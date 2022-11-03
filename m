@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF2FEC4321E
-	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23806C433FE
+	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231497AbiKCUFY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Nov 2022 16:05:24 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54980 "EHLO
+        id S231246AbiKCUF0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Nov 2022 16:05:26 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55036 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231359AbiKCUFP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Nov 2022 16:05:15 -0400
+        with ESMTP id S231415AbiKCUFQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Nov 2022 16:05:16 -0400
 Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 31ECF205C4;
-        Thu,  3 Nov 2022 13:05:03 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 52D0C205DE;
+        Thu,  3 Nov 2022 13:05:04 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1667505902;
-        bh=nQ3tEzhqpttUPdzZdmZ1topKxoxEb2txydHcB9R4ty8=;
+        s=smtpout1; t=1667505904;
+        bh=0QD71HnTfi102kMj/iQwyJg3EXoJA+jNlf4ovqOd4kI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=wG7SpXlll3yAU8/jcT+n6RT4N3u1NgkVvcCBqj64GIUtGC6B1KMc6aS4PtN0Sd00h
-         rjGWbtylO618hFL2CPMafrTZ88dYco+6HF0ISJJTt9j/7OI0MQCt/44+ma6GZsw8e3
-         s3AMzAKpoU0e7bdRwMzMmmWaovetKKRWLsAPLSg1M2qogJCWQYBQUZywH2PT21tzyf
-         KynQb7VZboiPNAXyQrk3AMvJIa9r15VvfVJGc0Z4PpZsXJLdqCJzb/BhwM2YCeB/Ms
-         qRF96izYTO0jl2OTQFjk1ENn3jCNpw6juw/h861RM3DGud+mC8dRE1dK5mdwdV4ASb
-         0jURbD8GFHfAw==
+        b=ETGY9r1/7djqED9kRWdvb2A7Hn7p0T80/dljzT/sjkFH/rpqdtRzFK9OMRAmRbQtj
+         BZcbtD6h2TSfkcGemwd/iHAmvwPYXosrvUUvHQ2NFto1BKPm/zMPomPP/ysZ4xm+jJ
+         SudXbwa4IaAoTJNYDHWGPM3qZnuxoudRmsf9Lp+2CQNMixO1TITjJogn3bI9jDoTQY
+         lI9nrtpDsriaY5dg21SYn1BzlnrNPb+Ytx8JK+aj10FB8jc8TFwcFhf8QNXVcxQ4Xy
+         HUvXNcrEyofptJorvifkYnDuvj5+Q0Fm97oabgIZ2OHSxqr8iUnnGQXj/4UeuNnNPr
+         NJJ32YXJoh9sg==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F9B1KJRzg4l;
-        Thu,  3 Nov 2022 16:05:02 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F9C5KfTzfB5;
+        Thu,  3 Nov 2022 16:05:03 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -38,13 +38,10 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Vincent Chen <vincent.chen@sifive.com>,
-        Eric Lin <eric.lin@sifive.com>,
-        Palmer Dabbelt <palmer@rivosinc.com>
-Subject: [PATCH v5 18/24] selftests/rseq: riscv: Template memory ordering and percpu access mode
-Date:   Thu,  3 Nov 2022 16:03:53 -0400
-Message-Id: <20221103200359.328736-19-mathieu.desnoyers@efficios.com>
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH v5 22/24] selftests/rseq: Implement numa node id vs vm_vcpu_id invariant test
+Date:   Thu,  3 Nov 2022 16:03:57 -0400
+Message-Id: <20221103200359.328736-23-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
 References: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
@@ -54,980 +51,180 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Introduce a rseq-riscv-bits.h template header which is internally included
-to generate the static inline functions covering:
+On all architectures except Power, the NUMA topology is never
+reconfigured after a CPU has been associated with a NUMA node in the
+system lifetime.
 
-- relaxed and release memory ordering,
-- per-cpu-id and per-vm-vcpu-id per-cpu data access.
+Even on Power, we can assume that NUMA topology reconfiguration happens
+rarely, and therefore we do not expect it to happen while the NUMA test
+is running.
+
+This test validates that the mapping between a vm_vcpu_id and a numa
+node id remains valid for the process lifetime. In other words, it
+validates that if any thread within the process running on behalf of a
+vm_vcpu_id N observes a NUMA node id M, all threads within this process
+will always observe the same NUMA node id value when running on behalf
+of that same vm_vcpu_id.
+
+This characteristic is important for NUMA locality.
+
+This test is skipped on architectures that do not implement
+rseq_load_u32_u32.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Vincent Chen <vincent.chen@sifive.com>
-Cc: Eric Lin <eric.lin@sifive.com>
-Cc: Palmer Dabbelt <palmer@rivosinc.com>
 ---
-Changes since v4:
-- Use RSEQ_TEMPLATE_CPU_ID_FIELD.
----
- .../testing/selftests/rseq/rseq-riscv-bits.h  | 410 ++++++++++++++
- tools/testing/selftests/rseq/rseq-riscv.h     | 527 +-----------------
- 2 files changed, 437 insertions(+), 500 deletions(-)
- create mode 100644 tools/testing/selftests/rseq/rseq-riscv-bits.h
+ tools/testing/selftests/rseq/.gitignore       |   1 +
+ tools/testing/selftests/rseq/Makefile         |   2 +-
+ .../testing/selftests/rseq/basic_numa_test.c  | 117 ++++++++++++++++++
+ 3 files changed, 119 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/rseq/basic_numa_test.c
 
-diff --git a/tools/testing/selftests/rseq/rseq-riscv-bits.h b/tools/testing/selftests/rseq/rseq-riscv-bits.h
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
+index db5c1a124c6c..9231abed69cc 100644
+--- a/tools/testing/selftests/rseq/.gitignore
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -1,4 +1,5 @@
+ # SPDX-License-Identifier: GPL-2.0-only
++basic_numa_test
+ basic_percpu_ops_test
+ basic_percpu_ops_vm_vcpu_id_test
+ basic_test
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index 3eec8e166385..4bf5b7202254 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -12,7 +12,7 @@ LDLIBS += -lpthread -ldl
+ # still track changes to header files and depend on shared object.
+ OVERRIDE_TARGETS = 1
+ 
+-TEST_GEN_PROGS = basic_test basic_percpu_ops_test basic_percpu_ops_vm_vcpu_id_test param_test \
++TEST_GEN_PROGS = basic_test basic_numa_test basic_percpu_ops_test basic_percpu_ops_vm_vcpu_id_test param_test \
+ 		param_test_benchmark param_test_compare_twice param_test_vm_vcpu_id \
+ 		param_test_vm_vcpu_id_benchmark param_test_vm_vcpu_id_compare_twice
+ 
+diff --git a/tools/testing/selftests/rseq/basic_numa_test.c b/tools/testing/selftests/rseq/basic_numa_test.c
 new file mode 100644
-index 000000000000..7a5ce10b8ccc
+index 000000000000..45cb714b135c
 --- /dev/null
-+++ b/tools/testing/selftests/rseq/rseq-riscv-bits.h
-@@ -0,0 +1,410 @@
-+/* SPDX-License-Identifier: LGPL-2.1 OR MIT */
-+
-+#include "rseq-bits-template.h"
-+
-+#if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
-+	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_VM_VCPU_ID))
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(4)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
-+				  RSEQ_INJECT_ASM(5)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]		"r" (cpu),
-+				    [current_cpu_id]	"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [v]			"m" (*v),
-+				    [expect]		"r" (expect),
-+				    [newv]		"r" (newv)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort, cmpfail
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1, error2
-+#endif
-+	);
-+
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+cmpfail:
-+	return 1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+error2:
-+	rseq_bug("expected value comparison failed");
-+#endif
-+}
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpnev_storeoffp_load)(intptr_t *v, intptr_t expectnot,
-+			       off_t voffp, intptr_t *load, int cpu)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+				  RSEQ_ASM_OP_CMPNE(v, expectnot, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(4)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+				  RSEQ_ASM_OP_CMPNE(v, expectnot, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_OP_R_LOAD(v)
-+				  RSEQ_ASM_OP_R_STORE(load)
-+				  RSEQ_ASM_OP_R_LOAD_OFF(voffp)
-+				  RSEQ_ASM_OP_R_FINAL_STORE(v, 3)
-+				  RSEQ_INJECT_ASM(5)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]		"r" (cpu),
-+				    [current_cpu_id]	"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [v]			"m" (*v),
-+				    [expectnot]		"r" (expectnot),
-+				    [load]		"m" (*load),
-+				    [voffp]		"r" (voffp)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort, cmpfail
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1, error2
-+#endif
-+	);
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+cmpfail:
-+	return 1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+error2:
-+	rseq_bug("expected value comparison failed");
-+#endif
-+}
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_addv)(intptr_t *v, intptr_t count, int cpu)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+#endif
-+				  RSEQ_ASM_OP_R_LOAD(v)
-+				  RSEQ_ASM_OP_R_ADD(count)
-+				  RSEQ_ASM_OP_R_FINAL_STORE(v, 3)
-+				  RSEQ_INJECT_ASM(4)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]		"r" (cpu),
-+				    [current_cpu_id]	"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [v]			"m" (*v),
-+				    [count]		"r" (count)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1
-+#endif
-+	);
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+#endif
-+}
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t expect,
-+			      intptr_t *v2, intptr_t expect2,
-+			      intptr_t newv, int cpu)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error3]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(4)
-+				  RSEQ_ASM_OP_CMPEQ(v2, expect2, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(5)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
-+				  RSEQ_ASM_OP_CMPEQ(v2, expect2, "%l[error3]")
-+#endif
-+				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
-+				  RSEQ_INJECT_ASM(6)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]		"r" (cpu),
-+				    [current_cpu_id]	"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [v]			"m" (*v),
-+				    [expect]		"r" (expect),
-+				    [v2]			"m" (*v2),
-+				    [expect2]		"r" (expect2),
-+				    [newv]		"r" (newv)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort, cmpfail
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1, error2, error3
-+#endif
-+	);
-+
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+cmpfail:
-+	return 1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+error2:
-+	rseq_bug("expected value comparison failed");
-+error3:
-+	rseq_bug("2nd expected value comparison failed");
-+#endif
-+}
-+
-+#define RSEQ_ARCH_HAS_OFFSET_DEREF_ADDV
-+
++++ b/tools/testing/selftests/rseq/basic_numa_test.c
+@@ -0,0 +1,117 @@
++// SPDX-License-Identifier: LGPL-2.1
 +/*
-+ *   pval = *(ptr+off)
-+ *  *pval += inc;
++ * Basic rseq NUMA test. Validate that (vm_vcpu_id, numa_node_id) pairs are
++ * invariant. The only known scenario where this is untrue is on Power which
++ * can reconfigure the NUMA topology on CPU hotunplug/hotplug sequence.
 + */
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_offset_deref_addv)(intptr_t *ptr, off_t off, intptr_t inc, int cpu)
-+{
-+	RSEQ_INJECT_C(9)
 +
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+#endif
-+				  RSEQ_ASM_OP_R_DEREF_ADDV(ptr, off, 3)
-+				  RSEQ_INJECT_ASM(4)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]			"r" (cpu),
-+				    [current_cpu_id]		"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]			"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [ptr]			"r" (ptr),
-+				    [off]			"er" (off),
-+				    [inc]			"er" (inc)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1
-+#endif
-+	);
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+#endif
++#define _GNU_SOURCE
++#include <assert.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/time.h>
++
++#include "rseq.h"
++
++#define NR_LOOPS	100000000
++#define NR_THREADS	16
++
++#ifdef RSEQ_ARCH_HAS_LOAD_U32_U32
++
++static
++int cpu_numa_id[CPU_SETSIZE];
++
++static
++void numa_id_init(void)
++{
++	int i;
++
++	for (i = 0; i < CPU_SETSIZE; i++)
++		cpu_numa_id[i] = -1;
 +}
 +
-+#endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
-+	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_VM_VCPU_ID)) */
-+
-+#if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
-+	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_VM_VCPU_ID))
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
-+				 intptr_t *v2, intptr_t newv2,
-+				 intptr_t newv, int cpu)
++static
++void *test_thread(void *arg)
 +{
-+	RSEQ_INJECT_C(9)
++	int i;
 +
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(4)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_OP_STORE(newv2, v2)
-+				  RSEQ_INJECT_ASM(5)
-+#ifdef RSEQ_TEMPLATE_MO_RELEASE
-+				  RSEQ_ASM_OP_FINAL_STORE_RELEASE(newv, v, 3)
++	if (rseq_register_current_thread()) {
++		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		abort();
++	}
++
++	for (i = 0; i < NR_LOOPS; i++) {
++		uint32_t vm_vcpu_id, node;
++		int cached_node_id;
++
++		while (rseq_load_u32_u32(RSEQ_MO_RELAXED, &vm_vcpu_id, &rseq_get_abi()->vm_vcpu_id,
++					 &node, &rseq_get_abi()->node_id) != 0) {
++			/* Retry. */
++		}
++		cached_node_id = RSEQ_READ_ONCE(cpu_numa_id[vm_vcpu_id]);
++		if (cached_node_id == -1) {
++			RSEQ_WRITE_ONCE(cpu_numa_id[vm_vcpu_id], node);
++		} else {
++			if (node != cached_node_id) {
++				fprintf(stderr, "Error: NUMA node id discrepancy: vm_vcpu_id %u cached node id %d node id %u.\n",
++					vm_vcpu_id, cached_node_id, node);
++				fprintf(stderr, "This is likely a kernel bug, or caused by a concurrent NUMA topology reconfiguration.\n");
++				abort();
++			}
++		}
++	}
++
++	if (rseq_unregister_current_thread()) {
++		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		abort();
++	}
++	return NULL;
++}
++
++static
++int test_numa(void)
++{
++        pthread_t tid[NR_THREADS];
++        int err, i;
++        void *tret;
++
++	numa_id_init();
++
++	printf("testing rseq (vm_vcpu_id, numa_node_id) invariant, single thread\n");
++
++	(void) test_thread(NULL);
++
++	printf("testing rseq (vm_vcpu_id, numa_node_id) invariant, multi-threaded\n");
++
++        for (i = 0; i < NR_THREADS; i++) {
++                err = pthread_create(&tid[i], NULL, test_thread, NULL);
++                if (err != 0)
++                        abort();
++        }
++
++        for (i = 0; i < NR_THREADS; i++) {
++                err = pthread_join(tid[i], &tret);
++                if (err != 0)
++                        abort();
++        }
++
++	return 0;
++}
 +#else
-+				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
-+#endif
-+				  RSEQ_INJECT_ASM(6)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]			"r" (cpu),
-+				    [current_cpu_id]		"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]			"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [expect]			"r" (expect),
-+				    [v]				"m" (*v),
-+				    [newv]			"r" (newv),
-+				    [v2]			"m" (*v2),
-+				    [newv2]			"r" (newv2)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort, cmpfail
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1, error2
-+#endif
-+	);
-+
-+	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+cmpfail:
-+	return 1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+error2:
-+	rseq_bug("expected value comparison failed");
-+#endif
-+}
-+
-+static inline __always_inline
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t expect,
-+				 void *dst, void *src, size_t len,
-+				 intptr_t newv, int cpu)
++static
++int test_numa(void)
 +{
-+	RSEQ_INJECT_C(9)
-+	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
-+				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
-+				  RSEQ_INJECT_ASM(3)
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
-+				  RSEQ_INJECT_ASM(4)
-+#ifdef RSEQ_COMPARE_TWICE
-+				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
-+				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
-+#endif
-+				  RSEQ_ASM_OP_R_BAD_MEMCPY(dst, src, len)
-+				  RSEQ_INJECT_ASM(5)
-+#ifdef RSEQ_TEMPLATE_MO_RELEASE
-+				  RSEQ_ASM_OP_FINAL_STORE_RELEASE(newv, v, 3)
-+#else
-+				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
-+#endif
-+				  RSEQ_INJECT_ASM(6)
-+				  RSEQ_ASM_DEFINE_ABORT(4, abort)
-+				  : /* gcc asm goto does not allow outputs */
-+				  : [cpu_id]			"r" (cpu),
-+				    [current_cpu_id]		"m" (rseq_get_abi()->RSEQ_TEMPLATE_CPU_ID_FIELD),
-+				    [rseq_cs]			"m" (rseq_get_abi()->rseq_cs.arch.ptr),
-+				    [expect]			"r" (expect),
-+				    [v]				"m" (*v),
-+				    [newv]			"r" (newv),
-+				    [dst]			"r" (dst),
-+				    [src]			"r" (src),
-+				    [len]			"r" (len)
-+				    RSEQ_INJECT_INPUT
-+				  : "memory", RSEQ_ASM_TMP_REG_1, RSEQ_ASM_TMP_REG_2,
-+				    RSEQ_ASM_TMP_REG_3, RSEQ_ASM_TMP_REG_4
-+				    RSEQ_INJECT_CLOBBER
-+				  : abort, cmpfail
-+#ifdef RSEQ_COMPARE_TWICE
-+				    , error1, error2
-+#endif
-+	);
-+
++	fprintf(stderr, "rseq_load_u32_u32 is not implemented on this architecture. "
++			"Skipping numa test.\n");
 +	return 0;
-+abort:
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+cmpfail:
-+	return 1;
-+#ifdef RSEQ_COMPARE_TWICE
-+error1:
-+	rseq_bug("cpu_id comparison failed");
-+error2:
-+	rseq_bug("expected value comparison failed");
-+#endif
 +}
++#endif
 +
-+#endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
-+	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_VM_VCPU_ID)) */
-+
-+#include "rseq-bits-reset.h"
-diff --git a/tools/testing/selftests/rseq/rseq-riscv.h b/tools/testing/selftests/rseq/rseq-riscv.h
-index b16d943a63e1..ad61ad06ef9f 100644
---- a/tools/testing/selftests/rseq/rseq-riscv.h
-+++ b/tools/testing/selftests/rseq/rseq-riscv.h
-@@ -165,507 +165,34 @@ do {									\
- 	RSEQ_ASM_OP_R_ADD(inc)						\
- 	__rseq_str(post_commit_label) ":\n"
- 
--static inline __always_inline
--int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [v]			"m" (*v),
--				    [expect]		"r" (expect),
--				    [newv]		"r" (newv)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
--			       off_t voffp, intptr_t *load, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPNE(v, expectnot, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPNE(v, expectnot, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_R_LOAD(v)
--				  RSEQ_ASM_OP_R_STORE(load)
--				  RSEQ_ASM_OP_R_LOAD_OFF(voffp)
--				  RSEQ_ASM_OP_R_FINAL_STORE(v, 3)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [v]			"m" (*v),
--				    [expectnot]		"r" (expectnot),
--				    [load]		"m" (*load),
--				    [voffp]		"r" (voffp)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
-+/* Per-cpu-id indexing. */
- 
--static inline __always_inline
--int rseq_addv(intptr_t *v, intptr_t count, int cpu)
--{
--	RSEQ_INJECT_C(9)
-+#define RSEQ_TEMPLATE_CPU_ID
-+#define RSEQ_TEMPLATE_MO_RELAXED
-+#include "rseq-riscv-bits.h"
-+#undef RSEQ_TEMPLATE_MO_RELAXED
- 
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--#endif
--				  RSEQ_ASM_OP_R_LOAD(v)
--				  RSEQ_ASM_OP_R_ADD(count)
--				  RSEQ_ASM_OP_R_FINAL_STORE(v, 3)
--				  RSEQ_INJECT_ASM(4)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [v]			"m" (*v),
--				    [count]		"r" (count)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1
--#endif
--	);
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
--				 intptr_t *v2, intptr_t newv2,
--				 intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_STORE(newv2, v2)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
--				  RSEQ_INJECT_ASM(6)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [expect]		"r" (expect),
--				    [v]			"m" (*v),
--				    [newv]		"r" (newv),
--				    [v2]			"m" (*v2),
--				    [newv2]		"r" (newv2)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
--					 intptr_t *v2, intptr_t newv2,
--					 intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_STORE(newv2, v2)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_OP_FINAL_STORE_RELEASE(newv, v, 3)
--				  RSEQ_INJECT_ASM(6)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [expect]		"r" (expect),
--				    [v]			"m" (*v),
--				    [newv]		"r" (newv),
--				    [v2]			"m" (*v2),
--				    [newv2]		"r" (newv2)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
--			      intptr_t *v2, intptr_t expect2,
--			      intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error3]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--				  RSEQ_ASM_OP_CMPEQ(v2, expect2, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(5)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--				  RSEQ_ASM_OP_CMPEQ(v2, expect2, "%l[error3]")
--#endif
--				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
--				  RSEQ_INJECT_ASM(6)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [v]			"m" (*v),
--				    [expect]		"r" (expect),
--				    [v2]			"m" (*v2),
--				    [expect2]		"r" (expect2),
--				    [newv]		"r" (newv)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2, error3
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--error3:
--	rseq_bug("2nd expected value comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
--				 void *dst, void *src, size_t len,
--				 intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_R_BAD_MEMCPY(dst, src, len)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_OP_FINAL_STORE(newv, v, 3)
--				  RSEQ_INJECT_ASM(6)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [expect]		"r" (expect),
--				    [v]			"m" (*v),
--				    [newv]		"r" (newv),
--				    [dst]			"r" (dst),
--				    [src]			"r" (src),
--				    [len]			"r" (len)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1, RSEQ_ASM_TMP_REG_2,
--				    RSEQ_ASM_TMP_REG_3, RSEQ_ASM_TMP_REG_4
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
--
--static inline __always_inline
--int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
--					 void *dst, void *src, size_t len,
--					 intptr_t newv, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[cmpfail]")
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error2]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[cmpfail]")
--				  RSEQ_INJECT_ASM(4)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--				  RSEQ_ASM_OP_CMPEQ(v, expect, "%l[error2]")
--#endif
--				  RSEQ_ASM_OP_R_BAD_MEMCPY(dst, src, len)
--				  RSEQ_INJECT_ASM(5)
--				  RSEQ_ASM_OP_FINAL_STORE_RELEASE(newv, v, 3)
--				  RSEQ_INJECT_ASM(6)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]	"m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [expect]		"r" (expect),
--				    [v]			"m" (*v),
--				    [newv]		"r" (newv),
--				    [dst]			"r" (dst),
--				    [src]			"r" (src),
--				    [len]			"r" (len)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1, RSEQ_ASM_TMP_REG_2,
--				    RSEQ_ASM_TMP_REG_3, RSEQ_ASM_TMP_REG_4
--				    RSEQ_INJECT_CLOBBER
--				  : abort, cmpfail
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1, error2
--#endif
--	);
--
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--cmpfail:
--	return 1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--error2:
--	rseq_bug("expected value comparison failed");
--#endif
--}
-+#define RSEQ_TEMPLATE_MO_RELEASE
-+#include "rseq-riscv-bits.h"
-+#undef RSEQ_TEMPLATE_MO_RELEASE
-+#undef RSEQ_TEMPLATE_CPU_ID
- 
--#define RSEQ_ARCH_HAS_OFFSET_DEREF_ADDV
-+/* Per-vm-vcpu-id indexing. */
- 
--/*
-- *   pval = *(ptr+off)
-- *  *pval += inc;
-- */
--static inline __always_inline
--int rseq_offset_deref_addv(intptr_t *ptr, off_t off, intptr_t inc, int cpu)
--{
--	RSEQ_INJECT_C(9)
--
--	__asm__ __volatile__ goto(RSEQ_ASM_DEFINE_TABLE(1, 2f, 3f, 4f)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_DEFINE_EXIT_POINT(2f, "%l[error1]")
--#endif
--				  RSEQ_ASM_STORE_RSEQ_CS(2, 1b, rseq_cs)
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
--				  RSEQ_INJECT_ASM(3)
--#ifdef RSEQ_COMPARE_TWICE
--				  RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, "%l[error1]")
--#endif
--				  RSEQ_ASM_OP_R_DEREF_ADDV(ptr, off, 3)
--				  RSEQ_INJECT_ASM(4)
--				  RSEQ_ASM_DEFINE_ABORT(4, abort)
--				  : /* gcc asm goto does not allow outputs */
--				  : [cpu_id]		"r" (cpu),
--				    [current_cpu_id]      "m" (rseq_get_abi()->cpu_id),
--				    [rseq_cs]		"m" (rseq_get_abi()->rseq_cs.arch.ptr),
--				    [ptr]			"r" (ptr),
--				    [off]			"er" (off),
--				    [inc]			"er" (inc)
--				    RSEQ_INJECT_INPUT
--				  : "memory", RSEQ_ASM_TMP_REG_1
--				    RSEQ_INJECT_CLOBBER
--				  : abort
--#ifdef RSEQ_COMPARE_TWICE
--				    , error1
--#endif
--	);
--	return 0;
--abort:
--	RSEQ_INJECT_FAILED
--	return -1;
--#ifdef RSEQ_COMPARE_TWICE
--error1:
--	rseq_bug("cpu_id comparison failed");
--#endif
--}
-+#define RSEQ_TEMPLATE_VM_VCPU_ID
-+#define RSEQ_TEMPLATE_MO_RELAXED
-+#include "rseq-riscv-bits.h"
-+#undef RSEQ_TEMPLATE_MO_RELAXED
-+
-+#define RSEQ_TEMPLATE_MO_RELEASE
-+#include "rseq-riscv-bits.h"
-+#undef RSEQ_TEMPLATE_MO_RELEASE
-+#undef RSEQ_TEMPLATE_VM_VCPU_ID
-+
-+/* APIs which are not based on cpu ids. */
-+
-+#define RSEQ_TEMPLATE_CPU_ID_NONE
-+#define RSEQ_TEMPLATE_MO_RELAXED
-+#include "rseq-riscv-bits.h"
-+#undef RSEQ_TEMPLATE_MO_RELAXED
-+#undef RSEQ_TEMPLATE_CPU_ID_NONE
++int main(int argc, char **argv)
++{
++	return test_numa();
++}
 -- 
 2.25.1
 
