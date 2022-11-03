@@ -2,32 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 839FAC4332F
-	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2D477C433FE
+	for <linux-api@archiver.kernel.org>; Thu,  3 Nov 2022 20:05:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231182AbiKCUFC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 3 Nov 2022 16:05:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54542 "EHLO
+        id S231217AbiKCUFD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 3 Nov 2022 16:05:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54546 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230341AbiKCUE6 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Nov 2022 16:04:58 -0400
-X-Greylist: delayed 111496 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Thu, 03 Nov 2022 13:04:56 PDT
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 71EBA1402E;
-        Thu,  3 Nov 2022 13:04:56 -0700 (PDT)
+        with ESMTP id S230410AbiKCUFA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 3 Nov 2022 16:05:00 -0400
+Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F26B92034F;
+        Thu,  3 Nov 2022 13:04:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1667505895;
-        bh=JEwuruCzX8OqiQJkSoNdaMaRC2YnfdyQAI0GUeVuJFU=;
-        h=From:To:Cc:Subject:Date:From;
-        b=L1I7Wydzu6HA9+hmquJE3oaNH9nVsh6wlNwsrBPO4OO3q3N9rZ1dEj1qJqXyU6vd5
-         TrsqvjUf8pTcE5flwRdhVrxpMJLjv9eowXFb6rr5gi80Yu9YtxSikkL54oYYn5pv39
-         +7mjQkYBP21BgLZTCjLBk+3+bKMovX76m9Yv/pb0CIE816crc70kUAdKjjE8EoU9tl
-         iN7U13/2bFsE6VRivLHuoRZLrIKByBEiU2/q4I/v+yT2ENMfN5od9AyW26YeMYyBox
-         egvL4onMm4pZAW94kA6sxdKFIvM8LoXIGw3oC9s8b0RM8QYQPc3ypsakCj/ndEe2Fc
-         xfiyQ2Q+d22Vw==
+        s=smtpout1; t=1667505897;
+        bh=yXMCQTJUBVpgK2HTSfnSaD1+EBfTlpw5kc6q1ePvqj4=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=PX7mVB4AbWTz7C0kIbwTzWLVhDu9iR1/2N6wfo7RmJYJsORUgHmcXRCAd0xvRAHv7
+         DXWh03M/4BJOlNgqS1ZgQzF8UqBz/jB9/7su1eF1jC8I1rLtKk7XJ0APZFgXlgLccj
+         NfBZoU+kHlhIDZ273o0fpXCQ25oOg3ctODMLbD3R3pMdKrs6idIiCV42MH1WqzVtxi
+         asS6vxrX2gKT9oGasRGXMrKD90XR10NFekdxCXSoojOUV6h5uuxaCAoG3014ZvTViz
+         ar045vXY2WwYLrNxP/VjNlxXgjev7GsulEVyUXCV3nOQ0TRgMRSi2k1flWq42Q9rvT
+         7oA1QQQB5Ri7Q==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F926TtQzfnq;
-        Thu,  3 Nov 2022 16:04:54 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N3F950gLZzftP;
+        Thu,  3 Nov 2022 16:04:57 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -40,122 +39,275 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 00/24] RSEQ node id and virtual cpu id extensions
-Date:   Thu,  3 Nov 2022 16:03:35 -0400
-Message-Id: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
+Subject: [PATCH v5 06/24] lib: Implement find_{first,next,nth}_notandnot_bit, find_first_andnot_bit
+Date:   Thu,  3 Nov 2022 16:03:41 -0400
+Message-Id: <20221103200359.328736-7-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
+References: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Extend the rseq ABI to expose a NUMA node ID and a vm_vcpu_id field.
+Allow finding the first, next, or nth bit within two input bitmasks
+which is zero in both masks.
 
-The NUMA node ID field allows implementing a faster getcpu(2) in libc.
+Allow fiding the first bit within two input bitmasks which is set in
+first mask and cleared in the second mask. find_next_andnot_bit and
+find_nth_andnot_bit already exist, so find the first bit appears to be
+missing.
 
-The virtual cpu id allows ideal scaling (down or up) of user-space
-per-cpu data structures. The virtual cpu ids allocated within a memory
-space are tracked by the scheduler, which takes into account the number
-of concurrently running threads, thus implicitly considering the number
-of threads, the cpu affinity, the cpusets applying to those threads, and
-the number of logical cores on the system.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ include/linux/find.h | 123 +++++++++++++++++++++++++++++++++++++++++--
+ lib/find_bit.c       |  42 +++++++++++++++
+ 2 files changed, 161 insertions(+), 4 deletions(-)
 
-This series is based on tip/sched/core
-commit 52b33d87b9197 ("sched/psi: Use task->psi_flags to clear in CPU migration")
-
-Thanks,
-
-Mathieu
-
-Mathieu Desnoyers (24):
-  rseq: Introduce feature size and alignment ELF auxiliary vector
-    entries
-  rseq: Introduce extensible rseq ABI
-  rseq: Extend struct rseq with numa node id
-  selftests/rseq: Use ELF auxiliary vector for extensible rseq
-  selftests/rseq: Implement rseq numa node id field selftest
-  lib: Implement find_{first,next,nth}_notandnot_bit,
-    find_first_andnot_bit
-  cpumask: Implement cpumask_{first,next}_{not,}andnot
-  sched: Introduce per memory space current virtual cpu id
-  rseq: Extend struct rseq with per memory space vcpu id
-  selftests/rseq: Remove RSEQ_SKIP_FASTPATH code
-  selftests/rseq: Implement rseq vm_vcpu_id field support
-  selftests/rseq: x86: Template memory ordering and percpu access mode
-  selftests/rseq: arm: Template memory ordering and percpu access mode
-  selftests/rseq: arm64: Template memory ordering and percpu access mode
-  selftests/rseq: mips: Template memory ordering and percpu access mode
-  selftests/rseq: ppc: Template memory ordering and percpu access mode
-  selftests/rseq: s390: Template memory ordering and percpu access mode
-  selftests/rseq: riscv: Template memory ordering and percpu access mode
-  selftests/rseq: Implement basic percpu ops vm_vcpu_id test
-  selftests/rseq: Implement parametrized vm_vcpu_id test
-  selftests/rseq: x86: Implement rseq_load_u32_u32
-  selftests/rseq: Implement numa node id vs vm_vcpu_id invariant test
-  selftests/rseq: parametrized test: Report/abort on negative cpu id
-  tracing/rseq: Add mm_vcpu_id field to rseq_update
-
- fs/binfmt_elf.c                               |    5 +
- fs/exec.c                                     |    6 +
- include/linux/cpumask.h                       |   60 +
- include/linux/find.h                          |  123 +-
- include/linux/mm.h                            |   25 +
- include/linux/mm_types.h                      |  110 +-
- include/linux/sched.h                         |    9 +
- include/trace/events/rseq.h                   |    7 +-
- include/uapi/linux/auxvec.h                   |    2 +
- include/uapi/linux/rseq.h                     |   22 +
- init/Kconfig                                  |    4 +
- kernel/fork.c                                 |   11 +-
- kernel/ptrace.c                               |    2 +-
- kernel/rseq.c                                 |   65 +-
- kernel/sched/core.c                           |   52 +
- kernel/sched/sched.h                          |  168 +++
- kernel/signal.c                               |    2 +
- lib/find_bit.c                                |   42 +
- tools/testing/selftests/rseq/.gitignore       |    5 +
- tools/testing/selftests/rseq/Makefile         |   20 +-
- .../testing/selftests/rseq/basic_numa_test.c  |  117 ++
- .../selftests/rseq/basic_percpu_ops_test.c    |   46 +-
- tools/testing/selftests/rseq/basic_test.c     |    4 +
- tools/testing/selftests/rseq/compiler.h       |    6 +
- tools/testing/selftests/rseq/param_test.c     |  157 ++-
- tools/testing/selftests/rseq/rseq-abi.h       |   22 +
- tools/testing/selftests/rseq/rseq-arm-bits.h  |  505 +++++++
- tools/testing/selftests/rseq/rseq-arm.h       |  701 +---------
- .../testing/selftests/rseq/rseq-arm64-bits.h  |  392 ++++++
- tools/testing/selftests/rseq/rseq-arm64.h     |  520 +------
- .../testing/selftests/rseq/rseq-bits-reset.h  |   11 +
- .../selftests/rseq/rseq-bits-template.h       |   41 +
- tools/testing/selftests/rseq/rseq-mips-bits.h |  462 +++++++
- tools/testing/selftests/rseq/rseq-mips.h      |  646 +--------
- tools/testing/selftests/rseq/rseq-ppc-bits.h  |  454 +++++++
- tools/testing/selftests/rseq/rseq-ppc.h       |  617 +--------
- .../testing/selftests/rseq/rseq-riscv-bits.h  |  410 ++++++
- tools/testing/selftests/rseq/rseq-riscv.h     |  529 +-------
- tools/testing/selftests/rseq/rseq-s390-bits.h |  474 +++++++
- tools/testing/selftests/rseq/rseq-s390.h      |  495 +------
- tools/testing/selftests/rseq/rseq-skip.h      |   65 -
- tools/testing/selftests/rseq/rseq-x86-bits.h  | 1036 ++++++++++++++
- tools/testing/selftests/rseq/rseq-x86.h       | 1193 +----------------
- tools/testing/selftests/rseq/rseq.c           |   86 +-
- tools/testing/selftests/rseq/rseq.h           |  229 +++-
- .../testing/selftests/rseq/run_param_test.sh  |    5 +
- 46 files changed, 5294 insertions(+), 4669 deletions(-)
- create mode 100644 tools/testing/selftests/rseq/basic_numa_test.c
- create mode 100644 tools/testing/selftests/rseq/rseq-arm-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-arm64-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-bits-reset.h
- create mode 100644 tools/testing/selftests/rseq/rseq-bits-template.h
- create mode 100644 tools/testing/selftests/rseq/rseq-mips-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-ppc-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-riscv-bits.h
- create mode 100644 tools/testing/selftests/rseq/rseq-s390-bits.h
- delete mode 100644 tools/testing/selftests/rseq/rseq-skip.h
- create mode 100644 tools/testing/selftests/rseq/rseq-x86-bits.h
-
+diff --git a/include/linux/find.h b/include/linux/find.h
+index ccaf61a0f5fd..43c3db92a096 100644
+--- a/include/linux/find.h
++++ b/include/linux/find.h
+@@ -14,6 +14,8 @@ unsigned long _find_next_and_bit(const unsigned long *addr1, const unsigned long
+ 					unsigned long nbits, unsigned long start);
+ unsigned long _find_next_andnot_bit(const unsigned long *addr1, const unsigned long *addr2,
+ 					unsigned long nbits, unsigned long start);
++unsigned long _find_next_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
++					unsigned long nbits, unsigned long start);
+ unsigned long _find_next_zero_bit(const unsigned long *addr, unsigned long nbits,
+ 					 unsigned long start);
+ extern unsigned long _find_first_bit(const unsigned long *addr, unsigned long size);
+@@ -22,8 +24,14 @@ unsigned long __find_nth_and_bit(const unsigned long *addr1, const unsigned long
+ 				unsigned long size, unsigned long n);
+ unsigned long __find_nth_andnot_bit(const unsigned long *addr1, const unsigned long *addr2,
+ 					unsigned long size, unsigned long n);
++unsigned long __find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
++					unsigned long size, unsigned long n);
+ extern unsigned long _find_first_and_bit(const unsigned long *addr1,
+ 					 const unsigned long *addr2, unsigned long size);
++extern unsigned long _find_first_andnot_bit(const unsigned long *addr1,
++					 const unsigned long *addr2, unsigned long size);
++extern unsigned long _find_first_notandnot_bit(const unsigned long *addr1,
++					 const unsigned long *addr2, unsigned long size);
+ extern unsigned long _find_first_zero_bit(const unsigned long *addr, unsigned long size);
+ extern unsigned long _find_last_bit(const unsigned long *addr, unsigned long size);
+ 
+@@ -95,15 +103,14 @@ unsigned long find_next_and_bit(const unsigned long *addr1,
+ 
+ #ifndef find_next_andnot_bit
+ /**
+- * find_next_andnot_bit - find the next set bit in *addr1 excluding all the bits
+- *                        in *addr2
++ * find_next_andnot_bit - find the next bit set in *addr1, cleared in *addr2
+  * @addr1: The first address to base the search on
+  * @addr2: The second address to base the search on
+  * @size: The bitmap size in bits
+  * @offset: The bitnumber to start searching at
+  *
+- * Returns the bit number for the next set bit
+- * If no bits are set, returns @size.
++ * Returns the bit number for the next bit set in *addr1, cleared in *addr2
++ * If no such bits are found, returns @size.
+  */
+ static inline
+ unsigned long find_next_andnot_bit(const unsigned long *addr1,
+@@ -124,6 +131,37 @@ unsigned long find_next_andnot_bit(const unsigned long *addr1,
+ }
+ #endif
+ 
++#ifndef find_next_notandnot_bit
++/**
++ * find_next_notandnot_bit - find the next bit cleared in both *addr1 and *addr2
++ * @addr1: The first address to base the search on
++ * @addr2: The second address to base the search on
++ * @size: The bitmap size in bits
++ * @offset: The bitnumber to start searching at
++ *
++ * Returns the bit number for the next bit cleared in both *addr1 and *addr2
++ * If no such bits are found, returns @size.
++ */
++static inline
++unsigned long find_next_notandnot_bit(const unsigned long *addr1,
++		const unsigned long *addr2, unsigned long size,
++		unsigned long offset)
++{
++	if (small_const_nbits(size)) {
++		unsigned long val;
++
++		if (unlikely(offset >= size))
++			return size;
++
++		val = ~*addr1 & ~*addr2 & GENMASK(size - 1, offset);
++		return val ? __ffs(val) : size;
++	}
++
++	return _find_next_notandnot_bit(addr1, addr2, size, offset);
++}
++#endif
++
++
+ #ifndef find_next_zero_bit
+ /**
+  * find_next_zero_bit - find the next cleared bit in a memory region
+@@ -255,6 +293,32 @@ unsigned long find_nth_andnot_bit(const unsigned long *addr1, const unsigned lon
+ 	return __find_nth_andnot_bit(addr1, addr2, size, n);
+ }
+ 
++/**
++ * find_nth_notandnot_bit - find N'th cleared bit in 2 memory regions.
++ * @addr1: The 1st address to start the search at
++ * @addr2: The 2nd address to start the search at
++ * @size: The maximum number of bits to search
++ * @n: The number of set bit, which position is needed, counting from 0
++ *
++ * Returns the bit number of the N'th cleared bit.
++ * If no such, returns @size.
++ */
++static inline
++unsigned long find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
++				unsigned long size, unsigned long n)
++{
++	if (n >= size)
++		return size;
++
++	if (small_const_nbits(size)) {
++		unsigned long val =  (~*addr1) & (~*addr2) & GENMASK(size - 1, 0);
++
++		return val ? fns(val, n) : size;
++	}
++
++	return __find_nth_notandnot_bit(addr1, addr2, size, n);
++}
++
+ #ifndef find_first_and_bit
+ /**
+  * find_first_and_bit - find the first set bit in both memory regions
+@@ -280,6 +344,57 @@ unsigned long find_first_and_bit(const unsigned long *addr1,
+ }
+ #endif
+ 
++#ifndef find_first_andnot_bit
++/**
++ * find_first_andnot_bit - find first set bit in 2 memory regions,
++ *			   flipping bits in 2nd region
++ * @addr1: The first address to base the search on
++ * @addr2: The second address to base the search on
++ * @size: The bitmap size in bits
++ *
++ * Returns the bit number for the next set bit
++ * If no bits are set, returns @size.
++ */
++static inline
++unsigned long find_first_andnot_bit(const unsigned long *addr1,
++				 const unsigned long *addr2,
++				 unsigned long size)
++{
++	if (small_const_nbits(size)) {
++		unsigned long val = *addr1 & (~*addr2) & GENMASK(size - 1, 0);
++
++		return val ? __ffs(val) : size;
++	}
++
++	return _find_first_andnot_bit(addr1, addr2, size);
++}
++#endif
++
++#ifndef find_first_notandnot_bit
++/**
++ * find_first_notandnot_bit - find first cleared bit in 2 memory regions
++ * @addr1: The first address to base the search on
++ * @addr2: The second address to base the search on
++ * @size: The bitmap size in bits
++ *
++ * Returns the bit number for the next cleared bit
++ * If no bits are set, returns @size.
++ */
++static inline
++unsigned long find_first_notandnot_bit(const unsigned long *addr1,
++				 const unsigned long *addr2,
++				 unsigned long size)
++{
++	if (small_const_nbits(size)) {
++		unsigned long val = (~*addr1) & (~*addr2) & GENMASK(size - 1, 0);
++
++		return val ? __ffs(val) : size;
++	}
++
++	return _find_first_notandnot_bit(addr1, addr2, size);
++}
++#endif
++
+ #ifndef find_first_zero_bit
+ /**
+  * find_first_zero_bit - find the first cleared bit in a memory region
+diff --git a/lib/find_bit.c b/lib/find_bit.c
+index 18bc0a7ac8ee..a1f592f2437e 100644
+--- a/lib/find_bit.c
++++ b/lib/find_bit.c
+@@ -116,6 +116,32 @@ unsigned long _find_first_and_bit(const unsigned long *addr1,
+ EXPORT_SYMBOL(_find_first_and_bit);
+ #endif
+ 
++#ifndef find_first_andnot_bit
++/*
++ * Find the first set bit in two memory regions, flipping bits in 2nd region.
++ */
++unsigned long _find_first_andnot_bit(const unsigned long *addr1,
++				  const unsigned long *addr2,
++				  unsigned long size)
++{
++	return FIND_FIRST_BIT(addr1[idx] & ~addr2[idx], /* nop */, size);
++}
++EXPORT_SYMBOL(_find_first_andnot_bit);
++#endif
++
++#ifndef find_first_notandnot_bit
++/*
++ * Find the first cleared bit in two memory regions.
++ */
++unsigned long _find_first_notandnot_bit(const unsigned long *addr1,
++				  const unsigned long *addr2,
++				  unsigned long size)
++{
++	return FIND_FIRST_BIT(~addr1[idx] & ~addr2[idx], /* nop */, size);
++}
++EXPORT_SYMBOL(_find_first_notandnot_bit);
++#endif
++
+ #ifndef find_first_zero_bit
+ /*
+  * Find the first cleared bit in a memory region.
+@@ -155,6 +181,13 @@ unsigned long __find_nth_andnot_bit(const unsigned long *addr1, const unsigned l
+ }
+ EXPORT_SYMBOL(__find_nth_andnot_bit);
+ 
++unsigned long __find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
++				 unsigned long size, unsigned long n)
++{
++	return FIND_NTH_BIT(~addr1[idx] & ~addr2[idx], size, n);
++}
++EXPORT_SYMBOL(__find_nth_notandnot_bit);
++
+ #ifndef find_next_and_bit
+ unsigned long _find_next_and_bit(const unsigned long *addr1, const unsigned long *addr2,
+ 					unsigned long nbits, unsigned long start)
+@@ -173,6 +206,15 @@ unsigned long _find_next_andnot_bit(const unsigned long *addr1, const unsigned l
+ EXPORT_SYMBOL(_find_next_andnot_bit);
+ #endif
+ 
++#ifndef find_next_notandnot_bit
++unsigned long _find_next_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
++					unsigned long nbits, unsigned long start)
++{
++	return FIND_NEXT_BIT(~addr1[idx] & ~addr2[idx], /* nop */, nbits, start);
++}
++EXPORT_SYMBOL(_find_next_notandnot_bit);
++#endif
++
+ #ifndef find_next_zero_bit
+ unsigned long _find_next_zero_bit(const unsigned long *addr, unsigned long nbits,
+ 					 unsigned long start)
 -- 
 2.25.1
 
