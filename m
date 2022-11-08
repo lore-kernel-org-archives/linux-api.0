@@ -2,42 +2,40 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CBCE8C433FE
-	for <linux-api@archiver.kernel.org>; Tue,  8 Nov 2022 13:05:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9AC53C4332F
+	for <linux-api@archiver.kernel.org>; Tue,  8 Nov 2022 19:45:25 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233779AbiKHNFC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 8 Nov 2022 08:05:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48820 "EHLO
+        id S229700AbiKHTpY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 8 Nov 2022 14:45:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44766 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233866AbiKHNFB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Nov 2022 08:05:01 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ED609B99;
-        Tue,  8 Nov 2022 05:05:00 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
-        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=dHBGD5sXlI0lRYkCZWGfedeiEQdnEUe+C13lU+wZ1iY=; b=QyvWUkK6pirDDr6L21v798/C7u
-        qqoX+8LbeKfELkmoNJQCl1/4RTkBp+Q1C5iWU5oX4faHgFcSAUyIr/DDmsbT87hAtZlvRHdNYGDIg
-        aMQBS4HzZFNOWMwAKiJTxPE01mKYIHPEDY+pTESREbmDVBbhE0JAAOus5IWcP1XNJwRy0TwmOsETt
-        LY5Q6pS4faSz6cQ2Q5M7FCSK/vV3HYwAZzWr94+O52T0Tk87mnN+lV2s4iCoBTWozgbbOPXecE/ID
-        k9btwTc5+ikym8XA/Y5Ms7EJjxN4f0l1duzlrtRoHojTnlo2ZU10O8NVK1YtpVB3DWbMJCaaMjxid
-        RLO8fq6g==;
-Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1osOHe-00AHQF-5N; Tue, 08 Nov 2022 13:04:54 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2CCC7300338;
-        Tue,  8 Nov 2022 14:04:46 +0100 (CET)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 145D82B8C8559; Tue,  8 Nov 2022 14:04:46 +0100 (CET)
-Date:   Tue, 8 Nov 2022 14:04:46 +0100
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+        with ESMTP id S229452AbiKHTpV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 8 Nov 2022 14:45:21 -0500
+Received: from smtpout.efficios.com (smtpout.efficios.com [IPv6:2607:5300:203:5aae::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 519D31D654;
+        Tue,  8 Nov 2022 11:45:19 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+        s=smtpout1; t=1667936717;
+        bh=N9FGx501778vNVrOHYv7pAKWQyx42YqgfZDZQz7Kpgk=;
+        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
+        b=k3iNJAuKTFU1zCZs/molOCmMlgz/rjg/gx2J96nBs8Qmowxl5/5/XbzmM8ddiN31j
+         HH4vY1V+Uxx11sHIUyU0mRQmfs0aMLSZ5a/hDbv13H4spU7VQ8qf8+L/eIZWvDnQ6N
+         gZlzjsswfTAW1xCXAv7yESvj2OK11CO1cnMXGS9n2glgaqwBEkIBADosDHvorRPBwl
+         nf+qFoDKxJndZCKSQczBv5XFZUTh3oSyQyJxyTvL1kBrAuE05fxgs5r+fvXxkMOCp1
+         QER9Qns99zg8tw80p/vMPMxUTTon9pMOpqjOGnuM1kh53FKdiK+OBDXP+4MLO/tg01
+         RlnUMNIryPV9Q==
+Received: from [172.16.0.153] (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4N6JV51LvbzgHZ;
+        Tue,  8 Nov 2022 14:45:17 -0500 (EST)
+Message-ID: <916c7a1f-fddd-77d6-6f91-6d3c196e1d86@efficios.com>
+Date:   Tue, 8 Nov 2022 14:45:24 -0500
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.4.0
+Subject: Re: [PATCH v5 08/24] sched: Introduce per memory space current
+ virtual cpu id
+Content-Language: en-US
+To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         "Paul E . McKenney" <paulmck@kernel.org>,
         Boqun Feng <boqun.feng@gmail.com>,
@@ -47,42 +45,56 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>
-Subject: Re: [PATCH v5 08/24] sched: Introduce per memory space current
- virtual cpu id
-Message-ID: <Y2pT7ij/TcI4EmH6@hirez.programming.kicks-ass.net>
 References: <20221103200359.328736-1-mathieu.desnoyers@efficios.com>
  <20221103200359.328736-9-mathieu.desnoyers@efficios.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20221103200359.328736-9-mathieu.desnoyers@efficios.com>
+ <Y2pS4gC1MHw+mX3x@hirez.programming.kicks-ass.net>
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+In-Reply-To: <Y2pS4gC1MHw+mX3x@hirez.programming.kicks-ass.net>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Nov 03, 2022 at 04:03:43PM -0400, Mathieu Desnoyers wrote:
+On 2022-11-08 08:00, Peter Zijlstra wrote:
+> On Thu, Nov 03, 2022 at 04:03:43PM -0400, Mathieu Desnoyers wrote:
+> 
+>> diff --git a/fs/exec.c b/fs/exec.c
+>> index 349a5da91efe..93eb88f4053b 100644
+>> --- a/fs/exec.c
+>> +++ b/fs/exec.c
+>> @@ -1013,6 +1013,9 @@ static int exec_mmap(struct mm_struct *mm)
+>>   	tsk->active_mm = mm;
+>>   	tsk->mm = mm;
+>>   	lru_gen_add_mm(mm);
+>> +	mm_init_vcpu_lock(mm);
+>> +	mm_init_vcpumask(mm);
+>> +	mm_init_node_vcpumask(mm);
+>>   	/*
+>>   	 * This prevents preemption while active_mm is being loaded and
+>>   	 * it and mm are being updated, which could cause problems for
+> 
+>> @@ -1150,6 +1154,9 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
+>>   
+>>   	mm->user_ns = get_user_ns(user_ns);
+>>   	lru_gen_init_mm(mm);
+>> +	mm_init_vcpu_lock(mm);
+>> +	mm_init_vcpumask(mm);
+>> +	mm_init_node_vcpumask(mm);
+>>   	return mm;
+>>   
+>>   fail_nocontext:
+> 
+> Why isn't all that a single mm_init_vcpu(mm) or something ?
 
-> The credit goes to Paul Turner (Google) for the vcpu_id idea. This
-> feature is implemented based on the discussions with Paul Turner and
-> Peter Oskolkov (Google), but I took the liberty to implement scheduler
-> fast-path optimizations and my own NUMA-awareness scheme. The rumor has
-> it that Google have been running a rseq vcpu_id extension internally at
-> Google in production for a year. The tcmalloc source code indeed has
-> comments hinting at a vcpu_id prototype extension to the rseq system
-> call [1].
+Good point, I'll update that.
 
-Re NUMA thing -- that means that on a 512 node system a single threaded
-task can still observe 512 separate vcpu-ids, right?
+Thanks,
 
-Also, said space won't be dense.
+Mathieu
 
-The main selling point of the whole vcpu-id scheme was that the id space
-is dense and not larger than min(nr_cpus, nr_threads), which then gives
-useful properties.
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+https://www.efficios.com
 
-But I'm not at all seeing how the NUMA thing preserves that.
-
-Also; given the utter mind-bendiness of the NUMA thing; should it go
-into it's own patch; introduce the regular plain old vcpu first, and
-then add things to it -- that also allows pushing those weird cpumask
-ops you've created later into the series.
