@@ -2,40 +2,40 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E78FBC43219
-	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:34:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3559AC4321E
+	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:34:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230018AbiKOTeO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 15 Nov 2022 14:34:14 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37614 "EHLO
+        id S231209AbiKOTeP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 15 Nov 2022 14:34:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37612 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229693AbiKOTeK (ORCPT
+        with ESMTP id S230244AbiKOTeK (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 15 Nov 2022 14:34:10 -0500
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 41BE7A189;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 41B1D9FF9;
         Tue, 15 Nov 2022 11:34:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
         References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=xQGbwJBFPdywGVEY1nsUqo2w6Ph8/bC9PDVo83SGkBE=; b=R+jp8claD3kKSP26LER/jd1Ub6
-        HsbUQoiGXISXe/c+55v0VWTJ7MnwOd1HJ//X2FPUubx7XQHvOUC5E7OMqWpyL+eIOxwMvnFtP5ghV
-        jNiCS1exb5MvPmxmmwN+6KZ/cRdFwQhFqqul6jk/djVlHvafCMK7qaNh60B9AHTOnvvKx0P3hD4F1
-        V+mRLnIPWrspe+2jaznHOVlEQNkYki1Dq9DjWnoHW0+jhXtvqtLai3X2uKrnsI0LT/Cc49yIp+moF
-        Mo7iBZfk1TzIoJ9xeGU6nJv+5tACw6fSSFnoQiiy/ZuHvkt+lmGEkUE2sGAkrDpX9WyHW38x9CJVQ
-        bd38ONNw==;
+        bh=+TZHe91CVKHcCvipG59L2Mt6GN52GFDDf1u+Vof4nE8=; b=Q7ytUqvEOw0JQGQeiFz9eKB7XE
+        u6IILmY6Rs0Zc6uh5cIj6pEjW+vBgPo0eHG6v2elnUwRtAC8nPSgOGuujaZpV0hZ79xT2Ivv1PiJD
+        KfecqmbHOE6kDo00ZNMG0gOry5tG2JJqS6BGRCZY8ScUi3NDhq5scMHTJw4Eexwu7u38JC0t28g64
+        f7pP7BgeWXYSKITT0JtXpYtI8CyJK7AxypPIGUED56wzUpqpau7EuaPA0TuAS3QmwjHxM4dHThNWG
+        gtOeX5R7Npcyfo6nvqYo7QPqxmBJaZLla4kr170lwgy6fcX+HTwQ9PSk4orOHlKHOhrFHOH/M8jJd
+        e2gNgPOA==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1ov1gd-00GXs5-9I; Tue, 15 Nov 2022 19:33:35 +0000
+        id 1ov1gd-00GXs4-9A; Tue, 15 Nov 2022 19:33:35 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 71321302D84;
-        Tue, 15 Nov 2022 15:47:05 +0100 (CET)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id BA420300137;
+        Tue, 15 Nov 2022 12:47:22 +0100 (CET)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 590C820C99E5C; Tue, 15 Nov 2022 15:47:05 +0100 (CET)
-Date:   Tue, 15 Nov 2022 15:47:05 +0100
+        id 9E03B2015BE8A; Tue, 15 Nov 2022 12:47:22 +0100 (CET)
+Date:   Tue, 15 Nov 2022 12:47:22 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -64,53 +64,60 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         John Allen <john.allen@amd.com>, kcc@google.com,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
-        Mike Rapoport <rppt@linux.ibm.com>
-Subject: Re: [PATCH v3 36/37] x86/cet/shstk: Add ARCH_CET_UNLOCK
-Message-ID: <Y3OmaSjhCtjht1nS@hirez.programming.kicks-ass.net>
+        Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v3 15/37] x86/mm: Check Shadow Stack page fault errors
+Message-ID: <Y3N8Sn65TzyD6jwL@hirez.programming.kicks-ass.net>
 References: <20221104223604.29615-1-rick.p.edgecombe@intel.com>
- <20221104223604.29615-37-rick.p.edgecombe@intel.com>
+ <20221104223604.29615-16-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20221104223604.29615-37-rick.p.edgecombe@intel.com>
+In-Reply-To: <20221104223604.29615-16-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Nov 04, 2022 at 03:36:03PM -0700, Rick Edgecombe wrote:
-
-> diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-> index 71620b77a654..bed7032d35f2 100644
-> --- a/arch/x86/kernel/shstk.c
-> +++ b/arch/x86/kernel/shstk.c
-> @@ -450,9 +450,14 @@ long cet_prctl(struct task_struct *task, int option, unsigned long features)
->  		return 0;
->  	}
+On Fri, Nov 04, 2022 at 03:35:42PM -0700, Rick Edgecombe wrote:
+> @@ -1331,6 +1345,18 @@ void do_user_addr_fault(struct pt_regs *regs,
 >  
-> -	/* Don't allow via ptrace */
-> -	if (task != current)
-> +	/* Only allow via ptrace */
-
-Both the old and new comment are equally useless for they tell us
-nothing the code doesn't already.
-
-Why isn't ptrace allowed to call these, and doesn't that rather leave
-CRIU in a bind, it can unlock but not re-lock the features, leaving
-restored processes more vulnerable than they were.
-
-> +	if (task != current) {
-> +		if (option == ARCH_CET_UNLOCK && IS_ENABLED(CONFIG_CHECKPOINT_RESTORE)) {
-
-Why make this conditional on CRIU at all?
-
-> +			task->thread.features_locked &= ~features;
-> +			return 0;
-> +		}
->  		return -EINVAL;
-> +	}
+>  	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 >  
->  	/* Do not allow to change locked features */
->  	if (features & task->thread.features_locked)
+> +	/*
+> +	 * To service shadow stack read faults, unlike normal read faults, the
+> +	 * fault handler needs to create a type of memory that will also be
+> +	 * writable (with instructions that generate shadow stack writes).
+> +	 * In the case of COW memory, the COW needs to take place even with
+> +	 * a shadow stack read. Otherwise the shared page will be left (shadow
+> +	 * stack) writable in userspace. So to trigger the appropriate behavior
+> +	 * by setting FAULT_FLAG_WRITE for shadow stack accesses, even if the
+> +	 * access was a shadow stack read.
+> +	 */
+
+Clear as mud... So SS pages are 'Write=0,Dirty=1', which, per
+construction, lack a RW bit. And these pages are writable (WRUSS).
+
+pte_wrprotect() seems to do: _PAGE_DIRTY->_PAGE_COW (which is really
+weird in this situation), resulting in: 'Write=0,Dirty=0,Cow=1'.
+
+That's regular RO memory and won't raise read-faults.
+
+But I'm thinking RET will trip #PF here when it tries to read the SS
+because the SSP is not a proper shadow stack page?
+
+And in that case you want to tickle pte_mkwrite() to undo the
+pte_wrprotect() above?
+
+So while the #PF is a 'read' fault due to RET not actually writing to
+the shadow stack, you want to force a write fault so it will re-instate
+the SS page.
+
+Did I get that right?
+
+> +	if (error_code & X86_PF_SHSTK)
+> +		flags |= FAULT_FLAG_WRITE;
+>  	if (error_code & X86_PF_WRITE)
+>  		flags |= FAULT_FLAG_WRITE;
+>  	if (error_code & X86_PF_INSTR)
 > -- 
 > 2.17.1
 > 
