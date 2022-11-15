@@ -2,40 +2,40 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3559AC4321E
-	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:34:18 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6958DC43217
+	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:34:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231209AbiKOTeP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 15 Nov 2022 14:34:15 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37612 "EHLO
+        id S231331AbiKOTe0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 15 Nov 2022 14:34:26 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37630 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230244AbiKOTeK (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 15 Nov 2022 14:34:10 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 41B1D9FF9;
-        Tue, 15 Nov 2022 11:34:09 -0800 (PST)
+        with ESMTP id S229637AbiKOTeS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 15 Nov 2022 14:34:18 -0500
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEF36A198;
+        Tue, 15 Nov 2022 11:34:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
         References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=+TZHe91CVKHcCvipG59L2Mt6GN52GFDDf1u+Vof4nE8=; b=Q7ytUqvEOw0JQGQeiFz9eKB7XE
-        u6IILmY6Rs0Zc6uh5cIj6pEjW+vBgPo0eHG6v2elnUwRtAC8nPSgOGuujaZpV0hZ79xT2Ivv1PiJD
-        KfecqmbHOE6kDo00ZNMG0gOry5tG2JJqS6BGRCZY8ScUi3NDhq5scMHTJw4Eexwu7u38JC0t28g64
-        f7pP7BgeWXYSKITT0JtXpYtI8CyJK7AxypPIGUED56wzUpqpau7EuaPA0TuAS3QmwjHxM4dHThNWG
-        gtOeX5R7Npcyfo6nvqYo7QPqxmBJaZLla4kr170lwgy6fcX+HTwQ9PSk4orOHlKHOhrFHOH/M8jJd
-        e2gNgPOA==;
+        bh=QR6n+vA00Dlok+NeJO2qYZC04d5g39W8pXVCw+YOkug=; b=hj+ppKnTzlA4/rLNRkRsmj84g4
+        rBmfHU+K7gBrv/4esPsOcYckFekm8hkTs4ZHZM5NpqAjEn7RIrg49OmU+LB0LIfcA4AucT0Ou+ii1
+        nMMQz4/w4wOPgdPsEltcsGtDqThJ34kPGFUn1EO2uDNFND4UNrbKICVVFFBRLCfOKGYnHZi89GvNY
+        opHKCutTO9hp/95pRKWMvcWwPSezcDL9qCKql1mT1tJvX6T+VR9xdZq4nyHQycQVBfhaIRlu70MFr
+        qu7zWNcyr+Ocl8GMz+ZTB+68H4O/9FThRnNV9m5GMT7zMbJrUb4nD29HrmtGT2YqfHWRNVXCaRwpZ
+        K83+u31A==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1ov1gd-00GXs4-9A; Tue, 15 Nov 2022 19:33:35 +0000
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1ov1gX-0015JT-1w; Tue, 15 Nov 2022 19:33:29 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id BA420300137;
-        Tue, 15 Nov 2022 12:47:22 +0100 (CET)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 904E0300422;
+        Tue, 15 Nov 2022 13:26:23 +0100 (CET)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 9E03B2015BE8A; Tue, 15 Nov 2022 12:47:22 +0100 (CET)
-Date:   Tue, 15 Nov 2022 12:47:22 +0100
+        id 76E4D2C368970; Tue, 15 Nov 2022 13:26:23 +0100 (CET)
+Date:   Tue, 15 Nov 2022 13:26:23 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -63,61 +63,40 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
         John Allen <john.allen@amd.com>, kcc@google.com,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
-        dethoma@microsoft.com, akpm@linux-foundation.org,
-        Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v3 15/37] x86/mm: Check Shadow Stack page fault errors
-Message-ID: <Y3N8Sn65TzyD6jwL@hirez.programming.kicks-ass.net>
+        dethoma@microsoft.com, akpm@linux-foundation.org
+Subject: Re: [PATCH v3 24/37] x86: Introduce userspace API for CET enabling
+Message-ID: <Y3OFb1035Ef+4oLj@hirez.programming.kicks-ass.net>
 References: <20221104223604.29615-1-rick.p.edgecombe@intel.com>
- <20221104223604.29615-16-rick.p.edgecombe@intel.com>
+ <20221104223604.29615-25-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20221104223604.29615-16-rick.p.edgecombe@intel.com>
+In-Reply-To: <20221104223604.29615-25-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Nov 04, 2022 at 03:35:42PM -0700, Rick Edgecombe wrote:
-> @@ -1331,6 +1345,18 @@ void do_user_addr_fault(struct pt_regs *regs,
->  
->  	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
->  
-> +	/*
-> +	 * To service shadow stack read faults, unlike normal read faults, the
-> +	 * fault handler needs to create a type of memory that will also be
-> +	 * writable (with instructions that generate shadow stack writes).
-> +	 * In the case of COW memory, the COW needs to take place even with
-> +	 * a shadow stack read. Otherwise the shared page will be left (shadow
-> +	 * stack) writable in userspace. So to trigger the appropriate behavior
-> +	 * by setting FAULT_FLAG_WRITE for shadow stack accesses, even if the
-> +	 * access was a shadow stack read.
-> +	 */
-
-Clear as mud... So SS pages are 'Write=0,Dirty=1', which, per
-construction, lack a RW bit. And these pages are writable (WRUSS).
-
-pte_wrprotect() seems to do: _PAGE_DIRTY->_PAGE_COW (which is really
-weird in this situation), resulting in: 'Write=0,Dirty=0,Cow=1'.
-
-That's regular RO memory and won't raise read-faults.
-
-But I'm thinking RET will trip #PF here when it tries to read the SS
-because the SSP is not a proper shadow stack page?
-
-And in that case you want to tickle pte_mkwrite() to undo the
-pte_wrprotect() above?
-
-So while the #PF is a 'read' fault due to RET not actually writing to
-the shadow stack, you want to force a write fault so it will re-instate
-the SS page.
-
-Did I get that right?
-
-> +	if (error_code & X86_PF_SHSTK)
-> +		flags |= FAULT_FLAG_WRITE;
->  	if (error_code & X86_PF_WRITE)
->  		flags |= FAULT_FLAG_WRITE;
->  	if (error_code & X86_PF_INSTR)
-> -- 
-> 2.17.1
+On Fri, Nov 04, 2022 at 03:35:51PM -0700, Rick Edgecombe wrote:
+> From: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
 > 
+> Add three new arch_prctl() handles:
+> 
+>  - ARCH_CET_ENABLE/DISABLE enables or disables the specified
+>    feature. Returns 0 on success or an error.
+> 
+>  - ARCH_CET_LOCK prevents future disabling or enabling of the
+>    specified feature. Returns 0 on success or an error
+> 
+> The features are handled per-thread and inherited over fork(2)/clone(2),
+> but reset on exec().
+> 
+> This is preparation patch. It does not implement any features.
+
+Urgh... so much for sharing with other architectures I suppose :/
+
+The ARM64 BTI thing is very similar to IBT (except I think their
+approach to the legacy bitmap is much saner).
+
+Given that IBT isn't supported and needs the whole legacy bitmap mess,
+do we really want to call this CET ? Why not just make a Shadow Stack
+API and tackle IBT independently.
