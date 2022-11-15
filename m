@@ -2,40 +2,40 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CC29C4321E
-	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:39:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 38CB1C4332F
+	for <linux-api@archiver.kernel.org>; Tue, 15 Nov 2022 19:43:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231255AbiKOTi6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 15 Nov 2022 14:38:58 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40938 "EHLO
+        id S230005AbiKOTn4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 15 Nov 2022 14:43:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43366 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230338AbiKOTiz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 15 Nov 2022 14:38:55 -0500
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AB9A1FD3B;
-        Tue, 15 Nov 2022 11:38:54 -0800 (PST)
+        with ESMTP id S229602AbiKOTnz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 15 Nov 2022 14:43:55 -0500
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9BE5D1B1E7;
+        Tue, 15 Nov 2022 11:43:54 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Type:MIME-Version:
         References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
         Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=m/idPlmlMSHYNd4VPV/uZ+42R303Fem83Y9Bl6HGhEk=; b=QB/jjPrQQAT8hA+XnNLKn5newW
-        3sIB6p85AcVqg9GDTQd5XWrkPSGYi7VE7q/AVPmk3oA5zsywMXiE2K9+PbdWTCSfcSsBQQ/rat+Zq
-        69IMgrgyQ1lr9mR6+2Z+yLZ0MOqLL9g8Eqx9nzn3mGUmjIPmdJyZvm/Ux4PM9ZDRSxvF9allMdE6h
-        r48VCIodLTC3ZoFqCUFvx/x6AE/BaoBzheW3DGE4ScZYnDQ/Xgoa594c/Ns9X0PNh+xB56z/RtxdX
-        kFFbMpPqHRpwE7hXwGN0JkqawQrlYLsjvzVEeAUouU8S6FJNz5HjDXNvDEiMY76cQne9+ZCPCzS5T
-        19aD/+KA==;
+        bh=QnRFaJdTKibI758I9kj7cXS0kb/T4IK8Fmo0NNbrHpo=; b=RI9MhJbYpg6c3VLPNttnDQb2xQ
+        OrqcxaY9Xgd61XCY8OUVnzvMF/dIS2ryHCuVfKlLsCv0/F5irZgoTtKnKMfiW7XrdluzBWQ0bWK3M
+        8SrwqVl13LxvaSNQ+Kfo1hC5vDLg8L9haDSBsPkyF54hbvnd5ZAiiYVkfnfK2qNaNK5J81UR+hn2V
+        mR9bBwAcJqNH+gw+HVRkr3UrTGLD0HhCf+tYPu0d2HtvRzPQAJ2K4H0t+JEah8c/V5KUADskjYMI9
+        tz1fTfFrnjDh4e/c8g1IXN2v4W2zrA4nRI3kAWF0JE+xNithQ91lkY+8kJSqxR9+xzPa4f5PSKYj8
+        cCO/nCJw==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1ov1lT-00GYBj-0V; Tue, 15 Nov 2022 19:38:35 +0000
+        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1ov1qD-0015RU-1o; Tue, 15 Nov 2022 19:43:29 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 21F70300C6F;
-        Tue, 15 Nov 2022 13:32:32 +0100 (CET)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 3754E300F30;
+        Tue, 15 Nov 2022 15:18:25 +0100 (CET)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 094CE2C36896F; Tue, 15 Nov 2022 13:32:31 +0100 (CET)
-Date:   Tue, 15 Nov 2022 13:32:31 +0100
+        id 206542CB43B63; Tue, 15 Nov 2022 15:18:25 +0100 (CET)
+Date:   Tue, 15 Nov 2022 15:18:25 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -65,74 +65,34 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v3 25/37] x86/shstk: Add user-mode shadow stack support
-Message-ID: <Y3OG31hoj/q4Bgh7@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v3 27/37] x86/shstk: Introduce routines modifying shstk
+Message-ID: <Y3OfsZI0jFRoUw02@hirez.programming.kicks-ass.net>
 References: <20221104223604.29615-1-rick.p.edgecombe@intel.com>
- <20221104223604.29615-26-rick.p.edgecombe@intel.com>
+ <20221104223604.29615-28-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20221104223604.29615-26-rick.p.edgecombe@intel.com>
+In-Reply-To: <20221104223604.29615-28-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Nov 04, 2022 at 03:35:52PM -0700, Rick Edgecombe wrote:
+On Fri, Nov 04, 2022 at 03:35:54PM -0700, Rick Edgecombe wrote:
 
-> +static int shstk_setup(void)
+> +#ifdef CONFIG_X86_USER_SHADOW_STACK
+> +static inline int write_user_shstk_64(u64 __user *addr, u64 val)
 > +{
-> +	struct thread_shstk *shstk = &current->thread.shstk;
-> +	unsigned long addr, size;
-> +
-> +	/* Already enabled */
-> +	if (features_enabled(CET_SHSTK))
-> +		return 0;
-> +
-> +	/* Also not supported for 32 bit and x32 */
-> +	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK) || in_32bit_syscall())
-> +		return -EOPNOTSUPP;
-> +
-> +	size = adjust_shstk_size(0);
-> +	addr = alloc_shstk(size);
-> +	if (IS_ERR_VALUE(addr))
-> +		return PTR_ERR((void *)addr);
-> +
-> +	fpregs_lock_and_load();
-> +	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
-> +	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
-
-This..
-
-> +	fpregs_unlock();
-> +
-> +	shstk->base = addr;
-> +	shstk->size = size;
-> +	features_set(CET_SHSTK);
-> +
+> +	asm_volatile_goto("1: wrussq %[val], (%[addr])\n"
+> +			  _ASM_EXTABLE(1b, %l[fail])
+> +			  :: [addr] "r" (addr), [val] "r" (val)
+> +			  :: fail);
 > +	return 0;
+> +fail:
+> +	return -EFAULT;
 > +}
+> +#endif /* CONFIG_X86_USER_SHADOW_STACK */
 
-> +static int shstk_disable(void)
-> +{
-> +	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
-> +		return -EOPNOTSUPP;
-> +
-> +	/* Already disabled? */
-> +	if (!features_enabled(CET_SHSTK))
-> +		return 0;
-> +
-> +	fpregs_lock_and_load();
-> +	/* Disable WRSS too when disabling shadow stack */
-> +	set_clr_bits_msrl(MSR_IA32_U_CET, 0, CET_SHSTK_EN);
+Why isn't this modelled after put_user() ?
 
-And this... aren't very consistent in approach. Given there is no U_IBT
-yet, why complicate matters like this?
-
-> +	wrmsrl(MSR_IA32_PL3_SSP, 0);
-> +	fpregs_unlock();
-> +
-> +	shstk_free(current);
-> +	features_clr(CET_SHSTK);
-> +
-> +	return 0;
-> +}
+Should you write a 64bit value even if the task receiving a signal is
+32bit ?
