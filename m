@@ -2,150 +2,93 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 16C2BC433FE
-	for <linux-api@archiver.kernel.org>; Wed, 16 Nov 2022 09:39:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B3827C43217
+	for <linux-api@archiver.kernel.org>; Wed, 16 Nov 2022 09:44:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238176AbiKPJju (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 16 Nov 2022 04:39:50 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56480 "EHLO
+        id S231974AbiKPJoS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 16 Nov 2022 04:44:18 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60458 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238008AbiKPJjr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Nov 2022 04:39:47 -0500
-Received: from mail-ej1-x629.google.com (mail-ej1-x629.google.com [IPv6:2a00:1450:4864:20::629])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1AC5D21E16
-        for <linux-api@vger.kernel.org>; Wed, 16 Nov 2022 01:39:45 -0800 (PST)
-Received: by mail-ej1-x629.google.com with SMTP id ud5so42726502ejc.4
-        for <linux-api@vger.kernel.org>; Wed, 16 Nov 2022 01:39:45 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ffwll.ch; s=google;
-        h=in-reply-to:content-disposition:mime-version:references
-         :mail-followup-to:message-id:subject:cc:to:from:date:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=S6oqx15ITri8OuC13o4xCW0SmP3dFj+PiqjV49pnT8A=;
-        b=TZCSe/yGP+6YUUxZ+J3RiJY4ZZose/RfW64FOqPUop2XAXuLE6BVBfv1uW5gjHBz+e
-         jY4ZL1INXZi+XC4mhyNs198vPjVdRcWqCvAv20Hv5CHDkO16DbUgwCNB3owLSdhv/RF9
-         iCekFgLlJcwBBdU6WRRe//N8RcoYY0FGMfYHE=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=in-reply-to:content-disposition:mime-version:references
-         :mail-followup-to:message-id:subject:cc:to:from:date
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=S6oqx15ITri8OuC13o4xCW0SmP3dFj+PiqjV49pnT8A=;
-        b=ytXIPvQBn97Zk6G8QQ3HMFdujZup0DwCT9E0fPPhFn8yGMpd0+h0j8OJ0LkHo6R/Ju
-         iDwAmQMDVAt/SEhRzZZyi22ZCzu4mfarTVawNnSuK3L3lc5HTuynxKUMEXtRe6wjMvz8
-         eomu7D+/svIEuz5CZ61VPXtk3Koq485cVRiH22Z1kJHeKGT0qy5t7rucO0GcKkqYczkt
-         V2t9kOEhdqF+NLlUcQPj1SO00YC0tvVWq20M+zh9CTQa6ryTLHQzj4CTwztiJEs0D7JQ
-         XNDbUeS+xOfUsSQJv4bmuNFo4g5hGuWPRSLvExBwqsr03qArr6PiYYGCrLYlGzfpXbk+
-         VrFQ==
-X-Gm-Message-State: ANoB5pmzbih575FwuxpvTHW19ae1lIHzj16uLXMmklmimrN7190ykxKV
-        NDo0esJV46IFojoX0urz3kijLg==
-X-Google-Smtp-Source: AA0mqf5IDCFzMzxg7K+YiFTymvahSK1AsntC/ot3k1xLAUk0GHJ5RGc4u67XB6zl0x/PYZjfkwUibg==
-X-Received: by 2002:a17:906:414d:b0:781:951:2fb with SMTP id l13-20020a170906414d00b00781095102fbmr17126729ejk.64.1668591583634;
-        Wed, 16 Nov 2022 01:39:43 -0800 (PST)
-Received: from phenom.ffwll.local (212-51-149-33.fiber7.init7.net. [212.51.149.33])
-        by smtp.gmail.com with ESMTPSA id z4-20020aa7d404000000b0046778ce5fdfsm5928035edq.10.2022.11.16.01.39.42
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 16 Nov 2022 01:39:43 -0800 (PST)
-Date:   Wed, 16 Nov 2022 10:39:41 +0100
-From:   Daniel Vetter <daniel@ffwll.ch>
-To:     Dave Airlie <airlied@gmail.com>
-Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Daniel Vetter <daniel.vetter@ffwll.ch>,
-        dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        Peter Zijlstra <peterz@infradead.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Michel =?iso-8859-1?Q?D=E4nzer?= <michel@daenzer.net>,
-        Christian Brauner <brauner@kernel.org>,
-        David Airlie <airlied@linux.ie>,
-        Daniel Vetter <daniel.vetter@intel.com>,
-        Sultan Alsawaf <sultan@kerneltoast.com>,
-        Sean Paul <sean@poorly.run>,
-        Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
-Subject: Re: [PATCH] drm/atomic: do not branch based on the value of
- current->comm[0]
-Message-ID: <Y3Sv3TgclLH6SD0A@phenom.ffwll.local>
-Mail-Followup-To: Dave Airlie <airlied@gmail.com>,
-        "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        dri-devel@lists.freedesktop.org, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>,
-        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Michel =?iso-8859-1?Q?D=E4nzer?= <michel@daenzer.net>,
-        Christian Brauner <brauner@kernel.org>,
-        David Airlie <airlied@linux.ie>,
-        Daniel Vetter <daniel.vetter@intel.com>,
-        Sultan Alsawaf <sultan@kerneltoast.com>,
-        Sean Paul <sean@poorly.run>,
-        Nicholas Kazlauskas <nicholas.kazlauskas@amd.com>
-References: <20221105222012.4226-1-Jason@zx2c4.com>
- <CAPM=9twc_TBtG_654Hm4SV_G1Ar+PiCuZGg1fV-Zooga+4S0GQ@mail.gmail.com>
+        with ESMTP id S231235AbiKPJoR (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 16 Nov 2022 04:44:17 -0500
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.220.29])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 22D8DC35;
+        Wed, 16 Nov 2022 01:44:17 -0800 (PST)
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by smtp-out2.suse.de (Postfix) with ESMTPS id CB0651F917;
+        Wed, 16 Nov 2022 09:44:15 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+        t=1668591855; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+         mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=bd1ed+hXkn5V0KAbqZOvNVfy2rS7WvVz5GEqvktKWWY=;
+        b=X7MK3qsoKxTEpjWbFjE9xW0c2iyyPdjK7wws/FefVvJvW9CRT/hoRursX3YRl3h4gO/gln
+        iWUy8RzwaPACPNE7Ka4m9J+lAieH4Z+Neuln6AnJPVivUFAoDvbEiBDBEAyHDtuKPtStIR
+        VyMepZxN93/ysm6GILFefm67khV6+mU=
+Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        (No client certificate requested)
+        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id AAFE3134CE;
+        Wed, 16 Nov 2022 09:44:15 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([192.168.254.65])
+        by imap2.suse-dmz.suse.de with ESMTPSA
+        id V5FhJ++wdGNKPQAAMHmgww
+        (envelope-from <mhocko@suse.com>); Wed, 16 Nov 2022 09:44:15 +0000
+Date:   Wed, 16 Nov 2022 10:44:15 +0100
+From:   Michal Hocko <mhocko@suse.com>
+To:     Zhongkun He <hezhongkun.hzk@bytedance.com>
+Cc:     "Huang, Ying" <ying.huang@intel.com>, corbet@lwn.net,
+        akpm@linux-foundation.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org
+Subject: Re: [External] Re: [PATCH v2] mm: add new syscall
+ pidfd_set_mempolicy().
+Message-ID: <Y3Sw77bL/b6ePl3G@dhcp22.suse.cz>
+References: <20221111084051.2121029-1-hezhongkun.hzk@bytedance.com>
+ <87zgcrwfac.fsf@yhuang6-desk2.ccr.corp.intel.com>
+ <0445de39-15a4-f645-b380-39f20abb6524@bytedance.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAPM=9twc_TBtG_654Hm4SV_G1Ar+PiCuZGg1fV-Zooga+4S0GQ@mail.gmail.com>
-X-Operating-System: Linux phenom 5.19.0-2-amd64 
+In-Reply-To: <0445de39-15a4-f645-b380-39f20abb6524@bytedance.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Nov 16, 2022 at 01:49:43PM +1000, Dave Airlie wrote:
-> On Sun, 6 Nov 2022 at 08:21, Jason A. Donenfeld <Jason@zx2c4.com> wrote:
-> >
-> > This reverts 26b1d3b527e7 ("drm/atomic: Take the atomic toys away from
-> > X"), a rootkit-like kludge that has no business being inside of a
-> > general purpose kernel. It's the type of debugging hack I'll use
-> > momentarily but never commit, or a sort of babbies-first-process-hider
-> > malware trick.
-> >
-> > The backstory is that some userspace code -- xorg-server -- has a
-> > modesetting DDX that isn't really coded right. With nobody wanting to
-> > maintain X11 anymore, rather than fixing the buggy code, the kernel was
-> > adjusted to avoid having to touch X11. A bummer, but fair enough: if the
-> > kernel doesn't want to support some userspace API any more, the right
-> > thing to do is to arrange for a graceful fallback where userspace thinks
-> > it's not available in a manageable way.
-> >
-> > However, the *way* it goes about doing that is just to check
-> > `current->comm[0] == 'X'`, and disable it for only that case. So that
-> > means it's *not* simply a matter of the kernel not wanting to support a
-> > particular userspace API anymore, but rather it's the kernel not wanting
-> > to support xorg-server, in theory, but actually, it turns out, that's
-> > all processes that begin with 'X'.
-> >
-> > Playing games with current->comm like this is obviously wrong, and it's
-> > pretty shocking that this ever got committed.
+On Wed 16-11-22 17:38:09, Zhongkun He wrote:
+> Hi Ying, thanks for your replay and suggestions.
 > 
-> I've been ignoring this because I don't really want to reintroduce a
-> regression for deployed X servers. I don't see the value.
+> > 
+> > I suggest to move the flags in "mode" parameter (MPOL_F_STATIC_NODES,
+> > MPOL_F_RELATIVE_NODES, MPOL_F_NUMA_BALANCING, etc.) to "flags"
+> > parameter, otherwise, why add it?
 > 
-> You use a lot of what I'd call overly not backed up language. Why is
-> it obviously wrong though? Is it "playing games" or is it accessing
-> the comm to see if the process starts with X.
-> 
-> Do we have lots of userspace processes starting with X that access
-> this specific piece of the drm modesetting API. I suppose we might and
-> if we have complaints about that I'd say let's try to fix it better.
-> 
-> Sometimes engineering is hard, It was a big enough problem that a big
-> enough hammer was used.
-> 
-> I'd hope @Daniel Vetter can comment as well since the original patch was his.
+> The "flags" is used for future extension if any, just like
+> process_madvise() and set_mempolicy_home_node().
+> Maybe it should be removed.
 
-Frankly I refrained from replying when I've seen the patch originally
-because I didn't manage to come up with a nice&constructive reply like you
-did here. The only thing novel here is the amount of backhanded insults
-folded into the commit message.
+No, please! Even if there is no use for the flags now we are usually
+terrible at predicting future and potential extensions. MPOL_F* is kinda
+flags but for historical reasons it is a separate mode and we shouldn't
+create a new confusion when this is treated differently for pidfd based
+APIs.
 
-I very much welcome constructive contributions that actually solve the
-problem here, or at least move it forward a bit. This patch is neither.
+> > And, how about add a "home_node" parameter?  I don't think that it's a
+> > good idea to add another new syscall for pidfd_set_mempolicy_home_node()
+> > in the future.
 
-What might be an option is a tainting module option that disables this
-check, since the amount of people willing&able to fix up Xorg is still
-zero. But that would need to come with a proper commit message and all
-that, and ideally a pile of acks from people who insist they really want
-this and need it.
--Daniel
+Why would this be a bad idea?
+
+> Good idea, but "home_node" is used for vma policy, not task policy.
+> It is possible to use it in pidfd_mbind() in the future.
+
+I woould go with pidfd_set_mempolicy_home_node to counterpart an
+existing syscall.
+
 -- 
-Daniel Vetter
-Software Engineer, Intel Corporation
-http://blog.ffwll.ch
+Michal Hocko
+SUSE Labs
