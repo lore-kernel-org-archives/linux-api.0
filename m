@@ -2,52 +2,51 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 58805C4332F
-	for <linux-api@archiver.kernel.org>; Thu, 17 Nov 2022 14:15:45 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 473ABC43217
+	for <linux-api@archiver.kernel.org>; Thu, 17 Nov 2022 14:18:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239861AbiKQOPk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Nov 2022 09:15:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46882 "EHLO
+        id S240359AbiKQOSj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Nov 2022 09:18:39 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48798 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234758AbiKQOPf (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Nov 2022 09:15:35 -0500
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9D55D63E5;
-        Thu, 17 Nov 2022 06:15:34 -0800 (PST)
+        with ESMTP id S240376AbiKQOSY (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Nov 2022 09:18:24 -0500
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3D0407617D;
+        Thu, 17 Nov 2022 06:18:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=In-Reply-To:Content-Transfer-Encoding:
-        Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
-        Sender:Reply-To:Content-ID:Content-Description;
-        bh=fwfXj9i+0drfeAtV3x/BJbMGowEj2984Cc/3ytwqZcU=; b=KZVC5rscvSiJsyoZlBXxoTQtTB
-        5ldi2h+HYWjRL1mnMiZtA39wkJdfvf9ezxl3yKLMMVJnDkoG0btc/6h8cUs10tELVVdgxp5/HP13k
-        lty5MCtWPNWA8yVbzaNK6Erpks/hJfDwdkagDaJH/50gefiKH4OuJqQa6sDhi9BEH4UdUyg+A3+MY
-        t7N0sM4tE4/X/wG+mH2DUnF2cx/E7okVhFaHzmFdOvVSLBse+ad6x6xJ961SiYWD48vNi9CK8tkez
-        BbI5DPiuGl29Y6FLhXH2dm9j2fl2pRZ+1vWOXmtVTvQmF7Ct0tc/aZjtkquIQ2GdhQIa3vVlqCjuU
-        EABT5AzQ==;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=LF9qnU9ueFzG/Bylc7E69vWwnL1I+GU41GAT4rdB6kA=; b=nIXpURg+Y8f25kudoCA5olsfHz
+        /EltvxuuE17XMktIvYP8zRCyJMQ454nHHssGgB9fBxgz9pC/AOB/0PX2dVi5rGivxesVgsNqjZ+8P
+        RLqtXObfkKAly5eeVWGMbsineXGePk3E8JuBFPh5rl2BjLZA7lVezFemk0JkY5grwVSknNRxe2ULT
+        XJtC4ToTtg3nKJ/SzwQj+12JBEa3B9sV8LSW0Aad1T0ZO0lHXJgi9L8UBP8U3qIRpA1JhVoZyHHig
+        t3RkBPvHEmZvWiP1C2WJkl5kijRDdsq8bAWyFmtaYhm0V02dY++1D3qN7ycAZ7nLwpBZDN3Ha3Yj3
+        ZA/nUKQQ==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1ovffP-001hFW-Uz; Thu, 17 Nov 2022 14:15:00 +0000
+        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1ovfi8-0015ca-Mx; Thu, 17 Nov 2022 14:17:48 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 73C33300454;
-        Thu, 17 Nov 2022 15:14:58 +0100 (CET)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id F0FFE300220;
+        Thu, 17 Nov 2022 15:17:40 +0100 (CET)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 1000)
-        id 5B4D0207D6246; Thu, 17 Nov 2022 15:14:58 +0100 (CET)
-Date:   Thu, 17 Nov 2022 15:14:58 +0100
+        id D92D02C12E288; Thu, 17 Nov 2022 15:17:40 +0100 (CET)
+Date:   Thu, 17 Nov 2022 15:17:40 +0100
 From:   Peter Zijlstra <peterz@infradead.org>
-To:     "Schimpe, Christina" <christina.schimpe@intel.com>
-Cc:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
-        "bsingharora@gmail.com" <bsingharora@gmail.com>,
+To:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
+Cc:     "bsingharora@gmail.com" <bsingharora@gmail.com>,
         "hpa@zytor.com" <hpa@zytor.com>,
         "Syromiatnikov, Eugene" <esyr@redhat.com>,
         "rdunlap@infradead.org" <rdunlap@infradead.org>,
         "keescook@chromium.org" <keescook@chromium.org>,
         "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
         "Eranian, Stephane" <eranian@google.com>,
+        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
+        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
         "linux-mm@kvack.org" <linux-mm@kvack.org>,
         "fweimer@redhat.com" <fweimer@redhat.com>,
         "nadav.amit@gmail.com" <nadav.amit@gmail.com>,
@@ -59,14 +58,15 @@ Cc:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
         "hjl.tools@gmail.com" <hjl.tools@gmail.com>,
         "Yang, Weijiang" <weijiang.yang@intel.com>,
         "Lutomirski, Andy" <luto@kernel.org>,
-        "pavel@ucw.cz" <pavel@ucw.cz>, "arnd@arndb.de" <arnd@arndb.de>,
+        "jamorris@linux.microsoft.com" <jamorris@linux.microsoft.com>,
+        "arnd@arndb.de" <arnd@arndb.de>,
         "tglx@linutronix.de" <tglx@linutronix.de>,
+        "pavel@ucw.cz" <pavel@ucw.cz>,
         "mike.kravetz@oracle.com" <mike.kravetz@oracle.com>,
         "x86@kernel.org" <x86@kernel.org>,
         "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "jamorris@linux.microsoft.com" <jamorris@linux.microsoft.com>,
-        "john.allen@amd.com" <john.allen@amd.com>,
         "rppt@kernel.org" <rppt@kernel.org>,
+        "john.allen@amd.com" <john.allen@amd.com>,
         "mingo@redhat.com" <mingo@redhat.com>,
         "Shankar, Ravi V" <ravi.v.shankar@intel.com>,
         "corbet@lwn.net" <corbet@lwn.net>,
@@ -74,66 +74,50 @@ Cc:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
         "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
         "gorcunov@gmail.com" <gorcunov@gmail.com>,
         "akpm@linux-foundation.org" <akpm@linux-foundation.org>
-Subject: Re: [PATCH v3 35/37] x86/cet: Add PTRACE interface for CET
-Message-ID: <Y3ZB4iJew2Fkh4R3@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v3 27/37] x86/shstk: Introduce routines modifying shstk
+Message-ID: <Y3ZChDNwybrNKFX2@hirez.programming.kicks-ass.net>
 References: <20221104223604.29615-1-rick.p.edgecombe@intel.com>
- <20221104223604.29615-36-rick.p.edgecombe@intel.com>
- <Y3Olme4Nl+VOkjAH@hirez.programming.kicks-ass.net>
- <223bf306716f5eb68e4f9fd660414c84cddd9886.camel@intel.com>
- <CY4PR11MB2005AD47BA1D97BC1A96A769F9069@CY4PR11MB2005.namprd11.prod.outlook.com>
+ <20221104223604.29615-28-rick.p.edgecombe@intel.com>
+ <Y3OfsZI0jFRoUw02@hirez.programming.kicks-ass.net>
+ <be65a66baf94cebf0bc8d726a704238787195837.camel@intel.com>
+ <Y3S5AKhLaU+YuUpQ@hirez.programming.kicks-ass.net>
+ <cb4c70dd57f43fd46a47e0bf7d3c759b0b313f83.camel@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CY4PR11MB2005AD47BA1D97BC1A96A769F9069@CY4PR11MB2005.namprd11.prod.outlook.com>
+In-Reply-To: <cb4c70dd57f43fd46a47e0bf7d3c759b0b313f83.camel@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Nov 17, 2022 at 12:25:16PM +0000, Schimpe, Christina wrote:
-> > + Christina
+On Wed, Nov 16, 2022 at 10:38:19PM +0000, Edgecombe, Rick P wrote:
+> On Wed, 2022-11-16 at 11:18 +0100, Peter Zijlstra wrote:
+> > > > 
+> > > > Should you write a 64bit value even if the task receiving a
+> > > > signal is
+> > > > 32bit ?
+> > > 
+> > > 32 bit support was also dropped.
 > > 
-> > On Tue, 2022-11-15 at 15:43 +0100, Peter Zijlstra wrote:
-> > > On Fri, Nov 04, 2022 at 03:36:02PM -0700, Rick Edgecombe wrote:
-> > > > From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> > > >
-> > > > Some applications (like GDB and CRIU) would like to tweak CET state
-> > > > via ptrace. This allows for existing functionality to continue to
-> > > > work for seized CET applications. Provide an interface based on the
-> > > > xsave buffer format of CET, but filter unneeded states to make the
-> > > > kernel’s job easier.
-> > > >
-> > > > There is already ptrace functionality for accessing xstate, but this
-> > > > does not include supervisor xfeatures. So there is not a completely
-> > > > clear place for where to put the CET state. Adding it to the user
-> > > > xfeatures regset would complicate that code, as it currently shares
-> > > > logic with signals which should not have supervisor features.
-> > > >
-> > > > Don’t add a general supervisor xfeature regset like the user one,
-> > > > because it is better to maintain flexibility for other supervisor
-> > > > xfeatures to define their own interface. For example, an xfeature
-> > > > may decide not to expose all of it’s state to userspace. A lot of
-> > > > enum values remain to be used, so just put it in dedicated CET
-> > > > regset.
-> > > >
-> > > > The only downside to not having a generic supervisor xfeature
-> > > > regset, is that apps need to be enlightened of any new supervisor
-> > > > xfeature exposed this way (i.e. they can’t try to have generic
-> > > > save/restore logic). But maybe that is a good thing, because they
-> > > > have to think through each new xfeature instead of encountering
-> > > > issues when new a new supervisor xfeature was added.
-> > >
-> > > Per this argument this should not use the CET XSAVE format and CET
-> > > name at all, because that conflates the situation vs IBT. Enabling
-> > > that might not want to follow this precedent.
+> > How? Task could start life as 64bit, frob LDT to set up 32bit code
+> > segment and jump into it and start doing 32bit syscalls, then what?
 > > 
-> > Hmm, we definitely need to be able to set the SSP. Christina, does GDB need
-> > anything else? I thought maybe toggling SHSTK_EN?
+> > AFAICT those 32bit syscalls will end up doing SA_IA32_ABI sigframes.
 > 
-> In addition to the SSP, we want to write the CET state. For instance for inferior calls,
-> we want to reset the IBT bits.
+> Hmm, good point. This series used to support normal 32 bit apps via
+> ia32 emulation which would have handled this. But I removed it (blocked
+> in the enabling logic) because it didn't seem like it would get enough
+> use to justify the extra code. That doesn't block this scenario here
+> though.
+> 
+> Pardon the possibly naive question, but is this 32/64 bit mixing
+> something any normal, shstk-desiring, applications would actually do? O
+> r more that they could do?
 
-This is about Shadow Stack -- IBT is a completely different feature and
-not subject of this series.
+It is not something common, but it is something that things like Wine
+do IIRC, and it would be a real shame if Wine could not use shadow
+stacks or something, right ;-)
 
-Also, wth is an inferior call?
+But more to the point; since the kernel cannot forbit this scenario
+(aside from taking away the LDT entirely) it is something that needs
+handling.
