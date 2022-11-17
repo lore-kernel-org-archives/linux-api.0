@@ -2,45 +2,63 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id B2A71C4332F
-	for <linux-api@archiver.kernel.org>; Thu, 17 Nov 2022 14:21:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96305C43217
+	for <linux-api@archiver.kernel.org>; Thu, 17 Nov 2022 15:13:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234053AbiKQOVf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 17 Nov 2022 09:21:35 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51196 "EHLO
+        id S240649AbiKQPNP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 17 Nov 2022 10:13:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56180 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240373AbiKQOVd (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Nov 2022 09:21:33 -0500
-Received: from mga14.intel.com (mga14.intel.com [192.55.52.115])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0F6EC77225;
-        Thu, 17 Nov 2022 06:21:30 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1668694890; x=1700230890;
-  h=date:from:to:cc:subject:message-id:reply-to:references:
-   mime-version:content-transfer-encoding:in-reply-to;
-  bh=QAS2h8V2dfght1SJU/Na0JcJSN/AEZSVl08JRBsGjdI=;
-  b=NNK2xzoKjwI6qrmzmGmeKxLrNmv1MfC5ADjD6m8RHOc5qInpX8GUo6Kc
-   DGxFqUcjxrFSxNgjlG6pAFy+WDmFjandV5TQM4N6SsjF0ito1788+EDl+
-   H5+XYRvEc5yS8+cPIzx8zzTd3zL73kJ1dSrkXXa/Zs6DUma1Ls4bUAUH8
-   7OPnFgL4uM5NiL++90N5G2kik3Z8LhOB4Ee65e3421zTIjyEi7ViQHN+V
-   qUmBIlieRBS0vf/6d1u/PWIq6fQo/FdDSlVTcNrbhFh8rjJeNTtnJJ1ZW
-   0vusI+e60KUZESmSxqDOLI5XdLgX6B/nwtsIM49grAuhoJJhuZ8f1gd25
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10534"; a="312874347"
-X-IronPort-AV: E=Sophos;i="5.96,171,1665471600"; 
-   d="scan'208";a="312874347"
-Received: from orsmga007.jf.intel.com ([10.7.209.58])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 17 Nov 2022 06:21:29 -0800
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6500,9779,10534"; a="634066426"
-X-IronPort-AV: E=Sophos;i="5.96,171,1665471600"; 
-   d="scan'208";a="634066426"
-Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
-  by orsmga007.jf.intel.com with ESMTP; 17 Nov 2022 06:21:17 -0800
-Date:   Thu, 17 Nov 2022 22:16:53 +0800
-From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     Alex =?iso-8859-1?Q?Benn=E9e?= <alex.bennee@linaro.org>
+        with ESMTP id S240307AbiKQPMw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 17 Nov 2022 10:12:52 -0500
+Received: from mail-wr1-x436.google.com (mail-wr1-x436.google.com [IPv6:2a00:1450:4864:20::436])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C7CD67A36C
+        for <linux-api@vger.kernel.org>; Thu, 17 Nov 2022 07:09:22 -0800 (PST)
+Received: by mail-wr1-x436.google.com with SMTP id g12so4301761wrs.10
+        for <linux-api@vger.kernel.org>; Thu, 17 Nov 2022 07:09:22 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linaro.org; s=google;
+        h=content-transfer-encoding:mime-version:message-id:in-reply-to:date
+         :subject:cc:to:from:user-agent:references:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=OBusLlaaNz/2IZSIaqYfgs6/xdT0ROMSHKfiBIhkdsE=;
+        b=NfpbBsBQgrbY75WiJ016e0JTmdGmoYyca7I/NCnJZhfmCCTZjayS9RdRKm4JfS2fcJ
+         fVeXHWNZWpWqOxuAKjFqL87nRYvfdIeS/OGZksL27R8rb8hVNRwXGKXYPRUYovuyOhTQ
+         2KdieC+Lyx97mRgkXg4lB53Eby8Njkv0vJYLjpXxSam8mrjRDYlb2SWZOAdruhuNiKch
+         oimt+1rPmL9CFVQctuwqINnIzoMMDOOHZx1qNiF5cxB4yWYef69Ku4OJl58DzQ7tLFDO
+         9GvANFdmzddlRJJK66Ax9Y8b7HOjXFK6WEOP7Gtp/3GhVHUbB2438tgaxi1Vg2RVLoXk
+         l1kQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=content-transfer-encoding:mime-version:message-id:in-reply-to:date
+         :subject:cc:to:from:user-agent:references:x-gm-message-state:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=OBusLlaaNz/2IZSIaqYfgs6/xdT0ROMSHKfiBIhkdsE=;
+        b=g2tNDngYEkbGy1oKzT58jSbRpZlezAuShLzL440Zzn9Hdn2HODmVMoqi8CGSFZlvT1
+         JwkphBcQc+RZJ0oG2+07woIUes4fDCh8IGNFt+EVu8h7tyoVkNLJ9faFmifGeLaeQl57
+         HSP9QKZI2/JyhO8GWhgknbKJL1TET6+hVKhi15ax1FYkp0RNh2AQzxRhly5EI4PAUcNv
+         7qKJJAC9j89x5BHuuAypPmKSe6SrZ9q+wBw3NNIibMoGS6nJ5Kq7Rshc++pnlx/CBHuP
+         GolF+/zDyb5fBEMEzWAqbR7Qn0lF0cOwnpQe03Rt6cxGEOziVI87mRMqBQs3jeRGuQOx
+         JtBg==
+X-Gm-Message-State: ANoB5pl5iLOqxO+0mJJDOgDP72vTUeUXdKyyL0ZodGobMuCgJ+j+yIAH
+        OjqQ5QAf0HxR7/d+vIZbRxGToQ==
+X-Google-Smtp-Source: AA0mqf7vvxL/xmrC6/yE9sA9AOuHHRmrasa80rT6NKUjVl0i95jt04rAjvEUusssVu8F+bFzV97rWw==
+X-Received: by 2002:adf:efd2:0:b0:236:e5a2:4f66 with SMTP id i18-20020adfefd2000000b00236e5a24f66mr1861434wrp.357.1668697761285;
+        Thu, 17 Nov 2022 07:09:21 -0800 (PST)
+Received: from zen.linaroharston ([185.81.254.11])
+        by smtp.gmail.com with ESMTPSA id r10-20020adfce8a000000b00241b371d73esm1255319wrn.77.2022.11.17.07.09.20
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 17 Nov 2022 07:09:20 -0800 (PST)
+Received: from zen (localhost [127.0.0.1])
+        by zen.linaroharston (Postfix) with ESMTP id 5177C1FFB7;
+        Thu, 17 Nov 2022 15:09:20 +0000 (GMT)
+References: <20221025151344.3784230-1-chao.p.peng@linux.intel.com>
+ <20221025151344.3784230-4-chao.p.peng@linux.intel.com>
+ <87cz9o9mr8.fsf@linaro.org> <20221116031441.GA364614@chaop.bj.intel.com>
+ <87mt8q90rw.fsf@linaro.org> <20221117134520.GD422408@chaop.bj.intel.com>
+User-agent: mu4e 1.9.2; emacs 28.2.50
+From:   Alex =?utf-8?Q?Benn=C3=A9e?= <alex.bennee@linaro.org>
+To:     Chao Peng <chao.p.peng@linux.intel.com>
 Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
         linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
@@ -71,169 +89,208 @@ Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         ddutile@redhat.com, dhildenb@redhat.com,
         Quentin Perret <qperret@google.com>, tabba@google.com,
         Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
-        Muchun Song <songmuchun@bytedance.com>, wei.w.wang@intel.com,
-        Viresh Kumar <viresh.kumar@linaro.org>,
-        Mathieu Poirier <mathieu.poirier@linaro.org>,
-        AKASHI Takahiro <takahiro.akashi@linaro.org>
-Subject: Re: [PATCH v9 0/8] KVM: mm: fd-based approach for supporting KVM
-Message-ID: <20221117141653.GE422408@chaop.bj.intel.com>
-Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
-References: <20221025151344.3784230-1-chao.p.peng@linux.intel.com>
- <87k03xbvkt.fsf@linaro.org>
- <20221116050022.GC364614@chaop.bj.intel.com>
- <87v8nf8bte.fsf@linaro.org>
+        Muchun Song <songmuchun@bytedance.com>, wei.w.wang@intel.com
+Subject: Re: [PATCH v9 3/8] KVM: Add KVM_EXIT_MEMORY_FAULT exit
+Date:   Thu, 17 Nov 2022 15:08:17 +0000
+In-reply-to: <20221117134520.GD422408@chaop.bj.intel.com>
+Message-ID: <87a64p8vof.fsf@linaro.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <87v8nf8bte.fsf@linaro.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Nov 16, 2022 at 09:40:23AM +0000, Alex Bennée wrote:
-> 
-> Chao Peng <chao.p.peng@linux.intel.com> writes:
-> 
-> > On Mon, Nov 14, 2022 at 11:43:37AM +0000, Alex Bennée wrote:
-> >> 
-> >> Chao Peng <chao.p.peng@linux.intel.com> writes:
-> >> 
-> >> <snip>
-> >> > Introduction
-> >> > ============
-> >> > KVM userspace being able to crash the host is horrible. Under current
-> >> > KVM architecture, all guest memory is inherently accessible from KVM
-> >> > userspace and is exposed to the mentioned crash issue. The goal of this
-> >> > series is to provide a solution to align mm and KVM, on a userspace
-> >> > inaccessible approach of exposing guest memory. 
-> >> >
-> >> > Normally, KVM populates secondary page table (e.g. EPT) by using a host
-> >> > virtual address (hva) from core mm page table (e.g. x86 userspace page
-> >> > table). This requires guest memory being mmaped into KVM userspace, but
-> >> > this is also the source where the mentioned crash issue can happen. In
-> >> > theory, apart from those 'shared' memory for device emulation etc, guest
-> >> > memory doesn't have to be mmaped into KVM userspace.
-> >> >
-> >> > This series introduces fd-based guest memory which will not be mmaped
-> >> > into KVM userspace. KVM populates secondary page table by using a
-> >> > fd/offset pair backed by a memory file system. The fd can be created
-> >> > from a supported memory filesystem like tmpfs/hugetlbfs and KVM can
-> >> > directly interact with them with newly introduced in-kernel interface,
-> >> > therefore remove the KVM userspace from the path of accessing/mmaping
-> >> > the guest memory. 
-> >> >
-> >> > Kirill had a patch [2] to address the same issue in a different way. It
-> >> > tracks guest encrypted memory at the 'struct page' level and relies on
-> >> > HWPOISON to reject the userspace access. The patch has been discussed in
-> >> > several online and offline threads and resulted in a design document [3]
-> >> > which is also the original proposal for this series. Later this patch
-> >> > series evolved as more comments received in community but the major
-> >> > concepts in [3] still hold true so recommend reading.
-> >> >
-> >> > The patch series may also be useful for other usages, for example, pure
-> >> > software approach may use it to harden itself against unintentional
-> >> > access to guest memory. This series is designed with these usages in
-> >> > mind but doesn't have code directly support them and extension might be
-> >> > needed.
-> >> 
-> >> There are a couple of additional use cases where having a consistent
-> >> memory interface with the kernel would be useful.
-> >
-> > Thanks very much for the info. But I'm not so confident that the current
-> > memfd_restricted() implementation can be useful for all these usages. 
-> >
-> >> 
-> >>   - Xen DomU guests providing other domains with VirtIO backends
-> >> 
-> >>   Xen by default doesn't give other domains special access to a domains
-> >>   memory. The guest can grant access to regions of its memory to other
-> >>   domains for this purpose. 
-> >
-> > I'm trying to form my understanding on how this could work and what's
-> > the benefit for a DomU guest to provide memory through memfd_restricted().
-> > AFAICS, memfd_restricted() can help to hide the memory from DomU userspace,
-> > but I assume VirtIO backends are still in DomU uerspace and need access
-> > that memory, right?
-> 
-> They need access to parts of the memory. At the moment you run your
-> VirtIO domains in the Dom0 and give them access to the whole of a DomU's
-> address space - however the Xen model is by default the guests memory is
-> inaccessible to other domains on the system. The DomU guest uses the Xen
-> grant model to expose portions of its address space to other domains -
-> namely for the VirtIO queues themselves and any pages containing buffers
-> involved in the VirtIO transaction. My thought was that looks like a
-> guest memory interface which is mostly inaccessible (private) with some
-> holes in it where memory is being explicitly shared with other domains.
 
-Yes, similar in conception. For KVM, memfd_restricted() is used by host
-OS, guest will issue conversion between private and shared for its
-memory range. This is similar to Xen DomU guest grants its memory to
-other domains. Similarly, I guess to make memfd_restricted() being really
-useful for Xen, it should be run on the VirtIO backend domain (e.g.
-equivalent to the host position for KVM).
+Chao Peng <chao.p.peng@linux.intel.com> writes:
 
-> 
-> What I want to achieve is a common userspace API with defined semantics
-> for what happens when private and shared regions are accessed. Because
-> having each hypervisor/confidential computing architecture define its
-> own special API for accessing this memory is just a recipe for
-> fragmentation and makes sharing common VirtIO backends impossible.
+> On Wed, Nov 16, 2022 at 07:03:49PM +0000, Alex Benn=C3=A9e wrote:
+>>=20
+>> Chao Peng <chao.p.peng@linux.intel.com> writes:
+>>=20
+>> > On Tue, Nov 15, 2022 at 04:56:12PM +0000, Alex Benn=C3=A9e wrote:
+>> >>=20
+>> >> Chao Peng <chao.p.peng@linux.intel.com> writes:
+>> >>=20
+>> >> > This new KVM exit allows userspace to handle memory-related errors.=
+ It
+>> >> > indicates an error happens in KVM at guest memory range [gpa, gpa+s=
+ize).
+>> >> > The flags includes additional information for userspace to handle t=
+he
+>> >> > error. Currently bit 0 is defined as 'private memory' where '1'
+>> >> > indicates error happens due to private memory access and '0' indica=
+tes
+>> >> > error happens due to shared memory access.
+>> >> >
+>> >> > When private memory is enabled, this new exit will be used for KVM =
+to
+>> >> > exit to userspace for shared <-> private memory conversion in memory
+>> >> > encryption usage. In such usage, typically there are two kind of me=
+mory
+>> >> > conversions:
+>> >> >   - explicit conversion: happens when guest explicitly calls into K=
+VM
+>> >> >     to map a range (as private or shared), KVM then exits to usersp=
+ace
+>> >> >     to perform the map/unmap operations.
+>> >> >   - implicit conversion: happens in KVM page fault handler where KVM
+>> >> >     exits to userspace for an implicit conversion when the page is =
+in a
+>> >> >     different state than requested (private or shared).
+>> >> >
+>> >> > Suggested-by: Sean Christopherson <seanjc@google.com>
+>> >> > Co-developed-by: Yu Zhang <yu.c.zhang@linux.intel.com>
+>> >> > Signed-off-by: Yu Zhang <yu.c.zhang@linux.intel.com>
+>> >> > Signed-off-by: Chao Peng <chao.p.peng@linux.intel.com>
+>> >> > ---
+>> >> >  Documentation/virt/kvm/api.rst | 23 +++++++++++++++++++++++
+>> >> >  include/uapi/linux/kvm.h       |  9 +++++++++
+>> >> >  2 files changed, 32 insertions(+)
+>> >> >
+>> >> > diff --git a/Documentation/virt/kvm/api.rst b/Documentation/virt/kv=
+m/api.rst
+>> >> > index f3fa75649a78..975688912b8c 100644
+>> >> > --- a/Documentation/virt/kvm/api.rst
+>> >> > +++ b/Documentation/virt/kvm/api.rst
+>> >> > @@ -6537,6 +6537,29 @@ array field represents return values. The us=
+erspace should update the return
+>> >> >  values of SBI call before resuming the VCPU. For more details on R=
+ISC-V SBI
+>> >> >  spec refer, https://github.com/riscv/riscv-sbi-doc.
+>> >> >=20=20
+>> >> > +::
+>> >> > +
+>> >> > +		/* KVM_EXIT_MEMORY_FAULT */
+>> >> > +		struct {
+>> >> > +  #define KVM_MEMORY_EXIT_FLAG_PRIVATE	(1 << 0)
+>> >> > +			__u32 flags;
+>> >> > +			__u32 padding;
+>> >> > +			__u64 gpa;
+>> >> > +			__u64 size;
+>> >> > +		} memory;
+>> >> > +
+>> >> > +If exit reason is KVM_EXIT_MEMORY_FAULT then it indicates that the=
+ VCPU has
+>> >> > +encountered a memory error which is not handled by KVM kernel modu=
+le and
+>> >> > +userspace may choose to handle it. The 'flags' field indicates the=
+ memory
+>> >> > +properties of the exit.
+>> >> > +
+>> >> > + - KVM_MEMORY_EXIT_FLAG_PRIVATE - indicates the memory error is ca=
+used by
+>> >> > +   private memory access when the bit is set. Otherwise the memory=
+ error is
+>> >> > +   caused by shared memory access when the bit is clear.
+>> >>=20
+>> >> What does a shared memory access failure entail?
+>> >
+>> > In the context of confidential computing usages, guest can issue a
+>> > shared memory access while the memory is actually private from the host
+>> > point of view. This exit with bit 0 cleared gives userspace a chance to
+>> > convert the private memory to shared memory on host.
+>>=20
+>> I think this should be explicit rather than implied by the absence of
+>> another flag. Sean suggested you might want flags for RWX failures so
+>> maybe something like:
+>>=20
+>> 	KVM_MEMORY_EXIT_SHARED_FLAG_READ	(1 << 0)
+>> 	KVM_MEMORY_EXIT_SHARED_FLAG_WRITE	(1 << 1)
+>> 	KVM_MEMORY_EXIT_SHARED_FLAG_EXECUTE	(1 << 2)
+>>         KVM_MEMORY_EXIT_FLAG_PRIVATE            (1 << 3)
+>
+> Yes, but I would not add 'SHARED' to RWX, they are not share memory
+> specific, private memory can also set them once introduced.
 
-Yes, I agree. That's interesting to explore.
+OK so how about:
 
-> 
-> >
-> >> 
-> >>   - pKVM on ARM
-> >> 
-> >>   Similar to Xen, pKVM moves the management of the page tables into the
-> >>   hypervisor and again doesn't allow those domains to share memory by
-> >>   default.
-> >
-> > Right, we already had some discussions on this in the past versions.
-> >
-> >> 
-> >>   - VirtIO loopback
-> >> 
-> >>   This allows for VirtIO devices for the host kernel to be serviced by
-> >>   backends running in userspace. Obviously the memory userspace is
-> >>   allowed to access is strictly limited to the buffers and queues
-> >>   because giving userspace unrestricted access to the host kernel would
-> >>   have consequences.
-> >
-> > Okay, but normal memfd_create() should work for it, right? And
-> > memfd_restricted() instead may not work as it unmaps the memory from
-> > userspace.
-> >
-> >> 
-> >> All of these VirtIO backends work with vhost-user which uses memfds to
-> >> pass references to guest memory from the VMM to the backend
-> >> implementation.
-> >
-> > Sounds to me these are the places where normal memfd_create() can act on.
-> > VirtIO backends work on the mmap-ed memory which currently is not the
-> > case for memfd_restricted(). memfd_restricted() has different design
-> > purpose that unmaps the memory from userspace and employs some kernel
-> > callbacks so other kernel modules can make use of the memory with these
-> > callbacks instead of userspace virtual address.
-> 
-> Maybe my understanding is backwards then. Are you saying a guest starts
-> with all its memory exposed and then selectively unmaps the private
-> regions? Is this driven by the VMM or the guest itself?
+ 	KVM_MEMORY_EXIT_FLAG_READ	(1 << 0)
+ 	KVM_MEMORY_EXIT_FLAG_WRITE	(1 << 1)
+ 	KVM_MEMORY_EXIT_FLAG_EXECUTE	(1 << 2)
+        KVM_MEMORY_EXIT_FLAG_SHARED     (1 << 3)
+        KVM_MEMORY_EXIT_FLAG_PRIVATE    (1 << 4)
 
-For confidential computing usages, normally guest starts with all guest
-memory being private, e.g,  cannot be accessed by host. The memory will
-be lived in memfd_restricted() memory and not exposed to host userspace
-VMM like QEMU. Guest then can selectively map its private sub regions
-(e.g. VirtIO queue in the guest VirtIO frontend driver) as shared so
-host backend driver in QEMU can see it. When this happens, new shared
-mapping will be established in KVM and the new memory will be provided
-from normal mmap-able memory, then QEMU can do whatever it can do for
-the device emulation.
+>
+> Thanks,
+> Chao
+>>=20
+>> which would allow you to signal the various failure modes of the shared
+>> region, or that you had accessed private memory.
+>>=20
+>> >
+>> >>=20
+>> >> If you envision any other failure modes it might be worth making it
+>> >> explicit with additional flags.
+>> >
+>> > Sean mentioned some more usages[1][]2] other than the memory conversion
+>> > for confidential usage. But I would leave those flags being added in t=
+he
+>> > future after those usages being well discussed.
+>> >
+>> > [1] https://lkml.kernel.org/r/20200617230052.GB27751@linux.intel.com
+>> > [2] https://lore.kernel.org/all/YKxJLcg%2FWomPE422@google.com
+>> >
+>> >> I also wonder if a bitmask makes sense if
+>> >> there can only be one reason for a failure? Maybe all that is needed =
+is
+>> >> a reason enum?
+>> >
+>> > Tough we only have one reason right now but we still want to leave room
+>> > for future extension. Enum can express a single value at once well but
+>> > bitmask makes it possible to express multiple orthogonal flags.
+>>=20
+>> I agree if multiple orthogonal failures can occur at once a bitmask is
+>> the right choice.
+>>=20
+>> >
+>> > Chao
+>> >>=20
+>> >> > +
+>> >> > +'gpa' and 'size' indicate the memory range the error occurs at. Th=
+e userspace
+>> >> > +may handle the error and return to KVM to retry the previous memor=
+y access.
+>> >> > +
+>> >> >  ::
+>> >> >=20=20
+>> >> >      /* KVM_EXIT_NOTIFY */
+>> >> > diff --git a/include/uapi/linux/kvm.h b/include/uapi/linux/kvm.h
+>> >> > index f1ae45c10c94..fa60b032a405 100644
+>> >> > --- a/include/uapi/linux/kvm.h
+>> >> > +++ b/include/uapi/linux/kvm.h
+>> >> > @@ -300,6 +300,7 @@ struct kvm_xen_exit {
+>> >> >  #define KVM_EXIT_RISCV_SBI        35
+>> >> >  #define KVM_EXIT_RISCV_CSR        36
+>> >> >  #define KVM_EXIT_NOTIFY           37
+>> >> > +#define KVM_EXIT_MEMORY_FAULT     38
+>> >> >=20=20
+>> >> >  /* For KVM_EXIT_INTERNAL_ERROR */
+>> >> >  /* Emulate instruction failed. */
+>> >> > @@ -538,6 +539,14 @@ struct kvm_run {
+>> >> >  #define KVM_NOTIFY_CONTEXT_INVALID	(1 << 0)
+>> >> >  			__u32 flags;
+>> >> >  		} notify;
+>> >> > +		/* KVM_EXIT_MEMORY_FAULT */
+>> >> > +		struct {
+>> >> > +#define KVM_MEMORY_EXIT_FLAG_PRIVATE	(1 << 0)
+>> >> > +			__u32 flags;
+>> >> > +			__u32 padding;
+>> >> > +			__u64 gpa;
+>> >> > +			__u64 size;
+>> >> > +		} memory;
+>> >> >  		/* Fix the size of the union. */
+>> >> >  		char padding[256];
+>> >> >  	};
+>> >>=20
+>> >>=20
+>> >> --=20
+>> >> Alex Benn=C3=A9e
+>>=20
+>>=20
+>> --=20
+>> Alex Benn=C3=A9e
 
-Thanks,
-Chao
-> 
-> -- 
-> Alex Bennée
+
+--=20
+Alex Benn=C3=A9e
