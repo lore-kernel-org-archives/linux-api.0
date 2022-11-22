@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F5AEC4167B
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B7CF8C47088
 	for <linux-api@archiver.kernel.org>; Tue, 22 Nov 2022 20:41:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234988AbiKVUlj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Nov 2022 15:41:39 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47980 "EHLO
+        id S235000AbiKVUlk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Nov 2022 15:41:40 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46954 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234738AbiKVUlB (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:41:01 -0500
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7655B85161;
-        Tue, 22 Nov 2022 12:39:57 -0800 (PST)
+        with ESMTP id S234923AbiKVUk3 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:40:29 -0500
+Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ACF5B7EBEE;
+        Tue, 22 Nov 2022 12:39:56 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1669149596;
-        bh=i8g/GvauG/kg2WHWmSyOCdrT/ckBtsOzQscjDSY2tkk=;
+        s=smtpout1; t=1669149595;
+        bh=mUoAzurDGmqt1I+v51UkeZo8hWHaq3S1k8cv4Ik8vPI=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=hURPSG/h3z0spYO9rFVodxRCnueLJfSWc/mTGHbZtemiALAqpSO/PdMCs+vrepjFZ
-         DNJMhMuZxCBLYrOQMTXWKjuhEkOufiicSdQo8su52BXzYr/cvp90rURfbOBua0u3a9
-         Hl0cxnClYJmIrA9q5+6zXfgUatIIfx3XsMjA6yj1krbyJGlGsSENuk4RJhgAsCbfJi
-         ZpjKvjA4QUnkEA6oL7ZBvvdaqFYPrcfQPguNM94yTO4+DQJtDBi75gFvE4cLKGZUPA
-         a6wVkgijjOhzIi5HErPL8Ohku9JBZkT4kc5U1xs8we6bHivzV3kOVKQPVAo81H/KpT
-         oDQKUJsy/0Bfw==
+        b=M2RpRc6I8zhiXCCrvLB8u6ULY1yP/N2xiM8McKNhutO2vPiTQ+BiNaFoV0xc4XWSq
+         rzGXIzBsJeRxS7ELpkxInwG43LsQkvYFoHR2sMBcOwakt0YgraYsnx5TqA3IFPiO8W
+         mXA9kYV9y9OwL/8k9b07OePMKifwbg2LN4w5u1WkBHhdcHFWZ7ZSSChwaIfItrTd9I
+         evAm56L3hUDRnQH9vdLpe8F79qfWuKufdUC0ofWqY9LiHUKIVrM08PB1M2BUqnvKbI
+         rmQtKg2q/VIc9giGNQDdGBZAYYdAE4c4nhC6wtbS38A9R60BXAxzXKhJnm9YKNhdC+
+         sqW1graDFJQEg==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2h2zcwzXLT;
-        Tue, 22 Nov 2022 15:39:56 -0500 (EST)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2g4L77zXTc;
+        Tue, 22 Nov 2022 15:39:55 -0500 (EST)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -39,9 +39,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 29/30] selftests/rseq: Implement mm_numa_cid tests
-Date:   Tue, 22 Nov 2022 15:39:31 -0500
-Message-Id: <20221122203932.231377-30-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 27/30] selftests/rseq: Implement mm_numa_cid accessors in headers
+Date:   Tue, 22 Nov 2022 15:39:29 -0500
+Message-Id: <20221122203932.231377-28-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
 References: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
@@ -51,218 +51,533 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement rseq selftests for the mm_numa_cid struct rseq field.
-
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- tools/testing/selftests/rseq/.gitignore       |  4 ++++
- tools/testing/selftests/rseq/Makefile         | 16 ++++++++++++-
- .../selftests/rseq/basic_percpu_ops_test.c    | 12 ++++++++++
- tools/testing/selftests/rseq/param_test.c     | 24 +++++++++++++++++++
- tools/testing/selftests/rseq/rseq.h           | 19 +++++++++++++++
- 5 files changed, 74 insertions(+), 1 deletion(-)
+ tools/testing/selftests/rseq/rseq-abi.h       |  9 ++++++++
+ tools/testing/selftests/rseq/rseq-arm-bits.h  |  8 +++----
+ tools/testing/selftests/rseq/rseq-arm.h       | 12 +++++++++++
+ .../testing/selftests/rseq/rseq-arm64-bits.h  |  8 +++----
+ tools/testing/selftests/rseq/rseq-arm64.h     | 12 +++++++++++
+ .../selftests/rseq/rseq-bits-template.h       | 10 +++++++++
+ tools/testing/selftests/rseq/rseq-mips-bits.h |  8 +++----
+ tools/testing/selftests/rseq/rseq-mips.h      | 12 +++++++++++
+ tools/testing/selftests/rseq/rseq-ppc-bits.h  |  8 +++----
+ tools/testing/selftests/rseq/rseq-ppc.h       | 12 +++++++++++
+ .../testing/selftests/rseq/rseq-riscv-bits.h  |  8 +++----
+ tools/testing/selftests/rseq/rseq-riscv.h     | 12 +++++++++++
+ tools/testing/selftests/rseq/rseq-s390-bits.h |  8 +++----
+ tools/testing/selftests/rseq/rseq-s390.h      | 12 +++++++++++
+ tools/testing/selftests/rseq/rseq-x86-bits.h  | 16 +++++++-------
+ tools/testing/selftests/rseq/rseq-x86.h       | 21 +++++++++++++++----
+ tools/testing/selftests/rseq/rseq.h           | 10 +++++++++
+ 17 files changed, 150 insertions(+), 36 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
-index 8a8d163cbb9f..e4dff7a20b3a 100644
---- a/tools/testing/selftests/rseq/.gitignore
-+++ b/tools/testing/selftests/rseq/.gitignore
-@@ -2,6 +2,7 @@
- basic_numa_test
- basic_percpu_ops_test
- basic_percpu_ops_mm_cid_test
-+basic_percpu_ops_mm_numa_cid_test
- basic_test
- basic_rseq_op_test
- param_test
-@@ -10,3 +11,6 @@ param_test_compare_twice
- param_test_mm_cid
- param_test_mm_cid_benchmark
- param_test_mm_cid_compare_twice
-+param_test_mm_numa_cid
-+param_test_mm_numa_cid_benchmark
-+param_test_mm_numa_cid_compare_twice
-diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
-index a00b9dc8eec5..14119871f16f 100644
---- a/tools/testing/selftests/rseq/Makefile
-+++ b/tools/testing/selftests/rseq/Makefile
-@@ -14,7 +14,9 @@ OVERRIDE_TARGETS = 1
+diff --git a/tools/testing/selftests/rseq/rseq-abi.h b/tools/testing/selftests/rseq/rseq-abi.h
+index fb4ec8a75dd4..11f7df6bf329 100644
+--- a/tools/testing/selftests/rseq/rseq-abi.h
++++ b/tools/testing/selftests/rseq/rseq-abi.h
+@@ -164,6 +164,15 @@ struct rseq_abi {
+ 	 */
+ 	__u32 mm_cid;
  
- TEST_GEN_PROGS = basic_test basic_numa_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
- 		param_test_benchmark param_test_compare_twice param_test_mm_cid \
--		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice
-+		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice \
-+		param_test_mm_numa_cid param_test_mm_numa_cid_benchmark \
-+		param_test_mm_numa_cid_compare_twice
++	/*
++	 * Restartable sequences mm_numa_cid field. Updated by the kernel.
++	 * Read by user-space with single-copy atomicity semantics. This field
++	 * should only be read by the thread which registered this data
++	 * structure. Aligned on 32-bit. Contains the current thread's
++	 * NUMA-aware concurrency ID (allocated uniquely within a memory map).
++	 */
++	__u32 mm_numa_cid;
++
+ 	/*
+ 	 * Flexible array member at end of structure, after last feature field.
+ 	 */
+diff --git a/tools/testing/selftests/rseq/rseq-arm-bits.h b/tools/testing/selftests/rseq/rseq-arm-bits.h
+index 4f03cb395462..025a4e3cd91d 100644
+--- a/tools/testing/selftests/rseq/rseq-arm-bits.h
++++ b/tools/testing/selftests/rseq/rseq-arm-bits.h
+@@ -8,7 +8,7 @@
+ #include "rseq-bits-template.h"
  
- TEST_GEN_PROGS_EXTENDED = librseq.so
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
  
-@@ -52,3 +54,15 @@ $(OUTPUT)/param_test_mm_cid_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
- $(OUTPUT)/param_test_mm_cid_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
- 					rseq.h rseq-*.h
- 	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_CID -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
-+
-+$(OUTPUT)/param_test_mm_numa_cid: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h
-+	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID $< $(LDLIBS) -lrseq -o $@
-+
-+$(OUTPUT)/param_test_mm_numa_cid_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h
-+	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID -DBENCHMARK $< $(LDLIBS) -lrseq -o $@
-+
-+$(OUTPUT)/param_test_mm_numa_cid_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
-+					rseq.h rseq-*.h
-+	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
-diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-index 887542961968..5631b4e7130c 100644
---- a/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-+++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
-@@ -24,6 +24,18 @@ bool rseq_validate_cpu_id(void)
- {
- 	return rseq_mm_cid_available();
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -288,10 +288,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
  }
-+#elif defined(BUILDOPT_RSEQ_PERCPU_MM_NUMA_CID)
-+# define RSEQ_PERCPU	RSEQ_PERCPU_MM_NUMA_CID
-+static
-+int get_current_cpu_id(void)
-+{
-+	return rseq_current_mm_numa_cid();
-+}
-+static
-+bool rseq_validate_cpu_id(void)
-+{
-+	return rseq_mm_numa_cid_available();
-+}
- #else
- # define RSEQ_PERCPU	RSEQ_PERCPU_CPU_ID
- static
-diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
-index bf951a490bb4..b32c45ec9a56 100644
---- a/tools/testing/selftests/rseq/param_test.c
-+++ b/tools/testing/selftests/rseq/param_test.c
-@@ -300,6 +300,30 @@ int rseq_membarrier_expedited(int cpu)
- 			      0, 0);
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -500,6 +500,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
  }
- # endif /* TEST_MEMBARRIER */
-+#elif defined(BUILDOPT_RSEQ_PERCPU_MM_NUMA_CID)
-+# define RSEQ_PERCPU	RSEQ_PERCPU_MM_NUMA_CID
-+static
-+int get_current_cpu_id(void)
-+{
-+	return rseq_current_mm_numa_cid();
-+}
-+static
-+bool rseq_validate_cpu_id(void)
-+{
-+	return rseq_mm_numa_cid_available();
-+}
-+# ifdef TEST_MEMBARRIER
-+/*
-+ * Membarrier does not currently support targeting a mm_numa_cid, so
-+ * issue the barrier on all cpus.
-+ */
-+static
-+int rseq_membarrier_expedited(int cpu)
-+{
-+	return sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
-+			      0, 0);
-+}
-+# endif /* TEST_MEMBARRIER */
- #else
- # define RSEQ_PERCPU	RSEQ_PERCPU_CPU_ID
- static
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
+index 8414fc3eac15..1b414d308aae 100644
+--- a/tools/testing/selftests/rseq/rseq-arm.h
++++ b/tools/testing/selftests/rseq/rseq-arm.h
+@@ -167,6 +167,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-numa-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-arm-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-arm-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-arm64-bits.h b/tools/testing/selftests/rseq/rseq-arm64-bits.h
+index cc7226b1efe1..68881d111f04 100644
+--- a/tools/testing/selftests/rseq/rseq-arm64-bits.h
++++ b/tools/testing/selftests/rseq/rseq-arm64-bits.h
+@@ -9,7 +9,7 @@
+ #include "rseq-bits-template.h"
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -246,10 +246,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -387,6 +387,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-arm64.h b/tools/testing/selftests/rseq/rseq-arm64.h
+index 85b90977e7e6..3a77c09c78ae 100644
+--- a/tools/testing/selftests/rseq/rseq-arm64.h
++++ b/tools/testing/selftests/rseq/rseq-arm64.h
+@@ -224,6 +224,18 @@ do {										\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-numa-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-arm64-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-arm64-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-bits-template.h b/tools/testing/selftests/rseq/rseq-bits-template.h
+index 65698d6a6cf9..2632eea2f0f6 100644
+--- a/tools/testing/selftests/rseq/rseq-bits-template.h
++++ b/tools/testing/selftests/rseq/rseq-bits-template.h
+@@ -25,6 +25,16 @@
+ # else
+ #  error "Never use <rseq-bits-template.h> directly; include <rseq.h> instead."
+ # endif
++#elif defined(RSEQ_TEMPLATE_MM_NUMA_CID)
++# define RSEQ_TEMPLATE_CPU_ID_OFFSET	RSEQ_MM_NUMA_CID_OFFSET
++# define RSEQ_TEMPLATE_CPU_ID_FIELD	mm_numa_cid
++# ifdef RSEQ_TEMPLATE_MO_RELEASE
++#  define RSEQ_TEMPLATE_SUFFIX		_release_mm_numa_cid
++# elif defined (RSEQ_TEMPLATE_MO_RELAXED)
++#  define RSEQ_TEMPLATE_SUFFIX		_relaxed_mm_numa_cid
++# else
++#  error "Never use <rseq-bits-template.h> directly; include <rseq.h> instead."
++# endif
+ #elif defined (RSEQ_TEMPLATE_CPU_ID_NONE)
+ # ifdef RSEQ_TEMPLATE_MO_RELEASE
+ #  define RSEQ_TEMPLATE_SUFFIX		_release
+diff --git a/tools/testing/selftests/rseq/rseq-mips-bits.h b/tools/testing/selftests/rseq/rseq-mips-bits.h
+index 6c48af4d0944..360d4d55a5ad 100644
+--- a/tools/testing/selftests/rseq/rseq-mips-bits.h
++++ b/tools/testing/selftests/rseq/rseq-mips-bits.h
+@@ -8,7 +8,7 @@
+ #include "rseq-bits-template.h"
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -261,10 +261,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -457,6 +457,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-mips.h b/tools/testing/selftests/rseq/rseq-mips.h
+index 50b950cf9585..87dde8ad6cf6 100644
+--- a/tools/testing/selftests/rseq/rseq-mips.h
++++ b/tools/testing/selftests/rseq/rseq-mips.h
+@@ -172,6 +172,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-numa-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-mips-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-mips-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-ppc-bits.h b/tools/testing/selftests/rseq/rseq-ppc-bits.h
+index 98e69eae1e62..ca040bd9ecfd 100644
+--- a/tools/testing/selftests/rseq/rseq-ppc-bits.h
++++ b/tools/testing/selftests/rseq/rseq-ppc-bits.h
+@@ -9,7 +9,7 @@
+ #include "rseq-bits-template.h"
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -283,10 +283,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -449,6 +449,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
+index dc9190facee9..41f2f5d4e44f 100644
+--- a/tools/testing/selftests/rseq/rseq-ppc.h
++++ b/tools/testing/selftests/rseq/rseq-ppc.h
+@@ -229,6 +229,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-numa-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-ppc-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-ppc-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-riscv-bits.h b/tools/testing/selftests/rseq/rseq-riscv-bits.h
+index de31a0143139..6e066df95389 100644
+--- a/tools/testing/selftests/rseq/rseq-riscv-bits.h
++++ b/tools/testing/selftests/rseq/rseq-riscv-bits.h
+@@ -3,7 +3,7 @@
+ #include "rseq-bits-template.h"
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __always_inline
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -272,10 +272,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_offset_deref_addv)(intptr_t *ptr, off_t off, i
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __always_inline
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -405,6 +405,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-riscv.h b/tools/testing/selftests/rseq/rseq-riscv.h
+index 17932a79e066..75c846ea1d12 100644
+--- a/tools/testing/selftests/rseq/rseq-riscv.h
++++ b/tools/testing/selftests/rseq/rseq-riscv.h
+@@ -189,6 +189,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-riscv-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-riscv-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-s390-bits.h b/tools/testing/selftests/rseq/rseq-s390-bits.h
+index 0cf17d9f170a..9b31e0899eb8 100644
+--- a/tools/testing/selftests/rseq/rseq-s390-bits.h
++++ b/tools/testing/selftests/rseq/rseq-s390-bits.h
+@@ -3,7 +3,7 @@
+ #include "rseq-bits-template.h"
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -274,10 +274,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ /* s390 is TSO. */
+ static inline __attribute__((always_inline))
+@@ -469,6 +469,6 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #include "rseq-bits-reset.h"
+diff --git a/tools/testing/selftests/rseq/rseq-s390.h b/tools/testing/selftests/rseq/rseq-s390.h
+index 46c92598acc7..27e06d979484 100644
+--- a/tools/testing/selftests/rseq/rseq-s390.h
++++ b/tools/testing/selftests/rseq/rseq-s390.h
+@@ -154,6 +154,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-s390-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-s390-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
+diff --git a/tools/testing/selftests/rseq/rseq-x86-bits.h b/tools/testing/selftests/rseq/rseq-x86-bits.h
+index fdf5ef398393..8d7c529330ee 100644
+--- a/tools/testing/selftests/rseq/rseq-x86-bits.h
++++ b/tools/testing/selftests/rseq/rseq-x86-bits.h
+@@ -10,7 +10,7 @@
+ #ifdef __x86_64__
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -328,10 +328,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -517,12 +517,12 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #elif defined(__i386__)
+ 
+ #if defined(RSEQ_TEMPLATE_MO_RELAXED) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_storev)(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+@@ -784,10 +784,10 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_cmpeqv_storev)(intptr_t *v, intptr_t ex
+ }
+ 
+ #endif /* #if defined(RSEQ_TEMPLATE_MO_RELAXED) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) && \
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID))
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID))
+ 
+ static inline __attribute__((always_inline))
+ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trystorev_storev)(intptr_t *v, intptr_t expect,
+@@ -986,7 +986,7 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+ }
+ 
+ #endif /* #if (defined(RSEQ_TEMPLATE_MO_RELAXED) || defined(RSEQ_TEMPLATE_MO_RELEASE)) &&
+-	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID)) */
++	(defined(RSEQ_TEMPLATE_CPU_ID) || defined(RSEQ_TEMPLATE_MM_CID) || defined(RSEQ_TEMPLATE_MM_NUMA_CID)) */
+ 
+ #endif
+ 
+diff --git a/tools/testing/selftests/rseq/rseq-x86.h b/tools/testing/selftests/rseq/rseq-x86.h
+index fb65ef54b0fb..1c7d1801904b 100644
+--- a/tools/testing/selftests/rseq/rseq-x86.h
++++ b/tools/testing/selftests/rseq/rseq-x86.h
+@@ -26,10 +26,11 @@
+  * address through a "r" input operand.
+  */
+ 
+-/* Offset of cpu_id, rseq_cs, and mm_cid fields in struct rseq. */
+-#define RSEQ_CPU_ID_OFFSET	4
+-#define RSEQ_CS_OFFSET		8
+-#define RSEQ_MM_CID_OFFSET	24
++/* Offset of cpu_id, rseq_cs, mm_cid, and mm_numa_cid fields in struct rseq. */
++#define RSEQ_CPU_ID_OFFSET		4
++#define RSEQ_CS_OFFSET			8
++#define RSEQ_MM_CID_OFFSET		24
++#define RSEQ_MM_NUMA_CID_OFFSET		28
+ 
+ #ifdef __x86_64__
+ 
+@@ -225,6 +226,18 @@ do {									\
+ #undef RSEQ_TEMPLATE_MO_RELEASE
+ #undef RSEQ_TEMPLATE_MM_CID
+ 
++/* Per-mm-numa-cid indexing. */
++
++#define RSEQ_TEMPLATE_MM_NUMA_CID
++#define RSEQ_TEMPLATE_MO_RELAXED
++#include "rseq-x86-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELAXED
++
++#define RSEQ_TEMPLATE_MO_RELEASE
++#include "rseq-x86-bits.h"
++#undef RSEQ_TEMPLATE_MO_RELEASE
++#undef RSEQ_TEMPLATE_MM_NUMA_CID
++
+ /* APIs which are not based on cpu ids. */
+ 
+ #define RSEQ_TEMPLATE_CPU_ID_NONE
 diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index 6b682abf39b0..91923c7b74b0 100644
+index b6095c2a5da6..6b682abf39b0 100644
 --- a/tools/testing/selftests/rseq/rseq.h
 +++ b/tools/testing/selftests/rseq/rseq.h
-@@ -86,6 +86,7 @@ enum rseq_mo {
- enum rseq_percpu_mode {
- 	RSEQ_PERCPU_CPU_ID = 0,
- 	RSEQ_PERCPU_MM_CID = 1,
-+	RSEQ_PERCPU_MM_NUMA_CID = 2,
- };
+@@ -215,6 +215,16 @@ static inline uint32_t rseq_current_mm_cid(void)
+ 	return RSEQ_ACCESS_ONCE(rseq_get_abi()->mm_cid);
+ }
  
- static inline struct rseq_abi *rseq_get_abi(void)
-@@ -258,6 +259,8 @@ int rseq_cmpeqv_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mode,
- 		return rseq_cmpeqv_storev_relaxed_cpu_id(v, expect, newv, cpu);
- 	case RSEQ_PERCPU_MM_CID:
- 		return rseq_cmpeqv_storev_relaxed_mm_cid(v, expect, newv, cpu);
-+	case RSEQ_PERCPU_MM_NUMA_CID:
-+		return rseq_cmpeqv_storev_relaxed_mm_numa_cid(v, expect, newv, cpu);
- 	}
- 	return -1;
- }
-@@ -278,6 +281,8 @@ int rseq_cmpnev_storeoffp_load(enum rseq_mo rseq_mo, enum rseq_percpu_mode percp
- 		return rseq_cmpnev_storeoffp_load_relaxed_cpu_id(v, expectnot, voffp, load, cpu);
- 	case RSEQ_PERCPU_MM_CID:
- 		return rseq_cmpnev_storeoffp_load_relaxed_mm_cid(v, expectnot, voffp, load, cpu);
-+	case RSEQ_PERCPU_MM_NUMA_CID:
-+		return rseq_cmpnev_storeoffp_load_relaxed_mm_numa_cid(v, expectnot, voffp, load, cpu);
- 	}
- 	return -1;
- }
-@@ -293,6 +298,8 @@ int rseq_addv(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mode,
- 		return rseq_addv_relaxed_cpu_id(v, count, cpu);
- 	case RSEQ_PERCPU_MM_CID:
- 		return rseq_addv_relaxed_mm_cid(v, count, cpu);
-+	case RSEQ_PERCPU_MM_NUMA_CID:
-+		return rseq_addv_relaxed_mm_numa_cid(v, count, cpu);
- 	}
- 	return -1;
- }
-@@ -313,6 +320,8 @@ int rseq_offset_deref_addv(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mo
- 		return rseq_offset_deref_addv_relaxed_cpu_id(ptr, off, inc, cpu);
- 	case RSEQ_PERCPU_MM_CID:
- 		return rseq_offset_deref_addv_relaxed_mm_cid(ptr, off, inc, cpu);
-+	case RSEQ_PERCPU_MM_NUMA_CID:
-+		return rseq_offset_deref_addv_relaxed_mm_numa_cid(ptr, off, inc, cpu);
- 	}
- 	return -1;
- }
-@@ -331,6 +340,8 @@ int rseq_cmpeqv_trystorev_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
- 			return rseq_cmpeqv_trystorev_storev_relaxed_cpu_id(v, expect, v2, newv2, newv, cpu);
- 		case RSEQ_PERCPU_MM_CID:
- 			return rseq_cmpeqv_trystorev_storev_relaxed_mm_cid(v, expect, v2, newv2, newv, cpu);
-+		case RSEQ_PERCPU_MM_NUMA_CID:
-+			return rseq_cmpeqv_trystorev_storev_relaxed_mm_numa_cid(v, expect, v2, newv2, newv, cpu);
- 		}
- 		return -1;
- 	case RSEQ_MO_RELEASE:
-@@ -339,6 +350,8 @@ int rseq_cmpeqv_trystorev_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
- 			return rseq_cmpeqv_trystorev_storev_release_cpu_id(v, expect, v2, newv2, newv, cpu);
- 		case RSEQ_PERCPU_MM_CID:
- 			return rseq_cmpeqv_trystorev_storev_release_mm_cid(v, expect, v2, newv2, newv, cpu);
-+		case RSEQ_PERCPU_MM_NUMA_CID:
-+			return rseq_cmpeqv_trystorev_storev_release_mm_numa_cid(v, expect, v2, newv2, newv, cpu);
- 		}
- 		return -1;
- 	default:
-@@ -359,6 +372,8 @@ int rseq_cmpeqv_cmpeqv_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu
- 		return rseq_cmpeqv_cmpeqv_storev_relaxed_cpu_id(v, expect, v2, expect2, newv, cpu);
- 	case RSEQ_PERCPU_MM_CID:
- 		return rseq_cmpeqv_cmpeqv_storev_relaxed_mm_cid(v, expect, v2, expect2, newv, cpu);
-+	case RSEQ_PERCPU_MM_NUMA_CID:
-+		return rseq_cmpeqv_cmpeqv_storev_relaxed_mm_numa_cid(v, expect, v2, expect2, newv, cpu);
- 	}
- 	return -1;
- }
-@@ -376,6 +391,8 @@ int rseq_cmpeqv_trymemcpy_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
- 			return rseq_cmpeqv_trymemcpy_storev_relaxed_cpu_id(v, expect, dst, src, len, newv, cpu);
- 		case RSEQ_PERCPU_MM_CID:
- 			return rseq_cmpeqv_trymemcpy_storev_relaxed_mm_cid(v, expect, dst, src, len, newv, cpu);
-+		case RSEQ_PERCPU_MM_NUMA_CID:
-+			return rseq_cmpeqv_trymemcpy_storev_relaxed_mm_numa_cid(v, expect, dst, src, len, newv, cpu);
- 		}
- 		return -1;
- 	case RSEQ_MO_RELEASE:
-@@ -384,6 +401,8 @@ int rseq_cmpeqv_trymemcpy_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
- 			return rseq_cmpeqv_trymemcpy_storev_release_cpu_id(v, expect, dst, src, len, newv, cpu);
- 		case RSEQ_PERCPU_MM_CID:
- 			return rseq_cmpeqv_trymemcpy_storev_release_mm_cid(v, expect, dst, src, len, newv, cpu);
-+		case RSEQ_PERCPU_MM_NUMA_CID:
-+			return rseq_cmpeqv_trymemcpy_storev_release_mm_numa_cid(v, expect, dst, src, len, newv, cpu);
- 		}
- 		return -1;
- 	default:
++static inline bool rseq_mm_numa_cid_available(void)
++{
++	return (int) rseq_feature_size >= rseq_offsetofend(struct rseq_abi, mm_numa_cid);
++}
++
++static inline uint32_t rseq_current_mm_numa_cid(void)
++{
++	return RSEQ_ACCESS_ONCE(rseq_get_abi()->mm_numa_cid);
++}
++
+ static inline void rseq_clear_rseq_cs(void)
+ {
+ 	RSEQ_WRITE_ONCE(rseq_get_abi()->rseq_cs.arch.ptr, 0);
 -- 
 2.25.1
 
