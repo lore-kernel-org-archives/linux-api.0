@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A9EEC43217
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8F5AEC4167B
 	for <linux-api@archiver.kernel.org>; Tue, 22 Nov 2022 20:41:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234983AbiKVUlg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Nov 2022 15:41:36 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46642 "EHLO
+        id S234988AbiKVUlj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Nov 2022 15:41:39 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47980 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234938AbiKVUkN (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:40:13 -0500
-Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B269A74CCF;
-        Tue, 22 Nov 2022 12:39:54 -0800 (PST)
+        with ESMTP id S234738AbiKVUlB (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:41:01 -0500
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7655B85161;
+        Tue, 22 Nov 2022 12:39:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1669149593;
-        bh=yXMCQTJUBVpgK2HTSfnSaD1+EBfTlpw5kc6q1ePvqj4=;
+        s=smtpout1; t=1669149596;
+        bh=i8g/GvauG/kg2WHWmSyOCdrT/ckBtsOzQscjDSY2tkk=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=THKOE2IYwuP8W73rEgK5PDBziDXz/EYeaFlbykDbuuA7aulqLzsXTFO5kTONv/NJg
-         KURNIZiId5FnKZ5Ve8NcvPJtRbl+g+8rHF0KaMHRW4vbwIl6CUXf7iMospG08ChZ4l
-         PwlVjVSoAIk/mX3Ib+0nYnPGcOzuwC9dqefmHHcvagm7VJQne6ZoIed1cvOKYWnSUG
-         24gID1dzMz5nXWJSszaG/WGX5wlfVwAOuwZKFSmkCp8PpGHXsEvUkybCjfdlZSyyox
-         ZeyEBzN3Gh8weZ2ADuOmmXbu8vXInnxc5FaXB0M0dtNGW0IqDAFKjQMc5yiYPvhhAi
-         NCgC5hZ8UbYrw==
+        b=hURPSG/h3z0spYO9rFVodxRCnueLJfSWc/mTGHbZtemiALAqpSO/PdMCs+vrepjFZ
+         DNJMhMuZxCBLYrOQMTXWKjuhEkOufiicSdQo8su52BXzYr/cvp90rURfbOBua0u3a9
+         Hl0cxnClYJmIrA9q5+6zXfgUatIIfx3XsMjA6yj1krbyJGlGsSENuk4RJhgAsCbfJi
+         ZpjKvjA4QUnkEA6oL7ZBvvdaqFYPrcfQPguNM94yTO4+DQJtDBi75gFvE4cLKGZUPA
+         a6wVkgijjOhzIi5HErPL8Ohku9JBZkT4kc5U1xs8we6bHivzV3kOVKQPVAo81H/KpT
+         oDQKUJsy/0Bfw==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2d4Cd1zWgp;
-        Tue, 22 Nov 2022 15:39:53 -0500 (EST)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2h2zcwzXLT;
+        Tue, 22 Nov 2022 15:39:56 -0500 (EST)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -39,9 +39,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 22/30] lib: Implement find_{first,next,nth}_notandnot_bit, find_first_andnot_bit
-Date:   Tue, 22 Nov 2022 15:39:24 -0500
-Message-Id: <20221122203932.231377-23-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 29/30] selftests/rseq: Implement mm_numa_cid tests
+Date:   Tue, 22 Nov 2022 15:39:31 -0500
+Message-Id: <20221122203932.231377-30-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
 References: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
@@ -51,263 +51,218 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow finding the first, next, or nth bit within two input bitmasks
-which is zero in both masks.
-
-Allow fiding the first bit within two input bitmasks which is set in
-first mask and cleared in the second mask. find_next_andnot_bit and
-find_nth_andnot_bit already exist, so find the first bit appears to be
-missing.
+Implement rseq selftests for the mm_numa_cid struct rseq field.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- include/linux/find.h | 123 +++++++++++++++++++++++++++++++++++++++++--
- lib/find_bit.c       |  42 +++++++++++++++
- 2 files changed, 161 insertions(+), 4 deletions(-)
+ tools/testing/selftests/rseq/.gitignore       |  4 ++++
+ tools/testing/selftests/rseq/Makefile         | 16 ++++++++++++-
+ .../selftests/rseq/basic_percpu_ops_test.c    | 12 ++++++++++
+ tools/testing/selftests/rseq/param_test.c     | 24 +++++++++++++++++++
+ tools/testing/selftests/rseq/rseq.h           | 19 +++++++++++++++
+ 5 files changed, 74 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/find.h b/include/linux/find.h
-index ccaf61a0f5fd..43c3db92a096 100644
---- a/include/linux/find.h
-+++ b/include/linux/find.h
-@@ -14,6 +14,8 @@ unsigned long _find_next_and_bit(const unsigned long *addr1, const unsigned long
- 					unsigned long nbits, unsigned long start);
- unsigned long _find_next_andnot_bit(const unsigned long *addr1, const unsigned long *addr2,
- 					unsigned long nbits, unsigned long start);
-+unsigned long _find_next_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
-+					unsigned long nbits, unsigned long start);
- unsigned long _find_next_zero_bit(const unsigned long *addr, unsigned long nbits,
- 					 unsigned long start);
- extern unsigned long _find_first_bit(const unsigned long *addr, unsigned long size);
-@@ -22,8 +24,14 @@ unsigned long __find_nth_and_bit(const unsigned long *addr1, const unsigned long
- 				unsigned long size, unsigned long n);
- unsigned long __find_nth_andnot_bit(const unsigned long *addr1, const unsigned long *addr2,
- 					unsigned long size, unsigned long n);
-+unsigned long __find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
-+					unsigned long size, unsigned long n);
- extern unsigned long _find_first_and_bit(const unsigned long *addr1,
- 					 const unsigned long *addr2, unsigned long size);
-+extern unsigned long _find_first_andnot_bit(const unsigned long *addr1,
-+					 const unsigned long *addr2, unsigned long size);
-+extern unsigned long _find_first_notandnot_bit(const unsigned long *addr1,
-+					 const unsigned long *addr2, unsigned long size);
- extern unsigned long _find_first_zero_bit(const unsigned long *addr, unsigned long size);
- extern unsigned long _find_last_bit(const unsigned long *addr, unsigned long size);
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
+index 8a8d163cbb9f..e4dff7a20b3a 100644
+--- a/tools/testing/selftests/rseq/.gitignore
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -2,6 +2,7 @@
+ basic_numa_test
+ basic_percpu_ops_test
+ basic_percpu_ops_mm_cid_test
++basic_percpu_ops_mm_numa_cid_test
+ basic_test
+ basic_rseq_op_test
+ param_test
+@@ -10,3 +11,6 @@ param_test_compare_twice
+ param_test_mm_cid
+ param_test_mm_cid_benchmark
+ param_test_mm_cid_compare_twice
++param_test_mm_numa_cid
++param_test_mm_numa_cid_benchmark
++param_test_mm_numa_cid_compare_twice
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index a00b9dc8eec5..14119871f16f 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -14,7 +14,9 @@ OVERRIDE_TARGETS = 1
  
-@@ -95,15 +103,14 @@ unsigned long find_next_and_bit(const unsigned long *addr1,
+ TEST_GEN_PROGS = basic_test basic_numa_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
+ 		param_test_benchmark param_test_compare_twice param_test_mm_cid \
+-		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice
++		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice \
++		param_test_mm_numa_cid param_test_mm_numa_cid_benchmark \
++		param_test_mm_numa_cid_compare_twice
  
- #ifndef find_next_andnot_bit
- /**
-- * find_next_andnot_bit - find the next set bit in *addr1 excluding all the bits
-- *                        in *addr2
-+ * find_next_andnot_bit - find the next bit set in *addr1, cleared in *addr2
-  * @addr1: The first address to base the search on
-  * @addr2: The second address to base the search on
-  * @size: The bitmap size in bits
-  * @offset: The bitnumber to start searching at
-  *
-- * Returns the bit number for the next set bit
-- * If no bits are set, returns @size.
-+ * Returns the bit number for the next bit set in *addr1, cleared in *addr2
-+ * If no such bits are found, returns @size.
-  */
- static inline
- unsigned long find_next_andnot_bit(const unsigned long *addr1,
-@@ -124,6 +131,37 @@ unsigned long find_next_andnot_bit(const unsigned long *addr1,
+ TEST_GEN_PROGS_EXTENDED = librseq.so
+ 
+@@ -52,3 +54,15 @@ $(OUTPUT)/param_test_mm_cid_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
+ $(OUTPUT)/param_test_mm_cid_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
+ 					rseq.h rseq-*.h
+ 	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_CID -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
++
++$(OUTPUT)/param_test_mm_numa_cid: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID $< $(LDLIBS) -lrseq -o $@
++
++$(OUTPUT)/param_test_mm_numa_cid_benchmark: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID -DBENCHMARK $< $(LDLIBS) -lrseq -o $@
++
++$(OUTPUT)/param_test_mm_numa_cid_compare_twice: param_test.c $(TEST_GEN_PROGS_EXTENDED) \
++					rseq.h rseq-*.h
++	$(CC) $(CFLAGS) -DBUILDOPT_RSEQ_PERCPU_MM_NUMA_CID -DRSEQ_COMPARE_TWICE $< $(LDLIBS) -lrseq -o $@
+diff --git a/tools/testing/selftests/rseq/basic_percpu_ops_test.c b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
+index 887542961968..5631b4e7130c 100644
+--- a/tools/testing/selftests/rseq/basic_percpu_ops_test.c
++++ b/tools/testing/selftests/rseq/basic_percpu_ops_test.c
+@@ -24,6 +24,18 @@ bool rseq_validate_cpu_id(void)
+ {
+ 	return rseq_mm_cid_available();
  }
- #endif
- 
-+#ifndef find_next_notandnot_bit
-+/**
-+ * find_next_notandnot_bit - find the next bit cleared in both *addr1 and *addr2
-+ * @addr1: The first address to base the search on
-+ * @addr2: The second address to base the search on
-+ * @size: The bitmap size in bits
-+ * @offset: The bitnumber to start searching at
-+ *
-+ * Returns the bit number for the next bit cleared in both *addr1 and *addr2
-+ * If no such bits are found, returns @size.
-+ */
-+static inline
-+unsigned long find_next_notandnot_bit(const unsigned long *addr1,
-+		const unsigned long *addr2, unsigned long size,
-+		unsigned long offset)
++#elif defined(BUILDOPT_RSEQ_PERCPU_MM_NUMA_CID)
++# define RSEQ_PERCPU	RSEQ_PERCPU_MM_NUMA_CID
++static
++int get_current_cpu_id(void)
 +{
-+	if (small_const_nbits(size)) {
-+		unsigned long val;
-+
-+		if (unlikely(offset >= size))
-+			return size;
-+
-+		val = ~*addr1 & ~*addr2 & GENMASK(size - 1, offset);
-+		return val ? __ffs(val) : size;
-+	}
-+
-+	return _find_next_notandnot_bit(addr1, addr2, size, offset);
++	return rseq_current_mm_numa_cid();
 +}
-+#endif
-+
-+
- #ifndef find_next_zero_bit
- /**
-  * find_next_zero_bit - find the next cleared bit in a memory region
-@@ -255,6 +293,32 @@ unsigned long find_nth_andnot_bit(const unsigned long *addr1, const unsigned lon
- 	return __find_nth_andnot_bit(addr1, addr2, size, n);
++static
++bool rseq_validate_cpu_id(void)
++{
++	return rseq_mm_numa_cid_available();
++}
+ #else
+ # define RSEQ_PERCPU	RSEQ_PERCPU_CPU_ID
+ static
+diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
+index bf951a490bb4..b32c45ec9a56 100644
+--- a/tools/testing/selftests/rseq/param_test.c
++++ b/tools/testing/selftests/rseq/param_test.c
+@@ -300,6 +300,30 @@ int rseq_membarrier_expedited(int cpu)
+ 			      0, 0);
  }
- 
-+/**
-+ * find_nth_notandnot_bit - find N'th cleared bit in 2 memory regions.
-+ * @addr1: The 1st address to start the search at
-+ * @addr2: The 2nd address to start the search at
-+ * @size: The maximum number of bits to search
-+ * @n: The number of set bit, which position is needed, counting from 0
-+ *
-+ * Returns the bit number of the N'th cleared bit.
-+ * If no such, returns @size.
-+ */
-+static inline
-+unsigned long find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
-+				unsigned long size, unsigned long n)
+ # endif /* TEST_MEMBARRIER */
++#elif defined(BUILDOPT_RSEQ_PERCPU_MM_NUMA_CID)
++# define RSEQ_PERCPU	RSEQ_PERCPU_MM_NUMA_CID
++static
++int get_current_cpu_id(void)
 +{
-+	if (n >= size)
-+		return size;
-+
-+	if (small_const_nbits(size)) {
-+		unsigned long val =  (~*addr1) & (~*addr2) & GENMASK(size - 1, 0);
-+
-+		return val ? fns(val, n) : size;
-+	}
-+
-+	return __find_nth_notandnot_bit(addr1, addr2, size, n);
++	return rseq_current_mm_numa_cid();
 +}
-+
- #ifndef find_first_and_bit
- /**
-  * find_first_and_bit - find the first set bit in both memory regions
-@@ -280,6 +344,57 @@ unsigned long find_first_and_bit(const unsigned long *addr1,
- }
- #endif
- 
-+#ifndef find_first_andnot_bit
-+/**
-+ * find_first_andnot_bit - find first set bit in 2 memory regions,
-+ *			   flipping bits in 2nd region
-+ * @addr1: The first address to base the search on
-+ * @addr2: The second address to base the search on
-+ * @size: The bitmap size in bits
-+ *
-+ * Returns the bit number for the next set bit
-+ * If no bits are set, returns @size.
-+ */
-+static inline
-+unsigned long find_first_andnot_bit(const unsigned long *addr1,
-+				 const unsigned long *addr2,
-+				 unsigned long size)
++static
++bool rseq_validate_cpu_id(void)
 +{
-+	if (small_const_nbits(size)) {
-+		unsigned long val = *addr1 & (~*addr2) & GENMASK(size - 1, 0);
-+
-+		return val ? __ffs(val) : size;
-+	}
-+
-+	return _find_first_andnot_bit(addr1, addr2, size);
++	return rseq_mm_numa_cid_available();
 +}
-+#endif
-+
-+#ifndef find_first_notandnot_bit
-+/**
-+ * find_first_notandnot_bit - find first cleared bit in 2 memory regions
-+ * @addr1: The first address to base the search on
-+ * @addr2: The second address to base the search on
-+ * @size: The bitmap size in bits
-+ *
-+ * Returns the bit number for the next cleared bit
-+ * If no bits are set, returns @size.
-+ */
-+static inline
-+unsigned long find_first_notandnot_bit(const unsigned long *addr1,
-+				 const unsigned long *addr2,
-+				 unsigned long size)
-+{
-+	if (small_const_nbits(size)) {
-+		unsigned long val = (~*addr1) & (~*addr2) & GENMASK(size - 1, 0);
-+
-+		return val ? __ffs(val) : size;
-+	}
-+
-+	return _find_first_notandnot_bit(addr1, addr2, size);
-+}
-+#endif
-+
- #ifndef find_first_zero_bit
- /**
-  * find_first_zero_bit - find the first cleared bit in a memory region
-diff --git a/lib/find_bit.c b/lib/find_bit.c
-index 18bc0a7ac8ee..a1f592f2437e 100644
---- a/lib/find_bit.c
-+++ b/lib/find_bit.c
-@@ -116,6 +116,32 @@ unsigned long _find_first_and_bit(const unsigned long *addr1,
- EXPORT_SYMBOL(_find_first_and_bit);
- #endif
- 
-+#ifndef find_first_andnot_bit
++# ifdef TEST_MEMBARRIER
 +/*
-+ * Find the first set bit in two memory regions, flipping bits in 2nd region.
++ * Membarrier does not currently support targeting a mm_numa_cid, so
++ * issue the barrier on all cpus.
 + */
-+unsigned long _find_first_andnot_bit(const unsigned long *addr1,
-+				  const unsigned long *addr2,
-+				  unsigned long size)
++static
++int rseq_membarrier_expedited(int cpu)
 +{
-+	return FIND_FIRST_BIT(addr1[idx] & ~addr2[idx], /* nop */, size);
++	return sys_membarrier(MEMBARRIER_CMD_PRIVATE_EXPEDITED_RSEQ,
++			      0, 0);
 +}
-+EXPORT_SYMBOL(_find_first_andnot_bit);
-+#endif
-+
-+#ifndef find_first_notandnot_bit
-+/*
-+ * Find the first cleared bit in two memory regions.
-+ */
-+unsigned long _find_first_notandnot_bit(const unsigned long *addr1,
-+				  const unsigned long *addr2,
-+				  unsigned long size)
-+{
-+	return FIND_FIRST_BIT(~addr1[idx] & ~addr2[idx], /* nop */, size);
-+}
-+EXPORT_SYMBOL(_find_first_notandnot_bit);
-+#endif
-+
- #ifndef find_first_zero_bit
- /*
-  * Find the first cleared bit in a memory region.
-@@ -155,6 +181,13 @@ unsigned long __find_nth_andnot_bit(const unsigned long *addr1, const unsigned l
++# endif /* TEST_MEMBARRIER */
+ #else
+ # define RSEQ_PERCPU	RSEQ_PERCPU_CPU_ID
+ static
+diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
+index 6b682abf39b0..91923c7b74b0 100644
+--- a/tools/testing/selftests/rseq/rseq.h
++++ b/tools/testing/selftests/rseq/rseq.h
+@@ -86,6 +86,7 @@ enum rseq_mo {
+ enum rseq_percpu_mode {
+ 	RSEQ_PERCPU_CPU_ID = 0,
+ 	RSEQ_PERCPU_MM_CID = 1,
++	RSEQ_PERCPU_MM_NUMA_CID = 2,
+ };
+ 
+ static inline struct rseq_abi *rseq_get_abi(void)
+@@ -258,6 +259,8 @@ int rseq_cmpeqv_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mode,
+ 		return rseq_cmpeqv_storev_relaxed_cpu_id(v, expect, newv, cpu);
+ 	case RSEQ_PERCPU_MM_CID:
+ 		return rseq_cmpeqv_storev_relaxed_mm_cid(v, expect, newv, cpu);
++	case RSEQ_PERCPU_MM_NUMA_CID:
++		return rseq_cmpeqv_storev_relaxed_mm_numa_cid(v, expect, newv, cpu);
+ 	}
+ 	return -1;
  }
- EXPORT_SYMBOL(__find_nth_andnot_bit);
- 
-+unsigned long __find_nth_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
-+				 unsigned long size, unsigned long n)
-+{
-+	return FIND_NTH_BIT(~addr1[idx] & ~addr2[idx], size, n);
-+}
-+EXPORT_SYMBOL(__find_nth_notandnot_bit);
-+
- #ifndef find_next_and_bit
- unsigned long _find_next_and_bit(const unsigned long *addr1, const unsigned long *addr2,
- 					unsigned long nbits, unsigned long start)
-@@ -173,6 +206,15 @@ unsigned long _find_next_andnot_bit(const unsigned long *addr1, const unsigned l
- EXPORT_SYMBOL(_find_next_andnot_bit);
- #endif
- 
-+#ifndef find_next_notandnot_bit
-+unsigned long _find_next_notandnot_bit(const unsigned long *addr1, const unsigned long *addr2,
-+					unsigned long nbits, unsigned long start)
-+{
-+	return FIND_NEXT_BIT(~addr1[idx] & ~addr2[idx], /* nop */, nbits, start);
-+}
-+EXPORT_SYMBOL(_find_next_notandnot_bit);
-+#endif
-+
- #ifndef find_next_zero_bit
- unsigned long _find_next_zero_bit(const unsigned long *addr, unsigned long nbits,
- 					 unsigned long start)
+@@ -278,6 +281,8 @@ int rseq_cmpnev_storeoffp_load(enum rseq_mo rseq_mo, enum rseq_percpu_mode percp
+ 		return rseq_cmpnev_storeoffp_load_relaxed_cpu_id(v, expectnot, voffp, load, cpu);
+ 	case RSEQ_PERCPU_MM_CID:
+ 		return rseq_cmpnev_storeoffp_load_relaxed_mm_cid(v, expectnot, voffp, load, cpu);
++	case RSEQ_PERCPU_MM_NUMA_CID:
++		return rseq_cmpnev_storeoffp_load_relaxed_mm_numa_cid(v, expectnot, voffp, load, cpu);
+ 	}
+ 	return -1;
+ }
+@@ -293,6 +298,8 @@ int rseq_addv(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mode,
+ 		return rseq_addv_relaxed_cpu_id(v, count, cpu);
+ 	case RSEQ_PERCPU_MM_CID:
+ 		return rseq_addv_relaxed_mm_cid(v, count, cpu);
++	case RSEQ_PERCPU_MM_NUMA_CID:
++		return rseq_addv_relaxed_mm_numa_cid(v, count, cpu);
+ 	}
+ 	return -1;
+ }
+@@ -313,6 +320,8 @@ int rseq_offset_deref_addv(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu_mo
+ 		return rseq_offset_deref_addv_relaxed_cpu_id(ptr, off, inc, cpu);
+ 	case RSEQ_PERCPU_MM_CID:
+ 		return rseq_offset_deref_addv_relaxed_mm_cid(ptr, off, inc, cpu);
++	case RSEQ_PERCPU_MM_NUMA_CID:
++		return rseq_offset_deref_addv_relaxed_mm_numa_cid(ptr, off, inc, cpu);
+ 	}
+ 	return -1;
+ }
+@@ -331,6 +340,8 @@ int rseq_cmpeqv_trystorev_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
+ 			return rseq_cmpeqv_trystorev_storev_relaxed_cpu_id(v, expect, v2, newv2, newv, cpu);
+ 		case RSEQ_PERCPU_MM_CID:
+ 			return rseq_cmpeqv_trystorev_storev_relaxed_mm_cid(v, expect, v2, newv2, newv, cpu);
++		case RSEQ_PERCPU_MM_NUMA_CID:
++			return rseq_cmpeqv_trystorev_storev_relaxed_mm_numa_cid(v, expect, v2, newv2, newv, cpu);
+ 		}
+ 		return -1;
+ 	case RSEQ_MO_RELEASE:
+@@ -339,6 +350,8 @@ int rseq_cmpeqv_trystorev_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
+ 			return rseq_cmpeqv_trystorev_storev_release_cpu_id(v, expect, v2, newv2, newv, cpu);
+ 		case RSEQ_PERCPU_MM_CID:
+ 			return rseq_cmpeqv_trystorev_storev_release_mm_cid(v, expect, v2, newv2, newv, cpu);
++		case RSEQ_PERCPU_MM_NUMA_CID:
++			return rseq_cmpeqv_trystorev_storev_release_mm_numa_cid(v, expect, v2, newv2, newv, cpu);
+ 		}
+ 		return -1;
+ 	default:
+@@ -359,6 +372,8 @@ int rseq_cmpeqv_cmpeqv_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode percpu
+ 		return rseq_cmpeqv_cmpeqv_storev_relaxed_cpu_id(v, expect, v2, expect2, newv, cpu);
+ 	case RSEQ_PERCPU_MM_CID:
+ 		return rseq_cmpeqv_cmpeqv_storev_relaxed_mm_cid(v, expect, v2, expect2, newv, cpu);
++	case RSEQ_PERCPU_MM_NUMA_CID:
++		return rseq_cmpeqv_cmpeqv_storev_relaxed_mm_numa_cid(v, expect, v2, expect2, newv, cpu);
+ 	}
+ 	return -1;
+ }
+@@ -376,6 +391,8 @@ int rseq_cmpeqv_trymemcpy_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
+ 			return rseq_cmpeqv_trymemcpy_storev_relaxed_cpu_id(v, expect, dst, src, len, newv, cpu);
+ 		case RSEQ_PERCPU_MM_CID:
+ 			return rseq_cmpeqv_trymemcpy_storev_relaxed_mm_cid(v, expect, dst, src, len, newv, cpu);
++		case RSEQ_PERCPU_MM_NUMA_CID:
++			return rseq_cmpeqv_trymemcpy_storev_relaxed_mm_numa_cid(v, expect, dst, src, len, newv, cpu);
+ 		}
+ 		return -1;
+ 	case RSEQ_MO_RELEASE:
+@@ -384,6 +401,8 @@ int rseq_cmpeqv_trymemcpy_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
+ 			return rseq_cmpeqv_trymemcpy_storev_release_cpu_id(v, expect, dst, src, len, newv, cpu);
+ 		case RSEQ_PERCPU_MM_CID:
+ 			return rseq_cmpeqv_trymemcpy_storev_release_mm_cid(v, expect, dst, src, len, newv, cpu);
++		case RSEQ_PERCPU_MM_NUMA_CID:
++			return rseq_cmpeqv_trymemcpy_storev_release_mm_numa_cid(v, expect, dst, src, len, newv, cpu);
+ 		}
+ 		return -1;
+ 	default:
 -- 
 2.25.1
 
