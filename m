@@ -2,229 +2,253 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C7A29C4167E
-	for <linux-api@archiver.kernel.org>; Tue, 22 Nov 2022 20:41:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C148C43217
+	for <linux-api@archiver.kernel.org>; Tue, 22 Nov 2022 23:45:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235003AbiKVUll (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Nov 2022 15:41:41 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46044 "EHLO
+        id S233625AbiKVXpX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Nov 2022 18:45:23 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54956 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234942AbiKVUk3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:40:29 -0500
-Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1A8047FC04;
-        Tue, 22 Nov 2022 12:39:56 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1669149596;
-        bh=btsOn+kTAHo+7IfW5AlIpOTuvX1JZdT5JIC9e1lK/8s=;
-        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=ge57bUTBQ1jwA8BF18CyH+AVY87N0Rsid219ntaxLSC8yQAo1QEtayVDWr/mnJuQM
-         17UdA2QJztHPBTHzTf5PzBiqWrt14FzgEIPGh2zQkF7XD8xWRdd5OhIyOY/CdEtoRA
-         W0trwk9qt1PK7fqOTVtGzQiBV3LoK29e75G/7ifyOQWGoZCcxYJMMozlWDAjNtmKCH
-         8qbb0VhhEGW6vHpoC3fp4tK/j9DcO7eJFl49iaUeijKFUrQpMgZSQFe8UQ23rwn5To
-         hLq3ZNXGSFb63OrXRFI9Jke6Hb5D/UFahzovWGFyJAzRZp28zJBZ7f4aL3c9mhsvTY
-         GTmgmk1y7+80Q==
-Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2h0MqwzXTd;
-        Tue, 22 Nov 2022 15:39:56 -0500 (EST)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     Peter Zijlstra <peterz@infradead.org>
-Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api@vger.kernel.org, Christian Brauner <brauner@kernel.org>,
-        Florian Weimer <fw@deneb.enyo.de>, David.Laight@ACULAB.COM,
-        carlos@redhat.com, Peter Oskolkov <posk@posk.io>,
-        Alexander Mikhalitsyn <alexander@mihalicyn.com>,
-        Chris Kennelly <ckennelly@google.com>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 28/30] selftests/rseq: Implement numa node id vs mm_numa_cid invariant test
-Date:   Tue, 22 Nov 2022 15:39:30 -0500
-Message-Id: <20221122203932.231377-29-mathieu.desnoyers@efficios.com>
-X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
-References: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
+        with ESMTP id S235065AbiKVXpV (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 18:45:21 -0500
+Received: from mail-pf1-x432.google.com (mail-pf1-x432.google.com [IPv6:2607:f8b0:4864:20::432])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 473E6C72C2
+        for <linux-api@vger.kernel.org>; Tue, 22 Nov 2022 15:45:20 -0800 (PST)
+Received: by mail-pf1-x432.google.com with SMTP id d192so15855692pfd.0
+        for <linux-api@vger.kernel.org>; Tue, 22 Nov 2022 15:45:20 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=fromorbit-com.20210112.gappssmtp.com; s=20210112;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=4Br32V4f5RhJzAJZzqIlTw5MxWMCxMPceRuTf9fFBWs=;
+        b=LMp1DNYW9KAAMAhwIRp13A+UoP5f9oi+tOL9pTcPwVL3Hc6Ia0RKrsPyHf7sk3dYlL
+         v9YR+AZs0izub2IeIbLi9+6o8cIngufh1uDpzVlhQ/ZFDkXxqwXovqRsjKBm6NZFGvv6
+         pSeTyc8+Xrg5pYq9dVwahpyuRyB+A0L7WHBm9FYVIm3CSim0mFWLdFJcXn1W/Cirm8wU
+         4cx6I/5Z9/oLvxF/W/DNvYvSDm5Y1x5ZXSK3G4AXZe853DkbvzdSe2ugzOjJtso17frU
+         aC8o3HsIYiTKdAMhTgI75zsB1Xqbrkav8T2gO/YrQ38GZirJO2OPKZh8DErpWJLFpzvk
+         XPlg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=4Br32V4f5RhJzAJZzqIlTw5MxWMCxMPceRuTf9fFBWs=;
+        b=CiUraXH1vspIRmIaoP5FWgh2Y8Wk1pMsl/6k9e+N8mNuk+/V3jnuAndg0hYCoIL4oa
+         IiuQRJj+t8TSqDDfLo5RrjHIAkPD1R54Qd6Smdej1fk41/IkxTv5GtOWkz12zFfHLd7y
+         8C3cdfoFZY2fW4nq1uQuJASZuUy9ST3ronwsxJsd0/KyvnGnU4asnvPwYXHnrOXD0cN1
+         CTCX2A/u0O5oM+st3iyIB2ca0Vw2Ms4X9m6hzYDu8jFIjLeP5iKMRJSit4rOusrk9yzm
+         6qojfwlkcvXFYHOUQk8ZDg4CaRAqLKcMzqQ5OfgifrtR9SXa7cCKvezEVRCzwaNMOdh0
+         smQQ==
+X-Gm-Message-State: ANoB5pmt8oFK8r/o/FCLuLoAKiruR6PBrmEoZgtRgs4MCLZN+cm6b/e0
+        iOzHhI+hc6Ps14ed0sVmFwTDrw==
+X-Google-Smtp-Source: AA0mqf4vEA83Ja+O0Ci0KfXTX8Oj7a0KKnCvRMdSpSJjVAh65PF1JRO/J4lVuOvYHHckcCKBomIqGQ==
+X-Received: by 2002:a63:1626:0:b0:470:2c90:d89f with SMTP id w38-20020a631626000000b004702c90d89fmr7904405pgl.253.1669160719359;
+        Tue, 22 Nov 2022 15:45:19 -0800 (PST)
+Received: from dread.disaster.area (pa49-186-65-106.pa.vic.optusnet.com.au. [49.186.65.106])
+        by smtp.gmail.com with ESMTPSA id e126-20020a621e84000000b00573769811d6sm6800188pfe.44.2022.11.22.15.45.18
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 22 Nov 2022 15:45:18 -0800 (PST)
+Received: from dave by dread.disaster.area with local (Exim 4.92.3)
+        (envelope-from <david@fromorbit.com>)
+        id 1oxcx1-00HS2f-47; Wed, 23 Nov 2022 10:45:15 +1100
+Date:   Wed, 23 Nov 2022 10:45:15 +1100
+From:   Dave Chinner <david@fromorbit.com>
+To:     "Darrick J. Wong" <djwong@kernel.org>
+Cc:     Catherine Hoang <catherine.hoang@oracle.com>,
+        linux-xfs@vger.kernel.org, linux-ext4 <linux-ext4@vger.kernel.org>,
+        Theodore Ts'o <tytso@mit.edu>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        linux-api@vger.kernel.org
+Subject: Re: [PATCH v1] xfs_spaceman: add fsuuid command
+Message-ID: <20221122234515.GT3600936@dread.disaster.area>
+References: <20221109222335.84920-1-catherine.hoang@oracle.com>
+ <Y3abjYmX//CF/ey0@magnolia>
+ <20221117215125.GH3600936@dread.disaster.area>
+ <Y3bKjm2vOwy/jV4Z@magnolia>
+ <20221121233357.GO3600936@dread.disaster.area>
+ <Y3xqhXjJpXosOPPH@magnolia>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
+In-Reply-To: <Y3xqhXjJpXosOPPH@magnolia>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On all architectures except Power, the NUMA topology is never
-reconfigured after a CPU has been associated with a NUMA node in the
-system lifetime.
+On Mon, Nov 21, 2022 at 10:21:57PM -0800, Darrick J. Wong wrote:
+> [adding Ted, the ext4 list, fsdevel, and api, because why not?]
+> 
+> On Tue, Nov 22, 2022 at 10:33:57AM +1100, Dave Chinner wrote:
+> > On Thu, Nov 17, 2022 at 03:58:06PM -0800, Darrick J. Wong wrote:
+> > > On Fri, Nov 18, 2022 at 08:51:25AM +1100, Dave Chinner wrote:
+> > > > On Thu, Nov 17, 2022 at 12:37:33PM -0800, Darrick J. Wong wrote:
+> > > > > On Wed, Nov 09, 2022 at 02:23:35PM -0800, Catherine Hoang wrote:
+> > > > > > Add support for the fsuuid command to retrieve the UUID of a mounted
+> > > > > > filesystem.
+> > > > > > 
+> > > > > > Signed-off-by: Catherine Hoang <catherine.hoang@oracle.com>
+> > > > > > ---
+> 
+> <snip to the good part>
+> > > > > If you're really unlucky, the C compiler will put the fsuuid right
+> > > > > before the call frame, which is how stack smashing attacks work.  It
+> > > > > might also lay out bp[] immediately afterwards, which will give you
+> > > > > weird results as the unparse function overwrites its source buffer.  The
+> > > > > C compiler controls the stack layout, which means this can go bad in
+> > > > > subtle ways.
+> > > > > 
+> > > > > Either way, gcc complains about this (albeit in an opaque manner)...
+> > > > > 
+> > > > > In file included from ../include/xfs.h:9,
+> > > > >                  from ../include/libxfs.h:15,
+> > > > >                  from fsuuid.c:7:
+> > > > > In function ‘platform_uuid_unparse’,
+> > > > >     inlined from ‘fsuuid_f’ at fsuuid.c:45:3:
+> > > > > ../include/xfs/linux.h:100:9: error: ‘uuid_unparse’ reading 16 bytes from a region of size 0 [-Werror=stringop-overread]
+> > > > >   100 |         uuid_unparse(*uu, buffer);
+> > > > >       |         ^~~~~~~~~~~~~~~~~~~~~~~~~
+> > > > > ../include/xfs/linux.h: In function ‘fsuuid_f’:
+> > > > > ../include/xfs/linux.h:100:9: note: referencing argument 1 of type ‘const unsigned char *’
+> > > > > In file included from ../include/xfs/linux.h:13,
+> > > > >                  from ../include/xfs.h:9,
+> > > > >                  from ../include/libxfs.h:15,
+> > > > >                  from fsuuid.c:7:
+> > > > > /usr/include/uuid/uuid.h:107:13: note: in a call to function ‘uuid_unparse’
+> > > > >   107 | extern void uuid_unparse(const uuid_t uu, char *out);
+> > > > >       |             ^~~~~~~~~~~~
+> > > > > cc1: all warnings being treated as errors
+> > > > > 
+> > > > > ...so please allocate the struct fsuuid object dynamically.
+> > > > 
+> > > > So, follow common convention and you'll get it wrong, eh? That a
+> > > > score of -4 on Rusty's API Design scale.
+> > > > 
+> > > > http://sweng.the-davies.net/Home/rustys-api-design-manifesto
+> > > > 
+> > > > Flex arrays in user APIs like this just look plain dangerous to me.
+> > > > 
+> > > > Really, this says that the FSUUID API should have a fixed length
+> > > > buffer size defined in the API and the length used can be anything
+> > > > up to the maximum.
+> > > > 
+> > > > We already have this being added for the ioctl API:
+> > > > 
+> > > > #define UUID_SIZE 16
+> > > > 
+> > > > So why isn't the API definition this:
+> > > > 
+> > > > struct fsuuid {
+> > > >     __u32   fsu_len;
+> > > >     __u32   fsu_flags;
+> > > >     __u8    fsu_uuid[UUID_SIZE];
+> > > > };
+> > > > 
+> > > > Or if we want to support larger ID structures:
+> > > > 
+> > > > #define MAX_FSUUID_SIZE 256
+> > > > 
+> > > > struct fsuuid {
+> > > >     __u32   fsu_len;
+> > > >     __u32   fsu_flags;
+> > > >     __u8    fsu_uuid[MAX_FSUUID_SIZE];
+> > > > };
+> > > > 
+> > > > Then the structure can be safely placed on the stack, which means
+> > > > "the obvious use is (probably) the correct one" (a score of 7 on
+> > > > Rusty's API Design scale). It also gives the kernel a fixed upper
+> > > > bound that it can use to validate the incoming fsu_len variable
+> > > > against...
+> > > 
+> > > Too late now, this already shipped in 6.0.  Changing the struct size
+> > > would change the ioctl number, which is a totally new API.  This was
+> > > already discussed back in July on fsdevel/api.
+> > 
+> > It is certainly not too late - if we are going to lift this to the
+> > VFS, then we can simply make it a new ioctl. The horrible ext4 ioctl
+> > can ber left to rot in ext4 and nobody else ever needs to care that
+> > it exists.
+> 
+> You're wrong.  This was discussed **multiple times** this summer on
+> the fsdevel and API lists.  You had plenty of opportunity to make these
+> suggestions about the design, and yet you did not:
+> 
+> https://lore.kernel.org/linux-api/20220701201123.183468-1-bongiojp@gmail.com/
+> https://lore.kernel.org/linux-api/20220719065551.154132-1-bongiojp@gmail.com/
+> https://lore.kernel.org/linux-api/20220719234131.235187-1-bongiojp@gmail.com/
+> https://lore.kernel.org/linux-api/20220721224422.438351-1-bongiojp@gmail.com/
 
-Even on Power, we can assume that NUMA topology reconfiguration happens
-rarely, and therefore we do not expect it to happen while the NUMA test
-is running.
 
-This test validates that the mapping between a mm_numa_cid and a numa
-node id remains valid for the process lifetime. In other words, it
-validates that if any thread within the process running on behalf of a
-mm_numa_cid N observes a NUMA node id M, all threads within this process
-will always observe the same NUMA node id value when running on behalf
-of that same mm_numa_cid.
+There's good reason for that: this was posted and reviewed as *an
+EXT4 specific API*.  Why are you expecting XFS developers to closely
+review a patchset that was titled "Add ioctls to get/set the ext4
+superblock uuid."?
 
-This characteristic is important for NUMA locality.
+There was -no reasons- for me to pay attention to it, and I have
+enough to keep up with without having to care about the minutae of
+what ext4 internal information is being exposing to userspace.
 
-This test is skipped on architectures that do not implement
-rseq_load_u32_u32.
+However, now it's being proposed as a *generic VFS API*, and so it's
+now important enough for developers from other filesystems to look
+at this ioctl API.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
----
- tools/testing/selftests/rseq/.gitignore       |   1 +
- tools/testing/selftests/rseq/Makefile         |   2 +-
- .../testing/selftests/rseq/basic_numa_test.c  | 117 ++++++++++++++++++
- 3 files changed, 119 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/rseq/basic_numa_test.c
+> Jeremy built the functionality and followed the customary process,
+> sending four separate revisions for reviews.  He adapted his code based
+> on our feedback about how to future-proof it by adding an explicit
+> length parameter, and got it merged into ext4 in 6.0-rc1.
 
-diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
-index 16496de5f6ce..8a8d163cbb9f 100644
---- a/tools/testing/selftests/rseq/.gitignore
-+++ b/tools/testing/selftests/rseq/.gitignore
-@@ -1,4 +1,5 @@
- # SPDX-License-Identifier: GPL-2.0-only
-+basic_numa_test
- basic_percpu_ops_test
- basic_percpu_ops_mm_cid_test
- basic_test
-diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
-index 82a52810a649..a00b9dc8eec5 100644
---- a/tools/testing/selftests/rseq/Makefile
-+++ b/tools/testing/selftests/rseq/Makefile
-@@ -12,7 +12,7 @@ LDLIBS += -lpthread -ldl
- # still track changes to header files and depend on shared object.
- OVERRIDE_TARGETS = 1
- 
--TEST_GEN_PROGS = basic_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
-+TEST_GEN_PROGS = basic_test basic_numa_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
- 		param_test_benchmark param_test_compare_twice param_test_mm_cid \
- 		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice
- 
-diff --git a/tools/testing/selftests/rseq/basic_numa_test.c b/tools/testing/selftests/rseq/basic_numa_test.c
-new file mode 100644
-index 000000000000..fce23356fc7e
---- /dev/null
-+++ b/tools/testing/selftests/rseq/basic_numa_test.c
-@@ -0,0 +1,117 @@
-+// SPDX-License-Identifier: LGPL-2.1
-+/*
-+ * Basic rseq NUMA test. Validate that (mm_numa_cid, numa_node_id) pairs
-+ * are invariant. The only known scenario where this is untrue is on Power
-+ * which can reconfigure the NUMA topology on CPU hotunplug/hotplug sequence.
-+ */
-+
-+#define _GNU_SOURCE
-+#include <assert.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <string.h>
-+#include <sys/time.h>
-+
-+#include "rseq.h"
-+
-+#define NR_LOOPS	100000000
-+#define NR_THREADS	16
-+
-+#ifdef RSEQ_ARCH_HAS_LOAD_U32_U32
-+
-+static
-+int cpu_numa_id[CPU_SETSIZE];
-+
-+static
-+void numa_id_init(void)
-+{
-+	int i;
-+
-+	for (i = 0; i < CPU_SETSIZE; i++)
-+		cpu_numa_id[i] = -1;
-+}
-+
-+static
-+void *test_thread(void *arg)
-+{
-+	int i;
-+
-+	if (rseq_register_current_thread()) {
-+		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+
-+	for (i = 0; i < NR_LOOPS; i++) {
-+		uint32_t mm_numa_cid, node;
-+		int cached_node_id;
-+
-+		while (rseq_load_u32_u32(RSEQ_MO_RELAXED, &mm_numa_cid,
-+					 &rseq_get_abi()->mm_numa_cid,
-+					 &node, &rseq_get_abi()->node_id) != 0) {
-+			/* Retry. */
-+		}
-+		cached_node_id = RSEQ_READ_ONCE(cpu_numa_id[mm_numa_cid]);
-+		if (cached_node_id == -1) {
-+			RSEQ_WRITE_ONCE(cpu_numa_id[mm_numa_cid], node);
-+		} else {
-+			if (node != cached_node_id) {
-+				fprintf(stderr, "Error: NUMA node id discrepancy: mm_numa_cid %u cached node id %d node id %u.\n",
-+					mm_numa_cid, cached_node_id, node);
-+				fprintf(stderr, "This is likely a kernel bug, or caused by a concurrent NUMA topology reconfiguration.\n");
-+				abort();
-+			}
-+		}
-+	}
-+
-+	if (rseq_unregister_current_thread()) {
-+		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
-+			errno, strerror(errno));
-+		abort();
-+	}
-+	return NULL;
-+}
-+
-+static
-+int test_numa(void)
-+{
-+	pthread_t tid[NR_THREADS];
-+	int err, i;
-+	void *tret;
-+
-+	numa_id_init();
-+
-+	printf("testing rseq (mm_numa_cid, numa_node_id) invariant, single thread\n");
-+
-+	(void) test_thread(NULL);
-+
-+	printf("testing rseq (mm_numa_cid, numa_node_id) invariant, multi-threaded\n");
-+
-+	for (i = 0; i < NR_THREADS; i++) {
-+		err = pthread_create(&tid[i], NULL, test_thread, NULL);
-+		if (err != 0)
-+			abort();
-+	}
-+
-+	for (i = 0; i < NR_THREADS; i++) {
-+		err = pthread_join(tid[i], &tret);
-+		if (err != 0)
-+			abort();
-+	}
-+
-+	return 0;
-+}
-+#else
-+static
-+int test_numa(void)
-+{
-+	fprintf(stderr, "rseq_load_u32_u32 is not implemented on this architecture. Skipping numa test.\n");
-+	return 0;
-+}
-+#endif
-+
-+int main(int argc, char **argv)
-+{
-+	return test_numa();
-+}
+*As an EXT4 modification*, not a generic VFS ioctl.
+
+> Now you want Catherine and I to tear down his work and initiate a design
+> review of YET ANOTHER NEW IOCTL just so the API can hit this one design
+> point you care about, and then convince Ted to go back and redo all the
+> work that has already been done.  All this to extract 16 bytes from the
+> kernel in a slightly different style than the existing XFS fsgeometry
+> ioctl.
+
+I'm not asking you to tear anything down. Just leave the ext4 ioctl
+as it is currently defined and nothing existing breaks or needs
+reworking.
+
+All I'm asking is that instead of lifting the ext4 ioctl verbatim,
+you lift it with a fixed maximum size for the uuid data array to
+replace the flex array. It's a *trivial change to make*, and yes, I
+know that this means it's not the same as the ext4 ioctl.
+
+But, really, who cares that it will be a different ioctl? Nobody but
+ext4 utilities will be using the ext4 ioctl, and we expect generic
+block/fs utilities and applications to use the VFS definition of the
+ioctl, not the ext4 specific one.
+
+> This was /supposed/ to be a simple way for a less experienced staffer to
+> gain some experience wiring up an existing ioctl.  And, well, I hope she
+> doesn't take away that developing for Linux is institutionally broken
+> and frustrating, because that's what I've taken away from the last 2+
+> years of being here.
+
+When we lift stuff from filesystem specific scope (where few people
+care about API warts) to generic VFS scope that the whole world is
+expected to see, use and understand, you should expect a larger
+number of experienced developers to scrutinise it.  The wider scope
+of the API means the "acceptibility bar" is set higher.
+
+Just because the code change is simple, it doesn't mean the issues
+surrounding the code change are simple or straight forward. Just
+because it went through a review on the ext4 list it doesn't mean
+the API or implementation is flawless.
+
+The point I'm making is that lifting fs ioctl APIs verbatim is a
+*known broken process* that leads to future pain fixing all the
+problems inherited from the original fs specific API and
+implementation.  If we want to lift functionality to be generic VFS
+UAPI and at the time of lifting we find problems with the UAPI
+and/or implementation, then we need to fix the problems before we
+expose the new VFS API to the entire world.
+
+Repeat past mistakes, or learn from them. Your choice...
+
+-Dave.
 -- 
-2.25.1
-
+Dave Chinner
+david@fromorbit.com
