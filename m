@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7FB16C43219
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A2A70C46467
 	for <linux-api@archiver.kernel.org>; Tue, 22 Nov 2022 20:41:56 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234984AbiKVUlh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 22 Nov 2022 15:41:37 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46022 "EHLO
+        id S234995AbiKVUlj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 22 Nov 2022 15:41:39 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46058 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234921AbiKVUk2 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:40:28 -0500
+        with ESMTP id S234569AbiKVUlB (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 22 Nov 2022 15:41:01 -0500
 Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AD4297EC81;
-        Tue, 22 Nov 2022 12:39:56 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CDBFB716E3;
+        Tue, 22 Nov 2022 12:39:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1669149595;
-        bh=iVMCYAmS3XeOy575q0F4bpZRCi+r4Ash4gZrAlnOTWg=;
+        s=smtpout1; t=1669149597;
+        bh=O1N2y3vjljIZnKe9A0DWaJyuaE+DJOz1zqwzlJQB/j4=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=gx0rqgoxO0RU2ChrQS5GdeCgyTs7X06YQ32SKanbAgP9TUBQPQ3aO8onXBX6NzdCr
-         nJGH6oDE2qg2UL/93XRX1Kl0DjLdX+LL/AYVt09pfybJXdrXjMAQqb72wTUs7QwSpr
-         AEQPxbJG+UodnZv3Xvhw/nFVZZB2DSI3tNe+gzn+FXHlsxtUbkfLm0oSlqG2XIyg7K
-         yi1FZsU3wZ1myE0nueEdI4w01QyjuVdnJQfjv/ffA7XzqgEggIL5w5F7HrtIrYLiDH
-         lXAnyF2Tso7tZPX4GixpweFxsBbxAv4GY8bt1rDyxUW6orhC0yMGiy90Oz5/GsAWMZ
-         BOKbFomzp3bqQ==
+        b=FH7kxxsZPNpCeWLHljPWd50s3fK1CsH4OXiUxDH0jqtzGiw0TUUBVWGDNuR+tQpct
+         rroSkpWJfrMBtTt8xT9zKWR/lqefUTomiiG+stVJdiEQvrX3bJI6RsfRWx7T2aZhSD
+         m/Jhj69J2E4Nkv7benyo6QmJxAk43hcbZaRUw1iSmeKuhvUZcMW1ckZrTFuZaZC6kA
+         iUMIk0m2QCc0mqNZths82FXge0o/YMfl5Cj6dU2olLZuXPIGPqS31M7w5wD4h3ntKX
+         XQORaOj+SPbuY1DXGDyub5sJAIhj6RZodCmsIkL6QlfX+h9iOF2udmmPFapgNLVpW1
+         /10GtKzySEgEQ==
 Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2g16fnzXLS;
-        Tue, 22 Nov 2022 15:39:55 -0500 (EST)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NGx2h5jgJzXLV;
+        Tue, 22 Nov 2022 15:39:56 -0500 (EST)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -39,9 +39,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Alexander Mikhalitsyn <alexander@mihalicyn.com>,
         Chris Kennelly <ckennelly@google.com>,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 26/30] selftests/rseq: x86: Implement rseq_load_u32_u32
-Date:   Tue, 22 Nov 2022 15:39:28 -0500
-Message-Id: <20221122203932.231377-27-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 30/30] tracing/rseq: Add mm_numa_cid field to rseq_update
+Date:   Tue, 22 Nov 2022 15:39:32 -0500
+Message-Id: <20221122203932.231377-31-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
 References: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
@@ -51,92 +51,41 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow loading a pair of u32 within a rseq critical section. It can be
-used in situations where both rseq_abi()->mm_numa_cid and
-rseq_abi()->node_id need to be sampled atomically with respect to
-preemption, signal delivery and migration.
+Add the mm_numa_cid field to the rseq_update event, allowing tracers to
+follow which mm_numa_cid is observed by user-space, and whether negative
+mm_numa_cid values are visible in case of internal scheduler
+implementation issues.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 ---
- tools/testing/selftests/rseq/rseq-x86-bits.h | 43 ++++++++++++++++++++
- tools/testing/selftests/rseq/rseq.h          | 14 +++++++
- 2 files changed, 57 insertions(+)
+ include/trace/events/rseq.h | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq-x86-bits.h b/tools/testing/selftests/rseq/rseq-x86-bits.h
-index 8a9431eec467..fdf5ef398393 100644
---- a/tools/testing/selftests/rseq/rseq-x86-bits.h
-+++ b/tools/testing/selftests/rseq/rseq-x86-bits.h
-@@ -990,4 +990,47 @@ int RSEQ_TEMPLATE_IDENTIFIER(rseq_cmpeqv_trymemcpy_storev)(intptr_t *v, intptr_t
+diff --git a/include/trace/events/rseq.h b/include/trace/events/rseq.h
+index 823b47d1ba1e..95f33d2c0714 100644
+--- a/include/trace/events/rseq.h
++++ b/include/trace/events/rseq.h
+@@ -18,16 +18,18 @@ TRACE_EVENT(rseq_update,
+ 		__field(s32, cpu_id)
+ 		__field(s32, node_id)
+ 		__field(s32, mm_cid)
++		__field(s32, mm_numa_cid)
+ 	),
  
- #endif
+ 	TP_fast_assign(
+ 		__entry->cpu_id = raw_smp_processor_id();
+ 		__entry->node_id = cpu_to_node(__entry->cpu_id);
+ 		__entry->mm_cid = task_mm_cid(t);
++		__entry->mm_numa_cid = task_mm_numa_cid(t);
+ 	),
  
-+#if defined(RSEQ_TEMPLATE_CPU_ID_NONE) && defined(RSEQ_TEMPLATE_MO_RELAXED)
-+
-+#define RSEQ_ARCH_HAS_LOAD_U32_U32
-+
-+static inline __attribute__((always_inline))
-+int RSEQ_TEMPLATE_IDENTIFIER(rseq_load_u32_u32)(uint32_t *dst1, uint32_t *src1,
-+		      uint32_t *dst2, uint32_t *src2)
-+{
-+	RSEQ_INJECT_C(9)
-+
-+	__asm__ __volatile__ goto (
-+		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
-+		/* Start rseq by storing table entry pointer into rseq_cs. */
-+		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_ASM_TP_SEGMENT:RSEQ_CS_OFFSET(%[rseq_offset]))
-+		RSEQ_INJECT_ASM(3)
-+		"movl %[src1], %%eax\n\t"
-+		"movl %%eax, %[dst1]\n\t"
-+		"movl %[src2], %%eax\n\t"
-+		"movl %%eax, %[dst2]\n\t"
-+		"2:\n\t"
-+		RSEQ_INJECT_ASM(4)
-+		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
-+		: /* gcc asm goto does not allow outputs */
-+		: [rseq_offset]		"r" (rseq_offset),
-+		  /* final store input */
-+		  [dst1]		"m" (*dst1),
-+		  [src1]		"m" (*src1),
-+		  [dst2]		"m" (*dst2),
-+		  [src2]		"m" (*src2)
-+		: "memory", "cc", "rax"
-+		  RSEQ_INJECT_CLOBBER
-+		: abort
-+	);
-+	rseq_after_asm_goto();
-+	return 0;
-+abort:
-+	rseq_after_asm_goto();
-+	RSEQ_INJECT_FAILED
-+	return -1;
-+}
-+
-+#endif /* defined(RSEQ_TEMPLATE_CPU_ID_NONE) && defined(RSEQ_TEMPLATE_MO_RELAXED) */
-+
- #include "rseq-bits-reset.h"
-diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-index d7364ea4d201..b6095c2a5da6 100644
---- a/tools/testing/selftests/rseq/rseq.h
-+++ b/tools/testing/selftests/rseq/rseq.h
-@@ -381,4 +381,18 @@ int rseq_cmpeqv_trymemcpy_storev(enum rseq_mo rseq_mo, enum rseq_percpu_mode per
- 	}
- }
+-	TP_printk("cpu_id=%d node_id=%d mm_cid=%d", __entry->cpu_id,
+-		  __entry->node_id, __entry->mm_cid)
++	TP_printk("cpu_id=%d node_id=%d mm_cid=%d mm_numa_cid=%d", __entry->cpu_id,
++		  __entry->node_id, __entry->mm_cid,  __entry->mm_numa_cid)
+ );
  
-+#ifdef RSEQ_ARCH_HAS_LOAD_U32_U32
-+
-+static inline __attribute__((always_inline))
-+int rseq_load_u32_u32(enum rseq_mo rseq_mo,
-+		      uint32_t *dst1, uint32_t *src1,
-+		      uint32_t *dst2, uint32_t *src2)
-+{
-+	if (rseq_mo != RSEQ_MO_RELAXED)
-+		return -1;
-+	return rseq_load_u32_u32_relaxed(dst1, src1, dst2, src2);
-+}
-+
-+#endif
-+
- #endif  /* RSEQ_H_ */
+ TRACE_EVENT(rseq_ip_fixup,
 -- 
 2.25.1
 
