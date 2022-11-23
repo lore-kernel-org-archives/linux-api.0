@@ -2,55 +2,56 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 81037C47088
-	for <linux-api@archiver.kernel.org>; Wed, 23 Nov 2022 19:59:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E1E16C3A59F
+	for <linux-api@archiver.kernel.org>; Wed, 23 Nov 2022 19:59:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235864AbiKWT7I (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Nov 2022 14:59:08 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50760 "EHLO
+        id S237696AbiKWT7M (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Nov 2022 14:59:12 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49294 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239947AbiKWT6B (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Nov 2022 14:58:01 -0500
-Received: from sonic317-38.consmr.mail.ne1.yahoo.com (sonic317-38.consmr.mail.ne1.yahoo.com [66.163.184.49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D34421C910
-        for <linux-api@vger.kernel.org>; Wed, 23 Nov 2022 11:57:55 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233475; bh=vaNHeu+uBrJ/jXIPtDlBaZHKQlALl1G+dML+hKWuQRo=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=eHy6sP/WR82UG4S77tqPHKVhrHxgXTeJP1bSSOCPI0aJJtCmXliUaFjOMtwiLAdu3wSqlXaPPVhaj0PGMvYF1BWDOeZAUr0ZsR1ieRHE3i/gnnS75h4Sr6FQeZ1aYS5uN4uxnJQ/r+uzOk5YYtcowtrHMfm/guvb/53AAlMgmvlFdJbwkhcWWf7boSzvgLe6ow4fNn/ueQgM1rZkMdSTGfTK8ytRL9HXl+bxQLTA9VYL9TBdmD62GF6ru4Wgtdva7HI2QEIRwkoALE4PZ+zP42yWDZjbAKQyUEuROmeo1Jf6jGTk8bDCdQ3Pdq8I0XCqZyrB6r8ZeyKwZTveg0tXXA==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233475; bh=zE05qdxpj4K731pyyqTe6kjCPXlT8TPgcDvuMubnjdj=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=h7p6putSObBwliLjPCu18lTiZwRlz4TW9B28xMU0ciLlpqa7/Bk0maF5YrVTAXw5jqcFukfPE3/2Z/wgfjLL2MJHHmUmtjC6vwJNrF/wm1xtbbcJFh3o80bp4IxQU05ePGH7t1nj3CLwHOsUkekVIhZPipszHSvAlSIygYKmJqJuA1yCWGig9/NVo5lxPVTNyJM5OWuueLs5a3+Q0k3KCw/mumoYljowaeD83ooTCFalFNw1qn6NUGhxXu2ODIl/qJrIsgvdNkCvekRqi7/8GpjX/m0ZXa2byRhv+PJGMod+xoaTZeyfVc/BnTV6pM4CVXz1AmxAOpidNV0OotzfMw==
-X-YMail-OSG: GIg79akVM1li41DiYr0E7pr9tXnyszRRcdtr__H44ckniLk5u1NimjhFmK1U9sh
- 5VV8JS72eJBg_24iwxa4Evu9qtxAwcG1D.tqy4Een7HV46EPOGd21LncO_6MU73OM4Egs5XiF29O
- 8_jkCBag_SaLHBtmopTibDqZZSSir3n7LKphXhpyO_K_cbEYniETG17G3srpcjM4VzhAvSoJiBny
- HMbcYILTj6vDp7GSFSpBF6Y6LCemMqITfJuCs_u6T1rFGWgZOKWhSU9G1wYDO_OyJj4OM5JFKIii
- ou8ss6dZEpije3mlSEVq.XEncutrL1FCjLRnjzsaWfWthdFUtxQcYjuVNk2moqL9PAs2VZEqAb.H
- 3fOyPqxDXFu4BdN9ffRd1cRzQ3Jf4.clBB.Vud4TGQG_c0Q.oC629g83W0GhA.EivL4.NbZppaQP
- pqqj0hzVxyy.k1N6mcKI3rBoNFjJmEvLVJNUdkM.cVCRfpKWOovKOfrVrYHmLlbdXhC42JYfgMuD
- Waqne5U1Mx2z2nzgMloAHrCsXDzgb8kw.wJPHRhBe1EeGhWtSsv1Vhdj.nlqFPNbW3nnlF_Nud9D
- tVK07ELSwcZQYIqmVTWWEJOdT4KTnhNoHRHmZ5EYjo5lZT71zP2WbZnBwmLJwMisHrfndcNrLAFE
- WnEASIXU6w03g.hWRovOnjXrUbd.j6MTooD8_.oWGUqHA7GCWFyFib4X7Tsm9Hp66FV1q3YoEfF4
- 821LBwsrNHlnSop4RReq4NJgR2G27hKSd7Y2Kdg6v92MzmmBw59le7zvTCW_JgcPZ5msV4YkvKom
- 66h_.g65NPWfXInlSe0pdE4lwEPzmD1rWX8HFjDppUwLP.NC1eSDZ_wDKgaYmuW4BzwvCwbkzrDR
- zeefZmFKUEB.HrEKbLgzuhBvoM_yiA_yukVeS6.3NUhKzWl4dXv5vPXo1N0c8Og3zGyQPI8tYME3
- PjXOUC6DJSHY1RwVW56CvtONrFCxUfWNCMdDKJlz3aWi9L5cycPGjwAdujC_Ts.uZn4tlEFju0lH
- s4tatJ56MO3A7BlCbTwFrWP5qGlOeoS6K4NMARkmyoBar3AKeLeEW8H7.tPPQb8Pa_FxFUYukqIz
- XHv3PT87YRBjW2gSbFPfS69xvejyZdqu9izARdqxV4kIR1lcLFTBSYLuVXwJ24Pcecr10PkWvpZI
- eG2fIkxctjVt46qjFKesm.Tsupt3fRWsulEx2AkVWAUL5TNCOeFPLRrTDIEE_h.KEft.wBG3ldZj
- HdeZewsVGL_VtlvNvRi6.LtUYa9cKtFPxPmz3qgy7R6_GdWzLaxRot9ubvhhCuHUnmf84TKy90Iw
- YSutsaQSYE0OosDpube.C_Z4Qa8q.2cj7GwMPXin60hPLZ5itaufo1wmxKwn.tVVZfryNWCZ2YK3
- iC712SjVGbqB6F_REgVhg0NmXLYPJQQswYEMw620F8.rcHStdydNlDw4duhh7gMAHuCC2tIeTkrV
- cY_f8UoIu13A1cxifenK7x5onu36G4kn4_qkjf7Njy52GA8GNFk9F8GnUU3Vkox1fAJwqb9UmCgr
- KKbkyJFRJwci_PZl8q6Qos.Ke77YKGq6i7Hkfhenfj2n1dZEqRkCkCaSjQHIbQt1mrSHJe0vHAyZ
- c7i2Q.OWHM2XLSL2PbB1L4HxemNrr7cXyX3PNzp.sL54gMANXhjONestZ3VJ4WFiF5bIMLU1w95i
- JX46cw1UTbm3OAUxcMQCunql_Qls54AIOeOKket6PT_.LF0IjYekeSEegVTa7jUahP1NgHUqdNx8
- dkUuw1HzDhciSZm2W4vJ.qtfJcGIPE4qYax1shETYEm5f0MrBCpOm_jGxEd965e30i.HPb.Iv4Gt
- P8k7LiGxr_VSdjH6l6Y8s5B1rBTWNgj9Smy_krVXsesL1VzqCcYyFyt_glfqfB.4M.HLKc0JOhOs
- sK.VoFlsFmyP5c0oQAZnOykC0ABGD14a83J3GbhkPjotJbu1smrrS3V5r5DdZ_OIOMgC5Tu7SGUH
- QUDLF882nNAFqG_hi0gO3ZGY8iVaNZ4jbduvm6KVYbPIjyiSFOZH33kxGGptbdWRxZr1.rulmaJo
- Fk_9qT7cSSnhYYNMyff61dRuHR7zH7RFEBSSNEFQ_DlmLIQdvX0N1.mxp3WWIUlMOlvTRSLmRHX7
- u47woWTe0xyPiQeASg0UOgOAAuObHSu8tnpepxG2cK7SKaWZv5YLydv5Dz9qHg7P3AJbsO3fR9Ut
- 8cHnk1p4ydllAUcme5rUSQb205GAdPtKh4drP
+        with ESMTP id S239936AbiKWT5z (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Nov 2022 14:57:55 -0500
+Received: from sonic316-26.consmr.mail.ne1.yahoo.com (sonic316-26.consmr.mail.ne1.yahoo.com [66.163.187.152])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 315A3DF00
+        for <linux-api@vger.kernel.org>; Wed, 23 Nov 2022 11:57:51 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233470; bh=KGezVsV0Po7wkqsLTMkHH3Oi+nbFxChfwJVSfxR3dMA=; h=From:To:Cc:Subject:Date:References:From:Subject:Reply-To; b=Ml6RS7b/q91w3NUyI9l+ulLb15yIe868ZH/FzDmVuIDMOklorbMYlTM7wocGkhQuRubK8HtvYX1I08q1oWSDaUZsW2W2t0iKqo62KF1G9THwRARNVImQVlHZpyqo1RRULgAwAgYeUnl/IPBfSn2b6rXHvVioxSlIe9gtKAVQ5naDoWTuw02dfx46MJmZauG5BK+Jt64YW2XkAuU4mSzmtO4vJ49JRtOq1MGqU0uNKQnBhVYqlSyti4I/PgnxUkIzHKVzrFlGz13GmomfpInGP8eDCZIY9lfLy1mHg7H+t/aIufEqbjY3ODCffl3HghDkVFP9VmvWlxjTsSg02Czd/Q==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233470; bh=iDdE/f5HexrxIf1Jz1p61NqQ3OaTQvJBYgQ9RSJ1nkK=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=LThMiHdfh4IsyOqVdNIeQVDoTR/XTrH284w1f8sNpKSzK6Chs2MyH3clfJpZcHsxWU8HXKWGuAdfL+aHVH41azJvHPnVWYETvIt/keK/wJAxIFYt9n2oyo7bRVc/0IEw7C/1Ix36C+3AaMs6JhQwsvG0WTDLXPmnCbaOQtH0VSVnjQvf31wLKES63kfVVzqJpoIKWt9P8Q5QS1yd7OrrIEhtbrMf6J4bJkCCq1yYEorhEY4QfjqpZnotgckuzs4WZTFa+bBw/NtZUSGuyhEh9inDf/U7hqX+ZGv0WNnGFaMK9FEnmRTl7Hu8kqAtZQ+CJeEKJzTGymf+xRHsSVZdxQ==
+X-YMail-OSG: LXWC9P0VM1nWqJx7OwjvahsCdES_Rxx6WP3D.XQDpyLHkLCoVI2yfQeg6IhsSLU
+ hCTZsD48CbhtZ_lI4eAjr4FGLvo3b4_xBQpwBN6ZB9liAkVE7CQSNpBaylwbBfIXX7McIrs99W78
+ Q5mHf.JoRx4v.vzhStp6kMUNjhSp2alhWyJaFOdxEpWjSxbIN_gFWF_WP8WavCXjrXxnaLJX5Pxu
+ cPzafRGQ69g66sAylgtqvK0FFdq6ZEl9Ur2Wc9DX54MhtTUeUG3DrKp9uvPdne.Hcado94pskFx9
+ R3Oz8GePtZXu_rTJ.5oObrTZNHiIa2xKCFaxDjzrfRZU5IVkKO44SNrFbNA5ZEWZKlRSVhKZNvO6
+ fcCpHWkuVVLSd7w7sBhzUnEdpnUyyj2ajaEmzd5Ik7skeAuEaMnjPk.UkrMyQGjm1k1b6KF6CkwH
+ UYkF_QCTYkJc7msc7JB1MUUYKawrf4TmQfJZ.AzQ59HQvB_T19A3cvpaWB.gBP9EvdplZ4.4FHV9
+ vGX4ER73zK.uwv0yaERFwYgzRSDaDK1tpOpPUPNwka7IDQ8qYlqbmA_2SFqmYJcZEha0rTwXQs4e
+ upLxQ3dB.GYUwNHsF1ehuaQ544TfCezf1coUffAYjsgGTmrnrBH0JgvJdCFBMIgtuG.BsADxjFJQ
+ IyOfrrVluWbJzg_yftG25rPQ4CQUB8WquGbM5HTls4u7bUy1D2.oykZCnvWOPvJFlDEmMrQcvtg2
+ kcNJjgVRm7dD8eACfflGRbz05YADPKSQnCuMns7gf.Ah_uOHQRP_wFnLmI8mQKZnXgrGvTeagAKp
+ wNqDcvSG76Uq9zj.qoL.9lNTVqLz.yNOfBbCupriX8NAtYafSFb2SrXs3OwrBD2EGG0JbXdo4uvv
+ 20yQADzTBN4ZVbMWv_UC2UPDJYpcpbDKAlfc8HhrcjIdarH6HGNwBcgPzKogAXvFX_GoWgf6pS3F
+ 9NC9j6F522Dy9DRkrCUzcencSP2JGF5uKfVcpzO1NdBJYqSu7.rNJ3fmzEn_b1WI_Smy4VPD1Gzu
+ gggdGbJcrilgOpz0TECLZRJfl7KLD6ch9AJnZNyPXHXdysJE9yBb3MRc45zunyEuK4R8VcwPKhn7
+ 2_WjvF8VI1hqpzHzglSIFmEqFK5QO85S4Wz_z8Ba4ls5UduovM4lYIiZmDHsBZCQtzjvQ_.ooKHK
+ SGfIGTcDbR9ig_.yQwOk3OnKhhr.hT6ozW1u763N4l9fPdc6i4d2JgfhOnUwereV.uey7Sb9TxpJ
+ BQnM5yR.ognjqJ6TBOXIqnzE4wj6.EbLrmVmMnBK.dcX32o2NpuYxKkBJNoz9AjgP78aGDs.k3SB
+ KqWcV4MInM8aOHNurXIUnatxUahnmyesT4Tnfb.Cew5EvkBjc8.u8Ro_xbnMaDqX7r06NonyEJa9
+ lWGMDlZ0PCuHJL1bLLBOdRsAKFc1WEZekB_EzE5B9kxIYDdjN1.ZdD2tkMthmpt0MZHmMPNdycsw
+ T.WIvbf.JfcujaAZOMybGXHdqoxjKtD1q1CnvpMuHDjG8SoHdwbGXNWIjNuErvqkNcx7zqsnO46R
+ DuIqRGIBoEbrpTz0YMp4ZKdcFgGAzKx3d05hI2AUR51_PWy_jwEr.Ff2NE2kYN1ZzSooKdGmRicQ
+ oWLa06LgMNOD0je53gdlM_D06WY3YbJfrNh4eU1o181nds3WyYBGQTnwNC39lkNfZCqi3SNFfeW9
+ spImseU.rLUS8Be_Z8lLaQkqYOHvL1_dwX_VSt1StLJd5HU5b58KeYLlUUTsIsqQvWMdBnnIFeU1
+ jCneWOHX9i8wkBFAwDyfAm4dlKcr3_42DWGx1Gzk9iLbSwPUbhpRaf15vVuh6HSYrzJwljyaas1x
+ ycUY8y3j4VdKqdN8zQqEX7iW7n_cylkJICRw5lTClNrN7pYUG5m1n4JEQn523BBKgs5DJNon5oT5
+ 3U6_jz6okzdcxZu1ozH8DyNhahxBiy6_jJ5wSUp4lw6yrSUdVvZkzS1mPXn2tepNmj2EeZsAPgps
+ 4bZmNL_JxT2_vPvGrFK_wLu2kOFk7Q098IQB3tLqE4HKU45DbJgj306_i.aWoUP9unjVhIbr3i_Z
+ jsgVdxrJF3KtHUN0I6gcs3rBxtgEAMx5aXWXDQi4TtpaPxBgZ4DAZz4M6sh1YGh3p6yUNvtPbpv.
+ cqcQk8TUtMWZCyxzhM7lAIcXXc7H1vifCSGrtgP9hJ09H3DNnOFjrkIFjXl2qsqRRsNl_fdFpCAx
+ a4VmAjnHvRUmCWbcKE9jEj5aA0dIqY2UmA5_ruUwmuEBx8VpFPrXDSug72shvgAE1lBtj3b99Nqn
+ 0Bxt981JGJpp.
 X-Sonic-MF: <casey@schaufler-ca.com>
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic317.consmr.mail.ne1.yahoo.com with HTTP; Wed, 23 Nov 2022 19:57:55 +0000
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic316.consmr.mail.ne1.yahoo.com with HTTP; Wed, 23 Nov 2022 19:57:50 +0000
 Received: by hermes--production-gq1-579bc4bddd-hbm49 (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID dd0bf7e44b76ebf62a48c0cf31f93899;
-          Wed, 23 Nov 2022 19:57:50 +0000 (UTC)
+          Wed, 23 Nov 2022 19:57:48 +0000 (UTC)
 From:   Casey Schaufler <casey@schaufler-ca.com>
 To:     casey.schaufler@intel.com, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
@@ -58,317 +59,105 @@ Cc:     casey@schaufler-ca.com, jmorris@namei.org, keescook@chromium.org,
         john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v1 2/8] LSM: Add an LSM identifier for external use
-Date:   Wed, 23 Nov 2022 11:57:37 -0800
-Message-Id: <20221123195744.7738-3-casey@schaufler-ca.com>
+Subject: [PATCH v1 0/8] LSM: Two basic syscalls
+Date:   Wed, 23 Nov 2022 11:57:35 -0800
+Message-Id: <20221123195744.7738-1-casey@schaufler-ca.com>
 X-Mailer: git-send-email 2.38.1
-In-Reply-To: <20221123195744.7738-1-casey@schaufler-ca.com>
-References: <20221123195744.7738-1-casey@schaufler-ca.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+References: <20221123195744.7738-1-casey.ref@schaufler-ca.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add an integer member "id" to the struct lsm_id. This value is
-a unique identifier associated with each security module. The
-values are defined in a new UAPI header file. Each existing LSM
-has been updated to include it's LSMID in the lsm_id.
+Add two system calls for the Linux Security Module ABI.
 
-The LSM ID values are sequential, with the oldest module
-LSM_ID_CAPABILITY being the lowest value and the existing
-modules numbered in the order they were included in the
-main line kernel. The first 32 values (0 - 31) are reserved
-for some as yet unknown but important use.
+lsm_self_attr() provides the security module specific attributes
+that have previously been visible in the /proc/self/attr directory.
+For each attribute that is set on the current process the system
+call will return an LSM identifier, an attribute identifier and
+the value of the attribute. The LSM and attribute identifier values
+are defined in include/uapi/linux/lsm.h
 
-Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
----
- include/linux/lsm_hooks.h    |  1 +
- include/uapi/linux/lsm.h     | 32 ++++++++++++++++++++++++++++++++
- security/apparmor/lsm.c      |  2 ++
- security/bpf/hooks.c         |  2 ++
- security/commoncap.c         |  2 ++
- security/landlock/setup.c    |  2 ++
- security/loadpin/loadpin.c   |  2 ++
- security/lockdown/lockdown.c |  2 ++
- security/safesetid/lsm.c     |  2 ++
- security/selinux/hooks.c     |  2 ++
- security/smack/smack_lsm.c   |  2 ++
- security/tomoyo/tomoyo.c     |  2 ++
- security/yama/yama_lsm.c     |  2 ++
- 13 files changed, 55 insertions(+)
+lsm_module_list() provides the LSM identifiers, in order, of the
+security modules that are active on the system. This has been
+available in the securityfs file /sys/kernel/security/lsm.
+
+Patch 0001 changes the LSM registration from passing the name
+of the module to passing a lsm_id structure that contains the
+name of the module.
+Patch 0002 adds an LSM identifier number to the lsm_id structure.
+Patch 0003 adds an attribute identifier to the lsm_id.
+Patch 0004 adds the registered lsm_ids to a table.
+Patch 0005 changes security_[gs]etprocattr() to use LSM IDs instead
+of LSM names.
+Patch 0006 implements lsm_self_attr().
+Patch 0007 implements lsm_module_list().
+Patch 0008 wires up the two syscalls.
+
+Casey Schaufler (8):
+  LSM: Identify modules by more than name
+  LSM: Add an LSM identifier for external use
+  LSM: Identify the process attributes for each module
+  LSM: Maintain a table of LSM attribute data
+  proc: Use lsmids instead of lsm names for attrs
+  LSM: lsm_self_attr syscall for LSM self attributes
+  LSM: Create lsm_module_list system call
+  lsm: wireup syscalls lsm_self_attr and lsm_module_list
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |   2 +
+ arch/arm/tools/syscall.tbl                    |   2 +
+ arch/arm64/include/asm/unistd32.h             |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   2 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   2 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   2 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   2 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   2 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   2 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   2 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   2 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   2 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   2 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   2 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   2 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   2 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   2 +
+ fs/proc/base.c                                |  29 +--
+ fs/proc/internal.h                            |   2 +-
+ include/linux/lsm_hooks.h                     |  13 +-
+ include/linux/security.h                      |  28 ++-
+ include/linux/syscalls.h                      |   3 +
+ include/uapi/asm-generic/unistd.h             |   5 +-
+ include/uapi/linux/lsm.h                      |  67 ++++++
+ kernel/sys_ni.c                               |   4 +
+ security/Makefile                             |   1 +
+ security/apparmor/lsm.c                       |   9 +-
+ security/bpf/hooks.c                          |  13 +-
+ security/commoncap.c                          |   8 +-
+ security/landlock/cred.c                      |   2 +-
+ security/landlock/fs.c                        |   2 +-
+ security/landlock/ptrace.c                    |   2 +-
+ security/landlock/setup.c                     |   6 +
+ security/landlock/setup.h                     |   1 +
+ security/loadpin/loadpin.c                    |   9 +-
+ security/lockdown/lockdown.c                  |   8 +-
+ security/lsm_syscalls.c                       | 194 ++++++++++++++++++
+ security/safesetid/lsm.c                      |   9 +-
+ security/security.c                           |  37 +++-
+ security/selinux/hooks.c                      |  11 +-
+ security/smack/smack_lsm.c                    |   9 +-
+ security/tomoyo/tomoyo.c                      |   9 +-
+ security/yama/yama_lsm.c                      |   8 +-
+ .../arch/mips/entry/syscalls/syscall_n64.tbl  |   2 +
+ .../arch/powerpc/entry/syscalls/syscall.tbl   |   2 +
+ .../perf/arch/s390/entry/syscalls/syscall.tbl |   2 +
+ .../arch/x86/entry/syscalls/syscall_64.tbl    |   2 +
+ 47 files changed, 484 insertions(+), 47 deletions(-)
  create mode 100644 include/uapi/linux/lsm.h
+ create mode 100644 security/lsm_syscalls.c
 
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index e383e468f742..dd4b4d95a172 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1607,6 +1607,7 @@ struct security_hook_heads {
-  */
- struct lsm_id {
- 	const char	*lsm;		/* Name of the LSM */
-+	int		id;		/* LSM ID */
- };
- 
- /*
-diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
-new file mode 100644
-index 000000000000..d5bcbb9375df
---- /dev/null
-+++ b/include/uapi/linux/lsm.h
-@@ -0,0 +1,32 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+/*
-+ * Linus Security Modules (LSM) - User space API
-+ *
-+ * Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
-+ * Copyright (C) Intel Corporation
-+ */
-+
-+#ifndef _UAPI_LINUX_LSM_H
-+#define _UAPI_LINUX_LSM_H
-+
-+/*
-+ * ID values to identify security modules.
-+ * A system may use more than one security module.
-+ *
-+ * LSM_ID_XXX values 0 - 31 are reserved for future use
-+ */
-+#define LSM_ID_INVALID		-1
-+#define LSM_ID_CAPABILITY	32
-+#define LSM_ID_SELINUX		33
-+#define LSM_ID_SMACK		34
-+#define LSM_ID_TOMOYO		35
-+#define LSM_ID_IMA		36
-+#define LSM_ID_APPARMOR		37
-+#define LSM_ID_YAMA		38
-+#define LSM_ID_LOADPIN		39
-+#define LSM_ID_SAFESETID	40
-+#define LSM_ID_LOCKDOWN		41
-+#define LSM_ID_BPF		42
-+#define LSM_ID_LANDLOCK		43
-+
-+#endif /* _UAPI_LINUX_LSM_H */
-diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index e708c1ad7267..b859b1af6c75 100644
---- a/security/apparmor/lsm.c
-+++ b/security/apparmor/lsm.c
-@@ -24,6 +24,7 @@
- #include <linux/zlib.h>
- #include <net/sock.h>
- #include <uapi/linux/mount.h>
-+#include <uapi/linux/lsm.h>
- 
- #include "include/apparmor.h"
- #include "include/apparmorfs.h"
-@@ -1204,6 +1205,7 @@ struct lsm_blob_sizes apparmor_blob_sizes __lsm_ro_after_init = {
- 
- static struct lsm_id apparmor_lsmid __lsm_ro_after_init = {
- 	.lsm = "apparmor",
-+	.id = LSM_ID_APPARMOR,
- };
- 
- static struct security_hook_list apparmor_hooks[] __lsm_ro_after_init = {
-diff --git a/security/bpf/hooks.c b/security/bpf/hooks.c
-index ef9b1d983665..20983ae8d31f 100644
---- a/security/bpf/hooks.c
-+++ b/security/bpf/hooks.c
-@@ -5,6 +5,7 @@
-  */
- #include <linux/lsm_hooks.h>
- #include <linux/bpf_lsm.h>
-+#include <uapi/linux/lsm.h>
- 
- static struct security_hook_list bpf_lsm_hooks[] __lsm_ro_after_init = {
- 	#define LSM_HOOK(RET, DEFAULT, NAME, ...) \
-@@ -21,6 +22,7 @@ static struct security_hook_list bpf_lsm_hooks[] __lsm_ro_after_init = {
-  */
- struct lsm_id bpf_lsmid __lsm_ro_after_init = {
- 	.lsm = "bpf",
-+	.id = LSM_ID_BPF,
- };
- 
- static int __init bpf_lsm_init(void)
-diff --git a/security/commoncap.c b/security/commoncap.c
-index 986920da0c26..940e36d8503d 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -25,6 +25,7 @@
- #include <linux/binfmts.h>
- #include <linux/personality.h>
- #include <linux/mnt_idmapping.h>
-+#include <uapi/linux/lsm.h>
- 
- /*
-  * If a non-root user executes a setuid-root binary in
-@@ -1448,6 +1449,7 @@ int cap_mmap_file(struct file *file, unsigned long reqprot,
- 
- static struct lsm_id capability_lsmid __lsm_ro_after_init = {
- 	.lsm = "capability",
-+	.id = LSM_ID_CAPABILITY,
- };
- 
- static struct security_hook_list capability_hooks[] __lsm_ro_after_init = {
-diff --git a/security/landlock/setup.c b/security/landlock/setup.c
-index 4a12666a4090..5b32c087e34b 100644
---- a/security/landlock/setup.c
-+++ b/security/landlock/setup.c
-@@ -8,6 +8,7 @@
- 
- #include <linux/init.h>
- #include <linux/lsm_hooks.h>
-+#include <uapi/linux/lsm.h>
- 
- #include "common.h"
- #include "cred.h"
-@@ -25,6 +26,7 @@ struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
- 
- struct lsm_id landlock_lsmid __lsm_ro_after_init = {
- 	.lsm = LANDLOCK_NAME,
-+	.id = LSM_ID_LANDLOCK,
- };
- 
- static int __init landlock_init(void)
-diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
-index 24d041a888b8..32bdf7294a6f 100644
---- a/security/loadpin/loadpin.c
-+++ b/security/loadpin/loadpin.c
-@@ -20,6 +20,7 @@
- #include <linux/string_helpers.h>
- #include <linux/dm-verity-loadpin.h>
- #include <uapi/linux/loadpin.h>
-+#include <uapi/linux/lsm.h>
- 
- #define VERITY_DIGEST_FILE_HEADER "# LOADPIN_TRUSTED_VERITY_ROOT_DIGESTS"
- 
-@@ -199,6 +200,7 @@ static int loadpin_load_data(enum kernel_load_data_id id, bool contents)
- 
- static struct lsm_id loadpin_lsmid __lsm_ro_after_init = {
- 	.lsm = "loadpin",
-+	.id = LSM_ID_LOADPIN,
- };
- 
- static struct security_hook_list loadpin_hooks[] __lsm_ro_after_init = {
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 2004d67f7201..e8c41a0caf7d 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -13,6 +13,7 @@
- #include <linux/security.h>
- #include <linux/export.h>
- #include <linux/lsm_hooks.h>
-+#include <uapi/linux/lsm.h>
- 
- static enum lockdown_reason kernel_locked_down;
- 
-@@ -77,6 +78,7 @@ static struct security_hook_list lockdown_hooks[] __lsm_ro_after_init = {
- 
- static struct lsm_id lockdown_lsmid __lsm_ro_after_init = {
- 	.lsm = "lockdown",
-+	.id = LSM_ID_LOCKDOWN,
- };
- 
- static int __init lockdown_lsm_init(void)
-diff --git a/security/safesetid/lsm.c b/security/safesetid/lsm.c
-index d9af1d04d293..8d0742ba045d 100644
---- a/security/safesetid/lsm.c
-+++ b/security/safesetid/lsm.c
-@@ -19,6 +19,7 @@
- #include <linux/ptrace.h>
- #include <linux/sched/task_stack.h>
- #include <linux/security.h>
-+#include <uapi/linux/lsm.h>
- #include "lsm.h"
- 
- /* Flag indicating whether initialization completed */
-@@ -263,6 +264,7 @@ static int safesetid_task_fix_setgroups(struct cred *new, const struct cred *old
- 
- static struct lsm_id safesetid_lsmid __lsm_ro_after_init = {
- 	.lsm = "safesetid",
-+	.id = LSM_ID_SAFESETID,
- };
- 
- static struct security_hook_list safesetid_security_hooks[] = {
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index aee20bb1778d..5fcce36267bd 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -92,6 +92,7 @@
- #include <linux/fsnotify.h>
- #include <linux/fanotify.h>
- #include <linux/io_uring.h>
-+#include <uapi/linux/lsm.h>
- 
- #include "avc.h"
- #include "objsec.h"
-@@ -7016,6 +7017,7 @@ static int selinux_uring_cmd(struct io_uring_cmd *ioucmd)
- 
- static struct lsm_id selinux_lsmid __lsm_ro_after_init = {
- 	.lsm = "selinux",
-+	.id = LSM_ID_SELINUX,
- };
- 
- /*
-diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-index 0c0fea933bbd..c7ba80e20b8d 100644
---- a/security/smack/smack_lsm.c
-+++ b/security/smack/smack_lsm.c
-@@ -43,6 +43,7 @@
- #include <linux/fs_parser.h>
- #include <linux/watch_queue.h>
- #include <linux/io_uring.h>
-+#include <uapi/linux/lsm.h>
- #include "smack.h"
- 
- #define TRANS_TRUE	"TRUE"
-@@ -4789,6 +4790,7 @@ struct lsm_blob_sizes smack_blob_sizes __lsm_ro_after_init = {
- 
- static struct lsm_id smack_lsmid __lsm_ro_after_init = {
- 	.lsm = "smack",
-+	.id = LSM_ID_SMACK,
- };
- 
- static struct security_hook_list smack_hooks[] __lsm_ro_after_init = {
-diff --git a/security/tomoyo/tomoyo.c b/security/tomoyo/tomoyo.c
-index 80fbab5d2d7e..1916eb6216f7 100644
---- a/security/tomoyo/tomoyo.c
-+++ b/security/tomoyo/tomoyo.c
-@@ -6,6 +6,7 @@
-  */
- 
- #include <linux/lsm_hooks.h>
-+#include <uapi/linux/lsm.h>
- #include "common.h"
- 
- /**
-@@ -532,6 +533,7 @@ static void tomoyo_task_free(struct task_struct *task)
- 
- static struct lsm_id tomoyo_lsmid __lsm_ro_after_init = {
- 	.lsm = "tomoyo",
-+	.id = LSM_ID_TOMOYO,
- };
- 
- /*
-diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
-index 4f60158850a7..2487b8f847f3 100644
---- a/security/yama/yama_lsm.c
-+++ b/security/yama/yama_lsm.c
-@@ -18,6 +18,7 @@
- #include <linux/task_work.h>
- #include <linux/sched.h>
- #include <linux/spinlock.h>
-+#include <uapi/linux/lsm.h>
- 
- #define YAMA_SCOPE_DISABLED	0
- #define YAMA_SCOPE_RELATIONAL	1
-@@ -423,6 +424,7 @@ static int yama_ptrace_traceme(struct task_struct *parent)
- 
- static struct lsm_id yama_lsmid __lsm_ro_after_init = {
- 	.lsm = "yama",
-+	.id = LSM_ID_YAMA,
- };
- 
- static struct security_hook_list yama_hooks[] __lsm_ro_after_init = {
+
+base-commit: 247f34f7b80357943234f93f247a1ae6b6c3a740
 -- 
 2.37.3
 
