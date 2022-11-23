@@ -2,161 +2,81 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 62E8AC46467
-	for <linux-api@archiver.kernel.org>; Wed, 23 Nov 2022 20:01:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 818E2C4332F
+	for <linux-api@archiver.kernel.org>; Wed, 23 Nov 2022 20:11:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239419AbiKWUBk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 23 Nov 2022 15:01:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52504 "EHLO
+        id S234723AbiKWULi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 23 Nov 2022 15:11:38 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33332 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239618AbiKWUBI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Nov 2022 15:01:08 -0500
-Received: from sonic317-38.consmr.mail.ne1.yahoo.com (sonic317-38.consmr.mail.ne1.yahoo.com [66.163.184.49])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1E2A1786D5
-        for <linux-api@vger.kernel.org>; Wed, 23 Nov 2022 12:01:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233665; bh=JPTHbEtDzTcWk/IoC5WyCw9rcLntJ6rErxAyipdRKeU=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=dmlqS0kQe0djrKrBjuA4d/aPak5GSNPoY248dyly+15I9bkgIgrGGEGD9cp89txM18a0actTWL3YVeBh2FT3Vc0Or+2iCgoOTO9lofd88WJmmRr2KiDxM9yeGLnD7hdF8yZ8HdbuILkIPiDQavzGu/Pq+lgIg+y6zSmbu//Nmy6eNmhAmhHxecd7DBOdgE8ejBSwm4JKJfSQFZjJOuWLx8NHDl+DrcPDtgjdDgoDOPzPKUAoCyIAYRtp3TgrsamZANMVbAzQUDY7PgQqMgf7oqjbaZPVVEFN5nZ4dOg0EJKofj6zMFRgLAN7qfsq2YdwVgN49lwUrSBumUuZYLRZIA==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669233665; bh=PHe9JGXXmYmYKz5fYYMpAJ2eUDMB8vhTKugusDKKUDG=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=tGnP6o4qDqZMCCdl4CwaWHw8kfpMEAnbj3vT6EA3+e6qw9yBSaH2RoNlWASrt91KTJuT03Pu9I+s1G8JklfZBlyw1R/ODgyWzRh3z8jneSz6//P52AnUOL5PCHExnPubUJ4EUABMbsAJKhZ2/cm5CKboNCtYqyR0/RKdoJf9xjhRNiFgs1RyiVey6WWYmI8ZmbSKS/HcnzqAxvebavP5fv3pnR9MQ8/BTKXOYRL3wiSvKeY83xnmfAE8kqPY/1esp4lRfjdDXHB59Y7tbehyOhK5qyLSFS8RHbGNfujCUSZus6bwclhy0W9q+cWhBxNsY7ASYTS5bwkwjMshiMwk0g==
-X-YMail-OSG: ZDRlpNEVM1mxbtCeaB6IkBuiVi4BBsfRZEiJdTdv2qzlcU5eSEzs0YZHkjDKgnP
- HJrQgX_1fElyT_9hYOQjwm5pimk9ae82_8DdkBsUw.vtYdUbFTeRfL6K0TA0R4SeqSsFOTRdsaEg
- L0qYdQjuXE_s_I3cVbwIQH_2boWMMssQvpI3.oYqP_qwo.y1gUm7nr6URe6fm2BS1.8TRf7efFBs
- pDfghPDOkj37W3jA5YBN.8PV4tJ6BsBWMd3UJNYuOA9DbS6PnNoInagQ9joR.7ze4MvkOXvosR83
- FcCPsoxh6LMg51oIS2gI_jA4fGTsVg8D_gZPDVAIKvi94YSyZpJxKprMe5L7sSLYOsFJfq2_KSup
- KUzTR6pxlXxIDDW8fvK0eSXlxUagFSFGpcnGFUDcYc1b0xc05b6lco.bPoSvIrBBtIuiyLj2cVhU
- xUsS3nWHHFHXYNEWeL1H.6qrbyhfFaXTy2dyNALZO9kO2q43qEOyfbe4TmCdnK5AJxh7iwq9LLri
- m8MR3ZBMyEIfLCW_Le4HTN0hRNqANbMZLbXerYPcbZxuHC1b5E6C_QKEYQTFP23G2YDrKbtdOXpG
- kkgTz8H_a1WWYhJwvFBEqW.PYjpSiqq.VgPJARRMvBKihccAq7JXtMLfWsHwxYztiskw6L8ooFJo
- OgGWJcN18QF0Kg1522b7ShlKJIbpXaB4rAjjWec1P0bIpvWxg094KtycRur4xDPROLoI4JfEfw96
- XyFHWgvkqSMdf4kIhn29e9KKiLdR2MxbVAJLxiJWn8uQKp4P8VwjeWdYi4clgbn9LjO76FTUWbx9
- PovECGY2plVLatWnaG6jgK.an6VyyFIgwc0wyX6gqwdiFNsTHs3Y6lJcT9ra1VrIsFMveY1gwIGS
- dx4vk6BRtBlRihRriAwBDx.rlNVEK.uB2YP1sZnUD.xlzq91ZZn2T91ypkDPfUB_XyGcKpRZWfpA
- usPiwfj3XdbLiWGflQWMNEsM6aTSfDMW7DVvkcB9Ld0kubRx5t0ZgW9mXEMhXdYMxsV_RlGmPPgZ
- H6_EAaS0vnsmlEq3bozhZaBDhyBKRzGkHF6oJOWGqRNNN22bFs8kozZnP09N.W7uDDM7iCMbTLWZ
- 3v3Vs05ldiRlOvl3S7.lTdb7GNtbJhVFSerndwqAEThOEJC.3FyV_CnHsrQiQ5aLzTo07nJObNp1
- DvhjR9iubt1skYoZzeg_7cfTl9ZCV.kgV1S5vRUqysF7pGlHd4KF9HNRdtQ.fZiZaE7tB0tNa4P_
- k1Rl1QQsPNtoMv7dNoxf9gt6M3ELjeitEXT2f3Sb53UmIFWK.webgPRzitOWaLjLV12tYGowz6sS
- XUMwcIcBROGXIwjLUxbWj0y.cxv7gM1bz55SWVGh4UCpl33Gqkeyo6iWid9IOcttuvPH3KuHUfh5
- hFOwp2CCGeC7yK3e4TggHnOMbshXzGGTwg6ohLTHD5saOvg_eI1heQfe96pNt3Ug2xl6LUvvmERO
- SIYqmNcHnCJm9Rfpss.KKo1rhOwa6lAoqf3rMURd07vJ3_cHI6zW9b5zQME9ROpzJdBiMIiPtbW6
- xgtm9NubMiIUZCaMOykEZguJGWgZ1D5RLkwX7cksxzhKf83fw18Zysj5S4h2ki2Zj3ztfu3n2hgS
- tWxq0UYM_FVYNL_XHgVuhFbXgxEQ0NCEi3wmapjkbLj3SrJ07aMrN6tiFuITkzKILAXMW4y12vQV
- sry09oXG8BHA2s2C5bJy0eROTBnBa.C3Xjl5PzMA4UwRh3haK3N0Sx6VMliM2osll.4F5_NqVh1V
- wGw2nH.gV8pizLoMFSMkZwsT9hmUYCxkGosx3MTcVxRwgY1FfjpkJKHZaNEz1XXtfk1uGihREBLY
- X1aEyT17hobR_0zfGF657imnqCf7CNltNVA2IpJvVGPviTZJbcJ0cC87ZnUHxUGoj2rI1WxaJrJX
- 0Y0wQvDGf9OLBdge1eWgcPy6Tdc8VofDvmqMz3oNiJt2XRyGnjoP5sx4yLvJcrK4GY6hzjvIagf7
- y9a7dcrVxAd27eRKTxlx3gog3F3phD51QTa4rLnlcLTeAUQ0gQ4.TPpmqgTVqqXEaEOwnsb7M.rX
- lC4BBg5du1hQcYYbig5AsIf1hW8i3NfOWnSKEpc3zaQ5X50IhYE0w.CChuk275Gwo2WRF.6eZ0gO
- H3EB_tLakB2sgSLooQk.OLxNDfKUtxtXEcm_bNC1XkyXxgKQAk35.1q.YDYwOhHoc04FiTG9LSMV
- E9DhK.sYUM8jS3X2xLw2.0gzPfDS06ZD2yzD6GVAmh0jw0td1.9H.d194r_zRxXQIS6XdzD.GmwS
- LKoiCmnVpRcnWtueRGPrt
+        with ESMTP id S233625AbiKWULh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 23 Nov 2022 15:11:37 -0500
+Received: from sonic311-30.consmr.mail.ne1.yahoo.com (sonic311-30.consmr.mail.ne1.yahoo.com [66.163.188.211])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7BF487C464
+        for <linux-api@vger.kernel.org>; Wed, 23 Nov 2022 12:11:36 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669234296; bh=GPbhQXdLb4Nphfn3/CvkY6ve9GsVdeScr9Qq0oBHf0A=; h=Date:Subject:To:Cc:References:From:In-Reply-To:From:Subject:Reply-To; b=eO5xY0X8eugtepvk5ipTg6HtsDgh74c6E04e2rGpkps13Z/e93dyjCEhnBKlp7Sq3HGvfX0PPqcNCGmHPTuh/oDhLF8MxEyetLgO5BCqIA40QtKxVEyutjkx7+8BVMe1Ezc9APYh+tyk3s1MeBlT+VYi2egua6tmkz1Bh/KP56yNyM/NoIcHglG2u5F+g1ydL9qd/lGA2GQeesUcqMeY0fw0HHEEUsoNQ54Vv1YxuUC2NLUGBYP+iXTthjKHsh0hODRtZlPVSeoGCjTkpO3kAuusCVUFAjwjhuYRh9v2FBncT1z9CA3hu1G8m9+5l43DUCWmzLH7ZUQDHoDeh+NdBw==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1669234296; bh=W5VC5x+DmOaW1uVjwoIm4gnA4RvcQfxNBtja2aSRyct=; h=X-Sonic-MF:Date:Subject:To:From:From:Subject; b=oGKrAfxPnzGopg4R3efLyoLgbWm9x1+YscSZWoiSMu5luxGH5SWi00qNGw72t0LWjfhz6d62RExkWZp/dNH2IvtcdnpcxDDQ7UqAkKabGQZAITqQ9sOeapZwVsvBZl/WbDxrXgNfz0n3+PTZPTg71H0Za4yqQ/8IGwLrm3Zh9RXE20vPYaz7SeRVlW9Rlmx/Dz6KFLcekchK1y4nk+wvIKwf5mrBBrbqTvdf7BUq76gIeq47Ekpg8mLYb8mL7G1irYSD0FbRZSnBTI5lieXPx5SwDUW+ltocgaPuqwEzU56A3WKFQoYrhtkUmv0Yhraf3cc26OpppxK/UfC1BD4GKg==
+X-YMail-OSG: fH4wupsVM1nw.RHwvnKzkNBXpgifYSeYwYOSVPZ4dDLB6x4W8DIxyOuIc8K2hTe
+ BomL2GBbR8D2DjK8outNFf5Ekmf9AI.roR4vErP7c7xK6UDIiVVXXFm47MetPRt3ss79Q6X1nUpO
+ j9TAbAXVuh7VKUF8d46y5kgay9Eeu5iZpGm7KKHbSeIydgxcL8VhlhO2HYF0rHv5LH.qKyOdvSqj
+ qO8URaQ4LF60ST9XUrKk9OB9MexgtAVnyYPxwo17AqRvatSzdPoEZ9J8I_UsNp8E3pS.OhoUmwOM
+ eWY_8C5gPF1Yz8NEQnO_t5Vyamhzer2xrMiJJqWhkyvkCycZaExX9f8dI1_ZkMbKY_Qp1ilRfJZf
+ RAnbRfmvziTSNKVtdaFDCR9jlVhfWMm17zno98zRIf_g5xUWSLL273y6Ekat.ToDWNRetnE2k0QZ
+ laM5waB.srO6Sc8YwayyfMAZjBn.dwN3OiGR5QeUyNBZ1rbBTkZGm_WiLIbLjMu9dP2zh41yjedL
+ nE0nQmy5iz3AvsvwOqtNKheDkeRkr3EGnVFQmqWqsZZH_9jjs_DnSe3nV4RKxtCLCkokfnMPZzlj
+ fW046jJyZQErw5rAa3KxzHV0Swo8EPcBxiAPuk0RXYnV17EXFY2pnxGbncya7qTpxpH_X.KcuhIF
+ Ydn._lLB99QVCSk6zOFesiII0oM75qAw4XYYp8ktdLSfHgbNTuWG.suXAMHxdYR3Sl9ZQkaSMY7b
+ D43WQLLnuPgsTS._ydwn56DjLASADX3ZrovOGxxER8xdEQas16O9gjB0JEGpmMgDEVwft.k1nvPp
+ wiYYyy7rpGDFv28poKkklsvCAKROgrJZKtjCRF6MzTrxkO4fyp4p25fe1_gJcoSAmHtlDrpzw4N8
+ HqjOxr6fUin6p7LxRAdre9CkAAfGGnCVvkrBMArz65fz4uNacdpuonDIIQDEXANp6IUZ_ZZjp5J2
+ j5e4S8MSgqABAvrSNfZjknpMjvLlZIJf9KS3kpLtIQvEtsob_c74.8m5z87Yf5cuU8xZ1e_0aUyz
+ 3fqn7k6W5TOdAeb9R8S4j6wUwJsMNR0IenjlQY_57hQi_r38Sgl7ObPWZCiWCxxuLeDkTUDu4kga
+ JKZc6JllBynzwXZSRh0f2hnhALEzT3KGRz4GDLwfk_8KR8AHDWnrFOvHg2Gh9aiKfkrSbgfcmW0E
+ YZEOZNQ_wnne9NGjYTgOX45v0xcP8hjfA7PPWltFcCqFitSpyaqM6jIn4DG1yEFcFaumQckAL0V4
+ kkFESZvQKIIUC.yzNoXLCKXn1Yyud7gObcQXBdzkUgHCOC8EBLwXMKqYLloG0CNZODjPexU._UL1
+ W.OkpMp7XeKJqNwiW9oRfYC2a2FsuS3DNW4qjei6F_pNW3EwPdSIybTeWB.KlKhwklr9hoWLiqQ9
+ p4ubnQbkL0_2mKkp0XTZTI_mDwJ2UlTi7kQTmIHlCo1YTD1tMbhWIs5KcTEVh6ALLP0qM9GIsMbW
+ VeMp41q7cKD43i7FNsTgLfMd.CAr4h66gnVe5t4gtCoy9C1mvslzBLOVEw55LR8AySQrvwE5gDg8
+ SzO_b8QHL.1ilmT4jRJBGJ7qlIpeJKCGYIUuT3VaORTxv3OQhd8VSOOc1si9XlbkdEKYy79JLYIb
+ zLsESF_VD4Z8aTqJu5GlyeGrYgzFtOWzef8uEaxR4jKrM0KubyOtDonRYIF0KKav.w86s9IAhmxh
+ s81g.68bNMJWE9N.s3bVC.dLtf5I4e7pQOycsc.KFhnguTvyekrz0s_81EyIdPBTqxDNU6PiXGU5
+ b2JnhhygP5IF.NU9d9wxums6GQMHeVen_7mOuX2pi.g6Z0HwoFnAovpD3cevyukPC0A63mmUbIyn
+ joEG96m4L2h6ZoVYsP6VEoOQ4G7Pj_0Ehp0TC.U0Ob8qWgVYh0M7IFaqeSi3Tw68O8zNWH1t57pH
+ OnuaAdIfg65iuwmetoUgtWsI3tlAKNLx29o2YtxoeU27S4dsEVeqtBuBOQkKpr8oa3p_Y.bY2f1u
+ jnq3SjmjtK0VfHDEz62KjlnwMaweI_XBdiasu_ckJ3Uu8dtVUMvkCkhvBLfEE3uHMVviaw5EY6Xe
+ .qPIbZme1HMX2VNo2yGgr30DDQzWZQE_GZOCxK_XaYHCHvkBHLHxB3HYT8E0.wUuAVR.j6l7RkLv
+ xy1PFLVJVAw_24T7PFwROezEE8gKvr4vY6.2TvcUw1PDzkr.5v7DWRycey8G6fMMIqhktRQiTjYB
+ HX5gBftMMFrlGxtVeU2eKYbwOvnWsrLvcNkguIL_R1Q--
 X-Sonic-MF: <casey@schaufler-ca.com>
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic317.consmr.mail.ne1.yahoo.com with HTTP; Wed, 23 Nov 2022 20:01:05 +0000
-Received: by hermes--production-ne1-6bcfb7fb87-2hzbf (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 9a2b4e210b8fb0ce0242a6033d9f3e20;
-          Wed, 23 Nov 2022 20:01:01 +0000 (UTC)
-From:   Casey Schaufler <casey@schaufler-ca.com>
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic311.consmr.mail.ne1.yahoo.com with HTTP; Wed, 23 Nov 2022 20:11:36 +0000
+Received: by hermes--production-gq1-579bc4bddd-kbwws (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID e06ebf814d694ecbabbbaecbcfa7c6dc;
+          Wed, 23 Nov 2022 20:11:32 +0000 (UTC)
+Message-ID: <2ca28e79-4600-08fd-b38d-479ca14c8b18@schaufler-ca.com>
+Date:   Wed, 23 Nov 2022 12:11:30 -0800
+MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.5.0
+Subject: Re: [PATCH v1 0/8] LSM: Two basic syscalls
+Content-Language: en-US
 To:     casey.schaufler@intel.com, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
-Cc:     casey@schaufler-ca.com, jmorris@namei.org, keescook@chromium.org,
+Cc:     jmorris@namei.org, keescook@chromium.org,
         john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v1 7/8] LSM: Create lsm_module_list system call
-Date:   Wed, 23 Nov 2022 11:57:42 -0800
-Message-Id: <20221123195744.7738-8-casey@schaufler-ca.com>
-X-Mailer: git-send-email 2.38.1
+References: <20221123195744.7738-1-casey.ref@schaufler-ca.com>
+ <20221123195744.7738-1-casey@schaufler-ca.com>
+From:   Casey Schaufler <casey@schaufler-ca.com>
 In-Reply-To: <20221123195744.7738-1-casey@schaufler-ca.com>
-References: <20221123195744.7738-1-casey@schaufler-ca.com>
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-Mailer: WebService/1.1.20863 mail.backend.jedi.jws.acl:role.jedi.acl.token.atz.jws.hermes.yahoo
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Create a system call to report the list of Linux Security Modules
-that are active on the system. The list is provided as an array
-of LSM ID numbers.
+On 11/23/2022 11:57 AM, Casey Schaufler wrote:
+> Add two system calls for the Linux Security Module ABI.
 
-The calling application can use this list determine what LSM
-specific actions it might take. That might include chosing an
-output format, determining required privilege or bypassing
-security module specific behavior.
-
-Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
----
- include/linux/syscalls.h |  1 +
- kernel/sys_ni.c          |  1 +
- security/lsm_syscalls.c  | 38 ++++++++++++++++++++++++++++++++++++++
- 3 files changed, 40 insertions(+)
-
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 2d9033e9e5a0..02bb82142e24 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1058,6 +1058,7 @@ asmlinkage long sys_set_mempolicy_home_node(unsigned long start, unsigned long l
- 					    unsigned long home_node,
- 					    unsigned long flags);
- asmlinkage long sys_lsm_self_attr(struct lsm_ctx *ctx, size_t *size, int flags);
-+asmlinkage long sys_lsm_module_list(unsigned int *ids, size_t *size, int flags);
- 
- /*
-  * Architecture-specific system calls
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index 0fdb0341251d..bde9e74a3473 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -264,6 +264,7 @@ COND_SYSCALL(mremap);
- 
- /* security/lsm_syscalls.c */
- COND_SYSCALL(lsm_self_attr);
-+COND_SYSCALL(lsm_module_list);
- 
- /* security/keys/keyctl.c */
- COND_SYSCALL(add_key);
-diff --git a/security/lsm_syscalls.c b/security/lsm_syscalls.c
-index da0fab7065e2..cd5db370b974 100644
---- a/security/lsm_syscalls.c
-+++ b/security/lsm_syscalls.c
-@@ -154,3 +154,41 @@ SYSCALL_DEFINE3(lsm_self_attr,
- 	kfree(final);
- 	return rc;
- }
-+
-+/**
-+ * lsm_module_list - Return a list of the active security modules
-+ * @ids: the LSM module ids
-+ * @size: size of @ids, updated on return
-+ * @flags: reserved for future use, must be zero
-+ *
-+ * Returns a list of the active LSM ids. On success this function
-+ * returns the number of @ids array elements. This value may be zero
-+ * if there are no LSMs active. If @size is insufficient to contain
-+ * the return data -E2BIG is returned and @size is set to the minimum
-+ * required size. In all other cases a negative value indicating the
-+ * error is returned.
-+ */
-+SYSCALL_DEFINE3(lsm_module_list,
-+		unsigned int __user *, ids,
-+		size_t __user *, size,
-+		unsigned int, flags)
-+{
-+	size_t total_size = lsm_id * sizeof(*ids);
-+	size_t usize;
-+	int i;
-+
-+	if (get_user(usize, size))
-+		return -EFAULT;
-+
-+	if (put_user(total_size, size) != 0)
-+		return -EFAULT;
-+
-+	if (usize < total_size)
-+		return -E2BIG;
-+
-+	for (i = 0; i < lsm_id; i++)
-+		if (put_user(lsm_idlist[i]->id, ids++))
-+			return -EFAULT;
-+
-+	return lsm_id;
-+}
--- 
-2.37.3
+Whoops. Sorry for the spam. Test posting escape. Please ignore.
 
