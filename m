@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 6057CC47089
-	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:43:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 05B45C47090
+	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:43:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235010AbiLCAnm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 2 Dec 2022 19:43:42 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54102 "EHLO
+        id S235261AbiLCAno (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 2 Dec 2022 19:43:44 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41808 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234980AbiLCAmF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:42:05 -0500
+        with ESMTP id S235094AbiLCAmG (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:42:06 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 596E3FA451;
-        Fri,  2 Dec 2022 16:38:32 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 303B4FA44A;
+        Fri,  2 Dec 2022 16:38:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1670027912; x=1701563912;
+  t=1670027915; x=1701563915;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=tLQzvtFCG7gPr37x5ob+Amj80mPdYmHi/Bjvakhw+Z8=;
-  b=MACDcLCHEH3KqhNgCMhCN9N6ImoxZTG/+c71XeRUzK2pvixCpU9+rdeg
-   uLm/R98OeQWCQW95iYfcmQOTYpSCDCr62MiIxMJ9sUJDAN35mCmc/rYz3
-   ceBDHy914aIGzz93MHfZQxBuCr9xGdXLumvRvNbYxAWWjSpmDiidYN6KZ
-   1MwlNzHQmhwE2z7KQt6L3l3cw2FarSDWdC7P0QxIjtLe+rTBnHS3w/nL9
-   yOX5nW+5J22ek9XZoGzolFI5cEH/lJj5f4UpNAyUFa/uvIxHiHDdDpgAy
-   v3PVil9NziIFXNJHlW1HQPBFa8d3WtHyoVegC7il+th6kt13FlsG8baCz
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711538"
+  bh=Y8HP+6SI6A4E79h0YyqSt+wn/k0j51I/AMnEXqlWOFs=;
+  b=jBl/UXj5+Sgarm3jvEG5JfsuMBTkhPu3cbT20MlfLuo9PksxN9L3Uiey
+   o0VwtFiNfE8ZjJHR8CvLNEIveoUW+ogJTy2tREo108glLf+GFVFeANIjt
+   UBTxqwXa37QCT7tn8/ivH3YF46tTT5jDG3DLuF7VduE6fiQUyEe3Yt8Qe
+   Pd60jMyWTONGCYVFpN1OGm+Dx/7NVgk9iqRemsZ0Osq95c8RQmXaacGQ3
+   GzXwxkwVheZnTwgofK67YIX8f4UYsGj4sS1JENpvxdFbHqCtDiCpFMHhE
+   qr9luA5Hm/sQsJPAjBAl/Aw0utIIHuOeEJU2waA+ZMJDOnTc4zfZERQk9
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711600"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="313711538"
+   d="scan'208";a="313711600"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:44 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787480020"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:50 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787480049"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="787480020"
+   d="scan'208";a="787480049"
 Received: from bgordon1-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.212.211.211])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:42 -0800
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:46 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
 Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH v4 34/39] x86/shstk: Wire in shadow stack interface
-Date:   Fri,  2 Dec 2022 16:36:01 -0800
-Message-Id: <20221203003606.6838-35-rick.p.edgecombe@intel.com>
+Subject: [PATCH v4 36/39] x86/fpu: Add helper for initing features
+Date:   Fri,  2 Dec 2022 16:36:03 -0800
+Message-Id: <20221203003606.6838-37-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
 References: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
@@ -76,47 +76,133 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The kernel now has the main shadow stack functionality to support
-applications. Wire in the WRSS and shadow stack enable/disable functions
-into the existing shadow stack API skeleton.
+If an xfeature is saved in a buffer, the xfeature's bit will be set in
+xsave->header.xfeatures. The CPU may opt to not save the xfeature if it
+is in it's init state. In this case the xfeature buffer address cannot
+be retrieved with get_xsave_addr().
+
+Future patches will need to handle the case of writing to an xfeature
+that may not be saved. So provide helpers to init an xfeature in an
+xsave buffer.
+
+This could of course be done directly by reaching into the xsave buffer,
+however this would not be robust against future changes to optimize the
+xsave buffer by compacting it. In that case the xsave buffer would need
+to be re-arranged as well. So the logic properly belongs encapsulated
+in a helper where the logic can be unified.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 ---
 
-v4:
- - Remove "CET" references
-
 v2:
- - Split from other patches
+ - New patch
 
- arch/x86/kernel/shstk.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ arch/x86/kernel/fpu/xstate.c | 58 +++++++++++++++++++++++++++++-------
+ arch/x86/kernel/fpu/xstate.h |  6 ++++
+ 2 files changed, 53 insertions(+), 11 deletions(-)
 
-diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 3a7bcc01d985..5d91e653f77a 100644
---- a/arch/x86/kernel/shstk.c
-+++ b/arch/x86/kernel/shstk.c
-@@ -468,9 +468,17 @@ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
- 		return -EINVAL;
- 
- 	if (option == ARCH_SHSTK_DISABLE) {
-+		if (features & ARCH_SHSTK_WRSS)
-+			return wrss_control(false);
-+		if (features & ARCH_SHSTK_SHSTK)
-+			return shstk_disable();
- 		return -EINVAL;
- 	}
- 
- 	/* Handle ARCH_SHSTK_ENABLE */
-+	if (features & ARCH_SHSTK_SHSTK)
-+		return shstk_setup();
-+	if (features & ARCH_SHSTK_WRSS)
-+		return wrss_control(true);
- 	return -EINVAL;
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index 13a80521dd51..3ff80be0a441 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -934,6 +934,24 @@ static void *__raw_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+ 	return (void *)xsave + xfeature_get_offset(xcomp_bv, xfeature_nr);
  }
+ 
++static int xsave_buffer_access_checks(int xfeature_nr)
++{
++	/*
++	 * Do we even *have* xsave state?
++	 */
++	if (!boot_cpu_has(X86_FEATURE_XSAVE))
++		return 1;
++
++	/*
++	 * We should not ever be requesting features that we
++	 * have not enabled.
++	 */
++	if (WARN_ON_ONCE(!xfeature_enabled(xfeature_nr)))
++		return 1;
++
++	return 0;
++}
++
+ /*
+  * Given the xsave area and a state inside, this function returns the
+  * address of the state.
+@@ -954,17 +972,7 @@ static void *__raw_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+  */
+ void *get_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+ {
+-	/*
+-	 * Do we even *have* xsave state?
+-	 */
+-	if (!boot_cpu_has(X86_FEATURE_XSAVE))
+-		return NULL;
+-
+-	/*
+-	 * We should not ever be requesting features that we
+-	 * have not enabled.
+-	 */
+-	if (WARN_ON_ONCE(!xfeature_enabled(xfeature_nr)))
++	if (xsave_buffer_access_checks(xfeature_nr))
+ 		return NULL;
+ 
+ 	/*
+@@ -984,6 +992,34 @@ void *get_xsave_addr(struct xregs_state *xsave, int xfeature_nr)
+ 	return __raw_xsave_addr(xsave, xfeature_nr);
+ }
+ 
++/*
++ * Given the xsave area and a state inside, this function
++ * initializes an xfeature in the buffer.
++ *
++ * get_xsave_addr() will return NULL if the feature bit is
++ * not present in the header. This function will make it so
++ * the xfeature buffer address is ready to be retrieved by
++ * get_xsave_addr().
++ *
++ * Inputs:
++ *	xstate: the thread's storage area for all FPU data
++ *	xfeature_nr: state which is defined in xsave.h (e.g. XFEATURE_FP,
++ *	XFEATURE_SSE, etc...)
++ * Output:
++ *	1 if the feature cannot be inited, 0 on success
++ */
++int init_xfeature(struct xregs_state *xsave, int xfeature_nr)
++{
++	if (xsave_buffer_access_checks(xfeature_nr))
++		return 1;
++
++	/*
++	 * Mark the feature inited.
++	 */
++	xsave->header.xfeatures |= BIT_ULL(xfeature_nr);
++	return 0;
++}
++
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+ 
+ /*
+diff --git a/arch/x86/kernel/fpu/xstate.h b/arch/x86/kernel/fpu/xstate.h
+index a4ecb04d8d64..dc06f63063ee 100644
+--- a/arch/x86/kernel/fpu/xstate.h
++++ b/arch/x86/kernel/fpu/xstate.h
+@@ -54,6 +54,12 @@ extern void fpu__init_cpu_xstate(void);
+ extern void fpu__init_system_xstate(unsigned int legacy_size);
+ 
+ extern void *get_xsave_addr(struct xregs_state *xsave, int xfeature_nr);
++extern int init_xfeature(struct xregs_state *xsave, int xfeature_nr);
++
++static inline int xfeature_saved(struct xregs_state *xsave, int xfeature_nr)
++{
++	return xsave->header.xfeatures & BIT_ULL(xfeature_nr);
++}
+ 
+ static inline u64 xfeatures_mask_supervisor(void)
+ {
 -- 
 2.17.1
 
