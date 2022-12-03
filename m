@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C07EEC4321E
-	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:36:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A0C0FC636F9
+	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:36:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234568AbiLCAga (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 2 Dec 2022 19:36:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41062 "EHLO
+        id S234988AbiLCAgl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 2 Dec 2022 19:36:41 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41098 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233795AbiLCAg3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:36:29 -0500
+        with ESMTP id S233795AbiLCAgd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:36:33 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F0655F4EA3;
-        Fri,  2 Dec 2022 16:36:28 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E1AFEF7A23;
+        Fri,  2 Dec 2022 16:36:32 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1670027788; x=1701563788;
-  h=from:to:cc:subject:date:message-id:mime-version:
-   content-transfer-encoding;
-  bh=UExb0P455rgshLHt6GYI1t6rsa+B8lT8eGARn4e7l/I=;
-  b=C2bx68riARE++8vncPuCZ+2R8c9173dMLMzWoj//m2s+8P0lSHQG9mSR
-   c9b4/53UTfezYQZUiXcRDQgkP6Ln6E4kplUPPNT6VOfW6XWj22PK8gBXA
-   kysc5b+AkAbKREJf4DvShiNjZJj+mWFDzxvx/H5QRtMjlVWLH+lgqTXaK
-   FKLlz97bZdsgQCwXBzUt6Z9mC9qhHxuCqXy5Tljjv1FzvggALX04zm3Wv
-   9DCwXDWMbia6NSPz1gAly0Zq4Pzg9VNpUwvcGOGMwdh5tU8j1NJGPisJD
-   YYIiqcYZusWD+a6riwyrTlaIgtRu9htHK/pomW8mWcwd9D1/tlZ9jwjpA
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313710614"
+  t=1670027792; x=1701563792;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references;
+  bh=nPGHwvfvhwh0s+qOYAT9IA/XK2YwRNZRo0Le5Qvnc2o=;
+  b=YlOwkxLBIxJ4zgEZb9hGfpkfrYPm7bBLUkSngkARprFxFAbXh7CGyyIW
+   wJ1Y3vzgGdfQcDKs3MmqN9/nuLNE+ijyv3wVR3eTwvcO5C1BYQDsvDTsY
+   3BwX2npgz5fM3J5ctMysosdzPc8nzU+6xu7LE2Xse0+t6AbsV8Pvx6Tr+
+   Iux0+TrRNYuE27dPOV05nrVoRMUQ/U0Xc8Humu4kScMyhb2oIW16MN4MI
+   tirmzJ0bGH9gwWiLpr5+j315/rdiHgudEEPxPDvVpcc3YXpKchhp5mFlj
+   uEVcTb5x+eKvWLd776PFVIUMU0epRR60hE6EzD9Zfn0zfScjMJwgItpcU
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313710667"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="313710614"
+   d="scan'208";a="313710667"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:28 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479735"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:32 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479752"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="787479735"
+   d="scan'208";a="787479752"
 Received: from bgordon1-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.212.211.211])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:26 -0800
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:30 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,190 +65,122 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH v4 00/39] Shadow stacks for userspace
-Date:   Fri,  2 Dec 2022 16:35:27 -0800
-Message-Id: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v4 02/39] x86/shstk: Add Kconfig option for Shadow Stack
+Date:   Fri,  2 Dec 2022 16:35:29 -0800
+Message-Id: <20221203003606.6838-3-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
+References: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-This series implements Shadow Stacks for userspace using x86's Control-flow 
-Enforcement Technology (CET). CET consists of two related security features: 
-Shadow Stacks and Indirect Branch Tracking. This series implements just the 
-Shadow Stack part of this feature, and just for userspace.
+Shadow Stack provides protection for applications against function return
+address corruption. It is active when the processor supports it, the
+kernel has CONFIG_X86_SHADOW_STACK enabled, and the application is built
+for the feature. This is only implemented for the 64-bit kernel. When it
+is enabled, legacy non-Shadow Stack applications continue to work, but
+without protection.
 
-The main use case for shadow stack is providing protection against return 
-oriented programming attacks. It works by maintaining a secondary (shadow) 
-stack using a special memory type that has protections against modification. 
-When executing a CALL instruction, the processor pushes the return address to 
-both the normal stack and to the special permissioned shadow stack. Upon RET, 
-the processor pops the shadow stack copy and compares it to the normal stack 
-copy. For more details, see the coverletter from v1 [0].
+Since there is another feature that utilizes CET (Kernel IBT) that will
+share implementation with Shadow Stacks, create CONFIG_CET to signify
+that at least one CET feature is configured.
 
+Tested-by: Pengfei Xu <pengfei.xu@intel.com>
+Tested-by: John Allen <john.allen@amd.com>
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Cc: Kees Cook <keescook@chromium.org>
+---
 
-I humbly think this is looking decent at this point, please consider applying.
+v3:
+ - Add X86_CET (Kees)
+ - Add back WRUSS dependency (Kees)
+ - Fix verbiage (Dave)
+ - Change from promt to bool (Kirill)
+ - Add more to commit log
 
-Again there were some smaller changes (logged in the patches). The more
-noteworthy changes were:
- - Separate Shadow stack from IBT in kernel APIs. This involves renaming the
-   arch_prctl()s. And changing the ptrace cet regset interface to only expose
-   the SSP, and not any IBT bits.
- - Handle 32 bit case more completely. (see commit log of “x86: Prevent 32 bit
-   operations for 64 bit shstk tasks” for the details)
- - Drop elf header bit filtering compatibility patch for now, per Linus. [1]
- - Break apart _PAGE_COW patch for bisectability reasons.
+v2:
+ - Remove already wrong kernel size increase info (tlgx)
+ - Change prompt to remove "Intel" (tglx)
+ - Update line about what CPUs are supported (Dave)
 
-I left the Tested-by tags that were already in place, testers please re-test.
+Yu-cheng v25:
+ - Remove X86_CET and use X86_SHADOW_STACK directly.
 
-Previous version [2].
+Yu-cheng v24:
+ - Update for the splitting X86_CET to X86_SHADOW_STACK and X86_IBT.
 
-Thanks,
+ arch/x86/Kconfig           | 24 ++++++++++++++++++++++++
+ arch/x86/Kconfig.assembler |  5 +++++
+ 2 files changed, 29 insertions(+)
 
-Rick
-
-[0] https://lore.kernel.org/lkml/20220130211838.8382-1-rick.p.edgecombe@intel.com/
-[1] https://lore.kernel.org/lkml/CAHk-=wgP5mk3poVeejw16Asbid0ghDt4okHnWaWKLBkRhQntRA@mail.gmail.com/
-[2] https://lore.kernel.org/lkml/20221104223604.29615-1-rick.p.edgecombe@intel.com/
-
-Kirill A. Shutemov (1):
-  x86: Introduce userspace API for shadow stack
-
-Mike Rapoport (1):
-  x86/shstk: Add ARCH_SHSTK_UNLOCK
-
-Rick Edgecombe (13):
-  x86/fpu: Add helper for modifying xstate
-  x86/mm: Introduce _PAGE_COW
-  x86/mm: Start actually marking _PAGE_COW
-  mm: Don't allow write GUPs to shadow stack memory
-  mm: Warn on shadow stack memory in wrong vma
-  x86/shstk: Introduce map_shadow_stack syscall
-  x86/shstk: Support wrss for userspace
-  x86: Expose thread features in /proc/$PID/status
-  x86: Prevent 32 bit operations for 64 bit shstk tasks
-  x86/shstk: Wire in shadow stack interface
-  selftests/x86: Add shadow stack test
-  x86/fpu: Add helper for initing features
-  x86/shstk: Add ARCH_SHSTK_STATUS
-
-Yu-cheng Yu (24):
-  Documentation/x86: Add CET shadow stack description
-  x86/shstk: Add Kconfig option for Shadow Stack
-  x86/cpufeatures: Add CPU feature flags for shadow stacks
-  x86/cpufeatures: Enable CET CR4 bit for shadow stack
-  x86/fpu/xstate: Introduce CET MSR and XSAVES supervisor states
-  x86: Add user control-protection fault handler
-  x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-  x86/mm: Move pmd_write(), pud_write() up in the file
-  x86/mm: Update pte_modify for _PAGE_COW
-  x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for
-    transition from _PAGE_DIRTY to _PAGE_COW
-  mm: Move VM_UFFD_MINOR_BIT from 37 to 38
-  mm: Introduce VM_SHADOW_STACK for shadow stack memory
-  x86/mm: Check Shadow Stack page fault errors
-  x86/mm: Update maybe_mkwrite() for shadow stack
-  mm: Fixup places that call pte_mkwrite() directly
-  mm: Add guard pages around a shadow stack.
-  mm/mmap: Add shadow stack pages to memory accounting
-  mm/mprotect: Exclude shadow stack from preserve_write
-  mm: Re-introduce vm_flags to do_mmap()
-  x86/shstk: Add user-mode shadow stack support
-  x86/shstk: Handle thread shadow stack
-  x86/shstk: Introduce routines modifying shstk
-  x86/shstk: Handle signals for shadow stack
-  x86: Add PTRACE interface for shadow stack
-
- Documentation/filesystems/proc.rst            |   1 +
- Documentation/x86/index.rst                   |   1 +
- Documentation/x86/shstk.rst                   | 172 +++++
- arch/arm/kernel/signal.c                      |   2 +-
- arch/arm64/kernel/signal.c                    |   2 +-
- arch/arm64/kernel/signal32.c                  |   2 +-
- arch/sparc/kernel/signal32.c                  |   2 +-
- arch/sparc/kernel/signal_64.c                 |   2 +-
- arch/x86/Kconfig                              |  24 +
- arch/x86/Kconfig.assembler                    |   5 +
- arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
- arch/x86/include/asm/cpufeatures.h            |   2 +
- arch/x86/include/asm/disabled-features.h      |  16 +-
- arch/x86/include/asm/fpu/api.h                |   9 +
- arch/x86/include/asm/fpu/regset.h             |   7 +-
- arch/x86/include/asm/fpu/sched.h              |   3 +-
- arch/x86/include/asm/fpu/types.h              |  14 +-
- arch/x86/include/asm/fpu/xstate.h             |   6 +-
- arch/x86/include/asm/idtentry.h               |   2 +-
- arch/x86/include/asm/mmu_context.h            |   2 +
- arch/x86/include/asm/msr.h                    |  11 +
- arch/x86/include/asm/pgtable.h                | 320 +++++++-
- arch/x86/include/asm/pgtable_types.h          |  65 +-
- arch/x86/include/asm/processor.h              |   8 +
- arch/x86/include/asm/shstk.h                  |  52 ++
- arch/x86/include/asm/sighandling.h            |   1 +
- arch/x86/include/asm/special_insns.h          |  13 +
- arch/x86/include/asm/tlbflush.h               |   3 +-
- arch/x86/include/asm/trap_pf.h                |   2 +
- arch/x86/include/uapi/asm/mman.h              |   3 +
- arch/x86/include/uapi/asm/prctl.h             |  12 +
- arch/x86/kernel/Makefile                      |   2 +
- arch/x86/kernel/cpu/common.c                  |  37 +-
- arch/x86/kernel/cpu/cpuid-deps.c              |   1 +
- arch/x86/kernel/cpu/proc.c                    |  23 +
- arch/x86/kernel/fpu/core.c                    |  60 +-
- arch/x86/kernel/fpu/regset.c                  |  87 +++
- arch/x86/kernel/fpu/xstate.c                  | 148 ++--
- arch/x86/kernel/fpu/xstate.h                  |   6 +
- arch/x86/kernel/idt.c                         |   2 +-
- arch/x86/kernel/process.c                     |  18 +-
- arch/x86/kernel/process_64.c                  |   8 +
- arch/x86/kernel/ptrace.c                      |  12 +
- arch/x86/kernel/shstk.c                       | 495 +++++++++++++
- arch/x86/kernel/signal.c                      |  21 +
- arch/x86/kernel/signal_64.c                   |   6 +
- arch/x86/kernel/signal_compat.c               |   7 +-
- arch/x86/kernel/traps.c                       | 107 ++-
- arch/x86/mm/fault.c                           |  38 +
- arch/x86/mm/pat/set_memory.c                  |   2 +-
- arch/x86/mm/pgtable.c                         |   6 +
- arch/x86/xen/enlighten_pv.c                   |   2 +-
- arch/x86/xen/xen-asm.S                        |   2 +-
- fs/aio.c                                      |   2 +-
- fs/proc/array.c                               |   6 +
- fs/proc/task_mmu.c                            |   3 +
- include/linux/mm.h                            |  57 +-
- include/linux/pgtable.h                       |  35 +
- include/linux/proc_fs.h                       |   2 +
- include/linux/ptrace.h                        |   1 +
- include/linux/syscalls.h                      |   1 +
- include/uapi/asm-generic/siginfo.h            |   3 +-
- include/uapi/asm-generic/unistd.h             |   2 +-
- include/uapi/linux/elf.h                      |   2 +
- ipc/shm.c                                     |   2 +-
- kernel/signal.c                               |   8 +
- kernel/sys_ni.c                               |   1 +
- mm/gup.c                                      |   2 +-
- mm/huge_memory.c                              |  20 +-
- mm/memory.c                                   |   7 +-
- mm/migrate_device.c                           |   4 +-
- mm/mmap.c                                     |  12 +-
- mm/mprotect.c                                 |   8 +
- mm/nommu.c                                    |   4 +-
- mm/userfaultfd.c                              |  10 +-
- mm/util.c                                     |   2 +-
- tools/testing/selftests/x86/Makefile          |   4 +-
- .../testing/selftests/x86/test_shadow_stack.c | 685 ++++++++++++++++++
- 78 files changed, 2560 insertions(+), 178 deletions(-)
- create mode 100644 Documentation/x86/shstk.rst
- create mode 100644 arch/x86/include/asm/shstk.h
- create mode 100644 arch/x86/kernel/shstk.c
- create mode 100644 tools/testing/selftests/x86/test_shadow_stack.c
-
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index ae36661cfd81..3c4a8e47cf19 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1853,6 +1853,11 @@ config CC_HAS_IBT
+ 		  (CC_IS_CLANG && CLANG_VERSION >= 140000)) && \
+ 		  $(as-instr,endbr64)
+ 
++config X86_CET
++	def_bool n
++	help
++	  CET features configured (Shadow Stack or IBT)
++
+ config X86_KERNEL_IBT
+ 	prompt "Indirect Branch Tracking"
+ 	def_bool y
+@@ -1860,6 +1865,7 @@ config X86_KERNEL_IBT
+ 	# https://github.com/llvm/llvm-project/commit/9d7001eba9c4cb311e03cd8cdc231f9e579f2d0f
+ 	depends on !LD_IS_LLD || LLD_VERSION >= 140000
+ 	select OBJTOOL
++	select X86_CET
+ 	help
+ 	  Build the kernel with support for Indirect Branch Tracking, a
+ 	  hardware support course-grain forward-edge Control Flow Integrity
+@@ -1954,6 +1960,24 @@ config X86_SGX
+ 
+ 	  If unsure, say N.
+ 
++config X86_USER_SHADOW_STACK
++	bool "X86 Userspace Shadow Stack"
++	depends on AS_WRUSS
++	depends on X86_64
++	select ARCH_USES_HIGH_VMA_FLAGS
++	select X86_CET
++	help
++	  Shadow Stack protection is a hardware feature that detects function
++	  return address corruption.  This helps mitigate ROP attacks.
++	  Applications must be enabled to use it, and old userspace does not
++	  get protection "for free".
++
++	  CPUs supporting shadow stacks were first released in 2020.
++
++	  See Documentation/x86/cet.rst for more information.
++
++	  If unsure, say N.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+index 26b8c08e2fc4..00c79dd93651 100644
+--- a/arch/x86/Kconfig.assembler
++++ b/arch/x86/Kconfig.assembler
+@@ -19,3 +19,8 @@ config AS_TPAUSE
+ 	def_bool $(as-instr,tpause %ecx)
+ 	help
+ 	  Supported by binutils >= 2.31.1 and LLVM integrated assembler >= V7
++
++config AS_WRUSS
++	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
++	help
++	  Supported by binutils >= 2.31 and LLVM integrated assembler
 -- 
 2.17.1
 
