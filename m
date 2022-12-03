@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DF0A4C47088
-	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:36:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 66F88C63705
+	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:36:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234977AbiLCAgk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 2 Dec 2022 19:36:40 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41074 "EHLO
+        id S234995AbiLCAgn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 2 Dec 2022 19:36:43 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41196 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234952AbiLCAgc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:36:32 -0500
+        with ESMTP id S234965AbiLCAgk (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:36:40 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 40C9DF4EA3;
-        Fri,  2 Dec 2022 16:36:31 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEDC0F7A3A;
+        Fri,  2 Dec 2022 16:36:34 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1670027791; x=1701563791;
+  t=1670027794; x=1701563794;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=XOfd9JiLVYyEEu25Vb3yqxeb0WsD1mhiLPx5CYNxCNc=;
-  b=PlHG5WK43S6P9kUl/JptEGRpDcoilpR3MskSZOp1hryttxp9SE9UNd8O
-   IiS90F0YEgwhOk3miJoKpjnqBS7jlxiOPueF1qFSsaB4Xxfs9ilkPZ2tn
-   gfuC7kLd1yjpPm/oZSxuhaVsEXLeQh0I8w8nGwbHC4wIvpZmJ5kt1LNTo
-   9rEcpmgCRmcX6L6HujdcshcdsGJ4fI6/W7ntqelF9TklfBj9rhRDwoapC
-   0Bkgmd9fA/+m78V1hVLD1WwEHWEXmqqRgHGVQNXNL1AM+lf7FyoYSDtF6
-   pp9p+V3zoAx4wuvbcUHmQphKFJfAoYnKmTrhALJNbQQ3sJkeayqrdJrtF
+  bh=ngQ/jKKoQl7UDYFjf+gMhARftHxTv2Bpvt3YS5XCfS4=;
+  b=M3garLhXFuSTnJhML8Nlm1GlM5leFyb4+EnBNZUyUOhkIi2Pznr7MOZ9
+   QToYhqKu9eZJyjNaaxfKfbDxegtIEbG2Lz1S73t2nDdVkOfcIsnB1Y7uL
+   LOc/WK1J3P5kJrJXnwJB4VwUBVo2xIMw11VcNUaIDYX6Yc2Un61b/yhK/
+   kMiS/hxy37aNSlTZL2+UTuxrzbVKqDi+kHwtMPwAKS2n2dlkjM3Clav2s
+   SgMGj5Risj0eYGUz52h8rNSH2ZTeBWn0OkNy/xR2xGSECuZ3s+cPl4rGD
+   mNk1xevr5db8cSpSvCfu2UsQYoVs/FlgnfDJCVwDbeDHAOLHLnhb5+7GS
    w==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313710642"
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313710694"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="313710642"
+   d="scan'208";a="313710694"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:30 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479747"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:34 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479756"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="787479747"
+   d="scan'208";a="787479756"
 Received: from bgordon1-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.212.211.211])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:28 -0800
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:36:32 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v4 01/39] Documentation/x86: Add CET shadow stack description
-Date:   Fri,  2 Dec 2022 16:35:28 -0800
-Message-Id: <20221203003606.6838-2-rick.p.edgecombe@intel.com>
+Subject: [PATCH v4 03/39] x86/cpufeatures: Add CPU feature flags for shadow stacks
+Date:   Fri,  2 Dec 2022 16:35:30 -0800
+Message-Id: <20221203003606.6838-4-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
 References: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
@@ -78,7 +78,25 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-Introduce a new document on Control-flow Enforcement Technology (CET).
+The Control-Flow Enforcement Technology contains two related features,
+one of which is Shadow Stacks. Future patches will utilize this feature
+for shadow stack support in KVM, so add a CPU feature flags for Shadow
+Stacks (CPUID.(EAX=7,ECX=0):ECX[bit 7]).
+
+To protect shadow stack state from malicious modification, the registers
+are only accessible in supervisor mode. This implementation
+context-switches the registers with XSAVES. Make X86_FEATURE_SHSTK depend
+on XSAVES.
+
+The shadow stack feature, enumerated by the CPUID bit described above,
+encompasses both supervisor and userspace support for shadow stack. In
+near future patches, only userspace shadow stack will be enabled. In
+expectation of future supervisor shadow stack support, create a software
+CPU capability to enumerate kernel utilization of userspace shadow stack
+support. This will also allow for userspace shadow stack to be disabled,
+while leaving the shadow stack hardware capability exposed in the cpuinfo
+proc. This user shadow stack bit should depend on the HW "shstk"
+capability and that logic will be implemented in future patches.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
@@ -88,214 +106,83 @@ Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc: Kees Cook <keescook@chromium.org>
 ---
 
-v4:
- - Drop clearcpuid piece (Boris)
- - Add some info about 32 bit
-
 v3:
- - Clarify kernel IBT is supported by the kernel. (Kees, Andrew Cooper)
- - Clarify which arch_prctl's can take multiple bits. (Kees)
- - Describe ASLR characteristics of thread shadow stacks. (Kees)
- - Add exec section. (Andrew Cooper)
- - Fix some capitalization (Bagas Sanjaya)
- - Update new location of enablement status proc.
- - Add info about new user_shstk software capability.
- - Add more info about what the kernel pushes to the shadow stack on
-   signal.
+ - Add user specific shadow stack cpu cap (Andrew Cooper)
+ - Drop reviewed-bys from Boris and Kees due to the above change.
 
 v2:
- - Updated to new arch_prctl() API
- - Add bit about new proc status
+ - Remove IBT reference in commit log (Kees)
+ - Describe xsaves dependency using text from (Dave)
 
 v1:
- - Update and clarify the docs.
- - Moved kernel parameters documentation to other patch.
+ - Remove IBT, can be added in a follow on IBT series.
 
- Documentation/x86/index.rst |   1 +
- Documentation/x86/shstk.rst | 162 ++++++++++++++++++++++++++++++++++++
- 2 files changed, 163 insertions(+)
- create mode 100644 Documentation/x86/shstk.rst
+Yu-cheng v25:
+ - Make X86_FEATURE_IBT depend on X86_FEATURE_SHSTK.
 
-diff --git a/Documentation/x86/index.rst b/Documentation/x86/index.rst
-index c73d133fd37c..8ac64d7de4dc 100644
---- a/Documentation/x86/index.rst
-+++ b/Documentation/x86/index.rst
-@@ -22,6 +22,7 @@ x86-specific Documentation
-    mtrr
-    pat
-    intel-hfi
-+   shstk
-    iommu
-    intel_txt
-    amd-memory-encryption
-diff --git a/Documentation/x86/shstk.rst b/Documentation/x86/shstk.rst
-new file mode 100644
-index 000000000000..8e0b2fe83ef8
---- /dev/null
-+++ b/Documentation/x86/shstk.rst
-@@ -0,0 +1,162 @@
-+.. SPDX-License-Identifier: GPL-2.0
+ arch/x86/include/asm/cpufeatures.h       | 2 ++
+ arch/x86/include/asm/disabled-features.h | 8 +++++++-
+ arch/x86/kernel/cpu/cpuid-deps.c         | 1 +
+ 3 files changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 11a0e06362e4..aab7fa4104d7 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -307,6 +307,7 @@
+ #define X86_FEATURE_SGX_EDECCSSA	(11*32+18) /* "" SGX EDECCSSA user leaf function */
+ #define X86_FEATURE_CALL_DEPTH		(11*32+19) /* "" Call depth tracking for RSB stuffing */
+ #define X86_FEATURE_MSR_TSX_CTRL	(11*32+20) /* "" MSR IA32_TSX_CTRL (Intel) implemented */
++#define X86_FEATURE_USER_SHSTK		(11*32+21) /* Shadow stack support for user mode applications */
+ 
+ /* Intel-defined CPU features, CPUID level 0x00000007:1 (EAX), word 12 */
+ #define X86_FEATURE_AVX_VNNI		(12*32+ 4) /* AVX VNNI instructions */
+@@ -369,6 +370,7 @@
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
+index c44b56f7ffba..7a2954a16cb7 100644
+--- a/arch/x86/include/asm/disabled-features.h
++++ b/arch/x86/include/asm/disabled-features.h
+@@ -99,6 +99,12 @@
+ # define DISABLE_TDX_GUEST	(1 << (X86_FEATURE_TDX_GUEST & 31))
+ #endif
+ 
++#ifdef CONFIG_X86_USER_SHADOW_STACK
++#define DISABLE_USER_SHSTK	0
++#else
++#define DISABLE_USER_SHSTK	(1 << (X86_FEATURE_USER_SHSTK & 31))
++#endif
 +
-+======================================================
-+Control-flow Enforcement Technology (CET) Shadow Stack
-+======================================================
-+
-+CET Background
-+==============
-+
-+Control-flow Enforcement Technology (CET) is term referring to several
-+related x86 processor features that provides protection against control
-+flow hijacking attacks. The HW feature itself can be set up to protect
-+both applications and the kernel.
-+
-+CET introduces Shadow Stack and Indirect Branch Tracking (IBT). Shadow stack
-+is a secondary stack allocated from memory and cannot be directly modified by
-+applications. When executing a CALL instruction, the processor pushes the
-+return address to both the normal stack and the shadow stack. Upon
-+function return, the processor pops the shadow stack copy and compares it
-+to the normal stack copy. If the two differ, the processor raises a
-+control-protection fault. IBT verifies indirect CALL/JMP targets are intended
-+as marked by the compiler with 'ENDBR' opcodes. Not all CPU's have both Shadow
-+Stack and Indirect Branch Tracking. Today in the 64-bit kernel, only userspace
-+Shadow Stack and kernel IBT is supported.
-+
-+Requirements to use Shadow Stack
-+================================
-+
-+To use userspace shadow stack you need HW that supports it, a kernel
-+configured with it and userspace libraries compiled with it.
-+
-+The kernel Kconfig option is X86_USER_SHADOW_STACK, and it can be disabled
-+with the kernel parameter: nousershstk.
-+
-+To build a user shadow stack enabled kernel, Binutils v2.29 or LLVM v6 or later
-+are required.
-+
-+At run time, /proc/cpuinfo shows CET features if the processor supports
-+CET. "shstk" and "ibt" relate to the individual HW features. "user_shstk"
-+relates to whether the userspace shadow stack specifically is supported.
-+
-+Application Enabling
-+====================
-+
-+An application's CET capability is marked in its ELF note and can be verified
-+from readelf/llvm-readelf output:
-+
-+    readelf -n <application> | grep -a SHSTK
-+        properties: x86 feature: SHSTK
-+
-+The kernel does not process these applications markers directly. Applications
-+or loaders must enable CET features using the interface described in section 4.
-+Typically this would be done in dynamic loader or static runtime objects, as is
-+the case in GLIBC.
-+
-+Enabling arch_prctl()'s
-+=======================
-+
-+Elf features should be enabled by the loader using the below arch_prctl's. They
-+are only supported in 64 bit user applciations.
-+
-+arch_prctl(ARCH_SHSTK_ENABLE, unsigned long feature)
-+    Enable a single feature specified in 'feature'. Can only operate on
-+    one feature at a time.
-+
-+arch_prctl(ARCH_SHSTK_DISABLE, unsigned long feature)
-+    Disable a single feature specified in 'feature'. Can only operate on
-+    one feature at a time.
-+
-+arch_prctl(ARCH_SHSTK_LOCK, unsigned long features)
-+    Lock in features at their current enabled or disabled status. 'features'
-+    is a mask of all features to lock. All bits set are processed, unset bits
-+    are ignored. The mask is ORed with the existing value. So any feature bits
-+    set here cannot be enabled or disabled afterwards.
-+
-+The return values are as following:
-+    On success, return 0. On error, errno can be::
-+
-+        -EPERM if any of the passed feature are locked.
-+        -EOPNOTSUPP if the feature is not supported by the hardware or
-+         disabled by kernel parameter.
-+        -EINVAL arguments (non existing feature, etc)
-+
-+The feature's bits supported are::
-+
-+    ARCH_SHSTK_SHSTK - Shadow stack
-+    ARCH_SHSTK_WRSS  - WRSS
-+
-+Currently shadow stack and WRSS are supported via this interface. WRSS
-+can only be enabled with shadow stack, and is automatically disabled
-+if shadow stack is disabled.
-+
-+Proc Status
-+===========
-+To check if an application is actually running with shadow stack, the
-+user can read the /proc/$PID/status. It will report "wrss" or "shstk"
-+depending on what is enabled. The lines look like this::
-+
-+    x86_Thread_features: shstk wrss
-+    x86_Thread_features_locked: shstk wrss
-+
-+Implementation of the Shadow Stack
-+==================================
-+
-+Shadow Stack Size
-+-----------------
-+
-+A task's shadow stack is allocated from memory to a fixed size of
-+MIN(RLIMIT_STACK, 4 GB). In other words, the shadow stack is allocated to
-+the maximum size of the normal stack, but capped to 4 GB. However,
-+a compat-mode application's address space is smaller, each of its thread's
-+shadow stack size is MIN(1/4 RLIMIT_STACK, 4 GB).
-+
-+Signal
-+------
-+
-+By default, the main program and its signal handlers use the same shadow
-+stack. Because the shadow stack stores only return addresses, a large
-+shadow stack covers the condition that both the program stack and the
-+signal alternate stack run out.
-+
-+When a signal happens, the old pre-signal state is pushed on the stack. When
-+shadow stack is enabled, the shadow stack specific state is pushed onto the
-+shadow stack. Today this is only the old SSP (shadow stack pointer), pushed
-+in a special format with bit 63 set. On sigreturn this old SSP token is
-+verified and restored by the kernel. The kernel will also push the normal
-+restorer address to the shadow stack to help userspace avoid a shadow stack
-+violation on the sigreturn path that goes through the restorer.
-+
-+So the shadow stack signal frame format is as follows::
-+
-+    |1...old SSP| - Pointer to old pre-signal ssp in sigframe token format
-+                    (bit 63 set to 1)
-+    |        ...| - Other state may be added in the future
-+
-+
-+32 bit ABI signals are not supported in shadow stack processes. Linux prevents
-+this by clearing any 32 bit signals (those registered via a 32 bit syscall)
-+when shadow stack is enabled, and blocking any new ones from being added.
-+
-+Fork
-+----
-+
-+The shadow stack's vma has VM_SHADOW_STACK flag set; its PTEs are required
-+to be read-only and dirty. When a shadow stack PTE is not RO and dirty, a
-+shadow access triggers a page fault with the shadow stack access bit set
-+in the page fault error code.
-+
-+When a task forks a child, its shadow stack PTEs are copied and both the
-+parent's and the child's shadow stack PTEs are cleared of the dirty bit.
-+Upon the next shadow stack access, the resulting shadow stack page fault
-+is handled by page copy/re-use.
-+
-+When a pthread child is created, the kernel allocates a new shadow stack
-+for the new thread. New shadow stack's behave like mmap() with respect to
-+ASLR behavior.
-+
-+Exec
-+----
-+
-+On exec, shadow stack features are disabled by the kernel. At which point,
-+userspace can choose to re-enable, or lock them.
+ /*
+  * Make sure to add features to the correct mask
+  */
+@@ -114,7 +120,7 @@
+ #define DISABLED_MASK9	(DISABLE_SGX)
+ #define DISABLED_MASK10	0
+ #define DISABLED_MASK11	(DISABLE_RETPOLINE|DISABLE_RETHUNK|DISABLE_UNRET| \
+-			 DISABLE_CALL_DEPTH_TRACKING)
++			 DISABLE_CALL_DEPTH_TRACKING|DISABLE_USER_SHSTK)
+ #define DISABLED_MASK12	0
+ #define DISABLED_MASK13	0
+ #define DISABLED_MASK14	0
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index d95221117129..c3e4e5246df9 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -79,6 +79,7 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_XFD,			X86_FEATURE_XSAVES    },
+ 	{ X86_FEATURE_XFD,			X86_FEATURE_XGETBV1   },
+ 	{ X86_FEATURE_AMX_TILE,			X86_FEATURE_XFD       },
++	{ X86_FEATURE_SHSTK,			X86_FEATURE_XSAVES    },
+ 	{}
+ };
+ 
 -- 
 2.17.1
 
