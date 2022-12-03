@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ADFD4C4321E
-	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:43:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6057CC47089
+	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:43:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235334AbiLCAnU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 2 Dec 2022 19:43:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41864 "EHLO
+        id S235010AbiLCAnm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 2 Dec 2022 19:43:42 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:54102 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235279AbiLCAmD (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:42:03 -0500
+        with ESMTP id S234980AbiLCAmF (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:42:05 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 299851042E0;
-        Fri,  2 Dec 2022 16:38:27 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 596E3FA451;
+        Fri,  2 Dec 2022 16:38:32 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1670027908; x=1701563908;
+  t=1670027912; x=1701563912;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=9Rgq6Is1ft2SHhT8Knmc6hxAfAY7NUj7tCn2AnWmhHU=;
-  b=JLznq60wRLmOAHjqC+rkZsCOl7pFbD2wpjlzi9HyaQHHk/0UJhUMJSXh
-   96jhzCFrokGQJxiP9kg+E6JbcRDKwJOizY6Jetv5tL5pYQ4Sdd9Wouw84
-   hdvq2xzmb3ya8x+vd0PlzwoWhodqhdDSA6epCLxMMqow5ujDt1uzXeisy
-   sSdCZNAUDr5z7ck1cHlvksd1oB69AebpTJxCWnMXIZArPqu/p+zCCJdbZ
-   oRabDTvIrhDFU/6Y30qAvBJBvOh9UBQxVhkTmsZMCNi10iAEJ1Hbp9haz
-   mDAvCfwqMNojKgsWSdY9ssqWj+XfMlzoDD1/vakepWxjllmo+sJS0bOrr
-   w==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711482"
+  bh=tLQzvtFCG7gPr37x5ob+Amj80mPdYmHi/Bjvakhw+Z8=;
+  b=MACDcLCHEH3KqhNgCMhCN9N6ImoxZTG/+c71XeRUzK2pvixCpU9+rdeg
+   uLm/R98OeQWCQW95iYfcmQOTYpSCDCr62MiIxMJ9sUJDAN35mCmc/rYz3
+   ceBDHy914aIGzz93MHfZQxBuCr9xGdXLumvRvNbYxAWWjSpmDiidYN6KZ
+   1MwlNzHQmhwE2z7KQt6L3l3cw2FarSDWdC7P0QxIjtLe+rTBnHS3w/nL9
+   yOX5nW+5J22ek9XZoGzolFI5cEH/lJj5f4UpNAyUFa/uvIxHiHDdDpgAy
+   v3PVil9NziIFXNJHlW1HQPBFa8d3WtHyoVegC7il+th6kt13FlsG8baCz
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711538"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="313711482"
+   d="scan'208";a="313711538"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:40 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479999"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:44 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787480020"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="787479999"
+   d="scan'208";a="787480020"
 Received: from bgordon1-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.212.211.211])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:38 -0800
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:42 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
 Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH v4 32/39] x86: Expose thread features in /proc/$PID/status
-Date:   Fri,  2 Dec 2022 16:35:59 -0800
-Message-Id: <20221203003606.6838-33-rick.p.edgecombe@intel.com>
+Subject: [PATCH v4 34/39] x86/shstk: Wire in shadow stack interface
+Date:   Fri,  2 Dec 2022 16:36:01 -0800
+Message-Id: <20221203003606.6838-35-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
 References: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
@@ -76,112 +76,47 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Applications and loaders can have logic to decide whether to enable
-shadow stack. They usually don't report whether shadow stack has been
-enabled or not, so there is no way to verify whether an application
-actually is protected by shadow stack.
-
-Add two lines in /proc/$PID/status to report enabled and locked features.
-
-Since, this involves referring to arch specific defines in asm/prctl.h,
-implement an arch breakout to emit the feature lines.
+The kernel now has the main shadow stack functionality to support
+applications. Wire in the WRSS and shadow stack enable/disable functions
+into the existing shadow stack API skeleton.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
-Signed-off-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
-[Switched to CET, added to commit log]
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 ---
 
 v4:
  - Remove "CET" references
 
-v3:
- - Move to /proc/pid/status (Kees)
-
 v2:
- - New patch
+ - Split from other patches
 
- arch/x86/kernel/cpu/proc.c | 23 +++++++++++++++++++++++
- fs/proc/array.c            |  6 ++++++
- include/linux/proc_fs.h    |  2 ++
- 3 files changed, 31 insertions(+)
+ arch/x86/kernel/shstk.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/kernel/cpu/proc.c b/arch/x86/kernel/cpu/proc.c
-index 099b6f0d96bd..31c0e68f6227 100644
---- a/arch/x86/kernel/cpu/proc.c
-+++ b/arch/x86/kernel/cpu/proc.c
-@@ -4,6 +4,8 @@
- #include <linux/string.h>
- #include <linux/seq_file.h>
- #include <linux/cpufreq.h>
-+#include <asm/prctl.h>
-+#include <linux/proc_fs.h>
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 3a7bcc01d985..5d91e653f77a 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -468,9 +468,17 @@ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
+ 		return -EINVAL;
  
- #include "cpu.h"
+ 	if (option == ARCH_SHSTK_DISABLE) {
++		if (features & ARCH_SHSTK_WRSS)
++			return wrss_control(false);
++		if (features & ARCH_SHSTK_SHSTK)
++			return shstk_disable();
+ 		return -EINVAL;
+ 	}
  
-@@ -175,3 +177,24 @@ const struct seq_operations cpuinfo_op = {
- 	.stop	= c_stop,
- 	.show	= show_cpuinfo,
- };
-+
-+#ifdef CONFIG_X86_USER_SHADOW_STACK
-+static void dump_x86_features(struct seq_file *m, unsigned long features)
-+{
+ 	/* Handle ARCH_SHSTK_ENABLE */
 +	if (features & ARCH_SHSTK_SHSTK)
-+		seq_puts(m, "shstk ");
++		return shstk_setup();
 +	if (features & ARCH_SHSTK_WRSS)
-+		seq_puts(m, "wrss ");
-+}
-+
-+void arch_proc_pid_thread_features(struct seq_file *m, struct task_struct *task)
-+{
-+	seq_puts(m, "x86_Thread_features:\t");
-+	dump_x86_features(m, task->thread.features);
-+	seq_putc(m, '\n');
-+
-+	seq_puts(m, "x86_Thread_features_locked:\t");
-+	dump_x86_features(m, task->thread.features_locked);
-+	seq_putc(m, '\n');
-+}
-+#endif /* CONFIG_X86_USER_SHADOW_STACK */
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index d2a94eafe9a3..96ee17d68b4c 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -433,6 +433,11 @@ static inline void task_untag_mask(struct seq_file *m, struct mm_struct *mm)
- 	seq_printf(m, "untag_mask:\t%#lx\n", mm_untag_mask(mm));
++		return wrss_control(true);
+ 	return -EINVAL;
  }
- 
-+__weak void arch_proc_pid_thread_features(struct seq_file *m,
-+					  struct task_struct *task)
-+{
-+}
-+
- int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 			struct pid *pid, struct task_struct *task)
- {
-@@ -457,6 +462,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 	task_cpus_allowed(m, task);
- 	cpuset_task_status_allowed(m, task);
- 	task_context_switch_counts(m, task);
-+	arch_proc_pid_thread_features(m, task);
- 	return 0;
- }
- 
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 81d6e4ec2294..5a8b21c0a587 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -158,6 +158,8 @@ int proc_pid_arch_status(struct seq_file *m, struct pid_namespace *ns,
- 			struct pid *pid, struct task_struct *task);
- #endif /* CONFIG_PROC_PID_ARCH_STATUS */
- 
-+void arch_proc_pid_thread_features(struct seq_file *m, struct task_struct *task);
-+
- #else /* CONFIG_PROC_FS */
- 
- static inline void proc_root_init(void)
 -- 
 2.17.1
 
