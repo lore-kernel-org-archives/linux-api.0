@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 71E8AC63703
-	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:40:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6EE5C47090
+	for <linux-api@archiver.kernel.org>; Sat,  3 Dec 2022 00:40:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235147AbiLCAks (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 2 Dec 2022 19:40:48 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41778 "EHLO
+        id S235024AbiLCAkx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 2 Dec 2022 19:40:53 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41204 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235056AbiLCAkO (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:40:14 -0500
+        with ESMTP id S235118AbiLCAkS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 2 Dec 2022 19:40:18 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0274D2EF4B;
-        Fri,  2 Dec 2022 16:37:56 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B0A7C421A9;
+        Fri,  2 Dec 2022 16:38:02 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1670027877; x=1701563877;
+  t=1670027882; x=1701563882;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=OscWK4vBleHDbCii3J5IxRm9vERbNW8+FtcU6Glk4SQ=;
-  b=Vfvj2FmofA5LOIcQoMyvroTW6AQxBJduWB986yaRTakap3Aucd9V1rut
-   1TtVFUDEn6ijJLr9iqfhp0ZqIUighhudkVK6Q9qFVo0w4JXhJVZ3jmYQq
-   ZaON/TfldnztU/iOSwepJYiKQvzvcV61orUbo0NM0HwfGkIO3w8c0fa7e
-   T/Tbkby3z6ztjaZubQJxEdMWM/G+y19n4vbjwxb272CTCqnUZPVXq6CYi
-   vs/f5qlFw5tSmJl3AJr+Gzqz8SZw8T6ApGisefOEXhQwr0V4P0etoHAIm
-   G5wxs6SK/je8My6GlzkQwU1+t0MfPJLofXCz4KdH0JFuqc4kVNv8Wl34p
-   w==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711140"
+  bh=e1Skkfy1bUPFrf6Q3GKORbKcHv2d1Lsi1t/sz8iK3T0=;
+  b=dI+zjLmZgQKl4reOc5ild3Xo8n29jQF38wpDrK8gGOXx294gdZsWSG1q
+   pE2N5o/H0jQrArrtcxYZhRJpfkldOlQ6VQN7Wnj0ovdeM7pfO86RmvkWR
+   m5Uus6P8CyUvFd2AbsC5vnsMkXlbyu7xu9CYtbjg6kxWk65X9K4hKL3eh
+   nurw6QVoByszTHLbhoCy+1nPJtvlzR+wp2F4brw61j7vcs1VmdzoKOl6L
+   6/ahAo2G9Viw72ydEbJc4ZsZLf+iIPtQKIVAdHiLUVIlc57ZmJLwDvDtV
+   eY2J6ZiiZsDrQw0q6LzgZTVrhm56qkh3JJyLHJJo1vmVryrG5y9pUNeFD
+   A==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="313711190"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="313711140"
+   d="scan'208";a="313711190"
 Received: from fmsmga001.fm.intel.com ([10.253.24.23])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:16 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479912"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:22 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10549"; a="787479929"
 X-IronPort-AV: E=Sophos;i="5.96,213,1665471600"; 
-   d="scan'208";a="787479912"
+   d="scan'208";a="787479929"
 Received: from bgordon1-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.212.211.211])
-  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:13 -0800
+  by fmsmga001-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 02 Dec 2022 16:37:20 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v4 19/39] mm: Add guard pages around a shadow stack.
-Date:   Fri,  2 Dec 2022 16:35:46 -0800
-Message-Id: <20221203003606.6838-20-rick.p.edgecombe@intel.com>
+Subject: [PATCH v4 22/39] mm: Re-introduce vm_flags to do_mmap()
+Date:   Fri,  2 Dec 2022 16:35:49 -0800
+Message-Id: <20221203003606.6838-23-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
 References: <20221203003606.6838-1-rick.p.edgecombe@intel.com>
@@ -78,124 +78,152 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-The x86 Control-flow Enforcement Technology (CET) feature includes a new
-type of memory called shadow stack. This shadow stack memory has some
-unusual properties, which requires some core mm changes to function
-properly.
+There was no more caller passing vm_flags to do_mmap(), and vm_flags was
+removed from the function's input by:
 
-The architecture of shadow stack constrains the ability of userspace to
-move the shadow stack pointer (SSP) in order to  prevent corrupting or
-switching to other shadow stacks. The RSTORSSP can move the spp to
-different shadow stacks, but it requires a specially placed token in order
-to do this. However, the architecture does not prevent incrementing the
-stack pointer to wander onto an adjacent shadow stack. To prevent this in
-software, enforce guard pages at the beginning of shadow stack vmas, such
-that there will always be a gap between adjacent shadow stacks.
+    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
 
-Make the gap big enough so that no userspace SSP changing operations
-(besides RSTORSSP), can move the SSP from one stack to the next. The
-SSP can increment or decrement by CALL, RET  and INCSSP. CALL and RET
-can move the SSP by a maximum of 8 bytes, at which point the shadow
-stack would be accessed.
-
-The INCSSP instruction can also increment the shadow stack pointer. It
-is the shadow stack analog of an instruction like:
-
-	addq    $0x80, %rsp
-
-However, there is one important difference between an ADD on %rsp and
-INCSSP. In addition to modifying SSP, INCSSP also reads from the memory
-of the first and last elements that were "popped". It can be thought of
-as acting like this:
-
-READ_ONCE(ssp);       // read+discard top element on stack
-ssp += nr_to_pop * 8; // move the shadow stack
-READ_ONCE(ssp-8);     // read+discard last popped stack element
-
-The maximum distance INCSSP can move the SSP is 2040 bytes, before it
-would read the memory. Therefore a single page gap will be enough to
-prevent any operation from shifting the SSP to an adjacent stack, since
-it would have to land in the gap at least once, causing a fault.
-
-This could be accomplished by using VM_GROWSDOWN, but this has a
-downside. The behavior would allow shadow stack's to grow, which is
-unneeded and adds a strange difference to how most regular stacks work.
+There is a new user now.  Shadow stack allocation passes VM_SHADOW_STACK to
+do_mmap().  Thus, re-introduce vm_flags to do_mmap().
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Reviewed-by: Peter Collingbourne <pcc@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-mm@kvack.org
 ---
+ fs/aio.c           |  2 +-
+ include/linux/mm.h |  3 ++-
+ ipc/shm.c          |  2 +-
+ mm/mmap.c          | 10 +++++-----
+ mm/nommu.c         |  4 ++--
+ mm/util.c          |  2 +-
+ 6 files changed, 12 insertions(+), 11 deletions(-)
 
-v4:
- - Drop references to 32 bit instructions
- - Switch to generic code to drop __weak (Peterz)
-
-v2:
- - Use __weak instead of #ifdef (Dave Hansen)
- - Only have start gap on shadow stack (Andy Luto)
- - Create stack_guard_start_gap() to not duplicate code
-   in an arch version of vm_start_gap() (Dave Hansen)
- - Improve commit log partly with verbiage from (Dave Hansen)
-
-Yu-cheng v25:
- - Move SHADOW_STACK_GUARD_GAP to arch/x86/mm/mmap.c.
-
-Yu-cheng v24:
- - Instead changing vm_*_gap(), create x86-specific versions.
-
- include/linux/mm.h | 31 ++++++++++++++++++++++++++-----
- 1 file changed, 26 insertions(+), 5 deletions(-)
-
+diff --git a/fs/aio.c b/fs/aio.c
+index 5b2ff20ad322..66119297125a 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -554,7 +554,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
+ 
+ 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
+ 				 PROT_READ | PROT_WRITE,
+-				 MAP_SHARED, 0, &unused, NULL);
++				 MAP_SHARED, 0, 0, &unused, NULL);
+ 	mmap_write_unlock(mm);
+ 	if (IS_ERR((void *)ctx->mmap_base)) {
+ 		ctx->mmap_size = 0;
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index f10797a1b236..e0991d2fc5a8 100644
+index e0991d2fc5a8..7c10d2a7bbfd 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -2821,15 +2821,36 @@ struct vm_area_struct *vma_lookup(struct mm_struct *mm, unsigned long addr)
- 	return mtree_load(&mm->mm_mt, addr);
- }
+@@ -2731,7 +2731,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	struct list_head *uf);
+ extern unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+-	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
++	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
++	struct list_head *uf);
+ extern int do_mas_munmap(struct ma_state *mas, struct mm_struct *mm,
+ 			 unsigned long start, size_t len, struct list_head *uf,
+ 			 bool downgrade);
+diff --git a/ipc/shm.c b/ipc/shm.c
+index bd2fcc4d454e..1c5476bfec8b 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -1662,7 +1662,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
+ 			goto invalid;
+ 	}
  
-+static inline unsigned long stack_guard_start_gap(struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_GROWSDOWN)
-+		return stack_guard_gap;
-+
-+	/*
-+	 * Shadow stack pointer is moved by CALL, RET, and INCSSPQ.
-+	 * INCSSPQ moves shadow stack pointer up to 255 * 8 = ~2 KB
-+	 * and touches the first and the last element in the range, which
-+	 * triggers a page fault if the range is not in a shadow stack.
-+	 * Because of this, creating 4-KB guard pages around a shadow
-+	 * stack prevents these instructions from going beyond.
-+	 *
-+	 * Creation of VM_SHADOW_STACK is tightly controlled, so a vma
-+	 * can't be both VM_GROWSDOWN and VM_SHADOW_STACK
-+	 */
-+	if (vma->vm_flags & VM_SHADOW_STACK)
-+		return PAGE_SIZE;
-+
-+	return 0;
-+}
-+
- static inline unsigned long vm_start_gap(struct vm_area_struct *vma)
+-	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
++	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
+ 	*raddr = addr;
+ 	err = 0;
+ 	if (IS_ERR_VALUE(addr))
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 7ce04d2d5a10..a3ce13be0767 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1239,11 +1239,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
+  */
+ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			unsigned long len, unsigned long prot,
+-			unsigned long flags, unsigned long pgoff,
+-			unsigned long *populate, struct list_head *uf)
++			unsigned long flags, vm_flags_t vm_flags,
++			unsigned long pgoff, unsigned long *populate,
++			struct list_head *uf)
  {
-+	unsigned long gap = stack_guard_start_gap(vma);
- 	unsigned long vm_start = vma->vm_start;
+ 	struct mm_struct *mm = current->mm;
+-	vm_flags_t vm_flags;
+ 	int pkey = 0;
  
--	if (vma->vm_flags & VM_GROWSDOWN) {
--		vm_start -= stack_guard_gap;
--		if (vm_start > vma->vm_start)
--			vm_start = 0;
--	}
-+	vm_start -= gap;
-+	if (vm_start > vma->vm_start)
-+		vm_start = 0;
- 	return vm_start;
- }
+ 	validate_mm(mm);
+@@ -1304,7 +1304,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
  
+ 	if (flags & MAP_LOCKED)
+@@ -2877,7 +2877,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+ 
+ 	file = get_file(vma->vm_file);
+ 	ret = do_mmap(vma->vm_file, start, size,
+-			prot, flags, pgoff, &populate, NULL);
++			prot, flags, 0, pgoff, &populate, NULL);
+ 	fput(file);
+ out:
+ 	mmap_write_unlock(mm);
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 214c70e1d059..20ff1ec89091 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1042,6 +1042,7 @@ unsigned long do_mmap(struct file *file,
+ 			unsigned long len,
+ 			unsigned long prot,
+ 			unsigned long flags,
++			vm_flags_t vm_flags,
+ 			unsigned long pgoff,
+ 			unsigned long *populate,
+ 			struct list_head *uf)
+@@ -1049,7 +1050,6 @@ unsigned long do_mmap(struct file *file,
+ 	struct vm_area_struct *vma;
+ 	struct vm_region *region;
+ 	struct rb_node *rb;
+-	vm_flags_t vm_flags;
+ 	unsigned long capabilities, result;
+ 	int ret;
+ 	MA_STATE(mas, &current->mm->mm_mt, 0, 0);
+@@ -1069,7 +1069,7 @@ unsigned long do_mmap(struct file *file,
+ 
+ 	/* we've determined that we can make the mapping, now translate what we
+ 	 * now know into VMA flags */
+-	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
++	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
+ 
+ 
+ 	/* we're going to need to record the mapping */
+diff --git a/mm/util.c b/mm/util.c
+index 12984e76767e..aefe4fae7ecf 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -517,7 +517,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 	if (!ret) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+-		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
++		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
+ 			      &uf);
+ 		mmap_write_unlock(mm);
+ 		userfaultfd_unmap_complete(mm, &uf);
 -- 
 2.17.1
 
