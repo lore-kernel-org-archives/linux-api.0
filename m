@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A4ED0C47089
-	for <linux-api@archiver.kernel.org>; Mon,  5 Dec 2022 18:41:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18B24C4332F
+	for <linux-api@archiver.kernel.org>; Mon,  5 Dec 2022 18:58:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233548AbiLESlQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 5 Dec 2022 13:41:16 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57718 "EHLO
+        id S232825AbiLES6S (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 5 Dec 2022 13:58:18 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46290 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233578AbiLESkk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 5 Dec 2022 13:40:40 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E1E9622B19
-        for <linux-api@vger.kernel.org>; Mon,  5 Dec 2022 10:34:53 -0800 (PST)
+        with ESMTP id S232839AbiLES6C (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 5 Dec 2022 13:58:02 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3649C20374
+        for <linux-api@vger.kernel.org>; Mon,  5 Dec 2022 10:57:01 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1670265293;
+        s=mimecast20190719; t=1670266620;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=WSqj19ShjO/7vxtuZI+dUviEQUmeLdI4Lm1aF+a+dOQ=;
-        b=TIxl587fq0YjeabC1TXTJA4FK5r9X9GE3Ec1dVAtrMI5LUyvkhNYhUbYzEbTgf+bOUrKP8
-        GnOB/crtyOJiF6sCRwAvfpwotAN5vV8fyLbVMEhrN1b/Jpm3HZ7gkhBmhJz73nj3P52dfW
-        2WYxJDUliBK9BdAMVP90lnVefLH74ec=
+        bh=YCNHamu5OKkFSMiJBfaNJ5Z6zqi4GnZWuw4yb+jZR9o=;
+        b=PYNjCcONBFJH8NOd8vQflao33IouRD92x2kTRT1xTtXNqUppR1/qC9BWET6WyAGnYV/0V8
+        2p9ZL4eChrWdB5nRV7ydjpwJi4dx+TUEszcEeT4/wkxdaEgjNE0k9SVwfkSKJFr24ml27l
+        210EztK8SQ4loj15ZVhSsmWw1HeenV8=
 Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
  [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-343-Ema1oqdPPVeJJZtUykzAeQ-1; Mon, 05 Dec 2022 13:34:46 -0500
-X-MC-Unique: Ema1oqdPPVeJJZtUykzAeQ-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+ us-mta-310-jY6HYjo0PeS4GoiGjdW_6A-1; Mon, 05 Dec 2022 13:56:54 -0500
+X-MC-Unique: jY6HYjo0PeS4GoiGjdW_6A-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 1A8FF3C38FE4;
-        Mon,  5 Dec 2022 18:34:46 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 873B91C05AAC;
+        Mon,  5 Dec 2022 18:56:53 +0000 (UTC)
 Received: from oldenburg.str.redhat.com (unknown [10.2.16.84])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id 560C39E70;
-        Mon,  5 Dec 2022 18:34:43 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTPS id AB68A1401C22;
+        Mon,  5 Dec 2022 18:56:51 +0000 (UTC)
 From:   Florian Weimer <fweimer@redhat.com>
 To:     "Jason A. Donenfeld" <Jason@zx2c4.com>
 Cc:     linux-kernel@vger.kernel.org, patches@lists.linux.dev,
@@ -47,91 +47,53 @@ Cc:     linux-kernel@vger.kernel.org, patches@lists.linux.dev,
         Carlos O'Donell <carlos@redhat.com>,
         Arnd Bergmann <arnd@arndb.de>,
         Christian Brauner <brauner@kernel.org>
-Subject: Re: [PATCH v11 1/4] random: add vgetrandom_alloc() syscall
+Subject: Re: [PATCH v11 3/4] random: introduce generic vDSO getrandom()
+ implementation
 References: <20221205020046.1876356-1-Jason@zx2c4.com>
-        <20221205020046.1876356-2-Jason@zx2c4.com>
-Date:   Mon, 05 Dec 2022 19:34:39 +0100
-In-Reply-To: <20221205020046.1876356-2-Jason@zx2c4.com> (Jason A. Donenfeld's
-        message of "Mon, 5 Dec 2022 03:00:43 +0100")
-Message-ID: <87cz8xr96o.fsf@oldenburg.str.redhat.com>
+        <20221205020046.1876356-4-Jason@zx2c4.com>
+Date:   Mon, 05 Dec 2022 19:56:47 +0100
+In-Reply-To: <20221205020046.1876356-4-Jason@zx2c4.com> (Jason A. Donenfeld's
+        message of "Mon, 5 Dec 2022 03:00:45 +0100")
+Message-ID: <878rjlr85s.fsf@oldenburg.str.redhat.com>
 User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/27.2 (gnu/linux)
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
 * Jason A. Donenfeld:
 
-> +/********************************************************************
-> + *
-> + * vDSO support helpers.
-> + *
-> + * The actual vDSO function is defined over in lib/vdso/getrandom.c,
-> + * but this section contains the kernel-mode helpers to support that.
-> + *
-> + ********************************************************************/
-> +
-> +#ifdef CONFIG_VDSO_GETRANDOM
-> +/**
-> + * sys_vgetrandom_alloc - Allocate opaque states for use with vDSO getra=
-ndom().
-> + *
-> + * @num:	   On input, a pointer to a suggested hint of how many states to
-> + * 		   allocate, and on return the number of states actually allocated.
-> + *
-> + * @size_per_each: On input, must be zero. On return, the size of each s=
-tate allocated,
-> + * 		   so that the caller can split up the returned allocation into
-> + * 		   individual states.
-> + *
-> + * @addr:	   Reserved, must be zero.
-> + *
-> + * @flags:	   Reserved, must be zero.
-> + *
-> + * The getrandom() vDSO function in userspace requires an opaque state, =
-which
-> + * this function allocates by mapping a certain number of special pages =
-into
-> + * the calling process. It takes a hint as to the number of opaque states
-> + * desired, and provides the caller with the number of opaque states act=
-ually
-> + * allocated, the size of each one in bytes, and the address of the first
-> + * state, which may be split up into @num states of @size_per_each bytes=
- each,
-> + * by adding @size_per_each to the returned first state @num times.
-> + *
-> + * Returns the address of the first state in the allocation on success, =
-or a
-> + * negative error value on failure.
-> + *
-> + * The returned address of the first state may be passed to munmap(2) wi=
-th a
-> + * length of `(size_t)num * (size_t)size_per_each`, in order to dealloca=
-te the
-> + * memory, after which it is invalid to pass it to vDSO getrandom().
-> + *
-> + * States allocated by this function must not be dereferenced, written, =
-read,
-> + * or otherwise manipulated. The *only* supported operations are:
-> + *   - Splitting up the states in intervals of @size_per_each, no more t=
-han
-> + *     @num times from the first state.
-> + *   - Passing a state to the getrandom() vDSO function's @opaque_state
-> + *     parameter, but not passing the same state at the same time to two=
- such
-> + *     calls.
-> + *   - Passing the first state to munmap(2), as described above.
-> + * All other uses are undefined behavior, which is subject to change or =
-removal
+> +retry_generation:
+> +	/*
+> +	 * @rng_info->generation must always be read here, as it serializes @st=
+ate->key with the
+> +	 * kernel's RNG reseeding schedule.
+> +	 */
+> +	current_generation =3D READ_ONCE(rng_info->generation);
 
-Suggest: =E2=80=9CPassing the first state *and total length* to munmap(2)=
-=E2=80=9D
+> +		if (unlikely(READ_ONCE(state->generation) !=3D READ_ONCE(rng_info-
 
-Rest of the documentation looks good to me.  It addresses my concerns
-about future evolution of this interface.
+I'm pretty sure you need some sort of barrier here.  We have a similar
+TM-lite construct in glibc ld.so for locating link maps by address, and
+there the compiler performed reordering.
+
+  _dl_find_object miscompilation on powerpc64le
+  <https://sourceware.org/bugzilla/show_bug.cgi?id=3D28745>
+
+I'm not familiar with READ_ONCE, but Documentation/atomic_t.txt suggests
+it's a =E2=80=9Cregular LOAD=E2=80=9D, and include/asm-generic/rwonce.h con=
+curs.
+Likewise, the signal safety mechanism needs compiler barriers (signal
+fences).
+
+I'm also not sure how READ_ONCE realizes atomic 64-bit reads on 32-bit
+platforms.  i386 can do them in user space via the FPU worst-case (if
+the control word hasn't been corrupted).  CMPXCHG8B is not applicable
+here because it's a read-only mapping.  Maybe add a comment at least
+about that =E2=80=9Cstrong prevailing wind=E2=80=9D?
 
 Thanks,
 Florian
