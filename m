@@ -2,51 +2,70 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C88AC4167B
-	for <linux-api@archiver.kernel.org>; Thu, 15 Dec 2022 07:51:26 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 1822EC4332F
+	for <linux-api@archiver.kernel.org>; Thu, 15 Dec 2022 13:57:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229631AbiLOHvY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 15 Dec 2022 02:51:24 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51290 "EHLO
+        id S229832AbiLON5w (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 15 Dec 2022 08:57:52 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35042 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229488AbiLOHvW (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Dec 2022 02:51:22 -0500
-Received: from smtp-out2.suse.de (smtp-out2.suse.de [IPv6:2001:67c:2178:6::1d])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2D64420995;
-        Wed, 14 Dec 2022 23:51:21 -0800 (PST)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by smtp-out2.suse.de (Postfix) with ESMTPS id 6AFA120CA9;
-        Thu, 15 Dec 2022 07:51:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-        t=1671090679; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=ApTPtm4BpVUmJDkiZyC1YdPf5EgpdLIlVfUqGS4nvKM=;
-        b=a41MyVNd5CeVoWrJcB4xuBEUNfYo4yDh603pgccImOnX5OCtr1gya9icfuLNk75R7Tk1id
-        gSDLYnn/xsqXVWQ/tro/OCo9PqlVcQRku5Sc/vAZfPj2iATPKyx+oom9eFMvCeJ+2W3Tsm
-        /ufa51Ym/t8u3pVUN7hd/OkttdwJEH0=
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 4203A138E5;
-        Thu, 15 Dec 2022 07:51:19 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id 0LftDffRmmMJewAAMHmgww
-        (envelope-from <mhocko@suse.com>); Thu, 15 Dec 2022 07:51:19 +0000
-Date:   Thu, 15 Dec 2022 08:51:18 +0100
-From:   Michal Hocko <mhocko@suse.com>
-To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        linux-kernel@vger.kernel.org,
-        "Aneesh Kumar K . V" <aneesh.kumar@linux.ibm.com>,
+        with ESMTP id S230043AbiLON5c (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 15 Dec 2022 08:57:32 -0500
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 997463055C;
+        Thu, 15 Dec 2022 05:57:20 -0800 (PST)
+Received: from pps.filterd (m0127361.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 2BFDuCDZ031042;
+        Thu, 15 Dec 2022 13:56:56 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=from : to : cc : subject
+ : in-reply-to : references : date : message-id : mime-version :
+ content-type; s=pp1; bh=sZD5GHL0Wts8M3LookLZiILQir76BKnZ83UrOMH34TU=;
+ b=mJm0xhEmaVU5kZztL4q1aoGW/GPKf5tgHeE+As72FF0Z0CD14Mz/MLx53rL75d7vNqWY
+ 7Ph8GIuKaRAfvl7/ZmqAUWJpmnlxx96rlziZl+5y1i/Ob6DFzfKA1+3aKlaaalUgnSQh
+ zwiqsvuU6CCJ5/DUAar1lDshMsGf0/nzaVGqTac/VtRmdEtvRZKY5WuaCedDMgUIDFTs
+ M3tLxznHgMH0Jkdo4Jf7LvYuyccnj2UvhVrkS0PO2ciyt8MzP0swuiMMt8xO8FNK4rbs
+ QNnLyUsI0HndCFxbIb2mqo+yEvxh8NNkTqFB459cZcxv5kmyoelUaQfcokZcz8aEv4FA VA== 
+Received: from pps.reinject (localhost [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 3mg4wdr0ca-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 15 Dec 2022 13:56:55 +0000
+Received: from m0127361.ppops.net (m0127361.ppops.net [127.0.0.1])
+        by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 2BFDuUWr031603;
+        Thu, 15 Dec 2022 13:56:55 GMT
+Received: from ppma03dal.us.ibm.com (b.bd.3ea9.ip4.static.sl-reverse.com [169.62.189.11])
+        by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 3mg4wdr0c3-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 15 Dec 2022 13:56:55 +0000
+Received: from pps.filterd (ppma03dal.us.ibm.com [127.0.0.1])
+        by ppma03dal.us.ibm.com (8.17.1.19/8.17.1.19) with ESMTP id 2BFD3crx005714;
+        Thu, 15 Dec 2022 13:56:54 GMT
+Received: from smtprelay04.wdc07v.mail.ibm.com ([9.208.129.114])
+        by ppma03dal.us.ibm.com (PPS) with ESMTPS id 3meyfdxcw5-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Thu, 15 Dec 2022 13:56:54 +0000
+Received: from smtpav02.dal12v.mail.ibm.com (smtpav02.dal12v.mail.ibm.com [10.241.53.101])
+        by smtprelay04.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 2BFDuqYq29033156
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Thu, 15 Dec 2022 13:56:53 GMT
+Received: from smtpav02.dal12v.mail.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 939425805F;
+        Thu, 15 Dec 2022 13:56:52 +0000 (GMT)
+Received: from smtpav02.dal12v.mail.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id D7BAB58051;
+        Thu, 15 Dec 2022 13:56:46 +0000 (GMT)
+Received: from skywalker.linux.ibm.com (unknown [9.43.98.149])
+        by smtpav02.dal12v.mail.ibm.com (Postfix) with ESMTP;
+        Thu, 15 Dec 2022 13:56:46 +0000 (GMT)
+X-Mailer: emacs 29.0.60 (via feedmail 11-beta-1 I)
+From:   "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>
+To:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        Andrew Morton <akpm@linux-foundation.org>
+Cc:     linux-kernel@vger.kernel.org,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
         Ben Widawsky <ben.widawsky@intel.com>,
         Dave Hansen <dave.hansen@linux.intel.com>,
         Feng Tang <feng.tang@intel.com>,
+        Michal Hocko <mhocko@kernel.org>,
         Andrea Arcangeli <aarcange@redhat.com>,
         Mel Gorman <mgorman@techsingularity.net>,
         Mike Kravetz <mike.kravetz@oracle.com>,
@@ -58,23 +77,38 @@ Cc:     Andrew Morton <akpm@linux-foundation.org>,
         stable@vger.kernel.org
 Subject: Re: [RFC PATCH] mm/mempolicy: Fix memory leak in
  set_mempolicy_home_node system call
-Message-ID: <Y5rR9n5HSvlATV5A@dhcp22.suse.cz>
-References: <20221214222110.200487-1-mathieu.desnoyers@efficios.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 In-Reply-To: <20221214222110.200487-1-mathieu.desnoyers@efficios.com>
+References: <20221214222110.200487-1-mathieu.desnoyers@efficios.com>
+Date:   Thu, 15 Dec 2022 19:26:43 +0530
+Message-ID: <87r0x06a90.fsf@linux.ibm.com>
+MIME-Version: 1.0
+Content-Type: text/plain
+X-TM-AS-GCONF: 00
+X-Proofpoint-GUID: YsxdgRmNPa0CM3b1-lNIiSE2FqANa2A5
+X-Proofpoint-ORIG-GUID: cKSKxkmT5nN3gQQQGGgDepktkHOW77VH
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.205,Aquarius:18.0.923,Hydra:6.0.545,FMLib:17.11.122.1
+ definitions=2022-12-15_07,2022-12-15_02,2022-06-22_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 lowpriorityscore=0
+ mlxlogscore=999 malwarescore=0 phishscore=0 impostorscore=0 clxscore=1011
+ adultscore=0 suspectscore=0 bulkscore=0 priorityscore=1501 spamscore=0
+ mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2212070000 definitions=main-2212150110
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed 14-12-22 17:21:10, Mathieu Desnoyers wrote:
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> writes:
+
 > When encountering any vma in the range with policy other than MPOL_BIND
 > or MPOL_PREFERRED_MANY, an error is returned without issuing a mpol_put
 > on the policy just allocated with mpol_dup().
-> 
+>
 > This allows arbitrary users to leak kernel memory.
-> 
+>
+
+Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
+
 > Fixes: c6018b4b2549 ("mm/mempolicy: add set_mempolicy_home_node syscall")
 > Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 > Cc: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
@@ -93,71 +127,21 @@ On Wed 14-12-22 17:21:10, Mathieu Desnoyers wrote:
 > Cc: <linux-api@vger.kernel.org>
 > Cc: Andrew Morton <akpm@linux-foundation.org>
 > Cc: stable@vger.kernel.org # 5.17+
-
-Acked-by: Michal Hocko <mhocko@suse.com>
-Thanks for catching this!
-
-Btw. looking at the code again it seems rather pointless to duplicate
-the policy just to throw it away anyway. A slightly bigger diff but this
-looks more reasonable to me. What do you think? I can also send it as a
-clean up on top of your fix.
----
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 61aa9aedb728..918cdc8a7f0c 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -1489,7 +1489,7 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
- {
- 	struct mm_struct *mm = current->mm;
- 	struct vm_area_struct *vma;
--	struct mempolicy *new;
-+	struct mempolicy *new. *old;
- 	unsigned long vmstart;
- 	unsigned long vmend;
- 	unsigned long end;
-@@ -1521,30 +1521,28 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
- 		return 0;
- 	mmap_write_lock(mm);
- 	for_each_vma_range(vmi, vma, end) {
--		vmstart = max(start, vma->vm_start);
--		vmend   = min(end, vma->vm_end);
--		new = mpol_dup(vma_policy(vma));
--		if (IS_ERR(new)) {
--			err = PTR_ERR(new);
--			break;
--		}
--		/*
--		 * Only update home node if there is an existing vma policy
--		 */
--		if (!new)
--			continue;
--
- 		/*
- 		 * If any vma in the range got policy other than MPOL_BIND
- 		 * or MPOL_PREFERRED_MANY we return error. We don't reset
- 		 * the home node for vmas we already updated before.
- 		 */
--		if (new->mode != MPOL_BIND && new->mode != MPOL_PREFERRED_MANY) {
-+		old = vma_policy(vma);
-+		if (!old)
-+			continue;
-+		if (old->mode != MPOL_BIND && old->mode != MPOL_PREFERRED_MANY) {
- 			err = -EOPNOTSUPP;
- 			break;
- 		}
- 
-+		new = mpol_dup(vma_policy(vma));
-+		if (IS_ERR(new)) {
-+			err = PTR_ERR(new);
-+			break;
-+		}
-+
- 		new->home_node = home_node;
-+		vmstart = max(start, vma->vm_start);
-+		vmend   = min(end, vma->vm_end);
- 		err = mbind_range(mm, vmstart, vmend, new);
- 		mpol_put(new);
- 		if (err)
--- 
-Michal Hocko
-SUSE Labs
+> ---
+>  mm/mempolicy.c | 1 +
+>  1 file changed, 1 insertion(+)
+>
+> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+> index 61aa9aedb728..02c8a712282f 100644
+> --- a/mm/mempolicy.c
+> +++ b/mm/mempolicy.c
+> @@ -1540,6 +1540,7 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
+>  		 * the home node for vmas we already updated before.
+>  		 */
+>  		if (new->mode != MPOL_BIND && new->mode != MPOL_PREFERRED_MANY) {
+> +			mpol_put(new);
+>  			err = -EOPNOTSUPP;
+>  			break;
+>  		}
+> -- 
+> 2.25.1
