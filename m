@@ -2,96 +2,150 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D0A1C4332F
-	for <linux-api@archiver.kernel.org>; Fri, 16 Dec 2022 17:05:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 64901C4332F
+	for <linux-api@archiver.kernel.org>; Fri, 16 Dec 2022 19:45:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231639AbiLPRFa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 16 Dec 2022 12:05:30 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59336 "EHLO
+        id S231892AbiLPTpx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 16 Dec 2022 14:45:53 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46344 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231646AbiLPRF1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Dec 2022 12:05:27 -0500
-Received: from mail-pf1-x42c.google.com (mail-pf1-x42c.google.com [IPv6:2607:f8b0:4864:20::42c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B4A796C715
-        for <linux-api@vger.kernel.org>; Fri, 16 Dec 2022 09:05:25 -0800 (PST)
-Received: by mail-pf1-x42c.google.com with SMTP id k79so2189298pfd.7
-        for <linux-api@vger.kernel.org>; Fri, 16 Dec 2022 09:05:25 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore-com.20210112.gappssmtp.com; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=d6OCT2ZdbDad/BMX0pnYZXGlc+e0Af4ihyKy0ZnG13g=;
-        b=Z0kmH3yeP9Pw0NncQFCv47w2VUJEbyqW6wCtFqkqD35DzlnQjOymTL+UIizo91OQJV
-         cb0kZr+GoPvoKk7VIQcBxGOOKum+LwY304gfBuOFvktTcQ6eucNVWmwasTR+x5mrxlVm
-         gnkRdOPRq4ruRtwFXXARRsU13Njjzms5ldIpvk3E/COI4DMoiOu9FldaJbUDbM3KPhLC
-         3z+O/MQW6suHxTx+ukoHtZAEtChDXTCoe0OOSFcA/TvX6DhappkvNrejJMbPPrqlG0l0
-         fhUqJ93Dp6iPHkyFu5Fq51DzpAepYTiuFjdBpvyAIo6b/6LKeUxI04HggIUgvV/nzfNS
-         Y8+g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=d6OCT2ZdbDad/BMX0pnYZXGlc+e0Af4ihyKy0ZnG13g=;
-        b=xQLhzsEv++rWzXkmlQpPrJvF2bmeZ67pzBVj/NQxhQ1wA6vI3/JJIZ4W7hTbu7Eo2X
-         jgyqVNux+xvDG5hqKYm58cHAuIotz/sjcrl7Tqf22PmBXyBeY9b+BojHpFPxS3fDhrCC
-         cLl8FeEHxzC0I9dkVfwd0nCQG8cTkVhH854wLH2sjkaUmrPVKvkbS/cry1YA24Rjb0uB
-         KHjsxrhtiDQB8Z8a+0bqF6zyLHjmsQdPlql5pBSJ/KwF09MxRIBGqral3MQsYOptTyOh
-         kecXpd/NZq+DPre3zdnNcffiCJtiXReVIECNq1yh3hAX+o0zMRm92x9xdR2C/L8lXiqp
-         Ymqw==
-X-Gm-Message-State: ANoB5pmwvUa+Xa2y6zS23TPrlOSieuXcKau9vYnuT1uc5/L00yfnr2Sb
-        ame1edpM3mLpzpTnKw7/fNWYUMqQ5AROT1aiDXVY
-X-Google-Smtp-Source: AA0mqf456SOTI8h5405bjuHYKyboskc6RX/a1Ar+YL3tEroIPWZYM0tvvsDsxRnA/dxrNyn4bb9+vxyTCfLgcpe9goM=
-X-Received: by 2002:a63:64c5:0:b0:479:2109:506 with SMTP id
- y188-20020a6364c5000000b0047921090506mr1494989pgb.92.1671210325149; Fri, 16
- Dec 2022 09:05:25 -0800 (PST)
+        with ESMTP id S232026AbiLPTps (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Dec 2022 14:45:48 -0500
+Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7E1DB8FCC
+        for <linux-api@vger.kernel.org>; Fri, 16 Dec 2022 11:45:47 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
+        s=smtpout1; t=1671219945;
+        bh=C3x0LxEaOZxc8RC+32bOB5QAmF9xMZLVglOZu0jV2nA=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=T4TW14IBwDykxKAdOJEumQDzYo81Fj7dUn/WD8Lb8OJcFIsOrRessQxWLDlr0n76e
+         4hUv8PS4ZUKS3k5+7NrLSV8sBMSdsaoBMwrxGl2KPgn2Rjf714stlIsd8Glw49SsRr
+         Y5jlZPBIE+030hCcSRO50IAk8RYgBTB20BU1bWCIE20rjPaoyA8c4lPceOJD+R6Ngj
+         UiC54cy7oC8KhtYbCzPfNvN5vcnVeODmQ/S/uELtnDclvN4DM+T6fOkBodobyrV4IA
+         0RrXJ2FGJhyWn+XRPLHkIgcIb5peu/0SxC/SH5d65MbxBuMFKBgSCTlEohCmvWSi7B
+         7Xx3ML+O0xqdg==
+Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NYfj51zpjzbGl;
+        Fri, 16 Dec 2022 14:45:45 -0500 (EST)
+From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To:     linux-mm@kvack.org
+Cc:     Michal Hocko <mhocko@suse.com>,
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+        "Aneesh Kumar K . V" <aneesh.kumar@linux.ibm.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Feng Tang <feng.tang@intel.com>,
+        Michal Hocko <mhocko@kernel.org>,
+        Andrea Arcangeli <aarcange@redhat.com>,
+        Mel Gorman <mgorman@techsingularity.net>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Andi Kleen <ak@linux.intel.com>,
+        Dan Williams <dan.j.williams@intel.com>,
+        Huang Ying <ying.huang@intel.com>, linux-api@vger.kernel.org,
+        Andrew Morton <akpm@linux-foundation.org>
+Subject: [PATCH 2/2] mm/mempolicy: do not duplicate policy if it is not applicable for set_mempolicy_home_node
+Date:   Fri, 16 Dec 2022 14:45:37 -0500
+Message-Id: <20221216194537.238047-2-mathieu.desnoyers@efficios.com>
+X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20221216194537.238047-1-mathieu.desnoyers@efficios.com>
+References: <20221216194537.238047-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
-References: <cover.1670606054.git.rgb@redhat.com> <45da8423b9b1e8fc7abd68cd2269acff8cf9022a.1670606054.git.rgb@redhat.com>
- <20221216164342.ojcbdifdmafq5njw@quack3>
-In-Reply-To: <20221216164342.ojcbdifdmafq5njw@quack3>
-From:   Paul Moore <paul@paul-moore.com>
-Date:   Fri, 16 Dec 2022 12:05:14 -0500
-Message-ID: <CAHC9VhQCQJ6_0RtHQHuA2FDje-3ick3b3ar8K8NAnuMF=ww2cA@mail.gmail.com>
-Subject: Re: [PATCH v5 2/3] fanotify: define struct members to hold response
- decision context
-To:     Jan Kara <jack@suse.cz>
-Cc:     Richard Guy Briggs <rgb@redhat.com>,
-        Linux-Audit Mailing List <linux-audit@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        Eric Paris <eparis@parisplace.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Amir Goldstein <amir73il@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Dec 16, 2022 at 11:43 AM Jan Kara <jack@suse.cz> wrote:
->
-> On Mon 12-12-22 09:06:10, Richard Guy Briggs wrote:
-> > This patch adds a flag, FAN_INFO and an extensible buffer to provide
-> > additional information about response decisions.  The buffer contains
-> > one or more headers defining the information type and the length of the
-> > following information.  The patch defines one additional information
-> > type, FAN_RESPONSE_INFO_AUDIT_RULE, to audit a rule number.  This will
-> > allow for the creation of other information types in the future if other
-> > users of the API identify different needs.
-> >
-> > Suggested-by: Steve Grubb <sgrubb@redhat.com>
-> > Link: https://lore.kernel.org/r/2745105.e9J7NaK4W3@x2
-> > Suggested-by: Jan Kara <jack@suse.cz>
-> > Link: https://lore.kernel.org/r/20201001101219.GE17860@quack2.suse.cz
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
->
-> Thanks for the patches. They look very good to me. Just two nits below. I
-> can do the small updates on commit if there would be no other changes. But
-> I'd like to get some review from audit guys for patch 3/3 before I commit
-> this.
+From: Michal Hocko <mhocko@suse.com>
 
-It's in my review queue, but it's a bit lower in the pile as my
-understanding is that the linux-next folks don't like to see new
-things in the next branches until after the merge window closes.
+set_mempolicy_home_node tries to duplicate a memory policy before
+checking it whether it is applicable for the operation. There is
+no real reason for doing that and it might actually be a pointless
+memory allocation and deallocation exercise for MPOL_INTERLEAVE.
 
+Not a big problem but we can do better. Simply check the policy before
+acting on it.
+
+[ Mathieu: compile-tested only. Tested-by would be welcome. ]
+
+Signed-off-by: Michal Hocko <mhocko@suse.com>
+Reviewed-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
+Cc: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: Feng Tang <feng.tang@intel.com>
+Cc: Michal Hocko <mhocko@kernel.org>
+Cc: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Mel Gorman <mgorman@techsingularity.net>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Dan Williams <dan.j.williams@intel.com>
+Cc: Huang Ying <ying.huang@intel.com>
+Cc: linux-api@vger.kernel.org
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm@kvack.org
+---
+ mm/mempolicy.c | 28 ++++++++++++----------------
+ 1 file changed, 12 insertions(+), 16 deletions(-)
+
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index 02c8a712282f..becf41e10076 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -1489,7 +1489,7 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
+ {
+ 	struct mm_struct *mm = current->mm;
+ 	struct vm_area_struct *vma;
+-	struct mempolicy *new;
++	struct mempolicy *new, *old;
+ 	unsigned long vmstart;
+ 	unsigned long vmend;
+ 	unsigned long end;
+@@ -1521,31 +1521,27 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
+ 		return 0;
+ 	mmap_write_lock(mm);
+ 	for_each_vma_range(vmi, vma, end) {
+-		vmstart = max(start, vma->vm_start);
+-		vmend   = min(end, vma->vm_end);
+-		new = mpol_dup(vma_policy(vma));
+-		if (IS_ERR(new)) {
+-			err = PTR_ERR(new);
+-			break;
+-		}
+-		/*
+-		 * Only update home node if there is an existing vma policy
+-		 */
+-		if (!new)
+-			continue;
+-
+ 		/*
+ 		 * If any vma in the range got policy other than MPOL_BIND
+ 		 * or MPOL_PREFERRED_MANY we return error. We don't reset
+ 		 * the home node for vmas we already updated before.
+ 		 */
+-		if (new->mode != MPOL_BIND && new->mode != MPOL_PREFERRED_MANY) {
+-			mpol_put(new);
++		old = vma_policy(vma);
++		if (!old)
++			continue;
++		if (old->mode != MPOL_BIND && old->mode != MPOL_PREFERRED_MANY) {
+ 			err = -EOPNOTSUPP;
+ 			break;
+ 		}
++		new = mpol_dup(old);
++		if (IS_ERR(new)) {
++			err = PTR_ERR(new);
++			break;
++		}
+ 
+ 		new->home_node = home_node;
++		vmstart = max(start, vma->vm_start);
++		vmend   = min(end, vma->vm_end);
+ 		err = mbind_range(mm, vmstart, vmend, new);
+ 		mpol_put(new);
+ 		if (err)
 -- 
-paul-moore.com
+2.25.1
+
