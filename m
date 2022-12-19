@@ -2,106 +2,152 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07A75C46467
-	for <linux-api@archiver.kernel.org>; Fri, 16 Dec 2022 19:45:56 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A7092C10F1B
+	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 07:57:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232026AbiLPTpy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 16 Dec 2022 14:45:54 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46406 "EHLO
+        id S229485AbiLSH5p (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 19 Dec 2022 02:57:45 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44124 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232054AbiLPTps (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Dec 2022 14:45:48 -0500
-Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5A4302DFA;
-        Fri, 16 Dec 2022 11:45:45 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1671219944;
-        bh=m6euT/AHHIicwNDOAp3nHcZWM1Blrtk8U8hPYxizTig=;
-        h=From:To:Cc:Subject:Date:From;
-        b=PIk5P77FwZkcBK/nqbbLY5gPhFLweG3xvdRtJ+7pucyP8Tc/+b6Zl9dsvj8VYKvel
-         st/7dYXU3zi6oJgrAVmdq/cSMhRdx59rRpbdtyghSzJ8QUJRppTGvoKDo4E6INIRom
-         i3G7vN5gD9MrhgZuWFHR9TgQSLMO6Q/6L/6+9NAFCUT00sQxLEGVqLnrp5MzgyakYb
-         6bFuOyfWvv+cqM9Ft4aEBmfxLMow78XFricxKUvRrDbv1Ch4xC6PubN2uBQwLeukWb
-         /sS5cQ6fAupXA74fIZGS/Lg2UwsO5QF3XuhTT9E7a+bRskff/B/CUv8Aq6dzoq289b
-         3EVjmEbeywJww==
-Received: from localhost.localdomain (192-222-180-24.qc.cable.ebox.net [192.222.180.24])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NYfj36pGkzbGk;
-        Fri, 16 Dec 2022 14:45:43 -0500 (EST)
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-To:     linux-mm@kvack.org
-Cc:     Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        "Huang, Ying" <ying.huang@intel.com>,
-        "Aneesh Kumar K . V" <aneesh.kumar@linux.ibm.com>,
-        Michal Hocko <mhocko@suse.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Feng Tang <feng.tang@intel.com>,
-        Michal Hocko <mhocko@kernel.org>,
-        Andrea Arcangeli <aarcange@redhat.com>,
-        Mel Gorman <mgorman@techsingularity.net>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Vlastimil Babka <vbabka@suse.cz>,
-        Andi Kleen <ak@linux.intel.com>,
-        Dan Williams <dan.j.williams@intel.com>,
-        linux-api@vger.kernel.org,
-        Andrew Morton <akpm@linux-foundation.org>,
-        stable@vger.kernel.org
-Subject: [PATCH 1/2] mm/mempolicy: Fix memory leak in set_mempolicy_home_node system call
-Date:   Fri, 16 Dec 2022 14:45:36 -0500
-Message-Id: <20221216194537.238047-1-mathieu.desnoyers@efficios.com>
-X-Mailer: git-send-email 2.25.1
+        with ESMTP id S229473AbiLSH5o (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 02:57:44 -0500
+Received: from mga06.intel.com (mga06b.intel.com [134.134.136.31])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0305EBC2E;
+        Sun, 18 Dec 2022 23:57:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1671436663; x=1702972663;
+  h=date:from:to:cc:subject:message-id:reply-to:references:
+   mime-version:in-reply-to;
+  bh=1plgwk37hmjdXcKtmCG/KoF8dtK3gUMs5OEN6hcYczw=;
+  b=Ff8kmsBK0HUhY0iDM6CyHCXVu9qex1TMwhdgBKgW4vjc1pWJrzRpZs0z
+   9kq1aqZ0M1GW1TIgFDSnHIaQwfqDftDSZyscSggouKnYlrujxpXNWJHeT
+   SZaOJBDslixe4HDIJ5m27JQOUq57X1sOX+7cgQASpOumlMLm39V8eru0g
+   0g53UoH5sYgbdpVYOwHKDFbH9yafFoK9NpyNam95NKm4oePjsjpWQse6C
+   wSVuzKdN2t/4bIhNQfOskJzEGA2lT0EXDgeqAss40Pyx4VE+kRQVOi9HX
+   h2L+c++Xu5cvbKDF3G0kEiimAdY1DAnFcYmGvpZnc9csCz0EFizA7pf5L
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="381520271"
+X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
+   d="scan'208";a="381520271"
+Received: from orsmga002.jf.intel.com ([10.7.209.21])
+  by orsmga104.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Dec 2022 23:57:41 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="650470073"
+X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
+   d="scan'208";a="650470073"
+Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
+  by orsmga002.jf.intel.com with ESMTP; 18 Dec 2022 23:57:29 -0800
+Date:   Mon, 19 Dec 2022 15:53:13 +0800
+From:   Chao Peng <chao.p.peng@linux.intel.com>
+To:     "Huang, Kai" <kai.huang@intel.com>
+Cc:     "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "linux-mm@kvack.org" <linux-mm@kvack.org>,
+        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
+        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+        "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
+        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
+        "tglx@linutronix.de" <tglx@linutronix.de>,
+        "jmattson@google.com" <jmattson@google.com>,
+        "Lutomirski, Andy" <luto@kernel.org>,
+        "pbonzini@redhat.com" <pbonzini@redhat.com>,
+        "ak@linux.intel.com" <ak@linux.intel.com>,
+        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
+        "david@redhat.com" <david@redhat.com>,
+        "tabba@google.com" <tabba@google.com>,
+        "Hocko, Michal" <mhocko@suse.com>,
+        "michael.roth@amd.com" <michael.roth@amd.com>,
+        "corbet@lwn.net" <corbet@lwn.net>,
+        "bfields@fieldses.org" <bfields@fieldses.org>,
+        "dhildenb@redhat.com" <dhildenb@redhat.com>,
+        "x86@kernel.org" <x86@kernel.org>, "bp@alien8.de" <bp@alien8.de>,
+        "vannapurve@google.com" <vannapurve@google.com>,
+        "rppt@kernel.org" <rppt@kernel.org>,
+        "shuah@kernel.org" <shuah@kernel.org>,
+        "vkuznets@redhat.com" <vkuznets@redhat.com>,
+        "vbabka@suse.cz" <vbabka@suse.cz>, "arnd@arndb.de" <arnd@arndb.de>,
+        "mail@maciej.szmigiero.name" <mail@maciej.szmigiero.name>,
+        "qperret@google.com" <qperret@google.com>,
+        "Christopherson,, Sean" <seanjc@google.com>,
+        "ddutile@redhat.com" <ddutile@redhat.com>,
+        "naoya.horiguchi@nec.com" <naoya.horiguchi@nec.com>,
+        "aarcange@redhat.com" <aarcange@redhat.com>,
+        "wanpengli@tencent.com" <wanpengli@tencent.com>,
+        "yu.c.zhang@linux.intel.com" <yu.c.zhang@linux.intel.com>,
+        "hughd@google.com" <hughd@google.com>,
+        "mingo@redhat.com" <mingo@redhat.com>,
+        "hpa@zytor.com" <hpa@zytor.com>,
+        "Nakajima, Jun" <jun.nakajima@intel.com>,
+        "jlayton@kernel.org" <jlayton@kernel.org>,
+        "joro@8bytes.org" <joro@8bytes.org>,
+        "steven.price@arm.com" <steven.price@arm.com>,
+        "Hansen, Dave" <dave.hansen@intel.com>,
+        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
+        "linmiaohe@huawei.com" <linmiaohe@huawei.com>,
+        "Wang, Wei W" <wei.w.wang@intel.com>
+Subject: Re: [PATCH v10 1/9] mm: Introduce memfd_restricted system call to
+ create restricted user memory
+Message-ID: <20221219075313.GB1691829@chaop.bj.intel.com>
+Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
+References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com>
+ <20221202061347.1070246-2-chao.p.peng@linux.intel.com>
+ <5c6e2e516f19b0a030eae9bf073d555c57ca1f21.camel@intel.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <5c6e2e516f19b0a030eae9bf073d555c57ca1f21.camel@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When encountering any vma in the range with policy other than MPOL_BIND
-or MPOL_PREFERRED_MANY, an error is returned without issuing a mpol_put
-on the policy just allocated with mpol_dup().
+On Tue, Dec 13, 2022 at 11:49:13PM +0000, Huang, Kai wrote:
+> > 
+> > memfd_restricted() itself is implemented as a shim layer on top of real
+> > memory file systems (currently tmpfs). Pages in restrictedmem are marked
+> > as unmovable and unevictable, this is required for current confidential
+> > usage. But in future this might be changed.
+> > 
+> > 
+> I didn't dig full histroy, but I interpret this as we don't support page
+> migration and swapping for restricted memfd for now.  IMHO "page marked as
+> unmovable" can be confused with PageMovable(), which is a different thing from
+> this series.  It's better to just say something like "those pages cannot be
+> migrated and swapped".
 
-This allows arbitrary users to leak kernel memory.
+Yes, if that helps some clarification.
 
-[ Mathieu: compile-tested only. Tested-by would be welcome. ]
+> 
+> [...]
+> 
+> > +
+> > +	/*
+> > +	 * These pages are currently unmovable so don't place them into movable
+> > +	 * pageblocks (e.g. CMA and ZONE_MOVABLE).
+> > +	 */
+> > +	mapping = memfd->f_mapping;
+> > +	mapping_set_unevictable(mapping);
+> > +	mapping_set_gfp_mask(mapping,
+> > +			     mapping_gfp_mask(mapping) & ~__GFP_MOVABLE);
+> 
+> But, IIUC removing __GFP_MOVABLE flag here only makes page allocation from non-
+> movable zones, but doesn't necessarily prevent page from being migrated.  My
+> first glance is you need to implement either a_ops->migrate_folio() or just
+> get_page() after faulting in the page to prevent.
 
-Fixes: c6018b4b2549 ("mm/mempolicy: add set_mempolicy_home_node syscall")
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Reviewed-by: Randy Dunlap <rdunlap@infradead.org>
-Reviewed-by: "Huang, Ying" <ying.huang@intel.com>
-Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
-Acked-by: Michal Hocko <mhocko@suse.com>
-Cc: Aneesh Kumar K.V <aneesh.kumar@linux.ibm.com>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Feng Tang <feng.tang@intel.com>
-Cc: Michal Hocko <mhocko@kernel.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Mel Gorman <mgorman@techsingularity.net>
-Cc: Mike Kravetz <mike.kravetz@oracle.com>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Dan Williams <dan.j.williams@intel.com>
-Cc: Huang Ying <ying.huang@intel.com>
-Cc: linux-api@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm@kvack.org
-Cc: stable@vger.kernel.org # 5.17+
----
- mm/mempolicy.c | 1 +
- 1 file changed, 1 insertion(+)
+The current api restrictedmem_get_page() already does this, after the
+caller calling it, it holds a reference to the page. The caller then
+decides when to call put_page() appropriately.
 
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 61aa9aedb728..02c8a712282f 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -1540,6 +1540,7 @@ SYSCALL_DEFINE4(set_mempolicy_home_node, unsigned long, start, unsigned long, le
- 		 * the home node for vmas we already updated before.
- 		 */
- 		if (new->mode != MPOL_BIND && new->mode != MPOL_PREFERRED_MANY) {
-+			mpol_put(new);
- 			err = -EOPNOTSUPP;
- 			break;
- 		}
--- 
-2.25.1
+> 
+> So I think the comment also needs improvement -- IMHO we can just call out
+> currently those pages cannot be migrated and swapped, which is clearer (and the
+> latter justifies mapping_set_unevictable() clearly).
 
+Good to me.
+
+Thanks,
+Chao
+> 
+> 
