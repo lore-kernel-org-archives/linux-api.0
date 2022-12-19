@@ -2,117 +2,128 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51C7AC4167B
-	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 07:59:03 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 96266C4167B
+	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 08:01:27 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229611AbiLSH7C (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 19 Dec 2022 02:59:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44582 "EHLO
+        id S231256AbiLSIBZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 19 Dec 2022 03:01:25 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45978 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229473AbiLSH7B (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 02:59:01 -0500
-Received: from mga07.intel.com (mga07.intel.com [134.134.136.100])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C2AF6BC2E;
-        Sun, 18 Dec 2022 23:59:00 -0800 (PST)
+        with ESMTP id S229615AbiLSIBX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 03:01:23 -0500
+Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7EE4E389D;
+        Mon, 19 Dec 2022 00:01:21 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1671436740; x=1702972740;
+  t=1671436881; x=1702972881;
   h=date:from:to:cc:subject:message-id:reply-to:references:
-   mime-version:content-transfer-encoding:in-reply-to;
-  bh=LTCN5nc9sJT3ve1jNEbkwKdzxPjXUiJ2eqZmznP7zEs=;
-  b=apUAziLsi1avXc90CdVu3Tk+ZAKwrXTAVhoVT0ukEOkXjTdgjaXvpsvi
-   osNLiMEc0XIJif58bf6GTq2L9ayChJY4uf32rVYak1dX6eHTcDZJdKNN6
-   XcGu3RjsWwmOyIwNkpkJpiMQ9I6D9DAk/dUo/ygVUkns9LYNxizqNRKPo
-   bi+yFSclXObovu0qvSPAsePk9d70I6UwIlmbIr6I8hsTbtImyz2mGRVFj
-   8mq0KpHdKs7xWCiunRLH+kYg4yN2AC0qNHcK0ZtW8SJBAFqyQbrLi1X/2
-   yWrNLtXvUJCTzmKygHTIxQwkVS9YKxLuMi4Ts072Y2MpOwAx4TbI4Qr2V
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="383638121"
+   mime-version:in-reply-to;
+  bh=OfZ8wFDJ+6nAyql1Nd8OAfYvfKbri9zQQ6twPOrF8GY=;
+  b=bmJW7eAv3NykjkhPT0YMpF5V5G+0fbG46x7W1i3HTwqmMKARmuZHao/+
+   rABFuW/HYTc620BBaB7xVwFG6uDwKZkc9A2ZxTowDUpVfXVz8J7mBwLKD
+   DZSYrNbOQ6MY6bXivT/tVMs2PrRUap95HnWaJiZnlf+MA8axKgGFn4i5E
+   tfTSGgK3h4ENT7ncpRJNmId/hsfefBxjiOo+Qo7ZaH0sZo/w6e3z+0MMf
+   dd7PA6g4oy59rp150ToXAPGF8zc7819cXYR3eHjYlGkerL1I3MDaglVKW
+   kyX0AUoN+tgQtpllTQjXQuxGOZvBMhIVus4+Yaup4PMQmR9uQZ97+3/TL
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="302716663"
 X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
-   d="scan'208";a="383638121"
-Received: from fmsmga006.fm.intel.com ([10.253.24.20])
-  by orsmga105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Dec 2022 23:58:59 -0800
+   d="scan'208";a="302716663"
+Received: from orsmga005.jf.intel.com ([10.7.209.41])
+  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Dec 2022 23:58:45 -0800
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="895959169"
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="824757705"
 X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
-   d="scan'208";a="895959169"
+   d="scan'208";a="824757705"
 Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
-  by fmsmga006.fm.intel.com with ESMTP; 18 Dec 2022 23:58:49 -0800
-Date:   Mon, 19 Dec 2022 15:54:32 +0800
+  by orsmga005.jf.intel.com with ESMTP; 18 Dec 2022 23:54:49 -0800
+Date:   Mon, 19 Dec 2022 15:50:32 +0800
 From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     "Huang, Kai" <kai.huang@intel.com>
-Cc:     "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "qemu-devel@nongnu.org" <qemu-devel@nongnu.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "jmattson@google.com" <jmattson@google.com>,
-        "Lutomirski, Andy" <luto@kernel.org>,
-        "pbonzini@redhat.com" <pbonzini@redhat.com>,
-        "ak@linux.intel.com" <ak@linux.intel.com>,
-        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
-        "david@redhat.com" <david@redhat.com>,
-        "tabba@google.com" <tabba@google.com>,
-        "Hocko, Michal" <mhocko@suse.com>,
-        "michael.roth@amd.com" <michael.roth@amd.com>,
-        "corbet@lwn.net" <corbet@lwn.net>,
-        "bfields@fieldses.org" <bfields@fieldses.org>,
-        "dhildenb@redhat.com" <dhildenb@redhat.com>,
-        "x86@kernel.org" <x86@kernel.org>, "bp@alien8.de" <bp@alien8.de>,
-        "vannapurve@google.com" <vannapurve@google.com>,
-        "rppt@kernel.org" <rppt@kernel.org>,
-        "shuah@kernel.org" <shuah@kernel.org>,
-        "vkuznets@redhat.com" <vkuznets@redhat.com>,
-        "vbabka@suse.cz" <vbabka@suse.cz>, "arnd@arndb.de" <arnd@arndb.de>,
-        "mail@maciej.szmigiero.name" <mail@maciej.szmigiero.name>,
-        "qperret@google.com" <qperret@google.com>,
-        "Christopherson,, Sean" <seanjc@google.com>,
-        "ddutile@redhat.com" <ddutile@redhat.com>,
-        "naoya.horiguchi@nec.com" <naoya.horiguchi@nec.com>,
-        "aarcange@redhat.com" <aarcange@redhat.com>,
-        "wanpengli@tencent.com" <wanpengli@tencent.com>,
-        "yu.c.zhang@linux.intel.com" <yu.c.zhang@linux.intel.com>,
-        "hughd@google.com" <hughd@google.com>,
-        "mingo@redhat.com" <mingo@redhat.com>,
-        "hpa@zytor.com" <hpa@zytor.com>,
-        "Nakajima, Jun" <jun.nakajima@intel.com>,
-        "jlayton@kernel.org" <jlayton@kernel.org>,
-        "joro@8bytes.org" <joro@8bytes.org>,
-        "steven.price@arm.com" <steven.price@arm.com>,
-        "Hansen, Dave" <dave.hansen@intel.com>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "linmiaohe@huawei.com" <linmiaohe@huawei.com>,
-        "Wang, Wei W" <wei.w.wang@intel.com>
-Subject: Re: [PATCH v10 6/9] KVM: Unmap existing mappings when change the
- memory attributes
-Message-ID: <20221219075432.GC1691829@chaop.bj.intel.com>
+To:     Xiaoyao Li <xiaoyao.li@intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Naoya Horiguchi <naoya.horiguchi@nec.com>,
+        Miaohe Lin <linmiaohe@huawei.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>, tabba@google.com,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        wei.w.wang@intel.com
+Subject: Re: [PATCH v10 3/9] KVM: Extend the memslot to support fd-based
+ private memory
+Message-ID: <20221219075032.GA1691829@chaop.bj.intel.com>
 Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
 References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com>
- <20221202061347.1070246-7-chao.p.peng@linux.intel.com>
- <0889bab999cbb464e63490bdb5b3c68c07791979.camel@intel.com>
+ <20221202061347.1070246-4-chao.p.peng@linux.intel.com>
+ <cd950a78-5c5b-16ef-d0a6-ad2878af067e@intel.com>
+ <20221208113003.GE1304936@chaop.bj.intel.com>
+ <4d736cc0-f249-6531-c0af-7093c2c2537f@intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <0889bab999cbb464e63490bdb5b3c68c07791979.camel@intel.com>
+In-Reply-To: <4d736cc0-f249-6531-c0af-7093c2c2537f@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Dec 13, 2022 at 11:51:25PM +0000, Huang, Kai wrote:
-> On Fri, 2022-12-02 at 14:13 +0800, Chao Peng wrote:
-> >  
-> > -	/* flags is currently not used. */
-> > +	/* 'flags' is currently not used. */
-> >  	if (attrs->flags)
-> >  		return -EINVAL;
+On Tue, Dec 13, 2022 at 08:04:14PM +0800, Xiaoyao Li wrote:
+> On 12/8/2022 7:30 PM, Chao Peng wrote:
+> > On Thu, Dec 08, 2022 at 04:37:03PM +0800, Xiaoyao Li wrote:
+> > > On 12/2/2022 2:13 PM, Chao Peng wrote:
+> > > 
+> > > ..
+> > > 
+> > > > Together with the change, a new config HAVE_KVM_RESTRICTED_MEM is added
+> > > > and right now it is selected on X86_64 only.
+> > > > 
+> > > 
+> > >  From the patch implementation, I have no idea why HAVE_KVM_RESTRICTED_MEM is
+> > > needed.
+> > 
+> > The reason is we want KVM further controls the feature enabling. An
+> > opt-in CONFIG_RESTRICTEDMEM can cause problem if user sets that for
+> > unsupported architectures.
 > 
-> Unintended code change.
+> HAVE_KVM_RESTRICTED_MEM is not used in this patch. It's better to introduce
+> it in the patch that actually uses it.
 
-Yeah!
+It's being 'used' in this patch by reverse selecting RESTRICTEDMEM in
+arch/x86/kvm/Kconfig, this gives people a sense where
+restrictedmem_notifier comes from. Introducing the config with other
+private/restricted memslot stuff together can also help future
+supporting architectures better identify what they need do. But those
+are trivial and moving to patch 08 sounds also good to me.
 
+Thanks,
 Chao
+> 
+> > Here is the original discussion:
+> > https://lore.kernel.org/all/YkJLFu98hZOvTSrL@google.com/
+> > 
+> > Thanks,
+> > Chao
