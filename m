@@ -2,108 +2,137 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id F2386C4332F
-	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 10:26:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E99CC4332F
+	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 14:37:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231760AbiLSK0J (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 19 Dec 2022 05:26:09 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41222 "EHLO
+        id S232479AbiLSOhV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 19 Dec 2022 09:37:21 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39594 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231830AbiLSKZz (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 05:25:55 -0500
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [IPv6:2001:67c:2178:6::1c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B476CE41;
-        Mon, 19 Dec 2022 02:25:50 -0800 (PST)
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
+        with ESMTP id S232548AbiLSOgz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 09:36:55 -0500
+Received: from mail.skyhub.de (mail.skyhub.de [IPv6:2a01:4f8:190:11c2::b:1457])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CB46712090;
+        Mon, 19 Dec 2022 06:36:34 -0800 (PST)
+Received: from zn.tnic (p5de8e9fe.dip0.t-ipconnect.de [93.232.233.254])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by smtp-out1.suse.de (Postfix) with ESMTPS id 4E8BB37323;
-        Mon, 19 Dec 2022 10:25:49 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-        t=1671445549; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=3dICCo4812NSE+Ksmy3//irJG0tDZgjWzexkQRofcf4=;
-        b=04zDuimBkZFtqJfiwxJUdw8+ClImZRpwGh3Hqc685njyuL1AJSbVSJRozZNlWm33juOQlN
-        hTHs21Mm/5IZdYYBx205LIUvTVraqw1oc5+OY9zfwLTJL4tVh3syqfLzxpTSVmw2sYQX82
-        HQX1lVVm80KmNEYFeqSkGJ/PHuVwQhU=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-        s=susede2_ed25519; t=1671445549;
-        h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-         mime-version:mime-version:content-type:content-type:
-         in-reply-to:in-reply-to:references:references;
-        bh=3dICCo4812NSE+Ksmy3//irJG0tDZgjWzexkQRofcf4=;
-        b=752P1krkWV/pAvwnMceaKk+TTkkrOBx+IWdoxCPUPGP9+qdWAHYBEegkxc8b7s4iMIDxeX
-        R52yQgepv44hObAw==
-Received: from imap2.suse-dmz.suse.de (imap2.suse-dmz.suse.de [192.168.254.74])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature ECDSA (P-521) server-digest SHA512)
-        (No client certificate requested)
-        by imap2.suse-dmz.suse.de (Postfix) with ESMTPS id 3C19313910;
-        Mon, 19 Dec 2022 10:25:49 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([192.168.254.65])
-        by imap2.suse-dmz.suse.de with ESMTPSA
-        id NFydDi08oGOJNAAAMHmgww
-        (envelope-from <jack@suse.cz>); Mon, 19 Dec 2022 10:25:49 +0000
-Received: by quack3.suse.cz (Postfix, from userid 1000)
-        id B199AA0732; Mon, 19 Dec 2022 11:10:23 +0100 (CET)
-Date:   Mon, 19 Dec 2022 11:10:23 +0100
-From:   Jan Kara <jack@suse.cz>
-To:     Paul Moore <paul@paul-moore.com>
-Cc:     Jan Kara <jack@suse.cz>, Richard Guy Briggs <rgb@redhat.com>,
-        Linux-Audit Mailing List <linux-audit@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        Eric Paris <eparis@parisplace.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [PATCH v5 2/3] fanotify: define struct members to hold response
- decision context
-Message-ID: <20221219101023.6bqjj3jg3il2fbzf@quack3>
-References: <cover.1670606054.git.rgb@redhat.com>
- <45da8423b9b1e8fc7abd68cd2269acff8cf9022a.1670606054.git.rgb@redhat.com>
- <20221216164342.ojcbdifdmafq5njw@quack3>
- <CAHC9VhQCQJ6_0RtHQHuA2FDje-3ick3b3ar8K8NAnuMF=ww2cA@mail.gmail.com>
+        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id ECC051EC06BD;
+        Mon, 19 Dec 2022 15:36:32 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
+        t=1671460593;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
+        bh=Nr0Z4OvkPMBKiUgwrvy1b0JeJ5CuH4u8cdycIbF3VTo=;
+        b=g4O8WnDjjWmrtbFmMTY4G0yltCqzIeXhWywY3xwLBgdFTN9TCYZMZhAq9By4cTHHjnVkHt
+        354idtEXaLQwUDtNstFC6rPiAS1iw8va+w5OrbtVNCuvMSntL0hbmQcddYbRIVl0pEcCkP
+        SG+jpLF4Ne/7gzC4KSRDGyQn3EtYD1Q=
+Date:   Mon, 19 Dec 2022 15:36:28 +0100
+From:   Borislav Petkov <bp@alien8.de>
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>,
+        Naoya Horiguchi <naoya.horiguchi@nec.com>,
+        Miaohe Lin <linmiaohe@huawei.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>, tabba@google.com,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        wei.w.wang@intel.com
+Subject: Re: [PATCH v10 3/9] KVM: Extend the memslot to support fd-based
+ private memory
+Message-ID: <Y6B27MpZO8o1Asfe@zn.tnic>
+References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com>
+ <20221202061347.1070246-4-chao.p.peng@linux.intel.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhQCQJ6_0RtHQHuA2FDje-3ick3b3ar8K8NAnuMF=ww2cA@mail.gmail.com>
+In-Reply-To: <20221202061347.1070246-4-chao.p.peng@linux.intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri 16-12-22 12:05:14, Paul Moore wrote:
-> On Fri, Dec 16, 2022 at 11:43 AM Jan Kara <jack@suse.cz> wrote:
-> >
-> > On Mon 12-12-22 09:06:10, Richard Guy Briggs wrote:
-> > > This patch adds a flag, FAN_INFO and an extensible buffer to provide
-> > > additional information about response decisions.  The buffer contains
-> > > one or more headers defining the information type and the length of the
-> > > following information.  The patch defines one additional information
-> > > type, FAN_RESPONSE_INFO_AUDIT_RULE, to audit a rule number.  This will
-> > > allow for the creation of other information types in the future if other
-> > > users of the API identify different needs.
-> > >
-> > > Suggested-by: Steve Grubb <sgrubb@redhat.com>
-> > > Link: https://lore.kernel.org/r/2745105.e9J7NaK4W3@x2
-> > > Suggested-by: Jan Kara <jack@suse.cz>
-> > > Link: https://lore.kernel.org/r/20201001101219.GE17860@quack2.suse.cz
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> >
-> > Thanks for the patches. They look very good to me. Just two nits below. I
-> > can do the small updates on commit if there would be no other changes. But
-> > I'd like to get some review from audit guys for patch 3/3 before I commit
-> > this.
+On Fri, Dec 02, 2022 at 02:13:41PM +0800, Chao Peng wrote:
+> In memory encryption usage, guest memory may be encrypted with special
+> key and can be accessed only by the guest itself. We call such memory
+> private memory. It's valueless and sometimes can cause problem to allow
+
+valueless?
+
+I can't parse that.
+
+> userspace to access guest private memory. This new KVM memslot extension
+> allows guest private memory being provided through a restrictedmem
+> backed file descriptor(fd) and userspace is restricted to access the
+> bookmarked memory in the fd.
+
+bookmarked?
+
+> This new extension, indicated by the new flag KVM_MEM_PRIVATE, adds two
+> additional KVM memslot fields restricted_fd/restricted_offset to allow
+> userspace to instruct KVM to provide guest memory through restricted_fd.
+> 'guest_phys_addr' is mapped at the restricted_offset of restricted_fd
+> and the size is 'memory_size'.
 > 
-> It's in my review queue, but it's a bit lower in the pile as my
-> understanding is that the linux-next folks don't like to see new
-> things in the next branches until after the merge window closes.
+> The extended memslot can still have the userspace_addr(hva). When use, a
 
-Sure, there's no hurry :). I just wanted to make it clear where the things
-stand.
+"When un use, ..."
 
-								Honza
+...
+
+> diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
+> index a8e379a3afee..690cb21010e7 100644
+> --- a/arch/x86/kvm/Kconfig
+> +++ b/arch/x86/kvm/Kconfig
+> @@ -50,6 +50,8 @@ config KVM
+>  	select INTERVAL_TREE
+>  	select HAVE_KVM_PM_NOTIFIER if PM
+>  	select HAVE_KVM_MEMORY_ATTRIBUTES
+> +	select HAVE_KVM_RESTRICTED_MEM if X86_64
+> +	select RESTRICTEDMEM if HAVE_KVM_RESTRICTED_MEM
+
+Those deps here look weird.
+
+RESTRICTEDMEM should be selected by TDX_GUEST as it can't live without
+it.
+
+Then you don't have to select HAVE_KVM_RESTRICTED_MEM simply because of
+X86_64 - you need that functionality when the respective guest support
+is enabled in KVM.
+
+Then, looking forward into your patchset, I'm not sure you even
+need HAVE_KVM_RESTRICTED_MEM - you could make it all depend on
+CONFIG_RESTRICTEDMEM. But that's KVM folks call - I'd always aim for
+less Kconfig items because we have waay too many.
+
+Thx.
+
 -- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+Regards/Gruss,
+    Boris.
+
+https://people.kernel.org/tglx/notes-about-netiquette
