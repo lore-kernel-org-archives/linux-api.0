@@ -2,45 +2,45 @@ Return-Path: <linux-api-owner@kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 96266C4167B
-	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 08:01:27 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8D1C3C4332F
+	for <linux-api@archiver.kernel.org>; Mon, 19 Dec 2022 08:20:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231256AbiLSIBZ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 19 Dec 2022 03:01:25 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45978 "EHLO
+        id S231524AbiLSIUE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 19 Dec 2022 03:20:04 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51794 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229615AbiLSIBX (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 03:01:23 -0500
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7EE4E389D;
-        Mon, 19 Dec 2022 00:01:21 -0800 (PST)
+        with ESMTP id S229499AbiLSIUC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 19 Dec 2022 03:20:02 -0500
+Received: from mga17.intel.com (mga17.intel.com [192.55.52.151])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C8ADBF7F;
+        Mon, 19 Dec 2022 00:20:00 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1671436881; x=1702972881;
+  t=1671438000; x=1702974000;
   h=date:from:to:cc:subject:message-id:reply-to:references:
    mime-version:in-reply-to;
-  bh=OfZ8wFDJ+6nAyql1Nd8OAfYvfKbri9zQQ6twPOrF8GY=;
-  b=bmJW7eAv3NykjkhPT0YMpF5V5G+0fbG46x7W1i3HTwqmMKARmuZHao/+
-   rABFuW/HYTc620BBaB7xVwFG6uDwKZkc9A2ZxTowDUpVfXVz8J7mBwLKD
-   DZSYrNbOQ6MY6bXivT/tVMs2PrRUap95HnWaJiZnlf+MA8axKgGFn4i5E
-   tfTSGgK3h4ENT7ncpRJNmId/hsfefBxjiOo+Qo7ZaH0sZo/w6e3z+0MMf
-   dd7PA6g4oy59rp150ToXAPGF8zc7819cXYR3eHjYlGkerL1I3MDaglVKW
-   kyX0AUoN+tgQtpllTQjXQuxGOZvBMhIVus4+Yaup4PMQmR9uQZ97+3/TL
-   Q==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="302716663"
+  bh=LNCdKsFcaAqCxKwjGOGvE5vkO4LxzR3OxK3Y+B+ZSpI=;
+  b=LBTL0lT9N7OTJVymllyL6GEEIxeCqISqegKeG8rzigRhMjKVbSyWddah
+   42K2kKHP8aZZ1+tw966Dq9ZdidMew+6klGCrMuBK0AXqctiFu/t5+SH/x
+   0b/DhfzJ6hx/CaYQBRjiTMrr4xfTNvU96Ev0zpbQRAzJeSZrGghs6N+o5
+   vS3X+ny02gWk49F9Bdlkz/6TydT7mfnfK5JoMNM6zOGlK0xe1S6gDodpT
+   uN5eKplH07m0d2R4ZCOhMa/j9XAkKqery7HeaqmHCDvq5ewsoPsI5du1b
+   Y15D731j3waALz/L5OVumxnzBgGxTAEFFttJclyWCya+xTX5rmbmgNSuP
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="299627805"
 X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
-   d="scan'208";a="302716663"
-Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Dec 2022 23:58:45 -0800
+   d="scan'208";a="299627805"
+Received: from fmsmga004.fm.intel.com ([10.253.24.48])
+  by fmsmga107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Dec 2022 00:19:59 -0800
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="824757705"
+X-IronPort-AV: E=McAfee;i="6500,9779,10565"; a="719033720"
 X-IronPort-AV: E=Sophos;i="5.96,255,1665471600"; 
-   d="scan'208";a="824757705"
+   d="scan'208";a="719033720"
 Received: from chaop.bj.intel.com (HELO localhost) ([10.240.193.75])
-  by orsmga005.jf.intel.com with ESMTP; 18 Dec 2022 23:54:49 -0800
-Date:   Mon, 19 Dec 2022 15:50:32 +0800
+  by fmsmga004.fm.intel.com with ESMTP; 19 Dec 2022 00:19:49 -0800
+Date:   Mon, 19 Dec 2022 16:15:32 +0800
 From:   Chao Peng <chao.p.peng@linux.intel.com>
-To:     Xiaoyao Li <xiaoyao.li@intel.com>
+To:     Borislav Petkov <bp@alien8.de>
 Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
         linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
@@ -53,8 +53,7 @@ Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         Jim Mattson <jmattson@google.com>,
         Joerg Roedel <joro@8bytes.org>,
         Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        Arnd Bergmann <arnd@arndb.de>,
+        Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>,
         Naoya Horiguchi <naoya.horiguchi@nec.com>,
         Miaohe Lin <linmiaohe@huawei.com>, x86@kernel.org,
         "H . Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
@@ -74,56 +73,114 @@ Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
         Quentin Perret <qperret@google.com>, tabba@google.com,
         Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
         wei.w.wang@intel.com
-Subject: Re: [PATCH v10 3/9] KVM: Extend the memslot to support fd-based
- private memory
-Message-ID: <20221219075032.GA1691829@chaop.bj.intel.com>
+Subject: Re: [PATCH v10 2/9] KVM: Introduce per-page memory attributes
+Message-ID: <20221219081532.GD1691829@chaop.bj.intel.com>
 Reply-To: Chao Peng <chao.p.peng@linux.intel.com>
 References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com>
- <20221202061347.1070246-4-chao.p.peng@linux.intel.com>
- <cd950a78-5c5b-16ef-d0a6-ad2878af067e@intel.com>
- <20221208113003.GE1304936@chaop.bj.intel.com>
- <4d736cc0-f249-6531-c0af-7093c2c2537f@intel.com>
+ <20221202061347.1070246-3-chao.p.peng@linux.intel.com>
+ <Y5yKEpwCzZpNoBrp@zn.tnic>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <4d736cc0-f249-6531-c0af-7093c2c2537f@intel.com>
+In-Reply-To: <Y5yKEpwCzZpNoBrp@zn.tnic>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Dec 13, 2022 at 08:04:14PM +0800, Xiaoyao Li wrote:
-> On 12/8/2022 7:30 PM, Chao Peng wrote:
-> > On Thu, Dec 08, 2022 at 04:37:03PM +0800, Xiaoyao Li wrote:
-> > > On 12/2/2022 2:13 PM, Chao Peng wrote:
-> > > 
-> > > ..
-> > > 
-> > > > Together with the change, a new config HAVE_KVM_RESTRICTED_MEM is added
-> > > > and right now it is selected on X86_64 only.
-> > > > 
-> > > 
-> > >  From the patch implementation, I have no idea why HAVE_KVM_RESTRICTED_MEM is
-> > > needed.
-> > 
-> > The reason is we want KVM further controls the feature enabling. An
-> > opt-in CONFIG_RESTRICTEDMEM can cause problem if user sets that for
-> > unsupported architectures.
+On Fri, Dec 16, 2022 at 04:09:06PM +0100, Borislav Petkov wrote:
+> On Fri, Dec 02, 2022 at 02:13:40PM +0800, Chao Peng wrote:
+> > diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+> > index 1782c4555d94..7f0f5e9f2406 100644
+> > --- a/virt/kvm/kvm_main.c
+> > +++ b/virt/kvm/kvm_main.c
+> > @@ -1150,6 +1150,9 @@ static struct kvm *kvm_create_vm(unsigned long type, const char *fdname)
+> >  	spin_lock_init(&kvm->mn_invalidate_lock);
+> >  	rcuwait_init(&kvm->mn_memslots_update_rcuwait);
+> >  	xa_init(&kvm->vcpu_array);
+> > +#ifdef CONFIG_HAVE_KVM_MEMORY_ATTRIBUTES
+> > +	xa_init(&kvm->mem_attr_array);
+> > +#endif
 > 
-> HAVE_KVM_RESTRICTED_MEM is not used in this patch. It's better to introduce
-> it in the patch that actually uses it.
+> 	if (IS_ENABLED(CONFIG_HAVE_KVM_MEMORY_ATTRIBUTES))
+> 		...
+> 
+> would at least remove the ugly ifdeffery.
+> 
+> Or you could create wrapper functions for that xa_init() and
+> xa_destroy() and put the ifdeffery in there.
 
-It's being 'used' in this patch by reverse selecting RESTRICTEDMEM in
-arch/x86/kvm/Kconfig, this gives people a sense where
-restrictedmem_notifier comes from. Introducing the config with other
-private/restricted memslot stuff together can also help future
-supporting architectures better identify what they need do. But those
-are trivial and moving to patch 08 sounds also good to me.
+Agreed.
 
-Thanks,
+> 
+> > @@ -2323,6 +2329,49 @@ static int kvm_vm_ioctl_clear_dirty_log(struct kvm *kvm,
+> >  }
+> >  #endif /* CONFIG_KVM_GENERIC_DIRTYLOG_READ_PROTECT */
+> >  
+> > +#ifdef CONFIG_HAVE_KVM_MEMORY_ATTRIBUTES
+> > +static u64 kvm_supported_mem_attributes(struct kvm *kvm)
+> 
+> I guess that function should have a verb in the name:
+> 
+> kvm_get_supported_mem_attributes()
+
+Right!
+> 
+> > +static int kvm_vm_ioctl_set_mem_attributes(struct kvm *kvm,
+> > +					   struct kvm_memory_attributes *attrs)
+> > +{
+> > +	gfn_t start, end;
+> > +	unsigned long i;
+> > +	void *entry;
+> > +	u64 supported_attrs = kvm_supported_mem_attributes(kvm);
+> > +
+> > +	/* flags is currently not used. */
+> > +	if (attrs->flags)
+> > +		return -EINVAL;
+> > +	if (attrs->attributes & ~supported_attrs)
+> > +		return -EINVAL;
+> > +	if (attrs->size == 0 || attrs->address + attrs->size < attrs->address)
+> > +		return -EINVAL;
+> > +	if (!PAGE_ALIGNED(attrs->address) || !PAGE_ALIGNED(attrs->size))
+> > +		return -EINVAL;
+> 
+> Dunno, shouldn't those issue some sort of an error message so that the
+> caller knows where it failed? Or at least return different retvals which
+> signal what the problem is?
+
+Tamping down with error number a bit:
+
+        if (attrs->flags)
+                return -ENXIO;
+        if (attrs->attributes & ~supported_attrs)
+                return -EOPNOTSUPP;
+        if (!PAGE_ALIGNED(attrs->address) || !PAGE_ALIGNED(attrs->size) ||
+            attrs->size == 0)
+                return -EINVAL;
+        if (attrs->address + attrs->size < attrs->address)
+                return -E2BIG;
+
 Chao
 > 
-> > Here is the original discussion:
-> > https://lore.kernel.org/all/YkJLFu98hZOvTSrL@google.com/
-> > 
-> > Thanks,
-> > Chao
+> > +	start = attrs->address >> PAGE_SHIFT;
+> > +	end = (attrs->address + attrs->size - 1 + PAGE_SIZE) >> PAGE_SHIFT;
+> > +
+> > +	entry = attrs->attributes ? xa_mk_value(attrs->attributes) : NULL;
+> > +
+> > +	mutex_lock(&kvm->lock);
+> > +	for (i = start; i < end; i++)
+> > +		if (xa_err(xa_store(&kvm->mem_attr_array, i, entry,
+> > +				    GFP_KERNEL_ACCOUNT)))
+> > +			break;
+> > +	mutex_unlock(&kvm->lock);
+> > +
+> > +	attrs->address = i << PAGE_SHIFT;
+> > +	attrs->size = (end - i) << PAGE_SHIFT;
+> > +
+> > +	return 0;
+> > +}
+> 
+> -- 
+> Regards/Gruss,
+>     Boris.
+> 
+> https://people.kernel.org/tglx/notes-about-netiquette
