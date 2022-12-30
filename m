@@ -2,385 +2,407 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D71FDC4708E
-	for <linux-api@archiver.kernel.org>; Thu, 29 Dec 2022 23:39:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D1C24C4332F
+	for <linux-api@archiver.kernel.org>; Fri, 30 Dec 2022 23:06:16 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234265AbiL2Xi7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Dec 2022 18:38:59 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46846 "EHLO
+        id S235604AbiL3XGP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 30 Dec 2022 18:06:15 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60326 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234291AbiL2Xid (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Dec 2022 18:38:33 -0500
-Received: from sonic314-27.consmr.mail.ne1.yahoo.com (sonic314-27.consmr.mail.ne1.yahoo.com [66.163.189.153])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D60B510FDD
-        for <linux-api@vger.kernel.org>; Thu, 29 Dec 2022 15:38:30 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1672357110; bh=4wRAVNsYsojyGknEyx2xkWB+QA9Ai0fa1Y8YXkdOvU0=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=ZGuZYKSfNSXO1H34e2HeHCN8Xyx1406Ytk+O9pUTs+DDpIYFFO3Ly0nLPD2DMrOpjmGV9ypvW/ks8gDkteZBoGr3VgLwETtGebVSoGTkNXU2LGAXJ0yijI+xJKDd1Atyq2J8rdF+cqprxMxcFCUsk45/l+lUwSVMBFgi+alm7COYU8gXfS1cgjJXM17Wza2Qo8ylueDz9znZbu9sIaaqGi6g/5JFGLl26rBc9vE+aLFp5uPS9Gwqw4LjTOnWtr2UqjDy7jI5bO/MYSfeOqrtAEMU7C/CJ0QEUt8xpm7J+LEhmEKy/aEOA/Co+T6KJ3FIflYi+9/694GUO0qAOJ9bgw==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1672357110; bh=p9qk78XADwt01b/4agJ7BzeCDdmHo2QojO/EkGxnlAy=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=Kph0AHY1hZnji5rJ5z48CxfKUu5PnpAwYCoZyMcSn5RJzg5ekPcOMFiF5GjkW/ytQC2yaOysRXBK4kX8P8kjFo0qEOGuM5yvO6Y4FtTGif9T7+12t6Y4UtRw/MGhsoRtKhE52CoT/tUlVbPm7uKn6q9W3aai4mGAhDlWff3je/bKGi1xIRDdKVA6D3EfuQSHbPNQ8cFpuaW3KHzXwQpeGAMKThl/tRY6ZsEuP68AYud7WHk3Cek4sWPp5KpNIF75UGA8FY5LWaQZgvGUZE1cRaYKJebCgwU/ju6Sma5xGtgYNnzNA863jllMQPSY+vCMf1LdwONmYYTDd2syyAzAFA==
-X-YMail-OSG: risgtHYVM1k7SyQMIndgL1T7rCS5IuH_MflEThQv2G4r_ArO8.hDkcsgwJNZi47
- 04aYp9hdxe5XwGGvNRUQ3BZdxWqxe4mAJFILwDtkXnLx4KUUTv_XBhG0RClowz0y7OFG.M5ozcDn
- tb8u3vvY9Vm1gXr.QF5k4HI7hLILqh202rkTtcosvBfdUAz1R0a.z3YuIczQZHSCJFxJGKmKaca3
- PRz37ZrY97c_ecEytxkRqdTYeRKoDOyj15guRceIpw_TNMgDCt7kl0FklB7MhOFxT0m57F3wStnQ
- 0nhyL9DPTaCkBP5VgwMXcsD5ne5LbI3qjJAb.N.3ziOSYaLkvTgLL6_YSoaO8ns3MNvm15j0X8dP
- 8PIrvG4jZzGRLmpQoTwQ4qs2w4WHQfvXl0C4VD5djz9bsaktK3J6Swi07CtE5TRlpuzZGFaOcxbp
- zvtTzJNGW7ZkD3YtCCKE0KhxKfyZMncL0_TFdZ2k.veJA0aQSmNrzaJ_on3RAnUWZ.zE_NaFyMo.
- dhZsV7XvBg6qMwNj8ZapXkciMGK.WytBgGowOq937YjVUwx5TVWwgbP8iz17c0wzkEjJTAtEqxJ.
- JfuiuL5j3AyGLJY0y9mGsUAUrLWj.n0pLCNO430Z.gjteKXUlRMrFP3hf4fDU_NZWwyDSV.v4d1Z
- E.5DrcpHSbJrWDOIp7YZ47BMYgXWF7xrf6sgpBTCHNminvN9XoqMJMCQrwejh5p5W9QV5EQHuF5n
- 8o7zeOXOz9fqfpcEiKpKpV_9c_JZLCdVJqeRyEHDdNMrOslVq9_JUevR0M7Q.pJObkeZVmVULGjA
- 6me6jOZ9k1d27_oSxghR6hBzHGIxkT4soEpHmI7DyxnwVP5i0uagFOeSsT7ZTa__IJ9M23IvVDgj
- iowR1tB.zSkoWm2gwos2GPRgR4SxO9ll3O6Ae3o0qIbIZHbXecukBGRNVkJxFGLH4mzyy.W.gsfe
- jYinnxitQhAMJ.ebxVWbTA8GMQaUYZvTgIWhCMXHi7Xt18i0slz7nOHRf6UrNJObjr3x_MKyFmfD
- QtiMr7r2SpU2I9qnw0.vynhDz9hfqOs0p.I2fvc7PQ8FBrxAfu.7KynHu_lallSOqV3Qo3Bi75Fk
- mMZIkSQwV6GmDjzkc.TM6RcWzCLNv_HZjX9l5j4dEEmKw1cMHnCgPWo2hH1.SrZPKeCiRU_ZtsOV
- WEQqSy6q3TbOCC6KZ1s8a1dOAbvWiN34LNWeesHytBeVWEMeS0m_Z2Lrq9NiEWb743u56JGdj_JG
- V1O3cEmmbbvLGz16obH1lC3BFGMBjzY1B274Y6TrosGSaIlHeVPvXVuqjjsN1G0KyPcmJ771_BPg
- EolvVTA2he23er9Enj.8DkBXDv1bSlm6SZCESwnJuFiV4p2NVDDuVQUIv6KFakx6XLCnzifLJY.K
- 5dbSO.i1YYYZ_naGKB9XKdpWh8dv.6Rz3.d.lY0j3jv3IllnEXkYssXQwJC4lVu4XCjpWnm5N3rX
- GSmtcegt2M4bEs2oLkoJsoPF5QTFKTGxbL92HGGlUGqtWJDIGdVeilv4.rWhRj1zZ.g8mtWrMtUw
- F59w0cvAIm7TbFsG0J.zLzzADOmgMrAeRBKUH5Sl6Nx_4gvm4wgWEJxt0pZQab1XqDnc2Kz2.sBC
- 4nX0HmSwxa59rMdcMHcsJCDHxQfT35unVWn.Ez1wCp.mQNvZJ0vl0GrkshCk33c0e2FPiKnC3umb
- OWUTkXXmbzwCe3qkVcSVBDeFPMP9pjjkW21Ly2mpgZgHNmxmB1ywYIlgElVqIvKfYMyJFqGtB0U0
- SEeguQ3XC1WAeyyxBkUaU5B2FOeqFQvoRwO0Uoyf81JsDbATKqudfqETFOCNgA9m_hNyHKaVtlri
- Vg3ixJwazO4XCSqCF8Ac9SDnRQ.4xuWS0J1j3RB4UtR9NhBSS4CcvHx.W5DDPUrASpSCQ4YrqiTo
- 8gY6aHrUhOX79CBcJyVDFdCi1Do2zqMlYXUOQj623QLVeV67r1f95NMz66Vz6qCIRx9WaXnnW2Xo
- 4FWGf.LQwJzCLwgYEGzBykdwh.NY4cEi_T9mj.QxiHd.3rdulPWbDX_2hhFlRDG1aYY1S6EEvnC7
- hgRg0RRfifA_GkeN4RZOCuvR4V3JsNg7uXNmqdhAzCGdxDKQ67qPqqAfcYA4.dKcn9vqjAs7vw6l
- 7m7m_AFiP.HBzvy0JtEf_uI7X64wHs7DNG9i9Kw01yTFHdnhAxRkO3Ng_2r87voa51gjbUugZX8o
- 0VbpBRe5yP.9T1HroTNGIRcxxkP9tiIgY1wzFQPk76Sdku94T_zfkbSE7iJuMDurLojs1VrEwuBP
- oMWCNFzxgCXhFp6GpPrQ-
-X-Sonic-MF: <casey@schaufler-ca.com>
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic314.consmr.mail.ne1.yahoo.com with HTTP; Thu, 29 Dec 2022 23:38:30 +0000
-Received: by hermes--production-gq1-d898c4779-kmgvg (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID c30ab77c0fba0515bdb50273bd82270d;
-          Thu, 29 Dec 2022 23:38:26 +0000 (UTC)
-From:   Casey Schaufler <casey@schaufler-ca.com>
-To:     casey.schaufler@intel.com, paul@paul-moore.com,
-        linux-security-module@vger.kernel.org
-Cc:     casey@schaufler-ca.com, jmorris@namei.org, keescook@chromium.org,
-        john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
-        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v4 7/8] LSM: wireup Linux Security Module syscalls
-Date:   Thu, 29 Dec 2022 15:34:53 -0800
-Message-Id: <20221229233454.43880-8-casey@schaufler-ca.com>
-X-Mailer: git-send-email 2.38.1
-In-Reply-To: <20221229233454.43880-1-casey@schaufler-ca.com>
-References: <20221229233454.43880-1-casey@schaufler-ca.com>
+        with ESMTP id S235580AbiL3XGP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 30 Dec 2022 18:06:15 -0500
+Received: from ams.source.kernel.org (ams.source.kernel.org [IPv6:2604:1380:4601:e00::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6CAF92DC7;
+        Fri, 30 Dec 2022 15:06:13 -0800 (PST)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+        (No client certificate requested)
+        by ams.source.kernel.org (Postfix) with ESMTPS id 07B1AB81D94;
+        Fri, 30 Dec 2022 23:06:12 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B267CC433EF;
+        Fri, 30 Dec 2022 23:06:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1672441570;
+        bh=A/dgeAj+KxG6IlyPN8N6M36a0RDTL9s2/p9TFh9dtrc=;
+        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
+        b=PvCx4/gSHyIbFgcss6wvfxZTsQt9LuaLnZMiD1QyiY2goSydCJp210p/cwmR1YPQP
+         YMRRmyTmUBsdpu6VhcrZQRK6xVQ2P5gpwptVXXl1grdaVurNoZZdTQIBPQjVUbroD+
+         H14IR8lF7pQvVMvhQzkJKxiI6jjgqIpz1Dpng4l3WSHhFvuSkBh0TH4bKtvNrXA0K9
+         mz6CNND9YTMRKV9hjIdO3rD2DGoHHSqzBtbjBKH1rQgfdfOWFrtIn0TdsqRCS9lAFt
+         XyDZdkvDDzzy5JdSWizMVk8N6nQdQ3R+l4R6tZOd5Zv7a9F1JsOwNT2hMjxeSjb40g
+         li+rSusZiRifg==
+Subject: [PATCHSET v24.0 00/21] xfs: atomic file updates
+From:   "Darrick J. Wong" <djwong@kernel.org>
+To:     djwong@kernel.org
+Cc:     linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Date:   Fri, 30 Dec 2022 14:13:55 -0800
+Message-ID: <167243843494.699466.5163281976943635014.stgit@magnolia>
+In-Reply-To: <Y69Unb7KRM5awJoV@magnolia>
+References: <Y69Unb7KRM5awJoV@magnolia>
+User-Agent: StGit/0.19
 MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Wireup lsm_get_self_attr, lsm_set_self_attr and lsm_module_list
-system calls.
+Hi all,
 
-Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
-Cc: linux-api@vger.kernel.org
+This series creates a new FIEXCHANGE_RANGE system call to exchange
+ranges of bytes between two files atomically.  This new functionality
+enables data storage programs to stage and commit file updates such that
+reader programs will see either the old contents or the new contents in
+their entirety, with no chance of torn writes.  A successful call
+completion guarantees that the new contents will be seen even if the
+system fails.
+
+The ability to swap extent mappings between files in this manner is
+critical to supporting online filesystem repair, which is built upon the
+strategy of constructing a clean copy of a damaged structure and
+committing the new structure into the metadata file atomically.
+
+User programs will be able to update files atomically by opening an
+O_TMPFILE, reflinking the source file to it, making whatever updates
+they want to make, and exchange the relevant ranges of the temp file
+with the original file.  If the updates are aligned with the file block
+size, a new (since v2) flag provides for exchanging only the written
+areas.  Callers can arrange for the update to be rejected if the
+original file has been changed.
+
+The intent behind this new userspace functionality is to enable atomic
+rewrites of arbitrary parts of individual files.  For years, application
+programmers wanting to ensure the atomicity of a file update had to
+write the changes to a new file in the same directory, fsync the new
+file, rename the new file on top of the old filename, and then fsync the
+directory.  People get it wrong all the time, and $fs hacks abound.
+Here is the proposed manual page:
+
+IOCTL-FIEXCHANGE_RANGE(Linux Programmer's ManIOCTL-FIEXCHANGE_RANGE(2)
+
+NAME
+       ioctl_fiexchange_range  - exchange the contents of parts of two
+       files
+
+SYNOPSIS
+       #include <sys/ioctl.h>
+       #include <linux/fiexchange.h>
+
+       int    ioctl(int     file2_fd,     FIEXCHANGE_RANGE,     struct
+       file_xchg_range *arg);
+
+DESCRIPTION
+       Given  a  range  of bytes in a first file file1_fd and a second
+       range of bytes in a second file  file2_fd,  this  ioctl(2)  ex‐
+       changes the contents of the two ranges.
+
+       Exchanges  are  atomic  with  regards to concurrent file opera‐
+       tions, so no userspace-level locks need to be taken  to  obtain
+       consistent  results.  Implementations must guarantee that read‐
+       ers see either the old contents or the new  contents  in  their
+       entirety, even if the system fails.
+
+       The exchange parameters are conveyed in a structure of the fol‐
+       lowing form:
+
+           struct file_xchg_range {
+               __s64    file1_fd;
+               __s64    file1_offset;
+               __s64    file2_offset;
+               __s64    length;
+
+               __u64    flags;
+
+               __s64    file2_ino;
+               __s64    file2_mtime;
+               __s64    file2_ctime;
+               __s32    file2_mtime_nsec;
+               __s32    file2_ctime_nsec;
+
+               __u64    pad[6];
+           };
+
+       The field pad must be zero.
+
+       The fields file1_fd, file1_offset, and length define the  first
+       range of bytes to be exchanged.
+
+       The fields file2_fd, file2_offset, and length define the second
+       range of bytes to be exchanged.
+
+       Both files must be from the same filesystem mount.  If the  two
+       file  descriptors represent the same file, the byte ranges must
+       not overlap.  Most  disk-based  filesystems  require  that  the
+       starts  of  both ranges must be aligned to the file block size.
+       If this is the case, the ends of the ranges  must  also  be  so
+       aligned unless the FILE_XCHG_RANGE_TO_EOF flag is set.
+
+       The field flags control the behavior of the exchange operation.
+
+           FILE_XCHG_RANGE_FILE2_FRESH
+                  Check  the  freshness  of file2_fd after locking the
+                  file but before exchanging the contents.   The  sup‐
+                  plied  file2_ino field must match file2's inode num‐
+                  ber, and the supplied file2_mtime, file2_mtime_nsec,
+                  file2_ctime,  and file2_ctime_nsec fields must match
+                  the modification time and change time of file2.   If
+                  they do not match, EBUSY will be returned.
+
+           FILE_XCHG_RANGE_TO_EOF
+                  Ignore  the length parameter.  All bytes in file1_fd
+                  from file1_offset to EOF are moved to file2_fd,  and
+                  file2's  size is set to (file2_offset+(file1_length-
+                  file1_offset)).  Meanwhile, all bytes in file2  from
+                  file2_offset  to  EOF are moved to file1 and file1's
+                  size   is   set   to    (file1_offset+(file2_length-
+                  file2_offset)).   This option is not compatible with
+                  FILE_XCHG_RANGE_FULL_FILES.
+
+           FILE_XCHG_RANGE_FSYNC
+                  Ensure that all modified in-core data in  both  file
+                  ranges  and  all  metadata updates pertaining to the
+                  exchange operation are flushed to persistent storage
+                  before  the  call  returns.  Opening either file de‐
+                  scriptor with O_SYNC or O_DSYNC will have  the  same
+                  effect.
+
+           FILE_XCHG_RANGE_SKIP_FILE1_HOLES
+                  Skip  sub-ranges  of  file1_fd that are known not to
+                  contain data.  This facility can be used  to  imple‐
+                  ment  atomic scatter-gather writes of any complexity
+                  for software-defined storage targets.
+
+           FILE_XCHG_RANGE_DRY_RUN
+                  Check the parameters and the feasibility of the  op‐
+                  eration, but do not change anything.
+
+           FILE_XCHG_RANGE_COMMIT
+                  This      flag      is      a     combination     of
+                  FILE_XCHG_RANGE_FILE2_FRESH |  FILE_XCHG_RANGE_FSYNC
+                  and  can  be  used  to commit changes to file2_fd to
+                  persistent storage if and  only  if  file2  has  not
+                  changed.
+
+           FILE_XCHG_RANGE_FULL_FILES
+                  Require that file1_offset and file2_offset are zero,
+                  and that the length field  matches  the  lengths  of
+                  both  files.   If  not, EDOM will be returned.  This
+                  option      is       not       compatible       with
+                  FILE_XCHG_RANGE_TO_EOF.
+
+           FILE_XCHG_RANGE_NONATOMIC
+                  This  flag  relaxes the requirement that readers see
+                  only the old contents or the new contents  in  their
+                  entirety.   If  the system fails before all modified
+                  in-core data and metadata updates are  persisted  to
+                  disk,  the contents of both file ranges after recov‐
+                  ery are not defined and may be a mix of both.
+
+                  Do not use this flag unless  the  contents  of  both
+                  ranges  are  known  to be identical and there are no
+                  other writers.
+
+RETURN VALUE
+       On error, -1 is returned, and errno is set to indicate the  er‐
+       ror.
+
+ERRORS
+       Error  codes can be one of, but are not limited to, the follow‐
+       ing:
+
+       EBADF  file1_fd is not open for reading and writing or is  open
+              for  append-only  writes;  or  file2_fd  is not open for
+              reading and writing or is open for append-only writes.
+
+       EBUSY  The inode number and timestamps supplied  do  not  match
+              file2_fd  and  FILE_XCHG_RANGE_FILE2_FRESH  was  set  in
+              flags.
+
+       EDOM   The ranges do not cover the entirety of both files,  and
+              FILE_XCHG_RANGE_FULL_FILES was set in flags.
+
+       EINVAL The  parameters  are  not correct for these files.  This
+              error can also appear if either file  descriptor  repre‐
+              sents  a device, FIFO, or socket.  Disk filesystems gen‐
+              erally require the offset and  length  arguments  to  be
+              aligned to the fundamental block sizes of both files.
+
+       EIO    An I/O error occurred.
+
+       EISDIR One of the files is a directory.
+
+       ENOMEM The  kernel  was unable to allocate sufficient memory to
+              perform the operation.
+
+       ENOSPC There is not enough free space  in  the  filesystem  ex‐
+              change the contents safely.
+
+       EOPNOTSUPP
+              The filesystem does not support exchanging bytes between
+              the two files.
+
+       EPERM  file1_fd or file2_fd are immutable.
+
+       ETXTBSY
+              One of the files is a swap file.
+
+       EUCLEAN
+              The filesystem is corrupt.
+
+       EXDEV  file1_fd and  file2_fd  are  not  on  the  same  mounted
+              filesystem.
+
+CONFORMING TO
+       This API is Linux-specific.
+
+USE CASES
+       Three use cases are imagined for this system call.
+
+       The  first  is a filesystem defragmenter, which copies the con‐
+       tents of a file into another file and wishes  to  exchange  the
+       space  mappings  of  the  two files, provided that the original
+       file has not changed.  The flags NONATOMIC and FILE2_FRESH  are
+       recommended for this application.
+
+       The  second is a data storage program that wants to commit non-
+       contiguous updates to a file atomically.  This can be  done  by
+       creating a temporary file, calling FICLONE(2) to share the con‐
+       tents, and staging the updates into the temporary file.  Either
+       of  the  FULL_FILES or TO_EOF flags are recommended, along with
+       FSYNC.  Depending on  the  application's  locking  design,  the
+       flags FILE2_FRESH or COMMIT may be applicable here.  The tempo‐
+       rary file can be deleted or punched out afterwards.
+
+       The third is a software-defined storage host (e.g. a disk juke‐
+       box)  which  implements an atomic scatter-gather write command.
+       Provided the exported disk's logical  block  size  matches  the
+       file's  allocation  unit  size,  this can be done by creating a
+       temporary file and writing the data at the appropriate offsets.
+       Use  this  call  with  the SKIP_HOLES flag to exchange only the
+       blocks involved in the write command.  The  use  of  the  FSYNC
+       flag is recommended here.  The temporary file should be deleted
+       or punched out completely before being reused to stage  another
+       write.
+
+NOTES
+       Some  filesystems may limit the amount of data or the number of
+       extents that can be exchanged in a single call.
+
+SEE ALSO
+       ioctl(2)
+
+Linux                         2022-12-31     IOCTL-FIEXCHANGE_RANGE(2)
+
+The reference implementation in XFS creates a new log incompat feature
+and log intent items to track high level progress of swapping ranges of
+two files and finish interrupted work if the system goes down.  Sample
+code can be found in the corresponding changes to xfs_io to exercise the
+use case mentioned above.
+
+Note that this function is /not/ the O_DIRECT atomic file writes concept
+that has also been floating around for years.  This RFC is constructed
+entirely in software, which means that there are no limitations other
+than the general filesystem limits.
+
+As a side note, the original motivation behind the kernel functionality
+is online repair of file-based metadata.  The atomic file swap is
+implemented as an atomic inode fork swap, which means that we can
+implement online reconstruction of extended attributes and directories
+by building a new one in another inode and atomically swap the contents.
+
+Subsequent patchsets adapt the online filesystem repair code to use
+atomic extent swapping.  This enables repair functions to construct a
+clean copy of a directory, xattr information, symbolic links, realtime
+bitmaps, and realtime summary information in a temporary inode.  If this
+completes successfully, the new contents can be swapped atomically into
+the inode being repaired.  This is essential to avoid making corruption
+problems worse if the system goes down in the middle of running repair.
+
+This patchset also ports the old XFS extent swap ioctl interface to use
+the new extent swap code.
+
+For userspace, this series also includes the userspace pieces needed to
+test the new functionality, and a sample implementation of atomic file
+updates.
+
+Question: Should we really bother with fsdevel bikeshedding?  Most
+filesystems cannot support this functionality, so we could keep it
+private to XFS for now.
+
+If you're going to start using this mess, you probably ought to just
+pull from my git trees, which are linked below.
+
+This is an extraordinary way to destroy everything.  Enjoy!
+Comments and questions are, as always, welcome.
+
+--D
+
+kernel git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfs-linux.git/log/?h=atomic-file-updates
+
+xfsprogs git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfsprogs-dev.git/log/?h=atomic-file-updates
+
+fstests git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfstests-dev.git/log/?h=atomic-file-updates
+
+xfsdocs git tree:
+https://git.kernel.org/cgit/linux/kernel/git/djwong/xfs-documentation.git/log/?h=atomic-file-updates
 ---
- arch/alpha/kernel/syscalls/syscall.tbl              |  3 +++
- arch/arm/tools/syscall.tbl                          |  3 +++
- arch/arm64/include/asm/unistd.h                     |  2 +-
- arch/arm64/include/asm/unistd32.h                   |  6 ++++++
- arch/ia64/kernel/syscalls/syscall.tbl               |  3 +++
- arch/m68k/kernel/syscalls/syscall.tbl               |  3 +++
- arch/microblaze/kernel/syscalls/syscall.tbl         |  3 +++
- arch/mips/kernel/syscalls/syscall_n32.tbl           |  3 +++
- arch/mips/kernel/syscalls/syscall_n64.tbl           |  3 +++
- arch/mips/kernel/syscalls/syscall_o32.tbl           |  3 +++
- arch/parisc/kernel/syscalls/syscall.tbl             |  3 +++
- arch/powerpc/kernel/syscalls/syscall.tbl            |  3 +++
- arch/s390/kernel/syscalls/syscall.tbl               |  3 +++
- arch/sh/kernel/syscalls/syscall.tbl                 |  3 +++
- arch/sparc/kernel/syscalls/syscall.tbl              |  3 +++
- arch/x86/entry/syscalls/syscall_32.tbl              |  3 +++
- arch/x86/entry/syscalls/syscall_64.tbl              |  3 +++
- arch/xtensa/kernel/syscalls/syscall.tbl             |  3 +++
- include/uapi/asm-generic/unistd.h                   | 11 ++++++++++-
- tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl |  3 +++
- tools/perf/arch/powerpc/entry/syscalls/syscall.tbl  |  3 +++
- tools/perf/arch/s390/entry/syscalls/syscall.tbl     |  3 +++
- tools/perf/arch/x86/entry/syscalls/syscall_64.tbl   |  3 +++
- 23 files changed, 77 insertions(+), 2 deletions(-)
-
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 8ebacf37a8cf..002e6a39fcb1 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -490,3 +490,6 @@
- 558	common	process_mrelease		sys_process_mrelease
- 559	common  futex_waitv                     sys_futex_waitv
- 560	common	set_mempolicy_home_node		sys_ni_syscall
-+561	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+562	common	lsm_module_list			sys_lsm_module_list
-+563	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index ac964612d8b0..dca80a2d3927 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -464,3 +464,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common	futex_waitv			sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 037feba03a51..bd77253b62e0 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -39,7 +39,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
- 
--#define __NR_compat_syscalls		451
-+#define __NR_compat_syscalls		453
- #endif
- 
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index 604a2053d006..cb4b3149024d 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -907,6 +907,12 @@ __SYSCALL(__NR_process_mrelease, sys_process_mrelease)
- __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
- #define __NR_set_mempolicy_home_node 450
- __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
-+#define __NR_lsm_get_self_attr 451
-+__SYSCALL(__NR_lsm_get_self_attr, sys_lsm_get_self_attr)
-+#define __NR_lsm_module_list 452
-+__SYSCALL(__NR_lsm_module_list, sys_module_list)
-+#define __NR_lsm_set_self_attr 453
-+__SYSCALL(__NR_lsm_set_self_attr, sys_lsm_set_self_attr)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index 72c929d9902b..1a5d560a1317 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -371,3 +371,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index b1f3940bc298..0b7b01c90315 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -450,3 +450,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 820145e47350..b69d57014c7b 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -456,3 +456,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 253ff994ed2e..7c1ca6241b90 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -389,3 +389,6 @@
- 448	n32	process_mrelease		sys_process_mrelease
- 449	n32	futex_waitv			sys_futex_waitv
- 450	n32	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	n32	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	n32	lsm_module_list			sys_lsm_module_list
-+453	n32	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 3f1886ad9d80..99453966d179 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -365,3 +365,6 @@
- 448	n64	process_mrelease		sys_process_mrelease
- 449	n64	futex_waitv			sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	n64	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	n64	lsm_module_list			sys_lsm_module_list
-+453	n64	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 8f243e35a7b2..4ddb0ff66793 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -438,3 +438,6 @@
- 448	o32	process_mrelease		sys_process_mrelease
- 449	o32	futex_waitv			sys_futex_waitv
- 450	o32	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	o32	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	o32	lsm_module_list			sys_lsm_module_list
-+453	032	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 0e42fceb2d5e..5ab1a5b22d8e 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -448,3 +448,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common	futex_waitv			sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index a0be127475b1..8d31bb83d6a2 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -537,3 +537,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450 	nospu	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 799147658dee..bb7597be2e4f 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -453,3 +453,6 @@
- 448  common	process_mrelease	sys_process_mrelease		sys_process_mrelease
- 449  common	futex_waitv		sys_futex_waitv			sys_futex_waitv
- 450  common	set_mempolicy_home_node	sys_set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451  common	lsm_get_self_attr	sys_lsm_get_self_attr		sys_lsm_get_self_attr
-+452  common	lsm_module_list		sys_lsm_module_list		sys_lsm_module_list
-+453  common	lsm_set_self_attr	sys_lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index 2de85c977f54..43d468742916 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -453,3 +453,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 4398cc6fb68d..c7791c7bdde4 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -496,3 +496,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 320480a8db4f..4f2e6577466e 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -455,3 +455,6 @@
- 448	i386	process_mrelease	sys_process_mrelease
- 449	i386	futex_waitv		sys_futex_waitv
- 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	i386	lsm_get_self_attr	sys_lsm_get_self_attr
-+452	i386	lsm_module_list		sys_lsm_module_list
-+453	i386	lsm_set_self_attr	sys_lsm_set_self_attr
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index c84d12608cd2..3a7866f72042 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -372,6 +372,9 @@
- 448	common	process_mrelease	sys_process_mrelease
- 449	common	futex_waitv		sys_futex_waitv
- 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr	sys_lsm_get_self_attr
-+452	common	lsm_module_list		sys_lsm_module_list
-+453	common	lsm_set_self_attr	sys_lsm_set_self_attr
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 52c94ab5c205..e0a5b61c1f1a 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -421,3 +421,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 45fa180cc56a..3659b2b02f5a 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -886,8 +886,17 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
- #define __NR_set_mempolicy_home_node 450
- __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
- 
-+#define __NR_lsm_get_self_attr 451
-+__SYSCALL(__NR_lsm_get_self_attr, sys_lsm_get_self_attr)
-+
-+#define __NR_lsm_module_list 452
-+__SYSCALL(__NR_lsm_module_list, sys_lsm_module_list)
-+
-+#define __NR_lsm_set_self_attr 453
-+__SYSCALL(__NR_lsm_set_self_attr, sys_lsm_set_self_attr)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 451
-+#define __NR_syscalls 454
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-index 3f1886ad9d80..99453966d179 100644
---- a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-+++ b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-@@ -365,3 +365,6 @@
- 448	n64	process_mrelease		sys_process_mrelease
- 449	n64	futex_waitv			sys_futex_waitv
- 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	n64	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	n64	lsm_module_list			sys_lsm_module_list
-+453	n64	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-index a0be127475b1..8d31bb83d6a2 100644
---- a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-@@ -537,3 +537,6 @@
- 448	common	process_mrelease		sys_process_mrelease
- 449	common  futex_waitv                     sys_futex_waitv
- 450 	nospu	set_mempolicy_home_node		sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr		sys_lsm_get_self_attr
-+452	common	lsm_module_list			sys_lsm_module_list
-+453	common	lsm_set_self_attr		sys_lsm_set_self_attr
-diff --git a/tools/perf/arch/s390/entry/syscalls/syscall.tbl b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-index 799147658dee..d69bd5550b46 100644
---- a/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-@@ -453,3 +453,6 @@
- 448  common	process_mrelease	sys_process_mrelease		sys_process_mrelease
- 449  common	futex_waitv		sys_futex_waitv			sys_futex_waitv
- 450  common	set_mempolicy_home_node	sys_set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451  common	lsm_get_self_attr	sys_lsm_get_self_attr	sys_lsm_get_self_attr
-+452  common	lsm_module_list		sys_lsm_module_list	sys_lsm_module_list
-+453  common	lsm_set_self_attr	sys_lsm_set_self_attr	sys_lsm_set_self_attr
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-index c84d12608cd2..3a7866f72042 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -372,6 +372,9 @@
- 448	common	process_mrelease	sys_process_mrelease
- 449	common	futex_waitv		sys_futex_waitv
- 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
-+451	common	lsm_get_self_attr	sys_lsm_get_self_attr
-+452	common	lsm_module_list		sys_lsm_module_list
-+453	common	lsm_set_self_attr	sys_lsm_set_self_attr
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
--- 
-2.38.1
+ Documentation/filesystems/vfs.rst  |   16 
+ fs/ioctl.c                         |   27 +
+ fs/remap_range.c                   |  296 ++++++++
+ fs/xfs/Makefile                    |    3 
+ fs/xfs/libxfs/xfs_bmap.h           |    4 
+ fs/xfs/libxfs/xfs_defer.c          |    7 
+ fs/xfs/libxfs/xfs_defer.h          |    3 
+ fs/xfs/libxfs/xfs_errortag.h       |    4 
+ fs/xfs/libxfs/xfs_format.h         |   15 
+ fs/xfs/libxfs/xfs_fs.h             |    2 
+ fs/xfs/libxfs/xfs_log_format.h     |   80 ++
+ fs/xfs/libxfs/xfs_log_recover.h    |    2 
+ fs/xfs/libxfs/xfs_sb.c             |    3 
+ fs/xfs/libxfs/xfs_swapext.c        | 1258 ++++++++++++++++++++++++++++++++++++
+ fs/xfs/libxfs/xfs_swapext.h        |  170 +++++
+ fs/xfs/libxfs/xfs_symlink_remote.c |   47 +
+ fs/xfs/libxfs/xfs_symlink_remote.h |    1 
+ fs/xfs/libxfs/xfs_trans_space.h    |    4 
+ fs/xfs/xfs_bmap_util.c             |  620 ------------------
+ fs/xfs/xfs_bmap_util.h             |    3 
+ fs/xfs/xfs_error.c                 |    3 
+ fs/xfs/xfs_file.c                  |   94 ++-
+ fs/xfs/xfs_inode.c                 |   13 
+ fs/xfs/xfs_inode.h                 |    6 
+ fs/xfs/xfs_ioctl.c                 |  102 +--
+ fs/xfs/xfs_ioctl.h                 |    4 
+ fs/xfs/xfs_ioctl32.c               |   11 
+ fs/xfs/xfs_linux.h                 |    5 
+ fs/xfs/xfs_log.c                   |   47 +
+ fs/xfs/xfs_log.h                   |   10 
+ fs/xfs/xfs_log_priv.h              |    3 
+ fs/xfs/xfs_log_recover.c           |    5 
+ fs/xfs/xfs_mount.c                 |   11 
+ fs/xfs/xfs_mount.h                 |    7 
+ fs/xfs/xfs_rtalloc.c               |  136 ++++
+ fs/xfs/xfs_rtalloc.h               |    3 
+ fs/xfs/xfs_super.c                 |   19 +
+ fs/xfs/xfs_swapext_item.c          |  657 +++++++++++++++++++
+ fs/xfs/xfs_swapext_item.h          |   56 ++
+ fs/xfs/xfs_symlink.c               |   49 -
+ fs/xfs/xfs_trace.c                 |    2 
+ fs/xfs/xfs_trace.h                 |  351 ++++++++++
+ fs/xfs/xfs_xattr.c                 |    6 
+ fs/xfs/xfs_xchgrange.c             |  964 ++++++++++++++++++++++++++++
+ fs/xfs/xfs_xchgrange.h             |   40 +
+ include/linux/fs.h                 |   14 
+ include/uapi/linux/fiexchange.h    |  101 +++
+ 47 files changed, 4473 insertions(+), 811 deletions(-)
+ create mode 100644 fs/xfs/libxfs/xfs_swapext.c
+ create mode 100644 fs/xfs/libxfs/xfs_swapext.h
+ create mode 100644 fs/xfs/xfs_swapext_item.c
+ create mode 100644 fs/xfs/xfs_swapext_item.h
+ create mode 100644 fs/xfs/xfs_xchgrange.c
+ create mode 100644 fs/xfs/xfs_xchgrange.h
+ create mode 100644 include/uapi/linux/fiexchange.h
 
