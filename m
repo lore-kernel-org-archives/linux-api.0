@@ -2,143 +2,129 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 42999C3DA7D
-	for <linux-api@archiver.kernel.org>; Thu,  5 Jan 2023 16:27:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 95845C4708E
+	for <linux-api@archiver.kernel.org>; Thu,  5 Jan 2023 20:38:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233094AbjAEQ14 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 5 Jan 2023 11:27:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60510 "EHLO
+        id S235517AbjAEUis (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 5 Jan 2023 15:38:48 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:34708 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234713AbjAEQ1k (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 5 Jan 2023 11:27:40 -0500
-Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8168524C;
-        Thu,  5 Jan 2023 08:27:37 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1672936056;
-        bh=2a02sfWya305xpJqy3l4emrqEUTjLaoJnNzo6PDwdFY=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=XXnczx6XasS3m9YJ+17km0hpRa4ycidnkkmHh/F8nuFmwNqxs1hgD5qNtlrTv9AVz
-         Od0ct5ir/fNj9I6Ku1bLL7fcP7LkxyKpyoSAEYtMKGIC60vifuaJs9z4btVvv/S5eH
-         +swuSVp8AFh+6JFiO0GeanJ3z8dRHwZi9TkQd5WWrbz6htsmVAfgrHcLXwZHBNt8JA
-         qdmHAOfq3XGJLQ70t1dLXB39lrK0P/8pz5aD+4oQUkVWIiRTe5nadm+fyJUcUQ8jDy
-         JRMcen3JvdzBcARtAGXhN4tRHDXemK4ZQW/JIsr2k2zBHMjvtRdMvPwdv25RUAv4CY
-         CWHZM63B9Tq2A==
-Received: from [10.1.0.205] (192-222-188-97.qc.cable.ebox.net [192.222.188.97])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4NnsMD2jblzffb;
-        Thu,  5 Jan 2023 11:27:36 -0500 (EST)
-Message-ID: <f8c0afe3-14e1-f38d-c9cf-0ec9b18b6e9b@efficios.com>
-Date:   Thu, 5 Jan 2023 11:28:06 -0500
+        with ESMTP id S235576AbjAEUio (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 5 Jan 2023 15:38:44 -0500
+Received: from mail-qt1-x832.google.com (mail-qt1-x832.google.com [IPv6:2607:f8b0:4864:20::832])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B212463D2A
+        for <linux-api@vger.kernel.org>; Thu,  5 Jan 2023 12:38:42 -0800 (PST)
+Received: by mail-qt1-x832.google.com with SMTP id v14so28196990qtq.3
+        for <linux-api@vger.kernel.org>; Thu, 05 Jan 2023 12:38:42 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=5R84gnDXIcZCl3q1uuKNVrzE7JF/GewA0GD7Joj4Tac=;
+        b=JTqD02qzpNL7au3Z3GUF4Xu2ARxubYVglZyPFMGjd5IBB76X21fyAUfGvELrmmzFik
+         QzBJjZBaZ6aZe7oTAlxNCti0+kLpAukE+qZM7LrpHVjgAMiyLgJZ2+98YW1K5vKsRoVw
+         2umAOw9diVB8LQA7BnZCONR8pssadQA3XE8f0al71RlaiMm7wUNlcWpSs5hmEzVyjqeM
+         eYv5U34leRc2bqLAihlC18sqPCveW9G6816ZQccg0Z2ovOthL6yQhQkI0guVnNH8iTu7
+         dG6eqdfXW1bD1DNzwo+oob/r+0lWSVvlcjXTltffxVApLthVRgT5BHTNgmHgdLEzU0KX
+         YdYg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=5R84gnDXIcZCl3q1uuKNVrzE7JF/GewA0GD7Joj4Tac=;
+        b=iCQMvL+X3DN373/77TwOY4VLrk1L3exyZxopBSXaEHE7G4YQh+vohg2Emn88/dPVpM
+         K/6oQRLifRJT6T2IlPVygbUGPrHAkdPrzLho4AHguEz+1EWPkCYLcvyWW/spBiJwBwmL
+         FQ6F8voy13xqGcxe1bcNjoXAWMJPn8yZyAUl3lCH7OE6WRtJRd3pIu93anuF4VZVe1Uo
+         2yXY8QUASaUU+QOhEC3v78Eg+IPzo7l8QE3fcuzpnLUX7uOiCwZSYortVvVU8NF04NBh
+         hO0oQCScdxco6AupFE+G6zK77ubM5TPFb4sDJX/HsfSDq9UjzN3KGmoSmhAE5mkSnOZG
+         rZig==
+X-Gm-Message-State: AFqh2kqBi1PjYr3cQxj+OrOYW2TYxgjSnCdKlliqaNgehM88rRjvDBYA
+        3FoxEBx4TfkXB4kdPl8dcgNXsBouO5VXFcWtnwqLX5sW28G+HA==
+X-Google-Smtp-Source: AMrXdXsO9CWfLwOzPVqYnAJucA/qVRf1ChKGrluQUWC1ROk0zrv6560/2Dre8nwP8Lxgkk7sOMhP2BMCSX8GFdVvZpI=
+X-Received: by 2002:ac8:5e0c:0:b0:3ab:754e:f0b3 with SMTP id
+ h12-20020ac85e0c000000b003ab754ef0b3mr2062105qtx.583.1672951121587; Thu, 05
+ Jan 2023 12:38:41 -0800 (PST)
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.6.0
-Subject: Re: [PATCH 05/30] selftests/rseq: Use ELF auxiliary vector for
- extensible rseq
-Content-Language: en-US
-To:     Florian Weimer <fw@deneb.enyo.de>
-Cc:     Peter Zijlstra <peterz@infradead.org>,
-        linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api@vger.kernel.org, Christian Brauner <brauner@kernel.org>,
-        David.Laight@ACULAB.COM, carlos@redhat.com,
-        Peter Oskolkov <posk@posk.io>,
-        Alexander Mikhalitsyn <alexander@mihalicyn.com>,
-        Chris Kennelly <ckennelly@google.com>
-References: <20221122203932.231377-1-mathieu.desnoyers@efficios.com>
- <20221122203932.231377-6-mathieu.desnoyers@efficios.com>
- <87a62yun6l.fsf@mid.deneb.enyo.de>
- <cce499bf-6083-558d-5431-9ceab05a98d6@efficios.com>
- <87tu15rm21.fsf@mid.deneb.enyo.de>
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-In-Reply-To: <87tu15rm21.fsf@mid.deneb.enyo.de>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com> <20221202061347.1070246-10-chao.p.peng@linux.intel.com>
+In-Reply-To: <20221202061347.1070246-10-chao.p.peng@linux.intel.com>
+From:   Vishal Annapurve <vannapurve@google.com>
+Date:   Thu, 5 Jan 2023 12:38:30 -0800
+Message-ID: <CAGtprH_pbSo1HeEFUEB6ZZxm-=NEw+nLZ6ZVvr76=9BeX=AHPA@mail.gmail.com>
+Subject: Re: [PATCH v10 9/9] KVM: Enable and expose KVM_MEM_PRIVATE
+To:     Chao Peng <chao.p.peng@linux.intel.com>
+Cc:     kvm@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-doc@vger.kernel.org, qemu-devel@nongnu.org,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Sean Christopherson <seanjc@google.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Naoya Horiguchi <naoya.horiguchi@nec.com>,
+        Miaohe Lin <linmiaohe@huawei.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>, tabba@google.com,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        wei.w.wang@intel.com
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 2023-01-05 11:19, Florian Weimer wrote:
-> * Mathieu Desnoyers:
-> 
->> 2- Now about applications (and libc) use of rseq fields:
->>
->> Using both __rseq_size (from libc) and the result of
->> getauxval(AT_RSEQ_FEATURE_SIZE), a rseq user can figure which rseq
->> fields can indeed be used. The important part is how
->> get_rseq_feature_size() is called in the rseq selftests:
->>
->>
->>                   rseq_feature_size = get_rseq_feature_size();
->>                   if (rseq_feature_size > rseq_size)
->>                           rseq_feature_size = rseq_size;
->>
->> which basically sets rseq_feature_size to the feature size exposed
->> by the kernel, except if libc's __rseq_size is smaller than the
->> feature size exposed by the kernel, in which case it will truncate
->> the rseq_feature_size to __rseq_size.
-> 
-> Ahh, this happens to work because we pass 32 today from glibc, and
-> there is nothing left to do in glibc to enable these new fields.
-> 
-> If true, that really argues in favor of this approach.
+On Thu, Dec 1, 2022 at 10:20 PM Chao Peng <chao.p.peng@linux.intel.com> wrote:
+>
+> +#ifdef CONFIG_HAVE_KVM_RESTRICTED_MEM
+> +static bool restrictedmem_range_is_valid(struct kvm_memory_slot *slot,
+> +                                        pgoff_t start, pgoff_t end,
+> +                                        gfn_t *gfn_start, gfn_t *gfn_end)
+> +{
+> +       unsigned long base_pgoff = slot->restricted_offset >> PAGE_SHIFT;
+> +
+> +       if (start > base_pgoff)
+> +               *gfn_start = slot->base_gfn + start - base_pgoff;
 
-Yes, you are correct..
+There should be a check for overflow here in case start is a very big
+value. Additional check can look like:
+if (start >= base_pgoff + slot->npages)
+       return false;
 
-> 
->>> Maybe we should just skip the existing padding and use it only for
->>> some vaguely kernel-internal purpose (say through a vDSO helper), so
->>> that it is less of an issue how to communicate the presence of these
->>> fields to userspace.
->>
->> The fact that libc's __rseq_size is included the original struct
->> rseq padding is unfortunate, but I really see this as a purely
->> userspace ABI concern, which should not dictate the layout of the
->> kernel ABI exposed to user-space, especially given that all the
->> information required to allow rseq users to know which fields can be
->> used is readily available by combining the value loaded from
->> __rseq_size and the result of getauxval(AT_RSEQ_FEATURE_SIZE).
-> 
-> But we must pass size 32 to the kernel today, otherwise rseq
-> registration fails.  It's a kernel-mandated value, not something
-> that's purely a userspace concern.
+> +       else
+> +               *gfn_start = slot->base_gfn;
+> +
+> +       if (end < base_pgoff + slot->npages)
+> +               *gfn_end = slot->base_gfn + end - base_pgoff;
 
-What I mean when stating the "userspace concern" is the semantic of the libc's
-__rseq_size symbol: whether it means allocated space (including padding)
-or actively populated feature fields.
+If "end" is smaller than base_pgoff, this can cause overflow and
+return the range as valid. There should be additional check:
+if (end < base_pgoff)
+         return false;
 
-In terms of rseq registration rseq_len argument, here is the updated check
-in the system call:
 
-         /*
-          * If there was no rseq previously registered, ensure the provided rseq
-          * is properly aligned, as communcated to user-space through the ELF
-          * auxiliary vector AT_RSEQ_ALIGN. If rseq_len is the original rseq
-          * size, the required alignment is the original struct rseq alignment.
-          *
-          * In order to be valid, rseq_len is either the original rseq size, or
-          * large enough to contain all supported fields, as communicated to
-          * user-space through the ELF auxiliary vector AT_RSEQ_FEATURE_SIZE.
-          */
-         if (rseq_len < ORIG_RSEQ_SIZE ||
-             (rseq_len == ORIG_RSEQ_SIZE && !IS_ALIGNED((unsigned long)rseq, ORIG_RSEQ_SIZE)) ||
-             (rseq_len != ORIG_RSEQ_SIZE && (!IS_ALIGNED((unsigned long)rseq, __alignof__(*rseq)) ||
-                                             rseq_len < offsetof(struct rseq, end))))
-                 return -EINVAL;
-
-Which keeps accepting rseq_len=32 (original ABI), else requires that enough space
-is available to hold all supported feature fields (but never less than 32 bytes).
-
-Do my explanations take care of your concerns, or are there still aspects that
-you are uneasy with ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-https://www.efficios.com
-
+> +       else
+> +               *gfn_end = slot->base_gfn + slot->npages;
+> +
+> +       if (*gfn_start >= *gfn_end)
+> +               return false;
+> +
+> +       return true;
+> +}
+> +
