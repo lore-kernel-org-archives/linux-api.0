@@ -2,109 +2,143 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DAB76C61DB3
-	for <linux-api@archiver.kernel.org>; Fri,  6 Jan 2023 22:08:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 552D6C677F1
+	for <linux-api@archiver.kernel.org>; Mon,  9 Jan 2023 07:59:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S234866AbjAFWH0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 6 Jan 2023 17:07:26 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46530 "EHLO
+        id S233395AbjAIH7t (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 9 Jan 2023 02:59:49 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57030 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231805AbjAFWHM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 6 Jan 2023 17:07:12 -0500
-Received: from mail-vs1-xe30.google.com (mail-vs1-xe30.google.com [IPv6:2607:f8b0:4864:20::e30])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 60F1484BEE
-        for <linux-api@vger.kernel.org>; Fri,  6 Jan 2023 14:07:10 -0800 (PST)
-Received: by mail-vs1-xe30.google.com with SMTP id i185so2924573vsc.6
-        for <linux-api@vger.kernel.org>; Fri, 06 Jan 2023 14:07:10 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=l9dqVddWwlNIkWBEkX2eMMbroRQSsxPmZhf5UK2bJx4=;
-        b=O6fLaeMkOAI9qlrlbD9V9hqb0FRi+3fYwY656X3zqlxsNXYgmUCLgJYTFwJVKAjthE
-         irUaeSLWBxwa416jiNkQxJky4pxbLUW3S/rzOYcjecUxbP1aO1xBadn5G83AJZJjM0GP
-         8LNX+VfdzXkl4XSINWkZYmRr2ww9tgPFY2yho=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=l9dqVddWwlNIkWBEkX2eMMbroRQSsxPmZhf5UK2bJx4=;
-        b=q94IWTDDpjo2V6oN11JhQwudbtY+ri4EbTbyastZVvUIAnIW2Np4El1gRGVcUzMG3D
-         gwTkp5KGOL3LbA8fYm/2D8dgttJljMrcfnPh46hpGcBEivXGNa9Ir0yIk859KLLT2HgZ
-         l08pZ06P7tStnADv+uoDr0AY5VjfrfsU2RevKzZn76IcISQOuQncgSZ8xqTioVgwOdh5
-         cGh4261VMcaNo3JfsqVJfC9D1QsT6MrRcckVHOtL39NQomgsU6KVYHMLI58nSwZwe6IR
-         12/EETeGHYfsjqufeG/JnsitvEOYCZkssgdyRUoCrxwPDmGFNtXmavwKHz3v42cKf+Q2
-         qUDw==
-X-Gm-Message-State: AFqh2kpgoNZhW8tk4lCKBW4VC8Qn5JauIukbMoFmon29TRaUy/sjqio6
-        /1mwx55zuejqfKXCNDQUaLfMFMQ6oMs8sapO
-X-Google-Smtp-Source: AMrXdXsKD5UK+rMpjIY/M+IR6ftZcovqozOZpLNDSZrGChGUNt6ZOsHABtu7OLHlfLF1UoWXcR400A==
-X-Received: by 2002:a67:e2c3:0:b0:3ce:e9bd:aa0f with SMTP id i3-20020a67e2c3000000b003cee9bdaa0fmr1565626vsm.32.1673042829052;
-        Fri, 06 Jan 2023 14:07:09 -0800 (PST)
-Received: from mail-qv1-f41.google.com (mail-qv1-f41.google.com. [209.85.219.41])
-        by smtp.gmail.com with ESMTPSA id u2-20020a05620a0c4200b006f9f3c0c63csm1212194qki.32.2023.01.06.14.07.07
-        for <linux-api@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 06 Jan 2023 14:07:07 -0800 (PST)
-Received: by mail-qv1-f41.google.com with SMTP id i12so1923157qvs.2
-        for <linux-api@vger.kernel.org>; Fri, 06 Jan 2023 14:07:07 -0800 (PST)
-X-Received: by 2002:a05:6214:1185:b0:4c6:608c:6b2c with SMTP id
- t5-20020a056214118500b004c6608c6b2cmr2661817qvv.130.1673042827328; Fri, 06
- Jan 2023 14:07:07 -0800 (PST)
+        with ESMTP id S231264AbjAIH7s (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 9 Jan 2023 02:59:48 -0500
+Received: from frasgout.his.huawei.com (frasgout.his.huawei.com [185.176.79.56])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E8986DE8D;
+        Sun,  8 Jan 2023 23:59:46 -0800 (PST)
+Received: from lhrpeml500004.china.huawei.com (unknown [172.18.147.201])
+        by frasgout.his.huawei.com (SkyGuard) with ESMTP id 4Nr5rX4tJDz67lSM;
+        Mon,  9 Jan 2023 15:57:16 +0800 (CST)
+Received: from [10.123.123.126] (10.123.123.126) by
+ lhrpeml500004.china.huawei.com (7.191.163.9) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256) id
+ 15.1.2375.34; Mon, 9 Jan 2023 07:59:44 +0000
+Message-ID: <4aa29433-e7f9-f225-5bdf-c80638c936e8@huawei.com>
+Date:   Mon, 9 Jan 2023 10:59:43 +0300
 MIME-Version: 1.0
-References: <CAHk-=wg_6Uhkjy12Vq_hN6rQqGRP2nE15rkgiAo6Qay5aOeigg@mail.gmail.com>
- <Y7SDgtXayQCy6xT6@zx2c4.com> <CAHk-=whQdWFw+0eGttxsWBHZg1+uh=0MhxXYtvJGX4t9P1MgNw@mail.gmail.com>
- <Y7SJ+/axonTK0Fir@zx2c4.com> <CAHk-=wi4gshfKjbhEO_xZdVb9ztXf0iuv5kKhxtvAHf2HzTmng@mail.gmail.com>
- <Y7STv9+p248zr+0a@zx2c4.com> <10302240-51ec-0854-2c86-16752d67a9be@opteya.com>
- <Y7dV1lVUYjqs8fh0@zx2c4.com> <CAHk-=wijEC_oDzfUajhmp=ZVnzMTXgjxHEcxAfaHiNQm4iAcqA@mail.gmail.com>
- <CAHk-=wiO4rp8oVmj6i6vvC97gNePLN-SxhSK=UozA88G6nxBGQ@mail.gmail.com> <Y7iV18CqKAa4gO9r@casper.infradead.org>
-In-Reply-To: <Y7iV18CqKAa4gO9r@casper.infradead.org>
-From:   Linus Torvalds <torvalds@linux-foundation.org>
-Date:   Fri, 6 Jan 2023 14:06:51 -0800
-X-Gmail-Original-Message-ID: <CAHk-=wj7jenrb6UNjv--xLC4hrjJDsCFxuaHw1e67a4ihVEmUw@mail.gmail.com>
-Message-ID: <CAHk-=wj7jenrb6UNjv--xLC4hrjJDsCFxuaHw1e67a4ihVEmUw@mail.gmail.com>
-Subject: Re: [PATCH v14 2/7] mm: add VM_DROPPABLE for designating always
- lazily freeable mappings
-To:     Matthew Wilcox <willy@infradead.org>
-Cc:     "Jason A. Donenfeld" <Jason@zx2c4.com>,
-        Yann Droneaud <ydroneaud@opteya.com>,
-        Andy Lutomirski <luto@kernel.org>,
-        Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org,
-        patches@lists.linux.dev, tglx@linutronix.de,
-        linux-crypto@vger.kernel.org, linux-api@vger.kernel.org,
-        x86@kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-        Adhemerval Zanella Netto <adhemerval.zanella@linaro.org>,
-        "Carlos O'Donell" <carlos@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        Arnd Bergmann <arnd@arndb.de>, Jann Horn <jannh@google.com>,
-        Christian Brauner <brauner@kernel.org>, linux-mm@kvack.org
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:91.0) Gecko/20100101
+ Thunderbird/91.4.1
+Subject: Re: [PATCH v8 07/12] landlock: Add network rules support
+Content-Language: ru
+To:     =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>,
+        <linux-sparse@vger.kernel.org>
+CC:     <willemdebruijn.kernel@gmail.com>, <gnoack3000@gmail.com>,
+        <linux-security-module@vger.kernel.org>, <netdev@vger.kernel.org>,
+        <netfilter-devel@vger.kernel.org>, <artem.kuzin@huawei.com>,
+        Linux API <linux-api@vger.kernel.org>,
+        "Alejandro Colomar (man-pages)" <alx.manpages@gmail.com>
+References: <20221021152644.155136-1-konstantin.meskhidze@huawei.com>
+ <20221021152644.155136-8-konstantin.meskhidze@huawei.com>
+ <49391484-7401-e7c7-d909-3bd6bd024731@digikod.net>
+ <9a6ea6ac-525d-e058-5867-0794a99b19a3@huawei.com>
+ <47fedda8-a13c-b62f-251f-b62508964bb0@digikod.net>
+From:   "Konstantin Meskhidze (A)" <konstantin.meskhidze@huawei.com>
+In-Reply-To: <47fedda8-a13c-b62f-251f-b62508964bb0@digikod.net>
+Content-Type: text/plain; charset="UTF-8"; format=flowed
+Content-Transfer-Encoding: 8bit
+X-Originating-IP: [10.123.123.126]
+X-ClientProxiedBy: lhrpeml100005.china.huawei.com (7.191.160.25) To
+ lhrpeml500004.china.huawei.com (7.191.163.9)
+X-CFilter-Loop: Reflected
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Jan 6, 2023 at 1:42 PM Matthew Wilcox <willy@infradead.org> wrote:
->
->
-> I'd be more inclined to do:
->
-> typedef unsigned int vm_flags_t[2];
 
-No, that's entirely invalid.
 
-Never *ever* use arrays in C for type safety. Arrays are not type
-safe. They can't be assigned sanely, and they silently become pointers
-(which also aren't type-safe, since they end up converting silently to
-'void *').
+1/6/2023 10:22 PM, Mickaël Salaün пишет:
+> 
+> On 04/01/2023 12:41, Konstantin Meskhidze (A) wrote:
+>> 
+>> 
+>> 11/17/2022 9:43 PM, Mickaël Salaün пишет:
+> 
+> [...]
+> 
+>>>>    /**
+>>>> @@ -79,6 +91,24 @@ struct landlock_path_beneath_attr {
+>>>>    	 */
+>>>>    } __attribute__((packed));
+>>>>
+>>>> +/**
+>>>> + * struct landlock_net_service_attr - TCP subnet definition
+>>>> + *
+>>>> + * Argument of sys_landlock_add_rule().
+>>>> + */
+>>>> +struct landlock_net_service_attr {
+>>>> +	/**
+>>>> +	 * @allowed_access: Bitmask of allowed access network for services
+>>>> +	 * (cf. `Network flags`_).
+>>>> +	 */
+>>>> +	__u64 allowed_access;
+>>>> +	/**
+>>>> +	 * @port: Network port.
+>>>> +	 */
+>>>> +	__u16 port;
+>>>
+>>>    From an UAPI point of view, I think the port field should be __be16, as
+>>> for sockaddr_in->port and other network-related APIs. This will require
+>>> some kernel changes to please sparse: make C=2 security/landlock/ must
+>>> not print any warning.
+>> 
+>>     I have this errors trying to launch sparse checking:
+>> 
+>>     DESCEND objtool
+>>     DESCEND bpf/resolve_btfids
+>>     CALL    scripts/checksyscalls.sh
+>>     CHK     kernel/kheaders_data.tar.xz
+>>     CC      security/landlock/setup.o
+>>     CHECK   security/landlock/setup.c
+>> ./include/asm-generic/rwonce.h:67:16: error: typename in expression
+>> ./include/asm-generic/rwonce.h:67:16: error: Expected ) in function call
+>> ./include/asm-generic/rwonce.h:67:16: error: got :
+>> ./include/linux/list.h:292:16: error: typename in expression
+>> ./include/linux/list.h:292:16: error: Expected ) in function call
+>> ./include/linux/list.h:292:16: error: got :
+>> 
+>> ....
+>> 
+>> ./include/linux/seqlock.h:682:16: error: Expected ) in function call
+>> ./include/linux/seqlock.h:682:16: error: got :
+>> ./include/linux/seqlock.h:695:16: error: typename in expression
+>> ./include/linux/seqlock.h:695:16: error: Expected ) in function call
+>> ./include/linux/seqlock.h:695:16: error: too many errors
+>> Segmentation fault (core dumped)
+>> make[3]: *** [scripts/Makefile.build:250: security/landlock/setup.o]
+>> Error 139
+>> make[3]: *** Deleting file 'security/landlock/setup.o'
+>> make[3]: *** Waiting for unfinished jobs....
+>> Segmentation fault (core dumped)
+>> make[3]: *** [scripts/Makefile.build:250: security/landlock/syscalls.o]
+>> Error 139
+>> make[3]: *** Deleting file 'security/landlock/syscalls.o'
+>> make[2]: *** [scripts/Makefile.build:502: security/landlock] Error 2
+>> make[1]: *** [scripts/Makefile.build:502: security] Error 2
+>> make[1]: *** Waiting for unfinished jobs....
+>> make: *** [Makefile:1994: .] Error 2
+> 
+> I don't know about this error. Did you follow the documentation?
+> https://docs.kernel.org/dev-tools/sparse.html#getting-sparse
+> 
+   Yes, I did as in the documentation. that's strange.
+If you dont mind can you please check it when I sent a new patch?
 
-If you want to use the type system to enforce things, and you don't
-want to rely on sparse, you absolutely have to use a struct (or union)
-type.
-
-So something like
-
-   typedef struct { u64 val; } vm_flags_t;
-
-would be an option.
-
-              Linus
+> 
+> 
+>>>
+>>> Using big-endian values as keys (casted to uintptr_t, not strictly
+>>> __be16) in the rb-tree should not be an issue because there is no port
+>>> range ordering (for now).
+>>>
+>>> A dedicated test should check that endianness is correct, e.g. by using
+>>> different port encoding. This should include passing and failing tests,
+>>> but they should work on all architectures (i.e. big or little endian).
+> .
