@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C434DC46467
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:31:58 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BC90FC46467
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:32:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230379AbjASVb4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:31:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45788 "EHLO
+        id S230394AbjASVcY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 16:32:24 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45328 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231127AbjASVax (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:30:53 -0500
+        with ESMTP id S231224AbjASVbQ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:31:16 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0C05EA7919;
-        Thu, 19 Jan 2023 13:25:12 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3A87BA2977;
+        Thu, 19 Jan 2023 13:25:40 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1674163513; x=1705699513;
+  t=1674163540; x=1705699540;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=PzST9NKmNucCPEHUcN1NhrjLFoRDDlEf869nc/warJQ=;
-  b=OtXfLuNdP+s5ABXvTSA6h3JcsJJ74kB46UQkIE55VBfg+4EvfX8ahcX+
-   Q9TK1f8noc1YveWVtuuaCCsFYiG/xqq/ftyG/fRz6+/TgppUtmXHy4rPd
-   tZHAOqiqVRzBfQ3IxMYCnnCzeA582pY3Av5rGCiCAAP0lOqEvsTTiVCP9
-   i/9NtZHBWdtkTIOCWLodVMmO9b3a4+3Z5tLsQGyyIGc886E7dwckLZlhd
-   33LX4DTmAt0kfKkTTCDHzFR5AjlC5/NmUDcvNsBZpxKStDll3rACVkkqi
-   Gvlhah6hq8Y8tGkEdAbrGCWsHzS1OM/egyN1sKDv73f/lCzRKYi0JDnwW
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119314"
+  bh=FFlwLGFrc3HasCEVoFiq4z4jSgXcdwaUjJhlr8Fvg+4=;
+  b=aRnOtZyMko5ae+FJxv4iVnVL/0VoeR40dnzCJ5SFkI3FMmrUprwC7AQf
+   Dud+YvZWnqA92Z8DId+I28Jtw6gusuFHAp8AAtkxhRd69Em5lrnJ63iW1
+   XWyukqttdXpCb156zgHveQi797Pc4pJsuZi1E+T2HK1RZN49NHqnH2WCN
+   BAt5qYl+Au7Mmd8Lj5VLR02xLLmU2wDhdNcbf6HEWrMB4L4AXbZOKYLv3
+   +Unv2ewsKqefz1mlpexTwKK66Q9UF2mCOeuCgcTGJcc18iBrcB3F8e0oc
+   nvGqB08B7RJVGjrni/9ViYP7i6u/VHg3VUxl9x0Ska2LJp6EvYre9THH+
+   A==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119389"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323119314"
+   d="scan'208";a="323119389"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:36 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139017"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:41 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139032"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139017"
+   d="scan'208";a="989139032"
 Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:34 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:39 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,11 +65,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Michael Kerrisk <mtk.manpages@gmail.com>
-Subject: [PATCH v5 07/39] x86: Add user control-protection fault handler
-Date:   Thu, 19 Jan 2023 13:22:45 -0800
-Message-Id: <20230119212317.8324-8-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v5 10/39] x86/mm: Introduce _PAGE_COW
+Date:   Thu, 19 Jan 2023 13:22:48 -0800
+Message-Id: <20230119212317.8324-11-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
 References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
@@ -77,569 +76,301 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Some OSes have a greater dependence on software available bits in PTEs than
+Linux. That left the hardware architects looking for a way to represent a
+new memory type (shadow stack) within the existing bits. They chose to
+repurpose a lightly-used state: Write=0,Dirty=1. So in order to support
+shadow stack memory, Linux should avoid creating memory with this PTE bit
+combination unless it intends for it to be shadow stack.
 
-A control-protection fault is triggered when a control-flow transfer
-attempt violates Shadow Stack or Indirect Branch Tracking constraints.
-For example, the return address for a RET instruction differs from the copy
-on the shadow stack.
+The reason it's lightly used is that Dirty=1 is normally set by HW
+_before_ a write. A write with a Write=0 PTE would typically only generate
+a fault, not set Dirty=1. Hardware can (rarely) both set Dirty=1 *and*
+generate the fault, resulting in a Write=0,Dirty=1 PTE. Hardware which
+supports shadow stacks will no longer exhibit this oddity.
 
-There already exists a control-protection fault handler for handling kernel
-IBT faults. Refactor this fault handler into separate user and kernel
-handlers, like the page fault handler. Add a control-protection handler
-for usermode. To avoid ifdeffery, put them both in a new file cet.c, which
-is compiled in the case of either of the two CET features supported in the
-kernel: kernel IBT or user mode shadow stack. Move some static inline
-functions from traps.c into a header so they can be used in cet.c.
+So that leaves Write=0,Dirty=1 PTEs created in software. To achieve this,
+in places where Linux normally creates Write=0,Dirty=1, it can use the
+software-defined _PAGE_COW in place of the hardware _PAGE_DIRTY. In other
+words, whenever Linux needs to create Write=0,Dirty=1, it instead creates
+Write=0,Cow=1 except for shadow stack, which is Write=0,Dirty=1.
+Further differentiated by VMA flags, these PTE bit combinations would be
+set as follows for various types of memory:
 
-Opportunistically fix a comment in the kernel IBT part of the fault
-handler that is on the end of the line instead of preceding it.
+(Write=0,Cow=1,Dirty=0):
+ - A modified, copy-on-write (COW) page. Previously when a typical
+   anonymous writable mapping was made COW via fork(), the kernel would
+   mark it Write=0,Dirty=1. Now it will instead use the Cow bit. This
+   happens in copy_present_pte().
+ - A R/O page that has been COW'ed. The user page is in a R/O VMA,
+   and get_user_pages(FOLL_FORCE) needs a writable copy. The page fault
+   handler creates a copy of the page and sets the new copy's PTE as
+   Write=0 and Cow=1.
+ - A shared shadow stack PTE. When a shadow stack page is being shared
+   among processes (this happens at fork()), its PTE is made Dirty=0, so
+   the next shadow stack access causes a fault, and the page is
+   duplicated and Dirty=1 is set again. This is the COW equivalent for
+   shadow stack pages, even though it's copy-on-access rather than
+   copy-on-write.
 
-Keep the same behavior for the kernel side of the fault handler, except for
-converting a BUG to a WARN in the case of a #CP happening when the feature
-is missing. This unifies the behavior with the new shadow stack code, and
-also prevents the kernel from crashing under this situation which is
-potentially recoverable.
+(Write=0,Cow=0,Dirty=1):
+ - A shadow stack PTE.
+ - A Cow PTE created when a processor without shadow stack support set
+   Dirty=1.
 
-The control-protection fault handler works in a similar way as the general
-protection fault handler. It provides the si_code SEGV_CPERR to the signal
-handler.
+There are six bits left available to software in the 64-bit PTE after
+consuming a bit for _PAGE_COW. No space is consumed in 32-bit kernels
+because shadow stacks are not enabled there.
+
+Implement only the infrastructure for _PAGE_COW. Changes to start
+creating _PAGE_COW PTEs will follow once other pieces are in place.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
+Co-developed-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Michael Kerrisk <mtk.manpages@gmail.com>
 ---
 
 v5:
- - Move to separate file to advoid ifdeffery (Boris)
- - Improvements to commit log (Boris)
- - Rename control_protection_err (Boris)
- - Move comment from end of line in IBT fault handler (Boris)
+ - Fix log, comments and whitespace (Boris)
+ - Remove capitalization on shadow stack (Boris)
+
+v4:
+ - Teach pte_flags_need_flush() about _PAGE_COW bit
+ - Break apart patch for better bisectability
 
 v3:
- - Shorten user/kernel #CP handler function names (peterz)
- - Restore CP_ENDBR check to kernel handler (peterz)
- - Utilize CONFIG_X86_CET (Kees)
- - Unify "unexpected" warnings (Andrew Cooper)
- - Use 2d array for error code chars (Andrew Cooper)
- - Add comment about why to read SSP MSR before enabling interrupts
+ - Add comment around _PAGE_TABLE in response to comment
+   from (Andrew Cooper)
+ - Check for PSE in pmd_shstk (Andrew Cooper)
+ - Get to the point quicker in commit log (Andrew Cooper)
+ - Clarify and reorder commit log for why the PTE bit examples have
+   multiple entries. Apply same changes for comment. (peterz)
+ - Fix comment that implied dirty bit for COW was a specific x86 thing
+   (peterz)
+ - Fix swapping of Write/Dirty (PeterZ)
 
 v2:
- - Integrate with kernel IBT fault handler
- - Update printed messages. (Dave)
- - Remove array_index_nospec() usage. (Dave)
- - Remove IBT messages. (Dave)
- - Add enclave error code bit processing it case it can get triggered
-   somehow.
- - Add extra "unknown" in control_protection_err.
+ - Update commit log with comments (Dave Hansen)
+ - Add comments in code to explain pte modification code better (Dave)
+ - Clarify info on the meaning of various Write,Cow,Dirty combinations
 
-v1:
- - Update static asserts for NSIGSEGV
+ arch/x86/include/asm/pgtable.h       | 78 ++++++++++++++++++++++++++++
+ arch/x86/include/asm/pgtable_types.h | 59 +++++++++++++++++++--
+ arch/x86/include/asm/tlbflush.h      |  3 +-
+ 3 files changed, 134 insertions(+), 6 deletions(-)
 
- arch/arm/kernel/signal.c                 |   2 +-
- arch/arm64/kernel/signal.c               |   2 +-
- arch/arm64/kernel/signal32.c             |   2 +-
- arch/sparc/kernel/signal32.c             |   2 +-
- arch/sparc/kernel/signal_64.c            |   2 +-
- arch/x86/include/asm/disabled-features.h |   8 +-
- arch/x86/include/asm/idtentry.h          |   2 +-
- arch/x86/include/asm/traps.h             |  12 ++
- arch/x86/kernel/Makefile                 |   2 +
- arch/x86/kernel/cet.c                    | 152 +++++++++++++++++++++++
- arch/x86/kernel/idt.c                    |   2 +-
- arch/x86/kernel/signal_32.c              |   2 +-
- arch/x86/kernel/signal_64.c              |   2 +-
- arch/x86/kernel/traps.c                  |  87 -------------
- arch/x86/xen/enlighten_pv.c              |   2 +-
- arch/x86/xen/xen-asm.S                   |   2 +-
- include/uapi/asm-generic/siginfo.h       |   3 +-
- 17 files changed, 186 insertions(+), 100 deletions(-)
- create mode 100644 arch/x86/kernel/cet.c
-
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index e07f359254c3..9a3c9de5ac5e 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -681,7 +681,7 @@ asmlinkage void do_rseq_syscall(struct pt_regs *regs)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index be279fd48248..4bced22213d5 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -1176,7 +1176,7 @@ void __init minsigstksz_setup(void)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/arm64/kernel/signal32.c b/arch/arm64/kernel/signal32.c
-index 4700f8522d27..bbd542704730 100644
---- a/arch/arm64/kernel/signal32.c
-+++ b/arch/arm64/kernel/signal32.c
-@@ -460,7 +460,7 @@ void compat_setup_restart_syscall(struct pt_regs *regs)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/sparc/kernel/signal32.c b/arch/sparc/kernel/signal32.c
-index dad38960d1a8..82da8a2d769d 100644
---- a/arch/sparc/kernel/signal32.c
-+++ b/arch/sparc/kernel/signal32.c
-@@ -751,7 +751,7 @@ asmlinkage int do_sys32_sigstack(u32 u_ssptr, u32 u_ossptr, unsigned long sp)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/sparc/kernel/signal_64.c b/arch/sparc/kernel/signal_64.c
-index 570e43e6fda5..b4e410976e0d 100644
---- a/arch/sparc/kernel/signal_64.c
-+++ b/arch/sparc/kernel/signal_64.c
-@@ -562,7 +562,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long orig_i0, unsigned long
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 505f78ddca82..652e366b68a0 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -105,6 +105,12 @@
- #define DISABLE_USER_SHSTK	(1 << (X86_FEATURE_USER_SHSTK & 31))
- #endif
- 
-+#ifdef CONFIG_X86_KERNEL_IBT
-+#define DISABLE_IBT	0
-+#else
-+#define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
-+#endif
-+
- /*
-  * Make sure to add features to the correct mask
-  */
-@@ -128,7 +134,7 @@
- #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
- 			 DISABLE_ENQCMD)
- #define DISABLED_MASK17	0
--#define DISABLED_MASK18	0
-+#define DISABLED_MASK18	(DISABLE_IBT)
- #define DISABLED_MASK19	0
- #define DISABLED_MASK20	0
- #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 21)
-diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
-index 72184b0b2219..69e26f48d027 100644
---- a/arch/x86/include/asm/idtentry.h
-+++ b/arch/x86/include/asm/idtentry.h
-@@ -618,7 +618,7 @@ DECLARE_IDTENTRY_RAW_ERRORCODE(X86_TRAP_DF,	xenpv_exc_double_fault);
- #endif
- 
- /* #CP */
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP,	exc_control_protection);
- #endif
- 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 47ecfff2c83d..75e0dabf0c45 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -47,4 +47,16 @@ void __noreturn handle_stack_overflow(struct pt_regs *regs,
- 				      struct stack_info *info);
- #endif
- 
-+static inline void cond_local_irq_enable(struct pt_regs *regs)
-+{
-+	if (regs->flags & X86_EFLAGS_IF)
-+		local_irq_enable();
-+}
-+
-+static inline void cond_local_irq_disable(struct pt_regs *regs)
-+{
-+	if (regs->flags & X86_EFLAGS_IF)
-+		local_irq_disable();
-+}
-+
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
-index dd61752f4c96..92446f1dedd7 100644
---- a/arch/x86/kernel/Makefile
-+++ b/arch/x86/kernel/Makefile
-@@ -144,6 +144,8 @@ obj-$(CONFIG_CFI_CLANG)			+= cfi.o
- 
- obj-$(CONFIG_CALL_THUNKS)		+= callthunks.o
- 
-+obj-$(CONFIG_X86_CET)			+= cet.o
-+
- ###
- # 64 bit specific files
- ifeq ($(CONFIG_X86_64),y)
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-new file mode 100644
-index 000000000000..33d7d119be26
---- /dev/null
-+++ b/arch/x86/kernel/cet.c
-@@ -0,0 +1,152 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#include <linux/ptrace.h>
-+#include <asm/bugs.h>
-+#include <asm/traps.h>
-+
-+enum cp_error_code {
-+	CP_EC        = (1 << 15) - 1,
-+
-+	CP_RET       = 1,
-+	CP_IRET      = 2,
-+	CP_ENDBR     = 3,
-+	CP_RSTRORSSP = 4,
-+	CP_SETSSBSY  = 5,
-+
-+	CP_ENCL	     = 1 << 15,
-+};
-+
-+static const char cp_err[][10] = {
-+	[0] = "unknown",
-+	[1] = "near ret",
-+	[2] = "far/iret",
-+	[3] = "endbranch",
-+	[4] = "rstorssp",
-+	[5] = "setssbsy",
-+};
-+
-+static const char *cp_err_string(unsigned long error_code)
-+{
-+	unsigned int cpec = error_code & CP_EC;
-+
-+	if (cpec >= ARRAY_SIZE(cp_err))
-+		cpec = 0;
-+	return cp_err[cpec];
-+}
-+
-+static void do_unexpected_cp(struct pt_regs *regs, unsigned long error_code)
-+{
-+	WARN_ONCE(1, "Unexpected %s #CP, error_code: %s\n",
-+		     user_mode(regs) ? "user mode" : "kernel mode",
-+		     cp_err_string(error_code));
-+}
-+
-+static DEFINE_RATELIMIT_STATE(cpf_rate, DEFAULT_RATELIMIT_INTERVAL,
-+			      DEFAULT_RATELIMIT_BURST);
-+
-+static void do_user_cp_fault(struct pt_regs *regs, unsigned long error_code)
-+{
-+	struct task_struct *tsk;
-+	unsigned long ssp;
-+
-+	/*
-+	 * An exception was just taken from userspace. Since interrupts are disabled
-+	 * here, no scheduling should have messed with the registers yet and they
-+	 * will be whatever is live in userspace. So read the SSP before enabling
-+	 * interrupts so locking the fpregs to do it later is not required.
-+	 */
-+	rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+	cond_local_irq_enable(regs);
-+
-+	tsk = current;
-+	tsk->thread.error_code = error_code;
-+	tsk->thread.trap_nr = X86_TRAP_CP;
-+
-+	/* Ratelimit to prevent log spamming. */
-+	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-+	    __ratelimit(&cpf_rate)) {
-+		pr_emerg("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)%s",
-+			 tsk->comm, task_pid_nr(tsk),
-+			 regs->ip, regs->sp, ssp, error_code,
-+			 cp_err_string(error_code),
-+			 error_code & CP_ENCL ? " in enclave" : "");
-+		print_vma_addr(KERN_CONT " in ", regs->ip);
-+		pr_cont("\n");
-+	}
-+
-+	force_sig_fault(SIGSEGV, SEGV_CPERR, (void __user *)0);
-+	cond_local_irq_disable(regs);
-+}
-+
-+static __ro_after_init bool ibt_fatal = true;
-+
-+/* code label defined in asm below */
-+extern void ibt_selftest_ip(void);
-+
-+static void do_kernel_cp_fault(struct pt_regs *regs, unsigned long error_code)
-+{
-+	if ((error_code & CP_EC) != CP_ENDBR) {
-+		do_unexpected_cp(regs, error_code);
-+		return;
-+	}
-+
-+	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
-+		regs->ax = 0;
-+		return;
-+	}
-+
-+	pr_err("Missing ENDBR: %pS\n", (void *)instruction_pointer(regs));
-+	if (!ibt_fatal) {
-+		printk(KERN_DEFAULT CUT_HERE);
-+		__warn(__FILE__, __LINE__, (void *)regs->ip, TAINT_WARN, regs, NULL);
-+		return;
-+	}
-+	BUG();
-+}
-+
-+/* Must be noinline to ensure uniqueness of ibt_selftest_ip. */
-+noinline bool ibt_selftest(void)
-+{
-+	unsigned long ret;
-+
-+	asm ("	lea ibt_selftest_ip(%%rip), %%rax\n\t"
-+	     ANNOTATE_RETPOLINE_SAFE
-+	     "	jmp *%%rax\n\t"
-+	     "ibt_selftest_ip:\n\t"
-+	     UNWIND_HINT_FUNC
-+	     ANNOTATE_NOENDBR
-+	     "	nop\n\t"
-+
-+	     : "=a" (ret) : : "memory");
-+
-+	return !ret;
-+}
-+
-+static int __init ibt_setup(char *str)
-+{
-+	if (!strcmp(str, "off"))
-+		setup_clear_cpu_cap(X86_FEATURE_IBT);
-+
-+	if (!strcmp(str, "warn"))
-+		ibt_fatal = false;
-+
-+	return 1;
-+}
-+
-+__setup("ibt=", ibt_setup);
-+
-+DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
-+{
-+	if (user_mode(regs)) {
-+		if (cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
-+			do_user_cp_fault(regs, error_code);
-+		else
-+			do_unexpected_cp(regs, error_code);
-+	} else {
-+		if (cpu_feature_enabled(X86_FEATURE_IBT))
-+			do_kernel_cp_fault(regs, error_code);
-+		else
-+			do_unexpected_cp(regs, error_code);
-+	}
-+}
-diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
-index a58c6bc1cd68..5074b8420359 100644
---- a/arch/x86/kernel/idt.c
-+++ b/arch/x86/kernel/idt.c
-@@ -107,7 +107,7 @@ static const __initconst struct idt_data def_idts[] = {
- 	ISTG(X86_TRAP_MC,		asm_exc_machine_check, IST_INDEX_MCE),
- #endif
- 
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- 	INTG(X86_TRAP_CP,		asm_exc_control_protection),
- #endif
- 
-diff --git a/arch/x86/kernel/signal_32.c b/arch/x86/kernel/signal_32.c
-index 9027fc088f97..c12624bc82a3 100644
---- a/arch/x86/kernel/signal_32.c
-+++ b/arch/x86/kernel/signal_32.c
-@@ -402,7 +402,7 @@ int ia32_setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- */
- static_assert(NSIGILL  == 11);
- static_assert(NSIGFPE  == 15);
--static_assert(NSIGSEGV == 9);
-+static_assert(NSIGSEGV == 10);
- static_assert(NSIGBUS  == 5);
- static_assert(NSIGTRAP == 6);
- static_assert(NSIGCHLD == 6);
-diff --git a/arch/x86/kernel/signal_64.c b/arch/x86/kernel/signal_64.c
-index 13a1e6083837..0e808c72bf7e 100644
---- a/arch/x86/kernel/signal_64.c
-+++ b/arch/x86/kernel/signal_64.c
-@@ -403,7 +403,7 @@ void sigaction_compat_abi(struct k_sigaction *act, struct k_sigaction *oact)
- */
- static_assert(NSIGILL  == 11);
- static_assert(NSIGFPE  == 15);
--static_assert(NSIGSEGV == 9);
-+static_assert(NSIGSEGV == 10);
- static_assert(NSIGBUS  == 5);
- static_assert(NSIGTRAP == 6);
- static_assert(NSIGCHLD == 6);
-diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-index d317dc3d06a3..18fb9d620824 100644
---- a/arch/x86/kernel/traps.c
-+++ b/arch/x86/kernel/traps.c
-@@ -77,18 +77,6 @@
- 
- DECLARE_BITMAP(system_vectors, NR_VECTORS);
- 
--static inline void cond_local_irq_enable(struct pt_regs *regs)
--{
--	if (regs->flags & X86_EFLAGS_IF)
--		local_irq_enable();
--}
--
--static inline void cond_local_irq_disable(struct pt_regs *regs)
--{
--	if (regs->flags & X86_EFLAGS_IF)
--		local_irq_disable();
--}
--
- __always_inline int is_valid_bugaddr(unsigned long addr)
- {
- 	if (addr < TASK_SIZE_MAX)
-@@ -213,81 +201,6 @@ DEFINE_IDTENTRY(exc_overflow)
- 	do_error_trap(regs, 0, "overflow", X86_TRAP_OF, SIGSEGV, 0, NULL);
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index b39f16c0d507..6d2f612c04b5 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -301,6 +301,44 @@ static inline pte_t pte_clear_flags(pte_t pte, pteval_t clear)
+ 	return native_make_pte(v & ~clear);
  }
  
--#ifdef CONFIG_X86_KERNEL_IBT
--
--static __ro_after_init bool ibt_fatal = true;
--
--extern void ibt_selftest_ip(void); /* code label defined in asm below */
--
--enum cp_error_code {
--	CP_EC        = (1 << 15) - 1,
--
--	CP_RET       = 1,
--	CP_IRET      = 2,
--	CP_ENDBR     = 3,
--	CP_RSTRORSSP = 4,
--	CP_SETSSBSY  = 5,
--
--	CP_ENCL	     = 1 << 15,
--};
--
--DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
--{
--	if (!cpu_feature_enabled(X86_FEATURE_IBT)) {
--		pr_err("Unexpected #CP\n");
--		BUG();
--	}
--
--	if (WARN_ON_ONCE(user_mode(regs) || (error_code & CP_EC) != CP_ENDBR))
--		return;
--
--	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
--		regs->ax = 0;
--		return;
--	}
--
--	pr_err("Missing ENDBR: %pS\n", (void *)instruction_pointer(regs));
--	if (!ibt_fatal) {
--		printk(KERN_DEFAULT CUT_HERE);
--		__warn(__FILE__, __LINE__, (void *)regs->ip, TAINT_WARN, regs, NULL);
--		return;
--	}
--	BUG();
--}
--
--/* Must be noinline to ensure uniqueness of ibt_selftest_ip. */
--noinline bool ibt_selftest(void)
--{
--	unsigned long ret;
--
--	asm ("	lea ibt_selftest_ip(%%rip), %%rax\n\t"
--	     ANNOTATE_RETPOLINE_SAFE
--	     "	jmp *%%rax\n\t"
--	     "ibt_selftest_ip:\n\t"
--	     UNWIND_HINT_FUNC
--	     ANNOTATE_NOENDBR
--	     "	nop\n\t"
--
--	     : "=a" (ret) : : "memory");
--
--	return !ret;
--}
--
--static int __init ibt_setup(char *str)
--{
--	if (!strcmp(str, "off"))
--		setup_clear_cpu_cap(X86_FEATURE_IBT);
--
--	if (!strcmp(str, "warn"))
--		ibt_fatal = false;
--
--	return 1;
--}
--
--__setup("ibt=", ibt_setup);
--
--#endif /* CONFIG_X86_KERNEL_IBT */
--
- #ifdef CONFIG_X86_F00F_BUG
- void handle_invalid_op(struct pt_regs *regs)
- #else
-diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
-index bb59cc6ddb2d..9c29cd5393cc 100644
---- a/arch/x86/xen/enlighten_pv.c
-+++ b/arch/x86/xen/enlighten_pv.c
-@@ -640,7 +640,7 @@ static struct trap_array_entry trap_array[] = {
- 	TRAP_ENTRY(exc_coprocessor_error,		false ),
- 	TRAP_ENTRY(exc_alignment_check,			false ),
- 	TRAP_ENTRY(exc_simd_coprocessor_error,		false ),
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- 	TRAP_ENTRY(exc_control_protection,		false ),
++/*
++ * Normally COW memory can result in Dirty=1,Write=0 PTEs. But in the case
++ * of X86_FEATURE_USER_SHSTK, the software COW bit is used, since the
++ * Dirty=1,Write=0 will result in the memory being treated as shadow stack
++ * by the HW. So when creating COW memory, a software bit is used
++ * _PAGE_BIT_COW. The following functions pte_mkcow() and pte_clear_cow()
++ * take a PTE marked conventionally COW (Dirty=1) and transition it to the
++ * shadow stack compatible version of COW (Cow=1).
++ */
++static inline pte_t pte_mkcow(pte_t pte)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pte;
++
++	pte = pte_clear_flags(pte, _PAGE_DIRTY);
++	return pte_set_flags(pte, _PAGE_COW);
++}
++
++static inline pte_t pte_clear_cow(pte_t pte)
++{
++	/*
++	 * _PAGE_COW is unnecessary on !X86_FEATURE_USER_SHSTK kernels, since
++	 * the HW dirty bit can be used without creating shadow stack memory.
++	 * See the _PAGE_COW definition for more details.
++	 */
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pte;
++
++	/*
++	 * PTE is getting copied-on-write, so it will be dirtied
++	 * if writable, or made shadow stack if shadow stack and
++	 * being copied on access. Set the dirty bit for both
++	 * cases.
++	 */
++	pte = pte_set_flags(pte, _PAGE_DIRTY);
++	return pte_clear_flags(pte, _PAGE_COW);
++}
++
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_WP
+ static inline int pte_uffd_wp(pte_t pte)
+ {
+@@ -413,6 +451,26 @@ static inline pmd_t pmd_clear_flags(pmd_t pmd, pmdval_t clear)
+ 	return native_make_pmd(v & ~clear);
+ }
+ 
++/* See comments above pte_mkcow() */
++static inline pmd_t pmd_mkcow(pmd_t pmd)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pmd;
++
++	pmd = pmd_clear_flags(pmd, _PAGE_DIRTY);
++	return pmd_set_flags(pmd, _PAGE_COW);
++}
++
++/* See comments above pte_mkcow() */
++static inline pmd_t pmd_clear_cow(pmd_t pmd)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pmd;
++
++	pmd = pmd_set_flags(pmd, _PAGE_DIRTY);
++	return pmd_clear_flags(pmd, _PAGE_COW);
++}
++
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_WP
+ static inline int pmd_uffd_wp(pmd_t pmd)
+ {
+@@ -484,6 +542,26 @@ static inline pud_t pud_clear_flags(pud_t pud, pudval_t clear)
+ 	return native_make_pud(v & ~clear);
+ }
+ 
++/* See comments above pte_mkcow() */
++static inline pud_t pud_mkcow(pud_t pud)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pud;
++
++	pud = pud_clear_flags(pud, _PAGE_DIRTY);
++	return pud_set_flags(pud, _PAGE_COW);
++}
++
++/* See comments above pte_mkcow() */
++static inline pud_t pud_clear_cow(pud_t pud)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return pud;
++
++	pud = pud_set_flags(pud, _PAGE_DIRTY);
++	return pud_clear_flags(pud, _PAGE_COW);
++}
++
+ static inline pud_t pud_mkold(pud_t pud)
+ {
+ 	return pud_clear_flags(pud, _PAGE_ACCESSED);
+diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
+index 0646ad00178b..5c3f942865d9 100644
+--- a/arch/x86/include/asm/pgtable_types.h
++++ b/arch/x86/include/asm/pgtable_types.h
+@@ -21,7 +21,8 @@
+ #define _PAGE_BIT_SOFTW2	10	/* " */
+ #define _PAGE_BIT_SOFTW3	11	/* " */
+ #define _PAGE_BIT_PAT_LARGE	12	/* On 2MB or 1GB pages */
+-#define _PAGE_BIT_SOFTW4	58	/* available for programmer */
++#define _PAGE_BIT_SOFTW4	57	/* available for programmer */
++#define _PAGE_BIT_SOFTW5	58	/* available for programmer */
+ #define _PAGE_BIT_PKEY_BIT0	59	/* Protection Keys, bit 1/4 */
+ #define _PAGE_BIT_PKEY_BIT1	60	/* Protection Keys, bit 2/4 */
+ #define _PAGE_BIT_PKEY_BIT2	61	/* Protection Keys, bit 3/4 */
+@@ -34,6 +35,15 @@
+ #define _PAGE_BIT_SOFT_DIRTY	_PAGE_BIT_SOFTW3 /* software dirty tracking */
+ #define _PAGE_BIT_DEVMAP	_PAGE_BIT_SOFTW4
+ 
++/*
++ * Indicates a copy-on-write page.
++ */
++#ifdef CONFIG_X86_USER_SHADOW_STACK
++#define _PAGE_BIT_COW		_PAGE_BIT_SOFTW5 /* copy-on-write */
++#else
++#define _PAGE_BIT_COW		0
++#endif
++
+ /* If _PAGE_BIT_PRESENT is clear, we use these: */
+ /* - if the user mapped it with PROT_NONE; pte_present gives true */
+ #define _PAGE_BIT_PROTNONE	_PAGE_BIT_GLOBAL
+@@ -117,6 +127,40 @@
+ #define _PAGE_SOFTW4	(_AT(pteval_t, 0))
  #endif
- };
-diff --git a/arch/x86/xen/xen-asm.S b/arch/x86/xen/xen-asm.S
-index 4a184f6e4e4d..7cdcb4ce6976 100644
---- a/arch/x86/xen/xen-asm.S
-+++ b/arch/x86/xen/xen-asm.S
-@@ -148,7 +148,7 @@ xen_pv_trap asm_exc_page_fault
- xen_pv_trap asm_exc_spurious_interrupt_bug
- xen_pv_trap asm_exc_coprocessor_error
- xen_pv_trap asm_exc_alignment_check
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- xen_pv_trap asm_exc_control_protection
- #endif
- #ifdef CONFIG_X86_MCE
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index ffbe4cec9f32..0f52d0ac47c5 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -242,7 +242,8 @@ typedef struct siginfo {
- #define SEGV_ADIPERR	7	/* Precise MCD exception */
- #define SEGV_MTEAERR	8	/* Asynchronous ARM MTE error */
- #define SEGV_MTESERR	9	/* Synchronous ARM MTE exception */
--#define NSIGSEGV	9
-+#define SEGV_CPERR	10	/* Control protection fault */
-+#define NSIGSEGV	10
+ 
++/*
++ * The hardware requires shadow stack to be read-only and Dirty.
++ * _PAGE_COW is a software-only bit used to separate copy-on-write PTEs
++ * from shadow stack PTEs:
++ *
++ * (Write=0,Cow=1,Dirty=0):
++ *  - A modified, copy-on-write (COW) page. Previously when a typical
++ *    anonymous writable mapping was made COW via fork(), the kernel would
++ *    mark it Write=0,Dirty=1. Now it will instead use the Cow bit. This
++ *    happens in copy_present_pte().
++ *  - A R/O page that has been COW'ed. The user page is in a R/O VMA,
++ *    and get_user_pages(FOLL_FORCE) needs a writable copy. The page fault
++ *    handler creates a copy of the page and sets the new copy's PTE as
++ *    Write=0 and Cow=1.
++ *  - A shared shadow stack PTE. When a shadow stack page is being shared
++ *    among processes (this happens at fork()), its PTE is made Dirty=0, so
++ *    the next shadow stack access causes a fault, and the page is
++ *    duplicated and Dirty=1 is set again. This is the COW equivalent for
++ *    shadow stack pages, even though it's copy-on-access rather than
++ *    copy-on-write.
++ *
++ * (Write=0,Cow=0,Dirty=1):
++ *  - A shadow stack PTE.
++ *  - A Cow PTE created when a processor without shadow stack support set
++ *    Dirty=1.
++ */
++#ifdef CONFIG_X86_USER_SHADOW_STACK
++#define _PAGE_COW	(_AT(pteval_t, 1) << _PAGE_BIT_COW)
++#else
++#define _PAGE_COW	(_AT(pteval_t, 0))
++#endif
++
++#define _PAGE_DIRTY_BITS (_PAGE_DIRTY | _PAGE_COW)
++
+ #define _PAGE_PROTNONE	(_AT(pteval_t, 1) << _PAGE_BIT_PROTNONE)
  
  /*
-  * SIGBUS si_codes
+@@ -186,12 +230,17 @@ enum page_cache_mode {
+ #define PAGE_READONLY	     __pg(__PP|   0|_USR|___A|__NX|   0|   0|   0)
+ #define PAGE_READONLY_EXEC   __pg(__PP|   0|_USR|___A|   0|   0|   0|   0)
+ 
+-#define __PAGE_KERNEL		 (__PP|__RW|   0|___A|__NX|___D|   0|___G)
+-#define __PAGE_KERNEL_EXEC	 (__PP|__RW|   0|___A|   0|___D|   0|___G)
+-#define _KERNPG_TABLE_NOENC	 (__PP|__RW|   0|___A|   0|___D|   0|   0)
+-#define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
++/*
++ * Page tables needs to have Write=1 in order for any lower PTEs to be
++ * writable. This includes shadow stack memory (Write=0, Dirty=1)
++ */
+ #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
+ #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
++#define _KERNPG_TABLE_NOENC	 (__PP|__RW|   0|___A|   0|___D|   0|   0)
++#define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
++
++#define __PAGE_KERNEL		 (__PP|__RW|   0|___A|__NX|___D|   0|___G)
++#define __PAGE_KERNEL_EXEC	 (__PP|__RW|   0|___A|   0|___D|   0|___G)
+ #define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
+ #define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
+ #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index cda3118f3b27..9429da70d689 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -273,7 +273,8 @@ static inline bool pte_flags_need_flush(unsigned long oldflags,
+ 	const pteval_t flush_on_clear = _PAGE_DIRTY | _PAGE_PRESENT |
+ 					_PAGE_ACCESSED;
+ 	const pteval_t software_flags = _PAGE_SOFTW1 | _PAGE_SOFTW2 |
+-					_PAGE_SOFTW3 | _PAGE_SOFTW4;
++					_PAGE_SOFTW3 | _PAGE_SOFTW4 |
++					_PAGE_COW;
+ 	const pteval_t flush_on_change = _PAGE_RW | _PAGE_USER | _PAGE_PWT |
+ 			  _PAGE_PCD | _PAGE_PSE | _PAGE_GLOBAL | _PAGE_PAT |
+ 			  _PAGE_PAT_LARGE | _PAGE_PKEY_BIT0 | _PAGE_PKEY_BIT1 |
 -- 
 2.17.1
 
