@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28D2FC004D4
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:33:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 662B9C46467
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:34:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229811AbjASVdc (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:33:32 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44784 "EHLO
+        id S230359AbjASVd6 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 16:33:58 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45736 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230003AbjASVba (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:31:30 -0500
+        with ESMTP id S230381AbjASVb5 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:31:57 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 403A24B4A8;
-        Thu, 19 Jan 2023 13:25:57 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08052A9580;
+        Thu, 19 Jan 2023 13:26:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1674163557; x=1705699557;
+  t=1674163581; x=1705699581;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=BvuOTjZc5NHm9ltMy7F/33kG5ApCivtjPVo72HaZTJE=;
-  b=fz7WkrmJtAuTmeLsTlW4joHvSBAe0DFMq1wvuF7i2ZHA4+9tNpdQI+Hi
-   IbyBliCQxo6m+tsJQNOQVvJTHjMNzbhG2owSPD9JmwHv5juHXlR+lLO1R
-   arxEaRlO6mvpbRgklr8xZgqXiMLbUe0frBhnkahBKvS1FB8Dod/x+0sNn
-   eN+JUGkv04PV/1AL12Fu84KTI0J2+mTnGTxNi5KMlSy30DziPNOwZT3VO
-   f1TQdIA46qokiZWLeN81athol3JyJjMJGH3pgC4DKgGJA1U9Zx6Fvuxdv
-   gIweIq0HE0G033EFZKbSeLP75CnyfwZb4cSwP9fivGjehkDrM7TTLYtZI
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119431"
+  bh=i0EcBhWDxak7M9Yc3IVuRFqXYd9IgUPiDgl15diefTc=;
+  b=WhE8+KXRZzLkYhRyBiIEwgz12qvjmpYj7S6svL+9/2diq8fFTsAOTfQf
+   55AzLxK3nGi5Qg/zt/Ef1LFs0S4XouQUzOdJzkdNmT5dh1R29nB8CG4rI
+   NBOsWWfatqsNqfUT9gjeBjPi5L7CG1Rd5tCwC5SVJd9nSOXeMoz090JEO
+   fufhhuWhcX7WfD3/WDzl8AXinHNtMW69yfK/gdolyN516zGoH+T+o6dXo
+   4qv6CqHikzyVvrAaH85AUEhze5sLvbfjBSdSfbxwqETyo4ePQjrL4JwAw
+   DI6D8ZaW+xFbhV6mfs4TwEE9S4ZrlD69j0/3aR2NDdKE09I6XCD9/roVZ
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119476"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323119431"
+   d="scan'208";a="323119476"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:44 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139043"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:47 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139051"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139043"
+   d="scan'208";a="989139051"
 Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:42 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:45 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,10 +65,11 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 12/39] x86/mm: Update ptep_set_wrprotect() and pmdp_set_wrprotect() for transition from _PAGE_DIRTY to _PAGE_COW
-Date:   Thu, 19 Jan 2023 13:22:50 -0800
-Message-Id: <20230119212317.8324-13-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
+        Peter Xu <peterx@redhat.com>
+Subject: [PATCH v5 14/39] mm: Move VM_UFFD_MINOR_BIT from 37 to 38
+Date:   Thu, 19 Jan 2023 13:22:52 -0800
+Message-Id: <20230119212317.8324-15-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
 References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
@@ -78,120 +79,44 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-When shadow stack is in use, Write=0,Dirty=1 PTE are preserved for
-shadow stack. Copy-on-write PTEs then have Write=0,Cow=1.
+The x86 Control-flow Enforcement Technology (CET) feature includes a new
+type of memory called shadow stack. This shadow stack memory has some
+unusual properties, which requires some core mm changes to function
+properly.
 
-When a PTE goes from Write=1,Dirty=1 to Write=0,Cow=1, it could
-become a transient shadow stack PTE in two cases:
-
-1. Some processors can start a write but end up seeing a Write=0 PTE by
-   the time they get to the Dirty bit, creating a transient shadow stack
-   PTE. However, this will not occur on processors supporting shadow
-   stack, and a TLB flush is not necessary.
-
-2. When _PAGE_DIRTY is replaced with _PAGE_COW non-atomically, a transient
-   shadow stack PTE can be created as a result. Thus, prevent that with
-   cmpxchg.
-
-In the case of pmdp_set_wrprotect(), for nopmd configs the ->pmd operated
-on does not exist and the logic would need to be different. Although the
-extra functionality will normally be optimized out when user shadow
-stacks are not configured, also exclude it in the preprocessor stage so
-that it will still compile. User shadow stack is not supported there by
-Linux anyway. Leave the cpu_feature_enabled() check so that the
-functionality also gets disabled based on runtime detection of the
-feature.
-
-Similarly, compile it out in ptep_set_wrprotect() due to a clang warning
-on i386. Like above, the code path should get optimized out on i386
-since shadow stack is not supported on 32 bit kernels, but this makes
-the compiler happy.
-
-Dave Hansen, Jann Horn, Andy Lutomirski, and Peter Zijlstra provided many
-insights to the issue. Jann Horn provided the cmpxchg solution.
+Future patches will introduce a new VM flag VM_SHADOW_STACK that will be
+VM_HIGH_ARCH_BIT_5. VM_HIGH_ARCH_BIT_1 through VM_HIGH_ARCH_BIT_4 are
+bits 32-36, and bit 37 is the unrelated VM_UFFD_MINOR_BIT. For the sake
+of order, make all VM_HIGH_ARCH_BITs stay together by moving
+VM_UFFD_MINOR_BIT from 37 to 38. This will allow VM_SHADOW_STACK to be
+introduced as 37.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Acked-by: Peter Xu <peterx@redhat.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Reviewed-by: Axel Rasmussen <axelrasmussen@google.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Cc: Peter Xu <peterx@redhat.com>
+Cc: Mike Kravetz <mike.kravetz@oracle.com>
 ---
+ include/linux/mm.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-v5:
- - Commit log verbiage and formatting (Boris)
- - Remove capitalization on shadow stack (Boris)
- - Fix i386 warning on recent clang
-
-v3:
- - Remove unnecessary #ifdef (Dave Hansen)
-
-v2:
- - Compile out some code due to clang build error
- - Clarify commit log (dhansen)
- - Normalize PTE bit descriptions between patches (dhansen)
- - Update comment with text from (dhansen)
-
-Yu-cheng v30:
- - Replace (pmdval_t) cast with CONFIG_PGTABLE_LEVELES > 2 (Borislav Petkov).
-
- arch/x86/include/asm/pgtable.h | 37 ++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
-
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 7942eff2af50..c5047eb5f406 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -1232,6 +1232,23 @@ static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,
- static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pte_t *ptep)
- {
-+#ifdef CONFIG_X86_USER_SHADOW_STACK
-+	/*
-+	 * Avoid accidentally creating shadow stack PTEs
-+	 * (Write=0,Dirty=1).  Use cmpxchg() to prevent races with
-+	 * the hardware setting Dirty=1.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_USER_SHSTK)) {
-+		pte_t old_pte, new_pte;
-+
-+		old_pte = READ_ONCE(*ptep);
-+		do {
-+			new_pte = pte_wrprotect(old_pte);
-+		} while (!try_cmpxchg(&ptep->pte, &old_pte.pte, new_pte.pte));
-+
-+		return;
-+	}
-+#endif
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)&ptep->pte);
- }
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 7afc86d50442..82a9a4903651 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -366,7 +366,7 @@ extern unsigned int kobjsize(const void *objp);
+ #endif
  
-@@ -1284,6 +1301,26 @@ static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,
- static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 				      unsigned long addr, pmd_t *pmdp)
- {
-+#ifdef CONFIG_X86_USER_SHADOW_STACK
-+	/*
-+	 * If shadow stack is enabled, pmd_wrprotect() moves _PAGE_DIRTY
-+	 * to _PAGE_COW (see comments at pmd_wrprotect()).
-+	 * When a thread reads a RW=1, Dirty=0 PMD and before changing it
-+	 * to RW=0, Dirty=0, another thread could have written to the page
-+	 * and the PMD is RW=1, Dirty=1 now.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_USER_SHSTK)) {
-+		pmd_t old_pmd, new_pmd;
-+
-+		old_pmd = READ_ONCE(*pmdp);
-+		do {
-+			new_pmd = pmd_wrprotect(old_pmd);
-+		} while (!try_cmpxchg(&pmdp->pmd, &old_pmd.pmd, new_pmd.pmd));
-+
-+		return;
-+	}
-+#endif
-+
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
- }
- 
+ #ifdef CONFIG_HAVE_ARCH_USERFAULTFD_MINOR
+-# define VM_UFFD_MINOR_BIT	37
++# define VM_UFFD_MINOR_BIT	38
+ # define VM_UFFD_MINOR		BIT(VM_UFFD_MINOR_BIT)	/* UFFD minor faults */
+ #else /* !CONFIG_HAVE_ARCH_USERFAULTFD_MINOR */
+ # define VM_UFFD_MINOR		VM_NONE
 -- 
 2.17.1
 
