@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 67FD6C6379F
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:41:47 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4A952C6379F
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:41:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229690AbjASVlp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:41:45 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55256 "EHLO
+        id S230122AbjASVlq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 16:41:46 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52476 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230410AbjASVix (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:38:53 -0500
+        with ESMTP id S231167AbjASVik (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:38:40 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C88086F885;
-        Thu, 19 Jan 2023 13:27:59 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7F40737544;
+        Thu, 19 Jan 2023 13:27:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1674163679; x=1705699679;
+  t=1674163678; x=1705699678;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=SwMjGEgQ4NIbBGCsK+je+PfgR9ALTBIfAb8eu9YmH38=;
-  b=UoeG49WBTwSDLoZTTRKIZ0iTYsjCPhk5ihw1NIZmpRY3+dGuwk9nYa5g
-   WSsvGDCLLicq2lSnpAU3CAJJtO+VG606JO8v9nhJyIL/Sc/nmeIG0buNT
-   G7xrvMo64wLfZW7k4n1ecjE/84Nh2SsjfiRjaGcZzM3fzearX+tsaD3cD
-   u8js3e2C/BF4q5eikb9Ki3ngSuyPhu9U1t1v2IMaykjl8uYeYno8U3CfS
-   iWJMLE6I+TdqUIBugTkl6STFM+xvR+LkeSQ5r49ij0GyBLqFuncUwwm5Q
-   YTbJ8wU27/93UV2d9mT1CFVyR7G9rLevPxP8ug8F8r9on+XNneXMVovVm
-   Q==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323120084"
+  bh=sQY1E+dUSY4CcT1mmXrJaIQvOz4XoIsJlzVbJWGjXhw=;
+  b=P2OoiS+hwDLY6GdBku6zRAS/PkdSptjlD6Vzbo/ybb4J8U3Z2faRDQTQ
+   y7Y58C5/UzgZQdbaJF6nEJb4SXz9RbaDE54LE3IsB/m1/DLsNKnfxvFrk
+   IAhUKoE50LVd6Z07EXbCUDoZ3golLfZ6xyC/vAjUyJhLZeLZFNIL5mFRx
+   WHh/i3YGvQOetdDHHkvbYFQKZdvZKPyvGchG2EzRAuxumMTWUtwLKsGuZ
+   vomDaCwiS7/uj/KlKoeC6LAtP2hPIY3MyMcL9r17WApdbg49TF0jd3O6x
+   7f8HBYybAU/qSmVH3GKaWiVyaa3F7HJVVsz1d9urOk2bKWUvnd0t/HGSH
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119994"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323120084"
+   d="scan'208";a="323119994"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:25 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139196"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:19 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139174"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139196"
+   d="scan'208";a="989139174"
 Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:23 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:17 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,10 +65,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com, Mike Rapoport <rppt@linux.ibm.com>
-Subject: [PATCH v5 38/39] x86/shstk: Add ARCH_SHSTK_UNLOCK
-Date:   Thu, 19 Jan 2023 13:23:16 -0800
-Message-Id: <20230119212317.8324-39-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com
+Subject: [PATCH v5 34/39] x86/shstk: Wire in shadow stack interface
+Date:   Thu, 19 Jan 2023 13:23:12 -0800
+Message-Id: <20230119212317.8324-35-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
 References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
@@ -76,95 +76,47 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Mike Rapoport <rppt@linux.ibm.com>
+The kernel now has the main shadow stack functionality to support
+applications. Wire in the WRSS and shadow stack enable/disable functions
+into the existing shadow stack API skeleton.
 
-Userspace loaders may lock features before a CRIU restore operation has
-the chance to set them to whatever state is required by the process
-being restored. Allow a way for CRIU to unlock features. Add it as an
-arch_prctl() like the other shadow stack operations, but restrict it being
-called by the ptrace arch_pctl() interface.
-
-Reviewed-by: Kees Cook <keescook@chromium.org>
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
-Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
-[Merged into recent API changes, added commit log and docs]
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 ---
 
 v4:
- - Add to docs that it is ptrace only.
  - Remove "CET" references
 
-v3:
- - Depend on CONFIG_CHECKPOINT_RESTORE (Kees)
+v2:
+ - Split from other patches
 
- Documentation/x86/shstk.rst       | 4 ++++
- arch/x86/include/uapi/asm/prctl.h | 1 +
- arch/x86/kernel/process_64.c      | 1 +
- arch/x86/kernel/shstk.c           | 9 +++++++--
- 4 files changed, 13 insertions(+), 2 deletions(-)
+ arch/x86/kernel/shstk.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/Documentation/x86/shstk.rst b/Documentation/x86/shstk.rst
-index f2e6f323cf68..e8ed5fc0f7ae 100644
---- a/Documentation/x86/shstk.rst
-+++ b/Documentation/x86/shstk.rst
-@@ -73,6 +73,10 @@ arch_prctl(ARCH_SHSTK_LOCK, unsigned long features)
-     are ignored. The mask is ORed with the existing value. So any feature bits
-     set here cannot be enabled or disabled afterwards.
- 
-+arch_prctl(ARCH_SHSTK_UNLOCK, unsigned long features)
-+    Unlock features. 'features' is a mask of all features to unlock. All
-+    bits set are processed, unset bits are ignored. Only works via ptrace.
-+
- The return values are as follows. On success, return 0. On error, errno can
- be::
- 
-diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
-index e31495668056..200efbbe5809 100644
---- a/arch/x86/include/uapi/asm/prctl.h
-+++ b/arch/x86/include/uapi/asm/prctl.h
-@@ -25,6 +25,7 @@
- #define ARCH_SHSTK_ENABLE		0x5001
- #define ARCH_SHSTK_DISABLE		0x5002
- #define ARCH_SHSTK_LOCK			0x5003
-+#define ARCH_SHSTK_UNLOCK		0x5004
- 
- /* ARCH_SHSTK_ features bits */
- #define ARCH_SHSTK_SHSTK		(1ULL <<  0)
-diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
-index 71094c8a305f..d368854fa9c4 100644
---- a/arch/x86/kernel/process_64.c
-+++ b/arch/x86/kernel/process_64.c
-@@ -835,6 +835,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
- 	case ARCH_SHSTK_ENABLE:
- 	case ARCH_SHSTK_DISABLE:
- 	case ARCH_SHSTK_LOCK:
-+	case ARCH_SHSTK_UNLOCK:
- 		return shstk_prctl(task, option, arg2);
- 	default:
- 		ret = -EINVAL;
 diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
-index 07142e6f05f6..a639119a21c5 100644
+index 71dbb49b93cd..07142e6f05f6 100644
 --- a/arch/x86/kernel/shstk.c
 +++ b/arch/x86/kernel/shstk.c
-@@ -452,9 +452,14 @@ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
- 		return 0;
+@@ -465,9 +465,17 @@ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
+ 		return -EINVAL;
+ 
+ 	if (option == ARCH_SHSTK_DISABLE) {
++		if (features & ARCH_SHSTK_WRSS)
++			return wrss_control(false);
++		if (features & ARCH_SHSTK_SHSTK)
++			return shstk_disable();
+ 		return -EINVAL;
  	}
  
--	/* Don't allow via ptrace */
--	if (task != current)
-+	/* Only allow via ptrace */
-+	if (task != current) {
-+		if (option == ARCH_SHSTK_UNLOCK && IS_ENABLED(CONFIG_CHECKPOINT_RESTORE)) {
-+			task->thread.features_locked &= ~features;
-+			return 0;
-+		}
- 		return -EINVAL;
-+	}
- 
- 	/* Do not allow to change locked features */
- 	if (features & task->thread.features_locked)
+ 	/* Handle ARCH_SHSTK_ENABLE */
++	if (features & ARCH_SHSTK_SHSTK)
++		return shstk_setup();
++	if (features & ARCH_SHSTK_WRSS)
++		return wrss_control(true);
+ 	return -EINVAL;
+ }
 -- 
 2.17.1
 
