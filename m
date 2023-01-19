@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A54F7C004D4
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:37:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 5A9A1C46467
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:37:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231130AbjASVh2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:37:28 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48922 "EHLO
+        id S230459AbjASVhp (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 16:37:45 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229961AbjASVfb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:35:31 -0500
+        with ESMTP id S230518AbjASVfe (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:35:34 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0A569A259E;
-        Thu, 19 Jan 2023 13:26:58 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1F7E7A317D;
+        Thu, 19 Jan 2023 13:27:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1674163619; x=1705699619;
+  t=1674163633; x=1705699633;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=mm+/ZDL+/WIl4y++bICVeaKn86uLCgMEEZawTB+3rKc=;
-  b=PMpO9Az+5sFWH+BMRmx3RFkQAGEH25D5e6AsgrAQnR9X/Xwhqeb0MwBL
-   QwvfWbMG6dLGT/VQgH924UKAZ4bsXdQsCKyrJtFLFVQVGUd2Tib9YwI9V
-   5jgYe43GmeAm8Pr9b6eyarvyax1MrP9uS0mdyT7BSddWokkeXnlZs4yCK
-   kPQsiGPqUOvFqYMNMQjeMk+b4FrTSaqwKnw2uHw9bBJGwCMTBVBR+U0bl
-   zTuH7p5I+PHgIOs+R2fiYA4JcKwdg7uAGbT6cDljmbZlDtAsLM3TyLui7
-   y6HeE/amBzIp8yNUesrdS3VU1EE0wEJAIodm/6vU7B+dskbDkZndr39Hl
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119608"
+  bh=yYO9z3rz8CNjUY1wgWFKyzY7eNICGcV4jFfyGKxF5+o=;
+  b=lk9s9lz/qn9AJQXFxfGT0MsCWqsSypdwhQh1mhhiOyJO5mNoZP2k1IO6
+   n/S6AmLAZLhG65GbtSb+qJGPn8/zISvjTBDOVlaL4PGVkYFw8CQ5kq0b2
+   FjNnXJqibnd+tC7fvjmYvhbKuMmc8JZfyKfcKesjIwaC7rZDJ8ZptDNiH
+   pi2E6jn7HeWAiYskJpk8q+cjK5x6iyuZ3mfn7nXeGX/yJgGWOI73BLqUZ
+   5AVJ5Lymc2pS3Lw/Smowo91KDhSZsPHuckSg4wAgb40scwkFj+PRYWHog
+   tmbrLNszIlq+bf5hLqfRmozQfAeJrz6CPXjwm/DaOfYXFzMxRcVa5gHO1
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119688"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323119608"
+   d="scan'208";a="323119688"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:55 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139087"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:00 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139105"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139087"
+   d="scan'208";a="989139105"
 Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:53 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:23:58 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,9 +66,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 19/39] mm: Fixup places that call pte_mkwrite() directly
-Date:   Thu, 19 Jan 2023 13:22:57 -0800
-Message-Id: <20230119212317.8324-20-rick.p.edgecombe@intel.com>
+Subject: [PATCH v5 22/39] mm: Re-introduce vm_flags to do_mmap()
+Date:   Thu, 19 Jan 2023 13:23:00 -0800
+Message-Id: <20230119212317.8324-23-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
 References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
@@ -78,180 +78,152 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-The x86 Control-flow Enforcement Technology (CET) feature includes a new
-type of memory called shadow stack. This shadow stack memory has some
-unusual properties, which requires some core mm changes to function
-properly.
+There was no more caller passing vm_flags to do_mmap(), and vm_flags was
+removed from the function's input by:
 
-With the introduction of shadow stack memory there are two ways a pte can
-be writable: regular writable memory and shadow stack memory.
+    commit 45e55300f114 ("mm: remove unnecessary wrapper function do_mmap_pgoff()").
 
-In past patches, maybe_mkwrite() has been updated to apply pte_mkwrite()
-or pte_mkwrite_shstk() depending on the VMA flag. This covers most cases
-where a PTE is made writable. However, there are places where pte_mkwrite()
-is called directly and the logic should now also create a shadow stack PTE
-in the case of a shadow stack VMA.
-
-- do_anonymous_page() and migrate_vma_insert_page() check VM_WRITE
-  directly and call pte_mkwrite(). Teach it about pte_mkwrite_shstk()
-
-- When userfaultfd is creating a PTE after userspace handles the fault
-  it calls pte_mkwrite() directly. Teach it about pte_mkwrite_shstk()
-
-To make the code cleaner, introduce is_shstk_write() which simplifies
-checking for VM_WRITE | VM_SHADOW_STACK together.
-
-In other cases where pte_mkwrite() is called directly, the VMA will not
-be VM_SHADOW_STACK, and so shadow stack memory should not be created.
- - In the case of pte_savedwrite(), shadow stack VMA's are excluded.
- - In the case of the "dirty_accountable" optimization in mprotect(),
-   shadow stack VMA's won't be VM_SHARED, so it is not necessary.
+There is a new user now.  Shadow stack allocation passes VM_SHADOW_STACK to
+do_mmap().  Thus, re-introduce vm_flags to do_mmap().
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Reviewed-by: Peter Collingbourne <pcc@google.com>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-mm@kvack.org
 ---
+ fs/aio.c           |  2 +-
+ include/linux/mm.h |  3 ++-
+ ipc/shm.c          |  2 +-
+ mm/mmap.c          | 10 +++++-----
+ mm/nommu.c         |  4 ++--
+ mm/util.c          |  2 +-
+ 6 files changed, 12 insertions(+), 11 deletions(-)
 
-v5:
- - Fix typo in commit log
-
-v3:
- - Restore do_anonymous_page() that accidetally moved commits (Kirill)
- - Open code maybe_mkwrite() cases from v2, so the behavior doesn't change
-   to mark that non-writable PTEs dirty. (Nadav)
-
-v2:
- - Updated commit log with comment's from Dave Hansen
- - Dave also suggested (I understood) to maybe tweak vm_get_page_prot()
-   to avoid having to call maybe_mkwrite(). After playing around with
-   this I opted to *not* do this. Shadow stack memory memory is
-   effectively writable, so having the default permissions be writable
-   ended up mapping the zero page as writable and other surprises. So
-   creating shadow stack memory needs to be done with manual logic
-   like pte_mkwrite().
- - Drop change in change_pte_range() because it couldn't actually trigger
-   for shadow stack VMAs.
- - Clarify reasoning for skipped cases of pte_mkwrite().
-
-Yu-cheng v25:
- - Apply same changes to do_huge_pmd_numa_page() as to do_numa_page().
-
- arch/x86/include/asm/pgtable.h |  3 +++
- arch/x86/mm/pgtable.c          |  6 ++++++
- include/linux/pgtable.h        |  7 +++++++
- mm/memory.c                    |  5 ++++-
- mm/migrate_device.c            |  4 +++-
- mm/userfaultfd.c               | 10 +++++++---
- 6 files changed, 30 insertions(+), 5 deletions(-)
-
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 45b1a8f058fe..87d3068734ec 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -951,6 +951,9 @@ static inline pgd_t pti_set_user_pgtbl(pgd_t *pgdp, pgd_t pgd)
- }
- #endif  /* CONFIG_PAGE_TABLE_ISOLATION */
+diff --git a/fs/aio.c b/fs/aio.c
+index 562916d85cba..279c75ec6a05 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -554,7 +554,7 @@ static int aio_setup_ring(struct kioctx *ctx, unsigned int nr_events)
  
-+#define is_shstk_write is_shstk_write
-+extern bool is_shstk_write(unsigned long vm_flags);
-+
- #endif	/* __ASSEMBLY__ */
- 
- 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index e4f499eb0f29..d103945ba502 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -880,3 +880,9 @@ int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)
- 
- #endif /* CONFIG_X86_64 */
- #endif	/* CONFIG_HAVE_ARCH_HUGE_VMAP */
-+
-+bool is_shstk_write(unsigned long vm_flags)
-+{
-+	return (vm_flags & (VM_SHADOW_STACK | VM_WRITE)) ==
-+	       (VM_SHADOW_STACK | VM_WRITE);
-+}
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index 14a820a45a37..49ce1f055242 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -1578,6 +1578,13 @@ static inline bool arch_has_pfn_modify_check(void)
- }
- #endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */
- 
-+#ifndef is_shstk_write
-+static inline bool is_shstk_write(unsigned long vm_flags)
-+{
-+	return false;
-+}
-+#endif
-+
- /*
-  * Architecture PAGE_KERNEL_* fallbacks
-  *
-diff --git a/mm/memory.c b/mm/memory.c
-index aad226daf41b..5e5107232a26 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -4088,7 +4088,10 @@ static vm_fault_t do_anonymous_page(struct vm_fault *vmf)
- 
- 	entry = mk_pte(page, vma->vm_page_prot);
- 	entry = pte_sw_mkyoung(entry);
--	if (vma->vm_flags & VM_WRITE)
-+
-+	if (is_shstk_write(vma->vm_flags))
-+		entry = pte_mkwrite_shstk(pte_mkdirty(entry));
-+	else if (vma->vm_flags & VM_WRITE)
- 		entry = pte_mkwrite(pte_mkdirty(entry));
- 
- 	vmf->pte = pte_offset_map_lock(vma->vm_mm, vmf->pmd, vmf->address,
-diff --git a/mm/migrate_device.c b/mm/migrate_device.c
-index 721b2365dbca..53d417683e01 100644
---- a/mm/migrate_device.c
-+++ b/mm/migrate_device.c
-@@ -645,7 +645,9 @@ static void migrate_vma_insert_page(struct migrate_vma *migrate,
- 			goto abort;
- 		}
- 		entry = mk_pte(page, vma->vm_page_prot);
--		if (vma->vm_flags & VM_WRITE)
-+		if (is_shstk_write(vma->vm_flags))
-+			entry = pte_mkwrite_shstk(pte_mkdirty(entry));
-+		else if (vma->vm_flags & VM_WRITE)
- 			entry = pte_mkwrite(pte_mkdirty(entry));
+ 	ctx->mmap_base = do_mmap(ctx->aio_ring_file, 0, ctx->mmap_size,
+ 				 PROT_READ | PROT_WRITE,
+-				 MAP_SHARED, 0, &unused, NULL);
++				 MAP_SHARED, 0, 0, &unused, NULL);
+ 	mmap_write_unlock(mm);
+ 	if (IS_ERR((void *)ctx->mmap_base)) {
+ 		ctx->mmap_size = 0;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 3f980d4823ad..6e1796ee7e1a 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2897,7 +2897,8 @@ extern unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	struct list_head *uf);
+ extern unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	unsigned long len, unsigned long prot, unsigned long flags,
+-	unsigned long pgoff, unsigned long *populate, struct list_head *uf);
++	vm_flags_t vm_flags, unsigned long pgoff, unsigned long *populate,
++	struct list_head *uf);
+ extern int do_mas_munmap(struct ma_state *mas, struct mm_struct *mm,
+ 			 unsigned long start, size_t len, struct list_head *uf,
+ 			 bool downgrade);
+diff --git a/ipc/shm.c b/ipc/shm.c
+index bd2fcc4d454e..1c5476bfec8b 100644
+--- a/ipc/shm.c
++++ b/ipc/shm.c
+@@ -1662,7 +1662,7 @@ long do_shmat(int shmid, char __user *shmaddr, int shmflg,
+ 			goto invalid;
  	}
  
-diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
-index 0499907b6f1a..832f0250ca61 100644
---- a/mm/userfaultfd.c
-+++ b/mm/userfaultfd.c
-@@ -63,6 +63,7 @@ int mfill_atomic_install_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
+-	addr = do_mmap(file, addr, size, prot, flags, 0, &populate, NULL);
++	addr = do_mmap(file, addr, size, prot, flags, 0, 0, &populate, NULL);
+ 	*raddr = addr;
+ 	err = 0;
+ 	if (IS_ERR_VALUE(addr))
+diff --git a/mm/mmap.c b/mm/mmap.c
+index 9f85596cce31..350bf156fcae 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1238,11 +1238,11 @@ static inline bool file_mmap_ok(struct file *file, struct inode *inode,
+  */
+ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 			unsigned long len, unsigned long prot,
+-			unsigned long flags, unsigned long pgoff,
+-			unsigned long *populate, struct list_head *uf)
++			unsigned long flags, vm_flags_t vm_flags,
++			unsigned long pgoff, unsigned long *populate,
++			struct list_head *uf)
+ {
+ 	struct mm_struct *mm = current->mm;
+-	vm_flags_t vm_flags;
+ 	int pkey = 0;
+ 
+ 	validate_mm(mm);
+@@ -1303,7 +1303,7 @@ unsigned long do_mmap(struct file *file, unsigned long addr,
+ 	 * to. we assume access permissions have been handled by the open
+ 	 * of the memory object, so we don't do any here.
+ 	 */
+-	vm_flags = calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
++	vm_flags |= calc_vm_prot_bits(prot, pkey) | calc_vm_flag_bits(flags) |
+ 			mm->def_flags | VM_MAYREAD | VM_MAYWRITE | VM_MAYEXEC;
+ 
+ 	if (flags & MAP_LOCKED)
+@@ -2877,7 +2877,7 @@ SYSCALL_DEFINE5(remap_file_pages, unsigned long, start, unsigned long, size,
+ 
+ 	file = get_file(vma->vm_file);
+ 	ret = do_mmap(vma->vm_file, start, size,
+-			prot, flags, pgoff, &populate, NULL);
++			prot, flags, 0, pgoff, &populate, NULL);
+ 	fput(file);
+ out:
+ 	mmap_write_unlock(mm);
+diff --git a/mm/nommu.c b/mm/nommu.c
+index 5b83938ecb67..3642a3e01265 100644
+--- a/mm/nommu.c
++++ b/mm/nommu.c
+@@ -1042,6 +1042,7 @@ unsigned long do_mmap(struct file *file,
+ 			unsigned long len,
+ 			unsigned long prot,
+ 			unsigned long flags,
++			vm_flags_t vm_flags,
+ 			unsigned long pgoff,
+ 			unsigned long *populate,
+ 			struct list_head *uf)
+@@ -1049,7 +1050,6 @@ unsigned long do_mmap(struct file *file,
+ 	struct vm_area_struct *vma;
+ 	struct vm_region *region;
+ 	struct rb_node *rb;
+-	vm_flags_t vm_flags;
+ 	unsigned long capabilities, result;
  	int ret;
- 	pte_t _dst_pte, *dst_pte;
- 	bool writable = dst_vma->vm_flags & VM_WRITE;
-+	bool shstk = dst_vma->vm_flags & VM_SHADOW_STACK;
- 	bool vm_shared = dst_vma->vm_flags & VM_SHARED;
- 	bool page_in_cache = page_mapping(page);
- 	spinlock_t *ptl;
-@@ -84,9 +85,12 @@ int mfill_atomic_install_pte(struct mm_struct *dst_mm, pmd_t *dst_pmd,
- 		writable = false;
- 	}
+ 	MA_STATE(mas, &current->mm->mm_mt, 0, 0);
+@@ -1069,7 +1069,7 @@ unsigned long do_mmap(struct file *file,
  
--	if (writable)
--		_dst_pte = pte_mkwrite(_dst_pte);
--	else
-+	if (writable) {
-+		if (shstk)
-+			_dst_pte = pte_mkwrite_shstk(_dst_pte);
-+		else
-+			_dst_pte = pte_mkwrite(_dst_pte);
-+	} else
- 		/*
- 		 * We need this to make sure write bit removed; as mk_pte()
- 		 * could return a pte with write bit set.
+ 	/* we've determined that we can make the mapping, now translate what we
+ 	 * now know into VMA flags */
+-	vm_flags = determine_vm_flags(file, prot, flags, capabilities);
++	vm_flags |= determine_vm_flags(file, prot, flags, capabilities);
+ 
+ 
+ 	/* we're going to need to record the mapping */
+diff --git a/mm/util.c b/mm/util.c
+index b56c92fb910f..77867bf9959a 100644
+--- a/mm/util.c
++++ b/mm/util.c
+@@ -517,7 +517,7 @@ unsigned long vm_mmap_pgoff(struct file *file, unsigned long addr,
+ 	if (!ret) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+-		ret = do_mmap(file, addr, len, prot, flag, pgoff, &populate,
++		ret = do_mmap(file, addr, len, prot, flag, 0, pgoff, &populate,
+ 			      &uf);
+ 		mmap_write_unlock(mm);
+ 		userfaultfd_unmap_complete(mm, &uf);
 -- 
 2.17.1
 
