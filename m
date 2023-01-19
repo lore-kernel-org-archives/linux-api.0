@@ -2,323 +2,192 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3D4A8C46467
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:42:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id EC24BC46467
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 22:55:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230504AbjASVmD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:42:03 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53370 "EHLO
+        id S230310AbjASWzO (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 17:55:14 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44582 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231181AbjASViy (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:38:54 -0500
-Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C876859565;
-        Thu, 19 Jan 2023 13:27:59 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1674163679; x=1705699679;
-  h=from:to:cc:subject:date:message-id:in-reply-to:
-   references;
-  bh=0itXeYpmwui1qYObTMssZc6TAQWFWu07BF3T37hLMrE=;
-  b=eRNpu+2QSZbYstpqp/lbEyp6mZfeqc9WAf7eCHkhwDAfn2GiRcH1y07a
-   X6tTdY5aaCwz/GhXyvSusqh0NnzOoQjHEvz0+ImZeAFCZDyFhZORLjaFw
-   0YeaX2wSo1ooLNKgf6y0LOiU9AN4Bw6hXInncZRfxsm2r4VHoQiddoFx5
-   lP5MrQDY3tvyX1jDA7f4aewEul/LVmAwi/CMHUbSe6up/pqOaAib4sGmj
-   xSzJ4IyF5KXGL0Qu+4S9BBT15zv5tLJ+I2xkB8txsWWW+dg45yIO0v/GV
-   +C4mL6NEembUQOX032khqFof0i5Ht+Pn02N1h7fRQnJcL/HjY5EATzDjV
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323120061"
-X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323120061"
-Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:23 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139192"
-X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139192"
-Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:22 -0800
-From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
-To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
-        linux-doc@vger.kernel.org, linux-mm@kvack.org,
-        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
-        Arnd Bergmann <arnd@arndb.de>,
-        Andy Lutomirski <luto@kernel.org>,
-        Balbir Singh <bsingharora@gmail.com>,
-        Borislav Petkov <bp@alien8.de>,
-        Cyrill Gorcunov <gorcunov@gmail.com>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        Eugene Syromiatnikov <esyr@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>,
-        "H . J . Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        with ESMTP id S229807AbjASWyd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 17:54:33 -0500
+Received: from mail-pg1-x52d.google.com (mail-pg1-x52d.google.com [IPv6:2607:f8b0:4864:20::52d])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 459635895D;
+        Thu, 19 Jan 2023 14:37:07 -0800 (PST)
+Received: by mail-pg1-x52d.google.com with SMTP id f3so2768049pgc.2;
+        Thu, 19 Jan 2023 14:37:07 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
+        bh=c3/xglDrs4GgAM40Pjq1vzK1v2T7qf4JcCCRFWl6k4g=;
+        b=NSYj639Mp9v5ap+wI0hCjvD0/JJIjDFxjIAk8s0W6QQZeGagLHTMYL5/dvvI2DPi4B
+         +aGueObJ+RXaUVDn4NiXYFIhEcPYWxInkxzarthRsu1sZZ256/vMx7XvGmJtSYSWRLwB
+         vl6fpplWJgAyhnKrjElYHYhD8OeiwcbmHLjIG5BiksGBX7KJzcLCywEenDObbw+Mxjwr
+         pmu+l0l6CF6xX7jvLuX0TRIXSYOrvw5purr8S55V7TS8hL4NzHy8DcBRiXHfgymzDvFg
+         PvZjALLBOjVmU5MNA64b0nuXlR2yYuFwQaHv+ETJElDhkdksrjTql7nEvp7HQxv7QCn3
+         HOLw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=in-reply-to:content-disposition:mime-version:references:message-id
+         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=c3/xglDrs4GgAM40Pjq1vzK1v2T7qf4JcCCRFWl6k4g=;
+        b=OpVuXW90GREJ8IPsBgaqU3tmELFOp4W+5eWlo+Q4wj0EQvohSimiv5iIP/nbKMBSDl
+         +QgbbhwKsf2aXFQ+yWDH62NAvqLscYAkolUtMrSzIA+U8gZJ3CBuYgUlDQVWFOkgHmQm
+         Z8EB1vbArrSTFv/3geeyzgVVJQ67U1Z3wslOnP0+oDDO5qU//mfNbAJ9104Y7HN7IIP+
+         zcjXcxunpwpwa/kJ4MoteHh2xf45+xrYrP9IfH9oS9j3rLCGFMEXeWZOOSk+p1x815Ry
+         SsGhayfVldf9dr8TwS/QcO2bs5T/IS/yy54lYdPsy4KkftCwkmPe2h5Bm0tlrKBTZcL2
+         2Ilg==
+X-Gm-Message-State: AFqh2ko9jBOMzyZ/8bInYMczvJo1WTEnXDMpYXwlreoiix5J3ddKEY5O
+        YiIgHEDFbkTDmlDqffsrRII=
+X-Google-Smtp-Source: AMrXdXtheeUgW/ehdT20D8crA3E+xLX19dRj8kq2j9cAtxWEF6/jTGrekTIsjKUTNo8D+nlbVHnJHA==
+X-Received: by 2002:a62:ab0b:0:b0:58b:46c9:a6b1 with SMTP id p11-20020a62ab0b000000b0058b46c9a6b1mr13080521pff.33.1674167826597;
+        Thu, 19 Jan 2023 14:37:06 -0800 (PST)
+Received: from localhost ([192.55.54.55])
+        by smtp.gmail.com with ESMTPSA id c202-20020a621cd3000000b0058dc1d54db1sm6563910pfc.206.2023.01.19.14.37.05
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 19 Jan 2023 14:37:05 -0800 (PST)
+Date:   Thu, 19 Jan 2023 14:37:04 -0800
+From:   Isaku Yamahata <isaku.yamahata@gmail.com>
+To:     Sean Christopherson <seanjc@google.com>
+Cc:     Isaku Yamahata <isaku.yamahata@gmail.com>,
+        Chao Peng <chao.p.peng@linux.intel.com>, kvm@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-fsdevel@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        qemu-devel@nongnu.org, Paolo Bonzini <pbonzini@redhat.com>,
         Jonathan Corbet <corbet@lwn.net>,
-        Kees Cook <keescook@chromium.org>,
-        Mike Kravetz <mike.kravetz@oracle.com>,
-        Nadav Amit <nadav.amit@gmail.com>,
-        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Randy Dunlap <rdunlap@infradead.org>,
-        Weijiang Yang <weijiang.yang@intel.com>,
+        Vitaly Kuznetsov <vkuznets@redhat.com>,
+        Wanpeng Li <wanpengli@tencent.com>,
+        Jim Mattson <jmattson@google.com>,
+        Joerg Roedel <joro@8bytes.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Naoya Horiguchi <naoya.horiguchi@nec.com>,
+        Miaohe Lin <linmiaohe@huawei.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Hugh Dickins <hughd@google.com>,
+        Jeff Layton <jlayton@kernel.org>,
+        "J . Bruce Fields" <bfields@fieldses.org>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Mike Rapoport <rppt@kernel.org>,
+        Steven Price <steven.price@arm.com>,
+        "Maciej S . Szmigiero" <mail@maciej.szmigiero.name>,
+        Vlastimil Babka <vbabka@suse.cz>,
+        Vishal Annapurve <vannapurve@google.com>,
+        Yu Zhang <yu.c.zhang@linux.intel.com>,
         "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
-        John Allen <john.allen@amd.com>, kcc@google.com,
-        eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
-        dethoma@microsoft.com, akpm@linux-foundation.org,
-        Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v5 37/39] x86: Add PTRACE interface for shadow stack
-Date:   Thu, 19 Jan 2023 13:23:15 -0800
-Message-Id: <20230119212317.8324-38-rick.p.edgecombe@intel.com>
-X-Mailer: git-send-email 2.17.1
-In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
-References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
+        luto@kernel.org, jun.nakajima@intel.com, dave.hansen@intel.com,
+        ak@linux.intel.com, david@redhat.com, aarcange@redhat.com,
+        ddutile@redhat.com, dhildenb@redhat.com,
+        Quentin Perret <qperret@google.com>, tabba@google.com,
+        Michael Roth <michael.roth@amd.com>, mhocko@suse.com,
+        wei.w.wang@intel.com
+Subject: Re: [PATCH v10 0/9] KVM: mm: fd-based approach for supporting KVM
+Message-ID: <20230119223704.GD2976263@ls.amr.corp.intel.com>
+References: <20221202061347.1070246-1-chao.p.peng@linux.intel.com>
+ <Y8H5Z3e4hZkFxAVS@google.com>
+ <20230119111308.GC2976263@ls.amr.corp.intel.com>
+ <Y8lg1G2lRIrI/hld@google.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <Y8lg1G2lRIrI/hld@google.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+On Thu, Jan 19, 2023 at 03:25:08PM +0000,
+Sean Christopherson <seanjc@google.com> wrote:
 
-Some applications (like GDB) would like to tweak shadow stack state via
-ptrace. This allows for existing functionality to continue to work for
-seized shadow stack applications. Provide an regset interface for
-manipulating the shadow stack pointer (SSP).
+> On Thu, Jan 19, 2023, Isaku Yamahata wrote:
+> > On Sat, Jan 14, 2023 at 12:37:59AM +0000,
+> > Sean Christopherson <seanjc@google.com> wrote:
+> > 
+> > > On Fri, Dec 02, 2022, Chao Peng wrote:
+> > > > This patch series implements KVM guest private memory for confidential
+> > > > computing scenarios like Intel TDX[1]. If a TDX host accesses
+> > > > TDX-protected guest memory, machine check can happen which can further
+> > > > crash the running host system, this is terrible for multi-tenant
+> > > > configurations. The host accesses include those from KVM userspace like
+> > > > QEMU. This series addresses KVM userspace induced crash by introducing
+> > > > new mm and KVM interfaces so KVM userspace can still manage guest memory
+> > > > via a fd-based approach, but it can never access the guest memory
+> > > > content.
+> > > > 
+> > > > The patch series touches both core mm and KVM code. I appreciate
+> > > > Andrew/Hugh and Paolo/Sean can review and pick these patches. Any other
+> > > > reviews are always welcome.
+> > > >   - 01: mm change, target for mm tree
+> > > >   - 02-09: KVM change, target for KVM tree
+> > > 
+> > > A version with all of my feedback, plus reworked versions of Vishal's selftest,
+> > > is available here:
+> > > 
+> > >   git@github.com:sean-jc/linux.git x86/upm_base_support
+> > > 
+> > > It compiles and passes the selftest, but it's otherwise barely tested.  There are
+> > > a few todos (2 I think?) and many of the commits need changelogs, i.e. it's still
+> > > a WIP.
+> > > 
+> > > As for next steps, can you (handwaving all of the TDX folks) take a look at what
+> > > I pushed and see if there's anything horrifically broken, and that it still works
+> > > for TDX?
+> > > 
+> > > Fuad (and pKVM folks) same ask for you with respect to pKVM.  Absolutely no rush
+> > > (and I mean that).
+> > > 
+> > > On my side, the two things on my mind are (a) tests and (b) downstream dependencies
+> > > (SEV and TDX).  For tests, I want to build a lists of tests that are required for
+> > > merging so that the criteria for merging are clear, and so that if the list is large
+> > > (haven't thought much yet), the work of writing and running tests can be distributed.
+> > > 
+> > > Regarding downstream dependencies, before this lands, I want to pull in all the
+> > > TDX and SNP series and see how everything fits together.  Specifically, I want to
+> > > make sure that we don't end up with a uAPI that necessitates ugly code, and that we
+> > > don't miss an opportunity to make things simpler.  The patches in the SNP series to
+> > > add "legacy" SEV support for UPM in particular made me slightly rethink some minor
+> > > details.  Nothing remotely major, but something that needs attention since it'll
+> > > be uAPI.
+> > 
+> > Although I'm still debuging with TDX KVM, I needed the following.
+> > kvm_faultin_pfn() is called without mmu_lock held.  the race to change
+> > private/shared is handled by mmu_seq.  Maybe dedicated function only for
+> > kvm_faultin_pfn().
+> 
+> Gah, you're not on the other thread where this was discussed[*].  Simply deleting
+> the lockdep assertion is safe, for guest types that rely on the attributes to
+> define shared vs. private, KVM rechecks the attributes under the protection of
+> mmu_seq.
+> 
+> I'll get a fixed version pushed out today.
+> 
+> [*] https://lore.kernel.org/all/Y8gpl+LwSuSgBFks@google.com
 
-There is already ptrace functionality for accessing xstate, but this
-does not include supervisor xfeatures. So there is not a completely
-clear place for where to put the shadow stack state. Adding it to the
-user xfeatures regset would complicate that code, as it currently shares
-logic with signals which should not have supervisor features.
+Now I have tdx kvm working. I've uploaded at the followings.
+It's rebased to v6.2-rc3.
+        git@github.com:yamahata/linux.git tdx/upm
+        git@github.com:yamahata/qemu.git tdx/upm
 
-Don't add a general supervisor xfeature regset like the user one,
-because it is better to maintain flexibility for other supervisor
-xfeatures to define their own interface. For example, an xfeature may
-decide not to expose all of it's state to userspace, as is actually the
-case for  shadow stack ptrace functionality. A lot of enum values remain
-to be used, so just put it in dedicated shadow stack regset.
+kvm_mmu_do_page_fault() needs the following change.
+kvm_mem_is_private() queries mem_attr_array.  kvm_faultin_pfn() also uses
+kvm_mem_is_private(). So the shared-private check in kvm_faultin_pfn() doesn't
+make sense. This change would belong to TDX KVM patches, though.
 
-The only downside to not having a generic supervisor xfeature regset,
-is that apps need to be enlightened of any new supervisor xfeature
-exposed this way (i.e. they can't try to have generic save/restore
-logic). But maybe that is a good thing, because they have to think
-through each new xfeature instead of encountering issues when new a new
-supervisor xfeature was added.
+diff --git a/arch/x86/kvm/mmu/mmu_internal.h b/arch/x86/kvm/mmu/mmu_internal.h
+index 72b0da8e27e0..f45ac438bbf4 100644
+--- a/arch/x86/kvm/mmu/mmu_internal.h
++++ b/arch/x86/kvm/mmu/mmu_internal.h
+@@ -430,7 +430,7 @@ static inline int kvm_mmu_do_page_fault(struct kvm_vcpu *vcpu, gpa_t cr2_or_gpa,
+                .max_level = vcpu->kvm->arch.tdp_max_page_level,
+                .req_level = PG_LEVEL_4K,
+                .goal_level = PG_LEVEL_4K,
+-               .is_private = kvm_mem_is_private(vcpu->kvm, cr2_or_gpa >> PAGE_SHIFT),
++               .is_private = kvm_is_private_gpa(vcpu->kvm, cr2_or_gpa),
+        };
+        int r;
 
-By adding a shadow stack regset, it also has the effect of including the
-shadow stack state in a core dump, which could be useful for debugging.
 
-The shadow stack specific xstate includes the SSP, and the shadow stack
-and WRSS enablement status. Enabling shadow stack or wrss in the kernel
-involves more than just flipping the bit. The kernel is made aware that
-it has to do extra things when cloning or handling signals. That logic
-is triggered off of separate feature enablement state kept in the task
-struct. So the flipping on HW shadow stack enforcement without notifying
-the kernel to change its behavior would severely limit what an application
-could do without crashing, and the results would depend on kernel
-internal implementation details. There is also no known use for controlling
-this state via prtace today. So only expose the SSP, which is something
-that userspace already has indirect control over.
-
-Tested-by: Pengfei Xu <pengfei.xu@intel.com>
-Tested-by: John Allen <john.allen@amd.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
----
-
-v5:
- - Check shadow stack enablement status for tracee (rppt)
- - Fix typo in comment
-
-v4:
- - Make shadow stack only. Reduce to only supporting SSP register, and
-   remove CET references (peterz)
- - Add comment to not use 0x203, because binutils already looks for it in
-   coredumps. (Christina Schimpe)
-
-v3:
- - Drop dependence on thread.shstk.size, and use thread.features bits
- - Drop 32 bit support
-
-v2:
- - Check alignment on ssp.
- - Block IBT bits.
- - Handle init states instead of returning error.
- - Add verbose commit log justifying the design.
-
- arch/x86/include/asm/fpu/regset.h |  7 +--
- arch/x86/kernel/fpu/regset.c      | 87 +++++++++++++++++++++++++++++++
- arch/x86/kernel/ptrace.c          | 12 +++++
- include/uapi/linux/elf.h          |  2 +
- 4 files changed, 105 insertions(+), 3 deletions(-)
-
-diff --git a/arch/x86/include/asm/fpu/regset.h b/arch/x86/include/asm/fpu/regset.h
-index 4f928d6a367b..697b77e96025 100644
---- a/arch/x86/include/asm/fpu/regset.h
-+++ b/arch/x86/include/asm/fpu/regset.h
-@@ -7,11 +7,12 @@
- 
- #include <linux/regset.h>
- 
--extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active;
-+extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active,
-+				ssp_active;
- extern user_regset_get2_fn fpregs_get, xfpregs_get, fpregs_soft_get,
--				 xstateregs_get;
-+				 xstateregs_get, ssp_get;
- extern user_regset_set_fn fpregs_set, xfpregs_set, fpregs_soft_set,
--				 xstateregs_set;
-+				 xstateregs_set, ssp_set;
- 
- /*
-  * xstateregs_active == regset_fpregs_active. Please refer to the comment
-diff --git a/arch/x86/kernel/fpu/regset.c b/arch/x86/kernel/fpu/regset.c
-index 6d056b68f4ed..10c092d21809 100644
---- a/arch/x86/kernel/fpu/regset.c
-+++ b/arch/x86/kernel/fpu/regset.c
-@@ -8,6 +8,7 @@
- #include <asm/fpu/api.h>
- #include <asm/fpu/signal.h>
- #include <asm/fpu/regset.h>
-+#include <asm/prctl.h>
- 
- #include "context.h"
- #include "internal.h"
-@@ -174,6 +175,92 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
- 	return ret;
- }
- 
-+
-+#ifdef CONFIG_X86_USER_SHADOW_STACK
-+int ssp_active(struct task_struct *target, const struct user_regset *regset)
-+{
-+	if (target->thread.features & ARCH_SHSTK_SHSTK)
-+		return regset->n;
-+
-+	return 0;
-+}
-+
-+int ssp_get(struct task_struct *target, const struct user_regset *regset,
-+		struct membuf to)
-+{
-+	struct fpu *fpu = &target->thread.fpu;
-+	struct cet_user_state *cetregs;
-+
-+	if (!boot_cpu_has(X86_FEATURE_USER_SHSTK))
-+		return -ENODEV;
-+
-+	sync_fpstate(fpu);
-+	cetregs = get_xsave_addr(&fpu->fpstate->regs.xsave, XFEATURE_CET_USER);
-+	if (!cetregs) {
-+		/*
-+		 * The registers are the in the init state. The init values for
-+		 * these regs are zero, so just zero the output buffer.
-+		 */
-+		membuf_zero(&to, sizeof(cetregs->user_ssp));
-+		return 0;
-+	}
-+
-+	return membuf_write(&to, (unsigned long *)&cetregs->user_ssp,
-+			    sizeof(cetregs->user_ssp));
-+}
-+
-+int ssp_set(struct task_struct *target, const struct user_regset *regset,
-+		  unsigned int pos, unsigned int count,
-+		  const void *kbuf, const void __user *ubuf)
-+{
-+	struct fpu *fpu = &target->thread.fpu;
-+	struct xregs_state *xsave = &fpu->fpstate->regs.xsave;
-+	struct cet_user_state *cetregs;
-+	unsigned long user_ssp;
-+	int r;
-+
-+	if (!boot_cpu_has(X86_FEATURE_USER_SHSTK) ||
-+	    !ssp_active(target, regset))
-+		return -ENODEV;
-+
-+	r = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &user_ssp, 0, -1);
-+	if (r)
-+		return r;
-+
-+	/*
-+	 * Some kernel instructions (IRET, etc) can cause exceptions in the case
-+	 * of disallowed CET register values. Just prevent invalid values.
-+	 */
-+	if ((user_ssp >= TASK_SIZE_MAX) || !IS_ALIGNED(user_ssp, 8))
-+		return -EINVAL;
-+
-+	fpu_force_restore(fpu);
-+
-+	/*
-+	 * Don't want to init the xfeature until the kernel will definitely
-+	 * overwrite it, otherwise if it inits and then fails out, it would
-+	 * end up initing it to random data.
-+	 */
-+	if (!xfeature_saved(xsave, XFEATURE_CET_USER) &&
-+	    WARN_ON(init_xfeature(xsave, XFEATURE_CET_USER)))
-+		return -ENODEV;
-+
-+	cetregs = get_xsave_addr(xsave, XFEATURE_CET_USER);
-+	if (WARN_ON(!cetregs)) {
-+		/*
-+		 * This shouldn't ever be NULL because it was successfully
-+		 * inited above if needed. The only scenario would be if an
-+		 * xfeature was somehow saved in a buffer, but not enabled in
-+		 * xsave.
-+		 */
-+		return -ENODEV;
-+	}
-+
-+	cetregs->user_ssp = user_ssp;
-+	return 0;
-+}
-+#endif /* CONFIG_X86_USER_SHADOW_STACK */
-+
- #if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
- 
- /*
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index dfaa270a7cc9..095f04bdabdc 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -58,6 +58,7 @@ enum x86_regset_64 {
- 	REGSET64_FP,
- 	REGSET64_IOPERM,
- 	REGSET64_XSTATE,
-+	REGSET64_SSP,
- };
- 
- #define REGSET_GENERAL \
-@@ -1267,6 +1268,17 @@ static struct user_regset x86_64_regsets[] __ro_after_init = {
- 		.active		= ioperm_active,
- 		.regset_get	= ioperm_get
- 	},
-+#ifdef CONFIG_X86_USER_SHADOW_STACK
-+	[REGSET64_SSP] = {
-+		.core_note_type	= NT_X86_SHSTK,
-+		.n		= 1,
-+		.size		= sizeof(u64),
-+		.align		= sizeof(u64),
-+		.active		= ssp_active,
-+		.regset_get	= ssp_get,
-+		.set		= ssp_set
-+	},
-+#endif
- };
- 
- static const struct user_regset_view user_x86_64_view = {
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 4c6a8fa5e7ed..413a15c07121 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -406,6 +406,8 @@ typedef struct elf64_shdr {
- #define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
- #define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
- #define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
-+/* Old binutils treats 0x203 as a CET state */
-+#define NT_X86_SHSTK	0x204		/* x86 SHSTK state */
- #define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
- #define NT_S390_TIMER	0x301		/* s390 timer register */
- #define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
 -- 
-2.17.1
-
+Isaku Yamahata <isaku.yamahata@gmail.com>
