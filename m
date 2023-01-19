@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E8539C004D4
-	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:39:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E5736C6379F
+	for <linux-api@archiver.kernel.org>; Thu, 19 Jan 2023 21:39:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231187AbjASVi4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 19 Jan 2023 16:38:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48922 "EHLO
+        id S229961AbjASVjf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 19 Jan 2023 16:39:35 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48938 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231128AbjASVh1 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:37:27 -0500
+        with ESMTP id S231143AbjASVhd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 19 Jan 2023 16:37:33 -0500
 Received: from mga11.intel.com (mga11.intel.com [192.55.52.93])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B2EDF1E1C8;
-        Thu, 19 Jan 2023 13:27:26 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 14E7A82D43;
+        Thu, 19 Jan 2023 13:27:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
   t=1674163657; x=1705699657;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=7r4JBhnxBM6qBcyW6ndYNR0sg/Hfe6OTwhDLlSBw690=;
-  b=B8xsrRM/Vktn8dyxr859PtnNes3HxgBrt5XXeG7q/fI+y+66KX8EQytD
-   cRVfBmldMk2eI0ef50IRzsNAcK1dbdexQjORESHjbLBNaAVDtPDJ7M7n0
-   hLfQskMfOqkaawFNqm3Y/hh2keQ2K9pNmMGCdHDCC9WWOmVlnmvGVP4nC
-   1sre+ZQ/LBZl3zEj9D/uYs/Th6GaqID8hdYz65vEV03YnQpPs9NffadiG
-   YzxJxXW2XVwoshgbfxGr5nIcXrNXdqBXFU30DFGA9W+UKxs7gmwo8pID6
-   GxUZMM8UBuJkvU2LKQks4SgEzfbVDnu8WQvU/PAnXw9XyeBg1HddZ06XB
+  bh=Ifxi0e32c84RQATdXOs3rUNHxe57SwrjYewWnLIO6BE=;
+  b=YHjiJCNMUpOYENSQPAKBAYTXBeVtqnA7pNj2ZWxTi7Gke0lOAEXRsZc7
+   bVZaIvBZ+qmzUZFqqVV15UofDuDMr+JDVogtnHxzsKW8fHuT/rBH21J5W
+   oG1R1EGfTlZZ+J1MinLXMcvQ0qTueMgE0FPrxuHrqIG0j3+wlMt8lRc4J
+   8AVmeN/HQRM5uza68WS3rlnmDwkoCP8gnFHXKaa3e+mZ9IKe/LgrjKx3A
+   I3ratEDE2TaWNsYeUufcXQS+I/Lbl9wpwo8qspxm04kGfdD3Ql7qTWZ+U
+   yS56DSyDmSK+BhVw12cmiJcR+OWJ+R+YeSiQP9Hy3GT/niYvE9i3SQOlW
    A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119771"
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="323119835"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="323119771"
+   d="scan'208";a="323119835"
 Received: from fmsmga005.fm.intel.com ([10.253.24.32])
-  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:04 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139124"
+  by fmsmga102.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:08 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10595"; a="989139135"
 X-IronPort-AV: E=Sophos;i="5.97,230,1669104000"; 
-   d="scan'208";a="989139124"
+   d="scan'208";a="989139135"
 Received: from hossain3-mobl.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.252.128.187])
-  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:03 -0800
+  by fmsmga005-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Jan 2023 13:24:06 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -65,10 +65,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com
-Cc:     rick.p.edgecombe@intel.com
-Subject: [PATCH v5 25/39] mm: Warn on shadow stack memory in wrong vma
-Date:   Thu, 19 Jan 2023 13:23:03 -0800
-Message-Id: <20230119212317.8324-26-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [PATCH v5 27/39] x86/shstk: Add user-mode shadow stack support
+Date:   Thu, 19 Jan 2023 13:23:05 -0800
+Message-Id: <20230119212317.8324-28-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
 References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
@@ -76,113 +76,266 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The x86 Control-flow Enforcement Technology (CET) feature includes a new
-type of memory called shadow stack. This shadow stack memory has some
-unusual properties, which requires some core mm changes to function
-properly.
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-One sharp edge is that PTEs that are both Write=0 and Dirty=1 are
-treated as shadow by the CPU, but this combination used to be created by
-the kernel on x86. Previous patches have changed the kernel to now avoid
-creating these PTEs unless they are for shadow stack memory. In case any
-missed corners of the kernel are still creating PTEs like this for
-non-shadow stack memory, and to catch any re-introductions of the logic,
-warn if any shadow stack PTEs (Write=0, Dirty=1) are found in non-shadow
-stack VMAs when they are being zapped. This won't catch transient cases
-but should have decent coverage. It will be compiled out when shadow
-stack is not configured.
+Introduce basic shadow stack enabling/disabling/allocation routines.
+A task's shadow stack is allocated from memory with VM_SHADOW_STACK flag
+and has a fixed size of min(RLIMIT_STACK, 4GB).
 
-In order to check if a pte is shadow stack in core mm code, add default
-implementations for pte_shstk() and pmd_shstk().
+Keep the task's shadow stack address and size in thread_struct. This will
+be copied when cloning new threads, but needs to be cleared during exec,
+so add a function to do this.
+
+Do not support IA32 emulation or x32.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Cc: Kees Cook <keescook@chromium.org>
 ---
 
 v5:
- - Fix typo in commit log
+ - Switch to EOPNOTSUPP
+ - Use MAP_ABOVE4G
+ - Move set_clr_bits_msrl() to patch where it is first used
+
+v4:
+ - Just set MSR_IA32_U_CET when disabling shadow stack, since we don't
+   have IBT yet. (Peterz)
 
 v3:
- - New patch
+ - Use define for set_clr_bits_msrl() (Kees)
+ - Make some functions static (Kees)
+ - Change feature_foo() to features_foo() (Kees)
+ - Centralize shadow stack size rlimit checks (Kees)
+ - Disable x32 support
 
- arch/x86/include/asm/pgtable.h |  2 ++
- include/linux/pgtable.h        | 14 ++++++++++++++
- mm/huge_memory.c               |  2 ++
- mm/memory.c                    |  2 ++
- 4 files changed, 20 insertions(+)
+v2:
+ - Get rid of unnessary shstk->base checks
+ - Don't support IA32 emulation
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 425ded5dd6ec..356f1d43e403 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -129,6 +129,7 @@ static inline bool pte_dirty(pte_t pte)
- 	return pte_flags(pte) & _PAGE_DIRTY_BITS;
- }
- 
-+#define pte_shstk pte_shstk
- static inline bool pte_shstk(pte_t pte)
- {
- 	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
-@@ -147,6 +148,7 @@ static inline bool pmd_dirty(pmd_t pmd)
- 	return pmd_flags(pmd) & _PAGE_DIRTY_BITS;
- }
- 
-+#define pmd_shstk pmd_shstk
- static inline bool pmd_shstk(pmd_t pmd)
- {
- 	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
-diff --git a/include/linux/pgtable.h b/include/linux/pgtable.h
-index 49ce1f055242..04d0bc466e43 100644
---- a/include/linux/pgtable.h
-+++ b/include/linux/pgtable.h
-@@ -539,6 +539,20 @@ static inline pte_t pte_mkwrite_shstk(pte_t pte)
- }
+ arch/x86/include/asm/processor.h  |   2 +
+ arch/x86/include/asm/shstk.h      |   7 ++
+ arch/x86/include/uapi/asm/prctl.h |   3 +
+ arch/x86/kernel/shstk.c           | 146 ++++++++++++++++++++++++++++++
+ 4 files changed, 158 insertions(+)
+
+diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+index e0734f417273..3c257a1a0757 100644
+--- a/arch/x86/include/asm/processor.h
++++ b/arch/x86/include/asm/processor.h
+@@ -479,6 +479,8 @@ struct thread_struct {
+ #ifdef CONFIG_X86_USER_SHADOW_STACK
+ 	unsigned long		features;
+ 	unsigned long		features_locked;
++
++	struct thread_shstk	shstk;
  #endif
  
-+#ifndef pte_shstk
-+static inline bool pte_shstk(pte_t pte)
-+{
-+	return false;
-+}
-+#endif
+ 	/* Floating point and extended processor state */
+diff --git a/arch/x86/include/asm/shstk.h b/arch/x86/include/asm/shstk.h
+index 58f9ee675be0..f40414a982e8 100644
+--- a/arch/x86/include/asm/shstk.h
++++ b/arch/x86/include/asm/shstk.h
+@@ -8,12 +8,19 @@
+ struct task_struct;
+ 
+ #ifdef CONFIG_X86_USER_SHADOW_STACK
++struct thread_shstk {
++	u64	base;
++	u64	size;
++};
 +
-+#ifndef pmd_shstk
-+static inline bool pmd_shstk(pmd_t pte)
-+{
-+	return false;
-+}
-+#endif
+ long shstk_prctl(struct task_struct *task, int option, unsigned long features);
+ void reset_thread_features(void);
++void shstk_free(struct task_struct *p);
+ #else
+ static inline long shstk_prctl(struct task_struct *task, int option,
+ 			     unsigned long features) { return -EINVAL; }
+ static inline void reset_thread_features(void) {}
++static inline void shstk_free(struct task_struct *p) {}
+ #endif /* CONFIG_X86_USER_SHADOW_STACK */
+ 
+ #endif /* __ASSEMBLY__ */
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index b2b3b7200b2d..7dfd9dc00509 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -26,4 +26,7 @@
+ #define ARCH_SHSTK_DISABLE		0x5002
+ #define ARCH_SHSTK_LOCK			0x5003
+ 
++/* ARCH_SHSTK_ features bits */
++#define ARCH_SHSTK_SHSTK		(1ULL <<  0)
 +
- #ifndef pmd_mkwrite_shstk
- static inline pmd_t pmd_mkwrite_shstk(pmd_t pmd)
+ #endif /* _ASM_X86_PRCTL_H */
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 41ed6552e0a5..f39e5d3b9303 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -8,14 +8,160 @@
+ 
+ #include <linux/sched.h>
+ #include <linux/bitops.h>
++#include <linux/types.h>
++#include <linux/mm.h>
++#include <linux/mman.h>
++#include <linux/slab.h>
++#include <linux/uaccess.h>
++#include <linux/sched/signal.h>
++#include <linux/compat.h>
++#include <linux/sizes.h>
++#include <linux/user.h>
++#include <asm/msr.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/shstk.h>
++#include <asm/special_insns.h>
++#include <asm/fpu/api.h>
+ #include <asm/prctl.h>
+ 
++static bool features_enabled(unsigned long features)
++{
++	return current->thread.features & features;
++}
++
++static void features_set(unsigned long features)
++{
++	current->thread.features |= features;
++}
++
++static void features_clr(unsigned long features)
++{
++	current->thread.features &= ~features;
++}
++
++static unsigned long alloc_shstk(unsigned long size)
++{
++	int flags = MAP_ANONYMOUS | MAP_PRIVATE | MAP_ABOVE4G;
++	struct mm_struct *mm = current->mm;
++	unsigned long addr, unused;
++
++	mmap_write_lock(mm);
++	addr = do_mmap(NULL, addr, size, PROT_READ, flags,
++		       VM_SHADOW_STACK | VM_WRITE, 0, &unused, NULL);
++
++	mmap_write_unlock(mm);
++
++	return addr;
++}
++
++static unsigned long adjust_shstk_size(unsigned long size)
++{
++	if (size)
++		return PAGE_ALIGN(size);
++
++	return PAGE_ALIGN(min_t(unsigned long long, rlimit(RLIMIT_STACK), SZ_4G));
++}
++
++static void unmap_shadow_stack(u64 base, u64 size)
++{
++	while (1) {
++		int r;
++
++		r = vm_munmap(base, size);
++
++		/*
++		 * vm_munmap() returns -EINTR when mmap_lock is held by
++		 * something else, and that lock should not be held for a
++		 * long time.  Retry it for the case.
++		 */
++		if (r == -EINTR) {
++			cond_resched();
++			continue;
++		}
++
++		/*
++		 * For all other types of vm_munmap() failure, either the
++		 * system is out of memory or there is bug.
++		 */
++		WARN_ON_ONCE(r);
++		break;
++	}
++}
++
++static int shstk_setup(void)
++{
++	struct thread_shstk *shstk = &current->thread.shstk;
++	unsigned long addr, size;
++
++	/* Already enabled */
++	if (features_enabled(ARCH_SHSTK_SHSTK))
++		return 0;
++
++	/* Also not supported for 32 bit and x32 */
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK) || in_32bit_syscall())
++		return -EOPNOTSUPP;
++
++	size = adjust_shstk_size(0);
++	addr = alloc_shstk(size);
++	if (IS_ERR_VALUE(addr))
++		return PTR_ERR((void *)addr);
++
++	fpregs_lock_and_load();
++	wrmsrl(MSR_IA32_PL3_SSP, addr + size);
++	wrmsrl(MSR_IA32_U_CET, CET_SHSTK_EN);
++	fpregs_unlock();
++
++	shstk->base = addr;
++	shstk->size = size;
++	features_set(ARCH_SHSTK_SHSTK);
++
++	return 0;
++}
++
+ void reset_thread_features(void)
  {
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index fbb8beb9265e..5bd71da75dec 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1700,6 +1700,8 @@ int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
- 	 */
- 	orig_pmd = pmdp_huge_get_and_clear_full(vma, addr, pmd,
- 						tlb->fullmm);
-+	VM_WARN_ON_ONCE(!(vma->vm_flags & VM_SHADOW_STACK) &&
-+			pmd_shstk(orig_pmd));
- 	tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
- 	if (vma_is_special_huge(vma)) {
- 		if (arch_needs_pgtable_deposit())
-diff --git a/mm/memory.c b/mm/memory.c
-index 5e5107232a26..c4cc38baffc5 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -1381,6 +1381,8 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
- 				continue;
- 			ptent = ptep_get_and_clear_full(mm, addr, pte,
- 							tlb->fullmm);
-+			VM_WARN_ON_ONCE(!(vma->vm_flags & VM_SHADOW_STACK) &&
-+					pte_shstk(ptent));
- 			tlb_remove_tlb_entry(tlb, pte, addr);
- 			zap_install_uffd_wp_if_needed(vma, addr, pte, details,
- 						      ptent);
++	memset(&current->thread.shstk, 0, sizeof(struct thread_shstk));
+ 	current->thread.features = 0;
+ 	current->thread.features_locked = 0;
+ }
+ 
++void shstk_free(struct task_struct *tsk)
++{
++	struct thread_shstk *shstk = &tsk->thread.shstk;
++
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK) ||
++	    !features_enabled(ARCH_SHSTK_SHSTK))
++		return;
++
++	if (!tsk->mm)
++		return;
++
++	unmap_shadow_stack(shstk->base, shstk->size);
++}
++
++
++static int shstk_disable(void)
++{
++	if (!cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
++		return -EOPNOTSUPP;
++
++	/* Already disabled? */
++	if (!features_enabled(ARCH_SHSTK_SHSTK))
++		return 0;
++
++	fpregs_lock_and_load();
++	/* Disable WRSS too when disabling shadow stack */
++	wrmsrl(MSR_IA32_U_CET, 0);
++	wrmsrl(MSR_IA32_PL3_SSP, 0);
++	fpregs_unlock();
++
++	shstk_free(current);
++	features_clr(ARCH_SHSTK_SHSTK);
++
++	return 0;
++}
++
+ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
+ {
+ 	if (option == ARCH_SHSTK_LOCK) {
 -- 
 2.17.1
 
