@@ -2,180 +2,144 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 502FBC63797
-	for <linux-api@archiver.kernel.org>; Fri,  3 Feb 2023 21:37:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D3700C05027
+	for <linux-api@archiver.kernel.org>; Fri,  3 Feb 2023 22:13:19 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233657AbjBCVhN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 3 Feb 2023 16:37:13 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41390 "EHLO
+        id S233482AbjBCWNT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 3 Feb 2023 17:13:19 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35156 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233297AbjBCVhM (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Feb 2023 16:37:12 -0500
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 75CACA7ED7
-        for <linux-api@vger.kernel.org>; Fri,  3 Feb 2023 13:35:46 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1675460145;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=WTWZ2Ef2CfyxEGVxp7yzT3b+CQOijHFN2HB2ijuK9AA=;
-        b=DucWH364pwOChSzp+F1mZeWD5xT/f76WF+vFZo+gamXSlfPkLNPeEgp6unlezE/iuHT8Rv
-        nc1tlANAfgCbGToWL/HD19m9M5IwNYohpT8jmqUfQ1dEwTKw010PKpaR6AxqW9siy/Q0Hp
-        odhSAvdw+MiyDgDPYgHmhByfR3ESmxU=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-13-dddXBdJWPGu1O0UyFFjw0w-1; Fri, 03 Feb 2023 16:35:42 -0500
-X-MC-Unique: dddXBdJWPGu1O0UyFFjw0w-1
-Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4AF533815F77;
-        Fri,  3 Feb 2023 21:35:41 +0000 (UTC)
-Received: from madcap2.tricolour.com (unknown [10.22.50.7])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 65280400F756;
-        Fri,  3 Feb 2023 21:35:39 +0000 (UTC)
-From:   Richard Guy Briggs <rgb@redhat.com>
-To:     Linux-Audit Mailing List <linux-audit@redhat.com>,
-        LKML <linux-kernel@vger.kernel.org>,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
-Cc:     Paul Moore <paul@paul-moore.com>,
-        Eric Paris <eparis@parisplace.org>,
-        Steve Grubb <sgrubb@redhat.com>,
-        Richard Guy Briggs <rgb@redhat.com>, Jan Kara <jack@suse.cz>,
-        Amir Goldstein <amir73il@gmail.com>
-Subject: [PATCH v7 3/3] fanotify,audit: Allow audit to use the full permission event response
-Date:   Fri,  3 Feb 2023 16:35:16 -0500
-Message-Id: <bcb6d552e517b8751ece153e516d8b073459069c.1675373475.git.rgb@redhat.com>
-In-Reply-To: <cover.1675373475.git.rgb@redhat.com>
-References: <cover.1675373475.git.rgb@redhat.com>
+        with ESMTP id S233287AbjBCWND (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Feb 2023 17:13:03 -0500
+Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2C41BAF0DD;
+        Fri,  3 Feb 2023 14:11:35 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1675462295; x=1706998295;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=Z9y3fGtXxJjLSg6pAMA8PX5Kw59u1JHoZiob62NOFyg=;
+  b=YqTe9pFN4oUDT2u8SdQK05X3PHXY6X/7fN8uvnUdw3kmXW14t+4w0hPL
+   cDOw7NaZuy9tHLdpi3La79AZboB6KHd8B6QhmY2ZCIA0oVVyomedm9/Jn
+   tVCTTUZVQzYwUAGzyGp8gX2Hx7kXmnAXtEIT4hpwRsUkEME3TIAX7M0k2
+   UWQNGifKGLRfZs+mH+29sV/wh+IlTtRoZ2SXDutSOYnoopOGmYNSCRwvS
+   aQGPOGhifFv+TRW5vYy3yhZiu2/kf1M5bBOb20LOqJeVwgfDVBpvxf0ce
+   dvLvM9Fx9Ngg41KbvXymMLlKX9TNywzP9XtoZJMzKnaJMXh9bVsHEvaV1
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10610"; a="308509991"
+X-IronPort-AV: E=Sophos;i="5.97,271,1669104000"; 
+   d="scan'208";a="308509991"
+Received: from orsmga006.jf.intel.com ([10.7.209.51])
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 03 Feb 2023 14:11:21 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6500,9779,10610"; a="643402334"
+X-IronPort-AV: E=Sophos;i="5.97,271,1669104000"; 
+   d="scan'208";a="643402334"
+Received: from lkp-server01.sh.intel.com (HELO 4455601a8d94) ([10.239.97.150])
+  by orsmga006.jf.intel.com with ESMTP; 03 Feb 2023 14:11:19 -0800
+Received: from kbuild by 4455601a8d94 with local (Exim 4.96)
+        (envelope-from <lkp@intel.com>)
+        id 1pO4H8-0000nQ-1B;
+        Fri, 03 Feb 2023 22:11:18 +0000
+Date:   Sat, 4 Feb 2023 06:10:57 +0800
+From:   kernel test robot <lkp@intel.com>
+To:     Nhat Pham <nphamcs@gmail.com>, akpm@linux-foundation.org
+Cc:     oe-kbuild-all@lists.linux.dev, hannes@cmpxchg.org,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        bfoster@redhat.com, willy@infradead.org, linux-api@vger.kernel.org,
+        kernel-team@meta.com
+Subject: Re: [PATCH v9 2/3] cachestat: implement cachestat syscall
+Message-ID: <202302040606.esjgszqH-lkp@intel.com>
+References: <20230203190413.2559707-3-nphamcs@gmail.com>
 MIME-Version: 1.0
-Content-type: text/plain
-Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20230203190413.2559707-3-nphamcs@gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This patch passes the full response so that the audit function can use all
-of it. The audit function was updated to log the additional information in
-the AUDIT_FANOTIFY record.
+Hi Nhat,
 
-Currently the only type of fanotify info that is defined is an audit
-rule number, but convert it to hex encoding to future-proof the field.
-Hex encoding suggested by Paul Moore <paul@paul-moore.com>.
+Thank you for the patch! Yet something to improve:
 
-The {subj,obj}_trust values are {0,1,2}, corresponding to no, yes, unknown.
+[auto build test ERROR on 1440f576022887004f719883acb094e7e0dd4944]
 
-Sample records:
-  type=FANOTIFY msg=audit(1600385147.372:590): resp=2 fan_type=1 fan_info=3137 subj_trust=3 obj_trust=5
-  type=FANOTIFY msg=audit(1659730979.839:284): resp=1 fan_type=0 fan_info=0 subj_trust=2 obj_trust=2
+url:    https://github.com/intel-lab-lkp/linux/commits/Nhat-Pham/workingset-refactor-LRU-refault-to-expose-refault-recency-check/20230204-030455
+base:   1440f576022887004f719883acb094e7e0dd4944
+patch link:    https://lore.kernel.org/r/20230203190413.2559707-3-nphamcs%40gmail.com
+patch subject: [PATCH v9 2/3] cachestat: implement cachestat syscall
+config: alpha-allnoconfig (https://download.01.org/0day-ci/archive/20230204/202302040606.esjgszqH-lkp@intel.com/config)
+compiler: alpha-linux-gcc (GCC) 12.1.0
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/intel-lab-lkp/linux/commit/49a57ed71ac2c005231660c85c3f30c4b47d8b7b
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Nhat-Pham/workingset-refactor-LRU-refault-to-expose-refault-recency-check/20230204-030455
+        git checkout 49a57ed71ac2c005231660c85c3f30c4b47d8b7b
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=alpha olddefconfig
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=alpha SHELL=/bin/bash
 
-Suggested-by: Steve Grubb <sgrubb@redhat.com>
-Link: https://lore.kernel.org/r/3075502.aeNJFYEL58@x2
-Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
----
- fs/notify/fanotify/fanotify.c |  3 ++-
- include/linux/audit.h         |  9 +++++----
- kernel/auditsc.c              | 18 +++++++++++++++---
- 3 files changed, 22 insertions(+), 8 deletions(-)
+If you fix the issue, kindly add following tag where applicable
+| Reported-by: kernel test robot <lkp@intel.com>
 
-diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
-index 24ec1d66d5a8..29bdd99b29fa 100644
---- a/fs/notify/fanotify/fanotify.c
-+++ b/fs/notify/fanotify/fanotify.c
-@@ -273,7 +273,8 @@ static int fanotify_get_response(struct fsnotify_group *group,
- 
- 	/* Check if the response should be audited */
- 	if (event->response & FAN_AUDIT)
--		audit_fanotify(event->response & ~FAN_AUDIT);
-+		audit_fanotify(event->response & ~FAN_AUDIT,
-+			       &event->audit_rule);
- 
- 	pr_debug("%s: group=%p event=%p about to return ret=%d\n", __func__,
- 		 group, event, ret);
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index d6b7d0c7ce43..31086a72e32a 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -14,6 +14,7 @@
- #include <linux/audit_arch.h>
- #include <uapi/linux/audit.h>
- #include <uapi/linux/netfilter/nf_tables.h>
-+#include <uapi/linux/fanotify.h>
- 
- #define AUDIT_INO_UNSET ((unsigned long)-1)
- #define AUDIT_DEV_UNSET ((dev_t)-1)
-@@ -416,7 +417,7 @@ extern void __audit_log_capset(const struct cred *new, const struct cred *old);
- extern void __audit_mmap_fd(int fd, int flags);
- extern void __audit_openat2_how(struct open_how *how);
- extern void __audit_log_kern_module(char *name);
--extern void __audit_fanotify(u32 response);
-+extern void __audit_fanotify(u32 response, struct fanotify_response_info_audit_rule *friar);
- extern void __audit_tk_injoffset(struct timespec64 offset);
- extern void __audit_ntp_log(const struct audit_ntp_data *ad);
- extern void __audit_log_nfcfg(const char *name, u8 af, unsigned int nentries,
-@@ -523,10 +524,10 @@ static inline void audit_log_kern_module(char *name)
- 		__audit_log_kern_module(name);
- }
- 
--static inline void audit_fanotify(u32 response)
-+static inline void audit_fanotify(u32 response, struct fanotify_response_info_audit_rule *friar)
- {
- 	if (!audit_dummy_context())
--		__audit_fanotify(response);
-+		__audit_fanotify(response, friar);
- }
- 
- static inline void audit_tk_injoffset(struct timespec64 offset)
-@@ -679,7 +680,7 @@ static inline void audit_log_kern_module(char *name)
- {
- }
- 
--static inline void audit_fanotify(u32 response)
-+static inline void audit_fanotify(u32 response, struct fanotify_response_info_audit_rule *friar)
- { }
- 
- static inline void audit_tk_injoffset(struct timespec64 offset)
-diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index d1fb821de104..5a5994659b44 100644
---- a/kernel/auditsc.c
-+++ b/kernel/auditsc.c
-@@ -64,6 +64,7 @@
- #include <uapi/linux/limits.h>
- #include <uapi/linux/netfilter/nf_tables.h>
- #include <uapi/linux/openat2.h> // struct open_how
-+#include <uapi/linux/fanotify.h>
- 
- #include "audit.h"
- 
-@@ -2877,10 +2878,21 @@ void __audit_log_kern_module(char *name)
- 	context->type = AUDIT_KERN_MODULE;
- }
- 
--void __audit_fanotify(u32 response)
-+void __audit_fanotify(u32 response, struct fanotify_response_info_audit_rule *friar)
- {
--	audit_log(audit_context(), GFP_KERNEL,
--		AUDIT_FANOTIFY,	"resp=%u", response);
-+	/* {subj,obj}_trust values are {0,1,2}: no,yes,unknown */
-+	switch (friar->hdr.type) {
-+	case FAN_RESPONSE_INFO_NONE:
-+		audit_log(audit_context(), GFP_KERNEL, AUDIT_FANOTIFY,
-+			  "resp=%u fan_type=%u fan_info=0 subj_trust=2 obj_trust=2",
-+			  response, FAN_RESPONSE_INFO_NONE);
-+		break;
-+	case FAN_RESPONSE_INFO_AUDIT_RULE:
-+		audit_log(audit_context(), GFP_KERNEL, AUDIT_FANOTIFY,
-+			  "resp=%u fan_type=%u fan_info=%X subj_trust=%u obj_trust=%u",
-+			  response, friar->hdr.type, friar->rule_number,
-+			  friar->subj_trust, friar->obj_trust);
-+	}
- }
- 
- void __audit_tk_injoffset(struct timespec64 offset)
+All errors (new ones prefixed by >>):
+
+   mm/filemap.c:4035:6: warning: no previous prototype for 'ksys_cachestat' [-Wmissing-prototypes]
+    4035 | long ksys_cachestat(unsigned int fd, loff_t off, size_t len,
+         |      ^~~~~~~~~~~~~~
+   In file included from mm/filemap.c:25:
+>> include/linux/syscalls.h:243:25: error: conflicting types for 'sys_cachestat'; have 'long int(unsigned int,  loff_t,  size_t,  struct cachestat *, unsigned int)' {aka 'long int(unsigned int,  long long int,  long unsigned int,  struct cachestat *, unsigned int)'}
+     243 |         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
+         |                         ^~~
+   include/linux/syscalls.h:229:9: note: in expansion of macro '__SYSCALL_DEFINEx'
+     229 |         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
+         |         ^~~~~~~~~~~~~~~~~
+   include/linux/syscalls.h:222:36: note: in expansion of macro 'SYSCALL_DEFINEx'
+     222 | #define SYSCALL_DEFINE5(name, ...) SYSCALL_DEFINEx(5, _##name, __VA_ARGS__)
+         |                                    ^~~~~~~~~~~~~~~
+   mm/filemap.c:4095:1: note: in expansion of macro 'SYSCALL_DEFINE5'
+    4095 | SYSCALL_DEFINE5(cachestat, unsigned int, fd, loff_t, off, size_t, len,
+         | ^~~~~~~~~~~~~~~
+   include/linux/syscalls.h:1060:17: note: previous declaration of 'sys_cachestat' with type 'long int(unsigned int,  long unsigned int,  long unsigned int,  size_t,  struct cachestat *, unsigned int)' {aka 'long int(unsigned int,  long unsigned int,  long unsigned int,  long unsigned int,  struct cachestat *, unsigned int)'}
+    1060 | asmlinkage long sys_cachestat(unsigned int fd, unsigned long off_low,
+         |                 ^~~~~~~~~~~~~
+
+
+vim +243 include/linux/syscalls.h
+
+1bd21c6c21e848 Dominik Brodowski   2018-04-05  232  
+e145242ea0df6b Dominik Brodowski   2018-04-09  233  /*
+e145242ea0df6b Dominik Brodowski   2018-04-09  234   * The asmlinkage stub is aliased to a function named __se_sys_*() which
+e145242ea0df6b Dominik Brodowski   2018-04-09  235   * sign-extends 32-bit ints to longs whenever needed. The actual work is
+e145242ea0df6b Dominik Brodowski   2018-04-09  236   * done within __do_sys_*().
+e145242ea0df6b Dominik Brodowski   2018-04-09  237   */
+1bd21c6c21e848 Dominik Brodowski   2018-04-05  238  #ifndef __SYSCALL_DEFINEx
+bed1ffca022cc8 Frederic Weisbecker 2009-03-13  239  #define __SYSCALL_DEFINEx(x, name, ...)					\
+bee20031772af3 Arnd Bergmann       2018-06-19  240  	__diag_push();							\
+bee20031772af3 Arnd Bergmann       2018-06-19  241  	__diag_ignore(GCC, 8, "-Wattribute-alias",			\
+bee20031772af3 Arnd Bergmann       2018-06-19  242  		      "Type aliasing is used to sanitize syscall arguments");\
+83460ec8dcac14 Andi Kleen          2013-11-12 @243  	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+e145242ea0df6b Dominik Brodowski   2018-04-09  244  		__attribute__((alias(__stringify(__se_sys##name))));	\
+c9a211951c7c79 Howard McLauchlan   2018-03-21  245  	ALLOW_ERROR_INJECTION(sys##name, ERRNO);			\
+e145242ea0df6b Dominik Brodowski   2018-04-09  246  	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
+e145242ea0df6b Dominik Brodowski   2018-04-09  247  	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+e145242ea0df6b Dominik Brodowski   2018-04-09  248  	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+1a94bc34768e46 Heiko Carstens      2009-01-14  249  	{								\
+e145242ea0df6b Dominik Brodowski   2018-04-09  250  		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
+07fe6e00f6cca6 Al Viro             2013-01-21  251  		__MAP(x,__SC_TEST,__VA_ARGS__);				\
+2cf0966683430b Al Viro             2013-01-21  252  		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
+2cf0966683430b Al Viro             2013-01-21  253  		return ret;						\
+1a94bc34768e46 Heiko Carstens      2009-01-14  254  	}								\
+bee20031772af3 Arnd Bergmann       2018-06-19  255  	__diag_pop();							\
+e145242ea0df6b Dominik Brodowski   2018-04-09  256  	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+1bd21c6c21e848 Dominik Brodowski   2018-04-05  257  #endif /* __SYSCALL_DEFINEx */
+1a94bc34768e46 Heiko Carstens      2009-01-14  258  
+
 -- 
-2.27.0
-
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests
