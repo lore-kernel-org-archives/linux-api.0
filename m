@@ -2,119 +2,160 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5FE2DC05027
-	for <linux-api@archiver.kernel.org>; Fri,  3 Feb 2023 19:44:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A8841C61DA4
+	for <linux-api@archiver.kernel.org>; Fri,  3 Feb 2023 21:36:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233425AbjBCTo1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 3 Feb 2023 14:44:27 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43092 "EHLO
+        id S233537AbjBCVgX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 3 Feb 2023 16:36:23 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41322 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229853AbjBCTo0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Feb 2023 14:44:26 -0500
-Received: from mail.skyhub.de (mail.skyhub.de [5.9.137.197])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A44B39DCB3;
-        Fri,  3 Feb 2023 11:44:25 -0800 (PST)
-Received: from zn.tnic (p5de8e9fe.dip0.t-ipconnect.de [93.232.233.254])
-        (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-        (No client certificate requested)
-        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id 30CE51EC050B;
-        Fri,  3 Feb 2023 20:44:24 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
-        t=1675453464;
+        with ESMTP id S231320AbjBCVgW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 3 Feb 2023 16:36:22 -0500
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0DD8BA77BB
+        for <linux-api@vger.kernel.org>; Fri,  3 Feb 2023 13:35:41 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1675460141;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
-        bh=Aawd1Ae416cyoOlyUnwX/vsr0DPMmD0L5HLCQmlorYw=;
-        b=Yw/nyWbPDsXI1pcZe7prJu7pg191XIQbuN4noeqgHgrl7hN4Y0WSj41wuH1q0Nf72djV/U
-        3JCyy3RBcRldDMC8zylW4+u6JZRWwSl56OG6QmFQMZjMxbeVXD2+VY8n5AZoHpQinTiHHI
-        Hr0nGS0ONG4GHznX84tW9AA6HshKxIA=
-Date:   Fri, 3 Feb 2023 20:44:20 +0100
-From:   Borislav Petkov <bp@alien8.de>
-To:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
-Cc:     "bsingharora@gmail.com" <bsingharora@gmail.com>,
-        "hpa@zytor.com" <hpa@zytor.com>,
-        "Syromiatnikov, Eugene" <esyr@redhat.com>,
-        "peterz@infradead.org" <peterz@infradead.org>,
-        "rdunlap@infradead.org" <rdunlap@infradead.org>,
-        "keescook@chromium.org" <keescook@chromium.org>,
-        "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
-        "Eranian, Stephane" <eranian@google.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "fweimer@redhat.com" <fweimer@redhat.com>,
-        "nadav.amit@gmail.com" <nadav.amit@gmail.com>,
-        "jannh@google.com" <jannh@google.com>,
-        "dethoma@microsoft.com" <dethoma@microsoft.com>,
-        "kcc@google.com" <kcc@google.com>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        "pavel@ucw.cz" <pavel@ucw.cz>, "oleg@redhat.com" <oleg@redhat.com>,
-        "hjl.tools@gmail.com" <hjl.tools@gmail.com>,
-        "Yang, Weijiang" <weijiang.yang@intel.com>,
-        "Lutomirski, Andy" <luto@kernel.org>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "arnd@arndb.de" <arnd@arndb.de>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "Schimpe, Christina" <christina.schimpe@intel.com>,
-        "mike.kravetz@oracle.com" <mike.kravetz@oracle.com>,
-        "x86@kernel.org" <x86@kernel.org>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "jamorris@linux.microsoft.com" <jamorris@linux.microsoft.com>,
-        "john.allen@amd.com" <john.allen@amd.com>,
-        "rppt@kernel.org" <rppt@kernel.org>,
-        "andrew.cooper3@citrix.com" <andrew.cooper3@citrix.com>,
-        "mingo@redhat.com" <mingo@redhat.com>,
-        "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>,
-        "corbet@lwn.net" <corbet@lwn.net>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "gorcunov@gmail.com" <gorcunov@gmail.com>
-Subject: Re: [PATCH v5 07/39] x86: Add user control-protection fault handler
-Message-ID: <Y91kFGVFe6QlHKmi@zn.tnic>
-References: <20230119212317.8324-1-rick.p.edgecombe@intel.com>
- <20230119212317.8324-8-rick.p.edgecombe@intel.com>
- <Y91b2x8pSFtmB+w6@zn.tnic>
- <393a03d063dee5831af93ca67636df75a76481c3.camel@intel.com>
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=yodz909gQLcsaRT2R9pZz/clnDYmt0URiuiWmBb/3AM=;
+        b=QS20qbLaaPQg0ty2Vo+FeOotQ/z+fDdzB7CCQ3j2ErFSbc3pG8sw7MU/Q8USgWmh1fFFur
+        pF0+6l+758AN0XO82tb1i/kz7ct+MlafNjjOmTPUmzdulmZlm51WS57i6GI2syAYKLrbxq
+        TPQYhEbQoMWqBRuG9X/guONJcFahVUA=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-126-Nol1wclAOWakrkcCYDgbxA-1; Fri, 03 Feb 2023 16:35:38 -0500
+X-MC-Unique: Nol1wclAOWakrkcCYDgbxA-1
+Received: from smtp.corp.redhat.com (int-mx01.intmail.prod.int.rdu2.redhat.com [10.11.54.1])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 72D821800077;
+        Fri,  3 Feb 2023 21:35:37 +0000 (UTC)
+Received: from madcap2.tricolour.com (unknown [10.22.50.7])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id F199240CF8EA;
+        Fri,  3 Feb 2023 21:35:35 +0000 (UTC)
+From:   Richard Guy Briggs <rgb@redhat.com>
+To:     Linux-Audit Mailing List <linux-audit@redhat.com>,
+        LKML <linux-kernel@vger.kernel.org>,
+        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Cc:     Paul Moore <paul@paul-moore.com>,
+        Eric Paris <eparis@parisplace.org>,
+        Steve Grubb <sgrubb@redhat.com>,
+        Richard Guy Briggs <rgb@redhat.com>, Jan Kara <jack@suse.cz>,
+        Amir Goldstein <amir73il@gmail.com>
+Subject: [PATCH v7 1/3] fanotify: Ensure consistent variable type for response
+Date:   Fri,  3 Feb 2023 16:35:14 -0500
+Message-Id: <3778cb0b3501bc4e686ba7770b20eb9ab0506cf4.1675373475.git.rgb@redhat.com>
+In-Reply-To: <cover.1675373475.git.rgb@redhat.com>
+References: <cover.1675373475.git.rgb@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <393a03d063dee5831af93ca67636df75a76481c3.camel@intel.com>
+Content-type: text/plain
+Content-Transfer-Encoding: 8bit
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.1
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Feb 03, 2023 at 07:24:08PM +0000, Edgecombe, Rick P wrote:
-> The name seems better, but this is actually from the existing kernel
-> IBT control protection exception code. So it seems like an separate
-> change. Would you like to see it snuck into the user shadow stack
-> handler, or could we leave this for future cleanups?
-> 
-> Kees pointed out that adding to the handler and moving it in the same
-> patch makes it difficult to see where the changes are. I'm splitting
-> this one into two patches for the next version.
+The user space API for the response variable is __u32. This patch makes
+sure that the whole path through the kernel uses u32 so that there is
+no sign extension or truncation of the user space response.
 
-Yap, that's the right way to do it.
+Suggested-by: Steve Grubb <sgrubb@redhat.com>
+Link: https://lore.kernel.org/r/12617626.uLZWGnKmhe@x2
+Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+Acked-by: Paul Moore <paul@paul-moore.com>
+---
+ fs/notify/fanotify/fanotify.h      | 2 +-
+ fs/notify/fanotify/fanotify_user.c | 6 +++---
+ include/linux/audit.h              | 6 +++---
+ kernel/auditsc.c                   | 2 +-
+ 4 files changed, 8 insertions(+), 8 deletions(-)
 
-> I think we have to read it before we enable interrupts or use
-> fpregs_lock(). So reading it before saves disabling preemption later.
-
-So I'm a bit confused - there's that cond_local_irq_enable() which will
-enable interrupts if they were enabled before.
-
-So if they were enabled before and you reenable them here, then that
-current could be the wrong one if we schedule in between, right?
-
-IOW, shouldn't those two lines be swapped so that it says:
-
-        tsk = current;
-
-        cond_local_irq_enable(regs);
-
-and you can be sure that tsk is always the right current which caused
-the #CP? Or am I way off again?
-
+diff --git a/fs/notify/fanotify/fanotify.h b/fs/notify/fanotify/fanotify.h
+index 57f51a9a3015..f899d610bc08 100644
+--- a/fs/notify/fanotify/fanotify.h
++++ b/fs/notify/fanotify/fanotify.h
+@@ -425,7 +425,7 @@ FANOTIFY_PE(struct fanotify_event *event)
+ struct fanotify_perm_event {
+ 	struct fanotify_event fae;
+ 	struct path path;
+-	unsigned short response;	/* userspace answer to the event */
++	u32 response;			/* userspace answer to the event */
+ 	unsigned short state;		/* state of the event */
+ 	int fd;		/* fd we passed to userspace for this event */
+ };
+diff --git a/fs/notify/fanotify/fanotify_user.c b/fs/notify/fanotify/fanotify_user.c
+index 4546da4a54f9..caa1211bac8c 100644
+--- a/fs/notify/fanotify/fanotify_user.c
++++ b/fs/notify/fanotify/fanotify_user.c
+@@ -289,7 +289,7 @@ static int create_fd(struct fsnotify_group *group, const struct path *path,
+  */
+ static void finish_permission_event(struct fsnotify_group *group,
+ 				    struct fanotify_perm_event *event,
+-				    unsigned int response)
++				    u32 response)
+ 				    __releases(&group->notification_lock)
+ {
+ 	bool destroy = false;
+@@ -310,9 +310,9 @@ static int process_access_response(struct fsnotify_group *group,
+ {
+ 	struct fanotify_perm_event *event;
+ 	int fd = response_struct->fd;
+-	int response = response_struct->response;
++	u32 response = response_struct->response;
+ 
+-	pr_debug("%s: group=%p fd=%d response=%d\n", __func__, group,
++	pr_debug("%s: group=%p fd=%d response=%u\n", __func__, group,
+ 		 fd, response);
+ 	/*
+ 	 * make sure the response is valid, if invalid we do nothing and either
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 3608992848d3..d6b7d0c7ce43 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -416,7 +416,7 @@ extern void __audit_log_capset(const struct cred *new, const struct cred *old);
+ extern void __audit_mmap_fd(int fd, int flags);
+ extern void __audit_openat2_how(struct open_how *how);
+ extern void __audit_log_kern_module(char *name);
+-extern void __audit_fanotify(unsigned int response);
++extern void __audit_fanotify(u32 response);
+ extern void __audit_tk_injoffset(struct timespec64 offset);
+ extern void __audit_ntp_log(const struct audit_ntp_data *ad);
+ extern void __audit_log_nfcfg(const char *name, u8 af, unsigned int nentries,
+@@ -523,7 +523,7 @@ static inline void audit_log_kern_module(char *name)
+ 		__audit_log_kern_module(name);
+ }
+ 
+-static inline void audit_fanotify(unsigned int response)
++static inline void audit_fanotify(u32 response)
+ {
+ 	if (!audit_dummy_context())
+ 		__audit_fanotify(response);
+@@ -679,7 +679,7 @@ static inline void audit_log_kern_module(char *name)
+ {
+ }
+ 
+-static inline void audit_fanotify(unsigned int response)
++static inline void audit_fanotify(u32 response)
+ { }
+ 
+ static inline void audit_tk_injoffset(struct timespec64 offset)
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 547c88be8a28..d1fb821de104 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -2877,7 +2877,7 @@ void __audit_log_kern_module(char *name)
+ 	context->type = AUDIT_KERN_MODULE;
+ }
+ 
+-void __audit_fanotify(unsigned int response)
++void __audit_fanotify(u32 response)
+ {
+ 	audit_log(audit_context(), GFP_KERNEL,
+ 		AUDIT_FANOTIFY,	"resp=%u", response);
 -- 
-Regards/Gruss,
-    Boris.
+2.27.0
 
-https://people.kernel.org/tglx/notes-about-netiquette
