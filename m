@@ -2,147 +2,169 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 76DE9C636D7
-	for <linux-api@archiver.kernel.org>; Fri, 10 Feb 2023 15:35:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 23581C636D7
+	for <linux-api@archiver.kernel.org>; Fri, 10 Feb 2023 16:34:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232735AbjBJPfv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 10 Feb 2023 10:35:51 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35884 "EHLO
+        id S232908AbjBJQeS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 10 Feb 2023 11:34:18 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51918 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232664AbjBJPfu (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 10 Feb 2023 10:35:50 -0500
-Received: from new3-smtp.messagingengine.com (new3-smtp.messagingengine.com [66.111.4.229])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTP id 42A0526CC4;
-        Fri, 10 Feb 2023 07:35:49 -0800 (PST)
-Received: from compute6.internal (compute6.nyi.internal [10.202.2.47])
-        by mailnew.nyi.internal (Postfix) with ESMTP id DEAF7581F63;
-        Fri, 10 Feb 2023 10:10:36 -0500 (EST)
-Received: from imap51 ([10.202.2.101])
-  by compute6.internal (MEProxy); Fri, 10 Feb 2023 10:10:36 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=arndb.de; h=cc
-        :cc:content-type:date:date:from:from:in-reply-to:in-reply-to
-        :message-id:mime-version:references:reply-to:sender:subject
-        :subject:to:to; s=fm3; t=1676041836; x=1676049036; bh=mnmCFBnaIP
-        +vBLu9FDqlvqV872F6Sk8/lQSQWnrc9vM=; b=D9Szpp77tFpcX+nFzNso9fAK0G
-        RKEY2e2MPcUw+e0HRg7S8ntVkkidfPRiVKiD9NnN/v5CGK69+T3Jead5T43+elxp
-        vdEvp0H3wpqmSvLp/EsSqJCUQp8vrbFlGhuwOBExHvxH/ijlvcebCIxq0GFKALZn
-        /KTXa55Xl1Nu1lYEE3YUdxKlBRHd9g6snyVPVw7lBXBFuN6X5R9KweBbGyws612U
-        HSSwAquhkWClD1qjztFmKSXMeUBJTYaykthTjsQv9cEQMLG0X1HQBvbnyPaoEUzh
-        c2j/S3bzXdpbQJtLfGhIn6moBc6uAsb7y1NxF05WugoRrHamBqi8vnM8+LIA==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-        messagingengine.com; h=cc:cc:content-type:date:date:feedback-id
-        :feedback-id:from:from:in-reply-to:in-reply-to:message-id
-        :mime-version:references:reply-to:sender:subject:subject:to:to
-        :x-me-proxy:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=
-        fm1; t=1676041836; x=1676049036; bh=mnmCFBnaIP+vBLu9FDqlvqV872F6
-        Sk8/lQSQWnrc9vM=; b=RHZtaJBO44uX2MARKJxLjffrlpmpVpqRWXHbD0f++4hp
-        qcrXlaKY1EA4C+ei9VBulYS+Pr1PaCMRoCiXza+fjmuBbIl7iAHJIIs/u5u04ZwR
-        un7ChSUzuQGzTl3Hzcn3+ASNHPbKVMq2pMRwmYsQFsty5c0tZWbMgH4X111G4rXx
-        xrYr3PGq6SNbkC1K18wAFFhEzQ4/Mu6MdjeZ0isXHr9XDxecB4/Wj99dyzjdUByn
-        eT3ZTxOyQt5xhBlFYcZRRNcG22TQLymxVnFTJ3lR0b/zX8cKrE9YnBJWzellYQHC
-        EsEl6lMz3XBzK0jy4OMsMTgRDCrxfrIC1I9MkjiqHw==
-X-ME-Sender: <xms:a17mY3P--ZnY9B0YNPVJei5M1XSljO-TrXiC-otvZu9e2Ux-mUMuYw>
-    <xme:a17mYx_FBr6stanlZSHdjEh_Yiizs7DAQDRo8eLwZjm4itklqm-Us_lyX4UcEEqKV
-    lc2GJafFQdTJPXBJdE>
-X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvhedrudehhedgjedvucetufdoteggodetrfdotf
-    fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
-    uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhepofgfggfkjghffffhvfevufgtsehttdertderredtnecuhfhrohhmpedftehr
-    nhguuceuvghrghhmrghnnhdfuceorghrnhgusegrrhhnuggsrdguvgeqnecuggftrfgrth
-    htvghrnhepffehueegteeihfegtefhjefgtdeugfegjeelheejueethfefgeeghfektdek
-    teffnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomheprg
-    hrnhgusegrrhhnuggsrdguvg
-X-ME-Proxy: <xmx:a17mY2Qg8I9CgxEscmfW_KVeyAfpnzZW3vSqA_Kax6WR9loxG21lZw>
-    <xmx:a17mY7sOa99lDqlxfSrIsA34dub4d_dg1GrUC46fm4OCcg0OSUjgZQ>
-    <xmx:a17mY_cLeUpfTHmXPpf5NVLlLOlkwFqtmEf2CkzJAFgsXIq3rY2cJw>
-    <xmx:bF7mYzlxhpbpL2dPNp2_IA_FqJ-2rZBBDGc_SPVtMY4KfbLAmmmu4A>
-Feedback-ID: i56a14606:Fastmail
-Received: by mailuser.nyi.internal (Postfix, from userid 501)
-        id 2C9A9B60086; Fri, 10 Feb 2023 10:10:35 -0500 (EST)
-X-Mailer: MessagingEngine.com Webmail Interface
-User-Agent: Cyrus-JMAP/3.9.0-alpha0-156-g081acc5ed5-fm-20230206.001-g081acc5e
-Mime-Version: 1.0
-Message-Id: <7493f543-bf02-4bfe-90bd-a01d3c52cb52@app.fastmail.com>
-In-Reply-To: <2344ac16-781e-8bfa-ec75-e71df0f3ed28@redhat.com>
-References: <1446579994-9937-1-git-send-email-palmer@dabbelt.com>
- <1447119071-19392-1-git-send-email-palmer@dabbelt.com>
- <1447119071-19392-4-git-send-email-palmer@dabbelt.com>
- <2344ac16-781e-8bfa-ec75-e71df0f3ed28@redhat.com>
-Date:   Fri, 10 Feb 2023 16:10:16 +0100
-From:   "Arnd Bergmann" <arnd@arndb.de>
-To:     "Thomas Huth" <thuth@redhat.com>,
-        "Palmer Dabbelt" <palmer@dabbelt.com>, linux-api@vger.kernel.org,
-        linux-kernel@vger.kernel.org,
-        "David S . Miller" <davem@davemloft.net>,
-        "Eric Dumazet" <edumazet@google.com>,
-        "Jakub Kicinski" <kuba@kernel.org>,
-        "Paolo Abeni" <pabeni@redhat.com>
-Cc:     "Alexander Viro" <viro@zeniv.linux.org.uk>,
-        aishchuk@linux.vnet.ibm.com, aarcange@redhat.com,
-        "Andrew Morton" <akpm@linux-foundation.org>,
-        "Andy Lutomirski" <luto@kernel.org>,
-        "Arnaldo Carvalho de Melo" <acme@kernel.org>,
-        "Baoquan He" <bhe@redhat.com>, 3chas3@gmail.com, chris@zankel.net,
-        dave@sr71.net, dyoung@redhat.com, drysdale@google.com,
-        "Eric W. Biederman" <ebiederm@xmission.com>, geoff@infradead.org,
-        "Greg Kroah-Hartman" <gregkh@linuxfoundation.org>,
-        "H. Peter Anvin" <hpa@zytor.com>, "Ingo Molnar" <mingo@kernel.org>,
-        iulia.manda21@gmail.com, plagnioj@jcrosoft.com, jikos@kernel.org,
-        "Josh Triplett" <josh@joshtriplett.org>,
-        Linux-Arch <linux-arch@vger.kernel.org>,
-        linux-fsdevel@vger.kernel.org, mathieu.desnoyers@efficios.com,
-        "Max Filippov" <jcmvbkbc@gmail.com>, paulmck@linux.vnet.ibm.com,
-        a.p.zijlstra@chello.nl, "Thomas Gleixner" <tglx@linutronix.de>,
-        vgoyal@redhat.com, x86@kernel.org,
-        "David Howells" <dhowells@redhat.com>,
-        "Peter Zijlstra" <peterz@infradead.org>,
-        Netdev <netdev@vger.kernel.org>
-Subject: Re: [PATCH 03/14] Move COMPAT_ATM_ADDPARTY to net/atm/svc.c
-Content-Type: text/plain
+        with ESMTP id S231889AbjBJQeS (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 10 Feb 2023 11:34:18 -0500
+Received: from mail-wm1-x32c.google.com (mail-wm1-x32c.google.com [IPv6:2a00:1450:4864:20::32c])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AA5251557E
+        for <linux-api@vger.kernel.org>; Fri, 10 Feb 2023 08:34:16 -0800 (PST)
+Received: by mail-wm1-x32c.google.com with SMTP id k8-20020a05600c1c8800b003dc57ea0dfeso6705052wms.0
+        for <linux-api@vger.kernel.org>; Fri, 10 Feb 2023 08:34:16 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linux-foundation.org; s=google;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=fhLS95sVAPuPLSt4s3QNipINWEX9MBrZr6+OBYHbgx0=;
+        b=cL0mkbQIbHTogr8+gARmzk7nOJyD+7SQmmdWptCXTxvc58+uY1vnr+O3VA6IXM3pTE
+         xBSu3S98ypYKJ1ws4c6sOhAicybJKFwvsEqJZZr3hDlVubO2y7LscipiJbUntT3Fcny5
+         cCGhMNw2tXB30dK1JJMm5hbi0YDzOdQMqBrds=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=fhLS95sVAPuPLSt4s3QNipINWEX9MBrZr6+OBYHbgx0=;
+        b=4GSSequO+jvV8Dhm6UkcYVOxM6KvKFqCswbJrxOj1E+fOA5Cd6RQiiYO141Vhh46ws
+         7krZzvzSmpBWnENNo0Bzyo/MxqYW1l/n/VZsbS4zlSKr+GwJ7WBDbJkK0QthENUy4IEQ
+         1S6Cz76TSgZAAfb6NUSi0JljfAE72vhCM8BlMWE/qBgRmyp17wmfKcY/zZAF/m2AWIcu
+         IovJJfn81L0/py/jH0dh52ALkwgD3B2AlWBPXSiHahZ9x21NYbAvbcbT4hiG6atTFhIe
+         NmQvOqCbkMaHfXtcmqhcJhzcsAPwgbIMcGxegFCy5NB0tkbySgM8tBZd5y5+HIuIfGS8
+         LxIA==
+X-Gm-Message-State: AO0yUKUjkea7afNhS8WS1+yA/WoYb1of71blQtqG5z/rgqXIMlFiYB2P
+        vjzddKO4dc2Qwkn+iOmAEdVfubHwTwpuP9yJC/c=
+X-Google-Smtp-Source: AK7set9OtYjrzZM4cukPOTVtrPn0RrX8dhAp0L3UQoucrtNua6mNQapZXVOFtanIX7MpGdw5//nzvQ==
+X-Received: by 2002:a05:600c:4488:b0:3dc:572f:edb7 with SMTP id e8-20020a05600c448800b003dc572fedb7mr2597538wmo.1.1676046854750;
+        Fri, 10 Feb 2023 08:34:14 -0800 (PST)
+Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com. [209.85.218.50])
+        by smtp.gmail.com with ESMTPSA id g16-20020a05600c4ed000b003dfee43863fsm10125869wmq.26.2023.02.10.08.34.13
+        for <linux-api@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 10 Feb 2023 08:34:14 -0800 (PST)
+Received: by mail-ej1-f50.google.com with SMTP id lu11so17382053ejb.3
+        for <linux-api@vger.kernel.org>; Fri, 10 Feb 2023 08:34:13 -0800 (PST)
+X-Received: by 2002:a17:906:4e46:b0:87a:7098:ca09 with SMTP id
+ g6-20020a1709064e4600b0087a7098ca09mr3021239ejw.78.1676046853351; Fri, 10 Feb
+ 2023 08:34:13 -0800 (PST)
+MIME-Version: 1.0
+References: <0cfd9f02-dea7-90e2-e932-c8129b6013c7@samba.org>
+ <CAHk-=wj8rthcQ9gQbvkMzeFt0iymq+CuOzmidx3Pm29Lg+W0gg@mail.gmail.com>
+ <20230210021603.GA2825702@dread.disaster.area> <20230210040626.GB2825702@dread.disaster.area>
+ <Y+XLuYh+kC+4wTRi@casper.infradead.org> <20230210065747.GD2825702@dread.disaster.area>
+ <CALCETrWjJisipSJA7tPu+h6B2gs3m+g0yPhZ4z+Atod+WOMkZg@mail.gmail.com>
+In-Reply-To: <CALCETrWjJisipSJA7tPu+h6B2gs3m+g0yPhZ4z+Atod+WOMkZg@mail.gmail.com>
+From:   Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Fri, 10 Feb 2023 08:33:56 -0800
+X-Gmail-Original-Message-ID: <CAHk-=wj66F6CdJUAAjqigXMBy7gHquFMzPNAwKCgkrb2mF6U7w@mail.gmail.com>
+Message-ID: <CAHk-=wj66F6CdJUAAjqigXMBy7gHquFMzPNAwKCgkrb2mF6U7w@mail.gmail.com>
+Subject: Re: copy on write for splice() from file to pipe?
+To:     Andy Lutomirski <luto@kernel.org>
+Cc:     Dave Chinner <david@fromorbit.com>,
+        Matthew Wilcox <willy@infradead.org>,
+        Stefan Metzmacher <metze@samba.org>,
+        Jens Axboe <axboe@kernel.dk>,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux API Mailing List <linux-api@vger.kernel.org>,
+        io-uring <io-uring@vger.kernel.org>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Samba Technical <samba-technical@lists.samba.org>
+Content-Type: text/plain; charset="UTF-8"
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Feb 10, 2023, at 15:55, Thomas Huth wrote:
-> On 10/11/2015 02.31, Palmer Dabbelt wrote:
->> This used to be behind an #ifdef COMPAT_COMPAT, so most of userspace
->> wouldn't have seen the definition before.  Unfortunately this header
->> file became visible to userspace, so the definition has instead been
->> moved to net/atm/svc.c (the only user).
->> 
->> Signed-off-by: Palmer Dabbelt <palmer@dabbelt.com>
->> Reviewed-by: Andrew Waterman <waterman@eecs.berkeley.edu>
->> Reviewed-by: Albert Ou <aou@eecs.berkeley.edu>
-
-Reviewed-by: Arnd Bergmann <arnd@arndb.de>
-
-It took me a bit to figure out why there is a separate command
-code but no special handler for the compat structure, aside from
-being in the wrong file it does look correct.
-
->> +#ifdef CONFIG_COMPAT
->> +/* It actually takes struct sockaddr_atmsvc, not struct atm_iobuf */
->> +#define COMPAT_ATM_ADDPARTY _IOW('a', ATMIOC_SPECIAL+4, struct compat_atm_iobuf)
->> +#endif
-
-We could actually drop the #ifdef here as well, or moving into
-the existing #ifdef.
-
->> +
->>   static int svc_create(struct net *net, struct socket *sock, int protocol,
->>   		      int kern);
+On Fri, Feb 10, 2023 at 7:15 AM Andy Lutomirski <luto@kernel.org> wrote:
 >
-> The CONFIG_* switch is still there in the atmdev.h uapi header ... could 
-> somebody please pick this patch up to fix it?
+> Frankly, I really don't like having non-immutable data in a pipe.
 
-It should get merged through the netdev tree, as Chas does not have
-a separate git tree for drivers/atm.
+That statement is completely nonsensical.
 
-I don't know what happened to the rest of the series, but if there are
-additional patches that got lost, merging them all through either the
-asm-generic or the mm tree would work as well.
+A pipe is a kernel buffer. If you want the buffer to be immutable, you
+do "read()" and "write()" on it. End of story.
 
-Any chance you or Palmer could rebase the series to 6.2-rc and
-see what remains?
+In contrast, "splice()" is literally the "map" operation. It's
+"mmap()", without the "m", because it turns out that memory mapping
+has a few problems:
 
-    Arnd
+ (a) mmap fundamentally only works on a page granularity
+
+ (b) mmap has huge setup and teardown costs with page tables and TLB's
+
+and so splice() is just basically "strange mmap with that kernel
+buffer that is pipe"
+
+Really. That is what spice *is*. There's absolutely no question about it.
+
+It has some advantages over mmap, in that because it's a software
+mapping, we can "map" partial pages, which means that you can also map
+data that might not be in full pages (it might be an incoming network
+buffer, for example).
+
+It has a lot of disadvantages over mmap too, of course. Not using
+hardware means that it doesn't really show up as a linear mapping, and
+you don't get the nice hardware lookup accelerations - but it also
+means that you don't have the downsides (ie TLB costs etc).
+
+So I'm not saying that it is the same thing as "mmap", but I very much
+_am_ saying that there's a very real and direct similarity. There are
+three fundamental IO models in Unix: read, write, and mmap. And mmap()
+is very much a "you get a direct window into something that can change
+under you".  And splice() is exactly that same thing.
+
+It was literally designed to be "look, we want zero-copy networking,
+and we could do 'sendfile()' by mmap'ing the file, but mmap - and
+particularly munmap - is too expensive, so we map things into kernel
+buffers instead".
+
+So saying "I really don't like having non-immutable data in a pipe" is
+complete nonsense. It's syntactically correct English, but it makes no
+conceptual sense.
+
+You can say "I don't like 'splice()'". That's fine. I used to think
+splice was a really cool concept, but I kind of hate it these days.
+Not liking splice() makes a ton of sense.
+
+But given splice, saying "I don't like non-immutable data" really is
+complete nonsense.
+
+If you want a stable buffer, use read() and write(). It's that simple.
+If you want to send data from a file to the network, and want a stable
+buffer in between the two, then "read()" and "write()" is *exactly*
+what you should do.
+
+With read and write, there's no mmap()/munmap() overhead of the file,
+and you already have the buffer (iwe call it "user address space").
+The only downside is the extra copy.
+
+So if  you want to send stable, unchanging file contents to the
+network, there is absolutely *no* reason to ever involve a pipe at
+all, and you should entirely ignore splice().
+
+The *only* reason to ever use splice() is because you don't want to
+copy data, and just want a reference to it, and want to keep it all in
+kernel space, because the kernel<->user boundary ends up either
+requiring copies, or that page alignment, and is generally fairly
+expensive.
+
+But once you decide to go that way, you need to understand that you
+don't have "immutable data". You asked for a reference, you got a
+reference, and it *will* change.
+
+That's not something specific to "splice()". It's fundamental to the
+whole *concept* of zero-copy. If you don't want copies, and the source
+file changes, then you see those changes.
+
+So saying "I really don't like having non-immutable data in a pipe"
+really is nonsense. Don't use splice. Or do, and realize that it's a
+*mapping*.
+
+Because that is literally the whole - and ONLY - reason for splice in
+the first place.
+
+              Linus
