@@ -2,68 +2,57 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id AEEA9C636D4
-	for <linux-api@archiver.kernel.org>; Mon, 13 Feb 2023 09:44:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7B553C64ED6
+	for <linux-api@archiver.kernel.org>; Mon, 13 Feb 2023 09:45:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230417AbjBMJo0 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 13 Feb 2023 04:44:26 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53302 "EHLO
+        id S229655AbjBMJpK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 13 Feb 2023 04:45:10 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53820 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229821AbjBMJoY (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Feb 2023 04:44:24 -0500
+        with ESMTP id S230509AbjBMJol (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 13 Feb 2023 04:44:41 -0500
 Received: from formenos.hmeau.com (167-179-156-38.a7b39c.syd.nbn.aussiebb.net [167.179.156.38])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D20D7C65B;
-        Mon, 13 Feb 2023 01:44:16 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E93EA3C21;
+        Mon, 13 Feb 2023 01:44:25 -0800 (PST)
 Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
         by formenos.hmeau.com with smtp (Exim 4.94.2 #2 (Debian))
-        id 1pRV8C-00AXUe-BO; Mon, 13 Feb 2023 17:28:17 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Mon, 13 Feb 2023 17:28:16 +0800
-Date:   Mon, 13 Feb 2023 17:28:16 +0800
+        id 1pRV5S-00AXIL-A4; Mon, 13 Feb 2023 17:25:27 +0800
+Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Mon, 13 Feb 2023 17:25:26 +0800
+Date:   Mon, 13 Feb 2023 17:25:26 +0800
 From:   Herbert Xu <herbert@gondor.apana.org.au>
-To:     Linus Torvalds <torvalds@linux-foundation.org>
-Cc:     david@fromorbit.com, metze@samba.org, axboe@kernel.dk,
+To:     Dave Chinner <david@fromorbit.com>
+Cc:     torvalds@linux-foundation.org, metze@samba.org, axboe@kernel.dk,
         linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
         io-uring@vger.kernel.org, linux-kernel@vger.kernel.org,
         viro@zeniv.linux.org.uk, samba-technical@lists.samba.org
 Subject: Re: copy on write for splice() from file to pipe?
-Message-ID: <Y+oCsDslHb4fTt3d@gondor.apana.org.au>
+Message-ID: <Y+oCBnz2nLtXrz7O@gondor.apana.org.au>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CAHk-=wgXvRKwsHUjA9T9Tw6n5x1pCO6B+4kk0GAx+oQ5qhUyRw@mail.gmail.com>
+In-Reply-To: <20230210061953.GC2825702@dread.disaster.area>
 X-Newsgroups: apana.lists.os.linux.kernel
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
+Dave Chinner <david@fromorbit.com> wrote:
 >
-> Ok, so I decided to try to take a look.
-> 
-> Somebody who actually does networking (and drivers in particular)
-> should probably check this, but it *looks* like the IPv4 TCP case
-> (just to pick the ony I looked at) gores through
-> tcp_sendpage_locked(), which does
-> 
->        if (!(sk->sk_route_caps & NETIF_F_SG))
->                return sock_no_sendpage_locked(sk, page, offset, size, flags);
-> 
-> which basically says "if you can't handle fragmented socket buffers,
-> do that 'no_sendpage' case".
-> 
-> So that will basically end up just falling back to a kernel
-> 'sendmsg()', which does a copy and then it's stable.
-> 
-> But for the networks that *can* handle fragmented socket buffers, it
-> then calls do_tcp_sendpages() instead, which just creates a skb
-> fragment of the page (with tcp_build_frag()).
-> 
-> I wonder if that case should just require NETIF_F_HW_CSUM?
+> IOWs, the application does not care if the data changes whilst they
+> are in transport attached to the pipe - it only cares that the
+> contents are stable once they have been delivered and are now wholly
+> owned by the network stack IO path so that the OTW encodings
+> (checksum, encryption, whatever) done within the network IO path
+> don't get compromised.
 
-NETIF_F_SG already depends on checksum offload (either via
-NETIF_F_HW_CSUM or something else that is equivalent).
+Is this even a real problem? The network stack doesn't care at
+all if you modify the pages while it's being processed.  All the
+things you've mentioned (checksum, encryption, etc.) will be
+self-consistent on the wire.
 
-So are you guys just imagining non-existant problems?
+Even when actual hardware offload is involved it's hard to see how
+things could possibly go wrong unless the hardware was going out of
+its way to do the wrong thing by fetching from memory twice.
 
 Cheers,
 -- 
