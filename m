@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C4122C64ED8
-	for <linux-api@archiver.kernel.org>; Sat, 18 Feb 2023 21:23:09 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 17952C6FA99
+	for <linux-api@archiver.kernel.org>; Sat, 18 Feb 2023 21:23:13 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230363AbjBRVXH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 18 Feb 2023 16:23:07 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51686 "EHLO
+        id S230297AbjBRVXL (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 18 Feb 2023 16:23:11 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49746 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230333AbjBRVWh (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Feb 2023 16:22:37 -0500
+        with ESMTP id S230350AbjBRVWq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Feb 2023 16:22:46 -0500
 Received: from mga05.intel.com (mga05.intel.com [192.55.52.43])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 382851ADF9;
-        Sat, 18 Feb 2023 13:19:21 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C7F231A499;
+        Sat, 18 Feb 2023 13:19:27 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1676755161; x=1708291161;
+  t=1676755167; x=1708291167;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=wOs5WGLz5VpZmdqpMgeC7szY9LNTPcbC4TNXJybBNLg=;
-  b=Fi+YIZZGByrIlkG7N057Mxt1QwjX9ZNH1dLaRY2V6AcvUQa0yvLIdSaP
-   ejGYx0nv9h6reNgwbht5FTJ/7K8WNThU6Scz24+L05ruo1Fk0iaGCFjwI
-   jgON390Ph5aVFOoaoq+wAIRWoBDgSu3OV5HAisIpW1lLdKGTYS/1NpfFV
-   RmmADOFtCotu8/sSaUKc7X751LhNMtBbthAwICK8wuw2LKSqXB7MzeLHG
-   7LgFFCmXF+9rRf+aiv3NETLtUzZbd6KcY7amguuhNNp5ZHfLjoaKxdRZC
-   Oa6y2ePggQVw9E74s9cccezboDTqwvNMHPCGL5iw1i9ZnhhbCgHNCE7dY
+  bh=PfOj46FKnOWR1PiqFiy1gLNlGQ5AfxHeduPbiAD9rSI=;
+  b=jbknPCpMYe1Fy66kCoQr9cTjuCz98MRQjFXpwwIXDwwOzOcP8931pWzf
+   MIFw4vLrPD7UzWlTWWBW81Wv4F4bT/QyCUg5elI4p5FZ5UOhIJ+cPLo5z
+   kmJ0BOyWdxfEO4Rag8vHUZ4vPZ5xIDdsNqOie3J5UVhmLiLa3Ke5e42eD
+   fMyKbc4xtYleM7aMWCCCq37fYaT19dm0hGR5vRAl+6uR+/t5PUsUuDcO/
+   XS+wbxAldE8Yw1RocTQ78A/+LDFHnxgXDlCzVRybRNrkCl5WX/jUTo6N2
+   gDwP5RLtbd22JFqBpTUGDtIQbvWt51elnA76KRVtii6TqHC4K2DCDnGo2
    g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="418427894"
+X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="418427959"
 X-IronPort-AV: E=Sophos;i="5.97,309,1669104000"; 
-   d="scan'208";a="418427894"
+   d="scan'208";a="418427959"
 Received: from orsmga007.jf.intel.com ([10.7.209.58])
-  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Feb 2023 13:16:27 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="664241750"
+  by fmsmga105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Feb 2023 13:16:30 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="664241764"
 X-IronPort-AV: E=Sophos;i="5.97,309,1669104000"; 
-   d="scan'208";a="664241750"
+   d="scan'208";a="664241764"
 Received: from adityava-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.80.223])
-  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Feb 2023 13:16:26 -0800
+  by orsmga007-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Feb 2023 13:16:29 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,10 +66,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v6 37/41] selftests/x86: Add shadow stack test
-Date:   Sat, 18 Feb 2023 13:14:29 -0800
-Message-Id: <20230218211433.26859-38-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Mike Rapoport <rppt@linux.ibm.com>
+Subject: [PATCH v6 40/41] x86/shstk: Add ARCH_SHSTK_UNLOCK
+Date:   Sat, 18 Feb 2023 13:14:32 -0800
+Message-Id: <20230218211433.26859-41-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230218211433.26859-1-rick.p.edgecombe@intel.com>
 References: <20230218211433.26859-1-rick.p.edgecombe@intel.com>
@@ -77,754 +77,95 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add a simple selftest for exercising some shadow stack behavior:
- - map_shadow_stack syscall and pivot
- - Faulting in shadow stack memory
- - Handling shadow stack violations
- - GUP of shadow stack memory
- - mprotect() of shadow stack memory
- - Userfaultfd on shadow stack memory
+From: Mike Rapoport <rppt@linux.ibm.com>
 
-Since this test exercises a recently added syscall manually, it needs
-to find the automatically created __NR_foo defines. Per the selftest
-documentation, KHDR_INCLUDES can be used to help the selftest Makefile's
-find the headers from the kernel source. This way the new selftest can
-be built inside the kernel source tree without installing the headers
-to the system. So also add KHDR_INCLUDES as described in the selftest
-docs, to facilitate this.
+Userspace loaders may lock features before a CRIU restore operation has
+the chance to set them to whatever state is required by the process
+being restored. Allow a way for CRIU to unlock features. Add it as an
+arch_prctl() like the other shadow stack operations, but restrict it being
+called by the ptrace arch_pctl() interface.
 
+Reviewed-by: Kees Cook <keescook@chromium.org>
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
-Co-developed-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Signed-off-by: Mike Rapoport <rppt@linux.ibm.com>
+[Merged into recent API changes, added commit log and docs]
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 
 ---
-v6:
- - Tweak mprotect test
- - Code style tweaks
-
-v5:
- - Update 32 bit signal test with new ABI and better asm
-
 v4:
- - Add test for 32 bit signal ABI blocking
+ - Add to docs that it is ptrace only.
+ - Remove "CET" references
 
 v3:
- - Change "+m" to "=m" in write_shstk() (Andrew Cooper)
- - Fix userfaultfd test with transparent huge pages by doing a
-   MADV_DONTNEED, since the token write faults in the while stack with
-   huge pages.
+ - Depend on CONFIG_CHECKPOINT_RESTORE (Kees)
 ---
- tools/testing/selftests/x86/Makefile          |   4 +-
- .../testing/selftests/x86/test_shadow_stack.c | 676 ++++++++++++++++++
- 2 files changed, 678 insertions(+), 2 deletions(-)
- create mode 100644 tools/testing/selftests/x86/test_shadow_stack.c
+ Documentation/x86/shstk.rst       | 4 ++++
+ arch/x86/include/uapi/asm/prctl.h | 1 +
+ arch/x86/kernel/process_64.c      | 1 +
+ arch/x86/kernel/shstk.c           | 9 +++++++--
+ 4 files changed, 13 insertions(+), 2 deletions(-)
 
-diff --git a/tools/testing/selftests/x86/Makefile b/tools/testing/selftests/x86/Makefile
-index 0388c4d60af0..cfc8a26ad151 100644
---- a/tools/testing/selftests/x86/Makefile
-+++ b/tools/testing/selftests/x86/Makefile
-@@ -18,7 +18,7 @@ TARGETS_C_32BIT_ONLY := entry_from_vm86 test_syscall_vdso unwind_vdso \
- 			test_FCMOV test_FCOMI test_FISTTP \
- 			vdso_restorer
- TARGETS_C_64BIT_ONLY := fsgsbase sysret_rip syscall_numbering \
--			corrupt_xstate_header amx
-+			corrupt_xstate_header amx test_shadow_stack
- # Some selftests require 32bit support enabled also on 64bit systems
- TARGETS_C_32BIT_NEEDED := ldt_gdt ptrace_syscall
+diff --git a/Documentation/x86/shstk.rst b/Documentation/x86/shstk.rst
+index f2e6f323cf68..e8ed5fc0f7ae 100644
+--- a/Documentation/x86/shstk.rst
++++ b/Documentation/x86/shstk.rst
+@@ -73,6 +73,10 @@ arch_prctl(ARCH_SHSTK_LOCK, unsigned long features)
+     are ignored. The mask is ORed with the existing value. So any feature bits
+     set here cannot be enabled or disabled afterwards.
  
-@@ -34,7 +34,7 @@ BINARIES_64 := $(TARGETS_C_64BIT_ALL:%=%_64)
- BINARIES_32 := $(patsubst %,$(OUTPUT)/%,$(BINARIES_32))
- BINARIES_64 := $(patsubst %,$(OUTPUT)/%,$(BINARIES_64))
++arch_prctl(ARCH_SHSTK_UNLOCK, unsigned long features)
++    Unlock features. 'features' is a mask of all features to unlock. All
++    bits set are processed, unset bits are ignored. Only works via ptrace.
++
+ The return values are as follows. On success, return 0. On error, errno can
+ be::
  
--CFLAGS := -O2 -g -std=gnu99 -pthread -Wall
-+CFLAGS := -O2 -g -std=gnu99 -pthread -Wall $(KHDR_INCLUDES)
+diff --git a/arch/x86/include/uapi/asm/prctl.h b/arch/x86/include/uapi/asm/prctl.h
+index e31495668056..200efbbe5809 100644
+--- a/arch/x86/include/uapi/asm/prctl.h
++++ b/arch/x86/include/uapi/asm/prctl.h
+@@ -25,6 +25,7 @@
+ #define ARCH_SHSTK_ENABLE		0x5001
+ #define ARCH_SHSTK_DISABLE		0x5002
+ #define ARCH_SHSTK_LOCK			0x5003
++#define ARCH_SHSTK_UNLOCK		0x5004
  
- # call32_from_64 in thunks.S uses absolute addresses.
- ifeq ($(CAN_BUILD_WITH_NOPIE),1)
-diff --git a/tools/testing/selftests/x86/test_shadow_stack.c b/tools/testing/selftests/x86/test_shadow_stack.c
-new file mode 100644
-index 000000000000..71de3527c67a
---- /dev/null
-+++ b/tools/testing/selftests/x86/test_shadow_stack.c
-@@ -0,0 +1,676 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * This program test's basic kernel shadow stack support. It enables shadow
-+ * stack manual via the arch_prctl(), instead of relying on glibc. It's
-+ * Makefile doesn't compile with shadow stack support, so it doesn't rely on
-+ * any particular glibc. As a result it can't do any operations that require
-+ * special glibc shadow stack support (longjmp(), swapcontext(), etc). Just
-+ * stick to the basics and hope the compiler doesn't do anything strange.
-+ */
-+
-+#define _GNU_SOURCE
-+
-+#include <sys/syscall.h>
-+#include <asm/mman.h>
-+#include <sys/mman.h>
-+#include <sys/stat.h>
-+#include <sys/wait.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <errno.h>
-+#include <stdbool.h>
-+#include <x86intrin.h>
-+#include <asm/prctl.h>
-+#include <sys/prctl.h>
-+#include <stdint.h>
-+#include <signal.h>
-+#include <pthread.h>
-+#include <sys/ioctl.h>
-+#include <linux/userfaultfd.h>
-+#include <setjmp.h>
-+
-+#define SS_SIZE 0x200000
-+
-+#if (__GNUC__ < 8) || (__GNUC__ == 8 && __GNUC_MINOR__ < 5)
-+int main(int argc, char *argv[])
-+{
-+	printf("[SKIP]\tCompiler does not support CET.\n");
-+	return 0;
-+}
-+#else
-+void write_shstk(unsigned long *addr, unsigned long val)
-+{
-+	asm volatile("wrssq %[val], (%[addr])\n"
-+		     : "=m" (addr)
-+		     : [addr] "r" (addr), [val] "r" (val));
-+}
-+
-+static inline unsigned long __attribute__((always_inline)) get_ssp(void)
-+{
-+	unsigned long ret = 0;
-+
-+	asm volatile("xor %0, %0; rdsspq %0" : "=r" (ret));
-+	return ret;
-+}
-+
-+/*
-+ * For use in inline enablement of shadow stack.
-+ *
-+ * The program can't return from the point where shadow stack gets enabled
-+ * because there will be no address on the shadow stack. So it can't use
-+ * syscall() for enablement, since it is a function.
-+ *
-+ * Based on code from nolibc.h. Keep a copy here because this can't pull in all
-+ * of nolibc.h.
-+ */
-+#define ARCH_PRCTL(arg1, arg2)					\
-+({								\
-+	long _ret;						\
-+	register long _num  asm("eax") = __NR_arch_prctl;	\
-+	register long _arg1 asm("rdi") = (long)(arg1);		\
-+	register long _arg2 asm("rsi") = (long)(arg2);		\
-+								\
-+	asm volatile (						\
-+		"syscall\n"					\
-+		: "=a"(_ret)					\
-+		: "r"(_arg1), "r"(_arg2),			\
-+		  "0"(_num)					\
-+		: "rcx", "r11", "memory", "cc"			\
-+	);							\
-+	_ret;							\
-+})
-+
-+void *create_shstk(void *addr)
-+{
-+	return (void *)syscall(__NR_map_shadow_stack, addr, SS_SIZE, SHADOW_STACK_SET_TOKEN);
-+}
-+
-+void *create_normal_mem(void *addr)
-+{
-+	return mmap(addr, SS_SIZE, PROT_READ | PROT_WRITE,
-+		    MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-+}
-+
-+void free_shstk(void *shstk)
-+{
-+	munmap(shstk, SS_SIZE);
-+}
-+
-+int reset_shstk(void *shstk)
-+{
-+	return madvise(shstk, SS_SIZE, MADV_DONTNEED);
-+}
-+
-+void try_shstk(unsigned long new_ssp)
-+{
-+	unsigned long ssp;
-+
-+	printf("[INFO]\tnew_ssp = %lx, *new_ssp = %lx\n",
-+	       new_ssp, *((unsigned long *)new_ssp));
-+
-+	ssp = get_ssp();
-+	printf("[INFO]\tchanging ssp from %lx to %lx\n", ssp, new_ssp);
-+
-+	asm volatile("rstorssp (%0)\n":: "r" (new_ssp));
-+	asm volatile("saveprevssp");
-+	printf("[INFO]\tssp is now %lx\n", get_ssp());
-+
-+	/* Switch back to original shadow stack */
-+	ssp -= 8;
-+	asm volatile("rstorssp (%0)\n":: "r" (ssp));
-+	asm volatile("saveprevssp");
-+}
-+
-+int test_shstk_pivot(void)
-+{
-+	void *shstk = create_shstk(0);
-+
-+	if (shstk == MAP_FAILED) {
-+		printf("[FAIL]\tError creating shadow stack: %d\n", errno);
-+		return 1;
-+	}
-+	try_shstk((unsigned long)shstk + SS_SIZE - 8);
-+	free_shstk(shstk);
-+
-+	printf("[OK]\tShadow stack pivot\n");
-+	return 0;
-+}
-+
-+int test_shstk_faults(void)
-+{
-+	unsigned long *shstk = create_shstk(0);
-+
-+	/* Read shadow stack, test if it's zero to not get read optimized out */
-+	if (*shstk != 0)
-+		goto err;
-+
-+	/* Wrss memory that was already read. */
-+	write_shstk(shstk, 1);
-+	if (*shstk != 1)
-+		goto err;
-+
-+	/* Page out memory, so we can wrss it again. */
-+	if (reset_shstk((void *)shstk))
-+		goto err;
-+
-+	write_shstk(shstk, 1);
-+	if (*shstk != 1)
-+		goto err;
-+
-+	printf("[OK]\tShadow stack faults\n");
-+	return 0;
-+
-+err:
-+	return 1;
-+}
-+
-+unsigned long saved_ssp;
-+unsigned long saved_ssp_val;
-+volatile bool segv_triggered;
-+
-+void __attribute__((noinline)) violate_ss(void)
-+{
-+	saved_ssp = get_ssp();
-+	saved_ssp_val = *(unsigned long *)saved_ssp;
-+
-+	/* Corrupt shadow stack */
-+	printf("[INFO]\tCorrupting shadow stack\n");
-+	write_shstk((void *)saved_ssp, 0);
-+}
-+
-+void segv_handler(int signum, siginfo_t *si, void *uc)
-+{
-+	printf("[INFO]\tGenerated shadow stack violation successfully\n");
-+
-+	segv_triggered = true;
-+
-+	/* Fix shadow stack */
-+	write_shstk((void *)saved_ssp, saved_ssp_val);
-+}
-+
-+int test_shstk_violation(void)
-+{
-+	struct sigaction sa;
-+
-+	sa.sa_sigaction = segv_handler;
-+	if (sigaction(SIGSEGV, &sa, NULL))
-+		return 1;
-+	sa.sa_flags = SA_SIGINFO;
-+
-+	segv_triggered = false;
-+
-+	/* Make sure segv_triggered is set before violate_ss() */
-+	asm volatile("" : : : "memory");
-+
-+	violate_ss();
-+
-+	signal(SIGSEGV, SIG_DFL);
-+
-+	printf("[OK]\tShadow stack violation test\n");
-+
-+	return !segv_triggered;
-+}
-+
-+/* Gup test state */
-+#define MAGIC_VAL 0x12345678
-+bool is_shstk_access;
-+void *shstk_ptr;
-+int fd;
-+
-+void reset_test_shstk(void *addr)
-+{
-+	if (shstk_ptr)
-+		free_shstk(shstk_ptr);
-+	shstk_ptr = create_shstk(addr);
-+}
-+
-+void test_access_fix_handler(int signum, siginfo_t *si, void *uc)
-+{
-+	printf("[INFO]\tViolation from %s\n", is_shstk_access ? "shstk access" : "normal write");
-+
-+	segv_triggered = true;
-+
-+	/* Fix shadow stack */
-+	if (is_shstk_access) {
-+		reset_test_shstk(shstk_ptr);
-+		return;
-+	}
-+
-+	free_shstk(shstk_ptr);
-+	create_normal_mem(shstk_ptr);
-+}
-+
-+bool test_shstk_access(void *ptr)
-+{
-+	is_shstk_access = true;
-+	segv_triggered = false;
-+	write_shstk(ptr, MAGIC_VAL);
-+
-+	asm volatile("" : : : "memory");
-+
-+	return segv_triggered;
-+}
-+
-+bool test_write_access(void *ptr)
-+{
-+	is_shstk_access = false;
-+	segv_triggered = false;
-+	*(unsigned long *)ptr = MAGIC_VAL;
-+
-+	asm volatile("" : : : "memory");
-+
-+	return segv_triggered;
-+}
-+
-+bool gup_write(void *ptr)
-+{
-+	unsigned long val;
-+
-+	lseek(fd, (unsigned long)ptr, SEEK_SET);
-+	if (write(fd, &val, sizeof(val)) < 0)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+bool gup_read(void *ptr)
-+{
-+	unsigned long val;
-+
-+	lseek(fd, (unsigned long)ptr, SEEK_SET);
-+	if (read(fd, &val, sizeof(val)) < 0)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+int test_gup(void)
-+{
-+	struct sigaction sa;
-+	int status;
-+	pid_t pid;
-+
-+	sa.sa_sigaction = test_access_fix_handler;
-+	if (sigaction(SIGSEGV, &sa, NULL))
-+		return 1;
-+	sa.sa_flags = SA_SIGINFO;
-+
-+	segv_triggered = false;
-+
-+	fd = open("/proc/self/mem", O_RDWR);
-+	if (fd == -1)
-+		return 1;
-+
-+	reset_test_shstk(0);
-+	if (gup_read(shstk_ptr))
-+		return 1;
-+	if (test_shstk_access(shstk_ptr))
-+		return 1;
-+	printf("[INFO]\tGup read -> shstk access success\n");
-+
-+	reset_test_shstk(0);
-+	if (gup_write(shstk_ptr))
-+		return 1;
-+	if (test_shstk_access(shstk_ptr))
-+		return 1;
-+	printf("[INFO]\tGup write -> shstk access success\n");
-+
-+	reset_test_shstk(0);
-+	if (gup_read(shstk_ptr))
-+		return 1;
-+	if (!test_write_access(shstk_ptr))
-+		return 1;
-+	printf("[INFO]\tGup read -> write access success\n");
-+
-+	reset_test_shstk(0);
-+	if (gup_write(shstk_ptr))
-+		return 1;
-+	if (!test_write_access(shstk_ptr))
-+		return 1;
-+	printf("[INFO]\tGup write -> write access success\n");
-+
-+	close(fd);
-+
-+	/* COW/gup test */
-+	reset_test_shstk(0);
-+	pid = fork();
-+	if (!pid) {
-+		fd = open("/proc/self/mem", O_RDWR);
-+		if (fd == -1)
-+			exit(1);
-+
-+		if (gup_write(shstk_ptr)) {
-+			close(fd);
-+			exit(1);
+ /* ARCH_SHSTK_ features bits */
+ #define ARCH_SHSTK_SHSTK		(1ULL <<  0)
+diff --git a/arch/x86/kernel/process_64.c b/arch/x86/kernel/process_64.c
+index 71094c8a305f..d368854fa9c4 100644
+--- a/arch/x86/kernel/process_64.c
++++ b/arch/x86/kernel/process_64.c
+@@ -835,6 +835,7 @@ long do_arch_prctl_64(struct task_struct *task, int option, unsigned long arg2)
+ 	case ARCH_SHSTK_ENABLE:
+ 	case ARCH_SHSTK_DISABLE:
+ 	case ARCH_SHSTK_LOCK:
++	case ARCH_SHSTK_UNLOCK:
+ 		return shstk_prctl(task, option, arg2);
+ 	default:
+ 		ret = -EINVAL;
+diff --git a/arch/x86/kernel/shstk.c b/arch/x86/kernel/shstk.c
+index 2faf9b45ac72..3197ff824809 100644
+--- a/arch/x86/kernel/shstk.c
++++ b/arch/x86/kernel/shstk.c
+@@ -451,9 +451,14 @@ long shstk_prctl(struct task_struct *task, int option, unsigned long features)
+ 		return 0;
+ 	}
+ 
+-	/* Don't allow via ptrace */
+-	if (task != current)
++	/* Only allow via ptrace */
++	if (task != current) {
++		if (option == ARCH_SHSTK_UNLOCK && IS_ENABLED(CONFIG_CHECKPOINT_RESTORE)) {
++			task->thread.features_locked &= ~features;
++			return 0;
 +		}
-+		close(fd);
-+		exit(0);
+ 		return -EINVAL;
 +	}
-+	waitpid(pid, &status, 0);
-+	if (WEXITSTATUS(status)) {
-+		printf("[FAIL]\tWrite in child failed\n");
-+		return 1;
-+	}
-+	if (*(unsigned long *)shstk_ptr == MAGIC_VAL) {
-+		printf("[FAIL]\tWrite in child wrote through to shared memory\n");
-+		return 1;
-+	}
-+
-+	printf("[INFO]\tCow gup write -> write access success\n");
-+
-+	free_shstk(shstk_ptr);
-+
-+	signal(SIGSEGV, SIG_DFL);
-+
-+	printf("[OK]\tShadow gup test\n");
-+
-+	return 0;
-+}
-+
-+int test_mprotect(void)
-+{
-+	struct sigaction sa;
-+
-+	sa.sa_sigaction = test_access_fix_handler;
-+	if (sigaction(SIGSEGV, &sa, NULL))
-+		return 1;
-+	sa.sa_flags = SA_SIGINFO;
-+
-+	segv_triggered = false;
-+
-+	/* mprotect a shadow stack as read only */
-+	reset_test_shstk(0);
-+	if (mprotect(shstk_ptr, SS_SIZE, PROT_READ) < 0) {
-+		printf("[FAIL]\tmprotect(PROT_READ) failed\n");
-+		return 1;
-+	}
-+
-+	/* try to wrss it and fail */
-+	if (!test_shstk_access(shstk_ptr)) {
-+		printf("[FAIL]\tShadow stack access to read-only memory succeeded\n");
-+		return 1;
-+	}
-+
-+	/*
-+	 * The shadow stack was reset above to resolve the fault, make the new one
-+	 * read-only.
-+	 */
-+	if (mprotect(shstk_ptr, SS_SIZE, PROT_READ) < 0) {
-+		printf("[FAIL]\tmprotect(PROT_READ) failed\n");
-+		return 1;
-+	}
-+
-+	/* then back to writable */
-+	if (mprotect(shstk_ptr, SS_SIZE, PROT_WRITE | PROT_READ) < 0) {
-+		printf("[FAIL]\tmprotect(PROT_WRITE) failed\n");
-+		return 1;
-+	}
-+
-+	/* then wrss to it and succeed */
-+	if (test_shstk_access(shstk_ptr)) {
-+		printf("[FAIL]\tShadow stack access to mprotect() writable memory failed\n");
-+		return 1;
-+	}
-+
-+	free_shstk(shstk_ptr);
-+
-+	signal(SIGSEGV, SIG_DFL);
-+
-+	printf("[OK]\tmprotect() test\n");
-+
-+	return 0;
-+}
-+
-+char zero[4096];
-+
-+static void *uffd_thread(void *arg)
-+{
-+	struct uffdio_copy req;
-+	int uffd = *(int *)arg;
-+	struct uffd_msg msg;
-+
-+	if (read(uffd, &msg, sizeof(msg)) <= 0)
-+		return (void *)1;
-+
-+	req.dst = msg.arg.pagefault.address;
-+	req.src = (__u64)zero;
-+	req.len = 4096;
-+	req.mode = 0;
-+
-+	if (ioctl(uffd, UFFDIO_COPY, &req))
-+		return (void *)1;
-+
-+	return (void *)0;
-+}
-+
-+int test_userfaultfd(void)
-+{
-+	struct uffdio_register uffdio_register;
-+	struct uffdio_api uffdio_api;
-+	struct sigaction sa;
-+	pthread_t thread;
-+	void *res;
-+	int uffd;
-+
-+	sa.sa_sigaction = test_access_fix_handler;
-+	if (sigaction(SIGSEGV, &sa, NULL))
-+		return 1;
-+	sa.sa_flags = SA_SIGINFO;
-+
-+	uffd = syscall(__NR_userfaultfd, O_CLOEXEC | O_NONBLOCK);
-+	if (uffd < 0) {
-+		printf("[SKIP]\tUserfaultfd unavailable.\n");
-+		return 0;
-+	}
-+
-+	reset_test_shstk(0);
-+
-+	uffdio_api.api = UFFD_API;
-+	uffdio_api.features = 0;
-+	if (ioctl(uffd, UFFDIO_API, &uffdio_api))
-+		goto err;
-+
-+	uffdio_register.range.start = (__u64)shstk_ptr;
-+	uffdio_register.range.len = 4096;
-+	uffdio_register.mode = UFFDIO_REGISTER_MODE_MISSING;
-+	if (ioctl(uffd, UFFDIO_REGISTER, &uffdio_register))
-+		goto err;
-+
-+	if (pthread_create(&thread, NULL, &uffd_thread, &uffd))
-+		goto err;
-+
-+	reset_shstk(shstk_ptr);
-+	test_shstk_access(shstk_ptr);
-+
-+	if (pthread_join(thread, &res))
-+		goto err;
-+
-+	if (test_shstk_access(shstk_ptr))
-+		goto err;
-+
-+	free_shstk(shstk_ptr);
-+
-+	signal(SIGSEGV, SIG_DFL);
-+
-+	if (!res)
-+		printf("[OK]\tUserfaultfd test\n");
-+	return !!res;
-+err:
-+	free_shstk(shstk_ptr);
-+	close(uffd);
-+	signal(SIGSEGV, SIG_DFL);
-+	return 1;
-+}
-+
-+/*
-+ * Too complicated to pull it out of the 32 bit header, but also get the
-+ * 64 bit one needed above. Just define a copy here.
-+ */
-+#define __NR_compat_sigaction 67
-+
-+/*
-+ * Call 32 bit signal handler to get 32 bit signals ABI. Make sure
-+ * to push the registers that will get clobbered.
-+ */
-+int sigaction32(int signum, const struct sigaction *restrict act,
-+		struct sigaction *restrict oldact)
-+{
-+	register long syscall_reg asm("eax") = __NR_compat_sigaction;
-+	register long signum_reg asm("ebx") = signum;
-+	register long act_reg asm("ecx") = (long)act;
-+	register long oldact_reg asm("edx") = (long)oldact;
-+	int ret = 0;
-+
-+	asm volatile ("int $0x80;"
-+		      : "=a"(ret), "=m"(oldact)
-+		      : "r"(syscall_reg), "r"(signum_reg), "r"(act_reg),
-+			"r"(oldact_reg)
-+		      : "r8", "r9", "r10", "r11"
-+		     );
-+
-+	return ret;
-+}
-+
-+sigjmp_buf jmp_buffer;
-+
-+void segv_gp_handler(int signum, siginfo_t *si, void *uc)
-+{
-+	segv_triggered = true;
-+
-+	/*
-+	 * To work with old glibc, this can't rely on siglongjmp working with
-+	 * shadow stack enabled, so disable shadow stack before siglongjmp().
-+	 */
-+	ARCH_PRCTL(ARCH_SHSTK_DISABLE, ARCH_SHSTK_SHSTK);
-+	siglongjmp(jmp_buffer, -1);
-+}
-+
-+/*
-+ * Transition to 32 bit mode and check that a #GP triggers a segfault.
-+ */
-+int test_32bit(void)
-+{
-+	struct sigaction sa;
-+	struct sigaction *sa32;
-+
-+	/* Create sigaction in 32 bit address range */
-+	sa32 = mmap(0, 4096, PROT_READ | PROT_WRITE,
-+		    MAP_32BIT | MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-+	sa32->sa_flags = SA_SIGINFO;
-+
-+	sa.sa_sigaction = segv_gp_handler;
-+	if (sigaction(SIGSEGV, &sa, NULL))
-+		return 1;
-+	sa.sa_flags = SA_SIGINFO;
-+
-+	segv_triggered = false;
-+
-+	/* Make sure segv_triggered is set before triggering the #GP */
-+	asm volatile("" : : : "memory");
-+
-+	/*
-+	 * Set handler to somewhere in 32 bit address space
-+	 */
-+	sa32->sa_handler = (void *)sa32;
-+	if (sigaction32(SIGUSR1, sa32, NULL))
-+		return 1;
-+
-+	if (!sigsetjmp(jmp_buffer, 1))
-+		raise(SIGUSR1);
-+
-+	if (segv_triggered)
-+		printf("[OK]\t32 bit test\n");
-+
-+	return !segv_triggered;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int ret = 0;
-+
-+	if (ARCH_PRCTL(ARCH_SHSTK_ENABLE, ARCH_SHSTK_SHSTK)) {
-+		printf("[SKIP]\tCould not enable Shadow stack\n");
-+		return 1;
-+	}
-+
-+	if (ARCH_PRCTL(ARCH_SHSTK_DISABLE, ARCH_SHSTK_SHSTK)) {
-+		ret = 1;
-+		printf("[FAIL]\tDisabling shadow stack failed\n");
-+	}
-+
-+	if (ARCH_PRCTL(ARCH_SHSTK_ENABLE, ARCH_SHSTK_SHSTK)) {
-+		printf("[SKIP]\tCould not re-enable Shadow stack\n");
-+		return 1;
-+	}
-+
-+	if (ARCH_PRCTL(ARCH_SHSTK_ENABLE, ARCH_SHSTK_WRSS)) {
-+		printf("[SKIP]\tCould not enable WRSS\n");
-+		ret = 1;
-+		goto out;
-+	}
-+
-+	/* Should have succeeded if here, but this is a test, so double check. */
-+	if (!get_ssp()) {
-+		printf("[FAIL]\tShadow stack disabled\n");
-+		return 1;
-+	}
-+
-+	if (test_shstk_pivot()) {
-+		ret = 1;
-+		printf("[FAIL]\tShadow stack pivot\n");
-+		goto out;
-+	}
-+
-+	if (test_shstk_faults()) {
-+		ret = 1;
-+		printf("[FAIL]\tShadow stack fault test\n");
-+		goto out;
-+	}
-+
-+	if (test_shstk_violation()) {
-+		ret = 1;
-+		printf("[FAIL]\tShadow stack violation test\n");
-+		goto out;
-+	}
-+
-+	if (test_gup()) {
-+		ret = 1;
-+		printf("[FAIL]\tShadow shadow stack gup\n");
-+		goto out;
-+	}
-+
-+	if (test_mprotect()) {
-+		ret = 1;
-+		printf("[FAIL]\tShadow shadow mprotect test\n");
-+		goto out;
-+	}
-+
-+	if (test_userfaultfd()) {
-+		ret = 1;
-+		printf("[FAIL]\tUserfaultfd test\n");
-+		goto out;
-+	}
-+
-+	if (test_32bit()) {
-+		ret = 1;
-+		printf("[FAIL]\t32 bit test\n");
-+	}
-+
-+	return ret;
-+
-+out:
-+	/*
-+	 * Disable shadow stack before the function returns, or there will be a
-+	 * shadow stack violation.
-+	 */
-+	if (ARCH_PRCTL(ARCH_SHSTK_DISABLE, ARCH_SHSTK_SHSTK)) {
-+		ret = 1;
-+		printf("[FAIL]\tDisabling shadow stack failed\n");
-+	}
-+
-+	return ret;
-+}
-+#endif
+ 
+ 	/* Do not allow to change locked features */
+ 	if (features & task->thread.features_locked)
 -- 
 2.17.1
 
