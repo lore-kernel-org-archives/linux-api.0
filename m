@@ -2,400 +2,163 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 24DFAC64ED6
-	for <linux-api@archiver.kernel.org>; Sun, 19 Feb 2023 07:34:14 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 79AD7C636CC
+	for <linux-api@archiver.kernel.org>; Sun, 19 Feb 2023 09:47:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229673AbjBSHeM (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sun, 19 Feb 2023 02:34:12 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41508 "EHLO
+        id S230158AbjBSJr5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sun, 19 Feb 2023 04:47:57 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43056 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229711AbjBSHeI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sun, 19 Feb 2023 02:34:08 -0500
-Received: from mail-oa1-x36.google.com (mail-oa1-x36.google.com [IPv6:2001:4860:4864:20::36])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1CDB112BF2;
-        Sat, 18 Feb 2023 23:33:46 -0800 (PST)
-Received: by mail-oa1-x36.google.com with SMTP id 586e51a60fabf-171dc4abbf8so17393fac.4;
-        Sat, 18 Feb 2023 23:33:46 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=A6ekRPQWIOO9h97zjQvvrZJ6rFQp5B1ODkwvrN46IL8=;
-        b=VIXw+j/9K0ueRJ3XZk56qe8QOL0Cmpp7GG1nfaoqd3mrwXvQjCOiuvqI3MWGdIsqPh
-         NaQSgSHqheGO1jZax3FsreUoTTAOxducCXCHLU9jQ1cnIjpNfQxt3HsFKsigcuIdyN3Y
-         +9YWSZPcHl0mF+YL7hl2tQ35jopvi/ziMoQxKbIO7pHLy9syY3n4EDs0LsO2UAUkDTwN
-         uG7VPb4moTRdlVk93TwqFHZU1f9QlzzuW2Y+BjvqunA5mn3GKnxB3ishhVrg4z1YNkFD
-         /T8V5EU+PYcLGlt8OQeA+DQDK9MxHrY5tRy4KkGmItFO0ftXjFIOeHG2GLQdWaSb9onW
-         oxKA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20210112;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=A6ekRPQWIOO9h97zjQvvrZJ6rFQp5B1ODkwvrN46IL8=;
-        b=v0TwhSFUWY9WbDk1ZYebh2X29JrgjD1U4xmzUb3wcHfwedWMgjmcBbdxIqymW6p2aE
-         iCYNlyEZ7JcRX8XjbHXtZvtM0Vy1yCris8Z9wtZ6jSZrOpYMMReIA+p66lvhMuYiUe6d
-         s4Kk8D7k6RK0Usr+xGxJ8iKUVfVAMDGiILtG/sqYfrwgF7x7jZSoExVjBnAuQzqSrddL
-         n9PLaxwskGr9BjtroH85WVToZbc/pcUbh7WyzuUKsZnNRT79fF7CBrwgb8hDAO3n8JRp
-         UIBS9oLnTXBwyA2hl7DNLxamHOVgaO9pDLDDjA0Jdv7sCWhRpyf9FLStbf0Hog/jVgih
-         Ueqw==
-X-Gm-Message-State: AO0yUKVk04AAOqPGHK2qQdWUpW2mjMtM1zq7dtNJrfTTp1ug8wM0w/bj
-        shchG1EIF3cdxYHhlzdXjQg=
-X-Google-Smtp-Source: AK7set/euVT54/mP9eiDg5UqVSwppotAHlDPyulAeUH1zq9S122GwNodRLkwuxHh1XZXG6+8OX1bNA==
-X-Received: by 2002:a05:6870:a693:b0:16e:8556:41e4 with SMTP id i19-20020a056870a69300b0016e855641e4mr6822908oam.3.1676792025333;
-        Sat, 18 Feb 2023 23:33:45 -0800 (PST)
-Received: from localhost (227.sub-174-197-65.myvzw.com. [174.197.65.227])
-        by smtp.gmail.com with ESMTPSA id r8-20020a056870624800b0016b7fe3be05sm3412107oak.39.2023.02.18.23.33.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 18 Feb 2023 23:33:45 -0800 (PST)
-From:   Nhat Pham <nphamcs@gmail.com>
-To:     akpm@linux-foundation.org
-Cc:     hannes@cmpxchg.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org, bfoster@redhat.com,
-        willy@infradead.org, arnd@arndb.de, linux-api@vger.kernel.org,
-        kernel-team@meta.com
-Subject: [PATCH v10 3/3] selftests: Add selftests for cachestat
-Date:   Sat, 18 Feb 2023 23:33:18 -0800
-Message-Id: <20230219073318.366189-4-nphamcs@gmail.com>
-X-Mailer: git-send-email 2.39.1
-In-Reply-To: <20230219073318.366189-1-nphamcs@gmail.com>
-References: <20230219073318.366189-1-nphamcs@gmail.com>
+        with ESMTP id S230162AbjBSJr4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sun, 19 Feb 2023 04:47:56 -0500
+Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7322A1258C;
+        Sun, 19 Feb 2023 01:47:22 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1676800042; x=1708336042;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=Po41OJZzQp1hc4fE+blyk6iThi8FGKEllh22Ry2nYos=;
+  b=WWOpXqvYAfWpWkZVo84FkSOiRdKjvV71bhucDjaqSL7+T6TnEzYtJWbi
+   911i/xcqMzfU0NKUuSu5qQDGVFDrnthITk4PXdDvPYQRQhjz0RaLUrtJF
+   6jrBvpuJRDNGRj/4Yf3BO+/56K9nPq8uHWTGy/lX4yoBHGNkGcJhd35+g
+   7ptcZ7HtS3oKS2y55EouPLKnHvUvpDCY9gt8zkrIJzJA0654BMAmq6Sfl
+   +E+2Bcuvd93f8p+DZIeu+Lg/H3jou2VumH0VnUMIovJ1StWVdZuaSi1Vy
+   CvICxWRYK9/TxkipnjRx6ojaVVy3nSpU3VEB5Sl2sT3J1h5kAPvr7CwF1
+   Q==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="311867291"
+X-IronPort-AV: E=Sophos;i="5.97,310,1669104000"; 
+   d="scan'208";a="311867291"
+Received: from fmsmga003.fm.intel.com ([10.253.24.29])
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 19 Feb 2023 01:45:36 -0800
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6500,9779,10625"; a="759872249"
+X-IronPort-AV: E=Sophos;i="5.97,310,1669104000"; 
+   d="scan'208";a="759872249"
+Received: from lkp-server01.sh.intel.com (HELO 4455601a8d94) ([10.239.97.150])
+  by FMSMGA003.fm.intel.com with ESMTP; 19 Feb 2023 01:45:34 -0800
+Received: from kbuild by 4455601a8d94 with local (Exim 4.96)
+        (envelope-from <lkp@intel.com>)
+        id 1pTgGD-000DEh-14;
+        Sun, 19 Feb 2023 09:45:33 +0000
+Date:   Sun, 19 Feb 2023 17:45:00 +0800
+From:   kernel test robot <lkp@intel.com>
+To:     Nhat Pham <nphamcs@gmail.com>, akpm@linux-foundation.org
+Cc:     oe-kbuild-all@lists.linux.dev, hannes@cmpxchg.org,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        bfoster@redhat.com, willy@infradead.org, arnd@arndb.de,
+        linux-api@vger.kernel.org, kernel-team@meta.com
+Subject: Re: [PATCH v10 2/3] cachestat: implement cachestat syscall
+Message-ID: <202302191700.Pg6Yy5Xp-lkp@intel.com>
+References: <20230219073318.366189-3-nphamcs@gmail.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20230219073318.366189-3-nphamcs@gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Test cachestat on a newly created file, /dev/ files, and /proc/ files.
-Also test on a shmem file (which can also be tested with huge pages
-since tmpfs supports huge pages).
+Hi Nhat,
 
-Signed-off-by: Nhat Pham <nphamcs@gmail.com>
----
- MAINTAINERS                                   |   7 +
- tools/testing/selftests/Makefile              |   1 +
- tools/testing/selftests/cachestat/.gitignore  |   2 +
- tools/testing/selftests/cachestat/Makefile    |   8 +
- .../selftests/cachestat/test_cachestat.c      | 256 ++++++++++++++++++
- 5 files changed, 274 insertions(+)
- create mode 100644 tools/testing/selftests/cachestat/.gitignore
- create mode 100644 tools/testing/selftests/cachestat/Makefile
- create mode 100644 tools/testing/selftests/cachestat/test_cachestat.c
+Thank you for the patch! Yet something to improve:
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index a198da986146..792a866353ec 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -4552,6 +4552,13 @@ S:	Supported
- F:	Documentation/filesystems/caching/cachefiles.rst
- F:	fs/cachefiles/
+[auto build test ERROR on 1440f576022887004f719883acb094e7e0dd4944]
 
-+CACHESTAT: PAGE CACHE STATS FOR A FILE
-+M:	Nhat Pham <nphamcs@gmail.com>
-+M:	Johannes Weiner <hannes@cmpxchg.org>
-+L:	linux-mm@kvack.org
-+S:	Maintained
-+F:	tools/testing/selftests/cachestat/test_cachestat.c
-+
- CADENCE MIPI-CSI2 BRIDGES
- M:	Maxime Ripard <mripard@kernel.org>
- L:	linux-media@vger.kernel.org
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 0464b2c6c1e4..3cad0b38c5c2 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -4,6 +4,7 @@ TARGETS += amd-pstate
- TARGETS += arm64
- TARGETS += bpf
- TARGETS += breakpoints
-+TARGETS += cachestat
- TARGETS += capabilities
- TARGETS += cgroup
- TARGETS += clone3
-diff --git a/tools/testing/selftests/cachestat/.gitignore b/tools/testing/selftests/cachestat/.gitignore
-new file mode 100644
-index 000000000000..d6c30b43a4bb
---- /dev/null
-+++ b/tools/testing/selftests/cachestat/.gitignore
-@@ -0,0 +1,2 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+test_cachestat
-diff --git a/tools/testing/selftests/cachestat/Makefile b/tools/testing/selftests/cachestat/Makefile
-new file mode 100644
-index 000000000000..fca73aaa7d14
---- /dev/null
-+++ b/tools/testing/selftests/cachestat/Makefile
-@@ -0,0 +1,8 @@
-+# SPDX-License-Identifier: GPL-2.0
-+TEST_GEN_PROGS := test_cachestat
-+
-+CFLAGS += $(KHDR_INCLUDES)
-+CFLAGS += -Wall
-+CFLAGS += -lrt
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/cachestat/test_cachestat.c b/tools/testing/selftests/cachestat/test_cachestat.c
-new file mode 100644
-index 000000000000..5d0fe5ae62f1
---- /dev/null
-+++ b/tools/testing/selftests/cachestat/test_cachestat.c
-@@ -0,0 +1,256 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+
-+#include <stdio.h>
-+#include <stdbool.h>
-+#include <linux/kernel.h>
-+#include <linux/mman.h>
-+#include <sys/mman.h>
-+#include <sys/shm.h>
-+#include <sys/syscall.h>
-+#include <unistd.h>
-+#include <string.h>
-+#include <fcntl.h>
-+#include <errno.h>
-+
-+#include "../kselftest.h"
-+
-+static const char * const dev_files[] = {
-+	"/dev/zero", "/dev/null", "/dev/urandom",
-+	"/proc/version", "/proc"
-+};
-+static const int cachestat_nr = 451;
-+
-+void print_cachestat(struct cachestat *cs)
-+{
-+	ksft_print_msg(
-+	"Using cachestat: Cached: %lu, Dirty: %lu, Writeback: %lu, Evicted: %lu, Recently Evicted: %lu\n",
-+	cs->nr_cache, cs->nr_dirty, cs->nr_writeback,
-+	cs->nr_evicted, cs->nr_recently_evicted);
-+}
-+
-+bool write_exactly(int fd, size_t filesize)
-+{
-+	char data[filesize];
-+	bool ret = true;
-+	int random_fd = open("/dev/urandom", O_RDONLY);
-+
-+	if (random_fd < 0) {
-+		ksft_print_msg("Unable to access urandom.\n");
-+		ret = false;
-+		goto out;
-+	} else {
-+		int remained = filesize;
-+		char *cursor = data;
-+
-+		while (remained) {
-+			ssize_t read_len = read(random_fd, cursor, remained);
-+
-+			if (read_len <= 0) {
-+				ksft_print_msg("Unable to read from urandom.\n");
-+				ret = false;
-+				goto close_random_fd;
-+			}
-+
-+			remained -= read_len;
-+			cursor += read_len;
-+		}
-+
-+		/* write random data to fd */
-+		remained = filesize;
-+		cursor = data;
-+		while (remained) {
-+			ssize_t write_len = write(fd, cursor, remained);
-+
-+			if (write_len <= 0) {
-+				ksft_print_msg("Unable write random data to file.\n");
-+				ret = false;
-+				goto close_random_fd;
-+			}
-+
-+			remained -= write_len;
-+			cursor += write_len;
-+		}
-+	}
-+
-+close_random_fd:
-+	close(random_fd);
-+out:
-+	return ret;
-+}
-+
-+/*
-+ * Open/create the file at filename, (optionally) write random data to it
-+ * (exactly num_pages), then test the cachestat syscall on this file.
-+ *
-+ * If test_fsync == true, fsync the file, then check the number of dirty
-+ * pages.
-+ */
-+bool test_cachestat(const char *filename, bool write_random, bool create,
-+		bool test_fsync, unsigned long num_pages, int open_flags,
-+		mode_t open_mode)
-+{
-+	size_t PS = sysconf(_SC_PAGESIZE);
-+	int filesize = num_pages * PS;
-+	bool ret = true;
-+	long syscall_ret;
-+	struct cachestat cs;
-+
-+	int fd = open(filename, open_flags, open_mode);
-+
-+	if (fd == -1) {
-+		ksft_print_msg("Unable to create/open file.\n");
-+		goto out;
-+	} else {
-+		ksft_print_msg("Create/open %s\n", filename);
-+	}
-+
-+	if (write_random) {
-+		if (!write_exactly(fd, filesize)) {
-+			ksft_print_msg("Unable to access urandom.\n");
-+			ret = false;
-+			goto out1;
-+		}
-+	}
-+
-+	syscall_ret = syscall(cachestat_nr, fd, filesize, 0, &cs, 0);
-+
-+	ksft_print_msg("Cachestat call returned %ld\n", syscall_ret);
-+
-+	if (syscall_ret) {
-+		ksft_print_msg("Cachestat returned non-zero.\n");
-+		ret = false;
-+		goto out1;
-+
-+	} else {
-+		print_cachestat(&cs);
-+
-+		if (write_random) {
-+			if (cs.nr_cache + cs.nr_evicted != num_pages) {
-+				ksft_print_msg(
-+					"Total number of cached and evicted pages is off.\n");
-+				ret = false;
-+			}
-+		}
-+	}
-+
-+	if (test_fsync) {
-+		if (fsync(fd)) {
-+			ksft_print_msg("fsync fails.\n");
-+			ret = false;
-+		} else {
-+			syscall_ret = syscall(cachestat_nr, fd, filesize, 0, &cs, 0);
-+
-+			ksft_print_msg("Cachestat call (after fsync) returned %ld\n",
-+				syscall_ret);
-+
-+			if (!syscall_ret) {
-+				print_cachestat(&cs);
-+
-+				if (cs.nr_dirty) {
-+					ret = false;
-+					ksft_print_msg(
-+						"Number of dirty should be zero after fsync.\n");
-+				}
-+			} else {
-+				ksft_print_msg("Cachestat (after fsync) returned non-zero.\n");
-+				ret = false;
-+				goto out1;
-+			}
-+		}
-+	}
-+
-+out1:
-+	close(fd);
-+
-+	if (create)
-+		remove(filename);
-+out:
-+	return ret;
-+}
-+
-+bool test_cachestat_shmem(void)
-+{
-+	size_t PS = sysconf(_SC_PAGESIZE);
-+	size_t filesize = PS * 512 * 2; /* 2 2MB huge pages */
-+	int syscall_ret;
-+	off_t off = PS;
-+	size_t compute_len = PS * 512;
-+	char *filename = "tmpshmcstat";
-+	struct cachestat cs;
-+	bool ret = true;
-+	unsigned long num_pages = compute_len / PS;
-+	int fd = shm_open(filename, O_CREAT | O_RDWR, 0600);
-+
-+	if (fd < 0) {
-+		ksft_print_msg("Unable to create shmem file.\n");
-+		ret = false;
-+		goto out;
-+	}
-+
-+	if (ftruncate(fd, filesize)) {
-+		ksft_print_msg("Unable to trucate shmem file.\n");
-+		ret = false;
-+		goto close_fd;
-+	}
-+
-+	if (!write_exactly(fd, filesize)) {
-+		ksft_print_msg("Unable to write to shmem file.\n");
-+		ret = false;
-+		goto close_fd;
-+	}
-+
-+	syscall_ret = syscall(cachestat_nr, fd, compute_len, off, &cs, 0);
-+
-+	if (syscall_ret) {
-+		ksft_print_msg("Cachestat returned non-zero.\n");
-+		ret = false;
-+		goto close_fd;
-+	} else {
-+		print_cachestat(&cs);
-+		if (cs.nr_cache + cs.nr_evicted != num_pages) {
-+			ksft_print_msg(
-+				"Total number of cached and evicted pages is off.\n");
-+			ret = false;
-+		}
-+	}
-+
-+close_fd:
-+	shm_unlink(filename);
-+out:
-+	return ret;
-+}
-+
-+int main(void)
-+{
-+	int ret = 0;
-+
-+	for (int i = 0; i < 5; i++) {
-+		const char *dev_filename = dev_files[i];
-+
-+		if (test_cachestat(dev_filename, false, false, false,
-+			4, O_RDONLY, 0400))
-+			ksft_test_result_pass("cachestat works with %s\n", dev_filename);
-+		else {
-+			ksft_test_result_fail("cachestat fails with %s\n", dev_filename);
-+			ret = 1;
-+		}
-+	}
-+
-+	if (test_cachestat("tmpfilecachestat", true, true,
-+		true, 4, O_CREAT | O_RDWR, 0400 | 0600))
-+		ksft_test_result_pass("cachestat works with a normal file\n");
-+	else {
-+		ksft_test_result_fail("cachestat fails with normal file\n");
-+		ret = 1;
-+	}
-+
-+	if (test_cachestat_shmem())
-+		ksft_test_result_pass("cachestat works with a shmem file\n");
-+	else {
-+		ksft_test_result_fail("cachestat fails with a shmem file\n");
-+		ret = 1;
-+	}
-+
-+	return ret;
-+}
---
-2.39.1
+url:    https://github.com/intel-lab-lkp/linux/commits/Nhat-Pham/workingset-refactor-LRU-refault-to-expose-refault-recency-check/20230219-153500
+base:   1440f576022887004f719883acb094e7e0dd4944
+patch link:    https://lore.kernel.org/r/20230219073318.366189-3-nphamcs%40gmail.com
+patch subject: [PATCH v10 2/3] cachestat: implement cachestat syscall
+config: riscv-buildonly-randconfig-r005-20230219 (https://download.01.org/0day-ci/archive/20230219/202302191700.Pg6Yy5Xp-lkp@intel.com/config)
+compiler: riscv64-linux-gcc (GCC) 12.1.0
+reproduce (this is a W=1 build):
+        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
+        chmod +x ~/bin/make.cross
+        # https://github.com/intel-lab-lkp/linux/commit/d691a3b4a696ab20c9c5fe86c624e9e36814523c
+        git remote add linux-review https://github.com/intel-lab-lkp/linux
+        git fetch --no-tags linux-review Nhat-Pham/workingset-refactor-LRU-refault-to-expose-refault-recency-check/20230219-153500
+        git checkout d691a3b4a696ab20c9c5fe86c624e9e36814523c
+        # save the config file
+        mkdir build_dir && cp config build_dir/.config
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=riscv olddefconfig
+        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=riscv SHELL=/bin/bash
+
+If you fix the issue, kindly add following tag where applicable
+| Reported-by: kernel test robot <lkp@intel.com>
+| Link: https://lore.kernel.org/oe-kbuild-all/202302191700.Pg6Yy5Xp-lkp@intel.com/
+
+All errors (new ones prefixed by >>):
+
+   mm/filemap.c:4035:6: warning: no previous prototype for 'ksys_cachestat' [-Wmissing-prototypes]
+    4035 | long ksys_cachestat(unsigned int fd, size_t len, loff_t off,
+         |      ^~~~~~~~~~~~~~
+   In file included from arch/riscv/include/asm/elf.h:12,
+                    from include/linux/elf.h:6,
+                    from include/linux/module.h:19,
+                    from include/linux/device/driver.h:21,
+                    from include/linux/device.h:32,
+                    from include/linux/blk_types.h:11,
+                    from include/linux/writeback.h:13,
+                    from include/linux/memcontrol.h:22,
+                    from include/linux/swap.h:9,
+                    from mm/filemap.c:23:
+>> include/linux/compat.h:75:25: error: conflicting types for 'compat_sys_cachestat'; have 'long int(unsigned int,  size_t,  u32,  u32,  struct cachestat *, unsigned int)' {aka 'long int(unsigned int,  long unsigned int,  unsigned int,  unsigned int,  struct cachestat *, unsigned int)'}
+      75 |         asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))        \
+         |                         ^~~~~~~~~~
+   include/linux/compat.h:63:9: note: in expansion of macro 'COMPAT_SYSCALL_DEFINEx'
+      63 |         COMPAT_SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
+         |         ^~~~~~~~~~~~~~~~~~~~~~
+   mm/filemap.c:4102:1: note: in expansion of macro 'COMPAT_SYSCALL_DEFINE6'
+    4102 | COMPAT_SYSCALL_DEFINE6(cachestat, unsigned int, fd, size_t, len,
+         | ^~~~~~~~~~~~~~~~~~~~~~
+   include/linux/compat.h:820:17: note: previous declaration of 'compat_sys_cachestat' with type 'long int(int,  size_t,  u32,  u32,  struct cachestat *, unsigned int)' {aka 'long int(int,  long unsigned int,  unsigned int,  unsigned int,  struct cachestat *, unsigned int)'}
+     820 | asmlinkage long compat_sys_cachestat(int fd, size_t len, compat_arg_u64(off),
+         |                 ^~~~~~~~~~~~~~~~~~~~
+
+
+vim +75 include/linux/compat.h
+
+217f4433fc2fe7 Heiko Carstens    2014-02-26  51  
+468366138850f2 Al Viro           2012-11-23  52  #define COMPAT_SYSCALL_DEFINE1(name, ...) \
+468366138850f2 Al Viro           2012-11-23  53          COMPAT_SYSCALL_DEFINEx(1, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  54  #define COMPAT_SYSCALL_DEFINE2(name, ...) \
+468366138850f2 Al Viro           2012-11-23  55  	COMPAT_SYSCALL_DEFINEx(2, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  56  #define COMPAT_SYSCALL_DEFINE3(name, ...) \
+468366138850f2 Al Viro           2012-11-23  57  	COMPAT_SYSCALL_DEFINEx(3, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  58  #define COMPAT_SYSCALL_DEFINE4(name, ...) \
+468366138850f2 Al Viro           2012-11-23  59  	COMPAT_SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  60  #define COMPAT_SYSCALL_DEFINE5(name, ...) \
+468366138850f2 Al Viro           2012-11-23  61  	COMPAT_SYSCALL_DEFINEx(5, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  62  #define COMPAT_SYSCALL_DEFINE6(name, ...) \
+468366138850f2 Al Viro           2012-11-23  63  	COMPAT_SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
+468366138850f2 Al Viro           2012-11-23  64  
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  65  /*
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  66   * The asmlinkage stub is aliased to a function named __se_compat_sys_*() which
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  67   * sign-extends 32-bit ints to longs whenever needed. The actual work is
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  68   * done within __do_compat_sys_*().
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  69   */
+7303e30ec1d8fb Dominik Brodowski 2018-04-05  70  #ifndef COMPAT_SYSCALL_DEFINEx
+468366138850f2 Al Viro           2012-11-23  71  #define COMPAT_SYSCALL_DEFINEx(x, name, ...)					\
+bee20031772af3 Arnd Bergmann     2018-06-19  72  	__diag_push();								\
+bee20031772af3 Arnd Bergmann     2018-06-19  73  	__diag_ignore(GCC, 8, "-Wattribute-alias",				\
+bee20031772af3 Arnd Bergmann     2018-06-19  74  		      "Type aliasing is used to sanitize syscall arguments");\
+83460ec8dcac14 Andi Kleen        2013-11-12 @75  	asmlinkage long compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  76  		__attribute__((alias(__stringify(__se_compat_sys##name))));	\
+c9a211951c7c79 Howard McLauchlan 2018-03-21  77  	ALLOW_ERROR_INJECTION(compat_sys##name, ERRNO);				\
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  78  	static inline long __do_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  79  	asmlinkage long __se_compat_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  80  	asmlinkage long __se_compat_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
+468366138850f2 Al Viro           2012-11-23  81  	{									\
+bee20031772af3 Arnd Bergmann     2018-06-19  82  		long ret = __do_compat_sys##name(__MAP(x,__SC_DELOUSE,__VA_ARGS__));\
+bee20031772af3 Arnd Bergmann     2018-06-19  83  		__MAP(x,__SC_TEST,__VA_ARGS__);					\
+bee20031772af3 Arnd Bergmann     2018-06-19  84  		return ret;							\
+468366138850f2 Al Viro           2012-11-23  85  	}									\
+bee20031772af3 Arnd Bergmann     2018-06-19  86  	__diag_pop();								\
+5ac9efa3c50d7c Dominik Brodowski 2018-04-09  87  	static inline long __do_compat_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
+7303e30ec1d8fb Dominik Brodowski 2018-04-05  88  #endif /* COMPAT_SYSCALL_DEFINEx */
+468366138850f2 Al Viro           2012-11-23  89  
+
+-- 
+0-DAY CI Kernel Test Service
+https://github.com/intel/lkp-tests
