@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2CED0C87FDC
-	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:01 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BFA0AC64ED6
+	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:02 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230307AbjB0Wb7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Feb 2023 17:31:59 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37522 "EHLO
+        id S229886AbjB0WcA (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Feb 2023 17:32:00 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37674 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230138AbjB0Wbb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:31 -0500
+        with ESMTP id S230230AbjB0Wbp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:45 -0500
 Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67DA72887D;
-        Mon, 27 Feb 2023 14:31:29 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC0EE25BBA;
+        Mon, 27 Feb 2023 14:31:37 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1677537089; x=1709073089;
+  t=1677537097; x=1709073097;
   h=from:to:cc:subject:date:message-id:in-reply-to:
-   references;
-  bh=Bg+qgKp1F47Y8UIietH1jC4hvVo4rClMm1kv9uYsMSQ=;
-  b=fsVnvUC6NTXsLfwjMOMN9Qnde439b57zC0I6SRXGdT8bAnPFHllRByKa
-   tAhmr+C1nWC2kef4dz5d+eNDabM5KCYetaYWqbJ2mxl1Q47I/4BNcHgwe
-   QKNluNyQp0WvBbsfNblOGR0pVpnULi4BFuq7mzWH3dY7WZB8kdb7/7xTQ
-   Exu+tuzsSNaG0Et5EGjh9AFr9FVxj18Dz98MtIwpQsnL1fj225pl1TEmV
-   xgm78lj+dpMIQxLrOxA6GhcPzBwnP1CWHXQ60qQtguAbqO8Pz1IP8O9qA
-   gW9L+27gxaObIS0p7lX9r2MIwdDruHzZwjX/fZ19mPOaOj57SWOy+GLi+
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657068"
+   references:mime-version:content-transfer-encoding;
+  bh=ErfroshrbQualKPLAsK/DpeAwNdzrJEBOvME1abf8WI=;
+  b=YJW48+NJ3BjgA2pQc6uwO/JakOBnTRN5+PRW5JhczADne0MtGqZsvIDn
+   0VA1m/hU9bS0FgBok7lr+RksNslpUE7o0Um4tOb8mOWiFl8j5uNe7nqwp
+   /cIfj/gHWq+3fXPreTDBPcgE84GT4tiB9ENX/cRpms/1Hgt+vb3VW6FKz
+   Y0UsNvgGABefZDw5Y3so0KJGhG7+MfmnhaMqzY3WaxAbthPQJwnC59rtV
+   TatdRKEvJaSCVW4sNdbBEJNrGl3Y6Zn7PBa6v8xNINQaATfMZWtts8hOW
+   e3a6cjI3zokkuuJz5MlaEDad9T7E8XatAs5Cm8xTVPMitsYtqQ0gcMgsc
+   g==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657279"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="313657068"
+   d="scan'208";a="313657279"
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:10 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024368"
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:16 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024471"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="848024368"
+   d="scan'208";a="848024471"
 Received: from leonqu-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.72.19])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:09 -0800
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:15 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,125 +66,121 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 04/41] x86/cpufeatures: Enable CET CR4 bit for shadow stack
-Date:   Mon, 27 Feb 2023 14:29:20 -0800
-Message-Id: <20230227222957.24501-5-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, linux-s390@vger.kernel.org
+Subject: [PATCH v7 12/41] s390/mm: Introduce pmd_mkwrite_kernel()
+Date:   Mon, 27 Feb 2023 14:29:28 -0800
+Message-Id: <20230227222957.24501-13-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+The x86 Control-flow Enforcement Technology (CET) feature includes a new
+type of memory called shadow stack. This shadow stack memory has some
+unusual properties, which requires some core mm changes to function
+properly.
 
-Setting CR4.CET is a prerequisite for utilizing any CET features, most of
-which also require setting MSRs.
+One of these changes is to allow for pmd_mkwrite() to create different
+types of writable memory (the existing conventionally writable type and
+also the new shadow stack type). Future patches will convert pmd_mkwrite()
+to take a VMA in order to facilitate this, however there are places in the
+kernel where pmd_mkwrite() is called outside of the context of a VMA.
+These are for kernel memory. So create a new variant called
+pmd_mkwrite_kernel() and switch the kernel users over to it. Have
+pmd_mkwrite() and pmd_mkwrite_kernel() be the same for now. Future patches
+will introduce changes to make pmd_mkwrite() take a VMA.
 
-Kernel IBT already enables the CET CR4 bit when it detects IBT HW support
-and is configured with kernel IBT. However, future patches that enable
-userspace shadow stack support will need the bit set as well. So change
-the logic to enable it in either case.
+Only do this for architectures that need it because they call pmd_mkwrite()
+in arch code without an associated VMA. Since it will only currently be
+used in arch code, so do not include it in arch_pgtable_helpers.rst.
 
-Clear MSR_IA32_U_CET in cet_disable() so that it can't live to see
-userspace in a new kexec-ed kernel that has CR4.CET set from kernel IBT.
-
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-s390@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-mm@kvack.org
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
+Acked-by: Heiko Carstens <hca@linux.ibm.com>
+Acked-by: David Hildenbrand <david@redhat.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Suggested-by: David Hildenbrand <david@redhat.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 
 ---
-v5:
- - Remove #ifdeffery (Boris)
+Hi Non-x86 Arch’s,
 
-v4:
- - Add back dedicated command line disable: "nousershstk" (Boris)
+x86 has a feature that allows for the creation of a special type of
+writable memory (shadow stack) that is only writable in limited specific
+ways. Previously, changes were proposed to core MM code to teach it to
+decide when to create normally writable memory or the special shadow stack
+writable memory, but David Hildenbrand suggested[0] to change
+pXX_mkwrite() to take a VMA, so awareness of shadow stack memory can be
+moved into x86 code.
 
-v3:
- - Remove stay new line (Boris)
- - Simplify commit log (Andrew Cooper)
+Since pXX_mkwrite() is defined in every arch, it requires some tree-wide
+changes. So that is why you are seeing some patches out of a big x86
+series pop up in your arch mailing list. There is no functional change.
+After this refactor, the shadow stack series goes on to use the arch
+helpers to push shadow stack memory details inside arch/x86.
 
-v2:
- - In the shadow stack case, go back to only setting CR4.CET if the
-   kernel is compiled with user shadow stack support.
- - Clear MSR_IA32_U_CET as well. (PeterZ)
+Testing was just 0-day build testing.
+
+Hopefully that is enough context. Thanks!
+
+[0] https://lore.kernel.org/lkml/0e29a2d0-08d8-bcd6-ff26-4bea0e4037b0@redhat.com/#t
+
+v6:
+ - New patch
 ---
- arch/x86/kernel/cpu/common.c | 35 +++++++++++++++++++++++++++--------
- 1 file changed, 27 insertions(+), 8 deletions(-)
+ arch/s390/include/asm/pgtable.h | 7 ++++++-
+ arch/s390/mm/pageattr.c         | 2 +-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 8cd4126d8253..cc686e5039be 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -600,27 +600,43 @@ __noendbr void ibt_restore(u64 save)
- 
- static __always_inline void setup_cet(struct cpuinfo_x86 *c)
- {
--	u64 msr = CET_ENDBR_EN;
-+	bool user_shstk, kernel_ibt;
- 
--	if (!HAS_KERNEL_IBT ||
--	    !cpu_feature_enabled(X86_FEATURE_IBT))
-+	if (!IS_ENABLED(CONFIG_X86_CET))
- 		return;
- 
--	wrmsrl(MSR_IA32_S_CET, msr);
-+	kernel_ibt = HAS_KERNEL_IBT && cpu_feature_enabled(X86_FEATURE_IBT);
-+	user_shstk = cpu_feature_enabled(X86_FEATURE_SHSTK) &&
-+		     IS_ENABLED(CONFIG_X86_USER_SHADOW_STACK);
-+
-+	if (!kernel_ibt && !user_shstk)
-+		return;
-+
-+	if (user_shstk)
-+		set_cpu_cap(c, X86_FEATURE_USER_SHSTK);
-+
-+	if (kernel_ibt)
-+		wrmsrl(MSR_IA32_S_CET, CET_ENDBR_EN);
-+	else
-+		wrmsrl(MSR_IA32_S_CET, 0);
-+
- 	cr4_set_bits(X86_CR4_CET);
- 
--	if (!ibt_selftest()) {
-+	if (kernel_ibt && !ibt_selftest()) {
- 		pr_err("IBT selftest: Failed!\n");
- 		wrmsrl(MSR_IA32_S_CET, 0);
- 		setup_clear_cpu_cap(X86_FEATURE_IBT);
--		return;
- 	}
+diff --git a/arch/s390/include/asm/pgtable.h b/arch/s390/include/asm/pgtable.h
+index d4943f2d3f00..deeb918cae1d 100644
+--- a/arch/s390/include/asm/pgtable.h
++++ b/arch/s390/include/asm/pgtable.h
+@@ -1491,7 +1491,7 @@ static inline pmd_t pmd_wrprotect(pmd_t pmd)
+ 	return set_pmd_bit(pmd, __pgprot(_SEGMENT_ENTRY_PROTECT));
  }
  
- __noendbr void cet_disable(void)
+-static inline pmd_t pmd_mkwrite(pmd_t pmd)
++static inline pmd_t pmd_mkwrite_kernel(pmd_t pmd)
  {
--	if (cpu_feature_enabled(X86_FEATURE_IBT))
--		wrmsrl(MSR_IA32_S_CET, 0);
-+	if (!(cpu_feature_enabled(X86_FEATURE_IBT) ||
-+	      cpu_feature_enabled(X86_FEATURE_SHSTK)))
-+		return;
-+
-+	wrmsrl(MSR_IA32_S_CET, 0);
-+	wrmsrl(MSR_IA32_U_CET, 0);
+ 	pmd = set_pmd_bit(pmd, __pgprot(_SEGMENT_ENTRY_WRITE));
+ 	if (pmd_val(pmd) & _SEGMENT_ENTRY_DIRTY)
+@@ -1499,6 +1499,11 @@ static inline pmd_t pmd_mkwrite(pmd_t pmd)
+ 	return pmd;
  }
  
- /*
-@@ -1482,6 +1498,9 @@ static void __init cpu_parse_early_param(void)
- 	if (cmdline_find_option_bool(boot_command_line, "noxsaves"))
- 		setup_clear_cpu_cap(X86_FEATURE_XSAVES);
- 
-+	if (cmdline_find_option_bool(boot_command_line, "nousershstk"))
-+		setup_clear_cpu_cap(X86_FEATURE_USER_SHSTK);
++static inline pmd_t pmd_mkwrite(pmd_t pmd)
++{
++	return pmd_mkwrite_kernel(pmd);
++}
 +
- 	arglen = cmdline_find_option(boot_command_line, "clearcpuid", arg, sizeof(arg));
- 	if (arglen <= 0)
- 		return;
+ static inline pmd_t pmd_mkclean(pmd_t pmd)
+ {
+ 	pmd = clear_pmd_bit(pmd, __pgprot(_SEGMENT_ENTRY_DIRTY));
+diff --git a/arch/s390/mm/pageattr.c b/arch/s390/mm/pageattr.c
+index 4ee5fe5caa23..7b6967dfacd0 100644
+--- a/arch/s390/mm/pageattr.c
++++ b/arch/s390/mm/pageattr.c
+@@ -146,7 +146,7 @@ static void modify_pmd_page(pmd_t *pmdp, unsigned long addr,
+ 	if (flags & SET_MEMORY_RO)
+ 		new = pmd_wrprotect(new);
+ 	else if (flags & SET_MEMORY_RW)
+-		new = pmd_mkwrite(pmd_mkdirty(new));
++		new = pmd_mkwrite_kernel(pmd_mkdirty(new));
+ 	if (flags & SET_MEMORY_NX)
+ 		new = set_pmd_bit(new, __pgprot(_SEGMENT_ENTRY_NOEXEC));
+ 	else if (flags & SET_MEMORY_X)
 -- 
 2.17.1
 
