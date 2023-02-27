@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5310DC7EE37
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BBB6BC7EE45
 	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:30 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229882AbjB0WcE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Feb 2023 17:32:04 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37670 "EHLO
+        id S230322AbjB0WcF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Feb 2023 17:32:05 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37594 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230225AbjB0Wbp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:45 -0500
+        with ESMTP id S230201AbjB0Wbh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:37 -0500
 Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 65D82298FC;
-        Mon, 27 Feb 2023 14:31:35 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 817E3298F0;
+        Mon, 27 Feb 2023 14:31:31 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1677537095; x=1709073095;
+  t=1677537091; x=1709073091;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=PJnxzPZePTV1h98WOAU1laXgjeyErhdpAXi/giQ17HE=;
-  b=Zf9iRryIcAiVooo3vQ+jqSg1dtnEBsB1GbNhhK7zqEdVox1l/y4obcV4
-   ejMph7wmPKDmpUPUE9U/ck9k2vtK9jj3lIk4K1V+ygRVwjdHrl8ZCO2v4
-   /iBBru0D0/4M4V2vKOSePY6Gx8ZY/y/Bwo1PnBowOGHisbfn3Lf/00ufj
-   7oMpUSSoZ1FJYwDjwfrX1D5v+FS6l04eYnsTWX3AbgCLxtyWaA7/veIDg
-   lJAUcUGlqXPARUYyNNB4BQ1ickRZzXhb7dYqQg+l5UKgHc63TgEy/9xgG
-   1ELcoQtpVV2plu8zIZwuFma1v6EG4f70v0UQkkQTmHZZmyAWw0ChJWcf/
-   g==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657224"
+  bh=D7r3sPYzuOicvyDyAiCcjJlcjrFZlOzlMPKscQsbvdA=;
+  b=D00v5Cw/5/5Swn5WtRlN8Wc/Tvnp2pi2PmadrF0xeFldyaSNTUiC4mma
+   ctjh5gzMvHmnNiH5gLjexWKh7kj1JIaQudKFLTKNbIK6sCx2oEUQKyAcg
+   g1LUhBIO/ySzywfA+LCf0DKYwoVGnpjPe6qVpWuTQm7nLk/NnrwfF+3El
+   P7PvrIwdMGbVv8F7hqCcTtWV1TW0tuq0LwWGVhpFvvRBiQnjzetZE9mz5
+   cFCBpfVnayYl+lN21ZSHTL+apWPHCJ4c4Tfzl/FAma5HdHi6UUczlXQjA
+   Vj2rWVBX+P41QVu2hT1jyGmH1Gct62dp4+DPfR9d0IFhqh3RcELBlNxP0
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657127"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="313657224"
+   d="scan'208";a="313657127"
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:15 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024440"
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:12 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024393"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="848024440"
+   d="scan'208";a="848024393"
 Received: from leonqu-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.72.19])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:14 -0800
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:11 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,10 +66,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 10/41] x86/mm: Move pmd_write(), pud_write() up in the file
-Date:   Mon, 27 Feb 2023 14:29:26 -0800
-Message-Id: <20230227222957.24501-11-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com
+Subject: [PATCH v7 06/41] x86/fpu: Add helper for modifying xstate
+Date:   Mon, 27 Feb 2023 14:29:22 -0800
+Message-Id: <20230227222957.24501-7-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
@@ -77,73 +77,107 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Just like user xfeatures, supervisor xfeatures can be active in the
+registers or present in the task FPU buffer. If the registers are
+active, the registers can be modified directly. If the registers are
+not active, the modification must be performed on the task FPU buffer.
 
-To prepare the introduction of _PAGE_SAVED_DIRTY, move pmd_write() and
-pud_write() up in the file, so that they can be used by other
-helpers below.  No functional changes.
+When the state is not active, the kernel could perform modifications
+directly to the buffer. But in order for it to do that, it needs
+to know where in the buffer the specific state it wants to modify is
+located. Doing this is not robust against optimizations that compact
+the FPU buffer, as each access would require computing where in the
+buffer it is.
+
+The easiest way to modify supervisor xfeature data is to force restore
+the registers and write directly to the MSRs. Often times this is just fine
+anyway as the registers need to be restored before returning to userspace.
+Do this for now, leaving buffer writing optimizations for the future.
+
+Add a new function fpregs_lock_and_load() that can simultaneously call
+fpregs_lock() and do this restore. Also perform some extra sanity
+checks in this function since this will be used in non-fpu focused code.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
----
- arch/x86/include/asm/pgtable.h | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 7425f32e5293..56eea96502c6 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -160,6 +160,18 @@ static inline int pte_write(pte_t pte)
- 	return pte_flags(pte) & _PAGE_RW;
+---
+v6:
+ - Drop "but appear to work" (Boris)
+
+v5:
+ - Fix spelling error (Boris)
+ - Don't export fpregs_lock_and_load() (Boris)
+
+v3:
+ - Rename to fpregs_lock_and_load() to match the unlocking
+   fpregs_unlock(). (Kees)
+ - Elaborate in comment about helper. (Dave)
+
+v2:
+ - Drop optimization of writing directly the buffer, and change API
+   accordingly.
+ - fpregs_lock_and_load() suggested by tglx
+ - Some commit log verbiage from dhansen
+---
+ arch/x86/include/asm/fpu/api.h |  9 +++++++++
+ arch/x86/kernel/fpu/core.c     | 18 ++++++++++++++++++
+ 2 files changed, 27 insertions(+)
+
+diff --git a/arch/x86/include/asm/fpu/api.h b/arch/x86/include/asm/fpu/api.h
+index 503a577814b2..aadc6893dcaa 100644
+--- a/arch/x86/include/asm/fpu/api.h
++++ b/arch/x86/include/asm/fpu/api.h
+@@ -82,6 +82,15 @@ static inline void fpregs_unlock(void)
+ 		preempt_enable();
  }
  
-+#define pmd_write pmd_write
-+static inline int pmd_write(pmd_t pmd)
-+{
-+	return pmd_flags(pmd) & _PAGE_RW;
-+}
++/*
++ * FPU state gets lazily restored before returning to userspace. So when in the
++ * kernel, the valid FPU state may be kept in the buffer. This function will force
++ * restore all the fpu state to the registers early if needed, and lock them from
++ * being automatically saved/restored. Then FPU state can be modified safely in the
++ * registers, before unlocking with fpregs_unlock().
++ */
++void fpregs_lock_and_load(void);
 +
-+#define pud_write pud_write
-+static inline int pud_write(pud_t pud)
-+{
-+	return pud_flags(pud) & _PAGE_RW;
-+}
-+
- static inline int pte_huge(pte_t pte)
- {
- 	return pte_flags(pte) & _PAGE_PSE;
-@@ -1120,12 +1132,6 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
- 				  unsigned long address, pmd_t *pmdp);
- 
- 
--#define pmd_write pmd_write
--static inline int pmd_write(pmd_t pmd)
--{
--	return pmd_flags(pmd) & _PAGE_RW;
--}
--
- #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
- static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm, unsigned long addr,
- 				       pmd_t *pmdp)
-@@ -1155,12 +1161,6 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ #ifdef CONFIG_X86_DEBUG_FPU
+ extern void fpregs_assert_state_consistent(void);
+ #else
+diff --git a/arch/x86/kernel/fpu/core.c b/arch/x86/kernel/fpu/core.c
+index caf33486dc5e..f851558b673f 100644
+--- a/arch/x86/kernel/fpu/core.c
++++ b/arch/x86/kernel/fpu/core.c
+@@ -753,6 +753,24 @@ void switch_fpu_return(void)
  }
+ EXPORT_SYMBOL_GPL(switch_fpu_return);
  
--#define pud_write pud_write
--static inline int pud_write(pud_t pud)
--{
--	return pud_flags(pud) & _PAGE_RW;
--}
--
- #ifndef pmdp_establish
- #define pmdp_establish pmdp_establish
- static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
++void fpregs_lock_and_load(void)
++{
++	/*
++	 * fpregs_lock() only disables preemption (mostly). So modifying state
++	 * in an interrupt could screw up some in progress fpregs operation.
++	 * Warn about it.
++	 */
++	WARN_ON_ONCE(!irq_fpu_usable());
++	WARN_ON_ONCE(current->flags & PF_KTHREAD);
++
++	fpregs_lock();
++
++	fpregs_assert_state_consistent();
++
++	if (test_thread_flag(TIF_NEED_FPU_LOAD))
++		fpregs_restore_userregs();
++}
++
+ #ifdef CONFIG_X86_DEBUG_FPU
+ /*
+  * If current FPU state according to its tracking (loaded FPU context on this
 -- 
 2.17.1
 
