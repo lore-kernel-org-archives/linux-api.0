@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DDEA6C88CBD
-	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:35 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 479ACC7EE30
+	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229578AbjB0WcU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Feb 2023 17:32:20 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37686 "EHLO
+        id S230111AbjB0WcV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Feb 2023 17:32:21 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37838 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230267AbjB0Wbw (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:52 -0500
+        with ESMTP id S230284AbjB0Wb4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:56 -0500
 Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F107F28D2D;
-        Mon, 27 Feb 2023 14:31:48 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 657F8298F3;
+        Mon, 27 Feb 2023 14:31:52 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1677537109; x=1709073109;
+  t=1677537112; x=1709073112;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=ZIfeT04mKir/YNhHsgsFjFvjvr/0UP7Swg3kZIhAJQw=;
-  b=Mrl5nwOMuKKAo9wkPfvKEB+7neim1lcySms1JrkKaU9ySLztoefFugoK
-   /ZelKfl+A8yoaohyfVIC4qqjl6ItI3scq0VopnndwGxUgGSBc6rQ0XLS9
-   kCrDnCZIOd4EMCz+A/YyNTfzedOU05BkU62MDFg/xqVwsiHLTXksCwTy2
-   YRSbys5vN2oL4uRl/HhyeRb+qqQPYH2sfgUBdgm0T97H+H6+DxyjvwXNF
-   I/sw3NrHy95O679WaTAm4pmusC2J2WaVWlXZTmW9oW+165/7LkyP4djS8
-   Yp6lCNTk7xATIw1zLFvlpsnJduH8D3+GPOj1uafbFodrYH/MRnPWpotHp
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657504"
+  bh=g/mLbA9/W/OJJZ4lgb8cNHR8TFa9W9m/xYBMcnZGnDk=;
+  b=k8zJDgRAV1xNrNwJwOJ9du+q7bLyWgmbgE8cZRU8sZufgm250zXuJUUG
+   WJzikpHwdIQ+UmIXYr/wY11cF00De6MnoYTlpTj70O94Bc7xkpB9V0EtG
+   hbwHLAad2UULbN9OesdbW9VoSmdne+yvIu5zoYBZpnczkxIcI8CtFzvTj
+   uhISFxu1YL0COnr/lhysLH2ejC5n7JXBjff9tOMTEyhLrFBRgMcGda//1
+   gn6PlnZNV6KFl3FlNVXhLe2Yukr6zbC4wRSbXHRWdzFu6xBRcYRunJ2a2
+   lif1YsjwfbsJpMVy4lKz7XQiZhJxTfFWJ+RC/CZ1Hpdvt4HfokVge6Wxm
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657585"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="313657504"
+   d="scan'208";a="313657585"
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:24 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024631"
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:26 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024659"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="848024631"
+   d="scan'208";a="848024659"
 Received: from leonqu-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.72.19])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:23 -0800
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:25 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,10 +66,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 22/41] mm/mmap: Add shadow stack pages to memory accounting
-Date:   Mon, 27 Feb 2023 14:29:38 -0800
-Message-Id: <20230227222957.24501-23-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com
+Subject: [PATCH v7 24/41] mm: Don't allow write GUPs to shadow stack memory
+Date:   Mon, 27 Feb 2023 14:29:40 -0800
+Message-Id: <20230227222957.24501-25-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
@@ -77,71 +77,67 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-
 The x86 Control-flow Enforcement Technology (CET) feature includes a new
 type of memory called shadow stack. This shadow stack memory has some
 unusual properties, which requires some core mm changes to function
 properly.
 
-Account shadow stack pages to stack memory. Do this by adding a
-VM_SHADOW_STACK check in is_stack_mapping().
+Shadow stack memory is writable only in very specific, controlled ways.
+However, since it is writable, the kernel treats it as such. As a result
+there remain many ways for userspace to trigger the kernel to write to
+shadow stack's via get_user_pages(, FOLL_WRITE) operations. To make this a
+little less exposed, block writable GUPs for shadow stack VMAs.
+
+Still allow FOLL_FORCE to write through shadow stack protections, as it
+does for read-only protections.
 
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
+Acked-by: David Hildenbrand <david@redhat.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: Kees Cook <keescook@chromium.org>
 
 ---
-v7:
- - Change is_stack_mapping() to know about VM_SHADOW_STACK so the
-   additions in vm_stat_account() can be dropped. (David Hildenbrand)
-
 v3:
- - Remove unneeded VM_SHADOW_STACK check in accountable_mapping()
-   (Kirill)
-
-v2:
- - Remove is_shadow_stack_mapping() and just change it to directly bitwise
-   and VM_SHADOW_STACK.
-
-Yu-cheng v26:
- - Remove redundant #ifdef CONFIG_MMU.
-
-Yu-cheng v25:
- - Remove #ifdef CONFIG_ARCH_HAS_SHADOW_STACK for is_shadow_stack_mapping().
+ - Add comment in __pte_access_permitted() (Dave)
+ - Remove unneeded shadow stack specific check in
+   __pte_access_permitted() (Jann)
 ---
- mm/internal.h | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ arch/x86/include/asm/pgtable.h | 5 +++++
+ mm/gup.c                       | 2 +-
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/mm/internal.h b/mm/internal.h
-index 7920a8b7982e..1d13d5580f64 100644
---- a/mm/internal.h
-+++ b/mm/internal.h
-@@ -491,14 +491,14 @@ static inline bool is_exec_mapping(vm_flags_t flags)
- }
- 
- /*
-- * Stack area - automatically grows in one direction
-+ * Stack area
-  *
-- * VM_GROWSUP / VM_GROWSDOWN VMAs are always private anonymous:
-- * do_mmap() forbids all other combinations.
-+ * VM_GROWSUP, VM_GROWSDOWN VMAs are always private
-+ * anonymous. do_mmap() forbids all other combinations.
-  */
- static inline bool is_stack_mapping(vm_flags_t flags)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index d81e7ec27507..2e3d8cca1195 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -1638,6 +1638,11 @@ static inline bool __pte_access_permitted(unsigned long pteval, bool write)
  {
--	return (flags & VM_STACK) == VM_STACK;
-+	return ((flags & VM_STACK) == VM_STACK) || (flags & VM_SHADOW_STACK);
- }
+ 	unsigned long need_pte_bits = _PAGE_PRESENT|_PAGE_USER;
  
- /*
++	/*
++	 * Write=0,Dirty=1 PTEs are shadow stack, which the kernel
++	 * shouldn't generally allow access to, but since they
++	 * are already Write=0, the below logic covers both cases.
++	 */
+ 	if (write)
+ 		need_pte_bits |= _PAGE_RW;
+ 
+diff --git a/mm/gup.c b/mm/gup.c
+index eab18ba045db..e7c7bcc0e268 100644
+--- a/mm/gup.c
++++ b/mm/gup.c
+@@ -978,7 +978,7 @@ static int check_vma_flags(struct vm_area_struct *vma, unsigned long gup_flags)
+ 		return -EFAULT;
+ 
+ 	if (write) {
+-		if (!(vm_flags & VM_WRITE)) {
++		if (!(vm_flags & VM_WRITE) || (vm_flags & VM_SHADOW_STACK)) {
+ 			if (!(gup_flags & FOLL_FORCE))
+ 				return -EFAULT;
+ 			/* hugetlb does not support FOLL_FORCE|FOLL_WRITE. */
 -- 
 2.17.1
 
