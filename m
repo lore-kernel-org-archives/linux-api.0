@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46401C87FE4
-	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8C5DC7EE30
+	for <linux-api@archiver.kernel.org>; Mon, 27 Feb 2023 22:32:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230317AbjB0WcC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 27 Feb 2023 17:32:02 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37582 "EHLO
+        id S229762AbjB0WcD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 27 Feb 2023 17:32:03 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37580 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230224AbjB0Wbp (ORCPT
+        with ESMTP id S230228AbjB0Wbp (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 27 Feb 2023 17:31:45 -0500
 Received: from mga12.intel.com (mga12.intel.com [192.55.52.136])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A70D928D38;
-        Mon, 27 Feb 2023 14:31:34 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 325AD29E11;
+        Mon, 27 Feb 2023 14:31:36 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1677537094; x=1709073094;
+  t=1677537096; x=1709073096;
   h=from:to:cc:subject:date:message-id:in-reply-to:
-   references;
-  bh=A4W74hb/mIAsetG4DQoyU98QDtxo6WTGpJJK3DMv6sU=;
-  b=Ke4ZilERCfs7OeQQ4tEy1DmXxKxtQo6f0vgkRPv+qXFxqmhbnJGN5Kdr
-   kLnMEDzIMivyX2OGIsAEFJJ4ZA2KulBdCU1I8jE1xWaKL+tWeZovav6Hi
-   qrk5ZP1Rb0zJTkgRyA796e5jLGXLC/x566d8B2w1tMhCOhw8DeOcyWqo4
-   j6Wb7e5Ur004wpO64UNKYNCtk5YB9UI0Duzr6gjIw9QMQAi5Yz4x4sfo4
-   XsRcVuRwb8EwCoXedwew4MYQgBS45sMpAl6Bp9bGNjh50fo81p8KGRET9
-   P6phnbJkU/RIBUJt10ZPi/R5zo+vgyxwmYVYexqSOn7PTHSd7PrLJv0/p
-   A==;
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657200"
+   references:mime-version:content-transfer-encoding;
+  bh=h3g9dfsaSYOQw9Djcf7aO6npKOb7bN/WODuQBbF8SE0=;
+  b=Ubt3Gx3414HK4ZAPqQUtqCrY0JJ1PRz/pqMyEujJszk+C6y1JlZrm5+T
+   QwIAgj62FyaDRJpWfRZszQ1PAHUrVpe2OyM0tnrzkbLt7KpPMSYhV0XjQ
+   +GPzDRqtxbJgblUy/fh/zsMoARk1aOnSX1wShQoyJNUEdW5Eu3rbObzuQ
+   oeMoCoYZTRt3MAN0NFSRu+5JaFTDB+KAv76wkukKFmyfhMRIZrCrC3Sti
+   Lv71oAIY2Thr+/Q1IqF67W61c44pl1w6hFd6jT5eITuxQwakahbOYPi64
+   EHDgeviIIASmf2Xco8s3VgN+fiY9jt7hREwB3HOUGd9eMHFqMZ+oLwIrV
+   w==;
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="313657249"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="313657200"
+   d="scan'208";a="313657249"
 Received: from orsmga005.jf.intel.com ([10.7.209.41])
-  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:14 -0800
-X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024424"
+  by fmsmga106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:16 -0800
+X-IronPort-AV: E=McAfee;i="6500,9779,10634"; a="848024459"
 X-IronPort-AV: E=Sophos;i="5.98,220,1673942400"; 
-   d="scan'208";a="848024424"
+   d="scan'208";a="848024459"
 Received: from leonqu-mobl1.amr.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.209.72.19])
-  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:13 -0800
+  by orsmga005-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 27 Feb 2023 14:31:15 -0800
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -66,109 +66,208 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Christoph Hellwig <hch@lst.de>
-Subject: [PATCH v7 09/41] x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-Date:   Mon, 27 Feb 2023 14:29:25 -0800
-Message-Id: <20230227222957.24501-10-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, linux-arm-kernel@lists.infradead.org,
+        linux-s390@vger.kernel.org, xen-devel@lists.xenproject.org
+Subject: [PATCH v7 11/41] mm: Introduce pte_mkwrite_kernel()
+Date:   Mon, 27 Feb 2023 14:29:27 -0800
+Message-Id: <20230227222957.24501-12-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+The x86 Control-flow Enforcement Technology (CET) feature includes a new
+type of memory called shadow stack. This shadow stack memory has some
+unusual properties, which requires some core mm changes to function
+properly.
 
-New processors that support Shadow Stack regard Write=0,Dirty=1 PTEs as
-shadow stack pages.
+One of these changes is to allow for pte_mkwrite() to create different
+types of writable memory (the existing conventionally writable type and
+also the new shadow stack type). Future patches will convert pte_mkwrite()
+to take a VMA in order to facilitate this, however there are places in the
+kernel where pte_mkwrite() is called outside of the context of a VMA.
+These are for kernel memory. So create a new variant called
+pte_mkwrite_kernel() and switch the kernel users over to it. Have
+pte_mkwrite() and pte_mkwrite_kernel() be the same for now. Future patches
+will introduce changes to make pte_mkwrite() take a VMA.
 
-In normal cases, it can be helpful to create Write=1 PTEs as also Dirty=1
-if HW dirty tracking is not needed, because if the Dirty bit is not already
-set the CPU has to set Dirty=1 when the memory gets written to. This
-creates additional work for the CPU. So traditional wisdom was to simply
-set the Dirty bit whenever you didn't care about it. However, it was never
-really very helpful for read-only kernel memory.
+Only do this for architectures that need it because they call pte_mkwrite()
+in arch code without an associated VMA. Since it will only currently be
+used in arch code, so do not include it in arch_pgtable_helpers.rst.
 
-When CR4.CET=1 and IA32_S_CET.SH_STK_EN=1, some instructions can write to
-such supervisor memory. The kernel does not set IA32_S_CET.SH_STK_EN, so
-avoiding kernel Write=0,Dirty=1 memory is not strictly needed for any
-functional reason. But having Write=0,Dirty=1 kernel memory doesn't have
-any functional benefit either, so to reduce ambiguity between shadow stack
-and regular Write=0 pages, remove Dirty=1 from any kernel Write=0 PTEs.
-
+Cc: linux-doc@vger.kernel.org
+Cc: linux-arm-kernel@lists.infradead.org
+Cc: linux-s390@vger.kernel.org
+Cc: xen-devel@lists.xenproject.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-mm@kvack.org
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
+Acked-by: David Hildenbrand <david@redhat.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
+Suggested-by: David Hildenbrand <david@redhat.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: Christoph Hellwig <hch@lst.de>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
 
 ---
+Hi Non-x86 Arch’s,
+
+x86 has a feature that allows for the creation of a special type of
+writable memory (shadow stack) that is only writable in limited specific
+ways. Previously, changes were proposed to core MM code to teach it to
+decide when to create normally writable memory or the special shadow stack
+writable memory, but David Hildenbrand suggested[0] to change
+pXX_mkwrite() to take a VMA, so awareness of shadow stack memory can be
+moved into x86 code.
+
+Since pXX_mkwrite() is defined in every arch, it requires some tree-wide
+changes. So that is why you are seeing some patches out of a big x86
+series pop up in your arch mailing list. There is no functional change.
+After this refactor, the shadow stack series goes on to use the arch
+helpers to push shadow stack memory details inside arch/x86.
+
+Testing was just 0-day build testing.
+
+Hopefully that is enough context. Thanks!
+
+[0] https://lore.kernel.org/lkml/0e29a2d0-08d8-bcd6-ff26-4bea0e4037b0@redhat.com/#t
+
 v6:
- - Also remove dirty from newly added set_memory_rox()
-
-v5:
- - Spelling and grammar in commit log (Boris)
-
-v3:
- - Update commit log (Andrew Cooper, Peterz)
-
-v2:
- - Normalize PTE bit descriptions between patches
+ - New patch
 ---
- arch/x86/include/asm/pgtable_types.h | 6 +++---
- arch/x86/mm/pat/set_memory.c         | 4 ++--
- 2 files changed, 5 insertions(+), 5 deletions(-)
+ arch/arm64/include/asm/pgtable.h | 7 ++++++-
+ arch/arm64/mm/trans_pgd.c        | 4 ++--
+ arch/s390/include/asm/pgtable.h  | 7 ++++++-
+ arch/s390/mm/pageattr.c          | 2 +-
+ arch/x86/include/asm/pgtable.h   | 7 ++++++-
+ arch/x86/xen/mmu_pv.c            | 2 +-
+ 6 files changed, 22 insertions(+), 7 deletions(-)
 
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index 447d4bee25c4..0646ad00178b 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -192,10 +192,10 @@ enum page_cache_mode {
- #define _KERNPG_TABLE		 (__PP|__RW|   0|___A|   0|___D|   0|   0| _ENC)
- #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
- #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
--#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
--#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
-+#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
-+#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
- #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
--#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
-+#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
- #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
- #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
- #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 356758b7d4b4..1b5c0dc9f32b 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -2073,12 +2073,12 @@ int set_memory_nx(unsigned long addr, int numpages)
- 
- int set_memory_ro(unsigned long addr, int numpages)
- {
--	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
-+	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY), 0);
+diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
+index b6ba466e2e8a..cccf8885792e 100644
+--- a/arch/arm64/include/asm/pgtable.h
++++ b/arch/arm64/include/asm/pgtable.h
+@@ -180,13 +180,18 @@ static inline pmd_t set_pmd_bit(pmd_t pmd, pgprot_t prot)
+ 	return pmd;
  }
  
- int set_memory_rox(unsigned long addr, int numpages)
+-static inline pte_t pte_mkwrite(pte_t pte)
++static inline pte_t pte_mkwrite_kernel(pte_t pte)
  {
--	pgprot_t clr = __pgprot(_PAGE_RW);
-+	pgprot_t clr = __pgprot(_PAGE_RW | _PAGE_DIRTY);
+ 	pte = set_pte_bit(pte, __pgprot(PTE_WRITE));
+ 	pte = clear_pte_bit(pte, __pgprot(PTE_RDONLY));
+ 	return pte;
+ }
  
- 	if (__supported_pte_mask & _PAGE_NX)
- 		clr.pgprot |= _PAGE_NX;
++static inline pte_t pte_mkwrite(pte_t pte)
++{
++	return pte_mkwrite_kernel(pte);
++}
++
+ static inline pte_t pte_mkclean(pte_t pte)
+ {
+ 	pte = clear_pte_bit(pte, __pgprot(PTE_DIRTY));
+diff --git a/arch/arm64/mm/trans_pgd.c b/arch/arm64/mm/trans_pgd.c
+index 4ea2eefbc053..5c07e68d80ea 100644
+--- a/arch/arm64/mm/trans_pgd.c
++++ b/arch/arm64/mm/trans_pgd.c
+@@ -40,7 +40,7 @@ static void _copy_pte(pte_t *dst_ptep, pte_t *src_ptep, unsigned long addr)
+ 		 * read only (code, rodata). Clear the RDONLY bit from
+ 		 * the temporary mappings we use during restore.
+ 		 */
+-		set_pte(dst_ptep, pte_mkwrite(pte));
++		set_pte(dst_ptep, pte_mkwrite_kernel(pte));
+ 	} else if (debug_pagealloc_enabled() && !pte_none(pte)) {
+ 		/*
+ 		 * debug_pagealloc will removed the PTE_VALID bit if
+@@ -53,7 +53,7 @@ static void _copy_pte(pte_t *dst_ptep, pte_t *src_ptep, unsigned long addr)
+ 		 */
+ 		BUG_ON(!pfn_valid(pte_pfn(pte)));
+ 
+-		set_pte(dst_ptep, pte_mkpresent(pte_mkwrite(pte)));
++		set_pte(dst_ptep, pte_mkpresent(pte_mkwrite_kernel(pte)));
+ 	}
+ }
+ 
+diff --git a/arch/s390/include/asm/pgtable.h b/arch/s390/include/asm/pgtable.h
+index 2c70b4d1263d..d4943f2d3f00 100644
+--- a/arch/s390/include/asm/pgtable.h
++++ b/arch/s390/include/asm/pgtable.h
+@@ -1005,7 +1005,7 @@ static inline pte_t pte_wrprotect(pte_t pte)
+ 	return set_pte_bit(pte, __pgprot(_PAGE_PROTECT));
+ }
+ 
+-static inline pte_t pte_mkwrite(pte_t pte)
++static inline pte_t pte_mkwrite_kernel(pte_t pte)
+ {
+ 	pte = set_pte_bit(pte, __pgprot(_PAGE_WRITE));
+ 	if (pte_val(pte) & _PAGE_DIRTY)
+@@ -1013,6 +1013,11 @@ static inline pte_t pte_mkwrite(pte_t pte)
+ 	return pte;
+ }
+ 
++static inline pte_t pte_mkwrite(pte_t pte)
++{
++	return pte_mkwrite_kernel(pte);
++}
++
+ static inline pte_t pte_mkclean(pte_t pte)
+ {
+ 	pte = clear_pte_bit(pte, __pgprot(_PAGE_DIRTY));
+diff --git a/arch/s390/mm/pageattr.c b/arch/s390/mm/pageattr.c
+index 85195c18b2e8..4ee5fe5caa23 100644
+--- a/arch/s390/mm/pageattr.c
++++ b/arch/s390/mm/pageattr.c
+@@ -96,7 +96,7 @@ static int walk_pte_level(pmd_t *pmdp, unsigned long addr, unsigned long end,
+ 		if (flags & SET_MEMORY_RO)
+ 			new = pte_wrprotect(new);
+ 		else if (flags & SET_MEMORY_RW)
+-			new = pte_mkwrite(pte_mkdirty(new));
++			new = pte_mkwrite_kernel(pte_mkdirty(new));
+ 		if (flags & SET_MEMORY_NX)
+ 			new = set_pte_bit(new, __pgprot(_PAGE_NOEXEC));
+ 		else if (flags & SET_MEMORY_X)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 56eea96502c6..3607f2572f9e 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -364,11 +364,16 @@ static inline pte_t pte_mkyoung(pte_t pte)
+ 	return pte_set_flags(pte, _PAGE_ACCESSED);
+ }
+ 
+-static inline pte_t pte_mkwrite(pte_t pte)
++static inline pte_t pte_mkwrite_kernel(pte_t pte)
+ {
+ 	return pte_set_flags(pte, _PAGE_RW);
+ }
+ 
++static inline pte_t pte_mkwrite(pte_t pte)
++{
++	return pte_mkwrite_kernel(pte);
++}
++
+ static inline pte_t pte_mkhuge(pte_t pte)
+ {
+ 	return pte_set_flags(pte, _PAGE_PSE);
+diff --git a/arch/x86/xen/mmu_pv.c b/arch/x86/xen/mmu_pv.c
+index ee29fb558f2e..a23f04243c19 100644
+--- a/arch/x86/xen/mmu_pv.c
++++ b/arch/x86/xen/mmu_pv.c
+@@ -150,7 +150,7 @@ void make_lowmem_page_readwrite(void *vaddr)
+ 	if (pte == NULL)
+ 		return;		/* vaddr missing */
+ 
+-	ptev = pte_mkwrite(*pte);
++	ptev = pte_mkwrite_kernel(*pte);
+ 
+ 	if (HYPERVISOR_update_va_mapping(address, ptev, 0))
+ 		BUG();
 -- 
 2.17.1
 
