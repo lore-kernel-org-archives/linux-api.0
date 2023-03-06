@@ -2,33 +2,33 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A2AA3C678D4
-	for <linux-api@archiver.kernel.org>; Mon,  6 Mar 2023 08:08:17 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 073C8C61DA4
+	for <linux-api@archiver.kernel.org>; Mon,  6 Mar 2023 13:01:59 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229582AbjCFIIQ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 6 Mar 2023 03:08:16 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41270 "EHLO
+        id S230408AbjCFNB4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 6 Mar 2023 08:01:56 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35412 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229510AbjCFIIP (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Mar 2023 03:08:15 -0500
+        with ESMTP id S230460AbjCFNBq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Mar 2023 08:01:46 -0500
 Received: from mail.skyhub.de (mail.skyhub.de [IPv6:2a01:4f8:190:11c2::b:1457])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8959286A6;
-        Mon,  6 Mar 2023 00:08:11 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 829AD2CFC3;
+        Mon,  6 Mar 2023 05:01:09 -0800 (PST)
 Received: from zn.tnic (p5de8e9fe.dip0.t-ipconnect.de [93.232.233.254])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id E1E6E1EC0554;
-        Mon,  6 Mar 2023 09:08:09 +0100 (CET)
+        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id B64261EC04DA;
+        Mon,  6 Mar 2023 14:01:07 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
-        t=1678090090;
+        t=1678107667;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
-        bh=SCgxwhfA8a2XzbeTj8pvN/P7ji/tBRIr/iWcDVYJ/Qg=;
-        b=hT6yTUHCM7iuFYwq3kiPpevrJfbf4NruRD+AiFavDW1R6kYkHTKRc/xTU5hzHlHM6vNlww
-        7jJxJGZh0qVyTqFR6adcA6K1PvN+XdSFZAVoo3V++d05KbDQ6rcktqT4oC+5k+UJO7/RW9
-        PC9GbmSz3dUK8wPBfDmFSPsylMM0BzE=
-Date:   Mon, 6 Mar 2023 09:08:05 +0100
+        bh=jQayClAk4ZKs945VJGZ1hReCgeNmANEJoJkjlZzhjRM=;
+        b=OLP9wrvnxP3bnofbwvS2TqGT0AU3SW2D5mL7WaFyFNRmzmapRbbEV2jcLh9mbFM5BlvCpA
+        cP5k+tgViv8zFIj65sSl31LsrfXl+HIKmVoU05Y2sKH94/MMBWFtDp2ZwxCY37ADbtpKsn
+        spmTShKfgv4iajAT73UtWOQiNHUruQ4=
+Date:   Mon, 6 Mar 2023 14:01:02 +0100
 From:   Borislav Petkov <bp@alien8.de>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -59,21 +59,20 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com,
         Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 21/41] mm: Add guard pages around a shadow stack.
-Message-ID: <ZAWfZcJLXUfNt1Fs@zn.tnic>
+Subject: Re: [PATCH v7 22/41] mm/mmap: Add shadow stack pages to memory
+ accounting
+Message-ID: <ZAXkDgmGFYpPoXTg@zn.tnic>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
- <20230227222957.24501-22-rick.p.edgecombe@intel.com>
+ <20230227222957.24501-23-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20230227222957.24501-22-rick.p.edgecombe@intel.com>
+In-Reply-To: <20230227222957.24501-23-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Just typos:
-
-On Mon, Feb 27, 2023 at 02:29:37PM -0800, Rick Edgecombe wrote:
+On Mon, Feb 27, 2023 at 02:29:38PM -0800, Rick Edgecombe wrote:
 > From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 > 
 > The x86 Control-flow Enforcement Technology (CET) feature includes a new
@@ -81,127 +80,10 @@ On Mon, Feb 27, 2023 at 02:29:37PM -0800, Rick Edgecombe wrote:
 > unusual properties, which requires some core mm changes to function
 > properly.
 > 
-> The architecture of shadow stack constrains the ability of userspace to
-> move the shadow stack pointer (SSP) in order to  prevent corrupting or
-> switching to other shadow stacks. The RSTORSSP can move the ssp to
-						^
-						instruction
+> Account shadow stack pages to stack memory. Do this by adding a
+> VM_SHADOW_STACK check in is_stack_mapping().
 
-s/ssp/SSP/g
-
-
-> different shadow stacks, but it requires a specially placed token in order
-> to do this. However, the architecture does not prevent incrementing the
-> stack pointer to wander onto an adjacent shadow stack. To prevent this in
-> software, enforce guard pages at the beginning of shadow stack vmas, such
-
-VMAs
-
-> that there will always be a gap between adjacent shadow stacks.
-> 
-> Make the gap big enough so that no userspace SSP changing operations
-> (besides RSTORSSP), can move the SSP from one stack to the next. The
-> SSP can increment or decrement by CALL, RET  and INCSSP. CALL and RET
-
-"can be incremented or decremented"
-
-> can move the SSP by a maximum of 8 bytes, at which point the shadow
-> stack would be accessed.
-> 
-> The INCSSP instruction can also increment the shadow stack pointer. It
-> is the shadow stack analog of an instruction like:
-> 
-> 	addq    $0x80, %rsp
-> 
-> However, there is one important difference between an ADD on %rsp and
-> INCSSP. In addition to modifying SSP, INCSSP also reads from the memory
-> of the first and last elements that were "popped". It can be thought of
-> as acting like this:
-> 
-> READ_ONCE(ssp);       // read+discard top element on stack
-> ssp += nr_to_pop * 8; // move the shadow stack
-> READ_ONCE(ssp-8);     // read+discard last popped stack element
-> 
-> The maximum distance INCSSP can move the SSP is 2040 bytes, before it
-> would read the memory. Therefore a single page gap will be enough to
-				  ^
-				  ,
-
-
-> prevent any operation from shifting the SSP to an adjacent stack, since
-> it would have to land in the gap at least once, causing a fault.
-> 
-> This could be accomplished by using VM_GROWSDOWN, but this has a
-> downside. The behavior would allow shadow stack's to grow, which is
-
-s/stack's/stacks/
-
-> unneeded and adds a strange difference to how most regular stacks work.
-> 
-> Tested-by: Pengfei Xu <pengfei.xu@intel.com>
-> Tested-by: John Allen <john.allen@amd.com>
-> Tested-by: Kees Cook <keescook@chromium.org>
-> Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> Co-developed-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-> Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
-> Cc: Kees Cook <keescook@chromium.org>
-> 
-> ---
-> v5:
->  - Fix typo in commit log
-> 
-> v4:
->  - Drop references to 32 bit instructions
->  - Switch to generic code to drop __weak (Peterz)
-> 
-> v2:
->  - Use __weak instead of #ifdef (Dave Hansen)
->  - Only have start gap on shadow stack (Andy Luto)
->  - Create stack_guard_start_gap() to not duplicate code
->    in an arch version of vm_start_gap() (Dave Hansen)
->  - Improve commit log partly with verbiage from (Dave Hansen)
-> 
-> Yu-cheng v25:
->  - Move SHADOW_STACK_GUARD_GAP to arch/x86/mm/mmap.c.
-> ---
->  include/linux/mm.h | 31 ++++++++++++++++++++++++++-----
->  1 file changed, 26 insertions(+), 5 deletions(-)
-> 
-> diff --git a/include/linux/mm.h b/include/linux/mm.h
-> index 097544afb1aa..6a093daced88 100644
-> --- a/include/linux/mm.h
-> +++ b/include/linux/mm.h
-> @@ -3107,15 +3107,36 @@ struct vm_area_struct *vma_lookup(struct mm_struct *mm, unsigned long addr)
->  	return mtree_load(&mm->mm_mt, addr);
->  }
->  
-> +static inline unsigned long stack_guard_start_gap(struct vm_area_struct *vma)
-> +{
-> +	if (vma->vm_flags & VM_GROWSDOWN)
-> +		return stack_guard_gap;
-> +
-> +	/*
-> +	 * Shadow stack pointer is moved by CALL, RET, and INCSSPQ.
-> +	 * INCSSPQ moves shadow stack pointer up to 255 * 8 = ~2 KB
-> +	 * and touches the first and the last element in the range, which
-> +	 * triggers a page fault if the range is not in a shadow stack.
-> +	 * Because of this, creating 4-KB guard pages around a shadow
-> +	 * stack prevents these instructions from going beyond.
-
-I'd prefer the equivalant explanation above from the commit message - it
-is more precise.
-
-> +	 *
-> +	 * Creation of VM_SHADOW_STACK is tightly controlled, so a vma
-> +	 * can't be both VM_GROWSDOWN and VM_SHADOW_STACK
-> +	 */
-> +	if (vma->vm_flags & VM_SHADOW_STACK)
-> +		return PAGE_SIZE;
-> +
-> +	return 0;
-> +}
+That last sentence is superfluous.
 
 -- 
 Regards/Gruss,
