@@ -2,33 +2,33 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 073C8C61DA4
-	for <linux-api@archiver.kernel.org>; Mon,  6 Mar 2023 13:01:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 36C26C61DA4
+	for <linux-api@archiver.kernel.org>; Mon,  6 Mar 2023 13:10:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230408AbjCFNB4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 6 Mar 2023 08:01:56 -0500
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35412 "EHLO
+        id S230434AbjCFNK1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 6 Mar 2023 08:10:27 -0500
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45966 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230460AbjCFNBq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Mar 2023 08:01:46 -0500
+        with ESMTP id S230323AbjCFNK0 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 6 Mar 2023 08:10:26 -0500
 Received: from mail.skyhub.de (mail.skyhub.de [IPv6:2a01:4f8:190:11c2::b:1457])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 829AD2CFC3;
-        Mon,  6 Mar 2023 05:01:09 -0800 (PST)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 369E928864;
+        Mon,  6 Mar 2023 05:10:19 -0800 (PST)
 Received: from zn.tnic (p5de8e9fe.dip0.t-ipconnect.de [93.232.233.254])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id B64261EC04DA;
-        Mon,  6 Mar 2023 14:01:07 +0100 (CET)
+        by mail.skyhub.de (SuperMail on ZX Spectrum 128k) with ESMTPSA id B221A1EC04DA;
+        Mon,  6 Mar 2023 14:10:17 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=alien8.de; s=dkim;
-        t=1678107667;
+        t=1678108217;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:in-reply-to:in-reply-to:  references:references;
-        bh=jQayClAk4ZKs945VJGZ1hReCgeNmANEJoJkjlZzhjRM=;
-        b=OLP9wrvnxP3bnofbwvS2TqGT0AU3SW2D5mL7WaFyFNRmzmapRbbEV2jcLh9mbFM5BlvCpA
-        cP5k+tgViv8zFIj65sSl31LsrfXl+HIKmVoU05Y2sKH94/MMBWFtDp2ZwxCY37ADbtpKsn
-        spmTShKfgv4iajAT73UtWOQiNHUruQ4=
-Date:   Mon, 6 Mar 2023 14:01:02 +0100
+        bh=bWmcddmzGW5yzynufI6rjsmSnLtiGLy5KYxja3tJ0Z8=;
+        b=B8mcPzwvMPSYO4I+OvKl5AfMKP7855m2KCKcP9KOUVszEzgJdjNqkWvJcMA7QfJSyyBTt9
+        qO1zUWZ+n9bzrRq4rlVZeJXOKYFQs1KYAKKh+nM2U/gtcRAN9sIniVVphbNrFpKd2mbZAR
+        MXoTf9V/XVsPQ8WRnhN3mJJiq6GdCQo=
+Date:   Mon, 6 Mar 2023 14:10:17 +0100
 From:   Borislav Petkov <bp@alien8.de>
 To:     Rick Edgecombe <rick.p.edgecombe@intel.com>
 Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
@@ -57,33 +57,46 @@ Cc:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         eranian@google.com, rppt@kernel.org, jamorris@linux.microsoft.com,
         dethoma@microsoft.com, akpm@linux-foundation.org,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
-        david@redhat.com, debug@rivosinc.com,
-        Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 22/41] mm/mmap: Add shadow stack pages to memory
- accounting
-Message-ID: <ZAXkDgmGFYpPoXTg@zn.tnic>
+        david@redhat.com, debug@rivosinc.com
+Subject: Re: [PATCH v7 24/41] mm: Don't allow write GUPs to shadow stack
+ memory
+Message-ID: <ZAXmOZYcoR3hq/CH@zn.tnic>
 References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
- <20230227222957.24501-23-rick.p.edgecombe@intel.com>
+ <20230227222957.24501-25-rick.p.edgecombe@intel.com>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20230227222957.24501-23-rick.p.edgecombe@intel.com>
+In-Reply-To: <20230227222957.24501-25-rick.p.edgecombe@intel.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Feb 27, 2023 at 02:29:38PM -0800, Rick Edgecombe wrote:
-> From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> 
+On Mon, Feb 27, 2023 at 02:29:40PM -0800, Rick Edgecombe wrote:
 > The x86 Control-flow Enforcement Technology (CET) feature includes a new
 > type of memory called shadow stack. This shadow stack memory has some
 > unusual properties, which requires some core mm changes to function
 > properly.
 > 
-> Account shadow stack pages to stack memory. Do this by adding a
-> VM_SHADOW_STACK check in is_stack_mapping().
+> Shadow stack memory is writable only in very specific, controlled ways.
+> However, since it is writable, the kernel treats it as such. As a result
+									  ^
+									  ,
 
-That last sentence is superfluous.
+> there remain many ways for userspace to trigger the kernel to write to
+> shadow stack's via get_user_pages(, FOLL_WRITE) operations. To make this a
+
+"stacks"
+
+or "to write to a shadow stack via..."
+
+> little less exposed, block writable GUPs for shadow stack VMAs.
+
+GUPs?
+
+I supposed this means "prevent get_user_pages() from pinning pages to
+which the corresponding VMA is a shadow stack one."?
+
+Or something like that which is less mm-internal speak...
 
 -- 
 Regards/Gruss,
