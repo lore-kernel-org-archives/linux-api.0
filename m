@@ -2,67 +2,67 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DFC2EC6FD1D
-	for <linux-api@archiver.kernel.org>; Wed, 15 Mar 2023 22:51:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B43BAC61DA4
+	for <linux-api@archiver.kernel.org>; Wed, 15 Mar 2023 22:52:52 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232653AbjCOWvm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 15 Mar 2023 18:51:42 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47760 "EHLO
+        id S232615AbjCOWwv (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 15 Mar 2023 18:52:51 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49888 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232543AbjCOWv3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Mar 2023 18:51:29 -0400
-Received: from sonic310-31.consmr.mail.ne1.yahoo.com (sonic310-31.consmr.mail.ne1.yahoo.com [66.163.186.212])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9B5A422CA6
-        for <linux-api@vger.kernel.org>; Wed, 15 Mar 2023 15:51:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1678920629; bh=ylaVWORBqgwPnX0cgeH09/nXwfkOMqqqp/PkB18uv1U=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=bDT0NCTmkwaabsc+dcWygREluI023CSk+HKwrCy6iF88QGmWlBGIDBcjKhwEESscZtxe8a3B3Ljo5F0G2CbMQrZcyyTkma5YcaKFLHhjG6QG/C1fn/UvTqS/WBiRm31dfImMk/Kb8ajtZ6q4d3K2arYF5OiHUV8jtgRGsgLcpunwfZXUc2z8m5TDesFbs755wMIiykeIkpxsIhT1t+irZ8V1BFzJm4MHckzWagM93RZLMSArnTbcWkXwGo/lqXERSA4JiIzPP0NkL11tYvcFMu2n0lEB41Ywv7w4NxIgi4lMiKTKB61th4F9fQ90fIYZZM5309LAEMzamN4tgoJRNQ==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1678920629; bh=9tL6T/4ms/E8+fo52yhFKb4PRZOxTyEzM+nwd1U4NCb=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=tOYEB8Gmbh959qP0LI7I/+eZD/eHi4U44GhVlpaeTXhGaI4wEqJ1+rtimEVHpxh7DAL6Ff9Z30/dN2Cf2Q9+CDSPHWX32x+Qot7o8HLVnG6lYpN46y1maGmtjV4gTaZA/SiwtxHxbO1WypJJ0cv6cQSmhtoEX99yW5yJnYeUeS6IQZfQbW06Xr9VZZICO9JRg+lM8WoStp0NTnco/lN4m7cR2TkmRRAyuqYiiEHyIubW5PMiSHBG+Iw3wWdCDaxtlsuYr92QaJQ0BSksLEr3pfLXEvSYf8aBXKcEqT07IEPMQDWExkv9zkBzPtvdi+7/L8YyHLSLFRbqOFfL/xpBMQ==
-X-YMail-OSG: uk.YOLsVM1lzVQLKKkeK6BAIE8kK_x4GHzQoGCYf8UtdwcttCYQO0PK1y0JJ5TU
- GeP_.F_PYtpjQmnqAlMccArqQskswFZsyOQlNJZFU400J0LamIJFotg7dP5I3IKcmqTfVO1wtb61
- GzJ89iUTlOfOYt0EwDryzY8YHpCREa9tMgB1N0Cs1N0q7iDN77rA.mX9XrpUOf6sEmsYIRszIgyv
- N_w8HYF6koZPNaXUgJS4VdGZtipolgOY1DZ_Efv00QqnPFvnkXQJ0KBg_JsHi47J5OVoGTYG53NB
- birwG2TS10DY5.6qAvfrQtCM3NXRxIdWWs_4Xj2uQ7yxxPEgIQcFRS8WCqWoBNeJzwbfbXEsKK8.
- b744MJfRRcX94iKklDHLMmTBsx11WLW9EoercTFXOIfinU8agMjmdrF6PeLx7TW3sPjqQIyFJWNF
- SX2oXNGPpLuQ1D.XrLBMzSf.JDnVut9OhpEIXONJ_RyKMJKFY9tDVYfxIxGEwTxW9SIfqsg09gtF
- ZEaGxM6rpX63o8M8I2RD7zB0ZSzCT4AM8KNQFD9blh21MF6bXuDN5z3vvD.qiOu2N2L8ccU0Th9s
- sp_m7UlILEgZ3SJToQSiG6UrvPT.jXSiW0wrwExGpjUs7JCWa9ob7i79wCrsvmJmomfhsM8qEiVk
- iXe4YNdKrxCe4s89GRJQDiIcMU9uqBUssbPcDs8Ci03hyCNPrJa0t9HuM9odfPOaJ.kaLE.2U3p7
- 3cedVdEwhglrJda8wS4lHSlSQQaaSH94__sIalGoQasmnb2ZjoofgJddBFoDBvlCfY7RXkiswd4V
- EO3WBjvmq3MF9djqDDeJdiu1t2120dxV5dUQaW3IrrfHhYA3fC8frdDa9eU1GP11IyMFY.dhaHnS
- JdP4ZoOQ7mHHrhDGLJToOWEkG7Gt5DllIvpFeqprQjBXCB1QaBcsh6YnLFkO9VTlxAWeiC23cLQ8
- KihYklfg2ARlKh.5WIBrcIROn5XFkhYBfacvY_7luEBmIkly2zWlidY1iMGM7WV67vQEefvELLV9
- eeZFpr17mMr4BzzFQcgSXyOMMe0ayZXzAUlVMHl4ZHnINds6oTQcrMXzO_mCaFkUYO.tij_FJKt6
- H0bQUMasm1lmov2b6cvR9sjN8hNQCbg9UuCgPqfVpu7xwBuMbAd7Lml.HADNcabpHUClE_ojB2yr
- Aj_X4IC.xk0JVNEeRKilJKxQ7BGNdXWYoIVLvI2sdOS83e56IR.am41_ItGr8gb.eXPpQyoWN6lW
- HYmTvsRgbnDPrYisRzkjcyQQAOv5i2FihgyKc0Re_PGUw9hyhJe4NkTOGxZLZ16wUkHEphTdfzR2
- aAzWbE.XSen0nSbJZEr.Bu5FwT.bz4RyXk9cxTXfLcrYEnZTTX3I0EtZq6S7eKMz35sJDA0VVeYm
- apJMYY5NTqfsNWDIJnEN7Rpmxp1Bvd7EghQDYtgeKj_zzSO35d2lM3bhK7p_3pSTdF7wbuXWPOHI
- C4Lx4GZFrk3Ik.cl7VMesexL_dF0bTMO83NCVnp4MgV_QBAmXuXLdKW5m7oGtX2d6zeCklHJkuVt
- LmsldkoQopwIyusKwMTDrLz66A2bc8MjgrvPSReBVlKUYNJKRCa7DJOr95ID9BJfkTttPTxfE_h.
- GIdsmFc_FH2xu2K5D_Uk3H8EhgXP0nOf99a6._RQDIGU5rl__WQTKeUaXlt4H8wc618QRP9r5gg0
- LIZyA3SxMUL2QIuOBcUKPwTTtz5XB0kiwp9YKGs2WYwh68xj9T6xmTd_PFhsMlsOPE658IwIegq5
- u2qsuDwoffIvphLqwLBrH0scVO2gk7VgaKYstf5.tSBpFKy9Vk92a2yGSzB9U8JFVs32KaTLEofY
- hlNV78fm2btY7QPynKTQ78btQhn5rHyPk4k4HadyBd3FY9VA6OTEvVkyidg7j_4vDMLtaDaGwJ2u
- tZkd2azNdPIchNi5WkJPMtXj18QVZjx8VbTkRmnqP0sIqmQl9dB6u3bV7Uc2DmFactby2vroBO3x
- hm9fi_YhoHj3sbrAQxcLKg7DNnPpDPeDkJfMC0R.EBL.Xo0jpwfvhVxhO.XzKLzTXnLPKkA3yGQe
- 9chE1bSh0MY2vkCLucT3FCVhZ6a6Qy1XAidApfEY34sfn6JIJrpUEZ4CtOy7sow33AShsPW5UL6V
- cIMbLEWGiFXt0c3mPD6V8fqDv.xrZt7_6GJSFdfN1wBbMqKMcx6a1qVEgOvYvXoCKDclgaFPLad6
- 9Yu4tNr6DP3Mm6PYrHib9ppw64qPDncLrouE84h6FEll.iQQhbbpOBNBKgNTC8s9TQL8U5Cbog3P
- 9KnS2Wemh9CQDeLiktYM-
+        with ESMTP id S232511AbjCOWwu (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 15 Mar 2023 18:52:50 -0400
+Received: from sonic307-16.consmr.mail.ne1.yahoo.com (sonic307-16.consmr.mail.ne1.yahoo.com [66.163.190.39])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BBBA65B41B
+        for <linux-api@vger.kernel.org>; Wed, 15 Mar 2023 15:52:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1678920724; bh=if+hZ2DN4xtsEpQ7eGOO9abOIZ8e6G3kT7BOtEafrW4=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=JDUCL2ydGoT4nop6+kyL/hf41xPMge8Y84ksxst+iE1XhxAuDI5ma6Lu3G3cFv1UKtvWovhfAerMoPbyHs4B9FFPFF4sl0jJ79s0H5GCu3uzBI2WL7GlrwT0GIvJL/xw22A8GdOPihpoHOt6si39mxZW0+QxPoCMgALpLepaLOGG4mSGX6WYzwPyaM3NtLehenjfzPUR8VA2zN6e6tSVTC1RfYZXjE4/oNosdaq/d4a3QhfM8T83k7XWHAlLgf5Wc2j7p6kGa1r5fFWN2XLySQnpMcICejWpkuUu8hbL863ZZT8V16rBywQ3PyrywQna/xsFXvL3d2ds7svgNiyj8Q==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1678920725; bh=jVEP8q4W5vwO1zMf7ZzeN6CGJWILPyziyt71bfVfhq+=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=ocLjPv+GDU3yt2Go4mBLmZB6o/v69VJ8dSJBKiWnPMAbP7nYv15kXccXTJ3gZMrU5uSd+VEyGLTHSF65gpQnce49xbFbmB9AWUz3N3DRD0JrZ9Br3fxfpLkiK/3CnB0Yp2L5RSGklF+wdXG/2Dfz/duCmOZtENgXXZOdFB4fBKTnudqbtZQDoFzoZvxTJ8yFfLdlgpQgRiKWp6ardk3cpi8Z9VpSe+tXgoIfwiHgEpSohs0iLZK+Yv6aGmGdmtL30Ex9ikawlMk0qkQxlacz7zr7RzWdRUEfva/dCJSU0V+ltX3fpqcwXUZHRBN4WSlmIgY29dUpm1OVEX3UawdoAg==
+X-YMail-OSG: Ww5itYoVM1njYCJfDWxNLthinP6bHmqq4Jg4TYHRdiusab_QwW8ShWhTqod0qUp
+ P1LmovhADG7PWk0lujbtGm1CfddF1Vab_v1CHwEo6xOrq6tILHA00VjsNxd5bNh1785oa91Z9TET
+ z9SgcjJSki.khfoW01GdpKrCq2P7F8kRn9hKts_uRy.qeqHJD8_wAFRBIaLLWo1.trUOEQjHCMrF
+ yKbGQq1nR8.kptzAmimTvnWRakchvfE3EyolzQTWbUaLJ.vdtLL.jjRXAS.YM7zJMKG_oYdFeb2i
+ NKeFXW6ZWYnIWZeN6ZhG2dJStnH8ovhitRgPaNDOwt.qJeQ1kE_zSlCP.Q.oHX9WG8CIDUY3pb06
+ sfIjuawDTIPF0AaFEO.WEzIeB37tAqO0MwrrwcG.jVDECH_Jv497UAFmO6kfuI1ZTTR3GV.aEO31
+ tFQ3YS9WwLKQsuFD19VbQ0f8NEsLlRgabRyXdw8ECFt.kz5kkaAmfVTN7yrU8kDloCL0xpcBbHvX
+ DFCDz6pA7_cgVcpDLS6dhGEUILNmw84xULfg8aNlNaSa8ZT6FMsaf8Pq4KqDrbnQ6pzSOxsHHOVy
+ KN6lpvP3sSimOJC8AMi2YnLsm3oMiLZKKv9EYq5msoSP4S38lxSpqsHFnpXrHa9PKzYlUNK4sR5b
+ H.58j22H2N6ykIYLU57qhcXhSU2rrIFvZ3w3wJ6kuNNkBX8Fg6_gT_jJ5ixhJ3HlgHDR_EUWkHC1
+ YMarN2.DNH2m0jd.o1iS6caeEwQaiFwPeF9brHNocAT7kuNMiUqe61GvMp1wZbCHIFTdrjRBM9NY
+ tA6ngUdfxD5_pSBpV3_rLo3584H0k9wm4hCi_pFWs6PV14StaTv12b6.p9SD3nYDJRW5yWCIP4Jc
+ tu_2Z1Y8aPu2uJuaBDR0bQHkOs1CrdYPeid0trQ2t26hU3cBMY0Sm.l52PmNomTCUz2FRYea7fYf
+ ylylGgar7eJtqA6uGTKcFvN8fMFd6bGuFvwc5En0BjDU6Xy.MeecIxifmxGDG.qf2Ar3dKkZ7w5q
+ xtXjw3ZaBui_qMKuOd7I0m2GIoz3h9Cxg0TActP7wvi.iaDOWWWjURsKfIRXsH3XqrZI8.yGj5z8
+ nLhpdssWdrrENTjPkWiroMEX.SkkkTKQtwQHfkoHgpFP5NXQpG7SkcNj51UvycPMb.8sXj7Be48e
+ YG4k3.xeGzukR6y2S1FBPS29oKl5wQZQ5G59VwEJiCQd69cBAiCHa9lDBTQcogMF5e8uGgofHbtX
+ x6hjvhc9Iy2ikK9g77nrDc8eM106W.AEewdwm7KyP.Sqs_ulXdi_g9KiZkZbO9pJmJqYNoaWT923
+ f4PhXYeW17KApkfB1Zlh9DydaqaaruUBjnKoBGHgq1Lc5MZA20F7nFXz1pr.icBWkn7HvD9wgK0P
+ JJDLkIAEYK7eli8JOkHCgPpmfJTEuyHYZfcIq517CJ29_GcF8p5N.cQeMS7detv4Gq0r.Wv5tbBC
+ b6gH1Jeh4dLO0igr6v45gtV4QvFAfkiJv1s_0w4HPj8jsgS7hb_gcs.QNjW9LbbW7gOLeTxZCeds
+ 0Hu6SnWtyD9xJfeEdG5YtDuqdPDh4Ut_TBPX3UkXYQBV0RWvGJSBktE9n6ks8J.8Hk9NZm9SzGaN
+ 8jN12s5U5Ic7mEdD8kr13KYY6x5qBZ6S4E7Oh0l3KC1ONF8Gt4giKSJSL4.9QyWqgjIVwDvaSxn_
+ o4rR1nwQEgKIm6OR52JP_3MiK0uqE64wIkYjmn.zboXL960gDBFixUxCBuAEM_RFUf7fuCVOkEGO
+ zX6Ii8wULhkU0hX.izLGH79WaDvILBdDomra56bRu9FzObgfWcq_wIXgnMOsy7t4aGBU192hDg0X
+ ck9Qzgdz8yeTHz7Nr_zxI_ygsRCG5r3_h.Xdq6n85.bX1zWeJgv93YtSPyF2BVZr.htuhpNz63Za
+ 1iQx46ewcT9ADeiRj7hEWviCzUDT5.oKSs.5Ro3KU9C7FMgNzMrkO.A8ssQXqSkNLyAWIyy.v1W0
+ c0w586Yv3clh49KD0llIbh66yOeVnkgItdv.8IKzunMaL7NmeiLdD931Xw8CTg0OQtyuwcBQ.IID
+ ybxSZLrV2VpLTVGbo4EXOJYuo.4gvHToW9cbvFuL7w0b0HnXv2jJArgLQxz80ke8lBxKh5LXPhxx
+ X.cbUNbOjrtwAVWTWr_i1Q.5p9R.Tus8Q5N74xlbjrZPX3UUe7QbKntfSiLPa5inRny6n3kW_Mus
+ _oAaAxgxF0YXmzkEyH9vUKlUFgT9oOUq2V3YEIzbFOoV6EEMZ5kEaO3VGGXuJSIzTdGidIJFiYUe
+ ZOs70fKqTffdYjSbWT3HEOxcnXKwr
 X-Sonic-MF: <casey@schaufler-ca.com>
-X-Sonic-ID: 10223a3d-1f1d-4cf4-bc64-10581ecf481b
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic310.consmr.mail.ne1.yahoo.com with HTTP; Wed, 15 Mar 2023 22:50:29 +0000
-Received: by hermes--production-bf1-777648578f-mpdrm (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 50e2f089a68eaebcc40c76391bc13d32;
-          Wed, 15 Mar 2023 22:50:24 +0000 (UTC)
+X-Sonic-ID: 1a0fd68d-3764-4dd3-932e-1a4ff284b6ab
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic307.consmr.mail.ne1.yahoo.com with HTTP; Wed, 15 Mar 2023 22:52:04 +0000
+Received: by hermes--production-ne1-759c9b8c64-2fnfh (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 3519737f64e89c1a78f5fee6524d3fd8;
+          Wed, 15 Mar 2023 22:52:00 +0000 (UTC)
 From:   Casey Schaufler <casey@schaufler-ca.com>
 To:     casey@schaufler-ca.com, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
 Cc:     jmorris@namei.org, keescook@chromium.org,
         john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v7 08/11] Smack: implement setselfattr and getselfattr hooks
-Date:   Wed, 15 Mar 2023 15:47:01 -0700
-Message-Id: <20230315224704.2672-9-casey@schaufler-ca.com>
+        linux-api@vger.kernel.org, mic@digikod.net, selinux@vger.kernel.org
+Subject: [PATCH v7 10/11] SELinux: Add selfattr hooks
+Date:   Wed, 15 Mar 2023 15:47:03 -0700
+Message-Id: <20230315224704.2672-11-casey@schaufler-ca.com>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20230315224704.2672-1-casey@schaufler-ca.com>
 References: <20230315224704.2672-1-casey@schaufler-ca.com>
@@ -72,110 +72,209 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Implement Smack support for security_[gs]etselfattr.
-Refactor the setprocattr hook to avoid code duplication.
+Add hooks for setselfattr and getselfattr. These hooks are not very
+different from their setprocattr and getprocattr equivalents, and
+much of the code is shared.
 
 Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
+Cc: selinux@vger.kernel.org
+Cc: Paul Moore <paul@paul-moore.com>
 ---
- security/smack/smack_lsm.c | 105 +++++++++++++++++++++++++++++++++++--
- 1 file changed, 100 insertions(+), 5 deletions(-)
+ security/selinux/hooks.c | 147 +++++++++++++++++++++++++++++++--------
+ 1 file changed, 117 insertions(+), 30 deletions(-)
 
-diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-index 3cf862fcbe08..b3e72b82ced9 100644
---- a/security/smack/smack_lsm.c
-+++ b/security/smack/smack_lsm.c
-@@ -3552,6 +3552,41 @@ static void smack_d_instantiate(struct dentry *opt_dentry, struct inode *inode)
- 	return;
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index 9403aee75981..8896edf80aa9 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -6348,8 +6348,7 @@ static void selinux_d_instantiate(struct dentry *dentry, struct inode *inode)
+ 		inode_doinit_with_dentry(inode, dentry);
  }
  
-+/**
-+ * smack_getselfattr - Smack current process attribute
-+ * @attr: which attribute to fetch
-+ * @ctx: buffer to receive the result
-+ * @size: available size in, actual size out
-+ * @flags: unused
-+ *
-+ * Fill the passed user space @ctx with the details of the requested
-+ * attribute.
-+ *
-+ * Returns 0 on success, an error code otherwise.
-+ */
-+static int smack_getselfattr(unsigned int __user attr,
-+			     struct lsm_ctx __user *ctx, size_t *size,
-+			     u32 __user flags)
+-static int selinux_getprocattr(struct task_struct *p,
+-			       const char *name, char **value)
++static int do_getattr(unsigned int attr, struct task_struct *p, char **value)
+ {
+ 	const struct task_security_struct *__tsec;
+ 	u32 sid;
+@@ -6367,20 +6366,27 @@ static int selinux_getprocattr(struct task_struct *p,
+ 			goto bad;
+ 	}
+ 
+-	if (!strcmp(name, "current"))
++	switch (attr) {
++	case LSM_ATTR_CURRENT:
+ 		sid = __tsec->sid;
+-	else if (!strcmp(name, "prev"))
++		break;
++	case LSM_ATTR_PREV:
+ 		sid = __tsec->osid;
+-	else if (!strcmp(name, "exec"))
++		break;
++	case LSM_ATTR_EXEC:
+ 		sid = __tsec->exec_sid;
+-	else if (!strcmp(name, "fscreate"))
++		break;
++	case LSM_ATTR_FSCREATE:
+ 		sid = __tsec->create_sid;
+-	else if (!strcmp(name, "keycreate"))
++		break;
++	case LSM_ATTR_KEYCREATE:
+ 		sid = __tsec->keycreate_sid;
+-	else if (!strcmp(name, "sockcreate"))
++		break;
++	case LSM_ATTR_SOCKCREATE:
+ 		sid = __tsec->sockcreate_sid;
+-	else {
+-		error = -EINVAL;
++		break;
++	default:
++		error = -EOPNOTSUPP;
+ 		goto bad;
+ 	}
+ 	rcu_read_unlock();
+@@ -6398,7 +6404,7 @@ static int selinux_getprocattr(struct task_struct *p,
+ 	return error;
+ }
+ 
+-static int selinux_setprocattr(const char *name, void *value, size_t size)
++static int do_setattr(u64 attr, void *value, size_t size)
+ {
+ 	struct task_security_struct *tsec;
+ 	struct cred *new;
+@@ -6409,28 +6415,36 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 	/*
+ 	 * Basic control over ability to set these attributes at all.
+ 	 */
+-	if (!strcmp(name, "exec"))
++	switch (attr) {
++	case LSM_ATTR_CURRENT:
++		error = avc_has_perm(&selinux_state,
++				     mysid, mysid, SECCLASS_PROCESS,
++				     PROCESS__SETCURRENT, NULL);
++		break;
++	case LSM_ATTR_EXEC:
+ 		error = avc_has_perm(&selinux_state,
+ 				     mysid, mysid, SECCLASS_PROCESS,
+ 				     PROCESS__SETEXEC, NULL);
+-	else if (!strcmp(name, "fscreate"))
++		break;
++	case LSM_ATTR_FSCREATE:
+ 		error = avc_has_perm(&selinux_state,
+ 				     mysid, mysid, SECCLASS_PROCESS,
+ 				     PROCESS__SETFSCREATE, NULL);
+-	else if (!strcmp(name, "keycreate"))
++		break;
++	case LSM_ATTR_KEYCREATE:
+ 		error = avc_has_perm(&selinux_state,
+ 				     mysid, mysid, SECCLASS_PROCESS,
+ 				     PROCESS__SETKEYCREATE, NULL);
+-	else if (!strcmp(name, "sockcreate"))
++		break;
++	case LSM_ATTR_SOCKCREATE:
+ 		error = avc_has_perm(&selinux_state,
+ 				     mysid, mysid, SECCLASS_PROCESS,
+ 				     PROCESS__SETSOCKCREATE, NULL);
+-	else if (!strcmp(name, "current"))
+-		error = avc_has_perm(&selinux_state,
+-				     mysid, mysid, SECCLASS_PROCESS,
+-				     PROCESS__SETCURRENT, NULL);
+-	else
+-		error = -EINVAL;
++		break;
++	default:
++		error = -EOPNOTSUPP;
++		break;
++	}
+ 	if (error)
+ 		return error;
+ 
+@@ -6442,13 +6456,14 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 		}
+ 		error = security_context_to_sid(&selinux_state, value, size,
+ 						&sid, GFP_KERNEL);
+-		if (error == -EINVAL && !strcmp(name, "fscreate")) {
++		if (error == -EINVAL && attr == LSM_ATTR_FSCREATE) {
+ 			if (!has_cap_mac_admin(true)) {
+ 				struct audit_buffer *ab;
+ 				size_t audit_size;
+ 
+-				/* We strip a nul only if it is at the end, otherwise the
+-				 * context contains a nul and we should audit that */
++				/* We strip a nul only if it is at the end,
++				 * otherwise the context contains a nul and
++				 * we should audit that */
+ 				if (str[size - 1] == '\0')
+ 					audit_size = size - 1;
+ 				else
+@@ -6459,7 +6474,8 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 				if (!ab)
+ 					return error;
+ 				audit_log_format(ab, "op=fscreate invalid_context=");
+-				audit_log_n_untrustedstring(ab, value, audit_size);
++				audit_log_n_untrustedstring(ab, value,
++							    audit_size);
+ 				audit_log_end(ab);
+ 
+ 				return error;
+@@ -6483,11 +6499,11 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 	   checks and may_create for the file creation checks. The
+ 	   operation will then fail if the context is not permitted. */
+ 	tsec = selinux_cred(new);
+-	if (!strcmp(name, "exec")) {
++	if (attr == LSM_ATTR_EXEC) {
+ 		tsec->exec_sid = sid;
+-	} else if (!strcmp(name, "fscreate")) {
++	} else if (attr == LSM_ATTR_FSCREATE) {
+ 		tsec->create_sid = sid;
+-	} else if (!strcmp(name, "keycreate")) {
++	} else if (attr == LSM_ATTR_KEYCREATE) {
+ 		if (sid) {
+ 			error = avc_has_perm(&selinux_state, mysid, sid,
+ 					     SECCLASS_KEY, KEY__CREATE, NULL);
+@@ -6495,9 +6511,9 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 				goto abort_change;
+ 		}
+ 		tsec->keycreate_sid = sid;
+-	} else if (!strcmp(name, "sockcreate")) {
++	} else if (attr == LSM_ATTR_SOCKCREATE) {
+ 		tsec->sockcreate_sid = sid;
+-	} else if (!strcmp(name, "current")) {
++	} else if (attr == LSM_ATTR_CURRENT) {
+ 		error = -EINVAL;
+ 		if (sid == 0)
+ 			goto abort_change;
+@@ -6542,6 +6558,75 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
+ 	return error;
+ }
+ 
++static int selinux_getselfattr(unsigned int __user attr,
++			       struct lsm_ctx __user *ctx, size_t *size,
++			       u32 __user flags)
 +{
-+	struct smack_known *skp = smk_of_current();
-+	int total;
-+	int slen;
++	char *value;
++	size_t total_len;
++	int len;
 +	int rc = 0;
 +
-+	if (attr != LSM_ATTR_CURRENT)
-+		return -EOPNOTSUPP;
++	len = do_getattr(attr, current, &value);
++	if (len < 0)
++		return len;
 +
-+	slen = strlen(skp->smk_known) + 1;
-+	total = slen + sizeof(*ctx);
-+	if (total > *size)
++	total_len = len + sizeof(*ctx);
++
++	if (total_len > *size)
 +		rc = -E2BIG;
 +	else
-+		lsm_fill_user_ctx(ctx, skp->smk_known, slen, LSM_ID_SMACK, 0);
++		lsm_fill_user_ctx(ctx, value, len, LSM_ID_SELINUX, 0);
 +
-+	*size = total;
++	*size = total_len;
 +	return rc;
 +}
 +
- /**
-  * smack_getprocattr - Smack process attribute access
-  * @p: the object task
-@@ -3581,8 +3616,8 @@ static int smack_getprocattr(struct task_struct *p, const char *name, char **val
- }
- 
- /**
-- * smack_setprocattr - Smack process attribute setting
-- * @name: the name of the attribute in /proc/.../attr
-+ * do_setattr - Smack process attribute setting
-+ * @attr: the ID of the attribute
-  * @value: the value to set
-  * @size: the size of the value
-  *
-@@ -3591,7 +3626,7 @@ static int smack_getprocattr(struct task_struct *p, const char *name, char **val
-  *
-  * Returns the length of the smack label or an error code
-  */
--static int smack_setprocattr(const char *name, void *value, size_t size)
-+static int do_setattr(u64 attr, void *value, size_t size)
- {
- 	struct task_smack *tsp = smack_cred(current_cred());
- 	struct cred *new;
-@@ -3605,8 +3640,8 @@ static int smack_setprocattr(const char *name, void *value, size_t size)
- 	if (value == NULL || size == 0 || size >= SMK_LONGLABEL)
- 		return -EINVAL;
- 
--	if (strcmp(name, "current") != 0)
--		return -EINVAL;
-+	if (attr != LSM_ATTR_CURRENT)
-+		return -EOPNOTSUPP;
- 
- 	skp = smk_import_entry(value, size);
- 	if (IS_ERR(skp))
-@@ -3645,6 +3680,64 @@ static int smack_setprocattr(const char *name, void *value, size_t size)
- 	return size;
- }
- 
-+/**
-+ * smack_setselfattr - Set a Smack process attribute
-+ * @attr: which attribute to set
-+ * @ctx: buffer containing the data
-+ * @size: size of @ctx
-+ * @flags: unused
-+ *
-+ * Fill the passed user space @ctx with the details of the requested
-+ * attribute.
-+ *
-+ * Returns 0 on success, an error code otherwise.
-+ */
-+static int smack_setselfattr(unsigned int __user attr,
-+			     struct lsm_ctx __user *ctx, size_t __user size,
-+			     u32 __user flags)
++static int selinux_setselfattr(unsigned int __user attr,
++			       struct lsm_ctx __user *ctx, size_t __user size,
++			       u32 __user flags)
 +{
 +	struct lsm_ctx *lctx;
 +	void *context;
@@ -199,18 +298,17 @@ index 3cf862fcbe08..b3e72b82ced9 100644
 +	return rc;
 +}
 +
-+/**
-+ * smack_setprocattr - Smack process attribute setting
-+ * @name: the name of the attribute in /proc/.../attr
-+ * @value: the value to set
-+ * @size: the size of the value
-+ *
-+ * Sets the Smack value of the task. Only setting self
-+ * is permitted and only with privilege
-+ *
-+ * Returns the length of the smack label or an error code
-+ */
-+static int smack_setprocattr(const char *name, void *value, size_t size)
++static int selinux_getprocattr(struct task_struct *p,
++			       const char *name, char **value)
++{
++	unsigned int attr = lsm_name_to_attr(name);
++
++	if (attr)
++		return do_getattr(attr, p, value);
++	return -EINVAL;
++}
++
++static int selinux_setprocattr(const char *name, void *value, size_t size)
 +{
 +	int attr = lsm_name_to_attr(name);
 +
@@ -219,17 +317,17 @@ index 3cf862fcbe08..b3e72b82ced9 100644
 +	return -EINVAL;
 +}
 +
- /**
-  * smack_unix_stream_connect - Smack access on UDS
-  * @sock: one sock
-@@ -4955,6 +5048,8 @@ static struct security_hook_list smack_hooks[] __lsm_ro_after_init = {
+ static int selinux_ismaclabel(const char *name)
+ {
+ 	return (strcmp(name, XATTR_SELINUX_SUFFIX) == 0);
+@@ -7183,6 +7268,8 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
  
- 	LSM_HOOK_INIT(d_instantiate, smack_d_instantiate),
+ 	LSM_HOOK_INIT(d_instantiate, selinux_d_instantiate),
  
-+	LSM_HOOK_INIT(getselfattr, smack_getselfattr),
-+	LSM_HOOK_INIT(setselfattr, smack_setselfattr),
- 	LSM_HOOK_INIT(getprocattr, smack_getprocattr),
- 	LSM_HOOK_INIT(setprocattr, smack_setprocattr),
++	LSM_HOOK_INIT(getselfattr, selinux_getselfattr),
++	LSM_HOOK_INIT(setselfattr, selinux_setselfattr),
+ 	LSM_HOOK_INIT(getprocattr, selinux_getprocattr),
+ 	LSM_HOOK_INIT(setprocattr, selinux_setprocattr),
  
 -- 
 2.39.2
