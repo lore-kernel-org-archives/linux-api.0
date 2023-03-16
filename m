@@ -2,164 +2,210 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D18CBC74A5B
-	for <linux-api@archiver.kernel.org>; Thu, 16 Mar 2023 12:36:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8CCACC6FD19
+	for <linux-api@archiver.kernel.org>; Thu, 16 Mar 2023 19:31:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230247AbjCPMgq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 16 Mar 2023 08:36:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60002 "EHLO
+        id S230139AbjCPTa7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 16 Mar 2023 15:30:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59178 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229678AbjCPMgp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Mar 2023 08:36:45 -0400
-Received: from mga18.intel.com (mga18.intel.com [134.134.136.126])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3E83A42E7;
-        Thu, 16 Mar 2023 05:36:36 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1678970197; x=1710506197;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=0VNdeGsSmFwWcpyMxSZKKLNkZhIZ+u3xoeNhoZCNaOc=;
-  b=OPZst0rBltULR9SsBMKs+/q+9sKjbm1GpyweZs0GtyXdJskO8BRalchH
-   ODr3uJcCQO4ffV2vXEfEJBO9Ev49B9lKFVNOCQRC32KlvK78tfobQ/Zk6
-   gtxGVQic4s+k4ihSUNKLR1ic1FKeRmHJI2E3XQcKD0xV0yx7ovFVuAgrm
-   nvZvHe+IWaI3bh+O4V45YXCn43l+JJydW8pRd367Tzys1wzuAti53uUM7
-   ujYfEPuQXyTBH50QAkXHG8cB3dJ8KlE8biebI48llOSJHoVRk9JGN8TBx
-   5jMhLbcwTRioAxqW4g1ll6sHx3oD3f20P3+bPjIq348IS5azWticzsaI7
-   Q==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10650"; a="321810657"
-X-IronPort-AV: E=Sophos;i="5.98,265,1673942400"; 
-   d="scan'208";a="321810657"
-Received: from fmsmga006.fm.intel.com ([10.253.24.20])
-  by orsmga106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 16 Mar 2023 05:36:34 -0700
-X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10650"; a="925761028"
-X-IronPort-AV: E=Sophos;i="5.98,265,1673942400"; 
-   d="scan'208";a="925761028"
-Received: from lkp-server01.sh.intel.com (HELO b613635ddfff) ([10.239.97.150])
-  by fmsmga006.fm.intel.com with ESMTP; 16 Mar 2023 05:36:30 -0700
-Received: from kbuild by b613635ddfff with local (Exim 4.96)
-        (envelope-from <lkp@intel.com>)
-        id 1pcmqL-0008W6-1e;
-        Thu, 16 Mar 2023 12:36:29 +0000
-Date:   Thu, 16 Mar 2023 20:35:59 +0800
-From:   kernel test robot <lkp@intel.com>
-To:     Casey Schaufler <casey@schaufler-ca.com>, paul@paul-moore.com,
-        linux-security-module@vger.kernel.org
-Cc:     oe-kbuild-all@lists.linux.dev, jmorris@namei.org,
-        keescook@chromium.org, john.johansen@canonical.com,
-        penguin-kernel@i-love.sakura.ne.jp, stephen.smalley.work@gmail.com,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        mic@digikod.net
-Subject: Re: [PATCH v7 04/11] LSM: syscalls for current process attributes
-Message-ID: <202303162018.FY1iL9wN-lkp@intel.com>
-References: <20230315224704.2672-5-casey@schaufler-ca.com>
+        with ESMTP id S230281AbjCPTa6 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 16 Mar 2023 15:30:58 -0400
+Received: from mail-yb1-xb35.google.com (mail-yb1-xb35.google.com [IPv6:2607:f8b0:4864:20::b35])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6ED75DFB44
+        for <linux-api@vger.kernel.org>; Thu, 16 Mar 2023 12:30:52 -0700 (PDT)
+Received: by mail-yb1-xb35.google.com with SMTP id z83so3239147ybb.2
+        for <linux-api@vger.kernel.org>; Thu, 16 Mar 2023 12:30:52 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=rivosinc-com.20210112.gappssmtp.com; s=20210112; t=1678995051;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=OQinqcAul9N1/k6Qm0xi6TTExDZScG0p56fu1+mj3E8=;
+        b=aZUr5Hc3SSnInpRHn4QQapVy8DLcSf4/Fsji81ynnnbmxFUbqyycyen3xS68rzw2cJ
+         csdHHzPzn1pP4Rqhq8/jlqA8dQLTAnyjBWcvBZHm6/pvneaCtKF11X0NKVPFJ6Lwuk5o
+         72RVceBABLTBI+tJn+l9lpq3yxow6PgeoozRTUpTU2xzCTSQilljxyWqtox7dKLQwmVh
+         Mt7eATOZlaYVhW8nPozAkwkhKitbs3qSfS0zDDfCSHkn4bHon39z2LN2WrpJHFl7bH+u
+         01CLGuTfkqCSiQaPZ34ZVbtLD9fLHpC87CEEjOYCcl/1TmRK/ccg1mJnufuIL2N997aO
+         uUJw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20210112; t=1678995051;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=OQinqcAul9N1/k6Qm0xi6TTExDZScG0p56fu1+mj3E8=;
+        b=lmejsGyljtfr38nojM/mDfV5AlbvO+s2W7u7kjv/TPLJ4KIifkrMJcuYTNTBMgjx+U
+         6qae+pXD+xZ7IZuLig/i19zXxMpISw/wx6ygRG93Jg4OoRC1Lol3BvVpiiB4X8XA3qSu
+         651dMTtFMrywwKc2TcaWlnDE3KDFE1pVUxdu52PEhXXW+Vv+/Hb7gto1XjkblD/LfgI6
+         +jZqFTH0+y2DS2tS8GLkMBGohTXyBv5rnyrFsBiSUKPh7Twi7DwkuOtDveXqopO0il/F
+         0bGyw/+8A4dFN7Wkd4wGXTm7zGnWOovegqds3MvFUzgEKIAvgjh2tPTjqefK+ubvle7h
+         IHHg==
+X-Gm-Message-State: AO0yUKUlZ+FVyq5RggddVTBUYTfA78ubAFNI4SzLW2wjA4D4LCU0Nyn9
+        B+5oPt88y3eCkqbyRjEWkUr944RRBq/+XMfjK9S0fQ==
+X-Google-Smtp-Source: AK7set8XMy0ufUxFXEARzyZfU02oLy+VwPbPQAYSeIVhzA2hlPaXVJJxn8QbOjY2tiSVxh7zXiHiE5Y10vOoOFYvORc=
+X-Received: by 2002:a25:f507:0:b0:b3b:6576:b22b with SMTP id
+ a7-20020a25f507000000b00b3b6576b22bmr10524766ybe.12.1678995051579; Thu, 16
+ Mar 2023 12:30:51 -0700 (PDT)
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20230315224704.2672-5-casey@schaufler-ca.com>
+References: <20230227222957.24501-1-rick.p.edgecombe@intel.com>
+ <20230227222957.24501-34-rick.p.edgecombe@intel.com> <ZADbP7HvyPHuwUY9@arm.com>
+ <20230309185511.GA1964069@debug.ba.rivosinc.com> <ZBAf/QI42hcVQ4Uq@kernel.org>
+In-Reply-To: <ZBAf/QI42hcVQ4Uq@kernel.org>
+From:   Deepak Gupta <debug@rivosinc.com>
+Date:   Thu, 16 Mar 2023 12:30:40 -0700
+Message-ID: <CAKC1njTP2WAnkh3vaNGGaeOCa_uArNAatVOXxie+chR2mhA89w@mail.gmail.com>
+Subject: Re: [PATCH v7 33/41] x86/shstk: Introduce map_shadow_stack syscall
+To:     Mike Rapoport <rppt@kernel.org>
+Cc:     Szabolcs Nagy <szabolcs.nagy@arm.com>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+        linux-doc@vger.kernel.org, linux-mm@kvack.org,
+        linux-arch@vger.kernel.org, linux-api@vger.kernel.org,
+        Arnd Bergmann <arnd@arndb.de>,
+        Andy Lutomirski <luto@kernel.org>,
+        Balbir Singh <bsingharora@gmail.com>,
+        Borislav Petkov <bp@alien8.de>,
+        Cyrill Gorcunov <gorcunov@gmail.com>,
+        Dave Hansen <dave.hansen@linux.intel.com>,
+        Eugene Syromiatnikov <esyr@redhat.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        "H . J . Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kees Cook <keescook@chromium.org>,
+        Mike Kravetz <mike.kravetz@oracle.com>,
+        Nadav Amit <nadav.amit@gmail.com>,
+        Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Weijiang Yang <weijiang.yang@intel.com>,
+        "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>,
+        John Allen <john.allen@amd.com>, kcc@google.com,
+        eranian@google.com, jamorris@linux.microsoft.com,
+        dethoma@microsoft.com, akpm@linux-foundation.org,
+        Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
+        david@redhat.com, nd@arm.com, al.grant@arm.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi Casey,
+On Tue, Mar 14, 2023 at 12:19=E2=80=AFAM Mike Rapoport <rppt@kernel.org> wr=
+ote:
+>
+> Hi,
+>
+> On Thu, Mar 09, 2023 at 10:55:11AM -0800, Deepak Gupta wrote:
+> > On Thu, Mar 02, 2023 at 05:22:07PM +0000, Szabolcs Nagy wrote:
+> > > The 02/27/2023 14:29, Rick Edgecombe wrote:
+> > > > Previously, a new PROT_SHADOW_STACK was attempted,
+> > > ...
+> > > > So rather than repurpose two existing syscalls (mmap, madvise) that=
+ don't
+> > > > quite fit, just implement a new map_shadow_stack syscall to allow
+> > > > userspace to map and setup new shadow stacks in one step. While uco=
+ntext
+> > > > is the primary motivator, userspace may have other unforeseen reaso=
+ns to
+> > > > setup it's own shadow stacks using the WRSS instruction. Towards th=
+is
+> > > > provide a flag so that stacks can be optionally setup securely for =
+the
+> > > > common case of ucontext without enabling WRSS. Or potentially have =
+the
+> > > > kernel set up the shadow stack in some new way.
+> > > ...
+> > > > The following example demonstrates how to create a new shadow stack=
+ with
+> > > > map_shadow_stack:
+> > > > void *shstk =3D map_shadow_stack(addr, stack_size, SHADOW_STACK_SET=
+_TOKEN);
+> > >
+> > > i think
+> > >
+> > > mmap(addr, size, PROT_READ, MAP_ANON|MAP_SHADOW_STACK, -1, 0);
+> > >
+> > > could do the same with less disruption to users (new syscalls
+> > > are harder to deal with than new flags). it would do the
+> > > guard page and initial token setup too (there is no flag for
+> > > it but could be squeezed in).
+> >
+> > Discussion on this topic in v6
+> > https://lore.kernel.org/all/20230223000340.GB945966@debug.ba.rivosinc.c=
+om/
+> >
+> > Again I know earlier CET patches had protection flag and somehow due to=
+ pushback
+> > on mailing list, it was adopted to go for special syscall because no on=
+e else
+> > had shadow stack.
+> >
+> > Seeing a response from Szabolcs, I am assuming arm4 would also want to =
+follow
+> > using mmap to manufacture shadow stack. For reference RFC patches for r=
+isc-v shadow stack,
+> > use a new protection flag =3D PROT_SHADOWSTACK.
+> > https://lore.kernel.org/lkml/20230213045351.3945824-1-debug@rivosinc.co=
+m/
+> >
+> > I know earlier discussion had been that we let this go and do a re-fact=
+or later as other
+> > arch support trickle in. But as I thought more on this and I think it m=
+ay just be
+> > messy from user mode point of view as well to have cognition of two dif=
+ferent ways of
+> > creating shadow stack. One would be special syscall (in current libc) a=
+nd another `mmap`
+> > (whenever future re-factor happens)
+> >
+> > If it's not too late, it would be more wise to take `mmap`
+> > approach rather than special `syscall` approach.
+>
+> I disagree.
+>
+> Having shadow stack flags for mmap() adds unnecessary complexity to the
+> core-mm, while having a dedicated syscall hides all the details in the
+> architecture specific code.
 
-I love your patch! Yet something to improve:
+Again reiterating it would've made sense if only x86 had a shadow stack.
+aarch64 announced support for guarded stack. risc-v spec is in
+development to support shadow stack.
 
-[auto build test ERROR on shuah-kselftest/next]
-[also build test ERROR on shuah-kselftest/fixes linus/master v6.3-rc2]
-[cannot apply to tip/perf/core acme/perf/core next-20230316]
-[If your patch is applied to the wrong git tree, kindly drop us a note.
-And when submitting patch, we suggest to use '--base' as documented in
-https://git-scm.com/docs/git-format-patch#_base_tree_information]
+So there will be shadow stack related flow in these arches.
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Casey-Schaufler/LSM-Maintain-a-table-of-LSM-attribute-data/20230316-074751
-base:   https://git.kernel.org/pub/scm/linux/kernel/git/shuah/linux-kselftest.git next
-patch link:    https://lore.kernel.org/r/20230315224704.2672-5-casey%40schaufler-ca.com
-patch subject: [PATCH v7 04/11] LSM: syscalls for current process attributes
-config: sh-allmodconfig (https://download.01.org/0day-ci/archive/20230316/202303162018.FY1iL9wN-lkp@intel.com/config)
-compiler: sh4-linux-gcc (GCC) 12.1.0
-reproduce (this is a W=1 build):
-        wget https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O ~/bin/make.cross
-        chmod +x ~/bin/make.cross
-        # https://github.com/intel-lab-lkp/linux/commit/0883a93af669a6fcb80a9cc74737d5285a1c46ae
-        git remote add linux-review https://github.com/intel-lab-lkp/linux
-        git fetch --no-tags linux-review Casey-Schaufler/LSM-Maintain-a-table-of-LSM-attribute-data/20230316-074751
-        git checkout 0883a93af669a6fcb80a9cc74737d5285a1c46ae
-        # save the config file
-        mkdir build_dir && cp config build_dir/.config
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=sh olddefconfig
-        COMPILER_INSTALL_PATH=$HOME/0day COMPILER=gcc-12.1.0 make.cross W=1 O=build_dir ARCH=sh SHELL=/bin/bash
+>
+> Another reason to use a dedicated system call allows for better
+> extensibility if/when we'd need to update the way shadow stack VMA is
+> created.
 
-If you fix the issue, kindly add following tag where applicable
-| Reported-by: kernel test robot <lkp@intel.com>
-| Link: https://lore.kernel.org/oe-kbuild-all/202303162018.FY1iL9wN-lkp@intel.com/
+I see two valid points here
+    - Shadow stack doesn't need conversion into different memory types
+(which is usually the case for address ranges created by mmap)
+      So there is a static page permissions on shadow stack which is
+not mutable.
 
-All errors (new ones prefixed by >>):
+    - Future feature addition (if there is one needed) at the time of
+shadow stack creation
+      It would avoid future tax on mmap
 
-   In file included from security/lsm_syscalls.c:15:
->> include/linux/syscalls.h:243:25: error: conflicting types for 'sys_lsm_set_self_attr'; have 'long int(unsigned int,  struct lsm_ctx *, size_t,  u32)' {aka 'long int(unsigned int,  struct lsm_ctx *, unsigned int,  unsigned int)'}
-     243 |         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
-         |                         ^~~
-   include/linux/syscalls.h:229:9: note: in expansion of macro '__SYSCALL_DEFINEx'
-     229 |         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
-         |         ^~~~~~~~~~~~~~~~~
-   include/linux/syscalls.h:221:36: note: in expansion of macro 'SYSCALL_DEFINEx'
-     221 | #define SYSCALL_DEFINE4(name, ...) SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
-         |                                    ^~~~~~~~~~~~~~~
-   security/lsm_syscalls.c:31:1: note: in expansion of macro 'SYSCALL_DEFINE4'
-      31 | SYSCALL_DEFINE4(lsm_set_self_attr, unsigned int, attr, struct lsm_ctx __user *,
-         | ^~~~~~~~~~~~~~~
-   include/linux/syscalls.h:1064:17: note: previous declaration of 'sys_lsm_set_self_attr' with type 'long int(unsigned int,  struct lsm_ctx *, __u64)' {aka 'long int(unsigned int,  struct lsm_ctx *, long long unsigned int)'}
-    1064 | asmlinkage long sys_lsm_set_self_attr(unsigned int attr, struct lsm_ctx *ctx,
-         |                 ^~~~~~~~~~~~~~~~~~~~~
->> include/linux/syscalls.h:243:25: error: conflicting types for 'sys_lsm_get_self_attr'; have 'long int(unsigned int,  struct lsm_ctx *, size_t *, u32)' {aka 'long int(unsigned int,  struct lsm_ctx *, unsigned int *, unsigned int)'}
-     243 |         asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))       \
-         |                         ^~~
-   include/linux/syscalls.h:229:9: note: in expansion of macro '__SYSCALL_DEFINEx'
-     229 |         __SYSCALL_DEFINEx(x, sname, __VA_ARGS__)
-         |         ^~~~~~~~~~~~~~~~~
-   include/linux/syscalls.h:221:36: note: in expansion of macro 'SYSCALL_DEFINEx'
-     221 | #define SYSCALL_DEFINE4(name, ...) SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
-         |                                    ^~~~~~~~~~~~~~~
-   security/lsm_syscalls.c:51:1: note: in expansion of macro 'SYSCALL_DEFINE4'
-      51 | SYSCALL_DEFINE4(lsm_get_self_attr, unsigned int, attr, struct lsm_ctx __user *,
-         | ^~~~~~~~~~~~~~~
-   include/linux/syscalls.h:1062:17: note: previous declaration of 'sys_lsm_get_self_attr' with type 'long int(unsigned int,  struct lsm_ctx *, size_t *, __u64)' {aka 'long int(unsigned int,  struct lsm_ctx *, unsigned int *, long long unsigned int)'}
-    1062 | asmlinkage long sys_lsm_get_self_attr(unsigned int attr, struct lsm_ctx *ctx,
-         |                 ^~~~~~~~~~~~~~~~~~~~~
+I'll think more about this.
 
+>
+> As for the userspace convenience, it is anyway required to add special
+> code for creating the shadow stack and it wouldn't matter if that code
+> would use mmap(NEW_FLAG) or map_shadow_stack().
 
-vim +243 include/linux/syscalls.h
+Yes *strictly* from userspace convenience, it doesn't matter which option.
 
-1bd21c6c21e848 Dominik Brodowski   2018-04-05  232  
-e145242ea0df6b Dominik Brodowski   2018-04-09  233  /*
-e145242ea0df6b Dominik Brodowski   2018-04-09  234   * The asmlinkage stub is aliased to a function named __se_sys_*() which
-e145242ea0df6b Dominik Brodowski   2018-04-09  235   * sign-extends 32-bit ints to longs whenever needed. The actual work is
-e145242ea0df6b Dominik Brodowski   2018-04-09  236   * done within __do_sys_*().
-e145242ea0df6b Dominik Brodowski   2018-04-09  237   */
-1bd21c6c21e848 Dominik Brodowski   2018-04-05  238  #ifndef __SYSCALL_DEFINEx
-bed1ffca022cc8 Frederic Weisbecker 2009-03-13  239  #define __SYSCALL_DEFINEx(x, name, ...)					\
-bee20031772af3 Arnd Bergmann       2018-06-19  240  	__diag_push();							\
-bee20031772af3 Arnd Bergmann       2018-06-19  241  	__diag_ignore(GCC, 8, "-Wattribute-alias",			\
-bee20031772af3 Arnd Bergmann       2018-06-19  242  		      "Type aliasing is used to sanitize syscall arguments");\
-83460ec8dcac14 Andi Kleen          2013-11-12 @243  	asmlinkage long sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))	\
-e145242ea0df6b Dominik Brodowski   2018-04-09  244  		__attribute__((alias(__stringify(__se_sys##name))));	\
-c9a211951c7c79 Howard McLauchlan   2018-03-21  245  	ALLOW_ERROR_INJECTION(sys##name, ERRNO);			\
-e145242ea0df6b Dominik Brodowski   2018-04-09  246  	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
-e145242ea0df6b Dominik Brodowski   2018-04-09  247  	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
-e145242ea0df6b Dominik Brodowski   2018-04-09  248  	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
-1a94bc34768e46 Heiko Carstens      2009-01-14  249  	{								\
-e145242ea0df6b Dominik Brodowski   2018-04-09  250  		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
-07fe6e00f6cca6 Al Viro             2013-01-21  251  		__MAP(x,__SC_TEST,__VA_ARGS__);				\
-2cf0966683430b Al Viro             2013-01-21  252  		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
-2cf0966683430b Al Viro             2013-01-21  253  		return ret;						\
-1a94bc34768e46 Heiko Carstens      2009-01-14  254  	}								\
-bee20031772af3 Arnd Bergmann       2018-06-19  255  	__diag_pop();							\
-e145242ea0df6b Dominik Brodowski   2018-04-09  256  	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__))
-1bd21c6c21e848 Dominik Brodowski   2018-04-05  257  #endif /* __SYSCALL_DEFINEx */
-1a94bc34768e46 Heiko Carstens      2009-01-14  258  
-
--- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests
+>
+> > > most of the mmap features need not be available (EINVAL) when
+> > > MAP_SHADOW_STACK is specified.
+> > >
+> > > the main drawback is running out of mmap flags so extension
+> > > is limited. (but the new syscall has limitations too).
+>
+> --
+> Sincerely yours,
+> Mike.
