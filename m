@@ -2,160 +2,179 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 935C2C6FD1D
-	for <linux-api@archiver.kernel.org>; Fri, 17 Mar 2023 08:41:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F363EC74A5B
+	for <linux-api@archiver.kernel.org>; Fri, 17 Mar 2023 16:53:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230246AbjCQIlF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 17 Mar 2023 04:41:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60368 "EHLO
+        id S229878AbjCQQxD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 17 Mar 2023 12:53:03 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56164 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230203AbjCQIkn (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Mar 2023 04:40:43 -0400
-Received: from smtp-8fac.mail.infomaniak.ch (smtp-8fac.mail.infomaniak.ch [IPv6:2001:1600:4:17::8fac])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BEB73E2536
-        for <linux-api@vger.kernel.org>; Fri, 17 Mar 2023 01:39:12 -0700 (PDT)
-Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4PdHbk65rVzMrFtq;
-        Fri, 17 Mar 2023 09:38:58 +0100 (CET)
-Received: from unknown by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4PdHbj33c2zMtj7j;
-        Fri, 17 Mar 2023 09:38:57 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1679042338;
-        bh=gEFNZNyzzNkTkIX589egniVJsyrpQ5YQ4cGwXbnxpWY=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=1Oels4oMX2i5m7AOJZF2oxA13VrQAAudlEM4O1x+IPAENN3TziYHdDfUe4aHeA30G
-         Lks3p/P8c5VY80B+kyKT3irBl5Df9H42YXN7xJ7UiI6SdL06YunPOBRxJTs8ZcrBfI
-         6hU5aJ1esyjOyohrE2MgTPwgX8MghtCFOKTluwiU=
-Message-ID: <b0ed38a5-09fe-c84a-b64a-cbb4ec7ab076@digikod.net>
-Date:   Fri, 17 Mar 2023 09:38:56 +0100
-MIME-Version: 1.0
-User-Agent: 
-Subject: Re: [PATCH 0/1] process attribute support for Landlock
+        with ESMTP id S229924AbjCQQw4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 17 Mar 2023 12:52:56 -0400
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 67799B06CF;
+        Fri, 17 Mar 2023 09:52:51 -0700 (PDT)
+Received: from pps.filterd (m0098410.ppops.net [127.0.0.1])
+        by mx0a-001b2d01.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 32HEwqQ8020323;
+        Fri, 17 Mar 2023 16:52:46 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=message-id : date :
+ subject : to : cc : references : from : in-reply-to : content-type :
+ content-transfer-encoding : mime-version; s=pp1;
+ bh=h8CQp6+iDtm9xUAsI4h9p4NSx/w9aaH83EG+p9E7o4E=;
+ b=ERElVEZTgBBo3qZCD79YO/gjby2BjRYUp9sJVszQFiATdN3gRa2MK/3J4J+2/2SU1QDu
+ Hf7p1j+4BCEwYxRxbCT/qbRnIcHgJ8x/1xjlNHW9fFOYSmjBYbHh/EdFcqMB0C2UepN/
+ X/nyxp+YqkkdApjEvNwzfUZ5xR/1LdeIHxDoJltGncMWeznqiKVoO0+ZQeICOGNNlQQU
+ GFQbk3apDc77QFWZTVW/Rnfi67ceFCnKwOAgTdc+m1MLgf2e7amKwjHfX2hLfhs5P5nN
+ Xh6cTV9SMnEeySla9SbiK4prexkUyxB+nITo8SpEZSWQhnlQDf3dMussKvEmqvDLPp1s Lg== 
+Received: from ppma06ams.nl.ibm.com (66.31.33a9.ip4.static.sl-reverse.com [169.51.49.102])
+        by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 3pctetk4r3-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Fri, 17 Mar 2023 16:52:46 +0000
+Received: from pps.filterd (ppma06ams.nl.ibm.com [127.0.0.1])
+        by ppma06ams.nl.ibm.com (8.17.1.19/8.17.1.19) with ESMTP id 32H6Ytg0029187;
+        Fri, 17 Mar 2023 16:52:43 GMT
+Received: from smtprelay01.fra02v.mail.ibm.com ([9.218.2.227])
+        by ppma06ams.nl.ibm.com (PPS) with ESMTPS id 3pbskt2e80-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+        Fri, 17 Mar 2023 16:52:43 +0000
+Received: from smtpav03.fra02v.mail.ibm.com (smtpav03.fra02v.mail.ibm.com [10.20.54.102])
+        by smtprelay01.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 32HGqfHv55968178
+        (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Fri, 17 Mar 2023 16:52:41 GMT
+Received: from smtpav03.fra02v.mail.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 0237C2004B;
+        Fri, 17 Mar 2023 16:52:41 +0000 (GMT)
+Received: from smtpav03.fra02v.mail.ibm.com (unknown [127.0.0.1])
+        by IMSVA (Postfix) with ESMTP id 6D3F820040;
+        Fri, 17 Mar 2023 16:52:40 +0000 (GMT)
+Received: from [9.171.87.24] (unknown [9.171.87.24])
+        by smtpav03.fra02v.mail.ibm.com (Postfix) with ESMTP;
+        Fri, 17 Mar 2023 16:52:40 +0000 (GMT)
+Message-ID: <8f17a884-09d2-b6a1-7ced-77dd4b4f21a5@linux.ibm.com>
+Date:   Fri, 17 Mar 2023 17:52:40 +0100
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.8.0
+Subject: Re: [PATCH for-next] scsi: Implement host state statistics
 Content-Language: en-US
-To:     =?UTF-8?Q?G=c3=bcnther_Noack?= <gnoack3000@gmail.com>
-Cc:     Shervin Oloumi <enlightened@chromium.org>,
-        linux-security-module@vger.kernel.org, jorgelo@chromium.org,
-        keescook@chromium.org, groeck@chromium.org, jeffxu@chromium.org,
-        allenwebb@chromium.org, Adrian Reber <areber@redhat.com>,
-        criu@openvz.org, Linux API <linux-api@vger.kernel.org>,
-        Jann Horn <jannh@google.com>,
-        Christian Brauner <brauner@kernel.org>
-References: <20230302185257.850681-1-enlightened@chromium.org>
- <247f3194-2dd2-1414-0a4d-6e41addf5e64@digikod.net>
- <CAMb9sTir8Gde=DwZ9LnW2Hq7YmSZ13u_aX8AyR=JEQWGBhCvAQ@mail.gmail.com>
- <ce44fc98-1234-fa53-5067-cd624866f44a@digikod.net>
- <20230316.17835bf118d5@gnoack.org>
-From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-In-Reply-To: <20230316.17835bf118d5@gnoack.org>
+To:     "Seymour, Shane M" <shane.seymour@hpe.com>,
+        Greg KH <gregkh@linuxfoundation.org>
+Cc:     "Martin K. Petersen" <martin.petersen@oracle.com>,
+        "jejb@linux.ibm.com" <jejb@linux.ibm.com>,
+        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+        "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+References: <DM4PR84MB1373DCD07EABD28D88129C50FDBF9@DM4PR84MB1373.NAMPRD84.PROD.OUTLOOK.COM>
+ <ZBFnYwtr+2bfjvcY@kroah.com>
+ <DM4PR84MB13737BE099BF599DF83617DBFDBF9@DM4PR84MB1373.NAMPRD84.PROD.OUTLOOK.COM>
+From:   Steffen Maier <maier@linux.ibm.com>
+In-Reply-To: <DM4PR84MB13737BE099BF599DF83617DBFDBF9@DM4PR84MB1373.NAMPRD84.PROD.OUTLOOK.COM>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
-X-Infomaniak-Routing: alpha
+X-TM-AS-GCONF: 00
+X-Proofpoint-GUID: lAloHn_hzzGVQjWWlB4znDzOpmgvgTpW
+X-Proofpoint-ORIG-GUID: lAloHn_hzzGVQjWWlB4znDzOpmgvgTpW
+Content-Transfer-Encoding: 7bit
+X-Proofpoint-UnRewURL: 0 URL was un-rewritten
+MIME-Version: 1.0
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.254,Aquarius:18.0.942,Hydra:6.0.573,FMLib:17.11.170.22
+ definitions=2023-03-17_10,2023-03-16_02,2023-02-09_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 mlxlogscore=999 mlxscore=0
+ suspectscore=0 spamscore=0 priorityscore=1501 bulkscore=0 impostorscore=0
+ malwarescore=0 phishscore=0 adultscore=0 clxscore=1011 lowpriorityscore=0
+ classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2303150002
+ definitions=main-2303170111
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-
-On 16/03/2023 07:19, Günther Noack wrote:
-> Hi!
-> 
-> On Wed, Mar 15, 2023 at 10:56:03AM +0100, Mickaël Salaün wrote:
->> On 08/03/2023 23:25, Shervin Oloumi wrote:
->>> Thanks all for the feedback. This is in reply to Mickaël, but should
->>> answer Günther's questions as well.
->>>
->>>> It would help to know exactly what are your needs short term, and long
->>>> term. As Günther is wondering, what about nested sandboxing?
->>>
->>> Our plan is to use the "landlocked" process attribute defined in the
->>> patch to determine the sandbox state of the system processes and send
->>> information to our metrics server regarding Landlock coverage. For
->>> example, the percentage of processes on the system that are sandboxed
->>> using Landlock.
->>>
->>> Given that we use Landlock in a very specific and controlled way, we
->>> are not concerned about the inheritance behavior and nested policies,
->>> at least for the use case of metrics. When daemons are launched in
->>> ChromiumOS, they have a pre-defined sandboxing configuration that
->>> dictates whether Landlock should be applied or not. So this attribute
->>> would help us verify that the processes running on devices in the wild
->>> indeed have the general sandboxing state that we expect and the
->>> reality matches our expectation.
->>>
->>> Long-term, it would be useful to learn more information about domains
->>> and policies through the process attribute interface, but we do not
->>> currently have a need for that, apart from maybe doing troubleshooting
->>> when defining Landlock rules for system daemons.
+On 3/15/23 23:41, Seymour, Shane M wrote:
+>> On Wed, Mar 15, 2023 at 06:08:19AM +0000, Seymour, Shane M wrote:
+>>> The following patch implements host state statistics via sysfs. The intent
+>>> is to allow user space to see the state changes and be able to report when
+>>> a host changes state. The files do not separate out the time spent into
+>>> each state but only into three:
 >>
->> OK, it makes sense.
+>> Why does userspace care about these things at all?  What tool needs them
+>> and what can userspace do with the information?
+>>
 > 
-> Fair enough.  I missed the fact that this was about the OS rather than
-> the browser.
+> In enterprise setups you may a significant number of LUNs presented to a
+> system (100s to 1000s) via a single HBA (usually via FC). Having a HBA going
+> into error handling causes issues. Every time a host goes into SCSI EH all
+> I/O to that host is blocked until SCSI EH completes. That means waiting for
+> every I/O to either complete or timeout before starting any recovery
+> processing.
 > 
-> Still, out of curiosity: Hypothetically, if you were to expose the
-> number of stacked Landlock policies instead of the boolean in that
-> place -- would there be any drawbacks to that which I'm overlooking?
+> At this time there is no way for anything outside of the kernel to know if a
+> HBA is having any issues. The cause of those issues can vary significantly,
+> just two examples:
 > 
-> It seems to me, superficially, that the implementation should be
-> similarly simple, it would be useful in more cases where Landlock
-> users do not have control over the full OS, and I can't currently see
-> any cases where having a number instead of a boolean would complicate
-> the usage from userspace?  Am I missing something?
+> 1) Storage end point issues
+> 2) SAN issues (e.g. laser transmit power at any point in the SAN)
+> 
+> My experience with downstream distros is that nobody seems to notice the
+> noise that SCSI EH produces (LUN, device, bus, host resets) and we see it
+> when we get a vmcore and have to try and work out what caused an I/O hang.
 
-I'd like to hear from Shervin, but here is my reasoning.
+I hear you. Especially, the fact that the very desirable asynchronous aborts 
+and even eh with escalations seems pretty much silent as long as a SCSI command 
+succeeds within one of the allowed retries. I suspect this was done in order 
+not to unsettle users by showing intermediate recovery, which can still lead to 
+successful I/O eventually.
 
-I'd like to avoid as much as possible the procfs interface (for security 
-and usability reasons specific to Landlock), but to only extend it to 
-the minimal requirement needed to tie a process to a Landlock domain. 
-Exposing any domain information (e.g. nested domain depth) should then 
-be managed by a new interface (i.e. /sys/kernel/security/landlock), and 
-we should avoid duplicating this information in the procfs interface. 
-Making an attr/landlock/domain file gives the information that a 
-(nested) domain exists for this PID, which is anyway a required minimal 
-interface.
+FWIW, at some point we figured out a nice scsi_logging_level of 4605, in order 
+to see any problems with lun probing ("why don't I get my volume in Linux?") or 
+timeouts/aborts/eh ("why are things so slow?") without producing kernel 
+messages for regular good I/O. Of course, it's not set by default, but can be 
+dynamically set if one suspects such problems.
 
+> I wanted to be more proactive in warning users that you've got a potential
+> storage issue you need to look at. It won't help when you have a sudden
+> massive issue but if you have an issue that is slowly getting worse over
+> a period of time you will at least get some warning.
+> 
+>>>
+>>> A (GPLv2) program called hostmond will be released in a few months that
+>>> will monitor these interfaces and report (local host only via syslog(3C))
+>>> when hosts change state.
+>>
+>> We kind of need to see this before the kernel changes can be accepted
+>> for obvious reasons, what is preventing that from happening now?
+> 
+> If you don't mind I'll answer this in my reply to James' email soon since
+> he commented about this.
+> 
+>>
+>> Please always use sysfs_emit() instead of the crazy scnprintf() for
+>> sysfs entries.
+> 
+> No problem I can make that change.
+> 
+>>
+>> u32 is a kernel type, not uint32_t please, but I don't know what the
+>> scsi layer is used to.
+> 
+> No problem I can make that change.
+> 
+>>
+>> thanks,
+>>
+>> greg k-h
+> 
+> Thank you for your willingness to provide feedback.
+> 
+> Shane
 
-> 
-> (But in any case, the boolean is also fine I think.)
-> 
-> 
->>>> Here are the guiding principles I think would make sense:
->>>> 1. A sandboxed thread shall not be able to directly know if it is
->>>> sandbox nor get any specific information from it's restrictions. The
->>>> reason for this principle is to avoid applications to simply jump to
->>>> conclusions (and change behavior) if they see that they are sandboxed
->>>> with Landlock, instead of trying to access resources and falling back
->>>> accordingly. A thread should only be able to inspect its
->>>> own/children/nested domains.
+-- 
+Mit freundlichen Gruessen / Kind regards
+Steffen Maier
 
-For a more up-to-date idea, see 
-https://lore.kernel.org/all/ee878a04-51f4-a8aa-7d4c-13e519b7409d@digikod.net/
-The fdinfo trick would not be required though, I found a better design 
-to tie an opened domain to its properties. Anyway, this is future work 
-and would be compatible with the /proc/[pid]/attr/landlock/domain file.
+Linux on IBM Z and LinuxONE
 
-> 
-> (Small remark:
-> 
-> Doing anything differently depending on whether and how you are
-> landlocked is definitely an antipattern which we should not encourage.
-> But I'm not sure whether we can hide the fact very easily.
-> 
-> It's already possible for a thread to detect whether it is landlocked,
-> by using this hack: Create a new thread and then in that thread count
-> how many additional sandboxes you can stack on top.
-> 
-> If you have knowledge about what Landlock configuration you are
-> looking for, it will be even easier to detect.
-> 
-> I hope noone takes the above example as inspiration.)
+https://www.ibm.com/privacy/us/en/
+IBM Deutschland Research & Development GmbH
+Vorsitzender des Aufsichtsrats: Gregor Pillen
+Geschaeftsfuehrung: David Faller
+Sitz der Gesellschaft: Boeblingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
 
-Indeed, there are multiple ways to detect that a thread is landlocked, 
-but we should not make any effort to make it easy to check unless there 
-is at least a valid use case. I'd like to only add/show new interfaces 
-were/when they are needed, in this case, "a thread should only be able 
-to inspect/see its nested domains". For now, the only valid usage I can 
-think of to detect sandboxing is for debug and metrics, not for a 
-legitimate sandboxed application. Furthermore, what I'd like to have for 
-Landlock is the ability to use this "domain" file to get access to 
-domain properties (e.g. handled accesses, rules), and giving the sandbox 
-configuration to the sandboxed process looks like a bad idea.
