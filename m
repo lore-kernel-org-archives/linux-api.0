@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7EEC6C761AF
-	for <linux-api@archiver.kernel.org>; Sun, 19 Mar 2023 00:16:55 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A6A6BC76196
+	for <linux-api@archiver.kernel.org>; Sun, 19 Mar 2023 00:17:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230015AbjCSAQx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Sat, 18 Mar 2023 20:16:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36590 "EHLO
+        id S230096AbjCSARe (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 18 Mar 2023 20:17:34 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36572 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229942AbjCSAQt (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Mar 2023 20:16:49 -0400
+        with ESMTP id S229994AbjCSAQw (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 18 Mar 2023 20:16:52 -0400
 Received: from mga14.intel.com (mga14.intel.com [192.55.52.115])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2F96C28EB8;
-        Sat, 18 Mar 2023 17:16:09 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3855928E62;
+        Sat, 18 Mar 2023 17:16:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1679184969; x=1710720969;
+  t=1679184973; x=1710720973;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references;
-  bh=4pjPISZWb7kvLOoOGyus9YN15ONkQWn4j+qGkUUpqp8=;
-  b=leWeNrN/M9hD5kgwMQJOVym13vgNgS00cOh+NRkXt9WMs50y8fcjt1zQ
-   x8dLkPabqLu1QllfmwTwQDbSTbXxlHRyhpzLD1RzwndqAo9q9HJ2yfGSm
-   lEppGL0tHxIDP1MPn9aSJgEsjTBLDnefBbO8N8JYSKt9mI5sc1khD9din
-   BU/0pONVrbN08dTXyrlVnOp2UomilrUV8k9mtXmDDWuGrQI53Rg2F/TkK
-   QsAiMCUdM1Z8z40zlX9Sg/a9FXQb7I2DKrMyfjy1feZHkKtuGMu1JBQyi
-   ky7L8s/Qit577u6PsBnssBdrZWTlXcMSRSuoJVW9t1UI5Oqx907P6hgvR
-   A==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10653"; a="338490893"
+  bh=Vja8kjxFIpUKpFfGiffO7CqOO8r6G2hYmB0i6nbkB4w=;
+  b=RwYEX84ChaIWRDghDt+fDVKaSWBWMbigkMP2SpY1xgNOnUTTU2Nb6LD1
+   6cBpkGDIAMNiAaCliCGbvAEot17HbVyUMhM5+cm8dmUHhCBetC0mac266
+   KP9pZwHQqzUYreI6Oo8BYArzMCN2P7V1xRbuChAmrBzKtzQtqUdqNS+KF
+   fZKim4euVPvwmHlGclOYzJmOCNyXlm6s0jqcFlwakRL6cmttzHaJYTARP
+   QNO0m4Wt2pdvX85op/nYpWZheRvhjB+DL+sOn7kDN+kpdBRmx2oFSoGXD
+   MJhLKSLJj7AOvUDZU2H0udhvDAMtlUdWKLwZKa1Rs/Y2UMzzVREmNAlWS
+   w==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10653"; a="338490937"
 X-IronPort-AV: E=Sophos;i="5.98,272,1673942400"; 
-   d="scan'208";a="338490893"
+   d="scan'208";a="338490937"
 Received: from fmsmga004.fm.intel.com ([10.253.24.48])
-  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Mar 2023 17:16:08 -0700
+  by fmsmga103.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Mar 2023 17:16:11 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10653"; a="749672805"
+X-IronPort-AV: E=McAfee;i="6600,9927,10653"; a="749672817"
 X-IronPort-AV: E=Sophos;i="5.98,272,1673942400"; 
-   d="scan'208";a="749672805"
+   d="scan'208";a="749672817"
 Received: from bmahatwo-mobl1.gar.corp.intel.com (HELO rpedgeco-desk.amr.corp.intel.com) ([10.135.34.5])
-  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Mar 2023 17:16:06 -0700
+  by fmsmga004-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 18 Mar 2023 17:16:10 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -68,9 +68,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com, szabolcs.nagy@arm.com
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 08/40] x86/shstk: Add user control-protection fault handler
-Date:   Sat, 18 Mar 2023 17:15:03 -0700
-Message-Id: <20230319001535.23210-9-rick.p.edgecombe@intel.com>
+Subject: [PATCH v8 10/40] x86/mm: Move pmd_write(), pud_write() up in the file
+Date:   Sat, 18 Mar 2023 17:15:05 -0700
+Message-Id: <20230319001535.23210-11-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.17.1
 In-Reply-To: <20230319001535.23210-1-rick.p.edgecombe@intel.com>
 References: <20230319001535.23210-1-rick.p.edgecombe@intel.com>
@@ -78,437 +78,72 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-A control-protection fault is triggered when a control-flow transfer
-attempt violates Shadow Stack or Indirect Branch Tracking constraints.
-For example, the return address for a RET instruction differs from the copy
-on the shadow stack.
-
-There already exists a control-protection fault handler for handling kernel
-IBT faults. Refactor this fault handler into separate user and kernel
-handlers, like the page fault handler. Add a control-protection handler
-for usermode. To avoid ifdeffery, put them both in a new file cet.c, which
-is compiled in the case of either of the two CET features supported in the
-kernel: kernel IBT or user mode shadow stack. Move some static inline
-functions from traps.c into a header so they can be used in cet.c.
-
-Opportunistically fix a comment in the kernel IBT part of the fault
-handler that is on the end of the line instead of preceding it.
-
-Keep the same behavior for the kernel side of the fault handler, except for
-converting a BUG to a WARN in the case of a #CP happening when the feature
-is missing. This unifies the behavior with the new shadow stack code, and
-also prevents the kernel from crashing under this situation which is
-potentially recoverable.
-
-The control-protection fault handler works in a similar way as the general
-protection fault handler. It provides the si_code SEGV_CPERR to the signal
-handler.
+To prepare the introduction of _PAGE_SAVED_DIRTY, move pmd_write() and
+pud_write() up in the file, so that they can be used by other
+helpers below.  No functional changes.
 
 Co-developed-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
-
 ---
-v7:
- - Adjust alignment of WARN statement
+ arch/x86/include/asm/pgtable.h | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
 
-v6:
- - Split into separate patches (Kees)
- - Change to "x86/shstk" in commit log (Boris)
-
-v5:
- - Move to separate file to avoid ifdeffery (Boris)
- - Improvements to commit log (Boris)
- - Rename control_protection_err (Boris)
- - Move comment from end of line in IBT fault handler (Boris)
-
-v3:
- - Shorten user/kernel #CP handler function names (peterz)
- - Restore CP_ENDBR check to kernel handler (peterz)
- - Utilize CONFIG_X86_CET (Kees)
- - Unify "unexpected" warnings (Andrew Cooper)
- - Use 2d array for error code chars (Andrew Cooper)
- - Add comment about why to read SSP MSR before enabling interrupts
-
-v2:
- - Integrate with kernel IBT fault handler
- - Update printed messages. (Dave)
- - Remove array_index_nospec() usage. (Dave)
- - Remove IBT messages. (Dave)
- - Add enclave error code bit processing it case it can get triggered
-   somehow.
- - Add extra "unknown" in control_protection_err.
----
- arch/arm/kernel/signal.c                 |  2 +-
- arch/arm64/kernel/signal.c               |  2 +-
- arch/arm64/kernel/signal32.c             |  2 +-
- arch/sparc/kernel/signal32.c             |  2 +-
- arch/sparc/kernel/signal_64.c            |  2 +-
- arch/x86/include/asm/disabled-features.h |  8 +-
- arch/x86/include/asm/idtentry.h          |  2 +-
- arch/x86/include/asm/traps.h             | 12 +++
- arch/x86/kernel/cet.c                    | 94 +++++++++++++++++++++---
- arch/x86/kernel/idt.c                    |  2 +-
- arch/x86/kernel/signal_32.c              |  2 +-
- arch/x86/kernel/signal_64.c              |  2 +-
- arch/x86/kernel/traps.c                  | 12 ---
- arch/x86/xen/enlighten_pv.c              |  2 +-
- arch/x86/xen/xen-asm.S                   |  2 +-
- include/uapi/asm-generic/siginfo.h       |  3 +-
- 16 files changed, 117 insertions(+), 34 deletions(-)
-
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index e07f359254c3..9a3c9de5ac5e 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -681,7 +681,7 @@ asmlinkage void do_rseq_syscall(struct pt_regs *regs)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/arm64/kernel/signal.c b/arch/arm64/kernel/signal.c
-index 06a02707f488..19b6b292892c 100644
---- a/arch/arm64/kernel/signal.c
-+++ b/arch/arm64/kernel/signal.c
-@@ -1341,7 +1341,7 @@ void __init minsigstksz_setup(void)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/arm64/kernel/signal32.c b/arch/arm64/kernel/signal32.c
-index 4700f8522d27..bbd542704730 100644
---- a/arch/arm64/kernel/signal32.c
-+++ b/arch/arm64/kernel/signal32.c
-@@ -460,7 +460,7 @@ void compat_setup_restart_syscall(struct pt_regs *regs)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/sparc/kernel/signal32.c b/arch/sparc/kernel/signal32.c
-index dad38960d1a8..82da8a2d769d 100644
---- a/arch/sparc/kernel/signal32.c
-+++ b/arch/sparc/kernel/signal32.c
-@@ -751,7 +751,7 @@ asmlinkage int do_sys32_sigstack(u32 u_ssptr, u32 u_ossptr, unsigned long sp)
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/sparc/kernel/signal_64.c b/arch/sparc/kernel/signal_64.c
-index 570e43e6fda5..b4e410976e0d 100644
---- a/arch/sparc/kernel/signal_64.c
-+++ b/arch/sparc/kernel/signal_64.c
-@@ -562,7 +562,7 @@ void do_notify_resume(struct pt_regs *regs, unsigned long orig_i0, unsigned long
-  */
- static_assert(NSIGILL	== 11);
- static_assert(NSIGFPE	== 15);
--static_assert(NSIGSEGV	== 9);
-+static_assert(NSIGSEGV	== 10);
- static_assert(NSIGBUS	== 5);
- static_assert(NSIGTRAP	== 6);
- static_assert(NSIGCHLD	== 6);
-diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index 505f78ddca82..652e366b68a0 100644
---- a/arch/x86/include/asm/disabled-features.h
-+++ b/arch/x86/include/asm/disabled-features.h
-@@ -105,6 +105,12 @@
- #define DISABLE_USER_SHSTK	(1 << (X86_FEATURE_USER_SHSTK & 31))
- #endif
- 
-+#ifdef CONFIG_X86_KERNEL_IBT
-+#define DISABLE_IBT	0
-+#else
-+#define DISABLE_IBT	(1 << (X86_FEATURE_IBT & 31))
-+#endif
-+
- /*
-  * Make sure to add features to the correct mask
-  */
-@@ -128,7 +134,7 @@
- #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
- 			 DISABLE_ENQCMD)
- #define DISABLED_MASK17	0
--#define DISABLED_MASK18	0
-+#define DISABLED_MASK18	(DISABLE_IBT)
- #define DISABLED_MASK19	0
- #define DISABLED_MASK20	0
- #define DISABLED_MASK_CHECK BUILD_BUG_ON_ZERO(NCAPINTS != 21)
-diff --git a/arch/x86/include/asm/idtentry.h b/arch/x86/include/asm/idtentry.h
-index b241af4ce9b4..61e0e6301f09 100644
---- a/arch/x86/include/asm/idtentry.h
-+++ b/arch/x86/include/asm/idtentry.h
-@@ -614,7 +614,7 @@ DECLARE_IDTENTRY_RAW_ERRORCODE(X86_TRAP_DF,	xenpv_exc_double_fault);
- #endif
- 
- /* #CP */
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_CP,	exc_control_protection);
- #endif
- 
-diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
-index 47ecfff2c83d..75e0dabf0c45 100644
---- a/arch/x86/include/asm/traps.h
-+++ b/arch/x86/include/asm/traps.h
-@@ -47,4 +47,16 @@ void __noreturn handle_stack_overflow(struct pt_regs *regs,
- 				      struct stack_info *info);
- #endif
- 
-+static inline void cond_local_irq_enable(struct pt_regs *regs)
-+{
-+	if (regs->flags & X86_EFLAGS_IF)
-+		local_irq_enable();
-+}
-+
-+static inline void cond_local_irq_disable(struct pt_regs *regs)
-+{
-+	if (regs->flags & X86_EFLAGS_IF)
-+		local_irq_disable();
-+}
-+
- #endif /* _ASM_X86_TRAPS_H */
-diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
-index 7ad22b705b64..cc10d8be9d74 100644
---- a/arch/x86/kernel/cet.c
-+++ b/arch/x86/kernel/cet.c
-@@ -4,10 +4,6 @@
- #include <asm/bugs.h>
- #include <asm/traps.h>
- 
--static __ro_after_init bool ibt_fatal = true;
--
--extern void ibt_selftest_ip(void); /* code label defined in asm below */
--
- enum cp_error_code {
- 	CP_EC        = (1 << 15) - 1,
- 
-@@ -20,15 +16,80 @@ enum cp_error_code {
- 	CP_ENCL	     = 1 << 15,
- };
- 
--DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
-+static const char cp_err[][10] = {
-+	[0] = "unknown",
-+	[1] = "near ret",
-+	[2] = "far/iret",
-+	[3] = "endbranch",
-+	[4] = "rstorssp",
-+	[5] = "setssbsy",
-+};
-+
-+static const char *cp_err_string(unsigned long error_code)
-+{
-+	unsigned int cpec = error_code & CP_EC;
-+
-+	if (cpec >= ARRAY_SIZE(cp_err))
-+		cpec = 0;
-+	return cp_err[cpec];
-+}
-+
-+static void do_unexpected_cp(struct pt_regs *regs, unsigned long error_code)
-+{
-+	WARN_ONCE(1, "Unexpected %s #CP, error_code: %s\n",
-+		  user_mode(regs) ? "user mode" : "kernel mode",
-+		  cp_err_string(error_code));
-+}
-+
-+static DEFINE_RATELIMIT_STATE(cpf_rate, DEFAULT_RATELIMIT_INTERVAL,
-+			      DEFAULT_RATELIMIT_BURST);
-+
-+static void do_user_cp_fault(struct pt_regs *regs, unsigned long error_code)
- {
--	if (!cpu_feature_enabled(X86_FEATURE_IBT)) {
--		pr_err("Unexpected #CP\n");
--		BUG();
-+	struct task_struct *tsk;
-+	unsigned long ssp;
-+
-+	/*
-+	 * An exception was just taken from userspace. Since interrupts are disabled
-+	 * here, no scheduling should have messed with the registers yet and they
-+	 * will be whatever is live in userspace. So read the SSP before enabling
-+	 * interrupts so locking the fpregs to do it later is not required.
-+	 */
-+	rdmsrl(MSR_IA32_PL3_SSP, ssp);
-+
-+	cond_local_irq_enable(regs);
-+
-+	tsk = current;
-+	tsk->thread.error_code = error_code;
-+	tsk->thread.trap_nr = X86_TRAP_CP;
-+
-+	/* Ratelimit to prevent log spamming. */
-+	if (show_unhandled_signals && unhandled_signal(tsk, SIGSEGV) &&
-+	    __ratelimit(&cpf_rate)) {
-+		pr_emerg("%s[%d] control protection ip:%lx sp:%lx ssp:%lx error:%lx(%s)%s",
-+			 tsk->comm, task_pid_nr(tsk),
-+			 regs->ip, regs->sp, ssp, error_code,
-+			 cp_err_string(error_code),
-+			 error_code & CP_ENCL ? " in enclave" : "");
-+		print_vma_addr(KERN_CONT " in ", regs->ip);
-+		pr_cont("\n");
- 	}
- 
--	if (WARN_ON_ONCE(user_mode(regs) || (error_code & CP_EC) != CP_ENDBR))
-+	force_sig_fault(SIGSEGV, SEGV_CPERR, (void __user *)0);
-+	cond_local_irq_disable(regs);
-+}
-+
-+static __ro_after_init bool ibt_fatal = true;
-+
-+/* code label defined in asm below */
-+extern void ibt_selftest_ip(void);
-+
-+static void do_kernel_cp_fault(struct pt_regs *regs, unsigned long error_code)
-+{
-+	if ((error_code & CP_EC) != CP_ENDBR) {
-+		do_unexpected_cp(regs, error_code);
- 		return;
-+	}
- 
- 	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
- 		regs->ax = 0;
-@@ -74,3 +135,18 @@ static int __init ibt_setup(char *str)
+diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
+index 7425f32e5293..56eea96502c6 100644
+--- a/arch/x86/include/asm/pgtable.h
++++ b/arch/x86/include/asm/pgtable.h
+@@ -160,6 +160,18 @@ static inline int pte_write(pte_t pte)
+ 	return pte_flags(pte) & _PAGE_RW;
  }
  
- __setup("ibt=", ibt_setup);
-+
-+DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
++#define pmd_write pmd_write
++static inline int pmd_write(pmd_t pmd)
 +{
-+	if (user_mode(regs)) {
-+		if (cpu_feature_enabled(X86_FEATURE_USER_SHSTK))
-+			do_user_cp_fault(regs, error_code);
-+		else
-+			do_unexpected_cp(regs, error_code);
-+	} else {
-+		if (cpu_feature_enabled(X86_FEATURE_IBT))
-+			do_kernel_cp_fault(regs, error_code);
-+		else
-+			do_unexpected_cp(regs, error_code);
-+	}
++	return pmd_flags(pmd) & _PAGE_RW;
 +}
-diff --git a/arch/x86/kernel/idt.c b/arch/x86/kernel/idt.c
-index a58c6bc1cd68..5074b8420359 100644
---- a/arch/x86/kernel/idt.c
-+++ b/arch/x86/kernel/idt.c
-@@ -107,7 +107,7 @@ static const __initconst struct idt_data def_idts[] = {
- 	ISTG(X86_TRAP_MC,		asm_exc_machine_check, IST_INDEX_MCE),
- #endif
- 
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- 	INTG(X86_TRAP_CP,		asm_exc_control_protection),
- #endif
- 
-diff --git a/arch/x86/kernel/signal_32.c b/arch/x86/kernel/signal_32.c
-index 9027fc088f97..c12624bc82a3 100644
---- a/arch/x86/kernel/signal_32.c
-+++ b/arch/x86/kernel/signal_32.c
-@@ -402,7 +402,7 @@ int ia32_setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- */
- static_assert(NSIGILL  == 11);
- static_assert(NSIGFPE  == 15);
--static_assert(NSIGSEGV == 9);
-+static_assert(NSIGSEGV == 10);
- static_assert(NSIGBUS  == 5);
- static_assert(NSIGTRAP == 6);
- static_assert(NSIGCHLD == 6);
-diff --git a/arch/x86/kernel/signal_64.c b/arch/x86/kernel/signal_64.c
-index 13a1e6083837..0e808c72bf7e 100644
---- a/arch/x86/kernel/signal_64.c
-+++ b/arch/x86/kernel/signal_64.c
-@@ -403,7 +403,7 @@ void sigaction_compat_abi(struct k_sigaction *act, struct k_sigaction *oact)
- */
- static_assert(NSIGILL  == 11);
- static_assert(NSIGFPE  == 15);
--static_assert(NSIGSEGV == 9);
-+static_assert(NSIGSEGV == 10);
- static_assert(NSIGBUS  == 5);
- static_assert(NSIGTRAP == 6);
- static_assert(NSIGCHLD == 6);
-diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
-index cc223e60aba2..18fb9d620824 100644
---- a/arch/x86/kernel/traps.c
-+++ b/arch/x86/kernel/traps.c
-@@ -77,18 +77,6 @@
- 
- DECLARE_BITMAP(system_vectors, NR_VECTORS);
- 
--static inline void cond_local_irq_enable(struct pt_regs *regs)
--{
--	if (regs->flags & X86_EFLAGS_IF)
--		local_irq_enable();
--}
--
--static inline void cond_local_irq_disable(struct pt_regs *regs)
--{
--	if (regs->flags & X86_EFLAGS_IF)
--		local_irq_disable();
--}
--
- __always_inline int is_valid_bugaddr(unsigned long addr)
++
++#define pud_write pud_write
++static inline int pud_write(pud_t pud)
++{
++	return pud_flags(pud) & _PAGE_RW;
++}
++
+ static inline int pte_huge(pte_t pte)
  {
- 	if (addr < TASK_SIZE_MAX)
-diff --git a/arch/x86/xen/enlighten_pv.c b/arch/x86/xen/enlighten_pv.c
-index bb59cc6ddb2d..9c29cd5393cc 100644
---- a/arch/x86/xen/enlighten_pv.c
-+++ b/arch/x86/xen/enlighten_pv.c
-@@ -640,7 +640,7 @@ static struct trap_array_entry trap_array[] = {
- 	TRAP_ENTRY(exc_coprocessor_error,		false ),
- 	TRAP_ENTRY(exc_alignment_check,			false ),
- 	TRAP_ENTRY(exc_simd_coprocessor_error,		false ),
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- 	TRAP_ENTRY(exc_control_protection,		false ),
- #endif
- };
-diff --git a/arch/x86/xen/xen-asm.S b/arch/x86/xen/xen-asm.S
-index 4a184f6e4e4d..7cdcb4ce6976 100644
---- a/arch/x86/xen/xen-asm.S
-+++ b/arch/x86/xen/xen-asm.S
-@@ -148,7 +148,7 @@ xen_pv_trap asm_exc_page_fault
- xen_pv_trap asm_exc_spurious_interrupt_bug
- xen_pv_trap asm_exc_coprocessor_error
- xen_pv_trap asm_exc_alignment_check
--#ifdef CONFIG_X86_KERNEL_IBT
-+#ifdef CONFIG_X86_CET
- xen_pv_trap asm_exc_control_protection
- #endif
- #ifdef CONFIG_X86_MCE
-diff --git a/include/uapi/asm-generic/siginfo.h b/include/uapi/asm-generic/siginfo.h
-index ffbe4cec9f32..0f52d0ac47c5 100644
---- a/include/uapi/asm-generic/siginfo.h
-+++ b/include/uapi/asm-generic/siginfo.h
-@@ -242,7 +242,8 @@ typedef struct siginfo {
- #define SEGV_ADIPERR	7	/* Precise MCD exception */
- #define SEGV_MTEAERR	8	/* Asynchronous ARM MTE error */
- #define SEGV_MTESERR	9	/* Synchronous ARM MTE exception */
--#define NSIGSEGV	9
-+#define SEGV_CPERR	10	/* Control protection fault */
-+#define NSIGSEGV	10
+ 	return pte_flags(pte) & _PAGE_PSE;
+@@ -1120,12 +1132,6 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
+ 				  unsigned long address, pmd_t *pmdp);
  
- /*
-  * SIGBUS si_codes
+ 
+-#define pmd_write pmd_write
+-static inline int pmd_write(pmd_t pmd)
+-{
+-	return pmd_flags(pmd) & _PAGE_RW;
+-}
+-
+ #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
+ static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm, unsigned long addr,
+ 				       pmd_t *pmdp)
+@@ -1155,12 +1161,6 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
+ 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
+ }
+ 
+-#define pud_write pud_write
+-static inline int pud_write(pud_t pud)
+-{
+-	return pud_flags(pud) & _PAGE_RW;
+-}
+-
+ #ifndef pmdp_establish
+ #define pmdp_establish pmdp_establish
+ static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
 -- 
 2.17.1
 
