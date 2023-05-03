@@ -2,190 +2,250 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 28966C7EE33
-	for <linux-api@archiver.kernel.org>; Tue,  2 May 2023 12:48:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 169ACC77B75
+	for <linux-api@archiver.kernel.org>; Wed,  3 May 2023 01:36:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229533AbjEBMsl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 2 May 2023 08:48:41 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33340 "EHLO
+        id S229491AbjECBgN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 2 May 2023 21:36:13 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33814 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234175AbjEBMsb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 2 May 2023 08:48:31 -0400
-Received: from mail-wm1-x333.google.com (mail-wm1-x333.google.com [IPv6:2a00:1450:4864:20::333])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9C35759E5;
-        Tue,  2 May 2023 05:48:29 -0700 (PDT)
-Received: by mail-wm1-x333.google.com with SMTP id 5b1f17b1804b1-3f199696149so23104855e9.0;
-        Tue, 02 May 2023 05:48:29 -0700 (PDT)
+        with ESMTP id S229457AbjECBgM (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 2 May 2023 21:36:12 -0400
+Received: from mail-pf1-x42a.google.com (mail-pf1-x42a.google.com [IPv6:2607:f8b0:4864:20::42a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4EB63273A;
+        Tue,  2 May 2023 18:36:10 -0700 (PDT)
+Received: by mail-pf1-x42a.google.com with SMTP id d2e1a72fcca58-63b52ad6311so5084584b3a.2;
+        Tue, 02 May 2023 18:36:10 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20221208; t=1683031708; x=1685623708;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=h8BXJ75gYzzYprFFZm4HHrpNV5bb1uDaD8X/yAOq6xE=;
-        b=Vej277/uvg5RtQa7PfkAJ+kQyYGnCl/VM/mlzVewXkVZX5bK/5RECW12tqaon7FHfc
-         xxj99UwAfDgh89FtLZuvt9zFkZYN3t3dUZp9RVx6iBX0EDpEDTViMiIs5BhFUh0FNZ7C
-         p7BvE01KWlL8GTleGJHiAfytwUyqbzIspLU0qutOyWmcNtREhCBvdXGqZgSqSj95jqz/
-         6+toPvturMJBjhMzDuSdJiTjfHSMxCz+dMCDE+Z/Ywe2agm5xJmJOc7UseofNGN45b1w
-         hvX0/SO48kkX4UhLUY7JshpNWz7qc44sL8ByZ9yW77RUszLaWPqtpjxe+0V17rWwAqdx
-         GQJw==
+        d=gmail.com; s=20221208; t=1683077770; x=1685669770;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=eK7EP3PhnpKeG8yIcMbqBOheIajrQYO1zrUhdTc/GBg=;
+        b=jAJHFHeVCCl0GyCwxZqRtbGjIBY/ntNtzqEp+53+mYcAsq0S58vk7XdH9ZYoPuQQnc
+         9tExO3ze3q62po/Q7KXkPoZaD0MytncpngiFQ3VW+SacbYAb0TTizRCXgO13Xpk4bb2Z
+         GgE1AARNqFDPw/VC2a8GrnF80/Eshca6G4Vig70arVXzBW6vWgJJdry8GB7Y9BgALOc1
+         7HGvpf51XFIPNe35xy2nhoHvUvunGxOSzj23O2Sso2WBkDV2WXayrWXjNesadjlRERwx
+         f4+isGNlbwOehNf5aeF7G2MgLwzj7nvokQxTAFqnYTrMpGz9ewo4L6iFcK2wrEqEUAM4
+         ZRFQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1683031708; x=1685623708;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=h8BXJ75gYzzYprFFZm4HHrpNV5bb1uDaD8X/yAOq6xE=;
-        b=g4jTTpMTiIh0xqGmEOkTy6d1cgZNMqiiRssv9i8a1hIz7Ii41FbwBG5fk4byPT3ekS
-         L3tzcuYqEPyEzkBhL02Cq4/pwNqR37N6WUyK8+DyJg4QiDR+00DMVrOmtoYLhrGL6QwG
-         2S7ZyzHS9UEkT2/H5oRFhaoYWA8+aj+14d8LBcNzPzy2bus/K+wjW4Hs6sxZtVQ/rmjA
-         i2WRiun6tem90TNyaGPqUJPY3a3xj3RaOdsV6Ky0/3kAm7BRIWKL7OTFyhtQ1HMQ3kYs
-         eikMOlUCIn88TIESnnrN8Lw6KGdsOeSl0Ih9G4ke1u2UWzeZhf/UtZHIM6O7ykWKNo+O
-         Ba+w==
-X-Gm-Message-State: AC+VfDyPVrbSkQydBkLbA/NwCZNvjrnbz4TkUletOp377r9DjYX1IZCC
-        xQGItuUy8lii3Wd3/la+QrU=
-X-Google-Smtp-Source: ACHHUZ56mV1h2noLhrpy/lUrHlFJl3n9dlxIoFIg3BmoUKvwGkC67UZ83WZ4LmMv/hkbK5kUXT+iYw==
-X-Received: by 2002:a05:600c:257:b0:3f0:5887:bea3 with SMTP id 23-20020a05600c025700b003f05887bea3mr12229044wmj.27.1683031707995;
-        Tue, 02 May 2023 05:48:27 -0700 (PDT)
-Received: from amir-ThinkPad-T480.lan ([5.29.249.86])
-        by smtp.gmail.com with ESMTPSA id d9-20020a5d6dc9000000b00304adbeeabbsm14226259wrz.99.2023.05.02.05.48.26
+        d=1e100.net; s=20221208; t=1683077770; x=1685669770;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=eK7EP3PhnpKeG8yIcMbqBOheIajrQYO1zrUhdTc/GBg=;
+        b=Xz/GVWb2YMZtx/mo19udtIxuyF28SZ9ZdS3JjXbVfrmIDO3K5mfLWmxXg4WlOZeRMr
+         OP+pWqO73vMtcrK4XKZS49ndp+oJuQnGnmehmIPe0EuOdhRVbIrZwhFmKcig4Yx7ZY1n
+         w6+8TmSo1sD41CbbIob4iUKfLBZ0USeJJaLQXm0A4XsSpzftoM5BGBubX+q1uzZ9b2xY
+         6O+L+cfCRSSGKVi6uEw54qcUZlV4pYSETH0ke6i28e023NFY3F8QmfvRzsgm/ZbhONip
+         SQuMrN9oSZrrFiO4KN5XHEzf0xZ6BzkXnaDsMjsTs66k/tuNbwIGieRUQrtJXfZcSbtd
+         VIFA==
+X-Gm-Message-State: AC+VfDyxB9EKG1sUhvv43lAC+KhukoW8vmY9rQZFJp+lAF83wYked3TE
+        ZBYoGgMSTI/3czsusl3GvQU=
+X-Google-Smtp-Source: ACHHUZ5+wkVPlH2fEQpQ22VkYwS1v+uafEQ9Gfhh9fUzt60DqvP/nimxfxU9E267I9yeN4gtVxkotw==
+X-Received: by 2002:aa7:88c7:0:b0:63b:8cbc:bc0f with SMTP id k7-20020aa788c7000000b0063b8cbcbc0fmr27350279pff.22.1683077769508;
+        Tue, 02 May 2023 18:36:09 -0700 (PDT)
+Received: from localhost (fwdproxy-prn-013.fbsv.net. [2a03:2880:ff:d::face:b00c])
+        by smtp.gmail.com with ESMTPSA id fe5-20020a056a002f0500b0062de9ef6915sm22128854pfb.216.2023.05.02.18.36.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 02 May 2023 05:48:27 -0700 (PDT)
-From:   Amir Goldstein <amir73il@gmail.com>
-To:     Jan Kara <jack@suse.cz>
-Cc:     Christian Brauner <brauner@kernel.org>,
-        Miklos Szeredi <miklos@szeredi.hu>,
-        Jeff Layton <jlayton@kernel.org>,
-        Chuck Lever <chuck.lever@oracle.com>,
-        linux-fsdevel@vger.kernel.org, linux-unionfs@vger.kernel.org,
-        linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH v2 3/4] exportfs: allow exporting non-decodeable file handles to userspace
-Date:   Tue,  2 May 2023 15:48:16 +0300
-Message-Id: <20230502124817.3070545-4-amir73il@gmail.com>
+        Tue, 02 May 2023 18:36:09 -0700 (PDT)
+From:   Nhat Pham <nphamcs@gmail.com>
+To:     akpm@linux-foundation.org
+Cc:     hannes@cmpxchg.org, linux-mm@kvack.org,
+        linux-kernel@vger.kernel.org, bfoster@redhat.com,
+        willy@infradead.org, linux-api@vger.kernel.org,
+        kernel-team@meta.com
+Subject: [PATCH v13 0/3] cachestat: a new syscall for page cache state of files
+Date:   Tue,  2 May 2023 18:36:05 -0700
+Message-Id: <20230503013608.2431726-1-nphamcs@gmail.com>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20230502124817.3070545-1-amir73il@gmail.com>
-References: <20230502124817.3070545-1-amir73il@gmail.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Some userspace programs use st_ino as a unique object identifier, even
-though inode numbers may be recycable.
+Changelog:
+v13:
+  * Change the API, putting the offset and length arguments into a
+    struct, passing only a userspace address to the syscall. It allows
+    for explicit 64 bit length. (suggested by Jens Axboe) (patch 2)
+v12:
+  * Update the cover letter with more cachestat usecase and security
+    concerns (suggested by Johannes Weiner and Andres Freund). 
+  * Fix a bug that crashes cachestat when processing recently evicted
+    pages.
+  * Add a new benchmark for cachestat v.s mincore
+v11:
+  * Clean up code and comments/documentation.
+    (patch 1 and 2) (suggested by Matthew Wilcox)
+  * Drop support for hugetlbfs (patch 2)
+    (from discussion with Johannes Weiner and Matthew Wilcox).
+v10:
+  * Reorder the arguments for archs with alignment requirements.
+    (patch 2) (suggested by Arnd Bergmann)
+v9:
+  * Remove syscall from all the architectures syscall table except x86
+    (patch 2)
+  * API change: handle different cases for offset and add compat syscall.
+    (patch 2) (suggested by Johannes Weiner and Arnd Bergmann)
+v8:
+  * Add syscall to mips syscall tables (detected by kernel test robot)
+    (patch 2)
+  * Add a missing return (suggested by Yu Zhao) (patch 2)
+v7:
+  * Fix and use lru_gen_test_recent (suggested by Brian Foster)
+    (patch 2)
+  * Small formatting and organizational fixes
+v6:
+  * Add a missing fdput() (suggested by Brian Foster) (patch 2)
+  * Replace cstat_size with cstat_version (suggested by Brian Foster)
+    (patch 2)
+  * Add conditional resched to the xas walk. (suggested by Hillf Danton)
+    (patch 2)
+v5:
+  * Separate first patch into its own series.
+    (suggested by Andrew Morton)
+  * Expose filemap_cachestat() to non-syscall usage
+    (patch 2) (suggested by Brian Foster).
+  * Fix some build errors from last version.
+    (patch 2)
+  * Explain eviction and recent eviction in the draft man page and
+    documentation (suggested by Andrew Morton).
+    (patch 2)
+v4:
+  * Refactor cachestat and move it to mm/filemap.c (patch 3)
+    (suggested by Brian Foster)
+  * Remove redundant checks (!folio, access_ok)
+    (patch 3) (suggested by Matthew Wilcox and Al Viro)
+  * Fix a bug in handling multipages folio.
+    (patch 3) (suggested by Matthew Wilcox)
+  * Add a selftest for shmem files, which can be used to test huge
+    pages (patch 4) (suggested by Johannes Weiner)
+v3:
+  * Fix some minor formatting issues and build errors.
+  * Add the new syscall entry to missing architecture syscall tables.
+    (patch 3).
+  * Add flags argument for the syscall. (patch 3).
+  * Clean up the recency refactoring (patch 2) (suggested by Yu Zhao)
+  * Add the new Kconfig (CONFIG_CACHESTAT) to disable the syscall.
+    (patch 3) (suggested by Josh Triplett)
+v2:
+  * len == 0 means query to EOF. len < 0 is invalid.
+    (patch 3) (suggested by Brian Foster)
+  * Make cachestat extensible by adding the `cstat_size` argument in the
+    syscall (patch 3)
 
-This issue has been addressed for NFS export long ago using the exportfs
-file handle API and the unique file handle identifiers are also exported
-to userspace via name_to_handle_at(2).
+There is currently no good way to query the page cache statistics of large
+files and directory trees. There is mincore(), but it scales poorly: the
+kernel writes out a lot of bitmap data that userspace has to aggregate,
+when the user really does not care about per-page information in that
+case. The user also needs to mmap and unmap each file as it goes along,
+which can be quite slow as well.
 
-fanotify also uses file handles to identify objects in events, but only
-for filesystems that support NFS export.
+Some use cases where this information could come in handy:
+  * Allowing database to decide whether to perform an index scan or direct
+    table queries based on the in-memory cache state of the index.
+  * Visibility into the writeback algorithm, for performance issues
+    diagnostic.
+  * Workload-aware writeback pacing: estimating IO fulfilled by page cache
+    (and IO to be done) within a range of a file, allowing for more
+    frequent syncing when and where there is IO capacity, and batching
+    when there is not.
+  * Computing memory usage of large files/directory trees, analogous to
+    the du tool for disk usage.
 
-Relax the requirement for NFS export support and allow more filesystems
-to export a unique object identifier via name_to_handle_at(2) with the
-flag AT_HANDLE_FID.
+More information about these use cases could be found in this thread:
+https://lore.kernel.org/lkml/20230315170934.GA97793@cmpxchg.org/
 
-A file handle requested with the AT_HANDLE_FID flag, may or may not be
-usable as an argument to open_by_handle_at(2).
+This series of patches introduces a new system call, cachestat, that
+summarizes the page cache statistics (number of cached pages, dirty
+pages, pages marked for writeback, evicted pages etc.) of a file, in a
+specified range of bytes. It also include a selftest suite that tests some
+typical usage. Currently, the syscall is only wired in for x86
+architecture.
 
-To allow filesystems to opt-in to supporting AT_HANDLE_FID, a struct
-export_operations is required, but even an empty struct is sufficient
-for encoding FIDs.
+This interface is inspired by past discussion and concerns with fincore,
+which has a similar design (and as a result, issues) as mincore.
+Relevant links:
 
-Acked-by: Jeff Layton <jlayton@kernel.org>
-Acked-by: Chuck Lever <chuck.lever@oracle.com>
-Signed-off-by: Amir Goldstein <amir73il@gmail.com>
----
- fs/fhandle.c               | 22 ++++++++++++++--------
- include/uapi/linux/fcntl.h |  5 +++++
- 2 files changed, 19 insertions(+), 8 deletions(-)
+https://lkml.indiana.edu/hypermail/linux/kernel/1302.1/04207.html
+https://lkml.indiana.edu/hypermail/linux/kernel/1302.1/04209.html
 
-diff --git a/fs/fhandle.c b/fs/fhandle.c
-index f2bc27d1975e..4a635cf787fc 100644
---- a/fs/fhandle.c
-+++ b/fs/fhandle.c
-@@ -16,7 +16,7 @@
- 
- static long do_sys_name_to_handle(const struct path *path,
- 				  struct file_handle __user *ufh,
--				  int __user *mnt_id)
-+				  int __user *mnt_id, int fh_flags)
- {
- 	long retval;
- 	struct file_handle f_handle;
-@@ -24,11 +24,14 @@ static long do_sys_name_to_handle(const struct path *path,
- 	struct file_handle *handle = NULL;
- 
- 	/*
--	 * We need to make sure whether the file system
--	 * support decoding of the file handle
-+	 * We need to make sure whether the file system support decoding of
-+	 * the file handle if decodeable file handle was requested.
-+	 * Otherwise, even empty export_operations are sufficient to opt-in
-+	 * to encoding FIDs.
- 	 */
- 	if (!path->dentry->d_sb->s_export_op ||
--	    !path->dentry->d_sb->s_export_op->fh_to_dentry)
-+	    (!(fh_flags & EXPORT_FH_FID) &&
-+	     !path->dentry->d_sb->s_export_op->fh_to_dentry))
- 		return -EOPNOTSUPP;
- 
- 	if (copy_from_user(&f_handle, ufh, sizeof(struct file_handle)))
-@@ -45,10 +48,10 @@ static long do_sys_name_to_handle(const struct path *path,
- 	/* convert handle size to multiple of sizeof(u32) */
- 	handle_dwords = f_handle.handle_bytes >> 2;
- 
--	/* we ask for a non connected handle */
-+	/* we ask for a non connectable maybe decodeable file handle */
- 	retval = exportfs_encode_fh(path->dentry,
- 				    (struct fid *)handle->f_handle,
--				    &handle_dwords,  0);
-+				    &handle_dwords, fh_flags);
- 	handle->handle_type = retval;
- 	/* convert handle size to bytes */
- 	handle_bytes = handle_dwords * sizeof(u32);
-@@ -84,6 +87,7 @@ static long do_sys_name_to_handle(const struct path *path,
-  * @handle: resulting file handle
-  * @mnt_id: mount id of the file system containing the file
-  * @flag: flag value to indicate whether to follow symlink or not
-+ *        and whether a decodable file handle is required.
-  *
-  * @handle->handle_size indicate the space available to store the
-  * variable part of the file handle in bytes. If there is not
-@@ -96,17 +100,19 @@ SYSCALL_DEFINE5(name_to_handle_at, int, dfd, const char __user *, name,
- {
- 	struct path path;
- 	int lookup_flags;
-+	int fh_flags;
- 	int err;
- 
--	if ((flag & ~(AT_SYMLINK_FOLLOW | AT_EMPTY_PATH)) != 0)
-+	if (flag & ~(AT_SYMLINK_FOLLOW | AT_EMPTY_PATH | AT_HANDLE_FID))
- 		return -EINVAL;
- 
- 	lookup_flags = (flag & AT_SYMLINK_FOLLOW) ? LOOKUP_FOLLOW : 0;
-+	fh_flags = (flag & AT_HANDLE_FID) ? EXPORT_FH_FID : 0;
- 	if (flag & AT_EMPTY_PATH)
- 		lookup_flags |= LOOKUP_EMPTY;
- 	err = user_path_at(dfd, name, lookup_flags, &path);
- 	if (!err) {
--		err = do_sys_name_to_handle(&path, handle, mnt_id);
-+		err = do_sys_name_to_handle(&path, handle, mnt_id, fh_flags);
- 		path_put(&path);
- 	}
- 	return err;
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index e8c07da58c9f..3091080db069 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -112,4 +112,9 @@
- 
- #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
- 
-+/* Flags for name_to_handle_at(2) */
-+#define AT_HANDLE_FID		0x10000	/* file handle is needed to compare
-+					   object indentity and may not be
-+					   usable to open_by_handle_at(2) */
-+
- #endif /* _UAPI_LINUX_FCNTL_H */
+
+I have also developed a small tool that computes the memory usage of
+files and directories, analogous to the du utility. User can choose
+between mincore or cachestat (with cachestat exporting more information
+than mincore). To compare the performance of these two options, I
+benchmarked the tool on the root directory of a Meta's server machine,
+each for five runs:
+
+Using cachestat
+real -- Median: 33.377s, Average: 33.475s, Standard Deviation: 0.3602
+user -- Median: 4.08s, Average: 4.1078s, Standard Deviation: 0.0742
+sys -- Median: 28.823s, Average: 28.8866s, Standard Deviation: 0.2689
+
+Using mincore:
+real -- Median: 102.352s, Average: 102.3442s, Standard Deviation: 0.2059
+user -- Median: 10.149s, Average: 10.1482s, Standard Deviation: 0.0162
+sys -- Median: 91.186s, Average: 91.2084s, Standard Deviation: 0.2046
+
+I also ran both syscalls on a 2TB sparse file:
+
+Using cachestat:
+real    0m0.009s
+user    0m0.000s
+sys     0m0.009s
+
+Using mincore:
+real    0m37.510s
+user    0m2.934s
+sys     0m34.558s
+
+Very large files like this are the pathological case for mincore. In fact,
+to compute the stats for a single 2TB file, mincore takes as long as
+cachestat takes to compute the stats for the entire tree! This could
+easily happen inadvertently when we run it on subdirectories. Mincore is
+clearly not suitable for a general-purpose command line tool.
+
+Regarding security concerns, cachestat() should not pose any additional
+issues. The caller already has read permission to the file itself (since
+they need an fd to that file to call cachestat). This means that the
+caller can access the underlying data in its entirety, which is a much
+greater source of information (and as a result, a much greater security
+risk) than the cache status itself.
+
+The latest API change (in v13 of the patch series) is suggested by
+Jens Axboe. It allows for 64-bit length argument, even on 32-bit
+architecture (which is previously not possible due to the limit on the
+number of syscall arguments). Furthermore, it eliminates the need for
+compatibility handling - every user can use the same ABI.
+
+This series consist of 3 patches:
+
+Nhat Pham (3):
+  workingset: refactor LRU refault to expose refault recency check
+  cachestat: implement cachestat syscall
+  selftests: Add selftests for cachestat
+
+ MAINTAINERS                                   |   7 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ include/linux/swap.h                          |   1 +
+ include/linux/syscalls.h                      |   5 +
+ include/uapi/asm-generic/unistd.h             |   5 +-
+ include/uapi/linux/mman.h                     |  14 +
+ init/Kconfig                                  |  10 +
+ kernel/sys_ni.c                               |   1 +
+ mm/filemap.c                                  | 172 ++++++++++++
+ mm/workingset.c                               | 150 ++++++----
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/cachestat/.gitignore  |   2 +
+ tools/testing/selftests/cachestat/Makefile    |   8 +
+ .../selftests/cachestat/test_cachestat.c      | 258 ++++++++++++++++++
+ 15 files changed, 587 insertions(+), 49 deletions(-)
+ create mode 100644 tools/testing/selftests/cachestat/.gitignore
+ create mode 100644 tools/testing/selftests/cachestat/Makefile
+ create mode 100644 tools/testing/selftests/cachestat/test_cachestat.c
+
 -- 
 2.34.1
-
