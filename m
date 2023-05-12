@@ -2,61 +2,70 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 274B5C77B7C
-	for <linux-api@archiver.kernel.org>; Fri, 12 May 2023 10:42:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E03DCC77B75
+	for <linux-api@archiver.kernel.org>; Fri, 12 May 2023 21:16:39 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S240782AbjELKme (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 12 May 2023 06:42:34 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42776 "EHLO
+        id S239766AbjELVQj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 12 May 2023 17:16:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41218 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240355AbjELKmd (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 12 May 2023 06:42:33 -0400
+        with ESMTP id S240097AbjELVQd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 12 May 2023 17:16:33 -0400
 Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E0A5810C9;
-        Fri, 12 May 2023 03:42:32 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 82ADFD2D3;
+        Fri, 12 May 2023 14:16:05 -0700 (PDT)
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
         (using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
         (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 7CCC7654A9;
-        Fri, 12 May 2023 10:42:32 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D6D80C433D2;
-        Fri, 12 May 2023 10:42:29 +0000 (UTC)
-Date:   Fri, 12 May 2023 11:42:26 +0100
-From:   Catalin Marinas <catalin.marinas@arm.com>
-To:     Nhat Pham <nphamcs@gmail.com>
-Cc:     akpm@linux-foundation.org, linux-api@vger.kernel.org,
+        by dfw.source.kernel.org (Postfix) with ESMTPS id A30D1658C2;
+        Fri, 12 May 2023 21:15:12 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9DBB7C433D2;
+        Fri, 12 May 2023 21:15:11 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linux-foundation.org;
+        s=korg; t=1683926112;
+        bh=tK/i+sli1Qx6hi7lAgqjt19/P/qmplAKgc7mqzvPIK0=;
+        h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+        b=axXGw573Ua/pYEsjK9DTEp81AR36GlN/Ei1OYz7L+p3Xa2y5J71aAVy/MjHfvCaZX
+         5kFFxkdHKE/ySOFoh0g6rh0qu02pC2aQY4ujsJmpJzzF7I0Bok3K0i9mGVPWvFFR+S
+         vkuig7T1usTBxcGHcQraC7mKcIGTja/w5yTqpRG8=
+Date:   Fri, 12 May 2023 14:15:10 -0700
+From:   Andrew Morton <akpm@linux-foundation.org>
+To:     Catalin Marinas <catalin.marinas@arm.com>
+Cc:     Nhat Pham <nphamcs@gmail.com>, linux-api@vger.kernel.org,
         kernel-team@meta.com, linux-arch@vger.kernel.org,
         hannes@cmpxchg.org, linux-mm@kvack.org,
         linux-kernel@vger.kernel.org, arnd@arndb.de, will@kernel.org,
         linux-arm-kernel@lists.infradead.org
 Subject: Re: [PATCH] arm64: wire up cachestat for arm64
-Message-ID: <ZF4YEjiTOeu3jx+5@arm.com>
+Message-Id: <20230512141510.20075825899e3c869c5358ca@linux-foundation.org>
+In-Reply-To: <ZF4YEjiTOeu3jx+5@arm.com>
 References: <20230510195806.2902878-1-nphamcs@gmail.com>
- <20230511092843.3896327-1-nphamcs@gmail.com>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20230511092843.3896327-1-nphamcs@gmail.com>
+        <20230511092843.3896327-1-nphamcs@gmail.com>
+        <ZF4YEjiTOeu3jx+5@arm.com>
+X-Mailer: Sylpheed 3.7.0 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, May 11, 2023 at 02:28:43AM -0700, Nhat Pham wrote:
-> cachestat is a new syscall that was previously wired in for most
-> architectures:
-> 
-> https://lore.kernel.org/lkml/20230503013608.2431726-1-nphamcs@gmail.com/
-> https://lore.kernel.org/linux-mm/20230510195806.2902878-1-nphamcs@gmail.com/
-> 
-> However, those patches miss arm64, which has its own syscall table in arch/arm64.
-> This patch wires cachestat in for arm64.
+On Fri, 12 May 2023 11:42:26 +0100 Catalin Marinas <catalin.marinas@arm.com> wrote:
 
-You may want to clarify that this is for compat support on arm64,
-otherwise native support uses the generic syscall numbers already.
-
+> On Thu, May 11, 2023 at 02:28:43AM -0700, Nhat Pham wrote:
+> > cachestat is a new syscall that was previously wired in for most
+> > architectures:
+> > 
+> > https://lore.kernel.org/lkml/20230503013608.2431726-1-nphamcs@gmail.com/
+> > https://lore.kernel.org/linux-mm/20230510195806.2902878-1-nphamcs@gmail.com/
+> > 
+> > However, those patches miss arm64, which has its own syscall table in arch/arm64.
+> > This patch wires cachestat in for arm64.
 > 
-> Signed-off-by: Nhat Pham <nphamcs@gmail.com>
-> Suggested-by: Geert Uytterhoeven <geert@linux-m68k.org>
-> Suggested-by: Arnd Bergmann <arnd@arndb.de>
+> You may want to clarify that this is for compat support on arm64,
+> otherwise native support uses the generic syscall numbers already.
 
-Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+Thanks, I updated the changelog thusly.  Note that this patch is
+transitory - it will be squashed into "cachestat: wire up cachestat for
+other architectures".
+
