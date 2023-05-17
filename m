@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 80CD6C7EE2D
-	for <linux-api@archiver.kernel.org>; Wed, 17 May 2023 15:27:39 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0B254C7EE2A
+	for <linux-api@archiver.kernel.org>; Wed, 17 May 2023 15:27:42 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232263AbjEQP1i (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 17 May 2023 11:27:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56202 "EHLO
+        id S231478AbjEQP1j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 17 May 2023 11:27:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56204 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232361AbjEQP1V (ORCPT
+        with ESMTP id S232357AbjEQP1V (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Wed, 17 May 2023 11:27:21 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F41C9ECB;
+Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 63E669ECC;
         Wed, 17 May 2023 08:27:06 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1684337224;
-        bh=1RursNp9qkMTEe/+yMwWnmeNTzScNBsuw1A9Btx9VgI=;
+        s=smtpout1; t=1684337225;
+        bh=oUBWD3uXfnEFaLFPKw63JibCtJN1wNcWvTTMTt7WX2U=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=EmcH9M9uGLTxz1YI6yx1ArarwBBRUSw2TPdgE8iVHAMD9UT7tr/3iiFq244PhEw8o
-         +Gr9a+zVV/aRi+thfHp+rrk4OlidHlM/r6zMlInIZUBrTJkh2K2qsJKpPBI10cGrRk
-         P7Z6U6DAmDnJdtq4tRBfv3dzZfMswU1QVRshqBB8E7eUCXAyUhgl54p8BGWpKcscaS
-         6kN2/UQguakV2xf384R2W3zsMUOP7vaXC9hSn41w7FJSNzFUYdm/EqCiY77zMfNheZ
-         INdQlrRmyq1mF60w+pTO0boVcG1e8vbRqIZmnMc8jJrlAxfrM670yaz0JfbKGa+75/
-         1+C6Qp62LE5IQ==
+        b=Pf/uwYxxbU/O++e8hVjspgx9b82crpxKgs6qVzKTYkrKAz+57jx+u5zvEZCnclksb
+         5x0sd3aETZoQFT6ZAHAhXzEagqOkpzW3Tl9WOA1VlptN2JOdiRS9Jqv9EvSlvc25hM
+         y1TxBLPyYXGnAkMv9BPQVoDojU9oK83/x8NL+zzZQ1kfh6j8Le+h01F/4T3VrDkWkY
+         UJXHx43mewfzDxxOTBQqMc1CuXoPbXiE2N7oCPQrOmz8clHWjaZpE6SHpqL1roOGQD
+         RU2JyfoAYjoOFovgNap6MI/rdZL+DSo5q5Ic/ncCjQyfLM4XaKanXKYxN/zGXodtI2
+         QCwlzi20GPCWg==
 Received: from localhost.localdomain (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4QLxmR53HXz131r;
-        Wed, 17 May 2023 11:27:03 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4QLxmT1RBCz12rG;
+        Wed, 17 May 2023 11:27:05 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -44,11 +44,10 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         =?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@igalia.com>,
         libc-alpha@sourceware.org, Steven Rostedt <rostedt@goodmis.org>,
         Jonathan Corbet <corbet@lwn.net>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-        Florian Weimer <fweimer@redhat.com>
-Subject: [RFC PATCH 1/4] rseq: Add sched_state field to struct rseq
-Date:   Wed, 17 May 2023 11:26:51 -0400
-Message-Id: <20230517152654.7193-2-mathieu.desnoyers@efficios.com>
+        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 4/4] selftests/rseq: Implement rseq_mutex test program
+Date:   Wed, 17 May 2023 11:26:54 -0400
+Message-Id: <20230517152654.7193-5-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20230517152654.7193-1-mathieu.desnoyers@efficios.com>
 References: <20230517152654.7193-1-mathieu.desnoyers@efficios.com>
@@ -58,144 +57,165 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Expose the "on-cpu" state for each thread through struct rseq to allow
-adaptative mutexes to decide more accurately between busy-waiting and
-calling sys_futex() to release the CPU, based on the on-cpu state of the
-mutex owner.
-
-It is only provided as an optimization hint, because there is no
-guarantee that the page containing this field is in the page cache, and
-therefore the scheduler may very well fail to clear the on-cpu state on
-preemption. This is expected to be rare though, and is resolved as soon
-as the task returns to user-space.
-
-The goal is to improve use-cases where the duration of the critical
-sections for a given lock follows a multi-modal distribution, preventing
-statistical guesses from doing a good job at choosing between busy-wait
-and futex wait behavior.
+Example use of the rseq sched state.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Steven Rostedt (Google) <rostedt@goodmis.org>
-Cc: Carlos O'Donell <carlos@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: libc-alpha@sourceware.org
 ---
- include/linux/sched.h     | 12 ++++++++++++
- include/uapi/linux/rseq.h | 17 +++++++++++++++++
- kernel/rseq.c             | 14 ++++++++++++++
- 3 files changed, 43 insertions(+)
+ tools/testing/selftests/rseq/.gitignore   |   1 +
+ tools/testing/selftests/rseq/Makefile     |   3 +-
+ tools/testing/selftests/rseq/rseq_mutex.c | 120 ++++++++++++++++++++++
+ 3 files changed, 123 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/rseq/rseq_mutex.c
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index eed5d65b8d1f..c7e9248134c1 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2351,11 +2351,20 @@ static inline void rseq_signal_deliver(struct ksignal *ksig,
- 	rseq_handle_notify_resume(ksig, regs);
- }
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
+index a8db9f7a7cec..38d5b2fe5905 100644
+--- a/tools/testing/selftests/rseq/.gitignore
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -10,3 +10,4 @@ param_test_mm_cid
+ param_test_mm_cid_benchmark
+ param_test_mm_cid_compare_twice
+ sched_state_test
++rseq_mutex
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index 7c8f4f2be74c..a9d7ceb5b79b 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -14,7 +14,8 @@ OVERRIDE_TARGETS = 1
  
-+void __rseq_set_sched_state(struct task_struct *t, unsigned int state);
+ TEST_GEN_PROGS = basic_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
+ 		param_test_benchmark param_test_compare_twice param_test_mm_cid \
+-		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice sched_state_test
++		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice sched_state_test \
++		rseq_mutex
+ 
+ TEST_GEN_PROGS_EXTENDED = librseq.so
+ 
+diff --git a/tools/testing/selftests/rseq/rseq_mutex.c b/tools/testing/selftests/rseq/rseq_mutex.c
+new file mode 100644
+index 000000000000..7e580fc6eebf
+--- /dev/null
++++ b/tools/testing/selftests/rseq/rseq_mutex.c
+@@ -0,0 +1,120 @@
++// SPDX-License-Identifier: LGPL-2.1
 +
-+static inline void rseq_set_sched_state(struct task_struct *t, unsigned int state)
-+{
-+	if (t->rseq)
-+		__rseq_set_sched_state(t, state);
-+}
++#define _GNU_SOURCE
++#include <assert.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/time.h>
++#include <poll.h>
 +
- /* rseq_preempt() requires preemption to be disabled. */
- static inline void rseq_preempt(struct task_struct *t)
- {
- 	__set_bit(RSEQ_EVENT_PREEMPT_BIT, &t->rseq_event_mask);
- 	rseq_set_notify_resume(t);
-+	rseq_set_sched_state(t, 0);
- }
- 
- /* rseq_migrate() requires preemption to be disabled. */
-@@ -2405,6 +2414,9 @@ static inline void rseq_signal_deliver(struct ksignal *ksig,
- 				       struct pt_regs *regs)
- {
- }
-+static inline void rseq_set_sched_state(struct task_struct *t, unsigned int state)
-+{
-+}
- static inline void rseq_preempt(struct task_struct *t)
- {
- }
-diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
-index c233aae5eac9..c6d8537e23ca 100644
---- a/include/uapi/linux/rseq.h
-+++ b/include/uapi/linux/rseq.h
-@@ -37,6 +37,13 @@ enum rseq_cs_flags {
- 		(1U << RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE_BIT),
- };
- 
-+enum rseq_sched_state {
++#include "rseq.h"
++
++#define RSEQ_MUTEX_MAX_BUSY_LOOP	100
++
++struct rseq_mutex {
 +	/*
-+	 * Task is currently running on a CPU if bit is set.
++	 * NULL: unlocked. When non-NULL, owner points to per-thread rseq_abi
++	 * of owner thread.
 +	 */
-+	RSEQ_SCHED_STATE_ON_CPU		= (1U << 0),
++	struct rseq_abi *owner;
 +};
 +
- /*
-  * struct rseq_cs is aligned on 4 * 8 bytes to ensure it is always
-  * contained within a single cache-line. It is usually declared as
-@@ -148,6 +155,16 @@ struct rseq {
- 	 */
- 	__u32 mm_cid;
- 
-+	/*
-+	 * Restartable sequences sched_state field. Updated by the kernel. Read
-+	 * by user-space with single-copy atomicity semantics. This fields can
-+	 * be read by any userspace thread. Aligned on 32-bit. Contains a
-+	 * bitmask of enum rseq_sched_state. This field is provided as a hint
-+	 * by the scheduler, and requires that the page holding struct rseq is
-+	 * faulted-in for the state update to be performed by the scheduler.
-+	 */
-+	__u32 sched_state;
++static struct rseq_mutex lock = { .owner = NULL };
 +
- 	/*
- 	 * Flexible array member at end of structure, after last feature field.
- 	 */
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 9de6e35fe679..b2eb3bbaa9ef 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -91,6 +91,7 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
- 	u32 cpu_id = raw_smp_processor_id();
- 	u32 node_id = cpu_to_node(cpu_id);
- 	u32 mm_cid = task_mm_cid(t);
-+	u32 sched_state = RSEQ_SCHED_STATE_ON_CPU;
- 
- 	WARN_ON_ONCE((int) mm_cid < 0);
- 	if (!user_write_access_begin(rseq, t->rseq_len))
-@@ -99,6 +100,7 @@ static int rseq_update_cpu_node_id(struct task_struct *t)
- 	unsafe_put_user(cpu_id, &rseq->cpu_id, efault_end);
- 	unsafe_put_user(node_id, &rseq->node_id, efault_end);
- 	unsafe_put_user(mm_cid, &rseq->mm_cid, efault_end);
-+	unsafe_put_user(sched_state, &rseq->sched_state, efault_end);
- 	/*
- 	 * Additional feature fields added after ORIG_RSEQ_SIZE
- 	 * need to be conditionally updated only if
-@@ -339,6 +341,18 @@ void __rseq_handle_notify_resume(struct ksignal *ksig, struct pt_regs *regs)
- 	force_sigsegv(sig);
- }
- 
-+/*
-+ * Attempt to update rseq scheduler state.
-+ */
-+void __rseq_set_sched_state(struct task_struct *t, unsigned int state)
++static int testvar;
++
++static void rseq_lock_slowpath(struct rseq_mutex *lock)
 +{
-+	if (unlikely(t->flags & PF_EXITING))
-+		return;
-+	pagefault_disable();
-+	(void) put_user(state, &t->rseq->sched_state);
-+	pagefault_enable();
++	int i = 0;
++
++	for (;;) {
++		struct rseq_abi *expected = NULL, *self = rseq_get_abi();
++
++		if (__atomic_compare_exchange_n(&lock->owner, &expected, self, false,
++						    __ATOMIC_ACQUIRE, __ATOMIC_RELAXED))
++			break;
++		//TODO: use rseq critical section to protect dereference of owner thread's
++		//rseq_abi, combined with rseq fence at thread reclaim.
++		if ((RSEQ_ACCESS_ONCE(expected->sched_state) & RSEQ_SCHED_STATE_ON_CPU) &&
++		    i < RSEQ_MUTEX_MAX_BUSY_LOOP) {
++			rseq_barrier();			/* busy-wait, e.g. cpu_relax(). */
++			i++;
++		} else {
++			//TODO: Enqueue waiter in a wait-queue, and integrate
++			//with sys_futex rather than waiting for 10ms.
++			(void) poll(NULL, 0, 10);	/* wait 10ms */
++		}
++	}
 +}
 +
- #ifdef CONFIG_DEBUG_RSEQ
- 
- /*
++static void rseq_lock(struct rseq_mutex *lock)
++{
++	struct rseq_abi *expected = NULL, *self = rseq_get_abi();
++
++	if (rseq_likely(__atomic_compare_exchange_n(&lock->owner, &expected, self, false,
++						    __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)))
++		return;
++	rseq_lock_slowpath(lock);
++}
++
++static void rseq_unlock(struct rseq_mutex *lock)
++{
++	__atomic_store_n(&lock->owner, NULL, __ATOMIC_RELEASE);
++	//TODO: integrate with sys_futex and wakeup oldest waiter.
++}
++
++static
++void *test_thread(void *arg)
++{
++	int i;
++
++	if (rseq_register_current_thread()) {
++		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		abort();
++	}
++
++	for (i = 0; i < 1000; i++) {
++		int var;
++
++		rseq_lock(&lock);
++		var = RSEQ_READ_ONCE(testvar);
++		if (var) {
++			fprintf(stderr, "Unexpected value %d\n", var);
++			abort();
++		}
++		RSEQ_WRITE_ONCE(testvar, 1);
++		if (!(i % 10))
++			(void) poll(NULL, 0, 10);
++		else
++			rseq_barrier();
++		RSEQ_WRITE_ONCE(testvar, 0);
++		rseq_unlock(&lock);
++	}
++
++	if (rseq_unregister_current_thread()) {
++		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		abort();
++	}
++	return NULL;
++}
++
++int main(int argc, char **argv)
++{
++	int nr_threads = 5;
++	pthread_t test_thread_id[nr_threads];
++	int i;
++
++	for (i = 0; i < nr_threads; i++) {
++		pthread_create(&test_thread_id[i], NULL, test_thread, NULL);
++	}
++
++	for (i = 0; i < nr_threads; i++) {
++		pthread_join(test_thread_id[i], NULL);
++	}
++
++	return 0;
++}
 -- 
 2.25.1
 
