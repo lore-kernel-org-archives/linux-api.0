@@ -2,31 +2,31 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 10A3FC7EE31
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AC6B5C7EE2F
 	for <linux-api@archiver.kernel.org>; Mon, 29 May 2023 19:14:31 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229455AbjE2TOa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S229550AbjE2TOa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 29 May 2023 15:14:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50834 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50848 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229695AbjE2TO1 (ORCPT
+        with ESMTP id S229676AbjE2TO1 (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 29 May 2023 15:14:27 -0400
 Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5567AAD;
-        Mon, 29 May 2023 12:14:23 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3B90DD9;
+        Mon, 29 May 2023 12:14:24 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1685387662;
-        bh=BuBFuJov4/08X+aS9ZPKMQM67VPLxpAoQ7NIMWm8KVA=;
-        h=From:To:Cc:Subject:Date:From;
-        b=F/U4EMf3L4KQEw4uC86Y2qkSiRYS7EegfItvbqZ3mgR+CV3EHp/2aGZmEn+ZAJcQ8
-         NNlrnk66WzIwMhyqM7kr3nvCdEO1Sf5q0WY9B/Wt/hXY3cQGelIIbd4aigq+DeXhDk
-         vXCKtNbgKIJAVt77ji+jQ9SZjBAWxzCltQPDVn8TjoaxTzO+/cznrrloXjzX98o50v
-         c0Koe/YMLrRzMIJMd0CjeLpFRAA39P5yd8bHn/rLuW3tx3+ueoaAYaW4VGps8MUi+Y
-         qJ2TYxTNBZ1ppbdCq4XB5y/HNaNx82HjOkpxwBWzUJtSfe7vsnLX1073+9TgzwYTd0
-         mkCQ4lO6o3Kdw==
+        s=smtpout1; t=1685387663;
+        bh=1NSDvuKZlkj1LDG55Opnc9arEf2CDBA5sWooOa0Auxs=;
+        h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+        b=E+nmIA9jjhGxSVcQWQ1eh0PMnpHNNfD6o9CBD+CE/oKRJutzuFGKqFXTzkuQ3vlHR
+         +srFPLRlhguoA+SYIAbp2Y80lBYBP8/sVMMuFZjOO8TomJeAkBd/oHgtqHKET1L/jE
+         Oq+sdX9bwUXsbfwjQ1TUad7wjJoJvyq4l5NiCSUFlorVyqzmqn8KCQdYd0PDkQDKke
+         rMm2TI/P4A++PEXnsUgm17wwUCo1q7HtISOODP7xtmJOwVXzNjY5xP9XCLnkP13faU
+         dvZd1sCtXlMDSGDDskruo6k2GnQ2obToX5tEaMZD6S6g95kTQbdLD9TnsB3M2w4yjk
+         7ljd78EzhMOCg==
 Received: from localhost.localdomain (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4QVQF94MPDz16DG;
-        Mon, 29 May 2023 15:14:21 -0400 (EDT)
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4QVQFC0n9Jz165Q;
+        Mon, 29 May 2023 15:14:23 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Peter Zijlstra <peterz@infradead.org>
 Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
@@ -47,69 +47,130 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         Noah Goldstein <goldstein.w.n@gmail.com>,
         Daniel Colascione <dancol@google.com>, longman@redhat.com,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH v2 0/4] Extend rseq with sched_state_ptr field
-Date:   Mon, 29 May 2023 15:14:12 -0400
-Message-Id: <20230529191416.53955-1-mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH v2 3/4] selftests/rseq: Implement sched state test program
+Date:   Mon, 29 May 2023 15:14:15 -0400
+Message-Id: <20230529191416.53955-4-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
+In-Reply-To: <20230529191416.53955-1-mathieu.desnoyers@efficios.com>
+References: <20230529191416.53955-1-mathieu.desnoyers@efficios.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This prototype extends struct rseq with a new sched_state_ptr field,
-which points to a structure containing a "on-cpu" flag kept up-to-date
-by the scheduler.
+This is a small test program with can be altered to show whether the
+target thread is on-cpu or not, dependending on whether it loops on
+poll() or does a busy-loop.
 
-It is meant to be used by userspace adaptative mutexes to decide between
-busy-wait and futex wait system call (releasing the CPU) behaviors based
-on the current state of the mutex owner.
-
-The goal is to improve use-cases where the duration of the critical
-sections for a given lock follows a multi-modal distribution, preventing
-statistical guesses from doing a good job at choosing between busy-wait
-and futex wait behavior.
-
-This is in response to the LWN coverage of 2023 Open Source Summit North
-America (https://lwn.net/Articles/931789/) unscheduled slot "Adaptive
-spinning in user space" presented by André Almeida.
-
-New in this v2:
-
-- Introduce a "struct rseq_sched_state", which contains the on-cpu
-  scheduler flag and a thread ID field. This eliminates false sharing
-  on the struct rseq cache lines caused by busy-waiting.
-
-I have favored adding a "thread ID" field to struct rseq_sched_state
-rather than adding stores of owner pointer in addition to a
-compare-and-swap and store on a uint32_t for lock state to minimize the
-number of stores to perform on the fast-path.
-
-Feedback is welcome!
-
-Mathieu
-
-Mathieu Desnoyers (4):
-  rseq: Add sched_state field to struct rseq
-  selftests/rseq: Add sched_state rseq field and getter
-  selftests/rseq: Implement sched state test program
-  selftests/rseq: Implement rseq_mutex test program
-
- include/linux/sched.h                         |  16 +++
- include/uapi/linux/rseq.h                     |  41 ++++++
- kernel/rseq.c                                 |  43 +++++++
- tools/testing/selftests/rseq/.gitignore       |   2 +
- tools/testing/selftests/rseq/Makefile         |   3 +-
- tools/testing/selftests/rseq/rseq-abi.h       |  42 ++++++
- tools/testing/selftests/rseq/rseq.c           |  13 ++
- tools/testing/selftests/rseq/rseq.h           |   5 +
- tools/testing/selftests/rseq/rseq_mutex.c     | 120 ++++++++++++++++++
- .../testing/selftests/rseq/sched_state_test.c |  72 +++++++++++
- 10 files changed, 356 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/rseq/rseq_mutex.c
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+---
+ tools/testing/selftests/rseq/.gitignore       |  1 +
+ tools/testing/selftests/rseq/Makefile         |  2 +-
+ .../testing/selftests/rseq/sched_state_test.c | 72 +++++++++++++++++++
+ 3 files changed, 74 insertions(+), 1 deletion(-)
  create mode 100644 tools/testing/selftests/rseq/sched_state_test.c
 
+diff --git a/tools/testing/selftests/rseq/.gitignore b/tools/testing/selftests/rseq/.gitignore
+index 16496de5f6ce..a8db9f7a7cec 100644
+--- a/tools/testing/selftests/rseq/.gitignore
++++ b/tools/testing/selftests/rseq/.gitignore
+@@ -9,3 +9,4 @@ param_test_compare_twice
+ param_test_mm_cid
+ param_test_mm_cid_benchmark
+ param_test_mm_cid_compare_twice
++sched_state_test
+diff --git a/tools/testing/selftests/rseq/Makefile b/tools/testing/selftests/rseq/Makefile
+index b357ba24af06..7c8f4f2be74c 100644
+--- a/tools/testing/selftests/rseq/Makefile
++++ b/tools/testing/selftests/rseq/Makefile
+@@ -14,7 +14,7 @@ OVERRIDE_TARGETS = 1
+ 
+ TEST_GEN_PROGS = basic_test basic_percpu_ops_test basic_percpu_ops_mm_cid_test param_test \
+ 		param_test_benchmark param_test_compare_twice param_test_mm_cid \
+-		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice
++		param_test_mm_cid_benchmark param_test_mm_cid_compare_twice sched_state_test
+ 
+ TEST_GEN_PROGS_EXTENDED = librseq.so
+ 
+diff --git a/tools/testing/selftests/rseq/sched_state_test.c b/tools/testing/selftests/rseq/sched_state_test.c
+new file mode 100644
+index 000000000000..5196b0dd897a
+--- /dev/null
++++ b/tools/testing/selftests/rseq/sched_state_test.c
+@@ -0,0 +1,72 @@
++// SPDX-License-Identifier: LGPL-2.1
++
++#define _GNU_SOURCE
++#include <assert.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/time.h>
++#include <poll.h>
++
++#include "rseq.h"
++
++static struct rseq_abi_sched_state *target_thread_state;
++
++//TODO:
++//Use rseq c.s. and rseq fence to protect access to remote thread's rseq_abi.
++
++static
++void show_sched_state(struct rseq_abi_sched_state *rseq_thread_state)
++{
++	uint32_t state;
++
++	state = rseq_thread_state->state;
++	printf("Target thread: %u, ON_CPU=%d\n",
++	       rseq_thread_state->tid,
++	       !!(state & RSEQ_ABI_SCHED_STATE_FLAG_ON_CPU));
++}
++
++static
++void *test_thread(void *arg)
++{
++	int i;
++
++	for (i = 0; i < 1000; i++) {
++		show_sched_state(target_thread_state);
++		(void) poll(NULL, 0, 100);
++	}
++	return NULL;
++}
++
++int main(int argc, char **argv)
++{
++	pthread_t test_thread_id;
++	int i;
++
++	if (rseq_register_current_thread()) {
++		fprintf(stderr, "Error: rseq_register_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		goto init_thread_error;
++	}
++	target_thread_state = rseq_get_sched_state(rseq_get_abi());
++
++	pthread_create(&test_thread_id, NULL, test_thread, NULL);
++
++	for (i = 0; i < 1000000000; i++)
++		rseq_barrier();
++	//for (i = 0; i < 10000; i++)
++	//	(void) poll(NULL, 0, 75);
++
++	pthread_join(test_thread_id, NULL);
++
++	if (rseq_unregister_current_thread()) {
++		fprintf(stderr, "Error: rseq_unregister_current_thread(...) failed(%d): %s\n",
++			errno, strerror(errno));
++		goto init_thread_error;
++	}
++	return 0;
++
++init_thread_error:
++	return -1;
++}
 -- 
 2.25.1
 
