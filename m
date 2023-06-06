@@ -2,56 +2,56 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EA31BC77B7A
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:05:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DDEF3C7EE31
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:05:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238087AbjFFTFE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 6 Jun 2023 15:05:04 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38688 "EHLO
+        id S239283AbjFFTFG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jun 2023 15:05:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38908 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239275AbjFFTEc (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:04:32 -0400
-Received: from mail-pf1-x449.google.com (mail-pf1-x449.google.com [IPv6:2607:f8b0:4864:20::449])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 12AC11992
-        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:04:28 -0700 (PDT)
-Received: by mail-pf1-x449.google.com with SMTP id d2e1a72fcca58-653a5de0478so2662454b3a.0
-        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:04:28 -0700 (PDT)
+        with ESMTP id S239231AbjFFTE3 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:04:29 -0400
+Received: from mail-yb1-xb49.google.com (mail-yb1-xb49.google.com [IPv6:2607:f8b0:4864:20::b49])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3E2A31712
+        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:04:21 -0700 (PDT)
+Received: by mail-yb1-xb49.google.com with SMTP id 3f1490d57ef6-bb2a7308f21so5264239276.2
+        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:04:21 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20221208; t=1686078267; x=1688670267;
+        d=google.com; s=20221208; t=1686078260; x=1688670260;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=q0LlAXxza1jA09p0tGZBn0yslODgyOL+oHXEFWpIcjw=;
-        b=oNCwvb9aRpGDjzemliRPAV2RbEjUkgcqMTcFw35zrX9Wk6VNZIJTDcZ8+sohLR6ypL
-         FaZ8YypjTtdq4RVqmfVtwq8W8DKoRJdnwKkTjuJm/fygYago9102lZaBqLBb3VLlSbNA
-         8+GKs0dCEhmYGJeMyAKWj2FCcFo2qfmKEi+Bfw7yT1VoVQRRdAWcJACFBwEDVx5EFgYY
-         ssLEqzao5SUtD6qqnRzkJD0PmTNAv31SFuhQy7OBTGaI6F+cg3TLNZhoEHYY01Vr6fPj
-         YBc8jpY1SOo3QPJvqg80DDEnv97O24LbqrhfCC1OmOHsPqRNG8fKpuVSD4Hro3kbXfW6
-         x8MA==
+        bh=EVsoBqdtoJX8/StMCoaJ2TBhLAuQb0ZIsYKuvX8foFc=;
+        b=3bRhDOn2F1YoY78ybE5Buf9pXWlEWLIrZLl3zmMqCMxMWePwOymNgzPlL05No/cBty
+         JhXR5aZftY97cDZvNkSb70a55Fkj8oothgT0n+qKkVwOjj7CYzQnLwO2wmEIMdOIIq24
+         jiWbdBDp6sWsJWroyTU36/XenlT2tddUva4/zzFiwtqHgjy72QN5YVUYSt+vJDoI3IyN
+         VcmHCICw1jUnn1dcw1Z79WvsPN60OZDQjPZspnctaG3vX9a9apYfWKKt97pGmH1ZZWZ+
+         n8NTZLQKSqtuCbrmmo44T26y4ZuXSivXoMS2qmsA9OyppL+7KUrgyC0TXXVY+vLySr9n
+         vPOw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686078267; x=1688670267;
+        d=1e100.net; s=20221208; t=1686078260; x=1688670260;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=q0LlAXxza1jA09p0tGZBn0yslODgyOL+oHXEFWpIcjw=;
-        b=bikVlJyZl9e9syu6dVxPU1LK7PJo2Zp8UBiAG3Acz7Pj0olDzWjM3yryN1SA1sGiTW
-         6kPYyiCWm3h4SXFVZT9NH7LFJTA9nEYv5dIOim+jtG9TffjoNOtdrJ19/fVb1ALb4vMj
-         utdSgeorKVNSH6NE+c1xwutWWKTKCUcfLtLLtvLryGNoKZpn0Q/22uFjVr3oTiFc8xyL
-         Ox3OEuuDe44P6JUJJNwUxEFcZXJPxmPSSGqJnlVP2nbZeCv0WuvitUT0f3NtlCRI53ia
-         L21yCr1Iz00qbc9bO99zG9clH5Yz68yZ2809YxHXek9QoMXujR7T/e2/cs4Vij0I3oGf
-         ULGg==
-X-Gm-Message-State: AC+VfDxA2fvKZZl4A86Akk/DGE999igiF8nBWZopC9R6w8awa0y0XTM/
-        vm/qWid0rVdB4t6vZbdDPytP91d7dWMzXatDgw==
-X-Google-Smtp-Source: ACHHUZ6/geo43pUv13kPM8dbgitYn16Pb8nr3LytYQllA2bz6ABBAmVaVTp99t2le/ojeTQ9xVl065tEgGqpA1Ormw==
+        bh=EVsoBqdtoJX8/StMCoaJ2TBhLAuQb0ZIsYKuvX8foFc=;
+        b=EU01HXRbLlzf1AU3DRvOhAeaR9/nHDKF/olh9e4pNXIFiPc43LWQdj2tuiRonB5XD/
+         NAOukxAEt0UYSiPBcl2ADODELVDeV0lGbQQZ2PTCyWEJvHI63DE4lbPwbKsrQtZ5rXSQ
+         LYafXvgcAiHC2q7nnmpM/3P0EuvOxWlTNzlc0Cqy9O9VpTwpBZKrtgk1/o5PPjmJqT4m
+         SL8KcLe291v9gZXL3JMIz5EJnoExDMNOA+vJybOcJRGk4YUkquewLxR94aXnRn9swCZZ
+         bY4E+Ke8bHTBhD8YsRlwMHx5MzoNmIOmoSACaMLwcEH7sv6zcuqHda/Yo7lXiRNq8pRL
+         nF7Q==
+X-Gm-Message-State: AC+VfDxqEePmRc0+mARGdpAIt0FbKvV/B+mxK9P3c/uwDuywGmFZ2cAh
+        EXQ4rOQX6V80aZPaUFaKlW0NmKrKyoS8wa5Bpg==
+X-Google-Smtp-Source: ACHHUZ7pHc1WWdEMTu1ZaLAHhToRSasMGs58ikGHS3ezVoQuVBFPIMzugkY1x4qddS4xfRUOsuXb06aDGCKa9mnCdw==
 X-Received: from ackerleytng-ctop.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:13f8])
- (user=ackerleytng job=sendgmr) by 2002:a05:6a00:188d:b0:64f:cdb0:64a8 with
- SMTP id x13-20020a056a00188d00b0064fcdb064a8mr1304775pfh.3.1686078267446;
- Tue, 06 Jun 2023 12:04:27 -0700 (PDT)
-Date:   Tue,  6 Jun 2023 19:03:53 +0000
+ (user=ackerleytng job=sendgmr) by 2002:a05:6902:124f:b0:ba8:2e68:7715 with
+ SMTP id t15-20020a056902124f00b00ba82e687715mr1639977ybu.2.1686078260457;
+ Tue, 06 Jun 2023 12:04:20 -0700 (PDT)
+Date:   Tue,  6 Jun 2023 19:03:49 +0000
 In-Reply-To: <cover.1686077275.git.ackerleytng@google.com>
 Mime-Version: 1.0
 References: <cover.1686077275.git.ackerleytng@google.com>
 X-Mailer: git-send-email 2.41.0.rc0.172.g3f132b7071-goog
-Message-ID: <cfe974a0ca8182f40a3437e0799f82b38542a667.1686077275.git.ackerleytng@google.com>
-Subject: [RFC PATCH 08/19] mm: hugetlb: Refactor restore_reserve_on_error
+Message-ID: <d1c8d97fbeab33b147b104ed18299b510c50ab40.1686077275.git.ackerleytng@google.com>
+Subject: [RFC PATCH 04/19] mm: hugetlb: Decouple hstate, subpool from inode
 From:   Ackerley Tng <ackerleytng@google.com>
 To:     akpm@linux-foundation.org, mike.kravetz@oracle.com,
         muchun.song@linux.dev, pbonzini@redhat.com, seanjc@google.com,
@@ -77,155 +77,325 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Refactor restore_reserve_on_error to allow resv_map to be passed
-in. vma_resv_map() assumes the use of hugetlbfs in the way it
-retrieves the resv_map from the vma and inode.
+hstate and subpool being retrievable from inode via hstate_inode() and
+subpool_inode() respectively is a hugetlbfs concept.
 
-Introduce restore_reserve_on_error_vma() which retains original
-functionality to simplify refactoring for now.
+hugetlb should be agnostic of hugetlbfs and hugetlb accounting
+functions should accept hstate (required) and subpool (can be NULL)
+independently of inode.
+
+inode is still a parameter for these accounting functions since the
+inode's block counts need to be updated during accounting.
+
+The inode's resv_map will also still need to be updated if not NULL.
 
 Signed-off-by: Ackerley Tng <ackerleytng@google.com>
 ---
- fs/hugetlbfs/inode.c    |  2 +-
- include/linux/hugetlb.h |  6 ++++--
- mm/hugetlb.c            | 37 +++++++++++++++++++++----------------
- 3 files changed, 26 insertions(+), 19 deletions(-)
+ fs/hugetlbfs/inode.c    | 59 ++++++++++++++++++++++++++++-------------
+ include/linux/hugetlb.h | 32 +++++++++++++++++-----
+ mm/hugetlb.c            | 49 ++++++++++++++++++++--------------
+ 3 files changed, 95 insertions(+), 45 deletions(-)
 
 diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
-index 0fc49b6252e4..44e6ee9a856d 100644
+index 4f25df31ae80..0fc49b6252e4 100644
 --- a/fs/hugetlbfs/inode.c
 +++ b/fs/hugetlbfs/inode.c
-@@ -868,7 +868,7 @@ static long hugetlbfs_fallocate(struct file *file, int mode, loff_t offset,
- 		__folio_mark_uptodate(folio);
- 		error = hugetlb_add_to_page_cache(folio, mapping, index);
- 		if (unlikely(error)) {
--			restore_reserve_on_error(h, &pseudo_vma, addr, folio);
-+			restore_reserve_on_error_vma(h, &pseudo_vma, addr, folio);
- 			folio_put(folio);
- 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
- 			goto out;
-diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
-index 7d49048c5a2a..02a2766d89a4 100644
---- a/include/linux/hugetlb.h
-+++ b/include/linux/hugetlb.h
-@@ -760,8 +760,10 @@ int hugetlb_filemap_add_folio(struct address_space *mapping, struct hstate *h,
- 			      struct folio *folio, pgoff_t idx);
- int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping,
- 			pgoff_t idx);
--void restore_reserve_on_error(struct hstate *h, struct vm_area_struct *vma,
--				unsigned long address, struct folio *folio);
-+void restore_reserve_on_error(struct resv_map *resv, pgoff_t resv_index,
-+			      bool may_share, struct folio *folio);
-+void restore_reserve_on_error_vma(struct hstate *h, struct vm_area_struct *vma,
-+				  unsigned long address, struct folio *folio);
+@@ -164,7 +164,7 @@ static int hugetlbfs_file_mmap(struct file *file, struct vm_area_struct *vma)
+ 	file_accessed(file);
  
- /* arch callback */
- int __init __alloc_bootmem_huge_page(struct hstate *h, int nid);
-diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index d943f83d15a9..4675f9efeba4 100644
---- a/mm/hugetlb.c
-+++ b/mm/hugetlb.c
-@@ -2805,15 +2805,10 @@ static long resv_map_del_reservation(struct resv_map *resv, pgoff_t resv_index,
-  *
-  * In case 2, simply undo reserve map modifications done by alloc_hugetlb_folio.
-  */
--void restore_reserve_on_error(struct hstate *h, struct vm_area_struct *vma,
--			unsigned long address, struct folio *folio)
-+void restore_reserve_on_error(struct resv_map *resv, pgoff_t resv_index,
-+			      bool may_share, struct folio *folio)
- {
--	long rc;
--	struct resv_map *resv = vma_resv_map(vma);
--	pgoff_t resv_index = vma_hugecache_offset(h, vma, address);
--	bool may_share = vma->vm_flags & VM_MAYSHARE;
--
--	rc = resv_map_needs_reservation(resv, resv_index, may_share);
-+	long rc = resv_map_needs_reservation(resv, resv_index, may_share);
- 
- 	if (folio_test_hugetlb_restore_reserve(folio)) {
- 		if (unlikely(rc < 0))
-@@ -2865,7 +2860,7 @@ void restore_reserve_on_error(struct hstate *h, struct vm_area_struct *vma,
- 			 * For shared mappings, no entry in the map indicates
- 			 * no reservation.  We are done.
- 			 */
--			if (!(vma->vm_flags & VM_MAYSHARE))
-+			if (!may_share)
- 				/*
- 				 * For private mappings, no entry indicates
- 				 * a reservation is present.  Since we can
-@@ -2883,6 +2878,16 @@ void restore_reserve_on_error(struct hstate *h, struct vm_area_struct *vma,
+ 	ret = -ENOMEM;
+-	if (!hugetlb_reserve_pages(inode,
++	if (!hugetlb_reserve_pages(h, subpool_inode(inode), inode,
+ 				vma->vm_pgoff >> huge_page_order(h),
+ 				len >> huge_page_shift(h), vma,
+ 				vma->vm_flags))
+@@ -550,14 +550,18 @@ hugetlb_vmdelete_list(struct rb_root_cached *root, pgoff_t start, pgoff_t end,
  	}
  }
  
-+void restore_reserve_on_error_vma(struct hstate *h, struct vm_area_struct *vma,
-+				  unsigned long address, struct folio *folio)
-+{
-+	struct resv_map *resv = vma_resv_map(vma);
-+	pgoff_t resv_index = vma_hugecache_offset(h, vma, address);
-+	bool may_share = vma->vm_flags & VM_MAYSHARE;
-+
-+	restore_reserve_on_error(resv, resv_index, may_share, folio);
-+}
-+
- /*
-  * alloc_and_dissolve_hugetlb_folio - Allocate a new folio and dissolve
-  * the old one
-@@ -5109,8 +5114,8 @@ int copy_hugetlb_page_range(struct mm_struct *dst, struct mm_struct *src,
- 				spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
- 				entry = huge_ptep_get(src_pte);
- 				if (!pte_same(src_pte_old, entry)) {
--					restore_reserve_on_error(h, dst_vma, addr,
--								new_folio);
-+					restore_reserve_on_error_vma(h, dst_vma, addr,
-+								     new_folio);
- 					folio_put(new_folio);
- 					/* huge_ptep of dst_pte won't change as in child */
- 					goto again;
-@@ -5642,7 +5647,7 @@ static vm_fault_t hugetlb_wp(struct mm_struct *mm, struct vm_area_struct *vma,
- 	 * unshare)
- 	 */
- 	if (new_folio != page_folio(old_page))
--		restore_reserve_on_error(h, vma, haddr, new_folio);
-+		restore_reserve_on_error_vma(h, vma, haddr, new_folio);
- 	folio_put(new_folio);
- out_release_old:
- 	put_page(old_page);
-@@ -5860,7 +5865,7 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
- 				 * to the page cache. So it's safe to call
- 				 * restore_reserve_on_error() here.
- 				 */
--				restore_reserve_on_error(h, vma, haddr, folio);
-+				restore_reserve_on_error_vma(h, vma, haddr, folio);
- 				folio_put(folio);
- 				goto out;
- 			}
-@@ -5965,7 +5970,7 @@ static vm_fault_t hugetlb_no_page(struct mm_struct *mm,
- 	spin_unlock(ptl);
- backout_unlocked:
- 	if (new_folio && !new_pagecache_folio)
--		restore_reserve_on_error(h, vma, haddr, folio);
-+		restore_reserve_on_error_vma(h, vma, haddr, folio);
+-/*
++/**
++ * Remove folio from page_cache and userspace mappings. Also unreserves pages,
++ * updating hstate @h, subpool @spool (if not NULL), @inode block info and
++ * @inode's resv_map (if not NULL).
++ *
+  * Called with hugetlb fault mutex held.
+  * Returns true if page was actually removed, false otherwise.
+  */
+-static bool remove_inode_single_folio(struct hstate *h, struct inode *inode,
+-					struct address_space *mapping,
+-					struct folio *folio, pgoff_t index,
+-					bool truncate_op)
++static bool remove_mapping_single_folio(
++	struct address_space *mapping, struct folio *folio, pgoff_t index,
++	struct hstate *h, struct hugepage_subpool *spool, struct inode *inode,
++	bool truncate_op)
+ {
+ 	bool ret = false;
+ 
+@@ -582,9 +586,8 @@ static bool remove_inode_single_folio(struct hstate *h, struct inode *inode,
+ 	hugetlb_delete_from_page_cache(folio);
+ 	ret = true;
+ 	if (!truncate_op) {
+-		if (unlikely(hugetlb_unreserve_pages(inode, index,
+-							index + 1, 1)))
+-			hugetlb_fix_reserve_counts(inode);
++		if (unlikely(hugetlb_unreserve_pages(h, spool, inode, index, index + 1, 1)))
++			hugetlb_fix_reserve_counts(h, spool);
+ 	}
  
  	folio_unlock(folio);
- 	folio_put(folio);
-@@ -6232,7 +6237,7 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm,
- 			/* Free the allocated folio which may have
- 			 * consumed a reservation.
- 			 */
--			restore_reserve_on_error(h, dst_vma, dst_addr, folio);
-+			restore_reserve_on_error_vma(h, dst_vma, dst_addr, folio);
- 			folio_put(folio);
- 
- 			/* Allocate a temporary folio to hold the copied
-@@ -6361,7 +6366,7 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm,
- 		folio_unlock(folio);
- out_release_nounlock:
- 	if (!folio_in_pagecache)
--		restore_reserve_on_error(h, dst_vma, dst_addr, folio);
-+		restore_reserve_on_error_vma(h, dst_vma, dst_addr, folio);
- 	folio_put(folio);
- 	goto out;
+@@ -592,7 +595,14 @@ static bool remove_inode_single_folio(struct hstate *h, struct inode *inode,
  }
+ 
+ /*
+- * remove_inode_hugepages handles two distinct cases: truncation and hole
++ * Remove hugetlb page mappings from @mapping between offsets [@lstart, @lend).
++ * Also updates reservations in:
++ * + hstate @h (required)
++ * + subpool @spool (can be NULL)
++ * + resv_map in @inode (can be NULL)
++ * and updates blocks in @inode (required)
++ *
++ * remove_mapping_hugepages handles two distinct cases: truncation and hole
+  * punch.  There are subtle differences in operation for each case.
+  *
+  * truncation is indicated by end of range being LLONG_MAX
+@@ -611,10 +621,10 @@ static bool remove_inode_single_folio(struct hstate *h, struct inode *inode,
+  * Note: If the passed end of range value is beyond the end of file, but
+  * not LLONG_MAX this routine still performs a hole punch operation.
+  */
+-void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend)
++void remove_mapping_hugepages(struct address_space *mapping,
++			      struct hstate *h, struct hugepage_subpool *spool,
++			      struct inode *inode, loff_t lstart, loff_t lend)
+ {
+-	struct hstate *h = hstate_inode(inode);
+-	struct address_space *mapping = &inode->i_data;
+ 	const pgoff_t start = lstart >> huge_page_shift(h);
+ 	const pgoff_t end = lend >> huge_page_shift(h);
+ 	struct folio_batch fbatch;
+@@ -636,8 +646,8 @@ void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend)
+ 			/*
+ 			 * Remove folio that was part of folio_batch.
+ 			 */
+-			if (remove_inode_single_folio(h, inode, mapping, folio,
+-							index, truncate_op))
++			if (remove_mapping_single_folio(mapping, folio, index,
++							h, spool, inode, truncate_op))
+ 				freed++;
+ 
+ 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
+@@ -647,7 +657,16 @@ void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend)
+ 	}
+ 
+ 	if (truncate_op)
+-		(void)hugetlb_unreserve_pages(inode, start, LONG_MAX, freed);
++		(void)hugetlb_unreserve_pages(h, spool, inode, start, LONG_MAX, freed);
++}
++
++void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend)
++{
++	struct address_space *mapping = &inode->i_data;
++	struct hstate *h = hstate_inode(inode);
++	struct hugepage_subpool *spool = subpool_inode(inode);
++
++	return remove_mapping_hugepages(mapping, h, spool, inode, lstart, lend);
+ }
+ 
+ static void hugetlbfs_evict_inode(struct inode *inode)
+@@ -1548,6 +1567,7 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
+ 	struct vfsmount *mnt;
+ 	int hstate_idx;
+ 	struct file *file;
++	struct hstate *h;
+ 
+ 	hstate_idx = get_hstate_idx(page_size_log);
+ 	if (hstate_idx < 0)
+@@ -1578,9 +1598,10 @@ struct file *hugetlb_file_setup(const char *name, size_t size,
+ 	inode->i_size = size;
+ 	clear_nlink(inode);
+ 
+-	if (!hugetlb_reserve_pages(inode, 0,
+-			size >> huge_page_shift(hstate_inode(inode)), NULL,
+-			acctflag))
++	h = hstate_inode(inode);
++	if (!hugetlb_reserve_pages(h, subpool_inode(inode), inode, 0,
++				   size >> huge_page_shift(h), NULL,
++				   acctflag))
+ 		file = ERR_PTR(-ENOMEM);
+ 	else
+ 		file = alloc_file_pseudo(inode, mnt, name, O_RDWR,
+diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
+index 1483020b412b..2457d7a21974 100644
+--- a/include/linux/hugetlb.h
++++ b/include/linux/hugetlb.h
+@@ -166,11 +166,13 @@ int hugetlb_mcopy_atomic_pte(struct mm_struct *dst_mm, pte_t *dst_pte,
+ 				struct page **pagep,
+ 				bool wp_copy);
+ #endif /* CONFIG_USERFAULTFD */
+-bool hugetlb_reserve_pages(struct inode *inode, long from, long to,
+-						struct vm_area_struct *vma,
+-						vm_flags_t vm_flags);
+-long hugetlb_unreserve_pages(struct inode *inode, long start, long end,
+-						long freed);
++bool hugetlb_reserve_pages(struct hstate *h, struct hugepage_subpool *spool,
++			   struct inode *inode,
++			   long from, long to,
++			   struct vm_area_struct *vma,
++			   vm_flags_t vm_flags);
++long hugetlb_unreserve_pages(struct hstate *h, struct hugepage_subpool *spool,
++			     struct inode *inode, long start, long end, long freed);
+ bool isolate_hugetlb(struct folio *folio, struct list_head *list);
+ int get_hwpoison_hugetlb_folio(struct folio *folio, bool *hugetlb, bool unpoison);
+ int get_huge_page_for_hwpoison(unsigned long pfn, int flags,
+@@ -178,7 +180,7 @@ int get_huge_page_for_hwpoison(unsigned long pfn, int flags,
+ void folio_putback_active_hugetlb(struct folio *folio);
+ void move_hugetlb_state(struct folio *old_folio, struct folio *new_folio, int reason);
+ void free_huge_page(struct page *page);
+-void hugetlb_fix_reserve_counts(struct inode *inode);
++void hugetlb_fix_reserve_counts(struct hstate *h, struct hugepage_subpool *spool);
+ extern struct mutex *hugetlb_fault_mutex_table;
+ u32 hugetlb_fault_mutex_hash(struct address_space *mapping, pgoff_t idx);
+ 
+@@ -259,6 +261,9 @@ void hugetlb_unshare_all_pmds(struct vm_area_struct *vma);
+ void hugetlb_zero_partial_page(struct hstate *h, struct address_space *mapping,
+ 			       loff_t start, loff_t end);
+ 
++void remove_mapping_hugepages(struct address_space *mapping,
++			      struct hstate *h, struct hugepage_subpool *spool,
++			      struct inode *inode, loff_t lstart, loff_t lend);
+ void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend);
+ 
+ #else /* !CONFIG_HUGETLB_PAGE */
+@@ -472,6 +477,9 @@ static inline void hugetlb_unshare_all_pmds(struct vm_area_struct *vma) { }
+ static inline void hugetlb_zero_partial_page(
+ 	struct hstate *h, struct address_space *mapping, loff_t start, loff_t end) {}
+ 
++static inline void remove_mapping_hugepages(
++	struct address_space *mapping, struct hstate *h, struct hugepage_subpool *spool,
++	struct inode *inode, loff_t lstart, loff_t lend) {}
+ static inline void remove_inode_hugepages(struct inode *inode, loff_t lstart, loff_t lend) {}
+ 
+ #endif /* !CONFIG_HUGETLB_PAGE */
+@@ -554,6 +562,12 @@ static inline struct hstate *hstate_inode(struct inode *i)
+ {
+ 	return HUGETLBFS_SB(i->i_sb)->hstate;
+ }
++
++static inline struct hugepage_subpool *subpool_inode(struct inode *inode)
++{
++	return HUGETLBFS_SB(inode->i_sb)->spool;
++}
++
+ #else /* !CONFIG_HUGETLBFS */
+ 
+ #define is_file_hugepages(file)			false
+@@ -568,6 +582,12 @@ static inline struct hstate *hstate_inode(struct inode *i)
+ {
+ 	return NULL;
+ }
++
++static inline struct hugepage_subpool *subpool_inode(struct inode *inode)
++{
++	return NULL;
++}
++
+ #endif /* !CONFIG_HUGETLBFS */
+ 
+ #ifdef HAVE_ARCH_HUGETLB_UNMAPPED_AREA
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 9c9262833b4f..9da419b930df 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -247,11 +247,6 @@ static long hugepage_subpool_put_pages(struct hugepage_subpool *spool,
+ 	return ret;
+ }
+ 
+-static inline struct hugepage_subpool *subpool_inode(struct inode *inode)
+-{
+-	return HUGETLBFS_SB(inode->i_sb)->spool;
+-}
+-
+ static inline struct hugepage_subpool *subpool_vma(struct vm_area_struct *vma)
+ {
+ 	return subpool_inode(file_inode(vma->vm_file));
+@@ -898,16 +893,13 @@ static long region_del(struct resv_map *resv, long f, long t)
+  * appear as a "reserved" entry instead of simply dangling with incorrect
+  * counts.
+  */
+-void hugetlb_fix_reserve_counts(struct inode *inode)
++void hugetlb_fix_reserve_counts(struct hstate *h, struct hugepage_subpool *spool)
+ {
+-	struct hugepage_subpool *spool = subpool_inode(inode);
+ 	long rsv_adjust;
+ 	bool reserved = false;
+ 
+ 	rsv_adjust = hugepage_subpool_get_pages(spool, 1);
+ 	if (rsv_adjust > 0) {
+-		struct hstate *h = hstate_inode(inode);
+-
+ 		if (!hugetlb_acct_memory(h, 1))
+ 			reserved = true;
+ 	} else if (!rsv_adjust) {
+@@ -6762,15 +6754,22 @@ long hugetlb_change_protection(struct vm_area_struct *vma,
+ 	return pages > 0 ? (pages << h->order) : pages;
+ }
+ 
+-/* Return true if reservation was successful, false otherwise.  */
+-bool hugetlb_reserve_pages(struct inode *inode,
+-					long from, long to,
+-					struct vm_area_struct *vma,
+-					vm_flags_t vm_flags)
++/**
++ * Reserves pages between vma indices @from and @to by handling accounting in:
++ * + hstate @h (required)
++ * + subpool @spool (can be NULL)
++ * + @inode (required if @vma is NULL)
++ *
++ * Will setup resv_map in @vma if necessary.
++ * Return true if reservation was successful, false otherwise.
++ */
++bool hugetlb_reserve_pages(struct hstate *h, struct hugepage_subpool *spool,
++			   struct inode *inode,
++			   long from, long to,
++			   struct vm_area_struct *vma,
++			   vm_flags_t vm_flags)
+ {
+ 	long chg = -1, add = -1;
+-	struct hstate *h = hstate_inode(inode);
+-	struct hugepage_subpool *spool = subpool_inode(inode);
+ 	struct resv_map *resv_map;
+ 	struct hugetlb_cgroup *h_cg = NULL;
+ 	long gbl_reserve, regions_needed = 0;
+@@ -6921,13 +6920,23 @@ bool hugetlb_reserve_pages(struct inode *inode,
+ 	return false;
+ }
+ 
+-long hugetlb_unreserve_pages(struct inode *inode, long start, long end,
+-								long freed)
++/**
++ * Unreserves pages between vma indices @start and @end by handling accounting
++ * in:
++ * + hstate @h (required)
++ * + subpool @spool (can be NULL)
++ * + @inode (required)
++ * + resv_map in @inode (can be NULL)
++ *
++ * @freed is the number of pages freed, for updating inode->i_blocks.
++ *
++ * Returns 0 on success.
++ */
++long hugetlb_unreserve_pages(struct hstate *h, struct hugepage_subpool *spool,
++			     struct inode *inode, long start, long end, long freed)
+ {
+-	struct hstate *h = hstate_inode(inode);
+ 	struct resv_map *resv_map = inode_resv_map(inode);
+ 	long chg = 0;
+-	struct hugepage_subpool *spool = subpool_inode(inode);
+ 	long gbl_reserve;
+ 
+ 	/*
 -- 
 2.41.0.rc0.172.g3f132b7071-goog
 
