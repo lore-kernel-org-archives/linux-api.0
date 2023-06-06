@@ -2,57 +2,57 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 98C27C77B73
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:07:52 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 2B910C7EE2A
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:08:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238913AbjFFTHt (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 6 Jun 2023 15:07:49 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39256 "EHLO
+        id S239486AbjFFTIN (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jun 2023 15:08:13 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:39102 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239233AbjFFTGv (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:06:51 -0400
-Received: from mail-yw1-x114a.google.com (mail-yw1-x114a.google.com [IPv6:2607:f8b0:4864:20::114a])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4BCA219B2
-        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:05:03 -0700 (PDT)
-Received: by mail-yw1-x114a.google.com with SMTP id 00721157ae682-56991d8e2b0so61696417b3.2
-        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:05:03 -0700 (PDT)
+        with ESMTP id S239368AbjFFTHD (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:07:03 -0400
+Received: from mail-pf1-x44a.google.com (mail-pf1-x44a.google.com [IPv6:2607:f8b0:4864:20::44a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CB48210FE
+        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:05:09 -0700 (PDT)
+Received: by mail-pf1-x44a.google.com with SMTP id d2e1a72fcca58-653843401d5so4464847b3a.3
+        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:05:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20221208; t=1686078284; x=1688670284;
+        d=google.com; s=20221208; t=1686078288; x=1688670288;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=xVPr1dIpnxklN0GMh0WV40gxjr+XB/duCXqFm/4Eedk=;
-        b=OpWI8RPhFgIw5MoV+RS2cmQpFpGPXsQqq6sU1K61/owOmBB1Ql0+w7FJ3nZldnf8p9
-         +qYBb0NtRqwQu8dWDMwOUTG0ATZVJvom27ARS7xgWW5TfboiScGSMfZ8N45qzVKLAY2H
-         4CU726nNQYrYfpWC/qzLp0r9J8us1SCC2lEqZrYJr9OdHyFq/TUwds9iZNdlTcobAHRr
-         ZZALUwW7mEujbc7yxykj2/g4xPWE/5QaSH6KTAlpAQ02/2PJYX27kEua6tRoLiCjwPDV
-         pyCH4FFtF/i8mbhld01B2RuTsSf6teTynYWziBlTcigs4W2oRa0ZqtYf/T+WFi+IMehY
-         DIyA==
+        bh=CCEiTTKrsebxDoXfSRZP/CN+WTuYdz3sOeWxyKUUyPY=;
+        b=KFM+d/JKzgYvN5OR6kU44o+ZYxe7Q/H7MNTOnP/z0cxW3//uRTJeZxZ8dFp8Jit4Gf
+         YquLlWVy9xCdFnBGp+gPFhLtGo2w3F50cPqXWf8JFYlZ/OGxawmSMJJ/jIE184rG6FHp
+         ixTL8P/2ovgE/QdCx/NLmyiW9xL5hbY3itkmDOuPi4r2D/Bp6z5cypKETkTA5IN3CsDs
+         1vhuCHFDhZuON8z8NNnBNoq7He9ZNsDe7Xmjzq9wK+9M2GgIoXw9C4JhNu7KegBFAMS3
+         MULic01j2ol2uU6vWbv87Xaf10SomC0FL9lq9TfMGxJn5DnDmpEo+KEOdrVPsgYMpseZ
+         BMRw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686078284; x=1688670284;
+        d=1e100.net; s=20221208; t=1686078288; x=1688670288;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=xVPr1dIpnxklN0GMh0WV40gxjr+XB/duCXqFm/4Eedk=;
-        b=M7EHj4LGh67BuqFSyLMhjyJyQbbzTJOrVaOyACPl8xq5Srrb1gu4Kwabp/FgfTn/bM
-         4nA296cdgAtvValRBElDhrSMsKLOsKFGyaxCeCLJ6qP3RkEjsA5IgI9dMtW55UrIJh8y
-         9AIrEs5xRqZ145uusREX5ZmnTb4TL28TWp+G+3ro0pYK2LsdD88qWw5Nvmrobr/uHXn3
-         NXwe++cpwhy9KJhkMTV9Siju1wO8P+SFwj21k1+EUANuIrAwf8TXZy+H5v3yUiPzsvA9
-         YalrS46uYQgPaTu37tS5duMZ5JD3SzYzf+B5FVWu+1EnE/7xyL3XtjEmwBWZIa22p8Rl
-         KrVQ==
-X-Gm-Message-State: AC+VfDwdZyHZqUdufSGuNDBZNRs6vi9qgjOisDL4ruqfuqf6PmCsxIwc
-        Wc2ckuyvfnn158pYLE+XXr/sK6CT0HQJP/bU0g==
-X-Google-Smtp-Source: ACHHUZ6iw5MaJvx6Biay/guXDPe54wqyOEjmtoFNQ8eDgpYM8NsdWofxvbuGdqaNO+FVNrUBL1ysZvJNR4qrxfEOBQ==
+        bh=CCEiTTKrsebxDoXfSRZP/CN+WTuYdz3sOeWxyKUUyPY=;
+        b=lGdlIaajI6ziYm7rxwGzfTqy/U4QqG60JklUnxZsZfMVZKoY5rmyVRVyD3JHK16twc
+         IBjR7z86ddXhlP/B2U5ykMyDz5+t8EpFVsevXw36N9u+jLBoSZfa9Y7ZdbyvWwRi932b
+         uzNvts8YbQiio3MYZ4kuQFrcXB2BW2VXRuxC1Hy6dg7NnHH89xU5+Qi4BfLwD5/q41dr
+         JQleMkRFkazuDvDZR6eeVCzbW4ReLmKjybAsk2UvzBZvk1a3cPYE6cnZQz02tnaMRDVi
+         +FGa61Ygc4ocEZO9TlQ7uIoKq+uMYDELXpezoPQu84aybtBPp7IHfwTfxAKM1SnZiZeb
+         oh8g==
+X-Gm-Message-State: AC+VfDwuiq77QYqDCpSrsPe7bx7S7sXqfBg6i99QxNHKo8Af3khvwWHK
+        MvdphB2+YcnPZn2wtIlgz02stIuVyKZ40SYuEQ==
+X-Google-Smtp-Source: ACHHUZ5UZgVYlUWSYfljNriuMM/SFMypamtYGG6ajWbl9pU1XKFK+BBOu36l6aAPASb6U7Gvlg5sOoRl6fqEbUEr5Q==
 X-Received: from ackerleytng-ctop.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:13f8])
- (user=ackerleytng job=sendgmr) by 2002:a05:6902:72d:b0:ba1:d0:7f7c with SMTP
- id l13-20020a056902072d00b00ba100d07f7cmr1128681ybt.2.1686078284464; Tue, 06
- Jun 2023 12:04:44 -0700 (PDT)
-Date:   Tue,  6 Jun 2023 19:04:02 +0000
+ (user=ackerleytng job=sendgmr) by 2002:a05:6a00:13a6:b0:657:f26e:b025 with
+ SMTP id t38-20020a056a0013a600b00657f26eb025mr1318192pfg.6.1686078288430;
+ Tue, 06 Jun 2023 12:04:48 -0700 (PDT)
+Date:   Tue,  6 Jun 2023 19:04:04 +0000
 In-Reply-To: <cover.1686077275.git.ackerleytng@google.com>
 Mime-Version: 1.0
 References: <cover.1686077275.git.ackerleytng@google.com>
 X-Mailer: git-send-email 2.41.0.rc0.172.g3f132b7071-goog
-Message-ID: <2b26bcc8b10f8a11e6405d4cea5f1235e82e83c9.1686077275.git.ackerleytng@google.com>
-Subject: [RFC PATCH 17/19] KVM: selftests: Add basic selftests for
- hugetlbfs-backed guest_mem
+Message-ID: <3ae2d02c45c5fb91b490b1674165c733efb871d6.1686077275.git.ackerleytng@google.com>
+Subject: [RFC PATCH 19/19] KVM: selftests: Update test for various private
+ memory backing source types
 From:   Ackerley Tng <ackerleytng@google.com>
 To:     akpm@linux-foundation.org, mike.kravetz@oracle.com,
         muchun.song@linux.dev, pbonzini@redhat.com, seanjc@google.com,
@@ -78,66 +78,121 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add tests for 2MB and 1GB page sizes.
+Update private_mem_conversions_test for various private memory backing
+source types
 
 Signed-off-by: Ackerley Tng <ackerleytng@google.com>
 ---
- .../testing/selftests/kvm/guest_memfd_test.c  | 33 ++++++++++++++-----
- 1 file changed, 24 insertions(+), 9 deletions(-)
+ .../kvm/x86_64/private_mem_conversions_test.c | 38 ++++++++++++++-----
+ 1 file changed, 28 insertions(+), 10 deletions(-)
 
-diff --git a/tools/testing/selftests/kvm/guest_memfd_test.c b/tools/testing/selftests/kvm/guest_memfd_test.c
-index 059b33cdecec..6e24631119c6 100644
---- a/tools/testing/selftests/kvm/guest_memfd_test.c
-+++ b/tools/testing/selftests/kvm/guest_memfd_test.c
-@@ -90,20 +90,14 @@ static void test_fallocate(int fd, size_t page_size, size_t total_size)
- 	TEST_ASSERT(!ret, "fallocate to restore punched hole should succeed");
+diff --git a/tools/testing/selftests/kvm/x86_64/private_mem_conversions_test.c b/tools/testing/selftests/kvm/x86_64/private_mem_conversions_test.c
+index 6a353cf64f52..27a7e5099b7b 100644
+--- a/tools/testing/selftests/kvm/x86_64/private_mem_conversions_test.c
++++ b/tools/testing/selftests/kvm/x86_64/private_mem_conversions_test.c
+@@ -240,14 +240,15 @@ static void *__test_mem_conversions(void *__vcpu)
+ 	}
  }
  
--
--int main(int argc, char *argv[])
-+void test_guest_mem(struct kvm_vm *vm, uint32_t flags, size_t page_size)
+-static void test_mem_conversions(enum vm_mem_backing_src_type src_type, uint32_t nr_vcpus,
+-				 uint32_t nr_memslots)
++static void test_mem_conversions(enum vm_mem_backing_src_type src_type,
++				 enum vm_pmem_backing_src_type pmem_src_type,
++				 uint32_t nr_vcpus, uint32_t nr_memslots)
  {
--	size_t page_size;
--	size_t total_size;
- 	int fd;
--	struct kvm_vm *vm;
-+	size_t total_size;
+-	const size_t memfd_size = PER_CPU_DATA_SIZE * nr_vcpus;
+ 	struct kvm_vcpu *vcpus[KVM_MAX_VCPUS];
+ 	pthread_t threads[KVM_MAX_VCPUS];
+ 	struct kvm_vm *vm;
+ 	int memfd, i, r;
++	size_t pmem_aligned_size, memfd_size;
+ 	size_t test_unit_size;
  
--	page_size = getpagesize();
- 	total_size = page_size * 4;
+ 	const struct vm_shape shape = {
+@@ -270,21 +271,32 @@ static void test_mem_conversions(enum vm_mem_backing_src_type src_type, uint32_t
+ 		 * Allocate enough memory so that each vCPU's chunk of memory can be
+ 		 * naturally aligned with respect to the size of the backing store.
+ 		 */
+-		test_unit_size = align_up(PER_CPU_DATA_SIZE, get_backing_src_pagesz(src_type));
++		test_unit_size = align_up(PER_CPU_DATA_SIZE,
++					  max(get_backing_src_pagesz(src_type),
++					      get_pmem_backing_src_pagesz(pmem_src_type)));
+ 	}
  
--	vm = vm_create_barebones();
--
--	fd = vm_create_guest_memfd(vm, total_size, 0);
-+	fd = vm_create_guest_memfd(vm, total_size, flags);
+-	memfd = vm_create_guest_memfd(vm, memfd_size, 0);
++	pmem_aligned_size = PER_CPU_DATA_SIZE;
++	if (nr_memslots > 1) {
++		pmem_aligned_size = align_up(PER_CPU_DATA_SIZE,
++					     get_pmem_backing_src_pagesz(pmem_src_type));
++	}
++
++	memfd_size = pmem_aligned_size * nr_vcpus;
++	memfd = vm_create_guest_memfd(vm, memfd_size,
++				      vm_pmem_backing_src_alias(pmem_src_type)->flag);
+ 	for (i = 0; i < nr_memslots; i++) {
+ 		uint64_t gpa =  BASE_DATA_GPA + i * test_unit_size;
+-		uint64_t npages = PER_CPU_DATA_SIZE / vm->page_size;
++		uint64_t npages = pmem_aligned_size / vm->page_size;
  
- 	test_file_read_write(fd);
- 	test_mmap(fd, page_size);
-@@ -112,3 +106,24 @@ int main(int argc, char *argv[])
+ 		/* Make sure the memslot is large enough for all the test units */
+ 		if (nr_memslots == 1)
+ 			npages *= nr_vcpus;
  
- 	close(fd);
++		/* Offsets must be aligned to private mem's page size */
+ 		vm_mem_add(vm, src_type, gpa,
+ 			   BASE_DATA_SLOT + i, npages,
+-			   KVM_MEM_PRIVATE, memfd, PER_CPU_DATA_SIZE * i);
++			   KVM_MEM_PRIVATE, memfd, pmem_aligned_size * i);
+ 	}
+ 
+ 	for (i = 0; i < nr_vcpus; i++) {
+@@ -324,10 +336,12 @@ static void test_mem_conversions(enum vm_mem_backing_src_type src_type, uint32_t
+ static void usage(const char *cmd)
+ {
+ 	puts("");
+-	printf("usage: %s [-h] [-m] [-s mem_type] [-n nr_vcpus]\n", cmd);
++	printf("usage: %s [-h] [-m] [-s mem_type] [-p pmem_type] [-n nr_vcpus]\n", cmd);
+ 	puts("");
+ 	backing_src_help("-s");
+ 	puts("");
++	pmem_backing_src_help("-p");
++	puts("");
+ 	puts(" -n: specify the number of vcpus (default: 1)");
+ 	puts("");
+ 	puts(" -m: use multiple memslots (default: 1)");
+@@ -337,6 +351,7 @@ static void usage(const char *cmd)
+ int main(int argc, char *argv[])
+ {
+ 	enum vm_mem_backing_src_type src_type = DEFAULT_VM_MEM_SRC;
++	enum vm_pmem_backing_src_type pmem_src_type = DEFAULT_VM_PMEM_SRC;
+ 	bool use_multiple_memslots = false;
+ 	uint32_t nr_vcpus = 1;
+ 	uint32_t nr_memslots;
+@@ -345,11 +360,14 @@ int main(int argc, char *argv[])
+ 	TEST_REQUIRE(kvm_has_cap(KVM_CAP_EXIT_HYPERCALL));
+ 	TEST_REQUIRE(kvm_check_cap(KVM_CAP_VM_TYPES) & BIT(KVM_X86_PROTECTED_VM));
+ 
+-	while ((opt = getopt(argc, argv, "hms:n:")) != -1) {
++	while ((opt = getopt(argc, argv, "hms:p:n:")) != -1) {
+ 		switch (opt) {
+ 		case 's':
+ 			src_type = parse_backing_src_type(optarg);
+ 			break;
++		case 'p':
++			pmem_src_type = parse_pmem_backing_src_type(optarg);
++			break;
+ 		case 'n':
+ 			nr_vcpus = atoi_positive("nr_vcpus", optarg);
+ 			break;
+@@ -365,7 +383,7 @@ int main(int argc, char *argv[])
+ 
+ 	nr_memslots = use_multiple_memslots ? nr_vcpus : 1;
+ 
+-	test_mem_conversions(src_type, nr_vcpus, nr_memslots);
++	test_mem_conversions(src_type, pmem_src_type, nr_vcpus, nr_memslots);
+ 
+ 	return 0;
  }
-+
-+int main(int argc, char *argv[])
-+{
-+	struct kvm_vm *vm = vm_create_barebones();
-+
-+	printf("Test guest mem 4K\n");
-+	test_guest_mem(vm, 0, getpagesize());
-+	printf("        PASSED\n");
-+
-+	printf("Test guest mem hugetlb 2M\n");
-+	test_guest_mem(
-+		vm, KVM_GUEST_MEMFD_HUGETLB | KVM_GUEST_MEMFD_HUGE_2MB, 2UL << 20);
-+	printf("        PASSED\n");
-+
-+	printf("Test guest mem hugetlb 1G\n");
-+	test_guest_mem(
-+		vm, KVM_GUEST_MEMFD_HUGETLB | KVM_GUEST_MEMFD_HUGE_1GB, 1UL << 30);
-+	printf("        PASSED\n");
-+
-+	return 0;
-+}
 -- 
 2.41.0.rc0.172.g3f132b7071-goog
 
