@@ -2,56 +2,57 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id ED113C7EE2C
-	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:05:10 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 65F52C77B7A
+	for <linux-api@archiver.kernel.org>; Tue,  6 Jun 2023 19:05:18 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S239225AbjFFTFJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 6 Jun 2023 15:05:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38960 "EHLO
+        id S239266AbjFFTFP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 6 Jun 2023 15:05:15 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38688 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S239246AbjFFTEb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:04:31 -0400
-Received: from mail-pj1-x1049.google.com (mail-pj1-x1049.google.com [IPv6:2607:f8b0:4864:20::1049])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC18C1732
-        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:04:24 -0700 (PDT)
-Received: by mail-pj1-x1049.google.com with SMTP id 98e67ed59e1d1-256a43693e7so2145243a91.2
-        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:04:24 -0700 (PDT)
+        with ESMTP id S239337AbjFFTEr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 6 Jun 2023 15:04:47 -0400
+Received: from mail-yb1-xb4a.google.com (mail-yb1-xb4a.google.com [IPv6:2607:f8b0:4864:20::b4a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A08B21717
+        for <linux-api@vger.kernel.org>; Tue,  6 Jun 2023 12:04:32 -0700 (PDT)
+Received: by mail-yb1-xb4a.google.com with SMTP id 3f1490d57ef6-bad06cc7fb7so10378623276.3
+        for <linux-api@vger.kernel.org>; Tue, 06 Jun 2023 12:04:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20221208; t=1686078264; x=1688670264;
+        d=google.com; s=20221208; t=1686078271; x=1688670271;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:from:to:cc:subject:date:message-id:reply-to;
-        bh=MZNbtWHLPp5u2GywkOyP6D11aGDQiwpmebr72+3tZZw=;
-        b=3nPwPewVscUDqVZMn7Uj3o98nrz5j8VLctE94SycAE0CkTh6eROV6trMOeNgO1y4jS
-         yLqfAq9F5z3V/0un8MfG4HdspEU1lRRMGNzpIw+TRUDHmsZbFPuX/+Cikl64LmUYIx66
-         8bq6oGIyVKNOZEdXnRQamgBHRpoKdYwSVBMUDqfzl7aIO0QNJg3Dh7nLDTiLBxl5+u8s
-         7Pxbmh7gLIa94u88QAeI5yehSo2cVl1/aF9z6LyF0284EPn+EeLrVrvCYse/GQqVLuDH
-         J/bFMQvA4aC2mtn4McrJir6hXAodHcAaWQLRaE/P7TGgIMKpZ2UbMXusJndkMLSh2bgC
-         CYgQ==
+        bh=QP9zRN1PPC9/vVggheoZtkj7ew+Av1V49kv617fnYR8=;
+        b=FI4N69NL3RScUYfhkbRLrL4c1EfS/desGI2Shr1/96TXRRDn4geHvyU1N7eGgqKJyG
+         GWBPzDYB1BfYFhv6zCt0EhdFu5tldM3yzA5NvQB4/zCb+hcK/bM/QuqRiIfDvi5+hI04
+         SbvBvKqQxgCQVjt+cTCPYL6N1+wfniCAiJKkEW+sWbUf69X9qSMHub3UvTd9MQDzXMi4
+         1B4c0zvORWB8HqA5+0cdcj+spglhu6jaXUuf69LPtiQvLZve3RcWtPEQxixl3Ypwmw86
+         K8LGygCgyEMNtUVq9AiwfPbvahkLarTMGurJs3foOYOqn4CdQy93rRAZp4edz17ORY67
+         OYlQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686078264; x=1688670264;
+        d=1e100.net; s=20221208; t=1686078271; x=1688670271;
         h=cc:to:from:subject:message-id:references:mime-version:in-reply-to
          :date:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=MZNbtWHLPp5u2GywkOyP6D11aGDQiwpmebr72+3tZZw=;
-        b=hCOA/vdjkyzXo3oVBI3b7Zzv6HyLbGfMcCGBFg5PhZ92pHT7Lqzf5vd/xbJH+DVKpY
-         Q1U/EAz7wvrCvB+WPBYSMC4jcWv+IbjdIoRFrNCSpnd3+fzqt7qSE4iT8OPVhzPWTxOc
-         ty9PaJpRgZuiPAH0ukNM0ApK5nW6MMXwRrm0UB7BjqhK5eY10sGSHdx+YhpZQg1R5xRy
-         huJ86X2Ixb20d7u3DRtJjDo/tXhTu38Pvr12sF4i0TLRwvNukwhIafV3fw/CyJdDYPP6
-         xeZ8d/nQaWHK1xuj7V0IECcVWz3amyuUoDtca16Ylu11E/GrlqoXvCph4CB/cLvzEyFU
-         c4dg==
-X-Gm-Message-State: AC+VfDxLtDrcXfA1ense/Xk07JJOC20u66Kuk75zbZuLJUqw4J4/fJpQ
-        fd5X/SeWACG9+wT6seL3Exmht3dEfn4M+9QQAg==
-X-Google-Smtp-Source: ACHHUZ7IGNkoxDfbAlb5rNYiUxqKSeo6I3oYpfv0H1ogSeNyAElarCOglNHY4mpG93xhDZmjnsgqFXX+BQakQxRlBw==
+        bh=QP9zRN1PPC9/vVggheoZtkj7ew+Av1V49kv617fnYR8=;
+        b=LxGJve8UaCnb3dLc9KrEAPOSURsC4FkzmxZJ3RXj8tMrJ77Ix+G8P4TjyjOQBlr9Fd
+         L4k+lbrL8TJNxiKI6mZ6dSdM32lPxc+tpf4lONZAgBV1g0wE7907cTWhQrIogm+UP81z
+         O2wZ+oErIpHu+vwFW4tvvMrJ8cj/HrLx6dm0KzBUKTq4tFQ9YxgeDMN2taAp41/QLvqv
+         Bb2mtOpllhKCG0xyMXAPX7zpgWSLSczS6g3G4JOZJcTEghgjJJ8bxRaPMlf/VP4VZK1Q
+         xpGtFfZRzdCZgQty2MJFUOtiEvS2tRHlHabGfErwrNKGHa2NjOoSVHFB3fKjDFuvmdHZ
+         NEkA==
+X-Gm-Message-State: AC+VfDzLQf6mlz96xQ9kjMa7+mQjHYwzu1QIBsm/uhMNLu8Sq8kn5C+b
+        jC5PW7KvoOzk98MbFJ4s02Tusiux5cKnnuxB2g==
+X-Google-Smtp-Source: ACHHUZ76bqpjC35XKXFBahxA9u7+2eFkt14S7ZQHJlZjw7W0ReYy7o2ytYkzhnc/yAz55ZaZBmAlcbBYdbpzzQGaSA==
 X-Received: from ackerleytng-ctop.c.googlers.com ([fda3:e722:ac3:cc00:7f:e700:c0a8:13f8])
- (user=ackerleytng job=sendgmr) by 2002:a17:90a:c092:b0:256:b3d0:f2f0 with
- SMTP id o18-20020a17090ac09200b00256b3d0f2f0mr806359pjs.2.1686078263970; Tue,
- 06 Jun 2023 12:04:23 -0700 (PDT)
-Date:   Tue,  6 Jun 2023 19:03:51 +0000
+ (user=ackerleytng job=sendgmr) by 2002:a25:105:0:b0:bab:a276:caac with SMTP
+ id 5-20020a250105000000b00baba276caacmr1716574ybb.3.1686078271536; Tue, 06
+ Jun 2023 12:04:31 -0700 (PDT)
+Date:   Tue,  6 Jun 2023 19:03:55 +0000
 In-Reply-To: <cover.1686077275.git.ackerleytng@google.com>
 Mime-Version: 1.0
 References: <cover.1686077275.git.ackerleytng@google.com>
 X-Mailer: git-send-email 2.41.0.rc0.172.g3f132b7071-goog
-Message-ID: <69ae008ec4076456078b880575ac310171136ac0.1686077275.git.ackerleytng@google.com>
-Subject: [RFC PATCH 06/19] mm: hugetlb: Provide hugetlb_filemap_add_folio()
+Message-ID: <382ee70df7b65c365a1eab1223f84aecc0c5be10.1686077275.git.ackerleytng@google.com>
+Subject: [RFC PATCH 10/19] mm: hugetlb: Parametrize alloc_hugetlb_folio_from_subpool()
+ by resv_map
 From:   Ackerley Tng <ackerleytng@google.com>
 To:     akpm@linux-foundation.org, mike.kravetz@oracle.com,
         muchun.song@linux.dev, pbonzini@redhat.com, seanjc@google.com,
@@ -77,64 +78,60 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-hstate_inode() is hugetlbfs-specific, limiting
-hugetlb_add_to_page_cache() to hugetlbfs.
-
-hugetlb_filemap_add_folio() allows hstate to be specified and further
-separates hugetlb from hugetlbfs.
+Parametrize alloc_hugetlb_folio_from_subpool() by resv_map to remove
+the use of vma_resv_map() and decouple hugetlb with hugetlbfs.
 
 Signed-off-by: Ackerley Tng <ackerleytng@google.com>
 ---
- include/linux/hugetlb.h |  2 ++
- mm/hugetlb.c            | 13 ++++++++++---
- 2 files changed, 12 insertions(+), 3 deletions(-)
+ include/linux/hugetlb.h | 2 +-
+ mm/hugetlb.c            | 6 +++---
+ 2 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
-index 14df89d1642c..7d49048c5a2a 100644
+index 5fe9643826d7..d564802ace4b 100644
 --- a/include/linux/hugetlb.h
 +++ b/include/linux/hugetlb.h
-@@ -756,6 +756,8 @@ struct folio *alloc_hugetlb_folio_nodemask(struct hstate *h, int preferred_nid,
- 				nodemask_t *nmask, gfp_t gfp_mask);
- struct folio *alloc_hugetlb_folio_vma(struct hstate *h, struct vm_area_struct *vma,
- 				unsigned long address);
-+int hugetlb_filemap_add_folio(struct address_space *mapping, struct hstate *h,
-+			      struct folio *folio, pgoff_t idx);
- int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping,
- 			pgoff_t idx);
- void restore_reserve_on_error(struct hstate *h, struct vm_area_struct *vma,
+@@ -767,7 +767,7 @@ struct huge_bootmem_page {
+ 
+ int isolate_or_dissolve_huge_page(struct page *page, struct list_head *list);
+ struct folio *alloc_hugetlb_folio_from_subpool(
+-	struct hugepage_subpool *spool, struct hstate *h,
++	struct hugepage_subpool *spool, struct hstate *h, struct resv_map *resv,
+ 	struct vm_area_struct *vma, unsigned long addr, int avoid_reserve);
+ struct folio *alloc_hugetlb_folio(struct vm_area_struct *vma,
+ 				unsigned long addr, int avoid_reserve);
 diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index 99ab4bbdb2ce..d16c6417b90f 100644
+index 540634aec181..aebdd8c63439 100644
 --- a/mm/hugetlb.c
 +++ b/mm/hugetlb.c
-@@ -5665,11 +5665,10 @@ static bool hugetlbfs_pagecache_present(struct hstate *h,
- 	return present;
+@@ -3003,7 +3003,7 @@ int isolate_or_dissolve_huge_page(struct page *page, struct list_head *list)
  }
  
--int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping,
--			   pgoff_t idx)
-+int hugetlb_filemap_add_folio(struct address_space *mapping, struct hstate *h,
-+			      struct folio *folio, pgoff_t idx)
+ struct folio *alloc_hugetlb_folio_from_subpool(
+-	struct hugepage_subpool *spool, struct hstate *h,
++	struct hugepage_subpool *spool, struct hstate *h, struct resv_map *resv,
+ 	struct vm_area_struct *vma, unsigned long addr, int avoid_reserve)
  {
- 	struct inode *inode = mapping->host;
--	struct hstate *h = hstate_inode(inode);
- 	int err;
+ 	struct folio *folio;
+@@ -3013,7 +3013,6 @@ struct folio *alloc_hugetlb_folio_from_subpool(
+ 	struct hugetlb_cgroup *h_cg = NULL;
+ 	bool deferred_reserve;
  
- 	__folio_set_locked(folio);
-@@ -5693,6 +5692,14 @@ int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping
- 	return 0;
+-	struct resv_map *resv = vma_resv_map(vma);
+ 	pgoff_t resv_index = vma_hugecache_offset(h, vma, addr);
+ 	bool may_share = vma->vm_flags & VM_MAYSHARE;
+ 
+@@ -3141,8 +3140,9 @@ struct folio *alloc_hugetlb_folio(struct vm_area_struct *vma,
+ {
+ 	struct hugepage_subpool *spool = subpool_vma(vma);
+ 	struct hstate *h = hstate_vma(vma);
++	struct resv_map *resv = vma_resv_map(vma);
+ 
+-	return alloc_hugetlb_folio_from_subpool(spool, h, vma, addr, avoid_reserve);
++	return alloc_hugetlb_folio_from_subpool(spool, h, resv, vma, addr, avoid_reserve);
  }
  
-+int hugetlb_add_to_page_cache(struct folio *folio, struct address_space *mapping,
-+			      pgoff_t idx)
-+{
-+	struct hstate *h = hstate_inode(mapping->host);
-+
-+	return hugetlb_filemap_add_folio(mapping, h, folio, idx);
-+}
-+
- static inline vm_fault_t hugetlb_handle_userfault(struct vm_area_struct *vma,
- 						  struct address_space *mapping,
- 						  pgoff_t idx,
+ int alloc_bootmem_huge_page(struct hstate *h, int nid)
 -- 
 2.41.0.rc0.172.g3f132b7071-goog
 
