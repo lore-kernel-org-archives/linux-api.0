@@ -2,85 +2,148 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EED33C77B7A
-	for <linux-api@archiver.kernel.org>; Wed,  7 Jun 2023 21:20:28 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 273DAC7EE43
+	for <linux-api@archiver.kernel.org>; Wed,  7 Jun 2023 22:33:06 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231747AbjFGVU1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 7 Jun 2023 17:20:27 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45448 "EHLO
+        id S232101AbjFGWdE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 7 Jun 2023 18:33:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45434 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231720AbjFGVU0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 7 Jun 2023 17:20:26 -0400
-Received: from mail-pf1-x42c.google.com (mail-pf1-x42c.google.com [IPv6:2607:f8b0:4864:20::42c])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id CA29B1BEF
-        for <linux-api@vger.kernel.org>; Wed,  7 Jun 2023 14:20:20 -0700 (PDT)
-Received: by mail-pf1-x42c.google.com with SMTP id d2e1a72fcca58-6532671ccc7so7024254b3a.2
-        for <linux-api@vger.kernel.org>; Wed, 07 Jun 2023 14:20:20 -0700 (PDT)
+        with ESMTP id S230106AbjFGWdD (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 7 Jun 2023 18:33:03 -0400
+Received: from mail-qv1-xf33.google.com (mail-qv1-xf33.google.com [IPv6:2607:f8b0:4864:20::f33])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 745931984
+        for <linux-api@vger.kernel.org>; Wed,  7 Jun 2023 15:33:00 -0700 (PDT)
+Received: by mail-qv1-xf33.google.com with SMTP id 6a1803df08f44-626190df842so315896d6.0
+        for <linux-api@vger.kernel.org>; Wed, 07 Jun 2023 15:33:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google; t=1686172820; x=1688764820;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=5tumlTohvViLF4uk0FiFKpbTE6W6nPi6UHifHjjU7Gk=;
-        b=l+oNp6trT33uJEfbYO2yQNVEMsga29EFAMRxZNRXXq4drjYG5twLkw34RY0BhpiJsK
-         ZGeuBaA6sAJICfrCYDwjvpJcekW/fVjLkAUH/16viXRR1PZYsQ+krYBB/yry9EVGyccg
-         V3cibkhbEj/6Z/Uuz3s0A+90xtin1OipzBd7c=
+        d=paul-moore.com; s=google; t=1686177179; x=1688769179;
+        h=in-reply-to:references:subject:cc:to:from:message-id:date:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=t9by4qHftkkIV9Dk+LEK7WmI/x+RI+VPrc+0RTrcbSE=;
+        b=ajwy+j036eXsYFXblwjoEB6Aw6OYAH1T+vWl1PD2S4FA48pMWXcuQKY6N9JS7YBGjf
+         1oJt9AhWoSXHs/cHV/yJu/2zFme+hAEFalbyMQCjYxXbxYPfLfMUuXAsxh0QngcDpKt1
+         qBuxMtrQ2tRjZjaOZx1HUc1wmaGpZSpO3dQgXpzgIQbZ5P0PHZallhvi3h/A50nVhyin
+         R1aPZoe5W9qz8UmY9Icgql9muuNPAEIttcC8/+xr3+ttCz5+p6MhAiq6HqsDrLhgktzx
+         UqQpclTpEaVZmBM5WifFpsySrLBbfReTiNxXVQj5itXBKRbLeyNnN3N3NphVqX/2WwX7
+         99yw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20221208; t=1686172820; x=1688764820;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=5tumlTohvViLF4uk0FiFKpbTE6W6nPi6UHifHjjU7Gk=;
-        b=OqYyFgmqyZcNuFEAGp7Tyq3WqDNikW+qF6HOjKef0aQuRiX+b5Xu5iZRoVkzvYmu1C
-         HUg9uDHQjSrbINdSvtsed5dQhIrB6Zhw0nmJt7+fHrKg7w1YzUTJUEef1IQ/U9t5hxS6
-         +R1q9HOxYNRV3TK82GzvEuV9FmrD5IdIKfNp8xkZn89ast1j0j2lIl+K3FvNQ9rYupsq
-         2ZTlkM8h8H0E5aziT0m+W0w7FnubVmVoU3l6eb0Oehr2ZZMWZ1cHPomRg5zGyCcYuxZY
-         HuCeoJUFQ7PSCZuQkLITak9lKmT/EcY4jxDXsjGECTK83n28htITXDEwXANccykbGgCx
-         XEug==
-X-Gm-Message-State: AC+VfDzHYyauZBEaNrDm4D8ZlmXvk+1dtHAnTwMDEpl08sld4jJsY4j/
-        vQQfWWuA8Bu6UC45Q/RwCFxxaA==
-X-Google-Smtp-Source: ACHHUZ5p5zdLANYUm4s7nZqX5ZmMyWB6WX5riR+Uw92Lpdl9+eZTnSluQMHGrhcfSKBVr5f2DHkWew==
-X-Received: by 2002:a05:6a00:18aa:b0:658:26a8:9d9e with SMTP id x42-20020a056a0018aa00b0065826a89d9emr8907841pfh.29.1686172820339;
-        Wed, 07 Jun 2023 14:20:20 -0700 (PDT)
-Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net. [198.0.35.241])
-        by smtp.gmail.com with ESMTPSA id 9-20020aa79149000000b00652a72b89d1sm9058051pfi.170.2023.06.07.14.20.19
+        d=1e100.net; s=20221208; t=1686177179; x=1688769179;
+        h=in-reply-to:references:subject:cc:to:from:message-id:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=t9by4qHftkkIV9Dk+LEK7WmI/x+RI+VPrc+0RTrcbSE=;
+        b=Pu2OjSA4R7sWwVwB/DK76gPvJLTMt5ArNf9hQXWIv+xPXmqKaj9+YxaCAKH4yTU52K
+         PCwwkwtRGCrmxB4lnbXDamjzm7x2v1eO4IUkpT6AwMIHNjZZSr8YqUJOyRkWNhMQt9pr
+         RYocNbmOnnYgspSW3XYEW3mdMRfWho8W1QuxaDsp54cdOFmawZTFzea6p+Rk30PGfhJz
+         Qr6qZDIlM+6VYgC14Z0Y9hQ+9rHRZcky6vJhdiV8QQr+sP+bYq1ZBhMKOqup5zpisFoO
+         x9GA9/77PES+bzGP5zzpBw8LpYq0WMZP9fZ3JjLuVcCzFLvNUYSUMQGYgpnQ5pnuGeYh
+         Vytw==
+X-Gm-Message-State: AC+VfDyYddLsN/P+59M8FpP0cHT4XW0Q358+tvKJxw6Sx3wYpcyCerN/
+        nDiH3fnBfkf3l3QF4PZTtI/H
+X-Google-Smtp-Source: ACHHUZ4ewnwuAf75MX7qtYNX8ySyhllpz6opxYtjHAmuUfwHeN4bTSuQYtfKgtbd9TlUj5MRrofMow==
+X-Received: by 2002:ad4:5c84:0:b0:625:b67c:919c with SMTP id o4-20020ad45c84000000b00625b67c919cmr6170358qvh.21.1686177179508;
+        Wed, 07 Jun 2023 15:32:59 -0700 (PDT)
+Received: from localhost (static-96-237-115-254.bstnma.fios.verizon.net. [96.237.115.254])
+        by smtp.gmail.com with ESMTPSA id s12-20020a0ce30c000000b00623813aa1d5sm229915qvl.89.2023.06.07.15.32.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 07 Jun 2023 14:20:19 -0700 (PDT)
-Date:   Wed, 7 Jun 2023 14:20:19 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Arnd Bergmann <arnd@kernel.org>
-Cc:     Andrew Morton <akpm@linux-foundation.org>,
-        Arnd Bergmann <arnd@arndb.de>,
-        Richard Henderson <richard.henderson@linaro.org>,
-        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
-        Matt Turner <mattst88@gmail.com>,
-        "Eric W. Biederman" <ebiederm@xmission.com>,
-        Borislav Petkov <bp@suse.de>,
-        Thomas Gleixner <tglx@linutronix.de>,
-        Jann Horn <jannh@google.com>, linux-alpha@vger.kernel.org,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH] syscalls: add sys_ni_posix_timers prototype
-Message-ID: <202306071420.C4F0A99@keescook>
-References: <20230607142925.3126422-1-arnd@kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20230607142925.3126422-1-arnd@kernel.org>
+        Wed, 07 Jun 2023 15:32:59 -0700 (PDT)
+Date:   Wed, 07 Jun 2023 18:32:58 -0400
+Message-ID: <30166d8a65c734af1c36b15f01501903.paul@paul-moore.com>
+From:   Paul Moore <paul@paul-moore.com>
+To:     Casey Schaufler <casey@schaufler-ca.com>,
+        linux-security-module@vger.kernel.org
+Cc:     llvm@lists.linux.dev, oe-kbuild-all@lists.linux.dev,
+        jmorris@namei.org, keescook@chromium.org,
+        john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
+        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, mic@digikod.net
+Subject: Re: [PATCH v10 7/11] LSM: Helpers for attribute names and filling  lsm_ctx
+References: <20230428203417.159874-8-casey@schaufler-ca.com>
+In-Reply-To: <20230428203417.159874-8-casey@schaufler-ca.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Jun 07, 2023 at 04:28:45PM +0200, Arnd Bergmann wrote:
-> From: Arnd Bergmann <arnd@arndb.de>
+On Apr 28, 2023 kernel test robot <lkp@intel.com> wrote:
 > 
-> The sys_ni_posix_timers() definition causes a warning when
-> the declaration is missing, so this needs to be added
-> along with the normal syscalls, outside of the #ifdef.
+> Add lsm_name_to_attr(), which translates a text string to a
+> LSM_ATTR value if one is available.
 > 
-> kernel/time/posix-stubs.c:26:17: error: no previous prototype for 'sys_ni_posix_timers' [-Werror=missing-prototypes]
+> Add lsm_fill_user_ctx(), which fills a struct lsm_ctx, including
+> the trailing attribute value. The .len value is padded to a multiple
+> of 64 bits for alignment.
 > 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> All are used in module specific components of LSM system calls.
+> 
+> Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
+> ---
+>  include/linux/security.h | 13 ++++++++++++
+>  security/lsm_syscalls.c  | 24 ++++++++++++++++++++++
+>  security/security.c      | 44 ++++++++++++++++++++++++++++++++++++++++
+>  3 files changed, 81 insertions(+)
 
-Reviewed-by: Kees Cook <keescook@chromium.org>
+...
 
--- 
-Kees Cook
+> diff --git a/security/security.c b/security/security.c
+> index 94b78bfd06b9..8c877d639cae 100644
+> --- a/security/security.c
+> +++ b/security/security.c
+> @@ -761,6 +761,50 @@ static int lsm_superblock_alloc(struct super_block *sb)
+>  	return 0;
+>  }
+>  
+> +/**
+> + * lsm_fill_user_ctx - Fill a user space lsm_ctx structure
+> + * @ctx: an LSM context to be filled
+> + * @context: the new context value
+> + * @context_size: the size of the new context value
+> + * @id: LSM id
+> + * @flags: LSM defined flags
+> + *
+> + * Fill all of the fields in a user space lsm_ctx structure.
+> + * Caller is assumed to have verified that @ctx has enough space
+> + * for @context.
+> + *
+> + * The total length is padded to a multiple of 64 bits to
+> + * accomodate possible alignment issues.
+> + *
+> + * Returns 0 on success, -EFAULT on a copyout error, -ENOMEM
+> + * if memory can't be allocated.
+> + */
+> +int lsm_fill_user_ctx(struct lsm_ctx __user *ctx, void *context,
+> +		      size_t context_size, u64 id, u64 flags)
+> +{
+> +	struct lsm_ctx *lctx;
+> +	size_t locallen = ALIGN(struct_size(lctx, ctx, context_size), 8);
+
+See my comment in 7/11 regarding the alignment calculation here.
+
+> +	int rc = 0;
+> +
+> +	lctx = kzalloc(locallen, GFP_KERNEL);
+> +	if (lctx == NULL)
+> +		return -ENOMEM;
+> +
+> +	lctx->id = id;
+> +	lctx->flags = flags;
+> +	lctx->ctx_len = context_size;
+> +	lctx->len = locallen;
+> +
+> +	memcpy(lctx->ctx, context, context_size);
+> +
+> +	if (copy_to_user(ctx, lctx, locallen))
+> +		rc = -EFAULT;
+> +
+> +	kfree(lctx);
+> +
+> +	return rc;
+> +}
+> +
+>  /*
+>   * The default value of the LSM hook is defined in linux/lsm_hook_defs.h and
+>   * can be accessed with:
+> -- 
+> 2.39.2
+
+--
+paul-moore.com
