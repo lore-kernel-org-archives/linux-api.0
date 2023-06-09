@@ -2,41 +2,41 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id DAC90C7EE25
-	for <linux-api@archiver.kernel.org>; Fri,  9 Jun 2023 09:29:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 07ED2C7EE29
+	for <linux-api@archiver.kernel.org>; Fri,  9 Jun 2023 09:29:38 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S241534AbjFIJ3g (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 9 Jun 2023 05:29:36 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52704 "EHLO
+        id S236470AbjFIJ3h (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 9 Jun 2023 05:29:37 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49038 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S241554AbjFIJ3G (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 9 Jun 2023 05:29:06 -0400
+        with ESMTP id S240271AbjFIJ3K (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 9 Jun 2023 05:29:10 -0400
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5ADFF5FF0
-        for <linux-api@vger.kernel.org>; Fri,  9 Jun 2023 02:22:36 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB6E77ECA
+        for <linux-api@vger.kernel.org>; Fri,  9 Jun 2023 02:22:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1686302512;
+        s=mimecast20190719; t=1686302500;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=ECFSkBPZk6Hf9wW6u18xsllOKumXr/NSdBh2uJ9ps7g=;
-        b=dvRnfunThmCO6NPx5m5/KHlnemzKOlGE/9Vm+XyFz/Jt1QDVX0S7ayKcOiQGHUY6+lRf65
-        VlkazF251M6Di5wITUI5KVg23dVW5EAHK3Ug1ETT2XucSu/m9S+/CuEeGvPaCeKKVPfQxv
-        1Sd8z3ox2pgy+RkI45AzGlI68Wh7UD0=
+        bh=yrvz2NuuJ8t+PjTH8hQDFouZJRAvGRd7mM5s6NiOOaU=;
+        b=VEulbuZSenqb41bfbWhG5LSAnkrDQxkv+G06R0rA4DQvEJocA7GFOw2zlKwzwbM3bvHa48
+        tVcFzpc0eE6DKGi00AGSTrwFo7koBHiIgTPhlYh3lWjo20TW/k1ZKhHXJ2HlRjoHn2zNNy
+        RrKg5qyuTcZwSpvSuVlamYgA2AfnL/I=
 Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
  [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-497-r4toiCbLPEavcdV3x29TIg-1; Fri, 09 Jun 2023 05:21:47 -0400
-X-MC-Unique: r4toiCbLPEavcdV3x29TIg-1
+ us-mta-333-jjshG5t0OBG9vTCK3FCePw-1; Fri, 09 Jun 2023 05:21:37 -0400
+X-MC-Unique: jjshG5t0OBG9vTCK3FCePw-1
 Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
         (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
         (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 5BF45101A593;
-        Fri,  9 Jun 2023 09:21:46 +0000 (UTC)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 405448028B2;
+        Fri,  9 Jun 2023 09:21:36 +0000 (UTC)
 Received: from eperezma.remote.csb (unknown [10.39.193.246])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 4888A20268C6;
-        Fri,  9 Jun 2023 09:21:43 +0000 (UTC)
+        by smtp.corp.redhat.com (Postfix) with ESMTP id 2C101202696C;
+        Fri,  9 Jun 2023 09:21:33 +0000 (UTC)
 From:   =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
 To:     mst@redhat.com, Jason Wang <jasowang@redhat.com>
 Cc:     Zhu Lingshan <lingshan.zhu@intel.com>,
@@ -53,9 +53,9 @@ Cc:     Zhu Lingshan <lingshan.zhu@intel.com>,
         Stefano Garzarella <sgarzare@redhat.com>,
         Cindy Lu <lulu@redhat.com>, si-wei.liu@oracle.com,
         Harpreet Singh Anand <hanand@xilinx.com>
-Subject: [PATCH v2 4/4] vdpa_sim: offer VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK
-Date:   Fri,  9 Jun 2023 11:21:27 +0200
-Message-Id: <20230609092127.170673-5-eperezma@redhat.com>
+Subject: [PATCH v2 1/4] vdpa: add VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK flag
+Date:   Fri,  9 Jun 2023 11:21:24 +0200
+Message-Id: <20230609092127.170673-2-eperezma@redhat.com>
 In-Reply-To: <20230609092127.170673-1-eperezma@redhat.com>
 References: <20230609092127.170673-1-eperezma@redhat.com>
 MIME-Version: 1.0
@@ -66,55 +66,33 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Start offering the feature in the simulator.  Other parent drivers can
-follow this code to offer it too.
+This feature flag allows the driver enabling virtqueues both before and
+after DRIVER_OK.
+
+This is needed for software assisted live migration, so userland can
+restore the device status in devices with control virtqueue before the
+dataplane is enabled.
 
 Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
 Acked-by: Shannon Nelson <shannon.nelson@amd.com>
 ---
- drivers/vdpa/vdpa_sim/vdpa_sim.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ include/uapi/linux/vhost_types.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/drivers/vdpa/vdpa_sim/vdpa_sim.c b/drivers/vdpa/vdpa_sim/vdpa_sim.c
-index d343af4fa60e..76d41058add9 100644
---- a/drivers/vdpa/vdpa_sim/vdpa_sim.c
-+++ b/drivers/vdpa/vdpa_sim/vdpa_sim.c
-@@ -18,6 +18,7 @@
- #include <linux/vdpa.h>
- #include <linux/vhost_iotlb.h>
- #include <uapi/linux/vdpa.h>
-+#include <uapi/linux/vhost_types.h>
+diff --git a/include/uapi/linux/vhost_types.h b/include/uapi/linux/vhost_types.h
+index c5690a8992d8..4889e6d70b15 100644
+--- a/include/uapi/linux/vhost_types.h
++++ b/include/uapi/linux/vhost_types.h
+@@ -165,5 +165,9 @@ struct vhost_vdpa_iova_range {
+ #define VHOST_BACKEND_F_SUSPEND  0x4
+ /* Device can be resumed */
+ #define VHOST_BACKEND_F_RESUME  0x5
++/* Device supports the driver enabling virtqueues both before and after
++ * DRIVER_OK
++ */
++#define VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK  0x6
  
- #include "vdpa_sim.h"
- 
-@@ -410,6 +411,11 @@ static u64 vdpasim_get_device_features(struct vdpa_device *vdpa)
- 	return vdpasim->dev_attr.supported_features;
- }
- 
-+static u64 vdpasim_get_backend_features(const struct vdpa_device *vdpa)
-+{
-+	return BIT_ULL(VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK);
-+}
-+
- static int vdpasim_set_driver_features(struct vdpa_device *vdpa, u64 features)
- {
- 	struct vdpasim *vdpasim = vdpa_to_sim(vdpa);
-@@ -733,6 +739,7 @@ static const struct vdpa_config_ops vdpasim_config_ops = {
- 	.get_vq_align           = vdpasim_get_vq_align,
- 	.get_vq_group           = vdpasim_get_vq_group,
- 	.get_device_features    = vdpasim_get_device_features,
-+	.get_backend_features   = vdpasim_get_backend_features,
- 	.set_driver_features    = vdpasim_set_driver_features,
- 	.get_driver_features    = vdpasim_get_driver_features,
- 	.set_config_cb          = vdpasim_set_config_cb,
-@@ -770,6 +777,7 @@ static const struct vdpa_config_ops vdpasim_batch_config_ops = {
- 	.get_vq_align           = vdpasim_get_vq_align,
- 	.get_vq_group           = vdpasim_get_vq_group,
- 	.get_device_features    = vdpasim_get_device_features,
-+	.get_backend_features   = vdpasim_get_backend_features,
- 	.set_driver_features    = vdpasim_set_driver_features,
- 	.get_driver_features    = vdpasim_get_driver_features,
- 	.set_config_cb          = vdpasim_set_config_cb,
+ #endif
 -- 
 2.31.1
 
