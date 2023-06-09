@@ -2,44 +2,64 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 07ED2C7EE29
-	for <linux-api@archiver.kernel.org>; Fri,  9 Jun 2023 09:29:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4C705C7EE2E
+	for <linux-api@archiver.kernel.org>; Fri,  9 Jun 2023 16:14:08 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236470AbjFIJ3h (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 9 Jun 2023 05:29:37 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49038 "EHLO
+        id S232446AbjFIQOH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 9 Jun 2023 12:14:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58780 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240271AbjFIJ3K (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 9 Jun 2023 05:29:10 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB6E77ECA
-        for <linux-api@vger.kernel.org>; Fri,  9 Jun 2023 02:22:46 -0700 (PDT)
+        with ESMTP id S242079AbjFIQOE (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 9 Jun 2023 12:14:04 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id BC42226B9
+        for <linux-api@vger.kernel.org>; Fri,  9 Jun 2023 09:13:23 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1686302500;
+        s=mimecast20190719; t=1686327202;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=yrvz2NuuJ8t+PjTH8hQDFouZJRAvGRd7mM5s6NiOOaU=;
-        b=VEulbuZSenqb41bfbWhG5LSAnkrDQxkv+G06R0rA4DQvEJocA7GFOw2zlKwzwbM3bvHa48
-        tVcFzpc0eE6DKGi00AGSTrwFo7koBHiIgTPhlYh3lWjo20TW/k1ZKhHXJ2HlRjoHn2zNNy
-        RrKg5qyuTcZwSpvSuVlamYgA2AfnL/I=
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-333-jjshG5t0OBG9vTCK3FCePw-1; Fri, 09 Jun 2023 05:21:37 -0400
-X-MC-Unique: jjshG5t0OBG9vTCK3FCePw-1
-Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 405448028B2;
-        Fri,  9 Jun 2023 09:21:36 +0000 (UTC)
-Received: from eperezma.remote.csb (unknown [10.39.193.246])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id 2C101202696C;
-        Fri,  9 Jun 2023 09:21:33 +0000 (UTC)
-From:   =?UTF-8?q?Eugenio=20P=C3=A9rez?= <eperezma@redhat.com>
-To:     mst@redhat.com, Jason Wang <jasowang@redhat.com>
-Cc:     Zhu Lingshan <lingshan.zhu@intel.com>,
+        bh=0D0fx1mFB/JV/q+hvvzbZ4BbnjjH4XlfjQ5soZ7CGmE=;
+        b=D8S7a501JNFuJdUf0CSInZL7Pme5X0QodUWsUfwJYD62fFeAZwyqtRDYAW76bEBTzATnxX
+        RefTsHQxSeqIpeimeMo+naH3y8JoCftroQTmKkpJnbmA9ni6VumO3ckoS7PRqtQDTQdoeS
+        pbQ/DmePAM6lXX7it15JPa+IeEpRjPE=
+Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
+ [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-74-nQRmTNXDPKePnvM3CcWwtQ-1; Fri, 09 Jun 2023 12:13:21 -0400
+X-MC-Unique: nQRmTNXDPKePnvM3CcWwtQ-1
+Received: by mail-wm1-f72.google.com with SMTP id 5b1f17b1804b1-3f7e8c24a92so7531845e9.0
+        for <linux-api@vger.kernel.org>; Fri, 09 Jun 2023 09:13:20 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20221208; t=1686327200; x=1688919200;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=0D0fx1mFB/JV/q+hvvzbZ4BbnjjH4XlfjQ5soZ7CGmE=;
+        b=GAy/dH6ORRIOTZceTemRoU0fTpAihYBu0x3OGUuLGtx+vQE29cJoc/3XP/ikolr8S2
+         pcAqWA5O96eI12AcT4qtTaaoaQeRoV654MQUZNCRA0ViHhsQrw3SB3w53NM3nh9Hd6gZ
+         5HbE0VNILdbYjNErpPl0Gt9Ag9EXYT0YeeUvCFU0brId03nLsBKt4bBojN/03NuC6cpW
+         XefGOt2dswyNYtYpI1/TWqGRHhAY6YsWpMZOxCOMo1zdXouS+iDKJZXihP4Pu5o6BxQJ
+         A6ymQuvDWjX7vcUCHmUaw3m54iTn4iTQpY6BvVfXYvglUGXDQmeTAcTF7XpR+Nme4lqg
+         hXNQ==
+X-Gm-Message-State: AC+VfDyZqIce+GP1zeod2d9kxlQNIUlFbfOQm1hgMPLi8rW4CtKuuTCw
+        vXwxldew2f9NevZyxts5b50V6u88Ew/W8QW7gcllHtxdDc5FLo14K6e2Xb0mOGMNHzgGbGvD/dB
+        kYlyPpnugEf68spXx8vJS
+X-Received: by 2002:a1c:7903:0:b0:3f5:60b:33 with SMTP id l3-20020a1c7903000000b003f5060b0033mr1210773wme.5.1686327199939;
+        Fri, 09 Jun 2023 09:13:19 -0700 (PDT)
+X-Google-Smtp-Source: ACHHUZ6PvTuWonpbAPcqcGK+Qy57af6UFWRA4xTXacgkC8KC6k77AUEeUdQkIRV+Tm1Yn4p/8VPllg==
+X-Received: by 2002:a1c:7903:0:b0:3f5:60b:33 with SMTP id l3-20020a1c7903000000b003f5060b0033mr1210743wme.5.1686327199617;
+        Fri, 09 Jun 2023 09:13:19 -0700 (PDT)
+Received: from redhat.com ([2a06:c701:7403:2800:22a6:7656:500:4dab])
+        by smtp.gmail.com with ESMTPSA id f26-20020a1c6a1a000000b003f7ea771b5dsm3187488wmc.1.2023.06.09.09.13.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 09 Jun 2023 09:13:19 -0700 (PDT)
+Date:   Fri, 9 Jun 2023 12:13:15 -0400
+From:   "Michael S. Tsirkin" <mst@redhat.com>
+To:     Eugenio =?iso-8859-1?Q?P=E9rez?= <eperezma@redhat.com>
+Cc:     Jason Wang <jasowang@redhat.com>,
+        Zhu Lingshan <lingshan.zhu@intel.com>,
         virtualization@lists.linux-foundation.org,
         "Gonglei (Arei)" <arei.gonglei@huawei.com>, longpeng2@huawei.com,
         Lei Yang <leiyang@redhat.com>,
@@ -53,46 +73,48 @@ Cc:     Zhu Lingshan <lingshan.zhu@intel.com>,
         Stefano Garzarella <sgarzare@redhat.com>,
         Cindy Lu <lulu@redhat.com>, si-wei.liu@oracle.com,
         Harpreet Singh Anand <hanand@xilinx.com>
-Subject: [PATCH v2 1/4] vdpa: add VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK flag
-Date:   Fri,  9 Jun 2023 11:21:24 +0200
-Message-Id: <20230609092127.170673-2-eperezma@redhat.com>
-In-Reply-To: <20230609092127.170673-1-eperezma@redhat.com>
+Subject: Re: [PATCH v2 2/4] vdpa: accept
+ VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK backend feature
+Message-ID: <20230609121244-mutt-send-email-mst@kernel.org>
 References: <20230609092127.170673-1-eperezma@redhat.com>
+ <20230609092127.170673-3-eperezma@redhat.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.4
+In-Reply-To: <20230609092127.170673-3-eperezma@redhat.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-This feature flag allows the driver enabling virtqueues both before and
-after DRIVER_OK.
+On Fri, Jun 09, 2023 at 11:21:25AM +0200, Eugenio Pérez wrote:
+> Accepting VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK backend feature if
+> userland sets it.
+> 
+> Signed-off-by: Eugenio Pérez <eperezma@redhat.com>
+> Acked-by: Shannon Nelson <shannon.nelson@amd.com>
 
-This is needed for software assisted live migration, so userland can
-restore the device status in devices with control virtqueue before the
-dataplane is enabled.
+I don't get it, so all vdpa devices accept this automatically?
+Should this not be up to the parent?
 
-Signed-off-by: Eugenio PÃ©rez <eperezma@redhat.com>
-Acked-by: Shannon Nelson <shannon.nelson@amd.com>
----
- include/uapi/linux/vhost_types.h | 4 ++++
- 1 file changed, 4 insertions(+)
-
-diff --git a/include/uapi/linux/vhost_types.h b/include/uapi/linux/vhost_types.h
-index c5690a8992d8..4889e6d70b15 100644
---- a/include/uapi/linux/vhost_types.h
-+++ b/include/uapi/linux/vhost_types.h
-@@ -165,5 +165,9 @@ struct vhost_vdpa_iova_range {
- #define VHOST_BACKEND_F_SUSPEND  0x4
- /* Device can be resumed */
- #define VHOST_BACKEND_F_RESUME  0x5
-+/* Device supports the driver enabling virtqueues both before and after
-+ * DRIVER_OK
-+ */
-+#define VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK  0x6
- 
- #endif
--- 
-2.31.1
+> ---
+>  drivers/vhost/vdpa.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/drivers/vhost/vdpa.c b/drivers/vhost/vdpa.c
+> index bf77924d5b60..a3204406b73d 100644
+> --- a/drivers/vhost/vdpa.c
+> +++ b/drivers/vhost/vdpa.c
+> @@ -680,7 +680,8 @@ static long vhost_vdpa_unlocked_ioctl(struct file *filep,
+>  			return -EFAULT;
+>  		if (features & ~(VHOST_VDPA_BACKEND_FEATURES |
+>  				 BIT_ULL(VHOST_BACKEND_F_SUSPEND) |
+> -				 BIT_ULL(VHOST_BACKEND_F_RESUME)))
+> +				 BIT_ULL(VHOST_BACKEND_F_RESUME) |
+> +				 BIT_ULL(VHOST_BACKEND_F_ENABLE_AFTER_DRIVER_OK)))
+>  			return -EOPNOTSUPP;
+>  		if ((features & BIT_ULL(VHOST_BACKEND_F_SUSPEND)) &&
+>  		     !vhost_vdpa_can_suspend(v))
+> -- 
+> 2.31.1
 
