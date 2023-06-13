@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D99E7CA9EAF
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4D155CA9EAC
 	for <linux-api@archiver.kernel.org>; Tue, 13 Jun 2023 00:12:29 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229454AbjFMAM2 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Jun 2023 20:12:28 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51902 "EHLO
+        id S238779AbjFMAM1 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Jun 2023 20:12:27 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51916 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238592AbjFMAMX (ORCPT
+        with ESMTP id S238496AbjFMAMX (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 12 Jun 2023 20:12:23 -0400
 Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A8371173F;
-        Mon, 12 Jun 2023 17:12:17 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 08EED1726;
+        Mon, 12 Jun 2023 17:12:15 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1686615138; x=1718151138;
+  t=1686615136; x=1718151136;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=YP96Yn7FdNN68fPWKmeUZZw0SU1yEnE0kYU9/y2Lvpc=;
-  b=QefwEUnAhkJ5xF6fSIomS1+EFsRVdKxpgTDF6YIqTUjTxp1QLWoEDZgU
-   Ut4C46TN409YUgx2wYW23j+eUexqKg+lgZzfvmE1z5fR36mxceMNqFHHq
-   a2IPzXlEkksvNKvkuKDC69SHpzFYFoubFjXwZ8oFHQ6hxiR+Eto7Vlws5
-   cyhcqXPmQa+ztulNzwkrRbGsymXV79MYeiJ67J1jNEe0DyXMyOM14UddW
-   2NzNIrPVGdzrsC+Uaed8ONPncvdhQMqVyByAWkI041ZXXYVwxDBbVq20V
-   7JMZsORUM1yMQGT07MmegA2/NprzxMZBvlwfKQrtsPbdEjWycVyJPuelV
+  bh=1T/qgZrUQhYBEmir0bddzuZOwE3WskkI/v/mGEi34h4=;
+  b=R3/b+BSDam0NqDlAT1HhuUrsopGL40H9zZf3quXKnqZM8STTQFcNglZ/
+   9GVzOcJb/LA1ZIXm2HoBRfGZP69oQEndy38eukFBmj5Xw22YEHG3fWV2G
+   V5Grxd7Uqp7qmOALzhjSEIIEKr0Kod1F0p3vGVgK22hn/fZ7UDhYX+wJI
+   RsI+XOuVWRl5V+fPTnY9sYcNONw0hBPOSXta27XwFUrM3qvTHfebL/DXu
+   EOq5y0Y5MPn25nC3rAQWSNogSRfcxNYmDQsiE9OyTagnSCXOLMyidMPHH
+   wnMwndWjUKzgkuW/uaaketD1g4GXc2dRny1y/ZokKMefHTXN/l7Uxw9y7
    w==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="361556844"
+X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="361556815"
 X-IronPort-AV: E=Sophos;i="6.00,238,1681196400"; 
-   d="scan'208";a="361556844"
+   d="scan'208";a="361556815"
 Received: from orsmga004.jf.intel.com ([10.7.209.38])
   by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:15 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="835671000"
+X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="835670993"
 X-IronPort-AV: E=Sophos;i="6.00,238,1681196400"; 
-   d="scan'208";a="835671000"
+   d="scan'208";a="835670993"
 Received: from almeisch-mobl1.amr.corp.intel.com (HELO rpedgeco-desk4.amr.corp.intel.com) ([10.209.42.242])
-  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:14 -0700
+  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:11 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -68,11 +68,10 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Andrew.Cooper3@citrix.com, christina.schimpe@intel.com,
         david@redhat.com, debug@rivosinc.com, szabolcs.nagy@arm.com,
         torvalds@linux-foundation.org, broonie@kernel.org
-Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
-        Pengfei Xu <pengfei.xu@intel.com>
-Subject: [PATCH v9 09/42] x86/mm: Move pmd_write(), pud_write() up in the file
-Date:   Mon, 12 Jun 2023 17:10:35 -0700
-Message-Id: <20230613001108.3040476-10-rick.p.edgecombe@intel.com>
+Cc:     rick.p.edgecombe@intel.com, Pengfei Xu <pengfei.xu@intel.com>
+Subject: [PATCH v9 07/42] x86/traps: Move control protection handler to separate file
+Date:   Mon, 12 Jun 2023 17:10:33 -0700
+Message-Id: <20230613001108.3040476-8-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20230613001108.3040476-1-rick.p.edgecombe@intel.com>
 References: <20230613001108.3040476-1-rick.p.edgecombe@intel.com>
@@ -82,73 +81,208 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To prepare the introduction of _PAGE_SAVED_DIRTY, move pmd_write() and
-pud_write() up in the file, so that they can be used by other
-helpers below.  No functional changes.
+Today the control protection handler is defined in traps.c and used only
+for the kernel IBT feature. To reduce ifdeffery, move it to it's own file.
+In future patches, functionality will be added to make this handler also
+handle user shadow stack faults. So name the file cet.c.
 
-Co-developed-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+No functional change.
+
 Signed-off-by: Rick Edgecombe <rick.p.edgecombe@intel.com>
 Reviewed-by: Borislav Petkov (AMD) <bp@alien8.de>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Acked-by: Mike Rapoport (IBM) <rppt@kernel.org>
 Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable.h | 24 ++++++++++++------------
- 1 file changed, 12 insertions(+), 12 deletions(-)
+ arch/x86/kernel/Makefile |  2 ++
+ arch/x86/kernel/cet.c    | 76 ++++++++++++++++++++++++++++++++++++++++
+ arch/x86/kernel/traps.c  | 75 ---------------------------------------
+ 3 files changed, 78 insertions(+), 75 deletions(-)
+ create mode 100644 arch/x86/kernel/cet.c
 
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 112e6060eafa..768ee46782c9 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -160,6 +160,18 @@ static inline int pte_write(pte_t pte)
- 	return pte_flags(pte) & _PAGE_RW;
- }
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 4070a01c11b7..abee0564b750 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -145,6 +145,8 @@ obj-$(CONFIG_CFI_CLANG)			+= cfi.o
  
-+#define pmd_write pmd_write
-+static inline int pmd_write(pmd_t pmd)
+ obj-$(CONFIG_CALL_THUNKS)		+= callthunks.o
+ 
++obj-$(CONFIG_X86_CET)			+= cet.o
++
+ ###
+ # 64 bit specific files
+ ifeq ($(CONFIG_X86_64),y)
+diff --git a/arch/x86/kernel/cet.c b/arch/x86/kernel/cet.c
+new file mode 100644
+index 000000000000..7ad22b705b64
+--- /dev/null
++++ b/arch/x86/kernel/cet.c
+@@ -0,0 +1,76 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#include <linux/ptrace.h>
++#include <asm/bugs.h>
++#include <asm/traps.h>
++
++static __ro_after_init bool ibt_fatal = true;
++
++extern void ibt_selftest_ip(void); /* code label defined in asm below */
++
++enum cp_error_code {
++	CP_EC        = (1 << 15) - 1,
++
++	CP_RET       = 1,
++	CP_IRET      = 2,
++	CP_ENDBR     = 3,
++	CP_RSTRORSSP = 4,
++	CP_SETSSBSY  = 5,
++
++	CP_ENCL	     = 1 << 15,
++};
++
++DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
 +{
-+	return pmd_flags(pmd) & _PAGE_RW;
++	if (!cpu_feature_enabled(X86_FEATURE_IBT)) {
++		pr_err("Unexpected #CP\n");
++		BUG();
++	}
++
++	if (WARN_ON_ONCE(user_mode(regs) || (error_code & CP_EC) != CP_ENDBR))
++		return;
++
++	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
++		regs->ax = 0;
++		return;
++	}
++
++	pr_err("Missing ENDBR: %pS\n", (void *)instruction_pointer(regs));
++	if (!ibt_fatal) {
++		printk(KERN_DEFAULT CUT_HERE);
++		__warn(__FILE__, __LINE__, (void *)regs->ip, TAINT_WARN, regs, NULL);
++		return;
++	}
++	BUG();
 +}
 +
-+#define pud_write pud_write
-+static inline int pud_write(pud_t pud)
++/* Must be noinline to ensure uniqueness of ibt_selftest_ip. */
++noinline bool ibt_selftest(void)
 +{
-+	return pud_flags(pud) & _PAGE_RW;
++	unsigned long ret;
++
++	asm ("	lea ibt_selftest_ip(%%rip), %%rax\n\t"
++	     ANNOTATE_RETPOLINE_SAFE
++	     "	jmp *%%rax\n\t"
++	     "ibt_selftest_ip:\n\t"
++	     UNWIND_HINT_FUNC
++	     ANNOTATE_NOENDBR
++	     "	nop\n\t"
++
++	     : "=a" (ret) : : "memory");
++
++	return !ret;
 +}
 +
- static inline int pte_huge(pte_t pte)
- {
- 	return pte_flags(pte) & _PAGE_PSE;
-@@ -1120,12 +1132,6 @@ extern int pmdp_clear_flush_young(struct vm_area_struct *vma,
- 				  unsigned long address, pmd_t *pmdp);
- 
- 
--#define pmd_write pmd_write
--static inline int pmd_write(pmd_t pmd)
--{
--	return pmd_flags(pmd) & _PAGE_RW;
--}
--
- #define __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR
- static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm, unsigned long addr,
- 				       pmd_t *pmdp)
-@@ -1155,12 +1161,6 @@ static inline void pmdp_set_wrprotect(struct mm_struct *mm,
- 	clear_bit(_PAGE_BIT_RW, (unsigned long *)pmdp);
++static int __init ibt_setup(char *str)
++{
++	if (!strcmp(str, "off"))
++		setup_clear_cpu_cap(X86_FEATURE_IBT);
++
++	if (!strcmp(str, "warn"))
++		ibt_fatal = false;
++
++	return 1;
++}
++
++__setup("ibt=", ibt_setup);
+diff --git a/arch/x86/kernel/traps.c b/arch/x86/kernel/traps.c
+index 58b1f208eff5..6f666dfa97de 100644
+--- a/arch/x86/kernel/traps.c
++++ b/arch/x86/kernel/traps.c
+@@ -213,81 +213,6 @@ DEFINE_IDTENTRY(exc_overflow)
+ 	do_error_trap(regs, 0, "overflow", X86_TRAP_OF, SIGSEGV, 0, NULL);
  }
  
--#define pud_write pud_write
--static inline int pud_write(pud_t pud)
+-#ifdef CONFIG_X86_KERNEL_IBT
+-
+-static __ro_after_init bool ibt_fatal = true;
+-
+-extern void ibt_selftest_ip(void); /* code label defined in asm below */
+-
+-enum cp_error_code {
+-	CP_EC        = (1 << 15) - 1,
+-
+-	CP_RET       = 1,
+-	CP_IRET      = 2,
+-	CP_ENDBR     = 3,
+-	CP_RSTRORSSP = 4,
+-	CP_SETSSBSY  = 5,
+-
+-	CP_ENCL	     = 1 << 15,
+-};
+-
+-DEFINE_IDTENTRY_ERRORCODE(exc_control_protection)
 -{
--	return pud_flags(pud) & _PAGE_RW;
+-	if (!cpu_feature_enabled(X86_FEATURE_IBT)) {
+-		pr_err("Unexpected #CP\n");
+-		BUG();
+-	}
+-
+-	if (WARN_ON_ONCE(user_mode(regs) || (error_code & CP_EC) != CP_ENDBR))
+-		return;
+-
+-	if (unlikely(regs->ip == (unsigned long)&ibt_selftest_ip)) {
+-		regs->ax = 0;
+-		return;
+-	}
+-
+-	pr_err("Missing ENDBR: %pS\n", (void *)instruction_pointer(regs));
+-	if (!ibt_fatal) {
+-		printk(KERN_DEFAULT CUT_HERE);
+-		__warn(__FILE__, __LINE__, (void *)regs->ip, TAINT_WARN, regs, NULL);
+-		return;
+-	}
+-	BUG();
 -}
 -
- #ifndef pmdp_establish
- #define pmdp_establish pmdp_establish
- static inline pmd_t pmdp_establish(struct vm_area_struct *vma,
+-/* Must be noinline to ensure uniqueness of ibt_selftest_ip. */
+-noinline bool ibt_selftest(void)
+-{
+-	unsigned long ret;
+-
+-	asm ("	lea ibt_selftest_ip(%%rip), %%rax\n\t"
+-	     ANNOTATE_RETPOLINE_SAFE
+-	     "	jmp *%%rax\n\t"
+-	     "ibt_selftest_ip:\n\t"
+-	     UNWIND_HINT_FUNC
+-	     ANNOTATE_NOENDBR
+-	     "	nop\n\t"
+-
+-	     : "=a" (ret) : : "memory");
+-
+-	return !ret;
+-}
+-
+-static int __init ibt_setup(char *str)
+-{
+-	if (!strcmp(str, "off"))
+-		setup_clear_cpu_cap(X86_FEATURE_IBT);
+-
+-	if (!strcmp(str, "warn"))
+-		ibt_fatal = false;
+-
+-	return 1;
+-}
+-
+-__setup("ibt=", ibt_setup);
+-
+-#endif /* CONFIG_X86_KERNEL_IBT */
+-
+ #ifdef CONFIG_X86_F00F_BUG
+ void handle_invalid_op(struct pt_regs *regs)
+ #else
 -- 
 2.34.1
 
