@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 00567C88CB2
-	for <linux-api@archiver.kernel.org>; Tue, 13 Jun 2023 00:12:37 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B4F2DCA9EAB
+	for <linux-api@archiver.kernel.org>; Tue, 13 Jun 2023 00:12:44 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238883AbjFMAMf (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 12 Jun 2023 20:12:35 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51946 "EHLO
+        id S238507AbjFMAMn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 12 Jun 2023 20:12:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51904 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S238738AbjFMAM0 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 12 Jun 2023 20:12:26 -0400
+        with ESMTP id S238475AbjFMAMW (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 12 Jun 2023 20:12:22 -0400
 Received: from mga03.intel.com (mga03.intel.com [134.134.136.65])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5C6C9F0;
-        Mon, 12 Jun 2023 17:12:22 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 43A79171C;
+        Mon, 12 Jun 2023 17:12:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1686615142; x=1718151142;
+  t=1686615134; x=1718151134;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=qno7FNbVCOlU0l2tsMlcvtzg5iSqFMH8Q3FgqO3yA3s=;
-  b=HQRuUlSox7Nv4w8nTyOBqx3/ZuiQHHppNSrNzzabwGyn30BldrP+ftmG
-   kg+hWfBNLPIXsfkxqD55ZDOnylyC9LjyIGgnwwcfraLeNgRscX9h6KCno
-   +mt/7Tq2xLyrKoK8bgA+iyqq2znz8MGvf/oU174MrggH4Ab2c8lIQtoYc
-   TvcqvENX8sEdZZ5nnjECZgeg5biSBxZiJjBJXK+fjbU/+NRiq7enCkbEq
-   8oLJliAvQz6yeERjjLOOvfD1dcBK4viqdFyv3/UaRyF1iVAFvdDBm86RM
-   h2f6WSpDWvFYM8CL8iUQqHNjYthEU6SvO1xtmtUu9K7/F+c9i3TrN3UCp
+  bh=VIRIy8IvN5ZfY5u3MVh2ThurjhiZOJC7RcXup7TqiYM=;
+  b=J5dsVrvsQoEiGXjU2/F2mZxHX9Wtgd8eR1tZAx8sTiWaU7g0Nl12dqYK
+   WC3qIDwv9pTqoHO0SUKRtQbFVgJJXVmXRdQq776vDZ4XBTtUinn7yXkpX
+   ERI5enbupURzIofkxsAzQJggymoC2YwNLTDDS+h4d2p1nfMoSJCBZc/Kg
+   eavVqt6vEYuEaRlEVK9WIqidIFBhMoFKjW197xXJdbTN5Yq4FpZ4taULP
+   CCWpLI0rtXeHOqMTe1e4WkxVbWxAAihvoerV/Tg1OhCah5+fCvni+h7rs
+   76q2oZ2nMw/rCfj7YwiGzBlGan0ehh2rHw5r0hr9f0ABIGqfzZ0iSoLJv
    Q==;
-X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="361556946"
+X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="361556774"
 X-IronPort-AV: E=Sophos;i="6.00,238,1681196400"; 
-   d="scan'208";a="361556946"
+   d="scan'208";a="361556774"
 Received: from orsmga004.jf.intel.com ([10.7.209.38])
-  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:19 -0700
+  by orsmga103.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:11 -0700
 X-ExtLoop1: 1
-X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="835671016"
+X-IronPort-AV: E=McAfee;i="6600,9927,10739"; a="835670988"
 X-IronPort-AV: E=Sophos;i="6.00,238,1681196400"; 
-   d="scan'208";a="835671016"
+   d="scan'208";a="835670988"
 Received: from almeisch-mobl1.amr.corp.intel.com (HELO rpedgeco-desk4.amr.corp.intel.com) ([10.209.42.242])
-  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:18 -0700
+  by orsmga004-auth.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Jun 2023 17:12:10 -0700
 From:   Rick Edgecombe <rick.p.edgecombe@intel.com>
 To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         Thomas Gleixner <tglx@linutronix.de>,
@@ -70,9 +70,9 @@ To:     x86@kernel.org, "H . Peter Anvin" <hpa@zytor.com>,
         torvalds@linux-foundation.org, broonie@kernel.org
 Cc:     rick.p.edgecombe@intel.com, Yu-cheng Yu <yu-cheng.yu@intel.com>,
         Pengfei Xu <pengfei.xu@intel.com>
-Subject: [PATCH v9 13/42] x86/mm: Remove _PAGE_DIRTY from kernel RO pages
-Date:   Mon, 12 Jun 2023 17:10:39 -0700
-Message-Id: <20230613001108.3040476-14-rick.p.edgecombe@intel.com>
+Subject: [PATCH v9 06/42] x86/shstk: Add Kconfig option for shadow stack
+Date:   Mon, 12 Jun 2023 17:10:32 -0700
+Message-Id: <20230613001108.3040476-7-rick.p.edgecombe@intel.com>
 X-Mailer: git-send-email 2.34.1
 In-Reply-To: <20230613001108.3040476-1-rick.p.edgecombe@intel.com>
 References: <20230613001108.3040476-1-rick.p.edgecombe@intel.com>
@@ -82,22 +82,16 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-New processors that support Shadow Stack regard Write=0,Dirty=1 PTEs as
-shadow stack pages.
+Shadow stack provides protection for applications against function return
+address corruption. It is active when the processor supports it, the
+kernel has CONFIG_X86_SHADOW_STACK enabled, and the application is built
+for the feature. This is only implemented for the 64-bit kernel. When it
+is enabled, legacy non-shadow stack applications continue to work, but
+without protection.
 
-In normal cases, it can be helpful to create Write=1 PTEs as also Dirty=1
-if HW dirty tracking is not needed, because if the Dirty bit is not already
-set the CPU has to set Dirty=1 when the memory gets written to. This
-creates additional work for the CPU. So traditional wisdom was to simply
-set the Dirty bit whenever you didn't care about it. However, it was never
-really very helpful for read-only kernel memory.
-
-When CR4.CET=1 and IA32_S_CET.SH_STK_EN=1, some instructions can write to
-such supervisor memory. The kernel does not set IA32_S_CET.SH_STK_EN, so
-avoiding kernel Write=0,Dirty=1 memory is not strictly needed for any
-functional reason. But having Write=0,Dirty=1 kernel memory doesn't have
-any functional benefit either, so to reduce ambiguity between shadow stack
-and regular Write=0 pages, remove Dirty=1 from any kernel Write=0 PTEs.
+Since there is another feature that utilizes CET (Kernel IBT) that will
+share implementation with shadow stacks, create CONFIG_CET to signify
+that at least one CET feature is configured.
 
 Co-developed-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
@@ -109,49 +103,72 @@ Tested-by: Pengfei Xu <pengfei.xu@intel.com>
 Tested-by: John Allen <john.allen@amd.com>
 Tested-by: Kees Cook <keescook@chromium.org>
 ---
- arch/x86/include/asm/pgtable_types.h | 8 +++++---
- arch/x86/mm/pat/set_memory.c         | 4 ++--
- 2 files changed, 7 insertions(+), 5 deletions(-)
+ arch/x86/Kconfig           | 24 ++++++++++++++++++++++++
+ arch/x86/Kconfig.assembler |  5 +++++
+ 2 files changed, 29 insertions(+)
 
-diff --git a/arch/x86/include/asm/pgtable_types.h b/arch/x86/include/asm/pgtable_types.h
-index ee6f8e57e115..26f07d6d5758 100644
---- a/arch/x86/include/asm/pgtable_types.h
-+++ b/arch/x86/include/asm/pgtable_types.h
-@@ -222,10 +222,12 @@ enum page_cache_mode {
- #define _PAGE_TABLE_NOENC	 (__PP|__RW|_USR|___A|   0|___D|   0|   0)
- #define _PAGE_TABLE		 (__PP|__RW|_USR|___A|   0|___D|   0|   0| _ENC)
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 53bab123a8ee..ce460d6b4e25 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -1852,6 +1852,11 @@ config CC_HAS_IBT
+ 		  (CC_IS_CLANG && CLANG_VERSION >= 140000)) && \
+ 		  $(as-instr,endbr64)
  
--#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|___D|   0|___G)
--#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|___D|   0|___G)
-+#define __PAGE_KERNEL_RO	 (__PP|   0|   0|___A|__NX|   0|   0|___G)
-+#define __PAGE_KERNEL_ROX	 (__PP|   0|   0|___A|   0|   0|   0|___G)
-+#define __PAGE_KERNEL		 (__PP|__RW|   0|___A|__NX|___D|   0|___G)
-+#define __PAGE_KERNEL_EXEC	 (__PP|__RW|   0|___A|   0|___D|   0|___G)
- #define __PAGE_KERNEL_NOCACHE	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __NC)
--#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|___D|   0|___G)
-+#define __PAGE_KERNEL_VVAR	 (__PP|   0|_USR|___A|__NX|   0|   0|___G)
- #define __PAGE_KERNEL_LARGE	 (__PP|__RW|   0|___A|__NX|___D|_PSE|___G)
- #define __PAGE_KERNEL_LARGE_EXEC (__PP|__RW|   0|___A|   0|___D|_PSE|___G)
- #define __PAGE_KERNEL_WP	 (__PP|__RW|   0|___A|__NX|___D|   0|___G| __WP)
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 7159cf787613..fc627acfe40e 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -2073,12 +2073,12 @@ int set_memory_nx(unsigned long addr, int numpages)
++config X86_CET
++	def_bool n
++	help
++	  CET features configured (Shadow stack or IBT)
++
+ config X86_KERNEL_IBT
+ 	prompt "Indirect Branch Tracking"
+ 	def_bool y
+@@ -1859,6 +1864,7 @@ config X86_KERNEL_IBT
+ 	# https://github.com/llvm/llvm-project/commit/9d7001eba9c4cb311e03cd8cdc231f9e579f2d0f
+ 	depends on !LD_IS_LLD || LLD_VERSION >= 140000
+ 	select OBJTOOL
++	select X86_CET
+ 	help
+ 	  Build the kernel with support for Indirect Branch Tracking, a
+ 	  hardware support course-grain forward-edge Control Flow Integrity
+@@ -1952,6 +1958,24 @@ config X86_SGX
  
- int set_memory_ro(unsigned long addr, int numpages)
- {
--	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW), 0);
-+	return change_page_attr_clear(&addr, numpages, __pgprot(_PAGE_RW | _PAGE_DIRTY), 0);
- }
+ 	  If unsure, say N.
  
- int set_memory_rox(unsigned long addr, int numpages)
- {
--	pgprot_t clr = __pgprot(_PAGE_RW);
-+	pgprot_t clr = __pgprot(_PAGE_RW | _PAGE_DIRTY);
- 
- 	if (__supported_pte_mask & _PAGE_NX)
- 		clr.pgprot |= _PAGE_NX;
++config X86_USER_SHADOW_STACK
++	bool "X86 userspace shadow stack"
++	depends on AS_WRUSS
++	depends on X86_64
++	select ARCH_USES_HIGH_VMA_FLAGS
++	select X86_CET
++	help
++	  Shadow stack protection is a hardware feature that detects function
++	  return address corruption.  This helps mitigate ROP attacks.
++	  Applications must be enabled to use it, and old userspace does not
++	  get protection "for free".
++
++	  CPUs supporting shadow stacks were first released in 2020.
++
++	  See Documentation/x86/shstk.rst for more information.
++
++	  If unsure, say N.
++
+ config EFI
+ 	bool "EFI runtime service support"
+ 	depends on ACPI
+diff --git a/arch/x86/Kconfig.assembler b/arch/x86/Kconfig.assembler
+index b88f784cb02e..8ad41da301e5 100644
+--- a/arch/x86/Kconfig.assembler
++++ b/arch/x86/Kconfig.assembler
+@@ -24,3 +24,8 @@ config AS_GFNI
+ 	def_bool $(as-instr,vgf2p8mulb %xmm0$(comma)%xmm1$(comma)%xmm2)
+ 	help
+ 	  Supported by binutils >= 2.30 and LLVM integrated assembler
++
++config AS_WRUSS
++	def_bool $(as-instr,wrussq %rax$(comma)(%rbx))
++	help
++	  Supported by binutils >= 2.31 and LLVM integrated assembler
 -- 
 2.34.1
 
