@@ -2,332 +2,331 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BF133C0015E
-	for <linux-api@archiver.kernel.org>; Fri, 16 Jun 2023 16:58:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 95B16EB64D8
+	for <linux-api@archiver.kernel.org>; Fri, 16 Jun 2023 18:29:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S1346066AbjFPQ6F (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 16 Jun 2023 12:58:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43786 "EHLO
+        id S229658AbjFPS3m (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 16 Jun 2023 14:29:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53868 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235280AbjFPQ5n (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Jun 2023 12:57:43 -0400
-Received: from sonic311-30.consmr.mail.ne1.yahoo.com (sonic311-30.consmr.mail.ne1.yahoo.com [66.163.188.211])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E236B468C
-        for <linux-api@vger.kernel.org>; Fri, 16 Jun 2023 09:55:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1686934557; bh=3KfYzQZSdHbYQjB0V2Ilq3MFhzyKnWJ15K+bVlsg+sU=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=pW3koTkDB55Q7fKjgheLlFOImcUnn6twslQTVxnLBv0ijl9Fmk1ih2S/k9PTdQ8xNRUPTC5SEVnlhW6UiUHcebtHjIoSJrSjSuMhQKvyn2suPEyrw4z80gG7yDeiIlCjaL/kiUZ+ygunsblU1YcS46mX2WmCAdYGizfvX/SG98KrajOky/VU7cyQnZF/EMVNVVh+s6RvvZRHCROHLJ7j+8QxFo9WuWfL9LdKUCISlsBGsIPa9igEs0lK8R9plYXFLboxviF+1ZRBwrUWjfT6EMuJBDcuFcaFsEQwnxhSbqp+4RoKVOPf71Ev/ePXd11qkJzHy0SnQ0PqKZ9M1SVMrw==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1686934557; bh=LYVqupBZG03jat7NE2oFGCjbV2g/Jb3wL5M/XTDh/FO=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=QQ4iZrcVJeJxR8BYDVnyGJixw+NvsSyqu5c0/lyfRSlLCM5qhzP7pAV1XJwQ2o2/xf2C0aix3/gohLjV+aQLF3jU03oECl48CrMPsrclX9vBDzyMyF6NSBjEe+rSwMfPs2BUyUMBeOkqAFPDgI0fjB1rDGfkB8TWC5FD22smNYt7aXqks3XsFB/CLLMgtDhlezB2ob1vPoRqXZdh0BcOFEg1aMdc5ifhLU+9p3LBjrMv3154JgaWsTS2Rf5Ww01kEZ6bVxjbgfumgKjCz9cnpwTCBkcgiVRCo/vFjtZOQoVZdT4/YCZQojqbVzdF9avLgeAJvocY+5/GS5EsDGWXIQ==
-X-YMail-OSG: iividokVM1m8tpceTRFA9lrwKdf1XkSt6oFM3b.y33AT3vVnUIlxzWjk1MTJQ.H
- cRSn9yDVEWGezLn_beWFtuK.xnpaahRoaaYRcztSjk9TKr9ROJiL14fQ9v1JuEVhPHW9bpiSbeyD
- 9_rtGOw_l.mCtppm5NRa_6Gg9W9Lo43tfJKIGKO.6G_LSr6_E.VL781yr8mEk1Ad0YhCdLd1U_Ff
- Hf2oNxIR8SXwVMH7ioofKByX46HNGtmPhQfoEYhW8LV3Prq.NVpFrsbvOcpiKG_G9vkiINwlZTDR
- JW8pNyBbhq0A7Vyks9ZNd7i6s.NWY1cx65k9BLd1jQbjfIq6Jfgisml80K3hnX1SYICbv.4rw6Ds
- .RusM_0mDaDQFQT7CBgPmFcUbOvECV4KyFzyOQFNiMfdUPfX8H.bK09NDHDlXhpKxOHLwemExHVg
- 2nNHKdIU0UtdMn6XOKrfRns.L4EArQaaaga_yICphvAW5mBHlYg5zFuuReGCdPMM2E8JKS36WmWK
- lLk2AnQYviDbeedA1861.AQuYFg1O8lAhtp71ZVL2xqk2Ymw5_D7lS5wNYoYUfBlGyTUEWUl1I2d
- 1r1LqV12UEGFZRvq6KOrjut3XVuZneeTsldphcaAzvZ6iNgYwmMgJDlhPGGx7xxvr7a2wb3VKdXb
- rIIXKPu.4CXZiGhYnom6doA6lAu4414sXmRIoCPBJlFksskXDBPtEARBZB2ZPhvFyXtD52x96BDa
- Wr_dBA_6vOKfUGhkneybjRgfaIVcWoop20ozJfInZLpTrBF43F0hXnoKOpc_bpi2tYe4sV_AWknG
- A.o9TOVbi6VW1CtpLzpsExMAZmdj9jVCQUMpy_CDDS3nlQt_CBAwWM_EJbIT5g9VrAF0xfmRa_9W
- o6CxARBE3dQAVBxvfnNJZ55NVjdlD0KUzH6UqyjGgOYadVhwysDZ7SD.xFDKg2UJ8xD1I5t3nO58
- uRykReaey4OfjU43mXcIQWTS1dxaLmTm6v_dVhZ1w1O4bGkrX8W7BQqozirXasufUVbNVVTqxfJZ
- bQF8ULWQrTls8awWKD9MKsEtC3j8N23uH.7iPuHWyAHV.sg8lLcqVzQh3_Q1CDeSuyUAege5SsL3
- Co7VQUY6IY4mxy3.jQE_tlQwKE14KwnGeun0dvWcoKwkM2tB2VsI7rIuTlJVxo9TKP5bbhA0L3Gf
- 21izp_HQulyUlUZi0L9IQrFovyeOcl7tVxgxsIZzjwHLkEmCAU6rQvD2jbHxiU0viIIn7DdIz9ab
- 9OYT2pzzCfweSRzfBoJpPlPxnGvkUXqWENRyrIrdg7uj9XshIuujJQXmJsUN8nJiwDtrpQ958Gq4
- ZOHiyghly3jkXwtDlx4QyAFAM7qG_CwGS4YbfJigYUySEXwYQgoQ3Gr5BP.W6dgolFH6HSQalD2s
- B1SdycDQtrG0vmS6mD98McYIMdb1CV9Eym6qSPzNG0Zeig4O1fiR1eV3PXTujQCM5V2dJr2fgvBI
- hcYefkerPzBIu5vZ9YwPPKUy1Oo4CKaI_JiVZ.p41Gm1bMB8yWGDNyIwmJkoXyhv7kF0kGmiXwcA
- XRTxDOy6gZbSt7ly1h_UY3_o70MKkF1Pd6oDNcvsngH4Zy9Y_GstDXc3fw8hT0Lr8sdzSmlhLtSk
- DDJnapfGGMbcbYf5_MbogXMsIPvQXa2HfKzASIvyIr.4dSnAlAjnCS6SDMFFXKarpzTcwF0Hzyuc
- t3CEvbssiOfQMkJgmi6IVaq_ZSvkn0ryL1yKaYSBvg_IThAhw9A6i60j2ZnHH32MB1FAmDS6tiRR
- ZhEFYiMPIjokzzAPW2EmWpnVPvDaX7YRH9MgQWZ9yd3LmdlJHvuPz95mS2vYVFkYYMDfwx_2ZYYL
- fH0T1aTdlkHTHvIaGOg5qHlJx2WwXvjrQ47TTacXVFgOszKHBXNkuuwRhKlD4WieLc_ajqN7Ksw0
- h_JnEwhwECQm.x_Qp9uXOnwOAvmWunrifI3CTczC1nm6az26b_i0iONpFrSK38q3JPISHTVjt.jj
- .E8cFZ.PvnO_GoVW0xrI.teSkpe.DZ76AyBRcIkUtuVkUoz2NgLE01WQLJKt86Vr9SafyvLPhOPl
- GEJNfy44QtVTTR9RkhfxSbqSGoeQEBa9HuTPk94XKF0qMlcZ1LZu91_1yxeO3a0F0iO59CZ7DymZ
- onoCYT92SGwYZmbPmtHIAqKD26S5NMBLgeDtCwrR2nCuno8ZM.TINVjCC_Q_rlFohyRdAsH0cxRU
- NtHb4C46BsjNabdGg5j2wVYujvYdSr0TwGK2Wdln.3L1pLtwhJXemWaKwvgSmVB2HkAUU1Bn3Hol
- A1ogFVctPbQ82qvny.Q0TU1PDqC3C
-X-Sonic-MF: <casey@schaufler-ca.com>
-X-Sonic-ID: 6ca35e08-3069-48c7-89e1-9e4c8c84f532
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic311.consmr.mail.ne1.yahoo.com with HTTP; Fri, 16 Jun 2023 16:55:57 +0000
-Received: by hermes--production-ne1-574d4b7954-tvjss (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 8aab4ebac04292db835fd6d81244177c;
-          Fri, 16 Jun 2023 16:55:53 +0000 (UTC)
-From:   Casey Schaufler <casey@schaufler-ca.com>
-To:     casey@schaufler-ca.com, paul@paul-moore.com,
-        linux-security-module@vger.kernel.org
-Cc:     jmorris@namei.org, serge@hallyn.com, keescook@chromium.org,
-        john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
-        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, mic@digikod.net, selinux@vger.kernel.org
-Subject: [PATCH v11 10/11] SELinux: Add selfattr hooks
-Date:   Fri, 16 Jun 2023 09:50:54 -0700
-Message-Id: <20230616165055.4705-11-casey@schaufler-ca.com>
-X-Mailer: git-send-email 2.40.1
-In-Reply-To: <20230616165055.4705-1-casey@schaufler-ca.com>
-References: <20230616165055.4705-1-casey@schaufler-ca.com>
+        with ESMTP id S229551AbjFPS3l (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 16 Jun 2023 14:29:41 -0400
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 885DA3C16;
+        Fri, 16 Jun 2023 11:29:16 -0700 (PDT)
+Received: from pps.filterd (m0333521.ppops.net [127.0.0.1])
+        by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 35GCibtd031355;
+        Fri, 16 Jun 2023 18:28:24 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=date : from : to : cc
+ : subject : message-id : references : content-type : in-reply-to :
+ mime-version; s=corp-2023-03-30;
+ bh=T41CyW/PaKixRn6+B404RftKy6s19yKMzto4qpSWycY=;
+ b=n3CNwfPv0dVPMcQndySsoOIUgthRi/iOnjg0fC9rQtzvpvG5fQCHkBaClhHIk+zhJ7Z1
+ dKuwRyddi4fXX8sBZJANcYwgBJl1Evhj5tBmaFxjQTigmRVMHTZbaZTqLYrJzzvllxrQ
+ sLcdM1AUA//MxDtZIuo73j1lPXE/yzGznKG+6gReSmRl+E96eVhHa4ebBN8mdLHF6fj3
+ XZrChnkvTox+mZrlonpMYOhNZEparpqbWynocqZSYQhLh6i5f8PcVo+OLiu0bMVr+luT
+ fCm97N9xOffTn6tJ4prJWsWUNucEMo0UucionydME+HCw7L6SdIT2dlfSFXWdle7qW8/ ZA== 
+Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
+        by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3r4g3bvxbd-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Fri, 16 Jun 2023 18:28:23 +0000
+Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+        by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.17.1.19/8.17.1.19) with ESMTP id 35GHdBJG038917;
+        Fri, 16 Jun 2023 18:28:23 GMT
+Received: from nam11-dm6-obe.outbound.protection.outlook.com (mail-dm6nam11lp2171.outbound.protection.outlook.com [104.47.57.171])
+        by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 3r4fm89nr9-1
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+        Fri, 16 Jun 2023 18:28:22 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
+ b=asnxmfCuKenHRI6ZHTczR/7QHLQM/99/BrjkEV9coaR47Pyd71m4j6DZUsUZxiskXk++5JfIIZSmEm36V0CSbAdJR8GQR9MQu71Q5Nthc182igrJJQGSjoputchn6QXplvDbvym1P+kIaiJtg6nvbSXIz1JPoqdD1DCeHZ7cLboiU3mpf2dHC11RH0a8BBk0av5Ajjaz+kltMvHglD16MxncWg/OilTk5XUQZOka6GL9btXkBx5DCUKBn+g0k3+M0QAgOKCugiS/kKibbINFJjqwXFTrrrst0dMPomTZubd+aB2OdRpdPZyVnJkXAgY//hkATjh23zivKV701yBNJQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector9901;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=T41CyW/PaKixRn6+B404RftKy6s19yKMzto4qpSWycY=;
+ b=TlIOUBj08covhTY5MohnkrVqDvR/3UwaZepcP+x8pyUEhLuVzYeSgPpOpOyW6/1QHp+Nr4HoXztTX0yj4sGgXs6KrcP33lPo432bn5MH3+h3PzexZekUk33pBXPmW4ufB3R8RJtqEEAaZJfsXA0Jd3+gzVzwyVHXYNFuryBMjKZ8aGO90rCzTnycaz/FwDFS++uFl7cfeOcIK1Gq7mEpnAHvVxEMK5u7I4lkTSadxk/mfqg+El80jZ4orziyYsdEre7MXO0iltlbPW7tLPmvtsH7nbD3QKc2WiYjHNFAKTxBEWstdGgqbxlbZwE05VVB0W7rBL2GZQ25rVIFKqASAQ==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=T41CyW/PaKixRn6+B404RftKy6s19yKMzto4qpSWycY=;
+ b=g5FSxZ3y+fN0vq/813Mphi3tpHLluaBXOuGu6aZNAqnh0sVhw2qGeRspSQGjlsDxywM6MxZ23or9RGIX5QjnKn316LJznt/qHK+zTjK4YKb/zPBlF+K2uOs8jvfZSAn+qTPJheuVlY5vCJeQx5DvxeVvn9piE7/zek6NjcmCe4A=
+Received: from BY5PR10MB4196.namprd10.prod.outlook.com (2603:10b6:a03:20d::23)
+ by SA1PR10MB5842.namprd10.prod.outlook.com (2603:10b6:806:22b::21) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6455.44; Fri, 16 Jun
+ 2023 18:28:19 +0000
+Received: from BY5PR10MB4196.namprd10.prod.outlook.com
+ ([fe80::4a17:13b0:2876:97f2]) by BY5PR10MB4196.namprd10.prod.outlook.com
+ ([fe80::4a17:13b0:2876:97f2%7]) with mapi id 15.20.6500.029; Fri, 16 Jun 2023
+ 18:28:19 +0000
+Date:   Fri, 16 Jun 2023 11:28:15 -0700
+From:   Mike Kravetz <mike.kravetz@oracle.com>
+To:     Ackerley Tng <ackerleytng@google.com>
+Cc:     akpm@linux-foundation.org, muchun.song@linux.dev,
+        pbonzini@redhat.com, seanjc@google.com, shuah@kernel.org,
+        willy@infradead.org, brauner@kernel.org,
+        chao.p.peng@linux.intel.com, coltonlewis@google.com,
+        david@redhat.com, dhildenb@redhat.com, dmatlack@google.com,
+        erdemaktas@google.com, hughd@google.com, isaku.yamahata@gmail.com,
+        jarkko@kernel.org, jmattson@google.com, joro@8bytes.org,
+        jthoughton@google.com, jun.nakajima@intel.com,
+        kirill.shutemov@linux.intel.com, liam.merwick@oracle.com,
+        mail@maciej.szmigiero.name, mhocko@suse.com, michael.roth@amd.com,
+        qperret@google.com, rientjes@google.com, rppt@kernel.org,
+        steven.price@arm.com, tabba@google.com, vannapurve@google.com,
+        vbabka@suse.cz, vipinsh@google.com, vkuznets@redhat.com,
+        wei.w.wang@intel.com, yu.c.zhang@linux.intel.com,
+        kvm@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
+        qemu-devel@nongnu.org, x86@kernel.org
+Subject: Re: [RFC PATCH 00/19] hugetlb support for KVM guest_mem
+Message-ID: <20230616182815.GA7371@monkey>
+References: <cover.1686077275.git.ackerleytng@google.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <cover.1686077275.git.ackerleytng@google.com>
+X-ClientProxiedBy: MW4PR03CA0063.namprd03.prod.outlook.com
+ (2603:10b6:303:b6::8) To BY5PR10MB4196.namprd10.prod.outlook.com
+ (2603:10b6:a03:20d::23)
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: BY5PR10MB4196:EE_|SA1PR10MB5842:EE_
+X-MS-Office365-Filtering-Correlation-Id: 7dec2167-d31e-4446-371d-08db6e97754c
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;
+X-Microsoft-Antispam-Message-Info: 2g7/j11H55ERvHxEkecLvFE/ibaKNgMg6YnDLWynbYNx93xOMQW/zCQczDfMd4crKYxsqi7I+xxahBsurATtqdESJDWWfsI5vPbRMr1VlDzqVYPLV8PO6q0Ur0YgKJNS1XyxRl9583rKhGsd9NxF37SO0wiLxTvQbbbLB+CE6GHiwanjljmjG9OErmuHv4ksGgDkE8ZUApS05SZ9pdjdikFUC4dpjsjSTBozhnGoBz5ssVhjhQdVxQh3rCIFMJtTUiqC0zMRNLO2DFB3r50mhvx/XqX5z9VP0RylNdzxDGbFy/uCWGNi6487zMXB6vVgw+v9ZIrDCsaitHk4uYRce/1QVCO8/zG9b3bH0MqGdJ5Ruc4zQ7WunFcKqKKk6k3ObSwH34wnABkVSKePEfOOl4eqOMFIfn4VdIT66cjDPirQOhArQhJxN+nSSZMlF386GEkI/E2Ou3+W4rpju04QbDRAp4ZV5hh+GAnwkL4M6mT9d31KG4qokOrxGbYtNa3M6rNfZvyAvuG0Q+XDOHRWhWSMGLahT2bOBxUQZsClMet/AEWfgGJgc9iVNTm58HAUJJ6oTlID8uDYMovpMh2lzQ==
+X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:BY5PR10MB4196.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230028)(7916004)(346002)(39860400002)(136003)(366004)(396003)(376002)(451199021)(86362001)(478600001)(33656002)(186003)(83380400001)(6512007)(26005)(1076003)(9686003)(53546011)(6486002)(6666004)(6506007)(966005)(8676002)(38100700002)(66946007)(66556008)(33716001)(66476007)(8936002)(5660300002)(4326008)(6916009)(41300700001)(44832011)(7406005)(316002)(7416002)(66899021)(2906002);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?yIZLomR3yi5pQDZhx4A3ZkOt6zZb99JzbzjPcFt//+RfIslNoRv2RUhmy+C1?=
+ =?us-ascii?Q?2pWMmqYVSstkD5EzbY4W9TnLbb/1If4+DBWV1UHOfXHkiKSuu+XcUZEJaV/h?=
+ =?us-ascii?Q?trKgz3jw141qpMK9npzaHdm6CLpfymzYFWaesRGONNjyhViBSEqV3Q9YzZTU?=
+ =?us-ascii?Q?EMEfjVI6LgDYDYYaMy3QvIFgfaoMvrH7KERAauwrKyBX4rvYobmSaJbPuo2i?=
+ =?us-ascii?Q?dpQDRZQDwWWPEXi7JXT0Z1JKMITfkoulTcPAmaNXe2guPvKH2MdEua+UDCMR?=
+ =?us-ascii?Q?C9DL7XFzWBTv1XzgzeY9meZTdS18qmj8MmU+jIz2EDpW8b+qtd9oX6baVoMK?=
+ =?us-ascii?Q?hzg8eQip76a6P39c7SvZceIoD8apWp9CyCKn4mF8wP8Tp8WToN0qdRim835F?=
+ =?us-ascii?Q?oCxdI2YXpXM5Qse22qMaL4EO4gyXLzgdf21cjvIlovp34DfnEYdFdeP6mabR?=
+ =?us-ascii?Q?3S6TlmHs3xNhjLrBljJ5wbCxzUEQ9j6MdrmUyIHux5H88SI4T2tYCosvK/IV?=
+ =?us-ascii?Q?scMs02WbLa0VJnHpYtOmVXHvzGcil/pjbZ0E81e4RcVhhTQdvwVOQC1Wt+9E?=
+ =?us-ascii?Q?Y+EBzH+sNI3Od9vQVDUv+Tbs86g+uARpc5zU2qv6tgexVEj/hkzpWYfwOnZ1?=
+ =?us-ascii?Q?fEwZ1GaDM4+GCVQJ/fsBMp5yxYjXseJx3xEEEl/g84l6VUbMJyr/nF03/hyh?=
+ =?us-ascii?Q?VMia93xfz7Bm/qln+q6q4lbHauGT9+ky8foRxatfHuD1pufjRldVRD1w7gcA?=
+ =?us-ascii?Q?k1h1Iu5cwhJUb4ZqB6eIiM2n429F2XTon7TiaDu2f+2eV2Esf21GuFU0wNjm?=
+ =?us-ascii?Q?0EW/I1qYKwVUiDHV5xYeqBcp0L6XihvyygYeChQwPbWQktXmd0vFdtTkUy0p?=
+ =?us-ascii?Q?azrgZh+bksj1ZM3siExap3caHdzBlsx7F/3kFPHDihHf0UhJ1BLsZOw9tMma?=
+ =?us-ascii?Q?+kRZYZnNw/X1JwxwwXLzrLITzxSn87AH1EkhTZWWSu9tEtAwkNdhMCY+EdTw?=
+ =?us-ascii?Q?QM54sQFu0C8xJCI4ix4KEnua/wIvyUBRABFLK4yh+eZMDJYTvxprLNcQJdi7?=
+ =?us-ascii?Q?lBa08ddWZPsmd6wmvzRADE+A9BJoBpxStaXkdJwF5/agdIzZFMYAXDk0Bl7G?=
+ =?us-ascii?Q?5XrFF1kgm5tKP3+M4Z8LY9+nOIoivhaWRtrYg7dXMM99Hxl1E7HSTTCu2AWi?=
+ =?us-ascii?Q?D+bxgeSQbNk9vtDa1mPf35lkhg7//sEv7xH84S+b2YEVMMsbp70tTQfbaXKN?=
+ =?us-ascii?Q?MIyYWA1M+Bsb5HwBYdk2oH/Za/QsN/NE7Y8FkM/sN1KZnxWLf2cM12eLz+XS?=
+ =?us-ascii?Q?LUephNKo4zjX7YL1SijmLI7U1YmlZgzivE1E2TLYZFwPY8C8QxJoCeftDiY4?=
+ =?us-ascii?Q?4srKOv71CiuPAdq8TDMcgJViUdzHp1av3A5ZgHxAlLCNzx3A2K/BtCi98wvH?=
+ =?us-ascii?Q?uFP6g3isvvjBhOs/DO9qYYbD8MKbHmOvf+qpRzgIWIsbOkaG8NMKokmJLo3I?=
+ =?us-ascii?Q?pMTHGqoawEkyJEsGcr18mixbz/VgN8xMWs4xVHyLdTi4qx7/JxunYGxLp/97?=
+ =?us-ascii?Q?UROOUPG64HJ1uImPb77Hp6AlFhDBLkmDf98DiHqe?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0: =?us-ascii?Q?AGpT/WhP8enun9xkQzIpXGmj+zLGjEW7kMonfy24cqYeHT8/1b12M/TbOxbL?=
+ =?us-ascii?Q?oL/sn8CE68fVQ52+CgyIivqYtvdExqCkVS5Wre+x6BjFPHtTCFQei6DF4uPd?=
+ =?us-ascii?Q?9D6BSZvHXr8omNApPAWQyV+UaO7ydWFXD/WmzHwrW+Q8PfI6ZVPaK1wI7okQ?=
+ =?us-ascii?Q?7X6Gj3KspmzOKoIx+/ttuzhcSy5cV3Y1/QsefNjFwR8a3iO3R7NLPpFBikCk?=
+ =?us-ascii?Q?qcHFtF9JzMP1ll+2rmBcqDlAm2PskZlHK9QA3jPEnpkWGLf1qyTBm20188sR?=
+ =?us-ascii?Q?dGsAUlc2HXws9bw7VLdZOY4YoIcRt4YZfoQvNGrYQ0cr5oIo+o9+oep+S4Xt?=
+ =?us-ascii?Q?GQ2SPBL8sgx+70ht2dI8Rb+r5dYJcBcPsTdqC3nQTCQ9dVoQNaJSjDfmZOd5?=
+ =?us-ascii?Q?QJwST6GJCGc55YqMzr4eFSnh7EdVLefe+7aRDt0Pjug46aDu7Yt145e7AzP2?=
+ =?us-ascii?Q?7fdRTLPhVLQchP4U0hVQS/IkRP+Zn5k1vEufH7PYpVGFeGJGKJpe+H7+aPMd?=
+ =?us-ascii?Q?g5buS1Z03zc4MLJbHWcCgLeYHS9+wHrKcKh51PIlXTQKatXaorCnG922PgSi?=
+ =?us-ascii?Q?zPHqBLyszVzH4hSLuqEDjEDPoL4CXh8/v+GlMGVsSJhm6uyD7cwqBAJUpiLu?=
+ =?us-ascii?Q?QRfFnMADnEXOk+mrkVOTJigML4k686DFNgWuCEmNrMT10FrBQmxbgsut7Kkd?=
+ =?us-ascii?Q?gx2acxYBHYLjh2Oe1/Kgypm6uQOsetlXeDEHxWvT4qE8T4Kg4YrdcNce1xsI?=
+ =?us-ascii?Q?NhT7u3HCCQgJ3NEVTZ39lXaHnZh8ctms6Tny4qiiYyTLCTzAVve5Mwcqk3H6?=
+ =?us-ascii?Q?XMoOn+ivHp9FQFCn0z5Eu1wV7SneSGiEUYOgcp9kPOOfnoqb2Swx5Ome7r7a?=
+ =?us-ascii?Q?NsuTVFnOC3TkOsTJEaimYTAWJaIs4deQoYk9Y/XwTmLV8xphN5VupVFf56Fc?=
+ =?us-ascii?Q?X88Ss9ZMYUxzZUJiUOL02KJRz6033c0D4QSC8+92FHFzzdS36S+DFRZeMrel?=
+ =?us-ascii?Q?D+4rp7wPerhZnMTWkOHAmmiG7bvJYee2mfld58+fCP8rU+MHEccG+lzwtGo5?=
+ =?us-ascii?Q?XknaitvtCdf/zw+/+QmZ0NwUeGnm3b4b8cnM2k6vP56p2oIyhWmnjti7GJEE?=
+ =?us-ascii?Q?6x1mnCu/GYEgly5fJgNBEl3XSbAB+47D4+7cJkP5ViNydj58IhG1M1Pyj+wT?=
+ =?us-ascii?Q?DZeqTwM4SLGHGSTppUY7li4B+cimerLIjfIHEuDyf4zj9vbiUnXZ/ABypdGJ?=
+ =?us-ascii?Q?hsVkpbfn9BForcn8l3JhNI/BwwQZOcewPhtcnaZH8GbP4soT5qF/JOLJl0xI?=
+ =?us-ascii?Q?xpc=3D?=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 7dec2167-d31e-4446-371d-08db6e97754c
+X-MS-Exchange-CrossTenant-AuthSource: BY5PR10MB4196.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 16 Jun 2023 18:28:19.6239
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: eMs/5hyMGJCVB0yl1QshAsQRdJT8nGrDEkw6zbkPE0jvn09xItCSOdO1EThI6MmwTDnuJnqm8oyWY/TZ80I2BQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA1PR10MB5842
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.254,Aquarius:18.0.957,Hydra:6.0.591,FMLib:17.11.176.26
+ definitions=2023-06-16_12,2023-06-16_01,2023-05-22_02
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0 suspectscore=0
+ mlxscore=0 adultscore=0 spamscore=0 phishscore=0 bulkscore=0
+ mlxlogscore=999 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2305260000 definitions=main-2306160167
+X-Proofpoint-ORIG-GUID: 4cAgM6VFL7skdtzzGFmEb1Tq0FarhN1Q
+X-Proofpoint-GUID: 4cAgM6VFL7skdtzzGFmEb1Tq0FarhN1Q
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add hooks for setselfattr and getselfattr. These hooks are not very
-different from their setprocattr and getprocattr equivalents, and
-much of the code is shared.
+On 06/06/23 19:03, Ackerley Tng wrote:
+> Hello,
+> 
+> This patchset builds upon a soon-to-be-published WIP patchset that Sean
+> published at https://github.com/sean-jc/linux/tree/x86/kvm_gmem_solo, mentioned
+> at [1].
+> 
+> The tree can be found at:
+> https://github.com/googleprodkernel/linux-cc/tree/gmem-hugetlb-rfc-v1
+> 
+> In this patchset, hugetlb support for KVM's guest_mem (aka gmem) is introduced,
+> allowing VM private memory (for confidential computing) to be backed by hugetlb
+> pages.
+> 
+> guest_mem provides userspace with a handle, with which userspace can allocate
+> and deallocate memory for confidential VMs without mapping the memory into
+> userspace.
 
-Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
-Cc: selinux@vger.kernel.org
-Cc: Paul Moore <paul@paul-moore.com>
----
- security/selinux/hooks.c | 148 ++++++++++++++++++++++++++++++++-------
- 1 file changed, 121 insertions(+), 27 deletions(-)
+Hello Ackerley,
 
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 49ec74bc006c..a4a536552717 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -6226,8 +6226,8 @@ static void selinux_d_instantiate(struct dentry *dentry, struct inode *inode)
- 		inode_doinit_with_dentry(inode, dentry);
- }
- 
--static int selinux_getprocattr(struct task_struct *p,
--			       const char *name, char **value)
-+static int selinux_lsm_getattr(unsigned int attr, struct task_struct *p,
-+			       char **value)
- {
- 	const struct task_security_struct *__tsec;
- 	u32 sid;
-@@ -6244,20 +6244,27 @@ static int selinux_getprocattr(struct task_struct *p,
- 			goto bad;
- 	}
- 
--	if (!strcmp(name, "current"))
-+	switch (attr) {
-+	case LSM_ATTR_CURRENT:
- 		sid = __tsec->sid;
--	else if (!strcmp(name, "prev"))
-+		break;
-+	case LSM_ATTR_PREV:
- 		sid = __tsec->osid;
--	else if (!strcmp(name, "exec"))
-+		break;
-+	case LSM_ATTR_EXEC:
- 		sid = __tsec->exec_sid;
--	else if (!strcmp(name, "fscreate"))
-+		break;
-+	case LSM_ATTR_FSCREATE:
- 		sid = __tsec->create_sid;
--	else if (!strcmp(name, "keycreate"))
-+		break;
-+	case LSM_ATTR_KEYCREATE:
- 		sid = __tsec->keycreate_sid;
--	else if (!strcmp(name, "sockcreate"))
-+		break;
-+	case LSM_ATTR_SOCKCREATE:
- 		sid = __tsec->sockcreate_sid;
--	else {
--		error = -EINVAL;
-+		break;
-+	default:
-+		error = -EOPNOTSUPP;
- 		goto bad;
- 	}
- 	rcu_read_unlock();
-@@ -6275,7 +6282,7 @@ static int selinux_getprocattr(struct task_struct *p,
- 	return error;
- }
- 
--static int selinux_setprocattr(const char *name, void *value, size_t size)
-+static int selinux_lsm_setattr(u64 attr, void *value, size_t size)
- {
- 	struct task_security_struct *tsec;
- 	struct cred *new;
-@@ -6286,23 +6293,31 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 	/*
- 	 * Basic control over ability to set these attributes at all.
- 	 */
--	if (!strcmp(name, "exec"))
-+	switch (attr) {
-+	case LSM_ATTR_EXEC:
- 		error = avc_has_perm(mysid, mysid, SECCLASS_PROCESS,
- 				     PROCESS__SETEXEC, NULL);
--	else if (!strcmp(name, "fscreate"))
-+		break;
-+	case LSM_ATTR_FSCREATE:
- 		error = avc_has_perm(mysid, mysid, SECCLASS_PROCESS,
- 				     PROCESS__SETFSCREATE, NULL);
--	else if (!strcmp(name, "keycreate"))
-+		break;
-+	case LSM_ATTR_KEYCREATE:
- 		error = avc_has_perm(mysid, mysid, SECCLASS_PROCESS,
- 				     PROCESS__SETKEYCREATE, NULL);
--	else if (!strcmp(name, "sockcreate"))
-+		break;
-+	case LSM_ATTR_SOCKCREATE:
- 		error = avc_has_perm(mysid, mysid, SECCLASS_PROCESS,
- 				     PROCESS__SETSOCKCREATE, NULL);
--	else if (!strcmp(name, "current"))
-+		break;
-+	case LSM_ATTR_CURRENT:
- 		error = avc_has_perm(mysid, mysid, SECCLASS_PROCESS,
- 				     PROCESS__SETCURRENT, NULL);
--	else
--		error = -EINVAL;
-+		break;
-+	default:
-+		error = -EOPNOTSUPP;
-+		break;
-+	}
- 	if (error)
- 		return error;
- 
-@@ -6314,13 +6329,14 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 		}
- 		error = security_context_to_sid(value, size,
- 						&sid, GFP_KERNEL);
--		if (error == -EINVAL && !strcmp(name, "fscreate")) {
-+		if (error == -EINVAL && attr == LSM_ATTR_FSCREATE) {
- 			if (!has_cap_mac_admin(true)) {
- 				struct audit_buffer *ab;
- 				size_t audit_size;
- 
--				/* We strip a nul only if it is at the end, otherwise the
--				 * context contains a nul and we should audit that */
-+				/* We strip a nul only if it is at the end,
-+				 * otherwise the context contains a nul and
-+				 * we should audit that */
- 				if (str[size - 1] == '\0')
- 					audit_size = size - 1;
- 				else
-@@ -6331,7 +6347,8 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 				if (!ab)
- 					return error;
- 				audit_log_format(ab, "op=fscreate invalid_context=");
--				audit_log_n_untrustedstring(ab, value, audit_size);
-+				audit_log_n_untrustedstring(ab, value,
-+							    audit_size);
- 				audit_log_end(ab);
- 
- 				return error;
-@@ -6354,11 +6371,11 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 	   checks and may_create for the file creation checks. The
- 	   operation will then fail if the context is not permitted. */
- 	tsec = selinux_cred(new);
--	if (!strcmp(name, "exec")) {
-+	if (attr == LSM_ATTR_EXEC) {
- 		tsec->exec_sid = sid;
--	} else if (!strcmp(name, "fscreate")) {
-+	} else if (attr == LSM_ATTR_FSCREATE) {
- 		tsec->create_sid = sid;
--	} else if (!strcmp(name, "keycreate")) {
-+	} else if (attr == LSM_ATTR_KEYCREATE) {
- 		if (sid) {
- 			error = avc_has_perm(mysid, sid,
- 					     SECCLASS_KEY, KEY__CREATE, NULL);
-@@ -6366,9 +6383,9 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 				goto abort_change;
- 		}
- 		tsec->keycreate_sid = sid;
--	} else if (!strcmp(name, "sockcreate")) {
-+	} else if (attr == LSM_ATTR_SOCKCREATE) {
- 		tsec->sockcreate_sid = sid;
--	} else if (!strcmp(name, "current")) {
-+	} else if (attr == LSM_ATTR_CURRENT) {
- 		error = -EINVAL;
- 		if (sid == 0)
- 			goto abort_change;
-@@ -6410,6 +6427,81 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
- 	return error;
- }
- 
-+static int selinux_getselfattr(unsigned int attr, struct lsm_ctx __user *ctx,
-+			       size_t *size, u32 flags)
-+{
-+	char *value;
-+	size_t total_len;
-+	int len;
-+	int rc;
-+
-+	len = selinux_lsm_getattr(attr, current, &value);
-+	if (len < 0)
-+		return len;
-+
-+	total_len = ALIGN(struct_size(ctx, ctx, len), 8);
-+
-+	if (total_len > *size)
-+		rc = -E2BIG;
-+	else if (ctx)
-+		rc = lsm_fill_user_ctx(ctx, value, len, LSM_ID_SELINUX, 0);
-+	else
-+		rc = 1;
-+
-+	*size = total_len;
-+	if (rc < 0)
-+		return rc;
-+	return 1;
-+}
-+
-+static int selinux_setselfattr(unsigned int __user attr,
-+			       struct lsm_ctx __user *ctx, size_t __user size,
-+			       u32 __user flags)
-+{
-+	struct lsm_ctx *lctx;
-+	int rc;
-+
-+	lctx = kmalloc(size, GFP_KERNEL);
-+	if (lctx == NULL)
-+		return -ENOMEM;
-+
-+	if (copy_from_user(lctx, ctx, size))
-+		rc = -EFAULT;
-+	else if (lctx->ctx_len > size)
-+		rc = -EINVAL;
-+	else
-+		rc = selinux_lsm_setattr(attr, lctx->ctx, lctx->ctx_len);
-+
-+	kfree(lctx);
-+	if (rc > 0)
-+		return 0;
-+	return rc;
-+}
-+
-+static int selinux_getprocattr(struct task_struct *p,
-+			       const char *name, char **value)
-+{
-+	unsigned int attr = lsm_name_to_attr(name);
-+	int rc;
-+
-+	if (attr) {
-+		rc = selinux_lsm_getattr(attr, p, value);
-+		if (rc != -EOPNOTSUPP)
-+			return rc;
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static int selinux_setprocattr(const char *name, void *value, size_t size)
-+{
-+	int attr = lsm_name_to_attr(name);
-+
-+	if (attr)
-+		return selinux_lsm_setattr(attr, value, size);
-+	return -EINVAL;
-+}
-+
- static int selinux_ismaclabel(const char *name)
- {
- 	return (strcmp(name, XATTR_SELINUX_SUFFIX) == 0);
-@@ -7041,6 +7133,8 @@ static struct security_hook_list selinux_hooks[] __ro_after_init = {
- 
- 	LSM_HOOK_INIT(d_instantiate, selinux_d_instantiate),
- 
-+	LSM_HOOK_INIT(getselfattr, selinux_getselfattr),
-+	LSM_HOOK_INIT(setselfattr, selinux_setselfattr),
- 	LSM_HOOK_INIT(getprocattr, selinux_getprocattr),
- 	LSM_HOOK_INIT(setprocattr, selinux_setprocattr),
- 
+I am not sure if you are aware or, have been following the hugetlb HGM
+discussion in this thread:
+https://lore.kernel.org/linux-mm/20230306191944.GA15773@monkey/
+
+There we are trying to decide if HGM should be added to hugetlb, or if
+perhaps a new filesystem/driver/allocator should be created.  The concern
+is added complexity to hugetlb as well as core mm special casing.  Note
+that HGM is addressing issues faced by existing hugetlb users.
+
+Your proposal here suggests modifying hugetlb so that it can be used in
+a new way (use case) by KVM's guest_mem.  As such it really seems like
+something that should be done in a separate filesystem/driver/allocator.
+You will likely not get much support for modifying hugetlb.
+
 -- 
-2.40.1
+Mike Kravetz
 
+> Why use hugetlb instead of introducing a new allocator, like gmem does for 4K
+> and transparent hugepages?
+> 
+> + hugetlb provides the following useful functionality, which would otherwise
+>   have to be reimplemented:
+>     + Allocation of hugetlb pages at boot time, including
+>         + Parsing of kernel boot parameters to configure hugetlb
+>         + Tracking of usage in hstate
+>         + gmem will share the same system-wide pool of hugetlb pages, so users
+>           don't have to have separate pools for hugetlb and gmem
+>     + Page accounting with subpools
+>         + hugetlb pages are tracked in subpools, which gmem uses to reserve
+>           pages from the global hstate
+>     + Memory charging
+>         + hugetlb provides code that charges memory to cgroups
+>     + Reporting: hugetlb usage and availability are available at /proc/meminfo,
+>       etc
+> 
+> The first 11 patches in this patchset is a series of refactoring to decouple
+> hugetlb and hugetlbfs.
+> 
+> The central thread binding the refactoring is that some functions (like
+> inode_resv_map(), inode_subpool(), inode_hstate(), etc) rely on a hugetlbfs
+> concept, that the resv_map, subpool, hstate, are in a specific field in a
+> hugetlb inode.
+> 
+> Refactoring to parametrize functions by hstate, subpool, resv_map will allow
+> hugetlb to be used by gmem and in other places where these data structures
+> aren't necessarily stored in the same positions in the inode.
+> 
+> The refactoring proposed here is just the minimum required to get a
+> proof-of-concept working with gmem. I would like to get opinions on this
+> approach before doing further refactoring. (See TODOs)
+> 
+> TODOs:
+> 
+> + hugetlb/hugetlbfs refactoring
+>     + remove_inode_hugepages() no longer needs to be exposed, it is hugetlbfs
+>       specific and used only in inode.c
+>     + remove_mapping_hugepages(), remove_inode_single_folio(),
+>       hugetlb_unreserve_pages() shouldn't need to take inode as a parameter
+>         + Updating inode->i_blocks can be refactored to a separate function and
+>           called from hugetlbfs and gmem
+>     + alloc_hugetlb_folio_from_subpool() shouldn't need to be parametrized by
+>       vma
+>     + hugetlb_reserve_pages() should be refactored to be symmetric with
+>       hugetlb_unreserve_pages()
+>         + It should be parametrized by resv_map
+>         + alloc_hugetlb_folio_from_subpool() could perhaps use
+>           hugetlb_reserve_pages()?
+> + gmem
+>     + Figure out if resv_map should be used by gmem at all
+>         + Probably needs more refactoring to decouple resv_map from hugetlb
+>           functions
+> 
+> Questions for the community:
+> 
+> 1. In this patchset, every gmem file backed with hugetlb is given a new
+>    subpool. Is that desirable?
+>     + In hugetlbfs, a subpool always belongs to a mount, and hugetlbfs has one
+>       mount per hugetlb size (2M, 1G, etc)
+>     + memfd_create(MFD_HUGETLB) effectively returns a full hugetlbfs file, so it
+>       (rightfully) uses the hugetlbfs kernel mounts and their subpools
+>     + I gave each file a subpool mostly to speed up implementation and still be
+>       able to reserve hugetlb pages from the global hstate based on the gmem
+>       file size.
+>     + gmem, unlike hugetlbfs, isn't meant to be a full filesystem, so
+>         + Should there be multiple mounts, one for each hugetlb size?
+>         + Will the mounts be initialized on boot or on first gmem file creation?
+>         + Or is one subpool per gmem file fine?
+> 2. Should resv_map be used for gmem at all, since gmem doesn't allow userspace
+>    reservations?
+> 
+> [1] https://lore.kernel.org/lkml/ZEM5Zq8oo+xnApW9@google.com/
+> 
+> ---
+> 
+> Ackerley Tng (19):
+>   mm: hugetlb: Expose get_hstate_idx()
+>   mm: hugetlb: Move and expose hugetlbfs_zero_partial_page
+>   mm: hugetlb: Expose remove_inode_hugepages
+>   mm: hugetlb: Decouple hstate, subpool from inode
+>   mm: hugetlb: Allow alloc_hugetlb_folio() to be parametrized by subpool
+>     and hstate
+>   mm: hugetlb: Provide hugetlb_filemap_add_folio()
+>   mm: hugetlb: Refactor vma_*_reservation functions
+>   mm: hugetlb: Refactor restore_reserve_on_error
+>   mm: hugetlb: Use restore_reserve_on_error directly in filesystems
+>   mm: hugetlb: Parametrize alloc_hugetlb_folio_from_subpool() by
+>     resv_map
+>   mm: hugetlb: Parametrize hugetlb functions by resv_map
+>   mm: truncate: Expose preparation steps for truncate_inode_pages_final
+>   KVM: guest_mem: Refactor kvm_gmem fd creation to be in layers
+>   KVM: guest_mem: Refactor cleanup to separate inode and file cleanup
+>   KVM: guest_mem: hugetlb: initialization and cleanup
+>   KVM: guest_mem: hugetlb: allocate and truncate from hugetlb
+>   KVM: selftests: Add basic selftests for hugetlbfs-backed guest_mem
+>   KVM: selftests: Support various types of backing sources for private
+>     memory
+>   KVM: selftests: Update test for various private memory backing source
+>     types
+> 
+>  fs/hugetlbfs/inode.c                          | 102 ++--
+>  include/linux/hugetlb.h                       |  86 ++-
+>  include/linux/mm.h                            |   1 +
+>  include/uapi/linux/kvm.h                      |  25 +
+>  mm/hugetlb.c                                  | 324 +++++++-----
+>  mm/truncate.c                                 |  24 +-
+>  .../testing/selftests/kvm/guest_memfd_test.c  |  33 +-
+>  .../testing/selftests/kvm/include/test_util.h |  14 +
+>  tools/testing/selftests/kvm/lib/test_util.c   |  74 +++
+>  .../kvm/x86_64/private_mem_conversions_test.c |  38 +-
+>  virt/kvm/guest_mem.c                          | 488 ++++++++++++++----
+>  11 files changed, 882 insertions(+), 327 deletions(-)
+> 
+> --
+> 2.41.0.rc0.172.g3f132b7071-goog
