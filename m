@@ -2,30 +2,30 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 56188EB64D8
-	for <linux-api@archiver.kernel.org>; Thu, 22 Jun 2023 16:54:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44060C001B1
+	for <linux-api@archiver.kernel.org>; Thu, 22 Jun 2023 16:54:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231521AbjFVQxd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 22 Jun 2023 12:53:33 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41600 "EHLO
+        id S231256AbjFVQxh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 22 Jun 2023 12:53:37 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41612 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231441AbjFVQxA (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 22 Jun 2023 12:53:00 -0400
-Received: from forward100b.mail.yandex.net (forward100b.mail.yandex.net [178.154.239.147])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A71F7E9;
-        Thu, 22 Jun 2023 09:52:59 -0700 (PDT)
+        with ESMTP id S231465AbjFVQxC (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 22 Jun 2023 12:53:02 -0400
+Received: from forward100c.mail.yandex.net (forward100c.mail.yandex.net [178.154.239.211])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E4E9210D;
+        Thu, 22 Jun 2023 09:53:00 -0700 (PDT)
 Received: from mail-nwsmtp-smtp-production-main-39.sas.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-39.sas.yp-c.yandex.net [IPv6:2a02:6b8:c08:2087:0:640:7bf5:0])
-        by forward100b.mail.yandex.net (Yandex) with ESMTP id C36E260033;
-        Thu, 22 Jun 2023 19:52:53 +0300 (MSK)
-Received: by mail-nwsmtp-smtp-production-main-39.sas.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id kqJAlpLDeKo0-UlNqGWkF;
-        Thu, 22 Jun 2023 19:52:52 +0300
+        by forward100c.mail.yandex.net (Yandex) with ESMTP id E1C5C600A6;
+        Thu, 22 Jun 2023 19:52:58 +0300 (MSK)
+Received: by mail-nwsmtp-smtp-production-main-39.sas.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id kqJAlpLDeKo0-Yux8647Y;
+        Thu, 22 Jun 2023 19:52:58 +0300
 X-Yandex-Fwd: 1
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail; t=1687452773;
-        bh=lDc4QgnEZC8KLbodk8+haNOeCOpk4ZEgKr8+epbYZ8s=;
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail; t=1687452778;
+        bh=b93M/kd7RtP0LNT+znv3PSo9p5SOOzFeXYgHQxmwv9I=;
         h=Message-Id:Date:In-Reply-To:Cc:Subject:References:To:From;
-        b=d9Au/G7fw+hAU9H5dZU/hkKz5vWdRoEwQneYwbVnEdlhySD0bmjL8cS3N2dIoo7W8
-         kIUlD3aj4do/0LS1Ql7uhIazcXHmVSNytAukyzOWPttEbmAUxcBTWglqY/ctW6H3wg
-         VE5qx/nyLn688d2XfqOMjKhKHZj3HCwlgluWs6Qc=
+        b=pw9vkkfjeG7hR2ziEEn7ezSdAdQd1GZRddpnZWxGipXv2Szk9UACc3EslkeEgEv/E
+         xpHc8yjiiNPoWf3pcJZGIZLrjEnutadOLRA+jeHwIe1F3y4CkU24kPaejvYDM0u5IF
+         H7l6CO4WQlEBibwIa7RnUNt2taP9LR0eAMJNcEpo=
 Authentication-Results: mail-nwsmtp-smtp-production-main-39.sas.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
 From:   Stas Sergeev <stsp2@yandex.ru>
 To:     linux-kernel@vger.kernel.org
@@ -35,9 +35,9 @@ Cc:     Stas Sergeev <stsp2@yandex.ru>, Jeff Layton <jlayton@kernel.org>,
         Christian Brauner <brauner@kernel.org>,
         linux-fsdevel@vger.kernel.org, Shuah Khan <shuah@kernel.org>,
         linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org
-Subject: [PATCH 1/2] fs/locks: F_UNLCK extension for F_OFD_GETLK
-Date:   Thu, 22 Jun 2023 21:52:23 +0500
-Message-Id: <20230622165225.2772076-2-stsp2@yandex.ru>
+Subject: [PATCH] fcntl.2: document F_UNLCK F_OFD_GETLK extension
+Date:   Thu, 22 Jun 2023 21:52:25 +0500
+Message-Id: <20230622165225.2772076-4-stsp2@yandex.ru>
 X-Mailer: git-send-email 2.39.2
 In-Reply-To: <20230622165225.2772076-1-stsp2@yandex.ru>
 References: <20230622165225.2772076-1-stsp2@yandex.ru>
@@ -47,9 +47,10 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Currently F_UNLCK with F_OFD_GETLK returns -EINVAL.
-The proposed extension allows to use it for getting the lock
-information from the particular fd.
+F_UNLCK has the special meaning when used as a lock type on input.
+It returns the information about any lock found in the specified
+region on that particular file descriptor. Locks on other file
+descriptors are ignored by F_UNLCK.
 
 Signed-off-by: Stas Sergeev <stsp2@yandex.ru>
 
@@ -64,64 +65,27 @@ CC: linux-kselftest@vger.kernel.org
 CC: linux-api@vger.kernel.org
 
 ---
- fs/locks.c | 23 ++++++++++++++++++++---
- 1 file changed, 20 insertions(+), 3 deletions(-)
+ man2/fcntl.2 | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/fs/locks.c b/fs/locks.c
-index df8b26a42524..210766007e63 100644
---- a/fs/locks.c
-+++ b/fs/locks.c
-@@ -868,6 +868,21 @@ static bool posix_locks_conflict(struct file_lock *caller_fl,
- 	return locks_conflict(caller_fl, sys_fl);
- }
- 
-+/* Determine if lock sys_fl blocks lock caller_fl. Used on xx_GETLK
-+ * path so checks for additional GETLK-specific things like F_UNLCK.
-+ */
-+static bool posix_test_locks_conflict(struct file_lock *caller_fl,
-+				      struct file_lock *sys_fl)
-+{
-+	/* F_UNLCK checks any locks on the same fd. */
-+	if (caller_fl->fl_type == F_UNLCK) {
-+		if (!posix_same_owner(caller_fl, sys_fl))
-+			return false;
-+		return locks_overlap(caller_fl, sys_fl);
-+	}
-+	return posix_locks_conflict(caller_fl, sys_fl);
-+}
-+
- /* Determine if lock sys_fl blocks lock caller_fl. FLOCK specific
-  * checking before calling the locks_conflict().
-  */
-@@ -901,7 +916,7 @@ posix_test_lock(struct file *filp, struct file_lock *fl)
- retry:
- 	spin_lock(&ctx->flc_lock);
- 	list_for_each_entry(cfl, &ctx->flc_posix, fl_list) {
--		if (!posix_locks_conflict(fl, cfl))
-+		if (!posix_test_locks_conflict(fl, cfl))
- 			continue;
- 		if (cfl->fl_lmops && cfl->fl_lmops->lm_lock_expirable
- 			&& (*cfl->fl_lmops->lm_lock_expirable)(cfl)) {
-@@ -2207,7 +2222,8 @@ int fcntl_getlk(struct file *filp, unsigned int cmd, struct flock *flock)
- 	if (fl == NULL)
- 		return -ENOMEM;
- 	error = -EINVAL;
--	if (flock->l_type != F_RDLCK && flock->l_type != F_WRLCK)
-+	if (cmd != F_OFD_GETLK && flock->l_type != F_RDLCK
-+			&& flock->l_type != F_WRLCK)
- 		goto out;
- 
- 	error = flock_to_posix_lock(filp, fl, flock);
-@@ -2414,7 +2430,8 @@ int fcntl_getlk64(struct file *filp, unsigned int cmd, struct flock64 *flock)
- 		return -ENOMEM;
- 
- 	error = -EINVAL;
--	if (flock->l_type != F_RDLCK && flock->l_type != F_WRLCK)
-+	if (cmd != F_OFD_GETLK && flock->l_type != F_RDLCK
-+			&& flock->l_type != F_WRLCK)
- 		goto out;
- 
- 	error = flock64_to_posix_lock(filp, fl, flock);
+diff --git a/man2/fcntl.2 b/man2/fcntl.2
+index 7b5604e3a..e3e3e7b8c 100644
+--- a/man2/fcntl.2
++++ b/man2/fcntl.2
+@@ -604,6 +604,13 @@ then details about one of these locks are returned via
+ .IR lock ,
+ as described above for
+ .BR F_GETLK .
++.B F_UNLCK
++has the special meaning when put into
++.I l_type
++as an input. It returns the information about any lock in the specified
++range on that particular file descriptor. The locks on other file
++descriptors are ignored by
++.BR F_UNLCK .
+ .PP
+ In the current implementation,
+ .\" commit 57b65325fe34ec4c917bc4e555144b4a94d9e1f7
 -- 
 2.39.2
 
