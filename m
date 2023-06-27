@@ -2,30 +2,30 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id EF8D1C001DE
-	for <linux-api@archiver.kernel.org>; Tue, 27 Jun 2023 15:29:46 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C1C6C001E0
+	for <linux-api@archiver.kernel.org>; Tue, 27 Jun 2023 15:29:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232304AbjF0P3p (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 27 Jun 2023 11:29:45 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46572 "EHLO
+        id S230431AbjF0P3q (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 27 Jun 2023 11:29:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46570 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231924AbjF0P3n (ORCPT
+        with ESMTP id S231974AbjF0P3n (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 27 Jun 2023 11:29:43 -0400
-Received: from smtpout.efficios.com (smtpout.efficios.com [167.114.26.122])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1309E2942;
-        Tue, 27 Jun 2023 08:29:41 -0700 (PDT)
+Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 889AA273C;
+        Tue, 27 Jun 2023 08:29:40 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
         s=smtpout1; t=1687879779;
-        bh=oKkXMwl9CppgPR3HEtDQfgVFXUAQ6EoIiQSv7ieSscM=;
+        bh=sUuJuaMEmAlyyRMOf/8VHfapTZrVaMFeI2CoS0ABZ7s=;
         h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-        b=hXNcy6nCTJIqA16UhPSgfyd6AmV61FoDTnapkgcJ42vPjzC5RL+3HyDJCfADcjXKz
-         qhH8QxzBY3MBiUTblRqiY2gzlwUztpGUHOnefGoLogsru3uDCxZx9GV6NMw2u3U87k
-         uZFgwcGLpCBzuzh+iIJ3Egtrv3EU+t6PGpl8e7vJhLQpUvr2/Oxi9tNLFbqLDWx6dB
-         QEq7SIdMs/UB2+4uZtMup+3ZAMWza3WUDlYXJPN1IkRZBpxhVPGaeG7kgtRjkAc+qv
-         bZsKJrTeuD11edopYYKU10/3SBu7m7Uwb+yVAQen3jLIoFlRHNfUtFir9yzWxURvyg
-         jSAzD8CS+++YA==
+        b=l2CFgGHSu56BZRopG2MyKoL8vpK51j2DxdvfY+3DnqE3iILve+RfIgSuLU8Ytf4p8
+         51cuYSnKWr+SBTleni42ze+MlbFBsszId1jETLtKq2n1baZkKmCaIyaxVocAsDkhg1
+         Dygh80QYwSpKZ+yba/FfeFMXd19WSyw+1zSYGV+MzyhbPnud5yXtQZ2o4gnRXzFkPI
+         JCw/YUiAieLchT7VS1IiNHX167tWMpXjUEd7TBctDvmdLM1mt42UMKwWZ7vMoq1Uh8
+         zjH1NkYlBnST5KgULDqWjYPBvWUbLPuVSIWCeRbpx5+Wn74TOT2zzSk5tjZUw+GaXb
+         SqMVPQm6xsubA==
 Received: from localhost.localdomain (192-222-143-198.qc.cable.ebox.net [192.222.143.198])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4Qr7tW19F9z19RQ;
+        by smtpout.efficios.com (Postfix) with ESMTPSA id 4Qr7tW5B6Nz19dJ;
         Tue, 27 Jun 2023 11:29:39 -0400 (EDT)
 From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 To:     Shuah Khan <shuah@kernel.org>
@@ -36,9 +36,9 @@ Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
         "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
         linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org,
         Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH 2/4] selftests/rseq: Implement rseq_unqual_scalar_typeof
-Date:   Tue, 27 Jun 2023 11:29:21 -0400
-Message-Id: <20230627152923.133238-3-mathieu.desnoyers@efficios.com>
+Subject: [PATCH 4/4] selftests/rseq: Use rseq_unqual_scalar_typeof in macros
+Date:   Tue, 27 Jun 2023 11:29:23 -0400
+Message-Id: <20230627152923.133238-5-mathieu.desnoyers@efficios.com>
 X-Mailer: git-send-email 2.25.1
 In-Reply-To: <20230627152923.133238-1-mathieu.desnoyers@efficios.com>
 References: <20230627152923.133238-1-mathieu.desnoyers@efficios.com>
@@ -48,54 +48,171 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Allow defining variables and perform cast with a typeof which removes
-the volatile and const qualifiers.
+Use rseq_unqual_scalar_typeof() rather than typeof() in macros to remove
+the volatile qualifier (if there is one in the input argument), thus
+generating better assembly code in those scenarios.
 
-This prevents declaring a stack variable with a volatile qualifier
-within a macro, which would generate sub-optimal assembler.
+Also add extra brackets around the "p" parameter in RSEQ_READ_ONCE(),
+RSEQ_WRITE_ONCE(), and rseq_unqual_scalar_typeof() across architectures
+to preserve expectations of operator priority. Here is an example that
+shows how operator priority may be an issue with missing parentheses:
 
-This is imported from the "librseq" project.
+    #define m(p) \
+    do { \
+            __typeof__(*p) v = 0; \
+    } while (0)
+
+    void fct(unsigned long long *p1)
+    {
+            m(p1 + 1);      /* works */
+            m(1 + p1);      /* broken */
+    }
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- tools/testing/selftests/rseq/compiler.h | 26 +++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+ tools/testing/selftests/rseq/rseq-arm.h   | 4 ++--
+ tools/testing/selftests/rseq/rseq-mips.h  | 4 ++--
+ tools/testing/selftests/rseq/rseq-ppc.h   | 4 ++--
+ tools/testing/selftests/rseq/rseq-riscv.h | 6 +++---
+ tools/testing/selftests/rseq/rseq-s390.h  | 4 ++--
+ tools/testing/selftests/rseq/rseq-x86.h   | 4 ++--
+ 6 files changed, 13 insertions(+), 13 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/compiler.h b/tools/testing/selftests/rseq/compiler.h
-index f47092bddeba..49d62fbd6dda 100644
---- a/tools/testing/selftests/rseq/compiler.h
-+++ b/tools/testing/selftests/rseq/compiler.h
-@@ -33,4 +33,30 @@
- #define RSEQ_COMBINE_TOKENS(_tokena, _tokenb)	\
- 	RSEQ__COMBINE_TOKENS(_tokena, _tokenb)
+diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
+index 8414fc3eac15..d887b3bbe257 100644
+--- a/tools/testing/selftests/rseq/rseq-arm.h
++++ b/tools/testing/selftests/rseq/rseq-arm.h
+@@ -66,7 +66,7 @@
  
-+#ifdef __cplusplus
-+#define rseq_unqual_scalar_typeof(x)					\
-+	std::remove_cv<std::remove_reference<decltype(x)>::type>::type
-+#else
-+#define rseq_scalar_type_to_expr(type)					\
-+	unsigned type: (unsigned type)0,				\
-+	signed type: (signed type)0
-+
-+/*
-+ * Use C11 _Generic to express unqualified type from expression. This removes
-+ * volatile qualifier from expression type.
-+ */
-+#define rseq_unqual_scalar_typeof(x)					\
-+	__typeof__(							\
-+		_Generic((x),						\
-+			char: (char)0,					\
-+			rseq_scalar_type_to_expr(char),			\
-+			rseq_scalar_type_to_expr(short),		\
-+			rseq_scalar_type_to_expr(int),			\
-+			rseq_scalar_type_to_expr(long),			\
-+			rseq_scalar_type_to_expr(long long),		\
-+			default: (x)					\
-+		)							\
-+	)
-+#endif
-+
- #endif  /* RSEQ_COMPILER_H_ */
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
+ 	rseq_smp_mb();							\
+ 	____p1;								\
+ })
+@@ -76,7 +76,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	rseq_smp_mb();							\
+-	RSEQ_WRITE_ONCE(*p, v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ #define __RSEQ_ASM_DEFINE_TABLE(label, version, flags, start_ip,	\
+diff --git a/tools/testing/selftests/rseq/rseq-mips.h b/tools/testing/selftests/rseq/rseq-mips.h
+index 50b950cf9585..42ef8e946693 100644
+--- a/tools/testing/selftests/rseq/rseq-mips.h
++++ b/tools/testing/selftests/rseq/rseq-mips.h
+@@ -45,7 +45,7 @@
+ 
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
+ 	rseq_smp_mb();							\
+ 	____p1;								\
+ })
+@@ -55,7 +55,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	rseq_smp_mb();							\
+-	RSEQ_WRITE_ONCE(*p, v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ #if _MIPS_SZLONG == 64
+diff --git a/tools/testing/selftests/rseq/rseq-ppc.h b/tools/testing/selftests/rseq/rseq-ppc.h
+index dc9190facee9..57b160597189 100644
+--- a/tools/testing/selftests/rseq/rseq-ppc.h
++++ b/tools/testing/selftests/rseq/rseq-ppc.h
+@@ -23,7 +23,7 @@
+ 
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
+ 	rseq_smp_lwsync();						\
+ 	____p1;								\
+ })
+@@ -33,7 +33,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	rseq_smp_lwsync();						\
+-	RSEQ_WRITE_ONCE(*p, v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ /*
+diff --git a/tools/testing/selftests/rseq/rseq-riscv.h b/tools/testing/selftests/rseq/rseq-riscv.h
+index 17932a79e066..37e598d0a365 100644
+--- a/tools/testing/selftests/rseq/rseq-riscv.h
++++ b/tools/testing/selftests/rseq/rseq-riscv.h
+@@ -36,8 +36,8 @@
+ 
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));			\
+-	RISCV_FENCE(r, rw)						\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
++	RISCV_FENCE(r, rw);						\
+ 	____p1;								\
+ })
+ 
+@@ -46,7 +46,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	RISCV_FENCE(rw, w);						\
+-	RSEQ_WRITE_ONCE(*(p), v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ #define __RSEQ_ASM_DEFINE_TABLE(label, version, flags, start_ip,	\
+diff --git a/tools/testing/selftests/rseq/rseq-s390.h b/tools/testing/selftests/rseq/rseq-s390.h
+index 46c92598acc7..33baaa9f9997 100644
+--- a/tools/testing/selftests/rseq/rseq-s390.h
++++ b/tools/testing/selftests/rseq/rseq-s390.h
+@@ -15,7 +15,7 @@
+ 
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
+ 	rseq_barrier();							\
+ 	____p1;								\
+ })
+@@ -25,7 +25,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	rseq_barrier();							\
+-	RSEQ_WRITE_ONCE(*p, v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ #ifdef __s390x__
+diff --git a/tools/testing/selftests/rseq/rseq-x86.h b/tools/testing/selftests/rseq/rseq-x86.h
+index fb65ef54b0fb..a2aa428ba151 100644
+--- a/tools/testing/selftests/rseq/rseq-x86.h
++++ b/tools/testing/selftests/rseq/rseq-x86.h
+@@ -42,7 +42,7 @@
+ 
+ #define rseq_smp_load_acquire(p)					\
+ __extension__ ({							\
+-	__typeof(*p) ____p1 = RSEQ_READ_ONCE(*p);			\
++	rseq_unqual_scalar_typeof(*(p)) ____p1 = RSEQ_READ_ONCE(*(p));	\
+ 	rseq_barrier();							\
+ 	____p1;								\
+ })
+@@ -52,7 +52,7 @@ __extension__ ({							\
+ #define rseq_smp_store_release(p, v)					\
+ do {									\
+ 	rseq_barrier();							\
+-	RSEQ_WRITE_ONCE(*p, v);						\
++	RSEQ_WRITE_ONCE(*(p), v);					\
+ } while (0)
+ 
+ #define __RSEQ_ASM_DEFINE_TABLE(label, version, flags,			\
 -- 
 2.25.1
 
