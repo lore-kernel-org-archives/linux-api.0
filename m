@@ -2,278 +2,773 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CAC2CEB64D9
-	for <linux-api@archiver.kernel.org>; Thu, 29 Jun 2023 16:08:15 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9AF89EB64D9
+	for <linux-api@archiver.kernel.org>; Thu, 29 Jun 2023 19:55:47 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231650AbjF2QIP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 29 Jun 2023 12:08:15 -0400
-Received: from mail-db8eur05on2088.outbound.protection.outlook.com ([40.107.20.88]:61472
-        "EHLO EUR05-DB8-obe.outbound.protection.outlook.com"
-        rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-        id S232035AbjF2QIK (ORCPT <rfc822;linux-api@vger.kernel.org>);
-        Thu, 29 Jun 2023 12:08:10 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=htpwCZPSKbFK/lAh6xoU7JNipvvRjPsm+GUSNR3AFq8=;
- b=U+f/6QxfqNq8akJ0U9oyw5cg7UFNTPcb4r5DK301oTbF6ga5oSTGpTQ4F9mhqEC/B225ZHcrwnsX1BTgLfNfdCEyjW6dV6t0ZFlJgB7dUSvLBuohQGwS7GHByLc8TaL2qeHpC3mfdAESI263W3P9mJBkvninbvz8qNkBNgKbAx0=
-Received: from DB7PR05CA0067.eurprd05.prod.outlook.com (2603:10a6:10:2e::44)
- by AS8PR08MB10077.eurprd08.prod.outlook.com (2603:10a6:20b:63e::19) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6521.23; Thu, 29 Jun
- 2023 16:08:07 +0000
-Received: from DBAEUR03FT004.eop-EUR03.prod.protection.outlook.com
- (2603:10a6:10:2e:cafe::e1) by DB7PR05CA0067.outlook.office365.com
- (2603:10a6:10:2e::44) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6544.20 via Frontend
- Transport; Thu, 29 Jun 2023 16:08:07 +0000
-X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 63.35.35.123)
- smtp.mailfrom=arm.com; dkim=pass (signature was verified)
- header.d=armh.onmicrosoft.com;dmarc=pass action=none header.from=arm.com;
-Received-SPF: Pass (protection.outlook.com: domain of arm.com designates
- 63.35.35.123 as permitted sender) receiver=protection.outlook.com;
- client-ip=63.35.35.123; helo=64aa7808-outbound-1.mta.getcheckrecipient.com;
- pr=C
-Received: from 64aa7808-outbound-1.mta.getcheckrecipient.com (63.35.35.123) by
- DBAEUR03FT004.mail.protection.outlook.com (100.127.142.103) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.6544.20 via Frontend Transport; Thu, 29 Jun 2023 16:08:07 +0000
-Received: ("Tessian outbound c08fa2e31830:v142"); Thu, 29 Jun 2023 16:08:07 +0000
-X-CheckRecipientChecked: true
-X-CR-MTA-CID: 18bc51183e159456
-X-CR-MTA-TID: 64aa7808
-Received: from 7277d59e5d02.1
-        by 64aa7808-outbound-1.mta.getcheckrecipient.com id F086B373-8C7E-46A5-BCBC-57607F88F16F.1;
-        Thu, 29 Jun 2023 16:08:00 +0000
-Received: from EUR04-DB3-obe.outbound.protection.outlook.com
-    by 64aa7808-outbound-1.mta.getcheckrecipient.com with ESMTPS id 7277d59e5d02.1
-    (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384);
-    Thu, 29 Jun 2023 16:08:00 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=HOoVEqTG8I5SvC8AK/Km+IUevE1Oxr4XHMlcqrALzlbTc3Ts0M0KJJf3iLhDg97mEtychYl7dCUPR5DqWUzF210Jwna7jxxPNUgshIwlbaBDKcLP0f0jNWEeWLKX26e3VpihBsJBk0PHNtOZ/J7+4fP3zvk76ZAGYdZy+KvItbFXRNIggoICGiLo1HI+ToennIL6m896HhgsM/mZNT6IiAcYFLvi4CUikWWDLgnPI4TZw/+Y3c2xenbwST+1yVJum5nwCvnVdFHy62/eEx0fDmyXre5XIFvKxLDWmYCTh6jWTS7kctMVmdqXbWQgw8MbTpJD5giP3vbnj/LKOoFuHQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=htpwCZPSKbFK/lAh6xoU7JNipvvRjPsm+GUSNR3AFq8=;
- b=lDm1LnbpTlVslGnEWPYh+s/8imwRBohlM8XCm1iP0Tqqq+WluX0XYh0N9fj/di9iK/ZbCvpBcRH/Qfm7acmwInd3cJqVyHuCcgePFXz/XiTh8cVnxg7IYQnCojr63aBx+tSiAWD/fOlGQTg2hNEjnh7iMcaG0q+PpbkKX7Zeww1TL12klityabgwG+T3t9J3jlaPSX/VIMqVKkjsHJhFaGTT0ip11V88m9Y5/K6QylWPt0pYQE0rBTnVFZ5nomrJN+xJGouMRH7pu8J9JSCeCo9HW50SAMTgboidIsthqWvWSsUxChXXNoDyMvo78kfHjGHpxcyzi4KtU1cvUC3hTA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=arm.com; dmarc=pass action=none header.from=arm.com; dkim=pass
- header.d=arm.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=htpwCZPSKbFK/lAh6xoU7JNipvvRjPsm+GUSNR3AFq8=;
- b=U+f/6QxfqNq8akJ0U9oyw5cg7UFNTPcb4r5DK301oTbF6ga5oSTGpTQ4F9mhqEC/B225ZHcrwnsX1BTgLfNfdCEyjW6dV6t0ZFlJgB7dUSvLBuohQGwS7GHByLc8TaL2qeHpC3mfdAESI263W3P9mJBkvninbvz8qNkBNgKbAx0=
-Authentication-Results-Original: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com (2603:10a6:10:2cc::19)
- by AS8PR08MB8442.eurprd08.prod.outlook.com (2603:10a6:20b:568::13) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6500.46; Thu, 29 Jun
- 2023 16:07:57 +0000
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::43b7:3a83:5cbe:4559]) by DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::43b7:3a83:5cbe:4559%4]) with mapi id 15.20.6521.026; Thu, 29 Jun 2023
- 16:07:57 +0000
-Date:   Thu, 29 Jun 2023 17:07:42 +0100
-From:   "szabolcs.nagy@arm.com" <szabolcs.nagy@arm.com>
-To:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
-        "Lutomirski, Andy" <luto@kernel.org>
-Cc:     "Xu, Pengfei" <pengfei.xu@intel.com>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        "kcc@google.com" <kcc@google.com>,
-        "nadav.amit@gmail.com" <nadav.amit@gmail.com>,
-        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
-        "david@redhat.com" <david@redhat.com>,
-        "Schimpe, Christina" <christina.schimpe@intel.com>,
-        "Yang, Weijiang" <weijiang.yang@intel.com>,
-        "peterz@infradead.org" <peterz@infradead.org>,
-        "corbet@lwn.net" <corbet@lwn.net>, "nd@arm.com" <nd@arm.com>,
-        "broonie@kernel.org" <broonie@kernel.org>,
-        "dethoma@microsoft.com" <dethoma@microsoft.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "x86@kernel.org" <x86@kernel.org>,
-        "debug@rivosinc.com" <debug@rivosinc.com>,
-        "bp@alien8.de" <bp@alien8.de>,
-        "rdunlap@infradead.org" <rdunlap@infradead.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "rppt@kernel.org" <rppt@kernel.org>,
-        "jamorris@linux.microsoft.com" <jamorris@linux.microsoft.com>,
-        "pavel@ucw.cz" <pavel@ucw.cz>,
-        "john.allen@amd.com" <john.allen@amd.com>,
-        "bsingharora@gmail.com" <bsingharora@gmail.com>,
-        "mike.kravetz@oracle.com" <mike.kravetz@oracle.com>,
-        "jannh@google.com" <jannh@google.com>,
-        "andrew.cooper3@citrix.com" <andrew.cooper3@citrix.com>,
-        "oleg@redhat.com" <oleg@redhat.com>,
-        "keescook@chromium.org" <keescook@chromium.org>,
-        "gorcunov@gmail.com" <gorcunov@gmail.com>,
-        "arnd@arndb.de" <arnd@arndb.de>,
-        "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        "fweimer@redhat.com" <fweimer@redhat.com>,
-        "hpa@zytor.com" <hpa@zytor.com>,
-        "mingo@redhat.com" <mingo@redhat.com>,
-        "hjl.tools@gmail.com" <hjl.tools@gmail.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "Syromiatnikov, Eugene" <esyr@redhat.com>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "Torvalds, Linus" <torvalds@linux-foundation.org>,
-        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "Eranian, Stephane" <eranian@google.com>
-Subject: Re: [PATCH v9 23/42] Documentation/x86: Add CET shadow stack
- description
-Message-ID: <ZJ2sTu9QRmiWNISy@arm.com>
-References: <ZJAWMSLfSaHOD1+X@arm.com>
- <5794e4024a01e9c25f0951a7386cac69310dbd0f.camel@intel.com>
- <ZJFukYxRbU1MZlQn@arm.com>
- <e676c4878c51ab4b6018c9426b5edacdb95f2168.camel@intel.com>
- <ZJLgp29mM3BLb3xa@arm.com>
- <c5ae83588a7e107beaf858ab04961e70d16fe32c.camel@intel.com>
- <ZJQR7slVHvjeCQG8@arm.com>
- <CALCETrW+30_a2QQE-yw9djVFPxSxm7-c2FZFwZ50dOEmnmkeDA@mail.gmail.com>
- <ZJR545en+dYx399c@arm.com>
- <1cd67ae45fc379fd82d2745190e4caf74e67499e.camel@intel.com>
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <1cd67ae45fc379fd82d2745190e4caf74e67499e.camel@intel.com>
-X-ClientProxiedBy: LO4P123CA0316.GBRP123.PROD.OUTLOOK.COM
- (2603:10a6:600:197::15) To DB9PR08MB7179.eurprd08.prod.outlook.com
- (2603:10a6:10:2cc::19)
+        id S230474AbjF2Tzq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 29 Jun 2023 15:55:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59910 "EHLO
+        lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+        with ESMTP id S229522AbjF2Tzp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 29 Jun 2023 15:55:45 -0400
+Received: from sonic314-27.consmr.mail.ne1.yahoo.com (sonic314-27.consmr.mail.ne1.yahoo.com [66.163.189.153])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30E01212C
+        for <linux-api@vger.kernel.org>; Thu, 29 Jun 2023 12:55:42 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1688068541; bh=wgtdZkkOjJUexz8+RxUBfp40TMcnceo+7I6pOOcmSOE=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=adYF/oCr7+Qm3f/gQVdwrIr6VaYLilpT2ukC2p3pfaEDtTLfNMamq9vXpJ85XwKSoIXCPeFYd8L63SN/ubk9IoLRmw7ivlgl3dQWwCK4XmQ3T2jPnE/t46GMRolynSNLgEU46G/Z+uZvoR+03VbcqHTUtcWR2zd7uM1pnp/ZQOWv5puFpTLYnUFj0porJ/InAnE7Z64Nk3QlodUhaVRS7TD6kQoNoiMUBj9hHDaa/QOpE3D7oiywEscOEk0fzoq9vHSVuXFkcqSgx3sUBbaCrvwUbb7EDIkWB+aw6WcPAD813w+d+LlE/aXAsNFsnKq73+GiW3eaqoxS2Us7IzMq0w==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1688068541; bh=lxykeEXVpMgtwXn2iQd59AUZ2pkLvby6tD5M4pG2WFX=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=uAkEjLUa+7ko0GeRHcj6Uxc0bKOZUJDAQm2uEY9q/pzYKKgtHG06/xiXYt2qRnVN4BJlkpzLacyhccRvPjzZOxpsA29Xa950C7UwBB3C6dJwkwlx0Lu58FE7tV0/kj8m2T/bGh4y0SneYqTarssKOTiyYxI2vBAkM+NQ0h35aplC444LZVf5bZ4h/vo0L0WFBrVZ/2dTqvSM1FzoYPsrZYp2cBw+/PSVPTUfjJ/BdPbc5qHvVumT8mq0Hz4kWXsunhrwhycnZgf8hkLn0XA/AtqBuWktrfEOd1tuWms1PpsUexmR2GRdVQuZU7oKMNsHhrypgywilJC4u4nh+VyYOQ==
+X-YMail-OSG: 4iH5sI8VM1lL0U99BB.SOYDcOTPt1SJ2Ncsb5BrrK50N1cVJhJOceh9el1ch5p7
+ 2A_korJ36mqHE9bxke604C5mwXH1_lXx5fQtsTk0YgeVWePeGkcwE35YjZpjhf3fVWsun2qHzBlW
+ qs3WxbpCNlx7mz_4mo.5l_XxXJ9y5pSfJbAsUqRDbn1H4IiVaCqEgbbJSeHtiqWcOr0rsjK8RxQ3
+ zUTbMkbh6JhZfUfOgy.Ij59NLve.yFg4lSPRbDG3vRwes5q1Cu4FKMqn5r4Ky3p_cAF9XGCfpIF5
+ PJyhAMPuElkrk7WOsoIbFT05Cx5S6o14xEutdsFhk60NaC1TFOGEaGvVxqTMN7Od.IlMkCMB2zOT
+ QpGPsgCfSsjtJVaEv2UWjdgmYIfL.CST4VePQHSZJHqyy70zpRJWVXW6gLp9ox3Sj1H_vhkNiuP1
+ w01KpZ_coPDGPNei6l8TczN5LYgOIMXd41cZ8b16sYA1664DkGwXg0D9dgo9mLpW1r01QdD7jso1
+ bYr5pGy_W8WFWVnud5M0bXVG4U6IVq.TbPJnf44KAroxerLs3tFLKp7SqloeAQAvUeXlC9ihPQd6
+ gdUB8fBNL5WRgz_A1ZER.tRvhIBACYL5tzRcGHI_dUy5w3kYbTWnGtqEWFQmqu0Y2kUia9NTw2ut
+ 3cvDX3.jWLPmSHJpDCLvsv22UzsrcT8w74w.wRfC8C_Qwjcb7riCmjipTFACUqBDtWpRsVRP8BCZ
+ t9ZdCj_897dq1ne4aSBHzMzXtr7IO3eEvQV8.zPLNzald3o4QZOVgtchpueW34V4bE.yJ5OuhFOc
+ yeZ8HF46pB3iGHV..3L3amKBEjRsVNwtw3qCoApXF4AuWNeL246Xt8uxPjIt7seu1efLX82FOxds
+ ZLfHMEEm3KXxSHMC9eLPAGBbg_8hKlLHJxSoWxoMMYnJJZbHOghPbhSCLn.5nhvuNUw67mea2Yls
+ gcEs_2gvzb7zA2FdUHUS3uoHgq44UI0RDwM_GW0bRtrLhnlMsSe5NdV77I01QRm6GAdVjA0BDP2K
+ pPliZyGBE_7vhLloHB1q5JSjwqHiPtAthB31CPrTLhgH2ptEwFDVE2S810pbCK0Nj7ClGH5bhRmH
+ RYu.ne2s8pbnsl3GFZ.GBoabMmPv1PqO_M2dimE7.9EP7nEhBUcxH7heMgV_NrW0FqO8RKPk0bzE
+ D1bhK2qprzZx59X.mgAwwwcUWs6sNPC4lzrS7DJci1xQIJteA08wfkW5V5NdkXDpMxDqsxhFBayW
+ KcQ.CciskUQsp4ysw4hm0tmMY8a70A8Aht8MjfE2ASyuo2yy8GQps2QZkozkYy86lxrPbAlvRAZH
+ u1QPCTcIftiYGv9PoKqa8.3vMXcfD5svhJkxhDdWD8MdPkLdqMtKkZcJ6Nv3pKcO2wDOV5sFWQ1A
+ 7qaLRSfyuoJg2hLUzd0f7z6cv.f0CYJzWZPt4d5XfIXAFEpfuX_s710xAWTrj2XP8peOd9O6uCTY
+ ozHmfzZuaW5nl6wNTKqVRk_x62Y88dWMIR..3CmTjwP.klHjO_gcQWTd.WpHQH1mBrvi.1qV4CCb
+ jJI8DUQ3dj2jAJHOEevPw11jOVJn81Ya8Z867HKep_VN8J49VrWoWTh32akC9yL7UeFH3.AGx8mO
+ pq_2zJT1lSFj6ek18lIdpmGXOtn5PKvmf7R7J18EJRael1VHabcdbRO.1g2nHuRXaNYM4ttBEEj1
+ _omfihNa2Lpf0ot40RZRm0e8KjDKUd4rvQOdtz_mNevnuhEOKkTbFeZ4uLEyEmKvfkDLL61bzY6J
+ RN.GFgJpTFpvsaOP33EVf.vxVNtdP_4oI7GkLp7ooVwuYdbvBovBcAsDHJaaPOYQEiuRpVFY1JTg
+ sSl4hjYkRvSzbAYHd0Syh5nahdEOS0_Sqibeo.eLRU1pfOQh2w6J5FFlgwS1Soppd3sTuQSK6xeE
+ 2oPy59ltDSdNvcZ2JXtRL8owozHrn4w78TX8D1.7U96vJ46qN5X9hHF.xE1WBYUX0kyGfdx5CQti
+ wXrTvq9GkBKGfoO3HWgmRBRIu3u7LPmt8GJkRRYPoDeb9XP0ZJddb_jTD9baun5erX4jengH5URU
+ XSWy1f90ZtyUVMXfO_lxgCxSSbUHhfVOunX4kwCvOKeWHLgqK0VosjMOTqWC8hmrvsnA5G4HqFUF
+ 0CqvdrWSyLExqq.SYH7mg_BZAzhYDqaw9dQMjgbZz4fOHtSwAMoK50VaqmWIFwb2oeduSBbYJ1S3
+ Jr5u2eQveAupK30fuxwZRWXXt6wOfXYArnng6sqrwbJeXfTBT1_e70t9056RAN.H5mHVJTLEK4mK
+ gpYbFI76HwnCAMDz6rjc-
+X-Sonic-MF: <casey@schaufler-ca.com>
+X-Sonic-ID: 66413678-1751-4148-83c9-082994ab9e43
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic314.consmr.mail.ne1.yahoo.com with HTTP; Thu, 29 Jun 2023 19:55:41 +0000
+Received: by hermes--production-gq1-5748b5bccb-dgd7m (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 8413d56f5114fad294c4c94233ef2643;
+          Thu, 29 Jun 2023 19:55:39 +0000 (UTC)
+From:   Casey Schaufler <casey@schaufler-ca.com>
+To:     casey@schaufler-ca.com, paul@paul-moore.com,
+        linux-security-module@vger.kernel.org
+Cc:     jmorris@namei.org, serge@hallyn.com, keescook@chromium.org,
+        john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
+        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, mic@digikod.net
+Subject: [PATCH v12 01/11] LSM: Identify modules by more than name
+Date:   Thu, 29 Jun 2023 12:55:25 -0700
+Message-Id: <20230629195535.2590-2-casey@schaufler-ca.com>
+X-Mailer: git-send-email 2.40.1
+In-Reply-To: <20230629195535.2590-1-casey@schaufler-ca.com>
+References: <20230629195535.2590-1-casey@schaufler-ca.com>
 MIME-Version: 1.0
-X-MS-TrafficTypeDiagnostic: DB9PR08MB7179:EE_|AS8PR08MB8442:EE_|DBAEUR03FT004:EE_|AS8PR08MB10077:EE_
-X-MS-Office365-Filtering-Correlation-Id: 761ebab7-18bb-49c8-0740-08db78bb072d
-x-checkrecipientrouted: true
-NoDisclaimer: true
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam-Untrusted: BCL:0;
-X-Microsoft-Antispam-Message-Info-Original: SuAiMI4pwQJkFTtkSCnZjVMeg2wIwzlDOnjwHCZJkUR9Jie4C0atK5k85Oh3r4ldi+oVJiCmqAQA0Ffp2OQ3rKvXLs/kgTv0OBSxJy0cT0zvUPFcGjg6QdrVu7VRojCmsj3rY2e/JWXSVzDqHfTLf6usIfMnH/zT9j8D205SpIBolfW2iY33/JnlGMgq/loR6ukjvEkpeYU1nT3PN+RQRYX4xzN0FYgXMzN1PCNkTxqDowiUq8UgGVfcUpcU66M1JCTy2ZGPinzbB7asnuEqW96QNj2Fvr6dnVEi6sGv2VveXwsvwlYGgn0luzE71J9geVELpNtzhRxKOpDf+nG9QxTOJXxdBl1VkE7Re/B9W4x6+GEVvmG45mZV5we+BZ9n5JBW77UoWD0yUTSAkkf9H2v9Ong6fJtUn1xPTyzo5qnRyr53+G0Tnl5TDEPgRfJLvYZolIf7gsOgg1r+KdzjF71V6aCuGuejwNJ8nyeNLR90cgSzaf220CqwtSFM4uSIu9+FE1G4J3KUtT1cQ8l+p/PppLXLMJXKEzW1GtBlST0RGqcNOLOZJzgamqystSqv
-X-Forefront-Antispam-Report-Untrusted: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB9PR08MB7179.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230028)(4636009)(376002)(136003)(366004)(346002)(396003)(39860400002)(451199021)(66899021)(66476007)(6666004)(66946007)(66556008)(36756003)(4326008)(478600001)(54906003)(110136005)(86362001)(26005)(186003)(2616005)(83380400001)(7406005)(5660300002)(7416002)(2906002)(41300700001)(316002)(6486002)(38100700002)(6506007)(8936002)(8676002)(6512007);DIR:OUT;SFP:1101;
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR08MB8442
-Original-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-X-EOPAttributedMessage: 0
-X-MS-Exchange-Transport-CrossTenantHeadersStripped: DBAEUR03FT004.eop-EUR03.prod.protection.outlook.com
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id-Prvs: b1adbf0b-af17-406f-05d1-08db78bb00ac
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: qHyxqSVub8Y68ty/WIEsTI7+tmeRwd1nSXWw0AVF3NfiO9TNXxy/mXQEn+UQRbq4KHL6xNdS5GIwtDxeNDFl1uCY0H5HXN4qiChPP4HXNUPAtF/65ljHmhLH7xnOWZbPcvN0nMQvbV8AdmpORFncnfLCIaIa3emcQSSelL5g6RNWHbRU0ktxxCoomksEUOd3mKCnn1knNAaIL111kxGWjC2tFS9gCMFrVb2kfMRdQw5QpxKWJIApLxtYqboFh6lsI5mZ+U8ypb06tQ1Fc+l/B+VWBSYGZ5HCLz29p5tcuFCfuU46poKwWPszIi9xoubIn8+uODwvXv5IGuU2M29J0/DLCRNNSTVWQReiRe2PVQzy1sSlthwL6kZ8v+jZ1WCF9HeUnJwqU4EPn8xJBBQs04lMujrILszmxWBxv5bAkveYcvpKRlsTI19KwxW6bbBOb8pjmxc/Tlxtu6h9YgpYLmtWj4adNfrUii+ULyephXWWIwNGDo2p3IxfuhRU5eIT+aHPviKk6HKzHrnXqVumEjQKwsk1SsoVUgrbHKLubPs+5EphzARAf7sJ39WfRLwrfBH2x6FTjbqKJw/Q+EpDFA+D8V3TDCUwul9vZgg9xDY6UKlS8ZldnkcoHluOVvPMFtl5mMRU8r4B9xsoZzXo6dmbAX7FKVME1zpjh+/3/dDrnvGXYbc+SflDpTLfD9WZtNJDhUaKWgI3guqy85YVeljJ7Nbt0M8R5B1p3tMGbVUvCvqIlXJlfywQDQb5tyWw
-X-Forefront-Antispam-Report: CIP:63.35.35.123;CTRY:IE;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:64aa7808-outbound-1.mta.getcheckrecipient.com;PTR:ec2-63-35-35-123.eu-west-1.compute.amazonaws.com;CAT:NONE;SFS:(13230028)(4636009)(396003)(39860400002)(376002)(136003)(346002)(451199021)(46966006)(40470700004)(36840700001)(5660300002)(450100002)(70586007)(316002)(478600001)(36756003)(4326008)(70206006)(6506007)(66899021)(8936002)(8676002)(86362001)(2906002)(6512007)(26005)(110136005)(54906003)(36860700001)(40460700003)(40480700001)(41300700001)(6666004)(6486002)(82310400005)(356005)(186003)(336012)(82740400003)(47076005)(107886003)(83380400001)(2616005)(81166007);DIR:OUT;SFP:1101;
-X-OriginatorOrg: arm.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 29 Jun 2023 16:08:07.7509
- (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 761ebab7-18bb-49c8-0740-08db78bb072d
-X-MS-Exchange-CrossTenant-Id: f34e5979-57d9-4aaa-ad4d-b122a662184d
-X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=f34e5979-57d9-4aaa-ad4d-b122a662184d;Ip=[63.35.35.123];Helo=[64aa7808-outbound-1.mta.getcheckrecipient.com]
-X-MS-Exchange-CrossTenant-AuthSource: DBAEUR03FT004.eop-EUR03.prod.protection.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Anonymous
-X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS8PR08MB10077
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The 06/22/2023 23:18, Edgecombe, Rick P wrote:
-> I'd also appreciate if you could spell out exactly which:
->  - ucontext
->  - signal
->  - longjmp
->  - custom library stack switching
-> 
-> patterns you think shadow stack should support working together.
-> Because even after all these mails, I'm still not sure exactly what you
-> are trying to achieve.
+Create a struct lsm_id to contain identifying information
+about Linux Security Modules (LSMs). At inception this contains
+the name of the module, an identifier associated with the security
+module and an integer member "attrs" which identifies the API
+related data associated with each security module. The initial set
+of features maps to information that has traditionaly been available
+in /proc/self/attr. They are documented in a new userspace-api file.
+Change the security_add_hooks() interface to use this structure.
+Change the individual modules to maintain their own struct lsm_id
+and pass it to security_add_hooks().
 
-i'm trying to support two operations (in any combination):
+The values are for LSM identifiers are defined in a new UAPI
+header file linux/lsm.h. Each existing LSM has been updated to
+include it's LSMID in the lsm_id.
 
-(1) jump up the current (active) stack.
+The LSM ID values are sequential, with the oldest module
+LSM_ID_CAPABILITY being the lowest value and the existing modules
+numbered in the order they were included in the main line kernel.
+This is an arbitrary convention for assigning the values, but
+none better presents itself. The value 0 is defined as being invalid.
+The values 1-99 are reserved for any special case uses which may
+arise in the future. This may include attributes of the LSM
+infrastructure itself, possibly related to namespacing or network
+attribute management. A special range is identified for such attributes
+to help reduce confusion for developers unfamiliar with LSMs.
 
-(2) jump to a live frame in a different inactive but live stack.
-    the old stack becomes inactive (= no task executes on it)
-    and live (= has valid frames to jump to).
+LSM attribute values are defined for the attributes presented by
+modules that are available today. As with the LSM IDs, The value 0
+is defined as being invalid. The values 1-99 are reserved for any
+special case uses which may arise in the future.
 
-with
+Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
+Cc: linux-security-module <linux-security-module@vger.kernel.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Serge Hallyn <serge@hallyn.com>
+---
+ Documentation/userspace-api/index.rst |  1 +
+ Documentation/userspace-api/lsm.rst   | 55 +++++++++++++++++++++++++++
+ MAINTAINERS                           |  1 +
+ include/linux/lsm_hooks.h             | 16 +++++++-
+ include/uapi/linux/lsm.h              | 54 ++++++++++++++++++++++++++
+ security/apparmor/lsm.c               |  8 +++-
+ security/bpf/hooks.c                  |  9 ++++-
+ security/commoncap.c                  |  8 +++-
+ security/landlock/cred.c              |  2 +-
+ security/landlock/fs.c                |  2 +-
+ security/landlock/ptrace.c            |  2 +-
+ security/landlock/setup.c             |  6 +++
+ security/landlock/setup.h             |  1 +
+ security/loadpin/loadpin.c            |  9 ++++-
+ security/lockdown/lockdown.c          |  8 +++-
+ security/safesetid/lsm.c              |  9 ++++-
+ security/security.c                   | 12 +++---
+ security/selinux/hooks.c              |  9 ++++-
+ security/smack/smack_lsm.c            |  8 +++-
+ security/tomoyo/tomoyo.c              |  9 ++++-
+ security/yama/yama_lsm.c              |  8 +++-
+ 21 files changed, 216 insertions(+), 21 deletions(-)
+ create mode 100644 Documentation/userspace-api/lsm.rst
+ create mode 100644 include/uapi/linux/lsm.h
 
-(3) the runtime must manage the shadow stacks transparently.
-    (= portable c code does not need modifications)
+diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+index 72a65db0c498..b5fa29c077eb 100644
+--- a/Documentation/userspace-api/index.rst
++++ b/Documentation/userspace-api/index.rst
+@@ -32,6 +32,7 @@ place where this information is gathered.
+    sysfs-platform_profile
+    vduse
+    futex2
++   lsm
+ 
+ .. only::  subproject and html
+ 
+diff --git a/Documentation/userspace-api/lsm.rst b/Documentation/userspace-api/lsm.rst
+new file mode 100644
+index 000000000000..6ddf5506110b
+--- /dev/null
++++ b/Documentation/userspace-api/lsm.rst
+@@ -0,0 +1,55 @@
++.. SPDX-License-Identifier: GPL-2.0
++.. Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
++.. Copyright (C) 2022 Intel Corporation
++
++=====================================
++Linux Security Modules
++=====================================
++
++:Author: Casey Schaufler
++:Date: November 2022
++
++Linux security modules (LSM) provide a mechanism to implement
++additional access controls to the Linux security policies.
++
++The various security modules may support any of these attributes:
++
++``LSM_ATTR_CURRENT`` is the current, active security context of the
++process.
++The proc filesystem provides this value in ``/proc/self/attr/current``.
++This is supported by the SELinux, Smack and AppArmor security modules.
++Smack also provides this value in ``/proc/self/attr/smack/current``.
++AppArmor also provides this value in ``/proc/self/attr/apparmor/current``.
++
++``LSM_ATTR_EXEC`` is the security context of the process at the time the
++current image was executed.
++The proc filesystem provides this value in ``/proc/self/attr/exec``.
++This is supported by the SELinux and AppArmor security modules.
++AppArmor also provides this value in ``/proc/self/attr/apparmor/exec``.
++
++``LSM_ATTR_FSCREATE`` is the security context of the process used when
++creating file system objects.
++The proc filesystem provides this value in ``/proc/self/attr/fscreate``.
++This is supported by the SELinux security module.
++
++``LSM_ATTR_KEYCREATE`` is the security context of the process used when
++creating key objects.
++The proc filesystem provides this value in ``/proc/self/attr/keycreate``.
++This is supported by the SELinux security module.
++
++``LSM_ATTR_PREV`` is the security context of the process at the time the
++current security context was set.
++The proc filesystem provides this value in ``/proc/self/attr/prev``.
++This is supported by the SELinux and AppArmor security modules.
++AppArmor also provides this value in ``/proc/self/attr/apparmor/prev``.
++
++``LSM_ATTR_SOCKCREATE`` is the security context of the process used when
++creating socket objects.
++The proc filesystem provides this value in ``/proc/self/attr/sockcreate``.
++This is supported by the SELinux security module.
++
++Additional documentation
++========================
++
++* Documentation/security/lsm.rst
++* Documentation/security/lsm-development.rst
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 35e19594640d..92911df464da 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -19007,6 +19007,7 @@ S:	Supported
+ W:	http://kernsec.org/
+ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/pcmoore/lsm.git
+ F:	security/
++F:	include/uapi/linux/lsm.h
+ X:	security/selinux/
+ 
+ SELINUX SECURITY MODULE
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index ab2b2fafa4a4..fba8881d2bb5 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -41,6 +41,18 @@ struct security_hook_heads {
+ 	#undef LSM_HOOK
+ } __randomize_layout;
+ 
++/**
++ * struct lsm_id - Identify a Linux Security Module.
++ * @lsm: name of the LSM, must be approved by the LSM maintainers
++ * @id: LSM ID number from uapi/linux/lsm.h
++ *
++ * Contains the information that identifies the LSM.
++ */
++struct lsm_id {
++	const char	*name;
++	u64		id;
++};
++
+ /*
+  * Security module hook list structure.
+  * For use with generic list macros for common operations.
+@@ -49,7 +61,7 @@ struct security_hook_list {
+ 	struct hlist_node		list;
+ 	struct hlist_head		*head;
+ 	union security_list_options	hook;
+-	const char			*lsm;
++	struct lsm_id			*lsmid;
+ } __randomize_layout;
+ 
+ /*
+@@ -84,7 +96,7 @@ extern struct security_hook_heads security_hook_heads;
+ extern char *lsm_names;
+ 
+ extern void security_add_hooks(struct security_hook_list *hooks, int count,
+-				const char *lsm);
++			       struct lsm_id *lsmid);
+ 
+ #define LSM_FLAG_LEGACY_MAJOR	BIT(0)
+ #define LSM_FLAG_EXCLUSIVE	BIT(1)
+diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
+new file mode 100644
+index 000000000000..f27c9a9cc376
+--- /dev/null
++++ b/include/uapi/linux/lsm.h
+@@ -0,0 +1,54 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Linux Security Modules (LSM) - User space API
++ *
++ * Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
++ * Copyright (C) 2022 Intel Corporation
++ */
++
++#ifndef _UAPI_LINUX_LSM_H
++#define _UAPI_LINUX_LSM_H
++
++/*
++ * ID tokens to identify Linux Security Modules (LSMs)
++ *
++ * These token values are used to uniquely identify specific LSMs
++ * in the kernel as well as in the kernel's LSM userspace API.
++ *
++ * A value of zero/0 is considered undefined and should not be used
++ * outside the kernel. Values 1-99 are reserved for potential
++ * future use.
++ */
++#define LSM_ID_UNDEF		0
++#define LSM_ID_CAPABILITY	100
++#define LSM_ID_SELINUX		101
++#define LSM_ID_SMACK		102
++#define LSM_ID_TOMOYO		103
++#define LSM_ID_IMA		104
++#define LSM_ID_APPARMOR		105
++#define LSM_ID_YAMA		106
++#define LSM_ID_LOADPIN		107
++#define LSM_ID_SAFESETID	108
++#define LSM_ID_LOCKDOWN		109
++#define LSM_ID_BPF		110
++#define LSM_ID_LANDLOCK		111
++
++/*
++ * LSM_ATTR_XXX definitions identify different LSM attributes
++ * which are used in the kernel's LSM userspace API. Support
++ * for these attributes vary across the different LSMs. None
++ * are required.
++ *
++ * A value of zero/0 is considered undefined and should not be used
++ * outside the kernel. Values 1-99 are reserved for potential
++ * future use.
++ */
++#define LSM_ATTR_UNDEF		0
++#define LSM_ATTR_CURRENT	100
++#define LSM_ATTR_EXEC		101
++#define LSM_ATTR_FSCREATE	102
++#define LSM_ATTR_KEYCREATE	103
++#define LSM_ATTR_PREV		104
++#define LSM_ATTR_SOCKCREATE	105
++
++#endif /* _UAPI_LINUX_LSM_H */
+diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
+index f431251ffb91..308cb3a281c3 100644
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -24,6 +24,7 @@
+ #include <linux/zstd.h>
+ #include <net/sock.h>
+ #include <uapi/linux/mount.h>
++#include <uapi/linux/lsm.h>
+ 
+ #include "include/apparmor.h"
+ #include "include/apparmorfs.h"
+@@ -1215,6 +1216,11 @@ struct lsm_blob_sizes apparmor_blob_sizes __ro_after_init = {
+ 	.lbs_task = sizeof(struct aa_task_ctx),
+ };
+ 
++static struct lsm_id apparmor_lsmid __ro_after_init = {
++	.name = "apparmor",
++	.id = LSM_ID_APPARMOR,
++};
++
+ static struct security_hook_list apparmor_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(ptrace_access_check, apparmor_ptrace_access_check),
+ 	LSM_HOOK_INIT(ptrace_traceme, apparmor_ptrace_traceme),
+@@ -1904,7 +1910,7 @@ static int __init apparmor_init(void)
+ 		goto buffers_out;
+ 	}
+ 	security_add_hooks(apparmor_hooks, ARRAY_SIZE(apparmor_hooks),
+-				"apparmor");
++				&apparmor_lsmid);
+ 
+ 	/* Report that AppArmor successfully initialized */
+ 	apparmor_initialized = 1;
+diff --git a/security/bpf/hooks.c b/security/bpf/hooks.c
+index cfaf1d0e6a5f..7e7bdc1b7979 100644
+--- a/security/bpf/hooks.c
++++ b/security/bpf/hooks.c
+@@ -5,6 +5,7 @@
+  */
+ #include <linux/lsm_hooks.h>
+ #include <linux/bpf_lsm.h>
++#include <uapi/linux/lsm.h>
+ 
+ static struct security_hook_list bpf_lsm_hooks[] __ro_after_init = {
+ 	#define LSM_HOOK(RET, DEFAULT, NAME, ...) \
+@@ -15,9 +16,15 @@ static struct security_hook_list bpf_lsm_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(task_free, bpf_task_storage_free),
+ };
+ 
++static struct lsm_id bpf_lsmid __ro_after_init = {
++	.name = "bpf",
++	.id = LSM_ID_BPF,
++};
++
+ static int __init bpf_lsm_init(void)
+ {
+-	security_add_hooks(bpf_lsm_hooks, ARRAY_SIZE(bpf_lsm_hooks), "bpf");
++	security_add_hooks(bpf_lsm_hooks, ARRAY_SIZE(bpf_lsm_hooks),
++			   &bpf_lsmid);
+ 	pr_info("LSM support for eBPF active\n");
+ 	return 0;
+ }
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 0b3fc2f3afe7..44c2577105f7 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -25,6 +25,7 @@
+ #include <linux/binfmts.h>
+ #include <linux/personality.h>
+ #include <linux/mnt_idmapping.h>
++#include <uapi/linux/lsm.h>
+ 
+ /*
+  * If a non-root user executes a setuid-root binary in
+@@ -1440,6 +1441,11 @@ int cap_mmap_file(struct file *file, unsigned long reqprot,
+ 
+ #ifdef CONFIG_SECURITY
+ 
++static struct lsm_id capability_lsmid __ro_after_init = {
++	.name = "capability",
++	.id = LSM_ID_CAPABILITY,
++};
++
+ static struct security_hook_list capability_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(capable, cap_capable),
+ 	LSM_HOOK_INIT(settime, cap_settime),
+@@ -1464,7 +1470,7 @@ static struct security_hook_list capability_hooks[] __ro_after_init = {
+ static int __init capability_init(void)
+ {
+ 	security_add_hooks(capability_hooks, ARRAY_SIZE(capability_hooks),
+-				"capability");
++			   &capability_lsmid);
+ 	return 0;
+ }
+ 
+diff --git a/security/landlock/cred.c b/security/landlock/cred.c
+index 13dff2a31545..786af18c4a1c 100644
+--- a/security/landlock/cred.c
++++ b/security/landlock/cred.c
+@@ -42,5 +42,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+ __init void landlock_add_cred_hooks(void)
+ {
+ 	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+-			   LANDLOCK_NAME);
++			   &landlock_lsmid);
+ }
+diff --git a/security/landlock/fs.c b/security/landlock/fs.c
+index 1c0c198f6fdb..db5ebecfbf02 100644
+--- a/security/landlock/fs.c
++++ b/security/landlock/fs.c
+@@ -1307,5 +1307,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+ __init void landlock_add_fs_hooks(void)
+ {
+ 	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+-			   LANDLOCK_NAME);
++			   &landlock_lsmid);
+ }
+diff --git a/security/landlock/ptrace.c b/security/landlock/ptrace.c
+index 8a06d6c492bf..2bfc533d36e4 100644
+--- a/security/landlock/ptrace.c
++++ b/security/landlock/ptrace.c
+@@ -116,5 +116,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+ __init void landlock_add_ptrace_hooks(void)
+ {
+ 	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+-			   LANDLOCK_NAME);
++			   &landlock_lsmid);
+ }
+diff --git a/security/landlock/setup.c b/security/landlock/setup.c
+index 0f6113528fa4..f5ec82a1c381 100644
+--- a/security/landlock/setup.c
++++ b/security/landlock/setup.c
+@@ -8,6 +8,7 @@
+ 
+ #include <linux/init.h>
+ #include <linux/lsm_hooks.h>
++#include <uapi/linux/lsm.h>
+ 
+ #include "common.h"
+ #include "cred.h"
+@@ -24,6 +25,11 @@ struct lsm_blob_sizes landlock_blob_sizes __ro_after_init = {
+ 	.lbs_superblock = sizeof(struct landlock_superblock_security),
+ };
+ 
++struct lsm_id landlock_lsmid __ro_after_init = {
++	.name = LANDLOCK_NAME,
++	.id = LSM_ID_LANDLOCK,
++};
++
+ static int __init landlock_init(void)
+ {
+ 	landlock_add_cred_hooks();
+diff --git a/security/landlock/setup.h b/security/landlock/setup.h
+index 1daffab1ab4b..38bce5b172dc 100644
+--- a/security/landlock/setup.h
++++ b/security/landlock/setup.h
+@@ -14,5 +14,6 @@
+ extern bool landlock_initialized;
+ 
+ extern struct lsm_blob_sizes landlock_blob_sizes;
++extern struct lsm_id landlock_lsmid;
+ 
+ #endif /* _SECURITY_LANDLOCK_SETUP_H */
+diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
+index ebae964f7cc9..14202ee4a362 100644
+--- a/security/loadpin/loadpin.c
++++ b/security/loadpin/loadpin.c
+@@ -20,6 +20,7 @@
+ #include <linux/string_helpers.h>
+ #include <linux/dm-verity-loadpin.h>
+ #include <uapi/linux/loadpin.h>
++#include <uapi/linux/lsm.h>
+ 
+ #define VERITY_DIGEST_FILE_HEADER "# LOADPIN_TRUSTED_VERITY_ROOT_DIGESTS"
+ 
+@@ -208,6 +209,11 @@ static int loadpin_load_data(enum kernel_load_data_id id, bool contents)
+ 	return loadpin_check(NULL, (enum kernel_read_file_id) id);
+ }
+ 
++static struct lsm_id loadpin_lsmid __ro_after_init = {
++	.name = "loadpin",
++	.id = LSM_ID_LOADPIN,
++};
++
+ static struct security_hook_list loadpin_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(sb_free_security, loadpin_sb_free_security),
+ 	LSM_HOOK_INIT(kernel_read_file, loadpin_read_file),
+@@ -259,7 +265,8 @@ static int __init loadpin_init(void)
+ 	if (!register_sysctl("kernel/loadpin", loadpin_sysctl_table))
+ 		pr_notice("sysctl registration failed!\n");
+ #endif
+-	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks), "loadpin");
++	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks),
++			   &loadpin_lsmid);
+ 
+ 	return 0;
+ }
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index 68d19632aeb7..aa109b5811d9 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -13,6 +13,7 @@
+ #include <linux/security.h>
+ #include <linux/export.h>
+ #include <linux/lsm_hooks.h>
++#include <uapi/linux/lsm.h>
+ 
+ static enum lockdown_reason kernel_locked_down;
+ 
+@@ -75,6 +76,11 @@ static struct security_hook_list lockdown_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(locked_down, lockdown_is_locked_down),
+ };
+ 
++static struct lsm_id lockdown_lsmid __ro_after_init = {
++	.name = "lockdown",
++	.id = LSM_ID_LOCKDOWN,
++};
++
+ static int __init lockdown_lsm_init(void)
+ {
+ #if defined(CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY)
+@@ -83,7 +89,7 @@ static int __init lockdown_lsm_init(void)
+ 	lock_kernel_down("Kernel configuration", LOCKDOWN_CONFIDENTIALITY_MAX);
+ #endif
+ 	security_add_hooks(lockdown_hooks, ARRAY_SIZE(lockdown_hooks),
+-			   "lockdown");
++			   &lockdown_lsmid);
+ 	return 0;
+ }
+ 
+diff --git a/security/safesetid/lsm.c b/security/safesetid/lsm.c
+index e806739f7868..24bbab457623 100644
+--- a/security/safesetid/lsm.c
++++ b/security/safesetid/lsm.c
+@@ -19,6 +19,7 @@
+ #include <linux/ptrace.h>
+ #include <linux/sched/task_stack.h>
+ #include <linux/security.h>
++#include <uapi/linux/lsm.h>
+ #include "lsm.h"
+ 
+ /* Flag indicating whether initialization completed */
+@@ -261,6 +262,11 @@ static int safesetid_task_fix_setgroups(struct cred *new, const struct cred *old
+ 	return 0;
+ }
+ 
++static struct lsm_id safesetid_lsmid __ro_after_init = {
++	.name = "safesetid",
++	.id = LSM_ID_SAFESETID,
++};
++
+ static struct security_hook_list safesetid_security_hooks[] = {
+ 	LSM_HOOK_INIT(task_fix_setuid, safesetid_task_fix_setuid),
+ 	LSM_HOOK_INIT(task_fix_setgid, safesetid_task_fix_setgid),
+@@ -271,7 +277,8 @@ static struct security_hook_list safesetid_security_hooks[] = {
+ static int __init safesetid_security_init(void)
+ {
+ 	security_add_hooks(safesetid_security_hooks,
+-			   ARRAY_SIZE(safesetid_security_hooks), "safesetid");
++			   ARRAY_SIZE(safesetid_security_hooks),
++			   &safesetid_lsmid);
+ 
+ 	/* Report that SafeSetID successfully initialized */
+ 	safesetid_initialized = 1;
+diff --git a/security/security.c b/security/security.c
+index d5ff7ff45b77..e56714ef045a 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -512,17 +512,17 @@ static int lsm_append(const char *new, char **result)
+  * security_add_hooks - Add a modules hooks to the hook lists.
+  * @hooks: the hooks to add
+  * @count: the number of hooks to add
+- * @lsm: the name of the security module
++ * @lsmid: the identification information for the security module
+  *
+  * Each LSM has to register its hooks with the infrastructure.
+  */
+ void __init security_add_hooks(struct security_hook_list *hooks, int count,
+-			       const char *lsm)
++			       struct lsm_id *lsmid)
+ {
+ 	int i;
+ 
+ 	for (i = 0; i < count; i++) {
+-		hooks[i].lsm = lsm;
++		hooks[i].lsmid = lsmid;
+ 		hlist_add_tail_rcu(&hooks[i].list, hooks[i].head);
+ 	}
+ 
+@@ -531,7 +531,7 @@ void __init security_add_hooks(struct security_hook_list *hooks, int count,
+ 	 * and fix this up afterwards.
+ 	 */
+ 	if (slab_is_available()) {
+-		if (lsm_append(lsm, &lsm_names) < 0)
++		if (lsm_append(lsmid->name, &lsm_names) < 0)
+ 			panic("%s - Cannot get early memory.\n", __func__);
+ 	}
+ }
+@@ -3778,7 +3778,7 @@ int security_getprocattr(struct task_struct *p, const char *lsm,
+ 	struct security_hook_list *hp;
+ 
+ 	hlist_for_each_entry(hp, &security_hook_heads.getprocattr, list) {
+-		if (lsm != NULL && strcmp(lsm, hp->lsm))
++		if (lsm != NULL && strcmp(lsm, hp->lsmid->name))
+ 			continue;
+ 		return hp->hook.getprocattr(p, name, value);
+ 	}
+@@ -3803,7 +3803,7 @@ int security_setprocattr(const char *lsm, const char *name, void *value,
+ 	struct security_hook_list *hp;
+ 
+ 	hlist_for_each_entry(hp, &security_hook_heads.setprocattr, list) {
+-		if (lsm != NULL && strcmp(lsm, hp->lsm))
++		if (lsm != NULL && strcmp(lsm, hp->lsmid->name))
+ 			continue;
+ 		return hp->hook.setprocattr(name, value, size);
+ 	}
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index 79b4890e9936..49ec74bc006c 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -92,6 +92,7 @@
+ #include <linux/fsnotify.h>
+ #include <linux/fanotify.h>
+ #include <linux/io_uring.h>
++#include <uapi/linux/lsm.h>
+ 
+ #include "avc.h"
+ #include "objsec.h"
+@@ -6890,6 +6891,11 @@ static int selinux_uring_cmd(struct io_uring_cmd *ioucmd)
+ }
+ #endif /* CONFIG_IO_URING */
+ 
++static struct lsm_id selinux_lsmid __ro_after_init = {
++	.name = "selinux",
++	.id = LSM_ID_SELINUX,
++};
++
+ /*
+  * IMPORTANT NOTE: When adding new hooks, please be careful to keep this order:
+  * 1. any hooks that don't belong to (2.) or (3.) below,
+@@ -7210,7 +7216,8 @@ static __init int selinux_init(void)
+ 
+ 	hashtab_cache_init();
+ 
+-	security_add_hooks(selinux_hooks, ARRAY_SIZE(selinux_hooks), "selinux");
++	security_add_hooks(selinux_hooks, ARRAY_SIZE(selinux_hooks),
++			   &selinux_lsmid);
+ 
+ 	if (avc_add_callback(selinux_netcache_avc_callback, AVC_CALLBACK_RESET))
+ 		panic("SELinux: Unable to register AVC netcache callback\n");
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index 7a3e9ab137d8..cf847cfe5ed8 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -43,6 +43,7 @@
+ #include <linux/fs_parser.h>
+ #include <linux/watch_queue.h>
+ #include <linux/io_uring.h>
++#include <uapi/linux/lsm.h>
+ #include "smack.h"
+ 
+ #define TRANS_TRUE	"TRUE"
+@@ -4840,6 +4841,11 @@ struct lsm_blob_sizes smack_blob_sizes __ro_after_init = {
+ 	.lbs_superblock = sizeof(struct superblock_smack),
+ };
+ 
++static struct lsm_id smack_lsmid __ro_after_init = {
++	.name = "smack",
++	.id = LSM_ID_SMACK,
++};
++
+ static struct security_hook_list smack_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(ptrace_access_check, smack_ptrace_access_check),
+ 	LSM_HOOK_INIT(ptrace_traceme, smack_ptrace_traceme),
+@@ -5046,7 +5052,7 @@ static __init int smack_init(void)
+ 	/*
+ 	 * Register with LSM
+ 	 */
+-	security_add_hooks(smack_hooks, ARRAY_SIZE(smack_hooks), "smack");
++	security_add_hooks(smack_hooks, ARRAY_SIZE(smack_hooks), &smack_lsmid);
+ 	smack_enabled = 1;
+ 
+ 	pr_info("Smack:  Initializing.\n");
+diff --git a/security/tomoyo/tomoyo.c b/security/tomoyo/tomoyo.c
+index 25006fddc964..e2efc94ec481 100644
+--- a/security/tomoyo/tomoyo.c
++++ b/security/tomoyo/tomoyo.c
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include <linux/lsm_hooks.h>
++#include <uapi/linux/lsm.h>
+ #include "common.h"
+ 
+ /**
+@@ -542,6 +543,11 @@ static void tomoyo_task_free(struct task_struct *task)
+ 	}
+ }
+ 
++static struct lsm_id tomoyo_lsmid __ro_after_init = {
++	.name = "tomoyo",
++	.id = LSM_ID_TOMOYO,
++};
++
+ /*
+  * tomoyo_security_ops is a "struct security_operations" which is used for
+  * registering TOMOYO.
+@@ -595,7 +601,8 @@ static int __init tomoyo_init(void)
+ 	struct tomoyo_task *s = tomoyo_task(current);
+ 
+ 	/* register ourselves with the security framework */
+-	security_add_hooks(tomoyo_hooks, ARRAY_SIZE(tomoyo_hooks), "tomoyo");
++	security_add_hooks(tomoyo_hooks, ARRAY_SIZE(tomoyo_hooks),
++			   &tomoyo_lsmid);
+ 	pr_info("TOMOYO Linux initialized\n");
+ 	s->domain_info = &tomoyo_kernel_domain;
+ 	atomic_inc(&tomoyo_kernel_domain.users);
+diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
+index 2503cf153d4a..31b52685e041 100644
+--- a/security/yama/yama_lsm.c
++++ b/security/yama/yama_lsm.c
+@@ -18,6 +18,7 @@
+ #include <linux/task_work.h>
+ #include <linux/sched.h>
+ #include <linux/spinlock.h>
++#include <uapi/linux/lsm.h>
+ 
+ #define YAMA_SCOPE_DISABLED	0
+ #define YAMA_SCOPE_RELATIONAL	1
+@@ -421,6 +422,11 @@ static int yama_ptrace_traceme(struct task_struct *parent)
+ 	return rc;
+ }
+ 
++static struct lsm_id yama_lsmid __ro_after_init = {
++	.name = "yama",
++	.id = LSM_ID_YAMA,
++};
++
+ static struct security_hook_list yama_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(ptrace_access_check, yama_ptrace_access_check),
+ 	LSM_HOOK_INIT(ptrace_traceme, yama_ptrace_traceme),
+@@ -471,7 +477,7 @@ static inline void yama_init_sysctl(void) { }
+ static int __init yama_init(void)
+ {
+ 	pr_info("Yama: becoming mindful.\n");
+-	security_add_hooks(yama_hooks, ARRAY_SIZE(yama_hooks), "yama");
++	security_add_hooks(yama_hooks, ARRAY_SIZE(yama_hooks), &yama_lsmid);
+ 	yama_init_sysctl();
+ 	return 0;
+ }
+-- 
+2.40.1
 
-mapping this to c apis:
-
-- swapcontext, setcontext, longjmp, custom stack switching are jump
-  operations. (there are conditions under which (1) and (2) must work,
-  further details don't matter.)
-
-- makecontext creates an inactive live stack.
-
-- signal is only special if it executes on an alt stack: on signal
-  entry the alt stack becomes active and the interrupted stack
-  inactive but live. (nested signals execute on the alt stack until
-  that is left either via a jump or signal return.)
-
-- unwinding can be implemented with jump operations (it needs some
-  other things but that's out of scope here).
-
-the patterns that shadow stack should support falls out of this model.
-(e.g. posix does not allow jumping from one thread to the stack of a
-different thread, but the model does not care about that, it only
-cares if the target stack is inactive and live then jump should work.)
-
-some observations:
-
-- it is necessary for jump to detect case (2) and then switch to the
-  target shadow stack. this is also sufficient to implement it. (note:
-  the restore token can be used for detection since that is guaranteed
-  to be present when user code creates an inactive live stack and is
-  not present anywhere else by design. a different marking can be used
-  if the inactive live stack is created by the kernel, but then the
-  kernel has to provide a switch method, e.g. syscall. this should not
-  be controversial.)
-
-- in this model two live stacks cannot use the same shadow stack since
-  jumping between the two stacks is allowed in both directions, but
-  jumping within a shadow stack only works in one direction. (also two
-  tasks could execute on the same shadow stack then. and it makes
-  shadow stack size accounting problematic.)
-
-- so sharing shadow stack with alt stack is broken. (the model is
-  right in the sense that valid posix code can trigger the issue. we
-  can ignore that corner case and adjust the model so the shared
-  shadow stack works for alt stack, but it likely does not change the
-  jump design: eventually we want alt shadow stack.)
-
-- shadow stack cannot always be managed by the runtime transparently:
-  it has to be allocated for makecontext and alt stack in situations
-  where allocation failure cannot be handled. more alarmingly the
-  destruction of stacks may not be visible to the runtime so the
-  corresponding shadow stacks leak. my preferred way to fix this is
-  new apis that are shadow stack compatible (e.g. shadow_makecontext
-  with shadow_freecontext) and marking the incompatible apis as such.
-  portable code then can decide to update to new apis, run with shstk
-  disabled or accept the leaks and OOM failures. the current approach
-  needs ifdef __CET__ in user code for makecontext and sigaltstack
-  has many issues.
-
-- i'm still not happy with the shadow stack sizing. and would like to
-  have a token at the end of the shadow stack to allow scanning. and
-  it would be nice to deal with shadow stack overflow. and there is
-  async disable on dlopen. so there are things to work on.
-
-i understand that the proposed linux abi makes most existing binaries
-with shstk marking work, which is relevant for x86.
-
-for a while i thought we can fix the remaining issues even if that
-means breaking existing shstk binaries (just bump the abi marking).
-now it seems the issues can only be addressed in a future abi break.
-
-which means x86 linux will likely end up maintaining two incompatible
-abis and the future one will need user code and build system changes,
-not just runtime changes. it is not a small incremental change to add
-alt shadow stack support for example.
-
-i don't think the maintenance burden of two shadow stack abis is the
-right path for arm64 to follow, so the shadow stack semantics will
-likely become divergent not common across targets.
-
-i hope my position is now clearer.
