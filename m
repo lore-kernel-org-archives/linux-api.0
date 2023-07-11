@@ -2,259 +2,281 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D223AC001DE
-	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 08:09:43 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 6DAD0EB64DC
+	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 11:27:10 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231223AbjGKIJn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Jul 2023 04:09:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37582 "EHLO
+        id S231786AbjGKL1J convert rfc822-to-8bit (ORCPT
+        <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Jul 2023 07:27:09 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52058 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229635AbjGKIJm (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 04:09:42 -0400
-Received: from EUR01-HE1-obe.outbound.protection.outlook.com (mail-he1eur01on2077.outbound.protection.outlook.com [40.107.13.77])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6DE2692;
-        Tue, 11 Jul 2023 01:09:40 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=ViMrgVPV1Q4sIrAiGhfaQMWmx5bKgeN5Q0Z2VMpcClc=;
- b=rAqJigMI6bGLz8mbrwRVBygZf4+CG6WIDRlKHxnP4TM7yU9Cp1syrLoVvuGAS61DUFVUd0gWXDrfv6jfOUI4/QpLGfLIuDbW4BA6hytUKGY/9om8ZjzD+InEmS6YS8vx9AnB3e3LL1h3ymwEbI/3n5YddrBv9//6z2bx+0pipOI=
-Received: from ZR2P278CA0008.CHEP278.PROD.OUTLOOK.COM (2603:10a6:910:50::11)
- by DU0PR08MB9751.eurprd08.prod.outlook.com (2603:10a6:10:445::17) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6565.30; Tue, 11 Jul
- 2023 08:08:54 +0000
-Received: from VI1EUR03FT056.eop-EUR03.prod.protection.outlook.com
- (2603:10a6:910:50:cafe::e5) by ZR2P278CA0008.outlook.office365.com
- (2603:10a6:910:50::11) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6565.30 via Frontend
- Transport; Tue, 11 Jul 2023 08:08:54 +0000
-X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 63.35.35.123)
- smtp.mailfrom=arm.com; dkim=pass (signature was verified)
- header.d=armh.onmicrosoft.com;dmarc=pass action=none header.from=arm.com;
-Received-SPF: Pass (protection.outlook.com: domain of arm.com designates
- 63.35.35.123 as permitted sender) receiver=protection.outlook.com;
- client-ip=63.35.35.123; helo=64aa7808-outbound-1.mta.getcheckrecipient.com;
- pr=C
-Received: from 64aa7808-outbound-1.mta.getcheckrecipient.com (63.35.35.123) by
- VI1EUR03FT056.mail.protection.outlook.com (100.127.144.95) with Microsoft
- SMTP Server (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.20.6588.20 via Frontend Transport; Tue, 11 Jul 2023 08:08:53 +0000
-Received: ("Tessian outbound f9124736ff4f:v145"); Tue, 11 Jul 2023 08:08:52 +0000
-X-CheckRecipientChecked: true
-X-CR-MTA-CID: 77f4db24a3baf5a9
-X-CR-MTA-TID: 64aa7808
-Received: from 3fdea9231e38.2
-        by 64aa7808-outbound-1.mta.getcheckrecipient.com id E4527609-92DF-46DD-A6A8-5BA612B1CFFC.1;
-        Tue, 11 Jul 2023 08:08:41 +0000
-Received: from EUR05-DB8-obe.outbound.protection.outlook.com
-    by 64aa7808-outbound-1.mta.getcheckrecipient.com with ESMTPS id 3fdea9231e38.2
-    (version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384);
-    Tue, 11 Jul 2023 08:08:41 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=Y3DwERX68z/8l8XtpUbpjSbHB1jkrAitrWR6GbcZwd5Ec0T6kZcuOJVY6iRVYGCm2pXFj5Bwba+4t3LcyOvP90/bsyNTiAsdCL97aC7QVA9MeggNhUZbPW1UjAy+EbqHGBYbVXy14UH9q0SFM7hHQqL0a2HnjvxoAgpTmBjff0OaJv+8Rgtslq7GjT4LV5A8VphPymM25gOHqLrHKOy0SmnSfMO26kFCVIwSgCs6y9r6u0LFZNhJubZQrB3bGLgJYCGC7vS7reNIBnZIi4ZGRBo+P6NFcs4M5kB+2qElwT3xHI+NB2UOiAAnH8cuEXTn5wyI+HQFCLLtNlk3bFy1ng==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=ViMrgVPV1Q4sIrAiGhfaQMWmx5bKgeN5Q0Z2VMpcClc=;
- b=Hz3qJ7MWdRLbxolrF1F9q5WUK+G73wSjzK9mXlvKVXKRbMz/rweAnxSE1sx8O5uxdxWreOnVVIpcl4XU+SFuo5MWOLWVbR+IWW7yS2vyA4XPA8exG2s1k0m2c78h1ofyXeEwkxUXYbnC2+3/zcgI/XTi66OVF706HdEVIbp6HG4x/FUZjP9pD5+MxxCijPc1y7797fvx2ykjxJoNehTK6jDxwdJD8TpKbEf25HxZC423jHH3QBq7+53ZaGbk5c4LJNhkDEY+kMvZ28t2w/d+nmfLfHNMoPKoDSmhf5xAFdkBhqghw+eMuWFOonNcSMXg3ltAUS+1MA3e0BuI9c47eQ==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=arm.com; dmarc=pass action=none header.from=arm.com; dkim=pass
- header.d=arm.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=armh.onmicrosoft.com;
- s=selector2-armh-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=ViMrgVPV1Q4sIrAiGhfaQMWmx5bKgeN5Q0Z2VMpcClc=;
- b=rAqJigMI6bGLz8mbrwRVBygZf4+CG6WIDRlKHxnP4TM7yU9Cp1syrLoVvuGAS61DUFVUd0gWXDrfv6jfOUI4/QpLGfLIuDbW4BA6hytUKGY/9om8ZjzD+InEmS6YS8vx9AnB3e3LL1h3ymwEbI/3n5YddrBv9//6z2bx+0pipOI=
-Authentication-Results-Original: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com (2603:10a6:10:2cc::19)
- by AS2PR08MB10267.eurprd08.prod.outlook.com (2603:10a6:20b:647::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6565.31; Tue, 11 Jul
- 2023 08:08:38 +0000
-Received: from DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::43b7:3a83:5cbe:4559]) by DB9PR08MB7179.eurprd08.prod.outlook.com
- ([fe80::43b7:3a83:5cbe:4559%4]) with mapi id 15.20.6565.028; Tue, 11 Jul 2023
- 08:08:38 +0000
-Date:   Tue, 11 Jul 2023 09:08:11 +0100
-From:   "szabolcs.nagy@arm.com" <szabolcs.nagy@arm.com>
-To:     "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>,
-        "Lutomirski, Andy" <luto@kernel.org>
-Cc:     "Xu, Pengfei" <pengfei.xu@intel.com>,
-        "tglx@linutronix.de" <tglx@linutronix.de>,
-        "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>,
-        "kcc@google.com" <kcc@google.com>,
-        "nadav.amit@gmail.com" <nadav.amit@gmail.com>,
-        "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>,
-        "david@redhat.com" <david@redhat.com>,
-        "Schimpe, Christina" <christina.schimpe@intel.com>,
-        "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "peterz@infradead.org" <peterz@infradead.org>,
-        "corbet@lwn.net" <corbet@lwn.net>, "nd@arm.com" <nd@arm.com>,
-        "broonie@kernel.org" <broonie@kernel.org>,
-        "dethoma@microsoft.com" <dethoma@microsoft.com>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "x86@kernel.org" <x86@kernel.org>, "pavel@ucw.cz" <pavel@ucw.cz>,
-        "bp@alien8.de" <bp@alien8.de>,
-        "debug@rivosinc.com" <debug@rivosinc.com>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "rppt@kernel.org" <rppt@kernel.org>,
-        "john.allen@amd.com" <john.allen@amd.com>,
-        "jamorris@linux.microsoft.com" <jamorris@linux.microsoft.com>,
-        "rdunlap@infradead.org" <rdunlap@infradead.org>,
-        "mike.kravetz@oracle.com" <mike.kravetz@oracle.com>,
-        "jannh@google.com" <jannh@google.com>,
-        "oleg@redhat.com" <oleg@redhat.com>,
-        "andrew.cooper3@citrix.com" <andrew.cooper3@citrix.com>,
-        "keescook@chromium.org" <keescook@chromium.org>,
-        "gorcunov@gmail.com" <gorcunov@gmail.com>,
-        "arnd@arndb.de" <arnd@arndb.de>,
-        "Yu, Yu-cheng" <yu-cheng.yu@intel.com>,
-        "fweimer@redhat.com" <fweimer@redhat.com>,
-        "hpa@zytor.com" <hpa@zytor.com>,
-        "mingo@redhat.com" <mingo@redhat.com>,
-        "hjl.tools@gmail.com" <hjl.tools@gmail.com>,
-        "bsingharora@gmail.com" <bsingharora@gmail.com>,
-        "linux-mm@kvack.org" <linux-mm@kvack.org>,
-        "Syromiatnikov, Eugene" <esyr@redhat.com>,
-        "Yang, Weijiang" <weijiang.yang@intel.com>,
-        "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-        "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-        "Torvalds, Linus" <torvalds@linux-foundation.org>,
-        "Eranian, Stephane" <eranian@google.com>,
-        libc-alpha@sourceware.org, dalias@libc.org,
-        branislav.rankov@arm.com
-Subject: Re: [PATCH v9 23/42] Documentation/x86: Add CET shadow stack
- description
-Message-ID: <ZK0N65CEAd8HMOjm@arm.com>
-References: <ZJ2sTu9QRmiWNISy@arm.com>
- <e057de9dd9e9fe48981afb4ded4b337e8a83fabf.camel@intel.com>
- <ZKMRFNSYQBC6S+ga@arm.com>
- <eda8b2c4b2471529954aadbe04592da1ddae906d.camel@intel.com>
- <ZKa8jB4lOik/aFn2@arm.com>
- <68b7f983ffd3b7c629940b6c6ee9533bb55d9a13.camel@intel.com>
- <ZKguVAZe+DGA1VEv@arm.com>
- <1c2f524cbaff886ce782bf3a3f95756197bc1e27.camel@intel.com>
- <ZKw3zSKxCug0IbC1@arm.com>
- <1c0460a2042480b6a2d4cc1f6b99b27ab1371f3a.camel@intel.com>
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <1c0460a2042480b6a2d4cc1f6b99b27ab1371f3a.camel@intel.com>
-X-ClientProxiedBy: DM6PR02CA0067.namprd02.prod.outlook.com
- (2603:10b6:5:177::44) To DB9PR08MB7179.eurprd08.prod.outlook.com
- (2603:10a6:10:2cc::19)
+        with ESMTP id S231370AbjGKL05 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 07:26:57 -0400
+Received: from us-smtp-delivery-44.mimecast.com (us-smtp-delivery-44.mimecast.com [205.139.111.44])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6C42812E
+        for <linux-api@vger.kernel.org>; Tue, 11 Jul 2023 04:26:56 -0700 (PDT)
+Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
+ [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ us-mta-434-0AFh6vecM-iT5qRLVmkLkQ-1; Tue, 11 Jul 2023 07:26:52 -0400
+X-MC-Unique: 0AFh6vecM-iT5qRLVmkLkQ-1
+Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
+        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
+        (No client certificate requested)
+        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 639B01C0E0C7;
+        Tue, 11 Jul 2023 11:26:50 +0000 (UTC)
+Received: from localhost.localdomain.com (unknown [10.45.225.44])
+        by smtp.corp.redhat.com (Postfix) with ESMTP id AEB8CF66B9;
+        Tue, 11 Jul 2023 11:26:38 +0000 (UTC)
+From:   Alexey Gladkov <legion@kernel.org>
+To:     LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        viro@zeniv.linux.org.uk
+Cc:     Palmer Dabbelt <palmer@sifive.com>,
+        James.Bottomley@HansenPartnership.com, acme@kernel.org,
+        alexander.shishkin@linux.intel.com, axboe@kernel.dk,
+        benh@kernel.crashing.org, borntraeger@de.ibm.com, bp@alien8.de,
+        catalin.marinas@arm.com, christian@brauner.io, dalias@libc.org,
+        davem@davemloft.net, deepa.kernel@gmail.com, deller@gmx.de,
+        dhowells@redhat.com, fenghua.yu@intel.com, firoz.khan@linaro.org,
+        fweimer@redhat.com, geert@linux-m68k.org, glebfm@altlinux.org,
+        gor@linux.ibm.com, hare@suse.com, heiko.carstens@de.ibm.com,
+        hpa@zytor.com, ink@jurassic.park.msu.ru, jhogan@kernel.org,
+        kim.phillips@arm.com, ldv@altlinux.org,
+        linux-alpha@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org,
+        linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org,
+        linux-parisc@vger.kernel.org, linux-s390@vger.kernel.org,
+        linux-sh@vger.kernel.org, linux@armlinux.org.uk,
+        linuxppc-dev@lists.ozlabs.org, luto@kernel.org, mattst88@gmail.com,
+        mingo@redhat.com, monstr@monstr.eu, mpe@ellerman.id.au,
+        namhyung@kernel.org, paul.burton@mips.com, paulus@samba.org,
+        peterz@infradead.org, ralf@linux-mips.org, rth@twiddle.net,
+        schwidefsky@de.ibm.com, sparclinux@vger.kernel.org,
+        stefan@agner.ch, tglx@linutronix.de, tony.luck@intel.com,
+        tycho@tycho.ws, will@kernel.org, x86@kernel.org,
+        ysato@users.sourceforge.jp
+Subject: [PATCH v3 3/5] arch: Register fchmodat4, usually as syscall 451
+Date:   Tue, 11 Jul 2023 13:25:44 +0200
+Message-Id: <e48c4d4046de97205fd52a73f77e9b203c3b871e.1689074739.git.legion@kernel.org>
+In-Reply-To: <cover.1689074739.git.legion@kernel.org>
+References: <87o8pscpny.fsf@oldenburg2.str.redhat.com> <cover.1689074739.git.legion@kernel.org>
 MIME-Version: 1.0
-X-MS-TrafficTypeDiagnostic: DB9PR08MB7179:EE_|AS2PR08MB10267:EE_|VI1EUR03FT056:EE_|DU0PR08MB9751:EE_
-X-MS-Office365-Filtering-Correlation-Id: dd19ab4b-4422-41b4-8a40-08db81e6118f
-x-checkrecipientrouted: true
-NoDisclaimer: true
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam-Untrusted: BCL:0;
-X-Microsoft-Antispam-Message-Info-Original: /DmQTz8Dk0Ah3h4psVOP47bZfz5ty/wyAoBH9b+Y/hGBhls9u24UwCAENHhXoM/2BqU8OyPi0JdJQaV2l8yO8WTLCtgObZXnRoxfeboJ/QY+8qdjhXKz8qenBgGhQ/HkDRKj63bOQfpsJpsI/aiIoLBVtK+oZ5BrZnMb1Hyq0tHGSEzhX2TsAiF74IayfuMEzktnNASpDwp5lj2K9n22fAcu+oSDy7iLSVSm6y3+j14FLqXe257naHuhjDCJPbx97G2pOwu5J7bppsOQE5bw0blXIRjxkq3P83Kxpy4WITKIbNXz5nCDjbFuTLR3FQl8baAK5Dt2GYRN3UZrgFiya0nqcd38ICeDj3/DAXJ05KrhDw/76chHY7KDi/NfA7X4I7bvGHQecI2voou/Ygucs8FKpWeek/00BeO0i6bHJ1o32K1Q/pUy3sSS2by1S5UkCsmpGe4pNhYRzPOydd4Zg4b1SNuNXkxgrWmUi8mKTqzXtjFSiVB9a1RTjqrjyPv8dvQtDwwCTu9j2ZsSZYwyPdnoLt+gHN6LDkwOgiSLFC2WcXd/pzPbh/vw0KX8ms70
-X-Forefront-Antispam-Report-Untrusted: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DB9PR08MB7179.eurprd08.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230028)(4636009)(39860400002)(136003)(396003)(346002)(366004)(376002)(451199021)(66899021)(478600001)(6486002)(6666004)(110136005)(54906003)(2616005)(83380400001)(36756003)(86362001)(2906002)(66946007)(6506007)(26005)(186003)(6512007)(38100700002)(8936002)(316002)(41300700001)(66556008)(7406005)(5660300002)(7416002)(66476007)(8676002)(4326008);DIR:OUT;SFP:1101;
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: AS2PR08MB10267
-Original-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=arm.com;
-X-EOPAttributedMessage: 0
-X-MS-Exchange-Transport-CrossTenantHeadersStripped: VI1EUR03FT056.eop-EUR03.prod.protection.outlook.com
-X-MS-PublicTrafficType: Email
-X-MS-Office365-Filtering-Correlation-Id-Prvs: 81dd8b25-8081-42c8-90d0-08db81e6083f
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: v6c19OBgozi+qOrh/3r2vyN6v70ZDp938sUfYl+tgk2yM9UGUgpKxN6gV7lol7ZxzZZPyzI8RdAX1uN1A6Iu4hzuchdDijA4mBMY1QrMid74L/xFjB4w/Ciq5Ermo+fOJarpLdayMMr49JwNIKJCBiVG+wR/qhAmaPkoPMOBJ6RDWDL842QLbjY3Jsu9PrPnviBFdKRgt2hE97XbzFng80yW0yT8pIjgZ/5cHyAvwMDqmCcBUpC3zJWcrsTGU9OJXOeFEsyw1WvZ7NFXYb8pxEr09qxI8K59sssWlRjipyrsPIwfJA3Ng2qdsShOOcyZ53EvUn1WGx87eJBHI1LCuLB7GhwnEwkTl8Ij2+hMYHWwpnRP5bPwJh5p31GbbZlqifxaepetyx0TvgUiR3kBZsw94yU14TXmwS1wolgWswUQaxKlwr2bE/1KqGxZ2D5VHQCGOiW0tCuzdeCvkfZiEij//y8Bt5m71M5dsfh3/+tn1K7C2du/XiZb482bwnE5aT8z07fHc0bN2ecPuotlQMXYH0UMoqbUCpVJkBCyFp82gb0A9W6L1M3WNNUNSXjzeVPg0JJSQzvsFUrRH2uB2u515fUv0mu43ujmVYDq/paaa9ftY6u6VxXVv20vy8D+I6dxpbvzsrlExsMH55XqhXkEyqN1Fb1f/KMaIWsa0QnmDpSycbAILQ11fywdliU0v/hzT7A3+Vpq7HsqPSNLMilxkOPd6mCIDGxhdQQsiiZOlW7Yymaqi0cdbTYvaYQ7
-X-Forefront-Antispam-Report: CIP:63.35.35.123;CTRY:IE;LANG:en;SCL:1;SRV:;IPV:CAL;SFV:NSPM;H:64aa7808-outbound-1.mta.getcheckrecipient.com;PTR:ec2-63-35-35-123.eu-west-1.compute.amazonaws.com;CAT:NONE;SFS:(13230028)(4636009)(396003)(136003)(39860400002)(376002)(346002)(451199021)(40470700004)(46966006)(36840700001)(36860700001)(82310400005)(36756003)(86362001)(40480700001)(40460700003)(81166007)(356005)(82740400003)(478600001)(110136005)(6666004)(54906003)(6486002)(6512007)(8676002)(8936002)(5660300002)(2906002)(316002)(450100002)(4326008)(70586007)(70206006)(41300700001)(2616005)(66899021)(336012)(26005)(6506007)(47076005)(83380400001)(186003);DIR:OUT;SFP:1101;
-X-OriginatorOrg: arm.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Jul 2023 08:08:53.7482
- (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: dd19ab4b-4422-41b4-8a40-08db81e6118f
-X-MS-Exchange-CrossTenant-Id: f34e5979-57d9-4aaa-ad4d-b122a662184d
-X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=f34e5979-57d9-4aaa-ad4d-b122a662184d;Ip=[63.35.35.123];Helo=[64aa7808-outbound-1.mta.getcheckrecipient.com]
-X-MS-Exchange-CrossTenant-AuthSource: VI1EUR03FT056.eop-EUR03.prod.protection.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Anonymous
-X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DU0PR08MB9751
+X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
+X-Mimecast-Spam-Score: 0
+X-Mimecast-Originator: kernel.org
+Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=WINDOWS-1252; x-default=true
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-The 07/10/2023 22:56, Edgecombe, Rick P wrote:
-> On Mon, 2023-07-10 at 17:54 +0100, szabolcs.nagy@arm.com wrote:
-> > in short the only important change for v1 is shstk sizing.
-> 
-> I tried searching through this long thread and AFAICT this is a new
-> idea. Sorry if I missed something, but your previous answer on this(3)
-> seemed concerned with the opposite problem (oversized shadow stacks).
-> 
-> Quoted from a past mail:
-> On Mon, 2023-07-03 at 19:19 +0100, szabolcs.nagy@arm.com wrote:
-...
-> > - tiny thread stack but big sigaltstack (musl libc, go).
+From: Palmer Dabbelt <palmer@sifive.com>
 
-and 4 months earlier:
+This registers the new fchmodat4 syscall in most places as nuber 451,
+with alpha being the exception where it's 561.  I found all these sites
+by grepping for fspick, which I assume has found me everything.
 
-> Date: Fri, 3 Mar 2023 16:30:37 +0000
-> Subject: Re: [PATCH v7 01/41] Documentation/x86: Add CET shadow stack description
-> > Looking at this again, I'm not sure why a new rlimit is needed. It
-> > seems many of those points were just formulations of that the clone3
-> > stack size was not used, but it actually is and just not documented. If
-> > you disagree perhaps you could elaborate on what the requirements are
-> > and we can see if it seems tricky to do in a follow up.
-> 
-> - tiny thread stack and deep signal stack.
-> (note that this does not really work with glibc because it has
-> implementation internal signals that don't run on alt stack,
-> cannot be masked and don't fit on a tiny thread stack, but
-> with other runtimes this can be a valid use-case, e.g. musl
-> allows tiny thread stacks, < pagesize.)
-...
+Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
+Signed-off-by: Alexey Gladkov <legion@kernel.org>
+---
+ arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
+ arch/arm/tools/syscall.tbl                  | 1 +
+ arch/arm64/include/asm/unistd32.h           | 2 ++
+ arch/ia64/kernel/syscalls/syscall.tbl       | 1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
+ arch/s390/kernel/syscalls/syscall.tbl       | 1 +
+ arch/sh/kernel/syscalls/syscall.tbl         | 1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
+ include/uapi/asm-generic/unistd.h           | 5 ++++-
+ 18 files changed, 22 insertions(+), 1 deletion(-)
 
-that analysis was wrong: it considered handling any signals
-at all, but if the stack overflows due to a recursive call
-with empty stack frames then the stack gets used up at the
-same rate as the shadow stack and since the signal handler
-on the alt stack uses the same shadow stack that can easily
-overflow too independently of the stack size.
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 8ebacf37a8cf..00ceeffec7ff 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -490,3 +490,4 @@
+ 558	common	process_mrelease		sys_process_mrelease
+ 559	common  futex_waitv                     sys_futex_waitv
+ 560	common	set_mempolicy_home_node		sys_ni_syscall
++561	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index ac964612d8b0..0b9702d5c425 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -464,3 +464,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common	futex_waitv			sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 604a2053d006..49c65d935049 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -907,6 +907,8 @@ __SYSCALL(__NR_process_mrelease, sys_process_mrelease)
+ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
++#define __NR_fchmodat4 451
++__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 72c929d9902b..b35225c64781 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -371,3 +371,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index b1f3940bc298..4d80cd87e089 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -450,3 +450,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 820145e47350..306bd18e5b52 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -456,3 +456,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 253ff994ed2e..2ef47a546fd3 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -389,3 +389,4 @@
+ 448	n32	process_mrelease		sys_process_mrelease
+ 449	n32	futex_waitv			sys_futex_waitv
+ 450	n32	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	n32	fchmodat4			sys_fchmodat4
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 3f1886ad9d80..6356c0a6cda0 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -365,3 +365,4 @@
+ 448	n64	process_mrelease		sys_process_mrelease
+ 449	n64	futex_waitv			sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	n64	fchmodat4			sys_fchmodat4
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 8f243e35a7b2..d1111edba47e 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -438,3 +438,4 @@
+ 448	o32	process_mrelease		sys_process_mrelease
+ 449	o32	futex_waitv			sys_futex_waitv
+ 450	o32	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	o32	fchmodat4			sys_fchmodat4
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index 0e42fceb2d5e..0a1c13744c32 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -448,3 +448,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common	futex_waitv			sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index a0be127475b1..ee23866fa1c8 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -537,3 +537,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450 	nospu	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index b68f47541169..d5ce80065ece 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -453,3 +453,4 @@
+ 448  common	process_mrelease	sys_process_mrelease		sys_process_mrelease
+ 449  common	futex_waitv		sys_futex_waitv			sys_futex_waitv
+ 450  common	set_mempolicy_home_node	sys_set_mempolicy_home_node	sys_set_mempolicy_home_node
++451  common	fchmodat4		sys_fchmodat4			sys_fchmodat4
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 2de85c977f54..697b914f5c33 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -453,3 +453,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 4398cc6fb68d..79be56831f39 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -496,3 +496,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 320480a8db4f..3ab07bd87ea9 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -455,3 +455,4 @@
+ 448	i386	process_mrelease	sys_process_mrelease
+ 449	i386	futex_waitv		sys_futex_waitv
+ 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	i386	fchmodat4		sys_fchmodat4
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index c84d12608cd2..17047878293c 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -372,6 +372,7 @@
+ 448	common	process_mrelease	sys_process_mrelease
+ 449	common	futex_waitv		sys_futex_waitv
+ 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
++451	common	fchmodat4		sys_fchmodat4
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 52c94ab5c205..ed47fd3b2293 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -421,3 +421,4 @@
+ 448	common	process_mrelease		sys_process_mrelease
+ 449	common  futex_waitv                     sys_futex_waitv
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
++451	common	fchmodat4			sys_fchmodat4
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 45fa180cc56a..b7978b3ce3f1 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -886,8 +886,11 @@ __SYSCALL(__NR_futex_waitv, sys_futex_waitv)
+ #define __NR_set_mempolicy_home_node 450
+ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ 
++#define __NR_fchmodat4 451
++__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 451
++#define __NR_syscalls 452
+ 
+ /*
+  * 32 bit systems traditionally used different
+-- 
+2.33.8
 
-this is a big deal as it affects what operations the libc
-can support and handling stack overflow is a common
-requirement.
-
-i originally argued for a fix using separate alt shadow
-stacks, but since it became clear that does not work for
-the x86 v1 abi i am recommending the size increase.
-
-with shadow stack size = stack size + 1 page, libc can
-document a depth limit for the alt stack that works.
-(longjumping back to the alt stack is still broken
-though, but that's rarely a requirement)
-
-> Also glibc would have to size ucontext shadow stacks with an additional
-
-yes, assuming glibc wants to support sigaltstack.
-
-> page as well. I think it would be good to get some other signs of
-> interest on this tweak due to the requirements for glibc to participate
-> on the scheme. Can you gather that quickly, so we can get this all
-> prepped again?
-
-i can cc libc-alpha.
-
-the decision is for x86 shadow stack linux abi to use
-
-  shadow stack size = stack size
-
-or
-
-  shadow stack size = stack size + 1 page
-
-as default policy when alt stack signals use the same
-shadow stack, not a separate one.
-
-note: smallest stack frame size is 8bytes, same as the
-shadow stack entry. on a target where smallest frame
-size is 2x shadow stack entry size, the formula would
-use (stack size / 2).
-
-note: there is no api to change the policy from userspace
-at this point.
