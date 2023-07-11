@@ -2,52 +2,43 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5D1EDC001DC
-	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 12:12:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 902FAC0015E
+	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 12:30:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231555AbjGKMML (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Jul 2023 08:12:11 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47732 "EHLO
+        id S231312AbjGKMaB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Jul 2023 08:30:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33634 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230313AbjGKMMF (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 08:12:05 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E11F5171B
-        for <linux-api@vger.kernel.org>; Tue, 11 Jul 2023 05:11:14 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1689077474;
-        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-         content-transfer-encoding:content-transfer-encoding:
-         in-reply-to:in-reply-to:references:references;
-        bh=jciyvh7bPAJKrnb358k+MOZYCgue2kVbXpRfHdO7VwM=;
-        b=WOo63R9H3GUQt4vZSFLzOa2LuU9Ctcc7paYkCWgzl8opdCtMUfMEpQeazJEDDL2P9kRqTy
-        /Lnx1IGJTaXwhQIMgLB2Luhiw+v8uK3K+Qc09LKUyQxmnWiufTriSAMD/w8SWsn9Z6eo8J
-        BZDKXNXKckJDAuBmQBKsemdqZflDx48=
-Received: from mimecast-mx02.redhat.com (mx3-rdu2.redhat.com
- [66.187.233.73]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-673-8WB8DNSZP4ajrQIethBppg-1; Tue, 11 Jul 2023 08:11:11 -0400
-X-MC-Unique: 8WB8DNSZP4ajrQIethBppg-1
-Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 2E72A1C47661;
-        Tue, 11 Jul 2023 12:11:11 +0000 (UTC)
-Received: from oldenburg.str.redhat.com (unknown [10.2.16.46])
-        by smtp.corp.redhat.com (Postfix) with ESMTPS id EA8111401C2E;
-        Tue, 11 Jul 2023 12:10:59 +0000 (UTC)
-From:   Florian Weimer <fweimer@redhat.com>
+        with ESMTP id S232338AbjGKM3y (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 08:29:54 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6471919A8;
+        Tue, 11 Jul 2023 05:29:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+        References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=Hu/F5cIunoMaT6a9kqfbZcMI7NNurFOLxchc3V/T840=; b=Gyep6a1gLgAdGC/Vi+oGeCj6t2
+        IKyL5/1RD8Tt4FNIzAW4j/atfGUaAPjhcTyA3GXH97IiwjxIU7Y/8B0fe9w8Muqivjaw/yL4bo5D4
+        5ZB6Z3jktax9ZhaYYlnpZ/6Oq2ASsc4zeolrABZ2MM6Kdwl61InYH3P9Iq/clR9bEshpkcTPgt83a
+        HcgfknEVHsZHsbDQUQVwhK7+voDCXknT2H10c2k4CU3PIKN/myEz2CoJrRiGA1cFSqntUv8vLlRLZ
+        MsgcNgtIOxR6kAkYIn3W2vzZiImwsqNNg3I5cIwMsUw6LmokGgjjMBQXCL8w1O5cla/0aNYRbdjkx
+        RH8+Ud9g==;
+Received: from willy by casper.infradead.org with local (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1qJCTM-00FiF8-9q; Tue, 11 Jul 2023 12:28:04 +0000
+Date:   Tue, 11 Jul 2023 13:28:04 +0100
+From:   Matthew Wilcox <willy@infradead.org>
 To:     Alexey Gladkov <legion@kernel.org>
 Cc:     LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>,
         linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        viro@zeniv.linux.org.uk, James.Bottomley@HansenPartnership.com,
-        acme@kernel.org, alexander.shishkin@linux.intel.com,
-        axboe@kernel.dk, benh@kernel.crashing.org, borntraeger@de.ibm.com,
-        bp@alien8.de, catalin.marinas@arm.com, christian@brauner.io,
-        dalias@libc.org, davem@davemloft.net, deepa.kernel@gmail.com,
-        deller@gmx.de, dhowells@redhat.com, fenghua.yu@intel.com,
-        firoz.khan@linaro.org, geert@linux-m68k.org, glebfm@altlinux.org,
+        viro@zeniv.linux.org.uk, Palmer Dabbelt <palmer@sifive.com>,
+        James.Bottomley@hansenpartnership.com, acme@kernel.org,
+        alexander.shishkin@linux.intel.com, axboe@kernel.dk,
+        benh@kernel.crashing.org, borntraeger@de.ibm.com, bp@alien8.de,
+        catalin.marinas@arm.com, christian@brauner.io, dalias@libc.org,
+        davem@davemloft.net, deepa.kernel@gmail.com, deller@gmx.de,
+        dhowells@redhat.com, fenghua.yu@intel.com, firoz.khan@linaro.org,
+        fweimer@redhat.com, geert@linux-m68k.org, glebfm@altlinux.org,
         gor@linux.ibm.com, hare@suse.com, heiko.carstens@de.ibm.com,
         hpa@zytor.com, ink@jurassic.park.msu.ru, jhogan@kernel.org,
         kim.phillips@arm.com, ldv@altlinux.org,
@@ -58,68 +49,29 @@ Cc:     LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>,
         linux-sh@vger.kernel.org, linux@armlinux.org.uk,
         linuxppc-dev@lists.ozlabs.org, luto@kernel.org, mattst88@gmail.com,
         mingo@redhat.com, monstr@monstr.eu, mpe@ellerman.id.au,
-        namhyung@kernel.org, palmer@sifive.com, paul.burton@mips.com,
-        paulus@samba.org, peterz@infradead.org, ralf@linux-mips.org,
-        rth@twiddle.net, schwidefsky@de.ibm.com,
-        sparclinux@vger.kernel.org, stefan@agner.ch, tglx@linutronix.de,
-        tony.luck@intel.com, tycho@tycho.ws, will@kernel.org,
-        x86@kernel.org, ysato@users.sourceforge.jp
-Subject: Re: [PATCH v3 5/5] selftests: add fchmodat4(2) selftest
+        namhyung@kernel.org, paul.burton@mips.com, paulus@samba.org,
+        peterz@infradead.org, ralf@linux-mips.org, rth@twiddle.net,
+        schwidefsky@de.ibm.com, sparclinux@vger.kernel.org,
+        stefan@agner.ch, tglx@linutronix.de, tony.luck@intel.com,
+        tycho@tycho.ws, will@kernel.org, x86@kernel.org,
+        ysato@users.sourceforge.jp
+Subject: Re: [PATCH v3 2/5] fs: Add fchmodat4()
+Message-ID: <ZK1K1BOf43JOJWMx@casper.infradead.org>
 References: <87o8pscpny.fsf@oldenburg2.str.redhat.com>
-        <cover.1689074739.git.legion@kernel.org>
-        <c3606ec38227d921fa8a3e11613ffdb2f3ea7636.1689074739.git.legion@kernel.org>
-Date:   Tue, 11 Jul 2023 14:10:58 +0200
-In-Reply-To: <c3606ec38227d921fa8a3e11613ffdb2f3ea7636.1689074739.git.legion@kernel.org>
-        (Alexey Gladkov's message of "Tue, 11 Jul 2023 13:25:46 +0200")
-Message-ID: <87pm4ybqct.fsf@oldenburg.str.redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/28.2 (gnu/linux)
+ <cover.1689074739.git.legion@kernel.org>
+ <d11b93ad8e3b669afaff942e25c3fca65c6a983c.1689074739.git.legion@kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.7
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <d11b93ad8e3b669afaff942e25c3fca65c6a983c.1689074739.git.legion@kernel.org>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-* Alexey Gladkov:
+On Tue, Jul 11, 2023 at 01:25:43PM +0200, Alexey Gladkov wrote:
+> -static int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
+> +static int do_fchmodat4(int dfd, const char __user *filename, umode_t mode, int lookup_flags)
 
-> The test marks as skipped if a syscall with the AT_SYMLINK_NOFOLLOW flag
-> fails. This is because not all filesystems support changing the mode
-> bits of symlinks properly. These filesystems return an error but change
-> the mode bits:
->
-> newfstatat(4, "regfile", {st_mode=3DS_IFREG|0640, st_size=3D0, ...}, AT_S=
-YMLINK_NOFOLLOW) =3D 0
-> newfstatat(4, "symlink", {st_mode=3DS_IFLNK|0777, st_size=3D7, ...}, AT_S=
-YMLINK_NOFOLLOW) =3D 0
-> syscall_0x1c3(0x4, 0x55fa1f244396, 0x180, 0x100, 0x55fa1f24438e, 0x34) =
-=3D -1 EOPNOTSUPP (Operation not supported)
-> newfstatat(4, "regfile", {st_mode=3DS_IFREG|0640, st_size=3D0, ...}, AT_S=
-YMLINK_NOFOLLOW) =3D 0
->
-> This happens with btrfs and xfs:
->
->  $ /kernel/tools/testing/selftests/fchmodat4/fchmodat4_test
->  TAP version 13
->  1..1
->  ok 1 # SKIP fchmodat4(symlink)
->  # Totals: pass:0 fail:0 xfail:0 xpass:0 skip:1 error:0
->
->  $ stat /tmp/ksft-fchmodat4.*/symlink
->    File: /tmp/ksft-fchmodat4.3NCqlE/symlink -> regfile
->    Size: 7               Blocks: 0          IO Block: 4096   symbolic link
->  Device: 7,0     Inode: 133         Links: 1
->  Access: (0600/lrw-------)  Uid: (    0/    root)   Gid: (    0/    root)
->
-> Signed-off-by: Alexey Gladkov <legion@kernel.org>
-
-This looks like a bug in those file systems?
-
-As an extra test, =E2=80=9Cecho 3 > /proc/sys/vm/drop_caches=E2=80=9D somet=
-imes has
-strange effects in such cases because the bits are not actually stored
-on disk, only in the dentry cache.
-
-Thanks,
-Florian
+This function can still be called do_fchmodat(); we don't need to
+version internal functions.
 
