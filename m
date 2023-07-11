@@ -2,157 +2,142 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 46AB2EB64DC
-	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 11:28:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 209B1EB64DC
+	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 11:32:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230257AbjGKL2r convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 11 Jul 2023 07:28:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53424 "EHLO
+        id S230194AbjGKLcK (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 11 Jul 2023 07:32:10 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55582 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231381AbjGKL2e (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 07:28:34 -0400
-Received: from us-smtp-delivery-44.mimecast.com (unknown [207.211.30.44])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5CAAE1738
-        for <linux-api@vger.kernel.org>; Tue, 11 Jul 2023 04:28:17 -0700 (PDT)
-Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
- [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- us-mta-447-NWZC1GziNDq7Lz0JPSLZRg-1; Tue, 11 Jul 2023 07:26:40 -0400
-X-MC-Unique: NWZC1GziNDq7Lz0JPSLZRg-1
-Received: from smtp.corp.redhat.com (int-mx05.intmail.prod.int.rdu2.redhat.com [10.11.54.5])
-        (using TLSv1.2 with cipher AECDH-AES256-SHA (256/256 bits))
-        (No client certificate requested)
-        by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 4FAB088D1B7;
-        Tue, 11 Jul 2023 11:26:38 +0000 (UTC)
-Received: from localhost.localdomain.com (unknown [10.45.225.44])
-        by smtp.corp.redhat.com (Postfix) with ESMTP id C5A9463F3C;
-        Tue, 11 Jul 2023 11:26:25 +0000 (UTC)
-From:   Alexey Gladkov <legion@kernel.org>
-To:     LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>,
-        linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-        viro@zeniv.linux.org.uk
-Cc:     Palmer Dabbelt <palmer@sifive.com>,
-        James.Bottomley@HansenPartnership.com, acme@kernel.org,
-        alexander.shishkin@linux.intel.com, axboe@kernel.dk,
-        benh@kernel.crashing.org, borntraeger@de.ibm.com, bp@alien8.de,
-        catalin.marinas@arm.com, christian@brauner.io, dalias@libc.org,
-        davem@davemloft.net, deepa.kernel@gmail.com, deller@gmx.de,
-        dhowells@redhat.com, fenghua.yu@intel.com, firoz.khan@linaro.org,
-        fweimer@redhat.com, geert@linux-m68k.org, glebfm@altlinux.org,
+        with ESMTP id S229517AbjGKLcJ (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 07:32:09 -0400
+Received: from out3-smtp.messagingengine.com (out3-smtp.messagingengine.com [66.111.4.27])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id A2E2EA6;
+        Tue, 11 Jul 2023 04:32:08 -0700 (PDT)
+Received: from compute6.internal (compute6.nyi.internal [10.202.2.47])
+        by mailout.nyi.internal (Postfix) with ESMTP id 755C55C00E7;
+        Tue, 11 Jul 2023 07:32:05 -0400 (EDT)
+Received: from imap50 ([10.202.2.100])
+  by compute6.internal (MEProxy); Tue, 11 Jul 2023 07:32:05 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=arndb.de; h=cc
+        :cc:content-type:content-type:date:date:from:from:in-reply-to
+        :in-reply-to:message-id:mime-version:references:reply-to:sender
+        :subject:subject:to:to; s=fm2; t=1689075125; x=1689161525; bh=/C
+        vj5KuDdmHIGd859qaJsBs/f1fpWATGo78ystxolZ8=; b=C4Tl5XZgJGIc7j43HJ
+        4fGyI/IRlktc3w6e0XFyC1Sg6fp8cLDzoB1xPJ/yosSCoI1QS/IIkA7A0lmOtSB5
+        8dS0sjpFCOyKj521J54iNrg2Ng8+adx4HMWT43DkM+FJcICGaQpids1RewgEq1Xj
+        0mY/MPzvKuffj8CGY+mzm9mDWmVhhvEbPTNxnU75mrfiB7BL+Eq7WxgavTeKOobo
+        O8eQk0OtdaNegptl2lVjD4jRydZYvCjVnTJ66OECZngYMjqizqY133wtbpYlGLGk
+        nxZgL729F0mocqDVx9p2E8s6g3NUBTZ0kf1O2D7yx4W09UvSleY+E25vqJ6FkgSF
+        Hfrg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:cc:content-type:content-type:date:date
+        :feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
+        :message-id:mime-version:references:reply-to:sender:subject
+        :subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+        :x-sasl-enc; s=fm2; t=1689075125; x=1689161525; bh=/Cvj5KuDdmHIG
+        d859qaJsBs/f1fpWATGo78ystxolZ8=; b=QqHVCmHeA3F+kyNbq+cIkQQCEtoHx
+        HsAMIDNNGIYjXVDzLpogMsF84iRhwfmY38lNiYRP4tDLqwRRID821vzTvgRLSw2N
+        iQqDY6Iq8rWyG9lLkEmR5e/UJG9diErjrD8AFbczp0X5rKkN8AG44+gfgfPaGLvL
+        hEL9WPOz/L9mb0cXjNy3JPxTH2oZtFGu2NYSMi0+g5/Ya/upwP8K+ycBfabbXSDS
+        pC7VjP6/HjSulVngpPClEkB50uvje1m9i5hPtX8K305ne5TzZEfZciWBQo/Qos9j
+        xbHxrcsOpeJnDp6IHEvgnIXFodpKlEk/s2SWjSA3iqRI90V/hVTnTDDhA==
+X-ME-Sender: <xms:tT2tZMq7b3F3GuNwIAVPns9-hrMV7r0Yc6YT9LqOf-jJMKbcl7Fh9A>
+    <xme:tT2tZCqNeEHxlc-UStg0uiSOgPvE3_cLgP_6sxhq7l1ERIaLmgg6bipvjEiyrkpas
+    EjV8FZ1WrtLpcs-7GM>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedviedrfedtgdegudcutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefofgggkfgjfhffhffvvefutgesthdtredtreertdenucfhrhhomhepfdetrhhn
+    ugcuuegvrhhgmhgrnhhnfdcuoegrrhhnugesrghrnhgusgdruggvqeenucggtffrrghtth
+    gvrhhnpeffheeugeetiefhgeethfejgfdtuefggeejleehjeeutefhfeeggefhkedtkeet
+    ffenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepmhgrihhlfhhrohhmpegrrh
+    hnugesrghrnhgusgdruggv
+X-ME-Proxy: <xmx:tT2tZBMvQLXICA6Yc7Zt2AWWWwfYYPHBdt_zdRvw9CwK-9s0jeSfHQ>
+    <xmx:tT2tZD6JBvvCY4Z7UDnCJz03QOvfOhdkKUjt4ButXwR1zHx1yx7H8Q>
+    <xmx:tT2tZL7ngUbKLupOWUkuw3qJR51wOdtRI_3lKoDd41m846IM35HoCQ>
+    <xmx:tT2tZPiMQDZ505eWhA_Ewk2IXxTzTQEwFwWy0ucHcigyBE5CiFgBjQ>
+Feedback-ID: i56a14606:Fastmail
+Received: by mailuser.nyi.internal (Postfix, from userid 501)
+        id ECECE1700090; Tue, 11 Jul 2023 07:32:04 -0400 (EDT)
+X-Mailer: MessagingEngine.com Webmail Interface
+User-Agent: Cyrus-JMAP/3.9.0-alpha0-531-gfdfa13a06d-fm-20230703.001-gfdfa13a0
+Mime-Version: 1.0
+Message-Id: <55fee4b7-41f0-4f24-ad0e-a4527486bad1@app.fastmail.com>
+In-Reply-To: <e48c4d4046de97205fd52a73f77e9b203c3b871e.1689074739.git.legion@kernel.org>
+References: <87o8pscpny.fsf@oldenburg2.str.redhat.com>
+ <cover.1689074739.git.legion@kernel.org>
+ <e48c4d4046de97205fd52a73f77e9b203c3b871e.1689074739.git.legion@kernel.org>
+Date:   Tue, 11 Jul 2023 13:31:44 +0200
+From:   "Arnd Bergmann" <arnd@arndb.de>
+To:     "Alexey Gladkov" <legion@kernel.org>,
+        LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org,
+        "Alexander Viro" <viro@zeniv.linux.org.uk>
+Cc:     "Palmer Dabbelt" <palmer@sifive.com>,
+        "James E . J . Bottomley" <James.Bottomley@HansenPartnership.com>,
+        "Arnaldo Carvalho de Melo" <acme@kernel.org>,
+        "Alexander Shishkin" <alexander.shishkin@linux.intel.com>,
+        "Jens Axboe" <axboe@kernel.dk>,
+        "Benjamin Herrenschmidt" <benh@kernel.crashing.org>,
+        "Christian Borntraeger" <borntraeger@de.ibm.com>,
+        "Borislav Petkov" <bp@alien8.de>,
+        "Catalin Marinas" <catalin.marinas@arm.com>, christian@brauner.io,
+        "Rich Felker" <dalias@libc.org>,
+        "David S . Miller" <davem@davemloft.net>,
+        "Deepa Dinamani" <deepa.kernel@gmail.com>,
+        "Helge Deller" <deller@gmx.de>,
+        "David Howells" <dhowells@redhat.com>, fenghua.yu@intel.com,
+        firoz.khan@linaro.org, "Florian Weimer" <fweimer@redhat.com>,
+        "Geert Uytterhoeven" <geert@linux-m68k.org>, glebfm@altlinux.org,
         gor@linux.ibm.com, hare@suse.com, heiko.carstens@de.ibm.com,
-        hpa@zytor.com, ink@jurassic.park.msu.ru, jhogan@kernel.org,
-        kim.phillips@arm.com, ldv@altlinux.org,
-        linux-alpha@vger.kernel.org, linux-arch@vger.kernel.org,
+        "H. Peter Anvin" <hpa@zytor.com>,
+        "Ivan Kokshaysky" <ink@jurassic.park.msu.ru>, jhogan@kernel.org,
+        "Kim Phillips" <kim.phillips@arm.com>, ldv@altlinux.org,
+        linux-alpha@vger.kernel.org,
+        Linux-Arch <linux-arch@vger.kernel.org>,
         linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org,
         linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org,
         linux-parisc@vger.kernel.org, linux-s390@vger.kernel.org,
-        linux-sh@vger.kernel.org, linux@armlinux.org.uk,
-        linuxppc-dev@lists.ozlabs.org, luto@kernel.org, mattst88@gmail.com,
-        mingo@redhat.com, monstr@monstr.eu, mpe@ellerman.id.au,
-        namhyung@kernel.org, paul.burton@mips.com, paulus@samba.org,
-        peterz@infradead.org, ralf@linux-mips.org, rth@twiddle.net,
-        schwidefsky@de.ibm.com, sparclinux@vger.kernel.org,
-        stefan@agner.ch, tglx@linutronix.de, tony.luck@intel.com,
-        tycho@tycho.ws, will@kernel.org, x86@kernel.org,
-        ysato@users.sourceforge.jp
-Subject: [PATCH v3 2/5] fs: Add fchmodat4()
-Date:   Tue, 11 Jul 2023 13:25:43 +0200
-Message-Id: <d11b93ad8e3b669afaff942e25c3fca65c6a983c.1689074739.git.legion@kernel.org>
-In-Reply-To: <cover.1689074739.git.legion@kernel.org>
-References: <87o8pscpny.fsf@oldenburg2.str.redhat.com> <cover.1689074739.git.legion@kernel.org>
-MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.1 on 10.11.54.5
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: kernel.org
-Content-Transfer-Encoding: 8BIT
-Content-Type: text/plain; charset=WINDOWS-1252; x-default=true
+        linux-sh@vger.kernel.org, "Russell King" <linux@armlinux.org.uk>,
+        linuxppc-dev@lists.ozlabs.org, "Andy Lutomirski" <luto@kernel.org>,
+        "Matt Turner" <mattst88@gmail.com>,
+        "Ingo Molnar" <mingo@redhat.com>,
+        "Michal Simek" <monstr@monstr.eu>,
+        "Michael Ellerman" <mpe@ellerman.id.au>,
+        "Namhyung Kim" <namhyung@kernel.org>, paul.burton@mips.com,
+        "Paul Mackerras" <paulus@samba.org>,
+        "Peter Zijlstra" <peterz@infradead.org>, ralf@linux-mips.org,
+        rth@twiddle.net, schwidefsky@de.ibm.com,
+        sparclinux@vger.kernel.org, stefan@agner.ch,
+        "Thomas Gleixner" <tglx@linutronix.de>,
+        "Tony Luck" <tony.luck@intel.com>, tycho@tycho.ws,
+        "Will Deacon" <will@kernel.org>, x86@kernel.org,
+        "Yoshinori Sato" <ysato@users.sourceforge.jp>
+Subject: Re: [PATCH v3 3/5] arch: Register fchmodat4, usually as syscall 451
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Palmer Dabbelt <palmer@sifive.com>
+On Tue, Jul 11, 2023, at 13:25, Alexey Gladkov wrote:
+> From: Palmer Dabbelt <palmer@sifive.com>
+>
+> This registers the new fchmodat4 syscall in most places as nuber 451,
+> with alpha being the exception where it's 561.  I found all these sites
+> by grepping for fspick, which I assume has found me everything.
+>
+> Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
+> Signed-off-by: Alexey Gladkov <legion@kernel.org>
 
-On the userspace side fchmodat(3) is implemented as a wrapper
-function which implements the POSIX-specified interface. This
-interface differs from the underlying kernel system call, which does not
-have a flags argument. Most implementations require procfs [1][2].
+In linux-6.5-rc1, number 451 is used for __NR_cachestat, the
+next free one at the moment is 452.
 
-There doesn't appear to be a good userspace workaround for this issue
-but the implementation in the kernel is pretty straight-forward.
+>  arch/arm/tools/syscall.tbl                  | 1 +
+>  arch/arm64/include/asm/unistd32.h           | 2 ++
 
-The new fchmodat4() syscall allows to pass the AT_SYMLINK_NOFOLLOW flag,
-unlike existing fchmodat.
+Unfortunately, you still also need to change __NR_compat_syscalls
+in arch/arm64/include/asm/unistd.h. Aside from these two issues,
+your patch is the correct way to hook up a new syscall.
 
-[1] https://sourceware.org/git/?p=glibc.git;a=blob;f=sysdeps/unix/sysv/linux/fchmodat.c;h=17eca54051ee28ba1ec3f9aed170a62630959143;hb=a492b1e5ef7ab50c6fdd4e4e9879ea5569ab0a6c#l35
-[2] https://git.musl-libc.org/cgit/musl/tree/src/stat/fchmodat.c?id=718f363bc2067b6487900eddc9180c84e7739f80#n28
-
-Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
-Signed-off-by: Alexey Gladkov <legion@kernel.org>
----
- fs/open.c                | 18 ++++++++++++++----
- include/linux/syscalls.h |  2 ++
- 2 files changed, 16 insertions(+), 4 deletions(-)
-
-diff --git a/fs/open.c b/fs/open.c
-index 4478adcc4f3a..58bb88c6afb6 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -671,11 +671,11 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
- 	return err;
- }
- 
--static int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
-+static int do_fchmodat4(int dfd, const char __user *filename, umode_t mode, int lookup_flags)
- {
- 	struct path path;
- 	int error;
--	unsigned int lookup_flags = LOOKUP_FOLLOW;
-+
- retry:
- 	error = user_path_at(dfd, filename, lookup_flags, &path);
- 	if (!error) {
-@@ -689,15 +689,25 @@ static int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
- 	return error;
- }
- 
-+SYSCALL_DEFINE4(fchmodat4, int, dfd, const char __user *, filename,
-+		umode_t, mode, int, flags)
-+{
-+	if (unlikely(flags & ~AT_SYMLINK_NOFOLLOW))
-+		return -EINVAL;
-+
-+	return do_fchmodat4(dfd, filename, mode,
-+			flags & AT_SYMLINK_NOFOLLOW ? 0 : LOOKUP_FOLLOW);
-+}
-+
- SYSCALL_DEFINE3(fchmodat, int, dfd, const char __user *, filename,
- 		umode_t, mode)
- {
--	return do_fchmodat(dfd, filename, mode);
-+	return do_fchmodat4(dfd, filename, mode, LOOKUP_FOLLOW);
- }
- 
- SYSCALL_DEFINE2(chmod, const char __user *, filename, umode_t, mode)
- {
--	return do_fchmodat(AT_FDCWD, filename, mode);
-+	return do_fchmodat4(AT_FDCWD, filename, mode, LOOKUP_FOLLOW);
- }
- 
- /**
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 497bdd968c32..b17d37d2bad6 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -466,6 +466,8 @@ asmlinkage long sys_chroot(const char __user *filename);
- asmlinkage long sys_fchmod(unsigned int fd, umode_t mode);
- asmlinkage long sys_fchmodat(int dfd, const char __user *filename,
- 			     umode_t mode);
-+asmlinkage long sys_fchmodat4(int dfd, const char __user *filename,
-+			     umode_t mode, int flags);
- asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid_t user,
- 			     gid_t group, int flag);
- asmlinkage long sys_fchown(unsigned int fd, uid_t user, gid_t group);
--- 
-2.33.8
-
+   Arnd
