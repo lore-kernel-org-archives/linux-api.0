@@ -2,35 +2,35 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 84F50C001DD
-	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 15:43:16 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ABE32EB64DC
+	for <linux-api@archiver.kernel.org>; Tue, 11 Jul 2023 15:43:17 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231452AbjGKPnP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S231348AbjGKPnP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 11 Jul 2023 11:43:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56438 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56426 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233367AbjGKPnD (ORCPT
+        with ESMTP id S233369AbjGKPnD (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 11 Jul 2023 11:43:03 -0400
-Received: from smtp-8fac.mail.infomaniak.ch (smtp-8fac.mail.infomaniak.ch [IPv6:2001:1600:4:17::8fac])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C4561BDD
-        for <linux-api@vger.kernel.org>; Tue, 11 Jul 2023 08:42:28 -0700 (PDT)
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4R0lMb0vFQzMrjHK;
-        Tue, 11 Jul 2023 15:36:11 +0000 (UTC)
-Received: from unknown by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4R0lMZ0YTVz7cB;
-        Tue, 11 Jul 2023 17:36:10 +0200 (CEST)
+Received: from smtp-bc0a.mail.infomaniak.ch (smtp-bc0a.mail.infomaniak.ch [IPv6:2001:1600:4:17::bc0a])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E52D4171E
+        for <linux-api@vger.kernel.org>; Tue, 11 Jul 2023 08:42:27 -0700 (PDT)
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [10.4.36.108])
+        by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4R0lLy14MczMr7Nt;
+        Tue, 11 Jul 2023 15:35:38 +0000 (UTC)
+Received: from unknown by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4R0lLv0sQDzMpssH;
+        Tue, 11 Jul 2023 17:35:34 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-        s=20191114; t=1689089771;
-        bh=NoTEdp3GjH9HjMfzvmEj442sgr0TNG1ORxVYhwwpJT4=;
+        s=20191114; t=1689089738;
+        bh=pGZFOJzopopKNMlQ3zX6PSzWYniFuF9OzCRAQrh7p5g=;
         h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=iCHCusETwMJ5+VzaMwufKL79d2UdJ7YKy/CYiogESaNE6QLGr1dEgAa3UKKRVy5J3
-         bnJHB/3a0/h5DxNNiJUdfSSvnqDuGjJzRuopC42gs4gpYPCdlMs5TsT70gZHs1mXEy
-         /31wOhW5OaYjhrwh57c/r82CPAD0dCy1BolMgdc4=
-Message-ID: <dde1ce1f-280d-f4b2-4bb0-bc9d8a6894a3@digikod.net>
-Date:   Tue, 11 Jul 2023 17:36:09 +0200
+        b=jeqS0QBliFiXRCl+cT+/CNqdA5CKSrCgKVirqSJkf1dfZZVIkg61N+utr+Kpw+gnE
+         S0wdazxnUURf7iCd+6/ZM+a31PcMSZ3DJlC8FtmgxDRrqtizbguH+ajFE/rtQHhOaV
+         WPx68cQEvr17P4Hh2nDt91FkMpavU5BjpO7GpPeo=
+Message-ID: <d98589cf-1fe2-d3e8-7d89-6959613b4518@digikod.net>
+Date:   Tue, 11 Jul 2023 17:35:34 +0200
 MIME-Version: 1.0
 User-Agent: 
-Subject: Re: [PATCH v12 04/11] LSM: syscalls for current process attributes
+Subject: Re: [PATCH v12 01/11] LSM: Identify modules by more than name
 Content-Language: en-US
 To:     Casey Schaufler <casey@schaufler-ca.com>, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
@@ -39,9 +39,9 @@ Cc:     jmorris@namei.org, serge@hallyn.com, keescook@chromium.org,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org
 References: <20230629195535.2590-1-casey@schaufler-ca.com>
- <20230629195535.2590-5-casey@schaufler-ca.com>
+ <20230629195535.2590-2-casey@schaufler-ca.com>
 From:   =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-In-Reply-To: <20230629195535.2590-5-casey@schaufler-ca.com>
+In-Reply-To: <20230629195535.2590-2-casey@schaufler-ca.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 X-Infomaniak-Routing: alpha
@@ -51,557 +51,725 @@ X-Mailing-List: linux-api@vger.kernel.org
 
 
 On 29/06/2023 21:55, Casey Schaufler wrote:
-> Create a system call lsm_get_self_attr() to provide the security
-> module maintained attributes of the current process.
-> Create a system call lsm_set_self_attr() to set a security
-> module maintained attribute of the current process.
-> Historically these attributes have been exposed to user space via
-> entries in procfs under /proc/self/attr.
+> Create a struct lsm_id to contain identifying information
+> about Linux Security Modules (LSMs). At inception this contains
+> the name of the module, an identifier associated with the security
+> module and an integer member "attrs" which identifies the API
+> related data associated with each security module. The initial set
+> of features maps to information that has traditionaly been available
+> in /proc/self/attr. They are documented in a new userspace-api file.
+> Change the security_add_hooks() interface to use this structure.
+> Change the individual modules to maintain their own struct lsm_id
+> and pass it to security_add_hooks().
 > 
-> The attribute value is provided in a lsm_ctx structure. The structure
-> identifies the size of the attribute, and the attribute value. The format
-> of the attribute value is defined by the security module. A flags field
-> is included for LSM specific information. It is currently unused and must
-> be 0. The total size of the data, including the lsm_ctx structure and any
-> padding, is maintained as well.
+> The values are for LSM identifiers are defined in a new UAPI
+> header file linux/lsm.h. Each existing LSM has been updated to
+> include it's LSMID in the lsm_id.
 > 
-> struct lsm_ctx {
->          __u64 id;
->          __u64 flags;
->          __u64 len;
->          __u64 ctx_len;
->          __u8 ctx[];
-> };
+> The LSM ID values are sequential, with the oldest module
+> LSM_ID_CAPABILITY being the lowest value and the existing modules
+> numbered in the order they were included in the main line kernel.
+> This is an arbitrary convention for assigning the values, but
+> none better presents itself. The value 0 is defined as being invalid.
+> The values 1-99 are reserved for any special case uses which may
+> arise in the future. This may include attributes of the LSM
+> infrastructure itself, possibly related to namespacing or network
+> attribute management. A special range is identified for such attributes
+> to help reduce confusion for developers unfamiliar with LSMs.
 > 
-> Two new LSM hooks are used to interface with the LSMs.
-> security_getselfattr() collects the lsm_ctx values from the
-> LSMs that support the hook, accounting for space requirements.
-> security_setselfattr() identifies which LSM the attribute is
-> intended for and passes it along.
+> LSM attribute values are defined for the attributes presented by
+> modules that are available today. As with the LSM IDs, The value 0
+> is defined as being invalid. The values 1-99 are reserved for any
+> special case uses which may arise in the future.
 > 
 > Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
+> Cc: linux-security-module <linux-security-module@vger.kernel.org>
 > Reviewed-by: Kees Cook <keescook@chromium.org>
 > Reviewed-by: Serge Hallyn <serge@hallyn.com>
+
+With the constification:
+
+Reviewed-by: Mickaël Salaün <mic@digikod.net>
+
 > ---
->   Documentation/userspace-api/lsm.rst |  15 ++++
->   include/linux/lsm_hook_defs.h       |   4 +
->   include/linux/lsm_hooks.h           |   1 +
->   include/linux/security.h            |  19 +++++
->   include/linux/syscalls.h            |   5 ++
->   include/uapi/linux/lsm.h            |  36 +++++++++
->   kernel/sys_ni.c                     |   4 +
->   security/Makefile                   |   1 +
->   security/lsm_syscalls.c             |  55 ++++++++++++++
->   security/security.c                 | 112 ++++++++++++++++++++++++++++
->   10 files changed, 252 insertions(+)
->   create mode 100644 security/lsm_syscalls.c
+>   Documentation/userspace-api/index.rst |  1 +
+>   Documentation/userspace-api/lsm.rst   | 55 +++++++++++++++++++++++++++
+>   MAINTAINERS                           |  1 +
+>   include/linux/lsm_hooks.h             | 16 +++++++-
+>   include/uapi/linux/lsm.h              | 54 ++++++++++++++++++++++++++
+>   security/apparmor/lsm.c               |  8 +++-
+>   security/bpf/hooks.c                  |  9 ++++-
+>   security/commoncap.c                  |  8 +++-
+>   security/landlock/cred.c              |  2 +-
+>   security/landlock/fs.c                |  2 +-
+>   security/landlock/ptrace.c            |  2 +-
+>   security/landlock/setup.c             |  6 +++
+>   security/landlock/setup.h             |  1 +
+>   security/loadpin/loadpin.c            |  9 ++++-
+>   security/lockdown/lockdown.c          |  8 +++-
+>   security/safesetid/lsm.c              |  9 ++++-
+>   security/security.c                   | 12 +++---
+>   security/selinux/hooks.c              |  9 ++++-
+>   security/smack/smack_lsm.c            |  8 +++-
+>   security/tomoyo/tomoyo.c              |  9 ++++-
+>   security/yama/yama_lsm.c              |  8 +++-
+>   21 files changed, 216 insertions(+), 21 deletions(-)
+>   create mode 100644 Documentation/userspace-api/lsm.rst
+>   create mode 100644 include/uapi/linux/lsm.h
 > 
+> diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+> index 72a65db0c498..b5fa29c077eb 100644
+> --- a/Documentation/userspace-api/index.rst
+> +++ b/Documentation/userspace-api/index.rst
+> @@ -32,6 +32,7 @@ place where this information is gathered.
+>      sysfs-platform_profile
+>      vduse
+>      futex2
+> +   lsm
+>   
+>   .. only::  subproject and html
+>   
 > diff --git a/Documentation/userspace-api/lsm.rst b/Documentation/userspace-api/lsm.rst
-> index 6ddf5506110b..e6c3f262addc 100644
-> --- a/Documentation/userspace-api/lsm.rst
+> new file mode 100644
+> index 000000000000..6ddf5506110b
+> --- /dev/null
 > +++ b/Documentation/userspace-api/lsm.rst
-> @@ -48,6 +48,21 @@ creating socket objects.
->   The proc filesystem provides this value in ``/proc/self/attr/sockcreate``.
->   This is supported by the SELinux security module.
+> @@ -0,0 +1,55 @@
+> +.. SPDX-License-Identifier: GPL-2.0
+> +.. Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
+> +.. Copyright (C) 2022 Intel Corporation
+> +
+> +=====================================
+> +Linux Security Modules
+> +=====================================
+> +
+> +:Author: Casey Schaufler
+> +:Date: November 2022
+
+You might want to update this date.
+
+> +
+> +Linux security modules (LSM) provide a mechanism to implement
+> +additional access controls to the Linux security policies.
+> +
+> +The various security modules may support any of these attributes:
+> +
+> +``LSM_ATTR_CURRENT`` is the current, active security context of the
+> +process.
+> +The proc filesystem provides this value in ``/proc/self/attr/current``.
+> +This is supported by the SELinux, Smack and AppArmor security modules.
+> +Smack also provides this value in ``/proc/self/attr/smack/current``.
+> +AppArmor also provides this value in ``/proc/self/attr/apparmor/current``.
+> +
+> +``LSM_ATTR_EXEC`` is the security context of the process at the time the
+> +current image was executed.
+> +The proc filesystem provides this value in ``/proc/self/attr/exec``.
+> +This is supported by the SELinux and AppArmor security modules.
+> +AppArmor also provides this value in ``/proc/self/attr/apparmor/exec``.
+> +
+> +``LSM_ATTR_FSCREATE`` is the security context of the process used when
+> +creating file system objects.
+> +The proc filesystem provides this value in ``/proc/self/attr/fscreate``.
+> +This is supported by the SELinux security module.
+> +
+> +``LSM_ATTR_KEYCREATE`` is the security context of the process used when
+> +creating key objects.
+> +The proc filesystem provides this value in ``/proc/self/attr/keycreate``.
+> +This is supported by the SELinux security module.
+> +
+> +``LSM_ATTR_PREV`` is the security context of the process at the time the
+> +current security context was set.
+> +The proc filesystem provides this value in ``/proc/self/attr/prev``.
+> +This is supported by the SELinux and AppArmor security modules.
+> +AppArmor also provides this value in ``/proc/self/attr/apparmor/prev``.
+> +
+> +``LSM_ATTR_SOCKCREATE`` is the security context of the process used when
+> +creating socket objects.
+> +The proc filesystem provides this value in ``/proc/self/attr/sockcreate``.
+> +This is supported by the SELinux security module.
+> +
+> +Additional documentation
+> +========================
+> +
+> +* Documentation/security/lsm.rst
+> +* Documentation/security/lsm-development.rst
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 35e19594640d..92911df464da 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -19007,6 +19007,7 @@ S:	Supported
+>   W:	http://kernsec.org/
+>   T:	git git://git.kernel.org/pub/scm/linux/kernel/git/pcmoore/lsm.git
+>   F:	security/
+> +F:	include/uapi/linux/lsm.h
+>   X:	security/selinux/
 >   
-> +Kernel interface
-> +================
-> +
-> +Set a security attribute of the current process
-> +-----------------------------------------------
-> +
-> +.. kernel-doc:: security/lsm_syscalls.c
-> +    :identifiers: sys_lsm_set_self_attr
-> +
-> +Get the specified security attributes of the current process
-> +------------------------------------------------------------
-> +
-> +.. kernel-doc:: security/lsm_syscalls.c
-> +    :identifiers: sys_lsm_get_self_attr
-> +
->   Additional documentation
->   ========================
->   
-> diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-> index 6bb55e61e8e8..f69a7863dbe2 100644
-> --- a/include/linux/lsm_hook_defs.h
-> +++ b/include/linux/lsm_hook_defs.h
-> @@ -261,6 +261,10 @@ LSM_HOOK(int, 0, sem_semop, struct kern_ipc_perm *perm, struct sembuf *sops,
->   LSM_HOOK(int, 0, netlink_send, struct sock *sk, struct sk_buff *skb)
->   LSM_HOOK(void, LSM_RET_VOID, d_instantiate, struct dentry *dentry,
->   	 struct inode *inode)
-> +LSM_HOOK(int, -EOPNOTSUPP, getselfattr, unsigned int attr,
-> +	 struct lsm_ctx __user *ctx, size_t *size, u32 flags)
-> +LSM_HOOK(int, -EOPNOTSUPP, setselfattr, unsigned int attr,
-> +	 struct lsm_ctx __user *ctx, size_t size, u32 flags)
->   LSM_HOOK(int, -EINVAL, getprocattr, struct task_struct *p, const char *name,
->   	 char **value)
->   LSM_HOOK(int, -EINVAL, setprocattr, const char *name, void *value, size_t size)
+>   SELINUX SECURITY MODULE
 > diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-> index fba8881d2bb5..9a3ae6b33d7b 100644
+> index ab2b2fafa4a4..fba8881d2bb5 100644
 > --- a/include/linux/lsm_hooks.h
 > +++ b/include/linux/lsm_hooks.h
-> @@ -25,6 +25,7 @@
->   #ifndef __LINUX_LSM_HOOKS_H
->   #define __LINUX_LSM_HOOKS_H
+> @@ -41,6 +41,18 @@ struct security_hook_heads {
+>   	#undef LSM_HOOK
+>   } __randomize_layout;
 >   
-> +#include <uapi/linux/lsm.h>
->   #include <linux/security.h>
->   #include <linux/init.h>
->   #include <linux/rculist.h>
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index 945101b0d404..475d0abfebda 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -60,6 +60,7 @@ struct fs_parameter;
->   enum fs_value_type;
->   struct watch;
->   struct watch_notification;
-> +struct lsm_ctx;
->   
->   /* Default (no) options for the capable function */
->   #define CAP_OPT_NONE 0x0
-> @@ -470,6 +471,10 @@ int security_sem_semctl(struct kern_ipc_perm *sma, int cmd);
->   int security_sem_semop(struct kern_ipc_perm *sma, struct sembuf *sops,
->   			unsigned nsops, int alter);
->   void security_d_instantiate(struct dentry *dentry, struct inode *inode);
-> +int security_getselfattr(unsigned int attr, struct lsm_ctx __user *ctx,
-> +			 size_t __user *size, u32 flags);
-> +int security_setselfattr(unsigned int attr, struct lsm_ctx __user *ctx,
-> +			 size_t size, u32 flags);
->   int security_getprocattr(struct task_struct *p, int lsmid, const char *name,
->   			 char **value);
->   int security_setprocattr(int lsmid, const char *name, void *value, size_t size);
-> @@ -1331,6 +1336,20 @@ static inline void security_d_instantiate(struct dentry *dentry,
->   					  struct inode *inode)
->   { }
->   
-> +static inline int security_getselfattr(unsigned int attr,
-> +				       struct lsm_ctx __user *ctx,
-> +				       size_t __user *size, u32 flags)
-> +{
-> +	return -EOPNOTSUPP;
-> +}
-> +
-> +static inline int security_setselfattr(unsigned int attr,
-> +				       struct lsm_ctx __user *ctx,
-> +				       size_t size, u32 flags)
-> +{
-> +	return -EOPNOTSUPP;
-> +}
-> +
->   static inline int security_getprocattr(struct task_struct *p, int lsmid,
->   				       const char *name, char **value)
->   {
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index 33a0ee3bcb2e..9a94c31bf6b6 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -71,6 +71,7 @@ struct clone_args;
->   struct open_how;
->   struct mount_attr;
->   struct landlock_ruleset_attr;
-> +struct lsm_ctx;
->   enum landlock_rule_type;
->   
->   #include <linux/types.h>
-> @@ -1058,6 +1059,10 @@ asmlinkage long sys_memfd_secret(unsigned int flags);
->   asmlinkage long sys_set_mempolicy_home_node(unsigned long start, unsigned long len,
->   					    unsigned long home_node,
->   					    unsigned long flags);
-> +asmlinkage long sys_lsm_get_self_attr(unsigned int attr, struct lsm_ctx *ctx,
-> +				      size_t *size, __u32 flags);
-> +asmlinkage long sys_lsm_set_self_attr(unsigned int attr, struct lsm_ctx *ctx,
-> +				      size_t size, __u32 flags);
->   
->   /*
->    * Architecture-specific system calls
-> diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
-> index f27c9a9cc376..eeda59a77c02 100644
-> --- a/include/uapi/linux/lsm.h
-> +++ b/include/uapi/linux/lsm.h
-> @@ -9,6 +9,36 @@
->   #ifndef _UAPI_LINUX_LSM_H
->   #define _UAPI_LINUX_LSM_H
->   
-> +#include <linux/types.h>
-> +#include <linux/unistd.h>
-> +
 > +/**
-> + * struct lsm_ctx - LSM context information
-> + * @id: the LSM id number, see LSM_ID_XXX
-> + * @flags: LSM specific flags
-> + * @len: length of the lsm_ctx struct, @ctx and any other data or padding
-> + * @ctx_len: the size of @ctx
-> + * @ctx: the LSM context value
+> + * struct lsm_id - Identify a Linux Security Module.
+> + * @lsm: name of the LSM, must be approved by the LSM maintainers
+> + * @id: LSM ID number from uapi/linux/lsm.h
 > + *
-> + * The @len field MUST be equal to the size of the lsm_ctx struct
-> + * plus any additional padding and/or data placed after @ctx.
-> + *
-> + * In all cases @ctx_len MUST be equal to the length of @ctx.
-> + * If @ctx is a string value it should be nul terminated with
-> + * @ctx_len equal to `strlen(@ctx) + 1`.  Binary values are
-> + * supported.
-> + *
-> + * The @flags and @ctx fields SHOULD only be interpreted by the
-> + * LSM specified by @id; they MUST be set to zero/0 when not used.
+> + * Contains the information that identifies the LSM.
 > + */
-> +struct lsm_ctx {
-> +	__u64 id;
-> +	__u64 flags;
-> +	__u64 len;
-> +	__u64 ctx_len;
-> +	__u8 ctx[];
+> +struct lsm_id {
+> +	const char	*name;
+> +	u64		id;
 > +};
 > +
 >   /*
->    * ID tokens to identify Linux Security Modules (LSMs)
->    *
-> @@ -51,4 +81,10 @@
->   #define LSM_ATTR_PREV		104
->   #define LSM_ATTR_SOCKCREATE	105
+>    * Security module hook list structure.
+>    * For use with generic list macros for common operations.
+> @@ -49,7 +61,7 @@ struct security_hook_list {
+>   	struct hlist_node		list;
+>   	struct hlist_head		*head;
+>   	union security_list_options	hook;
+> -	const char			*lsm;
+> +	struct lsm_id			*lsmid;
+
+We should use `const struct lsm_id` here.
+
+
+>   } __randomize_layout;
 >   
-> +/*
-> + * LSM_FLAG_XXX definitions identify special handling instructions
-> + * for the API.
-> + */
-> +#define LSM_FLAG_SINGLE	0x0001
-> +
->   #endif /* _UAPI_LINUX_LSM_H */
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index 860b2dcf3ac4..d03c78ef1562 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -262,6 +262,10 @@ COND_SYSCALL_COMPAT(recvmsg);
->   /* mm/nommu.c, also with MMU */
->   COND_SYSCALL(mremap);
+>   /*
+> @@ -84,7 +96,7 @@ extern struct security_hook_heads security_hook_heads;
+>   extern char *lsm_names;
 >   
-> +/* security/lsm_syscalls.c */
-> +COND_SYSCALL(lsm_get_self_attr);
-> +COND_SYSCALL(lsm_set_self_attr);
-> +
->   /* security/keys/keyctl.c */
->   COND_SYSCALL(add_key);
->   COND_SYSCALL(request_key);
-> diff --git a/security/Makefile b/security/Makefile
-> index 18121f8f85cd..59f238490665 100644
-> --- a/security/Makefile
-> +++ b/security/Makefile
-> @@ -7,6 +7,7 @@ obj-$(CONFIG_KEYS)			+= keys/
+>   extern void security_add_hooks(struct security_hook_list *hooks, int count,
+> -				const char *lsm);
+> +			       struct lsm_id *lsmid);
+
+const struct lsm_id *lsmid
+
 >   
->   # always enable default capabilities
->   obj-y					+= commoncap.o
-> +obj-$(CONFIG_SECURITY) 			+= lsm_syscalls.o
->   obj-$(CONFIG_MMU)			+= min_addr.o
->   
->   # Object file lists
-> diff --git a/security/lsm_syscalls.c b/security/lsm_syscalls.c
+>   #define LSM_FLAG_LEGACY_MAJOR	BIT(0)
+>   #define LSM_FLAG_EXCLUSIVE	BIT(1)
+> diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
 > new file mode 100644
-> index 000000000000..ee3881159241
+> index 000000000000..f27c9a9cc376
 > --- /dev/null
-> +++ b/security/lsm_syscalls.c
-> @@ -0,0 +1,55 @@
-> +// SPDX-License-Identifier: GPL-2.0-only
+> +++ b/include/uapi/linux/lsm.h
+> @@ -0,0 +1,54 @@
+> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 > +/*
-> + * System calls implementing the Linux Security Module API.
+> + * Linux Security Modules (LSM) - User space API
 > + *
-> + *  Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
-> + *  Copyright (C) 2022 Intel Corporation
+> + * Copyright (C) 2022 Casey Schaufler <casey@schaufler-ca.com>
+> + * Copyright (C) 2022 Intel Corporation
 > + */
 > +
-> +#include <asm/current.h>
-> +#include <linux/compiler_types.h>
-> +#include <linux/err.h>
-> +#include <linux/errno.h>
-> +#include <linux/security.h>
-> +#include <linux/stddef.h>
-> +#include <linux/syscalls.h>
-> +#include <linux/types.h>
-> +#include <linux/lsm_hooks.h>
+> +#ifndef _UAPI_LINUX_LSM_H
+> +#define _UAPI_LINUX_LSM_H
+> +
+> +/*
+> + * ID tokens to identify Linux Security Modules (LSMs)
+> + *
+> + * These token values are used to uniquely identify specific LSMs
+> + * in the kernel as well as in the kernel's LSM userspace API.
+> + *
+> + * A value of zero/0 is considered undefined and should not be used
+> + * outside the kernel. Values 1-99 are reserved for potential
+> + * future use.
+> + */
+> +#define LSM_ID_UNDEF		0
+> +#define LSM_ID_CAPABILITY	100
+> +#define LSM_ID_SELINUX		101
+> +#define LSM_ID_SMACK		102
+> +#define LSM_ID_TOMOYO		103
+> +#define LSM_ID_IMA		104
+> +#define LSM_ID_APPARMOR		105
+> +#define LSM_ID_YAMA		106
+> +#define LSM_ID_LOADPIN		107
+> +#define LSM_ID_SAFESETID	108
+> +#define LSM_ID_LOCKDOWN		109
+> +#define LSM_ID_BPF		110
+> +#define LSM_ID_LANDLOCK		111
+> +
+> +/*
+> + * LSM_ATTR_XXX definitions identify different LSM attributes
+> + * which are used in the kernel's LSM userspace API. Support
+> + * for these attributes vary across the different LSMs. None
+> + * are required.
+> + *
+> + * A value of zero/0 is considered undefined and should not be used
+> + * outside the kernel. Values 1-99 are reserved for potential
+> + * future use.
+> + */
+> +#define LSM_ATTR_UNDEF		0
+> +#define LSM_ATTR_CURRENT	100
+> +#define LSM_ATTR_EXEC		101
+> +#define LSM_ATTR_FSCREATE	102
+> +#define LSM_ATTR_KEYCREATE	103
+> +#define LSM_ATTR_PREV		104
+> +#define LSM_ATTR_SOCKCREATE	105
+> +
+> +#endif /* _UAPI_LINUX_LSM_H */
+> diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
+> index f431251ffb91..308cb3a281c3 100644
+> --- a/security/apparmor/lsm.c
+> +++ b/security/apparmor/lsm.c
+> @@ -24,6 +24,7 @@
+>   #include <linux/zstd.h>
+>   #include <net/sock.h>
+>   #include <uapi/linux/mount.h>
 > +#include <uapi/linux/lsm.h>
+>   
+>   #include "include/apparmor.h"
+>   #include "include/apparmorfs.h"
+> @@ -1215,6 +1216,11 @@ struct lsm_blob_sizes apparmor_blob_sizes __ro_after_init = {
+>   	.lbs_task = sizeof(struct aa_task_ctx),
+>   };
+>   
+> +static struct lsm_id apparmor_lsmid __ro_after_init = {
+
+const struct lsm_id apparmor_lsmid = {
+
+
+> +	.name = "apparmor",
+> +	.id = LSM_ID_APPARMOR,
+> +};
 > +
-> +/**
-> + * sys_lsm_set_self_attr - Set current task's security module attribute
-> + * @attr: which attribute to set
-> + * @ctx: the LSM contexts
-> + * @size: size of @ctx
+>   static struct security_hook_list apparmor_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(ptrace_access_check, apparmor_ptrace_access_check),
+>   	LSM_HOOK_INIT(ptrace_traceme, apparmor_ptrace_traceme),
+> @@ -1904,7 +1910,7 @@ static int __init apparmor_init(void)
+>   		goto buffers_out;
+>   	}
+>   	security_add_hooks(apparmor_hooks, ARRAY_SIZE(apparmor_hooks),
+> -				"apparmor");
+> +				&apparmor_lsmid);
+>   
+>   	/* Report that AppArmor successfully initialized */
+>   	apparmor_initialized = 1;
+> diff --git a/security/bpf/hooks.c b/security/bpf/hooks.c
+> index cfaf1d0e6a5f..7e7bdc1b7979 100644
+> --- a/security/bpf/hooks.c
+> +++ b/security/bpf/hooks.c
+> @@ -5,6 +5,7 @@
+>    */
+>   #include <linux/lsm_hooks.h>
+>   #include <linux/bpf_lsm.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   static struct security_hook_list bpf_lsm_hooks[] __ro_after_init = {
+>   	#define LSM_HOOK(RET, DEFAULT, NAME, ...) \
+> @@ -15,9 +16,15 @@ static struct security_hook_list bpf_lsm_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(task_free, bpf_task_storage_free),
+>   };
+>   
+> +static struct lsm_id bpf_lsmid __ro_after_init = {
 
-I don't understand why we need the lsm_ctx's size in this argument and 
-in the lsm_ctx.len field as well. It makes sense to use the syscall's 
-argument to set/get the size but I don't the the point of the "len" field.
+const struct lsm_id bpf_lsmid = {
 
-I may have miss some explanation but I also don't see the point of the 
-ctx_len field if we can infer this information from the size argument.
+Ditto for all other struct lsm_id variables.
 
 
-> + * @flags: reserved for future use
-> + *
-> + * Sets the calling task's LSM context. On success this function
-> + * returns 0. If the attribute specified cannot be set a negative
-> + * value indicating the reason for the error is returned.
-> + */
-> +SYSCALL_DEFINE4(lsm_set_self_attr, unsigned int, attr, struct lsm_ctx __user *,
-> +		ctx, size_t, size, u32, flags)
-> +{
-> +	return security_setselfattr(attr, ctx, size, flags);
-
-Why not include all this lsm_syscalls.c file into security.c, or 
-implement security_setselfattr() here instead? Ditto for other syscalls. 
-This would simplify code and avoid duplicating the documentation.
-
-
-> +}
+> +	.name = "bpf",
+> +	.id = LSM_ID_BPF,
+> +};
 > +
-> +/**
-> + * sys_lsm_get_self_attr - Return current task's security module attributes
-> + * @attr: which attribute to set
-> + * @ctx: the LSM contexts
-> + * @size: size of @ctx, updated on return
-> + * @flags: reserved for future use
-> + *
-> + * Returns the calling task's LSM contexts. On success this
-> + * function returns the number of @ctx array elements. This value
-> + * may be zero if there are no LSM contexts assigned. If @size is
-> + * insufficient to contain the return data -E2BIG is returned and
-> + * @size is set to the minimum required size. In all other cases
-
-This is not true with selinux_getselfattr() (and without 
-LSM_FLAG_SINGLE) at least. -E2BIG is returned without updating *size.
-
-
-> + * a negative value indicating the error is returned.
-> + */
-> +SYSCALL_DEFINE4(lsm_get_self_attr, unsigned int, attr, struct lsm_ctx __user *,
-> +		ctx, size_t __user *, size, u32, flags)
-> +{
-> +	return security_getselfattr(attr, ctx, size, flags);
-> +}
+>   static int __init bpf_lsm_init(void)
+>   {
+> -	security_add_hooks(bpf_lsm_hooks, ARRAY_SIZE(bpf_lsm_hooks), "bpf");
+> +	security_add_hooks(bpf_lsm_hooks, ARRAY_SIZE(bpf_lsm_hooks),
+> +			   &bpf_lsmid);
+>   	pr_info("LSM support for eBPF active\n");
+>   	return 0;
+>   }
+> diff --git a/security/commoncap.c b/security/commoncap.c
+> index 0b3fc2f3afe7..44c2577105f7 100644
+> --- a/security/commoncap.c
+> +++ b/security/commoncap.c
+> @@ -25,6 +25,7 @@
+>   #include <linux/binfmts.h>
+>   #include <linux/personality.h>
+>   #include <linux/mnt_idmapping.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   /*
+>    * If a non-root user executes a setuid-root binary in
+> @@ -1440,6 +1441,11 @@ int cap_mmap_file(struct file *file, unsigned long reqprot,
+>   
+>   #ifdef CONFIG_SECURITY
+>   
+> +static struct lsm_id capability_lsmid __ro_after_init = {
+> +	.name = "capability",
+> +	.id = LSM_ID_CAPABILITY,
+> +};
+> +
+>   static struct security_hook_list capability_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(capable, cap_capable),
+>   	LSM_HOOK_INIT(settime, cap_settime),
+> @@ -1464,7 +1470,7 @@ static struct security_hook_list capability_hooks[] __ro_after_init = {
+>   static int __init capability_init(void)
+>   {
+>   	security_add_hooks(capability_hooks, ARRAY_SIZE(capability_hooks),
+> -				"capability");
+> +			   &capability_lsmid);
+>   	return 0;
+>   }
+>   
+> diff --git a/security/landlock/cred.c b/security/landlock/cred.c
+> index 13dff2a31545..786af18c4a1c 100644
+> --- a/security/landlock/cred.c
+> +++ b/security/landlock/cred.c
+> @@ -42,5 +42,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+>   __init void landlock_add_cred_hooks(void)
+>   {
+>   	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+> -			   LANDLOCK_NAME);
+> +			   &landlock_lsmid);
+>   }
+> diff --git a/security/landlock/fs.c b/security/landlock/fs.c
+> index 1c0c198f6fdb..db5ebecfbf02 100644
+> --- a/security/landlock/fs.c
+> +++ b/security/landlock/fs.c
+> @@ -1307,5 +1307,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+>   __init void landlock_add_fs_hooks(void)
+>   {
+>   	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+> -			   LANDLOCK_NAME);
+> +			   &landlock_lsmid);
+>   }
+> diff --git a/security/landlock/ptrace.c b/security/landlock/ptrace.c
+> index 8a06d6c492bf..2bfc533d36e4 100644
+> --- a/security/landlock/ptrace.c
+> +++ b/security/landlock/ptrace.c
+> @@ -116,5 +116,5 @@ static struct security_hook_list landlock_hooks[] __ro_after_init = {
+>   __init void landlock_add_ptrace_hooks(void)
+>   {
+>   	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
+> -			   LANDLOCK_NAME);
+> +			   &landlock_lsmid);
+>   }
+> diff --git a/security/landlock/setup.c b/security/landlock/setup.c
+> index 0f6113528fa4..f5ec82a1c381 100644
+> --- a/security/landlock/setup.c
+> +++ b/security/landlock/setup.c
+> @@ -8,6 +8,7 @@
+>   
+>   #include <linux/init.h>
+>   #include <linux/lsm_hooks.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   #include "common.h"
+>   #include "cred.h"
+> @@ -24,6 +25,11 @@ struct lsm_blob_sizes landlock_blob_sizes __ro_after_init = {
+>   	.lbs_superblock = sizeof(struct landlock_superblock_security),
+>   };
+>   
+> +struct lsm_id landlock_lsmid __ro_after_init = {
+> +	.name = LANDLOCK_NAME,
+> +	.id = LSM_ID_LANDLOCK,
+> +};
+> +
+>   static int __init landlock_init(void)
+>   {
+>   	landlock_add_cred_hooks();
+> diff --git a/security/landlock/setup.h b/security/landlock/setup.h
+> index 1daffab1ab4b..38bce5b172dc 100644
+> --- a/security/landlock/setup.h
+> +++ b/security/landlock/setup.h
+> @@ -14,5 +14,6 @@
+>   extern bool landlock_initialized;
+>   
+>   extern struct lsm_blob_sizes landlock_blob_sizes;
+> +extern struct lsm_id landlock_lsmid;
+>   
+>   #endif /* _SECURITY_LANDLOCK_SETUP_H */
+> diff --git a/security/loadpin/loadpin.c b/security/loadpin/loadpin.c
+> index ebae964f7cc9..14202ee4a362 100644
+> --- a/security/loadpin/loadpin.c
+> +++ b/security/loadpin/loadpin.c
+> @@ -20,6 +20,7 @@
+>   #include <linux/string_helpers.h>
+>   #include <linux/dm-verity-loadpin.h>
+>   #include <uapi/linux/loadpin.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   #define VERITY_DIGEST_FILE_HEADER "# LOADPIN_TRUSTED_VERITY_ROOT_DIGESTS"
+>   
+> @@ -208,6 +209,11 @@ static int loadpin_load_data(enum kernel_load_data_id id, bool contents)
+>   	return loadpin_check(NULL, (enum kernel_read_file_id) id);
+>   }
+>   
+> +static struct lsm_id loadpin_lsmid __ro_after_init = {
+> +	.name = "loadpin",
+> +	.id = LSM_ID_LOADPIN,
+> +};
+> +
+>   static struct security_hook_list loadpin_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(sb_free_security, loadpin_sb_free_security),
+>   	LSM_HOOK_INIT(kernel_read_file, loadpin_read_file),
+> @@ -259,7 +265,8 @@ static int __init loadpin_init(void)
+>   	if (!register_sysctl("kernel/loadpin", loadpin_sysctl_table))
+>   		pr_notice("sysctl registration failed!\n");
+>   #endif
+> -	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks), "loadpin");
+> +	security_add_hooks(loadpin_hooks, ARRAY_SIZE(loadpin_hooks),
+> +			   &loadpin_lsmid);
+>   
+>   	return 0;
+>   }
+> diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+> index 68d19632aeb7..aa109b5811d9 100644
+> --- a/security/lockdown/lockdown.c
+> +++ b/security/lockdown/lockdown.c
+> @@ -13,6 +13,7 @@
+>   #include <linux/security.h>
+>   #include <linux/export.h>
+>   #include <linux/lsm_hooks.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   static enum lockdown_reason kernel_locked_down;
+>   
+> @@ -75,6 +76,11 @@ static struct security_hook_list lockdown_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(locked_down, lockdown_is_locked_down),
+>   };
+>   
+> +static struct lsm_id lockdown_lsmid __ro_after_init = {
+> +	.name = "lockdown",
+> +	.id = LSM_ID_LOCKDOWN,
+> +};
+> +
+>   static int __init lockdown_lsm_init(void)
+>   {
+>   #if defined(CONFIG_LOCK_DOWN_KERNEL_FORCE_INTEGRITY)
+> @@ -83,7 +89,7 @@ static int __init lockdown_lsm_init(void)
+>   	lock_kernel_down("Kernel configuration", LOCKDOWN_CONFIDENTIALITY_MAX);
+>   #endif
+>   	security_add_hooks(lockdown_hooks, ARRAY_SIZE(lockdown_hooks),
+> -			   "lockdown");
+> +			   &lockdown_lsmid);
+>   	return 0;
+>   }
+>   
+> diff --git a/security/safesetid/lsm.c b/security/safesetid/lsm.c
+> index e806739f7868..24bbab457623 100644
+> --- a/security/safesetid/lsm.c
+> +++ b/security/safesetid/lsm.c
+> @@ -19,6 +19,7 @@
+>   #include <linux/ptrace.h>
+>   #include <linux/sched/task_stack.h>
+>   #include <linux/security.h>
+> +#include <uapi/linux/lsm.h>
+>   #include "lsm.h"
+>   
+>   /* Flag indicating whether initialization completed */
+> @@ -261,6 +262,11 @@ static int safesetid_task_fix_setgroups(struct cred *new, const struct cred *old
+>   	return 0;
+>   }
+>   
+> +static struct lsm_id safesetid_lsmid __ro_after_init = {
+> +	.name = "safesetid",
+> +	.id = LSM_ID_SAFESETID,
+> +};
+> +
+>   static struct security_hook_list safesetid_security_hooks[] = {
+>   	LSM_HOOK_INIT(task_fix_setuid, safesetid_task_fix_setuid),
+>   	LSM_HOOK_INIT(task_fix_setgid, safesetid_task_fix_setgid),
+> @@ -271,7 +277,8 @@ static struct security_hook_list safesetid_security_hooks[] = {
+>   static int __init safesetid_security_init(void)
+>   {
+>   	security_add_hooks(safesetid_security_hooks,
+> -			   ARRAY_SIZE(safesetid_security_hooks), "safesetid");
+> +			   ARRAY_SIZE(safesetid_security_hooks),
+> +			   &safesetid_lsmid);
+>   
+>   	/* Report that SafeSetID successfully initialized */
+>   	safesetid_initialized = 1;
 > diff --git a/security/security.c b/security/security.c
-> index d942b0c8e32f..199db23581f1 100644
+> index d5ff7ff45b77..e56714ef045a 100644
 > --- a/security/security.c
 > +++ b/security/security.c
-> @@ -3798,6 +3798,118 @@ void security_d_instantiate(struct dentry *dentry, struct inode *inode)
->   }
->   EXPORT_SYMBOL(security_d_instantiate);
+> @@ -512,17 +512,17 @@ static int lsm_append(const char *new, char **result)
+>    * security_add_hooks - Add a modules hooks to the hook lists.
+>    * @hooks: the hooks to add
+>    * @count: the number of hooks to add
+> - * @lsm: the name of the security module
+> + * @lsmid: the identification information for the security module
+>    *
+>    * Each LSM has to register its hooks with the infrastructure.
+>    */
+>   void __init security_add_hooks(struct security_hook_list *hooks, int count,
+> -			       const char *lsm)
+> +			       struct lsm_id *lsmid)
+>   {
+>   	int i;
 >   
-> +/**
-> + * security_getselfattr - Read an LSM attribute of the current process.
-> + * @attr: which attribute to return
-> + * @ctx: the user-space destination for the information, or NULL
-
-It would be useful to explain the use case for NULL: to only get the 
-number of attributes. Also, LSM_FLAG_SINGLE is incompatible with a NULL 
-ctx. It's also a bit weird to still require size to contain a valid 
-address. And size is always checked by the hook implementations even if 
-ctx is NULL. I suggest to require size to be NULL if ctx is NULL, or 
-return -EINVAL otherwise.
-
-I'm not convinced this trick/exception to only get the number of 
-attribute is useful though, especially with *size that needs to be large 
-enough. Or maybe we should require *size to be zero and return the 
-required size to hold all attributes?
-
-
-> + * @size: pointer to the size of space available to receive the data
-> + * @flags: special handling options. LSM_FLAG_SINGLE indicates that only
-> + * attributes associated with the LSM identified in the passed @ctx be
-> + * reported
-> + *
-> + * Returns the number of attributes found on success, negative value
-> + * on error. @size is reset to the total size of the data.
-> + * If @size is insufficient to contain the data -E2BIG is returned.
-> + */
-> +int security_getselfattr(unsigned int attr, struct lsm_ctx __user *ctx,
-> +			 size_t __user *size, u32 flags)
-> +{
-> +	struct security_hook_list *hp;
-> +	struct lsm_ctx lctx = { .id = LSM_ID_UNDEF, };
-> +	u8 __user *base = (u8 __user *)ctx;
-> +	size_t total = 0;
-> +	size_t entrysize;
-> +	size_t left;
-> +	bool toobig = false;
-> +	int count = 0;
-> +	int rc;
+>   	for (i = 0; i < count; i++) {
+> -		hooks[i].lsm = lsm;
+> +		hooks[i].lsmid = lsmid;
+>   		hlist_add_tail_rcu(&hooks[i].list, hooks[i].head);
+>   	}
+>   
+> @@ -531,7 +531,7 @@ void __init security_add_hooks(struct security_hook_list *hooks, int count,
+>   	 * and fix this up afterwards.
+>   	 */
+>   	if (slab_is_available()) {
+> -		if (lsm_append(lsm, &lsm_names) < 0)
+> +		if (lsm_append(lsmid->name, &lsm_names) < 0)
+>   			panic("%s - Cannot get early memory.\n", __func__);
+>   	}
+>   }
+> @@ -3778,7 +3778,7 @@ int security_getprocattr(struct task_struct *p, const char *lsm,
+>   	struct security_hook_list *hp;
+>   
+>   	hlist_for_each_entry(hp, &security_hook_heads.getprocattr, list) {
+> -		if (lsm != NULL && strcmp(lsm, hp->lsm))
+> +		if (lsm != NULL && strcmp(lsm, hp->lsmid->name))
+>   			continue;
+>   		return hp->hook.getprocattr(p, name, value);
+>   	}
+> @@ -3803,7 +3803,7 @@ int security_setprocattr(const char *lsm, const char *name, void *value,
+>   	struct security_hook_list *hp;
+>   
+>   	hlist_for_each_entry(hp, &security_hook_heads.setprocattr, list) {
+> -		if (lsm != NULL && strcmp(lsm, hp->lsm))
+> +		if (lsm != NULL && strcmp(lsm, hp->lsmid->name))
+>   			continue;
+>   		return hp->hook.setprocattr(name, value, size);
+>   	}
+> diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+> index 79b4890e9936..49ec74bc006c 100644
+> --- a/security/selinux/hooks.c
+> +++ b/security/selinux/hooks.c
+> @@ -92,6 +92,7 @@
+>   #include <linux/fsnotify.h>
+>   #include <linux/fanotify.h>
+>   #include <linux/io_uring.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   #include "avc.h"
+>   #include "objsec.h"
+> @@ -6890,6 +6891,11 @@ static int selinux_uring_cmd(struct io_uring_cmd *ioucmd)
+>   }
+>   #endif /* CONFIG_IO_URING */
+>   
+> +static struct lsm_id selinux_lsmid __ro_after_init = {
+> +	.name = "selinux",
+> +	.id = LSM_ID_SELINUX,
+> +};
 > +
-> +	if (attr == LSM_ATTR_UNDEF)
-> +		return -EINVAL;
-> +	if (size == NULL)
-> +		return -EINVAL;
-> +	if (get_user(left, size))
-> +		return -EFAULT;
+>   /*
+>    * IMPORTANT NOTE: When adding new hooks, please be careful to keep this order:
+>    * 1. any hooks that don't belong to (2.) or (3.) below,
+> @@ -7210,7 +7216,8 @@ static __init int selinux_init(void)
+>   
+>   	hashtab_cache_init();
+>   
+> -	security_add_hooks(selinux_hooks, ARRAY_SIZE(selinux_hooks), "selinux");
+> +	security_add_hooks(selinux_hooks, ARRAY_SIZE(selinux_hooks),
+> +			   &selinux_lsmid);
+>   
+>   	if (avc_add_callback(selinux_netcache_avc_callback, AVC_CALLBACK_RESET))
+>   		panic("SELinux: Unable to register AVC netcache callback\n");
+> diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+> index 7a3e9ab137d8..cf847cfe5ed8 100644
+> --- a/security/smack/smack_lsm.c
+> +++ b/security/smack/smack_lsm.c
+> @@ -43,6 +43,7 @@
+>   #include <linux/fs_parser.h>
+>   #include <linux/watch_queue.h>
+>   #include <linux/io_uring.h>
+> +#include <uapi/linux/lsm.h>
+>   #include "smack.h"
+>   
+>   #define TRANS_TRUE	"TRUE"
+> @@ -4840,6 +4841,11 @@ struct lsm_blob_sizes smack_blob_sizes __ro_after_init = {
+>   	.lbs_superblock = sizeof(struct superblock_smack),
+>   };
+>   
+> +static struct lsm_id smack_lsmid __ro_after_init = {
+> +	.name = "smack",
+> +	.id = LSM_ID_SMACK,
+> +};
 > +
-> +	if ((flags & LSM_FLAG_SINGLE) == LSM_FLAG_SINGLE) {
-> +		if (!ctx)
-> +			return -EINVAL;
-> +		if (copy_struct_from_user(&lctx, sizeof(lctx), ctx, left))
-> +			return -EFAULT;
-> +		if (lctx.id == LSM_ID_UNDEF)
-> +			return -EINVAL;
-> +	} else if (flags) {
-> +		return -EINVAL;
-> +	}
-> +
-> +	hlist_for_each_entry(hp, &security_hook_heads.getselfattr, list) {
-> +		if (lctx.id != LSM_ID_UNDEF && lctx.id != hp->lsmid->id)
-> +			continue;
-> +		entrysize = left;
-> +		if (base)
-> +			ctx = (struct lsm_ctx __user *)(base + total);
-> +		rc = hp->hook.getselfattr(attr, ctx, &entrysize, flags); > +		if (rc == -EOPNOTSUPP) {
-> +			rc = 0;
-> +			continue;
-> +		}
-> +		if (rc == -E2BIG) {
-> +			toobig = true;
-> +			left = 0;
-> +			continue;
-> +		}
-> +		if (rc < 0)
-> +			return rc;
-> +
-> +		left -= entrysize;
-> +		total += entrysize;
-> +		count += rc;
-
-Would it make sense for an LSM (e.g. eBPF program) to return more than 
-one? If not, we should force 0 or 1, and probably call WARN_ON_ONCE() if 
-it is not the case.
-
-
-> +	}
-> +	if (put_user(total, size))
-
-This might be useful to get the required size, but if the original *size 
-is not big enough the LSM hook implementations (e.g. 
-selinux_getselfattr) currently don't update *size and just return 
--E2BIG, which is then propagated at the end of the syscall, after all 
-hook calls.
-
-
-> +		return -EFAULT;
-> +	if (toobig)
-> +		return -E2BIG;
-
-This doesn't help because we don't know how much space is required for a 
-specific list entries/LSMs.
-
-I'm convinced this syscall should only deal with one LSM attribute at a 
-time (i.e. only support LSM_FLAG_SINGLE, but then without this flag). I 
-think it's not worth it to handle a list of arbitrary-size elements, 
-especially when they have a different semantic.
-
-If we really need such list handling, I think it would be easier to have 
-a syscall argument pointing to a header part containing an array of LSM 
-IDs (and potentially the flags field)), and another syscall argument 
-that contains an array of (simplified) lsm_ctx entries (without len). 
-This would look like this:
-
-struct lsm_entry {
-	__u64 id;
-	__u64 flags;
-};
-
-struct lsm_ctx {
-	struct lsm_entry entry;
-	__u64 ctx_size;
-	__u8 ctx[];
-};
-
-int security_getselfattr(unsigned int attr, const struct lsm_id __user 
-*ids, size_t ids_size, struct lsm_ctx __user *ctx, size_t __user 
-*ctx_size, u32 flags);
-
-This enables to use a big buffer of packed lsm_ctx elements because we 
-don't need to allocate an array of fixed-size elements anymore. When an 
-LSM hook implementation return -E2BIG, the lsm_ctx array filling will 
-stop and renturn this error, which enables user space to know the 
-problematic entry. In this case, user space can get the required size by 
-setting @ctx to NULL and reading the returned *size value.
-
-This types would also enable to use the same lsm_ctx variable as @ids 
-and @ctx arguments (with sizeof and real size) to get one element, or 
-just fill the buffer with a list of lsm_entry entries and read back a 
-list of lsm_ctx entries. Using different syscall arguments makes it well 
-defined and documented.
-
-The lsm_ctx type can also be use by the setselfattr syscall, without 
-superfluous len field.
-
-I would also prefer to replace the `size_t __user *ctx_size` argument 
-with something like `size_t ctx_available_size` and `size_t __user 
-*ctx_written_size`, but it I guess it's a matter of taste…
-
-This struct lsm_entry could also be used by the lsm_list_modules() 
-syscall to get more informations about LSM using the flags fields.
-
-
-> +	if (count == 0)
-> +		return LSM_RET_DEFAULT(getselfattr);
-> +	return count;
-> +}
-> +
-> +/**
-> + * security_setselfattr - Set an LSM attribute on the current process.
-> + * @attr: which attribute to set
-> + * @ctx: the user-space source for the information
-> + * @size: the size of the data
-> + * @flags: reserved for future use, must be 0
-> + *
-> + * Set an LSM attribute for the current process. The LSM, attribute
-> + * and new value are included in @ctx.
-> + *
-> + * Returns 0 on success, -EINVAL if the input is inconsistent, -EFAULT
-> + * if the user buffer is inaccessible or an LSM specific failure.
-> + */
-> +int security_setselfattr(unsigned int attr, struct lsm_ctx __user *ctx,
-> +			 size_t size, u32 flags)
-> +{
-> +	struct security_hook_list *hp;
-> +	struct lsm_ctx lctx;
-> +
-> +	if (flags)
-> +		return -EINVAL;
-> +	if (size < sizeof(*ctx))
-> +		return -EINVAL;
-> +	if (copy_from_user(&lctx, ctx, sizeof(*ctx)))
-
-I'd suggest to handle all the user space copy here and pass a kernel 
-pointer to each LSM hook calls (and handle kmalloc and kfree here, if 
-needed). This single point of copy would make the LSM implementations 
-(setselfattr hooks) easier and less error prone. For instance, we could 
-limit data copied from user space to PAGE_SIZE (as done for Landlock 
-syscalls). If one day this limit is too short, there is always the 
-possibility to add a dedicated flag to the syscall or set exceptions 
-according to the target LSM.
-
-A global array containing the maximum size of such context per LSM would 
-be nice. I guess current LSMs don't accept unlimited attributes 
-(strings) size.
-
-
-> +		return -EFAULT;
-> +	if (size < lctx.len || size < lctx.ctx_len + sizeof(ctx) ||
-> +	    lctx.len < lctx.ctx_len + sizeof(ctx))
-
-It should not be sizeof(ctx) but sizeof(*ctx) or sizeof(lctx). Positive 
-and negative tests for these checks would be useful.
-
-Why not `if (size != lctx.ctx_len + sizeof(lctx))` instead? If this is 
-correct, ctx_len and len are redundant. Otherwise, a comment should 
-explain what is going on, and what is being checked.
-
-
-
-> +		return -EINVAL;
-> +
-> +	hlist_for_each_entry(hp, &security_hook_heads.setselfattr, list)
-> +		if ((hp->lsmid->id) == lctx.id)
-> +			return hp->hook.setselfattr(attr, ctx, size, flags);
-> +
-> +	return LSM_RET_DEFAULT(setselfattr);
-> +}
-> +
+>   static struct security_hook_list smack_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(ptrace_access_check, smack_ptrace_access_check),
+>   	LSM_HOOK_INIT(ptrace_traceme, smack_ptrace_traceme),
+> @@ -5046,7 +5052,7 @@ static __init int smack_init(void)
+>   	/*
+>   	 * Register with LSM
+>   	 */
+> -	security_add_hooks(smack_hooks, ARRAY_SIZE(smack_hooks), "smack");
+> +	security_add_hooks(smack_hooks, ARRAY_SIZE(smack_hooks), &smack_lsmid);
+>   	smack_enabled = 1;
+>   
+>   	pr_info("Smack:  Initializing.\n");
+> diff --git a/security/tomoyo/tomoyo.c b/security/tomoyo/tomoyo.c
+> index 25006fddc964..e2efc94ec481 100644
+> --- a/security/tomoyo/tomoyo.c
+> +++ b/security/tomoyo/tomoyo.c
+> @@ -6,6 +6,7 @@
+>    */
+>   
+>   #include <linux/lsm_hooks.h>
+> +#include <uapi/linux/lsm.h>
+>   #include "common.h"
+>   
 >   /**
->    * security_getprocattr() - Read an attribute for a task
->    * @p: the task
+> @@ -542,6 +543,11 @@ static void tomoyo_task_free(struct task_struct *task)
+>   	}
+>   }
+>   
+> +static struct lsm_id tomoyo_lsmid __ro_after_init = {
+> +	.name = "tomoyo",
+> +	.id = LSM_ID_TOMOYO,
+> +};
+> +
+>   /*
+>    * tomoyo_security_ops is a "struct security_operations" which is used for
+>    * registering TOMOYO.
+> @@ -595,7 +601,8 @@ static int __init tomoyo_init(void)
+>   	struct tomoyo_task *s = tomoyo_task(current);
+>   
+>   	/* register ourselves with the security framework */
+> -	security_add_hooks(tomoyo_hooks, ARRAY_SIZE(tomoyo_hooks), "tomoyo");
+> +	security_add_hooks(tomoyo_hooks, ARRAY_SIZE(tomoyo_hooks),
+> +			   &tomoyo_lsmid);
+>   	pr_info("TOMOYO Linux initialized\n");
+>   	s->domain_info = &tomoyo_kernel_domain;
+>   	atomic_inc(&tomoyo_kernel_domain.users);
+> diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
+> index 2503cf153d4a..31b52685e041 100644
+> --- a/security/yama/yama_lsm.c
+> +++ b/security/yama/yama_lsm.c
+> @@ -18,6 +18,7 @@
+>   #include <linux/task_work.h>
+>   #include <linux/sched.h>
+>   #include <linux/spinlock.h>
+> +#include <uapi/linux/lsm.h>
+>   
+>   #define YAMA_SCOPE_DISABLED	0
+>   #define YAMA_SCOPE_RELATIONAL	1
+> @@ -421,6 +422,11 @@ static int yama_ptrace_traceme(struct task_struct *parent)
+>   	return rc;
+>   }
+>   
+> +static struct lsm_id yama_lsmid __ro_after_init = {
+> +	.name = "yama",
+> +	.id = LSM_ID_YAMA,
+> +};
+> +
+>   static struct security_hook_list yama_hooks[] __ro_after_init = {
+>   	LSM_HOOK_INIT(ptrace_access_check, yama_ptrace_access_check),
+>   	LSM_HOOK_INIT(ptrace_traceme, yama_ptrace_traceme),
+> @@ -471,7 +477,7 @@ static inline void yama_init_sysctl(void) { }
+>   static int __init yama_init(void)
+>   {
+>   	pr_info("Yama: becoming mindful.\n");
+> -	security_add_hooks(yama_hooks, ARRAY_SIZE(yama_hooks), "yama");
+> +	security_add_hooks(yama_hooks, ARRAY_SIZE(yama_hooks), &yama_lsmid);
+>   	yama_init_sysctl();
+>   	return 0;
+>   }
