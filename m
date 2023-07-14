@@ -2,246 +2,145 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7E099EB64DA
-	for <linux-api@archiver.kernel.org>; Fri, 14 Jul 2023 08:41:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 381FAC001B0
+	for <linux-api@archiver.kernel.org>; Fri, 14 Jul 2023 14:16:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235207AbjGNIlT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Jul 2023 04:41:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49662 "EHLO
+        id S235698AbjGNOQg (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Jul 2023 10:16:36 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33226 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232566AbjGNIlS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Jul 2023 04:41:18 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id AD8992683;
-        Fri, 14 Jul 2023 01:41:16 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        with ESMTP id S234555AbjGNOQf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Jul 2023 10:16:35 -0400
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6852912E;
+        Fri, 14 Jul 2023 07:16:34 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
+        Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To;
+        bh=GuDJ92pMIScKKU1gBauDG1HK4VUsLXyIVGMSjzGcY4Y=; b=vBKCfPzsXlmZQm0fbY9sm4XN73
+        kHbqhYPRg24KF+nwElURpqsTJDlryKmDUOG3hRkpWvd0PhoT+M+UUAAfZagygwwYN+EQF96rxRzwh
+        y6Ksh55FaQO2qES2eZnYAQMF0W7I/N7hS39vamjL/ghCgcLWgEwlM2yccrC8KGWmH4aRt4oV3JFNS
+        hotzaBdyxJlbgmQPxYdyPurXiCwYhcjscrxIqsdlOamEmJ65hOEFV33r2X0xNYQURheEouIYUgXH7
+        LZl2gTROHDF1JASKWhc+5uERTwqfjo5eGhlgZOjCV9CM0JpWWZtTMWyghP3XtRYjLU3AJZkGy2PqC
+        A1aFb12A==;
+Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
+        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1qKJah-0016z8-NN; Fri, 14 Jul 2023 14:16:15 +0000
+Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 3AF3861BCB;
-        Fri, 14 Jul 2023 08:41:16 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 67F22C433C7;
-        Fri, 14 Jul 2023 08:41:12 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1689324075;
-        bh=43AvFbBXAA/x15yWr6kr4QPf0tiiT5S77EWSyFrw4Uk=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=vJ0aLFtOFdXd+tzdnrcKRBI2ooDdgSfQE3z7Of2pBHVBTYri+ODepWoDAI81P6ylV
-         lQkIhxe2EJtec8ADP/T8fiwUlILap5BsUewSYpos7/mkcEnkZedgTYjpfjugOuGLxS
-         nWkijJZkH0B3Oe8zbKx1TOHhYWVqAgDRWW7fsEZCYtn9Q5rsQ0usMKiFmmofB5XjU5
-         WLnGptQs8rtpHIGkHMQUL1M5XFT5Ax/XKHrSPmRMVRSdneITPyzY5bthPxW8RSifcQ
-         aW1dXfzEiEzhpAiY8qr242wD9bN2SMV29kOXiZCEXX1sYsD6fMCh+z2RO0YyAWugk/
-         AtciNx35/Ujeg==
-Date:   Fri, 14 Jul 2023 10:41:09 +0200
-From:   Christian Brauner <brauner@kernel.org>
-To:     Kees Cook <keescook@chromium.org>
-Cc:     "Serge E. Hallyn" <serge@hallyn.com>,
-        Jan Kiszka <jan.kiszka@siemens.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Laurent Vivier <laurent@vivier.eu>,
-        linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>,
-        Sargun Dhillon <sargun@sargun.me>,
-        Jann Horn <jannh@google.com>,
-        Henning Schild <henning.schild@siemens.com>,
-        Andrei Vagin <avagin@gmail.com>,
-        Matthew Bobrowski <repnop@google.com>,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        containers@lists.linux.dev,
-        Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v2 2/2] binfmt_misc: enable sandboxed mounts
-Message-ID: <20230714-dachsbau-injektion-163c6ddddb2c@brauner>
-References: <20211216112659.310979-1-brauner@kernel.org>
- <20211216112659.310979-2-brauner@kernel.org>
- <20211226133140.GA8064@mail.hallyn.com>
- <0e817424-51db-fe0b-a00e-ac7933e8ac1d@siemens.com>
- <20220530081358.b3tvgvo63mq5o2oo@wittgenstein>
- <202205311219.725ED1C69@keescook>
- <20220602104107.6b3d3udhslvhg6ew@wittgenstein>
- <08b4b0c8-3621-a970-d206-d24e6eb81355@siemens.com>
- <20230712185448.GA611149@mail.hallyn.com>
- <202307121219.1BD273E@keescook>
+         key-exchange X25519 server-signature RSA-PSS (4096 bits))
+        (Client did not present a certificate)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id B952E301A2F;
+        Fri, 14 Jul 2023 16:16:14 +0200 (CEST)
+Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
+        id 8BA61245EFFAB; Fri, 14 Jul 2023 16:16:13 +0200 (CEST)
+Message-ID: <20230714141219.282650897@infradead.org>
+User-Agent: quilt/0.66
+Date:   Fri, 14 Jul 2023 15:39:09 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     tglx@linutronix.de, axboe@kernel.dk
+Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
+        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
+        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
+        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
+        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, linux-arch@vger.kernel.org,
+        malteskarupke@web.de
+Subject: [HACK][PATCH 10/10] futex: Munge size and numa into the legacy interface
+References: <20230714133859.305719029@infradead.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <202307121219.1BD273E@keescook>
+Content-Type: text/plain; charset=UTF-8
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Wed, Jul 12, 2023 at 12:29:03PM -0700, Kees Cook wrote:
-> On Wed, Jul 12, 2023 at 01:54:48PM -0500, Serge E. Hallyn wrote:
-> > On Tue, Feb 28, 2023 at 07:20:28AM +0100, Jan Kiszka wrote:
-> > > On 02.06.22 12:41, Christian Brauner wrote:
-> > > > On Tue, May 31, 2022 at 12:24:37PM -0700, Kees Cook wrote:
-> > > >> On Mon, May 30, 2022 at 10:13:58AM +0200, Christian Brauner wrote:
-> > > >>> On Sun, May 29, 2022 at 09:35:40PM +0200, Jan Kiszka wrote:
-> > > >>>> On 26.12.21 14:31, Serge E. Hallyn wrote:
-> > > >>>>> On Thu, Dec 16, 2021 at 12:26:59PM +0100, Christian Brauner wrote:
-> > > >>>>>> From: Christian Brauner <christian.brauner@ubuntu.com>
-> > > >>>>>>
-> > > >>>>>> Enable unprivileged sandboxes to create their own binfmt_misc mounts.
-> > > >>>>>> This is based on Laurent's work in [1] but has been significantly
-> > > >>>>>> reworked to fix various issues we identified in earlier versions.
-> > > >>>>>>
-> > > >>>>>> While binfmt_misc can currently only be mounted in the initial user
-> > > >>>>>> namespace, binary types registered in this binfmt_misc instance are
-> > > >>>>>> available to all sandboxes (Either by having them installed in the
-> > > >>>>>> sandbox or by registering the binary type with the F flag causing the
-> > > >>>>>> interpreter to be opened right away). So binfmt_misc binary types are
-> > > >>>>>> already delegated to sandboxes implicitly.
-> > > >>>>>>
-> > > >>>>>> However, while a sandbox has access to all registered binary types in
-> > > >>>>>> binfmt_misc a sandbox cannot currently register its own binary types
-> > > >>>>>> in binfmt_misc. This has prevented various use-cases some of which were
-> > > >>>>>> already outlined in [1] but we have a range of issues associated with
-> > > >>>>>> this (cf. [3]-[5] below which are just a small sample).
-> > > >>>>>>
-> > > >>>>>> Extend binfmt_misc to be mountable in non-initial user namespaces.
-> > > >>>>>> Similar to other filesystem such as nfsd, mqueue, and sunrpc we use
-> > > >>>>>> keyed superblock management. The key determines whether we need to
-> > > >>>>>> create a new superblock or can reuse an already existing one. We use the
-> > > >>>>>> user namespace of the mount as key. This means a new binfmt_misc
-> > > >>>>>> superblock is created once per user namespace creation. Subsequent
-> > > >>>>>> mounts of binfmt_misc in the same user namespace will mount the same
-> > > >>>>>> binfmt_misc instance. We explicitly do not create a new binfmt_misc
-> > > >>>>>> superblock on every binfmt_misc mount as the semantics for
-> > > >>>>>> load_misc_binary() line up with the keying model. This also allows us to
-> > > >>>>>> retrieve the relevant binfmt_misc instance based on the caller's user
-> > > >>>>>> namespace which can be done in a simple (bounded to 32 levels) loop.
-> > > >>>>>>
-> > > >>>>>> Similar to the current binfmt_misc semantics allowing access to the
-> > > >>>>>> binary types in the initial binfmt_misc instance we do allow sandboxes
-> > > >>>>>> access to their parent's binfmt_misc mounts if they do not have created
-> > > >>>>>> a separate binfmt_misc instance.
-> > > >>>>>>
-> > > >>>>>> Overall, this will unblock the use-cases mentioned below and in general
-> > > >>>>>> will also allow to support and harden execution of another
-> > > >>>>>> architecture's binaries in tight sandboxes. For instance, using the
-> > > >>>>>> unshare binary it possible to start a chroot of another architecture and
-> > > >>>>>> configure the binfmt_misc interpreter without being root to run the
-> > > >>>>>> binaries in this chroot and without requiring the host to modify its
-> > > >>>>>> binary type handlers.
-> > > >>>>>>
-> > > >>>>>> Henning had already posted a few experiments in the cover letter at [1].
-> > > >>>>>> But here's an additional example where an unprivileged container
-> > > >>>>>> registers qemu-user-static binary handlers for various binary types in
-> > > >>>>>> its separate binfmt_misc mount and is then seamlessly able to start
-> > > >>>>>> containers with a different architecture without affecting the host:
-> > > >>>>>>
-> > > >>>>>> root    [lxc monitor] /var/snap/lxd/common/lxd/containers f1
-> > > >>>>>> 1000000  \_ /sbin/init
-> > > >>>>>> 1000000      \_ /lib/systemd/systemd-journald
-> > > >>>>>> 1000000      \_ /lib/systemd/systemd-udevd
-> > > >>>>>> 1000100      \_ /lib/systemd/systemd-networkd
-> > > >>>>>> 1000101      \_ /lib/systemd/systemd-resolved
-> > > >>>>>> 1000000      \_ /usr/sbin/cron -f
-> > > >>>>>> 1000103      \_ /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-activation --syslog-only
-> > > >>>>>> 1000000      \_ /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
-> > > >>>>>> 1000104      \_ /usr/sbin/rsyslogd -n -iNONE
-> > > >>>>>> 1000000      \_ /lib/systemd/systemd-logind
-> > > >>>>>> 1000000      \_ /sbin/agetty -o -p -- \u --noclear --keep-baud console 115200,38400,9600 vt220
-> > > >>>>>> 1000107      \_ dnsmasq --conf-file=/dev/null -u lxc-dnsmasq --strict-order --bind-interfaces --pid-file=/run/lxc/dnsmasq.pid --liste
-> > > >>>>>> 1000000      \_ [lxc monitor] /var/lib/lxc f1-s390x
-> > > >>>>>> 1100000          \_ /usr/bin/qemu-s390x-static /sbin/init
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-journald
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /usr/sbin/cron -f
-> > > >>>>>> 1100103              \_ /usr/bin/qemu-s390x-static /usr/bin/dbus-daemon --system --address=systemd: --nofork --nopidfile --systemd-ac
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /usr/bin/python3 /usr/bin/networkd-dispatcher --run-startup-triggers
-> > > >>>>>> 1100104              \_ /usr/bin/qemu-s390x-static /usr/sbin/rsyslogd -n -iNONE
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-logind
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud console 115200,38400,9600 vt220
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/0 115200,38400,9600 vt220
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/1 115200,38400,9600 vt220
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/2 115200,38400,9600 vt220
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /sbin/agetty -o -p -- \u --noclear --keep-baud pts/3 115200,38400,9600 vt220
-> > > >>>>>> 1100000              \_ /usr/bin/qemu-s390x-static /lib/systemd/systemd-udevd
-> > > >>>>>>
-> > > >>>>>> [1]: https://lore.kernel.org/all/20191216091220.465626-1-laurent@vivier.eu
-> > > >>>>>> [2]: https://discuss.linuxcontainers.org/t/binfmt-misc-permission-denied
-> > > >>>>>> [3]: https://discuss.linuxcontainers.org/t/lxd-binfmt-support-for-qemu-static-interpreters
-> > > >>>>>> [4]: https://discuss.linuxcontainers.org/t/3-1-0-binfmt-support-service-in-unprivileged-guest-requires-write-access-on-hosts-proc-sys-fs-binfmt-misc
-> > > >>>>>> [5]: https://discuss.linuxcontainers.org/t/qemu-user-static-not-working-4-11
-> > > >>>>>>
-> > > >>>>>> Link: https://lore.kernel.org/r/20191216091220.465626-2-laurent@vivier.eu (origin)
-> > > >>>>>> Link: https://lore.kernel.org/r/20211028103114.2849140-2-brauner@kernel.org (v1)
-> > > >>>>>> Cc: Sargun Dhillon <sargun@sargun.me>
-> > > >>>>>> Cc: Serge Hallyn <serge@hallyn.com>
-> > > >>>>>
-> > > >>>>> (one typo below)
-> > > >>>>>
-> > > >>>>> Acked-by: Serge Hallyn <serge@hallyn.com>
-> > > >>>>>
-> > > >>>>
-> > > >>>> What happened to this afterwards? Any remaining issues?
-> > > >>>
-> > > >>> Not that we know. I plan to queue this up for 5.20.
-> > > >>
-> > > >> Hello!
-> > > >>
-> > > >> Thanks for the thread-ping -- I hadn't had a chance to read through this
-> > > >> before, but since it's touching binfmt, it popped up on my radar. :)
-> > > >>
-> > > >> I like it overall, though I'd rather see it split up more (there's
-> > > >> some refactoring built into the patches that would be nice to split out
-> > > >> just to make review easier), but since others have already reviewed it,
-> > > >> that's probably overkill.
-> > > >>
-> > > >> I'd really like to see some self-tests for this, though. Especially
-> > > > 
-> > > > Yeah, I had started writing them but decoupled the upstreaming. Imho,
-> > > > you can start queueing this up. I'd like this to have very long exposure
-> > > > in -next. I'll follow up with selftests in the next weeks. (I'm out for
-> > > > a conference this week.)
-> > > > 
-> > > >> around the cred logic changes and the namespace fallback logic. I'd like
-> > > >> to explicitly document and test what the expectations are around the
-> > > >> mounts, etc.
-> > > >>
-> > > >> Finally, I'd prefer this went via the execve tree.
-> > > > 
-> > > > I mentioned this yesterday to you but just so there's a paper trail:
-> > > > The series and this iteration preceeds the maintainer entry. That's the
-> > > > only reason this originally wasn't aimed at that tree when the series
-> > > > was sent. You've been in Cc from the start though. :)
-> > > > I'd like to step up and maintain the binfmt_misc fs going forward. There
-> > > > are other tweaks it could use.
-> > > > 
-> > > 
-> > > Did anything happen after this? I'm not finding traced in lkml at least.
-> > > 
-> > > Jan
-> > 
-> > Looking at https://lore.kernel.org/all/20230630-hufen-herzallerliebst-fde8e7aecba0@brauner/
-> > looks like Christian was going to ping Kees about taking
-> > https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git/log/?h=vfs.binfmt_misc
-> 
-> Ah yeah! I forgot all about this series. I can pull this into the execve
-> tree now for max linux-next testing.
+Avert your eyes...
 
-Sure, I'm going to be mostly afk next week:
+Arguably just the NUMA thing wouldn't be too bad.
 
-  Linux 6.5-rc1 (2023-07-09 13:53:13 -0700)
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+---
+ include/uapi/linux/futex.h |   15 ++++++++++++---
+ kernel/futex/futex.h       |    9 ++++++++-
+ kernel/futex/syscalls.c    |   18 ++++++++++++++++++
+ 3 files changed, 38 insertions(+), 4 deletions(-)
 
-are available in the Git repository at:
+--- a/include/uapi/linux/futex.h
++++ b/include/uapi/linux/futex.h
+@@ -23,9 +23,18 @@
+ #define FUTEX_CMP_REQUEUE_PI	12
+ #define FUTEX_LOCK_PI2		13
+ 
+-#define FUTEX_PRIVATE_FLAG	128
+-#define FUTEX_CLOCK_REALTIME	256
+-#define FUTEX_CMD_MASK		~(FUTEX_PRIVATE_FLAG | FUTEX_CLOCK_REALTIME)
++#define FUTEX_PRIVATE_FLAG	(1 << 7)
++#define FUTEX_CLOCK_REALTIME	(1 << 8)
++#define FUTEX_NUMA		(1 << 9)
++#define FUTEX_SIZE_32		(0 << 10) /* backwards compat */
++#define FUTEX_SIZE_64		(1 << 10)
++#define FUTEX_SIZE_8		(2 << 10)
++#define FUTEX_SIZE_16		(3 << 10)
++
++#define FUTEX_CMD_MASK		~(FUTEX_PRIVATE_FLAG	|	\
++				  FUTEX_CLOCK_REALTIME	|	\
++				  FUTEX_NUMA		|	\
++				  FUTEX_SIZE_16)
+ 
+ #define FUTEX_WAIT_PRIVATE	(FUTEX_WAIT | FUTEX_PRIVATE_FLAG)
+ #define FUTEX_WAKE_PRIVATE	(FUTEX_WAKE | FUTEX_PRIVATE_FLAG)
+--- a/kernel/futex/futex.h
++++ b/kernel/futex/futex.h
+@@ -39,7 +39,7 @@
+ /* FUTEX_ to FLAGS_ */
+ static inline unsigned int futex_to_flags(unsigned int op)
+ {
+-	unsigned int flags = FLAGS_SIZE_32;
++	unsigned int sz, flags = 0;
+ 
+ 	if (!(op & FUTEX_PRIVATE_FLAG))
+ 		flags |= FLAGS_SHARED;
+@@ -47,6 +47,13 @@ static inline unsigned int futex_to_flag
+ 	if (op & FUTEX_CLOCK_REALTIME)
+ 		flags |= FLAGS_CLOCKRT;
+ 
++	if (op & FUTEX_NUMA)
++		flags |= FLAGS_NUMA;
++
++	/* { 2,3,0,1 } -> { 0,1,2,3 } */
++	sz = ((op + FUTEX_SIZE_8) & FUTEX_SIZE_16) >> 10;
++	flags |= sz;
++
+ 	return flags;
+ }
+ 
+--- a/kernel/futex/syscalls.c
++++ b/kernel/futex/syscalls.c
+@@ -95,6 +95,24 @@ long do_futex(u32 __user *uaddr, int op,
+ 			return -ENOSYS;
+ 	}
+ 
++	/* can't support u64 with a u32 based interface */
++	if ((flags & FLAGS_SIZE_MASK) == FLAGS_SIZE_64)
++		return -ENOSYS;
++
++	switch (cmd) {
++	case FUTEX_WAIT:
++	case FUTEX_WAIT_BITSET:
++	case FUTEX_WAKE:
++	case FUTEX_WAKE_BITSET:
++		/* u8, u16, u32 */
++		break;
++
++	default:
++		/* only u32 for now */
++		if ((flags & FLAGS_SIZE_MASK) != FLAGS_SIZE_32)
++			return -ENOSYS;
++	}
++
+ 	switch (cmd) {
+ 	case FUTEX_WAIT:
+ 		val3 = FUTEX_BITSET_MATCH_ANY;
 
-  git@gitolite.kernel.org:pub/scm/linux/kernel/git/vfs/vfs tags/execve.fs.binfmt.misc
-
-for you to fetch changes up to ffffd8cb246eac5f6d98fc6a532ed3c2973b7f42:
-
-  binfmt_misc: enable sandboxed mounts (2023-07-14 10:35:27 +0200)
-
-----------------------------------------------------------------
-execve.fs.binfmt.misc
-
-----------------------------------------------------------------
-Christian Brauner (2):
-      binfmt_misc: cleanup on filesystem umount
-      binfmt_misc: enable sandboxed mounts
-
- fs/binfmt_misc.c               | 397 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------
- include/linux/binfmts.h        |  10 ++++
- include/linux/user_namespace.h |   8 ++++
- kernel/user.c                  |  13 +++++
- kernel/user_namespace.c        |   3 ++
- 5 files changed, 361 insertions(+), 70 deletions(-)
 
