@@ -2,140 +2,112 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 5CD24C04E69
-	for <linux-api@archiver.kernel.org>; Fri, 14 Jul 2023 14:16:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 74040C0015E
+	for <linux-api@archiver.kernel.org>; Fri, 14 Jul 2023 14:27:41 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236003AbjGNOQu (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 14 Jul 2023 10:16:50 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:33356 "EHLO
+        id S235274AbjGNO1k (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 14 Jul 2023 10:27:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42388 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235957AbjGNOQp (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Jul 2023 10:16:45 -0400
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3BC7230C8;
-        Fri, 14 Jul 2023 07:16:42 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=50j8lu0fq8DZ70IkYc8oVFT5B2TMdBpxV7U6GuBpl7Q=; b=RAyQOPIKt+lXLX555aDpPJzUC9
-        L7EOxKUfSVd10nX0K16zDGniwOxKc30Cd/+xG8LzFUBBkCLdSF5xP40Cevv5Y/l6dyWqJa+dVphas
-        6Gr3l8Rz6zoUJVtRlBiLy943qRAqpj/vIhSitOCh6gTyqaAbRgo3JiXP+Dc7K9WePvtmFiCyQfKj8
-        RCN4PcykMUeb1gdeFB8LRCRweSK248CKdk4wGCboxrybdoWYOf/v45Z/R/lBU7b2/xNeycJx/kjtz
-        pIi/tFYgUgJFMSvi1VEusccqOJXl+n6NkSpusiNz4nBzjjmriQXxNwJcJZ5QOUmUYPapDvpPLr6Ya
-        W0DmGT1Q==;
-Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
-        id 1qKJah-006Iix-2B;
-        Fri, 14 Jul 2023 14:16:16 +0000
-Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits))
-        (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id B27AC300E86;
-        Fri, 14 Jul 2023 16:16:14 +0200 (CEST)
-Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 8732D245EFFAA; Fri, 14 Jul 2023 16:16:13 +0200 (CEST)
-Message-ID: <20230714141219.215288670@infradead.org>
-User-Agent: quilt/0.66
-Date:   Fri, 14 Jul 2023 15:39:08 +0200
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     tglx@linutronix.de, axboe@kernel.dk
-Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
-        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
-        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
-        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
-        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, linux-arch@vger.kernel.org,
-        malteskarupke@web.de
-Subject: [RFC][PATCH 09/10] futex: Enable FUTEX2_{8,16}
+        with ESMTP id S235417AbjGNO1g (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 14 Jul 2023 10:27:36 -0400
+Received: from wout4-smtp.messagingengine.com (wout4-smtp.messagingengine.com [64.147.123.20])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6C1133C14;
+        Fri, 14 Jul 2023 07:27:12 -0700 (PDT)
+Received: from compute6.internal (compute6.nyi.internal [10.202.2.47])
+        by mailout.west.internal (Postfix) with ESMTP id 05934320094C;
+        Fri, 14 Jul 2023 10:27:07 -0400 (EDT)
+Received: from imap51 ([10.202.2.101])
+  by compute6.internal (MEProxy); Fri, 14 Jul 2023 10:27:09 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=arndb.de; h=cc
+        :cc:content-type:content-type:date:date:from:from:in-reply-to
+        :in-reply-to:message-id:mime-version:references:reply-to:sender
+        :subject:subject:to:to; s=fm2; t=1689344827; x=1689431227; bh=u5
+        ipAH4K0NlmFos4pkZwsy4Cy+qhc8YEhRBvZpa54NA=; b=NVDxZZVQVdpDVPqMKF
+        5D21skUCKYkBUX497oLptmP4rm9ICbEKrL3/5o+aefL42+DszscNov6Sfg1O1oO+
+        HyZcRFc2l0D9E8L2ljfTyZEC0je25cILkj/SbcX9sec1bZzujiS/c/qUpKVt2Hxv
+        6VGve5GLs5640rZYzr1+XX2nqpAE6TumggKWqyPPibpMRqEaogZ4u6jTEr3tsR0R
+        ZcCd8h54KnIXnVlbnFxbbx6itIuJ7NLVXgIkBVJGQ/MTe3L2FwyAUDrWcq8jvABZ
+        nclMpn0mHQMre0DfXOAm5IudfTcgMdLYhcsx28XlTakAQFXYCCiJ9QaMPdI4Bzp0
+        KVPg==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:cc:content-type:content-type:date:date
+        :feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
+        :message-id:mime-version:references:reply-to:sender:subject
+        :subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+        :x-sasl-enc; s=fm3; t=1689344827; x=1689431227; bh=u5ipAH4K0NlmF
+        os4pkZwsy4Cy+qhc8YEhRBvZpa54NA=; b=coRg7x1pxfRs2SC9fY5YA59F+siDT
+        6kOl1drANxJlueREdmaiFWHCiyyvyhzXlj9NiaIHH2Tt6876pe5/xvWRUbr2JIhv
+        Ur8Y0fDRofH+vFA3ILQuRieNJ77P4KrjpL7i9HHwV4rOHmReGS6AhrxnRAFHQHde
+        4Q+BCBTOykfF94B/+2za0O+96x+Xkc6GZRkHgfQsuUtC6i8KFDyFi37rV+SxsLjI
+        eQ0GbaFsfeFFALg59LnFlGWGyBgWgiqHVjP6qefjUz7p2Vrt333mCwi2y4NXk43n
+        nDY4Dtm8i3tjIPs263JDEWZlpObxB1G7iYlM0wFH3Kf0sEMPQHvWLD8uA==
+X-ME-Sender: <xms:OluxZC9DTx8Y8-wywcFqtpsskU0D37co4wcnbbUUHKWimDNo7TjG7A>
+    <xme:OluxZCvxZYTiE3jfJy1gwHDY-3f59jg_JOsE8Zwzuhj_pkPQyfdAgTWsplCeYdajm
+    QiujwdcIRtfAekmdB4>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedviedrfeeigdejjecutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefofgggkfgjfhffhffvvefutgesthdtredtreertdenucfhrhhomhepfdetrhhn
+    ugcuuegvrhhgmhgrnhhnfdcuoegrrhhnugesrghrnhgusgdruggvqeenucggtffrrghtth
+    gvrhhnpeffheeugeetiefhgeethfejgfdtuefggeejleehjeeutefhfeeggefhkedtkeet
+    ffenucevlhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepmhgrihhlfhhrohhmpegrrh
+    hnugesrghrnhgusgdruggv
+X-ME-Proxy: <xmx:OluxZICpGItmE8gfLHTOGNvfLMwZpHl5XTXoPCQvOx313FjyL5e-TA>
+    <xmx:OluxZKeXrOjQy0cgy4DxY_TA4TvKwlPxdqrA4YcHebgQynYRuaRcqw>
+    <xmx:OluxZHNg9P2Nj0YH2WQC5JcDggvfROI_cXobdTjmKEto0od7fh6iXw>
+    <xmx:O1uxZFs-HwGyC7FXsyYG3dQR9GPrMfGT1EIX3fF6jZBYdshTZXJMaw>
+Feedback-ID: i56a14606:Fastmail
+Received: by mailuser.nyi.internal (Postfix, from userid 501)
+        id 9F37AB60092; Fri, 14 Jul 2023 10:27:06 -0400 (EDT)
+X-Mailer: MessagingEngine.com Webmail Interface
+User-Agent: Cyrus-JMAP/3.9.0-alpha0-531-gfdfa13a06d-fm-20230703.001-gfdfa13a0
+Mime-Version: 1.0
+Message-Id: <c5a09710-a7a1-43df-ac25-42e8f3983f9c@app.fastmail.com>
+In-Reply-To: <20230714141218.879715585@infradead.org>
 References: <20230714133859.305719029@infradead.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+ <20230714141218.879715585@infradead.org>
+Date:   Fri, 14 Jul 2023 16:26:45 +0200
+From:   "Arnd Bergmann" <arnd@arndb.de>
+To:     "Peter Zijlstra" <peterz@infradead.org>,
+        "Thomas Gleixner" <tglx@linutronix.de>,
+        "Jens Axboe" <axboe@kernel.dk>
+Cc:     linux-kernel@vger.kernel.org, "Ingo Molnar" <mingo@redhat.com>,
+        "Darren Hart" <dvhart@infradead.org>, dave@stgolabs.net,
+        andrealmeid@igalia.com,
+        "Andrew Morton" <akpm@linux-foundation.org>, urezki@gmail.com,
+        "Christoph Hellwig" <hch@infradead.org>,
+        "Lorenzo Stoakes" <lstoakes@gmail.com>, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, Linux-Arch <linux-arch@vger.kernel.org>,
+        malteskarupke@web.de
+Subject: Re: [RFC][PATCH 04/10] futex: Add sys_futex_wake()
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-When futexes are no longer u32 aligned, the lower offset bits are no
-longer available to put type info in. However, since offset is the
-offset within a page, there are plenty bits available on the top end.
+On Fri, Jul 14, 2023, at 15:39, Peter Zijlstra wrote:
+>
+> +++ b/include/linux/syscalls.h
+> @@ -563,6 +563,9 @@ asmlinkage long sys_set_robust_list(stru
+>  asmlinkage long sys_futex_waitv(struct futex_waitv *waiters,
+>  				unsigned int nr_futexes, unsigned int flags,
+>  				struct __kernel_timespec __user *timeout, clockid_t clockid);
+> +
+> +asmlinkage long sys_futex_wake(void __user *uaddr, int nr, unsigned 
+> int flags, u64 mask);
+> +
 
-After that, pass flags into futex_get_value_locked() for WAIT and
-disallow FUTEX2_64 instead of mandating FUTEX2_32.
+You can't really use 'u64' arguments in portable syscalls, it causes
+a couple of problems, both with defining the user space wrappers,
+and with compat mode.
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
----
- include/linux/futex.h   |   11 ++++++-----
- kernel/futex/syscalls.c |    4 ++--
- kernel/futex/waitwake.c |    4 ++--
- 3 files changed, 10 insertions(+), 9 deletions(-)
+Variants that would work include:
 
---- a/include/linux/futex.h
-+++ b/include/linux/futex.h
-@@ -16,18 +16,19 @@ struct task_struct;
-  * The key type depends on whether it's a shared or private mapping.
-  * Don't rearrange members without looking at hash_futex().
-  *
-- * offset is aligned to a multiple of sizeof(u32) (== 4) by definition.
-- * We use the two low order bits of offset to tell what is the kind of key :
-+ * offset is the position within a page and is in the range [0, PAGE_SIZE).
-+ * The high bits of the offset indicate what kind of key this is:
-  *  00 : Private process futex (PTHREAD_PROCESS_PRIVATE)
-  *       (no reference on an inode or mm)
-  *  01 : Shared futex (PTHREAD_PROCESS_SHARED)
-  *	mapped on a file (reference on the underlying inode)
-  *  10 : Shared futex (PTHREAD_PROCESS_SHARED)
-  *       (but private mapping on an mm, and reference taken on it)
--*/
-+ */
- 
--#define FUT_OFF_INODE    1 /* We set bit 0 if key has a reference on inode */
--#define FUT_OFF_MMSHARED 2 /* We set bit 1 if key has a reference on mm */
-+#define FUT_OFF_INODE    (PAGE_SIZE << 0)
-+#define FUT_OFF_MMSHARED (PAGE_SIZE << 1)
-+#define FUT_OFF_SIZE	 (PAGE_SIZE << 2)
- 
- union futex_key {
- 	struct {
---- a/kernel/futex/syscalls.c
-+++ b/kernel/futex/syscalls.c
-@@ -206,7 +206,7 @@ static int futex_parse_waitv(struct fute
- 		if ((aux.flags & ~FUTEX2_MASK) || aux.__reserved)
- 			return -EINVAL;
- 
--		if ((aux.flags & FUTEX2_64) != FUTEX2_32)
-+		if ((aux.flags & FUTEX2_64) == FUTEX2_64)
- 			return -EINVAL;
- 
- 		flags = futex2_to_flags(aux.flags);
-@@ -334,7 +334,7 @@ SYSCALL_DEFINE4(futex_wake,
- 	if (flags & ~FUTEX2_MASK)
- 		return -EINVAL;
- 
--	if ((flags & FUTEX2_64) != FUTEX2_32)
-+	if ((flags & FUTEX2_64) == FUTEX2_64)
- 		return -EINVAL;
- 
- 	flags = futex2_to_flags(flags);
---- a/kernel/futex/waitwake.c
-+++ b/kernel/futex/waitwake.c
-@@ -439,7 +439,7 @@ static int futex_wait_multiple_setup(str
- 		u32 val = vs[i].w.val;
- 
- 		hb = futex_q_lock(q);
--		ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
-+		ret = futex_get_value_locked(&uval, uaddr, flags);
- 
- 		if (!ret && uval == val) {
- 			/*
-@@ -607,7 +607,7 @@ int futex_wait_setup(u32 __user *uaddr,
- retry_private:
- 	*hb = futex_q_lock(q);
- 
--	ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
-+	ret = futex_get_value_locked(&uval, uaddr, flags);
- 
- 	if (ret) {
- 		futex_q_unlock(*hb);
+- using 'unsigned long' instead of 'u64'
+- passing 'mask' by reference, as in splice()
+- passing the mask in two u32-bit arguments like in llseek()
 
+Not sure if any of the above work for you.
 
+       Arnd
