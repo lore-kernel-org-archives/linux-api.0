@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 54C4BEB64DC
-	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:02 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 115FDC001DC
+	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231466AbjGULAB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 Jul 2023 07:00:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49000 "EHLO
+        id S231480AbjGULAC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 Jul 2023 07:00:02 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49878 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230503AbjGUK7c (ORCPT
+        with ESMTP id S230512AbjGUK7c (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 21 Jul 2023 06:59:32 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3D506270B;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3F0C02719;
         Fri, 21 Jul 2023 03:58:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=H3IuBL/KhSJX21OO6AiJ3KfnhO+mCUPBKJXcGuyHGe8=; b=RogQX4xlshgL4qH6+2IxiMjVjS
-        +1zhOSoNai85Vc5KaSqAdmQ8hx6mqVYEi06LEIs9ExdwhwgOgQ5AV2GlBZNRiGNafNdMa2JeXx8wP
-        bAEA3DJ1HNEOMdCTa89fuzMXV/BqYjh1x8FhuhlNxg2xyWM6OZporL66lCtpn22CtO7JPaHbkCQ+V
-        CAoxA8taEPfPlpJ3AKecQLkqX/lcp46V1jJLAXLuCfwD+NYc8kULtAqEW6o1yYx6l/hBlAjlj+zkx
-        USo5PoEwlYSbyzWuqJd61gExzfqRe9jHwsSmmHrU1u5AYp7t4b/iMC9V2XxoLTse+5N/amDAttAQl
-        ZDRvVWFw==;
+        d=infradead.org; s=casper.20170209; h=Subject:Cc:To:From:Date:Message-ID:
+        Sender:Reply-To:MIME-Version:Content-Type:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To:References;
+        bh=lcLLsfwzzryhPpNrplrfD7AaAzzB68vL86jiPn1J03c=; b=cqAvjtTnCh22vJ3NZdY19uUDsT
+        dakjp3WQqIb36goKS8vtFbnrBGEX+A8D46mL4l+0REZrWulK7bUMhE1x9fQ3FwrnUntSuk+Xu2UxQ
+        qkcNpB///bEL+HrWTuIasMjrcwrVCG2BGgegmSRiW9RyJ/2poSkGzxkGyb25iXtZzEYutcLHzkfXo
+        7KFx1RgOIbRY8tl4f2BQ4Ytfp7JGSSj02vTTCJpYycrfdT7uTZCLerKV9YgNlTZRFWMS7h3GmNArb
+        rcSFx2w6Gs+GCznImEvRaZdu48G4/VUb25W6NimdzeLOEcDhS190Buw03eBFpTjs0+b1vc9Dofzaa
+        weE6UOCw==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qMnqK-0012Ob-6Y; Fri, 21 Jul 2023 10:58:40 +0000
+        id 1qMnqJ-0012OT-JX; Fri, 21 Jul 2023 10:58:40 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits))
+         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2DA2A300A7E;
-        Fri, 21 Jul 2023 12:58:39 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 3024F3007AF;
+        Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 0F0DF3157E61F; Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
-Message-ID: <20230721105744.160298443@infradead.org>
+        id E256F314E02ED; Fri, 21 Jul 2023 12:58:37 +0200 (CEST)
+Message-ID: <20230721102237.268073801@infradead.org>
 User-Agent: quilt/0.66
-Date:   Fri, 21 Jul 2023 12:22:44 +0200
+Date:   Fri, 21 Jul 2023 12:22:37 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -47,159 +47,67 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH v1 07/14] futex: Propagate flags into get_futex_key()
-References: <20230721102237.268073801@infradead.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH v1 00/14] futex: More futex2 bits
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Instead of only passing FLAGS_SHARED as a boolean, pass down flags as
-a whole.
+Hi,
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+New version of the futex2 patches. These are actually tested and appear to work
+as expected.
+
+I'm hoping to get at least the first 3 patches merged such that Jens can base
+the io_uring futex patches on them.
+
+
+Changes since v0:
+ - switched over to 'unsigned long' for values (Arnd)
+ - unshare vmalloc_huge() (Willy)
+ - added wait/requeue syscalls
+ - fixed NUMA to support sparse nodemask
+ - added FUTEX2_n vs FUTEX2_NUMA check to ensure
+   the node_id fits in the futex
+ - added selftests
+ - fixed a ton of silly bugs
+
 ---
- kernel/futex/core.c     |    5 ++++-
- kernel/futex/futex.h    |    2 +-
- kernel/futex/pi.c       |    4 ++--
- kernel/futex/requeue.c  |    6 +++---
- kernel/futex/waitwake.c |   14 +++++++-------
- 5 files changed, 17 insertions(+), 14 deletions(-)
-
---- a/kernel/futex/core.c
-+++ b/kernel/futex/core.c
-@@ -217,7 +217,7 @@ static u64 get_inode_sequence_number(str
-  *
-  * lock_page() might sleep, the caller should not hold a spinlock.
-  */
--int get_futex_key(u32 __user *uaddr, bool fshared, union futex_key *key,
-+int get_futex_key(u32 __user *uaddr, unsigned int flags, union futex_key *key,
- 		  enum futex_access rw)
- {
- 	unsigned long address = (unsigned long)uaddr;
-@@ -225,6 +225,9 @@ int get_futex_key(u32 __user *uaddr, boo
- 	struct page *page, *tail;
- 	struct address_space *mapping;
- 	int err, ro = 0;
-+	bool fshared;
-+
-+	fshared = flags & FLAGS_SHARED;
- 
- 	/*
- 	 * The futex address must be "naturally" aligned.
---- a/kernel/futex/futex.h
-+++ b/kernel/futex/futex.h
-@@ -174,7 +174,7 @@ enum futex_access {
- 	FUTEX_WRITE
- };
- 
--extern int get_futex_key(u32 __user *uaddr, bool fshared, union futex_key *key,
-+extern int get_futex_key(u32 __user *uaddr, unsigned int flags, union futex_key *key,
- 			 enum futex_access rw);
- 
- extern struct hrtimer_sleeper *
---- a/kernel/futex/pi.c
-+++ b/kernel/futex/pi.c
-@@ -945,7 +945,7 @@ int futex_lock_pi(u32 __user *uaddr, uns
- 	to = futex_setup_timer(time, &timeout, flags, 0);
- 
- retry:
--	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &q.key, FUTEX_WRITE);
-+	ret = get_futex_key(uaddr, flags, &q.key, FUTEX_WRITE);
- 	if (unlikely(ret != 0))
- 		goto out;
- 
-@@ -1117,7 +1117,7 @@ int futex_unlock_pi(u32 __user *uaddr, u
- 	if ((uval & FUTEX_TID_MASK) != vpid)
- 		return -EPERM;
- 
--	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, FUTEX_WRITE);
-+	ret = get_futex_key(uaddr, flags, &key, FUTEX_WRITE);
- 	if (ret)
- 		return ret;
- 
---- a/kernel/futex/requeue.c
-+++ b/kernel/futex/requeue.c
-@@ -424,10 +424,10 @@ int futex_requeue(u32 __user *uaddr1, un
- 	}
- 
- retry:
--	ret = get_futex_key(uaddr1, flags & FLAGS_SHARED, &key1, FUTEX_READ);
-+	ret = get_futex_key(uaddr1, flags, &key1, FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
--	ret = get_futex_key(uaddr2, flags & FLAGS_SHARED, &key2,
-+	ret = get_futex_key(uaddr2, flags, &key2,
- 			    requeue_pi ? FUTEX_WRITE : FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
-@@ -789,7 +789,7 @@ int futex_wait_requeue_pi(u32 __user *ua
- 	 */
- 	rt_mutex_init_waiter(&rt_waiter);
- 
--	ret = get_futex_key(uaddr2, flags & FLAGS_SHARED, &key2, FUTEX_WRITE);
-+	ret = get_futex_key(uaddr2, flags, &key2, FUTEX_WRITE);
- 	if (unlikely(ret != 0))
- 		goto out;
- 
---- a/kernel/futex/waitwake.c
-+++ b/kernel/futex/waitwake.c
-@@ -145,13 +145,13 @@ int futex_wake(u32 __user *uaddr, unsign
- 	struct futex_hash_bucket *hb;
- 	struct futex_q *this, *next;
- 	union futex_key key = FUTEX_KEY_INIT;
--	int ret;
- 	DEFINE_WAKE_Q(wake_q);
-+	int ret;
- 
- 	if (!bitset)
- 		return -EINVAL;
- 
--	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, FUTEX_READ);
-+	ret = get_futex_key(uaddr, flags, &key, FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
- 
-@@ -245,10 +245,10 @@ int futex_wake_op(u32 __user *uaddr1, un
- 	DEFINE_WAKE_Q(wake_q);
- 
- retry:
--	ret = get_futex_key(uaddr1, flags & FLAGS_SHARED, &key1, FUTEX_READ);
-+	ret = get_futex_key(uaddr1, flags, &key1, FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
--	ret = get_futex_key(uaddr2, flags & FLAGS_SHARED, &key2, FUTEX_WRITE);
-+	ret = get_futex_key(uaddr2, flags, &key2, FUTEX_WRITE);
- 	if (unlikely(ret != 0))
- 		return ret;
- 
-@@ -423,7 +423,7 @@ static int futex_wait_multiple_setup(str
- 			continue;
- 
- 		ret = get_futex_key(u64_to_user_ptr(vs[i].w.uaddr),
--				    vs[i].w.flags & FLAGS_SHARED,
-+				    vs[i].w.flags,
- 				    &vs[i].q.key, FUTEX_READ);
- 
- 		if (unlikely(ret))
-@@ -435,7 +435,7 @@ static int futex_wait_multiple_setup(str
- 	for (i = 0; i < count; i++) {
- 		u32 __user *uaddr = (u32 __user *)(unsigned long)vs[i].w.uaddr;
- 		struct futex_q *q = &vs[i].q;
--		u32 val = (u32)vs[i].w.val;
-+		u32 val = vs[i].w.val;
- 
- 		hb = futex_q_lock(q);
- 		ret = futex_get_value_locked(&uval, uaddr);
-@@ -599,7 +599,7 @@ int futex_wait_setup(u32 __user *uaddr,
- 	 * while the syscall executes.
- 	 */
- retry:
--	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &q->key, FUTEX_READ);
-+	ret = get_futex_key(uaddr, flags, &q->key, FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
- 
-
+ arch/alpha/kernel/syscalls/syscall.tbl             |   3 +
+ arch/arm/tools/syscall.tbl                         |   3 +
+ arch/arm64/include/asm/unistd32.h                  |   6 +
+ arch/ia64/kernel/syscalls/syscall.tbl              |   3 +
+ arch/m68k/kernel/syscalls/syscall.tbl              |   3 +
+ arch/microblaze/kernel/syscalls/syscall.tbl        |   3 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl          |   3 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl          |   3 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl          |   3 +
+ arch/parisc/kernel/syscalls/syscall.tbl            |   3 +
+ arch/powerpc/kernel/syscalls/syscall.tbl           |   3 +
+ arch/s390/kernel/syscalls/syscall.tbl              |   3 +
+ arch/sh/kernel/syscalls/syscall.tbl                |   3 +
+ arch/sparc/kernel/syscalls/syscall.tbl             |   3 +
+ arch/x86/entry/syscalls/syscall_32.tbl             |   3 +
+ arch/x86/entry/syscalls/syscall_64.tbl             |   3 +
+ arch/xtensa/kernel/syscalls/syscall.tbl            |   3 +
+ include/linux/futex.h                              |  14 +-
+ include/linux/syscalls.h                           |  10 +
+ include/linux/vmalloc.h                            |   1 +
+ include/uapi/asm-generic/unistd.h                  |   9 +-
+ include/uapi/linux/futex.h                         |  17 +-
+ kernel/futex/core.c                                | 144 +++++++++++---
+ kernel/futex/futex.h                               |  96 ++++++++-
+ kernel/futex/pi.c                                  |  12 +-
+ kernel/futex/requeue.c                             |  18 +-
+ kernel/futex/syscalls.c                            | 221 ++++++++++++++++-----
+ kernel/futex/waitwake.c                            |  80 ++++----
+ kernel/sys_ni.c                                    |   3 +
+ mm/vmalloc.c                                       |   7 +
+ .../selftests/futex/functional/futex_requeue.c     | 100 +++++++++-
+ .../selftests/futex/functional/futex_wait.c        |  56 +++++-
+ .../futex/functional/futex_wait_timeout.c          |  14 +-
+ .../futex/functional/futex_wait_wouldblock.c       |  28 ++-
+ .../selftests/futex/functional/futex_waitv.c       |  15 +-
+ tools/testing/selftests/futex/functional/run.sh    |   6 +
+ tools/testing/selftests/futex/include/futex2test.h |  39 ++++
+ 37 files changed, 777 insertions(+), 167 deletions(-)
 
