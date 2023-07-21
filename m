@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 30EA5C04FE2
-	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:07 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 98354C04FE0
+	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:05 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230512AbjGULAF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 Jul 2023 07:00:05 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49712 "EHLO
+        id S231535AbjGULAE (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 Jul 2023 07:00:04 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49110 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231286AbjGUK7f (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Jul 2023 06:59:35 -0400
+        with ESMTP id S230521AbjGUK7e (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Jul 2023 06:59:34 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EA7DF272D;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id ECC262733;
         Fri, 21 Jul 2023 03:58:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=60hbAcuR558zERq3nmTHmGZxZzuSde/KCKqPvfvDN0A=; b=tGS8FVZVVED29+j6zj5HEaAOxI
-        SRQRgFzFoSu6P04KeweOXTANw3a3x3jrYY4ys1Yzf9d4Ze6qmx2YYCypunggIFUg1HeXufmpQBzxS
-        V/ldVoPSOQXOO0yg/aTBWAbreEC5bvBZ6CHMEkaKT9g5zpYPSSQ59osGECCXJ6t6FDoUrXYKhY2LA
-        m2VONQr27kHBHr41Xis4HXsWrHdZH9K0eHK2UAOW82fwq1o6Mm1hd2k9G4QNYGa6WgbPlhl9b3uEQ
-        wkv9AhQJWztan5osPkJb5qMdFvdObWwYdH68icSIwW2KMjbCl5Yz3bNkk8G5X+M7yMLoLd7nQL41p
-        65Vf054A==;
+        bh=Url1S2KkTliaPbsKSfxxrI3LXJILvuEJ2CRpOdAeZx4=; b=RjOze5I06m1EPmRzvNMOw4h7zJ
+        10p45BmFIxxQzO/qLwTkFJsFTB0PrU576kmq0IyFHIfRA75xAexc2xh4dIaNRLa9Y5LNrafe+Y2HU
+        XYyyFWUYwG1XdG7GwrQ8X4aBV8FeMN9VtfhlEzqZaTTa234TXbfT/mP2/kEwc5dwzows9j7EO/zTP
+        51+OgjfvYfrt/+bUwB908HZKFKqXxSPH9Bxt5Vx+8/i0uds+40kFe/jiU8oYpZzOG2lVwthSuPRLl
+        awEwZyTRVb/2zt01EAaLdTRESfjSw9Qsmle/lZskaj31xN2PyMnVDsz78EP0+awx5ayhv/lILMr2+
+        U+nM8rUg==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qMnqK-0012Oe-90; Fri, 21 Jul 2023 10:58:40 +0000
+        id 1qMnqJ-0012OU-K0; Fri, 21 Jul 2023 10:58:40 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 3486F300C65;
-        Fri, 21 Jul 2023 12:58:39 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 35687300911;
+        Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 1CC153157E624; Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
-Message-ID: <20230721105744.367616679@infradead.org>
+        id 020DE3157E61D; Fri, 21 Jul 2023 12:58:37 +0200 (CEST)
+Message-ID: <20230721105743.954526690@infradead.org>
 User-Agent: quilt/0.66
-Date:   Fri, 21 Jul 2023 12:22:47 +0200
+Date:   Fri, 21 Jul 2023 12:22:41 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -47,7 +47,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH v1 10/14] mm: Add vmalloc_huge_node()
+Subject: [PATCH v1 04/14] futex: Validate futex value against futex size
 References: <20230721102237.268073801@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,39 +55,46 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-To enable node specific hash-tables.
+Ensure the futex value fits in the given futex size. Since this adds a
+constraint to an existing syscall, it might possibly change behaviour.
+
+Currently the value would be truncated to a u32 and any high bits
+would get silently lost.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- include/linux/vmalloc.h |    1 +
- mm/vmalloc.c            |    7 +++++++
- 2 files changed, 8 insertions(+)
+ kernel/futex/futex.h    |    8 ++++++++
+ kernel/futex/syscalls.c |    3 +++
+ 2 files changed, 11 insertions(+)
 
---- a/include/linux/vmalloc.h
-+++ b/include/linux/vmalloc.h
-@@ -152,6 +152,7 @@ extern void *__vmalloc_node_range(unsign
- void *__vmalloc_node(unsigned long size, unsigned long align, gfp_t gfp_mask,
- 		int node, const void *caller) __alloc_size(1);
- void *vmalloc_huge(unsigned long size, gfp_t gfp_mask) __alloc_size(1);
-+void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node) __alloc_size(1);
- 
- extern void *__vmalloc_array(size_t n, size_t size, gfp_t flags) __alloc_size(1, 2);
- extern void *vmalloc_array(size_t n, size_t size) __alloc_size(1, 2);
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -3416,6 +3416,13 @@ void *vmalloc(unsigned long size)
+--- a/kernel/futex/futex.h
++++ b/kernel/futex/futex.h
+@@ -86,6 +86,14 @@ static inline unsigned int futex_size(un
+ 	return 1 << size; /* {0,1,2,3} -> {1,2,4,8} */
  }
- EXPORT_SYMBOL(vmalloc);
  
-+void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node)
++static inline bool futex_validate_input(unsigned int flags, u64 val)
 +{
-+	return __vmalloc_node_range(size, 1, VMALLOC_START, VMALLOC_END,
-+				    gfp_mask, PAGE_KERNEL, VM_ALLOW_HUGE_VMAP,
-+				    node, __builtin_return_address(0));
++	int bits = 8 * futex_size(flags);
++	if (bits < 64 && (val >> bits))
++		return false;
++	return true;
 +}
 +
- /**
-  * vmalloc_huge - allocate virtually contiguous memory, allow huge pages
-  * @size:      allocation size
+ #ifdef CONFIG_FAIL_FUTEX
+ extern bool should_fail_futex(bool fshared);
+ #else
+--- a/kernel/futex/syscalls.c
++++ b/kernel/futex/syscalls.c
+@@ -209,6 +209,9 @@ static int futex_parse_waitv(struct fute
+ 		if (!futex_flags_valid(flags))
+ 			return -EINVAL;
+ 
++		if (!futex_validate_input(flags, aux.val))
++			return -EINVAL;
++
+ 		futexv[i].w.flags = flags;
+ 		futexv[i].w.val = aux.val;
+ 		futexv[i].w.uaddr = aux.uaddr;
 
 
