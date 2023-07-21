@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D65A2C04E69
-	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 30EA5C04FE2
+	for <linux-api@archiver.kernel.org>; Fri, 21 Jul 2023 11:00:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231526AbjGULAD (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 21 Jul 2023 07:00:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49882 "EHLO
+        id S230512AbjGULAF (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 21 Jul 2023 07:00:05 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49712 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231215AbjGUK7e (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Jul 2023 06:59:34 -0400
+        with ESMTP id S231286AbjGUK7f (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 21 Jul 2023 06:59:35 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3EFFF2710;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EA7DF272D;
         Fri, 21 Jul 2023 03:58:56 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=QqRA1A/aeG7Vp+frAisWOweSXHDCgPVqvl/Ov07GdYA=; b=lFE5dOaGAlq2HalXhGp6uGQIwK
-        esgYEROcz1Z6gk7Ytrd5tH8FRsG5OraXU5DaAG3mohup4EZtz2C7uGTEdDJgwGcFd5YlPZVSDnapP
-        8QsC1JaNsIo2SS6rv3zyjqt5LbwmVZrhtzE5D+QvYdUoWmP9/8NZ+Twmb4Wx6kxVG2goXOQC3OmiQ
-        idJezFWYDjADNhx1Iz2iXmcLZu6awhOdlZQYjsThacLzjLe9IZTXsqtzsnBnp5cN2I2ueP48gmbk/
-        a5aYgcIuyM6UEqCwnWWBb4kn6f8E7y1Cuu6lR4NT7wYYwfmpd1zQPV6iWAagupMEQsDaARZ48MD5H
-        bIcqw28A==;
+        bh=60hbAcuR558zERq3nmTHmGZxZzuSde/KCKqPvfvDN0A=; b=tGS8FVZVVED29+j6zj5HEaAOxI
+        SRQRgFzFoSu6P04KeweOXTANw3a3x3jrYY4ys1Yzf9d4Ze6qmx2YYCypunggIFUg1HeXufmpQBzxS
+        V/ldVoPSOQXOO0yg/aTBWAbreEC5bvBZ6CHMEkaKT9g5zpYPSSQ59osGECCXJ6t6FDoUrXYKhY2LA
+        m2VONQr27kHBHr41Xis4HXsWrHdZH9K0eHK2UAOW82fwq1o6Mm1hd2k9G4QNYGa6WgbPlhl9b3uEQ
+        wkv9AhQJWztan5osPkJb5qMdFvdObWwYdH68icSIwW2KMjbCl5Yz3bNkk8G5X+M7yMLoLd7nQL41p
+        65Vf054A==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qMnqJ-0012OV-Jo; Fri, 21 Jul 2023 10:58:40 +0000
+        id 1qMnqK-0012Oe-90; Fri, 21 Jul 2023 10:58:40 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+         key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 2E5DF300513;
-        Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 3486F300C65;
+        Fri, 21 Jul 2023 12:58:39 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id E9077314E02E1; Fri, 21 Jul 2023 12:58:37 +0200 (CEST)
-Message-ID: <20230721105743.751364377@infradead.org>
+        id 1CC153157E624; Fri, 21 Jul 2023 12:58:38 +0200 (CEST)
+Message-ID: <20230721105744.367616679@infradead.org>
 User-Agent: quilt/0.66
-Date:   Fri, 21 Jul 2023 12:22:38 +0200
+Date:   Fri, 21 Jul 2023 12:22:47 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -47,7 +47,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH v1 01/14] futex: Clarify FUTEX2 flags
+Subject: [PATCH v1 10/14] mm: Add vmalloc_huge_node()
 References: <20230721102237.268073801@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,72 +55,39 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-sys_futex_waitv() is part of the futex2 series (the first and only so
-far) of syscalls and has a flags field per futex (as opposed to flags
-being encoded in the futex op).
-
-This new flags field has a new namespace, which unfortunately isn't
-super explicit. Notably it currently takes FUTEX_32 and
-FUTEX_PRIVATE_FLAG.
-
-Introduce the FUTEX2 namespace to clarify this
+To enable node specific hash-tables.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- include/uapi/linux/futex.h |   16 +++++++++++++---
- kernel/futex/syscalls.c    |    7 +++----
- 2 files changed, 16 insertions(+), 7 deletions(-)
+ include/linux/vmalloc.h |    1 +
+ mm/vmalloc.c            |    7 +++++++
+ 2 files changed, 8 insertions(+)
 
---- a/include/uapi/linux/futex.h
-+++ b/include/uapi/linux/futex.h
-@@ -44,10 +44,20 @@
- 					 FUTEX_PRIVATE_FLAG)
+--- a/include/linux/vmalloc.h
++++ b/include/linux/vmalloc.h
+@@ -152,6 +152,7 @@ extern void *__vmalloc_node_range(unsign
+ void *__vmalloc_node(unsigned long size, unsigned long align, gfp_t gfp_mask,
+ 		int node, const void *caller) __alloc_size(1);
+ void *vmalloc_huge(unsigned long size, gfp_t gfp_mask) __alloc_size(1);
++void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node) __alloc_size(1);
  
- /*
-- * Flags to specify the bit length of the futex word for futex2 syscalls.
-- * Currently, only 32 is supported.
-+ * Flags for futex2 syscalls.
-  */
--#define FUTEX_32		2
-+			/*	0x00 */
-+			/*	0x01 */
-+#define FUTEX2_32		0x02
-+			/*	0x04 */
-+			/*	0x08 */
-+			/*	0x10 */
-+			/*	0x20 */
-+			/*	0x40 */
-+#define FUTEX2_PRIVATE		FUTEX_PRIVATE_FLAG
-+
-+/* do not use */
-+#define FUTEX_32		FUTEX2_32 /* historical accident :-( */
- 
- /*
-  * Max numbers of elements in a futex_waitv array
---- a/kernel/futex/syscalls.c
-+++ b/kernel/futex/syscalls.c
-@@ -183,8 +183,7 @@ SYSCALL_DEFINE6(futex, u32 __user *, uad
- 	return do_futex(uaddr, op, val, tp, uaddr2, (unsigned long)utime, val3);
+ extern void *__vmalloc_array(size_t n, size_t size, gfp_t flags) __alloc_size(1, 2);
+ extern void *vmalloc_array(size_t n, size_t size) __alloc_size(1, 2);
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -3416,6 +3416,13 @@ void *vmalloc(unsigned long size)
  }
+ EXPORT_SYMBOL(vmalloc);
  
--/* Mask of available flags for each futex in futex_waitv list */
--#define FUTEXV_WAITER_MASK (FUTEX_32 | FUTEX_PRIVATE_FLAG)
-+#define FUTEX2_MASK (FUTEX2_32 | FUTEX2_PRIVATE)
- 
++void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node)
++{
++	return __vmalloc_node_range(size, 1, VMALLOC_START, VMALLOC_END,
++				    gfp_mask, PAGE_KERNEL, VM_ALLOW_HUGE_VMAP,
++				    node, __builtin_return_address(0));
++}
++
  /**
-  * futex_parse_waitv - Parse a waitv array from userspace
-@@ -205,10 +204,10 @@ static int futex_parse_waitv(struct fute
- 		if (copy_from_user(&aux, &uwaitv[i], sizeof(aux)))
- 			return -EFAULT;
- 
--		if ((aux.flags & ~FUTEXV_WAITER_MASK) || aux.__reserved)
-+		if ((aux.flags & ~FUTEX2_MASK) || aux.__reserved)
- 			return -EINVAL;
- 
--		if (!(aux.flags & FUTEX_32))
-+		if (!(aux.flags & FUTEX2_32))
- 			return -EINVAL;
- 
- 		futexv[i].w.flags = aux.flags;
+  * vmalloc_huge - allocate virtually contiguous memory, allow huge pages
+  * @size:      allocation size
 
 
