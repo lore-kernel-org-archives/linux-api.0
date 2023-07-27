@@ -2,21 +2,39 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 73ED2C04FE0
-	for <linux-api@archiver.kernel.org>; Thu, 27 Jul 2023 17:14:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id ADF21C001DC
+	for <linux-api@archiver.kernel.org>; Thu, 27 Jul 2023 17:36:40 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232749AbjG0ROH (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 27 Jul 2023 13:14:07 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46270 "EHLO
+        id S229487AbjG0Rgj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 27 Jul 2023 13:36:39 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:35452 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232747AbjG0RNs (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Jul 2023 13:13:48 -0400
-Received: from brightrain.aerifal.cx (brightrain.aerifal.cx [216.12.86.13])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 84B2D3AA8
-        for <linux-api@vger.kernel.org>; Thu, 27 Jul 2023 10:13:38 -0700 (PDT)
-Date:   Thu, 27 Jul 2023 13:13:37 -0400
-From:   "dalias@libc.org" <dalias@libc.org>
-To:     Christian Brauner <brauner@kernel.org>
+        with ESMTP id S229719AbjG0Rgi (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 27 Jul 2023 13:36:38 -0400
+Received: from dfw.source.kernel.org (dfw.source.kernel.org [IPv6:2604:1380:4641:c500::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 579EF2D67;
+        Thu, 27 Jul 2023 10:36:37 -0700 (PDT)
+Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
+        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+         key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+        (No client certificate requested)
+        by dfw.source.kernel.org (Postfix) with ESMTPS id AB42B61EFB;
+        Thu, 27 Jul 2023 17:36:36 +0000 (UTC)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9AD2AC433C8;
+        Thu, 27 Jul 2023 17:36:24 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+        s=k20201202; t=1690479396;
+        bh=iU7zvXpvxPSg5KiGe2n535PFFdPoC8EIhqciU1h+3Zw=;
+        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+        b=VxumH8hGN053L+FyKWAl7yNCuep6zB52SgRtI5W/3VmZXm+mmZ4jBeoyIQx8UEPBz
+         KB2g3ckpL1rFkA8SxtOo/2sVYVEfDaKNkKBz1lQ8P2ADzxBiSuYz1s4+mgNIaH8PHC
+         mgTZjyPGv647aIhCLp9wnBJ2zOHZU59iFOFLNAEflHY4ZPUF7p4ROHHXQAz2E75cTe
+         Vin+UGvlA56e4nxESt9X2PQkCsoXkmtj+oV/UF3bLR5Ny1I9LiKjhW+1r+2WJ/O6Yd
+         TgUSACO81o4AuGEsdvCy68dJhSXgXujDC+IFg4xwGOBHFACldMWcZVQg7TP9JlZNoG
+         348a+hccYCeEA==
+Date:   Thu, 27 Jul 2023 19:36:21 +0200
+From:   Christian Brauner <brauner@kernel.org>
+To:     "dalias@libc.org" <dalias@libc.org>
 Cc:     Andreas Schwab <schwab@linux-m68k.org>,
         David Laight <David.Laight@ACULAB.COM>,
         'Aleksa Sarai' <cyphar@cyphar.com>,
@@ -80,7 +98,7 @@ Cc:     Andreas Schwab <schwab@linux-m68k.org>,
         "ysato@users.sourceforge.jp" <ysato@users.sourceforge.jp>,
         Palmer Dabbelt <palmer@sifive.com>
 Subject: Re: [PATCH v4 2/5] fs: Add fchmodat2()
-Message-ID: <20230727171336.GC20050@brightrain.aerifal.cx>
+Message-ID: <20230727-boxte-wohnviertel-74b8541d27ec@brauner>
 References: <cover.1689074739.git.legion@kernel.org>
  <cover.1689092120.git.legion@kernel.org>
  <f2a846ef495943c5d101011eebcf01179d0c7b61.1689092120.git.legion@kernel.org>
@@ -88,56 +106,57 @@ References: <cover.1689074739.git.legion@kernel.org>
  <d052e1266bf042f9b4961bbf42261a55@AcuMS.aculab.com>
  <87ila5jp2y.fsf@igel.home>
  <20230727-zerrt-leitmotiv-9e8b60abf690@brauner>
+ <20230727171336.GC20050@brightrain.aerifal.cx>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20230727-zerrt-leitmotiv-9e8b60abf690@brauner>
-User-Agent: Mutt/1.5.21 (2010-09-15)
+In-Reply-To: <20230727171336.GC20050@brightrain.aerifal.cx>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, Jul 27, 2023 at 07:02:53PM +0200, Christian Brauner wrote:
-> On Thu, Jul 27, 2023 at 06:28:53PM +0200, Andreas Schwab wrote:
-> > On Jul 27 2023, David Laight wrote:
+On Thu, Jul 27, 2023 at 01:13:37PM -0400, dalias@libc.org wrote:
+> On Thu, Jul 27, 2023 at 07:02:53PM +0200, Christian Brauner wrote:
+> > On Thu, Jul 27, 2023 at 06:28:53PM +0200, Andreas Schwab wrote:
+> > > On Jul 27 2023, David Laight wrote:
+> > > 
+> > > > From: Aleksa Sarai
+> > > >> Sent: 25 July 2023 17:36
+> > > > ...
+> > > >> We almost certainly want to support AT_EMPTY_PATH at the same time.
+> > > >> Otherwise userspace will still need to go through /proc when trying to
+> > > >> chmod a file handle they have.
+> > > >
+> > > > That can't be allowed.
+> > > 
+> > > IIUC, fchmodat2(fd, "", m, AT_EMPTY_PATH) is equivalent to fchmod(fd,
+> > > m).  With that, new architectures only need to implement the fchmodat2
+> > > syscall to cover all chmod variants.
 > > 
-> > > From: Aleksa Sarai
-> > >> Sent: 25 July 2023 17:36
-> > > ...
-> > >> We almost certainly want to support AT_EMPTY_PATH at the same time.
-> > >> Otherwise userspace will still need to go through /proc when trying to
-> > >> chmod a file handle they have.
-> > >
-> > > That can't be allowed.
+> > There's a difference though as fchmod() doesn't work with O_PATH file
+> > descriptors while AT_EMPTY_PATH does. Similar to how fchown() doesn't
+> > work with O_PATH file descriptors.
 > > 
-> > IIUC, fchmodat2(fd, "", m, AT_EMPTY_PATH) is equivalent to fchmod(fd,
-> > m).  With that, new architectures only need to implement the fchmodat2
-> > syscall to cover all chmod variants.
+> > However, we do allow AT_EMPTY_PATH with fchownat() so there's no reason
+> > to not allow it for fchmodat2().
+> > 
+> > But it's a bit of a shame that O_PATH looks less and less like O_PATH.
+> > It came from can-do-barely-anything to can-do-quite-a-lot-of-things over
+> > the years.
+> > 
+> > In any case, AT_EMPTY_PATH for fchmodat2() can be an additional patch on
+> > top.
 > 
-> There's a difference though as fchmod() doesn't work with O_PATH file
-> descriptors while AT_EMPTY_PATH does. Similar to how fchown() doesn't
-> work with O_PATH file descriptors.
-> 
-> However, we do allow AT_EMPTY_PATH with fchownat() so there's no reason
-> to not allow it for fchmodat2().
-> 
-> But it's a bit of a shame that O_PATH looks less and less like O_PATH.
-> It came from can-do-barely-anything to can-do-quite-a-lot-of-things over
-> the years.
-> 
-> In any case, AT_EMPTY_PATH for fchmodat2() can be an additional patch on
-> top.
+> From a standpoint of implementing O_SEARCH/O_EXEC using it, I don't
+> see any reason fchown/fchmod should not work on O_PATH file
+> descriptors. And indeed when you have procfs available to emulate them
+> via procfs, it already does. So I don't see this as unwanted
 
-From a standpoint of implementing O_SEARCH/O_EXEC using it, I don't
-see any reason fchown/fchmod should not work on O_PATH file
-descriptors. And indeed when you have procfs available to emulate them
-via procfs, it already does. So I don't see this as unwanted
-functionality or an access control regression. I see it as things
-behaving as expected.
+I'm really not talking about the fact that proc is a giant loophole for
+basically everyhing related to O_PATH and reopening fds.
 
-Semantically, O_PATH is a reference to the inode, not to the dirent.
-So there is no reason you should not be able to do things that need
-permission to the inode (changing permissions on it) rather than to
-the dirent (renaming/moving).
+I'm saying that both fchmod() and fchown() don't work on O_PATH fds.
+They explicitly reject them.
 
-Rich
+AT_EMPTY_PATH and therefore O_PATH for fchmodat2() is fine given that we
+do it for fchownat() already.
