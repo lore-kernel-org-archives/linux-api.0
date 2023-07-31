@@ -2,38 +2,38 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 92CD6C001DC
-	for <linux-api@archiver.kernel.org>; Mon, 31 Jul 2023 16:08:19 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 005ABC001DC
+	for <linux-api@archiver.kernel.org>; Mon, 31 Jul 2023 16:11:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229775AbjGaQIS (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 31 Jul 2023 12:08:18 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44644 "EHLO
+        id S233276AbjGaQLh (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 31 Jul 2023 12:11:37 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47428 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229752AbjGaQIS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Jul 2023 12:08:18 -0400
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 52E77A7;
-        Mon, 31 Jul 2023 09:08:17 -0700 (PDT)
+        with ESMTP id S233313AbjGaQLf (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 31 Jul 2023 12:11:35 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [IPv6:2a0a:51c0:0:12e:550::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C5B06170A;
+        Mon, 31 Jul 2023 09:11:29 -0700 (PDT)
 From:   Thomas Gleixner <tglx@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020; t=1690819695;
+        s=2020; t=1690819888;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=+0nZDc7AkOYPa1mOccvDg657HcpzyBZSpAOhgeEprOM=;
-        b=kQiAjQGJ9PCeNdSRPe5w5zZZ+tsiqfczzWbMsKWzmIzNTMM02FDMXpzVOyl2zRTJVVs8M2
-        URGIxv87b+gOpCIJ6Y348bNO8+LXt97sXxKLvQa1l4Oe3afFm+by2PxPqMIsDJJUiIduLx
-        tHItUiTsMqJGTLsdOuFN7ojmScUu+Cu3HRPrNSCj6mr2ASjMPesCPd2qcd8ZqXFxYxTAJ1
-        VMfsoauJZuuxjjWwTq8B7d7LkSyJv/FhpUAwDaXPuWCJpKOtf1D/eHrGn0aKD54o6Ib/ZW
-        cyL6hBosji1kOglmWO5j7Ypb//w2mpPYIwhTWKQ0drQW1c9tCtJ0OAA8grU0cA==
+        bh=VPQ3fAPQWDrjXqLR7sLkRXFSfT5Axv/t++ZFAKa1vPk=;
+        b=YCHvdedUGbTtdsUBSqVP5Uw9Mcx1CwPAFnkmNMZtycuurfk4nzE3k/VaYOe9StNEpek6fW
+        4tZQI1qZ/8HYR4CHRVz+oSHc297wmYaQtr1Lxsq68JXMsWsZ3rqwa3/FjtNvJo3XGidbJk
+        NLZF8ebij6hSGvXSn/YmZn1zszvVymPr+dCKqJIC0pPqQ3p1wSWWtgcY/Jes8i92oRRUYj
+        KDEXDgkjQ/3xUJ3r2dNNjLf74LSNkxO8MOvixdltvkf5eHStJ0c4MEIso6BbjcbxA4kiVJ
+        cTexDkwgKV+WoiBmfucifc+RwdDhRuvnkLHjAcRDKt1pFA0UxvV88/ucWGg3tw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-        s=2020e; t=1690819695;
+        s=2020e; t=1690819888;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          in-reply-to:in-reply-to:references:references;
-        bh=+0nZDc7AkOYPa1mOccvDg657HcpzyBZSpAOhgeEprOM=;
-        b=5kIZ0r+H+aqRKB9BE/XX7G1AER5gHoEZqVGWnb/wMhd98/2fnWrr0ZtYLGcZ+9tMXKRf39
-        q0AP+fsSkjf/5uBA==
+        bh=VPQ3fAPQWDrjXqLR7sLkRXFSfT5Axv/t++ZFAKa1vPk=;
+        b=J0tyD6cXAhafaPfAXbWslIuDhV+ckGLy8BKgnEOUONS7UsIzCrAWQb2hlbxnG7rcEPQV+Q
+        gDwjvGqWQ5hdNEAw==
 To:     Peter Zijlstra <peterz@infradead.org>, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
@@ -42,29 +42,46 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: Re: [PATCH v1 01/14] futex: Clarify FUTEX2 flags
-In-Reply-To: <20230721105743.751364377@infradead.org>
+Subject: Re: [PATCH v1 02/14] futex: Extend the FUTEX2 flags
+In-Reply-To: <20230721105743.819362688@infradead.org>
 References: <20230721102237.268073801@infradead.org>
- <20230721105743.751364377@infradead.org>
-Date:   Mon, 31 Jul 2023 18:08:15 +0200
-Message-ID: <87h6pknjww.ffs@tglx>
+ <20230721105743.819362688@infradead.org>
+Date:   Mon, 31 Jul 2023 18:11:27 +0200
+Message-ID: <87edkonjrk.ffs@tglx>
 MIME-Version: 1.0
 Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-ROn Fri, Jul 21 2023 at 12:22, Peter Zijlstra wrote:
-> sys_futex_waitv() is part of the futex2 series (the first and only so
-> far) of syscalls and has a flags field per futex (as opposed to flags
-> being encoded in the futex op).
->
-> This new flags field has a new namespace, which unfortunately isn't
-> super explicit. Notably it currently takes FUTEX_32 and
-> FUTEX_PRIVATE_FLAG.
->
-> Introduce the FUTEX2 namespace to clarify this
->
-> Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+On Fri, Jul 21 2023 at 12:22, Peter Zijlstra wrote:
+> +#define FUTEX2_8		0x00
+> +#define FUTEX2_16		0x01
+>  #define FUTEX2_32		0x02
+> -			/*	0x04 */
+> +#define FUTEX2_64		0x03
+> +#define FUTEX2_NUMA		0x04
+>  			/*	0x08 */
+>  			/*	0x10 */
+>  			/*	0x20 */
+> --- a/kernel/futex/syscalls.c
+> +++ b/kernel/futex/syscalls.c
+> @@ -183,7 +183,7 @@ SYSCALL_DEFINE6(futex, u32 __user *, uad
+>  	return do_futex(uaddr, op, val, tp, uaddr2, (unsigned long)utime, val3);
+>  }
+>  
+> -#define FUTEX2_MASK (FUTEX2_32 | FUTEX2_PRIVATE)
+> +#define FUTEX2_MASK (FUTEX2_64 | FUTEX2_PRIVATE)
+>  
+>  /**
+>   * futex_parse_waitv - Parse a waitv array from userspace
+> @@ -207,7 +207,12 @@ static int futex_parse_waitv(struct fute
+>  		if ((aux.flags & ~FUTEX2_MASK) || aux.__reserved)
+>  			return -EINVAL;
 
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+With the above aux.flags with FUTEX2_32 set will result in -EINVAL. I
+don't think that's intentional.
+
+Thanks,
+
+        tglx
