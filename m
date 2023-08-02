@@ -2,57 +2,57 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A0CDBC04FDF
-	for <linux-api@archiver.kernel.org>; Wed,  2 Aug 2023 17:51:24 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id C369DC001E0
+	for <linux-api@archiver.kernel.org>; Wed,  2 Aug 2023 17:51:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232920AbjHBRvW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 2 Aug 2023 13:51:22 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:40012 "EHLO
+        id S234117AbjHBRvl (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 2 Aug 2023 13:51:41 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38714 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234083AbjHBRus (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Aug 2023 13:50:48 -0400
+        with ESMTP id S233462AbjHBRvA (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 2 Aug 2023 13:51:00 -0400
 Received: from sonic315-26.consmr.mail.ne1.yahoo.com (sonic315-26.consmr.mail.ne1.yahoo.com [66.163.190.152])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8A3E24203
-        for <linux-api@vger.kernel.org>; Wed,  2 Aug 2023 10:49:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1690998578; bh=1z4JIHZm4iFDoZgr2SE/Rwlkjm9zpKdJXxkkP4ltcr8=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=Ya4849+EibzjiYC6YiBGwSSn3hrQiTvFBuCwN1z9Y142YQD7mpkxzO15ZT9+ygtJ5rgKW0ErA7OkuRaC76myRfOPxWC/CgIIbik62msyyVyfCjhNIwovPfdcG1bHltnnPUL9WXlATO3APULkkimgSxUiFY4YFGKX22dxPMUE7g8vqKmAqj7CUSuiV8nOd25lzq4SE7K067IvU/rHOTeE+ooue8OnOtGq/sFJ2NzbIdeuPc5VpJbWS+FdR6Z9DPOcm1cpT3MfaXbjUJG4AKlGzs1Hqbe6/pU/h7WOIxxF5SPHW4Co1kxp+WVTCTdmyyidDVIFJMF/pS6CJzTnTMFMFA==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1690998578; bh=bOXpcUw4fHfXosFGEw3mClIfJtv5DvZGIp5zMC9Pu9m=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=kVZW6WaWDG20sR1XeGAhb84VPgG1iiICYQuM+dyWpCHZkyCJCudF7U2LmpIpytuYy1CL6s14f8dZLoOlCoQ7hHVchNAnr4w1PEQ1UzYxqYYbXs+m8JCSA+mPWl/lUGm4sKHC7fJ+fbyXM4Dvz1YBe6h+tSjDd1JP/0rV5D14+g/v1QjYVZNRltsBUcBeFYD8W95NoPPPo/Coj4BnUCdDFlJKWyiuX1NTaGtnmhS1LU0N4P6ZlYCsiAAnYpVUhu4f2qa+P1632dOjlUUq92SZCANRrjcItf4Rhns3F6nDpenjNL6hJjv0NqTf/9w5xDdXwBceUV1pnZXanX0TI6Q+uA==
-X-YMail-OSG: Z9o4sn4VM1lUq1.nMo31d1OxXYCvtZNr8s4VI1hGquFl6QBwarjcMSnMw_ql.yl
- 3d9yoPSF05SfULSCvZKtUaGz_RHPIxsARICHdfRD1AOWsTKi4yPbMA.S5k3_OrqKi_hoYFQPpSFP
- mCpJhleyAzjbYCawADMqo1ojI3oBSbJ4hCtwTHILbddlNy2VzCJiCpkN1KRt2_q4F.QXmVV.NjnA
- mM9OCBOIp.bGFR4hAJFxt3ELFQzWIqkixhO3qbPXqMT_Pkm1x6TiGBD3dwLM_glOzNopoFQy__P9
- 4gi5CEo5hC2g666kyNkHyBHUJ9EhRNwlTjKn.9RhxVAkvvWZbolsRsMxnWpdBmQJJd0Oz.5ugNrs
- 5mbuHdaCsYwpERX3SwgeeCbku.RarfPusoI1cse9Kg4EmFBVa7Yokw0FrEQZVB1O0O3DRWe3p1a3
- g9kHhMwOo9XYo64n14XOWpyb_.81a1Iv8MinJcu_dpfkNDiCEFKrhqKu1Di37hMyyCtRiKlfNdtB
- vd5v.iNkmbRtIpBRo41mtb__NepPQ_TvXmmg8h.MBW7hqYj_r2o2fPWhvIwaKjCbwHdj23cZETao
- Yhzz7K5BC0SiXxdgKPFJqS6QfeedTxpB3KomsLj7RZYHEuoyMAK2Huqyoe8hxkGO9dTiHhRoDd1D
- tBPi97FXIruw8M4u73T.WWQprXIkbFOeZk8mx5xDvnH2.BwpNRN4e5IA45Q1v.rnNXmb_4RkEuPZ
- d_3e5VNZdIFCeiS4QI_Q.B5Csr8U1L6dDCpNjZyz7DiJCf._Mj.CgX7wrT03GOyZm7pEEitPYR6r
- 8bVphPuwKToIl_akWRXEhbWK0tM.RXOimCtEKmDAwWT1XDf2v0X8M7WEeHJbt541x.ytpYXPNxx_
- 6rYLqhpjNQMiUTSiOFQfyYNR9nqMBVhhXi_Uie7a_nr9sykBefudf7G0hWES2C9WZ6qYbd0av3Cn
- Tsi6ur0giULQ4Z27cXgu7lDiumO_L3e4hrnFUOCYWZSskxJTapvhR23_Q8650txZ1ZPztTaTfCcN
- zi1KrNEISNzOIfj8Knn3HrFZGgp1xbeNO703EDLbYugQaUq6x_9oNqo0_sh4D5E.0UqsTooM2M57
- _FlXGWsXFRiq4ot06fHIdqm8LKRYF41w4kKo.4e8cId4KdbHIgXNBUCzZbCdSsqtqFOY.MtmKufw
- _r_NiyoHMyKiARDttboFhnxLKubAuUwhbUrcefF4S4exyOx3NZ6zyzM0wXDSHVNGaopwLwR47DIM
- eSHKlwKwoN3CJDHXv8_xubKrLfjOlNfgQ2qAbJGd96cmaOOU6iSh88nfJg9XVaXecyy6QdMnvxmD
- Rihfludsvzmf8u7As2cWLnyz2zymbvxZJggftgjOGculCg6yMtYyyLZzwl_WcRUzGekC.wF3tJ28
- dkFczx2iBsmxIsB0aDgwKW1MloctjIWeuq1a9TZsMciojbvS8Umv4_fLn17ntO1RNWvk0bLgc3oo
- 1loEP5RcQBKEE0fRZ8xccf.AIVALjLPQ0IapQDs3ieI4I4.RcFbP5MroSQHCNURbfrwEF57Bip3o
- R6d9mYecdJpIRyno4Y9ETvPbGt1K3R9Dej11Hw5SRmJNR7F7JZXKQqkAiBlsoPxBbFxncCxbUHa7
- fvaCxKkex8gNMp0UaMfNhZBjim_BaJOFbX6X39Du4aUqJDcHzumtpX_SyvzA8Giz3Q5y_deTv4o3
- xSFzqBI1.F2SLtGPbubodnEzwYw5Pmo8F8hZgrlEOeR0RTsPfLLWB_PV.0b1cJDDXkuu38O1kQnE
- ZpuaruhqHbHSYn..AySxfebZ71wB1nO8pJ1t2..phlavRjN4JA3tRKAz9KVTIJtVQRaeS8Esw8za
- akoJ2ccEohPxpk6hxKrRnAIT9YC8db2PCDJ0r3TnQiGJtzuZc63JPQrWABUoCVyP6YXTsvDtis1U
- tDX7qfhPgJfIeIWWY.CL2N7IYq1E0CUqWQYdY7Hw1vQAMhWNV_JCHZBdsrQoRQzb6K3aVYUaMkqu
- 8ig0EVFwQn61m.0BrJE5bV.f26DepnG507qESzsn17IsCuh0bmLfPfAwldic0lHRksbKG04vSinK
- xAA8t0Tcke743BVl61Ti3oPbpwaaP_yiODenLPIpldisuMtzMmJ0PnUyKivedQZjd0P1H3YpUmIN
- ykueReD4hSiOLd5QuRlobfyVTahGciUKbAJJ0Ky7wDcw8VAzptTkuUVWDp9weFoDWQs6.mjh9fKZ
- mFWzj6o8wyxVh9FipXFO5xHB6wIJOJj9wIDz0dRyHb3gcsDWjhyagSefqS3ExZ1Q6IR9Xd2MLsH1
- JxHDlEWF18fjJZInrh5GOn50-
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 86692422F
+        for <linux-api@vger.kernel.org>; Wed,  2 Aug 2023 10:50:08 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1690998583; bh=EHUe7DseksUqbUQVVRcgp/deEuFWo6dpSz/lsCkwGLo=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=mq1V+wRnfalQg+hDIs91JAiOBFWpoGtU3x3mT/7R8g4fKs4dIXxLcHLaoxQPwN6nd5hjlF4dDKShBW28tLNk2vbmq4AIBzSiKUVkykbDcylBz0XNDZ3mMTpVxTOaY8kzEcD6O/5glK0j57EaunOnbisPrf788ZfRWq5DwT4AO9t0ZYZETXRxCmVn7nuUc11BC7NudRDPi13E5xwVKk2f+VkT34NhGPq1X2PiRdRZl/rKjNC97SvVT1tUPE258+CGm9+/shEqMALuZDc7bpzhZ2Dx4V+dvLG/MH/S8EB1tKpzopzkQ89xDjtrJt3D2taJzkU+Nl/uiu6zPj52ZlCULg==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1690998583; bh=pRaG9LwybZCpb3vsKwbI7nz4Co4oVYLrocM+90ECRny=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=jcDR0rkVkUdJT/jxZ47SluSoQBYPEcyyEEiKaOyN0rxuP+sNEopw24Ym4zF0FN1luYa4OkV8pSCwrPijyA/MDGDlbweN/aqsiR53E5mlxgOLfuK5avIOY2QT6D4/Uudp5chzkGEbHi0zLblIlYQJZCyn45/gx8qGhwhjRfyx6YkVku6U+7TFdBweEIwZcNrvylAvtgHKwVl+YLAvHsTYJDGS4bLuCKooQ7kLtROSM6UCuwL6oz5d4QDcdUuTuRyD9QHcUBkaLmfGYDbp7B+v5ECmFjfX5ZdNpNdxJ3dcR1Vv1NKsj+tuoY4Ei7gdilo2mGZGnHM7FVQKCh3knthhqg==
+X-YMail-OSG: Z1z.4I4VM1kQ9sRAwbXt2.t09MNt_XloARUb5rfysjPYJq3pJDUssxRdWHV85t5
+ xUDWXDeeEIE9AIsEIFkZTMEHfiyJIycry8OJLfTCIelPWi9JI0diFa8B4Afkv78RCLrLhKHXZCQN
+ anuCHJj95fEUr5njgaKsUSR663Rejy3e6l8WdrrWRHej5vHqtofx2IqKQLhTGTPz3tahFdmsQUBl
+ yIPX65niKI8osi349svMhm7kYrbIs2t3q2JaO9rFZGumFRSnM55mmmGHHJ83mNKqsTlyDB4tCo3Q
+ 4F2mfAf9VPlUF8PceoJFYMh1D.wtcwdxLwN6u33GuPPeONsmQzBUv0tHCBiVAzNaxTbtWmBW_ElO
+ ZY8ztMiHbz.KIH0wOsJLtBgOlj15bklNmhPWcQM4X51F0QBgj5d9QU3DCLomMsj5Gx7pdYaJPypL
+ suTEBXBUHS28gcCPOkCLCkrq4jXhLNho76RS6kBBDMQVL1TSZ4W2BJdjY3ZYXp3CUnBSx85oH.xh
+ DVZtcO0ZxrBOKt49_6BgrTM97tk_GLMxccbcmWyJMd_0GPLDuJFC3QtoElkDC_vo1pRxbW84rBP.
+ tEil201JMX5LHWZTMcNkMWts_OR_ck2hBrWp16f79P8Y5V8B4QuGs0bFSabG8OdUNXYmbTnS7MMO
+ lhkVNqZxY0fUVs761R17.SyuKPfcFvBwyvhUOYubr8shgAVJISK2tqOaGulHIg2MzuGAsi99w6PU
+ uQwpZFsLygG9vsX_RH5wQkNcFumBNRkQq45AI_Pyjkgnv8NPEVHS3slsw4t5u269u3pSk8l.EAdm
+ nliZ6jjLDx2gZTbFT7U9QhSAJ8n0edxt9sJxiGohN1x_pAQrrLMySwLnefH4MMMKmH_vxbhbpFYE
+ HvhYZXnwLxY4Gz2L9ioYLRG7tL7OI3QWa3mGKEIP_h0N9LOxQgb0lBCNyEUPLQ14GvlGhKsVRqYF
+ uMTwcfxsYJIeH4XbSxzQElrhx2gmqC8_iePRTctc7UZrd9ngi7dZIDDOJlCjYHqfx29aWnJfR.Ew
+ pLLmmZDSG2oJ1s8HB2Q9C7v0YG2LRv1L87OiNHNUh_imerCp9DDFWcdilgrmVzgcncsfx4XLbIv2
+ Wevwm.krqoQLuOXU_AJG0n5_Sx_8NVZIlJneiUeyQxpfta_tjA89IHg_i2TMipUh8U5jxqlUfNWD
+ TV10JNQ818LZPGYDXYpudv8sDiq71JMWbcJcCCZQU_aDEILmyuS0Rd7HWnZd30ziMO1T7n8C0wus
+ sVQ8eS.BYxepgEjVc0aylZ5IbNSwURjPvhPGVerIhqi11KTAkFbLy862CM09cEYxW6bpIZ8rQ_Oi
+ vktyf0KwoXwOptgHEyvMeZC8971qodgudXMzgcs7zVeO1UBQlw3Ux96LzkIXcf5w6A4ccSxyDLSh
+ MMb9_BIphNimZA94NLkk4JKyN2AYOgNSV.euLL59qFEPro2VWoJJua1tKael_uEwskBGTC2NxkTx
+ 58TbtdH1manna8CQ70wl3FxvfaCR55wS6N2wVuTyT9g8jGy.IJjxXaIQInQQKnLiLW.8H28a2sBm
+ .W1eBhtsrRaa.oWybyYtiXdRtX4Z_Au_CakXU8JAj8tyQquxiVE9oIfQ8fweFucjeSHmcQNQkcOr
+ HYWszFaoQjW5CtG2dMQ6pp8wz.Aykr8m2Ylzy5_vV1cwjWiamn1MdLo8fpv2adBTNxAZfjHhDMfj
+ jciTHQpulFXakbTvXLw2rn7ucSHTA_tjbxAtClAArfmT61VALmGOF_yqzKtIj5NGz5sEfrr44xXm
+ O7JMmjdBV5kvJ7zGrSRaMPIvz_PZb.xfjFX_R31YoAt9e7VIGpFQUnkFBncKYsqsL6961XWBiPOC
+ mGvoCV8fEKsQtBa5AFIRoLN7D6AEflQaKa06HwR4l1d68u2SGO9araoNvyXvmhiY9656vSOEDQn1
+ 7iXiGqYtskhBMfdasf5kps6Lq_05CPbyxGQBJIiq4Vcu.M9Q9GoxA_cfzXm8xicGo4Lz7EX2nBlU
+ msbClpZzN1wOl5l3_GwLSy_hXbTvYEVERTS7reTznoISYHx3aZrplwVLSymmNWNC486UPc2ytff4
+ gDgJDS33kyIjMOuesoEEROJGVFg_PORiNhabBgq8rpHbWsYU85fYEzeOfXF2PzX9FoPX07pV4Q8d
+ qfd1pn8vKmXfXhqEVWX9Cq9Ipg6Vwrgq6l1pVpzxcf7VnDwZmxXrh3dLK9Ku_MB4.0.ZlpG298PC
+ o7pgfWO5FQ3MhVJ45eLWQRWl3TtAZisWPvvkn2E._s9CMpZsW8HUBCquGsMUYI_fmPkE1ZlXud6D
+ mUV_vAQ.8F3xMN.N1RfBuvNy1si4-
 X-Sonic-MF: <casey@schaufler-ca.com>
-X-Sonic-ID: 5e9be14c-e0e3-4c9f-a8c6-35d62f10c7ad
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic315.consmr.mail.ne1.yahoo.com with HTTP; Wed, 2 Aug 2023 17:49:38 +0000
+X-Sonic-ID: 0c7cbfe3-b789-4385-94a5-14dcef45030c
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic315.consmr.mail.ne1.yahoo.com with HTTP; Wed, 2 Aug 2023 17:49:43 +0000
 Received: by hermes--production-gq1-7d844d8954-l5pzx (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 6a2fae4a0e3a5f2539f1465356d53db3;
-          Wed, 02 Aug 2023 17:49:33 +0000 (UTC)
+          Wed, 02 Aug 2023 17:49:36 +0000 (UTC)
 From:   Casey Schaufler <casey@schaufler-ca.com>
 To:     casey@schaufler-ca.com, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
@@ -60,230 +60,699 @@ Cc:     jmorris@namei.org, serge@hallyn.com, keescook@chromium.org,
         john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v13 09/11] AppArmor: Add selfattr hooks
-Date:   Wed,  2 Aug 2023 10:44:32 -0700
-Message-ID: <20230802174435.11928-10-casey@schaufler-ca.com>
+Subject: [PATCH v13 11/11] LSM: selftests for Linux Security Module syscalls
+Date:   Wed,  2 Aug 2023 10:44:34 -0700
+Message-ID: <20230802174435.11928-12-casey@schaufler-ca.com>
 X-Mailer: git-send-email 2.41.0
 In-Reply-To: <20230802174435.11928-1-casey@schaufler-ca.com>
 References: <20230802174435.11928-1-casey@schaufler-ca.com>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Add hooks for setselfattr and getselfattr. These hooks are not very
-different from their setprocattr and getprocattr equivalents, and
-much of the code is shared.
+Add selftests for the three system calls supporting the LSM
+infrastructure. This set of tests is limited by the differences
+in access policy enforced by the existing security modules.
 
 Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
-Cc: John Johansen <john.johansen@canonical.com>
 ---
- security/apparmor/include/procattr.h |  2 +-
- security/apparmor/lsm.c              | 91 ++++++++++++++++++++++++++--
- security/apparmor/procattr.c         | 10 +--
- 3 files changed, 92 insertions(+), 11 deletions(-)
+ MAINTAINERS                                   |   1 +
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/lsm/Makefile          |  19 ++
+ tools/testing/selftests/lsm/common.c          |  81 ++++++
+ tools/testing/selftests/lsm/common.h          |  33 +++
+ tools/testing/selftests/lsm/config            |   3 +
+ .../selftests/lsm/lsm_get_self_attr_test.c    | 240 ++++++++++++++++++
+ .../selftests/lsm/lsm_list_modules_test.c     | 140 ++++++++++
+ .../selftests/lsm/lsm_set_self_attr_test.c    |  74 ++++++
+ 9 files changed, 592 insertions(+)
+ create mode 100644 tools/testing/selftests/lsm/Makefile
+ create mode 100644 tools/testing/selftests/lsm/common.c
+ create mode 100644 tools/testing/selftests/lsm/common.h
+ create mode 100644 tools/testing/selftests/lsm/config
+ create mode 100644 tools/testing/selftests/lsm/lsm_get_self_attr_test.c
+ create mode 100644 tools/testing/selftests/lsm/lsm_list_modules_test.c
+ create mode 100644 tools/testing/selftests/lsm/lsm_set_self_attr_test.c
 
-diff --git a/security/apparmor/include/procattr.h b/security/apparmor/include/procattr.h
-index 31689437e0e1..03dbfdb2f2c0 100644
---- a/security/apparmor/include/procattr.h
-+++ b/security/apparmor/include/procattr.h
-@@ -11,7 +11,7 @@
- #ifndef __AA_PROCATTR_H
- #define __AA_PROCATTR_H
+diff --git a/MAINTAINERS b/MAINTAINERS
+index aca4db11dd02..c96f1c388d22 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -19158,6 +19158,7 @@ W:	http://kernsec.org/
+ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/pcmoore/lsm.git
+ F:	include/uapi/linux/lsm.h
+ F:	security/
++F:	tools/testing/selftests/lsm/
+ X:	security/selinux/
  
--int aa_getprocattr(struct aa_label *label, char **string);
-+int aa_getprocattr(struct aa_label *label, char **string, bool newline);
- int aa_setprocattr_changehat(char *args, size_t size, int flags);
- 
- #endif /* __AA_PROCATTR_H */
-diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
-index bfd049c3fd22..cd54e5ecb46a 100644
---- a/security/apparmor/lsm.c
-+++ b/security/apparmor/lsm.c
-@@ -630,6 +630,55 @@ static int apparmor_sb_pivotroot(const struct path *old_path,
- 	return error;
- }
- 
-+static int apparmor_getselfattr(unsigned int attr, struct lsm_ctx __user *lx,
-+				size_t *size, u32 flags)
+ SELINUX SECURITY MODULE
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 666b56f22a41..bde7c217b23f 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -39,6 +39,7 @@ TARGETS += landlock
+ TARGETS += lib
+ TARGETS += livepatch
+ TARGETS += lkdtm
++TARGETS += lsm
+ TARGETS += membarrier
+ TARGETS += memfd
+ TARGETS += memory-hotplug
+diff --git a/tools/testing/selftests/lsm/Makefile b/tools/testing/selftests/lsm/Makefile
+new file mode 100644
+index 000000000000..bae6c1e3bba4
+--- /dev/null
++++ b/tools/testing/selftests/lsm/Makefile
+@@ -0,0 +1,19 @@
++# SPDX-License-Identifier: GPL-2.0
++#
++# First run: make -C ../../../.. headers_install
++
++CFLAGS += -Wall -O2 $(KHDR_INCLUDES)
++LOCAL_HDRS += common.h
++
++TEST_GEN_PROGS := lsm_get_self_attr_test lsm_list_modules_test \
++		  lsm_set_self_attr_test
++
++include ../lib.mk
++
++$(TEST_GEN_PROGS):
++
++$(OUTPUT)/lsm_get_self_attr_test: lsm_get_self_attr_test.c common.c
++$(OUTPUT)/lsm_set_self_attr_test: lsm_set_self_attr_test.c common.c
++$(OUTPUT)/lsm_list_modules_test: lsm_list_modules_test.c common.c
++
++EXTRA_CLEAN = $(OUTPUT)/common.o
+diff --git a/tools/testing/selftests/lsm/common.c b/tools/testing/selftests/lsm/common.c
+new file mode 100644
+index 000000000000..db9af9375238
+--- /dev/null
++++ b/tools/testing/selftests/lsm/common.c
+@@ -0,0 +1,81 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Linux Security Module infrastructure tests
++ *
++ * Copyright © 2023 Casey Schaufler <casey@schaufler-ca.com>
++ */
++
++#define _GNU_SOURCE
++#include <linux/lsm.h>
++#include <fcntl.h>
++#include <string.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include "common.h"
++
++#define PROCATTR	"/proc/self/attr/"
++
++int read_proc_attr(const char *attr, char *value, size_t size)
 +{
-+	int error = -ENOENT;
-+	struct aa_task_ctx *ctx = task_ctx(current);
-+	struct aa_label *label = NULL;
-+	size_t total_len = 0;
-+	char *value;
++	int fd;
++	int len;
++	char *path;
 +
-+	switch (attr) {
-+	case LSM_ATTR_CURRENT:
-+		label = aa_get_newest_label(cred_label(current_cred()));
-+		break;
-+	case LSM_ATTR_PREV:
-+		if (ctx->previous)
-+			label = aa_get_newest_label(ctx->previous);
-+		break;
-+	case LSM_ATTR_EXEC:
-+		if (ctx->onexec)
-+			label = aa_get_newest_label(ctx->onexec);
-+		break;
-+	default:
-+		error = -EOPNOTSUPP;
-+		break;
-+	}
++	len = strlen(PROCATTR) + strlen(attr) + 1;
++	path = calloc(len, 1);
++	if (path == NULL)
++		return -1;
++	sprintf(path, "%s%s", PROCATTR, attr);
 +
-+	if (label) {
-+		error = aa_getprocattr(label, &value, false);
-+		if (error > 0) {
-+			total_len = ALIGN(struct_size(lx, ctx, error), 8);
-+			if (total_len > *size)
-+				error = -E2BIG;
-+			else if (lx)
-+				error = lsm_fill_user_ctx(lx, value, error,
-+							  LSM_ID_APPARMOR, 0);
-+			else
-+				error = 1;
-+		}
-+		kfree(value);
-+	}
++	fd = open(path, O_RDONLY);
++	free(path);
 +
-+	aa_put_label(label);
++	if (fd < 0)
++		return -1;
++	len = read(fd, value, size);
++	if (len <= 0)
++		return -1;
++	close(fd);
 +
-+	*size = total_len;
-+	if (error < 0)
-+		return error;
-+	return 1;
++	path = strchr(value, '\n');
++	if (path)
++		*path = '\0';
++
++	return 0;
 +}
 +
- static int apparmor_getprocattr(struct task_struct *task, const char *name,
- 				char **value)
- {
-@@ -649,7 +698,7 @@ static int apparmor_getprocattr(struct task_struct *task, const char *name,
- 		error = -EINVAL;
- 
- 	if (label)
--		error = aa_getprocattr(label, value);
-+		error = aa_getprocattr(label, value, true);
- 
- 	aa_put_label(label);
- 	put_cred(cred);
-@@ -657,8 +706,7 @@ static int apparmor_getprocattr(struct task_struct *task, const char *name,
- 	return error;
- }
- 
--static int apparmor_setprocattr(const char *name, void *value,
--				size_t size)
-+static int do_setattr(u64 attr, void *value, size_t size)
- {
- 	char *command, *largs = NULL, *args = value;
- 	size_t arg_size;
-@@ -689,7 +737,7 @@ static int apparmor_setprocattr(const char *name, void *value,
- 		goto out;
- 
- 	arg_size = size - (args - (largs ? largs : (char *) value));
--	if (strcmp(name, "current") == 0) {
-+	if (attr == LSM_ATTR_CURRENT) {
- 		if (strcmp(command, "changehat") == 0) {
- 			error = aa_setprocattr_changehat(args, arg_size,
- 							 AA_CHANGE_NOFLAGS);
-@@ -704,7 +752,7 @@ static int apparmor_setprocattr(const char *name, void *value,
- 			error = aa_change_profile(args, AA_CHANGE_STACK);
- 		} else
- 			goto fail;
--	} else if (strcmp(name, "exec") == 0) {
-+	} else if (attr == LSM_ATTR_EXEC) {
- 		if (strcmp(command, "exec") == 0)
- 			error = aa_change_profile(args, AA_CHANGE_ONEXEC);
- 		else if (strcmp(command, "stack") == 0)
-@@ -724,13 +772,42 @@ static int apparmor_setprocattr(const char *name, void *value,
- 
- fail:
- 	aad(&sa)->label = begin_current_label_crit_section();
--	aad(&sa)->info = name;
-+	if (attr == LSM_ATTR_CURRENT)
-+		aad(&sa)->info = "current";
-+	else if (attr == LSM_ATTR_EXEC)
-+		aad(&sa)->info = "exec";
-+	else
-+		aad(&sa)->info = "invalid";
- 	aad(&sa)->error = error = -EINVAL;
- 	aa_audit_msg(AUDIT_APPARMOR_DENIED, &sa, NULL);
- 	end_current_label_crit_section(aad(&sa)->label);
- 	goto out;
- }
- 
-+static int apparmor_setselfattr(unsigned int attr, struct lsm_ctx *ctx,
-+				size_t size, u32 flags)
++int read_sysfs_lsms(char *lsms, size_t size)
 +{
++	FILE *fp;
++
++	fp = fopen("/sys/kernel/security/lsm", "r");
++	if (fp == NULL)
++		return -1;
++	if (fread(lsms, 1, size, fp) <= 0)
++		return -1;
++	fclose(fp);
++	return 0;
++}
++
++int attr_lsm_count(void)
++{
++	char *names = calloc(sysconf(_SC_PAGESIZE), 1);
++	int count = 0;
++
++	if (!names)
++		return 0;
++
++	if (read_sysfs_lsms(names, sysconf(_SC_PAGESIZE)))
++		return 0;
++
++	if (strstr(names, "selinux"))
++		count++;
++	if (strstr(names, "smack"))
++		count++;
++	if (strstr(names, "apparmor"))
++		count++;
++
++	return count;
++}
+diff --git a/tools/testing/selftests/lsm/common.h b/tools/testing/selftests/lsm/common.h
+new file mode 100644
+index 000000000000..cd0214a3eeb2
+--- /dev/null
++++ b/tools/testing/selftests/lsm/common.h
+@@ -0,0 +1,33 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Linux Security Module infrastructure tests
++ *
++ * Copyright © 2023 Casey Schaufler <casey@schaufler-ca.com>
++ */
++
++#ifndef lsm_get_self_attr
++static inline int lsm_get_self_attr(unsigned int attr, struct lsm_ctx *ctx,
++				    size_t *size, __u32 flags)
++{
++	return syscall(__NR_lsm_get_self_attr, attr, ctx, size, flags);
++}
++#endif
++
++#ifndef lsm_set_self_attr
++static inline int lsm_set_self_attr(unsigned int attr, struct lsm_ctx *ctx,
++				    size_t size, __u32 flags)
++{
++	return syscall(__NR_lsm_set_self_attr, attr, ctx, size, flags);
++}
++#endif
++
++#ifndef lsm_list_modules
++static inline int lsm_list_modules(__u64 *ids, size_t *size, __u32 flags)
++{
++	return syscall(__NR_lsm_list_modules, ids, size, flags);
++}
++#endif
++
++extern int read_proc_attr(const char *attr, char *value, size_t size);
++extern int read_sysfs_lsms(char *lsms, size_t size);
++int attr_lsm_count(void);
+diff --git a/tools/testing/selftests/lsm/config b/tools/testing/selftests/lsm/config
+new file mode 100644
+index 000000000000..1c0c4c020f9c
+--- /dev/null
++++ b/tools/testing/selftests/lsm/config
+@@ -0,0 +1,3 @@
++CONFIG_SYSFS=y
++CONFIG_SECURITY=y
++CONFIG_SECURITYFS=y
+diff --git a/tools/testing/selftests/lsm/lsm_get_self_attr_test.c b/tools/testing/selftests/lsm/lsm_get_self_attr_test.c
+new file mode 100644
+index 000000000000..74c65aae1fcc
+--- /dev/null
++++ b/tools/testing/selftests/lsm/lsm_get_self_attr_test.c
+@@ -0,0 +1,240 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Linux Security Module infrastructure tests
++ * Tests for the lsm_get_self_attr system call
++ *
++ * Copyright © 2022 Casey Schaufler <casey@schaufler-ca.com>
++ */
++
++#define _GNU_SOURCE
++#include <linux/lsm.h>
++#include <fcntl.h>
++#include <string.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include "../kselftest_harness.h"
++#include "common.h"
++
++static struct lsm_ctx *next_ctx(struct lsm_ctx *ctxp)
++{
++	void *vp;
++
++	vp = (void *)ctxp + sizeof(*ctxp) + ctxp->ctx_len;
++	return (struct lsm_ctx *)vp;
++}
++
++TEST(size_null_lsm_get_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++
++	ASSERT_NE(NULL, ctx);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, NULL, 0));
++	ASSERT_EQ(EINVAL, errno);
++
++	free(ctx);
++}
++
++TEST(ctx_null_lsm_get_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	size_t size = page_size;
 +	int rc;
 +
-+	if (attr != LSM_ATTR_CURRENT && attr != LSM_ATTR_EXEC)
-+		return -EOPNOTSUPP;
++	rc = lsm_get_self_attr(LSM_ATTR_CURRENT, NULL, &size, 0);
 +
-+	rc = do_setattr(attr, ctx->ctx, ctx->ctx_len);
-+	if (rc > 0)
-+		return 0;
-+	return rc;
++	if (attr_lsm_count()) {
++		ASSERT_NE(-1, rc);
++		ASSERT_NE(1, size);
++	} else {
++		ASSERT_EQ(-1, rc);
++	}
 +}
 +
-+static int apparmor_setprocattr(const char *name, void *value,
-+				size_t size)
++TEST(size_too_small_lsm_get_self_attr)
 +{
-+	int attr = lsm_name_to_attr(name);
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	size_t size = 1;
 +
-+	if (attr)
-+		return do_setattr(attr, value, size);
-+	return -EINVAL;
++	ASSERT_NE(NULL, ctx);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, &size, 0));
++	if (attr_lsm_count()) {
++		ASSERT_EQ(E2BIG, errno);
++	} else {
++		ASSERT_EQ(EOPNOTSUPP, errno);
++	}
++	ASSERT_NE(1, size);
++
++	free(ctx);
 +}
 +
- /**
-  * apparmor_bprm_committing_creds - do task cleanup on committing new creds
-  * @bprm: binprm for the exec  (NOT NULL)
-@@ -1253,6 +1330,8 @@ static struct security_hook_list apparmor_hooks[] __ro_after_init = {
- 	LSM_HOOK_INIT(file_lock, apparmor_file_lock),
- 	LSM_HOOK_INIT(file_truncate, apparmor_file_truncate),
- 
-+	LSM_HOOK_INIT(getselfattr, apparmor_getselfattr),
-+	LSM_HOOK_INIT(setselfattr, apparmor_setselfattr),
- 	LSM_HOOK_INIT(getprocattr, apparmor_getprocattr),
- 	LSM_HOOK_INIT(setprocattr, apparmor_setprocattr),
- 
-diff --git a/security/apparmor/procattr.c b/security/apparmor/procattr.c
-index 197d41f9c32b..e3857e3d7c6c 100644
---- a/security/apparmor/procattr.c
-+++ b/security/apparmor/procattr.c
-@@ -20,6 +20,7 @@
-  * aa_getprocattr - Return the label information for @label
-  * @label: the label to print label info about  (NOT NULL)
-  * @string: Returns - string containing the label info (NOT NULL)
-+ * @newline: indicates that a newline should be added
-  *
-  * Requires: label != NULL && string != NULL
-  *
-@@ -27,7 +28,7 @@
-  *
-  * Returns: size of string placed in @string else error code on failure
-  */
--int aa_getprocattr(struct aa_label *label, char **string)
-+int aa_getprocattr(struct aa_label *label, char **string, bool newline)
- {
- 	struct aa_ns *ns = labels_ns(label);
- 	struct aa_ns *current_ns = aa_get_current_ns();
-@@ -57,11 +58,12 @@ int aa_getprocattr(struct aa_label *label, char **string)
- 		return len;
- 	}
- 
--	(*string)[len] = '\n';
--	(*string)[len + 1] = 0;
-+	if (newline)
-+		(*string)[len++] = '\n';
-+	(*string)[len] = 0;
- 
- 	aa_put_ns(current_ns);
--	return len + 1;
-+	return len;
- }
- 
- /**
++TEST(flags_zero_lsm_get_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	size_t size = page_size;
++
++	ASSERT_NE(NULL, ctx);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, &size, 1));
++	ASSERT_EQ(EINVAL, errno);
++	ASSERT_EQ(page_size, size);
++
++	free(ctx);
++}
++
++TEST(flags_overset_lsm_get_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	size_t size = page_size;
++
++	ASSERT_NE(NULL, ctx);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_get_self_attr(LSM_ATTR_CURRENT | LSM_ATTR_PREV, ctx,
++					&size, 0));
++	ASSERT_EQ(EOPNOTSUPP, errno);
++
++	free(ctx);
++}
++
++TEST(basic_lsm_get_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	size_t size = page_size;
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	struct lsm_ctx *tctx = NULL;
++	__u64 *syscall_lsms = calloc(page_size, 1);
++	char *attr = calloc(page_size, 1);
++	int cnt_current = 0;
++	int cnt_exec = 0;
++	int cnt_fscreate = 0;
++	int cnt_keycreate = 0;
++	int cnt_prev = 0;
++	int cnt_sockcreate = 0;
++	int lsmcount;
++	int count;
++	int i;
++
++	ASSERT_NE(NULL, ctx);
++	ASSERT_NE(NULL, syscall_lsms);
++
++	lsmcount = syscall(__NR_lsm_list_modules, syscall_lsms, &size, 0);
++	ASSERT_LE(1, lsmcount);
++
++	for (i = 0; i < lsmcount; i++) {
++		switch (syscall_lsms[i]) {
++		case LSM_ID_SELINUX:
++			cnt_current++;
++			cnt_exec++;
++			cnt_fscreate++;
++			cnt_keycreate++;
++			cnt_prev++;
++			cnt_sockcreate++;
++			break;
++		case LSM_ID_SMACK:
++			cnt_current++;
++			break;
++		case LSM_ID_APPARMOR:
++			cnt_current++;
++			cnt_exec++;
++			cnt_prev++;
++			break;
++		default:
++			break;
++		}
++	}
++
++	if (cnt_current) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, &size, 0);
++		ASSERT_EQ(cnt_current, count);
++		tctx = ctx;
++		ASSERT_EQ(0, read_proc_attr("current", attr, page_size));
++		ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++		for (i = 1; i < count; i++) {
++			tctx = next_ctx(tctx);
++			ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++		}
++	}
++	if (cnt_exec) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_EXEC, ctx, &size, 0);
++		ASSERT_GE(cnt_exec, count);
++		if (count > 0) {
++			tctx = ctx;
++			if (read_proc_attr("exec", attr, page_size) == 0)
++				ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++		}
++		for (i = 1; i < count; i++) {
++			tctx = next_ctx(tctx);
++			ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++		}
++	}
++	if (cnt_fscreate) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_FSCREATE, ctx, &size, 0);
++		ASSERT_GE(cnt_fscreate, count);
++		if (count > 0) {
++			tctx = ctx;
++			if (read_proc_attr("fscreate", attr, page_size) == 0)
++				ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++		}
++		for (i = 1; i < count; i++) {
++			tctx = next_ctx(tctx);
++			ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++		}
++	}
++	if (cnt_keycreate) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_KEYCREATE, ctx, &size, 0);
++		ASSERT_GE(cnt_keycreate, count);
++		if (count > 0) {
++			tctx = ctx;
++			if (read_proc_attr("keycreate", attr, page_size) == 0)
++				ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++		}
++		for (i = 1; i < count; i++) {
++			tctx = next_ctx(tctx);
++			ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++		}
++	}
++	if (cnt_prev) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_PREV, ctx, &size, 0);
++		ASSERT_GE(cnt_prev, count);
++		if (count > 0) {
++			tctx = ctx;
++			ASSERT_EQ(0, read_proc_attr("prev", attr, page_size));
++			ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++			for (i = 1; i < count; i++) {
++				tctx = next_ctx(tctx);
++				ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++			}
++		}
++	}
++	if (cnt_sockcreate) {
++		size = page_size;
++		count = lsm_get_self_attr(LSM_ATTR_SOCKCREATE, ctx, &size, 0);
++		ASSERT_GE(cnt_sockcreate, count);
++		if (count > 0) {
++			tctx = ctx;
++			if (read_proc_attr("sockcreate", attr, page_size) == 0)
++				ASSERT_EQ(0, strcmp((char *)tctx->ctx, attr));
++		}
++		for (i = 1; i < count; i++) {
++			tctx = next_ctx(tctx);
++			ASSERT_NE(0, strcmp((char *)tctx->ctx, attr));
++		}
++	}
++
++	free(ctx);
++	free(attr);
++	free(syscall_lsms);
++}
++
++TEST_HARNESS_MAIN
+diff --git a/tools/testing/selftests/lsm/lsm_list_modules_test.c b/tools/testing/selftests/lsm/lsm_list_modules_test.c
+new file mode 100644
+index 000000000000..445c02f09c74
+--- /dev/null
++++ b/tools/testing/selftests/lsm/lsm_list_modules_test.c
+@@ -0,0 +1,140 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Linux Security Module infrastructure tests
++ * Tests for the lsm_list_modules system call
++ *
++ * Copyright © 2022 Casey Schaufler <casey@schaufler-ca.com>
++ */
++
++#define _GNU_SOURCE
++#include <linux/lsm.h>
++#include <string.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include "../kselftest_harness.h"
++#include "common.h"
++
++TEST(size_null_lsm_list_modules)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	__u64 *syscall_lsms = calloc(page_size, 1);
++
++	ASSERT_NE(NULL, syscall_lsms);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_list_modules(syscall_lsms, NULL, 0));
++	ASSERT_EQ(EFAULT, errno);
++
++	free(syscall_lsms);
++}
++
++TEST(ids_null_lsm_list_modules)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	size_t size = page_size;
++
++	errno = 0;
++	ASSERT_EQ(-1, lsm_list_modules(NULL, &size, 0));
++	ASSERT_EQ(EFAULT, errno);
++	ASSERT_NE(1, size);
++}
++
++TEST(size_too_small_lsm_list_modules)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	__u64 *syscall_lsms = calloc(page_size, 1);
++	size_t size = 1;
++
++	ASSERT_NE(NULL, syscall_lsms);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_list_modules(syscall_lsms, &size, 0));
++	ASSERT_EQ(E2BIG, errno);
++	ASSERT_NE(1, size);
++
++	free(syscall_lsms);
++}
++
++TEST(flags_set_lsm_list_modules)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	__u64 *syscall_lsms = calloc(page_size, 1);
++	size_t size = page_size;
++
++	ASSERT_NE(NULL, syscall_lsms);
++	errno = 0;
++	ASSERT_EQ(-1, lsm_list_modules(syscall_lsms, &size, 7));
++	ASSERT_EQ(EINVAL, errno);
++	ASSERT_EQ(page_size, size);
++
++	free(syscall_lsms);
++}
++
++TEST(correct_lsm_list_modules)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	size_t size = page_size;
++	__u64 *syscall_lsms = calloc(page_size, 1);
++	char *sysfs_lsms = calloc(page_size, 1);
++	char *name;
++	char *cp;
++	int count;
++	int i;
++
++	ASSERT_NE(NULL, sysfs_lsms);
++	ASSERT_NE(NULL, syscall_lsms);
++	ASSERT_EQ(0, read_sysfs_lsms(sysfs_lsms, page_size));
++
++	count = lsm_list_modules(syscall_lsms, &size, 0);
++	ASSERT_LE(1, count);
++	cp = sysfs_lsms;
++	for (i = 0; i < count; i++) {
++		switch (syscall_lsms[i]) {
++		case LSM_ID_CAPABILITY:
++			name = "capability";
++			break;
++		case LSM_ID_SELINUX:
++			name = "selinux";
++			break;
++		case LSM_ID_SMACK:
++			name = "smack";
++			break;
++		case LSM_ID_TOMOYO:
++			name = "tomoyo";
++			break;
++		case LSM_ID_IMA:
++			name = "ima";
++			break;
++		case LSM_ID_APPARMOR:
++			name = "apparmor";
++			break;
++		case LSM_ID_YAMA:
++			name = "yama";
++			break;
++		case LSM_ID_LOADPIN:
++			name = "loadpin";
++			break;
++		case LSM_ID_SAFESETID:
++			name = "safesetid";
++			break;
++		case LSM_ID_LOCKDOWN:
++			name = "lockdown";
++			break;
++		case LSM_ID_BPF:
++			name = "bpf";
++			break;
++		case LSM_ID_LANDLOCK:
++			name = "landlock";
++			break;
++		default:
++			name = "INVALID";
++			break;
++		}
++		ASSERT_EQ(0, strncmp(cp, name, strlen(name)));
++		cp += strlen(name) + 1;
++	}
++
++	free(sysfs_lsms);
++	free(syscall_lsms);
++}
++
++TEST_HARNESS_MAIN
+diff --git a/tools/testing/selftests/lsm/lsm_set_self_attr_test.c b/tools/testing/selftests/lsm/lsm_set_self_attr_test.c
+new file mode 100644
+index 000000000000..d0f5b776c548
+--- /dev/null
++++ b/tools/testing/selftests/lsm/lsm_set_self_attr_test.c
+@@ -0,0 +1,74 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Linux Security Module infrastructure tests
++ * Tests for the lsm_set_self_attr system call
++ *
++ * Copyright © 2022 Casey Schaufler <casey@schaufler-ca.com>
++ */
++
++#define _GNU_SOURCE
++#include <linux/lsm.h>
++#include <string.h>
++#include <stdio.h>
++#include <unistd.h>
++#include <sys/types.h>
++#include "../kselftest_harness.h"
++#include "common.h"
++
++TEST(ctx_null_lsm_set_self_attr)
++{
++	ASSERT_EQ(-1, lsm_set_self_attr(LSM_ATTR_CURRENT, NULL,
++					sizeof(struct lsm_ctx), 0));
++}
++
++TEST(size_too_small_lsm_set_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	size_t size = page_size;
++
++	ASSERT_NE(NULL, ctx);
++	if (attr_lsm_count()) {
++		ASSERT_LE(1, lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, &size,
++			  0));
++	}
++	ASSERT_EQ(-1, lsm_set_self_attr(LSM_ATTR_CURRENT, ctx, 1, 0));
++
++	free(ctx);
++}
++
++TEST(flags_zero_lsm_set_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	struct lsm_ctx *ctx = calloc(page_size, 1);
++	size_t size = page_size;
++
++	ASSERT_NE(NULL, ctx);
++	if (attr_lsm_count()) {
++		ASSERT_LE(1, lsm_get_self_attr(LSM_ATTR_CURRENT, ctx, &size,
++			  0));
++	}
++	ASSERT_EQ(-1, lsm_set_self_attr(LSM_ATTR_CURRENT, ctx, size, 1));
++
++	free(ctx);
++}
++
++TEST(flags_overset_lsm_set_self_attr)
++{
++	const long page_size = sysconf(_SC_PAGESIZE);
++	char *ctx = calloc(page_size, 1);
++	size_t size = page_size;
++	struct lsm_ctx *tctx = (struct lsm_ctx *)ctx;
++
++	ASSERT_NE(NULL, ctx);
++	if (attr_lsm_count()) {
++		ASSERT_LE(1, lsm_get_self_attr(LSM_ATTR_CURRENT, tctx, &size,
++			  0));
++	}
++	ASSERT_EQ(-1, lsm_set_self_attr(LSM_ATTR_CURRENT | LSM_ATTR_PREV, tctx,
++					size, 0));
++
++	free(ctx);
++}
++
++TEST_HARNESS_MAIN
 -- 
 2.41.0
 
