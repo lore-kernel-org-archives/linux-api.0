@@ -2,42 +2,43 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8288FC04FE0
-	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8899DC04FE2
+	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:22 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233608AbjHGMhU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Aug 2023 08:37:20 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36538 "EHLO
+        id S233612AbjHGMhV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Aug 2023 08:37:21 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36542 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231648AbjHGMhT (ORCPT
+        with ESMTP id S233592AbjHGMhT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 7 Aug 2023 08:37:19 -0400
-Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C32E10F8;
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 95E5010FC;
         Mon,  7 Aug 2023 05:37:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
+        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=sh7cl6AJW0b0f2uQNaiBLh5jyRqhKF5FPfLTlh7soFE=; b=gkcqeHyPgX7jzxCrnbCbVQRmKU
-        sxoBoTTJB+eaxMv4o9RWqLYYrr00tzh8Y9tp8nLHPktfM1FlIWx2vk2VRzQe8Q7POGb5HzWl2G6DB
-        +UaFAkRrHRqmTrT5H0aEIWsB903bT6N4SHjiTV15ToaPCWPDJVDqaN1jbyrjUE9/kYCon9BGbjwfG
-        bwREGmgtoAiEptkoyJahuC3WQqM8EuiXjVpJxEg9tVZr/XerxfvGQ3Fof5g32eL8vZq92giDChBrA
-        JAavjQYe3tEWK6PnJUoleS9+plUE+y4ttVSq9quCRNjAa1c6d7MBwqkeAzyLAaklJPnpTzmlb5Ffw
-        yMOOu43w==;
+        bh=pYLybm9JZIJCZuh77o+xiW69/IF1XmJJdrRIN+H3ncw=; b=pFuSQuVGSBJuutUwmlZpjMWdRU
+        kvMUDLgJkXKo9JPSo4x0sQY9HwX6M+hpbJzOfRDznKFrVHKVWrcBUnYeDmtwOPuHVYstLYl+mrfro
+        cZZpCjRlWeufpcF++64Tvvbk7dVtbbOx8m2nxgp4EKelAXSxwAVvB7sX5tg8Cl+Lr3QQF3oOEcEZw
+        FDF0SkoPTqaoqymn0jO9gOgPdi66KzSZ4r7GlthBVG7UtjsLTArj7CbvEpNC2ab9N64AgmFfVr63v
+        vJ1Fd8ziqqrOHHo214l1verg7oEcGCRSwG1Z0sAByEXYygkgkxN/UGMRogWSyT2ZIV5eMlsQSaDYz
+        V521WANA==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qSzTl-00AxGJ-GT; Mon, 07 Aug 2023 12:36:57 +0000
+        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
+        id 1qSzTl-003oSj-1T;
+        Mon, 07 Aug 2023 12:36:57 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 336FE3033D4;
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 28739302792;
         Mon,  7 Aug 2023 14:36:56 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id C12802021C3DD; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
-Message-ID: <20230807123323.573374169@infradead.org>
+        id AD6302021C3D5; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
+Message-ID: <20230807123323.297438324@infradead.org>
 User-Agent: quilt/0.66
-Date:   Mon, 07 Aug 2023 14:18:55 +0200
+Date:   Mon, 07 Aug 2023 14:18:51 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -47,7 +48,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH  v2 12/14] futex: Propagate flags into futex_get_value_locked()
+Subject: [PATCH  v2 08/14] futex: Add flags2 argument to futex_requeue()
 References: <20230807121843.710612856@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,125 +56,99 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In order to facilitate variable sized futexes propagate the flags into
-futex_get_value_locked().
+In order to support mixed size requeue, add a second flags argument to
+the internal futex_requeue() function.
 
 No functional change intended.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/futex/core.c     |    4 ++--
- kernel/futex/futex.h    |    2 +-
- kernel/futex/pi.c       |    8 ++++----
- kernel/futex/requeue.c  |    4 ++--
- kernel/futex/waitwake.c |    4 ++--
- 5 files changed, 11 insertions(+), 11 deletions(-)
+ kernel/futex/futex.h    |    5 +++--
+ kernel/futex/requeue.c  |   12 +++++++-----
+ kernel/futex/syscalls.c |    6 +++---
+ 3 files changed, 13 insertions(+), 10 deletions(-)
 
---- a/kernel/futex/core.c
-+++ b/kernel/futex/core.c
-@@ -515,12 +515,12 @@ int futex_cmpxchg_value_locked(u32 *curv
- 	return ret;
- }
- 
--int futex_get_value_locked(u32 *dest, u32 __user *from)
-+int futex_get_value_locked(u32 *dest, u32 __user *from, unsigned int flags)
- {
- 	int ret;
- 
- 	pagefault_disable();
--	ret = __get_user(*dest, from);
-+	ret = futex_get_value(dest, from, flags);
- 	pagefault_enable();
- 
- 	return ret ? -EFAULT : 0;
 --- a/kernel/futex/futex.h
 +++ b/kernel/futex/futex.h
-@@ -218,7 +218,7 @@ extern void futex_wake_mark(struct wake_
+@@ -318,8 +318,9 @@ extern int futex_wait_requeue_pi(u32 __u
+ 				 val, ktime_t *abs_time, u32 bitset, u32 __user
+ 				 *uaddr2);
  
- extern int fault_in_user_writeable(u32 __user *uaddr);
- extern int futex_cmpxchg_value_locked(u32 *curval, u32 __user *uaddr, u32 uval, u32 newval);
--extern int futex_get_value_locked(u32 *dest, u32 __user *from);
-+extern int futex_get_value_locked(u32 *dest, u32 __user *from, unsigned int flags);
- extern struct futex_q *futex_top_waiter(struct futex_hash_bucket *hb, union futex_key *key);
+-extern int futex_requeue(u32 __user *uaddr1, unsigned int flags,
+-			 u32 __user *uaddr2, int nr_wake, int nr_requeue,
++extern int futex_requeue(u32 __user *uaddr1, unsigned int flags1,
++			 u32 __user *uaddr2, unsigned int flags2,
++			 int nr_wake, int nr_requeue,
+ 			 u32 *cmpval, int requeue_pi);
  
- extern void __futex_unqueue(struct futex_q *q);
---- a/kernel/futex/pi.c
-+++ b/kernel/futex/pi.c
-@@ -239,7 +239,7 @@ static int attach_to_pi_state(u32 __user
- 	 * still is what we expect it to be, otherwise retry the entire
- 	 * operation.
- 	 */
--	if (futex_get_value_locked(&uval2, uaddr))
-+	if (futex_get_value_locked(&uval2, uaddr, FLAGS_SIZE_32))
- 		goto out_efault;
- 
- 	if (uval != uval2)
-@@ -358,7 +358,7 @@ static int handle_exit_race(u32 __user *
- 	 * The same logic applies to the case where the exiting task is
- 	 * already gone.
- 	 */
--	if (futex_get_value_locked(&uval2, uaddr))
-+	if (futex_get_value_locked(&uval2, uaddr, FLAGS_SIZE_32))
- 		return -EFAULT;
- 
- 	/* If the user space value has changed, try again. */
-@@ -526,7 +526,7 @@ int futex_lock_pi_atomic(u32 __user *uad
- 	 * Read the user space value first so we can validate a few
- 	 * things before proceeding further.
- 	 */
--	if (futex_get_value_locked(&uval, uaddr))
-+	if (futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32))
- 		return -EFAULT;
- 
- 	if (unlikely(should_fail_futex(true)))
-@@ -762,7 +762,7 @@ static int __fixup_pi_state_owner(u32 __
- 	if (!pi_state->owner)
- 		newtid |= FUTEX_OWNER_DIED;
- 
--	err = futex_get_value_locked(&uval, uaddr);
-+	err = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
- 	if (err)
- 		goto handle_err;
- 
+ extern int __futex_wait(u32 __user *uaddr, unsigned int flags, u32 val,
 --- a/kernel/futex/requeue.c
 +++ b/kernel/futex/requeue.c
-@@ -273,7 +273,7 @@ futex_proxy_trylock_atomic(u32 __user *p
- 	u32 curval;
- 	int ret;
+@@ -346,8 +346,9 @@ futex_proxy_trylock_atomic(u32 __user *p
+ /**
+  * futex_requeue() - Requeue waiters from uaddr1 to uaddr2
+  * @uaddr1:	source futex user address
+- * @flags:	futex flags (FLAGS_SHARED, etc.)
++ * @flags1:	futex flags (FLAGS_SHARED, etc.)
+  * @uaddr2:	target futex user address
++ * @flags2:	futex flags (FLAGS_SHARED, etc.)
+  * @nr_wake:	number of waiters to wake (must be 1 for requeue_pi)
+  * @nr_requeue:	number of waiters to requeue (0-INT_MAX)
+  * @cmpval:	@uaddr1 expected value (or %NULL)
+@@ -361,7 +362,8 @@ futex_proxy_trylock_atomic(u32 __user *p
+  *  - >=0 - on success, the number of tasks requeued or woken;
+  *  -  <0 - on error
+  */
+-int futex_requeue(u32 __user *uaddr1, unsigned int flags, u32 __user *uaddr2,
++int futex_requeue(u32 __user *uaddr1, unsigned int flags1,
++		  u32 __user *uaddr2, unsigned int flags2,
+ 		  int nr_wake, int nr_requeue, u32 *cmpval, int requeue_pi)
+ {
+ 	union futex_key key1 = FUTEX_KEY_INIT, key2 = FUTEX_KEY_INIT;
+@@ -424,10 +426,10 @@ int futex_requeue(u32 __user *uaddr1, un
+ 	}
  
--	if (futex_get_value_locked(&curval, pifutex))
-+	if (futex_get_value_locked(&curval, pifutex, FLAGS_SIZE_32))
- 		return -EFAULT;
+ retry:
+-	ret = get_futex_key(uaddr1, flags, &key1, FUTEX_READ);
++	ret = get_futex_key(uaddr1, flags1, &key1, FUTEX_READ);
+ 	if (unlikely(ret != 0))
+ 		return ret;
+-	ret = get_futex_key(uaddr2, flags, &key2,
++	ret = get_futex_key(uaddr2, flags2, &key2,
+ 			    requeue_pi ? FUTEX_WRITE : FUTEX_READ);
+ 	if (unlikely(ret != 0))
+ 		return ret;
+@@ -459,7 +461,7 @@ int futex_requeue(u32 __user *uaddr1, un
+ 			if (ret)
+ 				return ret;
  
- 	if (unlikely(should_fail_futex(true)))
-@@ -451,7 +451,7 @@ int futex_requeue(u32 __user *uaddr1, un
- 	if (likely(cmpval != NULL)) {
- 		u32 curval;
+-			if (!(flags & FLAGS_SHARED))
++			if (!(flags1 & FLAGS_SHARED))
+ 				goto retry_private;
  
--		ret = futex_get_value_locked(&curval, uaddr1);
-+		ret = futex_get_value_locked(&curval, uaddr1, FLAGS_SIZE_32);
- 
- 		if (unlikely(ret)) {
- 			double_unlock_hb(hb1, hb2);
---- a/kernel/futex/waitwake.c
-+++ b/kernel/futex/waitwake.c
-@@ -438,7 +438,7 @@ static int futex_wait_multiple_setup(str
- 		u32 val = vs[i].w.val;
- 
- 		hb = futex_q_lock(q);
--		ret = futex_get_value_locked(&uval, uaddr);
-+		ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
- 
- 		if (!ret && uval == val) {
- 			/*
-@@ -606,7 +606,7 @@ int futex_wait_setup(u32 __user *uaddr,
- retry_private:
- 	*hb = futex_q_lock(q);
- 
--	ret = futex_get_value_locked(&uval, uaddr);
-+	ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
- 
- 	if (ret) {
- 		futex_q_unlock(*hb);
+ 			goto retry;
+--- a/kernel/futex/syscalls.c
++++ b/kernel/futex/syscalls.c
+@@ -106,9 +106,9 @@ long do_futex(u32 __user *uaddr, int op,
+ 	case FUTEX_WAKE_BITSET:
+ 		return futex_wake(uaddr, flags, val, val3);
+ 	case FUTEX_REQUEUE:
+-		return futex_requeue(uaddr, flags, uaddr2, val, val2, NULL, 0);
++		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, NULL, 0);
+ 	case FUTEX_CMP_REQUEUE:
+-		return futex_requeue(uaddr, flags, uaddr2, val, val2, &val3, 0);
++		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, &val3, 0);
+ 	case FUTEX_WAKE_OP:
+ 		return futex_wake_op(uaddr, flags, uaddr2, val, val2, val3);
+ 	case FUTEX_LOCK_PI:
+@@ -125,7 +125,7 @@ long do_futex(u32 __user *uaddr, int op,
+ 		return futex_wait_requeue_pi(uaddr, flags, val, timeout, val3,
+ 					     uaddr2);
+ 	case FUTEX_CMP_REQUEUE_PI:
+-		return futex_requeue(uaddr, flags, uaddr2, val, val2, &val3, 1);
++		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, &val3, 1);
+ 	}
+ 	return -ENOSYS;
+ }
 
 
