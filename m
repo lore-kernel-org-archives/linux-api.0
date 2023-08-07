@@ -2,42 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A10E2C04A94
-	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:20 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8288FC04FE0
+	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:21 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233598AbjHGMhT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Aug 2023 08:37:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36532 "EHLO
+        id S233608AbjHGMhU (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Aug 2023 08:37:20 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36538 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229578AbjHGMhT (ORCPT
+        with ESMTP id S231648AbjHGMhT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 7 Aug 2023 08:37:19 -0400
 Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0159A10F3;
-        Mon,  7 Aug 2023 05:37:16 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7C32E10F8;
+        Mon,  7 Aug 2023 05:37:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
         d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=w9vOIgSzc3lTdvJPA8NMQRoDG93TaTUpiM2kUBnJUKc=; b=HVQVCCwtOi10B4bKYKmHp+D8Xn
-        3Mwa7mNyJqgKtoSRW8aoRhg2wTYWEV9bu/9nUYfTmEk+3fz/rBjtI7q1THMC5ThblPseixtBckC3P
-        jjsb4x5Dz2mO5rtOJ9ot0TyP3uuCeT8xgf7r1l0LNK1BT5L6Qi6StGFPGzQmtVQY9lWOzBzHyC66H
-        q+xN/XwnxvVLzZCjTSvnUwEl4A5jKDjzYcTRry6ZggG2oevtz8yX4SWXiLop/BFRdUUsRCip7yNiw
-        js+pcKYQeW/P2tUP49TmzRMkJdXA+QWfsKkYRpUYtcwdtt5yxgOY5SqOCkQ1ofSU6Lq0Uq+3lN0Wc
-        sDcW8hMQ==;
+        bh=sh7cl6AJW0b0f2uQNaiBLh5jyRqhKF5FPfLTlh7soFE=; b=gkcqeHyPgX7jzxCrnbCbVQRmKU
+        sxoBoTTJB+eaxMv4o9RWqLYYrr00tzh8Y9tp8nLHPktfM1FlIWx2vk2VRzQe8Q7POGb5HzWl2G6DB
+        +UaFAkRrHRqmTrT5H0aEIWsB903bT6N4SHjiTV15ToaPCWPDJVDqaN1jbyrjUE9/kYCon9BGbjwfG
+        bwREGmgtoAiEptkoyJahuC3WQqM8EuiXjVpJxEg9tVZr/XerxfvGQ3Fof5g32eL8vZq92giDChBrA
+        JAavjQYe3tEWK6PnJUoleS9+plUE+y4ttVSq9quCRNjAa1c6d7MBwqkeAzyLAaklJPnpTzmlb5Ffw
+        yMOOu43w==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
-        id 1qSzTk-00AxG0-S3; Mon, 07 Aug 2023 12:36:57 +0000
+        id 1qSzTl-00AxGJ-GT; Mon, 07 Aug 2023 12:36:57 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id D731E30092A;
-        Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 336FE3033D4;
+        Mon,  7 Aug 2023 14:36:56 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id 95E432029B0A3; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
-Message-ID: <20230807123322.952568452@infradead.org>
+        id C12802021C3DD; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
+Message-ID: <20230807123323.573374169@infradead.org>
 User-Agent: quilt/0.66
-Date:   Mon, 07 Aug 2023 14:18:46 +0200
+Date:   Mon, 07 Aug 2023 14:18:55 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -47,7 +47,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH  v2 03/14] futex: Flag conversion
+Subject: [PATCH  v2 12/14] futex: Propagate flags into futex_get_value_locked()
 References: <20230807121843.710612856@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -55,180 +55,125 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Futex has 3 sets of flags:
+In order to facilitate variable sized futexes propagate the flags into
+futex_get_value_locked().
 
- - legacy futex op bits
- - futex2 flags
- - internal flags
-
-Add a few helpers to convert from the API flags into the internal
-flags.
+No functional change intended.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/futex/futex.h    |   63 +++++++++++++++++++++++++++++++++++++++++++++---
- kernel/futex/syscalls.c |   24 ++++++------------
- kernel/futex/waitwake.c |    4 +--
- 3 files changed, 71 insertions(+), 20 deletions(-)
+ kernel/futex/core.c     |    4 ++--
+ kernel/futex/futex.h    |    2 +-
+ kernel/futex/pi.c       |    8 ++++----
+ kernel/futex/requeue.c  |    4 ++--
+ kernel/futex/waitwake.c |    4 ++--
+ 5 files changed, 11 insertions(+), 11 deletions(-)
 
+--- a/kernel/futex/core.c
++++ b/kernel/futex/core.c
+@@ -515,12 +515,12 @@ int futex_cmpxchg_value_locked(u32 *curv
+ 	return ret;
+ }
+ 
+-int futex_get_value_locked(u32 *dest, u32 __user *from)
++int futex_get_value_locked(u32 *dest, u32 __user *from, unsigned int flags)
+ {
+ 	int ret;
+ 
+ 	pagefault_disable();
+-	ret = __get_user(*dest, from);
++	ret = futex_get_value(dest, from, flags);
+ 	pagefault_enable();
+ 
+ 	return ret ? -EFAULT : 0;
 --- a/kernel/futex/futex.h
 +++ b/kernel/futex/futex.h
-@@ -5,6 +5,7 @@
- #include <linux/futex.h>
- #include <linux/rtmutex.h>
- #include <linux/sched/wake_q.h>
-+#include <linux/compat.h>
+@@ -218,7 +218,7 @@ extern void futex_wake_mark(struct wake_
  
- #ifdef CONFIG_PREEMPT_RT
- #include <linux/rcuwait.h>
-@@ -16,8 +17,15 @@
-  * Futex flags used to encode options to functions and preserve them across
-  * restarts.
-  */
-+#define FLAGS_SIZE_8		0x00
-+#define FLAGS_SIZE_16		0x01
-+#define FLAGS_SIZE_32		0x02
-+#define FLAGS_SIZE_64		0x03
-+
-+#define FLAGS_SIZE_MASK		0x03
-+
- #ifdef CONFIG_MMU
--# define FLAGS_SHARED		0x01
-+# define FLAGS_SHARED		0x10
- #else
- /*
-  * NOMMU does not have per process address space. Let the compiler optimize
-@@ -25,8 +33,57 @@
-  */
- # define FLAGS_SHARED		0x00
- #endif
--#define FLAGS_CLOCKRT		0x02
--#define FLAGS_HAS_TIMEOUT	0x04
-+#define FLAGS_CLOCKRT		0x20
-+#define FLAGS_HAS_TIMEOUT	0x40
-+#define FLAGS_NUMA		0x80
-+
-+/* FUTEX_ to FLAGS_ */
-+static inline unsigned int futex_to_flags(unsigned int op)
-+{
-+	unsigned int flags = FLAGS_SIZE_32;
-+
-+	if (!(op & FUTEX_PRIVATE_FLAG))
-+		flags |= FLAGS_SHARED;
-+
-+	if (op & FUTEX_CLOCK_REALTIME)
-+		flags |= FLAGS_CLOCKRT;
-+
-+	return flags;
-+}
-+
-+/* FUTEX2_ to FLAGS_ */
-+static inline unsigned int futex2_to_flags(unsigned int flags2)
-+{
-+	unsigned int flags = flags2 & FUTEX2_SIZE_MASK;
-+
-+	if (!(flags2 & FUTEX2_PRIVATE))
-+		flags |= FLAGS_SHARED;
-+
-+	if (flags2 & FUTEX2_NUMA)
-+		flags |= FLAGS_NUMA;
-+
-+	return flags;
-+}
-+
-+static inline bool futex_flags_valid(unsigned int flags)
-+{
-+	/* Only 64bit futexes for 64bit code */
-+	if (!IS_ENABLED(CONFIG_64BIT) || in_compat_syscall()) {
-+		if ((flags & FLAGS_SIZE_MASK) == FLAGS_SIZE_64)
-+			return false;
-+	}
-+
-+	/* Only 32bit futexes are implemented -- for now */
-+	if ((flags & FLAGS_SIZE_MASK) != FLAGS_SIZE_32)
-+		return false;
-+
-+	return true;
-+}
-+
-+static inline unsigned int futex_size(unsigned int flags)
-+{
-+	return 1 << (flags & FLAGS_SIZE_MASK);
-+}
+ extern int fault_in_user_writeable(u32 __user *uaddr);
+ extern int futex_cmpxchg_value_locked(u32 *curval, u32 __user *uaddr, u32 uval, u32 newval);
+-extern int futex_get_value_locked(u32 *dest, u32 __user *from);
++extern int futex_get_value_locked(u32 *dest, u32 __user *from, unsigned int flags);
+ extern struct futex_q *futex_top_waiter(struct futex_hash_bucket *hb, union futex_key *key);
  
- #ifdef CONFIG_FAIL_FUTEX
- extern bool should_fail_futex(bool fshared);
---- a/kernel/futex/syscalls.c
-+++ b/kernel/futex/syscalls.c
-@@ -1,6 +1,5 @@
- // SPDX-License-Identifier: GPL-2.0-or-later
+ extern void __futex_unqueue(struct futex_q *q);
+--- a/kernel/futex/pi.c
++++ b/kernel/futex/pi.c
+@@ -239,7 +239,7 @@ static int attach_to_pi_state(u32 __user
+ 	 * still is what we expect it to be, otherwise retry the entire
+ 	 * operation.
+ 	 */
+-	if (futex_get_value_locked(&uval2, uaddr))
++	if (futex_get_value_locked(&uval2, uaddr, FLAGS_SIZE_32))
+ 		goto out_efault;
  
--#include <linux/compat.h>
- #include <linux/syscalls.h>
- #include <linux/time_namespace.h>
+ 	if (uval != uval2)
+@@ -358,7 +358,7 @@ static int handle_exit_race(u32 __user *
+ 	 * The same logic applies to the case where the exiting task is
+ 	 * already gone.
+ 	 */
+-	if (futex_get_value_locked(&uval2, uaddr))
++	if (futex_get_value_locked(&uval2, uaddr, FLAGS_SIZE_32))
+ 		return -EFAULT;
  
-@@ -85,15 +84,12 @@ SYSCALL_DEFINE3(get_robust_list, int, pi
- long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
- 		u32 __user *uaddr2, u32 val2, u32 val3)
- {
-+	unsigned int flags = futex_to_flags(op);
- 	int cmd = op & FUTEX_CMD_MASK;
--	unsigned int flags = 0;
+ 	/* If the user space value has changed, try again. */
+@@ -526,7 +526,7 @@ int futex_lock_pi_atomic(u32 __user *uad
+ 	 * Read the user space value first so we can validate a few
+ 	 * things before proceeding further.
+ 	 */
+-	if (futex_get_value_locked(&uval, uaddr))
++	if (futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32))
+ 		return -EFAULT;
  
--	if (!(op & FUTEX_PRIVATE_FLAG))
--		flags |= FLAGS_SHARED;
--
--	if (op & FUTEX_CLOCK_REALTIME) {
--		flags |= FLAGS_CLOCKRT;
--		if (cmd != FUTEX_WAIT_BITSET && cmd != FUTEX_WAIT_REQUEUE_PI &&
-+	if (flags & FLAGS_CLOCKRT) {
-+		if (cmd != FUTEX_WAIT_BITSET &&
-+		    cmd != FUTEX_WAIT_REQUEUE_PI &&
- 		    cmd != FUTEX_LOCK_PI2)
- 			return -ENOSYS;
- 	}
-@@ -201,21 +197,19 @@ static int futex_parse_waitv(struct fute
- 	unsigned int i;
+ 	if (unlikely(should_fail_futex(true)))
+@@ -762,7 +762,7 @@ static int __fixup_pi_state_owner(u32 __
+ 	if (!pi_state->owner)
+ 		newtid |= FUTEX_OWNER_DIED;
  
- 	for (i = 0; i < nr_futexes; i++) {
-+		unsigned int flags;
-+
- 		if (copy_from_user(&aux, &uwaitv[i], sizeof(aux)))
- 			return -EFAULT;
+-	err = futex_get_value_locked(&uval, uaddr);
++	err = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
+ 	if (err)
+ 		goto handle_err;
  
- 		if ((aux.flags & ~FUTEX2_VALID_MASK) || aux.__reserved)
- 			return -EINVAL;
+--- a/kernel/futex/requeue.c
++++ b/kernel/futex/requeue.c
+@@ -273,7 +273,7 @@ futex_proxy_trylock_atomic(u32 __user *p
+ 	u32 curval;
+ 	int ret;
  
--		if (!IS_ENABLED(CONFIG_64BIT) || in_compat_syscall()) {
--			if ((aux.flags & FUTEX2_SIZE_MASK) == FUTEX2_SIZE_U64)
--				return -EINVAL;
--		}
--
--		if ((aux.flags & FUTEX2_SIZE_MASK) != FUTEX2_SIZE_U32)
-+		flags = futex2_to_flags(aux.flags);
-+		if (!futex_flags_valid(flags))
- 			return -EINVAL;
+-	if (futex_get_value_locked(&curval, pifutex))
++	if (futex_get_value_locked(&curval, pifutex, FLAGS_SIZE_32))
+ 		return -EFAULT;
  
--		futexv[i].w.flags = aux.flags;
-+		futexv[i].w.flags = flags;
- 		futexv[i].w.val = aux.val;
- 		futexv[i].w.uaddr = aux.uaddr;
- 		futexv[i].q = futex_q_init;
+ 	if (unlikely(should_fail_futex(true)))
+@@ -451,7 +451,7 @@ int futex_requeue(u32 __user *uaddr1, un
+ 	if (likely(cmpval != NULL)) {
+ 		u32 curval;
+ 
+-		ret = futex_get_value_locked(&curval, uaddr1);
++		ret = futex_get_value_locked(&curval, uaddr1, FLAGS_SIZE_32);
+ 
+ 		if (unlikely(ret)) {
+ 			double_unlock_hb(hb1, hb2);
 --- a/kernel/futex/waitwake.c
 +++ b/kernel/futex/waitwake.c
-@@ -419,11 +419,11 @@ static int futex_wait_multiple_setup(str
- 	 */
- retry:
- 	for (i = 0; i < count; i++) {
--		if ((vs[i].w.flags & FUTEX_PRIVATE_FLAG) && retry)
-+		if (!(vs[i].w.flags & FLAGS_SHARED) && retry)
- 			continue;
+@@ -438,7 +438,7 @@ static int futex_wait_multiple_setup(str
+ 		u32 val = vs[i].w.val;
  
- 		ret = get_futex_key(u64_to_user_ptr(vs[i].w.uaddr),
--				    !(vs[i].w.flags & FUTEX_PRIVATE_FLAG),
-+				    vs[i].w.flags & FLAGS_SHARED,
- 				    &vs[i].q.key, FUTEX_READ);
+ 		hb = futex_q_lock(q);
+-		ret = futex_get_value_locked(&uval, uaddr);
++		ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
  
- 		if (unlikely(ret))
+ 		if (!ret && uval == val) {
+ 			/*
+@@ -606,7 +606,7 @@ int futex_wait_setup(u32 __user *uaddr,
+ retry_private:
+ 	*hb = futex_q_lock(q);
+ 
+-	ret = futex_get_value_locked(&uval, uaddr);
++	ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
+ 
+ 	if (ret) {
+ 		futex_q_unlock(*hb);
 
 
