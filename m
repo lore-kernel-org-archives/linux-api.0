@@ -2,91 +2,102 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A04C0C001DE
-	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 19:38:25 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9BD60C41513
+	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 21:11:09 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230343AbjHGTiX (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 7 Aug 2023 15:38:23 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:59376 "EHLO
+        id S229526AbjHGVLI (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 7 Aug 2023 17:11:08 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49210 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230360AbjHGTiS (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 7 Aug 2023 15:38:18 -0400
-Received: from smtpout.efficios.com (unknown [IPv6:2607:5300:203:b2ee::31e5])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EA1E7198D;
-        Mon,  7 Aug 2023 12:38:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=efficios.com;
-        s=smtpout1; t=1691437083;
-        bh=1guEDll9h1wN1L9V3kLsxr8T2FFUdKFvpqggbyfqqO0=;
-        h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-        b=LNwyM6GML+F0UEISwhFOm8lG8w5go+IkS6bk3xzOD6oxhWR9MFTxybmAAf9E5Wjf3
-         AViw7drWtBR+44Qrrrc07Umr2rZdhzknyUsRQU148e+Vk4Dt4HqVE6m7JbyCLxHKOg
-         XFTm7HFR7OkF0rJON6y7W4ITkyP8zLaPKw/8IdYcoCs5mubHwINUKecFo7Og0zB5oU
-         rzvwOIyDOJHYNyDMHipmJyjWwJfIFw58U9tmZNy37y/oOrI+OQ2q5kFAJBvLJZ+DfW
-         8778otuGCQ/JC5cAM0ap3MqC9hhHboJteVb7BTE9QXs0VcZN9kt71Ts6rpf4i6eNvJ
-         NvpofuJWFKqTQ==
-Received: from [IPV6:2605:59c8:2711:c800::c66] (unknown [IPv6:2605:59c8:2711:c800::c66])
-        by smtpout.efficios.com (Postfix) with ESMTPSA id 4RKRSB5RPPz1Kqp;
-        Mon,  7 Aug 2023 15:38:02 -0400 (EDT)
-Message-ID: <4fb64f73-12eb-d6a6-6f84-97e6195d7a5b@efficios.com>
-Date:   Mon, 7 Aug 2023 15:38:59 -0400
+        with ESMTP id S229461AbjHGVLI (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 7 Aug 2023 17:11:08 -0400
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 68FB7E5B;
+        Mon,  7 Aug 2023 14:11:06 -0700 (PDT)
+From:   Thomas Gleixner <tglx@linutronix.de>
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020; t=1691442664;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=aftKb27pM5tJulfOGPsmsFua08eUVg+LfRzeaWEUurY=;
+        b=zPB+YRQ9l7XgX0zdA4BtF3llHrC3biczwyGskGKJdiqzkgZLxWshbAW47s97HF2pLnh9b3
+        z4MyAzJ8l+i4qBIkOYif2UCfTdoMp0/KDDbRBSV+lNOoBbE5uY9YNZm83X9RerFwMag8iZ
+        xXNeZWGmvgTMGOHp2NpYuWYoFcrj5lRd+r198ecXxYtvCakUgtEZk5ROPTEiMvrZcEwVpx
+        o/eDyRcHljbAp/bD04TggVEI5sSL667RuWFPxYDm3uPDkq7ezoqYWSWJNwo3E9plOSAZhl
+        oh50k6C5VGerDjI3g42B9F7thMeOV9M+7n93pdUQI1LJE1iaWvprH36DQp6n8w==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+        s=2020e; t=1691442664;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+         in-reply-to:in-reply-to:references:references;
+        bh=aftKb27pM5tJulfOGPsmsFua08eUVg+LfRzeaWEUurY=;
+        b=DGXhuQ8cNuQ5DS01SQIJ7A7DgvihZXcdIY6FEB4XnsTizUnVcq8XSHE8FYozz7HCRqDBPo
+        4QUt3edzqA3XwGAA==
+To:     Peter Zijlstra <peterz@infradead.org>, axboe@kernel.dk
+Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
+        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
+        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
+        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
+        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, linux-arch@vger.kernel.org,
+        malteskarupke@web.de
+Subject: Re: [PATCH  v2 11/14] futex: Implement FUTEX2_NUMA
+In-Reply-To: <20230807123323.504975124@infradead.org>
+References: <20230807121843.710612856@infradead.org>
+ <20230807123323.504975124@infradead.org>
+Date:   Mon, 07 Aug 2023 23:11:04 +0200
+Message-ID: <87fs4utv6f.ffs@tglx>
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.13.0
-Subject: Re: [PATCH 0/4] RSEQ selftests updates
-Content-Language: en-US
-To:     Shuah Khan <skhan@linuxfoundation.org>,
-        Peter Zijlstra <peterz@infradead.org>
-Cc:     linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>,
-        linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>,
-        linux-kselftest@vger.kernel.org
-References: <20230515135801.15220-1-mathieu.desnoyers@efficios.com>
- <fd64bf35-8e18-8da7-d83c-882fdc60a87d@efficios.com>
- <f0fdf470-f25d-b51f-8a2d-f891ea7b94b1@linuxfoundation.org>
-From:   Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-In-Reply-To: <f0fdf470-f25d-b51f-8a2d-f891ea7b94b1@linuxfoundation.org>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 8/7/23 14:53, Shuah Khan wrote:
-> On 6/6/23 07:36, Mathieu Desnoyers wrote:
->> Hi Peter,
->>
->> Can you queue those fixes through your tree ?
->>
-> 
-> 
-> Peter, Mathieu,
-> 
-> Doesn't look like this series has been pickedup?
+On Mon, Aug 07 2023 at 14:18, Peter Zijlstra wrote:
+>  /**
+>   * futex_hash - Return the hash bucket in the global hash
+>   * @key:	Pointer to the futex key for which the hash is calculated
+> @@ -114,10 +137,29 @@ late_initcall(fail_futex_debugfs);
+>   */
+>  struct futex_hash_bucket *futex_hash(union futex_key *key)
+>  {
+> -	u32 hash = jhash2((u32 *)key, offsetof(typeof(*key), both.offset) / 4,
+> +	u32 hash = jhash2((u32 *)key,
+> +			  offsetof(typeof(*key), both.offset) / sizeof(u32),
+>  			  key->both.offset);
+> +	int node = key->both.node;
+> +
+> +	if (node == -1) {
 
-Not AFAIK. Peter, if you have this somewhere in your tip queue, please 
-let us know.
+NUMA_NO_NODE please all over the place.
 
-> 
-> I can take these in for 6.6-rc1 if there are no dependencies
-> on other trees.
+> +		/*
+> +		 * In case of !FLAGS_NUMA, use some unused hash bits to pick a
+> +		 * node -- this ensures regular futexes are interleaved across
+> +		 * the nodes and avoids having to allocate multiple
+> +		 * hash-tables.
+> +		 *
+> +		 * NOTE: this isn't perfectly uniform, but it is fast and
+> +		 * handles sparse node masks.
+> +		 */
+> +		node = (hash >> futex_hashshift) % nr_node_ids;
+> +		if (!node_possible(node)) {
+> +			node = find_next_bit_wrap(node_possible_map.bits,
+> +						  nr_node_ids, node);
+> +		}
 
-It should not have dependencies with other trees.
+Smart.
 
-Thanks,
+>  
+> +static inline unsigned int futex_size(unsigned int flags)
+> +{
+> +	return 1 << (flags & FLAGS_SIZE_MASK);
+> +}
+> +
+>  static inline bool futex_flags_valid(unsigned int flags)
 
-Mathieu
+If you reorder these two functions in the patch which introduces them,
+this diff gets readable :)
 
-> 
-> thanks,
-> -- Shuah
-> 
-> 
-> 
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-https://www.efficios.com
-
+Aside of that this thing is really hard to review :)
