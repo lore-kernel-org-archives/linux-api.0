@@ -2,43 +2,42 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8899DC04FE2
-	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:22 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DA916C001DF
+	for <linux-api@archiver.kernel.org>; Mon,  7 Aug 2023 12:37:23 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233612AbjHGMhV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S232640AbjHGMhV (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 7 Aug 2023 08:37:21 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36542 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36538 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233592AbjHGMhT (ORCPT
+        with ESMTP id S233594AbjHGMhT (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 7 Aug 2023 08:37:19 -0400
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 95E5010FC;
+Received: from casper.infradead.org (casper.infradead.org [IPv6:2001:8b0:10b:1236::1])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 735BD10F7;
         Mon,  7 Aug 2023 05:37:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
+        d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
         Subject:Cc:To:From:Date:Message-ID:Sender:Reply-To:Content-Transfer-Encoding:
         Content-ID:Content-Description:In-Reply-To;
-        bh=pYLybm9JZIJCZuh77o+xiW69/IF1XmJJdrRIN+H3ncw=; b=pFuSQuVGSBJuutUwmlZpjMWdRU
-        kvMUDLgJkXKo9JPSo4x0sQY9HwX6M+hpbJzOfRDznKFrVHKVWrcBUnYeDmtwOPuHVYstLYl+mrfro
-        cZZpCjRlWeufpcF++64Tvvbk7dVtbbOx8m2nxgp4EKelAXSxwAVvB7sX5tg8Cl+Lr3QQF3oOEcEZw
-        FDF0SkoPTqaoqymn0jO9gOgPdi66KzSZ4r7GlthBVG7UtjsLTArj7CbvEpNC2ab9N64AgmFfVr63v
-        vJ1Fd8ziqqrOHHo214l1verg7oEcGCRSwG1Z0sAByEXYygkgkxN/UGMRogWSyT2ZIV5eMlsQSaDYz
-        V521WANA==;
+        bh=q2JUuQQkf4QJ5HlnBdmZO9ANv9VK51IAZht4p6DhAtU=; b=X2O67bPGappPJwoyYOLJli/2uq
+        GGSmNYvPLgZVt2/X3Hmrqu1CS1Zl85dYxPspA117dnFShAiy3LcGcjLWdXZTycTNRrU1JneiRVLRn
+        tF26dsEBGwIqCOIot1HFOrI/Fk0gDY8+KE/QG3B9WI9TIXDwsOozljsjh74EFJdAZuM4h9/nbE9Vh
+        o24zKa2EFC2UIQkKpr0RLuefzcIEbbl+sipU4Ta6NRRJkYkadodRotAl0POJj4WwsxnQYnjlHSVmi
+        cOmGBvprufkD87jLIhKiDB9kt5z1Z/WQKyHaXTVD1+6Jkq1ILqtyz/ZnZFh/da1aKf1GrYhBTezjK
+        bl271Qeg==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
-        id 1qSzTl-003oSj-1T;
-        Mon, 07 Aug 2023 12:36:57 +0000
+        by casper.infradead.org with esmtpsa (Exim 4.94.2 #2 (Red Hat Linux))
+        id 1qSzTl-00AxGL-Gr; Mon, 07 Aug 2023 12:36:57 +0000
 Received: from hirez.programming.kicks-ass.net (hirez.programming.kicks-ass.net [192.168.1.225])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange X25519 server-signature RSA-PSS (4096 bits))
         (Client did not present a certificate)
-        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 28739302792;
+        by noisy.programming.kicks-ass.net (Postfix) with ESMTPS id 37457303463;
         Mon,  7 Aug 2023 14:36:56 +0200 (CEST)
 Received: by hirez.programming.kicks-ass.net (Postfix, from userid 0)
-        id AD6302021C3D5; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
-Message-ID: <20230807123323.297438324@infradead.org>
+        id C5FE42021B5CF; Mon,  7 Aug 2023 14:36:54 +0200 (CEST)
+Message-ID: <20230807123323.641470179@infradead.org>
 User-Agent: quilt/0.66
-Date:   Mon, 07 Aug 2023 14:18:51 +0200
+Date:   Mon, 07 Aug 2023 14:18:56 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -48,7 +47,7 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de
-Subject: [PATCH  v2 08/14] futex: Add flags2 argument to futex_requeue()
+Subject: [PATCH  v2 13/14] futex: Enable FUTEX2_{8,16}
 References: <20230807121843.710612856@infradead.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -56,99 +55,103 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-In order to support mixed size requeue, add a second flags argument to
-the internal futex_requeue() function.
+When futexes are no longer u32 aligned, the lower offset bits are no
+longer available to put type info in. However, since offset is the
+offset within a page, there are plenty bits available on the top end.
 
-No functional change intended.
+After that, pass flags into futex_get_value_locked() for WAIT and
+disallow FUTEX2_SIZE_U64 instead of mandating FUTEX2_SIZE_U32.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- kernel/futex/futex.h    |    5 +++--
- kernel/futex/requeue.c  |   12 +++++++-----
- kernel/futex/syscalls.c |    6 +++---
- 3 files changed, 13 insertions(+), 10 deletions(-)
+ include/linux/futex.h   |   11 ++++++-----
+ kernel/futex/core.c     |    9 +++++++++
+ kernel/futex/futex.h    |    4 ++--
+ kernel/futex/waitwake.c |    5 +++--
+ 4 files changed, 20 insertions(+), 9 deletions(-)
 
+--- a/include/linux/futex.h
++++ b/include/linux/futex.h
+@@ -16,18 +16,19 @@ struct task_struct;
+  * The key type depends on whether it's a shared or private mapping.
+  * Don't rearrange members without looking at hash_futex().
+  *
+- * offset is aligned to a multiple of sizeof(u32) (== 4) by definition.
+- * We use the two low order bits of offset to tell what is the kind of key :
++ * offset is the position within a page and is in the range [0, PAGE_SIZE).
++ * The high bits of the offset indicate what kind of key this is:
+  *  00 : Private process futex (PTHREAD_PROCESS_PRIVATE)
+  *       (no reference on an inode or mm)
+  *  01 : Shared futex (PTHREAD_PROCESS_SHARED)
+  *	mapped on a file (reference on the underlying inode)
+  *  10 : Shared futex (PTHREAD_PROCESS_SHARED)
+  *       (but private mapping on an mm, and reference taken on it)
+-*/
++ */
+ 
+-#define FUT_OFF_INODE    1 /* We set bit 0 if key has a reference on inode */
+-#define FUT_OFF_MMSHARED 2 /* We set bit 1 if key has a reference on mm */
++#define FUT_OFF_INODE    (PAGE_SIZE << 0)
++#define FUT_OFF_MMSHARED (PAGE_SIZE << 1)
++#define FUT_OFF_SIZE	 (PAGE_SIZE << 2)
+ 
+ union futex_key {
+ 	struct {
+--- a/kernel/futex/core.c
++++ b/kernel/futex/core.c
+@@ -308,6 +308,15 @@ int get_futex_key(void __user *uaddr, un
+ 	}
+ 
+ 	/*
++	 * Encode the futex size in the offset. This makes cross-size
++	 * wake-wait fail -- see futex_match().
++	 *
++	 * NOTE that cross-size wake-wait is fundamentally broken wrt
++	 * FLAGS_NUMA but could possibly work for !NUMA.
++	 */
++	key->both.offset |= FUT_OFF_SIZE * (flags & FLAGS_SIZE_MASK);
++
++	/*
+ 	 * PROCESS_PRIVATE futexes are fast.
+ 	 * As the mm cannot disappear under us and the 'key' only needs
+ 	 * virtual address, we dont even have to find the underlying vma.
 --- a/kernel/futex/futex.h
 +++ b/kernel/futex/futex.h
-@@ -318,8 +318,9 @@ extern int futex_wait_requeue_pi(u32 __u
- 				 val, ktime_t *abs_time, u32 bitset, u32 __user
- 				 *uaddr2);
- 
--extern int futex_requeue(u32 __user *uaddr1, unsigned int flags,
--			 u32 __user *uaddr2, int nr_wake, int nr_requeue,
-+extern int futex_requeue(u32 __user *uaddr1, unsigned int flags1,
-+			 u32 __user *uaddr2, unsigned int flags2,
-+			 int nr_wake, int nr_requeue,
- 			 u32 *cmpval, int requeue_pi);
- 
- extern int __futex_wait(u32 __user *uaddr, unsigned int flags, u32 val,
---- a/kernel/futex/requeue.c
-+++ b/kernel/futex/requeue.c
-@@ -346,8 +346,9 @@ futex_proxy_trylock_atomic(u32 __user *p
- /**
-  * futex_requeue() - Requeue waiters from uaddr1 to uaddr2
-  * @uaddr1:	source futex user address
-- * @flags:	futex flags (FLAGS_SHARED, etc.)
-+ * @flags1:	futex flags (FLAGS_SHARED, etc.)
-  * @uaddr2:	target futex user address
-+ * @flags2:	futex flags (FLAGS_SHARED, etc.)
-  * @nr_wake:	number of waiters to wake (must be 1 for requeue_pi)
-  * @nr_requeue:	number of waiters to requeue (0-INT_MAX)
-  * @cmpval:	@uaddr1 expected value (or %NULL)
-@@ -361,7 +362,8 @@ futex_proxy_trylock_atomic(u32 __user *p
-  *  - >=0 - on success, the number of tasks requeued or woken;
-  *  -  <0 - on error
-  */
--int futex_requeue(u32 __user *uaddr1, unsigned int flags, u32 __user *uaddr2,
-+int futex_requeue(u32 __user *uaddr1, unsigned int flags1,
-+		  u32 __user *uaddr2, unsigned int flags2,
- 		  int nr_wake, int nr_requeue, u32 *cmpval, int requeue_pi)
- {
- 	union futex_key key1 = FUTEX_KEY_INIT, key2 = FUTEX_KEY_INIT;
-@@ -424,10 +426,10 @@ int futex_requeue(u32 __user *uaddr1, un
+@@ -79,8 +79,8 @@ static inline bool futex_flags_valid(uns
+ 			return false;
  	}
  
- retry:
--	ret = get_futex_key(uaddr1, flags, &key1, FUTEX_READ);
-+	ret = get_futex_key(uaddr1, flags1, &key1, FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
--	ret = get_futex_key(uaddr2, flags, &key2,
-+	ret = get_futex_key(uaddr2, flags2, &key2,
- 			    requeue_pi ? FUTEX_WRITE : FUTEX_READ);
- 	if (unlikely(ret != 0))
- 		return ret;
-@@ -459,7 +461,7 @@ int futex_requeue(u32 __user *uaddr1, un
- 			if (ret)
- 				return ret;
+-	/* Only 32bit futexes are implemented -- for now */
+-	if ((flags & FLAGS_SIZE_MASK) != FLAGS_SIZE_32)
++	/* 64bit futexes aren't implemented -- yet */
++	if ((flags & FLAGS_SIZE_MASK) == FLAGS_SIZE_64)
+ 		return false;
  
--			if (!(flags & FLAGS_SHARED))
-+			if (!(flags1 & FLAGS_SHARED))
- 				goto retry_private;
+ 	/*
+--- a/kernel/futex/waitwake.c
++++ b/kernel/futex/waitwake.c
+@@ -434,11 +434,12 @@ static int futex_wait_multiple_setup(str
  
- 			goto retry;
---- a/kernel/futex/syscalls.c
-+++ b/kernel/futex/syscalls.c
-@@ -106,9 +106,9 @@ long do_futex(u32 __user *uaddr, int op,
- 	case FUTEX_WAKE_BITSET:
- 		return futex_wake(uaddr, flags, val, val3);
- 	case FUTEX_REQUEUE:
--		return futex_requeue(uaddr, flags, uaddr2, val, val2, NULL, 0);
-+		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, NULL, 0);
- 	case FUTEX_CMP_REQUEUE:
--		return futex_requeue(uaddr, flags, uaddr2, val, val2, &val3, 0);
-+		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, &val3, 0);
- 	case FUTEX_WAKE_OP:
- 		return futex_wake_op(uaddr, flags, uaddr2, val, val2, val3);
- 	case FUTEX_LOCK_PI:
-@@ -125,7 +125,7 @@ long do_futex(u32 __user *uaddr, int op,
- 		return futex_wait_requeue_pi(uaddr, flags, val, timeout, val3,
- 					     uaddr2);
- 	case FUTEX_CMP_REQUEUE_PI:
--		return futex_requeue(uaddr, flags, uaddr2, val, val2, &val3, 1);
-+		return futex_requeue(uaddr, flags, uaddr2, flags, val, val2, &val3, 1);
- 	}
- 	return -ENOSYS;
- }
+ 	for (i = 0; i < count; i++) {
+ 		u32 __user *uaddr = (u32 __user *)(unsigned long)vs[i].w.uaddr;
++		unsigned int flags = vs[i].w.flags;
+ 		struct futex_q *q = &vs[i].q;
+ 		u32 val = vs[i].w.val;
+ 
+ 		hb = futex_q_lock(q);
+-		ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
++		ret = futex_get_value_locked(&uval, uaddr, flags);
+ 
+ 		if (!ret && uval == val) {
+ 			/*
+@@ -606,7 +607,7 @@ int futex_wait_setup(u32 __user *uaddr,
+ retry_private:
+ 	*hb = futex_q_lock(q);
+ 
+-	ret = futex_get_value_locked(&uval, uaddr, FLAGS_SIZE_32);
++	ret = futex_get_value_locked(&uval, uaddr, flags);
+ 
+ 	if (ret) {
+ 		futex_q_unlock(*hb);
 
 
