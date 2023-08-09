@@ -2,71 +2,124 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D4D0EB64DD
-	for <linux-api@archiver.kernel.org>; Wed,  9 Aug 2023 08:04:04 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id A5272C41513
+	for <linux-api@archiver.kernel.org>; Wed,  9 Aug 2023 22:25:34 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229800AbjHIIED (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 9 Aug 2023 04:04:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:53596 "EHLO
+        id S231215AbjHIWZd (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 9 Aug 2023 18:25:33 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:51508 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229783AbjHIIED (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 9 Aug 2023 04:04:03 -0400
-X-Greylist: delayed 414 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Wed, 09 Aug 2023 01:03:58 PDT
-Received: from forward502a.mail.yandex.net (forward502a.mail.yandex.net [178.154.239.82])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 7CA0C10CF
-        for <linux-api@vger.kernel.org>; Wed,  9 Aug 2023 01:03:58 -0700 (PDT)
-Received: from mail-nwsmtp-smtp-production-main-67.vla.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-67.vla.yp-c.yandex.net [IPv6:2a02:6b8:c15:2c95:0:640:f90:0])
-        by forward502a.mail.yandex.net (Yandex) with ESMTP id 8C1025EC41;
-        Wed,  9 Aug 2023 10:56:59 +0300 (MSK)
-Received: by mail-nwsmtp-smtp-production-main-67.vla.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id vuTatqBWuOs0-Hh7wC64C;
-        Wed, 09 Aug 2023 10:56:58 +0300
-X-Yandex-Fwd: 1
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail; t=1691567818;
-        bh=YDBk0KjQh1HzWuh0Dn/kXGmLDEsk4jPretTZd8jrNcY=;
-        h=From:In-Reply-To:Cc:Date:References:To:Subject:Message-ID;
-        b=Klvyi2pEWgIVNQ8vbrf0jldMARt81cx4SDQ3yguOP5JrQPp5Jesz7semU/6BzrjMW
-         c/EJk1KUvW34WiaFKd8g5SJmm/394hla3o7QFDEIIjMK7eXGSLIguTZWaE8j0q0VQT
-         UJC2wrXoTh9tSHuvWw3/xO1IawcXQ3FYNs1BpA1Y=
-Authentication-Results: mail-nwsmtp-smtp-production-main-67.vla.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
-Message-ID: <aa8a99e6-55e7-1f7d-dc64-4decf0ed7c80@yandex.ru>
-Date:   Wed, 9 Aug 2023 12:56:56 +0500
+        with ESMTP id S229525AbjHIWZd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 9 Aug 2023 18:25:33 -0400
+Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 22FF9B2;
+        Wed,  9 Aug 2023 15:25:32 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
+        s=20170329; h=Content-Transfer-Encoding:Content-Type:In-Reply-To:From:
+        References:Cc:To:Subject:MIME-Version:Date:Message-ID:Sender:Reply-To:
+        Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+        Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+        List-Subscribe:List-Post:List-Owner:List-Archive;
+        bh=//xuUqEbAoChMqlkpflQb6XFF+UhgSuCsR64Dz8oIOw=; b=RufX4PgdOl7/nn1WfR4xMKanOl
+        D8ramvykvo45vHnoc+ju2imszAJPNbvtFdVL0OAfTekgQwwA2HBM3O4RyiDQpaRRNM/2kqS4u4SmG
+        YwKohVEgznE3HYd0qC2ScNMZxaFBGA5NkQUwLMYG2eTgldeeOQHQlWYD98Ym40vjOQsny+efBjxpc
+        0P0JA7rgEa0usmHDtYv85YIiTyIQzg5ThDrQMn8xVUCCsF7KFw1AslC2RHbmnlzeh9t2ZgwSG2B9c
+        CsDCPXpSHkA9MheAvKSZSV/fFKyMjeyJHm+/VdJLiZKwvNgVK0zS633u+Cv7gN5lEt4OKitHigi+u
+        SmbFSjYQ==;
+Received: from [191.193.179.209] (helo=[192.168.1.111])
+        by fanzine2.igalia.com with esmtpsa 
+        (Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_128_GCM:128) (Exim)
+        id 1qTrcL-00GDvY-H2; Thu, 10 Aug 2023 00:25:25 +0200
+Message-ID: <071c02ae-a74d-46d8-990b-262264b62caf@igalia.com>
+Date:   Wed, 9 Aug 2023 19:25:19 -0300
 MIME-Version: 1.0
-User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
- Thunderbird/102.13.0
-Subject: Re: [PATCH 2/2] selftests: add OFD lock tests
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 05/14] futex: Add sys_futex_wake()
+To:     Peter Zijlstra <peterz@infradead.org>
+Cc:     linux-kernel@vger.kernel.org, mingo@redhat.com,
+        dvhart@infradead.org, dave@stgolabs.net, tglx@linutronix.de,
+        axboe@kernel.dk, Andrew Morton <akpm@linux-foundation.org>,
+        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
+        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, linux-arch@vger.kernel.org,
+        malteskarupke@web.de, Geert Uytterhoeven <geert@linux-m68k.org>
+References: <20230807121843.710612856@infradead.org>
+ <20230807123323.090897260@infradead.org>
 Content-Language: en-US
-To:     Chuck Lever III <chuck.lever@oracle.com>
-Cc:     Jeff Layton <jlayton@kernel.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christian Brauner <brauner@kernel.org>,
-        "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
-        Shuah Khan <shuah@kernel.org>,
-        "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
-References: <20230621152214.2720319-1-stsp2@yandex.ru>
- <20230621152214.2720319-3-stsp2@yandex.ru>
- <4db7c65bee0739fe7983059296cfc95f20647fa3.camel@kernel.org>
- <7bbb29d2-4cae-48bd-1b97-9f4dbf6ffb19@yandex.ru>
- <8F45F47C-86C0-472E-B701-001A4FF90DBC@oracle.com>
-From:   stsp <stsp2@yandex.ru>
-In-Reply-To: <8F45F47C-86C0-472E-B701-001A4FF90DBC@oracle.com>
+From:   =?UTF-8?Q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+In-Reply-To: <20230807123323.090897260@infradead.org>
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi,
+Hi Peter,
 
-22.06.2023 21:58, Chuck Lever III пишет:
-> IMO that's not a reason not to do this properly.
->
-> You should work with Jeff and the maintainer of
-> xfstests to make it happen.
-If only I knew who is that maintainer
-and why he ignores all patches...
+Em 07/08/2023 09:18, Peter Zijlstra escreveu:
+> To complement sys_futex_waitv() add sys_futex_wake(). This syscall
+> implements what was previously known as FUTEX_WAKE_BITSET except it
+> uses 'unsigned long' for the bitmask and takes FUTEX2 flags.
+> 
+> The 'unsigned long' allows FUTEX2_SIZE_U64 on 64bit platforms.
+> 
+> Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+> Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
+> ---
 
-Can someone else please take a look at this:
-https://www.spinics.net/lists/fstests/msg23115.html
-and make a review/ack?
+[...]
+
+> +/*
+> + * sys_futex_wake - Wake a number of futexes
+> + * @uaddr:	Address of the futex(es) to wake
+> + * @mask:	bitmask
+> + * @nr:		Number of the futexes to wake
+> + * @flags:	FUTEX2 flags
+> + *
+> + * Identical to the traditional FUTEX_WAKE_BITSET op, except it is part of the
+> + * futex2 family of calls.
+> + */
+> +
+> +SYSCALL_DEFINE4(futex_wake,
+> +		void __user *, uaddr,
+> +		unsigned long, mask,
+> +		int, nr,
+> +		unsigned int, flags)
+> +{
+
+Do you think we could have a
+
+	if (!nr)
+		return 0;
+
+here? Otherwise, calling futex_wake(&f, 0, flags) will wake 1 futex (if 
+available), which is a strange undocumented behavior in my opinion.
+
+> +	if (flags & ~FUTEX2_VALID_MASK)
+> +		return -EINVAL;
+> +
+> +	flags = futex2_to_flags(flags);
+> +	if (!futex_flags_valid(flags))
+> +		return -EINVAL;
+> +
+> +	if (!futex_validate_input(flags, mask))
+> +		return -EINVAL;
+> +
+> +	return futex_wake(uaddr, flags, nr, mask);
+> +}
+> +
+>   #ifdef CONFIG_COMPAT
+>   COMPAT_SYSCALL_DEFINE2(set_robust_list,
+>   		struct compat_robust_list_head __user *, head,
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -87,6 +87,7 @@ COND_SYSCALL_COMPAT(set_robust_list);
+>   COND_SYSCALL(get_robust_list);
+>   COND_SYSCALL_COMPAT(get_robust_list);
+>   COND_SYSCALL(futex_waitv);
+> +COND_SYSCALL(futex_wake);
+>   COND_SYSCALL(kexec_load);
+>   COND_SYSCALL_COMPAT(kexec_load);
+>   COND_SYSCALL(init_module);
+> 
+> 
