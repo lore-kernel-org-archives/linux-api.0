@@ -2,44 +2,44 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id CB52DC04A94
-	for <linux-api@archiver.kernel.org>; Mon, 14 Aug 2023 08:42:23 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3F057C04FE1
+	for <linux-api@archiver.kernel.org>; Mon, 14 Aug 2023 08:42:24 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233693AbjHNIlw (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 14 Aug 2023 04:41:52 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52246 "EHLO
+        id S234292AbjHNIlx (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 14 Aug 2023 04:41:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47800 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S234860AbjHNIlk (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Aug 2023 04:41:40 -0400
-Received: from mout-p-101.mailbox.org (mout-p-101.mailbox.org [80.241.56.151])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1337410EA;
-        Mon, 14 Aug 2023 01:41:35 -0700 (PDT)
-Received: from smtp202.mailbox.org (smtp202.mailbox.org [10.196.197.202])
+        with ESMTP id S234904AbjHNIls (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 14 Aug 2023 04:41:48 -0400
+Received: from mout-p-202.mailbox.org (mout-p-202.mailbox.org [IPv6:2001:67c:2050:0:465::202])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B3927127;
+        Mon, 14 Aug 2023 01:41:45 -0700 (PDT)
+Received: from smtp202.mailbox.org (smtp202.mailbox.org [IPv6:2001:67c:2050:b231:465::202])
         (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
          key-exchange ECDHE (P-384) server-signature RSA-PSS (4096 bits) server-digest SHA256)
         (No client certificate requested)
-        by mout-p-101.mailbox.org (Postfix) with ESMTPS id 4RPSYR2bs0z9sWB;
-        Mon, 14 Aug 2023 10:41:31 +0200 (CEST)
+        by mout-p-202.mailbox.org (Postfix) with ESMTPS id 4RPSYd70PJz9slh;
+        Mon, 14 Aug 2023 10:41:41 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cyphar.com; s=MBO0001;
-        t=1692002491;
+        t=1692002502;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:content-type:content-type:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=7gQyeuP4S02FF5qxYTiiXRiidByA4CAzLTryBvJ7G7w=;
-        b=PWInDqWMMKzI/ONQxGwzOm9Nqjj0QWXmLPZUkhDGsxbUFUikujZWbEY1MqZPB1WBCvi77e
-        kiKJ8pi/2PteW88+lQBK8ltXeZV9mb2bYVBIT+xToxGb7CsmZSjDBOtgWYsBzPZwis7wXQ
-        RtHIduy6h2n0Y08EgBWVCaB3NB4595F6cDxfr1hTZLGJAVUq5dt4TkT/kmSYd5o/jIhMC4
-        ijPwqZ/3W9OYLr4Ca7Mt3QrZIxPfcKZbkuVIeM0k0uGsxknhulEqFewn6BGmOkqAjyH3EK
-        i++D6TrN/b3E0iNQOwpKhc/n00nHwaN4m35+mYh5wEz06ygRPqfkMrBizyhlDw==
+        bh=79RoJoR/fwEl868XiYEwCuZo1mWc1anAic2p8X8NglE=;
+        b=p1mH3+eN9eCVXdi/TxEUdL6OIDyTpQYTMvtKaZZl79SDtqiMak9oJhVRBoeaG94oNA8btJ
+        PXKhAtBfpm7RHIgirGHwamL0Dqr5iJzMUBPRM7gjZR47hIhN/BQmCcoL7ufFIkmwRd7HqN
+        mVSznBoc06lgSX95l1aKE8O5Iqd0oGrgrweoODmiJ5QxpRealAixDosNM60Yo40IYyHmgg
+        UYfjbMmbOD9Hz5BIR3vTbMmxgQcmoaVDW7Tiy9rJ0hv/5isMvaFDnVF17zljfHsxF5j7Ls
+        UyjsKXdyA9wOQ660D6kuX8HSkD2lACAmd416Q3kl9z/0UdxSYT4GZVOm+puhqA==
 From:   Aleksa Sarai <cyphar@cyphar.com>
-Date:   Mon, 14 Aug 2023 18:40:57 +1000
-Subject: [PATCH v2 1/5] selftests: memfd: error out test process when child
- test fails
+Date:   Mon, 14 Aug 2023 18:40:59 +1000
+Subject: [PATCH v2 3/5] memfd: improve userspace warnings for missing
+ exec-related flags
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20230814-memfd-vm-noexec-uapi-fixes-v2-1-7ff9e3e10ba6@cyphar.com>
+Message-Id: <20230814-memfd-vm-noexec-uapi-fixes-v2-3-7ff9e3e10ba6@cyphar.com>
 References: <20230814-memfd-vm-noexec-uapi-fixes-v2-0-7ff9e3e10ba6@cyphar.com>
 In-Reply-To: <20230814-memfd-vm-noexec-uapi-fixes-v2-0-7ff9e3e10ba6@cyphar.com>
 To:     Andrew Morton <akpm@linux-foundation.org>,
@@ -51,59 +51,65 @@ Cc:     Christian Brauner <brauner@kernel.org>,
         stable@vger.kernel.org, linux-api@vger.kernel.org,
         linux-kernel@vger.kernel.org, linux-mm@kvack.org,
         linux-kselftest@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1390; i=cyphar@cyphar.com;
- h=from:subject:message-id; bh=+Up0ghrBW/nfRj4bC3B4yqL0dFwv9KTB+GgoZwyV0aw=;
- b=owGbwMvMwCWmMf3Xpe0vXfIZT6slMaTcfLFiw/TsfmWDxoNz8nnmrvi1iHnrP6m7AWasOo8m3
- 1wekyNc2FHKwiDGxSArpsiyzc8zdNP8xVeSP61kg5nDygQyhIGLUwAmkpfFyDBRc+qvi5+lrvwq
- Uu9s9nvj/PqGRbrzrqg2Y4FZ6bO7O9cw/NPdWbdxP9tDl7XxbgXfxdZNaXf791I7X+J3+4PgVBu
- 9RXwA
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2138; i=cyphar@cyphar.com;
+ h=from:subject:message-id; bh=RhSvSYmzoCDTkzH6eBS7S4EFPaKzfTKNkGx9zoaFDXg=;
+ b=owGbwMvMwCWmMf3Xpe0vXfIZT6slMaTcfLHKkqnzauO+Q1m9W/cV6QoIafZdM/7bxXw//nBq8
+ PzZ8dumdpSyMIhxMciKKbJs8/MM3TR/8ZXkTyvZYOawMoEMYeDiFICJPFNl+F/zy9EjaynTW+l7
+ ofv84tUT6+bn3924QbCv9tcRc+nsOj5GhjfxJfaqHXPWTy+PW/w4KtRJ8Llqn1Da/fm3D9eIrua
+ pYQcA
 X-Developer-Key: i=cyphar@cyphar.com; a=openpgp;
  fpr=C9C370B246B09F6DBCFC744C34401015D1D2D386
+X-Rspamd-Queue-Id: 4RPSYd70PJz9slh
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Before this change, a test runner using this self test would see a
-return code of 0 when the tests using a child process (namely the
-MFD_NOEXEC_SEAL and MFD_EXEC tests) failed, masking test failures.
+In order to incentivise userspace to switch to passing MFD_EXEC and
+MFD_NOEXEC_SEAL, we need to provide a warning on each attempt to call
+memfd_create() without the new flags. pr_warn_once() is not useful
+because on most systems the one warning is burned up during the boot
+process (on my system, systemd does this within the first second of
+boot) and thus userspace will in practice never see the warnings to push
+them to switch to the new flags.
 
-Fixes: 11f75a01448f ("selftests/memfd: add tests for MFD_NOEXEC_SEAL MFD_EXEC")
-Reviewed-by: Jeff Xu <jeffxu@google.com>
+The original patchset[1] used pr_warn_ratelimited(), however there were
+concerns about the degree of spam in the kernel log[2,3]. The resulting
+inability to detect every case was flagged as an issue at the time[4].
+
+While we could come up with an alternative rate-limiting scheme such as
+only outputting the message if vm.memfd_noexec has been modified, or
+only outputting the message once for a given task, these alternatives
+have downsides that don't make sense given how low-stakes a single
+kernel warning message is. Switching to pr_info_ratelimited() instead
+should be fine -- it's possible some monitoring tool will be unhappy
+with a stream of warning-level messages but there's already plenty of
+info-level message spam in dmesg.
+
+[1]: https://lore.kernel.org/20221215001205.51969-4-jeffxu@google.com/
+[2]: https://lore.kernel.org/202212161233.85C9783FB@keescook/
+[3]: https://lore.kernel.org/Y5yS8wCnuYGLHMj4@x1n/
+[4]: https://lore.kernel.org/f185bb42-b29c-977e-312e-3349eea15383@linuxfoundation.org/
+
+Cc: stable@vger.kernel.org # v6.3+
+Fixes: 105ff5339f49 ("mm/memfd: add MFD_NOEXEC_SEAL and MFD_EXEC")
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- tools/testing/selftests/memfd/memfd_test.c | 19 ++++++++++++++++++-
- 1 file changed, 18 insertions(+), 1 deletion(-)
+ mm/memfd.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/memfd/memfd_test.c b/tools/testing/selftests/memfd/memfd_test.c
-index dbdd9ec5e397..8eb49204f9ea 100644
---- a/tools/testing/selftests/memfd/memfd_test.c
-+++ b/tools/testing/selftests/memfd/memfd_test.c
-@@ -1207,7 +1207,24 @@ static pid_t spawn_newpid_thread(unsigned int flags, int (*fn)(void *))
+diff --git a/mm/memfd.c b/mm/memfd.c
+index d65485c762de..aa46521057ab 100644
+--- a/mm/memfd.c
++++ b/mm/memfd.c
+@@ -315,7 +315,7 @@ SYSCALL_DEFINE2(memfd_create,
+ 		return -EINVAL;
  
- static void join_newpid_thread(pid_t pid)
- {
--	waitpid(pid, NULL, 0);
-+	int wstatus;
-+
-+	if (waitpid(pid, &wstatus, 0) < 0) {
-+		printf("newpid thread: waitpid() failed: %m\n");
-+		abort();
-+	}
-+
-+	if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0) {
-+		printf("newpid thread: exited with non-zero error code %d\n",
-+		       WEXITSTATUS(wstatus));
-+		abort();
-+	}
-+
-+	if (WIFSIGNALED(wstatus)) {
-+		printf("newpid thread: killed by signal %d\n",
-+		       WTERMSIG(wstatus));
-+		abort();
-+	}
- }
- 
- /*
+ 	if (!(flags & (MFD_EXEC | MFD_NOEXEC_SEAL))) {
+-		pr_warn_once(
++		pr_info_ratelimited(
+ 			"%s[%d]: memfd_create() called without MFD_EXEC or MFD_NOEXEC_SEAL set\n",
+ 			current->comm, task_pid_nr(current));
+ 	}
 
 -- 
 2.41.0
