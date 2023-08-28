@@ -2,57 +2,57 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 754FEC83F11
-	for <linux-api@archiver.kernel.org>; Mon, 28 Aug 2023 19:59:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 396D0C83F15
+	for <linux-api@archiver.kernel.org>; Mon, 28 Aug 2023 19:59:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231764AbjH1T6j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S233526AbjH1T6j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Mon, 28 Aug 2023 15:58:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41936 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41958 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233491AbjH1T6Q (ORCPT
+        with ESMTP id S233507AbjH1T6Q (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Mon, 28 Aug 2023 15:58:16 -0400
-Received: from sonic309-27.consmr.mail.ne1.yahoo.com (sonic309-27.consmr.mail.ne1.yahoo.com [66.163.184.153])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 21A0E199
-        for <linux-api@vger.kernel.org>; Mon, 28 Aug 2023 12:58:13 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1693252692; bh=86NOatTwcSpk7wyjUbIzSnDgLk93pV2eDbNg2QFxdBU=; h=From:To:Cc:Subject:Date:In-Reply-To:References:From:Subject:Reply-To; b=n216jDejC6V0X4xzJWC2DIA7/ZMjgho+jMlyFew95DZlS5JoUIyIIodoGNqBt2ZBEfJw1PIdz+mHBKV8BEacw6JxfYvq3Ufzd8bCbjUFD32S0JbHdfz3RIDcg5chH3W9b42KikX7qcjk4x6I3tPE2ODzq2eqEESMS/GGUM/iFeXyNKlYvPxPeY+qfAG1P21Nmu5Ipg5PWeYJodBH7Cm+qZnUc7YSCjafvO62+78wiHVNtpUANW4Cdl7v2LL0ZwzjonEL7Td/xD+EoiiIBvd4L++yL7zw6CHtxujOny/7vclWhxxPfhTuR9avHxo7NJVQRVGtk/HflrGAjQbtI3PETg==
-X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1693252692; bh=do/uNzKh/XPJBakq4yI32UUCweSNheGPYM0MPPJk1og=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=PE2g8JraxfoAfuipj17DGRnK3jXSB3NwhsB73rlxBYT1wTM3EmEcCmZYYlI8gYa4SC+g9GB4nNEa+RRb+1CsqAsjomZKs0JPK2a9zvPRQgfnLjdWObjLey6Ds6PztAFh2MzYOrj24sa8MRCWWa2ZiNXRCw9wChzJBtYbsnjimViCHNW60WHxOkwadS4yrwAsArSXAf5eC8CY2QiK09zu8UlEouvZsMXu2c9kzbN98mICXXCTystloK9RcJ1N8D/8IWigX5UPib4n2sRabC6s5C55AyMMuK0Gj9PNaJ55a6pCMAQqLhLd2U5oAkv3Z/3fczPUyA2rj/3fxy2weewb0Q==
-X-YMail-OSG: CyRRcEEVM1kADcGXnyKucPw4UtEIBKgxZ_LpAiaf8nJtBGHFnhyf6Nkbx6oP.wx
- xSbeQWqYahLm69RKdHbGpc2VXIq9vZxTZG1a5l1u0wLWRlFCyZB6eHTeBHXR.Bblis_h76v47BsR
- OdKgqyK7U1Egtxk0Iz7nZgSgxy.1R8SPfS6rVnOoJ1N24hM6LOLEq_dTTKARuIPhNAIK6mW8Hrc5
- IcqTl08HON5_JewhdAGSpFL3_h3G6ymqmkFWP0LMLc0oo0d5IML2u2daNUyajzC.F8G37R2IpmcF
- mxS_Yt1rxRRVt6wcXopRIqM1M9sYFE.ADjRQKOIm7mcPxDdZnzHlkENSKvDgRp97zAX5WIj4sP13
- VHnS2PynqUXZh2fDeStldSg00fIrroO233sQuYNYBZRTL8J9tHw3PQ2G2q1J01l6ISaNy_ImQaVm
- DbOH1v8nS7I80tQvnsAY4rUTVU3GTMGljdpX9QH7KYjU6mPluMXDjQtXbTuFig4Tz1mH9spaHlEE
- ht16yEJfHxDCLzExlFRnZo6P7QHfevz9Ah_.78tx_ivlWuA2n1fB6_VmHGEMVelAkpMXioZBDNdg
- x7vDtr8qVqgf_Jx6gFW7z7kGtX5yxQ25nA_Rb0bhrjJ8FiB_H._lR8api__0uPVpPtQAsdao3V7o
- 3xLqrprNdf8xNiIXWWSvWb4d6LK31144Xz.XHsx0WNcWNL4WROF7YseKvHULSDWDVxSQz44EIHxv
- sLlNmILoANjc3.ldmLtTjqhbZVt7zIP1oAyepVayLIwTp6C.RhiBc5SD59KPBoBRCJJzQZBftpHB
- piemQurQaB5cg2fWOJF9wlAiNp7ou_zmhWkfok6swXspmL9qaMU5OBffohXLIQZv9BZLWRijPTEu
- RGncv376_.1Q9B06tU9iOi8YMvSopSH6mg3omZFhixwg_DEsPnCWiBnhUbHzzuhVusZdrbyTx.QE
- R38P5khADAWDEyEYHNaQl.ejpgLrgWh4t0HxEWXUhM1L2Yo6Vy0qjz94foRpMV.e.Md..aAbMF3z
- f01Nv9sM0_10OM1vL_JJ34yv_59UDEN0YmeF.3ZugZhe5Y7aSONzoxIjIIP092SrCtK2prGs6Dkl
- B3FqL.gy0SU2ShHC69i1yHDORSGBnZ_kuqPs97heanY4OzMz9Qybto8RnLEKRhdCWn7ZrTKiOO5c
- krcJ_fEQ_qjR0KZVPclnROtarQYSkvT6zn_0wK4q6BYpjHbWAg0scoNVgen_yMjDCLpUho_fi2vS
- Jk6niQdBsvOr_uQpoMiR37Y__roezWEPixWusLs1yNOo_pDsm_SJhcngD2ds_oLhDE4d9yakStQw
- lw3zXnPPS4makSY1by3RhN9EXlJYkR4PGSIKP.fFXJlom1iubs.Kr1pX5E8Jb0AQpTXnUYcBXiAM
- cx3wpjbvK3IhtWiVmqiQAHqGzL70DdHs2QVGVSb1AndCVr4R.YOPe8rv13kR92ypaK0lZH7ZUm1P
- 5SkX2o2Zlvd6lTz0NXUEmepd_e.KZeXmp6G1FpfY9kYQ1uUhq0dRF.vb6QfDUrXTPOwDdX0my4ut
- uQweRZh8BKbuaKX8Q3vP.gCAOGZUVjwBrz4k1f6FjbYzHxfJNlMs60ssnpXL.7e69P9qiJM9JScZ
- A1UAAK47aN9gvjgKW12mfvhA7mhQhEmLqnj52_UX35HYtyhwoD9IKzdw8EbTv0cMvcP9L6AQYbqK
- lDuY8fDz9YyP9dRS0icUZnBhUYjHSQ1PGjxNR2VG5X21ZvLfJ2zUboqaLtrZVW0BRxpCmK7_alSh
- qWi.ZdzcCBr6giQejJWIn.ifTNZagv7WSX4MtUalpkleNZpjQin3yAS4evk3nCWixKUZfBdyB8Be
- xWIRwyXhKQR54T_3gBZctmpFT8eBfEKhHlgfQRsyy2SNH_VpDC_cnla67_3inB34CLhzAJdclLPC
- bA.Z_f97i3HsSqGh9FEMPxkY_r18dDkKyGYu80gEk7Pj2vS.tQqLcEZy65.hp0baOgNPyWGn2OZy
- z6UMnwcrt7qqGgBBxbrIui05WWrmbAiWRsE0ASuwLdloVI_ttEg.xlM4V712ads.y0pgCDEGRqvc
- 4PcntEpbU6Ow_.30DILNcjjop.0b7xAXfI38Cqfbgxoeh722JphOli4ExE3Mqfeft13rx6FZBjcr
- mDrHFZ5GbYE4y3TpkXgd8vDd3c6wjajN_EhMowSy23ZiPmFI._HiMZ13m76zZuj2vlarIn2mLTvN
- NRgg7nZikL1U6BNJWg7XogY_zZ6rg.YcSZ_2pKLx5htJY8.pgjDl7mwbxdIDDPm4mIVZo3Zcv4Nt
- sgbZVG95TJwL06Xur
+Received: from sonic317-38.consmr.mail.ne1.yahoo.com (sonic317-38.consmr.mail.ne1.yahoo.com [66.163.184.49])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 0015D18F
+        for <linux-api@vger.kernel.org>; Mon, 28 Aug 2023 12:58:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1693252692; bh=9uP6Rg4oC00NQB5WTQcmPKWTjed9/3CV4MlwP7Wfme0=; h=From:To:Cc:Subject:Date:References:From:Subject:Reply-To; b=erx8W1MvC3keAr2ToBPwntOJJ/mQld2LqHqTyYSWcIzUxno9LBRqoec9lr69hBw82p35U0fzL6nFqUgRWoAab8/JJxGHbMQF6iN6P2y0u3tPM/XJGr4rH99xJjUt1qeYFKYD50cJhZJ1LfYK+2OPdFk5Hx2vYbVY8K4AsGKSiszRhPUi6g+SwEYVNJmZ18/hDWlopyIjxn0caoEuDd0tRaJEZkwN+xlMzfaUF2Ib4SYx1I0Aa40FLZu/G7YPpl+KKTTPNljG/sqRGOFE1BsmGI7A0ELDc8Ny69SiqapCugB+M3R+jsKPwdT/oH/Lr0rJkmPTGFaHOPsqqGAJRZSd8g==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1693252692; bh=bSl74hFzLCZacqMitHWQ3CFXzAL4+OVFCFpj2pzaP24=; h=X-Sonic-MF:From:To:Subject:Date:From:Subject; b=j9O6KnD18ajbTtU/1yj9hakre6ledP2W+qc6fTpVwZCYBYijkNt82Zn4Klf2k/kXUclrpEvVHFTxODLwl6fQhBCGCLqf2flHiZvMAAVlL+eB7O6PpcEWOHzUVdLFtXnNR9ohgO/K25nUFP0huC+IigS8dwQXuA7vUERsVygAS4XFadxhl9fs3E9+rls0urmZJV3UVwO/BBXlGo4ERAKbqgLOUdUEpoj6G8K0laXaFvMlDhWZFt1rxUGqR9OkK1QHg+2v5vADIpan1DwfSfmTRBHu5EQoMdCyekkb5CNRpTKcd0xhc1rwnaV+8MeIe8jaZIDuAiq4q0U9GwjtYCthtw==
+X-YMail-OSG: 7Bn_iiYVM1m23UywXsEQW9K1RXavEDn227whOc_oKdnghBaY8i_IhfoCYcKcXv4
+ h1y8xuv9n0_yYbN86JRN4xIsdEpTfTKRH4ByLuD2YSdSbjP10s9JUIErhhKHgnPng6BfWHOal7Tc
+ 7M.zbUyUww_ubJDORSruPpqRSWbTt.CRC5P8pHgMXU8.kswzjIvjnIhf5DtcVsxBif0dLUGoJ8mR
+ e56hRsylt2kB.PdFZF9CtBQjcK70h5NmtrlnRgTyPSPYWYI.W..fOBA3s5jpUyXG7jbUCapFd3C0
+ JDnARsVCGUdH0QmPgtKF6WzYzxtopJSf3P5rrscs6Qne4IjYykDFJECPMnLNVCV1V6c4dvsLbPAw
+ VQuSzjpb8M2yOltNdLYFqURsUnYUjxvvp8tEqoyNaNm5ySGeo4CfqTRU9btKlkzlczUjswciV6_J
+ 3VjYUDjW1aIqQ_4gynj_JjKuQi3IbQzWdohcKtiZPP2J.NgcM8SKnyAxKe1BmfqclMC0wSq0qwBV
+ GjToHrcGK9Vvm1HWpjKtarmwY9jB.St_Ty8.Q2aCk7iIIyIg91br0L9Eofq6gYNxyTbkp3snzSC7
+ Fb4aRcLq25QlQnZcsU7S3L0is6LKxfRKeaTZ1YtnuiYgm8lQxPVzAndXWXkkKKF9zRUpqG5mUpz8
+ oMnhD_R1y7P3TI6qGF7Yk5duq_weMCezdctMG5h47Lv4Eyfy2E7KfvsmrlftfXPzHo8bQIwxUvxC
+ 1s22qfA815_hulV7_w0_uRHUcjYVs_.V8HFGXP8F68_7wV0IsjSGwVkPsPIVO5YNB5JzQqBeEzhd
+ scutrObLhird_fSToR_krSOP11G9tsvxWeo.pA9MGjE58Rg7TVCssBa552wtnOsP26.e4DKpwuUA
+ c5XTb55ywbyRq6kiANE396Fgx_AuhEp7sXDop0_xqcpykZRpYu6t2VvgUB7RrPm1occTku8YlKH1
+ m6icfPb7WO8.e7e7jQvirVkd8.LvofXluJYcrpnQrElvgLJTjf6KajxU4r6CknzXmIg4pIHKRSNZ
+ TJ_.urrvMePdL_7iGvC9bh2hp9jg_JyCs2IH6wZVNKbE9pXsTnG6GKjpLubZgAbp6SxFpi4AdUGq
+ LoPaMlnTV4SPC0bG0NWoReGZYZLtNWi_egjQ5b2Mh9Dl9HXl8BsuGgdRj_ELtS9PzZiNeY1YyGXm
+ rd1tazBQw0BMdytnN0bCiH.GprXTLOJwtmIxDgYuz5HOdVEWOhAafHYmxERbDSt_w_8G8OsAct6P
+ jkbApYpWoobUKt54VCdTp8LSaN42aG7dwyPLiKd1ZIYMkd8vjiq2XZKMkzWAhpEyd9O_kWm5gkbX
+ 42qpnEAr75jNgF.LgRKBl.YeZgR9uoMF89wW2dvQnRxOKdqYe8_QdOsDWma8G0ehVhA3O7Ft354F
+ 4R1JRiP0HobVTLNI4GPbugi99Zzy0gEnJMoy1u3HPv5ZtWG3yYMs1dMaHhCrzheI8eDq14oXIgDS
+ wvimIPDF4NEjPELtdT4_kHlCyM3ehzjn84IInA.nhcbsMGikI1t_HHrvEPZUR2MQA3w6B1s5kKfM
+ BWpfaKm7K.wy0d2fUFhIswQhs_zNFZimgRzMNXjmzGlYm5pvwxWYDNt6TaChWtE4faT41dHQLPWV
+ Aq8NQUGw9T6In3GI4.UlnxhF9.sbhSbQb4T.HtQDhJEWs__0UwZWN5xzAStI8b5fCPziwzfBwbXK
+ K0CWTQfFOwpjG7LNbNpQLlhX.1AE2_offiG4t.MOAJPoG4uBfxiNC2rGsmxphKh64Y_QdBlknoAC
+ qwjDMJK.2gXdV5RobowB79BlaUKXP2jkRgp1X6CeC..YPUkDRVry.V_Gb6UxFzkCd985v1.iowBV
+ r7g4bVIyGF_x9Q.zGZ.npYlBqjXoLPi.oka7_BhFXBw5oSoFQ75mWpck48Z40kNGgzAgvL2Bfwes
+ G3AUjWLGbBEcDGddGjBM_zBZbQKgsO3bEG_yzAH9aKMotRKpnRO9YD1LRPE.y53zasXnegDrpD1C
+ kZ0Vm.6XaTBcDGANEofperFAzhZq2SemgptimW9OSMbuodi18iQMZ3HVCZC4myp0gEre.IuaOp5W
+ QgprWE3omgTUwpGYiEhIBA4lj8enHDlTjlizlpcctIF58d1B036R_sT787PKSRNy569baZL.UOlL
+ R3tX7Bvh0DFN2PPDPFpxGesmlW1YGvJ_o7.C.IFAs2ATgy2YT6wXxRjgNrwsZsdqu4qdB_h8unsk
+ msnNtO4Hld2TOynKx4ljf6EtV8XxY_sVySJ_IXWrwp4g6.VFU2UbLoJvcDT.2jLJqGLHSwsHMJWl
+ s8jOw_rvi2A--
 X-Sonic-MF: <casey@schaufler-ca.com>
-X-Sonic-ID: df643134-b983-4a28-8b89-9f5ea3933991
-Received: from sonic.gate.mail.ne1.yahoo.com by sonic309.consmr.mail.ne1.yahoo.com with HTTP; Mon, 28 Aug 2023 19:58:12 +0000
+X-Sonic-ID: bc872c02-43c6-4339-9023-6c37d909c576
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic317.consmr.mail.ne1.yahoo.com with HTTP; Mon, 28 Aug 2023 19:58:12 +0000
 Received: by hermes--production-gq1-6b7c87dcf5-rj4xx (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 5b607809d087525ffd4c5fd459fa4399;
-          Mon, 28 Aug 2023 19:58:09 +0000 (UTC)
+          Mon, 28 Aug 2023 19:58:07 +0000 (UTC)
 From:   Casey Schaufler <casey@schaufler-ca.com>
 To:     casey@schaufler-ca.com, paul@paul-moore.com,
         linux-security-module@vger.kernel.org
@@ -60,111 +60,222 @@ Cc:     jmorris@namei.org, serge@hallyn.com, keescook@chromium.org,
         john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
         stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, mic@digikod.net
-Subject: [PATCH v14 02/11] LSM: Maintain a table of LSM attribute data
-Date:   Mon, 28 Aug 2023 12:57:52 -0700
-Message-ID: <20230828195802.135055-3-casey@schaufler-ca.com>
+Subject: [PATCH v14 00/11] LSM: Three basic syscalls
+Date:   Mon, 28 Aug 2023 12:57:50 -0700
+Message-ID: <20230828195802.135055-1-casey@schaufler-ca.com>
 X-Mailer: git-send-email 2.41.0
-In-Reply-To: <20230828195802.135055-1-casey@schaufler-ca.com>
-References: <20230828195802.135055-1-casey@schaufler-ca.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+References: <20230828195802.135055-1-casey.ref@schaufler-ca.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-As LSMs are registered add their lsm_id pointers to a table.
-This will be used later for attribute reporting.
+Add three system calls for the Linux Security Module ABI.
 
-Determine the number of possible security modules based on
-their respective CONFIG options. This allows the number to be
-known at build time. This allows data structures and tables
-to use the constant.
+lsm_get_self_attr() provides the security module specific attributes
+that have previously been visible in the /proc/self/attr directory.
+For each security module that uses the specified attribute on the
+current process the system call will return an LSM identifier and
+the value of the attribute. The LSM and attribute identifier values
+are defined in include/uapi/linux/lsm.h
 
-Signed-off-by: Casey Schaufler <casey@schaufler-ca.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Serge Hallyn <serge@hallyn.com>
-Reviewed-by: Mickael Salaun <mic@digikod.net>
-Reviewed-by: John Johansen <john.johansen@canonical.com>
----
- include/linux/security.h |  2 ++
- security/security.c      | 37 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 39 insertions(+)
+LSM identifiers are simple integers and reflect the order in which
+the LSM was added to the mainline kernel. This is a convention, not
+a promise of the API. LSM identifiers below the value of 100 are
+reserved for unspecified future uses. That could include information
+about the security infrastructure itself, or about how multiple LSMs
+might interact with each other.
 
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 32828502f09e..a20a4ceda6d9 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -138,6 +138,8 @@ enum lockdown_reason {
- };
- 
- extern const char *const lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1];
-+extern u32 lsm_active_cnt;
-+extern const struct lsm_id *lsm_idlist[];
- 
- /* These functions are in security/commoncap.c */
- extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
-diff --git a/security/security.c b/security/security.c
-index feaae09581dc..3c0342410531 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -36,6 +36,25 @@
- /* How many LSMs were built into the kernel? */
- #define LSM_COUNT (__end_lsm_info - __start_lsm_info)
- 
-+/*
-+ * How many LSMs are built into the kernel as determined at
-+ * build time. Used to determine fixed array sizes.
-+ * The capability module is accounted for by CONFIG_SECURITY
-+ */
-+#define LSM_CONFIG_COUNT ( \
-+	(IS_ENABLED(CONFIG_SECURITY) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_SELINUX) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_SMACK) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_TOMOYO) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_IMA) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_APPARMOR) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_YAMA) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_LOADPIN) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_SAFESETID) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_LOCKDOWN_LSM) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_BPF_LSM) ? 1 : 0) + \
-+	(IS_ENABLED(CONFIG_SECURITY_LANDLOCK) ? 1 : 0))
-+
- /*
-  * These are descriptions of the reasons that can be passed to the
-  * security_locked_down() LSM hook. Placing this array here allows
-@@ -245,6 +264,12 @@ static void __init initialize_lsm(struct lsm_info *lsm)
- 	}
- }
- 
-+/*
-+ * Current index to use while initializing the lsm id list.
-+ */
-+u32 lsm_active_cnt __ro_after_init;
-+const struct lsm_id *lsm_idlist[LSM_CONFIG_COUNT];
-+
- /* Populate ordered LSMs list from comma-separated LSM name list. */
- static void __init ordered_lsm_parse(const char *order, const char *origin)
- {
-@@ -521,6 +546,18 @@ void __init security_add_hooks(struct security_hook_list *hooks, int count,
- {
- 	int i;
- 
-+	/*
-+	 * A security module may call security_add_hooks() more
-+	 * than once during initialization, and LSM initialization
-+	 * is serialized. Landlock is one such case.
-+	 * Look at the previous entry, if there is one, for duplication.
-+	 */
-+	if (lsm_active_cnt == 0 || lsm_idlist[lsm_active_cnt - 1] != lsmid) {
-+		if (lsm_active_cnt >= LSM_CONFIG_COUNT)
-+			panic("%s Too many LSMs registered.\n", __func__);
-+		lsm_idlist[lsm_active_cnt++] = lsmid;
-+	}
-+
- 	for (i = 0; i < count; i++) {
- 		hooks[i].lsmid = lsmid;
- 		hlist_add_tail_rcu(&hooks[i].list, hooks[i].head);
+A new LSM hook security_getselfattr() is introduced to get the
+required information from the security modules. This is similar
+to the existing security_getprocattr() hook, but specifies the
+format in which string data is returned and requires the module
+to put the information into a userspace destination.
+
+lsm_set_self_attr() changes the specified LSM attribute. Only one
+attribute can be changed at a time, and then only if the specified
+security module allows the change.
+
+A new LSM hook security_setselfattr() is introduced to set the
+required information in the security modules. This is similar
+to the existing security_setprocattr() hook, but specifies the
+format in which string data is presented and requires the module
+to get the information from a userspace destination.
+
+lsm_list_modules() provides the LSM identifiers, in order, of the
+security modules that are active on the system. This has been
+available in the securityfs file /sys/kernel/security/lsm.
+
+Patch 0001 changes the LSM registration from passing the name
+of the module to passing a lsm_id structure that contains the
+name of the module, an LSM identifier number and an attribute
+identifier.
+Patch 0002 adds the registered lsm_ids to a table.
+Patch 0003 changes security_[gs]etprocattr() to use LSM IDs instead
+of LSM names.
+Patch 0004 implements lsm_get_self_attr() and lsm_set_self_attr().
+New LSM hooks security_getselfattr() and security_setselfattr() are
+defined.
+Patch 0005 implements lsm_list_modules().
+Patch 0006 wires up the syscalls.
+Patch 0007 implements helper functions to make it easier for
+security modules to use lsm_ctx structures.
+Patch 0008 provides the Smack implementation for [gs]etselfattr().
+Patch 0009 provides the AppArmor implementation for [gs]etselfattr().
+Patch 0010 provides the SELinux implementation for [gs]etselfattr().
+Patch 0011 implements selftests for the three new syscalls.
+
+https://github.com/cschaufler/lsm-stacking.git#syscalls-6.5-rc7-v14
+
+v14: Make the handling of LSM_FLAG_SINGLE easier to understand.
+     Tighten the comments and documentation.
+     Better use of const, static, and __ro_after_init.
+     Add selftests for LSM_FLAG_SINGLE cases.
+v13: Change the setselfattr code to do a single user copy.
+     Make the self tests more robust.
+     Improve use of const.
+     Change syscall numbers to reflect upstream additions.
+v12: Repair a registration time overflow check.
+v11: Remove redundent alignment code
+     Improve a few comments.
+     Use LSM_ATTR_UNDEF in place of 0 in a few places.
+     Correct a return of -EINVAL to -E2BIG.
+v10: Correct use of __user.
+     Improve a few comments.
+     Revert unnecessary changes in module initialization.
+v9: Support a flag LSM_FLAG_SINGLE in lsm_get_self_attr() that
+    instructs the call to provide only the attribute for the LSM
+    identified in the referenced lsm_ctx structure.
+    Fix a typing error.
+    Change some coding style.
+v8: Allow an LSM to provide more than one instance of an attribute,
+    even though none of the existing modules do so.
+    Pad the data returned by lsm_get_self_attr() to the size of
+    the struct lsm_ctx.
+    Change some displeasing varilable names.
+v7: Pass the attribute desired to lsm_[gs]et_self_attr in its own
+    parameter rather than encoding it in the flags.
+    Change the flags parameters to u32.
+    Don't shortcut out of calling LSM specific code in the
+    infrastructure, let the LSM report that doesn't support an
+    attribute instead. With that it is not necessary to maintain
+    a set of supported attributes in the lsm_id structure.
+    Fix a typing error.
+v6: Switch from reusing security_[gs]procattr() to using new
+    security_[gs]selfattr() hooks. Use explicit sized data types
+    in the lsm_ctx structure.
+
+v5: Correct syscall parameter data types.
+
+v4: Restore "reserved" LSM ID values. Add explaination.
+    Squash patches that introduce fields in lsm_id.
+    Correct a wireup error.
+
+v3: Add lsm_set_self_attr().
+    Rename lsm_self_attr() to lsm_get_self_attr().
+    Provide the values only for a specifed attribute in
+    lsm_get_self_attr().
+    Add selftests for the three new syscalls.
+    Correct some parameter checking.
+
+v2: Use user-interface safe data types.
+    Remove "reserved" LSM ID values.
+    Improve kerneldoc comments
+    Include copyright dates
+    Use more descriptive name for LSM counter
+    Add documentation
+    Correct wireup errors
+
+Casey Schaufler (11):
+  LSM: Identify modules by more than name
+  LSM: Maintain a table of LSM attribute data
+  proc: Use lsmids instead of lsm names for attrs
+  LSM: syscalls for current process attributes
+  LSM: Create lsm_list_modules system call
+  LSM: wireup Linux Security Module syscalls
+  LSM: Helpers for attribute names and filling lsm_ctx
+  Smack: implement setselfattr and getselfattr hooks
+  AppArmor: Add selfattr hooks
+  SELinux: Add selfattr hooks
+  LSM: selftests for Linux Security Module syscalls
+
+ Documentation/userspace-api/index.rst         |   1 +
+ Documentation/userspace-api/lsm.rst           |  73 +++++
+ MAINTAINERS                                   |   2 +
+ arch/alpha/kernel/syscalls/syscall.tbl        |   3 +
+ arch/arm/tools/syscall.tbl                    |   3 +
+ arch/arm64/include/asm/unistd.h               |   2 +-
+ arch/arm64/include/asm/unistd32.h             |   6 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   3 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   3 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   3 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   3 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   3 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   3 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   3 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   3 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   3 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   3 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   3 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   3 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   3 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   3 +
+ fs/proc/base.c                                |  29 +-
+ fs/proc/internal.h                            |   2 +-
+ include/linux/lsm_hook_defs.h                 |   4 +
+ include/linux/lsm_hooks.h                     |  17 +-
+ include/linux/security.h                      |  46 ++-
+ include/linux/syscalls.h                      |   6 +
+ include/uapi/asm-generic/unistd.h             |   9 +-
+ include/uapi/linux/lsm.h                      |  90 ++++++
+ kernel/sys_ni.c                               |   3 +
+ security/Makefile                             |   1 +
+ security/apparmor/include/procattr.h          |   2 +-
+ security/apparmor/lsm.c                       |  99 ++++++-
+ security/apparmor/procattr.c                  |  10 +-
+ security/bpf/hooks.c                          |   9 +-
+ security/commoncap.c                          |   8 +-
+ security/landlock/cred.c                      |   2 +-
+ security/landlock/fs.c                        |   2 +-
+ security/landlock/ptrace.c                    |   2 +-
+ security/landlock/setup.c                     |   6 +
+ security/landlock/setup.h                     |   1 +
+ security/loadpin/loadpin.c                    |   9 +-
+ security/lockdown/lockdown.c                  |   8 +-
+ security/lsm_syscalls.c                       | 120 ++++++++
+ security/safesetid/lsm.c                      |   9 +-
+ security/security.c                           | 247 +++++++++++++++-
+ security/selinux/hooks.c                      | 143 +++++++--
+ security/smack/smack_lsm.c                    | 103 ++++++-
+ security/tomoyo/tomoyo.c                      |   9 +-
+ security/yama/yama_lsm.c                      |   8 +-
+ .../arch/mips/entry/syscalls/syscall_n64.tbl  |   3 +
+ .../arch/powerpc/entry/syscalls/syscall.tbl   |   3 +
+ .../perf/arch/s390/entry/syscalls/syscall.tbl |   3 +
+ .../arch/x86/entry/syscalls/syscall_64.tbl    |   3 +
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/lsm/.gitignore        |   1 +
+ tools/testing/selftests/lsm/Makefile          |  17 ++
+ tools/testing/selftests/lsm/common.c          |  89 ++++++
+ tools/testing/selftests/lsm/common.h          |  33 +++
+ tools/testing/selftests/lsm/config            |   3 +
+ .../selftests/lsm/lsm_get_self_attr_test.c    | 275 ++++++++++++++++++
+ .../selftests/lsm/lsm_list_modules_test.c     | 140 +++++++++
+ .../selftests/lsm/lsm_set_self_attr_test.c    |  74 +++++
+ 63 files changed, 1688 insertions(+), 93 deletions(-)
+ create mode 100644 Documentation/userspace-api/lsm.rst
+ create mode 100644 include/uapi/linux/lsm.h
+ create mode 100644 security/lsm_syscalls.c
+ create mode 100644 tools/testing/selftests/lsm/.gitignore
+ create mode 100644 tools/testing/selftests/lsm/Makefile
+ create mode 100644 tools/testing/selftests/lsm/common.c
+ create mode 100644 tools/testing/selftests/lsm/common.h
+ create mode 100644 tools/testing/selftests/lsm/config
+ create mode 100644 tools/testing/selftests/lsm/lsm_get_self_attr_test.c
+ create mode 100644 tools/testing/selftests/lsm/lsm_list_modules_test.c
+ create mode 100644 tools/testing/selftests/lsm/lsm_set_self_attr_test.c
+
 -- 
 2.41.0
 
