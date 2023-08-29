@@ -2,33 +2,33 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D4511C83F17
-	for <linux-api@archiver.kernel.org>; Tue, 29 Aug 2023 20:59:32 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 44173C83F19
+	for <linux-api@archiver.kernel.org>; Tue, 29 Aug 2023 20:59:33 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230335AbjH2U7D (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 29 Aug 2023 16:59:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42846 "EHLO
+        id S240566AbjH2U7H (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 29 Aug 2023 16:59:07 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:42820 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S240629AbjH2U6y (ORCPT
+        with ESMTP id S240633AbjH2U6y (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Tue, 29 Aug 2023 16:58:54 -0400
 Received: from lithops.sigma-star.at (lithops.sigma-star.at [195.201.40.130])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 986BECC0;
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9719A1BC;
         Tue, 29 Aug 2023 13:58:49 -0700 (PDT)
 Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id 33E6F6418DB5;
-        Tue, 29 Aug 2023 22:58:48 +0200 (CEST)
+        by lithops.sigma-star.at (Postfix) with ESMTP id F197D623489A;
+        Tue, 29 Aug 2023 22:58:46 +0200 (CEST)
 Received: from lithops.sigma-star.at ([127.0.0.1])
         by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10032)
-        with ESMTP id qs0Nv5zehD6Y; Tue, 29 Aug 2023 22:58:47 +0200 (CEST)
+        with ESMTP id Y3sq38MqC2IP; Tue, 29 Aug 2023 22:58:46 +0200 (CEST)
 Received: from localhost (localhost [127.0.0.1])
-        by lithops.sigma-star.at (Postfix) with ESMTP id DE64B623489F;
-        Tue, 29 Aug 2023 22:58:47 +0200 (CEST)
+        by lithops.sigma-star.at (Postfix) with ESMTP id 8F80A6234894;
+        Tue, 29 Aug 2023 22:58:46 +0200 (CEST)
 Received: from lithops.sigma-star.at ([127.0.0.1])
         by localhost (lithops.sigma-star.at [127.0.0.1]) (amavisd-new, port 10026)
-        with ESMTP id dENrN-Y_-S_h; Tue, 29 Aug 2023 22:58:47 +0200 (CEST)
+        with ESMTP id dWL4oQjI8eUY; Tue, 29 Aug 2023 22:58:46 +0200 (CEST)
 Received: from blindfold.corp.sigma-star.at (84-115-238-89.cable.dynamic.surfer.at [84.115.238.89])
-        by lithops.sigma-star.at (Postfix) with ESMTPSA id 6A94D6418DB5;
-        Tue, 29 Aug 2023 22:58:47 +0200 (CEST)
+        by lithops.sigma-star.at (Postfix) with ESMTPSA id F2D166418DB0;
+        Tue, 29 Aug 2023 22:58:45 +0200 (CEST)
 From:   Richard Weinberger <richard@nod.at>
 To:     alx@kernel.org, serge@hallyn.com, christian@brauner.io,
         ipedrosa@redhat.com, gscrivan@redhat.com,
@@ -36,51 +36,50 @@ To:     alx@kernel.org, serge@hallyn.com, christian@brauner.io,
 Cc:     acl-devel@nongnu.org, linux-man@vger.kernel.org,
         linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
         ebiederm@xmission.com, Richard Weinberger <richard@nod.at>
-Subject: [PATCH 3/3] man: Document pitfall with negative permissions and user namespaces
-Date:   Tue, 29 Aug 2023 22:58:33 +0200
-Message-Id: <20230829205833.14873-4-richard@nod.at>
+Subject: [PATCH 0/3] Document impact of user namespaces and negative permissions
+Date:   Tue, 29 Aug 2023 22:58:30 +0200
+Message-Id: <20230829205833.14873-1-richard@nod.at>
 X-Mailer: git-send-email 2.26.2
-In-Reply-To: <20230829205833.14873-1-richard@nod.at>
-References: <20230829205833.14873-1-richard@nod.at>
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-It is little known that user namespaces and some helpers
-can be used to bypass negative permissions.
+I'm sending out this patch series to document the current situation regar=
+ding
+negative permissions and user namespaces.
 
-Signed-off-by: Richard Weinberger <richard@nod.at>
----
-This patch applies to the shadow project.
----
- man/subgid.5.xml | 9 +++++++++
- 1 file changed, 9 insertions(+)
+From what I understand, the general agreement is that negative permission=
+s
+are not recommended and should be avoided. This is why the ability to som=
+ewhat
+bypass these permissions using user namespaces is tolerated, as it's deem=
+ed
+not worth the complexity to address this without breaking exsting program=
+s such
+as podman.
 
-diff --git a/man/subgid.5.xml b/man/subgid.5.xml
-index e473768d..8ed281e5 100644
---- a/man/subgid.5.xml
-+++ b/man/subgid.5.xml
-@@ -55,6 +55,15 @@
-       <filename>/etc/subgid</filename> if subid delegation is managed vi=
-a subid
-       files.
-     </para>
-+    <para>
-+      Additionally, it's worth noting that the utilization of subordinat=
-e group
-+      IDs can affect the enforcement of negative permissions. User can d=
-rop their
-+      supplementary groups and bypass certain negative permissions.
-+      For more details see
-+      <citerefentry>
-+	<refentrytitle>user_namespaces</refentrytitle><manvolnum>7</manvolnum>
-+      </citerefentry>.
-+    </para>
-   </refsect1>
-=20
-   <refsect1 id=3D'local-subordinate-delegation'>
+To be clear, the current way of bypassing negative permissions, whether D=
+AC or
+ACL, isn't a result of a kernel flaw. The kernel issue related to this wa=
+s
+resolved with CVE-2014-8989. Currently, certain privileged helpers like
+newuidmap allow regular users to create user namespaces with subordinate =
+user
+and group ID mappings.
+This allows users to effectively drop their extra group memberships.
+
+I recently stumbled upon this behavior while looking into how rootless co=
+ntainers
+work. In conversations with the maintainers of the shadow package, I lear=
+ned that
+this behavior is both known and intended.
+So, let's make sure to document it as well.
+
+Thanks,
+//richard
+
 --=20
-2.35.3
+2.26.2
 
