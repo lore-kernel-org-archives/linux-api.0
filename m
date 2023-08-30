@@ -2,87 +2,105 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 7D9BBC83F18
-	for <linux-api@archiver.kernel.org>; Wed, 30 Aug 2023 18:47:06 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 0918CC83F2A
+	for <linux-api@archiver.kernel.org>; Wed, 30 Aug 2023 18:47:07 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S242375AbjH3Sp4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 30 Aug 2023 14:45:56 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45296 "EHLO
+        id S242372AbjH3Sp5 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 30 Aug 2023 14:45:57 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45350 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242372AbjH3ISb (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Aug 2023 04:18:31 -0400
-Received: from dfw.source.kernel.org (dfw.source.kernel.org [139.178.84.217])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EBDF4113;
-        Wed, 30 Aug 2023 01:18:28 -0700 (PDT)
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        (using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-         key-exchange X25519 server-signature RSA-PSS (2048 bits))
-        (No client certificate requested)
-        by dfw.source.kernel.org (Postfix) with ESMTPS id 82B4C620E0;
-        Wed, 30 Aug 2023 08:18:28 +0000 (UTC)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4E795C433C7;
-        Wed, 30 Aug 2023 08:18:25 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1693383507;
-        bh=SkpG/DDT3OihqReQuHpG/g4EXzWeKyPLmZtNNtBCmFc=;
-        h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=HM8LH5oL2nGsXVe6N2Zt1wmivBmSOHvsHRh2MH9q2hYgZzWkKHIMh5b4bluxUc/aQ
-         zv66D+9FP8IwKpdMPcC+R8EpCNAfQOa+i1w30F0/P+KfMnIM117xs6AE3b1qz/MOdO
-         1H8WJnIBWsZmMNd2IBuZQHp84Wo5QpySUR5BleFUFdzPIRhOCdvpHmWSBaygPLDR5w
-         NZM6BJUJlbfhvze7nBH4nExFm7lA1MHqJNYm1y+3qFqAOz9ULD2m7S191b9WcmhYAp
-         UCAikQYRB+x7L9xY/erMOQuUO8ap/BDraPHu0vcbBF6EFPHDHscSz2i+IF89sXaCWY
-         2LiJLQisKcgYw==
-Date:   Wed, 30 Aug 2023 10:18:22 +0200
-From:   Christian Brauner <brauner@kernel.org>
-To:     Richard Weinberger <richard@nod.at>
-Cc:     alx@kernel.org, serge@hallyn.com, christian@brauner.io,
-        ipedrosa@redhat.com, gscrivan@redhat.com,
-        andreas.gruenbacher@gmail.com, acl-devel@nongnu.org,
-        linux-man@vger.kernel.org, linux-api@vger.kernel.org,
-        linux-fsdevel@vger.kernel.org, ebiederm@xmission.com
-Subject: Re: [PATCH 2/3] user_namespaces.7: Document pitfall with negative
- permissions and user namespaces
-Message-ID: <20230830-baldigen-zogen-facd760442ee@brauner>
-References: <20230829205833.14873-1-richard@nod.at>
- <20230829205833.14873-3-richard@nod.at>
+        with ESMTP id S245672AbjH3Pwp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 30 Aug 2023 11:52:45 -0400
+Received: from sonic310-21.consmr.mail.gq1.yahoo.com (sonic310-21.consmr.mail.gq1.yahoo.com [98.137.69.147])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C63931A3
+        for <linux-api@vger.kernel.org>; Wed, 30 Aug 2023 08:52:41 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.ca; s=s2048; t=1693410761; bh=8CTksIvAv2QdlANLJfYI5FQM3vInY3fXsMesns0e+O8=; h=Date:From:Subject:To:Cc:References:From:Subject:Reply-To; b=h4Ew7GjVk0rHjLoaxnXW2fOnrXN6Qkmyqt/ockRwGKKNNUO9Q1K4S9hl6PcKid9I8nZWpn76BICXuMRs6SD4XuSGeA42SlYesHMpdxi4XqyvQ/NvssDkQLFCtfW13v8s+M2pNU7uLcJUKoBBuoFtl8banchWttJ65Sq5VzVNRBQ0MM1fTHtMI3C7Gx1xcNDAkG60zw+2nA4FtIqzoka5FeoeBzeYDdRgh587ATX762DhZN2yojL/nzcCDdfBVrmtJCjOAb6C/ao+PuYs2wkit/ypLYXUx7VSpIg8yi9aW613+KyfOM7+kOWqwgUa/astVF1KYZlm5wxbnO2iJ2y2Ug==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1693410761; bh=0lrHScO/I7vSWMOyh4mLKLzRypQUeQIwcNAt3n0VJXy=; h=X-Sonic-MF:Date:From:Subject:To:From:Subject; b=l3bfb6XhIfnmyFq1o1ds8OmStgAEJ4ApeW8hGAYWmH5oEZyQCHJL0uyecqmynGvexWtyl3ERCv1d9BgI2JaBl0fbxUtNVqFjdA7KqgiqVqkn3nkjecoctz5bU2HlI4C8HV36FX2BhuTBEwUf2Y/lQeJna2s9cHOKL/00mETrX4mNbv4boiHFju7tB2DR3eBN0fGo0qjwf6jW9qGEH1CemZsxUz5akQY/B0LloUQ5QDuG4ra3MNtjhX67/qCEYpoqIsvtJola0bv2a355n4hKjxEI884RP7o/uNJ3GTdX7uusdF3r2Tf2nNP5e4q/NWbs66dUf24WJ3cR6TQw1sYDDA==
+X-YMail-OSG: Xa6wI1YVM1lKeIRWpDr1AtIlgVLEYFo0v9ci1dUfIkYd8YgZSbJZMd5Z6AigbfQ
+ A7O53H22YJFHIzl5OyX9bO7wl1uE28enUNkq428eq4kF_0a5XfRJPsb2pBvDlf1jzbdlQGF0Ub3l
+ eaVBJ6_a9xryUh1KFeKoovKeiZLbhFvirUREIZoWD1NnLP4LfnREKTElIGOij3e4LgB7NURH25kE
+ pxqvrvZERCA6c1lS5DfkiF3G2xDX14sVVAjSbdrAa.1SSywTTjMytOjZiDct9EyexVA627nBx1YP
+ 5fLGF0Cm_5cewxyNGjLNQrph.TTy3ehjR1QXRXHR7bDivKoMjbOxTM2Zm.GjeJbDHNRSe_uXJuoZ
+ V5ihPc.1DQGgsEuirtorvxCwkK.qahVjuXAc0xgQxwC9SPgrwvtJN2MCJfFoclv7rrBOkvoPNNmW
+ ghFMLvRqZWHuBEygbhoVa_msekk5dbf1ZLLckyxByS2WATt90MaQHNv27wpE3cipHLkBjtOtORiO
+ 7Ru0RGWzAdHuGwBghTfwEezSULxeV2h67f4vV635SwynulUf944skjMbQ5HCxzvCDVH0RxJVTJIT
+ eR.vmq_WNOSYisA3O2y7_c1ZvEkwikcqXbYpjJyXW92qrgYl4BIfJUIJy24B6MOjrgxKLsXj7iEE
+ lyzJGQPSRgUxhl4enVJ8ZefNSN2kIQ_YJoZmfYcIbVIapc0MIB4QYl2UaJwptbBrWd2FXIlzUrAN
+ IWZv1bYafbhyrUF6XYLw8G5Q6dnswNokfhs_0.3MH_HOSsdcCOt6hDIwXS3cMjCP966owrnL1.ln
+ U4GxXIaFzyygZ0yvReAYNEkKiona.yqn7qIVTvVjduu3zmo0nUvQjmsda4x6zJK71l8mQ0rgFmv2
+ d37OLFS16usypVYbqZGfcdzOFg8ac6tnP_FUNwslCURftaJgdvG7TZtKDecdfiIAqpqZPBzcfZ2y
+ aJqi3XmCBc09ax8UFuT_mWiJXRXg0TjldbNSXLZpcFkI0ufZegynyJh7hV6lNRy.Gkz6GKMuDJK6
+ tGileUy.8y8_2UdHOHsnJo3CY151SwR6j7njsF5NXQukAYUFIiMo7yEJ0LWP1NtTFd6qTowRbasX
+ WOCvX1xEz_KswN2GvOYeGIz_fEuvgEkqzl2WWTDXBPWuOXfyy1aU7eckSb8QA3UuPg2PFuOB9Zic
+ EiN3rmuD0oe13P1Pc.hzcPhlohOA5q4U2hxrJCLf7T1tjcyyA2h2oyjZtXhe3uWRkVyqCl6fT5fS
+ bpcqlbaa.jMfc2TxuQ7c4Mzecjfme25IDRMZEVyVSQDI5.X5gkRCie3ei1xNdqAiiwVV7Akbaj8A
+ .44ZRb1L5eeZ8kryjfgx65c_RO9504qVqM4m8TaSS085FSBlGN36JWf_V9aVw6tDUc.P0wfbJcA5
+ fZjZH4lpL1KsRGtZVSFusDKNFTom4rJe5bDipNC7Xn0PVTiwTQVYt2POmxeTFQgHXJEfwivJQLLb
+ xFYo1tEQMmeM2cS2R8.SjcOpyBmMiwmU3cUSGZCAZ0AyEEur1g8NL2nrNSjaANY1Ydsfd_IFTtE8
+ cKMxJXEz88VHFn6UJa4FJhV3pXRb7AtWc1kQTRwz.8AC_fQNiSzLAjP_Ds42vkuSVJpFx25dOcp4
+ k_TLHN2SorhUoiMrsopSNGLTOOkRe8G5ZyEX_0Am8ORuWDOC0MztNrxzT59q2FNXgWYs4_A7XoaG
+ axvY0hyP15l.ho0IPEkW_rgkY5u6iDrz2H3KEfp0Qjn5aUA..pABbJceqCATDailqB5.n0nxIhUc
+ jmjVRBhyo3CPqfVnOUql.eay.Uxr_8oWXUggfZvWIkrHGgUIryUyRhnObHbjpbU8zOcX70uqYkeb
+ qEgPb0nODHOyYmatt1PBwBBY2pi_9fg8x_xlnKC3yzq1vcxnNhTYSQsjpFWtsM3bKWRgFUtQzjeQ
+ ivXMrPzTMjUiQqZQuXOCyOpIXOJ600QIf.qh_hv2PvhCPLGkJSa5fq_pULf51A.V_L6AYKUgDBd.
+ DfheRPe1.AHwseXPANVWkDoianH9KV_dRS1gbFSfRQDQ6r_JPBf5hpxLGdxNWKduQrpycQbZvI_T
+ Xj5UzC_.zUwIoDu2Q1lz4r3RyPJtLyBdHwiTIlLaYDuVruJwMFlN0dJ40DON_q.vbo4t9Z6UCQu3
+ e4qa8ch3iI8SPXFyuSuvIXpTXiY1C4vS9qanUqvS8FBtxpj_uUzerP54kfcAwu9lbWhAuS1IiTfU
+ LwDYqbtDGgtBayFBSE.1ptvrrqSEw78uvqkgvdE2MSDSu9oUIWX16Zg--
+X-Sonic-MF: <alex_y_xu@yahoo.ca>
+X-Sonic-ID: c1ca1027-4a5d-4fb6-8760-830c245382b5
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic310.consmr.mail.gq1.yahoo.com with HTTP; Wed, 30 Aug 2023 15:52:41 +0000
+Received: by hermes--production-bf1-865889d799-xc84r (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID 0bd111ed5816a0df5a4f025ef033cea4;
+          Wed, 30 Aug 2023 15:52:37 +0000 (UTC)
+Date:   Wed, 30 Aug 2023 11:52:33 -0400
+From:   "Alex Xu (Hello71)" <alex_y_xu@yahoo.ca>
+Subject: Don't fill the kernel log with memfd_create messages
+To:     Christian Brauner <brauner@kernel.org>,
+        Aleksa Sarai <cyphar@cyphar.com>
+Cc:     Andrew Morton <akpm@linux-foundation.org>,
+        Shuah Khan <shuah@kernel.org>, Jeff Xu <jeffxu@google.com>,
+        Kees Cook <keescook@chromium.org>,
+        Daniel Verkamp <dverkamp@chromium.org>,
+        Dominique Martinet <asmadeus@codewreck.org>,
+        stable@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-mm@kvack.org,
+        linux-kselftest@vger.kernel.org
 MIME-Version: 1.0
+Message-Id: <1693408388.rwssx8r1h9.none@localhost>
 Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20230829205833.14873-3-richard@nod.at>
+Content-Transfer-Encoding: quoted-printable
+References: <1693408388.rwssx8r1h9.none.ref@localhost>
+X-Mailer: WebService/1.1.21763 mail.backend.jedi.jws.acl:role.jedi.acl.token.atz.jws.hermes.yahoo
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Aug 29, 2023 at 10:58:32PM +0200, Richard Weinberger wrote:
-> It is little known that user namespaces and some helpers
-> can be used to bypass negative permissions.
-> 
-> Signed-off-by: Richard Weinberger <richard@nod.at>
-> ---
-> This patch applies to the Linux man-pages project.
-> ---
->  man7/user_namespaces.7 | 29 +++++++++++++++++++++++++++++
->  1 file changed, 29 insertions(+)
-> 
-> diff --git a/man7/user_namespaces.7 b/man7/user_namespaces.7
-> index a65854d737cf..4927e194bcdc 100644
-> --- a/man7/user_namespaces.7
-> +++ b/man7/user_namespaces.7
-> @@ -1067,6 +1067,35 @@ the remaining unsupported filesystems
->  Linux 3.12 added support for the last of the unsupported major filesystems,
->  .\" commit d6970d4b726cea6d7a9bc4120814f95c09571fc3
->  XFS.
-> +.SS Negative permissions and Linux user namespaces
-> +While it is technically feasible to establish negative permissions through
-> +DAC or ACL settings, such an approach is widely regarded as a suboptimal
-> +practice. Furthermore, the utilization of Linux user namespaces introduces the
-> +potential to circumvent specific negative permissions.  This issue stems
-> +from the fact that privileged helpers, such as
-> +.BR newuidmap (1) ,
-> +enable unprivileged users to create user namespaces with subordinate user and
-> +group IDs. As a consequence, users can drop group memberships, resulting
-> +in a situation where negative permissions based on group membership no longer
-> +apply.
+Hi all,
 
-For the content,
-Acked-by: Christian Brauner <brauner@kernel.org>
+Recently "memfd: improve userspace warnings for missing exec-related=20
+flags" was merged. On my system, this is a regression, not an=20
+improvement, because the entire 256k kernel log buffer (default on x86)=20
+is filled with these warnings and "__do_sys_memfd_create: 122 callbacks=20
+suppressed". I haven't investigated too closely, but the most likely=20
+cause is Wayland libraries.
+
+This is too serious of a consequence for using an old API, especially=20
+considering how recently the flags were added. The vast majority of=20
+software has not had time to add the flags: glibc does not define the=20
+macros until 2.38 which was released less than one month ago, man-pages=20
+does not document the flags, and according to Debian Code Search, only=20
+systemd, stress-ng, and strace actually pass either of these flags.
+
+Furthermore, since old kernels reject unknown flags, it's not just a=20
+matter of defining and passing the flag; every program needs to=20
+add logic to handle EINVAL and try again.
+
+Some other way needs to be found to encourage userspace to add the=20
+flags; otherwise, this message will be patched out because the kernel=20
+log becomes unusable after running unupdated programs, which will still=20
+exist even after upstreams are fixed. In particular, AppImages,=20
+flatpaks, snaps, and similar app bundles contain vendored Wayland=20
+libraries which can be difficult or impossible to update.
+
+Thanks,
+Alex.
