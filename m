@@ -2,139 +2,128 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3292EE8015
-	for <linux-api@archiver.kernel.org>; Fri,  8 Sep 2023 16:11:12 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 60406EC8756
+	for <linux-api@archiver.kernel.org>; Fri,  8 Sep 2023 16:44:36 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S244919AbjIHQLP (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 8 Sep 2023 12:11:15 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47468 "EHLO
+        id S244993AbjIHQoi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 8 Sep 2023 12:44:38 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41962 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242789AbjIHQLO (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 8 Sep 2023 12:11:14 -0400
-Received: from mail-pf1-x432.google.com (mail-pf1-x432.google.com [IPv6:2607:f8b0:4864:20::432])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 468F71BF5
-        for <linux-api@vger.kernel.org>; Fri,  8 Sep 2023 09:11:10 -0700 (PDT)
-Received: by mail-pf1-x432.google.com with SMTP id d2e1a72fcca58-68c576d35feso2096005b3a.2
-        for <linux-api@vger.kernel.org>; Fri, 08 Sep 2023 09:11:10 -0700 (PDT)
+        with ESMTP id S229764AbjIHQoh (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 8 Sep 2023 12:44:37 -0400
+Received: from mail-yb1-xb43.google.com (mail-yb1-xb43.google.com [IPv6:2607:f8b0:4864:20::b43])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9EAF11FCD;
+        Fri,  8 Sep 2023 09:44:32 -0700 (PDT)
+Received: by mail-yb1-xb43.google.com with SMTP id 3f1490d57ef6-d77ad095e5cso2143834276.0;
+        Fri, 08 Sep 2023 09:44:32 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=chromium.org; s=google; t=1694189470; x=1694794270; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:from:to:cc:subject:date:message-id:reply-to;
-        bh=v5XWofP145WE08el5mK8likzGh8OJQmJSQyhLGqN5AY=;
-        b=Dbk7SETP19gMkTfxq5vqgtybjsaCMa5WcAlBBq407JsTgsO1SPIp5Ffbq21uaZCX++
-         c1K6A5r5xZlhA0AA00Y9qge6ZjblRnwJj3U+AHmVsJItCPYFF+lKnkl6/yxni6F5c/Mk
-         r0+iW3+Rt1i6h8MlhYA/FV7atKiHfHkpPbdgs=
+        d=gmail.com; s=20221208; t=1694191471; x=1694796271; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=bUkqZvZbz4Nyum4FhbznSqFgacq2OtzkInkEQPk5/xc=;
+        b=YzSOCxTo31JYuYMVP+FoJ+6yxsizZKxcLIZYNsn0irI2NUqHNW9WK1ZLeQCqb5sAkY
+         Q6htI6E+iyG7Uepy26lAmDMHiViPatoSJmVa/c5zE4vtraX+Zy0fWTCxgNP1j9MkoaZW
+         rpMVP6xQB3xOVDrL9PgOMoJiP7ST59NyLFbX6Q1P2vNG++pnOs5GjshL9korBuKEDpLL
+         0pK3jtP6XIK0GGKAQcV8MbnaiP9fJWAEBkGr9668s8mG7Qy4B6CzLf6ozD1iwDiu6Vj5
+         YmS1B6F5ypxXBjuLisHo8yIVHRti9EcdV12fprDuXecpCpfPzSeSJ8GPrTgUopLOE17h
+         0dww==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1694189470; x=1694794270;
-        h=in-reply-to:content-disposition:mime-version:references:message-id
-         :subject:cc:to:from:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=v5XWofP145WE08el5mK8likzGh8OJQmJSQyhLGqN5AY=;
-        b=C8h5+srRzCYmkIZkzISLVWocOH704OF02LlBVlQJsTvD+jeQ+g8Cvw/75BUrXG1vou
-         XA/1JuByoqRTjC3skKvlcD88He2mAt0bit1VM3eVsb8onAfOBy+Q4hz6wAUX9sLv1lwv
-         6i4E2aUSkmnw8hCYqswzQJfRPPnNEFaLRh+XhTeiQCM3F8b0NwRtrnUfJXyUVvQmhmdS
-         aq+SFOk9ayrLH6KU68pmjH81EPf0iSRaOmC4JG15nhSCMz/V7wNzp/oL/lVWP5MoWHFc
-         U82l8cTToeuUbzVeUgNLvcr+X0jT66hScqOwK9zsLMTx6Hd2X0ftHHFr///NrSim9wHC
-         fQwQ==
-X-Gm-Message-State: AOJu0YzQ2N7uYWgLvDW5Gevr7HzwSfmnkv4UOUv9X6tKUlwUWV2pgixI
-        jpEn3Mj0ZpU83GIKh0zHidLMpw==
-X-Google-Smtp-Source: AGHT+IEUvxwSx4nLanWnBC4W0VoCUil6UkDi838YCC8GDKfesIx0vo5YJCoPib+C0X/g2//i/dWCaQ==
-X-Received: by 2002:a05:6a00:852:b0:68e:4303:edb8 with SMTP id q18-20020a056a00085200b0068e4303edb8mr3129470pfk.30.1694189469777;
-        Fri, 08 Sep 2023 09:11:09 -0700 (PDT)
-Received: from www.outflux.net (198-0-35-241-static.hfc.comcastbusiness.net. [198.0.35.241])
-        by smtp.gmail.com with ESMTPSA id t14-20020a056a00138e00b0068782960099sm1148785pfg.22.2023.09.08.09.11.09
+        d=1e100.net; s=20230601; t=1694191471; x=1694796271;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=bUkqZvZbz4Nyum4FhbznSqFgacq2OtzkInkEQPk5/xc=;
+        b=TnNq0WX9nnSGgeQy5ygZ/wewkygSSIENyYkinPZ9SfTXWORetOOwKpAKzJOI7Vhb38
+         Jd8oR/Zq/zrMdnFn/dC9Y3fTi3UykMFhhUJ/5M34t8VYJ52Le3Nf7PAC8qnuV8JnF05C
+         el+n5eoWhkCYM8nOO1KPhUZY4yPw3kufR8P71fxV68NEKyBlwoR3+PAO6k1tcs0QNA2q
+         kshWEUxG3ikuSDVG1vaItZ71t52x6yf0H9s3eOzYirfpmLkUvY2nmLg9J9RDbAmyzP8/
+         lp+/fVSfAqWH5pmfgXIoWETvyRBigA5aSz1NsBs4bnU64Eon959NjDpRnUr4amN+qaJf
+         PK6Q==
+X-Gm-Message-State: AOJu0YzS9TDAT1qY24u7MUaXI1RGBDMw9DxcYPFfFsBL4IHpBMKWXGbj
+        Y9G4Hn7wZRKKOeKGkdmqEPGfdHiQDfUy
+X-Google-Smtp-Source: AGHT+IGrVeZTh3E5MKjaW2y+sPxVfcM3PbpLtCrVCbcst+i27PQrLgQ8Ovu/RBw6NTpzGx2iXE1n0A==
+X-Received: by 2002:a25:3414:0:b0:d77:de72:592b with SMTP id b20-20020a253414000000b00d77de72592bmr2517119yba.48.1694191471587;
+        Fri, 08 Sep 2023 09:44:31 -0700 (PDT)
+Received: from fedora.mshome.net (pool-173-79-56-208.washdc.fios.verizon.net. [173.79.56.208])
+        by smtp.gmail.com with ESMTPSA id e66-20020a253745000000b00d7ba7de90casm438858yba.51.2023.09.08.09.44.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 08 Sep 2023 09:11:09 -0700 (PDT)
-Date:   Fri, 8 Sep 2023 09:11:08 -0700
-From:   Kees Cook <keescook@chromium.org>
-To:     Alexey Dobriyan <adobriyan@gmail.com>
-Cc:     akpm@linux-foundation.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-hardening@vger.kernel.org
-Subject: Re: [PATCH v2] uapi: fix __DECLARE_FLEX_ARRAY for C++
-Message-ID: <202309080910.44BB7CEF@keescook>
-References: <930c3ee5-1282-40f4-93e0-8ff894aabf3a@p183>
- <a0c3a352-89c6-4764-b377-f55a68a1b2cb@p183>
- <202309080848.60319AF@keescook>
- <f1819874-2b91-4983-9ebe-6cd83d5d3bc3@p183>
+        Fri, 08 Sep 2023 09:44:31 -0700 (PDT)
+From:   Gregory Price <gourry.memverge@gmail.com>
+X-Google-Original-From: Gregory Price <gregory.price@memverge.com>
+To:     linux-mm@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-cxl@vger.kernel.org,
+        luto@kernel.org, tglx@linutronix.de, mingo@redhat.com,
+        bp@alien8.de, dave.hansen@linux.intel.com, hpa@zytor.com,
+        arnd@arndb.de, akpm@linux-foundation.org, x86@kernel.org,
+        Gregory Price <gregory.price@memverge.com>
+Subject: [RFC 0/3] sys_move_phy_pages system call
+Date:   Thu,  7 Sep 2023 03:54:50 -0400
+Message-Id: <20230907075453.350554-1-gregory.price@memverge.com>
+X-Mailer: git-send-email 2.39.1
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <f1819874-2b91-4983-9ebe-6cd83d5d3bc3@p183>
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Fri, Sep 08, 2023 at 07:03:17PM +0300, Alexey Dobriyan wrote:
-> On Fri, Sep 08, 2023 at 08:53:12AM -0700, Kees Cook wrote:
-> > On Fri, Sep 08, 2023 at 06:14:38PM +0300, Alexey Dobriyan wrote:
-> > > __DECLARE_FLEX_ARRAY(T, member) macro expands to
-> > > 
-> > > 	struct {
-> > > 		struct {} __empty_member;
-> > > 		T member[];
-> > > 	};
-> > > 
-> > > which is subtly wrong in C++ because sizeof(struct{}) is 1 not 0,
-> > 
-> > Ewwww. Isn't this a bug in C++?
-> 
-> Sort of, but it can't be fixed.
-> 
-> > > changing UAPI structures layouts.
-> > > 
-> > > This can be fixed by expanding to
-> > > 
-> > > 	T member[];
-> > > 
-> > > Now g++ doesn't like "T member[]" either throwing errors on code like
-> > > this:
-> > > 
-> > > 	struct S {
-> > > 		union {
-> > > 			T1 member1[];
-> > > 			T2 member2[];
-> > > 		};
-> > > 	};
-> > > 
-> > > or
-> > > 
-> > > 	struct S {
-> > > 		T member[];
-> > > 	};
-> > > So use
-> > > 
-> > > 	T member[0];
-> > > 
-> > > which seems to work and does the right thing wrt structure layout.
-> > 
-> > It seems sad to leave C++ broken, but I guess we have to do this.
-> > 
-> > Acked-by: Kees Cook <keescook@chromium.org>
-> > 
-> > > Fix header guard while I'm at it.
-> > 
-> > Hm, when did that get broken? Maybe that should be fixed separately?
-> 
-> By your last commit?
+This patch set is a proposal for a syscall analogous to move_pages,
+that migrates pages between NUMA nodes using physical addressing.
 
-:( Oops. I'm shocked this hasn't caused bigger problems.
+The intent is to better enable user-land system-wide memory tiering
+as CXL devices begin to provide memory resources on the PCIe bus.
 
-> 
-> > > Signed-off-by: Alexey Dobriyan <adobriyan@gmail.com>
-> > 
-> > Probably a Fixes: tag would be nice too.
-> 
-> OK
-> 
-> Fixes: c8248faf3ca2 ("Compiler Attributes: counted_by: Adjust name and identifier expansion")
-> Fixes: 3080ea5553cc ("stddef: Introduce DECLARE_FLEX_ARRAY() helper")
+This patch set broken into 3 patches:
+  1 & 2) A small refactor of existing migration code for the purpose
+         of reusing that code
+  3) The sys_move_phys_pages system call.
 
-Okay, can you please split the patch so they can be backported
-separately? Then I'll get them landed, etc.
+The sys_move_phys_pages system call validates the page may be
+migrated by checking migratable-status of each vma mapping the page,
+and the intersection of cpuset policies each vma's task.
 
-Thanks for fixing these!
 
--Kees
+Background:
+
+Userspace job schedulers, memory managers, and tiering software
+solutions depend on page migration syscalls to reallocate resources
+across NUMA nodes. Currently, these calls enable movement of memory
+associated with a specific PID. Moves can be requested in coarse,
+process-sized strokes (as with migrate_pages), and on specific virtual
+pages (via move_pages).
+
+However, a number of profiling mechanisms provide system-wide information
+that would benefit from a physical-addressing version move_pages.
+  - the IDLE bit is cleared on reads/writes of physical pages
+  - /proc/zoneinfo breaks PFN-space into NUMA nodes
+  - PEBS/IBS can track frequency of accesses to physical addresses.
+  - Devices themselves may provide hotness information about its memory
+    resources, either with physical or device addressing.
+
+Information from these sources facilitates systemwide resource management,
+but with the limitations of migrate_pages and move_pages applying to
+individual tasks, their outputs must be converted back to virtual addresses
+and re-associated with specific PIDs.
+
+Doing this reverse-translation outside of the kernel requires considerable
+space and compute, and it will have to be performed again by the existing
+system calls.  Much of this work can be avoided if the pages can be
+migrated directly with physical memory addressing.
+
+Gregory Price (3):
+  mm/migrate: remove unused mm argument from do_move_pages_to_node
+  mm/migrate: refactor add_page_for_migration for code re-use
+  mm/migrate: Create move_phys_pages syscall
+
+ arch/x86/entry/syscalls/syscall_32.tbl  |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl  |   1 +
+ include/linux/syscalls.h                |   5 +
+ include/uapi/asm-generic/unistd.h       |   8 +-
+ kernel/sys_ni.c                         |   1 +
+ mm/migrate.c                            | 268 ++++++++++++++++++++----
+ tools/include/uapi/asm-generic/unistd.h |   8 +-
+ 7 files changed, 248 insertions(+), 44 deletions(-)
 
 -- 
-Kees Cook
+2.39.1
+
