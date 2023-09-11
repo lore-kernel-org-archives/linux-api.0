@@ -2,71 +2,161 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 2BC95EE57DF
-	for <linux-api@archiver.kernel.org>; Mon, 11 Sep 2023 08:19:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 706FBCA0EC7
+	for <linux-api@archiver.kernel.org>; Mon, 11 Sep 2023 22:49:01 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231806AbjIKITo convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 11 Sep 2023 04:19:44 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48152 "EHLO
+        id S235615AbjIKWpW (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 11 Sep 2023 18:45:22 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41740 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230105AbjIKITo (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 11 Sep 2023 04:19:44 -0400
-Received: from eu-smtp-delivery-151.mimecast.com (eu-smtp-delivery-151.mimecast.com [185.58.86.151])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B6311102
-        for <linux-api@vger.kernel.org>; Mon, 11 Sep 2023 01:19:39 -0700 (PDT)
-Received: from AcuMS.aculab.com (156.67.243.121 [156.67.243.121]) by
- relay.mimecast.com with ESMTP with both STARTTLS and AUTH (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
- uk-mta-189-w8d5djPVMbSXyTLkmnO9bg-1; Mon, 11 Sep 2023 09:19:31 +0100
-X-MC-Unique: w8d5djPVMbSXyTLkmnO9bg-1
-Received: from AcuMS.Aculab.com (10.202.163.6) by AcuMS.aculab.com
- (10.202.163.6) with Microsoft SMTP Server (TLS) id 15.0.1497.48; Mon, 11 Sep
- 2023 09:19:20 +0100
-Received: from AcuMS.Aculab.com ([::1]) by AcuMS.aculab.com ([::1]) with mapi
- id 15.00.1497.048; Mon, 11 Sep 2023 09:19:20 +0100
-From:   David Laight <David.Laight@ACULAB.COM>
-To:     'Kees Cook' <keescook@chromium.org>,
-        Alexey Dobriyan <adobriyan@gmail.com>
-CC:     "akpm@linux-foundation.org" <akpm@linux-foundation.org>,
-        "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        "linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>
-Subject: RE: [PATCH v2] uapi: fix __DECLARE_FLEX_ARRAY for C++
-Thread-Topic: [PATCH v2] uapi: fix __DECLARE_FLEX_ARRAY for C++
-Thread-Index: AQHZ4m8cjJ3BuT/Tf0m9auRXbQbkb7AVTB0A
-Date:   Mon, 11 Sep 2023 08:19:20 +0000
-Message-ID: <e364b36eefa049d8863c1c1001018636@AcuMS.aculab.com>
-References: <930c3ee5-1282-40f4-93e0-8ff894aabf3a@p183>
- <a0c3a352-89c6-4764-b377-f55a68a1b2cb@p183> <202309080848.60319AF@keescook>
- <f1819874-2b91-4983-9ebe-6cd83d5d3bc3@p183> <202309080910.44BB7CEF@keescook>
-In-Reply-To: <202309080910.44BB7CEF@keescook>
-Accept-Language: en-GB, en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [10.202.205.107]
+        with ESMTP id S243856AbjIKSDd (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 11 Sep 2023 14:03:33 -0400
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.20])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9DCD6103;
+        Mon, 11 Sep 2023 11:03:28 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1694455408; x=1725991408;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=kxCm8IPxO4Adx3HaWS72d7S3asKhB+RqeSR07UfgL5Q=;
+  b=TgH4ZcvVeLgcJBMx88q+zt+rnhR/XRfuO/nxy/Ozi0X2cpYXH4HE64yE
+   j4PeTqTgQ1pE7xsMbvKBDjvUV3dHOaKnXYaQzFOxFkmFjMxlfXscIU4uV
+   t5M/C2DEPcLN6vUKsoLbTn6FVeytlnO9OZI40vOQiVzZxYKyjaYjTxK+P
+   jqWA5m5kF9XHSqvBJzfHvJUi4BzKSRf7MkHRuEGlFh/Rl86gIRZubwHqz
+   0ej0Fpyy9u/zLIvZEZr3LmRfZnfkJcx/O0nvzAihVAg5kky/2xMsbjQvX
+   OOj6q3VwwaBI2omjAlgvm0Vfs8s0PHkMGhLQpeP0Sdh4RXpaOPcA8ZTEy
+   g==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10830"; a="368416937"
+X-IronPort-AV: E=Sophos;i="6.02,244,1688454000"; 
+   d="scan'208";a="368416937"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Sep 2023 11:03:27 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10830"; a="808905950"
+X-IronPort-AV: E=Sophos;i="6.02,244,1688454000"; 
+   d="scan'208";a="808905950"
+Received: from sohilmeh.sc.intel.com ([172.25.103.65])
+  by fmsmga008.fm.intel.com with ESMTP; 11 Sep 2023 11:03:26 -0700
+From:   Sohil Mehta <sohil.mehta@intel.com>
+To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org
+Cc:     Sohil Mehta <sohil.mehta@intel.com>,
+        Richard Henderson <richard.henderson@linaro.org>,
+        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
+        Matt Turner <mattst88@gmail.com>,
+        Russell King <linux@armlinux.org.uk>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Geert Uytterhoeven <geert@linux-m68k.org>,
+        Michal Simek <monstr@monstr.eu>,
+        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+        "James E . J . Bottomley" <James.Bottomley@HansenPartnership.com>,
+        Helge Deller <deller@gmx.de>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Nicholas Piggin <npiggin@gmail.com>,
+        Christophe Leroy <christophe.leroy@csgroup.eu>,
+        Heiko Carstens <hca@linux.ibm.com>,
+        Vasily Gorbik <gor@linux.ibm.com>,
+        Alexander Gordeev <agordeev@linux.ibm.com>,
+        Christian Borntraeger <borntraeger@linux.ibm.com>,
+        Sven Schnelle <svens@linux.ibm.com>,
+        Yoshinori Sato <ysato@users.sourceforge.jp>,
+        Rich Felker <dalias@libc.org>,
+        John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
+        "David S . Miller" <davem@davemloft.net>,
+        Andy Lutomirski <luto@kernel.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
+        Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Chris Zankel <chris@zankel.net>,
+        Max Filippov <jcmvbkbc@gmail.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
+        Jiri Olsa <jolsa@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Ian Rogers <irogers@google.com>,
+        Adrian Hunter <adrian.hunter@intel.com>,
+        Lukas Bulwahn <lukas.bulwahn@gmail.com>,
+        Sergei Trofimovich <slyich@gmail.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Rohan McLure <rmclure@linux.ibm.com>,
+        Andreas Schwab <schwab@linux-m68k.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Brian Gerst <brgerst@gmail.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Mark Brown <broonie@kernel.org>,
+        Deepak Gupta <debug@rivosinc.com>, linux-alpha@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org,
+        linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org,
+        linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org,
+        linux-s390@vger.kernel.org, linux-sh@vger.kernel.org,
+        sparclinux@vger.kernel.org, linux-perf-users@vger.kernel.org
+Subject: [PATCH 0/2] arch: Sync all syscall tables with 2 newly added system calls
+Date:   Mon, 11 Sep 2023 18:02:08 +0000
+Message-Id: <20230911180210.1060504-1-sohil.mehta@intel.com>
+X-Mailer: git-send-email 2.34.1
 MIME-Version: 1.0
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: aculab.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-...
-> Okay, can you please split the patch so they can be backported
-> separately? Then I'll get them landed, etc.
+6.6-rc1 has added support for 2 new system calls:
+[1] fchmodat2()
+[2] x86-specific map_shadow_stack()
 
-Since the header with just the extra #endif is badly broken on C++
-isn't it best to ensure they get back-ported together?
-So one patch is probably better.
+This series mainly synchronizes the syscall tables arcoss the core kernel and
+tools to reflect the recent updates.
 
-	David
+For fchmodat2(), it fixes the missing entries in the tools directory.
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+For map_shadow_stack(), it reserves the syscall across the board. Since
+map_shadow_stack() is x86 specific for now, it is marked as a conditional
+syscall in sys_ni.c. Adding it to the syscall tables of other architectures is
+harmless and would return ENOSYS when exercised.
+
+Reserving arch-specific syscall numbers in the tables of all architectures is
+good practice and would help avoid future conflicts.
+
+[1]: https://lore.kernel.org/lkml/20230824-frohlocken-vorabend-725f6fdaad50@brauner/
+[2]: https://lore.kernel.org/lkml/20230830234752.19858-1-dave.hansen@linux.intel.com/
+
+Sohil Mehta (2):
+  tools headers UAPI: Sync fchmodat2() syscall table entries
+  arch: Reserve map_shadow_stack() syscall number for all architectures
+
+ arch/alpha/kernel/syscalls/syscall.tbl              | 1 +
+ arch/arm/tools/syscall.tbl                          | 1 +
+ arch/arm64/include/asm/unistd.h                     | 2 +-
+ arch/arm64/include/asm/unistd32.h                   | 2 ++
+ arch/ia64/kernel/syscalls/syscall.tbl               | 1 +
+ arch/m68k/kernel/syscalls/syscall.tbl               | 1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl         | 1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl           | 1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl           | 1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl           | 1 +
+ arch/parisc/kernel/syscalls/syscall.tbl             | 1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl            | 1 +
+ arch/s390/kernel/syscalls/syscall.tbl               | 1 +
+ arch/sh/kernel/syscalls/syscall.tbl                 | 1 +
+ arch/sparc/kernel/syscalls/syscall.tbl              | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl              | 1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl             | 1 +
+ include/uapi/asm-generic/unistd.h                   | 5 ++++-
+ tools/include/uapi/asm-generic/unistd.h             | 8 +++++++-
+ tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl | 2 ++
+ tools/perf/arch/powerpc/entry/syscalls/syscall.tbl  | 2 ++
+ tools/perf/arch/s390/entry/syscalls/syscall.tbl     | 2 ++
+ tools/perf/arch/x86/entry/syscalls/syscall_64.tbl   | 2 ++
+ 23 files changed, 37 insertions(+), 3 deletions(-)
+
+
+base-commit: 0bb80ecc33a8fb5a682236443c1e740d5c917d1d
+-- 
+2.34.1
 
