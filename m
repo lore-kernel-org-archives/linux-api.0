@@ -2,247 +2,387 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id C9F41CA0EC3
+	by smtp.lore.kernel.org (Postfix) with ESMTP id F20D6CA0EC7
 	for <linux-api@archiver.kernel.org>; Mon, 11 Sep 2023 22:49:28 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238881AbjIKWpi (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 11 Sep 2023 18:45:38 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44802 "EHLO
+        id S239328AbjIKWpm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 11 Sep 2023 18:45:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:41786 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S242545AbjIKPrH (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 11 Sep 2023 11:47:07 -0400
-Received: from NAM11-BN8-obe.outbound.protection.outlook.com (mail-bn8nam11on2040.outbound.protection.outlook.com [40.107.236.40])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F296B121;
-        Mon, 11 Sep 2023 08:47:01 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector9901; d=microsoft.com; cv=none;
- b=MHNR4/U+CHQ13E/WmcKSZp48cFMQqd1irN39Qsm4Ql3C8Yp7wYxnocNpYYUeU7B5USljCg0xzDolCY6X1yL/OmrrumBxCvJ6mWRd+mj6HntbCyAt59Xvya6l25pezsQRgcDWXtDXseYT/DgE1j3BaqRO3Hhtr8Nghs0S9Ug1e8t57yPRVVhVPi6N46MG2eT//DZIts7bWWryHp4FKObM5m03em2h2Nahx21Vgddb1xWqZWZyrKt0Dp+Iauikuw8SZZs7IZQYJsKpv91bs6XSvwDcssy3E/pKRmxMQ91dK4S37hKdDbEVEh6zq3Ij+cMalQMbc8UElqC6zxVulVXGog==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector9901;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=H1/v/hXiimiR/ueUgC0D/TouK+2ZIfKud4W62UpKMDQ=;
- b=DE23xPukfc9Q0/Cu9D9YbWtZeobRDAgToYRorN13MgfHIGJcpFa98lX8xx6RySHfFXjZ1RqcIEmvzuCwLw1+NhQC/C3DfVMyyCFx3Ypsu507OH7Ng5w95tywsgrgmWjK+EA1Ru8W8gW+wP31ueyK4xC9O4NIXuY1VkPBY8BXBE8DKyVn11sJDQl/JlJmaTUHNo8KbhTNyBaXCs6QjtH5u0TZSRVt/jhW/HcfTsqC+CnFAYxP6dl2/276DZtJ/cIgJV+KJ+Dh7y20VA2ZDOfHqhHzOe32uTWcQ4mpNUndyajy2eyTnXBwrZPiiNkhBFuPT3Qy5WrABiApSQh/2s52Ig==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=memverge.com; dmarc=pass action=none header.from=memverge.com;
- dkim=pass header.d=memverge.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=memverge.com;
- s=selector2;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=H1/v/hXiimiR/ueUgC0D/TouK+2ZIfKud4W62UpKMDQ=;
- b=GhA7thoLVCWZrFPli5o72MfYRz8/0hBYizETgLl7Cs4ql44+6I0ty0ubxP1NDhbxcRprCzFheeFW5jQMHBVtRH592qFyrhl67o4BPDRHhnjB6fo4e5ESG45VU7x3CSHgUCreDfI5c0KwkktbjzxF9D7T3nseknw5i4nFfsnzhw0=
-Authentication-Results: dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=memverge.com;
-Received: from SJ0PR17MB5512.namprd17.prod.outlook.com (2603:10b6:a03:394::19)
- by BY5PR17MB3953.namprd17.prod.outlook.com (2603:10b6:a03:231::20) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.6768.35; Mon, 11 Sep
- 2023 15:46:58 +0000
-Received: from SJ0PR17MB5512.namprd17.prod.outlook.com
- ([fe80::94b1:abab:838f:650e]) by SJ0PR17MB5512.namprd17.prod.outlook.com
- ([fe80::94b1:abab:838f:650e%4]) with mapi id 15.20.6745.030; Mon, 11 Sep 2023
- 15:46:58 +0000
-Date:   Sun, 10 Sep 2023 08:52:31 -0400
-From:   Gregory Price <gregory.price@memverge.com>
-To:     Arnd Bergmann <arnd@arndb.de>
-Cc:     Gregory Price <gourry.memverge@gmail.com>,
-        linux-mm@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Linux-Arch <linux-arch@vger.kernel.org>,
-        linux-api@vger.kernel.org, linux-cxl@vger.kernel.org,
+        with ESMTP id S243867AbjIKSDj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 11 Sep 2023 14:03:39 -0400
+Received: from mgamail.intel.com (mgamail.intel.com [134.134.136.20])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 860B9106;
+        Mon, 11 Sep 2023 11:03:33 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1694455413; x=1725991413;
+  h=from:to:cc:subject:date:message-id:in-reply-to:
+   references:mime-version:content-transfer-encoding;
+  bh=x1tjhQxmdQdx5EsHOtgg9rRyw85WQlvkAklT8BA7Zes=;
+  b=KRaMhSm4niB7tq/e2sNS8xHGUbfZooDPWMTN2gimame55xImhF8ZV0Kf
+   IvHM7DMVG+nJEaNgOXbOq7hKSXgd0y5jW/dCcTYKEOa2pEOZVxNf5rSuu
+   YPf95DEIgeQyB8P4ErgfA+yAA4B4owQuifM0ipACunwazajLkJxiz4J1X
+   O5LjSjQogS6Jpnxzu5vdRGUBHHBxGjow5Te7qTDMEEHMdbm0MxozbeVeU
+   fmagzLsL4rqv8Q6FL+ku8iLvy0tHaYVaGFDlBisAHKCWshNW3yBRxRo7T
+   u5YkykopNEAcHDI6iBzhZ6gCSgLHhChgnIitpuqZuFbh9x57PbShpVhm8
+   g==;
+X-IronPort-AV: E=McAfee;i="6600,9927,10830"; a="368417020"
+X-IronPort-AV: E=Sophos;i="6.02,244,1688454000"; 
+   d="scan'208";a="368417020"
+Received: from fmsmga008.fm.intel.com ([10.253.24.58])
+  by orsmga101.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 11 Sep 2023 11:03:32 -0700
+X-ExtLoop1: 1
+X-IronPort-AV: E=McAfee;i="6600,9927,10830"; a="808905983"
+X-IronPort-AV: E=Sophos;i="6.02,244,1688454000"; 
+   d="scan'208";a="808905983"
+Received: from sohilmeh.sc.intel.com ([172.25.103.65])
+  by fmsmga008.fm.intel.com with ESMTP; 11 Sep 2023 11:03:30 -0700
+From:   Sohil Mehta <sohil.mehta@intel.com>
+To:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-arch@vger.kernel.org
+Cc:     Sohil Mehta <sohil.mehta@intel.com>,
+        Richard Henderson <richard.henderson@linaro.org>,
+        Ivan Kokshaysky <ink@jurassic.park.msu.ru>,
+        Matt Turner <mattst88@gmail.com>,
+        Russell King <linux@armlinux.org.uk>,
+        Catalin Marinas <catalin.marinas@arm.com>,
+        Will Deacon <will@kernel.org>,
+        Geert Uytterhoeven <geert@linux-m68k.org>,
+        Michal Simek <monstr@monstr.eu>,
+        Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+        "James E . J . Bottomley" <James.Bottomley@HansenPartnership.com>,
+        Helge Deller <deller@gmx.de>,
+        Michael Ellerman <mpe@ellerman.id.au>,
+        Nicholas Piggin <npiggin@gmail.com>,
+        Christophe Leroy <christophe.leroy@csgroup.eu>,
+        Heiko Carstens <hca@linux.ibm.com>,
+        Vasily Gorbik <gor@linux.ibm.com>,
+        Alexander Gordeev <agordeev@linux.ibm.com>,
+        Christian Borntraeger <borntraeger@linux.ibm.com>,
+        Sven Schnelle <svens@linux.ibm.com>,
+        Yoshinori Sato <ysato@users.sourceforge.jp>,
+        Rich Felker <dalias@libc.org>,
+        John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
+        "David S . Miller" <davem@davemloft.net>,
         Andy Lutomirski <luto@kernel.org>,
         Thomas Gleixner <tglx@linutronix.de>,
         Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-        Dave Hansen <dave.hansen@linux.intel.com>,
-        "H. Peter Anvin" <hpa@zytor.com>,
-        Andrew Morton <akpm@linux-foundation.org>, x86@kernel.org
-Subject: Re: [RFC PATCH 3/3] mm/migrate: Create move_phys_pages syscall
-Message-ID: <ZP28D8dZXz3+4s9v@memverge.com>
-References: <20230907075453.350554-1-gregory.price@memverge.com>
- <20230907075453.350554-4-gregory.price@memverge.com>
- <f73d0495-f575-4b97-bc74-a57bd427df98@app.fastmail.com>
- <ZPrRcJCjRBvJ9c3N@memverge.com>
- <2fe03345-01a2-4cfe-9648-ae088493d1af@app.fastmail.com>
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <2fe03345-01a2-4cfe-9648-ae088493d1af@app.fastmail.com>
-X-ClientProxiedBy: BYAPR07CA0023.namprd07.prod.outlook.com
- (2603:10b6:a02:bc::36) To SJ0PR17MB5512.namprd17.prod.outlook.com
- (2603:10b6:a03:394::19)
+        Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org,
+        "H . Peter Anvin" <hpa@zytor.com>, Chris Zankel <chris@zankel.net>,
+        Max Filippov <jcmvbkbc@gmail.com>,
+        Arnd Bergmann <arnd@arndb.de>,
+        Peter Zijlstra <peterz@infradead.org>,
+        Arnaldo Carvalho de Melo <acme@kernel.org>,
+        Mark Rutland <mark.rutland@arm.com>,
+        Alexander Shishkin <alexander.shishkin@linux.intel.com>,
+        Jiri Olsa <jolsa@kernel.org>,
+        Namhyung Kim <namhyung@kernel.org>,
+        Ian Rogers <irogers@google.com>,
+        Adrian Hunter <adrian.hunter@intel.com>,
+        Lukas Bulwahn <lukas.bulwahn@gmail.com>,
+        Sergei Trofimovich <slyich@gmail.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Rohan McLure <rmclure@linux.ibm.com>,
+        Andreas Schwab <schwab@linux-m68k.org>,
+        "Eric W . Biederman" <ebiederm@xmission.com>,
+        Brian Gerst <brgerst@gmail.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Rick Edgecombe <rick.p.edgecombe@intel.com>,
+        Mark Brown <broonie@kernel.org>,
+        Deepak Gupta <debug@rivosinc.com>, linux-alpha@vger.kernel.org,
+        linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org,
+        linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org,
+        linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org,
+        linux-s390@vger.kernel.org, linux-sh@vger.kernel.org,
+        sparclinux@vger.kernel.org, linux-perf-users@vger.kernel.org
+Subject: [PATCH 2/2] arch: Reserve map_shadow_stack() syscall number for all architectures
+Date:   Mon, 11 Sep 2023 18:02:10 +0000
+Message-Id: <20230911180210.1060504-3-sohil.mehta@intel.com>
+X-Mailer: git-send-email 2.34.1
+In-Reply-To: <20230911180210.1060504-1-sohil.mehta@intel.com>
+References: <20230911180210.1060504-1-sohil.mehta@intel.com>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ0PR17MB5512:EE_|BY5PR17MB3953:EE_
-X-MS-Office365-Filtering-Correlation-Id: 59e2485e-24c9-4601-3f0c-08dbb2de54fa
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;
-X-Microsoft-Antispam-Message-Info: tchUKbQ3FzARpwjpMDIABV8JXU3pXZkOef/N0pw9o/cfC1ER73JoUqoOplIXvNl/Xpvj4iSmt+rmUUvxOpBwr6Iwewvv8oLbuuvsKs8OiuEH4AQedJPQrC1ukF6+tkDXYyxRGKsNxNNzRnjiwH6HAJpjUdsLsJRMznRMcGi1TBL6ZMGIQp+pJ9EA4/HynIvoz4RykECMTANecJoYZ47RC49plRib5Ppres8YN+YzvKT/jTKfeWpTnvKwwn9ObRiQokfm87LAfIBmOZs29qOcSHQhQFMRo+wY8frTwwgCh69f05grp886i/3udtLan/hOzY03QJGp5bD2UxEbR8mWyB5exVbMojL2dHT2HZ7v5zDWwm2KZeJUYyZRYv+sulRmFAz3/1A9U0zZR5kRD+CLVVcRFOj1RowOoMGi8nTRxD/FRKCWFVq/NGoKINDdZopNECY0EboMr7V+H8KEHlwarGiZ2gUPw+x2Ppx49G5mW/rv+VIbikxyO+hfuQEAsSJRSxxaiVsTR/2c56SAnG09eVAsk87WWnw6XvM5q78Iv3NXnnPHkXK1xMF8IZHG3u/1wuDH5Ax3vzu2gettwxZUGTcec2BY4eSgJtjx2Hr+7N4=
-X-Forefront-Antispam-Report: CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:SJ0PR17MB5512.namprd17.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230031)(346002)(366004)(39830400003)(396003)(136003)(376002)(186009)(451199024)(1800799009)(6506007)(6486002)(6512007)(6666004)(83380400001)(86362001)(38100700002)(36756003)(2616005)(26005)(6916009)(316002)(7416002)(41300700001)(66556008)(66946007)(4326008)(54906003)(2906002)(66476007)(8936002)(8676002)(44832011)(5660300002)(478600001)(67856001);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0: =?us-ascii?Q?ZzfCQXmFftUBAQz5CLBlkexR/LQAPd6dQ4qSJ0ipwgDVTegSHFomKCOsBl5+?=
- =?us-ascii?Q?nwTIm5fpZGAYu/CpUEjxXZ2nublnfe9kOCl7UDkld8336I6Mrrh2wcJZWB95?=
- =?us-ascii?Q?yxY6FytHUpsSSSObVedZNvbvQTjgeLdltuaeSfXuyEaN1VqjLLOpmBPyAxzN?=
- =?us-ascii?Q?7cbH5W8tnGrW5ZFiq1yeJ/4OcD2KrihCvDrlNw5iFqYZI7ts0GLn4/eu/DYO?=
- =?us-ascii?Q?liYtwrwGI3yLSrzwX0fkF8w/CNip2o3ZaAHlfyaIwXHxMT8Fko2lt7i79nCc?=
- =?us-ascii?Q?F49l5yO7lPQL2L30IlJw1lorYZtDZ0E+Ijp5z+mBbu5fdJEsAwxzkFHdv/HY?=
- =?us-ascii?Q?Ciqtv4+vKf1Lfrw3svI+riLmFMLVS9U1BFfkYJIfCper4WmTVrwTdR1wAXvW?=
- =?us-ascii?Q?vt91Y5qiZPssGHY5p4zSxMiDb/pewMRAhnnHMxSP0qOlQ1jC5X6ePQDPO4rH?=
- =?us-ascii?Q?OicwKsnW/75eYasMgzSkWKihP0TNjkjnd23aWKRmfAAVjgwy83JNcEXtQqMe?=
- =?us-ascii?Q?PPSg+1N8whnWHMuElQ+uZgpxGrbu357dFTtwKhpolSFR52Hfxa/Orb78EYtG?=
- =?us-ascii?Q?Fs7TvbVIl2wSHrXGUboK115W7gCa4kk51ruGgoG81P2NKcoRhg93297jKRvE?=
- =?us-ascii?Q?dn+tyJqkd5y7AMfQ23pyFOmwWENVlOIx0/j7/D4ysjEGLRwdSkVZ07NYY0SR?=
- =?us-ascii?Q?Z2BAFKO/Ex4q0gPQrOlm4NsI5+2Q/zYgCbBMpOKe1BSCswh1dDaps6hh34fv?=
- =?us-ascii?Q?AoQccsGV8Xs/zOsGiNnsNLtjw4+5oVcQ7mbOcJyR40+AiQ/2IbCUM8FATuuZ?=
- =?us-ascii?Q?jBkvjMDiDU9mSIQ6ZQfGspM06gfoQ0aIml2vQrBOmMak25QHymtz/UsKwf5v?=
- =?us-ascii?Q?qwmmI6vfuoORwg6lM5Rwmaglx1ivdjCtDEXJLOu9EKD6R4dgZKwP3OHIAK7D?=
- =?us-ascii?Q?iuyKFPS0FiIIubW+745xZjrcC6pfnD1X+7zC95xGywKipPO664L+bVHgExw+?=
- =?us-ascii?Q?rr+MGN+z/VErY4CANX4+at1IZAXFlwqWHtafs1GBL4OU14McIDl+YHTVZcyN?=
- =?us-ascii?Q?O2NQ4m1UGsejYxA2g0ckSXNdLCXihQnp+Wp5Kswj1LUHg0dS0CorKMFOHx2o?=
- =?us-ascii?Q?Dz6gKTh6bbkkWeahOwoVHjK5Y4O5zOqf7GI/FPEvKBYSw/ZZ23vTWJ7XbO4b?=
- =?us-ascii?Q?ZA3Jai9ZTnMAhYoZzNAReplhY4vVpFi1VPYP2rDnXkeS/sgsd55AAEVfWymC?=
- =?us-ascii?Q?iG9Mb2imChB0xMBv96CEDdTll1t5YLxs0twUayTtAQFlI6uAyGMi5YURQRkb?=
- =?us-ascii?Q?KiHjtfblm2cph5QtNKJlMEzuXxe6Mb61xKJyTr20+ksQiNf9zoHqO3254Ocw?=
- =?us-ascii?Q?2r57VyKnE7ixeGIVRRas88zk+qOFHAuCLslgd4xC1NYjg7CfB6HacK7Eq5dg?=
- =?us-ascii?Q?sT0egvKVXws4pvPsNHaEEnycg8NQKkGH+ZpkBGc56C5LAg2TIpCHmOVh5O1y?=
- =?us-ascii?Q?QjLgY+hPIKLFG97IUhMd26kk8ciGdFa03Kg4cw7J81oIEBiMw2taHdtiJ7N3?=
- =?us-ascii?Q?r4IJgTa+X8rLcqW+VvamMpbccy10lq9A+sLYy6hciJa/pzZhqvST1mIA0VpZ?=
- =?us-ascii?Q?Ng=3D=3D?=
-X-OriginatorOrg: memverge.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 59e2485e-24c9-4601-3f0c-08dbb2de54fa
-X-MS-Exchange-CrossTenant-AuthSource: SJ0PR17MB5512.namprd17.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 11 Sep 2023 15:46:58.2984
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 5c90cb59-37e7-4c81-9c07-00473d5fb682
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: vcK0ZOQNS4a6dbYRxW8LMM7mmDOlHmCj9eAu4w53yFwPK45cVPlSOq8fGxlmPBmihHyy/2ovWUewDD2SEzeAkReVvZBQJu3xPhx+SlY2ZW8=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BY5PR17MB3953
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Sat, Sep 09, 2023 at 05:18:13PM +0200, Arnd Bergmann wrote:
-> 
-> I think a pointer to '__u64' is the most appropriate here,
-> that is compatible between 32-bit and 64-bit architectures
-> and covers all addresses until we get architectures with
-> 128-bit addressing.
-> 
-> Thinking about it more, I noticed an existing bug in
-> both sys_move_pages and your current version of
-> sys_move_phys_pages: the 'pages' array is in fact not
-> suitable for compat tasks and needs an is_compat_task
-> check to load a 32-bit address from compat userspace on
-> the "if (get_user(p, pages + i))" line.
->
+Support for map_shadow_stack() was recently added but it is an x86
+only system call for now. There is a possibility that other
+architectures (namely, arm64 and Risc-V) that are implementing support
+for shadow stacks, might need to add support for it.
 
-I'll clean up the current implementation for what I have on a v2 of an
-RFC, and then look at adding some pull-ahead patches to fix both
-move_pages and move_phys_pages for compat processes.  Might take me a
-bit, I've only done compat work once before and I remember it being
-annoying to get right.
+Independent of that, reserving arch-specific syscall numbers in the
+syscall tables of all architectures is good practice and would help
+avoid future conflicts.
 
-I did see other work on migrate.c hanging around on the list, I'll
-double check this hasn't already been discovered/handled.
+Note, map_shadow_stack() was assigned #453 since #452 was taken by
+fchmodat2().
 
-> > on address vs pfn:
-> >
-> > Would using PFNs cause issues with portability of userland code? User
-> > code that gets access to a physical address would have to convert
-> > that to a PFN, which would be kernel-defined.  That could be easy
-> > enough if the kernel exposed the shift size somewhere.
-> 
-> I don't think we currently use PFN anywhere in the syscall
-> ABI, so this introduces a new basic type into uapi headers that
-> is currently kernel internal.
-> 
-> A 32-bit PFN is always sufficient to represent all physical
-> addresses on native 32-bit kernel, but not necessarily for
-> compat user space on 64-bit kernels with an address space wider
-> than 44 bits (16 terabyte address range).
-> 
-> For the interface it would also require the same quirk
-> for compat tasks that I pointed out above that is missing
-> in sys_move_pages today.
-> 
-> A minor quirk of PFN values is that they require knowing
-> the page size to convert addresses, but I suppose you need
-> that anyway.
->
+Link:https://lore.kernel.org/lkml/20230830234752.19858-1-dave.hansen@linux.intel.com/
 
-Hm.  So, based on the 5 sources I listed below, some can be PFN and
-others can be phys-addr.  To validate a physical address and
-ensure the page is online, we have to convert to PFN anyway.
+Signed-off-by: Sohil Mehta <sohil.mehta@intel.com>
+---
+ arch/alpha/kernel/syscalls/syscall.tbl              | 1 +
+ arch/arm/tools/syscall.tbl                          | 1 +
+ arch/arm64/include/asm/unistd.h                     | 2 +-
+ arch/arm64/include/asm/unistd32.h                   | 2 ++
+ arch/ia64/kernel/syscalls/syscall.tbl               | 1 +
+ arch/m68k/kernel/syscalls/syscall.tbl               | 1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl         | 1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl           | 1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl           | 1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl           | 1 +
+ arch/parisc/kernel/syscalls/syscall.tbl             | 1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl            | 1 +
+ arch/s390/kernel/syscalls/syscall.tbl               | 1 +
+ arch/sh/kernel/syscalls/syscall.tbl                 | 1 +
+ arch/sparc/kernel/syscalls/syscall.tbl              | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl              | 1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl             | 1 +
+ include/uapi/asm-generic/unistd.h                   | 5 ++++-
+ tools/include/uapi/asm-generic/unistd.h             | 5 ++++-
+ tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl | 1 +
+ tools/perf/arch/powerpc/entry/syscalls/syscall.tbl  | 1 +
+ tools/perf/arch/s390/entry/syscalls/syscall.tbl     | 1 +
+ tools/perf/arch/x86/entry/syscalls/syscall_64.tbl   | 1 +
+ 23 files changed, 30 insertions(+), 3 deletions(-)
 
-So for the user's sake, lets consider
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index ad37569d0507..6e8479c96e65 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -492,3 +492,4 @@
+ 560	common	set_mempolicy_home_node		sys_ni_syscall
+ 561	common	cachestat			sys_cachestat
+ 562	common	fchmodat2			sys_fchmodat2
++563	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index c572d6c3dee0..6d494dfbf5e4 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -466,3 +466,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index bd77253b62e0..6a28fb91b85d 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -39,7 +39,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+ 
+-#define __NR_compat_syscalls		453
++#define __NR_compat_syscalls		454
+ #endif
+ 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 78b68311ec81..a201d842ec82 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -911,6 +911,8 @@ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ __SYSCALL(__NR_cachestat, sys_cachestat)
+ #define __NR_fchmodat2 452
+ __SYSCALL(__NR_fchmodat2, sys_fchmodat2)
++#define __NR_map_shadow_stack 453
++__SYSCALL(__NR_map_shadow_stack, sys_map_shadow_stack)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 83d8609aec03..be02ce9d376f 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -373,3 +373,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 259ceb125367..bee2d2f7f82c 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -452,3 +452,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index a3798c2637fd..09eda7ed91b0 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -458,3 +458,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 152034b8e0a0..3c02cc3886ca 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -391,3 +391,4 @@
+ 450	n32	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	n32	cachestat			sys_cachestat
+ 452	n32	fchmodat2			sys_fchmodat2
++453	n32	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index cb5e757f6621..aa9ed6a7cb48 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -367,3 +367,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	n64	cachestat			sys_cachestat
+ 452	n64	fchmodat2			sys_fchmodat2
++453	n64	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 1a646813afdc..756f6feb21c2 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -440,3 +440,4 @@
+ 450	o32	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	o32	cachestat			sys_cachestat
+ 452	o32	fchmodat2			sys_fchmodat2
++453	o32	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index e97c175b56f9..c80eedbe0170 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -451,3 +451,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 20e50586e8a2..2767b8a42636 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -539,3 +539,4 @@
+ 450 	nospu	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 0122cc156952..22249c07e556 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -455,3 +455,4 @@
+ 450  common	set_mempolicy_home_node	sys_set_mempolicy_home_node	sys_set_mempolicy_home_node
+ 451  common	cachestat		sys_cachestat			sys_cachestat
+ 452  common	fchmodat2		sys_fchmodat2			sys_fchmodat2
++453  common	map_shadow_stack	sys_map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index e90d585c4d3e..5ccfe6fbb6b1 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -455,3 +455,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 4ed06c71c43f..b2d664edebdd 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -498,3 +498,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 2d0b1bd866ea..743a7ef5a4b9 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -457,3 +457,4 @@
+ 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	i386	cachestat		sys_cachestat
+ 452	i386	fchmodat2		sys_fchmodat2
++453	i386	map_shadow_stack	sys_map_shadow_stack
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index fc1a4f3c81d9..94e6bcc2bec7 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -423,3 +423,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index abe087c53b4b..203ae30d7761 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -823,8 +823,11 @@ __SYSCALL(__NR_cachestat, sys_cachestat)
+ #define __NR_fchmodat2 452
+ __SYSCALL(__NR_fchmodat2, sys_fchmodat2)
+ 
++#define __NR_map_shadow_stack 453
++__SYSCALL(__NR_map_shadow_stack, sys_map_shadow_stack)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 453
++#define __NR_syscalls 454
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index abe087c53b4b..203ae30d7761 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -823,8 +823,11 @@ __SYSCALL(__NR_cachestat, sys_cachestat)
+ #define __NR_fchmodat2 452
+ __SYSCALL(__NR_fchmodat2, sys_fchmodat2)
+ 
++#define __NR_map_shadow_stack 453
++__SYSCALL(__NR_map_shadow_stack, sys_map_shadow_stack)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 453
++#define __NR_syscalls 454
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
+index cb5e757f6621..aa9ed6a7cb48 100644
+--- a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
++++ b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
+@@ -367,3 +367,4 @@
+ 450	common	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	n64	cachestat			sys_cachestat
+ 452	n64	fchmodat2			sys_fchmodat2
++453	n64	map_shadow_stack		sys_map_shadow_stack
+diff --git a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
+index 20e50586e8a2..2767b8a42636 100644
+--- a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
++++ b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
+@@ -539,3 +539,4 @@
+ 450 	nospu	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	common	cachestat			sys_cachestat
+ 452	common	fchmodat2			sys_fchmodat2
++453	common	map_shadow_stack		sys_map_shadow_stack
+diff --git a/tools/perf/arch/s390/entry/syscalls/syscall.tbl b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
+index 0122cc156952..22249c07e556 100644
+--- a/tools/perf/arch/s390/entry/syscalls/syscall.tbl
++++ b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
+@@ -455,3 +455,4 @@
+ 450  common	set_mempolicy_home_node	sys_set_mempolicy_home_node	sys_set_mempolicy_home_node
+ 451  common	cachestat		sys_cachestat			sys_cachestat
+ 452  common	fchmodat2		sys_fchmodat2			sys_fchmodat2
++453  common	map_shadow_stack	sys_map_shadow_stack		sys_map_shadow_stack
+diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+index a5db10ddf540..6a5819362530 100644
+--- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -374,6 +374,7 @@
+ 450	common	set_mempolicy_home_node	sys_set_mempolicy_home_node
+ 451	common	cachestat		sys_cachestat
+ 452	common  fchmodat2		sys_fchmodat2
++453	common	map_shadow_stack	sys_map_shadow_stack
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+-- 
+2.34.1
 
-Source Data: PFN
-User Actions:
-    1) If interface requires phys-addr, convert to phys-addr
-    2) If interface allows PFN, simply pass in as-is
-Kernel Actions:
-    0) If Phys-Addr, convert to PFN
-    1) Validate the PFN (no bits beyond architecture length)
-    2) Get and validate struct page
-
-Source Data: Phys-Addr
-User Actions:
-    1) If interface requires phys-addr, simply pass in as-is
-    2) If interface requries PFN, convert to PFN
-Kernel Actions:
-    0) If Phys-addr, convert to PFN
-    1) Validate the PFN (no bits beyond arch length)
-    2) Get and validate struct page
-
-I think the take-away here is that the kernel has to validate the PFN
-regardless, and the kernel already has the information to do that.
-
-If you want to use both PFN (Idle Bit) and Phys Addr (IBS/PEBS)
-information, then the user needs the information to do page shifts
-That requires more exposure of kernel information, and is possibly
-complicated by things like hugepages.  It seems better to simply
-allow the interface to take both values, and add flags which
-format is being used.
-
-The worst possible result of malformed input is that the wrong page
-is migrated.  That's no different than move_phys_pages(/dev/random),
-and the user already requires CAP_SYS_NICE or _ADMIN, so there are
-probably worse things they could accomplish.
-
-Additionally, this allows the page buffer to simply use __u64*,
-and no need to expose a new user type for PFN.
-
-Now the interactions look like:
-
-Source Data: Phys-Addr or PFN
-User Actions:
-    0) move_phys_pages([phys-addr | pfn], MPOL_MF_(PHYS_ADDR ^ PFN))
-Kernel Actions:
-    0) If Phys-addr, convert to PFN
-    1) Validate the PFN (no bits beyond arch length)
-    2) Get and validate struct page
-
-This only requires plumbing new 2 flags through do_pages_move, and no
-new user-exposed types or information.
-
-Is there an ick-factor with the idea of adding the following?
-
-MPOL_MF_PHYS_ADDR : Treat page migration addresses as physical
-MPOL_MF_PFN : Treat page migration addresses as PFNs
-
-> 
-> These do not seem to be problematic from the ASLR perspective, so
-> I guess it may still be useful without CAP_SYS_ADMIN.
-> 
->      Arnd
-
-After reviewing the capabilities documentation it seems like
-CAP_SYS_NICE is the appropriate capability.  My last meassage I said
-CAP_SYS_ADMIN was probably correct, but I think using CAP_SYS_NICE
-is more appropriate unless there are strong feelings due to the use of
-PFN and Physcall Address.
-
-I'm not sure rowhammer is of great concern in this interface because you
-can't choose the destination address, only the destination node. Though
-I suppose someone could go nuts and try to "massage" a node in some way
-to get a statistical likelihood of placement (similar heap grooming).
-
-~Gregory
