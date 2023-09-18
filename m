@@ -2,34 +2,35 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 32099CD13DE
-	for <linux-api@archiver.kernel.org>; Mon, 18 Sep 2023 16:52:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 18D30CD13D9
+	for <linux-api@archiver.kernel.org>; Mon, 18 Sep 2023 17:02:37 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S230404AbjIRQwj (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 18 Sep 2023 12:52:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:37908 "EHLO
+        id S229981AbjIRRCk (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 18 Sep 2023 13:02:40 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58734 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S230310AbjIRQwi (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 18 Sep 2023 12:52:38 -0400
+        with ESMTP id S231289AbjIRRCj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 18 Sep 2023 13:02:39 -0400
 Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 5EF9C8E;
-        Mon, 18 Sep 2023 09:52:32 -0700 (PDT)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0A407C3277F;
-        Mon, 18 Sep 2023 14:24:57 +0000 (UTC)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C067EAF;
+        Mon, 18 Sep 2023 10:02:33 -0700 (PDT)
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9DD72C32788;
+        Mon, 18 Sep 2023 14:35:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1695047100;
-        bh=bg/LX3mqOuFh2MUykLPX8sJt2PS9kAFQ6eTnG58UTJE=;
+        s=k20201202; t=1695047715;
+        bh=ZLM4uoXja+zAiLIjYwhVmMEy6VOFuum0PgmoPN9LGCI=;
         h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-        b=EBfXDkoAMRPT7S4+Xj60vP1HfqObIMKvq/wufcj4BTWO4eGFitJ5RfrY9p9ubXjOp
-         lM+FV/NUGTNcWupIJF59Nw8e9NXYH3w8Xm0zAQrk6PaajxkEQT/V/SvLk1qFLGAshP
-         VPzg/ASWwsh/812c5zxB+NYiEZZTkmEHq8rEBcfoF+/aFhplIicJM02o3DeI+b8xMj
-         xTai3E6zHtaqmr9dYgv/+EtCOkvOr8oc+e5gm+2fdeVg/iBBVs+reVSVKn8Svba9n9
-         I95LoiSutTbHxKW4PF0VJAkJ5bGeD4EP677jrpSDWCf/mDIe1QA97BpDmPTUK7ts9R
-         v8Wb0zTVo9HQQ==
-Date:   Mon, 18 Sep 2023 16:24:55 +0200
+        b=NPBwd5dgOfqaXViVkdRXK1DtwA3TsAKmBHOLsoJZyq7Rx6xum+24NFGop6AbEB/fx
+         aZ9PhThcmToXryHNCGbAazkNY04lInBATmbAWvq+bBef+uSOJ/FIanVNR4Pj8TGnhw
+         xG921yK0Zl7KC8Hjszekg5FL/JfZcBHhTaOliV08OcfrOXA13RRe7IgnEME3HZ3a9L
+         7fNCJh4afGhuMkdL4joRtsvjJ5xVtsZquIS+S4Ske6vDlx19VqSBIixn45Mf67bKrA
+         960XkmwQvSnTpkauN1AI0itVwLwAVlsOuP45TKgZLBj+34Etm9URXbgIkh6bA+euo5
+         WXEB7mZcHvULg==
+Date:   Mon, 18 Sep 2023 16:35:09 +0200
 From:   Christian Brauner <brauner@kernel.org>
-To:     Miklos Szeredi <mszeredi@redhat.com>
+To:     Jeff Layton <jlayton@kernel.org>
 Cc:     Miklos Szeredi <miklos@szeredi.hu>,
+        Miklos Szeredi <mszeredi@redhat.com>,
         Linus Torvalds <torvalds@linux-foundation.org>,
         linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
         linux-api@vger.kernel.org, linux-man@vger.kernel.org,
@@ -40,58 +41,36 @@ Cc:     Miklos Szeredi <miklos@szeredi.hu>,
         Christian Brauner <christian@brauner.io>,
         Amir Goldstein <amir73il@gmail.com>
 Subject: Re: [RFC PATCH 2/3] add statmnt(2) syscall
-Message-ID: <20230918-hierbei-erhielten-ba5ef74a5b52@brauner>
+Message-ID: <20230918-geber-kruste-f9491ce3de41@brauner>
 References: <20230913152238.905247-1-mszeredi@redhat.com>
  <20230913152238.905247-3-mszeredi@redhat.com>
  <20230914-salzig-manifest-f6c3adb1b7b4@brauner>
  <CAJfpegs-sDk0++FjSZ_RuW5m-z3BTBQdu4T9QPtWwmSZ1_4Yvw@mail.gmail.com>
  <20230914-lockmittel-verknallen-d1a18d76ba44@brauner>
- <CAJfpegt-VPZP3ou-TMQFs1Xupj_iWA5ttC2UUFKh3E43EyCOQQ@mail.gmail.com>
- <20230918-grafik-zutreffen-995b321017ae@brauner>
- <CAOssrKfS79=+F0h=XPzJX2E6taxAPmEJEYPi4VBNQjgRR5ujqw@mail.gmail.com>
+ <3183d8b21e78dce2c1d5cbc8a1304f2937110621.camel@kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAOssrKfS79=+F0h=XPzJX2E6taxAPmEJEYPi4VBNQjgRR5ujqw@mail.gmail.com>
+In-Reply-To: <3183d8b21e78dce2c1d5cbc8a1304f2937110621.camel@kernel.org>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Sep 18, 2023 at 04:14:02PM +0200, Miklos Szeredi wrote:
-> On Mon, Sep 18, 2023 at 3:51 PM Christian Brauner <brauner@kernel.org> wrote:
-> 
-> > I really would prefer a properly typed struct and that's what everyone
-> > was happy with in the session as well. So I would not like to change the
-> > main parameters.
-> 
-> I completely  agree.  Just would like to understand this point:
-> 
->   struct statmnt *statmnt(u64 mntid, u64 mask, unsigned int flags);
-> 
-> What's not properly typed about this interface?
-> 
-> I guess the answer is that it's not a syscall interface, which will
-> have an added [void *buf, size_t bufsize], while the buffer sizing is
-> done by a simple libc wrapper.
-> 
-> Do you think that's a problem?  If so, why?
+> Fixed size structs are much nicer to deal with, and most of the fields
+> we're talking about don't change ofetn enough to make trying to strive
+> for perfect atomicity worthwhile.
 
-Sorry, I think we just talked passed each other.
-I didn't realize you were talking about a glibc wrapper.
-I'm not so much concerned with that they can expose this in whathever
-way they like. But we will have a lot of low-level userspace that will
-directly use statmount() or not even have glibc like go and other
-languages.
+I think we can live with mnt_root and mnt_mountpoint in struct statmnt
+if we add a length field for both them and make them __u64 pointers.
+That's what we did in clone3() for the pid array and bpf is doing that
+as well for log buffers and pathnames.
 
-The system call should please have a proper struct like you had in your
-first proposal. This is what I'm concerned about:
+So if Miklos is fine with that then I'm happy to compromise. And I think
+that's all the variable length data we want in struct statmount anyway.
 
-int statmount(u64 mnt_id,
-              struct statmnt __user *st,
-              size_t size,
-              unsigned int flags)
+> ...and then if the mnt_change_cookie hasn't changed, you know that the
+> string option was stable during that window.
 
-instead of taking an void pointer.
-
-
+Meh, I would really like to sidestep this and keep it as simple as we
+can. I like the proposal overall I just don't want it to get diluted too
+much by exploding into another overly broad solution.
