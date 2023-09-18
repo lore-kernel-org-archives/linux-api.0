@@ -2,38 +2,65 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id BE134CD13DA
-	for <linux-api@archiver.kernel.org>; Mon, 18 Sep 2023 17:02:42 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 3BBA4CD13D2
+	for <linux-api@archiver.kernel.org>; Mon, 18 Sep 2023 20:58:15 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S231308AbjIRRCq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 18 Sep 2023 13:02:46 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:58760 "EHLO
+        id S230209AbjIRU6R (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 18 Sep 2023 16:58:17 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32972 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S231295AbjIRRCj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 18 Sep 2023 13:02:39 -0400
-Received: from smtp.kernel.org (relay.kernel.org [52.25.139.140])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 98DAEAC;
-        Mon, 18 Sep 2023 10:02:33 -0700 (PDT)
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 91C11C32785;
-        Mon, 18 Sep 2023 14:29:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-        s=k20201202; t=1695047388;
-        bh=kJa0GvslCCcWNV+hoWf/bww4C4/mthZSRBqChvvgee0=;
-        h=Subject:From:To:Cc:Date:In-Reply-To:References:From;
-        b=guDI6Ni1l8l6BlhUUQMujoFH6hG+mfolikP/DaDNJta6Y43W00WHf90XlGHF6fHLo
-         NLgTDf8e1LD6OKhsssCr5QyqmFMLYPcQv4q2Sge6U1hWlCbIZBfkFgLTH5Q2JJqC0V
-         /TixeU5oylxH/lRszFSHlcZoVIh8rI3E8dQ8uH0fj7KYaAnRtezR9wKqFF/cuEG423
-         b4X1uiT7KuLkQQ/pMTDyNEsMyTpQnMkajMWonbBz/hYRMOVjVDjbgXjp/BSqBX2LNb
-         mdFN1nlYAXuq2dTc7swZjhVeGzk3qAQNPkqN6kNHs11fgf7J/JMBCYd5b8O9l89Ovl
-         WOwmwv1x1PPNQ==
-Message-ID: <3183d8b21e78dce2c1d5cbc8a1304f2937110621.camel@kernel.org>
+        with ESMTP id S230139AbjIRU6N (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 18 Sep 2023 16:58:13 -0400
+Received: from mail-pl1-x62b.google.com (mail-pl1-x62b.google.com [IPv6:2607:f8b0:4864:20::62b])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id D81DA13A
+        for <linux-api@vger.kernel.org>; Mon, 18 Sep 2023 13:58:03 -0700 (PDT)
+Received: by mail-pl1-x62b.google.com with SMTP id d9443c01a7336-1c364fb8a4cso46642255ad.1
+        for <linux-api@vger.kernel.org>; Mon, 18 Sep 2023 13:58:03 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=dilger-ca.20230601.gappssmtp.com; s=20230601; t=1695070683; x=1695675483; darn=vger.kernel.org;
+        h=references:to:cc:in-reply-to:date:subject:mime-version:message-id
+         :from:from:to:cc:subject:date:message-id:reply-to;
+        bh=Tauh1TRK/BMeBu2l0gaSo+cZtciZh4ApAYeMwZDiN0w=;
+        b=EtjCD8XVeuyu4XPhxQV+t9HYnYbdWObJjfzOR6vxv4ywzcteSLd7/vnG2MUSzDQt0O
+         LG3v00URknQcK8wR6BKbWHM6eXxfkaSoTz3oz+YjLfafcEqWoJnyWOQMsRNxOTVXNPt1
+         k2+lRenwmrczPR68IB+I7VjepnnPHVIkCEGo9oCT9gNgE61pRdv1/i+GTi8g92PWdnpH
+         L5pXGhySoxVwoCymRI4vbFm7w6Lx9+eU8phNMgqBFG8qk8Mr7IzfHSlpL9Nfmq4N0fxV
+         SyKHj8YGRldXW5vDWguPg+toMxg+W7nv35SzMx4cGWB8jM0fT8CS+mDmZDCF/b9Kq0cs
+         dwBQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1695070683; x=1695675483;
+        h=references:to:cc:in-reply-to:date:subject:mime-version:message-id
+         :from:x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Tauh1TRK/BMeBu2l0gaSo+cZtciZh4ApAYeMwZDiN0w=;
+        b=LH0SHxM6js0UfHQbcyUKFopdJik8KFvhUAg0yYxL4L9BQdjmkJwcX4EEKORtr2ZXM2
+         OLaY9AnNfaXvgc7uPOdVjQOfBx7CvTxHjdTciEqx1XJo5qXWBQDn6CRvY/lUsriZ4/gT
+         CM/3vKFBur/S/U1UtBj0KGbgmAOCS9Duirvv1DxurpNl3mSWGdaF19iTV9MBklJx9qiL
+         BE2nDNoM0aeBUmit8X9Jo12s1RyDDCPYpZc1Aae03CTM/P6YvHsDljN3OZmLy4rINbyX
+         qVSaITwqv/VlOwvZ5X8SzdWmeO1vycmydcKDaNOf2tlrJ5L6B+axowTX4at1KtOBVpRd
+         Mtmw==
+X-Gm-Message-State: AOJu0YxInYhs25kZN3w2TrhWA6FtyT58kjq+cDZDxESgOxZ3CTC5Og71
+        Mn5/WopmJAdqvnM6zMK3G3Jg/g==
+X-Google-Smtp-Source: AGHT+IHW/N9kktGUP1je9DFFNRd7ALIMHRTanWQ0GwsItBzOAA3iVWzYW3fREWh2c3rpYKzuxfVf5w==
+X-Received: by 2002:a17:903:24e:b0:1bc:6799:3f6c with SMTP id j14-20020a170903024e00b001bc67993f6cmr10039131plh.35.1695070683210;
+        Mon, 18 Sep 2023 13:58:03 -0700 (PDT)
+Received: from cabot.adilger.int (S01061cabc081bf83.cg.shawcable.net. [70.77.221.9])
+        by smtp.gmail.com with ESMTPSA id 9-20020a170902c20900b001b87d3e845bsm2813998pll.149.2023.09.18.13.58.01
+        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 18 Sep 2023 13:58:02 -0700 (PDT)
+From:   Andreas Dilger <adilger@dilger.ca>
+Message-Id: <59DA5D4F-8242-4BD4-AE1C-FC5A6464E377@dilger.ca>
+Content-Type: multipart/signed;
+ boundary="Apple-Mail=_5D26C71F-6AC4-4378-9A44-BBCB7136D1A4";
+ protocol="application/pgp-signature"; micalg=pgp-sha256
+Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
 Subject: Re: [RFC PATCH 2/3] add statmnt(2) syscall
-From:   Jeff Layton <jlayton@kernel.org>
-To:     Christian Brauner <brauner@kernel.org>,
-        Miklos Szeredi <miklos@szeredi.hu>
-Cc:     Miklos Szeredi <mszeredi@redhat.com>,
+Date:   Mon, 18 Sep 2023 14:58:00 -0600
+In-Reply-To: <20230918-grafik-zutreffen-995b321017ae@brauner>
+Cc:     Miklos Szeredi <miklos@szeredi.hu>,
+        Miklos Szeredi <mszeredi@redhat.com>,
         Linus Torvalds <torvalds@linux-foundation.org>,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+        Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
         linux-api@vger.kernel.org, linux-man@vger.kernel.org,
         linux-security-module@vger.kernel.org, Karel Zak <kzak@redhat.com>,
         Ian Kent <raven@themaw.net>,
@@ -41,216 +68,106 @@ Cc:     Miklos Szeredi <mszeredi@redhat.com>,
         Al Viro <viro@zeniv.linux.org.uk>,
         Christian Brauner <christian@brauner.io>,
         Amir Goldstein <amir73il@gmail.com>
-Date:   Mon, 18 Sep 2023 10:29:46 -0400
-In-Reply-To: <20230914-lockmittel-verknallen-d1a18d76ba44@brauner>
+To:     Christian Brauner <brauner@kernel.org>
 References: <20230913152238.905247-1-mszeredi@redhat.com>
-         <20230913152238.905247-3-mszeredi@redhat.com>
-         <20230914-salzig-manifest-f6c3adb1b7b4@brauner>
-         <CAJfpegs-sDk0++FjSZ_RuW5m-z3BTBQdu4T9QPtWwmSZ1_4Yvw@mail.gmail.com>
-         <20230914-lockmittel-verknallen-d1a18d76ba44@brauner>
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.48.4 (3.48.4-1.fc38) 
-MIME-Version: 1.0
+ <20230913152238.905247-3-mszeredi@redhat.com>
+ <20230914-salzig-manifest-f6c3adb1b7b4@brauner>
+ <CAJfpegs-sDk0++FjSZ_RuW5m-z3BTBQdu4T9QPtWwmSZ1_4Yvw@mail.gmail.com>
+ <20230914-lockmittel-verknallen-d1a18d76ba44@brauner>
+ <CAJfpegt-VPZP3ou-TMQFs1Xupj_iWA5ttC2UUFKh3E43EyCOQQ@mail.gmail.com>
+ <20230918-grafik-zutreffen-995b321017ae@brauner>
+X-Mailer: Apple Mail (2.3273)
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Thu, 2023-09-14 at 17:26 +0200, Christian Brauner wrote:
-> On Thu, Sep 14, 2023 at 12:13:54PM +0200, Miklos Szeredi wrote:
-> > On Thu, 14 Sept 2023 at 11:28, Christian Brauner <brauner@kernel.org> w=
-rote:
-> > >=20
-> > > On Wed, Sep 13, 2023 at 05:22:35PM +0200, Miklos Szeredi wrote:
-> > > > Add a way to query attributes of a single mount instead of having t=
-o parse
-> > > > the complete /proc/$PID/mountinfo, which might be huge.
-> > > >=20
-> > > > Lookup the mount by the old (32bit) or new (64bit) mount ID.  If a =
-mount
-> > > > needs to be queried based on path, then statx(2) can be used to fir=
-st query
-> > > > the mount ID belonging to the path.
-> > > >=20
-> > > > Design is based on a suggestion by Linus:
-> > > >=20
-> > > >   "So I'd suggest something that is very much like "statfsat()", wh=
-ich gets
-> > > >    a buffer and a length, and returns an extended "struct statfs" *=
-AND*
-> > > >    just a string description at the end."
-> > >=20
-> > > So what we agreed to at LSFMM was that we split filesystem option
-> > > retrieval into a separate system call and just have a very focused
-> > > statx() for mounts with just binary and non-variable sized informatio=
-n.
-> > > We even gave David a hard time about this. :) I would really love if =
-we
-> > > could stick to that.
-> > >=20
-> > > Linus, I realize this was your suggestion a long time ago but I would
-> > > really like us to avoid structs with variable sized fields at the end=
- of
-> > > a struct. That's just so painful for userspace and universally dislik=
-ed.
-> > > If you care I can even find the LSFMM video where we have users of th=
-at
-> > > api requesting that we please don't do this. So it'd be great if you
-> > > wouldn't insist on it.
-> >=20
-> > I completely missed that.
->=20
-> No worries, I think the discussion touching on this starts at:
-> https://youtu.be/j3fp2MtRr2I?si=3Df-YBg6uWq80dV3VC&t=3D1603
-> (with David talking quietly without a microphone for some parts
-> unfortunately...)
->=20
-> > What I'm thinking is making it even simpler for userspace:
-> >=20
-> > struct statmnt {
-> >   ...
-> >   char *mnt_root;
-> >   char *mountpoint;
-> >   char *fs_type;
-> >   u32 num_opts;
-> >   char *opts;
-> > };
-> >=20
-> > I'd still just keep options nul delimited.
-> >=20
-> > Is there a good reason not to return pointers (pointing to within the
-> > supplied buffer obviously) to userspace?
->=20
-> It's really unpleasant to program with. Yes, I think you pointed out
-> before that it often doesn't matter much as long as the system call is
-> really only relevant to some special purpose userspace.
->=20
-> But statmount() will be used pretty extensively pretty quickly for the
-> purpose of finding out mount options on a mount (Querying a whole
-> sequences of mounts via repeated listmount() + statmount() calls on the
-> other hand will be rarer.).
->=20
-> And there's just so many tools that need this: libmount, systemd, all
-> kinds of container runtimes, path lookup libraries such as libpathrs,
-> languages like go and rust that expose and wrap these calls and so on.
->=20
-> Most of these tools don't need to know about filesystem mount options
-> and if they do they can just query that through an extra system call. No
-> harm in doing that.
->=20
-> The agreement we came to to split out listing submounts into a separate
-> system call was exactly to avoid having to have a variable sized pointer
-> at the end of the struct statmnt (That's also part of the video above
-> btw.) and to make it as simple as possible.
->=20
-> Plus, the format for how to return arbitrary filesystem mount options
-> warrants a separate discussion imho as that's not really vfs level
-> information.
->=20
-> > > This will also allow us to turn statmnt() into an extensible argument
-> > > system call versioned by size just like we do any new system calls wi=
-th
-> > > struct arguments (e.g., mount_setattr(), clone3(), openat2() and so o=
-n).
-> > > Which is how we should do things like that.
-> >=20
-> > The mask mechanism also allow versioning of the struct.
->=20
-> Yes, but this is done with reserved space which just pushes away the
-> problem and bloats the struct for the sake of an unknown future. If we
-> were to use an extensible argument struct we would just version by size.
-> The only requirement is that you extend by 64 bit (see struct
-> clone_args) which had been extended.
->=20
->=20
 
-Fixed size structs are much nicer to deal with, and most of the fields
-we're talking about don't change ofetn enough to make trying to strive
-for perfect atomicity worthwhile.
+--Apple-Mail=_5D26C71F-6AC4-4378-9A44-BBCB7136D1A4
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=us-ascii
 
-What sort of interface are you thinking for fetching variable-length
-string info? It sounds a lot like getxattr that uses a mnt_id in place
-of a pathname. getmntattr() ?
+On Sep 18, 2023, at 7:51 AM, Christian Brauner <brauner@kernel.org> wrote:
+> 
+> 
+>> The type and subtype are naturally limited to sane sizes, those are
+>> not an issue.
+> 
+> What's the limit for fstype actually? I don't think there is one.
+> There's one by chance but not by design afaict?
+> 
+> Maybe crazy idea:
+> That magic number thing that we do in include/uapi/linux/magic.h
+> is there a good reason for this or why don't we just add a proper,
+> simple enum:
+> 
+> enum {
+> 	FS_TYPE_ADFS        1
+> 	FS_TYPE_AFFS        2
+> 	FS_TYPE_AFS         3
+> 	FS_TYPE_AUTOFS      4
+> 	FS_TYPE_EXT2	    5
+> 	FS_TYPE_EXT3	    6
+> 	FS_TYPE_EXT4	    7
+> 	.
+> 	.
+> 	.
+> 	FS_TYPE_MAX
+> }
+> 
+> that we start returning from statmount(). We can still return both the
+> old and the new fstype? It always felt a bit odd that fs developers to
+> just select a magic number.
+
+Yes, there is a very good reason that there isn't an enum for filesystem
+type, which is because this API would be broken if it encounters any
+filesystem that is not listed there.  Often a single filesystem driver in
+the kernel will have multiple different magic numbers to handle versions,
+endianness, etc.
+
+Having a 32-bit magic number allows decentralized development with low
+chance of collision, and using new filesystems without having to patch
+every kernel for this new API to work with that filesystem.  Also,
+filesystems come and go (though more slowly) over time, and keeping the
+full list of every filesystem ever developed in the kernel enum would be
+a headache.
+
+The field in the statmnt() call would need to be at a fixed-size 32-bit
+value in any case, so having it return the existing magic will "just work"
+because userspace tools already know and understand these magic values,
+while introducing an in-kernel enum would be broken for multiple reasons.
+
+Cheers, Andreas
 
 
-> > >=20
-> > > Other than that I really think this is on track for what we ultimatel=
-y
-> > > want.
-> > >=20
-> > > > +struct stmt_str {
-> > > > +     __u32 off;
-> > > > +     __u32 len;
-> > > > +};
-> > > > +
-> > > > +struct statmnt {
-> > > > +     __u64 mask;             /* What results were written [uncond]=
- */
-> > > > +     __u32 sb_dev_major;     /* Device ID */
-> > > > +     __u32 sb_dev_minor;
-> > > > +     __u64 sb_magic;         /* ..._SUPER_MAGIC */
-> > > > +     __u32 sb_flags;         /* MS_{RDONLY,SYNCHRONOUS,DIRSYNC,LAZ=
-YTIME} */
-> > > > +     __u32 __spare1;
-> > > > +     __u64 mnt_id;           /* Unique ID of mount */
-> > > > +     __u64 mnt_parent_id;    /* Unique ID of parent (for root =3D=
-=3D mnt_id) */
-> > > > +     __u32 mnt_id_old;       /* Reused IDs used in proc/.../mounti=
-nfo */
-> > > > +     __u32 mnt_parent_id_old;
-> > > > +     __u64 mnt_attr;         /* MOUNT_ATTR_... */
-> > > > +     __u64 mnt_propagation;  /* MS_{SHARED,SLAVE,PRIVATE,UNBINDABL=
-E} */
-> > > > +     __u64 mnt_peer_group;   /* ID of shared peer group */
-> > > > +     __u64 mnt_master;       /* Mount receives propagation from th=
-is ID */
-> > > > +     __u64 propagate_from;   /* Propagation from in current namesp=
-ace */
-> > > > +     __u64 __spare[20];
-> > > > +     struct stmt_str mnt_root;       /* Root of mount relative to =
-root of fs */
-> > > > +     struct stmt_str mountpoint;     /* Mountpoint relative to roo=
-t of process */
-> > > > +     struct stmt_str fs_type;        /* Filesystem type[.subtype] =
-*/
-> > >=20
-
-A bit tangential to this discussion, but one thing we could consider is
-adding something like a mnt_change_cookie field that increments on any
-significant changes on the mount: i.e. remounts with new options,
-changes to parentage or propagation, etc.
-
-That might make it more palatable to do something with separate syscalls
-for the string-based fields. You could do:
-
-statmnt(...);
-getmntattr(mnt, "mnt.fstype", ...);
-statmnt(...);
-
-...and then if the mnt_change_cookie hasn't changed, you know that the
-string option was stable during that window.
 
 
-> > > I think if we want to do this here we should add:
-> > >=20
-> > > __u64 fs_type
-> > > __u64 fs_subtype
-> > >=20
-> > > fs_type can just be our filesystem magic number and we introduce magi=
-c
-> >=20
-> > It's already there: sb_magic.
-> >=20
-> > However it's not a 1:1 mapping (ext* only has one magic).
->=20
-> That's a very odd choice but probably fixable by giving it a subtype.
->=20
-> >=20
-> > > numbers for sub types as well. So we don't need to use strings here.
-> >=20
-> > Ugh.
->=20
-> Hm, idk. It's not that bad imho. We'll have to make some ugly tradeoffs.
 
---=20
-Jeff Layton <jlayton@kernel.org>
+
+--Apple-Mail=_5D26C71F-6AC4-4378-9A44-BBCB7136D1A4
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIzBAEBCAAdFiEEDb73u6ZejP5ZMprvcqXauRfMH+AFAmUIudgACgkQcqXauRfM
+H+ANkBAAswMy3DnkxDykTG0XPE8YNdNKUuKmr8Ybnx3zZSYjr6gt0M9Z1RjbfXwb
+/gD7LMA5LRDiD18iwMdA7xhAhzCSFdycXADobuQQihqo5gAwRlm4iMDLharQlJSr
+OP5T5z92C7iBtV2ntUZ+vq0Ojh0jshFZXpwcWSMzoG5AD+lY5ci+ML+2fvKdCNbJ
+jUaY2xlOEu5TDwJeI52lT5gxKWezZHxk1oPWtFrAmyenRHDhe6Hq8fL36EtpHyTI
+iBzu3chvZ073H9i72vZt34nQBy7MATe3k4mRQQhsGhKuJGmXY2s/zil60fBzR2oh
+vqW5JGq4cj/HTjDNyjED8wS5yeAlvKFlAL53ojeM6VhipOR9IGUEb+RYefmcVaZ+
+ZyK3IgXrfFNhfLNxlrT33S8Y+EhPg5b8iFF06aroPs4hmwIpMy2whpnmjcQju84w
+4zVjFSo1spBY39cU6YWxGogITC/VT9WOtv4+ckr1Xn4gnMr3PFs7XnAumh3kC1a1
+JqmHbw38TLOFXAFV2Nkc6MWHdxCDjmFr24OkpoaR4sv+QxnK7v62JN8NIBGeVlDC
++jV5+LjSC2l502sVAqbOxamoTfv3u7r2UvB0zddiirtKl3/dUjwCmXFms90STFxP
+OnbdmtAnZu5wK1yWNVUojzLnWliZmcFAfLA1/lVTl1ttjlmG0Sw=
+=7iPD
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_5D26C71F-6AC4-4378-9A44-BBCB7136D1A4--
