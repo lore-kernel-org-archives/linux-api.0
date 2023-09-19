@@ -2,222 +2,226 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 91AC4CE79A9
-	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 21:28:59 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 51837CE79A8
+	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 23:09:57 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233133AbjISV3D (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Sep 2023 17:29:03 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:47662 "EHLO
+        id S233463AbjISXKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Sep 2023 19:10:01 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55944 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229690AbjISV3D (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 17:29:03 -0400
-Received: from mail-oa1-x31.google.com (mail-oa1-x31.google.com [IPv6:2001:4860:4864:20::31])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 783F9AD;
-        Tue, 19 Sep 2023 14:28:57 -0700 (PDT)
-Received: by mail-oa1-x31.google.com with SMTP id 586e51a60fabf-1d69b2ffa1fso2686253fac.2;
-        Tue, 19 Sep 2023 14:28:57 -0700 (PDT)
+        with ESMTP id S233781AbjISXJq (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 19:09:46 -0400
+Received: from mail-yw1-x1142.google.com (mail-yw1-x1142.google.com [IPv6:2607:f8b0:4864:20::1142])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74A0C1B9;
+        Tue, 19 Sep 2023 16:09:29 -0700 (PDT)
+Received: by mail-yw1-x1142.google.com with SMTP id 00721157ae682-59bc97d7b3dso4487777b3.1;
+        Tue, 19 Sep 2023 16:09:29 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1695158937; x=1695763737; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1695164968; x=1695769768; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=k83mB67AhO9crOADOMNRAqoI12asl4cHCEzQDkmUjKY=;
-        b=aozX6lmnXxRKnK3BNK0hYG13zEunx9VGbc0EyxTW+CbUFmDUeb5nqSQFUKKC7KGiFb
-         biVR7VYyVVUkmwperKkWTSlEjSalORaeiDmX7PVUPlIzndOynKMbCrdF1ppPseJKJkzZ
-         TXdxeRhjo4PGzDdTDo9lRudVyeymTMU/KkxQrKlOCCI4qTSB7TXiD5kGlmhkKdOTPPy9
-         y2s+ZLSTfBBwD0bPXUmx/MquYLEkG1i/q8QfIuLo0DOo/vjzUt1aVpR1X3mdq2fI5S64
-         w+w+jhwiADgpEsWoHZ4rYpA3RuOhNNsDQFIg29veLM0w8yqPKZmVT6fX6Ju4i16C+c74
-         VEfg==
+        bh=BLouotyXGn65Q/3Hxsys2lst/s1kpw1SClrVTeQFtkc=;
+        b=TGptGmlT/N3cQ9n7Jhz7htjuNxuS+DKE1ih2L99YImvZgafvrYWZTfec5VK3M6O7NQ
+         LSx9bDe0m1yqFnwaskoXaZTaGJfVKbhbb3D4yHuQE4KnFc8lJHcvuGVWLdLe774f1mYe
+         83Zx+knnuHaMrsyIVsvk6VI8rFL2XNv1IrcS6oBK/H/3YiFWZnbUnODfpaXbbdUtR0o9
+         X5hGyypUlaYLk0SZB8BVgzZzZQdiaR7mu7P4Xq1mfC8WbUhkxfkZNM8MbHbNUabpY5sk
+         skyqQqXjRf4vNrbXuHRN3QuTSRR8v4AJrFnnctUJb2eCxXo4eLVOafX77u8KX+CR1Siq
+         /G3w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695158937; x=1695763737;
+        d=1e100.net; s=20230601; t=1695164968; x=1695769768;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=k83mB67AhO9crOADOMNRAqoI12asl4cHCEzQDkmUjKY=;
-        b=T0lDkENS3J6rg+bWwhm9926pWime04CiZ64GK3OaNByF7fy/5rQdzZ2cTlFDD8wR+A
-         tczuf0K5Rupm00J8/rPeYy4qdDJgF0ff0pIWS5eSyIq6jB+rbIkxtbX11IMugxVFIelI
-         0RuzkEfJONDjH8R8bAzz/CSgnj0coWPFku4eJyzFdr99A868FHK9o+cvz7tP49OQAAsU
-         fGze7XHEJ1DddYBQBxUQBaLEyDywdZD28l2ivylxyqGHwUHqHJCd5DgnX5nZAkT/L2KD
-         H6a/YOiMzUPQ4S6BOu6IphR1bpP/Vw77CV6a0rakS1OyCTc0SO/8Gg8f9GK85wFHoifa
-         +C+g==
-X-Gm-Message-State: AOJu0YzNa9tKgHQVavM9v0kahmNghL36fhE12cjdT2mkLJEp2XXQ9oMk
-        R58oPfovW56oViuD/Fo5Q+E=
-X-Google-Smtp-Source: AGHT+IGSw6IsB8OK6JkcDjxUHlHYWdIdH576aFSFhR7R4tcyE4+vdzO3paz63AelUmM2aazXgb99+Q==
-X-Received: by 2002:a05:6870:391f:b0:1bf:e522:7133 with SMTP id b31-20020a056870391f00b001bfe5227133mr736132oap.38.1695158936538;
-        Tue, 19 Sep 2023 14:28:56 -0700 (PDT)
-Received: from firmament.. (h198-137-20-64.xnet.uga.edu. [198.137.20.64])
-        by smtp.gmail.com with ESMTPSA id z185-20020a8189c2000000b0059af9f2ee68sm3377091ywf.66.2023.09.19.14.28.55
+        bh=BLouotyXGn65Q/3Hxsys2lst/s1kpw1SClrVTeQFtkc=;
+        b=GdEE6eehsreTyCMlE2C2eCSK0WvD3n+MGXKW/Re2G5Pel6o1aNqHadB1uhiPiIBUYd
+         KuOcyGSLA9b09M0p0Ewts+3RDOSbIeeEXfcO9UEuKJkXLYfpzTrCG0AFlThjUWn1OWfF
+         YFjx5jBRcPOu3d8MMFLPJo7f0twgwRBa8BySqVC6WMGKdddGRUX8+2shLA6f/HNw9K6u
+         sNS5iGgnHVzAX3x9bpw6J6rqigQPelbwAF/S7Nv2UbTtZTzS/OTXL61ArYEbkYV0UHZ1
+         SCYs4wRrAZPYBmIVHe05KDjWp1qjCQO2t/rKXBQ120L69JAQODf594Ev7plP7T2vD/7b
+         8zng==
+X-Gm-Message-State: AOJu0YzR1D31m63x+9FeftBZ9FYIC1Q5d4t6iSzvbJoML2NmD8j4xXa/
+        aQKx8pk/RyFDV/H006vcb+kD4Qhsm11X
+X-Google-Smtp-Source: AGHT+IF47zIeEsarZk/JZFIFSE3MQxssVw9sGEWuhuP2/NTGCJ+Cj6XHJ/FmmxB/D4g/ZGB8xvzDKw==
+X-Received: by 2002:a0d:d4ce:0:b0:56f:fd0a:588d with SMTP id w197-20020a0dd4ce000000b0056ffd0a588dmr5098911ywd.8.1695164968364;
+        Tue, 19 Sep 2023 16:09:28 -0700 (PDT)
+Received: from fedora.mshome.net (pool-173-79-56-208.washdc.fios.verizon.net. [173.79.56.208])
+        by smtp.gmail.com with ESMTPSA id d128-20020a0df486000000b005925765aa30sm3476327ywf.135.2023.09.19.16.09.27
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Sep 2023 14:28:56 -0700 (PDT)
-From:   Matthew House <mattlloydhouse@gmail.com>
-To:     Miklos Szeredi <miklos@szeredi.hu>
-Cc:     Christian Brauner <brauner@kernel.org>,
-        Miklos Szeredi <mszeredi@redhat.com>,
-        Linus Torvalds <torvalds@linux-foundation.org>,
-        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, linux-man@vger.kernel.org,
-        linux-security-module@vger.kernel.org, Karel Zak <kzak@redhat.com>,
-        Ian Kent <raven@themaw.net>,
-        David Howells <dhowells@redhat.com>,
-        Al Viro <viro@zeniv.linux.org.uk>,
-        Christian Brauner <christian@brauner.io>,
-        Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC PATCH 2/3] add statmnt(2) syscall
-Date:   Tue, 19 Sep 2023 17:28:38 -0400
-Message-ID: <20230919212840.144314-1-mattlloydhouse@gmail.com>
-In-Reply-To: <CAJfpegs6g8JQDtaHsECA_12ss_8KXOHVRH9gwwPf5WamzxXOWQ@mail.gmail.com>
-References: <20230914-salzig-manifest-f6c3adb1b7b4@brauner> <CAJfpegs-sDk0++FjSZ_RuW5m-z3BTBQdu4T9QPtWwmSZ1_4Yvw@mail.gmail.com> <20230914-lockmittel-verknallen-d1a18d76ba44@brauner> <CAJfpegt-VPZP3ou-TMQFs1Xupj_iWA5ttC2UUFKh3E43EyCOQQ@mail.gmail.com> <20230918-grafik-zutreffen-995b321017ae@brauner> <CAOssrKfS79=+F0h=XPzJX2E6taxAPmEJEYPi4VBNQjgRR5ujqw@mail.gmail.com> <20230918-hierbei-erhielten-ba5ef74a5b52@brauner> <CAJfpegtaGXoZkMWLnk3PcibAvp7kv-4Yobo=UJj943L6v3ctJQ@mail.gmail.com> <20230918-stuhl-spannend-9904d4addc93@brauner> <CAJfpegvxNhty2xZW+4MM9Gepotii3CD1p0fyvLDQB82hCYzfLQ@mail.gmail.com> <20230918-bestialisch-brutkasten-1fb34abdc33c@brauner> <CAJfpegvTiK=RM+0y07h-2vT6Zk2GCu6F98c=_CNx8B1ytFtO-g@mail.gmail.com> <20230919003800.93141-1-mattlloydhouse@gmail.com> <CAJfpegs6g8JQDtaHsECA_12ss_8KXOHVRH9gwwPf5WamzxXOWQ@mail.gmail.com>
+        Tue, 19 Sep 2023 16:09:28 -0700 (PDT)
+From:   Gregory Price <gourry.memverge@gmail.com>
+X-Google-Original-From: Gregory Price <gregory.price@memverge.com>
+To:     linux-mm@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-cxl@vger.kernel.org,
+        luto@kernel.org, tglx@linutronix.de, mingo@redhat.com,
+        bp@alien8.de, dave.hansen@linux.intel.com, hpa@zytor.com,
+        arnd@arndb.de, akpm@linux-foundation.org, x86@kernel.org,
+        Gregory Price <gregory.price@memverge.com>
+Subject: [RFC v2 3/5] mm/migrate: refactor add_page_for_migration for code re-use
+Date:   Tue, 19 Sep 2023 19:09:06 -0400
+Message-Id: <20230919230909.530174-4-gregory.price@memverge.com>
+X-Mailer: git-send-email 2.39.1
+In-Reply-To: <20230919230909.530174-1-gregory.price@memverge.com>
+References: <20230919230909.530174-1-gregory.price@memverge.com>
 MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Tue, Sep 19, 2023 at 4:02 AM Miklos Szeredi <miklos@szeredi.hu> wrote:
-> On Tue, 19 Sept 2023 at 02:38, Matthew House <mattlloydhouse@gmail.com> w=
-rote:
->
-> > One natural solution is to set either of the two lengths to the expected
-> > size if the provided buffer are too small. That way, the caller learns =
-both
-> > which of the buffers is too small, and how large they need to be. Repla=
-cing
-> > a provided size with an expected size in this way already has precedent=
- in
-> > existing syscalls:
->
-> This is where the thread started.  Knowing the size of the buffer is
-> no good, since the needed buffer could change between calls.
+add_page_for_migration presently does two actions:
+  1) validates the page is present and migratable
+  2) isolates the page from LRU and puts it into the migration list
 
-As Brauner mentioned, this does not change with the single-buffer
-interface. And since changes are not likely to occur extremely frequently,
-I feel like it would be better for the caller to only need one retry in the
-common case rather than N retries for however many doublings it takes to
-fit the whole buffer.
+Break add_page_for_migration into 2 functions:
+  add_page_for_migration - isolate the page from LUR and add to list
+  add_virt_page_for_migration - validate the page and call the above
 
-> We are trying to create a simple interface, no?  My proposal would
-> need a helper like this:
->
-> struct statmnt *statmount(uint64_t mnt_id, uint64_t mask, unsigned int fl=
-ags)
-> {
->         size_t bufsize =3D 1 << 15;
->         void *buf;
->         int ret;
->
->         for (;;) {
->                 buf =3D malloc(bufsize <<=3D 1);
->                 if (!buf)
->                         return NULL;
->                 ret =3D syscall(__NR_statmnt, mnt_id, mask, buf, bufsize,=
- flags);
->                 if (!ret)
->                         return buf;
->                 free(buf);
->                 if (errno !=3D EOVERFLOW)
->                         return NULL;
->         }
-> }
->
-> Christian's would be (ignoring .fs_type for now):
->
-> int statmount(uint64_t mnt_id, uint64_t mask, struct statmnt *st,
-> unsigned int flags)
-> {
->         int ret;
->
->         st->mnt_root_size =3D 1 << 15;
->         st->mountpoint_size =3D 1 << 15;
->         for (;;) {
->                 st->mnt_root =3D malloc(st->mnt_root_size <<=3D 1);
->                 st->mountpoint =3D malloc(st->mountpoint <<=3D 1);
->                 if (!st->mnt_root || !st->mountpoint) {
->                         free(st->mnt_root);
->                         free(st->mountpoint);
->                         return -1;
->                 }
->                 ret =3D syscall(__NR_statmnt, mnt_id, mask, st,
-> sizeof(*st), flags);
->                 if (!ret || errno !=3D EOVERFLOW)
->                         return ret;
->                 free(st->mnt_root);
->                 free(st->mountpoint);
->         }
-> }
->
-> It's not hugely more complex, but more complex nonetheless.
->
-> Also having the helper allocate buffers inside the struct could easily
-> result in leaks since it's not obvious what the caller needs to free,
-> while in the first example it is.
+add_page_for_migration does not require the mm_struct and so can be
+re-used for a physical addressing version of move_pages
 
-There's nothing stopping the userspace helper from exposing a contiguous
-buffer that can be easily freed, even if the kernel API uses a separate-
-buffer interface internally. It just takes a bit of addition in the helper
-to calculate the correct pointers. To wit:
+Signed-off-by: Gregory Price <gregory.price@memverge.com>
+---
+ mm/migrate.c | 83 +++++++++++++++++++++++++++++++---------------------
+ 1 file changed, 50 insertions(+), 33 deletions(-)
 
-struct statmnt *statmount(uint64_t mnt_id, uint64_t mask, unsigned int flag=
-s)
-{
-        uint32_t mnt_root_size =3D PATH_MAX;
-        uint32_t mountpoint_size =3D PATH_MAX;
-        struct statmnt *st;
-        int ret;
+diff --git a/mm/migrate.c b/mm/migrate.c
+index dbe436163d65..1123d841a7f1 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2042,52 +2042,33 @@ static int do_move_pages_to_node(struct list_head *pagelist, int node)
+ }
+ 
+ /*
+- * Resolves the given address to a struct page, isolates it from the LRU and
+- * puts it to the given pagelist.
++ * Isolates the page from the LRU and puts it into the given pagelist
+  * Returns:
+  *     errno - if the page cannot be found/isolated
+  *     0 - when it doesn't have to be migrated because it is already on the
+  *         target node
+  *     1 - when it has been queued
+  */
+-static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
+-		int node, struct list_head *pagelist, bool migrate_all)
++static int add_page_for_migration(struct page *page, int node,
++		struct list_head *pagelist, bool migrate_all)
+ {
+-	struct vm_area_struct *vma;
+-	unsigned long addr;
+-	struct page *page;
+ 	int err;
+ 	bool isolated;
+ 
+-	mmap_read_lock(mm);
+-	addr = (unsigned long)untagged_addr_remote(mm, p);
+-
+-	err = -EFAULT;
+-	vma = vma_lookup(mm, addr);
+-	if (!vma || !vma_migratable(vma))
+-		goto out;
+-
+-	/* FOLL_DUMP to ignore special (like zero) pages */
+-	page = follow_page(vma, addr, FOLL_GET | FOLL_DUMP);
+-
+-	err = PTR_ERR(page);
+-	if (IS_ERR(page))
+-		goto out;
+-
+ 	err = -ENOENT;
+ 	if (!page)
+ 		goto out;
+ 
+ 	if (is_zone_device_page(page))
+-		goto out_putpage;
++		goto out;
+ 
+ 	err = 0;
+ 	if (page_to_nid(page) == node)
+-		goto out_putpage;
++		goto out;
+ 
+ 	err = -EACCES;
+ 	if (page_mapcount(page) > 1 && !migrate_all)
+-		goto out_putpage;
++		goto out;
+ 
+ 	if (PageHuge(page)) {
+ 		if (PageHead(page)) {
+@@ -2101,7 +2082,7 @@ static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
+ 		isolated = isolate_lru_page(head);
+ 		if (!isolated) {
+ 			err = -EBUSY;
+-			goto out_putpage;
++			goto out;
+ 		}
+ 
+ 		err = 1;
+@@ -2110,12 +2091,48 @@ static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
+ 			NR_ISOLATED_ANON + page_is_file_lru(head),
+ 			thp_nr_pages(head));
+ 	}
+-out_putpage:
+-	/*
+-	 * Either remove the duplicate refcount from
+-	 * isolate_lru_page() or drop the page ref if it was
+-	 * not isolated.
+-	 */
++out:
++	return err;
++}
++
++/*
++ * Resolves the given address to a struct page, isolates it from the LRU and
++ * puts it to the given pagelist.
++ * Returns:
++ *     errno - if the page cannot be found/isolated
++ *     0 - when it doesn't have to be migrated because it is already on the
++ *         target node
++ *     1 - when it has been queued
++ */
++static int add_virt_page_for_migration(struct mm_struct *mm,
++		const void __user *p, int node, struct list_head *pagelist,
++		bool migrate_all)
++{
++	struct vm_area_struct *vma;
++	unsigned long addr;
++	struct page *page;
++	int err = -EFAULT;
++
++	mmap_read_lock(mm);
++	addr = (unsigned long)untagged_addr_remote(mm, p);
++
++	vma = vma_lookup(mm, addr);
++	if (!vma || !vma_migratable(vma))
++		goto out;
++
++	/* FOLL_DUMP to ignore special (like zero) pages */
++	page = follow_page(vma, addr, FOLL_GET | FOLL_DUMP);
++
++	err = PTR_ERR(page);
++	if (IS_ERR(page))
++		goto out;
++
++	err = -ENOENT;
++	if (!page)
++		goto out;
++
++	err = add_page_for_migration(page, node, pagelist, migrate_all);
++
+ 	put_page(page);
+ out:
+ 	mmap_read_unlock(mm);
+@@ -2211,7 +2228,7 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 		 * Errors in the page lookup or isolation are not fatal and we simply
+ 		 * report them via status
+ 		 */
+-		err = add_page_for_migration(mm, p, current_node, &pagelist,
++		err = add_virt_page_for_migration(mm, p, current_node, &pagelist,
+ 					     flags & MPOL_MF_MOVE_ALL);
+ 
+ 		if (err > 0) {
+-- 
+2.39.1
 
-        for (;;) {
-                st =3D malloc(sizeof(*st) + mnt_root_size + mountpoint_size=
-);
-                if (!st)
-                        return NULL;
-                st->mnt_root =3D (char *)st + sizeof(*st);
-                st->mountpoint =3D (char *)st + sizeof(*st) + mnt_root_size;
-                st->mnt_root_size =3D mnt_root_size;
-                st->mountpoint_size =3D mountpoint_size;
-                ret =3D syscall(__NR_statmnt, mnt_id, mask, st, sizeof(*st),
-                              flags);
-                if (ret) {
-                        free(st);
-                        return NULL;
-                }
-                if (st->mnt_root_size <=3D mnt_root_size &&
-                    st->mountpoint_size <=3D mountpoint_size)
-                        return st;
-                mnt_root_size =3D st->mnt_root_size;
-                mountpoint_size =3D st->mountpoint_size;
-                free(st);
-        }
-}
-
-(This is also far more helpful for users of the returned struct statmnt *,
-since they can just dereference the two pointers instead of having to
-decode the offsets by hand.)
-
-More generally speaking, the biggest reason I dislike the current single-
-buffer interface is that the output is "all or nothing": either the caller
-has enough space in the buffer to store every single string, or it's unable
-to get any fields at all, just an -EOVERFLOW. There's no room for the
-caller to say that it just wants the integer fields and doesn't care about
-the strings. Thus, to reliably call statmnt() on an arbitrary mount, the
-ability to dynamically allocate memory is effectively mandatory. The only
-real solution to this would be additional statx-like flags to select the
-returned strings.
-
-Meanwhile, with a separate-buffer interface, where the caller provides a
-pointer and capacity for each string, granular output would be trivial: the
-caller could just specify NULL/0 for any string it doesn't want, and still
-successfully retrieve all the integer fields. This would also work well if
-the caller, e.g., wants to set a hard cap of PATH_MAX bytes for each string
-(since it's using static buffers), but nonetheless wants to retrieve the
-integer fields if a string is too long.
-
-Besides that, if the caller is written in standard C but doesn't want to
-use malloc(3) to allocate the buffer, then its helper function must be
-written very carefully (with a wrapper struct around the header and data)
-to satisfy the aliasing rules, which forbid programs from using a struct
-statmnt * pointer to read from a declared char[N] array. In practice,
-callers tend to very rarely exercise this proper care with existing single-
-buffer interfaces, such as recvmsg(2)'s msg_control buffer, and I would not
-be very happy if statmnt() further contributed to this widespread issue.
-
-Thank you,
-Matthew House
