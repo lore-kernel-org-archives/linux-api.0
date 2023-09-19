@@ -2,52 +2,53 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0630CCE79AD
-	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 23:10:00 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 652F3CE79A8
+	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 23:10:03 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233645AbjISXKC (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Tue, 19 Sep 2023 19:10:02 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55970 "EHLO
+        id S233693AbjISXKG (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Tue, 19 Sep 2023 19:10:06 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55994 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233699AbjISXJj (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 19:09:39 -0400
-Received: from mail-yw1-x1143.google.com (mail-yw1-x1143.google.com [IPv6:2607:f8b0:4864:20::1143])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 60B17C4;
-        Tue, 19 Sep 2023 16:09:24 -0700 (PDT)
-Received: by mail-yw1-x1143.google.com with SMTP id 00721157ae682-59c07cf02ebso49652637b3.1;
-        Tue, 19 Sep 2023 16:09:24 -0700 (PDT)
+        with ESMTP id S233808AbjISXJr (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 19:09:47 -0400
+Received: from mail-yw1-x1141.google.com (mail-yw1-x1141.google.com [IPv6:2607:f8b0:4864:20::1141])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 4A804CC1;
+        Tue, 19 Sep 2023 16:09:31 -0700 (PDT)
+Received: by mail-yw1-x1141.google.com with SMTP id 00721157ae682-59ed7094255so10861117b3.3;
+        Tue, 19 Sep 2023 16:09:31 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1695164963; x=1695769763; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to;
-        bh=4LUIFygfhett/C9IkVouxBc9S18CsTasygVXq8ih1M8=;
-        b=EqHzBlSq8/+2VtzFq1pXpZZNz47hBp/m+CHgymU+ZMmqWiEhxv4FiHCKtUlTscb6aX
-         XTF8NsIwiGLaSAQcvrzEy1X09kXjlYewZ0NDodFE9OJzrFWFiNUPSIuduLXo+o1eN3ae
-         qLkpPptL2cfYhg3MfuqngcX7E5Kltt+LAJeHpaJ3msmAWV3B6pg/nQUG0nRpZR5GmgWT
-         AXflFkqEuagw29XYXzClmspaC2IXFzcEEu20ybhuPkHdfOHMeqC586XzqkAJGZTbpUXD
-         3t0d5Jt7QhJysKGwd2bV6wNsQCc+5nQLU0vIc+AO8m7RqJCXc2MBtXKj2/2Wc9rrPFI0
-         TO8Q==
+        d=gmail.com; s=20230601; t=1695164970; x=1695769770; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=IAAOThTNxxDaTKwUuAmUnX6Mus9LanSm8SFJZWT7NOE=;
+        b=MniXeIXa2vGRodt2lyRPhgEyTzQTJ9S/TazdGdRy5rjehN+lcqr1+A7mGLz8XnR6l3
+         nqvrnjGy1r7hAkQDypQZHVyyEu/WenzXBVaf6b5n55A4832OmwjoKQFr0og75L30cjOJ
+         InnfrElw7jMdNv4QRFHAcc2ws4qVPk1yNPr/daXPjwBjyMLdx5k3NZZrr5rCaYs0k25u
+         lPriksmkkHgjFJM/pGMSazY5eBlDFYMd4Dr9ZewCKUP0Dtgj1gTjanddGDFH/bIfFHt6
+         hXLVZt8tyc4DsBZyiEZ5c/fC4PrISzJZ4V//cXxM5cA+TnpGHsFQ0NvwvxarVRb54QEv
+         e7YQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695164963; x=1695769763;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=4LUIFygfhett/C9IkVouxBc9S18CsTasygVXq8ih1M8=;
-        b=XQwYNsX9x8IzypgNrvVcvhM+K6apC1sHdPipNv2HBURThdodW4LBL7HZKAE91dG/Mu
-         gmHeNIouNQK7gdV1q+XsG0oYogqsCj5zU2S4+/QGTJZC0Anu4lKdrm+8xOcKT4PA1wTB
-         4UqPH3Itf/ZLXGtyCY5iKttaBsZnsPzKTcVUbAvG9M24HJ8Zl47m9EMJ7Wp/H7GKYy2g
-         2471vsHpcfwGcWOHOS78FIcGdU0jOBVZwG/DwxXVcApgY7iHNEw8NzlCC87C6OffYWZH
-         2JpqUdWYYYyl5sRipg7AjEiFGnI56Giom2n0DH6V0XP1J/kNcUYJmylOpx0YU/WtUhvK
-         VnfQ==
-X-Gm-Message-State: AOJu0YxvXvADnAbPZ6mEaRWlKCcj+AlCfh7C863HVQzscm7MWrMrvFBx
-        UIMh8uLlWn1UJ4gFWxYvxTU9pl8K/PoS
-X-Google-Smtp-Source: AGHT+IH4zegi8qYNbIf4HjNVs3xFkqqVpXRECJHm3LwsmgG7lXpA+5Ik7PzctU6JReJ4a41RJKl5Ug==
-X-Received: by 2002:a81:6c43:0:b0:584:33c:31f2 with SMTP id h64-20020a816c43000000b00584033c31f2mr777537ywc.17.1695164963126;
-        Tue, 19 Sep 2023 16:09:23 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1695164970; x=1695769770;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=IAAOThTNxxDaTKwUuAmUnX6Mus9LanSm8SFJZWT7NOE=;
+        b=dLeOzqM+cVdoN+ok52R7m8vm42v4OLu/JdG5wEmMguAVtVpioP2TYFFwKvxtoO25z6
+         eaTy92i8zmfyhmjgJIT1C0XSm7bqSKgNx0bx4/4QMXgq1grXGPQYqIp9A1kmj1ye7uQB
+         da8/0aNDhGiiXrq4Mp16yKABctIX3FAsHEiouYNLMOFs9E5QTmMeyNEx1humgZ841sR0
+         R04X88z8LL4YiTxRK8dFSkB78bPwDpNiC+Kjztxh+8HrLKO2o0l4cbGoX+Z3Y94dUVtp
+         tGKkaaLxt1KNn7LFb/X8Ya1xwuH5xDxAXyjdSFtpRS4FAWoqBp9x4eeu62iY1g+L4bzT
+         RA5Q==
+X-Gm-Message-State: AOJu0Yw+Y61FxQYdtKL1zOzRod7/WWFgvuB99u2y312StTIeoQv5dJ8T
+        gbrOdVe96HeVMvFUG+Hf6JPL0u/gxg3b
+X-Google-Smtp-Source: AGHT+IELpSbTtQSw9aZCtbMiiRQh32UaN2P3kHIm7eNXHSkBJQ5NEDVRLaBPyt36f3ZrhXNFGHjsxQ==
+X-Received: by 2002:a81:d243:0:b0:59b:cde8:fc32 with SMTP id m3-20020a81d243000000b0059bcde8fc32mr939034ywl.46.1695164970047;
+        Tue, 19 Sep 2023 16:09:30 -0700 (PDT)
 Received: from fedora.mshome.net (pool-173-79-56-208.washdc.fios.verizon.net. [173.79.56.208])
-        by smtp.gmail.com with ESMTPSA id d128-20020a0df486000000b005925765aa30sm3476327ywf.135.2023.09.19.16.09.21
+        by smtp.gmail.com with ESMTPSA id d128-20020a0df486000000b005925765aa30sm3476327ywf.135.2023.09.19.16.09.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Sep 2023 16:09:22 -0700 (PDT)
+        Tue, 19 Sep 2023 16:09:29 -0700 (PDT)
 From:   Gregory Price <gourry.memverge@gmail.com>
 X-Google-Original-From: Gregory Price <gregory.price@memverge.com>
 To:     linux-mm@vger.kernel.org
@@ -57,122 +58,405 @@ Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
         bp@alien8.de, dave.hansen@linux.intel.com, hpa@zytor.com,
         arnd@arndb.de, akpm@linux-foundation.org, x86@kernel.org,
         Gregory Price <gregory.price@memverge.com>
-Subject: [RFC v2 0/5] move_phys_pages syscall 
-Date:   Tue, 19 Sep 2023 19:09:03 -0400
-Message-Id: <20230919230909.530174-1-gregory.price@memverge.com>
+Subject: [RFC v2 4/5] mm/migrate: Create move_phys_pages syscall
+Date:   Tue, 19 Sep 2023 19:09:07 -0400
+Message-Id: <20230919230909.530174-5-gregory.price@memverge.com>
 X-Mailer: git-send-email 2.39.1
+In-Reply-To: <20230919230909.530174-1-gregory.price@memverge.com>
+References: <20230919230909.530174-1-gregory.price@memverge.com>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-v2:
-new:
-- ktest for move_phys_pages
-- draft man page
-- comments about do_pages_move refactor/arguments (mm, task_nodes)
-  for the phys_pages usage path.
-- compat ptr fixes for do_pages_move
-  (will pull this out into a separate patch request as well)
+Similar to the move_pages system call, instead of taking a pid and
+list of virtual addresses, this system call takes a list of physical
+addresses.
 
-fixes:
-- capable(CAP_SYS_ADMIN) requirements
-- additional error checking in do_pages_move
-- bad refactor in add_page_for_migration, fixed null-deref due to
-  not checking the result of follow_page correctly.
-- fixed get/put folio ordering issue in add_phys_page_for_migration
-- fixed non-memcg build issue in phys_page_migratable
-- added additional physical address source information to RFC text
-- some formatting and inconsistencies between definitions
+Because there is no task to validate the memory policy against, each
+page needs to be interrogated to determine whether the migration is
+valid, and all tasks that map it need to be interrogated.
 
-=== RFC
+This is accomplished in via a rmap_walk on the folio containing
+the page, and an interrogation of all tasks that map the page (by
+way of each task's vma).
 
-This patch set is a proposal for a syscall analogous to move_pages,
-that migrates pages between NUMA nodes using physical addressing.
+Each page must be interrogated individually, which should be
+considered when using this to migrate shared regions.
 
-The intent is to better enable user-land system-wide memory tiering
-as CXL devices begin to provide memory resources on the PCIe bus.
+The remaining logic is the same as the move_pages syscall. Some
+minor changes to do_pages_move are made (to check whether an
+mm_struct is passed) in order to re-use the existing migration code.
 
-This patch set broken into 5 patches:
-  1) compat ptr bug reported by Arnd
-  2) refactor of existing migration code for code reuse
-  3) refactor of existing migration code for code reuse
-  4) The sys_move_phys_pages system call.
-  5) ktest of the syscall
-  6) draft man page
-
-The sys_move_phys_pages system call validates the page may be
-migrated by checking migratable-status of each vma mapping the page,
-and the intersection of cpuset policies each vma's task.
-
-
-Background:
-
-Userspace job schedulers, memory managers, and tiering software
-solutions depend on page migration syscalls to reallocate resources
-across NUMA nodes. Currently, these calls enable movement of memory
-associated with a specific PID. Moves can be requested in coarse,
-process-sized strokes (as with migrate_pages), and on specific virtual
-pages (via move_pages).
-
-However, a number of profiling mechanisms provide system-wide information
-that would benefit from a physical-addressing version move_pages.
-
-There are presently at least 4 ways userland can acquire physical
-address information for use with this interface, and 1 that is being
-proposed here in the near future.
-
-1) /proc/pid/pagemap: can be used to do page table translations.
-     This is only really useful for testing, and the ktest was
-     written using this functionality.
-
-2) X86:  IBS (AMD) and PEBS (Intel) can be configured to return physical
-     and/or vitual address information.
-
-3) zoneinfo:  /proc/zoneinfo exposes the start PFN of zones
-
-4) /sys/kernel/mm/page_idle:  A way to query whether a PFN is idle.
-     So long as the page size is known, this can be used to identify
-     system-wide idle pages that could be migrated to lower tiers.
-
-     https://docs.kernel.org/admin-guide/mm/idle_page_tracking.html
-
-5) CXL (Proposed): a CXL memory device on the PCIe bus may provide
-     hot/cold information about its memory.  If a heatmap is provided,
-     for example, it would have to be a device address (0-based) or a
-     physical address (some base defined by the kernel and programmed
-     into device decoders such that it can convert them to 0-based).
-
-     This is presently being proposed but has not been agreed upon yet.
-
-Information from these sources facilitates systemwide resource management,
-but with the limitations of migrate_pages and move_pages applying to
-individual tasks, their outputs must be converted back to virtual addresses
-and re-associated with specific PIDs.
-
-Doing this reverse-translation outside of the kernel requires considerable
-space and compute, and it will have to be performed again by the existing
-system calls.  Much of this work can be avoided if the pages can be
-migrated directly with physical memory addressing.
-
-Gregory Price (5):
-  mm/migrate: fix do_pages_move for compat pointers
-  mm/migrate: remove unused mm argument from do_move_pages_to_node
-  mm/migrate: refactor add_page_for_migration for code re-use
-  mm/migrate: Create move_phys_pages syscall
-  ktest: sys_move_phys_pages ktest
-
+Signed-off-by: Gregory Price <gregory.price@memverge.com>
+---
  arch/x86/entry/syscalls/syscall_32.tbl  |   1 +
  arch/x86/entry/syscalls/syscall_64.tbl  |   1 +
  include/linux/syscalls.h                |   5 +
  include/uapi/asm-generic/unistd.h       |   8 +-
  kernel/sys_ni.c                         |   1 +
- mm/migrate.c                            | 319 ++++++++++++++++++++----
+ mm/migrate.c                            | 211 +++++++++++++++++++++++-
  tools/include/uapi/asm-generic/unistd.h |   8 +-
- tools/testing/selftests/mm/migration.c  | 101 ++++++++
- 8 files changed, 396 insertions(+), 48 deletions(-)
+ 7 files changed, 228 insertions(+), 7 deletions(-)
 
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 2d0b1bd866ea..25db6d71af0c 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -457,3 +457,4 @@
+ 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	i386	cachestat		sys_cachestat
+ 452	i386	fchmodat2		sys_fchmodat2
++454	i386	move_phys_pages		sys_move_phys_pages
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 1d6eee30eceb..9676f2e7698c 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -375,6 +375,7 @@
+ 451	common	cachestat		sys_cachestat
+ 452	common	fchmodat2		sys_fchmodat2
+ 453	64	map_shadow_stack	sys_map_shadow_stack
++454	common	move_phys_pages		sys_move_phys_pages
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 22bc6bc147f8..6860675a942f 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -821,6 +821,11 @@ asmlinkage long sys_move_pages(pid_t pid, unsigned long nr_pages,
+ 				const int __user *nodes,
+ 				int __user *status,
+ 				int flags);
++asmlinkage long sys_move_phys_pages(unsigned long nr_pages,
++				    const void __user * __user *pages,
++				    const int __user *nodes,
++				    int __user *status,
++				    int flags);
+ asmlinkage long sys_rt_tgsigqueueinfo(pid_t tgid, pid_t  pid, int sig,
+ 		siginfo_t __user *uinfo);
+ asmlinkage long sys_perf_event_open(
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index abe087c53b4b..8838fcfaf261 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -823,8 +823,14 @@ __SYSCALL(__NR_cachestat, sys_cachestat)
+ #define __NR_fchmodat2 452
+ __SYSCALL(__NR_fchmodat2, sys_fchmodat2)
+ 
++/* CONFIG_MMU only */
++#ifndef __ARCH_NOMMU
++#define __NR_move_phys_pages 454
++__SYSCALL(__NR_move_phys_pages, sys_move_phys_pages)
++#endif
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 453
++#define __NR_syscalls 455
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index e137c1385c56..07441b10f92a 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -192,6 +192,7 @@ COND_SYSCALL(migrate_pages);
+ COND_SYSCALL(move_pages);
+ COND_SYSCALL(set_mempolicy_home_node);
+ COND_SYSCALL(cachestat);
++COND_SYSCALL(move_phys_pages);
+ 
+ COND_SYSCALL(perf_event_open);
+ COND_SYSCALL(accept4);
+diff --git a/mm/migrate.c b/mm/migrate.c
+index 1123d841a7f1..2d06557c0b80 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2165,9 +2165,118 @@ static int move_pages_and_store_status(int node,
+ 	return store_status(status, start, node, i - start);
+ }
+ 
++struct rmap_page_ctxt {
++	bool found;
++	bool migratable;
++	bool node_allowed;
++	int node;
++};
++
++/*
++ * Walks each vma mapping a given page and determines if those
++ * vma's are both migratable, and that the target node is within
++ * the allowed cpuset of the owning task.
++ */
++static bool phys_page_migratable(struct folio *folio,
++				 struct vm_area_struct *vma,
++				 unsigned long address,
++				 void *arg)
++{
++	struct rmap_page_ctxt *ctxt = (struct rmap_page_ctxt *)arg;
++	struct task_struct *owner = vma->vm_mm->owner;
++	/* On non-memcg systems, the allowed set is the possible set */
++#ifdef CONFIG_MEMCG
++	nodemask_t task_nodes = cpuset_mems_allowed(owner);
++#else
++	nodemask_t task_nodes = node_possible_map;
++#endif
++
++	ctxt->found |= true;
++	ctxt->migratable &= vma_migratable(vma);
++	ctxt->node_allowed &= node_isset(ctxt->node, task_nodes);
++
++	return ctxt->migratable && ctxt->node_allowed;
++}
++
++static struct folio *phys_migrate_get_folio(struct page *page)
++{
++	struct folio *folio;
++
++	folio = page_folio(page);
++	if (!folio_test_lru(folio) || !folio_try_get(folio))
++		return NULL;
++	if (unlikely(page_folio(page) != folio || !folio_test_lru(folio))) {
++		folio_put(folio);
++		folio = NULL;
++	}
++	return folio;
++}
++
++/*
++ * Validates the physical address is online and migratable.  Walks the folio
++ * containing the page to validate the vma is migratable and the cpuset node
++ * restrictions.  Then calls add_page_for_migration to isolate it from the
++ * LRU and place it into the given pagelist.
++ * Returns:
++ *     errno - if the page is not online, migratable, or can't be isolated
++ *     0 - when it doesn't have to be migrated because it is already on the
++ *         target node
++ *     1 - when it has been queued
++ */
++static int add_phys_page_for_migration(const void __user *p, int node,
++				       struct list_head *pagelist,
++				       bool migrate_all)
++{
++	unsigned long pfn;
++	struct page *page;
++	struct folio *folio;
++	int err;
++	struct rmap_page_ctxt rmctxt = {
++		.found = false,
++		.migratable = true,
++		.node_allowed = true,
++		.node = node
++	};
++	struct rmap_walk_control rwc = {
++		.rmap_one = phys_page_migratable,
++		.arg = &rmctxt
++	};
++
++	pfn = ((unsigned long)p) >> PAGE_SHIFT;
++	page = pfn_to_online_page(pfn);
++	if (!page || PageTail(page))
++		return -ENOENT;
++
++	folio = phys_migrate_get_folio(page);
++	if (folio)
++		rmap_walk(folio, &rwc);
++
++	if (!rmctxt.found)
++		err = -ENOENT;
++	else if (!rmctxt.migratable)
++		err = -EFAULT;
++	else if (!rmctxt.node_allowed)
++		err = -EACCES;
++	else
++		err = add_page_for_migration(page, node, pagelist, migrate_all);
++
++	if (folio)
++		folio_put(folio);
++
++	return err;
++}
++
+ /*
+  * Migrate an array of page address onto an array of nodes and fill
+  * the corresponding array of status.
++ *
++ * When the mm argument is not NULL, task_nodes is expected to be the
++ * cpuset nodemask for the task which owns the mm_struct, and the
++ * values located in (*pages) are expected to be virtual addresses.
++ *
++ * When the mm argument is NULL, the values located at (*pages) are
++ * expected to be physical addresses, and task_nodes is expected to
++ * be empty.
+  */
+ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 			 unsigned long nr_pages,
+@@ -2181,6 +2290,10 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 	int start, i;
+ 	int err = 0, err1;
+ 
++	/* This should never occur in regular operation */
++	if (!mm && nodes_weight(task_nodes) > 0)
++		return -EINVAL;
++
+ 	lru_cache_disable();
+ 
+ 	for (i = start = 0; i < nr_pages; i++) {
+@@ -2209,7 +2322,14 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 			goto out_flush;
+ 
+ 		err = -EACCES;
+-		if (!node_isset(node, task_nodes))
++		/*
++		 * if mm is NULL, then the pages are addressed via physical
++		 * address and the task_nodes structure is empty. Validation
++		 * of migratability is deferred to add_phys_page_for_migration
++		 * where vma's that map the address will have their node_mask
++		 * checked to ensure the requested node bit is set.
++		 */
++		if (mm && !node_isset(node, task_nodes))
+ 			goto out_flush;
+ 
+ 		if (current_node == NUMA_NO_NODE) {
+@@ -2226,10 +2346,17 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 
+ 		/*
+ 		 * Errors in the page lookup or isolation are not fatal and we simply
+-		 * report them via status
++		 * report them via status.
++		 *
++		 * If mm is NULL, then p treated as is a physical address.
+ 		 */
+-		err = add_virt_page_for_migration(mm, p, current_node, &pagelist,
+-					     flags & MPOL_MF_MOVE_ALL);
++		if (mm)
++			err = add_virt_page_for_migration(mm, p, current_node, &pagelist,
++						     flags & MPOL_MF_MOVE_ALL);
++		else
++			err = add_phys_page_for_migration(p, current_node, &pagelist,
++					flags & MPOL_MF_MOVE_ALL);
++
+ 
+ 		if (err > 0) {
+ 			/* The page is successfully queued for migration */
+@@ -2317,6 +2444,37 @@ static void do_pages_stat_array(struct mm_struct *mm, unsigned long nr_pages,
+ 	mmap_read_unlock(mm);
+ }
+ 
++/*
++ * Determine the nodes pages pointed to by the physical addresses in the
++ * pages array, and store those node values in the status array
++ */
++static void do_phys_pages_stat_array(unsigned long nr_pages,
++				     const void __user **pages, int *status)
++{
++	unsigned long i;
++
++	for (i = 0; i < nr_pages; i++) {
++		unsigned long pfn = (unsigned long)(*pages) >> PAGE_SHIFT;
++		struct page *page = pfn_to_online_page(pfn);
++		int err = -ENOENT;
++
++		if (!page)
++			goto set_status;
++
++		get_page(page);
++
++		if (!is_zone_device_page(page))
++			err = page_to_nid(page);
++
++		put_page(page);
++set_status:
++		*status = err;
++
++		pages++;
++		status++;
++	}
++}
++
+ static int get_compat_pages_array(const void __user *chunk_pages[],
+ 				  const void __user * __user *pages,
+ 				  unsigned long chunk_nr)
+@@ -2359,7 +2517,10 @@ static int do_pages_stat(struct mm_struct *mm, unsigned long nr_pages,
+ 				break;
+ 		}
+ 
+-		do_pages_stat_array(mm, chunk_nr, chunk_pages, chunk_status);
++		if (mm)
++			do_pages_stat_array(mm, chunk_nr, chunk_pages, chunk_status);
++		else
++			do_phys_pages_stat_array(chunk_nr, chunk_pages, chunk_status);
+ 
+ 		if (copy_to_user(status, chunk_status, chunk_nr * sizeof(*status)))
+ 			break;
+@@ -2460,6 +2621,46 @@ SYSCALL_DEFINE6(move_pages, pid_t, pid, unsigned long, nr_pages,
+ 	return kernel_move_pages(pid, nr_pages, pages, nodes, status, flags);
+ }
+ 
++/*
++ * Move a list of physically-addressed pages to the list of target nodes
++ */
++static int kernel_move_phys_pages(unsigned long nr_pages,
++				  const void __user * __user *pages,
++				  const int __user *nodes,
++				  int __user *status, int flags)
++{
++	int err;
++	nodemask_t dummy_nodes;
++
++	if (flags & ~(MPOL_MF_MOVE|MPOL_MF_MOVE_ALL))
++		return -EINVAL;
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/*
++	 * When the mm argument to do_pages_move is null, the task_nodes
++	 * argument is ignored, so pass in an empty nodemask as a dummy.
++	 */
++	nodes_clear(dummy_nodes);
++	if (nodes)
++		err = do_pages_move(NULL, dummy_nodes, nr_pages, pages,
++			nodes, status, flags);
++	else
++		err = do_pages_stat(NULL, nr_pages, pages, status);
++
++	return err;
++}
++
++SYSCALL_DEFINE5(move_phys_pages, unsigned long, nr_pages,
++		const void __user * __user *, pages,
++		const int __user *, nodes,
++		int __user *, status, int, flags)
++{
++	return kernel_move_phys_pages(nr_pages, pages, nodes, status, flags);
++}
++
++
+ #ifdef CONFIG_NUMA_BALANCING
+ /*
+  * Returns true if this is a safe migration target node for misplaced NUMA
+diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
+index fd6c1cb585db..b140ad444946 100644
+--- a/tools/include/uapi/asm-generic/unistd.h
++++ b/tools/include/uapi/asm-generic/unistd.h
+@@ -820,8 +820,14 @@ __SYSCALL(__NR_set_mempolicy_home_node, sys_set_mempolicy_home_node)
+ #define __NR_cachestat 451
+ __SYSCALL(__NR_cachestat, sys_cachestat)
+ 
++/* CONFIG_MMU only */
++#ifndef __ARCH_NOMMU
++#define __NR_move_phys_pages 454
++__SYSCALL(__NR_move_phys_pages, sys_move_phys_pages)
++#endif
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 452
++#define __NR_syscalls 455
+ 
+ /*
+  * 32 bit systems traditionally used different
 -- 
 2.39.1
 
