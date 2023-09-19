@@ -2,53 +2,53 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 51837CE79A8
-	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 23:09:57 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id DC99ACE79AC
+	for <linux-api@archiver.kernel.org>; Tue, 19 Sep 2023 23:09:58 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233463AbjISXKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S233632AbjISXKB (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Tue, 19 Sep 2023 19:10:01 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55944 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:56390 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S233781AbjISXJq (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 19:09:46 -0400
-Received: from mail-yw1-x1142.google.com (mail-yw1-x1142.google.com [IPv6:2607:f8b0:4864:20::1142])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 74A0C1B9;
-        Tue, 19 Sep 2023 16:09:29 -0700 (PDT)
-Received: by mail-yw1-x1142.google.com with SMTP id 00721157ae682-59bc97d7b3dso4487777b3.1;
-        Tue, 19 Sep 2023 16:09:29 -0700 (PDT)
+        with ESMTP id S233710AbjISXJj (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Tue, 19 Sep 2023 19:09:39 -0400
+Received: from mail-yw1-x1143.google.com (mail-yw1-x1143.google.com [IPv6:2607:f8b0:4864:20::1143])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 371B8192;
+        Tue, 19 Sep 2023 16:09:25 -0700 (PDT)
+Received: by mail-yw1-x1143.google.com with SMTP id 00721157ae682-59e7fb87f1cso34133367b3.2;
+        Tue, 19 Sep 2023 16:09:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1695164968; x=1695769768; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1695164965; x=1695769765; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=BLouotyXGn65Q/3Hxsys2lst/s1kpw1SClrVTeQFtkc=;
-        b=TGptGmlT/N3cQ9n7Jhz7htjuNxuS+DKE1ih2L99YImvZgafvrYWZTfec5VK3M6O7NQ
-         LSx9bDe0m1yqFnwaskoXaZTaGJfVKbhbb3D4yHuQE4KnFc8lJHcvuGVWLdLe774f1mYe
-         83Zx+knnuHaMrsyIVsvk6VI8rFL2XNv1IrcS6oBK/H/3YiFWZnbUnODfpaXbbdUtR0o9
-         X5hGyypUlaYLk0SZB8BVgzZzZQdiaR7mu7P4Xq1mfC8WbUhkxfkZNM8MbHbNUabpY5sk
-         skyqQqXjRf4vNrbXuHRN3QuTSRR8v4AJrFnnctUJb2eCxXo4eLVOafX77u8KX+CR1Siq
-         /G3w==
+        bh=Z7GJ9wPpso5luu9UJg5nCytl1V4NyUk99h1NLHwPaTY=;
+        b=mJJeUQL4UPIJeXYloDFf/a65FjxYe29oFakTUy+PmB+o5Idzni6+MpoqlB3Kg6ksAN
+         FwU1v9G4KZuRMYNJu0+B4WTYiAhhBoVj89NTPV6zeq0KLzLiidscAl9qrFy0Z9b+1dNc
+         8bWqyd2rzGqzpU71CE3RNP4Bu9LHbNlunmkY6revONmvRQ5CLR8V7FlPwJPxoeUXk5re
+         ATUy/bOuP6j6+f1Hz8S6LJocZec5syTjJQbW6LuEGeZtOURLkT+VRm1O4fFIYMYcxVsc
+         fGuiYCagjuLAsC8QdUZ0oFLQZ5DFswARcYFYQWnSZM+HmG/FRLOEwG5jg8Ppb/agTtpw
+         k8+A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695164968; x=1695769768;
+        d=1e100.net; s=20230601; t=1695164965; x=1695769765;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=BLouotyXGn65Q/3Hxsys2lst/s1kpw1SClrVTeQFtkc=;
-        b=GdEE6eehsreTyCMlE2C2eCSK0WvD3n+MGXKW/Re2G5Pel6o1aNqHadB1uhiPiIBUYd
-         KuOcyGSLA9b09M0p0Ewts+3RDOSbIeeEXfcO9UEuKJkXLYfpzTrCG0AFlThjUWn1OWfF
-         YFjx5jBRcPOu3d8MMFLPJo7f0twgwRBa8BySqVC6WMGKdddGRUX8+2shLA6f/HNw9K6u
-         sNS5iGgnHVzAX3x9bpw6J6rqigQPelbwAF/S7Nv2UbTtZTzS/OTXL61ArYEbkYV0UHZ1
-         SCYs4wRrAZPYBmIVHe05KDjWp1qjCQO2t/rKXBQ120L69JAQODf594Ev7plP7T2vD/7b
-         8zng==
-X-Gm-Message-State: AOJu0YzR1D31m63x+9FeftBZ9FYIC1Q5d4t6iSzvbJoML2NmD8j4xXa/
-        aQKx8pk/RyFDV/H006vcb+kD4Qhsm11X
-X-Google-Smtp-Source: AGHT+IF47zIeEsarZk/JZFIFSE3MQxssVw9sGEWuhuP2/NTGCJ+Cj6XHJ/FmmxB/D4g/ZGB8xvzDKw==
-X-Received: by 2002:a0d:d4ce:0:b0:56f:fd0a:588d with SMTP id w197-20020a0dd4ce000000b0056ffd0a588dmr5098911ywd.8.1695164968364;
-        Tue, 19 Sep 2023 16:09:28 -0700 (PDT)
+        bh=Z7GJ9wPpso5luu9UJg5nCytl1V4NyUk99h1NLHwPaTY=;
+        b=sNJaA1IGIBwrp0hCkd0xzf+Adh5BTnihOmnnDbwhC9R9QZQgtTBQdpWkJHRMr/92PK
+         P3NW1TA+szYbbdK9MiCdK3i11YlMivWSEaJJHNorRgjtkxa9qP9rMF9/51fFKRdeKni7
+         Ok5N98ZPFrpa5CPcVwvzGbN6EwV7X4T5UtcrmYDg6I5qxPSjqM1ugtvmlysFV3/pp8js
+         O/3VYwIP8KK7PC2LpOY5p2c6xnCCzczOWdVyBCdwN08q/CNyi41hmfm9w6aVlf2TUEtg
+         G6RIchP5mZNL0Afwzu8U+f7PdL8FGBJMqFA71V2qdta4aj4rcdmsaakcSAn6ysTi/sC0
+         CXMA==
+X-Gm-Message-State: AOJu0YzTvN6pHK0BtnwqtrksbLjsDbIYJc7pmLrqNfPTKF5Gg0iDm0vV
+        VQfaYRtNQOwgsgSkptKid8Dwa28RGxim
+X-Google-Smtp-Source: AGHT+IHiLoInbbhr1x+Eyf/Q7rjl4gnHdTM14EuewXrOpJrVqDZ3walBWmHdRGD6TgQ1epsNl/x4IQ==
+X-Received: by 2002:a81:9e49:0:b0:59b:2458:f608 with SMTP id n9-20020a819e49000000b0059b2458f608mr777300ywj.30.1695164964975;
+        Tue, 19 Sep 2023 16:09:24 -0700 (PDT)
 Received: from fedora.mshome.net (pool-173-79-56-208.washdc.fios.verizon.net. [173.79.56.208])
-        by smtp.gmail.com with ESMTPSA id d128-20020a0df486000000b005925765aa30sm3476327ywf.135.2023.09.19.16.09.27
+        by smtp.gmail.com with ESMTPSA id d128-20020a0df486000000b005925765aa30sm3476327ywf.135.2023.09.19.16.09.24
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 19 Sep 2023 16:09:28 -0700 (PDT)
+        Tue, 19 Sep 2023 16:09:24 -0700 (PDT)
 From:   Gregory Price <gourry.memverge@gmail.com>
 X-Google-Original-From: Gregory Price <gregory.price@memverge.com>
 To:     linux-mm@vger.kernel.org
@@ -58,9 +58,9 @@ Cc:     linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org,
         bp@alien8.de, dave.hansen@linux.intel.com, hpa@zytor.com,
         arnd@arndb.de, akpm@linux-foundation.org, x86@kernel.org,
         Gregory Price <gregory.price@memverge.com>
-Subject: [RFC v2 3/5] mm/migrate: refactor add_page_for_migration for code re-use
-Date:   Tue, 19 Sep 2023 19:09:06 -0400
-Message-Id: <20230919230909.530174-4-gregory.price@memverge.com>
+Subject: [RFC v2 1/5] mm/migrate: fix do_pages_move for compat pointers
+Date:   Tue, 19 Sep 2023 19:09:04 -0400
+Message-Id: <20230919230909.530174-2-gregory.price@memverge.com>
 X-Mailer: git-send-email 2.39.1
 In-Reply-To: <20230919230909.530174-1-gregory.price@memverge.com>
 References: <20230919230909.530174-1-gregory.price@memverge.com>
@@ -70,158 +70,49 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-add_page_for_migration presently does two actions:
-  1) validates the page is present and migratable
-  2) isolates the page from LRU and puts it into the migration list
-
-Break add_page_for_migration into 2 functions:
-  add_page_for_migration - isolate the page from LUR and add to list
-  add_virt_page_for_migration - validate the page and call the above
-
-add_page_for_migration does not require the mm_struct and so can be
-re-used for a physical addressing version of move_pages
+do_pages_move does not handle compat pointers for the page list.
+correctly.  Add in_compat_syscall check and appropriate get_user
+fetch when iterating the page list.
 
 Signed-off-by: Gregory Price <gregory.price@memverge.com>
+Reported-by: Arnd Bergmann <arnd@arndb.de>
+Co-developed-by: Arnd Bergmann <arnd@arndb.de>
 ---
- mm/migrate.c | 83 +++++++++++++++++++++++++++++++---------------------
- 1 file changed, 50 insertions(+), 33 deletions(-)
+ mm/migrate.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
 
 diff --git a/mm/migrate.c b/mm/migrate.c
-index dbe436163d65..1123d841a7f1 100644
+index b7fa020003f3..a0b0c5a7f8a5 100644
 --- a/mm/migrate.c
 +++ b/mm/migrate.c
-@@ -2042,52 +2042,33 @@ static int do_move_pages_to_node(struct list_head *pagelist, int node)
- }
- 
- /*
-- * Resolves the given address to a struct page, isolates it from the LRU and
-- * puts it to the given pagelist.
-+ * Isolates the page from the LRU and puts it into the given pagelist
-  * Returns:
-  *     errno - if the page cannot be found/isolated
-  *     0 - when it doesn't have to be migrated because it is already on the
-  *         target node
-  *     1 - when it has been queued
-  */
--static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
--		int node, struct list_head *pagelist, bool migrate_all)
-+static int add_page_for_migration(struct page *page, int node,
-+		struct list_head *pagelist, bool migrate_all)
+@@ -2159,6 +2159,7 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 			 const int __user *nodes,
+ 			 int __user *status, int flags)
  {
--	struct vm_area_struct *vma;
--	unsigned long addr;
--	struct page *page;
- 	int err;
- 	bool isolated;
++	compat_uptr_t __user *compat_pages = (void __user *)pages;
+ 	int current_node = NUMA_NO_NODE;
+ 	LIST_HEAD(pagelist);
+ 	int start, i;
+@@ -2171,8 +2172,17 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+ 		int node;
  
--	mmap_read_lock(mm);
--	addr = (unsigned long)untagged_addr_remote(mm, p);
--
--	err = -EFAULT;
--	vma = vma_lookup(mm, addr);
--	if (!vma || !vma_migratable(vma))
--		goto out;
--
--	/* FOLL_DUMP to ignore special (like zero) pages */
--	page = follow_page(vma, addr, FOLL_GET | FOLL_DUMP);
--
--	err = PTR_ERR(page);
--	if (IS_ERR(page))
--		goto out;
--
- 	err = -ENOENT;
- 	if (!page)
- 		goto out;
+ 		err = -EFAULT;
+-		if (get_user(p, pages + i))
+-			goto out_flush;
++		if (in_compat_syscall()) {
++			compat_uptr_t cp;
++
++			if (get_user(cp, compat_pages + i))
++				goto out_flush;
++
++			p = compat_ptr(cp);
++		} else {
++			if (get_user(p, pages + i))
++				goto out_flush;
++		}
+ 		if (get_user(node, nodes + i))
+ 			goto out_flush;
  
- 	if (is_zone_device_page(page))
--		goto out_putpage;
-+		goto out;
- 
- 	err = 0;
- 	if (page_to_nid(page) == node)
--		goto out_putpage;
-+		goto out;
- 
- 	err = -EACCES;
- 	if (page_mapcount(page) > 1 && !migrate_all)
--		goto out_putpage;
-+		goto out;
- 
- 	if (PageHuge(page)) {
- 		if (PageHead(page)) {
-@@ -2101,7 +2082,7 @@ static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
- 		isolated = isolate_lru_page(head);
- 		if (!isolated) {
- 			err = -EBUSY;
--			goto out_putpage;
-+			goto out;
- 		}
- 
- 		err = 1;
-@@ -2110,12 +2091,48 @@ static int add_page_for_migration(struct mm_struct *mm, const void __user *p,
- 			NR_ISOLATED_ANON + page_is_file_lru(head),
- 			thp_nr_pages(head));
- 	}
--out_putpage:
--	/*
--	 * Either remove the duplicate refcount from
--	 * isolate_lru_page() or drop the page ref if it was
--	 * not isolated.
--	 */
-+out:
-+	return err;
-+}
-+
-+/*
-+ * Resolves the given address to a struct page, isolates it from the LRU and
-+ * puts it to the given pagelist.
-+ * Returns:
-+ *     errno - if the page cannot be found/isolated
-+ *     0 - when it doesn't have to be migrated because it is already on the
-+ *         target node
-+ *     1 - when it has been queued
-+ */
-+static int add_virt_page_for_migration(struct mm_struct *mm,
-+		const void __user *p, int node, struct list_head *pagelist,
-+		bool migrate_all)
-+{
-+	struct vm_area_struct *vma;
-+	unsigned long addr;
-+	struct page *page;
-+	int err = -EFAULT;
-+
-+	mmap_read_lock(mm);
-+	addr = (unsigned long)untagged_addr_remote(mm, p);
-+
-+	vma = vma_lookup(mm, addr);
-+	if (!vma || !vma_migratable(vma))
-+		goto out;
-+
-+	/* FOLL_DUMP to ignore special (like zero) pages */
-+	page = follow_page(vma, addr, FOLL_GET | FOLL_DUMP);
-+
-+	err = PTR_ERR(page);
-+	if (IS_ERR(page))
-+		goto out;
-+
-+	err = -ENOENT;
-+	if (!page)
-+		goto out;
-+
-+	err = add_page_for_migration(page, node, pagelist, migrate_all);
-+
- 	put_page(page);
- out:
- 	mmap_read_unlock(mm);
-@@ -2211,7 +2228,7 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
- 		 * Errors in the page lookup or isolation are not fatal and we simply
- 		 * report them via status
- 		 */
--		err = add_page_for_migration(mm, p, current_node, &pagelist,
-+		err = add_virt_page_for_migration(mm, p, current_node, &pagelist,
- 					     flags & MPOL_MF_MOVE_ALL);
- 
- 		if (err > 0) {
 -- 
 2.39.1
 
