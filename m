@@ -2,83 +2,93 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 22DD2CD4939
-	for <linux-api@archiver.kernel.org>; Wed, 20 Sep 2023 23:50:40 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 8DB8EE7D0A2
+	for <linux-api@archiver.kernel.org>; Thu, 21 Sep 2023 18:11:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229478AbjITXun (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 20 Sep 2023 19:50:43 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:43358 "EHLO
+        id S230142AbjIUSLr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 21 Sep 2023 14:11:47 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48284 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229547AbjITXum (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 20 Sep 2023 19:50:42 -0400
-Received: from bombadil.infradead.org (bombadil.infradead.org [IPv6:2607:7c80:54:3::133])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 71D1EDE;
-        Wed, 20 Sep 2023 16:50:25 -0700 (PDT)
+        with ESMTP id S229734AbjIUSLP (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 21 Sep 2023 14:11:15 -0400
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C1D64580B1;
+        Thu, 21 Sep 2023 10:19:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=bombadil.20210309; h=Sender:Content-Transfer-Encoding:
-        MIME-Version:Message-Id:Date:Subject:Cc:To:From:Reply-To:Content-Type:
-        Content-ID:Content-Description:In-Reply-To:References;
-        bh=tlgdA+9zRCeEqqQqdnsCAMTZo8+aT2RUqSoMURIS/L0=; b=gZWIxfyxxYZn8qx/ODs6UihV7w
-        yCc0UiMKZgKV21JT2OoezTRYQ6ZGJcTL+LjYU5Kl/ydpycLgWmI0rN9OxmzJ0tDrNFETenW0qyjAZ
-        jZcuflWPs1JomA/GzhSRDQjsMUOOk4z+gYkPVnUKU8pcav2geuBrihQwvqfcwFuJeC/FqrHCdIOGa
-        RgflSoRRiawgM6syJ0tqe9jN/M961ZNwsACj5a4lzDKQPBdWfDf/FHcRqpKY6e5OEA2jBFyQFLQkO
-        QUCkB3MRGO3k5nPhIwYDYBdShihgvRvYDf0SO0+mbkfbGdPh0ZXroFXiWk9OQFHuS2fEAoJtTecGO
-        cWI7OljA==;
-Received: from mcgrof by bombadil.infradead.org with local (Exim 4.96 #2 (Red Hat Linux))
-        id 1qj6xb-004UYT-1u;
-        Wed, 20 Sep 2023 23:50:23 +0000
-From:   Luis Chamberlain <mcgrof@kernel.org>
-To:     alx@kernel.org, linux-man@vger.kernel.org,
-        linux-api@vger.kernel.org
-Cc:     hughd@google.com, p.raghav@samsung.com, da.gomez@samsung.com,
-        rohan.puri@samsung.com, rpuri.linux@gmail.com,
-        a.manzanares@samsung.com, dave@stgolabs.net, yosryahmed@google.com,
-        keescook@chromium.org, mcgrof@kernel.org, patches@lists.linux.dev,
-        linux-fsdevel@vger.kernel.org, linux-mm@kvack.org,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH v2] tmpfs.5: extend with new noswap documentation
-Date:   Wed, 20 Sep 2023 16:50:22 -0700
-Message-Id: <20230920235022.1070752-1-mcgrof@kernel.org>
-X-Mailer: git-send-email 2.38.1
+        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
+        Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To;
+        bh=+WIdohk1HL2nzrHveE43px5IkTjGhV/7JBkH2s5C174=; b=ViAEDbVGOlyxSg3ebF8KxwAziD
+        ZJXxCIy42X12v4Mep2vVxljFUC4bpie4jrjZc5b7y0aR/AFBwBx8QQf7IyrWb6in0/ZjL0xzIPnSx
+        pb6UQGfcsxlZIGeiFtjBChv2JNIQwRXxcHOt6/36MAnZlaHZe1+0fz5A4w/a/h9G+i1YiZoOjLNE4
+        OwpOyR+wNSWxm0UFxB37sVSQEBBvFtN6ftl6Pn5yJIMtEP7rAmx4bdY6aw54FXq2amDzF8WCOnnaP
+        MIOPlPb7NIN0RqyDlWXr9vkr9PkW1Y4MN8g0z/WF3CPS10TmZ2L6+1wJRYHnIB47xz4TyxFPPPHSd
+        HzrBon7A==;
+Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
+        id 1qjHQN-00FJvv-1Z;
+        Thu, 21 Sep 2023 11:00:59 +0000
+Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
+        id 15CCD30067A; Thu, 21 Sep 2023 13:00:43 +0200 (CEST)
+Message-Id: <20230921105248.683656626@noisy.programming.kicks-ass.net>
+User-Agent: quilt/0.65
+Date:   Thu, 21 Sep 2023 12:45:16 +0200
+From:   peterz@infradead.org
+To:     tglx@linutronix.de, axboe@kernel.dk
+Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
+        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
+        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
+        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
+        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
+        linux-mm@kvack.org, linux-arch@vger.kernel.org,
+        malteskarupke@web.de, Christoph Hellwig <hch@lst.de>
+Subject: [PATCH v3 11/15] mm: Add vmalloc_huge_node()
+References: <20230921104505.717750284@noisy.programming.kicks-ass.net>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Sender: Luis Chamberlain <mcgrof@infradead.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Disposition: inline; filename=peterz-vmalloc_huge_node.patch
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Linux commit 2c6efe9cf2d7 ("shmem: add support to ignore swap")
-merged as of v6.4 added support to disable swap for tmpfs mounts.
+To enable node specific hash-tables.
 
-This extends the man page to document that.
-
-Signed-off-by: Luis Chamberlain <mcgrof@kernel.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 ---
+ include/linux/vmalloc.h |    1 +
+ mm/vmalloc.c            |    7 +++++++
+ 2 files changed, 8 insertions(+)
 
-changes on v2:
+Index: linux-2.6/include/linux/vmalloc.h
+===================================================================
+--- linux-2.6.orig/include/linux/vmalloc.h
++++ linux-2.6/include/linux/vmalloc.h
+@@ -152,6 +152,7 @@ extern void *__vmalloc_node_range(unsign
+ void *__vmalloc_node(unsigned long size, unsigned long align, gfp_t gfp_mask,
+ 		int node, const void *caller) __alloc_size(1);
+ void *vmalloc_huge(unsigned long size, gfp_t gfp_mask) __alloc_size(1);
++void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node) __alloc_size(1);
+ 
+ extern void *__vmalloc_array(size_t n, size_t size, gfp_t flags) __alloc_size(1, 2);
+ extern void *vmalloc_array(size_t n, size_t size) __alloc_size(1, 2);
+Index: linux-2.6/mm/vmalloc.c
+===================================================================
+--- linux-2.6.orig/mm/vmalloc.c
++++ linux-2.6/mm/vmalloc.c
+@@ -3420,6 +3420,13 @@ void *vmalloc(unsigned long size)
+ }
+ EXPORT_SYMBOL(vmalloc);
+ 
++void *vmalloc_huge_node(unsigned long size, gfp_t gfp_mask, int node)
++{
++	return __vmalloc_node_range(size, 1, VMALLOC_START, VMALLOC_END,
++				    gfp_mask, PAGE_KERNEL, VM_ALLOW_HUGE_VMAP,
++				    node, __builtin_return_address(0));
++}
++
+ /**
+  * vmalloc_huge - allocate virtually contiguous memory, allow huge pages
+  * @size:      allocation size
 
- - Use semantic newlines
-
- man5/tmpfs.5 | 6 ++++++
- 1 file changed, 6 insertions(+)
-
-diff --git a/man5/tmpfs.5 b/man5/tmpfs.5
-index 5274e632d6fd..047a17a78ee0 100644
---- a/man5/tmpfs.5
-+++ b/man5/tmpfs.5
-@@ -103,6 +103,12 @@ suffixes like
- .BR size ,
- but not a % suffix.
- .TP
-+.BR noswap "(since Linux 6.4)"
-+.\" commit 2c6efe9cf2d7841b75fe38ed1adbd41a90f51ba0
-+Disables swap.
-+Remounts must respect the original settings.
-+By default swap is enabled.
-+.TP
- .BR mode "=\fImode\fP"
- Set initial permissions of the root directory.
- .TP
--- 
-2.39.2
 
