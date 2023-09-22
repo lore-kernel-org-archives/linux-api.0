@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id D0D82CE7A8A
-	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 20:59:49 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 35306CE7A8B
+	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 20:59:50 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229746AbjIVU7x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Sep 2023 16:59:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52776 "EHLO
+        id S229763AbjIVU7y (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Sep 2023 16:59:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52790 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229678AbjIVU7w (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 16:59:52 -0400
+        with ESMTP id S229745AbjIVU7x (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 16:59:53 -0400
 Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1E4A31A4;
-        Fri, 22 Sep 2023 13:59:46 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B8B151A1;
+        Fri, 22 Sep 2023 13:59:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Subject:References:In-Reply-To:Cc:To:
-        From:Date:Message-Id:Sender:Reply-To:MIME-Version:Content-Type:
-        Content-Transfer-Encoding:Content-ID:Content-Description;
-        bh=reMqHnLawtQWzzJGyWchM0kycFgNaHwuVHMPL5F7/LQ=; b=fwFeoZP8X3SOPmGO0C+SKoLaLG
-        UAKf05bsOetdUDWVacCvVL3SjXif6z0O3NNcDeX2/R9AoKIxklW0DVkMVGiUH76DI2+9q/U/93kHO
-        bNuJPeHtMFR0JJKT4MjBEckZyH2RdH3VzULD/Pw+zP2inGLQvGtVqVNd3wnqS01TNY77T0U9q+wVk
-        rl3NW0T1VqrbVmYNUn4m+pstkERd4VyJW+r7qM5NQJQeiKA/maXRRwLEEz82fnvXMnoZHAm/exTmY
-        F7jM4yvKtti+5FjtFSQbidMffXd456V/d5TWPSxjJzB6J5g9wzFI2cQmKMWVYI8rHZlOJDkk8SNnR
-        K0IQUNYA==;
+        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
+        Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To;
+        bh=m5eUhTj4OMdhGrZCCmAgS0fprpsPOZ8qVsmY+pLiWtU=; b=DCD6izECXSbSHvAInV6KQTFrIm
+        AM42jx2fn31pHdWtIwgBg7UYPun61VPp7UZmrCy0O+wtnJgcLfiXyzMLfRpoWnTWzpJVGQJ8jo7J5
+        bFtxuDcm4+py1iQQAF3vZol/m5JSW+wtkIYwBQUnx+DP6uHi6VjF8Qs8bA0HREM7IAbga7BkRcJ8z
+        l7kAiGcSdKDyHIkEYK9JgiGqtRuvl75DEd2RCLmo9ym5K2osMT3RX8p5NMe8f3cwH2RuRKq4O4KF/
+        uVS4O05DZT1B9tQivLWaNkuXz1fPyb4mCZcQheDnfTNDElGcU3IAvwCoLKAF9ShDt8Wk2e9MO5frF
+        4ixJusiA==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
-        id 1qjnEs-00GXz9-2k;
+        id 1qjnEs-00GXzB-2v;
         Fri, 22 Sep 2023 20:59:05 +0000
 Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
-        id E269230042E; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
-Message-Id: <20230922200120.011184118@infradead.org>
+        id EC2F03005AA; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
+Message-Id: <20230922205449.923636292@infradead.org>
 User-Agent: quilt/0.65
-Date:   Fri, 22 Sep 2023 22:01:20 +0200
+Date:   Fri, 22 Sep 2023 22:01:22 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -43,75 +43,300 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de, steve.shaw@intel.com,
         marko.makela@mariadb.com, andrei.artemev@intel.com
-In-Reply-To: <20230921104505.717750284@noisy.programming.kicks-ass.net>
+Subject: [PATCH 16/15] futex,selftests: Extend the futex selftests for NUMA
 References: <20230921104505.717750284@noisy.programming.kicks-ass.net>
  <20230921104505.717750284@noisy.programming.kicks-ass.net>
-Subject: futex2 numa stuff
-X-Bad-Reply: References and In-Reply-To but no 'Re:' in Subject.
+ <20230922200120.011184118@infradead.org>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Hi!
+XXX
 
-Updated version of patch 15/15 and a few extra patches for testing the
-FUTEX2_NUMA bits. The last patch (17/15) should never be applied for anything
-you care about and exists purely because I'm too lazy to generate actual
-hash-bucket contention.
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+---
+ tools/testing/selftests/futex/functional/Makefile     |    3 
+ tools/testing/selftests/futex/functional/futex_numa.c |  262 ++++++++++++++++++
+ 2 files changed, 264 insertions(+), 1 deletion(-)
 
-On my 2 node IVB-EP:
-
- $ echo FUTEX_SQUASH > /debug/sched/features
-
-Effectively reducing each node to 1 bucket.
-
- $ numactl -m0 -N0 ./futex_numa -c10 -t2 -n0 -N0 &
-   numactl -m1 -N1 ./futex_numa -c10 -t2 -n0 -N0
-
- ...
- contenders: 16154935
- contenders: 16202472
-
- $ numactl -m0 -N0 ./futex_numa -c10 -t2 -n0 -N0 &
-   numactl -m1 -N1 ./futex_numa -c10 -t2 -n0 -N1
-
- contenders: 48584991
- contenders: 48680560
-
-(loop counts, higher is better)
-
-Clearly showing how separating the hashes works. 
-
-The first one runs 10 contenders on each node but forces the (numa) futex to
-hash to node 0 for both. This ensures all 20 contenders hash to the same
-bucket and *ouch*.
-
-The second one does the same, except now fully separates the nodes. Performance
-is much improved.
-
-Proving the per-node hashing actually works as advertised.
-
-Further:
-
- $ ./futex_numa -t2 -n50000 -s1 -N
- ...
- node: -1
- node: -1
- node: 0
- node: 0
- node: -1
- node: -1
- node: 1
- node: 1
- ...
- total: 8980
-
-Shows how a FUTEX2_NUMA lock can bounce around the nodes. The test has some
-trivial asserts trying to show critical section integrity, but otherwise does
-lock+unlock cycles with a nanosleep.
-
-This both illustrates how to build a (trivial) lock using FUTEX2_NUMA and
-proves the functionality works.
-
+--- a/tools/testing/selftests/futex/functional/Makefile
++++ b/tools/testing/selftests/futex/functional/Makefile
+@@ -17,7 +17,8 @@ TEST_GEN_PROGS := \
+ 	futex_wait_private_mapped_file \
+ 	futex_wait \
+ 	futex_requeue \
+-	futex_waitv
++	futex_waitv \
++	futex_numa
+ 
+ TEST_PROGS := run.sh
+ 
+--- /dev/null
++++ b/tools/testing/selftests/futex/functional/futex_numa.c
+@@ -0,0 +1,262 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#include <pthread.h>
++#include <sys/shm.h>
++#include <sys/mman.h>
++#include <fcntl.h>
++#include <stdbool.h>
++#include <time.h>
++#include <assert.h>
++#include "logging.h"
++#include "futextest.h"
++#include "futex2test.h"
++
++typedef u_int32_t u32;
++typedef int32_t   s32;
++typedef u_int64_t u64;
++
++static int fflags = (FUTEX2_SIZE_U32 | FUTEX2_PRIVATE);
++static int fnode = FUTEX_NO_NODE;
++
++/* fairly stupid test-and-set lock with a waiter flag */
++
++#define N_LOCK		0x0000001
++#define N_WAITERS	0x0001000
++
++struct futex_numa_32 {
++	union {
++		u64 full;
++		struct {
++			u32 val;
++			u32 node;
++		};
++	};
++};
++
++void futex_numa_32_lock(struct futex_numa_32 *lock)
++{
++	for (;;) {
++		struct futex_numa_32 new, old = {
++			.full = __atomic_load_n(&lock->full, __ATOMIC_RELAXED),
++		};
++
++		for (;;) {
++			new = old;
++			if (old.val == 0) {
++				/* no waiter, no lock -> first lock, set no-node */
++				new.node = fnode;
++			}
++			if (old.val & N_LOCK) {
++				/* contention, set waiter */
++				new.val |= N_WAITERS;
++			}
++			new.val |= N_LOCK;
++
++			/* nothing changed, ready to block */
++			if (old.full == new.full)
++				break;
++
++			/*
++			 * Use u64 cmpxchg to set the futex value and node in a
++			 * consistent manner.
++			 */
++			if (__atomic_compare_exchange_n(&lock->full,
++							&old.full, new.full,
++							/* .weak */ false,
++							__ATOMIC_ACQUIRE,
++							__ATOMIC_RELAXED)) {
++
++				/* if we just set N_LOCK, we own it */
++				if (!(old.val & N_LOCK))
++					return;
++
++				/* go block */
++				break;
++			}
++		}
++
++		futex2_wait(lock, new.val, ~0U, fflags, NULL, 0);
++	}
++}
++
++void futex_numa_32_unlock(struct futex_numa_32 *lock)
++{
++	u32 val = __atomic_sub_fetch(&lock->val, N_LOCK, __ATOMIC_RELEASE);
++	assert((s32)val >= 0);
++	if (val & N_WAITERS) {
++		int woken = futex2_wake(lock, ~0U, 1, fflags);
++		assert(val == N_WAITERS);
++		if (!woken) {
++			__atomic_compare_exchange_n(&lock->val, &val, 0U,
++						    false, __ATOMIC_RELAXED,
++						    __ATOMIC_RELAXED);
++		}
++	}
++}
++
++static long nanos = 50000;
++
++struct thread_args {
++	pthread_t tid;
++	volatile int * done;
++	struct futex_numa_32 *lock;
++	int val;
++	int *val1, *val2;
++	int node;
++};
++
++static void *threadfn(void *_arg)
++{
++	struct thread_args *args = _arg;
++	struct timespec ts = {
++		.tv_nsec = nanos,
++	};
++	int node;
++
++	while (!*args->done) {
++
++		futex_numa_32_lock(args->lock);
++		args->val++;
++
++		assert(*args->val1 == *args->val2);
++		(*args->val1)++;
++		nanosleep(&ts, NULL);
++		(*args->val2)++;
++
++		node = args->lock->node;
++		futex_numa_32_unlock(args->lock);
++
++		if (node != args->node) {
++			args->node = node;
++			printf("node: %d\n", node);
++		}
++
++		nanosleep(&ts, NULL);
++	}
++
++	return NULL;
++}
++
++static void *contendfn(void *_arg)
++{
++	struct thread_args *args = _arg;
++
++	while (!*args->done) {
++		/*
++		 * futex2_wait() will take hb-lock, verify *var == val and
++		 * queue/abort.  By knowingly setting val 'wrong' this will
++		 * abort and thereby generate hb-lock contention.
++		 */
++		futex2_wait(&args->lock->val, ~0U, ~0U, fflags, NULL, 0);
++		args->val++;
++	}
++
++	return NULL;
++}
++
++static volatile int done = 0;
++static struct futex_numa_32 lock = { .val = 0, };
++static int val1, val2;
++
++int main(int argc, char *argv[])
++{
++	struct thread_args *tas[512], *cas[512];
++	int c, t, threads = 2, contenders = 0;
++	int sleeps = 10;
++	int total = 0;
++
++	while ((c = getopt(argc, argv, "c:t:s:n:N::")) != -1) {
++		switch (c) {
++		case 'c':
++			contenders = atoi(optarg);
++			break;
++		case 't':
++			threads = atoi(optarg);
++			break;
++		case 's':
++			sleeps = atoi(optarg);
++			break;
++		case 'n':
++			nanos = atoi(optarg);
++			break;
++		case 'N':
++			fflags |= FUTEX2_NUMA;
++			if (optarg)
++				fnode = atoi(optarg);
++			break;
++		default:
++			exit(1);
++			break;
++		}
++	}
++
++	for (t = 0; t < contenders; t++) {
++		struct thread_args *args = calloc(1, sizeof(*args));
++		if (!args) {
++			perror("thread_args");
++			exit(-1);
++		}
++
++		args->done = &done;
++		args->lock = &lock;
++		args->val1 = &val1;
++		args->val2 = &val2;
++		args->node = -1;
++
++		if (pthread_create(&args->tid, NULL, contendfn, args)) {
++			perror("pthread_create");
++			exit(-1);
++		}
++
++		cas[t] = args;
++	}
++
++	for (t = 0; t < threads; t++) {
++		struct thread_args *args = calloc(1, sizeof(*args));
++		if (!args) {
++			perror("thread_args");
++			exit(-1);
++		}
++
++		args->done = &done;
++		args->lock = &lock;
++		args->val1 = &val1;
++		args->val2 = &val2;
++		args->node = -1;
++
++		if (pthread_create(&args->tid, NULL, threadfn, args)) {
++			perror("pthread_create");
++			exit(-1);
++		}
++
++		tas[t] = args;
++	}
++
++	sleep(sleeps);
++
++	done = true;
++
++	for (t = 0; t < threads; t++) {
++		struct thread_args *args = tas[t];
++
++		pthread_join(args->tid, NULL);
++		total += args->val;
++//		printf("tval: %d\n", args->val);
++	}
++	printf("total: %d\n", total);
++
++	if (contenders) {
++		total = 0;
++		for (t = 0; t < contenders; t++) {
++			struct thread_args *args = cas[t];
++
++			pthread_join(args->tid, NULL);
++			total += args->val;
++//			printf("tval: %d\n", args->val);
++		}
++		printf("contenders: %d\n", total);
++	}
++
++	return 0;
++}
++
 
 
