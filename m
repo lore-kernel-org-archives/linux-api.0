@@ -2,126 +2,94 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A3D54E6FE33
-	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 13:56:36 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CAA5CE7A86
+	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 20:59:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233207AbjIVN4k (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Sep 2023 09:56:40 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38198 "EHLO
+        id S229737AbjIVU7x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Fri, 22 Sep 2023 16:59:53 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52766 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232469AbjIVN4j (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 09:56:39 -0400
-Received: from mail-io1-xd29.google.com (mail-io1-xd29.google.com [IPv6:2607:f8b0:4864:20::d29])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 47D40192
-        for <linux-api@vger.kernel.org>; Fri, 22 Sep 2023 06:56:31 -0700 (PDT)
-Received: by mail-io1-xd29.google.com with SMTP id ca18e2360f4ac-79f8df47bfbso21825139f.0
-        for <linux-api@vger.kernel.org>; Fri, 22 Sep 2023 06:56:31 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=kernel-dk.20230601.gappssmtp.com; s=20230601; t=1695390990; x=1695995790; darn=vger.kernel.org;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=l4ucugCATkzwXuMI23OkOn2TmVsi6Gz/cX1EPcaz7Pc=;
-        b=OXfNquCIOcbqGFkW8h4CwCOrqp13I/OO5Ey9q0Ta9VHoviE5FI1wY5XxB0J3PW+sHg
-         0ltGtSn3TC7n4L1Neos1SZdAPGDeEE9q1binQlp4zP3fZTzyO2Z8btQ0Mdh+Kz5gTuRV
-         6HB1b2DI88yO9o8DRswBiRulqaqsYRk4sOEzRb0kDoOBJyefZSqYjocWUbdz9dXPOGYn
-         WNJJUfOV3uYi8Xt5jBqr+cJjshrbnCa+TZAkDfGiSmSSQgrxYG8hxe9Ygjs5xs0y+hKF
-         VRub7/r03NVK5HT2ojyWTwPCMq7sjh4UjxDmYNWQePXMOPvXefCapWgoMPHa+m/KkmiX
-         fT3g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695390990; x=1695995790;
-        h=content-transfer-encoding:in-reply-to:from:references:cc:to
-         :content-language:subject:user-agent:mime-version:date:message-id
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=l4ucugCATkzwXuMI23OkOn2TmVsi6Gz/cX1EPcaz7Pc=;
-        b=U0LSXf+W8NpupnFtpQq2v+Dbn7AOxjvXa6j+i8mJffsS34pXlLyLeIGW1wUDD/XPoS
-         zduD3xItlDHKjiiPW5TCPE9DQwR0zuUzRfzH6TVT3CZP3Sz6CS8RO0zusmdg3UzacQ/U
-         QFJYHprQqFnobeYEkzOneVr2c9DRp2NlKUCqhvgH/0LIeq6b1V5wFQT4VfbrFEya8/nj
-         Vj0/XhK1eo4ri8W3p30/ZqPHmYH67WdlVVvwoAihXHl6dUHYczOCyLPVt/fOSJbPqDBn
-         ANcTsT374HZTAfy1tofxBg5c0SR0CvTHhjER3gEHUbe95zfqW5BSJMiYYeAJCBp9OkKo
-         53Nw==
-X-Gm-Message-State: AOJu0Yyvtyt0NxFneDDT6zuabKwTGARYFh7Ouv6gZYI8U+tng79aW4kt
-        fNns8p1+U5D/lwbB5A55cggbmQ==
-X-Google-Smtp-Source: AGHT+IGjSQ4+X2lvYsCJzmEr2bY8Ksct5WoXMUIbuCCLm87x5DFFi7/n497IxFMbPn45HSyCkxKdYQ==
-X-Received: by 2002:a05:6602:13c2:b0:79d:1c65:9bde with SMTP id o2-20020a05660213c200b0079d1c659bdemr11422024iov.1.1695390990588;
-        Fri, 22 Sep 2023 06:56:30 -0700 (PDT)
-Received: from [192.168.1.94] ([96.43.243.2])
-        by smtp.gmail.com with ESMTPSA id l13-20020a02cd8d000000b0042b05586c52sm1028681jap.25.2023.09.22.06.56.29
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 22 Sep 2023 06:56:29 -0700 (PDT)
-Message-ID: <ec7cf6ad-3081-47a8-be83-af6eb7befa35@kernel.dk>
-Date:   Fri, 22 Sep 2023 07:56:28 -0600
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 10/15] futex: Add sys_futex_requeue()
-Content-Language: en-US
-To:     Peter Zijlstra <peterz@infradead.org>,
-        Ingo Molnar <mingo@kernel.org>
-Cc:     tglx@linutronix.de, linux-kernel@vger.kernel.org, mingo@redhat.com,
-        dvhart@infradead.org, dave@stgolabs.net, andrealmeid@igalia.com,
-        Andrew Morton <akpm@linux-foundation.org>, urezki@gmail.com,
-        hch@infradead.org, lstoakes@gmail.com,
+        with ESMTP id S229723AbjIVU7w (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 16:59:52 -0400
+Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C46471A2;
+        Fri, 22 Sep 2023 13:59:44 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
+        Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
+        Content-ID:Content-Description:In-Reply-To;
+        bh=zWIQ6Yi556U65myk2PzRkq/DHdsIiBTxeyqBKDx6r2g=; b=hktQlK3IZ5z27ejm1FLGbbL1mo
+        mzMcjkhwk3cOL9uWlaupMqvTCXnVZAoT6CJRQ0M29Q5yLP4ldsnxOmGjX4q6rjSEI64QiOYmhDBl1
+        P34q0qimycD9b/kQhEEKct+8KTKDGbkWMwSTmS278soTtIfi9R+SqnOIrE5sNsyZz3ma+fTYPc4zF
+        1bnVko5qUEoPXj7iOJw+xXKE+NPyQD41xo32nxvuoljsm3NlHTZLfVHISoB7SITHfEz+0mYyjkOq8
+        DkRxp0jw7F5ICVHtOBTQtELeVEyWis3tl7y1KZ2CkP3ihqlF98Q0ECbL3/aloKy0AEDNlzdBY/hIg
+        FSIpHA6A==;
+Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
+        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
+        id 1qjnEs-00GXzC-2v;
+        Fri, 22 Sep 2023 20:59:05 +0000
+Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
+        id F0DDE3008D6; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
+Message-Id: <20230922205450.033535181@infradead.org>
+User-Agent: quilt/0.65
+Date:   Fri, 22 Sep 2023 22:01:23 +0200
+From:   Peter Zijlstra <peterz@infradead.org>
+To:     tglx@linutronix.de, axboe@kernel.dk
+Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
+        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
+        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
+        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
         Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
-        malteskarupke@web.de, Geert Uytterhoeven <geert@linux-m68k.org>
+        malteskarupke@web.de, steve.shaw@intel.com,
+        marko.makela@mariadb.com, andrei.artemev@intel.com
+Subject: [PATCH 17/15] [HACK] futex: Force futex hash collision
 References: <20230921104505.717750284@noisy.programming.kicks-ass.net>
- <20230921105248.511860556@noisy.programming.kicks-ass.net>
- <ZQ1fx29+b8PmLVk6@gmail.com>
- <20230922110335.GC7080@noisy.programming.kicks-ass.net>
-From:   Jens Axboe <axboe@kernel.dk>
-In-Reply-To: <20230922110335.GC7080@noisy.programming.kicks-ass.net>
+ <20230921104505.717750284@noisy.programming.kicks-ass.net>
+ <20230922200120.011184118@infradead.org>
+MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On 9/22/23 5:03 AM, Peter Zijlstra wrote:
-> On Fri, Sep 22, 2023 at 11:35:03AM +0200, Ingo Molnar wrote:
->>
->> * peterz@infradead.org <peterz@infradead.org> wrote:
->>
->>> --- linux-2.6.orig/kernel/futex/syscalls.c
->>> +++ linux-2.6/kernel/futex/syscalls.c
->>> @@ -396,6 +396,44 @@ SYSCALL_DEFINE6(futex_wait,
->>>  	return ret;
->>>  }
->>>  
->>> +/*
->>> + * sys_futex_requeue - Requeue a waiter from one futex to another
->>> + * @waiters:	array describing the source and destination futex
->>> + * @flags:	unused
->>> + * @nr_wake:	number of futexes to wake
->>> + * @nr_requeue:	number of futexes to requeue
->>> + *
->>> + * Identical to the traditional FUTEX_CMP_REQUEUE op, except it is part of the
->>> + * futex2 family of calls.
->>> + */
->>> +
->>> +SYSCALL_DEFINE4(futex_requeue,
->>> +		struct futex_waitv __user *, waiters,
->>> +		unsigned int, flags,
->>> +		int, nr_wake,
->>> +		int, nr_requeue)
->>> +{
->>> +	struct futex_vector futexes[2];
->>> +	u32 cmpval;
->>> +	int ret;
->>> +
->>> +	if (flags)
->>> +		return -EINVAL;
->>
->> Small detail, but isn't -ENOSYS the canonical error code for functionality 
->> not yet implemented - which the unused 'flags' ABI is arguably?
->>
->> -EINVAL is for recognized but incorrect parameters, such as:
-> 
-> IIUC 'unknown flag' falls into the -EINVAL return category. Here we
-> happen to have no known flags, but that should not matter.
+If you hate performance -- use this.
 
-Yep, -ENOSYS is for not having the syscall at all, -EINVAL for unknown
-flags set.
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+---
+ kernel/futex/core.c     |    6 ++++++
+ kernel/sched/features.h |    2 ++
+ 2 files changed, 8 insertions(+)
 
--- 
-Jens Axboe
+--- a/kernel/futex/core.c
++++ b/kernel/futex/core.c
+@@ -128,6 +128,9 @@ static int futex_put_value(u32 val, u32
+ 	}
+ }
+ 
++#include <linux/sched/cputime.h>
++#include "../sched/sched.h"
++
+ /**
+  * futex_hash - Return the hash bucket in the global hash
+  * @key:	Pointer to the futex key for which the hash is calculated
+@@ -159,6 +162,9 @@ struct futex_hash_bucket *futex_hash(uni
+ 		}
+ 	}
+ 
++	if (sched_feat(FUTEX_SQUASH))
++		hash = 0;
++
+ 	return &futex_queues[node][hash & (futex_hashsize - 1)];
+ }
+ 
+--- a/kernel/sched/features.h
++++ b/kernel/sched/features.h
+@@ -89,3 +89,5 @@ SCHED_FEAT(UTIL_EST_FASTUP, true)
+ SCHED_FEAT(LATENCY_WARN, false)
+ 
+ SCHED_FEAT(HZ_BW, true)
++
++SCHED_FEAT(FUTEX_SQUASH, false)
+
 
