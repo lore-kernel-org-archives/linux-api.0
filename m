@@ -2,37 +2,37 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 9CAA5CE7A86
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D0D82CE7A8A
 	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 20:59:49 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229737AbjIVU7x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        id S229746AbjIVU7x (ORCPT <rfc822;linux-api@archiver.kernel.org>);
         Fri, 22 Sep 2023 16:59:53 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52766 "EHLO
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52776 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229723AbjIVU7w (ORCPT
+        with ESMTP id S229678AbjIVU7w (ORCPT
         <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 16:59:52 -0400
 Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C46471A2;
-        Fri, 22 Sep 2023 13:59:44 -0700 (PDT)
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 1E4A31A4;
+        Fri, 22 Sep 2023 13:59:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=zWIQ6Yi556U65myk2PzRkq/DHdsIiBTxeyqBKDx6r2g=; b=hktQlK3IZ5z27ejm1FLGbbL1mo
-        mzMcjkhwk3cOL9uWlaupMqvTCXnVZAoT6CJRQ0M29Q5yLP4ldsnxOmGjX4q6rjSEI64QiOYmhDBl1
-        P34q0qimycD9b/kQhEEKct+8KTKDGbkWMwSTmS278soTtIfi9R+SqnOIrE5sNsyZz3ma+fTYPc4zF
-        1bnVko5qUEoPXj7iOJw+xXKE+NPyQD41xo32nxvuoljsm3NlHTZLfVHISoB7SITHfEz+0mYyjkOq8
-        DkRxp0jw7F5ICVHtOBTQtELeVEyWis3tl7y1KZ2CkP3ihqlF98Q0ECbL3/aloKy0AEDNlzdBY/hIg
-        FSIpHA6A==;
+        d=infradead.org; s=desiato.20200630; h=Subject:References:In-Reply-To:Cc:To:
+        From:Date:Message-Id:Sender:Reply-To:MIME-Version:Content-Type:
+        Content-Transfer-Encoding:Content-ID:Content-Description;
+        bh=reMqHnLawtQWzzJGyWchM0kycFgNaHwuVHMPL5F7/LQ=; b=fwFeoZP8X3SOPmGO0C+SKoLaLG
+        UAKf05bsOetdUDWVacCvVL3SjXif6z0O3NNcDeX2/R9AoKIxklW0DVkMVGiUH76DI2+9q/U/93kHO
+        bNuJPeHtMFR0JJKT4MjBEckZyH2RdH3VzULD/Pw+zP2inGLQvGtVqVNd3wnqS01TNY77T0U9q+wVk
+        rl3NW0T1VqrbVmYNUn4m+pstkERd4VyJW+r7qM5NQJQeiKA/maXRRwLEEz82fnvXMnoZHAm/exTmY
+        F7jM4yvKtti+5FjtFSQbidMffXd456V/d5TWPSxjJzB6J5g9wzFI2cQmKMWVYI8rHZlOJDkk8SNnR
+        K0IQUNYA==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
         by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
-        id 1qjnEs-00GXzC-2v;
+        id 1qjnEs-00GXz9-2k;
         Fri, 22 Sep 2023 20:59:05 +0000
 Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
-        id F0DDE3008D6; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
-Message-Id: <20230922205450.033535181@infradead.org>
+        id E269230042E; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
+Message-Id: <20230922200120.011184118@infradead.org>
 User-Agent: quilt/0.65
-Date:   Fri, 22 Sep 2023 22:01:23 +0200
+Date:   Fri, 22 Sep 2023 22:01:20 +0200
 From:   Peter Zijlstra <peterz@infradead.org>
 To:     tglx@linutronix.de, axboe@kernel.dk
 Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
@@ -43,53 +43,75 @@ Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
         linux-mm@kvack.org, linux-arch@vger.kernel.org,
         malteskarupke@web.de, steve.shaw@intel.com,
         marko.makela@mariadb.com, andrei.artemev@intel.com
-Subject: [PATCH 17/15] [HACK] futex: Force futex hash collision
+In-Reply-To: <20230921104505.717750284@noisy.programming.kicks-ass.net>
 References: <20230921104505.717750284@noisy.programming.kicks-ass.net>
  <20230921104505.717750284@noisy.programming.kicks-ass.net>
- <20230922200120.011184118@infradead.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: futex2 numa stuff
+X-Bad-Reply: References and In-Reply-To but no 'Re:' in Subject.
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-If you hate performance -- use this.
+Hi!
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
----
- kernel/futex/core.c     |    6 ++++++
- kernel/sched/features.h |    2 ++
- 2 files changed, 8 insertions(+)
+Updated version of patch 15/15 and a few extra patches for testing the
+FUTEX2_NUMA bits. The last patch (17/15) should never be applied for anything
+you care about and exists purely because I'm too lazy to generate actual
+hash-bucket contention.
 
---- a/kernel/futex/core.c
-+++ b/kernel/futex/core.c
-@@ -128,6 +128,9 @@ static int futex_put_value(u32 val, u32
- 	}
- }
- 
-+#include <linux/sched/cputime.h>
-+#include "../sched/sched.h"
-+
- /**
-  * futex_hash - Return the hash bucket in the global hash
-  * @key:	Pointer to the futex key for which the hash is calculated
-@@ -159,6 +162,9 @@ struct futex_hash_bucket *futex_hash(uni
- 		}
- 	}
- 
-+	if (sched_feat(FUTEX_SQUASH))
-+		hash = 0;
-+
- 	return &futex_queues[node][hash & (futex_hashsize - 1)];
- }
- 
---- a/kernel/sched/features.h
-+++ b/kernel/sched/features.h
-@@ -89,3 +89,5 @@ SCHED_FEAT(UTIL_EST_FASTUP, true)
- SCHED_FEAT(LATENCY_WARN, false)
- 
- SCHED_FEAT(HZ_BW, true)
-+
-+SCHED_FEAT(FUTEX_SQUASH, false)
+On my 2 node IVB-EP:
+
+ $ echo FUTEX_SQUASH > /debug/sched/features
+
+Effectively reducing each node to 1 bucket.
+
+ $ numactl -m0 -N0 ./futex_numa -c10 -t2 -n0 -N0 &
+   numactl -m1 -N1 ./futex_numa -c10 -t2 -n0 -N0
+
+ ...
+ contenders: 16154935
+ contenders: 16202472
+
+ $ numactl -m0 -N0 ./futex_numa -c10 -t2 -n0 -N0 &
+   numactl -m1 -N1 ./futex_numa -c10 -t2 -n0 -N1
+
+ contenders: 48584991
+ contenders: 48680560
+
+(loop counts, higher is better)
+
+Clearly showing how separating the hashes works. 
+
+The first one runs 10 contenders on each node but forces the (numa) futex to
+hash to node 0 for both. This ensures all 20 contenders hash to the same
+bucket and *ouch*.
+
+The second one does the same, except now fully separates the nodes. Performance
+is much improved.
+
+Proving the per-node hashing actually works as advertised.
+
+Further:
+
+ $ ./futex_numa -t2 -n50000 -s1 -N
+ ...
+ node: -1
+ node: -1
+ node: 0
+ node: 0
+ node: -1
+ node: -1
+ node: 1
+ node: 1
+ ...
+ total: 8980
+
+Shows how a FUTEX2_NUMA lock can bounce around the nodes. The test has some
+trivial asserts trying to show critical section integrity, but otherwise does
+lock+unlock cycles with a nanosleep.
+
+This both illustrates how to build a (trivial) lock using FUTEX2_NUMA and
+proves the functionality works.
+
 
 
