@@ -2,596 +2,102 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 0FE73CE7A8E
-	for <linux-api@archiver.kernel.org>; Fri, 22 Sep 2023 20:59:51 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 4775CCE7A8C
+	for <linux-api@archiver.kernel.org>; Sat, 23 Sep 2023 04:47:20 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229778AbjIVU7z (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Fri, 22 Sep 2023 16:59:55 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:52802 "EHLO
+        id S229732AbjIWErY (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Sat, 23 Sep 2023 00:47:24 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:32822 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229754AbjIVU7x (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Fri, 22 Sep 2023 16:59:53 -0400
-Received: from desiato.infradead.org (desiato.infradead.org [IPv6:2001:8b0:10b:1:d65d:64ff:fe57:4e05])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 042871A3;
-        Fri, 22 Sep 2023 13:59:46 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-        d=infradead.org; s=desiato.20200630; h=Content-Type:MIME-Version:References:
-        Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
-        Content-ID:Content-Description:In-Reply-To;
-        bh=BvjuRtWo050xPXsgTFFwYa3Pxgz0X14YXS2BCPIBTTw=; b=Jm+mmif1QHz9p1V9PEZ1jxGrK4
-        BsOKUFbl+GDj7qihxO8w+rf7OMEODZK2USA+UtM12dOCjpENqBaJMxFf+7BGsi7Ev094AUYcxmq0C
-        BX1pKj6MPKCIWsCZaJ3PckCIRxS6h547/ZfO5bEFsaGlMDz/VnARYS+JWc0WtL8Hz2jIhpX9m0D9W
-        plBaUUGKDEiaOKfamtYinCJIB4jLUijkuTtrHp08Eb1f5NQ8I7+TuBiRGDEPpS/2FvEck7ZteBSAz
-        /sX8ftF70dbiX+d7WpeSQdo7fruRrIcjDxRU/bQDDgZcm7Jgx11EoPtcJyDUANIXD1WezAPSUYB8z
-        oLms/DIA==;
-Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
-        by desiato.infradead.org with esmtpsa (Exim 4.96 #2 (Red Hat Linux))
-        id 1qjnEs-00GXzA-2q;
-        Fri, 22 Sep 2023 20:59:05 +0000
-Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
-        id E76B630058C; Fri, 22 Sep 2023 22:59:03 +0200 (CEST)
-Message-Id: <20230922205449.808782861@infradead.org>
-User-Agent: quilt/0.65
-Date:   Fri, 22 Sep 2023 22:01:21 +0200
-From:   Peter Zijlstra <peterz@infradead.org>
-To:     tglx@linutronix.de, axboe@kernel.dk
-Cc:     linux-kernel@vger.kernel.org, peterz@infradead.org,
-        mingo@redhat.com, dvhart@infradead.org, dave@stgolabs.net,
-        andrealmeid@igalia.com, Andrew Morton <akpm@linux-foundation.org>,
-        urezki@gmail.com, hch@infradead.org, lstoakes@gmail.com,
-        Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org,
-        linux-mm@kvack.org, linux-arch@vger.kernel.org,
-        malteskarupke@web.de, steve.shaw@intel.com,
-        marko.makela@mariadb.com, andrei.artemev@intel.com
-Subject: [PATCH 15/15] futex,selftests: Extend the futex selftests
-References: <20230921104505.717750284@noisy.programming.kicks-ass.net>
- <20230921104505.717750284@noisy.programming.kicks-ass.net>
- <20230922200120.011184118@infradead.org>
+        with ESMTP id S229652AbjIWErX (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Sat, 23 Sep 2023 00:47:23 -0400
+Received: from www262.sakura.ne.jp (www262.sakura.ne.jp [202.181.97.72])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9396719E;
+        Fri, 22 Sep 2023 21:47:17 -0700 (PDT)
+Received: from fsav412.sakura.ne.jp (fsav412.sakura.ne.jp [133.242.250.111])
+        by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTP id 38N4kYnm032599;
+        Sat, 23 Sep 2023 13:46:34 +0900 (JST)
+        (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Received: from www262.sakura.ne.jp (202.181.97.72)
+ by fsav412.sakura.ne.jp (F-Secure/fsigk_smtp/550/fsav412.sakura.ne.jp);
+ Sat, 23 Sep 2023 13:46:34 +0900 (JST)
+X-Virus-Status: clean(F-Secure/fsigk_smtp/550/fsav412.sakura.ne.jp)
+Received: from [192.168.1.6] (M106072142033.v4.enabler.ne.jp [106.72.142.33])
+        (authenticated bits=0)
+        by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTPSA id 38N4kYZc032591
+        (version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NO);
+        Sat, 23 Sep 2023 13:46:34 +0900 (JST)
+        (envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Message-ID: <af696700-ae4b-346e-4c52-3a7a21b0f46c@I-love.SAKURA.ne.jp>
+Date:   Sat, 23 Sep 2023 13:46:35 +0900
 MIME-Version: 1.0
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101
+ Thunderbird/102.15.1
+Subject: Re: [PATCH v15 01/11] LSM: Identify modules by more than name
+Content-Language: en-US
+To:     Kees Cook <keescook@chromium.org>
+Cc:     Casey Schaufler <casey@schaufler-ca.com>, paul@paul-moore.com,
+        linux-security-module@vger.kernel.org, jmorris@namei.org,
+        serge@hallyn.com, john.johansen@canonical.com,
+        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, mic@digikod.net,
+        Dave Chinner <david@fromorbit.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Jonathan Corbet <corbet@lwn.net>
+References: <20230912205658.3432-1-casey@schaufler-ca.com>
+ <20230912205658.3432-2-casey@schaufler-ca.com>
+ <1f5e725d-58b6-eca2-97dc-d7c1209ff167@I-love.SAKURA.ne.jp>
+ <568c0730-b458-04b4-dbfa-77da1758aa05@schaufler-ca.com>
+ <94743c22-bc76-e741-e577-3e0845423f69@I-love.SAKURA.ne.jp>
+ <6df9f8b8-5653-09a5-ae0a-6526016abaff@schaufler-ca.com>
+ <ec37cd2f-24ee-3273-c253-58d480569117@I-love.SAKURA.ne.jp>
+ <202309200803.1911A584@keescook>
+From:   Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+In-Reply-To: <202309200803.1911A584@keescook>
 Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-Extend the wait/requeue selftests to also cover the futex2 syscalls.
+On 2023/09/21 0:08, Kees Cook wrote:
+> I feel like you are willfully not listening to us when we say that this
+> doesn't block out of tree LSMs. Again, there is nothing here that stops
+> it. To prove this point, here is an out of tree LSM that works with this
+> series. So let's move from theoretical to practical: given this example,
+> why do you think out of tree LSMs are blocked?
 
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
----
- tools/testing/selftests/futex/functional/futex_requeue.c         |  100 +++++++++-
- tools/testing/selftests/futex/functional/futex_wait.c            |   56 ++++-
- tools/testing/selftests/futex/functional/futex_wait_timeout.c    |   16 +
- tools/testing/selftests/futex/functional/futex_wait_wouldblock.c |   28 ++
- tools/testing/selftests/futex/functional/futex_waitv.c           |   15 -
- tools/testing/selftests/futex/functional/run.sh                  |    6 
- tools/testing/selftests/futex/include/futex2test.h               |   52 +++++
- 7 files changed, 243 insertions(+), 30 deletions(-)
+Because an LSM ID value
 
---- a/tools/testing/selftests/futex/functional/futex_requeue.c
-+++ b/tools/testing/selftests/futex/functional/futex_requeue.c
-@@ -7,8 +7,10 @@
- 
- #include <pthread.h>
- #include <limits.h>
-+#include <stdbool.h>
- #include "logging.h"
- #include "futextest.h"
-+#include "futex2test.h"
- 
- #define TEST_NAME "futex-requeue"
- #define timeout_ns  30000000
-@@ -16,24 +18,58 @@
- 
- volatile futex_t *f1;
- 
-+bool futex2 = 0;
-+bool mixed = 0;
-+
- void usage(char *prog)
- {
- 	printf("Usage: %s\n", prog);
- 	printf("  -c	Use color\n");
-+	printf("  -n	Use futex2 interface\n");
-+	printf("  -x	Use mixed size futex\n");
- 	printf("  -h	Display this help message\n");
- 	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
- 	       VQUIET, VCRITICAL, VINFO);
- }
- 
--void *waiterfn(void *arg)
-+static void *waiterfn(void *arg)
- {
-+	unsigned int flags = 0;
- 	struct timespec to;
- 
--	to.tv_sec = 0;
--	to.tv_nsec = timeout_ns;
-+	if (futex2) {
-+		unsigned long mask;
-+
-+		if (clock_gettime(CLOCK_MONOTONIC, &to)) {
-+			printf("clock_gettime() failed errno %d", errno);
-+			return NULL;
-+		}
-+
-+		to.tv_nsec += timeout_ns;
-+		if (to.tv_nsec >= 1000000000) {
-+			to.tv_sec++;
-+			to.tv_nsec -= 1000000000;
-+		}
-+
-+		if (mixed) {
-+			flags |= FUTEX2_SIZE_U16;
-+			mask = (unsigned short)(~0U);
-+		} else {
-+			flags |= FUTEX2_SIZE_U32;
-+			mask = (unsigned int)(~0U);
-+		}
-+
-+		if (futex2_wait(f1, *f1, mask, flags,
-+				&to, CLOCK_MONOTONIC))
-+			printf("waiter failed errno %d\n", errno);
-+	} else {
-+
-+		to.tv_sec = 0;
-+		to.tv_nsec = timeout_ns;
- 
--	if (futex_wait(f1, *f1, &to, 0))
--		printf("waiter failed errno %d\n", errno);
-+		if (futex_wait(f1, *f1, &to, flags))
-+			printf("waiter failed errno %d\n", errno);
-+	}
- 
- 	return NULL;
- }
-@@ -48,7 +84,7 @@ int main(int argc, char *argv[])
- 
- 	f1 = &_f1;
- 
--	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
-+	while ((c = getopt(argc, argv, "xncht:v:")) != -1) {
- 		switch (c) {
- 		case 'c':
- 			log_color(1);
-@@ -59,6 +95,12 @@ int main(int argc, char *argv[])
- 		case 'v':
- 			log_verbosity(atoi(optarg));
- 			break;
-+		case 'x':
-+			mixed=1;
-+			/* fallthrough */
-+		case 'n':
-+			futex2=1;
-+			break;
- 		default:
- 			usage(basename(argv[0]));
- 			exit(1);
-@@ -79,7 +121,22 @@ int main(int argc, char *argv[])
- 	usleep(WAKE_WAIT_US);
- 
- 	info("Requeuing 1 futex from f1 to f2\n");
--	res = futex_cmp_requeue(f1, 0, &f2, 0, 1, 0);
-+	if (futex2) {
-+		struct futex_waitv futexes[2] = {
-+			{
-+				.val = 0,
-+				.uaddr = (unsigned long)f1,
-+				.flags = mixed ? FUTEX2_SIZE_U16 : FUTEX2_SIZE_U32,
-+			},
-+			{
-+				.uaddr = (unsigned long)&f2,
-+				.flags = FUTEX2_SIZE_U32,
-+			},
-+		};
-+		res = futex2_requeue(futexes, 0, 0, 1);
-+	} else {
-+		res = futex_cmp_requeue(f1, 0, &f2, 0, 1, 0);
-+	}
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_requeue simple returned: %d %s\n",
- 				      res ? errno : res,
-@@ -89,7 +146,11 @@ int main(int argc, char *argv[])
- 
- 
- 	info("Waking 1 futex at f2\n");
--	res = futex_wake(&f2, 1, 0);
-+	if (futex2) {
-+		res = futex2_wake(&f2, ~0U, 1, FUTEX2_SIZE_U32);
-+	} else {
-+		res = futex_wake(&f2, 1, 0);
-+	}
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_requeue simple returned: %d %s\n",
- 				      res ? errno : res,
-@@ -112,7 +173,22 @@ int main(int argc, char *argv[])
- 	usleep(WAKE_WAIT_US);
- 
- 	info("Waking 3 futexes at f1 and requeuing 7 futexes from f1 to f2\n");
--	res = futex_cmp_requeue(f1, 0, &f2, 3, 7, 0);
-+	if (futex2) {
-+		struct futex_waitv futexes[2] = {
-+			{
-+				.val = 0,
-+				.uaddr = (unsigned long)f1,
-+				.flags = mixed ? FUTEX2_SIZE_U16 : FUTEX2_SIZE_U32,
-+			},
-+			{
-+				.uaddr = (unsigned long)&f2,
-+				.flags = FUTEX2_SIZE_U32,
-+			},
-+		};
-+		res = futex2_requeue(futexes, 0, 3, 7);
-+	} else {
-+		res = futex_cmp_requeue(f1, 0, &f2, 3, 7, 0);
-+	}
- 	if (res != 10) {
- 		ksft_test_result_fail("futex_requeue many returned: %d %s\n",
- 				      res ? errno : res,
-@@ -121,7 +197,11 @@ int main(int argc, char *argv[])
- 	}
- 
- 	info("Waking INT_MAX futexes at f2\n");
--	res = futex_wake(&f2, INT_MAX, 0);
-+	if (futex2) {
-+		res = futex2_wake(&f2, ~0U, INT_MAX, FUTEX2_SIZE_U32);
-+	} else {
-+		res = futex_wake(&f2, INT_MAX, 0);
-+	}
- 	if (res != 7) {
- 		ksft_test_result_fail("futex_requeue many returned: %d %s\n",
- 				      res ? errno : res,
---- a/tools/testing/selftests/futex/functional/futex_wait.c
-+++ b/tools/testing/selftests/futex/functional/futex_wait.c
-@@ -9,8 +9,10 @@
- #include <sys/shm.h>
- #include <sys/mman.h>
- #include <fcntl.h>
-+#include <stdbool.h>
- #include "logging.h"
- #include "futextest.h"
-+#include "futex2test.h"
- 
- #define TEST_NAME "futex-wait"
- #define timeout_ns  30000000
-@@ -19,10 +21,13 @@
- 
- void *futex;
- 
-+bool futex2 = 0;
-+
- void usage(char *prog)
- {
- 	printf("Usage: %s\n", prog);
- 	printf("  -c	Use color\n");
-+	printf("  -n	Use futex2 interface\n");
- 	printf("  -h	Display this help message\n");
- 	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
- 	       VQUIET, VCRITICAL, VINFO);
-@@ -30,17 +35,35 @@ void usage(char *prog)
- 
- static void *waiterfn(void *arg)
- {
--	struct timespec to;
- 	unsigned int flags = 0;
-+	struct timespec to;
- 
- 	if (arg)
- 		flags = *((unsigned int *) arg);
- 
--	to.tv_sec = 0;
--	to.tv_nsec = timeout_ns;
-+	if (futex2) {
-+		if (clock_gettime(CLOCK_MONOTONIC, &to)) {
-+			printf("clock_gettime() failed errno %d", errno);
-+			return NULL;
-+		}
- 
--	if (futex_wait(futex, 0, &to, flags))
--		printf("waiter failed errno %d\n", errno);
-+		to.tv_nsec += timeout_ns;
-+		if (to.tv_nsec >= 1000000000) {
-+			to.tv_sec++;
-+			to.tv_nsec -= 1000000000;
-+		}
-+
-+		if (futex2_wait(futex, 0, ~0U, flags | FUTEX2_SIZE_U32,
-+				&to, CLOCK_MONOTONIC))
-+			printf("waiter failed errno %d\n", errno);
-+	} else {
-+
-+		to.tv_sec = 0;
-+		to.tv_nsec = timeout_ns;
-+
-+		if (futex_wait(futex, 0, &to, flags))
-+			printf("waiter failed errno %d\n", errno);
-+	}
- 
- 	return NULL;
- }
-@@ -55,7 +78,7 @@ int main(int argc, char *argv[])
- 
- 	futex = &f_private;
- 
--	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
-+	while ((c = getopt(argc, argv, "ncht:v:")) != -1) {
- 		switch (c) {
- 		case 'c':
- 			log_color(1);
-@@ -66,6 +89,9 @@ int main(int argc, char *argv[])
- 		case 'v':
- 			log_verbosity(atoi(optarg));
- 			break;
-+		case 'n':
-+			futex2=1;
-+			break;
- 		default:
- 			usage(basename(argv[0]));
- 			exit(1);
-@@ -84,7 +110,11 @@ int main(int argc, char *argv[])
- 	usleep(WAKE_WAIT_US);
- 
- 	info("Calling private futex_wake on futex: %p\n", futex);
--	res = futex_wake(futex, 1, FUTEX_PRIVATE_FLAG);
-+	if (futex2) {
-+		res = futex2_wake(futex, ~0U, 1, FUTEX2_SIZE_U32 | FUTEX2_PRIVATE);
-+	} else {
-+		res = futex_wake(futex, 1, FUTEX_PRIVATE_FLAG);
-+	}
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_wake private returned: %d %s\n",
- 				      errno, strerror(errno));
-@@ -112,7 +142,11 @@ int main(int argc, char *argv[])
- 	usleep(WAKE_WAIT_US);
- 
- 	info("Calling shared (page anon) futex_wake on futex: %p\n", futex);
--	res = futex_wake(futex, 1, 0);
-+	if (futex2) {
-+		res = futex2_wake(futex, ~0U, 1, FUTEX2_SIZE_U32);
-+	} else {
-+		res = futex_wake(futex, 1, 0);
-+	}
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_wake shared (page anon) returned: %d %s\n",
- 				      errno, strerror(errno));
-@@ -151,7 +185,11 @@ int main(int argc, char *argv[])
- 	usleep(WAKE_WAIT_US);
- 
- 	info("Calling shared (file backed) futex_wake on futex: %p\n", futex);
--	res = futex_wake(shm, 1, 0);
-+	if (futex2) {
-+		res = futex2_wake(shm, ~0U, 1, FUTEX2_SIZE_U32);
-+	} else {
-+		res = futex_wake(shm, 1, 0);
-+	}
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_wake shared (file backed) returned: %d %s\n",
- 				      errno, strerror(errno));
---- a/tools/testing/selftests/futex/functional/futex_wait_timeout.c
-+++ b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
-@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
- 	struct futex_waitv waitv = {
- 			.uaddr = (uintptr_t)&f1,
- 			.val = f1,
--			.flags = FUTEX_32,
-+			.flags = FUTEX2_SIZE_U32,
- 			.__reserved = 0
- 		};
- 
-@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
- 	}
- 
- 	ksft_print_header();
--	ksft_set_plan(9);
-+	ksft_set_plan(11);
- 	ksft_print_msg("%s: Block on a futex and wait for timeout\n",
- 	       basename(argv[0]));
- 	ksft_print_msg("\tArguments: timeout=%ldns\n", timeout_ns);
-@@ -201,6 +201,18 @@ int main(int argc, char *argv[])
- 	res = futex_waitv(&waitv, 1, 0, &to, CLOCK_REALTIME);
- 	test_timeout(res, &ret, "futex_waitv realtime", ETIMEDOUT);
- 
-+	/* futex2_wait with CLOCK_MONOTONIC */
-+	if (futex_get_abs_timeout(CLOCK_MONOTONIC, &to, timeout_ns))
-+		return RET_FAIL;
-+	res = futex2_wait(&f1, f1, 1, FUTEX2_SIZE_U32, &to, CLOCK_MONOTONIC);
-+	test_timeout(res, &ret, "futex2_wait monotonic", ETIMEDOUT);
-+
-+	/* futex2_wait with CLOCK_REALTIME */
-+	if (futex_get_abs_timeout(CLOCK_REALTIME, &to, timeout_ns))
-+		return RET_FAIL;
-+	res = futex2_wait(&f1, f1, 1, FUTEX2_SIZE_U32, &to, CLOCK_REALTIME);
-+	test_timeout(res, &ret, "futex2_wait realtime", ETIMEDOUT);
-+
- 	ksft_print_cnts();
- 	return ret;
- }
---- a/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
-+++ b/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
-@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
- 	struct futex_waitv waitv = {
- 			.uaddr = (uintptr_t)&f1,
- 			.val = f1+1,
--			.flags = FUTEX_32,
-+			.flags = FUTEX2_SIZE_U32 | FUTEX2_PRIVATE,
- 			.__reserved = 0
- 		};
- 
-@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
- 	}
- 
- 	ksft_print_header();
--	ksft_set_plan(2);
-+	ksft_set_plan(3);
- 	ksft_print_msg("%s: Test the unexpected futex value in FUTEX_WAIT\n",
- 	       basename(argv[0]));
- 
-@@ -106,6 +106,30 @@ int main(int argc, char *argv[])
- 		ksft_test_result_pass("futex_waitv\n");
- 	}
- 
-+	if (clock_gettime(CLOCK_MONOTONIC, &to)) {
-+		error("clock_gettime failed\n", errno);
-+		return errno;
-+	}
-+
-+	to.tv_nsec += timeout_ns;
-+
-+	if (to.tv_nsec >= 1000000000) {
-+		to.tv_sec++;
-+		to.tv_nsec -= 1000000000;
-+	}
-+
-+	info("Calling futex2_wait on f1: %u @ %p with val=%u\n", f1, &f1, f1+1);
-+	res = futex2_wait(&f1, f1+1, ~0U, FUTEX2_SIZE_U32 | FUTEX2_PRIVATE,
-+			  &to, CLOCK_MONOTONIC);
-+	if (!res || errno != EWOULDBLOCK) {
-+		ksft_test_result_pass("futex2_wait returned: %d %s\n",
-+				      res ? errno : res,
-+				      res ? strerror(errno) : "");
-+		ret = RET_FAIL;
-+	} else {
-+		ksft_test_result_pass("futex2_wait\n");
-+	}
-+
- 	ksft_print_cnts();
- 	return ret;
- }
---- a/tools/testing/selftests/futex/functional/futex_waitv.c
-+++ b/tools/testing/selftests/futex/functional/futex_waitv.c
-@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
- 
- 	for (i = 0; i < NR_FUTEXES; i++) {
- 		waitv[i].uaddr = (uintptr_t)&futexes[i];
--		waitv[i].flags = FUTEX_32 | FUTEX_PRIVATE_FLAG;
-+		waitv[i].flags = FUTEX2_SIZE_U32 | FUTEX2_PRIVATE;
- 		waitv[i].val = 0;
- 		waitv[i].__reserved = 0;
- 	}
-@@ -99,7 +99,8 @@ int main(int argc, char *argv[])
- 
- 	usleep(WAKE_WAIT_US);
- 
--	res = futex_wake(u64_to_ptr(waitv[NR_FUTEXES - 1].uaddr), 1, FUTEX_PRIVATE_FLAG);
-+	res = futex2_wake(u64_to_ptr(waitv[NR_FUTEXES - 1].uaddr), ~0U, 1,
-+			  FUTEX2_PRIVATE | FUTEX2_SIZE_U32);
- 	if (res != 1) {
- 		ksft_test_result_fail("futex_wake private returned: %d %s\n",
- 				      res ? errno : res,
-@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
- 
- 		*shared_data = 0;
- 		waitv[i].uaddr = (uintptr_t)shared_data;
--		waitv[i].flags = FUTEX_32;
-+		waitv[i].flags = FUTEX2_SIZE_U32;
- 		waitv[i].val = 0;
- 		waitv[i].__reserved = 0;
- 	}
-@@ -145,8 +146,8 @@ int main(int argc, char *argv[])
- 	for (i = 0; i < NR_FUTEXES; i++)
- 		shmdt(u64_to_ptr(waitv[i].uaddr));
- 
--	/* Testing a waiter without FUTEX_32 flag */
--	waitv[0].flags = FUTEX_PRIVATE_FLAG;
-+	/* Testing a waiter without FUTEX2_SIZE_U32 flag */
-+	waitv[0].flags = FUTEX2_PRIVATE;
- 
- 	if (clock_gettime(CLOCK_MONOTONIC, &to))
- 		error("gettime64 failed\n", errno);
-@@ -160,11 +161,11 @@ int main(int argc, char *argv[])
- 				      res ? strerror(errno) : "");
- 		ret = RET_FAIL;
- 	} else {
--		ksft_test_result_pass("futex_waitv without FUTEX_32\n");
-+		ksft_test_result_pass("futex_waitv without FUTEX2_SIZE_U32\n");
- 	}
- 
- 	/* Testing a waiter with an unaligned address */
--	waitv[0].flags = FUTEX_PRIVATE_FLAG | FUTEX_32;
-+	waitv[0].flags = FUTEX2_PRIVATE | FUTEX2_SIZE_U32;
- 	waitv[0].uaddr = 1;
- 
- 	if (clock_gettime(CLOCK_MONOTONIC, &to))
---- a/tools/testing/selftests/futex/functional/run.sh
-+++ b/tools/testing/selftests/futex/functional/run.sh
-@@ -76,9 +76,15 @@ echo
- 
- echo
- ./futex_wait $COLOR
-+echo
-+./futex_wait -n $COLOR
- 
- echo
- ./futex_requeue $COLOR
-+echo
-+./futex_requeue -n $COLOR
-+echo
-+./futex_requeue -x $COLOR
- 
- echo
- ./futex_waitv $COLOR
---- a/tools/testing/selftests/futex/include/futex2test.h
-+++ b/tools/testing/selftests/futex/include/futex2test.h
-@@ -8,6 +8,41 @@
- 
- #define u64_to_ptr(x) ((void *)(uintptr_t)(x))
- 
-+#ifndef __NR_futex_waitv
-+#define __NR_futex_waitv 449
-+
-+struct futex_waitv {
-+	__u64 val;
-+	__u64 uaddr;
-+	__u32 flags;
-+	__u32 __reserved;
-+};
-+#endif
-+
-+#ifndef __NR_futex_wake
-+#define __NR_futex_wake 454
-+#define __NR_futex_wait 455
-+#define __NR_futex_requeue 456
-+#endif
-+
-+#ifndef FUTEX2_SIZE_U8
-+/*
-+ * Flags for futex2 syscalls.
-+ */
-+#define FUTEX2_SIZE_U8		0x00
-+#define FUTEX2_SIZE_U16		0x01
-+#define FUTEX2_SIZE_U32		0x02
-+#define FUTEX2_SIZE_U64		0x03
-+#define FUTEX2_NUMA		0x04
-+			/*	0x08 */
-+			/*	0x10 */
-+			/*	0x20 */
-+			/*	0x40 */
-+#define FUTEX2_PRIVATE		FUTEX_PRIVATE_FLAG
-+#endif
-+
-+#define FUTEX_NO_NODE (-1)
-+
- /**
-  * futex_waitv - Wait at multiple futexes, wake on any
-  * @waiters:    Array of waiters
-@@ -20,3 +55,20 @@ static inline int futex_waitv(volatile s
- {
- 	return syscall(__NR_futex_waitv, waiters, nr_waiters, flags, timo, clockid);
- }
-+
-+static inline int futex2_wake(volatile void *uaddr, unsigned long mask, int nr, unsigned int flags)
-+{
-+	return syscall(__NR_futex_wake, uaddr, mask, nr, flags);
-+}
-+
-+static inline int futex2_wait(volatile void *uaddr, unsigned long val, unsigned long mask,
-+			      unsigned int flags, struct timespec *timo, clockid_t clockid)
-+{
-+	return syscall(__NR_futex_wait, uaddr, val, mask, flags, timo, clockid);
-+}
-+
-+static inline int futex2_requeue(struct futex_waitv *futexes, unsigned int flags,
-+				 int nr_wake, int nr_requeue)
-+{
-+	return syscall(__NR_futex_requeue, futexes, flags, nr_wake, nr_requeue);
-+}
+> diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
+> index eeda59a77c02..23b7a8f79cef 100644
+> --- a/include/uapi/linux/lsm.h
+> +++ b/include/uapi/linux/lsm.h
+> @@ -63,6 +63,8 @@ struct lsm_ctx {
+>  #define LSM_ID_BPF		110
+>  #define LSM_ID_LANDLOCK		111
+>  
+> +#define LSM_ID_GOAT		1138
+> +
+>  /*
+>   * LSM_ATTR_XXX definitions identify different LSM attributes
+>   * which are used in the kernel's LSM userspace API. Support
 
+is assigned to LSM only when that LSM became no longer out of tree.
+
+I'm against the policy that only LSM modules that succeeded to become
+in-tree are assigned LSM ID. That's not a good usage of identifier.
+
+Quoting from https://lkml.kernel.org/r/4a6b6e2c-9872-4d4c-e42e-4ff0fb79f3ae@I-love.SAKURA.ne.jp :
+
+  The sane and the better usage of LSM ID is to register any publicly available
+  LSMs. If LSM ID serves as an index for what LSMs are available in the world,
+  by maintaining "the LSM module name, the LSM ID value, short description about
+  that LSM module, the public git repository or web site for more information
+  about that LSM module" pairs, people can easily find what LSMs could be used
+  for their purpose, and developers can avoid re-inventing similar LSM modules
+  which are already available somewhere in the world (and optionally helps
+  avoiding module name collisions with any publicly available LSMs).
+
+You must not say "We don't care about out of tree LSMs." when talking about this patch.
 
