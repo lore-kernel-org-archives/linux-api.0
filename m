@@ -2,130 +2,147 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 468DDE732C4
-	for <linux-api@archiver.kernel.org>; Thu, 28 Sep 2023 11:25:41 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id B8667E732CD
+	for <linux-api@archiver.kernel.org>; Thu, 28 Sep 2023 13:02:46 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232186AbjI1LZj convert rfc822-to-8bit (ORCPT
-        <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 Sep 2023 07:25:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55860 "EHLO
+        id S232600AbjI1NCq (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 Sep 2023 09:02:46 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:60378 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232215AbjI1LZZ (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Sep 2023 07:25:25 -0400
-Received: from eu-smtp-delivery-151.mimecast.com (eu-smtp-delivery-151.mimecast.com [185.58.85.151])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 9A040359A
-        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 04:23:04 -0700 (PDT)
-Received: from AcuMS.aculab.com (156.67.243.121 [156.67.243.121]) by
- relay.mimecast.com with ESMTP with both STARTTLS and AUTH (version=TLSv1.2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384) id
- uk-mta-94-16gep9MhMWCHUX4uA_UWOw-1; Thu, 28 Sep 2023 12:22:56 +0100
-X-MC-Unique: 16gep9MhMWCHUX4uA_UWOw-1
-Received: from AcuMS.Aculab.com (10.202.163.6) by AcuMS.aculab.com
- (10.202.163.6) with Microsoft SMTP Server (TLS) id 15.0.1497.48; Thu, 28 Sep
- 2023 12:22:55 +0100
-Received: from AcuMS.Aculab.com ([::1]) by AcuMS.aculab.com ([::1]) with mapi
- id 15.00.1497.048; Thu, 28 Sep 2023 12:22:55 +0100
-From:   David Laight <David.Laight@ACULAB.COM>
-To:     'Peter Zijlstra' <peterz@infradead.org>,
-        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC:     "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-        "Thomas Gleixner" <tglx@linutronix.de>,
-        "Paul E . McKenney" <paulmck@kernel.org>,
-        Boqun Feng <boqun.feng@gmail.com>,
-        "H . Peter Anvin" <hpa@zytor.com>, "Paul Turner" <pjt@google.com>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        Christian Brauner <brauner@kernel.org>,
-        "Florian Weimer" <fw@deneb.enyo.de>,
-        "carlos@redhat.com" <carlos@redhat.com>,
-        "Peter Oskolkov" <posk@posk.io>,
-        Alexander Mikhalitsyn <alexander@mihalicyn.com>,
-        Chris Kennelly <ckennelly@google.com>,
-        Ingo Molnar <mingo@redhat.com>,
-        "Darren Hart" <dvhart@infradead.org>,
-        Davidlohr Bueso <dave@stgolabs.net>,
-        =?iso-8859-1?Q?Andr=E9_Almeida?= <andrealmeid@igalia.com>,
-        "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>,
-        Steven Rostedt <rostedt@goodmis.org>,
-        Jonathan Corbet <corbet@lwn.net>,
-        Noah Goldstein <goldstein.w.n@gmail.com>,
-        Daniel Colascione <dancol@google.com>,
-        "longman@redhat.com" <longman@redhat.com>,
-        Florian Weimer <fweimer@redhat.com>
-Subject: RE: [RFC PATCH v2 1/4] rseq: Add sched_state field to struct rseq
-Thread-Topic: [RFC PATCH v2 1/4] rseq: Add sched_state field to struct rseq
-Thread-Index: AQHZ8fgZ0Ykvpvbq8USYUjzds++7brAwFQDg
-Date:   Thu, 28 Sep 2023 11:22:55 +0000
-Message-ID: <ef39143ad24743008a896d2a09da1066@AcuMS.aculab.com>
-References: <20230529191416.53955-1-mathieu.desnoyers@efficios.com>
- <20230529191416.53955-2-mathieu.desnoyers@efficios.com>
- <20230928103926.GI9829@noisy.programming.kicks-ass.net>
-In-Reply-To: <20230928103926.GI9829@noisy.programming.kicks-ass.net>
-Accept-Language: en-GB, en-US
-X-MS-Has-Attach: 
-X-MS-TNEF-Correlator: 
-x-ms-exchange-transport-fromentityheader: Hosted
-x-originating-ip: [10.202.205.107]
+        with ESMTP id S232593AbjI1NCp (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Sep 2023 09:02:45 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 219411A5
+        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:01:58 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1695906117;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=mK7muDvbuwqZAV3QEAYNGQadrKd1oX00byk/Uab1QWg=;
+        b=B0FNnDGK2BA+HpRIjcjVcDLc2zyNZalCP4/ccUK68navoFF2n0wSoCgw22zloTdid13q1x
+        LClVM5YnEGgFCxCMPLsfgxDyO2oEAuiYtcqDJIWj03ChruUb+xpEIQMMjxszAx6j98zwH5
+        3xFMDPXODE4lHi9npJgBKKVjpOTEeRw=
+Received: from mail-ej1-f71.google.com (mail-ej1-f71.google.com
+ [209.85.218.71]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-342-Jyb7q5N5PK6x4c6Nht0DsQ-1; Thu, 28 Sep 2023 09:01:55 -0400
+X-MC-Unique: Jyb7q5N5PK6x4c6Nht0DsQ-1
+Received: by mail-ej1-f71.google.com with SMTP id a640c23a62f3a-9a1cf3e6c04so1139968666b.3
+        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:01:55 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1695906114; x=1696510914;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=mK7muDvbuwqZAV3QEAYNGQadrKd1oX00byk/Uab1QWg=;
+        b=CejMa5f0GuLUsr6PRvrmlyI4vvpAI6ylOB0zq/FBJPq/rQLI6nrF+EAE2o1YaEnF4u
+         uhwsQtuW0gmgJ8NuxE+TD70oxz/ZbvjtwFSgq6QO6uc4Atl8Rf5ueykhfCuPJ9es+q17
+         VjIc0SJoQV7AHX8YtWIg+GCReO3nRECBNDvvJ5YXDd7uIu5ZDblXpxZ30KiRZ1t2R9VD
+         Affswh/7ye6daCKizFYJL1f4RL9beimqwPyBbF41szX8oqkdvX9Yhs/DcAPROGDl9O1F
+         qvgjb6BKZ4mUgO47h9nL7dL4w9zFP+Cdzzo7NXKB8DebiOqFlG+/yIdO4W3xkHncVNkH
+         X7jA==
+X-Gm-Message-State: AOJu0YwTWpB7US8Cf6t0rLM/ccu6qmgDEy3kb7WVOWYYFyHUsFQYWhrB
+        acupxrq80CzW6DP9Cj/RLaDkIi2M8As+oym1l+VmzvihVbnNB3m95tzXdy+abVyVBPvTrXKLZKR
+        au97S3nyVgrK28llLVUtuXDgJGSgK
+X-Received: by 2002:a17:906:319a:b0:9ae:7943:b0ff with SMTP id 26-20020a170906319a00b009ae7943b0ffmr1409856ejy.27.1695906114324;
+        Thu, 28 Sep 2023 06:01:54 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFJjQiIjJVuDS3g32mRy//SH9vwKSEPCf6FjkZoTcZfx77rovjUrCRFJp0QcgV0Zb3CqzJbMg==
+X-Received: by 2002:a17:906:319a:b0:9ae:7943:b0ff with SMTP id 26-20020a170906319a00b009ae7943b0ffmr1409778ejy.27.1695906113300;
+        Thu, 28 Sep 2023 06:01:53 -0700 (PDT)
+Received: from maszat.piliscsaba.szeredi.hu (94-21-53-31.pool.digikabel.hu. [94.21.53.31])
+        by smtp.gmail.com with ESMTPSA id v6-20020a170906380600b0099c53c4407dsm10784863ejc.78.2023.09.28.06.01.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 28 Sep 2023 06:01:52 -0700 (PDT)
+From:   Miklos Szeredi <mszeredi@redhat.com>
+To:     linux-fsdevel@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-man@vger.kernel.org, linux-security-module@vger.kernel.org,
+        Karel Zak <kzak@redhat.com>, Ian Kent <raven@themaw.net>,
+        David Howells <dhowells@redhat.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        Amir Goldstein <amir73il@gmail.com>,
+        Matthew House <mattlloydhouse@gmail.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH v3 2/4] namespace: extract show_path() helper
+Date:   Thu, 28 Sep 2023 15:01:44 +0200
+Message-ID: <20230928130147.564503-3-mszeredi@redhat.com>
+X-Mailer: git-send-email 2.41.0
+In-Reply-To: <20230928130147.564503-1-mszeredi@redhat.com>
+References: <20230928130147.564503-1-mszeredi@redhat.com>
 MIME-Version: 1.0
-X-Mimecast-Spam-Score: 0
-X-Mimecast-Originator: aculab.com
-Content-Language: en-US
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-From: Peter Zijlstra
-> Sent: 28 September 2023 11:39
-> 
-> On Mon, May 29, 2023 at 03:14:13PM -0400, Mathieu Desnoyers wrote:
-> > Expose the "on-cpu" state for each thread through struct rseq to allow
-> > adaptative mutexes to decide more accurately between busy-waiting and
-> > calling sys_futex() to release the CPU, based on the on-cpu state of the
-> > mutex owner.
+To be used by the statmount(2) syscall as well.
 
-Are you trying to avoid spinning when the owning process is sleeping?
-Or trying to avoid the system call when it will find that the futex
-is no longer held?
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/internal.h       |  2 ++
+ fs/namespace.c      |  9 +++++++++
+ fs/proc_namespace.c | 10 +++-------
+ 3 files changed, 14 insertions(+), 7 deletions(-)
 
-The latter is really horribly detremental.
-
-> >
-> > It is only provided as an optimization hint, because there is no
-> > guarantee that the page containing this field is in the page cache, and
-> > therefore the scheduler may very well fail to clear the on-cpu state on
-> > preemption. This is expected to be rare though, and is resolved as soon
-> > as the task returns to user-space.
-> >
-> > The goal is to improve use-cases where the duration of the critical
-> > sections for a given lock follows a multi-modal distribution, preventing
-> > statistical guesses from doing a good job at choosing between busy-wait
-> > and futex wait behavior.
-> 
-> As always, are syscalls really *that* expensive? Why can't we busy wait
-> in the kernel instead?
-> 
-> I mean, sure, meltdown sucked, but most people should now be running
-> chips that are not affected by that particular horror show, no?
-
-IIRC 'page table separation' which is what makes system calls expensive
-is only a compile-time option. So is likely to be enabled on any 'distro'
-kernel.
-But a lot of other mitigations (eg RSB stuffing) are also pretty detrimental.
-
-OTOH if you have a 'hot' userspace mutex you are going to lose whatever.
-All that needs to happen is for a ethernet interrupt to decide to discard
-completed transmits and refill the rx ring, and then for the softint code
-to free a load of stuff deferred by rcu while you've grabbed the mutex
-and no matter how short the user-space code path the mutex won't be
-released for absolutely ages.
-
-I had to change a load of code to use arrays and atomic increments
-to avoid delays acquiring mutex.
-
-	David
-
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+diff --git a/fs/internal.h b/fs/internal.h
+index d64ae03998cc..0c4f4cf2ff5a 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -83,6 +83,8 @@ int path_mount(const char *dev_name, struct path *path,
+ 		const char *type_page, unsigned long flags, void *data_page);
+ int path_umount(struct path *path, int flags);
+ 
++int show_path(struct seq_file *m, struct dentry *root);
++
+ /*
+  * fs_struct.c
+  */
+diff --git a/fs/namespace.c b/fs/namespace.c
+index e02bc5f41c7b..c3a41200fe70 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -4678,6 +4678,15 @@ SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path,
+ 	return err;
+ }
+ 
++int show_path(struct seq_file *m, struct dentry *root)
++{
++	if (root->d_sb->s_op->show_path)
++		return root->d_sb->s_op->show_path(m, root);
++
++	seq_dentry(m, root, " \t\n\\");
++	return 0;
++}
++
+ static void __init init_mount_tree(void)
+ {
+ 	struct vfsmount *mnt;
+diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
+index 250eb5bf7b52..5638ad419f52 100644
+--- a/fs/proc_namespace.c
++++ b/fs/proc_namespace.c
+@@ -142,13 +142,9 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
+ 
+ 	seq_printf(m, "%i %i %u:%u ", r->mnt_id, r->mnt_parent->mnt_id,
+ 		   MAJOR(sb->s_dev), MINOR(sb->s_dev));
+-	if (sb->s_op->show_path) {
+-		err = sb->s_op->show_path(m, mnt->mnt_root);
+-		if (err)
+-			goto out;
+-	} else {
+-		seq_dentry(m, mnt->mnt_root, " \t\n\\");
+-	}
++	err = show_path(m, mnt->mnt_root);
++	if (err)
++		goto out;
+ 	seq_putc(m, ' ');
+ 
+ 	/* mountpoints outside of chroot jail will give SEQ_SKIP on this */
+-- 
+2.41.0
 
