@@ -2,59 +2,59 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 50055E732CC
-	for <linux-api@archiver.kernel.org>; Thu, 28 Sep 2023 13:03:31 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id E6C7FE732CA
+	for <linux-api@archiver.kernel.org>; Thu, 28 Sep 2023 13:03:43 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S232608AbjI1NDa (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 28 Sep 2023 09:03:30 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:57122 "EHLO
+        id S232671AbjI1NDn (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 28 Sep 2023 09:03:43 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:55992 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232607AbjI1ND3 (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Sep 2023 09:03:29 -0400
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id EB8311A1
-        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:01:55 -0700 (PDT)
+        with ESMTP id S232607AbjI1NDb (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 28 Sep 2023 09:03:31 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 478EF1A8
+        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:02:00 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-        s=mimecast20190719; t=1695906115;
+        s=mimecast20190719; t=1695906119;
         h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
          to:to:cc:cc:mime-version:mime-version:
          content-transfer-encoding:content-transfer-encoding:
          in-reply-to:in-reply-to:references:references;
-        bh=SWtEP6obDhInT9MlruX+BXNPufUR3rJf8VMpuhorm70=;
-        b=fh78fpIMcBy1zXbGkflppcGWCeCkqFBP0kTxoMqzQlzNIPdhgBj5fJ03//nLT28b1vLbO4
-        AQ8e/XNUryLl/bKhg/lusrUCOAVBzigMPBevxC7qPQyGJbSSLv/Vzx2rkxnHyLkdfYhgoP
-        3lSxpHy8xKejvrnDS9PBH68d2iAib/Y=
-Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
- [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
+        bh=tVM4vTWFn4I5wl/Ns/ji6K+zCuq5d/aWhjyPG/bsZNM=;
+        b=YU9byh5oHOrBZmA+wxxkq//jlig1/dLVVd5+93J9o+anLXCyy/k8inz27i7HJD9GnGMZ5U
+        86mRivpupYnLUUxqfNrnINg1weef6MAx9xdZE+afwKoyPHeix3NbaNVFjVj7h1Eo/HZv+V
+        DtoFX+ePG4rSm62AsPnvAOpCqeGLnw0=
+Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com
+ [209.85.218.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-341-eJeOml-aM0es9cKq8VjtZw-1; Thu, 28 Sep 2023 09:01:53 -0400
-X-MC-Unique: eJeOml-aM0es9cKq8VjtZw-1
-Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-993c2d9e496so1107786466b.0
-        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:01:53 -0700 (PDT)
+ us-mta-368-xfIDSyL4Pw6a3uYY0BoVbg-1; Thu, 28 Sep 2023 09:01:57 -0400
+X-MC-Unique: xfIDSyL4Pw6a3uYY0BoVbg-1
+Received: by mail-ej1-f70.google.com with SMTP id a640c23a62f3a-9a9d7a801a3so1129843366b.2
+        for <linux-api@vger.kernel.org>; Thu, 28 Sep 2023 06:01:57 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1695906112; x=1696510912;
+        d=1e100.net; s=20230601; t=1695906116; x=1696510916;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=SWtEP6obDhInT9MlruX+BXNPufUR3rJf8VMpuhorm70=;
-        b=mjmfrq4Ifn3zfcH9IGxI67l5bm+YeMMvJcF4nS4RcYpKikaAs4BC/8gnqKEKTedM3m
-         VzTCVKHLueX+OFZFYlKEBLAD31PdysXJJpFsTzRgRKMwpjzPGJstP9z06GuB9VXfN0u2
-         S0hLwB8ckGQtLT9hLPYPPItLW1xWVLtFE9rySPfLGTRgCp2jPz9FFt7+O2kXrG5GhTzl
-         KOM3G09zMLHECmkDy3gEB6cuAPjJofqN5Tc3TJZbstU+sdwbOid0PoY8RLWrT25KT3H1
-         IO+ighfd5NNWyL0Md5qKbYngj0ZPv5Jb8NaRu26Kxmu60xXAQfk0LKMLAE1RlEV5hEGK
-         6jLw==
-X-Gm-Message-State: AOJu0YztN/MrDKvc6W9aKMlEl6lmpvjspMppu1M/OvLt8xAbFVj1CRTa
-        Lh+PRZ7YvCngVXzRkyej9Yy2kYdnF0ik8SZFNtH9vfaNoclX5VUiQbEABDnJDOO/9ViD8GADEvD
-        i3cbWbxU/XGbO+NOpqumt
-X-Received: by 2002:a17:907:7886:b0:9ae:3a68:93e8 with SMTP id ku6-20020a170907788600b009ae3a6893e8mr1305777ejc.14.1695906111919;
-        Thu, 28 Sep 2023 06:01:51 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IEz3pbGNaGsGXLxS4Ox+9nimNMZDSlGuOBBQFpgwBh7j/cbtDjr7ZFe8TndKXVmt+ywY7dOTA==
-X-Received: by 2002:a17:907:7886:b0:9ae:3a68:93e8 with SMTP id ku6-20020a170907788600b009ae3a6893e8mr1305753ejc.14.1695906111560;
-        Thu, 28 Sep 2023 06:01:51 -0700 (PDT)
+        bh=tVM4vTWFn4I5wl/Ns/ji6K+zCuq5d/aWhjyPG/bsZNM=;
+        b=lisEnl700JMZcFeTsi1d2HX+zrb5qHL4lvoPEkKXKzWv7njb5MM37o6rP4D/2rxaYR
+         u+3P8vn9v4xqMSjgscklzy00hMHDZC7gWlvkuzkZmDC0prHNcYa9jszZd2YGqfWvnBnt
+         T+urMBvkubaNV8rSIlg6//Q1eqfONnxBvY1QVtl+EdxYDVLJcl1xm/12avIZKAg9NvMw
+         msauWcno8hClKOY8+jlyTLzyLfHTCmpGrsFa7mcT6kJ5h5QaxdBfOrw/SKUR1dxae9jC
+         6vrF4ISD7w/lBnLMxsiSJIWJm66PM0vX3Pz+iCY+BDxsO09xzmHRW32jrqU8ysnsYOgL
+         OAbA==
+X-Gm-Message-State: AOJu0YwFLeMOnwvM42qAGmX+5BVpampALhRcAeVDQgRXKgc+N+MG+MvB
+        WPPc6ZuAFfvQE47GB7nEeqViuULQx7kRnK+X3TmhtRCXaFcQu5Gp72DoExxd6Lclu2cjJ8PdqmK
+        pIO38RHQ5fRt7m4GElQIu
+X-Received: by 2002:a17:906:29e:b0:9b0:552c:b36c with SMTP id 30-20020a170906029e00b009b0552cb36cmr1168256ejf.21.1695906116393;
+        Thu, 28 Sep 2023 06:01:56 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IFj0Vi09eIzprfVw38fz/8j9wZpbBsM0WwbMMqDlXyZ+kJqaPE8hFUAjvFPJpBmA1s3I9qgPA==
+X-Received: by 2002:a17:906:29e:b0:9b0:552c:b36c with SMTP id 30-20020a170906029e00b009b0552cb36cmr1168217ejf.21.1695906115881;
+        Thu, 28 Sep 2023 06:01:55 -0700 (PDT)
 Received: from maszat.piliscsaba.szeredi.hu (94-21-53-31.pool.digikabel.hu. [94.21.53.31])
-        by smtp.gmail.com with ESMTPSA id v6-20020a170906380600b0099c53c4407dsm10784863ejc.78.2023.09.28.06.01.50
+        by smtp.gmail.com with ESMTPSA id v6-20020a170906380600b0099c53c4407dsm10784863ejc.78.2023.09.28.06.01.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 28 Sep 2023 06:01:50 -0700 (PDT)
+        Thu, 28 Sep 2023 06:01:54 -0700 (PDT)
 From:   Miklos Szeredi <mszeredi@redhat.com>
 To:     linux-fsdevel@vger.kernel.org
 Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
@@ -68,9 +68,9 @@ Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
         Matthew House <mattlloydhouse@gmail.com>,
         Florian Weimer <fweimer@redhat.com>,
         Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v3 1/4] add unique mount ID
-Date:   Thu, 28 Sep 2023 15:01:43 +0200
-Message-ID: <20230928130147.564503-2-mszeredi@redhat.com>
+Subject: [PATCH v3 3/4] add statmount(2) syscall
+Date:   Thu, 28 Sep 2023 15:01:45 +0200
+Message-ID: <20230928130147.564503-4-mszeredi@redhat.com>
 X-Mailer: git-send-email 2.41.0
 In-Reply-To: <20230928130147.564503-1-mszeredi@redhat.com>
 References: <20230928130147.564503-1-mszeredi@redhat.com>
@@ -80,92 +80,470 @@ Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-If a mount is released then its mnt_id can immediately be reused.  This is
-bad news for user interfaces that want to uniquely identify a mount.
+Add a way to query attributes of a single mount instead of having to parse
+the complete /proc/$PID/mountinfo, which might be huge.
 
-Implementing a unique mount ID is trivial (use a 64bit counter).
-Unfortunately userspace assumes 32bit size and would overflow after the
-counter reaches 2^32.
+Lookup the mount the new 64bit mount ID.  If a mount needs to be queried
+based on path, then statx(2) can be used to first query the mount ID
+belonging to the path.
 
-Introduce a new 64bit ID alongside the old one.  Initialize the counter to
-2^32, this guarantees that the old and new IDs are never mixed up.
+Design is based on a suggestion by Linus:
 
+  "So I'd suggest something that is very much like "statfsat()", which gets
+   a buffer and a length, and returns an extended "struct statfs" *AND*
+   just a string description at the end."
+
+The interface closely mimics that of statx.
+
+Handle ASCII attributes by appending after the end of the structure (as per
+above suggestion).  Pointers to strings are stored in u64 members to make
+the structure the same regardless of pointer size.  Strings are nul
+terminated.
+
+Link: https://lore.kernel.org/all/CAHk-=wh5YifP7hzKSbwJj94+DZ2czjrZsczy6GBimiogZws=rg@mail.gmail.com/
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
 ---
- fs/mount.h                | 3 ++-
- fs/namespace.c            | 4 ++++
- fs/stat.c                 | 9 +++++++--
- include/uapi/linux/stat.h | 1 +
- 4 files changed, 14 insertions(+), 3 deletions(-)
+ arch/x86/entry/syscalls/syscall_32.tbl |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl |   1 +
+ fs/namespace.c                         | 283 +++++++++++++++++++++++++
+ fs/statfs.c                            |   1 +
+ include/linux/syscalls.h               |   5 +
+ include/uapi/asm-generic/unistd.h      |   5 +-
+ include/uapi/linux/mount.h             |  56 +++++
+ 7 files changed, 351 insertions(+), 1 deletion(-)
 
-diff --git a/fs/mount.h b/fs/mount.h
-index 130c07c2f8d2..a14f762b3f29 100644
---- a/fs/mount.h
-+++ b/fs/mount.h
-@@ -72,7 +72,8 @@ struct mount {
- 	struct fsnotify_mark_connector __rcu *mnt_fsnotify_marks;
- 	__u32 mnt_fsnotify_mask;
- #endif
--	int mnt_id;			/* mount identifier */
-+	int mnt_id;			/* mount identifier, reused */
-+	u64 mnt_id_unique;		/* mount ID unique until reboot */
- 	int mnt_group_id;		/* peer group identifier */
- 	int mnt_expiry_mark;		/* true if marked for expiry */
- 	struct hlist_head mnt_pins;
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 2d0b1bd866ea..317b1320ad18 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -457,3 +457,4 @@
+ 450	i386	set_mempolicy_home_node		sys_set_mempolicy_home_node
+ 451	i386	cachestat		sys_cachestat
+ 452	i386	fchmodat2		sys_fchmodat2
++454	i386	statmount		sys_statmount
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 1d6eee30eceb..7312c440978f 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -375,6 +375,7 @@
+ 451	common	cachestat		sys_cachestat
+ 452	common	fchmodat2		sys_fchmodat2
+ 453	64	map_shadow_stack	sys_map_shadow_stack
++454	common	statmount		sys_statmount
+ 
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
 diff --git a/fs/namespace.c b/fs/namespace.c
-index e157efc54023..e02bc5f41c7b 100644
+index c3a41200fe70..3326ba2b2810 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -68,6 +68,9 @@ static u64 event;
- static DEFINE_IDA(mnt_id_ida);
- static DEFINE_IDA(mnt_group_ida);
- 
-+/* Don't allow confusion with old 32bit mount ID */
-+static atomic64_t mnt_id_ctr = ATOMIC64_INIT(1ULL << 32);
-+
- static struct hlist_head *mount_hashtable __read_mostly;
- static struct hlist_head *mountpoint_hashtable __read_mostly;
- static struct kmem_cache *mnt_cache __read_mostly;
-@@ -131,6 +134,7 @@ static int mnt_alloc_id(struct mount *mnt)
- 	if (res < 0)
- 		return res;
- 	mnt->mnt_id = res;
-+	mnt->mnt_id_unique = atomic64_inc_return(&mnt_id_ctr);
+@@ -4687,6 +4687,289 @@ int show_path(struct seq_file *m, struct dentry *root)
  	return 0;
  }
  
-diff --git a/fs/stat.c b/fs/stat.c
-index 6e60389d6a15..e61e0172e191 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -280,8 +280,13 @@ static int vfs_statx(int dfd, struct filename *filename, int flags,
- 
- 	error = vfs_getattr(&path, stat, request_mask, flags);
- 
--	stat->mnt_id = real_mount(path.mnt)->mnt_id;
--	stat->result_mask |= STATX_MNT_ID;
-+	if (request_mask & STATX_MNT_ID_UNIQUE) {
-+		stat->mnt_id = real_mount(path.mnt)->mnt_id_unique;
-+		stat->result_mask |= STATX_MNT_ID_UNIQUE;
-+	} else {
-+		stat->mnt_id = real_mount(path.mnt)->mnt_id;
-+		stat->result_mask |= STATX_MNT_ID;
++static struct vfsmount *lookup_mnt_in_ns(u64 id, struct mnt_namespace *ns)
++{
++	struct mount *mnt;
++	struct vfsmount *res = NULL;
++
++	lock_ns_list(ns);
++	list_for_each_entry(mnt, &ns->list, mnt_list) {
++		if (!mnt_is_cursor(mnt) && id == mnt->mnt_id_unique) {
++			res = &mnt->mnt;
++			break;
++		}
 +	}
++	unlock_ns_list(ns);
++	return res;
++}
++
++struct stmt_state {
++	struct statmnt __user *const buf;
++	size_t const bufsize;
++	struct vfsmount *const mnt;
++	u64 const mask;
++	struct seq_file seq;
++	struct path root;
++	struct statmnt sm;
++	size_t pos;
++	int err;
++};
++
++typedef int (*stmt_func_t)(struct stmt_state *);
++
++static int stmt_string_seq(struct stmt_state *s, stmt_func_t func)
++{
++	size_t rem = s->bufsize - s->pos - sizeof(s->sm);
++	struct seq_file *seq = &s->seq;
++	int ret;
++
++	seq->count = 0;
++	seq->size = min(seq->size, rem);
++	seq->buf = kvmalloc(seq->size, GFP_KERNEL_ACCOUNT);
++	if (!seq->buf)
++		return -ENOMEM;
++
++	ret = func(s);
++	if (ret)
++		return ret;
++
++	if (seq_has_overflowed(seq)) {
++		if (seq->size == rem)
++			return -EOVERFLOW;
++		seq->size *= 2;
++		if (seq->size > MAX_RW_COUNT)
++			return -ENOMEM;
++		kvfree(seq->buf);
++		return 0;
++	}
++
++	/* Done */
++	return 1;
++}
++
++static void stmt_string(struct stmt_state *s, u64 mask, stmt_func_t func,
++		       u32 *str)
++{
++	int ret = s->pos + sizeof(s->sm) >= s->bufsize ? -EOVERFLOW : 0;
++	struct statmnt *sm = &s->sm;
++	struct seq_file *seq = &s->seq;
++
++	if (s->err || !(s->mask & mask))
++		return;
++
++	seq->size = PAGE_SIZE;
++	while (!ret)
++		ret = stmt_string_seq(s, func);
++
++	if (ret < 0) {
++		s->err = ret;
++	} else {
++		seq->buf[seq->count++] = '\0';
++		if (copy_to_user(s->buf->str + s->pos, seq->buf, seq->count)) {
++			s->err = -EFAULT;
++		} else {
++			*str = s->pos;
++			s->pos += seq->count;
++		}
++	}
++	kvfree(seq->buf);
++	sm->mask |= mask;
++}
++
++static void stmt_numeric(struct stmt_state *s, u64 mask, stmt_func_t func)
++{
++	if (s->err || !(s->mask & mask))
++		return;
++
++	s->err = func(s);
++	s->sm.mask |= mask;
++}
++
++static u64 mnt_to_attr_flags(struct vfsmount *mnt)
++{
++	unsigned int mnt_flags = READ_ONCE(mnt->mnt_flags);
++	u64 attr_flags = 0;
++
++	if (mnt_flags & MNT_READONLY)
++		attr_flags |= MOUNT_ATTR_RDONLY;
++	if (mnt_flags & MNT_NOSUID)
++		attr_flags |= MOUNT_ATTR_NOSUID;
++	if (mnt_flags & MNT_NODEV)
++		attr_flags |= MOUNT_ATTR_NODEV;
++	if (mnt_flags & MNT_NOEXEC)
++		attr_flags |= MOUNT_ATTR_NOEXEC;
++	if (mnt_flags & MNT_NODIRATIME)
++		attr_flags |= MOUNT_ATTR_NODIRATIME;
++	if (mnt_flags & MNT_NOSYMFOLLOW)
++		attr_flags |= MOUNT_ATTR_NOSYMFOLLOW;
++
++	if (mnt_flags & MNT_NOATIME)
++		attr_flags |= MOUNT_ATTR_NOATIME;
++	else if (mnt_flags & MNT_RELATIME)
++		attr_flags |= MOUNT_ATTR_RELATIME;
++	else
++		attr_flags |= MOUNT_ATTR_STRICTATIME;
++
++	if (is_idmapped_mnt(mnt))
++		attr_flags |= MOUNT_ATTR_IDMAP;
++
++	return attr_flags;
++}
++
++static u64 mnt_to_propagation_flags(struct mount *m)
++{
++	u64 propagation = 0;
++
++	if (IS_MNT_SHARED(m))
++		propagation |= MS_SHARED;
++	if (IS_MNT_SLAVE(m))
++		propagation |= MS_SLAVE;
++	if (IS_MNT_UNBINDABLE(m))
++		propagation |= MS_UNBINDABLE;
++	if (!propagation)
++		propagation |= MS_PRIVATE;
++
++	return propagation;
++}
++
++static int stmt_sb_basic(struct stmt_state *s)
++{
++	struct super_block *sb = s->mnt->mnt_sb;
++
++	s->sm.sb_dev_major = MAJOR(sb->s_dev);
++	s->sm.sb_dev_minor = MINOR(sb->s_dev);
++	s->sm.sb_magic = sb->s_magic;
++	s->sm.sb_flags = sb->s_flags & (SB_RDONLY|SB_SYNCHRONOUS|SB_DIRSYNC|SB_LAZYTIME);
++
++	return 0;
++}
++
++static int stmt_mnt_basic(struct stmt_state *s)
++{
++	struct mount *m = real_mount(s->mnt);
++
++	s->sm.mnt_id = m->mnt_id_unique;
++	s->sm.mnt_parent_id = m->mnt_parent->mnt_id_unique;
++	s->sm.mnt_id_old = m->mnt_id;
++	s->sm.mnt_parent_id_old = m->mnt_parent->mnt_id;
++	s->sm.mnt_attr = mnt_to_attr_flags(&m->mnt);
++	s->sm.mnt_propagation = mnt_to_propagation_flags(m);
++	s->sm.mnt_peer_group = IS_MNT_SHARED(m) ? m->mnt_group_id : 0;
++	s->sm.mnt_master = IS_MNT_SLAVE(m) ? m->mnt_master->mnt_group_id : 0;
++
++	return 0;
++}
++
++static int stmt_propagate_from(struct stmt_state *s)
++{
++	struct mount *m = real_mount(s->mnt);
++
++	if (!IS_MNT_SLAVE(m))
++		return 0;
++
++	s->sm.propagate_from = get_dominating_id(m, &current->fs->root);
++
++	return 0;
++}
++
++static int stmt_mnt_root(struct stmt_state *s)
++{
++	struct seq_file *seq = &s->seq;
++	int err = show_path(seq, s->mnt->mnt_root);
++
++	if (!err && !seq_has_overflowed(seq)) {
++		seq->buf[seq->count] = '\0';
++		seq->count = string_unescape_inplace(seq->buf, UNESCAPE_OCTAL);
++	}
++	return err;
++}
++
++static int stmt_mnt_point(struct stmt_state *s)
++{
++	struct vfsmount *mnt = s->mnt;
++	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
++	int err = seq_path_root(&s->seq, &mnt_path, &s->root, "");
++
++	return err == SEQ_SKIP ? 0 : err;
++}
++
++static int stmt_fs_type(struct stmt_state *s)
++{
++	struct seq_file *seq = &s->seq;
++	struct super_block *sb = s->mnt->mnt_sb;
++
++	seq_puts(seq, sb->s_type->name);
++	return 0;
++}
++
++static int do_statmount(struct stmt_state *s)
++{
++	struct statmnt *sm = &s->sm;
++	struct mount *m = real_mount(s->mnt);
++	size_t copysize = min_t(size_t, s->bufsize, sizeof(*sm));
++	int err;
++
++	err = security_sb_statfs(s->mnt->mnt_root);
++	if (err)
++		return err;
++
++	if (!capable(CAP_SYS_ADMIN) &&
++	    !is_path_reachable(m, m->mnt.mnt_root, &s->root))
++		return -EPERM;
++
++	stmt_numeric(s, STMT_SB_BASIC, stmt_sb_basic);
++	stmt_numeric(s, STMT_MNT_BASIC, stmt_mnt_basic);
++	stmt_numeric(s, STMT_PROPAGATE_FROM, stmt_propagate_from);
++	stmt_string(s, STMT_FS_TYPE, stmt_fs_type, &sm->fs_type);
++	stmt_string(s, STMT_MNT_ROOT, stmt_mnt_root, &sm->mnt_root);
++	stmt_string(s, STMT_MNT_POINT, stmt_mnt_point, &sm->mnt_point);
++
++	if (s->err)
++		return s->err;
++
++	/* Return the number of bytes copied to the buffer */
++	sm->size = copysize + s->pos;
++
++	if (copy_to_user(s->buf, sm, copysize))
++		return -EFAULT;
++
++	return 0;
++}
++
++SYSCALL_DEFINE4(statmount, const struct __mount_arg __user *, req,
++		struct statmnt __user *, buf, size_t, bufsize,
++		unsigned int, flags)
++{
++	struct vfsmount *mnt;
++	struct __mount_arg kreq;
++	int ret;
++
++	if (flags)
++		return -EINVAL;
++
++	if (copy_from_user(&kreq, req, sizeof(kreq)))
++		return -EFAULT;
++
++	down_read(&namespace_sem);
++	mnt = lookup_mnt_in_ns(kreq.mnt_id, current->nsproxy->mnt_ns);
++	ret = -ENOENT;
++	if (mnt) {
++		struct stmt_state s = {
++			.mask = kreq.request_mask,
++			.buf = buf,
++			.bufsize = bufsize,
++			.mnt = mnt,
++		};
++
++		get_fs_root(current->fs, &s.root);
++		ret = do_statmount(&s);
++		path_put(&s.root);
++	}
++	up_read(&namespace_sem);
++
++	return ret;
++}
++
+ static void __init init_mount_tree(void)
+ {
+ 	struct vfsmount *mnt;
+diff --git a/fs/statfs.c b/fs/statfs.c
+index 96d1c3edf289..cc774c2e2c9a 100644
+--- a/fs/statfs.c
++++ b/fs/statfs.c
+@@ -9,6 +9,7 @@
+ #include <linux/security.h>
+ #include <linux/uaccess.h>
+ #include <linux/compat.h>
++#include <uapi/linux/mount.h>
+ #include "internal.h"
  
- 	if (path.mnt->mnt_root == path.dentry)
- 		stat->attributes |= STATX_ATTR_MOUNT_ROOT;
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index 7cab2c65d3d7..2f2ee82d5517 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -154,6 +154,7 @@ struct statx {
- #define STATX_BTIME		0x00000800U	/* Want/got stx_btime */
- #define STATX_MNT_ID		0x00001000U	/* Got stx_mnt_id */
- #define STATX_DIOALIGN		0x00002000U	/* Want/got direct I/O alignment info */
-+#define STATX_MNT_ID_UNIQUE	0x00004000U	/* Want/got extended stx_mount_id */
+ static int flags_by_mnt(int mnt_flags)
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 22bc6bc147f8..ba371024d902 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -74,6 +74,8 @@ struct landlock_ruleset_attr;
+ enum landlock_rule_type;
+ struct cachestat_range;
+ struct cachestat;
++struct statmnt;
++struct __mount_arg;
  
- #define STATX__RESERVED		0x80000000U	/* Reserved for future struct statx expansion */
+ #include <linux/types.h>
+ #include <linux/aio_abi.h>
+@@ -408,6 +410,9 @@ asmlinkage long sys_statfs64(const char __user *path, size_t sz,
+ asmlinkage long sys_fstatfs(unsigned int fd, struct statfs __user *buf);
+ asmlinkage long sys_fstatfs64(unsigned int fd, size_t sz,
+ 				struct statfs64 __user *buf);
++asmlinkage long sys_statmount(const struct __mount_arg __user *req,
++			      struct statmnt __user *buf, size_t bufsize,
++			      unsigned int flags);
+ asmlinkage long sys_truncate(const char __user *path, long length);
+ asmlinkage long sys_ftruncate(unsigned int fd, unsigned long length);
+ #if BITS_PER_LONG == 32
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index abe087c53b4b..8f034e934a2e 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -823,8 +823,11 @@ __SYSCALL(__NR_cachestat, sys_cachestat)
+ #define __NR_fchmodat2 452
+ __SYSCALL(__NR_fchmodat2, sys_fchmodat2)
  
++#define __NR_statmount   454
++__SYSCALL(__NR_statmount, sys_statmount)
++
+ #undef __NR_syscalls
+-#define __NR_syscalls 453
++#define __NR_syscalls 455
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
+index bb242fdcfe6b..d2c988ab526b 100644
+--- a/include/uapi/linux/mount.h
++++ b/include/uapi/linux/mount.h
+@@ -138,4 +138,60 @@ struct mount_attr {
+ /* List of all mount_attr versions. */
+ #define MOUNT_ATTR_SIZE_VER0	32 /* sizeof first published struct */
+ 
++
++/*
++ * Structure for getting mount/superblock/filesystem info with statmount(2).
++ *
++ * The interface is similar to statx(2): individual fields or groups can be
++ * selected with the @mask argument of statmount().  Kernel will set the @mask
++ * field according to the supported fields.
++ *
++ * If string fields are selected, then the caller needs to pass a buffer that
++ * has space after the fixed part of the structure.  Nul terminated strings are
++ * copied there and offsets relative to @str are stored in the relevant fields.
++ * If the buffer is too small, then EOVERFLOW is returned.  The actually used
++ * size is returned in @size.
++ */
++struct statmnt {
++	__u32 size;		/* Total size, including strings */
++	__u32 __spare1;
++	__u64 mask;		/* What results were written */
++	__u32 sb_dev_major;	/* Device ID */
++	__u32 sb_dev_minor;
++	__u64 sb_magic;		/* ..._SUPER_MAGIC */
++	__u32 sb_flags;		/* MS_{RDONLY,SYNCHRONOUS,DIRSYNC,LAZYTIME} */
++	__u32 fs_type;		/* [str] Filesystem type */
++	__u64 mnt_id;		/* Unique ID of mount */
++	__u64 mnt_parent_id;	/* Unique ID of parent (for root == mnt_id) */
++	__u32 mnt_id_old;	/* Reused IDs used in proc/.../mountinfo */
++	__u32 mnt_parent_id_old;
++	__u64 mnt_attr;		/* MOUNT_ATTR_... */
++	__u64 mnt_propagation;	/* MS_{SHARED,SLAVE,PRIVATE,UNBINDABLE} */
++	__u64 mnt_peer_group;	/* ID of shared peer group */
++	__u64 mnt_master;	/* Mount receives propagation from this ID */
++	__u64 propagate_from;	/* Propagation from in current namespace */
++	__u32 mnt_root;		/* [str] Root of mount relative to root of fs */
++	__u32 mnt_point;	/* [str] Mountpoint relative to current root */
++	__u64 __spare2[50];
++	char str[];		/* Variable size part containing strings */
++};
++
++/*
++ * To be used on the kernel ABI only for passing 64bit arguments to statmount(2)
++ */
++struct __mount_arg {
++	__u64 mnt_id;
++	__u64 request_mask;
++};
++
++/*
++ * @mask bits for statmount(2)
++ */
++#define STMT_SB_BASIC		0x00000001U     /* Want/got sb_... */
++#define STMT_MNT_BASIC		0x00000002U	/* Want/got mnt_... */
++#define STMT_PROPAGATE_FROM	0x00000004U	/* Want/got propagate_from */
++#define STMT_MNT_ROOT		0x00000008U	/* Want/got mnt_root  */
++#define STMT_MNT_POINT		0x00000010U	/* Want/got mnt_point */
++#define STMT_FS_TYPE		0x00000020U	/* Want/got fs_type */
++
+ #endif /* _UAPI_LINUX_MOUNT_H */
 -- 
 2.41.0
 
