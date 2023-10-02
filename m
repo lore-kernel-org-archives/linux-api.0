@@ -2,207 +2,100 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 1C879E74913
-	for <linux-api@archiver.kernel.org>; Mon,  2 Oct 2023 19:13:08 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87E2EE74914
+	for <linux-api@archiver.kernel.org>; Mon,  2 Oct 2023 19:21:54 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S238588AbjJBTNJ (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 2 Oct 2023 15:13:09 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36678 "EHLO
+        id S238825AbjJBTVz (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 2 Oct 2023 15:21:55 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:38676 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229536AbjJBTNI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Oct 2023 15:13:08 -0400
-Received: from mail-qv1-xf30.google.com (mail-qv1-xf30.google.com [IPv6:2607:f8b0:4864:20::f30])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id C795EB3
-        for <linux-api@vger.kernel.org>; Mon,  2 Oct 2023 12:13:04 -0700 (PDT)
-Received: by mail-qv1-xf30.google.com with SMTP id 6a1803df08f44-65b2463d651so642626d6.3
-        for <linux-api@vger.kernel.org>; Mon, 02 Oct 2023 12:13:04 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20230601; t=1696273984; x=1696878784; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=UrdshLJ6yY4TrRO+7HKqgHBt/I+RLSjFGYVl7KEYqTI=;
-        b=V5rIdH3ABQqrWkOcHPHfk4puVfhnzUPZfwFbZDn+fRkjIss08Om0Vok5ClfLFkLj9L
-         MPsLqndLZEY0PBXsyRSohdb9EdVIHtO3Et6E8InO8V2U/VaUzgcR9fSm9ZWq49lyJj5P
-         0XOF3qSDOItqY8P51toknL5em6vD3gKWSE2c8JhvqrnUsblh4byV2tWaHYB+WrPrBVnQ
-         ihcegEmZtLT5ate82ZbfUqTakN0ejz8WACcbefFTItNoIUsedYeHoOivF4ryjVrT2xoF
-         odbGl1ECUipomhK71avc0fHHVAVYaMA2eUC9UVhfCEmphVKPvBh/wPegJUnaTKrpJDl7
-         szxw==
+        with ESMTP id S238588AbjJBTVz (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Oct 2023 15:21:55 -0400
+Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com [209.85.210.171])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 800C7B8;
+        Mon,  2 Oct 2023 12:21:52 -0700 (PDT)
+Received: by mail-pf1-f171.google.com with SMTP id d2e1a72fcca58-692c70bc440so95996b3a.3;
+        Mon, 02 Oct 2023 12:21:52 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696273984; x=1696878784;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=UrdshLJ6yY4TrRO+7HKqgHBt/I+RLSjFGYVl7KEYqTI=;
-        b=geHdM7DeJyYyiyMJHIsmD6kligYlBMYjYfjtNzPFHNzwYkbwzN4ZDlS75Z1qpz9D4T
-         F3NI44qy+cZD2on8PrvvRy/f27oLMtHn+eXMUMR4yF6w8Qn/HTVMYEet4k8NGjNn1K5V
-         ZvcNzYLBkPeP2c7/je27oWhPERTKkYnnW1Fe/sabtFJEJ8hndG4GBRjBFNMXHi9zsTja
-         XJFTDkiXOnXkjPcmgY3V3WMeahko1DViP/IhFxwbxEHDLAuonNklMvytD6HcSP8ChYSA
-         rNhrZhYemBg2wf+HP9LOaoDZuDFLg9xdvVzNm7UV2ewanKu8AwQQhmheqgs62Tus3DdG
-         qPtQ==
-X-Gm-Message-State: AOJu0YwYgPaJB3mHreo6k6fD7IGwdWvC9zY3i2sU5GflJIEB1c4h/J98
-        lgHaZDjR+OyO3JxfLOIcfSH2SVVNlZ3XQerNzREiufXKOm4ATCaXoHM=
-X-Google-Smtp-Source: AGHT+IH1wn5ECQeHv7HdplVxaqOth1RWCOBlGsjk711xwfVqBlnsjjZuBUv1oJq5F0LPcPyQSrvzzHrEmFhKsEkZkSQ=
-X-Received: by 2002:a0c:b541:0:b0:655:ea8d:666d with SMTP id
- w1-20020a0cb541000000b00655ea8d666dmr11587167qvd.44.1696273983581; Mon, 02
- Oct 2023 12:13:03 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1696274512; x=1696879312;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=F/ve4+0hI3kPGfr74V3fRnzywfGyjXPBIyqNnDnwTuY=;
+        b=ASbk9QYdkJdNH3dtF4kQxAFsa1WIsFZRCmEaGeONCcDrOLUA/l3FYCyKw+jCc/l4Lp
+         URXEmUyjTNfoFYhTaboe92+s7mCrUOIVAOQNo7OInFKLSaaU4MQNVpTrj/sDrS/6DeeC
+         +opqrkEnDfP0HpV0WoqiNvrET5+jyMu7PgwfAhuyV9L8ecpIJ0cSoQBlYcw6D/+oJ1r3
+         s42eclPXZE7oBYjDzhDlpytJE2W2JM2eOVZxf5NeDeSgsVCXAVzK4OG1qDq9tK5VqfMZ
+         h9grhLsPMwTuAyv9mHhfnNUyx6Ym90CUjWcQ6z5449W3OoSjr6jQMqfdLYNOcXTZo0mT
+         dnMA==
+X-Gm-Message-State: AOJu0YxwOStOFqwEYS4mNMb4un+Em2+f+aOYqo7HHNVxq1/NIfLSArFa
+        a1C0cxuf65JPiMj37Itu/N8=
+X-Google-Smtp-Source: AGHT+IHdmSkxcMU9Q3KlwXLUK3XdwSehxi52wiuutteyt+WOowhzgK0t39kMn9Z+tSskapiavysFsA==
+X-Received: by 2002:a05:6a21:35c4:b0:136:ea0e:d23 with SMTP id ba4-20020a056a2135c400b00136ea0e0d23mr9301982pzc.11.1696274511618;
+        Mon, 02 Oct 2023 12:21:51 -0700 (PDT)
+Received: from ?IPV6:2620:15c:211:201:6ad7:f663:5f97:db57? ([2620:15c:211:201:6ad7:f663:5f97:db57])
+        by smtp.gmail.com with ESMTPSA id o5-20020a170902d4c500b001b896d0eb3dsm10650573plg.8.2023.10.02.12.21.49
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 02 Oct 2023 12:21:51 -0700 (PDT)
+Message-ID: <6a41f73c-d2ac-405f-9ecd-96dd938c9a1f@acm.org>
+Date:   Mon, 2 Oct 2023 12:21:48 -0700
 MIME-Version: 1.0
-References: <20230808030357.1213829-1-kolyshkin@gmail.com>
-In-Reply-To: <20230808030357.1213829-1-kolyshkin@gmail.com>
-From:   enh <enh@google.com>
-Date:   Mon, 2 Oct 2023 12:12:48 -0700
-Message-ID: <CAJgzZooaa7m01KMnL+jHPLCX-Gqtps0ZqxhU7q6ai3OXdNzAgA@mail.gmail.com>
-Subject: Re: [PATCH] sched/headers: move struct sched_param out of uapi
-To:     Kir Kolyshkin <kolyshkin@gmail.com>
-Cc:     linux-kernel@vger.kernel.org, libc-alpha@sourceware.org,
-        musl@lists.openwall.com, linux-api@vger.kernel.org,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Christian Brauner <brauner@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 19/21] scsi: sd: Add WRITE_ATOMIC_16 support
+Content-Language: en-US
+To:     John Garry <john.g.garry@oracle.com>, axboe@kernel.dk,
+        kbusch@kernel.org, hch@lst.de, sagi@grimberg.me,
+        jejb@linux.ibm.com, martin.petersen@oracle.com, djwong@kernel.org,
+        viro@zeniv.linux.org.uk, brauner@kernel.org,
+        chandan.babu@oracle.com, dchinner@redhat.com
+Cc:     linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-nvme@lists.infradead.org, linux-xfs@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
+        linux-api@vger.kernel.org
+References: <20230929102726.2985188-1-john.g.garry@oracle.com>
+ <20230929102726.2985188-20-john.g.garry@oracle.com>
+ <2abb1fb8-88c6-401d-b65f-b7001b2203ec@acm.org>
+ <a6041625-a203-04b3-fa42-ed023e868060@oracle.com>
+From:   Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <a6041625-a203-04b3-fa42-ed023e868060@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Aug 7, 2023 at 8:04=E2=80=AFPM Kir Kolyshkin via Libc-alpha
-<libc-alpha@sourceware.org> wrote:
->
-> Both glibc and musl define struct sched_param in sched.h, while kernel
-> has it in uapi/linux/sched/types.h, making it cumbersome to use
-> sched_getattr(2) or sched_setattr(2) from userspace.
->
-> For example, something like this:
->
->         #include <sched.h>
->         #include <linux/sched/types.h>
->
->         struct sched_attr sa;
->
-> will result in "error: redefinition of =E2=80=98struct sched_param=E2=80=
-=99" (note the
-> code doesn't need sched_param at all -- it needs struct sched_attr
-> plus some stuff from sched.h).
+On 10/2/23 04:36, John Garry wrote:
+> On 29/09/2023 18:59, Bart Van Assche wrote:
+>> On 9/29/23 03:27, John Garry wrote:
+>>> +static blk_status_t sd_setup_atomic_cmnd(struct scsi_cmnd *cmd,
+>>> +                    sector_t lba, unsigned int nr_blocks,
+>>> +                    unsigned char flags)
+>>> +{
+>>> +    cmd->cmd_len  = 16;
+>>> +    cmd->cmnd[0]  = WRITE_ATOMIC_16;
+>>> +    cmd->cmnd[1]  = flags;
+>>> +    put_unaligned_be64(lba, &cmd->cmnd[2]);
+>>> +    cmd->cmnd[10] = 0;
+>>> +    cmd->cmnd[11] = 0;
+>>> +    put_unaligned_be16(nr_blocks, &cmd->cmnd[12]);
+>>> +    cmd->cmnd[14] = 0;
+>>> +    cmd->cmnd[15] = 0;
+>>> +
+>>> +    return BLK_STS_OK;
+>>> +}
+>>
+>> Please store the 'dld' value in the GROUP NUMBER field. See e.g.
+>> sd_setup_rw16_cmnd().
+> 
+> Are you sure that WRITE ATOMIC (16) supports dld?
 
-note that `struct sched_attr` is still pretty problematic for
-userspace because it keeps changing. i (Android's bionic libc
-maintainer) get pretty frequent complaints about the lack of a wrapper
-for this in libc, but that doesn't seem plausible if it keeps
-changing. worse than that, we do find projects copy & pasting `struct
-sched_attr` (ltp, for example), which causes problems when bionic --
-which uses the latest released uapi headers directly -- and those
-projects' duplicates don't match.
+Hi John,
 
-it would be helpful (or at least "less problematic") if each new
-variant was called sched_attr_v1, sched_attr_v2 etc.
+I was assuming that DLD would be supported by the WRITE ATOMIC(16) 
+command. After having taken another look at the latest SBC-5 draft
+I see that the DLD2/DLD1/DLD0 bits are not present in the WRITE 
+ATOMIC(16) command. So please ignore my comment above.
 
-ironically, the end result of the requests for `struct sched_attr` to
-be in <sched.h> and to have wrappers for the syscalls is that i'm
-seriously considering _removing_ `struct sched_attr` from our uapi
-headers [because when i said we use them "directly", they do actually
-go through a python script] on the assumption that "everyone just
-carries around the specific version they want, and no-one has to worry
-about ABI differences" is less problematic than the current situation.
+Thanks,
 
-(to be clear: personally i've only seen source incompatibility.
-although one _could_ pass `struct sched_attr` across library
-boundaries and have ABI incompatibility, i haven't yet seen that.
-unless you count "that's the reason why there's no libc wrapper for
-this syscall, despite it being by far my most-demanded syscall
-wrapper".)
-
-> The situation is, glibc is not going to provide a wrapper for
-> sched_{get,set}attr, thus the need to include linux/sched_types.h
-> directly, which leads to the above problem.
->
-> Thus, the userspace is left with a few sub-par choices when it wants to
-> use e.g. sched_setattr(2), such as maintaining a copy of struct
-> sched_attr definition, or using some other ugly tricks.
->
-> OTOH, struct sched_param is well known, defined in POSIX, and it won't
-> be ever changed (as that would break backward compatibility).
->
-> So, while struct sched_param is indeed part of the kernel uapi,
-> exposing it the way it's done now creates an issue, and hiding it
-> (like this patch does) fixes that issue, hopefully without creating
-> another one: common userspace software rely on libc headers, and as
-> for "special" software (like libc), it looks like glibc and musl
-> do not rely on kernel headers for struct sched_param definition
-> (but let's Cc their mailing lists in case it's otherwise).
-
-getting back to your actual point about `struct sched_param`, yes,
-this sgtm too. bionic has the exact same <sched.h> vs
-<linux/sched/types.h> duplication.
-
-> The alternative to this patch would be to move struct sched_attr to,
-> say, linux/sched.h, or linux/sched/attr.h (the new file).
-
-as long as everyone promises never to change `struct sched_param`,
-that would be my personal preference --- my _ideal_ is that i never
-define anything that's uapi and get it "direct" from the [very lightly
-modified] upstream uapi headers instead.
-
-> Oh, and here is the previous attempt to fix the issue:
-> https://lore.kernel.org/all/20200528135552.GA87103@google.com/
-> While I support Linus arguments, the issue is still here
-> and needs to be fixed.
->
-> Cc: libc-alpha@sourceware.org
-> Cc: musl@lists.openwall.com
-> Cc: linux-api@vger.kernel.org
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Joel Fernandes <joel@joelfernandes.org>
-> Cc: Christian Brauner <brauner@kernel.org>
-> Fixes: e2d1e2aec572 ("sched/headers: Move various ABI definitions to <uap=
-i/linux/sched/types.h>")
-> Signed-off-by: Kir Kolyshkin <kolyshkin@gmail.com>
-> ---
->  include/linux/sched.h            | 5 ++++-
->  include/uapi/linux/sched/types.h | 4 ----
->  2 files changed, 4 insertions(+), 5 deletions(-)
->
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 609bde814cb0..3167e97a6b04 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -63,7 +63,6 @@ struct robust_list_head;
->  struct root_domain;
->  struct rq;
->  struct sched_attr;
-> -struct sched_param;
->  struct seq_file;
->  struct sighand_struct;
->  struct signal_struct;
-> @@ -370,6 +369,10 @@ extern struct root_domain def_root_domain;
->  extern struct mutex sched_domains_mutex;
->  #endif
->
-> +struct sched_param {
-> +       int sched_priority;
-> +};
-> +
->  struct sched_info {
->  #ifdef CONFIG_SCHED_INFO
->         /* Cumulative counters: */
-> diff --git a/include/uapi/linux/sched/types.h b/include/uapi/linux/sched/=
-types.h
-> index f2c4589d4dbf..90662385689b 100644
-> --- a/include/uapi/linux/sched/types.h
-> +++ b/include/uapi/linux/sched/types.h
-> @@ -4,10 +4,6 @@
->
->  #include <linux/types.h>
->
-> -struct sched_param {
-> -       int sched_priority;
-> -};
-> -
->  #define SCHED_ATTR_SIZE_VER0   48      /* sizeof first published struct =
-*/
->  #define SCHED_ATTR_SIZE_VER1   56      /* add: util_{min,max} */
->
-> --
-> 2.41.0
->
+Bart.
