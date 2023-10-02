@@ -2,138 +2,117 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id E3B46E7490C
-	for <linux-api@archiver.kernel.org>; Mon,  2 Oct 2023 18:57:38 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id BD7C4E74913
+	for <linux-api@archiver.kernel.org>; Mon,  2 Oct 2023 19:12:55 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S229534AbjJBS5j (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 2 Oct 2023 14:57:39 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:46902 "EHLO
+        id S238552AbjJBTM4 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 2 Oct 2023 15:12:56 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:48564 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S229521AbjJBS5j (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Oct 2023 14:57:39 -0400
-Received: from mail-ej1-x62b.google.com (mail-ej1-x62b.google.com [IPv6:2a00:1450:4864:20::62b])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id E5184B3;
-        Mon,  2 Oct 2023 11:57:35 -0700 (PDT)
-Received: by mail-ej1-x62b.google.com with SMTP id a640c23a62f3a-98377c5d53eso10134666b.0;
-        Mon, 02 Oct 2023 11:57:35 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1696273054; x=1696877854; darn=vger.kernel.org;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date:sender
-         :from:to:cc:subject:date:message-id:reply-to;
-        bh=6otIAIPh5XIg1eGDA9+e/nRojsDL+BWNZmCLTXEiHIA=;
-        b=SkY7fLwEi05LRe4HbNrtDKgquzKBUKQVBBSW7ldg4gktqWijMcLhgG0qQGhrkC5Gdx
-         hiYkLIWkmZOXsnU/aoXyzHYcOVY15S/rjBU3GeA44TcyrHfsX2cysX/cn0W3WDm3j9gH
-         +tvmjzs/3rdMceWT0ufdLlzBumWUYhndYNj1o6syLCq1+9o+gcgKpz20wqZEBZbVMEYW
-         aKiF2LldMkiy2h6jdoOAzklnMsFKO62RMTc0sisQpw1QjhIPdbznjFmpNxF8LJx3B535
-         M2gsACbAoE1xlFJw/qlgtJUy2/j4KFEGxr0BB1XLawHm1Mi3LohrJb36Nx48gN7FryRy
-         p5KQ==
+        with ESMTP id S238519AbjJBTM4 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 2 Oct 2023 15:12:56 -0400
+Received: from mail-oi1-f175.google.com (mail-oi1-f175.google.com [209.85.167.175])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F1A2FC9;
+        Mon,  2 Oct 2023 12:12:52 -0700 (PDT)
+Received: by mail-oi1-f175.google.com with SMTP id 5614622812f47-3af603da0f0so69170b6e.3;
+        Mon, 02 Oct 2023 12:12:52 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1696273054; x=1696877854;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :mime-version:references:message-id:subject:cc:to:from:date:sender
+        d=1e100.net; s=20230601; t=1696273972; x=1696878772;
+        h=content-transfer-encoding:in-reply-to:from:references:cc:to
+         :content-language:subject:user-agent:mime-version:date:message-id
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
-        bh=6otIAIPh5XIg1eGDA9+e/nRojsDL+BWNZmCLTXEiHIA=;
-        b=biPmDiKJZ1IahmGqDAh9v6bMNgNpUYJavD81jhXfV0f3eW6o2lqxwnWjzzBOuH2KEG
-         l+9JnfMPj+haYgKzp2/ViNLiNrAa6gTkMTeUv05zMp6d3PGZACvQUomeDJj2u5iRjyPF
-         7gEJtLVdUMqbCPvhF75cZ04agsceU1QNkJjdiU+skFxqq/U8CHqHWEbzJgf8CayRLQht
-         q7mBm/Hv80z7Gl+BRgdIghcGnPnBuC8BEFXxVPHgCmzn+C2FoRKOGPE3TItVxsqlUZVU
-         QoCWY0zYaLRKf9Z8sZnSd2El9XGRb33X8nSmzAhA+hIpNFctoUG05/HpiRxTt0aG48Si
-         0TlA==
-X-Gm-Message-State: AOJu0YxvgArJxfPiIZdIFucs6+XUD6EP5IeJ29cTJNqZ6klmLtsT6SK4
-        ZtOIFeWN8+uVhuOtl6bQvBE=
-X-Google-Smtp-Source: AGHT+IHD8FhvaBavsFW1owvzNtaVcgzQZwpKsi3fOHEFxFljS9IxvDlviiFOn1pYk31ZGH6V97T+BQ==
-X-Received: by 2002:a17:906:1097:b0:9a9:e393:8bcd with SMTP id u23-20020a170906109700b009a9e3938bcdmr9775679eju.5.1696273053905;
-        Mon, 02 Oct 2023 11:57:33 -0700 (PDT)
-Received: from gmail.com (1F2EF530.nat.pool.telekom.hu. [31.46.245.48])
-        by smtp.gmail.com with ESMTPSA id z17-20020a1709067e5100b0099bc80d5575sm17245551ejr.200.2023.10.02.11.57.32
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Oct 2023 11:57:33 -0700 (PDT)
-Sender: Ingo Molnar <mingo.kernel.org@gmail.com>
-Date:   Mon, 2 Oct 2023 20:57:31 +0200
-From:   Ingo Molnar <mingo@kernel.org>
-To:     Kir Kolyshkin <kolyshkin@gmail.com>
-Cc:     linux-kernel@vger.kernel.org, libc-alpha@sourceware.org,
-        musl@lists.openwall.com, linux-api@vger.kernel.org,
-        Ingo Molnar <mingo@redhat.com>,
-        Peter Zijlstra <peterz@infradead.org>,
-        Joel Fernandes <joel@joelfernandes.org>,
-        Christian Brauner <brauner@kernel.org>,
-        Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH] sched/headers: move struct sched_param out of uapi
-Message-ID: <ZRsSm7vDnMVEEk/f@gmail.com>
-References: <20230808030357.1213829-1-kolyshkin@gmail.com>
+        bh=QUdRRJDEOEUkLfFy9sPy2x/dfu57//lkDWppt3CgCr0=;
+        b=POUAI3nH/ATN8nxSyfkeanTklP+0FQKReRaRF4qD8X4PoZ6eKRfV/KZMLAup1P3yTl
+         gGqaI0w8luGRdM4k8tIMxufzgreqRPchnetFqn5qooNVYGQUKvVJ2yBH0Yf0a3Ro/jPs
+         aIbryfGYXyA29WOBG1mObNAr3whIyLVdVXYsj1yJeRCOmQJeEtRbm3cizVtQGxF029YB
+         +v7a7O7d9UFQ3fm1t+PQoHBnABzj68IuYHfVlMkrNXJPL8Hy0LBsDvPibm30k16zUf6D
+         KozoWv41MOJ2pRNi20gLhPMoqpSOHlHK3vz5xAfhZZ/jaPXgGateCmIs6PCGzBOlIWyP
+         WnSw==
+X-Gm-Message-State: AOJu0Yz1kdLOTGYCxBYu2M1+r2WMOXK/Zc39uMwnQsgKZ0vr7nBkBZCE
+        7lS8byRfes8Vms2Fx4HaS68=
+X-Google-Smtp-Source: AGHT+IH0PK11dn6H63Mr8RpWcPoILY0OrFw4a9OhWFOW8KKCEwPGNLXzRWfSUSCL5bhxshAKSBIzhQ==
+X-Received: by 2002:aca:1911:0:b0:3a7:aabc:738f with SMTP id l17-20020aca1911000000b003a7aabc738fmr11881935oii.39.1696273971928;
+        Mon, 02 Oct 2023 12:12:51 -0700 (PDT)
+Received: from ?IPV6:2620:15c:211:201:6ad7:f663:5f97:db57? ([2620:15c:211:201:6ad7:f663:5f97:db57])
+        by smtp.gmail.com with ESMTPSA id p4-20020a637f44000000b005637030d00csm19436115pgn.30.2023.10.02.12.12.50
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 02 Oct 2023 12:12:51 -0700 (PDT)
+Message-ID: <b7a6f380-c6fa-45e0-b727-ba804c6684e4@acm.org>
+Date:   Mon, 2 Oct 2023 12:12:49 -0700
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH 10/21] block: Add fops atomic write support
+Content-Language: en-US
+To:     John Garry <john.g.garry@oracle.com>, axboe@kernel.dk,
+        kbusch@kernel.org, hch@lst.de, sagi@grimberg.me,
+        jejb@linux.ibm.com, martin.petersen@oracle.com, djwong@kernel.org,
+        viro@zeniv.linux.org.uk, brauner@kernel.org,
+        chandan.babu@oracle.com, dchinner@redhat.com
+Cc:     linux-block@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-nvme@lists.infradead.org, linux-xfs@vger.kernel.org,
+        linux-fsdevel@vger.kernel.org, tytso@mit.edu, jbongio@google.com,
+        linux-api@vger.kernel.org
+References: <20230929102726.2985188-1-john.g.garry@oracle.com>
+ <20230929102726.2985188-11-john.g.garry@oracle.com>
+ <17ee1669-5830-4ead-888d-a6a4624b638a@acm.org>
+ <5d26fa3b-ec34-bc39-ecfe-4616a04977ca@oracle.com>
+From:   Bart Van Assche <bvanassche@acm.org>
+In-Reply-To: <5d26fa3b-ec34-bc39-ecfe-4616a04977ca@oracle.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20230808030357.1213829-1-kolyshkin@gmail.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-
-* Kir Kolyshkin <kolyshkin@gmail.com> wrote:
-
-> Both glibc and musl define struct sched_param in sched.h, while kernel
-> has it in uapi/linux/sched/types.h, making it cumbersome to use
-> sched_getattr(2) or sched_setattr(2) from userspace.
+On 10/2/23 03:10, John Garry wrote:
+> On 29/09/2023 18:51, Bart Van Assche wrote:
+>> On 9/29/23 03:27, John Garry wrote:
+>  > +    if (pos % atomic_write_unit_min_bytes)
+>  > +        return false;
 > 
-> For example, something like this:
+> See later rules.
+
+Is atomic_write_unit_min_bytes always equal to the logical block size?
+If so, can the above test be left out?
+
+>  > +    if (iov_iter_count(iter) % atomic_write_unit_min_bytes)
+>  > +        return false;
 > 
-> 	#include <sched.h>
-> 	#include <linux/sched/types.h>
+> For SCSI, there is an atomic write granularity, which dictates 
+> atomic_write_unit_min_bytes. So here we need to ensure that the length 
+> is a multiple of this value.
+
+Are there any SCSI devices that we care about that report an ATOMIC 
+TRANSFER LENGTH GRANULARITY that is larger than a single logical block?
+I'm wondering whether we really have to support such devices.
+
+>  > +    if (!is_power_of_2(iov_iter_count(iter)))
+>  > +        return false;
 > 
-> 	struct sched_attr sa;
+> This rule comes from FS block alignment and NVMe atomic boundary.
 > 
-> will result in "error: redefinition of ‘struct sched_param’" (note the
-> code doesn't need sched_param at all -- it needs struct sched_attr
-> plus some stuff from sched.h).
+> FSes (XFS) have discontiguous extents. We need to ensure that an atomic 
+> write does not cross discontiguous extents. To do this we ensure extent 
+> length and alignment and limit atomic_write_unit_max_bytes to that.
 > 
-> The situation is, glibc is not going to provide a wrapper for
-> sched_{get,set}attr, thus the need to include linux/sched_types.h
-> directly, which leads to the above problem.
+> For NVMe, an atomic write boundary is a boundary in LBA space which an 
+> atomic write should not cross. We limit atomic_write_unit_max_bytes such 
+> that it is evenly divisible into this atomic write boundary.
+> 
+> To ensure that the write does not cross these alignment boundaries we 
+> say that it must be naturally aligned and a power-of-2 in length.
+> 
+> We may be able to relax this rule but I am not sure it buys us anything 
+> - typically we want to be writing a 64KB block aligned to 64KB, for 
+> example.
 
-Meh, I truly detest this patch, because 'struct sched_param' is very much
-part of the syscall ABI signature:
-
-  include/linux/syscalls.h:
-
-  asmlinkage long sys_sched_setparam(pid_t pid,
-                                        struct sched_param __user *param);
-  asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
-                                        struct sched_param __user *param);
-  asmlinkage long sys_sched_getparam(pid_t pid,
-                                        struct sched_param __user *param);
-
-... but OTOH let's not pretend that UAPI headers have much justification
-to exist unless they are useful & can be utilized in some of the most
-common user-space library environments as-is. Namespace collisions happen.
-
-So I'm inclined to apply this workaround, but changed the title and added
-the caveat below to the changelog:
-
-    sched/headers: Move 'struct sched_param' out of uapi, to work around glibc/musl breakage
-
-    ...
-
-    Oh, and here is the previous attempt to fix the issue:
-    
-      https://lore.kernel.org/all/20200528135552.GA87103@google.com/
-    
-    While I support Linus arguments, the issue is still here
-    and needs to be fixed.
-
-    [ mingo: Linus is right, this shouldn't be needed - but on the other
-             hand I agree that this header is not really helpful to
-             user-space as-is. So let's pretend that
-             <uapi/linux/sched/types.h> is only about sched_attr, and
-             call this commit a workaround for user-space breakage
-             that it in reality is ... Also, remove the Fixes tag. ]
-    
-
-So unless Linus objects, I'll apply this to tip:sched/core for a v6.7 merge.
+It seems to me that the requirement is_power_of_2(iov_iter_count(iter))
+is necessary for some filesystems but not for all filesystems. 
+Restrictions that are specific to a single filesystem (XFS) should not 
+occur in code that is intended to be used by all filesystems 
+(blkdev_atomic_write_valid()).
 
 Thanks,
 
-	Ingo
+Bart.
+
