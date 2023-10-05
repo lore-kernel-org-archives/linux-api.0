@@ -2,159 +2,190 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id A958DE92702
-	for <linux-api@archiver.kernel.org>; Thu,  5 Oct 2023 14:36:21 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 7C57CE9270B
+	for <linux-api@archiver.kernel.org>; Thu,  5 Oct 2023 14:43:12 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S236455AbjJEOgT (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Thu, 5 Oct 2023 10:36:19 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:45780 "EHLO
+        id S236336AbjJEOmm (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Thu, 5 Oct 2023 10:42:42 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:49620 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235975AbjJEOed (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Thu, 5 Oct 2023 10:34:33 -0400
-Received: from mailout1.w1.samsung.com (mailout1.w1.samsung.com [210.118.77.11])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id B5BB926B5
-        for <linux-api@vger.kernel.org>; Thu,  5 Oct 2023 06:50:48 -0700 (PDT)
-Received: from eucas1p2.samsung.com (unknown [182.198.249.207])
-        by mailout1.w1.samsung.com (KnoxPortal) with ESMTP id 20231005133232euoutp01fe4746f0357f9cf324ea1129ca5c0bf3~LOVwtffEy0672306723euoutp01t
-        for <linux-api@vger.kernel.org>; Thu,  5 Oct 2023 13:32:32 +0000 (GMT)
-DKIM-Filter: OpenDKIM Filter v2.11.0 mailout1.w1.samsung.com 20231005133232euoutp01fe4746f0357f9cf324ea1129ca5c0bf3~LOVwtffEy0672306723euoutp01t
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=samsung.com;
-        s=mail20170921; t=1696512752;
-        bh=8oh84wv4BpHh5bEuSWpNHH1TzfuQNXxhFhUs9JhPYcc=;
-        h=Date:Subject:To:CC:From:In-Reply-To:References:From;
-        b=nJ+q1MaOlno70kH1ngY/IHPLmefWq0+3qe7nC7PVQpQ0AlJ0pG9oMD/H6O2XCZDlO
-         VC/eSFbNkZw7FZln9y2SR7j+mdRyo+ZO/cRMiFU54i0rveY+u2Qlxokc41UyPFokdE
-         +oyOpIA8R2SvsuB8R2jQCk+Btab20GKpjFLL+Amw=
-Received: from eusmges3new.samsung.com (unknown [203.254.199.245]) by
-        eucas1p1.samsung.com (KnoxPortal) with ESMTP id
-        20231005133232eucas1p194459d5c2154b380ca2aa5767b65390f~LOVwPvDiZ3103131031eucas1p1H;
-        Thu,  5 Oct 2023 13:32:32 +0000 (GMT)
-Received: from eucas1p1.samsung.com ( [182.198.249.206]) by
-        eusmges3new.samsung.com (EUCPMTA) with SMTP id 10.77.37758.0FABE156; Thu,  5
-        Oct 2023 14:32:32 +0100 (BST)
-Received: from eusmtrp2.samsung.com (unknown [182.198.249.139]) by
-        eucas1p2.samsung.com (KnoxPortal) with ESMTPA id
-        20231005133231eucas1p2df60b494ece43160cfe55304468308fe~LOVva1K6J2036920369eucas1p2w;
-        Thu,  5 Oct 2023 13:32:31 +0000 (GMT)
-Received: from eusmgms2.samsung.com (unknown [182.198.249.180]) by
-        eusmtrp2.samsung.com (KnoxPortal) with ESMTP id
-        20231005133231eusmtrp21abe9236253ea4b8693fff68e2310973~LOVvYgaza1834818348eusmtrp2T;
-        Thu,  5 Oct 2023 13:32:31 +0000 (GMT)
-X-AuditID: cbfec7f5-815ff7000002937e-b1-651ebaf0393a
-Received: from eusmtip1.samsung.com ( [203.254.199.221]) by
-        eusmgms2.samsung.com (EUCPMTA) with SMTP id ED.6C.25043.FEABE156; Thu,  5
-        Oct 2023 14:32:31 +0100 (BST)
-Received: from CAMSVWEXC02.scsc.local (unknown [106.1.227.72]) by
-        eusmtip1.samsung.com (KnoxPortal) with ESMTPA id
-        20231005133231eusmtip196d343ea8c1e6b872d69f4abd5ac4f36~LOVvME8bj0869408694eusmtip1-;
-        Thu,  5 Oct 2023 13:32:31 +0000 (GMT)
-Received: from [106.110.32.65] (106.110.32.65) by CAMSVWEXC02.scsc.local
-        (2002:6a01:e348::6a01:e348) with Microsoft SMTP Server (TLS) id 15.0.1497.2;
-        Thu, 5 Oct 2023 14:32:29 +0100
-Message-ID: <83f58662-d737-44b0-9899-c0519a75968a@samsung.com>
-Date:   Thu, 5 Oct 2023 15:32:29 +0200
+        with ESMTP id S236232AbjJEOhD (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Thu, 5 Oct 2023 10:37:03 -0400
+Received: from out2-smtp.messagingengine.com (out2-smtp.messagingengine.com [66.111.4.26])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 2D0B73F016;
+        Thu,  5 Oct 2023 07:02:52 -0700 (PDT)
+Received: from compute4.internal (compute4.nyi.internal [10.202.2.44])
+        by mailout.nyi.internal (Postfix) with ESMTP id 08D525C025F;
+        Thu,  5 Oct 2023 00:23:41 -0400 (EDT)
+Received: from mailfrontend2 ([10.202.2.163])
+  by compute4.internal (MEProxy); Thu, 05 Oct 2023 00:23:41 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=themaw.net; h=cc
+        :cc:content-transfer-encoding:content-type:content-type:date
+        :date:from:from:in-reply-to:in-reply-to:message-id:mime-version
+        :references:reply-to:sender:subject:subject:to:to; s=fm1; t=
+        1696479821; x=1696566221; bh=Z9/BddHtqtTSTcngqikz3LcXGL1B2ri4Bu8
+        DyrtBFpA=; b=ZATk2PEGSVbByPxxMHhCET54U+sK7GsAptaPN938K3RVWhuGZ5y
+        1MPF+9p64wEAdmCwLrRQXrxD/Z8DVIFcnUnqWreXfhPid6+S7dKJ/TEGIN/wGi+b
+        w7UeuMfX/bLTSQO+fVc34VBq1wO1dUgJOvxF0tpJTnyQf5cE3IPdC2sYfKA0jAjG
+        5+IYUWyKC3qnAOwJfJdm5vsBkqiziGe+7EGb5i4r5JXCRTl9hWca88GkjTghPVez
+        acMX6X1LbL2muWnR1934QI1V9CGQfyDgJAgufvqQ2Kw6mzMfrzzzygVbLH2Ee0dr
+        54v+p6eYw+ouexAq5fVz/hwiI28hqHXDmsQ==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+        messagingengine.com; h=cc:cc:content-transfer-encoding
+        :content-type:content-type:date:date:feedback-id:feedback-id
+        :from:from:in-reply-to:in-reply-to:message-id:mime-version
+        :references:reply-to:sender:subject:subject:to:to:x-me-proxy
+        :x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm2; t=
+        1696479821; x=1696566221; bh=Z9/BddHtqtTSTcngqikz3LcXGL1B2ri4Bu8
+        DyrtBFpA=; b=l1tqXNRK10fDiiVcNwtJA0uOc/5R0o5gnOO61e6/GXPLBmaxAmP
+        Oes8qYtqeVZfnPgVVCdc+RXPh8Gw9bfax7tqiszQxZsc85fSVpprBRMLvFkJmvnH
+        AhuqzooUTZ3Ah1sL4WvIfKU7IApqwjqXF/qoM9FYe9hU9wotxuQwckbMOMgEs8JM
+        TWOrzse4ZMt0lJw+bjUgBvNWj8zsbaiaoj4aFj16uOh6cmN1xnxFqsMEU0vEg1qx
+        BnLb9yq7cETJbSx70aGg7piPq5Ve5NY2TfQmWSplWeVPXzqFIsG5cJ8txrx7Ofi+
+        zpApTEwfl5TEODfW27Y5c9DHpS3Oza52BjQ==
+X-ME-Sender: <xms:SzoeZVQem9RMqeDhYeJaTvhJcFyq8Erl84K7YNXvrekTeVeuRl77JQ>
+    <xme:SzoeZex9sfi01AN7RobO41A27ETMlq08vkJbH__Szc2EzG4-TijY3Rs1Donu3wGlw
+    2oRFxP9O-RN>
+X-ME-Received: <xmr:SzoeZa39pA9oM1GJ4l2oTNh7mzcWmIitokwjaPOcg3v-vpVeSsY8LGcWiTNs_xPb6X8aH0DdfOhih5BftqSNWevnZ0dPSJDOjZDm1mo-eBNYrvT9r9S8pdCg>
+X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedrgeefgdekvdcutefuodetggdotefrodftvf
+    curfhrohhfihhlvgemucfhrghsthforghilhdpqfgfvfdpuffrtefokffrpgfnqfghnecu
+    uegrihhlohhuthemuceftddtnecusecvtfgvtghiphhivghnthhsucdlqddutddtmdenuc
+    fjughrpefkffggfgfuvfevfhfhjggtgfesthekredttdefjeenucfhrhhomhepkfgrnhcu
+    mfgvnhhtuceorhgrvhgvnhesthhhvghmrgifrdhnvghtqeenucggtffrrghtthgvrhhnpe
+    egvdetvedvfeeivdeuueejgeetvdehlefhheethfekgfejueffgeeugfekudfhjeenucev
+    lhhushhtvghrufhiiigvpedtnecurfgrrhgrmhepmhgrihhlfhhrohhmpehrrghvvghnse
+    hthhgvmhgrfidrnhgvth
+X-ME-Proxy: <xmx:SzoeZdDciAtZwRk0Yzved4E9M2AnwsGT0W61S7IhiM0cqL1pTlvSgQ>
+    <xmx:SzoeZeiorAuaxLm_o3gm8qM5bD_cHVJOcDx1E1A_txs2tFOUDKYmXg>
+    <xmx:SzoeZRr3Cn8PLYe1aG08RrTR45DiIX7qCZO690Qp2De1v4Np-NTcwg>
+    <xmx:TToeZe5FzehY4x2bDePAxtenrqdu9Dbp12yeuFC_F0HeclaNBJgGDg>
+Feedback-ID: i31e841b0:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
+ 5 Oct 2023 00:23:33 -0400 (EDT)
+Message-ID: <a25f2736-1837-f4ca-b401-85db24f46452@themaw.net>
+Date:   Thu, 5 Oct 2023 12:23:29 +0800
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 21/21] nvme: Support atomic writes
-To:     John Garry <john.g.garry@oracle.com>,
-        Alan Adamson <alan.adamson@oracle.com>
-CC:     <axboe@kernel.dk>, <kbusch@kernel.org>, <hch@lst.de>,
-        <sagi@grimberg.me>, <jejb@linux.ibm.com>,
-        <martin.petersen@oracle.com>, <djwong@kernel.org>,
-        <viro@zeniv.linux.org.uk>, <brauner@kernel.org>,
-        <chandan.babu@oracle.com>, <dchinner@redhat.com>,
-        <linux-block@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-        <linux-nvme@lists.infradead.org>, <linux-xfs@vger.kernel.org>,
-        <linux-fsdevel@vger.kernel.org>, <tytso@mit.edu>,
-        <jbongio@google.com>, <linux-api@vger.kernel.org>
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101
+ Thunderbird/102.13.0
+Subject: Re: [PATCH v3 4/4] add listmount(2) syscall
+To:     Miklos Szeredi <miklos@szeredi.hu>,
+        Paul Moore <paul@paul-moore.com>
+Cc:     Miklos Szeredi <mszeredi@redhat.com>,
+        linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org, linux-man@vger.kernel.org,
+        linux-security-module@vger.kernel.org, Karel Zak <kzak@redhat.com>,
+        David Howells <dhowells@redhat.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        Amir Goldstein <amir73il@gmail.com>,
+        Matthew House <mattlloydhouse@gmail.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>
+References: <20230928130147.564503-1-mszeredi@redhat.com>
+ <20230928130147.564503-5-mszeredi@redhat.com>
+ <CAHC9VhQD9r+Qf5Vz1XmxUdJJJO7HNTKdo8Ux=n+xkxr=JGFMrw@mail.gmail.com>
+ <CAJfpegsPbDgaz46x4Rr9ZgCpF9rohVHsvuWtQ5LNAdiYU_D4Ww@mail.gmail.com>
 Content-Language: en-US
-From:   Pankaj Raghav <p.raghav@samsung.com>
-In-Reply-To: <b6ed0e26-e3d4-40c1-b95d-11c5b3b71077@oracle.com>
-Content-Type: text/plain; charset="UTF-8"
+From:   Ian Kent <raven@themaw.net>
+In-Reply-To: <CAJfpegsPbDgaz46x4Rr9ZgCpF9rohVHsvuWtQ5LNAdiYU_D4Ww@mail.gmail.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
-X-Originating-IP: [106.110.32.65]
-X-ClientProxiedBy: CAMSVWEXC01.scsc.local (2002:6a01:e347::6a01:e347) To
-        CAMSVWEXC02.scsc.local (2002:6a01:e348::6a01:e348)
-X-Brightmail-Tracker: H4sIAAAAAAAAA01Sf1CTZRy/533fvXs3A1+mtCdArFVyIhBl0sOlRNHu3j+0I7vy0utysSe2
-        4oduTEPrGBAimICQKUNjh/JDd5UMgYGQ+OqkqYQXamMckd34wy1uIsQyGcV4seO/z/P5cd/v
-        53sPQ8oK6QhGm5OHdTmqLAUtpTquPvw5/n53NE60/0SjnsprBLKMVtLIe/kBQL/Yo9GA56QY
-        DblD0RmLnUCOiz4aNTg7CHTzHxtA1fwdgNr8B2nU61qHenodFBrqPkGj+qZxMeqetYlRc/8c
-        gb73+ihU8tVDMRoM9ItSwzmz1cAN/tZKcUMDBs56tozmqhr6ANd2uoC7MGykuaIbdpKbHHdR
-        nO/H2zQ3ZY3mrO4JIv2J7dKNapyl3YN1L6TslGouBbyiXb9KP2v1OAgjsEjKgYSB7Muw3H9H
-        VA6kjIxtAbC400MEBRk7DWDTud2CMAVgzck/yccJq8VLC0IzgLOeRup/l5+3EsLDBuD1djcI
-        RkLYFHg1cHQhTrHPweKuGZHAh0FHrZsK4nB2NRxzHRcH8Qo2CV65cGvBv5LdCmvOuBd4kr1H
-        wlKeEbAcutz188MYhmZjYWGZOAgl86N6u7HgWAtLOh8tJlfD4va6xQLPwOphn0jAX8Br510L
-        K0O2Qgp564hYEN6EU8MTtIBXQE//+UU+Cv7bVU8IeD8cdz4ihfCXAFZ2/UAHl4Dsq7DiRpbg
-        eR2aav1AoEOhcyJM2CcUVnccI6vA86YlhzAtKWZaUsG0pIIZUGeBHBv02ZlYvz4H703Qq7L1
-        hpzMhIzcbCuY/6XX5/r/soEWz2QCDwgG8AAypGJlSKYxCstC1Kr8fViX+6HOkIX1PIhkKIU8
-        ZN0mR4aMzVTl4U8x3oV1j1WCkUQYiZa4d8i/k6j0tFayae19W/yD1tqo98em4/w3T6z5ZE2q
-        MsWiy3ewjVsqlkW83QhQH3cIa2faVv1ewr8XpbAftZmXV9cVXHzy1MHlYZ79p+neHX35AUZ9
-        O3lsJK6S3KGZfuvWRy1Fo5qi8H1bjTHMkfZTypiJjVuUxoFVT2vvlTaNKg9tKxtPDX/qm9d6
-        NN8VOF95dio+9uNIz7s4dkTmOxz6RyApr2HAu6mzK3AgpTHtpZJzR2YOJypEyzSFG+7uBFcK
-        vi41FycPmg/MXs5NljsTN2/ftmH9bnV+evKkNJARWZWmvYS+HZKr2vfMSujUD/bCN9R8dF1M
-        81xNwuawu59XKRWUXqN6MZbU6VX/AfQjJ8UUBAAA
-X-Brightmail-Tracker: H4sIAAAAAAAAA+NgFtrBKsWRmVeSWpSXmKPExsVy+t/xu7rvd8mlGnR28Vjs6T/FZLH6bj+b
-        xevDnxgtLh2Vszj7ai67xeUnfBYrVx9lsji5/z2bxaIb25gsLvzawWgx6dA1RovN3zvYLPbe
-        0rbYs/cki8XlXXPYLOYve8pusevPDnaL5cf/MVmse/2exaK15ye7xfm/x1kdRD0WbCr1OH9v
-        I4vH5bOlHptWdbJ5TFh0gNFj85J6j903G9g8ms4cZfb4+PQWi8f7fVfZPD5vkvPY9OQtUwBP
-        lJ5NUX5pSapCRn5xia1StKGFkZ6hpYWekYmlnqGxeayVkamSvp1NSmpOZllqkb5dgl7Gwb+v
-        WQuuc1VsfHWSqYFxNWcXIyeHhICJxKbVr9m6GLk4hASWMkq0fp3KBpGQkdj45SorhC0s8eda
-        F1TRR0aJNX0PWCGcHYwSXadeglXxCthJHPs7lRnEZhFQkWje+Q0qLihxcuYTFhBbVEBe4v6t
-        GewgtrCAmcSR3VfA6kUEgiQmr3zCDjKUWeA5s8Tzebeg1q1ikng1sQusg1lAXOLWk/lMXYwc
-        HGwCWhKNnewgJifQ4r27UiEqNCVat/+GqpaXaN46mxniA0WJSTffQ31TK/H57zPGCYyis5Cc
-        NwvJgllIRs1CMmoBI8sqRpHU0uLc9NxiI73ixNzi0rx0veT83E2MwCS07djPLTsYV776qHeI
-        kYmD8RCjBAezkghveoNMqhBvSmJlVWpRfnxRaU5q8SFGU2AYTWSWEk3OB6bBvJJ4QzMDU0MT
-        M0sDU0szYyVxXs+CjkQhgfTEktTs1NSC1CKYPiYOTqkGps6DxgtCt7+WaL/EPcXtYMdF4e75
-        eTVSTh8y1vL36vExZU6vei0QJWzuar/L1Szj8rLL7TO0L5wpr9iuskLIf3+flNhHz7+25frP
-        1q5/9Pa8Vlrbz4imWzq8CRV+FiU2a213qCcLXquK62J/wMJ3zN9x1b1jD4wFJ31UfMqcVdi9
-        wI/5u6LOijbdXfc4e4xDI4vUuL4/OmPyY5f8v+XzGGbMbqk2k/9qsjjmluRub27f6JrEhxIf
-        K/ewVVTdFVx5TLt9ycJGIaOdCyef117/ty77dJaxXaDnkwcWT9f5KUvyfX0bNZu7+47ChIbj
-        Nhed1rcFvTqzU/zJ8iaNBwc0HKXvfPiUrhfs/nipQ+JpJZbijERDLeai4kQAWQAI6MsDAAA=
-X-CMS-MailID: 20231005133231eucas1p2df60b494ece43160cfe55304468308fe
-X-Msg-Generator: CA
-X-RootMTR: 20231004113943eucas1p23a51ce5ef06c36459f826101bb7b85fc
-X-EPHeader: CA
-CMS-TYPE: 201P
-X-CMS-RootMailID: 20231004113943eucas1p23a51ce5ef06c36459f826101bb7b85fc
-References: <20230929102726.2985188-1-john.g.garry@oracle.com>
-        <20230929102726.2985188-22-john.g.garry@oracle.com>
-        <CGME20231004113943eucas1p23a51ce5ef06c36459f826101bb7b85fc@eucas1p2.samsung.com>
-        <20231004113941.zx3jlgnt23vs453r@localhost>
-        <b6ed0e26-e3d4-40c1-b95d-11c5b3b71077@oracle.com>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
->>> +                blk_queue_atomic_write_max_bytes(disk->queue, atomic_bs);
->>> +                blk_queue_atomic_write_unit_min_sectors(disk->queue, 1);
->>> +                blk_queue_atomic_write_unit_max_sectors(disk->queue,
->>> +                                    atomic_bs / bs);
->> blk_queue_atomic_write_unit_[min| max]_sectors expects sectors (512 bytes unit)
->> as input but no conversion is done here from device logical block size
->> to SECTORs.
-> 
-> Yeah, you are right. I think that we can just use:
-> 
-> blk_queue_atomic_write_unit_max_sectors(disk->queue,
-> atomic_bs >> SECTOR_SHIFT);
-> 
-
-Makes sense.
-I still don't grok the difference between max_bytes and unit_max_sectors here.
-(Maybe NVMe spec does not differentiate it?)
-
-I assume min_sectors should be as follows instead of setting it to 1 (512 bytes)?
-
-blk_queue_atomic_write_unit_min_sectors(disk->queue, bs >> SECTORS_SHIFT);
-
-
-> Thanks,
-> John
-> 
->>> +                blk_queue_atomic_write_boundary_bytes(disk->queue, boundary);
->>> +            } else {
->>> +                dev_err(ns->ctrl->device, "Unsupported atomic boundary=0x%x\n",
->>> +                    boundary);
->>> +            }
+On 5/10/23 12:01, Miklos Szeredi wrote:
+> On Wed, 4 Oct 2023 at 21:38, Paul Moore <paul@paul-moore.com> wrote:
+>> On Thu, Sep 28, 2023 at 9:04 AM Miklos Szeredi <mszeredi@redhat.com> wrote:
+>>> Add way to query the children of a particular mount.  This is a more
+>>> flexible way to iterate the mount tree than having to parse the complete
+>>> /proc/self/mountinfo.
 >>>
-> 
+>>> Lookup the mount by the new 64bit mount ID.  If a mount needs to be queried
+>>> based on path, then statx(2) can be used to first query the mount ID
+>>> belonging to the path.
+>>>
+>>> Return an array of new (64bit) mount ID's.  Without privileges only mounts
+>>> are listed which are reachable from the task's root.
+>>>
+>>> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+>>> ---
+>>>   arch/x86/entry/syscalls/syscall_32.tbl |  1 +
+>>>   arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+>>>   fs/namespace.c                         | 69 ++++++++++++++++++++++++++
+>>>   include/linux/syscalls.h               |  3 ++
+>>>   include/uapi/asm-generic/unistd.h      |  5 +-
+>>>   include/uapi/linux/mount.h             |  3 ++
+>>>   6 files changed, 81 insertions(+), 1 deletion(-)
+>> ...
+>>
+>>> diff --git a/fs/namespace.c b/fs/namespace.c
+>>> index 3326ba2b2810..050e2d2af110 100644
+>>> --- a/fs/namespace.c
+>>> +++ b/fs/namespace.c
+>>> @@ -4970,6 +4970,75 @@ SYSCALL_DEFINE4(statmount, const struct __mount_arg __user *, req,
+>>>          return ret;
+>>>   }
+>>>
+>>> +static long do_listmount(struct vfsmount *mnt, u64 __user *buf, size_t bufsize,
+>>> +                        const struct path *root, unsigned int flags)
+>>> +{
+>>> +       struct mount *r, *m = real_mount(mnt);
+>>> +       struct path rootmnt = {
+>>> +               .mnt = root->mnt,
+>>> +               .dentry = root->mnt->mnt_root
+>>> +       };
+>>> +       long ctr = 0;
+>>> +       bool reachable_only = true;
+>>> +       int err;
+>>> +
+>>> +       err = security_sb_statfs(mnt->mnt_root);
+>>> +       if (err)
+>>> +               return err;
+>>> +
+>>> +       if (flags & LISTMOUNT_UNREACHABLE) {
+>>> +               if (!capable(CAP_SYS_ADMIN))
+>>> +                       return -EPERM;
+>>> +               reachable_only = false;
+>>> +       }
+>>> +
+>>> +       if (reachable_only && !is_path_reachable(m, mnt->mnt_root, &rootmnt))
+>>> +               return capable(CAP_SYS_ADMIN) ? 0 : -EPERM;
+>>> +
+>>> +       list_for_each_entry(r, &m->mnt_mounts, mnt_child) {
+>>> +               if (reachable_only &&
+>>> +                   !is_path_reachable(r, r->mnt.mnt_root, root))
+>>> +                       continue;
+>> I believe we would want to move the security_sb_statfs() call from
+>> above to down here; something like this I think ...
+>>
+>>    err = security_sb_statfs(r->mnt.mnt_root);
+>>    if (err)
+>>      /* if we can't access the mount, pretend it doesn't exist */
+>>      continue;
+> Hmm.  Why is this specific to listing mounts (i.e. why doesn't readdir
+> have a similar filter)?
+>
+> Also why hasn't this come up with regards to the proc interfaces that
+> list mounts?
+
+The proc interfaces essentially use <mount namespace>->list to provide
+
+the mounts that can be seen so it's filtered by mount namespace of the
+
+task that's doing the open().
+
+
+See fs/namespace.c:mnt_list_next() and just below the m_start(), m_next(),
+
+etc.
+
+
+Ian
+
+>
+> I just want to understand the big picture here.
+>
+> Thanks,
+> Miklos
