@@ -2,90 +2,92 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 39196CDB465
-	for <linux-api@archiver.kernel.org>; Mon, 16 Oct 2023 15:06:48 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 87659CDB482
+	for <linux-api@archiver.kernel.org>; Tue, 17 Oct 2023 01:03:00 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S233620AbjJPPGr (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Mon, 16 Oct 2023 11:06:47 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36116 "EHLO
+        id S233333AbjJQBC7 (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Mon, 16 Oct 2023 21:02:59 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:50446 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S232985AbjJPPGr (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Mon, 16 Oct 2023 11:06:47 -0400
-Received: from mail-yb1-xb36.google.com (mail-yb1-xb36.google.com [IPv6:2607:f8b0:4864:20::b36])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 50545E1
-        for <linux-api@vger.kernel.org>; Mon, 16 Oct 2023 08:06:45 -0700 (PDT)
-Received: by mail-yb1-xb36.google.com with SMTP id 3f1490d57ef6-d9ac45092e7so5154627276.2
-        for <linux-api@vger.kernel.org>; Mon, 16 Oct 2023 08:06:45 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=paul-moore.com; s=google; t=1697468804; x=1698073604; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=7JPLLbFfi+3DcdR4lMb9bxT1Efqz3WnKELubajvCf/8=;
-        b=dagC2NQY29AS3Upuik35O6nqJ8zXL3qZIbhmlUeyEHTa5xsoWW8EXpxGWIC3jdlgvP
-         5OIPBMdEQ5LjLZwJk5kr/40hLiHfRcWQS6iemI39AY6srmG0LKt2/ZYH9nVrMoVquag2
-         uR9p6GEoOSN4mioIM/WN2CFSg+mB2od5Brd5GA9K/6UIHwqXwrNmQE0qqWiQnxIXrnXT
-         2Igh9t/uvVwet52Yx/myMeYwqyGBo7aYH6hvhLg3ld6lq7SCU8NePOKh6bhRfebvW5mR
-         Em++plsgl7iF0+7F7p5VBEbeN0Hrk5PZTp8P6m/fR5B/21Q8UeomsnXqGHCO+oMl/5N9
-         Wmng==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1697468804; x=1698073604;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=7JPLLbFfi+3DcdR4lMb9bxT1Efqz3WnKELubajvCf/8=;
-        b=VzcICe//sl151TXsUW1sMnlRDGZfgvuVLv5RyL3l+b6OOyilnMP3bNfZlBZLIAlW42
-         WyljsJfku/5ZxP3yTgELUtmXX+p3/+iEB0TeeUBqUF0gvBK5JA7KAmWqvHc88vUI5Jxi
-         Z7AmWYcZKQP9aWz6POu0LPZX9oL7VoFqqDensh88rUjakKKvBa1WdsXtJh6o4OBs6/lq
-         q/B2rVSZ9jDqzNZxPqH1/fy29Qun6MJoxIRIDrdsSgCfqCTPgPBaHdgL3YQ+JC7E9mm2
-         Anl4S8qj/TjDZfZIa3Bh3wGpTOZevo55z6ftnk1GA2Mjmaq7hLwZHpymZpzYFetRHPFy
-         Hy3Q==
-X-Gm-Message-State: AOJu0YyRsYVRKmm8kkwRpGw59UwWwKi7sqgVlImDuEspb9NslilwoIhp
-        mtjxou17vpWni0b+n+/+dPEP0HbZmvD5Plhj20GU
-X-Google-Smtp-Source: AGHT+IGDqKl7MND9wZqcX+N6HWeeMu6HHtgNjthMSWYuYqtbmsB/+9mEShdOg4gGou5EhGsCNoZVqcXb9rZceJuQ6gU=
-X-Received: by 2002:a25:ae8b:0:b0:d9a:d20d:7d5a with SMTP id
- b11-20020a25ae8b000000b00d9ad20d7d5amr13002821ybj.1.1697468804361; Mon, 16
- Oct 2023 08:06:44 -0700 (PDT)
+        with ESMTP id S229848AbjJQBC7 (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Mon, 16 Oct 2023 21:02:59 -0400
+X-Greylist: delayed 415 seconds by postgrey-1.37 at lindbergh.monkeyblade.net; Mon, 16 Oct 2023 18:02:57 PDT
+Received: from bolin (vbox.bolinlang.com [IPv6:2001:19f0:b001:f83:5400:4ff:fe1a:5b71])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id F124992
+        for <linux-api@vger.kernel.org>; Mon, 16 Oct 2023 18:02:57 -0700 (PDT)
+Received: by bolin (Postfix, from userid 1000)
+        id 290E4FA139; Tue, 17 Oct 2023 00:56:00 +0000 (UTC)
 MIME-Version: 1.0
-References: <20230912205658.3432-1-casey.ref@schaufler-ca.com>
- <20230912205658.3432-1-casey@schaufler-ca.com> <CAHC9VhRcbp3iWQwL7FTUrcU1C3OsZ413Nbq+17oTwW7hZ7XvBw@mail.gmail.com>
- <CAHC9VhSqY5+DR-jXprrftb1=CzDvhTh0Ep66A16RMd4L7W7TYw@mail.gmail.com> <ae39864947debbc7c460db478b8abe1c147b7d5c.camel@huaweicloud.com>
-In-Reply-To: <ae39864947debbc7c460db478b8abe1c147b7d5c.camel@huaweicloud.com>
-From:   Paul Moore <paul@paul-moore.com>
-Date:   Mon, 16 Oct 2023 11:06:33 -0400
-Message-ID: <CAHC9VhRQ7xpeSX7b3VZfzQ15noJ8mgauNMuHWo_n3hMgsYMAfQ@mail.gmail.com>
-Subject: Re: [PATCH v15 00/11] LSM: Three basic syscalls
-To:     Roberto Sassu <roberto.sassu@huaweicloud.com>
-Cc:     Casey Schaufler <casey@schaufler-ca.com>,
-        linux-security-module@vger.kernel.org, jmorris@namei.org,
-        serge@hallyn.com, keescook@chromium.org,
-        john.johansen@canonical.com, penguin-kernel@i-love.sakura.ne.jp,
-        stephen.smalley.work@gmail.com, linux-kernel@vger.kernel.org,
-        linux-api@vger.kernel.org, mic@digikod.net
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="1804289383-1697504160=:196329"
+From:   Levo D <l-asm@mail9fcb1a.bolinlang.com>
+To:     <linux-api@vger.kernel.org>
+Subject: mmap a file without an overwrite risk?
+User-Agent: mail (GNU Mailutils 3.15)
+Date:   Tue, 17 Oct 2023 00:56:00 +0000
+Message-Id: <20231017005600.290E4FA139@bolin>
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-On Mon, Oct 16, 2023 at 8:05=E2=80=AFAM Roberto Sassu
-<roberto.sassu@huaweicloud.com> wrote:
->
-> Sorry, I just noticed LSM_ID_IMA. Since we have the 'integrity' LSM, I
-> think it should be LSM_ID_INTEGRITY.
->
-> Mimi, all, do you agree? If yes, I send a patch shortly.
+--1804289383-1697504160=:196329
+Content-Type: text/plain; charset=UTF-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+Content-ID: <20231017005600.196329@bolin>
 
-I believe LSM_ID_IMA is the better option, despite "integrity" already
-being present in Kconfig and possibly other areas.  "IMA" is a
-specific thing/LSM whereas "integrity" is a property, principle, or
-quality.  Especially as we move forward with promoting IMA as a full
-and proper LSM, we should work towards referring to it as "IMA" and
-not "integrity".
+Attached are 2 c files with main.c having reproduce instructions
 
-If anything we should be working to support "IMA" in places where we
-currently have "integrity" so that we can eventually deprecate
-"integrity".
+I noticed if I try to read a large file it's a bit slow and mallocing/mmap a large amount of memory waits hundreds of milliseconds from the OS. However mmap is incredibly fast but leaves my software open to memory corruption. I attached a reproducable
 
---=20
-paul-moore.com
+I tried various MAP flags and couldn't think of a way to get rid of the risk. The gist of the problem is if I mmap a file another process can overwrite data which appears in mine, or delete the file causing my code to have a bus error. Not shown in the code is me trying to write to every page in hopes it'd prevent my memory from being overwritten, it didn't work either.
+
+If there's nothing I can do is there an alternative way to load a file quicker than malloc+read? Files can be >100MB or GBs in size
+
+
+--1804289383-1697504160=:196329
+Content-Type: application/octet-stream; name="main.c"
+Content-Disposition: attachment; filename="main.c"
+Content-Transfer-Encoding: base64
+Content-ID: <20231017005600.196329.1@bolin>
+
+LyogUmVwcm9kdWNhYmxlIHN0ZXBzCmdjYyBtYWluLmMgLW8gYXBwMQpnY2MgYXBwMi5jIC1vIGFw
+cDIKZm49L3RtcC91QjJrQ0RGbERvUkE1NmdkZXV2T1ZLYkwxS0hYeE1oRFhjM3BGbmhqYmhjCmRk
+IGlmPS9kZXYvemVybyBvZj0kZm4gY291bnQ9NTEyMCBicz00MDk2OyAuL2FwcDEgJGZuIDEgfCAu
+L2FwcDIgJGZuCllvdSdsbCBzZWUgIlJlc3VsdCB3YXMgNzIiIGluc3RlYWQgb2YgIlJlc3VsdCB3
+YXMgMCIKZGQgaWY9L2Rldi96ZXJvIG9mPSRmbiBjb3VudD01MTIwIGJzPTQwOTY7IC4vYXBwMSAk
+Zm4gMCB8IC4vYXBwMiAkZm4KWW91J2xsIHNlZSB0aGUgZGVzaXJlZCAiUmVzdWx0IHdhcyAwIgpJ
+biBhcHAyLmMgdW5jb21tZW50L2NvbW1lbnQgbGluZSAxMyBhbmQgMTIKZ2NjIGFwcDIuYyAtbyBh
+cHAyCk5vdyB0aGlzIHdpbGwgaGF2ZSBhIGJ1cyBlcnJvciBhbmQgbGFzdCBsaW5lIHdyaXR0ZW4g
+aXMgd2FraW5nCmRkIGlmPS9kZXYvemVybyBvZj0kZm4gY291bnQ9NTEyMCBicz00MDk2OyAuL2Fw
+cDEgJGZuIDEgfCAuL2FwcDIgJGZuCnJlYWQgaXMgdW5hZmZlY3RlZApkZCBpZj0vZGV2L3plcm8g
+b2Y9JGZuIGNvdW50PTUxMjAgYnM9NDA5NjsgLi9hcHAxICRmbiAwIHwgLi9hcHAyICRmbgoqLwoK
+I2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDxzdGRsaWIuaD4KI2luY2x1ZGUgPHN0cmluZy5o
+PgojaW5jbHVkZSA8c3lzL21tYW4uaD4KI2luY2x1ZGUgPGZjbnRsLmg+CiNpbmNsdWRlIDx1bmlz
+dGQuaD4KI2luY2x1ZGUgPHN5cy9zdGF0Lmg+CmludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2
+W10pCnsKCS8vYS5vdXQgZmlsZW5hbWUgMQoJaWYgKGFyZ2MgIT0gMykgewoJCWZwcmludGYoc3Rk
+ZXJyLCAiQmFkIGFyZ3NcbiIpOwoJCXJldHVybiAxOwoJfQoJCglpbnQgZmQgPSBvcGVuKGFyZ3Zb
+MV0sIE9fUkRPTkxZKTsKCXN0cnVjdCBzdGF0IHM9ezB9OwoJZnN0YXQoZmQsICZzKTsKCWNoYXIq
+cDsKCWlmIChhcmd2WzJdWzBdID09ICcxJykKCQlwID0gKGNoYXIqKW1tYXAoMCwgcy5zdF9zaXpl
+LCBQUk9UX1JFQUQgLCBNQVBfUFJJVkFURSwgZmQsIDApOwoJZWxzZSB7CgkJcCA9IChjaGFyKilt
+YWxsb2Mocy5zdF9zaXplKTsKCQlyZWFkKGZkLCBwLCBzLnN0X3NpemUpOwoJfQoJd3JpdGUoMiwg
+IlNsZWVwaW5nXG4iLCA5KTsKCXdyaXRlKDEsICJTbGVlcGluZ1xuIiwgOSk7IC8vVHJpZ2dlcnMg
+dGhlIG90aGVyIGFwcCB0byB3cml0ZQoJc2xlZXAoMSk7Cgl3cml0ZSgyLCAiV2FraW5nXG4iLCA3
+KTsKCgkvL3JlYWQgZmlyc3QgYnl0ZSBvZiBldmVyeSA0ayBwYWdlCglpbnQgc3VtID0gMDsKCWZv
+ciAobG9uZyBpPTA7IGk8cy5zdF9zaXplOyBpKz00MDk2KSB7CgkJaWYgKHBbaV0gIT0gMCkgewoJ
+CQlpbnQgej0wOwoJCX0KCQlzdW0gKz0gcFtpXTsKCX0KCWZwcmludGYoc3RkZXJyLCAiUmVzdWx0
+IHdhcyAlZFxuIiwgc3VtKTsKCXJldHVybiAwOwp9Cg==
+--1804289383-1697504160=:196329
+Content-Type: application/octet-stream; name="app2.c"
+Content-Disposition: attachment; filename="app2.c"
+Content-Transfer-Encoding: base64
+Content-ID: <20231017005600.196329.2@bolin>
+
+I2luY2x1ZGUgPHN0ZGlvLmg+CiNpbmNsdWRlIDx1bmlzdGQuaD4KI2luY2x1ZGUgPGZjbnRsLmg+
+CmludCBtYWluKGludCBhcmdjLCBjaGFyICphcmd2W10pCnsKCWlmIChhcmdjICE9IDIpIHsKCQlm
+cHJpbnRmKHN0ZGVyciwgIkJhZCBhcmdzXG4iKTsKCQlyZXR1cm4gMTsKCX0KCWNoYXIgYnVmWzQw
+OTZdOwoJcmVhZCgwLCBidWYsIDQwOTYpOwoJaW50IGZkID0gb3Blbihhcmd2WzFdLCBPX1dST05M
+WXxPX0NSRUFUKTsKCS8vaW50IGZkID0gb3Blbihhcmd2WzFdLCBPX1dST05MWXxPX0NSRUFUfE9f
+VFJVTkN8T19DTE9FWEVDKTsgLy88LS0gVGhpcyBvbmUgY2F1c2VzIGEgYnVzIGVycm9yCgl3cml0
+ZShmZCwgIkhlbGxvIiwgNSk7CglmcHJpbnRmKHN0ZGVyciwgIldyaXR0ZW4gJWRcbiIsIGZkKTsK
+fQo=
+--1804289383-1697504160=:196329--
