@@ -2,197 +2,147 @@ Return-Path: <linux-api-owner@vger.kernel.org>
 X-Spam-Checker-Version: SpamAssassin 3.4.0 (2014-02-07) on
 	aws-us-west-2-korg-lkml-1.web.codeaurora.org
 Received: from vger.kernel.org (vger.kernel.org [23.128.96.18])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 31D15C07545
-	for <linux-api@archiver.kernel.org>; Wed, 25 Oct 2023 14:12:11 +0000 (UTC)
+	by smtp.lore.kernel.org (Postfix) with ESMTP id D7EA0C25B72
+	for <linux-api@archiver.kernel.org>; Wed, 25 Oct 2023 14:39:53 +0000 (UTC)
 Received: (majordomo@vger.kernel.org) by vger.kernel.org via listexpand
-        id S235098AbjJYOML (ORCPT <rfc822;linux-api@archiver.kernel.org>);
-        Wed, 25 Oct 2023 10:12:11 -0400
-Received: from lindbergh.monkeyblade.net ([23.128.96.19]:36316 "EHLO
+        id S234952AbjJYOjy (ORCPT <rfc822;linux-api@archiver.kernel.org>);
+        Wed, 25 Oct 2023 10:39:54 -0400
+Received: from lindbergh.monkeyblade.net ([23.128.96.19]:44058 "EHLO
         lindbergh.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-        with ESMTP id S235086AbjJYOMI (ORCPT
-        <rfc822;linux-api@vger.kernel.org>); Wed, 25 Oct 2023 10:12:08 -0400
-Received: from mail-qv1-xf32.google.com (mail-qv1-xf32.google.com [IPv6:2607:f8b0:4864:20::f32])
-        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 30A7619D;
-        Wed, 25 Oct 2023 07:12:01 -0700 (PDT)
-Received: by mail-qv1-xf32.google.com with SMTP id 6a1803df08f44-66d0ceba445so32116876d6.0;
-        Wed, 25 Oct 2023 07:12:01 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1698243121; x=1698847921; darn=vger.kernel.org;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=tKVdix5RJvAI2e7Uan+fxbsu4C97jUxO2pzvhonFzY0=;
-        b=CNS1eddqb09hcy1uhUf2Ojts+RIgLDq6IcmgR6OAKxEsjVep2Qq7bWGc7UbkQ7zPj2
-         f4c97FMU438jHeKGWLTKmOEzcmTVKaBJFKCV00Fobym3LMhK3uo1DFErKJ5kHtC+f8TK
-         P37ZLnlCFIVRBXYxlv1jliKDQdAA7lAA3T3KDStUMpolo68kDhp/DEH5YsV6NI9LWCF5
-         JRWEK91jyIjr57dDO5koa7K4xNniD4HTXB2FW/4fvJQL9RePGjdt7WFRqkGyzq6Dwbif
-         FMzMQqb4cQ2TDHvNUWhCkHPvFv156PrQjfeQkFSrIqzERtYSAghYcUpHv3XKm8FPy2GK
-         iBCw==
+        with ESMTP id S235020AbjJYODv (ORCPT
+        <rfc822;linux-api@vger.kernel.org>); Wed, 25 Oct 2023 10:03:51 -0400
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+        by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 6385F192
+        for <linux-api@vger.kernel.org>; Wed, 25 Oct 2023 07:02:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+        s=mimecast20190719; t=1698242534;
+        h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+         to:to:cc:cc:mime-version:mime-version:
+         content-transfer-encoding:content-transfer-encoding:
+         in-reply-to:in-reply-to:references:references;
+        bh=oOOGhallOPxnWGST34MdPR6LpOdkhm6q6XmykKHjQ0c=;
+        b=gT2LfIBMmQ8sCCKPzUxLcI7wq6s2aIyE98U06NzNmSIBPseLsePeYNdg0v+gQLgIfTPJrB
+        /1l4qyt0AHF8g42FLc/sqvnLyp8/2gdWLk02P+24+3DCkyTCA+TMMuuWnwhrc6PHOpY4Iw
+        YPsKfm28BeQ4F8Gu4THGbG0qUtFTkh8=
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com
+ [209.85.218.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-629-qFJmzubDM2ekOxwORuj1kA-1; Wed, 25 Oct 2023 10:02:13 -0400
+X-MC-Unique: qFJmzubDM2ekOxwORuj1kA-1
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-9b98d8f6bafso375070066b.1
+        for <linux-api@vger.kernel.org>; Wed, 25 Oct 2023 07:02:12 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1698243121; x=1698847921;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=tKVdix5RJvAI2e7Uan+fxbsu4C97jUxO2pzvhonFzY0=;
-        b=V9nmMnS4LJPUrGV3CYECA9/Y+JxDkHQXf9MfXWyWW+vlYfuKlNg9VduF7SCLQHlaW4
-         pJ2BgEXajIC3/RxsxcTGV2+oPN5A+Tc37j5CuDsm/p3zASrnI3daj2t7VW/l3yotOzBw
-         XfnZtGShCWdpOylFhW1RWh3NgwdbMNGnZ3bgdFUf+Amz51u/TS77F1zXE1rS0XmpmIiP
-         Vcc/7CeaaiuVnoB+87ZnjfXuJi74uDr2oz0MzGxsCaFunDHHrFHKL+rOpqdbijdBqORS
-         8O4MlJemtPg8Z3CRIGHmexsYo1leI1jtHbPUtJSiMAxXInQgCgfmQTDHDm7xKgI1RS5F
-         wskg==
-X-Gm-Message-State: AOJu0Yzt6eRY4K5Ya/FM5RYrDbd9bvpEsnLfo/8wDS+rHWwMxfN0sSKx
-        hgO0DL3JCEzS1yQJn3UZ88ATsJR+yjfP4+Xo6dE4DHbybxo=
-X-Google-Smtp-Source: AGHT+IEYmiXrH9anAkYWc5nR1PVbmJGPx+I6s1L7XIvhFdEERBEuSUp/hRq1VdhSVnhFrfQhMOY3YEFbbstolz52YUE=
-X-Received: by 2002:ad4:5beb:0:b0:65b:3133:cec with SMTP id
- k11-20020ad45beb000000b0065b31330cecmr17192353qvc.32.1698243120426; Wed, 25
- Oct 2023 07:12:00 -0700 (PDT)
+        d=1e100.net; s=20230601; t=1698242531; x=1698847331;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=oOOGhallOPxnWGST34MdPR6LpOdkhm6q6XmykKHjQ0c=;
+        b=AEp7wOjJA1qtQsUN+Ka9srBVcJP6TBMoVPmPjOoTqWao9+04GDqOsirjzpWsLAk4fb
+         tzcoMGQ/MDHOBJYaFIPKezU7kw5vYaybsDLKGS3wOeDeUU7K8Tbnpj87pbzEsljZG4LF
+         D6hcfp3L1cOOjDkZGwA/cmwFxnnH4nqwndggrhJHd97pgxPWVYT3+eYzgQPKGUYp1xfE
+         7/2CnKFD+7BZaksUSe3I7hxHdJ/YB5BrxxcMoaD23bENa3wW2rjlR309UY1eUnRwTVl4
+         8DOsmz/6aXxqN/QCtn4FWQAytgupN2eyF5I5abCJ9CjnB51hbtd4b7383va/nq6aJ2q2
+         YI0g==
+X-Gm-Message-State: AOJu0Yz4njUqj9tIfQz9R4FZZsr1kLhy09g4sJYtlxtRfCb/kO7xR3EX
+        tl5aDAe1tIIitam+mmDLT7XyfCC4N4059IoK51j3jm2ZqEkoCbWBl/961MGdsxF4qf9yD6aL/FV
+        Qy+zZd/xDXLuRtzmIJPJVyDevFmrW
+X-Received: by 2002:a17:907:7214:b0:9c5:64f2:eaba with SMTP id dr20-20020a170907721400b009c564f2eabamr12173162ejc.53.1698242531650;
+        Wed, 25 Oct 2023 07:02:11 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IGjFyLKoZkQVe5WJ8FMZvmHP9TlGwCthXsPC2ClyGzG4V59SQ3WuYohHWjLbekPtDQTXUhMwQ==
+X-Received: by 2002:a17:907:7214:b0:9c5:64f2:eaba with SMTP id dr20-20020a170907721400b009c564f2eabamr12173147ejc.53.1698242531456;
+        Wed, 25 Oct 2023 07:02:11 -0700 (PDT)
+Received: from maszat.piliscsaba.szeredi.hu (92-249-235-200.pool.digikabel.hu. [92.249.235.200])
+        by smtp.gmail.com with ESMTPSA id vl9-20020a170907b60900b00989828a42e8sm9857073ejc.154.2023.10.25.07.02.10
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Oct 2023 07:02:10 -0700 (PDT)
+From:   Miklos Szeredi <mszeredi@redhat.com>
+To:     linux-fsdevel@vger.kernel.org
+Cc:     linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+        linux-man@vger.kernel.org, linux-security-module@vger.kernel.org,
+        Karel Zak <kzak@redhat.com>, Ian Kent <raven@themaw.net>,
+        David Howells <dhowells@redhat.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Al Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <christian@brauner.io>,
+        Amir Goldstein <amir73il@gmail.com>,
+        Matthew House <mattlloydhouse@gmail.com>,
+        Florian Weimer <fweimer@redhat.com>,
+        Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH v4 3/6] namespace: extract show_path() helper
+Date:   Wed, 25 Oct 2023 16:02:01 +0200
+Message-ID: <20231025140205.3586473-4-mszeredi@redhat.com>
+X-Mailer: git-send-email 2.41.0
+In-Reply-To: <20231025140205.3586473-1-mszeredi@redhat.com>
+References: <20231025140205.3586473-1-mszeredi@redhat.com>
 MIME-Version: 1.0
-References: <20230411124037.1629654-1-amir73il@gmail.com> <20230412184359.grx7qyujnb63h4oy@quack3>
- <CAOQ4uxj_OQt+yLVnBH-Cg4mKe4_19L42bcsQx2BSOxR7E46SDQ@mail.gmail.com>
- <20230417162721.ouzs33oh6mb7vtft@quack3> <CAOQ4uxjfP+TrDded+Zps6k6GQM+UsEuW0R2PT_fMEH8ouY_aUg@mail.gmail.com>
- <20230920110429.f4wkfuls73pd55pv@quack3>
-In-Reply-To: <20230920110429.f4wkfuls73pd55pv@quack3>
-From:   Amir Goldstein <amir73il@gmail.com>
-Date:   Wed, 25 Oct 2023 17:11:48 +0300
-Message-ID: <CAOQ4uxh_wNOoWjxw2qQPyxoqyvo-u8pFGHH9p92BzrqBACVJTA@mail.gmail.com>
-Subject: Re: [RFC][PATCH] fanotify: Enable FAN_REPORT_FID on more filesystem types
-To:     Jan Kara <jack@suse.cz>
-Cc:     Christian Brauner <brauner@kernel.org>,
-        linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
-        Jeff Layton <jlayton@kernel.org>,
-        Chuck Lever <chuck.lever@oracle.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Precedence: bulk
 List-ID: <linux-api.vger.kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 
-> > Hi Jan,
-> >
-> > I seem to have dropped the ball on this after implementing AT_HANDLE_FID.
-> > It was step one in a larger plan.
->
-> No problem, I forgot about this as well :)
->
+To be used by the statmount(2) syscall as well.
 
-Following up...
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/internal.h       |  2 ++
+ fs/namespace.c      |  9 +++++++++
+ fs/proc_namespace.c | 10 +++-------
+ 3 files changed, 14 insertions(+), 7 deletions(-)
 
-> > Christian, Jeff,
-> >
-> > Do you have an objection to this plan:
-> > 1. Convert all "legacy" FILEID_INO32_GEN fs with non-empty
-> >     s_export_op and no explicit ->encode_fh() to use an explicit
-> >     generic_encode_ino32_gen_fh()
-> > 2. Relax requirement of non-empty s_export_op for AT_HANDLE_FID
-> >     to support encoding a (non-NFS) file id on all fs
-> > 3. For fs with empty s_export_op, allow fallback of AT_HANDLE_FID
-> >     in exportfs_encode_inode_fh() to encode FILEID_INO64_GEN
-> >
+diff --git a/fs/internal.h b/fs/internal.h
+index d64ae03998cc..0c4f4cf2ff5a 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -83,6 +83,8 @@ int path_mount(const char *dev_name, struct path *path,
+ 		const char *type_page, unsigned long flags, void *data_page);
+ int path_umount(struct path *path, int flags);
+ 
++int show_path(struct seq_file *m, struct dentry *root);
++
+ /*
+  * fs_struct.c
+  */
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 0eab47ffc76c..7a33ea391a02 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -4672,6 +4672,15 @@ SYSCALL_DEFINE5(mount_setattr, int, dfd, const char __user *, path,
+ 	return err;
+ }
+ 
++int show_path(struct seq_file *m, struct dentry *root)
++{
++	if (root->d_sb->s_op->show_path)
++		return root->d_sb->s_op->show_path(m, root);
++
++	seq_dentry(m, root, " \t\n\\");
++	return 0;
++}
++
+ static void __init init_mount_tree(void)
+ {
+ 	struct vfsmount *mnt;
+diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
+index 73d2274d5f59..0a808951b7d3 100644
+--- a/fs/proc_namespace.c
++++ b/fs/proc_namespace.c
+@@ -142,13 +142,9 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
+ 
+ 	seq_printf(m, "%i %i %u:%u ", r->mnt_id, r->mnt_parent->mnt_id,
+ 		   MAJOR(sb->s_dev), MINOR(sb->s_dev));
+-	if (sb->s_op->show_path) {
+-		err = sb->s_op->show_path(m, mnt->mnt_root);
+-		if (err)
+-			goto out;
+-	} else {
+-		seq_dentry(m, mnt->mnt_root, " \t\n\\");
+-	}
++	err = show_path(m, mnt->mnt_root);
++	if (err)
++		goto out;
+ 	seq_putc(m, ' ');
+ 
+ 	/* mountpoints outside of chroot jail will give SEQ_SKIP on this */
+-- 
+2.41.0
 
-These are now queued on Christian's vfs.f_fsid branch.
-
-> >
-> > > > > Also I have noticed your workaround with using st_dev for fsid. As I've
-> > > > > checked, there are actually very few filesystems that don't set fsid these
-> > > > > days. So maybe we could just get away with still refusing to report on
-> > > > > filesystems without fsid and possibly fixup filesystems which don't set
-> > > > > fsid yet and are used enough so that users complain?
-> > > >
-> > > > I started going down this path to close the gap with inotify.
-> > > > inotify is capable of watching all fs including pseudo fs, so I would
-> > > > like to have this feature parity.
-> > >
-> > > Well, but with pseudo filesystems (similarly as with FUSE) the notification
-> > > was always unreliable. As in: some cases worked but others did not. I'm not
-> > > sure that is something we should try to replicate :)
-> > >
-> > > So still I'd be interested to know which filesystems we are exactly
-> > > interested to support and whether we are not better off to explicitly add
-> > > fsid support to them like we did for tmpfs.
-> > >
-> >
-> > Since this email, kernfs derivative fs gained fsid as well.
-> > Quoting your audit of remaining fs from another thread:
-> >
-> > > ...As far as I remember
-> > > fanotify should be now able to handle anything that provides f_fsid in its
-> > > statfs(2) call. And as I'm checking filesystems not setting fsid currently are:
-> > >
-> > > afs, coda, nfs - networking filesystems where inotify and fanotify have
-> > >   dubious value anyway
-> >
-> > Be that as it may, there may be users that use inotify on network fs
-> > and it even makes a lot of sense in controlled environments with
-> > single NFS client per NFS export (e.g. home dirs), so I think we will
-> > need to support those fs as well.
->
-> Fair enough.
-
-I have sent an fsid patch for NFS and for FUSE.
-I am not going to deal with afs and coda unless there is explicit demand.
-
->
-> > Maybe the wise thing to do is to opt-in to monitor those fs after all?
-> > Maybe with explicit opt-in to watch a single fs, fanotify group will
-> > limit itself to marks on a specific sb and then a null fsid won't matter?
->
-> We have virtual filesystems with all sorts of missing or weird notification
-> functionality and we don't flag that in any way. So making a special flag
-> for network filesystems seems a bit arbitrary. I'd just make them provide
-> fsid and be done with it.
->
-> > > configfs, debugfs, devpts, efivarfs, hugetlbfs, openpromfs, proc, pstore,
-> > > ramfs, sysfs, tracefs - virtual filesystems where fsnotify functionality is
-> > >   quite limited. But some special cases could be useful. Adding fsid support
-> > >   is the same amount of trouble as for kernfs - a few LOC. In fact, we
-> > >   could perhaps add a fstype flag to indicate that this is a filesystem
-> > >   without persistent identification and so uuid should be autogenerated on
-> > >   mount (likely in alloc_super()) and f_fsid generated from sb->s_uuid.
-> > >   This way we could handle all these filesystems with trivial amount of
-> > >   effort.
-> > >
-
-Patch for simple fs fsid also queued on Christian's vfs.f_fsid branch.
-
-> >
-> > Christian,
-> >
-> > I recall that you may have had reservations on initializing s_uuid
-> > and f_fsid in vfs code?
-> > Does an opt-in fstype flag address your concerns?
-> > Will you be ok with doing the tmpfs/kernfs trick for every fs
-> > that opted-in with fstype flag in generic vfs code?
-> >
-> > > freevxfs - the only real filesystem without f_fsid. Trivial to handle one
-> > >   way or the other.
-> > >
-
-fsid patch was posted for freevxfs.
-fsid patch for gfs2 was posted and applied by the maintainer.
-
-> >
-> > Last but not least, btrfs subvolumes.
-> > They do have an fsid, but it is different from the sb fsid,
-> > so we disallow (even inode) fanotify marks.
-> >
-> > I am not sure how to solve this one,
-> > but if we choose to implement the opt-in fanotify flag for
-> > "watch single fs", we can make this problem go away, along
-> > with the problem of network fs fsid and other odd fs that we
-> > do not want to have to deal with.
-> >
-> > On top of everything, it is a fast solution and it doesn't
-> > involve vfs and changing any fs at all.
->
-> Yeah, right, forgot about this one. Thanks for reminding me. But this is
-> mostly a kernel internal implementation issue and doesn't seem to be a
-> principial problem so I'd prefer not to complicate the uAPI for this. We
-> could for example mandate a special super_operation for fetching fsid for a
-> dentry for filesystems which don't have uniform fsids over the whole
-> filesystem (i.e., btrfs) and call this when generating event for such
-> filesystems. Or am I missing some other complication?
->
-
-No complication AFAICS.
-btrfs fsid patches posted for review.
-
-Thanks,
-Amir.
