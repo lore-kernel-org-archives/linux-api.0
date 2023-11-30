@@ -1,57 +1,55 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=tycho.pizza header.i=@tycho.pizza header.b="bfcSzGWg";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="aANGV5K1"
+	dkim=pass (2048-bit key) header.d=tycho.pizza header.i=@tycho.pizza header.b="xGCt99og";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="MRoPsenN"
 Received: from out4-smtp.messagingengine.com (out4-smtp.messagingengine.com [66.111.4.28])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 12AE110E2;
-	Thu, 30 Nov 2023 08:40:58 -0800 (PST)
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 51DB41A4;
+	Thu, 30 Nov 2023 08:40:57 -0800 (PST)
 Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
-	by mailout.nyi.internal (Postfix) with ESMTP id 7D8C25C007F;
-	Thu, 30 Nov 2023 11:40:57 -0500 (EST)
+	by mailout.nyi.internal (Postfix) with ESMTP id EA2735C006B;
+	Thu, 30 Nov 2023 11:40:53 -0500 (EST)
 Received: from mailfrontend1 ([10.202.2.162])
-  by compute1.internal (MEProxy); Thu, 30 Nov 2023 11:40:57 -0500
+  by compute1.internal (MEProxy); Thu, 30 Nov 2023 11:40:53 -0500
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=tycho.pizza; h=
 	cc:cc:content-transfer-encoding:content-type:date:date:from:from
-	:in-reply-to:in-reply-to:message-id:mime-version:references
-	:reply-to:sender:subject:subject:to:to; s=fm3; t=1701362457; x=
-	1701448857; bh=4sDD4mN+pIoyX7m8FGv2uCwfMAv7UW1AZsJ3O0T01T8=; b=b
-	fcSzGWgxiasYLEPtKTIOyLWvupsxC9+Bncp3fVIRu3jCqyyUltHLmbYBQDqwAWD8
-	wKkJ6ihbiucwniyQbywRdsp0/zyHrCMt6K0oU9Y/qECgFaPcd5ZAxCs4WoHBSKIg
-	LbAUH6PV26VlDiHrUM/XsiCXXlnXQkPQH3YVsAVjowoAKEPKYjSPY6LtlScg0uYe
-	tf80TuUe0dgekCqV2MFtDanTSy3V9LIriJEaDvClZo+PECOjVHe9yfUy3+iLFk9i
-	4v5GQtxpCL4VdG2V69yEiNZkv4Ljg7cXKrrDiEsJmydYacKDCVMOCdDzb3tlesrf
-	REOXsb8aZiwiPsi+WDlAA==
+	:in-reply-to:message-id:mime-version:reply-to:sender:subject
+	:subject:to:to; s=fm3; t=1701362453; x=1701448853; bh=GcRUTefwOD
+	feWsEEU+T7P5vkTMTkxQIp7mTUU9VqXL8=; b=xGCt99ogNyz5PF4Lg0iAzjC7qp
+	FTlBXswcvclsYpRpetMTOZeHvn0VKjXlt5IxOKdgHGAdqFfr7wACfU37IXpvx/6t
+	P8GYFuhEuY1+1HU/lQU4KGELsKb+Shoqwh6YBsDfec4s8aGLKT6QUYU26PSui/6I
+	/4gT+bDjkIJGkOJp6Gbxa7FpsfUJjyWrNHakgInrdTcGADekAP8zHs0ntdDyfBnF
+	qcu93zQEGRxPbQRSSR5Sh/2L5PmeQW/DnL/8cjpFNAWqGjyRdzu0y0eBBV8VyEuo
+	nw4aOFHD4fteUzqZZFz14NyYmX9BKhwRd9BnVu3tyScO7/ArxN7XfBz0rPPg==
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
 	messagingengine.com; h=cc:cc:content-transfer-encoding
 	:content-type:date:date:feedback-id:feedback-id:from:from
-	:in-reply-to:in-reply-to:message-id:mime-version:references
-	:reply-to:sender:subject:subject:to:to:x-me-proxy:x-me-proxy
-	:x-me-sender:x-me-sender:x-sasl-enc; s=fm1; t=1701362457; x=
-	1701448857; bh=4sDD4mN+pIoyX7m8FGv2uCwfMAv7UW1AZsJ3O0T01T8=; b=a
-	ANGV5K1XzH9CPL28GtdWbUILbVM8yIuEp0TA0y0lHtx0q0Gz38FvjgG9wAPCAyBb
-	CSPxlP+VoIQMA9FNzH240SeYuN8zz9r3T+FTN+0XJA39XaFYyiwu8DeZhpvEZ2O4
-	SWBf70fveyFAe9+nCF8BU1rerdd9AAdZcmBcMcuMhRor5jM9cL9Few/D0WAfe5Xm
-	nZzNcDHfShuEdtq6qoNT2Y/6149jNxuAg5m6X8l6Rt4e8AKyrELSznf5cEo7qreA
-	88iONaDp7R4vru3HwI5TCvSa1C8RPfE1bvQOCaPBhbp4ggnTl4rs/2DFtM0I585L
-	RcUisRmQ+cNOlcp99hM0w==
-X-ME-Sender: <xms:GbtoZQRpqkbCTw_0mWhJO2Ivs6-hrrgWALCwE-cEvremXeqOOjWsng>
-    <xme:GbtoZdxqjsBSGbWx9fRuGJwt6ZQYpNARK47gZzxtjmjYjq_VhLjZDQ00nTG28b6Ps
-    bUVUCyiDG93n2qI9RU>
-X-ME-Received: <xmr:GbtoZd1_1TJOl405YzZmIq9AB-iOZq9x5YHR4e0aSIN33cKjjOwjic-FH7RfoJYtJGBNjg>
+	:in-reply-to:message-id:mime-version:reply-to:sender:subject
+	:subject:to:to:x-me-proxy:x-me-proxy:x-me-sender:x-me-sender
+	:x-sasl-enc; s=fm1; t=1701362453; x=1701448853; bh=GcRUTefwODfeW
+	sEEU+T7P5vkTMTkxQIp7mTUU9VqXL8=; b=MRoPsenNPeU3+ceAOVhtiJAXfV/uR
+	GTn22jjH2BZ5z93PfBkF7NgpW7yARoJtGwnZ+pew+zZqqULn+2GKr02BLwdjYVg8
+	7VbnJ0yYaeLbvBy9Db+9x21UY4Lpk3ozF8v80qwwkvLX5G05+7gFGAE1Yb6R6xLD
+	thYnzYkEMKNVz1cyfUx7xzcK+Cu84vVl1kxlXt0cZ4AVHTqcGF+nVl2XdG5yqcLP
+	RxjinEvBgtwLrUbq6zpGD7XC5bLhk5BjrUrWxbLm3NrSk0ArDsLkPksVv5J4XINd
+	XIAv97dzF9BE10dgkLytjqllQj8UE+NC3FTwCNdFFrxPzlN9noMKkwr0A==
+X-ME-Sender: <xms:FbtoZbKWnQl9swwhF8d-cfzIQYsWVfddnN2c-BAD0eV9J4oY65wgXw>
+    <xme:FbtoZfIxiz3L1siGUM_UngRKelJoyxSHY7M9gkhGuHLGwx9e6qM-c80jFmZtLMyfT
+    nfHkSj3WYTS65MkFYo>
+X-ME-Received: <xmr:FbtoZTsInCHdFqc4s2hBM_B6_DMTGmgdsayeC2IyuId94Z9migP3UkwJCSFHGLIufG6J7Q>
 X-ME-Proxy-Cause: gggruggvucftvghtrhhoucdtuddrgedvkedrudeijedgleduucetufdoteggodetrfdotf
     fvucfrrhhofhhilhgvmecuhfgrshhtofgrihhlpdfqfgfvpdfurfetoffkrfgpnffqhgen
     uceurghilhhouhhtmecufedttdenucesvcftvggtihhpihgvnhhtshculddquddttddmne
-    cujfgurhephffvvefufffkofgjfhgggfestdekredtredttdenucfhrhhomhepvfihtghh
-    ohcutehnuggvrhhsvghnuceothihtghhohesthihtghhohdrphhiiiiirgeqnecuggftrf
-    grthhtvghrnhepvdegffehledvleejvdethffgieefveevhfeigefffffgheeguedtieek
-    tdeigeeunecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomh
-    epthihtghhohesthihtghhohdrphhiiiiirg
-X-ME-Proxy: <xmx:GbtoZUBrZ0CarmP0il6Tmait1Jwe5hyG_mvqkg_itSz2xxqPmjRkoA>
-    <xmx:GbtoZZjup_GZrD6WBufcls8o_2V2nlI0uZviKGRU9rosFUemwbLuIg>
-    <xmx:GbtoZQrD4wl0oD9FWaoLH4vClKY4fFIhOHnrpChE-XBtOu9ZsQxp9Q>
-    <xmx:GbtoZXb4hsrIMZLT7PUkwRdn8CwadJzJK81sOK4-diZ6a3Q8md6WzQ>
+    cujfgurhephffvvefufffkofgggfestdekredtredttdenucfhrhhomhepvfihtghhohcu
+    tehnuggvrhhsvghnuceothihtghhohesthihtghhohdrphhiiiiirgeqnecuggftrfgrth
+    htvghrnhepheeffeehleeftdfgjeegheelieefvdfghfeuudeuheehuefhhffhtefhiedv
+    geegnecuvehluhhsthgvrhfuihiivgeptdenucfrrghrrghmpehmrghilhhfrhhomhepth
+    ihtghhohesthihtghhohdrphhiiiiirg
+X-ME-Proxy: <xmx:FbtoZUbvG4ShnYrcRkxZ93RRhU0Fb2PHZpTDdZfbiq1pKNTMOjRaCQ>
+    <xmx:FbtoZSaJqd2StH1olzM6QrkKFhb5agn88EuXXs4pVKGOqF4WS0V9WA>
+    <xmx:FbtoZYAlVpZucUuefDFRhFSpY9SFdUEqv6zM9RGwA7dktX2mQwH-ZA>
+    <xmx:FbtoZZwdqZz87YMNN4LKK5f2fPACkWh_pwkndUjK2LDjOkX1yiOJ2w>
 Feedback-ID: i21f147d5:Fastmail
 Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
- 30 Nov 2023 11:40:56 -0500 (EST)
+ 30 Nov 2023 11:40:52 -0500 (EST)
 From: Tycho Andersen <tycho@tycho.pizza>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Oleg Nesterov <oleg@redhat.com>,
@@ -60,12 +58,10 @@ Cc: Oleg Nesterov <oleg@redhat.com>,
 	linux-api@vger.kernel.org,
 	Tycho Andersen <tycho@tycho.pizza>,
 	Tycho Andersen <tandersen@netflix.com>
-Subject: [RFC 3/3] clone: allow CLONE_THREAD | CLONE_PIDFD together
-Date: Thu, 30 Nov 2023 09:39:46 -0700
-Message-Id: <20231130163946.277502-3-tycho@tycho.pizza>
+Subject: [RFC 1/3] pidfd: allow pidfd_open() on non-thread-group leaders
+Date: Thu, 30 Nov 2023 09:39:44 -0700
+Message-Id: <20231130163946.277502-1-tycho@tycho.pizza>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20231130163946.277502-1-tycho@tycho.pizza>
-References: <20231130163946.277502-1-tycho@tycho.pizza>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -76,68 +72,127 @@ Content-Transfer-Encoding: 8bit
 
 From: Tycho Andersen <tandersen@netflix.com>
 
-This removes the restriction of CLONE_THREAD | CLONE_PIDFD being specified
-together. Assuming the previous patch sorts out all the thorny issues this
-should be safe. I've left it as a separate patch since it is not strictly
-necessary as a usecase for us, but might be nice? Perhaps we want to wait
-until someone actually needs it though.
+We are using the pidfd family of syscalls with the seccomp userspace
+notifier. When some thread triggers a seccomp notification, we want to do
+some things to its context (munge fd tables via pidfd_getfd(), maybe write
+to its memory, etc.). However, threads created with ~CLONE_FILES or
+~CLONE_VM mean that we can't use the pidfd family of syscalls for this
+purpose, since their fd table or mm are distinct from the thread group
+leader's. In this patch, we relax this restriction for pidfd_open().
+
+In order to avoid dangling poll() users we need to notify pidfd waiters
+when individual threads die, but once we do that all the other machinery
+seems to work ok viz. the tests. But I suppose there are more cases than
+just this one.
+
+Another weirdness is the open-coding of this vs. exporting using
+do_notify_pidfd(). This particular location is after __exit_signal() is
+called, which does __unhash_process() which kills ->thread_pid, so we need
+to use the copy we have locally, vs do_notify_pid() which accesses it via
+task_pid(). Maybe this suggests that the notification should live somewhere
+in __exit_signals()? I just put it here because I saw we were already
+testing if this task was the leader.
 
 Signed-off-by: Tycho Andersen <tandersen@netflix.com>
 ---
- kernel/fork.c                                   |  3 +--
- .../selftests/pidfd/pidfd_non_tgl_test.c        | 17 +++++++++++++++++
- 2 files changed, 18 insertions(+), 2 deletions(-)
+ kernel/exit.c | 29 +++++++++++++++++++----------
+ kernel/fork.c |  4 +---
+ kernel/pid.c  | 11 +----------
+ 3 files changed, 21 insertions(+), 23 deletions(-)
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index eef15c93f6cf..ada476f38b56 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -2302,9 +2302,8 @@ __latent_entropy struct task_struct *copy_process(
- 		/*
- 		 * - CLONE_DETACHED is blocked so that we can potentially
- 		 *   reuse it later for CLONE_PIDFD.
--		 * - CLONE_THREAD is blocked until someone really needs it.
- 		 */
--		if (clone_flags & (CLONE_DETACHED | CLONE_THREAD))
-+		if (clone_flags & CLONE_DETACHED)
- 			return ERR_PTR(-EINVAL);
+diff --git a/kernel/exit.c b/kernel/exit.c
+index ee9f43bed49a..34eeefc7ee21 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -263,16 +263,25 @@ void release_task(struct task_struct *p)
+ 	 */
+ 	zap_leader = 0;
+ 	leader = p->group_leader;
+-	if (leader != p && thread_group_empty(leader)
+-			&& leader->exit_state == EXIT_ZOMBIE) {
+-		/*
+-		 * If we were the last child thread and the leader has
+-		 * exited already, and the leader's parent ignores SIGCHLD,
+-		 * then we are the one who should release the leader.
+-		 */
+-		zap_leader = do_notify_parent(leader, leader->exit_signal);
+-		if (zap_leader)
+-			leader->exit_state = EXIT_DEAD;
++	if (leader != p) {
++		if (thread_group_empty(leader)
++				&& leader->exit_state == EXIT_ZOMBIE) {
++			/*
++			 * If we were the last child thread and the leader has
++			 * exited already, and the leader's parent ignores SIGCHLD,
++			 * then we are the one who should release the leader.
++			 */
++			zap_leader = do_notify_parent(leader,
++						      leader->exit_signal);
++			if (zap_leader)
++				leader->exit_state = EXIT_DEAD;
++		} else {
++			/*
++			 * wake up pidfd pollers anyway, they want to know this
++			 * thread is dying.
++			 */
++			wake_up_all(&thread_pid->wait_pidfd);
++		}
  	}
  
-diff --git a/tools/testing/selftests/pidfd/pidfd_non_tgl_test.c b/tools/testing/selftests/pidfd/pidfd_non_tgl_test.c
-index e3992f2d88cf..dfd6a2cd85a3 100644
---- a/tools/testing/selftests/pidfd/pidfd_non_tgl_test.c
-+++ b/tools/testing/selftests/pidfd/pidfd_non_tgl_test.c
-@@ -305,6 +305,22 @@ static int test_non_tgl_exit(void)
- 	return ret;
- }
+ 	write_unlock_irq(&tasklist_lock);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 10917c3e1f03..eef15c93f6cf 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2163,8 +2163,6 @@ static int __pidfd_prepare(struct pid *pid, unsigned int flags, struct file **re
+  * Allocate a new file that stashes @pid and reserve a new pidfd number in the
+  * caller's file descriptor table. The pidfd is reserved but not installed yet.
+  *
+- * The helper verifies that @pid is used as a thread group leader.
+- *
+  * If this function returns successfully the caller is responsible to either
+  * call fd_install() passing the returned pidfd and pidfd file as arguments in
+  * order to install the pidfd into its file descriptor table or they must use
+@@ -2182,7 +2180,7 @@ static int __pidfd_prepare(struct pid *pid, unsigned int flags, struct file **re
+  */
+ int pidfd_prepare(struct pid *pid, unsigned int flags, struct file **ret)
+ {
+-	if (!pid || !pid_has_task(pid, PIDTYPE_TGID))
++	if (!pid)
+ 		return -EINVAL;
  
-+static int test_clone_thread_pidfd(void)
-+{
-+	pid_t pid;
-+	int flags = CLONE_THREAD | CLONE_VM | CLONE_SIGHAND | CLONE_PIDFD;
-+	int pidfd;
-+
-+	pid = clone(thread_sleep, stack + STACK_SIZE, flags, NULL, &pidfd);
-+	if (pid < 0) {
-+		perror("clone");
-+		return KSFT_FAIL;
-+	}
-+
-+	close(pidfd);
-+	return KSFT_PASS;
-+}
-+
- #define T(x) { x, #x }
- struct pidfd_non_tgl_test {
- 	int (*fn)();
-@@ -313,6 +329,7 @@ struct pidfd_non_tgl_test {
- 	T(test_non_tgl_basic),
- 	T(test_non_tgl_exec),
- 	T(test_non_tgl_exit),
-+	T(test_clone_thread_pidfd),
- };
- #undef T
- 
+ 	return __pidfd_prepare(pid, flags, ret);
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 6500ef956f2f..4806798022d9 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -552,11 +552,6 @@ struct pid *pidfd_get_pid(unsigned int fd, unsigned int *flags)
+  * Return the task associated with @pidfd. The function takes a reference on
+  * the returned task. The caller is responsible for releasing that reference.
+  *
+- * Currently, the process identified by @pidfd is always a thread-group leader.
+- * This restriction currently exists for all aspects of pidfds including pidfd
+- * creation (CLONE_PIDFD cannot be used with CLONE_THREAD) and pidfd polling
+- * (only supports thread group leaders).
+- *
+  * Return: On success, the task_struct associated with the pidfd.
+  *	   On error, a negative errno number will be returned.
+  */
+@@ -615,11 +610,7 @@ int pidfd_create(struct pid *pid, unsigned int flags)
+  * @flags: flags to pass
+  *
+  * This creates a new pid file descriptor with the O_CLOEXEC flag set for
+- * the process identified by @pid. Currently, the process identified by
+- * @pid must be a thread-group leader. This restriction currently exists
+- * for all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
+- * be used with CLONE_THREAD) and pidfd polling (only supports thread group
+- * leaders).
++ * the process identified by @pid.
+  *
+  * Return: On success, a cloexec pidfd is returned.
+  *         On error, a negative errno number will be returned.
+
+base-commit: 2cc14f52aeb78ce3f29677c2de1f06c0e91471ab
 -- 
 2.34.1
 
