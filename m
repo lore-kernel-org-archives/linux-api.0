@@ -1,43 +1,43 @@
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="WFawR2xm"
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="HfqVKAsm"
 Received: from mail-yw1-x1144.google.com (mail-yw1-x1144.google.com [IPv6:2607:f8b0:4864:20::1144])
-	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 3CC01E0;
-	Wed, 13 Dec 2023 14:41:25 -0800 (PST)
-Received: by mail-yw1-x1144.google.com with SMTP id 00721157ae682-5d6b9143782so68126677b3.0;
-        Wed, 13 Dec 2023 14:41:25 -0800 (PST)
+	by lindbergh.monkeyblade.net (Postfix) with ESMTPS id 8DA1DEA;
+	Wed, 13 Dec 2023 14:41:28 -0800 (PST)
+Received: by mail-yw1-x1144.google.com with SMTP id 00721157ae682-5c85e8fdd2dso73245737b3.2;
+        Wed, 13 Dec 2023 14:41:28 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1702507284; x=1703112084; darn=vger.kernel.org;
+        d=gmail.com; s=20230601; t=1702507287; x=1703112087; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=SvF8XP3toqTj9OsWUmBPBjL8Vx7rS+7EittbCVzs1w4=;
-        b=WFawR2xmJuz3IWOcfH/7O97+Q5IYFDwcmVcm/t3liFuYP5Xb4Av9TvlfAIdJMrHi9L
-         /LGtZuJLNZLe4HB5NmrsginLg5sFJ03pwXt8qCBZndbXmnxy847aqzulGVmORK3umUh8
-         6uZ081nb9J0crQFl0CyKBgWPWu8V4frgBgXLRyLa6OfonDS0Dg5ITc835zwjTIv6f7LG
-         r0ojEE1hOEqkx+rLYbwXEF4H4EIsgEcsOsPlCydsWGXRZ/NLwCBRMv/xTssox0VfdAFc
-         n1kn/gNKfMuyMKS81KXfc08RO4BAgUZl48jk0vizA5Qf/zQU97cUWgV3rjI5jM6l3KSS
-         +YwA==
+        bh=oR/U/lAWuhs3jEMZC4KyA26ezpCk8+tc9jcFDZQx9cU=;
+        b=HfqVKAsmfmk5otoU0fhpOLdxeL9mc9vHjHTLJwk6xWNKgcp+1rkeJcnF8Xa5+Zbdcx
+         Bo0zfUs+GCa1yXH07QNI3rdUFdS4n8ZWG3pIBXUYEbzoogM1G1ueC3MmccD1OfbnVnF4
+         tTZjHosZ28GnqrKS7/E0Oz4Pa5MCBwq/0tEz5QH8L+FPoOZdibqNyWHwqCjhqNLngBHd
+         0BPo+6vAOko9Li28AKH5FAtc6/7nb/TqIV+3HfdSo319HSqmG++DnIKOoy6bXjiZlWuk
+         ZrT5qfZBoJKOFoIS2UzHx3RwWl3rk6OWgTaWbJ5/I2qWeq4nWq0RNvOcdPDVVxR5IaSh
+         SVbA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1702507284; x=1703112084;
+        d=1e100.net; s=20230601; t=1702507287; x=1703112087;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=SvF8XP3toqTj9OsWUmBPBjL8Vx7rS+7EittbCVzs1w4=;
-        b=EN/o21zPv0/PT32R9JV7ipqilyBX/WcWR5AskrtkQ6dXN9R4IVR3NHuYsIWP4hA2xY
-         TYQQoCJ6yscDBy7jN6p0DeP2jM/MSzI+Wl26q28UiOW8Gt7EhpMgyZsGrHYfMmhzS8J9
-         Jag3WgzfAsi25oWA/3+QiQIUYJwa9Cf6KML8HFF+GHqDEu+Vc/sFZmBHD/Fp3oNRhomG
-         INM7dJLUhzNqhKZ4wEvq+8kLATifOvNF7tqY3TyjIg/WG/XSHHscZ2IXMy9zUMpqr7c8
-         LtSrimaVzQvmcEX6fn7SzZYiwV0nB7lTgNlgGk4+jDIx+RJzbgHRdtYyZ4NkhwxgDMMu
-         YhKw==
-X-Gm-Message-State: AOJu0Yz0ewnnhI76eayafVDtmTi4VfZpjX+G87UzZCUHA8POb+oEMvaN
-	k3HPFoY4fIRpvlxLniucMg==
-X-Google-Smtp-Source: AGHT+IFlmStwxigHm34C0TZtRXyNvC2pOZtDqxjEvfnM76EBY13SftV96kVUouIoklqHelxIbJeuVA==
-X-Received: by 2002:a81:8410:0:b0:5d7:1940:7d67 with SMTP id u16-20020a818410000000b005d719407d67mr7001727ywf.62.1702507283960;
-        Wed, 13 Dec 2023 14:41:23 -0800 (PST)
+        bh=oR/U/lAWuhs3jEMZC4KyA26ezpCk8+tc9jcFDZQx9cU=;
+        b=vU1EyDFwDpIKQn6S/WroZr1wH2tuSN0DyP/9vxsiCy5NVYAQ064xwB3Adh/VmTqi0B
+         GKrz2gkThh+YzuyDrsheG672IeolssAD3jEoEonkhJg+fdHNFoeuWQ2UNJI+u5scLLyn
+         MZBjOR9M0D38itRWIrpLsl3rMbRq1tibvwwvCHnJIVFHc99dm+a+cPYsbUbjuC1ynHY0
+         K8FRjS8CarclnhzkZL/CI5MSz3eKqIlFj5okmSY3z3YuBPGSb9asuQM6VfEuh5upHF2g
+         /cJee3aRx4BOP87TiEqGOwL60jaIBGblxYvKUeJxOovPmZrTOKKig+oGJUYA81oP65vT
+         NWJQ==
+X-Gm-Message-State: AOJu0YwTYMPxBGU2LHjTK9PHp8BCPOVudgziGDvZpBCxl4yzOEmqw9Bk
+	BnlVLhuFXJQOeE2GRqT5yw==
+X-Google-Smtp-Source: AGHT+IFpEpSdMzAFUYfwPof6Y59fNnXlN60sd7WtpPgNS/71WOJgjYuTivvQkauLM7Uk+cl8cqNLow==
+X-Received: by 2002:a0d:d383:0:b0:5d7:1940:dd68 with SMTP id v125-20020a0dd383000000b005d71940dd68mr6889260ywd.62.1702507287649;
+        Wed, 13 Dec 2023 14:41:27 -0800 (PST)
 Received: from fedora.mshome.net (pool-173-79-56-208.washdc.fios.verizon.net. [173.79.56.208])
-        by smtp.gmail.com with ESMTPSA id v4-20020a818504000000b005d9729068f5sm5050583ywf.42.2023.12.13.14.41.22
+        by smtp.gmail.com with ESMTPSA id v4-20020a818504000000b005d9729068f5sm5050583ywf.42.2023.12.13.14.41.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 13 Dec 2023 14:41:23 -0800 (PST)
+        Wed, 13 Dec 2023 14:41:27 -0800 (PST)
 From: Gregory Price <gourry.memverge@gmail.com>
 X-Google-Original-From: Gregory Price <gregory.price@memverge.com>
 To: linux-mm@kvack.org
@@ -70,9 +70,9 @@ Cc: linux-doc@vger.kernel.org,
 	emirakhur@micron.com,
 	Hasan.Maruf@amd.com,
 	seungjun.ha@samsung.com
-Subject: [PATCH v3 01/11] mm/mempolicy: implement the sysfs-based weighted_interleave interface
-Date: Wed, 13 Dec 2023 17:41:08 -0500
-Message-Id: <20231213224118.1949-2-gregory.price@memverge.com>
+Subject: [PATCH v3 03/11] mm/mempolicy: refactor sanitize_mpol_flags for reuse
+Date: Wed, 13 Dec 2023 17:41:10 -0500
+Message-Id: <20231213224118.1949-4-gregory.price@memverge.com>
 X-Mailer: git-send-email 2.39.1
 In-Reply-To: <20231213224118.1949-1-gregory.price@memverge.com>
 References: <20231213224118.1949-1-gregory.price@memverge.com>
@@ -82,240 +82,74 @@ List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-From: Rakie Kim <rakie.kim@sk.com>
+split sanitize_mpol_flags into sanitize and validate.
 
-This patch provides a way to set interleave weight information under
-sysfs at /sys/kernel/mm/mempolicy/weighted_interleave/nodeN
+Sanitize is used by set_mempolicy to split (int mode) into mode
+and mode_flags, and then validates them.
 
-The sysfs structure is designed as follows.
+Validate validates already split flags.
 
-  $ tree /sys/kernel/mm/mempolicy/
-  /sys/kernel/mm/mempolicy/ [1]
-  └── weighted_interleave [2]
-      ├── node0 [3]
-      └── node1
+Validate will be reused for new syscalls that accept already
+split mode and mode_flags.
 
-Each file above can be explained as follows.
-
-[1] mm/mempolicy: configuration interface for mempolicy subsystem
-
-[2] weighted_interleave/: config interface for weighted interleave policy
-
-[3] weighted_interleave/nodeN: weight for nodeN
-
-Signed-off-by: Rakie Kim <rakie.kim@sk.com>
-Signed-off-by: Honggyu Kim <honggyu.kim@sk.com>
-Co-developed-by: Gregory Price <gregory.price@memverge.com>
 Signed-off-by: Gregory Price <gregory.price@memverge.com>
-Co-developed-by: Hyeongtak Ji <hyeongtak.ji@sk.com>
-Signed-off-by: Hyeongtak Ji <hyeongtak.ji@sk.com>
 ---
- .../ABI/testing/sysfs-kernel-mm-mempolicy     |   4 +
- ...fs-kernel-mm-mempolicy-weighted-interleave |  22 +++
- mm/mempolicy.c                                | 143 ++++++++++++++++++
- 3 files changed, 169 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-kernel-mm-mempolicy
- create mode 100644 Documentation/ABI/testing/sysfs-kernel-mm-mempolicy-weighted-interleave
+ mm/mempolicy.c | 29 ++++++++++++++++++++++-------
+ 1 file changed, 22 insertions(+), 7 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy b/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy
-new file mode 100644
-index 000000000000..2dcf24f4384a
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy
-@@ -0,0 +1,4 @@
-+What:		/sys/kernel/mm/mempolicy/
-+Date:		December 2023
-+Contact:	Linux memory management mailing list <linux-mm@kvack.org>
-+Description:	Interface for Mempolicy
-diff --git a/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy-weighted-interleave b/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy-weighted-interleave
-new file mode 100644
-index 000000000000..aa27fdf08c19
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-kernel-mm-mempolicy-weighted-interleave
-@@ -0,0 +1,22 @@
-+What:		/sys/kernel/mm/mempolicy/weighted_interleave/
-+Date:		December 2023
-+Contact:	Linux memory management mailing list <linux-mm@kvack.org>
-+Description:	Configuration Interface for the Weighted Interleave policy
-+
-+What:		/sys/kernel/mm/mempolicy/weighted_interleave/nodeN
-+Date:		December 2023
-+Contact:	Linux memory management mailing list <linux-mm@kvack.org>
-+Description:	Weight configuration interface for nodeN
-+
-+		The interleave weight for a memory node (N). These weights are
-+		utilized by processes which have set their mempolicy to
-+		MPOL_WEIGHTED_INTERLEAVE and have opted into global weights by
-+		omitting a task-local weight array.
-+
-+		These weights only affect new allocations, and changes at runtime
-+		will not cause migrations on already allocated pages.
-+
-+		Writing an empty string resets the weight value to 1.
-+
-+		Minimum weight: 1
-+		Maximum weight: 255
 diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 10a590ee1c89..5310021181ab 100644
+index bd233aed103c..e55a8fa13e45 100644
 --- a/mm/mempolicy.c
 +++ b/mm/mempolicy.c
-@@ -131,6 +131,8 @@ static struct mempolicy default_policy = {
- 
- static struct mempolicy preferred_node_policy[MAX_NUMNODES];
- 
-+static char iw_table[MAX_NUMNODES];
-+
- /**
-  * numa_nearest_node - Find nearest node by state
-  * @node: Node id to start the search
-@@ -3067,3 +3069,144 @@ void mpol_to_str(char *buffer, int maxlen, struct mempolicy *pol)
- 		p += scnprintf(p, buffer + maxlen - p, ":%*pbl",
- 			       nodemask_pr_args(&nodes));
+@@ -1463,24 +1463,39 @@ static int copy_nodes_to_user(unsigned long __user *mask, unsigned long maxnode,
+ 	return copy_to_user(mask, nodes_addr(*nodes), copy) ? -EFAULT : 0;
  }
-+
-+struct iw_node_attr {
-+	struct kobj_attribute kobj_attr;
-+	int nid;
-+};
-+
-+static ssize_t node_show(struct kobject *kobj, struct kobj_attribute *attr,
-+			 char *buf)
+ 
+-/* Basic parameter sanity check used by both mbind() and set_mempolicy() */
+-static inline int sanitize_mpol_flags(int *mode, unsigned short *flags)
++/*
++ * Basic parameter sanity check used by mbind/set_mempolicy
++ * May modify flags to include internal flags (e.g. MPOL_F_MOF/F_MORON)
++ */
++static inline int validate_mpol_flags(unsigned short mode, unsigned short *flags)
+ {
+-	*flags = *mode & MPOL_MODE_FLAGS;
+-	*mode &= ~MPOL_MODE_FLAGS;
+-
+-	if ((unsigned int)(*mode) >=  MPOL_MAX)
++	if ((unsigned int)(mode) >= MPOL_MAX)
+ 		return -EINVAL;
+ 	if ((*flags & MPOL_F_STATIC_NODES) && (*flags & MPOL_F_RELATIVE_NODES))
+ 		return -EINVAL;
+ 	if (*flags & MPOL_F_NUMA_BALANCING) {
+-		if (*mode != MPOL_BIND)
++		if (mode != MPOL_BIND)
+ 			return -EINVAL;
+ 		*flags |= (MPOL_F_MOF | MPOL_F_MORON);
+ 	}
+ 	return 0;
+ }
+ 
++/*
++ * Used by mbind/set_memplicy to split and validate mode/flags
++ * set_mempolicy combines (mode | flags), split them out into separate
++ * fields and return just the mode in mode_arg and flags in flags.
++ */
++static inline int sanitize_mpol_flags(int *mode_arg, unsigned short *flags)
 +{
-+	struct iw_node_attr *node_attr;
++	unsigned short mode = (*mode_arg & ~MPOL_MODE_FLAGS);
 +
-+	node_attr = container_of(attr, struct iw_node_attr, kobj_attr);
-+	return sysfs_emit(buf, "%d\n", iw_table[node_attr->nid]);
++	*flags = *mode_arg & MPOL_MODE_FLAGS;
++	*mode_arg = mode;
++
++	return validate_mpol_flags(mode, flags);
 +}
 +
-+static ssize_t node_store(struct kobject *kobj, struct kobj_attribute *attr,
-+			  const char *buf, size_t count)
-+{
-+	struct iw_node_attr *node_attr;
-+	unsigned char weight = 0;
-+
-+	node_attr = container_of(attr, struct iw_node_attr, kobj_attr);
-+	/* If no input, set default weight to 1 */
-+	if (count == 0 || sysfs_streq(buf, ""))
-+		weight = 1;
-+	else if (kstrtou8(buf, 0, &weight) || !weight)
-+		return -EINVAL;
-+
-+	iw_table[node_attr->nid] = weight;
-+	return count;
-+}
-+
-+static struct iw_node_attr *node_attrs[MAX_NUMNODES];
-+
-+static void sysfs_wi_node_release(struct iw_node_attr *node_attr,
-+				  struct kobject *parent)
-+{
-+	if (!node_attr)
-+		return;
-+	sysfs_remove_file(parent, &node_attr->kobj_attr.attr);
-+	kfree(node_attr->kobj_attr.attr.name);
-+	kfree(node_attr);
-+}
-+
-+static void sysfs_mempolicy_release(struct kobject *mempolicy_kobj)
-+{
-+	int i;
-+
-+	for (i = 0; i < MAX_NUMNODES; i++)
-+		sysfs_wi_node_release(node_attrs[i], mempolicy_kobj);
-+	kobject_put(mempolicy_kobj);
-+}
-+
-+static const struct kobj_type mempolicy_ktype = {
-+	.sysfs_ops = &kobj_sysfs_ops,
-+	.release = sysfs_mempolicy_release,
-+};
-+
-+static int add_weight_node(int nid, struct kobject *wi_kobj)
-+{
-+	struct iw_node_attr *node_attr;
-+	char *name;
-+
-+	node_attr = kzalloc(sizeof(*node_attr), GFP_KERNEL);
-+	if (!node_attr)
-+		return -ENOMEM;
-+
-+	name = kasprintf(GFP_KERNEL, "node%d", nid);
-+	if (!name) {
-+		kfree(node_attr);
-+		return -ENOMEM;
-+	}
-+
-+	sysfs_attr_init(&node_attr->attr);
-+	node_attr->kobj_attr.attr.name = name;
-+	node_attr->kobj_attr.attr.mode = 0644;
-+	node_attr->kobj_attr.show = node_show;
-+	node_attr->kobj_attr.store = node_store;
-+	node_attr->nid = nid;
-+
-+	if (sysfs_create_file(wi_kobj, &node_attr->kobj_attr.attr)) {
-+		kfree(node_attr->kobj_attr.attr.name);
-+		kfree(node_attr);
-+		pr_err("failed to add attribute to weighted_interleave\n");
-+		return -ENOMEM;
-+	}
-+
-+	node_attrs[nid] = node_attr;
-+	return 0;
-+}
-+
-+static int add_weighted_interleave_group(struct kobject *root_kobj)
-+{
-+	struct kobject *wi_kobj;
-+	int nid, err;
-+
-+	wi_kobj = kzalloc(sizeof(struct kobject), GFP_KERNEL);
-+	if (!wi_kobj)
-+		return -ENOMEM;
-+
-+	err = kobject_init_and_add(wi_kobj, &mempolicy_ktype, root_kobj,
-+				   "weighted_interleave");
-+	if (err) {
-+		kfree(wi_kobj);
-+		return err;
-+	}
-+
-+	memset(node_attrs, 0, sizeof(node_attrs));
-+	for_each_node_state(nid, N_POSSIBLE) {
-+		err = add_weight_node(nid, wi_kobj);
-+		if (err) {
-+			pr_err("failed to add sysfs [node%d]\n", nid);
-+			break;
-+		}
-+	}
-+	if (err)
-+		kobject_put(wi_kobj);
-+	return 0;
-+}
-+
-+static int __init mempolicy_sysfs_init(void)
-+{
-+	int err;
-+	struct kobject *root_kobj;
-+
-+	memset(&iw_table, 1, sizeof(iw_table));
-+
-+	root_kobj = kobject_create_and_add("mempolicy", mm_kobj);
-+	if (!root_kobj) {
-+		pr_err("failed to add mempolicy kobject to the system\n");
-+		return -ENOMEM;
-+	}
-+
-+	err = add_weighted_interleave_group(root_kobj);
-+
-+	if (err)
-+		kobject_put(root_kobj);
-+	return err;
-+
-+}
-+late_initcall(mempolicy_sysfs_init);
+ static long kernel_mbind(unsigned long start, unsigned long len,
+ 			 unsigned long mode, const unsigned long __user *nmask,
+ 			 unsigned long maxnode, unsigned int flags)
 -- 
 2.39.1
 
