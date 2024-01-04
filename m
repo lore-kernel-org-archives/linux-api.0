@@ -1,41 +1,40 @@
 Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EE4E24A01;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EEB524A1B;
 	Thu,  4 Jan 2024 16:11:37 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=oracle.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="Z5PvsOq7"
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="YSbRBowg"
 Received: from pps.filterd (m0333520.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 404G9ooQ005861;
-	Thu, 4 Jan 2024 16:10:15 GMT
+	by mx0b-00069f02.pphosted.com (8.17.1.19/8.17.1.19) with ESMTP id 404G9pk8005867;
+	Thu, 4 Jan 2024 16:10:10 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=from : to : cc :
- subject : date : message-id : in-reply-to : references : mime-version :
- content-transfer-encoding; s=corp-2023-11-20;
- bh=hPsbuDOPQa7mvK/9Tk1ZUbi7L1u3SU56ie9iQcqGShM=;
- b=Z5PvsOq7LqYET87S47xzqWj3KbGSGauv7pl/FA57sBb2K18s2UOvpHbomoFwkvqsHheV
- U+jcrZtDDRgurBmT0WZh+LC/VC0p60gYyVnxYRhZkQZBMpXMqT3YIIEqTbc66h5EV8dc
- PBgN/3oyOTPr1KUPTZt9XgF6OJJstEgLC2CLtCf6JDsTyh++asnxjR5GSVm7YfoLUiZa
- ye7Us+0pf4UHzd6ig8zGu+KUoom//A/ozlkJDXVpMHs8pFdGrzuKqvnVFw8TKofa+5Yl
- YRdMGLt61iwxV61BwmeOTJZ26KGP9goR9tTb6qAZak2UZPXPi1adcsaSsSWH31P+9IWx Ww== 
+ subject : date : message-id : mime-version : content-transfer-encoding;
+ s=corp-2023-11-20; bh=X9vxQbxFR9yiom7tWw8fZfudhH+D0dUZJvMr0Tcyfjc=;
+ b=YSbRBowguMf+oYk84lCh45C/wWysUseXr128NrBet+b7PEvPDjw97gDOKsK7IOgVPNw1
+ uegk0AJ96Y87dxHwp1HmBxcmX8sO92gqYhSIUMRq5hiWQk5P4bnrAx8eC/7oJZO28PJ1
+ PAHvBXiEgWF7IJGPztXkDtJ0Pzls/jCyr66mNedDmrnEqoi0CMChD79uVH1MXvUPc7Aw
+ Kr0ME8WWR9H1dvTjJfGl8dfGwh4LjPpfI9EPhOH410Qpz8cKnJ3ck/KoqPWLp7Hok4sK
+ Gn6rW0Zc71J2iR86fhu2rJ/5J73tAf/x1mYgbKE9IF4BYAK8lcXnc5TuGs3acg56awSJ Dg== 
 Received: from iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta03.appoci.oracle.com [130.35.103.27])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3vdyxn806r-1
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 3vdyxn805r-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Thu, 04 Jan 2024 16:10:15 +0000
+	Thu, 04 Jan 2024 16:10:10 +0000
 Received: from pps.filterd (iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19) with ESMTP id 404FecAV039313;
-	Thu, 4 Jan 2024 16:10:14 GMT
+	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (8.17.1.19/8.17.1.19) with ESMTP id 404Fdte6039299;
+	Thu, 4 Jan 2024 16:10:09 GMT
 Received: from pps.reinject (localhost [127.0.0.1])
-	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 3vdvhudx6w-1
+	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 3vdvhudwvg-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Thu, 04 Jan 2024 16:10:14 +0000
+	Thu, 04 Jan 2024 16:10:09 +0000
 Received: from iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
-	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 404GA9ge026902;
-	Thu, 4 Jan 2024 16:10:13 GMT
+	by pps.reinject (8.17.1.5/8.17.1.5) with ESMTP id 404GA9ga026902;
+	Thu, 4 Jan 2024 16:10:09 GMT
 Received: from localhost.localdomain (dhcp-10-175-55-141.vpn.oracle.com [10.175.55.141])
-	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 3vdvhudwne-3;
-	Thu, 04 Jan 2024 16:10:13 +0000
+	by iadpaimrmta03.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTP id 3vdvhudwne-1;
+	Thu, 04 Jan 2024 16:10:09 +0000
 From: Vegard Nossum <vegard.nossum@oracle.com>
 To: Jonathan Corbet <corbet@lwn.net>
 Cc: Randy Dunlap <rdunlap@infradead.org>,
@@ -43,12 +42,10 @@ Cc: Randy Dunlap <rdunlap@infradead.org>,
         Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
         Jani Nikula <jani.nikula@linux.intel.com>, linux-doc@vger.kernel.org,
         linux-api@vger.kernel.org, Vegard Nossum <vegard.nossum@oracle.com>
-Subject: [PATCH 3/5] docs: userspace-api: use single toctree level
-Date: Thu,  4 Jan 2024 17:09:44 +0100
-Message-Id: <20240104160946.3450743-3-vegard.nossum@oracle.com>
+Subject: [PATCH 1/5] docs: move admin-guide/sysfs-rules.rst to userspace-api/
+Date: Thu,  4 Jan 2024 17:09:42 +0100
+Message-Id: <20240104160946.3450743-1-vegard.nossum@oracle.com>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20240104160946.3450743-1-vegard.nossum@oracle.com>
-References: <20240104160946.3450743-1-vegard.nossum@oracle.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -63,35 +60,97 @@ X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 spamscore=0 adult
  suspectscore=0 phishscore=0 mlxscore=0 mlxlogscore=999 bulkscore=0
  classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2311290000
  definitions=main-2401040127
-X-Proofpoint-GUID: 8rMT-XVrRLzZ5GA4lSckn5FH_wKz8SBv
-X-Proofpoint-ORIG-GUID: 8rMT-XVrRLzZ5GA4lSckn5FH_wKz8SBv
+X-Proofpoint-GUID: BgxvGfBTOy-6LayscKHEolNaX-clmeK1
+X-Proofpoint-ORIG-GUID: BgxvGfBTOy-6LayscKHEolNaX-clmeK1
 
-Having a single toctree level makes this page more readable at a glance.
+This file documents how userspace ought to interact with sysfs. It is
+clearly intended for applications that access sysfs programmatically,
+rather than at users or admins.
 
-This also makes it more like the other top-level books (process,
-admin-guide, etc.).
+Move it to the userspace API guide.
 
-We can also consider using proper headings like process/index does, but
-this is at least a step in the right direction.
-
+Cc: Mauro Carvalho Chehab <mchehab@kernel.org>
 Signed-off-by: Vegard Nossum <vegard.nossum@oracle.com>
 ---
- Documentation/userspace-api/index.rst | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ Documentation/ABI/stable/sysfs-devices                 |  2 +-
+ Documentation/admin-guide/index.rst                    |  9 ---------
+ Documentation/userspace-api/index.rst                  | 10 +++++++++-
+ .../{admin-guide => userspace-api}/sysfs-rules.rst     |  0
+ tools/lib/api/fs/fs.c                                  |  2 +-
+ 5 files changed, 11 insertions(+), 12 deletions(-)
+ rename Documentation/{admin-guide => userspace-api}/sysfs-rules.rst (100%)
 
+diff --git a/Documentation/ABI/stable/sysfs-devices b/Documentation/ABI/stable/sysfs-devices
+index 98a8ef99ac5f..7829414cba62 100644
+--- a/Documentation/ABI/stable/sysfs-devices
++++ b/Documentation/ABI/stable/sysfs-devices
+@@ -1,6 +1,6 @@
+ Note:
+   This documents additional properties of any device beyond what
+-  is documented in Documentation/admin-guide/sysfs-rules.rst
++  is documented in Documentation/userspace-api/sysfs-rules.rst
+ 
+ What:		/sys/devices/*/of_node
+ Date:		February 2015
+diff --git a/Documentation/admin-guide/index.rst b/Documentation/admin-guide/index.rst
+index 43ea35613dfc..c2b032314a24 100644
+--- a/Documentation/admin-guide/index.rst
++++ b/Documentation/admin-guide/index.rst
+@@ -47,15 +47,6 @@ problems and bugs in particular.
+    perf/index
+    pstore-blk
+ 
+-This is the beginning of a section with information of interest to
+-application developers.  Documents covering various aspects of the kernel
+-ABI will be found here.
+-
+-.. toctree::
+-   :maxdepth: 1
+-
+-   sysfs-rules
+-
+ This is the beginning of a section with information of interest to
+ application developers and system integrators doing analysis of the
+ Linux kernel for safety critical applications. Documents supporting
 diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
-index 275f70f3bcbe..82f9dbd228f5 100644
+index 74bc0716432e..6ce2edf519f6 100644
 --- a/Documentation/userspace-api/index.rst
 +++ b/Documentation/userspace-api/index.rst
-@@ -19,7 +19,7 @@ General documentation:
- Subsystem-specific documentation:
+@@ -9,8 +9,16 @@ While much of the kernel's user-space API is documented elsewhere
+ also be found in the kernel tree itself.  This manual is intended to be the
+ place where this information is gathered.
  
- .. toctree::
--   :maxdepth: 2
++General documentation:
++
++.. toctree::
 +   :maxdepth: 1
++
++   sysfs-rules
++
++Subsystem-specific documentation:
++
+ .. toctree::
+-   :caption: Table of contents
+    :maxdepth: 2
  
     no_new_privs
-    seccomp_filter
+diff --git a/Documentation/admin-guide/sysfs-rules.rst b/Documentation/userspace-api/sysfs-rules.rst
+similarity index 100%
+rename from Documentation/admin-guide/sysfs-rules.rst
+rename to Documentation/userspace-api/sysfs-rules.rst
+diff --git a/tools/lib/api/fs/fs.c b/tools/lib/api/fs/fs.c
+index 5cb0eeec2c8a..c35247b6ad81 100644
+--- a/tools/lib/api/fs/fs.c
++++ b/tools/lib/api/fs/fs.c
+@@ -214,7 +214,7 @@ static void mem_toupper(char *f, size_t len)
+ 
+ /*
+  * Check for "NAME_PATH" environment variable to override fs location (for
+- * testing). This matches the recommendation in Documentation/admin-guide/sysfs-rules.rst
++ * testing). This matches the recommendation in Documentation/userspace-api/sysfs-rules.rst
+  * for SYSFS_PATH.
+  */
+ static bool fs__env_override(struct fs *fs)
 -- 
 2.34.1
 
