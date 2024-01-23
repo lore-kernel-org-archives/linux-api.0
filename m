@@ -1,103 +1,113 @@
-Received: from smtp-190c.mail.infomaniak.ch (smtp-190c.mail.infomaniak.ch [185.125.25.12])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50CA96280F
-	for <linux-api@vger.kernel.org>; Tue, 23 Jan 2024 15:40:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.25.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30E43823D4
+	for <linux-api@vger.kernel.org>; Tue, 23 Jan 2024 19:57:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706024422; cv=none; b=pREo69E8IxHj3rlxhpm9Nxg+SqpR5uLkTqhCFRGnKlObjHaPSHz2/N1sW4LFCFwYz3j2FCsvO6x68zJi/V2irI5TnU3qUykMHcOHgVitPBSnYMvlw0jRG0Ttp+nsEFnO9C1tsvuDveqpV4jgtSfXArEysvBjsNvN4xiXP1QsshY=
+	t=1706039849; cv=none; b=Xaxz3GBC3H/FLXnlbnW25kgrJOAiXHzdx5wqL9uIfOYx3xSl3AO1k6WMMzIvazJQYJp0Y7QAtH/bLzBOb7I4VDtoiiXtinDrYfsPee5x9ThXTVTi16N49tg+9fb8mjhRKmiPXXYgOatE/aHhk8GjfsnzERz6o1Ax2+vTvJT4/Us=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706024422; c=relaxed/simple;
-	bh=zgqI9UR8YogjZoN9u8vWb4dHmJvB8ik8X67zHyKWp0E=;
+	s=arc-20240116; t=1706039849; c=relaxed/simple;
+	bh=eHkPR3/xKx5knTznkRRWuM3jQAUkvV0DDAKaVcE10cM=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=a6TDUeJ+3rImn6OQ6XI1/uNeMRCeLLvb9P3v6UmqZti1Vrk9Hp6NQkpYWS0zMWefLPYhy2S8QCOW/H38e+MWcsBFWVJMSHDs7+ykap0k6Ri4QPt/lL4O0UPuO57skHHIuu/7Oe/Hdpr8JqpiX41ykiLZuixQcTRriEMH7HCOYKc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=XXbo1DEE; arc=none smtp.client-ip=185.125.25.12
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
+	 Content-Type:Content-Disposition:In-Reply-To; b=rzLCwklDTuONzsiKT/CGbRbg3XePoXgG1XkwloQBoEu2ZBLNiDahvak9yPYUW9ZKpxZ8gzW6+87jDo6yT52oVeCFuSMaDm3n3t03pCgcLZRxi5mhYPFqJPTlcQSDQrivaN0ingNPQcz+dlfjzg22tNG/cMlFfZrFAfhB+dFwV8w=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Z5cOUJdh; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="XXbo1DEE"
-Received: from smtp-3-0000.mail.infomaniak.ch (unknown [10.4.36.107])
-	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4TKB1N6n0DzMq5jw;
-	Tue, 23 Jan 2024 16:32:56 +0100 (CET)
-Received: from unknown by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4TKB1M6BnkzrB;
-	Tue, 23 Jan 2024 16:32:55 +0100 (CET)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=digikod.net;
-	s=20191114; t=1706023976;
-	bh=zgqI9UR8YogjZoN9u8vWb4dHmJvB8ik8X67zHyKWp0E=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=XXbo1DEEM3NL5OR6r67arzFI93BlDNA3jzA0bdkXrlPcz9PWoynqbZ9DRchI+s6Hg
-	 sumZzKWpg5rsuUXtHAg+MW1vTX8Wek22Z+dFFd/K6v6792zx7BcdklDSFmE1Z7xIYb
-	 udJuqxRWB40sTpRe3IUczKgQk87Ey5o7YLkGSRLM=
-Date: Tue, 23 Jan 2024 16:32:52 +0100
-From: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
-To: Huyadi <hu.yadi@h3c.com>
-Cc: "jmorris@namei.org" <jmorris@namei.org>, 
-	"serge@hallyn.com" <serge@hallyn.com>, "shuah@kernel.org" <shuah@kernel.org>, 
-	"mathieu.desnoyers@efficios.com" <mathieu.desnoyers@efficios.com>, "amir73il@gmail.com" <amir73il@gmail.com>, 
-	"brauner@kernel.org" <brauner@kernel.org>, "avagin@google.com" <avagin@google.com>, 
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, 
-	"linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, 
-	"linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>, "514118380@qq.com" <514118380@qq.com>, 
-	"konstantin.meskhidze@huawei.com" <konstantin.meskhidze@huawei.com>
-Subject: Re: =?utf-8?B?5Zue5aSN?= =?utf-8?Q?=3A?= [PATCH v4]
- selftests/landlock:Fix two build issues
-Message-ID: <20240123.deeT9hegh4vo@digikod.net>
-References: <20240115102409.19799-1-hu.yadi@h3c.com>
- <20240119.Ugaehae2ze5b@digikod.net>
- <adec399e50c74b30b59480d92c431241@h3c.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Z5cOUJdh"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1706039847;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=5vwh8XXykxSRKxJ8L9h/647T2KFRZBxRZj81Ie4/Uls=;
+	b=Z5cOUJdhuIdTMgDet67EWWB0iCHCEwIi6U06OfoZHWSGKsXxadfYry2dI1Gtpjr7TDwLEY
+	10WUYFSFzLWwEHFlsIGCCQHPlq0UMMIkSWhDAiZrB3znhbV5V6wXWnOuGNDSozKoZr0z/p
+	nJtuCsYRhCysow+XX/LwjvNPCbUaE6o=
+Received: from mimecast-mx02.redhat.com (mimecast-mx02.redhat.com
+ [66.187.233.88]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-492-JItt-U_pOjajNrstXhT0bQ-1; Tue, 23 Jan 2024 14:57:24 -0500
+X-MC-Unique: JItt-U_pOjajNrstXhT0bQ-1
+Received: from smtp.corp.redhat.com (int-mx04.intmail.prod.int.rdu2.redhat.com [10.11.54.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id E4F9C10AFA03;
+	Tue, 23 Jan 2024 19:57:23 +0000 (UTC)
+Received: from dhcp-27-174.brq.redhat.com (unknown [10.45.224.197])
+	by smtp.corp.redhat.com (Postfix) with SMTP id 82BEB2026D66;
+	Tue, 23 Jan 2024 19:57:22 +0000 (UTC)
+Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
+	oleg@redhat.com; Tue, 23 Jan 2024 20:56:10 +0100 (CET)
+Date: Tue, 23 Jan 2024 20:56:08 +0100
+From: Oleg Nesterov <oleg@redhat.com>
+To: Tycho Andersen <tycho@tycho.pizza>
+Cc: Christian Brauner <brauner@kernel.org>, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, Tycho Andersen <tandersen@netflix.com>
+Subject: Re: [PATCH v3 1/3] pidfd: allow pidfd_open() on non-thread-group
+ leaders
+Message-ID: <20240123195608.GB9978@redhat.com>
+References: <20240123153452.170866-1-tycho@tycho.pizza>
+ <20240123153452.170866-2-tycho@tycho.pizza>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <adec399e50c74b30b59480d92c431241@h3c.com>
-X-Infomaniak-Routing: alpha
+In-Reply-To: <20240123153452.170866-2-tycho@tycho.pizza>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.4
 
-On Tue, Jan 23, 2024 at 12:04:17PM +0000, Huyadi wrote:
-> 
-> >> Changes v3 -> v2:
-> >>  - add helper of gettid instead of __NR_gettid
-> >>  - add gcc/glibc version info in comments Changes v1 -> v2:
-> >>  - fix whitespace error
-> >>  - replace SYS_gettid with _NR_gettid
-> >> 
-> >>  tools/testing/selftests/landlock/fs_test.c  | 5 ++++-  
-> >> tools/testing/selftests/landlock/net_test.c | 7 ++++++-
-> >>  2 files changed, 10 insertions(+), 2 deletions(-)
-> >> 
-> >> diff --git a/tools/testing/selftests/landlock/fs_test.c 
-> >> b/tools/testing/selftests/landlock/fs_test.c
-> >> index 18e1f86a6234..a992cf7c0ad1 100644
-> >> --- a/tools/testing/selftests/landlock/fs_test.c
-> >> +++ b/tools/testing/selftests/landlock/fs_test.c
-> >> @@ -4572,7 +4572,10 @@ FIXTURE_VARIANT(layout3_fs)
-> >>  /* clang-format off */
-> >>  FIXTURE_VARIANT_ADD(layout3_fs, tmpfs) {
-> >>  	/* clang-format on */
-> >> -	.mnt = mnt_tmp,
-> >> +	.mnt = {
-> >> +		.type = "tmpfs",
-> >> +		.data = "size=4m,mode=700",
-> >> +	},
-> >
-> >I requested some changes here.
-> >
-> 
-> Could you give me some inspiration how to fix it? 
-> it looks fine to me to assign value as above, which consistent with other pseudo FS tests.
-> Thanks in advance.
+Too late for me, but I don't understand this patch after a quick glance.
+perhaps I missed something...
 
-Just add and use this for the two tmpfs data:
-#define MNT_TMP_DATA "size=4m,mode=700"
+On 01/23, Tycho Andersen wrote:
+>
+> @@ -256,6 +256,17 @@ void release_task(struct task_struct *p)
+>  	write_lock_irq(&tasklist_lock);
+>  	ptrace_release_task(p);
+>  	thread_pid = get_pid(p->thread_pid);
+> +
+> +	/*
+> +	 * If we're not the leader, notify any waiters on our pidfds. Note that
+> +	 * we don't want to notify the leader until /everyone/ in the thread
+> +	 * group is dead, viz. the condition below.
+> +	 *
+> +	 * We have to do this here, since __exit_signal() will
+> +	 * __unhash_processes(), and break do_notify_pidfd()'s lookup.
+> +	 */
+> +	if (!thread_group_leader(p))
+> +		do_notify_pidfd(p);
 
-You can also make the mnt_tmp variable static const.
+This doesn't look consistent.
 
+If the task is a group leader do_notify_pidfd() is called by exit_notify()
+when it becomes a zombie (if no other threads), before it is reaped by its
+parent (unless autoreap).
 
-> 
-> >>  	.file_path = file1_s1d1,
-> >>  };
-> >> 
->   
+If it is a sub-thread, it is called by release_task() above. Note that a
+sub-thread can become a zombie too if it is traced.
+
+>  	__exit_signal(p);
+
+and,  do_notify_pidfd() is called before __exit_signal() which does
+__unhash_process() -> detach_pid(PIDTYPE_PID).
+
+Doesn't this mean that pidfd_poll() can hang? thread_group_exited()
+won't return true after do_notify_pidfd() above, not to mention that
+thread_group_empty() is not possible if !thread_group_leader().
+
+So. When do we want to do do_notify_pidfd() ? Whe the task (leader or not)
+becomes a zombie (passes exit_notify) or when it is reaped by release_task?
+
+Either way pidfd_poll() needs more changes with this patch and it can't
+use thread_group_exited(). If do_notify_pidfd() is called by release_task()
+after __exit_signal(), it can just check pid_has_task(PIDTYPE_PID).
+
+Oleg.
+
