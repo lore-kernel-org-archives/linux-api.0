@@ -1,34 +1,34 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3158C1106;
-	Wed, 24 Jan 2024 00:58:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B35073C3B;
+	Wed, 24 Jan 2024 00:58:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706057917; cv=none; b=cBZ2F2Y3Iw34KLN5NNgqgSbvdzBC9waRIRl2rri4jFiUW1gx8MU0eX10VWHwG6ACsEHN1WwCS20HgEY+4S2/ms84a+S1Jip+jELJtwx1jzvnkCSx0DUSUfxV4TCBks+fCI8oYYddWakCi+C/HqHtzYLH4639LqjiQMG4OfgT6N0=
+	t=1706057920; cv=none; b=tvXEZDjXhg6sPCmyCHBaVIsjhF/0E7gVv9LXi04XSlke4kMm8q6NUyoQUWJxPyMx7yT5Plf0+f74xzYy3UajY0wDWg5x9bV6XyJCFOnWrHZ87DLMcJPkTO3ivYFA4QRfY+pj506q3ufPZC18s9Na22zclEM+618VXUFm6ctIdc0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706057917; c=relaxed/simple;
-	bh=XM9GV8+sIMF5RW/KaB3HIusG5cMiPnVsHGK1IBjoex4=;
+	s=arc-20240116; t=1706057920; c=relaxed/simple;
+	bh=0afrJ/uftX6Nq9Eow5vBIO/VvCEiQGqndgMtPqx2aco=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=aciia/+kjrKlzr4yTxgvGqQZKPmUOc78gdmxTsNTeiHsQeMsCzk1Ic3yhEF89/kcK2H27bHRn5ppuPlF22Wak7s1VQwlUOQxXX51NR1SNHoO5zCGLye8L9pgbkr8uaRWRQ5Z5hLfndh4bZDIb5hJMQyvFxrZWO0U8Jmsfm6ut08=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=i4sXuuWK; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=m49nn17HmjhVVIbg+obWHJJ59/jV3TiyH99G15+Nm5VvcN47b1p1Fr0YIagKQ5QzSkNTc4mDp4ncfRQBkWQRDI87+ktVPOzfTi1TG+DYBczU64djNdLX8YK3BQjn9Nhbdon+TSbOq+BA77d9ASHjzQRh8QfGPidFnhJomAICXWU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=iIP0o2mv; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="i4sXuuWK"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="iIP0o2mv"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=/+Jb+z9Ua1CTDoDCd/u+WQhU/PYvORg76KqM3L0CpVs=; b=i4sXuuWKHjKxS4FGq+K00nVbyd
-	HlFC/HixOQ6zLd8hsht4H0sEAuy1eGn37NCPWHIEX+Eq1B88g53/FVvQNJqlXN3xkkSYB8ZSWA6q5
-	UWjhWjzJ4LkoEZt8Ohtp8mjy63flNZb0D6PZ6qsXAiwXRK8o6clyD/0MBE4FH1Dgzz82gbnYJnCv3
-	mw6lFvqXAfrG/ttBhTioQWRcbpDa31XtlA86Ir86L7GcES9HawtUN2gpzlUHApzOouXjq1Dy2ajQ3
-	yg2luBELKYi/4nhk81bFmZmxbIi+ZIUQdfC3KguyST03qarJGjn7T8CPnIwPC9YpIymuR6zhU6y+j
-	b2SYn2Cw==;
+	bh=oUXTx6PCjwpopSp5hsJS/fwxSNq/Qs+N3FA1Q73jh2c=; b=iIP0o2mvYtke4of5HpTYWx6VlE
+	Sh6yOl5yvxhtSKUuhRSmREPdm5W47goV8nGyVpgZFxd+BCbGvztK6DtAcXympigwr/hYC+cZEY7gG
+	46JY3WLXYoos5DnuH8XFmofKKt2/K1dqYo+mUQtElj7AlREQp2XRRQBcna6nPTspsNvV3VLNUDoCN
+	NfU56VZYnkIr2i5lf1a7vNIV9zUSWuI6AKToCVrHafYPS9+Gzbigtu1y+5uTDuhHy/2LR3Eb0/t/k
+	AysYzbjiv9g+Ynrv3lZYI9juC64FRlQxtaYV9+wV/NP4TKZGYymut8MfURH3t+Fj9Q79d/+/yhweu
+	cM/3TTiA==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rSRLB-00DVeW-2B;
+	id 1rSRLB-00DVeW-0r;
 	Tue, 23 Jan 2024 18:42:05 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
@@ -41,9 +41,9 @@ Cc: wine-devel@winehq.org,
 	Arkadiusz Hiler <ahiler@codeweavers.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [RFC PATCH 4/9] ntsync: Introduce NTSYNC_IOC_PUT_SEM.
-Date: Tue, 23 Jan 2024 18:40:23 -0600
-Message-ID: <20240124004028.16826-5-zfigura@codeweavers.com>
+Subject: [RFC PATCH 1/9] ntsync: Introduce the ntsync driver and character device.
+Date: Tue, 23 Jan 2024 18:40:20 -0600
+Message-ID: <20240124004028.16826-2-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240124004028.16826-1-zfigura@codeweavers.com>
 References: <20240124004028.16826-1-zfigura@codeweavers.com>
@@ -55,151 +55,110 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This corresponds to the NT syscall NtReleaseSemaphore().
+ntsync uses a misc device as the simplest and least intrusive uAPI interface.
+
+Each file description on the device represents an isolated NT instance, intended
+to correspond to a single NT virtual machine.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- drivers/misc/ntsync.c       | 76 +++++++++++++++++++++++++++++++++++++
- include/uapi/linux/ntsync.h |  2 +
- 2 files changed, 78 insertions(+)
+ drivers/misc/Kconfig  |  9 ++++++++
+ drivers/misc/Makefile |  1 +
+ drivers/misc/ntsync.c | 53 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 63 insertions(+)
+ create mode 100644 drivers/misc/ntsync.c
 
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index 4fb291f0bf7c..bdd8a71bd853 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -504,6 +504,15 @@ config OPEN_DICE
+ 	  measured boot flow. Userspace can use CDIs for remote attestation
+ 	  and sealing.
+ 
++config NTSYNC
++	tristate "NT synchronization primitive emulation"
++	help
++	  This module provides kernel support for emulation of Windows NT
++	  synchronization primitives. It is not a hardware driver.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called ntsync.
++
+ 	  If unsure, say N.
+ 
+ config VCPU_STALL_DETECTOR
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index ea6ea5bbbc9c..153a3f4837e8 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -59,6 +59,7 @@ obj-$(CONFIG_PVPANIC)   	+= pvpanic/
+ obj-$(CONFIG_UACCE)		+= uacce/
+ obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
+ obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
++obj-$(CONFIG_NTSYNC)		+= ntsync.o
+ obj-$(CONFIG_HI6421V600_IRQ)	+= hi6421v600-irq.o
+ obj-$(CONFIG_OPEN_DICE)		+= open-dice.o
+ obj-$(CONFIG_GP_PCI1XXXX)	+= mchp_pci1xxxx/
 diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index 3287b94be351..d1c91c2a4f1a 100644
---- a/drivers/misc/ntsync.c
+new file mode 100644
+index 000000000000..9424c6210e51
+--- /dev/null
 +++ b/drivers/misc/ntsync.c
-@@ -21,9 +21,11 @@ enum ntsync_type {
- struct ntsync_obj {
- 	struct rcu_head rhead;
- 	struct kref refcount;
-+	spinlock_t lock;
- 
- 	enum ntsync_type type;
- 
-+	/* The following fields are protected by the object lock. */
- 	union {
- 		struct {
- 			__u32 count;
-@@ -36,6 +38,19 @@ struct ntsync_device {
- 	struct xarray objects;
- };
- 
-+static struct ntsync_obj *get_obj(struct ntsync_device *dev, __u32 id)
-+{
-+	struct ntsync_obj *obj;
-+
-+	rcu_read_lock();
-+	obj = xa_load(&dev->objects, id);
-+	if (obj && !kref_get_unless_zero(&obj->refcount))
-+		obj = NULL;
-+	rcu_read_unlock();
-+
-+	return obj;
-+}
-+
- static void destroy_obj(struct kref *ref)
- {
- 	struct ntsync_obj *obj = container_of(ref, struct ntsync_obj, refcount);
-@@ -48,6 +63,18 @@ static void put_obj(struct ntsync_obj *obj)
- 	kref_put(&obj->refcount, destroy_obj);
- }
- 
-+static struct ntsync_obj *get_obj_typed(struct ntsync_device *dev, __u32 id,
-+					enum ntsync_type type)
-+{
-+	struct ntsync_obj *obj = get_obj(dev, id);
-+
-+	if (obj && obj->type != type) {
-+		put_obj(obj);
-+		return NULL;
-+	}
-+	return obj;
-+}
-+
- static int ntsync_char_open(struct inode *inode, struct file *file)
- {
- 	struct ntsync_device *dev;
-@@ -81,6 +108,7 @@ static int ntsync_char_release(struct inode *inode, struct file *file)
- static void init_obj(struct ntsync_obj *obj)
- {
- 	kref_init(&obj->refcount);
-+	spin_lock_init(&obj->lock);
- }
- 
- static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
-@@ -131,6 +159,52 @@ static int ntsync_delete(struct ntsync_device *dev, void __user *argp)
- 	return 0;
- }
- 
+@@ -0,0 +1,53 @@
++// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * Actually change the semaphore state, returning -EOVERFLOW if it is made
-+ * invalid.
++ * ntsync.c - Kernel driver for NT synchronization primitives
++ *
++ * Copyright (C) 2021-2022 Elizabeth Figura
 + */
-+static int put_sem_state(struct ntsync_obj *sem, __u32 count)
++
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
++
++#define NTSYNC_NAME	"ntsync"
++
++static int ntsync_char_open(struct inode *inode, struct file *file)
 +{
-+	lockdep_assert_held(&sem->lock);
++	return nonseekable_open(inode, file);
++}
 +
-+	if (sem->u.sem.count + count < sem->u.sem.count ||
-+	    sem->u.sem.count + count > sem->u.sem.max)
-+		return -EOVERFLOW;
-+
-+	sem->u.sem.count += count;
++static int ntsync_char_release(struct inode *inode, struct file *file)
++{
 +	return 0;
 +}
 +
-+static int ntsync_put_sem(struct ntsync_device *dev, void __user *argp)
++static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
++			      unsigned long parm)
 +{
-+	struct ntsync_sem_args __user *user_args = argp;
-+	struct ntsync_sem_args args;
-+	struct ntsync_obj *sem;
-+	__u32 prev_count;
-+	int ret;
-+
-+	if (copy_from_user(&args, argp, sizeof(args)))
-+		return -EFAULT;
-+
-+	sem = get_obj_typed(dev, args.sem, NTSYNC_TYPE_SEM);
-+	if (!sem)
-+		return -EINVAL;
-+
-+	spin_lock(&sem->lock);
-+
-+	prev_count = sem->u.sem.count;
-+	ret = put_sem_state(sem, args.count);
-+
-+	spin_unlock(&sem->lock);
-+
-+	put_obj(sem);
-+
-+	if (!ret && put_user(prev_count, &user_args->count))
-+		ret = -EFAULT;
-+
-+	return ret;
++	switch (cmd) {
++	default:
++		return -ENOIOCTLCMD;
++	}
 +}
 +
- static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
- 			      unsigned long parm)
- {
-@@ -142,6 +216,8 @@ static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
- 		return ntsync_create_sem(dev, argp);
- 	case NTSYNC_IOC_DELETE:
- 		return ntsync_delete(dev, argp);
-+	case NTSYNC_IOC_PUT_SEM:
-+		return ntsync_put_sem(dev, argp);
- 	default:
- 		return -ENOIOCTLCMD;
- 	}
-diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index d97afc138dcc..8c610d65f8ef 100644
---- a/include/uapi/linux/ntsync.h
-+++ b/include/uapi/linux/ntsync.h
-@@ -21,5 +21,7 @@ struct ntsync_sem_args {
- #define NTSYNC_IOC_CREATE_SEM		_IOWR(NTSYNC_IOC_BASE, 0, \
- 					      struct ntsync_sem_args)
- #define NTSYNC_IOC_DELETE		_IOW (NTSYNC_IOC_BASE, 1, __u32)
-+#define NTSYNC_IOC_PUT_SEM		_IOWR(NTSYNC_IOC_BASE, 2, \
-+					      struct ntsync_sem_args)
- 
- #endif
++static const struct file_operations ntsync_fops = {
++	.owner		= THIS_MODULE,
++	.open		= ntsync_char_open,
++	.release	= ntsync_char_release,
++	.unlocked_ioctl	= ntsync_char_ioctl,
++	.compat_ioctl	= ntsync_char_ioctl,
++	.llseek		= no_llseek,
++};
++
++static struct miscdevice ntsync_misc = {
++	.minor		= MISC_DYNAMIC_MINOR,
++	.name		= NTSYNC_NAME,
++	.fops		= &ntsync_fops,
++};
++
++module_misc_device(ntsync_misc);
++
++MODULE_AUTHOR("Elizabeth Figura");
++MODULE_DESCRIPTION("Kernel driver for NT synchronization primitives");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS("devname:" NTSYNC_NAME);
 -- 
 2.43.0
 
