@@ -1,29 +1,29 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEAB310E3;
-	Wed, 24 Jan 2024 00:59:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E4AA1FAA;
+	Wed, 24 Jan 2024 01:14:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706057977; cv=none; b=rOUWdQZk/MhZTOmk6G3E+DI8V/7AREUC4UinikbmhN86CFo3pwxc2ECapLiHLa+YlRNPr8ijjOyOBcekIQSH2+w1L1l0T4bkh3dy5X3Ar/kZcol4jkdVHBmxIlVKcaIe3pYyQWhTHn19S8EGEJtUdwtYzzjz55Mri/KaVV9xq2o=
+	t=1706058858; cv=none; b=i5NabR/bHDIMHhtIULXe6bBMuPFVHZghu3/QRkhDbsM0CTQgkoMUyT4a5Q8by9MhYc9dXyAlh5M4YrWWbGG0Ycz6IWI1lP6kVu0vHOHRF5Oz/U63qurpT5p3X2BLh220MgVvUDuXgFQNhAeN7o9PLhP/kWbfQVnLcmBv5a0hIDc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706057977; c=relaxed/simple;
-	bh=DvauO6ycaIw3mAD1xvoregXuj3b2mxdZaXL8A1ZszOs=;
+	s=arc-20240116; t=1706058858; c=relaxed/simple;
+	bh=qWcnJt0pf9bdDGsYcKVLk1NGTUvvib50FPZ8UjiLKug=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=C630b8I0FrG9VigIHb/7kiq4prlRxs9QfyA/+OnguxjN5SYpgrdxNIjzJkFk/v8vTZtunkxPzqtuyCHbNFmUO/gUah3tJiYC94J6tEVBBEGG0Tl/Xc7uFETTVbk0Ul/X2X9hjUn45xKU8DRMCEja68m+a/IJ0ISyq00AQ/rw67Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=ZGZYkYlw; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=IgAf7xmMxZEVTAmUUTh4XbUzlZ9bQ0rgVsChKofO0azItK1BsWjAehRvtzYXr53RxBbHDueXsZu2SGCqcUabpM9GAe2RSxx8+eTT8c8v0EbrEow72geq4bbOHQXWe3e7fAg/n4sGA2msU5yDKDlpwqq3h64Sz04Js0PSjI3Zrr8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=e+HrVT+5; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="ZGZYkYlw"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 527C9C433F1;
-	Wed, 24 Jan 2024 00:59:36 +0000 (UTC)
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="e+HrVT+5"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EA5D3C433F1;
+	Wed, 24 Jan 2024 01:14:17 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1706057976;
-	bh=DvauO6ycaIw3mAD1xvoregXuj3b2mxdZaXL8A1ZszOs=;
+	s=korg; t=1706058858;
+	bh=qWcnJt0pf9bdDGsYcKVLk1NGTUvvib50FPZ8UjiLKug=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=ZGZYkYlww5n/wqdtykDcoiab3c8Chc3oAvIM/NzP6wNqNA4YZ4Uc8ajo3yOjF/Lj3
-	 R2wbj0NOj5ylnHM1/IMOqvC5kpzJq0M5gt3jXYuuG6DzVf8W5ASvYjSOnCLYixjcSt
-	 Hdsr7SlqlN0/aMCz/xZaeWU175y/+vDNycxPeMho=
-Date: Tue, 23 Jan 2024 16:59:35 -0800
+	b=e+HrVT+5RZvgPrFmWTd5dXq9JwoZ2LyffRT5//NQHo8gKxQtSATCZqdkRqVpPGe1Y
+	 jsZA/B+5B38PgXqB0sJaJBEaPKPKUG9n7Y23iJ2DJKq6Dvz7GPHEKQY/jkQgJH3dU9
+	 zIsyfoJleOh/3IA6c/JSimg4qBvDW5BUZ0S25COg=
+Date: Tue, 23 Jan 2024 17:14:17 -0800
 From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 To: Elizabeth Figura <zfigura@codeweavers.com>
 Cc: Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org,
@@ -32,9 +32,11 @@ Cc: Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org,
 	Wolfram Sang <wsa@kernel.org>,
 	Arkadiusz Hiler <ahiler@codeweavers.com>,
 	Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 0/9] NT synchronization primitive driver
-Message-ID: <2024012319-aptly-calculate-0f88@gregkh>
+Subject: Re: [RFC PATCH 3/9] ntsync: Introduce NTSYNC_IOC_CREATE_SEM and
+ NTSYNC_IOC_DELETE.
+Message-ID: <2024012301-dork-awry-c9ad@gregkh>
 References: <20240124004028.16826-1-zfigura@codeweavers.com>
+ <20240124004028.16826-4-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -43,31 +45,30 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20240124004028.16826-1-zfigura@codeweavers.com>
+In-Reply-To: <20240124004028.16826-4-zfigura@codeweavers.com>
 
-On Tue, Jan 23, 2024 at 06:40:19PM -0600, Elizabeth Figura wrote:
-> == Patches ==
-> 
-> This is the first part of a 32-patch series. The series comprises 17 patches
-> which contain the actual implementation, 13 which provide self-tests, 1 to
-> update the MAINTAINERS file, and 1 to add API documentation.
+On Tue, Jan 23, 2024 at 06:40:22PM -0600, Elizabeth Figura wrote:
+> +static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
+> +{
+> +	struct ntsync_sem_args __user *user_args = argp;
+> +	struct ntsync_sem_args args;
+> +	struct ntsync_obj *sem;
+> +	__u32 id;
+> +	int ret;
+> +
+> +	if (copy_from_user(&args, argp, sizeof(args)))
+> +		return -EFAULT;
+> +
+> +	if (args.count > args.max)
+> +		return -EINVAL;
 
-32 patches?  I only see 9 here, why not submit them all?
+No bounds checking on count or max?
 
-> The intended semantics of the patches are broadly intended to match those of the
-> corresponding Windows functions. Since I do not expect familiarity with Windows
-> syscalls, however, and especially not with some of the more subtle or
-> unspecified behaviour that they provide, the documentation patch included in the
-> series also describes the intended behaviour in detail, and can be used as a
-> specification for the rest of the series.
-> 
-> The entire series can be retrieved or browsed here:
-> 
->     https://repo.or.cz/linux/zf.git/shortlog/refs/heads/ntsync4
-
-No one is going to dig elsewhere for kernel changes, sorry.  Please
-submit them in email for review, that's the only way we can look at them
-and comment.
+What's the relationship between count and max?  Some sort of real
+documentation is needed here, the changelog needs to explain this.  Or
+somewhere, but as-is, this patch series is pretty unreviewable as I
+can't figure out how to review it because I don't know what it wants to
+do.
 
 thanks,
 
