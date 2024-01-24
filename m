@@ -1,81 +1,249 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FC671872;
-	Wed, 24 Jan 2024 00:54:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F02F1841;
+	Wed, 24 Jan 2024 00:58:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706057644; cv=none; b=ZdC3iwnrYWFr0xkqNNldSFuO8ZDJJpqrg3YFz8smFruv6S7CM/P53Ttwwe7NDrDPWMlvXOMy6kAgxgJ2MZ6kWqn8NpR2E4KWRAzNqcCsYF2F3QQvT7PXpFUfisHVR1KSnn/sLLTWV1xDCTIwsWc2TxonoOPGmzDdAOB2zF6zfuc=
+	t=1706057911; cv=none; b=FZau5uK8/Z1XLUczZuGcKM2u7n4iHBuxC/e3uyniWkgInJoCr1dBRz/7Snm0LPj/G4mk6iR1ks+KLuvnsMux6LheuOyO5TG0Ft/kkBVpOz8tRNQ3WaR4+L5JY26OKCjQb9fjusS09d0dwmkmssEbgYWIhhYe03VdHAqlCi3Bm2U=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706057644; c=relaxed/simple;
-	bh=D8/fnoZnYDq6gX23XdA37KFCnw+tAaoRYYE4izrTFqw=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=WbFSohUiU1dbGvtnD0LhPy82RQEHNi0FhqHDI0Zxb61/FzH4RGVjuwwXyWJYNNp6Sk7NFAjomDhwNoBnnWrvk1w+xgMPionE697IxnDVIhJfzwAfEUzVHLdAut8mXmr4CLz6KYiJojsgc7e01vuy6wgL7/cXeDVTkciGriECFRU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=lhCUI2Vh; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1706057911; c=relaxed/simple;
+	bh=gGRv5odUNhfX4VoV6kC+64r+PLYNEQB8KtgHYIT9nk8=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=q1F2lILSXUXNQ13HEBQ0EyEHuDYMEbFlz8wEWAnr3a1bGGpkyE64qWI/+0GJMu5Yw4lPGi3f0S9tvhKvcaU8UnqQ9A2FsAC+n7CU5O4z09t7pXd/x/ys3+M/wEa3r0+uUFewiADTUwLkHFbUVfby4jTQPT0LrYNkJA4260wOuEM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=l2HUwBKi; arc=none smtp.client-ip=4.36.192.163
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="lhCUI2Vh"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 88BE1C433F1;
-	Wed, 24 Jan 2024 00:54:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1706057643;
-	bh=D8/fnoZnYDq6gX23XdA37KFCnw+tAaoRYYE4izrTFqw=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=lhCUI2VhTmxzSzbN1xXEt74XXF2PxfMYqSZuoTdftCHMDHoKpWuiZH2qOT9tEmz2J
-	 ELwnWtdCJR7lzwd+fzAAoBuf5iaAL/mO1akL5Mc9ex+3s6nxoaDjOezDhRgGFknPf6
-	 V82UhHWbGLNwNeKeNLNLgwwaKnAfqUHYfY9ABBDQ=
-Date: Tue, 23 Jan 2024 16:54:02 -0800
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To: Elizabeth Figura <zfigura@codeweavers.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, wine-devel@winehq.org,
-	=?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>,
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="l2HUwBKi"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
+	bh=IpiExmoWV0N5DWasqyp0qDuktw1Ruf47n+D+iWJ83/M=; b=l2HUwBKixJXPHnQ8DC/ZTyFzDF
+	f1cDRO66MzSI54QY6M9+BhzcwlcisBFZ2+Etbg2/jeEjyjHQXZSdxzyHnErw8VoGIhsTYX7T5+Qy7
+	Idw6bNaBnRBok/idufHFDjVzpT9LzyMNApcaYe8KHDNGqOHDtLJX+Mh1i5YOrodAcO7csrScG+PPy
+	P+2f/l+9K1mf3MWQiQJPnHRzoHlJMJ9spf9BV+YWjqj72+WfgNtvgSvIONcR/EIojDI15ncFlmR3t
+	6P9fG4NhS8WuXTTk4+DyDRWgAMP7y00JSsOBIb4SDEQcEHPwUXR67qE4uQkfLFPqUuhJHCYcsmfd9
+	8euWlbRg==;
+Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
+	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <zfigura@codeweavers.com>)
+	id 1rSRLB-00DVeW-1i;
+	Tue, 23 Jan 2024 18:42:05 -0600
+From: Elizabeth Figura <zfigura@codeweavers.com>
+To: Arnd Bergmann <arnd@arndb.de>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org
+Cc: wine-devel@winehq.org,
+	=?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@igalia.com>,
 	Wolfram Sang <wsa@kernel.org>,
 	Arkadiusz Hiler <ahiler@codeweavers.com>,
-	Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 2/9] ntsync: Reserve a minor device number and ioctl
- range.
-Message-ID: <2024012356-dove-duke-f7f6@gregkh>
+	Peter Zijlstra <peterz@infradead.org>,
+	Elizabeth Figura <zfigura@codeweavers.com>
+Subject: [RFC PATCH 3/9] ntsync: Introduce NTSYNC_IOC_CREATE_SEM and NTSYNC_IOC_DELETE.
+Date: Tue, 23 Jan 2024 18:40:22 -0600
+Message-ID: <20240124004028.16826-4-zfigura@codeweavers.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20240124004028.16826-1-zfigura@codeweavers.com>
 References: <20240124004028.16826-1-zfigura@codeweavers.com>
- <20240124004028.16826-3-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20240124004028.16826-3-zfigura@codeweavers.com>
+Content-Transfer-Encoding: 8bit
 
-On Tue, Jan 23, 2024 at 06:40:21PM -0600, Elizabeth Figura wrote:
-> Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
-> ---
+These correspond to the NT syscalls NtCreateSemaphore() and NtClose().
+Unlike those functions, however, these ioctls do not handle object names, or
+lookup of existing objects, or handle reference counting, but simply create the
+underlying primitive. The user space emulator is expected to implement those
+functions if they are required.
 
-Note, we can't take patches without any changelog text, and you don't
-want us to :)
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+---
+ drivers/misc/ntsync.c       | 117 ++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/ntsync.h |  25 ++++++++
+ 2 files changed, 142 insertions(+)
+ create mode 100644 include/uapi/linux/ntsync.h
 
->  Documentation/admin-guide/devices.txt              | 3 ++-
->  Documentation/userspace-api/ioctl/ioctl-number.rst | 2 ++
->  drivers/misc/ntsync.c                              | 3 ++-
->  include/linux/miscdevice.h                         | 1 +
->  4 files changed, 7 insertions(+), 2 deletions(-)
-> 
-> diff --git a/Documentation/admin-guide/devices.txt b/Documentation/admin-guide/devices.txt
-> index 94c98be1329a..041404397ee5 100644
-> --- a/Documentation/admin-guide/devices.txt
-> +++ b/Documentation/admin-guide/devices.txt
-> @@ -376,8 +376,9 @@
->  		240 = /dev/userio	Serio driver testing device
->  		241 = /dev/vhost-vsock	Host kernel driver for virtio vsock
->  		242 = /dev/rfkill	Turning off radio transmissions (rfkill)
-> +		243 = /dev/ntsync	NT synchronization primitive device
->  
-> -		243-254			Reserved for local use
-> +		244-254			Reserved for local use
+diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
+index 84b498e2b2d5..3287b94be351 100644
+--- a/drivers/misc/ntsync.c
++++ b/drivers/misc/ntsync.c
+@@ -8,23 +8,140 @@
+ #include <linux/fs.h>
+ #include <linux/miscdevice.h>
+ #include <linux/module.h>
++#include <linux/slab.h>
++#include <linux/xarray.h>
++#include <uapi/linux/ntsync.h>
+ 
+ #define NTSYNC_NAME	"ntsync"
+ 
++enum ntsync_type {
++	NTSYNC_TYPE_SEM,
++};
++
++struct ntsync_obj {
++	struct rcu_head rhead;
++	struct kref refcount;
++
++	enum ntsync_type type;
++
++	union {
++		struct {
++			__u32 count;
++			__u32 max;
++		} sem;
++	} u;
++};
++
++struct ntsync_device {
++	struct xarray objects;
++};
++
++static void destroy_obj(struct kref *ref)
++{
++	struct ntsync_obj *obj = container_of(ref, struct ntsync_obj, refcount);
++
++	kfree_rcu(obj, rhead);
++}
++
++static void put_obj(struct ntsync_obj *obj)
++{
++	kref_put(&obj->refcount, destroy_obj);
++}
++
+ static int ntsync_char_open(struct inode *inode, struct file *file)
+ {
++	struct ntsync_device *dev;
++
++	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
++	if (!dev)
++		return -ENOMEM;
++
++	xa_init_flags(&dev->objects, XA_FLAGS_ALLOC);
++
++	file->private_data = dev;
+ 	return nonseekable_open(inode, file);
+ }
+ 
+ static int ntsync_char_release(struct inode *inode, struct file *file)
+ {
++	struct ntsync_device *dev = file->private_data;
++	struct ntsync_obj *obj;
++	unsigned long id;
++
++	xa_for_each(&dev->objects, id, obj)
++		put_obj(obj);
++
++	xa_destroy(&dev->objects);
++
++	kfree(dev);
++
++	return 0;
++}
++
++static void init_obj(struct ntsync_obj *obj)
++{
++	kref_init(&obj->refcount);
++}
++
++static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
++{
++	struct ntsync_sem_args __user *user_args = argp;
++	struct ntsync_sem_args args;
++	struct ntsync_obj *sem;
++	__u32 id;
++	int ret;
++
++	if (copy_from_user(&args, argp, sizeof(args)))
++		return -EFAULT;
++
++	if (args.count > args.max)
++		return -EINVAL;
++
++	sem = kzalloc(sizeof(*sem), GFP_KERNEL);
++	if (!sem)
++		return -ENOMEM;
++
++	init_obj(sem);
++	sem->type = NTSYNC_TYPE_SEM;
++	sem->u.sem.count = args.count;
++	sem->u.sem.max = args.max;
++
++	ret = xa_alloc(&dev->objects, &id, sem, xa_limit_32b, GFP_KERNEL);
++	if (ret < 0) {
++		kfree(sem);
++		return ret;
++	}
++
++	return put_user(id, &user_args->sem);
++}
++
++static int ntsync_delete(struct ntsync_device *dev, void __user *argp)
++{
++	struct ntsync_obj *obj;
++	__u32 id;
++
++	if (get_user(id, (__u32 __user *)argp))
++		return -EFAULT;
++
++	obj = xa_erase(&dev->objects, id);
++	if (!obj)
++		return -EINVAL;
++
++	put_obj(obj);
+ 	return 0;
+ }
+ 
+ static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
+ 			      unsigned long parm)
+ {
++	struct ntsync_device *dev = file->private_data;
++	void __user *argp = (void __user *)parm;
++
+ 	switch (cmd) {
++	case NTSYNC_IOC_CREATE_SEM:
++		return ntsync_create_sem(dev, argp);
++	case NTSYNC_IOC_DELETE:
++		return ntsync_delete(dev, argp);
+ 	default:
+ 		return -ENOIOCTLCMD;
+ 	}
+diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
+new file mode 100644
+index 000000000000..d97afc138dcc
+--- /dev/null
++++ b/include/uapi/linux/ntsync.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Kernel support for NT synchronization primitive emulation
++ *
++ * Copyright (C) 2021-2022 Elizabeth Figura
++ */
++
++#ifndef __LINUX_NTSYNC_H
++#define __LINUX_NTSYNC_H
++
++#include <linux/types.h>
++
++struct ntsync_sem_args {
++	__u32 sem;
++	__u32 count;
++	__u32 max;
++};
++
++#define NTSYNC_IOC_BASE 0xf7
++
++#define NTSYNC_IOC_CREATE_SEM		_IOWR(NTSYNC_IOC_BASE, 0, \
++					      struct ntsync_sem_args)
++#define NTSYNC_IOC_DELETE		_IOW (NTSYNC_IOC_BASE, 1, __u32)
++
++#endif
+-- 
+2.43.0
 
-Why do you need a fixed minor number?  Can't your userspace handle
-dynamic numbers?  What systems require a static value?
-
-thanks,
-
-greg k-h
