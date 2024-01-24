@@ -1,35 +1,34 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AAE9CC158;
-	Wed, 24 Jan 2024 00:58:52 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01957D2F5;
+	Wed, 24 Jan 2024 00:58:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706057934; cv=none; b=imfcRKbgvdL0oO5N8+2k82K/xlWlK/s2tMFCw0ZxLE++MFjNpRZ9CKWRH09i2BlAymzwPQDzCiL8YVZ/M3Qddr56jyn1/U+Q1GCjB0eCLC5QJcePuc8BdomDVqn69KQzIUHxBx9G3/eSGYIdfr7or9eYjfJXcORUSY97s9THnc8=
+	t=1706057936; cv=none; b=kGYJ+CmGIyYMIuyzi/ztZqEGZpmBuT6gbZw/6/4ZFcHEufB9q4S0KaeunjvmveZPYSYvh9BFEUFMZV2/FSnYlhIu1RVvV8Pljdma3+a3Elq3QM/+143EepOKVxajkbxOg4g/9wyA1fE4/D48Ufo6u7j0SgAfzL/LBEqKTLvLSWM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706057934; c=relaxed/simple;
-	bh=OK38CsfmTQ/+2qSV1J4hYuKjCcXbFCVQw/NRr4ahxMo=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tTKI9cgqYK7Y+fI/AtqzoeK5XbaRO6HKpuGRnIy+qkIkT8I3MoXHhgHNHrObKBEe8YTfK/Lyd7sNeyE8zw1dahteFOHnZaXWBRlkWx4GX5ivrg8Dy9krd5kYck3sIPU2CRDzMxHhVuw/GWiXhZCiXRmKey1AmGvjI2ea7kiLdKM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Jig3bTtu; arc=none smtp.client-ip=4.36.192.163
+	s=arc-20240116; t=1706057936; c=relaxed/simple;
+	bh=sW+Y20MU/VFGCQimHbrm3O/+hpPKzSdsKRsTMf/sjRE=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=YQ/wAt6lWByRMW32tuayoBV9ITwKgoGp2vc1yYJi/tt8nocwfH0I1csU05T1cvGnR17JO2hLlFErOLz9/zGhhiy5qtQ1z5Ep9KUibqldSJonWZp6m6s4h+ZjgQHcgqc8lg/qG86mcR8Jyxj2+OW9ZC38dWe6venbYH5IQuIfqv0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=f3R2Qc0I; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Jig3bTtu"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="f3R2Qc0I"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=n18n/Dm5XC6gbUFhjKBhHb8lqgVEir8MGaSOOm77plw=; b=Jig3bTtunFQFejUo6b+UvK6XZF
-	7SgxJtpxArTsO4cbvnNbOIvIMo/QGA5gArDGz5JtNA6ry5L2pt/CCiH6HjGwck0+X0b43/Gslh9g2
-	vg1y3MvizpW+KlPcFJalkc/qzzfjIe1lhgfzD4kqE2tc2DCDzItFsu2TNrajxp7H11asQ0Lz9zaY8
-	3zldhzmOHX85FHXvneXHHk0kK3l2HGF4xl5D7jAUPI+sCDSPuwGBOBLC4nfMB2xCtzYXKAIwjFVD6
-	K4J9qAEXgW/wFMhlWUhGrBkJX4M/4RtcLIiYrZ5xpEvQMxUHYEg939uG9ym9EZXiJALrjelKkCMEm
-	o+169QSw==;
+	bh=2U6pZsqi4Oh7oXdwVx3LuWdFgEkqnlIZZ9lJn+kGE2Y=; b=f3R2Qc0IL5/w8V5fs02yhEAH11
+	7NKCu9HrRy/JjvXftKCdhmbgNzlyzpNZPRxcoN5UQGHle5Tn6gWIA3ShcRb6dgyTV9IZPZa5fMtH8
+	xr2SsXf0mgXy4LpU3fPTTo6+XSCZTbPKAFckYmuparF28ZWbBw5fOANJD2nqn9oYnXutrtsGyeM/e
+	dC+ejB+p0/NbC0IeD7rzUd54/VL/PPRRCKumZgTMDaCgJr0cbj+SOyq1S1CPfrg+aA+Dm1fHnmPBZ
+	wiXg31gOPj7y9gibtHB+WVGYqoY8UOWcLgjlSwmFozkWrX0QdQUdZvuBvyJ50b5NZq+pFPiEHotXl
+	aDXf6kmw==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rSRLC-00DVeW-0c;
-	Tue, 23 Jan 2024 18:42:06 -0600
+	id 1rSRLA-00DVeW-2Q;
+	Tue, 23 Jan 2024 18:42:05 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -41,12 +40,10 @@ Cc: wine-devel@winehq.org,
 	Arkadiusz Hiler <ahiler@codeweavers.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [RFC PATCH 7/9] ntsync: Introduce NTSYNC_IOC_CREATE_MUTEX.
-Date: Tue, 23 Jan 2024 18:40:26 -0600
-Message-ID: <20240124004028.16826-8-zfigura@codeweavers.com>
+Subject: [RFC PATCH 0/9] NT synchronization primitive driver
+Date: Tue, 23 Jan 2024 18:40:19 -0600
+Message-ID: <20240124004028.16826-1-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <20240124004028.16826-1-zfigura@codeweavers.com>
-References: <20240124004028.16826-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -55,171 +52,160 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This corresponds to the NT syscall NtCreateMutant().
+This patch series introduces a new char misc driver, /dev/ntsync, which is used
+to implement Windows NT synchronization primitives.
 
-Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
----
- drivers/misc/ntsync.c       | 72 +++++++++++++++++++++++++++++++++++++
- include/uapi/linux/ntsync.h |  8 +++++
- 2 files changed, 80 insertions(+)
+== Background ==
 
-diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index 2685363fae9e..d48f2ef41341 100644
---- a/drivers/misc/ntsync.c
-+++ b/drivers/misc/ntsync.c
-@@ -16,6 +16,7 @@
- 
- enum ntsync_type {
- 	NTSYNC_TYPE_SEM,
-+	NTSYNC_TYPE_MUTEX,
- };
- 
- struct ntsync_obj {
-@@ -60,6 +61,10 @@ struct ntsync_obj {
- 			__u32 count;
- 			__u32 max;
- 		} sem;
-+		struct {
-+			__u32 count;
-+			__u32 owner;
-+		} mutex;
- 	} u;
- };
- 
-@@ -188,6 +193,10 @@ static bool is_signaled(struct ntsync_obj *obj, __u32 owner)
- 	switch (obj->type) {
- 	case NTSYNC_TYPE_SEM:
- 		return !!obj->u.sem.count;
-+	case NTSYNC_TYPE_MUTEX:
-+		if (obj->u.mutex.owner && obj->u.mutex.owner != owner)
-+			return false;
-+		return obj->u.mutex.count < UINT_MAX;
- 	}
- 
- 	WARN(1, "bad object type %#x\n", obj->type);
-@@ -230,6 +239,10 @@ static void try_wake_all(struct ntsync_device *dev, struct ntsync_q *q,
- 			case NTSYNC_TYPE_SEM:
- 				obj->u.sem.count--;
- 				break;
-+			case NTSYNC_TYPE_MUTEX:
-+				obj->u.mutex.count++;
-+				obj->u.mutex.owner = q->owner;
-+				break;
- 			}
- 		}
- 		wake_up_process(q->task);
-@@ -271,6 +284,28 @@ static void try_wake_any_sem(struct ntsync_obj *sem)
- 	}
- }
- 
-+static void try_wake_any_mutex(struct ntsync_obj *mutex)
-+{
-+	struct ntsync_q_entry *entry;
-+
-+	lockdep_assert_held(&mutex->lock);
-+
-+	list_for_each_entry(entry, &mutex->any_waiters, node) {
-+		struct ntsync_q *q = entry->q;
-+
-+		if (mutex->u.mutex.count == UINT_MAX)
-+			break;
-+		if (mutex->u.mutex.owner && mutex->u.mutex.owner != q->owner)
-+			continue;
-+
-+		if (atomic_cmpxchg(&q->signaled, -1, entry->index) == -1) {
-+			mutex->u.mutex.count++;
-+			mutex->u.mutex.owner = q->owner;
-+			wake_up_process(q->task);
-+		}
-+	}
-+}
-+
- static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
- {
- 	struct ntsync_sem_args __user *user_args = argp;
-@@ -303,6 +338,38 @@ static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
- 	return put_user(id, &user_args->sem);
- }
- 
-+static int ntsync_create_mutex(struct ntsync_device *dev, void __user *argp)
-+{
-+	struct ntsync_mutex_args __user *user_args = argp;
-+	struct ntsync_mutex_args args;
-+	struct ntsync_obj *mutex;
-+	__u32 id;
-+	int ret;
-+
-+	if (copy_from_user(&args, argp, sizeof(args)))
-+		return -EFAULT;
-+
-+	if (!args.owner != !args.count)
-+		return -EINVAL;
-+
-+	mutex = kzalloc(sizeof(*mutex), GFP_KERNEL);
-+	if (!mutex)
-+		return -ENOMEM;
-+
-+	init_obj(mutex);
-+	mutex->type = NTSYNC_TYPE_MUTEX;
-+	mutex->u.mutex.count = args.count;
-+	mutex->u.mutex.owner = args.owner;
-+
-+	ret = xa_alloc(&dev->objects, &id, mutex, xa_limit_32b, GFP_KERNEL);
-+	if (ret < 0) {
-+		kfree(mutex);
-+		return ret;
-+	}
-+
-+	return put_user(id, &user_args->mutex);
-+}
-+
- static int ntsync_delete(struct ntsync_device *dev, void __user *argp)
- {
- 	struct ntsync_obj *obj;
-@@ -497,6 +564,9 @@ static void try_wake_any_obj(struct ntsync_obj *obj)
- 	case NTSYNC_TYPE_SEM:
- 		try_wake_any_sem(obj);
- 		break;
-+	case NTSYNC_TYPE_MUTEX:
-+		try_wake_any_mutex(obj);
-+		break;
- 	}
- }
- 
-@@ -662,6 +732,8 @@ static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
- 	void __user *argp = (void __user *)parm;
- 
- 	switch (cmd) {
-+	case NTSYNC_IOC_CREATE_MUTEX:
-+		return ntsync_create_mutex(dev, argp);
- 	case NTSYNC_IOC_CREATE_SEM:
- 		return ntsync_create_sem(dev, argp);
- 	case NTSYNC_IOC_DELETE:
-diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index a5bed5a39b21..26d1b3d4847f 100644
---- a/include/uapi/linux/ntsync.h
-+++ b/include/uapi/linux/ntsync.h
-@@ -16,6 +16,12 @@ struct ntsync_sem_args {
- 	__u32 max;
- };
- 
-+struct ntsync_mutex_args {
-+	__u32 mutex;
-+	__u32 owner;
-+	__u32 count;
-+};
-+
- struct ntsync_wait_args {
- 	__u64 timeout;
- 	__u64 objs;
-@@ -38,5 +44,7 @@ struct ntsync_wait_args {
- 					      struct ntsync_wait_args)
- #define NTSYNC_IOC_WAIT_ALL		_IOWR(NTSYNC_IOC_BASE, 4, \
- 					      struct ntsync_wait_args)
-+#define NTSYNC_IOC_CREATE_MUTEX		_IOWR(NTSYNC_IOC_BASE, 5, \
-+					      struct ntsync_mutex_args)
- 
- #endif
+The Wine project emulates the Windows API in user space. One particular part of
+that API, namely the NT synchronization primitives, have historically been
+implemented via RPC to a dedicated "kernel" process. However, more recent
+applications use these APIs more strenuously, and the overhead of RPC has become
+a bottleneck.
+
+The NT synchronization APIs are too complex to implement on top of existing
+primitives without sacrificing correctness. Certain operations, such as
+NtPulseEvent() or the "wait-for-all" mode of NtWaitForMultipleObjects(), require
+direct control over the underlying wait queue, and implementing a wait queue
+sufficiently robust for Wine in user space is not possible. This proposed
+driver, therefore, implements the problematic interfaces directly in the Linux
+kernel.
+
+This driver was presented at Linux Plumbers Conference 2023. For those further
+interested in the history of synchronization in Wine and past attempts to solve
+this problem in user space, a recording of the presentation can be viewed here:
+
+    https://www.youtube.com/watch?v=NjU4nyWyhU8
+
+
+== Performance ==
+
+The gain in performance varies wildly depending on the application in question
+and the user's hardware. For some games NT synchronization is not a bottleneck
+and no change can be observed, but for others frame rate improvements of 50 to
+150 percent are not atypical. The following table lists frame rate measurements
+from a variety of games on a variety of hardware, taken by users Dmitry
+Skvortsov, FuzzyQuills, OnMars, and myself:
+
+Game				Upstream	ntsync		improvement
+===========================================================================
+Anger Foot			 69		 99		 43%
+Call of Juarez			 99.8		224.1		125%
+Dirt 3				110.6		860.7		678%
+Forza Horizon 5			108		160		 48%
+Lara Croft: Temple of Osiris	141		326		131%
+Metro 2033			164.4		199.2		 21%
+Resident Evil 2			 26		 77		196%
+The Crew			 26		 51		 96%
+Tiny Tina's Wonderlands		130		360		177%
+Total War Saga: Troy		109		146		 34%
+===========================================================================
+
+
+== Patches ==
+
+This is the first part of a 32-patch series. The series comprises 17 patches
+which contain the actual implementation, 13 which provide self-tests, 1 to
+update the MAINTAINERS file, and 1 to add API documentation.
+
+The intended semantics of the patches are broadly intended to match those of the
+corresponding Windows functions. Since I do not expect familiarity with Windows
+syscalls, however, and especially not with some of the more subtle or
+unspecified behaviour that they provide, the documentation patch included in the
+series also describes the intended behaviour in detail, and can be used as a
+specification for the rest of the series.
+
+The entire series can be retrieved or browsed here:
+
+    https://repo.or.cz/linux/zf.git/shortlog/refs/heads/ntsync4
+
+The patches making use of this driver in Wine can be retrieved or browsed here:
+
+    https://repo.or.cz/wine/zf.git/shortlog/refs/heads/ntsync4
+
+
+== Implementation ==
+
+Some aspects of the implementation may deserve particular comment:
+
+* In the interest of performance, each object is governed only by a single
+  spinlock. However, NTSYNC_IOC_WAIT_ALL requires that the state of multiple
+  objects be changed as a single atomic operation. In order to achieve this, we
+  first take a device-wide lock ("wait_all_lock") any time we are going to lock
+  more than one object at a time.
+
+  The maximum number of objects that can be used in a vectored wait, and
+  therefore the maximum that can be locked simultaneously, is 64. This number is
+  NT's own limit.
+
+  The acquisition of multiple spinlocks will degrade performance. This is a
+  conscious choice, however. Wait-for-all is known to be a very rare operation
+  in practice, especially with counts that approach the maximum, and it is the
+  intent of the ntsync driver to optimize the wait-for-any pattern at the
+  expense of the wait-for-all pattern as much as possible.
+
+* NT mutexes are tied to their threads on an OS level, and the kernel includes
+  builtin support for "robust" mutexes. In order to keep the ntsync driver
+  self-contained and avoid touching more code than necessary, it does not hook
+  into task exit nor use pids.
+
+  Instead, the user space emulator is expected to manage thread IDs and pass
+  them as an argument to any relevant functions; this is the "owner" field of
+  ntsync_wait_args and ntsync_mutex_args.
+
+  When the emulator detects that a thread dies, it should therefore call
+  NTSYNC_IOC_KILL_OWNER, which will mark mutexes owned by that thread (if any)
+  as abandoned.
+
+* This implementation uses a misc device mostly because it seemed like the
+  simplest and least obtrusive option.
+
+  Besides simplicitly of implementation, the only particularly interesting
+  advantage is the ability to create an arbitrary number of "contexts"
+  (corresponding to Windows virtual machines) which are self-contained and
+  shareable across multiple processes; this maps nicely to file descriptions
+  (i.e. struct file). This is not impossible with syscalls of course but would
+  require an extra argument.
+
+  On the other hand, there is no reason to forbid using ntsync by default from
+  user-mode processes, and (as far as I understand) to do so with a char device
+  requires explicit configuration by e.g. udev or init. Since this is done with
+  e.g. fuse, I assume this is the model to follow, but I may have chosen
+  something deprecated.
+
+* ntsync is module-capable mostly because there was nothing preventing it, and
+  because it aided development. I am not aware of any reason why being a module
+  is required, though.
+
+* The misc minor number has not been reserved with LANANA. I am not sure at what
+  point in the process this makes the most sense, but since this is still only
+  an RFC I've abstained from doing so yet.
+
+
+Elizabeth Figura (9):
+  ntsync: Introduce the ntsync driver and character device.
+  ntsync: Reserve a minor device number and ioctl range.
+  ntsync: Introduce NTSYNC_IOC_CREATE_SEM and NTSYNC_IOC_DELETE.
+  ntsync: Introduce NTSYNC_IOC_PUT_SEM.
+  ntsync: Introduce NTSYNC_IOC_WAIT_ANY.
+  ntsync: Introduce NTSYNC_IOC_WAIT_ALL.
+  ntsync: Introduce NTSYNC_IOC_CREATE_MUTEX.
+  ntsync: Introduce NTSYNC_IOC_PUT_MUTEX.
+  ntsync: Introduce NTSYNC_IOC_KILL_OWNER.
+
+ Documentation/admin-guide/devices.txt         |   3 +-
+ .../userspace-api/ioctl/ioctl-number.rst      |   2 +
+ drivers/misc/Kconfig                          |   9 +
+ drivers/misc/Makefile                         |   1 +
+ drivers/misc/ntsync.c                         | 916 ++++++++++++++++++
+ include/linux/miscdevice.h                    |   1 +
+ include/uapi/linux/ntsync.h                   |  53 +
+ 7 files changed, 984 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/misc/ntsync.c
+ create mode 100644 include/uapi/linux/ntsync.h
+
+
+base-commit: 6613476e225e090cc9aad49be7fa504e290dd33d
 -- 
 2.43.0
 
