@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9600E5258;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 962C45667;
 	Wed, 31 Jan 2024 02:16:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1706667365; cv=none; b=Zj/VAjrdX4lh3kZSQxc8PgRNJ65dXyvrYgCSeLDzvCvMHyq2osjDznZHTLa4xc2ljrLy/kP/ztYANdwAiY8dC5FKDZg7d8WFpPiAppp3x78Hns6T8e8XbkYy7E4QsP+EQN/6zy/DZJgcF0hB3crc77c0+ycMN17WMglJBf+hKRM=
+	t=1706667366; cv=none; b=Us8U/eDC+yWj5D1BZFsXAiEmgQ0MvDn8XX/DApZAbDDBg3uEPf8s+XwI//gXhNc/qh3wMryGnTFDCS4jnDPC+fY0LuxRGarECEulJWylmrbuuiNAKQu23HPiHT8gx3sz6CkZp3+y2DkRnRJq+SucZHOgTZ1XekuZKff7jiQEw7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1706667365; c=relaxed/simple;
-	bh=2odIObPUB+D6zv4g+F9ZVLeovm0W2e6pr8HGw+xbkuI=;
+	s=arc-20240116; t=1706667366; c=relaxed/simple;
+	bh=I4trA2JfrK9wBwFoc8bTAUMVwA5tJ+kKV0vPGN6dfHk=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=GN6tJ3E+t7HheCsjRy9qYkiVuHJb2Xq5mqjy9cPP4jEap/sClO0U5YcAFqI8MDQdzJ1lHSnIkZnkiItjEgdBTfyVdV0MJt7HXIeOFpkOv9BzzvfQYTWEGiBAvxw+XpQmaGz78zCTs3BFd4xoFc9fy2ia3K6rCy9fipOKataxQRA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=j46SZs9h; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=kOyewLxdo/BDuCfFhGd+V7gFjBHFRUN4kBLft/jiTPvSbmZhsVeK+vF1+acGUFMX+XoZjPOz94W7Fz0TA4zDRBp44RlAbJRjehZ4n17+EMe5V/Yp39xa9FI7lv39K8ElAUUK2vUf00UHtNX7qa74f+5vaa2AQGqO6bH3R8rt9OY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=cqzL2BqK; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="j46SZs9h"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="cqzL2BqK"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=Bu0ZiIo7Hs1vPWly90g3amII2kYFsaEWUlUodmN8Ds0=; b=j46SZs9homq/UDMpGZ5FPOXWd7
-	BWj7ilgWch/meWOIb77O4Gt9ic5h2vh0oAYO0RKKw3YJr6s4xcXbNBhmPt3kvZX2g1j+iptDH5vfh
-	mRkDNln26e240cmIgJOlOBvI3ezuFczhN9VBqcGRh9W95FCtQmHtlbK9Pio+/FrhUkxbXUnrQIbFL
-	S0dZz2anXZsGa/utyQAV7UulNUJ1OAxUqH+VruNsFoflwz3u6okQUk0ts1rbRAXgjA+GnOpFdMRdo
-	5pxBGKPz52A7n95KOw7l9tmySRjdGq/WC3pBvED5FtSbZjZyO8ah1tt7AVf7tceMIZSVXE45VIgF7
-	7AoRwgvw==;
+	bh=X/IZwfYWP9znQfddabnSoi+xBA9zWsqNxvzC3bQDVaM=; b=cqzL2BqKLT0kOzyVTWLpHtAvEn
+	CokxLS83003PLTeKCseYL0B7nzWKw6waJ3UDbNRaafYfrc//BhVcx9Zao0981tSm2EeiA0ClrXoxG
+	UzExgMJCWcy0ZaNjSWr1qAfxZmiDXDgYfv1vc/X8YPSUqgZALKygghsULFRunHTqpIqrINlJCIGXe
+	JvWULanxOUx5Bp0g3zBrhSv640BZBjXxcJcasU4nFf3834DQREf/vub1O67GI9deb+4itk44+5c16
+	+C+2O4gpet496MFsBKnzh8i/g2R3KR5WLRE7QdGkJNMFu0scFE8vsRUcnKl5TKmNhRWvEqxeMfr4d
+	boR1AvqA==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rV08n-0038Kv-38;
-	Tue, 30 Jan 2024 20:15:54 -0600
+	id 1rV08m-0038Kv-0L;
+	Tue, 30 Jan 2024 20:15:52 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -46,9 +46,9 @@ Cc: linux-kernel@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	linux-kselftest@vger.kernel.org,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [RFC PATCH v2 11/29] ntsync: Introduce NTSYNC_IOC_EVENT_RESET.
-Date: Tue, 30 Jan 2024 20:13:38 -0600
-Message-ID: <20240131021356.10322-12-zfigura@codeweavers.com>
+Subject: [RFC PATCH v2 01/29] ntsync: Introduce the ntsync driver and character device.
+Date: Tue, 30 Jan 2024 20:13:28 -0600
+Message-ID: <20240131021356.10322-2-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240131021356.10322-1-zfigura@codeweavers.com>
 References: <20240131021356.10322-1-zfigura@codeweavers.com>
@@ -60,67 +60,109 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This corresponds to the NT syscall NtResetEvent().
+ntsync uses a misc device as the simplest and least intrusive uAPI interface.
 
-This sets the event to the unsignaled state, and returns its previous state.
+Each file description on the device represents an isolated NT instance, intended
+to correspond to a single NT virtual machine.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- drivers/misc/ntsync.c       | 22 ++++++++++++++++++++++
- include/uapi/linux/ntsync.h |  1 +
- 2 files changed, 23 insertions(+)
+ drivers/misc/Kconfig  |  9 ++++++++
+ drivers/misc/Makefile |  1 +
+ drivers/misc/ntsync.c | 52 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 62 insertions(+)
+ create mode 100644 drivers/misc/ntsync.c
 
-diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index b2da50989953..009d927739b8 100644
---- a/drivers/misc/ntsync.c
-+++ b/drivers/misc/ntsync.c
-@@ -482,6 +482,26 @@ static int ntsync_event_set(struct ntsync_obj *event, void __user *argp)
- 	return 0;
- }
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index 4fb291f0bf7c..bdd8a71bd853 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -504,6 +504,15 @@ config OPEN_DICE
+ 	  measured boot flow. Userspace can use CDIs for remote attestation
+ 	  and sealing.
  
-+static int ntsync_event_reset(struct ntsync_obj *event, void __user *argp)
++config NTSYNC
++	tristate "NT synchronization primitive emulation"
++	help
++	  This module provides kernel support for emulation of Windows NT
++	  synchronization primitives. It is not a hardware driver.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called ntsync.
++
+ 	  If unsure, say N.
+ 
+ config VCPU_STALL_DETECTOR
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index ea6ea5bbbc9c..153a3f4837e8 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -59,6 +59,7 @@ obj-$(CONFIG_PVPANIC)   	+= pvpanic/
+ obj-$(CONFIG_UACCE)		+= uacce/
+ obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
+ obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
++obj-$(CONFIG_NTSYNC)		+= ntsync.o
+ obj-$(CONFIG_HI6421V600_IRQ)	+= hi6421v600-irq.o
+ obj-$(CONFIG_OPEN_DICE)		+= open-dice.o
+ obj-$(CONFIG_GP_PCI1XXXX)	+= mchp_pci1xxxx/
+diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
+new file mode 100644
+index 000000000000..e4969ef90722
+--- /dev/null
++++ b/drivers/misc/ntsync.c
+@@ -0,0 +1,52 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * ntsync.c - Kernel driver for NT synchronization primitives
++ *
++ * Copyright (C) 2024 Elizabeth Figura
++ */
++
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
++
++#define NTSYNC_NAME	"ntsync"
++
++static int ntsync_char_open(struct inode *inode, struct file *file)
 +{
-+	__u32 prev_state;
++	return nonseekable_open(inode, file);
++}
 +
-+	if (event->type != NTSYNC_TYPE_EVENT)
-+		return -EINVAL;
-+
-+	spin_lock(&event->lock);
-+
-+	prev_state = event->u.event.signaled;
-+	event->u.event.signaled = false;
-+
-+	spin_unlock(&event->lock);
-+
-+	if (put_user(prev_state, (__u32 __user *)argp))
-+		return -EFAULT;
-+
++static int ntsync_char_release(struct inode *inode, struct file *file)
++{
 +	return 0;
 +}
 +
- static int ntsync_obj_release(struct inode *inode, struct file *file)
- {
- 	struct ntsync_obj *obj = file->private_data;
-@@ -507,6 +527,8 @@ static long ntsync_obj_ioctl(struct file *file, unsigned int cmd,
- 		return ntsync_mutex_kill(obj, argp);
- 	case NTSYNC_IOC_EVENT_SET:
- 		return ntsync_event_set(obj, argp);
-+	case NTSYNC_IOC_EVENT_RESET:
-+		return ntsync_event_reset(obj, argp);
- 	default:
- 		return -ENOIOCTLCMD;
- 	}
-diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index 782057552483..f2d7507d8438 100644
---- a/include/uapi/linux/ntsync.h
-+++ b/include/uapi/linux/ntsync.h
-@@ -49,5 +49,6 @@ struct ntsync_wait_args {
- #define NTSYNC_IOC_MUTEX_UNLOCK		_IOWR('N', 0x85, struct ntsync_mutex_args)
- #define NTSYNC_IOC_MUTEX_KILL		_IOW ('N', 0x86, __u32)
- #define NTSYNC_IOC_EVENT_SET		_IOR ('N', 0x88, __u32)
-+#define NTSYNC_IOC_EVENT_RESET		_IOR ('N', 0x89, __u32)
- 
- #endif
++static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
++			      unsigned long parm)
++{
++	switch (cmd) {
++	default:
++		return -ENOIOCTLCMD;
++	}
++}
++
++static const struct file_operations ntsync_fops = {
++	.owner		= THIS_MODULE,
++	.open		= ntsync_char_open,
++	.release	= ntsync_char_release,
++	.unlocked_ioctl	= ntsync_char_ioctl,
++	.compat_ioctl	= compat_ptr_ioctl,
++	.llseek		= no_llseek,
++};
++
++static struct miscdevice ntsync_misc = {
++	.minor		= MISC_DYNAMIC_MINOR,
++	.name		= NTSYNC_NAME,
++	.fops		= &ntsync_fops,
++};
++
++module_misc_device(ntsync_misc);
++
++MODULE_AUTHOR("Elizabeth Figura");
++MODULE_DESCRIPTION("Kernel driver for NT synchronization primitives");
++MODULE_LICENSE("GPL");
 -- 
 2.43.0
 
