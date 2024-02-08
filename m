@@ -1,198 +1,93 @@
-Received: from out02.mta.xmission.com (out02.mta.xmission.com [166.70.13.232])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB54F7E79A;
-	Thu,  8 Feb 2024 16:10:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=166.70.13.232
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16F0F7E789
+	for <linux-api@vger.kernel.org>; Thu,  8 Feb 2024 16:13:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1707408604; cv=none; b=DrSu3Tj68WH/Mb3uHeg6sGLjz9CzhbojpZbXE7BuVyFovZJWpAVbP965P+G1AYTq6zDC1kDHYX9GNpeEljGvQz/p81YRgT/4DkXf+YPCCDGPQ3eBc0wf47zHDErd4FRB83q/pRwCvAlOyIH4do5cEVPUIstN/cdqXAEz/81ez7U=
+	t=1707408836; cv=none; b=BdQxvNa9H7es1G7Nb8K8AMqGQbbS87MZZzZ+AMH6FzoEAVMJmmVDHpQUYTVH28rPQsJmEEOt7FvAnwyrhzjjCxTWby9Zpb4WVLFX0z3ukQn887u8yDdpJnUrW95zuKOlxp26xi1pl6QRVHcHtlKIjxANe8Bu4qTv5N/nfqwvJfg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1707408604; c=relaxed/simple;
-	bh=S1sd8HbbpUd9FjSYOKtZgb/F3IO/C1wLRtiXfPZIx/s=;
-	h=From:To:Cc:In-Reply-To:References:Date:Message-ID:MIME-Version:
-	 Content-Type:Subject; b=X96Yusq6uCW4gxzaxaq/sGtcq1qvldJZ8+Xkn5uGYOqoE4oMcKcLJKKTLNgLTF7v2lpEaqtQ7JkhuvO8QD86nvISP7I6QDWn4Vk+G+rBqKUwriEI0o0eLHMfBf72jkkc3MydOflsFvKsamrx3wKja9d09pEi0x9dIpseaM6TOxM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=xmission.com; spf=pass smtp.mailfrom=xmission.com; arc=none smtp.client-ip=166.70.13.232
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=xmission.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xmission.com
-Received: from in02.mta.xmission.com ([166.70.13.52]:56100)
-	by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1rY6Q0-003VkL-8b; Thu, 08 Feb 2024 08:34:28 -0700
-Received: from ip68-227-168-167.om.om.cox.net ([68.227.168.167]:56436 helo=email.froward.int.ebiederm.org.xmission.com)
-	by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1rY6Pz-001plP-2z; Thu, 08 Feb 2024 08:34:27 -0700
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Christian Brauner <brauner@kernel.org>,  Andy Lutomirski
- <luto@amacapital.net>,  Tycho Andersen <tycho@tycho.pizza>,
-  linux-api@vger.kernel.org,  linux-kernel@vger.kernel.org
-In-Reply-To: <20240207114549.GA12697@redhat.com> (Oleg Nesterov's message of
-	"Wed, 7 Feb 2024 12:45:49 +0100")
+	s=arc-20240116; t=1707408836; c=relaxed/simple;
+	bh=fGN+8yem8iK2xAq/g74215xfHKUUWP3ssmQdsWN6nkk=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=UleRCqY7oakD5ytFOnLQPZOsWFcTsDAJINVnhtQ8xwBoF8C7aMIpYXwPUSn4HNSwfgEXoJrkp3Tl224FuvE2a4tCBAx+ozSXu/ecOEQniMaTJtaRKfM7npAoLwEye/W9QyYu9ZuYnxoTb6A3ZsLuu3TWnhpVwFgrViViOIpGszI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=aYhpzvCx; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="aYhpzvCx"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1707408831;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fGN+8yem8iK2xAq/g74215xfHKUUWP3ssmQdsWN6nkk=;
+	b=aYhpzvCx9gY3ddYvDS9d87b55402y+LlxAr4ABbox74Jwivl4K7sO6G5nlyfSmgoTotZTc
+	xZVIMuBiPD1w0H+ptY6YwfLJmQ9Ku2pD1WHlaKeI8aOeDvzGcSmLRj5gj7GnOTP0heQ5nf
+	FuBLAuDtCI+G8LSj79RyftmeDs3TrIs=
+Received: from mimecast-mx02.redhat.com (mx-ext.redhat.com [66.187.233.73])
+ by relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-441-lBOwh8qBM6KbU3EH3hgsWQ-1; Thu,
+ 08 Feb 2024 11:13:02 -0500
+X-MC-Unique: lBOwh8qBM6KbU3EH3hgsWQ-1
+Received: from smtp.corp.redhat.com (int-mx07.intmail.prod.int.rdu2.redhat.com [10.11.54.7])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mimecast-mx02.redhat.com (Postfix) with ESMTPS id 155803C28653;
+	Thu,  8 Feb 2024 16:12:37 +0000 (UTC)
+Received: from dhcp-27-174.brq.redhat.com (unknown [10.45.224.158])
+	by smtp.corp.redhat.com (Postfix) with SMTP id 71A841C14B0E;
+	Thu,  8 Feb 2024 16:12:35 +0000 (UTC)
+Received: by dhcp-27-174.brq.redhat.com (nbSMTP-1.00) for uid 1000
+	oleg@redhat.com; Thu,  8 Feb 2024 17:11:21 +0100 (CET)
+Date: Thu, 8 Feb 2024 17:11:19 +0100
+From: Oleg Nesterov <oleg@redhat.com>
+To: Christian Brauner <brauner@kernel.org>
+Cc: Andy Lutomirski <luto@amacapital.net>,
+	"Eric W. Biederman" <ebiederm@xmission.com>,
+	Tycho Andersen <tycho@tycho.pizza>, linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] pidfd: change pidfd_send_signal() to respect PIDFD_THREAD
+Message-ID: <20240208161118.GI19801@redhat.com>
 References: <20240207114549.GA12697@redhat.com>
-User-Agent: Gnus/5.13 (Gnus v5.13) Emacs/28.2 (gnu/linux)
-Date: Thu, 08 Feb 2024 09:33:46 -0600
-Message-ID: <8734u32co5.fsf@email.froward.int.ebiederm.org>
+ <20240208-fragt-prospekt-7866333b15f0@brauner>
+ <20240208135344.GD19801@redhat.com>
+ <20240208143407.GF19801@redhat.com>
+ <20240208-klopapier-aushebeln-446ac80a6e9b@brauner>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1rY6Pz-001plP-2z;;;mid=<8734u32co5.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=68.227.168.167;;;frm=ebiederm@xmission.com;;;spf=pass
-X-XM-AID: U2FsdGVkX1/ZEJ+XOenGhdjrpc2ZjArZXtizBmgdUL0=
-X-SA-Exim-Connect-IP: 68.227.168.167
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-X-Spam-Level: 
-X-Spam-Report: 
-	* -1.0 ALL_TRUSTED Passed through trusted hosts only via SMTP
-	*  0.8 BAYES_50 BODY: Bayes spam probability is 40 to 60%
-	*      [score: 0.5000]
-	*  0.7 XMSubLong Long Subject
-	*  0.0 T_TM2_M_HEADER_IN_MSG BODY: No description available.
-	* -0.0 DCC_CHECK_NEGATIVE Not listed in DCC
-	*      [sa07 1397; Body=1 Fuz1=1 Fuz2=1]
-	*  0.0 T_TooManySym_01 4+ unique symbols in subject
-	* -0.0 T_SCC_BODY_TEXT_LINE No description available.
-	*  0.0 T_TooManySym_02 5+ unique symbols in subject
-X-Spam-DCC: XMission; sa07 1397; Body=1 Fuz1=1 Fuz2=1 
-X-Spam-Combo: ;Oleg Nesterov <oleg@redhat.com>
-X-Spam-Relay-Country: 
-X-Spam-Timing: total 582 ms - load_scoreonly_sql: 0.03 (0.0%),
-	signal_user_changed: 10 (1.6%), b_tie_ro: 8 (1.4%), parse: 0.88 (0.2%),
-	 extract_message_metadata: 3.8 (0.7%), get_uri_detail_list: 2.0 (0.3%),
-	 tests_pri_-2000: 3.1 (0.5%), tests_pri_-1000: 2.2 (0.4%),
-	tests_pri_-950: 1.17 (0.2%), tests_pri_-900: 0.90 (0.2%),
-	tests_pri_-90: 231 (39.7%), check_bayes: 229 (39.4%), b_tokenize: 9
-	(1.6%), b_tok_get_all: 8 (1.4%), b_comp_prob: 2.5 (0.4%),
-	b_tok_touch_all: 206 (35.4%), b_finish: 0.87 (0.1%), tests_pri_0: 313
-	(53.8%), check_dkim_signature: 0.56 (0.1%), check_dkim_adsp: 2.9
-	(0.5%), poll_dns_idle: 1.15 (0.2%), tests_pri_10: 1.99 (0.3%),
-	tests_pri_500: 7 (1.2%), rewrite_mail: 0.00 (0.0%)
-Subject: Re: [PATCH] pidfd: change pidfd_send_signal() to respect PIDFD_THREAD
-X-SA-Exim-Version: 4.2.1 (built Sat, 08 Feb 2020 21:53:50 +0000)
-X-SA-Exim-Scanned: Yes (on in02.mta.xmission.com)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20240208-klopapier-aushebeln-446ac80a6e9b@brauner>
+User-Agent: Mutt/1.5.24 (2015-08-30)
+X-Scanned-By: MIMEDefang 3.4.1 on 10.11.54.7
 
-Oleg Nesterov <oleg@redhat.com> writes:
-
-> Turn kill_pid_info() into kill_pid_info_type(), this allows to pass any
-> pid_type to group_send_sig_info(), despite its name it should work fine
-> even if type = PIDTYPE_PID.
+On 02/08, Christian Brauner wrote:
 >
-> Change pidfd_send_signal() to use PIDTYPE_PID or PIDTYPE_TGID depending
-> on PIDFD_THREAD.
+> > Is prepare_kill_siginfo() correct when we send a signal to the child
+> > pid namespace? si_pid = task_tgid_vnr(current) doesn't look right in
+> > this case but perhaps I am totally confused.
+> >
+> > And why do we need it at all? Can't sys_kill() and pidfd_send_signal()
+> > just use SEND_SIG_NOINFO?
 >
-> While at it kill another TODO comment in pidfd_show_fdinfo(). As Christian
-> expains fdinfo reports f_flags, userspace can already detect PIDFD_THREAD.
->
+> Yeah, good point. I don't remember as it's been quite a while ago. My
+> guess is that it just tried to mirror kill() itself without being aware
+> of SEND_SIG_NOINFO. If you don't find anything wrong with this then
+> switch it to SEND_SIG_NOINFO in a preparatory patch we can backport,
+> please.
 
-I have a question here.
+Yes, but I still feel I must have missed something. Will read this code
+tomorrow.
 
-Why is this based on group_send_sig_info instead of send_sig_info?
+And another note for the record before I forget this. We can probably
+improve and rename access_pidfd_pidns(). Currently it is only used by
+pidfd_send_signal() but pidns_install() looks like another user.
 
-AKA why does this look like sys_kill instead of sys_tgkill?
+Oleg.
 
-In particular I am asking are the intended semantics that the signal is
-sent to a single thread in a thread group and placed in the per thread
-queue, or is the signal sent to the entire thread group and placed
-in the thread group signal queue?
-
-Does the type parameter handle that decision for us now?  If so
-perhaps we should cleanup the helpers so that this easier to
-see when reading the code.
-
-Because honestly right now using group_send_sig_info when
-the intended target of the signal is not the entire thread
-group is very confusing when reading your change.
-
-Eric
-
-> Signed-off-by: Oleg Nesterov <oleg@redhat.com>
-> ---
->  kernel/fork.c   |  2 --
->  kernel/signal.c | 18 ++++++++++++------
->  2 files changed, 12 insertions(+), 8 deletions(-)
->
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index cd61ca87d0e6..47b565598063 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -2051,8 +2051,6 @@ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
->  
->  	seq_put_decimal_ll(m, "Pid:\t", nr);
->  
-> -	/* TODO: report PIDFD_THREAD */
-> -
->  #ifdef CONFIG_PID_NS
->  	seq_put_decimal_ll(m, "\nNSpid:\t", nr);
->  	if (nr > 0) {
-> diff --git a/kernel/signal.c b/kernel/signal.c
-> index c3fac06937e2..e3edcd784e45 100644
-> --- a/kernel/signal.c
-> +++ b/kernel/signal.c
-> @@ -47,6 +47,7 @@
->  #include <linux/cgroup.h>
->  #include <linux/audit.h>
->  #include <linux/sysctl.h>
-> +#include <uapi/linux/pidfd.h>
->  
->  #define CREATE_TRACE_POINTS
->  #include <trace/events/signal.h>
-> @@ -1478,7 +1479,8 @@ int __kill_pgrp_info(int sig, struct kernel_siginfo *info, struct pid *pgrp)
->  	return ret;
->  }
->  
-> -int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid)
-> +static int kill_pid_info_type(int sig, struct kernel_siginfo *info,
-> +				struct pid *pid, enum pid_type type)
->  {
->  	int error = -ESRCH;
->  	struct task_struct *p;
-> @@ -1487,11 +1489,10 @@ int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid)
->  		rcu_read_lock();
->  		p = pid_task(pid, PIDTYPE_PID);
->  		if (p)
-> -			error = group_send_sig_info(sig, info, p, PIDTYPE_TGID);
-> +			error = group_send_sig_info(sig, info, p, type);
->  		rcu_read_unlock();
->  		if (likely(!p || error != -ESRCH))
->  			return error;
-> -
->  		/*
->  		 * The task was unhashed in between, try again.  If it
->  		 * is dead, pid_task() will return NULL, if we race with
-> @@ -1500,6 +1501,11 @@ int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid)
->  	}
->  }
->  
-> +int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid)
-> +{
-> +	return kill_pid_info_type(sig, info, pid, PIDTYPE_TGID);
-> +}
-> +
->  static int kill_proc_info(int sig, struct kernel_siginfo *info, pid_t pid)
->  {
->  	int error;
-> @@ -3890,6 +3896,7 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
->  	struct fd f;
->  	struct pid *pid;
->  	kernel_siginfo_t kinfo;
-> +	enum pid_type type;
->  
->  	/* Enforce flags be set to 0 until we add an extension. */
->  	if (flags)
-> @@ -3928,9 +3935,8 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
->  		prepare_kill_siginfo(sig, &kinfo);
->  	}
->  
-> -	/* TODO: respect PIDFD_THREAD */
-> -	ret = kill_pid_info(sig, &kinfo, pid);
-> -
-> +	type = (f.file->f_flags & PIDFD_THREAD) ? PIDTYPE_PID : PIDTYPE_TGID;
-> +	ret = kill_pid_info_type(sig, &kinfo, pid, type);
->  err:
->  	fdput(f);
->  	return ret;
