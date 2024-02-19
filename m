@@ -1,161 +1,128 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03004482F8;
-	Mon, 19 Feb 2024 19:02:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8C5B55E75;
+	Mon, 19 Feb 2024 22:39:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708369341; cv=none; b=PtqBMu5l4xmSTktS6BrTblMnYdGz4qt7MBHgWy0/Ceq+paveDYfUh0TCaoQxzyPMbopBYBiKjkly4A94geno2PYGeEEEYwH3s9iXWSNLYyQeOKCpYMwgdTmBB3KTXavFNh/AVlXluQj3rPFTl+qqPVYhJ4CmTEuap37CnEpBafA=
+	t=1708382378; cv=none; b=LOCVBEi8Y66pza72+erwteMDMxpaAahs9cqYwjtPTALiOmGtdKVxE4NRlWuW5YKYHEGsQ6yJy8uqN7j8jY1XBzATW1YclIZWIwNo3xGU/k57gOBAyh9+O/dlgwSLpqHIJIfJ6kxHVrhGNImpBTeom0g1j4RSuVlUojyvPrfmY2M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1708369341; c=relaxed/simple;
-	bh=8uwAxkMAA6MNFUqB6ZfPPfcwy23Ru+f/+1DQ3k3LdEQ=;
+	s=arc-20240116; t=1708382378; c=relaxed/simple;
+	bh=8vChgnZcciRVIn4A4k5nT/+5cnSjuxpcKRkohbyTjM4=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=qyRwMPWREqL4gxlb4i2hGeAbdaWjZDPFdWjWWfdQ9tDKn0tWLtYcBpavm3ZB1pyiEmxvvP0qKkCX1lescOryUAfktHOLWsWyBO1SJpZNxd2qzSLHsDgqUT/JCyM1hNiLyNrtvnB4IEei6shRrMJ/X4nCF9rDq2rMGdHpZjmiXLc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=V2ozuC5w; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=S0QHNMxhAE1iZ6psQG3lPlo7BGPWvi6ppIEjg90qoaeT3Uux1aoRKYJ3u9NJEgRCQlfzyWWwbACc3VqKlbG3x79Uin87ZxNSVikDYgDHJ+5Nz8JNZVIkOzKbcq96/vVJ+taqeyrHUE1NGLnoEzTkPOLjUX76mIy+c2DMdNxWTDs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=YDeIS2RY; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="V2ozuC5w"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="YDeIS2RY"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=OswHFruBK+/42s5rUgGTBUDrZT8BKSSXWo8vUY+w8EE=; b=V2ozuC5whirZjX5c3zIZcKzXOy
-	ochgpA2PZNhXbxdMP7TdNWqORglH4mwKiegmekbtii4Net8AcfYh93PrccpamdE55szcbfIbrTTtV
-	Pm0oTIbBwAbQSiwtYlzKW49z/0QKzXYy+UYC0esfGQWx7/TXCaasq1cFhgYTfUCGPG3FK2PREsghX
-	Ngeb52VM/5Q/rUnGN7uZemohAFeS2FG4OaLqU7CCIUqfttD6Kf0IlbTlpwVTr+ZGUF2k0ztMTBSev
-	hrsOJYIwei+UEu5clcO9CNPbBnunIpm+glQuk8I5Th5gJo9SvB4o0GCzkwDf8UPaw1lm6dOkgN6zo
-	L/jb1B4Q==;
-Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.localnet)
+	bh=318iLk4qhgnvG3UCB4Cli5m+symGF/f8He5a8Oh6z/w=; b=YDeIS2RYr+xKUT8prN4JFPKzg3
+	LGg1VkcbH53dXhRCt65geIPsHQiPqBTE5Od1S+mLwWA7ZcOeZr+iJhGZJPokHeU76xOXrihvhSsN2
+	mha7HNZrQ+cSNUCecj/asvwPbRFzM6XW2gNldw71TTQtTQa8+P/C8XZLXqvNnzw+5QvmoLtsUdctk
+	k1DydH9qrW6dk6aVS5eB9jvCLzJ5MVgg4eCxdMb7Aao3tN59P4710yg9GC/vjlsz63WhMqZbhj7Bb
+	DSLvAB6VawHLodLS8a6wr/2o2sVEuQToG3I3KrqVcguTt9DHVOOr+jwQnAMGlmoei4T/Fj68gBVp3
+	dNDqNEJg==;
+Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rc8tz-002yXh-36;
-	Mon, 19 Feb 2024 13:02:08 -0600
+	id 1rcCIN-0037Oz-0P;
+	Mon, 19 Feb 2024 16:39:31 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Jonathan Corbet <corbet@lwn.net>,
- Shuah Khan <shuah@kernel.org>, linux-kernel@vger.kernel.org,
- linux-api@vger.kernel.org, wine-devel@winehq.org,
- =?ISO-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>,
- Wolfram Sang <wsa@kernel.org>, Arkadiusz Hiler <ahiler@codeweavers.com>,
- Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@kernel.org>,
- linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org
-Subject: Re: [PATCH 02/31] ntsync: Introduce NTSYNC_IOC_CREATE_SEM.
-Date: Mon, 19 Feb 2024 13:02:07 -0600
-Message-ID: <3547727.iIbC2pHGDl@camazotz>
-In-Reply-To: <2024021707-sloppy-hurt-df0c@gregkh>
-References:
- <20240214233645.9273-1-zfigura@codeweavers.com>
- <13452408.uLZWGnKmhe@camazotz> <2024021707-sloppy-hurt-df0c@gregkh>
+To: Arnd Bergmann <arnd@arndb.de>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <shuah@kernel.org>
+Cc: linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	wine-devel@winehq.org,
+	=?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@igalia.com>,
+	Wolfram Sang <wsa@kernel.org>,
+	Arkadiusz Hiler <ahiler@codeweavers.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andy Lutomirski <luto@kernel.org>,
+	linux-doc@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Elizabeth Figura <zfigura@codeweavers.com>
+Subject: [PATCH v2 14/31] ntsync: Introduce NTSYNC_IOC_MUTEX_READ.
+Date: Mon, 19 Feb 2024 16:38:16 -0600
+Message-ID: <20240219223833.95710-15-zfigura@codeweavers.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20240219223833.95710-1-zfigura@codeweavers.com>
+References: <20240219223833.95710-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
 
-On Saturday, 17 February 2024 02:03:15 CST Greg Kroah-Hartman wrote:
-> On Thu, Feb 15, 2024 at 01:22:01PM -0600, Elizabeth Figura wrote:
-> > On Thursday, 15 February 2024 01:28:32 CST Greg Kroah-Hartman wrote:
-> > > On Wed, Feb 14, 2024 at 05:36:38PM -0600, Elizabeth Figura wrote:
-> > > > This corresponds to the NT syscall NtCreateSemaphore().
-> > > > 
-> > > > Semaphores are one of three types of object to be implemented in this driver,
-> > > > the others being mutexes and events.
-> > > > 
-> > > > An NT semaphore contains a 32-bit counter, and is signaled and can be acquired
-> > > > when the counter is nonzero. The counter has a maximum value which is specified
-> > > > at creation time. The initial value of the semaphore is also specified at
-> > > > creation time. There are no restrictions on the maximum and initial value.
-> > > > 
-> > > > Each object is exposed as an file, to which any number of fds may be opened.
-> > > > When all fds are closed, the object is deleted.
-> > > > 
-> > > > Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
-> > > > ---
-> > > >  .../userspace-api/ioctl/ioctl-number.rst      |   2 +
-> > > >  drivers/misc/ntsync.c                         | 120 ++++++++++++++++++
-> > > >  include/uapi/linux/ntsync.h                   |  21 +++
-> > > >  3 files changed, 143 insertions(+)
-> > > >  create mode 100644 include/uapi/linux/ntsync.h
-> > > > 
-> > > > diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-> > > > index 457e16f06e04..2f5c6994f042 100644
-> > > > --- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-> > > > +++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-> > > > @@ -173,6 +173,8 @@ Code  Seq#    Include File                                           Comments
-> > > >  'M'   00-0F  drivers/video/fsl-diu-fb.h                              conflict!
-> > > >  'N'   00-1F  drivers/usb/scanner.h
-> > > >  'N'   40-7F  drivers/block/nvme.c
-> > > > +'N'   80-8F  uapi/linux/ntsync.h                                     NT synchronization primitives
-> > > > +                                                                     <mailto:wine-devel@winehq.org>
-> > > >  'O'   00-06  mtd/ubi-user.h                                          UBI
-> > > >  'P'   all    linux/soundcard.h                                       conflict!
-> > > >  'P'   60-6F  sound/sscape_ioctl.h                                    conflict!
-> > > > diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-> > > > index e4969ef90722..3ad86d98b82d 100644
-> > > > --- a/drivers/misc/ntsync.c
-> > > > +++ b/drivers/misc/ntsync.c
-> > > > @@ -5,26 +5,146 @@
-> > > >   * Copyright (C) 2024 Elizabeth Figura
-> > > >   */
-> > > >  
-> > > > +#include <linux/anon_inodes.h>
-> > > > +#include <linux/file.h>
-> > > >  #include <linux/fs.h>
-> > > >  #include <linux/miscdevice.h>
-> > > >  #include <linux/module.h>
-> > > > +#include <linux/slab.h>
-> > > > +#include <uapi/linux/ntsync.h>
-> > > >  
-> > > >  #define NTSYNC_NAME	"ntsync"
-> > > >  
-> > > > +enum ntsync_type {
-> > > > +	NTSYNC_TYPE_SEM,
-> > > > +};
-> > > > +
-> > > > +struct ntsync_obj {
-> > > > +	enum ntsync_type type;
-> > > > +
-> > > > +	union {
-> > > > +		struct {
-> > > > +			__u32 count;
-> > > > +			__u32 max;
-> > > > +		} sem;
-> > > > +	} u;
-> > > > +
-> > > > +	struct file *file;
-> > > > +	struct ntsync_device *dev;
-> > > > +};
-> > > > +
-> > > > +struct ntsync_device {
-> > > > +	struct file *file;
-> > > > +};
-> > > 
-> > > No reference counting is needed for your ntsync_device?  Or are you
-> > > relying on the reference counting of struct file here?
-> > > 
-> > > You pass around pointers to this structure, and save it off into other
-> > > structures, how do you know it is "safe" to do so?
-> > 
-> > Yes, this relies on the reference counting of struct file. The sync
-> > objects (semaphore etc.) grab a reference when they're created, via
-> > get_file(), and release it when they're destroyed. This reference is
-> > taken from within ioctls on the ntsync_device, so the file must be
-> > valid when we grab a reference. Maybe I'm missing something, though?
-> 
-> If the reference count is driven by struct file, that's fine, and great,
-> otherwise you end up with two different reference counts and keeping
-> them in sync is impossible.
-> 
-> But as it wasn't obvious, a comment somewhere here would be helpful for
-> reviewing and figuring out how this all works in 4 years when someone
-> has to touch it again.
+This corresponds to the NT syscall NtQueryMutant().
 
-Ah, makes sense. I'll add comments to be clearer about the refcounting
-relationships, thanks.
+This returns the recursion count, owner, and abandoned state of the mutex.
 
---Zeb
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+---
+ drivers/misc/ntsync.c       | 23 +++++++++++++++++++++++
+ include/uapi/linux/ntsync.h |  1 +
+ 2 files changed, 24 insertions(+)
 
+diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
+index 0daaeeeba051..b07510035c1f 100644
+--- a/drivers/misc/ntsync.c
++++ b/drivers/misc/ntsync.c
+@@ -547,6 +547,27 @@ static int ntsync_sem_read(struct ntsync_obj *sem, void __user *argp)
+ 	return 0;
+ }
+ 
++static int ntsync_mutex_read(struct ntsync_obj *mutex, void __user *argp)
++{
++	struct ntsync_mutex_args __user *user_args = argp;
++	struct ntsync_mutex_args args;
++	int ret;
++
++	if (mutex->type != NTSYNC_TYPE_MUTEX)
++		return -EINVAL;
++
++	args.mutex = 0;
++	spin_lock(&mutex->lock);
++	args.count = mutex->u.mutex.count;
++	args.owner = mutex->u.mutex.owner;
++	ret = mutex->u.mutex.ownerdead ? -EOWNERDEAD : 0;
++	spin_unlock(&mutex->lock);
++
++	if (copy_to_user(user_args, &args, sizeof(args)))
++		return -EFAULT;
++	return ret;
++}
++
+ static int ntsync_obj_release(struct inode *inode, struct file *file)
+ {
+ 	struct ntsync_obj *obj = file->private_data;
+@@ -572,6 +593,8 @@ static long ntsync_obj_ioctl(struct file *file, unsigned int cmd,
+ 		return ntsync_mutex_unlock(obj, argp);
+ 	case NTSYNC_IOC_MUTEX_KILL:
+ 		return ntsync_mutex_kill(obj, argp);
++	case NTSYNC_IOC_MUTEX_READ:
++		return ntsync_mutex_read(obj, argp);
+ 	case NTSYNC_IOC_EVENT_SET:
+ 		return ntsync_event_set(obj, argp, false);
+ 	case NTSYNC_IOC_EVENT_RESET:
+diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
+index 42f51dc4e57e..25f3296cfabf 100644
+--- a/include/uapi/linux/ntsync.h
++++ b/include/uapi/linux/ntsync.h
+@@ -52,5 +52,6 @@ struct ntsync_wait_args {
+ #define NTSYNC_IOC_EVENT_RESET		_IOR ('N', 0x89, __u32)
+ #define NTSYNC_IOC_EVENT_PULSE		_IOR ('N', 0x8a, __u32)
+ #define NTSYNC_IOC_SEM_READ		_IOR ('N', 0x8b, struct ntsync_sem_args)
++#define NTSYNC_IOC_MUTEX_READ		_IOR ('N', 0x8c, struct ntsync_mutex_args)
+ 
+ #endif
+-- 
+2.43.0
 
