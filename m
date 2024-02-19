@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EB7BC55E7F;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE0CC5644B;
 	Mon, 19 Feb 2024 22:39:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1708382380; cv=none; b=lD2XRTU5l/lpAGZU+eWjFaRYbOBuKM7Rt22peesGxSBHqZd7RRbTDyeT9cq4e6gxnB2kZhmzBEpNfHZWZg3aIBVv6oWpUuIVzHSJa131oiQA2r5lI5vT+KtHyCaS9tRKoCqX/PbhiXHHPMsuJsHKSkaH61Pj8URNoLzrg+sqpto=
+	t=1708382380; cv=none; b=WNbSstHJ5F17pT8awRUmtQPCD7rl7yM3sOXqUE18E4peMzK15LpTcrZguodOmU32k6njhcXbgSq65sMK2h5/S6VVzjIcGHrfUKxfBJWLxDLEudon6ayAHxL5HUCQvhCQWjbmKaAWnXOOWX07a1D0t05v3lugguMjHIGeUJIFH/M=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1708382380; c=relaxed/simple;
-	bh=35iTzxZcFLBKZ/PDaMKqsGnCECNDfJHEeMtcKH4/tsg=;
+	bh=ho35sDy8q6vTSWxOgKap78dL81SAppW0zva5v9aBiMo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Lq8pq/UO8WRgnM97LR0pYTXI73h4RwtF92ugyM88PPebUYMzNGDzXaMzyXzKjO5i1XAVd4zCTHxbAL2EPOD3FcA8PCnc/rajMqfGPRojbAm/ACTWct5hgt+NhEmlYx8sZ1Z/UceKg5WvRvXJ/gWrNSKG661SMXGbY7HTvwgHJVc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=rAsKfTYx; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=WOPsJSnOGu1ufG3zuc0WJSiIBaYQEDky626v2VzC+pZiVUx/KOScz9YirVpBlMOEm+5ezgopo3ifLrKAuGbADndcbCPg3g+05D2l9xYGqcyHjNjrtRc7XRrH0I5rGNZcD9mqyJg7oFBO2pDA6P/I5FIEjw858F/ek64dNx643vA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=dal7TowD; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="rAsKfTYx"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="dal7TowD"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=03V9stfksSmZXXqovL8/FnIbRc/VcLxBEgVsBfrxEb0=; b=rAsKfTYxiQ9Ni7q/BLbevPHtE9
-	Tmh48hutCmC1e/1RrzhiaM4SOTblC9cmu+bp9VdX/yVz9b4yeb00HXDRzKPxOYKbGmtHqV2f8FHvr
-	x69+KvRkYN7C54Nm32gNBStJl1uPpQwuG+h5NggEZYKkpWIP2oqlt/FAiA/zARasq/03Sc1+p3hVS
-	lqV9zGf9+iTGjXLG/5PQPId0cd4VIPmhIOu9tdX4TVNFCCvElaWBKL0WvhQl6ng24qzMq+esChrjE
-	znO/r7yKOWkMewesU/CYVbwjmtpfs4sAg63fhQDhbdlvKsOyfBrRdY8buWsx69XkIyFL+FQvVe0zz
-	9RcuHaXg==;
+	bh=K0cW3d5t42AkImUgjDNVCCgUjYNfQnZTDPHDMI8GqfA=; b=dal7TowDhJB5lljh4ACNLMrVOX
+	Zdaf63eZHDvXGpjRUxqHXUGdVf3+POrqXE5fIQWyxI4kfJMAcSCWnBa8KG2v5/C/ml/KzR4wWSK72
+	OlSz7xu/RfJU/dVfjnlNy8uPSbViF3dCrfT0jeNsOp9OeLTBoiT5+foQkRwqnPWJlWc4eLF8wB8v7
+	EdwvYKGPwx0mkTOcZkIWr5KGL73cEmkjujodjIBUD3Yb4SEyQ9dfWmA9CwJ/0ton2OPKbkKl/gkOO
+	XEvGb9GFTKOF+6aEVysE+7p9TO7CVQdmUCumgz19DD+x7MTW7UEhlE1hbuPzfH1DTwFg0b2FiUX+4
+	rC+odrPA==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rcCIK-0037Oz-1V;
-	Mon, 19 Feb 2024 16:39:28 -0600
+	id 1rcCIM-0037Oz-0a;
+	Mon, 19 Feb 2024 16:39:30 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -47,9 +47,9 @@ Cc: linux-kernel@vger.kernel.org,
 	linux-kselftest@vger.kernel.org,
 	Randy Dunlap <rdunlap@infradead.org>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v2 02/31] ntsync: Introduce NTSYNC_IOC_CREATE_SEM.
-Date: Mon, 19 Feb 2024 16:38:04 -0600
-Message-ID: <20240219223833.95710-3-zfigura@codeweavers.com>
+Subject: [PATCH v2 08/31] ntsync: Introduce NTSYNC_IOC_MUTEX_KILL.
+Date: Mon, 19 Feb 2024 16:38:10 -0600
+Message-ID: <20240219223833.95710-9-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240219223833.95710-1-zfigura@codeweavers.com>
 References: <20240219223833.95710-1-zfigura@codeweavers.com>
@@ -61,232 +61,170 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This corresponds to the NT syscall NtCreateSemaphore().
+This does not correspond to any NT syscall. Rather, when a thread dies, it
+should be called by the NT emulator for each mutex.
 
-Semaphores are one of three types of object to be implemented in this driver,
-the others being mutexes and events.
-
-An NT semaphore contains a 32-bit counter, and is signaled and can be acquired
-when the counter is nonzero. The counter has a maximum value which is specified
-at creation time. The initial value of the semaphore is also specified at
-creation time. There are no restrictions on the maximum and initial value.
-
-Each object is exposed as an file, to which any number of fds may be opened.
-When all fds are closed, the object is deleted.
-
-Objects hold a pointer to the ntsync_device that created them. The device's
-reference count is driven by struct file.
+NT mutexes are robust (in the pthread sense). When an NT thread dies, any
+mutexes it owned are immediately released. Acquisition of those mutexes by other
+threads will return a special value indicating that the mutex was abandoned,
+like EOWNERDEAD returned from pthread_mutex_lock(), and EOWNERDEAD is indeed
+used here for that purpose.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- .../userspace-api/ioctl/ioctl-number.rst      |   2 +
- drivers/misc/ntsync.c                         | 131 ++++++++++++++++++
- include/uapi/linux/ntsync.h                   |  21 +++
- 3 files changed, 154 insertions(+)
- create mode 100644 include/uapi/linux/ntsync.h
+ drivers/misc/ntsync.c       | 71 +++++++++++++++++++++++++++++++++++--
+ include/uapi/linux/ntsync.h |  1 +
+ 2 files changed, 70 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index 457e16f06e04..2f5c6994f042 100644
---- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-+++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-@@ -173,6 +173,8 @@ Code  Seq#    Include File                                           Comments
- 'M'   00-0F  drivers/video/fsl-diu-fb.h                              conflict!
- 'N'   00-1F  drivers/usb/scanner.h
- 'N'   40-7F  drivers/block/nvme.c
-+'N'   80-8F  uapi/linux/ntsync.h                                     NT synchronization primitives
-+                                                                     <mailto:wine-devel@winehq.org>
- 'O'   00-06  mtd/ubi-user.h                                          UBI
- 'P'   all    linux/soundcard.h                                       conflict!
- 'P'   60-6F  sound/sscape_ioctl.h                                    conflict!
 diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index bd76e653d83e..20158ec148bc 100644
+index 222ebead8eba..a3466be50c45 100644
 --- a/drivers/misc/ntsync.c
 +++ b/drivers/misc/ntsync.c
-@@ -5,26 +5,157 @@
-  * Copyright (C) 2024 Elizabeth Figura <zfigura@codeweavers.com>
-  */
+@@ -57,6 +57,7 @@ struct ntsync_obj {
+ 		struct {
+ 			__u32 count;
+ 			__u32 owner;
++			bool ownerdead;
+ 		} mutex;
+ 	} u;
  
-+#include <linux/anon_inodes.h>
-+#include <linux/file.h>
- #include <linux/fs.h>
- #include <linux/miscdevice.h>
- #include <linux/module.h>
-+#include <linux/slab.h>
-+#include <uapi/linux/ntsync.h>
+@@ -109,6 +110,7 @@ struct ntsync_q {
+ 	atomic_t signaled;
  
- #define NTSYNC_NAME	"ntsync"
+ 	bool all;
++	bool ownerdead;
+ 	__u32 count;
+ 	struct ntsync_q_entry entries[];
+ };
+@@ -184,6 +186,9 @@ static void try_wake_all(struct ntsync_device *dev, struct ntsync_q *q,
+ 				obj->u.sem.count--;
+ 				break;
+ 			case NTSYNC_TYPE_MUTEX:
++				if (obj->u.mutex.ownerdead)
++					q->ownerdead = true;
++				obj->u.mutex.ownerdead = false;
+ 				obj->u.mutex.count++;
+ 				obj->u.mutex.owner = q->owner;
+ 				break;
+@@ -243,6 +248,9 @@ static void try_wake_any_mutex(struct ntsync_obj *mutex)
+ 			continue;
  
-+enum ntsync_type {
-+	NTSYNC_TYPE_SEM,
-+};
-+
+ 		if (atomic_cmpxchg(&q->signaled, -1, entry->index) == -1) {
++			if (mutex->u.mutex.ownerdead)
++				q->ownerdead = true;
++			mutex->u.mutex.ownerdead = false;
+ 			mutex->u.mutex.count++;
+ 			mutex->u.mutex.owner = q->owner;
+ 			wake_up_process(q->task);
+@@ -374,6 +382,62 @@ static int ntsync_mutex_unlock(struct ntsync_obj *mutex, void __user *argp)
+ 	return ret;
+ }
+ 
 +/*
-+ * Individual synchronization primitives are represented by
-+ * struct ntsync_obj, and each primitive is backed by a file.
-+ *
-+ * The whole namespace is represented by a struct ntsync_device also
-+ * backed by a file.
-+ *
-+ * Both rely on struct file for reference counting. Individual
-+ * ntsync_obj objects take a reference to the device when created.
++ * Actually change the mutex state to mark its owner as dead,
++ * returning -EPERM if not the owner.
 + */
-+
-+struct ntsync_obj {
-+	enum ntsync_type type;
-+
-+	union {
-+		struct {
-+			__u32 count;
-+			__u32 max;
-+		} sem;
-+	} u;
-+
-+	struct file *file;
-+	struct ntsync_device *dev;
-+};
-+
-+struct ntsync_device {
-+	struct file *file;
-+};
-+
-+static int ntsync_obj_release(struct inode *inode, struct file *file)
++static int kill_mutex_state(struct ntsync_obj *mutex, __u32 owner)
 +{
-+	struct ntsync_obj *obj = file->private_data;
++	lockdep_assert_held(&mutex->lock);
 +
-+	fput(obj->dev->file);
-+	kfree(obj);
++	if (mutex->u.mutex.owner != owner)
++		return -EPERM;
 +
++	mutex->u.mutex.ownerdead = true;
++	mutex->u.mutex.owner = 0;
++	mutex->u.mutex.count = 0;
 +	return 0;
 +}
 +
-+static const struct file_operations ntsync_obj_fops = {
-+	.owner		= THIS_MODULE,
-+	.release	= ntsync_obj_release,
-+	.llseek		= no_llseek,
-+};
-+
-+static struct ntsync_obj *ntsync_alloc_obj(struct ntsync_device *dev,
-+					   enum ntsync_type type)
++static int ntsync_mutex_kill(struct ntsync_obj *mutex, void __user *argp)
 +{
-+	struct ntsync_obj *obj;
++	struct ntsync_device *dev = mutex->dev;
++	__u32 owner;
++	int ret;
 +
-+	obj = kzalloc(sizeof(*obj), GFP_KERNEL);
-+	if (!obj)
-+		return NULL;
-+	obj->type = type;
-+	obj->dev = dev;
-+	get_file(dev->file);
-+
-+	return obj;
-+}
-+
-+static int ntsync_obj_get_fd(struct ntsync_obj *obj)
-+{
-+	struct file *file;
-+	int fd;
-+
-+	fd = get_unused_fd_flags(O_CLOEXEC);
-+	if (fd < 0)
-+		return fd;
-+	file = anon_inode_getfile("ntsync", &ntsync_obj_fops, obj, O_RDWR);
-+	if (IS_ERR(file)) {
-+		put_unused_fd(fd);
-+		return PTR_ERR(file);
-+	}
-+	obj->file = file;
-+	fd_install(fd, file);
-+
-+	return fd;
-+}
-+
-+static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
-+{
-+	struct ntsync_sem_args __user *user_args = argp;
-+	struct ntsync_sem_args args;
-+	struct ntsync_obj *sem;
-+	int fd;
-+
-+	if (copy_from_user(&args, argp, sizeof(args)))
++	if (get_user(owner, (__u32 __user *)argp))
 +		return -EFAULT;
-+
-+	if (args.count > args.max)
++	if (!owner)
 +		return -EINVAL;
 +
-+	sem = ntsync_alloc_obj(dev, NTSYNC_TYPE_SEM);
-+	if (!sem)
-+		return -ENOMEM;
-+	sem->u.sem.count = args.count;
-+	sem->u.sem.max = args.max;
-+	fd = ntsync_obj_get_fd(sem);
-+	if (fd < 0) {
-+		kfree(sem);
-+		return fd;
++	if (mutex->type != NTSYNC_TYPE_MUTEX)
++		return -EINVAL;
++
++	if (atomic_read(&mutex->all_hint) > 0) {
++		spin_lock(&dev->wait_all_lock);
++		spin_lock_nest_lock(&mutex->lock, &dev->wait_all_lock);
++
++		ret = kill_mutex_state(mutex, owner);
++		if (!ret) {
++			try_wake_all_obj(dev, mutex);
++			try_wake_any_mutex(mutex);
++		}
++
++		spin_unlock(&mutex->lock);
++		spin_unlock(&dev->wait_all_lock);
++	} else {
++		spin_lock(&mutex->lock);
++
++		ret = kill_mutex_state(mutex, owner);
++		if (!ret)
++			try_wake_any_mutex(mutex);
++
++		spin_unlock(&mutex->lock);
 +	}
 +
-+	return put_user(fd, &user_args->sem);
++	return ret;
 +}
 +
- static int ntsync_char_open(struct inode *inode, struct file *file)
+ static int ntsync_obj_release(struct inode *inode, struct file *file)
  {
-+	struct ntsync_device *dev;
-+
-+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-+	if (!dev)
-+		return -ENOMEM;
-+
-+	file->private_data = dev;
-+	dev->file = file;
- 	return nonseekable_open(inode, file);
- }
- 
- static int ntsync_char_release(struct inode *inode, struct file *file)
- {
-+	struct ntsync_device *dev = file->private_data;
-+
-+	kfree(dev);
-+
- 	return 0;
- }
- 
- static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
- 			      unsigned long parm)
- {
-+	struct ntsync_device *dev = file->private_data;
-+	void __user *argp = (void __user *)parm;
-+
- 	switch (cmd) {
-+	case NTSYNC_IOC_CREATE_SEM:
-+		return ntsync_create_sem(dev, argp);
+ 	struct ntsync_obj *obj = file->private_data;
+@@ -395,6 +459,8 @@ static long ntsync_obj_ioctl(struct file *file, unsigned int cmd,
+ 		return ntsync_sem_post(obj, argp);
+ 	case NTSYNC_IOC_MUTEX_UNLOCK:
+ 		return ntsync_mutex_unlock(obj, argp);
++	case NTSYNC_IOC_MUTEX_KILL:
++		return ntsync_mutex_kill(obj, argp);
  	default:
  		return -ENOIOCTLCMD;
  	}
+@@ -579,6 +645,7 @@ static int setup_wait(struct ntsync_device *dev,
+ 	q->owner = args->owner;
+ 	atomic_set(&q->signaled, -1);
+ 	q->all = all;
++	q->ownerdead = false;
+ 	q->count = count;
+ 
+ 	for (i = 0; i < count; i++) {
+@@ -686,7 +753,7 @@ static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
+ 		struct ntsync_wait_args __user *user_args = argp;
+ 
+ 		/* even if we caught a signal, we need to communicate success */
+-		ret = 0;
++		ret = q->ownerdead ? -EOWNERDEAD : 0;
+ 
+ 		if (put_user(signaled, &user_args->index))
+ 			ret = -EFAULT;
+@@ -767,7 +834,7 @@ static int ntsync_wait_all(struct ntsync_device *dev, void __user *argp)
+ 		struct ntsync_wait_args __user *user_args = argp;
+ 
+ 		/* even if we caught a signal, we need to communicate success */
+-		ret = 0;
++		ret = q->ownerdead ? -EOWNERDEAD : 0;
+ 
+ 		if (put_user(signaled, &user_args->index))
+ 			ret = -EFAULT;
 diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-new file mode 100644
-index 000000000000..6a4867a6c97b
---- /dev/null
+index 265503d441b1..4800941fcbda 100644
+--- a/include/uapi/linux/ntsync.h
 +++ b/include/uapi/linux/ntsync.h
-@@ -0,0 +1,21 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+/*
-+ * Kernel support for NT synchronization primitive emulation
-+ *
-+ * Copyright (C) 2021-2022 Elizabeth Figura <zfigura@codeweavers.com>
-+ */
-+
-+#ifndef __LINUX_NTSYNC_H
-+#define __LINUX_NTSYNC_H
-+
-+#include <linux/types.h>
-+
-+struct ntsync_sem_args {
-+	__u32 sem;
-+	__u32 count;
-+	__u32 max;
-+};
-+
-+#define NTSYNC_IOC_CREATE_SEM		_IOWR('N', 0x80, struct ntsync_sem_args)
-+
-+#endif
+@@ -40,5 +40,6 @@ struct ntsync_wait_args {
+ 
+ #define NTSYNC_IOC_SEM_POST		_IOWR('N', 0x81, __u32)
+ #define NTSYNC_IOC_MUTEX_UNLOCK		_IOWR('N', 0x85, struct ntsync_mutex_args)
++#define NTSYNC_IOC_MUTEX_KILL		_IOW ('N', 0x86, __u32)
+ 
+ #endif
 -- 
 2.43.0
 
