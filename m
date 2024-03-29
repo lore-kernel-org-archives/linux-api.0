@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF59814F78;
-	Fri, 29 Mar 2024 00:24:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49CF042073;
+	Fri, 29 Mar 2024 00:24:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711671869; cv=none; b=AyBO4dUbplZOciOfmYEY5xeZDmI2OilW+BclMMiv5LUZ9zwesaYjk3pNry2tz7KkcTzQxzuXt+vtlJlJL4GtuZP9U9wDs5sVG1L5t9L5VcyUy5M0pajWpvUWU4l7MuVPfaVf66jbfHBUQNu3zuJGg3+1FC9XP/jwTJ0yU4gUKLc=
+	t=1711671871; cv=none; b=TQ1Q4YlJDL9ppR6pSyDCMimOb2fHk15s6phxxJPu8gP4PRomUWcHSLHX7OtbbEHPBbpGTKML6+EkypgMlfFgfz7q6EjWmJUGs+5bRx3or7KkS0TanChs3Z/dyp/kiuCILLNh5WrPMcviH13SfGoqnL86Tn80TWV1a4k7SCY0Ov0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711671869; c=relaxed/simple;
-	bh=AE6NXINBH8omVPz1fHj5ljdzuytgTwzlTVzo/ubdiPg=;
+	s=arc-20240116; t=1711671871; c=relaxed/simple;
+	bh=UXKmd/tB5MoVcAQ9w02fckyfMxcSHRdyv+iPNlCu+YA=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lMMMyMJdcn8vb4OlVxN21NHu5vrtY6EmMVTDWpi88/vxV9M1BbmMcc/XofUXmuusVFUjI6lnGlH/hbc6JTOCo/K5jTauYks5BKZG7XFooDsBFnero7XzTtmpLMGGhPXCQhPwH+YMGFCdihADXZ4FqlytAIcgSfs/lFoPwyKszb8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Af/do5db; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=ZFAkrZ2pH6W+fCnTNHnofzfZDmjaOmPNQ0GUAE5c2qsMgfxlC/dWYf8EPjl1TQoJ2/gKrBIgmaxTwFPcVgdHkaqxwF8QOmgZe+Euzz0apXxt0n3IxMv6VBejdVvwOqhQyqgXwsjdaUQXWKX4vI1nKYLH8Qajpuj9IiMeY5AaxFQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=HpBeEPh3; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Af/do5db"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="HpBeEPh3"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=4IcsQqwJDSOpJrs7K0nnQqbkT6O6ZHWNLrwUIQFYjxY=; b=Af/do5dblRI/3DvQ6kE/CYWe72
-	K4QeVRYC59m8ZY19UCuar28Z5RODgKIfBXNnzjaDcOfxtRSGqvjPuc3Uh3LCZi5VOdV5lqk78tdR6
-	8xEVIX2ASUCeu6WQ/0xnjKSLOTaQZtIrrHdmf3mRD3jH2Ov4VFx5/P9A2BP9P6aBJMJ98Lie9alkx
-	0tfEG6IrS/X4RaJkWi86K25kiCN9i78rwJyKeUaNPnVty2D6L6gWjYVwtG7StqbkVhQQT9kGUJc1X
-	RpxcnD+EnOH/BPh0GzgBu6ZQl9eRnuR00mZikEz7a1DQTz946JKSyRkj2qKen241YRcjpkDfOXc6k
-	2B22s2KQ==;
+	bh=/i5nF4410gEXNHjyrEQSUz30K2sNvrn0R5ExzpIN3gw=; b=HpBeEPh3oi4kKFCyJo5hcDq2FL
+	7U8V7n9Ar6Nq8TpmR1ahqKP3IZ0dmBA9aC5AXORmHQKv7cZIm4BL1C5+j79VZ7wuUVUdHtcO+pOQ2
+	CARQq/rpZQ9z6UckzvTteOERGEE3x3JTALWwptZhk7t6KcwXAXL3aGILfyoE3qD5yYCTt0VQLGqzL
+	EnjVLnw19BWHsulsfkVzPq1eT+VyLB9pcXNnEJO+GOiZT+bw17izYfM3FgcYjSpTiN7ZRyfsmsF6J
+	U7ikSGg4vw/Tkw2H4V1GzeHis0cTxID2U9vQ9wcUE0gy+CAsXe/NEZj3w/cH7vGPhZeB9ic8i82Eo
+	qMM+QzLQ==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rpzlP-000iik-1Z;
-	Thu, 28 Mar 2024 19:06:31 -0500
+	id 1rpzlL-000iik-30;
+	Thu, 28 Mar 2024 19:06:27 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -47,9 +47,9 @@ Cc: linux-kernel@vger.kernel.org,
 	linux-kselftest@vger.kernel.org,
 	Randy Dunlap <rdunlap@infradead.org>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v3 16/30] ntsync: Introduce alertable waits.
-Date: Thu, 28 Mar 2024 19:06:07 -0500
-Message-ID: <20240329000621.148791-17-zfigura@codeweavers.com>
+Subject: [PATCH v3 01/30] ntsync: Introduce the ntsync driver and character device.
+Date: Thu, 28 Mar 2024 19:05:52 -0500
+Message-ID: <20240329000621.148791-2-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240329000621.148791-1-zfigura@codeweavers.com>
 References: <20240329000621.148791-1-zfigura@codeweavers.com>
@@ -61,192 +61,111 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-NT waits can optionally be made "alertable". This is a special channel for
-thread wakeup that is mildly similar to SIGIO. A thread has an internal single
-bit of "alerted" state, and if a thread is alerted while an alertable wait, the
-wait will return a special value, consume the "alerted" state, and will not
-consume any of its objects.
+ntsync uses a misc device as the simplest and least intrusive uAPI interface.
 
-Alerts are implemented using events; the user-space NT emulator is expected to
-create an internal ntsync event for each thread and pass that event to wait
-functions.
+Each file description on the device represents an isolated NT instance, intended
+to correspond to a single NT virtual machine.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- drivers/misc/ntsync.c       | 68 ++++++++++++++++++++++++++++++++-----
- include/uapi/linux/ntsync.h |  2 +-
- 2 files changed, 60 insertions(+), 10 deletions(-)
+ drivers/misc/Kconfig  | 11 +++++++++
+ drivers/misc/Makefile |  1 +
+ drivers/misc/ntsync.c | 52 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 64 insertions(+)
+ create mode 100644 drivers/misc/ntsync.c
 
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index 4fb291f0bf7c..801ed229ed7d 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -506,6 +506,17 @@ config OPEN_DICE
+ 
+ 	  If unsure, say N.
+ 
++config NTSYNC
++	tristate "NT synchronization primitive emulation"
++	help
++	  This module provides kernel support for emulation of Windows NT
++	  synchronization primitives. It is not a hardware driver.
++
++	  To compile this driver as a module, choose M here: the
++	  module will be called ntsync.
++
++	  If unsure, say N.
++
+ config VCPU_STALL_DETECTOR
+ 	tristate "Guest vCPU stall detector"
+ 	depends on OF && HAS_IOMEM
+diff --git a/drivers/misc/Makefile b/drivers/misc/Makefile
+index ea6ea5bbbc9c..153a3f4837e8 100644
+--- a/drivers/misc/Makefile
++++ b/drivers/misc/Makefile
+@@ -59,6 +59,7 @@ obj-$(CONFIG_PVPANIC)   	+= pvpanic/
+ obj-$(CONFIG_UACCE)		+= uacce/
+ obj-$(CONFIG_XILINX_SDFEC)	+= xilinx_sdfec.o
+ obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
++obj-$(CONFIG_NTSYNC)		+= ntsync.o
+ obj-$(CONFIG_HI6421V600_IRQ)	+= hi6421v600-irq.o
+ obj-$(CONFIG_OPEN_DICE)		+= open-dice.o
+ obj-$(CONFIG_GP_PCI1XXXX)	+= mchp_pci1xxxx/
 diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index a03c6fceb518..19fd70ac3f50 100644
---- a/drivers/misc/ntsync.c
+new file mode 100644
+index 000000000000..bd76e653d83e
+--- /dev/null
 +++ b/drivers/misc/ntsync.c
-@@ -819,25 +819,32 @@ static int setup_wait(struct ntsync_device *dev,
- 		      const struct ntsync_wait_args *args, bool all,
- 		      struct ntsync_q **ret_q)
- {
-+	int fds[NTSYNC_MAX_WAIT_COUNT + 1];
- 	const __u32 count = args->count;
--	int fds[NTSYNC_MAX_WAIT_COUNT];
- 	struct ntsync_q *q;
-+	__u32 total_count;
- 	__u32 i, j;
- 
- 	if (!args->owner)
- 		return -EINVAL;
- 
--	if (args->pad || args->pad2 || (args->flags & ~NTSYNC_WAIT_REALTIME))
-+	if (args->pad || (args->flags & ~NTSYNC_WAIT_REALTIME))
- 		return -EINVAL;
- 
- 	if (args->count > NTSYNC_MAX_WAIT_COUNT)
- 		return -EINVAL;
- 
-+	total_count = count;
-+	if (args->alert)
-+		total_count++;
+@@ -0,0 +1,52 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * ntsync.c - Kernel driver for NT synchronization primitives
++ *
++ * Copyright (C) 2024 Elizabeth Figura <zfigura@codeweavers.com>
++ */
 +
- 	if (copy_from_user(fds, u64_to_user_ptr(args->objs),
- 			   array_size(count, sizeof(*fds))))
- 		return -EFAULT;
-+	if (args->alert)
-+		fds[count] = args->alert;
- 
--	q = kmalloc(struct_size(q, entries, count), GFP_KERNEL);
-+	q = kmalloc(struct_size(q, entries, total_count), GFP_KERNEL);
- 	if (!q)
- 		return -ENOMEM;
- 	q->task = current;
-@@ -847,7 +854,7 @@ static int setup_wait(struct ntsync_device *dev,
- 	q->ownerdead = false;
- 	q->count = count;
- 
--	for (i = 0; i < count; i++) {
-+	for (i = 0; i < total_count; i++) {
- 		struct ntsync_q_entry *entry = &q->entries[i];
- 		struct ntsync_obj *obj = get_obj(dev, fds[i]);
- 
-@@ -897,9 +904,9 @@ static void try_wake_any_obj(struct ntsync_obj *obj)
- static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
- {
- 	struct ntsync_wait_args args;
-+	__u32 i, total_count;
- 	struct ntsync_q *q;
- 	int signaled;
--	__u32 i;
- 	int ret;
- 
- 	if (copy_from_user(&args, argp, sizeof(args)))
-@@ -909,9 +916,13 @@ static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
- 	if (ret < 0)
- 		return ret;
- 
-+	total_count = args.count;
-+	if (args.alert)
-+		total_count++;
++#include <linux/fs.h>
++#include <linux/miscdevice.h>
++#include <linux/module.h>
 +
- 	/* queue ourselves */
- 
--	for (i = 0; i < args.count; i++) {
-+	for (i = 0; i < total_count; i++) {
- 		struct ntsync_q_entry *entry = &q->entries[i];
- 		struct ntsync_obj *obj = entry->obj;
- 
-@@ -920,9 +931,15 @@ static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
- 		spin_unlock(&obj->lock);
- 	}
- 
--	/* check if we are already signaled */
-+	/*
-+	 * Check if we are already signaled.
-+	 *
-+	 * Note that the API requires that normal objects are checked before
-+	 * the alert event. Hence we queue the alert event last, and check
-+	 * objects in order.
-+	 */
- 
--	for (i = 0; i < args.count; i++) {
-+	for (i = 0; i < total_count; i++) {
- 		struct ntsync_obj *obj = q->entries[i].obj;
- 
- 		if (atomic_read(&q->signaled) != -1)
-@@ -939,7 +956,7 @@ static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
- 
- 	/* and finally, unqueue */
- 
--	for (i = 0; i < args.count; i++) {
-+	for (i = 0; i < total_count; i++) {
- 		struct ntsync_q_entry *entry = &q->entries[i];
- 		struct ntsync_obj *obj = entry->obj;
- 
-@@ -999,6 +1016,14 @@ static int ntsync_wait_all(struct ntsync_device *dev, void __user *argp)
- 		 */
- 		list_add_tail(&entry->node, &obj->all_waiters);
- 	}
-+	if (args.alert) {
-+		struct ntsync_q_entry *entry = &q->entries[args.count];
-+		struct ntsync_obj *obj = entry->obj;
++#define NTSYNC_NAME	"ntsync"
 +
-+		spin_lock_nest_lock(&obj->lock, &dev->wait_all_lock);
-+		list_add_tail(&entry->node, &obj->any_waiters);
-+		spin_unlock(&obj->lock);
++static int ntsync_char_open(struct inode *inode, struct file *file)
++{
++	return nonseekable_open(inode, file);
++}
++
++static int ntsync_char_release(struct inode *inode, struct file *file)
++{
++	return 0;
++}
++
++static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
++			      unsigned long parm)
++{
++	switch (cmd) {
++	default:
++		return -ENOIOCTLCMD;
 +	}
- 
- 	/* check if we are already signaled */
- 
-@@ -1006,6 +1031,21 @@ static int ntsync_wait_all(struct ntsync_device *dev, void __user *argp)
- 
- 	spin_unlock(&dev->wait_all_lock);
- 
-+	/*
-+	 * Check if the alert event is signaled, making sure to do so only
-+	 * after checking if the other objects are signaled.
-+	 */
++}
 +
-+	if (args.alert) {
-+		struct ntsync_obj *obj = q->entries[args.count].obj;
++static const struct file_operations ntsync_fops = {
++	.owner		= THIS_MODULE,
++	.open		= ntsync_char_open,
++	.release	= ntsync_char_release,
++	.unlocked_ioctl	= ntsync_char_ioctl,
++	.compat_ioctl	= compat_ptr_ioctl,
++	.llseek		= no_llseek,
++};
 +
-+		if (atomic_read(&q->signaled) == -1) {
-+			spin_lock(&obj->lock);
-+			try_wake_any_obj(obj);
-+			spin_unlock(&obj->lock);
-+		}
-+	}
++static struct miscdevice ntsync_misc = {
++	.minor		= MISC_DYNAMIC_MINOR,
++	.name		= NTSYNC_NAME,
++	.fops		= &ntsync_fops,
++};
 +
- 	/* sleep */
- 
- 	ret = ntsync_schedule(q, &args);
-@@ -1028,6 +1068,16 @@ static int ntsync_wait_all(struct ntsync_device *dev, void __user *argp)
- 
- 		put_obj(obj);
- 	}
-+	if (args.alert) {
-+		struct ntsync_q_entry *entry = &q->entries[args.count];
-+		struct ntsync_obj *obj = entry->obj;
++module_misc_device(ntsync_misc);
 +
-+		spin_lock_nest_lock(&obj->lock, &dev->wait_all_lock);
-+		list_del(&entry->node);
-+		spin_unlock(&obj->lock);
-+
-+		put_obj(obj);
-+	}
- 
- 	spin_unlock(&dev->wait_all_lock);
- 
-diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index 80f36de46a75..f21dbac42164 100644
---- a/include/uapi/linux/ntsync.h
-+++ b/include/uapi/linux/ntsync.h
-@@ -37,8 +37,8 @@ struct ntsync_wait_args {
- 	__u32 owner;
- 	__u32 index;
- 	__u32 flags;
-+	__u32 alert;
- 	__u32 pad;
--	__u32 pad2;
- };
- 
- #define NTSYNC_MAX_WAIT_COUNT 64
++MODULE_AUTHOR("Elizabeth Figura <zfigura@codeweavers.com>");
++MODULE_DESCRIPTION("Kernel driver for NT synchronization primitives");
++MODULE_LICENSE("GPL");
 -- 
 2.43.0
 
