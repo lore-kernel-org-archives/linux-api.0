@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E1C2D38DE9;
-	Fri, 29 Mar 2024 00:23:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF38439AC1;
+	Fri, 29 Mar 2024 00:23:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1711671837; cv=none; b=aoRc+sHRR0wUzYesZgGSxNIaSVsvSrQcbqrCxKEhcxTGJo+dD+GSQuFazmkzLsX5yPZjPyRIE9DSSEKAhOvmUyZHXeAEl3soKLt5K0GNxxFk/vYh3UUvGeTNUNfSqUOn80DMlxd/55k+QnfSRfj+egMEZ/0Et1itQHavr26VG9s=
+	t=1711671839; cv=none; b=A+TbLeAP8w2wAjUl2PW0YBILwI+ilHWzpd921pcRJB0LP3PwG2UiohYh+1goHv5nZg3Ac//ac3nEgu8er8eycHH5CvdS7rvuQam36BFQaPzL34DdP6xwohliw6gsppmVr9Yj4RY0z5Mysww6aNbQxOPzaxhymBiAJ2N0a2wWusU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1711671837; c=relaxed/simple;
-	bh=c+6U+ZbefTz0YtyUBcA/usnu8kiO48W/n5csRaPODMw=;
+	s=arc-20240116; t=1711671839; c=relaxed/simple;
+	bh=L8d9LKUtIlHbbP7cxUNXa7f8ALBrZ7EKpjsLi7r052M=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=dn9doLt5FZk+Vi7QzwsbcojsNJv9mcN1OMm919FUj4Cw6KK39/hImKXosxLK5QT0mGcAugNP+NqsnD59cMKKOSOeE/4R8/NpXuEOgaRjEJnt94YbCuopJ167qbsOT5y5kxIbK7J8ZnFUe30QGVvYoVb8jj9RR9eFSDUJvgfo72g=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Odsqstsn; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=cloUrm1Sh8O0gicDrgCQY/Gn/7uhBUiWapGxpdMiwXLKUUL0+UjVnofaCdyN7JmGg37pWomQIoMJ8aTXpCNfKnCkLkPYmLO5gOb7ZKoHA/ITqOdAgMiVjFmNl04j9cc7t5E3i0inEFZU9w+rEVvjf78uFQLqReMZVtO8U2LAHA4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Mxyjugc0; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Odsqstsn"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Mxyjugc0"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=S+Bo60slTZYs+MASNA28omTt/46YdAeLaNdjfMjNW6Q=; b=OdsqstsnimTQ+8vWFCX1COgWtN
-	+C1iCeaSgUMPgMz4QpoCtLtZvcr/g6GGhbHNYp9FattdybXOWbNxBenEoF3RyLzpOVlzDCo+ZBnnk
-	aaOq7Gnkgr/IaY68gC72pI78fNk5Pdy5ifeTfmjDwGKzat5d72ADdz3YhIl/kVUj0F9JWhcBPHB8b
-	zvVokRFcaOoeymqoarQlJyo3ZdZDFO8FqO5cnkM4Ur8SDFLmnZB4LjHejK5pIG1cA911lxg8zk4hk
-	5095yYlquWOVjz2zDk52pz21ZcWELKbDd54OfGsSXNWgTyb/xsUZ9UsFjg7GQQ3TCxn9c0XeAVVtx
-	idV9mSbw==;
+	bh=Y95uioGAPMdZZ0cAwPbXEkD4hHbWG+8pblZmeRY+GjA=; b=Mxyjugc0OKuoput8ZfqY2nafUA
+	Is7OyH/2F/1g7fZIZ8/tyKF1ES1rnpTMxacKDwU/vDWQC8lm/B08eB3U03LfgOFje488FBW9GAIAR
+	OdZyOBdhSmQTo0qsgg10oyEOzn+zKGbD44uC711J8e0YLUZbHFjM4X7zSR/p31oHRlXJ/36XGzufP
+	uRCxKYgnofW30lxnkGhxm+BcDs+pixoCzL7RVxEWwThtNejnHY9ikh29Drll4OciTisHueeRsH+c6
+	rQ082JOeAau12YIyjHiEIJqWXGeXea3JU5m07TZhrpSBjmqW1Z29iqJRM8IOXIBedPjpHIvWVELQ8
+	M5XJ3dEw==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rpzlS-000iik-0X;
-	Thu, 28 Mar 2024 19:06:34 -0500
+	id 1rpzlT-000iik-2b;
+	Thu, 28 Mar 2024 19:06:35 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -47,9 +47,9 @@ Cc: linux-kernel@vger.kernel.org,
 	linux-kselftest@vger.kernel.org,
 	Randy Dunlap <rdunlap@infradead.org>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v3 20/30] selftests: ntsync: Add some tests for NTSYNC_IOC_WAIT_ALL.
-Date: Thu, 28 Mar 2024 19:06:11 -0500
-Message-ID: <20240329000621.148791-21-zfigura@codeweavers.com>
+Subject: [PATCH v3 23/30] selftests: ntsync: Add some tests for manual-reset event state.
+Date: Thu, 28 Mar 2024 19:06:14 -0500
+Message-ID: <20240329000621.148791-24-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240329000621.148791-1-zfigura@codeweavers.com>
 References: <20240329000621.148791-1-zfigura@codeweavers.com>
@@ -61,140 +61,122 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Test basic synchronous functionality of NTSYNC_IOC_WAIT_ALL, and when objects
-are considered simultaneously signaled.
+Test event-specific ioctls NTSYNC_IOC_EVENT_SET, NTSYNC_IOC_EVENT_RESET,
+NTSYNC_IOC_EVENT_PULSE, NTSYNC_IOC_EVENT_READ for manual-reset events, and
+waiting on manual-reset events.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- .../testing/selftests/drivers/ntsync/ntsync.c | 99 ++++++++++++++++++-
- 1 file changed, 97 insertions(+), 2 deletions(-)
+ .../testing/selftests/drivers/ntsync/ntsync.c | 89 +++++++++++++++++++
+ 1 file changed, 89 insertions(+)
 
 diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
-index 40ad8cbd3138..c0f372167557 100644
+index b77fb0b2c4b1..b6481c2b85cc 100644
 --- a/tools/testing/selftests/drivers/ntsync/ntsync.c
 +++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
-@@ -73,7 +73,8 @@ static int unlock_mutex(int mutex, __u32 owner, __u32 *count)
+@@ -73,6 +73,27 @@ static int unlock_mutex(int mutex, __u32 owner, __u32 *count)
  	return ret;
  }
  
--static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
-+static int wait_objs(int fd, unsigned long request, __u32 count,
-+		     const int *objs, __u32 owner, __u32 *index)
- {
- 	struct ntsync_wait_args args = {0};
- 	struct timespec timeout;
-@@ -86,11 +87,21 @@ static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *in
- 	args.objs = (uintptr_t)objs;
- 	args.owner = owner;
- 	args.index = 0xdeadbeef;
--	ret = ioctl(fd, NTSYNC_IOC_WAIT_ANY, &args);
-+	ret = ioctl(fd, request, &args);
- 	*index = args.index;
- 	return ret;
- }
- 
-+static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
++static int read_event_state(int event, __u32 *signaled, __u32 *manual)
 +{
-+	return wait_objs(fd, NTSYNC_IOC_WAIT_ANY, count, objs, owner, index);
++	struct ntsync_event_args args;
++	int ret;
++
++	memset(&args, 0xcc, sizeof(args));
++	ret = ioctl(event, NTSYNC_IOC_EVENT_READ, &args);
++	*signaled = args.signaled;
++	*manual = args.manual;
++	return ret;
 +}
 +
-+static int wait_all(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
-+{
-+	return wait_objs(fd, NTSYNC_IOC_WAIT_ALL, count, objs, owner, index);
-+}
++#define check_event_state(event, signaled, manual) \
++	({ \
++		__u32 __signaled, __manual; \
++		int ret = read_event_state((event), &__signaled, &__manual); \
++		EXPECT_EQ(0, ret); \
++		EXPECT_EQ((signaled), __signaled); \
++		EXPECT_EQ((manual), __manual); \
++	})
 +
- TEST(semaphore_state)
+ static int wait_objs(int fd, unsigned long request, __u32 count,
+ 		     const int *objs, __u32 owner, __u32 *index)
  {
- 	struct ntsync_sem_args sem_args;
-@@ -461,4 +472,88 @@ TEST(test_wait_any)
+@@ -353,6 +374,74 @@ TEST(mutex_state)
  	close(fd);
  }
  
-+TEST(test_wait_all)
++TEST(manual_event_state)
 +{
-+	struct ntsync_mutex_args mutex_args = {0};
-+	struct ntsync_sem_args sem_args = {0};
-+	__u32 owner, index, count;
-+	int objs[2], fd, ret;
++	struct ntsync_event_args event_args;
++	__u32 index, signaled;
++	int fd, event, ret;
 +
 +	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
 +	ASSERT_LE(0, fd);
 +
-+	sem_args.count = 2;
-+	sem_args.max = 3;
-+	sem_args.sem = 0xdeadbeef;
-+	ret = ioctl(fd, NTSYNC_IOC_CREATE_SEM, &sem_args);
++	event_args.manual = 1;
++	event_args.signaled = 0;
++	event_args.event = 0xdeadbeef;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_EVENT, &event_args);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_NE(0xdeadbeef, sem_args.sem);
++	EXPECT_NE(0xdeadbeef, event_args.event);
++	event = event_args.event;
++	check_event_state(event, 0, 1);
 +
-+	mutex_args.owner = 0;
-+	mutex_args.count = 0;
-+	mutex_args.mutex = 0xdeadbeef;
-+	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	signaled = 0xdeadbeef;
++	ret = ioctl(event, NTSYNC_IOC_EVENT_SET, &signaled);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_NE(0xdeadbeef, mutex_args.mutex);
++	EXPECT_EQ(0, signaled);
++	check_event_state(event, 1, 1);
 +
-+	objs[0] = sem_args.sem;
-+	objs[1] = mutex_args.mutex;
++	ret = ioctl(event, NTSYNC_IOC_EVENT_SET, &signaled);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(1, signaled);
++	check_event_state(event, 1, 1);
 +
-+	ret = wait_all(fd, 2, objs, 123, &index);
++	ret = wait_any(fd, 1, &event, 123, &index);
 +	EXPECT_EQ(0, ret);
 +	EXPECT_EQ(0, index);
-+	check_sem_state(sem_args.sem, 1, 3);
-+	check_mutex_state(mutex_args.mutex, 1, 123);
++	check_event_state(event, 1, 1);
 +
-+	ret = wait_all(fd, 2, objs, 456, &index);
++	signaled = 0xdeadbeef;
++	ret = ioctl(event, NTSYNC_IOC_EVENT_RESET, &signaled);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(1, signaled);
++	check_event_state(event, 0, 1);
++
++	ret = ioctl(event, NTSYNC_IOC_EVENT_RESET, &signaled);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, signaled);
++	check_event_state(event, 0, 1);
++
++	ret = wait_any(fd, 1, &event, 123, &index);
 +	EXPECT_EQ(-1, ret);
 +	EXPECT_EQ(ETIMEDOUT, errno);
-+	check_sem_state(sem_args.sem, 1, 3);
-+	check_mutex_state(mutex_args.mutex, 1, 123);
 +
-+	ret = wait_all(fd, 2, objs, 123, &index);
++	ret = ioctl(event, NTSYNC_IOC_EVENT_SET, &signaled);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, index);
-+	check_sem_state(sem_args.sem, 0, 3);
-+	check_mutex_state(mutex_args.mutex, 2, 123);
++	EXPECT_EQ(0, signaled);
 +
-+	ret = wait_all(fd, 2, objs, 123, &index);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(ETIMEDOUT, errno);
-+	check_sem_state(sem_args.sem, 0, 3);
-+	check_mutex_state(mutex_args.mutex, 2, 123);
-+
-+	count = 3;
-+	ret = post_sem(sem_args.sem, &count);
++	ret = ioctl(event, NTSYNC_IOC_EVENT_PULSE, &signaled);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, count);
++	EXPECT_EQ(1, signaled);
++	check_event_state(event, 0, 1);
 +
-+	ret = wait_all(fd, 2, objs, 123, &index);
++	ret = ioctl(event, NTSYNC_IOC_EVENT_PULSE, &signaled);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, index);
-+	check_sem_state(sem_args.sem, 2, 3);
-+	check_mutex_state(mutex_args.mutex, 3, 123);
++	EXPECT_EQ(0, signaled);
++	check_event_state(event, 0, 1);
 +
-+	owner = 123;
-+	ret = ioctl(mutex_args.mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
-+	EXPECT_EQ(0, ret);
-+
-+	ret = wait_all(fd, 2, objs, 123, &index);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EOWNERDEAD, errno);
-+	check_sem_state(sem_args.sem, 1, 3);
-+	check_mutex_state(mutex_args.mutex, 1, 123);
-+
-+	/* test waiting on the same object twice */
-+	objs[0] = objs[1] = sem_args.sem;
-+	ret = wait_all(fd, 2, objs, 123, &index);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EINVAL, errno);
-+
-+	close(sem_args.sem);
-+	close(mutex_args.mutex);
++	close(event);
 +
 +	close(fd);
 +}
 +
- TEST_HARNESS_MAIN
+ TEST(test_wait_any)
+ {
+ 	int objs[NTSYNC_MAX_WAIT_COUNT + 1], fd, ret;
 -- 
 2.43.0
 
