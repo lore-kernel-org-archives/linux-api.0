@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ADCA01C10;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B419D5227;
 	Tue, 16 Apr 2024 01:10:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713229830; cv=none; b=Ns8OJQdkqUoKJ8gbAeoLFLf+dGWF4uBl6u8nSDeeWYX+3y3v1Fyg9jq51g2iMtWlcln+jc8yM7MpLQJNpIn/xVnHpwL475p8DGkxXfg7SnOTtQc0Ycq2LGDSjEbo5vVb5EyYqDAOgWj1DvXNyAJveTJxIJTpd2o3q0xh7mpCH4o=
+	t=1713229830; cv=none; b=bxrFJ6GLjJ9/2ZMQmKWWc/PylC+2mcke6D+Vxti53JMSn2Adr/25z4j49jB3IuuEdlwAsn89Jjc3HHoVtY9gErK8hagi9AZx/lpud0NzUAh3P49iZ96BHA0upFEok5cHBvzNV/lts7GCS3kmbGIcmG79/8LPDGQJf7Jr7jyoZmw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1713229830; c=relaxed/simple;
-	bh=BZw7zShBTT5PfD4hawcGoNVQjDPKfhLnloDinunlfUc=;
+	bh=ndUmoE2NV9+WeOkOEqF67OKbQbe/bdhyixSY54pcM0Y=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=fjluxCNV60egKK2T1be+aVTGINs0XSJHBsLWfP8XaGa7/KsC3fSWF5611SUGAbY9OR4+ev8zDdQFOlu6OOsHirggBz6o20fLm1z0QJwUlcyjK9XQ1otEbbjQpwE1uhNqJjWT/2TtfORYIsbhS+iF8bU9RuQp/FDr0PPtgJQ5bW4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=DjcU9Ozm; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=ndaMm4bvjUOKN27K074VeiO6Z3aYx2W8UOeVP+VxHKhQOoIn8Axq4tC6kp0PqrBLWbPPyh0rwM7fkHQiVU7Z4FrZfdG+npP71BClMgaL0H9/ZYpZPB9gcf+KznFiw5wUWO4dt0isFuUcIIeFA214rLdjsohfixEKHQH0GEGu9QI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=KNYbKDKT; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="DjcU9Ozm"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="KNYbKDKT"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=sRVvK3PXYm0eOCy4h040E2JuAl2v9xoXVKyVT6JY+Rw=; b=DjcU9OzmhjRU+z0BXxK99RYGr6
-	2TI4XAEb+oufOdDTRpp/SAUM8NWaSh6rIEq+t+vFoMMxNQkHQ38dfX7PMD2A2Ju9+/N5/ewmxgcDJ
-	AYrRmNZ6+V8em+F6S08LMkdrJS3PWK8eo8sOMLTurA7R4GBoEcjf95aP5V1KLl9pjPg02cIm41Ugp
-	t0CsaTiCxqvdM/j5POGrs6jaFce7/Z/R3fngSozYlgUzZahm7g8KXDqhYoNgoNwN5RmjD3WBxO7Yv
-	Fbq3jJbjgXa7HrZ6adGK/xViFlkJajVwiZl9Xh2EYLFc8JDChYgMZzOFWKy6IzZaUekzsDEK/LcGP
-	3M3bnDAw==;
+	bh=VqcveN9RvbaElZOWRtg2p1KLPGz7XiKBHU5wR2tZ85M=; b=KNYbKDKT8UGx5FcAW8Gks+OoVt
+	c6o7t8tCC1m05FdQDVXSNpVcfFt1stp/umTYHKK+g5PsQrgEvlQcNbiw6My/IuR0SkS0Yxl16P8Ro
+	Z5N5LJ3foK4+mTlier1O9TrOoYV8xN8+XPlPteNZLqmEP5yw8a+I81ulJ66WJR8KT3wgwfDmBikpC
+	Psit77YeYSUXeTJm6XIBDQO99x/ZR6JjtUnQiAcFFIrDkS3C459pRMqTHFuDFOpi9Nbxcu0g287ru
+	padWLr8WX8ARB6lmfj+Cb90s084Pi85g+HTv1DWkhazrN5bu8V/9ILEBQFQOAJjzGxLGpEuPn0Grh
+	S6viwmQw==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rwXL2-00FbQv-0Y;
-	Mon, 15 Apr 2024 20:10:20 -0500
+	id 1rwXL1-00FbQv-1Q;
+	Mon, 15 Apr 2024 20:10:19 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -51,9 +51,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Waiman Long <longman@redhat.com>,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v4 19/27] selftests: ntsync: Add some tests for wakeup signaling with WINESYNC_IOC_WAIT_ALL.
-Date: Mon, 15 Apr 2024 20:08:29 -0500
-Message-ID: <20240416010837.333694-20-zfigura@codeweavers.com>
+Subject: [PATCH v4 15/27] selftests: ntsync: Add some tests for mutex state.
+Date: Mon, 15 Apr 2024 20:08:25 -0500
+Message-ID: <20240416010837.333694-16-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240416010837.333694-1-zfigura@codeweavers.com>
 References: <20240416010837.333694-1-zfigura@codeweavers.com>
@@ -65,117 +65,221 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Test contended "wait-for-all" waits, to make sure that scheduling and wakeup
-logic works correctly, and that the wait only exits once objects are all
-simultaneously signaled.
+Test mutex-specific ioctls NTSYNC_IOC_MUTEX_UNLOCK and NTSYNC_IOC_MUTEX_READ,
+and waiting on mutexes.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- .../testing/selftests/drivers/ntsync/ntsync.c | 98 +++++++++++++++++++
- 1 file changed, 98 insertions(+)
+ .../testing/selftests/drivers/ntsync/ntsync.c | 196 ++++++++++++++++++
+ 1 file changed, 196 insertions(+)
 
 diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
-index 993f5db23768..b77fb0b2c4b1 100644
+index 1e145c6dfded..7cd0f40594fd 100644
 --- a/tools/testing/selftests/drivers/ntsync/ntsync.c
 +++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
-@@ -706,4 +706,102 @@ TEST(wake_any)
+@@ -40,6 +40,39 @@ static int post_sem(int sem, __u32 *count)
+ 	return ioctl(sem, NTSYNC_IOC_SEM_POST, count);
+ }
+ 
++static int read_mutex_state(int mutex, __u32 *count, __u32 *owner)
++{
++	struct ntsync_mutex_args args;
++	int ret;
++
++	memset(&args, 0xcc, sizeof(args));
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_READ, &args);
++	*count = args.count;
++	*owner = args.owner;
++	return ret;
++}
++
++#define check_mutex_state(mutex, count, owner) \
++	({ \
++		__u32 __count, __owner; \
++		int ret = read_mutex_state((mutex), &__count, &__owner); \
++		EXPECT_EQ(0, ret); \
++		EXPECT_EQ((count), __count); \
++		EXPECT_EQ((owner), __owner); \
++	})
++
++static int unlock_mutex(int mutex, __u32 owner, __u32 *count)
++{
++	struct ntsync_mutex_args args;
++	int ret;
++
++	args.owner = owner;
++	args.count = 0xdeadbeef;
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_UNLOCK, &args);
++	*count = args.count;
++	return ret;
++}
++
+ static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
+ {
+ 	struct ntsync_wait_args args = {0};
+@@ -146,4 +179,167 @@ TEST(semaphore_state)
  	close(fd);
  }
  
-+TEST(wake_all)
++TEST(mutex_state)
 +{
-+	struct ntsync_mutex_args mutex_args = {0};
-+	struct ntsync_wait_args wait_args = {0};
-+	struct ntsync_sem_args sem_args = {0};
-+	struct wait_args thread_args;
-+	int objs[2], fd, ret;
-+	__u32 count, index;
-+	pthread_t thread;
++	struct ntsync_mutex_args mutex_args;
++	__u32 owner, count, index;
++	struct timespec timeout;
++	int fd, ret, mutex;
++
++	clock_gettime(CLOCK_MONOTONIC, &timeout);
 +
 +	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
 +	ASSERT_LE(0, fd);
 +
-+	sem_args.count = 0;
-+	sem_args.max = 3;
-+	sem_args.sem = 0xdeadbeef;
-+	ret = ioctl(fd, NTSYNC_IOC_CREATE_SEM, &sem_args);
-+	EXPECT_EQ(0, ret);
-+	EXPECT_NE(0xdeadbeef, sem_args.sem);
++	mutex_args.owner = 123;
++	mutex_args.count = 0;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EINVAL, errno);
++
++	mutex_args.owner = 0;
++	mutex_args.count = 2;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EINVAL, errno);
 +
 +	mutex_args.owner = 123;
-+	mutex_args.count = 1;
++	mutex_args.count = 2;
 +	mutex_args.mutex = 0xdeadbeef;
 +	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
 +	EXPECT_EQ(0, ret);
 +	EXPECT_NE(0xdeadbeef, mutex_args.mutex);
++	mutex = mutex_args.mutex;
++	check_mutex_state(mutex, 2, 123);
 +
-+	objs[0] = sem_args.sem;
-+	objs[1] = mutex_args.mutex;
++	ret = unlock_mutex(mutex, 0, &count);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EINVAL, errno);
 +
-+	wait_args.timeout = get_abs_timeout(1000);
-+	wait_args.objs = (uintptr_t)objs;
-+	wait_args.count = 2;
-+	wait_args.owner = 456;
-+	thread_args.fd = fd;
-+	thread_args.args = &wait_args;
-+	thread_args.request = NTSYNC_IOC_WAIT_ALL;
-+	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
++	ret = unlock_mutex(mutex, 456, &count);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EPERM, errno);
++	check_mutex_state(mutex, 2, 123);
++
++	ret = unlock_mutex(mutex, 123, &count);
 +	EXPECT_EQ(0, ret);
++	EXPECT_EQ(2, count);
++	check_mutex_state(mutex, 1, 123);
 +
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(ETIMEDOUT, ret);
-+
-+	count = 1;
-+	ret = post_sem(sem_args.sem, &count);
-+	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, count);
-+
-+	ret = pthread_tryjoin_np(thread, NULL);
-+	EXPECT_EQ(EBUSY, ret);
-+
-+	check_sem_state(sem_args.sem, 1, 3);
-+
-+	ret = wait_any(fd, 1, &sem_args.sem, 123, &index);
-+	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, index);
-+
-+	ret = unlock_mutex(mutex_args.mutex, 123, &count);
++	ret = unlock_mutex(mutex, 123, &count);
 +	EXPECT_EQ(0, ret);
 +	EXPECT_EQ(1, count);
++	check_mutex_state(mutex, 0, 0);
 +
-+	ret = pthread_tryjoin_np(thread, NULL);
-+	EXPECT_EQ(EBUSY, ret);
++	ret = unlock_mutex(mutex, 123, &count);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EPERM, errno);
 +
-+	check_mutex_state(mutex_args.mutex, 0, 0);
-+
-+	count = 2;
-+	ret = post_sem(sem_args.sem, &count);
++	ret = wait_any(fd, 1, &mutex, 456, &index);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, count);
-+	check_sem_state(sem_args.sem, 1, 3);
-+	check_mutex_state(mutex_args.mutex, 1, 456);
++	EXPECT_EQ(0, index);
++	check_mutex_state(mutex, 1, 456);
 +
-+	ret = wait_for_thread(thread, 100);
++	ret = wait_any(fd, 1, &mutex, 456, &index);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, thread_args.ret);
++	EXPECT_EQ(0, index);
++	check_mutex_state(mutex, 2, 456);
 +
-+	/* delete an object while it's being waited on */
++	ret = unlock_mutex(mutex, 456, &count);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(2, count);
++	check_mutex_state(mutex, 1, 456);
 +
-+	wait_args.timeout = get_abs_timeout(200);
-+	wait_args.owner = 123;
-+	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
++	ret = wait_any(fd, 1, &mutex, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(ETIMEDOUT, errno);
++
++	owner = 0;
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EINVAL, errno);
++
++	owner = 123;
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EPERM, errno);
++	check_mutex_state(mutex, 1, 456);
++
++	owner = 456;
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
 +	EXPECT_EQ(0, ret);
 +
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(ETIMEDOUT, ret);
++	memset(&mutex_args, 0xcc, sizeof(mutex_args));
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_READ, &mutex_args);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	EXPECT_EQ(0, mutex_args.count);
++	EXPECT_EQ(0, mutex_args.owner);
 +
-+	close(sem_args.sem);
-+	close(mutex_args.mutex);
++	memset(&mutex_args, 0xcc, sizeof(mutex_args));
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_READ, &mutex_args);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	EXPECT_EQ(0, mutex_args.count);
++	EXPECT_EQ(0, mutex_args.owner);
 +
-+	ret = wait_for_thread(thread, 200);
++	ret = wait_any(fd, 1, &mutex, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	EXPECT_EQ(0, index);
++	check_mutex_state(mutex, 1, 123);
++
++	owner = 123;
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
 +	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(-1, thread_args.ret);
-+	EXPECT_EQ(ETIMEDOUT, thread_args.err);
++
++	memset(&mutex_args, 0xcc, sizeof(mutex_args));
++	ret = ioctl(mutex, NTSYNC_IOC_MUTEX_READ, &mutex_args);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	EXPECT_EQ(0, mutex_args.count);
++	EXPECT_EQ(0, mutex_args.owner);
++
++	ret = wait_any(fd, 1, &mutex, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	EXPECT_EQ(0, index);
++	check_mutex_state(mutex, 1, 123);
++
++	close(mutex);
++
++	mutex_args.owner = 0;
++	mutex_args.count = 0;
++	mutex_args.mutex = 0xdeadbeef;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(0, ret);
++	EXPECT_NE(0xdeadbeef, mutex_args.mutex);
++	mutex = mutex_args.mutex;
++	check_mutex_state(mutex, 0, 0);
++
++	ret = wait_any(fd, 1, &mutex, 123, &index);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, index);
++	check_mutex_state(mutex, 1, 123);
++
++	close(mutex);
++
++	mutex_args.owner = 123;
++	mutex_args.count = ~0u;
++	mutex_args.mutex = 0xdeadbeef;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(0, ret);
++	EXPECT_NE(0xdeadbeef, mutex_args.mutex);
++	mutex = mutex_args.mutex;
++	check_mutex_state(mutex, ~0u, 123);
++
++	ret = wait_any(fd, 1, &mutex, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(ETIMEDOUT, errno);
++
++	close(mutex);
 +
 +	close(fd);
 +}
