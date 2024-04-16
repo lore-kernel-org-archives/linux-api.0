@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD83B6FC7;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFDF57483;
 	Tue, 16 Apr 2024 01:10:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713229832; cv=none; b=NhbpqTdqW0HJUsABxFpfhrOKV20dQsfIi2B4wXUHiIKnmYg6XsLZORi34qyI3YK3+xmOL202EKaaPoVwswOowkf6giHXHDPjcxxdyp1IQbsyvgT5a07wCY1bjw16RC6WDeZohu0wwGYVFJocVeFsPkmI56hXMF+b40+M/wZ34go=
+	t=1713229832; cv=none; b=pDGTo05AdGIHCog1Uk+Vl5eOHBuUh1znkDAir2T8FSP9PrDdWQFrkvGExSFhxYcvaIYzfJEGYfiA4H8/VSWJhRpsQvabp5nX1sugkYuRjDEJn1/Z+MKfP9FtD9sG1NmEbPfVaz9BR0Anr7Aopej51Jf4KU+qOD/r7jMG1cNpLnc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1713229832; c=relaxed/simple;
-	bh=qk0lOShQNh46Ivwy26TSgyRhbSnLQO0T3i9GzNtHLDY=;
+	bh=iCBKSs88BnhIi4wRYcrHmulPU5noVaFJKgE+8Pd4dp0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=D1tBWjyT0F7BATC/0w9kcBaMeohaxDsyXxkkFtgB+HWJ+oO4oeyqr/NdVAA7hhftJzissXMA19tIA938wgKdhPQ3Z+JW5f8JzFTCQLqe16jW/G/q5rAxXu5UV/HEr0lKiisPmFrLbvsc8dbQf+ChyqgaHXyri4VsYJZRUOa58dc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=hleiHDZs; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=r/vDwIh5PswaINmzRWw9R6uT0inWgpJhkDFn85EXTLBgCP6R6UzOM6eCWfbuv+K4bFWSsFQfwmugta7MZ/XP4iXN5xPAtvf3kljhaGpufPkdIRBTfGBv8OcqpsMKvaFLOoRR1X3ypu9/xDY/xi6ZHLT9lK0WBp4cXPPkb+EjBIM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=n5AlHg5b; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="hleiHDZs"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="n5AlHg5b"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=cKdpBzNnrH572ZCQ0KkLAIrp1rHYDFK3Qi77ARszWL4=; b=hleiHDZsQN2v77aojocKSsIqEg
-	TcW0IB2Pm617Gl8kk7CCOCbe6lwJKjaZyGywEjsU639IZeJ/Q8ewkujc9AXClu3Bg6Zz08Eg4qgkP
-	gbXcD9CQTCwyiI8Eb4a/eHEyzjvqbZUgyliH+g1PBRYgLmSCM+wx1Q/Tk+WK+fWBNH9H6uqwQHXJJ
-	c0eF+PbmeLTma16OPuY8mOe3AG0df6qMJQBALURuPu35J4dq87F5Z+KZ4f3CMUfh9nG1GUF3X6mPz
-	ipB68Qa0auamvSgIv/D3I+cM567X+tTEgUsthnrd03H+2D/pbGazpamYLHITa1J9vfHYGie2L9qYY
-	Cg3QIxsw==;
+	bh=RYBMOq1phKF6kVrcJnfpZPVkjj2AQtC0kLQdg9MZn2g=; b=n5AlHg5b5Y/vtM+O8bN/DqgZsO
+	1GFW2Ifz9efIqvZeHPR7lSN0C3jD6/JvgdXafKWTh3RLxf1QOVBRNPgWRKSeMCF+rVgkTtz0NYLuX
+	GabTHhdXdl8KCqOiHynjSOnr5Tub/2TgWt+6ibuZEIsBzxOWqu0Y3HNnNJDCdDt0GxNbGoV8C8zyY
+	d+aRlRVvMJa7clCEUAVoqa1usznV4zm17NHZECoAW7+A5W9GHjjtwSL2zgji9yNi8Fb22tX02LzA3
+	W5I8qe9XuVVkWGr2Trj336NPvQ0Mqw1gcu5H8eKM+Wz8dNWUshQnc/iGmKSq2OIhyjqQtGFoH0Sjn
+	joUOq3Ew==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1rwXKz-00FbQv-29;
-	Mon, 15 Apr 2024 20:10:17 -0500
+	id 1rwXKy-00FbQv-1E;
+	Mon, 15 Apr 2024 20:10:16 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -51,9 +51,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Waiman Long <longman@redhat.com>,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v4 06/27] ntsync: Introduce NTSYNC_IOC_CREATE_EVENT.
-Date: Mon, 15 Apr 2024 20:08:16 -0500
-Message-ID: <20240416010837.333694-7-zfigura@codeweavers.com>
+Subject: [PATCH v4 01/27] ntsync: Introduce NTSYNC_IOC_WAIT_ANY.
+Date: Mon, 15 Apr 2024 20:08:11 -0500
+Message-ID: <20240416010837.333694-2-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240416010837.333694-1-zfigura@codeweavers.com>
 References: <20240416010837.333694-1-zfigura@codeweavers.com>
@@ -65,87 +65,124 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This correspond to the NT syscall NtCreateEvent().
+This corresponds to part of the functionality of the NT syscall
+NtWaitForMultipleObjects(). Specifically, it implements the behaviour where
+the third argument (wait_any) is TRUE, and it does not handle alertable waits.
+Those features have been split out into separate patches to ease review.
 
-An NT event holds a single bit of state denoting whether it is signaled or
-unsignaled.
+This patch therefore implements the wait/wake infrastructure which comprises the
+core of ntsync's functionality.
 
-There are two types of events: manual-reset and automatic-reset. When an
-automatic-reset event is acquired via a wait function, its state is reset to
-unsignaled. Manual-reset events are not affected by wait functions.
+NTSYNC_IOC_WAIT_ANY is a vectored wait function similar to poll(). Unlike
+poll(), it "consumes" objects when they are signaled. For semaphores, this means
+decreasing one from the internal counter. At most one object can be consumed by
+this function.
 
-Whether the event is manual-reset, and its initial state, are specified at
-creation time.
+This wait/wake model is fundamentally different from that used anywhere else in
+the kernel, and for that reason ntsync does not use any existing infrastructure,
+such as futexes, kernel mutexes or semaphores, or wait_event().
+
+Up to 64 objects can be waited on at once. As soon as one is signaled, the
+object with the lowest index is consumed, and that index is returned via the
+"index" field.
+
+A timeout is supported. The timeout is passed as a u64 nanosecond value, which
+represents absolute time measured against either the MONOTONIC or REALTIME clock
+(controlled by the flags argument). If U64_MAX is passed, the ioctl waits
+indefinitely.
+
+This ioctl validates that all objects belong to the relevant device. This is not
+necessary for any technical reason related to NTSYNC_IOC_WAIT_ANY, but will be
+necessary for NTSYNC_IOC_WAIT_ALL introduced in the following patch.
+
+Two u32s of padding are left in the ntsync_wait_args structure; one will be used
+by a patch later in the series (which is split out to ease review).
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- drivers/misc/ntsync.c       | 61 +++++++++++++++++++++++++++++++++++++
- include/uapi/linux/ntsync.h |  7 +++++
- 2 files changed, 68 insertions(+)
+ drivers/misc/ntsync.c       | 250 ++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/ntsync.h |  16 +++
+ 2 files changed, 266 insertions(+)
 
 diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index 1e68f96bc2a6..3e125c805c00 100644
+index 3c2f743c58b0..c6f84a5fc8c0 100644
 --- a/drivers/misc/ntsync.c
 +++ b/drivers/misc/ntsync.c
-@@ -25,6 +25,7 @@
- enum ntsync_type {
- 	NTSYNC_TYPE_SEM,
- 	NTSYNC_TYPE_MUTEX,
-+	NTSYNC_TYPE_EVENT,
+@@ -6,11 +6,16 @@
+  */
+ 
+ #include <linux/anon_inodes.h>
++#include <linux/atomic.h>
+ #include <linux/file.h>
+ #include <linux/fs.h>
++#include <linux/hrtimer.h>
++#include <linux/ktime.h>
+ #include <linux/miscdevice.h>
+ #include <linux/module.h>
+ #include <linux/overflow.h>
++#include <linux/sched.h>
++#include <linux/sched/signal.h>
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <uapi/linux/ntsync.h>
+@@ -30,6 +35,8 @@ enum ntsync_type {
+  *
+  * Both rely on struct file for reference counting. Individual
+  * ntsync_obj objects take a reference to the device when created.
++ * Wait operations take a reference to each object being waited on for
++ * the duration of the wait.
+  */
+ 
+ struct ntsync_obj {
+@@ -47,12 +54,56 @@ struct ntsync_obj {
+ 			__u32 max;
+ 		} sem;
+ 	} u;
++
++	struct list_head any_waiters;
++};
++
++struct ntsync_q_entry {
++	struct list_head node;
++	struct ntsync_q *q;
++	struct ntsync_obj *obj;
++	__u32 index;
++};
++
++struct ntsync_q {
++	struct task_struct *task;
++	__u32 owner;
++
++	/*
++	 * Protected via atomic_try_cmpxchg(). Only the thread that wins the
++	 * compare-and-swap may actually change object states and wake this
++	 * task.
++	 */
++	atomic_t signaled;
++
++	__u32 count;
++	struct ntsync_q_entry entries[];
  };
  
- /*
-@@ -59,6 +60,10 @@ struct ntsync_obj {
- 			__u32 owner;
- 			bool ownerdead;
- 		} mutex;
-+		struct {
-+			bool manual;
-+			bool signaled;
-+		} event;
- 	} u;
+ struct ntsync_device {
+ 	struct file *file;
+ };
  
- 	/*
-@@ -143,6 +148,8 @@ static bool is_signaled(struct ntsync_obj *obj, __u32 owner)
- 		if (obj->u.mutex.owner && obj->u.mutex.owner != owner)
- 			return false;
- 		return obj->u.mutex.count < UINT_MAX;
-+	case NTSYNC_TYPE_EVENT:
-+		return obj->u.event.signaled;
- 	}
- 
- 	WARN(1, "bad object type %#x\n", obj->type);
-@@ -193,6 +200,10 @@ static void try_wake_all(struct ntsync_device *dev, struct ntsync_q *q,
- 				obj->u.mutex.count++;
- 				obj->u.mutex.owner = q->owner;
- 				break;
-+			case NTSYNC_TYPE_EVENT:
-+				if (!obj->u.event.manual)
-+					obj->u.event.signaled = false;
-+				break;
- 			}
- 		}
- 		wake_up_process(q->task);
-@@ -261,6 +272,27 @@ static void try_wake_any_mutex(struct ntsync_obj *mutex)
- 	}
- }
- 
-+static void try_wake_any_event(struct ntsync_obj *event)
++static void try_wake_any_sem(struct ntsync_obj *sem)
 +{
 +	struct ntsync_q_entry *entry;
 +
-+	lockdep_assert_held(&event->lock);
++	lockdep_assert_held(&sem->lock);
 +
-+	list_for_each_entry(entry, &event->any_waiters, node) {
++	list_for_each_entry(entry, &sem->any_waiters, node) {
 +		struct ntsync_q *q = entry->q;
 +		int signaled = -1;
 +
-+		if (!event->u.event.signaled)
++		if (!sem->u.sem.count)
 +			break;
 +
 +		if (atomic_try_cmpxchg(&q->signaled, &signaled, entry->index)) {
-+			if (!event->u.event.manual)
-+				event->u.event.signaled = false;
++			sem->u.sem.count--;
 +			wake_up_process(q->task);
 +		}
 +	}
@@ -154,81 +191,261 @@ index 1e68f96bc2a6..3e125c805c00 100644
  /*
   * Actually change the semaphore state, returning -EOVERFLOW if it is made
   * invalid.
-@@ -569,6 +601,30 @@ static int ntsync_create_mutex(struct ntsync_device *dev, void __user *argp)
- 	return put_user(fd, &user_args->mutex);
+@@ -88,6 +139,8 @@ static int ntsync_sem_post(struct ntsync_obj *sem, void __user *argp)
+ 
+ 	prev_count = sem->u.sem.count;
+ 	ret = post_sem_state(sem, args);
++	if (!ret)
++		try_wake_any_sem(sem);
+ 
+ 	spin_unlock(&sem->lock);
+ 
+@@ -141,6 +194,7 @@ static struct ntsync_obj *ntsync_alloc_obj(struct ntsync_device *dev,
+ 	obj->dev = dev;
+ 	get_file(dev->file);
+ 	spin_lock_init(&obj->lock);
++	INIT_LIST_HEAD(&obj->any_waiters);
+ 
+ 	return obj;
+ }
+@@ -191,6 +245,200 @@ static int ntsync_create_sem(struct ntsync_device *dev, void __user *argp)
+ 	return put_user(fd, &user_args->sem);
  }
  
-+static int ntsync_create_event(struct ntsync_device *dev, void __user *argp)
++static struct ntsync_obj *get_obj(struct ntsync_device *dev, int fd)
 +{
-+	struct ntsync_event_args __user *user_args = argp;
-+	struct ntsync_event_args args;
-+	struct ntsync_obj *event;
-+	int fd;
++	struct file *file = fget(fd);
++	struct ntsync_obj *obj;
++
++	if (!file)
++		return NULL;
++
++	if (file->f_op != &ntsync_obj_fops) {
++		fput(file);
++		return NULL;
++	}
++
++	obj = file->private_data;
++	if (obj->dev != dev) {
++		fput(file);
++		return NULL;
++	}
++
++	return obj;
++}
++
++static void put_obj(struct ntsync_obj *obj)
++{
++	fput(obj->file);
++}
++
++static int ntsync_schedule(const struct ntsync_q *q, const struct ntsync_wait_args *args)
++{
++	ktime_t timeout = ns_to_ktime(args->timeout);
++	clockid_t clock = CLOCK_MONOTONIC;
++	ktime_t *timeout_ptr;
++	int ret = 0;
++
++	timeout_ptr = (args->timeout == U64_MAX ? NULL : &timeout);
++
++	if (args->flags & NTSYNC_WAIT_REALTIME)
++		clock = CLOCK_REALTIME;
++
++	do {
++		if (signal_pending(current)) {
++			ret = -ERESTARTSYS;
++			break;
++		}
++
++		set_current_state(TASK_INTERRUPTIBLE);
++		if (atomic_read(&q->signaled) != -1) {
++			ret = 0;
++			break;
++		}
++		ret = schedule_hrtimeout_range_clock(timeout_ptr, 0, HRTIMER_MODE_ABS, clock);
++	} while (ret < 0);
++	__set_current_state(TASK_RUNNING);
++
++	return ret;
++}
++
++/*
++ * Allocate and initialize the ntsync_q structure, but do not queue us yet.
++ */
++static int setup_wait(struct ntsync_device *dev,
++		      const struct ntsync_wait_args *args,
++		      struct ntsync_q **ret_q)
++{
++	const __u32 count = args->count;
++	int fds[NTSYNC_MAX_WAIT_COUNT];
++	struct ntsync_q *q;
++	__u32 i, j;
++
++	if (!args->owner)
++		return -EINVAL;
++
++	if (args->pad || args->pad2 || (args->flags & ~NTSYNC_WAIT_REALTIME))
++		return -EINVAL;
++
++	if (args->count > NTSYNC_MAX_WAIT_COUNT)
++		return -EINVAL;
++
++	if (copy_from_user(fds, u64_to_user_ptr(args->objs),
++			   array_size(count, sizeof(*fds))))
++		return -EFAULT;
++
++	q = kmalloc(struct_size(q, entries, count), GFP_KERNEL);
++	if (!q)
++		return -ENOMEM;
++	q->task = current;
++	q->owner = args->owner;
++	atomic_set(&q->signaled, -1);
++	q->count = count;
++
++	for (i = 0; i < count; i++) {
++		struct ntsync_q_entry *entry = &q->entries[i];
++		struct ntsync_obj *obj = get_obj(dev, fds[i]);
++
++		if (!obj)
++			goto err;
++
++		entry->obj = obj;
++		entry->q = q;
++		entry->index = i;
++	}
++
++	*ret_q = q;
++	return 0;
++
++err:
++	for (j = 0; j < i; j++)
++		put_obj(q->entries[j].obj);
++	kfree(q);
++	return -EINVAL;
++}
++
++static void try_wake_any_obj(struct ntsync_obj *obj)
++{
++	switch (obj->type) {
++	case NTSYNC_TYPE_SEM:
++		try_wake_any_sem(obj);
++		break;
++	}
++}
++
++static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
++{
++	struct ntsync_wait_args args;
++	struct ntsync_q *q;
++	int signaled;
++	__u32 i;
++	int ret;
 +
 +	if (copy_from_user(&args, argp, sizeof(args)))
 +		return -EFAULT;
 +
-+	event = ntsync_alloc_obj(dev, NTSYNC_TYPE_EVENT);
-+	if (!event)
-+		return -ENOMEM;
-+	event->u.event.manual = args.manual;
-+	event->u.event.signaled = args.signaled;
-+	fd = ntsync_obj_get_fd(event);
-+	if (fd < 0) {
-+		kfree(event);
-+		return fd;
++	ret = setup_wait(dev, &args, &q);
++	if (ret < 0)
++		return ret;
++
++	/* queue ourselves */
++
++	for (i = 0; i < args.count; i++) {
++		struct ntsync_q_entry *entry = &q->entries[i];
++		struct ntsync_obj *obj = entry->obj;
++
++		spin_lock(&obj->lock);
++		list_add_tail(&entry->node, &obj->any_waiters);
++		spin_unlock(&obj->lock);
 +	}
 +
-+	return put_user(fd, &user_args->event);
++	/* check if we are already signaled */
++
++	for (i = 0; i < args.count; i++) {
++		struct ntsync_obj *obj = q->entries[i].obj;
++
++		if (atomic_read(&q->signaled) != -1)
++			break;
++
++		spin_lock(&obj->lock);
++		try_wake_any_obj(obj);
++		spin_unlock(&obj->lock);
++	}
++
++	/* sleep */
++
++	ret = ntsync_schedule(q, &args);
++
++	/* and finally, unqueue */
++
++	for (i = 0; i < args.count; i++) {
++		struct ntsync_q_entry *entry = &q->entries[i];
++		struct ntsync_obj *obj = entry->obj;
++
++		spin_lock(&obj->lock);
++		list_del(&entry->node);
++		spin_unlock(&obj->lock);
++
++		put_obj(obj);
++	}
++
++	signaled = atomic_read(&q->signaled);
++	if (signaled != -1) {
++		struct ntsync_wait_args __user *user_args = argp;
++
++		/* even if we caught a signal, we need to communicate success */
++		ret = 0;
++
++		if (put_user(signaled, &user_args->index))
++			ret = -EFAULT;
++	} else if (!ret) {
++		ret = -ETIMEDOUT;
++	}
++
++	kfree(q);
++	return ret;
 +}
 +
- static struct ntsync_obj *get_obj(struct ntsync_device *dev, int fd)
+ static int ntsync_char_open(struct inode *inode, struct file *file)
  {
- 	struct file *file = fget(fd);
-@@ -702,6 +758,9 @@ static void try_wake_any_obj(struct ntsync_obj *obj)
- 	case NTSYNC_TYPE_MUTEX:
- 		try_wake_any_mutex(obj);
- 		break;
-+	case NTSYNC_TYPE_EVENT:
-+		try_wake_any_event(obj);
-+		break;
- 	}
- }
- 
-@@ -890,6 +949,8 @@ static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
- 	void __user *argp = (void __user *)parm;
- 
+ 	struct ntsync_device *dev;
+@@ -222,6 +470,8 @@ static long ntsync_char_ioctl(struct file *file, unsigned int cmd,
  	switch (cmd) {
-+	case NTSYNC_IOC_CREATE_EVENT:
-+		return ntsync_create_event(dev, argp);
- 	case NTSYNC_IOC_CREATE_MUTEX:
- 		return ntsync_create_mutex(dev, argp);
  	case NTSYNC_IOC_CREATE_SEM:
+ 		return ntsync_create_sem(dev, argp);
++	case NTSYNC_IOC_WAIT_ANY:
++		return ntsync_wait_any(dev, argp);
+ 	default:
+ 		return -ENOIOCTLCMD;
+ 	}
 diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index 1bff8f19d6d9..0d133f2eaf0b 100644
+index dcfa38fdc93c..60ad414b5552 100644
 --- a/include/uapi/linux/ntsync.h
 +++ b/include/uapi/linux/ntsync.h
-@@ -22,6 +22,12 @@ struct ntsync_mutex_args {
- 	__u32 count;
+@@ -16,7 +16,23 @@ struct ntsync_sem_args {
+ 	__u32 max;
  };
  
-+struct ntsync_event_args {
-+	__u32 event;
-+	__u32 manual;
-+	__u32 signaled;
++#define NTSYNC_WAIT_REALTIME	0x1
++
++struct ntsync_wait_args {
++	__u64 timeout;
++	__u64 objs;
++	__u32 count;
++	__u32 owner;
++	__u32 index;
++	__u32 flags;
++	__u32 pad;
++	__u32 pad2;
 +};
 +
- #define NTSYNC_WAIT_REALTIME	0x1
- 
- struct ntsync_wait_args {
-@@ -41,6 +47,7 @@ struct ntsync_wait_args {
- #define NTSYNC_IOC_WAIT_ANY		_IOWR('N', 0x82, struct ntsync_wait_args)
- #define NTSYNC_IOC_WAIT_ALL		_IOWR('N', 0x83, struct ntsync_wait_args)
- #define NTSYNC_IOC_CREATE_MUTEX		_IOWR('N', 0x84, struct ntsync_sem_args)
-+#define NTSYNC_IOC_CREATE_EVENT		_IOWR('N', 0x87, struct ntsync_event_args)
++#define NTSYNC_MAX_WAIT_COUNT 64
++
+ #define NTSYNC_IOC_CREATE_SEM		_IOWR('N', 0x80, struct ntsync_sem_args)
++#define NTSYNC_IOC_WAIT_ANY		_IOWR('N', 0x82, struct ntsync_wait_args)
  
  #define NTSYNC_IOC_SEM_POST		_IOWR('N', 0x81, __u32)
- #define NTSYNC_IOC_MUTEX_UNLOCK		_IOWR('N', 0x85, struct ntsync_mutex_args)
+ 
 -- 
 2.43.0
 
