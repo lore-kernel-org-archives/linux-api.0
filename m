@@ -1,100 +1,69 @@
-Received: from forward201b.mail.yandex.net (forward201b.mail.yandex.net [178.154.239.156])
+Received: from forward501a.mail.yandex.net (forward501a.mail.yandex.net [178.154.239.81])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9373037171;
-	Tue, 23 Apr 2024 22:47:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.154.239.156
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CECFE18B04;
+	Tue, 23 Apr 2024 22:52:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.154.239.81
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1713912475; cv=none; b=HfnmoqPtEH/tTuSEYmyz92CfrgVAJyZpGZ4CwPnMWRMeVZZ7TZAsqqkz3TY2sC28sD4ISmS+uuPVqslw+GIIds/PNb3gP+QlXD22w6tQBx5aNbAl2lZ/bZVnb0SEFSGk0mrRb1i9pD/KZgX3sTohswr23QCcB5quqH48cK0CiOE=
+	t=1713912779; cv=none; b=uQtnQ2AjQMS/CxYSD2L0SK2BLcmLihoPQI4WywIoRIHmqfZVlj7NGxU3dFnPA4/amBLHiHsD40YseB7slskM1Zak2PfJHrdGpDZa3tZFhS82bI9BkKUOcQJtqov8QfhU4VljMhB4s3LzKY7+6n/fcilbD7hddH1BqUrYqNdAdGY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1713912475; c=relaxed/simple;
-	bh=kGO8taly3zjYFLJkCPrWOp2pJAZjOIXOxrX3rQi33GI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=Ba+otHCpY1zi7O0BoaZcbcv9MCQ4xqlty8jRwmz+nhAIQENaKbs4LOAChS9U2BEhkruA1wkew5I5L4BiLisbf+9LdwCd0HAUV0QUUDFZq/RN46JosGDE1yt9+3lUd/CUJXofhbxu2snFzgReh251m30mrwK5Adif5MI3wYLA4Mw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru; spf=pass smtp.mailfrom=yandex.ru; dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b=nV/7DAky; arc=none smtp.client-ip=178.154.239.156
+	s=arc-20240116; t=1713912779; c=relaxed/simple;
+	bh=gEADGKBqJj3ZAJettCo9099wAMmz2xF0IxZ6PXZbvXM=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=ZlzjFdfiXc57MWjYSxqyQDUgWzMQa+SAvNrPuC3QJG9HRPtbj9fh+hyK6t3V/i1+uebadvJm/XLNJinbiiFaE+WiO3B+evcETISGEFN9AkyCFdPfyjZW4gDNuaF26Nsfrj6l971R+D7zjea/yH/ouW+/5ViTSSbKmSxbyEO9yPA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru; spf=pass smtp.mailfrom=yandex.ru; dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b=rozgHBGe; arc=none smtp.client-ip=178.154.239.81
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=yandex.ru
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=yandex.ru
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b="nV/7DAky"
-Received: from forward102c.mail.yandex.net (forward102c.mail.yandex.net [IPv6:2a02:6b8:c03:500:1:45:d181:d102])
-	by forward201b.mail.yandex.net (Yandex) with ESMTPS id 375686735E;
-	Wed, 24 Apr 2024 01:47:50 +0300 (MSK)
-Received: from mail-nwsmtp-smtp-production-main-57.myt.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-57.myt.yp-c.yandex.net [IPv6:2a02:6b8:c12:3624:0:640:caf8:0])
-	by forward102c.mail.yandex.net (Yandex) with ESMTPS id 6FDB86003C;
-	Wed, 24 Apr 2024 01:47:41 +0300 (MSK)
-Received: by mail-nwsmtp-smtp-production-main-57.myt.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id dlTUXjFh6mI0-nkyakC7O;
-	Wed, 24 Apr 2024 01:47:40 +0300
+	dkim=pass (1024-bit key) header.d=yandex.ru header.i=@yandex.ru header.b="rozgHBGe"
+Received: from mail-nwsmtp-smtp-production-main-59.iva.yp-c.yandex.net (mail-nwsmtp-smtp-production-main-59.iva.yp-c.yandex.net [IPv6:2a02:6b8:c0c:1a14:0:640:8120:0])
+	by forward501a.mail.yandex.net (Yandex) with ESMTPS id CC8D86180D;
+	Wed, 24 Apr 2024 01:52:48 +0300 (MSK)
+Received: by mail-nwsmtp-smtp-production-main-59.iva.yp-c.yandex.net (smtp/Yandex) with ESMTPSA id jqTm45NoKmI0-LxKvboFV;
+	Wed, 24 Apr 2024 01:52:47 +0300
 X-Yandex-Fwd: 1
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yandex.ru; s=mail;
-	t=1713912460; bh=cacnpBEsGFJi0JFbY7VQqOugKerOzw77/aAnDNnT0yk=;
-	h=Message-ID:Date:Cc:Subject:To:From;
-	b=nV/7DAkyNizRFyyXlCjwZVzVaf2NdYbBFqhl9r6VL4hNCHCv1LFM4CcKgGMwSz3z5
-	 mfo217WNDAsAdklkuN8o5sC/jlr94agFvSIZM+89/XuSs+B3CzFTiLLitnFdZ9DAvo
-	 IKKiiNhiDLC9BIHbdLjgzW7kizNbg04iATZYNFEE=
-Authentication-Results: mail-nwsmtp-smtp-production-main-57.myt.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
-From: Stas Sergeev <stsp2@yandex.ru>
-To: linux-kernel@vger.kernel.org
-Cc: Stas Sergeev <stsp2@yandex.ru>,
-	Stefan Metzmacher <metze@samba.org>,
-	Eric Biederman <ebiederm@xmission.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andy Lutomirski <luto@kernel.org>,
-	Christian Brauner <brauner@kernel.org>,
-	Jan Kara <jack@suse.cz>,
-	Jeff Layton <jlayton@kernel.org>,
-	Chuck Lever <chuck.lever@oracle.com>,
-	Alexander Aring <alex.aring@gmail.com>,
-	linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	=?UTF-8?q?Christian=20G=C3=B6ttsche?= <cgzones@googlemail.com>
-Subject: [PATCH v3 0/2] implement OA2_INHERIT_CRED flag for openat2()
-Date: Wed, 24 Apr 2024 01:46:13 +0300
-Message-ID: <20240423224615.298045-1-stsp2@yandex.ru>
-X-Mailer: git-send-email 2.44.0
+	t=1713912767; bh=frtj/OWfuK2l0yauuwxOq5Ja3FZYzGG8tIdmxFP5wxI=;
+	h=From:In-Reply-To:Cc:Date:References:To:Subject:Message-ID;
+	b=rozgHBGehcqd87/IxWKXLRd9g5vTbAA3lVsgEiB792xg6wC334pZBnp+3OjEKgz7b
+	 guU3natDtp2HyifDgFpl7coJBqwG9lbleKAaDfZjzr4fIE9rQ9OZ/pxI8S4DA3OaEz
+	 fo0ZnqwGYKldFBmH8cV96w6a6FI9GZYoMEchv2ks=
+Authentication-Results: mail-nwsmtp-smtp-production-main-59.iva.yp-c.yandex.net; dkim=pass header.i=@yandex.ru
+Message-ID: <3a6eccbd-263d-4a54-a35f-c16f60dc0a11@yandex.ru>
+Date: Wed, 24 Apr 2024 01:52:45 +0300
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 0/2] implement OA2_INHERIT_CRED flag for openat2()
+Content-Language: en-US
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: linux-kernel@vger.kernel.org, Stefan Metzmacher <metze@samba.org>,
+ Eric Biederman <ebiederm@xmission.com>,
+ Alexander Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>,
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+ Jeff Layton <jlayton@kernel.org>, Chuck Lever <chuck.lever@oracle.com>,
+ Alexander Aring <alex.aring@gmail.com>, linux-fsdevel@vger.kernel.org,
+ linux-api@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>,
+ =?UTF-8?Q?Christian_G=C3=B6ttsche?= <cgzones@googlemail.com>
+References: <20240423110148.13114-1-stsp2@yandex.ru>
+ <4D2A1543-273F-417F-921B-E9F994FBF2E8@amacapital.net>
+From: stsp <stsp2@yandex.ru>
+In-Reply-To: <4D2A1543-273F-417F-921B-E9F994FBF2E8@amacapital.net>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-This patch-set implements the OA2_INHERIT_CRED flag for openat2() syscall.
-It is needed to perform an open operation with the creds that were in
-effect when the dir_fd was opened. This allows the process to pre-open
-some dirs and switch eUID (and other UIDs/GIDs) to the less-privileged
-user, while still retaining the possibility to open/create files within
-the pre-opened directory set.
+23.04.2024 19:44, Andy Lutomirski пишет:
+> Also, there are lots of ways that f_cred could be relevant: fsuid/fsgid, effective capabilities and security labels. And it gets more complex if this ever gets extended to support connecting or sending to a socket or if someone opens a device node.  Does CAP_SYS_ADMIN carry over?
+I posted a v3 where I only override
+fsuid, fsgid and group_info.
+Capabilities and whatever else are
+not overridden to avoid security risks.
+Does this address your concern?
 
-The more detailed description (including security considerations)
-is available in the log messages of individual patches.
-
-Changes in v3:
-- partially revert v2 changes to avoid overriding capabilities.
-  Only the bare minimum is overridden: fsuid, fsgid and group_info.
-  Document the fact the full cred override is unwanted, as it may
-  represent an unneeded security risk.
-
-Changes in v2:
-- capture full struct cred instead of just fsuid/fsgid.
-  Suggested by Stefan Metzmacher <metze@samba.org>
-
-CC: Stefan Metzmacher <metze@samba.org>
-CC: Eric Biederman <ebiederm@xmission.com>
-CC: Alexander Viro <viro@zeniv.linux.org.uk>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Christian Brauner <brauner@kernel.org>
-CC: Jan Kara <jack@suse.cz>
-CC: Jeff Layton <jlayton@kernel.org>
-CC: Chuck Lever <chuck.lever@oracle.com>
-CC: Alexander Aring <alex.aring@gmail.com>
-CC: linux-fsdevel@vger.kernel.org
-CC: linux-kernel@vger.kernel.org
-CC: linux-api@vger.kernel.org
-CC: Paolo Bonzini <pbonzini@redhat.com>
-CC: Christian Göttsche <cgzones@googlemail.com>
-
--- 
-2.44.0
-
+Note that I think your other concerns
+are already addressed, I just added a
+bit more of a description now.
