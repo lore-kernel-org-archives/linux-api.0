@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B57C745E4;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9870F74C08;
 	Sun, 19 May 2024 20:25:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716150320; cv=none; b=OAUJ3BNE/Cnwuac6MQFLRagwKHSx2C4orkS3fPG0HkWGioX9k48r3bMSqnRhZ+slMa0htfg//TK7B38JT9R3ot6URG9xQEEZo1kKZnmwmJ6FtZ+Z4Ond6qCcyVhVz38DqiQMKjeJmrr7rq2+3OwMX8gHNmtzoBClTidPH8Q/0Eo=
+	t=1716150320; cv=none; b=QS0IaCj+D8EignYaUdlFgcLHK8Hw0/BppiQm4uddY9BpSth9F6P64Jedy526ojrq1CAti+2wbrFZDdUKJ4GlIV5mFiyIy9S+8JTTjYZZ+GvC/MF9ob/W2DEf/7T8i55It/4E5YCHLJDH3rAfrKpE3sDJykEdMovt2IQUT86tyec=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1716150320; c=relaxed/simple;
-	bh=/SCsDcIFIj64ZDboquiqjhZR9XtURfbTg0qdg0iowEw=;
+	bh=RxzO+9cowicVFB0C8g1tfr/5wcAsZKu2OdxghkIxD54=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=h0H75kSWXGy2bZBNAn8xY7V1C+FkdbZVdK1fGmTCeQ0nvNTGlRKFjwmhr62rKk7WLa3WirJKCZzAOmKqRHBhb7DVwxlQsEoccyj2MQQh8sZgueBU/726eBo9I2CWF0LjJoLV5akpZ0MEn1ftsFb5BKb9JDMK2SU3wEDAScUeV9k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=kA6oV0pP; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=Ss6xWPYx/r8cQx2vENq0aiDb20Ni0ZrfV7I3RoI2a2ogEMMcEnRuEGFzpMHZ+PLstI3KBsHl//m7hLYN7gFg7uaigzhMF5dgLYpB9zrf3dUZVY4kB0Em85FddlbAmAfiIPexDAAF+GlhJBom99TBP4WV8VFmLtMLjnAWPBgge80=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Am5lCtnq; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="kA6oV0pP"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Am5lCtnq"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=mTVrQMAIEqBosG3pkv+IJR4y3PjjTGcGSmKq26KRI50=; b=kA6oV0pPnmyUY0ozmTktPqXeCs
-	iTAaLMHNkZCN609cyPq06/6QDlZ43mLiNcz+jQmlZucRj/0Gl1p7x+9mZ6YoOcgtGYE2jWPZ3SZ+m
-	PeFs7iiMUMlBBTOZE1W3KzcOZ0fkzEvmUJjr5+S85ET4CYT2kk00F/JOM8NtpAWj2Ex0wCqPf+V4I
-	L9jYmYEOwCopkbZdhyH1yhpc3l9qXrlKCibqt5EsS7WZqaHn+/zaLOXlTQzIR1veR36COdHavixO4
-	oZZ9YLjgktEhyd9ECa9+qDuOPCB3Tclmv7cGKKjAcWpO2coGz0cu2gQE1LhKNggTHIE/SYmS0xHGx
-	wkfJ2zfw==;
+	bh=oYv/7gpkTd7m3dOtwqdlHd+jUV1xxytJ6Ebv/6cbmco=; b=Am5lCtnqztGBM28U4zpjs03U+s
+	jaw2gc0+azG93hztW+pTRaS3V9N766l8LpYdgKcYoyIapxJ+Pd5edMvcbQmFwEDzs8gnTMfCXeQTB
+	CV3kMqQJhYqSw9rkxb4onIkWtFB1FxbU3sz3SPjljhiEAnVtJekyNgadmLdTOH+DWLvD6yfDtdroJ
+	zf+aBr23Q/xn7fovimaY79ZMIIKcHsQzWC1OBywtk09gzgDZCPPp6zexaRrEFsRpeJ1BhATLxyvvO
+	rRIUCce818lHkNu0POOX4B/37d4AprBoc6ypEQV8Wn1suAx2sJ20cdtjwNs6A/7ho/u1Od0X2csx2
+	L5xwUnFg==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1s8n5b-008wIn-2b;
-	Sun, 19 May 2024 15:25:03 -0500
+	id 1s8n5i-008wIn-1d;
+	Sun, 19 May 2024 15:25:10 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -51,9 +51,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Waiman Long <longman@redhat.com>,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v5 05/28] ntsync: Introduce NTSYNC_IOC_MUTEX_KILL.
-Date: Sun, 19 May 2024 15:24:31 -0500
-Message-ID: <20240519202454.1192826-6-zfigura@codeweavers.com>
+Subject: [PATCH v5 25/28] selftests: ntsync: Add a stress test for contended waits.
+Date: Sun, 19 May 2024 15:24:51 -0500
+Message-ID: <20240519202454.1192826-26-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240519202454.1192826-1-zfigura@codeweavers.com>
 References: <20240519202454.1192826-1-zfigura@codeweavers.com>
@@ -65,161 +65,101 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-This does not correspond to any NT syscall. Rather, when a thread dies, it
-should be called by the NT emulator for each mutex, with the TID of the dying
-thread.
+Test a more realistic usage pattern, and one with heavy contention, in order to
+actually exercise ntsync's internal synchronization.
 
-NT mutexes are robust (in the pthread sense). When an NT thread dies, any
-mutexes it owned are immediately released. Acquisition of those mutexes by other
-threads will return a special value indicating that the mutex was abandoned,
-like EOWNERDEAD returned from pthread_mutex_lock(), and EOWNERDEAD is indeed
-used here for that purpose.
+This test has several threads in a tight loop acquiring a mutex, modifying some
+shared data, and then releasing the mutex. At the end we check if the data is
+consistent.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- drivers/misc/ntsync.c       | 61 +++++++++++++++++++++++++++++++++++--
- include/uapi/linux/ntsync.h |  1 +
- 2 files changed, 60 insertions(+), 2 deletions(-)
+ .../testing/selftests/drivers/ntsync/ntsync.c | 74 +++++++++++++++++++
+ 1 file changed, 74 insertions(+)
 
-diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index f00af9b15164..5aaf9dad76b6 100644
---- a/drivers/misc/ntsync.c
-+++ b/drivers/misc/ntsync.c
-@@ -59,6 +59,7 @@ struct ntsync_obj {
- 		struct {
- 			__u32 count;
- 			pid_t owner;
-+			bool ownerdead;
- 		} mutex;
- 	} u;
- 
-@@ -107,6 +108,7 @@ struct ntsync_q {
- 	atomic_t signaled;
- 
- 	bool all;
-+	bool ownerdead;
- 	__u32 count;
- 	struct ntsync_q_entry entries[];
- };
-@@ -275,6 +277,9 @@ static void try_wake_all(struct ntsync_device *dev, struct ntsync_q *q,
- 				obj->u.sem.count--;
- 				break;
- 			case NTSYNC_TYPE_MUTEX:
-+				if (obj->u.mutex.ownerdead)
-+					q->ownerdead = true;
-+				obj->u.mutex.ownerdead = false;
- 				obj->u.mutex.count++;
- 				obj->u.mutex.owner = q->owner;
- 				break;
-@@ -338,6 +343,9 @@ static void try_wake_any_mutex(struct ntsync_obj *mutex)
- 			continue;
- 
- 		if (atomic_try_cmpxchg(&q->signaled, &signaled, entry->index)) {
-+			if (mutex->u.mutex.ownerdead)
-+				q->ownerdead = true;
-+			mutex->u.mutex.ownerdead = false;
- 			mutex->u.mutex.count++;
- 			mutex->u.mutex.owner = q->owner;
- 			wake_up_process(q->task);
-@@ -447,6 +455,52 @@ static int ntsync_mutex_unlock(struct ntsync_obj *mutex, void __user *argp)
- 	return ret;
+diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
+index 968874d7e325..5fa2c9a0768c 100644
+--- a/tools/testing/selftests/drivers/ntsync/ntsync.c
++++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
+@@ -1330,4 +1330,78 @@ TEST(alert_all)
+ 	close(fd);
  }
  
-+/*
-+ * Actually change the mutex state to mark its owner as dead,
-+ * returning -EPERM if not the owner.
-+ */
-+static int kill_mutex_state(struct ntsync_obj *mutex, __u32 owner)
++#define STRESS_LOOPS 10000
++#define STRESS_THREADS 4
++
++static unsigned int stress_counter;
++static int stress_device, stress_start_event, stress_mutex;
++
++static void *stress_thread(void *arg)
 +{
-+	ntsync_assert_held(mutex);
-+
-+	if (mutex->u.mutex.owner != owner)
-+		return -EPERM;
-+
-+	mutex->u.mutex.ownerdead = true;
-+	mutex->u.mutex.owner = 0;
-+	mutex->u.mutex.count = 0;
-+	return 0;
-+}
-+
-+static int ntsync_mutex_kill(struct ntsync_obj *mutex, void __user *argp)
-+{
-+	struct ntsync_device *dev = mutex->dev;
-+	__u32 owner;
-+	bool all;
++	struct ntsync_wait_args wait_args = {0};
++	__u32 index, count, i;
 +	int ret;
 +
-+	if (get_user(owner, (__u32 __user *)argp))
-+		return -EFAULT;
-+	if (!owner)
-+		return -EINVAL;
++	wait_args.timeout = UINT64_MAX;
++	wait_args.count = 1;
++	wait_args.objs = (uintptr_t)&stress_start_event;
++	wait_args.owner = gettid();
++	wait_args.index = 0xdeadbeef;
 +
-+	if (mutex->type != NTSYNC_TYPE_MUTEX)
-+		return -EINVAL;
++	ioctl(stress_device, NTSYNC_IOC_WAIT_ANY, &wait_args);
 +
-+	all = ntsync_lock_obj(dev, mutex);
++	wait_args.objs = (uintptr_t)&stress_mutex;
 +
-+	ret = kill_mutex_state(mutex, owner);
-+	if (!ret) {
-+		if (all)
-+			try_wake_all_obj(dev, mutex);
-+		try_wake_any_mutex(mutex);
++	for (i = 0; i < STRESS_LOOPS; ++i) {
++		ioctl(stress_device, NTSYNC_IOC_WAIT_ANY, &wait_args);
++
++		++stress_counter;
++
++		unlock_mutex(stress_mutex, wait_args.owner, &count);
 +	}
 +
-+	ntsync_unlock_obj(dev, mutex, all);
-+
-+	return ret;
++	return NULL;
 +}
 +
- static int ntsync_obj_release(struct inode *inode, struct file *file)
- {
- 	struct ntsync_obj *obj = file->private_data;
-@@ -468,6 +522,8 @@ static long ntsync_obj_ioctl(struct file *file, unsigned int cmd,
- 		return ntsync_sem_post(obj, argp);
- 	case NTSYNC_IOC_MUTEX_UNLOCK:
- 		return ntsync_mutex_unlock(obj, argp);
-+	case NTSYNC_IOC_MUTEX_KILL:
-+		return ntsync_mutex_kill(obj, argp);
- 	default:
- 		return -ENOIOCTLCMD;
- 	}
-@@ -659,6 +715,7 @@ static int setup_wait(struct ntsync_device *dev,
- 	q->owner = args->owner;
- 	atomic_set(&q->signaled, -1);
- 	q->all = all;
-+	q->ownerdead = false;
- 	q->count = count;
- 
- 	for (i = 0; i < count; i++) {
-@@ -767,7 +824,7 @@ static int ntsync_wait_any(struct ntsync_device *dev, void __user *argp)
- 		struct ntsync_wait_args __user *user_args = argp;
- 
- 		/* even if we caught a signal, we need to communicate success */
--		ret = 0;
-+		ret = q->ownerdead ? -EOWNERDEAD : 0;
- 
- 		if (put_user(signaled, &user_args->index))
- 			ret = -EFAULT;
-@@ -848,7 +905,7 @@ static int ntsync_wait_all(struct ntsync_device *dev, void __user *argp)
- 		struct ntsync_wait_args __user *user_args = argp;
- 
- 		/* even if we caught a signal, we need to communicate success */
--		ret = 0;
-+		ret = q->ownerdead ? -EOWNERDEAD : 0;
- 
- 		if (put_user(signaled, &user_args->index))
- 			ret = -EFAULT;
-diff --git a/include/uapi/linux/ntsync.h b/include/uapi/linux/ntsync.h
-index a633db34f284..d7996180c1d2 100644
---- a/include/uapi/linux/ntsync.h
-+++ b/include/uapi/linux/ntsync.h
-@@ -43,5 +43,6 @@ struct ntsync_wait_args {
- 
- #define NTSYNC_IOC_SEM_POST		_IOWR('N', 0x81, __u32)
- #define NTSYNC_IOC_MUTEX_UNLOCK		_IOWR('N', 0x85, struct ntsync_mutex_args)
-+#define NTSYNC_IOC_MUTEX_KILL		_IOW ('N', 0x86, __u32)
- 
- #endif
++TEST(stress_wait)
++{
++	struct ntsync_event_args event_args;
++	struct ntsync_mutex_args mutex_args;
++	pthread_t threads[STRESS_THREADS];
++	__u32 signaled, i;
++	int ret;
++
++	stress_device = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
++	ASSERT_LE(0, stress_device);
++
++	mutex_args.owner = 0;
++	mutex_args.count = 0;
++	ret = ioctl(stress_device, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(0, ret);
++	stress_mutex = mutex_args.mutex;
++
++	event_args.manual = 1;
++	event_args.signaled = 0;
++	ret = ioctl(stress_device, NTSYNC_IOC_CREATE_EVENT, &event_args);
++	EXPECT_EQ(0, ret);
++	stress_start_event = event_args.event;
++
++	for (i = 0; i < STRESS_THREADS; ++i)
++		pthread_create(&threads[i], NULL, stress_thread, NULL);
++
++	ret = ioctl(stress_start_event, NTSYNC_IOC_EVENT_SET, &signaled);
++	EXPECT_EQ(0, ret);
++
++	for (i = 0; i < STRESS_THREADS; ++i) {
++		ret = pthread_join(threads[i], NULL);
++		EXPECT_EQ(0, ret);
++	}
++
++	EXPECT_EQ(STRESS_LOOPS * STRESS_THREADS, stress_counter);
++
++	close(stress_start_event);
++	close(stress_mutex);
++	close(stress_device);
++}
++
+ TEST_HARNESS_MAIN
 -- 
 2.43.0
 
