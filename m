@@ -1,35 +1,35 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D0D2B6D1B9;
-	Sun, 19 May 2024 20:25:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82A2171B52;
+	Sun, 19 May 2024 20:25:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1716150319; cv=none; b=LFEjjvGoBCnr/3RgpMyb8z48TYtWgZItHQQ2/pJdR3jLlJ+AVmL1hH0or1YIOkiGxYJr5n/HX3ZkllCr4L0mqsDMj09746lPeOkLsL81O1X+/An3PAwfWl0MFfOMZp9GZaaxRuUIsKSIokOoZxUwmKaLFem/PAIhV63ZchOBApA=
+	t=1716150319; cv=none; b=Ihz8YHw5c0JS3S0XZBMU+BdnuUz8tKXQ3um8KXX1ef9jz6Li1TqZzSbduD0I3ok+yfshg+4ASDPWBLSUnynGwyaz9OR9uIN8If1Kx8cKKbZKGCvND81Xt4j2zvp0ibnRQ5h4W9oEcLOkB/quH2kgDCJflJa9356044bGodks3lo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1716150319; c=relaxed/simple;
-	bh=Ab69AfMl5s2HGKThTzcfia+0ARaIy7ZHxeWA1a+xzg0=;
+	bh=FzJOOSC9UUHrWRcI7UAQtasAek/KIUNP0SrrKFAkeFc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=m2aCEWr+6XS64+rwDg8vyXZuu/aOL/WVjULq7/kuJQNaRa+lXHuTnVq9K0YHThTqZ+S6pGzYKrTClWsUI9AloTjUHsYA63rbzB6dT3QL+mF6w8gXRrFzAXEnO58i9o6Ah5y5UHq+Q0S7q2s4cMZPrdMdnfliGT8qXiOcz0aKgpc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=d+f9ku/Y; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=pebZen4N4PpTKBFg+uV+bHsFmSOw3fpSc9mQIjlkuaRmoLP6KGtI2cAOssOqGTUf6A8v2zl0coW4/+KXpC/rWp5S0WXhnbQyt6VlocehL312pUSXG7xZ/lsm5LXfzUjoKi6UrFGzX5YBJVJTWSEe5+TH9hZcYoiF9GOdOLMaoS4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=QCbrF+CJ; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="d+f9ku/Y"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="QCbrF+CJ"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Message-ID:Date:Subject:Cc:To:From:Sender;
-	bh=VdK2oeTVoe5yhUMrLM100xnYjqFCb6ObBf63KIgk/7I=; b=d+f9ku/Yu2E+VySvadD8hCvF6W
-	MjXAr8xwMQeB/0y7/g/HQC+U3ui+x0bybvV27lgoJRdvS+yCkrgMtSkdmRTznIS/yHB9YTSWGKbGn
-	dZgBwqm+mUXhTcuRCrnuULdEHwgmvGx0OkTNSxWszJNGe5kpujK2ewNz5qic7TZYPdzQnSBEKBzCs
-	Gg/ZC3k6hF6Q9S0HeDdO2wwG2pEI5qVS9J2ZngMjPYRn4tMJxH5myLAqzEpWed0VaAJ07u1zMisEL
-	LOq14ItTYtgHgCHpe2NQgdiNNp6cxuNvpD3uFJyWEWPx/iAT8ikgxk4Zpeqv/BDHDjzHcy/x4b3aN
-	mOmp535Q==;
+	bh=mD7kGOKMw9/SgIhNijECJqDpS2n0gwPnb6QPtQ/fOO8=; b=QCbrF+CJT8vL3VIl0W0pStHPvH
+	mLaVYIbWbk7zFe3FuiEMvC3CzWpx6hu/UvNdVAFfV68nGuPT+Yqu68YBDtHk5mEkh+t0F6RJfYLDg
+	9WjfHLVnhVyFh4vWKxkUs64mIE+FJ9qMvjGPoLvEKkz8bEIi0n0NFGpmLqC0AdB5tRoT4hAjFCSDs
+	ou15sT9aG5nS1uos6ZnISFEc04h0u6XdzbjrM4Bvbjm9Qvgpg11UQnfktykvjsZfKV4qoGncpG78/
+	VLWEX+ZDYgGST6CUDtJx6/uG1k+7Ke6ZMb76aXtnK7O2VrDwEmk0Mt702nHQDNpR4ZjnrHuPblFN1
+	tZueIiLw==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1s8n5j-008wIn-0W;
-	Sun, 19 May 2024 15:25:11 -0500
+	id 1s8n5h-008wIn-1U;
+	Sun, 19 May 2024 15:25:09 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -51,9 +51,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Waiman Long <longman@redhat.com>,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v5 26/28] maintainers: Add an entry for ntsync.
-Date: Sun, 19 May 2024 15:24:52 -0500
-Message-ID: <20240519202454.1192826-27-zfigura@codeweavers.com>
+Subject: [PATCH v5 24/28] selftests: ntsync: Add some tests for wakeup signaling via alerts.
+Date: Sun, 19 May 2024 15:24:50 -0500
+Message-ID: <20240519202454.1192826-25-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20240519202454.1192826-1-zfigura@codeweavers.com>
 References: <20240519202454.1192826-1-zfigura@codeweavers.com>
@@ -65,33 +65,114 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add myself as maintainer, supported by CodeWeavers.
+Expand the alert tests to cover alerting a thread mid-wait, to test that the
+relevant scheduling logic works correctly.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- MAINTAINERS | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ .../testing/selftests/drivers/ntsync/ntsync.c | 62 +++++++++++++++++++
+ 1 file changed, 62 insertions(+)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index c6dbde10bfc1..c9c9f1d98dd6 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -15748,6 +15748,15 @@ T:	git https://github.com/Paragon-Software-Group/linux-ntfs3.git
- F:	Documentation/filesystems/ntfs3.rst
- F:	fs/ntfs3/
+diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
+index 5465a16d38b3..968874d7e325 100644
+--- a/tools/testing/selftests/drivers/ntsync/ntsync.c
++++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
+@@ -1113,9 +1113,12 @@ TEST(wake_all)
+ TEST(alert_any)
+ {
+ 	struct ntsync_event_args event_args = {0};
++	struct ntsync_wait_args wait_args = {0};
+ 	struct ntsync_sem_args sem_args = {0};
+ 	__u32 index, count, signaled;
++	struct wait_args thread_args;
+ 	int objs[2], fd, ret;
++	pthread_t thread;
  
-+NTSYNC SYNCHRONIZATION PRIMITIVE DRIVER
-+M:	Elizabeth Figura <zfigura@codeweavers.com>
-+L:	wine-devel@winehq.org
-+S:	Supported
-+F:	Documentation/userspace-api/ntsync.rst
-+F:	drivers/misc/ntsync.c
-+F:	include/uapi/linux/ntsync.h
-+F:	tools/testing/selftests/drivers/ntsync/
+ 	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
+ 	ASSERT_LE(0, fd);
+@@ -1163,6 +1166,34 @@ TEST(alert_any)
+ 	EXPECT_EQ(0, ret);
+ 	EXPECT_EQ(2, index);
+ 
++	/* test wakeup via alert */
 +
- NUBUS SUBSYSTEM
- M:	Finn Thain <fthain@linux-m68k.org>
- L:	linux-m68k@lists.linux-m68k.org
++	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_RESET, &signaled);
++	EXPECT_EQ(0, ret);
++
++	wait_args.timeout = get_abs_timeout(1000);
++	wait_args.objs = (uintptr_t)objs;
++	wait_args.count = 2;
++	wait_args.owner = 123;
++	wait_args.index = 0xdeadbeef;
++	wait_args.alert = event_args.event;
++	thread_args.fd = fd;
++	thread_args.args = &wait_args;
++	thread_args.request = NTSYNC_IOC_WAIT_ANY;
++	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
++	EXPECT_EQ(0, ret);
++
++	ret = wait_for_thread(thread, 100);
++	EXPECT_EQ(ETIMEDOUT, ret);
++
++	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_SET, &signaled);
++	EXPECT_EQ(0, ret);
++
++	ret = wait_for_thread(thread, 100);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, thread_args.ret);
++	EXPECT_EQ(2, wait_args.index);
++
+ 	close(event_args.event);
+ 
+ 	/* test with an auto-reset event */
+@@ -1199,9 +1230,12 @@ TEST(alert_any)
+ TEST(alert_all)
+ {
+ 	struct ntsync_event_args event_args = {0};
++	struct ntsync_wait_args wait_args = {0};
+ 	struct ntsync_sem_args sem_args = {0};
++	struct wait_args thread_args;
+ 	__u32 index, count, signaled;
+ 	int objs[2], fd, ret;
++	pthread_t thread;
+ 
+ 	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
+ 	ASSERT_LE(0, fd);
+@@ -1235,6 +1269,34 @@ TEST(alert_all)
+ 	EXPECT_EQ(0, ret);
+ 	EXPECT_EQ(2, index);
+ 
++	/* test wakeup via alert */
++
++	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_RESET, &signaled);
++	EXPECT_EQ(0, ret);
++
++	wait_args.timeout = get_abs_timeout(1000);
++	wait_args.objs = (uintptr_t)objs;
++	wait_args.count = 2;
++	wait_args.owner = 123;
++	wait_args.index = 0xdeadbeef;
++	wait_args.alert = event_args.event;
++	thread_args.fd = fd;
++	thread_args.args = &wait_args;
++	thread_args.request = NTSYNC_IOC_WAIT_ALL;
++	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
++	EXPECT_EQ(0, ret);
++
++	ret = wait_for_thread(thread, 100);
++	EXPECT_EQ(ETIMEDOUT, ret);
++
++	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_SET, &signaled);
++	EXPECT_EQ(0, ret);
++
++	ret = wait_for_thread(thread, 100);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, thread_args.ret);
++	EXPECT_EQ(2, wait_args.index);
++
+ 	close(event_args.event);
+ 
+ 	/* test with an auto-reset event */
 -- 
 2.43.0
 
