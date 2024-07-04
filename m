@@ -1,33 +1,33 @@
-Received: from smtp-bc0b.mail.infomaniak.ch (smtp-bc0b.mail.infomaniak.ch [45.157.188.11])
+Received: from smtp-190c.mail.infomaniak.ch (smtp-190c.mail.infomaniak.ch [185.125.25.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC75213D62A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC04613A252
 	for <linux-api@vger.kernel.org>; Thu,  4 Jul 2024 19:02:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.157.188.11
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.25.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1720119739; cv=none; b=jz9c0KLvSUjo+2JUwCECeXcT5anIaF85Fz5sWIuAgwL+tc/sdm8T2ZhnoFCn59SSb2QySMo9CxTRWOdQz1wT0W+ghQ7VN1jbTp6NZGQxioTSP6UjZN0zXvVmjvEIkPNngPhqCjAL0G/MGN4xx+P+LIVGcjz3uG2ud6NwJiJ91oU=
+	t=1720119740; cv=none; b=ZzQeMmdCwHzubs9IH7JlYc7n1S+xv6j88C8BCkeMW2wSkriMQIctbVTd3fvkBirSDJVROPXWTj+kqGEJt4chH1kWEwLZVuDJ/7g59pdxMFwJewBEP5tzl+jpb+hHRuKukurUDc2QvdeBxYOtBZvxb3Xb084ap135GtBg/SGKqMc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1720119739; c=relaxed/simple;
-	bh=QkSeR/S7n24t9rwdBxmCu1WbP7aeAIrwOrKa2VVZbjA=;
+	s=arc-20240116; t=1720119740; c=relaxed/simple;
+	bh=oF6rZ0nuBxG6YDixlM9cat48r0Oum2JdP1zOs4FQ5/c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=NoxNucjD78ljwxXLfIxVcXSoFFPQVOqClycV+XMpJ3zpw5ke6Mw/dG6EvXN4kQMZIxwtpXWj8xdHvYTOa3Ho32N0REmUJw+D8ZGVXMMifoOzzphBh+CUpM+/OePhfsOp/p04mkxFem1w2qDhOar+Z1SRX/V17z8emeK5kXHWNeo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=RoJpMmrw; arc=none smtp.client-ip=45.157.188.11
+	 MIME-Version:Content-Type; b=XaMys/Qf01ePkhYjCnELFvcfdtVpgkfzqIp/TJuUGS9i4dixkG6j88HQD8iyez8wnvfZDySSSPODHDnJaC7471z/Vk0I6Ezqd8k/6t+w2XIf9WHwXOgu8DQ98ZNLYZ2Bwuz3l4Kg7wvcl2u4D8I8QEEqjM0WU+U30SuCPY0w0Ic=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=sz775JKN; arc=none smtp.client-ip=185.125.25.12
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="RoJpMmrw"
-Received: from smtp-3-0001.mail.infomaniak.ch (smtp-3-0001.mail.infomaniak.ch [10.4.36.108])
-	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4WFQxW5nlpzC3q;
-	Thu,  4 Jul 2024 21:02:07 +0200 (CEST)
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="sz775JKN"
+Received: from smtp-4-0001.mail.infomaniak.ch (smtp-4-0001.mail.infomaniak.ch [10.7.10.108])
+	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4WFQxd4WXSz114p;
+	Thu,  4 Jul 2024 21:02:13 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
-	s=20191114; t=1720119727;
-	bh=Y9d96OsDMPb7+yCSisfZWoz+qtMBDpJ4FX9JzX/byVk=;
+	s=20191114; t=1720119733;
+	bh=v0fxaXOdLtc/Ju12bV32vY14OcdVSThIgNKjl9+i++A=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=RoJpMmrwajgMIZzj+FDE8d2fMbX6V4zlKWa7FHgUGq82BsioXPo8PzYQfoHIFVUkz
-	 TV8A2QFNZM2+q+h0r43ok920fl0wvuPue9FRnVPait38jkHnUbIUXrLRWLEaLimXlR
-	 1rX+c3eFRYDpywr2XT9ozXTEknnIa3ZHKGwnQiAQ=
-Received: from unknown by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4WFQxR1bl1z3JG;
-	Thu,  4 Jul 2024 21:02:03 +0200 (CEST)
+	b=sz775JKNODOr34yQ+Cv6KYcDvi+5ptHtkytGJ4G92ILUZoxk4zmBBIN1RY/1M1tms
+	 ZO3bjuRTATAsvIlizxMEmtFYYYIpG6mKsV5ckhQqA6RKyNXIXh9DUoYxtxxVrb/Yc1
+	 MGjtdlShlQavT56SM7tKhkep7CajraMh20U4V77E=
+Received: from unknown by smtp-4-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4WFQxc5zxzzTK7;
+	Thu,  4 Jul 2024 21:02:12 +0200 (CEST)
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To: Al Viro <viro@zeniv.linux.org.uk>,
 	Christian Brauner <brauner@kernel.org>,
@@ -80,9 +80,9 @@ Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
 	linux-integrity@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	linux-security-module@vger.kernel.org
-Subject: [RFC PATCH v19 1/5] exec: Add a new AT_CHECK flag to execveat(2)
-Date: Thu,  4 Jul 2024 21:01:33 +0200
-Message-ID: <20240704190137.696169-2-mic@digikod.net>
+Subject: [RFC PATCH v19 5/5] samples/should-exec: Add set-should-exec
+Date: Thu,  4 Jul 2024 21:01:37 +0200
+Message-ID: <20240704190137.696169-6-mic@digikod.net>
 In-Reply-To: <20240704190137.696169-1-mic@digikod.net>
 References: <20240704190137.696169-1-mic@digikod.net>
 Precedence: bulk
@@ -95,187 +95,178 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Infomaniak-Routing: alpha
 
-Add a new AT_CHECK flag to execveat(2) to check if a file would be
-allowed for execution.  The main use case is for script interpreters and
-dynamic linkers to check execution permission according to the kernel's
-security policy. Another use case is to add context to access logs e.g.,
-which script (instead of interpreter) accessed a file.  As any
-executable code, scripts could also use this check [1].
-
-This is different than faccessat(2) which only checks file access
-rights, but not the full context e.g. mount point's noexec, stack limit,
-and all potential LSM extra checks (e.g. argv, envp, credentials).
-Since the use of AT_CHECK follows the exact kernel semantic as for a
-real execution, user space gets the same error codes.
-
-With the information that a script interpreter is about to interpret a
-script, an LSM security policy can adjust caller's access rights or log
-execution request as for native script execution (e.g. role transition).
-This is possible thanks to the call to security_bprm_creds_for_exec().
-
-Because LSMs may only change bprm's credentials, use of AT_CHECK with
-current kernel code should not be a security issue (e.g. unexpected role
-transition).  LSMs willing to update the caller's credential could now
-do so when bprm->is_check is set.  Of course, such policy change should
-be in line with the new user space code.
-
-Because AT_CHECK is dedicated to user space interpreters, it doesn't
-make sense for the kernel to parse the checked files, look for
-interpreters known to the kernel (e.g. ELF, shebang), and return ENOEXEC
-if the format is unknown.  Because of that, security_bprm_check() is
-never called when AT_CHECK is used.
-
-It should be noted that script interpreters cannot directly use
-execveat(2) (without this new AT_CHECK flag) because this could lead to
-unexpected behaviors e.g., `python script.sh` could lead to Bash being
-executed to interpret the script.  Unlike the kernel, script
-interpreters may just interpret the shebang as a simple comment, which
-should not change for backward compatibility reasons.
-
-Because scripts or libraries files might not currently have the
-executable permission set, or because we might want specific users to be
-allowed to run arbitrary scripts, the following patch provides a dynamic
-configuration mechanism with the SECBIT_SHOULD_EXEC_CHECK and
-SECBIT_SHOULD_EXEC_RESTRICT securebits.
-
-This is a redesign of the CLIP OS 4's O_MAYEXEC:
-https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
-This patch has been used for more than a decade with customized script
-interpreters.  Some examples can be found here:
-https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
+Add a simple tool to set SECBIT_SHOULD_EXEC_CHECK,
+SECBIT_SHOULD_EXEC_RESTRICT, and their lock counterparts before
+executing a command.  This should be useful to easily test against
+script interpreters.
 
 Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Paul Moore <paul@paul-moore.com>
-Link: https://docs.python.org/3/library/io.html#io.open_code [1]
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20240704190137.696169-2-mic@digikod.net
+Link: https://lore.kernel.org/r/20240704190137.696169-6-mic@digikod.net
 ---
+ samples/Kconfig                       |  7 +++
+ samples/Makefile                      |  1 +
+ samples/should-exec/.gitignore        |  1 +
+ samples/should-exec/Makefile          | 13 ++++
+ samples/should-exec/set-should-exec.c | 88 +++++++++++++++++++++++++++
+ 5 files changed, 110 insertions(+)
+ create mode 100644 samples/should-exec/.gitignore
+ create mode 100644 samples/should-exec/Makefile
+ create mode 100644 samples/should-exec/set-should-exec.c
 
-New design since v18:
-https://lore.kernel.org/r/20220104155024.48023-3-mic@digikod.net
----
- fs/exec.c                  |  5 +++--
- include/linux/binfmts.h    |  7 ++++++-
- include/uapi/linux/fcntl.h | 30 ++++++++++++++++++++++++++++++
- kernel/audit.h             |  1 +
- kernel/auditsc.c           |  1 +
- 5 files changed, 41 insertions(+), 3 deletions(-)
-
-diff --git a/fs/exec.c b/fs/exec.c
-index 40073142288f..ea2a1867afdc 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -931,7 +931,7 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
- 		.lookup_flags = LOOKUP_FOLLOW,
- 	};
+diff --git a/samples/Kconfig b/samples/Kconfig
+index b288d9991d27..d8f2639bc830 100644
+--- a/samples/Kconfig
++++ b/samples/Kconfig
+@@ -180,6 +180,13 @@ config SAMPLE_SECCOMP
+ 	  Build samples of seccomp filters using various methods of
+ 	  BPF filter construction.
  
--	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
-+	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH | AT_CHECK)) != 0)
- 		return ERR_PTR(-EINVAL);
- 	if (flags & AT_SYMLINK_NOFOLLOW)
- 		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
-@@ -1595,6 +1595,7 @@ static struct linux_binprm *alloc_bprm(int fd, struct filename *filename, int fl
- 		bprm->filename = bprm->fdpath;
- 	}
- 	bprm->interp = bprm->filename;
-+	bprm->is_check = !!(flags & AT_CHECK);
- 
- 	retval = bprm_mm_init(bprm);
- 	if (!retval)
-@@ -1885,7 +1886,7 @@ static int bprm_execve(struct linux_binprm *bprm)
- 
- 	/* Set the unchanging part of bprm->cred */
- 	retval = security_bprm_creds_for_exec(bprm);
--	if (retval)
-+	if (retval || bprm->is_check)
- 		goto out;
- 
- 	retval = exec_binprm(bprm);
-diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
-index 70f97f685bff..8ff9c9e33aed 100644
---- a/include/linux/binfmts.h
-+++ b/include/linux/binfmts.h
-@@ -42,7 +42,12 @@ struct linux_binprm {
- 		 * Set when errors can no longer be returned to the
- 		 * original userspace.
- 		 */
--		point_of_no_return:1;
-+		point_of_no_return:1,
-+		/*
-+		 * Set by user space to check executability according to the
-+		 * caller's environment.
-+		 */
-+		is_check:1;
- 	struct file *executable; /* Executable to pass to the interpreter */
- 	struct file *interpreter;
- 	struct file *file;
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index c0bcc185fa48..bcd05c59b7df 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -118,6 +118,36 @@
- #define AT_HANDLE_FID		AT_REMOVEDIR	/* file handle is needed to
- 					compare object identity and may not
- 					be usable to open_by_handle_at(2) */
++config SAMPLE_SHOULD_EXEC
++	bool "Should-exec secure bits examples"
++	depends on CC_CAN_LINK && HEADERS_INSTALL
++	help
++	  Build a tool to easily configure SECBIT_SHOULD_EXEC_CHECK,
++	  SECBIT_SHOULD_EXEC_RESTRICT and their lock counterparts.
 +
+ config SAMPLE_TIMER
+ 	bool "Timer sample"
+ 	depends on CC_CAN_LINK && HEADERS_INSTALL
+diff --git a/samples/Makefile b/samples/Makefile
+index b85fa64390c5..0e7a97fb222d 100644
+--- a/samples/Makefile
++++ b/samples/Makefile
+@@ -19,6 +19,7 @@ subdir-$(CONFIG_SAMPLE_PIDFD)		+= pidfd
+ obj-$(CONFIG_SAMPLE_QMI_CLIENT)		+= qmi/
+ obj-$(CONFIG_SAMPLE_RPMSG_CLIENT)	+= rpmsg/
+ subdir-$(CONFIG_SAMPLE_SECCOMP)		+= seccomp
++subdir-$(CONFIG_SAMPLE_SHOULD_EXEC)	+= should-exec
+ subdir-$(CONFIG_SAMPLE_TIMER)		+= timers
+ obj-$(CONFIG_SAMPLE_TRACE_EVENTS)	+= trace_events/
+ obj-$(CONFIG_SAMPLE_TRACE_CUSTOM_EVENTS) += trace_events/
+diff --git a/samples/should-exec/.gitignore b/samples/should-exec/.gitignore
+new file mode 100644
+index 000000000000..ac46c614ec80
+--- /dev/null
++++ b/samples/should-exec/.gitignore
+@@ -0,0 +1 @@
++/set-should-exec
+diff --git a/samples/should-exec/Makefile b/samples/should-exec/Makefile
+new file mode 100644
+index 000000000000..c4294278dd07
+--- /dev/null
++++ b/samples/should-exec/Makefile
+@@ -0,0 +1,13 @@
++# SPDX-License-Identifier: BSD-3-Clause
++
++userprogs-always-y := set-should-exec
++
++userccflags += -I usr/include
++
++.PHONY: all clean
++
++all:
++	$(MAKE) -C ../.. samples/should-exec/
++
++clean:
++	$(MAKE) -C ../.. M=samples/should-exec/ clean
+diff --git a/samples/should-exec/set-should-exec.c b/samples/should-exec/set-should-exec.c
+new file mode 100644
+index 000000000000..b3c31106d916
+--- /dev/null
++++ b/samples/should-exec/set-should-exec.c
+@@ -0,0 +1,88 @@
++// SPDX-License-Identifier: BSD-3-Clause
 +/*
-+ * AT_CHECK only performs a check on a regular file and returns 0 if execution
-+ * of this file would be allowed, ignoring the file format and then the related
-+ * interpreter dependencies (e.g. ELF libraries, script's shebang).  AT_CHECK
-+ * should only be used if SECBIT_SHOULD_EXEC_CHECK is set for the calling
-+ * thread.  See securebits.h documentation.
++ * Simple tool to set SECBIT_SHOULD_EXEC_CHECK,  SECBIT_SHOULD_EXEC_RESTRICT,
++ * and their lock counterparts before executing a command.
 + *
-+ * Programs should use this check to apply kernel-level checks against files
-+ * that are not directly executed by the kernel but directly passed to a user
-+ * space interpreter instead.  All files that contain executable code, from the
-+ * point of view of the interpreter, should be checked.  The main purpose of
-+ * this flag is to improve the security and consistency of an execution
-+ * environment to ensure that direct file execution (e.g. ./script.sh) and
-+ * indirect file execution (e.g. sh script.sh) lead to the same result.  For
-+ * instance, this can be used to check if a file is trustworthy according to
-+ * the caller's environment.
-+ *
-+ * In a secure environment, libraries and any executable dependencies should
-+ * also be checked.  For instance dynamic linking should make sure that all
-+ * libraries are allowed for execution to avoid trivial bypass (e.g. using
-+ * LD_PRELOAD).  For such secure execution environment to make sense, only
-+ * trusted code should be executable, which also requires integrity guarantees.
-+ *
-+ * To avoid race conditions leading to time-of-check to time-of-use issues,
-+ * AT_CHECK should be used with AT_EMPTY_PATH to check against a file
-+ * descriptor instead of a path.
++ * Copyright © 2024 Microsoft Corporation
 + */
-+#define AT_CHECK		0x10000
 +
- #if defined(__KERNEL__)
- #define AT_GETATTR_NOSEC	0x80000000
- #endif
-diff --git a/kernel/audit.h b/kernel/audit.h
-index a60d2840559e..8ebdabd2ab81 100644
---- a/kernel/audit.h
-+++ b/kernel/audit.h
-@@ -197,6 +197,7 @@ struct audit_context {
- 		struct open_how openat2;
- 		struct {
- 			int			argc;
-+			bool			is_check;
- 		} execve;
- 		struct {
- 			char			*name;
-diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 6f0d6fb6523f..b6316e284342 100644
---- a/kernel/auditsc.c
-+++ b/kernel/auditsc.c
-@@ -2662,6 +2662,7 @@ void __audit_bprm(struct linux_binprm *bprm)
- 
- 	context->type = AUDIT_EXECVE;
- 	context->execve.argc = bprm->argc;
-+	context->execve.is_check = bprm->is_check;
- }
- 
- 
++#define _GNU_SOURCE
++#define __SANE_USERSPACE_TYPES__
++#include <errno.h>
++#include <linux/prctl.h>
++#include <linux/securebits.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/prctl.h>
++#include <unistd.h>
++
++static void print_usage(const char *argv0)
++{
++	fprintf(stderr, "usage: %s -c|-r [-l] -- <cmd> [args]...\n\n", argv0);
++	fprintf(stderr, "Execute a command with\n");
++	fprintf(stderr, "- SECBIT_SHOULD_EXEC_CHECK set: -c\n");
++	fprintf(stderr, "- SECBIT_SHOULD_EXEC_RESTRICT set: -r\n");
++	fprintf(stderr, "- SECBIT_SHOULD_EXEC_*_LOCKED set: -l\n");
++}
++
++int main(const int argc, char *const argv[], char *const *const envp)
++{
++	const char *cmd_path;
++	char *const *cmd_argv;
++	int opt, secbits, err;
++	bool has_policy = false;
++
++	secbits = prctl(PR_GET_SECUREBITS);
++
++	while ((opt = getopt(argc, argv, "crl")) != -1) {
++		switch (opt) {
++		case 'c':
++			secbits |= SECBIT_SHOULD_EXEC_CHECK;
++			has_policy = true;
++			break;
++		case 'r':
++			secbits |= SECBIT_SHOULD_EXEC_RESTRICT;
++			has_policy = true;
++			break;
++		case 'l':
++			secbits |= SECBIT_SHOULD_EXEC_CHECK_LOCKED;
++			secbits |= SECBIT_SHOULD_EXEC_RESTRICT_LOCKED;
++			break;
++		default:
++			print_usage(argv[0]);
++			return 1;
++		}
++	}
++
++	if (!argv[optind] || !has_policy) {
++		print_usage(argv[0]);
++		return 1;
++	}
++
++	err = prctl(PR_SET_SECUREBITS, secbits);
++	if (err) {
++		perror("Failed to set secure bit(s).");
++		fprintf(stderr,
++			"Hint: The running kernel may not support this feature.\n");
++		return 1;
++	}
++
++	fprintf(stderr, "SECBIT_SHOULD_EXEC_CHECK: %d\n",
++		!!(secbits & SECBIT_SHOULD_EXEC_CHECK));
++	fprintf(stderr, "SECBIT_SHOULD_EXEC_CHECK_LOCKED: %d\n",
++		!!(secbits & SECBIT_SHOULD_EXEC_CHECK_LOCKED));
++	fprintf(stderr, "SECBIT_SHOULD_EXEC_RESTRICT: %d\n",
++		!!(secbits & SECBIT_SHOULD_EXEC_RESTRICT));
++	fprintf(stderr, "SECBIT_SHOULD_EXEC_RESTRICT_LOCKED: %d\n",
++		!!(secbits & SECBIT_SHOULD_EXEC_RESTRICT_LOCKED));
++
++	cmd_path = argv[optind];
++	cmd_argv = argv + optind;
++	fprintf(stderr, "Executing command...\n");
++	execvpe(cmd_path, cmd_argv, envp);
++	fprintf(stderr, "Failed to execute \"%s\": %s\n", cmd_path,
++		strerror(errno));
++	return 1;
++}
 -- 
 2.45.2
 
