@@ -1,33 +1,33 @@
-Received: from smtp-42ab.mail.infomaniak.ch (smtp-42ab.mail.infomaniak.ch [84.16.66.171])
+Received: from smtp-bc09.mail.infomaniak.ch (smtp-bc09.mail.infomaniak.ch [45.157.188.9])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67F5F1CF2B5
-	for <linux-api@vger.kernel.org>; Fri, 11 Oct 2024 18:44:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=84.16.66.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B183F1C9DFD
+	for <linux-api@vger.kernel.org>; Fri, 11 Oct 2024 18:44:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.157.188.9
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1728672285; cv=none; b=amjcTqjC+Duij+CXjh7MQIrArfCsyUfie29tWelGh6DB7/G0Y+nZcOfybhcR/RsNvraVSAXVJAxANhDdF2nP596VbUzfQm8ZGOwxc3SsD/KhQPGJDdO57ncRFDQcp665ltrvCDgqwZGmyGr3Z7BXhPK3MQHP3lVnTl+uhnng7qU=
+	t=1728672287; cv=none; b=Uva/FsXpNNEevcQ5dN22gF4A5AWqBfdeEW12kUA2HKR1+czFKbitTVIvbhRUTUpjGXQV/ao52W7DO6cv5GkJKDUUXU7xxu7slyzVwdTV868nVfrLJM43fzJfzFkQDPo0f6HsO4zC0bGVQeQrRo/5RRakiMzFL5FGqPolEeDyxZI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1728672285; c=relaxed/simple;
-	bh=qE4IkN8vBtssZGOjD+An+UPa82UBNAMueF7vXlqmgYA=;
+	s=arc-20240116; t=1728672287; c=relaxed/simple;
+	bh=O1EEjSNCMJkeVz1DE2JEWk7oUV26bTjK3aVQCreFQa0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=uJFk5ezj5eMgIICKMWGNJH14jO5xaX89FmXx48xWxPvcWymps08m78KIjZDPY71eeHeVj1uKLdMUd0Hz3CYRjYc3E/bJ4VhGB6UALUdA/yz9tO/xOuQzHuvFU3RG25yOQ2NbcuV8uFjFJrBK1CIz6+vwunGpLAKVOYFTlZkkrww=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=JhxETcDE; arc=none smtp.client-ip=84.16.66.171
+	 MIME-Version:Content-Type; b=m2jmkOpwTSzjr5VQdJ73ToDXDKHUpybfYikshUvSm5hrMppuYE4jLv5ICx6ALw/UQC0aiDeqXYlQtITbbvkBsiQFtQPsJ6dbtLIsUJn6TyjQ2Q0hXKTBqUymvWs8m9AZ7Ypbdwvjp4oz+eC/2fEvmEA2XiwcxycqZ/Jdf53mu9Q=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=gHUcQTIS; arc=none smtp.client-ip=45.157.188.9
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="JhxETcDE"
-Received: from smtp-4-0000.mail.infomaniak.ch (unknown [IPv6:2001:1600:7:10:40ca:feff:fe05:0])
-	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4XQFsg176xzGqF;
-	Fri, 11 Oct 2024 20:44:39 +0200 (CEST)
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="gHUcQTIS"
+Received: from smtp-4-0001.mail.infomaniak.ch (smtp-4-0001.mail.infomaniak.ch [10.7.10.108])
+	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4XQFsl140fzKWj;
+	Fri, 11 Oct 2024 20:44:43 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
-	s=20191114; t=1728672279;
-	bh=oIubVU30zs/16E0Q2LZFubxJE+lcp6sykCdBAfggw8w=;
+	s=20191114; t=1728672283;
+	bh=JarsyHP2gi90H4buKba+juANmtIwTUFPLAgfgya4hP0=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=JhxETcDEKcKQm8KdwOEem6f79VAU1q6V6YaDdpiHLJeduKLLF+iOGoAmqTHH3kke6
-	 Lwsk5uzLDQZDsOOn0K+Fyws5sSIqUc5SI+YpOXAXUo2V49SdpepkrTuOplU4uqfOE/
-	 /FuTFg4vipnG0LrXRox2jJ0cvA+qrjVGdvAsWcrw=
-Received: from unknown by smtp-4-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4XQFsd69Yhz5qs;
-	Fri, 11 Oct 2024 20:44:37 +0200 (CEST)
+	b=gHUcQTISbwF0nDJ9KG/YqeAl24uTnTv2K5R+1G61lpif2zdOLcD+oapwzxrbStlP8
+	 CUT6Z++LGGI8Sve/tWh1P+W5JtuW3/ea0OTAyDBzUuAakWYZE2yYmWebsiGThKojdo
+	 5LvDOntVfK0nxEMM5zgxebQJVXfw+Eb5rRqOV+so=
+Received: from unknown by smtp-4-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4XQFsj2XHXz2gn;
+	Fri, 11 Oct 2024 20:44:41 +0200 (CEST)
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To: Al Viro <viro@zeniv.linux.org.uk>,
 	Christian Brauner <brauner@kernel.org>,
@@ -83,10 +83,10 @@ Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
 	linux-integrity@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
-	Andy Lutomirski <luto@amacapital.net>
-Subject: [PATCH v20 2/6] security: Add EXEC_RESTRICT_FILE and EXEC_DENY_INTERACTIVE securebits
-Date: Fri, 11 Oct 2024 20:44:18 +0200
-Message-ID: <20241011184422.977903-3-mic@digikod.net>
+	=?UTF-8?q?G=C3=BCnther=20Noack?= <gnoack@google.com>
+Subject: [PATCH v20 4/6] selftests/landlock: Add tests for execveat + AT_CHECK
+Date: Fri, 11 Oct 2024 20:44:20 +0200
+Message-ID: <20241011184422.977903-5-mic@digikod.net>
 In-Reply-To: <20241011184422.977903-1-mic@digikod.net>
 References: <20241011184422.977903-1-mic@digikod.net>
 Precedence: bulk
@@ -99,251 +99,84 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Infomaniak-Routing: alpha
 
-The new SECBIT_EXEC_RESTRICT_FILE, SECBIT_EXEC_DENY_INTERACTIVE, and
-their *_LOCKED counterparts are designed to be set by processes setting
-up an execution environment, such as a user session, a container, or a
-security sandbox.  Unlike other securebits, these ones can be set by
-unprivileged processes.  Like seccomp filters or Landlock domains, the
-securebits are inherited across processes.
+Extend layout1.execute with the new AT_CHECK flag.  The semantic with
+AT_CHECK is the same as with a simple execve(2),
+LANDLOCK_ACCESS_FS_EXECUTE is enforced the same way.
 
-When SECBIT_EXEC_RESTRICT_FILE is set, programs interpreting code should
-control executable resources according to execveat(2) + AT_CHECK (see
-previous commit).
-
-When SECBIT_EXEC_DENY_INTERACTIVE is set, a process should deny
-execution of user interactive commands (which excludes executable
-regular files).
-
-Being able to configure each of these securebits enables system
-administrators or owner of image containers to gradually validate the
-related changes and to identify potential issues (e.g. with interpreter
-or audit logs).
-
-It should be noted that unlike other security bits, the
-SECBIT_EXEC_RESTRICT_FILE and SECBIT_EXEC_DENY_INTERACTIVE bits are
-dedicated to user space willing to restrict itself.  Because of that,
-they only make sense in the context of a trusted environment (e.g.
-sandbox, container, user session, full system) where the process
-changing its behavior (according to these bits) and all its parent
-processes are trusted.  Otherwise, any parent process could just execute
-its own malicious code (interpreting a script or not), or even enforce a
-seccomp filter to mask these bits.
-
-Such a secure environment can be achieved with an appropriate access
-control (e.g. mount's noexec option, file access rights, LSM policy) and
-an enlighten ld.so checking that libraries are allowed for execution
-e.g., to protect against illegitimate use of LD_PRELOAD.
-
-Ptrace restrictions according to these securebits would not make sense
-because of the processes' trust assumption.
-
-Scripts may need some changes to deal with untrusted data (e.g. stdin,
-environment variables), but that is outside the scope of the kernel.
-
-See chromeOS's documentation about script execution control and the
-related threat model:
-https://www.chromium.org/chromium-os/developer-library/guides/security/noexec-shell-scripts/
-
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Andy Lutomirski <luto@amacapital.net>
-Cc: Christian Brauner <brauner@kernel.org>
+Cc: Günther Noack <gnoack@google.com>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Paul Moore <paul@paul-moore.com>
-Cc: Serge Hallyn <serge@hallyn.com>
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20241011184422.977903-3-mic@digikod.net
+Link: https://lore.kernel.org/r/20241011184422.977903-5-mic@digikod.net
 ---
+ tools/testing/selftests/landlock/fs_test.c | 26 ++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
-Changes since v19:
-* Replace SECBIT_SHOULD_EXEC_CHECK and SECBIT_SHOULD_EXEC_RESTRICT with
-  SECBIT_EXEC_RESTRICT_FILE and SECBIT_EXEC_DENY_INTERACTIVE:
-  https://lore.kernel.org/all/20240710.eiKohpa4Phai@digikod.net/
-* Remove the ptrace restrictions, suggested by Andy.
-* Improve documentation according to the discussion with Jeff.
-
-New design since v18:
-https://lore.kernel.org/r/20220104155024.48023-3-mic@digikod.net
----
- include/uapi/linux/securebits.h | 113 +++++++++++++++++++++++++++++++-
- security/commoncap.c            |  29 ++++++--
- 2 files changed, 135 insertions(+), 7 deletions(-)
-
-diff --git a/include/uapi/linux/securebits.h b/include/uapi/linux/securebits.h
-index d6d98877ff1a..351b6ecefc76 100644
---- a/include/uapi/linux/securebits.h
-+++ b/include/uapi/linux/securebits.h
-@@ -52,10 +52,121 @@
- #define SECBIT_NO_CAP_AMBIENT_RAISE_LOCKED \
- 			(issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE_LOCKED))
+diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
+index 6788762188fe..413be4fea21e 100644
+--- a/tools/testing/selftests/landlock/fs_test.c
++++ b/tools/testing/selftests/landlock/fs_test.c
+@@ -37,6 +37,10 @@
+ #include <linux/fs.h>
+ #include <linux/mount.h>
  
-+/*
-+ * The SECBIT_EXEC_RESTRICT_FILE and SECBIT_EXEC_DENY_INTERACTIVE securebits
-+ * are intended for script interpreters and dynamic linkers to enforce a
-+ * consistent execution security policy handled by the kernel.
-+ *
-+ * Whether an interpreter should check these securebits or not depends on the
-+ * security risk of running malicious scripts with respect to the execution
-+ * environment, and whether the kernel can check if a script is trustworthy or
-+ * not.  For instance, Python scripts running on a server can use arbitrary
-+ * syscalls and access arbitrary files.  Such interpreters should then be
-+ * enlighten to use these securebits and let users define their security
-+ * policy.  However, a JavaScript engine running in a web browser should
-+ * already be sandboxed and then should not be able to harm the user's
-+ * environment.
-+ *
-+ * When SECBIT_EXEC_RESTRICT_FILE is set, a process should only interpret or
-+ * execute a file if a call to execveat(2) with the related file descriptor and
-+ * the AT_CHECK flag succeed.
-+ *
-+ * This secure bit may be set by user session managers, service managers,
-+ * container runtimes, sandboxer tools...  Except for test environments, the
-+ * related SECBIT_EXEC_RESTRICT_FILE_LOCKED bit should also be set.
-+ *
-+ * Programs should only enforce consistent restrictions according to the
-+ * securebits but without relying on any other user-controlled configuration.
-+ * Indeed, the use case for these securebits is to only trust executable code
-+ * vetted by the system configuration (through the kernel), so we should be
-+ * careful to not let untrusted users control this configuration.
-+ *
-+ * However, script interpreters may still use user configuration such as
-+ * environment variables as long as it is not a way to disable the securebits
-+ * checks.  For instance, the PATH and LD_PRELOAD variables can be set by a
-+ * script's caller.  Changing these variables may lead to unintended code
-+ * executions, but only from vetted executable programs, which is OK.  For this
-+ * to make sense, the system should provide a consistent security policy to
-+ * avoid arbitrary code execution e.g., by enforcing a write xor execute
-+ * policy.
-+ *
-+ * SECBIT_EXEC_RESTRICT_FILE is complementary and should also be checked.
-+ */
-+#define SECURE_EXEC_RESTRICT_FILE		8
-+#define SECURE_EXEC_RESTRICT_FILE_LOCKED	9  /* make bit-8 immutable */
++/* Defines AT_CHECK without type conflicts. */
++#define _ASM_GENERIC_FCNTL_H
++#include <linux/fcntl.h>
 +
-+#define SECBIT_EXEC_RESTRICT_FILE (issecure_mask(SECURE_EXEC_RESTRICT_FILE))
-+#define SECBIT_EXEC_RESTRICT_FILE_LOCKED \
-+			(issecure_mask(SECURE_EXEC_RESTRICT_FILE_LOCKED))
-+
-+/*
-+ * When SECBIT_EXEC_DENY_INTERACTIVE is set, a process should never interpret
-+ * interactive user commands (e.g. scripts).  However, if such commands are
-+ * passed through a file descriptor (e.g. stdin), its content should be
-+ * interpreted if a call to execveat(2) with the related file descriptor and
-+ * the AT_CHECK flag succeed.
-+ *
-+ * For instance, script interpreters called with a script snippet as argument
-+ * should always deny such execution if SECBIT_EXEC_DENY_INTERACTIVE is set.
-+ *
-+ * This secure bit may be set by user session managers, service managers,
-+ * container runtimes, sandboxer tools...  Except for test environments, the
-+ * related SECBIT_EXEC_DENY_INTERACTIVE_LOCKED bit should also be set.
-+ *
-+ * See the SECBIT_EXEC_RESTRICT_FILE documentation.
-+ *
-+ * Here is the expected behavior for a script interpreter according to
-+ * combination of any exec securebits:
-+ *
-+ * 1. SECURE_EXEC_RESTRICT_FILE=0 SECURE_EXEC_DENY_INTERACTIVE=0 (default)
-+ *    Always interpret scripts, and allow arbitrary user commands.
-+ *    => No threat, everyone and everything is trusted, but we can get ahead of
-+ *       potential issues thanks to the call to execveat with AT_CHECK which
-+ *       should always be performed but ignored by the script interpreter.
-+ *       Indeed, this check is still important to enable systems administrators
-+ *       to verify requests (e.g. with audit) and prepare for migration to a
-+ *       secure mode.
-+ *
-+ * 2. SECURE_EXEC_RESTRICT_FILE=1 SECURE_EXEC_DENY_INTERACTIVE=0
-+ *    Deny script interpretation if they are not executable, but allow
-+ *    arbitrary user commands.
-+ *    => The threat is (potential) malicious scripts run by trusted (and not
-+ *       fooled) users.  That can protect against unintended script executions
-+ *       (e.g. sh /tmp/*.sh).  This makes sense for (semi-restricted) user
-+ *       sessions.
-+ *
-+ * 3. SECURE_EXEC_RESTRICT_FILE=0 SECURE_EXEC_DENY_INTERACTIVE=1
-+ *    Always interpret scripts, but deny arbitrary user commands.
-+ *    => This use case may be useful for secure services (i.e. without
-+ *       interactive user session) where scripts' integrity is verified (e.g.
-+ *       with IMA/EVM or dm-verity/IPE) but where access rights might not be
-+ *       ready yet.  Indeed, arbitrary interactive commands would be much more
-+ *       difficult to check.
-+ *
-+ * 4. SECURE_EXEC_RESTRICT_FILE=1 SECURE_EXEC_DENY_INTERACTIVE=1
-+ *    Deny script interpretation if they are not executable, and also deny
-+ *    any arbitrary user commands.
-+ *    => The threat is malicious scripts run by untrusted users (but trusted
-+ *       code).  This makes sense for system services that may only execute
-+ *       trusted scripts.
-+ */
-+#define SECURE_EXEC_DENY_INTERACTIVE		10
-+#define SECURE_EXEC_DENY_INTERACTIVE_LOCKED	11  /* make bit-10 immutable */
-+
-+#define SECBIT_EXEC_DENY_INTERACTIVE \
-+			(issecure_mask(SECURE_EXEC_DENY_INTERACTIVE))
-+#define SECBIT_EXEC_DENY_INTERACTIVE_LOCKED \
-+			(issecure_mask(SECURE_EXEC_DENY_INTERACTIVE_LOCKED))
-+
- #define SECURE_ALL_BITS		(issecure_mask(SECURE_NOROOT) | \
- 				 issecure_mask(SECURE_NO_SETUID_FIXUP) | \
- 				 issecure_mask(SECURE_KEEP_CAPS) | \
--				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE))
-+				 issecure_mask(SECURE_NO_CAP_AMBIENT_RAISE) | \
-+				 issecure_mask(SECURE_EXEC_RESTRICT_FILE) | \
-+				 issecure_mask(SECURE_EXEC_DENY_INTERACTIVE))
- #define SECURE_ALL_LOCKS	(SECURE_ALL_BITS << 1)
+ #include "common.h"
  
-+#define SECURE_ALL_UNPRIVILEGED (issecure_mask(SECURE_EXEC_RESTRICT_FILE) | \
-+				 issecure_mask(SECURE_EXEC_DENY_INTERACTIVE))
-+
- #endif /* _UAPI_LINUX_SECUREBITS_H */
-diff --git a/security/commoncap.c b/security/commoncap.c
-index cefad323a0b1..52ea01acb453 100644
---- a/security/commoncap.c
-+++ b/security/commoncap.c
-@@ -1302,21 +1302,38 @@ int cap_task_prctl(int option, unsigned long arg2, unsigned long arg3,
- 		     & (old->securebits ^ arg2))			/*[1]*/
- 		    || ((old->securebits & SECURE_ALL_LOCKS & ~arg2))	/*[2]*/
- 		    || (arg2 & ~(SECURE_ALL_LOCKS | SECURE_ALL_BITS))	/*[3]*/
--		    || (cap_capable(current_cred(),
--				    current_cred()->user_ns,
--				    CAP_SETPCAP,
--				    CAP_OPT_NONE) != 0)			/*[4]*/
- 			/*
- 			 * [1] no changing of bits that are locked
- 			 * [2] no unlocking of locks
- 			 * [3] no setting of unsupported bits
--			 * [4] doing anything requires privilege (go read about
--			 *     the "sendmail capabilities bug")
- 			 */
- 		    )
- 			/* cannot change a locked bit */
- 			return -EPERM;
+ #ifndef renameat2
+@@ -2008,6 +2012,21 @@ static void test_execute(struct __test_metadata *const _metadata, const int err,
+ 	};
+ }
  
-+		/*
-+		 * Doing anything requires privilege (go read about the
-+		 * "sendmail capabilities bug"), except for unprivileged bits.
-+		 * Indeed, the SECURE_ALL_UNPRIVILEGED bits are not
-+		 * restrictions enforced by the kernel but by user space on
-+		 * itself.
-+		 */
-+		if (cap_capable(current_cred(), current_cred()->user_ns,
-+				CAP_SETPCAP, CAP_OPT_NONE) != 0) {
-+			const unsigned long unpriv_and_locks =
-+				SECURE_ALL_UNPRIVILEGED |
-+				SECURE_ALL_UNPRIVILEGED << 1;
-+			const unsigned long changed = old->securebits ^ arg2;
++static void test_check_exec(struct __test_metadata *const _metadata,
++			    const int err, const char *const path)
++{
++	int ret;
++	char *const argv[] = { (char *)path, NULL };
 +
-+			/* For legacy reason, denies non-change. */
-+			if (!changed)
-+				return -EPERM;
++	ret = execveat(AT_FDCWD, path, argv, NULL, AT_EMPTY_PATH | AT_CHECK);
++	if (err) {
++		EXPECT_EQ(-1, ret);
++		EXPECT_EQ(errno, err);
++	} else {
++		EXPECT_EQ(0, ret);
++	}
++}
 +
-+			/* Denies privileged changes. */
-+			if (changed & ~unpriv_and_locks)
-+				return -EPERM;
-+		}
+ TEST_F_FORK(layout1, execute)
+ {
+ 	const struct rule rules[] = {
+@@ -2025,20 +2044,27 @@ TEST_F_FORK(layout1, execute)
+ 	copy_binary(_metadata, file1_s1d2);
+ 	copy_binary(_metadata, file1_s1d3);
+ 
++	/* Checks before file1_s1d1 being denied. */
++	test_execute(_metadata, 0, file1_s1d1);
++	test_check_exec(_metadata, 0, file1_s1d1);
 +
- 		new = prepare_creds();
- 		if (!new)
- 			return -ENOMEM;
+ 	enforce_ruleset(_metadata, ruleset_fd);
+ 	ASSERT_EQ(0, close(ruleset_fd));
+ 
+ 	ASSERT_EQ(0, test_open(dir_s1d1, O_RDONLY));
+ 	ASSERT_EQ(0, test_open(file1_s1d1, O_RDONLY));
+ 	test_execute(_metadata, EACCES, file1_s1d1);
++	test_check_exec(_metadata, EACCES, file1_s1d1);
+ 
+ 	ASSERT_EQ(0, test_open(dir_s1d2, O_RDONLY));
+ 	ASSERT_EQ(0, test_open(file1_s1d2, O_RDONLY));
+ 	test_execute(_metadata, 0, file1_s1d2);
++	test_check_exec(_metadata, 0, file1_s1d2);
+ 
+ 	ASSERT_EQ(0, test_open(dir_s1d3, O_RDONLY));
+ 	ASSERT_EQ(0, test_open(file1_s1d3, O_RDONLY));
+ 	test_execute(_metadata, 0, file1_s1d3);
++	test_check_exec(_metadata, 0, file1_s1d3);
+ }
+ 
+ TEST_F_FORK(layout1, link)
 -- 
 2.46.1
 
