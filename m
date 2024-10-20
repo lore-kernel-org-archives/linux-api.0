@@ -1,70 +1,68 @@
-Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B473A1370;
-	Sun, 20 Oct 2024 16:21:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF304194A43;
+	Sun, 20 Oct 2024 16:21:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729441267; cv=fail; b=ewa0/qYg4m7xCjXKBb7fk/q2Y4f1ZDgvm9X+82uswHmsqo1EmEcz6p12MdSbvOFxZwoIBt4dnQETZtuK8GGdYVslhTPRAcmA5KshP4OvzfZ0I9HkBPG8LoyZ65sotLrJb9dtwmLGSe6V3PVBRajHPdKWUFe3J/5Cg6HIzGXKsXM=
+	t=1729441272; cv=fail; b=Vgib3pFWufXs46rc8IEuZ+DLMEHlAHlvNSBbpHWft26wSIY5GNoHtTQM0JItrYAp/1CbHPmvZN9gDtPb1MYGgWwXsuFx8GyLDXBe/hQ4YZ/Y03LWN0ZPAUOq2Eax4uXuVGbJ0f2Z9/mcRfJLuLR6bM46aemtXlqh5akxtIRt/Jg=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1729441267; c=relaxed/simple;
-	bh=ACUNtPIZvF+aeRLwFmoU2XVPvNLugIa8fPicUy5I6K4=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=HtCulO5SG4m4xoyaGXMj6sIBaSUJeWFpqxyypOrKb+IqEBwXdedYE3/lPKY5sc1gTtfwOBtPYAoyW8g7mv28eCHQBpa3CWSdcM8YP6Kfexyu3uYQuJDsRhGr/1MLIBz1S8jI1PrhP5iYjMo4qfDn4mSAdYEAClyVP5Yy09S0aA4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=Qbl1skzW; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=b70TdbEY; arc=fail smtp.client-ip=205.220.165.32
+	s=arc-20240116; t=1729441272; c=relaxed/simple;
+	bh=byyDknJIjXZlSl3WVNl4q0dawoW++M+678YQZqQBunE=;
+	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=oWiCwBwqmsgZTaft90s8s5LawnUrI8epV5vS1WaD9NzKZ8Nj4SlB8eDgBMvfqdUBYx8x1/CoeFy9OVGRxSYE+5jZ0p5z/3fl/cCIyOfiwC2gAs153l82tHptWx+VxIKREMszIei53qzGJdzJaCN8UbUJP1hr0gG2AoGI9sjzAPQ=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=O5DTn7lp; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=bBfrPe3F; arc=fail smtp.client-ip=205.220.177.32
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="Qbl1skzW";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="b70TdbEY"
-Received: from pps.filterd (m0246627.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 49KEeO3W002389;
-	Sun, 20 Oct 2024 16:20:28 GMT
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="O5DTn7lp";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="bBfrPe3F"
+Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 49KDBlIK010994;
+	Sun, 20 Oct 2024 16:20:18 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2023-11-20; bh=H8+OeiOA7LbXlMb4dJ93wFyuZQtE9inPfUq4/oA3sfE=; b=
-	Qbl1skzWIjCs2U2rqn+M/SaB6YfE8SV0vY7REqEyWh5EhLXmAFr84Wxjo8hZPbVp
-	ND7kDFe6Qk8OTWZ8p4hQSR/X0zOUga7Zm6SAj6N+kc3pcR/Vtp74bh3nrk+FxTJy
-	+PvO6l6wg/FbUEdhx5DMpNVnbhbdNDAFCdFcf0YWyk7G7izNw/Ryw+NS0XaNymvw
-	yhIp4/OY4u23e5/mHaC5d0sddjGo5dW+WQdZrecjr0uXE7KUNdX8DXmcFyzsWCcq
-	RqnvL6rc8B3OyGuM/IG+tMzLaJNmMmB8mQjn6MHM2pfzjBTE6AhxBHEsbHUdA4vQ
-	McXU6iq8guBxRd0PGlwGWw==
-Received: from phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta03.appoci.oracle.com [138.1.37.129])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 42c55ustxg-1
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=corp-2023-11-20; bh=O8hJeffTehHXTsGL
+	aORJom5Afz+X1YAv18lGNZrcb7c=; b=O5DTn7lp4OMWaTrckFK7kpua8Pig9x7t
+	5OqGQOXRPslJRAMwulZ4zTIkolotEts1PXmgg7R52ZVb+Is7+mQ2uiCH8ChiHVwC
+	DpxdbU82EDmmR2aQcKs1PG/m9fdNcBZB82xnrC8cMMONMm02GhUKAlKp8uSWpwBA
+	HlPlUv9Rh5i9TGktJ/5th78omIucTMMFKKZKBH/M0iujuhJB1RcJAy/UYNtZv5cf
+	Tn/ayWvR9ZQtE5Q3IVrO16MglWVoAD0Q3+PP06nTm4DIP9P8O6aGAkIXwS21grB0
+	a5cnv1uER8p62LTUbsw+JYbdNMVxazbX/DVTrw+h3AE8Muvk3MVTHg==
+Received: from iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (iadpaimrmta01.appoci.oracle.com [130.35.100.223])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 42ckkqs3hw-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Sun, 20 Oct 2024 16:20:28 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 49KE3Tpg035552;
-	Sun, 20 Oct 2024 16:20:27 GMT
-Received: from nam11-co1-obe.outbound.protection.outlook.com (mail-co1nam11lp2171.outbound.protection.outlook.com [104.47.56.171])
-	by phxpaimrmta03.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 42c3768fqb-1
+	Sun, 20 Oct 2024 16:20:18 +0000 (GMT)
+Received: from pps.filterd (iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com [127.0.0.1])
+	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 49KD3tcf019698;
+	Sun, 20 Oct 2024 16:20:17 GMT
+Received: from nam02-bn1-obe.outbound.protection.outlook.com (mail-bn1nam02lp2045.outbound.protection.outlook.com [104.47.51.45])
+	by iadpaimrmta01.imrmtpd1.prodappiadaev1.oraclevcn.com (PPS) with ESMTPS id 42c37bjgg8-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Sun, 20 Oct 2024 16:20:27 +0000
+	Sun, 20 Oct 2024 16:20:17 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=rXdfuzYabm0mIq96brROStUIdEHen6BpysgsPBPdjCtE1SvL/3RMm0AKjmHKCMdfpbID9eqa9gNzP5oguXKLKNMTG9UEdFI2ztS2Ku+aHhOlNIPFiyOTzPn37jB8IM96H//rBdtG6jAz3V7Uv5+MivGvUHZTZI36Cz9xp2DgWCv7WgZB13GCWX4q+5zXmiu0xhiWWsUtBBDrB5xZpR/UwLwYwC0555RsRuaHIbTSmOnMx7G1TyjdpgN+A4RWSKW9vHFw9FiUkbMyQnCwb3XtVXg0Zf1CwXHobp7RKMszFnFM9K9IYNWc+DHqV9fzTgQjVmVSLH5UtNcXo6bv+rEr+Q==
+ b=EpQZCzFpQC5a7wqvpizHESLAZhv713TxZ6AshHDGlNn88I6903HUzDTxNrhwqDqTEQwag6M6ri9MshJIs/NKcNFHfXR+0lDELwY/NxAtymdQnEg/8oo25wW1Dehefeq3x3XwLffaT/E2+AnK9EOfBrgFuzh96xccyOvVcJE6H0sCjQ3ToUGrTgdY3fCRuL51LiFD3SNiCqgTDnjgnyjU5aoKP8iZyqrviEFn2TYLstywzLL/VD2f4vy46nIu4MBGm2u+onEPp2YVgf6igqQQT+nm7GX6QSWBZ5PivY7AWcymL3tF/8GOn92Au8gRnGCO+HdHWcasgitik9xtDdsLoA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=H8+OeiOA7LbXlMb4dJ93wFyuZQtE9inPfUq4/oA3sfE=;
- b=judN2HQzkswrA92dXhajFIyIBcnV/M1A/p90YMyTqYUTkPzingyxJ4VtLVfP2KTLBZOjQj5Zl3nbH7qQ7WTPO97nXVYiSrPMKrU0v3TpwkK0ic7/bxyQNSCV8dEvFa3qJ9Pdzl65ENdP2hWFvzWSfpFwYW+tCoM8LMKlOVL2N9fqJWp48k++fH7767tEHelIehc4VeiA1S49bvrB8vRJLOk8hrgaTpjKR6yWiG0VFbaW6L2L/qBtRIYgBwKoTFUYmTmofrWDJ0tcTqKiA8y+VnQT/93qzcmJFbkOqAQT7+Tj+od/kKv1XHMqlIaB07k2t0+V1zNtVPRIPW1Vnn9u4w==
+ bh=O8hJeffTehHXTsGLaORJom5Afz+X1YAv18lGNZrcb7c=;
+ b=s1NRFPNrDUNBKiJo36ftmUbXg4UhNoqzzJZc1TE760KZiEfP6ssFdRtiMBGHFOp+DAaKcvMzjgnokmFRY0W48hiGKe9lAkUaCRGcSXfLUGS6SUpbckaH6IEjJpLuFrc4CULhwTTAhJVomuQaQS+wtqRnkUItnuBZB1rN+Ia6cG9W3GgEHYt5xXM14FFAdNfrp7dfvTyuwHAJ/NfaFIhbeYnPmuAEpXe7Hws8tYVgIz77r7gwiz0OphCZKHjMZ9hpdSo5EoOMHhTPwlqKNYj1HotHykoPAtQJBcYSD+rxuGIpghecSUaH/+BjSAjqTeTxiTNqoFwbcsy+35YRRZqaTA==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
  dkim=pass header.d=oracle.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=H8+OeiOA7LbXlMb4dJ93wFyuZQtE9inPfUq4/oA3sfE=;
- b=b70TdbEYV7/Ifu9lQM3+dKj+egjgTeQ+nz4hgM4fSwEHGWZYtQaCwIbVI9B06fxwjsKYJnwrdzlROTFPsff3Z16vmuS1R8FUo+gb7yZ9Yu0ft3wLLdEXRi8OGGhtKuEhAVRstofPbXmi7uLAfEzB7DkxwtUrGkCmTGOOrtFHgDo=
+ bh=O8hJeffTehHXTsGLaORJom5Afz+X1YAv18lGNZrcb7c=;
+ b=bBfrPe3FqQ4DKLsnUowrA3n8X/npZHDbh+lCxefZZPG+GFG92NXfHsNt9BSDrJw5ifdNwXzN/zOkAZtw9Vp1+sfBzMPvj3HRkXSy3C18AwC3LrBM3elWsNkPTFbLxHi7wCMJrc42Clj+55sueLtn1QI8UjagRI95NkoOCAHqBo8=
 Received: from BYAPR10MB3366.namprd10.prod.outlook.com (2603:10b6:a03:14f::25)
  by DS0PR10MB6703.namprd10.prod.outlook.com (2603:10b6:8:139::12) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8069.27; Sun, 20 Oct
- 2024 16:20:20 +0000
+ 2024 16:20:14 +0000
 Received: from BYAPR10MB3366.namprd10.prod.outlook.com
  ([fe80::baf2:dff1:d471:1c9]) by BYAPR10MB3366.namprd10.prod.outlook.com
  ([fe80::baf2:dff1:d471:1c9%6]) with mapi id 15.20.8069.024; Sun, 20 Oct 2024
- 16:20:20 +0000
+ 16:20:13 +0000
 From: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: Suren Baghdasaryan <surenb@google.com>,
@@ -87,16 +85,14 @@ Cc: Suren Baghdasaryan <surenb@google.com>,
         Sidhartha Kumar <sidhartha.kumar@oracle.com>,
         Jeff Xu <jeffxu@chromium.org>, Christoph Hellwig <hch@infradead.org>,
         linux-api@vger.kernel.org, John Hubbard <jhubbard@nvidia.com>
-Subject: [PATCH v2 2/5] mm: add PTE_MARKER_GUARD PTE marker
-Date: Sun, 20 Oct 2024 17:20:02 +0100
-Message-ID: <081837b697a98c7fa5832542b20f603d49e0b557.1729440856.git.lorenzo.stoakes@oracle.com>
+Subject: [PATCH v2 0/5] implement lightweight guard pages
+Date: Sun, 20 Oct 2024 17:20:00 +0100
+Message-ID: <cover.1729440856.git.lorenzo.stoakes@oracle.com>
 X-Mailer: git-send-email 2.47.0
-In-Reply-To: <cover.1729440856.git.lorenzo.stoakes@oracle.com>
-References: <cover.1729440856.git.lorenzo.stoakes@oracle.com>
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain
-X-ClientProxiedBy: LO4P265CA0050.GBRP265.PROD.OUTLOOK.COM
- (2603:10a6:600:2ac::16) To BYAPR10MB3366.namprd10.prod.outlook.com
+X-ClientProxiedBy: LO0P265CA0011.GBRP265.PROD.OUTLOOK.COM
+ (2603:10a6:600:355::19) To BYAPR10MB3366.namprd10.prod.outlook.com
  (2603:10b6:a03:14f::25)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
@@ -106,244 +102,264 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
 X-MS-TrafficTypeDiagnostic: BYAPR10MB3366:EE_|DS0PR10MB6703:EE_
-X-MS-Office365-Filtering-Correlation-Id: 452254f3-efb4-48c4-b0da-08dcf12317a2
+X-MS-Office365-Filtering-Correlation-Id: 32c3fd17-a14e-4a77-0d6c-08dcf12313af
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
 	BCL:0;ARA:13230040|10070799003|1800799024|7416014|376014|366016;
 X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?Is5Az2c4onPppbZN1/q6i4LLoPwhGu59ogzE7DZGh6CwzMvFUxR5A03skOik?=
- =?us-ascii?Q?/ss35mKvtCJAVARxaZrdSczfJhPi38XcrnAuULvFOpnNubT6QkDItjLeUW71?=
- =?us-ascii?Q?6Lui4lh3rLeEw3Be+32GS1BLTnXLsqIRvM1cL5X+hU+8nSZSb+wbpHq8Wwap?=
- =?us-ascii?Q?2P8LvCPOMSOQzsLM4cDq2FEWQweS8IcExbfNYCVW8VbqmP5F7M7CM6cXsq0l?=
- =?us-ascii?Q?EqIOF7YxAKWcLOFLG398ZkEq3s07w4//QkZnCNBtWgctRPSpi3WwVfh6FGem?=
- =?us-ascii?Q?yeRlMV/s1pMECfs61toHPqL9ZS5llRNlf7XuK6mvsyD0MCdmwmcz4/O9Im1b?=
- =?us-ascii?Q?WeFE6V+Fq/V/90q2GStw7qzr8YHPWGm/MHUfIGPQnFgJn3v6jyfBptiM3nae?=
- =?us-ascii?Q?XDDqe+YgsYXwQHoAQ+cZp0jfcOuy59KLC4oFgQa1rlOOIsBI4OsL6w9VICWz?=
- =?us-ascii?Q?vtcwWZr9hTEpYGn9lo0amWgOonAeK/9USS+rcfQmMJmG4jPwTKCKtRTJUnAN?=
- =?us-ascii?Q?KJ7/Z9JLKSGOz4rhgBmHYVrRCCxtpnMG7XBx1yi+R/QuT6FSRGd3x/LNTeV6?=
- =?us-ascii?Q?thPKuZebUd2ImaAJqjr/yhxTyM0aXp0eHERIYvNLHS1UorL23iqjRykJOIBy?=
- =?us-ascii?Q?ETiJpsXmbkqz2aRsbfdxFPKfITvCJJtScbH4iIKc3MsMOLVPrL8/Gny4tsSc?=
- =?us-ascii?Q?kLyqftYkHXr/oDIL6pUmPOs3h/gkeRX31rZFtWn+vDdpzgMoA4c2gf/Vu8Xp?=
- =?us-ascii?Q?hP9OOOnGn6FpPwc0Svcfr6dLlVb63PbqIxp7CMwuXu1ZfxVW4noTk+f5x53z?=
- =?us-ascii?Q?w3sjcUMn9OAUrYjdoGIuCE39FKxgYfAml6qA6/6xBfyY9jKfS4qDUZ7KR+kR?=
- =?us-ascii?Q?eUZUlTRaS6D/+9zfmlfeVH7qeFKdWpwRBjaYLxGkdu+nuR/a195FAlXH3xTk?=
- =?us-ascii?Q?Yc3PAPsQ+Wf6AtqRutYx82aiBjeL8+kyV4dtNiOJgKDu59ueN+3FVwagF7+j?=
- =?us-ascii?Q?18OAVWrFKU4iWB517RusJB4JoPcxAwfyrxM7B2kvz+KRC4EDutUDh7Edzndc?=
- =?us-ascii?Q?tcwvIRoNRxFoZkdd0zojQ1orXMBnPSVN+Z5atKlf5TW0ulhONQa/qxUQAzSQ?=
- =?us-ascii?Q?kU4BJq77en7Hit12m3o9kQUIiVZ7ZxEGRPJeWwx15NUyuOaBHGqUOPbEYcUA?=
- =?us-ascii?Q?rQ46aZmFOhjRimCQ0m05jvzKKFWD0t9bMejjdOGc/NpL1+B2TtmMuy6+zRuT?=
- =?us-ascii?Q?sJ7XXCUQKqSCuddV4Q/Um7yCE7QTx/o5e+epeRkyFj7qUkRJ5BxX0Meuvujs?=
- =?us-ascii?Q?alc=3D?=
+	=?us-ascii?Q?qxJ77VFX2dva4EFVc5vaz4wXm0BWFCFAz/AYhn6DfFpUyx832JZZ7Z1jFLWK?=
+ =?us-ascii?Q?cQEoPsf5hv8fKWwui9m1HUfKmQnFN+dV/9P3xhtYpK5P/VlfsjF4blEeajch?=
+ =?us-ascii?Q?RzkEC0sEIZf+eXL7ueCpN4CjuN5zmuzgXqI308BCpI92zUkE3bbukee7Gq3D?=
+ =?us-ascii?Q?/bSI71/CXvt8nXRLkY5CgOZXtPKpCeydwmiOCWjSbDUiCM78ilTx4maHvXaF?=
+ =?us-ascii?Q?K/FpOUs/KC6ZvclUvXYLDjtvrF7cSf+gHAgg+tg5/HD0SPJZDlCm7uzQH0z5?=
+ =?us-ascii?Q?6mcOawolpRzqb8pIdleYhZBwf4RSzIDdQeQZe2Xf0Mhu45rX0DW+eglp7OQJ?=
+ =?us-ascii?Q?RZYAcEcoAv2Lt5aVSAwKKPS0/uW+ZnCcV4E1JRk+GBjPeQfNAjkdvjUSxW2W?=
+ =?us-ascii?Q?hzeHfZBzvuguXF2xd0KEO38NCtNCWALiL7QpLCx2keeNjuETS61CsaniBvBh?=
+ =?us-ascii?Q?rn8vZlM/7zCaGxV+wFvynvZvY3nfpnFBQmGmYDs0jKSmi0TEmMY86TeB1vOZ?=
+ =?us-ascii?Q?nD5gPJvG7YUuXgfZTq7FwLSny9M/aA0T2/QUIxYO0Ey05z0z7P37M6vcp/48?=
+ =?us-ascii?Q?kNvKCd6qB711RryoaOw63qML6bIOxnZ52kKUnSv5YQ/2Jqh/EslPwG809hgQ?=
+ =?us-ascii?Q?t7PcD0dT5keVdd7IaWv81uGn+jzceeIdjcP3ZYmKKmqF+nIq8inSXx/Ygn65?=
+ =?us-ascii?Q?66WTkxMYO4PbIiHJEWuRw4D+22uQBLXbKEokA+UOZFz9IU4GZXd+HKvWkQEJ?=
+ =?us-ascii?Q?OqbE3P4ZdpVyS/16lKHkHlrBeTgBWZTGrQ2Qgly8u/jB1vCXC4YC57p77NMF?=
+ =?us-ascii?Q?3kdDHGyJNDrsEj/QEb941673XpYPjW6WzP1OUdkyBBMZULQoIk3B1mn5IyPs?=
+ =?us-ascii?Q?fX5ULaRvl8yVA8E4mGrffA98Cz+vGg1+Icl6+PqDA/6YaZ8P6aTGJcnwJhN0?=
+ =?us-ascii?Q?AvO7Me2am7tdfLvwlZIhnWV4uLTK7H0Fpai0nFblzs7kNtfrMY+xe3rTPtdP?=
+ =?us-ascii?Q?Dyi7fsnaFxeEI9Yz6jfwQBS8r/kVEUqBZuHzyQMnBZyCeZgIPWuxwttAO2iy?=
+ =?us-ascii?Q?DmF+Fdh9BsWwECOJG4NZM+Ii/4/JsX0Q5TkUZ+PXaeCUVcJ8K4o0GDZ9JifG?=
+ =?us-ascii?Q?Y8p1K/0Qmg+W60cK6VEcLxDex5FmuwRlVJNbBnBRNjGyF0STRSUegEdtaI2G?=
+ =?us-ascii?Q?heFsF2lrkoKb7kJw+T7rEHuPh4DvewnF+6Qw+0GoCCXUDOtBxnF7ed8o2EAw?=
+ =?us-ascii?Q?n6frbzCsCUwhxLpegkN20K8Ak19mWv1Wa5ssAnPJffjJg2MwFm99JMzTcgRh?=
+ =?us-ascii?Q?Wwv6vnVJBv9VSS3Qy3mqcnec?=
 X-Forefront-Antispam-Report:
 	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:BYAPR10MB3366.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(10070799003)(1800799024)(7416014)(376014)(366016);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?2+siz7bM8do+NgkQnswhKBhf5ZsGCrBEJnBHJ08K/NqgT7ZJroZ6s6jAcMJR?=
- =?us-ascii?Q?W38UoLib94vYgHkteY5VOUFpFN3HQvag34yENUFzqF7WOQkUT4icF78LP4uV?=
- =?us-ascii?Q?1kmGURT9blUq6CKZmuu0kCRI2EmWFjaoRIndAd7o+9zNtifx7H+ht0wELV7n?=
- =?us-ascii?Q?OAbbIu5w6kyHPx3Iw/xX3namDiMzKS2eCinP/Lu4q3p1dvnyE2OVOus7esYu?=
- =?us-ascii?Q?kPjQPEqSC9dXg3+NIJRmZmLJj9jGF2L2LnXJHI49gJGvS3xU065eXkLSs8Fc?=
- =?us-ascii?Q?DTERrY0z/d/X8aPqTLHY/u9XLBDJKpybGsWKLRa+s7zYa7iptN84L87K0Vp3?=
- =?us-ascii?Q?+UK03P58A/j3EhHS+Cy1Klplvzkervu76zOLXXqVDb6rcc5YDU249y9+LuoL?=
- =?us-ascii?Q?mpxnS31G2NARQ/xrdAxZJ/hEV7rZKBmh7yyuxhrkx9ArpMIU5Y3Wk0r2tQkx?=
- =?us-ascii?Q?w4wZXrWRXhtWxIRZ4f49rI4ZZOLLKNV1X5MBpu2KujwW5iz5aL7idPSq7cdu?=
- =?us-ascii?Q?pWXUawQyGowxxU72Ls02fTvbdisKCg3taU0gozPeJVs0aVSTySwrLC3Prqkc?=
- =?us-ascii?Q?NoHcqPrN5SHH5jW1nvvA5oyYWvr5ar0OTyeyNUoGb13YWfbbkvaOKRTN3tWN?=
- =?us-ascii?Q?Z6jli7iWgLNOZl8QOxXpV0PAMTPdryy/XAaK95sHTZJ3Ry/vL7dsVpvNcw6Q?=
- =?us-ascii?Q?l4shkooAMUqLvWRs9d7eL+8YYvzSbcyVRslFcSS13KJxZm/uJ7O7f0MTuK6i?=
- =?us-ascii?Q?aA7bPxeSqom9yS6ut6c6j2aroimjlGqmcONIzQbwJLX4jEAkwXWRQmnxv2y/?=
- =?us-ascii?Q?TO4uG9N5qgR2zOzIZyVqMtuPpJWBqAZ4h+o1sqwTcWPMrqLRZpwWCMm5JTMR?=
- =?us-ascii?Q?4DESQqovt5HJoUPFc3cKI0ewIT72YNfP4gPQjvu+iAk7prbG5qAwTQDuGUoh?=
- =?us-ascii?Q?7Gn8QpBoUlkEBidItWRvhusfqaXE+Lh82ZEdESIDwEKvqm9Tr6v49J4l4P1m?=
- =?us-ascii?Q?hUNegY0d8vLWxvsrLBZR4NI078Nv2HMc9eayzSYbOl0rmRNTihZG41HHPEHL?=
- =?us-ascii?Q?3ExLqCEmuYGtmqwjdZfEeDbSK3xQG5+InXIvvH6d23P+N69EJec2k8fB4pAK?=
- =?us-ascii?Q?rHZT9szwjnvoH+Jux7RaCwDjOveWiYK+otjfcDnepzA+TApqJjRqmFbmqpkY?=
- =?us-ascii?Q?i+YmHIVY/gcVSaqsEg9ycqrigoft5vzvN+p6wRN9k7jMdzWxzF6kFNf8oexE?=
- =?us-ascii?Q?3+vSrAefl5AyU27oLlAxEDnQtzWrXPBWhbSsGUTKHJ8zu/2y3iE5K9gFEk7g?=
- =?us-ascii?Q?FEWR88QNNZlrZZRfvJitTyEsmIjFdcJzov3kyPZ00Ra3aF1qU55W+rwdVF6s?=
- =?us-ascii?Q?Pk6cFonogZ561NaOTGN+u3fGTMCXkmqnt7wqX4gkvk/Pr68NW92mf5DBNI8M?=
- =?us-ascii?Q?BLfLcxPJp/dg4CTSqjTTZv43IxWr3gkmYs0k5czEUMlwYk4XoVA2uI6tluNW?=
- =?us-ascii?Q?XXC0mLUU6qU2Kk+0kUjhlb8DsfMcZDC9AFxwAB7GZWszbiwWSbbdnBUKPybQ?=
- =?us-ascii?Q?tTm/0T/1ue/7j2Iy9LskVrXsef729AQEJZP2arJJhJ29Q/bXMEDFZJHqW4cs?=
- =?us-ascii?Q?VFfgyKFcD7eH1iNCDSRaVN4Zl3AWnaqU3g4v/4Xijydq9UOjElhY3sSPHhoU?=
- =?us-ascii?Q?UhFsRQ=3D=3D?=
+	=?us-ascii?Q?I+wzes16wR/Y6aRyInWvXXy3NLxvVbGW+aAxR26bfGYytRzv+ZxxgGbPuysc?=
+ =?us-ascii?Q?2UICWRgNc8T3rgreHEx77UPGkzlNwJAhMufbQoUWxvSPkO97YiwAk/+I2nD9?=
+ =?us-ascii?Q?XIo5pnwZyowF4JXfNa/03tx+e9/MukSveWfx7jEaNw7kke3/7atzLnQDLRPf?=
+ =?us-ascii?Q?6z9lCCg63vmKhK7l3+dwHWUFaPux0J4MY7RkQ6PDiGT4BXV0wOf8SltPtacs?=
+ =?us-ascii?Q?FFf6hqJhtSpv0wtYMUza2vQPEwAi808Z3gATx9/GrqBGGVKWSvM7Ehr35mLu?=
+ =?us-ascii?Q?iLeY+4FZdBTJ03rfhsQ9uw3X4GJyEzI3uSELoar4Tk5Mi3LNwceot2TvBZOp?=
+ =?us-ascii?Q?Iuy+VFdy9hsfZc9ilzCQOts4PiLF5CcRr+9REK7zd4oskDk39/Wh6o+MV4RD?=
+ =?us-ascii?Q?1CdHP/UP5D4OEb77B3s65K7OnPVzZqpf00D4fvVPuhxY1TT65el55FDcc0DJ?=
+ =?us-ascii?Q?MsLlFoia+8erEqVbup21MWoVPVrwjrKNW3vkPAJm33fAWXN7Zukym/zicCte?=
+ =?us-ascii?Q?M3Etwb2nFeSNqGvaezCQWdCalM3MRcseNlZjoBHZqhOOVsCgeuxI/OJA/S+f?=
+ =?us-ascii?Q?4n7ENDD8HDnlfi7llEA0a6NueHFNqDEYoS9rqbGfAda+0aIEPps3WgnwvEFj?=
+ =?us-ascii?Q?GwLMTtpImdRdQ6h2LRQKm4OtNA1cwr9U8T/TT7xJFBTwmOG19Dgr4KSkpVfG?=
+ =?us-ascii?Q?VgFLzXEi6iFbx8RMUHSpcljUr0fsKESA8RPnfNajfA4WRpuiwT3TnQsSqW0T?=
+ =?us-ascii?Q?hbirsw9+xzzf0drBjK6F02OUMC7mQzg6aP+Zh24qILp8L3AmnWtQ7i51bPo7?=
+ =?us-ascii?Q?6WgDjz5S3m1n4Nk1tBQv2b7/b+s/+VgVhCZD6WhrjOTe6ID2BgfOazWJKqCG?=
+ =?us-ascii?Q?hVvQDjyW689L9Pthe10/8JrVLqHfnVmAeL2XGMuwohY4Xbf4Pq8aiIfX0HYg?=
+ =?us-ascii?Q?mL7n1lsDxV7i3ZiMPFkorD9JFk2JD585hOoh3BZlsBS1lY9plrPdvkg2UAjH?=
+ =?us-ascii?Q?7eT5rgcCc3bwd2RYtES6MtGPQ182DhGSBD3c3lvMn2QKpdAFIYxCkQBbKBF0?=
+ =?us-ascii?Q?bfFKP3EehXFKiAqGAtfD0kasPBdhI8yhr42DjkZ8Ds+LVvVxhmQdQrGyS6JA?=
+ =?us-ascii?Q?8eIcymC7gR3RIPT0j+M7q4bZjzEcQqzNR3k5PgozpjRCBd54mT/6Hs0Cz2PT?=
+ =?us-ascii?Q?rFTJIon5pxB8i632zvubfr16t68btV0RwR+Yd2hr97SVGLkRlz0IhN2CO0Vc?=
+ =?us-ascii?Q?o27StVDUu9JlqQrB/6Tm7jggugW7LSy/Y79EUar4+gl39TfYaR+ESt5luV9I?=
+ =?us-ascii?Q?4jJwqmHQPnx4zrAOh9DCLalxfD63irrr1FwW7VqX9938axJSmDpUv6X7qrlN?=
+ =?us-ascii?Q?HVUO5k+HK6EnIF11sSHW514wMSRCLVm6vqeoCyFTKwcsfL3QiisK+OpuzeAv?=
+ =?us-ascii?Q?DPDFPxew1AhdNteDFLdeMbAywCxjQt2SSNz6mQEfbaS5Ed57Eev/rYsGt1BI?=
+ =?us-ascii?Q?MLTFZoBUMibN1sRlDwYl0fT6GE972ksuudKv5T0WMprlurto3Zgt97HFAE+v?=
+ =?us-ascii?Q?xakAtmQMj4jzlQzljUE4fJdu1S41jEqROBoX9+NmjESM4Yk3gvCg2iIGYO/s?=
+ =?us-ascii?Q?+AXybFOycXjjr96bJT3tJLyJkXWFw/5JGl+bnqOlG+n9E2pymPqjcYJnLJuM?=
+ =?us-ascii?Q?AZKI8g=3D=3D?=
 X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	8Bh9f2BmSEj9093E8wwVtwhrDCf+rsLoazHCJhiQpLn2KJ4YGIvv0ZV70PUH2hTMJyeFc7mBHQoTfTO3DDqdmv0pZV/qiwqAnw1Iqqwwc0LyN/7C3f7d87bjng/o7n5WxoAg/PZqEdCCu5XzwJOj5sN2RKQcnV8Be+WyFusuAlVMYrco/d4YiY/QEr5+MP7gs0zbh80FuC6El/3BmnFtAuL4wIs8xa1ZBOAW4tMYJVdW0yUKTWGO6mz5Rk2bY4zqgDNkdxwfpy6GSj4iv+3gu4vKTEdrFNUlhwt48nEHU8Rd+wwc97GmDE0DoA0w6wLi+DDhpKzcVKOoXaE9XAhWm41IjCWmtsPyYYNZkzF27ZbdhtIvdDI+ueh8H7beO47gKFXauLRSsf5LI70520DH8UKil63rrNix3tFuhMWOK3yBJAtsl5xE6sy5chjp2HV9zwowO+PpkKIAhDGZthCYAfrKDe+q8BvPeQSNYLVLDY2Ta6dBxvr2AcS3ckGpQGbGJMOnvm2DWePzpicbDHd8a+IMWhb8YKjAQo2e1zJ6VW5ARUOgu5wYyzTdn0s3RwD2hmQ5eyK3jl8QNZukp8Wgx8cPDmEiiBwfJ39JCZlCVdI=
+	rP0TmBMVJEIlSbCkWJA6K3+/WmUPZHKmgA2PUlG9/3FNz93MQfY7UgB3ZTZGMz6UwY5Sa2HPexhzuGKWhPBlPc7aSHEtf3vvvZmM2b1Tr76+uPoALGe3lcGkjBkL1iz4YV5Eq6wlgmIRoowBU/Ogp7WM0Qg1LYpZDVbmLb1dc62B10muMRf4DGgtXGXL4Rmaeu96AFvQa3RjwZzpqmEC4xT/z2Vnw80gntLe1pP8icMxX2QAqs87FlH9EKFPNauHAQWuErZCk2gqbTDgPm9nxasp42SxRcg7dPDRlcaopXl+I51sRLEwu2exF7n7O+86Iygws+zcUEuEEix7K98zHkG3/+E7HMfP71G5ciNhKH+LBnS8bsIFmGR8KVxfx+/0YcBVdd8l21OpqBhc+HXKYmyBTvjf2YSH3TvgUyqRT2h8RRKhuUBJ1ou49LvEk6fcOu5D7nuz1f6w6NFmnDQYdIwzs+YRgVP/msBjxnM/bpNOfK1aYyJhsP51eZWegj28BAKRQFUKItgCfBPjpiCkLeLZvPdteBzj/09EkRsh8eCGtbOSToCwFQBRF2MuwwzqaajQGat5UEj3DkhVGBpWqebq1EX6gAao4klbVaNDvAY=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 452254f3-efb4-48c4-b0da-08dcf12317a2
+X-MS-Exchange-CrossTenant-Network-Message-Id: 32c3fd17-a14e-4a77-0d6c-08dcf12313af
 X-MS-Exchange-CrossTenant-AuthSource: BYAPR10MB3366.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 20 Oct 2024 16:20:20.4874
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 20 Oct 2024 16:20:13.7833
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: db7Hjelck6q8W+dPWCIEi0SvAayclm1APxneG4okPM6fGM8s1ru75q7Y4NwFHhCTO/9cXG9ijfgK/vyiWyC6d2ZgIlH1ncC1jpZ/sFXaCpk=
+X-MS-Exchange-CrossTenant-UserPrincipalName: hoH3Tbm5a5eMBQOAcUabwwjGmZnck6R+4wPIF9yjzMgfnMK22XpxiuppvZBPRO89gjJMVha4wD74EaypsATxgPHMnA6ek0CgRFEwJ171J/A=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS0PR10MB6703
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
  definitions=2024-10-20_14,2024-10-17_01,2024-09-30_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0 bulkscore=0 adultscore=0
- mlxscore=0 spamscore=0 mlxlogscore=999 suspectscore=0 phishscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2409260000
- definitions=main-2410200114
-X-Proofpoint-GUID: iX_W0srb_wC0cISVUGMtD1It4TYlLpxT
-X-Proofpoint-ORIG-GUID: iX_W0srb_wC0cISVUGMtD1It4TYlLpxT
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 bulkscore=0 suspectscore=0
+ mlxlogscore=999 spamscore=0 malwarescore=0 mlxscore=0 adultscore=0
+ phishscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2409260000 definitions=main-2410200114
+X-Proofpoint-GUID: smzS4JAnZBTa-SVAqYzRIYA2ihRYzQIG
+X-Proofpoint-ORIG-GUID: smzS4JAnZBTa-SVAqYzRIYA2ihRYzQIG
 
-Add a new PTE marker that results in any access causing the accessing
-process to segfault.
+Userland library functions such as allocators and threading implementations
+often require regions of memory to act as 'guard pages' - mappings which,
+when accessed, result in a fatal signal being sent to the accessing
+process.
 
-This is preferable to PTE_MARKER_POISONED, which results in the same
-handling as hardware poisoned memory, and is thus undesirable for cases
-where we simply wish to 'soft' poison a range.
+The current means by which these are implemented is via a PROT_NONE mmap()
+mapping, which provides the required semantics however incur an overhead of
+a VMA for each such region.
 
-This is in preparation for implementing the ability to specify guard pages
-at the page table level, i.e. ranges that, when accessed, should cause
-process termination.
+With a great many processes and threads, this can rapidly add up and incur
+a significant memory penalty. It also has the added problem of preventing
+merges that might otherwise be permitted.
 
-Additionally, rename zap_drop_file_uffd_wp() to zap_drop_markers() - the
-function checks the ZAP_FLAG_DROP_MARKER flag so naming it for this single
-purpose was simply incorrect.
+This series takes a different approach - an idea suggested by Vlasimil
+Babka (and before him David Hildenbrand and Jann Horn - perhaps more - the
+provenance becomes a little tricky to ascertain after this - please forgive
+any omissions!)  - rather than locating the guard pages at the VMA layer,
+instead placing them in page tables mapping the required ranges.
 
-We then reuse the same logic to determine whether a zap should clear a
-guard entry - this should only be performed on teardown and never on
-MADV_DONTNEED or the like.
+Early testing of the prototype version of this code suggests a 5 times
+speed up in memory mapping invocations (in conjunction with use of
+process_madvise()) and a 13% reduction in VMAs on an entirely idle android
+system and unoptimised code.
 
-Signed-off-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
----
- include/linux/mm_inline.h |  2 +-
- include/linux/swapops.h   | 26 ++++++++++++++++++++++++--
- mm/hugetlb.c              |  3 +++
- mm/memory.c               | 18 +++++++++++++++---
- 4 files changed, 43 insertions(+), 6 deletions(-)
+We expect with optimisation and a loaded system with a larger number of
+guard pages this could significantly increase, but in any case these
+numbers are encouraging.
 
-diff --git a/include/linux/mm_inline.h b/include/linux/mm_inline.h
-index 355cf46a01a6..1b6a917fffa4 100644
---- a/include/linux/mm_inline.h
-+++ b/include/linux/mm_inline.h
-@@ -544,7 +544,7 @@ static inline pte_marker copy_pte_marker(
- {
- 	pte_marker srcm = pte_marker_get(entry);
- 	/* Always copy error entries. */
--	pte_marker dstm = srcm & PTE_MARKER_POISONED;
-+	pte_marker dstm = srcm & (PTE_MARKER_POISONED | PTE_MARKER_GUARD);
- 
- 	/* Only copy PTE markers if UFFD register matches. */
- 	if ((srcm & PTE_MARKER_UFFD_WP) && userfaultfd_wp(dst_vma))
-diff --git a/include/linux/swapops.h b/include/linux/swapops.h
-index cb468e418ea1..4d0606df0791 100644
---- a/include/linux/swapops.h
-+++ b/include/linux/swapops.h
-@@ -426,9 +426,15 @@ typedef unsigned long pte_marker;
-  * "Poisoned" here is meant in the very general sense of "future accesses are
-  * invalid", instead of referring very specifically to hardware memory errors.
-  * This marker is meant to represent any of various different causes of this.
-+ *
-+ * Note that, when encountered by the faulting logic, PTEs with this marker will
-+ * result in VM_FAULT_HWPOISON and thus regardless trigger hardware memory error
-+ * logic.
-  */
- #define  PTE_MARKER_POISONED			BIT(1)
--#define  PTE_MARKER_MASK			(BIT(2) - 1)
-+/* Indicates that, on fault, this PTE will case a SIGSEGV signal to be sent. */
-+#define  PTE_MARKER_GUARD			BIT(2)
-+#define  PTE_MARKER_MASK			(BIT(3) - 1)
- 
- static inline swp_entry_t make_pte_marker_entry(pte_marker marker)
- {
-@@ -461,9 +467,25 @@ static inline swp_entry_t make_poisoned_swp_entry(void)
- }
- 
- static inline int is_poisoned_swp_entry(swp_entry_t entry)
-+{
-+	/*
-+	 * We treat guard pages as poisoned too as these have the same semantics
-+	 * as poisoned ranges, only with different fault handling.
-+	 */
-+	return is_pte_marker_entry(entry) &&
-+		(pte_marker_get(entry) &
-+		 (PTE_MARKER_POISONED | PTE_MARKER_GUARD));
-+}
-+
-+static inline swp_entry_t make_guard_swp_entry(void)
-+{
-+	return make_pte_marker_entry(PTE_MARKER_GUARD);
-+}
-+
-+static inline int is_guard_swp_entry(swp_entry_t entry)
- {
- 	return is_pte_marker_entry(entry) &&
--	    (pte_marker_get(entry) & PTE_MARKER_POISONED);
-+		(pte_marker_get(entry) & PTE_MARKER_GUARD);
- }
- 
- /*
-diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index 906294ac85dc..50e3f6ed73ac 100644
---- a/mm/hugetlb.c
-+++ b/mm/hugetlb.c
-@@ -6353,6 +6353,9 @@ vm_fault_t hugetlb_fault(struct mm_struct *mm, struct vm_area_struct *vma,
- 				ret = VM_FAULT_HWPOISON_LARGE |
- 				      VM_FAULT_SET_HINDEX(hstate_index(h));
- 				goto out_mutex;
-+			} else if (marker & PTE_MARKER_GUARD) {
-+				ret = VM_FAULT_SIGSEGV;
-+				goto out_mutex;
- 			}
- 		}
- 
-diff --git a/mm/memory.c b/mm/memory.c
-index 0f614523b9f4..551455cd453f 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -1455,7 +1455,7 @@ static inline bool should_zap_folio(struct zap_details *details,
- 	return !folio_test_anon(folio);
- }
- 
--static inline bool zap_drop_file_uffd_wp(struct zap_details *details)
-+static inline bool zap_drop_markers(struct zap_details *details)
- {
- 	if (!details)
- 		return false;
-@@ -1476,7 +1476,7 @@ zap_install_uffd_wp_if_needed(struct vm_area_struct *vma,
- 	if (vma_is_anonymous(vma))
- 		return;
- 
--	if (zap_drop_file_uffd_wp(details))
-+	if (zap_drop_markers(details))
- 		return;
- 
- 	for (;;) {
-@@ -1671,7 +1671,15 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
- 			 * drop the marker if explicitly requested.
- 			 */
- 			if (!vma_is_anonymous(vma) &&
--			    !zap_drop_file_uffd_wp(details))
-+			    !zap_drop_markers(details))
-+				continue;
-+		} else if (is_guard_swp_entry(entry)) {
-+			/*
-+			 * Ordinary zapping should not remove guard PTE
-+			 * markers. Only do so if we should remove PTE markers
-+			 * in general.
-+			 */
-+			if (!zap_drop_markers(details))
- 				continue;
- 		} else if (is_hwpoison_entry(entry) ||
- 			   is_poisoned_swp_entry(entry)) {
-@@ -4003,6 +4011,10 @@ static vm_fault_t handle_pte_marker(struct vm_fault *vmf)
- 	if (marker & PTE_MARKER_POISONED)
- 		return VM_FAULT_HWPOISON;
- 
-+	/* Hitting a guard page is always a fatal condition. */
-+	if (marker & PTE_MARKER_GUARD)
-+		return VM_FAULT_SIGSEGV;
-+
- 	if (pte_marker_entry_uffd_wp(entry))
- 		return pte_marker_handle_uffd_wp(vmf);
- 
--- 
+This way, rather than having separate VMAs specifying which parts of a
+range are guard pages, instead we have a VMA spanning the entire range of
+memory a user is permitted to access and including ranges which are to be
+'guarded'.
+
+After mapping this, a user can specify which parts of the range should
+result in a fatal signal when accessed.
+
+By restricting the ability to specify guard pages to memory mapped by
+existing VMAs, we can rely on the mappings being torn down when the
+mappings are ultimately unmapped and everything works simply as if the
+memory were not faulted in, from the point of view of the containing VMAs.
+
+This mechanism in effect poisons memory ranges similar to hardware memory
+poisoning, only it is an entirely software-controlled form of poisoning.
+
+Any poisoned region of memory is also able to 'unpoisoned', that is, to
+have its poison markers removed.
+
+The mechanism is implemented via madvise() behaviour - MADV_GUARD_POISON
+which simply poisons ranges - and MADV_GUARD_UNPOISON - which clears this
+poisoning.
+
+Poisoning can be performed across multiple VMAs and any existing mappings
+will be cleared, that is zapped, before installing the poisoned page table
+mappings.
+
+There is no concept of 'nested' poisoning, multiple attempts to poison a
+range will, after the first poisoning, have no effect.
+
+Importantly, unpoisoning of poisoned ranges has no effect on non-poisoned
+memory, so a user can safely unpoison a range of memory and clear only
+poison page table mappings leaving the rest intact.
+
+The actual mechanism by which the page table entries are specified makes
+use of existing logic - PTE markers, which are used for the userfaultfd
+UFFDIO_POISON mechanism.
+
+Unfortunately PTE_MARKER_POISONED is not suited for the guard page
+mechanism as it results in VM_FAULT_HWPOISON semantics in the fault
+handler, so we add our own specific PTE_MARKER_GUARD and adapt existing
+logic to handle it.
+
+We also extend the generic page walk mechanism to allow for installation of
+PTEs (carefully restricted to memory management logic only to prevent
+unwanted abuse).
+
+We ensure that zapping performed by, for instance, MADV_DONTNEED, does not
+remove guard poison markers, nor does forking (except when VM_WIPEONFORK is
+specified for a VMA which implies a total removal of memory
+characteristics).
+
+It's important to note that the guard page implementation is emphatically
+NOT a security feature, so a user can remove the poisoning if they wish. We
+simply implement it in such a way as to provide the least surprising
+behaviour.
+
+An extensive set of self-tests are provided which ensure behaviour is as
+expected and additionally self-documents expected behaviour of poisoned
+ranges.
+
+Suggested-by: Vlastimil Babka <vbabka@suse.cz>
+Suggested-by: Jann Horn <jannh@google.com>
+Suggested-by: David Hildenbrand <david@redhat.com>
+
+v2
+* The macros in kselftest_harness.h seem to be broken - __EXPECT() is
+  terminated by '} while (0); OPTIONAL_HANDLER(_assert)' meaning it is not
+  safe in single line if / else or for /which blocks, however working
+  around this results in checkpatch producing invalid warnings, as reported
+  by Shuah.
+* Fixing these macros is out of scope for this series, so compromise and
+  instead rewrite test blocks so as to use multiple lines by separating out
+  a decl in most cases. This has the side effect of, for the most part,
+  making things more readable.
+* Heavily document the use of the volatile keyword - we can't avoid
+  checkpatch complaining about this, so we explain it, as reported by
+  Shuah.
+* Updated commit message to highlight that we skip tests we lack
+  permissions for, as reported by Shuah.
+* Replaced a perror() with ksft_exit_fail_perror(), as reported by Shuah.
+* Added user friendly messages to cases where tests are skipped due to lack
+  of permissions, as reported by Shuah.
+* Update the tool header to include the new MADV_GUARD_POISON/UNPOISON
+  defines and directly include asm-generic/mman.h to get the
+  platform-neutral versions to ensure we import them.
+* Finally fixed Vlastimil's email address in Suggested-by tags from suze to
+  suse, as reported by Vlastimil.
+* Added linux-api to cc list, as reported by Vlastimil.
+
+v1
+* Un-RFC'd as appears no major objections to approach but rather debate on
+  implementation.
+* Fixed issue with arches which need mmu_context.h and
+  tlbfush.h. header imports in pagewalker logic to be able to use
+  update_mmu_cache() as reported by the kernel test bot.
+* Added comments in page walker logic to clarify who can use
+  ops->install_pte and why as well as adding a check_ops_valid() helper
+  function, as suggested by Christoph.
+* Pass false in full parameter in pte_clear_not_present_full() as suggested
+  by Jann.
+* Stopped erroneously requiring a write lock for the poison operation as
+  suggested by Jann and Suren.
+* Moved anon_vma_prepare() to the start of madvise_guard_poison() to be
+  consistent with how this is used elsewhere in the kernel as suggested by
+  Jann.
+* Avoid returning -EAGAIN if we are raced on page faults, just keep looping
+  and duck out if a fatal signal is pending or a conditional reschedule is
+  needed, as suggested by Jann.
+* Avoid needlessly splitting huge PUDs and PMDs by specifying
+  ACTION_CONTINUE, as suggested by Jann.
+https://lore.kernel.org/all/cover.1729196871.git.lorenzo.stoakes@oracle.com/
+
+RFC
+https://lore.kernel.org/all/cover.1727440966.git.lorenzo.stoakes@oracle.com/
+
+Lorenzo Stoakes (5):
+  mm: pagewalk: add the ability to install PTEs
+  mm: add PTE_MARKER_GUARD PTE marker
+  mm: madvise: implement lightweight guard page mechanism
+  tools: testing: update tools UAPI header for mman-common.h
+  selftests/mm: add self tests for guard page feature
+
+ arch/alpha/include/uapi/asm/mman.h           |    3 +
+ arch/mips/include/uapi/asm/mman.h            |    3 +
+ arch/parisc/include/uapi/asm/mman.h          |    3 +
+ arch/xtensa/include/uapi/asm/mman.h          |    3 +
+ include/linux/mm_inline.h                    |    2 +-
+ include/linux/pagewalk.h                     |   18 +-
+ include/linux/swapops.h                      |   26 +-
+ include/uapi/asm-generic/mman-common.h       |    3 +
+ mm/hugetlb.c                                 |    3 +
+ mm/internal.h                                |    6 +
+ mm/madvise.c                                 |  168 +++
+ mm/memory.c                                  |   18 +-
+ mm/mprotect.c                                |    3 +-
+ mm/mseal.c                                   |    1 +
+ mm/pagewalk.c                                |  200 ++-
+ tools/include/uapi/asm-generic/mman-common.h |    3 +
+ tools/testing/selftests/mm/.gitignore        |    1 +
+ tools/testing/selftests/mm/Makefile          |    1 +
+ tools/testing/selftests/mm/guard-pages.c     | 1228 ++++++++++++++++++
+ 19 files changed, 1627 insertions(+), 66 deletions(-)
+ create mode 100644 tools/testing/selftests/mm/guard-pages.c
+
+--
 2.47.0
-
