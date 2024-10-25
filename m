@@ -1,40 +1,40 @@
 Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A0EC9175A6;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 085701D27A4;
 	Fri, 25 Oct 2024 09:41:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1729849273; cv=none; b=CWAVcvW2SJ85Ej4m+86GgWn+Ro9uZlQctcp/2/pwXYe19qNBeK94rAINw3NVUZzJ75WFQ+3lZ04DTbPKNd+o3YS41Yw24CN1eiq7elM/EtJcf51TI/2UhI8ME07rnZxJd2IdPZZXN/wBxBs9GB+kZnUGrJgsZH9ezJut3xk/xco=
+	t=1729849273; cv=none; b=oGWTkT3jvJsu3Lcm8un0NFEZDURNO5ws+T/RdslJbgyYDdb6paZXlK7gC+5OPCOihCeDFY+/kJjLj52MsDtZ4jhqvAfNkwxyNST2Zr0qeMkM+oAp1DTVmZPgct9pu+dQSul29dW6/hoofJSF1y9NCoxVaf2HiBBVX57ivR24fek=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1729849273; c=relaxed/simple;
-	bh=KDCxAA2t4R126zWcHSt54xfK4tfXCDSdh3BN1NDkNf0=;
+	bh=u9cC+VIflPY+XWujgQFWfKRUU/IWFOqABA383V31UD8=;
 	h=Message-Id:Date:From:To:Cc:Subject:References:MIME-Version:
-	 Content-Type; b=ZwpKNAknv3mNsMMGZLIv8ngzUwUyXX5hUcg9qrQmOEK85/t4DrLAeQrn0A1l0+0dExBq3ftLzzizYiQ+2O+PlukoTM22ZTyTqbKkolJTyF6P8cZO5UmGBjpcyF4kXPKOhwbonHpsgEnJ9yhiNeBMnjIpImVYhL5LJUz7N68iX/Q=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=Y2cyR1HP; arc=none smtp.client-ip=90.155.50.34
+	 Content-Type; b=rK6chcwUNxJOiaMehpaNTvyDGXJP/TMreMxVan5A4LpLH1WIamkbnB7TVZw1jQWtbZJakcUMJ2hPIbmT5sUM86c0im9kZ1F8kPoexAZrnujglMjUv3u766ffsrBs4LS3i/9sigmJNiWNezz9IdlzVYHR+LuCy+GHNim5v6zeQwI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=oh40u7qw; arc=none smtp.client-ip=90.155.50.34
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="Y2cyR1HP"
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="oh40u7qw"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=infradead.org; s=casper.20170209; h=Content-Type:MIME-Version:References:
 	Subject:Cc:To:From:Date:Message-Id:Sender:Reply-To:Content-Transfer-Encoding:
 	Content-ID:Content-Description:In-Reply-To;
-	bh=RZyeqL/sDawSYArfjik+bzTHUaH0yRhT/D7WDZYPYBA=; b=Y2cyR1HPqEIEF7pPOyzphBJXKY
-	5m6VIXPj2PJRcDkKRF8+NVUBugBJk6WNVYlLYSmQQ8F33FYEpW4Sqh1ioL5UUNbrSkDCQCbIt/mbU
-	C/qEC6Q4O77K8rlLfhA2cwul6CNsYEDCKf+19iOiRxXrJKjsKXtCfJQ0V6j0mI8qWRPvGZrutb1gE
-	zagsCUxVojU8zDApLn4H/SbdldGgPTcoKed5Jc0C4QZBFaI3hUx6A7I7jJKSX4MyKbb19A9SlktQ6
-	RSeJ9D7aHgah0fGVuSgl3kyVxp1uzgnGQjtHjauc7Fqsg12U6Wwvi0k8UOmvnJUXnhpMSDBg3E45S
-	vRnXCBzQ==;
+	bh=BvjuRtWo050xPXsgTFFwYa3Pxgz0X14YXS2BCPIBTTw=; b=oh40u7qwkY/JURIVsPemCwfDPJ
+	0eudseN8r74Sr1VTVdGipoDt0WYw8UT03IDAnHpPTvt7oBzEXuC2//Wvl+vImQ1HELoQMuxdysCM2
+	RdJiYvRjjckM+MZJLWlymoVVf+vwSQIHbiR/kr+RjhYsTCxoU5LT6Q2BEIVzVAqRKWoFA2BIvtbOg
+	DiL7E10pWE1c0nvV+KUlqg8oxq19vBO1JlGwEIPYE34CFH37MXGBhd3aaQ21LImZil8hVJYrrP/q+
+	QqfuzOV956MaNMFpymQ3/oNLOPhXV43/EGa1ta+OwDIld1Nk2ozSq5gNULhLjn+YWQWPqYRTrKtzW
+	SBqZIetQ==;
 Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
 	by casper.infradead.org with esmtpsa (Exim 4.98 #2 (Red Hat Linux))
-	id 1t4GoU-000000054PO-00xQ;
-	Fri, 25 Oct 2024 09:40:58 +0000
+	id 1t4GoU-000000054PT-2Eki;
+	Fri, 25 Oct 2024 09:40:59 +0000
 Received: by noisy.programming.kicks-ass.net (Postfix, from userid 0)
-	id D1B7C300B40; Fri, 25 Oct 2024 11:40:57 +0200 (CEST)
-Message-Id: <20241025093944.485691531@infradead.org>
+	id DE930301D99; Fri, 25 Oct 2024 11:40:57 +0200 (CEST)
+Message-Id: <20241025093944.817031866@infradead.org>
 User-Agent: quilt/0.65
-Date: Fri, 25 Oct 2024 11:03:49 +0200
+Date: Fri, 25 Oct 2024 11:03:52 +0200
 From: Peter Zijlstra <peterz@infradead.org>
 To: tglx@linutronix.de
 Cc: linux-kernel@vger.kernel.org,
@@ -54,7 +54,7 @@ Cc: linux-kernel@vger.kernel.org,
  malteskarupke@web.de,
  cl@linux.com,
  llong@redhat.com
-Subject: [PATCH 2/6] futex: Implement FUTEX2_NUMA
+Subject: [PATCH 5/6] futex,selftests: Extend the futex selftests
 References: <20241025090347.244183920@infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
@@ -64,323 +64,545 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 
-Extend the futex2 interface to be numa aware.
-
-When FUTEX2_NUMA is specified for a futex, the user value is extended
-to two words (of the same size). The first is the user value we all
-know, the second one will be the node to place this futex on.
-
-  struct futex_numa_32 {
-	u32 val;
-	u32 node;
-  };
-
-When node is set to ~0, WAIT will set it to the current node_id such
-that WAKE knows where to find it. If userspace corrupts the node value
-between WAIT and WAKE, the futex will not be found and no wakeup will
-happen.
-
-When FUTEX2_NUMA is not set, the node is simply an extention of the
-hash, such that traditional futexes are still interleaved over the
-nodes.
-
-This is done to avoid having to have a separate !numa hash-table.
+Extend the wait/requeue selftests to also cover the futex2 syscalls.
 
 Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 ---
- include/linux/futex.h      |    3 +
- include/uapi/linux/futex.h |    8 ++
- kernel/futex/core.c        |  128 ++++++++++++++++++++++++++++++++++++---------
- kernel/futex/futex.h       |   17 +++++
- 4 files changed, 131 insertions(+), 25 deletions(-)
+ tools/testing/selftests/futex/functional/futex_requeue.c         |  100 +++++++++-
+ tools/testing/selftests/futex/functional/futex_wait.c            |   56 ++++-
+ tools/testing/selftests/futex/functional/futex_wait_timeout.c    |   16 +
+ tools/testing/selftests/futex/functional/futex_wait_wouldblock.c |   28 ++
+ tools/testing/selftests/futex/functional/futex_waitv.c           |   15 -
+ tools/testing/selftests/futex/functional/run.sh                  |    6 
+ tools/testing/selftests/futex/include/futex2test.h               |   52 +++++
+ 7 files changed, 243 insertions(+), 30 deletions(-)
 
---- a/include/linux/futex.h
-+++ b/include/linux/futex.h
-@@ -34,6 +34,7 @@ union futex_key {
- 		u64 i_seq;
- 		unsigned long pgoff;
- 		unsigned int offset;
-+		/* unsigned int node; */
- 	} shared;
- 	struct {
- 		union {
-@@ -42,11 +43,13 @@ union futex_key {
+--- a/tools/testing/selftests/futex/functional/futex_requeue.c
++++ b/tools/testing/selftests/futex/functional/futex_requeue.c
+@@ -7,8 +7,10 @@
+ 
+ #include <pthread.h>
+ #include <limits.h>
++#include <stdbool.h>
+ #include "logging.h"
+ #include "futextest.h"
++#include "futex2test.h"
+ 
+ #define TEST_NAME "futex-requeue"
+ #define timeout_ns  30000000
+@@ -16,24 +18,58 @@
+ 
+ volatile futex_t *f1;
+ 
++bool futex2 = 0;
++bool mixed = 0;
++
+ void usage(char *prog)
+ {
+ 	printf("Usage: %s\n", prog);
+ 	printf("  -c	Use color\n");
++	printf("  -n	Use futex2 interface\n");
++	printf("  -x	Use mixed size futex\n");
+ 	printf("  -h	Display this help message\n");
+ 	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
+ 	       VQUIET, VCRITICAL, VINFO);
+ }
+ 
+-void *waiterfn(void *arg)
++static void *waiterfn(void *arg)
+ {
++	unsigned int flags = 0;
+ 	struct timespec to;
+ 
+-	to.tv_sec = 0;
+-	to.tv_nsec = timeout_ns;
++	if (futex2) {
++		unsigned long mask;
++
++		if (clock_gettime(CLOCK_MONOTONIC, &to)) {
++			printf("clock_gettime() failed errno %d", errno);
++			return NULL;
++		}
++
++		to.tv_nsec += timeout_ns;
++		if (to.tv_nsec >= 1000000000) {
++			to.tv_sec++;
++			to.tv_nsec -= 1000000000;
++		}
++
++		if (mixed) {
++			flags |= FUTEX2_SIZE_U16;
++			mask = (unsigned short)(~0U);
++		} else {
++			flags |= FUTEX2_SIZE_U32;
++			mask = (unsigned int)(~0U);
++		}
++
++		if (futex2_wait(f1, *f1, mask, flags,
++				&to, CLOCK_MONOTONIC))
++			printf("waiter failed errno %d\n", errno);
++	} else {
++
++		to.tv_sec = 0;
++		to.tv_nsec = timeout_ns;
+ 
+-	if (futex_wait(f1, *f1, &to, 0))
+-		printf("waiter failed errno %d\n", errno);
++		if (futex_wait(f1, *f1, &to, flags))
++			printf("waiter failed errno %d\n", errno);
++	}
+ 
+ 	return NULL;
+ }
+@@ -48,7 +84,7 @@ int main(int argc, char *argv[])
+ 
+ 	f1 = &_f1;
+ 
+-	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
++	while ((c = getopt(argc, argv, "xncht:v:")) != -1) {
+ 		switch (c) {
+ 		case 'c':
+ 			log_color(1);
+@@ -59,6 +95,12 @@ int main(int argc, char *argv[])
+ 		case 'v':
+ 			log_verbosity(atoi(optarg));
+ 			break;
++		case 'x':
++			mixed=1;
++			/* fallthrough */
++		case 'n':
++			futex2=1;
++			break;
+ 		default:
+ 			usage(basename(argv[0]));
+ 			exit(1);
+@@ -79,7 +121,22 @@ int main(int argc, char *argv[])
+ 	usleep(WAKE_WAIT_US);
+ 
+ 	info("Requeuing 1 futex from f1 to f2\n");
+-	res = futex_cmp_requeue(f1, 0, &f2, 0, 1, 0);
++	if (futex2) {
++		struct futex_waitv futexes[2] = {
++			{
++				.val = 0,
++				.uaddr = (unsigned long)f1,
++				.flags = mixed ? FUTEX2_SIZE_U16 : FUTEX2_SIZE_U32,
++			},
++			{
++				.uaddr = (unsigned long)&f2,
++				.flags = FUTEX2_SIZE_U32,
++			},
++		};
++		res = futex2_requeue(futexes, 0, 0, 1);
++	} else {
++		res = futex_cmp_requeue(f1, 0, &f2, 0, 1, 0);
++	}
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_requeue simple returned: %d %s\n",
+ 				      res ? errno : res,
+@@ -89,7 +146,11 @@ int main(int argc, char *argv[])
+ 
+ 
+ 	info("Waking 1 futex at f2\n");
+-	res = futex_wake(&f2, 1, 0);
++	if (futex2) {
++		res = futex2_wake(&f2, ~0U, 1, FUTEX2_SIZE_U32);
++	} else {
++		res = futex_wake(&f2, 1, 0);
++	}
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_requeue simple returned: %d %s\n",
+ 				      res ? errno : res,
+@@ -112,7 +173,22 @@ int main(int argc, char *argv[])
+ 	usleep(WAKE_WAIT_US);
+ 
+ 	info("Waking 3 futexes at f1 and requeuing 7 futexes from f1 to f2\n");
+-	res = futex_cmp_requeue(f1, 0, &f2, 3, 7, 0);
++	if (futex2) {
++		struct futex_waitv futexes[2] = {
++			{
++				.val = 0,
++				.uaddr = (unsigned long)f1,
++				.flags = mixed ? FUTEX2_SIZE_U16 : FUTEX2_SIZE_U32,
++			},
++			{
++				.uaddr = (unsigned long)&f2,
++				.flags = FUTEX2_SIZE_U32,
++			},
++		};
++		res = futex2_requeue(futexes, 0, 3, 7);
++	} else {
++		res = futex_cmp_requeue(f1, 0, &f2, 3, 7, 0);
++	}
+ 	if (res != 10) {
+ 		ksft_test_result_fail("futex_requeue many returned: %d %s\n",
+ 				      res ? errno : res,
+@@ -121,7 +197,11 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	info("Waking INT_MAX futexes at f2\n");
+-	res = futex_wake(&f2, INT_MAX, 0);
++	if (futex2) {
++		res = futex2_wake(&f2, ~0U, INT_MAX, FUTEX2_SIZE_U32);
++	} else {
++		res = futex_wake(&f2, INT_MAX, 0);
++	}
+ 	if (res != 7) {
+ 		ksft_test_result_fail("futex_requeue many returned: %d %s\n",
+ 				      res ? errno : res,
+--- a/tools/testing/selftests/futex/functional/futex_wait.c
++++ b/tools/testing/selftests/futex/functional/futex_wait.c
+@@ -9,8 +9,10 @@
+ #include <sys/shm.h>
+ #include <sys/mman.h>
+ #include <fcntl.h>
++#include <stdbool.h>
+ #include "logging.h"
+ #include "futextest.h"
++#include "futex2test.h"
+ 
+ #define TEST_NAME "futex-wait"
+ #define timeout_ns  30000000
+@@ -19,10 +21,13 @@
+ 
+ void *futex;
+ 
++bool futex2 = 0;
++
+ void usage(char *prog)
+ {
+ 	printf("Usage: %s\n", prog);
+ 	printf("  -c	Use color\n");
++	printf("  -n	Use futex2 interface\n");
+ 	printf("  -h	Display this help message\n");
+ 	printf("  -v L	Verbosity level: %d=QUIET %d=CRITICAL %d=INFO\n",
+ 	       VQUIET, VCRITICAL, VINFO);
+@@ -30,17 +35,35 @@ void usage(char *prog)
+ 
+ static void *waiterfn(void *arg)
+ {
+-	struct timespec to;
+ 	unsigned int flags = 0;
++	struct timespec to;
+ 
+ 	if (arg)
+ 		flags = *((unsigned int *) arg);
+ 
+-	to.tv_sec = 0;
+-	to.tv_nsec = timeout_ns;
++	if (futex2) {
++		if (clock_gettime(CLOCK_MONOTONIC, &to)) {
++			printf("clock_gettime() failed errno %d", errno);
++			return NULL;
++		}
+ 
+-	if (futex_wait(futex, 0, &to, flags))
+-		printf("waiter failed errno %d\n", errno);
++		to.tv_nsec += timeout_ns;
++		if (to.tv_nsec >= 1000000000) {
++			to.tv_sec++;
++			to.tv_nsec -= 1000000000;
++		}
++
++		if (futex2_wait(futex, 0, ~0U, flags | FUTEX2_SIZE_U32,
++				&to, CLOCK_MONOTONIC))
++			printf("waiter failed errno %d\n", errno);
++	} else {
++
++		to.tv_sec = 0;
++		to.tv_nsec = timeout_ns;
++
++		if (futex_wait(futex, 0, &to, flags))
++			printf("waiter failed errno %d\n", errno);
++	}
+ 
+ 	return NULL;
+ }
+@@ -55,7 +78,7 @@ int main(int argc, char *argv[])
+ 
+ 	futex = &f_private;
+ 
+-	while ((c = getopt(argc, argv, "cht:v:")) != -1) {
++	while ((c = getopt(argc, argv, "ncht:v:")) != -1) {
+ 		switch (c) {
+ 		case 'c':
+ 			log_color(1);
+@@ -66,6 +89,9 @@ int main(int argc, char *argv[])
+ 		case 'v':
+ 			log_verbosity(atoi(optarg));
+ 			break;
++		case 'n':
++			futex2=1;
++			break;
+ 		default:
+ 			usage(basename(argv[0]));
+ 			exit(1);
+@@ -84,7 +110,11 @@ int main(int argc, char *argv[])
+ 	usleep(WAKE_WAIT_US);
+ 
+ 	info("Calling private futex_wake on futex: %p\n", futex);
+-	res = futex_wake(futex, 1, FUTEX_PRIVATE_FLAG);
++	if (futex2) {
++		res = futex2_wake(futex, ~0U, 1, FUTEX2_SIZE_U32 | FUTEX2_PRIVATE);
++	} else {
++		res = futex_wake(futex, 1, FUTEX_PRIVATE_FLAG);
++	}
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_wake private returned: %d %s\n",
+ 				      errno, strerror(errno));
+@@ -112,7 +142,11 @@ int main(int argc, char *argv[])
+ 	usleep(WAKE_WAIT_US);
+ 
+ 	info("Calling shared (page anon) futex_wake on futex: %p\n", futex);
+-	res = futex_wake(futex, 1, 0);
++	if (futex2) {
++		res = futex2_wake(futex, ~0U, 1, FUTEX2_SIZE_U32);
++	} else {
++		res = futex_wake(futex, 1, 0);
++	}
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_wake shared (page anon) returned: %d %s\n",
+ 				      errno, strerror(errno));
+@@ -151,7 +185,11 @@ int main(int argc, char *argv[])
+ 	usleep(WAKE_WAIT_US);
+ 
+ 	info("Calling shared (file backed) futex_wake on futex: %p\n", futex);
+-	res = futex_wake(shm, 1, 0);
++	if (futex2) {
++		res = futex2_wake(shm, ~0U, 1, FUTEX2_SIZE_U32);
++	} else {
++		res = futex_wake(shm, 1, 0);
++	}
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_wake shared (file backed) returned: %d %s\n",
+ 				      errno, strerror(errno));
+--- a/tools/testing/selftests/futex/functional/futex_wait_timeout.c
++++ b/tools/testing/selftests/futex/functional/futex_wait_timeout.c
+@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
+ 	struct futex_waitv waitv = {
+ 			.uaddr = (uintptr_t)&f1,
+ 			.val = f1,
+-			.flags = FUTEX_32,
++			.flags = FUTEX2_SIZE_U32,
+ 			.__reserved = 0
  		};
- 		unsigned long address;
- 		unsigned int offset;
-+		/* unsigned int node; */
- 	} private;
- 	struct {
- 		u64 ptr;
- 		unsigned long word;
- 		unsigned int offset;
-+		unsigned int node;	/* NOT hashed! */
- 	} both;
- };
  
---- a/include/uapi/linux/futex.h
-+++ b/include/uapi/linux/futex.h
-@@ -74,6 +74,14 @@
- /* do not use */
- #define FUTEX_32		FUTEX2_SIZE_U32 /* historical accident :-( */
+@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
+ 	}
  
+ 	ksft_print_header();
+-	ksft_set_plan(9);
++	ksft_set_plan(11);
+ 	ksft_print_msg("%s: Block on a futex and wait for timeout\n",
+ 	       basename(argv[0]));
+ 	ksft_print_msg("\tArguments: timeout=%ldns\n", timeout_ns);
+@@ -201,6 +201,18 @@ int main(int argc, char *argv[])
+ 	res = futex_waitv(&waitv, 1, 0, &to, CLOCK_REALTIME);
+ 	test_timeout(res, &ret, "futex_waitv realtime", ETIMEDOUT);
+ 
++	/* futex2_wait with CLOCK_MONOTONIC */
++	if (futex_get_abs_timeout(CLOCK_MONOTONIC, &to, timeout_ns))
++		return RET_FAIL;
++	res = futex2_wait(&f1, f1, 1, FUTEX2_SIZE_U32, &to, CLOCK_MONOTONIC);
++	test_timeout(res, &ret, "futex2_wait monotonic", ETIMEDOUT);
 +
++	/* futex2_wait with CLOCK_REALTIME */
++	if (futex_get_abs_timeout(CLOCK_REALTIME, &to, timeout_ns))
++		return RET_FAIL;
++	res = futex2_wait(&f1, f1, 1, FUTEX2_SIZE_U32, &to, CLOCK_REALTIME);
++	test_timeout(res, &ret, "futex2_wait realtime", ETIMEDOUT);
++
+ 	ksft_print_cnts();
+ 	return ret;
+ }
+--- a/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
++++ b/tools/testing/selftests/futex/functional/futex_wait_wouldblock.c
+@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
+ 	struct futex_waitv waitv = {
+ 			.uaddr = (uintptr_t)&f1,
+ 			.val = f1+1,
+-			.flags = FUTEX_32,
++			.flags = FUTEX2_SIZE_U32 | FUTEX2_PRIVATE,
+ 			.__reserved = 0
+ 		};
+ 
+@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
+ 	}
+ 
+ 	ksft_print_header();
+-	ksft_set_plan(2);
++	ksft_set_plan(3);
+ 	ksft_print_msg("%s: Test the unexpected futex value in FUTEX_WAIT\n",
+ 	       basename(argv[0]));
+ 
+@@ -106,6 +106,30 @@ int main(int argc, char *argv[])
+ 		ksft_test_result_pass("futex_waitv\n");
+ 	}
+ 
++	if (clock_gettime(CLOCK_MONOTONIC, &to)) {
++		error("clock_gettime failed\n", errno);
++		return errno;
++	}
++
++	to.tv_nsec += timeout_ns;
++
++	if (to.tv_nsec >= 1000000000) {
++		to.tv_sec++;
++		to.tv_nsec -= 1000000000;
++	}
++
++	info("Calling futex2_wait on f1: %u @ %p with val=%u\n", f1, &f1, f1+1);
++	res = futex2_wait(&f1, f1+1, ~0U, FUTEX2_SIZE_U32 | FUTEX2_PRIVATE,
++			  &to, CLOCK_MONOTONIC);
++	if (!res || errno != EWOULDBLOCK) {
++		ksft_test_result_pass("futex2_wait returned: %d %s\n",
++				      res ? errno : res,
++				      res ? strerror(errno) : "");
++		ret = RET_FAIL;
++	} else {
++		ksft_test_result_pass("futex2_wait\n");
++	}
++
+ 	ksft_print_cnts();
+ 	return ret;
+ }
+--- a/tools/testing/selftests/futex/functional/futex_waitv.c
++++ b/tools/testing/selftests/futex/functional/futex_waitv.c
+@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
+ 
+ 	for (i = 0; i < NR_FUTEXES; i++) {
+ 		waitv[i].uaddr = (uintptr_t)&futexes[i];
+-		waitv[i].flags = FUTEX_32 | FUTEX_PRIVATE_FLAG;
++		waitv[i].flags = FUTEX2_SIZE_U32 | FUTEX2_PRIVATE;
+ 		waitv[i].val = 0;
+ 		waitv[i].__reserved = 0;
+ 	}
+@@ -99,7 +99,8 @@ int main(int argc, char *argv[])
+ 
+ 	usleep(WAKE_WAIT_US);
+ 
+-	res = futex_wake(u64_to_ptr(waitv[NR_FUTEXES - 1].uaddr), 1, FUTEX_PRIVATE_FLAG);
++	res = futex2_wake(u64_to_ptr(waitv[NR_FUTEXES - 1].uaddr), ~0U, 1,
++			  FUTEX2_PRIVATE | FUTEX2_SIZE_U32);
+ 	if (res != 1) {
+ 		ksft_test_result_fail("futex_wake private returned: %d %s\n",
+ 				      res ? errno : res,
+@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
+ 
+ 		*shared_data = 0;
+ 		waitv[i].uaddr = (uintptr_t)shared_data;
+-		waitv[i].flags = FUTEX_32;
++		waitv[i].flags = FUTEX2_SIZE_U32;
+ 		waitv[i].val = 0;
+ 		waitv[i].__reserved = 0;
+ 	}
+@@ -145,8 +146,8 @@ int main(int argc, char *argv[])
+ 	for (i = 0; i < NR_FUTEXES; i++)
+ 		shmdt(u64_to_ptr(waitv[i].uaddr));
+ 
+-	/* Testing a waiter without FUTEX_32 flag */
+-	waitv[0].flags = FUTEX_PRIVATE_FLAG;
++	/* Testing a waiter without FUTEX2_SIZE_U32 flag */
++	waitv[0].flags = FUTEX2_PRIVATE;
+ 
+ 	if (clock_gettime(CLOCK_MONOTONIC, &to))
+ 		error("gettime64 failed\n", errno);
+@@ -160,11 +161,11 @@ int main(int argc, char *argv[])
+ 				      res ? strerror(errno) : "");
+ 		ret = RET_FAIL;
+ 	} else {
+-		ksft_test_result_pass("futex_waitv without FUTEX_32\n");
++		ksft_test_result_pass("futex_waitv without FUTEX2_SIZE_U32\n");
+ 	}
+ 
+ 	/* Testing a waiter with an unaligned address */
+-	waitv[0].flags = FUTEX_PRIVATE_FLAG | FUTEX_32;
++	waitv[0].flags = FUTEX2_PRIVATE | FUTEX2_SIZE_U32;
+ 	waitv[0].uaddr = 1;
+ 
+ 	if (clock_gettime(CLOCK_MONOTONIC, &to))
+--- a/tools/testing/selftests/futex/functional/run.sh
++++ b/tools/testing/selftests/futex/functional/run.sh
+@@ -76,9 +76,15 @@ echo
+ 
+ echo
+ ./futex_wait $COLOR
++echo
++./futex_wait -n $COLOR
+ 
+ echo
+ ./futex_requeue $COLOR
++echo
++./futex_requeue -n $COLOR
++echo
++./futex_requeue -x $COLOR
+ 
+ echo
+ ./futex_waitv $COLOR
+--- a/tools/testing/selftests/futex/include/futex2test.h
++++ b/tools/testing/selftests/futex/include/futex2test.h
+@@ -8,6 +8,41 @@
+ 
+ #define u64_to_ptr(x) ((void *)(uintptr_t)(x))
+ 
++#ifndef __NR_futex_waitv
++#define __NR_futex_waitv 449
++
++struct futex_waitv {
++	__u64 val;
++	__u64 uaddr;
++	__u32 flags;
++	__u32 __reserved;
++};
++#endif
++
++#ifndef __NR_futex_wake
++#define __NR_futex_wake 454
++#define __NR_futex_wait 455
++#define __NR_futex_requeue 456
++#endif
++
++#ifndef FUTEX2_SIZE_U8
 +/*
-+ * When FUTEX2_NUMA doubles the futex word, the second word is a node value.
-+ * The special value -1 indicates no-node. This is the same value as
-+ * NUMA_NO_NODE, except that value is not ABI, this is.
++ * Flags for futex2 syscalls.
 + */
-+#define FUTEX_NO_NODE		(-1)
++#define FUTEX2_SIZE_U8		0x00
++#define FUTEX2_SIZE_U16		0x01
++#define FUTEX2_SIZE_U32		0x02
++#define FUTEX2_SIZE_U64		0x03
++#define FUTEX2_NUMA		0x04
++			/*	0x08 */
++			/*	0x10 */
++			/*	0x20 */
++			/*	0x40 */
++#define FUTEX2_PRIVATE		FUTEX_PRIVATE_FLAG
++#endif
 +
- /*
-  * Max numbers of elements in a futex_waitv array
-  */
---- a/kernel/futex/core.c
-+++ b/kernel/futex/core.c
-@@ -36,7 +36,8 @@
- #include <linux/pagemap.h>
- #include <linux/debugfs.h>
- #include <linux/plist.h>
--#include <linux/memblock.h>
-+#include <linux/gfp.h>
-+#include <linux/vmalloc.h>
- #include <linux/fault-inject.h>
- #include <linux/slab.h>
- 
-@@ -49,12 +50,14 @@
-  * reside in the same cacheline.
-  */
- static struct {
--	struct futex_hash_bucket *queues;
- 	unsigned long            hashsize;
-+	unsigned int		 hashshift;
-+	struct futex_hash_bucket *queues[MAX_NUMNODES];
- } __futex_data __read_mostly __aligned(2*sizeof(long));
--#define futex_queues   (__futex_data.queues)
--#define futex_hashsize (__futex_data.hashsize)
- 
-+#define futex_hashsize	(__futex_data.hashsize)
-+#define futex_hashshift	(__futex_data.hashshift)
-+#define futex_queues	(__futex_data.queues)
- 
- /*
-  * Fault injections for futexes.
-@@ -107,6 +110,26 @@ late_initcall(fail_futex_debugfs);
- 
- #endif /* CONFIG_FAIL_FUTEX */
- 
-+static int futex_get_value(u32 *val, u32 __user *from, unsigned int flags)
-+{
-+	switch (futex_size(flags)) {
-+	case 1: return __get_user(*val, (u8 __user *)from);
-+	case 2: return __get_user(*val, (u16 __user *)from);
-+	case 4: return __get_user(*val, (u32 __user *)from);
-+	default: BUG();
-+	}
-+}
-+
-+static int futex_put_value(u32 val, u32 __user *to, unsigned int flags)
-+{
-+	switch (futex_size(flags)) {
-+	case 1: return __put_user(val, (u8 __user *)to);
-+	case 2: return __put_user(val, (u16 __user *)to);
-+	case 4: return __put_user(val, (u32 __user *)to);
-+	default: BUG();
-+	}
-+}
++#define FUTEX_NO_NODE (-1)
 +
  /**
-  * futex_hash - Return the hash bucket in the global hash
-  * @key:	Pointer to the futex key for which the hash is calculated
-@@ -116,10 +139,29 @@ late_initcall(fail_futex_debugfs);
-  */
- struct futex_hash_bucket *futex_hash(union futex_key *key)
+  * futex_waitv - Wait at multiple futexes, wake on any
+  * @waiters:    Array of waiters
+@@ -20,3 +55,20 @@ static inline int futex_waitv(volatile s
  {
--	u32 hash = jhash2((u32 *)key, offsetof(typeof(*key), both.offset) / 4,
-+	u32 hash = jhash2((u32 *)key,
-+			  offsetof(typeof(*key), both.offset) / sizeof(u32),
- 			  key->both.offset);
-+	int node = key->both.node;
- 
--	return &futex_queues[hash & (futex_hashsize - 1)];
-+	if (node == FUTEX_NO_NODE) {
-+		/*
-+		 * In case of !FLAGS_NUMA, use some unused hash bits to pick a
-+		 * node -- this ensures regular futexes are interleaved across
-+		 * the nodes and avoids having to allocate multiple
-+		 * hash-tables.
-+		 *
-+		 * NOTE: this isn't perfectly uniform, but it is fast and
-+		 * handles sparse node masks.
-+		 */
-+		node = (hash >> futex_hashshift) % nr_node_ids;
-+		if (!node_possible(node)) {
-+			node = find_next_bit_wrap(node_possible_map.bits,
-+						  nr_node_ids, node);
-+		}
-+	}
-+
-+	return &futex_queues[node][hash & (futex_hashsize - 1)];
+ 	return syscall(__NR_futex_waitv, waiters, nr_waiters, flags, timo, clockid);
  }
- 
- 
-@@ -219,7 +261,7 @@ static u64 get_inode_sequence_number(str
-  *
-  * lock_page() might sleep, the caller should not hold a spinlock.
-  */
--int get_futex_key(u32 __user *uaddr, unsigned int flags, union futex_key *key,
-+int get_futex_key(void __user *uaddr, unsigned int flags, union futex_key *key,
- 		  enum futex_access rw)
- {
- 	unsigned long address = (unsigned long)uaddr;
-@@ -227,25 +269,49 @@ int get_futex_key(u32 __user *uaddr, uns
- 	struct page *page;
- 	struct folio *folio;
- 	struct address_space *mapping;
--	int err, ro = 0;
-+	int node, err, size, ro = 0;
- 	bool fshared;
- 
- 	fshared = flags & FLAGS_SHARED;
-+	size = futex_size(flags);
-+	if (flags & FLAGS_NUMA)
-+		size *= 2;
- 
- 	/*
- 	 * The futex address must be "naturally" aligned.
- 	 */
- 	key->both.offset = address % PAGE_SIZE;
--	if (unlikely((address % sizeof(u32)) != 0))
-+	if (unlikely((address % size) != 0))
- 		return -EINVAL;
- 	address -= key->both.offset;
- 
--	if (unlikely(!access_ok(uaddr, sizeof(u32))))
-+	if (unlikely(!access_ok(uaddr, size)))
- 		return -EFAULT;
- 
- 	if (unlikely(should_fail_futex(fshared)))
- 		return -EFAULT;
- 
-+	if (flags & FLAGS_NUMA) {
-+		void __user *naddr = uaddr + size / 2;
 +
-+		if (futex_get_value(&node, naddr, flags))
-+			return -EFAULT;
++static inline int futex2_wake(volatile void *uaddr, unsigned long mask, int nr, unsigned int flags)
++{
++	return syscall(__NR_futex_wake, uaddr, mask, nr, flags);
++}
 +
-+		if (node == FUTEX_NO_NODE) {
-+			node = numa_node_id();
-+			if (futex_put_value(node, naddr, flags))
-+				return -EFAULT;
++static inline int futex2_wait(volatile void *uaddr, unsigned long val, unsigned long mask,
++			      unsigned int flags, struct timespec *timo, clockid_t clockid)
++{
++	return syscall(__NR_futex_wait, uaddr, val, mask, flags, timo, clockid);
++}
 +
-+		} else if (node >= MAX_NUMNODES || !node_possible(node)) {
-+			return -EINVAL;
-+		}
-+
-+		key->both.node = node;
-+
-+	} else {
-+		key->both.node = FUTEX_NO_NODE;
-+	}
-+
- 	/*
- 	 * PROCESS_PRIVATE futexes are fast.
- 	 * As the mm cannot disappear under us and the 'key' only needs
-@@ -1148,26 +1214,42 @@ void futex_exit_release(struct task_stru
- 
- static int __init futex_init(void)
- {
--	unsigned int futex_shift;
--	unsigned long i;
-+	unsigned int order, n;
-+	unsigned long size, i;
- 
- #ifdef CONFIG_BASE_SMALL
- 	futex_hashsize = 16;
- #else
--	futex_hashsize = roundup_pow_of_two(256 * num_possible_cpus());
-+	futex_hashsize = 256 * num_possible_cpus();
-+	futex_hashsize /= num_possible_nodes();
-+	futex_hashsize = roundup_pow_of_two(futex_hashsize);
- #endif
-+	futex_hashshift = ilog2(futex_hashsize);
-+	size = sizeof(struct futex_hash_bucket) * futex_hashsize;
-+	order = get_order(size);
-+
-+	for_each_node(n) {
-+		struct futex_hash_bucket *table;
-+
-+		if (order > MAX_ORDER)
-+			table = vmalloc_huge_node(size, GFP_KERNEL, n);
-+		else
-+			table = alloc_pages_exact_nid(n, size, GFP_KERNEL);
-+
-+		BUG_ON(!table);
-+
-+		for (i = 0; i < futex_hashsize; i++) {
-+			atomic_set(&table[i].waiters, 0);
-+			spin_lock_init(&table[i].lock);
-+			plist_head_init(&table[i].chain);
-+		}
- 
--	futex_queues = alloc_large_system_hash("futex", sizeof(*futex_queues),
--					       futex_hashsize, 0, 0,
--					       &futex_shift, NULL,
--					       futex_hashsize, futex_hashsize);
--	futex_hashsize = 1UL << futex_shift;
--
--	for (i = 0; i < futex_hashsize; i++) {
--		atomic_set(&futex_queues[i].waiters, 0);
--		plist_head_init(&futex_queues[i].chain);
--		spin_lock_init(&futex_queues[i].lock);
-+		futex_queues[n] = table;
- 	}
-+	pr_info("futex hash table, %d nodes, %ld entries (order: %d, %lu bytes)\n",
-+		num_possible_nodes(),
-+		futex_hashsize, order,
-+		sizeof(struct futex_hash_bucket) * futex_hashsize);
- 
- 	return 0;
- }
---- a/kernel/futex/futex.h
-+++ b/kernel/futex/futex.h
-@@ -52,7 +52,7 @@ static inline unsigned int futex_to_flag
- 	return flags;
- }
- 
--#define FUTEX2_VALID_MASK (FUTEX2_SIZE_MASK | FUTEX2_PRIVATE)
-+#define FUTEX2_VALID_MASK (FUTEX2_SIZE_MASK | FUTEX2_NUMA | FUTEX2_PRIVATE)
- 
- /* FUTEX2_ to FLAGS_ */
- static inline unsigned int futex2_to_flags(unsigned int flags2)
-@@ -85,6 +85,19 @@ static inline bool futex_flags_valid(uns
- 	if ((flags & FLAGS_SIZE_MASK) != FLAGS_SIZE_32)
- 		return false;
- 
-+	/*
-+	 * Must be able to represent both FUTEX_NO_NODE and every valid nodeid
-+	 * in a futex word.
-+	 */
-+	if (flags & FLAGS_NUMA) {
-+		int bits = 8 * futex_size(flags);
-+		u64 max = ~0ULL;
-+
-+		max >>= 64 - bits;
-+		if (nr_node_ids >= max)
-+			return false;
-+	}
-+
- 	return true;
- }
- 
-@@ -193,7 +206,7 @@ enum futex_access {
- 	FUTEX_WRITE
- };
- 
--extern int get_futex_key(u32 __user *uaddr, unsigned int flags, union futex_key *key,
-+extern int get_futex_key(void __user *uaddr, unsigned int flags, union futex_key *key,
- 			 enum futex_access rw);
- 
- extern struct hrtimer_sleeper *
++static inline int futex2_requeue(struct futex_waitv *futexes, unsigned int flags,
++				 int nr_wake, int nr_requeue)
++{
++	return syscall(__NR_futex_requeue, futexes, flags, nr_wake, nr_requeue);
++}
 
 
