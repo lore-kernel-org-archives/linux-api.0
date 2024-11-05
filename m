@@ -1,112 +1,122 @@
-Received: from mx0a-002e3701.pphosted.com (mx0a-002e3701.pphosted.com [148.163.147.86])
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C916717E8E2;
-	Tue,  5 Nov 2024 03:19:38 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=148.163.147.86
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1137E1D47C8;
+	Tue,  5 Nov 2024 12:10:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1730776781; cv=none; b=AGIRnx3uFdoYHBcRskKaVVPQ9gvO0JGVfnNQXLbVxh7fjD2vaRIbSdnZqL9W+bzV96rc5HvEzIvpI4Is7Gxj0i5l8qwjN4ij6Roe6sVnaVEZQZ75fFTr7T3b2O8rSJKe4fmIEvbYsFtM/7QGgLhdkW406ivfODSZPaqvroAECac=
+	t=1730808620; cv=none; b=NTXzP/tryf7nnRX7kJM1zaSvRQVNiEpe1cLB0mXNca9DNk3h+fYQJ6IaJCziOpwRchx3uddx65I28cGniw+xmgyVNYljNF/GNquefJRsOPCcpWN5emXLFs7XljtwAMCokg+elHRKKYoL0FRUnj0meJqr4MXVx5tNC9TXWo5wO2s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1730776781; c=relaxed/simple;
-	bh=ZO4mZ6uDnQ4xgSBdcl2TmLImoFFrdOZgNandE9nq1hM=;
-	h=From:To:Cc:Subject:Date:Message-Id:MIME-Version; b=jjvm0hCdjEAKtD/os8FGY6O2yOyKHAgd1mswiyhs/QsiuH8u368jHBOgywmiMVUa0L5kN/UVrLZ5qR9LVwQ0/wxmvejsGWYyatDl6s0jid/B2jYcUqtW1LtYA+5RUuG4dhOTYE6DZ7F4IGNveGizTil8bfTRVHXMcQ5iNFA/2bQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hpe.com; spf=pass smtp.mailfrom=hpe.com; dkim=pass (2048-bit key) header.d=hpe.com header.i=@hpe.com header.b=VIw2w5sk; arc=none smtp.client-ip=148.163.147.86
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hpe.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=hpe.com
+	s=arc-20240116; t=1730808620; c=relaxed/simple;
+	bh=D/Sjnsy+/xB8yB9ivMteFWzQ4KLjCq4S2+qQfStaHW8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=LQ5QcEQwcjtxB6K7su9g9oL4Toey3U6uAG5Dcwl18y5bvxLIFwxIJD0Z3pDBa24BuZkAUy+Fxhkh4CRXnhOuCwNU8xce9mKJVcJDskFAfPWqgmz8tQXxucopZkda2rjfWPCEtJbJUbhnbeJfp2/E7HhqwTSMXzyZEE/jR/CDDjQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=T7i/zeJj; arc=none smtp.client-ip=90.155.50.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hpe.com header.i=@hpe.com header.b="VIw2w5sk"
-Received: from pps.filterd (m0134421.ppops.net [127.0.0.1])
-	by mx0b-002e3701.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 4A4KtqhW022119;
-	Tue, 5 Nov 2024 03:19:15 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=hpe.com; h=cc
-	:content-transfer-encoding:date:from:message-id:mime-version
-	:subject:to; s=pps0720; bh=RLvlyd7j+M/HoXWqrm1jIxIlrb8ntzFqxgIsi
-	f42wOA=; b=VIw2w5skrOsvgULAD0vSl4XjsjJ5tZ4X57K7WssK3scIWUggHWICM
-	rxlkc++Yd4bRGFvEmIiKEaBXEEamWivKBzeCJlzvhcj818zRbgHDtH4CT1W5jgir
-	sCuLhYB6IE/FQQt73PaRB3fcs23kB9jdx8EpBQgGkM9JDPbmdkGujdxyeNXDza70
-	B9H5mK7TWuX1HnLKgxmcnCF0ZrgjhsoTPUxvXbB8bipBAqS55T7WIfaYXWRpmzHF
-	PyGUeL/jpdv+B/2R9s9y4Dhb0eLfXcfWt/LlHqCWgMxo2H/OnJY46HNgqJPtmoNE
-	/DH94lqu+x2qSe49C7sozKCwfWuOvL+yg==
-Received: from p1lg14878.it.hpe.com ([16.230.97.204])
-	by mx0b-002e3701.pphosted.com (PPS) with ESMTPS id 42q5qqa95w-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 05 Nov 2024 03:19:15 +0000 (GMT)
-Received: from localhost (unknown [192.58.206.35])
-	by p1lg14878.it.hpe.com (Postfix) with ESMTP id 9B9F52766C;
-	Tue,  5 Nov 2024 03:19:13 +0000 (UTC)
-From: Matt Muggeridge <Matt.Muggeridge@hpe.com>
-To: 
-Cc: Matt Muggeridge <Matt.Muggeridge@hpe.com>,
-        David Ahern <dsahern@kernel.org>,
-        "David S . Miller" <davem@davemloft.net>, linux-api@vger.kernel.org,
-        stable@vger.kernel.org, Eric Dumazet <edumazet@google.com>,
-        Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
-        Simon Horman <horms@kernel.org>, netdev@vger.kernel.org,
-        linux-kernel@vger.kernel.org
-Subject: [PATCH net 0/1] net/ipv6: Netlink flag for new IPv6 Default Routes
-Date: Mon,  4 Nov 2024 22:18:38 -0500
-Message-Id: <20241105031841.10730-1-Matt.Muggeridge@hpe.com>
-X-Mailer: git-send-email 2.35.3
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="T7i/zeJj"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Transfer-Encoding:
+	Content-Type:MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:
+	Sender:Reply-To:Content-ID:Content-Description;
+	bh=JMfl+NyZcivvY2Hh7sjOcV4qti2lDbv6tUdw1BYPUR8=; b=T7i/zeJjDWLLrif0Z/0xNB0e24
+	74a1VpvHrVOsx16+tD3a1rKwp8fv56k/kTwkGSlcXDC4RoX3/0WH3sIRDzYfOzeLJ/ONoJE+K+L6e
+	qbsNawDJlidF1/L+/QHWOi+H5U4ANDsvPfSgfU71LDN8fgX8gAFGXnZ6pRJfczWeym98BPM/aJfJR
+	4zZh2BNI9Fh5mXjGMXSaYygA2QiqN0Gn4qvy8ARch2Elsqfe7mjoL1dZHf9wVR3RA7TZC+5CsY4zj
+	kYwmaO1lJ4YfgWMrw5BQP9wT5Lv4WFO+yjAjoViYTClj4jSTuSoByKk1f3CNsOpzy164GmQhiMMWS
+	8NtPPjFQ==;
+Received: from j130084.upc-j.chello.nl ([24.132.130.84] helo=noisy.programming.kicks-ass.net)
+	by casper.infradead.org with esmtpsa (Exim 4.98 #2 (Red Hat Linux))
+	id 1t8INt-00000002lvd-12FH;
+	Tue, 05 Nov 2024 12:10:10 +0000
+Received: by noisy.programming.kicks-ass.net (Postfix, from userid 1000)
+	id 7AD6A30042E; Tue,  5 Nov 2024 13:10:09 +0100 (CET)
+Date: Tue, 5 Nov 2024 13:10:09 +0100
+From: Peter Zijlstra <peterz@infradead.org>
+To: =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
+	Darren Hart <dvhart@infradead.org>,
+	Davidlohr Bueso <dave@stgolabs.net>, Arnd Bergmann <arnd@arndb.de>,
+	sonicadvance1@gmail.com, linux-kernel@vger.kernel.org,
+	kernel-dev@igalia.com, linux-api@vger.kernel.org,
+	Nathan Chancellor <nathan@kernel.org>
+Subject: Re: [PATCH v2 2/3] futex: Create set_robust_list2
+Message-ID: <20241105121009.GH24862@noisy.programming.kicks-ass.net>
+References: <20241101162147.284993-1-andrealmeid@igalia.com>
+ <20241101162147.284993-3-andrealmeid@igalia.com>
+ <20241104112240.GA24862@noisy.programming.kicks-ass.net>
+ <8373eb11-d61c-40c4-9289-1047ec35c4d6@igalia.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-X-Proofpoint-GUID: 2ZpbU0J99SP4QRAkmWWubxBa3XzyO8KB
-X-Proofpoint-ORIG-GUID: 2ZpbU0J99SP4QRAkmWWubxBa3XzyO8KB
-X-HPE-SCL: -1
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1051,Hydra:6.0.680,FMLib:17.12.62.30
- definitions=2024-10-05_03,2024-10-04_01,2024-09-30_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0 bulkscore=0 phishscore=0
- spamscore=0 impostorscore=0 priorityscore=1501 lowpriorityscore=0
- malwarescore=0 suspectscore=0 clxscore=1011 mlxlogscore=643 mlxscore=0
- adultscore=0 classifier=spam adjust=0 reason=mlx scancount=1
- engine=8.19.0-2409260000 definitions=main-2411050024
+In-Reply-To: <8373eb11-d61c-40c4-9289-1047ec35c4d6@igalia.com>
 
-This is the cover letter and provides a brief overview of the change.
+On Mon, Nov 04, 2024 at 06:55:45PM -0300, André Almeida wrote:
+> Hi Peter,
+> 
+> Em 04/11/2024 08:22, Peter Zijlstra escreveu:
+> > On Fri, Nov 01, 2024 at 01:21:46PM -0300, André Almeida wrote:
+> > > @@ -1046,24 +1095,44 @@ static inline void exit_pi_state_list(struct task_struct *curr) { }
+> > >   static void futex_cleanup(struct task_struct *tsk)
+> > >   {
+> > > +	struct robust_list2_entry *curr, *n;
+> > > +	struct list_head *list2 = &tsk->robust_list2;
+> > > +
+> > >   #ifdef CONFIG_64BIT
+> > >   	if (unlikely(tsk->robust_list)) {
+> > > -		exit_robust_list64(tsk);
+> > > +		exit_robust_list64(tsk, tsk->robust_list);
+> > >   		tsk->robust_list = NULL;
+> > >   	}
+> > >   #else
+> > >   	if (unlikely(tsk->robust_list)) {
+> > > -		exit_robust_list32(tsk);
+> > > +		exit_robust_list32(tsk, (struct robust_list_head32 *) tsk->robust_list);
+> > >   		tsk->robust_list = NULL;
+> > >   	}
+> > >   #endif
+> > >   #ifdef CONFIG_COMPAT
+> > >   	if (unlikely(tsk->compat_robust_list)) {
+> > > -		exit_robust_list32(tsk);
+> > > +		exit_robust_list32(tsk, tsk->compat_robust_list);
+> > >   		tsk->compat_robust_list = NULL;
+> > >   	}
+> > >   #endif
+> > > +	/*
+> > > +	 * Walk through the linked list, parsing robust lists and freeing the
+> > > +	 * allocated lists
+> > > +	 */
+> > > +	if (unlikely(!list_empty(list2))) {
+> > > +		list_for_each_entry_safe(curr, n, list2, list) {
+> > > +			if (curr->head != NULL) {
+> > > +				if (curr->list_type == ROBUST_LIST_64BIT)
+> > > +					exit_robust_list64(tsk, curr->head);
+> > > +				else if (curr->list_type == ROBUST_LIST_32BIT)
+> > > +					exit_robust_list32(tsk, curr->head);
+> > > +				curr->head = NULL;
+> > > +			}
+> > > +			list_del_init(&curr->list);
+> > > +			kfree(curr);
+> > > +		}
+> > > +	}
+> > >   	if (unlikely(!list_empty(&tsk->pi_state_list)))
+> > >   		exit_pi_state_list(tsk);
+> > 
+> > I'm still digesting this, but the above seems particularly silly.
+> > 
+> > Should not the legacy lists also be on the list of lists? I mean, it
+> > makes no sense to have two completely separate means of tracking lists.
+> > 
+> 
+> You are asking if, whenever someone calls set_robust_list() or
+> compat_set_robust_list() to be inserted into &current->robust_list2 instead
+> of using tsk->robust_list and tsk->compat_robust_list?
 
-Add a Netlink rtm_flag, RTM_F_RA_ROUTER for the RTM_NEWROUTE message.
-This allows an IPv6 Netlink client to indicate the default route came
-from an RA. This results in the kernel creating individual default
-routes, rather than coalescing multiple default routes into a single
-ECMP route.
-
-This change also needs to be reflected in the man7/rtnetlink.7 page. Below is
-the one-line addition to the man-pages git repo
-(https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git):
-
-diff --git a/man/man7/rtnetlink.7 b/man/man7/rtnetlink.7
-index 86ed459bb..07c4ef0a8 100644
---- a/man/man7/rtnetlink.7
-+++ b/man/man7/rtnetlink.7
-@@ -295,6 +295,7 @@ if the route changes, notify the user via rtnetlink
- T}
- RTM_F_CLONED:route is cloned from another route
- RTM_F_EQUALIZE:a multipath equalizer (not yet implemented)
-+RTM_F_RA_ROUTER: the route is a default route from an RA
- .TE
- .IP
- .I rtm_table
-
-
-Signed-off-by: Matt Muggeridge <Matt.Muggeridge@hpe.com>
-Cc: David Ahern <dsahern@kernel.org>
-Cc: David S. Miller <davem@davemloft.net>
-Cc: linux-api@vger.kernel.org
-Cc: stable@vger.kernel.org
-
-Matt Muggeridge (1):
-  net/ipv6: Netlink flag for new IPv6 Default Routes
-
- include/uapi/linux/rtnetlink.h | 9 +++++----
- net/ipv6/route.c               | 3 +++
- 2 files changed, 8 insertions(+), 4 deletions(-)
-
-
-base-commit: 5ccdcdf186aec6b9111845fd37e1757e9b413e2f
--- 
-2.35.3
-
+Yes, that.
