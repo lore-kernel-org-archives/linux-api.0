@@ -1,172 +1,206 @@
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.15])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6306620E037;
-	Tue, 12 Nov 2024 09:37:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.15
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2105420D51D
+	for <linux-api@vger.kernel.org>; Tue, 12 Nov 2024 10:10:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1731404236; cv=none; b=fneKtRTPtxYVlAE2df4tHRkklk/tOU0X9BOkKcme6NC8bCZITmJ3fjKxO8d4ApH+b1q2xU2MfxMJKFb0M0r6I+s6n7yF/436RhJkREj/XPzE7s29LcrLpQJd/IJzvDBO8dUkwWoO0y3SA298g9qlOXgOcVFd6NweOoBE6u8jmJo=
+	t=1731406214; cv=none; b=YlNwk8JmYAzYpIlbRmGK+d19UbIb15SOiLW0C2KCnbjn792rsb+xUNJGiPDxAzAs6Vm2QNAQZJtdZC/CQc4WKMYNqXt8KQ/vTI2fOc/ofFgTzOX8iRH6fUlu5MwO9Ca3kFnQiWXhBKkexfVW3ntDH+hzGjp3MmUAcy6GWTbE20A=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1731404236; c=relaxed/simple;
-	bh=sa9o6tJLuPEt4doSHckjMjO+65m1SV01OWp1P2w3aW4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=X+YEQaIJnyc0pTbsejxIC7R0+30vEbm+ag8ThTL1Ep0RnbaIso/cY/lOh3ota87Lzc0rd2+jxV3MBGp74HMyFoXBgH6BPckbmoOvzfT/tq9z6Ai0v+wcgUdawEYyYDOGWuuID0J1FHhgF+neTZHJf8340j1EqYQEn63M3IBuHGc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com; spf=pass smtp.mailfrom=intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=VLSj/W5k; arc=none smtp.client-ip=192.198.163.15
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	s=arc-20240116; t=1731406214; c=relaxed/simple;
+	bh=3CqMRoAUQ/VZkOxVTn2tOWqNGD9JA7YdHG+Hw1NNfE4=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=myQeiX8rbJLs+nS60x9110Cg2i+X1EEKLbLq0UOqoTQr9K6hEhrk+soScvIE18uYgJXB4gJjISbQ/5mh58suNvzG9+LSynnWgVbFtDDGY1e1LjW10e3b7I7UGNodjfC/BHJNnFDofGmtzguMrm8K3J8G72+HxRRn0xlulgbwiDA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ZcgVA0mc; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="VLSj/W5k"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1731404234; x=1762940234;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=sa9o6tJLuPEt4doSHckjMjO+65m1SV01OWp1P2w3aW4=;
-  b=VLSj/W5k7/fElL3nycItnrGWqXaoOZ8oVI1H45M4FmDKperNtN4oKubx
-   K5TkQFxVRQU+8ZJCAf03T1z4WR6aFiR0v4/mM16qUhRIoTi64ZDfbpgl+
-   QxFfi7OyGrb22EBfU4XcQkorrHC1clzcXB0YwxAUM1L8JloiKPhQJMUNW
-   ajUidJ4xwTFE+ctmPCXlvwzJaBOTfFBjbVoylq7jsshQpFU1Xm+lBHueM
-   wHncv1w9RVj7Ly6y88y2W11dc/mP9PWUMeJoFx/7rvBh0v9CLh4K4dDKM
-   l/afr45UKd+QHL7fcSXKRIBuL4eDOQRemkov7RwX9hh1g7nB5bls5Gadd
-   Q==;
-X-CSE-ConnectionGUID: EzFgIMUNRC6AjbYnlEYJ1g==
-X-CSE-MsgGUID: JDBNkEA2RWKGKBxRKRrdaA==
-X-IronPort-AV: E=McAfee;i="6700,10204,11253"; a="31324309"
-X-IronPort-AV: E=Sophos;i="6.12,147,1728975600"; 
-   d="scan'208";a="31324309"
-Received: from orviesa007.jf.intel.com ([10.64.159.147])
-  by fmvoesa109.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 12 Nov 2024 01:37:11 -0800
-X-CSE-ConnectionGUID: T4p8b4V4QAKl0jAGQaorIg==
-X-CSE-MsgGUID: q7Kel42VRcGmmOcxnFcM1Q==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.12,147,1728975600"; 
-   d="scan'208";a="87726525"
-Received: from lkp-server01.sh.intel.com (HELO bcfed0da017c) ([10.239.97.150])
-  by orviesa007.jf.intel.com with ESMTP; 12 Nov 2024 01:37:11 -0800
-Received: from kbuild by bcfed0da017c with local (Exim 4.96)
-	(envelope-from <lkp@intel.com>)
-	id 1tAnKd-0000fn-2G;
-	Tue, 12 Nov 2024 09:37:07 +0000
-Date: Tue, 12 Nov 2024 17:36:44 +0800
-From: kernel test robot <lkp@intel.com>
-To: John Ousterhout <ouster@cs.stanford.edu>, netdev@vger.kernel.org,
-	linux-api@vger.kernel.org
-Cc: oe-kbuild-all@lists.linux.dev, John Ousterhout <ouster@cs.stanford.edu>
-Subject: Re: [PATCH net-next v2 12/12] net: homa: create Makefile and Kconfig
-Message-ID: <202411121722.Oxq727h0-lkp@intel.com>
-References: <20241111234006.5942-13-ouster@cs.stanford.edu>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ZcgVA0mc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1731406211;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding;
+	bh=nn4qiEJZ+ap7x5uz1e04QMgEzTquaDZxiT0D5O7PuY4=;
+	b=ZcgVA0mcMpS2NQc3Bbx8ZRC7zR18C3MEWQT8uG59ytXP2DlBKb0z17QoxRAKPeIPEI352A
+	3HLp3hQxSvAnQQODxsRaAZJBLATW9yAXG79Z/d58yKtqOVVtHdou3o1THDvN1VfyufY72/
+	5X1BnfjvNp5vLiWV31IGNmMC6HxkGMQ=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-356-ZuApJ_YmM362v1Hnkb8Tog-1; Tue, 12 Nov 2024 05:10:09 -0500
+X-MC-Unique: ZuApJ_YmM362v1Hnkb8Tog-1
+X-Mimecast-MFC-AGG-ID: ZuApJ_YmM362v1Hnkb8Tog
+Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-37d462b64e3so2897391f8f.3
+        for <linux-api@vger.kernel.org>; Tue, 12 Nov 2024 02:10:09 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1731406208; x=1732011008;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=nn4qiEJZ+ap7x5uz1e04QMgEzTquaDZxiT0D5O7PuY4=;
+        b=ujFhdcSFZG5NouxJR83xaHE+KvoBkpQ9C7JCcYBH1ouVptJbyn7fbNnkddGscMpSde
+         kWNft0Pak0+Cvl4gWhijRWGzYPktBY2K9p6hpKCxl066qRqaBU4j3G3XA+MDzKz2oLkZ
+         k3YCNFj0IGlX3vikSY8wUti47EmHho689/52VyB1vz2XehYWwS8kancrsN+bD85clB9X
+         Gd4gjxWl9UtlgTO0ITPf4FsQmxwznHzOwq+n0knKBP3em3MvFzYuXTtJCrjKKC8jGR8X
+         2V01N7OleVeACqs4uqFPzm7x53m54qR7Pvowf/4aYo5Q6w4azxN2zJo6pTG7Ds2Uzo56
+         AYpA==
+X-Gm-Message-State: AOJu0Yyiclvdo5pYSvnb597g/6qsIULh1Z2GxIL5KkRF+FAAYijxAWo8
+	zOpiKTuokOcNvi/lOCqYpdUQO171UkJQUxnCtSP1HYg3+wDL830A2fgrJzwLHESy/FRM1V2dfMc
+	Z9XVVz/22xisozjP/d7C0HdPTN3Xz1PXOAYeIznBPAdfNwOsMJ4qvNTZ21bhkQiXqzQ==
+X-Received: by 2002:a5d:5850:0:b0:381:cde6:4ced with SMTP id ffacd0b85a97d-381f1880662mr12419981f8f.45.1731406208061;
+        Tue, 12 Nov 2024 02:10:08 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IFWiamj90WZFzxDicuPiKeuDO26e0ElLoop/KUBpyDmAXiQTDVLWZDGpnLfUjUzDZ6TLXCz4A==
+X-Received: by 2002:a5d:5850:0:b0:381:cde6:4ced with SMTP id ffacd0b85a97d-381f1880662mr12419961f8f.45.1731406207659;
+        Tue, 12 Nov 2024 02:10:07 -0800 (PST)
+Received: from maszat.piliscsaba.szeredi.hu (193-226-245-233.pool.digikabel.hu. [193.226.245.233])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-381ed970729sm14929937f8f.15.2024.11.12.02.10.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 12 Nov 2024 02:10:07 -0800 (PST)
+From: Miklos Szeredi <mszeredi@redhat.com>
+To: linux-fsdevel@vger.kernel.org
+Cc: linux-api@vger.kernel.org,
+	Karel Zak <kzak@redhat.com>,
+	Christian Brauner <christian@brauner.io>,
+	Josef Bacik <josef@toxicpanda.com>
+Subject: [PATCH] statmount: add flag to retrieve unescaped options
+Date: Tue, 12 Nov 2024 11:10:04 +0100
+Message-ID: <20241112101006.30715-1-mszeredi@redhat.com>
+X-Mailer: git-send-email 2.47.0
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20241111234006.5942-13-ouster@cs.stanford.edu>
+Content-Transfer-Encoding: 8bit
 
-Hi John,
+Filesystem options can be retrieved with STATMOUNT_MNT_OPTS, which
+returns a string of comma separated options, where some characters are
+escaped using the \OOO notation.
 
-kernel test robot noticed the following build warnings:
+Add a new flag, STATMOUNT_OPT_ARRAY, which instead returns the raw
+option values separated with '\0' charaters.
 
-[auto build test WARNING on net-next/main]
+Since escaped charaters are rare, this inteface is preferable for
+non-libmount users which likley don't want to deal with option
+de-escaping.
 
-url:    https://github.com/intel-lab-lkp/linux/commits/John-Ousterhout/net-homa-define-user-visible-API-for-Homa/20241112-074535
-base:   net-next/main
-patch link:    https://lore.kernel.org/r/20241111234006.5942-13-ouster%40cs.stanford.edu
-patch subject: [PATCH net-next v2 12/12] net: homa: create Makefile and Kconfig
-config: mips-allyesconfig (https://download.01.org/0day-ci/archive/20241112/202411121722.Oxq727h0-lkp@intel.com/config)
-compiler: mips-linux-gcc (GCC) 14.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20241112/202411121722.Oxq727h0-lkp@intel.com/reproduce)
+Example code:
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202411121722.Oxq727h0-lkp@intel.com/
+	if (st->mask & STATMOUNT_OPT_ARRAY) {
+		const char *opt = st->str + st->opt_array;
 
-All warnings (new ones prefixed by >>):
+		for (unsigned int i = 0; i < st->opt_num; i++) {
+			printf("opt_array[%i]: <%s>\n", i, opt);
+			opt += strlen(opt) + 1;
+		}
+	}
 
-   In file included from arch/mips/include/asm/div64.h:89,
-                    from include/linux/math.h:6,
-                    from include/linux/kernel.h:27,
-                    from include/linux/cpumask.h:11,
-                    from arch/mips/include/asm/processor.h:15,
-                    from arch/mips/include/asm/thread_info.h:16,
-                    from include/linux/thread_info.h:60,
-                    from include/asm-generic/current.h:6,
-                    from ./arch/mips/include/generated/asm/current.h:1,
-                    from include/linux/sched.h:12,
-                    from include/linux/audit.h:12,
-                    from net/homa/homa_impl.h:12,
-                    from net/homa/homa_outgoing.c:7:
-   net/homa/homa_outgoing.c: In function 'homa_new_data_packet':
->> include/asm-generic/div64.h:222:35: warning: comparison of distinct pointer types lacks a cast [-Wcompare-distinct-pointer-types]
-     222 |         (void)(((typeof((n)) *)0) == ((uint64_t *)0));  \
-         |                                   ^~
-   net/homa/homa_outgoing.c:108:9: note: in expansion of macro 'do_div'
-     108 |         do_div(segs, max_seg_data);
-         |         ^~~~~~
-   In file included from arch/mips/include/asm/bug.h:5,
-                    from include/linux/bug.h:5,
-                    from net/homa/homa_impl.h:10:
->> include/asm-generic/div64.h:234:32: warning: right shift count >= width of type [-Wshift-count-overflow]
-     234 |         } else if (likely(((n) >> 32) == 0)) {          \
-         |                                ^~
-   include/linux/compiler.h:76:45: note: in definition of macro 'likely'
-      76 | # define likely(x)      __builtin_expect(!!(x), 1)
-         |                                             ^
-   net/homa/homa_outgoing.c:108:9: note: in expansion of macro 'do_div'
-     108 |         do_div(segs, max_seg_data);
-         |         ^~~~~~
-   net/homa/homa_outgoing.c: In function 'homa_message_out_fill':
->> include/asm-generic/div64.h:222:35: warning: comparison of distinct pointer types lacks a cast [-Wcompare-distinct-pointer-types]
-     222 |         (void)(((typeof((n)) *)0) == ((uint64_t *)0));  \
-         |                                   ^~
-   net/homa/homa_outgoing.c:233:9: note: in expansion of macro 'do_div'
-     233 |         do_div(segs_per_gso, max_seg_data);
-         |         ^~~~~~
->> include/asm-generic/div64.h:234:32: warning: right shift count >= width of type [-Wshift-count-overflow]
-     234 |         } else if (likely(((n) >> 32) == 0)) {          \
-         |                                ^~
-   include/linux/compiler.h:76:45: note: in definition of macro 'likely'
-      76 | # define likely(x)      __builtin_expect(!!(x), 1)
-         |                                             ^
-   net/homa/homa_outgoing.c:233:9: note: in expansion of macro 'do_div'
-     233 |         do_div(segs_per_gso, max_seg_data);
-         |         ^~~~~~
+Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+---
+ fs/namespace.c             | 42 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/mount.h |  7 +++++--
+ 2 files changed, 47 insertions(+), 2 deletions(-)
 
-
-vim +222 include/asm-generic/div64.h
-
-^1da177e4c3f41 Linus Torvalds     2005-04-16  215  
-^1da177e4c3f41 Linus Torvalds     2005-04-16  216  /* The unnecessary pointer compare is there
-^1da177e4c3f41 Linus Torvalds     2005-04-16  217   * to check for type safety (n must be 64bit)
-^1da177e4c3f41 Linus Torvalds     2005-04-16  218   */
-^1da177e4c3f41 Linus Torvalds     2005-04-16  219  # define do_div(n,base) ({				\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  220  	uint32_t __base = (base);			\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  221  	uint32_t __rem;					\
-^1da177e4c3f41 Linus Torvalds     2005-04-16 @222  	(void)(((typeof((n)) *)0) == ((uint64_t *)0));	\
-911918aa7ef6f8 Nicolas Pitre      2015-11-02  223  	if (__builtin_constant_p(__base) &&		\
-911918aa7ef6f8 Nicolas Pitre      2015-11-02  224  	    is_power_of_2(__base)) {			\
-911918aa7ef6f8 Nicolas Pitre      2015-11-02  225  		__rem = (n) & (__base - 1);		\
-911918aa7ef6f8 Nicolas Pitre      2015-11-02  226  		(n) >>= ilog2(__base);			\
-c747ce4706190e Geert Uytterhoeven 2021-08-11  227  	} else if (__builtin_constant_p(__base) &&	\
-461a5e51060c93 Nicolas Pitre      2015-10-30  228  		   __base != 0) {			\
-461a5e51060c93 Nicolas Pitre      2015-10-30  229  		uint32_t __res_lo, __n_lo = (n);	\
-461a5e51060c93 Nicolas Pitre      2015-10-30  230  		(n) = __div64_const32(n, __base);	\
-461a5e51060c93 Nicolas Pitre      2015-10-30  231  		/* the remainder can be computed with 32-bit regs */ \
-461a5e51060c93 Nicolas Pitre      2015-10-30  232  		__res_lo = (n);				\
-461a5e51060c93 Nicolas Pitre      2015-10-30  233  		__rem = __n_lo - __res_lo * __base;	\
-911918aa7ef6f8 Nicolas Pitre      2015-11-02 @234  	} else if (likely(((n) >> 32) == 0)) {		\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  235  		__rem = (uint32_t)(n) % __base;		\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  236  		(n) = (uint32_t)(n) / __base;		\
-c747ce4706190e Geert Uytterhoeven 2021-08-11  237  	} else {					\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  238  		__rem = __div64_32(&(n), __base);	\
-c747ce4706190e Geert Uytterhoeven 2021-08-11  239  	}						\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  240  	__rem;						\
-^1da177e4c3f41 Linus Torvalds     2005-04-16  241   })
-^1da177e4c3f41 Linus Torvalds     2005-04-16  242  
-
+diff --git a/fs/namespace.c b/fs/namespace.c
+index 9a4ab1bc8b94..a16f75011610 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -5074,6 +5074,41 @@ static int statmount_mnt_opts(struct kstatmount *s, struct seq_file *seq)
+ 	return 0;
+ }
+ 
++static int statmount_opt_array(struct kstatmount *s, struct seq_file *seq)
++{
++	struct vfsmount *mnt = s->mnt;
++	struct super_block *sb = mnt->mnt_sb;
++	size_t start = seq->count;
++	u32 count = 0;
++	char *p, *end, *next, *u = seq->buf + start;
++	int err;
++
++       if (!sb->s_op->show_options)
++               return 0;
++
++       err = sb->s_op->show_options(seq, mnt->mnt_root);
++       if (err)
++	       return err;
++
++       if (unlikely(seq_has_overflowed(seq)))
++	       return -EAGAIN;
++
++       end = seq->buf + seq->count;
++       *end = '\0';
++       for (p = u + 1; p < end; p = next + 1) {
++               next = strchrnul(p, ',');
++               *next = '\0';
++               u += string_unescape(p, u, 0, UNESCAPE_OCTAL) + 1;
++	       count++;
++	       if (!count)
++		       return -EOVERFLOW;
++       }
++       seq->count = u - 1 - seq->buf;
++       s->sm.opt_num = count;
++
++       return 0;
++}
++
+ static int statmount_string(struct kstatmount *s, u64 flag)
+ {
+ 	int ret = 0;
+@@ -5099,6 +5134,10 @@ static int statmount_string(struct kstatmount *s, u64 flag)
+ 		sm->mnt_opts = start;
+ 		ret = statmount_mnt_opts(s, seq);
+ 		break;
++	case STATMOUNT_OPT_ARRAY:
++		sm->opt_array = start;
++		ret = statmount_opt_array(s, seq);
++		break;
+ 	case STATMOUNT_FS_SUBTYPE:
+ 		sm->fs_subtype = start;
+ 		statmount_fs_subtype(s, seq);
+@@ -5252,6 +5291,9 @@ static int do_statmount(struct kstatmount *s, u64 mnt_id, u64 mnt_ns_id,
+ 	if (!err && s->mask & STATMOUNT_MNT_OPTS)
+ 		err = statmount_string(s, STATMOUNT_MNT_OPTS);
+ 
++	if (!err && s->mask & STATMOUNT_OPT_ARRAY)
++		err = statmount_string(s, STATMOUNT_OPT_ARRAY);
++
+ 	if (!err && s->mask & STATMOUNT_FS_SUBTYPE)
+ 		err = statmount_string(s, STATMOUNT_FS_SUBTYPE);
+ 
+diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
+index 2b49e9131d77..c0fda4604187 100644
+--- a/include/uapi/linux/mount.h
++++ b/include/uapi/linux/mount.h
+@@ -154,7 +154,7 @@ struct mount_attr {
+  */
+ struct statmount {
+ 	__u32 size;		/* Total size, including strings */
+-	__u32 mnt_opts;		/* [str] Mount options of the mount */
++	__u32 mnt_opts;		/* [str] Options (comma separated, escaped) */
+ 	__u64 mask;		/* What results were written */
+ 	__u32 sb_dev_major;	/* Device ID */
+ 	__u32 sb_dev_minor;
+@@ -175,7 +175,9 @@ struct statmount {
+ 	__u64 mnt_ns_id;	/* ID of the mount namespace */
+ 	__u32 fs_subtype;	/* [str] Subtype of fs_type (if any) */
+ 	__u32 sb_source;	/* [str] Source string of the mount */
+-	__u64 __spare2[48];
++	__u32 opt_num;		/* Number of fs options */
++	__u32 opt_array;	/* [str] Array of nul terminated fs options */
++	__u64 __spare2[47];
+ 	char str[];		/* Variable size part containing strings */
+ };
+ 
+@@ -211,6 +213,7 @@ struct mnt_id_req {
+ #define STATMOUNT_MNT_OPTS		0x00000080U	/* Want/got mnt_opts */
+ #define STATMOUNT_FS_SUBTYPE		0x00000100U	/* Want/got fs_subtype */
+ #define STATMOUNT_SB_SOURCE		0x00000200U	/* Want/got sb_source */
++#define STATMOUNT_OPT_ARRAY		0x00000400U	/* Want/got opt_... */
+ 
+ /*
+  * Special @mnt_id values that can be passed to listmount
 -- 
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+2.47.0
+
