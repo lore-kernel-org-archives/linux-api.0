@@ -1,247 +1,360 @@
-Received: from frasgout11.his.huawei.com (frasgout11.his.huawei.com [14.137.139.23])
+Received: from smtp-42ab.mail.infomaniak.ch (smtp-42ab.mail.infomaniak.ch [84.16.66.171])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF5AB16F27E;
-	Thu,  5 Dec 2024 08:54:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=14.137.139.23
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C41717E473
+	for <linux-api@vger.kernel.org>; Thu,  5 Dec 2024 16:09:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=84.16.66.171
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733388870; cv=none; b=Tp2HpPuqU/8/OJ/lzjMvnkSwn6Dk+bgRCN5xDbdNTrIu8yRoiTj1udZyXAUif90BmPw1HbXx32KUxwwxFbd8SXkQRLvKKTtNFNelSworQ0kjYb61WJ8Yk4UIDQq9/ZP5JW6vJz2Gm00W/MQnfixOwGkMI03pwvDxn9jW4VA+B6s=
+	t=1733414993; cv=none; b=H8UhjBlCcwbBRot+iZroD/TmReXQIpcCxG+qRVCmchK7+KtRMk0vwfnMIuogqR+F6tJaIBpYK4x6X3ALiybdanhyXXQB7Ozf1ppN7ooDc1AMaS2zdqCr8FBygSDxL7dczQvX8OOSFpQrjkEFAmdNbQJ75FQnZZsToMO1uaYF0mI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733388870; c=relaxed/simple;
-	bh=g0gydrHl/2oqhtVxsWa7SZilONyoK1LSyfq8FZ/A+/0=;
-	h=Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=hpCy5o3WuMg0r11Awj5NtIPVQuYSgP/P2dnMqBsXsdZgZS/sX3nHgXNZ06WfxMKBo8eNzh+LbPjjuUy8wLMF4Oc+fLXry+Cowm7EDFFrXFn9/OwAPkboC1oBgD4x93AFv4AmR8OoELy3nKhR+T7rIx8KEF3qKdrk6q16yi+JCQ0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com; spf=pass smtp.mailfrom=huaweicloud.com; arc=none smtp.client-ip=14.137.139.23
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=huaweicloud.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huaweicloud.com
-Received: from mail.maildlp.com (unknown [172.18.186.51])
-	by frasgout11.his.huawei.com (SkyGuard) with ESMTP id 4Y3nhd2ylsz9v7Vj;
-	Thu,  5 Dec 2024 16:33:05 +0800 (CST)
-Received: from mail02.huawei.com (unknown [7.182.16.47])
-	by mail.maildlp.com (Postfix) with ESMTP id 00C2714051A;
-	Thu,  5 Dec 2024 16:54:09 +0800 (CST)
-Received: from [127.0.0.1] (unknown [10.204.63.22])
-	by APP1 (Coremail) with SMTP id LxC2BwBH9CQdalFnenXcAg--.56302S2;
-	Thu, 05 Dec 2024 09:54:08 +0100 (CET)
-Message-ID: <3a759c091ac097be84b882dd992e6e216ec11723.camel@huaweicloud.com>
-Subject: Re: [PATCH v6 00/15] integrity: Introduce the Integrity Digest Cache
-From: Roberto Sassu <roberto.sassu@huaweicloud.com>
-To: Eric Snowberg <eric.snowberg@oracle.com>
-Cc: Mimi Zohar <zohar@linux.ibm.com>, Dmitry Kasatkin
- <dmitry.kasatkin@gmail.com>, "corbet@lwn.net" <corbet@lwn.net>, 
- "mcgrof@kernel.org" <mcgrof@kernel.org>, "petr.pavlu@suse.com"
- <petr.pavlu@suse.com>,  "samitolvanen@google.com"
- <samitolvanen@google.com>, "da.gomez@samsung.com" <da.gomez@samsung.com>, 
- Andrew Morton <akpm@linux-foundation.org>, "paul@paul-moore.com"
- <paul@paul-moore.com>, "jmorris@namei.org" <jmorris@namei.org>,
- "serge@hallyn.com" <serge@hallyn.com>, "shuah@kernel.org"
- <shuah@kernel.org>, "mcoquelin.stm32@gmail.com"
- <mcoquelin.stm32@gmail.com>,  "alexandre.torgue@foss.st.com"
- <alexandre.torgue@foss.st.com>, "linux-integrity@vger.kernel.org"
- <linux-integrity@vger.kernel.org>, "linux-doc@vger.kernel.org"
- <linux-doc@vger.kernel.org>, "linux-kernel@vger.kernel.org"
- <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org"
- <linux-api@vger.kernel.org>, "linux-modules@vger.kernel.org"
- <linux-modules@vger.kernel.org>, "linux-security-module@vger.kernel.org"
- <linux-security-module@vger.kernel.org>, "linux-kselftest@vger.kernel.org"
- <linux-kselftest@vger.kernel.org>, "wufan@linux.microsoft.com"
- <wufan@linux.microsoft.com>, "pbrobinson@gmail.com" <pbrobinson@gmail.com>,
-  "zbyszek@in.waw.pl" <zbyszek@in.waw.pl>, "hch@lst.de" <hch@lst.de>,
- "mjg59@srcf.ucam.org" <mjg59@srcf.ucam.org>, "pmatilai@redhat.com"
- <pmatilai@redhat.com>,  "jannh@google.com" <jannh@google.com>,
- "dhowells@redhat.com" <dhowells@redhat.com>,  "jikos@kernel.org"
- <jikos@kernel.org>, "mkoutny@suse.com" <mkoutny@suse.com>,
- "ppavlu@suse.com" <ppavlu@suse.com>, "petr.vorel@gmail.com"
- <petr.vorel@gmail.com>,  "mzerqung@0pointer.de" <mzerqung@0pointer.de>,
- "kgold@linux.ibm.com" <kgold@linux.ibm.com>, Roberto Sassu
- <roberto.sassu@huawei.com>
-Date: Thu, 05 Dec 2024 09:53:45 +0100
-In-Reply-To: <B0DC94E7-78A3-4797-B864-31DE0A2C903C@oracle.com>
-References: <20241119104922.2772571-1-roberto.sassu@huaweicloud.com>
-	 <C4BE31F8-1FA3-4AD1-A712-ED2AA7E61E96@oracle.com>
-	 <17ef4f662e594c8431a00fe423507af4f6a82286.camel@huaweicloud.com>
-	 <B135AC90-7CE5-4E51-90B1-9D82031668A8@oracle.com>
-	 <00f3eb72042aedaa4644ff0932d06d4e8d215f6b.camel@huaweicloud.com>
-	 <B0DC94E7-78A3-4797-B864-31DE0A2C903C@oracle.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.44.4-0ubuntu2 
+	s=arc-20240116; t=1733414993; c=relaxed/simple;
+	bh=RP85EB0JPMxqBe9enzwWtSmpSe9gECP9CorwqIMc/jU=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=SzNzUvS7EB5xFUtuxeJPshK0aevVdM9puuTvzOdq5ga/ZsYbd4gmIN/ufcytRq0bZidC8mMrxO3dbiKzEZe/8PFUFcx5+3Hr2HnEgwKq2gyAKydbXEIAunnoy1mMgRpyRZi4wd6ctC6ZTKgN+ve34f9ZVRZ5J0Yxp5piRtdN37A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=fivtcfl6; arc=none smtp.client-ip=84.16.66.171
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="fivtcfl6"
+Received: from smtp-4-0001.mail.infomaniak.ch (unknown [IPv6:2001:1600:7:10:40ca:feff:fe05:1])
+	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4Y3zqb32ltzssH;
+	Thu,  5 Dec 2024 17:09:47 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
+	s=20191114; t=1733414987;
+	bh=Rv90cIm/DfvkuDs5cYfIFc/UTRHBVaOslMZuoqNbp/U=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
+	b=fivtcfl6qWtPX2O10RcYAzlHarGWmBxDa9vaHgRXb+wRdYoRto6diK8n634EFoYRJ
+	 N6e9ds1l1nrIjM8Z9V6bmf7jzl/DoA0wk2G62WqgMC2piyJ/F5ZyTmw/9LWkv0TaxL
+	 cVvkkTwGEpRn4LSAB7wbpmOxDvuNKJ+V5+++aE7A=
+Received: from unknown by smtp-4-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4Y3zqZ3Kdfzg63;
+	Thu,  5 Dec 2024 17:09:46 +0100 (CET)
+From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
+To: Al Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>,
+	Kees Cook <keescook@chromium.org>,
+	Paul Moore <paul@paul-moore.com>,
+	Serge Hallyn <serge@hallyn.com>
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
+	Adhemerval Zanella Netto <adhemerval.zanella@linaro.org>,
+	Alejandro Colomar <alx@kernel.org>,
+	Aleksa Sarai <cyphar@cyphar.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andy Lutomirski <luto@kernel.org>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Casey Schaufler <casey@schaufler-ca.com>,
+	Christian Heimes <christian@python.org>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Elliott Hughes <enh@google.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Eric Chiang <ericchiang@google.com>,
+	Fan Wu <wufan@linux.microsoft.com>,
+	Florian Weimer <fweimer@redhat.com>,
+	Geert Uytterhoeven <geert@linux-m68k.org>,
+	James Morris <jamorris@linux.microsoft.com>,
+	Jan Kara <jack@suse.cz>,
+	Jann Horn <jannh@google.com>,
+	Jeff Xu <jeffxu@google.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Jordan R Abrahams <ajordanr@google.com>,
+	Lakshmi Ramasubramanian <nramas@linux.microsoft.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Luca Boccassi <bluca@debian.org>,
+	Luis Chamberlain <mcgrof@kernel.org>,
+	"Madhavan T . Venkataraman" <madvenka@linux.microsoft.com>,
+	Matt Bobrowski <mattbobrowski@google.com>,
+	Matthew Garrett <mjg59@srcf.ucam.org>,
+	Matthew Wilcox <willy@infradead.org>,
+	Miklos Szeredi <mszeredi@redhat.com>,
+	Mimi Zohar <zohar@linux.ibm.com>,
+	Nicolas Bouchinet <nicolas.bouchinet@ssi.gouv.fr>,
+	Roberto Sassu <roberto.sassu@huawei.com>,
+	Scott Shell <scottsh@microsoft.com>,
+	Shuah Khan <shuah@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Stephen Rothwell <sfr@canb.auug.org.au>,
+	Steve Dower <steve.dower@python.org>,
+	Steve Grubb <sgrubb@redhat.com>,
+	Theodore Ts'o <tytso@mit.edu>,
+	Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>,
+	Vincent Strubel <vincent.strubel@ssi.gouv.fr>,
+	Xiaoming Ni <nixiaoming@huawei.com>,
+	Yin Fengwei <fengwei.yin@intel.com>,
+	kernel-hardening@lists.openwall.com,
+	linux-api@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-security-module@vger.kernel.org
+Subject: [PATCH v22 1/8] exec: Add a new AT_EXECVE_CHECK flag to execveat(2)
+Date: Thu,  5 Dec 2024 17:09:18 +0100
+Message-ID: <20241205160925.230119-2-mic@digikod.net>
+In-Reply-To: <20241205160925.230119-1-mic@digikod.net>
+References: <20241205160925.230119-1-mic@digikod.net>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-CM-TRANSID:LxC2BwBH9CQdalFnenXcAg--.56302S2
-X-Coremail-Antispam: 1UD129KBjvJXoW3WrW8tF1DCFykKFWfAF47Jwb_yoW7tw1kpa
-	y5Ka13Kr4kWr10k3Z2ka1UWF1Fk3yftr15Xwn8Xry5CrZ0gr929F1xKa15uFyDGr1kGr12
-	vr1ag347CrWDAaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDU0xBIdaVrnRJUUUv0b4IE77IF4wAFF20E14v26rWj6s0DM7CY07I20VC2zVCF04k2
-	6cxKx2IYs7xG6rWj6s0DM7CIcVAFz4kK6r1j6r18M28lY4IEw2IIxxk0rwA2F7IY1VAKz4
-	vEj48ve4kI8wA2z4x0Y4vE2Ix0cI8IcVAFwI0_Jr0_JF4l84ACjcxK6xIIjxv20xvEc7Cj
-	xVAFwI0_Gr0_Cr1l84ACjcxK6I8E87Iv67AKxVW8JVWxJwA2z4x0Y4vEx4A2jsIEc7CjxV
-	AFwI0_Gr0_Gr1UM2AIxVAIcxkEcVAq07x20xvEncxIr21l5I8CrVACY4xI64kE6c02F40E
-	x7xfMcIj6xIIjxv20xvE14v26r1j6r18McIj6I8E87Iv67AKxVWUJVW8JwAm72CE4IkC6x
-	0Yz7v_Jr0_Gr1lF7xvr2IY64vIr41lFIxGxcIEc7CjxVA2Y2ka0xkIwI1lc7CjxVAaw2AF
-	wI0_Wrv_ZF1l42xK82IYc2Ij64vIr41l4I8I3I0E4IkC6x0Yz7v_Jr0_Gr1lx2IqxVAqx4
-	xG67AKxVWUJVWUGwC20s026x8GjcxK67AKxVWUGVWUWwC2zVAF1VAY17CE14v26rWY6r4U
-	JwCIc40Y0x0EwIxGrwCI42IY6xIIjxv20xvE14v26r1j6r1xMIIF0xvE2Ix0cI8IcVCY1x
-	0267AKxVW8JVWxJwCI42IY6xAIw20EY4v20xvaj40_Jr0_JF4lIxAIcVC2z280aVAFwI0_
-	Jr0_Gr1lIxAIcVC2z280aVCY1x0267AKxVW8JVW8JrUvcSsGvfC2KfnxnUUI43ZEXa7IU0
-	EksDUUUUU==
-X-CM-SenderInfo: purev21wro2thvvxqx5xdzvxpfor3voofrz/1tbiAgAIBGdRD-QHxQAAsB
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+X-Infomaniak-Routing: alpha
 
-On Thu, 2024-12-05 at 00:57 +0000, Eric Snowberg wrote:
->=20
-> > On Dec 4, 2024, at 3:44=E2=80=AFAM, Roberto Sassu <roberto.sassu@huawei=
-cloud.com> wrote:
-> >=20
-> > On Tue, 2024-12-03 at 20:06 +0000, Eric Snowberg wrote:
-> > >=20
-> > > > On Nov 26, 2024, at 3:41=E2=80=AFAM, Roberto Sassu <roberto.sassu@h=
-uaweicloud.com> wrote:
-> > > >=20
-> > > > On Tue, 2024-11-26 at 00:13 +0000, Eric Snowberg wrote:
-> > > > >=20
-> > > > > > On Nov 19, 2024, at 3:49=E2=80=AFAM, Roberto Sassu <roberto.sas=
-su@huaweicloud.com> wrote:
-> > > > > >=20
-> > > > > > From: Roberto Sassu <roberto.sassu@huawei.com>
-> > > > > >=20
-> > > > > > The Integrity Digest Cache can also help IMA for appraisal. IMA=
- can simply
-> > > > > > lookup the calculated digest of an accessed file in the list of=
- digests
-> > > > > > extracted from package headers, after verifying the header sign=
-ature. It is
-> > > > > > sufficient to verify only one signature for all files in the pa=
-ckage, as
-> > > > > > opposed to verifying a signature for each file.
-> > > > >=20
-> > > > > Is there a way to maintain integrity over time?  Today if a CVE i=
-s discovered=20
-> > > > > in a signed program, the program hash can be added to the blackli=
-st keyring.=20
-> > > > > Later if IMA appraisal is used, the signature validation will fai=
-l just for that=20
-> > > > > program.  With the Integrity Digest Cache, is there a way to do t=
-his? =20
-> > > >=20
-> > > > As far as I can see, the ima_check_blacklist() call is before
-> > > > ima_appraise_measurement(). If it fails, appraisal with the Integri=
-ty
-> > > > Digest Cache will not be done.
-> > >=20
-> > >=20
-> > > It is good the program hash would be checked beforehand and fail if i=
-t is=20
-> > > contained on the list.=20
-> > >=20
-> > > The .ima keyring may contain many keys.  If one of the keys was later=
-=20
-> > > revoked and added to the .blacklist, wouldn't this be missed?  It wou=
-ld=20
-> > > be caught during signature validation when the file is later appraise=
-d, but=20
-> > > now this step isn't taking place.  Correct?
-> >=20
-> > For files included in the digest lists, yes, there won't be detection
-> > of later revocation of a key. However, it will still work at package
-> > level/digest list level, since they are still appraised with a
-> > signature.
-> >=20
-> > We can add a mechanism (if it does not already exist) to invalidate the
-> > integrity status based on key revocation, which can be propagated to
-> > files verified with the affected digest lists.
-> >=20
-> > > With IMA appraisal, it is easy to maintain authenticity but challengi=
-ng to=20
-> > > maintain integrity over time. In user-space there are constantly new =
-CVEs. =20
-> > > To maintain integrity over time, either keys need to be rotated in th=
-e .ima=20
-> > > keyring or program hashes need to be frequently added to the .blackli=
-st.  =20
-> > > If neither is done, for an end-user on a distro, IMA-appraisal basica=
-lly=20
-> > > guarantees authenticity.
-> > >=20
-> > > While I understand the intent of the series is to increase performanc=
-e,=20
-> > > have you considered using this to give the end-user the ability to ma=
-intain=20
-> > > integrity of their system?  What I mean is, instead of trying to impo=
-rt anything=20
-> > > from an RPM, just have the end-user provide this information in some =
-format=20
-> > > to the Digest Cache.  User-space tools could be built to collect and =
-format=20
-> >=20
-> > This is already possible, digest-cache-tools
-> > (https://github.com/linux-integrity/digest-cache-tools) already allow
-> > to create a digest list with the file a user wants.
-> >=20
-> > But in this case, the user is vouching for having taken the correct
-> > measure of the file at the time it was added to the digest list. This
-> > would be instead automatically guaranteed by RPMs or other packages
-> > shipped with Linux distributions.
-> >=20
-> > To mitigate the concerns of CVEs, we can probably implement a rollback
-> > prevention mechanism, which would not allow to load a previous version
-> > of a digest list.
->=20
-> IMHO, pursuing this with the end-user being in control of what is contain=
-ed=20
-> within the Digest Cache vs what is contained in a distro would provide mo=
-re
-> value. Allowing the end-user to easily update their Digest Cache in some =
-way=20
-> without having to do any type of revocation for both old and vulnerable=
-=20
-> applications with CVEs would be very beneficial.
+Add a new AT_EXECVE_CHECK flag to execveat(2) to check if a file would
+be allowed for execution.  The main use case is for script interpreters
+and dynamic linkers to check execution permission according to the
+kernel's security policy. Another use case is to add context to access
+logs e.g., which script (instead of interpreter) accessed a file.  As
+any executable code, scripts could also use this check [1].
 
-Yes, deleting the digest list would invalidate any integrity result
-done with that digest list.
+This is different from faccessat(2) + X_OK which only checks a subset of
+access rights (i.e. inode permission and mount options for regular
+files), but not the full context (e.g. all LSM access checks).  The main
+use case for access(2) is for SUID processes to (partially) check access
+on behalf of their caller.  The main use case for execveat(2) +
+AT_EXECVE_CHECK is to check if a script execution would be allowed,
+according to all the different restrictions in place.  Because the use
+of AT_EXECVE_CHECK follows the exact kernel semantic as for a real
+execution, user space gets the same error codes.
 
-I developed also an rpm plugin that synchronizes the digest lists with
-installed software. Old vulnerable software cannot be verified anymore
-with the Integrity Digest Cache, since the rpm plugin deletes the old
-software digest lists.
+An interesting point of using execveat(2) instead of openat2(2) is that
+it decouples the check from the enforcement.  Indeed, the security check
+can be logged (e.g. with audit) without blocking an execution
+environment not yet ready to enforce a strict security policy.
 
-https://github.com/linux-integrity/digest-cache-tools/blob/main/rpm-plugin/=
-digest_cache.c
+LSMs can control or log execution requests with
+security_bprm_creds_for_exec().  However, to enforce a consistent and
+complete access control (e.g. on binary's dependencies) LSMs should
+restrict file executability, or measure executed files, with
+security_file_open() by checking file->f_flags & __FMODE_EXEC.
 
-The good thing is that the Integrity Digest Cache can be easily
-controlled with filesystem operations (it works similarly to security
-blobs attached to kernel objects, like inodes and file descriptors).
+Because AT_EXECVE_CHECK is dedicated to user space interpreters, it
+doesn't make sense for the kernel to parse the checked files, look for
+interpreters known to the kernel (e.g. ELF, shebang), and return ENOEXEC
+if the format is unknown.  Because of that, security_bprm_check() is
+never called when AT_EXECVE_CHECK is used.
 
-As soon as something changes (e.g. digest list written, link to the
-digest lists), this triggers a reset in the Integrity Digest Cache, so
-digest lists and files need to be verified again. Deleting the digest
-list causes the in-kernel digest cache to be wiped away too (when the
-reference count reaches zero).
+It should be noted that script interpreters cannot directly use
+execveat(2) (without this new AT_EXECVE_CHECK flag) because this could
+lead to unexpected behaviors e.g., `python script.sh` could lead to Bash
+being executed to interpret the script.  Unlike the kernel, script
+interpreters may just interpret the shebang as a simple comment, which
+should not change for backward compatibility reasons.
 
-> Is there a belief the Digest Cache would be used without signed kernel=
-=20
-> modules?  Is the performance gain worth changing how kernel modules=20
-> get loaded at boot?  Couldn't this part just be dropped for easier accept=
-ance? =20
-> Integrity is already maintained with the current model of appended signat=
-ures.=20
+Because scripts or libraries files might not currently have the
+executable permission set, or because we might want specific users to be
+allowed to run arbitrary scripts, the following patch provides a dynamic
+configuration mechanism with the SECBIT_EXEC_RESTRICT_FILE and
+SECBIT_EXEC_DENY_INTERACTIVE securebits.
 
-I don't like making exceptions in the design, and I recently realized
-that it should not be task of the users of the Integrity Digest Cache
-to limit themselves.
+This is a redesign of the CLIP OS 4's O_MAYEXEC:
+https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
+This patch has been used for more than a decade with customized script
+interpreters.  Some examples can be found here:
+https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
 
-But the main problem was not the kernel modules themselves, but the
-infrastructure needed in user space to load them, which might not be
-available at the time a digest list parser needs to be loaded.
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Christian Brauner <brauner@kernel.org>
+Cc: Kees Cook <keescook@chromium.org>
+Acked-by: Paul Moore <paul@paul-moore.com>
+Reviewed-by: Serge Hallyn <serge@hallyn.com>
+Link: https://docs.python.org/3/library/io.html#io.open_code [1]
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Link: https://lore.kernel.org/r/20241205160925.230119-2-mic@digikod.net
+---
 
-I hope ksys_finit_module() does not cause too much resistance (however
-I need to document it better, as others noted). It is just a different
-way to pass the same parameters of the finit_module() system call.
+Changes since v21:
+* Remove the audit changes, requested by Paul.
+* Add Acked-by: Paul Moore.
+* Fix a typo in comments and in commit message.
+* Add SPDX-License-Identifier header to the documentation.
+* Rebase on v6.13-rc1 .
 
-Thanks
+Changes since v20:
+* Rename AT_CHECK to AT_EXECVE_CHECK, requested by Amir Goldstein and
+  Serge Hallyn.
+* Move the UAPI documentation to a dedicated RST file.
+* Add Reviewed-by: Serge Hallyn
 
-Roberto
+Changes since v19:
+* Remove mention of "role transition" as suggested by Andy.
+* Highlight the difference between security_bprm_creds_for_exec() and
+  the __FMODE_EXEC check for LSMs (in commit message and LSM's hooks) as
+  discussed with Jeff.
+* Improve documentation both in UAPI comments and kernel comments
+  (requested by Kees).
+
+New design since v18:
+https://lore.kernel.org/r/20220104155024.48023-3-mic@digikod.net
+---
+ Documentation/userspace-api/check_exec.rst | 37 ++++++++++++++++++++++
+ Documentation/userspace-api/index.rst      |  1 +
+ fs/exec.c                                  | 20 ++++++++++--
+ include/linux/binfmts.h                    |  7 +++-
+ include/uapi/linux/fcntl.h                 |  4 +++
+ security/security.c                        | 10 ++++++
+ 6 files changed, 76 insertions(+), 3 deletions(-)
+ create mode 100644 Documentation/userspace-api/check_exec.rst
+
+diff --git a/Documentation/userspace-api/check_exec.rst b/Documentation/userspace-api/check_exec.rst
+new file mode 100644
+index 000000000000..393dd7ca19c4
+--- /dev/null
++++ b/Documentation/userspace-api/check_exec.rst
+@@ -0,0 +1,37 @@
++.. SPDX-License-Identifier: GPL-2.0
++.. Copyright © 2024 Microsoft Corporation
++
++===================
++Executability check
++===================
++
++AT_EXECVE_CHECK
++===============
++
++Passing the ``AT_EXECVE_CHECK`` flag to :manpage:`execveat(2)` only performs a
++check on a regular file and returns 0 if execution of this file would be
++allowed, ignoring the file format and then the related interpreter dependencies
++(e.g. ELF libraries, script's shebang).
++
++Programs should always perform this check to apply kernel-level checks against
++files that are not directly executed by the kernel but passed to a user space
++interpreter instead.  All files that contain executable code, from the point of
++view of the interpreter, should be checked.  However the result of this check
++should only be enforced according to ``SECBIT_EXEC_RESTRICT_FILE`` or
++``SECBIT_EXEC_DENY_INTERACTIVE.``.
++
++The main purpose of this flag is to improve the security and consistency of an
++execution environment to ensure that direct file execution (e.g.
++``./script.sh``) and indirect file execution (e.g. ``sh script.sh``) lead to
++the same result.  For instance, this can be used to check if a file is
++trustworthy according to the caller's environment.
++
++In a secure environment, libraries and any executable dependencies should also
++be checked.  For instance, dynamic linking should make sure that all libraries
++are allowed for execution to avoid trivial bypass (e.g. using ``LD_PRELOAD``).
++For such secure execution environment to make sense, only trusted code should
++be executable, which also requires integrity guarantees.
++
++To avoid race conditions leading to time-of-check to time-of-use issues,
++``AT_EXECVE_CHECK`` should be used with ``AT_EMPTY_PATH`` to check against a
++file descriptor instead of a path.
+diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+index 274cc7546efc..6272bcf11296 100644
+--- a/Documentation/userspace-api/index.rst
++++ b/Documentation/userspace-api/index.rst
+@@ -35,6 +35,7 @@ Security-related interfaces
+    mfd_noexec
+    spec_ctrl
+    tee
++   check_exec
+ 
+ Devices and I/O
+ ===============
+diff --git a/fs/exec.c b/fs/exec.c
+index 98cb7ba9983c..e3f461096e84 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -892,7 +892,8 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
+ 		.lookup_flags = LOOKUP_FOLLOW,
+ 	};
+ 
+-	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
++	if ((flags &
++	     ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH | AT_EXECVE_CHECK)) != 0)
+ 		return ERR_PTR(-EINVAL);
+ 	if (flags & AT_SYMLINK_NOFOLLOW)
+ 		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
+@@ -1541,6 +1542,21 @@ static struct linux_binprm *alloc_bprm(int fd, struct filename *filename, int fl
+ 	}
+ 	bprm->interp = bprm->filename;
+ 
++	/*
++	 * At this point, security_file_open() has already been called (with
++	 * __FMODE_EXEC) and access control checks for AT_EXECVE_CHECK will
++	 * stop just after the security_bprm_creds_for_exec() call in
++	 * bprm_execve().  Indeed, the kernel should not try to parse the
++	 * content of the file with exec_binprm() nor change the calling
++	 * thread, which means that the following security functions will not
++	 * be called:
++	 * - security_bprm_check()
++	 * - security_bprm_creds_from_file()
++	 * - security_bprm_committing_creds()
++	 * - security_bprm_committed_creds()
++	 */
++	bprm->is_check = !!(flags & AT_EXECVE_CHECK);
++
+ 	retval = bprm_mm_init(bprm);
+ 	if (!retval)
+ 		return bprm;
+@@ -1836,7 +1852,7 @@ static int bprm_execve(struct linux_binprm *bprm)
+ 
+ 	/* Set the unchanging part of bprm->cred */
+ 	retval = security_bprm_creds_for_exec(bprm);
+-	if (retval)
++	if (retval || bprm->is_check)
+ 		goto out;
+ 
+ 	retval = exec_binprm(bprm);
+diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
+index e6c00e860951..8ff0eb3644a1 100644
+--- a/include/linux/binfmts.h
++++ b/include/linux/binfmts.h
+@@ -42,7 +42,12 @@ struct linux_binprm {
+ 		 * Set when errors can no longer be returned to the
+ 		 * original userspace.
+ 		 */
+-		point_of_no_return:1;
++		point_of_no_return:1,
++		/*
++		 * Set by user space to check executability according to the
++		 * caller's environment.
++		 */
++		is_check:1;
+ 	struct file *executable; /* Executable to pass to the interpreter */
+ 	struct file *interpreter;
+ 	struct file *file;
+diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+index 6e6907e63bfc..a15ac2fa4b20 100644
+--- a/include/uapi/linux/fcntl.h
++++ b/include/uapi/linux/fcntl.h
+@@ -155,4 +155,8 @@
+ #define AT_HANDLE_MNT_ID_UNIQUE	0x001	/* Return the u64 unique mount ID. */
+ #define AT_HANDLE_CONNECTABLE	0x002	/* Request a connectable file handle */
+ 
++/* Flags for execveat2(2). */
++#define AT_EXECVE_CHECK		0x10000	/* Only perform a check if execution
++					   would be allowed. */
++
+ #endif /* _UAPI_LINUX_FCNTL_H */
+diff --git a/security/security.c b/security/security.c
+index 09664e09fec9..dae7e903947f 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -1248,6 +1248,12 @@ int security_vm_enough_memory_mm(struct mm_struct *mm, long pages)
+  * to 1 if AT_SECURE should be set to request libc enable secure mode.  @bprm
+  * contains the linux_binprm structure.
+  *
++ * If execveat(2) is called with the AT_EXECVE_CHECK flag, bprm->is_check is
++ * set.  The result must be the same as without this flag even if the execution
++ * will never really happen and @bprm will always be dropped.
++ *
++ * This hook must not change current->cred, only @bprm->cred.
++ *
+  * Return: Returns 0 if the hook is successful and permission is granted.
+  */
+ int security_bprm_creds_for_exec(struct linux_binprm *bprm)
+@@ -3098,6 +3104,10 @@ int security_file_receive(struct file *file)
+  * Save open-time permission checking state for later use upon file_permission,
+  * and recheck access if anything has changed since inode_permission.
+  *
++ * We can check if a file is opened for execution (e.g. execve(2) call), either
++ * directly or indirectly (e.g. ELF's ld.so) by checking file->f_flags &
++ * __FMODE_EXEC .
++ *
+  * Return: Returns 0 if permission is granted.
+  */
+ int security_file_open(struct file *file)
+-- 
+2.47.1
 
