@@ -1,154 +1,208 @@
-Received: from smtp1.cs.Stanford.EDU (smtp1.cs.stanford.edu [171.64.64.25])
+Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1991A149DFF
-	for <linux-api@vger.kernel.org>; Mon,  9 Dec 2024 17:03:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=171.64.64.25
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9CE1919924A;
+	Mon,  9 Dec 2024 18:59:34 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733763827; cv=none; b=nGoKZCJV5ZH7a2FBibcy7ZWzwpyCz3O+arttFbSpQCu1ztQjrEORinbUULR3Bn7O6VfL4FBja5dYy5lxo9KhPE6SHQ6M7cso2Ix2IcaafvVf1fteIb8EsaGtexyd6KZ2o/WRClOsGHnkp1/H6/PywDPiO8bK8PvaOTXrI3Jyyw4=
+	t=1733770776; cv=none; b=XLHR+pqKaj5ljSrbdhOyckdQDoTAmV1KhQWDQu7dVO4REqRA3KNXDjc4GYqql+CqbiR0yW4kUTLGt6Af3jetzkrqc3jevdWODt+JzVw9FHk1fFODqd9zsoWrWf6B0WHPUbxyWmlniNCGn21d1edQcARsz2voiTQOSFWUyMJvmpI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733763827; c=relaxed/simple;
-	bh=TS2dJvRpcbYgPpTKZ5ZMeYuSA6Xg6ig0fMR+eYbQUgQ=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=aPNf7c/VG1yTvo34TSRa95cquATYcepdLUysjPLtvjfagVKYx6KsUp/wcXMN6NmY4hC3zbj/CeI3KPImAr8BA6/FZJ+/+xLFTbIj0zbNnhOTQffqIrH3HCaFuoxuhD514zzwM6zHA3X/Ou80UYiuzMqVBaJfIJ7tSPfrTGGTT6U=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cs.stanford.edu; spf=pass smtp.mailfrom=cs.stanford.edu; dkim=pass (2048-bit key) header.d=cs.stanford.edu header.i=@cs.stanford.edu header.b=Aj2Pyz7H; arc=none smtp.client-ip=171.64.64.25
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cs.stanford.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.stanford.edu
+	s=arc-20240116; t=1733770776; c=relaxed/simple;
+	bh=JvVmg1UN/TaLoMpuByeMdl8BxvJCfzEncRZ/E8RvE98=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=of5tjisw8r8dVl9gPgBdFML+WrAApJ2d5977YmaXR8Kws2ePgbAfrU+TVUZFqaQUXIwWQt0Y2uP54+Yr027IrPGuNfwGzkH5BMjkEIXUL9DhyPVoAv5SkefRhZeY8YFoXhJ7KtuBHjK9mb2YUNMDJZoV6LjcBFOKNTUhVGJP9Yo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=rA7/pcdf; arc=none smtp.client-ip=4.36.192.163
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cs.stanford.edu header.i=@cs.stanford.edu header.b="Aj2Pyz7H"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="rA7/pcdf"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=cs.stanford.edu; s=cs2308; h=Content-Transfer-Encoding:Content-Type:Cc:To:
-	Subject:Message-ID:Date:From:In-Reply-To:References:MIME-Version:Sender:
-	Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
-	:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+	d=codeweavers.com; s=s1; h=Content-Transfer-Encoding:MIME-Version:References:
+	In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
+	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+	Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
 	List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=ja54K3Mix1tFT4xLqbj9VGzMOknxqdpdclB1ZrggbhM=; t=1733763826; x=1734627826; 
-	b=Aj2Pyz7HxjsqpB/UoMXNLNl275lmDBCnKSOrmb6eOrZBK3FdxnqPSSl1HrvUp5Mo/1yLHPrxpk/
-	giuplY8xfNTE0awvj83O4huiFlB6M97zd1mnQKJVXaTeehhlHBw2EayzsEvGdBydgv/E2+7zr9DLm
-	LgkOVMbLDr/wbksAI/QHdgPjOps9k+rYn5gqA1ayg8CDENk1KbOfjP88V/MqLQZgmPpJJhBb7mOdC
-	IP2z2xE7G/zt9UeMHzestI5stmqx9yoSaCMjgI8+rjqextEuS98k6NCJvRKpdNisOLYIUcSXTfUib
-	oruzyAK5zjbqUZj7Q5anveKnnuwfK2LSG17Q==;
-Received: from mail-oi1-f177.google.com ([209.85.167.177]:60735)
-	by smtp1.cs.Stanford.EDU with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-	(Exim 4.94.2)
-	(envelope-from <ouster@cs.stanford.edu>)
-	id 1tKhAe-00031R-WD; Mon, 09 Dec 2024 09:03:45 -0800
-Received: by mail-oi1-f177.google.com with SMTP id 5614622812f47-3eb34620af9so958501b6e.1;
-        Mon, 09 Dec 2024 09:03:44 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AJvYcCUUsoMReA/ZPKvqOVuYZ7OuBhiHiHllfDiU3AcfxU0mYygZUocgNKDL1y9C8scYd2xs+yQygL5p414=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yw66QH8WtKV2Sc2b7QIiGbTvLo67BdOWVmb/ifAIoLUQ4w4lS+M
-	ySfP/jdB39US0Tg4qW8FrrLCQNjAanVEntQRtC9tpuZXRIFaUbnZre8YlWAla/pzbIVXmUhGkoW
-	KCt0seHOOBk5eMU26ylgJHNQ4BUg=
-X-Google-Smtp-Source: AGHT+IEx49wfEmM9KnGVO24uFYJAhJE6eoNVVDYpalHyD8aUiQ9WMrfjb8X+AwJBVyX8mq+O2ZE0+FcSo/FJ/5TmQNk=
-X-Received: by 2002:a05:6870:a91f:b0:29e:5522:8ee4 with SMTP id
- 586e51a60fabf-29f733ace51mr11999301fac.25.1733763824396; Mon, 09 Dec 2024
- 09:03:44 -0800 (PST)
+	bh=lYFNZhuVigdg2tLeh5rrT9NNlUPQrUYIEI4aFbYYiYM=; b=rA7/pcdf7JqQnRIh8dUJHkjn/P
+	Bw6feVBUSrl7BwEL+d0iQwrLI0aI/aipgMX9tKpRjiiU2fAGs+uUBoVjUTNacfRx83l2w3TtT/THe
+	niS9MaqX1E7OnIZrseT3jlutDzr+GTUDWI+vSZZXJ5+vN8RNMxLNtYxeqN0JXbTyda0quNr1W8D0z
+	m+XhiCLhVSGhMPzN8YsTCDojuOCThiI9knix98jxdI29kQBf1Ju/jF4CfXyUGywdvPzWGgUUNCDGi
+	VEeB+mnKB0/NKIeLI4vdkhs+Dkb+kRtZy+pYMJfOaN7e3hMPR+EcS4S/ITTN9Mic40haWInDwcKoM
+	avd6TTSA==;
+Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
+	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <zfigura@codeweavers.com>)
+	id 1tKiyd-001Gd5-28;
+	Mon, 09 Dec 2024 12:59:27 -0600
+From: Elizabeth Figura <zfigura@codeweavers.com>
+To: Arnd Bergmann <arnd@arndb.de>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <shuah@kernel.org>
+Cc: linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	wine-devel@winehq.org,
+	=?UTF-8?q?Andr=C3=A9=20Almeida?= <andrealmeid@igalia.com>,
+	Wolfram Sang <wsa@kernel.org>,
+	Arkadiusz Hiler <ahiler@codeweavers.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andy Lutomirski <luto@kernel.org>,
+	linux-doc@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Will Deacon <will@kernel.org>,
+	Waiman Long <longman@redhat.com>,
+	Boqun Feng <boqun.feng@gmail.com>,
+	Elizabeth Figura <zfigura@codeweavers.com>
+Subject: [PATCH v6 17/28] selftests: ntsync: Add some tests for NTSYNC_IOC_WAIT_ALL.
+Date: Mon,  9 Dec 2024 12:58:53 -0600
+Message-ID: <20241209185904.507350-18-zfigura@codeweavers.com>
+X-Mailer: git-send-email 2.45.2
+In-Reply-To: <20241209185904.507350-1-zfigura@codeweavers.com>
+References: <20241209185904.507350-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20241111234006.5942-1-ouster@cs.stanford.edu> <20241111234006.5942-12-ouster@cs.stanford.edu>
- <f79a70fd-35a4-4d0d-b239-daa4ab652880@linux.alibaba.com> <CAGXJAmw4tULA02TLXBPa8Lv5cXD1Oe+1ajTWrM2x9=byMTy4jA@mail.gmail.com>
- <b4bf68f1-189c-4685-8e1a-d8cbf60c1120@linux.alibaba.com> <CAGXJAmxkR7Wgmd2+eUKwOHos2tGbSJ8UFqYKE4nsegg7sr96WQ@mail.gmail.com>
-In-Reply-To: <CAGXJAmxkR7Wgmd2+eUKwOHos2tGbSJ8UFqYKE4nsegg7sr96WQ@mail.gmail.com>
-From: John Ousterhout <ouster@cs.stanford.edu>
-Date: Mon, 9 Dec 2024 09:03:08 -0800
-X-Gmail-Original-Message-ID: <CAGXJAmzzmNrp-7OANK1yQX+xJcGAYjTWDFuyhdD5pvjN28CtXQ@mail.gmail.com>
-Message-ID: <CAGXJAmzzmNrp-7OANK1yQX+xJcGAYjTWDFuyhdD5pvjN28CtXQ@mail.gmail.com>
-Subject: Re: [PATCH net-next v2 11/12] net: homa: create homa_plumbing.c homa_utils.c
-To: "D. Wythe" <alibuda@linux.alibaba.com>
-Cc: netdev@vger.kernel.org, linux-api@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-X-Spam-Score: -1.0
-X-Spam-Level: 
-X-Scan-Signature: 37a9e86f2e4d2511d38563a73d487f50
+Content-Transfer-Encoding: 8bit
 
-A follow-up question on this, if I may. Is it OK to vmap a large
-region of user address space (say, 64 MB) and leave this mapped for an
-extended period of time (say, the life of the application), or would
-this have undesirable consequences? In other words, if I do this,
-would I need to monitor how actively the memory is being used and
-release the vmap for space that is inactive?
+Test basic synchronous functionality of NTSYNC_IOC_WAIT_ALL, and when objects
+are considered simultaneously signaled.
 
--John-
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+---
+ .../testing/selftests/drivers/ntsync/ntsync.c | 99 ++++++++++++++++++-
+ 1 file changed, 97 insertions(+), 2 deletions(-)
 
+diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
+index 40ad8cbd3138..c0f372167557 100644
+--- a/tools/testing/selftests/drivers/ntsync/ntsync.c
++++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
+@@ -73,7 +73,8 @@ static int unlock_mutex(int mutex, __u32 owner, __u32 *count)
+ 	return ret;
+ }
+ 
+-static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
++static int wait_objs(int fd, unsigned long request, __u32 count,
++		     const int *objs, __u32 owner, __u32 *index)
+ {
+ 	struct ntsync_wait_args args = {0};
+ 	struct timespec timeout;
+@@ -86,11 +87,21 @@ static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *in
+ 	args.objs = (uintptr_t)objs;
+ 	args.owner = owner;
+ 	args.index = 0xdeadbeef;
+-	ret = ioctl(fd, NTSYNC_IOC_WAIT_ANY, &args);
++	ret = ioctl(fd, request, &args);
+ 	*index = args.index;
+ 	return ret;
+ }
+ 
++static int wait_any(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
++{
++	return wait_objs(fd, NTSYNC_IOC_WAIT_ANY, count, objs, owner, index);
++}
++
++static int wait_all(int fd, __u32 count, const int *objs, __u32 owner, __u32 *index)
++{
++	return wait_objs(fd, NTSYNC_IOC_WAIT_ALL, count, objs, owner, index);
++}
++
+ TEST(semaphore_state)
+ {
+ 	struct ntsync_sem_args sem_args;
+@@ -461,4 +472,88 @@ TEST(test_wait_any)
+ 	close(fd);
+ }
+ 
++TEST(test_wait_all)
++{
++	struct ntsync_mutex_args mutex_args = {0};
++	struct ntsync_sem_args sem_args = {0};
++	__u32 owner, index, count;
++	int objs[2], fd, ret;
++
++	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
++	ASSERT_LE(0, fd);
++
++	sem_args.count = 2;
++	sem_args.max = 3;
++	sem_args.sem = 0xdeadbeef;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_SEM, &sem_args);
++	EXPECT_EQ(0, ret);
++	EXPECT_NE(0xdeadbeef, sem_args.sem);
++
++	mutex_args.owner = 0;
++	mutex_args.count = 0;
++	mutex_args.mutex = 0xdeadbeef;
++	ret = ioctl(fd, NTSYNC_IOC_CREATE_MUTEX, &mutex_args);
++	EXPECT_EQ(0, ret);
++	EXPECT_NE(0xdeadbeef, mutex_args.mutex);
++
++	objs[0] = sem_args.sem;
++	objs[1] = mutex_args.mutex;
++
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, index);
++	check_sem_state(sem_args.sem, 1, 3);
++	check_mutex_state(mutex_args.mutex, 1, 123);
++
++	ret = wait_all(fd, 2, objs, 456, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(ETIMEDOUT, errno);
++	check_sem_state(sem_args.sem, 1, 3);
++	check_mutex_state(mutex_args.mutex, 1, 123);
++
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, index);
++	check_sem_state(sem_args.sem, 0, 3);
++	check_mutex_state(mutex_args.mutex, 2, 123);
++
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(ETIMEDOUT, errno);
++	check_sem_state(sem_args.sem, 0, 3);
++	check_mutex_state(mutex_args.mutex, 2, 123);
++
++	count = 3;
++	ret = post_sem(sem_args.sem, &count);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, count);
++
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(0, ret);
++	EXPECT_EQ(0, index);
++	check_sem_state(sem_args.sem, 2, 3);
++	check_mutex_state(mutex_args.mutex, 3, 123);
++
++	owner = 123;
++	ret = ioctl(mutex_args.mutex, NTSYNC_IOC_MUTEX_KILL, &owner);
++	EXPECT_EQ(0, ret);
++
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EOWNERDEAD, errno);
++	check_sem_state(sem_args.sem, 1, 3);
++	check_mutex_state(mutex_args.mutex, 1, 123);
++
++	/* test waiting on the same object twice */
++	objs[0] = objs[1] = sem_args.sem;
++	ret = wait_all(fd, 2, objs, 123, &index);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EINVAL, errno);
++
++	close(sem_args.sem);
++	close(mutex_args.mutex);
++
++	close(fd);
++}
++
+ TEST_HARNESS_MAIN
+-- 
+2.45.2
 
-On Mon, Dec 9, 2024 at 8:53=E2=80=AFAM John Ousterhout <ouster@cs.stanford.=
-edu> wrote:
->
-> Thanks for the additional information; I'll put this on my list of
-> things to consider for performance optimization.
->
-> -John-
->
->
-> On Sun, Dec 8, 2024 at 10:56=E2=80=AFPM D. Wythe <alibuda@linux.alibaba.c=
-om> wrote:
-> >
-> >
-> >
-> > On 12/6/24 3:49 AM, John Ousterhout wrote:
-> > > On Sun, Dec 1, 2024 at 7:51=E2=80=AFPM D. Wythe <alibuda@linux.alibab=
-a.com> wrote:
-> > >>> +int homa_setsockopt(struct sock *sk, int level, int optname, sockp=
-tr_t optval,
-> > >>> +                 unsigned int optlen)
-> > >>> +{
-> > >>> +     struct homa_sock *hsk =3D homa_sk(sk);
-> > >>> +     struct homa_set_buf_args args;
-> > >>> +     int ret;
-> > >>> +
-> > >>> +     if (level !=3D IPPROTO_HOMA || optname !=3D SO_HOMA_SET_BUF |=
-|
-> > >>> +         optlen !=3D sizeof(struct homa_set_buf_args))
-> > >>> +             return -EINVAL;
-> > >>
-> > >> SO_HOMA_SET_BUF is a bit odd here, maybe HOMA_RCVBUF ? which also ca=
-n be
-> > >> implemented in getsockopt.
-> > >
-> > > I have changed it to HOMA_RCVBUF (and renamed struct homa_set_buf_arg=
-s
-> > > to struct homa_rcvbuf_args). I also implemented getsockopt for
-> > > HOMA_RCVBUF.
-> > >
-> > >>> +
-> > >>> +     if (copy_from_sockptr(&args, optval, optlen))
-> > >>> +             return -EFAULT;
-> > >>> +
-> > >>> +     /* Do a trivial test to make sure we can at least write the f=
-irst
-> > >>> +      * page of the region.
-> > >>> +      */
-> > >>> +     if (copy_to_user((__force void __user *)args.start, &args, si=
-zeof(args)))
-> > >>> +             return -EFAULT;
-> > >>
-> > >> To share buffer between kernel and userspace, maybe you should refer=
- to the implementation of
-> > >> io_pin_pbuf_ring()
-> > >
-> > > I'm not sure what you mean here. Are you suggesting that I look at th=
-e
-> > > code of io_pin_pbuf_ring to make sure I've done everything needed to
-> > > share buffers? I don't believe that Homa needs to do anything special
-> > > (e.g. it doesn't need to pin the user's buffers); it just saves the
-> > > address and makes copy_to_user calls later when needed (and these
-> > > calls are all done at syscall level in the context of the
-> > > application). Is there something I'm missing?
-> > >
-> >
-> > I just thought that since the received buffer is shared between kernel =
-and user-space, if using
-> > vmap() to map the very memory, so that we don't need to use such "copy_=
-to_user" to transfer the data
-> > from kernel to user-space, we can use memcpy() instead. This shall be m=
-ore faster, but I had no
-> > relevant data to prove it..
-> >
-> > So I'm not going to insist on it, it ups to you.
-> >
-> > D. Wythe
