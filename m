@@ -1,39 +1,39 @@
 Received: from mail.codeweavers.com (mail.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 94A6419F130;
-	Mon,  9 Dec 2024 18:59:40 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21B1A1A08C1;
+	Mon,  9 Dec 2024 18:59:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1733770783; cv=none; b=IkP+Wubgqdq/AaECqZsK9FsS3x3XFpnFmmcl0gYFDdcPep3kOm2KH6tXqjynz/eM44Sl5RL13woXh+vXbKZz67gXZKuND0OycOfH17PWGW543+Vy2Ys0QbNGVoxICKZUVhLUxZDv6SFV2454S8cDN/k1p7sCWW2mS9tzBKKewtU=
+	t=1733770784; cv=none; b=CP+IrOoWB8xfMx4SQVy5zjxt/+m5UvHEAqpNCxHK+/jk/CxDq6yRTlQoUUVryGGo38HB4HPqkNFn5g3Hi0AXAAgeNJPlrcK4HvxyKaHL16OCzle7PRwErmGGiNzQKSCapuUzbOMTF996FqKWRxJNgigOL+Mq0xKhaxZ01pMOPzQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1733770783; c=relaxed/simple;
-	bh=oZlH871wgcJLL9ukiEsDxPWhFE+tDhB1jJ+zJrhg1B8=;
+	s=arc-20240116; t=1733770784; c=relaxed/simple;
+	bh=U2jvLVxDBW1wqTl+8HqpuZ+B2aEhALkVpMFRfXjOGKY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=f9zuc2MUCRzog83YutBARC3ZyDibf8ylwByboyxlZJNiMgSWQc5IrdS9KxCAvfBlAml6wRkvk9k9a3Hdk+FS5BgdxhGehqnqXRi2cpt3oT4DIILCaI9ibc/AA7bLIXyrnvePcpsAFgYGAYekZeYpAcYA8pr1h6hq2IPWfeo0tZo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=ka/nM3bC; arc=none smtp.client-ip=4.36.192.163
+	 MIME-Version; b=o9VPy2NXa0RL1vQ6qZ91L4bsX4+zQJ9O7GUNuA3ZttTMMA7utNCnkiMPgpOKtssKockQCeXP1b+8EsheVOLEAvwaNCw4oM4QF60AlLGXncSQoHrOEVHkTv5FZSliPRcE8D2qDUoKAS/1YYIFSqUFfd8M/BL9RVY5P4zm1fBlocw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=Gqqvsk/U; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="ka/nM3bC"
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="Gqqvsk/U"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=codeweavers.com; s=s1; h=Content-Transfer-Encoding:MIME-Version:References:
 	In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender:Reply-To:Content-Type:
 	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
 	Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
 	List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=3XGXZLANAg39CSRLjWPFEQoZ9yJ6vyFbmQa56UpXQ+U=; b=ka/nM3bC6lTe9DEhcTPX1MwSTv
-	/+PrtAiS592D/8NuAajNd5wQNRDwBGxjBg3citxU1FSor4HZSgY3J9ro+Smhz9EhpESqvBs89PVDt
-	YXVaL51Ab9sutIYOhH80pyRiiGdVyDnJ8Pr2H4443ZPNtYyN8C/VBgSWjaiHWL4Za5nmLAGXdICYN
-	r9AKL1NPIHRCXuXNHiCvcWQGfVbClLarjYHGlnWLGSZMkZ27GufhKnqgsHJCPSRg8lfS5q7VdsUC/
-	pyvmdTwMCOjVBl/7YPbYPh3vn9gqQbF8vfddD3keqrU/vEMFlsDfX/7ttDS/GLxJwpqOYpSCXdfqR
-	nzzr7B2g==;
+	bh=H78XD7mVtyigbR9tP1mufDrwr59LEZXCMX3E9nnMZnc=; b=Gqqvsk/UhZ00lHsnAOtQAReH+/
+	cdELKg9lCSQ/xQLM+11OtLlPicrJ+kQPkYd1ixPbDuCFKAX47SvtY6VJp4LG+/aY13L2KJrmV57F5
+	UmrohjllNAhdnYOD+0b5jChqSydukbds5sKupWwhlkMp9sTl6paA7XjWZ5ZAQ4JNVqod6KcpJ5kWH
+	Xq49jhpQ4pRamn/5lvoeX7O90VLVQmb+cCyzcxmKus+O0TlvAmb8cQeCdVR7mrZYkjU9jNfiFDTAz
+	LyXOFu9qKxQ+bJHU1u3D9Z2w9yGc1+BX7G3cQtTOIWEOd8ZkPkcgR9mcsnEVLf+ic8yZEyXrht66K
+	PNtfKKUA==;
 Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
 	by mail.codeweavers.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 	(Exim 4.96)
 	(envelope-from <zfigura@codeweavers.com>)
-	id 1tKiym-001Gd5-2e;
-	Mon, 09 Dec 2024 12:59:37 -0600
+	id 1tKiyp-001Gd5-2o;
+	Mon, 09 Dec 2024 12:59:39 -0600
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
@@ -55,9 +55,9 @@ Cc: linux-kernel@vger.kernel.org,
 	Waiman Long <longman@redhat.com>,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v6 24/28] selftests: ntsync: Add some tests for wakeup signaling via alerts.
-Date: Mon,  9 Dec 2024 12:59:00 -0600
-Message-ID: <20241209185904.507350-25-zfigura@codeweavers.com>
+Subject: [PATCH v6 28/28] ntsync: No longer depend on BROKEN.
+Date: Mon,  9 Dec 2024 12:59:04 -0600
+Message-ID: <20241209185904.507350-29-zfigura@codeweavers.com>
 X-Mailer: git-send-email 2.45.2
 In-Reply-To: <20241209185904.507350-1-zfigura@codeweavers.com>
 References: <20241209185904.507350-1-zfigura@codeweavers.com>
@@ -69,114 +69,28 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Expand the alert tests to cover alerting a thread mid-wait, to test that the
-relevant scheduling logic works correctly.
+f5b335dc025cfee90957efa90dc72fada0d5abb4 ("misc: ntsync: mark driver as "broken"
+to prevent from building") was committed to avoid the driver being used while
+only part of its functionality was released. Since the rest of the functionality
+has now been committed, revert this.
 
 Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
 ---
- .../testing/selftests/drivers/ntsync/ntsync.c | 62 +++++++++++++++++++
- 1 file changed, 62 insertions(+)
+ drivers/misc/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
 
-diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
-index 5465a16d38b3..968874d7e325 100644
---- a/tools/testing/selftests/drivers/ntsync/ntsync.c
-+++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
-@@ -1113,9 +1113,12 @@ TEST(wake_all)
- TEST(alert_any)
- {
- 	struct ntsync_event_args event_args = {0};
-+	struct ntsync_wait_args wait_args = {0};
- 	struct ntsync_sem_args sem_args = {0};
- 	__u32 index, count, signaled;
-+	struct wait_args thread_args;
- 	int objs[2], fd, ret;
-+	pthread_t thread;
+diff --git a/drivers/misc/Kconfig b/drivers/misc/Kconfig
+index 09cbe3f0ab1e..fb772bfe27c3 100644
+--- a/drivers/misc/Kconfig
++++ b/drivers/misc/Kconfig
+@@ -517,7 +517,6 @@ config OPEN_DICE
  
- 	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
- 	ASSERT_LE(0, fd);
-@@ -1163,6 +1166,34 @@ TEST(alert_any)
- 	EXPECT_EQ(0, ret);
- 	EXPECT_EQ(2, index);
- 
-+	/* test wakeup via alert */
-+
-+	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_RESET, &signaled);
-+	EXPECT_EQ(0, ret);
-+
-+	wait_args.timeout = get_abs_timeout(1000);
-+	wait_args.objs = (uintptr_t)objs;
-+	wait_args.count = 2;
-+	wait_args.owner = 123;
-+	wait_args.index = 0xdeadbeef;
-+	wait_args.alert = event_args.event;
-+	thread_args.fd = fd;
-+	thread_args.args = &wait_args;
-+	thread_args.request = NTSYNC_IOC_WAIT_ANY;
-+	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
-+	EXPECT_EQ(0, ret);
-+
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(ETIMEDOUT, ret);
-+
-+	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_SET, &signaled);
-+	EXPECT_EQ(0, ret);
-+
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, thread_args.ret);
-+	EXPECT_EQ(2, wait_args.index);
-+
- 	close(event_args.event);
- 
- 	/* test with an auto-reset event */
-@@ -1199,9 +1230,12 @@ TEST(alert_any)
- TEST(alert_all)
- {
- 	struct ntsync_event_args event_args = {0};
-+	struct ntsync_wait_args wait_args = {0};
- 	struct ntsync_sem_args sem_args = {0};
-+	struct wait_args thread_args;
- 	__u32 index, count, signaled;
- 	int objs[2], fd, ret;
-+	pthread_t thread;
- 
- 	fd = open("/dev/ntsync", O_CLOEXEC | O_RDONLY);
- 	ASSERT_LE(0, fd);
-@@ -1235,6 +1269,34 @@ TEST(alert_all)
- 	EXPECT_EQ(0, ret);
- 	EXPECT_EQ(2, index);
- 
-+	/* test wakeup via alert */
-+
-+	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_RESET, &signaled);
-+	EXPECT_EQ(0, ret);
-+
-+	wait_args.timeout = get_abs_timeout(1000);
-+	wait_args.objs = (uintptr_t)objs;
-+	wait_args.count = 2;
-+	wait_args.owner = 123;
-+	wait_args.index = 0xdeadbeef;
-+	wait_args.alert = event_args.event;
-+	thread_args.fd = fd;
-+	thread_args.args = &wait_args;
-+	thread_args.request = NTSYNC_IOC_WAIT_ALL;
-+	ret = pthread_create(&thread, NULL, wait_thread, &thread_args);
-+	EXPECT_EQ(0, ret);
-+
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(ETIMEDOUT, ret);
-+
-+	ret = ioctl(event_args.event, NTSYNC_IOC_EVENT_SET, &signaled);
-+	EXPECT_EQ(0, ret);
-+
-+	ret = wait_for_thread(thread, 100);
-+	EXPECT_EQ(0, ret);
-+	EXPECT_EQ(0, thread_args.ret);
-+	EXPECT_EQ(2, wait_args.index);
-+
- 	close(event_args.event);
- 
- 	/* test with an auto-reset event */
+ config NTSYNC
+ 	tristate "NT synchronization primitive emulation"
+-	depends on BROKEN
+ 	help
+ 	  This module provides kernel support for emulation of Windows NT
+ 	  synchronization primitives. It is not a hardware driver.
 -- 
 2.45.2
 
