@@ -1,33 +1,33 @@
-Received: from smtp-8fac.mail.infomaniak.ch (smtp-8fac.mail.infomaniak.ch [83.166.143.172])
+Received: from smtp-190c.mail.infomaniak.ch (smtp-190c.mail.infomaniak.ch [185.125.25.12])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9105223E9C
-	for <linux-api@vger.kernel.org>; Thu, 12 Dec 2024 17:42:50 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=83.166.143.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 275E322652C
+	for <linux-api@vger.kernel.org>; Thu, 12 Dec 2024 17:42:53 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.25.12
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1734025375; cv=none; b=E/ZY8i52xhAtElm0o87S9MYu6yJtIKf1rJvn/oXO+5Q5EiONJmI9ZEasJnzMBmyJ8ahiSJWtkxJGw2f121LjfxwTFM1cfcETmYwDCqV4S6AXKVTfLXyuQzZe57hI0Xq4/7TspZJznIOg3+AOYZ9n1PbNjuxsBDTbtGIfvv0Tmew=
+	t=1734025377; cv=none; b=O7Sm2/iHUoS8xTL1QmqUqgnbqtkZo96GV0CkdOZpX8qU9DhpK/PJLu9ZSfOrV+o+/3cqPBdHrLM4tkSz20GV8i6/1HKHtMGFu3V3X44nqvjE/pj4Vty+HyrPqzm0f2b4WFw6sQ0+6ruVNpmILoyvk+gt+yENF/SxTqxOyPdZUmI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1734025375; c=relaxed/simple;
-	bh=OWtu4/9cb5rBJ0sC28mmX6e1Q8lEqMMH3bhf2adb73g=;
+	s=arc-20240116; t=1734025377; c=relaxed/simple;
+	bh=QDdGJ4b6TLjTo21kiQPE8vi0Kz9+yyMPOFlHYQDPk4I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=jAxuqyRIz1voYM2lYkJBg8H6K5BYGmyLVdqa9ok+eud0Bf5VW+DlP3ujsxlcLFPCjjpxZ+gP/B+wQ09QCTB94Z5zLbbdoTF9VanILO+w/x6n7/envKQcyjbgRsGjmsrwBoXBkaal6T8GOynAQDofRZQv27qt0V8BuPRvgSli05c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=yFNuSGxh; arc=none smtp.client-ip=83.166.143.172
+	 MIME-Version:Content-Type; b=Zf7bxVQDoJX7LQFFLfshB9yAIycCzpupYGuBRJfksDnS8dDsGfyXmevybhCHskVI4CubBQnQfnXcAGI9U+sqkyD/ORF00OPkoEW3vOJiOGadkI5nTDj676VGiTqSHh+3cDA/mwYXfc5Rc+8yu8GZBcTQ04+Ops5iEVyYQoJ9yPI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=dOuvs+/G; arc=none smtp.client-ip=185.125.25.12
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="yFNuSGxh"
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="dOuvs+/G"
 Received: from smtp-3-0000.mail.infomaniak.ch (smtp-3-0000.mail.infomaniak.ch [10.4.36.107])
-	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4Y8KYb0pxRz48W;
-	Thu, 12 Dec 2024 18:42:43 +0100 (CET)
+	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4Y8KYf342Bz8TD;
+	Thu, 12 Dec 2024 18:42:46 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
-	s=20191114; t=1734025363;
-	bh=z4ssrersaEHFV1b2phErnW7WJMX3XDwnDSGfj0KVL4Q=;
+	s=20191114; t=1734025366;
+	bh=GBc+grD+RTjGsWmnoQitfhm9MAWUGCvE9QwlCnHtBJg=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=yFNuSGxhAFe2wYH+mdHF7gsVGu7RQuLRcjV/ujFKm7soYHH2JOpjcuTcNqsPed0Ni
-	 RZLtCtL4WoSEC56qp3S6MroVxKwyl5CWt9t0D0LMTnpjTyANP4ttKw7jfAzaoOV7Hk
-	 IPx1g1j6QDuJJv514rfFzfKiU/dcE19Lh3mYe+fs=
-Received: from unknown by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4Y8KYY6rb9z4Hr;
-	Thu, 12 Dec 2024 18:42:41 +0100 (CET)
+	b=dOuvs+/GOiJZnkIqzAe9hDVhAAzSyKjYNXNf8eRrZHrE+QA/h5foEWQBiQCkkBGwz
+	 cxTkVvuhNpyY5zcpb6yDwQe/WCLyeIlHBG8uGKOpTPQR5LUxauE1xm/iHK9MUp6pyd
+	 mDYmra3RxEETQdE1yxbYaira6PB9r7H64isGnUkA=
+Received: from unknown by smtp-3-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4Y8KYd2X6lz4dd;
+	Thu, 12 Dec 2024 18:42:45 +0100 (CET)
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
 To: Al Viro <viro@zeniv.linux.org.uk>,
 	Christian Brauner <brauner@kernel.org>,
@@ -84,10 +84,11 @@ Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>,
 	linux-integrity@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
-	=?UTF-8?q?G=C3=BCnther=20Noack?= <gnoack@google.com>
-Subject: [PATCH v23 4/8] selftests/landlock: Add tests for execveat + AT_EXECVE_CHECK
-Date: Thu, 12 Dec 2024 18:42:19 +0100
-Message-ID: <20241212174223.389435-5-mic@digikod.net>
+	Kees Cook <kees@kernel.org>,
+	=?UTF-8?q?N=C3=ADcolas=20F=2E=20R=2E=20A=2E=20Prado?= <nfraprado@collabora.com>
+Subject: [PATCH v23 6/8] selftests: ktap_helpers: Fix uninitialized variable
+Date: Thu, 12 Dec 2024 18:42:21 +0100
+Message-ID: <20241212174223.389435-7-mic@digikod.net>
 In-Reply-To: <20241212174223.389435-1-mic@digikod.net>
 References: <20241212174223.389435-1-mic@digikod.net>
 Precedence: bulk
@@ -100,89 +101,43 @@ Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 X-Infomaniak-Routing: alpha
 
-Extend layout1.execute with the new AT_EXECVE_CHECK flag.  The semantic
-with AT_EXECVE_CHECK is the same as with a simple execve(2),
-LANDLOCK_ACCESS_FS_EXECUTE is enforced the same way.
+__ktap_test() may be called without the optional third argument which is
+an issue for scripts using `set -u` to detect uninitialized variables
+and potential bugs.
 
-Cc: Günther Noack <gnoack@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Paul Moore <paul@paul-moore.com>
+Fix this optional "directive" argument by either using the third
+argument or an empty string.
+
+This is required for the next commit to properly test script execution
+control.
+
+Cc: Kees Cook <kees@kernel.org>
+Cc: Nícolas F. R. A. Prado <nfraprado@collabora.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Fixes: 14571ab1ad21 ("kselftest: Add new test for detecting unprobed Devicetree devices")
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Link: https://lore.kernel.org/r/20241212174223.389435-5-mic@digikod.net
+Link: https://lore.kernel.org/r/20241212174223.389435-7-mic@digikod.net
 ---
 
-Changes since v20:
-* Rename AT_CHECK to AT_EXECVE_CHECK.
+Also sent as a standalone patch:
+https://lore.kernel.org/r/20241127160342.31472-1-mic@digikod.net
 ---
- tools/testing/selftests/landlock/fs_test.c | 27 ++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ tools/testing/selftests/kselftest/ktap_helpers.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/landlock/fs_test.c b/tools/testing/selftests/landlock/fs_test.c
-index 6788762188fe..cd66901be612 100644
---- a/tools/testing/selftests/landlock/fs_test.c
-+++ b/tools/testing/selftests/landlock/fs_test.c
-@@ -37,6 +37,10 @@
- #include <linux/fs.h>
- #include <linux/mount.h>
+diff --git a/tools/testing/selftests/kselftest/ktap_helpers.sh b/tools/testing/selftests/kselftest/ktap_helpers.sh
+index 79a125eb24c2..14e7f3ec3f84 100644
+--- a/tools/testing/selftests/kselftest/ktap_helpers.sh
++++ b/tools/testing/selftests/kselftest/ktap_helpers.sh
+@@ -40,7 +40,7 @@ ktap_skip_all() {
+ __ktap_test() {
+ 	result="$1"
+ 	description="$2"
+-	directive="$3" # optional
++	directive="${3:-}" # optional
  
-+/* Defines AT_EXECVE_CHECK without type conflicts. */
-+#define _ASM_GENERIC_FCNTL_H
-+#include <linux/fcntl.h>
-+
- #include "common.h"
- 
- #ifndef renameat2
-@@ -2008,6 +2012,22 @@ static void test_execute(struct __test_metadata *const _metadata, const int err,
- 	};
- }
- 
-+static void test_check_exec(struct __test_metadata *const _metadata,
-+			    const int err, const char *const path)
-+{
-+	int ret;
-+	char *const argv[] = { (char *)path, NULL };
-+
-+	ret = execveat(AT_FDCWD, path, argv, NULL,
-+		       AT_EMPTY_PATH | AT_EXECVE_CHECK);
-+	if (err) {
-+		EXPECT_EQ(-1, ret);
-+		EXPECT_EQ(errno, err);
-+	} else {
-+		EXPECT_EQ(0, ret);
-+	}
-+}
-+
- TEST_F_FORK(layout1, execute)
- {
- 	const struct rule rules[] = {
-@@ -2025,20 +2045,27 @@ TEST_F_FORK(layout1, execute)
- 	copy_binary(_metadata, file1_s1d2);
- 	copy_binary(_metadata, file1_s1d3);
- 
-+	/* Checks before file1_s1d1 being denied. */
-+	test_execute(_metadata, 0, file1_s1d1);
-+	test_check_exec(_metadata, 0, file1_s1d1);
-+
- 	enforce_ruleset(_metadata, ruleset_fd);
- 	ASSERT_EQ(0, close(ruleset_fd));
- 
- 	ASSERT_EQ(0, test_open(dir_s1d1, O_RDONLY));
- 	ASSERT_EQ(0, test_open(file1_s1d1, O_RDONLY));
- 	test_execute(_metadata, EACCES, file1_s1d1);
-+	test_check_exec(_metadata, EACCES, file1_s1d1);
- 
- 	ASSERT_EQ(0, test_open(dir_s1d2, O_RDONLY));
- 	ASSERT_EQ(0, test_open(file1_s1d2, O_RDONLY));
- 	test_execute(_metadata, 0, file1_s1d2);
-+	test_check_exec(_metadata, 0, file1_s1d2);
- 
- 	ASSERT_EQ(0, test_open(dir_s1d3, O_RDONLY));
- 	ASSERT_EQ(0, test_open(file1_s1d3, O_RDONLY));
- 	test_execute(_metadata, 0, file1_s1d3);
-+	test_check_exec(_metadata, 0, file1_s1d3);
- }
- 
- TEST_F_FORK(layout1, link)
+ 	local directive_str=
+ 	[ ! -z "$directive" ] && directive_str="# $directive"
 -- 
 2.47.1
 
