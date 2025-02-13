@@ -1,68 +1,70 @@
 Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69BF72036FF;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69C66205502;
 	Thu, 13 Feb 2025 18:19:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1739470753; cv=fail; b=Ygcj7MBoc2KLDGzQWIyvpnbBLgONON2x8pE5SRXXibVkuQ4U+lTdm1OJtvd09JiUONVngvwMqV0Beb+edD+gNf+bz/VF/XYU7FtRpTbu2enR2z2GJpvVC1ehWZgIesTdvFHzpr7VNDRs9O14rOcq8sXfW8o0q9miVxEPaSet2NU=
+	t=1739470753; cv=fail; b=UnVbxA/7JO505Km32voD+L83W+GbND+bLKXQa1HdNO+IeS8eOvstsJvT9uL49pMm9GFxWyR3Y4yiTdy4SaFyvVuU3OwiAKBae47/tyaABvEQl7XF7fKnNSAnIIONzDy4rzclswvTmBnh8doi4QuqlgYXrblXP324Pk8izd5Krf0=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1739470753; c=relaxed/simple;
-	bh=LS57ijaYlm3z1XRCqptFHmG89ICUrmeKyzh5wEGrpuY=;
-	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=FNMi1dDRjsBV/DkLV99++EvZMq/wIgHueNSIOS1IxjQwAb8ExGvUgjr23fkYeHZZWSq/W5uU+buUE7fTFPA3K0FvBgi/EDFaXih5fyOiwrUf3CQnFT51PDWuPjfO/viXbaEFulp1mo4nw2x2sf1zLEQHRFjnQB5/ZRA9eeiLrIo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=QMLV+GU5; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=yluvrh9v; arc=fail smtp.client-ip=205.220.177.32
+	bh=DHQZRKxcCzjZlj0297c/p5rZF81xnLYAtJ2U28nGh6k=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 Content-Type:MIME-Version; b=IkWM2yFom7rjcuKnNhDA2XMQKhzPjbHYFNeazuyPoSsoXlsyOXI/0K+DtHX7hM2MSAAcTc58yqFNh+BfUvQeVIc58s8pFiDzu3Dt+pYh4v7BkZ2ykKc6xef55kk4JRvxMO/6K/NH1pK0Lp5IV0NWERQmB6I3OmV/oE6nVy8kiz8=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=MKmj1Qin; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=c131nM5L; arc=fail smtp.client-ip=205.220.177.32
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="QMLV+GU5";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="yluvrh9v"
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 51DGfXYk026063;
-	Thu, 13 Feb 2025 18:18:50 GMT
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="MKmj1Qin";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="c131nM5L"
+Received: from pps.filterd (m0246632.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 51DGfY1h027481;
+	Thu, 13 Feb 2025 18:18:55 GMT
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:message-id
-	:mime-version:subject:to; s=corp-2023-11-20; bh=t4soA2hEgvtIwobU
-	3XdgjZxFYCeqDQEVJg/J09mfCwY=; b=QMLV+GU5SQ7oB0rHpvJ7L5C4HTT9dHNv
-	XdK+B82Bi3rIzBGQkaWNN/bG1ga2NWTbHUsprQ9Fsq/NK+ZFuXfHQjX3CRP3EWcr
-	BTMi1Ynft9Z8soIlKRNVDczbkTcG31Bj71/a+cMSu1+tOeN7i/mSb13kYXCo2uIP
-	GYt/nUS0ET1cNXd7j7TRouKRbnCaB6bBq6LtDUBGsiynDo1GfeM63kCr1wrzpg2Y
-	3f0asInoGtx/bVQLuClayDNusJeLbUcwXYqbGo+7+mgCIn66lgjQaGsLmWlYawzk
-	663cVPj/yq6X1X59N0OKpur4Trxj2DiI6n8Bi/+PJI1U2dUJjZU3jA==
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=
+	corp-2023-11-20; bh=Ga6vAO3xLWeENYcr5F0yrXvgrNaobjLFfYfpEeC9QgQ=; b=
+	MKmj1QinPWP86nFnJAO0qj78XzpyDkP+49y3ku7KqF3GkRb1sx5kDawNw4e2ShOf
+	z4bjLZd07eCn0eNTuAsSlkztt1XHmyJjdPtN6y8E6N1Pm+z6IyfanGZMye6Ull1q
+	eEMk67vVwdSZQaRG7i6WaLirk9f14gOJeIM+OfmroFw4g5fSRuAqpGOioei7+116
+	o4bxZEByZRtOCM4DN0pvgO3TQyIb2LbkTnkVEkp2gMts+EC8LwM/GFuCWb2U9N4i
+	v/FTteFkGr02N64yEiLwlTcKYvo4yyPzn33eLF5INc3xLn7hwbL547nqwPQXzDsi
+	6Ff76cUxT4peP4dsvBwMWw==
 Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 44p0qyt8np-1
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 44p0qaj5c2-1
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Thu, 13 Feb 2025 18:18:50 +0000 (GMT)
+	Thu, 13 Feb 2025 18:18:54 +0000 (GMT)
 Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 51DHG2Vw005110;
-	Thu, 13 Feb 2025 18:18:49 GMT
+	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 51DHG2W5005110;
+	Thu, 13 Feb 2025 18:18:53 GMT
 Received: from nam11-bn8-obe.outbound.protection.outlook.com (mail-bn8nam11lp2176.outbound.protection.outlook.com [104.47.58.176])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 44nwqc2ahq-1
+	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 44nwqc2ahq-4
 	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Thu, 13 Feb 2025 18:18:49 +0000
+	Thu, 13 Feb 2025 18:18:53 +0000
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=N0u8tQAPXjJF4J20a3Gx+i9suBzH75qZHDjmWqqOz80Nf+12bR0YDD7O53OI0/3LBCdShL3WnVeKdfPqSbMgz+ylTLsFGWHvw0qyak7jGiVQSBYsW3hqM04ZSCxjjejOIKUhigzBpOEEFY7O9j3qCC0NKZerC74mCuoFd5rzev67NUXkiJ2VEhKMuah7mOG3AraqfjYfjUTZFFRRs0OTcp/Y+oxcxhPPW4oYBTY0k/ch9ToRHoCM0vNEys+dg3+3VJQHCJTwqMwZrxu2t1BONKjWtfPgZlbtFxKe8hw9BMNwXqULGwoOl6OBgpHzQ0mgdypdU/kg25SSRnNIBEr20w==
+ b=nsvVvuQgcCj2UuaQYKAsR0yOORey4TGWJ880L26EJv/4Av0CMojEvMAyyb/VTj/g4Mk6Lb6TwEg54W4DAHDcD2FQnvtmy9EI1eN0myS7qIaaHPtR3+4K4RL5WK368FgzyWCKSNh0Q7pMeiPcyY3kgnOmWPj4MLR8Q+4FzkTjJC5Z7Q1igeo2FysL/lv91HTwfAfSwEl5Vs5Z8+bDIj5AWmOywEoXas+Y/zqXiaFopWNTTs7VyDinapEozRFkc/gEo0BnPmAw1fcFnUT4xGEoyy4bFQVFa17265U/YoKYmd2a2ONq6RNJYTea6xVadU5vbly61njXL7A91ASCFQwnDA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=t4soA2hEgvtIwobU3XdgjZxFYCeqDQEVJg/J09mfCwY=;
- b=KFdWMQ2kdh100p+OjJ6CMFQwchq7l3UC7bgWKfXEYSYbfOBpgLrmNCldgt6i2ri+faSMqdqb/KV+/4TYgiryXEJCyc6O4asC961B3+fj6UGbzqag3AZc7p+HyzETcKvEG6IbzY5YGhWWhBek8CJHYBFWoHPQ9lHQ6eUaDvtUCMw8R6zf2KN1fQ9taESpM91OXwnq/CWu6l3vFZna8xViQ56mfxYQ9xPhSsH3EWtM7wzImz/A+GWLYgzMEGBeY+/0iU1Bu9o5HuIseCPN1BW/ngy/o4yDTMtZ3Ibgb4mWvpup0/AdVYz/p2e32lTCBLpBFxdqmqxTGdhjupbivZat0Q==
+ bh=Ga6vAO3xLWeENYcr5F0yrXvgrNaobjLFfYfpEeC9QgQ=;
+ b=VxWlGeUv9/FDCmZwW/P5QKQd9AlhHm50F2plGczq6t6UYQPYFr9rJrPIiOZi5Lz2KdlNLKTENhvs8AhFimwGhRLz2uHuR0sOUW24jez1CdXB3V1O8oQvJajfwtH+ed8EbrxwNaLuL+xSXzxnToMcIwSuzcTeXbU8rIKkGhBIV7mz40PYso8CZTNor2LOVEwvKkVhVEwpLx2OcRBl19ZHwFqnooitd0za2R7vV1EK158mNUOtLebaAcbbGle2znyHS/b1sx7cdBpS6nOvaTcsILHVuuzZLq4h6GmVSpi+2sNqu22PMDHNqKHg6z/ASzklifSJR2agcxJS0E4ZB38z/A==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
  smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
  dkim=pass header.d=oracle.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
  d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=t4soA2hEgvtIwobU3XdgjZxFYCeqDQEVJg/J09mfCwY=;
- b=yluvrh9vUmpG3zKq8BVG53F9n8hG2CkpitV8LcSluzQt/gxmIBn7Z6X/49ztwef/uJMjAtxNvLA+ehllPX8prVEiVFdjZIJKWf5ucyreLroDzImLZD1gxRHzS9XA5RMYfCOU/SmLKk/RSYJTeJYc/dAzPqbOhmZGn4Js4d0dw18=
+ bh=Ga6vAO3xLWeENYcr5F0yrXvgrNaobjLFfYfpEeC9QgQ=;
+ b=c131nM5LvvFd7mZNN/pioQXQGzDOSCZM7RI2avwHXtxpGeLL72gMDQ6k6LS2A8xwFfhR0QQnznmUXbKgMfASnjleP8N7CKq6cPEEyzh8hOH9u9TmBDzNrvmaYS0JupCVb4PvcocbRhRifCKSE263vom45k4vulYY3fpo6iEV/Mc=
 Received: from BYAPR10MB3366.namprd10.prod.outlook.com (2603:10b6:a03:14f::25)
  by PH8PR10MB6387.namprd10.prod.outlook.com (2603:10b6:510:1c2::17) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8445.13; Thu, 13 Feb
- 2025 18:18:31 +0000
+ 2025 18:18:40 +0000
 Received: from BYAPR10MB3366.namprd10.prod.outlook.com
  ([fe80::baf2:dff1:d471:1c9]) by BYAPR10MB3366.namprd10.prod.outlook.com
  ([fe80::baf2:dff1:d471:1c9%4]) with mapi id 15.20.8398.025; Thu, 13 Feb 2025
- 18:18:31 +0000
+ 18:18:40 +0000
 From: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: Suren Baghdasaryan <surenb@google.com>,
@@ -74,14 +76,16 @@ Cc: Suren Baghdasaryan <surenb@google.com>,
         linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org,
         John Hubbard <jhubbard@nvidia.com>, Juan Yescas <jyescas@google.com>,
         Kalesh Singh <kaleshsingh@google.com>
-Subject: [PATCH 0/4] mm: permit guard regions for file-backed/shmem mappings
-Date: Thu, 13 Feb 2025 18:16:59 +0000
-Message-ID: <cover.1739469950.git.lorenzo.stoakes@oracle.com>
+Subject: [PATCH 3/4] tools/selftests: expand all guard region tests to file-backed
+Date: Thu, 13 Feb 2025 18:17:02 +0000
+Message-ID: <ab42228d2bd9b8aa18e9faebcd5c88732a7e5820.1739469950.git.lorenzo.stoakes@oracle.com>
 X-Mailer: git-send-email 2.48.1
+In-Reply-To: <cover.1739469950.git.lorenzo.stoakes@oracle.com>
+References: <cover.1739469950.git.lorenzo.stoakes@oracle.com>
 Content-Transfer-Encoding: 8bit
 Content-Type: text/plain
-X-ClientProxiedBy: LNXP123CA0008.GBRP123.PROD.OUTLOOK.COM
- (2603:10a6:600:d2::20) To BYAPR10MB3366.namprd10.prod.outlook.com
+X-ClientProxiedBy: LO2P265CA0009.GBRP265.PROD.OUTLOOK.COM
+ (2603:10a6:600:62::21) To BYAPR10MB3366.namprd10.prod.outlook.com
  (2603:10b6:a03:14f::25)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
@@ -91,80 +95,80 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 X-MS-PublicTrafficType: Email
 X-MS-TrafficTypeDiagnostic: BYAPR10MB3366:EE_|PH8PR10MB6387:EE_
-X-MS-Office365-Filtering-Correlation-Id: b4eb76ab-2908-47dd-40fb-08dd4c5ad204
+X-MS-Office365-Filtering-Correlation-Id: 8927168e-208f-4eb0-5d3a-08dd4c5ad767
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam: BCL:0;ARA:13230040|376014|7416014|366016|1800799024;
 X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?I0koNAFI6HJyW7+tNA48kmcGj29xS0/rOcVPGxJviovGu3WveOW18z7KEhc3?=
- =?us-ascii?Q?6SlRq6t20m/PVmnDNd2vRKZ7+mVO//d0OZYAr3QOiVWUfKp1IdP64G2crTte?=
- =?us-ascii?Q?GNOfAdAf9YBzlWNmwB0gc8Qhl38s/PfZEjxcqHIFO5BVUkg+yPTznwXAAtsz?=
- =?us-ascii?Q?msbIY+n9rrfjX006S0FE0a9yZtvzigjAXK+QsPZxKHnddJdn3wEQCSD+bz/V?=
- =?us-ascii?Q?gfNPbMlvwFZCKC3YY2bggMNUp2Fn+HDgLEIidFA6tsqBZflXnmp8DzSAsWVR?=
- =?us-ascii?Q?lGg+cDDAL9WRFm4iw0M6MxUM6nGE3Znq/K4XRI1bPo9G6PlO8NgD7ollaDF/?=
- =?us-ascii?Q?HF1D0EamwmE0ZXkUMi2lXzXjB8BO+4V4IlkBshHlB2uKsOlKO29YTBp0FaGM?=
- =?us-ascii?Q?iIqgMekKhWx/zGG5LxQSLQcf/eNZT12powNF+Q2KwdVd4ECC+6sfmva3M37M?=
- =?us-ascii?Q?tOBXKrmIjXJrMVfRCRfuuHDQ8+Z5kM5GIEBdlYIVsjwKax2kOXkUA5fBFOeS?=
- =?us-ascii?Q?UnlMEodAO3DW6MddQCMEb7DAWpKATLTaWeg6g/No5GsJmmkTpwbewdD/Xhre?=
- =?us-ascii?Q?/ARBQZfOzJUnRT88o40X732dlJg9XOk7/avCdBQvCUVUqyV+X9a54wmXv+U6?=
- =?us-ascii?Q?Qcxh6m3t30F472dnYPPcogfsWPAj2HyF60b6GhvZKH8INjYFxbCJigpDHimw?=
- =?us-ascii?Q?qRvWFPyKo4ey1X7OSLf9mqpM1zPuyXQCiyBFhkl690C3C7dN65d3fR0yKB9x?=
- =?us-ascii?Q?XyFIZzLkeuq+ZSmR3bFA46yRHuusKk2GtMirKAF8g/uaZGGeWtIf9gXGbs7P?=
- =?us-ascii?Q?SrtF5wq9svW2b4fj3OpGgf+xI4dXaPt2RzCynb2oSQ9WRWBPbF7fVyoFzNs+?=
- =?us-ascii?Q?92RUq7TLMewRVVXjFT6w4nzFHLnFoN61HWbUxaUpjec090YUyGgl5sGPydnn?=
- =?us-ascii?Q?rNtee2mBy04F6Qk2e5TWI3jScaPsTLebqQvv8l9diCNkH6yXgWc8mBNQsUYP?=
- =?us-ascii?Q?dwqT9WTGBIqOV3U0efkcVEyyjr+KgSg49xOn2EAQ6vkIabI/7mHogGDVs088?=
- =?us-ascii?Q?GbvmtzmfTeLvzzSHlIkioR/IeX3yxgTCGq5i5tFf/ahY/kpZ6KtlW4gNhRH6?=
- =?us-ascii?Q?1ha377ZNP6YnTivLh6JgE9+F4x+0XmOSa1v9QQExL6tbgpyvxfoznPRius7/?=
- =?us-ascii?Q?nDJ7kMgyzrCVOXkeMIt/A2ioif1xN/zjnonZbX9kIyS1Xd/j5MejDcjjGbRN?=
- =?us-ascii?Q?sDOvikCVmIg6piylO0Mryf5/bBCFxBvc94EjG+nty5YCFeF8IU0to1aRUpVB?=
- =?us-ascii?Q?q+4/5N3CSMJtk7UaQ/3HbCKgMGmBNJ4LdkrcRz81RoVcnt0DdVTsOlcSnx/q?=
- =?us-ascii?Q?E0KHIZDKDNol8KJZ4cFBpJ7nOzfY?=
+	=?us-ascii?Q?ETUFvYL1uUYYdH2Jfd6S3zl49VAozOE6bqYwaN2rAn2DglfZ5thCAhJw4LaD?=
+ =?us-ascii?Q?7EEAbwdmnvJ8M3zTUtBu5vG1BtYEpZSmXX4xxsExudqyYzO2aqt4okoSRcXO?=
+ =?us-ascii?Q?Zkn5t3pL/RltuQYVOMbLMT2xbcxNJNkQqQmQuyjvpBJIb0HGv727/VM9aHQm?=
+ =?us-ascii?Q?WHAoIOKnhUTlSsSYSnC/yxl1x0xOMh5ZzjmqnJVCSCt1Em/BDI4qV9q0vdBS?=
+ =?us-ascii?Q?0NF/A6KVa/X6nIHPuBWBGWTcCuNgKpDHM7MkRz5Qi4xx/e6Tgo2Qd3lXBcIR?=
+ =?us-ascii?Q?qAmtuMvBJT2GmU5j1i2QuIAVQTaNj6KdtM5UM9qg7Lk3lowg3mNphWV17VE+?=
+ =?us-ascii?Q?KB3KGSkM1C3MYJ8Qrr+pzJuphekWKV1RUAqLtUX5dUYWvDGdM2mkPQsfjkVI?=
+ =?us-ascii?Q?NMEVvuaCDsJLGGcJkO0oyBXqizFYLINfldD8SbY+gXgufRpZlmCI/L72Ps+l?=
+ =?us-ascii?Q?fUiCw1a0Ak56Gxdu7ZQ6xqV82J2J0wcQBddNgMZm+iMBfG/tZERszUUvQNlq?=
+ =?us-ascii?Q?6g3DgLLmmfWqDjlreBSirT3sMVpeaaVrx//UYf5RwSMmNCNhyaXuylLwJpfL?=
+ =?us-ascii?Q?N97IoF24Z3quSkDZP6d40SulCQDjXJydYjII+ZCS9NSI3BkLMgMVFEz9hwk4?=
+ =?us-ascii?Q?oObhcd6KWnKRg587OxI0ZXhbQHywKf3l8w2D9TREOr0ejVDnUTqDOQIRkqZk?=
+ =?us-ascii?Q?t0CmDGVwNNWq0t6iS84XeCb0/IMf7HqjA9Q/4auPJB4s/HRVFuwaQWNreAOR?=
+ =?us-ascii?Q?A4uZZ/Bu3N9cyvBUjmKLY3mfff7AMBqdaeDjF9BOV23pBkc7N6+5oY3dlJr0?=
+ =?us-ascii?Q?M90Rj3buyUTn7puNgHPCDLFSirjoYhIfxhvT816XuWfRuDNJ9kXm+HpgEWsz?=
+ =?us-ascii?Q?6DPceeLnJYX1Wx4ZZOW+TMtfIL5MK5+29mGOcw1bw4wvc5Bbtc/rQrmZVtgh?=
+ =?us-ascii?Q?moFp1euFuEoKOfKkYWFiYGiJG5firqU/HgyOjPchRwgLxMAOOj6Em6ureZU3?=
+ =?us-ascii?Q?no/IuZ4zEz74xE8XY+bXeXaoMkLTBzZlipwPGkR22p1tdy0hrm5LFpzwN8Yc?=
+ =?us-ascii?Q?TUVfRsjbiLTYkVgh8fI6k8L3RUBiSb0Jf81OhZJisauhL1/Dove5joS7r9kG?=
+ =?us-ascii?Q?EerCRLI5r/JWXvrSNeGZ1ajpPkxcV7stQTIAmJArFboWQvo+rv0BHYvz5OX4?=
+ =?us-ascii?Q?hksu/YWRVSX55mX25bQ0bPx91YAqzJnvYMXDw4cjduvP2UbhswqSi2qqjIAg?=
+ =?us-ascii?Q?6co9D2LTxD6c+dsNIm8mneGB25k7Hah3+M5w8nkEFeP684t7V6M3nPmpbM/F?=
+ =?us-ascii?Q?LaVPM3zbeooJTGsFpbi01MBKJJOveIFQ+7HxctNHkmHjd86lB/eXSKKXhcuc?=
+ =?us-ascii?Q?PABbEVdxvhdANa2KCEe1VbBxbfqj?=
 X-Forefront-Antispam-Report:
 	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:BYAPR10MB3366.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(376014)(7416014)(366016)(1800799024);DIR:OUT;SFP:1101;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?488+lPuVFTHo54bJ9JawkuyCPUQSLqP/jc6reSczIaXdnXkw5xNZs+b4hY9n?=
- =?us-ascii?Q?uFCTg866qdk+SZ4an+bK7ELXrX1crcGHVat2Ug5L6XwGcLH/8g0lxaB7pvM2?=
- =?us-ascii?Q?DkCxMKea331eGqZ1HYMomnEI7/zACMcf8XfrMuGaj9EjTNs3WvofKRZuvXx0?=
- =?us-ascii?Q?ilDoCyus1S2RtOQ/LDcJ5lhCZFVUToueeutf6VFhDfBxAQRQnJiYZSBBgBCB?=
- =?us-ascii?Q?50Qx1of0VXjzYiBu0Lentq6QbLTEbdePdfFVsxOyAXy5BCeSZSHrXRSbaLAL?=
- =?us-ascii?Q?hdMdqC1y69sE4DAhShUxCpKWsYZjUlvqodyMUbkmLwzgSAe6zr+3N/dLfSiC?=
- =?us-ascii?Q?zIw/AT60c82d1sUqFKhwuiKTn/IAIljyOG8Gw5gwCcimtNkfyJdndqixycAu?=
- =?us-ascii?Q?GikFSPs37w5CVs0/YdpOmRqLJ/JnZ3ponipMWA/MU1AajHqQYEaUsBWJBSwC?=
- =?us-ascii?Q?IrWGBdmUObfYACWI4MIdkKVosQa4gO1aG9ysuMFHxezwfHXUkvsrkPT4paZw?=
- =?us-ascii?Q?qX9NLozZgwBfmI8viBZ1eAo3vtelEI+XMXAYCQraKXPZKtuOEL1NAuaVZHv6?=
- =?us-ascii?Q?E0e2CzNXEAKj+1xsKlnz4S4XA7/sJN23g9ggzXJlu2LD2lRU1vs2Qm8GbKW5?=
- =?us-ascii?Q?g2ig5XhGkCIVQ4aXXFqbI6nJdO3KCGJX4Mm/T/5kXxWK6cppFRX9NfMvpLTS?=
- =?us-ascii?Q?CUG5lQujmev62xF/2dQw2y2uBf+cBykY4ByhjWw4snFjAcSDcTJ6FGU5++i+?=
- =?us-ascii?Q?Vi0HCPosGiCW/QCDUuTTjozux5QoiMDUhWWcbJJzANnUP+02tbhxtpyJJV8d?=
- =?us-ascii?Q?QxyqYT1ALsOWcry+pwUbYaWcNYU1IfkUaUmcTad4WRM6JykEP4suukw5VjDm?=
- =?us-ascii?Q?XlxkS6HZbmRRriDPOfcc8HSsmi2FKyDDDSNapYIayUC5FEsF2rT6+Sznhg+V?=
- =?us-ascii?Q?3tJQjbg6kejhgcLBhBWYBJFG2EBgXxWbbDN00SSlb1XTLxizuWCymXzS7O7Y?=
- =?us-ascii?Q?DBHK0Zz7MWbgn90YThf/Qhn2Y6CjLf1GmZTGoksK6g2Uiz9ezFW7A63215lS?=
- =?us-ascii?Q?kaxvBSXHgFZXlclmO+zeei3VfTOIAg/D+Unr2++Wwq2hWn09F9WQ5fUk1HFS?=
- =?us-ascii?Q?ipeCzO9nCgC7icdA27so5cTZN5hER65O1iVplTNSYKPQellINKQdhzQFvIdz?=
- =?us-ascii?Q?YzubI/m9uoABrdYOoPE8zs8ufKl+OxwKK7zZKtp+MvZ1xgGHa8QaTAw7K5Xa?=
- =?us-ascii?Q?XED2ijaaD5kO1TuaOXrnMGqnW9T/LTpS24hz86fW8BBh0XKyuLdAvogehKca?=
- =?us-ascii?Q?UDGyjIjPbNVYhwkrbFA2mu38LcycJ2SuxR79E6Aztoq+sx1Nz+P6hxAc9mO8?=
- =?us-ascii?Q?gxSumDgcSE2k/nZlA1iaUN4yiPPhHk9YPG95Iy+pE/bLOz1YKdc5ldE1S1F8?=
- =?us-ascii?Q?wwrbzhNOcxwd+KLmp3lnvTv8ZVORjJ0ji3afR/9scu3DQiVhG2m/h9Y8YM/B?=
- =?us-ascii?Q?lGJDtm7yQ9TCNiPcFllNiFYAhTC7NwXDO4JpHH/iew3s09n49QKika+OQcNL?=
- =?us-ascii?Q?vYotJRd1jzkExHVpENDuNtF/n3mSN0w6fbdQ6YSqB8hkX5r2wNMPpKPRrbmd?=
- =?us-ascii?Q?gA=3D=3D?=
+	=?us-ascii?Q?uId88eQJY8ZHOhHw5VfNKDvTlCL/fZgCQ979wmCb/57ZyI4EZEKhNibQW6Fj?=
+ =?us-ascii?Q?Klkm3tnHfiVGn5aPmK4rb3D/3XTuIJnn9spm91xMWNMKR+yPTh2HlrSNjbkG?=
+ =?us-ascii?Q?hz771FXFFyf3T7e+U5t73G+m9QeGk1QdsJbTh7MHDsFJh6lLG3qvAb+AFEl4?=
+ =?us-ascii?Q?5lFt5rorln4EMqX5F/VLzyNfQCaEeD85YKqjmrlaDFJEY28mxsk4vV9jJl7x?=
+ =?us-ascii?Q?oOqep9tlUdHvfJwjrSb7GL/I0ss0iwB8XOXeB2339ejkkqGSUUU7m4VZTqpV?=
+ =?us-ascii?Q?+eNFXm9jf7pf3pLG66JcMMME+Q1JMh9erkMdkmlPp3Sz9KZ7xyj9dPlNNFSQ?=
+ =?us-ascii?Q?mjLfRCR3CjutOKJWKRm/5KeoU2/k8tdOsimED1mNA/SPtkvR5ELBvUbA54uf?=
+ =?us-ascii?Q?gP3mghvERjpQBsWEY7h0OXr2tppP8mpY3XFa1fpYxUcT+892ZFrBwX9gDu+P?=
+ =?us-ascii?Q?aTpsegvNKwxExbyMQas7vGLp4zgS5eLx4wz9NHZ6rkrjMvdJ6Hc7N2Notivo?=
+ =?us-ascii?Q?WaiPcq11zCBQgfadv6jjRUcEgaGCQnC9pOcUarwpbrZcLSIgAlroYAAqz2/C?=
+ =?us-ascii?Q?g5rFvPKq2OEGP4xC8as8EgTQu2INlnae6by9BYF10E3+QuntuEzjRcqFpzCQ?=
+ =?us-ascii?Q?K0Mb8fuvisL9vWK1+TEEquTPj40W6dmQZzcue1yGtGBQLelfOmQBDeXoEqGn?=
+ =?us-ascii?Q?abzfVoezb+SKFEo8Fp1uoFQAj27w6Ytjt067hB6o9hkQqCCEiDVdnnlX6MDT?=
+ =?us-ascii?Q?9qQ5aDsSYI+A+7vmtElvX/KGIhxXPvlJyUPwRAWcwPn5ef/Dvz5tc2pZvaoD?=
+ =?us-ascii?Q?FlsUC4tdY9dZiZ07rkELdL2Nsfy74fTijLJAdaU74PCRHh7h8Qc9fwVg32ze?=
+ =?us-ascii?Q?l+xqGqy5XV8499EOPB0qlYjnzkw0dgr3wM1/qlSVwPMtdO3zpzWgpT97GLzM?=
+ =?us-ascii?Q?YA4U4jEcRZicDZlnpcoMROcfhITGOfC7PsPmNywc8c4KYyboM/vEa86jdpmW?=
+ =?us-ascii?Q?1NEQ1WNhz6OvscaFSoeRVHmm9ZnFxPljPYi3peM/VhZjRNB1DsChbKjg5RmQ?=
+ =?us-ascii?Q?XlViLic3BbypWpakjI7BNqCYymLywioFjM4isBRi5BDeUekPf4iAwVc3kQkO?=
+ =?us-ascii?Q?0aTGYDxWeinwS2/YB/Rbh6OIWOKQeVzQmT8DezUuzob8KoyyIPeIbmzHg7jC?=
+ =?us-ascii?Q?V2CnhT9+qi30XeCOMg0AGdEoYTvaPQNYe/AA9XfXfzTwcxWxC5NLya0mEvrw?=
+ =?us-ascii?Q?S97rvSFQTIJB+VTrEmuGsLHj+YYDfhHnU3oVYwp/Lmty8kjiiBSvHVZUmDOF?=
+ =?us-ascii?Q?uSkv1lwTd1Ebtychbma6FgJnpYtAcjKS2dol3e76Y62U3WRIrIIGXGLGTf2J?=
+ =?us-ascii?Q?ffdjs9j3XsFW8b6SeAhwyydEUgbm+X5rVER4eH1lf9md0DpZx2Qp/5ZDW93o?=
+ =?us-ascii?Q?fzAWs2JstfK35HmsKVKOH5VU1v6Ilcpu5cn9wW+jaRztLxff5K2K30QZ+3bE?=
+ =?us-ascii?Q?ZEUREisr8+DIiW6vJd/Vipt8nZUfIIciXwjOlPvuXS2esLH1ISkJM/08sZ8v?=
+ =?us-ascii?Q?HOvPRWvnj3eu/OUaOLyeo/Xt2JTfm35YmfVZhaTEBpNRbzk+uDjgP1RU43fp?=
+ =?us-ascii?Q?Cg=3D=3D?=
 X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	6T2XG64/uUBXXHpGGukLBJKThVc8TVDEFopd2GazrwnWShBCmlrGAHRaU+jpLWqwZGfFYFZ3kqbUnCq5rTFJ+LS33E0aNAcSDItmY91/Z5KLWAa1jExh2b9po7dg5lEUX19uTuwHGusWdLtqYAORvjDi4xSCHLAN6xmmXS0ZbQQh97YbbNxA7G/bd97FD4LZxRJkE8BPB+4bG8E3zn3EDJHRw9tYtENKxfz4kGlg/7ILbju9BG9cI9EhVF5a+t7uuIuiCZzULgWY0RYW1FmxDTUt5+fnboNhluBNK5uWUgsbDJbFtSDga4JoslIniInPR8H+c7XUc5d1VQ+eK9CbTppk/kfxUcJYuvA+w5bSpkjoQHELrv94PC7OrREVgNW2J53RKYaC32iYwUzkuQHbYFoWlgYelo2Gb3gqlwbJrPR6oAjv9BBfHQVg/NgtmU4w++HdVWD6Tp5TlQziw/Lka+7Kcs/SL4x7wPvN1Zyy7BkJxt2HJ3UshNoJKioTLz14fbjijgg4kmJTBL/ma/18U1DXdhbZqbRefd/MXB+m023U6yODrhqwvJ09tNZd4XnFgzztQYhskxDhdMXX5vVlHU80lPG3YRH+NKLF9Tc7lX8=
+	U6VDyxUeIIP8eMpOhdZMmOAuBX1w+0RoM6aT8lK6VBUb9pmlptnpXHX5sBGH8urhgg/ePBqL6A0EM11iLH1bDJ8ToEctaqNnq5m09GJwp2aVFHT7AKY+goKMKgzbCGkh90FdR4q9pPd5ReMu2lu5gJHD24hJInP1Uok45a2WLXHMHf5AVAC+3myxHzWcaPGmLMFcP7Zl5doMhvABECH/xduMKVDBzBWlQmvr53/296ETdWiMyAS5YK8G9+zC9OtglJohTzJl6MnijGpjak61vX7LqUHiM7Sog3uYGEcOQCgE+uD/OtYFZ7G7Py9lBL34vEiF75u9754+VbsnczLFKgc1NgDqUjZG1CHANLa/BvFEtHwzmry9MkJsDeMFt94RHzrxOsifk0ZZ7qK0mWB/PfvsnIJsOyVL6vMd1ujA+X8SMjQC7mNpdhUeIN8h3dlOn9A677kqTDCuo5unRcs2ZOXdp+/WNcNh5PYzopPpDWLorVTm6WAJTMLAYTAxF+MzW+TXUUeKyD+vTaNmyCda7bGahQTeXXLkHjRJD9K02KbufRERtgvUZcx3/a3DuzZ1nW3efFQlkvoBK47eI0V25677B8raP56ImvL1ejm+gkY=
 X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: b4eb76ab-2908-47dd-40fb-08dd4c5ad204
+X-MS-Exchange-CrossTenant-Network-Message-Id: 8927168e-208f-4eb0-5d3a-08dd4c5ad767
 X-MS-Exchange-CrossTenant-AuthSource: BYAPR10MB3366.namprd10.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 13 Feb 2025 18:18:31.2624
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 13 Feb 2025 18:18:40.3611
  (UTC)
 X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
 X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
 X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: YDsS+4hzkPFE1gSaSbLuy1Xrtj4tgo8LNNaDN2pvsUmCLni61im00TNn9iEEnqVyLKcsICUmjOlPjkWSJ/ChrhUpBPS7VKqpea2XqXBr7x8=
+X-MS-Exchange-CrossTenant-UserPrincipalName: eVSdaZDSFmh0/87cC9rijJ98mKADAfqCqb0kjUS7fsbI4rtpDLjuXLocMAY/W30Y8GFZQVhDu2Oau1sqDvEyM+8EmzZjt3WdVTe4Vl1HQ7E=
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH8PR10MB6387
 X-Proofpoint-Virus-Version: vendor=baseguard
  engine=ICAP:2.0.293,Aquarius:18.0.1057,Hydra:6.0.680,FMLib:17.12.68.34
@@ -173,162 +177,576 @@ X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 mlxlogscore=999 m
  adultscore=0 mlxscore=0 phishscore=0 suspectscore=0 spamscore=0
  bulkscore=0 classifier=spam adjust=0 reason=mlx scancount=1
  engine=8.12.0-2501170000 definitions=main-2502130130
-X-Proofpoint-ORIG-GUID: ezObmzxW1aE0OvWPznlvukZmNPaMq5Mw
-X-Proofpoint-GUID: ezObmzxW1aE0OvWPznlvukZmNPaMq5Mw
+X-Proofpoint-GUID: Hr3JxZ_bEJ-navJDw1pMlNuZDxjh9GGS
+X-Proofpoint-ORIG-GUID: Hr3JxZ_bEJ-navJDw1pMlNuZDxjh9GGS
 
-The guard regions feature was initially implemented to support anonymous
-mappings only, excluding shmem.
+Extend the guard region tests to allow for test fixture variants for anon,
+shmem, and local file files.
 
-This was done such as to introduce the feature carefully and incrementally
-and to be conservative when considering the various caveats and corner
-cases that are applicable to file-backed mappings but not to anonymous
-ones.
+This allows us to assert that each of the expected behaviours of anonymous
+memory also applies correctly to file-backed (both shmem and an a file
+created locally in the current working directory) and thus asserts the same
+correctness guarantees as all the remaining tests do.
 
-Now this feature has landed in 6.13, it is time to revisit this and to
-extend this functionality to file-backed and shmem mappings.
+The fixture teardown is now performed in the parent process rather than
+child forked ones, meaning cleanup is always performed, including unlinking
+any generated temporary files.
 
-In order to make this maximally useful, and since one may map file-backed
-mappings read-only (for instance ELF images), we also remove the
-restriction on read-only mappings and permit the establishment of guard
-regions in any non-hugetlb, non-mlock()'d mapping.
+Additionally the variant fixture data type now contains an enum value
+indicating the type of backing store and the mmap() invocation is
+abstracted to allow for the mapping of whichever backing store the variant
+is testing.
 
-It is permissible to permit the establishment of guard regions in read-only
-mappings because the guard regions only reduce access to the mapping, and
-when removed simply reinstate the existing attributes of the underlying
-VMA, meaning no access violations can occur.
+We adjust tests as necessary to account for the fact they may now reference
+files rather than anonymous memory.
 
-While the change in kernel code introduced in this series is small, the
-majority of the effort here is spent in extending the testing to assert
-that the feature works correctly across numerous file-backed mapping
-scenarios.
+Signed-off-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+---
+ tools/testing/selftests/mm/guard-regions.c | 290 +++++++++++++++------
+ 1 file changed, 205 insertions(+), 85 deletions(-)
 
-Every single guard region self-test performed against anonymous memory
-(which is relevant and not anon-only) has now been updated to also be
-performed against shmem and a mapping of a file in the working directory.
-
-This confirms that all cases also function correctly for file-backed guard
-regions.
-
-In addition a number of other tests are added for specific file-backed
-mapping scenarios.
-
-There are a number of other concerns that one might have with regard to
-guard regions, addressed below:
-
-Readahead
-~~~~~~~~~
-
-Readahead is a process through which the page cache is populated on the
-assumption that sequential reads will occur, thus amortising I/O and,
-through a clever use of the PG_readahead folio flag establishing during
-major fault and checked upon minor fault, provides for asynchronous I/O to
-occur as dat is processed, reducing I/O stalls as data is faulted in.
-
-Guard regions do not alter this mechanism which operations at the folio and
-fault level, but do of course prevent the faulting of folios that would
-otherwise be mapped.
-
-In the instance of a major fault prior to a guard region, synchronous
-readahead will occur including populating folios in the page cache which
-the guard regions will, in the case of the mapping in question, prevent
-access to.
-
-In addition, if PG_readahead is placed in a folio that is now inaccessible,
-this will prevent asynchronous readahead from occurring as it would
-otherwise do.
-
-However, there are mechanisms for heuristically resetting this within
-readahead regardless, which will 'recover' correct readahead behaviour.
-
-Readahead presumes sequential data access, the presence of a guard region
-clearly indicates that, at least in the guard region, no such sequential
-access will occur, as it cannot occur there.
-
-So this should have very little impact on any real workload. The far more
-important point is as to whether readahead causes incorrect or
-inappropriate mapping of ranges disallowed by the presence of guard
-regions - this is not the case, as readahead does not 'pre-fault' memory in
-this fashion.
-
-At any rate, any mechanism which would attempt to do so would hit the usual
-page fault paths, which correctly handle PTE markers as with anonymous
-mappings.
-
-Fault-Around
-~~~~~~~~~~~~
-
-The fault-around logic, in a similar vein to readahead, attempts to improve
-efficiency with regard to file-backed memory mappings, however it differs
-in that it does not try to fetch folios into the page cache that are about
-to be accessed, but rather pre-maps a range of folios around the faulting
-address.
-
-Guard regions making use of PTE markers makes this relatively trivial, as
-this case is already handled - see filemap_map_folio_range() and
-filemap_map_order0_folio() - in both instances, the solution is to simply
-keep the established page table mappings and let the fault handler take
-care of PTE markers, as per the comment:
-
-	/*
-	 * NOTE: If there're PTE markers, we'll leave them to be
-	 * handled in the specific fault path, and it'll prohibit
-	 * the fault-around logic.
-	 */
-
-This works, as establishing guard regions results in page table mappings
-with PTE markers, and clearing them removes them.
-
-Truncation
-~~~~~~~~~~
-
-File truncation will not eliminate existing guard regions, as the
-truncation operation will ultimately zap the range via
-unmap_mapping_range(), which specifically excludes PTE markers.
-
-Zapping
-~~~~~~~
-
-Zapping is, as with anonymous mappings, handled by zap_nonpresent_ptes(),
-which specifically deals with guard entries, leaving them intact except in
-instances such as process teardown or munmap() where they need to be
-removed.
-
-Reclaim
-~~~~~~~
-
-When reclaim is performed on file-backed folios, it ultimately invokes
-try_to_unmap_one() via the rmap. If the folio is non-large, then map_pte()
-will ultimately abort the operation for the guard region mapping. If large,
-then check_pte() will determine that this is a non-device private
-entry/device-exclusive entry 'swap' PTE and thus abort the operation in
-that instance.
-
-Therefore, no odd things happen in the instance of reclaim being attempted
-upon a file-backed guard region.
-
-Hole Punching
-~~~~~~~~~~~~~
-
-This updates the page cache and ultimately invokes unmap_mapping_range(),
-which explicitly leaves PTE markers in place.
-
-Because the establishment of guard regions zapped any existing mappings to
-file-backed folios, once the guard regions are removed then the
-hole-punched region will be faulted in as usual and everything will behave
-as expected.
-
-Lorenzo Stoakes (4):
-  mm: allow guard regions in file-backed and read-only mappings
-  selftests/mm: rename guard-pages to guard-regions
-  tools/selftests: expand all guard region tests to file-backed
-  tools/selftests: add file/shmem-backed mapping guard region tests
-
- mm/madvise.c                                  |   8 +-
- tools/testing/selftests/mm/.gitignore         |   2 +-
- tools/testing/selftests/mm/Makefile           |   2 +-
- .../mm/{guard-pages.c => guard-regions.c}     | 921 ++++++++++++++++--
- 4 files changed, 821 insertions(+), 112 deletions(-)
- rename tools/testing/selftests/mm/{guard-pages.c => guard-regions.c} (58%)
-
---
+diff --git a/tools/testing/selftests/mm/guard-regions.c b/tools/testing/selftests/mm/guard-regions.c
+index 7a41cf9ffbdf..0469c783f4fa 100644
+--- a/tools/testing/selftests/mm/guard-regions.c
++++ b/tools/testing/selftests/mm/guard-regions.c
+@@ -6,6 +6,7 @@
+ #include <assert.h>
+ #include <errno.h>
+ #include <fcntl.h>
++#include <linux/limits.h>
+ #include <linux/userfaultfd.h>
+ #include <setjmp.h>
+ #include <signal.h>
+@@ -37,6 +38,79 @@ static sigjmp_buf signal_jmp_buf;
+  */
+ #define FORCE_READ(x) (*(volatile typeof(x) *)x)
+ 
++/*
++ * How is the test backing the mapping being tested?
++ */
++enum backing_type {
++	ANON_BACKED,
++	SHMEM_BACKED,
++	LOCAL_FILE_BACKED,
++};
++
++FIXTURE(guard_regions)
++{
++	unsigned long page_size;
++	char path[PATH_MAX];
++	int fd;
++};
++
++FIXTURE_VARIANT(guard_regions)
++{
++	enum backing_type backing;
++};
++
++FIXTURE_VARIANT_ADD(guard_regions, anon)
++{
++	.backing = ANON_BACKED,
++};
++
++FIXTURE_VARIANT_ADD(guard_regions, shmem)
++{
++	.backing = SHMEM_BACKED,
++};
++
++FIXTURE_VARIANT_ADD(guard_regions, file)
++{
++	.backing = LOCAL_FILE_BACKED,
++};
++
++static bool is_anon_backed(const FIXTURE_VARIANT(guard_regions) * variant)
++{
++	switch (variant->backing) {
++	case  ANON_BACKED:
++	case  SHMEM_BACKED:
++		return true;
++	default:
++		return false;
++	}
++}
++
++static void *mmap_(FIXTURE_DATA(guard_regions) * self,
++		   const FIXTURE_VARIANT(guard_regions) * variant,
++		   void *addr, size_t length, int prot, int extra_flags,
++		   off_t offset)
++{
++	int fd;
++	int flags = extra_flags;
++
++	switch (variant->backing) {
++	case ANON_BACKED:
++		flags |= MAP_PRIVATE | MAP_ANON;
++		fd = -1;
++		break;
++	case SHMEM_BACKED:
++	case LOCAL_FILE_BACKED:
++		flags |= MAP_SHARED;
++		fd = self->fd;
++		break;
++	default:
++		ksft_exit_fail();
++		break;
++	}
++
++	return mmap(addr, length, prot, flags, fd, offset);
++}
++
+ static int userfaultfd(int flags)
+ {
+ 	return syscall(SYS_userfaultfd, flags);
+@@ -107,12 +181,7 @@ static bool try_read_write_buf(char *ptr)
+ 	return try_read_buf(ptr) && try_write_buf(ptr);
+ }
+ 
+-FIXTURE(guard_regions)
+-{
+-	unsigned long page_size;
+-};
+-
+-FIXTURE_SETUP(guard_regions)
++static void setup_sighandler(void)
+ {
+ 	struct sigaction act = {
+ 		.sa_handler = &handle_fatal,
+@@ -122,11 +191,9 @@ FIXTURE_SETUP(guard_regions)
+ 	sigemptyset(&act.sa_mask);
+ 	if (sigaction(SIGSEGV, &act, NULL))
+ 		ksft_exit_fail_perror("sigaction");
++}
+ 
+-	self->page_size = (unsigned long)sysconf(_SC_PAGESIZE);
+-};
+-
+-FIXTURE_TEARDOWN(guard_regions)
++static void teardown_sighandler(void)
+ {
+ 	struct sigaction act = {
+ 		.sa_handler = SIG_DFL,
+@@ -137,6 +204,48 @@ FIXTURE_TEARDOWN(guard_regions)
+ 	sigaction(SIGSEGV, &act, NULL);
+ }
+ 
++static int open_file(const char *prefix, char *path)
++{
++	int fd;
++
++	snprintf(path, PATH_MAX, "%sguard_regions_test_file_XXXXXX", prefix);
++	fd = mkstemp(path);
++	if (fd < 0)
++		ksft_exit_fail_perror("mkstemp");
++
++	return fd;
++}
++
++FIXTURE_SETUP(guard_regions)
++{
++	self->page_size = (unsigned long)sysconf(_SC_PAGESIZE);
++	setup_sighandler();
++
++	if (variant->backing == ANON_BACKED)
++		return;
++
++	self->fd = open_file(
++		variant->backing == SHMEM_BACKED ? "/tmp/" : "",
++		self->path);
++
++	/* We truncate file to at least 100 pages, tests can modify as needed. */
++	ASSERT_EQ(ftruncate(self->fd, 100 * self->page_size), 0);
++};
++
++FIXTURE_TEARDOWN_PARENT(guard_regions)
++{
++	teardown_sighandler();
++
++	if (variant->backing == ANON_BACKED)
++		return;
++
++	if (self->fd >= 0)
++		close(self->fd);
++
++	if (self->path[0] != '\0')
++		unlink(self->path);
++}
++
+ TEST_F(guard_regions, basic)
+ {
+ 	const unsigned long NUM_PAGES = 10;
+@@ -144,8 +253,8 @@ TEST_F(guard_regions, basic)
+ 	char *ptr;
+ 	int i;
+ 
+-	ptr = mmap(NULL, NUM_PAGES * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_PRIVATE | MAP_ANON, -1, 0);
++	ptr = mmap_(self, variant, NULL, NUM_PAGES * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Trivially assert we can touch the first page. */
+@@ -238,25 +347,23 @@ TEST_F(guard_regions, multi_vma)
+ 	int i;
+ 
+ 	/* Reserve a 100 page region over which we can install VMAs. */
+-	ptr_region = mmap(NULL, 100 * page_size, PROT_NONE,
+-			  MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_region = mmap_(self, variant, NULL, 100 * page_size,
++			   PROT_NONE, 0, 0);
+ 	ASSERT_NE(ptr_region, MAP_FAILED);
+ 
+ 	/* Place a VMA of 10 pages size at the start of the region. */
+-	ptr1 = mmap(ptr_region, 10 * page_size, PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr1 = mmap_(self, variant, ptr_region, 10 * page_size,
++		     PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr1, MAP_FAILED);
+ 
+ 	/* Place a VMA of 5 pages size 50 pages into the region. */
+-	ptr2 = mmap(&ptr_region[50 * page_size], 5 * page_size,
+-		    PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr2 = mmap_(self, variant, &ptr_region[50 * page_size], 5 * page_size,
++		     PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr2, MAP_FAILED);
+ 
+ 	/* Place a VMA of 20 pages size at the end of the region. */
+-	ptr3 = mmap(&ptr_region[80 * page_size], 20 * page_size,
+-		    PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr3 = mmap_(self, variant, &ptr_region[80 * page_size], 20 * page_size,
++		     PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr3, MAP_FAILED);
+ 
+ 	/* Unmap gaps. */
+@@ -326,13 +433,11 @@ TEST_F(guard_regions, multi_vma)
+ 	}
+ 
+ 	/* Now map incompatible VMAs in the gaps. */
+-	ptr = mmap(&ptr_region[10 * page_size], 40 * page_size,
+-		   PROT_READ | PROT_WRITE | PROT_EXEC,
+-		   MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, &ptr_region[10 * page_size], 40 * page_size,
++		    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+-	ptr = mmap(&ptr_region[55 * page_size], 25 * page_size,
+-		   PROT_READ | PROT_WRITE | PROT_EXEC,
+-		   MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, &ptr_region[55 * page_size], 25 * page_size,
++		    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/*
+@@ -379,8 +484,8 @@ TEST_F(guard_regions, process_madvise)
+ 	ASSERT_NE(pidfd, -1);
+ 
+ 	/* Reserve region to map over. */
+-	ptr_region = mmap(NULL, 100 * page_size, PROT_NONE,
+-			  MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_region = mmap_(self, variant, NULL, 100 * page_size,
++			   PROT_NONE, 0, 0);
+ 	ASSERT_NE(ptr_region, MAP_FAILED);
+ 
+ 	/*
+@@ -388,9 +493,8 @@ TEST_F(guard_regions, process_madvise)
+ 	 * overwrite existing entries and test this code path against
+ 	 * overwriting existing entries.
+ 	 */
+-	ptr1 = mmap(&ptr_region[page_size], 10 * page_size,
+-		    PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE | MAP_POPULATE, -1, 0);
++	ptr1 = mmap_(self, variant, &ptr_region[page_size], 10 * page_size,
++		     PROT_READ | PROT_WRITE, MAP_FIXED | MAP_POPULATE, 0);
+ 	ASSERT_NE(ptr1, MAP_FAILED);
+ 	/* We want guard markers at start/end of each VMA. */
+ 	vec[0].iov_base = ptr1;
+@@ -399,9 +503,8 @@ TEST_F(guard_regions, process_madvise)
+ 	vec[1].iov_len = page_size;
+ 
+ 	/* 5 pages offset 50 pages into reserve region. */
+-	ptr2 = mmap(&ptr_region[50 * page_size], 5 * page_size,
+-		    PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr2 = mmap_(self, variant, &ptr_region[50 * page_size], 5 * page_size,
++		     PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr2, MAP_FAILED);
+ 	vec[2].iov_base = ptr2;
+ 	vec[2].iov_len = page_size;
+@@ -409,9 +512,8 @@ TEST_F(guard_regions, process_madvise)
+ 	vec[3].iov_len = page_size;
+ 
+ 	/* 20 pages offset 79 pages into reserve region. */
+-	ptr3 = mmap(&ptr_region[79 * page_size], 20 * page_size,
+-		    PROT_READ | PROT_WRITE,
+-		    MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr3 = mmap_(self, variant, &ptr_region[79 * page_size], 20 * page_size,
++		    PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr3, MAP_FAILED);
+ 	vec[4].iov_base = ptr3;
+ 	vec[4].iov_len = page_size;
+@@ -472,8 +574,8 @@ TEST_F(guard_regions, munmap)
+ 	const unsigned long page_size = self->page_size;
+ 	char *ptr, *ptr_new1, *ptr_new2;
+ 
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard first and last pages. */
+@@ -489,11 +591,11 @@ TEST_F(guard_regions, munmap)
+ 	ASSERT_EQ(munmap(&ptr[9 * page_size], page_size), 0);
+ 
+ 	/* Map over them.*/
+-	ptr_new1 = mmap(ptr, page_size, PROT_READ | PROT_WRITE,
+-			MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new1 = mmap_(self, variant, ptr, page_size, PROT_READ | PROT_WRITE,
++			 MAP_FIXED, 0);
+ 	ASSERT_NE(ptr_new1, MAP_FAILED);
+-	ptr_new2 = mmap(&ptr[9 * page_size], page_size, PROT_READ | PROT_WRITE,
+-			MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new2 = mmap_(self, variant, &ptr[9 * page_size], page_size,
++			 PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr_new2, MAP_FAILED);
+ 
+ 	/* Assert that they are now not guarded. */
+@@ -511,8 +613,8 @@ TEST_F(guard_regions, mprotect)
+ 	char *ptr;
+ 	int i;
+ 
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard the middle of the range. */
+@@ -559,8 +661,8 @@ TEST_F(guard_regions, split_merge)
+ 	char *ptr, *ptr_new;
+ 	int i;
+ 
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard the whole range. */
+@@ -601,14 +703,14 @@ TEST_F(guard_regions, split_merge)
+ 	}
+ 
+ 	/* Now map them again - the unmap will have cleared the guards. */
+-	ptr_new = mmap(&ptr[2 * page_size], page_size, PROT_READ | PROT_WRITE,
+-		       MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new = mmap_(self, variant, &ptr[2 * page_size], page_size,
++			PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr_new, MAP_FAILED);
+-	ptr_new = mmap(&ptr[5 * page_size], page_size, PROT_READ | PROT_WRITE,
+-		       MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new = mmap_(self, variant, &ptr[5 * page_size], page_size,
++			PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr_new, MAP_FAILED);
+-	ptr_new = mmap(&ptr[8 * page_size], page_size, PROT_READ | PROT_WRITE,
+-		       MAP_FIXED | MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new = mmap_(self, variant, &ptr[8 * page_size], page_size,
++			PROT_READ | PROT_WRITE, MAP_FIXED, 0);
+ 	ASSERT_NE(ptr_new, MAP_FAILED);
+ 
+ 	/* Now make sure guard pages are established. */
+@@ -690,8 +792,8 @@ TEST_F(guard_regions, dontneed)
+ 	char *ptr;
+ 	int i;
+ 
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Back the whole range. */
+@@ -721,8 +823,16 @@ TEST_F(guard_regions, dontneed)
+ 			ASSERT_FALSE(result);
+ 		} else {
+ 			ASSERT_TRUE(result);
+-			/* Make sure we really did get reset to zero page. */
+-			ASSERT_EQ(*curr, '\0');
++			switch (variant->backing) {
++			case ANON_BACKED:
++				/* If anon, then we get a zero page. */
++				ASSERT_EQ(*curr, '\0');
++				break;
++			default:
++				/* Otherwise, we get the file data. */
++				ASSERT_EQ(*curr, 'y');
++				break;
++			}
+ 		}
+ 
+ 		/* Now write... */
+@@ -743,8 +853,8 @@ TEST_F(guard_regions, mlock)
+ 	char *ptr;
+ 	int i;
+ 
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Populate. */
+@@ -816,8 +926,8 @@ TEST_F(guard_regions, mremap_move)
+ 	char *ptr, *ptr_new;
+ 
+ 	/* Map 5 pages. */
+-	ptr = mmap(NULL, 5 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 5 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Place guard markers at both ends of the 5 page span. */
+@@ -831,8 +941,7 @@ TEST_F(guard_regions, mremap_move)
+ 	/* Map a new region we will move this range into. Doing this ensures
+ 	 * that we have reserved a range to map into.
+ 	 */
+-	ptr_new = mmap(NULL, 5 * page_size, PROT_NONE, MAP_ANON | MAP_PRIVATE,
+-		       -1, 0);
++	ptr_new = mmap_(self, variant, NULL, 5 * page_size, PROT_NONE, 0, 0);
+ 	ASSERT_NE(ptr_new, MAP_FAILED);
+ 
+ 	ASSERT_EQ(mremap(ptr, 5 * page_size, 5 * page_size,
+@@ -863,8 +972,8 @@ TEST_F(guard_regions, mremap_expand)
+ 	char *ptr, *ptr_new;
+ 
+ 	/* Map 10 pages... */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 	/* ...But unmap the last 5 so we can ensure we can expand into them. */
+ 	ASSERT_EQ(munmap(&ptr[5 * page_size], 5 * page_size), 0);
+@@ -888,8 +997,7 @@ TEST_F(guard_regions, mremap_expand)
+ 	ASSERT_FALSE(try_read_write_buf(&ptr[4 * page_size]));
+ 
+ 	/* Reserve a region which we can move to and expand into. */
+-	ptr_new = mmap(NULL, 20 * page_size, PROT_NONE,
+-		       MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr_new = mmap_(self, variant, NULL, 20 * page_size, PROT_NONE, 0, 0);
+ 	ASSERT_NE(ptr_new, MAP_FAILED);
+ 
+ 	/* Now move and expand into it. */
+@@ -927,8 +1035,8 @@ TEST_F(guard_regions, mremap_shrink)
+ 	int i;
+ 
+ 	/* Map 5 pages. */
+-	ptr = mmap(NULL, 5 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 5 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Place guard markers at both ends of the 5 page span. */
+@@ -992,8 +1100,8 @@ TEST_F(guard_regions, fork)
+ 	int i;
+ 
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Establish guard pages in the first 5 pages. */
+@@ -1046,9 +1154,12 @@ TEST_F(guard_regions, fork_cow)
+ 	pid_t pid;
+ 	int i;
+ 
++	if (variant->backing != ANON_BACKED)
++		SKIP(return, "CoW only supported on anon mappings");
++
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Populate range. */
+@@ -1117,9 +1228,12 @@ TEST_F(guard_regions, fork_wipeonfork)
+ 	pid_t pid;
+ 	int i;
+ 
++	if (variant->backing != ANON_BACKED)
++		SKIP(return, "Wipe on fork only supported on anon mappings");
++
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Mark wipe on fork. */
+@@ -1166,9 +1280,12 @@ TEST_F(guard_regions, lazyfree)
+ 	char *ptr;
+ 	int i;
+ 
++	if (variant->backing != ANON_BACKED)
++		SKIP(return, "MADV_FREE only supported on anon mappings");
++
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard range. */
+@@ -1202,8 +1319,8 @@ TEST_F(guard_regions, populate)
+ 	char *ptr;
+ 
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard range. */
+@@ -1229,8 +1346,8 @@ TEST_F(guard_regions, cold_pageout)
+ 	int i;
+ 
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Guard range. */
+@@ -1281,6 +1398,9 @@ TEST_F(guard_regions, uffd)
+ 	struct uffdio_register reg;
+ 	struct uffdio_range range;
+ 
++	if (!is_anon_backed(variant))
++		SKIP(return, "uffd only works on anon backing");
++
+ 	/* Set up uffd. */
+ 	uffd = userfaultfd(0);
+ 	if (uffd == -1 && errno == EPERM)
+@@ -1290,8 +1410,8 @@ TEST_F(guard_regions, uffd)
+ 	ASSERT_EQ(ioctl(uffd, UFFDIO_API, &api), 0);
+ 
+ 	/* Map 10 pages. */
+-	ptr = mmap(NULL, 10 * page_size, PROT_READ | PROT_WRITE,
+-		   MAP_ANON | MAP_PRIVATE, -1, 0);
++	ptr = mmap_(self, variant, NULL, 10 * page_size,
++		    PROT_READ | PROT_WRITE, 0, 0);
+ 	ASSERT_NE(ptr, MAP_FAILED);
+ 
+ 	/* Register the range with uffd. */
+-- 
 2.48.1
+
