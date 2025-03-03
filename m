@@ -1,70 +1,70 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00A422512E5
-	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:30:57 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00A76252910
+	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:31:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741019460; cv=none; b=a0H++G/rLWTeXqp+5pfI7/G++fCPTXmCEmqq2+i/ONOga8bua3BFHLvGM1ndcZKta55GNpRqL8yZ9UUlXbALsIA0hsInIBO2WHjZMyrt1ZwxE+G51QdbDcse2+SOtCjgJCjqFEGbgqr77C0lDLSykJD7gQ4L2z6lTe5YhMRZZAo=
+	t=1741019462; cv=none; b=Worw/pSIW4bFF6HKwiTzJAb8GD8vtHAMaKZOjw/g2fUxJU2629WoTeOLiZeB8t0Cm9fJ0NyamEaOTU7s/cnOaCmwS8G5nYZ/H9zSbL54NxDTqXp2RxS3IAuv2qW7PnznXF26FJXVONlmPwjN66BqWXJaEZpGYtmkun8kYrYuZm4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741019460; c=relaxed/simple;
-	bh=tNn8Asbeia05psqh1fHi3T/D4xLY6zTouZa9tD22HYw=;
+	s=arc-20240116; t=1741019462; c=relaxed/simple;
+	bh=OBXpWDsR7o4dKf8NkhRON4PwL/H6iQiwplPc25GckEo=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=is3Z1Ph7aGK49CmlcjdZhX5IEPM/H9mHSmd5EAe93CZyrz0oxxbQqI7iP5o3QjN5Osdj5V5AoMj0uXCxKtnpmjBhCdXPY87lqjIbh+ojt0Y9lMRsDdAlSOd+ATjgaGWxfu+U3sMUshQxC9p3E+Yqy3wc2AslnJsJDX2DQdYt3cU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=JaSzZFcv; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=i8K/Hk6ZOddpRAJjn3hCJtAbPEZwO9ZeQZHhHWb81RIA8Kf9853zx7WkLDl6gNolVWn45/xHysgjgKAqW1VjXSp/kpDbuul5dySeAUI0s/m8cjxhURKLtYgi/rM9GIkMWbhmdtEWc/Mm+7XaiqLP0ozZ/7Ri+a4bsbG9kLcNZao=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Oej8aKPO; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="JaSzZFcv"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Oej8aKPO"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741019457;
+	s=mimecast20190719; t=1741019459;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=dM3d7FaE0s/3W03pV+cOCeas1Rcyk2uf0DwTQW3h1Ys=;
-	b=JaSzZFcvN8aC+Qd8NPWykyxPweoZ6at35MT4NzVATPZYeHL7IVn10+CXYAvJv7OOS5rD77
-	MvDmGoM0MS6PVWUP/ls8qYpN4MvW+T226jjLPubWJuu19OH/0ZdGEOYK8+9/H+zVeXVb4B
-	oaOYXEyMV01SHj/OVVM1AdgOti3v9WE=
-Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
- [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=VusPlBbKEOGpL4wS1BqoWY6CYb2f4HQ+/wIDh8p+vAo=;
+	b=Oej8aKPOwGkLYn6iY9ftUoB2lEl27Dh75CmtWh5gAVuclrc5RFPq6f/eHpWPKiqRJFNMPz
+	PC1oovmWPtZk21EUfgJqRPdO6/0osZAPOpTE6Kyi55rttGMF7T5EiEo3loQkx9L0nQrbAh
+	PcsnclNXcjmD1CvmA+dWxVThdchIVpc=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-139-FmgE0nZjOL-llqdB6C-xMA-1; Mon, 03 Mar 2025 11:30:55 -0500
-X-MC-Unique: FmgE0nZjOL-llqdB6C-xMA-1
-X-Mimecast-MFC-AGG-ID: FmgE0nZjOL-llqdB6C-xMA_1741019454
-Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-390eb06d920so3314190f8f.3
-        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:54 -0800 (PST)
+ us-mta-388-qIFfHXqxOgmazPXgUoNaWQ-1; Mon, 03 Mar 2025 11:30:43 -0500
+X-MC-Unique: qIFfHXqxOgmazPXgUoNaWQ-1
+X-Mimecast-MFC-AGG-ID: qIFfHXqxOgmazPXgUoNaWQ_1741019441
+Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-4388eee7073so24307615e9.0
+        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:42 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1741019454; x=1741624254;
+        d=1e100.net; s=20230601; t=1741019441; x=1741624241;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=dM3d7FaE0s/3W03pV+cOCeas1Rcyk2uf0DwTQW3h1Ys=;
-        b=iodDO806QxI3S5idGyYSdh353dKnykVKjBYePOvt6rCw2kWpWrkeioy3AWJus8kD5t
-         YCC26ZMem06noNtvFGPUPT50QISDFKGkWB5BPApPMAuDbSaL/NK1V8wOHFdHerdKIBHl
-         GBMBE5pnozsrtQzLE4RVjj5RxlDzKFcHEjIXaCTsiU77EoRZdSopJJSxgrylPI+Z6S4I
-         kuk6LpodLAwPk+hsgoh5cqCxP+8OYSQAkkBm3GCmqcTinbM8ArSeH0MRxGCXl3WLcgBt
-         SevP/t1lEh4L0qouqlisr1zxi8X4JDMP/2FktgKxJOFdfDxnihJR3qljVM68h3b/W9MZ
-         yELQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUo9t9HjuBMWCwO4dy1TtVaXxWHYNstQgpvCNggHObzSop61aB6SRiy1dOSkjSW4A/5p+sxL8U6G0g=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yxs1sYoBabEKE0o/O0KftDvwxAtF45oZZeFDp0ugbmmNDn6OyUI
-	vZUFoeRrZ0AOuqfvzbQJZasR4u0KLKzUZoeyYYF8vf9ayEOxOT0y7zK0mOxURZtPoJ1GtK2nFUE
-	/fkXtP/MVfJBZsA4DID+dwJiohkWclSCcF81/xr8i/avxp3r1RkDMldUfcA==
-X-Gm-Gg: ASbGnctXW7Xvke/XMibtBQoi0DntjDX9WBhx/i9717YBet/HWLJtAAcTwidvCN7uA/q
-	dgIU/ew1FYLBw604D/l36dQ/A7EjYPImWwUv6u99P/NdumhnT0QHt1K6fVjiMJ5oKqVhuh3mTqS
-	qxR3Xr0Qq4ONNTpqn//ABtPuqs89acv09/AY5roorWAjbrwOczVwEBNDPwVk0XCfYdw5veYGinP
-	Ji/OwuPAkHGfoh9O3VNtOv9O4fatZ4iecO2aKRCNJLFrc99nRMDNhDOgWuE1MGNKma7Gd8pvdhY
-	0mbcw6cWJYQ7SLJ66vxS/h4epmj8OqgTYUfeULrf90F9mDQUa/c8oi+Oo3c4cmjCuU+hjY5psJF
-	/
-X-Received: by 2002:a05:6000:4c6:b0:38d:c44a:a64b with SMTP id ffacd0b85a97d-390eca2589amr11095183f8f.48.1741019453849;
-        Mon, 03 Mar 2025 08:30:53 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IFDds/9qj55eCL2sJuyoEBZpLXmN9fljVQo3ZoynXY2Ft4dglS/KTUjLVmC7la2kWf5hOqFtQ==
-X-Received: by 2002:a05:6000:4c6:b0:38d:c44a:a64b with SMTP id ffacd0b85a97d-390eca2589amr11095139f8f.48.1741019453402;
-        Mon, 03 Mar 2025 08:30:53 -0800 (PST)
+        bh=VusPlBbKEOGpL4wS1BqoWY6CYb2f4HQ+/wIDh8p+vAo=;
+        b=cKjegRQMlX8Rhh76R0pYVr9X3K23peHkmZ5IBNyelzbz7fNqzPYRhb0dfm6fyLOOUm
+         SMFGmgCyQzxEXNBf8HIwcNGXXsg4STVpCcxh0LOPK2sIKaJnzDn0LCS6ai6m5iyBaHpA
+         IFhtLQv61a2qzVeWniX3DIfsFV5da3gKbl9fzjXIBxS6aPGH78hT1L1xZugNJ+Q70GSO
+         5sGazgfOqbBLz3AsK2SUXknFkEX3L1H9iRFF+/eY8ZsN+UNjMsTcmNbK882mFKCq2CMi
+         OeLWCl+IrxsgZvQnwbqX0AEXNBhu0SOue3OIQo+qGAWC1uGFsMc2Ez+mfrqEMMYesChz
+         DYWw==
+X-Forwarded-Encrypted: i=1; AJvYcCU09WXsHpzpdxg2B/7A5cFvUOxXFyh6Yocy6AWvqxhe+U4Jjbd7pxK/LaAZhTTNFYUsy1JUibYu/ns=@vger.kernel.org
+X-Gm-Message-State: AOJu0YyNkmfhM8ZOogOSVfAgVtHvyHSfAiiQz7WYqmBGJxJ5cW7wDaPP
+	0qJnHJiHvsbWgvg6xqbB+OTQOIR2YtoifYgWCktzAYhZsEIg0NwMxTqaZG6WjmGQyfI7VenM+rf
+	KtbTA+WlPJJt/f9Lwrk8pJ3MssLy/qp+xBo7IoXbU3/3/KwzhdLpJlAj9VA==
+X-Gm-Gg: ASbGncuPRonFK6GXuTNkZ9J3wYXO1Ik1+nh2YkD6TGN+HOPx0yoouDBRJfDpdwlmoXr
+	4yuxNGSNTuM0hcUswylaDd44k6LBh4rpIYB+UAvGfEPueWDsIWEePZFTJxw/tjoVaifYpKSDFtG
+	+gsHQJMBS1bsbUXwH4OP4MCmlmdLhut7wRcva34U3Sk3t5ukWfadk9di4hXgFp0jS00ENOi6uws
+	643MjYy1Em4XNp7JTZA9yJ0TyQEjpYAC1GLqAj8Sqy+wyMcKCGMVt67M/2xomUsNoYeT9v4ETON
+	h7SUXU6CkHvrNzjfv3McovURSSHCZ37jzNAojGm1M2SZY/xjhbgfLBpigkDlbm2JQQTPs5eObGQ
+	z
+X-Received: by 2002:a05:600c:26c6:b0:43b:bb72:1dce with SMTP id 5b1f17b1804b1-43bbb721f8fmr44417405e9.5.1741019441210;
+        Mon, 03 Mar 2025 08:30:41 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IF6XV9dtRCnC9UYnKtk79gh146334CB5ZefECKJp7wi6xxTybGeqstnFZTU3vfWQysm8+TPqw==
+X-Received: by 2002:a05:600c:26c6:b0:43b:bb72:1dce with SMTP id 5b1f17b1804b1-43bbb721f8fmr44417035e9.5.1741019440886;
+        Mon, 03 Mar 2025 08:30:40 -0800 (PST)
 Received: from localhost (p200300cbc7349600af274326a2162bfb.dip0.t-ipconnect.de. [2003:cb:c734:9600:af27:4326:a216:2bfb])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-43bbbff18b3sm56885465e9.24.2025.03.03.08.30.52
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-43bc1b5db02sm42954325e9.19.2025.03.03.08.30.38
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 03 Mar 2025 08:30:53 -0800 (PST)
+        Mon, 03 Mar 2025 08:30:40 -0800 (PST)
 From: David Hildenbrand <david@redhat.com>
 To: linux-kernel@vger.kernel.org
 Cc: linux-doc@vger.kernel.org,
@@ -90,9 +90,9 @@ Cc: linux-doc@vger.kernel.org,
 	Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
 	Vlastimil Babka <vbabka@suse.cz>,
 	Jann Horn <jannh@google.com>
-Subject: [PATCH v3 16/20] fs/proc/page: remove per-page mapcount dependency for /proc/kpagecount (CONFIG_NO_PAGE_MAPCOUNT)
-Date: Mon,  3 Mar 2025 17:30:09 +0100
-Message-ID: <20250303163014.1128035-17-david@redhat.com>
+Subject: [PATCH v3 10/20] bit_spinlock: __always_inline (un)lock functions
+Date: Mon,  3 Mar 2025 17:30:03 +0100
+Message-ID: <20250303163014.1128035-11-david@redhat.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250303163014.1128035-1-david@redhat.com>
 References: <20250303163014.1128035-1-david@redhat.com>
@@ -104,130 +104,65 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Let's implement an alternative when per-page mapcounts in large folios
-are no longer maintained -- soon with CONFIG_NO_PAGE_MAPCOUNT.
+The compiler might decide that it is a smart idea to not inline
+bit_spin_lock(), primarily when a couple of functions in the same file end
+up calling it. Especially when used in RMAP map/unmap code next, the
+compiler sometimes decides to not inline, which is then observable in
+some micro-benchmarks.
 
-For large folios, we'll return the per-page average mapcount within the
-folio, whereby we round to the closest integer when calculating the
-average: however, we'll always return at least 1 if the folio is
-mapped.
+Let's simply flag all lock/unlock functions as __always_inline;
+arch_test_and_set_bit_lock() and friends are already tagged like that
+(but not test_and_set_bit_lock() for some reason).
 
-So assuming a folio with 512 pages, the average would be:
-* 0 if not pages are mapped
-* 1 if there are 1 .. 767 per-page mappings
-* 2 if there are 767 .. 1279 per-page mappings
-...
-
-For hugetlb folios and for large folios that are fully mapped
-into all address spaces, there is no change.
-
-We'll make use of this helper in other context next.
-
-As an alternative, we could simply return 0 for non-hugetlb large folios,
-or disable this legacy interface with CONFIG_NO_PAGE_MAPCOUNT.
-
-But the information exposed by this interface can still be valuable, and
-frequently we deal with fully-mapped large folios where the average
-corresponds to the actual page mapcount. So we'll leave it like this for
-now and document the new behavior.
-
-Note: this interface is likely not very relevant for performance. If
-ever required, we could try doing a rather expensive rmap walk to collect
-precisely how often this folio page is mapped.
+If ever a problem, we could split it into a fast and a slow path, and
+only force the fast path to be inlined. But there is nothing
+particularly "big" here.
 
 Signed-off-by: David Hildenbrand <david@redhat.com>
 ---
- Documentation/admin-guide/mm/pagemap.rst |  7 ++++-
- fs/proc/internal.h                       | 35 ++++++++++++++++++++++++
- fs/proc/page.c                           | 11 ++++++--
- 3 files changed, 49 insertions(+), 4 deletions(-)
+ include/linux/bit_spinlock.h | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/Documentation/admin-guide/mm/pagemap.rst b/Documentation/admin-guide/mm/pagemap.rst
-index a297e824f9900..d6647daca9122 100644
---- a/Documentation/admin-guide/mm/pagemap.rst
-+++ b/Documentation/admin-guide/mm/pagemap.rst
-@@ -43,7 +43,12 @@ There are four components to pagemap:
-    skip over unmapped regions.
- 
-  * ``/proc/kpagecount``.  This file contains a 64-bit count of the number of
--   times each page is mapped, indexed by PFN.
-+   times each page is mapped, indexed by PFN. Some kernel configurations do
-+   not track the precise number of times a page part of a larger allocation
-+   (e.g., THP) is mapped. In these configurations, the average number of
-+   mappings per page in this larger allocation is returned instead. However,
-+   if any page of the large allocation is mapped, the returned value will
-+   be at least 1.
- 
- The page-types tool in the tools/mm directory can be used to query the
- number of times a page is mapped.
-diff --git a/fs/proc/internal.h b/fs/proc/internal.h
-index 1695509370b88..96ea58e843114 100644
---- a/fs/proc/internal.h
-+++ b/fs/proc/internal.h
-@@ -174,6 +174,41 @@ static inline int folio_precise_page_mapcount(struct folio *folio,
- 	return mapcount;
- }
- 
-+/**
-+ * folio_average_page_mapcount() - Average number of mappings per page in this
-+ *				   folio
-+ * @folio: The folio.
-+ *
-+ * The average number of user page table entries that reference each page in
-+ * this folio as tracked via the RMAP: either referenced directly (PTE) or
-+ * as part of a larger area that covers this page (e.g., PMD).
-+ *
-+ * The average is calculated by rounding to the nearest integer; however,
-+ * to avoid duplicated code in current callers, the average is at least
-+ * 1 if any page of the folio is mapped.
-+ *
-+ * Returns: The average number of mappings per page in this folio.
-+ */
-+static inline int folio_average_page_mapcount(struct folio *folio)
-+{
-+	int mapcount, entire_mapcount, avg;
-+
-+	if (!folio_test_large(folio))
-+		return atomic_read(&folio->_mapcount) + 1;
-+
-+	mapcount = folio_large_mapcount(folio);
-+	if (unlikely(mapcount <= 0))
-+		return 0;
-+	entire_mapcount = folio_entire_mapcount(folio);
-+	if (mapcount <= entire_mapcount)
-+		return entire_mapcount;
-+	mapcount -= entire_mapcount;
-+
-+	/* Round to closest integer ... */
-+	avg = ((unsigned int)mapcount + folio_large_nr_pages(folio) / 2) >> folio_large_order(folio);
-+	/* ... but return at least 1. */
-+	return max_t(int, avg + entire_mapcount, 1);
-+}
- /*
-  * array.c
+diff --git a/include/linux/bit_spinlock.h b/include/linux/bit_spinlock.h
+index bbc4730a6505c..c0989b5b0407f 100644
+--- a/include/linux/bit_spinlock.h
++++ b/include/linux/bit_spinlock.h
+@@ -13,7 +13,7 @@
+  * Don't use this unless you really need to: spin_lock() and spin_unlock()
+  * are significantly faster.
   */
-diff --git a/fs/proc/page.c b/fs/proc/page.c
-index a55f5acefa974..23fc771100ae5 100644
---- a/fs/proc/page.c
-+++ b/fs/proc/page.c
-@@ -67,9 +67,14 @@ static ssize_t kpagecount_read(struct file *file, char __user *buf,
- 		 * memmaps that were actually initialized.
- 		 */
- 		page = pfn_to_online_page(pfn);
--		if (page)
--			mapcount = folio_precise_page_mapcount(page_folio(page),
--							       page);
-+		if (page) {
-+			struct folio *folio = page_folio(page);
-+
-+			if (IS_ENABLED(CONFIG_PAGE_MAPCOUNT))
-+				mapcount = folio_precise_page_mapcount(folio, page);
-+			else
-+				mapcount = folio_average_page_mapcount(folio);
-+		}
- 
- 		if (put_user(mapcount, out)) {
- 			ret = -EFAULT;
+-static inline void bit_spin_lock(int bitnum, unsigned long *addr)
++static __always_inline void bit_spin_lock(int bitnum, unsigned long *addr)
+ {
+ 	/*
+ 	 * Assuming the lock is uncontended, this never enters
+@@ -38,7 +38,7 @@ static inline void bit_spin_lock(int bitnum, unsigned long *addr)
+ /*
+  * Return true if it was acquired
+  */
+-static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
++static __always_inline int bit_spin_trylock(int bitnum, unsigned long *addr)
+ {
+ 	preempt_disable();
+ #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+@@ -54,7 +54,7 @@ static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
+ /*
+  *  bit-based spin_unlock()
+  */
+-static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
++static __always_inline void bit_spin_unlock(int bitnum, unsigned long *addr)
+ {
+ #ifdef CONFIG_DEBUG_SPINLOCK
+ 	BUG_ON(!test_bit(bitnum, addr));
+@@ -71,7 +71,7 @@ static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
+  *  non-atomic version, which can be used eg. if the bit lock itself is
+  *  protecting the rest of the flags in the word.
+  */
+-static inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
++static __always_inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
+ {
+ #ifdef CONFIG_DEBUG_SPINLOCK
+ 	BUG_ON(!test_bit(bitnum, addr));
 -- 
 2.48.1
 
