@@ -1,70 +1,70 @@
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5DB39219A9B
-	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:30:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBD3A24395E
+	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:30:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741019440; cv=none; b=KNxCk5huAfl1Ys/BJz7FTretN8MuNeB89OPYmXxdeEEbRpBSs4qCiQlCwE5hlQdmitpQ0ruhlUL9QyR4XSLpxH0GZvKeCuRLwOzSI81+MguMCZtm7dDqDvR+vi0s2E8v1yHDQrkR4i19x8s34dL60MsPO+fGvYHLv+L6vBCxFoo=
+	t=1741019445; cv=none; b=K0S/uzI9mzUmWh6koNsEa9fhZPV4oav+YhJDvAQo8pQr1dn1zRp0wz4sElmKBao4A4bV4t1rdM3hOsho/uk49iJQYAmwwPCeT91gv/oX0wVSpu6En7ZYFrTmvhAMQHxYiUBB1gnBNX9aaaOZoiSDCrVB2k5TyD9+l/prNXo4/+8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741019440; c=relaxed/simple;
-	bh=CBy9KDDS4DSmHwlsP4Ue0ubLvN7R0is6yQy4i2JW8zg=;
+	s=arc-20240116; t=1741019445; c=relaxed/simple;
+	bh=8JZSTfKBKXDMVjBypXt5216219IvKwBRt9fqFMOGvw0=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=NWomMsACmluqIuHbfBss++7YsU/eOnRAywaIDZZnxlxqL/wOtFKd06LKTcfi990HTBhAFm5j6AzklZJBmJEYJOedYlI0U6dcQoY4Kqb6RrOnLoxbW+HRcYhlBfLH4RFhic4fpB4G0eTBvRLcNYoyzac3ZEAcRyWavZV3UiDLVB0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Vzr2FnrE; arc=none smtp.client-ip=170.10.129.124
+	 MIME-Version; b=PsR4/oHUar6S5cRJkJhhwQlNdDxmE98eqctmVd0rw+YU74joa5SKxWrdYq4Ii6Sv+OBNUYkoR3Thsg5y+WBuY94SQhGLCGJMxYF4Q3H4QePYt34vQ/p+1EDZM2ujexq8jV3yiNMmvOEeAx3E8fZ4ZI/2pav682Kw4woPbP+ixjw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=HbjVFLID; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Vzr2FnrE"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="HbjVFLID"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741019437;
+	s=mimecast20190719; t=1741019442;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=0VohxUkhEcl68WNDuA0eZYZJxa5JX4ZCeZ0UqfdwFdI=;
-	b=Vzr2FnrEuU0O68JEX4W61OL8lCJ95+cBrQK4lHKbUDReUVdsSyDnPg9ie+hJxuicjNTVN1
-	rZQ8oNGu8JzM4PTSIEwJt1f6HDJbYLf8oF2MHWkHpLRFx6BQ26RtkWP+BdkgkeA527ke5o
-	dA5oMiSRIsG/OB8W4FgsK4D78+r7fK8=
-Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
- [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=5CNQID9OyUlmGzlaLMJyJN9WCGZqSjZdKvQcCGQkCwE=;
+	b=HbjVFLID8O/IONFsfqLHpRhqPZHuDZeO/EyE0Q57dplUmWGSCYDaSaoBeWQQ9Tws/xHg3A
+	oIzFEgqVTBInFug+GNbkq7U9hdGfy9ou+ge9WgP3oMfjCWJXpHJsVkYG3/qlPyc8AvhZq4
+	e11KlWZl/4N/ARG+4L7hkOsXS8v26o8=
+Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
+ [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-483-cvdLVZ14PmChBOGKJCHBnA-1; Mon, 03 Mar 2025 11:30:25 -0500
-X-MC-Unique: cvdLVZ14PmChBOGKJCHBnA-1
-X-Mimecast-MFC-AGG-ID: cvdLVZ14PmChBOGKJCHBnA_1741019424
-Received: by mail-wm1-f72.google.com with SMTP id 5b1f17b1804b1-43ba50406fcso27671425e9.3
-        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:25 -0800 (PST)
+ us-mta-150-kLJiytxWO3qLLeviUpzESA-1; Mon, 03 Mar 2025 11:30:31 -0500
+X-MC-Unique: kLJiytxWO3qLLeviUpzESA-1
+X-Mimecast-MFC-AGG-ID: kLJiytxWO3qLLeviUpzESA_1741019430
+Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-43bc97e6360so2141175e9.3
+        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:31 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1741019424; x=1741624224;
+        d=1e100.net; s=20230601; t=1741019430; x=1741624230;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=0VohxUkhEcl68WNDuA0eZYZJxa5JX4ZCeZ0UqfdwFdI=;
-        b=WOxb4NlFvRAGrcUYK1b0kfGd1L1w98h8Ut5OlXJdeEsAjKtV8WwIPvn3WY2yjFxNHT
-         UsT251ay4EfS3BR62wTUQtTlr5w2cKH1Md80yXULox+ZDr6TKNlGcWubc2LX1D1JQHHs
-         orHO5U51Dsn2YuRjEv8KsDpVerWtl0sPfbersDZ6wgSq2zJgiH9S9DiodCaQWrB+VqGk
-         Sdq1z8zBdnfiEym0hQN+0bePNNuAUIgb/tYZYYcapfu2TVAGzIh3f+iNDE3hSv44/vtS
-         zOaaHX3WSNr6gCZnObdR4X46ARhNMFMJLNVshflduJg7WLmIx8pFM4wiEAeDd+0nib9v
-         rSvw==
-X-Forwarded-Encrypted: i=1; AJvYcCXi1HXpLt57YcTffTpPINCKRoQNNr0IRhjKEeKaeu9yM1yIPKRPmWtx3nmVZNP8MhXUsiv8iHTmz5M=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyKbAnneA3BnHC19FicMOFeeH47KtOdXgU9H5ucdFy3nHdLJgAX
-	3kT7mb/4Ys3R50eM+rFbRHU0GK2uLHcq1Jj/OlRj2fKakwaGFprzXUt1H1gir170Sv5JjB23wt5
-	FcIELPXpjbDufZrec09KEYXHBcfhskUM8KZrvSZ32o0X41ICM/v1wK3tX5A==
-X-Gm-Gg: ASbGncvfIbj28TrfTZpkOovbzldUx+iPzMYbm0OKw03pb3aTZYbvmt7bPzikIYne90B
-	m4FUUwdp0kKFMcLbAa0+hzp2MNPNbt85JfZg0TKivsVE51+46roVNPOD8lYWHdxsX+BarqZ1Q9M
-	KF4bPJ0HiI+4vaUkLZ06fJrVSJWTvG9+LfvC0BnQFH1RYQlBFbO7vWbkiOuXIiQlmsiqe7VY7PZ
-	7jmmu2ZOKCLw5DNWx8pod2C+0MwQouC1Ny29wxTSHBhko7RcS7LycTL8oaNYwthlWLuokg+sch9
-	9wtsSdfWQ7IFQcJOILbHBlVvnmv+dg1jodpWrS1R7j9PDNdvqg24GMT2/DNawgpdRvXAnSlqUb4
-	v
-X-Received: by 2002:a05:600c:3596:b0:439:9494:318 with SMTP id 5b1f17b1804b1-43ba66e252dmr97507775e9.1.1741019423952;
-        Mon, 03 Mar 2025 08:30:23 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IEA60b0YZJ7pQqMV6rPSAHKqjeBG5mk2kZJ3T/m9wf5+mg4ZPniiyD7qwD32/lnlnL6IXv1QQ==
-X-Received: by 2002:a05:600c:3596:b0:439:9494:318 with SMTP id 5b1f17b1804b1-43ba66e252dmr97507315e9.1.1741019423515;
-        Mon, 03 Mar 2025 08:30:23 -0800 (PST)
+        bh=5CNQID9OyUlmGzlaLMJyJN9WCGZqSjZdKvQcCGQkCwE=;
+        b=GIRefP+pz+pbpCD8sEDQN4mlmCDUVk1oVPJ5NhGcX4FMFTQBzWmBLTaSOkWrtWHKY0
+         KNa59IOjdCiA7mXNW6SXm/nL22b/jUwhrSSvcQ8f3KkpCv7elcWsg8s0Ubr6Z1kvI5J1
+         9RipvbjTGl4SRQVH3cSgZ8xmHiarvC8UF6yqdwmAUi0cQ9c1IQJqtHu5UM6oaByb2ynL
+         dtZNyRqBIEzSbT+NJkDp6TQEUArVceHY+wIcR6/U6s4/W3ba+vyqEIUXBBkN/cK+y8P+
+         ZN4EZEqQxJnZmG4MUyDNPbH+eHPr8uCNe0fjS+f/ZcqTucARFugBioJ/mHsqgl6B1SLs
+         4GNA==
+X-Forwarded-Encrypted: i=1; AJvYcCVQAOIKFkMnAoOOhM9kM6sowYcK47ROJ5XWpiWMiV6nNQ6mGwEKjKSwU8oUSOrlC1tWbrxgTx0c7qQ=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx3VMP4ahinkmSUNSkpm0JN7A2Km7PENR2DHsM3Wl9Efgu/0FTP
+	5hixeiDAtV3TXkwR0Ad28bHAu7RV74RA+GRJJ2aRCXdR6phmzlNjGAGDlDwzEIY8tSvM+u/9C70
+	lw9pmmkOgQwjucwtDSVT2GKE7ZuQvpnvtH4orCLyNwjqvfRYSKTWCVJXS6g==
+X-Gm-Gg: ASbGncuTgKwBuL0IMeYO8dVuVmPngR7LQSCey/FED7fb/Rrf3sgPCRuEq3b5AKXjFRX
+	GY2IRAeA1wRA9l7esjvxl8qWOCxjCkEhcyZd/6Ll4dr0cR0Altkl5p3UHGTya+druOS4JOUnALF
+	SEliNwABDfvDsXcWaabxMDmsZEf+FjEWF8gDgZckmj91Ap2HU2OwJ2aJP/lekRMe4FEN+k7vds6
+	PS0CCWW1E6PUfk236/VNUxy0qKKYn3PhT7x1r2hCsF8sWz+PsbAxkaRhJvr/A7sKSq+Hfy8S3tk
+	qK4ySQgR8kwL03rCXPhh1T4Qd/w75p3QJZRSFmrht54iEosI+HBhulYZatdxsNLsZLiNMNxAsCJ
+	6
+X-Received: by 2002:a5d:6da3:0:b0:38d:e48b:1766 with SMTP id ffacd0b85a97d-390ec7c67c4mr11859514f8f.6.1741019430362;
+        Mon, 03 Mar 2025 08:30:30 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHRquSNZRyjpwgx3Bpqn4SKjwIglVAovJ799aL6PA2lqrvYWWUmjvtNcaSqxs0FHQnHdYBh0w==
+X-Received: by 2002:a5d:6da3:0:b0:38d:e48b:1766 with SMTP id ffacd0b85a97d-390ec7c67c4mr11859482f8f.6.1741019430024;
+        Mon, 03 Mar 2025 08:30:30 -0800 (PST)
 Received: from localhost (p200300cbc7349600af274326a2162bfb.dip0.t-ipconnect.de. [2003:cb:c734:9600:af27:4326:a216:2bfb])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-390e485ddedsm14691606f8f.89.2025.03.03.08.30.21
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-43bc4478f70sm23988695e9.0.2025.03.03.08.30.28
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 03 Mar 2025 08:30:22 -0800 (PST)
+        Mon, 03 Mar 2025 08:30:29 -0800 (PST)
 From: David Hildenbrand <david@redhat.com>
 To: linux-kernel@vger.kernel.org
 Cc: linux-doc@vger.kernel.org,
@@ -89,11 +89,10 @@ Cc: linux-doc@vger.kernel.org,
 	"Liam R. Howlett" <Liam.Howlett@oracle.com>,
 	Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
 	Vlastimil Babka <vbabka@suse.cz>,
-	Jann Horn <jannh@google.com>,
-	"Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Subject: [PATCH v3 03/20] mm: let _folio_nr_pages overlay memcg_data in first tail page
-Date: Mon,  3 Mar 2025 17:29:56 +0100
-Message-ID: <20250303163014.1128035-4-david@redhat.com>
+	Jann Horn <jannh@google.com>
+Subject: [PATCH v3 06/20] mm: move _entire_mapcount in folio to page[2] on 32bit
+Date: Mon,  3 Mar 2025 17:29:59 +0100
+Message-ID: <20250303163014.1128035-7-david@redhat.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250303163014.1128035-1-david@redhat.com>
 References: <20250303163014.1128035-1-david@redhat.com>
@@ -105,211 +104,124 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Let's free up some more of the "unconditionally available on 64BIT"
-space in order-1 folios by letting _folio_nr_pages overlay memcg_data in
-the first tail page (second folio page). Consequently, we have the
-optimization now whenever we have CONFIG_MEMCG, independent of 64BIT.
+Let's free up some space on 32bit in page[1] by moving the _pincount to
+page[2].
 
-We have to make sure that page->memcg on tail pages does not return
-"surprises". page_memcg_check() already properly refuses PageTail().
-Let's do that earlier in print_page_owner_memcg() to avoid printing
-wrong "Slab cache page" information. No other code should touch that
-field on tail pages of compound pages.
+Ordinary folios only use the entire mapcount with PMD mappings, so
+order-1 folios don't apply. Similarly, hugetlb folios are always larger
+than order-1, turning the entire mapcount essentially unused for all
+order-1 folios. Moving it to order-1 folios will not change anything.
 
-Reset the "_nr_pages" to 0 when splitting folios, or when freeing them
-back to the buddy (to avoid false page->memcg_data "bad page" reports).
+On 32bit, simply check in folio_entire_mapcount() whether we have an
+order-1 folio, and return 0 in that case.
 
-Note that in __split_huge_page(), folio_nr_pages() would stop working
-already as soon as we start messing with the subpages.
+Note that THPs on 32bit are not particularly common (and we don't care
+too much about performance), but we want to keep it working reliably,
+because likely we want to use large folios there as well in the future,
+independent of PMD leaf support.
 
-Most kernel configs should have at least CONFIG_MEMCG enabled, even if
-disabled at runtime. 64byte "struct memmap" is what we usually have
-on 64BIT.
+Once we dynamically allocate "struct folio", the 32bit specifics will go
+away again; even small folios could then have a pincount.
 
-While at it, rename "_folio_nr_pages" to "_nr_pages".
-
-Hopefully memdescs / dynamically allocating "strut folio" in the future
-will further clean this up, e.g., making _nr_pages available in all
-configs and maybe even in small folios. Doing that should be fairly easy
-on top of this change.
-
-Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
 Signed-off-by: David Hildenbrand <david@redhat.com>
 ---
- include/linux/mm.h       |  4 ++--
- include/linux/mm_types.h | 30 ++++++++++++++++++++++--------
- mm/huge_memory.c         | 16 +++++++++++++---
- mm/internal.h            |  4 ++--
- mm/page_alloc.c          |  6 +++++-
- mm/page_owner.c          |  2 +-
- 6 files changed, 45 insertions(+), 17 deletions(-)
+ include/linux/mm.h       |  2 ++
+ include/linux/mm_types.h |  3 ++-
+ mm/internal.h            |  5 +++--
+ mm/page_alloc.c          | 12 ++++++++----
+ 4 files changed, 15 insertions(+), 7 deletions(-)
 
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index a743321dc1a5d..694704217df8a 100644
+index c1414491c0de2..53dd4f99fdabc 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -1199,10 +1199,10 @@ static inline unsigned int folio_large_order(const struct folio *folio)
- 	return folio->_flags_1 & 0xff;
+@@ -1333,6 +1333,8 @@ static inline int is_vmalloc_or_module_addr(const void *x)
+ static inline int folio_entire_mapcount(const struct folio *folio)
+ {
+ 	VM_BUG_ON_FOLIO(!folio_test_large(folio), folio);
++	if (!IS_ENABLED(CONFIG_64BIT) && unlikely(folio_large_order(folio) == 1))
++		return 0;
+ 	return atomic_read(&folio->_entire_mapcount) + 1;
  }
  
--#ifdef CONFIG_64BIT
-+#ifdef NR_PAGES_IN_LARGE_FOLIO
- static inline long folio_large_nr_pages(const struct folio *folio)
- {
--	return folio->_folio_nr_pages;
-+	return folio->_nr_pages;
- }
- #else
- static inline long folio_large_nr_pages(const struct folio *folio)
 diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
-index 689b2a7461892..e81be20bbabc6 100644
+index 31f466d8485bc..c83dd2f1ee25e 100644
 --- a/include/linux/mm_types.h
 +++ b/include/linux/mm_types.h
-@@ -287,6 +287,11 @@ typedef struct {
- 	unsigned long val;
- } swp_entry_t;
- 
-+#if defined(CONFIG_MEMCG) || defined(CONFIG_SLAB_OBJ_EXT)
-+/* We have some extra room after the refcount in tail pages. */
-+#define NR_PAGES_IN_LARGE_FOLIO
-+#endif
-+
- /**
-  * struct folio - Represents a contiguous set of bytes.
-  * @flags: Identical to the page flags.
-@@ -312,7 +317,7 @@ typedef struct {
-  * @_large_mapcount: Do not use directly, call folio_mapcount().
-  * @_nr_pages_mapped: Do not use outside of rmap and debug code.
-  * @_pincount: Do not use directly, call folio_maybe_dma_pinned().
-- * @_folio_nr_pages: Do not use directly, call folio_nr_pages().
-+ * @_nr_pages: Do not use directly, call folio_nr_pages().
-  * @_hugetlb_subpool: Do not use directly, use accessor in hugetlb.h.
-  * @_hugetlb_cgroup: Do not use directly, use accessor in hugetlb_cgroup.h.
-  * @_hugetlb_cgroup_rsvd: Do not use directly, use accessor in hugetlb_cgroup.h.
-@@ -377,13 +382,20 @@ struct folio {
- 			unsigned long _flags_1;
- 			unsigned long _head_1;
- 	/* public: */
--			atomic_t _large_mapcount;
--			atomic_t _entire_mapcount;
--			atomic_t _nr_pages_mapped;
--			atomic_t _pincount;
--#ifdef CONFIG_64BIT
--			unsigned int _folio_nr_pages;
--#endif
-+			union {
-+				struct {
-+					atomic_t _large_mapcount;
+@@ -385,9 +385,9 @@ struct folio {
+ 			union {
+ 				struct {
+ 					atomic_t _large_mapcount;
+-					atomic_t _entire_mapcount;
+ 					atomic_t _nr_pages_mapped;
+ #ifdef CONFIG_64BIT
 +					atomic_t _entire_mapcount;
-+					atomic_t _nr_pages_mapped;
-+					atomic_t _pincount;
-+				};
-+				unsigned long _usable_1[4];
-+			};
-+			atomic_t _mapcount_1;
-+			atomic_t _refcount_1;
-+#ifdef NR_PAGES_IN_LARGE_FOLIO
-+			unsigned int _nr_pages;
-+#endif /* NR_PAGES_IN_LARGE_FOLIO */
+ 					atomic_t _pincount;
+ #endif /* CONFIG_64BIT */
+ 				};
+@@ -409,6 +409,7 @@ struct folio {
+ 	/* public: */
+ 			struct list_head _deferred_list;
+ #ifndef CONFIG_64BIT
++			atomic_t _entire_mapcount;
+ 			atomic_t _pincount;
+ #endif /* !CONFIG_64BIT */
  	/* private: the union with struct page is transitional */
- 		};
- 		struct page __page_1;
-@@ -435,6 +447,8 @@ FOLIO_MATCH(_last_cpupid, _last_cpupid);
- 			offsetof(struct page, pg) + sizeof(struct page))
- FOLIO_MATCH(flags, _flags_1);
- FOLIO_MATCH(compound_head, _head_1);
-+FOLIO_MATCH(_mapcount, _mapcount_1);
-+FOLIO_MATCH(_refcount, _refcount_1);
- #undef FOLIO_MATCH
- #define FOLIO_MATCH(pg, fl)						\
- 	static_assert(offsetof(struct folio, fl) ==			\
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 6ac6d468af0d4..07d43ca6db1c6 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -3307,10 +3307,11 @@ bool can_split_folio(struct folio *folio, int caller_pins, int *pextra_pins)
-  * It splits @folio into @new_order folios and copies the @folio metadata to
-  * all the resulting folios.
-  */
--static void __split_folio_to_order(struct folio *folio, int new_order)
-+static void __split_folio_to_order(struct folio *folio, int old_order,
-+		int new_order)
- {
--	long nr_pages = folio_nr_pages(folio);
- 	long new_nr_pages = 1 << new_order;
-+	long nr_pages = 1 << old_order;
- 	long index;
- 
- 	/*
-@@ -3528,12 +3529,21 @@ static int __split_unmapped_folio(struct folio *folio, int new_order,
- 			}
- 		}
- 
-+		/*
-+		 * Reset any memcg data overlay in the tail pages.
-+		 * folio_nr_pages() is unreliable until prep_compound_page()
-+		 * was called again.
-+		 */
-+#ifdef NR_PAGES_IN_LARGE_FOLIO
-+		folio->_nr_pages = 0;
-+#endif
-+
- 		/* complete memcg works before add pages to LRU */
- 		split_page_memcg(&folio->page, old_order, split_order);
- 		split_page_owner(&folio->page, old_order, split_order);
- 		pgalloc_tag_split(folio, old_order, split_order);
- 
--		__split_folio_to_order(folio, split_order);
-+		__split_folio_to_order(folio, old_order, split_order);
- 
- after_split:
- 		/*
 diff --git a/mm/internal.h b/mm/internal.h
-index bb9f3624cf952..bcda1f604038f 100644
+index 378464246f259..9860e65ffc945 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
-@@ -682,8 +682,8 @@ static inline void folio_set_order(struct folio *folio, unsigned int order)
- 		return;
+@@ -719,10 +719,11 @@ static inline void prep_compound_head(struct page *page, unsigned int order)
  
- 	folio->_flags_1 = (folio->_flags_1 & ~0xffUL) | order;
--#ifdef CONFIG_64BIT
--	folio->_folio_nr_pages = 1U << order;
-+#ifdef NR_PAGES_IN_LARGE_FOLIO
-+	folio->_nr_pages = 1U << order;
- #endif
+ 	folio_set_order(folio, order);
+ 	atomic_set(&folio->_large_mapcount, -1);
+-	atomic_set(&folio->_entire_mapcount, -1);
+ 	atomic_set(&folio->_nr_pages_mapped, 0);
+-	if (IS_ENABLED(CONFIG_64BIT) || order > 1)
++	if (IS_ENABLED(CONFIG_64BIT) || order > 1) {
+ 		atomic_set(&folio->_pincount, 0);
++		atomic_set(&folio->_entire_mapcount, -1);
++	}
+ 	if (order > 1)
+ 		INIT_LIST_HEAD(&folio->_deferred_list);
  }
- 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index dd7e280a61c69..ae0f2a2e87369 100644
+index 594a552c735cd..b0739baf7b07f 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -1178,8 +1178,12 @@ __always_inline bool free_pages_prepare(struct page *page,
- 	if (unlikely(order)) {
- 		int i;
- 
--		if (compound)
-+		if (compound) {
- 			page[1].flags &= ~PAGE_FLAGS_SECOND;
-+#ifdef NR_PAGES_IN_LARGE_FOLIO
-+			folio->_nr_pages = 0;
-+#endif
-+		}
- 		for (i = 1; i < (1 << order); i++) {
- 			if (compound)
- 				bad += free_tail_page_prepare(page, page + i);
-diff --git a/mm/page_owner.c b/mm/page_owner.c
-index 2d6360eaccbb6..a409e2561a8fd 100644
---- a/mm/page_owner.c
-+++ b/mm/page_owner.c
-@@ -507,7 +507,7 @@ static inline int print_page_owner_memcg(char *kbuf, size_t count, int ret,
- 
- 	rcu_read_lock();
- 	memcg_data = READ_ONCE(page->memcg_data);
--	if (!memcg_data)
-+	if (!memcg_data || PageTail(page))
- 		goto out_unlock;
- 
- 	if (memcg_data & MEMCG_DATA_OBJEXTS)
+@@ -951,10 +951,6 @@ static int free_tail_page_prepare(struct page *head_page, struct page *page)
+ 	switch (page - head_page) {
+ 	case 1:
+ 		/* the first tail page: these may be in place of ->mapping */
+-		if (unlikely(folio_entire_mapcount(folio))) {
+-			bad_page(page, "nonzero entire_mapcount");
+-			goto out;
+-		}
+ 		if (unlikely(folio_large_mapcount(folio))) {
+ 			bad_page(page, "nonzero large_mapcount");
+ 			goto out;
+@@ -964,6 +960,10 @@ static int free_tail_page_prepare(struct page *head_page, struct page *page)
+ 			goto out;
+ 		}
+ 		if (IS_ENABLED(CONFIG_64BIT)) {
++			if (unlikely(atomic_read(&folio->_entire_mapcount) + 1)) {
++				bad_page(page, "nonzero entire_mapcount");
++				goto out;
++			}
+ 			if (unlikely(atomic_read(&folio->_pincount))) {
+ 				bad_page(page, "nonzero pincount");
+ 				goto out;
+@@ -977,6 +977,10 @@ static int free_tail_page_prepare(struct page *head_page, struct page *page)
+ 			goto out;
+ 		}
+ 		if (!IS_ENABLED(CONFIG_64BIT)) {
++			if (unlikely(atomic_read(&folio->_entire_mapcount) + 1)) {
++				bad_page(page, "nonzero entire_mapcount");
++				goto out;
++			}
+ 			if (unlikely(atomic_read(&folio->_pincount))) {
+ 				bad_page(page, "nonzero pincount");
+ 				goto out;
 -- 
 2.48.1
 
