@@ -1,70 +1,70 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00A76252910
-	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:31:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85B18253B68
+	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:31:03 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741019462; cv=none; b=Worw/pSIW4bFF6HKwiTzJAb8GD8vtHAMaKZOjw/g2fUxJU2629WoTeOLiZeB8t0Cm9fJ0NyamEaOTU7s/cnOaCmwS8G5nYZ/H9zSbL54NxDTqXp2RxS3IAuv2qW7PnznXF26FJXVONlmPwjN66BqWXJaEZpGYtmkun8kYrYuZm4=
+	t=1741019465; cv=none; b=SAjUO3YekfPATmC5jQ//deWX7cJVRx+7iBOUhnh4f4IP7OJsH5t9rWMzedFSel3QKGCQt7QfD3iNOdhiQ/Q6sB+zTD1kAOeLbX0fzw7XCaHVchQwqvHeQ1SSdc2T4tkpoF21YlBhVlS7X3ffw4b+/7wthWY5wnQXaaut2+mtJ0g=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741019462; c=relaxed/simple;
-	bh=OBXpWDsR7o4dKf8NkhRON4PwL/H6iQiwplPc25GckEo=;
+	s=arc-20240116; t=1741019465; c=relaxed/simple;
+	bh=tLoq8V+yWL9uG7J57/fSv64hWMwnlNF56fAlUed9ZyE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=i8K/Hk6ZOddpRAJjn3hCJtAbPEZwO9ZeQZHhHWb81RIA8Kf9853zx7WkLDl6gNolVWn45/xHysgjgKAqW1VjXSp/kpDbuul5dySeAUI0s/m8cjxhURKLtYgi/rM9GIkMWbhmdtEWc/Mm+7XaiqLP0ozZ/7Ri+a4bsbG9kLcNZao=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=Oej8aKPO; arc=none smtp.client-ip=170.10.133.124
+	 MIME-Version; b=DqoyGkurN2CE5ohQOm6zKOZ/0BNnkRpBH/ds2ytvxpCUPMFhDgNlzbFpha/r0DYKhTCNA8J0rtvDjwNDqpqaIUFAU5AN88ToOlmbXTn/9FcZ04eHvHMcmQ7Z572aFficFfgKbdyszVreE21WcNIr9F7so4KpecAnCuSokG1SJq8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=adEnZ+oQ; arc=none smtp.client-ip=170.10.133.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="Oej8aKPO"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="adEnZ+oQ"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741019459;
+	s=mimecast20190719; t=1741019461;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=VusPlBbKEOGpL4wS1BqoWY6CYb2f4HQ+/wIDh8p+vAo=;
-	b=Oej8aKPOwGkLYn6iY9ftUoB2lEl27Dh75CmtWh5gAVuclrc5RFPq6f/eHpWPKiqRJFNMPz
-	PC1oovmWPtZk21EUfgJqRPdO6/0osZAPOpTE6Kyi55rttGMF7T5EiEo3loQkx9L0nQrbAh
-	PcsnclNXcjmD1CvmA+dWxVThdchIVpc=
-Received: from mail-wm1-f69.google.com (mail-wm1-f69.google.com
- [209.85.128.69]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=sbAdVb8IlT1mHMxqkPSZKSMArZKBklKlP7kdJIBKPLI=;
+	b=adEnZ+oQOQvYbLnpMePkt3AlwHZzUy8u1XnpE+Khcr//qvPWEG6mVEfZzs3d4v/LsgOFuq
+	HxrSRrBImPLcfSpVL6OpMs/iS30oKULPr4sMF8icZJQos3uw7oS89DnL4dKC/Vjl5/HXOl
+	duA3gI/gMhk9NS/IJLce5dMhdleakNY=
+Received: from mail-wr1-f70.google.com (mail-wr1-f70.google.com
+ [209.85.221.70]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-388-qIFfHXqxOgmazPXgUoNaWQ-1; Mon, 03 Mar 2025 11:30:43 -0500
-X-MC-Unique: qIFfHXqxOgmazPXgUoNaWQ-1
-X-Mimecast-MFC-AGG-ID: qIFfHXqxOgmazPXgUoNaWQ_1741019441
-Received: by mail-wm1-f69.google.com with SMTP id 5b1f17b1804b1-4388eee7073so24307615e9.0
-        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:42 -0800 (PST)
+ us-mta-620-2e9SnzsCMX-5EwZFgekEGw-1; Mon, 03 Mar 2025 11:30:59 -0500
+X-MC-Unique: 2e9SnzsCMX-5EwZFgekEGw-1
+X-Mimecast-MFC-AGG-ID: 2e9SnzsCMX-5EwZFgekEGw_1741019458
+Received: by mail-wr1-f70.google.com with SMTP id ffacd0b85a97d-390e27150dbso4385590f8f.3
+        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:58 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1741019441; x=1741624241;
+        d=1e100.net; s=20230601; t=1741019458; x=1741624258;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=VusPlBbKEOGpL4wS1BqoWY6CYb2f4HQ+/wIDh8p+vAo=;
-        b=cKjegRQMlX8Rhh76R0pYVr9X3K23peHkmZ5IBNyelzbz7fNqzPYRhb0dfm6fyLOOUm
-         SMFGmgCyQzxEXNBf8HIwcNGXXsg4STVpCcxh0LOPK2sIKaJnzDn0LCS6ai6m5iyBaHpA
-         IFhtLQv61a2qzVeWniX3DIfsFV5da3gKbl9fzjXIBxS6aPGH78hT1L1xZugNJ+Q70GSO
-         5sGazgfOqbBLz3AsK2SUXknFkEX3L1H9iRFF+/eY8ZsN+UNjMsTcmNbK882mFKCq2CMi
-         OeLWCl+IrxsgZvQnwbqX0AEXNBhu0SOue3OIQo+qGAWC1uGFsMc2Ez+mfrqEMMYesChz
-         DYWw==
-X-Forwarded-Encrypted: i=1; AJvYcCU09WXsHpzpdxg2B/7A5cFvUOxXFyh6Yocy6AWvqxhe+U4Jjbd7pxK/LaAZhTTNFYUsy1JUibYu/ns=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyNkmfhM8ZOogOSVfAgVtHvyHSfAiiQz7WYqmBGJxJ5cW7wDaPP
-	0qJnHJiHvsbWgvg6xqbB+OTQOIR2YtoifYgWCktzAYhZsEIg0NwMxTqaZG6WjmGQyfI7VenM+rf
-	KtbTA+WlPJJt/f9Lwrk8pJ3MssLy/qp+xBo7IoXbU3/3/KwzhdLpJlAj9VA==
-X-Gm-Gg: ASbGncuPRonFK6GXuTNkZ9J3wYXO1Ik1+nh2YkD6TGN+HOPx0yoouDBRJfDpdwlmoXr
-	4yuxNGSNTuM0hcUswylaDd44k6LBh4rpIYB+UAvGfEPueWDsIWEePZFTJxw/tjoVaifYpKSDFtG
-	+gsHQJMBS1bsbUXwH4OP4MCmlmdLhut7wRcva34U3Sk3t5ukWfadk9di4hXgFp0jS00ENOi6uws
-	643MjYy1Em4XNp7JTZA9yJ0TyQEjpYAC1GLqAj8Sqy+wyMcKCGMVt67M/2xomUsNoYeT9v4ETON
-	h7SUXU6CkHvrNzjfv3McovURSSHCZ37jzNAojGm1M2SZY/xjhbgfLBpigkDlbm2JQQTPs5eObGQ
-	z
-X-Received: by 2002:a05:600c:26c6:b0:43b:bb72:1dce with SMTP id 5b1f17b1804b1-43bbb721f8fmr44417405e9.5.1741019441210;
-        Mon, 03 Mar 2025 08:30:41 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IF6XV9dtRCnC9UYnKtk79gh146334CB5ZefECKJp7wi6xxTybGeqstnFZTU3vfWQysm8+TPqw==
-X-Received: by 2002:a05:600c:26c6:b0:43b:bb72:1dce with SMTP id 5b1f17b1804b1-43bbb721f8fmr44417035e9.5.1741019440886;
-        Mon, 03 Mar 2025 08:30:40 -0800 (PST)
+        bh=sbAdVb8IlT1mHMxqkPSZKSMArZKBklKlP7kdJIBKPLI=;
+        b=F6sladsm8o1j53LDJBxsxM3II8bdNu4HMkOajBJmJSFlkLHJmIrpP0YBgGU3g2Eudj
+         8cXk0fBG/Eunjl9zyUhK3h7vN+2oJum6zbEvMHBls9MbMOBcsLe5TvSeBJEI/eOYfN35
+         CeScqWeUzsxd6BIClVBwDlmm8pcxFzU9tLhK48lpZ8ZVMcWvufV58EQFkd+uBm0jhOlX
+         LKUH7WJKBNM3UnlOmjCgQvHFg4sEHYTQTQLtyZlbHYyCka8OsdL9bMl3sfJpcjcLHE3A
+         AGqByeFsKJd4zM9N0vlS2/noa0taQqrs5FIxCm6+HFYsnvGqj2POoFTrMFZCNPunaTk8
+         K2Ww==
+X-Forwarded-Encrypted: i=1; AJvYcCWfqPqZ16E0G0VK74v4QkZv43cx3zCp3rP0gKQjdnYYH5s262+eG+u0j43PpunS9suy50F97RGLVjQ=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzEbD+GZKj9T/RlN7ELe/GriUE/0hQVJppmSZonjnxZvKTQ7D9a
+	6ynis1VhzG+VZQhjJ6ZYscthFikM8mPWVnBYg41ZIWpK/QH5NZ3nYA2AFcQMu3IUHiOUMxDgh1F
+	6XO5d3nszHzHyspp0hIOnktQ6iiZDxcnBqWb4C2bb7AQxJjnPI6fLVXwtYc1FVAr1le51
+X-Gm-Gg: ASbGncvoyv8nWX4KjRtl4pc4SGtENWPDufh2efVouY5+YomdmTH3U5MR2eeMvpl8sm2
+	GrXuiSLltOe/0f28f9ey6YuO010USOXsFy+ybB8UhFdgxoC/rr067bN93rCahuf2YpmvbvCD4Yg
+	04mUbru4Res6QfUgRy6aKoUK5O1yR9VzLP+D5xUFYZVqPx7TweilcYu+Z39G/k9s/VDGR1d6l7V
+	20T52RlN1OBTCQ3UiKCyWEHqoKDygRWKiG/3rcsKXYesMvb2JDtiDUCz3sLvdGrZULNPPPLxG+x
+	uinR9iqNkRC4a6cYx0HUueKrbI11LFUvoJjh3O1RCQVZw56QNGTG5++y8e1aFaJc2vstrl0mZBn
+	o
+X-Received: by 2002:a05:6000:156d:b0:38d:e3db:9058 with SMTP id ffacd0b85a97d-390ec7cb945mr10994377f8f.12.1741019457876;
+        Mon, 03 Mar 2025 08:30:57 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEvRr8UGYMtbKKLfF4vYk+epXuFbk91XT0kZhy1XfmXmyE27quXMsv2mgA7hFUbYP+d7m+S+Q==
+X-Received: by 2002:a05:6000:156d:b0:38d:e3db:9058 with SMTP id ffacd0b85a97d-390ec7cb945mr10994345f8f.12.1741019457510;
+        Mon, 03 Mar 2025 08:30:57 -0800 (PST)
 Received: from localhost (p200300cbc7349600af274326a2162bfb.dip0.t-ipconnect.de. [2003:cb:c734:9600:af27:4326:a216:2bfb])
-        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-43bc1b5db02sm42954325e9.19.2025.03.03.08.30.38
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-390e47a6aabsm14858335f8f.26.2025.03.03.08.30.56
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 03 Mar 2025 08:30:40 -0800 (PST)
+        Mon, 03 Mar 2025 08:30:57 -0800 (PST)
 From: David Hildenbrand <david@redhat.com>
 To: linux-kernel@vger.kernel.org
 Cc: linux-doc@vger.kernel.org,
@@ -90,9 +90,9 @@ Cc: linux-doc@vger.kernel.org,
 	Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
 	Vlastimil Babka <vbabka@suse.cz>,
 	Jann Horn <jannh@google.com>
-Subject: [PATCH v3 10/20] bit_spinlock: __always_inline (un)lock functions
-Date: Mon,  3 Mar 2025 17:30:03 +0100
-Message-ID: <20250303163014.1128035-11-david@redhat.com>
+Subject: [PATCH v3 18/20] fs/proc/task_mmu: remove per-page mapcount dependency for "mapmax" (CONFIG_NO_PAGE_MAPCOUNT)
+Date: Mon,  3 Mar 2025 17:30:11 +0100
+Message-ID: <20250303163014.1128035-19-david@redhat.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250303163014.1128035-1-david@redhat.com>
 References: <20250303163014.1128035-1-david@redhat.com>
@@ -104,65 +104,60 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The compiler might decide that it is a smart idea to not inline
-bit_spin_lock(), primarily when a couple of functions in the same file end
-up calling it. Especially when used in RMAP map/unmap code next, the
-compiler sometimes decides to not inline, which is then observable in
-some micro-benchmarks.
+Let's implement an alternative when per-page mapcounts in large folios are
+no longer maintained -- soon with CONFIG_NO_PAGE_MAPCOUNT.
 
-Let's simply flag all lock/unlock functions as __always_inline;
-arch_test_and_set_bit_lock() and friends are already tagged like that
-(but not test_and_set_bit_lock() for some reason).
+For calculating "mapmax", we now use the average per-page mapcount in
+a large folio instead of the per-page mapcount.
 
-If ever a problem, we could split it into a fast and a slow path, and
-only force the fast path to be inlined. But there is nothing
-particularly "big" here.
+For hugetlb folios and folios that are not partially mapped into MMs,
+there is no change.
+
+Likely, this change will not matter much in practice, and an alternative
+might be to simple remove this stat with CONFIG_NO_PAGE_MAPCOUNT.
+However, there might be value to it, so let's keep it like that and
+document the behavior.
 
 Signed-off-by: David Hildenbrand <david@redhat.com>
 ---
- include/linux/bit_spinlock.h | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ Documentation/filesystems/proc.rst | 5 +++++
+ fs/proc/task_mmu.c                 | 7 ++++++-
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/bit_spinlock.h b/include/linux/bit_spinlock.h
-index bbc4730a6505c..c0989b5b0407f 100644
---- a/include/linux/bit_spinlock.h
-+++ b/include/linux/bit_spinlock.h
-@@ -13,7 +13,7 @@
-  * Don't use this unless you really need to: spin_lock() and spin_unlock()
-  * are significantly faster.
-  */
--static inline void bit_spin_lock(int bitnum, unsigned long *addr)
-+static __always_inline void bit_spin_lock(int bitnum, unsigned long *addr)
+diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
+index 09f0aed5a08ba..1aa190017f796 100644
+--- a/Documentation/filesystems/proc.rst
++++ b/Documentation/filesystems/proc.rst
+@@ -686,6 +686,11 @@ Where:
+ node locality page counters (N0 == node0, N1 == node1, ...) and the kernel page
+ size, in KB, that is backing the mapping up.
+ 
++Note that some kernel configurations do not track the precise number of times
++a page part of a larger allocation (e.g., THP) is mapped. In these
++configurations, "mapmax" might corresponds to the average number of mappings
++per page in such a larger allocation instead.
++
+ 1.2 Kernel data
+ ---------------
+ 
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index f937c2df7b3f4..5043376ebd476 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -2866,7 +2866,12 @@ static void gather_stats(struct page *page, struct numa_maps *md, int pte_dirty,
+ 			unsigned long nr_pages)
  {
- 	/*
- 	 * Assuming the lock is uncontended, this never enters
-@@ -38,7 +38,7 @@ static inline void bit_spin_lock(int bitnum, unsigned long *addr)
- /*
-  * Return true if it was acquired
-  */
--static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
-+static __always_inline int bit_spin_trylock(int bitnum, unsigned long *addr)
- {
- 	preempt_disable();
- #if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-@@ -54,7 +54,7 @@ static inline int bit_spin_trylock(int bitnum, unsigned long *addr)
- /*
-  *  bit-based spin_unlock()
-  */
--static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
-+static __always_inline void bit_spin_unlock(int bitnum, unsigned long *addr)
- {
- #ifdef CONFIG_DEBUG_SPINLOCK
- 	BUG_ON(!test_bit(bitnum, addr));
-@@ -71,7 +71,7 @@ static inline void bit_spin_unlock(int bitnum, unsigned long *addr)
-  *  non-atomic version, which can be used eg. if the bit lock itself is
-  *  protecting the rest of the flags in the word.
-  */
--static inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
-+static __always_inline void __bit_spin_unlock(int bitnum, unsigned long *addr)
- {
- #ifdef CONFIG_DEBUG_SPINLOCK
- 	BUG_ON(!test_bit(bitnum, addr));
+ 	struct folio *folio = page_folio(page);
+-	int count = folio_precise_page_mapcount(folio, page);
++	int count;
++
++	if (IS_ENABLED(CONFIG_PAGE_MAPCOUNT))
++		count = folio_precise_page_mapcount(folio, page);
++	else
++		count = folio_average_page_mapcount(folio);
+ 
+ 	md->pages += nr_pages;
+ 	if (pte_dirty || folio_test_dirty(folio))
 -- 
 2.48.1
 
