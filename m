@@ -1,236 +1,193 @@
-Received: from vmicros1.altlinux.org (vmicros1.altlinux.org [194.107.17.57])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 6BACF1F153C;
-	Mon,  3 Mar 2025 11:28:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=194.107.17.57
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF99F2356A3
+	for <linux-api@vger.kernel.org>; Mon,  3 Mar 2025 16:30:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741001312; cv=none; b=GDP7hJAnVD5epXWiSIe9ldb/NWTnS0DOFBCw5EDy17idDJELRlz8KayfuDFgQKUy95VKOePI7cT14Dmi7rrKAklYN4KuC/VaXMGcp5tksAqh6LXP3ECGrK0saIV6brLP7HgBJhOI6Y+872Iwv9BObB7kCtUMxUCHzLoOfK+x4Qc=
+	t=1741019426; cv=none; b=rfaVDVGgMyFxr5Axc7mfuSZOitGAKqAKJ9UsCy6Gy7LC6d12FH+G4NQNS1Ct9Ym7YTvICMy/yXsmepxTN4uuG7rayOA3hO5SpRKZM42OL5JZdkqyVqRwRqLGxljGTRbGBt7yzDWSrWVE07tj9cgc/tPb+dbIdqsVIhvAc0iF+QM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741001312; c=relaxed/simple;
-	bh=/u+MDloBVzmoc27sdAOV659GJ4fLzQwI2/890oNEeHo=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition; b=WK2778ipc99O3zxSJVeahQgwVkbs59DMunl+62MjJ7mT0+OYF40MvAldl9YJMk+GPxXhvuzD12W/xxdIY5CfRdkAcQ+Q+i83uNJ/41Y3F+HVYFc0WC8CrLbDcSu4jLIlcQYXEt0nu/vXgaaY8L8dc8R06yRuLKlVrkYJfnPKVcM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=strace.io; spf=pass smtp.mailfrom=altlinux.org; arc=none smtp.client-ip=194.107.17.57
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=strace.io
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=altlinux.org
-Received: from mua.local.altlinux.org (mua.local.altlinux.org [192.168.1.14])
-	by vmicros1.altlinux.org (Postfix) with ESMTP id 32D5372C8F5;
-	Mon,  3 Mar 2025 14:19:11 +0300 (MSK)
-Received: by mua.local.altlinux.org (Postfix, from userid 508)
-	id 01EDE7CCB3B; Mon,  3 Mar 2025 13:19:10 +0200 (IST)
-Date: Mon, 3 Mar 2025 13:19:10 +0200
-From: "Dmitry V. Levin" <ldv@strace.io>
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>, Alexey Gladkov <legion@kernel.org>,
-	Eugene Syromyatnikov <evgsyr@gmail.com>,
-	Charlie Jenkins <charlie@rivosinc.com>,
-	Helge Deller <deller@gmx.de>,
-	"Maciej W. Rozycki" <macro@orcam.me.uk>,
-	Mike Frysinger <vapier@gentoo.org>,
-	Renzo Davoli <renzo@cs.unibo.it>,
-	Davide Berardi <berardi.dav@gmail.com>,
-	Vineet Gupta <vgupta@kernel.org>,
-	Russell King <linux@armlinux.org.uk>, Will Deacon <will@kernel.org>,
-	Guo Ren <guoren@kernel.org>, Brian Cain <bcain@quicinc.com>,
-	Huacai Chen <chenhuacai@kernel.org>,
-	WANG Xuerui <kernel@xen0n.name>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	Michal Simek <monstr@monstr.eu>, Dinh Nguyen <dinguyen@kernel.org>,
-	Jonas Bonn <jonas@southpole.se>,
-	Stefan Kristiansson <stefan.kristiansson@saunalahti.fi>,
-	Stafford Horne <shorne@gmail.com>,
-	Michael Ellerman <mpe@ellerman.id.au>,
-	Nicholas Piggin <npiggin@gmail.com>,
-	Christophe Leroy <christophe.leroy@csgroup.eu>,
-	Naveen N Rao <naveen@kernel.org>,
-	Madhavan Srinivasan <maddy@linux.ibm.com>,
-	Heiko Carstens <hca@linux.ibm.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	Yoshinori Sato <ysato@users.sourceforge.jp>,
-	Rich Felker <dalias@libc.org>,
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
-	"David S. Miller" <davem@davemloft.net>,
-	Andreas Larsson <andreas@gaisler.com>,
-	Richard Weinberger <richard@nod.at>,
-	Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-	Johannes Berg <johannes@sipsolutions.net>,
+	s=arc-20240116; t=1741019426; c=relaxed/simple;
+	bh=PXIkz9IhpVUA0dg2bzzU7MBYAWcAI8b7mocN+X2/mhY=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=JtNsSmx6QciP4TghghYphzcDGwSRNIEG43ng5To07gSzc/MSldCjkMtxZhbxIYxZ/JEv4nQ9SdSfKOyNjdZ0V4RwOplCCkJbOufYHw9QXGGuHBbdEVWgLmsXnAmmO6m4EN/aVY389m1YU4vLYeBCbgPcKX/5CyT5pBpeMTjpcHg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=MuJoASZz; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="MuJoASZz"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1741019424;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=YXwoThNtp+x7X/3NlVobY8ZdtRlIGCn0KXkmBvKPXvw=;
+	b=MuJoASZzToEu/2ZFEJ0KiQ1QynVsVpBg94lwv43XTwFpEBGLSzQo6zsB43TDo12lOwzfY3
+	iCpqU3S+i2nzq66HyGS3FFuqqxdmLKoHFaTl54jsl8zA7mGwwNkJXiod08eHrMmNQODMlC
+	eQL14X/UhzOOJvBEXKEimP4HaIQB6sI=
+Received: from mail-wm1-f72.google.com (mail-wm1-f72.google.com
+ [209.85.128.72]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-217-5VNacoebMyiRxISm0AYXlQ-1; Mon, 03 Mar 2025 11:30:22 -0500
+X-MC-Unique: 5VNacoebMyiRxISm0AYXlQ-1
+X-Mimecast-MFC-AGG-ID: 5VNacoebMyiRxISm0AYXlQ_1741019422
+Received: by mail-wm1-f72.google.com with SMTP id 5b1f17b1804b1-43943bd1409so33929255e9.3
+        for <linux-api@vger.kernel.org>; Mon, 03 Mar 2025 08:30:22 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1741019421; x=1741624221;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=YXwoThNtp+x7X/3NlVobY8ZdtRlIGCn0KXkmBvKPXvw=;
+        b=J6OPvAeWJBUiC34OCMdUgcUy0w8Bf2D4GuJhtv1OFGWEnhcb9soawm/bhw/xS+RaGU
+         UpI3IpszFpxrxuOMRS81ZfOW1ukg8Z3tS0oDY/ylX3igG6oiTR7DCIBAPYAEB1cV29q7
+         tja//+FQ9FV4wsnkixeOPX2g/X6bYogv1xQf8hOFI0zqY0eRepPZTFc82rq04vgS2K1M
+         hmBnXxHPksykYSOfkeMV2GM04M9/okapokssc8WJcj5Vy/vf2rcVdc9J5o43eb+5cHuw
+         CIKCZpvhiiqrgAYo6x4ehE75xbMSec4E47OxsY5pwX7KILsuG9cmyv5AyMQ9g0nNO2ek
+         MOQg==
+X-Forwarded-Encrypted: i=1; AJvYcCV1X9bLn9IwouBB3qHMN7XKLbtTpoDaJez/ss2w0exS6BgpgSK1M0NweV3NvDFWhBW7dPfiN1JPxsA=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzYje4Wn4Bn7/X+RU3YHOspLrQDX9yZM4PgBJUk6kdfX4MgDOiy
+	KB+dPsjA9IiWXRvaLw8aa13AG2aXT20DndCjw2cKNEwZTmvJuTvHLzHZSCMj5IJ67mPcp7lbPlg
+	Ep2i/E8gv7CGSjvDKqj/+yT6KkvcqVYux6H5JaRXlkbyOIowQ/pj/xhq3Og==
+X-Gm-Gg: ASbGncu0MBaR2Y1i9QgjTJCcilhKj5F7Su2BSHGV+AqcLcHiTmLZtJ2sRokI9cATmGi
+	S3xd3v6WZiVpw5UniWFOtJ8CI0SSmRFbvfqHtjNLBLbk+TwbaZfOYAcdgJG3I8WMQ3MAP8W/hRr
+	3SQyZO8+Di1obxSRywy9ffRBjgtfH3IW2sHCPZ/Sm0jc04JhHgGz6Ptjilgr9OACNmisDmTJJ4T
+	Gx99agAecQZf86zeUVHA+AWblLPHsuRDJH0Cj5Prap62+OcwpCN8/eNTTqTjzHFgge62F5UgpKc
+	JLrvg+h4oUTExmofOzBJH5Uazy9uz3ZTAKd8ciQu1bsavwHhmtEmMvmgQwOjaeHSevveik+iCcT
+	d
+X-Received: by 2002:a05:600c:5102:b0:43b:c0fa:f9eb with SMTP id 5b1f17b1804b1-43bc0faff85mr39510425e9.17.1741019421464;
+        Mon, 03 Mar 2025 08:30:21 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IHuptMXo5vgbefj6sa5a5v3hHufhVKK5lbtZ5OlCKuge8xCX7GzdoorXNmVUyzEzt6+EvCK+w==
+X-Received: by 2002:a05:600c:5102:b0:43b:c0fa:f9eb with SMTP id 5b1f17b1804b1-43bc0faff85mr39510065e9.17.1741019421019;
+        Mon, 03 Mar 2025 08:30:21 -0800 (PST)
+Received: from localhost (p200300cbc7349600af274326a2162bfb.dip0.t-ipconnect.de. [2003:cb:c734:9600:af27:4326:a216:2bfb])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-43aba58720esm198718765e9.40.2025.03.03.08.30.19
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 03 Mar 2025 08:30:20 -0800 (PST)
+From: David Hildenbrand <david@redhat.com>
+To: linux-kernel@vger.kernel.org
+Cc: linux-doc@vger.kernel.org,
+	cgroups@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	David Hildenbrand <david@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	"Matthew Wilcox (Oracle)" <willy@infradead.org>,
+	Tejun Heo <tj@kernel.org>,
+	Zefan Li <lizefan.x@bytedance.com>,
+	Johannes Weiner <hannes@cmpxchg.org>,
+	=?UTF-8?q?Michal=20Koutn=C3=BD?= <mkoutny@suse.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Andy Lutomirski <luto@kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
-	Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org,
-	"H. Peter Anvin" <hpa@zytor.com>, Chris Zankel <chris@zankel.net>,
-	Max Filippov <jcmvbkbc@gmail.com>, Arnd Bergmann <arnd@arndb.de>,
-	Shuah Khan <shuah@kernel.org>, strace-devel@lists.strace.io,
-	linux-snps-arc@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org, linux-csky@vger.kernel.org,
-	linux-hexagon@vger.kernel.org, loongarch@lists.linux.dev,
-	linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org,
-	linux-openrisc@vger.kernel.org, linux-parisc@vger.kernel.org,
-	linuxppc-dev@lists.ozlabs.org, linux-riscv@lists.infradead.org,
-	linux-s390@vger.kernel.org, linux-sh@vger.kernel.org,
-	sparclinux@vger.kernel.org, linux-um@lists.infradead.org,
-	linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-api@vger.kernel.org
-Subject: [PATCH v7 0/6] ptrace: introduce PTRACE_SET_SYSCALL_INFO API
-Message-ID: <20250303111910.GA24170@strace.io>
+	Ingo Molnar <mingo@redhat.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Dave Hansen <dave.hansen@linux.intel.com>,
+	Muchun Song <muchun.song@linux.dev>,
+	"Liam R. Howlett" <Liam.Howlett@oracle.com>,
+	Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
+	Vlastimil Babka <vbabka@suse.cz>,
+	Jann Horn <jannh@google.com>,
+	"Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
+Subject: [PATCH v3 02/20] mm: factor out large folio handling from folio_nr_pages() into folio_large_nr_pages()
+Date: Mon,  3 Mar 2025 17:29:55 +0100
+Message-ID: <20250303163014.1128035-3-david@redhat.com>
+X-Mailer: git-send-email 2.48.1
+In-Reply-To: <20250303163014.1128035-1-david@redhat.com>
+References: <20250303163014.1128035-1-david@redhat.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
 
-PTRACE_SET_SYSCALL_INFO is a generic ptrace API that complements
-PTRACE_GET_SYSCALL_INFO by letting the ptracer modify details of
-system calls the tracee is blocked in.
+Let's factor it out into a simple helper function. This helper will
+also come in handy when working with code where we know that our
+folio is large.
 
-This API allows ptracers to obtain and modify system call details in a
-straightforward and architecture-agnostic way, providing a consistent way
-of manipulating the system call number and arguments across architectures.
+While at it, let's consistently return a "long" value from all these
+similar functions. Note that we cannot use "unsigned int" (even though
+_folio_nr_pages is of that type), because it would break some callers
+that do stuff like "-folio_nr_pages()". Both "int" or "unsigned long"
+would work as well.
 
-As in case of PTRACE_GET_SYSCALL_INFO, PTRACE_SET_SYSCALL_INFO also
-does not aim to address numerous architecture-specific system call ABI
-peculiarities, like differences in the number of system call arguments
-for such system calls as pread64 and preadv.
+Maybe in the future we'll have the nr_pages readily available for all
+large folios, maybe even for small folios, or maybe for none.
 
-The current implementation supports changing only those bits of system call
-information that are used by strace system call tampering, namely, syscall
-number, syscall arguments, and syscall return value.
+Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Signed-off-by: David Hildenbrand <david@redhat.com>
+---
+ include/linux/mm.h | 28 ++++++++++++++++------------
+ 1 file changed, 16 insertions(+), 12 deletions(-)
 
-Support of changing additional details returned by PTRACE_GET_SYSCALL_INFO,
-such as instruction pointer and stack pointer, could be added later if
-needed, by using struct ptrace_syscall_info.flags to specify the additional
-details that should be set.  Currently, "flags" and "reserved" fields of
-struct ptrace_syscall_info must be initialized with zeroes; "arch",
-"instruction_pointer", and "stack_pointer" fields are currently ignored.
-
-PTRACE_SET_SYSCALL_INFO currently supports only PTRACE_SYSCALL_INFO_ENTRY,
-PTRACE_SYSCALL_INFO_EXIT, and PTRACE_SYSCALL_INFO_SECCOMP operations.
-Other operations could be added later if needed.
-
-Ideally, PTRACE_SET_SYSCALL_INFO should have been introduced along with
-PTRACE_GET_SYSCALL_INFO, but it didn't happen.  The last straw that
-convinced me to implement PTRACE_SET_SYSCALL_INFO was apparent failure
-to provide an API of changing the first system call argument on riscv
-architecture [1].
-
-ptrace(2) man page:
-
-long ptrace(enum __ptrace_request request, pid_t pid, void *addr, void *data);
-...
-PTRACE_SET_SYSCALL_INFO
-       Modify information about the system call that caused the stop.
-       The "data" argument is a pointer to struct ptrace_syscall_info
-       that specifies the system call information to be set.
-       The "addr" argument should be set to sizeof(struct ptrace_syscall_info)).
-
-[1] https://lore.kernel.org/all/59505464-c84a-403d-972f-d4b2055eeaac@gmail.com/
-
-Notes:
-    v7:
-    * csky: Fix typo in comment
-    * mips: syscall_set_arguments: Remove mips_syscall_is_indirect check
-    * mips: syscall_set_nr: Reword comment
-    * mips: Add Reviewed-by
-    * v6: https://lore.kernel.org/all/20250217090834.GA18175@strace.io/
-
-    v6:
-    * mips: Submit mips_get_syscall_arg() o32 fix via mips tree
-      to get it merged into v6.14-rc3
-    * Rebase to v6.14-rc3
-    * v5: https://lore.kernel.org/all/20250210113336.GA887@strace.io/
-
-    v5:
-    * ptrace: Extend the commit message to say that the new API does not aim
-      to address numerous architecture-specific syscall ABI peculiarities
-    * selftests: Add a workaround for s390 16-bit syscall numbers
-    * parisc: Add Acked-by
-    * v4: https://lore.kernel.org/all/20250203065849.GA14120@strace.io/
-
-    v4:
-    * Split out syscall_set_return_value() for hexagon into a separate patch
-    * s390: Change the style of syscall_set_arguments() implementation as
-      requested
-    * ptrace: Add Reviewed-by
-    * v3: https://lore.kernel.org/all/20250128091445.GA8257@strace.io/
-
-    v3:
-    * powerpc: Submit syscall_set_return_value() fix for "sc" case separately
-    * mips: Do not introduce erroneous argument truncation on mips n32,
-      add a detailed description to the commit message of the
-      mips_get_syscall_arg() change
-    * ptrace: Add explicit padding to the end of struct ptrace_syscall_info,
-      simplify obtaining of user ptrace_syscall_info,
-      do not introduce PTRACE_SYSCALL_INFO_SIZE_VER0
-    * ptrace: Change the return type of ptrace_set_syscall_info_* functions
-      from "unsigned long" to "int"
-    * ptrace: Add -ERANGE check to ptrace_set_syscall_info_exit(),
-      add comments to -ERANGE checks
-    * ptrace: Update comments about supported syscall stops
-    * selftests: Extend set_syscall_info test, fix for mips n32
-    * riscv: Add Tested-by and Reviewed-by
-
-    v2:
-    * Add patch to fix syscall_set_return_value() on powerpc
-    * Add patch to fix mips_get_syscall_arg() on mips
-    * Add syscall_set_return_value() implementation on hexagon
-    * Add syscall_set_return_value() invocation to syscall_set_nr()
-      on arm and arm64.
-    * Fix syscall_set_nr() and mips_set_syscall_arg() on mips
-    * Add a comment to syscall_set_nr() on arc, powerpc, s390, sh,
-      and sparc
-    * Remove redundant ptrace_syscall_info.op assignments in
-      ptrace_get_syscall_info_*
-    * Minor style tweaks in ptrace_get_syscall_info_op()
-    * Remove syscall_set_return_value() invocation from
-      ptrace_set_syscall_info_entry()
-    * Skip syscall_set_arguments() invocation in case of syscall number -1
-      in ptrace_set_syscall_info_entry() 
-    * Split ptrace_syscall_info.reserved into ptrace_syscall_info.reserved
-      and ptrace_syscall_info.flags
-    * Use __kernel_ulong_t instead of unsigned long in set_syscall_info test
-
-Dmitry V. Levin (6):
-  hexagon: add syscall_set_return_value()
-  syscall.h: add syscall_set_arguments()
-  syscall.h: introduce syscall_set_nr()
-  ptrace_get_syscall_info: factor out ptrace_get_syscall_info_op
-  ptrace: introduce PTRACE_SET_SYSCALL_INFO request
-  selftests/ptrace: add a test case for PTRACE_SET_SYSCALL_INFO
-
- arch/arc/include/asm/syscall.h                |  25 +
- arch/arm/include/asm/syscall.h                |  37 ++
- arch/arm64/include/asm/syscall.h              |  29 +
- arch/csky/include/asm/syscall.h               |  13 +
- arch/hexagon/include/asm/syscall.h            |  21 +
- arch/loongarch/include/asm/syscall.h          |  15 +
- arch/m68k/include/asm/syscall.h               |   7 +
- arch/microblaze/include/asm/syscall.h         |   7 +
- arch/mips/include/asm/syscall.h               |  43 ++
- arch/nios2/include/asm/syscall.h              |  16 +
- arch/openrisc/include/asm/syscall.h           |  13 +
- arch/parisc/include/asm/syscall.h             |  19 +
- arch/powerpc/include/asm/syscall.h            |  20 +
- arch/riscv/include/asm/syscall.h              |  16 +
- arch/s390/include/asm/syscall.h               |  21 +
- arch/sh/include/asm/syscall_32.h              |  24 +
- arch/sparc/include/asm/syscall.h              |  22 +
- arch/um/include/asm/syscall-generic.h         |  19 +
- arch/x86/include/asm/syscall.h                |  43 ++
- arch/xtensa/include/asm/syscall.h             |  18 +
- include/asm-generic/syscall.h                 |  30 +
- include/uapi/linux/ptrace.h                   |   7 +-
- kernel/ptrace.c                               | 179 +++++-
- tools/testing/selftests/ptrace/Makefile       |   2 +-
- .../selftests/ptrace/set_syscall_info.c       | 519 ++++++++++++++++++
- 25 files changed, 1138 insertions(+), 27 deletions(-)
- create mode 100644 tools/testing/selftests/ptrace/set_syscall_info.c
-
-
-base-commit: 7eb172143d5508b4da468ed59ee857c6e5e01da6
-
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index b2903bc705997..a743321dc1a5d 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1199,6 +1199,18 @@ static inline unsigned int folio_large_order(const struct folio *folio)
+ 	return folio->_flags_1 & 0xff;
+ }
+ 
++#ifdef CONFIG_64BIT
++static inline long folio_large_nr_pages(const struct folio *folio)
++{
++	return folio->_folio_nr_pages;
++}
++#else
++static inline long folio_large_nr_pages(const struct folio *folio)
++{
++	return 1L << folio_large_order(folio);
++}
++#endif
++
+ /*
+  * compound_order() can be called without holding a reference, which means
+  * that niceties like page_folio() don't work.  These callers should be
+@@ -2141,11 +2153,7 @@ static inline long folio_nr_pages(const struct folio *folio)
+ {
+ 	if (!folio_test_large(folio))
+ 		return 1;
+-#ifdef CONFIG_64BIT
+-	return folio->_folio_nr_pages;
+-#else
+-	return 1L << folio_large_order(folio);
+-#endif
++	return folio_large_nr_pages(folio);
+ }
+ 
+ /* Only hugetlbfs can allocate folios larger than MAX_ORDER */
+@@ -2160,24 +2168,20 @@ static inline long folio_nr_pages(const struct folio *folio)
+  * page.  compound_nr() can be called on a tail page, and is defined to
+  * return 1 in that case.
+  */
+-static inline unsigned long compound_nr(struct page *page)
++static inline long compound_nr(struct page *page)
+ {
+ 	struct folio *folio = (struct folio *)page;
+ 
+ 	if (!test_bit(PG_head, &folio->flags))
+ 		return 1;
+-#ifdef CONFIG_64BIT
+-	return folio->_folio_nr_pages;
+-#else
+-	return 1L << folio_large_order(folio);
+-#endif
++	return folio_large_nr_pages(folio);
+ }
+ 
+ /**
+  * thp_nr_pages - The number of regular pages in this huge page.
+  * @page: The head page of a huge page.
+  */
+-static inline int thp_nr_pages(struct page *page)
++static inline long thp_nr_pages(struct page *page)
+ {
+ 	return folio_nr_pages((struct folio *)page);
+ }
 -- 
-ldv
+2.48.1
+
