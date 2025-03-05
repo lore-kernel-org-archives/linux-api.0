@@ -1,73 +1,72 @@
 Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 62C191FF1A4
-	for <linux-api@vger.kernel.org>; Tue,  4 Mar 2025 10:21:44 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71F9A2063F8
+	for <linux-api@vger.kernel.org>; Wed,  5 Mar 2025 10:30:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1741083707; cv=none; b=YToz25QD4rp9S8LdgVIgdwLpbEvPlLyc0mhESrvaUxKSAkgVExo0NhFxBaKspJnvdQHHRVrIg+Wa4HnXlqdlHQ9y+6TNNVfd0ZF6yC1EM43VEI1K6ldRkA5lyIGdQtfD3mDQx8Jfx9mGUj7gM7Aue/5cA2xKtxPRofZWs7W3kVU=
+	t=1741170602; cv=none; b=Z8+i5tWgQ/xp9Zu7MigrE7uDCSXkoDTtmzpHhdUzvnuO9yXQ/Q5MlDzCKoyQuTZKFOzc30r3rMtgYyRiEJ+XGH8+ihTjF9aJmVX8SbQx3me0j092QxnSjn7jTkrUhJsOkxr/bH12ZYW80vZ/yL/01uoSlFUKcwUkkrFtdf2u3hY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1741083707; c=relaxed/simple;
-	bh=e7RM6hNb9ihF8EOVgJ5wclsgFLjxdYyGBdLQpDqENwM=;
+	s=arc-20240116; t=1741170602; c=relaxed/simple;
+	bh=ZIqceabQfJX8R/JGfPkeny57EsKqNJLvxvryLCwHQ+A=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=eedP5cfS92rzlN+hFvCtykk1KgSRZNTvnFEeIVy1q7pVjro/VV4sQGGd9FZ4vU6PTJqJYGqCsiPp2aJYeb5yvrVYvvHkHhLWuj77si5Df9+NfDBdH4hSsMK0M8F8ybymzDLfz+/60UbLoWyAwHqlDbqNWhn28Wpq16/GUzADjXw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=CcnO5Qco; arc=none smtp.client-ip=170.10.129.124
+	 In-Reply-To:Content-Type; b=AkzEgyiXo2hKhyfKQ0S7GD3j+qwksN3cw2A9sQeNPwI9trRb8McnaU2DkumPx6qOfc9jcm+ezwSXr1WBpdif6FAOvSVSiLpWQwkg6Sb5cAkTqWn6NsZGyflazKf6fgQTLKeEEOo7g6/X1oqYLH2q6CcQ043HNL9Z1/iGr9ksAYI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=fZh3vfUL; arc=none smtp.client-ip=170.10.129.124
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=redhat.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="CcnO5Qco"
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="fZh3vfUL"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1741083703;
+	s=mimecast20190719; t=1741170599;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references:autocrypt:autocrypt;
-	bh=G0GXHJX1K7E5e2wBQk1oB0WcGldIFjvSOHPSzQdYz+4=;
-	b=CcnO5QcoDm/RiaKK1vZM4NTiq8wvcLotdIajD1XydtTSHr+EXSa2Uf4KPHbIOrI7BNhaWz
-	Ho79Q27uJCfL+y/A93SSuJRiJF0/GXlQFbfDXwmjhjIlex4oDsx7l5p4XY4+fTVgcjaak2
-	8Pny9InRRkIDgmY+64kgzjY7ROtPpFQ=
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
- [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
+	bh=DwfrVJB2IPkMjhKdEJbWHuXqPqDoaFm43Z3NiVADH/M=;
+	b=fZh3vfULo/RqEKU58tfpvrrgZ4/Kf3F2OYBxl/+gN+g8EmimaELkfazC5U77+8785WDzG1
+	TUtSQeKkk+jU9ARIarFPqkKFerURRW2Xe5o+GcbhHeVNPd45qu1lbcOU8jAM2Wm9tT3zp1
+	VF6rdwqDVfMId4MH11sXzOuk2yNbYg8=
+Received: from mail-wr1-f71.google.com (mail-wr1-f71.google.com
+ [209.85.221.71]) by relay.mimecast.com with ESMTP with STARTTLS
  (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-633-S52x2kwDMzG1OUtXzmGreg-1; Tue, 04 Mar 2025 05:21:41 -0500
-X-MC-Unique: S52x2kwDMzG1OUtXzmGreg-1
-X-Mimecast-MFC-AGG-ID: S52x2kwDMzG1OUtXzmGreg_1741083700
-Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-390eefb2913so2617865f8f.0
-        for <linux-api@vger.kernel.org>; Tue, 04 Mar 2025 02:21:41 -0800 (PST)
+ us-mta-279-RPSG0epAOoGhOTb3XYatAA-1; Wed, 05 Mar 2025 05:29:58 -0500
+X-MC-Unique: RPSG0epAOoGhOTb3XYatAA-1
+X-Mimecast-MFC-AGG-ID: RPSG0epAOoGhOTb3XYatAA_1741170597
+Received: by mail-wr1-f71.google.com with SMTP id ffacd0b85a97d-391189236e7so1134925f8f.0
+        for <linux-api@vger.kernel.org>; Wed, 05 Mar 2025 02:29:57 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1741083700; x=1741688500;
+        d=1e100.net; s=20230601; t=1741170597; x=1741775397;
         h=content-transfer-encoding:in-reply-to:organization:autocrypt
          :content-language:from:references:cc:to:subject:user-agent
          :mime-version:date:message-id:x-gm-message-state:from:to:cc:subject
          :date:message-id:reply-to;
-        bh=G0GXHJX1K7E5e2wBQk1oB0WcGldIFjvSOHPSzQdYz+4=;
-        b=vvub2a5URhc066+sNG8wAlHJRPa2CYbB4TMQpJTNG5bNDAQeH+idU7cHRuBshefzXo
-         KhLq0M6VXCfmly9aDlHOQJZ8CxUjaCgm88QBEIk4wPVGvBkeYS1TynC6vb+eqNBP/y0O
-         EMGwQrAhjijv7LhDFqL+rhJx/nhLGiQOodczZrn4gsMZo0ILkPpVRo4c//BgLhoQGnmJ
-         WIxRhM/UM6FYvM0qBKluN4P5d/Zny21YL4hkYe0is4k1H9XRpS/90XpM3zzvRX4G5lIg
-         BZbr0b4tJ0HkwVSJMBI9o5oSKJEMkx8/t6V/oo/vUJEuYWADJjy9lqIiUWO6b065yrwa
-         /Ybg==
-X-Forwarded-Encrypted: i=1; AJvYcCUg5nQTq2apLRHNEu6EdMrQDVLO2qYwa9rwX4AOZeD2YZU9u8z3AytWNaTuRJGhlbv1J37b9qMd8CA=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzsH8tJvOwNtOqTC6YkRqWgufra91RhxlKce8UKgduDRV0+z34H
-	UvjnJhMMgoWIGuDWbYXA+TiDhw8k9uvxiKJ2MF7xTObMbTmbj69tbPgEIPCLPZcmgfI8BkJr/k2
-	ueUfrWsp/ylQkLWaMiFL7E177L31pG9LUDuFJ7BFbOyHVdHQ5QV5j7v2DRA==
-X-Gm-Gg: ASbGnctvFVmUEQ5gkf1bMT2NVwhyPVflx6BwVTRTQ/dliFyKQ9bZ6YSnUiS8RJa6JSF
-	d11f0mJNtXu9S1y/9TMwo4H5/yr90mXYZuZVD/YrkejvyTbwAw+CeB/dP5P0Vcq1h2UpMvWZmU0
-	mEADMa0tPhiKuODRiIzL4St4MD+uXsaAJ056g/uXNw4eBsMzHq9DBtLFxEx4rnyRcG5GJhu5H2l
-	lx5M39cKEhm7Zs+8YqmY6VJSiJItutHmXLEqcIekdI4BulDTTywPg3oagOheLOLfGCCLKDs7iRu
-	37LvNClfNJA4cYOfqEZOf+rTnToF+JxgVPNSEjOBKxM8prNfZ3S5UKetfX3ca/8/JV4/pTuKq4U
-	ct/YslrTZ3biBsc/QdOHRryAvwNj9q/r7ct27pYzm1rY=
-X-Received: by 2002:a5d:6c6e:0:b0:38d:c364:d516 with SMTP id ffacd0b85a97d-390eca81d4emr15654535f8f.54.1741083700184;
-        Tue, 04 Mar 2025 02:21:40 -0800 (PST)
-X-Google-Smtp-Source: AGHT+IFoe+t9reG+q1KXFWE83QujE4ro+8v9oe5SMfx3hNgMcGBMtEEMSM8d0V6pJPgREtHTPyF6dQ==
-X-Received: by 2002:a5d:6c6e:0:b0:38d:c364:d516 with SMTP id ffacd0b85a97d-390eca81d4emr15654508f8f.54.1741083699822;
-        Tue, 04 Mar 2025 02:21:39 -0800 (PST)
-Received: from ?IPV6:2003:cb:c736:1000:9e30:2a8a:cd3d:419c? (p200300cbc73610009e302a8acd3d419c.dip0.t-ipconnect.de. [2003:cb:c736:1000:9e30:2a8a:cd3d:419c])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-390e4796517sm16996820f8f.5.2025.03.04.02.21.37
+        bh=DwfrVJB2IPkMjhKdEJbWHuXqPqDoaFm43Z3NiVADH/M=;
+        b=aW98l5CyyL+SXENYO5mG1ldBJbi1VQWEpXBz3cOKEQFx9JzyCE41+XPwRCbQVL+wZV
+         X8QrOu1IdjsRZeAST9xv30EAiP9Po3g0ivknMxBaKGxHloulGkmlAfh+Ecvy2yaEmdzT
+         pylQ5iapfwYWGujtiTjpxD3693yk+9TMVHljRkrzG2RpiOwbF+RVo0u1xRA6cZlLgkmL
+         1U6HLHMK0iHE04rxddcUWZt4RBkI7plFo+DSuisZPAzxowcDvR0To6tTP/Uq7o6YGaqi
+         SSaMAenEd7e6ng6tGT82tXnnWEiIAVFalFxtU2TYtdLMPtjvseXBQiyDhAN8OP0hZ2t8
+         ex5w==
+X-Forwarded-Encrypted: i=1; AJvYcCXlmn/kjBdFbMgy2uuswchMpfSqPcG+mwAftNohdWdzx3IxumKEydVhbTEC9+dFwJ1sb+tIguNwfNA=@vger.kernel.org
+X-Gm-Message-State: AOJu0YyTDpEQ2Yj5pQvJ7XfXRddePdhuP6n0czPhGgsj3++n8bTltqOt
+	zZCz99gaQGo5ZfD1G6J8eKb2p9rpY8DZuqg8t/tfv3OFgR4oXTtYphxfzz7D4qz9FuorYGzKvCA
+	2RnnbSCQ1BkmaoLU3MYMw0dK33Y1Uhphso/cjRUkCUysM6F3ciXzKSSWPTA==
+X-Gm-Gg: ASbGncvRcWoJD+2PFGorYS43/nZeenBJoOlY4N6akCb8FjCFbMIbP1VpPUvFcF4EEWL
+	YDEOL7TlZzBxJjWjrBBzHioZy/i9kD5v7SvOoS/ocVnUkQDv/pyzfuzHc9esbeA8jbNMbsQ1jzN
+	HUHnMUhknHM4h49H6tn4pYIalm5+ictqRH+sWsVu4ZFKnbLAw3typb2CYZJnfKSMQ82DGnSxK/z
+	4QCQKlXD8gX25yLFnvzMsmbCmSgqgtgj/PtHtL2RJXz5ab/IBuyRposhYjE369zfd0YuPHWf+A6
+	PUkhrK25+rMRq9MunHLpaJFOjceW9oC0VARHVJ0PROpA2mp1Dg==
+X-Received: by 2002:a5d:6c62:0:b0:38f:503a:d93f with SMTP id ffacd0b85a97d-3911f7b349cmr1849712f8f.40.1741170596798;
+        Wed, 05 Mar 2025 02:29:56 -0800 (PST)
+X-Google-Smtp-Source: AGHT+IEWt7nqNGJWcxZ3sniy7h3PrfZcFzKDyC306gbJ7KAAn7ebAdfJmPYIrJ3yzoj/ABCPOc+44w==
+X-Received: by 2002:a5d:6c62:0:b0:38f:503a:d93f with SMTP id ffacd0b85a97d-3911f7b349cmr1849668f8f.40.1741170596371;
+        Wed, 05 Mar 2025 02:29:56 -0800 (PST)
+Received: from ?IPV6:2a09:80c0:192:0:5dac:bf3d:c41:c3e7? ([2a09:80c0:192:0:5dac:bf3d:c41:c3e7])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-390e47a6a9fsm20821992f8f.36.2025.03.05.02.29.55
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 04 Mar 2025 02:21:39 -0800 (PST)
-Message-ID: <54433b22-edaa-421e-9c99-6ee99734ab6d@redhat.com>
-Date: Tue, 4 Mar 2025 11:21:37 +0100
+        Wed, 05 Mar 2025 02:29:55 -0800 (PST)
+Message-ID: <a97f8a91-ec41-4796-81e3-7c9e0e491ba4@redhat.com>
+Date: Wed, 5 Mar 2025 11:29:54 +0100
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -75,24 +74,26 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v3 00/20] mm: MM owner tracking for large folios
- (!hugetlb) + CONFIG_NO_PAGE_MAPCOUNT
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
- cgroups@vger.kernel.org, linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
- linux-api@vger.kernel.org, "Matthew Wilcox (Oracle)" <willy@infradead.org>,
- Tejun Heo <tj@kernel.org>, Zefan Li <lizefan.x@bytedance.com>,
- Johannes Weiner <hannes@cmpxchg.org>, =?UTF-8?Q?Michal_Koutn=C3=BD?=
- <mkoutny@suse.com>, Jonathan Corbet <corbet@lwn.net>,
- Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>,
- Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>,
- Dave Hansen <dave.hansen@linux.intel.com>,
+Subject: Re: [PATCH v3 03/20] mm: let _folio_nr_pages overlay memcg_data in
+ first tail page
+To: linux-kernel@vger.kernel.org
+Cc: linux-doc@vger.kernel.org, cgroups@vger.kernel.org, linux-mm@kvack.org,
+ linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+ Andrew Morton <akpm@linux-foundation.org>,
+ "Matthew Wilcox (Oracle)" <willy@infradead.org>, Tejun Heo <tj@kernel.org>,
+ Zefan Li <lizefan.x@bytedance.com>, Johannes Weiner <hannes@cmpxchg.org>,
+ =?UTF-8?Q?Michal_Koutn=C3=BD?= <mkoutny@suse.com>,
+ Jonathan Corbet <corbet@lwn.net>, Andy Lutomirski <luto@kernel.org>,
+ Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>,
+ Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>,
  Muchun Song <muchun.song@linux.dev>,
  "Liam R. Howlett" <Liam.Howlett@oracle.com>,
  Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
- Vlastimil Babka <vbabka@suse.cz>, Jann Horn <jannh@google.com>
+ Vlastimil Babka <vbabka@suse.cz>, Jann Horn <jannh@google.com>,
+ "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>,
+ Stephen Rothwell <sfr@canb.auug.org.au>
 References: <20250303163014.1128035-1-david@redhat.com>
- <20250303144332.4cb51677966b515ee0c89a44@linux-foundation.org>
+ <20250303163014.1128035-4-david@redhat.com>
 From: David Hildenbrand <david@redhat.com>
 Content-Language: en-US
 Autocrypt: addr=david@redhat.com; keydata=
@@ -140,51 +141,173 @@ Autocrypt: addr=david@redhat.com; keydata=
  jPrnvUsUUsjRoRNJjKKA/REq+sAnhkNPPZ/NNMjaZ5b8Tovi8C0tmxiCHaQYqj7G2rgnT0kt
  WNyWQQ==
 Organization: Red Hat
-In-Reply-To: <20250303144332.4cb51677966b515ee0c89a44@linux-foundation.org>
+In-Reply-To: <20250303163014.1128035-4-david@redhat.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On 03.03.25 23:43, Andrew Morton wrote:
-> On Mon,  3 Mar 2025 17:29:53 +0100 David Hildenbrand <david@redhat.com> wrote:
+On 03.03.25 17:29, David Hildenbrand wrote:
+> Let's free up some more of the "unconditionally available on 64BIT"
+> space in order-1 folios by letting _folio_nr_pages overlay memcg_data in
+> the first tail page (second folio page). Consequently, we have the
+> optimization now whenever we have CONFIG_MEMCG, independent of 64BIT.
 > 
->> Some smaller change based on Zi Yan's feedback (thanks!).
->>
->>
->> Let's add an "easy" way to decide -- without false positives, without
->> page-mapcounts and without page table/rmap scanning -- whether a large
->> folio is "certainly mapped exclusively" into a single MM, or whether it
->> "maybe mapped shared" into multiple MMs.
->>
->> Use that information to implement Copy-on-Write reuse, to convert
->> folio_likely_mapped_shared() to folio_maybe_mapped_share(), and to
->> introduce a kernel config option that let's us not use+maintain
->> per-page mapcounts in large folios anymore.
->>
->> ...
->>
->> The goal is to make CONFIG_NO_PAGE_MAPCOUNT the default at some point,
->> to then slowly make it the only option, as we learn about real-life
->> impacts and possible ways to mitigate them.
+> We have to make sure that page->memcg on tail pages does not return
+> "surprises". page_memcg_check() already properly refuses PageTail().
+> Let's do that earlier in print_page_owner_memcg() to avoid printing
+> wrong "Slab cache page" information. No other code should touch that
+> field on tail pages of compound pages.
 > 
-> I expect that we'll get very little runtime testing this way, and we
-> won't hear about that testing unless there's a failure.
+> Reset the "_nr_pages" to 0 when splitting folios, or when freeing them
+> back to the buddy (to avoid false page->memcg_data "bad page" reports).
 > 
-> Part of me wants to make it default on right now, but that's perhaps a
-> bit mean to linux-next testers.
-
-Yes, letting this sit at least for some time before we enable it in 
-linux-next as default might make sense.
-
- > > Or perhaps default-off for now and switch to default-y for 6.15-rcX?
-
-Maybe default-off for now, until we rebase mm-unstable to 6.15-rcX. 
-Then, default on first in linux-next, and then upstream (6.16).
-
+> Note that in __split_huge_page(), folio_nr_pages() would stop working
+> already as soon as we start messing with the subpages.
 > 
-> I suggest this just to push things along more aggressively - we may
-> choose to return to default-off after a few weeks of -rcX.
+> Most kernel configs should have at least CONFIG_MEMCG enabled, even if
+> disabled at runtime. 64byte "struct memmap" is what we usually have
+> on 64BIT.
+> 
+> While at it, rename "_folio_nr_pages" to "_nr_pages".
+> 
+> Hopefully memdescs / dynamically allocating "strut folio" in the future
+> will further clean this up, e.g., making _nr_pages available in all
+> configs and maybe even in small folios. Doing that should be fairly easy
+> on top of this change.
+> 
+> Reviewed-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+> Signed-off-by: David Hildenbrand <david@redhat.com>
+> ---
+>   include/linux/mm.h       |  4 ++--
+>   include/linux/mm_types.h | 30 ++++++++++++++++++++++--------
+>   mm/huge_memory.c         | 16 +++++++++++++---
+>   mm/internal.h            |  4 ++--
+>   mm/page_alloc.c          |  6 +++++-
+>   mm/page_owner.c          |  2 +-
+>   6 files changed, 45 insertions(+), 17 deletions(-)
+> 
+> diff --git a/include/linux/mm.h b/include/linux/mm.h
+> index a743321dc1a5d..694704217df8a 100644
+> --- a/include/linux/mm.h
+> +++ b/include/linux/mm.h
+> @@ -1199,10 +1199,10 @@ static inline unsigned int folio_large_order(const struct folio *folio)
+>   	return folio->_flags_1 & 0xff;
+>   }
+>   
+> -#ifdef CONFIG_64BIT
+> +#ifdef NR_PAGES_IN_LARGE_FOLIO
+>   static inline long folio_large_nr_pages(const struct folio *folio)
+>   {
+> -	return folio->_folio_nr_pages;
+> +	return folio->_nr_pages;
+>   }
+>   #else
+>   static inline long folio_large_nr_pages(const struct folio *folio)
+> diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+> index 689b2a7461892..e81be20bbabc6 100644
+> --- a/include/linux/mm_types.h
+> +++ b/include/linux/mm_types.h
+> @@ -287,6 +287,11 @@ typedef struct {
+>   	unsigned long val;
+>   } swp_entry_t;
+>   
+> +#if defined(CONFIG_MEMCG) || defined(CONFIG_SLAB_OBJ_EXT)
+> +/* We have some extra room after the refcount in tail pages. */
+> +#define NR_PAGES_IN_LARGE_FOLIO
+> +#endif
+> +
+>   /**
+>    * struct folio - Represents a contiguous set of bytes.
+>    * @flags: Identical to the page flags.
+> @@ -312,7 +317,7 @@ typedef struct {
+>    * @_large_mapcount: Do not use directly, call folio_mapcount().
+>    * @_nr_pages_mapped: Do not use outside of rmap and debug code.
+>    * @_pincount: Do not use directly, call folio_maybe_dma_pinned().
+> - * @_folio_nr_pages: Do not use directly, call folio_nr_pages().
+> + * @_nr_pages: Do not use directly, call folio_nr_pages().
+>    * @_hugetlb_subpool: Do not use directly, use accessor in hugetlb.h.
+>    * @_hugetlb_cgroup: Do not use directly, use accessor in hugetlb_cgroup.h.
+>    * @_hugetlb_cgroup_rsvd: Do not use directly, use accessor in hugetlb_cgroup.h.
+> @@ -377,13 +382,20 @@ struct folio {
+>   			unsigned long _flags_1;
+>   			unsigned long _head_1;
+>   	/* public: */
+> -			atomic_t _large_mapcount;
+> -			atomic_t _entire_mapcount;
+> -			atomic_t _nr_pages_mapped;
+> -			atomic_t _pincount;
+> -#ifdef CONFIG_64BIT
+> -			unsigned int _folio_nr_pages;
+> -#endif
+> +			union {
+> +				struct {
+> +					atomic_t _large_mapcount;
+> +					atomic_t _entire_mapcount;
+> +					atomic_t _nr_pages_mapped;
+> +					atomic_t _pincount;
+> +				};
+> +				unsigned long _usable_1[4];
+> +			};
+> +			atomic_t _mapcount_1;
+> +			atomic_t _refcount_1;
+> +#ifdef NR_PAGES_IN_LARGE_FOLIO
+> +			unsigned int _nr_pages;
+> +#endif /* NR_PAGES_IN_LARGE_FOLIO */
+>   	/* private: the union with struct page is transitional */
 
-Yeah, I'm usually very careful; sometimes a bit too careful :)
+@Andrew
+
+The following on top to make htmldoc happy.
+
+There will be two conflicts to be resolved in two patches because of
+the added "/* private: " under "_pincount".
+
+It's fairly straight forward to resolve (just keep "/* private:" below
+any changes), but let me know if I should resend a v4 instead for this.
+
+
+ From 9d9ff38c2ea14f1b4dab29f099ec0f6be683f3fe Mon Sep 17 00:00:00 2001
+From: David Hildenbrand <david@redhat.com>
+Date: Wed, 5 Mar 2025 11:14:52 +0100
+Subject: [PATCH] fixup: mm: let _folio_nr_pages overlay memcg_data in first
+  tail page
+
+Make "make htmldoc" happy by marking non-private placeholder entries
+private.
+
+Signed-off-by: David Hildenbrand <david@redhat.com>
+---
+  include/linux/mm_types.h | 4 +++-
+  1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+index e81be20bbabc..6062c12c3871 100644
+--- a/include/linux/mm_types.h
++++ b/include/linux/mm_types.h
+@@ -381,18 +381,20 @@ struct folio {
+  		struct {
+  			unsigned long _flags_1;
+  			unsigned long _head_1;
+-	/* public: */
+  			union {
+  				struct {
++	/* public: */
+  					atomic_t _large_mapcount;
+  					atomic_t _entire_mapcount;
+  					atomic_t _nr_pages_mapped;
+  					atomic_t _pincount;
++	/* private: the union with struct page is transitional */
+  				};
+  				unsigned long _usable_1[4];
+  			};
+  			atomic_t _mapcount_1;
+  			atomic_t _refcount_1;
++	/* public: */
+  #ifdef NR_PAGES_IN_LARGE_FOLIO
+  			unsigned int _nr_pages;
+  #endif /* NR_PAGES_IN_LARGE_FOLIO */
+-- 
+2.48.1
+
 
 -- 
 Cheers,
