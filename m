@@ -1,451 +1,674 @@
-Received: from mx0b-00069f02.pphosted.com (mx0b-00069f02.pphosted.com [205.220.177.32])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 107941A9B48;
-	Fri, 25 Apr 2025 16:48:40 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.177.32
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1745599723; cv=fail; b=cxuD2poHvbea72G8JP1jLZGSoyLaQZXIdQ9wc+TzaKwE6anGFMM8RlS2pZmh8gbSzaipuaWLoCFWzElfTQLZh+PStSqciVMIIGakbZn1zXrIbJwO/hPHinYsaIAypHjiXpLlxTUewCZRSEaDSV1e8uwP4rJWx0cs1EXOMmWDTUk=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1745599723; c=relaxed/simple;
-	bh=/Gc9YxwkEPXlQwpTWBqIaTS+N0I2IhLUfDnljXWFgSU=;
-	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 Content-Type:MIME-Version; b=lL2BZ1FGtpsBKL0HKqlrSRSCLnvHEYmNe1wh2C5JOFLuTsx6vAq/RSun3QNX8pGsv1X9a3237l3mTpXKM6EPlB6LhAREPY1rmxpV3tOpQa7IkDtmP9TWtZTXDOV36MWY7BSCLq49Ux1fzPPYMaN2JYirfrSDHlVU6fPQLi8SuLI=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=T18a4TOK; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=lVvX7cRh; arc=fail smtp.client-ip=205.220.177.32
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC8CE215F72
+	for <linux-api@vger.kernel.org>; Fri, 25 Apr 2025 18:16:57 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1745605022; cv=none; b=UhAhmaq4pLhEAHzlNU3l6nZyFRIPSuIwXpznHH6i64eieeWWLoluczqRxQ2+u04kzFXDCCwjsiouqeEetlMKuBOUzVMCS2xGERhk7Wl5b+lqrk2SyCV1/9AVhsAnQ/VEE5So0mJCnQ7ybcLx8vSNeb9hFsnISgTM6dYSZyR2hRA=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1745605022; c=relaxed/simple;
+	bh=xRwS7DIQ9xzKdaaNVSmdVjShk/A0oP6INDbbCT/nzow=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=HgBbu5hf6EnVEN8daEAZav4Gu0OH5pUSXuIFSFoZwqqbuAyUeHfOi59PPrIYQ6bAmSvdKsaPOgJdsPsMSaO9p751d+jIVqNGXdv0QHurr730S/mos7pqr2AfBQcZKHQD3vSHDDR2G8IGnLpeAn+yWF8eB+PV3JROmWvoq1IMHZs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=DoNPDeK2; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="T18a4TOK";
-	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="lVvX7cRh"
-Received: from pps.filterd (m0246631.ppops.net [127.0.0.1])
-	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 53PFqV5h008417;
-	Fri, 25 Apr 2025 16:45:37 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=
-	corp-2023-11-20; bh=1DLzKEzxZWroZS79L7ym5z5u37TJWbokIXzfpxvotNA=; b=
-	T18a4TOKQySMRP7l3nvXJYZDCtxafEdwOHi7jx15nl0mlRjB+emWWtufitEmNFQH
-	c4HZ31C7HU/Ra/PUPEdReZ26jyZVpeN1hqp3IJBR7EqFtqvRC5LTAqsYnF89HL56
-	rMEmvtR/x3TuyHgGFsjgc9FSwcsTJQSB4RvWaDh+QLwXNWw/7kq98x76wv0xcC8I
-	nupFiztUJItuVma+hFkfIg922VxfrpJsNth5VmJVOb+J9UDkpx7DZZKqYlQg4frO
-	LvR/pN1arpeWjYfgsW4kZ6prdmDgKTyl/5knO16sV8DBGl+euEBIcQYw9WgS7b4z
-	D46OWkos2NRFUPmLn57KXQ==
-Received: from phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta02.appoci.oracle.com [147.154.114.232])
-	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 468d45r9ep-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 25 Apr 2025 16:45:37 +0000 (GMT)
-Received: from pps.filterd (phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 53PG8NQc030936;
-	Fri, 25 Apr 2025 16:45:36 GMT
-Received: from sj2pr03cu002.outbound.protection.outlook.com (mail-westusazlp17013074.outbound.protection.outlook.com [40.93.1.74])
-	by phxpaimrmta02.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 466k08ves1-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Fri, 25 Apr 2025 16:45:36 +0000
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=LBEpBZoke6sb2/4X7Mn8FPg3+y56Wwcysp0fE7GeJw9k5/FTFvcpJiJ6AnMS8U8Hto2qceFT/VVX0prSH5bq9Lxlm+E1ThNbB7ztRudtni2Ov7hS2Z1CU68HM4cp06hLw3ShXLx21qwPZkCaZQyJ2iBM1eGyGbal4ePpRRnntCFifi8G6r42sKOBPxlY9VYqr2oszAVsov1Sd7cJdSmBGh0gSTVrnn42ZlWPgE/O576SqXy9REG+PNC/Q9iWARTcAj83twtmrCZ+MBsLkJj5MgAQErDR8V86Rec++Zxq3v/aSnuR/3hnO5YZJV1MEiYhc+nvBcg6zJ+FqF8mEPY/4Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=1DLzKEzxZWroZS79L7ym5z5u37TJWbokIXzfpxvotNA=;
- b=f81kDIfa5+sJl0jwB+yEAwAY8wxOB+wew2wkoZftibl4bO0Aa3uSUDJLBwb/4Bxy6S2GmEwwI+B9Z/DGi9eXDDqxsheEo5s/N0bJdm2MFYF4FicLNEFFFqw8wYvgxilJJYkxXj0SdzqH6I8j5qGqNrlI7bpftGS1fFXD9gtMU/BN833lJ80U6mU+dl2K6D3E8YT87TrwknoNjE8Yq6dksbT2jbF131KKjqz2l/QWLTat7BeW/lICBPgnL9P5+Zi9nkHmkjXhqjksc3QiPOWwygogMkOPGYJQRyNxyb+u12Sj3+yig6Vj2mlvpyTLGyskwnvdGBnwGKi7sOu+BAH3qA==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
- dkim=pass header.d=oracle.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
- d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=1DLzKEzxZWroZS79L7ym5z5u37TJWbokIXzfpxvotNA=;
- b=lVvX7cRh5xouXJ0nIK0swLuO3TfvAOn+Wn5r9FK7EZRboCQgPvvru5ewD5BcrOO3MOOsz6LmJ+o6BBE9aGj3/9KQRQ21CuN/jkBboEOqzaDvdkZOXZYQzV5ySCvHNsf01X3kK2fwc9bzfjsjONhhxi4/66J7Sb/3jyBUlDxojC0=
-Received: from DM6PR10MB4313.namprd10.prod.outlook.com (2603:10b6:5:212::20)
- by PH7PR10MB5699.namprd10.prod.outlook.com (2603:10b6:510:127::12) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8655.40; Fri, 25 Apr
- 2025 16:45:33 +0000
-Received: from DM6PR10MB4313.namprd10.prod.outlook.com
- ([fe80::4f45:f4ab:121:e088]) by DM6PR10MB4313.namprd10.prod.outlook.com
- ([fe80::4f45:f4ab:121:e088%4]) with mapi id 15.20.8678.025; Fri, 25 Apr 2025
- 16:45:33 +0000
-From: John Garry <john.g.garry@oracle.com>
-To: brauner@kernel.org, djwong@kernel.org, hch@lst.de, viro@zeniv.linux.org.uk,
-        jack@suse.cz, cem@kernel.org
-Cc: linux-fsdevel@vger.kernel.org, dchinner@redhat.com,
-        linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org,
-        ojaswin@linux.ibm.com, ritesh.list@gmail.com,
-        martin.petersen@oracle.com, linux-ext4@vger.kernel.org,
-        linux-block@vger.kernel.org, catherine.hoang@oracle.com,
-        linux-api@vger.kernel.org, John Garry <john.g.garry@oracle.com>
-Subject: [PATCH v9 02/15] xfs: add helpers to compute log item overhead
-Date: Fri, 25 Apr 2025 16:44:51 +0000
-Message-Id: <20250425164504.3263637-3-john.g.garry@oracle.com>
-X-Mailer: git-send-email 2.31.1
-In-Reply-To: <20250425164504.3263637-1-john.g.garry@oracle.com>
-References: <20250425164504.3263637-1-john.g.garry@oracle.com>
-Content-Transfer-Encoding: 8bit
-Content-Type: text/plain
-X-ClientProxiedBy: SJ0PR03CA0236.namprd03.prod.outlook.com
- (2603:10b6:a03:39f::31) To DM6PR10MB4313.namprd10.prod.outlook.com
- (2603:10b6:5:212::20)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="DoNPDeK2"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1745605016;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3/H3vr0OCdDcR3s3PDhlvbwdaoTNbpfjoBVpx9IMnBk=;
+	b=DoNPDeK2STJBW2lvKOeUNdPR11BBrBQulvbvkJfkCnApgNaDujGCjbYvL+xOVVU1Z/Mxa0
+	sN52najFUYYfbwQmNKyNhBgFaH4yXbmxmGAiOJ+lbb+DFCDWNTS2PlOfYzOzXw608y9gD8
+	oVmOohrETzH6JM6n/enX+72H/1hX/tk=
+Received: from mail-ej1-f69.google.com (mail-ej1-f69.google.com
+ [209.85.218.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-111-d2jqbXXgPzCpe5zMARAMng-1; Fri, 25 Apr 2025 14:16:55 -0400
+X-MC-Unique: d2jqbXXgPzCpe5zMARAMng-1
+X-Mimecast-MFC-AGG-ID: d2jqbXXgPzCpe5zMARAMng_1745605014
+Received: by mail-ej1-f69.google.com with SMTP id a640c23a62f3a-ac6caf952d7so253774166b.3
+        for <linux-api@vger.kernel.org>; Fri, 25 Apr 2025 11:16:55 -0700 (PDT)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1745605014; x=1746209814;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :mime-version:references:message-id:subject:cc:to:from:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=3/H3vr0OCdDcR3s3PDhlvbwdaoTNbpfjoBVpx9IMnBk=;
+        b=h5bqtNXHE8viStY5YF0j+pidCRqbTCW+KYthdF+crumYdLySyLQaAW8yCJIokTBAbP
+         sX/BKPhJfmn7A3+bFMEAzD5VRaUMf9h9Qh1C4fBTRuORnLPtqt7PXKmoihdK0mKca9VU
+         ljVayLCJgsmiD3K+Wuin18XuYDLlih3bgWMlRaGqycVNSf1a5bUlNo74DVVXfmH23IhS
+         OY5TvHkU0ktV9aEKoWZQU+N2lAyKGkVzHIBDr1QC8+pSbrMpS6d2t5GF9jpbTCW5jhrl
+         woD2alAJ7N92M0qPAjTcQFO/Szwi82mv02AxWzImnqaUnN/amTWQCY5or9cJVKaMBYsV
+         GIFg==
+X-Forwarded-Encrypted: i=1; AJvYcCVsLxEI6oXxjVeHKjKjd0bh+LNQB/z4zT/VNfZTwq/Yb9LGAgQ7r8IYVARabr3elsDuaeNMCIZr15k=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzOwgpBJtE+aziGHpQN3Q35W4pYG4NUTIi5UmQ1GflYsLrEaxdw
+	L1dq19JlOWB0O3Hw+U4z5rb8uUdIGrrD4ugHbTbYl4TJ3HoOCQ2sIy89BC4hj7coPBsGVUqfJrg
+	FXQSZCEsJLnIAuNa8ujIvM01+24x17p2WrjPod3ZRr1cMOBrAGpiqusSL
+X-Gm-Gg: ASbGncsCQSx2Ms0+ydjKWqL1toioMpAwnsIjS+RkYPB9k5S+9WXPmu11AWRH1hh+xrZ
+	bfufSSMT1NX+XOolw9oNr+9WmDvgmZFODJSPDl26dd2dODo9xBaZ+w2rKJnBBUCHQeNy+/Z5lQP
+	2WUIrOqJ8uTeIsM5956JaSXv1AQZbbcc+Aaa7wxErN12OyG8DO0t2fZU7vT/EYA9WKeRwwBH6Od
+	yDG1zRgrI4E6YnuUdrRj7k+gXpYEDqqa7/rYm14pqF4zMJj6d0mf2vTZt5nYqTxBJrX26Ntsq4d
+	0S11EK8AcE7UNP9cS6NiJ5UexHNHdI8=
+X-Received: by 2002:a17:907:720d:b0:ac7:eb12:dc69 with SMTP id a640c23a62f3a-ace7110bb7emr344212966b.28.1745605013831;
+        Fri, 25 Apr 2025 11:16:53 -0700 (PDT)
+X-Google-Smtp-Source: AGHT+IEcwZ2uBmoBZxtvmd2g+z9kEiApYvdSEco/tISBfW2KUfnlzh1cUwx+QqrN8Zv6maFk6XK8qg==
+X-Received: by 2002:a17:907:720d:b0:ac7:eb12:dc69 with SMTP id a640c23a62f3a-ace7110bb7emr344205866b.28.1745605013200;
+        Fri, 25 Apr 2025 11:16:53 -0700 (PDT)
+Received: from thinky (ip-217-030-074-039.aim-net.cz. [217.30.74.39])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-ace6ed70606sm168961166b.160.2025.04.25.11.16.49
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 25 Apr 2025 11:16:52 -0700 (PDT)
+Date: Fri, 25 Apr 2025 20:16:48 +0200
+From: Andrey Albershteyn <aalbersh@redhat.com>
+To: Christian Brauner <brauner@kernel.org>
+Cc: Amir Goldstein <amir73il@gmail.com>, 
+	Richard Henderson <richard.henderson@linaro.org>, Matt Turner <mattst88@gmail.com>, 
+	Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, 
+	Will Deacon <will@kernel.org>, Geert Uytterhoeven <geert@linux-m68k.org>, 
+	Michal Simek <monstr@monstr.eu>, Thomas Bogendoerfer <tsbogend@alpha.franken.de>, 
+	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>, Helge Deller <deller@gmx.de>, 
+	Madhavan Srinivasan <maddy@linux.ibm.com>, Michael Ellerman <mpe@ellerman.id.au>, 
+	Nicholas Piggin <npiggin@gmail.com>, Christophe Leroy <christophe.leroy@csgroup.eu>, 
+	Naveen N Rao <naveen@kernel.org>, Heiko Carstens <hca@linux.ibm.com>, 
+	Vasily Gorbik <gor@linux.ibm.com>, Alexander Gordeev <agordeev@linux.ibm.com>, 
+	Christian Borntraeger <borntraeger@linux.ibm.com>, Sven Schnelle <svens@linux.ibm.com>, 
+	Yoshinori Sato <ysato@users.sourceforge.jp>, Rich Felker <dalias@libc.org>, 
+	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>, "David S. Miller" <davem@davemloft.net>, 
+	Andreas Larsson <andreas@gaisler.com>, Andy Lutomirski <luto@kernel.org>, 
+	Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, 
+	Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, 
+	Chris Zankel <chris@zankel.net>, Max Filippov <jcmvbkbc@gmail.com>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
+	=?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, =?utf-8?Q?G=C3=BCnther?= Noack <gnoack@google.com>, 
+	Arnd Bergmann <arnd@arndb.de>, Pali =?utf-8?B?Um9ow6Fy?= <pali@kernel.org>, 
+	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
+	"Serge E. Hallyn" <serge@hallyn.com>, linux-alpha@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-arm-kernel@lists.infradead.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, 
+	linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, 
+	linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, 
+	linux-xfs@vger.kernel.org
+Subject: Re: [PATCH v4 3/3] fs: introduce getfsxattrat and setfsxattrat
+ syscalls
+Message-ID: <l33napyvz5fwbcdju4otllbu4zr6faaz6mufz652alpxnjjfvl@h7j4hu4uwqwv>
+References: <20250321-xattrat-syscall-v4-0-3e82e6fb3264@kernel.org>
+ <20250321-xattrat-syscall-v4-3-3e82e6fb3264@kernel.org>
+ <CAOQ4uxj2Fqmc_pSD4bqqoQu7QjmgSVp2V15FbmBdTNqQ03aPGQ@mail.gmail.com>
+ <faqun3wrpvwrhwukql3niqvvauy5ngrpytx5bxbrv5xkounez3@m7j2znjuzapu>
+ <CAOQ4uxjs=Gg-ocwx_fkzc0gxQ_dHx-P9EAgz5ZwbdbrxV0T_EA@mail.gmail.com>
+ <20250422-suchen-filmpreis-3573a913457c@brauner>
+ <20250422-gefressen-faucht-8ded2c9a5375@brauner>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: DM6PR10MB4313:EE_|PH7PR10MB5699:EE_
-X-MS-Office365-Filtering-Correlation-Id: 28783dd8-4309-4d30-6670-08dd8418988d
-X-MS-Exchange-SenderADCheck: 1
-X-MS-Exchange-AntiSpam-Relay: 0
-X-Microsoft-Antispam: BCL:0;ARA:13230040|366016|1800799024|376014|7416014;
-X-Microsoft-Antispam-Message-Info:
-	=?us-ascii?Q?qTZx34BZktWGQM1Pi22v9MR0qMwwOc/FKh8QjKvQODxTYsAwFMJhQiA5DEtQ?=
- =?us-ascii?Q?VKxzblkAW33x2FZVtdF/Ay9zHjEyti1cE3ek3pAj4E3AIjT3wzWdLTBkXYyA?=
- =?us-ascii?Q?oKDoysvVgE1AGv6L/dHmxZamMCZNd+QDB7FR13uUOQP9iuSyjDv/POtg5b+6?=
- =?us-ascii?Q?QyfxLE8TCviYbBMzdlO2lATU9oUmsEeln3lhg7thjGPhOrLwYQY0kuxXNIMB?=
- =?us-ascii?Q?TlSqFTptM8TofIcDkWvoL2ULcjqjiEu7UIing7gkeH8m+2Cn9ln+6fwRp2va?=
- =?us-ascii?Q?AbTaQjT6m2qVovjBvXUcyW3CKlJSBra2UA+2pr0m5NFD8MNG01hYepceWyDB?=
- =?us-ascii?Q?zaJS/rvodbquOxuqP39f2mX071uRhH+CHph1oeJk/qSWrEmiisTWpIzlNRy0?=
- =?us-ascii?Q?UB82tNRwd0ba7mNm+Jr6OtiZoJBwN8I74S8EwSSxsCSvP2QXLYop8x39Wj5K?=
- =?us-ascii?Q?nnWqgAbKjUqp5Ar1n4kKQ6NJZGmmeeJDMQffp2GYAiupCO4WS9iWaTfmxQSP?=
- =?us-ascii?Q?AULWNTMH6/xjrC0/cXYFkyskB2HXdkumcumxxHMPgfLozR02UhMTe4UD5qcg?=
- =?us-ascii?Q?54ykFWnNhZL7oPgeF5aHRoVZoH0stClBUQwvMEoKKahBkNo8ntS8upYD6Vig?=
- =?us-ascii?Q?5c9NpWtz5LeNTPLLPjQMVr8dDLv7KPzwvdPalHgfYvBw7TlozI2PjsI7xAKH?=
- =?us-ascii?Q?J2h3m6WNI77dgHI2QDRYBkZsU0NnD9BupFPVFepme4hoSnQyDSMPAB3F6xu5?=
- =?us-ascii?Q?8+/SIeA5yJHEEKX6fdLmm1W0Gphksqjoy+aM5/yAJKb2x5wglXdzw6atkkb0?=
- =?us-ascii?Q?GPh/+F6WeNJ/p7T103HFIQaLWis/SwACgpJyLaiZ5gg2ADYrhJeesHHjYser?=
- =?us-ascii?Q?c8sbGA/TgfwhibasO4OzZX9ig3xZLzbrFxVG4XhnYczlXIPhKOstgDc3uMr3?=
- =?us-ascii?Q?kS5JbrMy56mjuVOcAgX38Fd4n9yjqrnsQE9K3GhrbL2avEP9hAZvP5AV/ivV?=
- =?us-ascii?Q?QxDQSDhwATTHakkOeWIhTyAXVjOvOz3R5gYHFmLXFn4L9LMD6SjrRV3l7K2W?=
- =?us-ascii?Q?3nQ6IZVO54IAjEZpNOEATYk1jknkK/Kxlkh1xYg7cdm+MxaxozMNsxmRjREJ?=
- =?us-ascii?Q?q6dVsaQoun9KMFqbLVCP8+UkKrhJOEfIQuO+SOzGVAiqXSbk03aWtb5OqR8Q?=
- =?us-ascii?Q?spN2MPMBT1ch1Spijl8HONG+FdAkyFWVeKqCl/cOHhpi2Sn6W5Vb54+muv9J?=
- =?us-ascii?Q?aYjRSK+9cHYtREVprdKJyngDvuz3Hbet11oXyKgTEpg5Mx36Fuzvz/LPnRty?=
- =?us-ascii?Q?KcNjt0H6QpK3rZlOh9rbBP3HBCnvRAgpGMNDtY1Nvk9xS0CD5HXmQh6NGOix?=
- =?us-ascii?Q?LtcK/KzBwoljlHa9RGrdkkTpipEafa119byZXSpp1ZDWs8Uj5yZKZ2WJwNtp?=
- =?us-ascii?Q?vdCJSalT/Og=3D?=
-X-Forefront-Antispam-Report:
-	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM6PR10MB4313.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(1800799024)(376014)(7416014);DIR:OUT;SFP:1101;
-X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-MessageData-0:
-	=?us-ascii?Q?gPJmrRzrpe2OJmQ77oozkCT8RBkoMZwEVW6R8swq5Tc+O5+pq6UO0qvplILD?=
- =?us-ascii?Q?cZVfpzDk9LBt4v39Hkz/GTEa3w46PR9zctuQnuyAu0X+U4DcIPodDPu+l40A?=
- =?us-ascii?Q?KVTgAJyotbxvvyayQv9ls/rQyLpCMFhH0olIMk+VVsiRwndtLWFzABf/V6GM?=
- =?us-ascii?Q?9i1h8UziPwG4KnGJtOnRk+2wybgj2vGWzVf3x1hO9QF5sStZpGXOnJuZnjIg?=
- =?us-ascii?Q?ZIhj2jDc96FTq60BUvfWAlymBr2zKN0opczTYtTLxvQZm2hWu/moJV++o6hs?=
- =?us-ascii?Q?n0btnksgi7v367Krix7JvkHUFVvd2SlnrJPTwlae8c1keyL2JCYZx61z3YCL?=
- =?us-ascii?Q?v+zRmGVLzCB1Z936yxp1zPLJU1A+ZOV7E/h8G7Ni4cp5mujKS3vZFzmUv42B?=
- =?us-ascii?Q?YPegkESqEbjJoSP4F0/TqrVHhbwEeBAHeY/PZq5VpjA2APZA6P8BHhiwoYEi?=
- =?us-ascii?Q?3FaBq1AOJyRUSH++lXaG03c+qUKXzCwbt7QGeYutAcEzgrnizYYd9eCddCno?=
- =?us-ascii?Q?gOZL6NK89ONTjHR+41rUa6NpprXGeZ23hpViFLowIsAFv70aIKb2jVPfQ0sD?=
- =?us-ascii?Q?Cs7x+gFWpU9EO5UAm/HWZ+wYzUsuZhRsNrOMXZTa/QuNCIfjvvKnvJj/mlmX?=
- =?us-ascii?Q?cUtl+1qT/XULjI+z+pqcpmfxlTyoHNAXf23hMtR4vbT38WUkSZFpZKxFgyZn?=
- =?us-ascii?Q?bKlouRmDrdqfaiQTuTK9eV7N5fUZ2T9paFeer6+GUYiRPyOijRi0kC+PcTsB?=
- =?us-ascii?Q?t/VcSjD1CRH2mh5ScJI/Xaz1vQjEnyPxvTI7FKs0k6WP7E9ePMAyWdrwULJE?=
- =?us-ascii?Q?xyxToiF4+gqVXko/5XuQYZdQ8Qyi8curvsjJAdEqZ6edzQEtgczlH1GkTFQg?=
- =?us-ascii?Q?cMpAzkj5xYuU9F6VTKQJQn54tub/Mzx41YKuMtNIt2oTkgZ9ZXkEFnpWNB+M?=
- =?us-ascii?Q?rUlnaNRnr7d2gB/rFEYjoJ7AqKGa2P4ykKVda++iGqvZXZptWFLHiNCKG/4T?=
- =?us-ascii?Q?zzYGU5lhqDmKXWA3Xsnmj2OJhJbsw4qptJIXv8K7DfKV8IWxbfcvR0ZSENG4?=
- =?us-ascii?Q?c1fiWypR01IsqpSjYi1lccodauELnRVAFgjTWr9o11kfiRzdyckZN9k57co2?=
- =?us-ascii?Q?w+loj0YzfRn6R5C9O+1NAcJocn3dN1ah8i/qqHqyW4SQPVxrMbaLVEYLYlke?=
- =?us-ascii?Q?k/FECiOKzNLyqhbKTJFsc+l3tZhYoNMjlYiuUNdCx7xct5ZpeXVikqBypvTC?=
- =?us-ascii?Q?iBhzmER7hk0akmZ4YOwcF3s2mabI5+uZVAr7rBr2puF82Ff667WcfaIusrev?=
- =?us-ascii?Q?wBslCQA0uE0rNaslERKakXHl2W7lLbvHlszAbbt2i9uYUE2cYJ3Cq5y1op67?=
- =?us-ascii?Q?iUdbXr1H8AqgN/1FEMkDVHBz0KFoOnseLqR1tM1ysVJ0oX2pbpgnKDR3w0PF?=
- =?us-ascii?Q?QN7FTOc+BCiP0FdgfNLJixiatbE1go1JR9PhCpbDpdL4oSXdPLBnhCcmuFZ1?=
- =?us-ascii?Q?qBTdV3NtRLy1FGXrCLs6XaIFkE0+cujT718BWkD8UIpQqZBAsQwtTMTtauZH?=
- =?us-ascii?Q?pFaDoM1f7j7wrKLBMeRQl9mB5uGvRkEHEJx+9AZEuuCMTCweQa4d6/204ofC?=
- =?us-ascii?Q?gA=3D=3D?=
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
-X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
-	EmNNHq1jFajM118LMrCzuk9SCptv9F6nyLjeJXROaYPV6ern2AhMc6VKsIvlSqp2yiZjQd7P3n/c0OoQ1uydBktJcsetiChAaCi4886SftJgdswA9qaHyzrsxpAphwYCPDn2vN/aQzXdTNuovpwkNmFDEmzGBVj7A51XXUoLICTUuy+dQnBH3TsECDGzEEaaXcshnULJ8XHAeAfp2gggBVXqxQPMJIIM7uZdaJIcewIsuoGmPHcdLEP9y4Sxmxir4PUVud8LCpbAoO60VATcWoFx30qjJ/mjmkRleSRnG+1m0qDUjubF3Kohv1yvaY7jWMeGSAyDIzhnMGJl7PlrLV/6ErX9DyQEtFSU3V/VXoEmKZENJHFuXru9CFiuMCbirVMOGSFPcCgBOfGg6uaJ5/PKHjNWy/Dp78kKi2o0PqVM4US+UUL+PmpUSmfnL9dRpI4Uwbcr46/33M/l7TjEdXzM2b6SwuDfjDFE/JMEu5msFD/dF+vCy/Lyo72hzoF4bEeCwxr+fsYkLrDB5V5oJeL57s12xc29a4wWRCNf+9MR3HbcNWrqJdzwOvY9FXf9DE+owkCKXa0+HQOnOSIXIo6G+KcURDAR75tsiqk5kuc=
-X-OriginatorOrg: oracle.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 28783dd8-4309-4d30-6670-08dd8418988d
-X-MS-Exchange-CrossTenant-AuthSource: DM6PR10MB4313.namprd10.prod.outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Apr 2025 16:45:33.1907
- (UTC)
-X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
-X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
-X-MS-Exchange-CrossTenant-MailboxType: HOSTED
-X-MS-Exchange-CrossTenant-UserPrincipalName: 6td3mrud68RvUidOTdV5HXBVlMQNcTJM1+4kQi8FFv4AjRTofkhVgPuOvZDKF+nmRyq4KbeGP0TbpgEIrGU9ZA==
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH7PR10MB5699
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.0.736,FMLib:17.12.80.40
- definitions=2025-04-25_05,2025-04-24_02,2025-02-21_01
-X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 phishscore=0 bulkscore=0 mlxscore=0
- spamscore=0 malwarescore=0 mlxlogscore=999 suspectscore=0 adultscore=0
- classifier=spam adjust=0 reason=mlx scancount=1 engine=8.12.0-2504070000
- definitions=main-2504250118
-X-Proofpoint-GUID: KTAOiScif-I8B5Ppa-U6k4rQ4BVetFEU
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNDI1MDExOCBTYWx0ZWRfXyphhwnSkQAOD fEu8iLAOdqRYKxv0U0QZ1ioKR5+UNRpdCl/0x18U2dJaxEORxsIk5pRACPwP3TTLLVrurcTvaCf HPWXICCMwSg/+oziCJq+zxeZoMxPkwSqfWMLVnND6INTdsiP01D6Biv34C/u6xKH/cPPYG4Si+P
- 0siaU4uPV/jQpDMGsKWemN2mIiUnqJsgjJw1yxbmIr5VBQC5fUY9nBL1d2P6+qpGnoqzzXEHsMQ oAI4RTHkLsH5rFOfWpvPX7ofuCeq6AUTDYJakCQheDb55NN6K6u6mv3bTvZ1Vq5kmoU24gyriqH 3vDzuXphL8AzE2uCPCzYzUtF6bghwvEN2R9GcskMLIeAph0EXfjIsYi1aKzmBZ7uqOqLN6mmZr3 FF2WAABg
-X-Proofpoint-ORIG-GUID: KTAOiScif-I8B5Ppa-U6k4rQ4BVetFEU
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20250422-gefressen-faucht-8ded2c9a5375@brauner>
 
-From: "Darrick J. Wong" <djwong@kernel.org>
+On 2025-04-22 17:14:10, Christian Brauner wrote:
+> On Tue, Apr 22, 2025 at 04:31:29PM +0200, Christian Brauner wrote:
+> > On Thu, Mar 27, 2025 at 12:39:28PM +0100, Amir Goldstein wrote:
+> > > On Thu, Mar 27, 2025 at 10:33 AM Andrey Albershteyn <aalbersh@redhat.com> wrote:
+> > > >
+> > > > On 2025-03-23 09:56:25, Amir Goldstein wrote:
+> > > > > On Fri, Mar 21, 2025 at 8:49 PM Andrey Albershteyn <aalbersh@redhat.com> wrote:
+> > > > > >
+> > > > > > From: Andrey Albershteyn <aalbersh@redhat.com>
+> > > > > >
+> > > > > > Introduce getfsxattrat and setfsxattrat syscalls to manipulate inode
+> > > > > > extended attributes/flags. The syscalls take parent directory fd and
+> > > > > > path to the child together with struct fsxattr.
+> > > > > >
+> > > > > > This is an alternative to FS_IOC_FSSETXATTR ioctl with a difference
+> > > > > > that file don't need to be open as we can reference it with a path
+> > > > > > instead of fd. By having this we can manipulated inode extended
+> > > > > > attributes not only on regular files but also on special ones. This
+> > > > > > is not possible with FS_IOC_FSSETXATTR ioctl as with special files
+> > > > > > we can not call ioctl() directly on the filesystem inode using fd.
+> > > > > >
+> > > > > > This patch adds two new syscalls which allows userspace to get/set
+> > > > > > extended inode attributes on special files by using parent directory
+> > > > > > and a path - *at() like syscall.
+> > > > > >
+> > > > > > CC: linux-api@vger.kernel.org
+> > > > > > CC: linux-fsdevel@vger.kernel.org
+> > > > > > CC: linux-xfs@vger.kernel.org
+> > > > > > Signed-off-by: Andrey Albershteyn <aalbersh@redhat.com>
+> > > > > > Acked-by: Arnd Bergmann <arnd@arndb.de>
+> > > > > > ---
+> > > > > ...
+> > > > > > +SYSCALL_DEFINE5(setfsxattrat, int, dfd, const char __user *, filename,
+> > > > > > +               struct fsxattr __user *, ufsx, size_t, usize,
+> > > > > > +               unsigned int, at_flags)
+> > > > > > +{
+> > > > > > +       struct fileattr fa;
+> > > > > > +       struct path filepath;
+> > > > > > +       int error;
+> > > > > > +       unsigned int lookup_flags = 0;
+> > > > > > +       struct filename *name;
+> > > > > > +       struct mnt_idmap *idmap;.
+> > > > >
+> > > > > > +       struct dentry *dentry;
+> > > > > > +       struct vfsmount *mnt;
+> > > > > > +       struct fsxattr fsx = {};
+> > > > > > +
+> > > > > > +       BUILD_BUG_ON(sizeof(struct fsxattr) < FSXATTR_SIZE_VER0);
+> > > > > > +       BUILD_BUG_ON(sizeof(struct fsxattr) != FSXATTR_SIZE_LATEST);
+> > > > > > +
+> > > > > > +       if ((at_flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
+> > > > > > +               return -EINVAL;
+> > > > > > +
+> > > > > > +       if (!(at_flags & AT_SYMLINK_NOFOLLOW))
+> > > > > > +               lookup_flags |= LOOKUP_FOLLOW;
+> > > > > > +
+> > > > > > +       if (at_flags & AT_EMPTY_PATH)
+> > > > > > +               lookup_flags |= LOOKUP_EMPTY;
+> > > > > > +
+> > > > > > +       if (usize > PAGE_SIZE)
+> > > > > > +               return -E2BIG;
+> > > > > > +
+> > > > > > +       if (usize < FSXATTR_SIZE_VER0)
+> > > > > > +               return -EINVAL;
+> > > > > > +
+> > > > > > +       error = copy_struct_from_user(&fsx, sizeof(struct fsxattr), ufsx, usize);
+> > > > > > +       if (error)
+> > > > > > +               return error;
+> > > > > > +
+> > > > > > +       fsxattr_to_fileattr(&fsx, &fa);
+> > > > > > +
+> > > > > > +       name = getname_maybe_null(filename, at_flags);
+> > > > > > +       if (!name) {
+> > > > > > +               CLASS(fd, f)(dfd);
+> > > > > > +
+> > > > > > +               if (fd_empty(f))
+> > > > > > +                       return -EBADF;
+> > > > > > +
+> > > > > > +               idmap = file_mnt_idmap(fd_file(f));
+> > > > > > +               dentry = file_dentry(fd_file(f));
+> > > > > > +               mnt = fd_file(f)->f_path.mnt;
+> > > > > > +       } else {
+> > > > > > +               error = filename_lookup(dfd, name, lookup_flags, &filepath,
+> > > > > > +                                       NULL);
+> > > > > > +               if (error)
+> > > > > > +                       return error;
+> > > > > > +
+> > > > > > +               idmap = mnt_idmap(filepath.mnt);
+> > > > > > +               dentry = filepath.dentry;
+> > > > > > +               mnt = filepath.mnt;
+> > > > > > +       }
+> > > > > > +
+> > > > > > +       error = mnt_want_write(mnt);
+> > > > > > +       if (!error) {
+> > > > > > +               error = vfs_fileattr_set(idmap, dentry, &fa);
+> > > > > > +               if (error == -ENOIOCTLCMD)
+> > > > > > +                       error = -EOPNOTSUPP;
+> > > > >
+> > > > > This is awkward.
+> > > > > vfs_fileattr_set() should return -EOPNOTSUPP.
+> > > > > ioctl_setflags() could maybe convert it to -ENOIOCTLCMD,
+> > > > > but looking at similar cases ioctl_fiemap(), ioctl_fsfreeze() the
+> > > > > ioctl returns -EOPNOTSUPP.
+> > > > >
+> > > > > I don't think it is necessarily a bad idea to start returning
+> > > > >  -EOPNOTSUPP instead of -ENOIOCTLCMD for the ioctl
+> > > > > because that really reflects the fact that the ioctl is now implemented
+> > > > > in vfs and not in the specific fs.
+> > > > >
+> > > > > and I think it would not be a bad idea at all to make that change
+> > > > > together with the merge of the syscalls as a sort of hint to userspace
+> > > > > that uses the ioctl, that the sycalls API exists.
+> > > > >
+> > > > > Thanks,
+> > > > > Amir.
+> > > > >
+> > > >
+> > > > Hmm, not sure what you're suggesting here. I see it as:
+> > > > - get/setfsxattrat should return EOPNOTSUPP as it make more sense
+> > > >   than ENOIOCTLCMD
+> > > > - ioctl_setflags returns ENOIOCTLCMD which also expected
+> > > >
+> > > > Don't really see a reason to change what vfs_fileattr_set() returns
+> > > > and then copying this if() to other places or start returning
+> > > > EOPNOTSUPP.
+> > > 
+> > > ENOIOCTLCMD conceptually means that the ioctl command is unknown
+> > > This is not the case since ->fileattr_[gs]et() became a vfs API
+> > 
+> > vfs_fileattr_{g,s}et() should not return ENOIOCTLCMD. Change the return
+> > code to EOPNOTSUPP and then make EOPNOTSUPP be translated to ENOTTY on
+> > on overlayfs and to ENOIOCTLCMD in ecryptfs and in fs/ioctl.c. This way
+> > we get a clean VFS api while retaining current behavior. Amir can do his
+> > cleanup based on that.
+> 
+> Also this get/set dance is not something new apis should do. It should
+> be handled like setattr_prepare() or generic_fillattr() where the
+> filesystem calls a VFS helper and that does all of this based on the
+> current state of the inode instead of calling into the filesystem twice:
+> 
+> int vfs_fileattr_set(struct mnt_idmap *idmap, struct dentry *dentry,
+> 		     struct fileattr *fa)
+> {
+> <snip>
+> 	inode_lock(inode);
+> 	err = vfs_fileattr_get(dentry, &old_ma);
+> 	if (!err) {
+> 		/* initialize missing bits from old_ma */
+> 		if (fa->flags_valid) {
+> <snip>
+> 		err = fileattr_set_prepare(inode, &old_ma, fa);
+> 		if (!err && !security_inode_setfsxattr(inode, fa))
+> 			err = inode->i_op->fileattr_set(idmap, dentry, fa);
+> 
 
-Add selected helpers to estimate the transaction reservation required to
-write various log intent and buffer items to the log.  These helpers
-will be used by the online repair code for more precise estimations of
-how much work can be done in a single transaction.
+You mean something like this? (not all fs are done)
 
-Signed-off-by: "Darrick J. Wong" <djwong@kernel.org>
-Signed-off-by: John Garry <john.g.garry@oracle.com>
----
- fs/xfs/xfs_bmap_item.c     | 10 ++++++++++
- fs/xfs/xfs_bmap_item.h     |  3 +++
- fs/xfs/xfs_buf_item.c      | 19 +++++++++++++++++++
- fs/xfs/xfs_buf_item.h      |  3 +++
- fs/xfs/xfs_extfree_item.c  | 10 ++++++++++
- fs/xfs/xfs_extfree_item.h  |  3 +++
- fs/xfs/xfs_log_cil.c       |  4 +---
- fs/xfs/xfs_log_priv.h      | 13 +++++++++++++
- fs/xfs/xfs_refcount_item.c | 10 ++++++++++
- fs/xfs/xfs_refcount_item.h |  3 +++
- fs/xfs/xfs_rmap_item.c     | 10 ++++++++++
- fs/xfs/xfs_rmap_item.h     |  3 +++
- 12 files changed, 88 insertions(+), 3 deletions(-)
-
-diff --git a/fs/xfs/xfs_bmap_item.c b/fs/xfs/xfs_bmap_item.c
-index 3d52e9d7ad57..646c515ee355 100644
---- a/fs/xfs/xfs_bmap_item.c
-+++ b/fs/xfs/xfs_bmap_item.c
-@@ -77,6 +77,11 @@ xfs_bui_item_size(
- 	*nbytes += xfs_bui_log_format_sizeof(buip->bui_format.bui_nextents);
- }
- 
-+unsigned int xfs_bui_log_space(unsigned int nr)
-+{
-+	return xlog_item_space(1, xfs_bui_log_format_sizeof(nr));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given bui log item. We use only 1 iovec, and we point that
-@@ -168,6 +173,11 @@ xfs_bud_item_size(
- 	*nbytes += sizeof(struct xfs_bud_log_format);
- }
- 
-+unsigned int xfs_bud_log_space(void)
-+{
-+	return xlog_item_space(1, sizeof(struct xfs_bud_log_format));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given bud log item. We use only 1 iovec, and we point that
-diff --git a/fs/xfs/xfs_bmap_item.h b/fs/xfs/xfs_bmap_item.h
-index 6fee6a508343..b42fee06899d 100644
---- a/fs/xfs/xfs_bmap_item.h
-+++ b/fs/xfs/xfs_bmap_item.h
-@@ -72,4 +72,7 @@ struct xfs_bmap_intent;
- 
- void xfs_bmap_defer_add(struct xfs_trans *tp, struct xfs_bmap_intent *bi);
- 
-+unsigned int xfs_bui_log_space(unsigned int nr);
-+unsigned int xfs_bud_log_space(void);
-+
- #endif	/* __XFS_BMAP_ITEM_H__ */
-diff --git a/fs/xfs/xfs_buf_item.c b/fs/xfs/xfs_buf_item.c
-index 19eb0b7a3e58..90139e0f3271 100644
---- a/fs/xfs/xfs_buf_item.c
-+++ b/fs/xfs/xfs_buf_item.c
-@@ -103,6 +103,25 @@ xfs_buf_item_size_segment(
- 	return;
- }
- 
-+/*
-+ * Compute the worst case log item overhead for an invalidated buffer with the
-+ * given map count and block size.
-+ */
-+unsigned int
-+xfs_buf_inval_log_space(
-+	unsigned int	map_count,
-+	unsigned int	blocksize)
-+{
-+	unsigned int	chunks = DIV_ROUND_UP(blocksize, XFS_BLF_CHUNK);
-+	unsigned int	bitmap_size = DIV_ROUND_UP(chunks, NBWORD);
-+	unsigned int	ret =
-+		offsetof(struct xfs_buf_log_format, blf_data_map) +
-+			(bitmap_size * sizeof_field(struct xfs_buf_log_format,
-+						    blf_data_map[0]));
-+
-+	return ret * map_count;
-+}
-+
- /*
-  * Return the number of log iovecs and space needed to log the given buf log
-  * item.
-diff --git a/fs/xfs/xfs_buf_item.h b/fs/xfs/xfs_buf_item.h
-index 8cde85259a58..e10e324cd245 100644
---- a/fs/xfs/xfs_buf_item.h
-+++ b/fs/xfs/xfs_buf_item.h
-@@ -64,6 +64,9 @@ static inline void xfs_buf_dquot_iodone(struct xfs_buf *bp)
- void	xfs_buf_iodone(struct xfs_buf *);
- bool	xfs_buf_log_check_iovec(struct xfs_log_iovec *iovec);
- 
-+unsigned int xfs_buf_inval_log_space(unsigned int map_count,
-+		unsigned int blocksize);
-+
- extern struct kmem_cache	*xfs_buf_item_cache;
- 
- #endif	/* __XFS_BUF_ITEM_H__ */
-diff --git a/fs/xfs/xfs_extfree_item.c b/fs/xfs/xfs_extfree_item.c
-index 777438b853da..d574f5f639fa 100644
---- a/fs/xfs/xfs_extfree_item.c
-+++ b/fs/xfs/xfs_extfree_item.c
-@@ -83,6 +83,11 @@ xfs_efi_item_size(
- 	*nbytes += xfs_efi_log_format_sizeof(efip->efi_format.efi_nextents);
- }
- 
-+unsigned int xfs_efi_log_space(unsigned int nr)
-+{
-+	return xlog_item_space(1, xfs_efi_log_format_sizeof(nr));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given efi log item. We use only 1 iovec, and we point that
-@@ -254,6 +259,11 @@ xfs_efd_item_size(
- 	*nbytes += xfs_efd_log_format_sizeof(efdp->efd_format.efd_nextents);
- }
- 
-+unsigned int xfs_efd_log_space(unsigned int nr)
-+{
-+	return xlog_item_space(1, xfs_efd_log_format_sizeof(nr));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given efd log item. We use only 1 iovec, and we point that
-diff --git a/fs/xfs/xfs_extfree_item.h b/fs/xfs/xfs_extfree_item.h
-index 41b7c4306079..c8402040410b 100644
---- a/fs/xfs/xfs_extfree_item.h
-+++ b/fs/xfs/xfs_extfree_item.h
-@@ -94,4 +94,7 @@ void xfs_extent_free_defer_add(struct xfs_trans *tp,
- 		struct xfs_extent_free_item *xefi,
- 		struct xfs_defer_pending **dfpp);
- 
-+unsigned int xfs_efi_log_space(unsigned int nr);
-+unsigned int xfs_efd_log_space(unsigned int nr);
-+
- #endif	/* __XFS_EXTFREE_ITEM_H__ */
-diff --git a/fs/xfs/xfs_log_cil.c b/fs/xfs/xfs_log_cil.c
-index 1ca406ec1b40..f66d2d430e4f 100644
---- a/fs/xfs/xfs_log_cil.c
-+++ b/fs/xfs/xfs_log_cil.c
-@@ -309,9 +309,7 @@ xlog_cil_alloc_shadow_bufs(
- 		 * Then round nbytes up to 64-bit alignment so that the initial
- 		 * buffer alignment is easy to calculate and verify.
- 		 */
--		nbytes += niovecs *
--			(sizeof(uint64_t) + sizeof(struct xlog_op_header));
--		nbytes = round_up(nbytes, sizeof(uint64_t));
-+		nbytes = xlog_item_space(niovecs, nbytes);
- 
- 		/*
- 		 * The data buffer needs to start 64-bit aligned, so round up
-diff --git a/fs/xfs/xfs_log_priv.h b/fs/xfs/xfs_log_priv.h
-index f3d78869e5e5..39a102cc1b43 100644
---- a/fs/xfs/xfs_log_priv.h
-+++ b/fs/xfs/xfs_log_priv.h
-@@ -698,4 +698,17 @@ xlog_kvmalloc(
- 	return p;
- }
- 
-+/*
-+ * Given a count of iovecs and space for a log item, compute the space we need
-+ * in the log to store that data plus the log headers.
-+ */
-+static inline unsigned int
-+xlog_item_space(
-+	unsigned int	niovecs,
-+	unsigned int	nbytes)
-+{
-+	nbytes += niovecs * (sizeof(uint64_t) + sizeof(struct xlog_op_header));
-+	return round_up(nbytes, sizeof(uint64_t));
-+}
-+
- #endif	/* __XFS_LOG_PRIV_H__ */
-diff --git a/fs/xfs/xfs_refcount_item.c b/fs/xfs/xfs_refcount_item.c
-index fe2d7aab8554..076501123d89 100644
---- a/fs/xfs/xfs_refcount_item.c
-+++ b/fs/xfs/xfs_refcount_item.c
-@@ -78,6 +78,11 @@ xfs_cui_item_size(
- 	*nbytes += xfs_cui_log_format_sizeof(cuip->cui_format.cui_nextents);
- }
- 
-+unsigned int xfs_cui_log_space(unsigned int nr)
-+{
-+	return xlog_item_space(1, xfs_cui_log_format_sizeof(nr));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given cui log item. We use only 1 iovec, and we point that
-@@ -179,6 +184,11 @@ xfs_cud_item_size(
- 	*nbytes += sizeof(struct xfs_cud_log_format);
- }
- 
-+unsigned int xfs_cud_log_space(void)
-+{
-+	return xlog_item_space(1, sizeof(struct xfs_cud_log_format));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given cud log item. We use only 1 iovec, and we point that
-diff --git a/fs/xfs/xfs_refcount_item.h b/fs/xfs/xfs_refcount_item.h
-index bfee8f30c63c..0fc3f493342b 100644
---- a/fs/xfs/xfs_refcount_item.h
-+++ b/fs/xfs/xfs_refcount_item.h
-@@ -76,4 +76,7 @@ struct xfs_refcount_intent;
- void xfs_refcount_defer_add(struct xfs_trans *tp,
- 		struct xfs_refcount_intent *ri);
- 
-+unsigned int xfs_cui_log_space(unsigned int nr);
-+unsigned int xfs_cud_log_space(void);
-+
- #endif	/* __XFS_REFCOUNT_ITEM_H__ */
-diff --git a/fs/xfs/xfs_rmap_item.c b/fs/xfs/xfs_rmap_item.c
-index 89decffe76c8..c99700318ec2 100644
---- a/fs/xfs/xfs_rmap_item.c
-+++ b/fs/xfs/xfs_rmap_item.c
-@@ -77,6 +77,11 @@ xfs_rui_item_size(
- 	*nbytes += xfs_rui_log_format_sizeof(ruip->rui_format.rui_nextents);
- }
- 
-+unsigned int xfs_rui_log_space(unsigned int nr)
-+{
-+	return xlog_item_space(1, xfs_rui_log_format_sizeof(nr));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given rui log item. We use only 1 iovec, and we point that
-@@ -180,6 +185,11 @@ xfs_rud_item_size(
- 	*nbytes += sizeof(struct xfs_rud_log_format);
- }
- 
-+unsigned int xfs_rud_log_space(void)
-+{
-+	return xlog_item_space(1, sizeof(struct xfs_rud_log_format));
-+}
-+
- /*
-  * This is called to fill in the vector of log iovecs for the
-  * given rud log item. We use only 1 iovec, and we point that
-diff --git a/fs/xfs/xfs_rmap_item.h b/fs/xfs/xfs_rmap_item.h
-index 40d331555675..3a99f0117f2d 100644
---- a/fs/xfs/xfs_rmap_item.h
-+++ b/fs/xfs/xfs_rmap_item.h
-@@ -75,4 +75,7 @@ struct xfs_rmap_intent;
- 
- void xfs_rmap_defer_add(struct xfs_trans *tp, struct xfs_rmap_intent *ri);
- 
-+unsigned int xfs_rui_log_space(unsigned int nr);
-+unsigned int xfs_rud_log_space(void);
-+
- #endif	/* __XFS_RMAP_ITEM_H__ */
 -- 
-2.31.1
+
+From 421445f054ccad3116d55ae22c8995a48bb753fd Mon Sep 17 00:00:00 2001
+From: Andrey Albershteyn <aalbersh@kernel.org>
+Date: Fri, 25 Apr 2025 17:20:42 +0200
+Subject: [PATCH] fs: push retrieval of fileattr down to filesystems
+
+Currently, vfs_fileattr_set() calls twice to the file system. Firstly,
+to retrieve current state of the inode extended attributes and secondly
+to set the new ones.
+
+This patch refactors this in a way that filesystem firstly gets current
+inode attribute state and then calls VFS helper to verify them. This way
+vfs_fileattr_set() will call filesystem just once.
+
+Signed-off-by: Andrey Albershteyn <aalbersh@kernel.org>
+---
+ fs/ext2/ioctl.c          |  9 ++++++
+ fs/ext4/ioctl.c          |  9 ++++++
+ fs/f2fs/file.c           | 12 +++++++-
+ fs/file_attr.c           | 62 ++++++++++++++++++++++++----------------
+ fs/gfs2/file.c           |  9 ++++++
+ fs/hfsplus/inode.c       |  9 ++++++
+ fs/jfs/ioctl.c           |  9 +++++-
+ fs/ntfs3/file.c          | 12 +++++++-
+ fs/orangefs/inode.c      |  9 ++++++
+ fs/ubifs/ioctl.c         | 12 +++++++-
+ fs/xfs/xfs_ioctl.c       |  6 ++++
+ include/linux/fileattr.h |  2 ++
+ mm/shmem.c               |  8 ++++++
+ 13 files changed, 140 insertions(+), 28 deletions(-)
+
+diff --git a/fs/ext2/ioctl.c b/fs/ext2/ioctl.c
+index 44e04484e570..3a45ed9c12b7 100644
+--- a/fs/ext2/ioctl.c
++++ b/fs/ext2/ioctl.c
+@@ -32,6 +32,15 @@ int ext2_fileattr_set(struct mnt_idmap *idmap,
+ {
+ 	struct inode *inode = d_inode(dentry);
+ 	struct ext2_inode_info *ei = EXT2_I(inode);
++	struct fileattr cfa;
++	int err;
++
++	err = ext2_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
+ 
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index d17207386ead..f988ff4d7256 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -1002,6 +1002,15 @@ int ext4_fileattr_set(struct mnt_idmap *idmap,
+ 	struct inode *inode = d_inode(dentry);
+ 	u32 flags = fa->flags;
+ 	int err = -EOPNOTSUPP;
++	struct fileattr cfa;
++
++	err = ext4_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
+ 
+ 	if (flags & ~EXT4_FL_USER_VISIBLE)
+ 		goto out;
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index abbcbb5865a3..f196a07f1f17 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -3371,14 +3371,24 @@ int f2fs_fileattr_set(struct mnt_idmap *idmap,
+ 		      struct dentry *dentry, struct fileattr *fa)
+ {
+ 	struct inode *inode = d_inode(dentry);
+-	u32 fsflags = fa->flags, mask = F2FS_SETTABLE_FS_FL;
++	u32 fsflags, mask = F2FS_SETTABLE_FS_FL;
+ 	u32 iflags;
++	struct fileattr cfa;
+ 	int err;
+ 
+ 	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
+ 		return -EIO;
+ 	if (!f2fs_is_checkpoint_ready(F2FS_I_SB(inode)))
+ 		return -ENOSPC;
++
++	err = f2fs_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
++	fsflags = fa->flags;
++
+ 	if (fsflags & ~F2FS_GETTABLE_FS_FL)
+ 		return -EOPNOTSUPP;
+ 	fsflags &= F2FS_SETTABLE_FS_FL;
+diff --git a/fs/file_attr.c b/fs/file_attr.c
+index 5e51c5b851ef..d0a01377bca8 100644
+--- a/fs/file_attr.c
++++ b/fs/file_attr.c
+@@ -7,6 +7,8 @@
+ #include <linux/fileattr.h>
+ #include <linux/namei.h>
+ 
++#include "internal.h"
++
+ /**
+  * fileattr_fill_xflags - initialize fileattr with xflags
+  * @fa:		fileattr pointer
+@@ -225,6 +227,36 @@ static int fileattr_set_prepare(struct inode *inode,
+ 	return 0;
+ }
+ 
++/**
++ * vfs_fileattr_set_prepare - merge new filettr state and check for validity
++ * @idmap:	idmap of the mount
++ * @dentry:	the object to change
++ * @cfa:	current fileattr state
++ * @fa:		fileattr pointer with new values
++ *
++ * Return: 0 on success, or a negative error on failure.
++ */
++int vfs_fileattr_set_prepare(struct mnt_idmap *idmap, struct dentry *dentry,
++			     struct fileattr *cfa, struct fileattr *fa)
++{
++	int err;
++
++	/* initialize missing bits from cfa */
++	if (fa->flags_valid) {
++		fa->fsx_xflags |= cfa->fsx_xflags & ~FS_XFLAG_COMMON;
++		fa->fsx_extsize = cfa->fsx_extsize;
++		fa->fsx_nextents = cfa->fsx_nextents;
++		fa->fsx_projid = cfa->fsx_projid;
++		fa->fsx_cowextsize = cfa->fsx_cowextsize;
++	} else {
++		fa->flags |= cfa->flags & ~FS_COMMON_FL;
++	}
++
++	err = fileattr_set_prepare(d_inode(dentry), cfa, fa);
++	return err;
++}
++EXPORT_SYMBOL(vfs_fileattr_set_prepare);
++
+ /**
+  * vfs_fileattr_set - change miscellaneous file attributes
+  * @idmap:	idmap of the mount
+@@ -245,7 +277,6 @@ int vfs_fileattr_set(struct mnt_idmap *idmap, struct dentry *dentry,
+ 		     struct fileattr *fa)
+ {
+ 	struct inode *inode = d_inode(dentry);
+-	struct fileattr old_ma = {};
+ 	int err;
+ 
+ 	if (!inode->i_op->fileattr_set)
+@@ -255,29 +286,12 @@ int vfs_fileattr_set(struct mnt_idmap *idmap, struct dentry *dentry,
+ 		return -EPERM;
+ 
+ 	inode_lock(inode);
+-	err = vfs_fileattr_get(dentry, &old_ma);
+-	if (!err) {
+-		/* initialize missing bits from old_ma */
+-		if (fa->flags_valid) {
+-			fa->fsx_xflags |= old_ma.fsx_xflags & ~FS_XFLAG_COMMON;
+-			fa->fsx_extsize = old_ma.fsx_extsize;
+-			fa->fsx_nextents = old_ma.fsx_nextents;
+-			fa->fsx_projid = old_ma.fsx_projid;
+-			fa->fsx_cowextsize = old_ma.fsx_cowextsize;
+-		} else {
+-			fa->flags |= old_ma.flags & ~FS_COMMON_FL;
+-		}
+-
+-		err = fileattr_set_prepare(inode, &old_ma, fa);
+-		if (err)
+-			goto out;
+-		err = security_inode_file_setattr(dentry, fa);
+-		if (err)
+-			goto out;
+-		err = inode->i_op->fileattr_set(idmap, dentry, fa);
+-		if (err)
+-			goto out;
+-	}
++	err = security_inode_file_setattr(dentry, fa);
++	if (err)
++		goto out;
++	err = inode->i_op->fileattr_set(idmap, dentry, fa);
++	if (err)
++		goto out;
+ 
+ out:
+ 	inode_unlock(inode);
+diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
+index fd1147aa3891..cf796fa73af2 100644
+--- a/fs/gfs2/file.c
++++ b/fs/gfs2/file.c
+@@ -282,10 +282,19 @@ int gfs2_fileattr_set(struct mnt_idmap *idmap,
+ 	u32 fsflags = fa->flags, gfsflags = 0;
+ 	u32 mask;
+ 	int i;
++	struct fileattr cfa;
++	int error;
+ 
+ 	if (d_is_special(dentry))
+ 		return -ENOTTY;
+ 
++	error = gfs2_fileattr_get(dentry, &cfa);
++	if (error)
++		return error;
++	error = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (error)
++		return error;
++
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+ 
+diff --git a/fs/hfsplus/inode.c b/fs/hfsplus/inode.c
+index f331e9574217..cdb11d00faea 100644
+--- a/fs/hfsplus/inode.c
++++ b/fs/hfsplus/inode.c
+@@ -678,6 +678,15 @@ int hfsplus_fileattr_set(struct mnt_idmap *idmap,
+ 	struct inode *inode = d_inode(dentry);
+ 	struct hfsplus_inode_info *hip = HFSPLUS_I(inode);
+ 	unsigned int new_fl = 0;
++	struct fileattr cfa;
++	int err;
++
++	err = hfsplus_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
+ 
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+diff --git a/fs/jfs/ioctl.c b/fs/jfs/ioctl.c
+index f7bd7e8f5be4..4c62c14d15b0 100644
+--- a/fs/jfs/ioctl.c
++++ b/fs/jfs/ioctl.c
+@@ -75,11 +75,18 @@ int jfs_fileattr_set(struct mnt_idmap *idmap,
+ {
+ 	struct inode *inode = d_inode(dentry);
+ 	struct jfs_inode_info *jfs_inode = JFS_IP(inode);
+-	unsigned int flags;
++	unsigned int flags = jfs_inode->mode2 & JFS_FL_USER_VISIBLE;
++	struct fileattr cfa;
++	int err;
+ 
+ 	if (d_is_special(dentry))
+ 		return -ENOTTY;
+ 
++	fileattr_fill_flags(&cfa, jfs_map_ext2(flags, 0));
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
++
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+ 
+diff --git a/fs/ntfs3/file.c b/fs/ntfs3/file.c
+index 9b6a3f8d2e7c..bc7ee7595b70 100644
+--- a/fs/ntfs3/file.c
++++ b/fs/ntfs3/file.c
+@@ -83,12 +83,22 @@ int ntfs_fileattr_set(struct mnt_idmap *idmap, struct dentry *dentry,
+ {
+ 	struct inode *inode = d_inode(dentry);
+ 	struct ntfs_inode *ni = ntfs_i(inode);
+-	u32 flags = fa->flags;
++	u32 flags;
+ 	unsigned int new_fl = 0;
++	struct fileattr cfa;
++	int err;
++
++	err = ntfs_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
+ 
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+ 
++	flags = fa->flags;
+ 	if (flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL | FS_COMPR_FL))
+ 		return -EOPNOTSUPP;
+ 
+diff --git a/fs/orangefs/inode.c b/fs/orangefs/inode.c
+index 5ac743c6bc2e..aecb61146443 100644
+--- a/fs/orangefs/inode.c
++++ b/fs/orangefs/inode.c
+@@ -910,6 +910,15 @@ static int orangefs_fileattr_set(struct mnt_idmap *idmap,
+ 				 struct dentry *dentry, struct fileattr *fa)
+ {
+ 	u64 val = 0;
++	struct fileattr cfa;
++	int error = 0;
++
++	error = orangefs_fileattr_get(dentry, &cfa);
++	if (error)
++		return error;
++	error = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (error)
++		return error;
+ 
+ 	gossip_debug(GOSSIP_FILE_DEBUG, "%s: called on %pd\n", __func__,
+ 		     dentry);
+diff --git a/fs/ubifs/ioctl.c b/fs/ubifs/ioctl.c
+index 2c99349cf537..e71e362c786b 100644
+--- a/fs/ubifs/ioctl.c
++++ b/fs/ubifs/ioctl.c
+@@ -148,14 +148,24 @@ int ubifs_fileattr_set(struct mnt_idmap *idmap,
+ 		       struct dentry *dentry, struct fileattr *fa)
+ {
+ 	struct inode *inode = d_inode(dentry);
+-	int flags = fa->flags;
++	int flags;
++	struct fileattr cfa;
++	int err;
+ 
+ 	if (d_is_special(dentry))
+ 		return -ENOTTY;
+ 
++	err = ubifs_fileattr_get(dentry, &cfa);
++	if (err)
++		return err;
++	err = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (err)
++		return err;
++
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+ 
++	flags = fa->flags;
+ 	if (flags & ~UBIFS_GETTABLE_IOCTL_FLAGS)
+ 		return -EOPNOTSUPP;
+ 
+diff --git a/fs/xfs/xfs_ioctl.c b/fs/xfs/xfs_ioctl.c
+index d250f7f74e3b..c861dc1c3cf0 100644
+--- a/fs/xfs/xfs_ioctl.c
++++ b/fs/xfs/xfs_ioctl.c
+@@ -733,12 +733,18 @@ xfs_fileattr_set(
+ 	struct xfs_dquot	*pdqp = NULL;
+ 	struct xfs_dquot	*olddquot = NULL;
+ 	int			error;
++	struct fileattr		cfa;
+ 
+ 	trace_xfs_ioctl_setattr(ip);
+ 
+ 	if (d_is_special(dentry))
+ 		return -ENOTTY;
+ 
++	xfs_fill_fsxattr(ip, XFS_DATA_FORK, &cfa);
++	error = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (error)
++		return error;
++
+ 	if (!fa->fsx_valid) {
+ 		if (fa->flags & ~(FS_IMMUTABLE_FL | FS_APPEND_FL |
+ 				  FS_NOATIME_FL | FS_NODUMP_FL |
+diff --git a/include/linux/fileattr.h b/include/linux/fileattr.h
+index f62a5143eb2d..aba76d897533 100644
+--- a/include/linux/fileattr.h
++++ b/include/linux/fileattr.h
+@@ -75,6 +75,8 @@ static inline bool fileattr_has_fsx(const struct fileattr *fa)
+ }
+ 
+ int vfs_fileattr_get(struct dentry *dentry, struct fileattr *fa);
++int vfs_fileattr_set_prepare(struct mnt_idmap *idmap, struct dentry *dentry,
++			     struct fileattr *cfa, struct fileattr *fa);
+ int vfs_fileattr_set(struct mnt_idmap *idmap, struct dentry *dentry,
+ 		     struct fileattr *fa);
+ int ioctl_getflags(struct file *file, unsigned int __user *argp);
+diff --git a/mm/shmem.c b/mm/shmem.c
+index 99327c30507c..c2a5991f944f 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -4199,6 +4199,14 @@ static int shmem_fileattr_set(struct mnt_idmap *idmap,
+ 	struct inode *inode = d_inode(dentry);
+ 	struct shmem_inode_info *info = SHMEM_I(inode);
+ 	int ret, flags;
++	struct fileattr cfa;
++
++	ret = shmem_fileattr_get(dentry, &cfa);
++	if (ret)
++		return ret;
++	ret = vfs_fileattr_set_prepare(idmap, dentry, &cfa, fa);
++	if (ret)
++		return ret;
+ 
+ 	if (fileattr_has_fsx(fa))
+ 		return -EOPNOTSUPP;
+-- 
+2.47.2
 
