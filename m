@@ -1,38 +1,36 @@
 Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1953B28312C;
-	Tue,  6 May 2025 14:40:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A416283144;
+	Tue,  6 May 2025 14:40:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746542408; cv=none; b=eoDAsYkCff5k2I2S/P2ImCoyKrdU6Wo+bKlQaQlPgZxYQZi1AaJMOawfVWwSQyRPOUvZB6/CICG183uAbb1baL6/kWJmiMYaqbhQNnxA3iQEPJuZOmFqrAMbbgbTSCwUjAeo94hgghCtwfW6GQNe16w4Lo++Hpp0wuxRGVtzE/o=
+	t=1746542409; cv=none; b=keDvIBSzEJdep2II9oQ4F5qWnjm3McogNh2ylleZc+twpPw6DnaCAuGhSMhzXVBDpYdn2i1SdLq4BpvpgTAkAZqq79TzoWUALezulKhypdkU4BZhMTFzcldzAPsu8UzmNO8p6l8Icw+EJJA1N93OL4zkbi5SZTMyss01TJZPkM8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746542408; c=relaxed/simple;
-	bh=oRtoK4OQ3pTc5bDcwGh+bbInmaqSKZ/gQFhJ0vvibzQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=prPDQFkQdpsW1R4xJRzO7aYGh1dS85+i8GY6hTz0wJSmoy3VdPh+KwDcmBCXLYOouuogRKVQScDNfuNFssQRGm7icaU9x+nJGWpC3ea4loF19l5pNzFuwLFScVTO/B3FD9PXbqhSA3RAm6Z0/twj040Fms+dJn+R78FqQMlrqW0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=Vb66+m91; arc=none smtp.client-ip=185.125.188.120
+	s=arc-20240116; t=1746542409; c=relaxed/simple;
+	bh=1iXstPr7bOiUj3ykArYg0RbbEU7/aRPEt2AAD7QT3is=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=gtrXES623YLS+SgpFGoTCu11KyZW5SytCLtG8Z2leU8zXqOMDQHv0g9ynq6Cy9jQeEPD6Zf8SiqwdQthXVH9r64kdKaL9yknKnhk0+VNwZpR/JYBMIczMxzCzL3UZTHnNH6lKqG8f6ooGt1eEePL8YxtCORk6EeD9CtjOy/FjtQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=FLDeS8VF; arc=none smtp.client-ip=185.125.188.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="Vb66+m91"
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="FLDeS8VF"
 Received: from sec2-plucky-amd64.. (lau06-h06-176-136-128-80.dsl.sta.abo.bbox.fr [176.136.128.80])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 33E1B3FA54;
-	Tue,  6 May 2025 14:33:52 +0000 (UTC)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 0A1493F942;
+	Tue,  6 May 2025 14:33:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1746542032;
-	bh=hyvapAcLQdJMkeSi/2KEFS+jCT+8B4SCrMVpfLKAPCY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type;
-	b=Vb66+m91neEuJpJWZPeg1h4V00CV3+LESm5ekiXTg5CSFH17/zL32vkHcVYnb/0un
-	 8SHKfCEwvGvgtGXjMEgC9wgjWePCyD9dHiCHSG1T7KybQnxUw/xfrMVJRqzgqM/CCB
-	 FeQe8rpgZKG0Ow0NmyCtAgXhDppkaJYDR7nkF3DZAgq64dSWrb3AiLQdvxU3LYG6xg
-	 aj0wXcpORLvls0JCM5QLGkFY2exrZgKI2rn6UJLh9it+6z1zzrHiqANbJNqyJMiTb/
-	 27BFDZWqx0/x4aviamZHEYhDu11V6lern2ZPfNAfB2GplQOWuF5bIdeyX/dTJVwnfD
-	 qfn8WMgc0gm2g==
+	s=20210705; t=1746542030;
+	bh=an5raNhgTgi9WJMXPfc6cBxG0uJN7smFK940ReUZLPc=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type;
+	b=FLDeS8VFZ41ndrtlEFVsHdrPIQ6TQtZdwGHAi2DPrlUhFH7oYF9po/v3tJk0L32WA
+	 EOk91i5JRKqQAPNh8l7Z8d6b9xTfSZ7zVQbdhePp9mAuA1BhIZ7qMJh4IVb6OXckox
+	 HMA8aboFP9Pjdwhe9c2bydNkb/cTE6LTcz/vSVaoQQo++bsI5wdyBTXAOeU5voiASr
+	 zgo6YhGV4fT4Z+zG9GHh9NuNaizX3O5zDoEaF8ZmpR+UCvZC/Il+gMmYESV7SdcgpL
+	 IEA4ke66R6Vh+qq6/5FLfM4fb5Q68/DCQbGojeqdPx4Wddr2QkR8Ds6/7nmBPKYyYG
+	 AldNvaW3ruqKg==
 From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
 To: linux-security-module@vger.kernel.org
 Cc: john.johansen@canonical.com,
@@ -49,12 +47,10 @@ Cc: john.johansen@canonical.com,
 	apparmor@lists.ubuntu.com,
 	linux-kernel@vger.kernel.org,
 	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-Subject: [PATCH 2/3] lsm: introduce security_lsm_manage_policy hook
-Date: Tue,  6 May 2025 16:32:29 +0200
-Message-ID: <20250506143254.718647-3-maxime.belair@canonical.com>
+Subject: [PATCH 0/3] lsm: introduce lsm_manage_policy() syscall
+Date: Tue,  6 May 2025 16:32:27 +0200
+Message-ID: <20250506143254.718647-1-maxime.belair@canonical.com>
 X-Mailer: git-send-email 2.48.1
-In-Reply-To: <20250506143254.718647-1-maxime.belair@canonical.com>
-References: <20250506143254.718647-1-maxime.belair@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -64,120 +60,70 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Define a new LSM hook security_lsm_manage_policy and wire it into the
-lsm_manage_policy() syscall so that LSMs can register a unified interface
-for policy management. This initial, minimal implementation only supports
-the LSM_POLICY_LOAD operation to limit changes.
+This patchset introduces a new syscall, lsm_manage_policy(), and the
+associated Linux Security Module hook security_lsm_manage_policy(),
+providing a unified interface for loading and managing LSM policies.
+This syscall complements the existing per‑LSM pseudo‑filesystem mechanism
+and works even when those filesystems are not mounted or available.
 
-Signed-off-by: Maxime Bélair <maxime.belair@canonical.com>
----
- include/linux/lsm_hook_defs.h |  2 ++
- include/linux/security.h      |  7 +++++++
- include/uapi/linux/lsm.h      |  8 ++++++++
- security/lsm_syscalls.c       |  7 ++++++-
- security/security.c           | 21 +++++++++++++++++++++
- 5 files changed, 44 insertions(+), 1 deletion(-)
+With this new syscall, administrators may lock down access to the
+pseudo‑filesystem yet still manage LSM policies. A single, tightly scoped
+entry point then replaces the many file operations exposed by those
+filesystems, significantly reducing the attack surface. This is
+particularly useful in containers or processes already confined by
+Landlock, where these pseudo‑filesystems are typically unavailable.
 
-diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
-index bf3bbac4e02a..04b6e34d5111 100644
---- a/include/linux/lsm_hook_defs.h
-+++ b/include/linux/lsm_hook_defs.h
-@@ -464,3 +464,5 @@ LSM_HOOK(int, 0, bdev_alloc_security, struct block_device *bdev)
- LSM_HOOK(void, LSM_RET_VOID, bdev_free_security, struct block_device *bdev)
- LSM_HOOK(int, 0, bdev_setintegrity, struct block_device *bdev,
- 	 enum lsm_integrity_type type, const void *value, size_t size)
-+LSM_HOOK(int, 0, lsm_manage_policy, u32 lsm_id, u32 op, void __user *buf,
-+	 size_t size, u32 flags)
-diff --git a/include/linux/security.h b/include/linux/security.h
-index cc9b54d95d22..dab547ee691c 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -581,6 +581,8 @@ void security_bdev_free(struct block_device *bdev);
- int security_bdev_setintegrity(struct block_device *bdev,
- 			       enum lsm_integrity_type type, const void *value,
- 			       size_t size);
-+int security_lsm_manage_policy(u32 lsm_id, u32 op, void __user *buf,
-+			       size_t size, u32 flags);
- #else /* CONFIG_SECURITY */
- 
- /**
-@@ -1602,6 +1604,11 @@ static inline int security_bdev_setintegrity(struct block_device *bdev,
- {
- 	return 0;
- }
-+static int security_lsm_manage_policy(u32 lsm_id, u32 op, void __user *buf,
-+				      size_t size, u32 flags)
-+
-+	return -EOPNOTSUPP;
-+}
- 
- #endif	/* CONFIG_SECURITY */
- 
-diff --git a/include/uapi/linux/lsm.h b/include/uapi/linux/lsm.h
-index 938593dfd5da..7335f9723114 100644
---- a/include/uapi/linux/lsm.h
-+++ b/include/uapi/linux/lsm.h
-@@ -90,4 +90,12 @@ struct lsm_ctx {
-  */
- #define LSM_FLAG_SINGLE	0x0001
- 
-+/*
-+ * LSM_POLICY_XXX definition identifies operation to manage lsm
-+ * policies
-+ */
-+
-+#define LSM_POLICY_UNDEF	0
-+#define LSM_POLICY_LOAD		100
-+
- #endif /* _UAPI_LINUX_LSM_H */
-diff --git a/security/lsm_syscalls.c b/security/lsm_syscalls.c
-index dcaad8818679..b39e6635a7d5 100644
---- a/security/lsm_syscalls.c
-+++ b/security/lsm_syscalls.c
-@@ -122,5 +122,10 @@ SYSCALL_DEFINE3(lsm_list_modules, u64 __user *, ids, u32 __user *, size,
- SYSCALL_DEFINE5(lsm_manage_policy, u32, lsm_id, u32, op, void __user *, buf, u32
- 		__user *, size, u32, flags)
- {
--	return 0;
-+	size_t usize;
-+
-+	if (get_user(usize, size))
-+		return -EFAULT;
-+
-+	return security_lsm_manage_policy(lsm_id, op, buf, usize, flags);
- }
-diff --git a/security/security.c b/security/security.c
-index fb57e8fddd91..256104e338b1 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -5883,6 +5883,27 @@ int security_bdev_setintegrity(struct block_device *bdev,
- }
- EXPORT_SYMBOL(security_bdev_setintegrity);
- 
-+/**
-+ * security_lsm_manage_policy() - Manage the policies of LSMs
-+ * @lsm_id: id of the lsm to target
-+ * @op: Operation to perform (one of the LSM_POLICY_XXX values)
-+ * @buf:  userspace pointer to policy data
-+ * @size: size of @buf
-+ * @flags: lsm policy management flags
-+ *
-+ * Manage the policies of a LSM. This notably allows to update them even when
-+ * the lsmfs is unavailable is restricted. Currently, only LSM_POLICY_LOAD is
-+ * supported.
-+ *
-+ * Return: Returns 0 on success, error on failure.
-+ */
-+int security_lsm_manage_policy(u32 lsm_id, u32 op, void __user *buf,
-+			       size_t size, u32 flags)
-+{
-+	return call_int_hook(lsm_manage_policy, lsm_id, op, buf, size, flags);
-+}
-+EXPORT_SYMBOL(security_lsm_manage_policy);
-+
- #ifdef CONFIG_PERF_EVENTS
- /**
-  * security_perf_event_open() - Check if a perf event open is allowed
+Because it provides a logical and unified interface, lsm_manage_policy()
+is simpler to use than several heterogeneous pseudo‑filesystems and
+avoids edge cases such as partially loaded policies. It also eliminates
+VFS overhead, yielding performance gains notably when many policies are
+loaded, for instance at boot time.
+
+This initial implementation is intentionally minimal to limit the scope
+of changes. Currently, only policy loading is supported, and only
+AppArmor registers this LSM hook. However, any LSM can adopt this
+interface, and future patches could extend this syscall to support more
+operations, such as replacing, removing, or querying loaded policies.
+
+Landlock already provides three Landlock‑specific syscalls (e.g.
+landlock_add_rule()) to restrict ambient rights for sets of processes
+without touching any pseudo-filesystem. lsm_manage_policy() generalizes
+that approach to the entire LSM layer, so any module can expose its
+policy operations through one uniform interface and reap the advantages
+outlined above.
+
+This patchset is available at [1] and a minimal user space example
+showing how to use this syscall with AppArmor is at [2].
+
+[1] https://github.com/emixam16/linux/tree/lsm_syscall
+[2] https://gitlab.com/emixam16/apparmor/tree/lsm_syscall
+
+Maxime Bélair (3):
+  Wire up the lsm_manage_policy syscall
+  lsm: introduce security_lsm_manage_policy hook
+  AppArmor: add support for lsm_manage_policy
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |  1 +
+ arch/arm/tools/syscall.tbl                    |  1 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |  1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |  1 +
+ include/linux/lsm_hook_defs.h                 |  2 ++
+ include/linux/security.h                      |  7 +++++++
+ include/linux/syscalls.h                      |  4 ++++
+ include/uapi/asm-generic/unistd.h             |  4 +++-
+ include/uapi/linux/lsm.h                      |  8 +++++++
+ kernel/sys_ni.c                               |  1 +
+ security/apparmor/apparmorfs.c                | 19 +++++++++++++++++
+ security/apparmor/include/apparmorfs.h        |  3 +++
+ security/apparmor/lsm.c                       | 16 ++++++++++++++
+ security/lsm_syscalls.c                       | 11 ++++++++++
+ security/security.c                           | 21 +++++++++++++++++++
+ tools/include/uapi/asm-generic/unistd.h       |  4 +++-
+ .../arch/x86/entry/syscalls/syscall_64.tbl    |  1 +
+ 17 files changed, 103 insertions(+), 2 deletions(-)
+
+
+base-commit: 9c32cda43eb78f78c73aee4aa344b777714e259b
 -- 
 2.48.1
 
