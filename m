@@ -1,129 +1,154 @@
-Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-il1-f173.google.com (mail-il1-f173.google.com [209.85.166.173])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A416283144;
-	Tue,  6 May 2025 14:40:07 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60B3C2153D2
+	for <linux-api@vger.kernel.org>; Tue,  6 May 2025 21:18:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.166.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1746542409; cv=none; b=keDvIBSzEJdep2II9oQ4F5qWnjm3McogNh2ylleZc+twpPw6DnaCAuGhSMhzXVBDpYdn2i1SdLq4BpvpgTAkAZqq79TzoWUALezulKhypdkU4BZhMTFzcldzAPsu8UzmNO8p6l8Icw+EJJA1N93OL4zkbi5SZTMyss01TJZPkM8=
+	t=1746566292; cv=none; b=ZSJj58vqC9k4AsFQNMrEUvyAocC6KtgM/WFHIKsz3gfuRErX2h2tjPqlhCHKRPrrxwW6NCdG4x4/yyM6ZWuH7xjEg1o+EgvNM9pLKR1PodjNfp9FZf66UiuBjWQdOBD838vNfIDdyFC2lgzyYP3LITCVz0iwzTokfBkWQADWB+Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1746542409; c=relaxed/simple;
-	bh=1iXstPr7bOiUj3ykArYg0RbbEU7/aRPEt2AAD7QT3is=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=gtrXES623YLS+SgpFGoTCu11KyZW5SytCLtG8Z2leU8zXqOMDQHv0g9ynq6Cy9jQeEPD6Zf8SiqwdQthXVH9r64kdKaL9yknKnhk0+VNwZpR/JYBMIczMxzCzL3UZTHnNH6lKqG8f6ooGt1eEePL8YxtCORk6EeD9CtjOy/FjtQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=FLDeS8VF; arc=none smtp.client-ip=185.125.188.120
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
+	s=arc-20240116; t=1746566292; c=relaxed/simple;
+	bh=ZbUVsEPh6tdbg1Nr8t8A3+DYza+dfr7oWIBRauQ+wn0=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=fsSibNohKX0l5nyq3zc7pkHWBBYGx9mOIEcDllmszoLXt0TcTHyRLQEl3qyjQqzzEI8Nt7//Wa1VtL+C8YcT6eUsqc5/GeL1yqVrTo9hkG7zMGe4k4aDr29XvPvrbRBtwjx0DXzagAQGK6Zx20bEP5MxwIeI/6mGnpa1z0DGHzc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linuxfoundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=MDzsGYuX; arc=none smtp.client-ip=209.85.166.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linuxfoundation.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="FLDeS8VF"
-Received: from sec2-plucky-amd64.. (lau06-h06-176-136-128-80.dsl.sta.abo.bbox.fr [176.136.128.80])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 0A1493F942;
-	Tue,  6 May 2025 14:33:50 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1746542030;
-	bh=an5raNhgTgi9WJMXPfc6cBxG0uJN7smFK940ReUZLPc=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type;
-	b=FLDeS8VFZ41ndrtlEFVsHdrPIQ6TQtZdwGHAi2DPrlUhFH7oYF9po/v3tJk0L32WA
-	 EOk91i5JRKqQAPNh8l7Z8d6b9xTfSZ7zVQbdhePp9mAuA1BhIZ7qMJh4IVb6OXckox
-	 HMA8aboFP9Pjdwhe9c2bydNkb/cTE6LTcz/vSVaoQQo++bsI5wdyBTXAOeU5voiASr
-	 zgo6YhGV4fT4Z+zG9GHh9NuNaizX3O5zDoEaF8ZmpR+UCvZC/Il+gMmYESV7SdcgpL
-	 IEA4ke66R6Vh+qq6/5FLfM4fb5Q68/DCQbGojeqdPx4Wddr2QkR8Ds6/7nmBPKYyYG
-	 AldNvaW3ruqKg==
-From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-To: linux-security-module@vger.kernel.org
-Cc: john.johansen@canonical.com,
-	paul@paul-moore.com,
-	jmorris@namei.org,
-	serge@hallyn.com,
-	mic@digikod.net,
-	kees@kernel.org,
-	stephen.smalley.work@gmail.com,
-	casey@schaufler-ca.com,
-	takedakn@nttdata.co.jp,
-	penguin-kernel@I-love.SAKURA.ne.jp,
-	linux-api@vger.kernel.org,
-	apparmor@lists.ubuntu.com,
-	linux-kernel@vger.kernel.org,
-	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-Subject: [PATCH 0/3] lsm: introduce lsm_manage_policy() syscall
-Date: Tue,  6 May 2025 16:32:27 +0200
-Message-ID: <20250506143254.718647-1-maxime.belair@canonical.com>
-X-Mailer: git-send-email 2.48.1
+	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="MDzsGYuX"
+Received: by mail-il1-f173.google.com with SMTP id e9e14a558f8ab-3d6d6d82633so21319315ab.0
+        for <linux-api@vger.kernel.org>; Tue, 06 May 2025 14:18:09 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=linuxfoundation.org; s=google; t=1746566288; x=1747171088; darn=vger.kernel.org;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :from:to:cc:subject:date:message-id:reply-to;
+        bh=Vhk1HBI/4LMXTfhNfYxi9xZ9PhHpTPrJe65ilxoqp+Y=;
+        b=MDzsGYuX/TEG/ZFEhjWcGRvGLlKwySKWFNkxfBfe9VLqC1hAF9tZQbHP6x8/4TDn8t
+         8pLwVxGXT6oMj3cRUkyGlZPe/fkcZFaCQ0jQLd4GrcR+MHRb9brDdrgnpgx0iFlPz5Ka
+         GrOA77VdUHOKx/4VYKhZKjvudtRONZzXi3MGk=
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1746566288; x=1747171088;
+        h=content-transfer-encoding:in-reply-to:from:content-language
+         :references:cc:to:subject:user-agent:mime-version:date:message-id
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=Vhk1HBI/4LMXTfhNfYxi9xZ9PhHpTPrJe65ilxoqp+Y=;
+        b=bWpVFpwTzHIrA3Hu058mwVITPEN/xnlhPJbXw1HPAo2FemwZ0ylBxC/VhJgr1bfuSF
+         vRhC7NbUofrhhpIU2tD2Qp8k75BBHAeQbK9TGBpZJmwyXLsUIyXurvxq9oKc6JQFZj1p
+         LLw4gjN2RvX8voWUqEIIC7TM2/PEKHUwbCSgyouqoRIMkT/fNnuvetvye6Sm2kVgmEC3
+         Xcj3+PA2DwQ9zxhZslnEeH1gV9pDHrf9XW9Q0lBi0/1oaJuvZgiwyqvrsAHHZA0CskUD
+         eKiTh2Koc1HFZUpyryzaxpOx+UES2n0sbE1U2xh3S7/7jF4lHZow1UUPY0ux+oyK8Yzh
+         snAQ==
+X-Forwarded-Encrypted: i=1; AJvYcCXU9ujlCl24mvttrXtbc281n7RaEjBjrLkscG+Q3ou0goKSWteczr2+bTEwY50GcxqTvk5zUvJ8AJA=@vger.kernel.org
+X-Gm-Message-State: AOJu0YyslcZ/X3pIzfUfuDjY2/VcaBFpRAvhkTUjsJ/fNFqycVJupB2V
+	mOuuX5amj0FEdOgHXVlssOA/b+X+5qEvlH0xy06ujKudlWk2/Z+ObPSO8i3FYX8=
+X-Gm-Gg: ASbGncsE9sqyG7mOntdp+dd/yMK45NJcb2KSlFNT/SVpVHKV4ULMhzBibMp2ptIIeKb
+	CGS3oQRoxZ91ktTESLAUOUYN3BrQSwnBdJr6/qV1hdyNW/PU5hwwEden/rrw5mU1JoTtRK+FH3E
+	iSbkbOvNONWTio1ESXCsJJsCLfwq6UtbpJ0EvrRWY0qV9qhqpiNGMEsH5n7k5TMaaW6y5lBxIsK
+	xJj1HcvCkWYAWGdcD7G8waWYNmPRSn3fpHmi/pr/v3vXpxBqtzXHkSIpP4gYFq+78RHZud18Gpn
+	SC7ZT38wjIqiF2CQjv3u9yI6WpoZxMDonHhPNruUYuveRiA33Gg=
+X-Google-Smtp-Source: AGHT+IHUA+sn2FCbduj4eCJZBOdW4tseCQ5oMi7Bx4Yf5oLI8Rys2VzAzxELUSzWphfH7ztNR5z4iA==
+X-Received: by 2002:a92:b0f:0:b0:3da:7237:525a with SMTP id e9e14a558f8ab-3da738e5fb2mr7278445ab.8.1746566288378;
+        Tue, 06 May 2025 14:18:08 -0700 (PDT)
+Received: from [192.168.1.14] ([38.175.170.29])
+        by smtp.gmail.com with ESMTPSA id 8926c6da1cb9f-4f88a916042sm2419259173.40.2025.05.06.14.18.07
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 06 May 2025 14:18:07 -0700 (PDT)
+Message-ID: <17464a97-e7be-49d4-9422-96ff824dba7c@linuxfoundation.org>
+Date: Tue, 6 May 2025 15:18:06 -0600
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v3 3/3] selftests: pidfd: add tests for PIDFD_SELF_*
+To: Peter Zijlstra <peterz@infradead.org>, John Hubbard <jhubbard@nvidia.com>
+Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
+ Christian Brauner <christian@brauner.io>, Shuah Khan <shuah@kernel.org>,
+ "Liam R . Howlett" <Liam.Howlett@oracle.com>,
+ Suren Baghdasaryan <surenb@google.com>, Vlastimil Babka <vbabka@suse.cz>,
+ pedro.falcato@gmail.com, linux-kselftest@vger.kernel.org,
+ linux-mm@kvack.org, linux-fsdevel@vger.kernel.org,
+ linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+ Oliver Sang <oliver.sang@intel.com>, seanjc@google.com,
+ Shuah Khan <skhan@linuxfoundation.org>
+References: <cover.1729073310.git.lorenzo.stoakes@oracle.com>
+ <c083817403f98ae45a70e01f3f1873ec1ba6c215.1729073310.git.lorenzo.stoakes@oracle.com>
+ <a3778bea-0a1e-41b7-b41c-15b116bcbb32@linuxfoundation.org>
+ <a6133831-3fc3-49aa-83c6-f9aeef3713c9@lucifer.local>
+ <5b0b8e1e-6f50-4e18-bf46-39b00376c26e@nvidia.com>
+ <20250501114235.GP4198@noisy.programming.kicks-ass.net>
+Content-Language: en-US
+From: Shuah Khan <skhan@linuxfoundation.org>
+In-Reply-To: <20250501114235.GP4198@noisy.programming.kicks-ass.net>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-This patchset introduces a new syscall, lsm_manage_policy(), and the
-associated Linux Security Module hook security_lsm_manage_policy(),
-providing a unified interface for loading and managing LSM policies.
-This syscall complements the existing per‑LSM pseudo‑filesystem mechanism
-and works even when those filesystems are not mounted or available.
+On 5/1/25 05:42, Peter Zijlstra wrote:
+> On Wed, Oct 16, 2024 at 07:14:34PM -0700, John Hubbard wrote:
+>> On 10/16/24 3:06 PM, Lorenzo Stoakes wrote:
+>>> On Wed, Oct 16, 2024 at 02:00:27PM -0600, Shuah Khan wrote:
+>>>> On 10/16/24 04:20, Lorenzo Stoakes wrote:
+>> ...
+>>>>> diff --git a/tools/testing/selftests/pidfd/pidfd.h b/tools/testing/selftests/pidfd/pidfd.h
+>>>>> index 88d6830ee004..1640b711889b 100644
+>>>>> --- a/tools/testing/selftests/pidfd/pidfd.h
+>>>>> +++ b/tools/testing/selftests/pidfd/pidfd.h
+>>>>> @@ -50,6 +50,14 @@
+>>>>>     #define PIDFD_NONBLOCK O_NONBLOCK
+>>>>>     #endif
+>>>>> +/* System header file may not have this available. */
+>>>>> +#ifndef PIDFD_SELF_THREAD
+>>>>> +#define PIDFD_SELF_THREAD -100
+>>>>> +#endif
+>>>>> +#ifndef PIDFD_SELF_THREAD_GROUP
+>>>>> +#define PIDFD_SELF_THREAD_GROUP -200
+>>>>> +#endif
+>>>>> +
+>>>>
+>>>> As mentioned in my response to v1 patch:
+>>>>
+>>>> kselftest has dependency on "make headers" and tests include
+>>>> headers from linux/ directory
+>>>
+>>> Right but that assumes you install the kernel headers on the build system,
+>>> which is quite a painful thing to have to do when you are quickly iterating
+>>> on a qemu setup.
+>>>
+>>> This is a use case I use all the time so not at all theoretical.
+>>>
+>>
+>> This is turning out to be a fairly typical reaction from kernel
+>> developers, when presented with the "you must first run make headers"
+>> requirement for kselftests.
+>>
+>> Peter Zijlstra's "NAK NAK NAK" response [1] last year was the most
+>> colorful, so I'll helpfully cite it here. :)
+> 
+> Let me re-try this.
+> 
+> This is driving me insane. I've spend the past _TWO_ days trying to
+> build KVM selftests and I'm still failing.
+> 
+> This is absolute atrocious crap and is costing me valuable time.
+> 
+> Please fix this fucking selftests shit to just build. This is unusable
+> garbage.
 
-With this new syscall, administrators may lock down access to the
-pseudo‑filesystem yet still manage LSM policies. A single, tightly scoped
-entry point then replaces the many file operations exposed by those
-filesystems, significantly reducing the attack surface. This is
-particularly useful in containers or processes already confined by
-Landlock, where these pseudo‑filesystems are typically unavailable.
+I don't recall all the reasons why kselftests needed "make headers"
+One reason I could think of was that when a new test depends on a
+header change, the test won't build unless headers are installed.
 
-Because it provides a logical and unified interface, lsm_manage_policy()
-is simpler to use than several heterogeneous pseudo‑filesystems and
-avoids edge cases such as partially loaded policies. It also eliminates
-VFS overhead, yielding performance gains notably when many policies are
-loaded, for instance at boot time.
+If this requirement is causing problems for tests that don't fall
+into the category and we probably have more of them mow, we can
+clean that up.
 
-This initial implementation is intentionally minimal to limit the scope
-of changes. Currently, only policy loading is supported, and only
-AppArmor registers this LSM hook. However, any LSM can adopt this
-interface, and future patches could extend this syscall to support more
-operations, such as replacing, removing, or querying loaded policies.
+John, you mentioned you got mm tests working without headers?
+Can you share the commit here.
 
-Landlock already provides three Landlock‑specific syscalls (e.g.
-landlock_add_rule()) to restrict ambient rights for sets of processes
-without touching any pseudo-filesystem. lsm_manage_policy() generalizes
-that approach to the entire LSM layer, so any module can expose its
-policy operations through one uniform interface and reap the advantages
-outlined above.
+thanks,
+-- Shuah
 
-This patchset is available at [1] and a minimal user space example
-showing how to use this syscall with AppArmor is at [2].
-
-[1] https://github.com/emixam16/linux/tree/lsm_syscall
-[2] https://gitlab.com/emixam16/apparmor/tree/lsm_syscall
-
-Maxime Bélair (3):
-  Wire up the lsm_manage_policy syscall
-  lsm: introduce security_lsm_manage_policy hook
-  AppArmor: add support for lsm_manage_policy
-
- arch/alpha/kernel/syscalls/syscall.tbl        |  1 +
- arch/arm/tools/syscall.tbl                    |  1 +
- arch/x86/entry/syscalls/syscall_32.tbl        |  1 +
- arch/x86/entry/syscalls/syscall_64.tbl        |  1 +
- include/linux/lsm_hook_defs.h                 |  2 ++
- include/linux/security.h                      |  7 +++++++
- include/linux/syscalls.h                      |  4 ++++
- include/uapi/asm-generic/unistd.h             |  4 +++-
- include/uapi/linux/lsm.h                      |  8 +++++++
- kernel/sys_ni.c                               |  1 +
- security/apparmor/apparmorfs.c                | 19 +++++++++++++++++
- security/apparmor/include/apparmorfs.h        |  3 +++
- security/apparmor/lsm.c                       | 16 ++++++++++++++
- security/lsm_syscalls.c                       | 11 ++++++++++
- security/security.c                           | 21 +++++++++++++++++++
- tools/include/uapi/asm-generic/unistd.h       |  4 +++-
- .../arch/x86/entry/syscalls/syscall_64.tbl    |  1 +
- 17 files changed, 103 insertions(+), 2 deletions(-)
-
-
-base-commit: 9c32cda43eb78f78c73aee4aa344b777714e259b
--- 
-2.48.1
 
