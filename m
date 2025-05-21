@@ -1,22 +1,22 @@
 Received: from mx.wizmail.org (smtp.wizmail.org [85.158.153.28])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 758EF264A89;
-	Wed, 21 May 2025 11:49:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 509B025A2AF;
+	Wed, 21 May 2025 11:49:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=85.158.153.28
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1747828198; cv=none; b=LJvafAx4W3Zb+00MFqFW8aO+5uRR6dEaimaJmlF29NJ/fe2A9YLGd4OdsxM5kl/CUwN93nSZQkaXfKjS9gpWBjWHyxZu05CMwdKawWGpAEq4YA9aCfv1PV4Qv38OzwBE7lXEzVxndfTZlXM/TGXArS/PrKHVz74YcqzKjEAPwBw=
+	t=1747828200; cv=none; b=ezb1DxWHo0CvybSi3KbiRBPkxjk+UQSVhnFMsA8GExSJOPJyQQhmAcUrvURvr/G/YBDaZZql4MiZM8SiVpDuqG0On+sxJFGTSbpjVIMo1vyqIqhRJTHngG2Vv7Lw9FquqtAqYRASr3jCIU10C3NAlW1Nopc3l/yfJAL5Ed4CbnM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1747828198; c=relaxed/simple;
-	bh=n7GL3JfX/o1loCKYYkVIDuL0l6MlqVUcQldRYUX0bvE=;
+	s=arc-20240116; t=1747828200; c=relaxed/simple;
+	bh=GOmNOUxIjL7FpfpdDBjTyoaeUXKoUvzhkneuD7WUxtM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Y9Pae5bIljAdUmxK5/nf4zSP6a4APxrHwEf4wdVh2hvZc7iX5RRrnT5rcQ2uBS5EL/Yuc3VFHKJzu4WA24CZFYoMkrw3RYulfSA7t0BNcyaOs2SJwg4ROLSyeJTgUUytWnXCUdqWZIhKdnePhe7A6zU3p94oKPy1ONp3gQ+7LOY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=exim.org; spf=fail smtp.mailfrom=exim.org; dkim=permerror (0-bit key) header.d=wizmail.org header.i=@wizmail.org header.b=r1ZT7nPx; dkim=pass (2048-bit key) header.d=wizmail.org header.i=@wizmail.org header.b=BUPiUY6F; arc=none smtp.client-ip=85.158.153.28
+	 MIME-Version; b=qLJkTcQxP7HWzc8YKFnH2kf8fsTFJaysrXKtca7MyTIIgx9BVhqxXVgr/9m5jEUZzrvj0aFyiAP0Jdaesqc0m2+xvDJ2BVYkQVWDKXmFNduiZHPvVx9Z0b/jUuD2fz+yJfjHSAzdaZRSSQFQcE11MjI9a9UTDqLawdf9FsuFbiY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=exim.org; spf=fail smtp.mailfrom=exim.org; dkim=permerror (0-bit key) header.d=wizmail.org header.i=@wizmail.org header.b=RQd4A3Pk; dkim=pass (2048-bit key) header.d=wizmail.org header.i=@wizmail.org header.b=qjubHqEF; arc=none smtp.client-ip=85.158.153.28
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=exim.org
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=exim.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=permerror (0-bit key) header.d=wizmail.org header.i=@wizmail.org header.b="r1ZT7nPx";
-	dkim=pass (2048-bit key) header.d=wizmail.org header.i=@wizmail.org header.b="BUPiUY6F"
+	dkim=permerror (0-bit key) header.d=wizmail.org header.i=@wizmail.org header.b="RQd4A3Pk";
+	dkim=pass (2048-bit key) header.d=wizmail.org header.i=@wizmail.org header.b="qjubHqEF"
 DKIM-Signature: v=1; a=ed25519-sha256; q=dns/txt; c=relaxed/relaxed;
 	d=wizmail.org; s=e202001; h=Content-Transfer-Encoding:MIME-Version:References
 	:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:From:Sender:Reply-To:Subject:
@@ -24,8 +24,8 @@ DKIM-Signature: v=1; a=ed25519-sha256; q=dns/txt; c=relaxed/relaxed;
 	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
 	Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
 	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive:
-	Autocrypt; bh=nb9WRft/OW0n5bm53JjdN0ibz9K5wZCUesZrN5O6JLQ=; b=r1ZT7nPxlyi9CEV
-	G4ydxptQ0KtJO0F3qWq6A6Hlom/+QEa+MGpvVluQb2lVmKbcHZ8QerGinUiKN/NlrBlntDg==;
+	Autocrypt; bh=X1jUlirJuPk7kGbfN3el3gS5c708I/qfwMVd/PFAGjY=; b=RQd4A3PkyhPL5Rt
+	VjBwtSl9fHxB855KDiudNgGY1H287iaDykVau4Y746KR86Nyz+54RnxLS2gja3EYMGaTfBw==;
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=wizmail.org
 	; s=r202001; h=Content-Transfer-Encoding:MIME-Version:References:In-Reply-To:
 	Message-ID:Date:Subject:Cc:To:From:From:Sender:Reply-To:Subject:Date:
@@ -33,12 +33,12 @@ DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=wizmail.org
 	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
 	Resent-To:Resent-Cc:Resent-Message-ID:In-Reply-To:References:List-Id:
 	List-Help:List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive:
-	Autocrypt; bh=nb9WRft/OW0n5bm53JjdN0ibz9K5wZCUesZrN5O6JLQ=; b=BUPiUY6FUWAFCO2
-	zN9zGsAgb8T+5zUNTiCTGir9zov/pc4cMfh5UOFEWrkOt3amzjZTC7PV1E8CWqZ5Ar08HrfH2ue+L
-	g853doe1YKMRyb4eLG/yei/1GCfGCIWSxgUWe4IXjq6uVtdwOeFbrm2EGyBfTaMd8btYlbXqAagTg
-	T/KkSSpqfpTyj9obTAJxEcTmfgcppUclxjSu20VCvYnaDbxVWsmhqVNUEUETc419xdvzYXCCHBB4w
-	SocVGiekOHnao6GrJq3LXERoZQMqDcjV12t7BTvp5J8ouRQSO38KTB2FQ4vilnth00c+UxayE8IU/
-	epRrrgYnt618cCWtyNw==;
+	Autocrypt; bh=X1jUlirJuPk7kGbfN3el3gS5c708I/qfwMVd/PFAGjY=; b=qjubHqEFRo1XDt9
+	EDC/WEs9gRXLmVLj0LV0FW24VHwrbYNSwEQ4DWeCskUqq4+s41HRRg74lTAYZAzRmV53loZqqQbm2
+	YwILHXGqI/d919OebDfwDOXJ12yEGePmjwzUCMsp8sjGMQieoh1FNjRK7XQ8aWthNANChVd6xMLy6
+	H9naiFKER7mGlfxGgjZ9cM6/MSnJpcF2E7yzDBfl+8m83/f6iD6umn5c75hmBemCMY3vnF13Kxv2S
+	krFDGuPxcNksTuEu5y5MXm6QvpIymZ2y3MaLQKj3deUtWImAUfapdPoXQ4cxsXrqKExfX+yNgCZ9E
+	SpKVnKbwElUGp3Hl4sg==;
 Authentication-Results: wizmail.org;
 	iprev=pass (hellmouth.gulag.org.uk) smtp.remote-ip=85.158.153.62;
 	auth=pass (PLAIN) smtp.auth=jgh@wizmail.org
@@ -46,18 +46,18 @@ Received: from hellmouth.gulag.org.uk ([85.158.153.62] helo=macbook.dom.ain)
 	by www.wizmail.org (Exim 4.98.115)
 	(TLS1.3) tls TLS_AES_256_GCM_SHA384
 	with esmtpsa
-	id 1uHht9-00000001yTm-2JBG
+	id 1uHhtA-00000001yTm-0C5v
 	(return-path <jgh@exim.org>);
-	Wed, 21 May 2025 11:45:35 +0000
+	Wed, 21 May 2025 11:45:36 +0000
 From: Jeremy Harris <jgh@exim.org>
 To: netdev@vger.kernel.org
 Cc: linux-api@vger.kernel.org,
 	edumazet@google.com,
 	ncardwell@google.com,
 	Jeremy Harris <jgh@exim.org>
-Subject: [PATCH net-next v2 3/6] tcp: fastopen: add write-data to fastopen synack packet
-Date: Wed, 21 May 2025 12:45:02 +0100
-Message-ID: <9de6aff3d0ff4cb21a8b94749229868cf3eacbc9.1747826775.git.jgh@exim.org>
+Subject: [PATCH net-next v2 5/6] tcp: fastopen: retransmit data when only the SYN of a synack-with-data is acked
+Date: Wed, 21 May 2025 12:45:04 +0100
+Message-ID: <685024553d541e6c06d7428f2cfe9160e8fc9ff4.1747826775.git.jgh@exim.org>
 X-Mailer: git-send-email 2.49.0
 In-Reply-To: <cover.1747826775.git.jgh@exim.org>
 References: <cover.1747826775.git.jgh@exim.org>
@@ -70,79 +70,39 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Pcms-Received-Sender: hellmouth.gulag.org.uk ([85.158.153.62] helo=macbook.dom.ain) with esmtpsa
 
-While building the synack packet, for a fastopen socket
-copy data from write queue to the packet.
-Move the data from write queue to retransmit queue.
+A corner-case for the 3rd-ack after a data-on-synack is for only
+the SYN to be acked. Handle this by, in ack processing, when in
+SYN_RECV state (the state is not yet updated to ESTABLISHED)
+marking the retransmit-queue sk_buff as having been lost.
 
 Signed-off-by: Jeremy Harris <jgh@exim.org>
 ---
- net/ipv4/tcp_output.c | 32 ++++++++++++++++++++++++++++++--
- 1 file changed, 30 insertions(+), 2 deletions(-)
+ net/ipv4/tcp_input.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
-diff --git a/net/ipv4/tcp_output.c b/net/ipv4/tcp_output.c
-index 3ac8d2d17e1f..c50553c1c795 100644
---- a/net/ipv4/tcp_output.c
-+++ b/net/ipv4/tcp_output.c
-@@ -3702,7 +3702,7 @@ int tcp_send_synack(struct sock *sk)
- 
- /**
-  * tcp_make_synack - Allocate one skb and build a SYNACK packet.
-- * @sk: listener socket
-+ * @sk: listener socket (or child socket for fastopen)
-  * @dst: dst entry attached to the SYNACK. It is consumed and caller
-  *       should not use it again.
-  * @req: request_sock pointer
-@@ -3719,6 +3719,7 @@ struct sk_buff *tcp_make_synack(const struct sock *sk, struct dst_entry *dst,
- 	struct inet_request_sock *ireq = inet_rsk(req);
- 	const struct tcp_sock *tp = tcp_sk(sk);
- 	struct tcp_out_options opts;
-+	struct sock *fastopen_sk = (struct sock *)sk;
- 	struct tcp_key key = {};
- 	struct sk_buff *skb;
- 	int tcp_header_size;
-@@ -3748,7 +3749,7 @@ struct sk_buff *tcp_make_synack(const struct sock *sk, struct dst_entry *dst,
- 		 * cpu might call us concurrently.
- 		 * sk->sk_wmem_alloc in an atomic, we can promote to rw.
- 		 */
--		skb_set_owner_w(skb, (struct sock *)sk);
-+		skb_set_owner_w(skb, fastopen_sk);
- 		break;
+diff --git a/net/ipv4/tcp_input.c b/net/ipv4/tcp_input.c
+index 345a08baaf02..a53021edddd5 100644
+--- a/net/ipv4/tcp_input.c
++++ b/net/ipv4/tcp_input.c
+@@ -4069,6 +4069,18 @@ static int tcp_ack(struct sock *sk, const struct sk_buff *skb, int flag)
+ 				      &rexmit);
  	}
- 	skb_dst_set(skb, dst);
-@@ -3831,6 +3832,33 @@ struct sk_buff *tcp_make_synack(const struct sock *sk, struct dst_entry *dst,
- 	th->window = htons(min(req->rsk_rcv_wnd, 65535U));
- 	tcp_options_write(th, NULL, tcp_rsk(req), &opts, &key);
- 	th->doff = (tcp_header_size >> 2);
-+
-+	/* If this is a FASTOPEN, and there is write-data on the accept socket,
-+	 * re-copy it to the synack segment. If not FASTOPEN. any data waits
-+	 * until 3rd-ack arrival.
+ 
++	/* On receiving a 3rd-ack, if we never sent a packet via
++	 * the normal means (which counts them), yet there is data
++	 * remaining for retransmit, it was data-on-synack not acked;
++	 * mark the skb for retransmission.
 +	 */
++	if (sk->sk_state == TCP_SYN_RECV && tp->segs_out == 0) {
++		struct sk_buff *skb = tcp_rtx_queue_head(sk);
 +
-+	if (synack_type == TCP_SYNACK_FASTOPEN &&
-+	    !skb_queue_empty(&sk->sk_write_queue)) {
-+		struct sk_buff *a_skb = tcp_write_queue_tail(sk);
-+		int copy = min_t(int, a_skb->len, skb_tailroom(skb));
-+
-+		skb_put_data(skb, a_skb->data, copy);
-+		TCP_SKB_CB(skb)->end_seq += copy;
-+
-+		tcp_skb_pcount_set(a_skb, 1);
-+		WRITE_ONCE(tcp_sk(fastopen_sk)->write_seq,
-+			   TCP_SKB_CB(a_skb)->end_seq);
-+
-+		skb_set_delivery_time(a_skb, now, SKB_CLOCK_MONOTONIC);
-+
-+		/* Move the data to the retransmit queue.
-+		 * Code elsewhere implies this is a full child socket and
-+		 * can be treated as writeable - permitting the cast.
-+		 */
-+		tcp_event_new_data_sent(fastopen_sk, a_skb);
++		if (skb)
++			tcp_mark_skb_lost(sk, skb);
 +	}
 +
- 	TCP_INC_STATS(sock_net(sk), TCP_MIB_OUTSEGS);
- 
- 	/* Okay, we have all we need - do the md5 hash if needed */
+ 	/* If needed, reset TLP/RTO timer when RACK doesn't set. */
+ 	if (flag & FLAG_SET_XMIT_TIMER)
+ 		tcp_set_xmit_timer(sk);
 -- 
 2.49.0
 
