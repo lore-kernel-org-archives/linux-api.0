@@ -1,129 +1,96 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from casper.infradead.org (casper.infradead.org [90.155.50.34])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E6272C3247;
-	Mon,  2 Jun 2025 14:36:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D3628226883;
+	Mon,  2 Jun 2025 18:02:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=90.155.50.34
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1748874975; cv=none; b=S4pg7ElgqQ1kqoj9E9Ehk0/uE9HNw8Gl0FTf1HFUM7F1cED0cBSlO+RpcNAYwUYeGZgdKucyfmI8IG8hhGao+qbGuxzGwgVtpjSXeVcVvIW7U/vMckndcKdX3xSjJ9FWphOPrK3IqXnbxGSeIJGdA3sxYcy9TkNIB7nFWkebhfo=
+	t=1748887329; cv=none; b=I4pInAnRnwtAZ6j0XBx4SGjxyYebCksD4XhTnGy9CYsHnyaCK1/AgOel+Du7HfB3DyQ05Nx5L0INR63F1EBA8wvnXdd17lq+HfDAbHVql6u/w6qQC4WYgiaQ65JkR0j6n0Zv2WEG22pf2xTj1zxh/qgJpH6DQYlJptMtqRNuRZY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1748874975; c=relaxed/simple;
-	bh=kp+WSZdOuINjaGj5c3s6dJyNaLtwpBOqrWOUGFgFgAc=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=oqvHtzYWimVzI8lfDw0go3PbXguNRRDmxPUg3MVDsyiGYpAw+eebbn2aOsf7o1MvhRbTq3r3vZLPJVOPYFrBl/UjBhsR9YaaIIEWb3f0bKyw33+vDtpj0Q6xiJh18zX7eMxZVi1UE40KJkZPwMZQ//JKVy5pdh5m3EdjUg8xy3k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=TC9mz+6z; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1748887329; c=relaxed/simple;
+	bh=pOc3AcH/2AmOYYaA/MuepE9mCfFaDPRN6va86H/6318=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=RdUpaX+Usk6jjpd1v49xMj6LOsOAQ3enWolgQ0ltXHO7bcYiX3YLrtnsJ3elh2JD42Is+XF92a/PRGTZl6rES0Qw/WmRg2wbeZKx0rZxMrrQCJOaaAE5C+6Hv8/HSKz1SbdVGJ3yS6lASX4Tt3p7xsjR2IZ97UNbkxuS5e8024E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org; spf=none smtp.mailfrom=infradead.org; dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b=fx2S/uS+; arc=none smtp.client-ip=90.155.50.34
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=infradead.org
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infradead.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="TC9mz+6z"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8867EC4CEEB;
-	Mon,  2 Jun 2025 14:36:14 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1748874975;
-	bh=kp+WSZdOuINjaGj5c3s6dJyNaLtwpBOqrWOUGFgFgAc=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=TC9mz+6zEOi2v7bgxNYjdBzA9XcYUzcl5PW8LGaeo0jG1U4NKfnNsvJt6mi0KT2P4
-	 NLZeRQ5paeo7A1GWUElOtMSiWjWN5XljQiQ1K4w4wQ4jDwv4sVnoapYEOsMu3o5XHz
-	 FIk41RFOaH5vYMTY8P+mNZyN3hTbCyvWZTZ6ovUo=
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To: stable@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	patches@lists.linux.dev,
-	Jann Horn <jannh@google.com>,
-	Christian Kellner <christian@kellner.me>,
-	linux-api@vger.kernel.org,
-	Christian Brauner <christian.brauner@ubuntu.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Christian Brauner <brauner@kernel.org>
-Subject: [PATCH 5.4 193/204] pidfd: check pid has attached task in fdinfo
-Date: Mon,  2 Jun 2025 15:48:46 +0200
-Message-ID: <20250602134303.260720932@linuxfoundation.org>
-X-Mailer: git-send-email 2.49.0
-In-Reply-To: <20250602134255.449974357@linuxfoundation.org>
-References: <20250602134255.449974357@linuxfoundation.org>
-User-Agent: quilt/0.68
-X-stable: review
-X-Patchwork-Hint: ignore
+	dkim=pass (2048-bit key) header.d=infradead.org header.i=@infradead.org header.b="fx2S/uS+"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=infradead.org; s=casper.20170209; h=In-Reply-To:Content-Type:MIME-Version:
+	References:Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:
+	Content-Transfer-Encoding:Content-ID:Content-Description;
+	bh=wNLQufEp1rJXsH/GI5NA0ro279s3D/mfj5DLODR5rBg=; b=fx2S/uS+FrK8cpSVxGwbBq0XeR
+	6QGGYf/wYPYmAT6H9FqucyWErsUWDjNoaJYY0TmVMu1wN5uOALwGSRHjeQcxjFbOVlBRhQxHrSPZn
+	iXKD52YYUfKrIpOP63a06xbO3BjEn2VM8KJWUMeNWEArkC4Z30HNcmZWRymX+s/rPUcR/K6S2qMPt
+	GGn7/NirTXLYAfJq3VYXkfTayEnYr/BYgPXGPeb15qrihHEUZoMlHCvhYVd3LdPPxk0MGja3jS/i8
+	NU2iz6hnAnBwYkd4XAGRjDhppFLeT2AOVgKsm/NuD4wdRC4Kpz49p6ePiVaJumtrxjIp8LinLuYms
+	dhWV0ZTw==;
+Received: from willy by casper.infradead.org with local (Exim 4.98.2 #2 (Red Hat Linux))
+	id 1uM9Tw-00000001C7d-2dSv;
+	Mon, 02 Jun 2025 18:01:56 +0000
+Date: Mon, 2 Jun 2025 19:01:56 +0100
+From: Matthew Wilcox <willy@infradead.org>
+To: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Shakeel Butt <shakeel.butt@linux.dev>,
+	"Liam R . Howlett" <Liam.Howlett@oracle.com>,
+	David Hildenbrand <david@redhat.com>,
+	Vlastimil Babka <vbabka@suse.cz>, Jann Horn <jannh@google.com>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Christian Brauner <brauner@kernel.org>,
+	SeongJae Park <sj@kernel.org>, Usama Arif <usamaarif642@gmail.com>,
+	Mike Rapoport <rppt@kernel.org>, Barry Song <21cnbao@gmail.com>,
+	linux-mm@kvack.org, linux-arch@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	Pedro Falcato <pfalcato@suse.de>
+Subject: Re: [DISCUSSION] proposed mctl() API
+Message-ID: <aD3nFMS9kWHp7a4F@casper.infradead.org>
+References: <85778a76-7dc8-4ea8-8827-acb45f74ee05@lucifer.local>
+ <aDh9LtSLCiTLjg2X@casper.infradead.org>
+ <20250529211423.GA1271329@cmpxchg.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250529211423.GA1271329@cmpxchg.org>
 
-5.4-stable review patch.  If anyone has any objections, please let me know.
+On Thu, May 29, 2025 at 05:14:23PM -0400, Johannes Weiner wrote:
+> On Thu, May 29, 2025 at 04:28:46PM +0100, Matthew Wilcox wrote:
+> > Barry's problem is that we're all nervous about possibly regressing
+> > performance on some unknown workloads.  Just try Barry's proposal, see
+> > if anyone actually compains or if we're just afraid of our own shadows.
+> 
+> I actually explained why I think this is a terrible idea. But okay, I
+> tried the patch anyway.
 
-------------------
+Sorry, I must've missed that one ;-(
 
-From: Christian Brauner <christian.brauner@ubuntu.com>
+> This is 'git log' on a hot kernel repo after a large IO stream:
+> 
+>                                      VANILLA                      BARRY
+> Real time                 49.93 (    +0.00%)         60.36 (   +20.48%)
+> User time                 32.10 (    +0.00%)         32.09 (    -0.04%)
+> System time               14.41 (    +0.00%)         14.64 (    +1.50%)
+> pgmajfault              9227.00 (    +0.00%)      18390.00 (   +99.30%)
+> workingset_refault_file  184.00 (    +0.00%)    236899.00 (+127954.05%)
+> 
+> Clearly we can't generally ignore page cache hits just because the
+> mmaps() are intermittent.
+> 
+> The whole point is to cache across processes and their various
+> apertures into a common, long-lived filesystem space.
+> 
+> Barry knows something about the relationship between certain processes
+> and certain files that he could exploit with MADV_COLD-on-exit
+> semantics. But that's not something the kernel can safely assume. Not
+> without defeating the page cache for an entire class of file accesses.
 
-commit 3d6d8da48d0b214d65ea0227d47228abc75d7c88 upstream.
-
-Currently, when a task is dead we still print the pid it used to use in
-the fdinfo files of its pidfds. This doesn't make much sense since the
-pid may have already been reused. So verify that the task is still alive
-by introducing the pid_has_task() helper which will be used by other
-callers in follow-up patches.
-If the task is not alive anymore, we will print -1. This allows us to
-differentiate between a task not being present in a given pid namespace
-- in which case we already print 0 - and a task having been reaped.
-
-Note that this uses PIDTYPE_PID for the check. Technically, we could've
-checked PIDTYPE_TGID since pidfds currently only refer to thread-group
-leaders but if they won't anymore in the future then this check becomes
-problematic without it being immediately obvious to non-experts imho. If
-a thread is created via clone(CLONE_THREAD) than struct pid has a single
-non-empty list pid->tasks[PIDTYPE_PID] and this pid can't be used as a
-PIDTYPE_TGID meaning pid->tasks[PIDTYPE_TGID] will return NULL even
-though the thread-group leader might still be very much alive. So
-checking PIDTYPE_PID is fine and is easier to maintain should we ever
-allow pidfds to refer to threads.
-
-Cc: Jann Horn <jannh@google.com>
-Cc: Christian Kellner <christian@kellner.me>
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Link: https://lore.kernel.org/r/20191017101832.5985-1-christian.brauner@ubuntu.com
-Signed-off-by: Christian Brauner <brauner@kernel.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
----
- include/linux/pid.h |    4 ++++
- kernel/fork.c       |   10 ++++++++--
- 2 files changed, 12 insertions(+), 2 deletions(-)
-
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -85,6 +85,10 @@ static inline struct pid *get_pid(struct
- 
- extern void put_pid(struct pid *pid);
- extern struct task_struct *pid_task(struct pid *pid, enum pid_type);
-+static inline bool pid_has_task(struct pid *pid, enum pid_type type)
-+{
-+	return !hlist_empty(&pid->tasks[type]);
-+}
- extern struct task_struct *get_pid_task(struct pid *pid, enum pid_type);
- 
- extern struct pid *get_task_pid(struct task_struct *task, enum pid_type type);
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1703,10 +1703,16 @@ static int pidfd_release(struct inode *i
- #ifdef CONFIG_PROC_FS
- static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
- {
--	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
- 	struct pid *pid = f->private_data;
-+	struct pid_namespace *ns;
-+	pid_t nr = -1;
- 
--	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
-+	if (likely(pid_has_task(pid, PIDTYPE_PID))) {
-+		ns = proc_pid_ns(file_inode(m->file));
-+		nr = pid_nr_ns(pid, ns);
-+	}
-+
-+	seq_put_decimal_ll(m, "Pid:\t", nr);
- 	seq_putc(m, '\n');
- }
- #endif
-
-
+So what about distinguishing between exited-normally processes (ie git
+log) vs killed-by-oom processes (ie Barry's usecase)?  Update the
+referenced bit in the first case and not the second?
