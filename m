@@ -1,40 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 105922EA486;
-	Sat, 14 Jun 2025 13:49:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 930C12EACE4;
+	Sat, 14 Jun 2025 13:49:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1749908957; cv=none; b=QfYrCuIKBC/T42x1ADhM2LASTkA9GnZQKV80beM2RdxPFzeUYkYbSvpzg/aymFfgEK610vUW12M/8KME9AZt+QN6as04tr7cBirbNio+5vBSkO6AzSHD/UmiFBtSOzTH/oNW8cuspngnnPp1r44MET8qdVrlKwb8UhapE8eXD4o=
+	t=1749908957; cv=none; b=R6//Mkbpc3nAxNj2AHY41iZcTT+6/t2nmcqSjBy3HatT9of/2mkhKI4iwIth1fiBOhIvWlP4uxr7XhHcUCJ/+25Vl/dWfx9kbZUqL5LYZZvhjl9iU/2MuroBGYkZCHwh6ioa8NjZELInSNJ4JjDMmaX/Or4ht6hahSF57MZ4wzQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1749908957; c=relaxed/simple;
-	bh=GI44pLwmhBFun8knb7fvgIc7M6bBnm5MRa+vS7fKwr4=;
+	bh=xpm4SrrZ3ZJ0RDo4NgssIWkYzLDT+qKUSusys7hGU00=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=Of0V+WhkaMQfiNkztgkhN+0kZwt9b5+fnr3pnfEwGETaGjS7yMepeOeXKLEnyB8+xUMSU4eAdYoLeRMso4aSo1yhZWAQDeIhcq775m9BIsTiwXo3pF93L2OggI3V+9N3yO2i5ChhvmIT/QHMh7p7KoOIyKh1uB6sLvFgUhBoDx8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=L+F/2xVY; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version; b=S3n6Vwpen301Yq6dBxwtq2Fwat9ecBJzyu50B6XNQ8gSSLvJAUS4fFwaJntHXIzKvrvuCYiftqq34E6d7VGYJe0J6cCYXSqahk8c8cAktHfYZgCdAuDarHRR0YSEapcKQGbxfbmPEKSF6atVSEqtRgf8ir3j5v1i17r61mYDBro=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=iSLwpMe+; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="L+F/2xVY"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 081E9C4CEF1;
-	Sat, 14 Jun 2025 13:49:14 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="iSLwpMe+"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D1D28C4CEEB;
+	Sat, 14 Jun 2025 13:49:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1749908955;
-	bh=GI44pLwmhBFun8knb7fvgIc7M6bBnm5MRa+vS7fKwr4=;
+	s=k20201202; t=1749908957;
+	bh=xpm4SrrZ3ZJ0RDo4NgssIWkYzLDT+qKUSusys7hGU00=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=L+F/2xVYT9Rfkf2heHdSWUjzyn1HxlZbdab0/2+LyZudEA1u/SE7d9XsQxFyPu/q4
-	 r/6irRC862b0by83XBD4oKuObnWc5ZOzbh7Z5Cf+CGJRtmDNf3kx1ocqpjjkKUYP0I
-	 ogQ+n8Ypb4xv1ZmhBxjY2HTvpxJQXC5UcwE1Gv9Cng9dmnmr1U2LXLo+hgrvo6mmz+
-	 teLJpiiEuSrID4G+Q1p+bl9ApzdI7nOoIvF+UXr3Dq8aeeK7boJiO/HckkFkgQ3SEq
-	 h2jIQ1W3AlMnLnB3SYdW7fOO64SLhY02I5kYi/IyYaYoN/IIiE0TQBhCz+iY9nLV4N
-	 TSWwBW1Qz43+A==
+	b=iSLwpMe+c9grQy2zeI4BGb5WU9CWPXW37xmkpxdJDjTy1h4iSWx8JTOtc4kEYeJo9
+	 iDbLKpCqShSy5OWO7WkfJq0cZ/InF9dehRFlma/Jo50OI1krLccuJ+ieXrT15UfyeM
+	 ezCZRpSdgSaF9fMK6TXo/1QoHzS8FEUo9C6Px48HEwLHxWYICyFMf+Q4H9IahRksGQ
+	 mBTbs6JL6d6UYBtL9gIU7yFfXphP/H/nC0W1RnRCNCGSxhr0NME2XGUDDRD/lxU8Dc
+	 4aWe96Hlvt1V/YX39WwZe3hLtaVjNZEW8gBY8a1HhPpwtbiNdMAbEZP6JeJVyKpaOH
+	 Ykbm5gMRma6HQ==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-kernel@vger.kernel.org
 Cc: linux-api@vger.kernel.org,
 	workflows@vger.kernel.org,
 	tools@kernel.org,
 	Sasha Levin <sashal@kernel.org>
-Subject: [RFC 16/19] kernel/api: add IOCTL specification infrastructure
-Date: Sat, 14 Jun 2025 09:48:55 -0400
-Message-Id: <20250614134858.790460-17-sashal@kernel.org>
+Subject: [RFC 18/19] binder: add detailed IOCTL API specifications
+Date: Sat, 14 Jun 2025 09:48:57 -0400
+Message-Id: <20250614134858.790460-19-sashal@kernel.org>
 X-Mailer: git-send-email 2.39.5
 In-Reply-To: <20250614134858.790460-1-sashal@kernel.org>
 References: <20250614134858.790460-1-sashal@kernel.org>
@@ -46,1076 +46,812 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add IOCTL API specification support to the kernel API specification
-framework. This enables detailed documentation and runtime validation of
-IOCTL interfaces.
-
-Key features:
-- IOCTL specification structure with command info and parameter details
-- Registration/unregistration functions for IOCTL specs
-- Helper macros for defining IOCTL specifications
-- KAPI_IOCTL_SPEC_DRIVER macro for simplified driver integration
-- Runtime validation support with KAPI_DEFINE_FOPS wrapper
-- Validation of IOCTL parameters and return values
-- Integration with existing kernel API spec infrastructure
-
-The validation framework checks:
-- Parameter constraints (ranges, enums, masks)
-- User pointer validity
-- Buffer size constraints
-- Return value correctness against specification
+Add kernel API specifications to the binder driver using the IOCTL
+specification framework. This provides detailed documentation and
+enables runtime validation of all binder IOCTL interfaces.
 
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- include/linux/ioctl_api_spec.h  | 540 ++++++++++++++++++++++++++++++++
- include/linux/kernel_api_spec.h |   2 +-
- kernel/api/Makefile             |   5 +-
- kernel/api/ioctl_validation.c   | 360 +++++++++++++++++++++
- kernel/api/kernel_api_spec.c    |  90 +++++-
- 5 files changed, 994 insertions(+), 3 deletions(-)
- create mode 100644 include/linux/ioctl_api_spec.h
- create mode 100644 kernel/api/ioctl_validation.c
+ drivers/android/binder.c | 758 +++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 758 insertions(+)
 
-diff --git a/include/linux/ioctl_api_spec.h b/include/linux/ioctl_api_spec.h
-new file mode 100644
-index 0000000000000..ab3337449ad77
---- /dev/null
-+++ b/include/linux/ioctl_api_spec.h
-@@ -0,0 +1,540 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * ioctl_api_spec.h - IOCTL API specification framework
-+ *
-+ * Extends the kernel API specification framework to support ioctl validation
-+ * and documentation.
-+ */
-+
-+#ifndef _LINUX_IOCTL_API_SPEC_H
-+#define _LINUX_IOCTL_API_SPEC_H
-+
+diff --git a/drivers/android/binder.c b/drivers/android/binder.c
+index c463ca4a8fff8..975f07216724b 100644
+--- a/drivers/android/binder.c
++++ b/drivers/android/binder.c
+@@ -67,6 +67,8 @@
+ #include <linux/task_work.h>
+ #include <linux/sizes.h>
+ #include <linux/ktime.h>
++#include <linux/ioctl_api_spec.h>
 +#include <linux/kernel_api_spec.h>
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+/* Forward declarations */
-+struct file;
-+
-+/**
-+ * struct kapi_ioctl_spec - IOCTL-specific API specification
-+ * @api_spec: Base API specification
-+ * @cmd: IOCTL command number
-+ * @cmd_name: Human-readable command name
-+ * @input_size: Size of input structure (0 if none)
-+ * @output_size: Size of output structure (0 if none)
-+ * @file_ops_name: Name of the file_operations structure
-+ */
-+struct kapi_ioctl_spec {
-+	struct kernel_api_spec api_spec;
-+	unsigned int cmd;
-+	const char *cmd_name;
-+	size_t input_size;
-+	size_t output_size;
-+	const char *file_ops_name;
-+};
-+
-+/* Registry functions for IOCTL specifications */
-+#ifdef CONFIG_KAPI_SPEC
-+int kapi_register_ioctl_spec(const struct kapi_ioctl_spec *spec);
-+void kapi_unregister_ioctl_spec(unsigned int cmd);
-+const struct kapi_ioctl_spec *kapi_get_ioctl_spec(unsigned int cmd);
-+
-+/* IOCTL validation functions */
+ 
+ #include <uapi/linux/android/binder.h>
+ 
+@@ -6930,6 +6932,7 @@ static int transaction_log_show(struct seq_file *m, void *unused)
+ 	return 0;
+ }
+ 
++/* Define the actual binder_fops structure */
+ const struct file_operations binder_fops = {
+ 	.owner = THIS_MODULE,
+ 	.poll = binder_poll,
+@@ -6941,6 +6944,751 @@ const struct file_operations binder_fops = {
+ 	.release = binder_release,
+ };
+ 
++/* Define wrapper for KAPI validation */
 +#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+int kapi_validate_ioctl(struct file *filp, unsigned int cmd, void __user *arg);
-+int kapi_validate_ioctl_struct(const struct kapi_ioctl_spec *spec,
-+			       const void *data, size_t size);
-+#else
-+static inline int kapi_validate_ioctl(struct file *filp, unsigned int cmd,
-+				      void __user *arg)
++static struct file_operations __kapi_wrapped_binder_fops;
++static struct kapi_fops_wrapper __kapi_wrapper_binder_fops;
++
++static void kapi_init_fops_binder_fops(void)
 +{
-+	return 0;
-+}
-+#endif /* CONFIG_KAPI_RUNTIME_CHECKS */
-+
-+#else /* !CONFIG_KAPI_SPEC */
-+static inline int kapi_register_ioctl_spec(const struct kapi_ioctl_spec *spec)
-+{
-+	return 0;
-+}
-+static inline void kapi_unregister_ioctl_spec(unsigned int cmd) {}
-+static inline const struct kapi_ioctl_spec *kapi_get_ioctl_spec(unsigned int cmd)
-+{
-+	return NULL;
-+}
-+#endif /* CONFIG_KAPI_SPEC */
-+
-+/* Helper macros for IOCTL specification */
-+
-+/**
-+ * DEFINE_IOCTL_API_SPEC - Start an IOCTL API specification
-+ * @name: Unique identifier for the specification
-+ * @cmd: IOCTL command number
-+ * @cmd_name_str: String name of the command
-+ */
-+#define DEFINE_IOCTL_API_SPEC(name, cmd, cmd_name_str)			\
-+static const struct kapi_ioctl_spec name##_spec = {			\
-+	.cmd = cmd,							\
-+	.cmd_name = cmd_name_str,					\
-+	.api_spec = {							\
-+		.name = #name,
-+
-+/**
-+ * KAPI_IOCTL_SIZE - Specify input/output structure sizes
-+ * @in_size: Size of input structure
-+ * @out_size: Size of output structure
-+ */
-+#define KAPI_IOCTL_SIZE(in_size, out_size)				\
-+	},								\
-+	.input_size = in_size,						\
-+	.output_size = out_size,
-+
-+/**
-+ * KAPI_IOCTL_FILE_OPS - Specify the file_operations structure name
-+ * @ops_name: Name of the file_operations structure
-+ */
-+#define KAPI_IOCTL_FILE_OPS(ops_name)					\
-+	.file_ops_name = #ops_name,
-+
-+/**
-+ * Common IOCTL parameter specifications
-+ */
-+#define KAPI_IOCTL_PARAM_SIZE							\
-+	KAPI_PARAM(0, "size", "__u32", "Size of the structure")		\
-+		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)					\
-+		.type = KAPI_TYPE_UINT,						\
-+		.constraint_type = KAPI_CONSTRAINT_CUSTOM,			\
-+		.constraints = "Must match sizeof(struct)",			\
-+	KAPI_PARAM_END
-+
-+#define KAPI_IOCTL_PARAM_FLAGS							\
-+	KAPI_PARAM(1, "flags", "__u32", "Feature flags")			\
-+		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)					\
-+		.type = KAPI_TYPE_UINT,						\
-+		.constraint_type = KAPI_CONSTRAINT_MASK,			\
-+		.valid_mask = 0,	/* 0 means no flags currently */	\
-+	KAPI_PARAM_END
-+
-+/**
-+ * KAPI_IOCTL_PARAM_USER_BUF - User buffer parameter
-+ * @idx: Parameter index
-+ * @name: Parameter name
-+ * @desc: Parameter description
-+ * @len_idx: Index of the length parameter
-+ */
-+#define KAPI_IOCTL_PARAM_USER_BUF(idx, name, desc, len_idx)		\
-+	KAPI_PARAM(idx, name, "__aligned_u64", desc)			\
-+		KAPI_PARAM_FLAGS(KAPI_PARAM_IN | KAPI_PARAM_USER_PTR)	\
-+		.type = KAPI_TYPE_USER_PTR,				\
-+		.size_param_idx = len_idx,				\
-+	KAPI_PARAM_END
-+
-+/**
-+ * KAPI_IOCTL_PARAM_USER_OUT_BUF - User output buffer parameter
-+ * @idx: Parameter index
-+ * @name: Parameter name
-+ * @desc: Parameter description
-+ * @len_idx: Index of the length parameter
-+ */
-+#define KAPI_IOCTL_PARAM_USER_OUT_BUF(idx, name, desc, len_idx)	\
-+	KAPI_PARAM(idx, name, "__aligned_u64", desc)			\
-+		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT | KAPI_PARAM_USER_PTR)	\
-+		.type = KAPI_TYPE_USER_PTR,				\
-+		.size_param_idx = len_idx,				\
-+	KAPI_PARAM_END
-+
-+/**
-+ * KAPI_IOCTL_PARAM_LEN - Buffer length parameter
-+ * @idx: Parameter index
-+ * @name: Parameter name
-+ * @desc: Parameter description
-+ * @max_size: Maximum allowed size
-+ */
-+#define KAPI_IOCTL_PARAM_LEN(idx, name, desc, max_size)		\
-+	KAPI_PARAM(idx, name, "__u32", desc)				\
-+		KAPI_PARAM_FLAGS(KAPI_PARAM_INOUT)			\
-+		.type = KAPI_TYPE_UINT,					\
-+		.constraint_type = KAPI_CONSTRAINT_RANGE,		\
-+		.min_value = 0,						\
-+		.max_value = max_size,					\
-+	KAPI_PARAM_END
-+
-+/* End the IOCTL specification */
-+#define KAPI_IOCTL_END_SPEC						\
-+};									\
-+									\
-+static int __init name##_spec_init(void)				\
-+{									\
-+	return kapi_register_ioctl_spec(&name##_spec);			\
-+}									\
-+									\
-+static void __exit name##_spec_exit(void)				\
-+{									\
-+	kapi_unregister_ioctl_spec(name##_spec.cmd);			\
-+}									\
-+									\
-+module_init(name##_spec_init);						\
-+module_exit(name##_spec_exit);
-+
-+/* Inline IOCTL specification support */
-+
-+/* Forward declaration */
-+struct fwctl_ucmd;
-+
-+/**
-+ * struct kapi_ioctl_handler - IOCTL handler with inline specification
-+ * @spec: IOCTL specification
-+ * @handler: Original IOCTL handler function
-+ */
-+struct kapi_ioctl_handler {
-+	struct kapi_ioctl_spec spec;
-+	int (*handler)(struct fwctl_ucmd *ucmd);
-+};
-+
-+/**
-+ * DEFINE_IOCTL_HANDLER - Define an IOCTL handler with inline specification
-+ * @name: Handler name
-+ * @cmd: IOCTL command number
-+ * @handler_func: Handler function
-+ * @struct_type: Structure type for this IOCTL
-+ * @last_field: Last field in the structure
-+ */
-+#define DEFINE_IOCTL_HANDLER(name, cmd, handler_func, struct_type, last_field)	\
-+static const struct kapi_ioctl_handler name = {				\
-+	.spec = {							\
-+		.cmd = cmd,						\
-+		.cmd_name = #cmd,					\
-+		.input_size = sizeof(struct_type),			\
-+		.output_size = sizeof(struct_type),			\
-+		.api_spec = {						\
-+			.name = #name,
-+
-+#define KAPI_IOCTL_HANDLER_END						\
-+		},							\
-+	},								\
-+	.handler = handler_func,					\
-+}
-+
-+/**
-+ * kapi_ioctl_wrapper - Wrapper function for transparent IOCTL validation
-+ * @filp: File pointer
-+ * @cmd: IOCTL command
-+ * @arg: User argument
-+ * @real_ioctl: The real ioctl handler
-+ *
-+ * This wrapper performs validation before and after the actual IOCTL call
-+ */
-+static inline long kapi_ioctl_wrapper(struct file *filp, unsigned int cmd,
-+				      unsigned long arg,
-+				      long (*real_ioctl)(struct file *, unsigned int, unsigned long))
-+{
-+	long ret;
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+	/* Pre-validation */
-+	ret = kapi_validate_ioctl(filp, cmd, (void __user *)arg);
-+	if (ret)
-+		return ret;
-+#endif
-+
-+	/* Call the real IOCTL handler */
-+	ret = real_ioctl(filp, cmd, arg);
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+	/* Post-validation could be added here if needed */
-+	/* For example, validating output parameters */
-+#endif
-+
-+	return ret;
-+}
-+
-+/**
-+ * KAPI_IOCTL_OPS - Define file_operations with transparent validation
-+ * @name: Name of the file_operations structure
-+ * @real_ioctl: The real ioctl handler function
-+ * @... : Other file operation handlers
-+ */
-+#define KAPI_IOCTL_OPS(name, real_ioctl, ...)				\
-+static long name##_validated_ioctl(struct file *filp, unsigned int cmd, \
-+				   unsigned long arg)			\
-+{									\
-+	return kapi_ioctl_wrapper(filp, cmd, arg, real_ioctl);		\
-+}									\
-+									\
-+static const struct file_operations name = {				\
-+	.unlocked_ioctl = name##_validated_ioctl,			\
-+	__VA_ARGS__							\
-+}
-+
-+/**
-+ * KAPI_IOCTL_OP_ENTRY - Define an IOCTL operation table entry with spec
-+ * @_ioctl: IOCTL command macro
-+ * @_handler: Handler structure (defined with DEFINE_IOCTL_HANDLER)
-+ * @_struct: Structure type
-+ * @_last: Last field name
-+ */
-+#define KAPI_IOCTL_OP_ENTRY(_ioctl, _handler, _struct, _last)		\
-+	[_IOC_NR(_ioctl) - FWCTL_CMD_BASE] = {				\
-+		.size = sizeof(_struct) +				\
-+			BUILD_BUG_ON_ZERO(sizeof(union fwctl_ucmd_buffer) < \
-+					  sizeof(_struct)),		\
-+		.min_size = offsetofend(_struct, _last),		\
-+		.ioctl_num = _ioctl,					\
-+		.execute = _handler.handler,				\
++	if (binder_fops.unlocked_ioctl) {
++		__kapi_wrapped_binder_fops = binder_fops;
++		__kapi_wrapper_binder_fops.real_fops = &binder_fops;
++		__kapi_wrapper_binder_fops.wrapped_fops = &__kapi_wrapped_binder_fops;
++		__kapi_wrapper_binder_fops.real_ioctl = binder_fops.unlocked_ioctl;
++		__kapi_wrapped_binder_fops.unlocked_ioctl = kapi_ioctl_validation_wrapper;
++		kapi_register_wrapper(&__kapi_wrapper_binder_fops);
 +	}
-+
-+/* Helper to register all handlers in a module */
-+#define KAPI_REGISTER_IOCTL_HANDLERS(handlers, count)			\
-+static int __init kapi_ioctl_handlers_init(void)			\
-+{									\
-+	int i, ret;							\
-+	for (i = 0; i < count; i++) {					\
-+		ret = kapi_register_ioctl_spec(&handlers[i].spec);	\
-+		if (ret) {						\
-+			while (--i >= 0)				\
-+				kapi_unregister_ioctl_spec(handlers[i].spec.cmd); \
-+			return ret;					\
-+		}							\
-+	}								\
-+	return 0;							\
-+}									\
-+									\
-+static void __exit kapi_ioctl_handlers_exit(void)			\
-+{									\
-+	int i;								\
-+	for (i = 0; i < count; i++)					\
-+		kapi_unregister_ioctl_spec(handlers[i].spec.cmd);	\
-+}									\
-+									\
-+module_init(kapi_ioctl_handlers_init);					\
-+module_exit(kapi_ioctl_handlers_exit)
-+
-+/**
-+ * KAPI_REGISTER_IOCTL_SPECS - Register an array of IOCTL specifications
-+ * @specs: Array of pointers to kapi_ioctl_spec
-+ * @count: Number of specifications
-+ *
-+ * This macro generates init/exit functions to register/unregister
-+ * the IOCTL specifications. The functions return 0 on success or
-+ * negative error code on failure.
-+ *
-+ * Usage:
-+ *   static const struct kapi_ioctl_spec *my_ioctl_specs[] = {
-+ *       &spec1, &spec2, &spec3,
-+ *   };
-+ *   KAPI_REGISTER_IOCTL_SPECS(my_ioctl_specs, ARRAY_SIZE(my_ioctl_specs))
-+ *
-+ * Then call the generated functions in your module init/exit:
-+ *   ret = kapi_register_##name();
-+ *   kapi_unregister_##name();
-+ */
-+#define KAPI_REGISTER_IOCTL_SPECS(name, specs)				\
-+static int kapi_register_##name(void)					\
-+{									\
-+	int i, ret;							\
-+	for (i = 0; i < ARRAY_SIZE(specs); i++) {			\
-+		ret = kapi_register_ioctl_spec(specs[i]);		\
-+		if (ret) {						\
-+			pr_warn("Failed to register IOCTL spec for %s: %d\n", \
-+				specs[i]->cmd_name, ret);		\
-+			while (--i >= 0)				\
-+				kapi_unregister_ioctl_spec(specs[i]->cmd); \
-+			return ret;					\
-+		}							\
-+	}								\
-+	pr_info("Registered %zu IOCTL specifications\n", 		\
-+		ARRAY_SIZE(specs));					\
-+	return 0;							\
-+}									\
-+									\
-+static void kapi_unregister_##name(void)				\
-+{									\
-+	int i;								\
-+	for (i = 0; i < ARRAY_SIZE(specs); i++)			\
-+		kapi_unregister_ioctl_spec(specs[i]->cmd);		\
 +}
++#else
++static inline void kapi_init_fops_binder_fops(void) {}
++#endif
 +
-+/**
-+ * KAPI_DEFINE_IOCTL_SPEC - Define a single IOCTL specification
-+ * @name: Name of the specification variable
-+ * @cmd: IOCTL command number
-+ * @cmd_name: String name of the command
-+ * @in_size: Input structure size
-+ * @out_size: Output structure size
-+ * @fops_name: Name of the file_operations structure
-+ *
-+ * This macro starts the definition of an IOCTL specification.
-+ * It must be followed by the API specification details and
-+ * ended with KAPI_END_IOCTL_SPEC.
-+ *
-+ * Example:
-+ *   KAPI_DEFINE_IOCTL_SPEC(my_ioctl_spec, MY_IOCTL, "MY_IOCTL",
-+ *                          sizeof(struct my_input), sizeof(struct my_output),
-+ *                          "my_fops")
-+ *   KAPI_DESCRIPTION("Description here")
-+ *   ...
-+ *   KAPI_END_IOCTL_SPEC;
-+ */
-+#define KAPI_DEFINE_IOCTL_SPEC(name, cmd, cmd_name_str, in_size, out_size, fops) \
-+static const struct kapi_ioctl_spec name = {				\
-+	.cmd = (cmd),							\
-+	.cmd_name = cmd_name_str,					\
-+	.input_size = in_size,						\
-+	.output_size = out_size,					\
-+	.file_ops_name = fops,						\
-+	.api_spec = {							\
-+		.name = #name,
++/* IOCTL API Specifications for Binder */
 +
-+#define KAPI_END_IOCTL_SPEC						\
-+	},								\
-+}
++static const struct kapi_ioctl_spec binder_write_read_spec = {
++	.cmd = BINDER_WRITE_READ,
++	.cmd_name = "BINDER_WRITE_READ",
++	.input_size = sizeof(struct binder_write_read),
++	.output_size = sizeof(struct binder_write_read),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_write_read",
++	KAPI_DESCRIPTION("Perform read/write operations on binder")
++	KAPI_LONG_DESC("Main workhorse of binder IPC. Allows writing commands to "
++		       "binder driver and reading responses. Commands are encoded "
++		       "in a special protocol format. Both read and write operations "
++		       "can be performed in a single ioctl call.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
 +
-+/**
-+ * KAPI_IOCTL_SPEC_DRIVER - Complete IOCTL specification for a driver
-+ * @driver_name: Name of the driver (used for logging)
-+ * @specs_array: Name of the array containing IOCTL spec pointers
-+ *
-+ * This macro provides everything needed for IOCTL spec registration:
-+ * 1. Generates the specs array declaration
-+ * 2. Creates init/exit functions for registration
-+ * 3. Provides simple function names to call from module init/exit
-+ *
-+ * Usage:
-+ *   // Define individual specs
-+ *   KAPI_DEFINE_IOCTL_SPEC(spec1, ...) ... KAPI_END_IOCTL_SPEC;
-+ *   KAPI_DEFINE_IOCTL_SPEC(spec2, ...) ... KAPI_END_IOCTL_SPEC;
-+ *
-+ *   // Create the driver registration (at end of file)
-+ *   KAPI_IOCTL_SPEC_DRIVER("my_driver", {
-+ *       &spec1,
-+ *       &spec2,
-+ *   })
-+ *
-+ *   // In module init: ret = kapi_ioctl_specs_init();
-+ *   // In module exit: kapi_ioctl_specs_exit();
-+ */
-+#define KAPI_IOCTL_SPEC_DRIVER(driver_name, ...)			\
-+static const struct kapi_ioctl_spec *__kapi_ioctl_specs[] = __VA_ARGS__;									\
-+									\
-+static int __init kapi_ioctl_specs_init(void)				\
-+{									\
-+	int i, ret;							\
-+	for (i = 0; i < ARRAY_SIZE(__kapi_ioctl_specs); i++) {		\
-+		ret = kapi_register_ioctl_spec(__kapi_ioctl_specs[i]);	\
-+		if (ret) {						\
-+			pr_warn("%s: Failed to register %s: %d\n",	\
-+				driver_name,				\
-+				__kapi_ioctl_specs[i]->cmd_name, ret);	\
-+			while (--i >= 0)				\
-+				kapi_unregister_ioctl_spec(		\
-+					__kapi_ioctl_specs[i]->cmd);	\
-+			return ret;					\
-+		}							\
-+	}								\
-+	pr_info("%s: Registered %zu IOCTL specifications\n",		\
-+		driver_name, ARRAY_SIZE(__kapi_ioctl_specs));		\
-+	return 0;							\
-+}									\
-+									\
-+static void kapi_ioctl_specs_exit(void)				\
-+{									\
-+	int i;								\
-+	for (i = 0; i < ARRAY_SIZE(__kapi_ioctl_specs); i++)		\
-+		kapi_unregister_ioctl_spec(__kapi_ioctl_specs[i]->cmd);\
-+}
++	/* Parameters */
++	KAPI_PARAM(0, "write_size", "binder_size_t", "Bytes to write")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = SZ_4M,	/* Reasonable limit for IPC */
++	KAPI_PARAM_END
 +
-+/* Transparent IOCTL validation wrapper support */
++	KAPI_PARAM(1, "write_consumed", "binder_size_t", "Bytes consumed by driver")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = SZ_4M,
++	KAPI_PARAM_END
 +
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
++	KAPI_PARAM(2, "write_buffer", "binder_uintptr_t", "User buffer with commands")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN | KAPI_PARAM_USER)
++		.type = KAPI_TYPE_USER_PTR,
++		.size_param_idx = 0,
++	KAPI_PARAM_END
 +
-+/**
-+ * struct kapi_fops_wrapper - Wrapper for file_operations with validation
-+ * @real_fops: Original file_operations
-+ * @wrapped_fops: Modified file_operations with validation wrapper
-+ * @real_ioctl: Original unlocked_ioctl handler
-+ */
-+struct kapi_fops_wrapper {
-+	const struct file_operations *real_fops;
-+	const struct file_operations *wrapped_fops;
-+	long (*real_ioctl)(struct file *, unsigned int, unsigned long);
++	KAPI_PARAM(3, "read_size", "binder_size_t", "Bytes to read")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = SZ_4M,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(4, "read_consumed", "binder_size_t", "Bytes consumed by driver")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = SZ_4M,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(5, "read_buffer", "binder_uintptr_t", "User buffer for responses")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT | KAPI_PARAM_USER)
++		.type = KAPI_TYPE_USER_PTR,
++		.size_param_idx = 3,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EFAULT, -EINVAL, -EAGAIN, -EINTR,
++					      -ENOMEM, -ECONNREFUSED},
++		.error_count = 6,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EFAULT, "EFAULT", "Failed to copy data to/from user space",
++		   "Check buffer pointers are valid user space addresses")
++	KAPI_ERROR(1, -EINVAL, "EINVAL", "Invalid parameters",
++		   "Buffer sizes or commands are invalid")
++	KAPI_ERROR(2, -EAGAIN, "EAGAIN", "Try again",
++		   "Non-blocking read with no data available")
++	KAPI_ERROR(3, -EINTR, "EINTR", "Interrupted by signal",
++		   "Operation interrupted, should be retried")
++	KAPI_ERROR(4, -ENOMEM, "ENOMEM", "Out of memory",
++		   "Unable to allocate memory for operation")
++	KAPI_ERROR(5, -ECONNREFUSED, "ECONNREFUSED", "Connection refused",
++		   "Process is being destroyed, no further operations allowed")
++
++	.error_count = 6,
++	.param_count = 6,
++	.since_version = "3.0",
++	.notes = "This is the primary interface for binder IPC. Most other "
++		 "ioctls are for configuration and management.",
++
++	/* Structure specifications */
++	KAPI_STRUCT_SPEC(0, binder_write_read, "Read/write operation structure")
++		KAPI_STRUCT_SIZE(sizeof(struct binder_write_read), __alignof__(struct binder_write_read))
++		KAPI_STRUCT_FIELD_COUNT(6)
++
++		KAPI_STRUCT_FIELD(0, "write_size", KAPI_TYPE_UINT, "binder_size_t",
++				  "Number of bytes to write")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, write_size))
++			KAPI_FIELD_SIZE(sizeof(binder_size_t))
++		KAPI_STRUCT_FIELD_END
++
++		KAPI_STRUCT_FIELD(1, "write_consumed", KAPI_TYPE_UINT, "binder_size_t",
++				  "Number of bytes consumed by driver")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, write_consumed))
++			KAPI_FIELD_SIZE(sizeof(binder_size_t))
++		KAPI_STRUCT_FIELD_END
++
++		KAPI_STRUCT_FIELD(2, "write_buffer", KAPI_TYPE_PTR, "binder_uintptr_t",
++				  "Pointer to write buffer")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, write_buffer))
++			KAPI_FIELD_SIZE(sizeof(binder_uintptr_t))
++		KAPI_STRUCT_FIELD_END
++
++		KAPI_STRUCT_FIELD(3, "read_size", KAPI_TYPE_UINT, "binder_size_t",
++				  "Number of bytes to read")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, read_size))
++			KAPI_FIELD_SIZE(sizeof(binder_size_t))
++		KAPI_STRUCT_FIELD_END
++
++		KAPI_STRUCT_FIELD(4, "read_consumed", KAPI_TYPE_UINT, "binder_size_t",
++				  "Number of bytes consumed by driver")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, read_consumed))
++			KAPI_FIELD_SIZE(sizeof(binder_size_t))
++		KAPI_STRUCT_FIELD_END
++
++		KAPI_STRUCT_FIELD(5, "read_buffer", KAPI_TYPE_PTR, "binder_uintptr_t",
++				  "Pointer to read buffer")
++			KAPI_FIELD_OFFSET(offsetof(struct binder_write_read, read_buffer))
++			KAPI_FIELD_SIZE(sizeof(binder_uintptr_t))
++		KAPI_STRUCT_FIELD_END
++	KAPI_STRUCT_SPEC_END
++
++	KAPI_STRUCT_SPEC_COUNT(1)
++
++	/* Side effects */
++	KAPI_SIDE_EFFECT(0, KAPI_EFFECT_MODIFY_STATE | KAPI_EFFECT_NETWORK,
++			 "binder transaction queue",
++			 "Enqueues transactions or commands to target process")
++		KAPI_EFFECT_CONDITION("write_size > 0")
++	KAPI_SIDE_EFFECT_END
++
++	KAPI_SIDE_EFFECT(1, KAPI_EFFECT_MODIFY_STATE | KAPI_EFFECT_SCHEDULE,
++			 "process state",
++			 "May block waiting for incoming transactions")
++		KAPI_EFFECT_CONDITION("read_size > 0 && no data available")
++	KAPI_SIDE_EFFECT_END
++
++	KAPI_SIDE_EFFECT(2, KAPI_EFFECT_RESOURCE_CREATE,
++			 "binder nodes/refs",
++			 "May create or destroy binder nodes and references")
++		KAPI_EFFECT_CONDITION("specific commands")
++		KAPI_EFFECT_REVERSIBLE
++	KAPI_SIDE_EFFECT_END
++
++	KAPI_SIDE_EFFECT(3, KAPI_EFFECT_SIGNAL_SEND,
++			 "target process",
++			 "May trigger death notifications to linked processes")
++		KAPI_EFFECT_CONDITION("death notification")
++	KAPI_SIDE_EFFECT_END
++
++	KAPI_SIDE_EFFECT_COUNT(4)
++
++	/* State transitions */
++	KAPI_STATE_TRANS(0, "transaction",
++			 "pending in sender", "queued in target",
++			 "Transaction moves from sender to target's queue")
++		KAPI_STATE_TRANS_COND("BC_TRANSACTION command")
++	KAPI_STATE_TRANS_END
++
++	KAPI_STATE_TRANS(1, "thread state",
++			 "running", "waiting for work",
++			 "Thread blocks waiting for incoming transactions")
++		KAPI_STATE_TRANS_COND("read with no work available")
++	KAPI_STATE_TRANS_END
++
++	KAPI_STATE_TRANS(2, "binder ref",
++			 "active", "released",
++			 "Reference count decremented, may trigger cleanup")
++		KAPI_STATE_TRANS_COND("BC_RELEASE command")
++	KAPI_STATE_TRANS_END
++
++	KAPI_STATE_TRANS_COUNT(3)
++	},
 +};
 +
-+/* Forward declarations */
-+long kapi_ioctl_validation_wrapper(struct file *filp, unsigned int cmd,
-+				   unsigned long arg);
-+void kapi_register_wrapper(struct kapi_fops_wrapper *wrapper);
++static const struct kapi_ioctl_spec binder_set_max_threads_spec = {
++	.cmd = BINDER_SET_MAX_THREADS,
++	.cmd_name = "BINDER_SET_MAX_THREADS",
++	.input_size = sizeof(__u32),
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_set_max_threads",
++	KAPI_DESCRIPTION("Set maximum number of binder threads")
++	KAPI_LONG_DESC("Sets the maximum number of threads that the binder driver "
++		       "will request this process to spawn for handling incoming "
++		       "transactions. The driver sends BR_SPAWN_LOOPER when it needs "
++		       "more threads.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
 +
-+/**
-+ * kapi_wrap_file_operations - Wrap file_operations for transparent validation
-+ * @fops: Original file_operations to wrap
-+ *
-+ * This creates a wrapper that intercepts ioctl calls for validation.
-+ * The wrapper is stored in a static variable in the calling module.
-+ */
-+#define kapi_wrap_file_operations(fops)					\
-+({										\
-+	static struct kapi_fops_wrapper __kapi_wrapper = {		\
-+		.real_fops = &(fops),					\
-+	};								\
-+	if (__kapi_wrapper.real_fops->unlocked_ioctl) {		\
-+		__kapi_wrapper.wrapped_fops = (fops);			\
-+		__kapi_wrapper.real_ioctl = (fops).unlocked_ioctl;	\
-+		__kapi_wrapper.wrapped_fops.unlocked_ioctl = 		\
-+			kapi_ioctl_validation_wrapper;			\
-+		&__kapi_wrapper.wrapped_fops;				\
-+	} else {							\
-+		&(fops);						\
-+	}								\
++	/* Parameters */
++	KAPI_PARAM(0, "max_threads", "__u32", "Maximum number of threads")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = INT_MAX,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EFAULT},
++		.error_count = 2,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Invalid thread count",
++		   "Thread count exceeds system limits")
++	KAPI_ERROR(1, -EFAULT, "EFAULT", "Failed to copy from user",
++		   "Invalid user pointer provided")
++
++	.error_count = 2,
++	.param_count = 1,
++	.since_version = "3.0",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_set_context_mgr_spec = {
++	.cmd = BINDER_SET_CONTEXT_MGR,
++	.cmd_name = "BINDER_SET_CONTEXT_MGR",
++	.input_size = 0,
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_set_context_mgr",
++	KAPI_DESCRIPTION("Become the context manager (handle 0)")
++	KAPI_LONG_DESC("Registers the calling process as the context manager for "
++		       "this binder domain. The context manager has special handle 0 "
++		       "and typically implements the service manager. Only one process "
++		       "per binder domain can be the context manager.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EBUSY, -EPERM, -ENOMEM},
++		.error_count = 3,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EBUSY, "EBUSY", "Context manager already set",
++		   "Another process is already the context manager")
++	KAPI_ERROR(1, -EPERM, "EPERM", "Permission denied",
++		   "Caller lacks permission or wrong UID")
++	KAPI_ERROR(2, -ENOMEM, "ENOMEM", "Out of memory",
++		   "Unable to allocate context manager node")
++
++	.error_count = 3,
++	.param_count = 0,
++	.since_version = "3.0",
++	.notes = "Requires CAP_SYS_NICE or proper SELinux permissions",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_set_context_mgr_ext_spec = {
++	.cmd = BINDER_SET_CONTEXT_MGR_EXT,
++	.cmd_name = "BINDER_SET_CONTEXT_MGR_EXT",
++	.input_size = sizeof(struct flat_binder_object),
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_set_context_mgr_ext",
++	KAPI_DESCRIPTION("Become context manager with extended info")
++	KAPI_LONG_DESC("Extended version of BINDER_SET_CONTEXT_MGR that allows "
++		       "specifying additional properties of the context manager "
++		       "through a flat_binder_object structure.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "object", "struct flat_binder_object", "Context manager properties")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_STRUCT,
++		.size = sizeof(struct flat_binder_object),
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EFAULT, -EBUSY, -EPERM, -ENOMEM},
++		.error_count = 5,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Invalid parameters",
++		   "Invalid flat_binder_object structure")
++	KAPI_ERROR(1, -EFAULT, "EFAULT", "Failed to copy from user",
++		   "Invalid user pointer provided")
++	KAPI_ERROR(2, -EBUSY, "EBUSY", "Context manager already set",
++		   "Another process is already the context manager")
++	KAPI_ERROR(3, -EPERM, "EPERM", "Permission denied",
++		   "Caller lacks permission or wrong UID")
++	KAPI_ERROR(4, -ENOMEM, "ENOMEM", "Out of memory",
++		   "Unable to allocate context manager node")
++
++	.error_count = 5,
++	.param_count = 1,
++	.since_version = "4.14",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_thread_exit_spec = {
++	.cmd = BINDER_THREAD_EXIT,
++	.cmd_name = "BINDER_THREAD_EXIT",
++	.input_size = 0,
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_thread_exit",
++	KAPI_DESCRIPTION("Exit binder thread")
++	KAPI_LONG_DESC("Notifies the binder driver that this thread is exiting. "
++		       "The driver will clean up any pending transactions and "
++		       "remove the thread from the thread pool.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){},
++		.error_count = 0,
++	KAPI_RETURN_END
++
++	.error_count = 0,
++	.param_count = 0,
++	.since_version = "3.0",
++	.notes = "Should be called before thread termination to ensure clean shutdown",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_version_spec = {
++	.cmd = BINDER_VERSION,
++	.cmd_name = "BINDER_VERSION",
++	.input_size = 0,
++	.output_size = sizeof(struct binder_version),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_version",
++	KAPI_DESCRIPTION("Get binder protocol version")
++	KAPI_LONG_DESC("Returns the current binder protocol version supported "
++		       "by the driver. Used for compatibility checking.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "protocol_version", "__s32", "Binder protocol version")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_INT,
++		.constraint_type = KAPI_CONSTRAINT_ENUM,
++		.enum_values = (const s64[]){BINDER_CURRENT_PROTOCOL_VERSION},
++		.enum_count = 1,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EFAULT},
++		.error_count = 2,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Invalid version structure",
++		   "Invalid user pointer for version structure")
++	KAPI_ERROR(1, -EFAULT, "EFAULT", "Failed to copy to user",
++		   "Unable to write version to user space")
++
++	.error_count = 2,
++	.param_count = 1,
++	.since_version = "3.0",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_get_node_info_for_ref_spec = {
++	.cmd = BINDER_GET_NODE_INFO_FOR_REF,
++	.cmd_name = "BINDER_GET_NODE_INFO_FOR_REF",
++	.input_size = sizeof(struct binder_node_info_for_ref),
++	.output_size = sizeof(struct binder_node_info_for_ref),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_get_node_info_for_ref",
++	KAPI_DESCRIPTION("Get node information for a reference")
++	KAPI_LONG_DESC("Retrieves information about a binder node given its handle. "
++		       "Returns the current strong and weak reference counts.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "handle", "__u32", "Binder handle")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(1, "strong_count", "__u32", "Strong reference count")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(2, "weak_count", "__u32", "Weak reference count")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EFAULT, -ENOENT},
++		.error_count = 3,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Invalid parameters",
++		   "Reserved fields must be zero")
++	KAPI_ERROR(1, -EFAULT, "EFAULT", "Failed to copy data",
++		   "Invalid user pointer provided")
++	KAPI_ERROR(2, -ENOENT, "ENOENT", "Handle not found",
++		   "No node exists for the given handle")
++
++	.error_count = 3,
++	.param_count = 3,
++	.since_version = "4.14",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_get_node_debug_info_spec = {
++	.cmd = BINDER_GET_NODE_DEBUG_INFO,
++	.cmd_name = "BINDER_GET_NODE_DEBUG_INFO",
++	.input_size = sizeof(struct binder_node_debug_info),
++	.output_size = sizeof(struct binder_node_debug_info),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_get_node_debug_info",
++	KAPI_DESCRIPTION("Get debug info for binder nodes")
++	KAPI_LONG_DESC("Iterates through all binder nodes in the process. "
++		       "Start with ptr=NULL to get first node, then use "
++		       "returned ptr for next call. Returns ptr=0 when done.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "ptr", "binder_uintptr_t", "Node pointer (NULL for first)")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_INOUT)
++		.type = KAPI_TYPE_PTR,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(1, "cookie", "binder_uintptr_t", "Node cookie value")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(2, "has_strong_ref", "__u32", "Has strong references")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = 1,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(3, "has_weak_ref", "__u32", "Has weak references")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = 1,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EFAULT, -EINVAL},
++		.error_count = 2,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EFAULT, "EFAULT", "Failed to copy data",
++		   "Invalid user pointer provided")
++	KAPI_ERROR(1, -EINVAL, "EINVAL", "Invalid node pointer",
++		   "Provided ptr is not a valid node")
++
++	.error_count = 2,
++	.param_count = 4,
++	.since_version = "4.14",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_freeze_spec = {
++	.cmd = BINDER_FREEZE,
++	.cmd_name = "BINDER_FREEZE",
++	.input_size = sizeof(struct binder_freeze_info),
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_freeze",
++	KAPI_DESCRIPTION("Freeze or unfreeze a binder process")
++	KAPI_LONG_DESC("Controls whether a process can receive binder transactions. "
++		       "When frozen, new transactions are blocked. Can wait for "
++		       "existing transactions to complete with timeout.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "pid", "__u32", "Process ID to freeze/unfreeze")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 1,
++		.max_value = PID_MAX_LIMIT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(1, "enable", "__u32", "1 to freeze, 0 to unfreeze")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = 1,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(2, "timeout_ms", "__u32", "Timeout in milliseconds (0 = no wait)")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = 60000,	/* 1 minute max */
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EAGAIN, -EFAULT, -ENOMEM},
++		.error_count = 4,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Invalid process",
++		   "Process not found or invalid parameters")
++	KAPI_ERROR(1, -EAGAIN, "EAGAIN", "Timeout waiting for transactions",
++		   "Existing transactions did not complete within timeout")
++	KAPI_ERROR(2, -EFAULT, "EFAULT", "Failed to copy from user",
++		   "Invalid user pointer provided")
++	KAPI_ERROR(3, -ENOMEM, "ENOMEM", "Out of memory",
++		   "Unable to allocate memory for freeze operation")
++
++	.error_count = 4,
++	.param_count = 3,
++	.since_version = "5.9",
++	.notes = "Requires appropriate permissions to freeze other processes",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_get_frozen_info_spec = {
++	.cmd = BINDER_GET_FROZEN_INFO,
++	.cmd_name = "BINDER_GET_FROZEN_INFO",
++	.input_size = sizeof(struct binder_frozen_status_info),
++	.output_size = sizeof(struct binder_frozen_status_info),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_get_frozen_info",
++	KAPI_DESCRIPTION("Get frozen status of a process")
++	KAPI_LONG_DESC("Queries whether a process is frozen and if it has "
++		       "received transactions while frozen. Useful for "
++		       "debugging frozen process issues.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "pid", "__u32", "Process ID to query")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 1,
++		.max_value = PID_MAX_LIMIT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(1, "sync_recv", "__u32", "Sync transactions received while frozen")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++		.constraints = "Bit 0: received after frozen, Bit 1: pending during freeze",
++	KAPI_PARAM_END
++
++	KAPI_PARAM(2, "async_recv", "__u32", "Async transactions received while frozen")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EINVAL, -EFAULT},
++		.error_count = 2,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EINVAL, "EINVAL", "Process not found",
++		   "No binder process found with given PID")
++	KAPI_ERROR(1, -EFAULT, "EFAULT", "Failed to copy data",
++		   "Invalid user pointer provided")
++
++	.error_count = 2,
++	.param_count = 3,
++	.since_version = "5.9",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_enable_oneway_spam_detection_spec = {
++	.cmd = BINDER_ENABLE_ONEWAY_SPAM_DETECTION,
++	.cmd_name = "BINDER_ENABLE_ONEWAY_SPAM_DETECTION",
++	.input_size = sizeof(__u32),
++	.output_size = 0,
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_enable_oneway_spam_detection",
++	KAPI_DESCRIPTION("Enable/disable oneway spam detection")
++	KAPI_LONG_DESC("Controls whether the driver monitors for excessive "
++		       "oneway transactions that might indicate spam or abuse. "
++		       "When enabled, BR_ONEWAY_SPAM_SUSPECT is sent when threshold exceeded.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "enable", "__u32", "1 to enable, 0 to disable")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_IN)
++		.type = KAPI_TYPE_UINT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = 0,
++		.max_value = 1,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EFAULT},
++		.error_count = 1,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EFAULT, "EFAULT", "Failed to copy from user",
++		   "Invalid user pointer provided")
++
++	.error_count = 1,
++	.param_count = 1,
++	.since_version = "5.13",
++	},
++};
++
++static const struct kapi_ioctl_spec binder_get_extended_error_spec = {
++	.cmd = BINDER_GET_EXTENDED_ERROR,
++	.cmd_name = "BINDER_GET_EXTENDED_ERROR",
++	.input_size = 0,
++	.output_size = sizeof(struct binder_extended_error),
++	.file_ops_name = "binder_fops",
++	.api_spec = {
++		.name = "binder_get_extended_error",
++	KAPI_DESCRIPTION("Get extended error information")
++	KAPI_LONG_DESC("Retrieves detailed error information from the last "
++		       "failed binder operation on this thread. Clears the "
++		       "error after reading.")
++	KAPI_CONTEXT(KAPI_CTX_PROCESS | KAPI_CTX_SLEEPABLE)
++
++	/* Parameters */
++	KAPI_PARAM(0, "id", "__u32", "Error identifier")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(1, "command", "__u32", "Binder command that failed")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_UINT,
++	KAPI_PARAM_END
++
++	KAPI_PARAM(2, "param", "__s32", "Error parameter (negative errno)")
++		KAPI_PARAM_FLAGS(KAPI_PARAM_OUT)
++		.type = KAPI_TYPE_INT,
++		.constraint_type = KAPI_CONSTRAINT_RANGE,
++		.min_value = -MAX_ERRNO,
++		.max_value = 0,
++	KAPI_PARAM_END
++
++	/* Return value */
++	KAPI_RETURN("int", "0 on success, negative errno on failure")
++		.type = KAPI_TYPE_INT,
++		.check_type = KAPI_RETURN_ERROR_CHECK,
++		.error_values = (const s64[]){-EFAULT},
++		.error_count = 1,
++	KAPI_RETURN_END
++
++	/* Errors */
++	KAPI_ERROR(0, -EFAULT, "EFAULT", "Failed to copy to user",
++		   "Invalid user pointer provided")
++
++	.error_count = 1,
++	.param_count = 3,
++	.since_version = "5.16",
++	.notes = "Error is cleared after reading, subsequent calls return BR_OK",
++	},
++};
++
++/* Register all binder IOCTL specifications */
++KAPI_IOCTL_SPEC_DRIVER("binder", {
++	&binder_write_read_spec,
++	&binder_set_max_threads_spec,
++	&binder_set_context_mgr_spec,
++	&binder_set_context_mgr_ext_spec,
++	&binder_thread_exit_spec,
++	&binder_version_spec,
++	&binder_get_node_info_for_ref_spec,
++	&binder_get_node_debug_info_spec,
++	&binder_freeze_spec,
++	&binder_get_frozen_info_spec,
++	&binder_enable_oneway_spam_detection_spec,
++	&binder_get_extended_error_spec,
 +})
 +
-+
-+/**
-+ * KAPI_DEFINE_FOPS - Define file_operations with automatic validation
-+ * @name: Name of the file_operations structure
-+ * @... : File operation handlers
-+ *
-+ * Usage:
-+ *   KAPI_DEFINE_FOPS(my_fops,
-+ *       .owner = THIS_MODULE,
-+ *       .open = my_open,
-+ *       .unlocked_ioctl = my_ioctl,
-+ *   );
-+ *
-+ * Then in your module init, call: kapi_init_fops_##name()
-+ */
-+#define KAPI_DEFINE_FOPS(name, ...)					\
-+static const struct file_operations __kapi_real_##name = {		\
-+	__VA_ARGS__							\
-+};									\
-+static struct file_operations __kapi_wrapped_##name;			\
-+static struct kapi_fops_wrapper __kapi_wrapper_##name;			\
-+static const struct file_operations *name;				\
-+static void kapi_init_fops_##name(void)				\
-+{									\
-+	if (__kapi_real_##name.unlocked_ioctl) {			\
-+		__kapi_wrapped_##name = __kapi_real_##name;		\
-+		__kapi_wrapper_##name.real_fops = &__kapi_real_##name;	\
-+		__kapi_wrapper_##name.wrapped_fops = &__kapi_wrapped_##name; \
-+		__kapi_wrapper_##name.real_ioctl = 			\
-+			__kapi_real_##name.unlocked_ioctl;		\
-+		__kapi_wrapped_##name.unlocked_ioctl = 		\
-+			kapi_ioctl_validation_wrapper;			\
-+		kapi_register_wrapper(&__kapi_wrapper_##name);		\
-+		name = &__kapi_wrapped_##name;				\
-+	} else {							\
-+		name = &__kapi_real_##name;				\
-+	}								\
-+}
-+
-+#else /* !CONFIG_KAPI_RUNTIME_CHECKS */
-+
-+/* When runtime checks are disabled, no wrapping occurs */
-+#define kapi_wrap_file_operations(fops) (&(fops))
-+#define KAPI_DEFINE_FOPS(name, ...) \
-+static const struct file_operations name = { __VA_ARGS__ }; \
-+static inline void kapi_init_fops_##name(void) {}
-+
-+#endif /* CONFIG_KAPI_RUNTIME_CHECKS */
-+
-+#endif /* _LINUX_IOCTL_API_SPEC_H */
-\ No newline at end of file
-diff --git a/include/linux/kernel_api_spec.h b/include/linux/kernel_api_spec.h
-index 04df5892bc6d6..9590fe3bb007c 100644
---- a/include/linux/kernel_api_spec.h
-+++ b/include/linux/kernel_api_spec.h
-@@ -849,7 +849,7 @@ struct kernel_api_spec {
- #define KAPI_PARAM_OUT		(KAPI_PARAM_OUT)
- #define KAPI_PARAM_INOUT	(KAPI_PARAM_IN | KAPI_PARAM_OUT)
- #define KAPI_PARAM_OPTIONAL	(KAPI_PARAM_OPTIONAL)
--#define KAPI_PARAM_USER_PTR	(KAPI_PARAM_USER | KAPI_PARAM_PTR)
-+#define KAPI_PARAM_USER_PTR	(KAPI_PARAM_USER)
+ DEFINE_SHOW_ATTRIBUTE(state);
+ DEFINE_SHOW_ATTRIBUTE(state_hashed);
+ DEFINE_SHOW_ATTRIBUTE(stats);
+@@ -7050,6 +7798,13 @@ static int __init binder_init(void)
+ 	if (ret)
+ 		return ret;
  
- /* Validation and runtime checking */
++	/* Initialize the wrapped file_operations */
++	kapi_init_fops_binder_fops();
++
++	ret = kapi_ioctl_specs_init();
++	if (ret)
++		goto err_kapi_init;
++
+ 	atomic_set(&binder_transaction_log.cur, ~0U);
+ 	atomic_set(&binder_transaction_log_failed.cur, ~0U);
  
-diff --git a/kernel/api/Makefile b/kernel/api/Makefile
-index 07b8c007ec156..9d2daf38f0029 100644
---- a/kernel/api/Makefile
-+++ b/kernel/api/Makefile
-@@ -6,5 +6,8 @@
- # Core API specification framework
- obj-$(CONFIG_KAPI_SPEC)		+= kernel_api_spec.o
+@@ -7102,6 +7857,9 @@ static int __init binder_init(void)
  
-+# IOCTL validation framework
-+obj-$(CONFIG_KAPI_SPEC)		+= ioctl_validation.o
+ err_alloc_device_names_failed:
+ 	debugfs_remove_recursive(binder_debugfs_dir_entry_root);
++	kapi_ioctl_specs_exit();
 +
- # Debugfs interface for kernel API specs
--obj-$(CONFIG_KAPI_SPEC_DEBUGFS)	+= kapi_debugfs.o
-\ No newline at end of file
-+obj-$(CONFIG_KAPI_SPEC_DEBUGFS)	+= kapi_debugfs.o
-diff --git a/kernel/api/ioctl_validation.c b/kernel/api/ioctl_validation.c
-new file mode 100644
-index 0000000000000..25f6db8cb33eb
---- /dev/null
-+++ b/kernel/api/ioctl_validation.c
-@@ -0,0 +1,360 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * ioctl_validation.c - Runtime validation for IOCTL API specifications
-+ *
-+ * Provides functions to validate ioctl parameters against their specifications
-+ * at runtime when CONFIG_KAPI_RUNTIME_CHECKS is enabled.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/ioctl_api_spec.h>
-+#include <linux/kernel_api_spec.h>
-+#include <linux/uaccess.h>
-+#include <linux/file.h>
-+#include <linux/fs.h>
-+#include <linux/slab.h>
-+#include <linux/container_of.h>
-+#include <linux/export.h>
-+#include <uapi/fwctl/fwctl.h>
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+
-+/**
-+ * kapi_validate_ioctl - Validate an ioctl call against its specification
-+ * @filp: File pointer
-+ * @cmd: IOCTL command
-+ * @arg: IOCTL argument
-+ *
-+ * Return: 0 if valid, negative errno if validation fails
-+ */
-+int kapi_validate_ioctl(struct file *filp, unsigned int cmd, void __user *arg)
-+{
-+	const struct kapi_ioctl_spec *spec;
-+	const struct kernel_api_spec *api_spec;
-+	void *data = NULL;
-+	size_t copy_size;
-+	int ret = 0;
-+	int i;
-+
-+	spec = kapi_get_ioctl_spec(cmd);
-+	if (!spec)
-+		return 0; /* No spec, can't validate */
-+
-+	api_spec = &spec->api_spec;
-+
-+	pr_debug("kapi: validating ioctl %s (0x%x)\n", spec->cmd_name, cmd);
-+
-+	/* Check if this ioctl requires specific capabilities */
-+	if (api_spec->param_count > 0) {
-+		for (i = 0; i < api_spec->param_count; i++) {
-+			const struct kapi_param_spec *param = &api_spec->params[i];
-+
-+			/* Check for capability requirements in constraints */
-+			if (param->constraint_type == KAPI_CONSTRAINT_CUSTOM &&
-+			    param->constraints[0] && strstr(param->constraints, "CAP_")) {
-+				/* Could add capability checks here if needed */
-+			}
-+		}
-+	}
-+
-+	/* For ioctls with input/output structures, copy and validate */
-+	if (spec->input_size > 0 || spec->output_size > 0) {
-+		copy_size = max(spec->input_size, spec->output_size);
-+
-+		/* Allocate temporary buffer for validation */
-+		data = kzalloc(copy_size, GFP_KERNEL);
-+		if (!data)
-+			return -ENOMEM;
-+
-+		/* Copy input data from user */
-+		if (spec->input_size > 0) {
-+			ret = copy_from_user(data, arg, spec->input_size);
-+			if (ret) {
-+				ret = -EFAULT;
-+				goto out;
-+			}
-+		}
-+
-+		/* Validate structure fields */
-+		ret = kapi_validate_ioctl_struct(spec, data, copy_size);
-+		if (ret)
-+			goto out;
-+	}
-+
-+out:
-+	kfree(data);
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_ioctl);
-+
-+/**
-+ * struct field_offset - Maps structure fields to their offsets
-+ * @field_idx: Parameter index
-+ * @offset: Offset in structure
-+ * @size: Size of field
-+ */
-+struct field_offset {
-+	int field_idx;
-+	size_t offset;
-+	size_t size;
-+};
-+
-+/* Common ioctl structure layouts */
-+static const struct field_offset fwctl_info_offsets[] = {
-+	{0, 0, sizeof(u32)},  /* size */
-+	{1, 4, sizeof(u32)},  /* flags */
-+	{2, 8, sizeof(u32)},  /* out_device_type */
-+	{3, 12, sizeof(u32)}, /* device_data_len */
-+	{4, 16, sizeof(u64)}, /* out_device_data */
-+};
-+
-+static const struct field_offset fwctl_rpc_offsets[] = {
-+	{0, 0, sizeof(u32)},  /* size */
-+	{1, 4, sizeof(u32)},  /* scope */
-+	{2, 8, sizeof(u32)},  /* in_len */
-+	{3, 12, sizeof(u32)}, /* out_len */
-+	{4, 16, sizeof(u64)}, /* in */
-+	{5, 24, sizeof(u64)}, /* out */
-+};
-+
-+/**
-+ * get_field_offsets - Get field offset information for an ioctl
-+ * @cmd: IOCTL command
-+ * @count: Returns number of fields
-+ *
-+ * Return: Array of field offsets or NULL
-+ */
-+static const struct field_offset *get_field_offsets(unsigned int cmd, int *count)
-+{
-+	switch (cmd) {
-+	case FWCTL_INFO:
-+		*count = ARRAY_SIZE(fwctl_info_offsets);
-+		return fwctl_info_offsets;
-+	case FWCTL_RPC:
-+		*count = ARRAY_SIZE(fwctl_rpc_offsets);
-+		return fwctl_rpc_offsets;
-+	default:
-+		*count = 0;
-+		return NULL;
-+	}
-+}
-+
-+/**
-+ * extract_field_value - Extract a field value from structure
-+ * @data: Structure data
-+ * @param: Parameter specification
-+ * @offset_info: Field offset information
-+ *
-+ * Return: Field value or 0 on error
-+ */
-+static s64 extract_field_value(const void *data,
-+			       const struct kapi_param_spec *param,
-+			       const struct field_offset *offset_info)
-+{
-+	const void *field = data + offset_info->offset;
-+
-+	switch (param->type) {
-+	case KAPI_TYPE_UINT:
-+		if (offset_info->size == sizeof(u32))
-+			return *(u32 *)field;
-+		else if (offset_info->size == sizeof(u64))
-+			return *(u64 *)field;
-+		break;
-+	case KAPI_TYPE_INT:
-+		if (offset_info->size == sizeof(s32))
-+			return *(s32 *)field;
-+		else if (offset_info->size == sizeof(s64))
-+			return *(s64 *)field;
-+		break;
-+	case KAPI_TYPE_USER_PTR:
-+		/* User pointers are typically u64 in ioctl structures */
-+		return (s64)(*(u64 *)field);
-+	default:
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+/**
-+ * kapi_validate_ioctl_struct - Validate an ioctl structure against specification
-+ * @spec: IOCTL specification
-+ * @data: Structure data
-+ * @size: Size of the structure
-+ *
-+ * Return: 0 if valid, negative errno if validation fails
-+ */
-+int kapi_validate_ioctl_struct(const struct kapi_ioctl_spec *spec,
-+				const void *data, size_t size)
-+{
-+	const struct kernel_api_spec *api_spec = &spec->api_spec;
-+	const struct field_offset *offsets;
-+	int offset_count;
-+	int i, j;
-+
-+	if (!spec || !data)
-+		return -EINVAL;
-+
-+	/* Get field offset information for this ioctl */
-+	offsets = get_field_offsets(spec->cmd, &offset_count);
-+
-+	/* Validate each parameter in the structure */
-+	for (i = 0; i < api_spec->param_count && i < KAPI_MAX_PARAMS; i++) {
-+		const struct kapi_param_spec *param = &api_spec->params[i];
-+		const struct field_offset *offset_info = NULL;
-+		s64 value;
-+
-+		/* Find offset information for this parameter */
-+		if (offsets) {
-+			for (j = 0; j < offset_count; j++) {
-+				if (offsets[j].field_idx == i) {
-+					offset_info = &offsets[j];
-+					break;
-+				}
-+			}
-+		}
-+
-+		if (!offset_info) {
-+			pr_debug("kapi: no offset info for param %d\n", i);
-+			continue;
-+		}
-+
-+		/* Extract field value */
-+		value = extract_field_value(data, param, offset_info);
-+
-+		/* Special handling for user pointers */
-+		if (param->type == KAPI_TYPE_USER_PTR) {
-+			/* Check if pointer looks valid (non-kernel address) */
-+			if (value && (value >= TASK_SIZE)) {
-+				pr_warn("ioctl %s: parameter %s has kernel pointer %llx\n",
-+					spec->cmd_name, param->name, value);
-+				return -EINVAL;
-+			}
-+
-+			/* For size validation, check against size_param_idx */
-+			if (param->size_param_idx >= 0 &&
-+			    param->size_param_idx < offset_count) {
-+				const struct field_offset *size_offset = NULL;
-+
-+				for (j = 0; j < offset_count; j++) {
-+					if (offsets[j].field_idx == param->size_param_idx) {
-+						size_offset = &offsets[j];
-+						break;
-+					}
-+				}
-+
-+				if (size_offset) {
-+					s64 buf_size = extract_field_value(data,
-+						&api_spec->params[param->size_param_idx],
-+						size_offset);
-+
-+					/* Validate buffer size constraints */
-+					if (buf_size > 0 &&
-+					    !kapi_validate_param(&api_spec->params[param->size_param_idx],
-+								 buf_size)) {
-+						pr_warn("ioctl %s: buffer size %lld invalid for %s\n",
-+							spec->cmd_name, buf_size, param->name);
-+						return -EINVAL;
-+					}
-+				}
-+			}
-+		} else {
-+			/* Validate using the standard parameter validation */
-+			if (!kapi_validate_param(param, value)) {
-+				pr_warn("ioctl %s: parameter %s validation failed (value=%lld)\n",
-+					spec->cmd_name, param->name, value);
-+				return -EINVAL;
-+			}
-+		}
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_ioctl_struct);
-+
-+/* Global registry of wrappers - in real implementation this would be per-module */
-+static struct kapi_fops_wrapper *kapi_global_wrapper;
-+
-+/**
-+ * kapi_register_wrapper - Register a wrapper (called from macro)
-+ * @wrapper: Wrapper to register
-+ */
-+void kapi_register_wrapper(struct kapi_fops_wrapper *wrapper)
-+{
-+	/* Simple implementation - just store the last one */
-+	kapi_global_wrapper = wrapper;
-+}
-+EXPORT_SYMBOL_GPL(kapi_register_wrapper);
-+
-+/**
-+ * kapi_find_wrapper - Find wrapper for given file_operations
-+ * @fops: File operations structure to check
-+ *
-+ * Return: Wrapper structure or NULL if not wrapped
-+ */
-+static struct kapi_fops_wrapper *kapi_find_wrapper(const struct file_operations *fops)
-+{
-+	/* Simple implementation - just return the global one if it matches */
-+	if (kapi_global_wrapper && kapi_global_wrapper->wrapped_fops == fops)
-+		return kapi_global_wrapper;
-+	return NULL;
-+}
-+
-+/**
-+ * kapi_ioctl_validation_wrapper - Wrapper function for transparent validation
-+ * @filp: File pointer
-+ * @cmd: IOCTL command
-+ * @arg: User argument
-+ *
-+ * This function is called instead of the real ioctl handler when validation
-+ * is enabled. It performs pre-validation, calls the real handler, then does
-+ * post-validation.
-+ *
-+ * Return: Result from the real ioctl handler or error
-+ */
-+long kapi_ioctl_validation_wrapper(struct file *filp, unsigned int cmd,
-+				   unsigned long arg)
-+{
-+	struct kapi_fops_wrapper *wrapper;
-+	const struct kapi_ioctl_spec *spec;
-+	long ret;
-+
-+	wrapper = kapi_find_wrapper(filp->f_op);
-+	if (!wrapper || !wrapper->real_ioctl)
-+		return -EINVAL;
-+
-+	/* Pre-validation */
-+	spec = kapi_get_ioctl_spec(cmd);
-+	if (spec) {
-+		ret = kapi_validate_ioctl(filp, cmd, (void __user *)arg);
-+		if (ret)
-+			return ret;
-+	}
-+
-+	/* Call the real ioctl handler */
-+	ret = wrapper->real_ioctl(filp, cmd, arg);
-+
-+	/* Post-validation - check return value against spec */
-+	if (spec && spec->api_spec.error_count > 0) {
-+		/* Validate that returned error is in the spec */
-+		if (ret < 0) {
-+			int i;
-+			bool found = false;
-+			for (i = 0; i < spec->api_spec.error_count; i++) {
-+				if (ret == spec->api_spec.errors[i].error_code) {
-+					found = true;
-+					break;
-+				}
-+			}
-+			if (!found) {
-+				pr_warn("IOCTL %s returned unexpected error %ld\n",
-+					spec->cmd_name, ret);
-+			}
-+		}
-+	}
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(kapi_ioctl_validation_wrapper);
-+
-+#endif /* CONFIG_KAPI_RUNTIME_CHECKS */
-diff --git a/kernel/api/kernel_api_spec.c b/kernel/api/kernel_api_spec.c
-index 29c0c84d87f7c..70e16a49f5dbe 100644
---- a/kernel/api/kernel_api_spec.c
-+++ b/kernel/api/kernel_api_spec.c
-@@ -1166,4 +1166,92 @@ static int __init kapi_debugfs_init(void)
++err_kapi_init:
+ 	binder_alloc_shrinker_exit();
  
- late_initcall(kapi_debugfs_init);
- 
--#endif /* CONFIG_DEBUG_FS */
-\ No newline at end of file
-+#endif /* CONFIG_DEBUG_FS */
-+
-+/* IOCTL specification registry */
-+#ifdef CONFIG_KAPI_SPEC
-+
-+#include <linux/ioctl_api_spec.h>
-+
-+static DEFINE_MUTEX(ioctl_spec_mutex);
-+static LIST_HEAD(ioctl_specs);
-+
-+struct ioctl_spec_entry {
-+	struct list_head list;
-+	const struct kapi_ioctl_spec *spec;
-+};
-+
-+/**
-+ * kapi_register_ioctl_spec - Register an IOCTL API specification
-+ * @spec: IOCTL specification to register
-+ *
-+ * Return: 0 on success, negative error code on failure
-+ */
-+int kapi_register_ioctl_spec(const struct kapi_ioctl_spec *spec)
-+{
-+	struct ioctl_spec_entry *entry;
-+
-+	if (!spec || !spec->cmd_name)
-+		return -EINVAL;
-+
-+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-+	if (!entry)
-+		return -ENOMEM;
-+
-+	entry->spec = spec;
-+
-+	mutex_lock(&ioctl_spec_mutex);
-+	list_add_tail(&entry->list, &ioctl_specs);
-+	mutex_unlock(&ioctl_spec_mutex);
-+
-+	pr_debug("Registered IOCTL spec: %s (0x%x)\n", spec->cmd_name, spec->cmd);
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(kapi_register_ioctl_spec);
-+
-+/**
-+ * kapi_unregister_ioctl_spec - Unregister an IOCTL API specification
-+ * @cmd: IOCTL command number to unregister
-+ */
-+void kapi_unregister_ioctl_spec(unsigned int cmd)
-+{
-+	struct ioctl_spec_entry *entry, *tmp;
-+
-+	mutex_lock(&ioctl_spec_mutex);
-+	list_for_each_entry_safe(entry, tmp, &ioctl_specs, list) {
-+		if (entry->spec->cmd == cmd) {
-+			list_del(&entry->list);
-+			kfree(entry);
-+			pr_debug("Unregistered IOCTL spec for cmd 0x%x\n", cmd);
-+			break;
-+		}
-+	}
-+	mutex_unlock(&ioctl_spec_mutex);
-+}
-+EXPORT_SYMBOL_GPL(kapi_unregister_ioctl_spec);
-+
-+/**
-+ * kapi_get_ioctl_spec - Retrieve IOCTL specification by command number
-+ * @cmd: IOCTL command number
-+ *
-+ * Return: Pointer to the specification or NULL if not found
-+ */
-+const struct kapi_ioctl_spec *kapi_get_ioctl_spec(unsigned int cmd)
-+{
-+	struct ioctl_spec_entry *entry;
-+	const struct kapi_ioctl_spec *spec = NULL;
-+
-+	mutex_lock(&ioctl_spec_mutex);
-+	list_for_each_entry(entry, &ioctl_specs, list) {
-+		if (entry->spec->cmd == cmd) {
-+			spec = entry->spec;
-+			break;
-+		}
-+	}
-+	mutex_unlock(&ioctl_spec_mutex);
-+
-+	return spec;
-+}
-+EXPORT_SYMBOL_GPL(kapi_get_ioctl_spec);
-+
-+#endif /* CONFIG_KAPI_SPEC */
+ 	return ret;
 -- 
 2.39.5
 
