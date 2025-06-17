@@ -1,94 +1,119 @@
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84A9F2D9EDE;
-	Tue, 17 Jun 2025 12:08:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25E4E2853E0;
+	Tue, 17 Jun 2025 18:35:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750162135; cv=none; b=DfVyZJ5YS8e95CAv0HLwdRI9d7OhLf+11UAwDkhWkPIkvZSZ8Y7sW2S3e6UBnXB47LPQAme81uVfpKVzdVIq37zTQJrHvdqSbRv205TwnNuB1nDyhnW2nsLiFJltKeUANXG5KqYew8WdJPdGEDKh7XdqqyMWyOboB+XfTibryhg=
+	t=1750185328; cv=none; b=QLe+kd5vB+/HyoNLtPny7wTra8pwCh/WmjFp/+9wMSThAwjCae2SoL1DCjhHlspgBSyw0057JIYiIJOolF1TaKCxw78L422K4Aj5DTfzK0Y3dV5z1AMn2YxrhE8sI9Cnlypykmyqr/j6HoLqxJJ7T5800pWP4IGNc25dfHRg1K8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750162135; c=relaxed/simple;
-	bh=hol8Y4KAFEPlWLZf5l4HrmnpL7xNmLx4AE9JLBSvKLo=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Za/sb7TJL0WlFfYUPRhCzV0Vst7Se4oTD2mRGyzRGEbLQ6lhoatzuelGEBADQWN5PR8i4iUYOygSEiTI/LUc6TZF2b7+3mCos1whEezz5a+dc7lXZvmBy2ZXJL4O50Q6MdeQevdNbXsHnN0XbSGLW0Eev2ZXOMjO+Ht2JodYD4c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=kB70X7OK; arc=none smtp.client-ip=209.85.128.42
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1750185328; c=relaxed/simple;
+	bh=HdsgE3dVEvFD0Kza/FGL4PVyH2AyEt8jTw7NRdOU/NU=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=GvZTNKS94tRjulDB8D3t+c8Uw8z1iz1eK6e8Tdy6zLFnM8zko0hWWgZfYI828BAouxv/h9MEwtvwAo4WAvL0/jJSpH9hEqChLfYZb1b8iu0lI2yIBkpiw7SY7QxlHP1/eV6mq98mbdsbUecDHYChucqhZxMb0iN9YJv9Y1YB84s=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=br0MBrsR; arc=none smtp.client-ip=213.97.179.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="kB70X7OK"
-Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-442e9c00bf4so48982935e9.3;
-        Tue, 17 Jun 2025 05:08:53 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20230601; t=1750162132; x=1750766932; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:subject:cc:to:from:date:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=yr8tf490dLZcrTR7ZRtUOPxPJ+C3QiVC034zaGj7oxY=;
-        b=kB70X7OKz4bzu3EEv9bZZ4V4Bh+SVncjy3ie24fjmH1ziD5DIHPkUHrz9hLTJDTDUH
-         XN7ivPotv5C1pdWbjtN0hAJ/+g7Lg4usFKMm4HXenYb3D4RpPTSK5PkbBYHpgYIBfubS
-         f/Aut/Sm4HJnwtnVA3bB8BFz2PqNcWQDadkE9e2VYqgp/WH/GKSZbRnCfH6yoWp/P34v
-         FNMUTDbxxIvxELDOWmgDr9c1Cs7igAA4liqut7Qn2m/YJnN8P6zFuc+o+6YuIXIN1U8F
-         iqrN6iBEFAlp5qtVBJv3NHAELC2hWzdMa4F9w1WIHsY7L8P+7XqxI3lzgYiKnKou1xe8
-         Gi1A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1750162132; x=1750766932;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:subject:cc:to:from:date:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=yr8tf490dLZcrTR7ZRtUOPxPJ+C3QiVC034zaGj7oxY=;
-        b=sbg0NUIZIHjETwhX6Qj/IZJuKIHB7m3LpL11p/OZDomc6b2UoGGqfM73PTBFmQOzeo
-         Cee6cxaR8zXqlffCX7Xv6N2/umT8BS2A9/z8dmlf0nhPbnxV+vmkCKrOw4KQ7pIz5aSp
-         kGjmdfkBrM8SjuHbJuB7nffC3MuQlxNMgV9Ubwb6x86F6LtCJDMGh/kiXswhxvem7o8d
-         96VzXInETTONEU6CESDmudYHd35eLANA3VmOpdHWYneq02npM3wM1w2E2805erZKZ9sZ
-         gWtNFj6w+s79UGby/RsgjMi4cR+OdRKBP2aXH1mWyDjW1WaRUYco45Smc2miYP8p7K/G
-         0AAQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUOarPpPeYmkqyYms9bC0xS5dVBudzDsxHjMl+nrhLNdzK5OzXr/yIwbYsLB0dm1LBT6/CKPROjpIxX@vger.kernel.org, AJvYcCWnAFM5vSaehI3iHKaWCkCM7srQqs+2hWlwI+tljzdwqmGwEnLwaJGirI28VNCVMdsltJ3/9DRb9sA=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzSCegKrYianyRoyztqASdwAw/v+XokcBpRbGDRyUXiteWXUBUB
-	jKKTm2Yo00Z6wCwM2mG2jJRFTRMnJlvWunG/xIDGznf5b9OYZOnEvbm0Uu+akA==
-X-Gm-Gg: ASbGncu1HNz2gABIYhHtoBbJklPSmEtnRuKfGlakBhz5efTk4cpec3JhPDWckjg38hj
-	/L9efRgkmJr+rpsZbRn9pxYG4yA1WEq0jj/WM0s6uzC5GpF2lHCVluovoWeX3OEKk4vr7SdzrDU
-	SDkHmlCfavCsXVgRSq2SxDmwz1wOnNAGgmyReSibW+iqGjgab5rZ6DkDmQw6evuApyApL9vh5Iq
-	Rxz9ZftK7QMWvYw1piWeFJeuWzapgCC9u1Py1nTOhSq6zwhe0tYoMGADgNHdD39fXQyCRTRYvyB
-	gRjRqoJJ5Gz/WQo3CJstgJhA0BR0eb+MBj/bTbGB/9XAtwQP2JQRl8D5duweJkitRsJGnHO2avh
-	l1KZCLOabMyKPbiu5HRtYlH1W
-X-Google-Smtp-Source: AGHT+IEIOX1GzSo473MBZ+UaEARhaHXuzm5oUIXccFwfpiU+QMAiIUkNa3q26+k+e/fOeO+ip3BxCA==
-X-Received: by 2002:a05:600c:630f:b0:440:9b1a:cd78 with SMTP id 5b1f17b1804b1-4533ca8b32fmr156454475e9.10.1750162131655;
-        Tue, 17 Jun 2025 05:08:51 -0700 (PDT)
-Received: from pumpkin (82-69-66-36.dsl.in-addr.zen.co.uk. [82.69.66.36])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4532e22460bsm183509415e9.6.2025.06.17.05.08.51
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 17 Jun 2025 05:08:51 -0700 (PDT)
-Date: Tue, 17 Jun 2025 13:08:50 +0100
-From: David Laight <david.laight.linux@gmail.com>
-To: Sasha Levin <sashal@kernel.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
- workflows@vger.kernel.org, tools@kernel.org
-Subject: Re: [RFC 00/19] Kernel API Specification Framework
-Message-ID: <20250617130850.4f558701@pumpkin>
-In-Reply-To: <20250614134858.790460-1-sashal@kernel.org>
-References: <20250614134858.790460-1-sashal@kernel.org>
-X-Mailer: Claws Mail 4.1.1 (GTK 3.24.38; arm-unknown-linux-gnueabihf)
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="br0MBrsR"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
+	s=20170329; h=Cc:To:In-Reply-To:References:Message-Id:
+	Content-Transfer-Encoding:Content-Type:MIME-Version:Subject:Date:From:Sender:
+	Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
+	:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+	List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=fyXXUndsFU1fi1/cHrhrRGj97R8gSsjU9AE57nmvn3s=; b=br0MBrsRE9RK8fS/T57MdHP6H4
+	VnkGANwToBV2D1zevNfDTTWSDoOPoy1ShzfxLKrwc5GF14DrnhOr8nBiocgx32niK86/sJlXd8Baa
+	S7RxASIfpWCLgwhGOQPHwt17orkvOPoMIMTYrJ6dffwKTOeNvrSOm6UDLn/N6GK4qFGtXqh+z0X9s
+	tvvb9jhye2eef45j1saJ0Qrg12Ts9yN37X4U7QtsVu7hI+lRbfX/M6W3xVoyznfmZvWvI/zeB/l0L
+	pHhjTxNNbotVsY09/v5gRHd4DumcGXP2gjlBYJncOJ8xgzHRA7eUYv6WyQy5zInMuwptirP3heBzo
+	72QjImgQ==;
+Received: from [191.204.192.64] (helo=[192.168.15.100])
+	by fanzine2.igalia.com with esmtpsa 
+	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
+	id 1uRb9D-004j89-3M; Tue, 17 Jun 2025 20:35:03 +0200
+From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+Date: Tue, 17 Jun 2025 15:34:18 -0300
+Subject: [PATCH RESEND v4 1/7] selftests/futex: Add ASSERT_ macros
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Message-Id: <20250617-tonyk-robust_futex-v4-1-6586f5fb9d33@igalia.com>
+References: <20250617-tonyk-robust_futex-v4-0-6586f5fb9d33@igalia.com>
+In-Reply-To: <20250617-tonyk-robust_futex-v4-0-6586f5fb9d33@igalia.com>
+To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, 
+ Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>, 
+ Davidlohr Bueso <dave@stgolabs.net>, Shuah Khan <shuah@kernel.org>, 
+ Arnd Bergmann <arnd@arndb.de>, 
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+ Waiman Long <longman@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+ linux-api@vger.kernel.org, kernel-dev@igalia.com, 
+ =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+X-Mailer: b4 0.14.2
 
-On Sat, 14 Jun 2025 09:48:39 -0400
-Sasha Levin <sashal@kernel.org> wrote:
+Create ASSERT_{EQ, NE, TRUE, FALSE} macros to make test creation easier.
 
-> This patch series introduces a framework for formally specifying kernel
-> APIs, addressing the long-standing challenge of maintaining stable
-> interfaces between the kernel and user-space programs. As outlined in
-> previous discussions about kernel ABI stability, the lack of
-> machine-readable API specifications has led to inadvertent breakages and
-> inconsistent validation across system calls and IOCTLs.
+Signed-off-by: André Almeida <andrealmeid@igalia.com>
+---
+ tools/testing/selftests/futex/include/logging.h | 38 +++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-Ugg, looks horrid.
-Going to be worse than things like doxygen for getting out of step with
-the actual code and grep searches are going to hit the comment blocks.
+diff --git a/tools/testing/selftests/futex/include/logging.h b/tools/testing/selftests/futex/include/logging.h
+index 874c69ce5cce9efa3a9d6de246f5972a75437dbf..a19755622a877932884570c8f58aaee7371d5f8f 100644
+--- a/tools/testing/selftests/futex/include/logging.h
++++ b/tools/testing/selftests/futex/include/logging.h
+@@ -23,6 +23,44 @@
+ #include <linux/futex.h>
+ #include "kselftest.h"
+ 
++#define ASSERT_EQ(var, value)	\
++do {				\
++	if (var != value) {	\
++		ksft_test_result_fail("%s: expected %ld, but %s has %ld\n", \
++				      __func__, (long) value, #var, \
++				      (long) var); \
++		return;		\
++	}			\
++} while (0)
++
++#define ASSERT_NE(var, value)	\
++do {				\
++	if (var == value) {	\
++		ksft_test_result_fail("%s: expected not %ld, but %s has %ld\n", \
++				      __func__, (long) value, #var, \
++				      (long) var); \
++		return; \
++	}		\
++} while (0)
++
++#define ASSERT_TRUE(var)	\
++do {				\
++	if ((var) == 0) {	\
++		ksft_test_result_fail("%s: expected %s to be true\n", \
++				      __func__, #var); \
++		return;		\
++	}			\
++} while (0)
++
++#define ASSERT_FALSE(var)	\
++do {				\
++	if (var) {		\
++		ksft_test_result_fail("%s: expected %s to be false\n", \
++				      __func__, #var); \
++		return;		\
++	}			\
++} while (0)
++
+ /*
+  * Define PASS, ERROR, and FAIL strings with and without color escape
+  * sequences, default to no color.
 
-	David
+-- 
+2.49.0
+
