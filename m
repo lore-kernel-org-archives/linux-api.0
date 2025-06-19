@@ -1,38 +1,38 @@
 Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 38CF628D8D9;
-	Thu, 19 Jun 2025 18:17:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 806E42E427C;
+	Thu, 19 Jun 2025 18:17:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750357039; cv=none; b=kRDRbgPsCr2mXo7WAI1chB7Zli6G7vw3yvZyq4XrB30uevjSMOmi8twAy2vDAORYwcO2aGFkFcE5AXL37oqRjhTgfAtPdaYdhcsjKc9tKhJ3Vf2oX+e4rX8+fpvW9Ywsyu/sl8jQCTch5SoY5ybV1CDF7zEWfxDSaWtiovHypyg=
+	t=1750357045; cv=none; b=jebvC+T4s/MdJw0kNI3TyCj7nUlvfCPKxAFzVBkc5O+TuBNMZCwBnZmMOIyyMxn/2y1RtCn2SeZeb9M70afBbVnlj1sAl9tYU6YQSQjB3FynP9kE+PQEYxQVqnH0QOkLy6Xg1jpU4W2kd28tksKUOBuD7aPPMsXBrl9va22mlXE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750357039; c=relaxed/simple;
-	bh=8Ba/iUV8KxOwbPI5k+ksoH4gA6gnBCmY9MCf/lyBN3o=;
+	s=arc-20240116; t=1750357045; c=relaxed/simple;
+	bh=9kKZ6DWECbNysfhA0hfF0MZfTsZKUcCXt5Y2NA1M1KQ=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=V3oUobT5Ffm2MEy2MW4WKiiQxiYfkMazLt8/X4VMWph2y02JnqG+1qnHPp0NDH1bbQU9IDpa+2C8Pi2OiTdZhCHOl6taytGAeEQ76QnD3vozUyYxRn3rC9qlBICHbv/XrU8qPvKU1UZtEnDdDNMFE9OZ9FqIrgbooQ+1ggGeL04=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=MX3cQRa0; arc=none smtp.client-ip=185.125.188.120
+	 MIME-Version:Content-Type; b=TALs9vQQD2+4/E5/8arflCsoISodSR/uPprpxLXBDF/5LVe9GXnKLVr662bzMQJUuVAxG9/NbOfbj6T5Isg8r3LdRfBAc05cndZe2KeE7944L6zeBh6SWuVEsu5lavWyTm9ZiiqGQ91jZgnvfpXM75lJeHnxaa3c7FmjTvOTqAg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=n4nNqmwA; arc=none smtp.client-ip=185.125.188.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="MX3cQRa0"
+	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="n4nNqmwA"
 Received: from sec2-plucky-amd64.. (lau06-h06-176-136-128-80.dsl.sta.abo.bbox.fr [176.136.128.80])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 01A8E3F9D7;
-	Thu, 19 Jun 2025 18:17:06 +0000 (UTC)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id EF03640190;
+	Thu, 19 Jun 2025 18:17:07 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1750357027;
-	bh=gN5JUBqYStlK2RpnTIQjOj6RzVWh26VE7Kpa1MyH6GI=;
+	s=20210705; t=1750357028;
+	bh=4HhWj8FwTgYkSNXm3uugMpk16mHuSt/StxC4XggXl4Q=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
 	 MIME-Version:Content-Type;
-	b=MX3cQRa0Qxz1Z4Vmxxs1iwoDEE4GkqZkxFj/aZ3IcGAPuhb+Tj+/bCQI2umBK1IGJ
-	 3ViavU+e76AuoBwL0jFq93GdPr+oPeqGHXs1nJN76CBRs0mbHHLoDddewF76qFv5NK
-	 P+L+CukR+gInY1XpSciBdECAk8+7Qj1T3QieDVC+6tCvBcMRj1vY9c2UMh4LAyjeEc
-	 E034LNDMcnWkBsmt8tYLStZOs58FvIM25FCFWtmz0z4c5mrYdue+0655/tUuaqxVq3
-	 g1HYquWg0Yaqc+0BNXssqjd7TWJ/GmoNMlbUYEHihtlxxWFYWafZnYRIZ6y8ewNnuE
-	 3HgiqnjqTGlVQ==
+	b=n4nNqmwAKNaZc7U3XUTkOIQWKxpz4wztwqrjtOtqtmwb7oCEK4/zzN63ljHw12sXf
+	 N/Jf7dnbef42W4DgYSAE+t8+nZbLyPzgBh2FyXlmW1tzLT/ozAZ0hFoMTGw25Sg/J4
+	 PJpiycvu/rwMX0Im9rsLrf2zlBE6F95wxWC96hHvBQv6p1nOX8AUMNDGiHvw0h4Hvz
+	 gHLc1SonupEgTdBGiAWBWhlJsWjaL3zVzT4Svd76MtLGAbbE4eZFuWff8ay58kFbO2
+	 yuGJ8+rhRvlaSUP+suyoF8Mr0wdx5ruUkQ4p5zowWgzrh/IZf+vrmRCEW5PTvkLPmD
+	 /nw+ojKP2vszw==
 From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
 To: linux-security-module@vger.kernel.org
 Cc: john.johansen@canonical.com,
@@ -50,9 +50,9 @@ Cc: john.johansen@canonical.com,
 	apparmor@lists.ubuntu.com,
 	linux-kernel@vger.kernel.org,
 	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-Subject: [PATCH v2 1/3] Wire up lsm_config_self_policy and lsm_config_system_policy syscalls
-Date: Thu, 19 Jun 2025 20:15:31 +0200
-Message-ID: <20250619181600.478038-2-maxime.belair@canonical.com>
+Subject: [PATCH v2 3/3] AppArmor: add support for lsm_config_self_policy and lsm_config_system_policy
+Date: Thu, 19 Jun 2025 20:15:33 +0200
+Message-ID: <20250619181600.478038-4-maxime.belair@canonical.com>
 X-Mailer: git-send-email 2.48.1
 In-Reply-To: <20250619181600.478038-1-maxime.belair@canonical.com>
 References: <20250619181600.478038-1-maxime.belair@canonical.com>
@@ -65,296 +65,160 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add support for the new lsm_config_self_policy and
-lsm_config_system_policy syscalls, providing a unified API for loading
-and modifying LSM policies, for the current user and for the entire
-system, respectively without requiring the LSM’s pseudo-filesystems.
+Enable users to manage AppArmor policies through the new hooks
+lsm_config_self_policy and lsm_config_system_policy.
 
-Benefits:
-  - Works even if the LSM pseudo-filesystem isn’t mounted or available
-    (e.g. in containers)
-  - Offers a logical and unified interface rather than multiple
-    heterogeneous pseudo-filesystems
-  - Avoids the overhead of other kernel interfaces for better efficiency
+lsm_config_self_policy allows stacking existing policies in the kernel.
+This ensures that it can only further restrict the caller and can never
+be used to gain new privileges.
+
+lsm_config_system_policy allows loading or replacing AppArmor policies in
+any AppArmor namespace.
 
 Signed-off-by: Maxime Bélair <maxime.belair@canonical.com>
 ---
- arch/alpha/kernel/syscalls/syscall.tbl            |  2 ++
- arch/arm/tools/syscall.tbl                        |  2 ++
- arch/m68k/kernel/syscalls/syscall.tbl             |  2 ++
- arch/microblaze/kernel/syscalls/syscall.tbl       |  2 ++
- arch/mips/kernel/syscalls/syscall_n32.tbl         |  2 ++
- arch/mips/kernel/syscalls/syscall_n64.tbl         |  2 ++
- arch/mips/kernel/syscalls/syscall_o32.tbl         |  2 ++
- arch/parisc/kernel/syscalls/syscall.tbl           |  2 ++
- arch/powerpc/kernel/syscalls/syscall.tbl          |  2 ++
- arch/s390/kernel/syscalls/syscall.tbl             |  2 ++
- arch/sh/kernel/syscalls/syscall.tbl               |  2 ++
- arch/sparc/kernel/syscalls/syscall.tbl            |  2 ++
- arch/x86/entry/syscalls/syscall_32.tbl            |  2 ++
- arch/x86/entry/syscalls/syscall_64.tbl            |  2 ++
- arch/xtensa/kernel/syscalls/syscall.tbl           |  2 ++
- include/linux/syscalls.h                          |  5 +++++
- include/uapi/asm-generic/unistd.h                 |  6 +++++-
- kernel/sys_ni.c                                   |  2 ++
- security/lsm_syscalls.c                           | 12 ++++++++++++
- tools/include/uapi/asm-generic/unistd.h           |  6 +++++-
- tools/perf/arch/x86/entry/syscalls/syscall_64.tbl |  2 ++
- 21 files changed, 61 insertions(+), 2 deletions(-)
+ security/apparmor/apparmorfs.c         | 31 +++++++++++++
+ security/apparmor/include/apparmorfs.h |  3 ++
+ security/apparmor/lsm.c                | 63 ++++++++++++++++++++++++++
+ 3 files changed, 97 insertions(+)
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 2dd6340de6b4..4fc75352220d 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -507,3 +507,5 @@
- 575	common	listxattrat			sys_listxattrat
- 576	common	removexattrat			sys_removexattrat
- 577	common	open_tree_attr			sys_open_tree_attr
-+578	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+579	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 27c1d5ebcd91..326483cb94a4 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -482,3 +482,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index 9fe47112c586..d37364df1cd7 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -467,3 +467,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 7b6e97828e55..9d58ebfcf967 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -473,3 +473,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index aa70e371bb54..8627b5f56280 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -406,3 +406,5 @@
- 465	n32	listxattrat			sys_listxattrat
- 466	n32	removexattrat			sys_removexattrat
- 467	n32	open_tree_attr			sys_open_tree_attr
-+468	n32	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	n32	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 1e8c44c7b614..813207b61f58 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -382,3 +382,5 @@
- 465	n64	listxattrat			sys_listxattrat
- 466	n64	removexattrat			sys_removexattrat
- 467	n64	open_tree_attr			sys_open_tree_attr
-+468	n64	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	n64	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 114a5a1a6230..9cd0946b4370 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -455,3 +455,5 @@
- 465	o32	listxattrat			sys_listxattrat
- 466	o32	removexattrat			sys_removexattrat
- 467	o32	open_tree_attr			sys_open_tree_attr
-+468	o32	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	o32	lsm_config_system_policy		sys_lsm_config_system_policy
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 94df3cb957e9..9db01dd55793 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -466,3 +466,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 9a084bdb8926..97714acb39ab 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -558,3 +558,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index a4569b96ef06..d2b0f14fb516 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -470,3 +470,5 @@
- 465  common	listxattrat		sys_listxattrat			sys_listxattrat
- 466  common	removexattrat		sys_removexattrat		sys_removexattrat
- 467  common	open_tree_attr		sys_open_tree_attr		sys_open_tree_attr
-+468  common	lsm_config_self_policy	sys_lsm_config_self_policy		sys_lsm_config_self_policy
-+469  common	lsm_config_system_policy	sys_lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index 52a7652fcff6..210d7118ce16 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -471,3 +471,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 83e45eb6c095..494417d80680 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -513,3 +513,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index ac007ea00979..36c2c538e04f 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -473,3 +473,5 @@
- 465	i386	listxattrat		sys_listxattrat
- 466	i386	removexattrat		sys_removexattrat
- 467	i386	open_tree_attr		sys_open_tree_attr
-+468	i386	lsm_config_self_policy	sys_lsm_config_self_policy
-+469	i386	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index cfb5ca41e30d..7eefbccfe531 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -391,6 +391,8 @@
- 465	common	listxattrat		sys_listxattrat
- 466	common	removexattrat		sys_removexattrat
- 467	common	open_tree_attr		sys_open_tree_attr
-+468	common	lsm_config_self_policy	sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index f657a77314f8..90d86a54a952 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -438,3 +438,5 @@
- 465	common	listxattrat			sys_listxattrat
- 466	common	removexattrat			sys_removexattrat
- 467	common	open_tree_attr			sys_open_tree_attr
-+468	common	lsm_config_self_policy		sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e5603cc91963..15b0f35c42fe 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -988,6 +988,11 @@ asmlinkage long sys_lsm_get_self_attr(unsigned int attr, struct lsm_ctx __user *
- asmlinkage long sys_lsm_set_self_attr(unsigned int attr, struct lsm_ctx __user *ctx,
- 				      u32 size, u32 flags);
- asmlinkage long sys_lsm_list_modules(u64 __user *ids, u32 __user *size, u32 flags);
-+asmlinkage long sys_lsm_config_self_policy(u32 lsm_id, u32 op, void __user *buf,
-+					   u32 __user *size, u32 flags);
-+asmlinkage long sys_lsm_config_system_policy(u32 lsm_id, u32 op, void __user *buf,
-+					     u32 __user *size, u32 flags);
-+
- 
- /*
-  * Architecture-specific system calls
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 2892a45023af..34278cc6a476 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -851,9 +851,13 @@ __SYSCALL(__NR_listxattrat, sys_listxattrat)
- __SYSCALL(__NR_removexattrat, sys_removexattrat)
- #define __NR_open_tree_attr 467
- __SYSCALL(__NR_open_tree_attr, sys_open_tree_attr)
-+#define __NR_lsm_config_self_policy 468
-+__SYSCALL(__NR_lsm_config_self_policy, lsm_config_self_policy)
-+#define __NR_lsm_config_system_policy 469
-+__SYSCALL(__NR_lsm_config_system_policy, lsm_config_system_policy)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 468
-+#define __NR_syscalls 470
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index c00a86931f8c..3ecebcd3fbe0 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -172,6 +172,8 @@ COND_SYSCALL_COMPAT(fadvise64_64);
- COND_SYSCALL(lsm_get_self_attr);
- COND_SYSCALL(lsm_set_self_attr);
- COND_SYSCALL(lsm_list_modules);
-+COND_SYSCALL(lsm_config_self_policy);
-+COND_SYSCALL(lsm_config_system_policy);
- 
- /* CONFIG_MMU only */
- COND_SYSCALL(swapon);
-diff --git a/security/lsm_syscalls.c b/security/lsm_syscalls.c
-index 8440948a690c..a3cb6dab8102 100644
---- a/security/lsm_syscalls.c
-+++ b/security/lsm_syscalls.c
-@@ -118,3 +118,15 @@ SYSCALL_DEFINE3(lsm_list_modules, u64 __user *, ids, u32 __user *, size,
- 
- 	return lsm_active_cnt;
+diff --git a/security/apparmor/apparmorfs.c b/security/apparmor/apparmorfs.c
+index 6039afae4bfc..827fe06b20ac 100644
+--- a/security/apparmor/apparmorfs.c
++++ b/security/apparmor/apparmorfs.c
+@@ -439,6 +439,37 @@ static ssize_t policy_update(u32 mask, const char __user *buf, size_t size,
+ 	return error;
  }
-+
-+SYSCALL_DEFINE5(lsm_config_self_policy, u32, lsm_id, u32, op, void __user *,
-+		buf, u32 __user *, size, u32, flags)
+ 
++/**
++ * aa_profile_load_ns_name - load a profile into the current namespace identified by name
++ * @name The name of the namesapce to load the policy in. "" for root_ns
++ * @name_size size of @name. 0 For root ns
++ * @buf buffer containing the user-provided policy
++ * @size size of @buf
++ * @ppos position pointer in the file
++ *
++ * Returns: 0 on success, negative value on error
++ */
++ssize_t aa_profile_load_ns_name(char *name, size_t name_size, const void __user *buf,
++				size_t size, loff_t *ppos)
 +{
-+	return 0;
++	struct aa_ns *ns;
++
++	if (name_size == 0)
++		ns = aa_get_ns(root_ns);
++	else
++		ns = aa_lookupn_ns(root_ns, name, name_size);
++
++	if (!ns)
++		return -EINVAL;
++
++	int error = policy_update(AA_MAY_LOAD_POLICY | AA_MAY_REPLACE_POLICY,
++				  buf, size, ppos, ns);
++
++	aa_put_ns(ns);
++
++	return error >= 0 ? 0 : error;
 +}
 +
-+SYSCALL_DEFINE5(lsm_config_system_policy, u32, lsm_id, u32, op, void __user *,
-+		buf, u32 __user *, size, u32, flags)
+ /* .load file hook fn to load policy */
+ static ssize_t profile_load(struct file *f, const char __user *buf, size_t size,
+ 			    loff_t *pos)
+diff --git a/security/apparmor/include/apparmorfs.h b/security/apparmor/include/apparmorfs.h
+index 1e94904f68d9..fd415afb7659 100644
+--- a/security/apparmor/include/apparmorfs.h
++++ b/security/apparmor/include/apparmorfs.h
+@@ -112,6 +112,9 @@ int __aafs_profile_mkdir(struct aa_profile *profile, struct dentry *parent);
+ void __aafs_ns_rmdir(struct aa_ns *ns);
+ int __aafs_ns_mkdir(struct aa_ns *ns, struct dentry *parent, const char *name,
+ 		     struct dentry *dent);
++ssize_t aa_profile_load_ns_name(char *name, size_t name_len, const void __user *buf,
++				size_t size, loff_t *ppos);
++
+ 
+ struct aa_loaddata;
+ 
+diff --git a/security/apparmor/lsm.c b/security/apparmor/lsm.c
+index 9b6c2f157f83..b38c4926cdc2 100644
+--- a/security/apparmor/lsm.c
++++ b/security/apparmor/lsm.c
+@@ -1275,6 +1275,65 @@ static int apparmor_socket_shutdown(struct socket *sock, int how)
+ 	return aa_sock_perm(OP_SHUTDOWN, AA_MAY_SHUTDOWN, sock);
+ }
+ 
++/**
++ * apparmor_lsm_config_self_policy - Stack a profile
++ * @buf: buffer containing the user-provided name of the profile to stack
++ * @size: size of @buf
++ *
++ * Returns: 0 on success, negative value on error
++ */
++static int apparmor_lsm_config_self_policy(u32 lsm_id, u32 op, void __user *buf,
++				      size_t size, u32 flags)
 +{
-+	return 0;
++	char *name = kvmalloc(size, GFP_KERNEL);
++	long name_size;
++	int ret;
++
++	if (op != LSM_POLICY_LOAD || flags)
++		return -EOPNOTSUPP;
++
++	name_size = strncpy_from_user(name, buf, size);
++	if (name_size < 0)
++		return name_size;
++
++	ret = aa_change_profile(name, AA_CHANGE_STACK);
++
++	kvfree(name);
++
++	return ret;
 +}
-diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
-index 2892a45023af..34278cc6a476 100644
---- a/tools/include/uapi/asm-generic/unistd.h
-+++ b/tools/include/uapi/asm-generic/unistd.h
-@@ -851,9 +851,13 @@ __SYSCALL(__NR_listxattrat, sys_listxattrat)
- __SYSCALL(__NR_removexattrat, sys_removexattrat)
- #define __NR_open_tree_attr 467
- __SYSCALL(__NR_open_tree_attr, sys_open_tree_attr)
-+#define __NR_lsm_config_self_policy 468
-+__SYSCALL(__NR_lsm_config_self_policy, lsm_config_self_policy)
-+#define __NR_lsm_config_system_policy 469
-+__SYSCALL(__NR_lsm_config_system_policy, lsm_config_system_policy)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 468
-+#define __NR_syscalls 470
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-index cfb5ca41e30d..7eefbccfe531 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -391,6 +391,8 @@
- 465	common	listxattrat		sys_listxattrat
- 466	common	removexattrat		sys_removexattrat
- 467	common	open_tree_attr		sys_open_tree_attr
-+468	common	lsm_config_self_policy	sys_lsm_config_self_policy
-+469	common	lsm_config_system_policy	sys_lsm_config_system_policy
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
++
++/**
++ * apparmor_lsm_config_system_policy - Load or replace a system policy
++ * @buf: user-supplied buffer in the form "<ns>\0<policy>"
++ *        <ns> is the namespace to load the policy into (empty string for root)
++ *        <policy> is the policy to load
++ * then '\0' then the policy to load
++ * @size: size of @buf
++ *
++ * Returns: 0 on success, negative value on error
++ */
++static int apparmor_lsm_config_system_policy(u32 lsm_id, u32 op, void __user *buf,
++				      size_t size, u32 flags)
++{
++	loff_t pos = 0; // Partial writing is not currently supported
++	char name[256];
++	long name_size;
++
++	if (op != LSM_POLICY_LOAD || flags)
++		return -EOPNOTSUPP;
++
++	name_size = strncpy_from_user(name, buf, 256);
++	if (name_size < 0)
++		return name_size;
++	else if (name_size == 256)
++		return -E2BIG;
++
++	return aa_profile_load_ns_name(name, name_size, buf + name_size + 1,
++				       size - name_size - 1, &pos);
++}
++
++
+ #ifdef CONFIG_NETWORK_SECMARK
+ /**
+  * apparmor_socket_sock_rcv_skb - check perms before associating skb to sk
+@@ -1483,6 +1542,10 @@ static struct security_hook_list apparmor_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(socket_getsockopt, apparmor_socket_getsockopt),
+ 	LSM_HOOK_INIT(socket_setsockopt, apparmor_socket_setsockopt),
+ 	LSM_HOOK_INIT(socket_shutdown, apparmor_socket_shutdown),
++
++	LSM_HOOK_INIT(lsm_config_self_policy, apparmor_lsm_config_self_policy),
++	LSM_HOOK_INIT(lsm_config_system_policy,
++		      apparmor_lsm_config_system_policy),
+ #ifdef CONFIG_NETWORK_SECMARK
+ 	LSM_HOOK_INIT(socket_sock_rcv_skb, apparmor_socket_sock_rcv_skb),
+ #endif
 -- 
 2.48.1
 
