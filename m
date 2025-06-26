@@ -1,132 +1,119 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26F5A20AF62;
-	Thu, 26 Jun 2025 16:23:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E04F28FFEE;
+	Thu, 26 Jun 2025 17:13:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1750955020; cv=none; b=ewlVG/D7KwYJ40QFatZt6R8A1zz94P68TU1KL+spSTnxt1ipLmdOdk7NZHEIJsiW0Se8FKW8BdUzawwFSBrNTDjCMLd+dECP9TKOjtjUJZMJg5MuPnEk/Ne0iAsbkNl83frbHXrEbKRFaLcKLu6fuGJ8NYrhjXbRwAHiA11LD3I=
+	t=1750957984; cv=none; b=uCDNse1PjaXQFdCreLukhKn8nB2dQo1ZGEu3KdPOvizBlAGlc7LRIkKp6r8VzaZyBuDKBy+8+xaPpzM2rFXHzzPZ5CqBIYIsQPphoA3HTdANWi9mTSnWx4rM1PqYmTxLKYUy/ucQIN60QPHmViwoiWS6uYgMRJzwKhLWOya7718=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1750955020; c=relaxed/simple;
-	bh=AL/ayqffGwaOW7aWfAzxONsmdVg4IhQmQQ3LDroZ/n8=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=k0oOcIWt6oueISPvRwcNVJKlrdHCeT1t6jDaH9JyDToChkgVmxlaAYwKi5ijqiQOGun+ONNN0uJRmsiWebb23SWIVNBGEH0S1cGkgrVCDzATK9ziJeFkt7+CGOHs09M4fSrqDTOUFelI3iMz8Rfo4i6Xt+zqkwhXDly/oxubEx8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HZWOSUBy; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1750957984; c=relaxed/simple;
+	bh=HdsgE3dVEvFD0Kza/FGL4PVyH2AyEt8jTw7NRdOU/NU=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=PXI3ervZSzRmDdtrFtHQgCM56oF2gSZYAenvBZOgmMUVZunbIgUj4tLyrtX7+0QppCQXYlFThZ4bZoIzl/ZHF7qBl5cDzpUluDPLHvwsoH/nKD+0dNbqUGobSFQhKVxxHvxUVjr7FzNDfrl3KiJmrptT+BgKKDAYbdcW5Rks4ww=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=TkQrMjNs; arc=none smtp.client-ip=213.97.179.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HZWOSUBy"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A5A7BC4CEEB;
-	Thu, 26 Jun 2025 16:23:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1750955019;
-	bh=AL/ayqffGwaOW7aWfAzxONsmdVg4IhQmQQ3LDroZ/n8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=HZWOSUBy299in7RzwFOlzWIeKnbZ/oojfsiofevfcFNiv8PgZceL8LfAbLKWExolB
-	 4qGpmC6eoEa9GK+WyhQUzj/VEDrn9faCr1NZH35UPKbJ9fiVH6Yb3uXND2v6Rn4uKV
-	 3/puAXBpvkRuSTCE1ckgo7zzUpho3T8h+7eGgAxHUEM81y8AtNiG+pYHhMP7U1z24p
-	 FITvVnRIskxPdAMZpaQKeFkHfmAUD8//rmS/R/SkqzoC5ChQUges+CzavJud2SNPP2
-	 6+mKlEttw3EeQCiZzRHEoasfguKmbcJ+Z3IjNpqMpba44mTtzhmorycRgJL7cZRqXb
-	 oHFP6YZ25FYZQ==
-Date: Thu, 26 Jun 2025 12:23:38 -0400
-From: Sasha Levin <sashal@kernel.org>
-To: Dmitry Vyukov <dvyukov@google.com>
-Cc: kees@kernel.org, elver@google.com, linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org, tools@kernel.org,
-	workflows@vger.kernel.org
-Subject: Re: [RFC 00/19] Kernel API Specification Framework
-Message-ID: <aF10Cu0GI092Sjr3@lappy>
-References: <aFNYQkbEctT6N0Hb@lappy>
- <20250623132803.26760-1-dvyukov@google.com>
- <aFsE0ogdbKupvt7o@lappy>
- <CACT4Y+Y04JC359J3DnLzLzhMRPNLem11oj+u04GoEazhpmzWTw@mail.gmail.com>
- <aFwb_3EE2VMEV_tf@lappy>
- <CACT4Y+b9u6_wx9BU0hH0L6ogGKN_+R5T7OsgJVFAWm8yeD0E7Q@mail.gmail.com>
- <CACT4Y+b1Sou9bzhsuJ_LAjwCtynWN1iNRnaUkkTecNWxLUfMUw@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="TkQrMjNs"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
+	s=20170329; h=Cc:To:In-Reply-To:References:Message-Id:
+	Content-Transfer-Encoding:Content-Type:MIME-Version:Subject:Date:From:Sender:
+	Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
+	:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+	List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=fyXXUndsFU1fi1/cHrhrRGj97R8gSsjU9AE57nmvn3s=; b=TkQrMjNs4RjBXp/YeWbS3Vhgbg
+	JonCqV01p1fPNrol+NpnVLdkwbDwyJT27OTBQikWIFq6hFkR9zOmri0stwuMUDfgL17nfoMAJCZKG
+	I7cRTq7fQsP+cMcLnx+zUiJIkvB7+iswNLYI1Dt5VlyfYnzibMXG0ydWtf7NKKEDmAGBo+Cm5xIgZ
+	riUW9sEBjeASXbwXMmPcxyGWSYR3H2beDc4yoZ0MNMyhQ2TFw8uSvssq4vp47UMc8axIjNpVkquSP
+	vj7i5kqVxATKRTYKUWlmqYND3ZtK7j8o3sJ/y0OmhTfQVfO7q6er5/ACKFm/U0le3ZmGOWcyUI1ov
+	9Z5/JAtA==;
+Received: from [191.204.192.64] (helo=[192.168.15.100])
+	by fanzine2.igalia.com with esmtpsa 
+	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
+	id 1uUq9h-009491-Ry; Thu, 26 Jun 2025 19:12:58 +0200
+From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+Date: Thu, 26 Jun 2025 14:11:25 -0300
+Subject: [PATCH v5 1/7] selftests/futex: Add ASSERT_ macros
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Disposition: inline
-In-Reply-To: <CACT4Y+b1Sou9bzhsuJ_LAjwCtynWN1iNRnaUkkTecNWxLUfMUw@mail.gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Message-Id: <20250626-tonyk-robust_futex-v5-1-179194dbde8f@igalia.com>
+References: <20250626-tonyk-robust_futex-v5-0-179194dbde8f@igalia.com>
+In-Reply-To: <20250626-tonyk-robust_futex-v5-0-179194dbde8f@igalia.com>
+To: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, 
+ Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>, 
+ Davidlohr Bueso <dave@stgolabs.net>, Shuah Khan <shuah@kernel.org>, 
+ Arnd Bergmann <arnd@arndb.de>, 
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+ Waiman Long <longman@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+ linux-api@vger.kernel.org, kernel-dev@igalia.com, 
+ =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+X-Mailer: b4 0.14.2
 
-On Thu, Jun 26, 2025 at 10:37:33AM +0200, Dmitry Vyukov wrote:
->On Thu, 26 Jun 2025 at 10:32, Dmitry Vyukov <dvyukov@google.com> wrote:
->>
->> On Wed, 25 Jun 2025 at 17:55, Sasha Levin <sashal@kernel.org> wrote:
->> >
->> > On Wed, Jun 25, 2025 at 10:52:46AM +0200, Dmitry Vyukov wrote:
->> > >On Tue, 24 Jun 2025 at 22:04, Sasha Levin <sashal@kernel.org> wrote:
->> > >
->> > >> >6. What's the goal of validation of the input arguments?
->> > >> >Kernel code must do this validation anyway, right.
->> > >> >Any non-trivial validation is hard, e.g. even for open the validation function
->> > >> >for file name would need to have access to flags and check file precense for
->> > >> >some flags combinations. That may add significant amount of non-trivial code
->> > >> >that duplicates main syscall logic, and that logic may also have bugs and
->> > >> >memory leaks.
->> > >>
->> > >> Mostly to catch divergence from the spec: think of a scenario where
->> > >> someone added a new param/flag/etc but forgot to update the spec - this
->> > >> will help catch it.
->> > >
->> > >How exactly is this supposed to work?
->> > >Even if we run with a unit test suite, a test suite may include some
->> > >incorrect inputs to check for error conditions. The framework will
->> > >report violations on these incorrect inputs. These are not bugs in the
->> > >API specifications, nor in the test suite (read false positives).
->> >
->> > Right now it would be something along the lines of the test checking for
->> > an expected failure message in dmesg, something along the lines of:
->> >
->> >         https://github.com/linux-test-project/ltp/blob/0c99c7915f029d32de893b15b0a213ff3de210af/testcases/commands/sysctl/sysctl02.sh#L67
->> >
->> > I'm not opposed to coming up with a better story...
->
->If the goal of validation is just indirectly validating correctness of
->the specification itself, then I would look for other ways of
->validating correctness of the spec.
->Either removing duplication between specification and actual code
->(i.e. generating it from SYSCALL_DEFINE, or the other way around) ,
->then spec is correct by construction. Or, cross-validating it with
->info automatically extracted from the source (using
->clang/dwarf/pahole).
->This would be more scalable (O(1) work, rather than thousands more
->manually written tests).
->
->> Oh, you mean special tests for this framework (rather than existing tests).
->> I don't think this is going to work in practice. Besides writing all
->> these specifications, we will also need to write dozens of tests per
->> each specification (e.g. for each fd arg one needs at least 3 tests:
->> -1, valid fd, inclid fd; an enum may need 5 various inputs of
->> something; let alone netlink specifications).
+Create ASSERT_{EQ, NE, TRUE, FALSE} macros to make test creation easier.
 
-I didn't mean just for the framework: being able to specify the APIs in
-machine readable format will enable us to automatically generate
-exhaustive tests for each such API.
+Signed-off-by: André Almeida <andrealmeid@igalia.com>
+---
+ tools/testing/selftests/futex/include/logging.h | 38 +++++++++++++++++++++++++
+ 1 file changed, 38 insertions(+)
 
-I've been playing with the kapi tool (see last patch) which already
-supports different formatters. Right now it outputs human readable
-output, but I have proof-of-concept code that outputs testcases for
-specced APIs.
-
-The dream here is to be able to automatically generate
-hundreds/thousands of tests for each API in an automated fashion, and
-verify the results with:
-
-1. Simply checking expected return value.
-
-2. Checking that the actual action happened (i.e. we called close(fd),
-verify that `fd` is really closed).
-
-3. Check for side effects (i.e. close(fd) isn't supposed to allocate
-memory - verify that it didn't allocate memory).
-
-4. Code coverage: our tests are supposed to cover 100% of the code in
-that APIs call chain, do we have code that didn't run (missing/incorrect
-specs).
+diff --git a/tools/testing/selftests/futex/include/logging.h b/tools/testing/selftests/futex/include/logging.h
+index 874c69ce5cce9efa3a9d6de246f5972a75437dbf..a19755622a877932884570c8f58aaee7371d5f8f 100644
+--- a/tools/testing/selftests/futex/include/logging.h
++++ b/tools/testing/selftests/futex/include/logging.h
+@@ -23,6 +23,44 @@
+ #include <linux/futex.h>
+ #include "kselftest.h"
+ 
++#define ASSERT_EQ(var, value)	\
++do {				\
++	if (var != value) {	\
++		ksft_test_result_fail("%s: expected %ld, but %s has %ld\n", \
++				      __func__, (long) value, #var, \
++				      (long) var); \
++		return;		\
++	}			\
++} while (0)
++
++#define ASSERT_NE(var, value)	\
++do {				\
++	if (var == value) {	\
++		ksft_test_result_fail("%s: expected not %ld, but %s has %ld\n", \
++				      __func__, (long) value, #var, \
++				      (long) var); \
++		return; \
++	}		\
++} while (0)
++
++#define ASSERT_TRUE(var)	\
++do {				\
++	if ((var) == 0) {	\
++		ksft_test_result_fail("%s: expected %s to be true\n", \
++				      __func__, #var); \
++		return;		\
++	}			\
++} while (0)
++
++#define ASSERT_FALSE(var)	\
++do {				\
++	if (var) {		\
++		ksft_test_result_fail("%s: expected %s to be false\n", \
++				      __func__, #var); \
++		return;		\
++	}			\
++} while (0)
++
+ /*
+  * Define PASS, ERROR, and FAIL strings with and without color escape
+  * sequences, default to no color.
 
 -- 
-Thanks,
-Sasha
+2.49.0
+
