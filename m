@@ -1,167 +1,141 @@
-Received: from smtp-relay-canonical-1.canonical.com (smtp-relay-canonical-1.canonical.com [185.125.188.121])
+Received: from www262.sakura.ne.jp (www262.sakura.ne.jp [202.181.97.72])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4458269CF1;
-	Tue,  1 Jul 2025 09:30:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.121
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A44B32701BF;
+	Tue,  1 Jul 2025 10:03:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=202.181.97.72
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1751362206; cv=none; b=tUFNrdZq5w39Z2dVd6nVB+56ZUYyFJGaDM0lmwOli+C4MMU0uAvKNjRVQIA+PnsZqeMwfV7ruybD6dnn3MHOX89t6IbJJLoqOo+V9/2o+qwPueVj9AIiIJmqNqknoyGVV3U3QplBwjxG77DIo86765Yksp3Vshhel5aRvkIMrQU=
+	t=1751364189; cv=none; b=Xa3BCzOYLu8Zv30SRLhEmoSbJrwV9H56bGcr/erHzbb7CAHGMzM2xZQE5rySFSZvM7nSgU8LyFcZUyoO/yDzHjnM6YQ3nWaCWJ+3qUDsEVLG1xCbSdVg6U/mCLbSKJee2epJ+kb6VDSk+9XJzW/to1q2XR/2V3r2BbD2/bH+pw8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1751362206; c=relaxed/simple;
-	bh=mI2bcxeSQWVmBisEdmPAetbjZIHjM16PxkzKdX7lrPI=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=RxPlGYeopQTjv1yVU7/0R175gm3I6npB3lkFkzzYIukAV/ozRzMuJDxYyueEBfH7CTGHfXUMHSdAwhXMiKvF3DsEoBwAm9y37XntkjEO3BTmSTvIpSRhBIwGkGtA7VmayzNbRyhlakaFZsyqy4IJcP7gBW+KNCPtWwk8X3xvEOk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b=krs4LUJP; arc=none smtp.client-ip=185.125.188.121
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=canonical.com header.i=@canonical.com header.b="krs4LUJP"
-Received: from sec2-plucky-amd64.. (176-136-128-80.abo.bbox.fr [176.136.128.80])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-relay-canonical-1.canonical.com (Postfix) with ESMTPSA id 4DC083F702;
-	Tue,  1 Jul 2025 09:20:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20210705; t=1751361610;
-	bh=sbEax+u9FyP8XVplruAPXD54M5bPhhX1zb7JgpbL7to=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type;
-	b=krs4LUJPF/uvFU3VSj3erJ8kQfzUOQxqUYoe7supNqCgC6lghZdNHEGCBnJGUCey6
-	 NnLnW/twUo+vKH7YI+k9v4AdBnpXAK60lK3pbfSM+A8HND/Oi7DVzgDzlEW/8oWPve
-	 K/9HUNhgM3cn8Jzn9BiSy7Ioa5kbhVDC4CzyyNZo6/ja8Bo8bOpEEfNKMYGNg6e7c1
-	 J+CbW/ovcQQQp3xjSTrf30DLymrWqnqIe/gOQS1R0uutHAbCn5DtoPxeD+2OAg4vo3
-	 dACor5fINPL51E5oHxy93mn2asniashQOKpIP3f1OjL9R8ULT5O2vGS7Xngmo/pNAW
-	 Ho3WaeiQMc3Ug==
-From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-To: linux-security-module@vger.kernel.org
-Cc: john.johansen@canonical.com,
-	paul@paul-moore.com,
-	jmorris@namei.org,
-	serge@hallyn.com,
-	mic@digikod.net,
-	kees@kernel.org,
-	stephen.smalley.work@gmail.com,
-	casey@schaufler-ca.com,
-	takedakn@nttdata.co.jp,
-	penguin-kernel@I-love.SAKURA.ne.jp,
-	song@kernel.org,
-	rdunlap@infradead.org,
-	linux-api@vger.kernel.org,
-	apparmor@lists.ubuntu.com,
-	linux-kernel@vger.kernel.org,
-	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
-Subject: [PATCH v4 0/3] lsm: introduce lsm_config_self_policy() and lsm_config_system_policy() syscalls
-Date: Tue,  1 Jul 2025 11:17:38 +0200
-Message-ID: <20250701091904.395837-1-maxime.belair@canonical.com>
-X-Mailer: git-send-email 2.48.1
+	s=arc-20240116; t=1751364189; c=relaxed/simple;
+	bh=NvbjkUgdlWSy3WOQbPWAgbYm4pYFUwIcipL4RztdTgg=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=rgZA0/e0oquRXAyoiRGtXZPNmDj9jidP6BuoAd719/x9ZiubbqFMrbmdtUMGJNdmzhXHY4ZRv1QibdUaBkG5IzpQnzFjuYacNRlmwkTv2Jrn0G0PruSTlk5ukzrHdyorzyGHtPh61+46XqsQqyEFUB0GCbLYXLE6Qxnpjixh/QI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=I-love.SAKURA.ne.jp; spf=pass smtp.mailfrom=I-love.SAKURA.ne.jp; arc=none smtp.client-ip=202.181.97.72
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=I-love.SAKURA.ne.jp
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=I-love.SAKURA.ne.jp
+Received: from www262.sakura.ne.jp (localhost [127.0.0.1])
+	by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTP id 561A1lZv068590;
+	Tue, 1 Jul 2025 19:01:47 +0900 (JST)
+	(envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Received: from [192.168.1.6] (M106072142033.v4.enabler.ne.jp [106.72.142.33])
+	(authenticated bits=0)
+	by www262.sakura.ne.jp (8.15.2/8.15.2) with ESMTPSA id 561A1kQM068582
+	(version=TLSv1.2 cipher=AES256-GCM-SHA384 bits=256 verify=NO);
+	Tue, 1 Jul 2025 19:01:47 +0900 (JST)
+	(envelope-from penguin-kernel@I-love.SAKURA.ne.jp)
+Message-ID: <8cf8c12d-65fc-4e3d-9c2e-fd7d40d38613@I-love.SAKURA.ne.jp>
+Date: Tue, 1 Jul 2025 19:01:46 +0900
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v4 3/3] AppArmor: add support for lsm_config_self_policy
+ and lsm_config_system_policy
+To: =?UTF-8?Q?Maxime_B=C3=A9lair?= <maxime.belair@canonical.com>,
+        linux-security-module@vger.kernel.org
+Cc: john.johansen@canonical.com, paul@paul-moore.com, jmorris@namei.org,
+        serge@hallyn.com, mic@digikod.net, kees@kernel.org,
+        stephen.smalley.work@gmail.com, casey@schaufler-ca.com,
+        takedakn@nttdata.co.jp, song@kernel.org, rdunlap@infradead.org,
+        linux-api@vger.kernel.org, apparmor@lists.ubuntu.com,
+        linux-kernel@vger.kernel.org
+References: <20250701091904.395837-1-maxime.belair@canonical.com>
+ <20250701091904.395837-4-maxime.belair@canonical.com>
+Content-Language: en-US
+From: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
+In-Reply-To: <20250701091904.395837-4-maxime.belair@canonical.com>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
+X-Anti-Virus-Server: fsav105.rs.sakura.ne.jp
+X-Virus-Status: clean
 
-This patchset introduces two new syscalls: lsm_config_self_policy(),
-lsm_config_system_policy() and the associated Linux Security Module hooks
-security_lsm_config_*_policy(), providing a unified interface for loading
-and managing LSM policies. These syscalls complement the existing per‑LSM
-pseudo‑filesystem mechanism and work even when those filesystems are not
-mounted or available.
+On 2025/07/01 18:17, Maxime Bélair wrote:
+> +static int apparmor_lsm_config_self_policy(u32 lsm_id, u32 op, void __user *buf,
+> +				      size_t size, u32 flags)
+> +{
+> +	char *name;
+> +	long name_size;
+> +	int ret;
+> +
+> +	if (op != LSM_POLICY_LOAD || flags)
+> +		return -EOPNOTSUPP;
+> +	if (size > AA_PROFILE_NAME_MAX_SIZE)
+> +		return -E2BIG;
+> +
+> +	name = kmalloc(size, GFP_KERNEL);
+> +	if (!name)
+> +		return -ENOMEM;
+> +
+> +
+> +	name_size = strncpy_from_user(name, buf, size);
+> +	if (name_size < 0) {
+> +		kfree(name);
+> +		return name_size;
+> +	}
+> +
+> +	ret = aa_change_profile(name, AA_CHANGE_STACK);
 
-With these new syscalls, users and administrators may lock down access to
-the pseudo‑filesystem yet still manage LSM policies. Two tightly-scoped
-entry points then replace the many file operations exposed by those
-filesystems, significantly reducing the attack surface. This is
-particularly useful in containers or processes already confined by
-Landlock, where these pseudo‑filesystems are typically unavailable.
+If size == 0, name == ZERO_SIZE_PTR and name_size == 0.
+Then, aa_change_profile() will oops due to ZERO_SIZE_PTR deref.
 
-Because they provide a logical and unified interface, these syscalls are
-simpler to use than several heterogeneous pseudo‑filesystems and avoid
-edge cases such as partially loaded policies. They also eliminates VFS
-overhead, yielding performance gains notably when many policies are
-loaded, for instance at boot time.
+> +
+> +	kfree(name);
+> +
+> +	return ret;
+> +}
+> +
+> +/**
+> + * apparmor_lsm_config_system_policy - Load or replace a system policy
+> + * @lsm_id: AppArmor ID (LSM_ID_APPARMOR). Unused here
+> + * @op: operation to perform. Currently, only LSM_POLICY_LOAD is supported
+> + * @buf: user-supplied buffer in the form "<ns>\0<policy>"
+> + *        <ns> is the namespace to load the policy into (empty string for root)
+> + *        <policy> is the policy to load
+> + * @size: size of @buf
+> + * @flags: reserved for future uses; must be zero
+> + *
+> + * Returns: 0 on success, negative value on error
+> + */
+> +static int apparmor_lsm_config_system_policy(u32 lsm_id, u32 op, void __user *buf,
+> +				      size_t size, u32 flags)
+> +{
+> +	loff_t pos = 0; // Partial writing is not currently supported
+> +	char name[AA_PROFILE_NAME_MAX_SIZE];
+> +	long name_size;
+> +
+> +	if (op != LSM_POLICY_LOAD || flags)
+> +		return -EOPNOTSUPP;
+> +	if (size > AA_PROFILE_MAX_SIZE)
+> +		return -E2BIG;
+> +
+> +	name_size = strncpy_from_user(name, buf, AA_PROFILE_NAME_MAX_SIZE);
+> +	if (name_size < 0)
+> +		return name_size;
+> +	else if (name_size == AA_PROFILE_NAME_MAX_SIZE)
+> +		return -E2BIG;
+> +
+> +	return aa_profile_load_ns_name(name, name_size, buf + name_size + 1,
+> +				       size - name_size - 1, &pos);
 
-This initial implementation is intentionally minimal to limit the scope
-of changes. Currently, only policy loading is supported, and only
-AppArmor registers this LSM hook. However, any LSM can adopt this
-interface, and future patches could extend this syscall to support more
-operations, such as replacing, removing, or querying loaded policies.
+If size == 0 and *name == '\0', name_size == 0. Then, size will be -1 at aa_profile_load_ns_name()
+and WARN_ON_ONCE() in __kvmalloc_node_noprof() from kvzalloc() from policy_update() will trigger?
 
-Landlock already provides three Landlock‑specific syscalls (e.g.
-landlock_add_rule()) to restrict ambient rights for sets of processes
-without touching any pseudo-filesystem. lsm_config_*_policy() generalizes
-that approach to the entire LSM layer, so any module can choose to
-support either or both of these syscalls, and expose its policy
-operations through a uniform interface and reap the advantages outlined
-above.
+You need more stricter checks to verify that @buf is in the form "<ns>\0<policy>".
+strncpy_from_user() should not try to read more than @size bytes.
 
-This patchset is available at [1], a minimal user space example
-showing how to use lsm_config_system_policy with AppArmor is at [2] and a
-performance benchmark of both syscalls is available at [3].
-
-[1] https://github.com/emixam16/linux/tree/lsm_syscall
-[2] https://gitlab.com/emixam16/apparmor/tree/lsm_syscall
-[3] https://gitlab.com/-/snippets/4864908
-
----
-Changes in v4
- - Make the syscall's maximum buffer size defined per module
- - Fix a memory leak
-
-Changes in v3
- - Fix typos
-
-Changes in v2
- - Split lsm_manage_policy() into two distinct syscalls:
-   lsm_config_self_policy() and lsm_config_system_policy()
- - The LSM hook now calls only the appropriate LSM (and not all LSMs)
- - Add a configuration variable to limit the buffer size of these
-   syscalls
- - AppArmor now allows stacking policies through lsm_config_self_policy()
-   and loading policies in any namespace through
-   lsm_config_system_policy()
----
-
-Maxime Bélair (3):
-  Wire up lsm_config_self_policy and lsm_config_system_policy syscalls
-  lsm: introduce security_lsm_config_*_policy hooks
-  AppArmor: add support for lsm_config_self_policy and
-    lsm_config_system_policy
-
- arch/alpha/kernel/syscalls/syscall.tbl        |  2 +
- arch/arm/tools/syscall.tbl                    |  2 +
- arch/m68k/kernel/syscalls/syscall.tbl         |  2 +
- arch/microblaze/kernel/syscalls/syscall.tbl   |  2 +
- arch/mips/kernel/syscalls/syscall_n32.tbl     |  2 +
- arch/mips/kernel/syscalls/syscall_n64.tbl     |  2 +
- arch/mips/kernel/syscalls/syscall_o32.tbl     |  2 +
- arch/parisc/kernel/syscalls/syscall.tbl       |  2 +
- arch/powerpc/kernel/syscalls/syscall.tbl      |  2 +
- arch/s390/kernel/syscalls/syscall.tbl         |  2 +
- arch/sh/kernel/syscalls/syscall.tbl           |  2 +
- arch/sparc/kernel/syscalls/syscall.tbl        |  2 +
- arch/x86/entry/syscalls/syscall_32.tbl        |  2 +
- arch/x86/entry/syscalls/syscall_64.tbl        |  2 +
- arch/xtensa/kernel/syscalls/syscall.tbl       |  2 +
- include/linux/lsm_hook_defs.h                 |  4 +
- include/linux/security.h                      | 20 +++++
- include/linux/syscalls.h                      |  5 ++
- include/uapi/asm-generic/unistd.h             |  6 +-
- include/uapi/linux/lsm.h                      |  8 ++
- kernel/sys_ni.c                               |  2 +
- security/apparmor/apparmorfs.c                | 31 ++++++++
- security/apparmor/include/apparmor.h          |  4 +
- security/apparmor/include/apparmorfs.h        |  3 +
- security/apparmor/lsm.c                       | 79 +++++++++++++++++++
- security/lsm_syscalls.c                       | 25 ++++++
- security/security.c                           | 63 +++++++++++++++
- tools/include/uapi/asm-generic/unistd.h       |  6 +-
- .../arch/x86/entry/syscalls/syscall_64.tbl    |  2 +
- 29 files changed, 286 insertions(+), 2 deletions(-)
+> +}
+> +
+> +
 
 
-base-commit: 9c32cda43eb78f78c73aee4aa344b777714e259b
--- 
-2.48.1
+
+Also, in [PATCH v4 2/3], why do you need lines below?
+These functions are supposed to be called via only syscalls, aren't these?
+
++EXPORT_SYMBOL(security_lsm_config_self_policy);
++EXPORT_SYMBOL(security_lsm_config_system_policy);
 
