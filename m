@@ -1,1189 +1,366 @@
-Received: from mail-yw1-f175.google.com (mail-yw1-f175.google.com [209.85.128.175])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mx0a-00069f02.pphosted.com (mx0a-00069f02.pphosted.com [205.220.165.32])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 714F0302CCE
-	for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 14:47:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.175
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753282090; cv=none; b=eOMx4yF5Mg4G71qpA4X3Cx9gr20mTftjAQf/Dn7HY52WlBgIYV+zfwF4rNbKepBAsFePvjSW5l9XY1uNx8XL6jZvS1MZXf0WCvXgNsNEFKlAi5QUCLTbRFbp3gzbs/dA0yF/lPeJW/GD+V2eGB5D6OEa5WYjoe1ZCxBDqiWwCvs=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753282090; c=relaxed/simple;
-	bh=vepJPtSM4UDtXKviQeBbm1OdHGnp/I7tMn8jrp4ro84=;
-	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=peftiMVcYh8Jb/QuRL7QXmRuvWVeDiVGwHQjKcnWo/MDI4Vpoh0qwhgcJtTmRJbMBRx9gudzTC0p0J4eBgx767/Y8tQVFpACeek5/MX1cOoqjzNsAWlMiQ+2NkP1D4UhOOPYY5IQzq6OpeVNEW5ShzunWo4ygy+uWyLlhnBJpt4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b=JS1n7GEP; arc=none smtp.client-ip=209.85.128.175
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89175C2E0;
+	Wed, 23 Jul 2025 17:47:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=205.220.165.32
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1753292853; cv=fail; b=oEQKIcmW7eqDAlbBVFt3h5k5KkAbCKyrD4g6Kh9q3KWQoo6guDsYpnaxaKhehMDruK97dRE5dwVr5sntNySgbpxC5uqaaoj+1kxXLgiJcl6KhfMMspNnrKLE2+vlIzpHK+hywsEVWdL4vsNHuGnIRXyLn2OTaSt5vFknw+e6kYI=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1753292853; c=relaxed/simple;
+	bh=uXZruu9lEvQtAiXzwt5Q5xwLtGOXT8tBa9Twy+PeDXM=;
+	h=From:To:Cc:Subject:Date:Message-ID:Content-Type:MIME-Version; b=D2+HuyhVT+yfZCRHK++RUckG/5HklJbBlYC/2w0h98t5+X2eKtbUpITut7A7OJ7xyNapjirW9pftIQXVEyRmYdM4OkHifQQNDEncjJf/bmEQkEKMPd80PnvyfsD3EvpOiecX5caJHoCHa7aSA9wBsb1mo4ZHxiZSIeWbnkWy1DI=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com; spf=pass smtp.mailfrom=oracle.com; dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b=eFcGOuMm; dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b=eifhZGGy; arc=fail smtp.client-ip=205.220.165.32
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=oracle.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=oracle.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b="JS1n7GEP"
-Received: by mail-yw1-f175.google.com with SMTP id 00721157ae682-7196cb401d4so43115837b3.3
-        for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 07:47:58 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=oracle.com header.i=@oracle.com header.b="eFcGOuMm";
+	dkim=pass (1024-bit key) header.d=oracle.onmicrosoft.com header.i=@oracle.onmicrosoft.com header.b="eifhZGGy"
+Received: from pps.filterd (m0246629.ppops.net [127.0.0.1])
+	by mx0b-00069f02.pphosted.com (8.18.1.2/8.18.1.2) with ESMTP id 56NGQBKK003664;
+	Wed, 23 Jul 2025 17:46:54 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=oracle.com; h=cc
+	:content-transfer-encoding:content-type:date:from:message-id
+	:mime-version:subject:to; s=corp-2025-04-25; bh=FYFHKMMdoalZ8HtT
+	x8Ds/PRCJ2aFwRYryN7YI8CdyyE=; b=eFcGOuMm0kXjVJFH2FZtdf3Ak81c0VTU
+	SVfLUSMapJxUsGJF9ytVUevDa9QWYPHKZX4v0ac6foo6WuL2UqtFdcHlJDK38mE7
+	XbrJuwHHuw7FnYnB2P3raz1+yn5QmFzBa1qwN7jvnrl/L8VZ1Ho+ZNGCXRu227sm
+	LMKxKrHJDiblH/vTs4XJqKGIfLcqY0GgC+FPXHI0tKIBbQapnxTzacTsHmtBj0w9
+	TlRm8X3yB9CiPWTxAIu0bL2C7LaELcm5fdk1L1fbYMrsQKeNt7HR0Zq+V8Z1t7CN
+	sk6fgx3ekvG+O1aAoeutxCAGuYrFg9ekwuFFdTSMOMpt6Jrc7Tu+0g==
+Received: from phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (phxpaimrmta01.appoci.oracle.com [138.1.114.2])
+	by mx0b-00069f02.pphosted.com (PPS) with ESMTPS id 48056eg24n-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 23 Jul 2025 17:46:53 +0000 (GMT)
+Received: from pps.filterd (phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com [127.0.0.1])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (8.18.1.2/8.18.1.2) with ESMTP id 56NGRGWW006053;
+	Wed, 23 Jul 2025 17:46:53 GMT
+Received: from nam10-mw2-obe.outbound.protection.outlook.com (mail-mw2nam10on2083.outbound.protection.outlook.com [40.107.94.83])
+	by phxpaimrmta01.imrmtpd1.prodappphxaev1.oraclevcn.com (PPS) with ESMTPS id 4801taw3hj-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Wed, 23 Jul 2025 17:46:52 +0000
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=mkR2F+udkHZM7BdzcDg7CcflsNX88dScwt2Ckd81QPopvSYFjjRKPY5gORqlQvsSOl+1J/l7qVkZFQxpb4vwIijwQQM5EzFsaJ4CyUV9MXdOpcmG0ZhhIKPD85VNBk3+SzAQBFBukji7WkI2O5J+HT9C8/fYqZg964vs2Cjh7xAPAgnfCe/kGQoI2mdzp2Qa6IGaT0d4rmAvTuEFw03ab2UZmFEPBGhJBGI9FxQbMbI7p+VOrjIzDCW0ooYLUjfSXQhUPI6nakYXZvDZN2VpQJ+RfaZfJTcNtQATz+kWgvUpBj0oRpjYn3PiB/1Uh9+3ozeWintbTT8Cv6cVgcQPgw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=FYFHKMMdoalZ8HtTx8Ds/PRCJ2aFwRYryN7YI8CdyyE=;
+ b=yDRnRtZPfVI1/y+ilatJZN2LXHEeb5Dd2Q4G1tmuF8ibLUcavEZrLq2R7wQJuonzZ1U1hK2Waxj6bmgrJlJ+miphRYk88n2vsrGr55qNJ4aY8ilrGnhjCLJccEJ0N/8cbHr55ZjMKFsNHZOFw7BEYCBVM4ooExuC+5Gcp+982YawMpUL5STwYOcgTCROEVvdI/f7K+uX+EUGHZaxFHkgWGPa4GyW1sXZAu++ubK6XN43B+w9VVcULL/2yZ0i4DR1A49oz05psDWqdyVMR+bmqlIS+qz64UMNsXCwDfuuYJ/p0wKW8+B90b+ZPGK2IrL/AqcwpcHZSjnrzwbEtB32Sg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=oracle.com; dmarc=pass action=none header.from=oracle.com;
+ dkim=pass header.d=oracle.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen-com.20230601.gappssmtp.com; s=20230601; t=1753282076; x=1753886876; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=ddb9O3W6dbBtTQBECl2xf4CCJbIM6CMV4Ov5izVmo8E=;
-        b=JS1n7GEPOoSzPkZMFIhYl9lcA1D4fDfEEPK2XKKg5GaVlGZ+HnqrOolqFqvhPpIbLT
-         QPH7Hd4HZFSyKunNkJ1FBNqPQbvvHQK9DNYzfvv+w+BSEuoZeuToev6mqAsxtyuRZpsz
-         r65Qu3Zq3Bs5d2jcKlDhCb8AGrxSRRniEA0RyafxmBixEZH4H8jP0/N41HbpbB+xT99J
-         OvoWRUTGXvDt8kr6AuuFEEZz1aQc8CtPmSwpdhTSwpbsc25stQyMgmxtgQN8jZo6MdCO
-         PVRc01G6WLXlORJInG0ipH5gA+HfGKy0hbWXIC4q8CQXLOKVvBq8JBCXKAXlBbKICTwl
-         0FAQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753282076; x=1753886876;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=ddb9O3W6dbBtTQBECl2xf4CCJbIM6CMV4Ov5izVmo8E=;
-        b=hS9/okAlDR70m/AEh3O4QsCfXX9ezeeJKil/4B/vwzpscrQGnBR6PjvAump1uVZfKC
-         Ht9KjdLMs1TvlRaJhQ2EvN9W4FyqNyjTI90E9Er3WrDtdg5l8aP2+XHMd2j9CmEyGRKT
-         pbabodlM+rC1LRUKcqE2PMu02QXV6lmNvDC1P8zRcQKOFFvTPBYRecC0vreUUIif3CSu
-         AivN5luqsSjALjE9AObJYny0p4JKc/GPyukxg0hJ/E8gHFV+i0Gejilx3uU/M7DIRect
-         Cy2yQl7/x2jcxvon/dg2VdyFHFslaJiy8Ufs68C1hSz1ZqA4zXMGYAEDQhdAN7m0CYKm
-         MiOA==
-X-Forwarded-Encrypted: i=1; AJvYcCWJSDreUSaA6x3mepN9Zb6b9RX3kF9J+nqmxj63CHxWuu3OvCpUMQgoLcLoqyQrXRuW2wbPYrXgtbI=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwIWm9CYnAhWQ3pHdMbT+4kljqmVhUQwsy5Y8O90jZLS6Dib5oT
-	weZP48xELeFtnLYkCgPanqX8suhvmFKLmNYPnMH2Y+V8Kfz1YIjAb1vk1lzaF0cpG6c=
-X-Gm-Gg: ASbGncuxto1oJgUuIEPyP/Wxe5MxQgOuaKYHgVb/jXnZJ0QeRW9hEmNnj51GQOJ1hUQ
-	amGUR4dqe++OduVQ6RbrZySI3p0b2W3vI5GxJuBSjcWrdPhnqIIB62d8m0YUWb+jWQpNy5HJbCq
-	VAhJuJzzMgr+8A6VQffMsmS9SiTH6+5KTC0NBdYJaTrV/FJgWC3kDgF78dy9ST1OdiwkuDOAo2m
-	6Om69F1iUryFbJpG4C4wY7GbW0lt10pCUCe+QZeDpKdom0zniWOBlLBUwyxdykTt7HaZ5qwXpHo
-	E5zSVVe19ov1zp+dtZUta8KXFw0MCwBHnz4RL3mNh7oRNmDZKlxG4ViiYlF9r6emEIjSYRqVf3P
-	tXmyz1k1Gv2Rj8fwamsXTT+30B8PRwkuTEcIqnIEYLo77WuWT2L9LnM5rtwVbTP1d6XRQoF4iuK
-	vC9NMhsyvTsD8tww==
-X-Google-Smtp-Source: AGHT+IGlOv83r7AFmSXicXojx61jzE5jt0kd4sJetNYOXC3TepTaetdKwNBRcnR6w4mKhuPo017eUg==
-X-Received: by 2002:a05:690c:45c1:b0:70e:2d1a:82b8 with SMTP id 00721157ae682-719b42f4b40mr40484857b3.34.1753282075975;
-        Wed, 23 Jul 2025 07:47:55 -0700 (PDT)
-Received: from soleen.c.googlers.com.com (235.247.85.34.bc.googleusercontent.com. [34.85.247.235])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-719532c7e4fsm30482117b3.72.2025.07.23.07.47.54
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 23 Jul 2025 07:47:55 -0700 (PDT)
-From: Pasha Tatashin <pasha.tatashin@soleen.com>
-To: pratyush@kernel.org,
-	jasonmiu@google.com,
-	graf@amazon.com,
-	changyuanl@google.com,
-	pasha.tatashin@soleen.com,
-	rppt@kernel.org,
-	dmatlack@google.com,
-	rientjes@google.com,
-	corbet@lwn.net,
-	rdunlap@infradead.org,
-	ilpo.jarvinen@linux.intel.com,
-	kanie@linux.alibaba.com,
-	ojeda@kernel.org,
-	aliceryhl@google.com,
-	masahiroy@kernel.org,
-	akpm@linux-foundation.org,
-	tj@kernel.org,
-	yoann.congal@smile.fr,
-	mmaurer@google.com,
-	roman.gushchin@linux.dev,
-	chenridong@huawei.com,
-	axboe@kernel.dk,
-	mark.rutland@arm.com,
-	jannh@google.com,
-	vincent.guittot@linaro.org,
-	hannes@cmpxchg.org,
-	dan.j.williams@intel.com,
-	david@redhat.com,
-	joel.granados@kernel.org,
-	rostedt@goodmis.org,
-	anna.schumaker@oracle.com,
-	song@kernel.org,
-	zhangguopeng@kylinos.cn,
-	linux@weissschuh.net,
-	linux-kernel@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-mm@kvack.org,
-	gregkh@linuxfoundation.org,
-	tglx@linutronix.de,
-	mingo@redhat.com,
-	bp@alien8.de,
-	dave.hansen@linux.intel.com,
-	x86@kernel.org,
-	hpa@zytor.com,
-	rafael@kernel.org,
-	dakr@kernel.org,
-	bartosz.golaszewski@linaro.org,
-	cw00.choi@samsung.com,
-	myungjoo.ham@samsung.com,
-	yesanishhere@gmail.com,
-	Jonathan.Cameron@huawei.com,
-	quic_zijuhu@quicinc.com,
-	aleksander.lobakin@intel.com,
-	ira.weiny@intel.com,
-	andriy.shevchenko@linux.intel.com,
-	leon@kernel.org,
-	lukas@wunner.de,
-	bhelgaas@google.com,
-	wagi@kernel.org,
-	djeffery@redhat.com,
-	stuart.w.hayes@gmail.com,
-	ptyadav@amazon.de,
-	lennart@poettering.net,
-	brauner@kernel.org,
-	linux-api@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	saeedm@nvidia.com,
-	ajayachandra@nvidia.com,
-	jgg@nvidia.com,
-	parav@nvidia.com,
-	leonro@nvidia.com,
-	witu@nvidia.com
-Subject: [PATCH v2 30/32] tools: introduce libluo
-Date: Wed, 23 Jul 2025 14:46:43 +0000
-Message-ID: <20250723144649.1696299-31-pasha.tatashin@soleen.com>
-X-Mailer: git-send-email 2.50.0.727.gbf7dc18ff4-goog
-In-Reply-To: <20250723144649.1696299-1-pasha.tatashin@soleen.com>
-References: <20250723144649.1696299-1-pasha.tatashin@soleen.com>
+ d=oracle.onmicrosoft.com; s=selector2-oracle-onmicrosoft-com;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=FYFHKMMdoalZ8HtTx8Ds/PRCJ2aFwRYryN7YI8CdyyE=;
+ b=eifhZGGyxAOGiqQP7rLHkYvEXeGZsXx7n59Nrnx0ZMHlvQtCzzbtZERRJ/ZbRN6z1tSzXt/ku8b0fgJGoB5XfxE3MBm61i8k+4QEAei79rhzAfb1VE7w47gxowGkLf0loOKrnaUei7hXWA7LEjFbyeiP/ziCV3dmYqTxz/FtQ70=
+Received: from DM4PR10MB8218.namprd10.prod.outlook.com (2603:10b6:8:1cc::16)
+ by BLAPR10MB4850.namprd10.prod.outlook.com (2603:10b6:208:324::11) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8964.21; Wed, 23 Jul
+ 2025 17:46:49 +0000
+Received: from DM4PR10MB8218.namprd10.prod.outlook.com
+ ([fe80::2650:55cf:2816:5f2]) by DM4PR10MB8218.namprd10.prod.outlook.com
+ ([fe80::2650:55cf:2816:5f2%4]) with mapi id 15.20.8943.029; Wed, 23 Jul 2025
+ 17:46:49 +0000
+From: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+To: Alejandro Colomar <alx@kernel.org>
+Cc: linux-man@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>,
+        Peter Xu <peterx@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>,
+        Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>,
+        "Liam R . Howlett" <Liam.Howlett@oracle.com>,
+        Vlastimil Babka <vbabka@suse.cz>, Jann Horn <jannh@google.com>,
+        Pedro Falcato <pfalcato@suse.de>, Rik van Riel <riel@surriel.com>,
+        linux-mm@kvack.org, linux-kernel@vger.kernel.org,
+        linux-api@vger.kernel.org
+Subject: [PATCH] man/man2/mremap.2: describe multiple mapping move, shrink
+Date: Wed, 23 Jul 2025 18:46:34 +0100
+Message-ID: <20250723174634.75054-1-lorenzo.stoakes@oracle.com>
+X-Mailer: git-send-email 2.50.1
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: LO2P265CA0121.GBRP265.PROD.OUTLOOK.COM
+ (2603:10a6:600:9f::13) To DM4PR10MB8218.namprd10.prod.outlook.com
+ (2603:10b6:8:1cc::16)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: DM4PR10MB8218:EE_|BLAPR10MB4850:EE_
+X-MS-Office365-Filtering-Correlation-Id: 53341eaa-a97a-470c-b1bf-08ddca10e6d6
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam: BCL:0;ARA:13230040|7416014|366016|376014|1800799024;
+X-Microsoft-Antispam-Message-Info:
+	=?us-ascii?Q?5Zdsa4ufCbBSZcr3dAChDxI7EgE6xYwhvcg3+unAcGESNQ4CN7WXgvxkqEZ7?=
+ =?us-ascii?Q?6TzwxNOv3MNfP1EeC1+JGc6zBq6q0BCrcmlDWlnVau5wwpE7O7nc7ZHLEctI?=
+ =?us-ascii?Q?0AWUyiO53lfY7Vk2lKsRxBGX8JnoLDzbM4lVDUDeItXvHu83UERHijw2jeEh?=
+ =?us-ascii?Q?e/rGjOMO4uZ792w/RLQ8OJu2i+w11miOyX2Qowu528Ri3El1/H9tYtgHLavz?=
+ =?us-ascii?Q?H+bsPCmkOYsLrbWsMv7Spc2PnzCTbV1lUMIkrXHrMxTH3IIZbgm8GhxVcu4T?=
+ =?us-ascii?Q?DpGTWn36Lleu9pViMelZggkIW3sAVSuaoB7oI2wsdlah0H/3hQhmedBqWkJP?=
+ =?us-ascii?Q?YBjPrMwyrwjzt2zCR6pWlW2hjLVFQGbgd6BTZOWDP0NYIYeC5AnEvUXEh00l?=
+ =?us-ascii?Q?GV1Z830eMyJZWaj9kWw9D43UWYclFs9mpSVxpblvRbkXHowyEDJDLDo/QepU?=
+ =?us-ascii?Q?cZtzhZLI4fM+LoE973RURyPb7IGM3sJ0k2coIUnhDPoXvwMbpz8XZ3Y7vYId?=
+ =?us-ascii?Q?lUx8jJSGQZAiHwGdn7wBogNttb3PnVxd2HcqNzcSY4zEhMyO7ixoQjppInUT?=
+ =?us-ascii?Q?OpuRAmdCP0VRbV8UjYRXax+1Erc3OFNnsgi2H8IJdXsQ3JJtwd0zHFOtkg0a?=
+ =?us-ascii?Q?43aStnNXxPLGIDv3wepx2OrM7b+SHP5ki4ZsNsdBKXfDpBABmEt5xJmyrJGZ?=
+ =?us-ascii?Q?dyboYHjXSvT2yw9SkdxxzK8UQnC3OsHShz4HzAb4ezFhWv/ZFCyzaqEAJJ9P?=
+ =?us-ascii?Q?Lm0sgn6VXZRyZLyY0NxIHEE9xZUXTNQd4oaTFddIV7h9DJvczlP4fVHQWMIy?=
+ =?us-ascii?Q?8xrsW5pRtXHlxjpkxh5I/bclTNG0iQTFQ1NRbyFx4rr5Jt1OSq4id2Oqc4+O?=
+ =?us-ascii?Q?6fHaJG+z/3OfnYfbQSPAJc/N2VL9a5gTVEaAFn+TER6VvoyTwmhyZOjuU7TO?=
+ =?us-ascii?Q?FSbmGGRx4/WcEXamFV1GwPvzcu4C+S4i8JhKjbPU1A5d651xbb3oYKOx2rI3?=
+ =?us-ascii?Q?+GnAKZJ4nu7EYc2oJfM+q29c639GL4XJQxM4HFNwISP8556KopiJUFyavAlq?=
+ =?us-ascii?Q?Qcl4wR0fGk4Kx9taMrFt58bMneWwHwgiOSWIfJ3d00PqhVccJL98qQeaugts?=
+ =?us-ascii?Q?ixlFRC+7rGnR0nZWVP+ZPCQg8YNQDPR96B4c/9+u6qXZD3V27Le7MbtGLlPO?=
+ =?us-ascii?Q?Ezpcpo+0wnteF6KXU3HXtFHLfsqE1+d67XdYgCyCRVDtmkVhmZ6Ih4i0yzgy?=
+ =?us-ascii?Q?i2iax2hbLEV7v+gq3S96KwXVlov2OsUkHOn/uPx3FgPB6KKgF+/qiH6JOXUx?=
+ =?us-ascii?Q?Uyq2+g5d7frmdZqiCMZJUEgDotXe3EDLRyMHVZ7t+EtCnyY8mPJHrgNZZsww?=
+ =?us-ascii?Q?yRN7mvL6rmfY6cP870bdRaq9SNBrOkGBAd7OR1DQGPEtHnxNAGtZth9lMYFr?=
+ =?us-ascii?Q?cbWg9HLkQsE=3D?=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:DM4PR10MB8218.namprd10.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(366016)(376014)(1800799024);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?us-ascii?Q?X4YL0/lxDSBsO2qzDrZU7gme2XiuyrksIuljSQ7pp8clXQFrD5c9TmuihgZQ?=
+ =?us-ascii?Q?iLrUDInIEmoHdalZ7xpkgPNIsdVFbNvAbSimfSSZPCr4t5gQCh/ns1bxZqgw?=
+ =?us-ascii?Q?bt+r/NBuBA2c9tZniRCzHWJPHD+cRJwrlYgTbUqG+SpgFj0lVsXbE9gC62fh?=
+ =?us-ascii?Q?5iyHaW2whQK1sRdUFrXvKp2/8YZEGXp5IPXyWyhttwyK/q/kXpvjnliZjzUs?=
+ =?us-ascii?Q?DmNh5nnIShz9CFSTkuCppdru6PE6rd82FznxgemcBjbYgMhc4CFnmpPzQUdO?=
+ =?us-ascii?Q?UzJ26eufsCrSjRxWfDgleYv1QSPfvEEUiK+JuN/t8hF7EUNfHd3FTrhO1pei?=
+ =?us-ascii?Q?B8S/F+iciresq26Fh71fSfSKjS2UzKc7MzyDG/c6+1HmbXP+e5H4poquRwIP?=
+ =?us-ascii?Q?+JYMQzmn0EeiE7lzfl7/tzbDaiIFZ5s27mUqILSc3z/Ec49gEUinYHAc8Vtu?=
+ =?us-ascii?Q?nBvJbs1krCatMuoU/qjlLGucV7lqAVoXDDNYKC21IBlMHI6A5Z9CMGecXOfS?=
+ =?us-ascii?Q?AEfykziLovJyqZIgcxboNotzicuqqvAYLRteKivLEEQMKn17OhY+1J0qj4et?=
+ =?us-ascii?Q?EeALw+GViibBvUYROw5vjqJ7X6tAhFxDByMQv5iHnD6l1MU3GLUaBUMpP7Ql?=
+ =?us-ascii?Q?eEtleeN8I1KnivCkqJ0CkoU2B2Rg4kpDTMHY5mHnfaAAQbeCJ0jlLCc50T0E?=
+ =?us-ascii?Q?do/Mq194hp7fYMhZEjwzTm4S7Nt0WpkrjimMG4XIXFv93gy+l+dj8PdrK17K?=
+ =?us-ascii?Q?8vLQf1QYpg4Mmxv/5TdMzdnNwBYYitum7M1EPZioghpsAisxpo75ceG8FJBx?=
+ =?us-ascii?Q?Jwmf9oKw0WXOV61HFin49mFSI5pIaROCGbeUcZ0PwnIY1gjzBHh8ScX0szcq?=
+ =?us-ascii?Q?inqYkR6+r7bvp9wlIVrBhEZH5q+ZK/8REdZ4kIdRrOPZMOHoadYqJLINMCFy?=
+ =?us-ascii?Q?ppDnoMmXleJ6iYvxdsh+7SYW52TaFpT1jlzhGgDjsHnZbFAB0XiOfPlBVJkE?=
+ =?us-ascii?Q?YsSp+ufahTpn/bRunPRAYJI/zvOSnj52yrbaPRCdad/AeBrHcxn6g9gNd7fI?=
+ =?us-ascii?Q?a8jQOhVpkVuI9RWmYIMeVCu4t5hB808TPZP9jtMQp/rV8oM6IkFRlbn3QezM?=
+ =?us-ascii?Q?ysAhDS7bKgLkVrxuqqsEBOpalxZoCyO+IPUfGdokjtSL3R/SuSF/YAbDAmex?=
+ =?us-ascii?Q?Mv1ZE2aKPjFNFEGAI6aNVFTO6iHSCDIhR/LDix4sZOzxkLWw8N6auB5Qkcl8?=
+ =?us-ascii?Q?4m6ZjtDTsrXcT8PUdl6vpCM8iJYuszSOJa0EvK/NIUl53wgnETmhW+OyIAZP?=
+ =?us-ascii?Q?IPDYPKCn09UwMlDfEom2PQqzp4Pkz/WqlrR3tx8SaZtJVcyPbpzCGthYZMeN?=
+ =?us-ascii?Q?FOzp2vFfKiYpBYt8eLUWNRczpxBLx5ZayNCSaG5lWJ79W6w3MTUDCOntWxjh?=
+ =?us-ascii?Q?Mfaf8lZkbY/52a/p71FemXNdxlAoKZlhtKdeThmTYS03p4GVkdMp+d6LV/8p?=
+ =?us-ascii?Q?f5qba5EDYVxXg10KrtZ609fJCMOYxv7yZ9PWaIK7RBYhOu7LBL+HER4ZkcWU?=
+ =?us-ascii?Q?+YhJvGKCSVS1qqwO3CxpsIY/Xt12YHmF2rnx4NPLPjmj4YTKttHNXicCy14Z?=
+ =?us-ascii?Q?Xw=3D=3D?=
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-ExternalHop-MessageData-0:
+	UgwxYssnTYOQtyR1VhhMYzIv4Z7zymU5HO53H2I91UtONPa+Yj4owuUsNkxKhsTSYFd6w23B7AuVikmvYHlR2SqRdAgnjsBbKy5xI3F+ORpNt2CXSqIMmvFR6KQru1hbnZiC+OOMQMZVBNeBBTB8mxw/udNbUXlP9a+pTmh/ds8lrbVsfkkm37LfQpvUme8lcdI+pD4pCQosBkVWhDtrDYDqr5AiAg4BL6HpJmw2z1R+1tvBGG8Oa1iKJYVK5shaXPRRwT64YujgCWZjcfTPg2UJUzbM3KZ1Esoe0DaxXgIhI8QmV6Yo9pyDjDmZMolF8XR9g835+QHycgy+fYexf7MoMSjEZp0HdX5cBkimv+8gPz3cuZkOGOSSk/McnhuE5NAd1NQE/FY2MmYnK0Ug+bBs0kbQDLW/byKCXWylDqksroJVZ5lxphkqfR65a8oDQ6QEtfGZx5pGUaB8ngZt1nYQ2Nt/Y5+E6ghALJQ0XQEHOniXqXkxeQqppldvXtPQRiwZahvfIagzBN+qHEOyx/CteMbCGGRPk3ABbsRcW/1+3cxNqJI+TNX1i+XR9TCshDOiN/50eiSeCaMgO9VDrIWIk4iAsSjOxUfrFEkWoyQ=
+X-OriginatorOrg: oracle.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 53341eaa-a97a-470c-b1bf-08ddca10e6d6
+X-MS-Exchange-CrossTenant-AuthSource: DM4PR10MB8218.namprd10.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 23 Jul 2025 17:46:49.8414
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 4e2c6054-71cb-48f1-bd6c-3a9705aca71b
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: C54Cd2ex0XnZPlqJhC4Bl6shf6zsZzRTy4hR8S3ojHBhCoAfu8VGjkHfguxc1vNah3p6rV8htvk9B8N98F/wlfdF+x7XlVRI4/hbsIdSBwI=
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BLAPR10MB4850
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1099,Hydra:6.1.9,FMLib:17.12.80.40
+ definitions=2025-07-23_03,2025-07-23_01,2025-03-28_01
+X-Proofpoint-Spam-Details: rule=notspam policy=default score=0 malwarescore=0 mlxlogscore=999
+ bulkscore=0 phishscore=0 adultscore=0 suspectscore=0 spamscore=0
+ mlxscore=0 classifier=spam adjust=0 reason=mlx scancount=1
+ engine=8.12.0-2505160000 definitions=main-2507230154
+X-Proofpoint-ORIG-GUID: xKK040apBDied59QGxUKieiTA1yU9Llq
+X-Proofpoint-GUID: xKK040apBDied59QGxUKieiTA1yU9Llq
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjUwNzIzMDE1NCBTYWx0ZWRfX9Ks8RdvykLsc
+ pm7uVfvdsH6Vb/duchQRGzTLFJ8X2L1CI+9JjjDSqSjZchQBZoZFRypQZVpLJxDz8sElSC54/kt
+ yfaTS7RoA+CWVFIW2pfz4FQcvwwVIpR+AdPseUenfAAVSKPyKkwhVU+JAY0vgvnt6JusLZ6aGbM
+ vKDMVQtgeyyac4DGIgQRxcnJuNAsDNzFfI3KjxoVfwRz/Nw2UvI3KuWJybYArDtWfFhyGoqkyd+
+ +R5Hs9D5H30yUrW3TmgEPgssQ+7u/le+mkdlL3NvwSZFZAK7jb0dOq/g1iir9+uwuxtjYtyxLSH
+ gxiu48bnuWFR2MxRS/qgOZfTXa3qPFKn0aRosPuAe2cmpUTSKt550nZOSqZdqaLOSIgsCUPwFLJ
+ ojSvKDoJVowHLt5xAzcooHaMn84Ui9QiSWHv3dAljM9YxLnm6qlN8HTeuy/Sd+PyADTw4IJ1
+X-Authority-Analysis: v=2.4 cv=Ef3IQOmC c=1 sm=1 tr=0 ts=6881200d cx=c_pps
+ a=XiAAW1AwiKB2Y8Wsi+sD2Q==:117 a=XiAAW1AwiKB2Y8Wsi+sD2Q==:17
+ a=6eWqkTHjU83fiwn7nKZWdM+Sl24=:19 a=lCpzRmAYbLLaTzLvsPZ7Mbvzbb8=:19
+ a=wKuvFiaSGQ0qltdbU6+NXLB8nM8=:19 a=Ol13hO9ccFRV9qXi2t6ftBPywas=:19
+ a=xqWC_Br6kY4A:10 a=Wb1JkmetP80A:10 a=GoEa3M9JfhUA:10 a=yPCof4ZbAAAA:8
+ a=VAqEK11FdZ_IT4zXH1QA:9
 
-From: Pratyush Yadav <ptyadav@amazon.de>
+There is pre-existing logic that appears to be undocumented for an mremap()
+shrink operation, where it turns out that the usual 'input range must span
+a single mapping' requirement no longer applies.
 
-LibLUO is a C library for interacting with the Live Update
-Orchestrator (LUO) subsystem. It provides a set of APIs for applications
-to interact with LUO, avoiding the need to directly calling the LUO
-ioctls. It provides APIs for controlling the LUO state and preserve and
-restore file descriptors across live updates.
+In fact, it turns out that the input range specified by [old_address,
+old_size) may span any number of mappings, as long old_address resides at
+or within a mapping and [old_address, new_size) spans only a single
+mapping.
 
-Signed-off-by: Pratyush Yadav <ptyadav@amazon.de>
-Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
+Explicitly document this.
+
+In addition, document the new behaviour introduced in Linux 6.17 whereby it
+is now possible to move multiple mappings in a single operation, as long as
+the operation is purely a move, that is old_size is equal to new_size and
+MREMAP_FIXED is specified.
+
+To make things clearer, also describe this 'pure move' operation, before
+expanding upon it to describe the newly introduced behaviour.
+
+This change also explains the limitations of of this method and the
+possibility of partial failure.
+
+Finally, we pluralise language where it makes sense to so the documentation
+does not contradict either this new capability nor the pre-existing edge
+case.
+
+Signed-off-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
 ---
- MAINTAINERS                        |   1 +
- tools/lib/luo/LICENSE              | 165 ++++++++++++++++++
- tools/lib/luo/Makefile             |  37 ++++
- tools/lib/luo/README.md            | 166 ++++++++++++++++++
- tools/lib/luo/include/libluo.h     | 128 ++++++++++++++
- tools/lib/luo/include/liveupdate.h | 265 +++++++++++++++++++++++++++++
- tools/lib/luo/libluo.c             | 203 ++++++++++++++++++++++
- 7 files changed, 965 insertions(+)
- create mode 100644 tools/lib/luo/LICENSE
- create mode 100644 tools/lib/luo/Makefile
- create mode 100644 tools/lib/luo/README.md
- create mode 100644 tools/lib/luo/include/libluo.h
- create mode 100644 tools/lib/luo/include/liveupdate.h
- create mode 100644 tools/lib/luo/libluo.c
+ man/man2/mremap.2 | 93 +++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 82 insertions(+), 11 deletions(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index b4fde9f62e9b..f833b340fabd 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -14026,6 +14026,7 @@ F:	include/linux/liveupdate.h
- F:	include/uapi/linux/liveupdate.h
- F:	kernel/liveupdate/
- F:	mm/memfd_luo.c
-+F:	tools/lib/luo/
- F:	tools/testing/selftests/liveupdate/
- 
- LLC (802.2)
-diff --git a/tools/lib/luo/LICENSE b/tools/lib/luo/LICENSE
-new file mode 100644
-index 000000000000..0a041280bd00
---- /dev/null
-+++ b/tools/lib/luo/LICENSE
-@@ -0,0 +1,165 @@
-+                   GNU LESSER GENERAL PUBLIC LICENSE
-+                       Version 3, 29 June 2007
-+
-+ Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
-+ Everyone is permitted to copy and distribute verbatim copies
-+ of this license document, but changing it is not allowed.
-+
-+
-+  This version of the GNU Lesser General Public License incorporates
-+the terms and conditions of version 3 of the GNU General Public
-+License, supplemented by the additional permissions listed below.
-+
-+  0. Additional Definitions.
-+
-+  As used herein, "this License" refers to version 3 of the GNU Lesser
-+General Public License, and the "GNU GPL" refers to version 3 of the GNU
-+General Public License.
-+
-+  "The Library" refers to a covered work governed by this License,
-+other than an Application or a Combined Work as defined below.
-+
-+  An "Application" is any work that makes use of an interface provided
-+by the Library, but which is not otherwise based on the Library.
-+Defining a subclass of a class defined by the Library is deemed a mode
-+of using an interface provided by the Library.
-+
-+  A "Combined Work" is a work produced by combining or linking an
-+Application with the Library.  The particular version of the Library
-+with which the Combined Work was made is also called the "Linked
-+Version".
-+
-+  The "Minimal Corresponding Source" for a Combined Work means the
-+Corresponding Source for the Combined Work, excluding any source code
-+for portions of the Combined Work that, considered in isolation, are
-+based on the Application, and not on the Linked Version.
-+
-+  The "Corresponding Application Code" for a Combined Work means the
-+object code and/or source code for the Application, including any data
-+and utility programs needed for reproducing the Combined Work from the
-+Application, but excluding the System Libraries of the Combined Work.
-+
-+  1. Exception to Section 3 of the GNU GPL.
-+
-+  You may convey a covered work under sections 3 and 4 of this License
-+without being bound by section 3 of the GNU GPL.
-+
-+  2. Conveying Modified Versions.
-+
-+  If you modify a copy of the Library, and, in your modifications, a
-+facility refers to a function or data to be supplied by an Application
-+that uses the facility (other than as an argument passed when the
-+facility is invoked), then you may convey a copy of the modified
-+version:
-+
-+   a) under this License, provided that you make a good faith effort to
-+   ensure that, in the event an Application does not supply the
-+   function or data, the facility still operates, and performs
-+   whatever part of its purpose remains meaningful, or
-+
-+   b) under the GNU GPL, with none of the additional permissions of
-+   this License applicable to that copy.
-+
-+  3. Object Code Incorporating Material from Library Header Files.
-+
-+  The object code form of an Application may incorporate material from
-+a header file that is part of the Library.  You may convey such object
-+code under terms of your choice, provided that, if the incorporated
-+material is not limited to numerical parameters, data structure
-+layouts and accessors, or small macros, inline functions and templates
-+(ten or fewer lines in length), you do both of the following:
-+
-+   a) Give prominent notice with each copy of the object code that the
-+   Library is used in it and that the Library and its use are
-+   covered by this License.
-+
-+   b) Accompany the object code with a copy of the GNU GPL and this license
-+   document.
-+
-+  4. Combined Works.
-+
-+  You may convey a Combined Work under terms of your choice that,
-+taken together, effectively do not restrict modification of the
-+portions of the Library contained in the Combined Work and reverse
-+engineering for debugging such modifications, if you also do each of
-+the following:
-+
-+   a) Give prominent notice with each copy of the Combined Work that
-+   the Library is used in it and that the Library and its use are
-+   covered by this License.
-+
-+   b) Accompany the Combined Work with a copy of the GNU GPL and this license
-+   document.
-+
-+   c) For a Combined Work that displays copyright notices during
-+   execution, include the copyright notice for the Library among
-+   these notices, as well as a reference directing the user to the
-+   copies of the GNU GPL and this license document.
-+
-+   d) Do one of the following:
-+
-+       0) Convey the Minimal Corresponding Source under the terms of this
-+       License, and the Corresponding Application Code in a form
-+       suitable for, and under terms that permit, the user to
-+       recombine or relink the Application with a modified version of
-+       the Linked Version to produce a modified Combined Work, in the
-+       manner specified by section 6 of the GNU GPL for conveying
-+       Corresponding Source.
-+
-+       1) Use a suitable shared library mechanism for linking with the
-+       Library.  A suitable mechanism is one that (a) uses at run time
-+       a copy of the Library already present on the user's computer
-+       system, and (b) will operate properly with a modified version
-+       of the Library that is interface-compatible with the Linked
-+       Version.
-+
-+   e) Provide Installation Information, but only if you would otherwise
-+   be required to provide such information under section 6 of the
-+   GNU GPL, and only to the extent that such information is
-+   necessary to install and execute a modified version of the
-+   Combined Work produced by recombining or relinking the
-+   Application with a modified version of the Linked Version. (If
-+   you use option 4d0, the Installation Information must accompany
-+   the Minimal Corresponding Source and Corresponding Application
-+   Code. If you use option 4d1, you must provide the Installation
-+   Information in the manner specified by section 6 of the GNU GPL
-+   for conveying Corresponding Source.)
-+
-+  5. Combined Libraries.
-+
-+  You may place library facilities that are a work based on the
-+Library side by side in a single library together with other library
-+facilities that are not Applications and are not covered by this
-+License, and convey such a combined library under terms of your
-+choice, if you do both of the following:
-+
-+   a) Accompany the combined library with a copy of the same work based
-+   on the Library, uncombined with any other library facilities,
-+   conveyed under the terms of this License.
-+
-+   b) Give prominent notice with the combined library that part of it
-+   is a work based on the Library, and explaining where to find the
-+   accompanying uncombined form of the same work.
-+
-+  6. Revised Versions of the GNU Lesser General Public License.
-+
-+  The Free Software Foundation may publish revised and/or new versions
-+of the GNU Lesser General Public License from time to time. Such new
-+versions will be similar in spirit to the present version, but may
-+differ in detail to address new problems or concerns.
-+
-+  Each version is given a distinguishing version number. If the
-+Library as you received it specifies that a certain numbered version
-+of the GNU Lesser General Public License "or any later version"
-+applies to it, you have the option of following the terms and
-+conditions either of that published version or of any later version
-+published by the Free Software Foundation. If the Library as you
-+received it does not specify a version number of the GNU Lesser
-+General Public License, you may choose any version of the GNU Lesser
-+General Public License ever published by the Free Software Foundation.
-+
-+  If the Library as you received it specifies that a proxy can decide
-+whether future versions of the GNU Lesser General Public License shall
-+apply, that proxy's public statement of acceptance of any version is
-+permanent authorization for you to choose that version for the
-+Library.
-diff --git a/tools/lib/luo/Makefile b/tools/lib/luo/Makefile
-new file mode 100644
-index 000000000000..e851c37d3d0a
---- /dev/null
-+++ b/tools/lib/luo/Makefile
-@@ -0,0 +1,37 @@
-+# SPDX-License-Identifier: LGPL-3.0-or-later
-+SRCS = libluo.c
-+OBJS = $(SRCS:.c=.o)
-+INCLUDE_DIR = include
-+HEADERS = $(wildcard $(INCLUDE_DIR)/*.h)
-+
-+CC = gcc
-+AR = ar
-+CFLAGS = -Wall -Wextra -fPIC -O2 -g -I$(INCLUDE_DIR)
-+LDFLAGS = -shared
-+
-+LIB_NAME = libluo
-+STATIC_LIB = $(LIB_NAME).a
-+SHARED_LIB = $(LIB_NAME).so
-+
-+.PHONY: all clean install
-+
-+all: $(STATIC_LIB) $(SHARED_LIB)
-+
-+$(STATIC_LIB): $(OBJS)
-+	$(AR) rcs $@ $^
-+
-+$(SHARED_LIB): $(OBJS)
-+	$(CC) $(LDFLAGS) -o $@ $^
-+
-+%.o: %.c $(HEADERS)
-+	$(CC) $(CFLAGS) -c $< -o $@
-+
-+clean:
-+	rm -f $(OBJS) $(STATIC_LIB) $(SHARED_LIB)
-+
-+install: all
-+	install -d $(DESTDIR)/usr/local/lib
-+	install -d $(DESTDIR)/usr/local/include
-+	install -m 644 $(STATIC_LIB) $(DESTDIR)/usr/local/lib
-+	install -m 755 $(SHARED_LIB) $(DESTDIR)/usr/local/lib
-+	install -m 644 $(HEADERS) $(DESTDIR)/usr/local/include
-diff --git a/tools/lib/luo/README.md b/tools/lib/luo/README.md
-new file mode 100644
-index 000000000000..a716ccb2992c
---- /dev/null
-+++ b/tools/lib/luo/README.md
-@@ -0,0 +1,166 @@
-+# LibLUO - Live Update Orchestrator Library
-+
-+A C library for interacting with the Linux Live Update Orchestrator (LUO) subsystem.
-+
-+## Overview
-+
-+LibLUO provides a set of APIs for applications to interact with LUO, avoiding
-+the need to directly calling the LUO ioctls. It provides APIs for controlling
-+the LUO state and preserve and restore file descriptors across live updates.
-+
-+## Features
-+
-+- Initialize and manage connection to the LUO device.
-+- Preserve file descriptors before a live update.
-+- Restore file descriptors after a live update.
-+- Control the live update state machine (prepare, cancel, finish).
-+- Query the current state of the LUO subsystem.
-+- The library also includes a test suite for testing both LibLUO and the kernel
-+  LUO interface.
-+
-+## Building
-+
-+```bash
-+make
-+```
-+
-+This will build both static (`libluo.a`) and shared (`libluo.so`) versions of the library.
-+
-+To build the tests, do
-+
-+``` bash
-+make tests
-+```
-+
-+This will build the `tests/test` binary.
-+
-+## Installation
-+
-+```bash
-+sudo make install
-+```
-+
-+This will install the library to `/usr/local/lib` and the header file to `/usr/local/include`.
-+
-+## Usage
-+
-+### Preserving a file descriptor
-+
-+```c
-+#include <libluo.h>
-+#include <stdio.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+
-+int main() {
-+    int ret;
-+    uint64_t token;
-+    int fd, new_fd;
-+    enum luo_state state;
-+
-+    // Initialize the library
-+    ret = luo_init();
-+    if (ret < 0) {
-+        fprintf(stderr, "Failed to initialize LibLUO: %d\n", ret);
-+        return 1;
-+    }
-+
-+    // Check if LUO is available
-+    if (!luo_is_available()) {
-+        fprintf(stderr, "LUO is not available on this system\n");
-+        return 1;
-+    }
-+
-+    // Get the current LUO state
-+    ret = luo_get_state(&state);
-+    if (ret < 0) {
-+        fprintf(stderr, "Failed to get LUO state: %d\n", ret);
-+        luo_cleanup();
-+        return 1;
-+    }
-+
-+    printf("Current LUO state: %s\n", luo_state_to_string(state));
-+
-+    // Open a file descriptor to preserve
-+	fd = memfd_create("luo_memfd", 0);
-+    if (fd < 0) {
-+        perror("Failed to open memfd");
-+        luo_cleanup();
-+        return 1;
-+    }
-+
-+    // Preserve the file descriptor
-+    ret = luo_fd_preserve(fd, &token);
-+    if (ret < 0) {
-+        fprintf(stderr, "Failed to preserve FD: %d\n", ret);
-+        close(fd);
-+        luo_cleanup();
-+        return 1;
-+    }
-+
-+    printf("FD %d preserved with token %lu\n", fd, token);
-+
-+    // After a live update, restore the file descriptor
-+    if (state == LUO_STATE_UPDATED) {
-+        ret = luo_fd_restore(token, &new_fd);
-+        if (ret < 0) {
-+            fprintf(stderr, "Failed to restore FD: %d\n", ret);
-+        } else {
-+            printf("FD restored: %d\n", new_fd);
-+            close(new_fd);
-+        }
-+
-+        // Signal completion of restoration
-+        luo_finish();
-+    }
-+
-+    close(fd);
-+    luo_cleanup();
-+    return 0;
-+}
-+```
-+
-+### Controlling the Live Update Process
-+
-+```c
-+#include <libluo.h>
-+#include <stdio.h>
-+
-+int main() {
-+    int ret;
-+
-+    ret = luo_init();
-+    if (ret < 0) {
-+        return 1;
-+    }
-+
-+    // Initiate the preparation phase
-+    ret = luo_prepare();
-+    if (ret < 0) {
-+        fprintf(stderr, "Failed to prepare for live update: %d\n", ret);
-+        luo_cleanup();
-+        return 1;
-+    }
-+
-+    // At this point, the system is ready for kexec reboot
-+    // The freeze operation is handled internally by the kernel
-+    // during kexec.
-+
-+    // After reboot, in the new kernel
-+    // Signal completion of restoration
-+    ret = luo_finish();
-+    if (ret < 0) {
-+        fprintf(stderr, "Failed to finish live update: %d\n", ret);
-+        luo_cleanup();
-+        return 1;
-+    }
-+
-+    luo_cleanup();
-+    return 0;
-+}
-+```
-+
-+## License
-+
-+This library is provided under the terms of the GNU Lesser General Public
-+License version 3.0, or (at your option) any later version.
-diff --git a/tools/lib/luo/include/libluo.h b/tools/lib/luo/include/libluo.h
-new file mode 100644
-index 000000000000..86b277e8e4f6
---- /dev/null
-+++ b/tools/lib/luo/include/libluo.h
-@@ -0,0 +1,128 @@
-+// SPDX-License-Identifier: LGPL-3.0-or-later
-+/**
-+ * @file libluo.h
-+ * @brief Library for interacting with the Linux Live Update Orchestrator (LUO)
-+ *
-+ * This library provides a simple interface for applications to interact with
-+ * the Linux Live Update Orchestrator (LUO) subsystem, allowing them to preserve
-+ * and restore file descriptors across live kernel updates.
-+ *
-+ * Copyright (C) 2025 Amazon.com Inc. or its affiliates.
-+ * Author: Pratyush Yadav <ptyadav@amazon.de>
-+ */
-+
-+#ifndef _LIBLUO_H
-+#define _LIBLUO_H
-+
-+#include <stdint.h>
-+#include <stdbool.h>
-+#include <liveupdate.h>
-+
-+/**
-+ * @brief Initialize the LUO library
-+ *
-+ * Opens the LUO device file and prepares the library for use.
-+ *
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_init(void);
-+
-+/**
-+ * @brief Clean up and release resources used by the LUO library
-+ *
-+ * Closes the LUO device file and releases any resources allocated by the
-+ * library.
-+ */
-+void luo_cleanup(void);
-+
-+/**
-+ * @brief Get the current state of the LUO subsystem
-+ *
-+ * @param[out] state Pointer to store the current LUO state
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_get_state(enum liveupdate_state *state);
-+
-+/**
-+ * @brief Preserve a file descriptor for restoration after a live update
-+ *
-+ * Marks the specified file descriptor for preservation across a live update.
-+ * The kernel validates if the FD type is supported for preservation.
-+ *
-+ * @param[in] fd The file descriptor to preserve
-+ * @param[in] token Token to associate fd with. Must be unique.
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_fd_preserve(int fd, uint64_t token);
-+
-+/**
-+ * @brief Cancel preservation of a previously preserved file descriptor
-+ *
-+ * Removes a file descriptor from the preservation list using its token.
-+ *
-+ * @param[in] token The token used to preserve fd previously.
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_fd_unpreserve(uint64_t token);
-+
-+/**
-+ * @brief Restore a previously preserved file descriptor
-+ *
-+ * Restores a file descriptor that was preserved before the live update.
-+ * This must be called after the system has rebooted into the new kernel.
-+ *
-+ * @param[in] token The token returned by luo_fd_preserve before the update
-+ * @param[out] fd Pointer to store the new file descriptor
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_fd_restore(uint64_t token, int *fd);
-+
-+/**
-+ * @brief Initiate the preparation phase for a live update
-+ *
-+ * Triggers the PREPARE phase in the LUO subsystem, which begins the
-+ * state saving process for items marked for preservation.
-+ *
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_prepare(void);
-+
-+/**
-+ * @brief Cancel the live update preparation phase
-+ *
-+ * Aborts the preparation sequence and returns the system to normal state.
-+ *
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_cancel(void);
-+
-+/**
-+ * @brief Signal completion of restoration after a live update
-+ *
-+ * Notifies the LUO subsystem that all necessary restoration actions
-+ * have been completed in the new kernel.
-+ *
-+ * @return 0 on success, negative error code on failure
-+ */
-+int luo_finish(void);
-+
-+/**
-+ * @brief Check if the LUO subsystem is available
-+ *
-+ * Tests if the LUO device file exists and can be opened.
-+ *
-+ * @return true if LUO is available, false otherwise
-+ */
-+bool luo_is_available(void);
-+
-+/**
-+ * @brief Convert a liveupdate_state enum value to a string
-+ *
-+ * Returns a string representation of the given LUO state.
-+ *
-+ * @param[in] state The LUO state to convert
-+ * @return A constant string representing the state
-+ */
-+const char *luo_state_to_string(enum liveupdate_state state);
-+
-+#endif /* _LIBLUO_H */
-diff --git a/tools/lib/luo/include/liveupdate.h b/tools/lib/luo/include/liveupdate.h
-new file mode 100644
-index 000000000000..7b12a1073c3c
---- /dev/null
-+++ b/tools/lib/luo/include/liveupdate.h
-@@ -0,0 +1,265 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+
-+/*
-+ * Userspace interface for /dev/liveupdate
-+ * Live Update Orchestrator
-+ *
-+ * Copyright (c) 2025, Google LLC.
-+ * Pasha Tatashin <pasha.tatashin@soleen.com>
-+ */
-+
-+#ifndef _UAPI_LIVEUPDATE_H
-+#define _UAPI_LIVEUPDATE_H
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+/**
-+ * enum liveupdate_state - Defines the possible states of the live update
-+ * orchestrator.
-+ * @LIVEUPDATE_STATE_UNDEFINED:      State has not yet been initialized.
-+ * @LIVEUPDATE_STATE_NORMAL:         Default state, no live update in progress.
-+ * @LIVEUPDATE_STATE_PREPARED:       Live update is prepared for reboot; the
-+ *                                   LIVEUPDATE_PREPARE callbacks have completed
-+ *                                   successfully.
-+ *                                   Devices might operate in a limited state
-+ *                                   for example the participating devices might
-+ *                                   not be allowed to unbind, and also the
-+ *                                   setting up of new DMA mappings might be
-+ *                                   disabled in this state.
-+ * @LIVEUPDATE_STATE_FROZEN:         The final reboot event
-+ *                                   (%LIVEUPDATE_FREEZE) has been sent, and the
-+ *                                   system is performing its final state saving
-+ *                                   within the "blackout window". User
-+ *                                   workloads must be suspended. The actual
-+ *                                   reboot (kexec) into the next kernel is
-+ *                                   imminent.
-+ * @LIVEUPDATE_STATE_UPDATED:        The system has rebooted into the next
-+ *                                   kernel via live update the system is now
-+ *                                   running the next kernel, awaiting the
-+ *                                   finish event.
-+ *
-+ * These states track the progress and outcome of a live update operation.
-+ */
-+enum liveupdate_state  {
-+	LIVEUPDATE_STATE_UNDEFINED = 0,
-+	LIVEUPDATE_STATE_NORMAL = 1,
-+	LIVEUPDATE_STATE_PREPARED = 2,
-+	LIVEUPDATE_STATE_FROZEN = 3,
-+	LIVEUPDATE_STATE_UPDATED = 4,
-+};
-+
-+/**
-+ * struct liveupdate_fd - Holds parameters for preserving and restoring file
-+ * descriptors across live update.
-+ * @fd:    Input for %LIVEUPDATE_IOCTL_FD_PRESERVE: The user-space file
-+ *         descriptor to be preserved.
-+ *         Output for %LIVEUPDATE_IOCTL_FD_RESTORE: The new file descriptor
-+ *         representing the fully restored kernel resource.
-+ * @flags: Unused, reserved for future expansion, must be set to 0.
-+ * @token: Input for %LIVEUPDATE_IOCTL_FD_PRESERVE: An opaque, unique token
-+ *         preserved for preserved resource.
-+ *         Input for %LIVEUPDATE_IOCTL_FD_RESTORE: The token previously
-+ *         provided to the preserve ioctl for the resource to be restored.
-+ *
-+ * This structure is used as the argument for the %LIVEUPDATE_IOCTL_FD_PRESERVE
-+ * and %LIVEUPDATE_IOCTL_FD_RESTORE ioctls. These ioctls allow specific types
-+ * of file descriptors (for example memfd, kvm, iommufd, and VFIO) to have their
-+ * underlying kernel state preserved across a live update cycle.
-+ *
-+ * To preserve an FD, user space passes this struct to
-+ * %LIVEUPDATE_IOCTL_FD_PRESERVE with the @fd field set. On success, the
-+ * kernel uses the @token field to uniquly associate the preserved FD.
-+ *
-+ * After the live update transition, user space passes the struct populated with
-+ * the *same* @token to %LIVEUPDATE_IOCTL_FD_RESTORE. The kernel uses the @token
-+ * to find the preserved state and, on success, populates the @fd field with a
-+ * new file descriptor referring to the restored resource.
-+ */
-+struct liveupdate_fd {
-+	int		fd;
-+	__u32		flags;
-+	__aligned_u64	token;
-+};
-+
-+/* The ioctl type, documented in ioctl-number.rst */
-+#define LIVEUPDATE_IOCTL_TYPE		0xBA
-+
-+/**
-+ * LIVEUPDATE_IOCTL_FD_PRESERVE - Validate and initiate preservation for a file
-+ * descriptor.
-+ *
-+ * Argument: Pointer to &struct liveupdate_fd.
-+ *
-+ * User sets the @fd field identifying the file descriptor to preserve
-+ * (e.g., memfd, kvm, iommufd, VFIO). The kernel validates if this FD type
-+ * and its dependencies are supported for preservation. If validation passes,
-+ * the kernel marks the FD internally and *initiates the process* of preparing
-+ * its state for saving. The actual snapshotting of the state typically occurs
-+ * during the subsequent %LIVEUPDATE_IOCTL_PREPARE execution phase, though
-+ * some finalization might occur during freeze.
-+ * On successful validation and initiation, the kernel uses the @token
-+ * field with an opaque identifier representing the resource being preserved.
-+ * This token confirms the FD is targeted for preservation and is required for
-+ * the subsequent %LIVEUPDATE_IOCTL_FD_RESTORE call after the live update.
-+ *
-+ * Return: 0 on success (validation passed, preservation initiated), negative
-+ * error code on failure (e.g., unsupported FD type, dependency issue,
-+ * validation failed).
-+ */
-+#define LIVEUPDATE_IOCTL_FD_PRESERVE					\
-+	_IOW(LIVEUPDATE_IOCTL_TYPE, 0x00, struct liveupdate_fd)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_FD_UNPRESERVE - Remove a file descriptor from the
-+ * preservation list.
-+ *
-+ * Argument: Pointer to __u64 token.
-+ *
-+ * Allows user space to explicitly remove a file descriptor from the set of
-+ * items marked as potentially preservable. User space provides a pointer to the
-+ * __u64 @token that was previously returned by a successful
-+ * %LIVEUPDATE_IOCTL_FD_PRESERVE call (potentially from a prior, possibly
-+ * cancelled, live update attempt). The kernel reads the token value from the
-+ * provided user-space address.
-+ *
-+ * On success, the kernel removes the corresponding entry (identified by the
-+ * token value read from the user pointer) from its internal preservation list.
-+ * The provided @token (representing the now-removed entry) becomes invalid
-+ * after this call.
-+ *
-+ * Return: 0 on success, negative error code on failure (e.g., -EBUSY or -EINVAL
-+ * if not in %LIVEUPDATE_STATE_NORMAL, bad address provided, invalid token value
-+ * read, token not found).
-+ */
-+#define LIVEUPDATE_IOCTL_FD_UNPRESERVE					\
-+	_IOW(LIVEUPDATE_IOCTL_TYPE, 0x01, __u64)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_FD_RESTORE - Restore a previously preserved file descriptor.
-+ *
-+ * Argument: Pointer to &struct liveupdate_fd.
-+ *
-+ * User sets the @token field to the value obtained from a successful
-+ * %LIVEUPDATE_IOCTL_FD_PRESERVE call before the live update. On success,
-+ * the kernel restores the state (saved during the PREPARE/FREEZE phases)
-+ * associated with the token and populates the @fd field with a new file
-+ * descriptor referencing the restored resource in the current (new) kernel.
-+ * This operation must be performed *before* signaling completion via
-+ * %LIVEUPDATE_IOCTL_FINISH.
-+ *
-+ * Return: 0 on success, negative error code on failure (e.g., invalid token).
-+ */
-+#define LIVEUPDATE_IOCTL_FD_RESTORE					\
-+	_IOWR(LIVEUPDATE_IOCTL_TYPE, 0x02, struct liveupdate_fd)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_GET_STATE - Query the current state of the live update
-+ * orchestrator.
-+ *
-+ * Argument: Pointer to &enum liveupdate_state.
-+ *
-+ * The kernel fills the enum value pointed to by the argument with the current
-+ * state of the live update subsystem. Possible states are:
-+ *
-+ * - %LIVEUPDATE_STATE_NORMAL:   Default state; no live update operation is
-+ *                               currently in progress.
-+ * - %LIVEUPDATE_STATE_PREPARED: The preparation phase (triggered by
-+ *                               %LIVEUPDATE_IOCTL_PREPARE) has completed
-+ *                               successfully. The system is ready for the
-+ *                               reboot transition. Note that some
-+ *                               device operations (e.g., unbinding, new DMA
-+ *                               mappings) might be restricted in this state.
-+ * - %LIVEUPDATE_STATE_UPDATED:  The system has successfully rebooted into the
-+ *                               new kernel via live update. It is now running
-+ *                               the new kernel code and is awaiting the
-+ *                               completion signal from user space via
-+ *                               %LIVEUPDATE_IOCTL_FINISH after
-+ *                               restoration tasks are done.
-+ *
-+ * See the definition of &enum liveupdate_state for more details on each state.
-+ *
-+ * Return: 0 on success, negative error code on failure.
-+ */
-+#define LIVEUPDATE_IOCTL_GET_STATE					\
-+	_IOR(LIVEUPDATE_IOCTL_TYPE, 0x03, enum liveupdate_state)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_PREPARE - Initiate preparation phase and trigger state
-+ * saving.
-+ *
-+ * Argument: None.
-+ *
-+ * Initiates the live update preparation phase. This action corresponds to
-+ * the internal %LIVEUPDATE_PREPARE. This typically triggers the saving process
-+ * for items marked via the PRESERVE ioctls. This typically occurs *before*
-+ * the "blackout window", while user applications (e.g., VMs) may still be
-+ * running. Kernel subsystems receiving the %LIVEUPDATE_PREPARE event should
-+ * serialize necessary state. This command does not transfer data.
-+ *
-+ * Return: 0 on success, negative error code on failure. Transitions state
-+ * towards %LIVEUPDATE_STATE_PREPARED on success.
-+ */
-+#define LIVEUPDATE_IOCTL_PREPARE					\
-+	_IO(LIVEUPDATE_IOCTL_TYPE, 0x04)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_CANCEL - Cancel the live update preparation phase.
-+ *
-+ * Argument: None.
-+ *
-+ * Notifies the live update subsystem to abort the preparation sequence
-+ * potentially initiated by %LIVEUPDATE_IOCTL_PREPARE. This action
-+ * typically corresponds to the internal %LIVEUPDATE_CANCEL kernel event,
-+ * which might also be triggered automatically if the PREPARE stage fails
-+ * internally.
-+ *
-+ * When triggered, subsystems receiving the %LIVEUPDATE_CANCEL event should
-+ * revert any state changes or actions taken specifically for the aborted
-+ * prepare phase (e.g., discard partially serialized state). The kernel
-+ * releases resources allocated specifically for this *aborted preparation
-+ * attempt*.
-+ *
-+ * This operation cancels the current *attempt* to prepare for a live update
-+ * but does **not** remove previously validated items from the internal list
-+ * of potentially preservable resources. Consequently, preservation tokens
-+ * previously generated by successful %LIVEUPDATE_IOCTL_FD_PRESERVE or calls
-+ * generally **remain valid** as identifiers for those potentially preservable
-+ * resources. However, since the system state returns towards
-+ * %LIVEUPDATE_STATE_NORMAL, user space must initiate a new live update sequence
-+ * (starting with %LIVEUPDATE_IOCTL_PREPARE) to proceed with an update
-+ * using these (or other) tokens.
-+ *
-+ * This command does not transfer data. Kernel callbacks for the
-+ * %LIVEUPDATE_CANCEL event must not fail.
-+ *
-+ * Return: 0 on success, negative error code on failure. Transitions state back
-+ * towards %LIVEUPDATE_STATE_NORMAL on success.
-+ */
-+#define LIVEUPDATE_IOCTL_CANCEL						\
-+	_IO(LIVEUPDATE_IOCTL_TYPE, 0x06)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_EVENT_FINISH - Signal restoration completion and trigger
-+ * cleanup.
-+ *
-+ * Argument: None.
-+ *
-+ * Signals that user space has completed all necessary restoration actions in
-+ * the new kernel (after a live update reboot). This action corresponds to the
-+ * internal %LIVEUPDATE_FINISH kernel event. Calling this ioctl triggers the
-+ * cleanup phase: any resources that were successfully preserved but were *not*
-+ * subsequently restored (reclaimed) via the RESTORE ioctls will have their
-+ * preserved state discarded and associated kernel resources released. Involved
-+ * devices may be reset. All desired restorations *must* be completed *before*
-+ * this. Kernel callbacks for the %LIVEUPDATE_FINISH event must not fail.
-+ * Successfully completing this phase transitions the system state from
-+ * %LIVEUPDATE_STATE_UPDATED back to %LIVEUPDATE_STATE_NORMAL. This command does
-+ * not transfer data.
-+ *
-+ * Return: 0 on success, negative error code on failure.
-+ */
-+#define LIVEUPDATE_IOCTL_FINISH						\
-+	_IO(LIVEUPDATE_IOCTL_TYPE, 0x07)
-+
-+#endif /* _UAPI_LIVEUPDATE_H */
-diff --git a/tools/lib/luo/libluo.c b/tools/lib/luo/libluo.c
-new file mode 100644
-index 000000000000..7de4bf01de16
---- /dev/null
-+++ b/tools/lib/luo/libluo.c
-@@ -0,0 +1,203 @@
-+// SPDX-License-Identifier: LGPL-3.0-or-later
-+/*
-+ * Copyright (C) 2025 Amazon.com Inc. or its affiliates.
-+ * Author: Pratyush Yadav <ptyadav@amazon.de>
-+ */
-+#include <libluo.h>
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <sys/ioctl.h>
-+#include <sys/stat.h>
-+#include <errno.h>
-+#include <stdio.h>
-+#include <string.h>
-+
-+/*
-+ * The liveupdate header is not mainline right now, so it is not available on
-+ * the system include path. It is copied from Linux tree and put in include/.
-+ *
-+ * This can be removed when liveupdate hits mainline.
-+ */
-+#include <liveupdate.h>
-+
-+#define LUO_DEVICE_PATH	"/dev/liveupdate"
-+
-+/* File descriptor for the LUO device */
-+static int luo_fd = -1;
-+
-+#define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
-+
-+int luo_init(void)
-+{
-+	if (luo_fd >= 0)
-+		/* Already initialized */
-+		return 0;
-+
-+	luo_fd = open(LUO_DEVICE_PATH, O_RDWR);
-+	if (luo_fd < 0) {
-+		int err = -errno;
-+
-+		fprintf(stderr, "Failed to open %s: %s\n",
-+			LUO_DEVICE_PATH, strerror(errno));
-+		return err;
-+	}
-+
-+	return 0;
-+}
-+
-+void luo_cleanup(void)
-+{
-+	if (luo_fd >= 0) {
-+		close(luo_fd);
-+		luo_fd = -1;
-+	}
-+}
-+
-+bool luo_is_available(void)
-+{
-+	struct stat st;
-+
-+	/* Use stat() to check if the device file exists and is accessible */
-+	if (stat(LUO_DEVICE_PATH, &st) < 0)
-+		return false;
-+
-+	/* Verify it's a character device file.  */
-+	if (!S_ISCHR(st.st_mode))
-+		return false;
-+
-+	return true;
-+}
-+
-+int luo_get_state(enum liveupdate_state *state)
-+{
-+	int ret;
-+
-+	if (!state)
-+		return -EINVAL;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_GET_STATE, state);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+int luo_fd_preserve(int fd, uint64_t token)
-+{
-+	struct liveupdate_fd fd_data;
-+	int ret;
-+
-+	if (fd < 0)
-+		return -EINVAL;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	fd_data.fd = fd;
-+	fd_data.flags = 0;  /* Must be set to 0 as per API documentation */
-+	fd_data.token = token;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_FD_PRESERVE, &fd_data);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+int luo_fd_unpreserve(uint64_t token)
-+{
-+	int ret;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_FD_UNPRESERVE, &token);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+int luo_fd_restore(uint64_t token, int *fd)
-+{
-+	struct liveupdate_fd fd_data;
-+	int ret;
-+
-+	if (!fd)
-+		return -EINVAL;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	fd_data.fd = -1;    /* Will be filled by the kernel */
-+	fd_data.flags = 0;  /* Must be set to 0 as per API documentation */
-+	fd_data.token = token;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_FD_RESTORE, &fd_data);
-+	if (ret < 0)
-+		return -errno;
-+
-+	*fd = fd_data.fd;
-+	return 0;
-+}
-+
-+int luo_prepare(void)
-+{
-+	int ret;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_PREPARE);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+int luo_cancel(void)
-+{
-+	int ret;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_CANCEL);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+int luo_finish(void)
-+{
-+	int ret;
-+
-+	if (luo_fd < 0)
-+		return -EBADF;
-+
-+	ret = ioctl(luo_fd, LIVEUPDATE_IOCTL_FINISH);
-+	if (ret < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
-+const char *luo_state_to_string(enum liveupdate_state state)
-+{
-+	static const char * const state_strings[] = {
-+		[LIVEUPDATE_STATE_UNDEFINED] = "undefined",
-+		[LIVEUPDATE_STATE_NORMAL] = "normal",
-+		[LIVEUPDATE_STATE_PREPARED] = "prepared",
-+		[LIVEUPDATE_STATE_FROZEN] = "frozen",
-+		[LIVEUPDATE_STATE_UPDATED] = "updated"
-+	};
-+
-+	if (state >= 0 && state < ARRAY_SIZE(state_strings) && state_strings[state])
-+		return state_strings[state];
-+
-+	return "UNKNOWN";
-+}
+diff --git a/man/man2/mremap.2 b/man/man2/mremap.2
+index 2168ca728..c1a9e7397 100644
+--- a/man/man2/mremap.2
++++ b/man/man2/mremap.2
+@@ -25,18 +25,56 @@ moving it at the same time (controlled by the
+ argument and
+ the available virtual address space).
+ .P
++Mappings can simply be moved by specifying equal
++.I old_size
++and
++.I new_size
++and specifying
++.IR new_address ,
++see the description of
++.B MREMAP_FIXED
++below.
++Since Linux 6.17,
++while
+ .I old_address
+-is the old address of the virtual memory block that you
+-want to expand (or shrink).
++must reside within a mapping,
++.I old_size
++may span multiple mappings
++which do not have to be
++adjacent to one another.
++.P
++Equally, if the operation performs a shrink,
++that is if
++.I old_size
++is greater than
++.IR new_size ,
++then
++.I old_size
++may also span multiple mappings
++which do not have to be
++adjacent to one another.
++However in this case,
++.I new_size
++must span only a single mapping.
++.P
++If the operation is neither a simple move
++nor a shrink,
++then
++.I old_size
++must span only a single mapping.
++.P
++.I old_address
++is the old address of the first virtual memory block that you
++want to expand, shrink, and/or move.
+ Note that
+ .I old_address
+ has to be page aligned.
+ .I old_size
+-is the old size of the
+-virtual memory block.
++is the size of the range containing
++virtual memory blocks to be manipulated.
+ .I new_size
+ is the requested size of the
+-virtual memory block after the resize.
++virtual memory blocks after the resize.
+ An optional fifth argument,
+ .IR new_address ,
+ may be provided; see the description of
+@@ -105,13 +143,43 @@ If
+ is specified, then
+ .B MREMAP_MAYMOVE
+ must also be specified.
++.IP
++Since Linux 6.17,
++if
++.I old_size
++is equal to
++.I new_size
++and
++.B MREMAP_FIXED
++is specified, then
++.I old_size
++may span beyond the mapping in which
++.I old_address
++resides.
++In this case,
++gaps between mappings in the original range
++are maintained in the new range.
++The whole operation is performed atomically
++unless an error arises,
++in which case the operation may be partially
++completed,
++that is,
++some mappings may be moved and others not.
++.IP
++
++Moving multiple mappings is not permitted if
++any of those mappings have either
++been registered with
++.BR userfaultfd (2) ,
++or map drivers that
++specify their own custom address mapping logic.
+ .TP
+ .BR MREMAP_DONTUNMAP " (since Linux 5.7)"
+ .\" commit e346b3813067d4b17383f975f197a9aa28a3b077
+ This flag, which must be used in conjunction with
+ .BR MREMAP_MAYMOVE ,
+-remaps a mapping to a new address but does not unmap the mapping at
+-.IR old_address .
++remaps mappings to a new address but does not unmap them
++from their original address.
+ .IP
+ The
+ .B MREMAP_DONTUNMAP
+@@ -149,13 +217,13 @@ mapped.
+ See NOTES for some possible applications of
+ .BR MREMAP_DONTUNMAP .
+ .P
+-If the memory segment specified by
++If the memory segments specified by
+ .I old_address
+ and
+ .I old_size
+-is locked (using
++are locked (using
+ .BR mlock (2)
+-or similar), then this lock is maintained when the segment is
++or similar), then this lock is maintained when the segments are
+ resized and/or relocated.
+ As a consequence, the amount of memory locked by the process may change.
+ .SH RETURN VALUE
+@@ -188,7 +256,10 @@ virtual memory address for this process.
+ You can also get
+ .B EFAULT
+ even if there exist mappings that cover the
+-whole address space requested, but those mappings are of different types.
++whole address space requested, but those mappings are of different types,
++and the
++.BR mremap ()
++operation being performed does not support this.
+ .TP
+ .B EINVAL
+ An invalid argument was given.
 -- 
-2.50.0.727.gbf7dc18ff4-goog
+2.50.1
 
