@@ -1,64 +1,64 @@
-Received: from mail-yw1-f180.google.com (mail-yw1-f180.google.com [209.85.128.180])
+Received: from mail-yw1-f177.google.com (mail-yw1-f177.google.com [209.85.128.177])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 848E22FF489
-	for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 14:47:49 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5318530207F
+	for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 14:47:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.177
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1753282075; cv=none; b=G4lihHuXkJmmiWeKD47KCvcVgkE7E5czgETfIxQtCeY/Bs7i8VZhaOAJBlvpS2EIaIVf4ExP9bndq6svSZUx5SGiWNfzWJ5iJB6S+NUO2WXQgzquVU4+ywkcGS+lKPlpp0cOUgOT/hMdwKwvL3We0pw8Zcu5LIC1bJS4a8jdQ14=
+	t=1753282080; cv=none; b=FTlLztQc1ihX8IvRNRz36z8dvUczjBOZkk1gzVu6CpnLs3W7uKqNF9Msd7/v/4g1Epc4pYvZZdb9HngNj2ngNAWsv9JOAB8UpP6+0kQymQBzLuQTYoW6gcEaFdl9vbcXFDjd4e6CgVuKwISmTsU3pLk6N3+nbH+aSEnSk1dm1z0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1753282075; c=relaxed/simple;
-	bh=XdAIwDQk9O8+e27TqOcTJB/ZHlzR4zDdUnKHElnpGKk=;
+	s=arc-20240116; t=1753282080; c=relaxed/simple;
+	bh=zC6u2biwGcXL2iC3P/2IdgSx0g0kQc0JVTiEcMEVtJ0=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=fUroDKOvNeFxmr8loAQfcqmYnOipq2lnuGXTkl3TwHYCu4FTdgTXtShYDkX68c2PmQOSMrUSZct21rtdW1oi8Cd4/cmSzGj9ClJaXlhse31YhQ8jcPdLuILFacXgXZqc4c6lH6HJb1nGxmDjAdEcOhF6suhgMk6YSmCoHs/GUsw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b=LVSylLjr; arc=none smtp.client-ip=209.85.128.180
+	 MIME-Version; b=olbaxfhsiRIw+l4YmRV0SizbGhOAVSjFx1MDdurloLUzypRuaWQPLG+y3SFKf2TqpYTRi/QXE8RyT5nWdAdU21GI6y0H0+q5SdbnAtU5aCgNTm6meteobGIH6Wg3vRYIL3dPWiTBfEiV8j+/7VFSzncZy9Rdy1pMfNdIr04DvPA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b=GWv9AWc6; arc=none smtp.client-ip=209.85.128.177
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b="LVSylLjr"
-Received: by mail-yw1-f180.google.com with SMTP id 00721157ae682-71840959355so27377b3.1
-        for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 07:47:49 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=soleen-com.20230601.gappssmtp.com header.i=@soleen-com.20230601.gappssmtp.com header.b="GWv9AWc6"
+Received: by mail-yw1-f177.google.com with SMTP id 00721157ae682-719728a1811so45004887b3.3
+        for <linux-api@vger.kernel.org>; Wed, 23 Jul 2025 07:47:55 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen-com.20230601.gappssmtp.com; s=20230601; t=1753282068; x=1753886868; darn=vger.kernel.org;
+        d=soleen-com.20230601.gappssmtp.com; s=20230601; t=1753282074; x=1753886874; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=po25YEPvXRrTuFLL1nDXhv73SfufZ4T7e/xtjD+elU8=;
-        b=LVSylLjr2ZxFjIaHssw6wLCghfI2bDo8oKymdDfL5NC68rbnDiJqjPGgnTACsmXUYv
-         rKpXyjTbKYvhrR8DMxGZwIeMAWpOyxnf8VVp1IJ7rIqPdm0NI+LT7vt2Kekm/WxZw5qB
-         sxtnOwJXoFVrjHVNHv3L6QPM3vRnoRBUgN1VwzZ4B+LccRuz7ex9ABKBCgcAv5Li/Z9P
-         xuMW1NoPiGvqLN4e09NHGhxNpj2TdRPFXB9scJk5ZQQVMyJOBHoVz4jBJ8Ysc3nHOt1y
-         9D2cTHFahp6KzgU8QS0kk52apndPb/ytbEd63P4KvoVcm2cvJTJuqXoDYwA9hhLRErq+
-         OYeQ==
+        bh=JgvqzDIiRiBX+3t66TRkd0Ymp5/wa/ERt/pQr69clFU=;
+        b=GWv9AWc6wLaC4emA0ALPX+CyHF9Lnl2b/UeBHZvMpBb9i3OphFQYQchconaWIW6H8y
+         bDa0amkJDboEBvga1Rg9hGIuq+aQP44YWBnRBKYo0s1o+mHLH0TUgcBi9h5ZVr9ggcwt
+         Nw8bKVv9mof6LT5oXMy4axHpQ+Q1qGlKQ9dFkXAe1FceaW95IzfEYzVF+/p7i6HvHpTg
+         j5ihmIBTN3+2JpZINiUIUdT5AjwlGs4YfFC01qN2YQA6ZDg2jvyl2QKS8e1xQmBX5ImN
+         SvrL5GLnmXmvRX5cgw4jYE0XxolX23Lf/x7TNSWJFfQh/6mAjmNcyz233tXpW8LQPwok
+         3+Vw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1753282068; x=1753886868;
+        d=1e100.net; s=20230601; t=1753282074; x=1753886874;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=po25YEPvXRrTuFLL1nDXhv73SfufZ4T7e/xtjD+elU8=;
-        b=omy8kbfM57uHhL8NyoNItnfr5A2kc51fCKX/EKoqecA8evaYT3VxNtzZGUJKc/KkQJ
-         2k2pywtusCyg6MksDINnCJzXQU2FFUqetmJkVM7eRaW7SNcUJ3WGTPdnU5arzuBLeglT
-         HVjrK7PcQKdrRwkwuQFhniLQTxp0IL+sz0UyB35jkjLjRX/E30wo6KKAa04fbC1qZ3MZ
-         7YOaEP6G2iOohXGOSlh33ZbQMdbBplQLJ9z+W7Og1Xu65GLJoC/gfQggUvmqRkfYHw4i
-         ybIKb6YuS1QGOAu2uTwWdc/rjsO3X8tTL+IodTDGv64i8C82TJBE/qRE1PRCXfFZVJnF
-         4ZOA==
-X-Forwarded-Encrypted: i=1; AJvYcCXxLLkEUWQn2R4W2dxOh+PYVFDawus+pICWlnR2tUQKQtruXi21XTEhcO/9umvZ9j7ufNWERk0TtLo=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yx4xUoDwoop96ItP1O57KsFdf1J08jb0ZhmyXCg3qtGoCy2oB67
-	pgPrpPY0oFphvEmok7lDdeXNFB92C8o11amQ0pjXyIHTY8fROCB1VbQVV2dKqhJ7+Z4=
-X-Gm-Gg: ASbGnctOW02jIw1WjOiyFyxqtGvvjnY9GqYZDx1zh+hX7L2vNL1zp9TpqgfIwReRldo
-	1k18wPF+gPJnAMps/udESnkTrdRGgQneUAeXn40q52Tyk5AIpPJm8ZZISoqnj1u/teImM9qUG8G
-	WlxqW+SDcsPp6cj1AHTGILGH1Q4+U292QmKewatTS/Qy6cm33qNMR1rcNkU2lSXkhIw2OTA/TbJ
-	KiISxhKpUF3eGQL/WCOVdzhFEq+KzB4egCky4ulSaUr7peUSt3IjdEIWRHMFIFOB8MeO7HRDg1a
-	AQuu8GARO40O1z6sNYtoCzIZycrg3nvCbCNUaeShbI/gjjT78oRxG3NMqhB6vZCSNbcC9I1OBmb
-	/DRXYd+Yr186MPZM9GmE9HUgy1T84WRSw+LJSYjW51edh8WH6sbTopED6WKEl0MuGSwgF8V4J96
-	Vimys02XHXAfD3Mg==
-X-Google-Smtp-Source: AGHT+IHUEvrhwYQb+PkqEHsQ9NVaBJx/HXsqV9Ci/9SKu6SQ4+1qmUQGxK2puIL8Ml0NTVfy05s2Ig==
-X-Received: by 2002:a05:690c:620c:b0:713:fe84:6f96 with SMTP id 00721157ae682-719a0b8f1fbmr86322747b3.14.1753282067864;
-        Wed, 23 Jul 2025 07:47:47 -0700 (PDT)
+        bh=JgvqzDIiRiBX+3t66TRkd0Ymp5/wa/ERt/pQr69clFU=;
+        b=azOPnCDZwLfsQH88uhUln4VcLPBorPLSJeNMlQ36tXE9QSClwGMnv2Yc9DLaFow65h
+         RUxymSTJQjKehbYanV5yQps4TkVr9NT4lRFiNREXiEPukCJLQrDM47WF+HCBvdmz/eN4
+         0eKNox5GnNzchjVtbIjHI4TnWcRA0DKTmHhUu0CJKp1PRkuh4kkgoMJfkaVzugXU2GMG
+         UDHIYdeK2eb0N83eNWQCwAxLB7Pwa+eAJZFk737zSxH5i5+BMP3X+fszr01Tpjiil7mo
+         uSX+LvEyGXs2a0iHusvKWZ6WWwDoWkICqWPPS/ZPIUrLviai/JcaiXwTxCOVgo/INw+w
+         n90g==
+X-Forwarded-Encrypted: i=1; AJvYcCU3N4iew6in1C2JW4Lqns3SsYPYv7YwDaxWBkFgRvqsf1mHz1FKleJWStw5EQUrc00kCT/j/WOX5ck=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxNf4GiCCdQvz8rwVhuHlCwfYWGqTx5/X11hDJM5cL/BE7KuNb7
+	QU+qvUmu1FGivuewYEiKur+wIpRTv3500ubDGG03NzN2tB7MNzcmx9q4Mnedknqd5YU=
+X-Gm-Gg: ASbGncuyYIhlljm5nkxX6gDKpagt1Eyz+iBQvSYrfjfZDzmbsPo/iXD1LFDZlsWVYlP
+	qx41EkzuDVBs5IIwiRbDzUF3/hnG2ex61yPGwhMBvYPEr//WleZIDkcEM4CjVFesf7YEWEnNPN1
+	cWn5uEZecv31RvZQAD39OHH/Dtpwi8ou4fr6daQshrErjEsFcd3i82j+YtjPqsFI9E3liuuzxiX
+	Csr0GDuOsq4oQXbHcMBzfL3ZpQwycNjHdhtSxd6sX3CsFuZtgD2aEjonB+ll6qzzsIk/smt8IOq
+	s3lVUHdSdts2QKUHWevT00BEEBiamsjQLhhYlK0caY/JApFZAep+RAA6vtJAcOz4z/cjV5HSigj
+	163XRzHhqorsK5qRugGIAUglLXVvbkE/lU0akoWw9w880cUJ9U6YcZBbO7Co1PYOoU8/X8WtZsx
+	Q6SC5IWvNiZNfZOQ==
+X-Google-Smtp-Source: AGHT+IGGfx7z148fU3GfejgZgpbPyTfIvTW82LKz4E+3FHtFbrw8wPq+9rOHj4lG5MqVILJufgSXww==
+X-Received: by 2002:a05:690c:358a:b0:70c:a57c:94ba with SMTP id 00721157ae682-719b4166f53mr47129757b3.17.1753282073888;
+        Wed, 23 Jul 2025 07:47:53 -0700 (PDT)
 Received: from soleen.c.googlers.com.com (235.247.85.34.bc.googleusercontent.com. [34.85.247.235])
-        by smtp.gmail.com with ESMTPSA id 00721157ae682-719532c7e4fsm30482117b3.72.2025.07.23.07.47.45
+        by smtp.gmail.com with ESMTPSA id 00721157ae682-719532c7e4fsm30482117b3.72.2025.07.23.07.47.52
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 23 Jul 2025 07:47:46 -0700 (PDT)
+        Wed, 23 Jul 2025 07:47:53 -0700 (PDT)
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
 To: pratyush@kernel.org,
 	jasonmiu@google.com,
@@ -132,9 +132,9 @@ To: pratyush@kernel.org,
 	parav@nvidia.com,
 	leonro@nvidia.com,
 	witu@nvidia.com
-Subject: [PATCH v2 26/32] mm: shmem: allow freezing inode mapping
-Date: Wed, 23 Jul 2025 14:46:39 +0000
-Message-ID: <20250723144649.1696299-27-pasha.tatashin@soleen.com>
+Subject: [PATCH v2 29/32] docs: add documentation for memfd preservation via LUO
+Date: Wed, 23 Jul 2025 14:46:42 +0000
+Message-ID: <20250723144649.1696299-30-pasha.tatashin@soleen.com>
 X-Mailer: git-send-email 2.50.0.727.gbf7dc18ff4-goog
 In-Reply-To: <20250723144649.1696299-1-pasha.tatashin@soleen.com>
 References: <20250723144649.1696299-1-pasha.tatashin@soleen.com>
@@ -148,104 +148,207 @@ Content-Transfer-Encoding: 8bit
 
 From: Pratyush Yadav <ptyadav@amazon.de>
 
-To prepare a shmem inode for live update via the Live Update
-Orchestrator (LUO), its index -> folio mappings must be serialized. Once
-the mappings are serialized, they cannot change since it would cause the
-serialized data to become inconsistent. This can be done by pinning the
-folios to avoid migration, and by making sure no folios can be added to
-or removed from the inode.
-
-While mechanisms to pin folios already exist, the only way to stop
-folios being added or removed are the grow and shrink file seals. But
-file seals come with their own semantics, one of which is that they
-can't be removed. This doesn't work with liveupdate since it can be
-cancelled or error out, which would need the seals to be removed and the
-file's normal functionality to be restored.
-
-Introduce SHMEM_F_MAPPING_FROZEN to indicate this instead. It is
-internal to shmem and is not directly exposed to userspace. It functions
-similar to F_SEAL_GROW | F_SEAL_SHRINK, but additionally disallows hole
-punching, and can be removed.
+Add the documentation under the "Preserving file descriptors" section of
+LUO's documentation. The doc describes the properties preserved,
+behaviour of the file under different LUO states, serialization format,
+and current limitations.
 
 Signed-off-by: Pratyush Yadav <ptyadav@amazon.de>
-Signed-off-by: Pasha Tatashin <pahsa.tatashin@soleen.com>
+Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 ---
- include/linux/shmem_fs.h | 17 +++++++++++++++++
- mm/shmem.c               | 12 +++++++++++-
- 2 files changed, 28 insertions(+), 1 deletion(-)
+ Documentation/core-api/liveupdate.rst   |   7 ++
+ Documentation/mm/index.rst              |   1 +
+ Documentation/mm/memfd_preservation.rst | 138 ++++++++++++++++++++++++
+ MAINTAINERS                             |   1 +
+ 4 files changed, 147 insertions(+)
+ create mode 100644 Documentation/mm/memfd_preservation.rst
 
-diff --git a/include/linux/shmem_fs.h b/include/linux/shmem_fs.h
-index 578a5f3d1935..1dd2aad0986b 100644
---- a/include/linux/shmem_fs.h
-+++ b/include/linux/shmem_fs.h
-@@ -22,6 +22,14 @@
- #define SHMEM_F_NORESERVE	BIT(0)
- /* Disallow swapping. */
- #define SHMEM_F_LOCKED		BIT(1)
-+/*
-+ * Disallow growing, shrinking, or hole punching in the inode. Combined with
-+ * folio pinning, makes sure the inode's mapping stays fixed.
-+ *
-+ * In some ways similar to F_SEAL_GROW | F_SEAL_SHRINK, but can be removed and
-+ * isn't directly visible to userspace.
-+ */
-+#define SHMEM_F_MAPPING_FROZEN	BIT(2)
+diff --git a/Documentation/core-api/liveupdate.rst b/Documentation/core-api/liveupdate.rst
+index 41c4b76cd3ec..232d5f623992 100644
+--- a/Documentation/core-api/liveupdate.rst
++++ b/Documentation/core-api/liveupdate.rst
+@@ -18,6 +18,13 @@ LUO Preserving File Descriptors
+ .. kernel-doc:: kernel/liveupdate/luo_files.c
+    :doc: LUO file descriptors
  
- struct shmem_inode_info {
- 	spinlock_t		lock;
-@@ -183,6 +191,15 @@ static inline bool shmem_file(struct file *file)
- 	return shmem_mapping(file->f_mapping);
- }
- 
-+/* Must be called with inode lock taken exclusive. */
-+static inline void shmem_i_mapping_freeze(struct inode *inode, bool freeze)
-+{
-+	if (freeze)
-+		SHMEM_I(inode)->flags |= SHMEM_F_MAPPING_FROZEN;
-+	else
-+		SHMEM_I(inode)->flags &= ~SHMEM_F_MAPPING_FROZEN;
-+}
++The following types of file descriptors can be preserved
 +
- /*
-  * If fallocate(FALLOC_FL_KEEP_SIZE) has been used, there may be pages
-  * beyond i_size's notion of EOF, which fallocate has committed to reserving:
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 6eded368d17a..d1e74f59cdba 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -1297,7 +1297,8 @@ static int shmem_setattr(struct mnt_idmap *idmap,
- 		loff_t newsize = attr->ia_size;
- 
- 		/* protected by i_rwsem */
--		if ((newsize < oldsize && (info->seals & F_SEAL_SHRINK)) ||
-+		if ((info->flags & SHMEM_F_MAPPING_FROZEN) ||
-+		    (newsize < oldsize && (info->seals & F_SEAL_SHRINK)) ||
- 		    (newsize > oldsize && (info->seals & F_SEAL_GROW)))
- 			return -EPERM;
- 
-@@ -3291,6 +3292,10 @@ shmem_write_begin(struct file *file, struct address_space *mapping,
- 			return -EPERM;
- 	}
- 
-+	if (unlikely((info->flags & SHMEM_F_MAPPING_FROZEN) &&
-+		     pos + len > inode->i_size))
-+		return -EPERM;
++.. toctree::
++   :maxdepth: 1
 +
- 	ret = shmem_get_folio(inode, index, pos + len, &folio, SGP_WRITE);
- 	if (ret)
- 		return ret;
-@@ -3664,6 +3669,11 @@ static long shmem_fallocate(struct file *file, int mode, loff_t offset,
- 
- 	inode_lock(inode);
- 
-+	if (info->flags & SHMEM_F_MAPPING_FROZEN) {
-+		error = -EPERM;
-+		goto out;
-+	}
++   ../mm/memfd_preservation
 +
- 	if (mode & FALLOC_FL_PUNCH_HOLE) {
- 		struct address_space *mapping = file->f_mapping;
- 		loff_t unmap_start = round_up(offset, PAGE_SIZE);
+ Public API
+ ==========
+ .. kernel-doc:: include/linux/liveupdate.h
+diff --git a/Documentation/mm/index.rst b/Documentation/mm/index.rst
+index d3ada3e45e10..97267567ef80 100644
+--- a/Documentation/mm/index.rst
++++ b/Documentation/mm/index.rst
+@@ -47,6 +47,7 @@ documentation, or deleted if it has served its purpose.
+    hugetlbfs_reserv
+    ksm
+    memory-model
++   memfd_preservation
+    mmu_notifier
+    multigen_lru
+    numa
+diff --git a/Documentation/mm/memfd_preservation.rst b/Documentation/mm/memfd_preservation.rst
+new file mode 100644
+index 000000000000..416cd1dafc97
+--- /dev/null
++++ b/Documentation/mm/memfd_preservation.rst
+@@ -0,0 +1,138 @@
++.. SPDX-License-Identifier: GPL-2.0-or-later
++
++==========================
++Memfd Preservation via LUO
++==========================
++
++Overview
++========
++
++Memory file descriptors (memfd) can be preserved over a kexec using the Live
++Update Orchestrator (LUO) file preservation. This allows userspace to transfer
++its memory contents to the next kernel after a kexec.
++
++The preservation is not intended to be transparent. Only select properties of
++the file are preserved. All others are reset to default. The preserved
++properties are described below.
++
++.. note::
++   The LUO API is not stabilized yet, so the preserved properties of a memfd are
++   also not stable and are subject to backwards incompatible changes.
++
++.. note::
++   Currently a memfd backed by Hugetlb is not supported. Memfds created
++   with ``MFD_HUGETLB`` will be rejected.
++
++Preserved Properties
++====================
++
++The following properties of the memfd are preserved across kexec:
++
++File Contents
++  All data stored in the file is preserved.
++
++File Size
++  The size of the file is preserved. Holes in the file are filled by allocating
++  pages for them during preservation.
++
++File Position
++  The current file position is preserved, allowing applications to continue
++  reading/writing from their last position.
++
++File Status Flags
++  memfds are always opened with ``O_RDWR`` and ``O_LARGEFILE``. This property is
++  maintained.
++
++Non-Preserved Properties
++========================
++
++All properties which are not preserved must be assumed to be reset to default.
++This section describes some of those properties which may be more of note.
++
++``FD_CLOEXEC`` flag
++  A memfd can be created with the ``MFD_CLOEXEC`` flag that sets the
++  ``FD_CLOEXEC`` on the file. This flag is not preserved and must be set again
++  after restore via ``fcntl()``.
++
++Seals
++  File seals are not preserved. The file is unsealed on restore and if needed,
++  must be sealed again via ``fcntl()``.
++
++Behavior with LUO states
++========================
++
++This section described the behavior of the memfd in the different LUO states.
++
++Normal Phase
++  During the normal phase, the memfd can be marked for preservation using the
++  ``LIVEUPDATE_IOCTL_FD_PRESERVE`` ioctl. The memfd acts as a regular memfd
++  during this phase with no additional restrictions.
++
++Prepared Phase
++  After LUO enters ``LIVEUPDATE_STATE_PREPARED``, the memfd is serialized and
++  prepared for the next kernel. During this phase, the below things happen:
++
++  - All the folios are pinned. If some folios reside in ``ZONE_MIGRATE``, they
++    are migrated out. This ensures none of the preserved folios land in KHO
++    scratch area.
++  - Pages in swap are swapped in. Currently, there is no way to pass pages in
++    swap over KHO, so all swapped out pages are swapped back in and pinned.
++  - The memfd goes into "frozen mapping" mode. The file can no longer grow or
++    shrink, or punch holes. This ensures the serialized mappings stay in sync.
++    The file can still be read from or written to or mmap-ed.
++
++Freeze Phase
++  Updates the current file position in the serialized data to capture any
++  changes that occurred between prepare and freeze phases. After this, the FD is
++  not allowed to be accessed.
++
++Restoration Phase
++  After being restored, the memfd is functional as normal with the properties
++  listed above restored.
++
++Cancellation
++  If the liveupdate is canceled after going into prepared phase, the memfd
++  functions like in normal phase.
++
++Serialization format
++====================
++
++The state is serialized in an FDT with the following structure::
++
++  /dts-v1/;
++
++  / {
++      compatible = "memfd-v1";
++      pos = <current_file_position>;
++      size = <file_size_in_bytes>;
++      folios = <array_of_preserved_folio_descriptors>;
++  };
++
++Each folio descriptor contains:
++
++- PFN + flags (8 bytes)
++
++  - Physical frame number (PFN) of the preserved folio (bits 63:12).
++  - Folio flags (bits 11:0):
++
++    - ``PRESERVED_FLAG_DIRTY`` (bit 0)
++    - ``PRESERVED_FLAG_UPTODATE`` (bit 1)
++
++- Folio index within the file (8 bytes).
++
++Limitations
++===========
++
++The current implementation has the following limitations:
++
++Size
++  Currently the size of the file is limited by the size of the FDT. The FDT can
++  be at of most ``MAX_PAGE_ORDER`` order. By default this is 4 MiB with 4K
++  pages. Each page in the file is tracked using 16 bytes. This limits the
++  maximum size of the file to 1 GiB.
++
++See Also
++========
++
++- :doc:`Live Update Orchestrator </admin-guide/liveupdate>`
++- :doc:`/core-api/kho/concepts`
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 361032f23876..b4fde9f62e9b 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14020,6 +14020,7 @@ S:	Maintained
+ F:	Documentation/ABI/testing/sysfs-kernel-liveupdate
+ F:	Documentation/admin-guide/liveupdate.rst
+ F:	Documentation/core-api/liveupdate.rst
++F:	Documentation/mm/memfd_preservation.rst
+ F:	Documentation/userspace-api/liveupdate.rst
+ F:	include/linux/liveupdate.h
+ F:	include/uapi/linux/liveupdate.h
 -- 
 2.50.0.727.gbf7dc18ff4-goog
 
