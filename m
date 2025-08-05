@@ -1,223 +1,335 @@
-Received: from mout-p-201.mailbox.org (mout-p-201.mailbox.org [80.241.56.171])
+Received: from mout-p-202.mailbox.org (mout-p-202.mailbox.org [80.241.56.172])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8AE3175A5;
-	Tue,  5 Aug 2025 05:54:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.171
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6E5EF282EE;
+	Tue,  5 Aug 2025 07:29:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=80.241.56.172
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754373243; cv=none; b=ZBp17RtvMN/SPj4VqTRlHUJrzCBkQVSGk+8KHj1xzTk2Tuo12vypppyeB2IxUORm2oXeYchWy1Ygr1yh8KCyalqU1NKWrKsyl0daUedYDx4vxJsDPVGC1fz0UOEqrHLbZF77zKIH4YCW8goPzpTwbGy1pD0bl6z7GSmBmcEd4mQ=
+	t=1754378969; cv=none; b=HvBcB+0sOIdQEHlABYjWU9sChLwmSc+/rmOvtr9upJyzQisBF9EVlzFKtUbgtAyWdONcS4W6h8y0TOebKHEjcChggBJYIMASnEDLEBCNdMgP48gB2mM3yNM7BseqZ5DJdPa3FF8L5PK5sC+3hfLE4el1fkrAU87BMM+kCFenCY4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754373243; c=relaxed/simple;
-	bh=b3qLvidQt2IQmyqEcAsLJbmTR+wVyp6SbcerHb1qMcs=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=hy2vXOhRTo/c4zigZyhpweHyn1q2wDksmrE76+qAsU1UMAWCu1ch6Jw47tSkM1FynqTTNe4u0jny3VAb64+hmCfT9w5DYfkU9IASUpF2EodOtzmjQoshbe+CBtVoiUOhcKW84AOeykvGmk3oDQtdKL9zn9TwJ/P1zIq1lUtpNPU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cyphar.com; spf=pass smtp.mailfrom=cyphar.com; dkim=pass (2048-bit key) header.d=cyphar.com header.i=@cyphar.com header.b=bBjDfKYW; arc=none smtp.client-ip=80.241.56.171
+	s=arc-20240116; t=1754378969; c=relaxed/simple;
+	bh=YiSBx51qUAJhEI1Vc8mOuai6IqOQu/TakE/doWnHuFM=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Offn8/zGx+KSfZxwKnflLLpqmUTFxcmE5inoPHH6DqJdxFNJJJik8hZVCc6ot99KsEHkv0WPQJ6teDooTqIk8jLeHya2PWAvKZpx1XWvkay4qC9VJCUIi9VCsz/8S30p2zx7fFBo+A3g8xtCPZ18mH7W7DqUvm0OkeGwjNsNX24=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cyphar.com; spf=pass smtp.mailfrom=cyphar.com; dkim=pass (2048-bit key) header.d=cyphar.com header.i=@cyphar.com header.b=xLs7dR6V; arc=none smtp.client-ip=80.241.56.172
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cyphar.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cyphar.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=cyphar.com header.i=@cyphar.com header.b="bBjDfKYW"
-Received: from smtp2.mailbox.org (smtp2.mailbox.org [IPv6:2001:67c:2050:b231:465::2])
+	dkim=pass (2048-bit key) header.d=cyphar.com header.i=@cyphar.com header.b="xLs7dR6V"
+Received: from smtp2.mailbox.org (smtp2.mailbox.org [10.196.197.2])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by mout-p-201.mailbox.org (Postfix) with ESMTPS id 4bx2T60Psrz9t8l;
-	Tue,  5 Aug 2025 07:45:30 +0200 (CEST)
+	by mout-p-202.mailbox.org (Postfix) with ESMTPS id 4bx4mz1YqVz9sqy;
+	Tue,  5 Aug 2025 09:29:23 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=cyphar.com; s=MBO0001;
-	t=1754372730;
+	t=1754378963;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=bPF4WdQCtv984o72KwXLxMISxhU/aJPqgLwzYtsm72M=;
-	b=bBjDfKYWT21NFwvhbyK5aFKtO6yFlm8WKPH9dWAj5oD5m1o+cPDeaf3RswmG9jD83irGDi
-	OpSvCvXeZuBix3/tg2FMC3AL8+gyQwrHiZibGBamiSy0+gusfknYSXjoUG11XufHr79v3u
-	MlViEwFLGuQ3lGIcljKeXIn8m4w6+Fsj6atzQWPSheC0cBLTAigLG/UyXtsbl9AnMLXxvE
-	Xh3lR5sdmm9nFCjCaZpezk3FnoxlEBuDmYJ/6vqSp4OH4Sn5xcuTJsiKuPM5+mqs78ViPV
-	o17N3NWGq4KpbOeOgNto/Uksx9Cu4EwpetVbqhnax656nKXT5VIaTRzEDWBH9Q==
-Authentication-Results: outgoing_mbo_mout;
-	dkim=none;
-	spf=pass (outgoing_mbo_mout: domain of cyphar@cyphar.com designates 2001:67c:2050:b231:465::2 as permitted sender) smtp.mailfrom=cyphar@cyphar.com
+	 in-reply-to:in-reply-to:references:references;
+	bh=Pfh8YJ4n3uQCmVckM45sIplsuScMr3VZ5PLpA8Dw3NM=;
+	b=xLs7dR6Vmy3KBoEtHV6RG5nPh39Q/vHHLVGDhIEG/L0MFDYaxGZD9vjTmX0vM4dwWwlY5m
+	xnMj7qKnybzTp5Bik6fSlL0Pt7MqgVUT3+z7cdmI9pWwZEsU9ADX3vd+v+b3pXw7BPvth4
+	C1BmLy/HzQcOpHz+rjhQzHVCZoKeMd+7CQCgb0kV0JdxVhrQRmjzyCRqOYLuqvyMoGv4zt
+	HCdm7Mt+nvooS3eks+q+EzwQWWQEnDg2J0tx/Iv4J+8XRTuDgRqkG+uENlW9R1xzFxuj0b
+	tXtM94tk8m5SclXE3yK79i6MlSWoQ0pHKBJB69lloMnDNQUjVG2e4cQSmfxl7g==
+Date: Tue, 5 Aug 2025 17:29:07 +1000
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v4 0/4] procfs: make reference pidns more user-visible
-Date: Tue, 05 Aug 2025 15:45:07 +1000
-Message-Id: <20250805-procfs-pidns-api-v4-0-705f984940e7@cyphar.com>
+To: Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Jonathan Corbet <corbet@lwn.net>, 
+	Shuah Khan <shuah@kernel.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, 
+	linux-kselftest@vger.kernel.org, Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [PATCH v4 2/4] procfs: add "pidns" mount option
+Message-ID: <2025-08-05.1754378656-steep-harps-muscled-mailroom-lively-gosling-VVGNTP@cyphar.com>
+References: <20250805-procfs-pidns-api-v4-0-705f984940e7@cyphar.com>
+ <20250805-procfs-pidns-api-v4-2-705f984940e7@cyphar.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-B4-Tracking: v=1; b=H4sIAGOakWgC/23NTQ6CMBCG4auYrq3p9IcWV97DuCDtIF0ITWsaC
- eHuFuICA8v3S+aZiSSMHhO5niYSMfvkh76EPJ+I7Zr+idS70oQzrpgGTUMcbJto8K5PtAmeGnS
- gjJACWkbKWYjY+s9K3h+lO5/eQxzXDxmW9Ydx2GMZKKPKupoxjQq4u9kxdE282OFFFi3zrSAOB
- F6EigNqdM6gZDtBbAV5IIgiSFsZZWtgNRd/wjzPX4EKj1I1AQAA
-To: Alexander Viro <viro@zeniv.linux.org.uk>, 
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
- Jonathan Corbet <corbet@lwn.net>, Shuah Khan <shuah@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, linux-kernel@vger.kernel.org, 
- linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
- linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, 
- Aleksa Sarai <cyphar@cyphar.com>
-X-Developer-Signature: v=1; a=openpgp-sha256; l=7460; i=cyphar@cyphar.com;
- h=from:subject:message-id; bh=b3qLvidQt2IQmyqEcAsLJbmTR+wVyp6SbcerHb1qMcs=;
- b=owGbwMvMwCWmMf3Xpe0vXfIZT6slMWRMnJV35/6lhU2bWe6c99t5d/cht20Cy821S3StD09t/
- V617E/f4Y5SFgYxLgZZMUWWbX6eoZvmL76S/GklG8wcViaQIQxcnAIwEekljAwv5yivvVnkLrSR
- vfXk4+Wpn166LLTnnrJ5VZB6vEPwv6z7jAzbNp5fo5x/vczhas+Cjh1/LR3a7bbue9Pf/bPhdPe
- dCiEGAA==
-X-Developer-Key: i=cyphar@cyphar.com; a=openpgp;
- fpr=C9C370B246B09F6DBCFC744C34401015D1D2D386
-X-Rspamd-Queue-Id: 4bx2T60Psrz9t8l
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="5o54eqw2png257t6"
+Content-Disposition: inline
+In-Reply-To: <20250805-procfs-pidns-api-v4-2-705f984940e7@cyphar.com>
 
-Ever since the introduction of pid namespaces, procfs has had very
-implicit behaviour surrounding them (the pidns used by a procfs mount is
-auto-selected based on the mounting process's active pidns, and the
-pidns itself is basically hidden once the mount has been constructed).
 
-/* pidns mount option for procfs */
+--5o54eqw2png257t6
+Content-Type: text/plain; protected-headers=v1; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+Subject: Re: [PATCH v4 2/4] procfs: add "pidns" mount option
+MIME-Version: 1.0
 
-This implicit behaviour has historically meant that userspace was
-required to do some special dances in order to configure the pidns of a
-procfs mount as desired. Examples include:
+On 2025-08-05, Aleksa Sarai <cyphar@cyphar.com> wrote:
+> Since the introduction of pid namespaces, their interaction with procfs
+> has been entirely implicit in ways that require a lot of dancing around
+> by programs that need to construct sandboxes with different PID
+> namespaces.
+>=20
+> Being able to explicitly specify the pid namespace to use when
+> constructing a procfs super block will allow programs to no longer need
+> to fork off a process which does then does unshare(2) / setns(2) and
+> forks again in order to construct a procfs in a pidns.
+>=20
+> So, provide a "pidns" mount option which allows such users to just
+> explicitly state which pid namespace they want that procfs instance to
+> use. This interface can be used with fsconfig(2) either with a file
+> descriptor or a path:
+>=20
+>   fsconfig(procfd, FSCONFIG_SET_FD, "pidns", NULL, nsfd);
+>   fsconfig(procfd, FSCONFIG_SET_STRING, "pidns", "/proc/self/ns/pid", 0);
+>=20
+> or with classic mount(2) / mount(8):
+>=20
+>   // mount -t proc -o pidns=3D/proc/self/ns/pid proc /tmp/proc
+>   mount("proc", "/tmp/proc", "proc", MS_..., "pidns=3D/proc/self/ns/pid");
+>=20
+> As this new API is effectively shorthand for setns(2) followed by
+> mount(2), the permission model for this mirrors pidns_install() to avoid
+> opening up new attack surfaces by loosening the existing permission
+> model.
+>=20
+> In order to avoid having to RCU-protect all users of proc_pid_ns() (to
+> avoid UAFs), attempting to reconfigure an existing procfs instance's pid
+> namespace will error out with -EBUSY. Creating new procfs instances is
+> quite cheap, so this should not be an impediment to most users, and lets
+> us avoid a lot of churn in fs/proc/* for a feature that it seems
+> unlikely userspace would use.
+>=20
+> Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+> ---
+>  Documentation/filesystems/proc.rst |  8 ++++
+>  fs/proc/root.c                     | 98 ++++++++++++++++++++++++++++++++=
++++---
+>  2 files changed, 100 insertions(+), 6 deletions(-)
+>=20
+> diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesyste=
+ms/proc.rst
+> index 5236cb52e357..5a157dadea0b 100644
+> --- a/Documentation/filesystems/proc.rst
+> +++ b/Documentation/filesystems/proc.rst
+> @@ -2360,6 +2360,7 @@ The following mount options are supported:
+>  	hidepid=3D	Set /proc/<pid>/ access mode.
+>  	gid=3D		Set the group authorized to learn processes information.
+>  	subset=3D		Show only the specified subset of procfs.
+> +	pidns=3D		Specify a the namespace used by this procfs.
+>  	=3D=3D=3D=3D=3D=3D=3D=3D=3D	=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> =20
+>  hidepid=3Doff or hidepid=3D0 means classic mode - everybody may access a=
+ll
+> @@ -2392,6 +2393,13 @@ information about processes information, just add =
+identd to this group.
+>  subset=3Dpid hides all top level files and directories in the procfs that
+>  are not related to tasks.
+> =20
+> +pidns=3D specifies a pid namespace (either as a string path to something=
+ like
+> +`/proc/$pid/ns/pid`, or a file descriptor when using `FSCONFIG_SET_FD`) =
+that
+> +will be used by the procfs instance when translating pids. By default, p=
+rocfs
+> +will use the calling process's active pid namespace. Note that the pid
+> +namespace of an existing procfs instance cannot be modified (attempting =
+to do
+> +so will give an `-EBUSY` error).
+> +
+>  Chapter 5: Filesystem behavior
+>  =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D
+> =20
+> diff --git a/fs/proc/root.c b/fs/proc/root.c
+> index ed86ac710384..fd1f1c8a939a 100644
+> --- a/fs/proc/root.c
+> +++ b/fs/proc/root.c
+> @@ -38,12 +38,14 @@ enum proc_param {
+>  	Opt_gid,
+>  	Opt_hidepid,
+>  	Opt_subset,
+> +	Opt_pidns,
+>  };
+> =20
+>  static const struct fs_parameter_spec proc_fs_parameters[] =3D {
+> -	fsparam_u32("gid",	Opt_gid),
+> +	fsparam_u32("gid",		Opt_gid),
+>  	fsparam_string("hidepid",	Opt_hidepid),
+>  	fsparam_string("subset",	Opt_subset),
+> +	fsparam_file_or_string("pidns",	Opt_pidns),
+>  	{}
+>  };
+> =20
+> @@ -109,11 +111,66 @@ static int proc_parse_subset_param(struct fs_contex=
+t *fc, char *value)
+>  	return 0;
+>  }
+> =20
+> +#ifdef CONFIG_PID_NS
+> +static int proc_parse_pidns_param(struct fs_context *fc,
+> +				  struct fs_parameter *param,
+> +				  struct fs_parse_result *result)
+> +{
+> +	struct proc_fs_context *ctx =3D fc->fs_private;
+> +	struct pid_namespace *target, *active =3D task_active_pid_ns(current);
+> +	struct ns_common *ns;
+> +	struct file *ns_filp __free(fput) =3D NULL;
+> +
+> +	switch (param->type) {
+> +	case fs_value_is_file:
+> +		/* came through fsconfig, steal the file reference */
+> +		ns_filp =3D no_free_ptr(param->file);
+> +		break;
+> +	case fs_value_is_string:
+> +		ns_filp =3D filp_open(param->string, O_RDONLY, 0);
+> +		break;
 
- * In order to bypass the mnt_too_revealing() check, Kubernetes creates
-   a procfs mount from an empty pidns so that user namespaced containers
-   can be nested (without this, the nested containers would fail to
-   mount procfs). But this requires forking off a helper process because
-   you cannot just one-shot this using mount(2).
+I just realised that we probably also want to support FSCONFIG_SET_PATH
+here, but fsparam_file_or_string() doesn't handle that at the moment. I
+think we probably want to have fsparam_file_or_path() which would act
+like:
 
- * Container runtimes in general need to fork into a container before
-   configuring its mounts, which can lead to security issues in the case
-   of shared-pidns containers (a privileged process in the pidns can
-   interact with your container runtime process). While
-   SUID_DUMP_DISABLE and user namespaces make this less of an issue, the
-   strict need for this due to a minor uAPI wart is kind of unfortunate.
+ 1. A path with FSCONFIG_SET_STRING and FSCONFIG_SET_PATH.
+ 2. A file with FSCONFIG_SET_FD.
 
-Things would be much easier if there was a way for userspace to just
-specify the pidns they want. Patch 1 implements a new "pidns" argument
-which can be set using fsconfig(2):
+These are the semantics I would already expect from these kinds of
+flags, but at the moment FSCONFIG_SET_PATH is entirely disallowed.
 
-    fsconfig(procfd, FSCONFIG_SET_FD, "pidns", NULL, nsfd);
-    fsconfig(procfd, FSCONFIG_SET_STRING, "pidns", "/proc/self/ns/pid", 0);
+@Amir:
 
-or classic mount(2) / mount(8):
+I wonder if overlayfs (the only other user of fsparam_file_or_string())
+would also prefer having these semantics? We could just migrate
+fsparam_file_or_string() to fsparam_file_or_path() everwhere, since I'm
+pretty sure these are the semantics userspace expects anyway.
 
-    // mount -t proc -o pidns=/proc/self/ns/pid proc /tmp/proc
-    mount("proc", "/tmp/proc", "proc", MS_..., "pidns=/proc/self/ns/pid");
+> +	default:
+> +		WARN_ON_ONCE(true);
+> +		break;
+> +	}
+> +	if (!ns_filp)
+> +		ns_filp =3D ERR_PTR(-EBADF);
+> +	if (IS_ERR(ns_filp)) {
+> +		errorfc(fc, "could not get file from pidns argument");
+> +		return PTR_ERR(ns_filp);
+> +	}
+> +
+> +	if (!proc_ns_file(ns_filp))
+> +		return invalfc(fc, "pidns argument is not an nsfs file");
+> +	ns =3D get_proc_ns(file_inode(ns_filp));
+> +	if (ns->ops->type !=3D CLONE_NEWPID)
+> +		return invalfc(fc, "pidns argument is not a pidns file");
+> +	target =3D container_of(ns, struct pid_namespace, ns);
+> +
+> +	/*
+> +	 * pidns=3D is shorthand for joining the pidns to get a fsopen fd, so t=
+he
+> +	 * permission model should be the same as pidns_install().
+> +	 */
+> +	if (!ns_capable(target->user_ns, CAP_SYS_ADMIN)) {
+> +		errorfc(fc, "insufficient permissions to set pidns");
+> +		return -EPERM;
+> +	}
+> +	if (!pidns_is_ancestor(target, active))
+> +		return invalfc(fc, "cannot set pidns to non-descendant pidns");
+> +
+> +	put_pid_ns(ctx->pid_ns);
+> +	ctx->pid_ns =3D get_pid_ns(target);
+> +	put_user_ns(fc->user_ns);
+> +	fc->user_ns =3D get_user_ns(ctx->pid_ns->user_ns);
+> +	return 0;
+> +}
+> +#endif /* CONFIG_PID_NS */
+> +
+>  static int proc_parse_param(struct fs_context *fc, struct fs_parameter *=
+param)
+>  {
+>  	struct proc_fs_context *ctx =3D fc->fs_private;
+>  	struct fs_parse_result result;
+> -	int opt;
+> +	int opt, err;
+> =20
+>  	opt =3D fs_parse(fc, proc_fs_parameters, param, &result);
+>  	if (opt < 0)
+> @@ -125,14 +182,38 @@ static int proc_parse_param(struct fs_context *fc, =
+struct fs_parameter *param)
+>  		break;
+> =20
+>  	case Opt_hidepid:
+> -		if (proc_parse_hidepid_param(fc, param))
+> -			return -EINVAL;
+> +		err =3D proc_parse_hidepid_param(fc, param);
+> +		if (err)
+> +			return err;
+>  		break;
+> =20
+>  	case Opt_subset:
+> -		if (proc_parse_subset_param(fc, param->string) < 0)
+> -			return -EINVAL;
+> +		err =3D proc_parse_subset_param(fc, param->string);
+> +		if (err)
+> +			return err;
+> +		break;
+> +
+> +	case Opt_pidns:
+> +#ifdef CONFIG_PID_NS
+> +		/*
+> +		 * We would have to RCU-protect every proc_pid_ns() or
+> +		 * proc_sb_info() access if we allowed this to be reconfigured
+> +		 * for an existing procfs instance. Luckily, procfs instances
+> +		 * are cheap to create, and mount-beneath would let you
+> +		 * atomically replace an instance even with overmounts.
+> +		 */
+> +		if (fc->purpose =3D=3D FS_CONTEXT_FOR_RECONFIGURE) {
+> +			errorfc(fc, "cannot reconfigure pidns for existing procfs");
+> +			return -EBUSY;
+> +		}
+> +		err =3D proc_parse_pidns_param(fc, param, &result);
+> +		if (err)
+> +			return err;
+>  		break;
+> +#else
+> +		errorfc(fc, "pidns mount flag not supported on this system");
+> +		return -EOPNOTSUPP;
+> +#endif
+> =20
+>  	default:
+>  		return -EINVAL;
+> @@ -154,6 +235,11 @@ static void proc_apply_options(struct proc_fs_info *=
+fs_info,
+>  		fs_info->hide_pid =3D ctx->hidepid;
+>  	if (ctx->mask & (1 << Opt_subset))
+>  		fs_info->pidonly =3D ctx->pidonly;
+> +	if (ctx->mask & (1 << Opt_pidns) &&
+> +	    !WARN_ON_ONCE(fc->purpose =3D=3D FS_CONTEXT_FOR_RECONFIGURE)) {
+> +		put_pid_ns(fs_info->pid_ns);
+> +		fs_info->pid_ns =3D get_pid_ns(ctx->pid_ns);
+> +	}
+>  }
+> =20
+>  static int proc_fill_super(struct super_block *s, struct fs_context *fc)
+>=20
+> --=20
+> 2.50.1
+>=20
 
-The initial security model I have in this RFC is to be as conservative
-as possible and just mirror the security model for setns(2) -- which
-means that you can only set pidns=... to pid namespaces that your
-current pid namespace is a direct ancestor of and you have CAP_SYS_ADMIN
-privileges over the pid namespace. This fulfils the requirements of
-container runtimes, but I suspect that this may be too strict for some
-usecases.
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+https://www.cyphar.com/
 
-The pidns argument is not displayed in mountinfo -- it's not clear to me
-what value it would make sense to show (maybe we could just use ns_dname
-to provide an identifier for the namespace, but this number would be
-fairly useless to userspace). I'm open to suggestions. Note that
-PROCFS_GET_PID_NAMESPACE (see below) does at least let userspace get
-information about this outside of mountinfo.
+--5o54eqw2png257t6
+Content-Type: application/pgp-signature; name="signature.asc"
 
-Note that you cannot change the pidns of an already-created procfs
-instance. The primary reason is that allowing this to be changed would
-require RCU-protecting proc_pid_ns(sb) and thus auditing all of
-fs/proc/* and some of the users in fs/* to make sure they wouldn't UAF
-the pid namespace. Since creating procfs instances is very cheap, it
-seems unnecessary to overcomplicate this upfront. Trying to reconfigure
-procfs this way errors out with -EBUSY.
+-----BEGIN PGP SIGNATURE-----
 
-/* ioctl(PROCFS_GET_PID_NAMESPACE) */
+iHUEABYKAB0WIQS2TklVsp+j1GPyqQYol/rSt+lEbwUCaJGywwAKCRAol/rSt+lE
+b9g9AP0cbo5zi5SaWHVkITOZ9tdmZPQ3mBfvQN80O6xOYxAasQD9GGvqDQLIZudv
+LWdGv0XCW63Bw5sA4NH64WxUuKaO3wk=
+=YRkM
+-----END PGP SIGNATURE-----
 
-In addition, being able to figure out what pid namespace is being used
-by a procfs mount is quite useful when you have an administrative
-process (such as a container runtime) which wants to figure out the
-correct way of mapping PIDs between its own namespace and the namespace
-for procfs (using NS_GET_{PID,TGID}_{IN,FROM}_PIDNS). There are
-alternative ways to do this, but they all rely on ancillary information
-that third-party libraries and tools do not necessarily have access to.
-
-To make this easier, add a new ioctl (PROCFS_GET_PID_NAMESPACE) which
-can be used to get a reference to the pidns that a procfs is using.
-
-Rather than copying the (fairly strict) security model for setns(2),
-apply a slightly looser model to better match what userspace can already
-do:
-
- * Make the ioctl only valid on the root (meaning that a process without
-   access to the procfs root -- such as only having an fd to a procfs
-   file or some open_tree(2)-like subset -- cannot use this API). This
-   means that the process already has some level of access to the
-   /proc/$pid directories.
-
- * If the calling process is in an ancestor pidns, then they can already
-   create pidfd for processes inside the pidns, which is morally
-   equivalent to a pidns file descriptor according to setns(2). So it
-   seems reasonable to just allow it in this case. (The justification
-   for this model was suggested by Christian.)
-
- * If the process has access to /proc/1/ns/pid already (i.e. has
-   ptrace-read access to the pidns pid1), then this ioctl is equivalent
-   to just opening a handle to it that way.
-
-   Ideally we would check for ptrace-read access against all processes
-   in the pidns (which is very likely to be true for at least one
-   process, as SUID_DUMP_DISABLE is cleared on exec(2) and is rarely set
-   by most programs), but this would obviously not scale.
-
-I'm open to suggestions for whether we need to make this stricter (or
-possibly allow more cases).
-
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
----
-Changes in v4:
-- Remove unneeded EXPORT_SYMBOL_GPL. [Christian Brauner]
-- Return -EOPNOTSUPP for new APIs for CONFIG_PID_NS=n rather than
-  pretending they don't exist entirely. [Christian Brauner]
-- PROCFS_IOCTL_MAGIC conflicts with XSDFEC_MAGIC, so we need to allocate
-  subvalues more carefully (switch to _IO(PROCFS_IOCTL_MAGIC, 32)).
-- Add some more selftests for PROCFS_GET_PID_NAMESPACE.
-- Reword argument for PROCFS_GET_PID_NAMESPACE security model based on
-  Christian's suggestion, and remove CAP_SYS_ADMIN edge-case (in most
-  cases, such a process would also have ptrace-read credentials over the
-  pidns pid1).
-- v3: <https://lore.kernel.org/r/20250724-procfs-pidns-api-v3-0-4c685c910923@cyphar.com>
-
-Changes in v3:
-- Disallow changing pidns for existing procfs instances, as we'd
-  probably have to RCU-protect everything that touches the pinned pidns
-  reference.
-- Improve tests with slightly nicer ASSERT_ERRNO* macros.
-- v2: <https://lore.kernel.org/r/20250723-procfs-pidns-api-v2-0-621e7edd8e40@cyphar.com>
-
-Changes in v2:
-- #ifdef CONFIG_PID_NS
-- Improve cover letter wording to make it clear we're talking about two
-  separate features with different permission models. [Andy Lutomirski]
-- Fix build warnings in pidns_is_ancestor() patch. [kernel test robot]
-- v1: <https://lore.kernel.org/r/20250721-procfs-pidns-api-v1-0-5cd9007e512d@cyphar.com>
-
----
-Aleksa Sarai (4):
-      pidns: move is-ancestor logic to helper
-      procfs: add "pidns" mount option
-      procfs: add PROCFS_GET_PID_NAMESPACE ioctl
-      selftests/proc: add tests for new pidns APIs
-
- Documentation/filesystems/proc.rst        |  12 ++
- fs/proc/root.c                            | 166 +++++++++++++++-
- include/linux/pid_namespace.h             |   9 +
- include/uapi/linux/fs.h                   |   4 +
- kernel/pid_namespace.c                    |  22 ++-
- tools/testing/selftests/proc/.gitignore   |   1 +
- tools/testing/selftests/proc/Makefile     |   1 +
- tools/testing/selftests/proc/proc-pidns.c | 315 ++++++++++++++++++++++++++++++
- 8 files changed, 514 insertions(+), 16 deletions(-)
----
-base-commit: 66639db858112bf6b0f76677f7517643d586e575
-change-id: 20250717-procfs-pidns-api-8ed1583431f0
-
-Best regards,
--- 
-Aleksa Sarai <cyphar@cyphar.com>
-
+--5o54eqw2png257t6--
