@@ -1,64 +1,64 @@
-Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
+Received: from mail-qv1-f44.google.com (mail-qv1-f44.google.com [209.85.219.44])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41CB5259CAB
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF4911D79A5
 	for <linux-api@vger.kernel.org>; Thu,  7 Aug 2025 01:45:25 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754531128; cv=none; b=XHo9IdIKb5fw+SgwHpytlGOvjSNZigPZVvImbnYKecHPdx6fZ2zOPW0gbV3vEsP2HE1J9gwwj2/NcbW2BA7tADBMfjnQDo+wK3Y+TQyZyU0kuvWiEl/CUeeHAKVUTsJigFDYC29ujbhqyigUCoRBUnx1yl50TSqdbm2vCNwFQJQ=
+	t=1754531129; cv=none; b=SF3hvkg+oFAKumUHw4Qt8d3vhfq1D9hjHtKRDam7YwtVX8Y7i9kSkkKwU01nJv01aR0t9DiElOgbNJzwPKZD2m5xU4HQPnzc2CMprRV6xO8wt2EoG4u8dchyMRvMubsIAWOMX8Z8PoVKYmAds6aOdONhRWZII3iBwJVFnJG3Sx0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754531128; c=relaxed/simple;
-	bh=rde7cD/pof9SFGzTndECBbTzNyyTEtJB9y1Sh5Pk7tw=;
+	s=arc-20240116; t=1754531129; c=relaxed/simple;
+	bh=MQ63LnQeT5I2XWVR3/9t21kTUDqY3sDHkmER0gtcW/M=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=h7roBESCT6pHHJ1RxWiq0UUrOZUISKMPXwt0p3gpVZiLnD70bqaGxW8hOqmaW6ftVwK3qLrEOMKx4Yn1ReL9Xo4boQTdqKk2i+ezPsMXz+BJ82iGbjXiNUu2X7pNTXQWiuhyKPJ5bUQSQHTFUGLVK2vllMYct7ygSeEKjCSeeNE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=aj7Vp4Wt; arc=none smtp.client-ip=209.85.219.53
+	 MIME-Version; b=HKfd59A24ukOtb86CZtYeOGLvTILQbHqt6T2C43fArevWa1dVpayauszbq0H9TIXXeyAMC/d434z/oh8xr9yJFEHTaY0L7W70RX/ZfCNMAmYYb3s8bD3dDtwdSrRUvKk3Uwbqgg0+92uRC8TnOzQ2RRgLZynGi8gvqEeOUN+kTs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=Uun+cnp/; arc=none smtp.client-ip=209.85.219.44
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="aj7Vp4Wt"
-Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-7077a1563b5so5304656d6.1
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="Uun+cnp/"
+Received: by mail-qv1-f44.google.com with SMTP id 6a1803df08f44-70756dc2c00so7504346d6.1
         for <linux-api@vger.kernel.org>; Wed, 06 Aug 2025 18:45:25 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=soleen.com; s=google; t=1754531124; x=1755135924; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=VOmTgDGmeBWmPehEZ3L8eOdNbmK4CsWM3+7RuLYUbdA=;
-        b=aj7Vp4WtCaqqepabk4m17vFtZ9ZgnVOMkWOpcGHgxeXdIgQfxr1n4aay+uLfTa6f5i
-         cl41j/SMdoVaZUOrKwo1aXXHCgUkJXt7uMzIzwFgma40K0tGixOUFS9lH8X4TtfRJgnb
-         ufV6m5rmJc012sVe8Ic8CnJz845ZbSVT/jIL4Usu81tOaPQu2rd4giqIy06EiXgaXO9x
-         fkh6eBljApxslN1rampmDlTZnHerVz8ypvkVPpolAqHquRJ5mCoFsCvitJd5YtRP1J6K
-         SDF4fawsCEWN1RUx/RYjK9Ut/AtKNIsbPpgxDqX6HUGAlyVvKDYDyG6/lL7M29IEEb+m
-         12IQ==
+        bh=QA/vUYeCxNkI6poJfbjFNlz5+YRzYcbbQ+LvASsW6yI=;
+        b=Uun+cnp/XZzGsvmDPlAnMsb6mrtGv5dYDxU0XO8gk/1VU77Obpair0DmYTgs11wixy
+         OEvZkYCAJnBva9a70vWXvsavXZ4astcUadDqnQZOlrHFrWk5w/Dgab6t1Yr4bdEofaQJ
+         uVYfrN4ICKA63QtOGO+reRstzuz4o5FnyutjFC1wv5COdWV3rkVxWL0cgs1NsXcKUGKp
+         yyo8h6baecjst6NVS7cbvibmGvPtTJYKh76QOTQ0rfRGdLrRF3bd+XaJ8DtiYw6wTLUu
+         hRlvoi3s4xhmoDs+Coyx8VZC5jj3DpTlml/n/UfO5TUSRPiyrG1fLlah/nfGRkJx0ivL
+         hEAQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=1e100.net; s=20230601; t=1754531124; x=1755135924;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=VOmTgDGmeBWmPehEZ3L8eOdNbmK4CsWM3+7RuLYUbdA=;
-        b=AY+mRWAmVIbjZV2zKrJ9G+YD6rIE/UWBUKxY4Rk0yaXJvd0eeInxd1ja5pqb/W7A1B
-         x+pk7Rt9N3lLwhlzvWquFKAMZcLhbviO645gQjlCI1QLM17ihs80P/+E3S4mauqr/PO1
-         UoFqMbjIdl1fvsdwC07crkJodH3o3NXngMcbyu0d8Xhm0mVYphdldwaoowAh6u3rZ9Ts
-         0uHLWBcnBleWmt0NBvFs+WugvqoH0DcFFMTuvTuIAkHGPoBGjsjkKO9/04XMnnGQPi+a
-         1XqeUwzxNFm0Zl3AfdU3lgHqpRcDFWpi3TQQe0h3FOJv2q+fapElcqx8UL33SlKplHPq
-         9u5Q==
-X-Forwarded-Encrypted: i=1; AJvYcCV/7mGg797W21dpM7zKh5Xp0qNSfqDdYHzhWmUYrjk6AwLjl+xmoEDTuQO4OQZilFthuf8CvNI8fRY=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyLU9UsQ0vAuhik3XMFKfa4N8dF0+jh4MJycBydxLoB8bwTQMrO
-	eR4J0FnK8nLVLNIS+iyugFZpbcH7egvjOh0FkuJZCoRyUi8bnbY0ycprXleHDQqPZyE=
-X-Gm-Gg: ASbGncsihCwCHltUGUKrMn+4A8Mft3xfQZEpL88JBtvMnfCS2vEg0JYr018UlCg9PSG
-	EtMczzaaSj433QkSxm+1ySxWPXgC90EylL5dv3UFdLcXtwYkS7xgQHWeDKH7kAu8L4Po4/d7NP9
-	oVK4FCzXwMvAWqGGhR5dsYKyf6VQLlHynmM+a3TVlXQG8y/GGDZLLoB6BCBo+6He7GA/B51sVXi
-	xArcJd6m4I2/emGikxXC6LrCMx5DlDK2zBbwWtiV78JU6O7uMyFzsdO5kmD66GwI2tCcasHsiMN
-	7o/OaUQ767NF9JZh86Hl8BibmP0KsP/2O//Ppig8muzFXy8MmrLPpb70XihfL+2jyundK56yCr7
-	gk3lq0WuRnbT7jELS0XeOHusQ8NtZ2265GYPk0A7tyF63Ael7LTkIYQYLNM67X6kEwQWB7bYfzp
-	bSHnu5bK0XdOL8
-X-Google-Smtp-Source: AGHT+IGa10Q9xXZTxnWqAP3/TJ/pWwwZKDNRJhQRt0NViWNtS/8r0csvFFcTyLahUM71ijfSvrto3Q==
-X-Received: by 2002:a05:6214:4013:b0:707:43a1:5b0e with SMTP id 6a1803df08f44-7098a6a5940mr22300026d6.10.1754531119648;
-        Wed, 06 Aug 2025 18:45:19 -0700 (PDT)
+        bh=QA/vUYeCxNkI6poJfbjFNlz5+YRzYcbbQ+LvASsW6yI=;
+        b=gijt16mTMmuFtJvIYB4oEeqtXDb+Ma6kQPhtsqIJU4dxRB6nHjTQw0x7AEqF6JKOAP
+         j3QrsXDtv4+lo1NEloaa/UXbT4rNzzj+CoShaciBObL0HBOqeCuouHL1W4vlNei7ZuEF
+         f0WxAxis/QTcpPS4pXsfsJU0+VvWf4LilFdoJyDzvmTdk9hITb78p8KZ3qawolT9QIyE
+         WragmD2tadK6nIQ+57JVhHa/wa1NZqcnvqNh+d8Ru2Zqt02gyLYz54ECVphNgUCpWHcz
+         TbRYgkw6XEoKunT42YddjA08gw/OwsiiKKJ4DACC6GwuE5fabgxEBwYwYHQ0T2yhgxVY
+         yRbw==
+X-Forwarded-Encrypted: i=1; AJvYcCU9H0fQ2I9IjjdINyJt/2IbpJT/XSgySEZu9QzhDV12Ki1ajd+KbaoVtkawQpUeC54wSJiQSv1WHV0=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yx6MGeMAGMyOcL6zRP1QWNzPHOho2FF7E7wAUVeeiWwJBw/p20C
+	rli5A2trToNqbLj5GmXYM3DM4QbCe81T86BpwqgJCqO+exeTkSYrIOaUdAZdnDdS494=
+X-Gm-Gg: ASbGncsdkW2ITl33QTWa/pz68YhepklY18E2G1ZGPnZJFn4ukjBQ/d7gjxyNuJQ8NqE
+	RAoUJYu0Z/MrPA4T6w0u7jnUcb+b6zqKCpDiboFmWRN+SLpTfIU0abIIabw7E5vJ9e33UGe+M3s
+	JLwpHcqQwI5FNPxFwy7Z+VdPz3AMY4Tip1Xb1CYNIEiE9R/08ahtBCeQnJeYzNjHi6bQhnenv+8
+	bNzYtMvTTfNOFJV16LSNhyhhsNajtPCUVDJdr+gGgpBtKQGHrjikso82YMol7zSTCkY2kV5cBkE
+	XxRWG2/q3sUXUmDL736fxOTIlFrnZJ9NZ5Ov3PMHKN8bvDSxC6u9hf9KB+NBVAWw8ouq6H+7a5q
+	MMuOijmct8V/4SpEv0s/sgYGK7Nh/XHZv+M2TfaIzFM0AsvQX0XlN7ymAR6/aBOpG3bgqoZz5tP
+	Q/CvwHXoNMoVAEbo80/vs5jpg=
+X-Google-Smtp-Source: AGHT+IEmxyIIEpF/zYXpWh7lst20k+6O+/3teCC6bRoX7mK0ce9gFr80XAlcr6QckhUk2jTkrcE1vA==
+X-Received: by 2002:a05:6214:27ea:b0:707:3314:793d with SMTP id 6a1803df08f44-7097969ff73mr76803076d6.37.1754531124250;
+        Wed, 06 Aug 2025 18:45:24 -0700 (PDT)
 Received: from soleen.c.googlers.com.com (235.247.85.34.bc.googleusercontent.com. [34.85.247.235])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7077cde5a01sm92969046d6.70.2025.08.06.18.45.18
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7077cde5a01sm92969046d6.70.2025.08.06.18.45.23
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Aug 2025 18:45:19 -0700 (PDT)
+        Wed, 06 Aug 2025 18:45:23 -0700 (PDT)
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
 To: pratyush@kernel.org,
 	jasonmiu@google.com,
@@ -132,9 +132,9 @@ To: pratyush@kernel.org,
 	parav@nvidia.com,
 	leonro@nvidia.com,
 	witu@nvidia.com
-Subject: [PATCH v3 22/30] liveupdate: add selftests for subsystems un/registration
-Date: Thu,  7 Aug 2025 01:44:28 +0000
-Message-ID: <20250807014442.3829950-23-pasha.tatashin@soleen.com>
+Subject: [PATCH v3 25/30] MAINTAINERS: add liveupdate entry
+Date: Thu,  7 Aug 2025 01:44:31 +0000
+Message-ID: <20250807014442.3829950-26-pasha.tatashin@soleen.com>
 X-Mailer: git-send-email 2.50.1.565.gc32cd1483b-goog
 In-Reply-To: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
 References: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
@@ -144,521 +144,40 @@ List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Introduce a self-test mechanism for the LUO to allow verification of
-core subsystem management functionality. This is primarily intended
-for developers and system integrators validating the live update
-feature.
-
-The tests are enabled via the new Kconfig option
-CONFIG_LIVEUPDATE_SELFTESTS (default 'n') and are triggered through
-a new ioctl command, LIVEUPDATE_IOCTL_SELFTESTS, added to the
-/dev/liveupdate device node.
-
-This ioctl accepts commands defined in luo_selftests.h to:
-- LUO_CMD_SUBSYSTEM_REGISTER: Creates and registers a dummy LUO
-  subsystem using the liveupdate_register_subsystem() function. It
-  allocates a data page and copies initial data from userspace.
-- LUO_CMD_SUBSYSTEM_UNREGISTER: Unregisters the specified dummy
-  subsystem using the liveupdate_unregister_subsystem() function and
-  cleans up associated test resources.
-- LUO_CMD_SUBSYSTEM_GETDATA: Copies the data page associated with a
-  registered test subsystem back to userspace, allowing verification of
-  data potentially modified or preserved by test callbacks.
-
-This provides a way to test the fundamental registration and
-unregistration flows within the LUO framework from userspace without
-requiring a full live update sequence.
+Add a MAINTAINERS file entry for the new Live Update Orchestrator
+introduced in previous patches.
 
 Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 ---
- kernel/liveupdate/Kconfig         |  15 ++
- kernel/liveupdate/Makefile        |   1 +
- kernel/liveupdate/luo_selftests.c | 345 ++++++++++++++++++++++++++++++
- kernel/liveupdate/luo_selftests.h |  84 ++++++++
- 4 files changed, 445 insertions(+)
- create mode 100644 kernel/liveupdate/luo_selftests.c
- create mode 100644 kernel/liveupdate/luo_selftests.h
+ MAINTAINERS | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/kernel/liveupdate/Kconfig b/kernel/liveupdate/Kconfig
-index 75a17ca8a592..5be04ede357d 100644
---- a/kernel/liveupdate/Kconfig
-+++ b/kernel/liveupdate/Kconfig
-@@ -47,6 +47,21 @@ config LIVEUPDATE_SYSFS_API
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 35cf4f95ed46..b88b77977649 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14207,6 +14207,19 @@ F:	kernel/module/livepatch.c
+ F:	samples/livepatch/
+ F:	tools/testing/selftests/livepatch/
  
- 	  If unsure, say N.
- 
-+config LIVEUPDATE_SELFTESTS
-+	bool "Live Update Orchestrator - self-tests"
-+	depends on LIVEUPDATE
-+	help
-+	  Say Y here to build self-tests for the LUO framework. When enabled,
-+	  these tests can be initiated via the ioctl interface to help verify
-+	  the core live update functionality.
-+
-+	  This option is primarily intended for developers working on the
-+	  live update feature or for validation purposes during system
-+	  integration.
-+
-+	  If you are unsure or are building a production kernel where size
-+	  or attack surface is a concern, say N.
-+
- config KEXEC_HANDOVER
- 	bool "kexec handover"
- 	depends on ARCH_SUPPORTS_KEXEC_HANDOVER && ARCH_SUPPORTS_KEXEC_FILE
-diff --git a/kernel/liveupdate/Makefile b/kernel/liveupdate/Makefile
-index 47f5d0378a75..9b8b69517463 100644
---- a/kernel/liveupdate/Makefile
-+++ b/kernel/liveupdate/Makefile
-@@ -13,4 +13,5 @@ obj-$(CONFIG_KEXEC_HANDOVER)		+= kexec_handover.o
- obj-$(CONFIG_KEXEC_HANDOVER_DEBUG)	+= kexec_handover_debug.o
- 
- obj-$(CONFIG_LIVEUPDATE)		+= luo.o
-+obj-$(CONFIG_LIVEUPDATE_SELFTESTS)	+= luo_selftests.o
- obj-$(CONFIG_LIVEUPDATE_SYSFS_API)	+= luo_sysfs.o
-diff --git a/kernel/liveupdate/luo_selftests.c b/kernel/liveupdate/luo_selftests.c
-new file mode 100644
-index 000000000000..824d6a99f8fc
---- /dev/null
-+++ b/kernel/liveupdate/luo_selftests.c
-@@ -0,0 +1,345 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+/*
-+ * Copyright (c) 2025, Google LLC.
-+ * Pasha Tatashin <pasha.tatashin@soleen.com>
-+ */
-+
-+/**
-+ * DOC: LUO Selftests
-+ *
-+ * We provide ioctl-based selftest interface for the LUO. It provides a
-+ * mechanism to test core LUO functionality, particularly the registration,
-+ * unregistration, and data handling aspects of LUO subsystems, without
-+ * requiring a full live update event sequence.
-+ *
-+ * The tests are intended primarily for developers working on the LUO framework
-+ * or for validation purposes during system integration. This functionality is
-+ * conditionally compiled based on the `CONFIG_LIVEUPDATE_SELFTESTS` Kconfig
-+ * option and should typically be disabled in production kernels.
-+ *
-+ * Interface:
-+ * The selftests are accessed via the `/dev/liveupdate` character device using
-+ * the `LIVEUPDATE_IOCTL_SELFTESTS` ioctl command. The argument to the ioctl
-+ * is a pointer to a `struct liveupdate_selftest` structure (defined in
-+ * `uapi/linux/liveupdate.h`), which contains:
-+ * - `cmd`: The specific selftest command to execute (e.g.,
-+ * `LUO_CMD_SUBSYSTEM_REGISTER`).
-+ * - `arg`: A pointer to a command-specific argument structure. For subsystem
-+ * tests, this points to a `struct luo_arg_subsystem` (defined in
-+ * `luo_selftests.h`).
-+ *
-+ * Commands:
-+ * - `LUO_CMD_SUBSYSTEM_REGISTER`:
-+ * Registers a new dummy LUO subsystem. It allocates kernel memory for test
-+ * data, copies initial data from the user-provided `data_page`, sets up
-+ * simple logging callbacks, and calls the core
-+ * `liveupdate_register_subsystem()`
-+ * function. Requires `arg` pointing to `struct luo_arg_subsystem`.
-+ * - `LUO_CMD_SUBSYSTEM_UNREGISTER`:
-+ * Unregisters a previously registered dummy subsystem identified by `name`.
-+ * It calls the core `liveupdate_unregister_subsystem()` function and then
-+ * frees the associated kernel memory and internal tracking structures.
-+ * Requires `arg` pointing to `struct luo_arg_subsystem` (only `name` used).
-+ * - `LUO_CMD_SUBSYSTEM_GETDATA`:
-+ * Copies the content of the kernel data page associated with the specified
-+ * dummy subsystem (`name`) back to the user-provided `data_page`. This allows
-+ * userspace to verify the state of the data after potential test operations.
-+ * Requires `arg` pointing to `struct luo_arg_subsystem`.
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/debugfs.h>
-+#include <linux/errno.h>
-+#include <linux/gfp.h>
-+#include <linux/kexec_handover.h>
-+#include <linux/liveupdate.h>
-+#include <linux/mutex.h>
-+#include <linux/uaccess.h>
-+#include <uapi/linux/liveupdate.h>
-+#include "luo_internal.h"
-+#include "luo_selftests.h"
-+
-+static struct luo_subsystems {
-+	struct liveupdate_subsystem handle;
-+	char name[LUO_NAME_LENGTH];
-+	void *data;
-+	bool in_use;
-+	bool preserved;
-+} luo_subsystems[LUO_MAX_SUBSYSTEMS];
-+
-+/* Only allow one selftest ioctl operation at a time */
-+static DEFINE_MUTEX(luo_ioctl_mutex);
-+
-+static int luo_subsystem_prepare(struct liveupdate_subsystem *h, u64 *data)
-+{
-+	struct luo_subsystems *s = container_of(h, struct luo_subsystems,
-+						handle);
-+	unsigned long phys_addr = __pa(s->data);
-+	int ret;
-+
-+	ret = kho_preserve_phys(phys_addr, PAGE_SIZE);
-+	if (ret)
-+		return ret;
-+
-+	s->preserved = true;
-+	*data = phys_addr;
-+	pr_info("Subsystem '%s' prepare data[%lx]\n",
-+		s->name, phys_addr);
-+
-+	if (strstr(s->name, NAME_PREPARE_FAIL))
-+		return -EAGAIN;
-+
-+	return 0;
-+}
-+
-+static int luo_subsystem_freeze(struct liveupdate_subsystem *h, u64 *data)
-+{
-+	struct luo_subsystems *s = container_of(h, struct luo_subsystems,
-+						handle);
-+
-+	pr_info("Subsystem '%s' freeze data[%llx]\n", s->name, *data);
-+
-+	return 0;
-+}
-+
-+static void luo_subsystem_cancel(struct liveupdate_subsystem *h, u64 data)
-+{
-+	struct luo_subsystems *s = container_of(h, struct luo_subsystems,
-+						handle);
-+
-+	pr_info("Subsystem '%s' canel data[%llx]\n", s->name, data);
-+	s->preserved = false;
-+	WARN_ON(kho_unpreserve_phys(data, PAGE_SIZE));
-+}
-+
-+static void luo_subsystem_finish(struct liveupdate_subsystem *h, u64 data)
-+{
-+	struct luo_subsystems *s = container_of(h, struct luo_subsystems,
-+						handle);
-+
-+	pr_info("Subsystem '%s' finish data[%llx]\n", s->name, data);
-+}
-+
-+static const struct liveupdate_subsystem_ops luo_selftest_subsys_ops = {
-+	.prepare = luo_subsystem_prepare,
-+	.freeze = luo_subsystem_freeze,
-+	.cancel = luo_subsystem_cancel,
-+	.finish = luo_subsystem_finish,
-+	.owner = THIS_MODULE,
-+};
-+
-+static int luo_subsystem_idx(char *name)
-+{
-+	int i;
-+
-+	for (i = 0; i < LUO_MAX_SUBSYSTEMS; i++) {
-+		if (luo_subsystems[i].in_use &&
-+		    !strcmp(luo_subsystems[i].name, name))
-+			break;
-+	}
-+
-+	if (i == LUO_MAX_SUBSYSTEMS) {
-+		pr_warn("Subsystem with name '%s' is not registred\n", name);
-+
-+		return -EINVAL;
-+	}
-+
-+	return i;
-+}
-+
-+static void luo_put_and_free_subsystem(char *name)
-+{
-+	int i = luo_subsystem_idx(name);
-+
-+	if (i < 0)
-+		return;
-+
-+	if (luo_subsystems[i].preserved)
-+		kho_unpreserve_phys(__pa(luo_subsystems[i].data), PAGE_SIZE);
-+	free_page((unsigned long)luo_subsystems[i].data);
-+	luo_subsystems[i].in_use = false;
-+	luo_subsystems[i].preserved = false;
-+}
-+
-+static int luo_get_and_alloc_subsystem(char *name, void __user *data,
-+				       struct liveupdate_subsystem **hp)
-+{
-+	unsigned long page_addr, i;
-+
-+	page_addr = get_zeroed_page(GFP_KERNEL);
-+	if (!page_addr) {
-+		pr_warn("Failed to allocate memory for subsystem data\n");
-+		return -ENOMEM;
-+	}
-+
-+	if (copy_from_user((void *)page_addr, data, PAGE_SIZE)) {
-+		free_page(page_addr);
-+		return -EFAULT;
-+	}
-+
-+	for (i = 0; i < LUO_MAX_SUBSYSTEMS; i++) {
-+		if (!luo_subsystems[i].in_use)
-+			break;
-+	}
-+
-+	if (i == LUO_MAX_SUBSYSTEMS) {
-+		pr_warn("Maximum number of subsystems registered\n");
-+		free_page(page_addr);
-+		return -ENOMEM;
-+	}
-+
-+	luo_subsystems[i].in_use = true;
-+	luo_subsystems[i].handle.ops = &luo_selftest_subsys_ops;
-+	luo_subsystems[i].handle.name = luo_subsystems[i].name;
-+	strscpy(luo_subsystems[i].name, name, LUO_NAME_LENGTH);
-+	luo_subsystems[i].data = (void *)page_addr;
-+
-+	*hp = &luo_subsystems[i].handle;
-+
-+	return 0;
-+}
-+
-+static int luo_cmd_subsystem_unregister(void __user *argp)
-+{
-+	struct luo_arg_subsystem arg;
-+	int ret, i;
-+
-+	if (copy_from_user(&arg, argp, sizeof(arg)))
-+		return -EFAULT;
-+
-+	i = luo_subsystem_idx(arg.name);
-+	if (i < 0)
-+		return i;
-+
-+	ret = liveupdate_unregister_subsystem(&luo_subsystems[i].handle);
-+	if (ret)
-+		return ret;
-+
-+	luo_put_and_free_subsystem(arg.name);
-+
-+	return 0;
-+}
-+
-+static int luo_cmd_subsystem_register(void __user *argp)
-+{
-+	struct liveupdate_subsystem *h;
-+	struct luo_arg_subsystem arg;
-+	int ret;
-+
-+	if (copy_from_user(&arg, argp, sizeof(arg)))
-+		return -EFAULT;
-+
-+	ret = luo_get_and_alloc_subsystem(arg.name,
-+					  (void __user *)arg.data_page, &h);
-+	if (ret)
-+		return ret;
-+
-+	ret = liveupdate_register_subsystem(h);
-+	if (ret)
-+		luo_put_and_free_subsystem(arg.name);
-+
-+	return ret;
-+}
-+
-+static int luo_cmd_subsystem_getdata(void __user *argp)
-+{
-+	struct luo_arg_subsystem arg;
-+	int i;
-+
-+	if (copy_from_user(&arg, argp, sizeof(arg)))
-+		return -EFAULT;
-+
-+	i = luo_subsystem_idx(arg.name);
-+	if (i < 0)
-+		return i;
-+
-+	if (copy_to_user(arg.data_page, luo_subsystems[i].data,
-+			 PAGE_SIZE)) {
-+		return -EFAULT;
-+	}
-+
-+	return 0;
-+}
-+
-+static int luo_ioctl_selftests(void __user *argp)
-+{
-+	struct liveupdate_selftest luo_st;
-+	void __user *cmd_argp;
-+	int ret = 0;
-+
-+	if (copy_from_user(&luo_st, argp, sizeof(luo_st)))
-+		return -EFAULT;
-+
-+	cmd_argp = (void __user *)luo_st.arg;
-+
-+	mutex_lock(&luo_ioctl_mutex);
-+	switch (luo_st.cmd) {
-+	case LUO_CMD_SUBSYSTEM_REGISTER:
-+		ret =  luo_cmd_subsystem_register(cmd_argp);
-+		break;
-+
-+	case LUO_CMD_SUBSYSTEM_UNREGISTER:
-+		ret =  luo_cmd_subsystem_unregister(cmd_argp);
-+		break;
-+
-+	case LUO_CMD_SUBSYSTEM_GETDATA:
-+		ret = luo_cmd_subsystem_getdata(cmd_argp);
-+		break;
-+
-+	default:
-+		pr_warn("ioctl: unknown self-test command nr: 0x%llx\n",
-+			luo_st.cmd);
-+		ret = -ENOTTY;
-+		break;
-+	}
-+	mutex_unlock(&luo_ioctl_mutex);
-+
-+	return ret;
-+}
-+
-+static long luo_selftest_ioctl(struct file *filep, unsigned int cmd,
-+			       unsigned long arg)
-+{
-+	int ret = 0;
-+
-+	if (_IOC_TYPE(cmd) != LIVEUPDATE_IOCTL_TYPE)
-+		return -ENOTTY;
-+
-+	switch (cmd) {
-+	case LIVEUPDATE_IOCTL_FREEZE:
-+		ret = luo_freeze();
-+		break;
-+
-+	case LIVEUPDATE_IOCTL_SELFTESTS:
-+		ret = luo_ioctl_selftests((void __user *)arg);
-+		break;
-+
-+	default:
-+		pr_warn("ioctl: unknown command nr: 0x%x\n", _IOC_NR(cmd));
-+		ret = -ENOTTY;
-+		break;
-+	}
-+
-+	return ret;
-+}
-+
-+static const struct file_operations luo_selftest_fops = {
-+	.open = nonseekable_open,
-+	.unlocked_ioctl = luo_selftest_ioctl,
-+};
-+
-+static int __init luo_seltesttest_init(void)
-+{
-+	if (!liveupdate_debugfs_root) {
-+		pr_err("liveupdate root is not set\n");
-+		return 0;
-+	}
-+	debugfs_create_file_unsafe("luo_selftest", 0600,
-+				   liveupdate_debugfs_root, NULL,
-+				   &luo_selftest_fops);
-+	return 0;
-+}
-+
-+late_initcall(luo_seltesttest_init);
-diff --git a/kernel/liveupdate/luo_selftests.h b/kernel/liveupdate/luo_selftests.h
-new file mode 100644
-index 000000000000..098f2e9e6a78
---- /dev/null
-+++ b/kernel/liveupdate/luo_selftests.h
-@@ -0,0 +1,84 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+/*
-+ * Copyright (c) 2025, Google LLC.
-+ * Pasha Tatashin <pasha.tatashin@soleen.com>
-+ */
-+
-+#ifndef _LINUX_LUO_SELFTESTS_H
-+#define _LINUX_LUO_SELFTESTS_H
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+/* Maximum number of subsystem self-test can register */
-+#define LUO_MAX_SUBSYSTEMS		16
-+#define LUO_NAME_LENGTH			32
-+
-+#define LUO_CMD_SUBSYSTEM_REGISTER	0
-+#define LUO_CMD_SUBSYSTEM_UNREGISTER	1
-+#define LUO_CMD_SUBSYSTEM_GETDATA	2
-+struct luo_arg_subsystem {
-+	char name[LUO_NAME_LENGTH];
-+	void *data_page;
-+};
-+
-+/*
-+ * Test name prefixes:
-+ * normal: prepare and freeze callbacks do not fail
-+ * prepare_fail: prepare callback fails for this test.
-+ * freeze_fail: freeze callback fails for this test
-+ */
-+#define NAME_NORMAL		"ksft_luo"
-+#define NAME_PREPARE_FAIL	"ksft_prepare_fail"
-+#define NAME_FREEZE_FAIL	"ksft_freeze_fail"
-+
-+/**
-+ * struct liveupdate_selftest - Holds directions for the self-test operations.
-+ * @cmd:    Selftest comman defined in luo_selftests.h.
-+ * @arg:    Argument for the self test command.
-+ *
-+ * This structure is used only for the selftest purposes.
-+ */
-+struct liveupdate_selftest {
-+	__u64		cmd;
-+	__u64		arg;
-+};
-+
-+/**
-+ * LIVEUPDATE_IOCTL_FREEZE - Notify subsystems of imminent reboot
-+ * transition.
-+ *
-+ * Argument: None.
-+ *
-+ * Notifies the live update subsystem and associated components that the kernel
-+ * is about to execute the final reboot transition into the new kernel (e.g.,
-+ * via kexec). This action triggers the internal %LIVEUPDATE_FREEZE kernel
-+ * event. This event provides subsystems a final, brief opportunity (within the
-+ * "blackout window") to save critical state or perform last-moment quiescing.
-+ * Any remaining or deferred state saving for items marked via the PRESERVE
-+ * ioctls typically occurs in response to the %LIVEUPDATE_FREEZE event.
-+ *
-+ * This ioctl should only be called when the system is in the
-+ * %LIVEUPDATE_STATE_PREPARED state. This command does not transfer data.
-+ *
-+ * Return: 0 if the notification is successfully processed by the kernel (but
-+ * reboot follows). Returns a negative error code if the notification fails
-+ * or if the system is not in the %LIVEUPDATE_STATE_PREPARED state.
-+ */
-+#define LIVEUPDATE_IOCTL_FREEZE						\
-+	_IO(LIVEUPDATE_IOCTL_TYPE, 0x05)
-+
-+/**
-+ * LIVEUPDATE_IOCTL_SELFTESTS - Interface for the LUO selftests
-+ *
-+ * Argument: Pointer to &struct liveupdate_selftest.
-+ *
-+ * Use by LUO selftests, commands are declared in luo_selftests.h
-+ *
-+ * Return: 0 on success, negative error code on failure (e.g., invalid token).
-+ */
-+#define LIVEUPDATE_IOCTL_SELFTESTS					\
-+	_IOWR(LIVEUPDATE_IOCTL_TYPE, 0x08, struct liveupdate_selftest)
-+
-+#endif /* _LINUX_LUO_SELFTESTS_H */
++LIVE UPDATE
++M:	Pasha Tatashin <pasha.tatashin@soleen.com>
++L:	linux-kernel@vger.kernel.org
++S:	Maintained
++F:	Documentation/ABI/testing/sysfs-kernel-liveupdate
++F:	Documentation/admin-guide/liveupdate.rst
++F:	Documentation/core-api/liveupdate.rst
++F:	Documentation/userspace-api/liveupdate.rst
++F:	include/linux/liveupdate.h
++F:	include/uapi/linux/liveupdate.h
++F:	kernel/liveupdate/
++F:	tools/testing/selftests/liveupdate/
++
+ LLC (802.2)
+ L:	netdev@vger.kernel.org
+ S:	Odd fixes
 -- 
 2.50.1.565.gc32cd1483b-goog
 
