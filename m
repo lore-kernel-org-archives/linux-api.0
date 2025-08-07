@@ -1,64 +1,64 @@
-Received: from mail-qt1-f172.google.com (mail-qt1-f172.google.com [209.85.160.172])
+Received: from mail-qv1-f51.google.com (mail-qv1-f51.google.com [209.85.219.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6D6E226D1E
-	for <linux-api@vger.kernel.org>; Thu,  7 Aug 2025 01:45:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.172
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F408223A98D
+	for <linux-api@vger.kernel.org>; Thu,  7 Aug 2025 01:45:17 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.219.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1754531116; cv=none; b=uPewdgAeBFytYEFFSjpwTnSOCaOW/YbgdUPHr54IUXTAcz6mrwVS1ryudCR6CG76yly6XycCs5OsnMVocRTTo2tZPrwgDjYVuO5khykd45Y0oNx8+eYrq6ObgZn1jAczXeRs/T6shLuruKfl8TVXaIv/xP0kcWqV59IIOtVLksA=
+	t=1754531120; cv=none; b=Mz68/y/+/LNsYQG1L91EADzIviV/9tsFEZ8fGLt4q4WjjO1JQAwBO5CjzwwxVHyHSTg0jPKXcA56V0TFvXQGCLW1BgAN7jnCnUyqW7uzSUA6gt8RUuMqqCxuXpfDTtwL3XAqjjBjX4w8klhfYI1IWcoTINM1rcn7ceIPw1bs9DM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1754531116; c=relaxed/simple;
-	bh=6IaJ4oC3HjSKXEwPPmdg9sH4w864pWwsUqoUlC5zX5s=;
+	s=arc-20240116; t=1754531120; c=relaxed/simple;
+	bh=RZ++fAXg5VoJ9aULwrUGHh0jUgxwzggc0842qo3hOvo=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=grY4owH3lXnMLTP7tS4eJgkWv7wwogmYSArG9ygeIYfAeG3x5sVJ5uFqUkNmxzW9V4BxHELvWhHT7L/9F/AHXXyTRUmnk1duLm/YbaK8GKqDBzlR4c89wGUAyE3JXSbLMVVLll3XvDQExl1xPJ7Rapm5SUuGWTj4v80Cg+l/P5k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=gF8WDCKl; arc=none smtp.client-ip=209.85.160.172
+	 MIME-Version; b=aLIfHdUDLum5rNNaEaGQkAOFqTkiM3FEWNWNldJ0Ek6uGohb53DCa6zUc0i4BHkSQpQeLux+qjtxl26NiYX5Bdvu4VvQYzhCqz3xQ8W308sSemMMMocbHac9EWU/rYodJ/8wt+q91XTKF6yZzU3PCBB+elnjRwjol7CsbCSM6Q8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=h3BWZfhk; arc=none smtp.client-ip=209.85.219.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="gF8WDCKl"
-Received: by mail-qt1-f172.google.com with SMTP id d75a77b69052e-4b07cb2d13bso7906261cf.1
-        for <linux-api@vger.kernel.org>; Wed, 06 Aug 2025 18:45:13 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="h3BWZfhk"
+Received: by mail-qv1-f51.google.com with SMTP id 6a1803df08f44-70749d4c598so5104296d6.0
+        for <linux-api@vger.kernel.org>; Wed, 06 Aug 2025 18:45:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen.com; s=google; t=1754531112; x=1755135912; darn=vger.kernel.org;
+        d=soleen.com; s=google; t=1754531117; x=1755135917; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=5k1U17r+PzRIJkOEWEh69D1nNoyfvJ+I2xTfX4gnP+M=;
-        b=gF8WDCKl7lSirbpvxjc3A32RPgzd74XttEyW4Jsd9Z6qD9CFDGpLG0/QILyXXGq6vT
-         VNiyCx4dGT1VKH/hnutlzijUDovc7kjUOthswMqgzUg1ye+DZ9jMuMRg7DCDA2CTqT36
-         cqA1XAcrRYZQQP5shvw6qmosaZrxu3hSUJ61vheEB1frWbRQe6P1R1THj6RnxhCYd66A
-         TXgv255p0lm0iYpnnkQFZawB3cQ7QI+W2N5gQdE0oZ0phIA4xiZYLXMr0rvTH9shEj83
-         HIR5EtNMEaKq4fn5+hGPW0phYNTQd8bTCRTPCrSm4Y26aOQAFJYt0DjVae44Yr0gYQsg
-         AgHQ==
+        bh=WtKfUzOgupFaYotRf3a7eOnx1rqlnB537wzbb8Z3Bb4=;
+        b=h3BWZfhkG+WF4+EcWwY4730YQ8ldiyH3oNiieZ0NLStWuOeP9N/2b+8vNQArNgCoG+
+         mLaksFDoAYGVeemswgDli5X9eI1aT7TdvLoPtyCuulwXojVEj9CeUH6m+dTeRk6JgNTN
+         vq+PXePRJ6wKDdGH7O/TNoh7U4iTFA3Ys+eTAsObiPubV1iuXtQK61w6Lu5wo/7u6p4U
+         BLdn1K8UBWvtJvY8epYMe0hC3kYn03Erna9X6Q9M3pu8KKuz+1YFA2k4h7LS28SxuAYv
+         vstbh2aEWtln7Jzc1VE+S5WZTOCFCTp4BrwUt/yVTypuDfGumlmVAtSng/a7IwLQCXIZ
+         ChIw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1754531112; x=1755135912;
+        d=1e100.net; s=20230601; t=1754531117; x=1755135917;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=5k1U17r+PzRIJkOEWEh69D1nNoyfvJ+I2xTfX4gnP+M=;
-        b=A28PETQxxfE9Koj8RR7cnYNq1ezJPUuLn6jN4kiPb1IuN48MLgDWOzTENfbx/fFMZd
-         WVtMMSaazvNfQx+tfLaP6i/Y7qT3FZpf+B4kW/eWXLq8jr3L+CxWjLbi083vkLWc0nfN
-         3VuUA/UBxOWLdATx4JFMKbROa+RTPdrKKDyPowQE7C1SxYO7/86+YBsSKH3GIDfdM3A1
-         uDWdmBARCQJxeXnCuE6kuplKsQeJwcbqB9osDgZo6sQmCyMBGjoTAZh22yFVw6k3IJye
-         A+8NcE7XcYeuoF+D7vvV91wvtKfOmpMB8I1fqUH0eZT697WF3Del7xSNJ0JirJWaUt2R
-         F3AQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUIlOOr5tBd0DvYvqWUsbF6lMguONTPuCEjSZcmOBkTwnj5+VeYaTpydYhhPzgHjh+PGRebsnKyp3Q=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxLrtZy/oHhUC3E8SbAJlGQk6wW3yZ8fmu3wNAdvmUNb6Vr/6uV
-	J7lcxOKLF4R1YTC4o2bMXQe4IQdBClUCNzhJfurGMA19bYEOl1MxHLSik7SyjjmSz/Q=
-X-Gm-Gg: ASbGncvhcnK4GSdIcFOJGXg8tQ0JGhpP11PyhudUkxlpbSQvarPcek3bzqRYJdOTl5b
-	6Ob3v2Yigo/IufH2vKBS8mGe76QB9ZUoY1y3KzKq74hJcsSC9vUOhWxV7c0KoT1+tvfH06MxtHC
-	h1CARsaq+wDdVAOlefLB+oUpgze/R/SW9R18OIsQToKDR0BDAHvcMZZZ9wKDYignNptvGiTWplM
-	W1bEZjxGT8l/EBP+hqjeoB5xHMQ2al6Gi+tuj7TX7T5UdkmqN1ZK1yhBP7dQGBI+P/7bK6f1c5P
-	tomCFixvyg4GHUmryz7hMI4lW1+DjcajScgRVf8qbw7sRrY+WV6F6cq8zAJZ9D20b/LFBzVfIFA
-	CUYZtLEULhhyqRcctPM/N5m5jEafPfop9cT3Sj3qbayF0r418deFFhUdh3q4oNp90gpdZT4Lc1d
-	W9DhuDdf8uvWIHPMqXM797y9Y=
-X-Google-Smtp-Source: AGHT+IFGhloL5+wAzqGLxdMTz2N8jTfQVk0LrudTV42eJiPSBl97ww3SO5T1gQQT1i9NRyGQ/H+ydQ==
-X-Received: by 2002:a05:622a:10d:b0:4b0:7e72:9f05 with SMTP id d75a77b69052e-4b09157a420mr93793331cf.29.1754531112392;
-        Wed, 06 Aug 2025 18:45:12 -0700 (PDT)
+        bh=WtKfUzOgupFaYotRf3a7eOnx1rqlnB537wzbb8Z3Bb4=;
+        b=bFXvXGmYWtW2jWgdoH9LeFm5IfbFlDxMFp+zwkmOkKWPtXWeFNNK8Zurcftx1+4LdG
+         nNaQDui+V7gVRGgbyGEG5evNvI85YuqAXB1kD24NVhxSTBp/r1owQqvUH/fiy3voxrl/
+         oHdQjAVt8UytUvDvoU6fh5FV5NR1iAlBomNSRP3012j5t7UitXrGgnH8x0ZKj4hmmyGu
+         pWKurIBerF9CpI8DTZQ+CJk4QzPVuwf2Q9maB6OR2jO3QdaXtj3x7LhDLgtVVEKVJ+w/
+         gY5anizDR5zv+PqE0YXuNMWWSWrEAK+wN0eml4ii71qfcWok9aQUFFUBkISTLs/JRRHw
+         8mYQ==
+X-Forwarded-Encrypted: i=1; AJvYcCWVjnTWCASFPGh66Xa7JHYLIjWt5BCvDZYCuelobxJTfMmgks7LTadiILWy/W+nCKFbQ/djYfLOk20=@vger.kernel.org
+X-Gm-Message-State: AOJu0YzvmquDFLkQcqSBwOqn1g0L5GMTgvYTlwLXyXvJTKrwz6i3QpRb
+	L1cQwsgWvsB+bVudb60vCduUqyxM6COJRSCP7Zy2Ng0ZkSLTPXeTbBJ/rYQbfRtjRqo=
+X-Gm-Gg: ASbGnct35rCJx5ZDtUBke0+TGeKQI5GYMrW8myOd61fDoE0bC94rA89Dt4Xu+orga3d
+	fXx3yf/eBoZUboGNB+7DUjF5PlN6tcK6tD+OTbERQbytEzpuoJKj1oajf7bTjRLDNJKU7te7ggn
+	TKX7vuUUUQX50p6ZCt0kfIxaSysDCNcUkhs2QlFYOu554enqrzCSpBqeDr1osTGw0Xo44nIcKF0
+	B70B+RZn0SSkPeQISmJ/5dRiivgHnwoKSG2ypdk2hI3mUnXOJRDYZHtZxtbCNHempz9AqYJjPWc
+	0nsg/izWTF2PtBL4zA2vNeSl+uqqWdgc5fT5kc43B4Ldd0Brf3P9qpeHTR+jj/CxU3YvqdEGRvh
+	SYfRfD7G+9hEorHvhgqHxbV6xpsrlxglKgn0YXNM56mCUdhIcBDqXi21493P4r4zCpKNTyZt2iQ
+	E8h++sPOGnqok9
+X-Google-Smtp-Source: AGHT+IHDHBBqboi0c0b6rcDIt/ymD1qcIlODHNQyebDLYVOHVLNPjCPlRPjhkhoVVjwmxNLgx8k5ag==
+X-Received: by 2002:a05:6214:300f:b0:707:29f9:3bd1 with SMTP id 6a1803df08f44-7097964ce99mr76346136d6.46.1754531116814;
+        Wed, 06 Aug 2025 18:45:16 -0700 (PDT)
 Received: from soleen.c.googlers.com.com (235.247.85.34.bc.googleusercontent.com. [34.85.247.235])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7077cde5a01sm92969046d6.70.2025.08.06.18.45.11
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-7077cde5a01sm92969046d6.70.2025.08.06.18.45.15
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 06 Aug 2025 18:45:11 -0700 (PDT)
+        Wed, 06 Aug 2025 18:45:16 -0700 (PDT)
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
 To: pratyush@kernel.org,
 	jasonmiu@google.com,
@@ -132,9 +132,9 @@ To: pratyush@kernel.org,
 	parav@nvidia.com,
 	leonro@nvidia.com,
 	witu@nvidia.com
-Subject: [PATCH v3 17/30] liveupdate: luo_files: luo_ioctl: Unregister all FDs on device close
-Date: Thu,  7 Aug 2025 01:44:23 +0000
-Message-ID: <20250807014442.3829950-18-pasha.tatashin@soleen.com>
+Subject: [PATCH v3 20/30] reboot: call liveupdate_reboot() before kexec
+Date: Thu,  7 Aug 2025 01:44:26 +0000
+Message-ID: <20250807014442.3829950-21-pasha.tatashin@soleen.com>
 X-Mailer: git-send-email 2.50.1.565.gc32cd1483b-goog
 In-Reply-To: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
 References: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
@@ -146,82 +146,51 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Currently, a file descriptor registered for preservation via the remains
-globally registered with LUO until it is explicitly unregistered. This
-creates a potential for resource leaks into the next kernel if the
-userspace agent crashes or exits without proper cleanup before a live
-update is fully initiated.
+Modify the reboot() syscall handler in kernel/reboot.c to call
+liveupdate_reboot() when processing the LINUX_REBOOT_CMD_KEXEC
+command.
 
-This patch ties the lifetime of FD preservation requests to the lifetime
-of the open file descriptor for /dev/liveupdate, creating an implicit
-"session".
+This ensures that the Live Update Orchestrator is notified just
+before the kernel executes the kexec jump. The liveupdate_reboot()
+function triggers the final LIVEUPDATE_FREEZE event, allowing
+participating subsystems to perform last-minute state saving within
+the blackout window, and transitions the LUO state machine to FROZEN.
 
-When the /dev/liveupdate file descriptor is closed (either explicitly
-via close() or implicitly on process exit/crash), the .release
-handler, luo_release(), is now called. This handler invokes the new
-function luo_unregister_all_files(), which iterates through all FDs
-that were preserved through that session and unregisters them.
+The call is placed immediately before kernel_kexec() to ensure LUO
+finalization happens at the latest possible moment before the kernel
+transition.
+
+If liveupdate_reboot() returns an error (indicating a failure during
+LUO finalization), the kexec operation is aborted to prevent proceeding
+with an inconsistent state.
 
 Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 ---
- kernel/liveupdate/luo_files.c    | 19 +++++++++++++++++++
- kernel/liveupdate/luo_internal.h |  1 +
- kernel/liveupdate/luo_ioctl.c    |  1 +
- 3 files changed, 21 insertions(+)
+ kernel/reboot.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/liveupdate/luo_files.c b/kernel/liveupdate/luo_files.c
-index 33577c9e9a64..63f8b086b785 100644
---- a/kernel/liveupdate/luo_files.c
-+++ b/kernel/liveupdate/luo_files.c
-@@ -721,6 +721,25 @@ int luo_unregister_file(u64 token)
- 	return ret;
- }
+diff --git a/kernel/reboot.c b/kernel/reboot.c
+index ec087827c85c..bdeb04a773db 100644
+--- a/kernel/reboot.c
++++ b/kernel/reboot.c
+@@ -13,6 +13,7 @@
+ #include <linux/kexec.h>
+ #include <linux/kmod.h>
+ #include <linux/kmsg_dump.h>
++#include <linux/liveupdate.h>
+ #include <linux/reboot.h>
+ #include <linux/suspend.h>
+ #include <linux/syscalls.h>
+@@ -797,6 +798,9 @@ SYSCALL_DEFINE4(reboot, int, magic1, int, magic2, unsigned int, cmd,
  
-+/**
-+ * luo_unregister_all_files - Unpreserve all currently registered files.
-+ *
-+ * Iterates through all file descriptors currently registered for preservation
-+ * and unregisters them, freeing all associated resources. This is typically
-+ * called when LUO agent exits.
-+ */
-+void luo_unregister_all_files(void)
-+{
-+	struct luo_file *luo_file;
-+	unsigned long token;
-+
-+	luo_state_read_enter();
-+	xa_for_each(&luo_files_xa_out, token, luo_file)
-+		__luo_unregister_file(token);
-+	luo_state_read_exit();
-+	WARN_ON_ONCE(atomic64_read(&luo_files_count) != 0);
-+}
-+
- /**
-  * luo_retrieve_file - Find a registered file instance by its token.
-  * @token: The unique token of the file instance to retrieve.
-diff --git a/kernel/liveupdate/luo_internal.h b/kernel/liveupdate/luo_internal.h
-index 5692196fd425..189e032d7738 100644
---- a/kernel/liveupdate/luo_internal.h
-+++ b/kernel/liveupdate/luo_internal.h
-@@ -37,5 +37,6 @@ void luo_do_subsystems_cancel_calls(void);
- int luo_retrieve_file(u64 token, struct file **filep);
- int luo_register_file(u64 token, int fd);
- int luo_unregister_file(u64 token);
-+void luo_unregister_all_files(void);
- 
- #endif /* _LINUX_LUO_INTERNAL_H */
-diff --git a/kernel/liveupdate/luo_ioctl.c b/kernel/liveupdate/luo_ioctl.c
-index 6f61569c94e8..7ca33d1c868f 100644
---- a/kernel/liveupdate/luo_ioctl.c
-+++ b/kernel/liveupdate/luo_ioctl.c
-@@ -137,6 +137,7 @@ static int luo_open(struct inode *inodep, struct file *filep)
- 
- static int luo_release(struct inode *inodep, struct file *filep)
- {
-+	luo_unregister_all_files();
- 	atomic_set(&luo_device_in_use, 0);
- 
- 	return 0;
+ #ifdef CONFIG_KEXEC_CORE
+ 	case LINUX_REBOOT_CMD_KEXEC:
++		ret = liveupdate_reboot();
++		if (ret)
++			break;
+ 		ret = kernel_kexec();
+ 		break;
+ #endif
 -- 
 2.50.1.565.gc32cd1483b-goog
 
