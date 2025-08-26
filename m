@@ -1,34 +1,36 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from smtp-190d.mail.infomaniak.ch (smtp-190d.mail.infomaniak.ch [185.125.25.13])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7CD23279798;
-	Tue, 26 Aug 2025 09:07:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D27422C15A8
+	for <linux-api@vger.kernel.org>; Tue, 26 Aug 2025 11:23:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.25.13
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756199234; cv=none; b=aX5xZVQS0Tbfcq7wItsoxfJLroUuQrd8P8ROMTLInSYg4nRqaY5u4O7fTgF+twxIeIWMYz1VkDkykpyF8ZlsGaQEy4eZxxTiD4O8CiS1xNF19lyQsI+kz3z8YcelBXWSnvmQj82Rson5newDmBbRaZrHWYiosLL8H0Sz/dCKwpg=
+	t=1756207430; cv=none; b=AdHSZwYBv45/meIjMvfspqB+/CYBwoeheFZQ8455YdjejTDYr2tksqV892hMUDc7O4HJlg6v0+zb5g2ECuw9GJMgKe3HvvR7wx5N9dbL5f3ikJUWtOSRn7say62sRi+Qus9ELPXD79aGUuJpS9nL2Tbp+y02Aq/k/U1n+VU6dLc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756199234; c=relaxed/simple;
-	bh=v1CSBcWHPbCnidtHdXODW6dfbip1NV8JwzZFOpqYkck=;
+	s=arc-20240116; t=1756207430; c=relaxed/simple;
+	bh=a3dONpQbijK8YoaZ/aqqUpqY1ZvBSwtSGl3/rVu/h0o=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=cTVnxgcnsdIZal7DaTHMwLgqbPWmM7PAb4Npa08+clNbXGItVAdHskXXIU92zxl9eIZlSi1QFt7xERcr49daad4vAkl1Up2ZraHXgd/TP/oPGDCm1pBhMT2bbkI9gBIrQ1l9sWwdBIiOdoaelh8XkWaUHD5ChJwwTkA8crISVnQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=s6iE5Y5F; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=CPYGqMndBztHJRuR6qRiDazV6LqBojD1AUeQ6tI1Havk8TAiG+6hlwimiY+oYiBe7VvmQHssAW98PceLTfHjtDkoXcZbUWjE3uSnn3GjMtm3wccyDzDqtsNTXJ+43Ixnugaq0Jup89qo9AzMQce13/DDdruQS8bK0Mam5NyBCoM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net; spf=pass smtp.mailfrom=digikod.net; dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b=ZxBqKiQh; arc=none smtp.client-ip=185.125.25.13
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="s6iE5Y5F"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 14EB8C4CEF1;
-	Tue, 26 Aug 2025 09:07:05 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1756199234;
-	bh=v1CSBcWHPbCnidtHdXODW6dfbip1NV8JwzZFOpqYkck=;
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.b="ZxBqKiQh"
+Received: from smtp-4-0000.mail.infomaniak.ch (smtp-4-0000.mail.infomaniak.ch [10.7.10.107])
+	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4cB4zb5C65zhCD;
+	Tue, 26 Aug 2025 13:23:39 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
+	s=20191114; t=1756207419;
+	bh=Rww2xVuKT9hbmIFkkD7HcWVeLL+qhFltg+bgWOSpLGg=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=s6iE5Y5FkD/yXMMiE/ghxcC3Oi9Yjk1XRIAqRYCNYsanV38XhW0i9eYf/To0VJW2o
-	 WYQ/ZuC/nsgerBNGvoSmbNWxd920UR2TtKpnCWfGJ0ya5JFfJedNtTwBQQPmb8U4h4
-	 BseIkK0ylDIqzI7SCwbyNOd9sNya7tC+6HO9HPjMmmQbOnK+zruIPEca3JrwtTdrNe
-	 oRTWtlPucmsV8c2at+UAsG81IyPSE2bfpHKs4HQe1qvcsLoiG+/mf1P9GeBoVj6YSx
-	 uaWFXu4OYAr72+8s0T/DoofNbBohK7R7cRZZj7Z1UVMUlyI61q+NGofFGEoEaZ13OJ
-	 F3tqSNVCLSKcg==
-Date: Tue, 26 Aug 2025 11:07:03 +0200
-From: Christian Brauner <brauner@kernel.org>
-To: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+	b=ZxBqKiQhUv+Pvrrn1/2CQKD3XT1nzj3AUfxgSMhhQuZD50UOTb9HuJYeEW+zysahz
+	 +B6JqT/YlnN76HwUPjid1Hasw1kpct8gdFLBml/o9qkdlCXMqGR5dSJkexYtSzgQgf
+	 6aykxrpUeddHu6VCgD5BUhF6SSEa7sfB/s2j2q+w=
+Received: from unknown by smtp-4-0000.mail.infomaniak.ch (Postfix) with ESMTPA id 4cB4zX5hs0zYsS;
+	Tue, 26 Aug 2025 13:23:36 +0200 (CEST)
+Date: Tue, 26 Aug 2025 13:23:36 +0200
+From: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+To: Christian Brauner <brauner@kernel.org>
 Cc: Al Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>, 
 	Paul Moore <paul@paul-moore.com>, Serge Hallyn <serge@hallyn.com>, 
 	Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, 
@@ -45,8 +47,9 @@ Cc: Al Viro <viro@zeniv.linux.org.uk>, Kees Cook <keescook@chromium.org>,
 	linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	linux-security-module@vger.kernel.org
 Subject: Re: [RFC PATCH v1 0/2] Add O_DENY_WRITE (complement AT_EXECVE_CHECK)
-Message-ID: <20250826-skorpion-magma-141496988fdc@brauner>
+Message-ID: <20250826.aig5aiShunga@digikod.net>
 References: <20250822170800.2116980-1-mic@digikod.net>
+ <20250826-skorpion-magma-141496988fdc@brauner>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -56,43 +59,60 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20250822170800.2116980-1-mic@digikod.net>
+In-Reply-To: <20250826-skorpion-magma-141496988fdc@brauner>
+X-Infomaniak-Routing: alpha
 
-On Fri, Aug 22, 2025 at 07:07:58PM +0200, Mickaël Salaün wrote:
-> Hi,
+On Tue, Aug 26, 2025 at 11:07:03AM +0200, Christian Brauner wrote:
+> On Fri, Aug 22, 2025 at 07:07:58PM +0200, Mickaël Salaün wrote:
+> > Hi,
+> > 
+> > Script interpreters can check if a file would be allowed to be executed
+> > by the kernel using the new AT_EXECVE_CHECK flag. This approach works
+> > well on systems with write-xor-execute policies, where scripts cannot
+> > be modified by malicious processes. However, this protection may not be
+> > available on more generic distributions.
+> > 
+> > The key difference between `./script.sh` and `sh script.sh` (when using
+> > AT_EXECVE_CHECK) is that execve(2) prevents the script from being opened
+> > for writing while it's being executed. To achieve parity, the kernel
+> > should provide a mechanism for script interpreters to deny write access
+> > during script interpretation. While interpreters can copy script content
+> > into a buffer, a race condition remains possible after AT_EXECVE_CHECK.
+> > 
+> > This patch series introduces a new O_DENY_WRITE flag for use with
+> > open*(2) and fcntl(2). Both interfaces are necessary since script
+> > interpreters may receive either a file path or file descriptor. For
+> > backward compatibility, open(2) with O_DENY_WRITE will not fail on
+> > unsupported systems, while users requiring explicit support guarantees
+> > can use openat2(2).
 > 
-> Script interpreters can check if a file would be allowed to be executed
-> by the kernel using the new AT_EXECVE_CHECK flag. This approach works
-> well on systems with write-xor-execute policies, where scripts cannot
-> be modified by malicious processes. However, this protection may not be
-> available on more generic distributions.
+> We've said no to abusing the O_* flag space for that AT_EXECVE_* stuff
+> before and you've been told by Linus as well that this is a nogo.
+
+Oh, please, don't mix up everything.  First, this is an RFC, and as I
+explained, the goal is to start a discussion with something concrete.
+Second, doing a one-time check on a file and providing guarantees for
+the whole lifetime of an opened file requires different approaches,
+hence this O_ *proposal*.
+
 > 
-> The key difference between `./script.sh` and `sh script.sh` (when using
-> AT_EXECVE_CHECK) is that execve(2) prevents the script from being opened
-> for writing while it's being executed. To achieve parity, the kernel
-> should provide a mechanism for script interpreters to deny write access
-> during script interpretation. While interpreters can copy script content
-> into a buffer, a race condition remains possible after AT_EXECVE_CHECK.
+> Nothing has changed in that regard and I'm not interested in stuffing
+> the VFS APIs full of special-purpose behavior to work around the fact
+> that this is work that needs to be done in userspace. Change the apps,
+> stop pushing more and more cruft into the VFS that has no business
+> there.
+
+It would be interesting to know how to patch user space to get the same
+guarantees...  Do you think I would propose a kernel patch otherwise?
+
 > 
-> This patch series introduces a new O_DENY_WRITE flag for use with
-> open*(2) and fcntl(2). Both interfaces are necessary since script
-> interpreters may receive either a file path or file descriptor. For
-> backward compatibility, open(2) with O_DENY_WRITE will not fail on
-> unsupported systems, while users requiring explicit support guarantees
-> can use openat2(2).
+> That's before we get into all the issues that are introduced by this
+> mechanism that magically makes arbitrary files unwritable. It's not just
+> a DoS it's likely to cause breakage in userspace as well. I removed the
+> deny-write from execve because it already breaks various use-cases or
+> leads to spurious failures in e.g., go. We're not spreading this disease
+> as a first-class VFS API.
 
-We've said no to abusing the O_* flag space for that AT_EXECVE_* stuff
-before and you've been told by Linus as well that this is a nogo.
-
-Nothing has changed in that regard and I'm not interested in stuffing
-the VFS APIs full of special-purpose behavior to work around the fact
-that this is work that needs to be done in userspace. Change the apps,
-stop pushing more and more cruft into the VFS that has no business
-there.
-
-That's before we get into all the issues that are introduced by this
-mechanism that magically makes arbitrary files unwritable. It's not just
-a DoS it's likely to cause breakage in userspace as well. I removed the
-deny-write from execve because it already breaks various use-cases or
-leads to spurious failures in e.g., go. We're not spreading this disease
-as a first-class VFS API.
+Jann explained it very well, and the deny-write for execve is still
+there, but let's keep it civil.  I already agreed that this is not a
+good approach, but we could get interesting proposals.
