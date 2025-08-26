@@ -1,231 +1,199 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-oo1-f45.google.com (mail-oo1-f45.google.com [209.85.161.45])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 63FDE35CEAC;
-	Tue, 26 Aug 2025 14:41:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BC822AD04
+	for <linux-api@vger.kernel.org>; Tue, 26 Aug 2025 15:02:55 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.161.45
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756219261; cv=none; b=ToeWdVFvLmuIo+nd0xQtiMsP95178yKM1WZW/MYDWnTufWE6jZYk6UX6HVIg0OlA5QqII84xLZd8BVp6XVKK+P/u86wR9AxfVPhlcwpK/MjL9epPZOER8Y/5LuzN/C3Zn/uZhMXz0v7CV5tJTjv5aWxld6LPWOfT1aJ8+9ghQGc=
+	t=1756220578; cv=none; b=LL2kHerMXOAMxu+OYwYNjzx90HwFAxmkHMYYYPdFV4wRTeXhlCk13CGbV3PBeYYOmcCygPOxqPaKAa6YLey1icHX4F65HdJ7xauEeuS/jtIkp+QpFC1+QFYf6/9hh+MT1Oq3QDoC/Fj4TV7uOt8/bS8lDcrodhtXYG9HmTQqQyE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756219261; c=relaxed/simple;
-	bh=y12dUb6KC7V9sLod0XI96q4WELtLomp8p21qnxJP86E=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=PJKeDeEY6M6hEq3/qYAsqSoudz8Zyxy5HPaCAZ0wsx8saGnvZ+vU+3OKewyZnH42l2fy4+TToKrxNhGxBoivWrSCtE33UFBsr+dHIYBLqqBdxKilTDNlZ3q4cYKAzcgnSjk/iSv0+aAGTTCmG4/igBHyLycMAmCFtTuoNMjxmGA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b=Lt0yAHIk; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1756220578; c=relaxed/simple;
+	bh=vipNTbGB9wFWdA45CBFqlA3kiRpHyWKU7fupy2TzZxE=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=VDuTFT9WQytOL6sWCA/QQjW2d7BTsCJ0WWm+8/QSPzVVL37Acdn8btHXhPl/dKFrDnt5cR8clrZs/j6EV0jgcIkU+vN2SsvFjhteZ6xDD0tBg09Z8N2tsw/1P/HiZAPlyIQzP0iKIelwzFgQ5SO/+KZMFVhp7WzgF8bzH40tZfI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=K9ZF+v7p; arc=none smtp.client-ip=209.85.161.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linuxfoundation.org header.i=@linuxfoundation.org header.b="Lt0yAHIk"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AE88BC4CEF1;
-	Tue, 26 Aug 2025 14:41:00 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=linuxfoundation.org;
-	s=korg; t=1756219261;
-	bh=y12dUb6KC7V9sLod0XI96q4WELtLomp8p21qnxJP86E=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=Lt0yAHIk7wR9hAde5AO9XHN/e3BIAzevuFL5e0P6Zjd6gVjKdUh/psoWEYayIDhkS
-	 SsZgH3Fd/OLEJRmTK9GO/UTndsdcRayRAhRIjctI90c1UYHBoKuf9qf6YtSYHXkTgR
-	 SbPHb800aQZDC9IIuNdatteFSXi9runJHuDwqwv4=
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-To: stable@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	patches@lists.linux.dev,
-	"Eric W. Biederman" <ebiederm@xmission.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <christian.brauner@ubuntu.com>,
-	Mattias Nissler <mnissler@chromium.org>,
-	Aleksa Sarai <cyphar@cyphar.com>,
-	Andrei Vagin <avagin@gmail.com>,
-	linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	lkml <linux-kernel@vger.kernel.org>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Sasha Levin <sashal@kernel.org>
-Subject: [PATCH 5.4 313/403] move_mount: allow to add a mount into an existing group
-Date: Tue, 26 Aug 2025 13:10:39 +0200
-Message-ID: <20250826110915.464250749@linuxfoundation.org>
-X-Mailer: git-send-email 2.50.1
-In-Reply-To: <20250826110905.607690791@linuxfoundation.org>
-References: <20250826110905.607690791@linuxfoundation.org>
-User-Agent: quilt/0.68
-X-stable: review
-X-Patchwork-Hint: ignore
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="K9ZF+v7p"
+Received: by mail-oo1-f45.google.com with SMTP id 006d021491bc7-61bc52fd7a4so3864624eaf.0
+        for <linux-api@vger.kernel.org>; Tue, 26 Aug 2025 08:02:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=soleen.com; s=google; t=1756220574; x=1756825374; darn=vger.kernel.org;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=a+0PR2fJcjZ6JOVTFgH14262z5rkDGxSbAwbjWWLyng=;
+        b=K9ZF+v7p+72pfwTw6pYAp8gUNmgFmG/Qsy2vzJdBuWGFlAz9o5c5jzGsqIBxwCo7Wn
+         mHUPyb1QYyDY2ZDtXxEP6tmMmrpJ1GnctCQuDH9XT9X+i5ly+tT1auWXULWxX2Yqvj5w
+         lI6ejW8xXCEyEwJPNqUhAuZmkRetbVL3XyE9LWUkYTCuS3xErB6UZsgrcqkPI74taDyC
+         s+XFSpbw1R8fxFp6s1JdudHpplysh2dRmoQdSr8JRTTX3QULw1QA+RXFs2dhBWOwN0m+
+         UfbBaPVFPJq9KbbCKeHG4TiHSH6hnmTlpp0pe6bIn5t+QrgUXram6XosO8qB4bqUThiX
+         u2aA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1756220575; x=1756825375;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to;
+        bh=a+0PR2fJcjZ6JOVTFgH14262z5rkDGxSbAwbjWWLyng=;
+        b=kglsNF+obyNlY9URF+iFOgMmT/R/bJLUIJPU3NEYc3uHYmQhbZt2TH1bri7op52bj9
+         aElzRwi9Ay3ewdZWlf8knCxeV2CcX5Gww4eZnoTHPOhVodgArnj22S9RVCHw93Vtyi31
+         IMSZqP+0C9ohZciL7MWqCp9SRl7I00XgJIMHjAo+pT0eNiQUMMSH7El5LGklx+f/zcVV
+         tCr/XjvOWT2zz2mnyDrfckdKhLHUkqCxoJD2VFUyjx5687qIQxvBVTKMyCtRGH6GrcLZ
+         kYgLbFg8P+Y5xLfEVxxBCPuPo71v6b2nKxRHvu1rDMiq0X/d+aGpupnt1ckzu65UEQaB
+         sg+A==
+X-Forwarded-Encrypted: i=1; AJvYcCWARxPMDYnjtsBHbm2iPfxzAWrytyJiqAVdH6UjCYdG0fuaqnJa8aeJ5obrs6CPqkoRI9OiTAmMg9s=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxAxq4zbAETOz5BSXiHO1yVTgQlK+fBPpawWM72IlLh6b28T7tx
+	I1k5mJ9gVBHrR11Z+2W/CnKlOTHhnbllot8MaYa410AstwBiyQ+Nk9KDNCphbj70xbX9LqmaCVr
+	SYEq4SBrCGoGpck6mtgLTUpyVRx0/5Y96BWBsAya8Eg==
+X-Gm-Gg: ASbGnctvW6Fgx3Os0jihHDby/jrVse/cF6pp5Z1+8WCjzFiIBW70weVNN/IySZP5+IE
+	zFTqq+SQnvLhb26py+2GSL7qimTFiBzpzMVmPSwJErWQop8Z18lSOQ+1fjEajWWRxK5iwl7O2+C
+	hsDwVl1gM30tWIsBHpEj7DWXn927hYgsC9jJNxPVWB1DbKF49zJsnHiCAYQ14/1ZVqGn8G/eDvn
+	Knx
+X-Google-Smtp-Source: AGHT+IGZRoryUW5ksQYVJjIedWGTznIaiVqZiY1Pg/H6rjAtNQNm/14jN2CvpI319rkbtN5Pjbxs+aqTIMSdEzY6AGA=
+X-Received: by 2002:a05:6808:3442:b0:434:b43:d4a3 with SMTP id
+ 5614622812f47-437c543fdd9mr854638b6e.12.1756220572416; Tue, 26 Aug 2025
+ 08:02:52 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+References: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
+ <mafs0ms7mxly1.fsf@kernel.org> <CA+CK2bBoLi9tYWHSFyDEHWd_cwvS_hR4q2HMmg-C+SJpQDNs=g@mail.gmail.com>
+ <20250826142406.GE1970008@nvidia.com>
+In-Reply-To: <20250826142406.GE1970008@nvidia.com>
+From: Pasha Tatashin <pasha.tatashin@soleen.com>
+Date: Tue, 26 Aug 2025 15:02:13 +0000
+X-Gm-Features: Ac12FXyHXPcCjTtFR9AWQQdvDhbej8DQJ5aeFKL6iCSLSRPcL1vtdZDLkhVgq68
+Message-ID: <CA+CK2bBrCd8t_BUeE-sVPGjsJwmtk3mCSVhTMGbseTi_Wk+4yQ@mail.gmail.com>
+Subject: Re: [PATCH v3 00/30] Live Update Orchestrator
+To: Jason Gunthorpe <jgg@nvidia.com>
+Cc: Pratyush Yadav <pratyush@kernel.org>, jasonmiu@google.com, graf@amazon.com, 
+	changyuanl@google.com, rppt@kernel.org, dmatlack@google.com, 
+	rientjes@google.com, corbet@lwn.net, rdunlap@infradead.org, 
+	ilpo.jarvinen@linux.intel.com, kanie@linux.alibaba.com, ojeda@kernel.org, 
+	aliceryhl@google.com, masahiroy@kernel.org, akpm@linux-foundation.org, 
+	tj@kernel.org, yoann.congal@smile.fr, mmaurer@google.com, 
+	roman.gushchin@linux.dev, chenridong@huawei.com, axboe@kernel.dk, 
+	mark.rutland@arm.com, jannh@google.com, vincent.guittot@linaro.org, 
+	hannes@cmpxchg.org, dan.j.williams@intel.com, david@redhat.com, 
+	joel.granados@kernel.org, rostedt@goodmis.org, anna.schumaker@oracle.com, 
+	song@kernel.org, zhangguopeng@kylinos.cn, linux@weissschuh.net, 
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, 
+	gregkh@linuxfoundation.org, tglx@linutronix.de, mingo@redhat.com, 
+	bp@alien8.de, dave.hansen@linux.intel.com, x86@kernel.org, hpa@zytor.com, 
+	rafael@kernel.org, dakr@kernel.org, bartosz.golaszewski@linaro.org, 
+	cw00.choi@samsung.com, myungjoo.ham@samsung.com, yesanishhere@gmail.com, 
+	Jonathan.Cameron@huawei.com, quic_zijuhu@quicinc.com, 
+	aleksander.lobakin@intel.com, ira.weiny@intel.com, 
+	andriy.shevchenko@linux.intel.com, leon@kernel.org, lukas@wunner.de, 
+	bhelgaas@google.com, wagi@kernel.org, djeffery@redhat.com, 
+	stuart.w.hayes@gmail.com, lennart@poettering.net, brauner@kernel.org, 
+	linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, saeedm@nvidia.com, 
+	ajayachandra@nvidia.com, parav@nvidia.com, leonro@nvidia.com, witu@nvidia.com
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-5.4-stable review patch.  If anyone has any objections, please let me know.
+On Tue, Aug 26, 2025 at 2:24=E2=80=AFPM Jason Gunthorpe <jgg@nvidia.com> wr=
+ote:
+>
+> On Tue, Aug 26, 2025 at 01:54:31PM +0000, Pasha Tatashin wrote:
+> > > > https://github.com/googleprodkernel/linux-liveupdate/tree/luo/v3
+> > > >
+> > > > Changelog from v2:
+> > > > - Addressed comments from Mike Rapoport and Jason Gunthorpe
+> > > > - Only one user agent (LiveupdateD) can open /dev/liveupdate
+> > > > - With the above changes, sessions are not needed, and should be
+> > > >   maintained by the user-agent itself, so removed support for
+> > > >   sessions.
+> > >
+> > > If all the FDs are restored in the agent's context, this assigns all =
+the
+> > > resources to the agent. For example, if the agent restores a memfd, a=
+ll
+> > > the memory gets charged to the agent's cgroup, and the client gets no=
+ne
+> > > of it. This makes it impossible to do any kind of resource limits.
+> > >
+> > > This was one of the advantages of being able to pass around sessions
+> > > instead of FDs. The agent can pass on the right session to the right
+> > > client, and then the client does the restore, getting all the resourc=
+es
+> > > charged to it.
+> > >
+> > > If we don't allow this, I think we will make LUO/LiveupdateD unsuitab=
+le
+> > > for many kinds of workloads. Do you have any ideas on how to do prope=
+r
+> > > resource attribution with the current patches? If not, then perhaps w=
+e
+> > > should reconsider this change?
+> >
+> > Hi Pratyush,
+> >
+> > That's an excellent point, and you're right that we must have a
+> > solution for correct resource charging.
+> >
+> > I'd prefer to keep the session logic in the userspace agent (luod
+> > https://tinyurl.com/luoddesign).
+> >
+> > For the charging problem, I believe there's a clear path forward with
+> > the current ioctl-based API. The design of the ioctl commands (with a
+> > size field in each struct) is intentionally extensible. In a follow-up
+> > patch, we can extend the liveupdate_ioctl_fd_restore struct to include
+> > a target pid field. The luod agent, would then be able to restore an
+> > FD on behalf of a client and instruct the kernel to charge the
+> > associated resources to that client's PID.
+>
+> This wasn't quite the idea though..
+>
+> The sessions sub FD were intended to be passed directly to other
+> processes though unix sockets and fd passing so they could run their
+> own ioctls in their own context for both save and restore. The ioctls
+> available on the sessions should be specifically narrowed to be safe
+> for this.
+>
+> I can understand not implementing session FDs in the first version,
+> but when sessions FD are available they should work like this and
+> solve the namespace/cgroup/etc issues.
+>
+> Passing some PID in an ioctl is not a great idea...
 
-------------------
+Hi Jason,
 
-From: Pavel Tikhomirov <ptikhomirov@virtuozzo.com>
+I'm trying to understand the drawbacks of the PID-based approach.
+Could you elaborate on why passing a PID in the RESTORE_FD ioctl is
+not a good idea?
 
-[ Upstream commit 9ffb14ef61bab83fa818736bf3e7e6b6e182e8e2 ]
+From my perspective, luod would have a live, open socket to the client
+process requesting the restore. It can use SO_PEERCRED to securely
+identify the client's PID at that moment. The flow would be:
 
-Previously a sharing group (shared and master ids pair) can be only
-inherited when mount is created via bindmount. This patch adds an
-ability to add an existing private mount into an existing sharing group.
+1. Client connects and resumes its session with luod.
+2. Client requests to restore TOKEN_X.
+3. luod verifies the client owns TOKEN_X for its session.
+4. luod calls the RESTORE_FD ioctl, telling the kernel: "Please
+restore TOKEN_X and charge the resources to PID Y (which I just
+verified is on the other end of this socket)."
+5. The kernel performs the action.
+6. luod receives the new FD from the kernel and passes it back to the
+client over the socket.
 
-With this functionality one can first create the desired mount tree from
-only private mounts (without the need to care about undesired mount
-propagation or mount creation order implied by sharing group
-dependencies), and next then setup any desired mount sharing between
-those mounts in tree as needed.
+In this flow, the client isn't providing an arbitrary PID; the trusted
+luod agent is providing the PID of a process it has an active
+connection with.
 
-This allows CRIU to restore any set of mount namespaces, mount trees and
-sharing group trees for a container.
+The idea was to let luod handle the session/security story, and the
+kernel handle the core preservation mechanism. Adding sessions to the
+kernel, delegates the management and part of the security model into
+the kernel. I am not sure if it is necessary, what can be cleanly
+managed in userspace should stay in userspace.
 
-We have many issues with restoring mounts in CRIU related to sharing
-groups and propagation:
-- reverse sharing groups vs mount tree order requires complex mounts
-  reordering which mostly implies also using some temporary mounts
-(please see https://lkml.org/lkml/2021/3/23/569 for more info)
-
-- mount() syscall creates tons of mounts due to propagation
-- mount re-parenting due to propagation
-- "Mount Trap" due to propagation
-- "Non Uniform" propagation, meaning that with different tricks with
-  mount order and temporary children-"lock" mounts one can create mount
-  trees which can't be restored without those tricks
-(see https://www.linuxplumbersconf.org/event/7/contributions/640/)
-
-With this new functionality we can resolve all the problems with
-propagation at once.
-
-Link: https://lore.kernel.org/r/20210715100714.120228-1-ptikhomirov@virtuozzo.com
-Cc: Eric W. Biederman <ebiederm@xmission.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Mattias Nissler <mnissler@chromium.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Andrei Vagin <avagin@gmail.com>
-Cc: linux-fsdevel@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Cc: lkml <linux-kernel@vger.kernel.org>
-Co-developed-by: Andrei Vagin <avagin@gmail.com>
-Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
-Signed-off-by: Pavel Tikhomirov <ptikhomirov@virtuozzo.com>
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-Stable-dep-of: cffd0441872e ("use uniform permission checks for all mount propagation changes")
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- fs/namespace.c             | 77 +++++++++++++++++++++++++++++++++++++-
- include/uapi/linux/mount.h |  3 +-
- 2 files changed, 78 insertions(+), 2 deletions(-)
-
-diff --git a/fs/namespace.c b/fs/namespace.c
-index ee5a87061f20..3c1afe60d438 100644
---- a/fs/namespace.c
-+++ b/fs/namespace.c
-@@ -2624,6 +2624,78 @@ static bool check_for_nsfs_mounts(struct mount *subtree)
- 	return ret;
- }
- 
-+static int do_set_group(struct path *from_path, struct path *to_path)
-+{
-+	struct mount *from, *to;
-+	int err;
-+
-+	from = real_mount(from_path->mnt);
-+	to = real_mount(to_path->mnt);
-+
-+	namespace_lock();
-+
-+	err = -EINVAL;
-+	/* To and From must be mounted */
-+	if (!is_mounted(&from->mnt))
-+		goto out;
-+	if (!is_mounted(&to->mnt))
-+		goto out;
-+
-+	err = -EPERM;
-+	/* We should be allowed to modify mount namespaces of both mounts */
-+	if (!ns_capable(from->mnt_ns->user_ns, CAP_SYS_ADMIN))
-+		goto out;
-+	if (!ns_capable(to->mnt_ns->user_ns, CAP_SYS_ADMIN))
-+		goto out;
-+
-+	err = -EINVAL;
-+	/* To and From paths should be mount roots */
-+	if (from_path->dentry != from_path->mnt->mnt_root)
-+		goto out;
-+	if (to_path->dentry != to_path->mnt->mnt_root)
-+		goto out;
-+
-+	/* Setting sharing groups is only allowed across same superblock */
-+	if (from->mnt.mnt_sb != to->mnt.mnt_sb)
-+		goto out;
-+
-+	/* From mount root should be wider than To mount root */
-+	if (!is_subdir(to->mnt.mnt_root, from->mnt.mnt_root))
-+		goto out;
-+
-+	/* From mount should not have locked children in place of To's root */
-+	if (has_locked_children(from, to->mnt.mnt_root))
-+		goto out;
-+
-+	/* Setting sharing groups is only allowed on private mounts */
-+	if (IS_MNT_SHARED(to) || IS_MNT_SLAVE(to))
-+		goto out;
-+
-+	/* From should not be private */
-+	if (!IS_MNT_SHARED(from) && !IS_MNT_SLAVE(from))
-+		goto out;
-+
-+	if (IS_MNT_SLAVE(from)) {
-+		struct mount *m = from->mnt_master;
-+
-+		list_add(&to->mnt_slave, &m->mnt_slave_list);
-+		to->mnt_master = m;
-+	}
-+
-+	if (IS_MNT_SHARED(from)) {
-+		to->mnt_group_id = from->mnt_group_id;
-+		list_add(&to->mnt_share, &from->mnt_share);
-+		lock_mount_hash();
-+		set_mnt_shared(to);
-+		unlock_mount_hash();
-+	}
-+
-+	err = 0;
-+out:
-+	namespace_unlock();
-+	return err;
-+}
-+
- static int do_move_mount(struct path *old_path, struct path *new_path)
- {
- 	struct mnt_namespace *ns;
-@@ -3583,7 +3655,10 @@ SYSCALL_DEFINE5(move_mount,
- 	if (ret < 0)
- 		goto out_to;
- 
--	ret = do_move_mount(&from_path, &to_path);
-+	if (flags & MOVE_MOUNT_SET_GROUP)
-+		ret = do_set_group(&from_path, &to_path);
-+	else
-+		ret = do_move_mount(&from_path, &to_path);
- 
- out_to:
- 	path_put(&to_path);
-diff --git a/include/uapi/linux/mount.h b/include/uapi/linux/mount.h
-index 96a0240f23fe..535ca707dfd7 100644
---- a/include/uapi/linux/mount.h
-+++ b/include/uapi/linux/mount.h
-@@ -70,7 +70,8 @@
- #define MOVE_MOUNT_T_SYMLINKS		0x00000010 /* Follow symlinks on to path */
- #define MOVE_MOUNT_T_AUTOMOUNTS		0x00000020 /* Follow automounts on to path */
- #define MOVE_MOUNT_T_EMPTY_PATH		0x00000040 /* Empty to path permitted */
--#define MOVE_MOUNT__MASK		0x00000077
-+#define MOVE_MOUNT_SET_GROUP		0x00000100 /* Set sharing group instead */
-+#define MOVE_MOUNT__MASK		0x00000177
- 
- /*
-  * fsopen() flags.
--- 
-2.50.1
+Thanks,
+Pasha
 
 
-
+>
+> Jason
