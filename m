@@ -1,36 +1,36 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 77BBC32F75C;
-	Mon,  1 Sep 2025 17:01:50 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2C59A306492;
+	Mon,  1 Sep 2025 17:11:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1756746110; cv=none; b=mZ/F/QdVkm9N70qguuWlGvmk/j3B3wsGKnR4CfahUmhwH6f2b8Z8a/hSmYqIIMKawPz61ReS4MU362QsgdouS6CIdOrqyVRtSXZi1R56MElW//2igsFB8PvjKt9KMiTRT80Hw5ynZnTYGevElv8U6a7/pTNzWFpzWxNgEtyRmQY=
+	t=1756746666; cv=none; b=gES8A/shU2vYcdYfO/Rf9Pz9ZNnDkwLZ5ad1gqqQbxGy5MYts+QIxvONSv+8Jf9HvrigzMnq28p6Qx0LZCL5HcaNykhOPxxtZaBdZReKDVkYkV4uD7flDadUFc6Esitbu1udCH7SkP7z1Hg9GNjTEF/aqSUd4ZR1RhAuOhMnHOQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1756746110; c=relaxed/simple;
-	bh=Xid0o6B2H0awNyRJaNWd4FT6j6sbVMwx8IaWar55E1A=;
+	s=arc-20240116; t=1756746666; c=relaxed/simple;
+	bh=4H0TvV5SATbPpUhZV/kpTrbxsbMRGPlfcGGMf566Pzg=;
 	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
-	 MIME-Version:Content-Type; b=sixnMaprzoXQPNh1DF3GRtaf5+50NauTttQEu4W7VPSQOf+6bDQPrZy44fBiP8jTA3xLsIYEVbOeRLhtz9MCaMI17W2scBavAKE5+0X1HANoAxBaN+F3Pt/L0cEZPlEa3JDUlePMD4VCzDwc9hmUPaeqVyugJOyxyLA7D+G8UUg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=A8kA9PWJ; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version:Content-Type; b=P5rMcy/J9vUgWL5tMKlq0/cHEbOU+JzIz23JsnhjLkcBPIgTRsnIJuqPDSA2KKh5JSxof9N6zpaPlnCExVBWw8fZTGnW9naloHZpUaEzua650R+vaE5LcbGqRROnr9ZO3uQLd4zY7eAPypjPH9sNYd2yemVIi18TA6zfyjRKGiM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TUUI4mWI; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="A8kA9PWJ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C4D11C4CEF0;
-	Mon,  1 Sep 2025 17:01:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TUUI4mWI"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 20273C4CEF0;
+	Mon,  1 Sep 2025 17:10:54 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1756746110;
-	bh=Xid0o6B2H0awNyRJaNWd4FT6j6sbVMwx8IaWar55E1A=;
+	s=k20201202; t=1756746665;
+	bh=4H0TvV5SATbPpUhZV/kpTrbxsbMRGPlfcGGMf566Pzg=;
 	h=From:To:Cc:Subject:In-Reply-To:References:Date:From;
-	b=A8kA9PWJsKdpYQ2CpBqzkOfqBwEeEF4/2ZT4gBaEtbBfff2ixrbCh57x0BX3PL1Q/
-	 LRcsPWqd+g4xHYH+APQddZHFzqVWwZtUGJUL2ugp7dNJ1M1NQ0kWAey74Ljdd8rPfU
-	 ZvXvt45+3GFJD7X0CdQALwh2fmjLib0nmKVV44Q/jVNYJ91jBDD1ekyWQYEPwFNhRr
-	 J4nVEA23qJollhtoj3dgmfuLPd4lPGfQRvyFL4gH+tTmPZ1S4lMR6JZk2fC2OZNJqo
-	 DYuErBJZvCnW6V2ChlHm3UiUC2OzRxbT3tqer9lZp7wib/mCTkg6T5qSjex029nZPr
-	 /XWqER5/3Pu+A==
+	b=TUUI4mWIbQYkLpKOkdoxxSUBAWTkDGIYzdhS0o8slwr8l2r1Piu0dUL/l4nBep+rG
+	 0yJmQw4jAg/OFnBDLBuTCbytHtcsfNnnUgNkZT3gLgEb3ShbgGVAKwQxkOyPSP18C8
+	 7llU/i7XIFhO9U0XbVOYJRMrxGrbX605fmK7MccA+FrMFzq540oBoLsId10kVkUbl0
+	 lAs6X6RqdrVdsl02+4MM4ddwO3muSKKRwdLGGmbbS8cho5TRe0jnQdsfS22uYIMObg
+	 eUQz4JMDeISgSUyU3IB3lnscaMdUMFfjTXMsM05sKQlT4UprJfC0pJ8VwXpakPhqL8
+	 FF3vY5xHeeBDA==
 From: Pratyush Yadav <pratyush@kernel.org>
-To: Mike Rapoport <rppt@kernel.org>
-Cc: Jason Gunthorpe <jgg@nvidia.com>,  Pasha Tatashin
- <pasha.tatashin@soleen.com>,  pratyush@kernel.org,  jasonmiu@google.com,
-  graf@amazon.com,  changyuanl@google.com,  dmatlack@google.com,
+To: Jason Gunthorpe <jgg@nvidia.com>
+Cc: Pratyush Yadav <pratyush@kernel.org>,  Pasha Tatashin
+ <pasha.tatashin@soleen.com>,  jasonmiu@google.com,  graf@amazon.com,
+  changyuanl@google.com,  rppt@kernel.org,  dmatlack@google.com,
   rientjes@google.com,  corbet@lwn.net,  rdunlap@infradead.org,
   ilpo.jarvinen@linux.intel.com,  kanie@linux.alibaba.com,
   ojeda@kernel.org,  aliceryhl@google.com,  masahiroy@kernel.org,
@@ -56,12 +56,13 @@ Cc: Jason Gunthorpe <jgg@nvidia.com>,  Pasha Tatashin
   saeedm@nvidia.com,  ajayachandra@nvidia.com,  parav@nvidia.com,
   leonro@nvidia.com,  witu@nvidia.com
 Subject: Re: [PATCH v3 29/30] luo: allow preserving memfd
-In-Reply-To: <aLXIcUwt0HVzRpYW@kernel.org>
+In-Reply-To: <20250828124320.GB7333@nvidia.com>
 References: <20250807014442.3829950-1-pasha.tatashin@soleen.com>
 	<20250807014442.3829950-30-pasha.tatashin@soleen.com>
-	<20250826162019.GD2130239@nvidia.com> <aLXIcUwt0HVzRpYW@kernel.org>
-Date: Mon, 01 Sep 2025 19:01:38 +0200
-Message-ID: <mafs0ldmyw1hp.fsf@kernel.org>
+	<20250826162019.GD2130239@nvidia.com> <mafs0bjo0yffo.fsf@kernel.org>
+	<20250828124320.GB7333@nvidia.com>
+Date: Mon, 01 Sep 2025 19:10:53 +0200
+Message-ID: <mafs0h5xmw12a.fsf@kernel.org>
 User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
@@ -71,71 +72,80 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain
 
-Hi Mike,
+Hi Jason,
 
-On Mon, Sep 01 2025, Mike Rapoport wrote:
+On Thu, Aug 28 2025, Jason Gunthorpe wrote:
 
-> On Tue, Aug 26, 2025 at 01:20:19PM -0300, Jason Gunthorpe wrote:
->> On Thu, Aug 07, 2025 at 01:44:35AM +0000, Pasha Tatashin wrote:
->> 
->> > +	/*
->> > +	 * Most of the space should be taken by preserved folios. So take its
->> > +	 * size, plus a page for other properties.
->> > +	 */
->> > +	fdt = memfd_luo_create_fdt(PAGE_ALIGN(preserved_size) + PAGE_SIZE);
->> > +	if (!fdt) {
->> > +		err = -ENOMEM;
->> > +		goto err_unpin;
->> > +	}
->> 
->> This doesn't seem to have any versioning scheme, it really should..
->> 
->> > +	err = fdt_property_placeholder(fdt, "folios", preserved_size,
->> > +				       (void **)&preserved_folios);
->> > +	if (err) {
->> > +		pr_err("Failed to reserve folios property in FDT: %s\n",
->> > +		       fdt_strerror(err));
->> > +		err = -ENOMEM;
->> > +		goto err_free_fdt;
->> > +	}
->> 
->> Yuk.
->> 
->> This really wants some luo helper
->> 
->> 'luo alloc array'
->> 'luo restore array'
->> 'luo free array'
+> On Wed, Aug 27, 2025 at 05:03:55PM +0200, Pratyush Yadav wrote:
 >
-> We can just add kho_{preserve,restore}_vmalloc(). I've drafted it here:
-> https://git.kernel.org/pub/scm/linux/kernel/git/rppt/linux.git/log/?h=kho/vmalloc/v1
+>> I think we need something a luo_xarray data structure that users like
+>> memfd (and later hugetlb and guest_memfd and maybe others) can build to
+>> make serialization easier. It will cover both contiguous arrays and
+>> arrays with some holes in them.
 >
-> Will wait for kbuild and then send proper patches.
+> I'm not sure xarray is the right way to go, it is very complex data
+> structure and building a kho variation of it seems like it is a huge
+> amount of work.
+>
+> I'd stick with simple kvalloc type approaches until we really run into
+> trouble.
+>
+> You can always map a sparse xarray into a kvalloc linear list by
+> including the xarray index in each entry.
+>
+> Especially for memfd where we don't actually expect any sparsity in
+> real uses cases there is no reason to invest a huge effort to optimize
+> for it..
 
-I have been working on something similar, but in a more generic way.
+Full xarray is too complex, sure. But I think a simple sparse array with
+xarray-like properties (4-byte pointers, values using xa_mk_value()) is
+fairly simple to implement. More advanced features of xarray like
+multi-index entries can be added later if needed.
 
-I have implemented a sparse KHO-preservable array (called kho_array)
-with xarray like properties. It can take in 4-byte aligned pointers and
-supports saving non-pointer values similar to xa_mk_value(). For now it
-doesn't support multi-index entries, but if needed the data format can
-be extended to support it as well.
+In fact, I have a WIP version of such an array and have used it for
+memfd preservation, and it looks quite alright to me. You can find the
+code at [0]. It is roughly 300 lines of code. I still need to clean it
+up to make it post-able, but it does work.
 
-The structure is very similar to what you have implemented. It uses a
-linked list of pages with some metadata at the head of each page.
-
-I have used it for memfd preservation, and I think it is quite
-versatile. For example, your kho_preserve_vmalloc() can be very easily
-built on top of this kho_array by simply saving each physical page
-address at consecutive indices in the array.
-
-The code is still WIP and currently a bit hacky, but I will clean it up
-in a couple days and I think it should be ready for posting. You can
-find the current version at [0][1]. Would be good to hear your thoughts,
-and if you agree with the approach, I can also port
-kho_preserve_vmalloc() to work on top of kho_array as well.
+Building kvalloc on top of this becomes trivial.
 
 [0] https://git.kernel.org/pub/scm/linux/kernel/git/pratyush/linux.git/commit/?h=kho-array&id=cf4c04c1e9ac854e3297018ad6dada17c54a59af
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/pratyush/linux.git/commit/?h=kho-array&id=5eb0d7316274a9c87acaeedd86941979fc4baf96
+
+>
+>> As I explained above, the versioning is already there. Beyond that, why
+>> do you think a raw C struct is better than FDT? It is just another way
+>> of expressing the same information. FDT is a bit more cumbersome to
+>> write and read, but comes at the benefit of more introspect-ability.
+>
+> Doesn't have the size limitations, is easier to work list, runs
+> faster.
+>
+>> >  luo_store_object(&memfd_luo_v0, sizeof(memfd_luo_v0), <.. identifier for this fd..>, /*version=*/0);
+>> >  luo_store_object(&memfd_luo_v1, sizeof(memfd_luo_v1), <.. identifier for this fd..>, /*version=*/1);
+>> 
+>> I think what you describe here is essentially how LUO works currently,
+>> just that the mechanisms are a bit different.
+>
+> The bit different is a very important bit though :)
+>
+> The versioning should be first class, not hidden away as some emergent
+> property of registering multiple serializers or something like that.
+
+That makes sense. How about some simple changes to the LUO interfaces to
+make the version more prominent:
+
+	int (*prepare)(struct liveupdate_file_handler *handler,
+		       struct file *file, u64 *data, char **compatible);
+
+This lets the subsystem fill in the compatible (AKA version) (string
+here, but you can make it an integer if you want) when it serialized its
+data.
+
+And on restore side, LUO can pass in the compatible:
+
+	int (*retrieve)(struct liveupdate_file_handler *handler,
+			u64 data, char *compatible, struct file **file);
+
 
 -- 
 Regards,
