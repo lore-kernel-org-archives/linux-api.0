@@ -1,104 +1,192 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA0D0258ED7;
-	Wed, 17 Sep 2025 03:23:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBDE634BA41
+	for <linux-api@vger.kernel.org>; Wed, 17 Sep 2025 16:05:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1758079397; cv=none; b=nfxz/RjrDWDb385jsNe32OxBddOjR1uPN+ftHnjPxjsPzxyHoc0UjKUQd7Bqp7VKgITbNWnDEU+b+K0uhrhqumM3LoQ/CMXpLBQIG4JGH9DB51XICvTnJHYr3jiUSZGM4AamXjkzJmWQGGHYiSsKsowLmbLVRBCNRg2/RBGRFkY=
+	t=1758125110; cv=none; b=cL4zh4AkOoJgRwCa8LoqzE25as/rva7zxT237AUeWTus0H76+J6t4G53pK2mlXA/EaOSaTHyyUVC2Qwwu8jM1dFwZBFr7f+tYKtZqM7M1n6eKrGRyBKftW5Vm3g2A09EVZIeG95tMOyP3z0azjRSLTvf+Wy7+4A+86J67lF7qGQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1758079397; c=relaxed/simple;
-	bh=s+Ah/AAHowwzNuuce/f6c/Q+zdGsP5DuTh81rmB8SBY=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=EOwPCwsnQwJ83eSswwcG/cT/c9zKm48Owj6YitipNzv4b5ssmDDZDusyyx7hRiVjl0HAY6X0vRbPuAOqH1VV6a5lLq26k2tFp4FI17oUwRPbS3ZOn0uFoSG3UoL1c4cQi/S7FdcYE0uVvlzDW9a4VMtF6n8BIBoCO8ZnHJo/TBg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=kzpLhge5; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1758125110; c=relaxed/simple;
+	bh=cjKoV1Ml2mdg973m1JTZsn9Z7R153MdyGnB9Arxg8O4=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=k19UY0mAoWtRO0nQ8JpzgFcG6r647tQRBUqhUubyBReJM8lpgw0pKusHqyz8U+1qCb+Asi4oa08KT7zkR0EaIg/srBQWHjnMu1uU0gpWhfbBDi8UySfNzbGzor6Jwj/DYvsXKZ/GjtbsbcRZmmblvhxWrrIuI9s0OCQFU+7A9ec=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=aasZvccv; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=8HcnzO2j; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Bp5DW7yS; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=4Z/4/W/y; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="kzpLhge5"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 4F0FBC4CEEB;
-	Wed, 17 Sep 2025 03:23:17 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1758079397;
-	bh=s+Ah/AAHowwzNuuce/f6c/Q+zdGsP5DuTh81rmB8SBY=;
-	h=From:Subject:Date:To:Cc:Reply-To:From;
-	b=kzpLhge5r2L72RZTlSC0Z4wFQ3CexEEasITaBc1BLgPmd21JW5o71p6AGXCQQ9/Nq
-	 76zoj0hNNExfPvJ+/uXeAykbrRFFfAgKqjAUVqeK1eVYccVYUo/FKzC3FVbB9qZsch
-	 fD9/H9Lo4sgbZU0d3raP19CxICiDEfun3kKOg8slkFr0rruknXsNf71eaF0zYHMLlD
-	 9NqBMbVueWVwOA0Xx7wf3ywd6uJcEV87WXIsIiEfyb66roE5OWymA36BfSkZQqfVez
-	 MQb8oB2ZCmmnPREVv35WqZGmMEulYulL4cdayYUzcIfJMI4FqjWDp0YE41I0HVeKPT
-	 03AhHKECsyJHQ==
-Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3C0A3CAC59A;
-	Wed, 17 Sep 2025 03:23:17 +0000 (UTC)
-From: Theodore Ts'o via B4 Relay <devnull+tytso.mit.edu@kernel.org>
-Subject: [PATCH v2 0/3] ext4: Add support for mounted updates to the
- superblock via an ioctl
-Date: Tue, 16 Sep 2025 23:22:46 -0400
-Message-Id: <20250916-tune2fs-v2-0-d594dc7486f0@mit.edu>
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="aasZvccv";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="8HcnzO2j";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Bp5DW7yS";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="4Z/4/W/y"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id DE67B33BAE;
+	Wed, 17 Sep 2025 16:05:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1758125107; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C2R25L5oz2gyvUsf4Zn8S0eWF+OxAm+fOvyZd8KgMG4=;
+	b=aasZvccvU8K7aEDNw5B4/B2hoCjFHLcjGdG9lt2hUEjTmW1aasSizcN6fzEn/PYwC2y707
+	MzXtf1hZ8mVMVB6nYIzGIpkumHjKMzy7qDPVhE/0bK1mDGY7z1yNzE9qeNqtXkwHx8i5fk
+	u0WGKzDkU0sgDg/ZeaoPP5ymbiT+Uz4=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1758125107;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C2R25L5oz2gyvUsf4Zn8S0eWF+OxAm+fOvyZd8KgMG4=;
+	b=8HcnzO2jRt+t3R8C9K3ZH95WM3ocZFfQU6pqLRzm3Trh3vA/0E6sQkeUXJHdravHRxit/x
+	5GFgMMWDYqTJ7rAw==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1758125106; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C2R25L5oz2gyvUsf4Zn8S0eWF+OxAm+fOvyZd8KgMG4=;
+	b=Bp5DW7ySIzRxPqZkRClHtj5mgfTpbYah6iewEiJLzhydcxZfzNupFyJ9Yr1jDhYzkm3Nq+
+	YDW6zSQiyg9D3Yegbp9V8hOHqW6a7xL5bXeP7Jq/nPm6AMvq0cYUVO7fMf2nelxWEd0QQw
+	XXqt5mxXxmNtHraqoG/g/tPThtObVcA=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1758125106;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=C2R25L5oz2gyvUsf4Zn8S0eWF+OxAm+fOvyZd8KgMG4=;
+	b=4Z/4/W/yKRBzPq2DJuG1y+LGwowctDZ9K4/8Vcf2+ihr6EtDQrYKXtf2tgFX1pFEbDsQFJ
+	a0IlA7OOze76+pAA==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id D0838137C3;
+	Wed, 17 Sep 2025 16:05:06 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id hzCGMjLcymiLKgAAD6G6ig
+	(envelope-from <jack@suse.cz>); Wed, 17 Sep 2025 16:05:06 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id 89C24A083B; Wed, 17 Sep 2025 18:05:06 +0200 (CEST)
+Date: Wed, 17 Sep 2025 18:05:06 +0200
+From: Jan Kara <jack@suse.cz>
+To: tytso@mit.edu
+Cc: linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, 
+	stable@vger.kernel.org
+Subject: Re: [PATCH v2 1/3] ext4: avoid potential buffer over-read in
+ parse_apply_sb_mount_options()
+Message-ID: <ik565ztp7s7zyhiog6n52zxylybtkkael6opfrmtvtf6su34iw@zho5dlhfvibq>
+References: <20250916-tune2fs-v2-0-d594dc7486f0@mit.edu>
+ <20250916-tune2fs-v2-1-d594dc7486f0@mit.edu>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-X-B4-Tracking: v=1; b=H4sIAIYpymgC/z3MQQ6CMBCF4auQWVtTOhaoK+9hWIBMZRYW05ZGQ
- 3p3KyYu/5eXb4NAninAudrAU+LAiyuhDhXc5sHdSfBUGpRUWnYoRVwdKRsEYtuMNLbqJBHK++n
- J8muXrn3pmUNc/HuHU/1df4aR3d9ItZCCcGiMMhZR68uD45GmFfqc8wfvNwsPnAAAAA==
-X-Change-ID: 20250830-tune2fs-3376beb72403
-To: tytso@mit.edu
-Cc: linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, 
- stable@vger.kernel.org
-X-Mailer: b4 0.14.2
-X-Developer-Signature: v=1; a=openpgp-sha256; l=1459; i=tytso@mit.edu;
- h=from:subject:message-id;
- bh=s+Ah/AAHowwzNuuce/f6c/Q+zdGsP5DuTh81rmB8SBY=;
- b=owEBbQGS/pANAwAIAfL5WVaVDYGjAcsmYgBoyimjM4Q785OEKu5sS5LIuhYhQqyZ/H7GzG6P4
- nHx/gaBbaCJATMEAAEIAB0WIQQrablU2/4IeSiBN8ny+VlWlQ2BowUCaMopowAKCRDy+VlWlQ2B
- o3dRB/9NpXGyTbbc0Uf8y4v3AtNFRwxLY/srg37XORX9wOm/lAn2ZpAfIWhMGSFmPLzSpJgkTen
- 8suE4uFvY+v+NLMDq3EPOFzVETckm+rjGTXU+m9FtD/TZKTfhQUiZcItf1CmBQ23ZcQplXuq00n
- crc4oUdEKw6ikCXCyQSQUXEVld0idq2Siknairp57zCZRIgP4pjj3HIKDNGb2ycWoTDV/nmT/lW
- Ui8QGlDk4wHSvX1g/BqWmAR/wMi1RBdaYinnODJKmIEsoNzBU7AJzpv8Wgxr7FPzTNIHwKmJ4j7
- PUioF0yqeJu/MG9ZvEHFcYNaP8XshrCLHQaYZJCwsS5qDACy
-X-Developer-Key: i=tytso@mit.edu; a=openpgp;
- fpr=3AB057B7E78D945C8C5591FBD36F769BC11804F0
-X-Endpoint-Received: by B4 Relay for tytso@mit.edu/default with auth_id=517
-X-Original-From: Theodore Ts'o <tytso@mit.edu>
-Reply-To: tytso@mit.edu
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20250916-tune2fs-v2-1-d594dc7486f0@mit.edu>
+X-Spamd-Result: default: False [-3.80 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-0.998];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	ARC_NA(0.00)[];
+	MISSING_XM_UA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	FUZZY_RATELIMITED(0.00)[rspamd.com];
+	RCVD_COUNT_THREE(0.00)[3];
+	FROM_HAS_DN(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	FROM_EQ_ENVFROM(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	TO_DN_NONE(0.00)[];
+	RCVD_TLS_LAST(0.00)[];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.cz:email,suse.com:email]
+X-Spam-Flag: NO
+X-Spam-Level: 
+X-Spam-Score: -3.80
 
-This patch series enables a future version of tune2fs to be able to
-modify certain parts of the ext4 superblock without to write to the
-block device.
+On Tue 16-09-25 23:22:47, Theodore Ts'o via B4 Relay wrote:
+> From: Theodore Ts'o <tytso@mit.edu>
+> 
+> Unlike other strings in the ext4 superblock, we rely on tune2fs to
+> make sure s_mount_opts is NUL terminated.  Harden
+> parse_apply_sb_mount_options() by treating s_mount_opts as a potential
+> __nonstring.
+> 
+> Cc: stable@vger.kernel.org
+> Fixes: 8b67f04ab9de ("ext4: Add mount options in superblock")
+> Signed-off-by: Theodore Ts'o <tytso@mit.edu>
 
-The first patch fixes a potential buffer overrun caused by a
-maliciously moified superblock.  The second patch adds support for
-32-bit uid and gid's which can have access to the reserved blocks pool.
-The last patch adds the ioctl's which will be used by tune2fs.
+Looks good. Feel free to add:
 
-Signed-off-by: Theodore Ts'o <tytso@mit.edu>
----
-Changes in v2:
-- fix bugs that were detected using sparse
-- remove tune (unsafe) ability to clear certain compat faatures
-- add the ability to set the encoding and encoding flags for case folding
-- Link to v1: https://lore.kernel.org/r/20250908-tune2fs-v1-0-e3a6929f3355@mit.edu
+Reviewed-by: Jan Kara <jack@suse.cz>
 
----
-Theodore Ts'o (3):
-      ext4: avoid potential buffer over-read in parse_apply_sb_mount_options()
-      ext4: add support for 32-bit default reserved uid and gid values
-      ext4: implemet new ioctls to set and get superblock parameters
+								Honza
 
- fs/ext4/ext4.h            |  16 +++-
- fs/ext4/ioctl.c           | 312 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--
- fs/ext4/super.c           |  25 +++----
- include/uapi/linux/ext4.h |  53 +++++++++++++
- 4 files changed, 382 insertions(+), 24 deletions(-)
----
-base-commit: b320789d6883cc00ac78ce83bccbfe7ed58afcf0
-change-id: 20250830-tune2fs-3376beb72403
-
-Best regards,
+> ---
+>  fs/ext4/super.c | 17 +++++------------
+>  1 file changed, 5 insertions(+), 12 deletions(-)
+> 
+> diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+> index 699c15db28a82f26809bf68533454a242596f0fd..94c98446c84f9a4614971d246ca7f001de610a8a 100644
+> --- a/fs/ext4/super.c
+> +++ b/fs/ext4/super.c
+> @@ -2460,7 +2460,7 @@ static int parse_apply_sb_mount_options(struct super_block *sb,
+>  					struct ext4_fs_context *m_ctx)
+>  {
+>  	struct ext4_sb_info *sbi = EXT4_SB(sb);
+> -	char *s_mount_opts = NULL;
+> +	char s_mount_opts[65];
+>  	struct ext4_fs_context *s_ctx = NULL;
+>  	struct fs_context *fc = NULL;
+>  	int ret = -ENOMEM;
+> @@ -2468,15 +2468,11 @@ static int parse_apply_sb_mount_options(struct super_block *sb,
+>  	if (!sbi->s_es->s_mount_opts[0])
+>  		return 0;
+>  
+> -	s_mount_opts = kstrndup(sbi->s_es->s_mount_opts,
+> -				sizeof(sbi->s_es->s_mount_opts),
+> -				GFP_KERNEL);
+> -	if (!s_mount_opts)
+> -		return ret;
+> +	strscpy_pad(s_mount_opts, sbi->s_es->s_mount_opts);
+>  
+>  	fc = kzalloc(sizeof(struct fs_context), GFP_KERNEL);
+>  	if (!fc)
+> -		goto out_free;
+> +		return -ENOMEM;
+>  
+>  	s_ctx = kzalloc(sizeof(struct ext4_fs_context), GFP_KERNEL);
+>  	if (!s_ctx)
+> @@ -2508,11 +2504,8 @@ static int parse_apply_sb_mount_options(struct super_block *sb,
+>  	ret = 0;
+>  
+>  out_free:
+> -	if (fc) {
+> -		ext4_fc_free(fc);
+> -		kfree(fc);
+> -	}
+> -	kfree(s_mount_opts);
+> +	ext4_fc_free(fc);
+> +	kfree(fc);
+>  	return ret;
+>  }
+>  
+> 
+> -- 
+> 2.51.0
+> 
+> 
+> 
 -- 
-Theodore Ts'o <tytso@mit.edu>
-
-
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
