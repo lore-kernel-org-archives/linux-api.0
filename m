@@ -1,64 +1,64 @@
-Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
+Received: from mail-qt1-f181.google.com (mail-qt1-f181.google.com [209.85.160.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47A381C54AF
-	for <linux-api@vger.kernel.org>; Mon, 29 Sep 2025 01:04:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.222.176
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C83AF29B8DC
+	for <linux-api@vger.kernel.org>; Mon, 29 Sep 2025 01:04:48 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1759107889; cv=none; b=qtGtlOYjZg0Ivu7BWfuVHDoCgdfIv/SpoLSSpOrZuOubcZQIdZ9IZ180bd6t9Io22avXiCD4TVzN3JbiJCwC9vuQiEG5i4EaMBMDqqBvnfWrglxEzzcludVWJslbKfqRv0kwNWgOy04sHhEmeA+RXeaOf/wdBkJyPjfy8NQF+fM=
+	t=1759107892; cv=none; b=DKJPm99+3eo3sYDt7oIUVzdaQtpnnqZToEItbUWjLiaaaKW2ZDLGWzOIcl/2j3U9RIXv7YTEmnn99NoF7rVoVDlSOI6LFOeYN0s/F5rxvl1Fwb6ayVsBUa7j0WxFRzfTiiKAGNDTUezgV2d4Arvp/XY6VTUxU+0P8blSDj4pPXA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1759107889; c=relaxed/simple;
-	bh=y18JrZ+RKa4FFiODMr7HVly8Elqh7J5PFIpDsoHY7Xk=;
+	s=arc-20240116; t=1759107892; c=relaxed/simple;
+	bh=atx7+45CbzyMl9240tLjOxzl3me8oSMCbHABSuWi61w=;
 	h=From:To:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lesteXPwinkC8TFL/1hqHCIkod0N/5LS1QBpXewhAlUVdBahgsI65GMjYtOsV0XrSsKtCMWScern9H2fLq94OyFORTBXWp4iutiU+e+4S4lw6q7kh1VRK//zVNA1Uqjpc0HcvCU3qR+9x1LBrtpQ63RtDESkgejY4aXmx8DK2gs=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=IVYdIC6w; arc=none smtp.client-ip=209.85.222.176
+	 MIME-Version; b=Lt7zCtxFQDGF4tf8OEi4Z3QrP1LiPc/T2DX/znD9xG3GsBQHgDep44KhPENUfeT/CP28lB1pjLV58imI7qq4D15pem7Z/y+A1ZF6omdTBD0i+Ma8e9r6dA/F/FcZPPoJUOcHgMErxfS1VQmcROsO7GktToNBl5+4za5Mz9HMx94=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=Hm4aFKwA; arc=none smtp.client-ip=209.85.160.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="IVYdIC6w"
-Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-8593bcdd909so428578285a.3
-        for <linux-api@vger.kernel.org>; Sun, 28 Sep 2025 18:04:45 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="Hm4aFKwA"
+Received: by mail-qt1-f181.google.com with SMTP id d75a77b69052e-4de2c597965so23463011cf.1
+        for <linux-api@vger.kernel.org>; Sun, 28 Sep 2025 18:04:48 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen.com; s=google; t=1759107885; x=1759712685; darn=vger.kernel.org;
+        d=soleen.com; s=google; t=1759107888; x=1759712688; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
          :reply-to;
-        bh=0YV/C30kHxyQuWB9Hp3Rra2QjX9aAIcMuuehexAQLV8=;
-        b=IVYdIC6w0YmdK+av3PCMizi2PcDs5ZZIO71plxbym8PlXtZHy8C3CZGeh7GXguB/M6
-         LdCgUbX9aq8B//aeLrYR4iQE8Z2yUcZB/tKhQVNDnjq7KRbeWQlXxOA8bM7JxHLpUSGF
-         blt4UkvnboyhKJDxghEVhOzjp1/rkmStpvEa4/1YPuIoJ3BYTqGHU4steZX/k9vJNoqg
-         7hIQK3oW2x7fWM6nsuwhICmodjbyqOBxRIhgcJnaOGDsj26a/4s0cyIy8HPKoJJ8xDGW
-         nxI3LjV7IID7krPmLV9RbVgrAGcdpz1dROYuM0eUHtE0KoM5hcsL1ZQgA/ZQFFKmH9su
-         Hh3g==
+        bh=pwXh0/kKCu0f+t04ISmoQpHfND/zfxsioOU5iAk15yM=;
+        b=Hm4aFKwA9MRTxuJ67DDDYFEYA+z6mMjMQ68x0toevSQ6MScm5DbnCVNNNvDZNw8grE
+         v9tv/Bn+fgXPWclF4cvo2G4Rgmn0RlDBhOG2yobPGNxzwedzOzpvsgVPzBAbzV7Rybum
+         K/sHp4n8uE7gtXg/exmo+yGzgkIPxvw39sKS4akFMwUowYMo75+9zj6Bt906NumdJ1x3
+         6oyK+j5cB9x3NeN7MNdnXQgvKI8C0MAveypU1KWXTaApnW59pdg9/+dPXbEeMRZ71niM
+         FqxYOlFpM5XJNMKYBybu5Fz+0WUwFAeScm610nVyuOjB177LK4C4TtntiD54F187oifO
+         5yhQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1759107885; x=1759712685;
+        d=1e100.net; s=20230601; t=1759107888; x=1759712688;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to;
-        bh=0YV/C30kHxyQuWB9Hp3Rra2QjX9aAIcMuuehexAQLV8=;
-        b=OjrE1MXrbeoIJamhwqXxo+EqQfjMyQeCRX+BXL0gknstNOH1nOdFMXIENKB1Kcm5md
-         eDzv0EAig3yI7/S+8kOG6pvN+0BUNcy8Eo2uakNQkeoHjwmXQtiaWd3sN8jW5ZY35sM5
-         PGuCQYD4APo6Uc2EmuiNwp31AtDidzPJJv9L/Ny7gXkWyb8qZUzyxtzK07NV09faNpZ4
-         9Ts/38AyN8u/23jPVRMv4tsBUUsX9KgniEOnLTHlQpIvEAw16BBWsJ7Y55permno/6kO
-         6QER2C8gTxdagEsDqbK8GpGR0NEAEzCYsmzY2Sb7zZHgDsxUApvJYTv2TLacfBTZ/uch
-         vkYA==
-X-Forwarded-Encrypted: i=1; AJvYcCWKBlWxvI2UNJmNF3Ck7XdQH2PzXlJ9+K1IYb+7CJiH2VdvRN7RNiK2RssNpuJcEgJElyz3B21541o=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yx6GjMMZ7AUMgvAY6hjAGLpK98FQJxF6hIejEtQkujnjx3LbpLO
-	yBq8IquRIdRDUXF7QnqG+pBEK3FhUa723dlTWgxgftVziMQ2rFaczq7JfGnMlV07fuQ=
-X-Gm-Gg: ASbGncvJXQYk+II5PzKVq1NzUPA2d80jKSWUArDGIBwl0iay2WKAvudeHuqlXj3dL/C
-	AfdqAMHsPcdT4qUZQt0ZG8jFpm0ANqJM0ODiuKnH1PSg6ar8kRx82TbBndIqoq48K8pBeFFJlh0
-	oHUOSgiy0Zrga+gGh19QiyZMXmb9Lbkm/r36r+DSdPAg9kgh8FtBa9ITrEFCSNWl4RYo8DWsET9
-	tIK3w31kChTebyxJ+3q6W3N6cN9bE+leZ4uqyihhU1UUFc+b2+QP26PEDu2IKU1v9o+8Sk82LSM
-	S+Gra22e9VuFE6gI3aGMw6AbTWraUKhqpPlXqeGgMTUe4XDb4heh+qSEUPUvAmP5dUWd/tmcG9A
-	pUiTwqx3SWOUYb5NdrL1TUJQbQRo9VVNsO6QLI3ldCyJ3iK7bnbUAqFlZRQl0esccawMlwLZ51I
-	fyLxoylDHP9DqvO8JOvg==
-X-Google-Smtp-Source: AGHT+IE/2gkO6BHU1Wstnbl9JT+BQr3NoLV1YqF2Ma44UH3Fg76MALcfhQNt/9B9O7w+tSiqkpudoA==
-X-Received: by 2002:a05:620a:2805:b0:849:8fcc:69e4 with SMTP id af79cd13be357-85ae8c269e3mr1755065285a.68.1759107827446;
-        Sun, 28 Sep 2025 18:03:47 -0700 (PDT)
+        bh=pwXh0/kKCu0f+t04ISmoQpHfND/zfxsioOU5iAk15yM=;
+        b=e9m5FstCkjlFvCrZ1PkswMDh8skcbdSCc38XMGpQTwpwTVmQdshq2ndrJ9ZRxHkvfE
+         yQedeaI99T2CGJvjXmPUUPh4aN5A6hBvMLPYmE+8vYfFY45QwkVf05ptVWk8hRdiygWg
+         Xr67kkSx7iJw7UG8r8IxGHrFYJ4rlGEgSjgL0/JylbUzGfAV1H+IRw8D/7VcJXtW/jl7
+         Gx5ZwUbYQ+CZcCgppeYXlEeOMM9qJN7YBsUoi97BFCyDTOqSo7FECkiFepst1UpGVWVp
+         8+2MLyAggoUb+5hSHCcMCnH+kURsvx2omyS/X4wtAQjPOZkPeVUoSI5Cnl3/s+Ip2Syv
+         aFzA==
+X-Forwarded-Encrypted: i=1; AJvYcCW7EYmoR9i0Vuf+VFWqhBsL62OYqkiq+bVdSyX02yCS8qF/ogC94yL5U+acfSKRIjWFK2o7xgYe8Ss=@vger.kernel.org
+X-Gm-Message-State: AOJu0Ywm8FFCnetirhuiUIHV4+ac9NKbfB1prF0OIYUih/n/Sy4ahjAT
+	arMglX9+ItU/3Wy408AEYAYM50LwLtZKpXbFFlx+S8LnPiYQ0T3Z7+lMz+aIuA8/EX8=
+X-Gm-Gg: ASbGncv84VIpTJccdpze4vSqt3O69m8u/g8hAyUZZJhK2zwcKe5pwUQdJ+g/Yb3Ob0J
+	Iebk4pIcwm0gSHn7WCuzsuYaBHo39c4TJRlyB4cG54/7L34TrWeXO+Cuf26poAQZPKR4zVkrMs0
+	wKyoN6vLKwhpORjUYcrIxzGOCy/9qbeTiTjsA9Hu1KT3WVQ3onetXGTpAKDPc7JLRDCPBYL/VTt
+	kmZaWE7xmdMAD1dwimd1mhRp34PprgF8JfJdtRjlAeowuWc4rD2VGHj15OTIUc6M3rVr4zSfBuW
+	ppyRFiRBlw6M32Xjr5sEKKUf4W4y3D2BnxqaUk6p0H8gAfHafTFeG6I255OKwmpKyceg0j+S1Ks
+	qe7bYHYWX8nhqNfEya+Rdz7asC2arHgjFgFu35J8tukvdSFYhhvqXbDbq3pa4s/bI7j+FddpnO/
+	xJjr7euOOIFAjyS+5/Ow==
+X-Google-Smtp-Source: AGHT+IGRP/eMVDf7zXMK0pi9Zti3NauS9lYe/VmLc3i8GoMpiU6Y/BcqSpE7f6fMLGjBIl3ZckzaXg==
+X-Received: by 2002:a05:622a:1b07:b0:4c0:983:9436 with SMTP id d75a77b69052e-4da48e74a08mr188378531cf.34.1759107887482;
+        Sun, 28 Sep 2025 18:04:47 -0700 (PDT)
 Received: from soleen.c.googlers.com.com (53.47.86.34.bc.googleusercontent.com. [34.86.47.53])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4db0c0fbe63sm64561521cf.23.2025.09.28.18.03.46
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-4db0c0fbe63sm64561521cf.23.2025.09.28.18.04.46
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 28 Sep 2025 18:03:46 -0700 (PDT)
+        Sun, 28 Sep 2025 18:04:46 -0700 (PDT)
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
 To: pratyush@kernel.org,
 	jasonmiu@google.com,
@@ -136,9 +136,9 @@ To: pratyush@kernel.org,
 	skhawaja@google.com,
 	chrisl@kernel.org,
 	steven.sistare@oracle.com
-Subject: [PATCH v4 11/30] liveupdate: luo_session: Add sessions support
-Date: Mon, 29 Sep 2025 01:03:02 +0000
-Message-ID: <20250929010321.3462457-12-pasha.tatashin@soleen.com>
+Subject: [PATCH v4 24/30] luo: allow preserving memfd
+Date: Mon, 29 Sep 2025 01:03:15 +0000
+Message-ID: <20250929010321.3462457-25-pasha.tatashin@soleen.com>
 X-Mailer: git-send-email 2.51.0.536.g15c5d4f767-goog
 In-Reply-To: <20250929010321.3462457-1-pasha.tatashin@soleen.com>
 References: <20250929010321.3462457-1-pasha.tatashin@soleen.com>
@@ -150,711 +150,606 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Introduce concept of "Live Update Sessions" within the LUO framework.
-LUO sessions provide a mechanism to group and manage `struct file *`
-instances (representing file descriptors) that need to be preserved
-across a kexec-based live update.
+From: Pratyush Yadav <ptyadav@amazon.de>
 
-Each session is identified by a unique name and acts as a container
-for file objects whose state is critical to a userspace workload, such
-as a virtual machine or a high-performance database, aiming to maintain
-their functionality across a kernel transition.
+The ability to preserve a memfd allows userspace to use KHO and LUO to
+transfer its memory contents to the next kernel. This is useful in many
+ways. For one, it can be used with IOMMUFD as the backing store for
+IOMMU page tables. Preserving IOMMUFD is essential for performing a
+hypervisor live update with passthrough devices. memfd support provides
+the first building block for making that possible.
 
-This groundwork establishes the framework for preserving file-backed
-state across kernel updates, with the actual file data preservation
-mechanisms to be implemented in subsequent patches.
+For another, applications with a large amount of memory that takes time
+to reconstruct, reboots to consume kernel upgrades can be very
+expensive. memfd with LUO gives those applications reboot-persistent
+memory that they can use to quickly save and reconstruct that state.
 
+While memfd is backed by either hugetlbfs or shmem, currently only
+support on shmem is added. To be more precise, support for anonymous
+shmem files is added.
+
+The handover to the next kernel is not transparent. All the properties
+of the file are not preserved; only its memory contents, position, and
+size. The recreated file gets the UID and GID of the task doing the
+restore, and the task's cgroup gets charged with the memory.
+
+After LUO is in prepared state, the file cannot grow or shrink, and all
+its pages are pinned to avoid migrations and swapping. The file can
+still be read from or written to.
+
+Co-developed-by: Changyuan Lyu <changyuanl@google.com>
+Signed-off-by: Changyuan Lyu <changyuanl@google.com>
+Co-developed-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
+Signed-off-by: Pratyush Yadav <ptyadav@amazon.de>
 ---
- include/uapi/linux/liveupdate.h  |   3 +
- kernel/liveupdate/Makefile       |   1 +
- kernel/liveupdate/luo_internal.h |  34 ++
- kernel/liveupdate/luo_session.c  | 607 +++++++++++++++++++++++++++++++
- 4 files changed, 645 insertions(+)
- create mode 100644 kernel/liveupdate/luo_session.c
+ MAINTAINERS    |   2 +
+ mm/Makefile    |   1 +
+ mm/memfd_luo.c | 523 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 526 insertions(+)
+ create mode 100644 mm/memfd_luo.c
 
-diff --git a/include/uapi/linux/liveupdate.h b/include/uapi/linux/liveupdate.h
-index 3cb09b2c4353..e8c0c210a790 100644
---- a/include/uapi/linux/liveupdate.h
-+++ b/include/uapi/linux/liveupdate.h
-@@ -91,4 +91,7 @@ enum liveupdate_event {
- 	LIVEUPDATE_CANCEL = 3,
- };
+diff --git a/MAINTAINERS b/MAINTAINERS
+index e99af6101d3c..a17e4e077174 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14433,6 +14433,7 @@ F:	tools/testing/selftests/livepatch/
  
-+/* The maximum length of session name including null termination */
-+#define LIVEUPDATE_SESSION_NAME_LENGTH 56
-+
- #endif /* _UAPI_LIVEUPDATE_H */
-diff --git a/kernel/liveupdate/Makefile b/kernel/liveupdate/Makefile
-index 2881bab0c6df..f64cfc92cbf0 100644
---- a/kernel/liveupdate/Makefile
-+++ b/kernel/liveupdate/Makefile
-@@ -3,6 +3,7 @@
- luo-y :=								\
- 		luo_core.o						\
- 		luo_ioctl.o						\
-+		luo_session.o						\
- 		luo_subsystems.o
+ LIVE UPDATE
+ M:	Pasha Tatashin <pasha.tatashin@soleen.com>
++R:	Pratyush Yadav <pratyush@kernel.org>
+ L:	linux-kernel@vger.kernel.org
+ S:	Maintained
+ F:	Documentation/ABI/testing/sysfs-kernel-liveupdate
+@@ -14441,6 +14442,7 @@ F:	Documentation/userspace-api/liveupdate.rst
+ F:	include/linux/liveupdate.h
+ F:	include/uapi/linux/liveupdate.h
+ F:	kernel/liveupdate/
++F:	mm/memfd_luo.c
+ F:	tools/testing/selftests/liveupdate/
  
- obj-$(CONFIG_KEXEC_HANDOVER)		+= kexec_handover.o
-diff --git a/kernel/liveupdate/luo_internal.h b/kernel/liveupdate/luo_internal.h
-index c62fbbb0790c..9223f71844ca 100644
---- a/kernel/liveupdate/luo_internal.h
-+++ b/kernel/liveupdate/luo_internal.h
-@@ -32,6 +32,40 @@ void *luo_contig_alloc_preserve(size_t size);
- void luo_contig_free_unpreserve(void *mem, size_t size);
- void luo_contig_free_restore(void *mem, size_t size);
- 
-+/**
-+ * struct luo_session - Represents an active or incoming Live Update session.
-+ * @name:      A unique name for this session, used for identification and
-+ *             retrieval.
-+ * @files_xa:  An xarray used to store the files associated with this session.
-+ * @ser:       Pointer to the serialized data for this session.
-+ * @count:     A counter tracking the number of files currently stored in the
-+ *             @files_xa for this session.
-+ * @list:      A list_head member used to link this session into a global list
-+ *             of either outgoing (to be preserved) or incoming (restored from
-+ *             previous kernel) sessions.
-+ * @retrieved: A boolean flag indicating whether this session has been retrieved
-+ *             by a consumer in the new kernel. Valid only during the
-+ *             LIVEUPDATE_STATE_UPDATED state.
-+ * @mutex:     Session lock, protects files_xa, and count.
-+ * @state:     State of this session: prepared/frozen/updated/normal.
-+ * @files:     The physical address of a contiguous memory block that holds
-+ *             the serialized state of files.
-+ */
-+struct luo_session {
-+	char name[LIVEUPDATE_SESSION_NAME_LENGTH];
-+	struct xarray files_xa;
-+	struct luo_session_ser *ser;
-+	long count;
-+	struct list_head list;
-+	bool retrieved;
-+	struct mutex mutex;
-+	enum liveupdate_state state;
-+	u64 files;
-+};
-+
-+int luo_session_create(const char *name, struct file **filep);
-+int luo_session_retrieve(const char *name, struct file **filep);
-+
- void luo_subsystems_startup(void *fdt);
- int luo_subsystems_fdt_setup(void *fdt);
- int luo_do_subsystems_prepare_calls(void);
-diff --git a/kernel/liveupdate/luo_session.c b/kernel/liveupdate/luo_session.c
+ LLC (802.2)
+diff --git a/mm/Makefile b/mm/Makefile
+index 21abb3353550..7738ec416f00 100644
+--- a/mm/Makefile
++++ b/mm/Makefile
+@@ -100,6 +100,7 @@ obj-$(CONFIG_NUMA) += memory-tiers.o
+ obj-$(CONFIG_DEVICE_MIGRATION) += migrate_device.o
+ obj-$(CONFIG_TRANSPARENT_HUGEPAGE) += huge_memory.o khugepaged.o
+ obj-$(CONFIG_PAGE_COUNTER) += page_counter.o
++obj-$(CONFIG_LIVEUPDATE) += memfd_luo.o
+ obj-$(CONFIG_MEMCG_V1) += memcontrol-v1.o
+ obj-$(CONFIG_MEMCG) += memcontrol.o vmpressure.o
+ ifdef CONFIG_SWAP
+diff --git a/mm/memfd_luo.c b/mm/memfd_luo.c
 new file mode 100644
-index 000000000000..74dee42e24b7
+index 000000000000..221e31c1197e
 --- /dev/null
-+++ b/kernel/liveupdate/luo_session.c
-@@ -0,0 +1,607 @@
++++ b/mm/memfd_luo.c
+@@ -0,0 +1,523 @@
 +// SPDX-License-Identifier: GPL-2.0
 +
 +/*
 + * Copyright (c) 2025, Google LLC.
 + * Pasha Tatashin <pasha.tatashin@soleen.com>
-+ */
-+
-+/**
-+ * DOC: LUO Sessions
++ * Changyuan Lyu <changyuanl@google.com>
 + *
-+ * LUO Sessions provide the core mechanism for grouping and managing file
-+ * descriptors that need to be preserved across a kexec-based live update.
-+ * Each session acts as a named container for a set of file objects, allowing
-+ * a userspace agent (e.g., a Live Update Orchestration Daemon) to manage the
-+ * lifecycle of resources critical to a workload.
-+ *
-+ * Core Concepts:
-+ *
-+ * - Named Containers: Sessions are identified by a unique, user-provided name,
-+ *   which is used for both creation and retrieval.
-+ *
-+ * - Userspace Interface: Session management is driven from userspace via
-+ *   ioctls on /dev/liveupdate (e.g., CREATE_SESSION, RETRIEVE_SESSION).
-+ *
-+ * - Serialization: Session metadata is preserved using the KHO framework.
-+ *   During the 'prepare' phase, an array of `struct luo_session_ser` is
-+ *   allocated and preserved. An FDT node is also created, containing the
-+ *   count of sessions and the physical address of this array.
-+ *
-+ * Session Lifecycle and State Management:
-+ *
-+ * 1.  Creation: A userspace agent calls `luo_session_create()` to create a new,
-+ *     empty session, receiving a file descriptor handle. This can be done in
-+ *     the NORMAL or UPDATED states.
-+ *
-+ * 2.  Name Collision: In the UPDATED state, `luo_session_create()` checks for
-+ *     name conflicts against sessions preserved from the previous kernel to
-+ *     prevent ambiguity.
-+ *
-+ * 3.  Preparation (`prepare` callback): When the global LUO PREPARE event is
-+ *     triggered, the list of all created sessions is serialized. The main
-+ *     `ser` array is allocated, and each active `struct luo_session` is given
-+ *     a direct pointer to its corresponding entry in this array.
-+ *
-+ * 4.  Release After Prepare: When a session FD is closed *after* the PREPARE
-+ *     event, the `.release` handler uses the session's direct pointer to
-+ *     `memset(0)` its entry in the `ser` array. This effectively marks the
-+ *     session as defunct without needing to resize the already-preserved
-+ *     memory.
-+ *
-+ * 5.  Boot (`boot` callback): In the new kernel, the FDT is read to locate
-+ *     the preserved `ser` array. The metadata (count, physical address) is
-+ *     stored in the `luo_session` global.
-+ *
-+ * 6.  Lazy Deserialization: The actual `luo_session` list is populated on
-+ *     first use (e.g., by `retrieve`, `finish`, or `create`). During this
-+ *     process, any zeroed-out entries from step 4 are skipped.
-+ *
-+ * 7.  Retrieval: The userspace agent calls `luo_session_retrieve()` in the new
-+ *     kernel to get a new FD handle for a preserved session by its name.
-+ *
-+ * 8.  Finalization (`finish` callback): When the global LUO FINISH event is
-+ *     sent, any preserved sessions that were successfully retrieved are moved
-+ *     to the `luo_session_global` list, making them available for a subsequent
-+ *     live update. Any sessions that were not retrieved are considered stale
-+ *     and are cleaned up.
++ * Copyright (C) 2025 Amazon.com Inc. or its affiliates.
++ * Pratyush Yadav <ptyadav@amazon.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 +
-+#include <linux/anon_inodes.h>
-+#include <linux/errno.h>
 +#include <linux/file.h>
-+#include <linux/fs.h>
++#include <linux/io.h>
 +#include <linux/libfdt.h>
 +#include <linux/liveupdate.h>
-+#include <uapi/linux/liveupdate.h>
-+#include "luo_internal.h"
++#include <linux/kexec_handover.h>
++#include <linux/shmem_fs.h>
++#include <linux/bits.h>
++#include "internal.h"
 +
-+#define LUO_SESSION_NODE_NAME	"luo-session"
-+#define LUO_SESSION_COMPATIBLE	"luo-session-v1"
++#define PRESERVED_PFN_MASK		GENMASK(63, 12)
++#define PRESERVED_PFN_SHIFT		12
++#define PRESERVED_FLAG_DIRTY		BIT(0)
++#define PRESERVED_FLAG_UPTODATE		BIT(1)
 +
-+/**
-+ * struct luo_session_ser - Represents the serialized metadata for a LUO session.
-+ * @name:    The unique name of the session, copied from the `luo_session`
-+ *           structure.
-+ * @files:   The physical address of a contiguous memory block that holds
-+ *           the serialized state of files.
-+ * @pgcnt:   The number of pages occupied by the `files` memory block.
-+ * @count:   The total number of files that were part of this session during
-+ *           serialization. Used for iteration and validation during
-+ *           restoration.
-+ *
-+ * This structure is used to package session-specific metadata for transfer
-+ * between kernels via Kexec Handover. An array of these structures (one per
-+ * session) is created and passed to the new kernel, allowing it to reconstruct
-+ * the session context.
-+ *
-+ * If this structure is modified, LUO_SESSION_COMPATIBLE must be updated.
-+ */
-+struct luo_session_ser {
-+	char name[LIVEUPDATE_SESSION_NAME_LENGTH];
-+	u64 files;
-+	u64 pgcnt;
-+	u64 count;
-+} __packed;
++#define PRESERVED_FOLIO_PFN(desc)	(((desc) & PRESERVED_PFN_MASK) >> PRESERVED_PFN_SHIFT)
++#define PRESERVED_FOLIO_FLAGS(desc)	((desc) & ~PRESERVED_PFN_MASK)
++#define PRESERVED_FOLIO_MKDESC(pfn, flags) (((pfn) << PRESERVED_PFN_SHIFT) | (flags))
 +
-+/**
-+ * struct luo_session_global - Global container for managing LUO sessions.
-+ * @count: The number of sessions currently tracked in the @list.
-+ * @list:  The head of the linked list of `struct luo_session` instances.
-+ * @rwsem: A read-write semaphore providing synchronized access to the session
-+ *         list and other fields in this structure.
-+ * @ser:   A pointer to the contiguous block of memory holding the serialized
-+ *         session data (an array of `struct luo_session_ser`). For `_out`, this
-+ *         is allocated and populated during `prepare`. For `_in`, this points
-+ *         to the data restored from the previous kernel.
-+ * @pgcnt: The size, in pages, of the memory block pointed to by @ser.
-+ * @fdt:   A pointer to the FDT blob that contains the metadata for this group
-+ *         of sessions. This FDT is what is ultimately passed to the parent LUO
-+ *         subsystem for preservation.
-+ */
-+struct luo_session_global {
-+	long count;
-+	struct list_head list;
-+	struct rw_semaphore rwsem;
-+	struct luo_session_ser *ser;
-+	u64 pgcnt;
-+	void *fdt;
-+	long ser_count;
++struct memfd_luo_preserved_folio {
++	/*
++	 * The folio descriptor is made of 2 parts. The bottom 12 bits are used
++	 * for storing flags, the others for storing the PFN.
++	 */
++	u64 foliodesc;
++	u64 index;
 +};
 +
-+static struct luo_session_global luo_session_global;
-+
-+static struct luo_session *luo_session_alloc(const char *name)
++static int memfd_luo_preserve_folios(struct memfd_luo_preserved_folio *pfolios,
++				     struct folio **folios,
++				     unsigned int nr_folios)
 +{
-+	struct luo_session *session = kzalloc(sizeof(*session), GFP_KERNEL);
++	int err;
++	long i;
 +
-+	if (!session)
++	for (i = 0; i < nr_folios; i++) {
++		struct memfd_luo_preserved_folio *pfolio = &pfolios[i];
++		struct folio *folio = folios[i];
++		unsigned int flags = 0;
++		unsigned long pfn;
++
++		err = kho_preserve_folio(folio);
++		if (err)
++			goto err_unpreserve;
++
++		pfn = folio_pfn(folio);
++		if (folio_test_dirty(folio))
++			flags |= PRESERVED_FLAG_DIRTY;
++		if (folio_test_uptodate(folio))
++			flags |= PRESERVED_FLAG_UPTODATE;
++
++		pfolio->foliodesc = PRESERVED_FOLIO_MKDESC(pfn, flags);
++		pfolio->index = folio->index;
++	}
++
++	return 0;
++
++err_unpreserve:
++	i--;
++	for (; i >= 0; i--)
++		WARN_ON_ONCE(kho_unpreserve_folio(folios[i]));
++	return err;
++}
++
++static void memfd_luo_unpreserve_folios(const struct memfd_luo_preserved_folio *pfolios,
++					unsigned int nr_folios)
++{
++	unsigned int i;
++
++	for (i = 0; i < nr_folios; i++) {
++		const struct memfd_luo_preserved_folio *pfolio = &pfolios[i];
++		struct folio *folio;
++
++		if (!pfolio->foliodesc)
++			continue;
++
++		folio = pfn_folio(PRESERVED_FOLIO_PFN(pfolio->foliodesc));
++
++		WARN_ON_ONCE(kho_unpreserve_folio(folio));
++		unpin_folio(folio);
++	}
++}
++
++static void *memfd_luo_create_fdt(unsigned long size)
++{
++	unsigned int order = get_order(size);
++	struct folio *fdt_folio;
++	int err = 0;
++	void *fdt;
++
++	if (order > MAX_PAGE_ORDER)
 +		return NULL;
 +
-+	strscpy(session->name, name, sizeof(session->name));
-+	xa_init(&session->files_xa);
-+	session->count = 0;
-+	INIT_LIST_HEAD(&session->list);
-+	mutex_init(&session->mutex);
-+	session->state = LIVEUPDATE_STATE_NORMAL;
++	fdt_folio = folio_alloc(GFP_KERNEL | __GFP_ZERO, order);
++	if (!fdt_folio)
++		return NULL;
 +
-+	return session;
++	fdt = folio_address(fdt_folio);
++
++	err |= fdt_create(fdt, (1 << (order + PAGE_SHIFT)));
++	err |= fdt_finish_reservemap(fdt);
++	err |= fdt_begin_node(fdt, "");
++	if (err)
++		goto free;
++
++	return fdt;
++
++free:
++	folio_put(fdt_folio);
++	return NULL;
 +}
 +
-+static void luo_session_free(struct luo_session *session)
++static int memfd_luo_finish_fdt(void *fdt)
 +{
-+	WARN_ON(session->count);
-+	xa_destroy(&session->files_xa);
-+	mutex_destroy(&session->mutex);
-+	kfree(session);
++	int err;
++
++	err = fdt_end_node(fdt);
++	if (err)
++		return err;
++
++	return fdt_finish(fdt);
 +}
 +
-+static int luo_session_insert(struct luo_session *session)
++static int memfd_luo_prepare(struct liveupdate_file_handler *handler,
++			     struct file *file, u64 *data)
 +{
-+	struct luo_session *it;
++	struct memfd_luo_preserved_folio *preserved_folios;
++	struct inode *inode = file_inode(file);
++	unsigned int max_folios, nr_folios = 0;
++	int err = 0, preserved_size;
++	struct folio **folios;
++	long size, nr_pinned;
++	pgoff_t offset;
++	void *fdt;
++	u64 pos;
 +
-+	lockdep_assert_held_write(&luo_session_global.rwsem);
++	inode_lock(inode);
++	shmem_i_mapping_freeze(inode, true);
++
++	size = i_size_read(inode);
++	if ((PAGE_ALIGN(size) / PAGE_SIZE) > UINT_MAX) {
++		err = -E2BIG;
++		goto err_unlock;
++	}
++
 +	/*
-+	 * For small number of sessions this loop won't hurt performance
-+	 * but if we ever start using a lot of sessions, this might
-+	 * become a bottle neck during deserialization time, as it would
-+	 * cause O(n*n) complexity.
++	 * Guess the number of folios based on inode size. Real number might end
++	 * up being smaller if there are higher order folios.
 +	 */
-+	list_for_each_entry(it, &luo_session_global.list, list) {
-+		if (!strncmp(it->name, session->name, sizeof(it->name)))
-+			return -EEXIST;
++	max_folios = PAGE_ALIGN(size) / PAGE_SIZE;
++	folios = kvmalloc_array(max_folios, sizeof(*folios), GFP_KERNEL);
++	if (!folios) {
++		err = -ENOMEM;
++		goto err_unfreeze;
 +	}
-+	list_add_tail(&session->list, &luo_session_global.list);
-+	luo_session_global.count++;
++
++	/*
++	 * Pin the folios so they don't move around behind our back. This also
++	 * ensures none of the folios are in CMA -- which ensures they don't
++	 * fall in KHO scratch memory. It also moves swapped out folios back to
++	 * memory.
++	 *
++	 * A side effect of doing this is that it allocates a folio for all
++	 * indices in the file. This might waste memory on sparse memfds. If
++	 * that is really a problem in the future, we can have a
++	 * memfd_pin_folios() variant that does not allocate a page on empty
++	 * slots.
++	 */
++	nr_pinned = memfd_pin_folios(file, 0, size - 1, folios, max_folios,
++				     &offset);
++	if (nr_pinned < 0) {
++		err = nr_pinned;
++		pr_err("failed to pin folios: %d\n", err);
++		goto err_free_folios;
++	}
++	/* nr_pinned won't be more than max_folios which is also unsigned int. */
++	nr_folios = (unsigned int)nr_pinned;
++
++	preserved_size = sizeof(struct memfd_luo_preserved_folio) * nr_folios;
++	if (check_mul_overflow(sizeof(struct memfd_luo_preserved_folio),
++			       nr_folios, &preserved_size)) {
++		err = -E2BIG;
++		goto err_unpin;
++	}
++
++	/*
++	 * Most of the space should be taken by preserved folios. So take its
++	 * size, plus a page for other properties.
++	 */
++	fdt = memfd_luo_create_fdt(PAGE_ALIGN(preserved_size) + PAGE_SIZE);
++	if (!fdt) {
++		err = -ENOMEM;
++		goto err_unpin;
++	}
++
++	pos = file->f_pos;
++	err = fdt_property(fdt, "pos", &pos, sizeof(pos));
++	if (err)
++		goto err_free_fdt;
++
++	err = fdt_property(fdt, "size", &size, sizeof(size));
++	if (err)
++		goto err_free_fdt;
++
++	err = fdt_property_placeholder(fdt, "folios", preserved_size,
++				       (void **)&preserved_folios);
++	if (err) {
++		pr_err("Failed to reserve folios property in FDT: %s\n",
++		       fdt_strerror(err));
++		err = -ENOMEM;
++		goto err_free_fdt;
++	}
++
++	err = memfd_luo_preserve_folios(preserved_folios, folios, nr_folios);
++	if (err)
++		goto err_free_fdt;
++
++	err = memfd_luo_finish_fdt(fdt);
++	if (err)
++		goto err_unpreserve;
++
++	err = kho_preserve_folio(virt_to_folio(fdt));
++	if (err)
++		goto err_unpreserve;
++
++	kvfree(folios);
++	inode_unlock(inode);
++
++	*data = virt_to_phys(fdt);
++	return 0;
++
++err_unpreserve:
++	memfd_luo_unpreserve_folios(preserved_folios, nr_folios);
++err_free_fdt:
++	folio_put(virt_to_folio(fdt));
++err_unpin:
++	unpin_folios(folios, nr_pinned);
++err_free_folios:
++	kvfree(folios);
++err_unfreeze:
++	shmem_i_mapping_freeze(inode, false);
++err_unlock:
++	inode_unlock(inode);
++	return err;
++}
++
++static int memfd_luo_freeze(struct liveupdate_file_handler *handler,
++			    struct file *file, u64 *data)
++{
++	u64 pos = file->f_pos;
++	void *fdt;
++	int err;
++
++	if (WARN_ON_ONCE(!*data))
++		return -EINVAL;
++
++	fdt = phys_to_virt(*data);
++
++	/*
++	 * The pos might have changed since prepare. Everything else stays the
++	 * same.
++	 */
++	err = fdt_setprop(fdt, 0, "pos", &pos, sizeof(pos));
++	if (err)
++		return err;
 +
 +	return 0;
 +}
 +
-+static void luo_session_remove(struct luo_session *session)
++static void memfd_luo_cancel(struct liveupdate_file_handler *handler,
++			     struct file *file, u64 data)
 +{
-+	lockdep_assert_held_write(&luo_session_global.rwsem);
-+	list_del(&session->list);
-+	luo_session_global.count--;
-+}
++	const struct memfd_luo_preserved_folio *pfolios;
++	struct inode *inode = file_inode(file);
++	struct folio *fdt_folio;
++	void *fdt;
++	int len;
 +
-+/* One session switches from the updated state to  normal state */
-+static void luo_session_finish_one(struct luo_session *session)
-+{
-+}
-+
-+/* Cancel one session from frozen or prepared state, back to normal */
-+static void luo_session_cancel_one(struct luo_session *session)
-+{
-+}
-+
-+/* One session is changed from normal to prepare state */
-+static int luo_session_prepare_one(struct luo_session *session)
-+{
-+	return 0;
-+}
-+
-+static int luo_session_release(struct inode *inodep, struct file *filep)
-+{
-+	struct luo_session *session = filep->private_data;
-+
-+	scoped_guard(rwsem_read, &luo_session_global.rwsem) {
-+		scoped_guard(mutex, &session->mutex) {
-+			if (session->ser) {
-+				memset(session->ser, 0,
-+				       sizeof(struct luo_session_ser));
-+			}
-+		}
-+	}
-+
-+	if (session->state == LIVEUPDATE_STATE_UPDATED)
-+		luo_session_finish_one(session);
-+	if (session->state == LIVEUPDATE_STATE_PREPARED ||
-+	    session->state == LIVEUPDATE_STATE_FROZEN) {
-+		luo_session_cancel_one(session);
-+	}
-+
-+	scoped_guard(rwsem_write, &luo_session_global.rwsem)
-+		luo_session_remove(session);
-+	luo_session_free(session);
-+
-+	return 0;
-+}
-+
-+static const struct file_operations luo_session_fops = {
-+	.owner = THIS_MODULE,
-+	.release = luo_session_release,
-+};
-+
-+static void luo_session_deserialize(void)
-+{
-+	static int visited;
-+	int i;
-+
-+	if (visited)
++	if (WARN_ON_ONCE(!data))
 +		return;
 +
-+	guard(rwsem_write)(&luo_session_global.rwsem);
-+	if (visited)
-+		return;
-+	visited++;
-+	for (i = 0; i < luo_session_global.ser_count; i++) {
-+		struct luo_session *session;
++	inode_lock(inode);
++	shmem_i_mapping_freeze(inode, false);
 +
-+		/*
-+		 * If there is no name, this session was remove from
-+		 * preservation after prepare. So, skip it.
-+		 */
-+		if (!luo_session_global.ser[i].name[0])
++	fdt = phys_to_virt(data);
++	fdt_folio = virt_to_folio(fdt);
++	pfolios = fdt_getprop(fdt, 0, "folios", &len);
++	if (pfolios)
++		memfd_luo_unpreserve_folios(pfolios, len / sizeof(*pfolios));
++
++	kho_unpreserve_folio(fdt_folio);
++	folio_put(fdt_folio);
++	inode_unlock(inode);
++}
++
++static struct folio *memfd_luo_get_fdt(u64 data)
++{
++	return kho_restore_folio((phys_addr_t)data);
++}
++
++static void memfd_luo_discard_folios(const struct memfd_luo_preserved_folio *pfolios,
++				     unsigned int nr_folios)
++{
++	unsigned int i;
++
++	for (i = 0; i < nr_folios; i++) {
++		const struct memfd_luo_preserved_folio *pfolio = &pfolios[i];
++		struct folio *folio;
++		phys_addr_t phys;
++
++		if (!pfolio->foliodesc)
 +			continue;
 +
-+		session = luo_session_alloc(luo_session_global.ser[i].name);
-+		if (!session)
-+			luo_restore_fail("Failed to allocate session on boot\n");
-+
-+		if (luo_session_insert(session)) {
-+			luo_restore_fail("Failed to insert session due to name conflict [%s]\n",
-+					 session->name);
++		phys = PFN_PHYS(PRESERVED_FOLIO_PFN(pfolio->foliodesc));
++		folio = kho_restore_folio(phys);
++		if (!folio) {
++			pr_warn_ratelimited("Unable to restore folio at physical address: %llx\n",
++					    phys);
++			continue;
 +		}
 +
-+		session->state = LIVEUPDATE_STATE_UPDATED;
-+		session->count = luo_session_global.ser[i].count;
-+		session->files = luo_session_global.ser[i].files;
++		folio_put(folio);
 +	}
 +}
 +
-+/* Create a "struct file" for session, and delete it on case of failure */
-+static int luo_session_getfile(struct luo_session *session, struct file **filep)
++static void memfd_luo_finish(struct liveupdate_file_handler *handler,
++			     struct file *file, u64 data, bool reclaimed)
 +{
-+	char name_buf[128];
++	const struct memfd_luo_preserved_folio *pfolios;
++	struct folio *fdt_folio;
++	int len;
++
++	if (reclaimed)
++		return;
++
++	fdt_folio = memfd_luo_get_fdt(data);
++
++	pfolios = fdt_getprop(folio_address(fdt_folio), 0, "folios", &len);
++	if (pfolios)
++		memfd_luo_discard_folios(pfolios, len / sizeof(*pfolios));
++
++	folio_put(fdt_folio);
++}
++
++static int memfd_luo_retrieve(struct liveupdate_file_handler *handler, u64 data,
++			      struct file **file_p)
++{
++	const struct memfd_luo_preserved_folio *pfolios;
++	int nr_pfolios, len, ret = 0, i = 0;
++	struct address_space *mapping;
++	struct folio *folio, *fdt_folio;
++	const u64 *pos, *size;
++	struct inode *inode;
 +	struct file *file;
++	const void *fdt;
 +
-+	scoped_guard(mutex, &session->mutex) {
-+		lockdep_assert_held(&session->mutex);
-+		snprintf(name_buf, sizeof(name_buf), "[luo_session] %s",
-+			 session->name);
-+		file = anon_inode_getfile(name_buf, &luo_session_fops, session,
-+					  O_RDWR);
-+	}
-+	if (IS_ERR(file)) {
-+		scoped_guard(rwsem_write, &luo_session_global.rwsem)
-+			luo_session_remove(session);
-+		luo_session_free(session);
-+		return PTR_ERR(file);
-+	}
-+
-+	*filep = file;
-+	return 0;
-+}
-+
-+int luo_session_create(const char *name, struct file **filep)
-+{
-+	struct luo_session *session;
-+	int ret;
-+
-+	guard(rwsem_read)(&luo_state_rwsem);
-+
-+	/* New sessions cannot be added after prepared state */
-+	if (!liveupdate_state_normal() && !liveupdate_state_updated())
-+		return -EAGAIN;
-+
-+	session = luo_session_alloc(name);
-+	if (!session)
-+		return -ENOMEM;
-+
-+	scoped_guard(rwsem_write, &luo_session_global.rwsem)
-+		ret = luo_session_insert(session);
-+	if (ret) {
-+		luo_session_free(session);
-+		return ret;
-+	}
-+
-+	return luo_session_getfile(session, filep);
-+}
-+
-+int luo_session_retrieve(const char *name, struct file **filep)
-+{
-+	struct luo_session *session = NULL;
-+	struct luo_session *it;
-+
-+	guard(rwsem_read)(&luo_state_rwsem);
-+
-+	/* Can only retrieve in the updated state */
-+	if (!liveupdate_state_updated())
-+		return -EAGAIN;
-+
-+	luo_session_deserialize();
-+	scoped_guard(rwsem_read, &luo_session_global.rwsem) {
-+		list_for_each_entry(it, &luo_session_global.list, list) {
-+			if (!strncmp(it->name, name, sizeof(it->name))) {
-+				session = it;
-+				break;
-+			}
-+		}
-+	}
-+
-+	if (!session)
++	fdt_folio = memfd_luo_get_fdt(data);
++	if (!fdt_folio)
 +		return -ENOENT;
 +
-+	scoped_guard(mutex, &session->mutex) {
-+		/*
-+		 * Session already retrieved or a session with the same name was
-+		 * created during updated state
-+		 */
-+		if (session->retrieved || session->state != LIVEUPDATE_STATE_UPDATED)
-+			return -EADDRINUSE;
++	fdt = page_to_virt(folio_page(fdt_folio, 0));
 +
-+		session->retrieved = true;
++	pfolios = fdt_getprop(fdt, 0, "folios", &len);
++	if (!pfolios || len % sizeof(*pfolios)) {
++		pr_err("invalid 'folios' property\n");
++		ret = -EINVAL;
++		goto put_fdt;
++	}
++	nr_pfolios = len / sizeof(*pfolios);
++
++	size = fdt_getprop(fdt, 0, "size", &len);
++	if (!size || len != sizeof(u64)) {
++		pr_err("invalid 'size' property\n");
++		ret = -EINVAL;
++		goto put_folios;
 +	}
 +
-+	return luo_session_getfile(session, filep);
-+}
-+
-+static void luo_session_global_preserved_cleanup(void)
-+{
-+	lockdep_assert_held_write(&luo_session_global.rwsem);
-+	if (luo_session_global.ser && !IS_ERR(luo_session_global.ser)) {
-+		luo_contig_free_unpreserve(luo_session_global.ser,
-+					   luo_session_global.pgcnt << PAGE_SHIFT);
-+	}
-+	if (luo_session_global.fdt && !IS_ERR(luo_session_global.fdt))
-+		luo_contig_free_unpreserve(luo_session_global.fdt, PAGE_SIZE);
-+
-+	luo_session_global.fdt = NULL;
-+	luo_session_global.ser = NULL;
-+	luo_session_global.ser_count = 0;
-+	luo_session_global.pgcnt = 0;
-+}
-+
-+static int luo_session_fdt_setup(void)
-+{
-+	u64 ser_pa;
-+	int ret;
-+
-+	lockdep_assert_held_write(&luo_session_global.rwsem);
-+	luo_session_global.pgcnt = DIV_ROUND_UP(luo_session_global.count *
-+				sizeof(struct luo_session_ser), PAGE_SIZE);
-+
-+	if (luo_session_global.pgcnt > 0) {
-+		size_t ser_size = luo_session_global.pgcnt << PAGE_SHIFT;
-+
-+		luo_session_global.ser = luo_contig_alloc_preserve(ser_size);
-+		if (IS_ERR(luo_session_global.ser)) {
-+			ret = PTR_ERR(luo_session_global.ser);
-+			goto exit_cleanup;
-+		}
++	pos = fdt_getprop(fdt, 0, "pos", &len);
++	if (!pos || len != sizeof(u64)) {
++		pr_err("invalid 'pos' property\n");
++		ret = -EINVAL;
++		goto put_folios;
 +	}
 +
-+	luo_session_global.fdt = luo_contig_alloc_preserve(PAGE_SIZE);
-+	if (IS_ERR(luo_session_global.fdt)) {
-+		ret = PTR_ERR(luo_session_global.fdt);
-+		goto exit_cleanup;
++	file = shmem_file_setup("", 0, VM_NORESERVE);
++
++	if (IS_ERR(file)) {
++		ret = PTR_ERR(file);
++		pr_err("failed to setup file: %d\n", ret);
++		goto put_folios;
 +	}
 +
-+	ret = fdt_create(luo_session_global.fdt, PAGE_SIZE);
-+	if (ret < 0)
-+		goto exit_cleanup;
++	inode = file->f_inode;
++	mapping = inode->i_mapping;
++	vfs_setpos(file, *pos, MAX_LFS_FILESIZE);
 +
-+	ret = fdt_finish_reservemap(luo_session_global.fdt);
-+	if (ret < 0)
-+		goto exit_finish;
++	for (; i < nr_pfolios; i++) {
++		const struct memfd_luo_preserved_folio *pfolio = &pfolios[i];
++		phys_addr_t phys;
++		u64 index;
++		int flags;
 +
-+	ret = fdt_begin_node(luo_session_global.fdt, LUO_SESSION_NODE_NAME);
-+	if (ret < 0)
-+		goto exit_finish;
-+
-+	ret = fdt_property_string(luo_session_global.fdt, "compatible",
-+				  LUO_SESSION_COMPATIBLE);
-+	if (ret < 0)
-+		goto exit_end_node;
-+
-+	ret = fdt_property_u64(luo_session_global.fdt, "count",
-+			       luo_session_global.count);
-+	if (ret < 0)
-+		goto exit_end_node;
-+
-+	ser_pa = luo_session_global.ser ? __pa(luo_session_global.ser) : 0;
-+	ret = fdt_property_u64(luo_session_global.fdt, "data", ser_pa);
-+	if (ret < 0)
-+		goto exit_end_node;
-+
-+	ret = fdt_property_u64(luo_session_global.fdt, "pgcnt",
-+			       luo_session_global.pgcnt);
-+	if (ret < 0)
-+		goto exit_end_node;
-+
-+	ret = fdt_end_node(luo_session_global.fdt);
-+	if (ret < 0)
-+		goto exit_finish;
-+
-+	ret = fdt_finish(luo_session_global.fdt);
-+	if (ret < 0)
-+		goto exit_cleanup;
-+
-+	return 0;
-+
-+exit_end_node:
-+	fdt_end_node(luo_session_global.fdt);
-+exit_finish:
-+	fdt_finish(luo_session_global.fdt);
-+exit_cleanup:
-+	luo_session_global_preserved_cleanup();
-+
-+	return ret;
-+}
-+
-+/*
-+ * Change all sessions to normal state: make every file within each session
-+ * to be in the normal state.
-+ */
-+static void luo_session_cancel(struct liveupdate_subsystem *h, u64 data)
-+{
-+	struct luo_session *it;
-+
-+	guard(rwsem_write)(&luo_session_global.rwsem);
-+	list_for_each_entry(it, &luo_session_global.list, list)
-+		luo_session_cancel_one(it);
-+	luo_session_global_preserved_cleanup();
-+}
-+
-+static int luo_session_prepare(struct liveupdate_subsystem *h, u64 *data)
-+{
-+	struct luo_session_ser *ser;
-+	struct luo_session *it;
-+	int ret;
-+
-+	scoped_guard(rwsem_write, &luo_session_global.rwsem) {
-+		ret = luo_session_fdt_setup();
-+		if (ret)
-+			return ret;
-+
-+		ser = luo_session_global.ser;
-+		list_for_each_entry(it, &luo_session_global.list, list) {
-+			if (it->state == LIVEUPDATE_STATE_NORMAL) {
-+				ret = luo_session_prepare_one(it);
-+				if (ret)
-+					break;
-+			}
-+			strscpy(ser->name, it->name, sizeof(ser->name));
-+			ser->count = it->count;
-+			ser->files = it->files;
-+			it->ser = ser;
-+			ser++;
-+		}
-+
-+		if (!ret)
-+			*data = __pa(luo_session_global.fdt);
-+	}
-+
-+	if (ret)
-+		luo_session_cancel(h, 0);
-+
-+	return ret;
-+}
-+
-+static int luo_session_freeze(struct liveupdate_subsystem *h, u64 *data)
-+{
-+	return 0;
-+}
-+
-+/*
-+ * Finish every file within each session. If session has not been reclaimed
-+ * remove it, otherwise keep this session, so it can participate in the
-+ * next live update.
-+ */
-+static void luo_session_finish(struct liveupdate_subsystem *h, u64 data)
-+{
-+	struct luo_session *session, *tmp;
-+
-+	luo_session_deserialize();
-+
-+	list_for_each_entry_safe(session, tmp, &luo_session_global.list, list) {
-+		/*
-+		 * Skip sessions that were created in new kernel or have been
-+		 * finished already.
-+		 */
-+		if (session->state != LIVEUPDATE_STATE_UPDATED)
++		if (!pfolio->foliodesc)
 +			continue;
-+		luo_session_finish_one(session);
-+		if (!session->retrieved) {
-+			pr_warn("Removing unreclaimed session[%s]\n",
-+				session->name);
-+			scoped_guard(rwsem_write, &luo_session_global.rwsem)
-+				luo_session_remove(session);
-+			luo_session_free(session);
++
++		phys = PFN_PHYS(PRESERVED_FOLIO_PFN(pfolio->foliodesc));
++		folio = kho_restore_folio(phys);
++		if (!folio) {
++			pr_err("Unable to restore folio at physical address: %llx\n",
++			       phys);
++			goto put_file;
 +		}
++		index = pfolio->index;
++		flags = PRESERVED_FOLIO_FLAGS(pfolio->foliodesc);
++
++		/* Set up the folio for insertion. */
++		__folio_set_locked(folio);
++		__folio_set_swapbacked(folio);
++
++		ret = mem_cgroup_charge(folio, NULL, mapping_gfp_mask(mapping));
++		if (ret) {
++			pr_err("shmem: failed to charge folio index %d: %d\n",
++			       i, ret);
++			goto unlock_folio;
++		}
++
++		ret = shmem_add_to_page_cache(folio, mapping, index, NULL,
++					      mapping_gfp_mask(mapping));
++		if (ret) {
++			pr_err("shmem: failed to add to page cache folio index %d: %d\n",
++			       i, ret);
++			goto unlock_folio;
++		}
++
++		if (flags & PRESERVED_FLAG_UPTODATE)
++			folio_mark_uptodate(folio);
++		if (flags & PRESERVED_FLAG_DIRTY)
++			folio_mark_dirty(folio);
++
++		ret = shmem_inode_acct_blocks(inode, 1);
++		if (ret) {
++			pr_err("shmem: failed to account folio index %d: %d\n",
++			       i, ret);
++			goto unlock_folio;
++		}
++
++		shmem_recalc_inode(inode, 1, 0);
++		folio_add_lru(folio);
++		folio_unlock(folio);
++		folio_put(folio);
 +	}
 +
-+	scoped_guard(rwsem_write, &luo_session_global.rwsem)
-+		luo_session_global_preserved_cleanup();
++	inode->i_size = *size;
++	*file_p = file;
++	folio_put(fdt_folio);
++	return 0;
++
++unlock_folio:
++	folio_unlock(folio);
++	folio_put(folio);
++put_file:
++	fput(file);
++	i++;
++put_folios:
++	for (; i < nr_pfolios; i++) {
++		const struct memfd_luo_preserved_folio *pfolio = &pfolios[i];
++
++		folio = kho_restore_folio(PRESERVED_FOLIO_PFN(pfolio->foliodesc));
++		if (folio)
++			folio_put(folio);
++	}
++
++put_fdt:
++	folio_put(fdt_folio);
++	return ret;
 +}
 +
-+static void luo_session_boot(struct liveupdate_subsystem *h, u64 data)
++static bool memfd_luo_can_preserve(struct liveupdate_file_handler *handler,
++				   struct file *file)
 +{
-+	u64 count, data_pa, pgcnt;
-+	const void *prop;
-+	int prop_len;
-+	void *fdt;
++	struct inode *inode = file_inode(file);
 +
-+	fdt = __va(data);
-+	if (fdt_node_check_compatible(fdt, 0, LUO_SESSION_COMPATIBLE))
-+		luo_restore_fail("luo-session FDT incompatible\n");
-+
-+	prop = fdt_getprop(fdt, 0, "count", &prop_len);
-+	if (!prop || prop_len != sizeof(u64))
-+		luo_restore_fail("luo-session FDT missing or invalid 'count'\n");
-+	count = be64_to_cpup(prop);
-+
-+	prop = fdt_getprop(fdt, 0, "data", &prop_len);
-+	if (!prop || prop_len != sizeof(u64))
-+		luo_restore_fail("luo-session FDT missing or invalid 'data'\n");
-+	data_pa = be64_to_cpup(prop);
-+
-+	prop = fdt_getprop(fdt, 0, "pgcnt", &prop_len);
-+	if (!prop || prop_len != sizeof(u64))
-+		luo_restore_fail("luo-session FDT missing or invalid 'pgcnt'\n");
-+	pgcnt = be64_to_cpup(prop);
-+
-+	if (!count)
-+		return;
-+
-+	guard(rwsem_write)(&luo_session_global.rwsem);
-+	luo_session_global.fdt = fdt;
-+	luo_session_global.ser = __va(data_pa);
-+	luo_session_global.ser_count = count;
-+	luo_session_global.pgcnt = pgcnt;
++	return shmem_file(file) && !inode->i_nlink;
 +}
 +
-+static const struct liveupdate_subsystem_ops luo_session_subsys_ops = {
-+	.prepare = luo_session_prepare,
-+	.freeze = luo_session_freeze,
-+	.cancel = luo_session_cancel,
-+	.boot = luo_session_boot,
-+	.finish = luo_session_finish,
++static const struct liveupdate_file_ops memfd_luo_file_ops = {
++	.prepare = memfd_luo_prepare,
++	.freeze = memfd_luo_freeze,
++	.cancel = memfd_luo_cancel,
++	.finish = memfd_luo_finish,
++	.retrieve = memfd_luo_retrieve,
++	.can_preserve = memfd_luo_can_preserve,
 +	.owner = THIS_MODULE,
 +};
 +
-+static struct liveupdate_subsystem luo_session_subsys = {
-+	.ops = &luo_session_subsys_ops,
-+	.name = LUO_SESSION_COMPATIBLE,
++static struct liveupdate_file_handler memfd_luo_handler = {
++	.ops = &memfd_luo_file_ops,
++	.compatible = "memfd-v1",
 +};
 +
-+static int __init luo_session_startup(void)
++static int __init memfd_luo_init(void)
 +{
-+	int ret;
++	int err;
 +
-+	if (!liveupdate_enabled())
-+		return 0;
++	err = liveupdate_register_file_handler(&memfd_luo_handler);
++	if (err)
++		pr_err("Could not register luo filesystem handler: %d\n", err);
 +
-+	init_rwsem(&luo_session_global.rwsem);
-+	INIT_LIST_HEAD(&luo_session_global.list);
-+
-+	ret = liveupdate_register_subsystem(&luo_session_subsys);
-+	if (ret) {
-+		pr_warn("Failed to register luo_session subsystem [%d]\n", ret);
-+		return ret;
-+	}
-+
-+	return ret;
++	return err;
 +}
-+late_initcall(luo_session_startup);
++late_initcall(memfd_luo_init);
 -- 
 2.51.0.536.g15c5d4f767-goog
 
