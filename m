@@ -1,195 +1,215 @@
-Received: from mail-qt1-f180.google.com (mail-qt1-f180.google.com [209.85.160.180])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6985E2877FC
-	for <linux-api@vger.kernel.org>; Fri, 10 Oct 2025 12:46:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.160.180
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99EE9284893;
+	Fri, 10 Oct 2025 13:27:07 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760100394; cv=none; b=NwSWG9tB/9Oih+TcPt+zL2KHKp4xIv8zapJJal1znAlbYd7fbhQhlhzjzss1YF+ztyOQWqmfE7zuHIWfqnICSw3vgSWMNhgIod0Vckmd4AGy/391HPoTbjumXSni5JrLUv3fB48n1PKQuVZIrZ+DeNCauz8fH3uVFqoXFppKKys=
+	t=1760102829; cv=none; b=byOPyRhip8MWwIk8EcNIBTT6ENLcZtf6ApR3JmNqcVQYgWd+7eXNYAM51ofWnazmMqk8iUK57fwkw8CqhdhIFbJ9Fc1zvObzjeTLuUtm3ofy39XSrHawXEWZoJM4Iv83mZZF2CTocIu8fe9h4jsqrL+lZQ2sSqjJrQN+CKy2qrc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760100394; c=relaxed/simple;
-	bh=cYonixcZbuyHF6K3JhPk4silzO2xyU5l/z1VPiL1Kzs=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ozE6Tp6FLt7VQD6UbaFwvFF6G+k206s2Vh1BTa//7RLQmDr6pYSFQZAPo5IvZC6TtaMnASgwVT9RlKHPVyc4/ijyd9prMA4xXahvc1tjgrRsSOQTMDguMg8w3ePtcU6faNgsYhdnrJt5SAvc1z8aoUYJZ892YNctFNN0n7mZYFU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=jTH7dhnN; arc=none smtp.client-ip=209.85.160.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
+	s=arc-20240116; t=1760102829; c=relaxed/simple;
+	bh=Sqju36u31Al8dusP1hKtjOry3JIoKP8tolpuNZ+8w6M=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=QWfVCHqH1qXuUN4tNR2otObbC4UVlOussPrcdW/pGAsHo7GO7nO363I73RuCFz/iH9I0C5OKCZx8JX8WLFgvFDptc6oydfzOyPhOtrdG7gXlQywmyTJ46Nbj/91QN2gk0a/k6n/c/fPMePfcXHuqTtReEbrYLIrB65+Pa9m3CQE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b=L4o+0sYf; arc=none smtp.client-ip=185.125.188.120
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="jTH7dhnN"
-Received: by mail-qt1-f180.google.com with SMTP id d75a77b69052e-4ddabf2ada5so31992681cf.1
-        for <linux-api@vger.kernel.org>; Fri, 10 Oct 2025 05:46:32 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen.com; s=google; t=1760100391; x=1760705191; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=kSdoiDX5nR8jqPMFduOgTUs/SIBXnAYTIt/wPSACCBU=;
-        b=jTH7dhnNtPW/Dz0k7tMfL16rG8lybdtk62ELH4BBaXh9m5eE/ERIfPM7/p+IugdCWY
-         rA0MtwUPMV48cVy0gDL4KN2pG2sQj6w8FZzRh/vV7NkZ512u4gFFtIokgSxLyuTov7zI
-         wQD9ogDOWugnEvKIt446I8UTl0kqTfPNRB5PsGcDVlS+Huwapns5zNoJrR2YovzvekF7
-         J+TAwkfuHUq/MzTefzfCe1QC5pCxSA9lMKd9eEBSu1jrs/cdCWohdf986VX/glDgdbx6
-         msfGlp0roNHt1ys117bS1eyR8VI1apFnyddTwtIV7q2yfSFzG7J/MBRfZM5nWUsBb43e
-         eu7A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760100391; x=1760705191;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to;
-        bh=kSdoiDX5nR8jqPMFduOgTUs/SIBXnAYTIt/wPSACCBU=;
-        b=blXklmww0NywQ3GQZAdSqm72FJtilpbNlGYs+MyEEbdOPqBcKSySRlT6h0tOei3MfD
-         D/cF7+vZtfxo4WXLtlMhWhJLnqfDm+Zs7nMqaX5QnjLGYqOffiWJDSfK0FQPiTvEBszO
-         LIrJ/Yd9I15j8wF2IGHZ619F0vQmHWVzoLExzGpjgiUth6ICwK7Rv+lXA3FYgUFFp4HT
-         RzIFS6C+4VV/VReZJK2e09qiPR3hDID6p4hv0MiOU6GT3H2v0gDXn64YgmAQORJKXyuK
-         qe1wvHM9DL5ccML/FsLCXo+xVb+F2u6Vdwj7/eWl4f+clX0kU6/wzHIWdCrfICOGCcbn
-         mTDA==
-X-Forwarded-Encrypted: i=1; AJvYcCVbe5d9tjoSS+Je+BzhwlL1wQQZEwxQeSAnCN4R4FbP4CnRpM/zsmOnYDquK+KVh4YaK+V3WqAVlfo=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwvL11w1jMY2wJUmsf8/eto1Aey06edokSbDY59XdNcIClhvyBB
-	qAf/cvW9VpVsAchZYS0jxWM33R9J73MRMXA6kFzrwBYc8HNIl4/f/10w0hq8/+D0CWKCUGtx6X3
-	Lcv6qxMtkV2y5Wi2g65Ql6JmP2Y3JBHLs5VDZYyNAlQ==
-X-Gm-Gg: ASbGncvb6GHojeBmS7nzBilHhVyWfRH7cCSMA+2y4QNzqw64rQwsJ0hsE0zf4th3ry5
-	CfBVKqLfoENyGOFg1mrdEufzcJT9Wiekm8ct/zgkchbry5Hg+I8ukNkMQNS4V7GLC8aG+MqVRvy
-	m4cf9IxShOpC5P5XllALFmAq1xem21Ru2ryux8rNRSPPyXX3LJ0KCsJBH8bYPTddnUWqjBCJPPf
-	NtEIUpqXw8UGBClpGa12CjoPtbPr4xvYA==
-X-Google-Smtp-Source: AGHT+IF3WkXquYSs0aZNr+CjES7Xeg58N6tZ4SYA03I6oeZM5oBf1kS+Z/F3o89F5+eVQe4l/6epRXKKJ0esSY22H0k=
-X-Received: by 2002:ac8:444a:0:b0:4e6:eb6c:fdd4 with SMTP id
- d75a77b69052e-4e6eb6d00c8mr119176221cf.52.1760100390967; Fri, 10 Oct 2025
- 05:46:30 -0700 (PDT)
+	dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b="L4o+0sYf"
+Received: from sec2-plucky-amd64.. (176-136-128-80.abo.bbox.fr [176.136.128.80])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id E53B542ABE;
+	Fri, 10 Oct 2025 13:26:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
+	s=20251003; t=1760102820;
+	bh=21Ej0bxpFACoQIzpnvpszcLFxcd87MwXCKY1pXAfvF4=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type;
+	b=L4o+0sYfURLqDWp6TBlMuUndaln4B9ioTdQ0F8OHohmz8C0MBMkaYEKv5rs4jIZMo
+	 w6R3yHNzapTLKmqYey8oj1VouJwpTbSZS+U1bUp+4a1raDaWu5GXleT22sneLBV86Y
+	 DQerpmnTTbfPVKP7HEI+mEg6Rlppb7bwh/YUeo5uEzr6xr0ym20AKw4MdigGtI96od
+	 A75SxEhX2BKeFjpHzrEvo1HvVnwRA+BBRF7u13HD+YXRWBSyfh7xmURgZI5PT6YHBZ
+	 wtFQ1vdvjkTQer4HqpQdCQyxm9NNjhneq92KuQ90cQs6B0CoHKEYkNxgTELSdKp48h
+	 Pp/QAZScv8q8poHxZT489hjSfdWC4DdrSH/9aA0dhYqE3d+u/vzTYFRzknqCGlYh30
+	 IWrDKvIhoL1FpE77XLdKQPrNxhwUu/upXA0MB3Dq8pHx2q3E/vY2uOG967OtlieNWJ
+	 U9hqTtrm8VxKtz94PwjvOYyM3qAyIV1KU7Te9qCWwlskUiqSFzuSBdIeYdQvN3V9Jc
+	 AOTTka5yZcvgMqKnH6kTA1fkU8rXqMCVmAqm8r8ranbZgnHOk/7+nN2SgZA2L0Iulk
+	 EiUit8hRLwZr53X/hJWZMB0AkpGYCP/gOn/36sZRtRDMTYF8EEKnc4L9eonzlOQC/e
+	 YfB/vM2BvHbt7nslsEIhRoZ0=
+From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
+To: linux-security-module@vger.kernel.org
+Cc: john.johansen@canonical.com,
+	paul@paul-moore.com,
+	jmorris@namei.org,
+	serge@hallyn.com,
+	mic@digikod.net,
+	kees@kernel.org,
+	stephen.smalley.work@gmail.com,
+	casey@schaufler-ca.com,
+	takedakn@nttdata.co.jp,
+	penguin-kernel@I-love.SAKURA.ne.jp,
+	song@kernel.org,
+	rdunlap@infradead.org,
+	linux-api@vger.kernel.org,
+	apparmor@lists.ubuntu.com,
+	linux-kernel@vger.kernel.org,
+	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
+Subject: [PATCH v6 5/5] Smack: add support for lsm_config_self_policy and lsm_config_system_policy
+Date: Fri, 10 Oct 2025 15:25:32 +0200
+Message-ID: <20251010132610.12001-6-maxime.belair@canonical.com>
+X-Mailer: git-send-email 2.48.1
+In-Reply-To: <20251010132610.12001-1-maxime.belair@canonical.com>
+References: <20251010132610.12001-1-maxime.belair@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20250929010321.3462457-1-pasha.tatashin@soleen.com>
- <CA+CK2bB+RdapsozPHe84MP4NVSPLo6vje5hji5MKSg8L6ViAbw@mail.gmail.com> <mafs0ms5zn0nm.fsf@kernel.org>
-In-Reply-To: <mafs0ms5zn0nm.fsf@kernel.org>
-From: Pasha Tatashin <pasha.tatashin@soleen.com>
-Date: Fri, 10 Oct 2025 08:45:52 -0400
-X-Gm-Features: AS18NWD1lDKPEljKLMW4w1nOwJRnWgZiJv6poOU8kRsyRJy9732wSgdXfAOypQY
-Message-ID: <CA+CK2bAKdu4-bZQgopNguE_gVtfZ-mpCo+0zOk-9wu8LW8QQwg@mail.gmail.com>
-Subject: Re: [PATCH v4 00/30] Live Update Orchestrator
-To: Pratyush Yadav <pratyush@kernel.org>
-Cc: jasonmiu@google.com, graf@amazon.com, changyuanl@google.com, 
-	rppt@kernel.org, dmatlack@google.com, rientjes@google.com, corbet@lwn.net, 
-	rdunlap@infradead.org, ilpo.jarvinen@linux.intel.com, kanie@linux.alibaba.com, 
-	ojeda@kernel.org, aliceryhl@google.com, masahiroy@kernel.org, 
-	akpm@linux-foundation.org, tj@kernel.org, yoann.congal@smile.fr, 
-	mmaurer@google.com, roman.gushchin@linux.dev, chenridong@huawei.com, 
-	axboe@kernel.dk, mark.rutland@arm.com, jannh@google.com, 
-	vincent.guittot@linaro.org, hannes@cmpxchg.org, dan.j.williams@intel.com, 
-	david@redhat.com, joel.granados@kernel.org, rostedt@goodmis.org, 
-	anna.schumaker@oracle.com, song@kernel.org, zhangguopeng@kylinos.cn, 
-	linux@weissschuh.net, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-mm@kvack.org, gregkh@linuxfoundation.org, tglx@linutronix.de, 
-	mingo@redhat.com, bp@alien8.de, dave.hansen@linux.intel.com, x86@kernel.org, 
-	hpa@zytor.com, rafael@kernel.org, dakr@kernel.org, 
-	bartosz.golaszewski@linaro.org, cw00.choi@samsung.com, 
-	myungjoo.ham@samsung.com, yesanishhere@gmail.com, Jonathan.Cameron@huawei.com, 
-	quic_zijuhu@quicinc.com, aleksander.lobakin@intel.com, ira.weiny@intel.com, 
-	andriy.shevchenko@linux.intel.com, leon@kernel.org, lukas@wunner.de, 
-	bhelgaas@google.com, wagi@kernel.org, djeffery@redhat.com, 
-	stuart.w.hayes@gmail.com, lennart@poettering.net, brauner@kernel.org, 
-	linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, saeedm@nvidia.com, 
-	ajayachandra@nvidia.com, jgg@nvidia.com, parav@nvidia.com, leonro@nvidia.com, 
-	witu@nvidia.com, hughd@google.com, skhawaja@google.com, chrisl@kernel.org, 
-	steven.sistare@oracle.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Thu, Oct 9, 2025 at 6:58=E2=80=AFPM Pratyush Yadav <pratyush@kernel.org>=
- wrote:
->
-> On Tue, Oct 07 2025, Pasha Tatashin wrote:
->
-> > On Sun, Sep 28, 2025 at 9:03=E2=80=AFPM Pasha Tatashin
-> > <pasha.tatashin@soleen.com> wrote:
-> >>
-> [...]
-> > 4. New File-Lifecycle-Bound Global State
-> > ----------------------------------------
-> > A new mechanism for managing global state was proposed, designed to be
-> > tied to the lifecycle of the preserved files themselves. This would
-> > allow a file owner (e.g., the IOMMU subsystem) to save and retrieve
-> > global state that is only relevant when one or more of its FDs are
-> > being managed by LUO.
->
-> Is this going to replace LUO subsystems? If yes, then why? The global
-> state will likely need to have its own lifecycle just like the FDs, and
-> subsystems are a simple and clean abstraction to control that. I get the
-> idea of only "activating" a subsystem when one or more of its FDs are
-> participating in LUO, but we can do that while keeping subsystems
-> around.
->
-> >
-> > The key characteristics of this new mechanism are:
-> > The global state is optionally created on the first preserve() call
-> > for a given file handler.
-> > The state can be updated on subsequent preserve() calls.
-> > The state is destroyed when the last corresponding file is unpreserved
-> > or finished.
-> > The data can be accessed during boot.
-> >
-> > I am thinking of an API like this.
-> >
-> > 1. Add three more callbacks to liveupdate_file_ops:
-> > /*
-> >  * Optional. Called by LUO during first get global state call.
-> >  * The handler should allocate/KHO preserve its global state object and=
- return a
-> >  * pointer to it via 'obj'. It must also provide a u64 handle (e.g., a =
-physical
-> >  * address of preserved memory) via 'data_handle' that LUO will save.
-> >  * Return: 0 on success.
-> >  */
-> > int (*global_state_create)(struct liveupdate_file_handler *h,
-> >                            void **obj, u64 *data_handle);
-> >
-> > /*
-> >  * Optional. Called by LUO in the new kernel
-> >  * before the first access to the global state. The handler receives
-> >  * the preserved u64 data_handle and should use it to reconstruct its
-> >  * global state object, returning a pointer to it via 'obj'.
-> >  * Return: 0 on success.
-> >  */
-> > int (*global_state_restore)(struct liveupdate_file_handler *h,
-> >                             u64 data_handle, void **obj);
-> >
-> > /*
-> >  * Optional. Called by LUO after the last
-> >  * file for this handler is unpreserved or finished. The handler
-> >  * must free its global state object and any associated resources.
-> >  */
-> > void (*global_state_destroy)(struct liveupdate_file_handler *h, void *o=
-bj);
-> >
-> > The get/put global state data:
-> >
-> > /* Get and lock the data with file_handler scoped lock */
-> > int liveupdate_fh_global_state_get(struct liveupdate_file_handler *h,
-> >                                    void **obj);
-> >
-> > /* Unlock the data */
-> > void liveupdate_fh_global_state_put(struct liveupdate_file_handler *h);
->
-> IMHO this looks clunky and overcomplicated. Each LUO FD type knows what
-> its subsystem is. It should talk to it directly. I don't get why we are
-> adding this intermediate step.
->
-> Here is how I imagine the proposed API would compare against subsystems
-> with hugetlb as an example (hugetlb support is still WIP, so I'm still
-> not clear on specifics, but this is how I imagine it will work):
->
-> - Hugetlb subsystem needs to track its huge page pools and which pages
->   are allocated and free. This is its global state. The pools get
->   reconstructed after kexec. Post-kexec, the free pages are ready for
->   allocation from other "regular" files and the pages used in LUO files
->   are reserved.
+Enable users to manage Smack policies through the new hooks
+lsm_config_self_policy and lsm_config_system_policy.
 
-Thinking more about this, HugeTLB is different from iommufd/iommu-core
-vfiofd/pci because it supports many types of FDs, such as memfd and
-guest_memfd (1G support is coming soon!). Also, since not all memfds
-or guest_memfd instances require HugeTLB, binding their lifecycles to
-HugeTLB doesn't make sense here. I agree that a subsystem is more
-appropriate for this use case.
+lsm_config_self_policy allows adding Smack policies for the current cred.
+For now it remains restricted to CAP_MAC_ADMIN.
 
-Pasha
+lsm_config_system_policy allows adding globabl Smack policies. This is
+restricted to CAP_MAC_ADMIN.
+
+Signed-off-by: Maxime Bélair <maxime.belair@canonical.com>
+---
+ security/smack/smack.h     |  8 +++++
+ security/smack/smack_lsm.c | 73 ++++++++++++++++++++++++++++++++++++++
+ security/smack/smackfs.c   |  2 +-
+ 3 files changed, 82 insertions(+), 1 deletion(-)
+
+diff --git a/security/smack/smack.h b/security/smack/smack.h
+index bf6a6ed3946c..3e3d30dfdcf7 100644
+--- a/security/smack/smack.h
++++ b/security/smack/smack.h
+@@ -275,6 +275,14 @@ struct smk_audit_info {
+ #endif
+ };
+ 
++/*
++ * This function is in smackfs.c
++ */
++ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
++			     size_t count, loff_t *ppos,
++			     struct list_head *rule_list,
++			     struct mutex *rule_lock, int format);
++
+ /*
+  * These functions are in smack_access.c
+  */
+diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
+index 99833168604e..bf4bb2242768 100644
+--- a/security/smack/smack_lsm.c
++++ b/security/smack/smack_lsm.c
+@@ -5027,6 +5027,76 @@ static int smack_uring_cmd(struct io_uring_cmd *ioucmd)
+ 
+ #endif /* CONFIG_IO_URING */
+ 
++/**
++ * smack_lsm_config_system_policy - Configure a system smack policy
++ * @op: operation to perform. Currently, only LSM_POLICY_LOAD is supported
++ * @buf: User-supplied buffer in the form "<fmt><policy>"
++ *        <fmt> is the 1-byte format of <policy>
++ *        <policy> is the policy to load
++ * @size: size of @buf
++ * @flags: reserved for future use; must be zero
++ *
++ * Returns: number of written rules on success, negative value on error
++ */
++static int smack_lsm_config_system_policy(u32 op, void __user *buf, size_t size,
++					  u32 flags)
++{
++	loff_t pos = 0;
++	u8 fmt;
++
++	if (op != LSM_POLICY_LOAD || flags)
++		return -EOPNOTSUPP;
++
++	if (size < 2)
++		return -EINVAL;
++
++	if (get_user(fmt, (uint8_t *)buf))
++		return -EFAULT;
++
++	return smk_write_rules_list(NULL, buf + 1, size - 1, &pos, NULL, NULL, fmt);
++}
++
++/**
++ * smack_lsm_config_self_policy - Configure a smack policy for the current cred
++ * @op: operation to perform. Currently, only LSM_POLICY_LOAD is supported
++ * @buf: User-supplied buffer in the form "<fmt><policy>"
++ *        <fmt> is the 1-byte format of <policy>
++ *        <policy> is the policy to load
++ * @size: size of @buf
++ * @flags: reserved for future use; must be zero
++ *
++ * Returns: number of written rules on success, negative value on error
++ */
++static int smack_lsm_config_self_policy(u32 op, void __user *buf, size_t size,
++					u32 flags)
++{
++	loff_t pos = 0;
++	u8 fmt;
++	struct task_smack *tsp;
++
++	if (op != LSM_POLICY_LOAD || flags)
++		return -EOPNOTSUPP;
++
++	if (size < 2)
++		return -EINVAL;
++
++	if (get_user(fmt, (uint8_t *)buf))
++		return -EFAULT;
++	/**
++	 * smk_write_rules_list could be used to gain privileges.
++	 * This function is thus restricted to CAP_MAC_ADMIN.
++	 * TODO: Ensure that the new rule does not give extra privileges
++	 * before dropping this CAP_MAC_ADMIN check.
++	 */
++	if (!capable(CAP_MAC_ADMIN))
++		return -EPERM;
++
++
++	tsp = smack_cred(current_cred());
++	return smk_write_rules_list(NULL, buf + 1, size - 1, &pos, &tsp->smk_rules,
++				    &tsp->smk_rules_lock, fmt);
++}
++
+ struct lsm_blob_sizes smack_blob_sizes __ro_after_init = {
+ 	.lbs_cred = sizeof(struct task_smack),
+ 	.lbs_file = sizeof(struct smack_known *),
+@@ -5203,6 +5273,9 @@ static struct security_hook_list smack_hooks[] __ro_after_init = {
+ 	LSM_HOOK_INIT(uring_sqpoll, smack_uring_sqpoll),
+ 	LSM_HOOK_INIT(uring_cmd, smack_uring_cmd),
+ #endif
++	LSM_HOOK_INIT(lsm_config_self_policy, smack_lsm_config_self_policy),
++	LSM_HOOK_INIT(lsm_config_system_policy, smack_lsm_config_system_policy),
++
+ };
+ 
+ 
+diff --git a/security/smack/smackfs.c b/security/smack/smackfs.c
+index 90a67e410808..ed1814588d56 100644
+--- a/security/smack/smackfs.c
++++ b/security/smack/smackfs.c
+@@ -441,7 +441,7 @@ static ssize_t smk_parse_long_rule(char *data, struct smack_parsed_rule *rule,
+  *	"subject<whitespace>object<whitespace>
+  *	 acc_enable<whitespace>acc_disable[<whitespace>...]"
+  */
+-static ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
++ssize_t smk_write_rules_list(struct file *file, const char __user *buf,
+ 					size_t count, loff_t *ppos,
+ 					struct list_head *rule_list,
+ 					struct mutex *rule_lock, int format)
+-- 
+2.48.1
+
