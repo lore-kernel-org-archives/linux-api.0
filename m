@@ -1,265 +1,193 @@
-Received: from smtp-relay-internal-0.canonical.com (smtp-relay-internal-0.canonical.com [185.125.188.122])
+Received: from smtp-relay-canonical-0.canonical.com (smtp-relay-canonical-0.canonical.com [185.125.188.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 57BF72F25EC
-	for <linux-api@vger.kernel.org>; Fri, 10 Oct 2025 13:34:21 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.122
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6EDC92F25F6;
+	Fri, 10 Oct 2025 13:35:04 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=185.125.188.120
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1760103263; cv=none; b=piKrz/foPkFQi3vOraWB/2DT16d0b3yz8mrDM0nPh7almhmLwNj4NvGDb8qfqZRRLRGQZ58au8yJ6oD3d2fVNqfAmexM0khJXlIRgW6SA5TnbDqwV6z4s7KXaBDSubLvrkoVa9sWsS1rX3G/A4ghAF+f6+JWvqgRUlS9zYri4yw=
+	t=1760103306; cv=none; b=bPdq8a5Rcb2TYw/MHOTsRaX4KLC1ppan87B29FV0QUIHvaI/URN/FGhxZ0alZrcvzN0eYqpRgy28WKh75TO3RMNaZfGZPK58vkt+NityktBsohMFoJDypJVbXhP8POIWscfCtzRV7QwuDnBNEILgZeph3AwUaBUdfIS3g0ZBTPk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1760103263; c=relaxed/simple;
-	bh=DZiQCX5XUYZdTQeBytL5g/Uxd4GVZVy4U/Kk3OE7NPw=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type; b=p+H4xFsyJlwtO2x43srm/LYiVIjKMaTYZeRdj7L42EhNjm7blRsErB53gCRFfPU7u0/oe2s+0VvpXbjTo2s259De8r/fDPDl/CKH0AKJBIGfDAF3IEsTtStye+ygtjVGlM+vKzvCAgOqI2x7NSF4tCovhDQzYpmQy0mmunTjQuA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b=Le6DjO+9; arc=none smtp.client-ip=185.125.188.122
+	s=arc-20240116; t=1760103306; c=relaxed/simple;
+	bh=86IupXS7vJybzKeEqcu/apTr9ZsblsOH7kVcn69OVmk=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=eic0vHa3x7ehr3k5QapfDDPeeuNM7oA5573ho76QjZFk3Qs5Tfq5fyfXwBAMjgga+HJ/mnIWnbI2qg47kOTx31d3C+hC4zAsk8JjOcRgg0RR4K0sNAu2fVSYDRjqcbWkxqkZjzi1ZFCUHfH+LNyXV8Mi8fseDQOv6TwRqOUhIF0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com; spf=pass smtp.mailfrom=canonical.com; dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b=ArKy1PzE; arc=none smtp.client-ip=185.125.188.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=canonical.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=canonical.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b="Le6DjO+9"
-Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com [209.85.221.69])
+	dkim=pass (4096-bit key) header.d=canonical.com header.i=@canonical.com header.b="ArKy1PzE"
+Received: from sec2-plucky-amd64.. (176-136-128-80.abo.bbox.fr [176.136.128.80])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-relay-internal-0.canonical.com (Postfix) with ESMTPS id 22A5F3F853
-	for <linux-api@vger.kernel.org>; Fri, 10 Oct 2025 13:34:18 +0000 (UTC)
+	by smtp-relay-canonical-0.canonical.com (Postfix) with ESMTPSA id 7B78142ABC;
+	Fri, 10 Oct 2025 13:26:59 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=canonical.com;
-	s=20251003; t=1760103258;
-	bh=8Awu2eIx7vXUcm0ifNHBhM6T9yr87CNa2eOKE83TFaY=;
-	h=Message-ID:Date:MIME-Version:From:Subject:To:Cc:References:
-	 In-Reply-To:Content-Type;
-	b=Le6DjO+95ScR9UK4UKmlJu3pmzXKJ+HM4iHfNMMMdqWC0OimF+NqsYczxPCJwxTQv
-	 AS5xjiIY2tOrKHXoMXH2kcgdsoB8aTj5qjlc7zNF/CpwiZUCYIEHQO6bUNQSNQDQM4
-	 ZDZDBIRROGJ0YZ8/VhjKMfqIFuYUkC7I2Pxz+iIhejKbW/SZkBpM5zXmjounb6D+Zu
-	 6VJlKvsxOJqq2HD9I1fOhE8sMgDYTF7Y1d2ZkN6pRzDQLzOiBBtDQE8sT4QXFpyk10
-	 4+xVRSQ9qM096IilLyDeaVmFUyKCUbdEF4AdbgZ3HSEj23B/tk+gj/zbSPl0O5BvFp
-	 kwv3HNpJkMj9xkNcwAqJSE6nGUYJfHWInNwDB/4z1iNxLAEUmSuaHBdeXrAsleZ8wR
-	 9eQRkSOmaEnMdAxwhLrMgPCcO8Mv5mE77vhTEGQXGG3wOmIyfVNrN4gTWFgOqCjc0A
-	 Q+6c9rzUJHFo9YhjuaSxcW9xlc/KvkFe7+TSrPB279AvTOGCQw/H2YG6941UiaS+nX
-	 Ldza72UbcO71p6cmr3TFAIZ15MqH834hDTYydqXQ421Byc0soiPIE3BKzDH3yJvpcM
-	 oPXJMd09TVzxrJt/NoNFN/DfPD0Gw0z/zjQwvPOClX2rcVHuuJpSB59oX/vqImcyIW
-	 tvKIF6xD0FKet66+DG6qDDrw=
-Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-3f6b44ab789so1160413f8f.3
-        for <linux-api@vger.kernel.org>; Fri, 10 Oct 2025 06:34:18 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1760103257; x=1760708057;
-        h=content-transfer-encoding:in-reply-to:autocrypt:content-language
-         :references:cc:to:subject:from:user-agent:mime-version:date
-         :message-id:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to;
-        bh=8Awu2eIx7vXUcm0ifNHBhM6T9yr87CNa2eOKE83TFaY=;
-        b=OwTzgfa50z4eQnAoOkxUMxzn1P2FYqDw++WNEbQuejc88v2AxOpcTeroSO9GjgZOBp
-         wZR7nsixL4yt7ei+0Ihh+YSJTkJLRyJnJZ1/9M7pYR4Hc56VFSLKL/qJxWwH5JkuCQis
-         YuK5gNfsBNN0Ui69zXDPwR6sv1I6JNZwZNBNmm5OvVAiiJHW1RfSGUH/A8SLCNocBWZk
-         YVo/95uForDmU+AvIqFNsyHYQXnAAla0XAgnymGwUOegBZZCYMPEyKaqP08cyM2z0LEp
-         HaT/2zlbhbZGogFHi0Au4F2iMWZ3f9mUnrbvl94hUNFpTev8fHfPHTTOUH/iNCxrsLbj
-         +3kQ==
-X-Forwarded-Encrypted: i=1; AJvYcCVaatUNubWqg31v1T2kFKxngBOY5ba6i6eMsA528kQpFETbtktplcdP+Z2Hcacw9/JtMvqN95WZXmI=@vger.kernel.org
-X-Gm-Message-State: AOJu0YwKxz4kHAJJobsRHsodCCQaIKH2ASpuolK5mSofYUTJlz+kgFkd
-	LxyUpCtsOBFcbDPocxyPYpacZQ2+/RPBTkkSD8VfiqSlCKAdGT+BiQFEhpSdjGU5rHqqq41BD11
-	/cGVKgl4u0V5kPtpS/PUqN2Kw7+GlclG0bsiyuOMmAcqXQZYo3DNUXCJTQlUjQ5w4VDK+zlqAV1
-	rkGw==
-X-Gm-Gg: ASbGncsPRuy6uudAbNeAwPSX+/wmm4GQd6/cq4kJKEST+S0mLWKXABgmJC2satbk2H2
-	VpW5fNkFerR7tsKx3X5Mk5cLGxtrwD3sRqx/M6WRduyL6Vcwok0D58O1SlzAZJSDIZzOti93cQo
-	1tC3uZQ50+ozE/KOZFHxTd30v7chOTxGBin1OiOHAeludC+0yFuGwHISfEQKmrzK2Z9q23NgNOt
-	kkffFWxMNWteVKcxceRrvPgDAPTHQkBmsOyzPyNI4R0yMHikKmajYAeGWg5R56ZNm7kTX8YqDIk
-	nSTxdXiDy4+tzovxGOAdyzXyWyzP9KxcLyG4Fljki2d6yBhX21fkR3fm6N2AUKfKLQjYD1f7i08
-	j5jdd1II7WxPZMD7R0v29J/Ar2i9N
-X-Received: by 2002:a05:6000:41d1:b0:403:6f7d:ac5d with SMTP id ffacd0b85a97d-4266e7dfaf4mr6678124f8f.34.1760103257218;
-        Fri, 10 Oct 2025 06:34:17 -0700 (PDT)
-X-Google-Smtp-Source: AGHT+IH7z1RCyySnr04IwsYiwIMTnCJMVn0IFEFxtmsVNIxWdOTAw2u10BPfhGaSDUipsfPrLTgbYw==
-X-Received: by 2002:a05:6000:41d1:b0:403:6f7d:ac5d with SMTP id ffacd0b85a97d-4266e7dfaf4mr6678093f8f.34.1760103256700;
-        Fri, 10 Oct 2025 06:34:16 -0700 (PDT)
-Received: from [192.168.1.29] (lau06-h06-176-136-128-80.dsl.sta.abo.bbox.fr. [176.136.128.80])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-426ce5e0987sm4185865f8f.38.2025.10.10.06.34.15
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 10 Oct 2025 06:34:16 -0700 (PDT)
-Message-ID: <0b7d5ab4-9b1d-4c59-86df-d91829d6d764@canonical.com>
-Date: Fri, 10 Oct 2025 15:34:15 +0200
+	s=20251003; t=1760102819;
+	bh=M2m06O/92yzIbKYKZQJQNk7bnRhXFzF181i5f3dRy1I=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type;
+	b=ArKy1PzETyeScQJJzKJyen23qk0N1d1UxX6gCuL1Z6SfQ9xAepj+LzfMLzMsGIoGZ
+	 NTzbR1evH4BO43kzTXVTKphtuON1hU9d0KEe2sEy+ROAOOhtidmEaayAn4f+O3coZs
+	 6gLXpUZdxlEwg+dU9wDdFuLr3wg+CW4ITFKO+FUVbbowGBzYJLlsFDd6Y++cLn1Gtl
+	 vHaV6HHyvAZc2zWbCtPP79cgdzfO9FC7X7QSMstSLuC6dZi0xuoLOWTuJFfND5vKFv
+	 IcwZ5I0EfnifurlCsODXltkiw2QG6imvjQrZx2nKfU2ikW/IFfRfL59kyl1HO2wrIB
+	 LjWcOoEYokpItnkr1eocttDWvX8UacM2Ydo/bY2orKKHX3unPR4ZkG8UigF4nxqfKB
+	 Pzhvg+we92xYBlHEbRCF9Nx4LgNJQ2HmctdI2sV5pZjTy/05RmPhn3EsP9rK3emP9h
+	 nmNT5q4fGxp+bU6nW/iLKyDxusf1krY6iTj/bYkBK0pW0e3NTUDlzEnym5Sanz3ykT
+	 ktCjwAYkbt6i/Rpx8NypYWokBo+MUe1ZR9vV9bJnDgRLylMF0CNtWeFjUKoegbLuTE
+	 vxdesh9D1QuzGL5IeO7R6aJSb/eYVMIBF5rlZAaUm3fkDiGj/CZSe+EqSZM4P7K051
+	 7wSKv/qqwUlE6GUXmUrZf3HY=
+From: =?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
+To: linux-security-module@vger.kernel.org
+Cc: john.johansen@canonical.com,
+	paul@paul-moore.com,
+	jmorris@namei.org,
+	serge@hallyn.com,
+	mic@digikod.net,
+	kees@kernel.org,
+	stephen.smalley.work@gmail.com,
+	casey@schaufler-ca.com,
+	takedakn@nttdata.co.jp,
+	penguin-kernel@I-love.SAKURA.ne.jp,
+	song@kernel.org,
+	rdunlap@infradead.org,
+	linux-api@vger.kernel.org,
+	apparmor@lists.ubuntu.com,
+	linux-kernel@vger.kernel.org,
+	=?UTF-8?q?Maxime=20B=C3=A9lair?= <maxime.belair@canonical.com>
+Subject: [PATCH v6 4/5] SELinux: add support for lsm_config_system_policy
+Date: Fri, 10 Oct 2025 15:25:31 +0200
+Message-ID: <20251010132610.12001-5-maxime.belair@canonical.com>
+X-Mailer: git-send-email 2.48.1
+In-Reply-To: <20251010132610.12001-1-maxime.belair@canonical.com>
+References: <20251010132610.12001-1-maxime.belair@canonical.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-From: =?UTF-8?Q?Maxime_B=C3=A9lair?= <maxime.belair@canonical.com>
-Subject: Re: [PATCH v5 0/3] lsm: introduce lsm_config_self_policy() and
- lsm_config_system_policy() syscalls
-To: Casey Schaufler <casey@schaufler-ca.com>,
- linux-security-module@vger.kernel.org
-Cc: john.johansen@canonical.com, paul@paul-moore.com, jmorris@namei.org,
- serge@hallyn.com, mic@digikod.net, kees@kernel.org,
- stephen.smalley.work@gmail.com, takedakn@nttdata.co.jp,
- penguin-kernel@I-love.SAKURA.ne.jp, song@kernel.org, rdunlap@infradead.org,
- linux-api@vger.kernel.org, apparmor@lists.ubuntu.com,
- linux-kernel@vger.kernel.org
-References: <20250709080220.110947-1-maxime.belair@canonical.com>
- <5ae541ce-613f-47c0-8a23-1ec9a0b346cf@schaufler-ca.com>
-Content-Language: en-US
-Autocrypt: addr=maxime.belair@canonical.com; keydata=
- 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
- yriCIKEAbLqHTyj+RhbroZmv5q3X7iVq
-In-Reply-To: <5ae541ce-613f-47c0-8a23-1ec9a0b346cf@schaufler-ca.com>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
+Enable users to manage SELinux policies through the new hook
+lsm_config_system_policy. This feature is restricted to CAP_MAC_ADMIN.
 
+Signed-off-by: Maxime Bélair <maxime.belair@canonical.com>
+---
+ security/selinux/hooks.c            | 27 +++++++++++++++++++++++++++
+ security/selinux/include/security.h |  7 +++++++
+ security/selinux/selinuxfs.c        | 16 ++++++++++++----
+ 3 files changed, 46 insertions(+), 4 deletions(-)
 
-On 7/9/25 18:48, Casey Schaufler wrote:
-> On 7/9/2025 1:00 AM, Maxime Bélair wrote:
->> This patchset introduces two new syscalls: lsm_config_self_policy(),
->> lsm_config_system_policy() and the associated Linux Security Module hooks
->> security_lsm_config_*_policy(), providing a unified interface for loading
->> and managing LSM policies. These syscalls complement the existing per‑LSM
->> pseudo‑filesystem mechanism and work even when those filesystems are not
->> mounted or available.
->>
->> With these new syscalls, users and administrators may lock down access to
->> the pseudo‑filesystem yet still manage LSM policies. Two tightly-scoped
->> entry points then replace the many file operations exposed by those
->> filesystems, significantly reducing the attack surface. This is
->> particularly useful in containers or processes already confined by
->> Landlock, where these pseudo‑filesystems are typically unavailable.
->>
->> Because they provide a logical and unified interface, these syscalls are
->> simpler to use than several heterogeneous pseudo‑filesystems and avoid
->> edge cases such as partially loaded policies. They also eliminates VFS
->> overhead, yielding performance gains notably when many policies are
->> loaded, for instance at boot time.
->>
->> This initial implementation is intentionally minimal to limit the scope
->> of changes. Currently, only policy loading is supported, and only
->> AppArmor registers this LSM hook. However, any LSM can adopt this
->> interface, and future patches could extend this syscall to support more
->> operations, such as replacing, removing, or querying loaded policies.
-> 
-> It would help me be more confident in the interface if you also included
-> hooks for SELinux and Smack. The API needs to be general enough to support
-> SELinux's atomic policy load, Smack's atomic and incremental load options,
-> and Smack's self rule loads. I really don't want to have to implement
-> lsm_config_self_policy2() when I decide to us it for Smack.
-> 
-
-I provided a minimal initial implementation for SELinux and Smack in v6.
-
-For SELinux, I implemented only lsm_config_system_policy, which
-currently allows to load policies with this syscall.
-
-For Smack, I supported both hooks, allowing modification of both global
-and subject rules. However since modifying even the subject rules is a
-privileged operation, both operation are limited to CAP_MAC_ADMIN.
-If we could ensure that the new rules only further restrict capabilities,
-we could allow to load subject rules with fewer privileges.
-
->>
->> Landlock already provides three Landlock‑specific syscalls (e.g.
->> landlock_add_rule()) to restrict ambient rights for sets of processes
->> without touching any pseudo-filesystem. lsm_config_*_policy() generalizes
->> that approach to the entire LSM layer, so any module can choose to
->> support either or both of these syscalls, and expose its policy
->> operations through a uniform interface and reap the advantages outlined
->> above.
->>
->> This patchset is available at [1], a minimal user space example
->> showing how to use lsm_config_system_policy with AppArmor is at [2] and a
->> performance benchmark of both syscalls is available at [3].
->>
->> [1] https://github.com/emixam16/linux/tree/lsm_syscall
->> [2] https://gitlab.com/emixam16/apparmor/tree/lsm_syscall
->> [3] https://gitlab.com/-/snippets/4864908
->>
->> ---
->> Changes in v5
->>  - Improve syscall input verification
->>  - Do not export security_lsm_config_*_policy symbols
->>
->> Changes in v4
->>  - Make the syscall's maximum buffer size defined per module
->>  - Fix a memory leak
->>
->> Changes in v3
->>  - Fix typos
->>
->> Changes in v2
->>  - Split lsm_manage_policy() into two distinct syscalls:
->>    lsm_config_self_policy() and lsm_config_system_policy()
->>  - The LSM hook now calls only the appropriate LSM (and not all LSMs)
->>  - Add a configuration variable to limit the buffer size of these
->>    syscalls
->>  - AppArmor now allows stacking policies through lsm_config_self_policy()
->>    and loading policies in any namespace through
->>    lsm_config_system_policy()
->> ---
->>
->> Maxime Bélair (3):
->>   Wire up lsm_config_self_policy and lsm_config_system_policy syscalls
->>   lsm: introduce security_lsm_config_*_policy hooks
->>   AppArmor: add support for lsm_config_self_policy and
->>     lsm_config_system_policy
->>
->>  arch/alpha/kernel/syscalls/syscall.tbl        |  2 +
->>  arch/arm/tools/syscall.tbl                    |  2 +
->>  arch/m68k/kernel/syscalls/syscall.tbl         |  2 +
->>  arch/microblaze/kernel/syscalls/syscall.tbl   |  2 +
->>  arch/mips/kernel/syscalls/syscall_n32.tbl     |  2 +
->>  arch/mips/kernel/syscalls/syscall_n64.tbl     |  2 +
->>  arch/mips/kernel/syscalls/syscall_o32.tbl     |  2 +
->>  arch/parisc/kernel/syscalls/syscall.tbl       |  2 +
->>  arch/powerpc/kernel/syscalls/syscall.tbl      |  2 +
->>  arch/s390/kernel/syscalls/syscall.tbl         |  2 +
->>  arch/sh/kernel/syscalls/syscall.tbl           |  2 +
->>  arch/sparc/kernel/syscalls/syscall.tbl        |  2 +
->>  arch/x86/entry/syscalls/syscall_32.tbl        |  2 +
->>  arch/x86/entry/syscalls/syscall_64.tbl        |  2 +
->>  arch/xtensa/kernel/syscalls/syscall.tbl       |  2 +
->>  include/linux/lsm_hook_defs.h                 |  4 +
->>  include/linux/security.h                      | 20 +++++
->>  include/linux/syscalls.h                      |  5 ++
->>  include/uapi/asm-generic/unistd.h             |  6 +-
->>  include/uapi/linux/lsm.h                      |  8 ++
->>  kernel/sys_ni.c                               |  2 +
->>  security/apparmor/apparmorfs.c                | 31 +++++++
->>  security/apparmor/include/apparmor.h          |  4 +
->>  security/apparmor/include/apparmorfs.h        |  3 +
->>  security/apparmor/lsm.c                       | 84 +++++++++++++++++++
->>  security/lsm_syscalls.c                       | 25 ++++++
->>  security/security.c                           | 60 +++++++++++++
->>  tools/include/uapi/asm-generic/unistd.h       |  6 +-
->>  .../arch/x86/entry/syscalls/syscall_64.tbl    |  2 +
->>  29 files changed, 288 insertions(+), 2 deletions(-)
->>
->>
->> base-commit: 9c32cda43eb78f78c73aee4aa344b777714e259b
-
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index e7a7dcab81db..3d14d4e47937 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -7196,6 +7196,31 @@ static int selinux_uring_allowed(void)
+ }
+ #endif /* CONFIG_IO_URING */
+ 
++/**
++ * selinux_lsm_config_system_policy - Manage a LSM policy
++ * @op: operation to perform. Currently, only LSM_POLICY_LOAD is supported
++ * @buf: User-supplied buffer
++ * @size: size of @buf
++ * @flags: reserved for future use; must be zero
++ *
++ * Returns: number of written rules on success, negative value on error
++ */
++static int selinux_lsm_config_system_policy(u32 op, void __user *buf,
++					    size_t size, u32 flags)
++{
++	loff_t pos = 0;
++
++	if (op != LSM_POLICY_LOAD || flags)
++		return -EOPNOTSUPP;
++
++	if (!selinux_null.dentry || !selinux_null.dentry->d_sb ||
++	    !selinux_null.dentry->d_sb->s_fs_info)
++		return -ENODEV;
++
++	return __sel_write_load(selinux_null.dentry->d_sb->s_fs_info, buf, size,
++				&pos);
++}
++
+ static const struct lsm_id selinux_lsmid = {
+ 	.name = "selinux",
+ 	.id = LSM_ID_SELINUX,
+@@ -7499,6 +7524,8 @@ static struct security_hook_list selinux_hooks[] __ro_after_init = {
+ #ifdef CONFIG_PERF_EVENTS
+ 	LSM_HOOK_INIT(perf_event_alloc, selinux_perf_event_alloc),
+ #endif
++	LSM_HOOK_INIT(lsm_config_system_policy, selinux_lsm_config_system_policy),
++
+ };
+ 
+ static __init int selinux_init(void)
+diff --git a/security/selinux/include/security.h b/security/selinux/include/security.h
+index e7827ed7be5f..7b779ea43cc3 100644
+--- a/security/selinux/include/security.h
++++ b/security/selinux/include/security.h
+@@ -389,7 +389,14 @@ struct selinux_kernel_status {
+ extern void selinux_status_update_setenforce(bool enforcing);
+ extern void selinux_status_update_policyload(u32 seqno);
+ extern void selinux_complete_init(void);
++
++struct selinux_fs_info;
++
+ extern struct path selinux_null;
++extern ssize_t __sel_write_load(struct selinux_fs_info *fsi,
++				const char __user *buf, size_t count,
++				loff_t *ppos);
++
+ extern void selnl_notify_setenforce(int val);
+ extern void selnl_notify_policyload(u32 seqno);
+ extern int selinux_nlmsg_lookup(u16 sclass, u16 nlmsg_type, u32 *perm);
+diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
+index 47480eb2189b..1f7e611d8300 100644
+--- a/security/selinux/selinuxfs.c
++++ b/security/selinux/selinuxfs.c
+@@ -567,11 +567,11 @@ static int sel_make_policy_nodes(struct selinux_fs_info *fsi,
+ 	return ret;
+ }
+ 
+-static ssize_t sel_write_load(struct file *file, const char __user *buf,
+-			      size_t count, loff_t *ppos)
++ssize_t __sel_write_load(struct selinux_fs_info *fsi,
++			 const char __user *buf, size_t count,
++			 loff_t *ppos)
+ 
+ {
+-	struct selinux_fs_info *fsi;
+ 	struct selinux_load_state load_state;
+ 	ssize_t length;
+ 	void *data = NULL;
+@@ -605,7 +605,6 @@ static ssize_t sel_write_load(struct file *file, const char __user *buf,
+ 		pr_warn_ratelimited("SELinux: failed to load policy\n");
+ 		goto out;
+ 	}
+-	fsi = file_inode(file)->i_sb->s_fs_info;
+ 	length = sel_make_policy_nodes(fsi, load_state.policy);
+ 	if (length) {
+ 		pr_warn_ratelimited("SELinux: failed to initialize selinuxfs\n");
+@@ -626,6 +625,15 @@ static ssize_t sel_write_load(struct file *file, const char __user *buf,
+ 	return length;
+ }
+ 
++static ssize_t sel_write_load(struct file *file, const char __user *buf,
++			      size_t count, loff_t *ppos)
++{
++	struct selinux_fs_info *fsi = file_inode(file)->i_sb->s_fs_info;
++
++	return __sel_write_load(fsi, buf, count, ppos);
++}
++
++
+ static const struct file_operations sel_load_ops = {
+ 	.write		= sel_write_load,
+ 	.llseek		= generic_file_llseek,
+-- 
+2.48.1
 
