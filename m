@@ -1,42 +1,52 @@
-Received: from canpmsgout12.his.huawei.com (canpmsgout12.his.huawei.com [113.46.200.227])
+Received: from szxga01-in.huawei.com (szxga01-in.huawei.com [45.249.212.187])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C32252BE644;
-	Wed, 12 Nov 2025 01:58:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.227
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFFB22951B3;
+	Wed, 12 Nov 2025 01:59:00 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.249.212.187
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762912741; cv=none; b=odO4Aipz6xmlwUfB4cFKlFf8+WqCkaUGA3wARMK20LSzSXZjrSzDIST2cb6O1BpHUnds7MnIY1cmCt4eKhZ1MrNdq1p2lMV9Acw2aXSQ9WBuxkmuQE+SnAyiBo/J8OYDNgmXQ9CsDz08d/0YPNwhz/i9Fcs18PaMwGLn8ZujxkM=
+	t=1762912743; cv=none; b=SMKf0yMC6INthkel04O2tTSrYuG3eXbXWIk+Vuiuqh1I1RNvGaaErlsvsaHtaGMkrxSWBZ9w5pwgS4c0J8oW2/V34QYS25L2XqfdGVMgdzRmEgQprN7V/1nFu02k9S1+zW2OOvHlEptJ5+I8UinivhAE7ehhsrsVsTX8GAFKP7Y=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762912741; c=relaxed/simple;
-	bh=vbriuadhIZV35OxOXbspPmIgK6TNJimrzRg8bMDyo9Q=;
-	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=F60vNkkmio7/2rsTEoEeQ2Lkmrt+eGwppxJfp/4g73m/AE3KlOCJ4o85T7M0rUTNr3ndYeb26QOfY5HAHx+bvhaRmCwGhTD0JiisGnGAgoZMSCP2ZuqT8vIfMjedNLNd+dyV750OLj4HhvMDbsTPavgjrMR3fMgpDdu5Vx0egMo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=PnwF6rmi; arc=none smtp.client-ip=113.46.200.227
+	s=arc-20240116; t=1762912743; c=relaxed/simple;
+	bh=VGlN7vVe2hkC/tx36jnpELpV0RtmhQbUr5kiaBGYMw4=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=DjA8KNBxA4uCbG3O1T2wWQ2yVJ//THWxpPfJ2OAwj0zIUso1zd8GdqGKffF5ts1Ve5SGyiq3Bl+4MSS93ZKhGnwijjouAxI/6PYsCEkY/ReJcFOUN4OL6MLRQF3eJU7A+c3qEcF57sPNCpd2s2qaZD3fQjrwHuYL+ru9MTLCblU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=nf6racO2; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=nf6racO2; arc=none smtp.client-ip=45.249.212.187
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="PnwF6rmi"
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="nf6racO2";
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="nf6racO2"
 dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
 	c=relaxed/relaxed; q=dns/txt;
 	h=From;
-	bh=tCc5dWx94uDsgm2vFWLxYZQ8XDvd2PR/3FJli510E/M=;
-	b=PnwF6rmirMI1fh3F7p/wUuUWStGvuLFd6zVfK8nN4P6HcA+7SBSNB0jxrIrnv+j11ssIUBAYF
-	JCK1Dhonicifdg+BDsxdryvRM/CyJ8E1/v8GIHpyghBKi8g0oODdduDplwZSm5805dwgpH9nYsi
-	qkBEg6cJAba5qna0I83UhFA=
-Received: from mail.maildlp.com (unknown [172.19.163.17])
-	by canpmsgout12.his.huawei.com (SkyGuard) with ESMTPS id 4d5mk675b4znTXd;
-	Wed, 12 Nov 2025 09:57:18 +0800 (CST)
+	bh=wuX5r28VaexWnYhOLnt7f93j+3rz9YK+PcJBP/DbyyY=;
+	b=nf6racO2ksupU9wnn7MfavGg5x+g9M7INfJAy2o3q9Itvw5SbuaeUa0L2xgDo5LTzma7YBj6a
+	2tOcS8MpWNvVWvo7OTjD4FW4TnG/HXjnAciTL84eHGp7WasyyJ5J8KwQhG85pKW6pHTMaVNMc9N
+	aNat5F8LjTaYTJ9S9WAzOkE=
+Received: from canpmsgout11.his.huawei.com (unknown [172.19.92.148])
+	by szxga01-in.huawei.com (SkyGuard) with ESMTPS id 4d5mlb08ftz1BFpZ;
+	Wed, 12 Nov 2025 09:58:35 +0800 (CST)
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=wuX5r28VaexWnYhOLnt7f93j+3rz9YK+PcJBP/DbyyY=;
+	b=nf6racO2ksupU9wnn7MfavGg5x+g9M7INfJAy2o3q9Itvw5SbuaeUa0L2xgDo5LTzma7YBj6a
+	2tOcS8MpWNvVWvo7OTjD4FW4TnG/HXjnAciTL84eHGp7WasyyJ5J8KwQhG85pKW6pHTMaVNMc9N
+	aNat5F8LjTaYTJ9S9WAzOkE=
+Received: from mail.maildlp.com (unknown [172.19.88.214])
+	by canpmsgout11.his.huawei.com (SkyGuard) with ESMTPS id 4d5mjy0VhLzKm7C;
+	Wed, 12 Nov 2025 09:57:10 +0800 (CST)
 Received: from dggemv706-chm.china.huawei.com (unknown [10.3.19.33])
-	by mail.maildlp.com (Postfix) with ESMTPS id 9890B1A0188;
+	by mail.maildlp.com (Postfix) with ESMTPS id 00E0A1A0174;
 	Wed, 12 Nov 2025 09:58:50 +0800 (CST)
 Received: from kwepemq200001.china.huawei.com (7.202.195.16) by
  dggemv706-chm.china.huawei.com (10.3.19.33) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1544.11; Wed, 12 Nov 2025 09:58:50 +0800
+ 15.2.1544.11; Wed, 12 Nov 2025 09:58:48 +0800
 Received: from localhost.huawei.com (10.90.31.46) by
  kwepemq200001.china.huawei.com (7.202.195.16) with Microsoft SMTP Server
  (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
- 15.2.1544.11; Wed, 12 Nov 2025 09:58:49 +0800
+ 15.2.1544.11; Wed, 12 Nov 2025 09:58:48 +0800
 From: Chenghai Huang <huangchenghai2@huawei.com>
 To: <arnd@arndb.de>, <catalin.marinas@arm.com>, <will@kernel.org>,
 	<akpm@linux-foundation.org>, <anshuman.khandual@arm.com>,
@@ -46,12 +56,10 @@ To: <arnd@arndb.de>, <catalin.marinas@arm.com>, <will@kernel.org>,
 	<linux-crypto@vger.kernel.org>, <linux-api@vger.kernel.org>
 CC: <fanghao11@huawei.com>, <shenyang39@huawei.com>, <liulongfang@huawei.com>,
 	<qianweili@huawei.com>
-Subject: [PATCH RFC 3/4] io-128-nonatomic: introduce io{read|write}128_{lo_hi|hi_lo}
-Date: Wed, 12 Nov 2025 09:58:45 +0800
-Message-ID: <20251112015846.1842207-4-huangchenghai2@huawei.com>
+Subject: [PATCH RFC 0/4] Introduce 128-bit IO access
+Date: Wed, 12 Nov 2025 09:58:42 +0800
+Message-ID: <20251112015846.1842207-1-huangchenghai2@huawei.com>
 X-Mailer: git-send-email 2.33.0
-In-Reply-To: <20251112015846.1842207-1-huangchenghai2@huawei.com>
-References: <20251112015846.1842207-1-huangchenghai2@huawei.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -63,106 +71,38 @@ Content-Type: text/plain
 X-ClientProxiedBy: kwepems200002.china.huawei.com (7.221.188.68) To
  kwepemq200001.china.huawei.com (7.202.195.16)
 
-From: Weili Qian <qianweili@huawei.com>
+These patches introduce 128-bit IO access functionality. The reason
+is that the current HiSilicon cryptographic devices need to
+maintain atomic operations when accessing 128-bit MMIO across
+physical and virtual functions.
 
-In order to provide non-atomic functions for io{read|write}128.
-We define a number of variants of these functions in the generic
-iomap that will do non-atomic operations.
+Currently, 128-bit atomic writes have already been implemented in
+the device driver, and the driver also depends on a 128-bit atomic
+read access interface. Therefore, we have introduced a generic
+128-bit IO access interface to replace the implementation of
+128-bit read and write IO interfaces using instructions in the
+device driver. When the architecture does not support 128-bit
+atomic operations, non-atomic 128-bit read and write interfaces can
+be used to make the driver functional.
 
-These functions are only defined if io{read|write}128 are defined.
-If they are not, then the wrappers that always use non-atomic operations
-from include/linux/io-128-nonatomic*.h will be used.
+Weili Qian (4):
+  UAPI: Introduce 128-bit types and byteswap operations
+  asm-generic/io.h: add io{read,write}128 accessors
+  io-128-nonatomic: introduce io{read|write}128_{lo_hi|hi_lo}
+  arm64/io: Add {__raw_read|__raw_write}128 support
 
-Signed-off-by: Weili Qian <qianweili@huawei.com>
-Signed-off-by: Chenghai Huang <huangchenghai2@huawei.com>
----
- include/linux/io-128-nonatomic-hi-lo.h | 35 ++++++++++++++++++++++++++
- include/linux/io-128-nonatomic-lo-hi.h | 34 +++++++++++++++++++++++++
- 2 files changed, 69 insertions(+)
+ arch/arm64/include/asm/io.h                  | 21 +++++++++
+ include/asm-generic/io.h                     | 48 ++++++++++++++++++++
+ include/linux/io-128-nonatomic-hi-lo.h       | 35 ++++++++++++++
+ include/linux/io-128-nonatomic-lo-hi.h       | 34 ++++++++++++++
+ include/uapi/linux/byteorder/big_endian.h    |  6 +++
+ include/uapi/linux/byteorder/little_endian.h |  6 +++
+ include/uapi/linux/swab.h                    | 10 ++++
+ include/uapi/linux/types.h                   |  3 ++
+ 8 files changed, 163 insertions(+)
  create mode 100644 include/linux/io-128-nonatomic-hi-lo.h
  create mode 100644 include/linux/io-128-nonatomic-lo-hi.h
 
-diff --git a/include/linux/io-128-nonatomic-hi-lo.h b/include/linux/io-128-nonatomic-hi-lo.h
-new file mode 100644
-index 000000000000..b5b083a9e81b
---- /dev/null
-+++ b/include/linux/io-128-nonatomic-hi-lo.h
-@@ -0,0 +1,35 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_IO_128_NONATOMIC_HI_LO_H_
-+#define _LINUX_IO_128_NONATOMIC_HI_LO_H_
-+
-+#include <linux/io.h>
-+#include <asm-generic/int-ll64.h>
-+
-+static inline u128 ioread128_hi_lo(const void __iomem *addr)
-+{
-+	u32 low, high;
-+
-+	high = ioread64(addr + sizeof(u64));
-+	low = ioread64(addr);
-+
-+	return low + ((u128)high << 64);
-+}
-+
-+static inline void iowrite128_hi_lo(u128 val, void __iomem *addr)
-+{
-+	iowrite64(val >> 64, addr + sizeof(u64));
-+	iowrite64(val, addr);
-+}
-+
-+#ifndef ioread128
-+#define ioread128_is_nonatomic
-+#define ioread128 ioread128_hi_lo
-+#endif
-+
-+#ifndef iowrite128
-+#define iowrite128_is_nonatomic
-+#define iowrite128 iowrite128_hi_lo
-+#endif
-+
-+#endif	/* _LINUX_IO_128_NONATOMIC_HI_LO_H_ */
-+
-diff --git a/include/linux/io-128-nonatomic-lo-hi.h b/include/linux/io-128-nonatomic-lo-hi.h
-new file mode 100644
-index 000000000000..0448ee5a13de
---- /dev/null
-+++ b/include/linux/io-128-nonatomic-lo-hi.h
-@@ -0,0 +1,34 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_IO_128_NONATOMIC_LO_HI_H_
-+#define _LINUX_IO_128_NONATOMIC_LO_HI_H_
-+
-+#include <linux/io.h>
-+#include <asm-generic/int-ll64.h>
-+
-+static inline u128 ioread128_lo_hi(const void __iomem *addr)
-+{
-+	u64 low, high;
-+
-+	low = ioread64(addr);
-+	high = ioread64(addr + sizeof(u64));
-+
-+	return low + ((u128)high << 64);
-+}
-+
-+static inline void iowrite128_lo_hi(u128 val, void __iomem *addr)
-+{
-+	iowrite64(val, addr);
-+	iowrite64(val >> 64, addr + sizeof(u64));
-+}
-+
-+#ifndef ioread128
-+#define ioread128_is_nonatomic
-+#define ioread128 ioread128_lo_hi
-+#endif
-+
-+#ifndef iowrite128
-+#define iowrite128_is_nonatomic
-+#define iowrite128 iowrite128_lo_hi
-+#endif
-+
-+#endif	/* _LINUX_IO_128_NONATOMIC_LO_HI_H_ */
 -- 
 2.33.0
 
