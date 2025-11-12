@@ -1,125 +1,162 @@
-Received: from mail.zytor.com (terminus.zytor.com [198.137.202.136])
+Received: from canpmsgout07.his.huawei.com (canpmsgout07.his.huawei.com [113.46.200.222])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8046A2868B5;
-	Tue, 11 Nov 2025 21:31:53 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=198.137.202.136
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A381B291C07;
+	Wed, 12 Nov 2025 01:58:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=113.46.200.222
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1762896715; cv=none; b=rJUOrwtxkXTI51WjQB9aprG2AtaqZRhQOTVARxEp/tXQYtRANCeGV/+CiEElaDoOHFLhpCv5nIoL+WLj1m5G4Xnd9XVltVTH5m1VE73n1DppL7s83p3NlzjmtkIS2jF58qHsXHI7Z6HOk5C0hz9T8yVWQSPujw3IVmTkDPIUJN8=
+	t=1762912735; cv=none; b=tX2cRLrNCRalQoe6nMv+6h1w9bmPj+UHGUY7Ez+tjyOMOddZHf1nApltVE3id6waV4aELliDWL8bVRU07SDt8keovrqO+70tFYsMoM2CSE1Fv5wGe1ESbetzu14622QDPUm79yH897xj9W5lpaAxUUnAavt5kKSZfETM5op8et8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1762896715; c=relaxed/simple;
-	bh=6Odj3tYkRiZs6yTQz6IlceMUTLk6AQXtihXfMKVwsFk=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=cHMb7T9mIxDQ4hvW4JRHNYeTovNYfsPdBccV/cktxVYioQ/A+ciClR2ni8FlQe5iXp3JPbFRXaffng+szStCp0Yr5HUXe5ZoOqMhFv/wFYsSjK8tOwwpx1cSMsdH4SC9TUNx6YQzTBKpbkiYkwBCWMJE6YAK1pVNMrtPjKa3Wzg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zytor.com; spf=pass smtp.mailfrom=zytor.com; dkim=fail (2048-bit key) header.d=zytor.com header.i=@zytor.com header.b=mDB9MXB2 reason="signature verification failed"; arc=none smtp.client-ip=198.137.202.136
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zytor.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=zytor.com
+	s=arc-20240116; t=1762912735; c=relaxed/simple;
+	bh=0d24U/gQtR7PaFIB8U0Qme4G1IgYCEDPR4xbDK59YFs=;
+	h=From:To:CC:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=IGGe6wgQ/wgc4p1h/gGR1fM1L2WRIyBgARr4vInHJ5dDwh2zSN+5NsaretwN7SPQX67x1TIVbuekH/Uy9YZodd7C0+n6CZsBJsDSnvvrQN6r7grrkX5trXH9LSwvo+Os0sAmcsmkXGoYU0Qo4O2RSzs0fEkfg3dov+5vVs4Pqzc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com; spf=pass smtp.mailfrom=huawei.com; dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b=I4H5FiXs; arc=none smtp.client-ip=113.46.200.222
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=huawei.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=huawei.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=fail reason="signature verification failed" (2048-bit key) header.d=zytor.com header.i=@zytor.com header.b="mDB9MXB2"
-Received: from [172.27.2.41] (c-76-133-66-138.hsd1.ca.comcast.net [76.133.66.138])
-	(authenticated bits=0)
-	by mail.zytor.com (8.18.1/8.17.1) with ESMTPSA id 5ABLSeYS360987
-	(version=TLSv1.3 cipher=TLS_AES_128_GCM_SHA256 bits=128 verify=NO);
-	Tue, 11 Nov 2025 13:28:41 -0800
-DKIM-Filter: OpenDKIM Filter v2.11.0 mail.zytor.com 5ABLSeYS360987
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=zytor.com;
-	s=2025102301; t=1762896521;
-	bh=bzL1y42NUb+51GA1nahiKxPpmYzfoAoFGVxMM1ISNHQ=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To:From;
-	b=mDB9MXB23HIeu2vMp0aP0xjdZH1lztVtNQJ4L0qP3vrvVuQFwBLMzudT8ddRlokNk
-	 g3dHPd7GP6uW+pxkSrKHt8S3FfUeFwB4FCXqcnpORWed3Stkbmtw+8Zmu+xgcGI1MM
-	 Xge6IcCgniccOK60FAzVdwQUcGnT6/BCqL2FNvbeyjq4TBKJuapFGLZLck+R2gfdBh
-	 vsyPS/+RSXAVQsHL14/nDLGQ+xkBUnApWuqFWdzwEHiv6BWJsN4XPiTD+Gs6WHQkyo
-	 JNqWoawmdl2ozCEUQtNE3aEYN5lqITkryWFe3s4bYX/iABtBtzgsCBbd8bUtvC/3GW
-	 yIvurM9YnVrWw==
-Message-ID: <85c9b487-eb18-46a9-babe-6223ae3e05f5@zytor.com>
-Date: Tue, 11 Nov 2025 13:28:40 -0800
+	dkim=pass (1024-bit key) header.d=huawei.com header.i=@huawei.com header.b="I4H5FiXs"
+dkim-signature: v=1; a=rsa-sha256; d=huawei.com; s=dkim;
+	c=relaxed/relaxed; q=dns/txt;
+	h=From;
+	bh=DP8vjdYZDSobWILtLfZiQMWdEZEMU/+jU5eftNIaWJc=;
+	b=I4H5FiXsckWGKiwWuQR7YErH3Rji7+fO7qkBrNGdRRFeAHv9JftjHulXLGSF9EJZYhFuf2Rv0
+	rkhZI5AsoMZ9WjnEYveCtbpo237GjdS1FEeCFcU8u02B9uzb+SV5bAluJBXhQ/zpumjJeK08HSP
+	2+IQfOFEbYkgz0himOw+HgA=
+Received: from mail.maildlp.com (unknown [172.19.163.44])
+	by canpmsgout07.his.huawei.com (SkyGuard) with ESMTPS id 4d5mjz0drmzLlVP;
+	Wed, 12 Nov 2025 09:57:11 +0800 (CST)
+Received: from dggemv705-chm.china.huawei.com (unknown [10.3.19.32])
+	by mail.maildlp.com (Postfix) with ESMTPS id 11544140135;
+	Wed, 12 Nov 2025 09:58:50 +0800 (CST)
+Received: from kwepemq200001.china.huawei.com (7.202.195.16) by
+ dggemv705-chm.china.huawei.com (10.3.19.32) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1544.11; Wed, 12 Nov 2025 09:58:49 +0800
+Received: from localhost.huawei.com (10.90.31.46) by
+ kwepemq200001.china.huawei.com (7.202.195.16) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.1544.11; Wed, 12 Nov 2025 09:58:49 +0800
+From: Chenghai Huang <huangchenghai2@huawei.com>
+To: <arnd@arndb.de>, <catalin.marinas@arm.com>, <will@kernel.org>,
+	<akpm@linux-foundation.org>, <anshuman.khandual@arm.com>,
+	<ryan.roberts@arm.com>, <andriy.shevchenko@linux.intel.com>,
+	<herbert@gondor.apana.org.au>, <linux-kernel@vger.kernel.org>,
+	<linux-arch@vger.kernel.org>, <linux-arm-kernel@lists.infradead.org>,
+	<linux-crypto@vger.kernel.org>, <linux-api@vger.kernel.org>
+CC: <fanghao11@huawei.com>, <shenyang39@huawei.com>, <liulongfang@huawei.com>,
+	<qianweili@huawei.com>
+Subject: [PATCH RFC 2/4] asm-generic/io.h: add io{read,write}128 accessors
+Date: Wed, 12 Nov 2025 09:58:44 +0800
+Message-ID: <20251112015846.1842207-3-huangchenghai2@huawei.com>
+X-Mailer: git-send-email 2.33.0
+In-Reply-To: <20251112015846.1842207-1-huangchenghai2@huawei.com>
+References: <20251112015846.1842207-1-huangchenghai2@huawei.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: RFC: Serial port DTR/RTS - O_NRESETDEV
-To: "Theodore Ts'o" <tytso@mit.edu>
-Cc: Maarten Brock <Maarten.Brock@sttls.nl>,
-        "linux-serial@vger.kernel.org" <linux-serial@vger.kernel.org>,
-        "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-        LKML <linux-kernel@vger.kernel.org>
-References: <bb44f856-10a2-40c7-a3f7-be50c8e4b0a9@zytor.com>
- <20251107173743.GA3131573@mit.edu>
- <dc42f5d4-a707-4442-bda6-1c1990666f54@zytor.com>
- <20251110033556.GC2988753@mit.edu>
- <ADB50E23-DC8B-43D0-A345-E10396A3DFD4@zytor.com>
- <AMBPR05MB11925DA076098B05E418BF64283CEA@AMBPR05MB11925.eurprd05.prod.outlook.com>
- <20251110201933.GH2988753@mit.edu>
- <0F8021E8-F288-4669-8195-9948844E36FD@zytor.com>
- <20251111035143.GJ2988753@mit.edu>
- <D4AF3E24-8698-4EEC-9D52-655D69897111@zytor.com>
- <20251111043803.GK2988753@mit.edu>
-Content-Language: en-US, sv-SE
-From: "H. Peter Anvin" <hpa@zytor.com>
-In-Reply-To: <20251111043803.GK2988753@mit.edu>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: kwepems200002.china.huawei.com (7.221.188.68) To
+ kwepemq200001.china.huawei.com (7.202.195.16)
 
-On 2025-11-10 20:38, Theodore Ts'o wrote:
-> On Mon, Nov 10, 2025 at 07:57:22PM -0800, H. Peter Anvin wrote:
->> I really think you are looking at this from a very odd point of
->> view, and you seem to be very inconsistent. Boot time setup? Isn't
->> that what setserial is for? We have the ability to feed this
->> configuration already, but you need a file descriptor.
-> 
-> I'm not really fond of adding some new open flag that to me seems
-> **very** serial / RS-485 specific, and so I'm trying to find some
-> way to avoid it.
-> 
+From: Weili Qian <qianweili@huawei.com>
 
-I don't think it is.  "Opening this device for configuration."
+Architectures like ARM64 already support 128-bit memory access. Currently,
+device drivers implement atomic read and write operations for 128-bit
+memory using assembly. This patch adds generic io{read,write}128 access
+functions, which will enable device drivers to consistently use
+io{read,write}128 for 128-bit access.
 
-> I also think that that the GPIO style timing requirements of RTS
-> **really** should be done as a line discpline, and not in userspace.
-> 
+Signed-off-by: Weili Qian <qianweili@huawei.com>
+Signed-off-by: Chenghai Huang <huangchenghai2@huawei.com>
+---
+ include/asm-generic/io.h | 48 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
 
-No disagreement there -- and so it is. What I want to do is a way to *attach*
-that line discipline without poking with the serial port itself.  That's what
-I keep trying to get at.
-
->> Honestly, though, I'm far less interested in what 8250-based hardware does than e.g. USB.
-> 
-> I'm quite confident that USB won't have "state" that will be preserved
-> across a reboot, because the device won't even get powered up until
-> the USB device is attached.  And part of the problem was that the
-> requirements weren't particularly clear, and given the insistence that
-> the "state" be preserved even across reboot, despite the serial port
-> autoconfiguration, I had assumed you were posting uing the COM 1/2/3/4
-> ports where autoconfiguration isn't stricty speaking necessary.
-> 
-> In some ways, USB ports might be easier, since it should be possible
-> to specify udev rules which get passed to the driver when the USB
-> serial device is inserted, and so *that* can easily be done without
-> needing a file descriptor.
-> 
-> And for this sort of thing, it seems perfectly fair to hard code some
-> specific behavior using either a boot command line or a udev rule,
-> since you seem to be positing that the serial port will be dedicated
-> to some kind of weird-shit RS-485 bus device, where any time RTS/DTR
-> gets raised, the bus will malfunction in weird and wondrous ways....
-
-But again, it is very much a configuration property.  You don't know where
-your dynamically assigned serial port will end up -- and you *can't*, because
-it is a property of the DCE -- what is plugged *into* the device.
-
-Now you have someone writing a terminal program or something like Arduino and
-decide to enumerate serial ports (which, as I stated, you can't actually do
-right now without opening the devices).  This is why it makes sense for the
-open() caller to declare intent; this is similar to how O_NDELAY replaced
-callout devices.
-
-It would be lovely if we could do something like
-open("/dev/ttyS0/option-string") and so on, but that is well and truly a far
-bigger change to the whole driver API.
-
-	-hpa
+diff --git a/include/asm-generic/io.h b/include/asm-generic/io.h
+index ca5a1ce6f0f8..c419021318e6 100644
+--- a/include/asm-generic/io.h
++++ b/include/asm-generic/io.h
+@@ -146,6 +146,16 @@ static inline u64 __raw_readq(const volatile void __iomem *addr)
+ #endif
+ #endif /* CONFIG_64BIT */
+ 
++#ifdef CONFIG_ARCH_SUPPORTS_INT128
++#ifndef __raw_read128
++#define __raw_read128 __raw_read128
++static inline u128 __raw_read128(volatile void __iomem *addr)
++{
++	return *(const volatile u128 __force *)addr;
++}
++#endif
++#endif /* CONFIG_ARCH_SUPPORTS_INT128 */
++
+ #ifndef __raw_writeb
+ #define __raw_writeb __raw_writeb
+ static inline void __raw_writeb(u8 value, volatile void __iomem *addr)
+@@ -180,6 +190,16 @@ static inline void __raw_writeq(u64 value, volatile void __iomem *addr)
+ #endif
+ #endif /* CONFIG_64BIT */
+ 
++#ifdef CONFIG_ARCH_SUPPORTS_INT128
++#ifndef __raw_write128
++#define __raw_write128 __raw_write128
++static inline void __raw_write128(u128 value, volatile void __iomem *addr)
++{
++	*(volatile u128 __force *)addr = value;
++}
++#endif
++#endif /* CONFIG_ARCH_SUPPORTS_INT128 */
++
+ /*
+  * {read,write}{b,w,l,q}() access little endian memory and return result in
+  * native endianness.
+@@ -917,6 +937,22 @@ static inline u64 ioread64(const volatile void __iomem *addr)
+ #endif
+ #endif /* CONFIG_64BIT */
+ 
++#ifdef CONFIG_ARCH_SUPPORTS_INT128
++#ifndef ioread128
++#define ioread128 ioread128
++static inline u128 ioread128(const volatile void __iomem *addr)
++{
++	u128 val;
++
++	__io_br();
++	val = __le128_to_cpu((__le128 __force)__raw_read128(addr));
++	__io_ar(val);
++
++	return val;
++}
++#endif
++#endif /* CONFIG_ARCH_SUPPORTS_INT128 */
++
+ #ifndef iowrite8
+ #define iowrite8 iowrite8
+ static inline void iowrite8(u8 value, volatile void __iomem *addr)
+@@ -951,6 +987,18 @@ static inline void iowrite64(u64 value, volatile void __iomem *addr)
+ #endif
+ #endif /* CONFIG_64BIT */
+ 
++#ifdef CONFIG_ARCH_SUPPORTS_INT128
++#ifndef iowrite128
++#define iowrite128 iowrite128
++static inline void iowrite128(u128 value, volatile void __iomem *addr)
++{
++	__io_bw();
++	__raw_write128((u128 __force)__cpu_to_le128(value), addr);
++	__io_aw();
++}
++#endif
++#endif /* CONFIG_ARCH_SUPPORTS_INT128 */
++
+ #ifndef ioread16be
+ #define ioread16be ioread16be
+ static inline u16 ioread16be(const volatile void __iomem *addr)
+-- 
+2.33.0
 
