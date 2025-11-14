@@ -1,59 +1,59 @@
-Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
+Received: from mail-ed1-f48.google.com (mail-ed1-f48.google.com [209.85.208.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8D34F2FB08F
-	for <linux-api@vger.kernel.org>; Fri, 14 Nov 2025 14:10:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9A63E2116F4
+	for <linux-api@vger.kernel.org>; Fri, 14 Nov 2025 14:49:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1763129429; cv=none; b=QlucPGOvMXLk4BI9MYwh75aaBAj78gZUttww+ER+zanqCh6iDwMx/gN+W3wwe2SS71ZBf3eIA58fiYBH2yZva4YRONCIdhPMVph5zDhMddf8vUrd736cDz19tllM/4u3J0MwN5XfnKK3nK+B5/HO3CaS694YJACnMfKgvwHV+k0=
+	t=1763131753; cv=none; b=dPXjGnzVrUVFDq+QH2jEn8V/2jrE5mnfUvoAP/LTBu46p2PzzQ5iEFMmJf2YkiGOcacLSCebOR1CzYl5Zi5MU7ywqQrUbUBbuDZwZAEYUdNb88e/IARS30H6o5WevLIVpM3QuOvvwhjiCGI4OpOUMmsoyddGjVrPo+8ne3H3EUc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1763129429; c=relaxed/simple;
-	bh=KE+QPebTvEqbnMKEXMooGer5jwtRyU8fzyKcLQ4mw/g=;
+	s=arc-20240116; t=1763131753; c=relaxed/simple;
+	bh=yKj8YKn4bG73S711v2EqDY1AhzbG3apkJ7Pfze5Fg6A=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=f9BkXM1pz3m+fPvkTR8I68ESHN210wXkjYFSLMmx4+ju6meusJiKzlTTxqn3rMJazMIs+vQtAKx2W1vlw54g6pmQcAfZekeufHiuBjWE7f7nGn42j6w7h3By5Dm9MchkpxNa8ZkCQI3Ilo8+pkNMWwqi9Yzz66832MIi65Axrb8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=Lesn+N1+; arc=none smtp.client-ip=209.85.218.53
+	 To:Cc:Content-Type; b=oXjM3uS1PJNZ38P1NlUVyT2QOkYP6i7uy9siJNYOmCqYOOcJ2gD8aZBEC1XWUgryxK0TTwrpCGSeU7pjwHrXrNjeqQm1JI+d0ar5osMv2ZshYv8ndX9xoAaQKXWvXb1PcEgbJagTxNtX/Aci6rDHAUuCxk0GxWG9ZVR9c3p28hQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com; spf=pass smtp.mailfrom=soleen.com; dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b=Y5Z6+vjF; arc=none smtp.client-ip=209.85.208.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="Lesn+N1+"
-Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-b736d883ac4so115403966b.2
-        for <linux-api@vger.kernel.org>; Fri, 14 Nov 2025 06:10:26 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.b="Y5Z6+vjF"
+Received: by mail-ed1-f48.google.com with SMTP id 4fb4d7f45d1cf-640b0639dabso3624520a12.3
+        for <linux-api@vger.kernel.org>; Fri, 14 Nov 2025 06:49:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen.com; s=google; t=1763129424; x=1763734224; darn=vger.kernel.org;
+        d=soleen.com; s=google; t=1763131750; x=1763736550; darn=vger.kernel.org;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=wUyLyvVVKlFsH483G8ekZl8QKBp07gDZblbUWMC1jGk=;
-        b=Lesn+N1+up0vOeI4VPrJ65CHM+HZS4l9BYFpy+ZAGPoMWIoEfa6AplEKNUMCfh3Y37
-         WmFW/0RoPrO3YvGhKscMCFM2KozG+YG7ahcyjRq6gmfBazKAab0s1k+UwTubXS0Qqszm
-         j42DCKbj75VSzhxFQGSY7KgO6sbnhjggb2eHqbgQ4oMQu4SrtK+qMRgqSWroQVYN6ulQ
-         Vk2CqF6Z30kY9x+9KFwmhCo2yyDlV1+p/SmFy8PeQ7Je6AqaF2B/cJvPBsDK+46u25W4
-         BpgwKUeZoUNilxvaR+miAbWjM4PVemAFtVhk31u1W4/aI6gw1890X4xbh9vyCYA6J+9V
-         SEfA==
+        bh=QYEAXpQ4a552Nj/Tapn49whjWroq5jBGQBSgz6ETKNI=;
+        b=Y5Z6+vjFPv1/p/nR+ohTtWyzvDWIPRs/B7urW8j5uI+JhJ2ps7AbJ8yuGdbudg2htE
+         3sxWPSjwRbXc4wer797ugPtVpC7eKHFqUGZD99vh988xBpKXDWNh+4KueVk0kY2C8NDa
+         ZCB+00FIG/VHRfFG8FQgayvQroGybNbmwiILrBEaNEcW7Bt6TONMvDPGXk93tF1awlSJ
+         frtKq1f5uOrmvyYEROA/m7Q4ULP/XQhmKwWQ07gnbT5o/fgBfUtspWXxuJ7ZIJ6DNSOF
+         Ge4CO+6YP0m3n+n4+yxlu4d/G2c2gzPA/uagVgl+DLFp1csYffujlUoHfoAzbRHdl/46
+         xCIg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20230601; t=1763129424; x=1763734224;
+        d=1e100.net; s=20230601; t=1763131750; x=1763736550;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to;
-        bh=wUyLyvVVKlFsH483G8ekZl8QKBp07gDZblbUWMC1jGk=;
-        b=NeWj+twhgVdlXOpwx/RpYJwRUMKXoCuVnLjbmRDtyRTawxK+6VZJd5U+OEgo+oXpZb
-         R23ROPzQDALo/51nDKnAaPfXlrbsDemUq4sc4m6rw4yIpxazpaWNJ87oRPdcYSW6vyv3
-         s/GDIJerTYjkl3M2vgjKnBh3HFu962+z7fuwpw6babSet4AmxHnshwbrAp8EJr3gyFdG
-         8YbK4g2pEqejA7Kkcp6OSHBl81DYCdMoH4H9om2Mh9BkuQOJ5DwyNTB9IAv1dZ028xJ9
-         X7kA6/CYym4Jm8iIDujTrkTAJKlTYHkD0vSgYU7bHNNQUE73Mnj2kQk6wDNy61eRMdxP
-         qWmQ==
-X-Forwarded-Encrypted: i=1; AJvYcCUfxHswR8bPbyOeDkz/afOrEkI/Fe2TyFSBk8wpCauVqNIKprHti5O1PRThhRL0BBTUtn5cxtblVYs=@vger.kernel.org
-X-Gm-Message-State: AOJu0YyrXNQPmoJmX2PD+RB3cBxNYCLZyqQS4qr1WcuqGvWnNc/ZZgto
-	66Sh8yN1ehvcQfTj/TslAX6yLcc8VfGN2y9yE4gEHKhqpZdbA3qH6BUfNu8uTM4DTtug8mV7r/O
-	XiId2uRgdhg1HrJILcPSCfQP0U/9q1OlRzYE5spzu9A==
-X-Gm-Gg: ASbGncs9+HlLLNTqsfsIUwpPEO8bnB3l+DFIFaVhAZ85MDl0+blXKYVS5BECoVWCgci
-	LEIv/kFKTONot6C/9+MxJLMT/ab7UIBDVLAkxDByR3/ZpnfUC3lMKJJzUg0xAjLaBo32cWhvwOU
-	cap3tRby2dU4rxshbXr7BM+PrybGlQKjTsuAfkhEDDPr9B0Dmm0NmSJ9cRATay8l/B85nVmHAus
-	hfTRPRCK/FHOkMwX3pLMboCecqb4E/gVAm01uP05pd4F2fjSnCsD1spJiRxFNGg0oME
-X-Google-Smtp-Source: AGHT+IHfDqjVq2HQlgOvTYSXDolFUyeHkC2njHwkXXlWNiYY2vI3dgM9DBu5caW7N/gKzWP7vOw7EXXGJJQDhW4sn3w=
-X-Received: by 2002:a17:906:6601:b0:b73:6998:7bcd with SMTP id
- a640c23a62f3a-b7369987d82mr195682366b.23.1763129424454; Fri, 14 Nov 2025
- 06:10:24 -0800 (PST)
+        bh=QYEAXpQ4a552Nj/Tapn49whjWroq5jBGQBSgz6ETKNI=;
+        b=JvHdWxK10O9qGcGhu9sGR/Nq7mKG5gAHfz9nfHPHWp0gLF5UvBkKo3ADpQalgLhSnS
+         HMPBn8ETTKl1bV4lGCU/wzR4tWGbk6i6g7GKWBoRtbDubHGyYj8PU6ISpBV4NRaxsqxr
+         TuhvsI43jHGOIGU3MyejJZM6CmiV6Ubwo8+6AOmrtzRhP3V0CLVu1gjBCItMV3ilJN45
+         a6XR5V4IoC+RUkKAcP9XCZrCW620Q6kohHeOmG7doWQMN20SFIgTb/jxGXo98mq/euM7
+         mhFLHGxfkmyVTbjc9KPfnXOykNLX4ejXMM7iPMFiKpiEe5UfD3eFDqaiLjTX/WHCnTLT
+         Om6g==
+X-Forwarded-Encrypted: i=1; AJvYcCWaT1Z4NBdreVTSWnDLpOjVjM8hpSfqp1vuU2ddWLUCa1/2uOC2FEx7vFeoiNBDcL4pcaqTK0Nhsws=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yxqpn/nwDGMQG9hhNqU1cehTX+KPFOX7mCp7/BjPD3n4yL01XdD
+	/jRWyGt5MVBT9xMrJTyeXml249+DSzzJCs373eyX/i8281Sv2Hn3ABocsiBs8gidssMQRXOY7E+
+	ihBduEkPuPcaJrkR7OscINnBN3tA5J4wyZab75B6Jzg==
+X-Gm-Gg: ASbGnct1WkhwZ1oHIYkAoAY6MjNssjqxBDh4NJwwdEIyRCIRA4KuErdKctVzV0CHX7V
+	SBlkNkqCcUwiXEk1EoYYeYhhL8xSABOo3amGIceVBBfREq6MRNamaVpD7g+YBnZtCdjwIDKl31D
+	+2ylw85NwL9qD7zTY/4yZ8dVW3p09BehtkIq4UaelBUf9aWlYnOnFpZRGLzPEkcLvbw4vx43vJx
+	HtzARDEDqsapeYsoGhqq2TaKSKf0E5KJu/8jzet+kIcMDnDK9Todb6ItYkzXvj0vDuT
+X-Google-Smtp-Source: AGHT+IHF8MqvIeu6twye/eYx/FuUCbRP62c2HbXTtkjoVGfiBHyEq0ZpwisfIJrVT6Hu103fGvqOuZ0WbhmUHmm+4tw=
+X-Received: by 2002:a05:6402:5341:20b0:640:ccb0:f4da with SMTP id
+ 4fb4d7f45d1cf-64350e9ff6dmr2279684a12.29.1763131749850; Fri, 14 Nov 2025
+ 06:49:09 -0800 (PST)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -61,13 +61,13 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 References: <20251107210526.257742-1-pasha.tatashin@soleen.com>
- <20251107210526.257742-8-pasha.tatashin@soleen.com> <aRcnRFnqhm3jkqd3@kernel.org>
-In-Reply-To: <aRcnRFnqhm3jkqd3@kernel.org>
+ <20251107210526.257742-3-pasha.tatashin@soleen.com> <aRcSpbwBabFjeYe3@kernel.org>
+In-Reply-To: <aRcSpbwBabFjeYe3@kernel.org>
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
-Date: Fri, 14 Nov 2025 09:09:48 -0500
-X-Gm-Features: AWmQ_bkHcsPKYBwcaJBkDElGfbsE2VmqDOwwNe9Hzx_22lS14GpcHvhkYld0Zm8
-Message-ID: <CA+CK2bCO=Hu0a4P5-_a4QrOSdKLR7OXEk=Nsz-p6TvjEHV9rwQ@mail.gmail.com>
-Subject: Re: [PATCH v5 07/22] liveupdate: luo_ioctl: add user interface
+Date: Fri, 14 Nov 2025 09:48:33 -0500
+X-Gm-Features: AWmQ_bm03KKG3xgTX39tlkUT5awfMY0ljNHpMhWuof0QVJ12PZgKUmkaxYYGwgY
+Message-ID: <CA+CK2bDzExcm-1LMFFQ4FgyfX5yuaPBd2fXdbNsd2yTbrSNKog@mail.gmail.com>
+Subject: Re: [PATCH v5 02/22] liveupdate: luo_core: integrate with KHO
 To: Mike Rapoport <rppt@kernel.org>
 Cc: pratyush@kernel.org, jasonmiu@google.com, graf@amazon.com, 
 	dmatlack@google.com, rientjes@google.com, corbet@lwn.net, 
@@ -96,111 +96,211 @@ Cc: pratyush@kernel.org, jasonmiu@google.com, graf@amazon.com,
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Fri, Nov 14, 2025 at 7:58=E2=80=AFAM Mike Rapoport <rppt@kernel.org> wro=
+On Fri, Nov 14, 2025 at 6:30=E2=80=AFAM Mike Rapoport <rppt@kernel.org> wro=
 te:
 >
-> On Fri, Nov 07, 2025 at 04:03:05PM -0500, Pasha Tatashin wrote:
-> > Introduce the user-space interface for the Live Update Orchestrator
-> > via ioctl commands, enabling external control over the live update
-> > process and management of preserved resources.
+> On Fri, Nov 07, 2025 at 04:03:00PM -0500, Pasha Tatashin wrote:
+> > Integrate the LUO with the KHO framework to enable passing LUO state
+> > across a kexec reboot.
 > >
-> > The idea is that there is going to be a single userspace agent driving
-> > the live update, therefore, only a single process can ever hold this
-> > device opened at a time.
+> > When LUO is transitioned to a "prepared" state, it tells KHO to
+> > finalize, so all memory segments that were added to KHO preservation
+> > list are getting preserved. After "Prepared" state no new segments
+> > can be preserved. If LUO is canceled, it also tells KHO to cancel the
+> > serialization, and therefore, later LUO can go back into the prepared
+> > state.
 > >
-> > The following ioctl commands are introduced:
+> > This patch introduces the following changes:
+> > - During the KHO finalization phase allocate FDT blob.
+> > - Populate this FDT with a LUO compatibility string ("luo-v1").
 > >
-> > LIVEUPDATE_IOCTL_CREATE_SESSION
-> > Provides a way for userspace to create a named session for grouping fil=
-e
-> > descriptors that need to be preserved. It returns a new file descriptor
-> > representing the session.
-> >
-> > LIVEUPDATE_IOCTL_RETRIEVE_SESSION
-> > Allows the userspace agent in the new kernel to reclaim a preserved
-> > session by its name, receiving a new file descriptor to manage the
-> > restored resources.
+> > LUO now depends on `CONFIG_KEXEC_HANDOVER`. The core state transition
+> > logic (`luo_do_*_calls`) remains unimplemented in this patch.
 > >
 > > Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 > > ---
-> >  include/uapi/linux/liveupdate.h  |  64 ++++++++++++
-> >  kernel/liveupdate/luo_internal.h |  21 ++++
-> >  kernel/liveupdate/luo_ioctl.c    | 173 +++++++++++++++++++++++++++++++
-> >  3 files changed, 258 insertions(+)
+> >  include/linux/liveupdate.h         |   6 +
+> >  include/linux/liveupdate/abi/luo.h |  54 +++++++
+> >  kernel/liveupdate/luo_core.c       | 243 ++++++++++++++++++++++++++++-
+> >  kernel/liveupdate/luo_internal.h   |  17 ++
+> >  mm/mm_init.c                       |   4 +
+> >  5 files changed, 323 insertions(+), 1 deletion(-)
+> >  create mode 100644 include/linux/liveupdate/abi/luo.h
+> >  create mode 100644 kernel/liveupdate/luo_internal.h
+> >
+> > diff --git a/include/linux/liveupdate.h b/include/linux/liveupdate.h
+> > index 730b76625fec..0be8804fc42a 100644
+> > --- a/include/linux/liveupdate.h
+> > +++ b/include/linux/liveupdate.h
+> > @@ -13,6 +13,8 @@
+> >
+> >  #ifdef CONFIG_LIVEUPDATE
+> >
+> > +void __init liveupdate_init(void);
+> > +
+> >  /* Return true if live update orchestrator is enabled */
+> >  bool liveupdate_enabled(void);
+> >
+> > @@ -21,6 +23,10 @@ int liveupdate_reboot(void);
+> >
+> >  #else /* CONFIG_LIVEUPDATE */
+> >
+> > +static inline void liveupdate_init(void)
+> > +{
+> > +}
+>
+> The common practice is to place brackets at the same line with function
+> declaration.
+
+Sure.
+
 >
 > ...
 >
-> > +static int luo_ioctl_create_session(struct luo_ucmd *ucmd)
+> > +static int __init luo_early_startup(void)
 > > +{
-> > +     struct liveupdate_ioctl_create_session *argp =3D ucmd->cmd;
-> > +     struct file *file;
-> > +     int ret;
+> > +     phys_addr_t fdt_phys;
+> > +     int err, ln_size;
+> > +     const void *ptr;
 > > +
-> > +     argp->fd =3D get_unused_fd_flags(O_CLOEXEC);
-> > +     if (argp->fd < 0)
-> > +             return argp->fd;
-> > +
-> > +     ret =3D luo_session_create(argp->name, &file);
-> > +     if (ret)
->
->                 put_unused_fd(fd) ?
-
-Yes, thank you.
-
->
-> > +             return ret;
-> > +
-> > +     ret =3D luo_ucmd_respond(ucmd, sizeof(*argp));
-> > +     if (ret) {
-> > +             fput(file);
-> > +             put_unused_fd(argp->fd);
-> > +             return ret;
-> > +     }
->
-> I think that using gotos for error handling is more appropriate here.
-
-Sure, I will do that
-
->
-> > +
-> > +     fd_install(argp->fd, file);
-> > +
-> > +     return 0;
-> > +}
-> > +
-> > +static int luo_ioctl_retrieve_session(struct luo_ucmd *ucmd)
-> > +{
-> > +     struct liveupdate_ioctl_retrieve_session *argp =3D ucmd->cmd;
-> > +     struct file *file;
-> > +     int ret;
-> > +
-> > +     argp->fd =3D get_unused_fd_flags(O_CLOEXEC);
-> > +     if (argp->fd < 0)
-> > +             return argp->fd;
-> > +
-> > +     ret =3D luo_session_retrieve(argp->name, &file);
-> > +     if (ret < 0) {
-> > +             put_unused_fd(argp->fd);
-> > +
-> > +             return ret;
+> > +     if (!kho_is_enabled()) {
+> > +             if (liveupdate_enabled())
+> > +                     pr_warn("Disabling liveupdate because KHO is disa=
+bled\n");
+> > +             luo_global.enabled =3D false;
+> > +             return 0;
 > > +     }
 > > +
-> > +     ret =3D luo_ucmd_respond(ucmd, sizeof(*argp));
-> > +     if (ret) {
-> > +             fput(file);
-> > +             put_unused_fd(argp->fd);
-> > +             return ret;
+> > +     /* Retrieve LUO subtree, and verify its format. */
+> > +     err =3D kho_retrieve_subtree(LUO_FDT_KHO_ENTRY_NAME, &fdt_phys);
+> > +     if (err) {
+> > +             if (err !=3D -ENOENT) {
+> > +                     pr_err("failed to retrieve FDT '%s' from KHO: %pe=
+\n",
+> > +                            LUO_FDT_KHO_ENTRY_NAME, ERR_PTR(err));
+> > +                     return err;
+> > +             }
+> > +
+> > +             return 0;
 > > +     }
+> > +
+> > +     luo_global.fdt_in =3D __va(fdt_phys);
 >
-> and here.
+> phys_to_virt is clearer, isn't it?
 
 Sure
 
 >
+> > +     err =3D fdt_node_check_compatible(luo_global.fdt_in, 0,
+> > +                                     LUO_FDT_COMPATIBLE);
+>
+> ...
+>
+> > +void __init liveupdate_init(void)
+> > +{
+> > +     int err;
 > > +
-> > +     fd_install(argp->fd, file);
+> > +     err =3D luo_early_startup();
+> > +     if (err) {
+> > +             pr_err("The incoming tree failed to initialize properly [=
+%pe], disabling live update\n",
+> > +                    ERR_PTR(err));
+> > +             luo_global.enabled =3D false;
+> > +     }
+> > +}
 > > +
-> > +     return 0;
+> > +/* Called during boot to create LUO fdt tree */
+>
+>                          ^ create outgoing
+
+OK
+
+>
+> > +static int __init luo_late_startup(void)
+> > +{
+> > +     int err;
+> > +
+> > +     if (!liveupdate_enabled())
+> > +             return 0;
+> > +
+> > +     err =3D luo_fdt_setup();
+> > +     if (err)
+> > +             luo_global.enabled =3D false;
+> > +
+> > +     return err;
+> > +}
+> > +late_initcall(luo_late_startup);
+>
+> It would be nice to have a comment explaining why late_initcall() is fine
+> and why there's no need to initialize the outgoing fdt earlier.
+
+I will add a comment; basically it is fine because the outgoing data
+structures are only used after we enter userspace.
+
+>
+> > +/**
+> > + * luo_alloc_preserve - Allocate, zero, and preserve memory.
+>
+> I think this and the "free" counterparts would be useful for any KHO user=
+s,
+> even those that don't need LUO.
+
+I will move them to KHO.
+
+>
+> > + * @size: The number of bytes to allocate.
+> > + *
+> > + * Allocates a physically contiguous block of zeroed pages that is lar=
+ge
+> > + * enough to hold @size bytes. The allocated memory is then registered=
+ with
+> > + * KHO for preservation across a kexec.
+> > + *
+> > + * Note: The actual allocated size will be rounded up to the nearest
+> > + * power-of-two page boundary.
+> > + *
+> > + * @return A virtual pointer to the allocated and preserved memory on =
+success,
+> > + * or an ERR_PTR() encoded error on failure.
+> > + */
+> > +void *luo_alloc_preserve(size_t size)
+> > +{
+> > +     struct folio *folio;
+> > +     int order, ret;
+> > +
+> > +     if (!size)
+> > +             return ERR_PTR(-EINVAL);
+> > +
+> > +     order =3D get_order(size);
+> > +     if (order > MAX_PAGE_ORDER)
+> > +             return ERR_PTR(-E2BIG);
+>
+> High order allocations would likely fail or at least cause a heavy reclai=
+m.
+> For now it seems that we won't be needing really large contiguous chunks =
+so
+> maybe limiting this to PAGE_ALLOC_COSTLY_ORDER?
+
+Let's use MAX_PAGE_ORDER for now, my concern is that
+PAGE_ALLOC_COSTLY_ORDER too fragile to make it part of ABI. If
+allocation fails, the user will have to deal with it, as we return a
+proper error code.
+
+> Later if we'd need higher order allocations we can try to allocate with
+> __GFP_NORETRY or __GFP_RETRY_MAYFAIL with a fallback to vmalloc.
+>
+> > +
+> > +     folio =3D folio_alloc(GFP_KERNEL | __GFP_ZERO, order);
+> > +     if (!folio)
+> > +             return ERR_PTR(-ENOMEM);
+> > +
+> > +     ret =3D kho_preserve_folio(folio);
+> > +     if (ret) {
+> > +             folio_put(folio);
+> > +             return ERR_PTR(ret);
+> > +     }
+> > +
+> > +     return folio_address(folio);
 > > +}
 > > +
 >
