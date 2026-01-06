@@ -1,95 +1,93 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FC523502AC;
-	Tue,  6 Jan 2026 17:44:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B17E62E542C;
+	Tue,  6 Jan 2026 23:13:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1767721473; cv=none; b=ooNxFDikOeJLk7U1OcVdda/f8folrDAAOEzyeby2h02aCmt2fu0ZapVEMS9LnqJQpDsZLugqlPNIrJg7ORhEtDGBuoZeqoaVA8gErU8wcC+BYaqWFfBLxujUkiPyn6ktQ9zqbKbcjX7UB0Z74Jhqf6JjQHFQdTbIsKIHQdazVOk=
+	t=1767741194; cv=none; b=HCAWkWJ9+rTzSmDxSkjQlSpWhHbSxujZm3UlJ2ZECe/x/19Flt/7llEOXKnMwUHPl8W4SlrYZTytPaCrqw5R8PTpsJHTjW/diyRME5Xmy+2GIzEqe7u/GyXtlTXM3P9Xa2hxzfsgvoiW1uc70nu0JuogxTkUTdDGxsndFO14PpE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1767721473; c=relaxed/simple;
-	bh=OryeiQL9V1ShuYrv8grMsRnle5IZx/eVvb7YtNXlOiU=;
-	h=Content-Type:MIME-Version:Message-Id:In-Reply-To:References:
-	 Subject:From:To:Cc:Date; b=b9NoOYwb2g3XkFMrL4BzUP7QEbJc0wflK3pEgiqUyWs/cqQfZPKMphbEF0n6nJJSgr8witn7WJhF+7sGAB41M6TSekII6p3Y9OIQWXVYxVROsXEceOfLNZ++c8T3AUXxUlrjTva5GysMIR9sbEkAHGDT82uhrYxjBzxzlsklOV8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=njyfa1Rx; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1767741194; c=relaxed/simple;
+	bh=/ytDw2AdQR7uZ21ZJAztZBzoug6vYgK3l5h0rxyFnnQ=;
+	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=NQDTMyVtW5UbtFbFZhUiwvbnb2DVBj+2GwDTmt6XDgB4p9pUJ97p62fDjJhHGzfkQ7L1KM4bbqVHB/IQYtnMWO5+igelCtJnQsNcB813KCxIkq9Mbxe6JtuF4OTy/wIHKvFTYAIuA8ZYFigVUTTVpGq2ggf9/WCvs939zcKdoj4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bD4TTabC; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="njyfa1Rx"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F1C25C116C6;
-	Tue,  6 Jan 2026 17:44:31 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bD4TTabC"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2A5F1C116C6;
+	Tue,  6 Jan 2026 23:13:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1767721472;
-	bh=OryeiQL9V1ShuYrv8grMsRnle5IZx/eVvb7YtNXlOiU=;
-	h=In-Reply-To:References:Subject:From:To:Cc:Date:From;
-	b=njyfa1RxGQPyGMeq7siQSLlMa1mRtYKzY5sKPzuMhFbI/OVIBeo5nvHEhFjYJUmbj
-	 i7BnnE9du8VPC67CVgajROsX7R9N2cO56Szlfg60IY6qTWpaQp09+3Lu3r9wfHPTsJ
-	 nc/USqC6R87y3E/H3BCn6SQRAgI0Slt4y+PbvcoydsdsGcsvTboQyMJs0VZ/H33FY0
-	 ZK4TyJtUe6v7mMkrHuxkmZ68gN2bn+EthJqRe7WXdu+nRIHUn/NNM8wSWyJFfbH61A
-	 pzCqrdfx5GdRz1YbYEa30kd/SEHN26wu94I54OS75aPl6p7uE5UaeQNQ6jCHimBXdK
-	 mGLsFpRwIgYRA==
-Content-Type: multipart/mixed; boundary="===============3784221737981949726=="
+	s=k20201202; t=1767741194;
+	bh=/ytDw2AdQR7uZ21ZJAztZBzoug6vYgK3l5h0rxyFnnQ=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
+	b=bD4TTabCnqpOvjlPxal3FABWEJidSlDMLjfyCRwToqf8m7hgqGdU93Qvgqf22owUs
+	 +rVFeyA/D2wz9NWsOwNFRG/VYRdhtyMQ4ARGWJvGn1ZiWOX7W3PssEkna8Kyw24Zs9
+	 +pvJSTHE3Z5vzM05xtRR1L1lmXHD/wuXZGJe0EnCycRGDLHfGhd5hb8Va0iKzueAbA
+	 ZAYrRfjIZQdpcrI3LBuUuMisg8/NAaIuKBubDNPRYjfxupfGg2b66UfqVKCBDVQl8a
+	 D43/PFKptnxUxDn3RLNxbhQQNgGGq7fFvM9GZ0T1hv294UhdVe6+BjV1Owrmfrzf/3
+	 fMIfCHIk1/ofg==
+Date: Tue, 6 Jan 2026 15:13:13 -0800
+From: Jakub Kicinski <kuba@kernel.org>
+To: Thomas =?UTF-8?B?V2Vpw59zY2h1aA==?= <thomas.weissschuh@linutronix.de>
+Cc: Eric Dumazet <edumazet@google.com>, Kuniyuki Iwashima
+ <kuniyu@google.com>, Paolo Abeni <pabeni@redhat.com>, Willem de Bruijn
+ <willemb@google.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH net-next] net: uapi: Provide an UAPI definition of
+ 'struct sockaddr'
+Message-ID: <20260106151313.1f8bd508@kernel.org>
+In-Reply-To: <20260106112714-d47c16e0-0020-4851-9c2a-f8849c9a0677@linutronix.de>
+References: <20260105-uapi-sockaddr-v1-1-b7653aba12a5@linutronix.de>
+	<20260105095713.0b312b26@kernel.org>
+	<20260106112714-d47c16e0-0020-4851-9c2a-f8849c9a0677@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Message-Id: <db428e27fdf0110ea05cdadf8980c7758d7f4dcd61289293394db7e34ce99601@mail.kernel.org>
-In-Reply-To: <20260106172018.57757-8-leon.hwang@linux.dev>
-References: <20260106172018.57757-8-leon.hwang@linux.dev>
-Subject: Re: [RESEND PATCH bpf-next v4 7/9] bpf: Add common attr support for map_create
-From: bot+bpf-ci@kernel.org
-To: leon.hwang@linux.dev,bpf@vger.kernel.org
-Cc: ast@kernel.org,daniel@iogearbox.net,andrii@kernel.org,martin.lau@linux.dev,eddyz87@gmail.com,song@kernel.org,yonghong.song@linux.dev,john.fastabend@gmail.com,kpsingh@kernel.org,sdf@fomichev.me,haoluo@google.com,jolsa@kernel.org,shuah@kernel.org,brauner@kernel.org,oleg@redhat.com,leon.hwang@linux.dev,sforshee@kernel.org,yuichtsu@amazon.com,aalbersh@redhat.com,willemb@google.com,kerneljasonxing@gmail.com,paul.chaignon@gmail.com,yatsenko@meta.com,memxor@gmail.com,a.s.protopopov@gmail.com,ameryhung@gmail.com,rongtao@cestc.cn,linux-kernel@vger.kernel.org,linux-api@vger.kernel.org,linux-kselftest@vger.kernel.org,kernel-patches-bot@fb.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,clm@meta.com,ihor.solodrai@linux.dev
-Date: Tue,  6 Jan 2026 17:44:31 +0000 (UTC)
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
---===============3784221737981949726==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
+On Tue, 6 Jan 2026 11:32:52 +0100 Thomas Wei=C3=9Fschuh wrote:
+> As for the failure in netdev CI however I am not so sure.
+> Looking at net-next-2026-01-05--12-00, the only failures triggered by my
+> change are also the ones from the bpf-ci. Are these the ones you meant,
+> or am I missing some others?
 
-> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-> index 14fc5738f2b9..e64cc7504731 100644
-> --- a/kernel/bpf/syscall.c
-> +++ b/kernel/bpf/syscall.c
+Multiple things broke at once so slightly hard to fish the relevant
+stuff out from here:
 
-[ ... ]
+https://netdev.bots.linux.dev/contest.html?branch=3Dnet-next-2026-01-05--15=
+-00&pass=3D0&pw-n=3D0
 
-> @@ -6279,7 +6345,11 @@ static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uattr, unsigned int size,
->
->  	switch (cmd) {
->  	case BPF_MAP_CREATE:
-> -		err = map_create(&attr, uattr);
-> +		common_attrs.log_true_size = 0;
-> +		err = map_create(&attr, uattr, &common_attrs);
-> +		ret = copy_common_attr_log_true_size(uattr_common, size_common,
-> +						     &common_attrs.log_true_size);
-> +		err = ret ? ret : err;
+Here's one:
 
-When map_create() succeeds, it returns a file descriptor that is already
-installed in the caller's fd table via bpf_map_new_fd(). If
-copy_common_attr_log_true_size() then fails (e.g., user provided a
-read-only buffer for uattr_common), the syscall returns -EFAULT but the
-fd remains installed.
+make[1]: Entering directory '/home/virtme/testing/wt-3/tools/testing/selfte=
+sts/net'
+  CC       busy_poller
+In file included from [01m[K/usr/include/sys/socket.h:33[m[K,
+                 from [01m[K/usr/include/netinet/in.h:23[m[K,
+                 from [01m[K/usr/include/arpa/inet.h:22[m[K,
+                 from [01m[Kbusy_poller.c:14[m[K:
+[01m[K/usr/include/bits/socket.h:182:8:[m[K [01;31m[Kerror: [m[Kredefinitio=
+n of '[01m[Kstruct sockaddr[m[K'
+  182 | struct [01;31m[Ksockaddr[m[K
+      |        [01;31m[K^~~~~~~~[m[K
+In file included from [01m[K/home/virtme/testing/wt-3/usr/include/linux/net=
+link.h:6[m[K,
+                 from [01m[K/home/virtme/testing/wt-3/usr/include/linux/gen=
+etlink.h:6[m[K,
+                 from [01m[K/home/virtme/testing/wt-3/tools/testing/selftes=
+ts/../../../tools/net/ynl/lib/ynl.h:7[m[K,
+                 from [01m[Kbusy_poller.c:12[m[K:
+[01m[K/home/virtme/testing/wt-3/usr/include/linux/socket.h:37:8:[m[K [01;36=
+m[Knote: [m[Koriginally defined here
+   37 | struct [01;36m[Ksockaddr[m[K {
+      |        [01;36m[K^~~~~~~~[m[K
+make[1]: *** [../lib.mk:225: /home/virtme/testing/wt-3/tools/testing/selfte=
+sts/net/busy_poller] Error 1
 
-Could this leak the file descriptor? The user gets an error and has no
-way to know what fd number was allocated, so they cannot close it.
+https://netdev-3.bots.linux.dev/vmksft-net-dbg/results/460421/7-xfrm-policy=
+-sh/stdout
 
-The sequence would be:
-  1. map_create() succeeds, returns fd (e.g., 5)
-  2. copy_common_attr_log_true_size() fails, ret = -EFAULT
-  3. err = ret ? ret : err = -EFAULT
-  4. syscall returns -EFAULT
-  5. map and fd persist, but user cannot close fd 5
-
-> +		break;
->  	case BPF_MAP_LOOKUP_ELEM:
->  		err = map_lookup_elem(&attr);
-
-
----
-AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
-See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
-
-CI run summary: https://github.com/kernel-patches/bpf/actions/runs/20756616585
-
---===============3784221737981949726==--
