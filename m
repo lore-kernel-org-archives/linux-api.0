@@ -1,45 +1,47 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8475F43CECD;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB61A43CEF2;
 	Tue, 20 Jan 2026 14:10:41 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768918243; cv=none; b=MwusQKw5SE9SR+3+ZsVAoKg+Ia196+uFLU7J5pfpT3J4IC46J/NFV4zKw9IB5/hLlokioiw0LrklwLazmDwE4fkz+yRtvkip7vVQoQcF+wSrvz/zfuSyyZirEQCA1Ze/SFFrzNdqZTlzVVV1EeN0tHCix2ihULUNmxeusynxRso=
+	t=1768918243; cv=none; b=TwZdg5gcWZ7dmZvb9PQNzX2vcouiifr4vCavuky4rhG/E4tk7KcZWvV4LFnKYt1Vxfanw2D0zzg4p2SgXdAhELI3PpK1r3PVpXXII1edgG+SlXPFe0CcA7PmW0gkTmvC8A1z/c8jzrrTBFqKjzvx3GIA4dxV26T4EwPi+W3XO7k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1768918243; c=relaxed/simple;
-	bh=Ahm6F+EOjc6R8Q0l33MFSfJ04zvpzbPYSaGnxm24BWE=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=R+FGMOZ6ZOdZbc5vZEcyCtGSTJXfJZYUsV7kj6obD/xY12mBSCN9QoKQwVtJtJ8RfPGhqb81aLjUkW/ll7AZjw16N1j13jUwsVf9CrBwb87B2EgILEMmGbF754tsaVfNbVH8vAPUuq6Rtji+iFlurI/csTj0qTW5ZCamYBu55Eg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=NoSWA8KH; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=NItJhtZf; arc=none smtp.client-ip=193.142.43.55
+	bh=gEyQT5Kcy9TJYGJ474UFnWhLZFO3ndb9iMUj0fZR+P0=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=Xlt2yczCWbi91g8iT29njGEPyo2FNqNPFSFKNrhC/pKOkfiruxxw7/llfwrznt7K8MFrBOv39vvjE1QOoCKOs5RkU8QuTtZrhXa8LaB98uBrYTwtk4B1XpbBWpySERhV/ic5WZpr6Ua3R9pfaZ3i30pJYs2Of6HrYuD1UIF6PFY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=o65XwdB9; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=DQr8iziB; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NoSWA8KH";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="NItJhtZf"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="o65XwdB9";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="DQr8iziB"
 From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1768918239;
+	s=2020; t=1768918240;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=nw3GMmv6rsxzJhfQEt7gKqAEVYquIJkLViAuhkQckP0=;
-	b=NoSWA8KHAOW34ej89I6r4P9qqfRGTSrpRdLYpSX2TU/YKte6uFQbzKvdinPA0lisvYESRi
-	HYR3dbyIkym4yrwD6NuHSOFvoIRarqOstQ0TP56+/FTOn0uUTAZnuzzVzPi/0GoNDWQ88d
-	GlGpOIj51tOdACdwx6SwPz+vAN3Pgg5Z+Wm/5Ly4DbiMrVsQfo/kZ8DQ3XH2ap2jNNODle
-	ES+cM/ucSiFmYheJ92FprCtTYAW3fNxZv9iWB3FSG21peOu2k5+LOEXRiiGBNOKFoT6SFT
-	fjRfM7aEWKIcHL7Nkspjl4yIVkCDKs85aMN92Q3Dl7GWp7BAFekFEzpwlwgi/g==
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=aaabGWtTucbZ8WjnJZ8jyHDns+gX0JvT/KU/uRiSp04=;
+	b=o65XwdB9ZsuKO6X8SlMdGBWHV1er2KvM1zGyZ933WAAci29EnYDG1WDWVuH2jNRH32Re9T
+	KU74HSp6R5wpyg1u4QNPRA360B9F54yXRotiEf1W3r4yzwU3CwNbKeqmMXMp7K1f4cA9nJ
+	ov4BZJnvK7MDcS3MHbeXfOrxU4eCVtcbEl0Olz2lb18frkcnpYrMO2SJBSIRJYy0Y6YWAM
+	b0obIzZN7nNA5d/rZU51OlzogHwEBhLFTujSrJtpPjxDsoG2W+mfwNd/hAnJYot6m+LHZP
+	q43a/2ZcMgfVIvWeqP5T1YzGh4MvoTDOWOUwL4FsrOSgv/10CAOUAE6Rd1E2Mw==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1768918239;
+	s=2020e; t=1768918240;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=nw3GMmv6rsxzJhfQEt7gKqAEVYquIJkLViAuhkQckP0=;
-	b=NItJhtZfv+tx5epeA2xKfozfbOxxbY0+Lwh+VC3Sf/nVsyjCAfZ/h/i5gbhoRCCWad3fkz
-	//HYvaUB6h2f5DAg==
-Subject: [PATCH net-next v2 0/4] net: uapi: Provide an UAPI definition of
- 'struct sockaddr'
-Date: Tue, 20 Jan 2026 15:10:30 +0100
-Message-Id: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=aaabGWtTucbZ8WjnJZ8jyHDns+gX0JvT/KU/uRiSp04=;
+	b=DQr8iziBzPVx6w6Qd1ifMB+zNRKVJIcikpI/fhVtclnM2b47YnrFGAlzPBgRY/hbavkmlV
+	94DIdcN9Fc7i0vAg==
+Date: Tue, 20 Jan 2026 15:10:32 +0100
+Subject: [PATCH net-next v2 2/4] selftests/landlock: Move some UAPI header
+ inclusions after libc ones
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -48,11 +50,9 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-X-B4-Tracking: v=1; b=H4sIANaMb2kC/12NQQ6CMBBFr0Jm7Zh2tBBdeQ/DotBBJpqWtIVgC
- He3Yeny5eW/v0HiKJzgXm0QeZEkwRegUwX9aP2LUVxhIEVGExHOdhJMoX9b5yL2g1bc1HRt6AZ
- lM0UeZD16T/Cc0fOaoS1mlJRD/B5Hiz58adZKK/PXXDRq7JraXGxnNVnz+Iifcwxe1rNjaPd9/
- wFO2SCEuAAAAA==
-X-Change-ID: 20251222-uapi-sockaddr-cf10e7624729
+Message-Id: <20260120-uapi-sockaddr-v2-2-63c319111cf6@linutronix.de>
+References: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
+In-Reply-To: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
 To: Eric Dumazet <edumazet@google.com>, 
  Kuniyuki Iwashima <kuniyu@google.com>, Paolo Abeni <pabeni@redhat.com>, 
  Willem de Bruijn <willemb@google.com>, 
@@ -79,58 +79,56 @@ Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
  Rich Felker <dalias@libc.org>, klibc@zytor.com, 
  Florian Weimer <fweimer@redhat.com>, 
  =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1768918237; l=2292;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1768918237; l=1356;
  i=thomas.weissschuh@linutronix.de; s=20240209; h=from:subject:message-id;
- bh=Ahm6F+EOjc6R8Q0l33MFSfJ04zvpzbPYSaGnxm24BWE=;
- b=5X22So3PfA/S7ayTw8eLh1EFtj1DE0Tv6sUsSL2/wnoVi2BXpK944Df4Iu5TWZmKG+GLpv7YI
- jzfIuR+GpMBDIJ9kfKmasfJ9A3NvmYTn3p3DyGhQAXO3d2FHCDLTleb
+ bh=gEyQT5Kcy9TJYGJ474UFnWhLZFO3ndb9iMUj0fZR+P0=;
+ b=vsXslEDMsuoiJY6VjPUQt3pMJ6PFOs4k30AXxu/bclwWz3MLbiSvMXmg37uv3pUcdncGpAGpm
+ KLXGLl8k+XFDkstK9st5ouee/sbd/CM4+SAhGjnjJrFeZfhsM418+zy
 X-Developer-Key: i=thomas.weissschuh@linutronix.de; a=ed25519;
  pk=pfvxvpFUDJV2h2nY0FidLUml22uGLSjByFbM6aqQQws=
 
-Various UAPI headers reference 'struct sockaddr'. Currently the
-definition of this struct is pulled in from the libc header
-sys/socket.h. This is problematic as it introduces a dependency
-on a full userspace toolchain.
+Interleaving inclusions of UAPI headers and libc headers is problematic.
+Both sets of headers define conflicting symbols. To enable their
+coexistence a compatibility-mechanism is in place.
 
-Add a definition of 'struct sockaddr' to the UAPI headers.
-Before that, reorder some problematic header inclusions in the selftests.
+An upcoming change will define 'struct sockaddr' from linux/socket.h.
+However sys/socket.h from libc does not yet handle this case and a
+symbol conflict will arise.
+
+Move the inclusion of all UAPI headers after the inclusion of the glibc
+ones, so the compatibility mechanism from the UAPI headers is used.
 
 Signed-off-by: Thomas Weißschuh <thomas.weissschuh@linutronix.de>
 ---
-Changes in v2:
-- Fix compilation failures in BPF samples and selftests
-- Link to v1: https://lore.kernel.org/r/20260105-uapi-sockaddr-v1-1-b7653aba12a5@linutronix.de
+ tools/testing/selftests/landlock/audit.h | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
----
-Thomas Weißschuh (4):
-      selftests: net: Move some UAPI header inclusions after libc ones
-      selftests/landlock: Move some UAPI header inclusions after libc ones
-      samples/bpf: Move some UAPI header inclusions after libc ones
-      net: uapi: Provide an UAPI definition of 'struct sockaddr'
+diff --git a/tools/testing/selftests/landlock/audit.h b/tools/testing/selftests/landlock/audit.h
+index 44eb433e9666..c12b16c690dc 100644
+--- a/tools/testing/selftests/landlock/audit.h
++++ b/tools/testing/selftests/landlock/audit.h
+@@ -7,9 +7,6 @@
+ 
+ #define _GNU_SOURCE
+ #include <errno.h>
+-#include <linux/audit.h>
+-#include <linux/limits.h>
+-#include <linux/netlink.h>
+ #include <regex.h>
+ #include <stdbool.h>
+ #include <stdint.h>
+@@ -20,6 +17,10 @@
+ #include <sys/time.h>
+ #include <unistd.h>
+ 
++#include <linux/audit.h>
++#include <linux/limits.h>
++#include <linux/netlink.h>
++
+ #include "kselftest.h"
+ 
+ #ifndef ARRAY_SIZE
 
- include/linux/socket.h                             | 10 ----------
- include/uapi/linux/if.h                            |  4 ----
- include/uapi/linux/libc-compat.h                   | 12 ++++++++++++
- include/uapi/linux/socket.h                        | 14 ++++++++++++++
- samples/bpf/xdp_adjust_tail_user.c                 |  6 ++++--
- samples/bpf/xdp_fwd_user.c                         |  7 ++++---
- samples/bpf/xdp_router_ipv4_user.c                 |  6 +++---
- samples/bpf/xdp_sample_user.c                      | 15 ++++++++-------
- samples/bpf/xdp_tx_iptunnel_user.c                 |  4 ++--
- tools/testing/selftests/landlock/audit.h           |  7 ++++---
- tools/testing/selftests/net/af_unix/diag_uid.c     |  9 +++++----
- tools/testing/selftests/net/busy_poller.c          |  3 ++-
- tools/testing/selftests/net/mptcp/mptcp_diag.c     | 11 ++++++-----
- tools/testing/selftests/net/nettest.c              |  4 ++--
- tools/testing/selftests/net/tcp_ao/icmps-discard.c |  6 +++---
- tools/testing/selftests/net/tcp_ao/lib/netlink.c   |  9 +++++----
- tools/testing/selftests/net/tun.c                  |  5 +++--
- 17 files changed, 77 insertions(+), 55 deletions(-)
----
-base-commit: 24d479d26b25bce5faea3ddd9fa8f3a6c3129ea7
-change-id: 20251222-uapi-sockaddr-cf10e7624729
-
-Best regards,
 -- 
-Thomas Weißschuh <thomas.weissschuh@linutronix.de>
+2.52.0
 
