@@ -1,47 +1,47 @@
 Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7AA82500940;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 171D8429819;
 	Tue, 20 Jan 2026 14:10:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1768918244; cv=none; b=FdvIoOgpHbdp57WsOJXCO//4rFWALMecvrYmpUj/GyVr3HBqMfwVSgpQ8wMcsBncuWqn490LLXIxa4t2kFvrQwY+VRMNg6YjprL+HF4ZDooG14hAD9x/Jgg7D+uQR8Gjw8APQE1tqUlxtQpNpBEU6IQV9qeJzDv8aD3edjSJQ8s=
+	t=1768918245; cv=none; b=VgzZbo8ARduLlw5NZ5ICCSvVg97RGr/F4Sr62xejXwkDjNJSR7wd90HeliI01ciTv+G1e3IoEyf2+c4p3LuZPOyIyN62xYt21QsJbi3DvBIF9df9kmGqaSvU9ubB1LWJpQ4dtTEsk/BQ2KUadRCdHQvEi/wgsRpUpMhZLIDNwAs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1768918244; c=relaxed/simple;
-	bh=NL2NiPJiVOXGlDSPX/IXGVFv3gZqRodtnl63WyHlrT8=;
+	s=arc-20240116; t=1768918245; c=relaxed/simple;
+	bh=0gJHssghFK1RP90RiI7zuAI2Lb2IlxOeNNJyTLHYHUk=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=Xrm++7RxC0Em3RiWpH6rlu+9a9eX8ihfykwiaKmuG77ONR1fI4CZoZyVJYKqKlH7gtI5TWw6pNUQBOks4I+JgKkCWeuDKJykLXHp8KH7VAWvCi+zXDY0MQcAC8gYEnWR0+qD1d1K8VLzaRxkM4c/cVeAryGrsrgZQ1CJVz9SCYk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=QVf5JIqw; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=RJuRitW1; arc=none smtp.client-ip=193.142.43.55
+	 In-Reply-To:To:Cc; b=WGBiEV3OXarkvN6MidWjt3Vgs7Qn6PInulQ5i5Uk6cyUwpZ2y6smBBPcwjRk23kY9i1590+AcrRMOHpq+t4ZShDqQMZhnICfdVP0wz87+aHyCzhnZqlVexAexP5zBherAEFiz9DJc75k9HDinxSwYX/oWt9qeNVqZgCbf5sstys=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=u9VUZEQv; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=bCMEs+2v; arc=none smtp.client-ip=193.142.43.55
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="QVf5JIqw";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="RJuRitW1"
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="u9VUZEQv";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="bCMEs+2v"
 From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1768918240;
+	s=2020; t=1768918241;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Nu42fbo/KTwWbTEJNSfohypBk88voIUWzFlL0jg8Asc=;
-	b=QVf5JIqwol6mD0wSHtGINS/EN7+SG1TaEysglbq9pi9jkITL/Re6B8r9X9x+lyNMsRqpr+
-	8XrMkTgdTEMUkLM7sG25qiqfsjXPXILaLxUPkLqs52GkMbuftElrt8h5Drpp8hcFEbZXPG
-	/l0Ip8WnVMNiGYJW7keA34hVfcfLNEU/+kvuEEhZY8PIGxociJ7gyB7cQDJUbrn9MoK+LX
-	uLuDbu849BBC73+/qR2YZyQtxWhx1C1CbOcSbukm0RFVtcDlZ2SDYlZ0kbhUQhjE+B1rEJ
-	+8UInYr5n8/ESscYa9Cd16etJGdVkxKTNhXenTkKtKmmdrQWx9ps+uluO9a0gw==
+	bh=eOQ8GS3W1MRmodMZgFABkywgFvGKyZPfH1LFL9LoMGY=;
+	b=u9VUZEQvWoxHjLBauY8z7HF1TLbuASKHVU93cqLptNcuHLrklRwLfzT96BGKyCwEhnqwLD
+	1ZMX/t8cShhT5EtRl90vpDEW3zSszuDu9SS+IGQxTaid54xyPdRLXjLhXKXnfoVy7zNps4
+	UutIKbGn7oBe7iBRWgJhbxyp2+kRRhx8c+GmV9BPNsWYOdONd1/fDg0usC1OKEejawa+7u
+	7nMQlCflqh1qJaAs144JmX61u23sFBcl+f2xF9ad3PRtsyLVtvzi7T+vZuWC1qPxluQ8+8
+	RHEFgpi41jpUbU1BL8pr8O80cRkvtBeolCykT/0mn99+fRhinykiD9iPgPeN/g==
 DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1768918240;
+	s=2020e; t=1768918241;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=Nu42fbo/KTwWbTEJNSfohypBk88voIUWzFlL0jg8Asc=;
-	b=RJuRitW17NsGCwZrxdyALTxa2Sop4NEm7M4/2D1lY0J5eoYWa1sEGUUHeaCOAJEb0w0nD3
-	s37/9rX4lucFajCQ==
-Date: Tue, 20 Jan 2026 15:10:33 +0100
-Subject: [PATCH net-next v2 3/4] samples/bpf: Move some UAPI header
- inclusions after libc ones
+	bh=eOQ8GS3W1MRmodMZgFABkywgFvGKyZPfH1LFL9LoMGY=;
+	b=bCMEs+2vw0GkQWixlwb7IbDDFfOdljaTfGnEqezEY+kbXmb6O17EBN8n+ne5vDNAvKdX3e
+	ug6xk5IBRC7RNMAA==
+Date: Tue, 20 Jan 2026 15:10:34 +0100
+Subject: [PATCH net-next v2 4/4] net: uapi: Provide an UAPI definition of
+ 'struct sockaddr'
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -50,7 +50,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-Message-Id: <20260120-uapi-sockaddr-v2-3-63c319111cf6@linutronix.de>
+Message-Id: <20260120-uapi-sockaddr-v2-4-63c319111cf6@linutronix.de>
 References: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
 In-Reply-To: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
 To: Eric Dumazet <edumazet@google.com>, 
@@ -79,164 +79,132 @@ Cc: netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
  Rich Felker <dalias@libc.org>, klibc@zytor.com, 
  Florian Weimer <fweimer@redhat.com>, 
  =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1768918237; l=4542;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1768918237; l=3848;
  i=thomas.weissschuh@linutronix.de; s=20240209; h=from:subject:message-id;
- bh=NL2NiPJiVOXGlDSPX/IXGVFv3gZqRodtnl63WyHlrT8=;
- b=eZBfbm8KV848zvW+Ku4Kfcq+zHdcVueYyOFWcMEHikDcFpOV2a627C4aKg6x8k5ZhHbg+N5yr
- +2ISIHCy3/1CwGRF/P2J+p4PIl3ac4MZGzF0g/1GdroJVysJyzTzpnF
+ bh=0gJHssghFK1RP90RiI7zuAI2Lb2IlxOeNNJyTLHYHUk=;
+ b=Y77GKxsdWINbT9W4Kz+9AEDonn7gqGaLn3W9iGuqEOx5FCQ40NeQXBIqjtdlLcussEkSDha7x
+ jGi3PaNWeKJBIq6QM1Pw24wmuBRULo1gD0tfU5AR7dmZpMH2ugb7SDS
 X-Developer-Key: i=thomas.weissschuh@linutronix.de; a=ed25519;
  pk=pfvxvpFUDJV2h2nY0FidLUml22uGLSjByFbM6aqQQws=
 
-Interleaving inclusions of UAPI headers and libc headers is problematic.
-Both sets of headers define conflicting symbols. To enable their
-coexistence a compatibility-mechanism is in place.
+Various UAPI headers reference 'struct sockaddr'. Currently the
+definition of this struct is pulled in from the libc header
+sys/socket.h. This is problematic as it introduces a dependency
+on a full userspace toolchain.
 
-An upcoming change will define 'struct sockaddr' from linux/socket.h.
-However sys/socket.h from libc does not yet handle this case and a
-symbol conflict will arise.
+Instead expose a custom but compatible definition of 'struct sockaddr'
+in the UAPI headers. It is guarded by the libc compatibility
+infrastructure to avoid potential conflicts.
 
-Move the inclusion of all UAPI headers after the inclusion of the glibc
-ones, so the compatibility mechanism from the UAPI headers is used.
+The compatibility symbol won't be supported by glibc right away,
+but right now __UAPI_DEF_IF_IFNAMSIZ is not supported either,
+so including the libc headers before the UAPI headers is broken anyways.
 
 Signed-off-by: Thomas Weißschuh <thomas.weissschuh@linutronix.de>
 ---
- samples/bpf/xdp_adjust_tail_user.c |  6 ++++--
- samples/bpf/xdp_fwd_user.c         |  7 ++++---
- samples/bpf/xdp_router_ipv4_user.c |  6 +++---
- samples/bpf/xdp_sample_user.c      | 15 ++++++++-------
- samples/bpf/xdp_tx_iptunnel_user.c |  4 ++--
- 5 files changed, 21 insertions(+), 17 deletions(-)
+ include/linux/socket.h           | 10 ----------
+ include/uapi/linux/if.h          |  4 ----
+ include/uapi/linux/libc-compat.h | 12 ++++++++++++
+ include/uapi/linux/socket.h      | 14 ++++++++++++++
+ 4 files changed, 26 insertions(+), 14 deletions(-)
 
-diff --git a/samples/bpf/xdp_adjust_tail_user.c b/samples/bpf/xdp_adjust_tail_user.c
-index e9426bd65420..32d00405debc 100644
---- a/samples/bpf/xdp_adjust_tail_user.c
-+++ b/samples/bpf/xdp_adjust_tail_user.c
-@@ -5,8 +5,6 @@
-  * modify it under the terms of version 2 of the GNU General Public
-  * License as published by the Free Software Foundation.
-  */
--#include <linux/bpf.h>
--#include <linux/if_link.h>
- #include <assert.h>
- #include <errno.h>
- #include <signal.h>
-@@ -18,9 +16,13 @@
- #include <netinet/ether.h>
- #include <unistd.h>
- #include <time.h>
+diff --git a/include/linux/socket.h b/include/linux/socket.h
+index ec715ad4bf25..8363d4e0a044 100644
+--- a/include/linux/socket.h
++++ b/include/linux/socket.h
+@@ -28,16 +28,6 @@ extern void socket_seq_show(struct seq_file *seq);
+ 
+ typedef __kernel_sa_family_t	sa_family_t;
+ 
+-/*
+- *	1003.1g requires sa_family_t and that sa_data is char.
+- */
+-
+-/* Deprecated for in-kernel use. Use struct sockaddr_unsized instead. */
+-struct sockaddr {
+-	sa_family_t	sa_family;	/* address family, AF_xxx	*/
+-	char		sa_data[14];	/* 14 bytes of protocol address	*/
+-};
+-
+ /**
+  * struct sockaddr_unsized - Unspecified size sockaddr for callbacks
+  * @sa_family: Address family (AF_UNIX, AF_INET, AF_INET6, etc.)
+diff --git a/include/uapi/linux/if.h b/include/uapi/linux/if.h
+index 797ba2c1562a..a4bc54196a07 100644
+--- a/include/uapi/linux/if.h
++++ b/include/uapi/linux/if.h
+@@ -25,10 +25,6 @@
+ #include <linux/socket.h>		/* for "struct sockaddr" et al	*/
+ #include <linux/compiler.h>		/* for "__user" et al           */
+ 
+-#ifndef __KERNEL__
+-#include <sys/socket.h>			/* for struct sockaddr.		*/
+-#endif
+-
+ #if __UAPI_DEF_IF_IFNAMSIZ
+ #define	IFNAMSIZ	16
+ #endif /* __UAPI_DEF_IF_IFNAMSIZ */
+diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
+index 0eca95ccb41e..13a06ce4e825 100644
+--- a/include/uapi/linux/libc-compat.h
++++ b/include/uapi/linux/libc-compat.h
+@@ -140,6 +140,13 @@
+ 
+ #endif /* _NETINET_IN_H */
+ 
++/* Definitions for socket.h */
++#if defined(_SYS_SOCKET_H)
++#define __UAPI_DEF_SOCKADDR		0
++#else
++#define __UAPI_DEF_SOCKADDR		1
++#endif
 +
- #include <bpf/bpf.h>
- #include <bpf/libbpf.h>
+ /* Definitions for xattr.h */
+ #if defined(_SYS_XATTR_H)
+ #define __UAPI_DEF_XATTR		0
+@@ -221,6 +228,11 @@
+ #define __UAPI_DEF_IP6_MTUINFO		1
+ #endif
  
-+#include <linux/bpf.h>
-+#include <linux/if_link.h>
++/* Definitions for socket.h */
++#ifndef __UAPI_DEF_SOCKADDR
++#define __UAPI_DEF_SOCKADDR		1
++#endif
 +
- #define STATS_INTERVAL_S 2U
- #define MAX_PCKT_SIZE 600
+ /* Definitions for xattr.h */
+ #ifndef __UAPI_DEF_XATTR
+ #define __UAPI_DEF_XATTR		1
+diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
+index d3fcd3b5ec53..35d7d5f4b1a8 100644
+--- a/include/uapi/linux/socket.h
++++ b/include/uapi/linux/socket.h
+@@ -2,6 +2,8 @@
+ #ifndef _UAPI_LINUX_SOCKET_H
+ #define _UAPI_LINUX_SOCKET_H
  
-diff --git a/samples/bpf/xdp_fwd_user.c b/samples/bpf/xdp_fwd_user.c
-index 193b3b79b31f..ca55f3eac12a 100644
---- a/samples/bpf/xdp_fwd_user.c
-+++ b/samples/bpf/xdp_fwd_user.c
-@@ -11,9 +11,6 @@
-  * General Public License for more details.
-  */
- 
--#include <linux/bpf.h>
--#include <linux/if_link.h>
--#include <linux/limits.h>
- #include <net/if.h>
- #include <errno.h>
- #include <stdio.h>
-@@ -27,6 +24,10 @@
- #include <bpf/libbpf.h>
- #include <bpf/bpf.h>
- 
-+#include <linux/bpf.h>
-+#include <linux/if_link.h>
-+#include <linux/limits.h>
++#include <linux/libc-compat.h>          /* for compatibility with glibc */
 +
- static __u32 xdp_flags = XDP_FLAGS_UPDATE_IF_NOEXIST;
- 
- static int do_attach(int idx, int prog_fd, int map_fd, const char *name)
-diff --git a/samples/bpf/xdp_router_ipv4_user.c b/samples/bpf/xdp_router_ipv4_user.c
-index 266fdd0b025d..2abc7d294251 100644
---- a/samples/bpf/xdp_router_ipv4_user.c
-+++ b/samples/bpf/xdp_router_ipv4_user.c
-@@ -1,9 +1,6 @@
- // SPDX-License-Identifier: GPL-2.0-only
- /* Copyright (C) 2017 Cavium, Inc.
+ /*
+  * Desired design of maximum size and alignment (see RFC2553)
   */
--#include <linux/bpf.h>
--#include <linux/netlink.h>
--#include <linux/rtnetlink.h>
- #include <assert.h>
- #include <errno.h>
- #include <signal.h>
-@@ -25,6 +22,9 @@
- #include <libgen.h>
- #include <getopt.h>
- #include <pthread.h>
-+#include <linux/bpf.h>
-+#include <linux/netlink.h>
-+#include <linux/rtnetlink.h>
- #include "xdp_sample_user.h"
- #include "xdp_router_ipv4.skel.h"
+@@ -26,6 +28,18 @@ struct __kernel_sockaddr_storage {
+ 	};
+ };
  
-diff --git a/samples/bpf/xdp_sample_user.c b/samples/bpf/xdp_sample_user.c
-index 158682852162..d9aec2bd372c 100644
---- a/samples/bpf/xdp_sample_user.c
-+++ b/samples/bpf/xdp_sample_user.c
-@@ -7,13 +7,6 @@
- #include <errno.h>
- #include <fcntl.h>
- #include <getopt.h>
--#include <linux/ethtool.h>
--#include <linux/hashtable.h>
--#include <linux/if_link.h>
--#include <linux/jhash.h>
--#include <linux/limits.h>
--#include <linux/list.h>
--#include <linux/sockios.h>
- #include <locale.h>
- #include <math.h>
- #include <net/if.h>
-@@ -32,6 +25,14 @@
- #include <time.h>
- #include <unistd.h>
- 
-+#include <linux/ethtool.h>
-+#include <linux/hashtable.h>
-+#include <linux/if_link.h>
-+#include <linux/jhash.h>
-+#include <linux/limits.h>
-+#include <linux/list.h>
-+#include <linux/sockios.h>
++/*
++ *	1003.1g requires sa_family_t and that sa_data is char.
++ */
 +
- #include "bpf_util.h"
- #include "xdp_sample_user.h"
- 
-diff --git a/samples/bpf/xdp_tx_iptunnel_user.c b/samples/bpf/xdp_tx_iptunnel_user.c
-index 7e4b2f7108a6..e9503036d0a0 100644
---- a/samples/bpf/xdp_tx_iptunnel_user.c
-+++ b/samples/bpf/xdp_tx_iptunnel_user.c
-@@ -1,8 +1,6 @@
- // SPDX-License-Identifier: GPL-2.0-only
- /* Copyright (c) 2016 Facebook
-  */
--#include <linux/bpf.h>
--#include <linux/if_link.h>
- #include <assert.h>
- #include <errno.h>
- #include <signal.h>
-@@ -16,6 +14,8 @@
- #include <time.h>
- #include <bpf/libbpf.h>
- #include <bpf/bpf.h>
-+#include <linux/bpf.h>
-+#include <linux/if_link.h>
- #include "bpf_util.h"
- #include "xdp_tx_iptunnel_common.h"
++/* Deprecated for in-kernel use. Use struct sockaddr_unsized instead. */
++#if __UAPI_DEF_SOCKADDR
++struct sockaddr {
++	__kernel_sa_family_t	sa_family;	/* address family, AF_xxx	*/
++	char			sa_data[14];	/* 14 bytes of protocol address	*/
++};
++#endif /* __UAPI_DEF_SOCKADDR */
++
+ #define SOCK_SNDBUF_LOCK	1
+ #define SOCK_RCVBUF_LOCK	2
  
 
 -- 
