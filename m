@@ -1,43 +1,46 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from zeniv.linux.org.uk (zeniv.linux.org.uk [62.89.141.173])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81952357A3E;
-	Fri, 23 Jan 2026 01:02:58 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6B1BE36CDE7;
+	Fri, 23 Jan 2026 01:37:24 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=62.89.141.173
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769130178; cv=none; b=HT5BzW4atFOEvhP6fmD1YcIKeNut+A7WUMmQlkC5Rq7jWFGC5t4h4Z3TZhz+gvY6IPLwKUtxT/QwLzQEUq+DrZiPI5kMq+tgFe2+PUBqidfg0X5eaw95gH0C5T7J9y6GXBPCfdDcD4N7opQVocRLkUFJSErYxDbl5K1lBIAcKtc=
+	t=1769132250; cv=none; b=IfzeOPjno9jiRxEptNSvmqEbRf2nkEUUpGY/TDxHY1IKNF4h9t1Ynz4Q/EOiMdSssEwMTk7eC064dUPi9wFPpkhsVx9ipu7Qolc7g2vDk9qPOVrOnj/KFqltJt1ngLvGXo5HDb/b1vPC3ySmoAiVg8MWWzuwx8vBFCIJ9iQzIvo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769130178; c=relaxed/simple;
-	bh=oOXoMNIYkU2bbdIVCwBjOMn0XV+l0LSgeYwJ5zZxeVc=;
+	s=arc-20240116; t=1769132250; c=relaxed/simple;
+	bh=URzEB4TyVLPJ0Q9KqeHfxpBTrzPlgb7DYWhcPdepu6Y=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=OSw11Bf59sc5/6PVNtzFozpR43WT6AuMMultfQAIci3rQh8cxfkn0kL2Vytx3ZFEVHUrJa6vRJWQCcyRW6S4zui0CA7VVg3Ro3b5IqifarIq6jvxYyhIwqdD2AnTM+yBbGryFH7Wg95Wd7Fna9t7d4uY/9ufcReGSLUgNEyw0bc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=amT4iVaS; arc=none smtp.client-ip=10.30.226.201
+	 Content-Type:Content-Disposition:In-Reply-To; b=Hz8/qGZ1cqW8k+PBwW3+jCOWfY4EAsoYI3g7MRc+9FpnJ7bTtngaTGdEaGhcbg6MouqAhQXG+Vz5S8EsM1Iw1yB/LP+KOKbWlPLXka/As6Kne8/BB++Q7KBRDPP3EfqUain7h38OQj3WIm3bLUQxumAUs1SNkFDHPoXtPTXTz7g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk; spf=none smtp.mailfrom=ftp.linux.org.uk; dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.b=XCYI5AMH; arc=none smtp.client-ip=62.89.141.173
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk
+Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=ftp.linux.org.uk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="amT4iVaS"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 62648C116C6;
-	Fri, 23 Jan 2026 01:02:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1769130177;
-	bh=oOXoMNIYkU2bbdIVCwBjOMn0XV+l0LSgeYwJ5zZxeVc=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=amT4iVaSdQoD3GFFlMQyN/Q5ALxPdr8DAXfte+WEBw5bVwf5yHkABzHMxxRxZXaSy
-	 dxJLc87h0FKgjljzkaTcsawbMbnnMgv8jYkLs0+13/2cPnYNVItO7M2Ces3+/JBzAm
-	 N3UjCDQR3IxaBsc2vCW8/XqbDvC2OG5ZIfhl/PdHNOa1kDuNqtePeLUKkeDAb/1Jpd
-	 rvOqCiWEkxAYUFgI8HN10rxsFJHTd8X7MvOqyWKv0AyK1WMw0A0QNs8cMxj/jGN7L+
-	 Dj/P0zAjfnaKO+4HM/rdlP5/S+Khob9pEbKFl+U4EmcjGJVnG6vA8nnzL48xnwppQM
-	 xyE7jKZjvDWwg==
-Date: Fri, 23 Jan 2026 02:02:53 +0100
-From: Alejandro Colomar <alx@kernel.org>
-To: Zack Weinberg <zack@owlfolio.org>
-Cc: Vincent Lefevre <vincent@vinc17.net>, Jan Kara <jack@suse.cz>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Rich Felker <dalias@libc.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.b="XCYI5AMH"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:
+	Content-Transfer-Encoding:Content-Type:MIME-Version:References:Message-ID:
+	Subject:Cc:To:From:Date:Reply-To:Content-ID:Content-Description;
+	bh=oJpR0abL6Upot0fWbyBrvmiec0l2GBXUNO1f0js3zDA=; b=XCYI5AMHgU7dGxUeQtdnSDkWie
+	KPLw9SlMuVfNUv2nEtN69WvPUHdBVZfdaQ3sM7lkHIITHmgKEJBp0vmOzTdx/g7/p9SLrrqiUjKDj
+	6iQL7sDlaeMXyX9/5d4nkKzb3cgz4zWQgFZQUjX+wjmruuyUxNHCpZh8ziR8YZZX/Qi1QEhoZOsPQ
+	qphdr0JdzeWubH0JzsnFaS24bu29FIeYfZGdBoSxXL0SI4Ne9266UYanfQ1zF+KXmnjotGGBN2FMH
+	YJl5h6kWA1E0Zel+7HnxrePTzL0VLAxmCghVT0syQ6tF2auFF7oX5R9dHN6udIfZ3NTsawvNHY8+8
+	VI3U+XEg==;
+Received: from viro by zeniv.linux.org.uk with local (Exim 4.99.1 #2 (Red Hat Linux))
+	id 1vj68Z-0000000Gb6u-2hnp;
+	Fri, 23 Jan 2026 01:38:59 +0000
+Date: Fri, 23 Jan 2026 01:38:59 +0000
+From: Al Viro <viro@zeniv.linux.org.uk>
+To: Alejandro Colomar <alx@kernel.org>
+Cc: Zack Weinberg <zack@owlfolio.org>, Vincent Lefevre <vincent@vinc17.net>,
+	Jan Kara <jack@suse.cz>, Christian Brauner <brauner@kernel.org>,
+	Rich Felker <dalias@libc.org>, linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org,
 	GNU libc development <libc-alpha@sourceware.org>
 Subject: Re: [RFC v1] man/man2/close.2: CAVEATS: Document divergence from
  POSIX.1-2024
-Message-ID: <aXLGdWGTrYo1s6v7@devuan>
-References: <20250516143957.GB5388@qaa.vinc17.org>
- <20250517133251.GY1509@brightrain.aerifal.cx>
+Message-ID: <20260123013859.GI3183987@ZenIV>
+References: <20250517133251.GY1509@brightrain.aerifal.cx>
  <5jm7pblkwkhh4frqjptrw4ll4nwncn22ep2v7sli6kz5wxg5ik@pbnj6wfv66af>
  <8c47e10a-be82-4d5b-a45e-2526f6e95123@app.fastmail.com>
  <20250524022416.GB6263@brightrain.aerifal.cx>
@@ -46,124 +49,49 @@ References: <20250516143957.GB5388@qaa.vinc17.org>
  <aW_jz7nucPBjhu0C@devuan>
  <aW_olRn5s1lbbjdH@devuan>
  <1ec25e49-841e-4b04-911d-66e3b9ff4471@app.fastmail.com>
+ <aXLGdWGTrYo1s6v7@devuan>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="3bwnce3ol6egwwjc"
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <1ec25e49-841e-4b04-911d-66e3b9ff4471@app.fastmail.com>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <aXLGdWGTrYo1s6v7@devuan>
+Sender: Al Viro <viro@ftp.linux.org.uk>
 
+On Fri, Jan 23, 2026 at 02:02:53AM +0100, Alejandro Colomar wrote:
+> > HISTORY
+> >        The close() system call was present in Unix V7.
+> 
+> That would be simply stated as:
+> 
+> 	V7.
+> 
+> We could also document the first POSIX standard, as not all Unix APIs
+> were standardized at the same time.  Thus:
+> 
+> 	V7, POSIX.1-1988.
+> 
+> Thanks!
 
---3bwnce3ol6egwwjc
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-From: Alejandro Colomar <alx@kernel.org>
-To: Zack Weinberg <zack@owlfolio.org>
-Cc: Vincent Lefevre <vincent@vinc17.net>, Jan Kara <jack@suse.cz>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Rich Felker <dalias@libc.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
-	GNU libc development <libc-alpha@sourceware.org>
-Subject: Re: [RFC v1] man/man2/close.2: CAVEATS: Document divergence from
- POSIX.1-2024
-Message-ID: <aXLGdWGTrYo1s6v7@devuan>
-References: <20250516143957.GB5388@qaa.vinc17.org>
- <20250517133251.GY1509@brightrain.aerifal.cx>
- <5jm7pblkwkhh4frqjptrw4ll4nwncn22ep2v7sli6kz5wxg5ik@pbnj6wfv66af>
- <8c47e10a-be82-4d5b-a45e-2526f6e95123@app.fastmail.com>
- <20250524022416.GB6263@brightrain.aerifal.cx>
- <1571b14d-1077-4e81-ab97-36e39099761e@app.fastmail.com>
- <20260120174659.GE6263@brightrain.aerifal.cx>
- <aW_jz7nucPBjhu0C@devuan>
- <aW_olRn5s1lbbjdH@devuan>
- <1ec25e49-841e-4b04-911d-66e3b9ff4471@app.fastmail.com>
-MIME-Version: 1.0
-In-Reply-To: <1ec25e49-841e-4b04-911d-66e3b9ff4471@app.fastmail.com>
+11/3/71							 SYS CLOSE (II)
+NAME		close -- close a file
+SYNOPSIS	(file descriptor in r0)
+		sys	close		/ close = 6.
+DESCRIPTION	Given a file descriptor such as returned from an open or
+		creat call, close closes the associated file. A close of
+		all files is automatic on exit, but since processes are
+		limited to 10 simultaneously open files, close is
+		necessary to programs which deal with many files.
+FILES
+SEE ALSO	creat, open
+DIAGNOSTICS	The error bit (c—bit) is set for an unknown file
+		descriptor.
+BUGS
+OWNER		ken, dmr
 
-Hi Zack,
-
-On Thu, Jan 22, 2026 at 07:33:58PM -0500, Zack Weinberg wrote:
-[...]
-
-> This is a full top-to-bottom rewrite of the manpage; please speak
-> up if you don't like any of my changes to any of it, not just the
-> new stuff about delayed errors.  It's written in freeform text for
-> ease of reading; I'll do proper troff markup after the text is
-> finalized.  (Alejandro, do you have a preference between -man
-> and -mdoc markup?)
-
-Strong preference for man(7).
-
-[...]
-> ERRORS
->        EBADF  The fd argument was not a valid, open file descriptor.
->=20
->        EINTR  The close() call was interrupted by a signal.
->               The file descriptor *may or may not* have been closed,
->               depending on the operating system.  See =E2=80=9CSignals and
->               close(),=E2=80=9D below.
-
-Punctuation like commas should go outside of the quotes (yes, I know
-some styles do that, but we don't).
-
-[...]
-
-> STANDARDS
->        POSIX.1-2024.
->=20
-> HISTORY
->        The close() system call was present in Unix V7.
-
-That would be simply stated as:
-
-	V7.
-
-We could also document the first POSIX standard, as not all Unix APIs
-were standardized at the same time.  Thus:
-
-	V7, POSIX.1-1988.
-
-Thanks!
-
-
-Have a lovely night!
-Alex
-
->=20
->        POSIX.1-2024 clarified the semantics of delayed errors; prior
->        to that revision, it was unspecified whether a close() call
->        that returned a delayed error would close the file descriptor.
->        However, we are not aware of any systems where it didn=E2=80=99t.
->=20
-> SEE ALSO
->        close_range(2), fcntl(2), fsync(2), fdatasync(2), shutdown(2),
->        unlink(2), open(2), read(2), write(2), fopen(3), fclose(3)
-
---=20
-<https://www.alejandro-colomar.es>
-
---3bwnce3ol6egwwjc
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmlyyLYACgkQ64mZXMKQ
-wqkb/w//WgLRrKZaa8I2z10iUXBxBSOQT9hzwG4T2mXhnADVvq9fmVK6ALEYeefV
-tZPVUb1s5OWh/X3YEIvnSQ847hMkiycxEmryEbdQZB1ZIs6CnnbtsTyEUsEVA9jX
-Ecjkbzgpc6VEPTXuyjLZhQ5rw5VRLawUuYUI6cX8W2AfvbgE51cg9FcKmMt7aM0k
-eiILb8lfi2nFxOQQu47+0A8YcTc8TNIIA4rqaJaT4iWum2SoSylLAOR0gGFqrXrT
-WBH2O4cm/AVBUyRY/v9KRZE/fFNAU256Rfj2f/sDplBZPQ68w9bRTqBrAPwS9Vd0
-xIy4KUSlon5A1UsFZKdC8SyOtfxPm3isstFb37cwVZtYA9JmW7pMa+6JyR+Uxa1u
-oEW2JW2eG3qsQsqXoH4W9v10MEUVI02vCrHrvlkFjxitPpAsEDa9heMdJHIIlmKh
-IFqIx1UxgYwSxO0Gfhsr/UICkSoNDHXVOSyVbrP97sPaLpg3ZtmPtQK+W43FXxof
-SnKM9Bd5p1bHKgUj770SANoPARTo4EaM1iwRLqWxFeAYwRVHXZXBuI5V2iWEbhbB
-N1FXeSsvYnSa1966EPTkpMzc8U6Jx+KLF6Xx2im0h2XfkDVDc+w8zUGj/pKWAev+
-UArGLFUL+um5dT7uOcrnaPH6iD9Osc2cdBMGDSk7aEqs/YWCtwQ=
-=jeMH
------END PGP SIGNATURE-----
-
---3bwnce3ol6egwwjc--
+That's V1 manual.  In V3 we already get EBADF on unopened descriptor;
+in _all_ cases there close(N) ends up with descriptor N not opened.
