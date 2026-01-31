@@ -1,62 +1,81 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EF4F2561AB;
-	Fri, 30 Jan 2026 16:17:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C44932B99F;
+	Sat, 31 Jan 2026 10:26:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769789864; cv=none; b=rac8xrn0XpfEweDmrmnf4sidS/gLANslOsedJQfOwTygGvGPs3QRzsdIvow+8YiuZzhRqKtIQ5QHZ+H/1OaTnwEy/xgjBR26so1VAx0DuLjYMfOBAySIJkdCPmxvv33gUuH42dM5p/biJBEXAS/6fn57QWsH79xLanmDkQZvKX8=
+	t=1769855204; cv=none; b=rAGGL4irw/u/c2xh9s3ZLkq7bcQQZD3n8bXccw1Sdbhek89M0Tb5k2Dn+6RNvV1gNsLLMIGiCDjCLpCB4W7JhIOi3QICMn8ejQ5A8DsUlwPjApM3HiCerUtuGePn8gIrHeoypSBFg/9uWrjE300KyX5cziwqpPim0zSx2ugzCkk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769789864; c=relaxed/simple;
-	bh=z+/dvHCuSRC8GadGxDVKBz0qCgDafXTsylWSvFzuU2c=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Xn8pvGNO315pOreCTqjnRcqJiaisqxChqlLYJSMoT4rOn02o6uklW3Rn3GHK5Qc2sBzLJPUa0kdzSW2S0kAuG/EwITGaMxmfwF/vOHBormSdN7mawVn7k/iU26bETFl+tnYnyy9TDTWccUmLkbZa008PHUq2vkegJ7Y0Jw7llg8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=k1yBHxLL; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1769855204; c=relaxed/simple;
+	bh=fSYUV7IS3o69dTdqJYCTCDDpkpgEmF9ZMQCatBCrxIY=;
+	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
+	 MIME-Version:Content-Type; b=PstHHjJ1DIEtlA3xO7/oN6p3z6qcnGUPwjmqzP4gy0f27NypuIJ2JkTgdf+Tpv1wa6PL6b2bxhc0eJJvosS/AKI/lF97t2e3ChXdhuEzgszN/zU66tmVLAojrERySmF7pmijecH9AiCR+16r09uqbSFEqyEO74MA1A2MSGgXGHU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=ujFcBGUs; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=o3Mf3maH; arc=none smtp.client-ip=193.142.43.55
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="k1yBHxLL"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1E553C4CEF7;
-	Fri, 30 Jan 2026 16:17:42 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1769789863;
-	bh=z+/dvHCuSRC8GadGxDVKBz0qCgDafXTsylWSvFzuU2c=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=k1yBHxLLaz7qxhw10LYJ/PtJZNuBRNWPbQu2fs4+Hr9Gl2ZeYV9zlK0cWuc8wcaJZ
-	 N7ocR6YBkkcnsiPwmxzWHPPx2rdjpiq+DgU7zyPAoiuhVpzoSOxLlkBOcs/uEH7eHj
-	 GwRvr1f0PQ5cNbr1qFx9r25PVqyYESybsJiifdgTf3ijpbEl8o6XP0A+GZEr9qkhNF
-	 dqGtK4AQ6fGklQugqY09NPgw3je0/YO+l9AkOZeXK/j/zLlo9ooctuE61JI287Oequ
-	 5jggHSC90FTvmIFUt1JFgewVOKnZ8k6aDXcM0tUS/fT2+99KhwaDGPK+EE2rYBA1dt
-	 rubZgn6PJby1A==
-Date: Fri, 30 Jan 2026 08:17:41 -0800
-From: Jakub Kicinski <kuba@kernel.org>
-To: Thomas =?UTF-8?B?V2Vpw59zY2h1aA==?= <thomas.weissschuh@linutronix.de>
-Cc: Eric Dumazet <edumazet@google.com>, Kuniyuki Iwashima
- <kuniyu@google.com>, Paolo Abeni <pabeni@redhat.com>, Willem de Bruijn
- <willemb@google.com>, "David S. Miller" <davem@davemloft.net>, Simon Horman
- <horms@kernel.org>, Shuah Khan <shuah@kernel.org>, Matthieu Baerts
- <matttbe@kernel.org>, Mat Martineau <martineau@kernel.org>, Geliang Tang
- <geliang@kernel.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?=
- <mic@digikod.net>, =?UTF-8?B?R8O8bnRoZXI=?= Noack <gnoack@google.com>,
- Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann
- <daniel@iogearbox.net>, Jesper Dangaard Brouer <hawk@kernel.org>, John
- Fastabend <john.fastabend@gmail.com>, Stanislav Fomichev <sdf@fomichev.me>,
- Andrii Nakryiko <andrii@kernel.org>, Martin KaFai Lau
- <martin.lau@linux.dev>, Eduard Zingerman <eddyz87@gmail.com>, Song Liu
- <song@kernel.org>, Yonghong Song <yonghong.song@linux.dev>, KP Singh
- <kpsingh@kernel.org>, Hao Luo <haoluo@google.com>, Jiri Olsa
- <jolsa@kernel.org>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>,
- linux-kselftest@vger.kernel.org, mptcp@lists.linux.dev,
- linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
- libc-alpha@sourceware.org, Carlos O'Donell <carlos@redhat.com>, Adhemerval
- Zanella <adhemerval.zanella@linaro.org>, Rich Felker <dalias@libc.org>,
- klibc@zytor.com, Florian Weimer <fweimer@redhat.com>
+	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="ujFcBGUs";
+	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="o3Mf3maH"
+Date: Sat, 31 Jan 2026 11:26:32 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020; t=1769855200;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fSYUV7IS3o69dTdqJYCTCDDpkpgEmF9ZMQCatBCrxIY=;
+	b=ujFcBGUsImqUv9Waw+ZtvA+p6fZ4LIbAmiS6QztDYuHyPXm/6tntcMoEMIYEjU8lOqcO84
+	JUUDN/6Kukil9yK//36hXfaWpntbhqwS7rpoYqgNp8J7vH2rEgPLSWBSOJCFhT370lMrz/
+	7gRztUGxucgA8FZM7aBr49ieKm/ipXKorVgUa2YcofyppS0h5L2o6S+vxx6wdHHiyZuQP7
+	4tDa97C40tHmopdF7sfKWCecB4iWhSWR6wxuCMHjQF5PnvXeR7OeAHevgmM2vMyuDCG3al
+	xfxPZ+QZ+kVu3G/6B75qY9SyFT5dp8UfXmQfVcVLA1dNhzZVtJfmKcKv2Y6xrg==
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
+	s=2020e; t=1769855200;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=fSYUV7IS3o69dTdqJYCTCDDpkpgEmF9ZMQCatBCrxIY=;
+	b=o3Mf3maHGlMurUXPFEwRlLNYIUYFFIj6zqdetL38/IGpMYAIMViNT6qayDv5qUM3kMIQ3B
+	XwdioEIZ+jxY1TDQ==
+From: =?UTF-8?Q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
+To: Jakub Kicinski <kuba@kernel.org>
+Cc: Eric Dumazet <edumazet@google.com>,
+	Kuniyuki Iwashima <kuniyu@google.com>,
+	Paolo Abeni <pabeni@redhat.com>,
+	Willem de Bruijn <willemb@google.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	Simon Horman <horms@kernel.org>, Shuah Khan <shuah@kernel.org>,
+	Matthieu Baerts <matttbe@kernel.org>,
+	Mat Martineau <martineau@kernel.org>,
+	Geliang Tang <geliang@kernel.org>,
+	=?UTF-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>,
+	=?UTF-8?Q?G=C3=BCnther_Noack?= <gnoack@google.com>,
+	Alexei Starovoitov <ast@kernel.org>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	Jesper Dangaard Brouer <hawk@kernel.org>,
+	John Fastabend <john.fastabend@gmail.com>,
+	Stanislav Fomichev <sdf@fomichev.me>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Eduard Zingerman <eddyz87@gmail.com>, Song Liu <song@kernel.org>,
+	Yonghong Song <yonghong.song@linux.dev>,
+	KP Singh <kpsingh@kernel.org>, Hao Luo <haoluo@google.com>,
+	Jiri Olsa <jolsa@kernel.org>, netdev@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	Arnd Bergmann <arnd@arndb.de>, linux-kselftest@vger.kernel.org,
+	mptcp@lists.linux.dev, linux-security-module@vger.kernel.org,
+	bpf@vger.kernel.org, libc-alpha@sourceware.org,
+	Carlos O'Donell <carlos@redhat.com>,
+	Adhemerval Zanella <adhemerval.zanella@linaro.org>,
+	Rich Felker <dalias@libc.org>, klibc@zytor.com,
+	Florian Weimer <fweimer@redhat.com>
+Message-ID: <3c46fc49-b41b-44a2-b42a-669cc7e6bb02@linutronix.de>
+In-Reply-To: <20260130081741.425a92e0@kernel.org>
+References: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de> <20260121192729.2095aa25@kernel.org> <20260130112309-28f2645b-e756-4173-96da-cf5c59191520@linutronix.de> <20260130081741.425a92e0@kernel.org>
 Subject: Re: [PATCH net-next v2 0/4] net: uapi: Provide an UAPI definition
  of 'struct sockaddr'
-Message-ID: <20260130081741.425a92e0@kernel.org>
-In-Reply-To: <20260130112309-28f2645b-e756-4173-96da-cf5c59191520@linutronix.de>
-References: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
-	<20260121192729.2095aa25@kernel.org>
-	<20260130112309-28f2645b-e756-4173-96da-cf5c59191520@linutronix.de>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -65,20 +84,43 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
+X-Correlation-ID: <3c46fc49-b41b-44a2-b42a-669cc7e6bb02@linutronix.de>
 
-On Fri, 30 Jan 2026 11:34:15 +0100 Thomas Wei=C3=9Fschuh wrote:
-> > Are all those selftests / samples getting broken by this patch set? =20
->=20
-> Yes.
->=20
-> Some of them get broken by the new 'struct sockaddr', but some others are
-> already broken just by the new transitive inclusion of libc-compat.h.
-> So any header starting to use the compatibility machinery may trigger bre=
-akage
-> in code including UAPI headers before libc header, even for completely ne=
-w type
-> definitions which themselves would not conflict with libc.
+Jan 30, 2026 17:17:46 Jakub Kicinski <kuba@kernel.org>:
 
-Let's split the uAPI header changes from any selftest changes.
-If you're saying the the selftests no longer build after the uAPI
-header changes then of course we can't apply the patches.
+> On Fri, 30 Jan 2026 11:34:15 +0100 Thomas Wei=C3=9Fschuh wrote:
+>>> Are all those selftests / samples getting broken by this patch set?=C2=
+=A0
+>>
+>> Yes.
+>>
+>> Some of them get broken by the new 'struct sockaddr', but some others ar=
+e
+>> already broken just by the new transitive inclusion of libc-compat.h.
+>> So any header starting to use the compatibility machinery may trigger br=
+eakage
+>> in code including UAPI headers before libc header, even for completely n=
+ew type
+>> definitions which themselves would not conflict with libc.
+>
+> Let's split the uAPI header changes from any selftest changes.
+> If you're saying the the selftests no longer build after the uAPI
+> header changes then of course we can't apply the patches.
+
+Yes, the selftests don't build anymore after the uAPI changes.
+
+"can't apply" as in
+* "can't apply separately"
+* "are unacceptable in general"
+* "are too late for this cycle"
+?
+
+None of this is urgent.
+We can do the selftests in one cycle and the uAPI in another one.
+Feel free to pick up the patches as you see fit.
+(The mptcp changes already go through their tree, so need to be dropped her=
+e)
+I can also resubmit the patches differently if preferred.
+
+
+Thomas
