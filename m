@@ -1,112 +1,229 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
+Received: from out-185.mta0.migadu.com (out-185.mta0.migadu.com [91.218.175.185])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A68842E54D1;
-	Sat, 31 Jan 2026 17:25:20 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC35936CDF8;
+	Mon,  2 Feb 2026 14:41:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.185
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1769880320; cv=none; b=sJOCOtxy7Fbts6voOSu6ckPujJMpdgqF0WfLykqmrYJXSNUj/MvxuRrPVbEcT/FCMmOryUrfz7nENiLKmH9PAHRqiLuCwvt6aqug0dun5jAXRj0bEGyerbr/AVAZYTAptVtKC6w30JxIFQ0uf7/uq+ESbqOwlV7ps73QGqf3OV4=
+	t=1770043288; cv=none; b=loscTd/zpfCJxuwr+rGrJKX+bIkfcAJxrtd9R8QEPAc7yVY2epHv7Z+6OIqE6gn1TCZlbSsY4Bt6n+PjTTzK5Lh1XngkbwGGo6YmTZFCIPF9grRilVgJzIczuf4rtB9jklU057o7bs2X6W7vLnmCrEyFPhc1cEB1Gq7HSGPklv8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1769880320; c=relaxed/simple;
-	bh=VdrhpYX/xqvIWPFWCfZ0baQLFsfzzI9f0fA4hBvpNCU=;
-	h=Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=O3+W8ZWliBSrEUXOZpR89v6xUst4VY2A1ITCEEqDnpOCE2Nmmk4C7sSdpwSCoKwPDW1hPAQxzIrrY8L1YT46TtH9bi4xnvcFBJ9ZvuoqtL/nGdpls5UGzyhwB7kTS+PjzqBlzAF1Iq6TOgbWjW68lJgscsN9H2w3o79A+3ySkzA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=lyOpOqHt; arc=none smtp.client-ip=10.30.226.201
+	s=arc-20240116; t=1770043288; c=relaxed/simple;
+	bh=8611ZDges07A76Up+eMpDh8OqwpOEUfnmIdVKq+fFEs=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=mx2wNlHiRXSo6AyFgWO5lwRTb2K/Wrp8KYaEBj8x7alph+Du3AG71QPBQ1Sa1o85Lcu+Are/TyiMKiaryTWDZ4HA8lSzuZ+8dyxEpYQ5zRLUcakKCoA6k1gc5ybmnoagH5fdxewzocJ12jxnI2YpVdJv2dNVn2wCB126iVvQ5oM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=XLHE1k09; arc=none smtp.client-ip=91.218.175.185
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="lyOpOqHt"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D040DC4CEF1;
-	Sat, 31 Jan 2026 17:25:18 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1769880320;
-	bh=VdrhpYX/xqvIWPFWCfZ0baQLFsfzzI9f0fA4hBvpNCU=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References:From;
-	b=lyOpOqHtctSBTT3RWfweLWjBSm8lFZdjvHAYZ8acBPsXKdsjhFaUI1HvBiJ+8esQx
-	 iZs9nM9nCkE7C41cwpNx07jcYh/Px++kGNvfXvuhwX+wcMLQRj3Vei2r7mL3A7gRAP
-	 7sPp2rRkruTZ74GGD8uXtl4d+ahRcbGFQ3JQro/P40AzkNF4VJ+T3MekVszUbRbz/N
-	 9XI2GGu2IoULhGPWnwnHmv6sxDJ79guFXCEv4zSwUe1AySyAk8Hu6XAtx17nkNtu9E
-	 3KTO/1xg6dk0qlgHyjCXxlSWgJg9zXp0c8PygCMTcs2k7jy8vycYji3w1BL7uj3OQQ
-	 vxGVswCFi595w==
-Date: Sat, 31 Jan 2026 09:25:17 -0800
-From: Jakub Kicinski <kuba@kernel.org>
-To: Thomas =?UTF-8?B?V2Vpw59zY2h1aA==?= <thomas.weissschuh@linutronix.de>
-Cc: Eric Dumazet <edumazet@google.com>, Kuniyuki Iwashima
- <kuniyu@google.com>, Paolo Abeni <pabeni@redhat.com>, Willem de Bruijn
- <willemb@google.com>, "David S. Miller" <davem@davemloft.net>, Simon Horman
- <horms@kernel.org>, Shuah Khan <shuah@kernel.org>, Matthieu Baerts
- <matttbe@kernel.org>, Mat Martineau <martineau@kernel.org>, Geliang Tang
- <geliang@kernel.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?=
- <mic@digikod.net>, =?UTF-8?B?R8O8bnRoZXI=?= Noack <gnoack@google.com>,
- Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann
- <daniel@iogearbox.net>, Jesper Dangaard Brouer <hawk@kernel.org>, John
- Fastabend <john.fastabend@gmail.com>, Stanislav Fomichev <sdf@fomichev.me>,
- Andrii Nakryiko <andrii@kernel.org>, Martin KaFai Lau
- <martin.lau@linux.dev>, Eduard Zingerman <eddyz87@gmail.com>, Song Liu
- <song@kernel.org>, Yonghong Song <yonghong.song@linux.dev>, KP Singh
- <kpsingh@kernel.org>, Hao Luo <haoluo@google.com>, Jiri Olsa
- <jolsa@kernel.org>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org,
- linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>,
- linux-kselftest@vger.kernel.org, mptcp@lists.linux.dev,
- linux-security-module@vger.kernel.org, bpf@vger.kernel.org,
- libc-alpha@sourceware.org, Carlos O'Donell <carlos@redhat.com>, Adhemerval
- Zanella <adhemerval.zanella@linaro.org>, Rich Felker <dalias@libc.org>,
- klibc@zytor.com, Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH net-next v2 0/4] net: uapi: Provide an UAPI definition
- of 'struct sockaddr'
-Message-ID: <20260131092517.6639d84c@kernel.org>
-In-Reply-To: <3c46fc49-b41b-44a2-b42a-669cc7e6bb02@linutronix.de>
-References: <20260120-uapi-sockaddr-v2-0-63c319111cf6@linutronix.de>
-	<20260121192729.2095aa25@kernel.org>
-	<20260130112309-28f2645b-e756-4173-96da-cf5c59191520@linutronix.de>
-	<20260130081741.425a92e0@kernel.org>
-	<3c46fc49-b41b-44a2-b42a-669cc7e6bb02@linutronix.de>
+	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="XLHE1k09"
+X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
+	t=1770043284;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SOP9FsLyggZ0t9qAXd0VsgAmwD5kRYUpSQzoquh1BzA=;
+	b=XLHE1k09NjOU1oGyMjJtUOCi1StlL5o1TlswFOOVw3VMV2pis+4qYfPHyhkgpUb/ZHz79v
+	owoOQn88Ylko60oOFst8WFtGNyDyYXRrTnnCxIzEBi+5/+IycAW1rhuwKo3wTGEw1MpQQv
+	/7PVJXx/QdXJCgQ/6nlv4jqx2j9j5Y4=
+From: Leon Hwang <leon.hwang@linux.dev>
+To: bpf@vger.kernel.org
+Cc: Alexei Starovoitov <ast@kernel.org>,
+	Daniel Borkmann <daniel@iogearbox.net>,
+	John Fastabend <john.fastabend@gmail.com>,
+	Andrii Nakryiko <andrii@kernel.org>,
+	Martin KaFai Lau <martin.lau@linux.dev>,
+	Eduard Zingerman <eddyz87@gmail.com>,
+	Song Liu <song@kernel.org>,
+	Yonghong Song <yonghong.song@linux.dev>,
+	KP Singh <kpsingh@kernel.org>,
+	Stanislav Fomichev <sdf@fomichev.me>,
+	Hao Luo <haoluo@google.com>,
+	Jiri Olsa <jolsa@kernel.org>,
+	Shuah Khan <shuah@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	Seth Forshee <sforshee@kernel.org>,
+	Yuichiro Tsuji <yuichtsu@amazon.com>,
+	Andrey Albershteyn <aalbersh@redhat.com>,
+	Leon Hwang <leon.hwang@linux.dev>,
+	Willem de Bruijn <willemb@google.com>,
+	Jason Xing <kerneljasonxing@gmail.com>,
+	Tao Chen <chen.dylane@linux.dev>,
+	Mykyta Yatsenko <yatsenko@meta.com>,
+	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+	Anton Protopopov <a.s.protopopov@gmail.com>,
+	Amery Hung <ameryhung@gmail.com>,
+	Rong Tao <rongtao@cestc.cn>,
+	linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	kernel-patches-bot@fb.com
+Subject: [PATCH bpf-next v9 1/9] bpf: Extend BPF syscall with common attributes support
+Date: Mon,  2 Feb 2026 22:40:38 +0800
+Message-ID: <20260202144046.30651-2-leon.hwang@linux.dev>
+In-Reply-To: <20260202144046.30651-1-leon.hwang@linux.dev>
+References: <20260202144046.30651-1-leon.hwang@linux.dev>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
+X-Migadu-Flow: FLOW_OUT
 
-On Sat, 31 Jan 2026 11:26:32 +0100 Thomas Wei=C3=9Fschuh wrote:
-> Jan 30, 2026 17:17:46 Jakub Kicinski <kuba@kernel.org>:
->=20
-> > On Fri, 30 Jan 2026 11:34:15 +0100 Thomas Wei=C3=9Fschuh wrote: =20
-> >> Some of them get broken by the new 'struct sockaddr', but some others =
-are
-> >> already broken just by the new transitive inclusion of libc-compat.h.
-> >> So any header starting to use the compatibility machinery may trigger =
-breakage
-> >> in code including UAPI headers before libc header, even for completely=
- new type
-> >> definitions which themselves would not conflict with libc. =20
-> >
-> > Let's split the uAPI header changes from any selftest changes.
-> > If you're saying the the selftests no longer build after the uAPI
-> > header changes then of course we can't apply the patches. =20
->=20
-> Yes, the selftests don't build anymore after the uAPI changes.
->=20
-> "can't apply" as in
-> * "can't apply separately"
-> * "are unacceptable in general"
+Extend the BPF syscall to support a set of common attributes shared
+across all BPF commands:
 
-this one
+1. 'log_buf': User-provided buffer for storing logs.
+2. 'log_size': Size of the log buffer.
+3. 'log_level': Log verbosity level.
+4. 'log_true_size': The size of log reported by kernel.
 
-> * "are too late for this cycle"
-> ?
->=20
-> None of this is urgent.
-> We can do the selftests in one cycle and the uAPI in another one.
-> Feel free to pick up the patches as you see fit.
-> (The mptcp changes already go through their tree, so need to be dropped h=
-ere)
-> I can also resubmit the patches differently if preferred.
+These common attributes are passed as the 4th argument to the BPF
+syscall, with the 5th argument specifying the size of this structure.
 
-The selftests are just a canary in the coalmine. If we break a bunch of
-selftests chances are we'll also break compilation of real applications
-for people. Subjective, but I don't see a sufficient upside here to do
-that.
+To indicate the use of these common attributes from userspace, a new flag
+'BPF_COMMON_ATTRS' ('1 << 16') is introduced. This flag is OR-ed into the
+'cmd' field of the syscall.
 
-FWIW the typelimits change broke compilation of ethtool, we'll see if
-anyone "outside kernel community itself" complains.
+When 'cmd & BPF_COMMON_ATTRS' is set, the kernel will copy the common
+attributes from userspace into kernel space for use.
+
+Signed-off-by: Leon Hwang <leon.hwang@linux.dev>
+---
+ include/linux/syscalls.h       |  3 ++-
+ include/uapi/linux/bpf.h       |  8 ++++++++
+ kernel/bpf/syscall.c           | 25 +++++++++++++++++++++----
+ tools/include/uapi/linux/bpf.h |  8 ++++++++
+ 4 files changed, 39 insertions(+), 5 deletions(-)
+
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index cf84d98964b2..729659202d77 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -937,7 +937,8 @@ asmlinkage long sys_seccomp(unsigned int op, unsigned int flags,
+ asmlinkage long sys_getrandom(char __user *buf, size_t count,
+ 			      unsigned int flags);
+ asmlinkage long sys_memfd_create(const char __user *uname_ptr, unsigned int flags);
+-asmlinkage long sys_bpf(int cmd, union bpf_attr __user *attr, unsigned int size);
++asmlinkage long sys_bpf(int cmd, union bpf_attr __user *attr, unsigned int size,
++			struct bpf_common_attr __user *attr_common, unsigned int size_common);
+ asmlinkage long sys_execveat(int dfd, const char __user *filename,
+ 			const char __user *const __user *argv,
+ 			const char __user *const __user *envp, int flags);
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index c8d400b7680a..b2126c9641ec 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -994,6 +994,7 @@ enum bpf_cmd {
+ 	BPF_PROG_STREAM_READ_BY_FD,
+ 	BPF_PROG_ASSOC_STRUCT_OPS,
+ 	__MAX_BPF_CMD,
++	BPF_COMMON_ATTRS = 1 << 16, /* Indicate carrying syscall common attrs. */
+ };
+ 
+ enum bpf_map_type {
+@@ -1500,6 +1501,13 @@ struct bpf_stack_build_id {
+ 	};
+ };
+ 
++struct bpf_common_attr {
++	__u64 log_buf;
++	__u32 log_size;
++	__u32 log_level;
++	__u32 log_true_size;
++};
++
+ #define BPF_OBJ_NAME_LEN 16U
+ 
+ enum {
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index 5f59dd47a5b1..a58b16735e86 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -6176,8 +6176,10 @@ static int prog_assoc_struct_ops(union bpf_attr *attr)
+ 	return ret;
+ }
+ 
+-static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uattr, unsigned int size)
++static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uattr, unsigned int size,
++		     bpfptr_t uattr_common, unsigned int size_common)
+ {
++	struct bpf_common_attr attr_common;
+ 	union bpf_attr attr;
+ 	int err;
+ 
+@@ -6191,6 +6193,20 @@ static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uattr, unsigned int size)
+ 	if (copy_from_bpfptr(&attr, uattr, size) != 0)
+ 		return -EFAULT;
+ 
++	memset(&attr_common, 0, sizeof(attr_common));
++	if (cmd & BPF_COMMON_ATTRS) {
++		err = bpf_check_uarg_tail_zero(uattr_common, sizeof(attr_common), size_common);
++		if (err)
++			return err;
++
++		cmd &= ~BPF_COMMON_ATTRS;
++		size_common = min_t(u32, size_common, sizeof(attr_common));
++		if (copy_from_bpfptr(&attr_common, uattr_common, size_common) != 0)
++			return -EFAULT;
++	} else {
++		size_common = 0;
++	}
++
+ 	err = security_bpf(cmd, &attr, size, uattr.is_kernel);
+ 	if (err < 0)
+ 		return err;
+@@ -6326,9 +6342,10 @@ static int __sys_bpf(enum bpf_cmd cmd, bpfptr_t uattr, unsigned int size)
+ 	return err;
+ }
+ 
+-SYSCALL_DEFINE3(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size)
++SYSCALL_DEFINE5(bpf, int, cmd, union bpf_attr __user *, uattr, unsigned int, size,
++		struct bpf_common_attr __user *, uattr_common, unsigned int, size_common)
+ {
+-	return __sys_bpf(cmd, USER_BPFPTR(uattr), size);
++	return __sys_bpf(cmd, USER_BPFPTR(uattr), size, USER_BPFPTR(uattr_common), size_common);
+ }
+ 
+ static bool syscall_prog_is_valid_access(int off, int size,
+@@ -6359,7 +6376,7 @@ BPF_CALL_3(bpf_sys_bpf, int, cmd, union bpf_attr *, attr, u32, attr_size)
+ 	default:
+ 		return -EINVAL;
+ 	}
+-	return __sys_bpf(cmd, KERNEL_BPFPTR(attr), attr_size);
++	return __sys_bpf(cmd, KERNEL_BPFPTR(attr), attr_size, KERNEL_BPFPTR(NULL), 0);
+ }
+ 
+ 
+diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
+index 5e38b4887de6..c4934c2370fd 100644
+--- a/tools/include/uapi/linux/bpf.h
++++ b/tools/include/uapi/linux/bpf.h
+@@ -994,6 +994,7 @@ enum bpf_cmd {
+ 	BPF_PROG_STREAM_READ_BY_FD,
+ 	BPF_PROG_ASSOC_STRUCT_OPS,
+ 	__MAX_BPF_CMD,
++	BPF_COMMON_ATTRS = 1 << 16, /* Indicate carrying syscall common attrs. */
+ };
+ 
+ enum bpf_map_type {
+@@ -1500,6 +1501,13 @@ struct bpf_stack_build_id {
+ 	};
+ };
+ 
++struct bpf_common_attr {
++	__u64 log_buf;
++	__u32 log_size;
++	__u32 log_level;
++	__u32 log_true_size;
++};
++
+ #define BPF_OBJ_NAME_LEN 16U
+ 
+ enum {
+-- 
+2.52.0
+
