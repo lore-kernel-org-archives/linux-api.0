@@ -1,24 +1,24 @@
-Received: from mail-m128214.netease.com (mail-m128214.netease.com [103.209.128.214])
+Received: from mail-m2477.xmail.ntesmail.com (mail-m2477.xmail.ntesmail.com [45.195.24.77])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9ABA035F5E9;
-	Mon,  6 Apr 2026 16:51:37 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=103.209.128.214
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91D2438838B;
+	Mon,  6 Apr 2026 16:56:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=45.195.24.77
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1775494303; cv=none; b=e81+kLR9+Tkxby+5D0LgP4dfNdtUA2rDG/0W7SVEiGD6xVAtQlUlNxpASYVhX9HvIsd8h7e1IGKH67asIqgH8Ed6YPA4z1FUUMo7jm9MxDWG9J8Ve/HjRaQXmnUD9VR0eR4l4q5qryBrEzm/GAIoa5q3fB29dCiQCHjGV7a06s0=
+	t=1775494607; cv=none; b=uSSg4ELwWJmyT88gvFFsDzHzr94Ko6U/qbMm/SAPPuCZMzJCMgscJ0Up/aiHhqLc1Hb9oelCGQbQq0FP8p7WtjTvZUPtFsyBkAamxJ93wfG/CC7+hIRgXqsIxoDZXjKPK8Do1uBofTDGeqnM3mIsiLjVkfBWT8yrfntRhYCd4/k=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1775494303; c=relaxed/simple;
-	bh=JGV9wifkkNiF1MU+26HGbW/+ymbUBkjqNWmmDG9ejug=;
+	s=arc-20240116; t=1775494607; c=relaxed/simple;
+	bh=7N4XBttMaUfHvT10Bjf8wMO7OY346LDy5mrmbVDtCK0=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=bW/3SXJtPHfhCsVNaiUrsoMTPHSaDUGVXBv6CTjHb8YpvoiJYN/1d2zCREFlza3cWqnXd1Tto4+s0JjpoGcBthDATUnEK4L1jLoWKuLqph3dLYHeRgtmFTBov6xXHJUVzQvHxUI39fh3z4aKuIs0/a5IDn2ohLi62+GQI4KfDEk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ruc.edu.cn; spf=pass smtp.mailfrom=ruc.edu.cn; dkim=pass (1024-bit key) header.d=ruc.edu.cn header.i=@ruc.edu.cn header.b=mr0jnYGJ; arc=none smtp.client-ip=103.209.128.214
+	 MIME-Version; b=cO1SRPC/dEGH13H5bNE4QwZNW4sDlgZ2mNfp5eK+mRIEXFq3Vr1L5ecbgyQmIrcQv57OAYkFqL6W2rDlX0l86jJMCMSzJBlrCWDWrUhR3T5lY0x83pL9KNhYqW/yaKnJX1BxmrQoOMXW2+/3WEztkSe0j7hf6H/j5XochvWzF2A=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ruc.edu.cn; spf=pass smtp.mailfrom=ruc.edu.cn; dkim=pass (1024-bit key) header.d=ruc.edu.cn header.i=@ruc.edu.cn header.b=B5oda5J2; arc=none smtp.client-ip=45.195.24.77
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ruc.edu.cn
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ruc.edu.cn
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=ruc.edu.cn header.i=@ruc.edu.cn header.b="mr0jnYGJ"
+	dkim=pass (1024-bit key) header.d=ruc.edu.cn header.i=@ruc.edu.cn header.b="B5oda5J2"
 Received: from lwz.tail698a0e.ts.net (gy-adaptive-ssl-proxy-1-entmail-virt204.gy.ntes [36.112.3.244])
-	by smtp.qiye.163.com (Hmail) with ESMTP id 39aaefbdb;
-	Tue, 7 Apr 2026 00:51:25 +0800 (GMT+08:00)
+	by smtp.qiye.163.com (Hmail) with ESMTP id 39aaefbda;
+	Tue, 7 Apr 2026 00:51:21 +0800 (GMT+08:00)
 From: Wenzhao Liao <wenzhaoliao@ruc.edu.cn>
 To: rust-for-linux@vger.kernel.org,
 	linux-pci@vger.kernel.org
@@ -30,13 +30,12 @@ Cc: ojeda@kernel.org,
 	gregkh@linuxfoundation.org,
 	linux-kernel@vger.kernel.org,
 	linux-api@vger.kernel.org
-Subject: [RFC PATCH v3 1/6] uapi: add goldfish_address_space userspace ABI header
-Date: Mon,  6 Apr 2026 12:51:15 -0400
-Message-Id: <20260406165120.166928-2-wenzhaoliao@ruc.edu.cn>
+Subject: [RFC PATCH v3 0/6] Rust goldfish_address_space driver (ioctl-only subset)
+Date: Mon,  6 Apr 2026 12:51:14 -0400
+Message-Id: <20260406165120.166928-1-wenzhaoliao@ruc.edu.cn>
 X-Mailer: git-send-email 2.34.1
-In-Reply-To: <20260406165120.166928-1-wenzhaoliao@ruc.edu.cn>
+In-Reply-To: <cover.1775456181.git.wenzhaoliao@ruc.edu.cn>
 References: <cover.1775456181.git.wenzhaoliao@ruc.edu.cn>
- <20260406165120.166928-1-wenzhaoliao@ruc.edu.cn>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -44,113 +43,102 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-HM-Tid: 0a9d63b4ca8003a2kunm562d3b0d647e63
+X-HM-Tid: 0a9d63b4b85003a2kunm562d3b0d647e52
 X-HM-MType: 10
 X-HM-Spam-Status: e1kfGhgUHx5ZQUpXWQgPGg8OCBgUHx5ZQUlOS1dZFg8aDwILHllBWSg2Ly
-	tZV1koWUFITzdXWS1ZQUlXWQ8JGhUIEh9ZQVkZSkgYVhoeS0pCQkJOS0geTFYeHw5VEwETFhoSFy
+	tZV1koWUFITzdXWS1ZQUlXWQ8JGhUIEh9ZQVlDThpMVk5DQktMSxofSB4aGlYeHw5VEwETFhoSFy
 	QUDg9ZV1kYEgtZQVlITVVKSklVSFVJT09ZV1kWGg8SFR0UWUFZT0tIVUpLSEpOTE5VSktLVUpCS0
 	tZBg++
 DKIM-Signature: a=rsa-sha256;
-	b=mr0jnYGJNn7jdQdmGx9snQukeD3Qle86rk2rjHNwRxzlq3z1QnTC5xPCsUs6ScNU2TzPr+pLNsIN/bPqVMJ0aW6R6lYp4m4VrAAZ/g1m48og8sJJnNcg94vYyd1Z9om1QI14x9/viFF0QyRbedvCJWQVQO79LFtSyIGorAbn7L0=; c=relaxed/relaxed; s=default; d=ruc.edu.cn; v=1;
-	bh=2PkcM2WRjNh0KqsyA+Q2Us0R9IhzckDTKUqyovFSI74=;
+	b=B5oda5J2EW5s+7mkPYu2H4P4OvncI9pvTRvKqr+bHhU7kHMJ90kgvYEQ9WC3su49q65DCD25J1pK59lGm2OO65m8tA7y9/C4/T2SyFsEeZhR538ALa3Sr/d+wj72Ef0WFy4hUY5wr9SCXG8DONtSTrEXBYrHUhO14aEK/IZBCMU=; c=relaxed/relaxed; s=default; d=ruc.edu.cn; v=1;
+	bh=DrGe7dDIenQDEOD5TVrW9lT5Xaaahb+DDLbuVFdBaKc=;
 	h=date:mime-version:subject:message-id:from;
 
-The external goldfish address-space driver exposes its userspace
-contract through a dedicated header. Land the ioctl definitions in
-include/uapi/linux so the Rust driver can depend on an in-tree UAPI
-surface instead of carrying an external private header.
+This respin narrows the Rust goldfish_address_space RFC to the
+open/release/ioctl ABI subset. Userspace mmap and PING_WITH_DATA are
+not part of this series.
 
-This RFC intentionally narrows the first upstream step to the
-open/release/ioctl ABI subset. Userspace mmap and PING_WITH_DATA stay
-out of this series until they have their own review and validation
-story.
+I would like to send this as a small first upstream step for the Rust
+driver, instead of asking reviewers to take the mmap/VMA lifecycle work
+in the same round.
 
-Signed-off-by: Wenzhao Liao <wenzhaoliao@ruc.edu.cn>
----
- MAINTAINERS                                 |  8 +++
- include/uapi/linux/goldfish_address_space.h | 54 +++++++++++++++++++++
- 2 files changed, 62 insertions(+)
+The goal of the respin is to keep only the pieces that are still
+required by the current driver:
+- the goldfish UAPI header and Rust bindings exposure,
+- minimal page helpers for the ping page,
+- a small SharedMemoryBar abstraction for shared BAR reservation,
+  memremap() lifetime, and physical base discovery,
+- hardened miscdevice registration/open boundaries,
+- and the Rust goldfish_address_space driver itself.
+
+Compared to the previous round, this drops the Rust VMA/BAR-to-VMA
+mapping work from the series and rewrites the driver and miscdevice
+pieces around the current teardown and publication model. The driver
+remains #![forbid(unsafe_code)].
+
+Feedback would be especially helpful on:
+- whether the ioctl-only ABI subset is a reasonable first upstream step
+  for goldfish_address_space;
+- whether SharedMemoryBar is the right minimal Rust abstraction for
+  shared-memory BAR reservation plus memremap() lifetime;
+- whether the miscdevice hardening direction makes sense, especially the
+  publication-safe open context and the THIS_MODULE-owned safe
+  file_operations path.
+
+Changes since v2:
+- dropped the userspace mmap portion of the RFC and removed the unused
+  Rust VMA/BAR-to-VMA mapping patch from the series;
+- narrowed the goldfish Kconfig help text and driver description to the
+  open/release/ioctl ABI subset;
+- reworked miscdevice so safe open() only sees publication-safe state
+  and safe drivers no longer have a raw file_operations escape hatch;
+- reworked goldfish teardown around deregister() -> shutdown() ->
+  disable_device(), with live-file revocation before PCI disable and
+  explicit enable_device_mem() probe unwind;
+- kept the in-tree Rust VMA helpers still used by binder out of this
+  series, so the respin only carries code with a current caller.
+
+Behavior exercised for the RFC-limited ABI subset:
+- open / release
+- allocate_block / deallocate_block
+- ping
+- claim_shared / unclaim_shared
+- unknown ioctl
+- reopen
+
+No claim is made beyond that subset in this respin.
+
+Build-tested:
+- make LLVM=1 rust/kernel.o
+- make LLVM=1 drivers/platform/goldfish/goldfish_address_space.o
+- make LLVM=1 samples/rust/rust_misc_device.o
+
+Wenzhao Liao (6):
+  uapi: add goldfish_address_space userspace ABI header
+  rust: bindings: expose goldfish address-space headers
+  rust: page: add helpers for page-backed ping state
+  rust: pci: add shared BAR memremap support
+  rust: miscdevice: harden registration and safe file_operations
+    invariants
+  platform/goldfish: add Rust goldfish_address_space driver
+
+ MAINTAINERS                                   |  10 +
+ drivers/platform/goldfish/Kconfig             |  11 +
+ drivers/platform/goldfish/Makefile            |   1 +
+ .../goldfish/goldfish_address_space.rs        | 917 ++++++++++++++++++
+ include/uapi/linux/goldfish_address_space.h   |  54 ++
+ rust/bindings/bindings_helper.h               |   1 +
+ rust/helpers/page.c                           |   5 +
+ rust/kernel/miscdevice.rs                     | 409 +++++---
+ rust/kernel/page.rs                           |  52 +-
+ rust/kernel/pci.rs                            |   8 +
+ rust/kernel/pci/id.rs                         |   2 +-
+ rust/kernel/pci/io.rs                         | 112 ++-
+ rust/uapi/uapi_helper.h                       |   1 +
+ samples/rust/rust_misc_device.rs              |   9 +-
+ 14 files changed, 1453 insertions(+), 139 deletions(-)
+ create mode 100644 drivers/platform/goldfish/goldfish_address_space.rs
  create mode 100644 include/uapi/linux/goldfish_address_space.h
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index a62f6af55c3a..800b2fe0e648 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -1882,6 +1882,14 @@ S:	Supported
- F:	Documentation/devicetree/bindings/interrupt-controller/google,goldfish-pic.yaml
- F:	drivers/irqchip/irq-goldfish-pic.c
- 
-+ANDROID GOLDFISH ADDRESS SPACE DRIVER
-+M:	Wenzhao Liao <wenzhaoliao@ruc.edu.cn>
-+L:	linux-kernel@vger.kernel.org
-+L:	linux-pci@vger.kernel.org
-+L:	rust-for-linux@vger.kernel.org
-+S:	Maintained
-+F:	include/uapi/linux/goldfish_address_space.h
-+
- ANDROID GOLDFISH RTC DRIVER
- M:	Jiaxun Yang <jiaxun.yang@flygoat.com>
- S:	Supported
-diff --git a/include/uapi/linux/goldfish_address_space.h b/include/uapi/linux/goldfish_address_space.h
-new file mode 100644
-index 000000000000..b782d82f53df
---- /dev/null
-+++ b/include/uapi/linux/goldfish_address_space.h
-@@ -0,0 +1,54 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _UAPI_LINUX_GOLDFISH_ADDRESS_SPACE_H
-+#define _UAPI_LINUX_GOLDFISH_ADDRESS_SPACE_H
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+#define GOLDFISH_ADDRESS_SPACE_DEVICE_NAME "goldfish_address_space"
-+
-+struct goldfish_address_space_allocate_block {
-+	__u64 size;
-+	__u64 offset;
-+	__u64 phys_addr;
-+};
-+
-+struct goldfish_address_space_ping {
-+	__u64 offset;
-+	__u64 size;
-+	__u64 metadata;
-+	__u32 version;
-+	__u32 wait_fd;
-+	__u32 wait_flags;
-+	__u32 direction;
-+};
-+
-+struct goldfish_address_space_claim_shared {
-+	__u64 offset;
-+	__u64 size;
-+};
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_MAGIC 'G'
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_OP(OP, T) \
-+	_IOWR(GOLDFISH_ADDRESS_SPACE_IOCTL_MAGIC, OP, T)
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_ALLOCATE_BLOCK \
-+	GOLDFISH_ADDRESS_SPACE_IOCTL_OP(10, \
-+		struct goldfish_address_space_allocate_block)
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_DEALLOCATE_BLOCK \
-+	GOLDFISH_ADDRESS_SPACE_IOCTL_OP(11, __u64)
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_PING \
-+	GOLDFISH_ADDRESS_SPACE_IOCTL_OP(12, \
-+		struct goldfish_address_space_ping)
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_CLAIM_SHARED \
-+	GOLDFISH_ADDRESS_SPACE_IOCTL_OP(13, \
-+		struct goldfish_address_space_claim_shared)
-+
-+#define GOLDFISH_ADDRESS_SPACE_IOCTL_UNCLAIM_SHARED \
-+	GOLDFISH_ADDRESS_SPACE_IOCTL_OP(14, __u64)
-+
-+#endif /* _UAPI_LINUX_GOLDFISH_ADDRESS_SPACE_H */
 -- 
 2.34.1
-
