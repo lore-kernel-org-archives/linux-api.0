@@ -1,46 +1,86 @@
-Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F38B40DFDE;
-	Thu, 30 Apr 2026 02:37:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E55A40B6F6;
+	Thu, 30 Apr 2026 14:47:18 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777516657; cv=none; b=PIMzHvAcROUaGwzJkQZUHxi5dHHCPqp7KW5AXEO86P14wOnM9z3gp7/G6GF5VLpstXSYkSx+5/dDhAcxCjOPlIuwwqk0cOj+lbh+kVJ1LUIoC4DHUh4g2Xbi11oupnU0YU+PeWKqvNNO81oSq720pcopQcziZhjnaWdPfhZf+Gk=
+	t=1777560438; cv=none; b=pzR/DbyM7TnSEQYoX9au5NbCOuJ+lRuqi1T7iknPyDeiQm25j2WyacDWk5Db4JDVPyYYknOZ8ub38Vs4ljwFcoiD9lvAuczphQPoKBJBrjMtL+Fxp5Tx6OD/mnj6M6VUHw5LPYib2ZheuPw/h4hA8ryNxPRKsUaFNZWYlqAKa9I=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777516657; c=relaxed/simple;
-	bh=cmojHuLP3jnNZWqmo/6rv3gqgflgbv0J4HVHA1I/ffo=;
+	s=arc-20240116; t=1777560438; c=relaxed/simple;
+	bh=PgjNJKLT2zJkSi9VpdJOFcoOhqQHfDSBNF35mCNRBI4=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=c7JLaLgNQVQG7aGssXup/HQdpoD3E6CAPNGn5t3PFpNJz4ezoYmAq7DkNCY14t+Rq7JaVSxed9xMObrtWJwW/jpXr4vjK801Edb65e9LEd4ip0gnfkSgqix0BVzYPJUTADZ3zJQChsbwUWZktAQCRKY19ci8wxgaTxctt+iJ4Ag=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b=B41INN4W; arc=none smtp.client-ip=180.181.231.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	 Content-Type:Content-Disposition:In-Reply-To; b=VzYMVwUUIacKnMjp8AmQ+5i25cCCFFxEr5z1MBw7P9TErzRSaA3w913p/yfFsOl6i7j1tmCCD26KuV3IcT3h0xk+ZDVKbQkCKMr3RS5Ns9gAxhlEgP7g905m0ltuZtMgPDBoGcjGPqH73c+DR9SyFI4M4BXW2eF2c93t4PQuDIA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=vM1iY9/t; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b="B41INN4W"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=gondor.apana.org.au; s=h01; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:cc:to:subject:message-id:date:
-	from:content-type:reply-to; bh=dVtNlQBpH51UytQpIb8A6JMmXFC/Chl+lh2xCMpAn80=; 
-	b=B41INN4Wgi9RyGKTQmptdjwvbjK5VHc2WwpnIVc1s9k5mK+s0F24dIeS5bFODOqXTdKseb00Naf
-	TCQQOL/t0N3IPq5mCY4NYzk28P7BufssSYEYtiUPX+kFz1zdTlrVU/GJgb8ILVPXaosRMqn+Lw0HN
-	tl6lpUCGLY43BU5x1271pyOkBc9cYBvIigphUr21YA5mFnYFQoY5OuxwnzK4FOL31O3A3yb4DXtaM
-	I2dVeBnvZxrfi8msBorNmpmjRd7LT4oY1Lk87KFqaBega+CUX2NSGg0BdQ1XDWUr8kVUZFu5u1c40
-	13CcP1vx4MIeBY8yqOsVN8u0u26NtvrI5siQ==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.96 #2 (Debian))
-	id 1wIGlw-00A1Fb-2O;
-	Thu, 30 Apr 2026 10:05:01 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 30 Apr 2026 10:05:00 +0800
-Date: Thu, 30 Apr 2026 10:05:00 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-	netdev@vger.kernel.org,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH] crypto: af_alg - Document the deprecation of AF_ALG
-Message-ID: <afK4zC-Mgo6LBfUh@gondor.apana.org.au>
-References: <20260430011544.31823-1-ebiggers@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="vM1iY9/t"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id B2039C2BCB3;
+	Thu, 30 Apr 2026 14:47:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1777560438;
+	bh=PgjNJKLT2zJkSi9VpdJOFcoOhqQHfDSBNF35mCNRBI4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=vM1iY9/t2BKQ45wuFAsqyAf/5CCva2wC6dU+JCnJ0IdlWvR2j3/AnA/0d31WDzruV
+	 imgLERpZhP/AubkiUNQk0DTfTomV0cDRKxCDPqgYn+dSrq0kQ8wO0Bn3ySopJtC1AY
+	 WIO8hhikkM7Cxdq0+UU4hER8OBwXdbXfyBJ3TYM7GV4RbJmmIZr8CFPU2h09+nntnP
+	 jBjY6wUdgRnnGC3sq6F8CqLNFsES1uliYwFO3ABzDjXGjybbY/3tfsXno3eq2ytHmX
+	 NNAotC3v8dUJwcpbKulD7LPfUyJAN7L0kY6Dsz4VQ1RRz/ooRyhv/n1kAQ2COSiCgP
+	 MINuZ0sKWe+ag==
+Date: Wed, 29 Apr 2026 18:32:16 +0200
+From: Nicolas Schier <nsc@kernel.org>
+To: Nathan Chancellor <nathan@kernel.org>
+Cc: Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-kbuild@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, workflows@vger.kernel.org,
+	tools@kernel.org, x86@kernel.org, Thomas Gleixner <tglx@kernel.org>,
+	"Paul E . McKenney" <paulmck@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Cyril Hrubis <chrubis@suse.cz>, Kees Cook <kees@kernel.org>,
+	Jake Edge <jake@lwn.net>,
+	David Laight <david.laight.linux@gmail.com>,
+	Askar Safin <safinaskar@zohomail.com>,
+	Gabriele Paoloni <gpaoloni@redhat.com>,
+	Mauro Carvalho Chehab <mchehab@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Masahiro Yamada <masahiroy@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 1/9] kernel/api: introduce kernel API specification
+ framework
+Message-ID: <afIykLLPj7m0fcsX@levanger>
+Mail-Followup-To: Nicolas Schier <nsc@kernel.org>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-kbuild@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, workflows@vger.kernel.org,
+	tools@kernel.org, x86@kernel.org, Thomas Gleixner <tglx@kernel.org>,
+	"Paul E . McKenney" <paulmck@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Cyril Hrubis <chrubis@suse.cz>, Kees Cook <kees@kernel.org>,
+	Jake Edge <jake@lwn.net>,
+	David Laight <david.laight.linux@gmail.com>,
+	Askar Safin <safinaskar@zohomail.com>,
+	Gabriele Paoloni <gpaoloni@redhat.com>,
+	Mauro Carvalho Chehab <mchehab@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Masahiro Yamada <masahiroy@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Ingo Molnar <mingo@redhat.com>, Arnd Bergmann <arnd@arndb.de>
+References: <20260424165130.2306833-1-sashal@kernel.org>
+ <20260424165130.2306833-2-sashal@kernel.org>
+ <177726106581.2478607.12645653803520391071.b4-review@b4>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -49,44 +89,37 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20260430011544.31823-1-ebiggers@kernel.org>
+In-Reply-To: <177726106581.2478607.12645653803520391071.b4-review@b4>
 
-On Wed, Apr 29, 2026 at 06:15:44PM -0700, Eric Biggers wrote:
-> AF_ALG is almost completely unnecessary, and it exposes a massive attack
-> surface that hasn't been standing up to modern vulnerability discovery
-> tools.  The latest one even has its own website, providing a small
-> Python script that reliably roots most Linux distros: https://copy.fail/
+On Sun, Apr 26, 2026 at 11:37:45PM -0400, Nathan Chancellor wrote:
+> On Fri, 24 Apr 2026 12:51:21 -0400, Sasha Levin <sashal@kernel.org> wrote:
+> > diff --git a/kernel/Makefile b/kernel/Makefile
+> > index 6785982013dc..564315153643 100644
+> > --- a/kernel/Makefile
+> > +++ b/kernel/Makefile
+> > @@ -59,6 +59,9 @@ obj-y += dma/
+> >  obj-y += entry/
+> >  obj-y += unwind/
+> >  obj-$(CONFIG_MODULES) += module/
+> > +obj-$(CONFIG_KAPI_SPEC) += api/
+> > +# Ensure api/ is always cleaned even when CONFIG_KAPI_SPEC is not set
+> > +obj- += api/
 > 
-> This isn't sustainable, especially as LLMs have accelerated the rate the
-> vulnerabilities are coming in.  The effort that is being put into this
-> thing is vastly disproportional to the few programs that actually use
-> it, and those programs would be better served by userspace code anyway.
+> If $(CONFIG_KAPI_SPEC) is not set, shouldn't
 > 
-> These issues have been noted in many mailing list discussions already.
-> But until now they haven't been reflected in the documentation or
-> kconfig menu itself, and the vulnerabilities are still coming in.
+>   obj-$(CONFIG_KAPI_SPEC) += api/
 > 
-> Let's go ahead and document the deprecation.
+> evaluate to
 > 
-> This isn't intended to change anything overnight.  After all, most Linux
-> distros won't be able to disable the kconfig options quite yet, mainly
-> because of iwd.  But this should create a bit more impetus for these
-> userspace programs to be fixed, and the documentation update should also
-> help prevent more users from appearing.
+>   obj- += api/
 > 
-> Signed-off-by: Eric Biggers <ebiggers@kernel.org>
+> anyways? Why the duplication? This is the only place in the kernel where
+> this would be needed?
 
-What about the exposure of akcipher through security/keys/keyctl_pkey.c?
+yes, this is definitely not needed, as obj- is always evaluated during
+'make clean', cp. scripts/Makefile.clean [1].
 
-There isn't even a Kconfig option to disable that user-space API.
-If module signatures are enabled then this automatically gets added
-to the kernel:
+Kind regards
+Nicolas
 
-MODULE_SIG -> MODULE_SIG_FORMAT -> SYSTEM_DATA_VERIFICATION ->
-KEYS + ASYMMETRIC_KEY_TYPE
-
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+[1]: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/scripts/Makefile.clean?h=v7.1-rc1#n30
