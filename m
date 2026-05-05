@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 79EA6290DBB;
-	Tue,  5 May 2026 07:46:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 015363EAC8F;
+	Tue,  5 May 2026 07:46:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1777967176; cv=none; b=NfEpI5VPibF/OE/1n/66WMDfo7fkmnCu/0prxEKkFPF8gLt0BqdzOaW5R4mz9zKLQX2Wo9Dz8KvZUUiSxawERQWxWO6H/AWpZP9ynpUqKJqBWKmkB0XQJhCL1C0+hZMPMxICr5r5XsLzfSrX12b8WJORpib9jRbioRiCQguaEVg=
+	t=1777967186; cv=none; b=tw3YUSGarc6ia4xvrXuCVQfjb7dKc6UbYSIqWIK/Rb2ccaXm3QlekV00+RE/NVCe4BbyERDBcVAouohs85C8vexvXHPRmovSZY1PXJOpuoCHKjAtkoCCHJFGJahx98L99YgXvsuwWaRrhgf4P/V4C+Xhyh1DqFAlahOe5eoei/Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1777967176; c=relaxed/simple;
-	bh=PuRAhq5SiXiqc76UbhOEtTuhVUy+QUHdrAQ6+om8jQ4=;
+	s=arc-20240116; t=1777967186; c=relaxed/simple;
+	bh=Dh359CCAET/Dcf0kc0xq9hC4/ZKbmHpQLlb9PuI5lg8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type:Content-Disposition; b=aAgkKhke+gpqFtZ82Zb6LJKVP2Cl9cKl5979YvEC3yURxZNPH81BSgawzAJYcUeiWTfvEHgtyxSQwXa97oWdwhhGUbxftTg7a33LufSVB5AbV2kEQj/oCPOL+cvaCKMjI7g4cVYcL8yGqSoH1HIUXhkYWNW4tSNv9abHNw0t6JU=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nYENH4ut; arc=none smtp.client-ip=10.30.226.201
+	 MIME-Version:Content-Type:Content-Disposition; b=UW7tC33gx6GmQuIaFNuHgsD7O4Yj3wdI0FfuWQu9BeAZRl+Wpe4dNLRdXSbFG2Ka+CixLmeS0OPqTXaUA+NNMb9PF03AE9NTfwIOzYL61cr1PKcK0gFbRzu+FJc3POQI9PFMQ3Mj2j6/sXE8/QGyzaqYH/ZW/Ozl9QdieCfWz78=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=c10hnoyS; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nYENH4ut"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3C35AC2BCC7;
-	Tue,  5 May 2026 07:46:08 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="c10hnoyS"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D808CC2BCF6;
+	Tue,  5 May 2026 07:46:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
-	s=k20201202; t=1777967175;
-	bh=PuRAhq5SiXiqc76UbhOEtTuhVUy+QUHdrAQ6+om8jQ4=;
+	s=k20201202; t=1777967183;
+	bh=Dh359CCAET/Dcf0kc0xq9hC4/ZKbmHpQLlb9PuI5lg8=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=nYENH4utBGU9HCP3WrpxkAdRRWjG5Exc2YJm6RQVhGs0R5MiJXHwlkQrzT+/yGDgS
-	 JJ/Ihea9J/vhNqPRgPeEZVAf9hTbuA+ymECadkAqfgKn+ZqYGea9P39NPPTzktJrkK
-	 mssSOCcO88HHObwUwWk7+26kETY7HcZmdzIyPJ/Wk7ZyFS/OKg5S37l7BOewB8r97G
-	 CSFtRh4JJvZgpmPQJQOA+Ix/6kLzD/6KLrrP/pwZpq0H4T34OEpDZV5bjVLklO62Lh
-	 zy4mNXODfCV39N/qwUs5MwUCAvHt1DkDZhaK7CyhYNUecFDSQnq0Xlrvh/UTjo+J8h
-	 U8LUzTAzNxkGw==
+	b=c10hnoySGjXxg3K9jTCfXe36MtvXSuPY8p2hY0x8zqPFF2DVOKojeXKe2hPTmwnST
+	 +PF7EocxGIO0LiCTow7sE20lTO4M9c/AVg2rNT5g60dk7Iu0iiZS8YFMwefjtCkBMl
+	 xeCY16xt09o5C7RYRB+XUMALe4CVGoOVYuf5giGaXdclBkUwyGKylWvgy+iIGcRT6z
+	 TEjHSureW/sH2SZFGQst8Ks9A/cpgqoxdqtIKtJqAyNjK6rUPlVbho9tFPpHkjQfFq
+	 pW/vjdt7ZbcEjx59zOuRDkimUl8/Uzz+rACGzMulDw/luV+49RVvbySvK8WZv9Q+fU
+	 zmHudV1sT79fw==
 From: Sasha Levin <sashal@kernel.org>
 To: Nicolas Schier <nsc@kernel.org>
 Cc: Sasha Levin <sashal@kernel.org>,
@@ -60,11 +60,11 @@ Cc: Sasha Levin <sashal@kernel.org>,
 	Ingo Molnar <mingo@redhat.com>,
 	Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH v3 1/9] kernel/api: introduce kernel API specification framework
-Date: Tue,  5 May 2026 03:45:41 -0400
-Message-ID: <20260505074545.430334-2-sashal@kernel.org>
+Date: Tue,  5 May 2026 03:45:42 -0400
+Message-ID: <20260505074545.430334-3-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
-In-Reply-To: <afIykLLPj7m0fcsX@levanger>
-References: <20260424165130.2306833-1-sashal@kernel.org> <20260424165130.2306833-2-sashal@kernel.org> <177726106581.2478607.12645653803520391071.b4-review@b4> <afIykLLPj7m0fcsX@levanger>
+In-Reply-To: <afI1LMB_vNMWYU7o@levanger>
+References: <20260424165130.2306833-1-sashal@kernel.org> <20260424165130.2306833-2-sashal@kernel.org> <afI1LMB_vNMWYU7o@levanger>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -75,37 +75,31 @@ Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-On Wed, Apr 29, 2026 at 06:32:16PM +0200, Nicolas Schier wrote:
-> On Sun, Apr 26, 2026 at 11:37:45PM -0400, Nathan Chancellor wrote:
-> > On Fri, 24 Apr 2026 12:51:21 -0400, Sasha Levin <sashal@kernel.org> wrote:
-> > > diff --git a/kernel/Makefile b/kernel/Makefile
-> > > [...]
-> > > +obj-$(CONFIG_KAPI_SPEC) += api/
-> > > +# Ensure api/ is always cleaned even when CONFIG_KAPI_SPEC is not set
-> > > +obj- += api/
-> >
-> > If $(CONFIG_KAPI_SPEC) is not set, shouldn't
-> >
-> >   obj-$(CONFIG_KAPI_SPEC) += api/
-> >
-> > evaluate to
-> >
-> >   obj- += api/
-> >
-> > anyways? Why the duplication? This is the only place in the kernel where
-> > this would be needed?
+On Wed, Apr 29, 2026 at 06:43:24PM +0200, Nicolas Schier wrote:
+> On Fri, Apr 24, 2026 at 12:51:21PM -0400, Sasha Levin wrote:
+> > diff --git a/kernel/api/Makefile b/kernel/api/Makefile
+> > new file mode 100644
+> > index 0000000000000..c0a13fc590e4a
+> > --- /dev/null
+> > +++ b/kernel/api/Makefile
+> > @@ -0,0 +1,14 @@
+> > +# SPDX-License-Identifier: GPL-2.0
+> > +#
+> > +# Makefile for the Kernel API Specification Framework
+> > +#
+> > +
+> > +# Core API specification framework
+> > +obj-$(CONFIG_KAPI_SPEC)		+= kernel_api_spec.o
 >
-> yes, this is definitely not needed, as obj- is always evaluated during
-> 'make clean', cp. scripts/Makefile.clean [1].
->
-> Kind regards
-> Nicolas
->
-> [1]: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/scripts/Makefile.clean?h=v7.1-rc1#n30
+> Bike-shedding: I'd use 'obj-y' here, to state clearly that
+> kernel_api_spec.c is the core part in the kernel/api/ subdir.  If
+> CONFIG_KAPI_SPEC is unset, the subfir will not be entered at all.
 
-Thanks for the pointer!
-
-The redundant "obj- += api/" and the accompanying comment are dropped in v4.
+Agreed, switched to "obj-y" in v4. The subdir gate moves up to
+kernel/Makefile and the entry inside kernel/api/Makefile becomes
+unconditional. The other two entries (KAPI_SPEC_DEBUGFS,
+KAPI_KUNIT_TEST) keep their own conditional guards since they are
+optional sub-features.
 
 --
 Thanks,
