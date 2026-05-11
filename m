@@ -1,260 +1,139 @@
-Received: from out-177.mta0.migadu.com (out-177.mta0.migadu.com [91.218.175.177])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C5FA401A27;
-	Mon, 11 May 2026 15:30:55 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=91.218.175.177
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9B1063CF660;
+	Mon, 11 May 2026 16:19:31 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1778513457; cv=none; b=gIf3RHzhL0b2p0elQV7YAHmuWoh7aGctGt8HIJnNBWGSrarQ7V2AWtlrjoeB37XGYiAr/zZo877p5TaE+4loePjLlWfzyN/LmcZb6n+pk8IXvmHEso+I8nnl9xdTyPKCGnKoyrz0nczQdFZ3m28JZBsv7goU3Qd/5fS7VfXTG2I=
+	t=1778516371; cv=none; b=arX1E8eVtBkmUfyF+qzFPcpYXWLWvc8vncKD57htxddiN1VXkppr21dgbk+8KQQkC9Lgj05REZ3ZLoBfWnKjuiK17PqZRN90ryngGg1FdlbAKzYRpIv4frY6B5Vvdya8c26QQ/WzOq1TTry/fZnmVT4zrYD2TxnYFt5YSSpbGV8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1778513457; c=relaxed/simple;
-	bh=sfKJZJ8ctcHAZCmfJQeymzJppmwIwJF9EO7P/NWJ/hQ=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=h2pH7UtXrSIaycKcB5qTq/5TAl3RNXgnM2m1/SnU41hf1CGdWn1nI/I4ln7L6jdsU3xBkP7aZSvd/WMdQsWROzjoW7Fo8nUEQ+5uZi7tZ0SBlxGPoBZNF8CjdkLBn+ky+ZJLNF8GUuL85GybACROse2PjVd3YjR6kKi20JOm99s=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev; spf=pass smtp.mailfrom=linux.dev; dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b=h09Qrrv7; arc=none smtp.client-ip=91.218.175.177
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	s=arc-20240116; t=1778516371; c=relaxed/simple;
+	bh=eze9RQV3hbB21kKo3b7RsDRVzX5i/gy14ILzEtPDtJk=;
+	h=Content-Type:MIME-Version:Message-Id:In-Reply-To:References:
+	 Subject:From:To:Cc:Date; b=jQK8CYd/HNYnnaFvXRmYND0kCAlJNx6aQjkuumUr6JAWcyeY/xIegrC3pJfNSTs/Z5YFJ/3gMQJ5YGFbnrwoARBKHXWTDrnHrXIhcYfI1KX3j3N3i6lQJF+zkyNgyq1XEZXewzp9awfGOtW9sMzS2aPlb1w+lbImibtDOo06GGw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fuboAVld; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.dev header.i=@linux.dev header.b="h09Qrrv7"
-X-Report-Abuse: Please report any abuse attempt to abuse@migadu.com and include these headers.
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linux.dev; s=key1;
-	t=1778513452;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=UBCKOVce/S8UBOdaCxeu/letmftudNtjxh9CrdzjR3Q=;
-	b=h09Qrrv7bUJDzQ+xMY8rrtt8Ah40KO5yTlwBMCpvqk6Gf6q0zuKW5alfYL3fE10n6CewcR
-	0tDDXgzEc9qNEayPAG0EA8WptY+FPCE9qhKatLhLR7eO8Y46hHp4oM022nIu8y2el0da1M
-	+ubvN6Ka1fOdtG+H1DZZkrwsqthy824=
-From: Leon Hwang <leon.hwang@linux.dev>
-To: bpf@vger.kernel.org
-Cc: Alexei Starovoitov <ast@kernel.org>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	John Fastabend <john.fastabend@gmail.com>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Song Liu <song@kernel.org>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	KP Singh <kpsingh@kernel.org>,
-	Stanislav Fomichev <sdf@fomichev.me>,
-	Hao Luo <haoluo@google.com>,
-	Jiri Olsa <jolsa@kernel.org>,
-	Shuah Khan <shuah@kernel.org>,
-	Christian Brauner <brauner@kernel.org>,
-	Seth Forshee <sforshee@kernel.org>,
-	Yuichiro Tsuji <yuichtsu@amazon.com>,
-	Andrey Albershteyn <aalbersh@redhat.com>,
-	Leon Hwang <leon.hwang@linux.dev>,
-	Willem de Bruijn <willemb@google.com>,
-	Jason Xing <kerneljasonxing@gmail.com>,
-	Tao Chen <chen.dylane@linux.dev>,
-	Mykyta Yatsenko <yatsenko@meta.com>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Anton Protopopov <a.s.protopopov@gmail.com>,
-	Amery Hung <ameryhung@gmail.com>,
-	Rong Tao <rongtao@cestc.cn>,
-	linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	kernel-patches-bot@fb.com
-Subject: [PATCH bpf-next v13 8/8] selftests/bpf: Add tests to verify map create failure log
-Date: Mon, 11 May 2026 23:28:17 +0800
-Message-ID: <20260511152817.89191-9-leon.hwang@linux.dev>
-In-Reply-To: <20260511152817.89191-1-leon.hwang@linux.dev>
-References: <20260511152817.89191-1-leon.hwang@linux.dev>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fuboAVld"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A1590C2BCB0;
+	Mon, 11 May 2026 16:19:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
+	s=k20201202; t=1778516371;
+	bh=eze9RQV3hbB21kKo3b7RsDRVzX5i/gy14ILzEtPDtJk=;
+	h=In-Reply-To:References:Subject:From:To:Cc:Date:From;
+	b=fuboAVldJnc8wqVWB5q7NV2IUJOvgtwJSxN1hZq2lDxAqbQa/Np/AoR63755Ulxiw
+	 7RAgGzQrn8MlIniPYcDoqzBJX+fMoRsTEKv51xSAaY4H962pydfWvI9YiF15czMZ9O
+	 MghVJ1N9gT9rkuXxL5f93K/J/9n3G7r5gJA/V4xZvro3iKL21Cjsvk/csgnmGBQyNH
+	 OcNGCOp3KSHQVgJPZTP827zYj93lVmSc7xglfCdpHXAnvaJ5VOjb1XuWCZqVgPnbQn
+	 IRntFctvwRBvubyUSwveR8DDseEAqDL5MG59oXRIAjveFfjXkRKSN0BW4CC71f7rMw
+	 ZbN7QPc37HsGg==
+Content-Type: multipart/mixed; boundary="===============0378492382572556629=="
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Migadu-Flow: FLOW_OUT
+Message-Id: <fad54bcc2f9363f61cda44680e7189ad7a510d81dc52f444a4c30a3fcd37df1d@mail.kernel.org>
+In-Reply-To: <20260511152817.89191-7-leon.hwang@linux.dev>
+References: <20260511152817.89191-7-leon.hwang@linux.dev>
+Subject: Re: [PATCH bpf-next v13 6/8] bpf: Add syscall common attributes support for map_create
+From: bot+bpf-ci@kernel.org
+To: leon.hwang@linux.dev,bpf@vger.kernel.org
+Cc: ast@kernel.org,daniel@iogearbox.net,john.fastabend@gmail.com,andrii@kernel.org,martin.lau@linux.dev,eddyz87@gmail.com,song@kernel.org,yonghong.song@linux.dev,kpsingh@kernel.org,sdf@fomichev.me,haoluo@google.com,jolsa@kernel.org,shuah@kernel.org,brauner@kernel.org,sforshee@kernel.org,yuichtsu@amazon.com,aalbersh@redhat.com,leon.hwang@linux.dev,willemb@google.com,kerneljasonxing@gmail.com,chen.dylane@linux.dev,yatsenko@meta.com,memxor@gmail.com,a.s.protopopov@gmail.com,ameryhung@gmail.com,rongtao@cestc.cn,linux-kernel@vger.kernel.org,linux-api@vger.kernel.org,linux-kselftest@vger.kernel.org,kernel-patches-bot@fb.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,clm@meta.com,ihor.solodrai@linux.dev
+Date: Mon, 11 May 2026 16:19:28 +0000 (UTC)
 
-Add tests to verify that the kernel reports the expected error messages
-and correct log_true_size when map creation fails.
+--===============0378492382572556629==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Leon Hwang <leon.hwang@linux.dev>
+> diff --git a/include/linux/bpf_verifier.h b/include/linux/bpf_verifier.h
+> index 8433430dedb7..c15a4c26a43b 100644
+> --- a/include/linux/bpf_verifier.h
+> +++ b/include/linux/bpf_verifier.h
+
+[ ... ]
+
+> diff --git a/kernel/bpf/log.c b/kernel/bpf/log.c
+> index fd12ad5a0338..62fe6ed18374 100644
+> --- a/kernel/bpf/log.c
+> +++ b/kernel/bpf/log.c
+
+[ ... ]
+
+> diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+> index 2fa05ba8f161..54b43e16848a 100644
+> --- a/kernel/bpf/syscall.c
+> +++ b/kernel/bpf/syscall.c
+
+[ ... ]
+
+> @@ -1611,6 +1632,31 @@ static int map_create(union bpf_attr *attr, bpfptr_t uattr)
+>  	return err;
+>  }
+>
+> +static int map_create(union bpf_attr *attr, bpfptr_t uattr, struct bpf_common_attr *attr_common,
+> +		      bpfptr_t uattr_common, u32 size_common)
+> +{
+> +	struct bpf_verifier_log *log;
+> +	struct bpf_log_attr attr_log;
+> +	int err, ret;
+> +
+> +	log = bpf_log_attr_create_vlog(&attr_log, attr_common, uattr_common, size_common);
+> +	if (IS_ERR(log))
+> +		return PTR_ERR(log);
+> +
+> +	err = __map_create(attr, uattr, log);
+> +
+> +	ret = bpf_log_attr_finalize(&attr_log, log);
+> +	if (ret) {
+> +		if (err >= 0)
+> +			close_fd(err);
+> +		err = ret;
+
+When bpf_log_attr_finalize() returns an error (say -ENOSPC for log buffer
+truncation or -EFAULT for copy_to_user failure) after __map_create() already
+returned a negative error (for example -EINVAL from CHECK_ATTR or -EPERM from
+security checks), does it make sense to overwrite the original map creation
+error with the log finalization error?
+
+The result is that userspace receives -ENOSPC or -EFAULT instead of the
+actual reason the map creation failed. A user with an undersized log buffer
+might retry with a larger buffer expecting success, when the real issue is
+that the map creation itself was rejected for a different reason.
+
+Looking at bpf_check() in kernel/bpf/verifier.c (around the verifier log
+finalization), it uses similar logic with 'err = ret;' reassignment. However,
+that doesn't appear to have the preserve-original-error comment that would
+clarify the intended behavior for this scenario.
+
+> +	}
+> +
+> +free:
+
+Does anything use this free: label? The only exit path before it is the early
+return for IS_ERR(log), which correctly returns directly since log is an error
+pointer and doesn't need cleanup. There doesn't seem to be any 'goto free;'
+statement in the function.
+
+With -Wunused-label enabled by default in the kernel build (part of -Wall),
+this will generate a compiler warning. When building with -Werror (common in
+CI configurations and allmodconfig builds), this would break the build.
+
+> +	kfree(log);
+> +	return err;
+> +}
+> +
+>  void bpf_map_inc(struct bpf_map *map)
+>  {
+>  	atomic64_inc(&map->refcnt);
+
+[ ... ]
+
+
 ---
- .../selftests/bpf/prog_tests/map_init.c       | 166 ++++++++++++++++++
- 1 file changed, 166 insertions(+)
+AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
+See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
 
-diff --git a/tools/testing/selftests/bpf/prog_tests/map_init.c b/tools/testing/selftests/bpf/prog_tests/map_init.c
-index 14a31109dd0e..5c61c8e37306 100644
---- a/tools/testing/selftests/bpf/prog_tests/map_init.c
-+++ b/tools/testing/selftests/bpf/prog_tests/map_init.c
-@@ -212,3 +212,169 @@ void test_map_init(void)
- 	if (test__start_subtest("pcpu_lru_map_init"))
- 		test_pcpu_lru_map_init();
- }
-+
-+static void test_map_create(enum bpf_map_type map_type, const char *map_name,
-+			    struct bpf_map_create_opts *opts, const char *exp_msg)
-+{
-+	const int key_size = 4, value_size = 4, max_entries = 1;
-+	char log_buf[128];
-+	int fd;
-+	LIBBPF_OPTS(bpf_log_opts, log_opts);
-+
-+	log_buf[0] = '\0';
-+	log_opts.buf = log_buf;
-+	log_opts.size = sizeof(log_buf);
-+	log_opts.level = 1;
-+	opts->log_opts = &log_opts;
-+	fd = bpf_map_create(map_type, map_name, key_size, value_size, max_entries, opts);
-+	if (!ASSERT_LT(fd, 0, "bpf_map_create")) {
-+		close(fd);
-+		return;
-+	}
-+
-+	ASSERT_STREQ(log_buf, exp_msg, "log_buf");
-+	ASSERT_EQ(log_opts.true_size, strlen(exp_msg) + 1, "true_size");
-+}
-+
-+static void test_map_create_array(struct bpf_map_create_opts *opts, const char *exp_msg)
-+{
-+	test_map_create(BPF_MAP_TYPE_ARRAY, "test_map_create", opts, exp_msg);
-+}
-+
-+static void test_invalid_vmlinux_value_type_id_struct_ops(void)
-+{
-+	const char *msg = "btf_vmlinux_value_type_id can only be used with struct_ops maps.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .btf_vmlinux_value_type_id = 1,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_invalid_vmlinux_value_type_id_kv_type_id(void)
-+{
-+	const char *msg = "btf_vmlinux_value_type_id is mutually exclusive with btf_key_type_id and btf_value_type_id.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .btf_vmlinux_value_type_id = 1,
-+		    .btf_key_type_id = 1,
-+	);
-+
-+	test_map_create(BPF_MAP_TYPE_STRUCT_OPS, "test_map_create", &opts, msg);
-+}
-+
-+static void test_invalid_value_type_id(void)
-+{
-+	const char *msg = "Invalid btf_value_type_id.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .btf_key_type_id = 1,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_invalid_map_extra(void)
-+{
-+	const char *msg = "Invalid map_extra.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .map_extra = 1,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_invalid_numa_node(void)
-+{
-+	const char *msg = "Invalid numa_node.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .map_flags = BPF_F_NUMA_NODE,
-+		    .numa_node = 0xFF,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_invalid_map_type(void)
-+{
-+	const char *msg = "Invalid map_type.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts);
-+
-+	test_map_create(__MAX_BPF_MAP_TYPE, "test_map_create", &opts, msg);
-+}
-+
-+static void test_invalid_token_fd(void)
-+{
-+	const char *msg = "Invalid map_token_fd.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .map_flags = BPF_F_TOKEN_FD,
-+		    .token_fd = 0xFF,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_invalid_map_name(void)
-+{
-+	const char *msg = "Invalid map_name.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts);
-+
-+	test_map_create(BPF_MAP_TYPE_ARRAY, "test-!@#", &opts, msg);
-+}
-+
-+static void test_invalid_btf_fd(void)
-+{
-+	const char *msg = "Invalid btf_fd.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .btf_fd = -1,
-+		    .btf_key_type_id = 1,
-+		    .btf_value_type_id = 1,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_excl_prog_hash_size_1(void)
-+{
-+	const char *msg = "Invalid excl_prog_hash_size.\n";
-+	const char *hash = "DEADCODE";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .excl_prog_hash = hash,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+static void test_excl_prog_hash_size_2(void)
-+{
-+	const char *msg = "Invalid excl_prog_hash_size.\n";
-+	LIBBPF_OPTS(bpf_map_create_opts, opts,
-+		    .excl_prog_hash_size = 1,
-+	);
-+
-+	test_map_create_array(&opts, msg);
-+}
-+
-+void test_map_create_failure(void)
-+{
-+	if (test__start_subtest("invalid_vmlinux_value_type_id_struct_ops"))
-+		test_invalid_vmlinux_value_type_id_struct_ops();
-+	if (test__start_subtest("invalid_vmlinux_value_type_id_kv_type_id"))
-+		test_invalid_vmlinux_value_type_id_kv_type_id();
-+	if (test__start_subtest("invalid_value_type_id"))
-+		test_invalid_value_type_id();
-+	if (test__start_subtest("invalid_map_extra"))
-+		test_invalid_map_extra();
-+	if (test__start_subtest("invalid_numa_node"))
-+		test_invalid_numa_node();
-+	if (test__start_subtest("invalid_map_type"))
-+		test_invalid_map_type();
-+	if (test__start_subtest("invalid_token_fd"))
-+		test_invalid_token_fd();
-+	if (test__start_subtest("invalid_map_name"))
-+		test_invalid_map_name();
-+	if (test__start_subtest("invalid_btf_fd"))
-+		test_invalid_btf_fd();
-+	if (test__start_subtest("invalid_excl_prog_hash_size_1"))
-+		test_excl_prog_hash_size_1();
-+	if (test__start_subtest("invalid_excl_prog_hash_size_2"))
-+		test_excl_prog_hash_size_2();
-+}
--- 
-2.54.0
-
+CI run summary: https://github.com/kernel-patches/bpf/actions/runs/25680759838
+--===============0378492382572556629==--
