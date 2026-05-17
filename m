@@ -1,40 +1,40 @@
 Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3AD673CF049;
-	Sun, 17 May 2026 18:37:17 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 657563CEB84;
+	Sun, 17 May 2026 18:37:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779043042; cv=none; b=aQEtuDVriMJ0M/svaOOS8wfu7/4tVI8d8sAg1FX986j/m6ZmD1azfe5KdmyISvvz2add4VLqAdsQcFIO9MamrcowIrjFCYsE3ZTkjhv3c7oq0WOeoosOqlIRF73P546v3CXOmqV0L26LOxiQrt/9vel2Xo6a+RhtIFeomfN2sAE=
+	t=1779043043; cv=none; b=lQVE0xQTunFX/N3SgRk89jwMgBZxPFs76sXORfojKqxgEn6+hUQSoo8PSCjwnV5ymjfz2CM0/3ltUGBGKBJAgB0i9FMHiU2AHiC9SIvtVRXNDYFmJDTVxySsw+17QNAfXJI8q5FqeBVXPn7kbV6QE9hsDa9pFgmYoYwLKx1LuWo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779043042; c=relaxed/simple;
-	bh=IzfWb3FIR60iFfSyvP7+1f4VtR+EYtoEKOgTcB72TyY=;
+	s=arc-20240116; t=1779043043; c=relaxed/simple;
+	bh=wTGET38CD6COu11C+GfxiQLuwWdWIja53YJgU+fO9Ug=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=exdXCfDBu+C5kYFO9xwsKuvxLfzj2zRLXK/2PI3gHrtbo1/QL0pSLJuwgsqGGGeO/+9pRUpapwHPKcStaXVO8hhZ1a8kk9co5cHa5qazbCrv+WBfXUGGVoDftPEKrgW/QNYvb1DBi3vj/QdBXj1dHppqThOTftZJSzO4f1aNyFc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=O/JinnuG; arc=none smtp.client-ip=213.97.179.56
+	 In-Reply-To:To:Cc; b=VhLZCM0sxbWZTSkt737Wp0KxlH0JHYjUfBu1UXLQl5ACIpt0o+2TMVRzMNhsShCnKAnWTEc21ikv8ooCerOrbDQGXC/XCbalB6Nj0NZ8kp8ytv9oxBbAgXvArhFYlxGpainAm4+r2SsE1cR73vigv0qg6MMubHFF/ecVgHsXE5g=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=jYvt3RcS; arc=none smtp.client-ip=213.97.179.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="O/JinnuG"
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="jYvt3RcS"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
 	s=20170329; h=Cc:To:In-Reply-To:References:Message-Id:
 	Content-Transfer-Encoding:Content-Type:MIME-Version:Subject:Date:From:Sender:
 	Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
 	:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
 	List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=jA0jwO8NqAbbwvetC+CA7ZxVTwLGbB+JAjjbDxxkNIo=; b=O/JinnuGiGhzy01uMYkZrNHAid
-	FNpw8ojhEVNvS+5fkDEuqe13fStMmXjCP1zAqPkX1GysQki04I7mUOlpTPAWoPQVzxytJbnDsRDVl
-	qoXhNizkQ/9oUU/Fva8KtP8IWVfDgmWd2L1ZjwUTFJYXnXQk04jDGYFs1M1Jq0iBnRrf0pNlIDaT3
-	GxOSd8vsxkawJaYOF+ghOJ5bTeBb8MssDeCnDH3Y5xl0tifUZp6OoiXngzHMX1QaiY6MvDiF8oCKo
-	nUOFbCIJXM3eD0wcpdtcbkz3Cb4/GJPnwimZLAT3dycZpadsU75Zbki6rX+mj2m83z5daWnCM/Zrx
-	wj3gLUAg==;
+	bh=mTm1itVUL5+eVJJJDMx7jNDUCkEzXL7A51fiJoig9I0=; b=jYvt3RcSvTnOoaO46YZIWqLtZF
+	Jcaxk+Y3HCUWarNvWwQkb8inBe04XwyaEGiIfRRWaixV2Dx3bB1jMlqZ9U51R0GMy34P+je5ttt1K
+	VeJfYi+cko+AAe3cf0tyRHwknRu/DoL0gkfGbJETg5b0uY6UK+YS77bswwr8MHXhBmYLMh32NJ0Hg
+	fzg+1dHm0WfdsBWDjKvKNUlodpVKNPmBy35FgnxDAdU2dkIJ49doxNfgZrS0/drvfaAVqw/qq5uUs
+	7kcAV2HUdxLB5bIWuk2olWe+etvVOG2We+PCCQ+1OoOHjsRzOsFkSIinTPmLfJRlga5TSwI24TG4n
+	LOUus7LQ==;
 Received: from [179.193.2.40] (helo=[192.168.15.100])
 	by fanzine2.igalia.com with esmtpsa 
 	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
-	id 1wOgM8-001cLz-Sf; Sun, 17 May 2026 20:36:53 +0200
+	id 1wOgMP-001cLz-0b; Sun, 17 May 2026 20:37:09 +0200
 From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-Date: Sun, 17 May 2026 15:36:11 -0300
-Subject: [PATCH 1/6] sched: Update get_task_comm() comment
+Date: Sun, 17 May 2026 15:36:14 -0300
+Subject: [PATCH 4/6] sched: Extend task command name to 64 bytes
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -43,7 +43,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-Message-Id: <20260517-tonyk-long_name-v1-1-3c282eaa91e2@igalia.com>
+Message-Id: <20260517-tonyk-long_name-v1-4-3c282eaa91e2@igalia.com>
 References: <20260517-tonyk-long_name-v1-0-3c282eaa91e2@igalia.com>
 In-Reply-To: <20260517-tonyk-long_name-v1-0-3c282eaa91e2@igalia.com>
 To: Peter Zijlstra <peterz@infradead.org>, 
@@ -61,30 +61,94 @@ Cc: linux-kernel@vger.kernel.org, kernel-dev@igalia.com, linux-mm@kvack.org,
  =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
 X-Mailer: b4 0.15.2
 
-Since commit 3a3f61ce5e0b ("exec: Make sure task->comm is always
-NUL-terminated"), __set_task_comm() no longer uses strscpy_pad(). Update
-the stale comment accordingly.
+Command name has been restrict to only 16 bytes, which is too limiting,
+specially when debugging and tracing complex software with thousands of
+threads and the need to differentiate them.
+
+Just as it was done with kthreads in commit 6b59808bfe48 ("workqueue:
+Show the latest workqueue name in /proc/PID/{comm,stat,status}"), support
+long names for userspace threads as well.
+
+To avoid buffer overflows, cap all existing userspace APIs to
+TASK_COMM_LEN, and leave the full extended name for a new interface.
 
 Co-developed-by: Bhupesh <bhupesh@igalia.com>
 Signed-off-by: Bhupesh <bhupesh@igalia.com>
 Signed-off-by: André Almeida <andrealmeid@igalia.com>
 ---
- include/linux/sched.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/proc/array.c       |  2 +-
+ include/linux/sched.h |  3 ++-
+ kernel/sys.c          | 10 +++++-----
+ 3 files changed, 8 insertions(+), 7 deletions(-)
 
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index c8c3fbd9bfa9..312371eddc7f 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -110,7 +110,7 @@ void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
+ 	else if (p->flags & PF_KTHREAD)
+ 		get_kthread_comm(tcomm, sizeof(tcomm), p);
+ 	else
+-		strscpy_pad(tcomm, p->comm);
++		strscpy_pad(tcomm, p->comm, TASK_COMM_LEN);
+ 
+ 	if (escape)
+ 		seq_escape_str(m, tcomm, ESCAPE_SPACE | ESCAPE_SPECIAL, "\n\\");
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 368c7b4d7cb5..60d004a49a27 100644
+index b6de742b1155..f7fd2b7d131d 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -2005,7 +2005,7 @@ extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec
-  *   User space can randomly change their names anyway, so locking for readers
-  *   doesn't make sense. For writers, locking is probably necessary, as a race
-  *   condition could lead to long-term mixed results.
-- *   The strscpy_pad() in __set_task_comm() can ensure that the task comm is
-+ *   The logic inside __set_task_comm() ensures that the task comm is
-  *   always NUL-terminated and zero-padded. Therefore the race condition between
-  *   reader and writer is not an issue.
-  *
+@@ -323,6 +323,7 @@ struct user_event_mm;
+  */
+ enum {
+ 	TASK_COMM_LEN = 16,
++	TASK_COMM_EXT_LEN = 64,
+ };
+ 
+ extern void sched_tick(void);
+@@ -1167,7 +1168,7 @@ struct task_struct {
+ 	 * - set it with set_task_comm() to ensure it is always
+ 	 *   NUL-terminated and zero-padded
+ 	 */
+-	char				comm[TASK_COMM_LEN];
++	char				comm[TASK_COMM_EXT_LEN];
+ 
+ 	struct nameidata		*nameidata;
+ 
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 1d5152d2395e..76d77218ab19 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2535,7 +2535,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		unsigned long, arg4, unsigned long, arg5)
+ {
+ 	struct task_struct *me = current;
+-	unsigned char comm[sizeof(me->comm)];
++	unsigned char comm[TASK_COMM_LEN];
+ 	long error;
+ 
+ 	error = security_task_prctl(option, arg2, arg3, arg4, arg5);
+@@ -2601,16 +2601,16 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 			error = -EINVAL;
+ 		break;
+ 	case PR_SET_NAME:
+-		comm[sizeof(me->comm) - 1] = 0;
++		comm[TASK_COMM_LEN - 1] = 0;
+ 		if (strncpy_from_user(comm, (char __user *)arg2,
+-				      sizeof(me->comm) - 1) < 0)
++				      TASK_COMM_LEN - 1) < 0)
+ 			return -EFAULT;
+ 		set_task_comm(me, comm);
+ 		proc_comm_connector(me);
+ 		break;
+ 	case PR_GET_NAME:
+-		strscpy_pad(comm, me->comm);
+-		if (copy_to_user((char __user *)arg2, comm, sizeof(comm)))
++		strscpy_pad(comm, me->comm, TASK_COMM_LEN);
++		if (copy_to_user((char __user *)arg2, comm, TASK_COMM_LEN))
+ 			return -EFAULT;
+ 		break;
+ 	case PR_GET_ENDIAN:
 
 -- 
 2.54.0
