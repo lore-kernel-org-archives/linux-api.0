@@ -1,133 +1,91 @@
-Received: from outgoing.mit.edu (outgoing-auth-1.mit.edu [18.9.28.11])
+Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 71FAF391E7A
-	for <linux-api@vger.kernel.org>; Fri, 22 May 2026 22:41:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=18.9.28.11
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BC6AD37B3E1;
+	Sun, 24 May 2026 22:39:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1779489723; cv=none; b=G18SGCugrtuXeVO9GOPOjQOVh4bokjvYzprsfIr+wzPLY3Vs3Co6XJ9g7Se3bVYV9k5IDZO+wtZ8vi9rpzslYl/XyI6LbSaQAYkqGf+jc9Cv/FzO0qMT+QcyJIzZsz1yx8+53pYqplD8Td3eA8OmpWVxDnYnVd28woUgvKKoN3E=
+	t=1779662395; cv=none; b=r3iCeejNNDUsTw3Zpm8G/BB2CCy+kNARbecQUwEsrkADflOJ9HnyuQaJ5Y2GIQyN08gWBuSHO5H2u9tXZXNnfeBAZ9MPlur27VbIxmx4OiJ6//ImnGbx6mOG7foxx6phz0GRE1HjuNiIR32ns81H4xSBK10eSkhAQDTJ5lqgDMs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1779489723; c=relaxed/simple;
-	bh=jTrxt8pBQmnSCCuuYFcho0dAfhL+nI+Z9OqeP4ZdnG0=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=tCh1lBtKiR0iX1vJXQXnDVNOscNKM6Y7J51l4U9TMKyz7bvR+c5SNTOD4DEMbRz2NyXzcx6Wp2cl53c1e/YqBQkTGW/VC2MXAZA6v7UokAs7wT7iZ90WmXvf3iio/TP2e8ycrR+VEx7df4NYumvq+DsA8ay+t58tMCuXzUbrlPk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu; spf=pass smtp.mailfrom=mit.edu; dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b=fzGRFuDb; arc=none smtp.client-ip=18.9.28.11
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=mit.edu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=mit.edu
+	s=arc-20240116; t=1779662395; c=relaxed/simple;
+	bh=IzfWb3FIR60iFfSyvP7+1f4VtR+EYtoEKOgTcB72TyY=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=tKZPu1iSY+soWc5rzQbJFChUDjQJXFL8MJeDdaDi/G8WLw7XQHO1TBmdVFhaK9sheZ8sLgUNBKYeZWt7G5LEFD3xVBRzaOeHRBpnf9kX29/PqdikIpG2FZu2k3cHm8+UUGethS7OVSnu/6hNCimFVkxzpbO0anejsVH+vr7cjds=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=P3ky81wA; arc=none smtp.client-ip=213.97.179.56
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=mit.edu header.i=@mit.edu header.b="fzGRFuDb"
-Received: from macsyma.thunk.org (pool-173-48-115-85.bstnma.fios.verizon.net [173.48.115.85])
-	(authenticated bits=0)
-        (User authenticated as tytso@ATHENA.MIT.EDU)
-	by outgoing.mit.edu (8.14.7/8.12.4) with ESMTP id 64MMf9rW014755
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Fri, 22 May 2026 18:41:10 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=mit.edu; s=outgoing;
-	t=1779489673; bh=mKk+R/Gk87+i0eU1luqUgLxjRP4P7rgGxNJYbCK1vPs=;
-	h=Date:From:Subject:Message-ID:MIME-Version:Content-Type;
-	b=fzGRFuDbzkUMu0uEQK2H4c1RfcgnLM3RfKHwG4javJ75OC9qF6AhAaDCLYfTMwPlz
-	 of/InxBIn2Z19QZdFO9Lfn35k3wShr53V1AkPLqBH3y926x31L8yIiX5Ft+VhXuzZj
-	 u6QWzugSykkNUHT2ZVgG3qguLUAzpDtoZQDbXZTjVM2bX8O4fdSlNwy/eEePJkgPbH
-	 xkPsLmfmndIESLSSXVVw5gUV1IIehEFz4Ze8ZLr5XDmXaN6ar/CferRPBKhzJ1xyA5
-	 xOcBMHr5C2Y9tZn++wyEJ2rpZjhv/cRPVTE2PhDddfmQdZgYpBQseZeb0sjiF8InMO
-	 Oiul1xSVQJQJA==
-Received: by macsyma.thunk.org (Postfix, from userid 15806)
-	id DB24469EAC01; Fri, 22 May 2026 18:41:08 -0400 (EDT)
-Date: Fri, 22 May 2026 18:41:08 -0400
-From: "Theodore Tso" <tytso@mit.edu>
-To: Jaegeuk Kim <jaegeuk@kernel.org>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-        Matthew Wilcox <willy@infradead.org>,
-        linux-f2fs-devel@lists.sourceforge.net,
-        Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org,
-        linux-fsdevel@vger.kernel.org, Akilesh Kailash <akailash@google.com>,
-        Christian Brauner <christian@brauner.io>
-Subject: Re: [f2fs-dev] [PATCH v2] f2fs: another way to set large folio by
- remembering inode number
-Message-ID: <20260522224108.GA18663@macsyma-wired.lan>
-References: <20260409134538.3692605-1-jaegeuk@kernel.org>
- <adhPZxtbZxgU-37v@google.com>
- <ad30g9xMs9wNJhFb@infradead.org>
- <ad_AVHe7RMnGrGTb@google.com>
- <ad_HwhzlNPUEKQi6@casper.infradead.org>
- <ag7HfNryTmQ-bVIS@infradead.org>
- <20260521155748.GA79343@macsyma-wired.lan>
- <ag_OVwPF49LSZ7rz@google.com>
- <20260522141115.GA8258@macsyma-wired.lan>
- <ahCNmWbcd_2lAJyk@google.com>
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="P3ky81wA"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
+	s=20170329; h=Cc:To:In-Reply-To:References:Message-Id:
+	Content-Transfer-Encoding:Content-Type:MIME-Version:Subject:Date:From:Sender:
+	Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender
+	:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+	List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=jA0jwO8NqAbbwvetC+CA7ZxVTwLGbB+JAjjbDxxkNIo=; b=P3ky81wAo8B7O3cTVu6wf0JyN/
+	l9o27mQ36tO2akMmIg2Mhz4ZKJUhDmhqwJLqKmCWGStSyWyFQ8+10Xs3AGWq9o9hTRts5TUdlAdKP
+	hU+KO4zsujgCtvOec9f6qORXLS5CKXC/z0FtMT6nkWjpCNJ4+DJDdVOFZuM1xEcWRF5hp7lSI15T5
+	Qxl/xixT0sqRASw3k6YibT7iFCKhqcgcYvomH64N7D+Wsf3oJ9egz5rcg7TnydONr8j8T3wbc2teq
+	XenIlSa451Pi6jKJkdwVVDodTB2aUlJF1dhvDEAuIWmj1pyxaYL39f0/5rEc2UCkT3Dcd96A5qU5Q
+	tBYlCn3g==;
+Received: from [179.118.191.12] (helo=[192.168.15.100])
+	by fanzine2.igalia.com with esmtpsa 
+	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
+	id 1wRHU2-007fJn-B6; Mon, 25 May 2026 00:39:46 +0200
+From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+Date: Sun, 24 May 2026 19:38:51 -0300
+Subject: [PATCH v2 1/6] sched: Update get_task_comm() comment
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <ahCNmWbcd_2lAJyk@google.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+Message-Id: <20260524-tonyk-long_name-v2-1-332f6bd041c4@igalia.com>
+References: <20260524-tonyk-long_name-v2-0-332f6bd041c4@igalia.com>
+In-Reply-To: <20260524-tonyk-long_name-v2-0-332f6bd041c4@igalia.com>
+To: Peter Zijlstra <peterz@infradead.org>, 
+ Juri Lelli <juri.lelli@redhat.com>, 
+ Vincent Guittot <vincent.guittot@linaro.org>, 
+ Steven Rostedt <rostedt@goodmis.org>, 
+ Christian Brauner <brauner@kernel.org>, Kees Cook <kees@kernel.org>, 
+ Shuah Khan <shuah@kernel.org>, willy@infradead.org, 
+ mathieu.desnoyers@efficios.com, David Laight <david.laight.linux@gmail.com>, 
+ Linus Torvalds <torvalds@linux-foundation.org>, akpm@linux-foundation.org, 
+ Yafang Shao <laoar.shao@gmail.com>, andrii.nakryiko@gmail.com, 
+ arnaldo.melo@gmail.com, Petr Mladek <pmladek@suse.com>
+Cc: linux-kernel@vger.kernel.org, kernel-dev@igalia.com, linux-mm@kvack.org, 
+ linux-api@vger.kernel.org, Bhupesh <bhupesh@igalia.com>, 
+ =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+X-Mailer: b4 0.15.2
 
-On Fri, May 22, 2026 at 05:08:41PM +0000, Jaegeuk Kim wrote:
-> 
-> Thank you for the explanation. It seems I made a wrong assumption on the
-> usage of "user." prefix where each filesystem can support in different
-> ways.
+Since commit 3a3f61ce5e0b ("exec: Make sure task->comm is always
+NUL-terminated"), __set_task_comm() no longer uses strscpy_pad(). Update
+the stale comment accordingly.
 
-The "user." prefix is used by all userspace applications that wish to
-store extended attributes.  For example, user.mime_type,
-user.xdg.origin_url, user.charset, user.appache_handler, etc
+Co-developed-by: Bhupesh <bhupesh@igalia.com>
+Signed-off-by: Bhupesh <bhupesh@igalia.com>
+Signed-off-by: André Almeida <andrealmeid@igalia.com>
+---
+ include/linux/sched.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-For more information, see:
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 368c7b4d7cb5..60d004a49a27 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2005,7 +2005,7 @@ extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec
+  *   User space can randomly change their names anyway, so locking for readers
+  *   doesn't make sense. For writers, locking is probably necessary, as a race
+  *   condition could lead to long-term mixed results.
+- *   The strscpy_pad() in __set_task_comm() can ensure that the task comm is
++ *   The logic inside __set_task_comm() ensures that the task comm is
+  *   always NUL-terminated and zero-padded. Therefore the race condition between
+  *   reader and writer is not an issue.
+  *
 
-    https://www.freedesktop.org/wiki/CommonExtendedAttribute
-    https://wiki.archlinux.org/title/Extended_attributes
+-- 
+2.54.0
 
-I certainly assumed this was common knowledge across all file system
-maintainers, but this was apparently not true in your case.  I don't
-know how this could be the case given that f2fs implements extended
-attributes, and I would have thought you would have known that when
-testing that feature.
-
-> I shared some motivation when replying to Darrick's feedback [1], but yes,
-> it was not enough for all heads-up. The problem started that some speicific
-> application needs as many high-order pages as possible mostly for reads. So,
-> I thought we can turn on large folio on the specific files per hints. One way
-> for the hints was using immutable bit, but it turned out it's very hard to
-> manage disabling the bit whenever deleting the files. Along with limited
-> ioctl() and requiring inode eviction to manage large folio activation, I had
-> to implement this path.
-> 
-> [1] https://lore.kernel.org/lkml/aeA5C8byIpXWla7f@google.com/
-
-Actually, you still haven't explained your use case, at least, not
-well enough for me to understand what you are trying to do.
-
-So an application wants a particular file to use as many high-order
-pages as possible.  Why?  What sort of guarantees do you need to
-provide?  What happens if they can't be provided?  What happens if a
-possibly malicious, or at least gready, application uses this
-interface to grab a lot of high-order pages?
-
-From your patch:
-
-1. setxattr(file, "user.fadvise", &value, sizeof(unsigned int), 0)
- -> register the inode number for large folio
-2. chmod(0400, file)
- -> make Read-Only
-3. open()
- -> f2fs_iget() with large folio
-4. open(WRITE), mkwrite on mmap, chmod(WRITE)
- -> return error
-5. iput() and open()
- -> goto #3
-6. unlink
- -> deregister the inode number
-
-Why should making the file read-only matter?  And when you say
-"derigster the inode number", why should this be related to deleting
-the inode?
-
-This is an interface which seems to be very specific to your use case.
-What if those requirements change over time?  What if you want pull in
-a file without making it be read-only?  And what if you want to
-release the large-order pages without deleting the file?
-
-						- Ted
