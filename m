@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DC8EA3A960E;
-	Fri, 29 May 2026 23:33:24 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50FD53C1418;
+	Fri, 29 May 2026 23:33:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780097607; cv=none; b=GvYs5XwnbHoZxb59dc0cHJjkZzW2vrvaaCQNgTz+NPwWTOM/LvOZ5HF0GacCFK8awImQJ2iB5sz4GW7YwgHF9I/EycZ7ZzQ7bQNW1fplahFrR1ieJaAMAfgQVhB1NQ2VP/ceIMz3xrZMlNoplFQyGr8F0jpu+1zqUexrdtZs5DE=
+	t=1780097614; cv=none; b=IYEUJTNu1HK26UcV/N2lH/jW9KpYeZ/hi4MYjMnyBD3CWUcog5t8IxHPjX0OWp384sPHqE1q/gFItvJikS6Zz9r0lwDpPZU90V3JKfOOFbxxXME80zjxEP5cWVq8ZXDsiq2ZOjFB6YeFHQun1txPmuSgBHlpfEbCVjGXtqtcDqs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780097607; c=relaxed/simple;
-	bh=/UoUnRlu7ctqjV2qqqC8PyG2pzw9oLcE1R0HqG4IlB8=;
+	s=arc-20240116; t=1780097614; c=relaxed/simple;
+	bh=M1Pjct4l36TWNUmH8oDG2tYRqelUXhS+LpmdVklvqfU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=ChvuL8Z9kqfzUjkzbzTARAkQeUjbLVi/JS+UoWWfWzQbQLK9CpvBLqy33/rQlJCHuwckklwmnDLhz8gohB38/z8rn4AV8BIPKr4AiHb58hIz5RuocPEjj7zggH7cIbEMW4tGMpx+m6cav/2TgN6c36/yYxICp6ElSPtz0+8Mx8A=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bNyZqNrg; arc=none smtp.client-ip=100.103.45.18
+	 MIME-Version; b=MHzFwpqppIwYzPNeozMz83gRF8hwu7Mlwixveb//o6R7X+spTzTUHtj5kTKr/Hh/vCvneyP2vurCxxhi/+2AM/xUppBuKlvsbWaCmllTClTXkFaJlF945HRpvdqTRW6SW3iDwDvQq3HVd8/KfdfbUd7IMED+k2LOQjjK3ryVho8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=oLPYNgAA; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bNyZqNrg"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B73401F0089A;
-	Fri, 29 May 2026 23:33:21 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="oLPYNgAA"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F06AC1F0089E;
+	Fri, 29 May 2026 23:33:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1780097604;
-	bh=DKBz4UUQi5FZnp0KQg62LGM0RNH+YNYQirs5JJJrbPc=;
+	s=k20260515; t=1780097610;
+	bh=2JTxvlFGHAdWOihq8FCQiAMMDV6W6dDMe4D1Ktr4ZzM=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=bNyZqNrgcQXM3hbo6w0ybYwWeDJc246y7hWPcBGBKt6ktWQcgad0X+0iojj0lJ/m1
-	 E9mD7TzPnc9/g0nj/fyB8Db7aZ8WsmsnZoBYIyvQDJfiBow0roQLDbC+pVTUB02A+L
-	 682OTNdyz6T83DnBn0cSMmytB/vklgjSg376SPBltrk6F81uK3jMc664ubhCFaJdhP
-	 NGyMWIXezXXouzvM1baiyd38HB1BhawSsSUIWgzZOORWYaPmBYfxUQowZ+4L3ecVku
-	 MoA2dK44IZezczZ14ewpUUVygqjNO+09D+crQJBUad03L77TJ7Znpx5sCFDxkpOyFM
-	 XLpy61DQLY8MA==
+	b=oLPYNgAAnZ6FstcAslx8XVjvkOWCZuULld5KwPzTiMtf+McwomZOnK4GOstufCkEU
+	 7quSCcGLR0xVhFqz+s0n2TAtjf/ZFESYEcJz7s2JthKZq+Orxl1CC84C3ieppVlFD7
+	 HvHlI3Uyt92MW73M0ORPGtJ3sVsTu2omJ/g2+PfWM/FUaCTj9i9bw796Xq5rsANFP8
+	 RZWVrTIglK5+Ytf9UlWIWKRtONOIGUiVB8VnD9WsRdIlCrJeOBb+GMzB0ZvWt1lDso
+	 Cor0eAz+j1kDN/Sa5dmOL62V2CMXixoVDK0GRkm7I6QfN/CFum6AY9S4ZL0iCJzOFH
+	 ifrG5EjXlxhSw==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-api@vger.kernel.org,
 	linux-kernel@vger.kernel.org
@@ -58,9 +58,9 @@ Cc: linux-doc@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Masami Hiramatsu <mhiramat@kernel.org>,
 	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v4 03/11] kernel/api: add debugfs interface for kernel API specifications
-Date: Fri, 29 May 2026 19:33:02 -0400
-Message-ID: <20260529233311.1901670-4-sashal@kernel.org>
+Subject: [PATCH v4 05/11] kernel/api: add API specification for sys_open
+Date: Fri, 29 May 2026 19:33:04 -0400
+Message-ID: <20260529233311.1901670-6-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260529233311.1901670-1-sashal@kernel.org>
 References: <20260529233311.1901670-1-sashal@kernel.org>
@@ -70,670 +70,347 @@ List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add a debugfs interface to expose kernel API specifications at runtime.
-This allows tools and users to query the complete API specifications
-through the debugfs filesystem.
+Add KAPI-annotated kerneldoc for the sys_open system call in fs/open.c.
 
-The interface provides:
-- /sys/kernel/debug/kapi/list - lists all available API specifications
-- /sys/kernel/debug/kapi/specs/<name> - detailed info for each API
-
-Each specification file includes:
-- Function name, version, and descriptions
-- Execution context requirements and flags
-- Parameter details with types, flags, and constraints
-- Return value specifications and success conditions
-- Error codes with descriptions and conditions
-- Locking requirements and constraints
-- Signal handling specifications
-- Examples, notes, and deprecation status
-
-This enables runtime introspection of kernel APIs for documentation
-tools, static analyzers, and debugging purposes.
+The specification documents parameter constraints (pathname, flags
+bitmask, permission mode), 25 error conditions, locking requirements,
+side effects, required capabilities, and usage examples.
 
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- Documentation/dev-tools/kernel-api-spec.rst |  49 +-
- kernel/api/kapi_debugfs.c                   | 553 ++++++++++++++++++++
- 2 files changed, 601 insertions(+), 1 deletion(-)
- create mode 100644 kernel/api/kapi_debugfs.c
+ fs/open.c | 317 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 317 insertions(+)
 
-diff --git a/Documentation/dev-tools/kernel-api-spec.rst b/Documentation/dev-tools/kernel-api-spec.rst
-index 62a1248746622..27da0f12ea3fc 100644
---- a/Documentation/dev-tools/kernel-api-spec.rst
-+++ b/Documentation/dev-tools/kernel-api-spec.rst
-@@ -242,6 +242,7 @@ Runtime validation is controlled by kernel configuration:
+diff --git a/fs/open.c b/fs/open.c
+index 91f1139591abe..61573d5abda00 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -1373,6 +1373,323 @@ int do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
+ }
  
- 1. Enable ``CONFIG_KAPI_SPEC`` to build the framework
- 2. Enable ``CONFIG_KAPI_RUNTIME_CHECKS`` for runtime validation
-+3. Optionally enable ``CONFIG_KAPI_SPEC_DEBUGFS`` for debugfs interface
  
- Validation Behavior
- -------------------
-@@ -282,6 +283,51 @@ custom validation functions via the ``validate`` field in the constraint spec:
-     .type = KAPI_CONSTRAINT_CUSTOM,
-     .validate = validate_buffer_size,
- 
-+DebugFS Interface
-+=================
-+
-+The debugfs interface provides runtime access to API specifications:
-+
-+Directory Structure
-+-------------------
-+
-+::
-+
-+    /sys/kernel/debug/kapi/
-+    ├── list                     # Overview of all registered API specs
-+    └── specs/                   # Per-API specification files
-+        ├── sys_open             # Human-readable spec for sys_open
-+        ├── sys_close            # Human-readable spec for sys_close
-+        ├── sys_read             # Human-readable spec for sys_read
-+        └── sys_write            # Human-readable spec for sys_write
-+
-+Usage Examples
-+--------------
-+
-+List all available API specifications::
-+
-+    $ cat /sys/kernel/debug/kapi/list
-+    Available Kernel API Specifications
-+    ===================================
-+
-+    sys_open - Open or create a file
-+    sys_close - Close a file descriptor
-+    sys_read - Read data from a file descriptor
-+    sys_write - Write data to a file descriptor
-+
-+    Total: 4 specifications
-+
-+Query specific API::
-+
-+    $ cat /sys/kernel/debug/kapi/specs/sys_open
-+    Kernel API Specification
-+    ========================
-+
-+    Name: sys_open
-+    Version: 1
-+    Description: Open or create a file
-+    ...
-+
- Performance Considerations
- ==========================
- 
-@@ -654,7 +700,8 @@ Submitting Specifications
- 1. Add specifications to the same file as the API implementation
- 2. Follow existing patterns and naming conventions
- 3. Test with CONFIG_KAPI_RUNTIME_CHECKS enabled
--4. Run scripts/checkpatch.pl on your changes
-+4. Verify debugfs output is correct
-+5. Run scripts/checkpatch.pl on your changes
- 
- Review Criteria
- ---------------
-diff --git a/kernel/api/kapi_debugfs.c b/kernel/api/kapi_debugfs.c
-new file mode 100644
-index 0000000000000..5a78287fc6cb8
---- /dev/null
-+++ b/kernel/api/kapi_debugfs.c
-@@ -0,0 +1,553 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
++/**
++ * sys_open - Open or create a file
++ * @filename: Pathname of the file to open or create
++ * @flags: File access mode and behavior flags (O_RDONLY, O_WRONLY, O_RDWR, etc.)
++ * @mode: File permission bits for newly created files (only with O_CREAT/O_TMPFILE)
 + *
-+ * Kernel API specification debugfs interface
++ * long-desc: Opens the file specified by pathname. If O_CREAT or O_TMPFILE is
++ *   specified in flags, the file is created if it does not exist; its mode is
++ *   set according to the mode parameter modified by the process's umask.
 + *
-+ * This provides a debugfs interface to expose kernel API specifications
-+ * at runtime, allowing tools and users to query the complete API specs.
-+ */
-+
-+#include <linux/debugfs.h>
-+#include <linux/kernel.h>
-+#include <linux/init.h>
-+#include <linux/seq_file.h>
-+#include <linux/kernel_api_spec.h>
-+#include <linux/slab.h>
-+#include <linux/string.h>
-+
-+#include "internal.h"
-+
-+static struct dentry *kapi_debugfs_root;
-+
-+/* Helper function to print parameter type as string */
-+static const char * const param_type_names[] = {
-+	[KAPI_TYPE_VOID]     = "void",
-+	[KAPI_TYPE_INT]      = "int",
-+	[KAPI_TYPE_UINT]     = "uint",
-+	[KAPI_TYPE_PTR]      = "ptr",
-+	[KAPI_TYPE_STRUCT]   = "struct",
-+	[KAPI_TYPE_UNION]    = "union",
-+	[KAPI_TYPE_ARRAY]    = "array",
-+	[KAPI_TYPE_FD]       = "fd",
-+	[KAPI_TYPE_ENUM]     = "enum",
-+	[KAPI_TYPE_USER_PTR] = "user_ptr",
-+	[KAPI_TYPE_PATH]     = "path",
-+	[KAPI_TYPE_FUNC_PTR] = "func_ptr",
-+	[KAPI_TYPE_CUSTOM]   = "custom",
-+};
-+
-+static const char *param_type_str(enum kapi_param_type type)
-+{
-+	if (type < ARRAY_SIZE(param_type_names) && param_type_names[type])
-+		return param_type_names[type];
-+	return "unknown";
-+}
-+
-+/* Helper to print parameter flags */
-+static void print_param_flags(struct seq_file *m, u32 flags)
-+{
-+	seq_puts(m, "    flags: ");
-+	if ((flags & KAPI_PARAM_INOUT) == KAPI_PARAM_INOUT)
-+		seq_puts(m, "INOUT ");
-+	else if (flags & KAPI_PARAM_IN)
-+		seq_puts(m, "IN ");
-+	else if (flags & KAPI_PARAM_OUT)
-+		seq_puts(m, "OUT ");
-+	if (flags & KAPI_PARAM_OPTIONAL)
-+		seq_puts(m, "OPTIONAL ");
-+	if (flags & KAPI_PARAM_CONST)
-+		seq_puts(m, "CONST ");
-+	if (flags & KAPI_PARAM_USER)
-+		seq_puts(m, "USER ");
-+	if (flags & KAPI_PARAM_VOLATILE)
-+		seq_puts(m, "VOLATILE ");
-+	if (flags & KAPI_PARAM_DMA)
-+		seq_puts(m, "DMA ");
-+	if (flags & KAPI_PARAM_ALIGNED)
-+		seq_puts(m, "ALIGNED ");
-+	seq_puts(m, "\n");
-+}
-+
-+/* Helper to print context flags */
-+static void print_context_flags(struct seq_file *m, u32 flags)
-+{
-+	seq_puts(m, "Context flags: ");
-+	if (flags & KAPI_CTX_PROCESS)
-+		seq_puts(m, "PROCESS ");
-+	if (flags & KAPI_CTX_HARDIRQ)
-+		seq_puts(m, "HARDIRQ ");
-+	if (flags & KAPI_CTX_SOFTIRQ)
-+		seq_puts(m, "SOFTIRQ ");
-+	if (flags & KAPI_CTX_NMI)
-+		seq_puts(m, "NMI ");
-+	if (flags & KAPI_CTX_SLEEPABLE)
-+		seq_puts(m, "SLEEPABLE ");
-+	if (flags & KAPI_CTX_ATOMIC)
-+		seq_puts(m, "ATOMIC ");
-+	if (flags & KAPI_CTX_PREEMPT_DISABLED)
-+		seq_puts(m, "PREEMPT_DISABLED ");
-+	if (flags & KAPI_CTX_IRQ_DISABLED)
-+		seq_puts(m, "IRQ_DISABLED ");
-+	seq_puts(m, "\n");
-+}
-+
-+/* Show function for individual API spec */
-+static int kapi_spec_show(struct seq_file *m, void *v)
-+{
-+	struct kernel_api_spec *spec = m->private;
-+	int i;
-+
-+	seq_puts(m, "Kernel API Specification\n");
-+	seq_puts(m, "========================\n\n");
-+
-+	/* Basic info */
-+	seq_printf(m, "Name: %s\n", spec->name);
-+	seq_printf(m, "Version: %u\n", spec->version);
-+	seq_printf(m, "Description: %s\n", spec->description);
-+	if (spec->long_description && *spec->long_description)
-+		seq_printf(m, "Long description: %s\n", spec->long_description);
-+
-+	/* Context */
-+	print_context_flags(m, spec->context_flags);
-+	seq_puts(m, "\n");
-+
-+	/* Parameters */
-+	if (spec->param_count > 0) {
-+		seq_printf(m, "Parameters (%u):\n", spec->param_count);
-+		for (i = 0; i < spec->param_count && i < KAPI_MAX_PARAMS; i++) {
-+			struct kapi_param_spec *param = &spec->params[i];
-+
-+			seq_printf(m, "  [%d] %s:\n", i, param->name);
-+			seq_printf(m, "    type: %s (%s)\n",
-+				   param_type_str(param->type), param->type_name);
-+			print_param_flags(m, param->flags);
-+			if (param->description && *param->description)
-+				seq_printf(m, "    description: %s\n", param->description);
-+			if (param->size > 0)
-+				seq_printf(m, "    size: %zu\n", param->size);
-+			if (param->alignment > 0)
-+				seq_printf(m, "    alignment: %zu\n", param->alignment);
-+
-+			/* Print constraints if any */
-+			if (param->constraint_type != KAPI_CONSTRAINT_NONE) {
-+				seq_puts(m, "    constraints:\n");
-+				switch (param->constraint_type) {
-+				case KAPI_CONSTRAINT_RANGE:
-+					seq_puts(m, "      type: range\n");
-+					seq_printf(m, "      min: %lld\n", param->min_value);
-+					seq_printf(m, "      max: %lld\n", param->max_value);
-+					break;
-+				case KAPI_CONSTRAINT_MASK:
-+					seq_puts(m, "      type: mask\n");
-+					seq_printf(m, "      valid_bits: 0x%llx\n",
-+						   param->valid_mask);
-+					break;
-+				case KAPI_CONSTRAINT_ENUM:
-+					seq_puts(m, "      type: enum\n");
-+					seq_printf(m, "      count: %u\n", param->enum_count);
-+					break;
-+				case KAPI_CONSTRAINT_USER_STRING:
-+					seq_puts(m, "      type: user_string\n");
-+					seq_printf(m, "      min_len: %lld\n", param->min_value);
-+					seq_printf(m, "      max_len: %lld\n", param->max_value);
-+					break;
-+				case KAPI_CONSTRAINT_USER_PATH:
-+					seq_puts(m, "      type: user_path\n");
-+					seq_puts(m, "      max_len: PATH_MAX (4096)\n");
-+					break;
-+				case KAPI_CONSTRAINT_USER_PTR:
-+					seq_puts(m, "      type: user_ptr\n");
-+					seq_printf(m, "      size: %zu bytes\n", param->size);
-+					break;
-+				case KAPI_CONSTRAINT_ALIGNMENT:
-+					seq_puts(m, "      type: alignment\n");
-+					seq_printf(m, "      alignment: %zu\n", param->alignment);
-+					break;
-+				case KAPI_CONSTRAINT_POWER_OF_TWO:
-+					seq_puts(m, "      type: power_of_two\n");
-+					break;
-+				case KAPI_CONSTRAINT_PAGE_ALIGNED:
-+					seq_puts(m, "      type: page_aligned\n");
-+					break;
-+				case KAPI_CONSTRAINT_NONZERO:
-+					seq_puts(m, "      type: nonzero\n");
-+					break;
-+				case KAPI_CONSTRAINT_CUSTOM:
-+					seq_puts(m, "      type: custom\n");
-+					if (param->constraints && *param->constraints)
-+						seq_printf(m, "      description: %s\n",
-+							   param->constraints);
-+					break;
-+				default:
-+					break;
-+				}
-+			}
-+			seq_puts(m, "\n");
-+		}
-+	}
-+
-+	/* Return value */
-+	seq_puts(m, "Return value:\n");
-+	seq_printf(m, "  type: %s\n", spec->return_spec.type_name);
-+	if (spec->return_spec.description && *spec->return_spec.description)
-+		seq_printf(m, "  description: %s\n", spec->return_spec.description);
-+
-+	switch (spec->return_spec.check_type) {
-+	case KAPI_RETURN_EXACT:
-+		seq_printf(m, "  success: == %lld\n", spec->return_spec.success_value);
-+		break;
-+	case KAPI_RETURN_RANGE:
-+		seq_printf(m, "  success: [%lld, %lld]\n",
-+			   spec->return_spec.success_min,
-+			   spec->return_spec.success_max);
-+		break;
-+	case KAPI_RETURN_FD:
-+		seq_puts(m, "  success: valid file descriptor (>= 0)\n");
-+		break;
-+	case KAPI_RETURN_ERROR_CHECK:
-+		seq_puts(m, "  success: error check\n");
-+		break;
-+	case KAPI_RETURN_CUSTOM:
-+		seq_puts(m, "  success: custom check\n");
-+		break;
-+	default:
-+		break;
-+	}
-+	seq_puts(m, "\n");
-+
-+	/* Errors */
-+	if (spec->error_count > 0) {
-+		seq_printf(m, "Errors (%u):\n", spec->error_count);
-+		for (i = 0; i < spec->error_count && i < KAPI_MAX_ERRORS; i++) {
-+			struct kapi_error_spec *err = &spec->errors[i];
-+
-+			seq_printf(m, "  %s (%d): %s\n",
-+				   err->name, err->error_code, err->description);
-+			if (err->condition && *err->condition)
-+				seq_printf(m, "    condition: %s\n", err->condition);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Locks */
-+	if (spec->lock_count > 0) {
-+		seq_printf(m, "Locks (%u):\n", spec->lock_count);
-+		for (i = 0; i < spec->lock_count && i < KAPI_MAX_LOCKS; i++) {
-+			struct kapi_lock_spec *lock = &spec->locks[i];
-+			const char *type_str, *scope_str;
-+
-+			switch (lock->lock_type) {
-+			case KAPI_LOCK_MUTEX:
-+				type_str = "mutex";
-+				break;
-+			case KAPI_LOCK_SPINLOCK:
-+				type_str = "spinlock";
-+				break;
-+			case KAPI_LOCK_RWLOCK:
-+				type_str = "rwlock";
-+				break;
-+			case KAPI_LOCK_SEMAPHORE:
-+				type_str = "semaphore";
-+				break;
-+			case KAPI_LOCK_RCU:
-+				type_str = "rcu";
-+				break;
-+			case KAPI_LOCK_SEQLOCK:
-+				type_str = "seqlock";
-+				break;
-+			default:
-+				type_str = "unknown";
-+				break;
-+			}
-+			switch (lock->scope) {
-+			case KAPI_LOCK_INTERNAL:
-+				scope_str = "acquired and released";
-+				break;
-+			case KAPI_LOCK_ACQUIRES:
-+				scope_str = "acquired (not released)";
-+				break;
-+			case KAPI_LOCK_RELEASES:
-+				scope_str = "released (held on entry)";
-+				break;
-+			case KAPI_LOCK_CALLER_HELD:
-+				scope_str = "held by caller";
-+				break;
-+			default:
-+				scope_str = "unknown";
-+				break;
-+			}
-+			seq_printf(m, "  %s (%s): %s\n",
-+				   lock->lock_name, type_str, lock->description);
-+			seq_printf(m, "    scope: %s\n", scope_str);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Constraints */
-+	if (spec->constraint_count > 0) {
-+		seq_printf(m, "Additional constraints (%u):\n", spec->constraint_count);
-+		for (i = 0; i < spec->constraint_count && i < KAPI_MAX_CONSTRAINTS; i++) {
-+			struct kapi_constraint_spec *cons = &spec->constraints[i];
-+
-+			seq_printf(m, "  - %s", cons->name);
-+			if (cons->description && *cons->description)
-+				seq_printf(m, ": %s", cons->description);
-+			seq_puts(m, "\n");
-+			if (cons->expression && *cons->expression)
-+				seq_printf(m, "    expression: %s\n", cons->expression);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Signals */
-+	if (spec->signal_count > 0) {
-+		seq_printf(m, "Signal handling (%u):\n", spec->signal_count);
-+		for (i = 0; i < spec->signal_count && i < KAPI_MAX_SIGNALS; i++) {
-+			struct kapi_signal_spec *sig = &spec->signals[i];
-+
-+			seq_printf(m, "  %s (%d):\n", sig->signal_name, sig->signal_num);
-+			seq_puts(m, "    direction: ");
-+			if (sig->direction & KAPI_SIGNAL_SEND)
-+				seq_puts(m, "send ");
-+			if (sig->direction & KAPI_SIGNAL_RECEIVE)
-+				seq_puts(m, "receive ");
-+			if (sig->direction & KAPI_SIGNAL_HANDLE)
-+				seq_puts(m, "handle ");
-+			if (sig->direction & KAPI_SIGNAL_BLOCK)
-+				seq_puts(m, "block ");
-+			if (sig->direction & KAPI_SIGNAL_IGNORE)
-+				seq_puts(m, "ignore ");
-+			seq_puts(m, "\n");
-+			seq_puts(m, "    action: ");
-+			switch (sig->action) {
-+			case KAPI_SIGNAL_ACTION_DEFAULT:
-+				seq_puts(m, "default");
-+				break;
-+			case KAPI_SIGNAL_ACTION_TERMINATE:
-+				seq_puts(m, "terminate");
-+				break;
-+			case KAPI_SIGNAL_ACTION_COREDUMP:
-+				seq_puts(m, "coredump");
-+				break;
-+			case KAPI_SIGNAL_ACTION_STOP:
-+				seq_puts(m, "stop");
-+				break;
-+			case KAPI_SIGNAL_ACTION_CONTINUE:
-+				seq_puts(m, "continue");
-+				break;
-+			case KAPI_SIGNAL_ACTION_CUSTOM:
-+				seq_puts(m, "custom");
-+				break;
-+			case KAPI_SIGNAL_ACTION_RETURN:
-+				seq_puts(m, "return");
-+				break;
-+			case KAPI_SIGNAL_ACTION_RESTART:
-+				seq_puts(m, "restart");
-+				break;
-+			case KAPI_SIGNAL_ACTION_QUEUE:
-+				seq_puts(m, "queue");
-+				break;
-+			case KAPI_SIGNAL_ACTION_DISCARD:
-+				seq_puts(m, "discard");
-+				break;
-+			case KAPI_SIGNAL_ACTION_TRANSFORM:
-+				seq_puts(m, "transform");
-+				break;
-+			default:
-+				seq_puts(m, "unknown");
-+				break;
-+			}
-+			seq_puts(m, "\n");
-+			if (sig->description && *sig->description)
-+				seq_printf(m, "    description: %s\n", sig->description);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Side effects */
-+	if (spec->side_effect_count > 0) {
-+		seq_printf(m, "Side effects (%u):\n", spec->side_effect_count);
-+		for (i = 0; i < spec->side_effect_count && i < KAPI_MAX_SIDE_EFFECTS; i++) {
-+			const struct kapi_side_effect *eff = &spec->side_effects[i];
-+
-+			seq_printf(m, "  - %s", eff->target);
-+			if (eff->description && *eff->description)
-+				seq_printf(m, ": %s", eff->description);
-+			if (eff->reversible)
-+				seq_puts(m, " (reversible)");
-+			seq_puts(m, "\n");
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* State transitions */
-+	if (spec->state_trans_count > 0) {
-+		seq_printf(m, "State transitions (%u):\n", spec->state_trans_count);
-+		for (i = 0; i < spec->state_trans_count && i < KAPI_MAX_STATE_TRANS; i++) {
-+			const struct kapi_state_transition *trans = &spec->state_transitions[i];
-+
-+			seq_printf(m, "  %s: %s -> %s\n", trans->object,
-+				   trans->from_state, trans->to_state);
-+			if (trans->description && *trans->description)
-+				seq_printf(m, "    %s\n", trans->description);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Capabilities */
-+	if (spec->capability_count > 0) {
-+		seq_printf(m, "Capabilities (%u):\n", spec->capability_count);
-+		for (i = 0; i < spec->capability_count && i < KAPI_MAX_CAPABILITIES; i++) {
-+			const struct kapi_capability_spec *cap = &spec->capabilities[i];
-+
-+			seq_printf(m, "  %s (%d):\n", cap->cap_name,
-+				   cap->capability);
-+			if (cap->allows && *cap->allows)
-+				seq_printf(m, "    allows: %s\n", cap->allows);
-+			if (cap->without_cap && *cap->without_cap)
-+				seq_printf(m, "    without: %s\n", cap->without_cap);
-+		}
-+		seq_puts(m, "\n");
-+	}
-+
-+	/* Additional info */
-+	if (spec->examples && *spec->examples)
-+		seq_printf(m, "Examples:\n%s\n\n", spec->examples);
-+	if (spec->notes && *spec->notes)
-+		seq_printf(m, "Notes:\n%s\n\n", spec->notes);
-+
-+	return 0;
-+}
-+
-+static int kapi_spec_open(struct inode *inode, struct file *file)
-+{
-+	return single_open(file, kapi_spec_show, inode->i_private);
-+}
-+
-+static const struct file_operations kapi_spec_fops = {
-+	.open = kapi_spec_open,
-+	.read = seq_read,
-+	.llseek = seq_lseek,
-+	.release = single_release,
-+};
-+
-+/*
-+ * JSON view of a single spec.  Calls kapi_export_json() into a temporary
-+ * buffer and pastes the result into the seq_file.  This gives userspace a
-+ * machine-readable rendering that matches the output produced by
-+ * kapi_export_json() from --vmlinux / --source tooling, so consumers can
-+ * diff the three modes for equivalence.
-+ */
-+#define KAPI_JSON_BUF_SIZE	(64 * 1024)
-+
-+static int kapi_spec_json_show(struct seq_file *m, void *v)
-+{
-+	const struct kernel_api_spec *spec = m->private;
-+	char *buf;
-+	int ret;
-+
-+	if (!spec)
-+		return -EINVAL;
-+
-+	buf = kmalloc(KAPI_JSON_BUF_SIZE, GFP_KERNEL);
-+	if (!buf)
-+		return -ENOMEM;
-+
-+	ret = kapi_export_json(spec, buf, KAPI_JSON_BUF_SIZE);
-+	if (ret < 0) {
-+		kfree(buf);
-+		return ret;
-+	}
-+
-+	seq_puts(m, buf);
-+	kfree(buf);
-+	return 0;
-+}
-+
-+static int kapi_spec_json_open(struct inode *inode, struct file *file)
-+{
-+	return single_open(file, kapi_spec_json_show, inode->i_private);
-+}
-+
-+static const struct file_operations kapi_spec_json_fops = {
-+	.open = kapi_spec_json_open,
-+	.read = seq_read,
-+	.llseek = seq_lseek,
-+	.release = single_release,
-+};
-+
-+/*
-+ * Show all available API specs.
++ *   The flags argument must include one of the following access modes: O_RDONLY
++ *   (read-only), O_WRONLY (write-only), or O_RDWR (read/write). These are the
++ *   low-order two bits of flags. In addition, zero or more file creation and
++ *   file status flags can be bitwise-ORed in flags.
 + *
-+ * Note: This only iterates the static .kapi_specs section. Specs registered
-+ * dynamically via kapi_register_spec() are not included in this listing
-+ * or in the per-spec debugfs files.
++ *   File creation flags: O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_DIRECTORY,
++ *   O_NOFOLLOW, O_CLOEXEC, O_TMPFILE. These flags affect open behavior.
++ *
++ *   File status flags: O_APPEND, FASYNC, O_DIRECT, O_DSYNC, O_LARGEFILE,
++ *   O_NOATIME, O_NONBLOCK (O_NDELAY), O_PATH, O_SYNC. These become part of the
++ *   file's open file description and can be retrieved/modified with fcntl().
++ *
++ *   The return value is a file descriptor, a small nonnegative integer used in
++ *   subsequent system calls (read, write, lseek, fcntl, etc.) to refer to the
++ *   open file. The file descriptor returned by a successful open is the lowest-
++ *   numbered file descriptor not currently open for the process.
++ *
++ *   On 64-bit systems, O_LARGEFILE is automatically added to the flags. On 32-bit
++ *   systems, files larger than 2GB require O_LARGEFILE to be explicitly set.
++ *
++ *   This syscall is a legacy interface. Modern code should prefer openat() for
++ *   relative path operations and openat2() for additional control via resolve
++ *   flags. The open() call is equivalent to openat(AT_FDCWD, pathname, flags).
++ *
++ * contexts: process, sleepable
++ *
++ * param: filename
++ *   type: path, input
++ *   constraint-type: user_path
++ *   cdesc: Must be a valid null-terminated path string in user memory.
++ *     Maximum path length is PATH_MAX (4096 bytes) including null terminator.
++ *     For relative paths, resolution starts from current working directory.
++ *     The path is followed (symlinks resolved) unless O_NOFOLLOW is specified.
++ *
++ * param: flags
++ *   type: int, input
++ *   constraint-type: mask(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY |
++ *                         O_TRUNC | O_APPEND | O_NONBLOCK | O_DSYNC | O_SYNC | FASYNC |
++ *                         O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | O_NOATIME |
++ *                         O_CLOEXEC | O_PATH | O_TMPFILE)
++ *   cdesc: Must include exactly one of O_RDONLY (0), O_WRONLY (1), or
++ *     O_RDWR (2) as the access mode. Additional flags may be ORed. Invalid flag
++ *     combinations (e.g., O_PATH with incompatible flags, O_TMPFILE without
++ *     O_DIRECTORY, O_TMPFILE with read-only mode) return EINVAL. Since Linux
++ *     6.7, O_CREAT is silently ignored when combined with O_DIRECTORY. Unknown
++ *     flags are silently ignored for backward compatibility (unlike openat2
++ *     which rejects them).
++ *
++ * param: mode
++ *   type: uint, input
++ *   constraint-type: mask(S_ISUID | S_ISGID | S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
++ *   cdesc: Only meaningful when O_CREAT or O_TMPFILE is specified in
++ *     flags. Specifies the file mode bits (permissions and setuid/setgid/sticky
++ *     bits) for a newly created file. The effective mode is (mode & ~umask).
++ *     When O_CREAT/O_TMPFILE is not set, mode is ignored. Mode values exceeding
++ *     S_IALLUGO (07777) are masked off.
++ *
++ * return:
++ *   type: int
++ *   check-type: fd
++ *   success: >= 0
++ *   desc: On success, returns a new file descriptor (non-negative integer).
++ *     The returned file descriptor is the lowest-numbered descriptor not
++ *     currently open for the process. On error, returns a negative error code.
++ *
++ * error: EACCES, Permission denied
++ *   desc: The requested access to the file is not allowed, or search permission
++ *     is denied for one of the directories in the path prefix of pathname, or
++ *     the file did not exist yet and write access to the parent directory is
++ *     not allowed, or O_TRUNC is specified but write permission is denied, or
++ *     the file is on a filesystem mounted with noexec and MAY_EXEC was implied.
++ *
++ * error: EAGAIN, Resource temporarily unavailable
++ *   desc: The file is a FIFO or regular file, O_NONBLOCK is specified, and the
++ *     operation would block. Also returned when RESOLVE_CACHED is used with
++ *     openat2() and the lookup cannot be satisfied from the dentry cache.
++ *
++ * error: EBUSY, Device or resource busy
++ *   desc: O_EXCL was specified in flags and pathname refers to a block device
++ *     that is in use by the system (e.g., it is mounted).
++ *
++ * error: EDQUOT, Disk quota exceeded
++ *   desc: O_CREAT is specified and the file does not exist, and the user's quota
++ *     of disk blocks or inodes on the filesystem has been exhausted.
++ *
++ * error: EEXIST, File exists
++ *   desc: O_CREAT and O_EXCL were specified in flags, but pathname already exists.
++ *     This error is atomic with respect to file creation - it prevents race
++ *     conditions (TOCTOU) when creating files.
++ *
++ * error: EFAULT, Bad address
++ *   desc: pathname points outside the process's accessible address space.
++ *
++ * error: EINTR, Interrupted system call
++ *   desc: The call was interrupted by a signal handler before completing file
++ *     open. This can occur during lock acquisition or when breaking leases.
++ *
++ * error: EINVAL, Invalid argument
++ *   desc: Returned for several conditions: (1) Invalid O_* flag combinations
++ *     (O_TMPFILE without O_DIRECTORY, O_TMPFILE with read-only access, O_PATH
++ *     with flags other than O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC).
++ *     (2) mode contains bits outside S_IALLUGO when O_CREAT/O_TMPFILE
++ *     is set (openat2 only). (3) O_DIRECT requested but filesystem doesn't
++ *     support it. (4) The filesystem does not support O_SYNC or O_DSYNC.
++ *
++ * error: EISDIR, Is a directory
++ *   desc: pathname refers to a directory and the access requested involved
++ *     writing (O_WRONLY, O_RDWR, or O_TRUNC). Also returned when O_TMPFILE is
++ *     used on a directory that doesn't support tmpfile operations.
++ *
++ * error: ELOOP, Too many symbolic links
++ *   desc: Too many symbolic links were encountered in resolving pathname, or
++ *     O_NOFOLLOW was specified but pathname refers to a symbolic link.
++ *
++ * error: EMFILE, Too many open files
++ *   desc: The per-process limit on the number of open file descriptors has been
++ *     reached. This limit is RLIMIT_NOFILE (default typically 1024, max set by
++ *     /proc/sys/fs/nr_open).
++ *
++ * error: ENAMETOOLONG, File name too long
++ *   desc: pathname was too long, exceeding PATH_MAX (4096) bytes, or a single
++ *     path component exceeded NAME_MAX (usually 255) bytes.
++ *
++ * error: ENFILE, Too many open files in system
++ *   desc: The system-wide limit on the total number of open files has been
++ *     reached (/proc/sys/fs/file-max). Processes with CAP_SYS_ADMIN can exceed
++ *     this limit.
++ *
++ * error: ENODEV, No such device
++ *   desc: pathname refers to a special file that has no corresponding device, or
++ *     the file's inode has no file operations assigned.
++ *
++ * error: ENOENT, No such file or directory
++ *   desc: A directory component in pathname does not exist or is a dangling
++ *     symbolic link, or O_CREAT is not set and the named file does not exist,
++ *     or pathname is an empty string (unless AT_EMPTY_PATH is used with openat2).
++ *
++ * error: ENOMEM, Out of memory
++ *   desc: The kernel could not allocate sufficient memory for the file structure,
++ *     path lookup structures, or the filename buffer.
++ *
++ * error: ENOSPC, No space left on device
++ *   desc: O_CREAT was specified and the file does not exist, and the directory
++ *     or filesystem containing the file has no room for a new file entry.
++ *
++ * error: ENOTDIR, Not a directory
++ *   desc: A component used as a directory in pathname is not actually a directory,
++ *     or O_DIRECTORY was specified and pathname was not a directory.
++ *
++ * error: ENXIO, No such device or address
++ *   desc: O_NONBLOCK | O_WRONLY is set and the named file is a FIFO and no
++ *     process has the FIFO open for reading. Also returned when opening a device
++ *     special file that does not exist.
++ *
++ * error: EOPNOTSUPP, Operation not supported
++ *   desc: The filesystem containing pathname does not support O_TMPFILE.
++ *
++ * error: EOVERFLOW, Value too large for defined data type
++ *   desc: pathname refers to a regular file that is too large to be opened.
++ *     This occurs on 32-bit systems without O_LARGEFILE when the file size
++ *     exceeds 2GB (2^31 - 1 bytes).
++ *
++ * error: EPERM, Operation not permitted
++ *   desc: O_NOATIME flag was specified but the effective UID of the caller did
++ *     not match the owner of the file and the caller is not privileged, or the
++ *     file is append-only and O_TRUNC was specified or write mode without
++ *     O_APPEND, or the file is immutable, or a seal prevents the operation.
++ *
++ * error: EROFS, Read-only file system
++ *   desc: pathname refers to a file on a read-only filesystem and write access
++ *     was requested.
++ *
++ * error: ETXTBSY, Text file busy
++ *   desc: pathname refers to an executable image which is currently being
++ *     executed, or to a swap file, and write access or truncation was requested.
++ *
++ * error: EWOULDBLOCK, Resource temporarily unavailable
++ *   desc: O_NONBLOCK was specified and an incompatible lease is held on the file.
++ *
++ * lock: files->file_lock
++ *   type: spinlock
++ *   acquired: true
++ *   released: true
++ *   desc: Acquired when allocating a file descriptor slot. Held briefly during
++ *     fd allocation via alloc_fd() and released before the syscall returns.
++ *
++ * lock: inode->i_rwsem (parent directory)
++ *   type: rwlock
++ *   acquired: conditional
++ *   released: true
++ *   desc: Write lock acquired on parent directory inode when creating a new file
++ *     (O_CREAT). Acquired via inode_lock_nested() in lookup path. May use
++ *     killable variant which can return EINTR on fatal signal.
++ *
++ * lock: RCU read-side
++ *   type: rcu
++ *   acquired: true
++ *   released: true
++ *   desc: Path lookup uses RCU mode initially for performance. If RCU lookup
++ *     fails (returns -ECHILD), falls back to reference-based lookup.
++ *
++ * signal: Any signal
++ *   direction: receive
++ *   action: return
++ *   condition: When blocked on interruptible or killable operations
++ *   desc: The syscall may be interrupted during path lookup, lock acquisition,
++ *     or lease breaking. Fatal signals (SIGKILL, etc.) will interrupt killable
++ *     operations. Non-fatal signals may interrupt interruptible operations.
++ *   errno: -EINTR
++ *   timing: during
++ *   restartable: yes
++ *
++ * side-effect: resource_create | alloc_memory
++ *   target: file descriptor, file structure, dentry cache
++ *   desc: Allocates a new file descriptor in the process's fd table. Allocates
++ *     a struct file from the filp slab cache. May allocate dentries and inodes
++ *     during path lookup. System-wide file count (nr_files) is incremented.
++ *   reversible: yes
++ *
++ * side-effect: filesystem
++ *   target: filesystem, inode
++ *   condition: When O_CREAT is specified and file doesn't exist
++ *   desc: Creates a new file on the filesystem. Creates new inode, allocates
++ *     data blocks as needed, and creates directory entry. Updates parent
++ *     directory mtime and ctime.
++ *   reversible: no
++ *
++ * side-effect: filesystem
++ *   target: file content
++ *   condition: When O_TRUNC is specified for existing file
++ *   desc: Truncates the file to zero length, releasing data blocks. Updates
++ *     file mtime and ctime. May trigger notifications to lease holders.
++ *   reversible: no
++ *
++ * side-effect: modify_state
++ *   target: inode timestamps
++ *   condition: Unless O_NOATIME is specified
++ *   desc: Opens for reading may update inode access time (atime) unless mounted
++ *     with noatime/relatime or O_NOATIME is specified. Opens for writing that
++ *     truncate or create update mtime and ctime.
++ *
++ * capability: CAP_DAC_OVERRIDE
++ *   type: bypass_check
++ *   allows: Bypass file read, write, and execute permission checks
++ *   without: Standard DAC (discretionary access control) checks are applied
++ *   condition: Checked when file permission would otherwise deny access
++ *
++ * capability: CAP_DAC_READ_SEARCH
++ *   type: bypass_check
++ *   allows: Bypass read permission on files and search permission on directories
++ *   without: Must have read permission on file or search permission on directory
++ *   condition: Checked during path traversal and file open
++ *
++ * capability: CAP_FOWNER
++ *   type: bypass_check
++ *   allows: Use O_NOATIME on files not owned by caller
++ *   without: O_NOATIME returns EPERM if caller is not file owner
++ *   condition: Checked when O_NOATIME is specified and caller is not owner
++ *
++ * capability: CAP_SYS_ADMIN
++ *   type: increase_limit
++ *   allows: Exceed the system-wide file limit (file-max)
++ *   without: Returns ENFILE when system limit is reached
++ *   condition: Checked in alloc_empty_file() when nr_files >= max_files
++ *
++ * constraint: RLIMIT_NOFILE (per-process fd limit)
++ *   desc: The returned file descriptor must be less than the process's
++ *     RLIMIT_NOFILE limit. Default is typically 1024, maximum is controlled
++ *     by /proc/sys/fs/nr_open (default 1048576). Exceeding returns EMFILE.
++ *   expr: fd < rlimit(RLIMIT_NOFILE)
++ *
++ * constraint: file-max (system-wide limit)
++ *   desc: System-wide limit on open files in /proc/sys/fs/file-max. Processes
++ *     without CAP_SYS_ADMIN receive ENFILE when this limit is reached. The
++ *     limit is computed based on system memory at boot time.
++ *   expr: nr_files < files_stat.max_files || capable(CAP_SYS_ADMIN)
++ *
++ * constraint: PATH_MAX
++ *   desc: Maximum length of pathname including null terminator is PATH_MAX
++ *     (4096 bytes). Individual path components must not exceed NAME_MAX (255).
++ *
++ * examples: fd = open("/etc/passwd", O_RDONLY);  // Read existing file
++ *   fd = open("/tmp/newfile", O_WRONLY | O_CREAT | O_TRUNC, 0644);  // Create/truncate
++ *   fd = open("/tmp/lockfile", O_WRONLY | O_CREAT | O_EXCL, 0600);  // Exclusive create
++ *   fd = open("/dev/null", O_RDWR);  // Open device
++ *   fd = open("/tmp", O_RDONLY | O_DIRECTORY);  // Open directory
++ *   fd = open("/tmp", O_TMPFILE | O_RDWR, 0600);  // Anonymous temp file
++ *
++ * notes: The distinction between O_RDONLY, O_WRONLY, and O_RDWR is critical.
++ *   O_RDONLY is defined as 0, so (flags & O_RDONLY) always evaluates to zero.
++ *   Test access mode using (flags & O_ACCMODE) == O_RDONLY.
++ *
++ *   When O_CREAT is specified without O_EXCL, there is a race condition between
++ *   testing for file existence and creating it. Use O_CREAT | O_EXCL for atomic
++ *   exclusive file creation.
++ *
++ *   O_CLOEXEC should be used in multithreaded programs to prevent file descriptor
++ *   leaks to child processes between fork() and execve().
++ *
++ *   O_DIRECT has alignment requirements that vary by filesystem. Use statx()
++ *   with STATX_DIOALIGN (Linux 6.1+) to query requirements. Unaligned I/O may
++ *   fail with EINVAL or fall back to buffered I/O.
++ *
++ *   O_PATH opens a file descriptor that can be used only for certain operations
++ *   (fstat, dup, fcntl, close, fchdir on directories, as dirfd for *at() calls).
++ *   I/O operations will fail with EBADF.
 + */
-+static int kapi_list_show(struct seq_file *m, void *v)
-+{
-+	const struct kernel_api_spec * const *pp;
-+	int count = 0;
-+
-+	seq_puts(m, "Available Kernel API Specifications\n");
-+	seq_puts(m, "===================================\n\n");
-+
-+	for (pp = __start_kapi_specs; pp < __stop_kapi_specs; pp++) {
-+		const struct kernel_api_spec *spec = *pp;
-+
-+		if (!spec)
-+			continue;
-+		seq_printf(m, "%s - %s\n", spec->name, spec->description);
-+		count++;
-+	}
-+
-+	seq_printf(m, "\nTotal: %d specifications\n", count);
-+	return 0;
-+}
-+
-+static int kapi_list_open(struct inode *inode, struct file *file)
-+{
-+	return single_open(file, kapi_list_show, NULL);
-+}
-+
-+static const struct file_operations kapi_list_fops = {
-+	.open = kapi_list_open,
-+	.read = seq_read,
-+	.llseek = seq_lseek,
-+	.release = single_release,
-+};
-+
-+static int __init kapi_debugfs_init(void)
-+{
-+	const struct kernel_api_spec * const *pp;
-+	struct dentry *spec_dir, *json_dir;
-+
-+	kapi_debugfs_root = debugfs_create_dir("kapi", NULL);
-+	if (IS_ERR(kapi_debugfs_root)) {
-+		pr_warn("kapi: cannot create /sys/kernel/debug/kapi: %pe\n",
-+			kapi_debugfs_root);
-+		kapi_debugfs_root = NULL;
-+		return 0;
-+	}
-+
-+	debugfs_create_file("list", 0444, kapi_debugfs_root, NULL,
-+			    &kapi_list_fops);
-+	spec_dir = debugfs_create_dir("specs", kapi_debugfs_root);
-+	json_dir = debugfs_create_dir("specs-json", kapi_debugfs_root);
-+
-+	for (pp = __start_kapi_specs; pp < __stop_kapi_specs; pp++) {
-+		const struct kernel_api_spec *spec = *pp;
-+
-+		if (!spec || !spec->name)
-+			continue;
-+		debugfs_create_file(spec->name, 0444, spec_dir,
-+				    (void *)spec, &kapi_spec_fops);
-+		debugfs_create_file(spec->name, 0444, json_dir,
-+				    (void *)spec, &kapi_spec_json_fops);
-+	}
-+
-+	return 0;
-+}
-+
-+/* Initialize as part of kernel, not as a module */
-+fs_initcall(kapi_debugfs_init);
+ SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
+ {
+ 	if (force_o_largefile())
 -- 
 2.53.0
 
