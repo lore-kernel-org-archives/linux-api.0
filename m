@@ -1,54 +1,54 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1FF9DBA3D;
-	Sun, 31 May 2026 00:12:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 818A922ACEB;
+	Sun, 31 May 2026 00:35:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780186331; cv=none; b=hbn4LtaSe9Vg5wbkqcyAGq6g8tw/Y3dkuFE6EQdOcrs3in0enYVnGrwj4gRGmq5YiPv073W0Vq+ojCl/5DA6tQ6wyDEUrsvQngb7nAHlOl+SD0gk36ycCPy4JColNo7XGUCWlnC7NVXjbvEIPKv65imWBO6KwbQ6rJASEQiXJXo=
+	t=1780187730; cv=none; b=SftGt3APDiEVXbTLWn3aHs7hAQWBgNIldG+2bJbS6wEaY0GHwipmWRNJiDYXhGvudqyRVK0O9dS7611zC1SKKARN6+m0ZH4tLoDIPe7aXTOd7QyOzIoZzXmwzTdsM1/ufeIFRZVxUjDv6cM2l2dogRYMZwO7H1hRnj8clCGherg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780186331; c=relaxed/simple;
-	bh=CPxt0QJ8OFKTnFuP4ZoTYcb1fv7XiqHyOJlhasg85kw=;
+	s=arc-20240116; t=1780187730; c=relaxed/simple;
+	bh=ua6nfT0obm5wkaI0I0ksba9L04jpDgP1XQxgrhPSutY=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=T2iBuWoboIK4TpCwRVdMFvjyvPtr+LjcOQsTPa/kKC5qp/gRYE2sv9Ajy+Swjo2X1c3cmHGYsiy4kiP9PFceRqxvcUuhLL53gKhbK+PHAUNlkYyML3ZhplrqxTFIeDBVUpVBgLv+UXesb1X4FJ10DMo7ZvxxiaNnwsgOt79GgrI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fHOhsAuR; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=sQbBqcYQjPKmdOYJTvPw8MT5JRqm7xUbKYqm2tiauERwK+6fZoxs8Ty4Bih4kalUqOLYSWPFqALq1B3EA08Gqf8518R7hiYmhBHf7VASziLNEebV58/uSE66m4jNL1vSVgZ/TDWnFxkcJATilIRCbNjN7lLqiNHhioyp/8SmqsE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=d53H0TLH; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fHOhsAuR"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 57C321F00893;
-	Sun, 31 May 2026 00:12:09 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="d53H0TLH"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0179E1F00893;
+	Sun, 31 May 2026 00:35:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1780186329;
-	bh=OYvRVj4ATb1VjPqyrKnbeBCWG0iaq3Bc8et+a/muwak=;
+	s=k20260515; t=1780187729;
+	bh=c8RBaPvCP6ZMekNwxeunAIbpIE5CulD2vhb0civMEuc=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=fHOhsAuR4ScpU7RKty78SP/q0nx98PvpFWPIMukzAHEP+/dxNLJI95BYxZOkZRH8b
-	 0vvtGETBPj6snAsl5sZla2ANtjpOu4hsZ5T9xZfqKEMyFTJ+hOr94AJt2anvzGK+2I
-	 UUkR+VjHrS2bRTK7MRYAYRcbwjVawM7kdJGKgjfyVuHrHvzAsPTa4LYjInu5Z7qURl
-	 uNsap2grrmNTO60WkFlgwkIZCj4q1gkDfjY+QhvWLXJjz4UkmrfX7fYLTkcA4ucLZJ
-	 K8wxewMF4nOOu52EePN9R+PXM0YUBOJ2WgVAEF3VTJ1jlevVgFJhgTDaF6fDHUvvrK
-	 pcE0/tyMGqKtg==
-Date: Sun, 31 May 2026 00:12:07 +0000
+	b=d53H0TLHSiX4+p2qwlrpbYNSkQr89x9B3WOu78Q9gI0I8WEUkK4/F0Zh3HERksKXa
+	 hg3haxL1FnZcxondubwZwSNMfqkYHFUlb1pVtumAOLYPxzg9iYQ0pDorDrMaBgKOD/
+	 19SMFIXoJdy9v1FI3zZfF9v/cgA9sSj7H7cQk2XdS8zrPotiR+MuiE0Uv2MC7VN0Oj
+	 D9qPYvBnffngDkemA2x1OvI+zzU9n1afjMGdGZN9X7wZzeaN3mSqLcp9+AZOQIZICx
+	 RomPOo2yIKZt95Ctpt1mPpJrInk8xy5K7p3NidJmIZRd+riM76W06RmR+UlHx97mfR
+	 4qsbhgJyW6jMA==
+Date: Sun, 31 May 2026 00:35:27 +0000
 From: Jaegeuk Kim <jaegeuk@kernel.org>
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Bart Van Assche <bvanassche@acm.org>, Theodore Tso <tytso@mit.edu>,
-	linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Matthew Wilcox <willy@infradead.org>,
-	linux-f2fs-devel@lists.sourceforge.net, linux-mm@kvack.org,
-	Akilesh Kailash <akailash@google.com>,
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Theodore Tso <tytso@mit.edu>, linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-f2fs-devel@lists.sourceforge.net,
+	Christoph Hellwig <hch@infradead.org>, linux-mm@kvack.org,
 	linux-fsdevel@vger.kernel.org,
+	Akilesh Kailash <akailash@google.com>,
 	Christian Brauner <christian@brauner.io>
 Subject: Re: [f2fs-dev] [PATCH v2] f2fs: another way to set large folio by
  remembering inode number
-Message-ID: <aht812OhSPFqIBPK@google.com>
-References: <ag_OVwPF49LSZ7rz@google.com>
+Message-ID: <ahuCTzdbvhCBJzcl@google.com>
+References: <ad_AVHe7RMnGrGTb@google.com>
+ <ad_HwhzlNPUEKQi6@casper.infradead.org>
+ <ag7HfNryTmQ-bVIS@infradead.org>
+ <20260521155748.GA79343@macsyma-wired.lan>
+ <ag_OVwPF49LSZ7rz@google.com>
  <20260522141115.GA8258@macsyma-wired.lan>
  <ahCNmWbcd_2lAJyk@google.com>
  <20260522224108.GA18663@macsyma-wired.lan>
  <ahTzHyHBL8t0iNBR@google.com>
- <ybmbjekuvzmaw4hmlxd7nxs546dqtwmxqxwyali74d6m3u7tat@b4q3japqnhrl>
- <f4e521ac-2381-49ca-8dcc-3cb3cf3ffaea@acm.org>
- <ahaPDHiXcJoVShPv@infradead.org>
- <ahcU5xbVy7xjps02@google.com>
- <ahkl52N3RDcusCNd@infradead.org>
+ <ahiZRpE593n4blxn@casper.infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -57,33 +57,41 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ahkl52N3RDcusCNd@infradead.org>
+In-Reply-To: <ahiZRpE593n4blxn@casper.infradead.org>
 
-On 05/28, Christoph Hellwig wrote:
-> On Wed, May 27, 2026 at 03:59:35PM +0000, Jaegeuk Kim wrote:
-> > F2FS merges bios before submit_bio, regardless of small or large folios,
-> > since the block addresses are consecutive. So, I think IO subsystem was
-> > working in full speed.
+On 05/28, Matthew Wilcox wrote:
+> On Tue, May 26, 2026 at 01:10:55AM +0000, Jaegeuk Kim wrote:
+> > Background
+> > ----------
+> > The primary use case is accelerating AI model loading, which demands
+> > exceptionally high sequential read speeds. In our benchmarks on embedded
+> > systems:
+> >  - Using high-order page allocations allows the system to saturate the
+> >    Universal Flash Storage (UFS) bandwidth, reaching 4 GB/s even at
+> >    medium-to-low CPU frequencies.
+> >  - In contrast, standard small folios cap performance at 2 GB/s.
+> > 
+> > The performance doubling stems directly from reducing CPU cycle overhead during
+> > memory allocation.
 > 
-> As does every other remotely modern file system.  But that merging is
-> surprisingly expensive, which is why using folios gets really major
-> performance improvements.
+> When you say "AI model loading", are you mmap()ing the file of weights,
+> or are you calling read() to load the file into anonymous memory?
 > 
-> For one doing these checks to merge touch quite a few cache lines.
-> Second, devices are often a lot more efficient if they see fewer SGL
-> entries.  I.e. having a 1MB bio a single SGL tends to work better than
-> having 256 of them.
-> The same is true in the kernel code itself, both in the submission path
-> (dma mapping and co), and even more so in the page cache handling
-> both before submitting and in the completion path.
-> 
-> See Bart's patch about how long the walk of the bio_vecs in the f2fs
-> completion path can take.  We had similar issues in XFS even in the
-> workqueue completion path due to lack of rescheduling, and these simply
-> go away when you do the folio manipulation in larger chunks (LAZY_PREEMPT
-> would avoid the need to explicit rescheduling these days, but that just
-> papers over the symptoms in this case).
-> 
+> This matters because for the first operation, you need to allocate folios
+> of PMD size in order to make best use of TLB entries.  For the second
+> operation, it's more important to iterate through the file quickly,
+> freeing folios behind you after you access them so they're available
+> for the next batch.
 
-I see. That's also super helpful. Let me kick off the large folio support asap.
-Thanks.
+We deal with multiple options tho, what I'm looking at is mostly a preloading
+models by mmap(MAP_POPULATE) which takes the readahead path bumping up the order
+by 2. Previously I also looked at fadvise(WILLNEED), but gave up due to the
+broken interface. OTOH, we use RWF_DONTCACHE for read() case, but I don't
+think it's ideal for the best loading performance.
+
+> 
+> 
+> _______________________________________________
+> Linux-f2fs-devel mailing list
+> Linux-f2fs-devel@lists.sourceforge.net
+> https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel
