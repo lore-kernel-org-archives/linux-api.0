@@ -1,149 +1,112 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8678C3909A4;
-	Tue,  2 Jun 2026 18:44:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B16A936EA80
+	for <linux-api@vger.kernel.org>; Tue,  2 Jun 2026 21:12:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.44
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780425883; cv=none; b=T1/OP8ui6Tej0fsXje8xZUpjZiAKt3R8uebIWgW8ygSLxZDKzKhLlA3Wg55cU6lK1pmUrBJIdBxviT2VihhqpuPIVi+m7N+ycBQXArnq+oSUvrkxlTeCNkldeoKkQYgyaN6ybAMnY2g3RKVeqZk40jKQ3ByCFrYchKiUAgRK+iE=
+	t=1780434774; cv=none; b=Y4tVs3o3udpS2IYJs7cBuQe0XUvSzfdjcZpIibRKQHUQNzi0OkvjpCUXfZvWxpLKbBOOvmp8KYEFTS2uYxz3Y1rlMNw3tnpJaHEvhWB1NgIuNXAmK00qxARUmWG9FexAwh0+9gLlb6GLF0xqfBqvT1OBh7xo/+9W79h0a4Zgoac=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780425883; c=relaxed/simple;
-	bh=IAJgDRvTCvMXiiaxRtRemk9HFoGhIAzgZdjXk1Y3atU=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=ABS9ujdSL4kgrZKxQff3FWl0X4Xzq3ad+hlk/1V/NLA/uSq6Wo984EnRAXyNDaHUs6mKp6Zo2iLcoxrz6bT9ryTPM+cggLF3J0mTwHinPxttrT+ijHigmw7KQ0hJHD0dxIJR0QQCwtHmLfMp19zb/oShCKwBvKbIaNStTAuvO/o=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ZkPgGXeJ; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1780434774; c=relaxed/simple;
+	bh=uij0fPrYXhiLn/hkkJMC6Jmrz2271TCJpQyuyCz9648=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=X+bJdPotSOct0lVlffZ9TqsodZ7nwy6SyjeBB2wAZpdnipZOCcybq98cM0uEkBZA1I0VAMfCB/iyD4OU55nqi1EVTae33o+Wd5tFVQVKPUnpFuflmM1+5WwWvexqmg1+Cb7kXBYXmlPQLUv3YNH2RB4ZPLipzvktRUUOMSxgiyM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=PBbMtFsm; arc=none smtp.client-ip=209.85.128.44
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ZkPgGXeJ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 883B11F00893;
-	Tue,  2 Jun 2026 18:44:41 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1780425882;
-	bh=MLZpb/dBT6Cd/zdymSeQQn2ShIJqYaKuCdbAYTAgCEs=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=ZkPgGXeJhcybPoUrwoJsoHbVqWODRisiZEor43NouJ0EOonoHtL5ZjXT5z2iJq2OW
-	 GDChFmTvh0mNbkacQwKUaKroi/K5VuMWckc3qDOZkoGWloPBy/BiNDmIsaDfaEbVdt
-	 SJIvc7Zr/r1UimXiaMWvOVkDxmTPRqm5nQj0oHRrXQP3pz160C1TveVTP7t69+wX+y
-	 4XU2qNwckg8sNPBwiMTbYksGRjLuaZKd4WSdoPd/PXHbT4sUKt38KmcNBD0nQUxgYG
-	 yrp+jU8aG/MhN4ziuGvqzI6WZWvejPq1QXRH+RvSiAdjLWhsMCdLfqKnatMcOtteZT
-	 VzdugpvG6XUWg==
-Date: Tue, 2 Jun 2026 18:44:40 +0000
-From: Eric Biggers <ebiggers@kernel.org>
-To: "David Hildenbrand (Arm)" <david@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Al Viro <viro@zeniv.linux.org.uk>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Christian Brauner <brauner@kernel.org>,
-	Askar Safin <safinaskar@gmail.com>, linux-kernel@vger.kernel.org,
-	linux-mm@kvack.org, linux-api@vger.kernel.org,
-	netdev@vger.kernel.org, Matthew Wilcox <willy@infradead.org>,
-	Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
-	David Howells <dhowells@redhat.com>,
-	Pedro Falcato <pfalcato@suse.de>,
-	Miklos Szeredi <miklos@szeredi.hu>, patches@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>
-Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for
- preadv2/pwritev2
-Message-ID: <20260602184440.GB2503276@google.com>
-References: <20260531010107.1953702-1-safinaskar@gmail.com>
- <20260601-enthusiasmus-canceln-anlehnen-0e62317a9784@brauner>
- <CAHk-=wifX_rrDjRGnDnOqE-usptAukuXKrmuPuVDP5bOCBWzGQ@mail.gmail.com>
- <20260601173325.GH2636677@ZenIV>
- <20260601160455.2c187574@gandalf.local.home>
- <20260601172825.a51a588ec1c32617a0e12d78@linux-foundation.org>
- <821ed41e-5b2f-4d17-aeb2-71b0361f8e7f@kernel.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="PBbMtFsm"
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-490abf12f0fso65885e9.0
+        for <linux-api@vger.kernel.org>; Tue, 02 Jun 2026 14:12:52 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1780434771; x=1781039571; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=Z9XdL0UcpSaON9fzpANOcoqtpqZ13Zvjis5WLumIDqM=;
+        b=PBbMtFsm7wChxpUx03NtaBWtFJn/EfXqGpb/VEcyERZ2iLqzHMNLMatuyuVR7QWPfu
+         8WW8Km1XEKgRVtRqCtPHN3gEyqhtnScsvDIixgY+SJJkqmbpV3efaZaYV/MpDC8bTm8e
+         gYdss33U+liT52p6RMSvYoxy2QyNaXnuzCa+sKtK8nUIqJ5pYU6Cy+mxQU8F5dPVe7u1
+         oNwY08o05liz3y3GSjB05k6kCEfRohwJ/l9HSMdThLORfytOf2+NyxgPK2L06LQokybP
+         6i/kZCzq/KcwJurNssCq+GZzk+85sMQ5Y6AcSdxc6gYMOO3mzAywpIfUxoG+CJ/gzeha
+         1nFQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1780434771; x=1781039571;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to;
+        bh=Z9XdL0UcpSaON9fzpANOcoqtpqZ13Zvjis5WLumIDqM=;
+        b=BWkPYSgLKftQiR1eFU/FYgX+sDJKgGL9KmOQafNIZ+yySjOfvpslGd3V6IkPAAXWGL
+         ljTTb9obdYK69t7FUeEtQ6UwuhE+P4NVyEIdITL53iNeLh8WYWB+x7AGK1GPHlR+iM+s
+         /291BNXebnHdxhMRQrb8cJbtU5lHH3EZ3uQlSkyZSqDIAOQzk75FFrDsfmQsA7/xNNHl
+         OOPAfHFLHQZeLolN1a42t5qDCPwuR1KC8IfzF4l8fH2yUfZX4wYbcsRyhqqPfpRaujUu
+         Eho6YyCg5U2J/tczSGYxUdbJfXMhjrCs2bBM17tta+3L4kg5mqZlfYXgT42DWIILuEqB
+         LVzg==
+X-Forwarded-Encrypted: i=1; AFNElJ8BglzxcZud4Z6ZGkxVOzA3w/FX5TZVSLV87DUhls/F44HGiINCObGABXM67QszNj/WERzil6WMm9g=@vger.kernel.org
+X-Gm-Message-State: AOJu0Yzc+DTCm54/NhD17mJ1XLyY65guhu3NO2hU+CHuk5OfFd4pQgv9
+	r7TUiJ1jvkBSfZ72TevTWSx9fQC/vHfzgQY34GTvNprhSG6z4dI9TiaC
+X-Gm-Gg: Acq92OHlbjGMRd4ipzPD1L1e36P+ZRwWowV3nXtChXQt/5inXjfXuUBkxFPdxLrwXkH
+	o3pTqWljuDQ4vwiNtxXbK/OWsnjbaFE0zBZLZzvn/dB+uNyclpW2+9XrwuFS63WtSADT+GHzMfs
+	V5i9iubyDRiFWdAJDuCTCulT3Q5tDpbXdkhouI4OoMA2IfPzB2zL7Ag5UWHfC1RFWDiv8XQiamO
+	VGtz0A9yyrjdTRwER6bNAkjZrzxTy7UIkQU0sWDRfcW9+xJ1OV+BR1hDOBsbYFyMXoTzF7grz2x
+	u/nC9TMXR0G5uHYcJ1LRNLNjEaMC9zI4cAFP7YA7Gv2yYoYABcHrN1kBLDTZFzseZ/KFGg8glC4
+	264PwR4kYRMidF0jtSHI1C8sVlu6VdSEh4FyP2bXQ3/aH185rQJOOaLS3SqwVxQFCfGmPPyTH0l
+	KlTL5MyJ5Y1lDGdhZgwH1nTeDprfnu2Q==
+X-Received: by 2002:a05:600c:3b98:b0:490:b11e:e4be with SMTP id 5b1f17b1804b1-490b611105bmr5959595e9.3.1780434771026;
+        Tue, 02 Jun 2026 14:12:51 -0700 (PDT)
+Received: from localhost ([212.73.77.104])
+        by smtp.gmail.com with UTF8SMTPSA id 5b1f17b1804b1-490b0e13f91sm111429715e9.3.2026.06.02.14.12.48
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 02 Jun 2026 14:12:50 -0700 (PDT)
+From: Askar Safin <safinaskar@gmail.com>
+To: pfalcato@suse.de
+Cc: akpm@linux-foundation.org,
+	axboe@kernel.dk,
+	brauner@kernel.org,
+	david@kernel.org,
+	dhowells@redhat.com,
+	hch@infradead.org,
+	jack@suse.cz,
+	linux-api@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	miklos@szeredi.hu,
+	netdev@vger.kernel.org,
+	patches@lists.linux.dev,
+	safinaskar@gmail.com,
+	torvalds@linux-foundation.org,
+	viro@zeniv.linux.org.uk,
+	willy@infradead.org
+Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for preadv2/pwritev2
+Date: Wed,  3 Jun 2026 00:12:42 +0300
+Message-ID: <20260602211242.13870-1-safinaskar@gmail.com>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <ahv16ogY8Zx3Rtox@pedro-suse.lan>
+References: <ahv16ogY8Zx3Rtox@pedro-suse.lan>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <821ed41e-5b2f-4d17-aeb2-71b0361f8e7f@kernel.org>
+Content-Transfer-Encoding: 8bit
 
-On Tue, Jun 02, 2026 at 10:25:06AM +0200, David Hildenbrand (Arm) wrote:
-> On 6/2/26 02:28, Andrew Morton wrote:
-> > On Mon, 1 Jun 2026 16:04:55 -0400 Steven Rostedt <rostedt@goodmis.org> wrote:
-> > 
-> >> On Mon, 1 Jun 2026 18:33:25 +0100
-> >> Al Viro <viro@zeniv.linux.org.uk> wrote:
-> >>
-> >>>
-> >>>
-> >>> FUSE might be interesting - fuse_dev_splice_read() and its ilk.
-> >>> Communications between the kernel and fuse server at least used to
-> >>> seriously want that, so that would be one place to look for unhappy
-> >>> userland...
-> >>>
-> >>> splice-related logics in fs/fuse/dev.c is interesting; another place
-> >>> like this is kernel/trace/, but I'm less familiar with that one.
-> >>>
-> >>> rostedt Cc'd (miklos already had been)
-> >>
-> >> Thanks for the Cc. The tracing ring buffer was specifically made to be used
-> >> by splice and the libtracefs has a lot of code to use it as well. As
-> >> reading the ring buffer literally swaps out the write portion with a blank
-> >> read portion, that portion (sub-buffer) is used to be directly fed into
-> >> splice, providing a zero-copy of the trace data from the write of the event
-> >> to going into a file.
-> >>
-> >> trace-cmd defaults to using splice to copy the tracing ring buffer directly
-> >> into files to avoid as much copying during live recordings as possible.
-> >>
-> >> Whatever changes we make, I would like to make sure there's no regressions
-> >> in performance of trace-cmd record.
-> > 
-> > Well yes, The patchset seems sensible from a quality POV.  But to make
-> > a decision we should first have a decent understanding of its downside
-> > impact.
+Pedro Falcato <pfalcato@suse.de>:
+> On Sun, May 31, 2026 at 01:01:04AM +0000, Askar Safin wrote:
+> > See recent discussion here:
+> > https://lore.kernel.org/all/20260516182126.530498-1-pfalcato@suse.de/T/#u
 > 
-> I guess most (all?) of us ... dislike ... vmsplice(), so trying to remove it
-> entirely is certainly very appealing ...
+> So, you took an ongoing discussion with an ongoing RFC patchset, and you
+> decided to reimplement part of the idea on your own, as a concurrent patchset.
 > 
-> > 
-> > I haven't seen a description of that impact in the discussion thus far.
-> > And that description is owed, please.
-> > 
-> > I assume a small number of specialized applications are using
-> > vmsplice() to great effect?  What are those applications?  What is the
-> > impact of this change?
-> 
-> 
-> I did some digging, and the kernel crypto API documents using splice/vmsplice
-> for zero-copy[1] and libkcapi [2].
-> 
-> I did not find performance numbers, how much vmsplice/splice actually gives us.
-> Playing with the kcapi-speed tool [3] (specifying --vmsplice vs. --sendmsg)
-> doesn't really reveal a big difference at least on my notebook. Not sure if the
-> parameters I specify are reasonable.
-> 
-> I don't know whether downgrading vmsplice to preadv2/pwritev2 would perform
-> significantly worse than sendmsg ... and I don't know what the default would
-> usually be (default to vmsplice or sendmsg). I might try finding some time to
-> play with it more, but I doubt it, so if anybody else has time ... :)
+> Riiiiiight.... I don't think I have to NAK this, do I?
 
-AF_ALG is a mistake and isn't commonly used.  Using a userspace crypto
-library is faster and is what almost everyone does anyway, as it avoids
-the syscall overhead.  There are many other issues with AF_ALG as well.
+Okay, possibly this was indeed inappropriate.
 
-7.2 will mark AF_ALG as deprecated, mostly remove AF_ALG's zero-copy
-support, and remove AF_ALG's async I/O support:
+So this time I'm asking explicitly: is it okay to post new patchset?
 
-    https://lore.kernel.org/linux-crypto/20260430011544.31823-1-ebiggers@kernel.org/
-    https://lore.kernel.org/linux-crypto/20260504225328.25356-1-ebiggers@kernel.org/
-    https://lore.kernel.org/linux-crypto/20260523-af-alg-harden-v1-0-c76755c3a5c5@gmail.com/
+I want to post patchset, which will remove pagecache-to-pipe splice.
 
-In practice, the programs that are keeping Linux distros from disabling
-AF_ALG in their kconfig outright are just iwd, cryptsetup, and bluez.
-They use AF_ALG just because it was mistakenly thought to be easier than
-using a userspace crypto library.  They don't need maximum performance,
-nor do they use vmsplice, splice, or sendfile.
-
-There is other highly niche code out there that does implement the
-AF_ALG + vmsplice + splice thing, e.g. libkcapi.  But it's just not
-enough of a reason to keep zero-copy support, especially considering
-that AF_ALG has always been the wrong solution in the first place.  The
-fallback to copying the data is fine for this deprecated API.
-
-- Eric
+-- 
+Askar Safin
