@@ -1,156 +1,85 @@
-Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DEE753AC0FA
-	for <linux-api@vger.kernel.org>; Wed,  3 Jun 2026 18:28:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58342342CB3
+	for <linux-api@vger.kernel.org>; Wed,  3 Jun 2026 19:22:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780511341; cv=none; b=bvOJWv+G6QPNnNvjH7FF8FdBffA2RgVAf3f76JeWxIMxl7/SMu5Wdavv1x6soKlJppJUKqNPKzgDDaqojDYKgCj82Ara7s1ba8GVsk3EG/vLxZ5iSqNZoj4r2vJkphXDXDMjQmIoM9fzzgBGam/DW2dQO18HRC7TcmQZ1GW2rJ4=
+	t=1780514553; cv=none; b=j/gY+jaCWBh4nHQDetf18ae1ODrU6/vDcELHpUleuwE8J6+qwrrlaHes2ztny2YBvWWJy1bT0J38+hdz4Aq/9l4qIVdgMI/8h4YADKzp9GYT1qoyQjbjI4tGbkDGHvJaYhYzJOPr7z072MpODNJqnpgS7WPL85K4BeaWFhi2BAk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780511341; c=relaxed/simple;
-	bh=GrDoA4gKT8W5olxXPEI9oGi6uCk0mHf0rlEhckvAfu4=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ajVSyi98XsGVWkSoECX9S+W9QFt/fh0S+NL7eXpeMBGM76FXKjH1O5VIugvQ14wXDvLDjjCCwzmwdzvzL4N9dLqH1DwoiCDscK9i3F5lS3g0//SNLCO4IqA7NWPlLjw9itxiqyhXxnNGBLaz6IpsgprV5s0Kt/h4ov6hknfYLnQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=GMezNROI; arc=none smtp.client-ip=209.85.214.179
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
+	s=arc-20240116; t=1780514553; c=relaxed/simple;
+	bh=LDFA3pbOm+KSrwgSML1mRQ80y9BoK4sbHsGg8JM9Eeo=;
+	h=In-Reply-To:References:To:Cc:Subject:MIME-Version:Content-Type:
+	 From:Date:Message-ID; b=NJGR9xB9M0Juu7w5zF2ePJHIPjYrIDwyxzxGKxeC0Hl0nddFh0of12iZs4LL8feXKxPnBliybiymZXbiNH+SkCQKhMnyzyBpkoTmmasfVZRwCxPrNIccuToO/T33jZ95koHu8ELoSeC3rPsQPqrgA9TbD9AwiEdv1m6Um+Op9PY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=i3/CeXQw; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="GMezNROI"
-Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-2bf237e1433so61432755ad.1
-        for <linux-api@vger.kernel.org>; Wed, 03 Jun 2026 11:28:59 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1780511339; x=1781116139; darn=vger.kernel.org;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=8VYe+dW7ZDjb/fodoLbEwUxVzR4phhS+HhNp00MJ/BA=;
-        b=GMezNROIFX1uIiIYotmtiB1yX6MaGT7jHa6XdElYfOJeMLmy1b+cS+XYSVIIDXih0Z
-         KSOsotlHLmctWpfttFox387XsSeyNb2WeU0Ju3EhY/DExSX59vOI7gi7lSef9Q39nvJ5
-         bHx2iWJ1EU18iD5dL6u2+PB1clej5NzXYpg6o=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780511339; x=1781116139;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=8VYe+dW7ZDjb/fodoLbEwUxVzR4phhS+HhNp00MJ/BA=;
-        b=pL6HAy1t6TeCbWfQgqzsClt7pdFahyQAq7uYRvYuRC5KMKAKFpGdYqGFTcKd66PWuK
-         1Q7UipkVTuxWL34/JipCxtlcpcwvXH+2De0jIqw0045vav6LkDIoeDNj/LrpG3wz7+p7
-         +2ydF3AdVfGiHkoKmpEKjYSaVqG19sOR/EZboZ3BM47KiCDZ2t5qXjXeH82UKtjwTlq3
-         zjH+B4V/Lz04W3hC+uITomgUNj7xCc1xQhajXdSxZgmYKWPWVuiebzmPwcr2voXO4rla
-         moun+t2otmDGuBrwTRwGmywwkGJfMRJ1PQnr5fCRiJhrOmULCbKRjKmbrpt4j2llje6T
-         bO1g==
-X-Forwarded-Encrypted: i=1; AFNElJ/XCoNZ9FhXTljNL4c96PgiEHLLz4McE1kjgu6sJVvpCviPRsll8PWy8SfgLHaA+puMts6yG+T1xko=@vger.kernel.org
-X-Gm-Message-State: AOJu0YynYyL1S+MK3iwGcAnoz74rEV2IZ8Rd2Tj62rY+NYt3uWDFmUqp
-	163sE3mv8WLTIKW44rsfqKWHlaBTsLwAVMo9laZ3cJlyrREWG37b1Yp7+YH8J7fzExd4rwoZgac
-	rYgxgtv3+Nw==
-X-Gm-Gg: Acq92OFltG4nxoYhTm0G2QDhxVoz54SkLDn5AmU/2GEE/ECWImktnRKIyRxOMAegTeT
-	zRC9sR5OrpwmlaF1VAoJtrupPiudaIJe1hWe0zEijJVQBcosjMqKnJVdm07bEhHoYkE4vOvXoLV
-	LdDSMJkTT8tl6fzQ9ar0TIPEIxx9J8N/njmUmsuxTkBDxUROSKAl3PD49XP6oOcez+nZtheeWhg
-	bxfEVMn9nG9R+D6jF1GX/b27wdnqwFIYdeU1xUCmAsh2D2rj4/5LQ/VuSTtBrIAYYUVvKQ/xsmq
-	bJDIf3J8KVgcVFSsuSUYhEX/pXxAifErnmnWLIsmP2X+glMB/Sghvdhd59ivD/NRDymVnVJw/vU
-	Ck8tFi3T+QNT68x3cfRf04R7Jl3R1TEilKrNkvtAFvSgp7rkNzM8tM8RBFjRNXvm3Xt24/F5+G6
-	6LQxuvKKT5bE6mwqwSheEs6rjMBWrmsBEx1zipjSy47foX+8NJwQgQDCXXcD1fn8fLYG/ytVr2R
-	AyXxkZe25QBBds=
-X-Received: by 2002:a17:903:1209:b0:2c0:dd75:e834 with SMTP id d9443c01a7336-2c163a242e3mr45082895ad.5.1780511338992;
-        Wed, 03 Jun 2026 11:28:58 -0700 (PDT)
-Received: from mail-pg1-f171.google.com (mail-pg1-f171.google.com. [209.85.215.171])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2c166391d53sm44524665ad.65.2026.06.03.11.28.58
-        for <linux-api@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 03 Jun 2026 11:28:58 -0700 (PDT)
-Received: by mail-pg1-f171.google.com with SMTP id 41be03b00d2f7-c858b392697so2297925a12.3
-        for <linux-api@vger.kernel.org>; Wed, 03 Jun 2026 11:28:58 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AFNElJ8kHNINjPwQBNqZPzu70n54cR+4Xu7NMnOfC3ioJthp6gBvd+OlL6E0boXo/FiOGn7FesuAmMZYIX8=@vger.kernel.org
-X-Received: by 2002:a05:6a21:50e:b0:3b4:736b:da61 with SMTP id
- adf61e73a8af0-3b49790c56cmr5052599637.35.1780511337548; Wed, 03 Jun 2026
- 11:28:57 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="i3/CeXQw"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1780514551;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=SzfTa5HCL1jfcKZlB3EuMMBtnPEwh0opU3X/4Q5o0kA=;
+	b=i3/CeXQwYTAB/lF01W86EyYgx77uXSMR+bmEHBAEWjx/e9YHLz7COnJpnC4LYS1x/AcWEb
+	+UUg3PCFgTyEiHpaAki/JHjk0eERQ6MjT5d1FMXg6+cQoQz5qwlBVtDcGy1DIYzie7j1ZV
+	/mNz2FuzhjUUdOXbCgUC54HKkVyrGTA=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-681-aQ1vVfH5Ndq95wd2x-ZPOw-1; Wed,
+ 03 Jun 2026 15:22:27 -0400
+X-MC-Unique: aQ1vVfH5Ndq95wd2x-ZPOw-1
+X-Mimecast-MFC-AGG-ID: aQ1vVfH5Ndq95wd2x-ZPOw_1780514545
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E63FE1956095;
+	Wed,  3 Jun 2026 19:22:23 +0000 (UTC)
+Received: from warthog.procyon.org.uk (unknown [10.44.48.52])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 75C3219560AD;
+	Wed,  3 Jun 2026 19:22:16 +0000 (UTC)
+Organization: Red Hat UK Ltd. Registered Address: Red Hat UK Ltd, Amberley
+	Place, 107-111 Peascod Street, Windsor, Berkshire, SI4 1TE, United
+	Kingdom.
+	Registered in England and Wales under Company Registration No. 3798903
+In-Reply-To: <CAHk-=wiEwSjfbjfO74xu=UmkkdHXkJg5QNQ8pP-3iYmunmeV9g@mail.gmail.com>
+References: <CAHk-=wiEwSjfbjfO74xu=UmkkdHXkJg5QNQ8pP-3iYmunmeV9g@mail.gmail.com> <CAHk-=wiAqf0PdZ4AKj_4riUnnEb=g_ZNPkLnXrByA9BBHYiFRg@mail.gmail.com> <20260602225426.122258-1-safinaskar@gmail.com> <CAHk-=wgKy4dP0oQCNKyMQQf3-uVpaigmDyH6_T0Via76gWST9g@mail.gmail.com> <CALCETrWx8-Q5-rK1KnAPCxCbXaWCd=Yfs_Pr8qVMa8k8L6of1w@mail.gmail.com> <CAHk-=wizkDXRut5xLXRF-CVUVYMaZ5AOexxeghOAoXPb4yAvQg@mail.gmail.com> <CALCETrXzxubt4eWue3+wv7Fq9C2m7uu6bWPstqFh6Mo57bPwQQ@mail.gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dhowells@redhat.com, Andy Lutomirski <luto@amacapital.net>,
+    Askar Safin <safinaskar@gmail.com>, akpm@linux-foundation.org,
+    axboe@kernel.dk, brauner@kernel.org, david@kernel.org,
+    hch@infradead.org, jack@suse.cz, linux-api@vger.kernel.org,
+    linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+    linux-mm@kvack.org, miklos@szeredi.hu, netdev@vger.kernel.org,
+    patches@lists.linux.dev, pfalcato@suse.de, viro@zeniv.linux.org.uk,
+    willy@infradead.org
+Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for preadv2/pwritev2
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAHk-=wiAqf0PdZ4AKj_4riUnnEb=g_ZNPkLnXrByA9BBHYiFRg@mail.gmail.com>
- <20260602225426.122258-1-safinaskar@gmail.com> <CAHk-=wgKy4dP0oQCNKyMQQf3-uVpaigmDyH6_T0Via76gWST9g@mail.gmail.com>
- <CALCETrWx8-Q5-rK1KnAPCxCbXaWCd=Yfs_Pr8qVMa8k8L6of1w@mail.gmail.com>
- <CAHk-=wizkDXRut5xLXRF-CVUVYMaZ5AOexxeghOAoXPb4yAvQg@mail.gmail.com> <CALCETrXzxubt4eWue3+wv7Fq9C2m7uu6bWPstqFh6Mo57bPwQQ@mail.gmail.com>
-In-Reply-To: <CALCETrXzxubt4eWue3+wv7Fq9C2m7uu6bWPstqFh6Mo57bPwQQ@mail.gmail.com>
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Wed, 3 Jun 2026 11:28:37 -0700
-X-Gmail-Original-Message-ID: <CAHk-=wiEwSjfbjfO74xu=UmkkdHXkJg5QNQ8pP-3iYmunmeV9g@mail.gmail.com>
-X-Gm-Features: AVHnY4I2wCOVMf6tT9iCpMFfYRmksgwgXPr0UvzSy7WYplz1D2yZ52_F3Jv-p8Q
-Message-ID: <CAHk-=wiEwSjfbjfO74xu=UmkkdHXkJg5QNQ8pP-3iYmunmeV9g@mail.gmail.com>
-Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for preadv2/pwritev2
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Askar Safin <safinaskar@gmail.com>, akpm@linux-foundation.org, axboe@kernel.dk, 
-	brauner@kernel.org, david@kernel.org, dhowells@redhat.com, hch@infradead.org, 
-	jack@suse.cz, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-mm@kvack.org, miklos@szeredi.hu, 
-	netdev@vger.kernel.org, patches@lists.linux.dev, pfalcato@suse.de, 
-	viro@zeniv.linux.org.uk, willy@infradead.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-ID: <22677.1780514496.1@warthog.procyon.org.uk>
+From: David Howells <dhowells@redhat.com>
+Date: Wed, 03 Jun 2026 20:22:15 +0100
+Message-ID: <22766.1780514535@warthog.procyon.org.uk>
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-On Wed, 3 Jun 2026 at 11:10, Andy Lutomirski <luto@amacapital.net> wrote:
->
-> So maybe we should make sure that, if we go down the route of
-> disabling all the splice magic, that we leave an API, maybe the
-> existing sendfile or maybe something else, that does an optimized copy
-> from one fd to another and that is at least capable of sending from a
-> file to the network with at most one CPU-side copy.
+Linus Torvalds <torvalds@linux-foundation.org> wrote:
 
-Why?
+> Because if people think splice is complicated, you haven't looked at
+> the skb rules. They are completely arbitrary and complex and spread
+> all over the tree.
 
-That is *LITERALLY* the attack surface - and the complexity - that we
-should be removing.
+Yeah - I fell foul of the net loopback driver just reflecting the outgoing
+packet back, complete with all the original spliced bufferage.  I was
+wondering if the loopback driver needs to look at the skbuff, see if it has
+zerocopy elements of some sort and, if so, copy it (or drop it if ENOMEM).
 
-sendfile() was a mistake. It is literally the "file->socket" thing
-that has been buggy.
+David
 
-I absolutely refuse to get rid of splice code but keep the buggy sh*t
-cases that caused all the problems in the first place.
-
-Because *THAT* would just be completely insane and pointless.
-
-> Even if we=E2=80=99re just doing that, I continue to find it strange that=
- we
-> require that a pipe be involved. What=E2=80=99s so special about pipes
-
-Again: it was never splice or the pipe that was the problem. Stop
-barking up the wrong tree.
-
-It was "file data to socket" that was the truly horrendous issue.
-
-That said, to explain the pipe: The reason for the pipe is to act as
-the kernel-side buffer.
-
-Now, these days we have much more capable iov_iter interfaces than we
-used to, and in that sense the "pipe as a buffer" is certainly not the
-obvious choice now.
-
-But even then you need to have a *handle* to the buffers for the
-general case, and that's what the pipe fd ends up then still
-effectively being.
-
-It was also done to avoid the M:N translation problem, because people
-wanted to do zero-copy between other things than just "file ->
-socket".
-
-But again: we're ABNSOLUTELY NOT keeping that "file -> socket" thing
-and getting rid of splice.  That's literally keeping the bath-water
-and throwing out the baby.
-
-Splice is the *good* part (well, relatively - splice is bad too).
-
-ile->socket needs to DIE IN A FIRE considering the security problems it has=
- had.
-
-I hope Jakub is right that the problems have been all fixed, and this
-is all theoretical, but having seen just *how* many there were, I'm a
-bit sceptical.
-
-Because if people think splice is complicated, you haven't looked at
-the skb rules. They are completely arbitrary and complex and spread
-all over the tree.
-
-               Linus
