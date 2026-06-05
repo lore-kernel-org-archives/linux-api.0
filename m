@@ -1,103 +1,139 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1EBA54A0C;
-	Fri,  5 Jun 2026 16:26:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9E06642A82
+	for <linux-api@vger.kernel.org>; Fri,  5 Jun 2026 16:30:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780676818; cv=none; b=SylhYY4ahRluxw+hvBYjeZyRkxUzBM+Kn6duJIl8YuY2Nxn4rymNXVjUEkn+F22AuGqxI20hZ2FDv4dcjgg5vsac20dqStU2BMkaBuIxq5SkR72SkF3LBoykSWewOpkF5R+E4Jvh5zUKVEHqkla0L61bVEtDq9qolrwzF+AGJCc=
+	t=1780677041; cv=none; b=qmY0GOwSQYHvEmImogFhNw1RzjsnNxQmHlz5ic0Cn0BOn5N0SeHNsHH8RantzP2AEkDCM654hy+609djlpwMBDTk2XlPqXozBs0mynLuSBYe1TZsUAo8BTaYn9necAmUqZO21+sIGDh7sV1Iqk+dmupL1Oea6lzxNfpyowhgFQQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780676818; c=relaxed/simple;
-	bh=k8jxxf8sPq7/nIqWVslJ63cGDL/ilghT2Ni5xc6z2d4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=AIGED8L1Q+/9LR42D3KeujvRJSe9cl2iRi16HVTJqeLF/EOJH6XjTcEDstjDNi+ey3/mwqODhuAhKE60Fn2Ul/yv12q/tgiEv5eaiNSvT9tAf1+fiVYIIhaVj4INKGFTH/d6Jz670SC6i3sppI/O4LvxHMFGlnexIAADqhA+4N8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LJ5AwyI0; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1780677041; c=relaxed/simple;
+	bh=GVKTJ1PUi145pODpne71tVTfx9y8nKFseHmwwZY5PTk=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=kVppwRJXmoMxmokiNKQK6hR8haHdxKuSGFdhkF4T69TYIAyvhdiHmPAsefjHozadVg3YdyaVkCTs1Tv09BgGdqkBsMEPdfhs7mOYYXh/ifUBUK00QiU+8rcVUdeCtYehN31vYyHNNjFAxgsBZsySavo6dyYLGKCZT2gMmEG3/cY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NYhnnLKX; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LJ5AwyI0"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5B91C1F00893;
-	Fri,  5 Jun 2026 16:26:52 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1780676816;
-	bh=r2snqK5TmvBjLf7irf+fuZCEZasZ3Pbn/RhGzf37Nzs=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=LJ5AwyI0OawYi+sL2VqoHYRDXQly81j/iq9Hu1QCyRV/oI2u+eo9HKRwCt/seMVYO
-	 ZdU6gjCh3epPP4w83HFdgfua/mqbm21w206mpV8ljUXevWL42dnlA3Suzgo//DxI7I
-	 exdSX9Ht4UckbFS3Yt/N7DLCSHKGx8idhu0gxBx29CuZCzwcXoJtqqrXjkIjBaxGOT
-	 lrH8m8UVsyKbN2OWhs8A/Oneh86jVogUhkO87JjphEqpnAKGqdgeufNOTMLNklpySA
-	 FlVFA3Q1CzPGOayBya4B24imwrQXZfdtdyUQ8YqUsnsgzWIlcrRTQJK56ddknaN3vo
-	 xobc9BNb2BBHg==
-Date: Fri, 5 Jun 2026 17:26:49 +0100
-From: Mark Brown <broonie@kernel.org>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NYhnnLKX"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1780677034;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=2WV80dwMeo/Oh+o/H20bt+QiS4rQvxiM6pL+lxNyrA4=;
+	b=NYhnnLKX2dUjN7FB3r4kGqVwPGPp9CMm0ub2kyxKoBdsWlcxrJhkaRYh+pqnyMhUqOLxNf
+	e4M/1wzr7WVBtDj4khJsXMrDPwkMxVvoNBssxv3FbJQbkL6CcHgZknbd+rRU8M/ORh414Z
+	ERSTHHlIBJJ+balcfEfnYAIcHu6Yj7Y=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-384-g4IP06-0Mb-aHZMfCcNRyw-1; Fri,
+ 05 Jun 2026 12:30:30 -0400
+X-MC-Unique: g4IP06-0Mb-aHZMfCcNRyw-1
+X-Mimecast-MFC-AGG-ID: g4IP06-0Mb-aHZMfCcNRyw_1780677025
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 7DA421800370;
+	Fri,  5 Jun 2026 16:30:24 +0000 (UTC)
+Received: from oldenburg3.str.redhat.com (unknown [10.44.50.55])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AEEB01800351;
+	Fri,  5 Jun 2026 16:30:18 +0000 (UTC)
+From: Florian Weimer <fweimer@redhat.com>
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Askar Safin <safinaskar@gmail.com>, linux-fsdevel@vger.kernel.org,
-	Christian Brauner <brauner@kernel.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	linux-kernel@vger.kernel.org, linux-mm@kvack.org,
-	linux-api@vger.kernel.org, netdev@vger.kernel.org,
-	Matthew Wilcox <willy@infradead.org>, Jens Axboe <axboe@kernel.dk>,
-	Christoph Hellwig <hch@infradead.org>,
-	David Howells <dhowells@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	David Hildenbrand <david@kernel.org>,
-	Pedro Falcato <pfalcato@suse.de>, Aishwharya.TCV@arm.com,
-	ltp@lists.linux.it, Miklos Szeredi <miklos@szeredi.hu>,
-	patches@lists.linux.dev
+Cc: David Laight <david.laight.linux@gmail.com>,  Askar Safin
+ <safinaskar@gmail.com>,  metze@samba.org,  akpm@linux-foundation.org,
+  axboe@kernel.dk,  brauner@kernel.org,  david@kernel.org,
+  dhowells@redhat.com,  hch@infradead.org,  jack@suse.cz,
+  linux-api@vger.kernel.org,  linux-fsdevel@vger.kernel.org,
+  linux-kernel@vger.kernel.org,  linux-mm@kvack.org,  miklos@szeredi.hu,
+  netdev@vger.kernel.org,  patches@lists.linux.dev,  pfalcato@suse.de,
+  viro@zeniv.linux.org.uk,  willy@infradead.org
 Subject: Re: [PATCH 2/3] vmsplice: make vmsplice a trivial wrapper for
  preadv2/pwritev2
-Message-ID: <1eac3b42-5dde-41c4-930a-d74cda9e6d68@sirena.org.uk>
-References: <20260531010107.1953702-1-safinaskar@gmail.com>
- <20260531010107.1953702-3-safinaskar@gmail.com>
- <d9806b34-fc73-4878-997a-95c5e8ae4b29@sirena.org.uk>
- <CAHk-=wjBZAzPdZgEeHAtSiwJpomt8ZZgKbixuiHfRm09a4=PtA@mail.gmail.com>
+In-Reply-To: <CAHk-=wjkZSAhxykvG6tQM5DnBoS30_XCKkYpCsQwEGcxJb=i3Q@mail.gmail.com>
+	(Linus Torvalds's message of "Fri, 5 Jun 2026 08:54:07 -0700")
+References: <f919874c-065e-48be-ac5b-300c4ab86d4e@samba.org>
+	<20260603211736.755139-1-safinaskar@gmail.com>
+	<20260604100609.6b37f500@pumpkin>
+	<CAHk-=wjvb56qo27-axALOKCY-CjLsj9_294zeBovPVJaYm14dA@mail.gmail.com>
+	<20260604183829.63c35fd9@pumpkin>
+	<CAHk-=wip3mwLOHOYJ9TtjDxOaq9YUXmuCg2AycyASGgeY6qqUw@mail.gmail.com>
+	<20260604223216.73468830@pumpkin>
+	<CAHk-=wh1Avi8FGbWkt9k0Z-KXWB0spo5mQyowO8PB2sJ3unbkw@mail.gmail.com>
+	<87se71jps4.fsf@oldenburg.str.redhat.com>
+	<CAHk-=wjkZSAhxykvG6tQM5DnBoS30_XCKkYpCsQwEGcxJb=i3Q@mail.gmail.com>
+Date: Fri, 05 Jun 2026 18:30:16 +0200
+Message-ID: <87wlwdhrvr.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="g/nnWGulOH+szEAc"
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wjBZAzPdZgEeHAtSiwJpomt8ZZgKbixuiHfRm09a4=PtA@mail.gmail.com>
-X-Cookie: Error in operator: add beer
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
+* Linus Torvalds:
 
---g/nnWGulOH+szEAc
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> On Fri, 5 Jun 2026 at 02:33, Florian Weimer <fweimer@redhat.com> wrote:
+>>
+>> * Linus Torvalds:
+>>
+>> > x86 really doesn't *care*. If the caller zero-extends or leaves high
+>> > bits set randomly, according to the x86 ABI that's perfectly fine: the
+>> > callee will only care about the low 32 bits. So the high bits are
+>> > simply not relevant for the ABI.
+>>
+>> Please note that Clang does not implement the x86-64 ABI and requires
+>> zero extension.  We see increasing problems from that, now that we have
+>> more C code calling Rust code.
+>
+> Uhhuh. But that is only specific to 'bool', right?
 
-On Fri, Jun 05, 2026 at 09:02:52AM -0700, Linus Torvalds wrote:
-> On Fri, 5 Jun 2026 at 04:02, Mark Brown <broonie@kernel.org> wrote:
+Also char and short.  This
 
-> > | L4472tst_test.c:2050: TINFO: Tested kernel: 7.1.0-rc6-next-20260604 #1 SMP @1780589917 armv7l
-> > | L4473tst_kconfig.c:71: TINFO: Couldn't locate kernel config!
-> > | L4474tst_test.c:1875: TINFO: Overall timeout per run is 0h 00m 30s
+extern int a[];
+int
+f (short i)
+{
+  return a[i];
+}
 
-> I htink this is the same thing that Christian already noted (he said
-> "reported by David", but I don't know which David ;), where the
-> vmsplice() writev() emulation was done as a blocking write, even
-> though vmsplice only blocked at the beginning (ie waiting only for
-> _initial_ space to write, not then blocking afterwards).
+gets turned into:
 
-Ah, yes it is - exactly the same issue that's mentioned in[1], I missed
-it in the middle of the quite large thread and didn't directly find
-David's report.  Sorry for the duplication there.
+f:
+	movslq	%edi, %rax
+	movl	a(,%rax,4), %eax
+	retq
 
-[1] https://lore.kernel.org/r/20260603-raumfahrt-unmerklich-ertrugen-c4ecae70d5f9@brauner
+This code assumes that the short value has been previously sign-extended
+into %edi.
 
---g/nnWGulOH+szEAc
-Content-Type: application/pgp-signature; name="signature.asc"
+As I read the original psABI, this assumption was not valid, and the
+extra bits were unspecified by omission.  And GCC tends to use shorter
+instruction encodings without extension if that does not result in
+partial register stalls.
 
------BEGIN PGP SIGNATURE-----
+> If it were to have the same issue that powerpc(*) had - that 'unsigned
+> int' has to be passed to functions with well-defined high bits - that
+> would be bad.
 
-iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAmoi+MgACgkQJNaLcl1U
-h9Ctwwf/XkRjB062vspvG1uidxqEpWAVutxYq5EvOG1EiujrqzC1HAdtvESiAulS
-WTWxzQt+TKgaYHJ2HVDYpinhZEgTbOLChWHzER0hzObbMogvQsYUXwhn6NKNF7pa
-wLasVL07aZdXilsSJdBcjzGOAkdbfpQMcPiO70YqrrCj/Dzcg3b7VDZwgWNmMJWB
-ZCH7O8PaAk0UU17qB1pF7XsoK79IDMcyzwrj9XX7VqZRc2hQ3E1MU6B8vwY9QBOI
-D+VetiwfTYgkb/yweZokwkAIH/o64w7mfBvi8SXnxBcKEfqvxELjjeIaD9DynXf0
-GM/haoPUaOz77nGe3hZgodaEqpnoBQ==
-=H14S
------END PGP SIGNATURE-----
+I would have to ask around.  It's hard to tell from experiments what the
+expectations around int/unsigned arguments are.  Clang and LLVM treat
+the upper bits from int/unsigned return values as undefined in some
+cases.
 
---g/nnWGulOH+szEAc--
+> Anyway, for the kernel, this shouldn't be an issue simply because we
+> typically avoid 'bool' in arguments or structures that are exposed to
+> outside.
+
+Right, but array indexing with u8/u16/s8/s16 function arguments is
+impacted, too.
+
+Thanks,
+Florian
+
