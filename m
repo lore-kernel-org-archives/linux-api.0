@@ -1,68 +1,68 @@
-Received: from mail-ej1-f49.google.com (mail-ej1-f49.google.com [209.85.218.49])
+Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com [209.85.208.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E9B30309EEC
-	for <linux-api@vger.kernel.org>; Fri,  5 Jun 2026 16:34:03 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 50F15317144
+	for <linux-api@vger.kernel.org>; Fri,  5 Jun 2026 17:12:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780677245; cv=none; b=Fj8VtrLkZ0lJn263zTNPWmkE5jxfVFrrvo1pOoLXjyZ+wOrppUkjmgyGJyI2bEcizbYcATspvb6kVDJc588CsPwUx8aRxipfnPCvwnLCU+31qby+HvgNxV2+e2tfUPWC0Elf4GSgfivKqyUSNg5xVoat3yLwoNaZnyHIDDB8xlg=
+	t=1780679548; cv=none; b=DT21DyVgCxLZFhtvdejRZRHoEiIYdZn4Ebla6Kn8dKp7a52NLHlvp5NahTa5rLKyApLUKk7/SmxB+VQNerOwwTx0qy/hplIgZOXocHAXfJ0jYlW7fYh6tkC+Sn63peJaX5h/v5IdC2zkm2TehfNQfTxtzMVeVAhz2/g1nPyGtPg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780677245; c=relaxed/simple;
-	bh=xhA0BnyaS18CqnQuFNEb6UVKH5NtNpGJdPqoi2RFSA4=;
+	s=arc-20240116; t=1780679548; c=relaxed/simple;
+	bh=cx8Rkcij++nIhZcQtMX+8UhBOPSebFuHtinR8U8Auj4=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=JhzPde7Zn/X+SgcEeRs1zGCDZrlVyVuc4EyEYkPKS/HsiEHtpN5VhSj9JMf+2P9Z62n/cTc9uhHxDggpNpWoXkp1St6d+fU4FfJypI2cVRCANyqiEk6yj0hqZjFm31E6JahYcIUMDpi5OMLu3Nvhznc4xK2VywqIRSUFe4CPKVw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=DwNK8ZMR; arc=none smtp.client-ip=209.85.218.49
+	 To:Cc:Content-Type; b=I68Y+wYqGd3jB2Pav7bzVrks8t2koriBXgGGvtU/RMvtI7WkuxiSqMJcW35Ftg291GWTMlvU4/8DpN7J/o2yHnhTODuKBPlrzHfaY+zhIhwTJUk0p/wS+aZdHWKNVbpf4V+giGNs2jI0rEmWg8jdr0Huww5J9q0a1nnLkEnPX2k=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org; spf=pass smtp.mailfrom=linuxfoundation.org; dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b=Um1Ze3my; arc=none smtp.client-ip=209.85.208.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=linux-foundation.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linuxfoundation.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="DwNK8ZMR"
-Received: by mail-ej1-f49.google.com with SMTP id a640c23a62f3a-bebde89cfd3so256386066b.2
-        for <linux-api@vger.kernel.org>; Fri, 05 Jun 2026 09:34:03 -0700 (PDT)
+	dkim=pass (1024-bit key) header.d=linux-foundation.org header.i=@linux-foundation.org header.b="Um1Ze3my"
+Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-68cc6c7df99so3149015a12.1
+        for <linux-api@vger.kernel.org>; Fri, 05 Jun 2026 10:12:27 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=linux-foundation.org; s=google; t=1780677242; x=1781282042; darn=vger.kernel.org;
+        d=linux-foundation.org; s=google; t=1780679546; x=1781284346; darn=vger.kernel.org;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:from:to:cc:subject:date:message-id:reply-to;
-        bh=2QDQNJjYqwPm+P0wBS/rB5uazpPW4+3idJB2lp6tmqM=;
-        b=DwNK8ZMRGdzZRV/SR9zODSRP7dgcOd7WIB9wCtKjlggBlbQs2SoWz0odv51vw+lrXW
-         v21hzFvS0C6Y47sHp6HvsK7Lvscuia8wYqMHsu7v8PoBz6sa53otBJj/a0sMjwSwkS7F
-         Gg5aYj4rSYP5bmD48ESbIflRmcB833ZnDInsU=
+        bh=zbDn0l7MCqGrATagRYR/CBho/Q+7UgNMgo5uDntFVrI=;
+        b=Um1Ze3myot5JCz+v/t+Yqy5MGTMZtBdNC6B8JbfXMlQnQlSX2Y1vx2OvzxH3MXyeex
+         PNDEv3ZvHTff+MFTRE6OQl/Vug/IhdUrV/Cm6g84do3rmWF0XE/9GyJ3ReVxTjFm1YNP
+         cF1aOy6orjZHPx7vwk0Im+MYc6iYLjTcsoR2w=
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1780677242; x=1781282042;
+        d=1e100.net; s=20251104; t=1780679546; x=1781284346;
         h=cc:to:subject:message-id:date:from:in-reply-to:references
          :mime-version:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to;
-        bh=2QDQNJjYqwPm+P0wBS/rB5uazpPW4+3idJB2lp6tmqM=;
-        b=g4sjTu5zRq0h+LJDv0Ls6sTXIcsSRDQbehc5IW8HmXBUblCJ1s/p/qh9M9cSmL/k4L
-         qKr2ZY8taoYl9+xfHDk5yB3xNqtl94MCl1dbutHjaqOVPOZ336DfWnvUKyEQKM78Kbze
-         3xBUj3mXckBKfjFlhBlLdxMzQaKVEzqprxMpRO+uiFJfXBGUYNFAX5Dr+VSdsfRaA7RA
-         QW0CjMU769zDHUYZHcjg4GZLKwFGY40Y+6PLhNBD/kAYzszFrbCdqw67Gl4N/keWJiq6
-         aSupF7du9XeHpqn5Ces3jEbamrS5zOfSucELXBPahl+8NwwHMxdAu69Exh50M4fzCcnj
-         8J0w==
-X-Forwarded-Encrypted: i=1; AFNElJ/LieqZUI4Y4cESPCIIt5fUcJQnSmrZlNPMTN0LRbp07VZmzXSN1Deqmgh8XLW1j2iBPFECdOxFcSg=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yy19jtRtxj52vjGwURWpR6RVlpseR3VcpnZ3aBXI+bS1XuJA0tL
-	ppD3K+ScLuzqePy1t+Wb/HgRP7kRj2ExB1CHZ4HMaGxC3ok0q6grMdj/7uqlX/7UWUdzmoLMpNg
-	diaqUDGaSSw==
-X-Gm-Gg: Acq92OFIg+u2qUVjGs2A7fJ4skH6hM6G/RBjwPBceAm6sgZ4NZ/lrC1PTU9S+34qhQi
-	SpjV4DRmD3QQwK+rvWSh4oieF98FCZopk8i1yRN7DxgFhncajnFDVfnOGYNi0WxAjE5odiHW6MM
-	Xn2h/tgXnG80uXjlwDymHuqDocUMGbs8hgXuDqjeiZuquMdUxLKfegPz9QMT+9qNjBcDl+9ecgG
-	1sA0DCqT4YknFGGMHemOizlcWuR1ttf9zFtX/CSJ82yts06Y/6OING/Yrp3esVKcJU1NOzoZbp1
-	KUO+5OK3NEqzcjnWh85Fa7MbjTbdJzPRTMEGFAE6DXOT96d+lT/4kZYP8heceIoXR0XIiuKlNN8
-	sSTjXjtRsXZkDr4bXVPRhlxQAPjLdsV8Yzddg8mAvFZ4Lod4WeoEn1UEXpCuit9iv+cBILqOO1g
-	VuFLJFNKELkw+wbX9bltv/HSzPzB7txSEE13dijlhQqWReVbcIinS1l/RMgZDkdqR8qcoF1e6eU
-	/1n8IQSAx0=
-X-Received: by 2002:a17:907:b582:b0:bed:4938:94dd with SMTP id a640c23a62f3a-bf372f20bcdmr165811666b.41.1780677242132;
-        Fri, 05 Jun 2026 09:34:02 -0700 (PDT)
-Received: from mail-ed1-f52.google.com (mail-ed1-f52.google.com. [209.85.208.52])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-bf055309368sm473456366b.49.2026.06.05.09.34.01
+        bh=zbDn0l7MCqGrATagRYR/CBho/Q+7UgNMgo5uDntFVrI=;
+        b=orVISzbtY/QUpcNldpOaSXIomThri0zDhk5ujNby6pD4C0590ETDkFzzKcMKWsRItb
+         q+Nw83ZNMuQCPUws8sWwmJFzySTkQVxF3cABt9bu6UE2xSH6cxmXaJwpAkXvHfiMfUbx
+         NDlPQrRqsMP7zRYvSFNMtcIyJ3UHyB2m9ry1zaixQ+jTSGrxZDGOYFZHfAJlNlQMU5WR
+         eMQPswNhDOVLOoW8aDDwesaU8L3MQhLQO/ysUkkvRBdCewvVDta+LMo/6RVPxsThdESK
+         tI2wQ9CiAdP7gipTLMTHSooA0pqnCJGW3YxiEaq+JEkL8Uj/5ui4uc5zcbyAGPkaoDNX
+         /gKA==
+X-Forwarded-Encrypted: i=1; AFNElJ+LQZMSS2GzUlOc9z+/ZydHXnrqfVvUrbhhFMlSQ6DtfBY79L5423sQ+CEkRvUCHNIj+AYPnH9uFNU=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxmLTQLogMRhqcshcACmsV2ZFMr665wzLV7wanKaWIinDjDkB8H
+	fCFM1vcpGX6z/hzVYsgLoaswiW1htmdy5kxv4EVFXFBbs5kkK1reMzEE0eL7fZctslto4smhHOp
+	d8QsEpVesUQ==
+X-Gm-Gg: Acq92OHQtd8b7PtysFYKiNVycxOiiudOcnjgTq2eWiWj/paRcm7cToVd5dM5Ij85DaX
+	E+L34K/3Sbo+lf1Xf79BNCzM42xO0mcRVW/v24FG7O3Ko1x10FaRYUhP5TNIKt5MDo7o+PaF90o
+	8jr3ixfApm4WDRJJZTtP2MAZjujRNHyhneXsfST5Z/gJZYZDKboE370I/7DkrDF0sm3/k12Pbaa
+	kjt12eFxIKX9cG4IBcQcURdPo6kqYBG5aICLz3+Trtl54hyracImz/BpbMXNSwTeLrASiN3P5M+
+	hhB0IzJFv1e9Ad1Q/LdlpoiaqjHXfc5D2NyL2Wm+nw7gqBUv6tBRPS/8wtj5riAms6mSn9Z2thZ
+	8RTYSP9rZJEhMQIyeXVY5VewLliQizfNRMsMQeEF0Jbj3R+AYZWrPelO9OE62kNYUUJa0AauIFU
+	vVxPmdrOFQHQ2eV6agjXHrC4uvuNP4XI8BBLG/JePAfujBnxJAmUuWdHUKlpOcCHgHSly9hIO2h
+	qd9wqhhxUs=
+X-Received: by 2002:a05:6402:4505:b0:68b:ba5c:4951 with SMTP id 4fb4d7f45d1cf-68fa5253b67mr2308984a12.23.1780679545738;
+        Fri, 05 Jun 2026 10:12:25 -0700 (PDT)
+Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com. [209.85.218.50])
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-68e64c2f358sm4117199a12.6.2026.06.05.10.12.23
         for <linux-api@vger.kernel.org>
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 05 Jun 2026 09:34:01 -0700 (PDT)
-Received: by mail-ed1-f52.google.com with SMTP id 4fb4d7f45d1cf-68e5f7c1131so3931015a12.2
-        for <linux-api@vger.kernel.org>; Fri, 05 Jun 2026 09:34:01 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AFNElJ9hoVF7YDAh0Y/WzrnCT7lrnE2rkNB+ayEcTn52GiN52gAmaVVSDGVpR3rnqqWljnK0rL7XNMQdPks=@vger.kernel.org
-X-Received: by 2002:a17:906:4fca:b0:bec:5264:ee9b with SMTP id
- a640c23a62f3a-bf372c2dbabmr257257066b.36.1780676845718; Fri, 05 Jun 2026
- 09:27:25 -0700 (PDT)
+        Fri, 05 Jun 2026 10:12:24 -0700 (PDT)
+Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-bec3ffb95dbso354917166b.0
+        for <linux-api@vger.kernel.org>; Fri, 05 Jun 2026 10:12:23 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AFNElJ+u/7A73N67Q9fUdJR4KIuTvAJTov0qKFucoo3ZT2EKKpf/esC3ZVRZKmaBuWfU6DUfVGSh6H2ufFk=@vger.kernel.org
+X-Received: by 2002:a17:907:2d92:b0:bf0:59a2:4ccc with SMTP id
+ a640c23a62f3a-bf36fd9bc68mr283989066b.3.1780679543586; Fri, 05 Jun 2026
+ 10:12:23 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -75,12 +75,13 @@ References: <f919874c-065e-48be-ac5b-300c4ab86d4e@samba.org>
  <20260604183829.63c35fd9@pumpkin> <CAHk-=wip3mwLOHOYJ9TtjDxOaq9YUXmuCg2AycyASGgeY6qqUw@mail.gmail.com>
  <20260604223216.73468830@pumpkin> <CAHk-=wh1Avi8FGbWkt9k0Z-KXWB0spo5mQyowO8PB2sJ3unbkw@mail.gmail.com>
  <87se71jps4.fsf@oldenburg.str.redhat.com> <CAHk-=wjkZSAhxykvG6tQM5DnBoS30_XCKkYpCsQwEGcxJb=i3Q@mail.gmail.com>
-In-Reply-To: <CAHk-=wjkZSAhxykvG6tQM5DnBoS30_XCKkYpCsQwEGcxJb=i3Q@mail.gmail.com>
+ <87wlwdhrvr.fsf@oldenburg.str.redhat.com>
+In-Reply-To: <87wlwdhrvr.fsf@oldenburg.str.redhat.com>
 From: Linus Torvalds <torvalds@linux-foundation.org>
-Date: Fri, 5 Jun 2026 09:27:08 -0700
-X-Gmail-Original-Message-ID: <CAHk-=whMTq8_2rpYoZgoxVCwj=LsvfzHzPuwo-NcizT7J24MPQ@mail.gmail.com>
-X-Gm-Features: AVVi8CcJjF0IzkUXs5jB8j5aKjJm1d1LQ0EBlpf4RydnYVXz3zkkVCs-hralHh4
-Message-ID: <CAHk-=whMTq8_2rpYoZgoxVCwj=LsvfzHzPuwo-NcizT7J24MPQ@mail.gmail.com>
+Date: Fri, 5 Jun 2026 10:12:05 -0700
+X-Gmail-Original-Message-ID: <CAHk-=wiTQr4YYYUH38srGvWAq3_UpDeAPR+qZWVyf-ZU7z8Hzw@mail.gmail.com>
+X-Gm-Features: AVVi8CckZsnJXSGEqzilnfJFExIfoQ08Dq0LHvA2PxDFlkolpXQtrHtyU3UQHDE
+Message-ID: <CAHk-=wiTQr4YYYUH38srGvWAq3_UpDeAPR+qZWVyf-ZU7z8Hzw@mail.gmail.com>
 Subject: Re: [PATCH 2/3] vmsplice: make vmsplice a trivial wrapper for preadv2/pwritev2
 To: Florian Weimer <fweimer@redhat.com>
 Cc: David Laight <david.laight.linux@gmail.com>, Askar Safin <safinaskar@gmail.com>, metze@samba.org, 
@@ -92,44 +93,43 @@ Cc: David Laight <david.laight.linux@gmail.com>, Askar Safin <safinaskar@gmail.c
 	viro@zeniv.linux.org.uk, willy@infradead.org
 Content-Type: text/plain; charset="UTF-8"
 
-On Fri, 5 Jun 2026 at 08:54, Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
+On Fri, 5 Jun 2026 at 09:30, Florian Weimer <fweimer@redhat.com> wrote:
 >
-> If it were to have the same issue that powerpc(*) had - that 'unsigned
-> int' has to be passed to functions with well-defined high bits - that
-> would be bad.
+> > Uhhuh. But that is only specific to 'bool', right?
 >
-> And I'm pretty sure that clang doesn't do that.
+> Also char and short.
 
-It's perhaps worth nothing *why* it's horribly bad and why I think the
-powerpc ABI is nasty: it means that *some* things are done in 32 bits,
-but other things then expect the upper bits to always match.
+That sounds like a complete ABI violation as far as I can tell.
 
-It caused security issues, where user space would (for example) pass
-in a 'int fd' what was value in the low bits, and then had interesting
-upper bits.
+Scary. Because I would not be surprised if we have code that assumes otherwise.
 
-The range check in the kernel would then compare fd to max_fds - using
-a 32-bit unsigned compare - and see that it is all in range.
+Now, the kernel *seldom* uses char/short types, and since compilers
+are typically at least self-consistent in those cases and we don't
+interact directly with untrusted sources.
 
-Then it would use the *exact same fd variable* to index into the fd
-array, but the compiler would use the full 64-bit value for that array
-dereference - without having ever checked those upper bits. And it had
-passed the unmodified full 64-bit value around the whole time, all the
-way from untrusted user space, and the kernel code all looked
-"obviously correct" and had all the proper checks in place.
+The system call interface is special, but we wrap that for other
+reasons so deeply these days that we'd not be impacted.
 
-If you want to bleed out of your eyes, take a look at the rather
-horrendous macros in <linux/syscalls.h> (and the sometimes even more
-horrendous arch 'syscall_wrappers.h' files).
+But we also do have various assembler code, and I certainly wasn't
+aware that apparently compilers have been walking away from the old
+ABI rules.
 
-They deal with issues like this - and others - with some truly
-inscrutable code. You have to be super-human to be able to read it,
-but those wrappers are why we can then just do things like
+I did find assembler code that clearly uses just 8-bit register
+accesses and function calls, but it was all _entirely_ within
+assembler. The low-level debug printing in
 
-   SYSCALL_DEFINE2(setregid, gid_t, rgid, gid_t, egid)
+    arch/x86/kernel/relocate_kernel_64.S
 
-and it will generate not only infrastructure for tracing etc, but also
-the code necessary to force clean up the types for the architecture.
+puts the character values in %al and then calls pr_char_8250() or
+pr_char_8250_mmio32() with it, but that is *all* in asm code.
 
-                    Linus
+I didn't find anything obvious that calls C code with that kind of
+argument though (which makes sense - we typically call the other way:
+C code calling into asm code, not the other way around).
+
+So at a guess we're fine, but it's still somewhat unsettling.
+
+And maybe others were aware of this, and it's just me that has old
+32-bit x86 code in mind.
+
+              Linus
