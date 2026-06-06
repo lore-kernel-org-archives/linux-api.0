@@ -1,172 +1,150 @@
-Received: from mo4-p02-ob.smtp.rzone.de (mo4-p02-ob.smtp.rzone.de [81.169.146.171])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 506563A7F4B;
-	Fri,  5 Jun 2026 20:58:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=81.169.146.171
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1780693084; cv=pass; b=F7xU38yboehSljPEAye5rWjJ+P/jXns0Ioasu5a6e70CjE+PFnkKeC49K84rnXElBFtL+E8diznB5zaCqp1trsbuEdjF4PJJnu4pXbWIzdgEmJUBHy2blgjpTK2Zb8btIp3dK+qQ6ENuJFLJZRv/+guSbWZcl3uPNRP5ePoqe6Q=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1780693084; c=relaxed/simple;
-	bh=uRYDliO21fd15TPq957TbM5u9FjxvLcB64qva0Hutsg=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=RP37II5Vr3i9M8AxlwSFoep37FBkX/S+eXsvIbREmnN9K5mKqX3Wz96kMXinxZU4IYwSSuoxIDl/Z3yTDeR2R8UndZYarOs8hR1nhlTLd+oTylyoqv+rgilkiJzvuFpGOnAVxdFBpsVbdm9lXKvsBC4lpQgG28KXNLzfMvppx1M=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=infinite-source.de; spf=none smtp.mailfrom=infinite-source.de; dkim=pass (2048-bit key) header.d=infinite-source.de header.i=@infinite-source.de header.b=QN+LVqd9; dkim=permerror (0-bit key) header.d=infinite-source.de header.i=@infinite-source.de header.b=8WCLaVWz; arc=pass smtp.client-ip=81.169.146.171
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=infinite-source.de
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=infinite-source.de
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 014F5262FF8
+	for <linux-api@vger.kernel.org>; Sat,  6 Jun 2026 06:11:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1780726264; cv=none; b=s+4YO/7j6wnKvld63opQZTLUY0oHxr5Fy8D4al6zHspi9If8Ov4iapcS3A2WiIQ/41xw6hudul+aht8MQymMCp8GZ1aPyeUH1XVfRtxEL3efoQzfA89X3IlINbJUIA3cIt+UzfyGEw0Nh7VG2Zy48oniqcAWwOC4S+uGZVfzgew=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1780726264; c=relaxed/simple;
+	bh=ve8FNUDJ+bfAlTYt1tyGpBHY0ZFpeP48sjRpO5hIorA=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=KXD9Gd7tPpJEDZ9kn8ljAx6ALAEZVlSiKTM+Qp6nl1B911Z4Fre4oZQOAsJCu0eY6b7/cVJHMN6nd3iocsQ72ntMbbPevXQ/2WaAIwBSqVshnyo2IgNT2K3w5qjgWVRopfxCp5QgMZmeHWKDxD96xeD0ZZvKmrS9RAEi+Sv761Y=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=lZLnIKMI; arc=none smtp.client-ip=209.85.221.54
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=infinite-source.de header.i=@infinite-source.de header.b="QN+LVqd9";
-	dkim=permerror (0-bit key) header.d=infinite-source.de header.i=@infinite-source.de header.b="8WCLaVWz"
-ARC-Seal: i=1; a=rsa-sha256; t=1780692890; cv=none;
-    d=strato.com; s=strato-dkim-0002;
-    b=hh6lIgoTvUllGPKdx4NqM37Z3SF8LMp0ir6sZ5owEEk2q+iyku+p9P7kRvyaP5a5Je
-    M3UWuwAPZA5fbGvy3uj6818OQdtroD2lLFkf3fuRCuFqcd2Xl64nwVAih7smIDfpUn0Q
-    c7Eo7Vv1iGEygwBki/yfC8ZguabC+MPAxuGMTTKNFOWZtSl+bGQfabCP5TcUTI19kB85
-    qNcTuzZgGOb2SJGKRylMVvx1qcHvH1y5+KftAdRHktrEnanFXMb943h2YwSTZn65ERa8
-    GoUBTLXZfEFhl2OCSaUbPdwNnZ9JQFMETWQ7Xx4Il6DCg5V2HwY055f0aUjfSvtVcbM0
-    ZaaA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; t=1780692890;
-    s=strato-dkim-0002; d=strato.com;
-    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
-    From:Subject:Sender;
-    bh=e5U4ig/uUW/ykznudNtIoLlpAxdXFMDfbHPHK9h+DFI=;
-    b=mW0kw25xNVqlyNoCKiNir7K4Wa6ubcpkH6PCelWgzXQPwunjJMVGM7/LcjVF8YXHy1
-    yqPNxtmPyzg/t4B5lhMhMY+8kmO4A5kem9FUerITV6bn7GumCb4X92HDNo7jBvcyXDe/
-    xi/rzkfvTRpyvV4BJi0xZV4HCsPohirJagixrEroGMqyNHAtdbxcBNNBLttSStQj0CMO
-    iNrispwkk5pcEBWGvpfUMNuFXq711PgaG7p+azV290Qqs0flcOpW1ye+CZ8VFjKRi7j4
-    zKA+ww//vjcofx3SV/4HQaVzT4tkvXmp8xOk1TyouzVXoC5EFRdPY/4ZhdcSm9baL8CF
-    GvLg==
-ARC-Authentication-Results: i=1; strato.com;
-    arc=none;
-    dkim=none
-X-RZG-CLASS-ID: mo02
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; t=1780692890;
-    s=strato-dkim-0002; d=infinite-source.de;
-    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
-    From:Subject:Sender;
-    bh=e5U4ig/uUW/ykznudNtIoLlpAxdXFMDfbHPHK9h+DFI=;
-    b=QN+LVqd9GFndtvOCtdXeHdLoDQKUV99KE/r4wqHwhZj240RcZNueQdKolOkD1VpIVB
-    Oc8Z0kOpEBJsH80PWib/FOzXyxjgiXNfxRQ9OzBkT5vJ7ee9kYSppu9cZYvrqRiY1WBv
-    s/mGiD7HO9kD+dIFxfOw6XfM6fmVJT/OAHEtLdD91brHmwK5nWO4lPEc6+uqMGlB1882
-    K3FKQvYlosYKDWdudFCB/16Z44IaD9PQXTA/knGRn6InGle36MKg3cc7wAU7muk9sh2v
-    C35CyTzMG/N7ezxeVM0oD2TXAqdAdr3z8vnfk+Fdgg9Wr9xPxx4C3pUsDpcAu9z0jlPj
-    Z8dg==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; t=1780692890;
-    s=strato-dkim-0003; d=infinite-source.de;
-    h=In-Reply-To:From:References:Cc:To:Subject:Date:Message-ID:Cc:Date:
-    From:Subject:Sender;
-    bh=e5U4ig/uUW/ykznudNtIoLlpAxdXFMDfbHPHK9h+DFI=;
-    b=8WCLaVWzkyF+FJqcLNijVyFBuhYUe+qoh+tOXBMn1wQUQAg06PmA5C7puyuyh3N7GY
-    r95LcM6D6YmdR1gmxADQ==
-X-RZG-AUTH: ":LW0Wek7mfO1Vkr5kPgWDvaJNkQpNEn8ylntakOISso1hE0McXX1lsX682SOpskKNgu1vdp7pXN2ayNAkRm8xGwNyBO1pryZlEoFdH8nUdt2z/2Kw21ZBog=="
-Received: from [IPV6:2003:de:f737:c700:4ed4:78b0:5f62:98a7]
-    by smtp.strato.de (RZmta 55.0.1 AUTH)
-    with ESMTPSA id 2b9b8e255Ksn2SU
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256 bits))
-	(Client did not present a certificate);
-    Fri, 5 Jun 2026 22:54:49 +0200 (CEST)
-Message-ID: <0c9f58f1-52f6-481c-829f-6f5a70ffff7f@infinite-source.de>
-Date: Fri, 5 Jun 2026 22:54:48 +0200
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="lZLnIKMI"
+Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-45ee5cdbd28so2201348f8f.1
+        for <linux-api@vger.kernel.org>; Fri, 05 Jun 2026 23:11:02 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20251104; t=1780726261; x=1781331061; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to;
+        bh=8r8X8oylGshLaIHIAK1kgCpu4mjI5I9eQ7pptBpGukw=;
+        b=lZLnIKMIF3d3ixq8CA9qHpI6c4K1GVAPpUE7R5cbmfuod843qux2ApzyxWcN9P1y0i
+         oMecdiFiZIMP/MgPqXZhVctyIRv7uFpA4tSLsF3uUJZwyQ4hA5iuZwQl9QFwGcd3gvGC
+         Hcdw9UucXPzWiaheQKM/ZZ/cvZbpBP7P1jAehUaNMz2+Lff0BSjM41b4lfirrrSchqdp
+         iipJrLwv6jAPAnpwodIcFsI9u55Gs6HqDYvjkk8XKoNqROoyb8jh13EJ828FZ0KvWiVZ
+         v7PCF9Eqn8mX4bx+AOr4+fAN6ce4raMku673pCYv0adx8D6N/lH1pEiyXmvfHU9o9LQR
+         FfZQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1780726261; x=1781331061;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to;
+        bh=8r8X8oylGshLaIHIAK1kgCpu4mjI5I9eQ7pptBpGukw=;
+        b=J5nTJS8s7x8ZwcDfCSFqiV0YgVPXu8M5DUOSF8U09KQndlI+R+X/z+jQf5lw/4nXP1
+         Q6MRl4K30pQDmkSTP7gwm/xY+wqiEfOYr4rNnUkb1/Bit21Dh+Bw0dhTW9sA5vpqSuTR
+         te8xNe7t68/cACwkpgjg3cYUOa15dJCmoyKFkZMdf/ej64B8LnHPy/ijVNmqOGJHG6Gu
+         C6n0JH/3OLYp/0pHfa3rZozIzL/2/hmTKnTABT6i2cqf9hED9NV8Z6/Oyr5oT3MbVj/7
+         ZBnuyiuUyaZ12OtQ2eZvo4niPAV2mLak2XaEfJW2q3Qd0KgX1Tvbd7ksK0GBY5S6wXAC
+         s71g==
+X-Forwarded-Encrypted: i=1; AFNElJ/RxMNpQt84C/EU3XMq9DV7YF6pDqn1l+fXghW6qyePycZZzVdTv5Hou4TUCSykF/U2yc5B4jsA75w=@vger.kernel.org
+X-Gm-Message-State: AOJu0YxfQWixXzbIRp6qNWGWJT+11iGe5j61wy5P1lD945v8eoCdbEKp
+	l678HhRKTh5eFvuq8faohP/1iT6ZmSxLA5mfkDptcVTu/kuTCLXnWjXr
+X-Gm-Gg: Acq92OHiE4VrI973YnyLmvYog6+KyiOGVo5Z5irL7iZ5IfVzjdp1V1q0BZ+1tk5ZZyi
+	BDYli5PQvWi4rEpIg9BZQt2Wnh2R9Ws9KEHkf5/IdAsVij8kxuAn0w7b5FKKSLUbmkjTsiGwhT7
+	FyCv/Bm1DPoDlBUAgrCdl22GOe5Xa8YcvP3Q64Ot/X031x3yyRe4EhJ1buerPbZpufLTUBnHVyH
+	j+3Qw6iuwC/Zdf2HcwTCVnrINPgGiY+QDfOyIX0u4CoAMfxutfzMjfAA7EqqdU39y6AkcsWF1EF
+	rTt1AkdmWDrg+Ocj+eZobmwwpC1UjUZhyjRMB5xc3t/zVTMXn08WSB/cQP44Z5R9n8+nv5lOoFl
+	/YEuRz234WYQDTGfQOtivPVfM0PutvbajMugkOWK7MZ+shGGf/G95/bw5bX9Dc6l+N6pDXE17rS
+	MAG++NcbBvvmrm1UoGTfzgG58hZO0iSQ==
+X-Received: by 2002:a05:6000:41c4:b0:45e:f5b5:885 with SMTP id ffacd0b85a97d-46032b610d1mr8361361f8f.2.1780726261254;
+        Fri, 05 Jun 2026 23:11:01 -0700 (PDT)
+Received: from localhost ([212.73.77.104])
+        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-4601f360bd6sm34254711f8f.36.2026.06.05.23.10.58
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 05 Jun 2026 23:11:00 -0700 (PDT)
+From: Askar Safin <safinaskar@gmail.com>
+To: linux-fsdevel@vger.kernel.org,
+	Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Jan Kara <jack@suse.cz>
+Cc: linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-api@vger.kernel.org,
+	netdev@vger.kernel.org,
+	fuse-devel@lists.linux.dev,
+	ltp@lists.linux.it,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Matthew Wilcox <willy@infradead.org>,
+	Jens Axboe <axboe@kernel.dk>,
+	Christoph Hellwig <hch@infradead.org>,
+	David Howells <dhowells@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	David Hildenbrand <david@kernel.org>,
+	Pedro Falcato <pfalcato@suse.de>,
+	Miklos Szeredi <miklos@szeredi.hu>,
+	Andy Lutomirski <luto@amacapital.net>,
+	Collin Funk <collin.funk1@gmail.com>,
+	David Laight <david.laight.linux@gmail.com>,
+	Stefan Metzmacher <metze@samba.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	The 8472 <kernel@infinite-source.de>,
+	Willy Tarreau <w@1wt.eu>,
+	Joanne Koong <joannelkoong@gmail.com>,
+	patches@lists.linux.dev
+Subject: [PATCH 0/5] vmsplice: fix some problems in my previous vmsplice patchset
+Date: Sat,  6 Jun 2026 06:10:26 +0000
+Message-ID: <20260606061031.3744880-1-safinaskar@gmail.com>
+X-Mailer: git-send-email 2.47.3
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for
- preadv2/pwritev2
-To: Linus Torvalds <torvalds@linux-foundation.org>, Willy Tarreau <w@1wt.eu>
-Cc: Andrew Morton <akpm@linux-foundation.org>,
- Steven Rostedt <rostedt@goodmis.org>, Al Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>, Askar Safin <safinaskar@gmail.com>,
- linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org,
- netdev@vger.kernel.org, Matthew Wilcox <willy@infradead.org>,
- Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@infradead.org>,
- David Howells <dhowells@redhat.com>, David Hildenbrand <david@kernel.org>,
- Pedro Falcato <pfalcato@suse.de>, Miklos Szeredi <miklos@szeredi.hu>,
- patches@lists.linux.dev, linux-fsdevel@vger.kernel.org,
- Jan Kara <jack@suse.cz>
-References: <20260531010107.1953702-1-safinaskar@gmail.com>
- <20260601-enthusiasmus-canceln-anlehnen-0e62317a9784@brauner>
- <CAHk-=wifX_rrDjRGnDnOqE-usptAukuXKrmuPuVDP5bOCBWzGQ@mail.gmail.com>
- <20260601173325.GH2636677@ZenIV> <20260601160455.2c187574@gandalf.local.home>
- <20260601172825.a51a588ec1c32617a0e12d78@linux-foundation.org>
- <aiEb8CTM-ovMIq7-@1wt.eu>
- <CAHk-=wiQB-j53cTs9kM4UeXoXPaFj78aJe3D6Yp1Fohg7i4tWA@mail.gmail.com>
- <aiGfgRch99l_5z11@1wt.eu>
- <CAHk-=wg0e8pP5haNW4qJP1=QwwUEctwjK5k07sv8bskitoMDgg@mail.gmail.com>
-Content-Language: en-US
-From: The 8472 <kernel@infinite-source.de>
-In-Reply-To: <CAHk-=wg0e8pP5haNW4qJP1=QwwUEctwjK5k07sv8bskitoMDgg@mail.gmail.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-On 04/06/2026 17:58, Linus Torvalds wrote:
-> On Thu, 4 Jun 2026 at 08:53, Willy Tarreau <w@1wt.eu> wrote:
->>
->>> It looks like you're actually doing exactly the thing that I thought
->>> was crazy and wouldn't even work reliably: you change the
->>> common_response[] contents dynamically *after* the vmsplice, and
->>> depend on the fact that changing it in user space changes the buffer
->>> in the pipe too.
->>
->> No no, it's definitely not doing that (or it's a bug, but it's not
->> supposed to happen). I'm perfectly aware that one must definitely not
->> do that, and it's a guarantee the user of vmsplice() must provide.
-> 
-> Whew, good.
-> 
-> In that case, can you just try the vmsplice patch series (Christian
-> already found a bug, but I don't think it will necessarily matter in
-> practice - famous last words) and that test patch of mine, and see if
-> it all (a) works for you and (b) if you have any numbers for
-> performance that would be *great*.
-> 
-> There aren't many obvious splice users out there, and even if they
-> were to exist they are typically specialized enough that you have to
-> have a real use case to then tell if the patches make a difference in
-> real life or not.
+This patchset is for VFS. Of course, it depends on my previous vmsplice
+patchset.
 
-In the Rust standard library we use splice as one of several strategies
-in our generic io::copy[0] routine. It selects the strategy[1] based on
-source and sink types.
+I fix some problems in my previous patchset.
 
-It tries
+1. Fix problem with CLASS(fd, f)(fd). See first patch for details.
+This is probably not so important, but I fix it anyway.
 
-- copy_file_range
-- sendfile
-- splice
-- fallback to userspace read-write loop
+2. Change "unsigned long" back to "int". See second patch for details.
+Again, this is probably not important, but I want to fix this anyway.
 
-sendfile or splice are skipped when we can't uphold the "callers must ensure
-transferred portions in_fd remain unmodified" condition on the manpage,
-which unfortunately includes some particularly desirable combinations of
-sinks and sources (such as mutable files -> socket).
+3. Fix that LTP vmsplice01 bug.
 
-We primarily want this for reflink copies and to avoid the syscall
-overhead of a read-write loop with a small stack buffer.
+See patches for details.
 
-Any additional zerocopy benefit, when it doesn't lead to unstable data, is
-welcome but not critical. E.g. it'd be nice if sendfile could do the following:
-For a 1MB source and a socket with a 64kB sendbuffer it could zerocopy first ~900kB
-safely and then memcpy the last 64kB to ensure it can't be modified after the
-syscall returns. But a "just memcpy in kernel space instead of zerocopy" flag for
-sendfile would be ok too.
+Please, run that LTP vmsplice01 test again.
 
-We're currently not making use of vmsplice. In theory we'd like to use it for
-copying from `&'static [u8]` sources since the type upholds the requirements of
-vmsplice, but type specialization currently is not powerful enough to
-select based on this lifetime and it's unclear if it'll ever be.
+Notes:
+
+- I want to repeat: I change behavior around SPLICE_F_NONBLOCK.
+Previously, vmsplice ignored whether pipe itself was opened as
+non-blocking file. Now it is not ignored. And in my opinion
+new behavior is better.
+- vmsplice(2) now is in fs/read_write.c . It is very similar to
+preadv2 and pwritev2 now, so I think it belongs to fs/read_write.c now.
+
+Please, review this patchset carefully. I'm still new contributor.
+In particular, please, review that do-while loop, I'm not sure I did
+everything right.
+
+Tested in Qemu.
+
+Askar Safin (5):
+  vmsplice: open-code do_writev and do_readv
+  vmsplice: change argument type back to "int"
+  splice: turn wait_for_space flags argument into bool
+  pipe: move wait_for_space to fs/pipe.c and rename it
+  vmsplice: make sure we don't wait after writing some data
+
+ fs/pipe.c                 | 17 +++++++++++
+ fs/read_write.c           | 61 ++++++++++++++++++++++++++++++++++-----
+ fs/splice.c               | 19 +-----------
+ include/linux/pipe_fs_i.h |  2 ++
+ include/linux/syscalls.h  |  2 +-
+ 5 files changed, 75 insertions(+), 26 deletions(-)
 
 
-[0] https://doc.rust-lang.org/nightly/std/io/fn.copy.html
-[1] https://github.com/rust-lang/rust/blob/ac6f3a3e778a586854bdbf8f15202e11e2348d9f/library/std/src/sys/io/kernel_copy/linux.rs#L210-L259
-
-> 
-> So you testing that thing would seem to be a great first test of
-> whether any of this is realistic..
-> 
->                 Linus
-> 
+base-commit: 8d86fcfc2857d64af85f5c87c193c25655c970af (vfs-7.2.vmsplice)
+-- 
+2.47.3
 
