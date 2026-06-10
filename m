@@ -1,79 +1,88 @@
-Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73A8B370D5C;
-	Wed, 10 Jun 2026 05:14:47 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D7AD9233921;
+	Wed, 10 Jun 2026 07:28:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1781068489; cv=none; b=adYYHTMsczFcFNrsN1LriVMVCZPkFLe/BPxlnnDPLIwP55XzOc5aJ2jb2boHPflDbY1xz7Hz3iEEwwVmqyQJ8+OCYFBcH5mnuLu+O3RHPHFlgBwqytpduKmDjrThkoHk/mWugP+kzWREA8WIGkkELuDXRZee+FKU/6COhHvodjQ=
+	t=1781076522; cv=none; b=M3TGiIwef/3Ifr4Bt7VrMucSnDkBnG8ckcnNSj5OSvgP0+Apxu5ah329zKfhBMBM52v1eWyhVPLYrKzqS+iGHMvOxyoY4hjvRVz28Xi26qw1zbeufHBZlzqLoi4C+dZh05BLZfDjzSwzLz7qRzukWsSPS3nFmaqYBAoHybHj9YE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1781068489; c=relaxed/simple;
-	bh=T7RfpQAYTtKgwwSsHkIlPQZB/3d8rHcE9475/UH+e6k=;
-	h=Date:From:To:Cc:Subject:Message-ID:MIME-Version:Content-Type:
-	 Content-Disposition:In-Reply-To; b=ZjKevqIMcgMhx3mNg6YD3+ayiRYyvu1HLpJyBvWIrXhquTcCEp1FKIhdVSvrFqjBd4/g4PNXAL0LdiDKOxzne+JEQqlGn+HNN551GXJgvItIZDRQ/O5Prc8pUJSjCfM7GkM1ZlmVhBsFeQOKNm/ICvfjTplXR3CX+QqGZNioiZQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b=SRtexRuX; arc=none smtp.client-ip=180.181.231.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1781076522; c=relaxed/simple;
+	bh=XVzT4dC9J9FFpWrYJ1jidUjuN9wz2V7gqq0wjB+r38s=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=LUOSeJBZUSZxnvYfJVR0HYtlj7W4K9l17CB18hf3XuzPRkCegJjsLWSb8QiKvmawcaUNXrlO65syW+kzLYOMyQ1Js6229GRgaQJaMRNdp1e3tCTuY7+WWavbHY5cM7Wz9C72PysN3deF80x9KQHCQtEfSreJY6zceU23sFr46ZI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=fgvSiRD0; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b="SRtexRuX"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=gondor.apana.org.au; s=h01; h=In-Reply-To:Content-Type:MIME-Version:
-	Message-ID:Subject:Cc:To:From:Date:cc:to:subject:message-id:date:from:
-	content-type:references:reply-to;
-	bh=CAQW/woRlD6nMS40SYfYEy04qnRENam7hotbzTsoZO8=; b=SRtexRuXBTK493UySnuP5ALAyo
-	Ufy0HINvTDsaMlNa2KbGBrDy3M2mD7oyb3K1uRfPZMycB8X6zumdthneP7PwKuWnxd5zs6rionpGo
-	CqVwZyAAgtMS180w2Sww0de4fpAm3YKHdPZPh4Q5m8+BlUowPqXDnOu/OvmIeJeySkzUlQVQ80poU
-	UfmB5QYu7L0pjXyJBBSf14lin4VNjPcw7OMXBPS9dJK5aJW8WVlAgKf4YfupIYwp5UaqDfieNMppl
-	d2qkzQ1y1nhCAHFMEtboyBji+UBQaYqHGcvs3No1FfiumRPjop7cisWUioyEz0Za2KLJZliLTqXRb
-	zHrKaoZA==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.98.2 #2 (Debian))
-	id 1wXBGr-00000004AWe-2FLp;
-	Wed, 10 Jun 2026 13:14:34 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Wed, 10 Jun 2026 13:14:33 +0800
-Date: Wed, 10 Jun 2026 13:14:33 +0800
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: metze@samba.org, luto@amacapital.net, safinaskar@gmail.com,
-	akpm@linux-foundation.org, axboe@kernel.dk, brauner@kernel.org,
-	david@kernel.org, dhowells@redhat.com, hch@infradead.org,
-	jack@suse.cz, linux-api@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-mm@kvack.org, miklos@szeredi.hu, netdev@vger.kernel.org,
-	patches@lists.linux.dev, pfalcato@suse.de, viro@zeniv.linux.org.uk,
-	willy@infradead.org
-Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for
- preadv2/pwritev2
-Message-ID: <aijyuX14ahOf53zM@gondor.apana.org.au>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="fgvSiRD0"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9D40D1F00893;
+	Wed, 10 Jun 2026 07:28:35 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1781076521;
+	bh=Ujw8//AhBz2ofNEZXVOO0whE9ziRkQU7WuP9Q2n1nw4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=fgvSiRD0nlrWeKZ00ARxxj8+SIeSOssxKo/IteKl5SNNXShxIV9RzZYZjW2fJDF4Y
+	 BRLJiLnad8I+/cgypVTOTIn/c5oxyEme4EK0poeNVEmG9QKE7i/U92Q7yjVt2JPZoo
+	 KKab8o9SdIM2XvpGoVICIQ4XwdgAVtaPGhU54ayQfCnfLlEaW3lPQVBllb9BkmzECO
+	 nE7j1CjEqBtnt3cNbOS7Erz0xZkaANJGk+ly24VtiJa0PCDT3qoW/N+IRr4nTvwqZd
+	 Z5PKSNrIQl7+mm2qzkxCg4AIGhgZkp5e7n9mKFUe2JXKDXK2WgGk0nXZXZ5u3/BshM
+	 PjG2C1OvGIzpg==
+Date: Wed, 10 Jun 2026 09:28:32 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Li Chen <me@linux.beauty>, Kees Cook <kees@kernel.org>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org, 
+	Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@kernel.org>, 
+	Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, 
+	Dave Hansen <dave.hansen@linux.intel.com>, "H. Peter Anvin" <hpa@zytor.com>, Jan Kara <jack@suse.cz>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>
+Subject: Re: [RFC PATCH v1 00/13] exec: add spawn templates for repeated
+ executable startup
+Message-ID: <20260610-saufen-zerfallen-uncool-5608105e0d8e@brauner>
+References: <20260528095235.2491226-1-me@linux.beauty>
+ <20260528-madig-fachrichtung-fehlinformation-61117ba640da@brauner>
+ <CALCETrWJQpLR4n1cpichBk8=uExSKLWTMGU3BufGdk_WE_p5UA@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <CAHk-=whL0oLvmh3FO9SapDhgrXMT_d6qkP2V3OBjysOWXod2Og@mail.gmail.com>
-X-Newsgroups: apana.lists.os.linux.kernel,apana.lists.os.linux.netdev
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CALCETrWJQpLR4n1cpichBk8=uExSKLWTMGU3BufGdk_WE_p5UA@mail.gmail.com>
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
->
-> Nope. If your web server opens files with write access, I'd be
-> extremely surprised.
+On Mon, Jun 08, 2026 at 05:01:57PM -0700, Andy Lutomirski wrote:
+> On Thu, May 28, 2026 at 4:05 AM Christian Brauner <brauner@kernel.org> wrote:
+> >
+> > On Thu, May 28, 2026 at 05:52:21PM +0800, Li Chen wrote:
+> > > Hi,
+> > >
+> > > This is an early RFC for an idea that is probably still rough in both the
+> > > UAPI and implementation details. Sorry for the rough edges; I am sending
+> > > it now to check whether this direction is worth pursuing and to get
+> > > feedback on the kernel/userspace boundary.
+> >
+> > The idea of having a builder api for exec isn't all that crazy. But it
+> > should simply be built on top of pidfds and thus pidfs itself instead.
+> > It has all the basic infrastructure in place already. Any implementation
+> > should also allow userspace to implement posix_spawn() on top of it.
+> >
+> > fd = pidfd_open(0, PIDFD_EMPTY /* or better name */)
+> >
+> > pidfd_config(fd, ...) // modeled similar to fsconfig()
+> >
 > 
-> And if you don't have write access, and you're sending out data from
-> files you opened just for reading - the onle sane case - you hit all
-> the existing problems with "I can certainly look up pages, but I damn
-> well shouldn't pass those pages to the networking code without copying
-> them".
+> After contemplating this for a bit... why pidfd?  Doesn't a pidfd
+> refer to an actual process that is, or at least was, running?  This
+> new thing is a process that we are contemplating spawning.  I can
+> imagine that basically all pidfd APIs would be a bit confused by the
+> nonexistence of the process in question.
 
-How about using write access as the gate to zero copy?
-
-IOW allow zero-copy if you already hold write access, otherwise
-perform a copy.
-
-Cheers,
--- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+I don't think that would be a problem because every api just needs to
+handle ESRCH. Ignoring that for a second: the mount api has a builder fd
+that is later transformed into a pidfd. Which is easily doable here as
+well. My point is that all the infrastructure building blocks already
+exist in pidfs.
