@@ -1,97 +1,35 @@
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5EAEA38B7CD
-	for <linux-api@vger.kernel.org>; Wed, 24 Jun 2026 07:12:34 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 760943932C9;
+	Wed, 24 Jun 2026 08:59:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782285156; cv=none; b=BsJDvoU3i4lxnIbGWDrs0RSlKXqqmq6Zxe60rCpbnGUdKIe9jCz3Ugl0uTW7sHfYcrB3SFp7xVUFbrwCdp6XJsoSMBiaAbcGe82XZd1YybCGnyFxmwggmThRj6b21Xn+TVLFMGMI7AsLZYaDiMOgd+ldgPgdafT/MuPwmbzG72M=
+	t=1782291583; cv=none; b=DPtTFj/49FB8vimbyqkAOQJ5cy8/9LS9hAVNLDpAto2TsPj4z/llkKRehM3viFGNQ8os/+vGu4ZNOjtrcaAgjyGW/6HEmdq7dM6BsbTJhOaT4bQcXgsD5g81XnnA58OoTXna7X7Ktq70rPmndSow2HimFeQ90kKH/O2Ic4lr5K0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782285156; c=relaxed/simple;
-	bh=T+oTEsZifQSSjkTTm8dieBj546vS01rprc6FRMPpgRY=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=NTxZFCjrnA21B3nZUVhz9O9ewUkswllHpKn5fPpY2l/j/ntlqKj2muXKkQ0ZujJGbd3dBnBEFPlpBgJBChNNSLiPNPsmSVgVKJv6v1fPYqRsTHcE8oKE831ikKfIcCghPLHijezIoYL3xG5wzRs6uhdm4tDTWzS48xVsDAyOCH0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NEk6jZgM; arc=none smtp.client-ip=209.85.221.45
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1782291583; c=relaxed/simple;
+	bh=4e2lvbGRAzSrAQ17eFCaDg3KhOLO9JpUk9tU+XsYGgc=;
+	h=Content-Type:MIME-Version:Subject:From:Message-Id:Date:References:
+	 In-Reply-To:To:Cc; b=VW/QTNDDROlc4Z++sRTN85FUy0nIyQhZ/lttrKsYqBk80TdoX2EowLJk0hdvMCnIuw7RbLkMEo/xQFPINn7n8e5gFs3VxOxhWv31cyCbzAVGg2PyIzAbqqYJ16xJyiVGWYBhJWsgNAsbpEqdSZx24thT16GkTCvxGi5oP7szJTM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Td6fOIN3; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NEk6jZgM"
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-462bb734793so408525f8f.1
-        for <linux-api@vger.kernel.org>; Wed, 24 Jun 2026 00:12:34 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1782285153; x=1782889953; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to;
-        bh=VhG9FcF945Re4Q58PUpr7BwlsxWpmlT6fgah9/vT28s=;
-        b=NEk6jZgMulgJqN17XPHyzxZWrjC3SRgX+YSWsZTjYh/fBnelCNZujLrpG/e+mFyoF7
-         f1Gq3XqQrb60v77rGI8/iNo2sqx2/b7UaQAXvH3QITshpe3OUojUSyJlLvUAe2/GpKjU
-         SE3hQWJrn17c9XTEnFuUX50Exw4ddu2TEcs+Jh3H2E1/KEmNBi8R2E1viN8X/RS/F8hf
-         ArU9eVXTMzswldd/Um38NKIYizUTz23JNVE2PVtj38Gk/Zuo1ygshyyt6BVLAHby6pN0
-         x3Dfz9pBCe5euKHjThKElffKbbO9TKgxcg8aVoI/xbwPxYjVbF266rAnHHl+iApuV2NX
-         Ru3A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1782285153; x=1782889953;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to;
-        bh=VhG9FcF945Re4Q58PUpr7BwlsxWpmlT6fgah9/vT28s=;
-        b=Ka8PElk3XzfaM+AJ/jOEWs6YGY3t1fWA5R4et+Goxj2n4KBcoR9G43itOI9sT3J/uf
-         qINPyK20dMGxMB8sdUHdC0P/zyjAAf0u3r+sO1z0YTvzG0MMblsOWIjOpfAodaJ7T7K8
-         MY6U7sXOZ+nHCbigcc1iDpClhWSTy/Yu7J5v12z8N4EZEGb2Aw0gDB8LbCMwehe9+MBG
-         SvwVX3lxoY0YwL2Znmlz7D8y+JhLMecqmU/PWf9Fkxr3PytsO1frCBsreEYknTnWgnf6
-         mbyNOnDAvSPFMeq9hzLuYGA7dsLiF9L7/dTKUTjWKt7Tajv0dT/Xa+DHHXv62xC3lJQc
-         PsdQ==
-X-Forwarded-Encrypted: i=1; AHgh+RrNZ4kVfXqoiPQH2C6soOTgMI107eskFwNtufOLO78pJGT1ox4gQ2FPsSCk55nHmbzoMwXW1olTecA=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yxyty8z92fJCPkv8b2LL5JIovFnErN1Pa7ZWGxO6J46/ypU9qfR
-	jjoEWw0zGYjmHcjlTTHGHRPPUjXnOPBnsfxiH2NOw5ZYxx6gE5VlF7m2
-X-Gm-Gg: AfdE7cn4yZDRehXz/FVCnGP79xp1xH0qS9ngLL1/OalkYrJHfDbb9dS4tf1VjUgEGQ6
-	/uTJy1hWhnMQjO+YSrnsOMotwK76cS83SuBJZTt84rPwlLJTYFcjZEFPLwJcm/8iU9RydJyrW8Q
-	+51cz5B433KGKBNGnALzu/RDk8cPGUe4XeshDuiU02sFFHtdyGklde7wMjfqkTUcR7MIUB0tmZ7
-	alVx0h/d0rKKAhI6i+3OQFbs9eAiIpQ1FkT14n4pKdrO4NB/E9+qU0ol3/3Pqa7qba0q1fUoZFb
-	r/TomghFA2U967J1p4LP1F4hb7wPLk9GyPifvMamgyKU2VNaDNI2HzszGodSBC0pvVkda2m4XOw
-	K0U49Cr0FDU8XcpMnh+dbQJU15YD/660bR/DSwmRAw5GjqcWzqrIMenYzM0fA2v8cMg7cweI59g
-	py0PPaEaVC
-X-Received: by 2002:a05:6000:4683:b0:46a:1f35:113f with SMTP id ffacd0b85a97d-46a1f35172dmr8359155f8f.21.1782285152523;
-        Wed, 24 Jun 2026 00:12:32 -0700 (PDT)
-Received: from localhost ([212.73.77.104])
-        by smtp.gmail.com with UTF8SMTPSA id ffacd0b85a97d-46c1ee0189esm4296531f8f.9.2026.06.24.00.12.30
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 24 Jun 2026 00:12:32 -0700 (PDT)
-From: Askar Safin <safinaskar@gmail.com>
-To: avagin@gmail.com
-Cc: akpm@linux-foundation.org,
-	alexander@mihalicyn.com,
-	axboe@kernel.dk,
-	bernd@bsbernd.com,
-	brauner@kernel.org,
-	criu@lists.linux.dev,
-	david@kernel.org,
-	dhowells@redhat.com,
-	fuse-devel@lists.linux.dev,
-	hch@infradead.org,
-	jack@suse.cz,
-	joannelkoong@gmail.com,
-	linux-api@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-mm@kvack.org,
-	miklos@szeredi.hu,
-	netdev@vger.kernel.org,
-	patches@lists.linux.dev,
-	pfalcato@suse.de,
-	rostedt@goodmis.org,
-	safinaskar@gmail.com,
-	torvalds@linux-foundation.org,
-	val@packett.cool,
-	viro@zeniv.linux.org.uk,
-	willy@infradead.org
-Subject: Re: [PATCH 0/3] vmsplice: make vmsplice a trivial wrapper for preadv2/pwritev2
-Date: Wed, 24 Jun 2026 10:12:26 +0300
-Message-ID: <20260624071226.2272209-1-safinaskar@gmail.com>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <CANaxB-zK5q=Xw6UZTmeFtXsDZjUsPkFk=p485m-wtNTBnf4hgg@mail.gmail.com>
-References: <CANaxB-zK5q=Xw6UZTmeFtXsDZjUsPkFk=p485m-wtNTBnf4hgg@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Td6fOIN3"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E76401F000E9;
+	Wed, 24 Jun 2026 08:59:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1782291581;
+	bh=TM6/7W5L0lECPXJpPRC/prv4vynbdZprP5beN/B/udw=;
+	h=Subject:From:Date:References:In-Reply-To:To:Cc;
+	b=Td6fOIN3/f0VBzergs0drcUYmXQQAsvO4StGVdMIjfzMrq302z0CgE5PZLuvuGTgu
+	 y6OwsR7LXPEEFrY7QrkK2hSlHI12MXhmVem1daB0+ozFWkUYEuEItyZJ7vx5MyaS+t
+	 Oc1WA2rvp0/OSZzW0f3+n0kg+mE0TC3Ab6FQDwqtxJv9M6iyI463PwXDsZeJtaXgH8
+	 cA97HZbh6WLwIiL86WWHqng6yP/LFC+v3mboYn4sGQCZ08gXpiYOtiLe5h2IPQIEJa
+	 sokPZW3EP5W8SOl4LwWjYysGGnj4trZOS4gry4rVwbkUraPobHITXsNO5d1m/HquOK
+	 yCniGim9xfQ2Q==
+Received: from [10.30.226.235] (localhost [IPv6:::1])
+	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 19A4A39EF964;
+	Wed, 24 Jun 2026 08:59:31 +0000 (UTC)
+Content-Type: text/plain; charset="utf-8"
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -99,37 +37,78 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
+Subject: Re: [f2fs-dev] [PATCH v14 00/15] Exposing case folding behavior
+From: patchwork-bot+f2fs@kernel.org
+Message-Id: 
+ <178229156954.2577930.8082691450605559803.git-patchwork-notify@kernel.org>
+Date: Wed, 24 Jun 2026 08:59:29 +0000
+References: <20260507-case-sensitivity-v14-0-e62cc8200435@oracle.com>
+In-Reply-To: <20260507-case-sensitivity-v14-0-e62cc8200435@oracle.com>
+To: Chuck Lever <cel@kernel.org>
+Cc: viro@zeniv.linux.org.uk, brauner@kernel.org, jack@suse.cz,
+ pc@manguebit.org, yuezhang.mo@sony.com, cem@kernel.org,
+ roland.mainz@nrubsig.org, almaz.alexandrovich@paragon-software.com,
+ adilger.kernel@dilger.ca, linux-cifs@vger.kernel.org, sfrench@samba.org,
+ slava@dubeyko.com, djwong@kernel.org, linux-ext4@vger.kernel.org,
+ linkinjeon@kernel.org, stfrench@microsoft.com, sprasad@microsoft.com,
+ frank.li@vivo.com, ronniesahlberg@gmail.com, glaubitz@physik.fu-berlin.de,
+ jaegeuk@kernel.org, hirofumi@mail.parknet.co.jp, linux-nfs@vger.kernel.org,
+ tytso@mit.edu, linux-api@vger.kernel.org,
+ linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org,
+ senozhatsky@chromium.org, chuck.lever@oracle.com, hansg@kernel.org,
+ anna@kernel.org, linux-fsdevel@vger.kernel.org, sj1557.seo@samsung.com,
+ trondmy@kernel.org
 
-Andrei Vagin <avagin@gmail.com>:
-> The CRIU fifo test fails with this change. The problem is that vmsplice
-> with SPLICE_F_NONBLOCK to a fifo file descriptor fails with -EOPNOTSUPP.
+Hello:
+
+This series was applied to jaegeuk/f2fs.git (dev)
+by Christian Brauner <brauner@kernel.org>:
+
+On Thu, 07 May 2026 04:52:53 -0400 you wrote:
+> Christian, let's lock this one in. I will post subsequent changes
+> as delta patches.
 > 
-> It seems we need a fix like this one:
+> Following on from:
 > 
-> diff --git a/fs/pipe.c b/fs/pipe.c
-> index 429b0714ec57..6fc49e933727 100644
-> --- a/fs/pipe.c
-> +++ b/fs/pipe.c
-> @@ -1253,6 +1253,7 @@ static int fifo_open(struct inode *inode, struct
-> file *filp)
+> https://lore.kernel.org/linux-nfs/20251021-zypressen-bazillus-545a44af57fd@brauner/T/#m0ba197d75b7921d994cf284f3cef3a62abb11aaa
 > 
->         /* We can only do regular read/write on fifos */
->         stream_open(inode, filp);
-> +       filp->f_mode |= FMODE_NOWAIT;
-> 
->         switch (filp->f_mode & (FMODE_READ | FMODE_WRITE)) {
->         case FMODE_READ:
+> [...]
 
-Does CRIU actually rely on ability to do SPLICE_F_NONBLOCK vmsplice into
-named fifos? Or this is merely a test?
+Here is the summary with links:
+  - [f2fs-dev,v14,01/15] fs: Move file_kattr initialization to callers
+    https://git.kernel.org/jaegeuk/f2fs/c/14c3197ecf07
+  - [f2fs-dev,v14,02/15] fs: Add case sensitivity flags to file_kattr
+    https://git.kernel.org/jaegeuk/f2fs/c/3035e4454142
+  - [f2fs-dev,v14,03/15] fat: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/c92db2ca726f
+  - [f2fs-dev,v14,04/15] exfat: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/27e0b573dd4a
+  - [f2fs-dev,v14,05/15] ntfs3: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/eeb7b37b9700
+  - [f2fs-dev,v14,06/15] hfs: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/b6fe046c3023
+  - [f2fs-dev,v14,07/15] hfsplus: Report case sensitivity in fileattr_get
+    https://git.kernel.org/jaegeuk/f2fs/c/a6469a15eefe
+  - [f2fs-dev,v14,08/15] xfs: Report case sensitivity in fileattr_get
+    https://git.kernel.org/jaegeuk/f2fs/c/c9da43e4e5c3
+  - [f2fs-dev,v14,09/15] cifs: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/e50bc12f5a36
+  - [f2fs-dev,v14,10/15] nfs: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/92d67628a1a9
+  - [f2fs-dev,v14,11/15] vboxsf: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/ef14aa143f1d
+  - [f2fs-dev,v14,12/15] isofs: Implement fileattr_get for case sensitivity
+    https://git.kernel.org/jaegeuk/f2fs/c/7bbd51b1d748
+  - [f2fs-dev,v14,13/15] nfsd: Report export case-folding via NFSv3 PATHCONF
+    https://git.kernel.org/jaegeuk/f2fs/c/211cb2ba4877
+  - [f2fs-dev,v14,14/15] nfsd: Implement NFSv4 FATTR4_CASE_INSENSITIVE and FATTR4_CASE_PRESERVING
+    https://git.kernel.org/jaegeuk/f2fs/c/01ee7c3d2e23
+  - [f2fs-dev,v14,15/15] ksmbd: Report filesystem case sensitivity via FS_ATTRIBUTE_INFORMATION
+    https://git.kernel.org/jaegeuk/f2fs/c/0164df1d1de7
 
-If this is just a test, I think we need not to preserve this behavior.
-
-I did debian code search with regex "vmsplice.*SPLICE_F_NONBLOCK" and I
-found very few packages. And it seems all them use pipes, not named fifos.
-
-(On speed: I still think that my vmsplice patches are good thing,
-despite performance regressions in CRIU.)
-
+You are awesome, thank you!
 -- 
-Askar Safin
+Deet-doot-dot, I am a bot.
+https://korg.docs.kernel.org/patchwork/pwbot.html
+
+
