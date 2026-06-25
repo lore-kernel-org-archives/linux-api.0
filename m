@@ -1,28 +1,28 @@
-Received: from MW6PR02CU001.outbound.protection.outlook.com (mail-westus2azon11022073.outbound.protection.outlook.com [52.101.48.73])
+Received: from SN4PR2101CU001.outbound.protection.outlook.com (mail-southcentralusazon11022095.outbound.protection.outlook.com [40.93.195.95])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C969E3ECBED;
-	Thu, 25 Jun 2026 17:34:15 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.48.73
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C64C3ED136;
+	Thu, 25 Jun 2026 17:34:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.195.95
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782408859; cv=fail; b=hfhzOnbD2QnEKgh5+qVHFVGOq+4fW8qnIME3M55bp3ryXoRlltUWW+qD67dIZv1FyfkhYwXbTl1/x1Y8SXRW4FJ2wMseRb8aeCfgscnU3IQjiYtmt9PJl0iONcEMXhwA/rt+Blcgzwj4V6yFJmpnV4+jYimXta3kjPBrYFWiNmM=
+	t=1782408859; cv=fail; b=mi5H0chNlAEIMFcm86qIUAOmH7ElbKhg26s8GMfdZujcURS5rnjHFUpn9ZXJZcl+07c0kqDof5huRfrAvw5Ve9SjB24pwgEz1tFDysnUynOKdKPOpAzJgABvaFBMjAvQ1Ff0+RNyox+zb9F/ISj8GuvPerVVMPXQUNwjodxLhGQ=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1782408859; c=relaxed/simple;
-	bh=eK38R4VZ2oWKMh2JOrA/t2qKu7Id+x9WAMzKFEiB8D0=;
+	bh=y4myAVBbg6tolCO+ichHbgF1lO+HixcJ5MeQMWBW62c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=PPJ3307MHu5HFQwQdM7ks58n9SJORSuinJJHAQLFHPYhKiFAV79Z95+aK66enrMjc4sCNSrKmJXGSV6yFTnTMwYQAn56QVJvgHzgsXOYtwIzTtA8DQtRGczPieIZVgxqKm9sAjjLGKtLczAIpUBsT+L7FB6ygab4aGooBPV+Q8k=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=FWIhd40n; arc=fail smtp.client-ip=52.101.48.73
+	 MIME-Version:Content-Type; b=eO+TdDpLq1qoS3SlAlnPfi82ns5sDmVherbWkk+1rH5I7BFDP8whherSTQYqqihDSteiVvhraph2OfyW7VQFN+KdKxtZfCKDX5yCzBRSswYb3f33SZL6wmMFdIlxeuVLkXPlbWQzjocG2Td/oRvGGLZeECPYhuBSbmt21CyOQgc=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=4f/doGob; arc=fail smtp.client-ip=40.93.195.95
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="FWIhd40n"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="4f/doGob"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=wyjJ5k2LK0tVw4155ZPTz7uEa2L+EkhrLRPN2wS5Ejow7QB7hW7va5q6XFtgxZMIOwXQWDbKKeNiO1iz3ERZUmW+twtWw/kyUTDGNiRWq2tNYm/oQWF/WvS1b+avlSXBmNx/keW9r528CA6IZd+IqZMgj6fkX5yxGuf2on6THFVKi07PheL57tc9zTGGT3BcrxJv1is3vfd3f0ayh6NpQ3VDuyX5jnOpNJ34C2/F77AnHp7oZFFgz++RexOlvs1MkAtdgdE5bT3N3ZeN9FRn7Dyd0IeXs8sQZhouDz9Mo0ZOFEH42Ih9ny/xFIEHWjFvzfe4IcTkL5RhyhsrJciYGw==
+ b=wWGooNz0EUBHSNchFYjO1G8tQq0VUaH0EXHpDN3/QJukcrFQ2sD377Kg93GqhObtJr4BHDpUlaXAABTLiTS+OzkMsy00Sr+q1IFf0+42CW5GeyMN9QbYde858tssqe0g3MkYPGuK1EVowRGXYZ7TavAb8aKB3Mj6cC7sj0eqeJPOh1s0qdTsSYgPKA9iMthzeFAfeHIfiOQlatz9ZFpjo0rvBvTFWvY8f1FiubVtHc/DzILaedeEBvWFeueocAeZPX9v/n9bfn9BYKjTFp7FWZcEEDztD9Nyl+KtoYhUbn01f5ksFNtK/URowr3M4Sjz3Ewzz9aPyXziuBak6dnpnA==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=OpRysDKYsu+meCnIUgK7fyxcW5k1rZeVIYgKTUfDxcI=;
- b=YyBF/yW+3pTcw9FUAt8vS3H93QnnUQNxxigoMs0IomnqXtpvUR5zTiCkGfTOasYO5Kp3VkT1ubzskcSdZuT8p86HOuK7565JElheKtf039jvWFt65JI9cwrXLdnejnffJg0Sh+6SFDa4aQJ7Mzk0/1wipf0ocaOkXSaWt+4Y/pFGZhzcdDa9VL71uN4mNouwQ00hwXm4CQIDw/h96mg/OuMbLtSkKVtCaajt9Xh6bwlSpEmyBEHPBCDVmdc5ocByDCVya9WQHB4mE750gIsAjrIzsA9n+hV6y2v8xcGHRwSZKWMsaixq++55r4MpSzzRQnTsAaI8auS62hA3q0ZdJA==
+ bh=Rohtc3LuMw+G1Efka3OAngS4CQk8ACRmH8Q+BThi3pE=;
+ b=MCDzO83vHrcLVp1gyY9l/or7lnGcrS0wH0gfTCqHdHiDOhNieo8yH8JP2JxIQf7HXsW3OAXIlr2D2fWXaRd1+6gNP0AK9usbNiMeGz2DBoyWed9xMWZym3b1AYsvg0uJyJcYDdLHN6iqmrkp69BVCCEKbwQy4LOpNoVt+Ymaj0dXnwr17TelKtamB8bmo0bUtn97h0aRWByMgrz83waqFfVzqMzTHNP9yQTs8u9R1YL1fRPFNNWq4WVtDnboNi4CiNgiyr8yh46oaTqunofAxcrea55WM/D6rKzZs31QMyrXJ1OFsQVlAS4vbbOg+J9WL9cB2ZTCsA3TWvZqnJq+7Q==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=OpRysDKYsu+meCnIUgK7fyxcW5k1rZeVIYgKTUfDxcI=;
- b=FWIhd40ngq/Q/neCl/biw3xvwJlYsnODPsxVeJSQQQ1712c7mcTQePcOBRqqEb5U5glZ5PpnxeES0U5zI6t13+0OYOYSLllCMNxmO5Q4Jm5FBKQkpYLYdhZcSNkX6yzLzOeG6qZeLUUk51KcAPdKZ9x7M1/VEnVQW6uFh8erHQWFrNMGFf5utB2BwXltBW61aXA2OI/6vD7rggvoM2d//Gc6o1OsMtmorCkO/KW5G2jL9fxZog+FaaOnElHHN1ED0yCWu5iwOX8CiL/CEAGH4anPa5H2B4sXjylEW+xSX9lewAq9lk+4JFy9fvFzCmxH2qN1Zomwjt6/ltBo3Xs3bw==
-Received: from SA1PR02CA0018.namprd02.prod.outlook.com (2603:10b6:806:2cf::26)
- by CH2PR04MB7015.namprd04.prod.outlook.com (2603:10b6:610:95::12) with
+ bh=Rohtc3LuMw+G1Efka3OAngS4CQk8ACRmH8Q+BThi3pE=;
+ b=4f/doGobqR66jRqi0j3kars9LuIMzrCBeZBJI/y3LACYIuyLaneyyV51gmyPBIUtttM1BrjstB1FNlEptLOH/5pAUwCBr1DD7pChH5BIn8bCSu5yiLhWtpR3f3ES0CP9oJYjw/BN3/QxGzJf5Cmc70/MW8LNIeQIxNDdugK5t+WHTlSq4AmhQuXLRqtBUokqk6e9w0it7KGdsV7xkzGOFAA5RZfau1oVmMVndu0CCej/ZAIMpezOpx0a9qjdT1QiyiKPLZ8PQvKx6mjP1L72KbLqJGBq+HdPVMmfVd/Mb+cNC6xnNHIDQcKZtlUrbmtICZ6fqwRo/wDRfzFS0ZcBzg==
+Received: from PH0PR07CA0118.namprd07.prod.outlook.com (2603:10b6:510:4::33)
+ by DS6PR04MB9939.namprd04.prod.outlook.com (2603:10b6:8:368::15) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.159.17; Thu, 25 Jun
- 2026 17:34:07 +0000
-Received: from SA2PEPF00003AE8.namprd02.prod.outlook.com
- (2603:10b6:806:2cf:cafe::7b) by SA1PR02CA0018.outlook.office365.com
- (2603:10b6:806:2cf::26) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.159.16; Thu, 25 Jun
+ 2026 17:34:10 +0000
+Received: from CY4PEPF0000FCC5.namprd03.prod.outlook.com
+ (2603:10b6:510:4:cafe::78) by PH0PR07CA0118.outlook.office365.com
+ (2603:10b6:510:4::33) with Microsoft SMTP Server (version=TLS1_3,
  cipher=TLS_AES_256_GCM_SHA384) id 15.21.159.17 via Frontend Transport; Thu,
- 25 Jun 2026 17:34:07 +0000
+ 25 Jun 2026 17:34:09 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,12 +49,12 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- SA2PEPF00003AE8.mail.protection.outlook.com (10.167.248.8) with Microsoft
+ CY4PEPF0000FCC5.mail.protection.outlook.com (10.167.242.107) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.181.6
- via Frontend Transport; Thu, 25 Jun 2026 17:34:06 +0000
+ via Frontend Transport; Thu, 25 Jun 2026 17:34:09 +0000
 Received: from hqxsv-cmdev3-skrishnamoorthy.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 7A6D01801756;
-	Thu, 25 Jun 2026 17:34:06 +0000 (UTC)
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 17533180176E;
+	Thu, 25 Jun 2026 17:34:07 +0000 (UTC)
 From: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
 	Alex Ousherovitch <aousherovitch@rambus.com>,
@@ -80,9 +80,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	sipsupport@rambus.com,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH 04/19] crypto: cmh - add SHA-2/SHA-3/SHAKE ahash
-Date: Thu, 25 Jun 2026 10:33:12 -0700
-Message-ID: <20260625173328.1140487-5-skrishnamoorthy@rambus.com>
+Subject: [PATCH 11/19] crypto: cmh - add DRBG hwrng
+Date: Thu, 25 Jun 2026 10:33:19 -0700
+Message-ID: <20260625173328.1140487-12-skrishnamoorthy@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
 References: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
@@ -95,42 +95,38 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SA2PEPF00003AE8:EE_|CH2PR04MB7015:EE_
+X-MS-TrafficTypeDiagnostic: CY4PEPF0000FCC5:EE_|DS6PR04MB9939:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: bb8dee06-8953-4a03-6179-08ded2dff57f
+X-MS-Office365-Filtering-Correlation-Id: a4764024-d582-4a90-78c1-08ded2dff6f6
 X-LD-Processed: bd0ba799-c2b9-413c-9c56-5d1731c4827c,ExtAddr
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|82310400026|376014|7416014|23010399003|1800799024|36860700016|921020|56012099006|11063799006|18002099003|22082099003|3023799007;
+	BCL:0;ARA:13230040|36860700016|82310400026|7416014|376014|1800799024|23010399003|18002099003|22082099003|11063799006|56012099006|921020|6133799003|3023799007;
 X-Microsoft-Antispam-Message-Info:
-	3HMmpm/QXxdUF8wseNbuAaYn2j8f9G1xF3rKMFm4Ug4EDpEwv7miXPh9CZTj26TUFIDjADmqjppzDY84358bamCmnZckUttykW5yYDhYtF4tnTH8TonU0UEpk0XJwddNojDhihoAW+bsmKzN2c1i8ESD5lrM+5dCD8Se/GoDRAm8s41dRqgfgXCSuVj2wzXNcNzu+RRqUcweLmQIsh+372paFpu2gq3DITCtpXtV42a3YV2dxWpVB9oKtjgwSN//fhUbuJiNc20pZxA3oUIj4qevkPEMwp0TvOPsA4f1PzFlb0+GSQMY3bphkrHRVakKo1SurN6RH3phsIFMMCplxJUWK6y4aZycvbBQCrGtuCM33LbFCWLTGqGvi7CpykJ8HKZ7YmCObKJpzkwNqOnz6yZtZuxDmVrhpc8XxiirrkxMlkCG2lFa3qXhmEAURZIS/fg5D2gbDfSspx7XB1nLTVfKh6s2Ry4Krao5LNHHQuNJqBmpTAPyAudJXjGNnk/hwQbuoFe7jO+ocs+9e/u5da89jDyQF48Kb826+dxHdeItT+9FXPeDeB8zz8mWKE08ULeS32Kptx6/GD/DSuSwsS2gPa6tzBP19aZ5hKOqlZb2WHqzgYbSmB4T1GDEOdWB1jZ7lkgrQDL9IUlzbRIsUwSWAHOMUwcSqzfz2W/v+3rpHuv5r1xRfwh7Qa/xSrrrShCkovCVerRzEUp9mhfqd/a2/x9tg1QyESDYn3gFeI//1UZyL1vGzWLbUft2L5yY
+	2n2WBUZyDQioejsGCPrEJARWdxBI0VPPhP1iDHTaiHCpkBMbYz9RfVNap1jsEOV6FGGtlpM99lyS/+hWaCReETGoRbKZbcEuv/+lhQvu1+qZrRrLdz6ivg95ccegqvpey829xSHYEUR7FGee035GJS6qlO0Xp/+2ExCMnlE8ZSOFpfyyO/mzBzMRt3UyqL4SNLDqgi6rIdwX8RYZrgDTOAmpr16tPkSwOtrEJDxxnmbAXhiPG2h65iryy1+YtyIPNOmaQ5gJEQzxRjdGLJG/ySRePRVf9k55Kn5Kro66G4URyKrnxNXrIqaUwL/oviDZElMx/C1GIKAY6jL49b1qPhWAJeYzQgre7vbzm/Lo7QMjIBYS4CGVPRIee+A92sDVLviNjX7pBHH807ayi41gY42WvjayEVdpZ2j3z1VMvw3pzRA9i23l+Vw1UnVNVLsLj2CCYIo3zhC8VNA3ERVkM8s3adKnOc4ndujLr908m1z/wGuUT6Xgcr65FbqYVRDIdarmK91v+Qjib5ynS/Rwz9908uohJrehv4CHc42zD8omtUEprcl1F7hr2EM0G9b88VJ9y1ft2p92aYzuUlD313ZoIR2Qpyj11B1WkgZeFknW9t2Jnp74mIUE4qP6BEtNj2guCMzKkcvNEtFmdUHIcE6GcH8aUcaCcXQBJ+ZtJLd578eyDtZZZIg6FtGzrzEaZVaHWUsH8qgec83KFiFhFRyVXWYDtg/xcZHqblSAgnG6VoPF3cj9PDZh5Me0e1zc
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(82310400026)(376014)(7416014)(23010399003)(1800799024)(36860700016)(921020)(56012099006)(11063799006)(18002099003)(22082099003)(3023799007);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(82310400026)(7416014)(376014)(1800799024)(23010399003)(18002099003)(22082099003)(11063799006)(56012099006)(921020)(6133799003)(3023799007);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	+9a7gdEBefYsdvVMbRkV1fgmaOcokA/c6dVEut5LrISgAAY+SVLDii07sdox3FezymzC68zSirSZXhNMNTlVreaY43tQfK7EYok5CoGCSAaXSCwQJYiKXIyB9lOXPCoGVHmGe1DuNq0i1B7XvnL4J9oTodqaist7deLqsfD3A8hQHZZZCXUvzTwrg880yDdqMxqxr8NxEZ0WfqF5W6L7LJHRmtAPrDcpS2kZdS8yMwhoLrWQhxDITflWhy6gJvyI14Le8DXCBgEQJqkY57IWP49HY1Q9bqeNkNd72ZqymgsDbiI4sTbhH3vzRIzqtnk42xKiHiz1dhXGJ78FPWaorg000Pb0prbRvlaMEdRSPWEqSipHV5JFtysj1/5uptgmmoE/fkvjEppv9dSoviAcJrunnJpEO2ld7BvsBHX4OwWKfwTzaX/7DAPkunop80W8
+	eIAApoSRY52zOG00XcTgjGJY+xuPSHB6aF2JOQN/gWdwnzhG/6NINJcXYJjCOEWNdQ0v/OFHgbl7PoJ+tFtkdBOwCU8cyuPZDEdW6SzWhDQFRZNMLZdsf3jXKXVSQLlMM3RTqiIpNYLdIPn2OZj+o/hBnkDIfoUHBymvpQB2FSO5V+S4rPto/Kx4Zo2Vew1xQXYnuZTQ2tgYYuJeaD0vJm5v+xxBPi0D97sOJ6z8JTRiTo4SHioDfwh8DR3IPhpVHcXx542+53cGl/tMtrR7snhMoePApSbioybTrdtMtGokfHE82oKJ4jLopLhXwlMSVVVZHgK47dvb7EenfqdWXtf6hRj9uOy3ZxhaYi8Y9iJx9JhJaSAUPHrcPZdqGsfxncUnoqxCB42+EtcN37pJuyJH/RYkDdpD75ZebO4WkKgjs42Zxq3TqY3r2UAJeVPo
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:06.9798
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:09.4825
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: bb8dee06-8953-4a03-6179-08ded2dff57f
+X-MS-Exchange-CrossTenant-Network-Message-Id: a4764024-d582-4a90-78c1-08ded2dff6f6
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	SA2PEPF00003AE8.namprd02.prod.outlook.com
+	CY4PEPF0000FCC5.namprd03.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH2PR04MB7015
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS6PR04MB9939
 
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 
-Register ahash algorithms for SHA-224, SHA-256, SHA-384, SHA-512,
-SHA3-224, SHA3-256, SHA3-384, SHA3-512, SHAKE128, and SHAKE256
-using the CMH hash core (core ID 0x02).
-
-Supports incremental update/finup/final, init/export/import for
-request cloning, and the CRYPTO_AHASH_REQ_VIRT flag for zero-copy
-from virtual buffers.
+Register the CMH DRBG core (core ID 0x0f) as an hwrng provider.
+The hardware implements a NIST SP 800-90A compliant DRBG with
+automatic self-seeding.
 
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.co=
 m>
@@ -139,993 +135,408 @@ Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
 Reviewed-by: Thi Nguyen <thin@rambus.com>
 ---
- drivers/crypto/cmh/Makefile           |   3 +-
- drivers/crypto/cmh/cmh_hash.c         | 860 ++++++++++++++++++++++++++
- drivers/crypto/cmh/cmh_main.c         |   9 +
- drivers/crypto/cmh/include/cmh_hash.h |  26 +
- 4 files changed, 897 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_hash.c
- create mode 100644 drivers/crypto/cmh/include/cmh_hash.h
+ drivers/crypto/cmh/Makefile   |   3 +-
+ drivers/crypto/cmh/cmh_main.c |   9 +
+ drivers/crypto/cmh/cmh_rng.c  | 316 ++++++++++++++++++++++++++++++++++
+ 3 files changed, 327 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_rng.c
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 1492e575598c..c0531f416229 100644
+index 4ebd0e1d10bc..1c4cb817424c 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -14,7 +14,8 @@ cmh-y :=3D \
-        cmh_dma.o \
-        cmh_sysfs.o \
-        cmh_key.o \
--       cmh_sys.o
-+       cmh_sys.o \
-+       cmh_hash.o
+@@ -28,7 +28,8 @@ cmh-y :=3D \
+        cmh_sm4_cmac.o \
+        cmh_ccp.o \
+        cmh_ccp_aead.o \
+-       cmh_ccp_poly.o
++       cmh_ccp_poly.o \
++       cmh_rng.o
 
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) +=3D \
-diff --git a/drivers/crypto/cmh/cmh_hash.c b/drivers/crypto/cmh/cmh_hash.c
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+index 79df27d43e7e..f31c50168e4a 100644
+--- a/drivers/crypto/cmh/cmh_main.c
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -34,6 +34,7 @@
+ #include "cmh_cshake.h"
+ #include "cmh_kmac.h"
+ #include "cmh_sm3.h"
++#include "cmh_rng.h"
+ #include "cmh_aes.h"
+ #include "cmh_sm4.h"
+ #include "cmh_ccp.h"
+@@ -224,6 +225,11 @@ static int cmh_probe(struct platform_device *pdev)
+        if (ret)
+                goto err_sm3_register;
+
++       /* Register hwrng backed by DRBG core */
++       ret =3D cmh_rng_register(pdev);
++       if (ret)
++               goto err_rng_register;
++
+        /* Register AES skcipher algorithms */
+        ret =3D cmh_aes_register();
+        if (ret)
+@@ -299,6 +305,8 @@ static int cmh_probe(struct platform_device *pdev)
+ err_aes_aead_register:
+        cmh_aes_unregister();
+ err_aes_register:
++       cmh_rng_unregister();
++err_rng_register:
+        cmh_sm3_unregister();
+ err_sm3_register:
+        cmh_kmac_unregister();
+@@ -344,6 +352,7 @@ static void cmh_remove(struct platform_device *pdev)
+        cmh_aes_cmac_unregister();
+        cmh_aes_aead_unregister();
+        cmh_aes_unregister();
++       cmh_rng_unregister();
+        cmh_sm3_unregister();
+        cmh_kmac_unregister();
+        cmh_cshake_unregister();
+diff --git a/drivers/crypto/cmh/cmh_rng.c b/drivers/crypto/cmh/cmh_rng.c
 new file mode 100644
-index 000000000000..2256bf4314c3
+index 000000000000..c9693f6cc360
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_hash.c
-@@ -0,0 +1,860 @@
++++ b/drivers/crypto/cmh/cmh_rng.c
+@@ -0,0 +1,316 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Kernel Crypto API Hash Driver
++ * CMH LKM -- Hardware RNG (DRBG) Driver
 + *
-+ * Registers asynchronous hash (ahash) algorithms with the Linux crypto
-+ * subsystem.  Implements SHA-2 (224/256/384/512), SHA-3
-+ * (224/256/384/512), and SHAKE (128/256) families using the CMH Hash
-+ * Core (HC).
++ * Implements a Linux hwrng backed by the CMH DRBG core.  Each .read()
++ * builds a 3-entry VCQ (header + GENERATE + FLUSH) and submits it
++ * synchronously through the Transaction Manager.
 + *
-+ * Incremental HW update model -- each .update() with enough data for
-+ * at least one full block submits a self-contained VCQ transaction:
++ * DRBG configuration (CONFIG) is a management-host operation in the
++ * CMH security model.  The driver's behaviour is controlled by the
++ * drbg_config setting (debug-only module parameter):
 + *
-+ *   .init()   -> software-only: zero per-request context
-+ *   .update() -> buffer data in holdback; when >=3D block_size bytes:
-+ *                INIT [+ RESTORE] + UPDATE(full blocks) + SAVE + FLUSH
-+ *                -> return -EINPROGRESS  (else return 0, data in holdback=
-)
-+ *   .final()  -> INIT [+ RESTORE] [+ UPDATE(residual)] + FINAL + FLUSH
-+ *   .finup()  -> linearise holdback + new data, then final path
-+ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot, zero-copy)
-+ *   .export() -> software-only: copy checkpoint + holdback to out
-+ *   .import() -> software-only: restore checkpoint + holdback from in
++ *   "auto" (default) -- attempt CONFIG at probe with the hardcoded
++ *     ratio/strength defaults.  Succeeds in stateless mode (any host may
++ *     CONFIG) or when this host is the management host in stateful
++ *     mode.  On -EPERM the driver logs a notice and continues --
++ *     GENERATE will work once the management host configures the DRBG.
 + *
-+ * The FLUSH after each .update() releases the HC core, so no lockout.
-+ * Two hash sessions interleave fine on the same MBX -- each saves its
-+ * own state via SAVE and restores via RESTORE on the next call.
++ *   "skip" -- do not issue CONFIG; assume an external management host
++ *     will configure the DRBG.  hwrng is still registered; .read()
++ *     returns -EAGAIN until GENERATE succeeds.
 + *
-+ * Export/import is purely software (no HW interaction), enabling
-+ * crypto API transform clone for all plain-hash algorithms.
++ * The management host (or any privileged user-space process) can also
++ * reconfigure the DRBG at runtime via CMH_IOCTL_DRBG_CONFIG.
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/crypto.h>
-+#include <crypto/internal/hash.h>
-+#include <crypto/scatterwalk.h>
-+#include <linux/scatterlist.h>
++#include <linux/hw_random.h>
 +#include <linux/slab.h>
-+#include <linux/string.h>
++#include <linux/platform_device.h>
 +
-+#include "cmh_hash.h"
++#include "cmh_rng.h"
 +#include "cmh_vcq.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
++#include "cmh_sys.h"
++#include "cmh_config.h"
 +
-+/* Algorithm Table */
++/* VCQ layout for .read(): header + GENERATE + FLUSH =3D 3 entries. */
++#define DRBG_READ_VCQ_CMDS     3
 +
-+struct cmh_hash_alg_info {
-+       u32         hc_algo;        /* HC_ALGO_* (SHA2, SHA3, SHAKE) */
-+       u32         digest_size;    /* bytes */
-+       u32         block_size;     /* cra_blocksize for Linux crypto API *=
++/* VCQ layout for CONFIG: header + RESET + CONFIG + FLUSH =3D 4 entries. *=
 /
-+       const char *alg_name;       /* Linux crypto name: "sha256" */
-+       const char *drv_name;       /* driver name: "cri-cmh-sha256" */
-+};
++#define DRBG_CONFIG_VCQ_CMDS   4
 +
-+static const struct cmh_hash_alg_info cmh_hash_algs_info[] =3D {
-+       /* SHA-2 family */
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA2_224,
-+               .digest_size =3D CMH_SHA224_DIGEST_SIZE,
-+               .block_size  =3D 64,
-+               .alg_name    =3D "sha224",
-+               .drv_name    =3D "cri-cmh-sha224",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA2_256,
-+               .digest_size =3D CMH_SHA256_DIGEST_SIZE,
-+               .block_size  =3D 64,
-+               .alg_name    =3D "sha256",
-+               .drv_name    =3D "cri-cmh-sha256",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA2_384,
-+               .digest_size =3D CMH_SHA384_DIGEST_SIZE,
-+               .block_size  =3D 128,
-+               .alg_name    =3D "sha384",
-+               .drv_name    =3D "cri-cmh-sha384",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA2_512,
-+               .digest_size =3D CMH_SHA512_DIGEST_SIZE,
-+               .block_size  =3D 128,
-+               .alg_name    =3D "sha512",
-+               .drv_name    =3D "cri-cmh-sha512",
-+       },
-+       /* SHA-3 family */
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA3_224,
-+               .digest_size =3D CMH_SHA3_224_DIGEST_SIZE,
-+               .block_size  =3D 144,  /* rate =3D 1600/8 - 2*224/8 =3D 144=
- */
-+               .alg_name    =3D "sha3-224",
-+               .drv_name    =3D "cri-cmh-sha3-224",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA3_256,
-+               .digest_size =3D CMH_SHA3_256_DIGEST_SIZE,
-+               .block_size  =3D 136,  /* rate =3D 1600/8 - 2*256/8 =3D 136=
- */
-+               .alg_name    =3D "sha3-256",
-+               .drv_name    =3D "cri-cmh-sha3-256",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA3_384,
-+               .digest_size =3D CMH_SHA3_384_DIGEST_SIZE,
-+               .block_size  =3D 104,  /* rate =3D 1600/8 - 2*384/8 =3D 104=
- */
-+               .alg_name    =3D "sha3-384",
-+               .drv_name    =3D "cri-cmh-sha3-384",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHA3_512,
-+               .digest_size =3D CMH_SHA3_512_DIGEST_SIZE,
-+               .block_size  =3D 72,   /* rate =3D 1600/8 - 2*512/8 =3D 72 =
-*/
-+               .alg_name    =3D "sha3-512",
-+               .drv_name    =3D "cri-cmh-sha3-512",
-+       },
++/*
++ * Linux hwrng quality is expressed in bits of entropy per 1024 bits of
++ * input.  The kernel clamps to this maximum; mirror it here so our
++ * MODULE_PARM_DESC and clamp logic stay in sync.
++ */
++#define CMH_HWRNG_QUALITY_MAX  1024
++
++/* Module parameters */
++
++static int hwrng_quality;
++module_param(hwrng_quality, int, 0444);
++MODULE_PARM_DESC(hwrng_quality,
++                "hwrng quality (0=3Dno CRNG seeding, 1-1024=3Denable; defa=
+ult: 0)");
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++static char *drbg_config =3D "auto";
++module_param(drbg_config, charp, 0444);
++MODULE_PARM_DESC(drbg_config,
++                "[debug] DRBG config at probe: \"auto\"=3Dattempt CONFIG, =
+\"skip\"=3Dassume external (default: auto)");
++#else
++static const char *drbg_config =3D "auto";
++#endif
++
++/*
++ * DRBG parameters -- hardcoded to production defaults.
++ * Entropy ratio 0 =3D 1:1 (full entropy), security strength 0x10 =3D 256-=
+bit.
++ */
++#define CMH_DRBG_ENTROPY_RATIO         0
++#define CMH_DRBG_SECURITY_STRENGTH     0x10
++
++static unsigned int drbg_timeout_ms =3D 500;
++
++/* VCQ Builders */
++
++static void vcq_add_drbg_generate(struct vcq_cmd *slot, u64 dst_phys, u32 =
+len)
++{
++       memset(slot, 0, sizeof(*slot));
++       slot->magic =3D VCQ_CMD_MAGIC;
++       slot->id =3D VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_GENERATE);
++       slot->hwc.drbg.cmd_generate.dst =3D dst_phys;
++       slot->hwc.drbg.cmd_generate.len =3D len;
++}
++
++/*
++ * Maximum bytes per DRBG GENERATE request.  The kernel calls .read()
++ * repeatedly to fill larger requests, so capping here is safe.
++ * 32 bytes matches the 256-bit security strength natural output size.
++ */
++#define CMH_DRBG_MAX_GENERATE  32U
++
++/* hwrng .read() callback */
++
++static int cmh_rng_read(struct hwrng *rng, void *data, size_t max, bool wa=
+it)
++{
++       struct cmh_dma_orphan *orphan;
++       struct vcq_cmd vcq[DRBG_READ_VCQ_CMDS];
++       dma_addr_t dma_addr;
++       void *dmabuf;
++       size_t nbytes;
++       int ret;
++
++       if (max =3D=3D 0)
++               return 0;
++
 +       /*
-+        * SHAKE (XOF) family -- fixed-output ahash registration.
-+        *
-+        * cra_blocksize =3D 1: SHAKE is a sponge/XOF, not Merkle-Damgaard.
-+        * The Keccak rate (168 for SHAKE-128, 136 for SHAKE-256) exceeds
-+        * MAX_ALGAPI_BLOCKSIZE (160) on Linux <=3D6.7.  Using 1 signals
-+        * "byte-oriented" which is correct for XOF consumers.  The kernel
-+        * raised the limit to 208 in 6.8 (commit 2f3a22704889).
++        * Our path uses GFP_KERNEL allocations and synchronous VCQ
++        * submission -- both may sleep.  When the caller indicates
++        * non-blocking context (!wait), return 0 ("no data yet") so
++        * the hwrng core retries later.
 +        */
-+       {
-+               .hc_algo     =3D HC_ALGO_SHAKE128,
-+               .digest_size =3D CMH_SHAKE128_DIGEST_SIZE,
-+               .block_size  =3D 1,    /* XOF: no meaningful block for cryp=
-to API */
-+               .alg_name    =3D "shake128",
-+               .drv_name    =3D "cri-cmh-shake128",
-+       },
-+       {
-+               .hc_algo     =3D HC_ALGO_SHAKE256,
-+               .digest_size =3D CMH_SHAKE256_DIGEST_SIZE,
-+               .block_size  =3D 1,    /* XOF: no meaningful block for cryp=
-to API */
-+               .alg_name    =3D "shake256",
-+               .drv_name    =3D "cri-cmh-shake256",
-+       },
-+};
-+
-+#define CMH_HASH_ALG_COUNT  ARRAY_SIZE(cmh_hash_algs_info)
-+
-+/* Per-Request State */
-+
-+/* Maximum cra_blocksize across all registered algorithms (SHA3-224) */
-+#define CMH_HASH_MAX_BLOCK     144
-+
-+/*
-+ * Exported hash state -- serialised by .export(), deserialised by
-+ * .import().  This is what statesize advertises to the crypto subsystem.
-+ */
-+struct cmh_hash_export_state {
-+       u8  checkpoint[HC_CONTEXT_SIZE]; /* HC context from last SAVE */
-+       u8  buf[CMH_HASH_MAX_BLOCK];    /* holdback buffer */
-+       u32 buf_len;                     /* valid bytes in buf[] */
-+       u32 hw_started;                  /* non-zero if checkpoint valid */
-+};
-+
-+/*
-+ * Maximum payload commands any hash transaction can produce:
-+ *   INIT + RESTORE + UPDATE + SAVE/FINAL + FLUSH =3D 5
-+ * Worst-case packed output (stride=3D7, 1 payload per VCQ):
-+ *   5 VCQs x 2 entries =3D 10
-+ */
-+#define CMH_HASH_MAX_PAYLOAD    5
-+#define CMH_HASH_MAX_PACKED     (CMH_HASH_MAX_PAYLOAD * 2)
-+
-+/*
-+ * Stored in ahash_request_ctx().  Tracks the algorithm, a holdback
-+ * buffer for partial blocks, an HC context checkpoint from the last
-+ * SAVE, and DMA state for the current in-flight async operation.
-+ *
-+ * The checkpoint is embedded inline rather than heap-allocated because
-+ * the kernel ahash API has no per-request destructor.  If a request is
-+ * abandoned without .final() (e.g. transform freed early), a heap
-+ * checkpoint would leak unconditionally.
-+ */
-+struct cmh_hash_reqctx {
-+       const struct cmh_hash_alg_info *info;
-+       int    error;
-+       u32    hw_started;      /* non-zero after first HW submission */
-+       u32    buf_len;         /* bytes in holdback buf[] */
-+       u32    has_checkpoint;  /* non-zero if checkpoint[] valid */
-+       /* DMA state for current async operation */
-+       dma_addr_t ckpt_dma;   /* RESTORE input */
-+       dma_addr_t save_dma;   /* SAVE output (update only) */
-+       dma_addr_t data_dma;   /* UPDATE input */
-+       dma_addr_t digest_dma; /* FINAL output (final/digest only) */
-+       u8    *save_buf;       /* SAVE output buffer */
-+       u8    *data_buf;       /* linearised data for DMA */
-+       u32    data_len;       /* bytes in data_buf */
-+       u8    *digest_buf;     /* digest output buffer */
-+       u8     buf[CMH_HASH_MAX_BLOCK]; /* holdback for partial block */
-+       u8     checkpoint[HC_CONTEXT_SIZE]; /* HC context from last SAVE */
-+       struct vcq_cmd packed[CMH_HASH_MAX_PACKED];
-+};
-+
-+/* VCQ Builders (HC-specific; shared builders in cmh_hc_abi.h / cmh_vcq.h)=
- */
-+
-+/* Add an HC_CMD_UPDATE entry */
-+static void vcq_add_hc_update(struct vcq_cmd *slot, u32 core_id, u64 input=
-_phys, u32 len)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, HC_CMD_UPDATE);
-+       slot->hwc.hc.cmd_update.input =3D input_phys;
-+       slot->hwc.hc.cmd_update.inlen =3D len;
-+}
-+
-+/* Add an HC_CMD_SAVE entry */
-+static void vcq_add_hc_save(struct vcq_cmd *slot, u32 core_id, u64 output_=
-phys, u32 outlen)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, HC_CMD_SAVE);
-+       slot->hwc.hc.cmd_save.output =3D output_phys;
-+       slot->hwc.hc.cmd_save.outlen =3D outlen;
-+}
-+
-+/* Add an HC_CMD_RESTORE entry */
-+static void vcq_add_hc_restore(struct vcq_cmd *slot, u32 core_id, u64 inpu=
-t_phys, u32 inlen)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, HC_CMD_RESTORE);
-+       slot->hwc.hc.cmd_restore.input =3D input_phys;
-+       slot->hwc.hc.cmd_restore.inlen =3D inlen;
-+}
-+
-+/* Request Context Cleanup */
-+
-+static void cmh_hash_free_reqctx(struct cmh_hash_reqctx *rctx)
-+{
-+       rctx->has_checkpoint =3D 0;
-+}
-+
-+/* VCQ Packing + Submit */
-+
-+/* ahash Operations */
-+
-+/*
-+ * Wrapper struct: embeds ahash_alg + a pointer to our alg_info table
-+ * entry so we can recover it in the tfm callbacks.
-+ */
-+struct cmh_hash_alg_drv {
-+       struct ahash_alg                 alg;
-+       const struct cmh_hash_alg_info  *info;
-+};
-+
-+/*
-+ * Find the cmh_hash_alg_info from the crypto_ahash (embedded in our
-+ * registered template).  We stash the info pointer in the algorithm's
-+ * driver-private area at registration time (see cmh_hash_register).
-+ */
-+static const struct cmh_hash_alg_info *
-+cmh_hash_get_info(struct crypto_ahash *tfm)
-+{
-+       struct ahash_alg *alg =3D crypto_ahash_alg(tfm);
-+
-+       return container_of(alg, struct cmh_hash_alg_drv, alg)->info;
-+}
-+
-+static int cmh_hash_init(struct ahash_request *req)
-+{
-+       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+
-+       memset(rctx, 0, sizeof(*rctx));
-+       rctx->info =3D cmh_hash_get_info(tfm);
-+       return 0;
-+}
-+
-+/*
-+ * Update completion -- called from threaded IRQ after SAVE completes.
-+ * Takes ownership of save_buf as the new checkpoint.
-+ */
-+static void cmh_hash_update_complete(void *data, int error)
-+{
-+       struct ahash_request *req =3D data;
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+
-+       if (error =3D=3D -EINPROGRESS) {
-+               cmh_complete(&req->base, error);
-+               return;
-+       }
-+
-+       /* Unmap DMA buffers */
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+       cmh_dma_unmap_single(rctx->save_dma, HC_CONTEXT_SIZE,
-+                            DMA_FROM_DEVICE);
-+       cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
-+                            DMA_TO_DEVICE);
-+
-+       if (!error) {
-+               memcpy(rctx->checkpoint, rctx->save_buf, HC_CONTEXT_SIZE);
-+               rctx->has_checkpoint =3D 1;
-+               kfree(rctx->save_buf);
-+               rctx->save_buf =3D NULL;
-+               rctx->hw_started =3D 1;
-+       } else {
-+               kfree(rctx->save_buf);
-+               rctx->save_buf =3D NULL;
-+               rctx->error =3D error;
-+       }
-+
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       rctx->data_len =3D 0;
-+
-+       cmh_complete(&req->base, error);
-+}
-+
-+/*
-+ * .update -- buffer incoming data, submit full blocks to HW.
-+ *
-+ * Maintains a partial-block holdback buffer in rctx->buf[].  When
-+ * enough data is available for at least one full block, the full
-+ * blocks are linearised and submitted as:
-+ *   INIT [+ RESTORE] + UPDATE(full_blocks) + SAVE + FLUSH
-+ *
-+ * The tail (< block_size) stays in the holdback for the next call.
-+ * Returns -EINPROGRESS on HW submission, 0 if only buffering.
-+ */
-+static int cmh_hash_update(struct ahash_request *req)
-+{
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       const struct cmh_hash_alg_info *info =3D rctx->info;
-+       struct vcq_cmd cmds[CMH_HASH_MAX_PAYLOAD];
-+       struct core_dispatch d;
-+       u32 block_size =3D info->block_size;
-+       u32 total_avail, full_len, tail_len, from_src;
-+       u32 idx;
-+       int ret;
-+       gfp_t gfp;
-+
-+       if (rctx->error)
-+               return rctx->error;
-+
-+       if (!req->nbytes)
++       if (!wait)
 +               return 0;
 +
-+       gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+             GFP_KERNEL : GFP_ATOMIC;
++       nbytes =3D min_t(size_t, max, CMH_DRBG_MAX_GENERATE);
 +
-+       total_avail =3D rctx->buf_len + req->nbytes;
-+
-+       /* Not enough for a full block -- just buffer */
-+       if (total_avail < block_size) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->buf + rctx->buf_len,
-+                              req->svirt, req->nbytes);
-+               else
-+                       scatterwalk_map_and_copy(rctx->buf + rctx->buf_len,
-+                                                req->src, 0,
-+                                                req->nbytes, 0);
-+               rctx->buf_len =3D total_avail;
-+               return 0;
-+       }
-+
-+       /* Have at least one full block -- submit to HW */
-+       full_len =3D total_avail - total_avail % block_size;
-+       tail_len =3D total_avail - full_len;
-+       from_src =3D full_len - rctx->buf_len;
-+
-+       /* Linearise: holdback prefix + full blocks from scatterlist */
-+       rctx->data_buf =3D kmalloc(full_len, gfp);
-+       if (!rctx->data_buf)
++       orphan =3D kmalloc_obj(*orphan, GFP_KERNEL);
++       if (!orphan)
 +               return -ENOMEM;
 +
-+       if (rctx->buf_len > 0)
-+               memcpy(rctx->data_buf, rctx->buf, rctx->buf_len);
-+
-+       if (from_src > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->data_buf + rctx->buf_len,
-+                              req->svirt, from_src);
-+               else
-+                       scatterwalk_map_and_copy(rctx->data_buf + rctx->buf=
-_len,
-+                                                req->src, 0,
-+                                                from_src, 0);
-+       }
-+
-+       /* Move tail to holdback */
-+       if (tail_len > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->buf, req->svirt + from_src,
-+                              tail_len);
-+               else
-+                       scatterwalk_map_and_copy(rctx->buf, req->src,
-+                                                from_src, tail_len,
-+                                                0);
-+       }
-+       rctx->buf_len =3D tail_len;
-+       rctx->data_len =3D full_len;
-+
-+       /* Allocate SAVE output buffer */
-+       rctx->save_buf =3D kzalloc(HC_CONTEXT_SIZE, gfp);
-+       if (!rctx->save_buf) {
-+               ret =3D -ENOMEM;
-+               goto err_free;
-+       }
-+
-+       /* DMA map data, save output, and checkpoint */
-+       rctx->data_dma =3D cmh_dma_map_single(rctx->data_buf, full_len,
-+                                           DMA_TO_DEVICE);
-+       if (cmh_dma_map_error(rctx->data_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_free;
-+       }
-+
-+       rctx->save_dma =3D cmh_dma_map_single(rctx->save_buf, HC_CONTEXT_SI=
-ZE,
-+                                           DMA_FROM_DEVICE);
-+       if (cmh_dma_map_error(rctx->save_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_unmap_data;
-+       }
-+
-+       rctx->ckpt_dma =3D DMA_MAPPING_ERROR;
-+       if (rctx->has_checkpoint) {
-+               rctx->ckpt_dma =3D cmh_dma_map_single(rctx->checkpoint,
-+                                                   HC_CONTEXT_SIZE,
-+                                                    DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->ckpt_dma)) {
-+                       ret =3D -ENOMEM;
-+                       goto err_unmap_save;
-+               }
-+       }
-+
-+       /* Build VCQ: INIT [+ RESTORE] + UPDATE + SAVE + FLUSH */
-+       d =3D cmh_core_select_instance(CMH_CORE_HC);
-+       idx =3D 0;
-+
-+       vcq_add_hc_init(&cmds[idx++], d.core_id, info->hc_algo);
-+
-+       if (rctx->has_checkpoint)
-+               vcq_add_hc_restore(&cmds[idx++], d.core_id,
-+                                  (u64)rctx->ckpt_dma, HC_CONTEXT_SIZE);
-+
-+       vcq_add_hc_update(&cmds[idx++], d.core_id,
-+                         (u64)rctx->data_dma, full_len);
-+
-+       vcq_add_hc_save(&cmds[idx++], d.core_id,
-+                       (u64)rctx->save_dma, HC_CONTEXT_SIZE);
-+
-+       vcq_add_flush(&cmds[idx++], d.core_id);
-+
-+       ret =3D cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+                                           CMH_HASH_MAX_PACKED,
-+                                           d.mbx_idx,
-+                                           cmh_hash_update_complete, req,
-+                                           !!(req->base.flags &
-+                                              CRYPTO_TFM_REQ_MAY_BACKLOG),
-+                                           cmh_tm_async_timeout_jiffies())=
-;
-+       if (ret =3D=3D -EBUSY)
-+               return -EBUSY;
-+       if (ret)
-+               goto err_unmap_ckpt;
-+
-+       return -EINPROGRESS;
-+
-+err_unmap_ckpt:
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+err_unmap_save:
-+       cmh_dma_unmap_single(rctx->save_dma, HC_CONTEXT_SIZE,
-+                            DMA_FROM_DEVICE);
-+err_unmap_data:
-+       cmh_dma_unmap_single(rctx->data_dma, full_len, DMA_TO_DEVICE);
-+err_free:
-+       kfree(rctx->save_buf);
-+       rctx->save_buf =3D NULL;
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       rctx->data_len =3D 0;
-+       return ret;
-+}
-+
-+/*
-+ * Final completion -- unmap all DMA, copy digest, signal done.
-+ */
-+static void cmh_hash_final_complete(void *data, int error)
-+{
-+       struct ahash_request *req =3D data;
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+
-+       if (error =3D=3D -EINPROGRESS) {
-+               cmh_complete(&req->base, error);
-+               return;
-+       }
-+
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+       if (rctx->data_buf)
-+               cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
-+                                    DMA_TO_DEVICE);
-+       cmh_dma_unmap_single(rctx->digest_dma, rctx->info->digest_size,
-+                            DMA_FROM_DEVICE);
-+
-+       if (!error)
-+               memcpy(req->result, rctx->digest_buf,
-+                      rctx->info->digest_size);
-+
-+       kfree(rctx->digest_buf);
-+       rctx->digest_buf =3D NULL;
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       cmh_hash_free_reqctx(rctx);
-+       cmh_complete(&req->base, error);
-+}
-+
-+/*
-+ * Submit the final VCQ transaction:
-+ *   INIT [+ RESTORE] [+ UPDATE(residual)] + FINAL + FLUSH
-+ *
-+ * @data_buf: linearised residual data, or NULL for empty-hash.
-+ *            Ownership transferred -- callback frees it.
-+ * @data_len: bytes in data_buf.
-+ */
-+static int cmh_hash_submit_final(struct ahash_request *req,
-+                                u8 *data_buf, u32 data_len)
-+{
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       const struct cmh_hash_alg_info *info =3D rctx->info;
-+       struct vcq_cmd cmds[CMH_HASH_MAX_PAYLOAD];
-+       struct core_dispatch d;
-+       u32 idx;
-+       int ret;
-+       gfp_t gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+                  GFP_KERNEL : GFP_ATOMIC;
-+
-+       rctx->data_buf =3D data_buf;
-+       rctx->data_len =3D data_len;
-+
-+       /* Allocate digest output buffer */
-+       rctx->digest_buf =3D kzalloc(info->digest_size, gfp);
-+       if (!rctx->digest_buf) {
-+               ret =3D -ENOMEM;
-+               goto err_free_data;
-+       }
-+
-+       rctx->digest_dma =3D cmh_dma_map_single(rctx->digest_buf,
-+                                             info->digest_size,
-+                                              DMA_FROM_DEVICE);
-+       if (cmh_dma_map_error(rctx->digest_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_free_digest;
-+       }
-+
-+       /* Map residual data for UPDATE */
-+       rctx->data_dma =3D DMA_MAPPING_ERROR;
-+       if (data_buf && data_len > 0) {
-+               rctx->data_dma =3D cmh_dma_map_single(data_buf, data_len,
-+                                                   DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->data_dma)) {
-+                       ret =3D -ENOMEM;
-+                       goto err_unmap_digest;
-+               }
-+       }
-+
-+       /* Map checkpoint for RESTORE */
-+       rctx->ckpt_dma =3D DMA_MAPPING_ERROR;
-+       if (rctx->has_checkpoint) {
-+               rctx->ckpt_dma =3D cmh_dma_map_single(rctx->checkpoint,
-+                                                   HC_CONTEXT_SIZE,
-+                                                    DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->ckpt_dma)) {
-+                       ret =3D -ENOMEM;
-+                       goto err_unmap_data;
-+               }
-+       }
-+
-+       /* Build VCQ: INIT [+ RESTORE] [+ UPDATE] + FINAL + FLUSH */
-+       d =3D cmh_core_select_instance(CMH_CORE_HC);
-+       idx =3D 0;
-+
-+       vcq_add_hc_init(&cmds[idx++], d.core_id, info->hc_algo);
-+
-+       if (rctx->has_checkpoint)
-+               vcq_add_hc_restore(&cmds[idx++], d.core_id,
-+                                  (u64)rctx->ckpt_dma, HC_CONTEXT_SIZE);
-+
-+       if (data_buf && data_len > 0)
-+               vcq_add_hc_update(&cmds[idx++], d.core_id,
-+                                 (u64)rctx->data_dma, data_len);
-+
-+       vcq_add_hc_final(&cmds[idx++], d.core_id,
-+                        (u64)rctx->digest_dma, info->digest_size);
-+
-+       vcq_add_flush(&cmds[idx++], d.core_id);
-+
-+       ret =3D cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+                                           CMH_HASH_MAX_PACKED,
-+                                           d.mbx_idx,
-+                                           cmh_hash_final_complete, req,
-+                                           !!(req->base.flags &
-+                                              CRYPTO_TFM_REQ_MAY_BACKLOG),
-+                                           cmh_tm_async_timeout_jiffies())=
-;
-+       if (ret =3D=3D -EBUSY)
-+               return -EBUSY;
-+       if (ret)
-+               goto err_unmap_ckpt;
-+
-+       return -EINPROGRESS;
-+
-+err_unmap_ckpt:
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+err_unmap_data:
-+       if (data_buf && data_len > 0)
-+               cmh_dma_unmap_single(rctx->data_dma, data_len,
-+                                    DMA_TO_DEVICE);
-+err_unmap_digest:
-+       cmh_dma_unmap_single(rctx->digest_dma, info->digest_size,
-+                            DMA_FROM_DEVICE);
-+err_free_digest:
-+       kfree(rctx->digest_buf);
-+       rctx->digest_buf =3D NULL;
-+err_free_data:
-+       kfree(data_buf);
-+       rctx->data_buf =3D NULL;
-+       cmh_hash_free_reqctx(rctx);
-+       return ret;
-+}
-+
-+static int cmh_hash_final(struct ahash_request *req)
-+{
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       u8 *data_buf =3D NULL;
-+       u32 data_len =3D 0;
-+       gfp_t gfp;
-+
-+       if (rctx->error)
-+               return rctx->error;
-+
-+       if (rctx->buf_len > 0) {
-+               gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+                     GFP_KERNEL : GFP_ATOMIC;
-+               data_buf =3D kmalloc(rctx->buf_len, gfp);
-+               if (!data_buf)
-+                       return -ENOMEM;
-+               memcpy(data_buf, rctx->buf, rctx->buf_len);
-+               data_len =3D rctx->buf_len;
-+               rctx->buf_len =3D 0;
-+       }
-+
-+       return cmh_hash_submit_final(req, data_buf, data_len);
-+}
-+
-+static int cmh_hash_finup(struct ahash_request *req);
-+
-+/*
-+ * One-shot digest -- delegates to init + finup so that all data is
-+ * linearised and mapped through cmh_dma_map_single(), which is the
-+ * only DMA mapping path aware of all supported DMA backends.
-+ */
-+static int cmh_hash_digest(struct ahash_request *req)
-+{
-+       int ret;
-+
-+       ret =3D cmh_hash_init(req);
-+       if (ret)
-+               return ret;
-+       return cmh_hash_finup(req);
-+}
-+
-+/*
-+ * .finup -- update + final combined into a single transaction.
-+ *
-+ * Linearises the holdback buffer + new data and submits everything
-+ * through the final path.  Avoids the kernel's ahash_def_finup()
-+ * which would allocate a subrequest and clone via export/import.
-+ */
-+static int cmh_hash_finup(struct ahash_request *req)
-+{
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       u32 data_len;
-+       u8 *data_buf;
-+       gfp_t gfp;
-+
-+       if (rctx->error)
-+               return rctx->error;
-+
-+       data_len =3D rctx->buf_len + req->nbytes;
-+
-+       if (data_len =3D=3D 0)
-+               return cmh_hash_submit_final(req, NULL, 0);
-+
-+       gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+             GFP_KERNEL : GFP_ATOMIC;
-+
-+       data_buf =3D kmalloc(data_len, gfp);
-+       if (!data_buf)
++       dmabuf =3D kmalloc(nbytes, GFP_KERNEL);
++       if (!dmabuf) {
++               kfree(orphan);
 +               return -ENOMEM;
-+
-+       if (rctx->buf_len > 0)
-+               memcpy(data_buf, rctx->buf, rctx->buf_len);
-+
-+       if (req->nbytes > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(data_buf + rctx->buf_len,
-+                              req->svirt, req->nbytes);
-+               else
-+                       scatterwalk_map_and_copy(data_buf + rctx->buf_len,
-+                                                req->src, 0,
-+                                                req->nbytes, 0);
 +       }
 +
-+       rctx->buf_len =3D 0;
-+       return cmh_hash_submit_final(req, data_buf, data_len);
-+}
-+
-+/*
-+ * Export -- purely software.
-+ *
-+ * Serialise the HC checkpoint (if any) and holdback buffer into the
-+ * export state structure.  No HW interaction needed because the
-+ * incremental model keeps checkpoint up-to-date after each .update().
-+ */
-+static int cmh_hash_export(struct ahash_request *req, void *out)
-+{
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       struct cmh_hash_export_state *state =3D out;
-+
-+       if (rctx->hw_started && rctx->has_checkpoint)
-+               memcpy(state->checkpoint, rctx->checkpoint, HC_CONTEXT_SIZE=
-);
-+       else
-+               memset(state->checkpoint, 0, HC_CONTEXT_SIZE);
-+
-+       if (rctx->buf_len > 0)
-+               memcpy(state->buf, rctx->buf, rctx->buf_len);
-+
-+       state->buf_len =3D rctx->buf_len;
-+       state->hw_started =3D rctx->hw_started;
-+
-+       return 0;
-+}
-+
-+/*
-+ * Import -- purely software.
-+ *
-+ * Restore checkpoint and holdback from a previously exported state.
-+ * The next .update() or .final() will RESTORE the checkpoint into HW.
-+ */
-+static int cmh_hash_import(struct ahash_request *req, const void *in)
-+{
-+       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
-+       struct cmh_hash_reqctx *rctx =3D ahash_request_ctx(req);
-+       const struct cmh_hash_export_state *state =3D in;
-+
-+       memset(rctx, 0, sizeof(*rctx));
-+       rctx->info =3D cmh_hash_get_info(tfm);
-+
-+       if (state->buf_len > CMH_HASH_MAX_BLOCK)
-+               return -EINVAL;
-+
-+       rctx->hw_started =3D state->hw_started;
-+       rctx->buf_len =3D state->buf_len;
-+       memcpy(rctx->buf, state->buf, state->buf_len);
-+
-+       if (state->hw_started) {
-+               memcpy(rctx->checkpoint, state->checkpoint, HC_CONTEXT_SIZE=
-);
-+               rctx->has_checkpoint =3D 1;
++       dma_addr =3D cmh_dma_map_single(dmabuf, nbytes, DMA_FROM_DEVICE);
++       if (cmh_dma_map_error(dma_addr)) {
++               kfree(dmabuf);
++               kfree(orphan);
++               return -ENOMEM;
 +       }
 +
-+       return 0;
-+}
++       orphan->buf  =3D dmabuf;
++       orphan->addr =3D dma_addr;
++       orphan->len  =3D nbytes;
++       orphan->dir  =3D DMA_FROM_DEVICE;
 +
-+/* Transform init (cra_init) -- set per-request context size */
++       vcq_set_header(&vcq[0], DRBG_READ_VCQ_CMDS);
++       vcq_add_drbg_generate(&vcq[1], dma_addr, nbytes);
++       vcq_add_flush(&vcq[2], CORE_ID_DRBG);
 +
-+static int cmh_hash_cra_init(struct crypto_tfm *tfm)
-+{
-+       crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-+                                sizeof(struct cmh_hash_reqctx));
-+       return 0;
++       /*
++        * Use the noabort variant: if the MBX is occupied by a slow
++        * operation (e.g. SLH-DSA sign at 120 s), we must not issue
++        * MBX_COMMAND_ABORT -- that would kill the unrelated in-flight
++        * VCQ.  On timeout with an in-flight VCQ (-EINPROGRESS), the
++        * orphan callback defers DMA cleanup until the RH fires.
++        */
++       ret =3D cmh_tm_submit_sync_noabort(vcq, DRBG_READ_VCQ_CMDS, 1,
++                                        msecs_to_jiffies(drbg_timeout_ms),
++                                        cmh_dma_orphan_free, orphan);
++       if (ret =3D=3D -EINPROGRESS) {
++               /* Orphan callback owns dmabuf -- will free on VCQ completi=
+on */
++               return -EAGAIN;
++       }
++
++       /* Normal path or cancelled-from-queue: caller owns DMA */
++       cmh_dma_unmap_single(dma_addr, nbytes, DMA_FROM_DEVICE);
++       kfree(orphan);
++
++       if (ret) {
++               /*
++                * Only translate known transient conditions to -EAGAIN
++                * so the hwrng subsystem retries later.  Propagate
++                * unexpected failures unchanged to avoid masking real
++                * faults and causing indefinite retry loops.
++                */
++               switch (ret) {
++               case -EAGAIN:
++               case -EBUSY:
++               case -ETIMEDOUT:
++               case -EIO:
++               /*
++                * -ENODEV: the TM is not running -- occurs when the
++                * hwrng kthread (PF_NOFREEZE, not frozen during
++                * suspend) calls .read() while the device is suspended.
++                * Treat as transient: the TM restarts on resume.
++                */
++               case -ENODEV:
++                       dev_dbg_ratelimited(cmh_dev(),
++                                           "rng: transient DRBG failure (r=
+c=3D%d)\n",
++                                           ret);
++                       kfree(dmabuf);
++                       return -EAGAIN;
++               default:
++                       dev_err_ratelimited(cmh_dev(),
++                                           "rng: DRBG generate failed (rc=
+=3D%d)\n",
++                                           ret);
++                       kfree(dmabuf);
++                       return ret;
++               }
++       }
++
++       memcpy(data, dmabuf, nbytes);
++       kfree(dmabuf);
++
++       return nbytes;
 +}
 +
 +/* Registration */
 +
-+static struct cmh_hash_alg_drv cmh_hash_drvs[CMH_HASH_ALG_COUNT];
++static bool cmh_rng_registered;
++
++static struct hwrng cmh_hwrng =3D {
++       .name =3D "cri-cmh-drbg",
++       .read =3D cmh_rng_read,
++};
 +
 +/**
-+ * cmh_hash_register() - Register SHA-256/384/512/3-256/3-384/3-512 hash a=
-lgorithms
++ * cmh_rng_register() - Register the CMH hardware RNG device
++ * @pdev: Platform device for the CMH accelerator
++ *
++ * Reads hwrng quality from device tree and module parameters, validates
++ * DRBG configuration, optionally sends a DRBG CONFIG VCQ to firmware,
++ * and registers the hwrng device with the kernel hwrng framework.
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_hash_register(void)
++int cmh_rng_register(struct platform_device *pdev)
 +{
-+       unsigned int i;
 +       int ret;
 +
-+       for (i =3D 0; i < CMH_HASH_ALG_COUNT; i++) {
-+               const struct cmh_hash_alg_info *info =3D &cmh_hash_algs_inf=
-o[i];
-+               struct cmh_hash_alg_drv *drv =3D &cmh_hash_drvs[i];
-+               struct ahash_alg *alg =3D &drv->alg;
++       cmh_hwrng.quality =3D hwrng_quality;
 +
-+               drv->info =3D info;
++       if (cmh_hwrng.quality > CMH_HWRNG_QUALITY_MAX)
++               cmh_hwrng.quality =3D CMH_HWRNG_QUALITY_MAX;
 +
-+               alg->init   =3D cmh_hash_init;
-+               alg->update =3D cmh_hash_update;
-+               alg->final  =3D cmh_hash_final;
-+               alg->finup  =3D cmh_hash_finup;
-+               alg->digest =3D cmh_hash_digest;
-+               alg->export =3D cmh_hash_export;
-+               alg->import =3D cmh_hash_import;
++       /*
++        * DRBG CONFIG is a management-host operation.  In "auto" mode,
++        * attempt it -- this succeeds in stateless mode (any host) or
++        * when we are the management host in stateful mode.  On -EPERM
++        * (not management host) we continue without error -- GENERATE
++        * will work once the management host configures the DRBG.
++        *
++        * In "skip" mode, do not issue CONFIG -- assume the management
++        * host has already configured (or will configure) the DRBG.
++        */
++       if (strcmp(drbg_config, "skip") !=3D 0) {
++               struct vcq_cmd cfg_vcq[DRBG_CONFIG_VCQ_CMDS];
 +
-+               alg->halg.digestsize =3D info->digest_size;
-+               alg->halg.statesize  =3D sizeof(struct cmh_hash_export_stat=
-e);
++               if (strcmp(drbg_config, "auto") !=3D 0)
++                       dev_warn(&pdev->dev,
++                                "rng: unrecognized drbg_config=3D\"%s\", t=
+reating as \"auto\"\n",
++                                drbg_config);
 +
-+               strscpy(alg->halg.base.cra_name, info->alg_name,
-+                       CRYPTO_MAX_ALG_NAME);
-+               strscpy(alg->halg.base.cra_driver_name, info->drv_name,
-+                       CRYPTO_MAX_ALG_NAME);
-+               alg->halg.base.cra_priority    =3D 300;
-+               alg->halg.base.cra_flags       =3D CRYPTO_ALG_KERN_DRIVER_O=
-NLY |
-+                                                CRYPTO_ALG_NO_FALLBACK |
-+                                                CRYPTO_ALG_ASYNC |
-+                                                CRYPTO_ALG_REQ_VIRT;
-+               alg->halg.base.cra_blocksize   =3D info->block_size;
-+               alg->halg.base.cra_ctxsize     =3D 0;
-+               alg->halg.base.cra_init        =3D cmh_hash_cra_init;
-+               alg->halg.base.cra_module      =3D THIS_MODULE;
-+
-+               ret =3D crypto_register_ahash(alg);
-+               if (ret) {
-+                       dev_err(cmh_dev(), "hash: failed to register %s (rc=
-=3D%d)\n",
-+                               info->drv_name, ret);
-+                       /* Unregister any already-registered algorithms */
-+                       while (i--)
-+                               crypto_unregister_ahash(&cmh_hash_drvs[i].a=
-lg);
-+                       return ret;
-+               }
-+
-+               dev_dbg(cmh_dev(), "hash: registered %s (priority 300)\n",
-+                       info->drv_name);
++               vcq_set_header(&cfg_vcq[0], DRBG_CONFIG_VCQ_CMDS);
++               vcq_add_drbg_reset(&cfg_vcq[1]);
++               vcq_add_drbg_config(&cfg_vcq[2], CMH_DRBG_ENTROPY_RATIO,
++                                   CMH_DRBG_SECURITY_STRENGTH);
++               vcq_add_flush(&cfg_vcq[3], CORE_ID_DRBG);
++               ret =3D cmh_tm_submit_sync(cfg_vcq, DRBG_CONFIG_VCQ_CMDS, 1=
+);
++               if (ret =3D=3D -EPERM)
++                       dev_notice(&pdev->dev,
++                                  "rng: DRBG config not permitted (not man=
+agement host); assuming external configuration\n");
++               else if (ret)
++                       dev_warn(&pdev->dev,
++                                "rng: DRBG config failed (rc=3D%d)\n", ret=
+);
++               else
++                       dev_info(&pdev->dev,
++                                "rng: DRBG configured (ratio=3D%u strength=
+=3D0x%02x)\n",
++                                CMH_DRBG_ENTROPY_RATIO,
++                                CMH_DRBG_SECURITY_STRENGTH);
++       } else {
++               dev_info(&pdev->dev,
++                        "rng: DRBG config skipped (drbg_config=3Dskip); as=
+suming external configuration\n");
 +       }
 +
-+       dev_info(cmh_dev(), "hash: %zu algorithm(s) registered\n",
-+                CMH_HASH_ALG_COUNT);
++       ret =3D hwrng_register(&cmh_hwrng);
++       if (ret) {
++               dev_err(&pdev->dev, "rng: hwrng_register failed (rc=3D%d)\n=
+",
++                       ret);
++               return ret;
++       }
++
++       dev_info(&pdev->dev,
++                "rng: registered cri-cmh-drbg (quality=3D%d timeout=3D%ums=
+)\n",
++                cmh_hwrng.quality, drbg_timeout_ms);
++
++       cmh_rng_registered =3D true;
 +       return 0;
 +}
 +
 +/**
-+ * cmh_hash_unregister() - Unregister SHA hash algorithms from the crypto =
-framework
++ * cmh_rng_unregister() - Unregister the CMH hardware RNG device
++ *
++ * Unregisters the hwrng device from the kernel hwrng framework if it
++ * was previously registered.
 + */
-+void cmh_hash_unregister(void)
++void cmh_rng_unregister(void)
 +{
-+       unsigned int i;
-+
-+       for (i =3D 0; i < CMH_HASH_ALG_COUNT; i++) {
-+               crypto_unregister_ahash(&cmh_hash_drvs[i].alg);
-+               dev_dbg(cmh_dev(), "hash: unregistered %s\n",
-+                       cmh_hash_algs_info[i].drv_name);
-+       }
-+
-+       dev_info(cmh_dev(), "hash: cleaned up\n");
++       if (!cmh_rng_registered)
++               return;
++       hwrng_unregister(&cmh_hwrng);
++       cmh_rng_registered =3D false;
++       dev_info(cmh_dev(), "rng: unregistered cri-cmh-drbg\n");
 +}
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index 307bd7dd304b..e8e30b893932 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -29,6 +29,7 @@
- #include "cmh_mqi.h"
- #include "cmh_txn.h"
- #include "cmh_rh.h"
-+#include "cmh_hash.h"
- #include "cmh_mgmt.h"
- #include "cmh_registers.h"
- #include "cmh_debugfs.h"
-@@ -191,6 +192,11 @@ static int cmh_probe(struct platform_device *pdev)
-        if (ret)
-                goto err_rh_init;
-
-+       /* Register hash algorithms with the kernel crypto API */
-+       ret =3D cmh_hash_register();
-+       if (ret)
-+               goto err_hash_register;
 +
-        /* Register key management device (/dev/cmh_mgmt) */
-        ret =3D cmh_mgmt_register();
-        if (ret)
-@@ -203,6 +209,8 @@ static int cmh_probe(struct platform_device *pdev)
-        return 0;
-
- err_mgmt_register:
-+       cmh_hash_unregister();
-+err_hash_register:
-        cmh_rh_cleanup(cfg);
- err_rh_init:
-        cmh_tm_cleanup();
-@@ -229,6 +237,7 @@ static void cmh_remove(struct platform_device *pdev)
-        cfg =3D &dev->config;
-
-        cmh_mgmt_unregister();
-+       cmh_hash_unregister();
-        cmh_rh_cleanup(cfg);
-        cmh_tm_cleanup();
-        cmh_mqi_cleanup(cfg);
-diff --git a/drivers/crypto/cmh/include/cmh_hash.h b/drivers/crypto/cmh/inc=
-lude/cmh_hash.h
-new file mode 100644
-index 000000000000..bf17d3af7787
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_hash.h
-@@ -0,0 +1,26 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Kernel Crypto API Hash Driver
++/* -- debugfs timeout accessor ------------------------------------------ =
+*/
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++/**
++ * cmh_rng_timeout_drbg_ptr() - Return pointer to drbg_timeout_ms for debu=
+gfs
 + *
-+ * Registers ahash algorithms (SHA-2, SHA-3, and SHAKE families) with the
-+ * Linux crypto subsystem.  Uses an incremental HW update model:
++ * Exposes the DRBG operation timeout for runtime tuning via debugfs
++ * config/ directory.
 + *
-+ *   .init()   -> software-only: zero per-request context
-+ *   .update() -> holdback partial blocks; submit full blocks via
-+ *                INIT [+ RESTORE] + UPDATE + SAVE + FLUSH
-+ *   .final()  -> INIT [+ RESTORE] [+ UPDATE(residual)] + FINAL + FLUSH
-+ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot)
-+ *   .export() -> software-only: copy checkpoint + holdback
-+ *   .import() -> software-only: restore checkpoint + holdback
++ * Return: pointer to the static drbg_timeout_ms variable.
 + */
-+
-+#ifndef CMH_HASH_H
-+#define CMH_HASH_H
-+
-+#include "cmh_config.h"
-+
-+int  cmh_hash_register(void);
-+void cmh_hash_unregister(void);
-+
-+#endif /* CMH_HASH_H */
++unsigned int *cmh_rng_timeout_drbg_ptr(void) { return &drbg_timeout_ms; }
++#endif
 --
 2.43.7
 
