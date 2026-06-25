@@ -1,28 +1,28 @@
-Received: from SN4PR0501CU005.outbound.protection.outlook.com (mail-southcentralusazon11021136.outbound.protection.outlook.com [40.93.194.136])
+Received: from BN1PR04CU002.outbound.protection.outlook.com (mail-eastus2azon11020074.outbound.protection.outlook.com [52.101.56.74])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 175183ED3A4;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0A32E3ED13F;
 	Thu, 25 Jun 2026 17:34:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.194.136
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.56.74
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782408860; cv=fail; b=E8sABHwSJYxM9Y6RVZ+q8zBfZx/E7/2zQaQ6snvXoRZaWEfbQUAflpTbVYAq1eDBkkqyJ/n04OG7By4eRC2+57UT+VM5WfUpF+kLOFSVSY+Xrak7sRdxcaaIHejUHRJ2aQAhf9rwF65CuUqBckphMYO3a3Ni/3S2Azx1t2nRzho=
+	t=1782408861; cv=fail; b=pqhNZkrV3rvbnPfCIFNmUJEjDlyD64nTg/kfi30ghMuh8JmmMfshd5S/hM9mCFh3Cwl+do38tvnj4ch0gSWZ3WsMk5Ik32d3Sf7PasnFAq5oWZonSl72TMZn2TLoZPxtTAq66xm5ooPVn+ZU7wxOlqyxIHSNBYQ6KXxkmLN0cNk=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782408860; c=relaxed/simple;
-	bh=0LZA1ingGgaFzDUya1kdTQ4jamVxM7QVjwKarjoi5Fk=;
+	s=arc-20240116; t=1782408861; c=relaxed/simple;
+	bh=xLoeMHfx0MJwDPAF2nMNuDgqQrM/9RnFkn9QgGrDELg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=adQd9jcHIFfHeDWDaMZQreNff6nRMGStYwcllwv6Hy+orUoz2uG1Oir9HvC+GbEPw8/kBFoqlDx5mnobAM0zJyRmttzX94EsQL/f8MmbaS4xjSVb6RtPd7lwl9WThM4zFjZTanNfFS5M1TrVtPLJVgXzKdSjyWFlVyPaQCJ27p8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=zSPZk4AW; arc=fail smtp.client-ip=40.93.194.136
+	 MIME-Version:Content-Type; b=r2SrD2CijrjeZnISmJgssRrns5ibgbzIbI8K9LLF+nJV4qkf3cjf4JM3qtM+9V6dmmUiS/d77IHW5k5v2AVriF2kyQmAbdFLG5/vczL9rQxCTSh94LFf2xcc5LAIfEhRTxdEMtZPMOslJm510zmaw6UyXAbWTLJoeNHAXQfjBLA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=PILasnqH; arc=fail smtp.client-ip=52.101.56.74
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="zSPZk4AW"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="PILasnqH"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=sCcImMWYsGuyxEfFnOHpVXgiILOi+Ehg+4LKbGEh/O45Uqx6SvBXaXksdoYv6GOyW2/fb+mzyeQyLFgS0gx0NSq+tkwiJ7/YxyykAefGtWu75lo/IEpkk55dYxv85pCfpK8Zu2xYJPh2SCPnCwh6NZDrleUXeh8iFelOihcYvFA9pFOpdIMLk5zBsH9rTvMpggUicE6XG0FWEQj66ggGJk1NFuvSYShBnipF3CXkLGx25gvQrkZ0utE+X+/B3z3uXP2kxgye1224Pe2ijU/nDfw6hOTi0juca5/aYpdHo+YtSSUEATeV74r4QeDkZuF2JKPeUOSUTCWljZcQ5MrM9A==
+ b=RkjxW+JI/1WFrqo5N47/y1Ta1W5XS2tqEia4NWmjbQCiW0ybllKhEO9d1iPrZhfk8x7Le/YQ6+XwHrexTCd6TEl3+4GrsOaqGuTFpIbA23vk2pAcDJmVbjFxYl0wzG95rp2V3HeuREeHLJ/LSKnQ+YbTDqWM9+jXbWVK0tlvrnp0/i76wW84fAgdFBj3VNvVkgGoQ0drb8M9sNwLnOrGfIhVZbyeddDrRIrx+3EorkPAJk5mGSEmd9PTYTkMKWyoO0cVufny8yC51egifxBMUarTz6JZb024/Sl48UZGSGF2jI4xe0jov1FVhYbBvNxIyt4uovn/Rv8DbeBf2hay2g==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=yx78HMsVFkk1b9/fp26pVfsH6nn2vfQjbtuBXWj9Bg0=;
- b=mzsYWOEjctAXeOs25odQuRup4t1/E7/QYBe3SGREQNxQ3yAfEVWdtTgKbXAUyoqUCE0ZL9F7t6QzvEjyxQPEGFoiYUY2z7ESq0ep9D2TLkIpDYrnxvbqP8TCH64mqLThB/Dhb62EpRTiv+bdsPK0WVHC3SzQ6ySZY14WWFsDmIYa//tQAA5FpZcXe2Ye+ceHzskvsYCepbs3qj/p3VkUbYGaX40bYhf/3PdKWv0EBQitlh6Qfamtfe5uQ2boxwPbrb3p5K2WSCN7W8c3fTIdwbwU6BNtOJhreH2rZ/D6AeMyu8vvyOsvRSzoaExvku0ygRYfNCtbO+4uGysX9n0pFQ==
+ bh=4ocNC4lnov5ZFcyrsgAmb1QwtSldwAfMVDmL8Ugsu6o=;
+ b=tVHXCG+pTChNtau+FBzGNRpC5SsWiMIb3CMUSeqjaiWcEDqPLLtTze/FoLQrkpZCWGTakSDO+5XoRkSWA/4UroY13Z7nYNYlhyU740A5UcvsL9sTrYxSdYXGEaqELHdHsoHN4/seCwvG0egiPlxc+Hq3yTmRUXhrth5nR5J7Rrh7x1wJZAOv3sFWc/nsl21QZAtBTZYDhQxlZYA5O1r4W1jTzM6E578Ies8qzOadz1GJamqC2fvGRleXx8XEMaN8rbDw/9n1alDhIpE9fBpIfCIVBdlAZxwzl16kFoLR9UMwmlhlLn6Ca8YdEOJRBNU8/9zBL3Y4WnejEDifDCTNkQ==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=yx78HMsVFkk1b9/fp26pVfsH6nn2vfQjbtuBXWj9Bg0=;
- b=zSPZk4AWckCnYyZ3b9S+VaNLjryzdsUly2GL/Mt3+B3lZKeSVmJPsMKMtq6eiEYoIt9daNXuOlyzYS9AlOPukKv2Kpuod5N3GD1NISO+mbMv5SvwI2yWkbqjIrOtDdV7Tsux5EGXO0bZm1gplR5DmBTWwVL1C1/NV0vh31QCUk4IMjO+2g6dbE3ye6XTBVSxBi7SPbgrtPc0cbK5Y1o9tobAowOYSyhdMjPrIwSIvqQrA9erqZTa/QF1j76iTzrjEUA7IbaKZHC2yuJIuq3AEfqmp42JQvpq7eO4R4NcvSFOoMp96VSkPnUEHjsaGiUf9iTKphvzmIG8QRPkPcN9/Q==
-Received: from SJ0PR13CA0094.namprd13.prod.outlook.com (2603:10b6:a03:2c5::9)
- by SA6PR04MB9672.namprd04.prod.outlook.com (2603:10b6:806:434::17) with
+ bh=4ocNC4lnov5ZFcyrsgAmb1QwtSldwAfMVDmL8Ugsu6o=;
+ b=PILasnqH7/NFcJUl6CB6IxKw362c7MM7ne5jTK5p1MKWRfpZdXEQ4D3C8JD+54cdwyj3xILsmsvm6F1Ayou5FZiARJXLCkk53v59NMlwDJrPflMowchBizcZc8SZezdtcalHqKx5VqcgE+Nh1UczNx+rudLu1n5z9ixQUvd9zbvXyZVX34Cyxzr2wltCFW3cXUdoL340IdinEodSfnt936eAjsuDZ62oR01J8ukhgWUDXS+5YS1joJt+zQwH6lRM/e1xiBB6K0BPGf3vrZDLhzD84foJ3xHnoaLh9lnfcK2SEnGT/wsr5zIHE5lW3Mn/nnvuKoDWrEbkgrCQPWs1CQ==
+Received: from PH0PR07CA0112.namprd07.prod.outlook.com (2603:10b6:510:4::27)
+ by BN8PR04MB6467.namprd04.prod.outlook.com (2603:10b6:408:de::19) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.139.20; Thu, 25 Jun
- 2026 17:34:08 +0000
-Received: from MWH0EPF000A6732.namprd04.prod.outlook.com
- (2603:10b6:a03:2c5:cafe::9b) by SJ0PR13CA0094.outlook.office365.com
- (2603:10b6:a03:2c5::9) with Microsoft SMTP Server (version=TLS1_3,
- cipher=TLS_AES_256_GCM_SHA384) id 15.21.181.6 via Frontend Transport; Thu, 25
- Jun 2026 17:34:08 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.139.11; Thu, 25 Jun
+ 2026 17:34:09 +0000
+Received: from CY4PEPF0000FCC5.namprd03.prod.outlook.com
+ (2603:10b6:510:4:cafe::ad) by PH0PR07CA0112.outlook.office365.com
+ (2603:10b6:510:4::27) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.159.16 via Frontend Transport; Thu,
+ 25 Jun 2026 17:34:08 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- MWH0EPF000A6732.mail.protection.outlook.com (10.167.249.24) with Microsoft
+ CY4PEPF0000FCC5.mail.protection.outlook.com (10.167.242.107) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.181.6
  via Frontend Transport; Thu, 25 Jun 2026 17:34:08 +0000
 Received: from hqxsv-cmdev3-skrishnamoorthy.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id AC1CE180175E;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 8BBAA1801757;
 	Thu, 25 Jun 2026 17:34:06 +0000 (UTC)
 From: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -80,9 +80,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	sipsupport@rambus.com,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH 07/19] crypto: cmh - add SM3 ahash
-Date: Thu, 25 Jun 2026 10:33:15 -0700
-Message-ID: <20260625173328.1140487-8-skrishnamoorthy@rambus.com>
+Subject: [PATCH 05/19] crypto: cmh - add HMAC ahash
+Date: Thu, 25 Jun 2026 10:33:13 -0700
+Message-ID: <20260625173328.1140487-6-skrishnamoorthy@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
 References: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
@@ -95,37 +95,38 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: MWH0EPF000A6732:EE_|SA6PR04MB9672:EE_
+X-MS-TrafficTypeDiagnostic: CY4PEPF0000FCC5:EE_|BN8PR04MB6467:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: 7681c43d-764a-4e8a-549d-08ded2dff637
+X-MS-Office365-Filtering-Correlation-Id: b5361133-6be9-4af2-ae9b-08ded2dff63a
 X-LD-Processed: bd0ba799-c2b9-413c-9c56-5d1731c4827c,ExtAddr
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|1800799024|82310400026|376014|7416014|23010399003|36860700016|3023799007|56012099006|11063799006|921020|18002099003|22082099003;
+	BCL:0;ARA:13230040|376014|7416014|36860700016|23010399003|1800799024|82310400026|22082099003|18002099003|3023799007|921020|56012099006|6133799003|11063799006;
 X-Microsoft-Antispam-Message-Info:
-	crrAHdMp0DLFVPR/xu2mtyskJgPt2n5n9dQCy/JgRf6219fCNB9/zUUrwh29a1H+aJGfsrDxnrgLU6MDtV5HzMp8iqBxX44t571Wg/WGOvaebOlWzTY0epwZrgeekHC2lF6gWPSVe7ngFAPqFauiS0t0XaDa1o/E41cv0QzvplTdIiEme34V1a3taEYuXbeOAT1xe3S4b9yqDCfN0XXe7T0xhY7YChOnTGWOOclo4Jl2cVk2mwd2lbbc/5cHCgWugenrEcSoVL5QkngiHlKnanHBf6h3qGjyW/KqMreSxyq7E35p2h7btTpS8PvALdObttNc9IqQ88WttwHbd3QtZM0/3FsvZbB53Y57SfrDcogCngHQ0DSMXwJrw+NFYgrEJKu4MrFdzRvvjVn/+2B/N7YP00EgDtkXTQ/KZSi9ESqLj7xU5T9oSJl8Teuwusx/JAKrVVV4AVNTpSQtvG/9z6aSXDx9/jWIuHRukKhXcOhRHdLaPRpNmwMGXvRVhgk0G6De7E/kF8kXdRagbVbFFLu0mtLgADA3f/4WOO7IYaYHMAePA6cDwylmRrQ0pd52yBGFb2ZGnCUZbAhHkoyvW9361N7aaCwmHLkjdPFM4W87UhzFmqGGRw0rCLB4OpORcppJpjU30pon7KgZdg3yDEsvKspDAgP3/8LQp1UJEDWgr4sm+g9L5F4CX9IF92LP6/HW7g7b4GMjn61ax0BT2MQQsZ1wznI9R0ulPbF5csnNo3xikOe7QSVPwOI8Xu0w
+	g4XDQL/eF6+Wdxh/GDy+JLM2VUIfVZAVfY8F+rCE46qKwSSyZJJfMJqm9gFUChq6+bLzBZV7U6ztcQACAGzoJtZCuI4EGhswJ8lun/V1q7bJyEPt/ujsnaEAKJ31VmMbcgF6fr9CgDw/zeYFXfca9FrVevHR7LBDPL8rip66dTdHk9MuvuAGjs1oY2Tmw0lPnaUgZx2KPmr0JbyaJyMXNHhOpHFWvz1rEHTGodMFfotPO5BrQkiVa0PN5qYguNqzfscEzlAUbLSzuDOY8WF/fEAGyESRq8djL0hDFwWhs2pw9k/yRk+64I7qhHQzQAAXSgf/ZgJkVGQruioVbefInfx0v/g9q1cTrZhhYpU6GovuroICNlNkAmM1V0SKDePW38gTAL0KX1mHG6hmwgdUj+fedLP6FWwtWvJo2Lv86hpvrmZuF15nhOyzzYK1i68/sPhCvlPreZZbz4SyHTJVmCdd+3PubI8Mzzv1jNM42zqz+hkOLShVQ1gsfWHRXG5o3xGKWY+C2wXMmPxTEEo5eFS9rzELD5YthOHQNZWCDr+ovHYiQJqwdIFOf98hvmfIXj31xtMiBwfmLJu4SuM1xeh896jEHO8ua45YLGOG0q+NfmcvRDOK/xw7bMYOohvk0ZT6brfO72VPiC0q/qdXqmSL+UocqhF5Q3q/9jCtxKHLj4WYwsmcJkaGD3cKXpKpu3re9v2RlIzpaxByMdeYm/VG4fIYvWlY9gBdyLgqBlRlBYGn1QzKr1egdAYEL+o0
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(1800799024)(82310400026)(376014)(7416014)(23010399003)(36860700016)(3023799007)(56012099006)(11063799006)(921020)(18002099003)(22082099003);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(376014)(7416014)(36860700016)(23010399003)(1800799024)(82310400026)(22082099003)(18002099003)(3023799007)(921020)(56012099006)(6133799003)(11063799006);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	EFi6CZw/ymMXMnLJmxjZDoSgFocaRX2t4gBaS0G9PZJiSEZ4vp1yQLtZ5xYxf0rOC/ADh4QmEb0kxtp7Wei4o0cinSqCXSmHCaQOy0ETAiZgbKfsOW14fnH2W0AjUCExGQ+Hn/e1/t6H/8Kpebp9ByBPQz+5ROSuzM7UiFo6HCVrEBPLdnFj5taDsUfTP9OyV9fOZHjZPb7/VUIHE7qY+m8o/taUh7CJKc4jTNmQozRdPecEvgfXN712PH02a4FVX2DjMNEYuLUG0P0JNeyC2Kg85lfHkuXLHI/mazD8MbzwhuHUlKJU1KdN00WpWelTzgHkeeB52m2AqrV22NzALn10bIXdjp+k+jhen/waDVMiDAvCjkaZL8OUptd0xtV0Mw0a4+r78UGPYkGveEeXxCJZtckasZSLTOOC4/ViDTkAo2yaYBAiSvdjfxmfvhhG
+	sXuq7Xd8UPptrgquwaqL8Ff0gu9yAZZRAYr+ENf2Eka4ARhs1cvZnjdeLUPvFFXjH7ROkSkERL9YOgfn2eST9nJf4yWYmHecoMm93VCtplGB20wW1FsxtC1fCamH78be83zSygU9nsJ06dClBCXwSBoIekOgTwOKxj0Q3Bg8adExixna31VdaPlOdj+OSFXpw3k/T80V4gmgQFfyfcP6UZBmDtYkcMcZXvZUjHFax6RqPr/s/BSVDzR4q3SJ5oA3iijTq/YD8rKDCXUSWjaN91uF1JXA5A5TBxpnszxuzF9aRpmbanPTTO4nBDsW3++fqAQx21dyzKpYpZSfz5SwQGqvl0egAiGPLbxHgk7zH56Pj+AhuEz1AQ9Q8BP1ABlrjGpF/iP115NXc0x9ZLWJ7kV0m/ewE45HyZKbfoWf0p8yMxSIvuCrvMurAL+zTGDI
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:08.2413
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:08.2107
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7681c43d-764a-4e8a-549d-08ded2dff637
+X-MS-Exchange-CrossTenant-Network-Message-Id: b5361133-6be9-4af2-ae9b-08ded2dff63a
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	MWH0EPF000A6732.namprd04.prod.outlook.com
+	CY4PEPF0000FCC5.namprd03.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SA6PR04MB9672
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BN8PR04MB6467
 
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 
-Register the SM3 ahash algorithm using the CMH SM3 core (core ID
-0x05).  Supports incremental update/finup/final and export/import.
+Register ahash algorithms for HMAC-SHA-224, HMAC-SHA-256,
+HMAC-SHA-384, HMAC-SHA-512, HMAC-SHA3-224, HMAC-SHA3-256,
+HMAC-SHA3-384, and HMAC-SHA3-512 using the CMH hash core.
 
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.co=
 m>
@@ -134,274 +135,335 @@ Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
 Reviewed-by: Thi Nguyen <thin@rambus.com>
 ---
- drivers/crypto/cmh/Makefile          |   3 +-
- drivers/crypto/cmh/cmh_main.c        |   9 +
- drivers/crypto/cmh/cmh_sm3.c         | 651 +++++++++++++++++++++++++++
- drivers/crypto/cmh/include/cmh_sm3.h |  27 ++
- 4 files changed, 689 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_sm3.c
- create mode 100644 drivers/crypto/cmh/include/cmh_sm3.h
+ drivers/crypto/cmh/Makefile           |   3 +-
+ drivers/crypto/cmh/cmh_hmac.c         | 684 ++++++++++++++++++++++++++
+ drivers/crypto/cmh/cmh_main.c         |   9 +
+ drivers/crypto/cmh/include/cmh_hmac.h |  16 +
+ 4 files changed, 711 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_hmac.c
+ create mode 100644 drivers/crypto/cmh/include/cmh_hmac.h
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 2bb240b97f31..b3018fbcf211 100644
+index c0531f416229..1f760c0214ef 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -18,7 +18,8 @@ cmh-y :=3D \
-        cmh_hash.o \
-        cmh_hmac.o \
-        cmh_cshake.o \
--       cmh_kmac.o
-+       cmh_kmac.o \
-+       cmh_sm3.o
+@@ -15,7 +15,8 @@ cmh-y :=3D \
+        cmh_sysfs.o \
+        cmh_key.o \
+        cmh_sys.o \
+-       cmh_hash.o
++       cmh_hash.o \
++       cmh_hmac.o
 
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) +=3D \
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index f04cc6855963..56541e0d4219 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -33,6 +33,7 @@
- #include "cmh_hmac.h"
- #include "cmh_cshake.h"
- #include "cmh_kmac.h"
-+#include "cmh_sm3.h"
- #include "cmh_mgmt.h"
- #include "cmh_registers.h"
- #include "cmh_debugfs.h"
-@@ -215,6 +216,11 @@ static int cmh_probe(struct platform_device *pdev)
-        if (ret)
-                goto err_kmac_register;
-
-+       /* Register SM3 hash algorithm */
-+       ret =3D cmh_sm3_register();
-+       if (ret)
-+               goto err_sm3_register;
-+
-        /* Register key management device (/dev/cmh_mgmt) */
-        ret =3D cmh_mgmt_register();
-        if (ret)
-@@ -227,6 +233,8 @@ static int cmh_probe(struct platform_device *pdev)
-        return 0;
-
- err_mgmt_register:
-+       cmh_sm3_unregister();
-+err_sm3_register:
-        cmh_kmac_unregister();
- err_kmac_register:
-        cmh_cshake_unregister();
-@@ -261,6 +269,7 @@ static void cmh_remove(struct platform_device *pdev)
-        cfg =3D &dev->config;
-
-        cmh_mgmt_unregister();
-+       cmh_sm3_unregister();
-        cmh_kmac_unregister();
-        cmh_cshake_unregister();
-        cmh_hmac_unregister();
-diff --git a/drivers/crypto/cmh/cmh_sm3.c b/drivers/crypto/cmh/cmh_sm3.c
+diff --git a/drivers/crypto/cmh/cmh_hmac.c b/drivers/crypto/cmh/cmh_hmac.c
 new file mode 100644
-index 000000000000..156f93da70af
+index 000000000000..1f536088eabf
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_sm3.c
-@@ -0,0 +1,651 @@
++++ b/drivers/crypto/cmh/cmh_hmac.c
+@@ -0,0 +1,684 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SM3 Hash Driver (CORE_ID_SM3)
++ * CMH LKM -- Kernel Crypto API HMAC Driver
 + *
-+ * Registers an asynchronous hash (ahash) algorithm for SM3
-+ * (GB/T 32905-2016) using the CMH SM3 core.  This is a standalone
-+ * driver separate from cmh_hash.c (which handles HC-based SHA-2/3/SHAKE)
-+ * because SM3 runs on a different hardware core with its own command
-+ * IDs and context layout.
++ * Registers HMAC ahash algorithms with the Linux crypto subsystem.
++ * Supports HMAC-SHA-2 (224/256/384/512) and HMAC-SHA-3 (224/256/384/512)
++ * using the CMH Hash Core (HC) via HC_CMD_HMAC.
 + *
-+ * Incremental HW update model (same pattern as cmh_hash.c):
++ * Uses the same self-contained transaction model as cmh_hash.c:
++ *   .setkey() -> store raw key bytes
++ *   .init()   -> software-only: initialize per-request context
++ *   .update() -> software-only: copy SG data into per-call chunk
++ *   .final()  -> [SYS_CMD_WRITE] + HC_CMD_HMAC + [GATHER] + FINAL + FLUSH
 + *
-+ *   .init()   -> software-only: zero per-request context
-+ *   .update() -> buffer data in holdback; when >=3D block_size bytes:
-+ *                SM3_CMD_INIT [+ RESTORE] + UPDATE + SAVE + FLUSH
-+ *                -> return -EINPROGRESS  (else return 0)
-+ *   .final()  -> SM3_CMD_INIT [+ RESTORE] [+ UPDATE] + FINAL + FLUSH
-+ *   .finup()  -> linearise holdback + new data, then final path
-+ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot, zero-copy)
-+ *   .export() -> software-only: copy checkpoint + holdback to out
-+ *   .import() -> software-only: restore checkpoint + holdback from in
++ * Raw-key atomicity: SYS_CMD_WRITE to SYS_REF_TEMP is packed into
++ * the same VCQ as HC_CMD_HMAC (see cmh_key.h for details).
++ *
++ * ahash .export()/.import() (state cloning): supported at the
++ * software accumulation level only.  The HW hash core does NOT
++ * support save/restore of intermediate HMAC state (SHA3 sponge
++ * invertibility, SHA2 blocked for consistency).  Since this driver
++ * accumulates all input data in kernel memory before submitting
++ * atomically in .final(), export/import simply serializes the
++ * input queue -- no keying material or HW state is exposed.
++ *
++ * All HMAC data is accumulated in kernel memory and capped at
++ * HMAC_MAX_DATA (64 KB).
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
 +#include <linux/crypto.h>
 +#include <crypto/internal/hash.h>
-+#include <crypto/scatterwalk.h>
++#include <crypto/hash.h>
 +#include <linux/scatterlist.h>
++#include <linux/list.h>
 +#include <linux/slab.h>
 +#include <linux/string.h>
 +
-+#include "cmh_sm3.h"
++#include "cmh_hmac.h"
 +#include "cmh_vcq.h"
++#include "cmh_hc_abi.h"
++#include "cmh_sys_abi.h"
++#include "cmh_sys.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
-+
-+/* Per-Request State */
++#include "cmh_key.h"
 +
 +/*
-+ * Exported SM3 state -- serialised by .export(), deserialised by
-+ * .import().  This is what statesize advertises to the crypto subsystem.
++ * Maximum data that can be accumulated across .update() calls.
++ * HMAC save/restore is intentionally unsupported (see file header),
++ * so all data must be buffered in kernel memory and submitted
++ * atomically in .final().  This cap prevents unbounded allocation.
 + */
-+struct cmh_sm3_export_state {
-+       u8  checkpoint[SM3_CONTEXT_SIZE]; /* SM3 context from last SAVE */
-+       u8  buf[CMH_SM3_BLOCK_SIZE];     /* holdback buffer */
-+       u32 buf_len;                      /* valid bytes in buf[] */
-+       u32 hw_started;                   /* non-zero if checkpoint valid *=
++#define HMAC_MAX_DATA          (64 * 1024)
++
++/* Algorithm Table */
++
++struct cmh_hmac_alg_info {
++       u32         hc_algo;        /* HC_ALGO_* */
++       u32         digest_size;    /* bytes */
++       u32         block_size;     /* cra_blocksize */
++       const char *alg_name;       /* Linux crypto name: "hmac(sha256)" */
++       const char *drv_name;       /* driver name: "cri-cmh-hmac-sha256" *=
 /
 +};
 +
-+#define CMH_SM3_MAX_PAYLOAD    5   /* INIT + RESTORE + UPDATE + FINAL/SAVE=
- + FLUSH */
-+#define CMH_SM3_MAX_PACKED     (CMH_SM3_MAX_PAYLOAD * 2)
-+
-+/*
-+ * Checkpoint embedded inline: the kernel ahash API has no per-request
-+ * destructor, so a heap-allocated checkpoint leaks if a request is
-+ * abandoned without .final().
-+ */
-+struct cmh_sm3_reqctx {
-+       int    error;
-+       u32    hw_started;
-+       u32    buf_len;
-+       u32    has_checkpoint;
-+       u8     checkpoint[SM3_CONTEXT_SIZE]; /* SM3 context from last SAVE =
-*/
-+       /* DMA state for current async operation */
-+       dma_addr_t ckpt_dma;
-+       dma_addr_t save_dma;
-+       dma_addr_t data_dma;
-+       dma_addr_t digest_dma;
-+       u8    *save_buf;
-+       u8    *data_buf;
-+       u32    data_len;
-+       u8    *digest_buf;
-+       u8     buf[CMH_SM3_BLOCK_SIZE]; /* holdback for partial block */
-+       struct vcq_cmd packed[CMH_SM3_MAX_PACKED];
++static const struct cmh_hmac_alg_info cmh_hmac_algs_info[] =3D {
++       /* HMAC-SHA-2 family */
++       {
++               .hc_algo     =3D HC_ALGO_SHA2_224,
++               .digest_size =3D CMH_SHA224_DIGEST_SIZE,
++               .block_size  =3D 64,
++               .alg_name    =3D "hmac(sha224)",
++               .drv_name    =3D "cri-cmh-hmac-sha224",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA2_256,
++               .digest_size =3D CMH_SHA256_DIGEST_SIZE,
++               .block_size  =3D 64,
++               .alg_name    =3D "hmac(sha256)",
++               .drv_name    =3D "cri-cmh-hmac-sha256",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA2_384,
++               .digest_size =3D CMH_SHA384_DIGEST_SIZE,
++               .block_size  =3D 128,
++               .alg_name    =3D "hmac(sha384)",
++               .drv_name    =3D "cri-cmh-hmac-sha384",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA2_512,
++               .digest_size =3D CMH_SHA512_DIGEST_SIZE,
++               .block_size  =3D 128,
++               .alg_name    =3D "hmac(sha512)",
++               .drv_name    =3D "cri-cmh-hmac-sha512",
++       },
++       /* HMAC-SHA-3 family */
++       {
++               .hc_algo     =3D HC_ALGO_SHA3_224,
++               .digest_size =3D CMH_SHA3_224_DIGEST_SIZE,
++               .block_size  =3D 144,
++               .alg_name    =3D "hmac(sha3-224)",
++               .drv_name    =3D "cri-cmh-hmac-sha3-224",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA3_256,
++               .digest_size =3D CMH_SHA3_256_DIGEST_SIZE,
++               .block_size  =3D 136,
++               .alg_name    =3D "hmac(sha3-256)",
++               .drv_name    =3D "cri-cmh-hmac-sha3-256",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA3_384,
++               .digest_size =3D CMH_SHA3_384_DIGEST_SIZE,
++               .block_size  =3D 104,
++               .alg_name    =3D "hmac(sha3-384)",
++               .drv_name    =3D "cri-cmh-hmac-sha3-384",
++       },
++       {
++               .hc_algo     =3D HC_ALGO_SHA3_512,
++               .digest_size =3D CMH_SHA3_512_DIGEST_SIZE,
++               .block_size  =3D 72,
++               .alg_name    =3D "hmac(sha3-512)",
++               .drv_name    =3D "cri-cmh-hmac-sha3-512",
++       },
 +};
 +
-+/* VCQ Builders -- SM3 core (CORE_ID_SM3); generic flush from cmh_vcq.h */
++#define CMH_HMAC_ALG_COUNT  ARRAY_SIZE(cmh_hmac_algs_info)
 +
-+static void vcq_add_sm3_init(struct vcq_cmd *slot, u32 core_id)
++/* Per-Request State */
++
++struct cmh_hmac_chunk {
++       struct list_head  list;
++       struct list_head  tfm_node; /* per-tfm orphan tracking */
++       u32               len;
++       u8                data[];
++};
++
++/*
++ * Maximum payload commands any HMAC transaction can produce:
++ *   [SYS_CMD_WRITE] + HC_CMD_HMAC + [GATHER] + FINAL + FLUSH =3D 5
++ * Worst-case packed output (stride=3D7, 1 payload per VCQ):
++ *   5 VCQs x 2 entries =3D 10
++ */
++#define CMH_HMAC_MAX_PAYLOAD    5
++#define CMH_HMAC_MAX_PACKED     (CMH_HMAC_MAX_PAYLOAD * 2)
++
++struct cmh_hmac_reqctx {
++       const struct cmh_hmac_alg_info *info;
++       int                             error;
++       struct list_head                chunks;
++       u32                             num_chunks;
++       u32                             total_len;
++       /* DMA state for async final */
++       dma_addr_t                      digest_dma;
++       dma_addr_t                      key_dma;
++       u8                             *digest_buf;
++       struct cmh_sg_map              *sgm;
++       u32                             keylen;
++       struct vcq_cmd packed[CMH_HMAC_MAX_PACKED];
++};
++
++/* Flat state for export/import -- holds accumulated input data only */
++struct cmh_hmac_export_state {
++       u32 total_len;
++       u8  data[];
++};
++
++/*
++ * Flat state buffer for export/import.  The CMH hash core does not
++ * support save/restore of intermediate HMAC state, so this driver
++ * accumulates input in SW and serialises the buffer on export.
++ *
++ * PAGE_SIZE (4096) caps the exportable accumulated-data window.
++ * Full-range export (up to HMAC_MAX_DATA =3D 64 KB) is not feasible
++ * because the crypto subsystem pre-allocates statesize bytes per
++ * request.  Export returns -EINVAL if the caller has accumulated
++ * more than CMH_HMAC_EXPORT_MAX.
++ */
++#define CMH_HMAC_STATE_SIZE 4096
++#define CMH_HMAC_EXPORT_MAX (CMH_HMAC_STATE_SIZE - sizeof(struct cmh_hmac_=
+export_state))
++
++/* Per-Transform State (carries key across requests) */
++
++struct cmh_hmac_tfm_ctx {
++       struct cmh_key_ctx key;
++       spinlock_t         chunk_lock;  /* protects all_chunks */
++       struct list_head   all_chunks;  /* orphan-safe chunk tracking */
++};
++
++/* VCQ Builders (HMAC-specific; shared builders in cmh_hc_abi.h / cmh_vcq.=
+h) */
++
++/* Add an HC_CMD_HMAC entry */
++static void vcq_add_hc_hmac(struct vcq_cmd *slot, u32 core_id, u64 key_ref=
+,
++                           u32 keylen, u32 algo)
 +{
 +       memset(slot, 0, sizeof(*slot));
 +       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_INIT);
-+       /* SM3 has a single algorithm -- no algo selector field */
-+}
-+
-+static void vcq_add_sm3_update(struct vcq_cmd *slot, u32 core_id, u64 inpu=
-t_phys, u32 len)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_UPDATE);
-+       slot->hwc.sm3.cmd_update.input =3D input_phys;
-+       slot->hwc.sm3.cmd_update.inlen =3D len;
-+}
-+
-+static void vcq_add_sm3_final(struct vcq_cmd *slot, u32 core_id, u64 diges=
-t_phys, u32 outlen)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_FINAL);
-+       slot->hwc.sm3.cmd_final.digest =3D digest_phys;
-+       slot->hwc.sm3.cmd_final.outlen =3D outlen;
-+}
-+
-+static void vcq_add_sm3_save(struct vcq_cmd *slot, u32 core_id, u64 output=
-_phys, u32 outlen)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_SAVE);
-+       slot->hwc.sm3.cmd_save.output =3D output_phys;
-+       slot->hwc.sm3.cmd_save.outlen =3D outlen;
-+}
-+
-+static void vcq_add_sm3_restore(struct vcq_cmd *slot, u32 core_id, u64 inp=
-ut_phys, u32 inlen)
-+{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_RESTORE);
-+       slot->hwc.sm3.cmd_restore.input =3D input_phys;
-+       slot->hwc.sm3.cmd_restore.inlen =3D inlen;
++       slot->id =3D VCQ_CMD_ID(core_id, 0, 1, HC_CMD_HMAC);
++       slot->hwc.hc.cmd_hmac.key =3D key_ref;
++       slot->hwc.hc.cmd_hmac.keylen =3D keylen;
++       slot->hwc.hc.cmd_hmac.algo =3D algo;
 +}
 +
 +/* Request Context Cleanup */
 +
-+static void cmh_sm3_free_reqctx(struct cmh_sm3_reqctx *rctx)
++static void cmh_hmac_free_chunks(struct cmh_hmac_reqctx *rctx,
++                                struct cmh_hmac_tfm_ctx *tctx)
 +{
-+       rctx->has_checkpoint =3D 0;
++       struct cmh_hmac_chunk *chunk, *tmp;
++
++       spin_lock_bh(&tctx->chunk_lock);
++       list_for_each_entry_safe(chunk, tmp, &rctx->chunks, list) {
++               list_del(&chunk->list);
++               list_del(&chunk->tfm_node);
++               kfree_sensitive(chunk);
++       }
++       spin_unlock_bh(&tctx->chunk_lock);
++       rctx->num_chunks =3D 0;
++       rctx->total_len =3D 0;
++}
++
++/*
++ * Build a DMA-mapped CMH eSW scatter-gather chain from accumulated chunks=
+.
++ */
++static struct cmh_sg_map *
++cmh_hmac_build_sg(struct cmh_hmac_reqctx *rctx, gfp_t gfp)
++{
++       struct cmh_dma_buf *bufs;
++       struct cmh_hmac_chunk *chunk;
++       struct cmh_sg_map *sgm;
++       u32 i;
++
++       bufs =3D kcalloc(rctx->num_chunks, sizeof(*bufs), gfp);
++       if (!bufs)
++               return NULL;
++
++       i =3D 0;
++       list_for_each_entry(chunk, &rctx->chunks, list) {
++               bufs[i].data =3D chunk->data;
++               bufs[i].len =3D chunk->len;
++               i++;
++       }
++
++       sgm =3D cmh_dma_build_sg(bufs, rctx->num_chunks, gfp);
++       kfree(bufs);
++       return sgm;
 +}
 +
 +/* VCQ Packing + Submit */
 +
 +/* ahash Operations */
 +
-+static int cmh_sm3_init(struct ahash_request *req)
-+{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
++struct cmh_hmac_alg_drv {
++       struct ahash_alg                  alg;
++       const struct cmh_hmac_alg_info   *info;
++};
 +
-+       memset(rctx, 0, sizeof(*rctx));
++static const struct cmh_hmac_alg_info *
++cmh_hmac_get_info(struct crypto_ahash *tfm)
++{
++       struct ahash_alg *alg =3D crypto_ahash_alg(tfm);
++
++       return container_of(alg, struct cmh_hmac_alg_drv, alg)->info;
++}
++
++static int cmh_hmac_setkey(struct crypto_ahash *tfm, const u8 *key,
++                          unsigned int keylen)
++{
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_ahash_ctx(tfm);
++
++       return cmh_key_setkey_raw(&tctx->key, key, keylen, CORE_ID_HC);
++}
++
++static int cmh_hmac_init(struct ahash_request *req)
++{
++       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
++
++       rctx->info =3D cmh_hmac_get_info(tfm);
++       rctx->error =3D 0;
++       INIT_LIST_HEAD(&rctx->chunks);
++       rctx->num_chunks =3D 0;
++       rctx->total_len =3D 0;
++
 +       return 0;
 +}
 +
-+/*
-+ * Update completion -- takes ownership of save_buf as new checkpoint.
-+ */
-+static void cmh_sm3_update_complete(void *data, int error)
++static int cmh_hmac_update(struct ahash_request *req)
 +{
-+       struct ahash_request *req =3D data;
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+
-+       if (error =3D=3D -EINPROGRESS) {
-+               cmh_complete(&req->base, error);
-+               return;
-+       }
-+
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+       cmh_dma_unmap_single(rctx->save_dma, SM3_CONTEXT_SIZE,
-+                            DMA_FROM_DEVICE);
-+       cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
-+                            DMA_TO_DEVICE);
-+
-+       if (!error) {
-+               memcpy(rctx->checkpoint, rctx->save_buf, SM3_CONTEXT_SIZE);
-+               rctx->has_checkpoint =3D 1;
-+               kfree(rctx->save_buf);
-+               rctx->save_buf =3D NULL;
-+               rctx->hw_started =3D 1;
-+       } else {
-+               kfree(rctx->save_buf);
-+               rctx->save_buf =3D NULL;
-+               rctx->error =3D error;
-+       }
-+
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       rctx->data_len =3D 0;
-+
-+       cmh_complete(&req->base, error);
-+}
-+
-+static int cmh_sm3_update(struct ahash_request *req)
-+{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       struct vcq_cmd cmds[CMH_SM3_MAX_PAYLOAD];
-+       struct core_dispatch d;
-+       u32 total_avail, full_len, tail_len, from_src;
-+       u32 idx;
-+       int ret;
-+       gfp_t gfp;
++       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_ahash_ctx(tfm);
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
++       struct cmh_hmac_chunk *chunk;
++       int nents;
 +
 +       if (rctx->error)
 +               return rctx->error;
@@ -409,240 +471,171 @@ ut_phys, u32 inlen)
 +       if (!req->nbytes)
 +               return 0;
 +
-+       gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+             GFP_KERNEL : GFP_ATOMIC;
-+
-+       total_avail =3D rctx->buf_len + req->nbytes;
-+
-+       if (total_avail < CMH_SM3_BLOCK_SIZE) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->buf + rctx->buf_len,
-+                              req->svirt, req->nbytes);
-+               else
-+                       scatterwalk_map_and_copy(rctx->buf + rctx->buf_len,
-+                                                req->src, 0,
-+                                                req->nbytes, 0);
-+               rctx->buf_len =3D total_avail;
-+               return 0;
++       if (req->nbytes > HMAC_MAX_DATA - rctx->total_len) {
++               rctx->error =3D -EINVAL;
++               goto err_free_chunks;
 +       }
 +
-+       full_len =3D total_avail - total_avail % CMH_SM3_BLOCK_SIZE;
-+       tail_len =3D total_avail - full_len;
-+       from_src =3D full_len - rctx->buf_len;
-+
-+       rctx->data_buf =3D kmalloc(full_len, gfp);
-+       if (!rctx->data_buf)
-+               return -ENOMEM;
-+
-+       if (rctx->buf_len > 0)
-+               memcpy(rctx->data_buf, rctx->buf, rctx->buf_len);
-+
-+       if (from_src > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->data_buf + rctx->buf_len,
-+                              req->svirt, from_src);
-+               else
-+                       scatterwalk_map_and_copy(rctx->data_buf + rctx->buf=
-_len,
-+                                                req->src, 0,
-+                                                from_src, 0);
++       chunk =3D kmalloc(sizeof(*chunk) + req->nbytes,
++                       req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++                       GFP_KERNEL : GFP_ATOMIC);
++       if (!chunk) {
++               rctx->error =3D -ENOMEM;
++               goto err_free_chunks;
 +       }
 +
-+       if (tail_len > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(rctx->buf, req->svirt + from_src,
-+                              tail_len);
-+               else
-+                       scatterwalk_map_and_copy(rctx->buf, req->src,
-+                                                from_src, tail_len,
-+                                                0);
-+       }
-+       rctx->buf_len =3D tail_len;
-+       rctx->data_len =3D full_len;
-+
-+       rctx->save_buf =3D kzalloc(SM3_CONTEXT_SIZE, gfp);
-+       if (!rctx->save_buf) {
-+               ret =3D -ENOMEM;
-+               goto err_free;
-+       }
-+
-+       rctx->data_dma =3D cmh_dma_map_single(rctx->data_buf, full_len,
-+                                           DMA_TO_DEVICE);
-+       if (cmh_dma_map_error(rctx->data_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_free;
-+       }
-+
-+       rctx->save_dma =3D cmh_dma_map_single(rctx->save_buf, SM3_CONTEXT_S=
-IZE,
-+                                           DMA_FROM_DEVICE);
-+       if (cmh_dma_map_error(rctx->save_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_unmap_data;
-+       }
-+
-+       rctx->ckpt_dma =3D DMA_MAPPING_ERROR;
-+       if (rctx->has_checkpoint) {
-+               rctx->ckpt_dma =3D cmh_dma_map_single(rctx->checkpoint,
-+                                                   SM3_CONTEXT_SIZE,
-+                                                    DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->ckpt_dma)) {
-+                       ret =3D -ENOMEM;
-+                       goto err_unmap_save;
++       chunk->len =3D req->nbytes;
++       if (req->base.flags & CRYPTO_AHASH_REQ_VIRT) {
++               memcpy(chunk->data, req->svirt, req->nbytes);
++       } else {
++               nents =3D sg_nents_for_len(req->src, req->nbytes);
++               if (nents < 0 ||
++                   sg_copy_to_buffer(req->src, nents,
++                                     chunk->data, req->nbytes) !=3D req->n=
+bytes) {
++                       kfree_sensitive(chunk);
++                       rctx->error =3D -EINVAL;
++                       goto err_free_chunks;
 +               }
 +       }
 +
-+       d =3D cmh_core_select_instance(CMH_CORE_SM3);
-+       idx =3D 0;
++       list_add_tail(&chunk->list, &rctx->chunks);
++       spin_lock_bh(&tctx->chunk_lock);
++       list_add_tail(&chunk->tfm_node, &tctx->all_chunks);
++       spin_unlock_bh(&tctx->chunk_lock);
++       rctx->num_chunks++;
++       rctx->total_len +=3D req->nbytes;
 +
-+       vcq_add_sm3_init(&cmds[idx++], d.core_id);
++       return 0;
 +
-+       if (rctx->has_checkpoint)
-+               vcq_add_sm3_restore(&cmds[idx++], d.core_id,
-+                                   (u64)rctx->ckpt_dma, SM3_CONTEXT_SIZE);
-+
-+       vcq_add_sm3_update(&cmds[idx++], d.core_id,
-+                          (u64)rctx->data_dma, full_len);
-+
-+       vcq_add_sm3_save(&cmds[idx++], d.core_id,
-+                        (u64)rctx->save_dma, SM3_CONTEXT_SIZE);
-+
-+       vcq_add_flush(&cmds[idx++], d.core_id);
-+
-+       ret =3D cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+                                           CMH_SM3_MAX_PACKED,
-+                                           d.mbx_idx,
-+                                           cmh_sm3_update_complete, req,
-+                                           !!(req->base.flags &
-+                                              CRYPTO_TFM_REQ_MAY_BACKLOG),
-+                                           cmh_tm_async_timeout_jiffies())=
-;
-+       if (ret =3D=3D -EBUSY)
-+               return -EBUSY;
-+       if (ret)
-+               goto err_unmap_ckpt;
-+
-+       return -EINPROGRESS;
-+
-+err_unmap_ckpt:
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+err_unmap_save:
-+       cmh_dma_unmap_single(rctx->save_dma, SM3_CONTEXT_SIZE,
-+                            DMA_FROM_DEVICE);
-+err_unmap_data:
-+       cmh_dma_unmap_single(rctx->data_dma, full_len, DMA_TO_DEVICE);
-+err_free:
-+       kfree(rctx->save_buf);
-+       rctx->save_buf =3D NULL;
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       rctx->data_len =3D 0;
-+       return ret;
++err_free_chunks:
++       /*
++        * Terminal error -- free all previously accumulated chunks.
++        * The crypto API hash path does not call .final()
++        * on error, and hash_sock_destruct has no per-request
++        * destructor, so chunks would be orphaned otherwise.
++        */
++       cmh_hmac_free_chunks(rctx, tctx);
++       return rctx->error;
 +}
 +
-+static void cmh_sm3_final_complete(void *data, int error)
++static void cmh_hmac_complete(void *data, int error)
 +{
 +       struct ahash_request *req =3D data;
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
++       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_ahash_ctx(tfm);
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
 +
 +       if (error =3D=3D -EINPROGRESS) {
 +               cmh_complete(&req->base, error);
 +               return;
 +       }
 +
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+       if (rctx->data_buf)
-+               cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
-+                                    DMA_TO_DEVICE);
-+       cmh_dma_unmap_single(rctx->digest_dma, CMH_SM3_DIGEST_SIZE,
++       cmh_dma_unmap_single(rctx->digest_dma, rctx->info->digest_size,
 +                            DMA_FROM_DEVICE);
 +
 +       if (!error)
-+               memcpy(req->result, rctx->digest_buf, CMH_SM3_DIGEST_SIZE);
++               memcpy(req->result, rctx->digest_buf,
++                      rctx->info->digest_size);
 +
 +       kfree(rctx->digest_buf);
 +       rctx->digest_buf =3D NULL;
-+       kfree(rctx->data_buf);
-+       rctx->data_buf =3D NULL;
-+       cmh_sm3_free_reqctx(rctx);
++       cmh_dma_free_sg(rctx->sgm);
++       rctx->sgm =3D NULL;
++       cmh_hmac_free_chunks(rctx, tctx);
 +       cmh_complete(&req->base, error);
 +}
 +
-+static int cmh_sm3_submit_final(struct ahash_request *req,
-+                               u8 *data_buf, u32 data_len)
++static int cmh_hmac_final(struct ahash_request *req)
 +{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       struct vcq_cmd cmds[CMH_SM3_MAX_PAYLOAD];
++       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_ahash_ctx(tfm);
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
++       const struct cmh_hmac_alg_info *info =3D rctx->info;
++       struct vcq_cmd cmds[CMH_HMAC_MAX_PAYLOAD];
++       struct cmh_sg_map *sgm =3D NULL;
++       dma_addr_t digest_dma =3D DMA_MAPPING_ERROR, key_dma =3D DMA_MAPPIN=
+G_ERROR;
++       u8 *digest_buf;
++       u64 key_ref;
++       u32 keylen;
 +       struct core_dispatch d;
++       s32 target_mbx;
++       u32 core_id;
 +       u32 idx;
 +       int ret;
 +       gfp_t gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
 +                  GFP_KERNEL : GFP_ATOMIC;
 +
-+       rctx->data_buf =3D data_buf;
-+       rctx->data_len =3D data_len;
-+
-+       rctx->digest_buf =3D kzalloc(CMH_SM3_DIGEST_SIZE, gfp);
-+       if (!rctx->digest_buf) {
-+               ret =3D -ENOMEM;
-+               goto err_free_data;
++       if (rctx->error) {
++               ret =3D rctx->error;
++               goto out_free;
 +       }
 +
-+       rctx->digest_dma =3D cmh_dma_map_single(rctx->digest_buf,
-+                                             CMH_SM3_DIGEST_SIZE,
-+                                              DMA_FROM_DEVICE);
-+       if (cmh_dma_map_error(rctx->digest_dma)) {
-+               ret =3D -ENOMEM;
-+               goto err_free_digest;
++       if (tctx->key.mode =3D=3D CMH_KEY_NONE) {
++               ret =3D -ENOKEY;
++               goto out_free;
 +       }
 +
-+       rctx->data_dma =3D DMA_MAPPING_ERROR;
-+       if (data_buf && data_len > 0) {
-+               rctx->data_dma =3D cmh_dma_map_single(data_buf, data_len,
-+                                                   DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->data_dma)) {
++       if (rctx->num_chunks > 0) {
++               sgm =3D cmh_hmac_build_sg(rctx, gfp);
++               if (!sgm) {
 +                       ret =3D -ENOMEM;
-+                       goto err_unmap_digest;
++                       goto out_free;
 +               }
 +       }
 +
-+       rctx->ckpt_dma =3D DMA_MAPPING_ERROR;
-+       if (rctx->has_checkpoint) {
-+               rctx->ckpt_dma =3D cmh_dma_map_single(rctx->checkpoint,
-+                                                   SM3_CONTEXT_SIZE,
-+                                                    DMA_TO_DEVICE);
-+               if (cmh_dma_map_error(rctx->ckpt_dma)) {
-+                       ret =3D -ENOMEM;
-+                       goto err_unmap_data;
-+               }
++       digest_buf =3D kzalloc(info->digest_size, gfp);
++       if (!digest_buf) {
++               ret =3D -ENOMEM;
++               goto out_free_sg;
++       }
++       digest_dma =3D cmh_dma_map_single(digest_buf, info->digest_size,
++                                       DMA_FROM_DEVICE);
++       if (cmh_dma_map_error(digest_dma)) {
++               ret =3D -ENOMEM;
++               goto out_free_digest;
 +       }
 +
-+       d =3D cmh_core_select_instance(CMH_CORE_SM3);
++       /* Resolve key reference */
 +       idx =3D 0;
 +
-+       vcq_add_sm3_init(&cmds[idx++], d.core_id);
++       /*
++        * Raw key: pack SYS_CMD_WRITE(SYS_REF_TEMP) into the
++        * same VCQ so the key write + HMAC are atomic.
++        */
++       key_dma =3D tctx->key.raw.dma;
++       vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP, (u64)key_dma,
++                         SYS_REF_NONE, tctx->key.raw.len,
++                         tctx->key.raw.sys_type);
++       key_ref =3D SYS_REF_TEMP;
++       keylen =3D tctx->key.raw.len;
++       d =3D cmh_core_select_instance(CMH_CORE_HC);
 +
-+       if (rctx->has_checkpoint)
-+               vcq_add_sm3_restore(&cmds[idx++], d.core_id,
-+                                   (u64)rctx->ckpt_dma, SM3_CONTEXT_SIZE);
++       target_mbx =3D d.mbx_idx;
 +
-+       if (data_buf && data_len > 0)
-+               vcq_add_sm3_update(&cmds[idx++], d.core_id,
-+                                  (u64)rctx->data_dma, data_len);
++       core_id =3D d.core_id;
 +
-+       vcq_add_sm3_final(&cmds[idx++], d.core_id,
-+                         (u64)rctx->digest_dma, CMH_SM3_DIGEST_SIZE);
++       vcq_add_hc_hmac(&cmds[idx++], core_id, key_ref, keylen, info->hc_al=
+go);
 +
-+       vcq_add_flush(&cmds[idx++], d.core_id);
++       if (sgm)
++               vcq_add_hc_gather(&cmds[idx++], core_id, (u64)sgm->items_dm=
+a,
++                                 HC_CMD_UPDATE);
++
++       vcq_add_hc_final(&cmds[idx++], core_id, (u64)digest_dma, info->dige=
+st_size);
++       vcq_add_flush(&cmds[idx++], core_id);
++
++       rctx->digest_buf =3D digest_buf;
++       rctx->digest_dma =3D digest_dma;
++       rctx->sgm =3D sgm;
 +
 +       ret =3D cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+                                           CMH_SM3_MAX_PACKED,
-+                                           d.mbx_idx,
-+                                           cmh_sm3_final_complete, req,
++                                           CMH_HMAC_MAX_PACKED,
++                                           target_mbx,
++                                           cmh_hmac_complete, req,
 +                                           !!(req->base.flags &
 +                                              CRYPTO_TFM_REQ_MAY_BACKLOG),
 +                                           cmh_tm_async_timeout_jiffies())=
@@ -650,261 +643,294 @@ IZE,
 +       if (ret =3D=3D -EBUSY)
 +               return -EBUSY;
 +       if (ret)
-+               goto err_unmap_ckpt;
++               goto out_cleanup_all;
 +
 +       return -EINPROGRESS;
 +
-+err_unmap_ckpt:
-+       if (rctx->has_checkpoint)
-+               cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
-+                                    DMA_TO_DEVICE);
-+err_unmap_data:
-+       if (data_buf && data_len > 0)
-+               cmh_dma_unmap_single(rctx->data_dma, data_len,
-+                                    DMA_TO_DEVICE);
-+err_unmap_digest:
-+       cmh_dma_unmap_single(rctx->digest_dma, CMH_SM3_DIGEST_SIZE,
++out_cleanup_all:
++       cmh_dma_unmap_single(digest_dma, info->digest_size,
 +                            DMA_FROM_DEVICE);
-+err_free_digest:
-+       kfree(rctx->digest_buf);
-+       rctx->digest_buf =3D NULL;
-+err_free_data:
-+       kfree(data_buf);
-+       rctx->data_buf =3D NULL;
-+       cmh_sm3_free_reqctx(rctx);
++out_free_digest:
++       kfree(digest_buf);
++
++out_free_sg:
++       cmh_dma_free_sg(sgm);
++
++out_free:
++       cmh_hmac_free_chunks(rctx, tctx);
 +       return ret;
 +}
 +
-+static int cmh_sm3_final(struct ahash_request *req)
-+{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       u8 *data_buf =3D NULL;
-+       u32 data_len =3D 0;
-+       gfp_t gfp;
-+
-+       if (rctx->error)
-+               return rctx->error;
-+
-+       if (rctx->buf_len > 0) {
-+               gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+                     GFP_KERNEL : GFP_ATOMIC;
-+               data_buf =3D kmalloc(rctx->buf_len, gfp);
-+               if (!data_buf)
-+                       return -ENOMEM;
-+               memcpy(data_buf, rctx->buf, rctx->buf_len);
-+               data_len =3D rctx->buf_len;
-+               rctx->buf_len =3D 0;
-+       }
-+
-+       return cmh_sm3_submit_final(req, data_buf, data_len);
-+}
-+
-+static int cmh_sm3_finup(struct ahash_request *req);
-+
-+/*
-+ * One-shot digest -- delegates to init + finup so that all data is
-+ * linearised and mapped through cmh_dma_map_single(), which is the
-+ * only DMA mapping path aware of all supported DMA backends.
-+ */
-+static int cmh_sm3_digest(struct ahash_request *req)
++static int cmh_hmac_finup(struct ahash_request *req)
 +{
 +       int ret;
 +
-+       ret =3D cmh_sm3_init(req);
++       ret =3D cmh_hmac_update(req);
 +       if (ret)
 +               return ret;
-+       return cmh_sm3_finup(req);
++
++       return cmh_hmac_final(req);
 +}
 +
-+static int cmh_sm3_finup(struct ahash_request *req)
++static int cmh_hmac_digest(struct ahash_request *req)
 +{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       u32 data_len;
-+       u8 *data_buf;
-+       gfp_t gfp;
++       int ret;
 +
-+       if (rctx->error)
-+               return rctx->error;
++       ret =3D cmh_hmac_init(req);
++       if (ret)
++               return ret;
 +
-+       data_len =3D rctx->buf_len + req->nbytes;
++       return cmh_hmac_finup(req);
++}
 +
-+       if (data_len =3D=3D 0)
-+               return cmh_sm3_submit_final(req, NULL, 0);
++/*
++ * ahash .export()/.import(): serialize/deserialize the software
++ * accumulation buffer.  No HW state is involved.
++ */
 +
-+       gfp =3D req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+             GFP_KERNEL : GFP_ATOMIC;
++static int cmh_hmac_export(struct ahash_request *req, void *out)
++{
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
++       struct cmh_hmac_export_state *state =3D out;
++       struct cmh_hmac_chunk *chunk;
++       u32 offset =3D 0;
 +
-+       data_buf =3D kmalloc(data_len, gfp);
-+       if (!data_buf)
-+               return -ENOMEM;
++       if (rctx->total_len > CMH_HMAC_EXPORT_MAX)
++               return -ENOSPC;
 +
-+       if (rctx->buf_len > 0)
-+               memcpy(data_buf, rctx->buf, rctx->buf_len);
-+
-+       if (req->nbytes > 0) {
-+               if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+                       memcpy(data_buf + rctx->buf_len,
-+                              req->svirt, req->nbytes);
-+               else
-+                       scatterwalk_map_and_copy(data_buf + rctx->buf_len,
-+                                                req->src, 0,
-+                                                req->nbytes, 0);
++       state->total_len =3D rctx->total_len;
++       list_for_each_entry(chunk, &rctx->chunks, list) {
++               memcpy(state->data + offset, chunk->data, chunk->len);
++               offset +=3D chunk->len;
 +       }
-+
-+       rctx->buf_len =3D 0;
-+       return cmh_sm3_submit_final(req, data_buf, data_len);
-+}
-+
-+static int cmh_sm3_export(struct ahash_request *req, void *out)
-+{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       struct cmh_sm3_export_state *state =3D out;
-+
-+       if (rctx->hw_started && rctx->has_checkpoint)
-+               memcpy(state->checkpoint, rctx->checkpoint, SM3_CONTEXT_SIZ=
-E);
-+       else
-+               memset(state->checkpoint, 0, SM3_CONTEXT_SIZE);
-+
-+       if (rctx->buf_len > 0)
-+               memcpy(state->buf, rctx->buf, rctx->buf_len);
-+
-+       state->buf_len =3D rctx->buf_len;
-+       state->hw_started =3D rctx->hw_started;
-+
 +       return 0;
 +}
 +
-+static int cmh_sm3_import(struct ahash_request *req, const void *in)
++static int cmh_hmac_import(struct ahash_request *req, const void *in)
 +{
-+       struct cmh_sm3_reqctx *rctx =3D ahash_request_ctx(req);
-+       const struct cmh_sm3_export_state *state =3D in;
++       struct crypto_ahash *tfm =3D crypto_ahash_reqtfm(req);
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_ahash_ctx(tfm);
++       struct cmh_hmac_reqctx *rctx =3D ahash_request_ctx(req);
++       const struct cmh_hmac_export_state *state =3D in;
++       struct cmh_hmac_chunk *chunk;
 +
-+       memset(rctx, 0, sizeof(*rctx));
++       /*
++        * Do NOT call free_chunks() here: the crypto API does not
++        * guarantee the request context is in a valid state before
++        * import(), so the list pointers may be stale or invalid.
++        * Re-initialize from scratch instead.  Any pre-existing chunks
++        * are tracked on tctx->all_chunks and freed in cra_exit.
++        */
++       rctx->info =3D cmh_hmac_get_info(tfm);
++       rctx->error =3D 0;
++       INIT_LIST_HEAD(&rctx->chunks);
++       rctx->num_chunks =3D 0;
++       rctx->total_len =3D 0;
 +
-+       if (state->buf_len > CMH_SM3_BLOCK_SIZE)
++       if (state->total_len > CMH_HMAC_EXPORT_MAX)
 +               return -EINVAL;
 +
-+       rctx->hw_started =3D state->hw_started;
-+       rctx->buf_len =3D state->buf_len;
-+       memcpy(rctx->buf, state->buf, state->buf_len);
-+
-+       if (state->hw_started) {
-+               memcpy(rctx->checkpoint, state->checkpoint, SM3_CONTEXT_SIZ=
-E);
-+               rctx->has_checkpoint =3D 1;
++       if (state->total_len) {
++               chunk =3D kmalloc(sizeof(*chunk) + state->total_len, GFP_KE=
+RNEL);
++               if (!chunk)
++                       return -ENOMEM;
++               chunk->len =3D state->total_len;
++               memcpy(chunk->data, state->data, state->total_len);
++               list_add_tail(&chunk->list, &rctx->chunks);
++               spin_lock_bh(&tctx->chunk_lock);
++               list_add_tail(&chunk->tfm_node, &tctx->all_chunks);
++               spin_unlock_bh(&tctx->chunk_lock);
++               rctx->num_chunks =3D 1;
++               rctx->total_len =3D state->total_len;
 +       }
-+
 +       return 0;
 +}
 +
-+/* Transform init (cra_init) */
++/* Transform init/exit (cra_init/cra_exit) */
 +
-+static int cmh_sm3_cra_init(struct crypto_tfm *tfm)
++static int cmh_hmac_cra_init(struct crypto_tfm *tfm)
 +{
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_tfm_ctx(tfm);
++
++       memset(tctx, 0, sizeof(*tctx));
++       tctx->key.mode =3D CMH_KEY_NONE;
++       spin_lock_init(&tctx->chunk_lock);
++       INIT_LIST_HEAD(&tctx->all_chunks);
 +       crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-+                                sizeof(struct cmh_sm3_reqctx));
++                                sizeof(struct cmh_hmac_reqctx));
 +       return 0;
++}
++
++static void cmh_hmac_cra_exit(struct crypto_tfm *tfm)
++{
++       struct cmh_hmac_tfm_ctx *tctx =3D crypto_tfm_ctx(tfm);
++       struct cmh_hmac_chunk *chunk, *tmp;
++
++       /* Free any orphaned chunks (e.g. testmgr export/reimport poison) *=
+/
++       spin_lock_bh(&tctx->chunk_lock);
++       list_for_each_entry_safe(chunk, tmp, &tctx->all_chunks, tfm_node) {
++               list_del(&chunk->tfm_node);
++               kfree_sensitive(chunk);
++       }
++       spin_unlock_bh(&tctx->chunk_lock);
++
++       cmh_key_destroy(&tctx->key);
 +}
 +
 +/* Registration */
 +
-+static struct ahash_alg cmh_sm3_ahash_alg =3D {
-+       .init    =3D cmh_sm3_init,
-+       .update  =3D cmh_sm3_update,
-+       .final   =3D cmh_sm3_final,
-+       .finup   =3D cmh_sm3_finup,
-+       .digest  =3D cmh_sm3_digest,
-+       .export  =3D cmh_sm3_export,
-+       .import  =3D cmh_sm3_import,
-+
-+       .halg =3D {
-+               .digestsize =3D CMH_SM3_DIGEST_SIZE,
-+               .statesize  =3D sizeof(struct cmh_sm3_export_state),
-+               .base =3D {
-+                       .cra_name        =3D "sm3",
-+                       .cra_driver_name =3D "cri-cmh-sm3",
-+                       .cra_priority    =3D 300,
-+                       .cra_flags       =3D CRYPTO_ALG_KERN_DRIVER_ONLY |
-+                                          CRYPTO_ALG_NO_FALLBACK |
-+                                          CRYPTO_ALG_ASYNC |
-+                                          CRYPTO_ALG_REQ_VIRT,
-+                       .cra_blocksize   =3D CMH_SM3_BLOCK_SIZE,
-+                       .cra_ctxsize     =3D 0,
-+                       .cra_init        =3D cmh_sm3_cra_init,
-+                       .cra_module      =3D THIS_MODULE,
-+               },
-+       },
-+};
++static struct cmh_hmac_alg_drv cmh_hmac_drvs[CMH_HMAC_ALG_COUNT];
 +
 +/**
-+ * cmh_sm3_register() - Register SM3 hash algorithm with the crypto framew=
-ork
++ * cmh_hmac_register() - Register HMAC-SHA hash algorithms with the crypto=
+ framework
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_sm3_register(void)
++int cmh_hmac_register(void)
 +{
++       unsigned int i;
 +       int ret;
 +
-+       ret =3D crypto_register_ahash(&cmh_sm3_ahash_alg);
-+       if (ret) {
-+               dev_err(cmh_dev(), "sm3: failed to register cmh-sm3 (rc=3D%=
-d)\n",
-+                       ret);
-+               return ret;
++       for (i =3D 0; i < CMH_HMAC_ALG_COUNT; i++) {
++               const struct cmh_hmac_alg_info *info =3D &cmh_hmac_algs_inf=
+o[i];
++               struct cmh_hmac_alg_drv *drv =3D &cmh_hmac_drvs[i];
++               struct ahash_alg *alg =3D &drv->alg;
++
++               drv->info =3D info;
++
++               alg->init   =3D cmh_hmac_init;
++               alg->update =3D cmh_hmac_update;
++               alg->final  =3D cmh_hmac_final;
++               alg->finup  =3D cmh_hmac_finup;
++               alg->digest =3D cmh_hmac_digest;
++               alg->export =3D cmh_hmac_export;
++               alg->import =3D cmh_hmac_import;
++               alg->setkey =3D cmh_hmac_setkey;
++
++               alg->halg.digestsize =3D info->digest_size;
++               alg->halg.statesize  =3D CMH_HMAC_STATE_SIZE;
++
++               strscpy(alg->halg.base.cra_name, info->alg_name,
++                       CRYPTO_MAX_ALG_NAME);
++               strscpy(alg->halg.base.cra_driver_name, info->drv_name,
++                       CRYPTO_MAX_ALG_NAME);
++               alg->halg.base.cra_priority    =3D 300;
++               alg->halg.base.cra_flags       =3D CRYPTO_ALG_KERN_DRIVER_O=
+NLY |
++                                                CRYPTO_ALG_NO_FALLBACK |
++                                                CRYPTO_ALG_ASYNC |
++                                                CRYPTO_ALG_REQ_VIRT;
++               alg->halg.base.cra_blocksize   =3D info->block_size;
++               alg->halg.base.cra_ctxsize     =3D sizeof(struct cmh_hmac_t=
+fm_ctx);
++               alg->halg.base.cra_init        =3D cmh_hmac_cra_init;
++               alg->halg.base.cra_exit        =3D cmh_hmac_cra_exit;
++               alg->halg.base.cra_module      =3D THIS_MODULE;
++
++               ret =3D crypto_register_ahash(alg);
++               if (ret) {
++                       dev_err(cmh_dev(), "hmac: failed to register %s (rc=
+=3D%d)\n",
++                               info->drv_name, ret);
++                       while (i--)
++                               crypto_unregister_ahash(&cmh_hmac_drvs[i].a=
+lg);
++                       return ret;
++               }
++
++               dev_dbg(cmh_dev(), "hmac: registered %s (priority 300)\n",
++                       info->drv_name);
 +       }
 +
-+       dev_info(cmh_dev(), "sm3: registered cri-cmh-sm3 (priority 300)\n")=
-;
-+       dev_info(cmh_dev(), "sm3: 1 algorithm(s) registered\n");
++       dev_info(cmh_dev(), "hmac: %zu algorithm(s) registered\n",
++                CMH_HMAC_ALG_COUNT);
 +       return 0;
 +}
 +
 +/**
-+ * cmh_sm3_unregister() - Unregister SM3 hash algorithm from the crypto fr=
-amework
++ * cmh_hmac_unregister() - Unregister HMAC-SHA hash algorithms from the cr=
+ypto framework
 + */
-+void cmh_sm3_unregister(void)
++void cmh_hmac_unregister(void)
 +{
-+       crypto_unregister_ahash(&cmh_sm3_ahash_alg);
-+       dev_info(cmh_dev(), "sm3: unregistered cri-cmh-sm3\n");
-+       dev_info(cmh_dev(), "sm3: cleaned up\n");
++       unsigned int i;
++
++       for (i =3D 0; i < CMH_HMAC_ALG_COUNT; i++) {
++               crypto_unregister_ahash(&cmh_hmac_drvs[i].alg);
++               dev_dbg(cmh_dev(), "hmac: unregistered %s\n",
++                       cmh_hmac_algs_info[i].drv_name);
++       }
++
++       dev_info(cmh_dev(), "hmac: cleaned up\n");
 +}
-diff --git a/drivers/crypto/cmh/include/cmh_sm3.h b/drivers/crypto/cmh/incl=
-ude/cmh_sm3.h
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+index e8e30b893932..c18219197bd8 100644
+--- a/drivers/crypto/cmh/cmh_main.c
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -30,6 +30,7 @@
+ #include "cmh_txn.h"
+ #include "cmh_rh.h"
+ #include "cmh_hash.h"
++#include "cmh_hmac.h"
+ #include "cmh_mgmt.h"
+ #include "cmh_registers.h"
+ #include "cmh_debugfs.h"
+@@ -197,6 +198,11 @@ static int cmh_probe(struct platform_device *pdev)
+        if (ret)
+                goto err_hash_register;
+
++       /* Register HMAC hash algorithms */
++       ret =3D cmh_hmac_register();
++       if (ret)
++               goto err_hmac_register;
++
+        /* Register key management device (/dev/cmh_mgmt) */
+        ret =3D cmh_mgmt_register();
+        if (ret)
+@@ -209,6 +215,8 @@ static int cmh_probe(struct platform_device *pdev)
+        return 0;
+
+ err_mgmt_register:
++       cmh_hmac_unregister();
++err_hmac_register:
+        cmh_hash_unregister();
+ err_hash_register:
+        cmh_rh_cleanup(cfg);
+@@ -237,6 +245,7 @@ static void cmh_remove(struct platform_device *pdev)
+        cfg =3D &dev->config;
+
+        cmh_mgmt_unregister();
++       cmh_hmac_unregister();
+        cmh_hash_unregister();
+        cmh_rh_cleanup(cfg);
+        cmh_tm_cleanup();
+diff --git a/drivers/crypto/cmh/include/cmh_hmac.h b/drivers/crypto/cmh/inc=
+lude/cmh_hmac.h
 new file mode 100644
-index 000000000000..2f73537f9c87
+index 000000000000..fb1a11fb76eb
 --- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_sm3.h
-@@ -0,0 +1,27 @@
++++ b/drivers/crypto/cmh/include/cmh_hmac.h
+@@ -0,0 +1,16 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SM3 Hash Driver
++ * CMH LKM -- Kernel Crypto API HMAC Driver
 + *
-+ * Registers an ahash algorithm for SM3 (GB/T 32905-2016) with the
-+ * Linux crypto subsystem using the CMH SM3 core (CORE_ID_SM3).
-+ * Uses the same incremental HW update model as cmh_hash.c:
-+ *
-+ *   .init()   -> software-only: zero per-request context
-+ *   .update() -> holdback partial blocks; submit full blocks via
-+ *                SM3_CMD_INIT [+ RESTORE] + UPDATE + SAVE + FLUSH
-+ *   .final()  -> SM3_CMD_INIT [+ RESTORE] [+ UPDATE] + FINAL + FLUSH
-+ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot)
-+ *   .export() -> software-only: copy checkpoint + holdback
-+ *   .import() -> software-only: restore checkpoint + holdback
++ * Registers HMAC ahash algorithms (HMAC-SHA-2, HMAC-SHA-3) with the
++ * Linux crypto subsystem using HC_CMD_HMAC.
 + */
 +
-+#ifndef CMH_SM3_H
-+#define CMH_SM3_H
++#ifndef CMH_HMAC_H
++#define CMH_HMAC_H
 +
-+#include "cmh_config.h"
++int  cmh_hmac_register(void);
++void cmh_hmac_unregister(void);
 +
-+int  cmh_sm3_register(void);
-+void cmh_sm3_unregister(void);
-+
-+#endif /* CMH_SM3_H */
++#endif /* CMH_HMAC_H */
 --
 2.43.7
 
