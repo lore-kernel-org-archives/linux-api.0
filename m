@@ -1,28 +1,28 @@
-Received: from SN4PR2101CU001.outbound.protection.outlook.com (mail-southcentralusazon11022095.outbound.protection.outlook.com [40.93.195.95])
+Received: from CY3PR05CU001.outbound.protection.outlook.com (mail-westcentralusazon11023110.outbound.protection.outlook.com [40.93.201.110])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C64C3ED136;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A99503ED138;
 	Thu, 25 Jun 2026 17:34:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.195.95
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.201.110
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782408859; cv=fail; b=mi5H0chNlAEIMFcm86qIUAOmH7ElbKhg26s8GMfdZujcURS5rnjHFUpn9ZXJZcl+07c0kqDof5huRfrAvw5Ve9SjB24pwgEz1tFDysnUynOKdKPOpAzJgABvaFBMjAvQ1Ff0+RNyox+zb9F/ISj8GuvPerVVMPXQUNwjodxLhGQ=
+	t=1782408860; cv=fail; b=GK5/0opWkMLCtyRJZZjPGg/4JbrD4KkZjNlPQrPjpbCZ6Goa+CBfM5k78pAFwJ6pFsOwcUGIUfAEfALyLz5ahIjLeAjg5u7ES1O+9gljS3aXVz5dxtGbbcHyI9LMjcXs6kQeW5oRQAt3cPOafJ5JbRq0wtTwhKQaJuOJDkF/kv8=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782408859; c=relaxed/simple;
-	bh=y4myAVBbg6tolCO+ichHbgF1lO+HixcJ5MeQMWBW62c=;
+	s=arc-20240116; t=1782408860; c=relaxed/simple;
+	bh=UmHFhOHeYV5hnPD+EMle7g8JeBzApZCU+yJ2Ls8RxZc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=eO+TdDpLq1qoS3SlAlnPfi82ns5sDmVherbWkk+1rH5I7BFDP8whherSTQYqqihDSteiVvhraph2OfyW7VQFN+KdKxtZfCKDX5yCzBRSswYb3f33SZL6wmMFdIlxeuVLkXPlbWQzjocG2Td/oRvGGLZeECPYhuBSbmt21CyOQgc=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=4f/doGob; arc=fail smtp.client-ip=40.93.195.95
+	 MIME-Version:Content-Type; b=lT8Ly67K5ZYnH3XjNEumwbJ/ECCgI+0N2tUfPcHqJ+3ZzMrdnqyCCMZM3ROZBHecPMr5S0Fnner+dST7T2bReTsLKCwZygJU1G8TXPWDWuptVPw1uy8t9ZT12hXmY/vWt5ExlEBEbDtnqocdHukVrEHQ9ZHXS8QWL6SmpN6XpAw=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=oYA5tyZM; arc=fail smtp.client-ip=40.93.201.110
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="4f/doGob"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="oYA5tyZM"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=wWGooNz0EUBHSNchFYjO1G8tQq0VUaH0EXHpDN3/QJukcrFQ2sD377Kg93GqhObtJr4BHDpUlaXAABTLiTS+OzkMsy00Sr+q1IFf0+42CW5GeyMN9QbYde858tssqe0g3MkYPGuK1EVowRGXYZ7TavAb8aKB3Mj6cC7sj0eqeJPOh1s0qdTsSYgPKA9iMthzeFAfeHIfiOQlatz9ZFpjo0rvBvTFWvY8f1FiubVtHc/DzILaedeEBvWFeueocAeZPX9v/n9bfn9BYKjTFp7FWZcEEDztD9Nyl+KtoYhUbn01f5ksFNtK/URowr3M4Sjz3Ewzz9aPyXziuBak6dnpnA==
+ b=xAiAqQ7whctunc7ySmDFB+qFKUvLk7NTiK3ppL/jjiMsH/RW66ZjW+9uldfhGnOjoUI6ofg412tEqdbJ1NE1cV/uutaOqB/lJUE8wMyS5gBO5gWP17ouWpPB5yKF0/ECIT2XG9D6BnV67LLFVg0745sUWqNkH3VH6QFOvlxXLtjxOehODtccEcwAMNnzPPI+aAvISsd6YTbVZGOgGApR5mwhevhFcZc3Se1d/NnA8KnHTUsf7SEZ2QuPdOuRfmjZeygX4gZwBhFoP1GECXfEF62cPnB7fKXqC1UOhtGZrcJZPFzPtRhRpgfXoeobLG1LXWsSaRNV98iaJ9JXv70mpQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=Rohtc3LuMw+G1Efka3OAngS4CQk8ACRmH8Q+BThi3pE=;
- b=MCDzO83vHrcLVp1gyY9l/or7lnGcrS0wH0gfTCqHdHiDOhNieo8yH8JP2JxIQf7HXsW3OAXIlr2D2fWXaRd1+6gNP0AK9usbNiMeGz2DBoyWed9xMWZym3b1AYsvg0uJyJcYDdLHN6iqmrkp69BVCCEKbwQy4LOpNoVt+Ymaj0dXnwr17TelKtamB8bmo0bUtn97h0aRWByMgrz83waqFfVzqMzTHNP9yQTs8u9R1YL1fRPFNNWq4WVtDnboNi4CiNgiyr8yh46oaTqunofAxcrea55WM/D6rKzZs31QMyrXJ1OFsQVlAS4vbbOg+J9WL9cB2ZTCsA3TWvZqnJq+7Q==
+ bh=XfpoXOZdTs/2xcTF4Rta1wqOWocmIUwHAHfOL8nSRoY=;
+ b=lZmQ4HYQA83huhG6BM+t8mj7GnL34iOExTFOX/J1H5O7Akcr6DzRnw2lG27HnTAcmFluWuY9YwDRrZVnTpxMQxfCG91Lp/fdo5klJZFKF5gSj66WPlyADU+GWXJgk7XUXmNa1wCi+LOqdMALYS7uqc4+f4bQ3j2cI1QzfZOeq/Ny8VdYWgpqqqTn1F7ctUQj3CLYWSuFuMV5SJ/o6ermO/11H4+FLxskk5MjaihEQFnGVmnCiIsOao1SN/L/GUVoNxecAlFRq58pfw0T8F9N7FkxKRBJNlG7yP3wzpk4ReXm53rr623X++VCDYZpMjc74F2HiRHglWWYVVQJrKrgIg==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,17 +30,17 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=Rohtc3LuMw+G1Efka3OAngS4CQk8ACRmH8Q+BThi3pE=;
- b=4f/doGobqR66jRqi0j3kars9LuIMzrCBeZBJI/y3LACYIuyLaneyyV51gmyPBIUtttM1BrjstB1FNlEptLOH/5pAUwCBr1DD7pChH5BIn8bCSu5yiLhWtpR3f3ES0CP9oJYjw/BN3/QxGzJf5Cmc70/MW8LNIeQIxNDdugK5t+WHTlSq4AmhQuXLRqtBUokqk6e9w0it7KGdsV7xkzGOFAA5RZfau1oVmMVndu0CCej/ZAIMpezOpx0a9qjdT1QiyiKPLZ8PQvKx6mjP1L72KbLqJGBq+HdPVMmfVd/Mb+cNC6xnNHIDQcKZtlUrbmtICZ6fqwRo/wDRfzFS0ZcBzg==
-Received: from PH0PR07CA0118.namprd07.prod.outlook.com (2603:10b6:510:4::33)
- by DS6PR04MB9939.namprd04.prod.outlook.com (2603:10b6:8:368::15) with
+ bh=XfpoXOZdTs/2xcTF4Rta1wqOWocmIUwHAHfOL8nSRoY=;
+ b=oYA5tyZM0RSYXWKII0fkILad0PRpZxgciHVH5zYV9ShF9pxlTsvyW4/qWqLAptV8hTAHy35+GKUgVmnSC/Ak0W0UeA7b6CCDvEQZKrsSyOT2Oo5VmaVYgAi2C08MjnwzLnKMWIO4MPOfja4PM0spK9s4JQCCW/3Iw80QWfn8653EdVCo/knEXdJzHLMR+zx7EZ+qRJ4wLs7E5MTHhiywXrT2X10uBcY1/jikJrP6R9xtsP5jbOeylpwgjQJQhPLz7Ef9mbuQaaQ3hwJSxQhxcbpoXuyYQAlLqpSBmpDs4w1bJo/QKM2PeewIYyAlztvnInKzwr+Uloqbji6svebezQ==
+Received: from BY5PR04CA0023.namprd04.prod.outlook.com (2603:10b6:a03:1d0::33)
+ by BY5PR04MB6849.namprd04.prod.outlook.com (2603:10b6:a03:228::17) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.159.16; Thu, 25 Jun
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.139.20; Thu, 25 Jun
  2026 17:34:10 +0000
-Received: from CY4PEPF0000FCC5.namprd03.prod.outlook.com
- (2603:10b6:510:4:cafe::78) by PH0PR07CA0118.outlook.office365.com
- (2603:10b6:510:4::33) with Microsoft SMTP Server (version=TLS1_3,
- cipher=TLS_AES_256_GCM_SHA384) id 15.21.159.17 via Frontend Transport; Thu,
+Received: from MWH0EPF000A6731.namprd04.prod.outlook.com
+ (2603:10b6:a03:1d0:cafe::7d) by BY5PR04CA0023.outlook.office365.com
+ (2603:10b6:a03:1d0::33) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.159.16 via Frontend Transport; Thu,
  25 Jun 2026 17:34:09 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- CY4PEPF0000FCC5.mail.protection.outlook.com (10.167.242.107) with Microsoft
+ MWH0EPF000A6731.mail.protection.outlook.com (10.167.249.23) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.181.6
  via Frontend Transport; Thu, 25 Jun 2026 17:34:09 +0000
 Received: from hqxsv-cmdev3-skrishnamoorthy.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 17533180176E;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 418861801774;
 	Thu, 25 Jun 2026 17:34:07 +0000 (UTC)
 From: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -80,9 +80,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	sipsupport@rambus.com,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH 11/19] crypto: cmh - add DRBG hwrng
-Date: Thu, 25 Jun 2026 10:33:19 -0700
-Message-ID: <20260625173328.1140487-12-skrishnamoorthy@rambus.com>
+Subject: [PATCH 13/19] crypto: cmh - add ECDSA/SM2 sig
+Date: Thu, 25 Jun 2026 10:33:21 -0700
+Message-ID: <20260625173328.1140487-14-skrishnamoorthy@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
 References: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
@@ -95,38 +95,40 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: CY4PEPF0000FCC5:EE_|DS6PR04MB9939:EE_
+X-MS-TrafficTypeDiagnostic: MWH0EPF000A6731:EE_|BY5PR04MB6849:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: a4764024-d582-4a90-78c1-08ded2dff6f6
+X-MS-Office365-Filtering-Correlation-Id: de16b095-886d-4771-c834-08ded2dff6f5
 X-LD-Processed: bd0ba799-c2b9-413c-9c56-5d1731c4827c,ExtAddr
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|36860700016|82310400026|7416014|376014|1800799024|23010399003|18002099003|22082099003|11063799006|56012099006|921020|6133799003|3023799007;
+	BCL:0;ARA:13230040|36860700016|1800799024|82310400026|7416014|23010399003|376014|921020|22082099003|18002099003|3023799007|56012099006|11063799006;
 X-Microsoft-Antispam-Message-Info:
-	2n2WBUZyDQioejsGCPrEJARWdxBI0VPPhP1iDHTaiHCpkBMbYz9RfVNap1jsEOV6FGGtlpM99lyS/+hWaCReETGoRbKZbcEuv/+lhQvu1+qZrRrLdz6ivg95ccegqvpey829xSHYEUR7FGee035GJS6qlO0Xp/+2ExCMnlE8ZSOFpfyyO/mzBzMRt3UyqL4SNLDqgi6rIdwX8RYZrgDTOAmpr16tPkSwOtrEJDxxnmbAXhiPG2h65iryy1+YtyIPNOmaQ5gJEQzxRjdGLJG/ySRePRVf9k55Kn5Kro66G4URyKrnxNXrIqaUwL/oviDZElMx/C1GIKAY6jL49b1qPhWAJeYzQgre7vbzm/Lo7QMjIBYS4CGVPRIee+A92sDVLviNjX7pBHH807ayi41gY42WvjayEVdpZ2j3z1VMvw3pzRA9i23l+Vw1UnVNVLsLj2CCYIo3zhC8VNA3ERVkM8s3adKnOc4ndujLr908m1z/wGuUT6Xgcr65FbqYVRDIdarmK91v+Qjib5ynS/Rwz9908uohJrehv4CHc42zD8omtUEprcl1F7hr2EM0G9b88VJ9y1ft2p92aYzuUlD313ZoIR2Qpyj11B1WkgZeFknW9t2Jnp74mIUE4qP6BEtNj2guCMzKkcvNEtFmdUHIcE6GcH8aUcaCcXQBJ+ZtJLd578eyDtZZZIg6FtGzrzEaZVaHWUsH8qgec83KFiFhFRyVXWYDtg/xcZHqblSAgnG6VoPF3cj9PDZh5Me0e1zc
+	JWDAYwwAZL8u2k2jRjNxTl4egenaksy27R8uYkaMpFU5w7E8C7Z51K/Aoo90s3aB3kzoZ9gik18jFIn3SYiXezHmKaF2Vq2L6BnAQxPkUi04z6UbNXcK0DoDQll03dNKK1yTmA6eY+U3JCgCsax57jMKz+LtZo+tU641XSbdrqtSr6btr0bK6x9oawYLxUk9VaqnkJTx880v0/slmc9gI9Vqwum2dPIfyrVt8/QKvKmV1zVp1yzEpj1fd8F7dhNUnRRoui8UeCFQuOpG0tPRXz66gwmIimpgqyhqZXi5pPfEd5qoodLw1cqfk7wRZ1Pv7e51yzS0sP6gUowx75VI65lSYj5I7gvjszqQ7ahVhVVWJgnNsqBSbg1bjLIuG3KreVHi+26xKBikReDBW1YjGKIBtmH/GseyCrBeXFalLAXT5S5EWds12dXhcTQKLuMDjLvXfeMdlp5KXPzHTDQVoMkSkcwCpZgWVmTOCAXRQPWjbk5BMLjbVbXBNJpl+r6/MgEW/biBfC+GjmRbkWJoViZICGOOz/X7wMd9qfHmZ+LN21pdQ3BzKkY1X20OMfb7mk9o/doEKEGrU2WWzc2G+XWls7bH1D3f83XH9MSjFX4MsPdoUbdbyhYpnBulDKAiZHwqaEHgWLB9Ei1xgec1qWDztci8kLlmfKkBJQEeRRBK120/2wil6GswNaXYsh0J2rUprNEZdhe9FdQOmRcVnJ2JB3GiPKwy29R4/ONOYpBKxCtS5Qjr4kkDVqZomaE7
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(82310400026)(7416014)(376014)(1800799024)(23010399003)(18002099003)(22082099003)(11063799006)(56012099006)(921020)(6133799003)(3023799007);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(1800799024)(82310400026)(7416014)(23010399003)(376014)(921020)(22082099003)(18002099003)(3023799007)(56012099006)(11063799006);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	eIAApoSRY52zOG00XcTgjGJY+xuPSHB6aF2JOQN/gWdwnzhG/6NINJcXYJjCOEWNdQ0v/OFHgbl7PoJ+tFtkdBOwCU8cyuPZDEdW6SzWhDQFRZNMLZdsf3jXKXVSQLlMM3RTqiIpNYLdIPn2OZj+o/hBnkDIfoUHBymvpQB2FSO5V+S4rPto/Kx4Zo2Vew1xQXYnuZTQ2tgYYuJeaD0vJm5v+xxBPi0D97sOJ6z8JTRiTo4SHioDfwh8DR3IPhpVHcXx542+53cGl/tMtrR7snhMoePApSbioybTrdtMtGokfHE82oKJ4jLopLhXwlMSVVVZHgK47dvb7EenfqdWXtf6hRj9uOy3ZxhaYi8Y9iJx9JhJaSAUPHrcPZdqGsfxncUnoqxCB42+EtcN37pJuyJH/RYkDdpD75ZebO4WkKgjs42Zxq3TqY3r2UAJeVPo
+	Kc7AeOUMFQ5TbC0nMnwlQUfsbO3DcmNH3NERwrJuqH6b7n1WaUVhtj155w8lBvJrzGOimNcpRTILgT2JtIqEJmxtoZkFxu9jFWsmlQ+UGncEH3YwuxbfztaI/cd00If8aNsbxlZdr9gIVe6cS+s8VmpVhfGcFWXNEssLAQ4pJUoIgWhfL9nGNg9box3ssCS+Q4elQLMAXGDhPZnJ5m7Xdwps17LDJG5iAVGjd4O43S3bPNPprJJ0c/2+LPECwEjVmuO2kCFrUmpcThe8letevobfmwlkMqtm9PzD3zWO+gQnDqdl2REze/OaT8aLYMHzNuu7bcFCf0JhC+sOQej6Ks3wV2J4PuwMTTh446JNx0kZFevXSePq9Sj1qOQqmxLAB+XUdEp3eltjIVmWQSYjuPpW1f63bTR/LhnoSdjBomRtX0dee+HoztBYea6sVqJy
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:09.4825
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 25 Jun 2026 17:34:09.4899
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: a4764024-d582-4a90-78c1-08ded2dff6f6
+X-MS-Exchange-CrossTenant-Network-Message-Id: de16b095-886d-4771-c834-08ded2dff6f5
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	CY4PEPF0000FCC5.namprd03.prod.outlook.com
+	MWH0EPF000A6731.namprd04.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: DS6PR04MB9939
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: BY5PR04MB6849
 
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 
-Register the CMH DRBG core (core ID 0x0f) as an hwrng provider.
-The hardware implements a NIST SP 800-90A compliant DRBG with
-automatic self-seeding.
+Register ECDSA and SM2 sig algorithms using the CMH PKE core.
+Supports P-256, P-384, P-521, and SM2 curves for sign and verify
+operations.  SM2 is registered as verify-only via the crypto API;
+full SM2 operations (encrypt, decrypt, key exchange) are available
+through the /dev/cmh_mgmt ioctl interface.
 
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.co=
 m>
@@ -135,408 +137,667 @@ Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
 Reviewed-by: Thi Nguyen <thin@rambus.com>
 ---
- drivers/crypto/cmh/Makefile   |   3 +-
- drivers/crypto/cmh/cmh_main.c |   9 +
- drivers/crypto/cmh/cmh_rng.c  | 316 ++++++++++++++++++++++++++++++++++
- 3 files changed, 327 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_rng.c
+ drivers/crypto/cmh/Makefile        |   3 +-
+ drivers/crypto/cmh/cmh_main.c      |   8 +
+ drivers/crypto/cmh/cmh_pke_ecdsa.c | 575 +++++++++++++++++++++++++++++
+ 3 files changed, 585 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_pke_ecdsa.c
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 4ebd0e1d10bc..1c4cb817424c 100644
+index 7afd9852c337..fdbf66b13628 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -28,7 +28,8 @@ cmh-y :=3D \
-        cmh_sm4_cmac.o \
-        cmh_ccp.o \
-        cmh_ccp_aead.o \
--       cmh_ccp_poly.o
-+       cmh_ccp_poly.o \
-+       cmh_rng.o
+@@ -31,7 +31,8 @@ cmh-y :=3D \
+        cmh_ccp_poly.o \
+        cmh_rng.o \
+        cmh_pke_common.o \
+-       cmh_pke_rsa.o
++       cmh_pke_rsa.o \
++       cmh_pke_ecdsa.o
 
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) +=3D \
 diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index 79df27d43e7e..f31c50168e4a 100644
+index 8535453342d7..939ff5007755 100644
 --- a/drivers/crypto/cmh/cmh_main.c
 +++ b/drivers/crypto/cmh/cmh_main.c
-@@ -34,6 +34,7 @@
- #include "cmh_cshake.h"
- #include "cmh_kmac.h"
- #include "cmh_sm3.h"
-+#include "cmh_rng.h"
- #include "cmh_aes.h"
- #include "cmh_sm4.h"
- #include "cmh_ccp.h"
-@@ -224,6 +225,11 @@ static int cmh_probe(struct platform_device *pdev)
+@@ -281,6 +281,11 @@ static int cmh_probe(struct platform_device *pdev)
         if (ret)
-                goto err_sm3_register;
+                goto err_pke_rsa_register;
 
-+       /* Register hwrng backed by DRBG core */
-+       ret =3D cmh_rng_register(pdev);
++       /* Register PKE ECDSA/SM2 sig */
++       ret =3D cmh_pke_ecdsa_register();
 +       if (ret)
-+               goto err_rng_register;
++               goto err_pke_ecdsa_register;
 +
-        /* Register AES skcipher algorithms */
-        ret =3D cmh_aes_register();
+        /* Register key management device (/dev/cmh_mgmt) */
+        ret =3D cmh_mgmt_register();
         if (ret)
-@@ -299,6 +305,8 @@ static int cmh_probe(struct platform_device *pdev)
- err_aes_aead_register:
-        cmh_aes_unregister();
- err_aes_register:
-+       cmh_rng_unregister();
-+err_rng_register:
-        cmh_sm3_unregister();
- err_sm3_register:
-        cmh_kmac_unregister();
-@@ -344,6 +352,7 @@ static void cmh_remove(struct platform_device *pdev)
-        cmh_aes_cmac_unregister();
-        cmh_aes_aead_unregister();
-        cmh_aes_unregister();
-+       cmh_rng_unregister();
-        cmh_sm3_unregister();
-        cmh_kmac_unregister();
-        cmh_cshake_unregister();
-diff --git a/drivers/crypto/cmh/cmh_rng.c b/drivers/crypto/cmh/cmh_rng.c
+@@ -293,6 +298,8 @@ static int cmh_probe(struct platform_device *pdev)
+        return 0;
+
+ err_mgmt_register:
++       cmh_pke_ecdsa_unregister();
++err_pke_ecdsa_register:
+        cmh_pke_rsa_unregister();
+ err_pke_rsa_register:
+        cmh_ccp_poly_unregister();
+@@ -351,6 +358,7 @@ static void cmh_remove(struct platform_device *pdev)
+        cfg =3D &dev->config;
+
+        cmh_mgmt_unregister();
++       cmh_pke_ecdsa_unregister();
+        cmh_pke_rsa_unregister();
+        cmh_ccp_poly_unregister();
+        cmh_ccp_aead_unregister();
+diff --git a/drivers/crypto/cmh/cmh_pke_ecdsa.c b/drivers/crypto/cmh/cmh_pk=
+e_ecdsa.c
 new file mode 100644
-index 000000000000..c9693f6cc360
+index 000000000000..6b65f7fb72cc
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_rng.c
-@@ -0,0 +1,316 @@
++++ b/drivers/crypto/cmh/cmh_pke_ecdsa.c
+@@ -0,0 +1,575 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Hardware RNG (DRBG) Driver
++ * CMH LKM -- ECDSA / SM2 Signature Driver (sig_alg, synchronous)
 + *
-+ * Implements a Linux hwrng backed by the CMH DRBG core.  Each .read()
-+ * builds a 3-entry VCQ (header + GENERATE + FLUSH) and submits it
-+ * synchronously through the Transaction Manager.
++ * Registers "ecdsa-nist-p256", "ecdsa-nist-p384", and "ecdsa-nist-p521"
++ * sig algorithms with sign, verify, set_pub_key, and set_priv_key callbac=
+ks.
++ * Registers "sm2" as verify-only (set_pub_key + verify); SM2 sign is
++ * provided via the cmh_mgmt ioctl path in cmh_pke_sm2.c.
 + *
-+ * DRBG configuration (CONFIG) is a management-host operation in the
-+ * CMH security model.  The driver's behaviour is controlled by the
-+ * drbg_config setting (debug-only module parameter):
++ * In-kernel consumers typically use verify-only (module signatures, IMA),
++ * but we provide sign as well for completeness -- matching the CMH eSW
++ * capability.
 + *
-+ *   "auto" (default) -- attempt CONFIG at probe with the hardcoded
-+ *     ratio/strength defaults.  Succeeds in stateless mode (any host may
-+ *     CONFIG) or when this host is the management host in stateful
-+ *     mode.  On -EPERM the driver logs a notice and continues --
-+ *     GENERATE will work once the management host configures the DRBG.
++ * Key format: Public key =3D raw 04 || X || Y (uncompressed).
++ * Signature format: struct ecdsa_raw_sig (two u64[ECC_MAX_DIGITS] arrays
++ * in VLI format -- native byte order, LE digit order) for both sign
++ * output and verify input.  This matches the kernel crypto sig API.
 + *
-+ *   "skip" -- do not issue CONFIG; assume an external management host
-+ *     will configure the DRBG.  hwrng is still registered; .read()
-+ *     returns -EAGAIN until GENERATE succeeds.
++ * Private key via cmh_key_ctx: raw keys written via SYS_REF_TEMP.
++ * Datastore-referenced keys are only reachable through the ioctl
++ * path (cmh_mgmt.c).
 + *
-+ * The management host (or any privileged user-space process) can also
-+ * reconfigure the DRBG at runtime via CMH_IOCTL_DRBG_CONFIG.
++ * SM2 note: The SM2 sig entry is verify-only (no sign/set_priv_key).
++ * SM2 signature verification requires the digest to be SM3(ZA || M)
++ * where ZA =3D SM3(ENTLA || IDA || a || b || xG || yG || xA || yA).
++ * The ZA identity pre-hash is the caller's responsibility; the driver
++ * passes the digest directly to the CMH eSW SM2 verify engine.
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/hw_random.h>
 +#include <linux/slab.h>
-+#include <linux/platform_device.h>
++#include <crypto/sha2.h>
++#include <crypto/sig.h>
++#include <crypto/internal/sig.h>
++#include <crypto/internal/ecc.h>
 +
-+#include "cmh_rng.h"
-+#include "cmh_vcq.h"
++#include "cmh_pke.h"
++#include "cmh_sys.h"
++#include "cmh_sys_abi.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
-+#include "cmh_sys.h"
-+#include "cmh_config.h"
-+
-+/* VCQ layout for .read(): header + GENERATE + FLUSH =3D 3 entries. */
-+#define DRBG_READ_VCQ_CMDS     3
-+
-+/* VCQ layout for CONFIG: header + RESET + CONFIG + FLUSH =3D 4 entries. *=
-/
-+#define DRBG_CONFIG_VCQ_CMDS   4
++#include "cmh_key.h"
 +
 +/*
-+ * Linux hwrng quality is expressed in bits of entropy per 1024 bits of
-+ * input.  The kernel clamps to this maximum; mirror it here so our
-+ * MODULE_PARM_DESC and clamp logic stay in sync.
++ * Number of ECC digits needed for a given coordinate byte length.
++ * P-256: 4, P-384: 6, P-521/SM2(clen=3D68): 9.
 + */
-+#define CMH_HWRNG_QUALITY_MAX  1024
-+
-+/* Module parameters */
-+
-+static int hwrng_quality;
-+module_param(hwrng_quality, int, 0444);
-+MODULE_PARM_DESC(hwrng_quality,
-+                "hwrng quality (0=3Dno CRNG seeding, 1-1024=3Denable; defa=
-ult: 0)");
-+
-+#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
-+static char *drbg_config =3D "auto";
-+module_param(drbg_config, charp, 0444);
-+MODULE_PARM_DESC(drbg_config,
-+                "[debug] DRBG config at probe: \"auto\"=3Dattempt CONFIG, =
-\"skip\"=3Dassume external (default: auto)");
-+#else
-+static const char *drbg_config =3D "auto";
-+#endif
-+
-+/*
-+ * DRBG parameters -- hardcoded to production defaults.
-+ * Entropy ratio 0 =3D 1:1 (full entropy), security strength 0x10 =3D 256-=
-bit.
-+ */
-+#define CMH_DRBG_ENTROPY_RATIO         0
-+#define CMH_DRBG_SECURITY_STRENGTH     0x10
-+
-+static unsigned int drbg_timeout_ms =3D 500;
-+
-+/* VCQ Builders */
-+
-+static void vcq_add_drbg_generate(struct vcq_cmd *slot, u64 dst_phys, u32 =
-len)
++static inline unsigned int clen_to_ndigits(u32 clen)
 +{
-+       memset(slot, 0, sizeof(*slot));
-+       slot->magic =3D VCQ_CMD_MAGIC;
-+       slot->id =3D VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_GENERATE);
-+       slot->hwc.drbg.cmd_generate.dst =3D dst_phys;
-+       slot->hwc.drbg.cmd_generate.len =3D len;
++       return DIV_ROUND_UP(clen, sizeof(u64));
 +}
 +
-+/*
-+ * Maximum bytes per DRBG GENERATE request.  The kernel calls .read()
-+ * repeatedly to fill larger requests, so capping here is safe.
-+ * 32 bytes matches the 256-bit security strength natural output size.
-+ */
-+#define CMH_DRBG_MAX_GENERATE  32U
-+
-+/* hwrng .read() callback */
-+
-+static int cmh_rng_read(struct hwrng *rng, void *data, size_t max, bool wa=
-it)
-+{
-+       struct cmh_dma_orphan *orphan;
-+       struct vcq_cmd vcq[DRBG_READ_VCQ_CMDS];
-+       dma_addr_t dma_addr;
-+       void *dmabuf;
-+       size_t nbytes;
-+       int ret;
-+
-+       if (max =3D=3D 0)
-+               return 0;
-+
-+       /*
-+        * Our path uses GFP_KERNEL allocations and synchronous VCQ
-+        * submission -- both may sleep.  When the caller indicates
-+        * non-blocking context (!wait), return 0 ("no data yet") so
-+        * the hwrng core retries later.
-+        */
-+       if (!wait)
-+               return 0;
-+
-+       nbytes =3D min_t(size_t, max, CMH_DRBG_MAX_GENERATE);
-+
-+       orphan =3D kmalloc_obj(*orphan, GFP_KERNEL);
-+       if (!orphan)
-+               return -ENOMEM;
-+
-+       dmabuf =3D kmalloc(nbytes, GFP_KERNEL);
-+       if (!dmabuf) {
-+               kfree(orphan);
-+               return -ENOMEM;
-+       }
-+
-+       dma_addr =3D cmh_dma_map_single(dmabuf, nbytes, DMA_FROM_DEVICE);
-+       if (cmh_dma_map_error(dma_addr)) {
-+               kfree(dmabuf);
-+               kfree(orphan);
-+               return -ENOMEM;
-+       }
-+
-+       orphan->buf  =3D dmabuf;
-+       orphan->addr =3D dma_addr;
-+       orphan->len  =3D nbytes;
-+       orphan->dir  =3D DMA_FROM_DEVICE;
-+
-+       vcq_set_header(&vcq[0], DRBG_READ_VCQ_CMDS);
-+       vcq_add_drbg_generate(&vcq[1], dma_addr, nbytes);
-+       vcq_add_flush(&vcq[2], CORE_ID_DRBG);
-+
-+       /*
-+        * Use the noabort variant: if the MBX is occupied by a slow
-+        * operation (e.g. SLH-DSA sign at 120 s), we must not issue
-+        * MBX_COMMAND_ABORT -- that would kill the unrelated in-flight
-+        * VCQ.  On timeout with an in-flight VCQ (-EINPROGRESS), the
-+        * orphan callback defers DMA cleanup until the RH fires.
-+        */
-+       ret =3D cmh_tm_submit_sync_noabort(vcq, DRBG_READ_VCQ_CMDS, 1,
-+                                        msecs_to_jiffies(drbg_timeout_ms),
-+                                        cmh_dma_orphan_free, orphan);
-+       if (ret =3D=3D -EINPROGRESS) {
-+               /* Orphan callback owns dmabuf -- will free on VCQ completi=
-on */
-+               return -EAGAIN;
-+       }
-+
-+       /* Normal path or cancelled-from-queue: caller owns DMA */
-+       cmh_dma_unmap_single(dma_addr, nbytes, DMA_FROM_DEVICE);
-+       kfree(orphan);
-+
-+       if (ret) {
-+               /*
-+                * Only translate known transient conditions to -EAGAIN
-+                * so the hwrng subsystem retries later.  Propagate
-+                * unexpected failures unchanged to avoid masking real
-+                * faults and causing indefinite retry loops.
-+                */
-+               switch (ret) {
-+               case -EAGAIN:
-+               case -EBUSY:
-+               case -ETIMEDOUT:
-+               case -EIO:
-+               /*
-+                * -ENODEV: the TM is not running -- occurs when the
-+                * hwrng kthread (PF_NOFREEZE, not frozen during
-+                * suspend) calls .read() while the device is suspended.
-+                * Treat as transient: the TM restarts on resume.
-+                */
-+               case -ENODEV:
-+                       dev_dbg_ratelimited(cmh_dev(),
-+                                           "rng: transient DRBG failure (r=
-c=3D%d)\n",
-+                                           ret);
-+                       kfree(dmabuf);
-+                       return -EAGAIN;
-+               default:
-+                       dev_err_ratelimited(cmh_dev(),
-+                                           "rng: DRBG generate failed (rc=
-=3D%d)\n",
-+                                           ret);
-+                       kfree(dmabuf);
-+                       return ret;
-+               }
-+       }
-+
-+       memcpy(data, dmabuf, nbytes);
-+       kfree(dmabuf);
-+
-+       return nbytes;
-+}
-+
-+/* Registration */
-+
-+static bool cmh_rng_registered;
-+
-+static struct hwrng cmh_hwrng =3D {
-+       .name =3D "cri-cmh-drbg",
-+       .read =3D cmh_rng_read,
++struct cmh_ecdsa_tfm_ctx {
++       struct cmh_key_ctx key;         /* private key (raw only) */
++       u8 *pub_key;                    /* uncompressed (x, y) without 04 p=
+refix */
++       u32 pub_key_len;
++       u32 curve;                      /* PKE_CURVE_* */
++       u32 clen;                       /* coordinate length in bytes */
 +};
 +
-+/**
-+ * cmh_rng_register() - Register the CMH hardware RNG device
-+ * @pdev: Platform device for the CMH accelerator
-+ *
-+ * Reads hwrng quality from device tree and module parameters, validates
-+ * DRBG configuration, optionally sends a DRBG CONFIG VCQ to firmware,
-+ * and registers the hwrng device with the kernel hwrng framework.
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_rng_register(struct platform_device *pdev)
++static inline struct cmh_ecdsa_tfm_ctx *cmh_ecdsa_ctx(struct crypto_sig *t=
+fm)
 +{
-+       int ret;
++       return crypto_sig_ctx(tfm);
++}
 +
-+       cmh_hwrng.quality =3D hwrng_quality;
++/*
++ * Convert one VLI component (u64 array, LE digit order, native byte order=
+)
++ * to big-endian byte array of @out_len bytes.  The VLI value is right-ali=
+gned
++ * in the output (leading zero bytes if ndigits*8 > out_len are discarded;
++ * leading zero padding added if ndigits*8 < out_len).
++ */
++static void ecdsa_vli_to_be(const u64 *vli, unsigned int ndigits,
++                           u8 *out, unsigned int out_len)
++{
++       unsigned int full_len =3D ndigits * sizeof(u64);
++       unsigned int i, skip;
 +
-+       if (cmh_hwrng.quality > CMH_HWRNG_QUALITY_MAX)
-+               cmh_hwrng.quality =3D CMH_HWRNG_QUALITY_MAX;
++       memset(out, 0, out_len);
 +
-+       /*
-+        * DRBG CONFIG is a management-host operation.  In "auto" mode,
-+        * attempt it -- this succeeds in stateless mode (any host) or
-+        * when we are the management host in stateful mode.  On -EPERM
-+        * (not management host) we continue without error -- GENERATE
-+        * will work once the management host configures the DRBG.
-+        *
-+        * In "skip" mode, do not issue CONFIG -- assume the management
-+        * host has already configured (or will configure) the DRBG.
-+        */
-+       if (strcmp(drbg_config, "skip") !=3D 0) {
-+               struct vcq_cmd cfg_vcq[DRBG_CONFIG_VCQ_CMDS];
++       if (full_len <=3D out_len) {
++               /* VLI fits entirely -- write at right end of out */
++               u8 *dst =3D out + (out_len - full_len);
 +
-+               if (strcmp(drbg_config, "auto") !=3D 0)
-+                       dev_warn(&pdev->dev,
-+                                "rng: unrecognized drbg_config=3D\"%s\", t=
-reating as \"auto\"\n",
-+                                drbg_config);
-+
-+               vcq_set_header(&cfg_vcq[0], DRBG_CONFIG_VCQ_CMDS);
-+               vcq_add_drbg_reset(&cfg_vcq[1]);
-+               vcq_add_drbg_config(&cfg_vcq[2], CMH_DRBG_ENTROPY_RATIO,
-+                                   CMH_DRBG_SECURITY_STRENGTH);
-+               vcq_add_flush(&cfg_vcq[3], CORE_ID_DRBG);
-+               ret =3D cmh_tm_submit_sync(cfg_vcq, DRBG_CONFIG_VCQ_CMDS, 1=
-);
-+               if (ret =3D=3D -EPERM)
-+                       dev_notice(&pdev->dev,
-+                                  "rng: DRBG config not permitted (not man=
-agement host); assuming external configuration\n");
-+               else if (ret)
-+                       dev_warn(&pdev->dev,
-+                                "rng: DRBG config failed (rc=3D%d)\n", ret=
-);
-+               else
-+                       dev_info(&pdev->dev,
-+                                "rng: DRBG configured (ratio=3D%u strength=
-=3D0x%02x)\n",
-+                                CMH_DRBG_ENTROPY_RATIO,
-+                                CMH_DRBG_SECURITY_STRENGTH);
++               for (i =3D 0; i < ndigits; i++)
++                       put_unaligned_be64(vli[ndigits - 1 - i],
++                                          &dst[i * sizeof(u64)]);
 +       } else {
-+               dev_info(&pdev->dev,
-+                        "rng: DRBG config skipped (drbg_config=3Dskip); as=
-suming external configuration\n");
++               /* VLI wider than out -- skip leading (zero) bytes */
++               u8 tmp[ECC_MAX_BYTES];
++
++               for (i =3D 0; i < ndigits; i++)
++                       put_unaligned_be64(vli[ndigits - 1 - i],
++                                          &tmp[i * sizeof(u64)]);
++               skip =3D full_len - out_len;
++               WARN_ON_ONCE(memchr_inv(tmp, 0, skip));
++               memcpy(out, tmp + skip, out_len);
 +       }
++}
 +
-+       ret =3D hwrng_register(&cmh_hwrng);
-+       if (ret) {
-+               dev_err(&pdev->dev, "rng: hwrng_register failed (rc=3D%d)\n=
-",
-+                       ret);
-+               return ret;
++/*
++ * Convert big-endian byte array to VLI (u64 array, LE digit order).
++ * Output is zero-filled to @max_digits entries.
++ */
++static void ecdsa_be_to_vli(const u8 *in, unsigned int in_len,
++                           u64 *vli, unsigned int max_digits)
++{
++       unsigned int full_len =3D max_digits * sizeof(u64);
++       u8 tmp[ECC_MAX_BYTES];
++       unsigned int i;
++
++       if (WARN_ON_ONCE(max_digits > ECC_MAX_DIGITS))
++               max_digits =3D ECC_MAX_DIGITS;
++
++       memset(tmp, 0, full_len);
++       if (in_len <=3D full_len)
++               memcpy(tmp + (full_len - in_len), in, in_len);
++       else
++               memcpy(tmp, in + (in_len - full_len), full_len);
++
++       for (i =3D 0; i < max_digits; i++) {
++               unsigned int off =3D (max_digits - 1 - i) * sizeof(u64);
++
++               vli[i] =3D get_unaligned_be64(&tmp[off]);
 +       }
++}
 +
-+       dev_info(&pdev->dev,
-+                "rng: registered cri-cmh-drbg (quality=3D%d timeout=3D%ums=
-)\n",
-+                cmh_hwrng.quality, drbg_timeout_ms);
++/*
++ * Extract raw (r || s) big-endian byte arrays from struct ecdsa_raw_sig.
++ * Each component is written as @clen bytes into @raw_rs.
++ */
++static int ecdsa_sig_to_raw(const void *src, unsigned int slen,
++                           u8 *raw_rs, u32 clen)
++{
++       const struct ecdsa_raw_sig *sig =3D src;
++       unsigned int ndigits =3D clen_to_ndigits(clen);
 +
-+       cmh_rng_registered =3D true;
++       if (slen !=3D sizeof(struct ecdsa_raw_sig))
++               return -EINVAL;
++
++       ecdsa_vli_to_be(sig->r, ndigits, raw_rs, clen);
++       ecdsa_vli_to_be(sig->s, ndigits, raw_rs + clen, clen);
 +       return 0;
 +}
 +
-+/**
-+ * cmh_rng_unregister() - Unregister the CMH hardware RNG device
-+ *
-+ * Unregisters the hwrng device from the kernel hwrng framework if it
-+ * was previously registered.
++/*
++ * Encode raw (r || s) big-endian byte arrays into struct ecdsa_raw_sig.
++ * Returns sizeof(struct ecdsa_raw_sig) on success.
 + */
-+void cmh_rng_unregister(void)
++static int ecdsa_raw_to_sig(const u8 *raw_rs, u32 clen,
++                           void *dst, unsigned int dlen)
 +{
-+       if (!cmh_rng_registered)
-+               return;
-+       hwrng_unregister(&cmh_hwrng);
-+       cmh_rng_registered =3D false;
-+       dev_info(cmh_dev(), "rng: unregistered cri-cmh-drbg\n");
++       struct ecdsa_raw_sig *sig =3D dst;
++
++       if (dlen < sizeof(struct ecdsa_raw_sig))
++               return -ENOSPC;
++
++       memset(sig, 0, sizeof(*sig));
++       ecdsa_be_to_vli(raw_rs, clen, sig->r, ECC_MAX_DIGITS);
++       ecdsa_be_to_vli(raw_rs + clen, clen, sig->s, ECC_MAX_DIGITS);
++       return sizeof(struct ecdsa_raw_sig);
 +}
 +
-+/* -- debugfs timeout accessor ------------------------------------------ =
-*/
-+
-+#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
-+/**
-+ * cmh_rng_timeout_drbg_ptr() - Return pointer to drbg_timeout_ms for debu=
-gfs
++/*
++ * ECDSA verify (synchronous sig_alg)
 + *
-+ * Exposes the DRBG operation timeout for runtime tuning via debugfs
-+ * config/ directory.
++ * @src:    struct ecdsa_raw_sig (VLI format)
++ * @slen:   signature length (must be sizeof(struct ecdsa_raw_sig))
++ * @digest: hash digest
++ * @dlen:   digest length
 + *
-+ * Return: pointer to the static drbg_timeout_ms variable.
++ * Returns 0 on successful verification, negative errno on failure.
 + */
-+unsigned int *cmh_rng_timeout_drbg_ptr(void) { return &drbg_timeout_ms; }
-+#endif
++static int cmh_ecdsa_verify(struct crypto_sig *tfm,
++                           const void *src, unsigned int slen,
++                           const void *digest, unsigned int dlen)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++       u32 clen =3D ctx->clen;
++       u32 sig_raw_len =3D 2 * clen;
++       u32 copy_len =3D min_t(u32, dlen, clen);
++       struct core_dispatch d =3D cmh_core_select_instance(CMH_CORE_PKE);
++       struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++       u8 *sig_raw =3D NULL, *dig_buf =3D NULL, *pk_buf =3D NULL, *rp_buf =
+=3D NULL;
++       dma_addr_t pk_dma, dig_dma, sig_dma, rp_dma;
++       int ret;
++
++       if (!ctx->pub_key)
++               return -EINVAL;
++
++       sig_raw =3D kzalloc(sig_raw_len, GFP_KERNEL);
++       dig_buf =3D kzalloc(clen, GFP_KERNEL);
++       pk_buf =3D kmemdup(ctx->pub_key, ctx->pub_key_len, GFP_KERNEL);
++       rp_buf =3D kzalloc(clen, GFP_KERNEL);
++       if (!sig_raw || !dig_buf || !pk_buf || !rp_buf) {
++               ret =3D -ENOMEM;
++               goto out_free;
++       }
++
++       /* Extract raw (r, s) big-endian from VLI signature */
++       ret =3D ecdsa_sig_to_raw(src, slen, sig_raw, clen);
++       if (ret)
++               goto out_free;
++
++       /*
++        * Truncate or zero-pad digest to clen bytes, right-aligned.
++        * Matches ECDSA bits2int: use leftmost min(dlen, clen) bytes,
++        * zero-pad on the left when dlen < clen.
++        */
++       memcpy(dig_buf + (clen - copy_len), digest, copy_len);
++
++       pk_dma =3D cmh_dma_map_single(pk_buf, ctx->pub_key_len, DMA_TO_DEVI=
+CE);
++       dig_dma =3D cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
++       sig_dma =3D cmh_dma_map_single(sig_raw, sig_raw_len, DMA_TO_DEVICE)=
+;
++       rp_dma =3D cmh_dma_map_single(rp_buf, clen, DMA_FROM_DEVICE);
++
++       if (cmh_dma_map_error(pk_dma) || cmh_dma_map_error(dig_dma) ||
++           cmh_dma_map_error(sig_dma) || cmh_dma_map_error(rp_dma)) {
++               ret =3D -ENOMEM;
++               goto out_unmap;
++       }
++
++       vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++       vcq_add_pke_ecdsa_verify(&vcq[1], d.core_id, ctx->curve, clen,
++                                pk_dma, dig_dma, sig_dma, rp_dma,
++                                pke_swap_flags(ctx->curve));
++       vcq_add_pke_flush(&vcq[2], d.core_id);
++
++       ret =3D cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, d.mbx_idx)=
+;
++
++out_unmap:
++       if (!cmh_dma_map_error(rp_dma))
++               cmh_dma_unmap_single(rp_dma, clen, DMA_FROM_DEVICE);
++       if (!cmh_dma_map_error(sig_dma))
++               cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_TO_DEVICE);
++       if (!cmh_dma_map_error(dig_dma))
++               cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
++       if (!cmh_dma_map_error(pk_dma))
++               cmh_dma_unmap_single(pk_dma, ctx->pub_key_len, DMA_TO_DEVIC=
+E);
++
++out_free:
++       kfree(rp_buf);
++       kfree(pk_buf);
++       kfree(sig_raw);
++       kfree(dig_buf);
++       return ret;
++}
++
++/*
++ * ECDSA sign (synchronous sig_alg)
++ *
++ * @src:  hash digest
++ * @slen: digest length
++ * @dst:  output buffer for struct ecdsa_raw_sig (VLI format)
++ * @dlen: output buffer length
++ *
++ * Returns sizeof(struct ecdsa_raw_sig) on success, negative errno on fail=
+ure.
++ */
++static int cmh_ecdsa_sign(struct crypto_sig *tfm,
++                         const void *src, unsigned int slen,
++                         void *dst, unsigned int dlen)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++       u32 clen =3D ctx->clen;
++       u32 sig_raw_len =3D 2 * clen;
++       u32 copy_len =3D min_t(u32, slen, clen);
++       struct core_dispatch dd;
++       struct vcq_cmd vcq[PKE_VCQ_CMDS_MAX];
++       u8 *dig_buf =3D NULL, *sig_buf =3D NULL, *sk_buf =3D NULL;
++       dma_addr_t dig_dma, sig_dma, sk_dma;
++       int ret, idx;
++
++       if (ctx->key.mode !=3D CMH_KEY_RAW)
++               return -EINVAL;
++       if (dlen < sizeof(struct ecdsa_raw_sig))
++               return -EINVAL;
++
++       dig_buf =3D kzalloc(clen, GFP_KERNEL);
++       sig_buf =3D kzalloc(sig_raw_len, GFP_KERNEL);
++       sk_buf =3D kmemdup(ctx->key.raw.data, ctx->key.raw.len, GFP_KERNEL)=
+;
++       if (!dig_buf || !sig_buf || !sk_buf) {
++               ret =3D -ENOMEM;
++               goto out_free;
++       }
++
++       /*
++        * Truncate or zero-pad digest to clen bytes, right-aligned.
++        * Matches ECDSA bits2int: use leftmost min(slen, clen) bytes,
++        * zero-pad on the left when slen < clen.
++        */
++       memcpy(dig_buf + (clen - copy_len), src, copy_len);
++
++       dig_dma =3D cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
++       sig_dma =3D cmh_dma_map_single(sig_buf, sig_raw_len, DMA_FROM_DEVIC=
+E);
++       sk_dma =3D cmh_dma_map_single(sk_buf, ctx->key.raw.len, DMA_TO_DEVI=
+CE);
++
++       if (cmh_dma_map_error(dig_dma) || cmh_dma_map_error(sig_dma) ||
++           cmh_dma_map_error(sk_dma)) {
++               ret =3D -ENOMEM;
++               goto out_unmap;
++       }
++
++       dd =3D cmh_core_select_instance(CMH_CORE_PKE);
++
++       idx =3D 1;
++       vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, sk_dma,
++                         SYS_REF_NONE, ctx->key.raw.len,
++                         ctx->key.raw.sys_type);
++       vcq[idx].id |=3D pke_swap_flags(ctx->curve);
++       idx++;
++       vcq_add_pke_ecdsa_sign(&vcq[idx++], dd.core_id, ctx->curve, clen,
++                              dig_dma, sig_dma, SYS_REF_TEMP,
++                              clen, pke_swap_flags(ctx->curve));
++       vcq_add_pke_flush(&vcq[idx++], dd.core_id);
++       vcq_set_header(&vcq[0], idx);
++
++       ret =3D cmh_tm_submit_sync_mbx(vcq, idx, 1, dd.mbx_idx);
++       if (!ret) {
++               /* Sync bounce buffer so CPU sees the DMA-written signature=
+ */
++               cmh_dma_sync_for_cpu(sig_dma, sig_raw_len, DMA_FROM_DEVICE)=
+;
++
++               /* Encode raw (r||s) into VLI ecdsa_raw_sig for kernel API =
+*/
++               ret =3D ecdsa_raw_to_sig(sig_buf, clen, dst, dlen);
++       }
++
++out_unmap:
++       if (!cmh_dma_map_error(sk_dma))
++               cmh_dma_unmap_single(sk_dma, ctx->key.raw.len, DMA_TO_DEVIC=
+E);
++       if (!cmh_dma_map_error(sig_dma))
++               cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_FROM_DEVICE)=
+;
++       if (!cmh_dma_map_error(dig_dma))
++               cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
++
++out_free:
++       kfree_sensitive(sk_buf);
++       kfree(sig_buf);
++       kfree(dig_buf);
++       return ret;
++}
++
++static int cmh_ecdsa_set_pub_key(struct crypto_sig *tfm,
++                                const void *key, unsigned int keylen)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++       const u8 *d =3D key;
++       u32 clen =3D ctx->clen;
++       u32 raw_clen;
++
++       /* Accept 04 || X || Y (uncompressed point) */
++       if (keylen < 1 || d[0] !=3D 0x04)
++               return -EINVAL;
++       d++;
++       keylen--;
++
++       if (keylen & 1)
++               return -EINVAL;
++       raw_clen =3D keylen / 2;
++
++       /*
++        * Kernel passes ceil(bits/8) per coordinate (e.g. 66 for P-521),
++        * but our HW ABI uses clen (ALIGN(66,4)=3D68 for P-521).
++        * Accept raw_clen <=3D clen and zero-pad on the left.
++        */
++       if (raw_clen > clen || raw_clen =3D=3D 0)
++               return -EINVAL;
++
++       kfree(ctx->pub_key);
++       ctx->pub_key =3D NULL;
++       ctx->pub_key_len =3D 0;
++
++       ctx->pub_key =3D kzalloc(2 * clen, GFP_KERNEL);
++       if (!ctx->pub_key)
++               return -ENOMEM;
++
++       /* Right-align each coordinate to clen bytes */
++       memcpy(ctx->pub_key + (clen - raw_clen), d, raw_clen);
++       memcpy(ctx->pub_key + clen + (clen - raw_clen), d + raw_clen,
++              raw_clen);
++       ctx->pub_key_len =3D 2 * clen;
++       return 0;
++}
++
++static int cmh_ecdsa_set_priv_key(struct crypto_sig *tfm,
++                                 const void *key, unsigned int keylen)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       if (keylen !=3D ctx->clen)
++               return -EINVAL;
++
++       return cmh_key_setkey_raw(&ctx->key, key, keylen, CORE_ID_PKE);
++}
++
++static unsigned int cmh_ecdsa_key_size(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       /* crypto_sig_keysize() returns bits, not bytes */
++       return pke_curve_bits(ctx->curve);
++}
++
++static unsigned int cmh_ecdsa_max_size(struct crypto_sig *tfm)
++{
++       return sizeof(struct ecdsa_raw_sig);
++}
++
++static unsigned int cmh_ecdsa_digest_size(struct crypto_sig *tfm)
++{
++       /*
++        * Accept digests up to SHA-512 (64 bytes).  Digests longer
++        * than the curve order are truncated per ECDSA bits2int.
++        * Matches kernel ecdsa_digest_size().
++        */
++       return SHA512_DIGEST_SIZE;
++}
++
++static int cmh_ecdsa_p256_init(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       memset(ctx, 0, sizeof(*ctx));
++       ctx->curve =3D PKE_CURVE_P256;
++       ctx->clen =3D pke_curve_clen(PKE_CURVE_P256);
++       return 0;
++}
++
++static int cmh_ecdsa_p384_init(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       memset(ctx, 0, sizeof(*ctx));
++       ctx->curve =3D PKE_CURVE_P384;
++       ctx->clen =3D pke_curve_clen(PKE_CURVE_P384);
++       return 0;
++}
++
++static int cmh_ecdsa_p521_init(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       memset(ctx, 0, sizeof(*ctx));
++       ctx->curve =3D PKE_CURVE_P521;
++       ctx->clen =3D pke_curve_clen(PKE_CURVE_P521);
++       return 0;
++}
++
++static int cmh_sm2_init(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       memset(ctx, 0, sizeof(*ctx));
++       ctx->curve =3D PKE_CURVE_SM2;
++       ctx->clen =3D pke_curve_clen(PKE_CURVE_SM2);
++       return 0;
++}
++
++static void cmh_ecdsa_exit(struct crypto_sig *tfm)
++{
++       struct cmh_ecdsa_tfm_ctx *ctx =3D cmh_ecdsa_ctx(tfm);
++
++       cmh_key_destroy(&ctx->key);
++       kfree(ctx->pub_key);
++       ctx->pub_key =3D NULL;
++}
++
++static struct sig_alg cmh_ecdsa_algs[] =3D {
++       {
++               .sign           =3D cmh_ecdsa_sign,
++               .verify         =3D cmh_ecdsa_verify,
++               .set_pub_key    =3D cmh_ecdsa_set_pub_key,
++               .set_priv_key   =3D cmh_ecdsa_set_priv_key,
++               .key_size       =3D cmh_ecdsa_key_size,
++               .max_size       =3D cmh_ecdsa_max_size,
++               .digest_size    =3D cmh_ecdsa_digest_size,
++               .init           =3D cmh_ecdsa_p256_init,
++               .exit           =3D cmh_ecdsa_exit,
++               .base =3D {
++                       .cra_name         =3D "ecdsa-nist-p256",
++                       .cra_driver_name  =3D "cri-cmh-ecdsa-nist-p256",
++                       .cra_priority     =3D 300,
++                       .cra_module       =3D THIS_MODULE,
++                       .cra_ctxsize      =3D sizeof(struct cmh_ecdsa_tfm_c=
+tx),
++               },
++       },
++       {
++               .sign           =3D cmh_ecdsa_sign,
++               .verify         =3D cmh_ecdsa_verify,
++               .set_pub_key    =3D cmh_ecdsa_set_pub_key,
++               .set_priv_key   =3D cmh_ecdsa_set_priv_key,
++               .key_size       =3D cmh_ecdsa_key_size,
++               .max_size       =3D cmh_ecdsa_max_size,
++               .digest_size    =3D cmh_ecdsa_digest_size,
++               .init           =3D cmh_ecdsa_p384_init,
++               .exit           =3D cmh_ecdsa_exit,
++               .base =3D {
++                       .cra_name         =3D "ecdsa-nist-p384",
++                       .cra_driver_name  =3D "cri-cmh-ecdsa-nist-p384",
++                       .cra_priority     =3D 300,
++                       .cra_module       =3D THIS_MODULE,
++                       .cra_ctxsize      =3D sizeof(struct cmh_ecdsa_tfm_c=
+tx),
++               },
++       },
++       {
++               .sign           =3D cmh_ecdsa_sign,
++               .verify         =3D cmh_ecdsa_verify,
++               .set_pub_key    =3D cmh_ecdsa_set_pub_key,
++               .set_priv_key   =3D cmh_ecdsa_set_priv_key,
++               .key_size       =3D cmh_ecdsa_key_size,
++               .max_size       =3D cmh_ecdsa_max_size,
++               .digest_size    =3D cmh_ecdsa_digest_size,
++               .init           =3D cmh_ecdsa_p521_init,
++               .exit           =3D cmh_ecdsa_exit,
++               .base =3D {
++                       .cra_name         =3D "ecdsa-nist-p521",
++                       .cra_driver_name  =3D "cri-cmh-ecdsa-nist-p521",
++                       .cra_priority     =3D 300,
++                       .cra_module       =3D THIS_MODULE,
++                       .cra_ctxsize      =3D sizeof(struct cmh_ecdsa_tfm_c=
+tx),
++               },
++       },
++       {
++               .verify         =3D cmh_ecdsa_verify,
++               .set_pub_key    =3D cmh_ecdsa_set_pub_key,
++               .key_size       =3D cmh_ecdsa_key_size,
++               .max_size       =3D cmh_ecdsa_max_size,
++               .digest_size    =3D cmh_ecdsa_digest_size,
++               .init           =3D cmh_sm2_init,
++               .exit           =3D cmh_ecdsa_exit,
++               .base =3D {
++                       .cra_name         =3D "sm2",
++                       .cra_driver_name  =3D "cri-cmh-sm2",
++                       .cra_priority     =3D 300,
++                       .cra_module       =3D THIS_MODULE,
++                       .cra_ctxsize      =3D sizeof(struct cmh_ecdsa_tfm_c=
+tx),
++               },
++       },
++};
++
++/**
++ * cmh_pke_ecdsa_register() - Register ECDSA/SM2 sig algorithms with the c=
+rypto framework
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_pke_ecdsa_register(void)
++{
++       int ret, i;
++
++       for (i =3D 0; i < ARRAY_SIZE(cmh_ecdsa_algs); i++) {
++               ret =3D crypto_register_sig(&cmh_ecdsa_algs[i]);
++               if (ret) {
++                       dev_err(cmh_dev(), "cmh: failed to register %s (%d)=
+\n",
++                               cmh_ecdsa_algs[i].base.cra_name, ret);
++                       goto err_unregister;
++               }
++       }
++
++       return 0;
++
++err_unregister:
++       while (i--)
++               crypto_unregister_sig(&cmh_ecdsa_algs[i]);
++       return ret;
++}
++
++/**
++ * cmh_pke_ecdsa_unregister() - Unregister ECDSA/SM2 sig algorithms from t=
+he crypto framework
++ */
++void cmh_pke_ecdsa_unregister(void)
++{
++       int i =3D ARRAY_SIZE(cmh_ecdsa_algs);
++
++       while (i--)
++               crypto_unregister_sig(&cmh_ecdsa_algs[i]);
++}
 --
 2.43.7
 
