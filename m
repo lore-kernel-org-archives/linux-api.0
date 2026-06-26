@@ -1,32 +1,32 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A213D3DB335;
-	Fri, 26 Jun 2026 10:55:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 038373DB327;
+	Fri, 26 Jun 2026 10:57:58 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782471336; cv=none; b=aZQRkSc3fzz+TKrwiw05CGZJssXm6pZ3c5di5N9hk7uzswB5z+yqOO9X6LVNdgDCMNme3Yn3DGx8X6MzL65HkWgWdYHUHD1FWIzfnN1iLrzlWUcWWOLz/Q8BGqWNBvfXWXYAYeku3kD/nUTJgrz/2Eb8/ZHSFO1E5yJ+WCDBtD8=
+	t=1782471480; cv=none; b=aBiQO54nPNZ/jeyVa4IMe8Yu/W76LfiWNpeSNnMXIb/FSomXmmV6p/G7OHYuXZoTIw2DXjlx5haI31uDAeyKZ+gnK43G43uEMwcZzZA2mjCIjXxhz04XK21xpZKWB47OtCnnZx0epMNDb+GKwPpdsgGVPu1AsjPSyg9wvtK6cR0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782471336; c=relaxed/simple;
-	bh=Pg/QvNc4j9H1BLdDz0GXIMcYO67sejm2IIXsUQKsPeM=;
+	s=arc-20240116; t=1782471480; c=relaxed/simple;
+	bh=63xVF5ybA58lufS8+mQU0NJ6N2HaPImjxW3MDpTwDj0=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=FgUEKvXg8H5J0m0EGZ0Uk7wIk/FLWpZQYbRVuY1hCTr++sqMRiVAuCyLwgr/LESQN20lhrrUlYHSP5g3i6P1J5u+hVifY5pFGZ1OKZoduOSeakudLEEGLZIx4q5Wg0Ag6fui/3S0A6CR5Hzb5C+wSbwsBnxNGIvQ0lSPjzyVy+Y=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=II5ulM2a; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=obBsLy2JHtCnpAnmFNdYHVA30E7n3DJ5v/TEVBahdP/wJ/egzVE7dtaDCHPCZHESEo8nuPY2NqXdbr2figB49XY4tdR/oNhPsdBwApk4JRtbYH73rsTxAhoRksgQQc+cwSTumirMKIzkvM/Njeso/SAoM6YE/23UZokEnYZ+KGw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=My/1BS+s; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="II5ulM2a"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1821D1F000E9;
-	Fri, 26 Jun 2026 10:55:33 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="My/1BS+s"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7351B1F000E9;
+	Fri, 26 Jun 2026 10:57:57 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1782471335;
-	bh=5qUqUO94Lsgk2pmwn16HNoraThlX5eu1F9Lne1J2lFM=;
+	s=k20260515; t=1782471478;
+	bh=ZTRPyMyzXJJHzBuvJUIeax1xIMpUkC2R+b5TUXDfLVg=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=II5ulM2a0TAGT9OX04JqPHP4XO48Ektj6r2dCjZv8MAUUZMc0a/LYpXopUqQ1xchp
-	 LyIacXJ34B1honivxeNuPdIa4bGfe7QGwL6dkGIhXYoemvD25osUhNDQVeKcofwonY
-	 uDGlaM3auu9JbZq8dW3DIzcnTj1Dcr8CAZqAM/UBjsMKwsN3kSItjSYluLnr/PvQGg
-	 80CSIMuXKueVn82P7ukoZvKcOOl0gVBedjkG5oOZlrQ+TvBmTXiauVh3RGOwu7pUVm
-	 xAKOvi4qGM+ZxP/c+1LhWavarNIuQblX7Dv/UQEoWd+jvPXw7B0bkBaP7bchElroSZ
-	 buv52ZOhHOfwA==
-Date: Fri, 26 Jun 2026 12:55:31 +0200
+	b=My/1BS+sODPPWkKG5n35GpohqpvIdqpVm5jWKuOA91DwPIV4FMBeiMnXbIOLzlSQX
+	 G47l2zPc1OhCTSS+gMbjyDBTIqPNhR+h3fylG7wpAEzkqYXY1k3JGpwuA+cfUKGL8K
+	 O8V74f1xsA5AlIQ4dL4Zj/JnGhrqZrAzg6PjJs7LSCaDKpIYpv4d0Rv9WMZCFZeeVv
+	 ndbOcQwcAxzq8jMCpJrxBR9ciJB5fLX1K5wx8/gIzBlNn1nft373kMpl1AWTuSuSzx
+	 bGHH6RvfFgYN/vXg7EBPy9oUGrL8QbN2JZaNW0QWj4N5GyvcYPa0WihXf86QgEnS2c
+	 BZFMyOzA0vlPw==
+Date: Fri, 26 Jun 2026 12:57:53 +0200
 From: Krzysztof Kozlowski <krzk@kernel.org>
 To: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Cc: Albert Ou <aou@eecs.berkeley.edu>, 
@@ -39,10 +39,10 @@ Cc: Albert Ou <aou@eecs.berkeley.edu>,
 	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
 	linux-riscv@lists.infradead.org, Shuah Khan <skhan@linuxfoundation.org>, sipsupport@rambus.com, 
 	Thi Nguyen <thin@rambus.com>
-Subject: Re: [PATCH 01/19] dt-bindings: crypto: add Rambus CryptoManager Hub
-Message-ID: <20260626-radiant-affable-raccoon-f48b9a@quoll>
+Subject: Re: [PATCH 19/19] MAINTAINERS: add Rambus CryptoManager Hub (CMH)
+Message-ID: <20260626-lush-eel-of-election-5fcbde@quoll>
 References: <20260625173328.1140487-1-skrishnamoorthy@rambus.com>
- <20260625173328.1140487-2-skrishnamoorthy@rambus.com>
+ <20260625173328.1140487-20-skrishnamoorthy@rambus.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -51,22 +51,72 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20260625173328.1140487-2-skrishnamoorthy@rambus.com>
+In-Reply-To: <20260625173328.1140487-20-skrishnamoorthy@rambus.com>
 
-On Thu, Jun 25, 2026 at 10:33:09AM -0700, Saravanakrishnan Krishnamoorthy wrote:
+On Thu, Jun 25, 2026 at 10:33:27AM -0700, Saravanakrishnan Krishnamoorthy wrote:
 > From: Alex Ousherovitch <aousherovitch@rambus.com>
 > 
-> Add device tree binding schema for the CRI CryptoManager Hub (CMH)
-> hardware crypto accelerator.  The binding covers the parent SoC-level
-> node with register region, interrupt, DMA properties, and per-core
-> child nodes identified by compatible string and unit address.
+> Add MAINTAINERS entry for the CRI CryptoManager Hub (CMH) hardware
+> crypto accelerator driver under drivers/crypto/cmh/.
+> 
+> Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
+> Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
+> Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
+> Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
+> Reviewed-by: Thi Nguyen <thin@rambus.com>
 
-...
+Are these people really provided you with Reviewer's statement of
+oversight? Do they understand what does it mean?
 
+> ---
+>  MAINTAINERS | 19 +++++++++++++++++++
+>  1 file changed, 19 insertions(+)
+> 
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 90034eb7874e..ecb389795e3d 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -6797,6 +6797,25 @@ F:       kernel/cred.c
+>  F:     rust/kernel/cred.rs
+>  F:     Documentation/security/credentials.rst
+> 
+> +CRI CRYPTOMANAGER HUB (CMH) HARDWARE CRYPTO ACCELERATOR
+> +M:     Alex Ousherovitch <aousherovitch@rambus.com>
+> +M:     Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
+> +R:     Joel Wittenauer <Joel.Wittenauer@cryptography.com>
+> +R:     Thi Nguyen <thin@rambus.com>
+> +L:     linux-crypto@vger.kernel.org
+> +L:     sipsupport@rambus.com (moderated for non-subscribers)
+
+NAK, drop. You are not allowed to add here internal moderated mailing
+lists. We are not going to participate in your corporate dances.
+
+> +S:     Maintained
+> +T:     git https://git.kernel.org/pub/scm/linux/kernel/git/herbert/cryptodev-2.6.git
+
+Drop, you do not have commit rights there.
+
+> +F:     Documentation/ABI/testing/cmh-mgmt
+> +F:     Documentation/ABI/testing/debugfs-driver-cmh
+> +F:     Documentation/ABI/testing/sysfs-driver-cmh
+> +F:     Documentation/crypto/device_drivers/cmh.rst
+> +F:     Documentation/devicetree/bindings/crypto/cri,cmh.yaml
+> +F:     Documentation/userspace-api/ioctl/cmh_mgmt.rst
+> +F:     drivers/crypto/cmh/
+> +F:     include/uapi/linux/cmh_mgmt_ioctl.h
+> +F:     tools/testing/selftests/drivers/crypto/cmh/
+> +
+>  INTEL CRPS COMMON REDUNDANT PSU DRIVER
+>  M:     Ninad Palsule <ninad@linux.ibm.com>
+>  L:     linux-hwmon@vger.kernel.org
+> --
+> 2.43.7
+> 
 > 
 > ** This message and any attachments are for the sole use of the intended recipient(s). It may contain information that is confidential and privileged. If you are not the intended recipient of this message, you are prohibited from printing, copying, forwarding or saving it. Please delete the message and attachments and notify the sender immediately. **
 
-OK, we are done. I am removing your posting from Patchwork.
+Heh, I should have ignored your message...
+
 
 Best regards,
 Krzysztof
