@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2DCBB3F8244;
-	Mon, 29 Jun 2026 08:56:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A4F51253B42;
+	Mon, 29 Jun 2026 09:19:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782723370; cv=none; b=jp2p2g8zlTsn5E2cbkdyu1sf2F6Rj/HpwMsZJLOqNQe/YdZZHgrKAMvAh6E+FlnR59IIZ+CJL+ivNC+AIB/VxQFmZuGCu1AZYYMWQUsRT5yt3ZLhH1b1LnJMIWpuB5Makopb3oRad/Xb9tOoVJqcmEL0/a0CzxE6pec7D+5lEDA=
+	t=1782724766; cv=none; b=FQb8vHP4WbwuGzMR/+jYmm5jXMoe21RvhQ8gTIqXjhaOzium6ANjKGfZD5/jeK0tJ/IqIXAhHZzRHGGUGYNPnQeJQGJZnhn/yb9M7ggJCIlWcFeSyq+3AH91xFg15OacA2Z8j5A5opaYUoDikd3gzdlujVBUCvrUTjn2vwavxTA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782723370; c=relaxed/simple;
-	bh=6ZpRv6SzHMXp0xQtZa31f3aFronDafFEK7j2Ogd9m0w=;
+	s=arc-20240116; t=1782724766; c=relaxed/simple;
+	bh=uR8HO3H1zUPtr8G0Zp6+Ktn5lJGREnqvWcuZOYXRlPU=;
 	h=MIME-Version:Content-Type:Subject:From:To:Cc:In-Reply-To:
-	 References:Date:Message-Id; b=G9t25won98evbcjl0pMC1TMCU05We47J51tXgsDT47cB9n3Fec1mV5Q+TxGfYxxAQLkGUc+SBc4SnriQGyPhDc79jmZ2klrEqEHP4QrNVkw0m+OnviQf8pOxyWXA/jzlQgnZrbjCTu3Re8VMUExy/W3Ut9KdRJY9tUuod5lh184=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=GwU3YJXR; arc=none smtp.client-ip=100.103.45.18
+	 References:Date:Message-Id; b=dgXfhKyZBgG/lYd0fSU8v5+PvGUsWMCyF28zNFmFI1JhNe6NsecIXPv6GEP49Q2X3WEu5LkXzIXf2usMhFQhkWKkbRlW9aovqr8CgBv/zF6FPmy7tcQNB7ZnsbgtEwQcPBtQ4ZrBnmglAkSkyHtBsEhLAzCep9p4jGZnJy6WNdY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=DlT8vxH5; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="GwU3YJXR"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0C8BC1F000E9;
-	Mon, 29 Jun 2026 08:56:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="DlT8vxH5"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 65A001F000E9;
+	Mon, 29 Jun 2026 09:19:19 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1782723368;
-	bh=MjjLfoAnCdYSBQMHU+LNPQ7Y69v0MhSYKVpOdD7ztR4=;
+	s=k20260515; t=1782724765;
+	bh=VQkmJ6O0KdU+araY9cEcdEV3lY4ZmztKgNlix5k27sE=;
 	h=Subject:From:To:Cc:In-Reply-To:References:Date;
-	b=GwU3YJXRw2/+yv1fTqnt6eVUxhDAcOuivlMebRL8kpMszPEkVDZp9KZvr1qmRJkEj
-	 ndYeJ+NxyL9mh9tGB6OfPO7zUGCg3QXdX8430/N2Iysu67+wdAZgfcELi9z31tkr6K
-	 Y9U1RVBXklyP6tItBZFDn3uCwDFuhK1NOepw5hw3nVpaTH/63SnR79X6vJtapM97kU
-	 4oA9wlFsT8Mn2tdApNGT/6ZgFis6bRokFmsJyqXoLoH40wuVZ5jVFdTmfZXG0iW4oF
-	 xcAky5dvfXqGgX8fxhaq09pJ6hXplxohoAPkJTz057yO88MJTs5krF6d9LLLvMX8GR
-	 6aLMDBEccE6JQ==
+	b=DlT8vxH5utORFwzr7vxs+1ZC5b8cxQsTqXOya1AQqsce5YpoKelp2QpHlKA+nkhWr
+	 7GteQ5CCSkyd6M4WMmbss+2aU0e7CTZBjtyjalrXpN7xoqYsfmQ4YcjkOkkrNlMZsj
+	 aHUPmsQMrOP8L+mvilChS1rcJupw+08A7A2GMjHi2QbXp6JKC0fXQrr8wk/Li1RPLm
+	 qWhJpFAPQbPJJdW7ennikm1IF8S60n6fbWDjGGlLwbeFdllm4IkkixKHY3cBn4AA+O
+	 KULJr9DbVfZhjJfd4kLHKCccrfrrIri+zo1kBioSQjDpj9A9QKvwf6ng4eIjLmo07F
+	 wZjGFw8eu9+4w==
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -34,46 +34,51 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Subject: Re: [PATCH v2 0/7] vmsplice: fix some problems in my previous
- vmsplice patchset
+Subject: Re: [RFC PATCH 2/3] fs: support tasks with a null root or cwd
 From: Christian Brauner <brauner@kernel.org>
-To: "David Hildenbrand (Arm)" <david@kernel.org>
-Cc: Askar Safin <safinaskar@gmail.com>, akpm@linux-foundation.org, 
- avagin@gmail.com, axboe@kernel.dk, brauner@kernel.org, 
- collin.funk1@gmail.com, david.laight.linux@gmail.com, dhowells@redhat.com, 
- fuse-devel@lists.linux.dev, hch@infradead.org, jack@suse.cz, 
- joannelkoong@gmail.com, kernel@infinite-source.de, 
- linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
- linux-kernel@vger.kernel.org, linux-mm@kvack.org, luto@amacapital.net, 
- metze@samba.org, miklos@szeredi.hu, netdev@vger.kernel.org, 
- patches@lists.linux.dev, pfalcato@suse.de, torvalds@linux-foundation.org, 
- val@packett.cool, viro@zeniv.linux.org.uk, w@1wt.eu, willy@infradead.org
-In-Reply-To: <63f7860c-4f5c-4682-8914-27978b9fbfe1@kernel.org>
-References: <89ea76b3-e956-4232-8180-ee3929adf905@kernel.org>
- <20260625101132.3859505-1-safinaskar@gmail.com>
- <63f7860c-4f5c-4682-8914-27978b9fbfe1@kernel.org>
-Date: Mon, 29 Jun 2026 10:56:00 +0200
-Message-Id: <20260629-bauland-knabbern-abgeladen-c0acbfa62cc2@brauner>
+To: John Ericson <John.Ericson@Obsidian.Systems>
+Cc: Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
+ David Howells <dhowells@redhat.com>, Chuck Lever <cel@kernel.org>, 
+ Jeff Layton <jlayton@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, 
+ David Laight <david.laight.linux@gmail.com>, 
+ "H. Peter Anvin" <hpa@zytor.com>, Li Chen <me@linux.beauty>, 
+ Cong Wang <cwang@multikernel.io>, Arnd Bergmann <arnd@arndb.de>, 
+ Thomas Gleixner <tglx@kernel.org>, Ingo Molnar <mingo@redhat.com>, 
+ Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, 
+ Jonathan Corbet <corbet@lwn.net>, Kees Cook <kees@kernel.org>, 
+ Sergei Zimmerman <sergei@zimmerman.foo>, 
+ Farid Zakaria <farid.m.zakaria@gmail.com>, 
+ linux-arch <linux-arch@vger.kernel.org>, 
+ LKML <linux-kernel@vger.kernel.org>, 
+ linux-fsdevel <linux-fsdevel@vger.kernel.org>, 
+ linux-api <linux-api@vger.kernel.org>, netfs <netfs@lists.linux.dev>, 
+ linux-nfs <linux-nfs@vger.kernel.org>, John Ericson <mail@JohnEricson.me>
+In-Reply-To: <20260629065934.1425479-3-John.Ericson@Obsidian.Systems>
+References: <20260629065934.1425479-1-John.Ericson@Obsidian.Systems>
+ <20260629065934.1425479-3-John.Ericson@Obsidian.Systems>
+Date: Mon, 29 Jun 2026 11:19:15 +0200
+Message-Id: <20260629-defizit-typisch-maulkorb-53953a5a8510@brauner>
 X-Mailer: b4 0.16-dev-4217c
-X-Developer-Signature: v=1; a=openpgp-sha256; l=560; i=brauner@kernel.org;
- h=from:subject:message-id; bh=6ZpRv6SzHMXp0xQtZa31f3aFronDafFEK7j2Ogd9m0w=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQ5GStpsto3L25ZaHM588TTeVIxjm8PX36fP4G3atef6
- tnan07bdJSyMIhxMciKKbI4tJuEyy3nqdhslKkBM4eVCWQIAxenAEykfyojQ/+HyQebdwRoa/Tw
- +LrZf/ycyn56iXf4+nN/F66647o+OJORYdO0TNsO1j5m20MZD44uXF/x9VjejOt+wk928kitEog
- 8ywAA
+X-Developer-Signature: v=1; a=openpgp-sha256; l=671; i=brauner@kernel.org;
+ h=from:subject:message-id; bh=uR8HO3H1zUPtr8G0Zp6+Ktn5lJGREnqvWcuZOYXRlPU=;
+ b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQ5WUwXTTaTvvSu4GfWn46fsm+2i02PPX5V3fPyPSuXV
+ Um/VI4t7ShlYRDjYpAVU2RxaDcJl1vOU7HZKFMDZg4rE8gQBi5OAZiIHgsjw9vuM9WOryfL1B8p
+ EdhZaip++9T67xH3L3D9DL2+57k1iwkjw6I6jRv3djYmpZ9h/3HlgfilKdZNPNODDkZzHUh5lL3
+ +KhMA
 X-Developer-Key: i=brauner@kernel.org; a=openpgp;
  fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 
-On 2026-06-25 12:35 +0200, David Hildenbrand (Arm) wrote:
-> On 6/25/26 12:11, Askar Safin wrote:
-> > "David Hildenbrand (Arm)" <david@kernel.org>:
-> >> I think we concluded that we cannot rip out vmsplice that way at this point, and
-> >> I suspect that Christian will drop that topic branch from -next after -rc1.
-> > 
-> > I think my patches still have a chance.
-> 
-> I talked to Christian and it doesn't sound like it.
+> A task's root directory (`fs->root`) and current working directory
+> (`fs->pwd`) are normally established by `chroot(2)`/`pivot_root(2)` and
+> `chdir(2)`/`fchdir(2)` (or inherited across `fork(2)`). Allow either to
+> instead be the null path, as documented in `struct fs_struct`. The two
+> are independent: a task may opt out of one, the other, or both.
 
-The amount of regression reports that we got in short succession doesn't
-make it likely that we can merge a plain degradation.
+No, absolutely we're not going to have tasks with struct path's in their
+struct fs_struct that have NULL members in them. struct path is used
+insanely widely in the kernel this is just an an open invitation for a
+slew of security bugs. Not going to happen.
 
+-- 
+Christian Brauner <brauner@kernel.org>
