@@ -1,148 +1,97 @@
-Received: from galois.linutronix.de (Galois.linutronix.de [193.142.43.55])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA97D42B325;
-	Thu,  2 Jul 2026 08:21:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=193.142.43.55
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 549714266B1;
+	Thu,  2 Jul 2026 09:29:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1782980506; cv=none; b=TnMxy8BvuoJ05GwL/Eb4FIMi+/xp/42rdQFzQtolUXtWAqgL4EfL6AlsUSupBBzwUBX09E98vkvty2i9enztjQlhleTYXme3toj8uJP635hJhifJG6u+WqZgJZSK+j8vSFmtruDEpXuIIwy3RQAzNdddhTZf9tDuIJLY8sLu3kE=
+	t=1782984570; cv=none; b=ZjxLoMJiyYr1oOGnJmc2Nco32zueRf6s2a0yfdkP9R0N6Uve6zawXxtIFLhfP6yN/35Q0IsBkI7S2kEqgnk4hWKz6gohkzC4wAe8k8G4d2SQpVhU7ItpnYczB3xG9pkYBV5kiQKcU0QMrNs//Fj0p+II4iZuSuL+CJhhcnKBeNQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1782980506; c=relaxed/simple;
-	bh=5g615MqgFMp6M0A+ZVnIgEz2yKH7vz8ZMuh99cb7cpM=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=lVbw1RWq2yAyTndfOBeWoZ7z3MruBR1Ji63oSYCUoKScbcVwEHT7qv0ef9wOiQooEbuDyy88v5kgge6u3pWQRW1tgDKgYJJxCFUT7Jg5NCmQrGTgWZSrAE/KJYpo8aLlF9XgTyf2itwJk5W3qCFBxFWuwwstLSqRwVbIIBNp1Lc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de; spf=pass smtp.mailfrom=linutronix.de; dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=Ju+BX4Wp; dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b=O3+0llp0; arc=none smtp.client-ip=193.142.43.55
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linutronix.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linutronix.de
+	s=arc-20240116; t=1782984570; c=relaxed/simple;
+	bh=BW4Hg/WHgx/wqWP0dHNwLEanMvutIGbvuRLcltLhx2w=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=cblM7e7qzixEeAl2HcKmFvr+48m8dpXfVDRUkNg0G63j1TpLM5+H64UkqDAX+z59PbFFeaXjSnDbY+spQyTZb4HNUZAHKYyehXDqwWLzx/Y72Bhoz1rXknstx0VVRrXpHaU9IPSx+DX3M1p6aGQ5bYVLTv3kHW9dTpiCb7I74yE=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=e1pHYz6M; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="Ju+BX4Wp";
-	dkim=permerror (0-bit key) header.d=linutronix.de header.i=@linutronix.de header.b="O3+0llp0"
-From: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020; t=1782980502;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=n92rz6XZyDHduuUMRGj8v17yy2y+GqzJvWaUESl6CjM=;
-	b=Ju+BX4WptZhtkZ0xka0eDircy71rg7a8jgfQHPrUYwoa91IaXbfGYVbB0xSiZh/9kbjvnP
-	hxBUuZ8aa8qyhBB14ZKEKphtKSGY5jJgEUSwxyIfHkM/AD8nAtW1nTFG8r5dybliIzhaLS
-	SZeDbvA2p6xXsq2DYF14Rp1TYxHprobSGEJBa3HWucsAB3XKUGs/6AZPp3yXPQ2fZT7SSk
-	zLMrXhSq067Ixmyikxf3MVzT+lKjHmA4ew08eLqzmDo2hDNt6afCSIKbJuwKjS4KfC3yhD
-	eBWE1mQfsudAQV9Qc0aazYpQ85pRsKr9NALiTvOXJrUWLXK6cfVUQRuLZSGVNw==
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=linutronix.de;
-	s=2020e; t=1782980502;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=n92rz6XZyDHduuUMRGj8v17yy2y+GqzJvWaUESl6CjM=;
-	b=O3+0llp0uPND16gfyqFlxpbwIHuoeUoQD4Q/Clu8sHHEI0ud3n8czVTTmvF1g1Y/xyIzS8
-	gxrdq95n7wNC1tAA==
-Date: Thu, 02 Jul 2026 10:21:33 +0200
-Subject: [PATCH v3 9/9] vdso/gettimeofday: Verify COMPAT_32BIT_TIME
- interactions
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="e1pHYz6M"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 451721F000E9;
+	Thu,  2 Jul 2026 09:29:24 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1782984568;
+	bh=dXbKba1B/CK8l+IdjdOVTRZMbCjkk+ESMNksJd+Czxo=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=e1pHYz6M5wc22UEPY39S7MqKIR92W35h+OZlUX2//BA9xeVm6wvj0cP/u3aO6dTZv
+	 TIGdOAH18KZ9CiNo9hwRzrtH4q3kCxAjc+BVpLC/mE79gxFg34GOJLmNNPVHPwuZwn
+	 QTUBMCFpPGmCmUPxtbpGeUX01UhCAbMPQD0nBOccht09xoOs5VOphvm+jF7QvULdP3
+	 Bl4QTqSqA42sKKvKE4pWXPHR23G7F3Rvp/m/9dsQxmChy3LNDpRsSKfdg1foo4Hx9e
+	 7Pk+jESfziUy3hlUU+M4wL3z9Bt/TjFONYY3iLKAYClvwn7AGspasA4SUBxrZu2Hrb
+	 29+piCtGSKm+A==
+Date: Thu, 2 Jul 2026 11:29:22 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: John Ericson <mail@johnericson.me>, Li Chen <me@linux.beauty>, 
+	Cong Wang <cwang@multikernel.io>, linux-arch <linux-arch@vger.kernel.org>, 
+	LKML <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, 
+	linux-api <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@kernel.org>, 
+	Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, 
+	Dave Hansen <dave.hansen@linux.intel.com>, "H. Peter Anvin" <hpa@zytor.com>, Jan Kara <jack@suse.cz>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
+	Al Viro <viro@zeniv.linux.org.uk>, Kees Cook <kees@kernel.org>, 
+	Sergei Zimmerman <sergei@zimmerman.foo>, Farid Zakaria <farid.m.zakaria@gmail.com>
+Subject: Re: [RFC] Null Namespaces
+Message-ID: <20260702-markt-haifisch-kiesgrube-8580a3636064@brauner>
+References: <a49ce818-f38d-41b0-bbf7-80b8aad998b1@app.fastmail.com>
+ <20260629-hauer-erhitzen-sobald-96d3dff68707@brauner>
+ <eb390c52-eeb3-44b3-88e9-e65c52a26c05@app.fastmail.com>
+ <20260630-kippen-jobaussicht-restriktionen-2149cc663b22@brauner>
+ <372c1f13-e6eb-46e6-8685-3c39da4e9f72@app.fastmail.com>
+ <CALCETrV8T3KOWgjZL6wy2j7E+Y6zOjfN1aCDsVH4PadvE+yxSw@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Message-Id: <20260702-vdso-compat_32bit_time-v3-9-db9f36d8d432@linutronix.de>
-References: <20260702-vdso-compat_32bit_time-v3-0-db9f36d8d432@linutronix.de>
-In-Reply-To: <20260702-vdso-compat_32bit_time-v3-0-db9f36d8d432@linutronix.de>
-To: Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@kernel.org>, 
- Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, 
- Dave Hansen <dave.hansen@linux.intel.com>, x86@kernel.org, 
- "H. Peter Anvin" <hpa@zytor.com>, Russell King <linux@armlinux.org.uk>, 
- Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will@kernel.org>, 
- Madhavan Srinivasan <maddy@linux.ibm.com>, 
- Michael Ellerman <mpe@ellerman.id.au>, Nicholas Piggin <npiggin@gmail.com>, 
- "Christophe Leroy (CS GROUP)" <chleroy@kernel.org>, 
- Thomas Bogendoerfer <tsbogend@alpha.franken.de>, 
- Vincenzo Frascino <vincenzo.frascino@arm.com>, 
- John Stultz <jstultz@google.com>, Stephen Boyd <sboyd@kernel.org>, 
- "David S. Miller" <davem@davemloft.net>, 
- Andreas Larsson <andreas@gaisler.com>
-Cc: =?utf-8?q?Thomas_Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>, 
- linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
- linuxppc-dev@lists.ozlabs.org, linux-mips@vger.kernel.org, 
- Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, 
- sparclinux@vger.kernel.org, 
- =?utf-8?q?Philippe_Mathieu-Daud=C3=A9?= <philmd@oss.qualcomm.com>
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1782980489; l=1961;
- i=thomas.weissschuh@linutronix.de; s=20240209; h=from:subject:message-id;
- bh=5g615MqgFMp6M0A+ZVnIgEz2yKH7vz8ZMuh99cb7cpM=;
- b=9r69kfG/WPHhMK/v3k1Ei9r0o54djhlcPyY3jYCnYKkxUndy33fhLwmO1brSL65A552jj8YEl
- ETzvBSqQBqlCLXH05NxwrkT2gG8Wi4rBSYoB0y8j7rTpSYquFTmPzMC
-X-Developer-Key: i=thomas.weissschuh@linutronix.de; a=ed25519;
- pk=pfvxvpFUDJV2h2nY0FidLUml22uGLSjByFbM6aqQQws=
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CALCETrV8T3KOWgjZL6wy2j7E+Y6zOjfN1aCDsVH4PadvE+yxSw@mail.gmail.com>
 
-If CONFIG_COMPAT_32BIT_TIME is disabled then the vDSO should not
-provide any 32-bit time related functionality.
+> > > I agree with the sentiment
+> >
+> > Thanks, I appreciate it :).
+> >
+> > > You know what the easy solution is: don't allow a struct path to be
+> > > empty...
+> >
+> > Just so we're clear, my quibble here is purely behavioral: the nullfs
+> > directory can be opened, right? And that open directory can also be
+> > getdents64ed (yielding no entries, since it is empty), right? If I am
+> > wrong about these things then sure, no objections from me --- let's ship
+> > nullfs FDs right away!
+> >
+> 
+> Christian, how would you feel about a variant of nullfs that fails all
+> operations instead of acting as if it were empty?  (I'm far from
+> convinced that this would actually be better, but it at least seems
+> pretty straightforwardly possible.  And obviously the
+> nullfs-at-the-root-of-everything would not want this variant.)
 
-Add some build-time validations to make sure the architecture-specific
-glue satisfies this requirement.
+I think it would have to be a separate fs type: failfs. The problem is -
+if taken to its logical extreme - it would have to refuse statfs and
+fstatfs as well which means you can't discover it. You'd still be able
+to get your cwd and root of course via /proc/self/{cwd,root}. So for
+that we could just add:
 
-Signed-off-by: Thomas Weißschuh <thomas.weissschuh@linutronix.de>
-Reviewed-by: Philippe Mathieu-Daudé <philmd@oss.qualcomm.com>
-Reviewed-by: Arnd Bergmann <arnd@arndb.de>
----
- lib/vdso/gettimeofday.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+FD_FAILFS_ROOT
 
-diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
-index b8c1fc85eb74..f7a591aba59f 100644
---- a/lib/vdso/gettimeofday.c
-+++ b/lib/vdso/gettimeofday.c
-@@ -25,6 +25,8 @@
-  */
- #include <asm/vdso/gettimeofday.h>
- 
-+#include <linux/build_bug.h>
-+
- /* Bring in default accessors */
- #include <vdso/vsyscall.h>
- 
-@@ -325,6 +327,8 @@ __cvdso_clock_gettime32_data(const struct vdso_time_data *vd, clockid_t clock,
- 	struct __kernel_timespec ts;
- 	bool ok;
- 
-+	BUILD_BUG_ON(!IS_ENABLED(CONFIG_COMPAT_32BIT_TIME));
-+
- 	ok = __cvdso_clock_gettime_common(vd, clock, &ts);
- 
- 	if (unlikely(!ok))
-@@ -354,6 +358,8 @@ __cvdso_gettimeofday_data(const struct vdso_time_data *vd,
- 	BUILD_BUG();
- #endif
- 
-+	BUILD_BUG_ON(sizeof(tv->tv_sec) != 8 && !IS_ENABLED(CONFIG_COMPAT_32BIT_TIME));
-+
- 	if (likely(tv != NULL)) {
- 		struct __kernel_timespec ts;
- 
-@@ -392,6 +398,8 @@ __cvdso_time_data(const struct vdso_time_data *vd, __kernel_old_time_t *time)
- 	BUILD_BUG();
- #endif
- 
-+	BUILD_BUG_ON(sizeof(*time) != 8 && !IS_ENABLED(CONFIG_COMPAT_32BIT_TIME));
-+
- 	if (vdso_is_timens_clock(vc)) {
- 		vd = vdso_timens_data(vd);
- 		vc = vd->clock_data;
-@@ -481,6 +489,8 @@ __cvdso_clock_getres_time32_data(const struct vdso_time_data *vd, clockid_t cloc
- 	struct __kernel_timespec ts;
- 	bool ok;
- 
-+	BUILD_BUG_ON(!IS_ENABLED(CONFIG_COMPAT_32BIT_TIME));
-+
- 	ok = __cvdso_clock_getres_common(vd, clock, &ts);
- 
- 	if (unlikely(!ok))
+I don't have quarrels with that. I can add that and it seems genuinely
+useful. I'd again keep it as a kernel-only thing (not mountable) for now
+until we have an idea whether the semantics work out...
 
--- 
-2.55.0
-
+(Btw, I've done something vaguely similar for kthreads in work to be
+merged coming cycle. Their root and pwd are in a _separate_ nullfs that
+can't even be overmounted. Which means you can't do arbitrary lookup or
+I/O in init's fs state from kthreads anymore without having to use an
+explicit scoped_with_init_fs() override with init's fs state
+temporarily. Which means that hopefully things like ksmbd will not
+happen again...)
