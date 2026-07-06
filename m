@@ -1,40 +1,40 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BD8A2EEE68
-	for <linux-api@vger.kernel.org>; Mon,  6 Jul 2026 17:05:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 42443383998
+	for <linux-api@vger.kernel.org>; Mon,  6 Jul 2026 17:10:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783357512; cv=none; b=eq+JSuTUgMfw6y+8vZWW2TWJDn8QixGcmTFW0rGdjAEvv2JtITa+DLlxKIWHUzuxjc7PFc2tq0TWCqupdWtaQJmeof3pBCG2F1YEk9I3+pSn1N74Oftw70kI35toDIiyHV1FUc29GMtJdx2c6yBo8Rcqlv06BckC0q9gX2wv0b8=
+	t=1783357848; cv=none; b=c27w8C+fQTV9KaWtSvrBmPqzIr228AWrbmbmSP49LTDA0m1M62WZfuGaoA15v+EHfncB4B7GD8slzHFIJ8Mp8RViOQDjJudyGcESGkMUig57McDIjrYCAu6FKSSE/m74dv4DKjWeC12URhVYA4c7ootEjRnf5Ul8hD3WXZXmOYc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1783357512; c=relaxed/simple;
-	bh=L27q0R6YyAhQAd+AUU/QjRgzV3M2j4YatKxa8NAnbBg=;
+	s=arc-20240116; t=1783357848; c=relaxed/simple;
+	bh=UE1/A4JUkdvobYsxruX3DgPOIwXgNzWpCHo/V4LViqA=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=jz4NV59ePPHyAxdcMH6Jn8yFYGAzBMJ/XCvYLkslpGF9Nvcctx5arIXzunOurhKbuCeaAxTLsLDnVRnC04QWRzOFI20Q4worD8ub6s6seu3nDcXPIHA2A08NQdFwybwRoQAEsYNsa9ovyGWx7EV7iSN9R3Up87gst6z4/WQCHlY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=bM59pHRQ; arc=none smtp.client-ip=100.103.45.18
+	 To:Cc:Content-Type; b=DY8v2uupWXkJE330KY30MSmKggPzC0Wwl10q2QBp2jXBeTaSWNK+cOADKAhNxY7tqWt+bz9kUINcpVPQKo8eWaNK2htf27AiimgvW95nOQVPWH8B5Su6umP8gAzI6j04pY1LPDyS3dz+Xoc3VbK1pwdzkovFCzHBDGp1FHf5Tlw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=PjiLzONW; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="bM59pHRQ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 13B071F00ADB
-	for <linux-api@vger.kernel.org>; Mon,  6 Jul 2026 17:05:11 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="PjiLzONW"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 137F51F00A3D
+	for <linux-api@vger.kernel.org>; Mon,  6 Jul 2026 17:10:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1783357511;
-	bh=z93kPEt+tZaBA1w5iH97ApluuGseB7fzewwCAxDvJzE=;
+	s=k20260515; t=1783357847;
+	bh=eJA0xUON18WtiblCyjyGpTE1Z5c5pH5jHS0SuDx0JtU=;
 	h=References:In-Reply-To:From:Date:Subject:To:Cc;
-	b=bM59pHRQm3M1YRG0EIq7jG9mnj+UKFkAyz3GpEGLAv019MZUGL6VzZ8adwEMeRp9M
-	 kMbACv+D4QrFkUAeC55aQWJZGtWrlMCuhoZVQEQJgA1M30veRSXmn4Uu6Y96c9C2CT
-	 mHuj2FRuFtkqgj2K6/nekNffQGiY9Cb1r/Ov31Nn3Id7exk8Tc3+BCrvuU6FGsvmwR
-	 w0BTy8IFhTAWMN5fWoB8EP/VNE7rJhmHomR30+NUgLtD7dg4J0AQ0muVebDXR0czGx
-	 ffjppF3XYxHWtbeH4BhZdXw3Qu6OoUZmpDV7WB7iERKmnGUoJMg+NMRnHvY+0PlbBo
-	 uyy1V0CV6EO2A==
-Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-5aeb24c0807so2588615e87.0
-        for <linux-api@vger.kernel.org>; Mon, 06 Jul 2026 10:05:11 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AHgh+RrYIcfc5ckyoYeUafQI7fDRIgrblCa/2TZwc92uHJp84IQrO9s+ZLz3+2SsAJJFSh866ikeyQdF/m4=@vger.kernel.org
-X-Gm-Message-State: AOJu0Ywh/j1KftHBb1iYX3CzifX7DZ2Lj1LSsjEm6Q3YJDoK2UrOhSTk
-	tBRIwoHi8TFgsEJm0be/NP79Dfg9qB/bhSHjedyiNV72+yMIGPHPchKlhVv38gPmRiAX5dmTQAZ
-	2plogGJLf7JRtBPiwTn9AEHiEYVf/Ax3GWIHMXMTZ
-X-Received: by 2002:a05:6512:66c7:10b0:5ae:c4e0:6a05 with SMTP id
- 2adb3069b0e04-5b007c47a40mr215252e87.50.1783357509203; Mon, 06 Jul 2026
- 10:05:09 -0700 (PDT)
+	b=PjiLzONWALmqoNzeUTrvoOujjWzg3QQoQTvs5Fow3gv/QJQ+OEc7tzTZZFYL01TPD
+	 Ei6FNSnO5SZPyJ22qWSTwI6eJ7kfjadg7gacET/Q6qeilh6i9P/SBkth86kRtZLjZp
+	 BsvPNhmSMSUQOovDc7LtrDAC+SRXxH5GcQC19JDXCtKNinQDKKAXd7Hpd0RGJxMqgt
+	 ev5v8GlDrX97glp72aE81uFI/nPT5PPAW4OLylPUzuap98KFP95Jyi5OajOGEMWuZU
+	 8NusNpdOV8LhE+XXB8trjkfB/pmkqQLtUaw9jzkPzo0DcEz1h+WfL9KC4GlxuF7xMJ
+	 CTj6EbcM81MwA==
+Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5aeb2bc82ccso3082827e87.2
+        for <linux-api@vger.kernel.org>; Mon, 06 Jul 2026 10:10:47 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AHgh+RplrEWr1jfwR3Wm3YrouoisY2zY6R00IQqOxnulPW+SMNsKS2aWIYW9vHgMRmRoqz0NtBi8Ir1Yuos=@vger.kernel.org
+X-Gm-Message-State: AOJu0YwdO5HcLtkD/4lX0R5j6S2a2egxFiU6dqQqg/s9YdN10z+7Zd72
+	BsFcSkHyGCN6RVBPZ6ULmG02HwtCEEB9tBjsUxD7wkIPlD9reMzDvz221/uB9K7s48rhCf2EnBj
+	1PLVBYPE2KW1QZO7GpHb4QudzIGireXiIwkPC4jJv
+X-Received: by 2002:a05:6512:254e:b0:5ad:5cec:74d4 with SMTP id
+ 2adb3069b0e04-5b007bc6019mr205711e87.41.1783357844812; Mon, 06 Jul 2026
+ 10:10:44 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -43,16 +43,17 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 References: <a49ce818-f38d-41b0-bbf7-80b8aad998b1@app.fastmail.com>
  <20260629-hauer-erhitzen-sobald-96d3dff68707@brauner> <CALCETrVuh0-biOw=TgYN9ERTFAoiki57XeZ3S2T3dO2+hL54gA@mail.gmail.com>
- <20260702-entladen-farbkombinationen-klarheit-fe24cb608f23@brauner> <20260706-dabei-radeln-glitzer-71ecb835029c@brauner>
-In-Reply-To: <20260706-dabei-radeln-glitzer-71ecb835029c@brauner>
+ <20260702-entladen-farbkombinationen-klarheit-fe24cb608f23@brauner>
+ <20260706-dabei-radeln-glitzer-71ecb835029c@brauner> <CAG48ez0sh7vEzBxtaG1HCJ0bmUMmhF_JR3=xXcc4+vpfB6LUOQ@mail.gmail.com>
+In-Reply-To: <CAG48ez0sh7vEzBxtaG1HCJ0bmUMmhF_JR3=xXcc4+vpfB6LUOQ@mail.gmail.com>
 From: Andy Lutomirski <luto@kernel.org>
-Date: Mon, 6 Jul 2026 10:04:57 -0700
-X-Gmail-Original-Message-ID: <CALCETrXRuJEFQzz5qznVJtSvmsZdc=D7vp271H9j9JyaRdEpxg@mail.gmail.com>
-X-Gm-Features: AVVi8Cd36ZOk4eFeLvJ3vCejadYb-et-1LJStHYmB7PpOlauQGmA_yjWX8q1GQQ
-Message-ID: <CALCETrXRuJEFQzz5qznVJtSvmsZdc=D7vp271H9j9JyaRdEpxg@mail.gmail.com>
+Date: Mon, 6 Jul 2026 10:10:32 -0700
+X-Gmail-Original-Message-ID: <CALCETrW6HO22peDYwA44Kk05YdLbsK4mJ51R7qodLUUBYnspGA@mail.gmail.com>
+X-Gm-Features: AVVi8Cfu2si1SpvPZPvwXFx-sB9HeAk226nHqLE8GCDNAolic_zOW6mpgLOpyNU
+Message-ID: <CALCETrW6HO22peDYwA44Kk05YdLbsK4mJ51R7qodLUUBYnspGA@mail.gmail.com>
 Subject: Re: [RFC] Null Namespaces
-To: Christian Brauner <brauner@kernel.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, 
+To: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <brauner@kernel.org>, Andy Lutomirski <luto@kernel.org>, 
 	John Ericson <mail@johnericson.me>, Li Chen <me@linux.beauty>, Cong Wang <cwang@multikernel.io>, 
 	linux-arch@vger.kernel.org, linux-kernel@vger.kernel.org, 
 	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
@@ -65,178 +66,42 @@ Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>,
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Jul 6, 2026 at 8:31=E2=80=AFAM Christian Brauner <brauner@kernel.or=
-g> wrote:
+On Mon, Jul 6, 2026 at 9:55=E2=80=AFAM Jann Horn <jannh@google.com> wrote:
 >
-> On Thu, Jul 02, 2026 at 11:34:01AM +0200, Christian Brauner wrote:
-> > On Mon, Jun 29, 2026 at 02:06:55PM -0700, Andy Lutomirski wrote:
-> > > On Mon, Jun 29, 2026 at 4:45=E2=80=AFAM Christian Brauner <brauner@ke=
-rnel.org> wrote:
-> > > >
-> > >
-> > > > But I guess the even simpler model would be to copy what I've been =
-doing
-> > > > for pidfs:
-> > > >
-> > > > +static struct path nullfs_root_path =3D {};
-> > > > +
-> > > > +void nullfs_get_root(struct path *path)
-> > > > +{
-> > > > +       *path =3D nullfs_root_path;
-> > > > +       path_get(path);
-> > > > +}
-> > > > +
-> > > >  static void __init init_mount_tree(void)
-> > > >  {
-> > > >         struct vfsmount *mnt, *nullfs_mnt;
-> > > > @@ -6209,6 +6217,8 @@ static void __init init_mount_tree(void)
-> > > >         /* Mount mutable rootfs on top of nullfs. */
-> > > >         root.mnt                =3D nullfs_mnt;
-> > > >         root.dentry             =3D nullfs_mnt->mnt_root;
-> > > > +       nullfs_root_path.mnt    =3D nullfs_mnt;
-> > > > +       pidfs_root_path.dentry  =3D nullfs_mnt->mnt_root;
-> > > >
-> > > >         LOCK_MOUNT_EXACT(mp, &root);
-> > > >         if (unlikely(IS_ERR(mp.parent)))
-> > > > diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.=
-h
-> > > > index aadfbf6e0cb3..f55c87c70b78 100644
-> > > > --- a/include/uapi/linux/fcntl.h
-> > > > +++ b/include/uapi/linux/fcntl.h
-> > > > @@ -124,6 +124,7 @@ struct delegation {
-> > > >
-> > > >  #define FD_PIDFS_ROOT                  -10002 /* Root of the pidfs=
- filesystem */
-> > > >  #define FD_NSFS_ROOT                   -10003 /* Root of the nsfs =
-filesystem */
-> > > > +#define FD_NULLFS_ROOT                 -10004 /* Root of the nullf=
-s filesystem */
-> > > >  #define FD_INVALID                     -10009 /* Invalid file desc=
-riptor: -10000 - EBADF =3D -10009 */
-> > > >
-> > > >  /* Generic flags for the *at(2) family of syscalls. */
-> > > >
-> > > > we then add fchroot() (overdue anyway) and then teach both fchdir()=
- and
-> > > > fchroot() to honor FD_NULLFS_ROOT. Then a process may shed its fs s=
-tate
-> > > > and move itself into nullfs. Restrict *chdir() and *chroot() for sa=
-id
-> > > > process via seccomp and it's locked in forever as well.
-> > > >
-> > >
-> > > One thing comes to mind that might need a bit of care: this would giv=
-e
-> > > an API for any task to get an fd to a directory that lives in the ini=
-t
-> > > mount namespace.  It's not at all obvious to me that this is dangerou=
-s
-> > > or even observable (you're not about to find a setuid program in
-> > > nullfs), but I think it's at least worth a tiny bit of consideration.
-> >
-> > Yes, I thought about this as well. But it doesn't have to be this way.
-> > Every mount namespaces has nullfs as it's root ever since I introduced
-> > it. Which means FD_NULLFS_ROOT can also just mean "nullfs within that
-> > specific mount namespace". That's fine.
-> >
-> > For my FD_FAILFS_ROOT proposal it would be enough if we make failfs
-> > SB_KERNMOUNT which means it's logically distinct from every mount
-> > namespace. I think that might be the right thing to do. I need to spend
-> > one or more brain cycles on this though.
->
-> I had to take a long drive on Sunday and I kept thinking about both
-> FD_NULLFS_ROOT and FD_FAILFS_ROOT and ofc there are some things to
-> consider/discuss.
->
-> I think the straightforward solution to FD_NULLFS_ROOT would be to just:
->
-> - make it always available
-> - refer to the caller's mount namespace nullfs
-> - work with fchroot()/fchdir()
->
-> So I considered two chroot() use-cases for the sake of simplicity:
->
-> (1) You want to isolate yourself for the sake of lookup
->
-> (2) You want to isolate yourself to assemble a "private mount tree" but
->     not really be in a separate namespace (very odd use-case... but it
->     helps to make a point).
->
-> The problem with this approach is that everyone who chroots into the
-> nullfs root would suffer from the problem that any mount on top of it is
-> still visible. So that kinda makes it pointless for both (1) and (2).
 
-Ugh.
+> I mostly agree, though we might want to gate this on no_new_privs just
+> to be sure - you could theoretically have a setuid root program that
+> gives the caller more privileges if it can't find its config file.
+> That's kind of a far-fetched scenario, and in reality it would
+> probably fail because the dynamic linker can't be found, but there is
+> precedent for other sandboxing stuff also requiring no_new_privs, so
+> we might as well require that here, too...
+>
 
-You're at least functionally correct, although this all reminds me
-that I have never felt like Linux's vfs mount hierarchy makes any
-sense:
+My ancient patch did this gating.
 
-root@debian:/mnt/empty# mkdir hidden
-root@debian:/mnt/empty# mount --bind /usr .
-root@debian:/mnt/empty# ls
-hidden
-root@debian:/mnt/empty# ls hidden/..
-bin  games  include  lib  libexec  local  sbin share  src
+FWIW, if we are contemplating letting unprivileged tasks chroot to an
+*empty* mountns and they don't have privileges to bind anything there,
+then the mnt_may_suid() will prevent them from using execveat to run a
+setuid program.
 
+> (I think it actually might be fine to just make chroot entirely
+> unprivileged as long as no_new_privs is set, but I don't think we
+> should actually do that, that would just be unnecessarily playing with
+> fire and would probably confuse some security monitoring tools or
+> such.)
 >
-> FD_FAILFS_ROOT on the other hand should work fine. It would be a shared
-> single fs with SB_KERNMOUNT and you can't do anything at all:
+> We should probably also reject if current_chrooted() is true, for the
+> same reason we reject userns creation when that's true.
 >
-> - no lookup
-> - no creation (duh)
-> - no stat
-> - no mounting
->
-> We could certainly allow a chroot() into this which would mean from that
-> point onward all your lookup bust be relative to a given file
-> descriptor. Anything that requires absolute paths would fail. Which also
-> means any absolute symlink would fail afaict. It's kinda like an
-> fs_struct variant of: RESOLVE_BENEATH where a FD_FAILFS_ROOT fs_struct
-> forces you to provide an actual dirfd...
->
-> chroot()ing back into anything non-empty would necessarily require
-> CAP_SYS_CHROOT. And since you're chroot()ed you can't unshare a userns.
-> So the only way to get out of this is by having access to a file
-> descriptor to a mount namespace that the caller has privilege over and
-> can setns() into. So it's mostly a "throw-away-the-key" moment.
->
-> > > But if this happens, maybe we could finally land one of the patches t=
-o
-> > > enable unprivileged chroot?  It's been tried a few times.
-> > >
-> > > https://lore.kernel.org/lkml/0e2f0f54e19bff53a3739ecfddb4ffa9a6dbde4d=
-.1327858005.git.luto@amacapital.net/
-> > >
-> > > https://lore.kernel.org/all/20210316203633.424794-2-mic@digikod.net/
-> > >
-> > > I think the need for it has reduced a tiny bit with user namespaces,
-> > > as you can sort of emulate it by unsharing your user namespace and
-> > > thus getting enough privilege, but this is rather heavyweight and
-> > > limiting.
-> >
-> > I think we could make that work with both FD_NULLFS_ROOT and
-> > FD_FAILFS_ROOT...
-> >
-> > >
-> > >
-> > > If all of the above landed, then the old chroot /var/empty kludge tha=
-t
-> > > security-minded programs have done for decades could finally be
-> > > modernized and not require any privilege :)
-> >
-> > I think I like it.
-> >
-> > > Hmm, thinking aloud: every now and then someone brings up the idea of
-> > > having an fd (really an OFD) that points to a file or a directory but
-> > > carries less in the way of permissions/capabilities than the usual
-> > > OFDs.  If we had a way to make an OFD to a directory that forced
-> > > RESOLVE_BENEATH (or RESOLVE_IN_ROOT) and that propagated that
-> > > restriction to anything you open using it, and if an unprivileged
-> > > process could chroot itself to nullfs, then we would be getting quite
-> > > close to what Capsicum can do.
-> >
-> > Next steps. I hear you volunteering...
->
-> Thanks for the braindump. I need to find time to process it all.
->
+
+These empty-tree proposals might expose a little issue in
+current_chrooted().  We don't want to check whether our root is the
+namespace root -- I think we may want to check whether our root has a
+parent.  Otherwise once you chroot to an empty tree once, you can't
+chroot again, which is silly.  Maybe if we add this empty tree thing,
+the definition of current_chrooted should change.
+
+(This is already an issue with open_tree and probably even with
+detached mounts before that, but I don't think it's as easily
+observable.)
