@@ -1,28 +1,28 @@
-Received: from BL2PR02CU003.outbound.protection.outlook.com (mail-eastusazon11021106.outbound.protection.outlook.com [52.101.52.106])
+Received: from SN4PR2101CU001.outbound.protection.outlook.com (mail-southcentralusazon11022103.outbound.protection.outlook.com [40.93.195.103])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 58E3F3CF030;
-	Thu,  9 Jul 2026 20:31:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.52.106
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F76F3D16F1;
+	Thu,  9 Jul 2026 20:31:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.195.103
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1783629099; cv=fail; b=lbdKeQIEAPCA7csNfgG+ujOQARsLJgMMVEu5ov6zwiGOaGjoqvyduDXy5rSW+lePQsTUuNgReM210mYTcVaUKS09YUela6DhWhwc1A0WrQynWpYpzyJzOuyW4+FIvAMib8OKPZc5SQXp4jjfL4cHw+IpKTSY4UsjaBOHOAyRw+8=
+	t=1783629099; cv=fail; b=HIw1YvvfLM9E8+StjBDlVIjPGaDLp6Uegxptuj/DQ+Dvfpp8mBb1YunMAhhIzCWN+Hoen9UXaO1B/u3pPEfVTTBq5mKd0jW3w7x9qPuibH6e2m6sYAB2Qc353KfZqVjF0+SAB9DlDdg8cdPJeT75tlV9DU2eyl0Cg7mS6lVgAmo=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1783629099; c=relaxed/simple;
-	bh=+8ldbnnThrgZOGouSbQWv29tZP10MKYQMSFHr05pbEw=;
+	bh=Upz3i+EGYG+dTvejUJ5zbRh3aAvbRbmSidzJVpUgKOc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=jU0axs5jtwEg7GIPJoIeMxRn2obOPnv4szyWr+U88Rdsre+4ug7E9Svl+AoEDluh/zn/m5Bpp2qYATss5P54/Ulpi8/Ts3He8E5WMeqZGAuDhMEeNiRON8OK2sypdA2i8d3xqAuMuZk2gq8MRTS3oaTRkpy1jywIb2NPra0lb9c=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=vyBJnjS9; arc=fail smtp.client-ip=52.101.52.106
+	 MIME-Version:Content-Type; b=ZYbqrEz3Ws5RyyZ2uLIoV1dRvkxmgdpbg/CM9a+gX1pZUUs7MF1eR1sYqo+CziMGplyoQ6Ic7bQ7ynGKMnQNe2mdIJQzL1gYEy91+GU0mPdAcalvO2cTr0Pj77d6LKEC5OxaUxNwJS4InvZuJRZRYu/xCsVjjaxdVAUv+OfUgis=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=mbKyycgW; arc=fail smtp.client-ip=40.93.195.103
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="vyBJnjS9"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="mbKyycgW"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=U+2nQSl9njSPPoAQCy4vci9jlUieukkokciP/Pr4OXbp/LeJgCbqfkfQWjwJYJuyRPdRuYxQWxLt76aDBtdaxoMMoPULP5JsLRyNTEFnprHofpsklKvmNF4KGh08LHoRLWGEO7vofRi2RHL0RDEQ0dNapkroUgxCTxxCFchkURdgX17uNAQ0UInr61gkhRMMw7HJtxHCn79N/yUvRrxTbjXxP3wYDY7zM4lADS/6LLoDc8juRkj204JE3mLJ+kOWZqolocupGKh6cvvHA3/3SLvukwZ4F9ASEEFf9nNHOrgopwpy/+IdqKqdbgnj4gTYs+F4xTZMRDKq82usY/7y3w==
+ b=Mm2g6ZuLUqdQMjBv8pIYiBDtQCvcKi+5rFAb4X0pDbQyMxfe+CRuqmJS5FU5C3s4bZbg4gKOwsLr9uQ8tj3KvzSUC3sS5yYts6P9EnQbfgWaydpMALj5qalVexCZbb2ELqZNtwdFDaAULSmfbSd3drBHwRnurrGrX6LNGyea3h+z9mYdxhaUc6qIvJZAGLGJd3bZJPNkp4jLw+XiEzFFgH4bNssuYM4wcFM/dRTQRB7ChBLupi7p85z2GniAIIsxOr8oiTcltDaCoLuy5GGACPxL6zUuVFQB+gNuPaXnkGRY6zZJFOyV7x0c7kMgDh8fNQ+KtRdg/QeyDZlQKWjDOQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=q0cSpZwkOHfv2tGfvQUSHCdw3BO31XIM9DScq4vBMG0=;
- b=hLm2cHVpujW4JMLpUeB/+MMdYpxspT+FIBIwRQnBWunW81zyWjtfj+rb111k7ykiU5fnzOV4mmwhDqlc/EyEc+ETy8lphmFnj1aViWycC64m3CkJJOnj/BDceqfS1h7jkZDsByCJjyjIFeQDEa9DyudseotJ6GfTk4EEHfefb/7FIprB7v6JLyFq6Fv6On09zAsOmX4ceB+mNMcTdPNpHCae2ZRZVIkF+Us5eb64HYNFURA5elNH4dcdq05KJNZIw8/HFBkZvwKJMVZ3LiGCQ7U67vUZslbBSskzaNxPei5rjChLC4NFOqBNTBG2+SVXwARoKsZzeBlaT3e/fCuqlQ==
+ bh=/SuUTK1ZjXF81/1Ak73JkkHA1dNvvCHzB7ocmFw4O78=;
+ b=QW1Al5HLB++R0p22+jH+Z48yzPsJTZaSfh/tS8ZOqnDP2SAsUUkZRLdAcARg0wTOuN1Alzfy4Pi6H+iaMuphTVEDzof+DWLea8hLyrubD3tPLbXMPAopATzzmMRR9jaJt5oCo/evmUVXmxQwIc8WRJ9YKomxViq64H5X8aB/HLVE0gMyMkzfx64zRooIK1ouMSG5MrsInkFDAdEf6VicAcT80mULJqnH7fN9BxPUf4KsccgXhwwmZWYxglUVklMD/WRz/cRvjArSE2Gz1rFED2HIIFvdH4jnBJkZFTKjaeGG04yc6QXKHUg6Sgn0HCrq2wBin04q1GN2QvRzcHkdlQ==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=q0cSpZwkOHfv2tGfvQUSHCdw3BO31XIM9DScq4vBMG0=;
- b=vyBJnjS9vRoFoYgrbbm+GCIlrox9P7lFloOkuH7zuVY9rgqEjfxpe5MVOslB1jhqbRSrTmoOyGN7IKaQlyWj8iccBCR8emXbu2BTct8YSyYbUy+7jIUEUzeX4UtbfEB2npAO73+VR7lqQ0ddUD/VBlKdNzVvgwC9iVW9AYkoW8Si/WUMdRSwBbfkMs3jK7mBHxLur5MRfx2lojyW0GTFUlEdZWn4BorZqQ6jBt/feQVLM6uv5o1T4boITwU0/pjah0NDe+VQQWX0b1t+knW8SOZcKULmViGQpnjlF95XiH2ub2hzXQPugZ07aRO5VRdakCCNqrO8ogLwHwJhhgqB7g==
-Received: from MW4PR03CA0075.namprd03.prod.outlook.com (2603:10b6:303:b6::20)
- by BN0PR04MB8128.namprd04.prod.outlook.com (2603:10b6:408:144::15) with
+ bh=/SuUTK1ZjXF81/1Ak73JkkHA1dNvvCHzB7ocmFw4O78=;
+ b=mbKyycgWn1ZFLieovMvwcBF5SyXrnWH+kIFnaRgUmZ5qPkcT75VQQknbRTteoAQbiv1KtkdAxpSm76AK0PmvDf3ucmp/aEp3SFLeaCc7bjCMkDe8ug7sORIBEZKevQ49AuWIj4BLrNaTzLR2hlU1Po/V7X7stdsUJSp4k/Zdjm03Rsjq6T01feuvcWpfhBo+/HxjaOccBL9x2U+WHcda7Bn/bhU+u7sCFoViVYQPwgCPj6JDQL+yy/shiUm0BtTIOFSKaUTgRPcKoXNst2RXulHbAp5efkpLqOl0GJisawGu3JaCrFZN7XRW4adQGyzHtvgJbQmvCndSx7FzOlsJpQ==
+Received: from MN2PR07CA0003.namprd07.prod.outlook.com (2603:10b6:208:1a0::13)
+ by DM6PR04MB6796.namprd04.prod.outlook.com (2603:10b6:5:22b::16) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.181.16; Thu, 9 Jul
- 2026 20:31:23 +0000
-Received: from CO1PEPF000075EF.namprd03.prod.outlook.com
- (2603:10b6:303:b6:cafe::62) by MW4PR03CA0075.outlook.office365.com
- (2603:10b6:303:b6::20) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.181.14; Thu, 9 Jul
+ 2026 20:31:24 +0000
+Received: from BL02EPF00021F69.namprd02.prod.outlook.com
+ (2603:10b6:208:1a0:cafe::80) by MN2PR07CA0003.outlook.office365.com
+ (2603:10b6:208:1a0::13) with Microsoft SMTP Server (version=TLS1_3,
  cipher=TLS_AES_256_GCM_SHA384) id 15.21.202.11 via Frontend Transport; Thu, 9
- Jul 2026 20:31:22 +0000
+ Jul 2026 20:31:24 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- CO1PEPF000075EF.mail.protection.outlook.com (10.167.249.38) with Microsoft
+ BL02EPF00021F69.mail.protection.outlook.com (10.167.249.5) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.181.6
- via Frontend Transport; Thu, 9 Jul 2026 20:31:22 +0000
+ via Frontend Transport; Thu, 9 Jul 2026 20:31:23 +0000
 Received: from hqxsv-cmdev3-skrishnamoorthy.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 0A548180175E;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 484E6180176A;
 	Thu,  9 Jul 2026 20:31:21 +0000 (UTC)
 From: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v2 10/19] crypto: cmh - add ChaCha20-Poly1305
-Date: Thu,  9 Jul 2026 13:30:28 -0700
-Message-ID: <20260709203037.1884436-11-skrishnamoorthy@rambus.com>
+Subject: [PATCH v2 13/19] crypto: cmh - add ECDSA/SM2 sig
+Date: Thu,  9 Jul 2026 13:30:31 -0700
+Message-ID: <20260709203037.1884436-14-skrishnamoorthy@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260709203037.1884436-1-skrishnamoorthy@rambus.com>
 References: <20260709203037.1884436-1-skrishnamoorthy@rambus.com>
@@ -94,37 +94,39 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: CO1PEPF000075EF:EE_|BN0PR04MB8128:EE_
+X-MS-TrafficTypeDiagnostic: BL02EPF00021F69:EE_|DM6PR04MB6796:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: e2e25f9f-f467-403e-ce26-08deddf90a82
+X-MS-Office365-Filtering-Correlation-Id: 5b2eea4e-d751-41e0-6366-08deddf90b37
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|7416014|376014|23010399003|36860700016|1800799024|82310400026|921020|22082099003|18002099003|3023799007|11063799006|56012099006|6133799003;
+	BCL:0;ARA:13230040|1800799024|36860700016|82310400026|7416014|23010399003|376014|3023799007|56012099006|11063799006|18002099003|22082099003|921020;
 X-Microsoft-Antispam-Message-Info:
-	hnqIoK+O7aQKnXTfiJZS6mVUoPMEWBA1ZCV1BcoL+chEsmRd9b2gDsAJ3kF/2X6c8AoWE0x3MWwqlOe2NsLzbs8LNG4vOiXq4NcVklLDxgA4Ut90O7q5EfuVUE0ZHQ7x2a6rxLRKVtWCt0hO0d1C/NFF2gu8167KQCRsk/gKQkZJk09mGbz3NBcBZ3z3r6OlmsCI7nheKdOcJy7lVxKmOWvblQBmq1niJNy+VqcZv0YeBC2t8/1hVnpKMAuMW+2t4Gf6bflqqjW0Bgup13MfoxaqJq4AlyepmisVIP2vx1z+rV/s9MXR0PiboWjf0sdX11bHNrTe+DSa10L6JvmyTHZGcsnbSAR9nH5SVwx+noom9obm164Ro7O2rjQotmDDb7MAfu9fmy0nzGe24rwkK5A8V5dae1PvRi/9OIP6Bt2mBtvbFEcmVUB+n4IacsIdv8CWV2u/TXZYhj4lXGfLR9YB20FAslTPHb7x68moJe78t+tV2cilyGxarUiKBjO3i9fPTcTzbSQdZaBLpEpbnOwJfuBQaUjeScSzcTpcKkgW/qfkhtglK50ueZm/n3Z1HYP9Vd6wp0BVmzxlimtJkMPwaDqXLiCfjQI8y/eDUuQv6PsmzSGIhwZENypKMtSnioGjbUDRxRV5i2hBfg8ZGjXQ0/zOh0vgbbu4DaXLg9O6YN/TzUl12BuBqkopEUQE2ObfQudEpsYK9l9DPxrHhuJWXVayrWAlnBqDQDIvZa11OffDlJb5SqsBReIqpWVg
+	jEGxpCuMult3ekNjS3XMh7nluJZzoRVqLC+xwZw3OhZoaDZJmnnaje6zyFPXxq7o9SBp4bw67fA88MbCEJ8RVype4qXFz68AMtg8BVTwsIjFdHQPo9H48GH21No4JY0PhzuR7FiF2w8g7+SSzNN5Oq7IjC1maTnt5kwK/Z1m8EuzaMQzjBiI8h3D/RyNuOuu/MbaUr0oS3n6DXUafFXBzIq0ubB0ihd/dNbA4XqWm9Qs0Bc2prHwdTLpayIPiBBKBHeTh5qXejkaKPV/cXozuuWCKOGKoD59I/DgX8EF94jd8OS8sNzy4Zpr37CSFtIp2wzM9YThmfxJnEW7VXSN3qf7ep4eD+wdZB7QiJRL3PW40CAh6m6Qsw2FsEWX1uq/kyp7BW5EECvlo28LhueMfu8yV1+ef6puuz2NXe1oleQbJdVP2u9V+8ID806AVKL7QbTY9WGEbdpiXTfULA6cqGIHd6XEjhm5qs9FsT0LYnPxwKPy9WlRcIg1o2nhXzpJGeUA8I916iacG7zOtave9lLNUg74XnSsRtkL4U7GSj6mBae+yM1gdjDCshMdCb5fre6Uh3rE4QxL3BTxgN0DWGY2dx/QsLj6QcUl/laxQg1B9oa1VFfXtHMTaADmxcj7npPlbm85lBBmWzbKuyGOis/kZjCRjR9uGgzgtEHyLEcrJPuz3XCHB4Jiml0TM2R9Da0zjLIh6kGMWbuGrml7zuKKSrxshpHcRg4LzKy62DQfQNM1yHmk71U+Cp5DoYqC
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(376014)(23010399003)(36860700016)(1800799024)(82310400026)(921020)(22082099003)(18002099003)(3023799007)(11063799006)(56012099006)(6133799003);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(1800799024)(36860700016)(82310400026)(7416014)(23010399003)(376014)(3023799007)(56012099006)(11063799006)(18002099003)(22082099003)(921020);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	A/Ugl2LbmXLVeRKdXclfVwzsGH32OWBc3aZcdS4bKZaiqRcBjuO8T5fHASJObiwJykJ5hiZVv+dEui7HZZ8Thz37HevnPWIOWxbF49UOVJfp2O0YIJ6rhtI7yv79DPKGLNMlyzIZHUj20UhkQn2NofH+LJt+zXWrbaksh5oOCcEps89l077v8XTsMKEaVHdpdRu07lnLVVQ+prOpEGrO2CJyE8inH/h1JXDGL4Ka5fHA4weDylI8l9KFNkD3PdfxPmijR2jntp0dzSPuvUn/EE6VnuPmVkLBhBEDFVvnL32GQY5Rg8Dro9SKf05QXxNt6XTiPDh+Qhu3Zgod1w7yMqDnDIsNubWmgvNPpV0L8x8feVh9553Mcul5bihR50Xqdk+dMOtIB0MFrP/Cto6pYnnA+33iDNY5zxSWE3d9QFzuM83DQ4/y3DUgAFyeISMZ
+	MI6IGSZSbjcxuPblvnnrsuomvSMtFnMJcFwNUM/XEW+2IvPHPDzjIrV+IKzHmEx3z572SOXLdzbvfcNLoQUA95kPDxHcs6TcsVhqVUK+x7VS93GA2yZItgDQGFvSJBIf0FzyB5Hf6M06q2eQ+thclyLLtFM+pbBasypFtpplYC1rZPl5UD9Pmt/SFEMwjAfxUwcRMqpRz6RtKF+LTHHlxb4irJdoJx4i0Q8md8NLMm+2jsXZ81+Qs36q5WsnHepE8hRGKUDkqgRiwffcVudD/A6O9sfPMBz813Qdgxp7QIhqJg1UaNWkM9/PaQKWq+/Fwk81w2C3B90ij7fOyLDVzqOOhvgwrEq4cDYY8pEKgWmo9IBQVwMfrqYfmhIqNNTa/ifOdatiT6GZwt1h5Qyy4yeyqLr1HP9VzBOo0d4d17ydhMEmIA5Az7sO8fGUSE+g
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Jul 2026 20:31:22.5003
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 09 Jul 2026 20:31:23.5494
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: e2e25f9f-f467-403e-ce26-08deddf90a82
+X-MS-Exchange-CrossTenant-Network-Message-Id: 5b2eea4e-d751-41e0-6366-08deddf90b37
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	CO1PEPF000075EF.namprd03.prod.outlook.com
+	BL02EPF00021F69.namprd02.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: BN0PR04MB8128
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM6PR04MB6796
 
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 
-Register ChaCha20-Poly1305 AEAD and ChaCha20 skcipher algorithms
-using the CMH CCP core (core ID 0x18).  Also registers the Poly1305
-ahash for standalone use.
+Register ECDSA and SM2 sig algorithms using the CMH PKE core.
+Supports P-256, P-384, P-521, and SM2 curves for sign and verify
+operations.  SM2 is registered as verify-only via the crypto API;
+full SM2 operations (encrypt, decrypt, key exchange) are available
+through the /dev/cmh_mgmt ioctl interface.
 
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
@@ -132,1614 +134,640 @@ Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
 Reviewed-by: Thi Nguyen <thin@rambus.com>
 ---
- drivers/crypto/cmh/Makefile          |   5 +-
- drivers/crypto/cmh/cmh_ccp.c         | 364 +++++++++++++++++
- drivers/crypto/cmh/cmh_ccp_aead.c    | 583 +++++++++++++++++++++++++++
- drivers/crypto/cmh/cmh_ccp_poly.c    | 528 ++++++++++++++++++++++++
- drivers/crypto/cmh/cmh_main.c        |  25 ++
- drivers/crypto/cmh/include/cmh_ccp.h |  24 ++
- 6 files changed, 1528 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_ccp.c
- create mode 100644 drivers/crypto/cmh/cmh_ccp_aead.c
- create mode 100644 drivers/crypto/cmh/cmh_ccp_poly.c
- create mode 100644 drivers/crypto/cmh/include/cmh_ccp.h
+ drivers/crypto/cmh/Makefile        |   3 +-
+ drivers/crypto/cmh/cmh_main.c      |   8 +
+ drivers/crypto/cmh/cmh_pke_ecdsa.c | 575 +++++++++++++++++++++++++++++
+ 3 files changed, 585 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_pke_ecdsa.c
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 1f36cd9c0b98..4ebd0e1d10bc 100644
+index 7afd9852c337..fdbf66b13628 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -25,7 +25,10 @@ cmh-y := \
- 	cmh_aes_cmac.o \
- 	cmh_sm4_skcipher.o \
- 	cmh_sm4_aead.o \
--	cmh_sm4_cmac.o
-+	cmh_sm4_cmac.o \
-+	cmh_ccp.o \
-+	cmh_ccp_aead.o \
-+	cmh_ccp_poly.o
+@@ -31,7 +31,8 @@ cmh-y := \
+ 	cmh_ccp_poly.o \
+ 	cmh_rng.o \
+ 	cmh_pke_common.o \
+-	cmh_pke_rsa.o
++	cmh_pke_rsa.o \
++	cmh_pke_ecdsa.o
  
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
-diff --git a/drivers/crypto/cmh/cmh_ccp.c b/drivers/crypto/cmh/cmh_ccp.c
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+index 07f26b0dd2ef..2191682f3d54 100644
+--- a/drivers/crypto/cmh/cmh_main.c
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -287,6 +287,11 @@ static int cmh_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		goto err_pke_rsa_register;
+ 
++	/* Register PKE ECDSA/SM2 sig */
++	ret = cmh_pke_ecdsa_register();
++	if (ret)
++		goto err_pke_ecdsa_register;
++
+ 	/* Register key management device (/dev/cmh_mgmt) */
+ 	ret = cmh_mgmt_register();
+ 	if (ret)
+@@ -299,6 +304,8 @@ static int cmh_probe(struct platform_device *pdev)
+ 	return 0;
+ 
+ err_mgmt_register:
++	cmh_pke_ecdsa_unregister();
++err_pke_ecdsa_register:
+ 	cmh_pke_rsa_unregister();
+ err_pke_rsa_register:
+ 	cmh_ccp_poly_unregister();
+@@ -357,6 +364,7 @@ static void cmh_remove(struct platform_device *pdev)
+ 	cfg = &dev->config;
+ 
+ 	cmh_mgmt_unregister();
++	cmh_pke_ecdsa_unregister();
+ 	cmh_pke_rsa_unregister();
+ 	cmh_ccp_poly_unregister();
+ 	cmh_ccp_aead_unregister();
+diff --git a/drivers/crypto/cmh/cmh_pke_ecdsa.c b/drivers/crypto/cmh/cmh_pke_ecdsa.c
 new file mode 100644
-index 000000000000..deb1db9200f8
+index 000000000000..6b65f7fb72cc
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_ccp.c
-@@ -0,0 +1,364 @@
++++ b/drivers/crypto/cmh/cmh_pke_ecdsa.c
+@@ -0,0 +1,575 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Kernel Crypto API ChaCha20 (skcipher) Driver
++ * CMH LKM -- ECDSA / SM2 Signature Driver (sig_alg, synchronous)
 + *
-+ * Registers the "chacha20" skcipher algorithm with the Linux crypto
-+ * subsystem, backed by the CMH CCP core.
++ * Registers "ecdsa-nist-p256", "ecdsa-nist-p384", and "ecdsa-nist-p521"
++ * sig algorithms with sign, verify, set_pub_key, and set_priv_key callbacks.
++ * Registers "sm2" as verify-only (set_pub_key + verify); SM2 sign is
++ * provided via the cmh_mgmt ioctl path in cmh_pke_sm2.c.
 + *
-+ * VCQ sequence:
-+ *   [SYS_CMD_WRITE] + CCP_CMD_CHACHA20_INIT + CCP_CMD_FINAL + CCP_CMD_FLUSH
++ * In-kernel consumers typically use verify-only (module signatures, IMA),
++ * but we provide sign as well for completeness -- matching the CMH eSW
++ * capability.
 + *
-+ * The CCP core expects a 16-byte counter+nonce (ctrnonce):
-+ *   bytes [0..3]  = 32-bit LE counter
-+ *   bytes [4..15] = 12-byte nonce
++ * Key format: Public key = raw 04 || X || Y (uncompressed).
++ * Signature format: struct ecdsa_raw_sig (two u64[ECC_MAX_DIGITS] arrays
++ * in VLI format -- native byte order, LE digit order) for both sign
++ * output and verify input.  This matches the kernel crypto sig API.
 + *
-+ * The Linux chacha20 skcipher interface passes a 16-byte IV in the
-+ * same format, so we forward it directly.
++ * Private key via cmh_key_ctx: raw keys written via SYS_REF_TEMP.
++ * Datastore-referenced keys are only reachable through the ioctl
++ * path (cmh_mgmt.c).
 + *
-+ * ChaCha20 is a stream cipher -- arbitrary plaintext lengths are
-+ * supported (no block-alignment requirement).
++ * SM2 note: The SM2 sig entry is verify-only (no sign/set_priv_key).
++ * SM2 signature verification requires the digest to be SM3(ZA || M)
++ * where ZA = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA).
++ * The ZA identity pre-hash is the caller's responsibility; the driver
++ * passes the digest directly to the CMH eSW SM2 verify engine.
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/crypto.h>
-+#include <crypto/internal/skcipher.h>
-+#include <crypto/scatterwalk.h>
-+#include <linux/scatterlist.h>
 +#include <linux/slab.h>
-+#include <linux/string.h>
-+#include <linux/unaligned.h>
++#include <crypto/sha2.h>
++#include <crypto/sig.h>
++#include <crypto/internal/sig.h>
++#include <crypto/internal/ecc.h>
 +
-+#include "cmh_ccp.h"
-+#include "cmh_vcq.h"
-+#include "cmh_ccp_abi.h"
-+#include "cmh_sys_abi.h"
++#include "cmh_pke.h"
 +#include "cmh_sys.h"
++#include "cmh_sys_abi.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
 +#include "cmh_key.h"
 +
-+/* Per-transform context */
-+
-+struct cmh_ccp_tfm_ctx {
-+	struct cmh_key_ctx key;
-+};
-+
-+/* Per-request context (lives in skcipher_request::__ctx) */
-+
 +/*
-+ * Maximum payload commands:
-+ *   [SYS_CMD_WRITE] + CCP_CMD_CHACHA20_INIT + CCP_CMD_FINAL + FLUSH = 4
++ * Number of ECC digits needed for a given coordinate byte length.
++ * P-256: 4, P-384: 6, P-521/SM2(clen=68): 9.
 + */
-+#define CMH_CCP_MAX_PAYLOAD	4
-+#define CMH_CCP_MAX_PACKED	(CMH_CCP_MAX_PAYLOAD * 2)
++static inline unsigned int clen_to_ndigits(u32 clen)
++{
++	return DIV_ROUND_UP(clen, sizeof(u64));
++}
 +
-+struct cmh_ccp_reqctx {
-+	dma_addr_t in_dma;
-+	dma_addr_t out_dma;
-+	dma_addr_t iv_dma;
-+	dma_addr_t key_dma;
-+	u8 *in_buf;
-+	u8 *out_buf;
-+	u8 *iv_buf;
-+	u32 cryptlen;
-+	u32 keylen;
-+	struct vcq_cmd packed[CMH_CCP_MAX_PACKED];
++struct cmh_ecdsa_tfm_ctx {
++	struct cmh_key_ctx key;		/* private key (raw only) */
++	u8 *pub_key;			/* uncompressed (x, y) without 04 prefix */
++	u32 pub_key_len;
++	u32 curve;			/* PKE_CURVE_* */
++	u32 clen;			/* coordinate length in bytes */
 +};
 +
-+/* VCQ Builders -- ChaCha20-specific */
-+
-+static void vcq_add_ccp_chacha_init(struct vcq_cmd *slot, u32 core_id, u64 key_ref,
-+				    u64 ctrnonce_dma, u32 keylen, u32 op)
++static inline struct cmh_ecdsa_tfm_ctx *cmh_ecdsa_ctx(struct crypto_sig *tfm)
 +{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_CHACHA20_INIT);
-+	slot->hwc.ccp.cmd_chacha.key = key_ref;
-+	slot->hwc.ccp.cmd_chacha.ctrnonce = ctrnonce_dma;
-+	slot->hwc.ccp.cmd_chacha.keylen = keylen;
-+	slot->hwc.ccp.cmd_chacha.ctrnoncelen = CCP_CTRNONCE_SIZE;
-+	slot->hwc.ccp.cmd_chacha.ctrlen = CCP_CHACHA_CTR_LEN;
-+	slot->hwc.ccp.cmd_chacha.op = op;
-+}
-+
-+static void vcq_add_ccp_final(struct vcq_cmd *slot, u32 core_id, u64 input_dma,
-+			      u64 output_dma, u32 iolen)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_FINAL);
-+	slot->hwc.ccp.cmd_final.input = input_dma;
-+	slot->hwc.ccp.cmd_final.output = output_dma;
-+	slot->hwc.ccp.cmd_final.tag = 0;
-+	slot->hwc.ccp.cmd_final.iolen = iolen;
-+	slot->hwc.ccp.cmd_final.taglen = 0;
-+}
-+
-+/* skcipher Operations */
-+static int cmh_ccp_setkey(struct crypto_skcipher *tfm, const u8 *key,
-+			  unsigned int keylen)
-+{
-+	struct cmh_ccp_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-+	/* ChaCha20 requires 32-byte key per RFC 8439 */
-+	if (keylen != 32)
-+		return -EINVAL;
-+
-+	return cmh_key_setkey_raw(&tctx->key, key, keylen, CORE_ID_CCP);
-+}
-+
-+static int cmh_ccp_init_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct cmh_ccp_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-+
-+	memset(tctx, 0, sizeof(*tctx));
-+	crypto_skcipher_set_reqsize(tfm, sizeof(struct cmh_ccp_reqctx));
-+	return 0;
-+}
-+
-+static void cmh_ccp_exit_tfm(struct crypto_skcipher *tfm)
-+{
-+	struct cmh_ccp_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-+
-+	cmh_key_destroy(&tctx->key);
-+}
-+
-+/* DMA unmap helper */
-+static void cmh_ccp_unmap_dma(struct cmh_ccp_reqctx *rctx)
-+{
-+	cmh_dma_unmap_single(rctx->iv_dma, CCP_CTRNONCE_SIZE, DMA_TO_DEVICE);
-+	cmh_dma_unmap_single(rctx->out_dma, rctx->cryptlen, DMA_FROM_DEVICE);
-+	cmh_dma_unmap_single(rctx->in_dma, rctx->cryptlen, DMA_TO_DEVICE);
-+}
-+
-+static void cmh_ccp_free_bufs(struct cmh_ccp_reqctx *rctx)
-+{
-+	kfree(rctx->iv_buf);
-+	rctx->iv_buf = NULL;
-+	kfree_sensitive(rctx->out_buf);
-+	rctx->out_buf = NULL;
-+	kfree_sensitive(rctx->in_buf);
-+	rctx->in_buf = NULL;
-+}
-+
-+static void cmh_ccp_complete(void *data, int error)
-+{
-+	struct skcipher_request *req = data;
-+	struct cmh_ccp_reqctx *rctx = skcipher_request_ctx(req);
-+
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	cmh_ccp_unmap_dma(rctx);
-+
-+	if (!error) {
-+		u32 counter, nblocks;
-+
-+		scatterwalk_map_and_copy(rctx->out_buf, req->dst,
-+					 0, rctx->cryptlen, 1);
-+
-+		/*
-+		 * Update the 32-bit LE block counter at IV[0..3].
-+		 * ChaCha20 processes 64-byte blocks; the nonce at
-+		 * IV[4..15] is unchanged.
-+		 */
-+		counter = get_unaligned_le32(req->iv);
-+		nblocks = DIV_ROUND_UP(rctx->cryptlen, 64);
-+		put_unaligned_le32(counter + nblocks, req->iv);
-+	}
-+
-+	cmh_ccp_free_bufs(rctx);
-+	cmh_complete(&req->base, error);
++	return crypto_sig_ctx(tfm);
 +}
 +
 +/*
-+ * Core encrypt/decrypt -- builds a VCQ transaction and submits async.
-+ *
-+ * ChaCha20 is a stream cipher: encrypt and decrypt use the same
-+ * underlying XOR operation.
++ * Convert one VLI component (u64 array, LE digit order, native byte order)
++ * to big-endian byte array of @out_len bytes.  The VLI value is right-aligned
++ * in the output (leading zero bytes if ndigits*8 > out_len are discarded;
++ * leading zero padding added if ndigits*8 < out_len).
 + */
-+static int cmh_ccp_crypt(struct skcipher_request *req, u32 ccp_op)
++static void ecdsa_vli_to_be(const u64 *vli, unsigned int ndigits,
++			    u8 *out, unsigned int out_len)
 +{
-+	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-+	struct cmh_ccp_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-+	struct cmh_ccp_reqctx *rctx = skcipher_request_ctx(req);
-+	struct vcq_cmd cmds[CMH_CCP_MAX_PAYLOAD];
-+	u64 key_ref;
-+	u32 keylen;
-+	struct core_dispatch d;
-+	s32 target_mbx;
-+	u32 core_id;
-+	u32 idx;
-+	int ret;
-+	gfp_t gfp;
++	unsigned int full_len = ndigits * sizeof(u64);
++	unsigned int i, skip;
 +
-+	if (tctx->key.mode == CMH_KEY_NONE)
-+		return -ENOKEY;
++	memset(out, 0, out_len);
 +
-+	if (!req->cryptlen)
-+		return 0;
++	if (full_len <= out_len) {
++		/* VLI fits entirely -- write at right end of out */
++		u8 *dst = out + (out_len - full_len);
 +
-+	/* Limit linearisation buffers to avoid large allocations. */
-+	if (req->cryptlen > SZ_1M)
-+		return -EINVAL;
++		for (i = 0; i < ndigits; i++)
++			put_unaligned_be64(vli[ndigits - 1 - i],
++					   &dst[i * sizeof(u64)]);
++	} else {
++		/* VLI wider than out -- skip leading (zero) bytes */
++		u8 tmp[ECC_MAX_BYTES];
 +
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
-+
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->cryptlen = req->cryptlen;
-+
-+	/* Linearise input from scatterlist */
-+	rctx->in_buf = kmalloc(req->cryptlen, gfp);
-+	if (!rctx->in_buf)
-+		return -ENOMEM;
-+
-+	scatterwalk_map_and_copy(rctx->in_buf, req->src, 0, req->cryptlen, 0);
-+
-+	rctx->in_dma = cmh_dma_map_single(rctx->in_buf, req->cryptlen,
-+					  DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(rctx->in_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_in;
++		for (i = 0; i < ndigits; i++)
++			put_unaligned_be64(vli[ndigits - 1 - i],
++					   &tmp[i * sizeof(u64)]);
++		skip = full_len - out_len;
++		WARN_ON_ONCE(memchr_inv(tmp, 0, skip));
++		memcpy(out, tmp + skip, out_len);
 +	}
-+
-+	rctx->out_buf = kmalloc(req->cryptlen, gfp);
-+	if (!rctx->out_buf) {
-+		ret = -ENOMEM;
-+		goto out_unmap_in;
-+	}
-+
-+	rctx->out_dma = cmh_dma_map_single(rctx->out_buf, req->cryptlen,
-+					   DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(rctx->out_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_out;
-+	}
-+
-+	rctx->iv_buf = kmemdup(req->iv, CCP_CTRNONCE_SIZE, gfp);
-+	if (!rctx->iv_buf) {
-+		ret = -ENOMEM;
-+		goto out_unmap_out;
-+	}
-+
-+	rctx->iv_dma = cmh_dma_map_single(rctx->iv_buf, CCP_CTRNONCE_SIZE,
-+					  DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(rctx->iv_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_iv;
-+	}
-+
-+	/* Resolve key reference */
-+	idx = 0;
-+
-+	rctx->key_dma = tctx->key.raw.dma;
-+	rctx->keylen = tctx->key.raw.len;
-+	vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP,
-+			  (u64)rctx->key_dma, SYS_REF_NONE,
-+			  tctx->key.raw.len,
-+			  tctx->key.raw.sys_type);
-+	key_ref = SYS_REF_TEMP;
-+	keylen = tctx->key.raw.len;
-+	d = cmh_core_select_instance(CMH_CORE_CCP);
-+	target_mbx = d.mbx_idx;
-+	core_id = d.core_id;
-+
-+	vcq_add_ccp_chacha_init(&cmds[idx++], core_id, key_ref,
-+				(u64)rctx->iv_dma, keylen, ccp_op);
-+
-+	vcq_add_ccp_final(&cmds[idx++], core_id, (u64)rctx->in_dma,
-+			  (u64)rctx->out_dma, req->cryptlen);
-+
-+	vcq_add_flush(&cmds[idx++], core_id);
-+
-+	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+					    CMH_CCP_MAX_PACKED, target_mbx,
-+					    cmh_ccp_complete, req,
-+					    !!(req->base.flags &
-+					       CRYPTO_TFM_REQ_MAY_BACKLOG),
-+					    cmh_tm_async_timeout_jiffies());
-+	/* -EBUSY = backlogged; ownership transferred to callback. */
-+	if (ret == -EBUSY)
-+		return -EBUSY;
-+	if (ret)
-+		goto out_cleanup_all;
-+
-+	return -EINPROGRESS;
-+
-+out_cleanup_all:
-+	cmh_dma_unmap_single(rctx->iv_dma, CCP_CTRNONCE_SIZE, DMA_TO_DEVICE);
-+out_free_iv:
-+	kfree(rctx->iv_buf);
-+out_unmap_out:
-+	cmh_dma_unmap_single(rctx->out_dma, req->cryptlen, DMA_FROM_DEVICE);
-+out_free_out:
-+	kfree_sensitive(rctx->out_buf);
-+out_unmap_in:
-+	cmh_dma_unmap_single(rctx->in_dma, req->cryptlen, DMA_TO_DEVICE);
-+out_free_in:
-+	kfree_sensitive(rctx->in_buf);
-+	return ret;
 +}
 +
-+static int cmh_ccp_encrypt(struct skcipher_request *req)
-+{
-+	return cmh_ccp_crypt(req, CCP_OP_ENCRYPT);
-+}
-+
-+static int cmh_ccp_decrypt(struct skcipher_request *req)
-+{
-+	return cmh_ccp_crypt(req, CCP_OP_DECRYPT);
-+}
-+
-+/* Registration */
-+
-+static struct skcipher_alg cmh_chacha20_alg = {
-+	.setkey      = cmh_ccp_setkey,
-+	.encrypt     = cmh_ccp_encrypt,
-+	.decrypt     = cmh_ccp_decrypt,
-+	.init        = cmh_ccp_init_tfm,
-+	.exit        = cmh_ccp_exit_tfm,
-+	.min_keysize = 32,
-+	.max_keysize = 32,
-+	.ivsize      = CCP_CTRNONCE_SIZE,
-+	.base        = {
-+		.cra_name        = "chacha20",
-+		.cra_driver_name = "cri-cmh-chacha20",
-+		.cra_priority    = 300,
-+		.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
-+				   CRYPTO_ALG_ASYNC,
-+		.cra_blocksize   = 1,	/* stream cipher */
-+		.cra_ctxsize     = sizeof(struct cmh_ccp_tfm_ctx),
-+		.cra_module      = THIS_MODULE,
-+	},
-+};
-+
-+/**
-+ * cmh_ccp_register() - Register ChaCha20 skcipher algorithm with the crypto framework
-+ *
-+ * Return: 0 on success, negative errno on failure.
++/*
++ * Convert big-endian byte array to VLI (u64 array, LE digit order).
++ * Output is zero-filled to @max_digits entries.
 + */
-+int cmh_ccp_register(void)
++static void ecdsa_be_to_vli(const u8 *in, unsigned int in_len,
++			    u64 *vli, unsigned int max_digits)
 +{
-+	int ret;
++	unsigned int full_len = max_digits * sizeof(u64);
++	u8 tmp[ECC_MAX_BYTES];
++	unsigned int i;
 +
-+	ret = crypto_register_skcipher(&cmh_chacha20_alg);
-+	if (ret)
-+		dev_err(cmh_dev(), "cmh_ccp: failed to register chacha20 (rc=%d)\n", ret);
++	if (WARN_ON_ONCE(max_digits > ECC_MAX_DIGITS))
++		max_digits = ECC_MAX_DIGITS;
++
++	memset(tmp, 0, full_len);
++	if (in_len <= full_len)
++		memcpy(tmp + (full_len - in_len), in, in_len);
 +	else
-+		dev_dbg(cmh_dev(), "cmh_ccp: registered chacha20\n");
++		memcpy(tmp, in + (in_len - full_len), full_len);
 +
-+	return ret;
++	for (i = 0; i < max_digits; i++) {
++		unsigned int off = (max_digits - 1 - i) * sizeof(u64);
++
++		vli[i] = get_unaligned_be64(&tmp[off]);
++	}
 +}
-+
-+/**
-+ * cmh_ccp_unregister() - Unregister ChaCha20 skcipher algorithm from the crypto framework
-+ */
-+void cmh_ccp_unregister(void)
-+{
-+	crypto_unregister_skcipher(&cmh_chacha20_alg);
-+	dev_dbg(cmh_dev(), "cmh_ccp: unregistered chacha20\n");
-+}
-diff --git a/drivers/crypto/cmh/cmh_ccp_aead.c b/drivers/crypto/cmh/cmh_ccp_aead.c
-new file mode 100644
-index 000000000000..20b6f9d1746a
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_ccp_aead.c
-@@ -0,0 +1,583 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Kernel Crypto API ChaCha20-Poly1305 AEAD Driver (RFC 7539)
-+ *
-+ * Registers "rfc7539(chacha20,poly1305)" as an AEAD algorithm with the
-+ * Linux crypto subsystem, backed by the CMH CCP core.
-+ *
-+ * VCQ sequence:
-+ *   [SYS_CMD_WRITE] + CCP_CMD_AEAD_INIT + [CCP_CMD_AAD_FINAL]
-+ *   + CCP_CMD_FINAL + CCP_CMD_FLUSH
-+ *
-+ * The RFC 7539 AEAD interface passes a 12-byte nonce via req->iv.
-+ * The CCP core expects a 16-byte ctrnonce (4-byte LE counter + 12-byte
-+ * nonce).  We prepend a zero counter (per RFC 7539 S2.8: counter 0
-+ * generates the Poly1305 key, counter 1 starts encryption -- the
-+ * CMH eSW handles this internally from the initial counter value of 0).
-+ *
-+ * Tag is always 16 bytes (Poly1305 authenticator).
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/crypto.h>
-+#include <crypto/chacha.h>
-+#include <crypto/internal/aead.h>
-+#include <crypto/scatterwalk.h>
-+#include <linux/scatterlist.h>
-+#include <linux/slab.h>
-+#include <linux/string.h>
-+
-+#include "cmh_ccp.h"
-+#include "cmh_vcq.h"
-+#include "cmh_ccp_abi.h"
-+#include "cmh_sys_abi.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_dma.h"
-+#include "cmh_key.h"
-+
-+#define CCP_AEAD_IV_SIZE	12U	/* RFC 7539 nonce */
-+#define CCP_ESP_IV_SIZE		8U	/* RFC 7539 ESP nonce (4-byte salt at setkey) */
-+#define CCP_ESP_SALT_SIZE	4U
-+#define CCP_AEAD_TAG_SIZE	16U	/* Poly1305 tag */
-+
-+struct cmh_ccp_aead_tfm_ctx {
-+	struct cmh_key_ctx key;
-+	u32 authsize;
-+	u8 salt[CCP_ESP_SALT_SIZE];	/* ESP salt (unused for rfc7539) */
-+};
-+
-+/* Per-request context (lives in aead_request::__ctx) */
 +
 +/*
-+ * Maximum payload commands:
-+ *   [SYS_CMD_WRITE] + CCP_CMD_AEAD_INIT + CCP_CMD_AAD_FINAL
-+ *   + CCP_CMD_FINAL + FLUSH = 5
++ * Extract raw (r || s) big-endian byte arrays from struct ecdsa_raw_sig.
++ * Each component is written as @clen bytes into @raw_rs.
 + */
-+#define CMH_CCP_AEAD_MAX_PAYLOAD	5
-+#define CMH_CCP_AEAD_MAX_PACKED		(CMH_CCP_AEAD_MAX_PAYLOAD * 2)
-+
-+struct cmh_ccp_aead_reqctx {
-+	dma_addr_t in_dma;
-+	dma_addr_t out_dma;
-+	dma_addr_t iv_dma;
-+	dma_addr_t key_dma;
-+	dma_addr_t aad_dma;
-+	dma_addr_t tag_dma;
-+	u8 *in_buf;
-+	u8 *out_buf;
-+	u8 *iv_buf;
-+	u8 *aad_buf;
-+	u8 *tag_buf;
-+	u32 cryptlen;
-+	u32 assoclen;
-+	u32 authsize;
-+	u32 keylen;
-+	bool encrypting;
-+	struct vcq_cmd packed[CMH_CCP_AEAD_MAX_PACKED];
-+};
-+
-+/* VCQ Builders -- CCP AEAD-specific */
-+
-+static void vcq_add_ccp_aead_init(struct vcq_cmd *slot, u32 core_id, u64 key_ref,
-+				  u64 ctrnonce_dma, u32 keylen, u32 op)
++static int ecdsa_sig_to_raw(const void *src, unsigned int slen,
++			    u8 *raw_rs, u32 clen)
 +{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_AEAD_INIT);
-+	slot->hwc.ccp.cmd_aead.key = key_ref;
-+	slot->hwc.ccp.cmd_aead.ctrnonce = ctrnonce_dma;
-+	slot->hwc.ccp.cmd_aead.keylen = keylen;
-+	slot->hwc.ccp.cmd_aead.ctrnoncelen = CCP_CTRNONCE_SIZE;
-+	slot->hwc.ccp.cmd_aead.op = op;
-+}
++	const struct ecdsa_raw_sig *sig = src;
++	unsigned int ndigits = clen_to_ndigits(clen);
 +
-+static void vcq_add_ccp_aad_final(struct vcq_cmd *slot, u32 core_id, u64 aad_dma,
-+				  u32 aadlen)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_AAD_FINAL);
-+	slot->hwc.ccp.cmd_aad_final.aad = aad_dma;
-+	slot->hwc.ccp.cmd_aad_final.aadlen = aadlen;
-+}
-+
-+static void vcq_add_ccp_aead_final(struct vcq_cmd *slot, u32 core_id, u64 input_dma,
-+				   u64 output_dma, u64 tag_dma,
-+				   u32 iolen, u32 taglen)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_FINAL);
-+	slot->hwc.ccp.cmd_final.input = input_dma;
-+	slot->hwc.ccp.cmd_final.output = output_dma;
-+	slot->hwc.ccp.cmd_final.tag = tag_dma;
-+	slot->hwc.ccp.cmd_final.iolen = iolen;
-+	slot->hwc.ccp.cmd_final.taglen = taglen;
-+}
-+
-+/* setkey */
-+static int cmh_ccp_aead_setkey(struct crypto_aead *tfm, const u8 *key,
-+			       unsigned int keylen)
-+{
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-+	/* RFC 7539 AEAD requires 32-byte key */
-+	if (keylen != CHACHA_KEY_SIZE)
++	if (slen != sizeof(struct ecdsa_raw_sig))
 +		return -EINVAL;
 +
-+	return cmh_key_setkey_raw(&tctx->key, key, keylen, CORE_ID_CCP);
-+}
-+
-+static int cmh_ccp_aead_setauthsize(struct crypto_aead *tfm,
-+				    unsigned int authsize)
-+{
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-+
-+	/* Poly1305 tag is always 16 bytes */
-+	if (authsize != CCP_AEAD_TAG_SIZE)
-+		return -EINVAL;
-+
-+	tctx->authsize = authsize;
++	ecdsa_vli_to_be(sig->r, ndigits, raw_rs, clen);
++	ecdsa_vli_to_be(sig->s, ndigits, raw_rs + clen, clen);
 +	return 0;
 +}
 +
-+static int cmh_ccp_aead_init_tfm(struct crypto_aead *tfm)
++/*
++ * Encode raw (r || s) big-endian byte arrays into struct ecdsa_raw_sig.
++ * Returns sizeof(struct ecdsa_raw_sig) on success.
++ */
++static int ecdsa_raw_to_sig(const u8 *raw_rs, u32 clen,
++			    void *dst, unsigned int dlen)
 +{
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
++	struct ecdsa_raw_sig *sig = dst;
 +
-+	memset(tctx, 0, sizeof(*tctx));
-+	tctx->authsize = CCP_AEAD_TAG_SIZE;
-+	crypto_aead_set_reqsize(tfm, sizeof(struct cmh_ccp_aead_reqctx));
-+	return 0;
-+}
++	if (dlen < sizeof(struct ecdsa_raw_sig))
++		return -ENOSPC;
 +
-+static void cmh_ccp_aead_exit_tfm(struct crypto_aead *tfm)
-+{
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-+
-+	cmh_key_destroy(&tctx->key);
-+}
-+
-+/* DMA unmap helper */
-+static void cmh_ccp_aead_unmap_dma(struct cmh_ccp_aead_reqctx *rctx)
-+{
-+	cmh_dma_unmap_single(rctx->iv_dma, CCP_CTRNONCE_SIZE, DMA_TO_DEVICE);
-+	cmh_dma_unmap_single(rctx->tag_dma, rctx->authsize,
-+			     rctx->encrypting ? DMA_FROM_DEVICE :
-+					       DMA_TO_DEVICE);
-+	if (rctx->cryptlen > 0) {
-+		cmh_dma_unmap_single(rctx->out_dma, rctx->cryptlen,
-+				     DMA_FROM_DEVICE);
-+		cmh_dma_unmap_single(rctx->in_dma, rctx->cryptlen,
-+				     DMA_TO_DEVICE);
-+	}
-+	if (rctx->assoclen > 0)
-+		cmh_dma_unmap_single(rctx->aad_dma, rctx->assoclen,
-+				     DMA_TO_DEVICE);
-+}
-+
-+static void cmh_ccp_aead_free_bufs(struct cmh_ccp_aead_reqctx *rctx)
-+{
-+	kfree(rctx->iv_buf);
-+	rctx->iv_buf = NULL;
-+	kfree(rctx->tag_buf);
-+	rctx->tag_buf = NULL;
-+	kfree_sensitive(rctx->out_buf);
-+	rctx->out_buf = NULL;
-+	kfree_sensitive(rctx->in_buf);
-+	rctx->in_buf = NULL;
-+	kfree(rctx->aad_buf);
-+	rctx->aad_buf = NULL;
-+}
-+
-+static void cmh_ccp_aead_complete(void *data, int error)
-+{
-+	struct aead_request *req = data;
-+	struct cmh_ccp_aead_reqctx *rctx = aead_request_ctx(req);
-+
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	cmh_ccp_aead_unmap_dma(rctx);
-+
-+	/*
-+	 * Map HW error on decrypt to -EBADMSG.  The eSW CCP core uses a
-+	 * single error code (-EIO) for both authentication failures and
-+	 * other core errors (e.g. DMA timeout), so we cannot distinguish
-+	 * them from the MBX_STATUS alone.  In practice the only error
-+	 * during a well-formed AEAD decrypt is auth-tag mismatch; a DMA
-+	 * timeout would indicate a fatal HW problem where -EBADMSG vs
-+	 * -EIO is moot.  The kernel crypto API requires -EBADMSG for
-+	 * AEAD authentication failures.
-+	 */
-+	if (error == -EIO && !rctx->encrypting)
-+		error = -EBADMSG;
-+
-+	if (!error) {
-+		if (rctx->cryptlen > 0)
-+			scatterwalk_map_and_copy(rctx->out_buf, req->dst,
-+						 req->assoclen,
-+						rctx->cryptlen, 1);
-+		if (rctx->encrypting)
-+			scatterwalk_map_and_copy(rctx->tag_buf, req->dst,
-+						 req->assoclen +
-+						rctx->cryptlen,
-+						rctx->authsize, 1);
-+	}
-+
-+	cmh_ccp_aead_free_bufs(rctx);
-+	cmh_complete(&req->base, error);
++	memset(sig, 0, sizeof(*sig));
++	ecdsa_be_to_vli(raw_rs, clen, sig->r, ECC_MAX_DIGITS);
++	ecdsa_be_to_vli(raw_rs + clen, clen, sig->s, ECC_MAX_DIGITS);
++	return sizeof(struct ecdsa_raw_sig);
 +}
 +
 +/*
-+ * Core AEAD encrypt/decrypt -- async path.
++ * ECDSA verify (synchronous sig_alg)
 + *
-+ * Encrypt: plaintext -> ciphertext + 16-byte tag
-+ * Decrypt: ciphertext + tag -> plaintext (tag verified by CMH eSW)
++ * @src:    struct ecdsa_raw_sig (VLI format)
++ * @slen:   signature length (must be sizeof(struct ecdsa_raw_sig))
++ * @digest: hash digest
++ * @dlen:   digest length
 + *
-+ * VCQ: [SYS_CMD_WRITE] + AEAD_INIT + [AAD_FINAL] + FINAL + FLUSH
++ * Returns 0 on successful verification, negative errno on failure.
 + */
-+static int cmh_ccp_aead_crypt(struct aead_request *req, u32 ccp_op)
++static int cmh_ecdsa_verify(struct crypto_sig *tfm,
++			    const void *src, unsigned int slen,
++			    const void *digest, unsigned int dlen)
 +{
-+	struct crypto_aead *tfm = crypto_aead_reqtfm(req);
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
-+	struct cmh_ccp_aead_reqctx *rctx = aead_request_ctx(req);
-+	struct vcq_cmd cmds[CMH_CCP_AEAD_MAX_PAYLOAD];
-+	u64 key_ref;
-+	u32 keylen, authsize, cryptlen;
-+	struct core_dispatch d;
-+	s32 target_mbx;
-+	u32 core_id;
-+	u32 idx;
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++	u32 clen = ctx->clen;
++	u32 sig_raw_len = 2 * clen;
++	u32 copy_len = min_t(u32, dlen, clen);
++	struct core_dispatch d = cmh_core_select_instance(CMH_CORE_PKE);
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u8 *sig_raw = NULL, *dig_buf = NULL, *pk_buf = NULL, *rp_buf = NULL;
++	dma_addr_t pk_dma, dig_dma, sig_dma, rp_dma;
 +	int ret;
-+	gfp_t gfp;
 +
-+	if (tctx->key.mode == CMH_KEY_NONE)
-+		return -ENOKEY;
-+
-+	authsize = tctx->authsize;
-+
-+	if (ccp_op == CCP_OP_ENCRYPT) {
-+		cryptlen = req->cryptlen;
-+	} else {
-+		if (req->cryptlen < authsize)
-+			return -EINVAL;
-+		cryptlen = req->cryptlen - authsize;
-+	}
-+
-+	/*
-+	 * HW uses a proprietary LLI scatter-gather format that is
-+	 * incompatible with struct scatterlist, so the payload is
-+	 * linearised into contiguous buffers for DMA.  Cap total
-+	 * size to prevent excessive memory consumption.
-+	 */
-+	if ((u64)cryptlen + req->assoclen > SZ_1M)
++	if (!ctx->pub_key)
 +		return -EINVAL;
 +
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
-+
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->cryptlen = cryptlen;
-+	rctx->assoclen = req->assoclen;
-+	rctx->authsize = authsize;
-+	rctx->encrypting = (ccp_op == CCP_OP_ENCRYPT);
-+
-+	/*
-+	 * rfc7539esp: the last ivsize (8) bytes of the AAD region are the
-+	 * IV/nonce, not actual associated data.  Subtract them so HW only
-+	 * authenticates the real AAD.
-+	 */
-+	if (crypto_aead_ivsize(tfm) == CCP_ESP_IV_SIZE) {
-+		if (rctx->assoclen < CCP_ESP_IV_SIZE)
-+			return -EINVAL;
-+		rctx->assoclen -= CCP_ESP_IV_SIZE;
-+	}
-+
-+	/* Linearise AAD */
-+	if (rctx->assoclen > 0) {
-+		rctx->aad_buf = kmalloc(rctx->assoclen, gfp);
-+		if (!rctx->aad_buf)
-+			return -ENOMEM;
-+		scatterwalk_map_and_copy(rctx->aad_buf, req->src,
-+					 0, rctx->assoclen, 0);
-+		rctx->aad_dma = cmh_dma_map_single(rctx->aad_buf,
-+						   rctx->assoclen,
-+						    DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rctx->aad_dma)) {
-+			ret = -ENOMEM;
-+			goto out_free_aad;
-+		}
-+	}
-+
-+	/* Linearise input */
-+	if (cryptlen > 0) {
-+		rctx->in_buf = kmalloc(cryptlen, gfp);
-+		if (!rctx->in_buf) {
-+			ret = -ENOMEM;
-+			goto out_unmap_aad;
-+		}
-+		scatterwalk_map_and_copy(rctx->in_buf, req->src,
-+					 req->assoclen, cryptlen, 0);
-+		rctx->in_dma = cmh_dma_map_single(rctx->in_buf, cryptlen,
-+						  DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rctx->in_dma)) {
-+			ret = -ENOMEM;
-+			goto out_free_in;
-+		}
-+	}
-+
-+	/* Allocate output buffer */
-+	if (cryptlen > 0) {
-+		rctx->out_buf = kmalloc(cryptlen, gfp);
-+		if (!rctx->out_buf) {
-+			ret = -ENOMEM;
-+			goto out_unmap_in;
-+		}
-+		rctx->out_dma = cmh_dma_map_single(rctx->out_buf, cryptlen,
-+						   DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(rctx->out_dma)) {
-+			ret = -ENOMEM;
-+			goto out_free_out;
-+		}
-+	}
-+
-+	/* Tag buffer */
-+	rctx->tag_buf = kmalloc(authsize, gfp);
-+	if (!rctx->tag_buf) {
++	sig_raw = kzalloc(sig_raw_len, GFP_KERNEL);
++	dig_buf = kzalloc(clen, GFP_KERNEL);
++	pk_buf = kmemdup(ctx->pub_key, ctx->pub_key_len, GFP_KERNEL);
++	rp_buf = kzalloc(clen, GFP_KERNEL);
++	if (!sig_raw || !dig_buf || !pk_buf || !rp_buf) {
 +		ret = -ENOMEM;
-+		goto out_unmap_out;
++		goto out_free;
 +	}
 +
-+	if (!rctx->encrypting) {
-+		scatterwalk_map_and_copy(rctx->tag_buf, req->src,
-+					 req->assoclen + cryptlen,
-+					authsize, 0);
-+	} else {
-+		memset(rctx->tag_buf, 0, authsize);
-+	}
-+
-+	rctx->tag_dma = cmh_dma_map_single(rctx->tag_buf, authsize,
-+					   rctx->encrypting ?
-+					    DMA_FROM_DEVICE : DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(rctx->tag_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_tag;
-+	}
-+
-+	/* Build 16-byte ctrnonce: 4-byte zero counter + 12-byte nonce.
-+	 * rfc7539:    counter(4) | req->iv(12)
-+	 * rfc7539esp: counter(4) | salt(4) | req->iv(8)
-+	 */
-+	rctx->iv_buf = kzalloc(CCP_CTRNONCE_SIZE, gfp);
-+	if (!rctx->iv_buf) {
-+		ret = -ENOMEM;
-+		goto out_unmap_tag;
-+	}
-+	if (crypto_aead_ivsize(tfm) == CCP_ESP_IV_SIZE) {
-+		memcpy(rctx->iv_buf + CCP_CHACHA_CTR_LEN,
-+		       tctx->salt, CCP_ESP_SALT_SIZE);
-+		memcpy(rctx->iv_buf + CCP_CHACHA_CTR_LEN + CCP_ESP_SALT_SIZE,
-+		       req->iv, CCP_ESP_IV_SIZE);
-+	} else {
-+		memcpy(rctx->iv_buf + CCP_CHACHA_CTR_LEN,
-+		       req->iv, CCP_AEAD_IV_SIZE);
-+	}
-+
-+	rctx->iv_dma = cmh_dma_map_single(rctx->iv_buf, CCP_CTRNONCE_SIZE,
-+					  DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(rctx->iv_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_iv;
-+	}
-+
-+	/* Resolve key reference */
-+	idx = 0;
-+
-+	rctx->key_dma = tctx->key.raw.dma;
-+	rctx->keylen = tctx->key.raw.len;
-+	vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP,
-+			  (u64)rctx->key_dma, SYS_REF_NONE,
-+			  tctx->key.raw.len,
-+			  tctx->key.raw.sys_type);
-+	key_ref = SYS_REF_TEMP;
-+	keylen = tctx->key.raw.len;
-+	d = cmh_core_select_instance(CMH_CORE_CCP);
-+	target_mbx = d.mbx_idx;
-+	core_id = d.core_id;
-+
-+	/* AEAD_INIT */
-+	vcq_add_ccp_aead_init(&cmds[idx++], core_id, key_ref,
-+			      (u64)rctx->iv_dma, keylen, ccp_op);
-+
-+	/* AAD_FINAL if we have associated data */
-+	if (rctx->assoclen > 0)
-+		vcq_add_ccp_aad_final(&cmds[idx++], core_id,
-+				      (u64)rctx->aad_dma, rctx->assoclen);
-+
-+	/* FINAL with tag */
-+	vcq_add_ccp_aead_final(&cmds[idx++], core_id,
-+			       cryptlen > 0 ? (u64)rctx->in_dma : 0,
-+			       cryptlen > 0 ? (u64)rctx->out_dma : 0,
-+			       (u64)rctx->tag_dma, cryptlen, authsize);
-+
-+	vcq_add_flush(&cmds[idx++], core_id);
-+
-+	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+					    CMH_CCP_AEAD_MAX_PACKED,
-+					    target_mbx,
-+					    cmh_ccp_aead_complete, req,
-+					    !!(req->base.flags &
-+					       CRYPTO_TFM_REQ_MAY_BACKLOG),
-+					    cmh_tm_async_timeout_jiffies());
-+	if (ret == -EBUSY)
-+		return -EBUSY;
++	/* Extract raw (r, s) big-endian from VLI signature */
++	ret = ecdsa_sig_to_raw(src, slen, sig_raw, clen);
 +	if (ret)
-+		goto out_cleanup_all;
++		goto out_free;
 +
-+	return -EINPROGRESS;
++	/*
++	 * Truncate or zero-pad digest to clen bytes, right-aligned.
++	 * Matches ECDSA bits2int: use leftmost min(dlen, clen) bytes,
++	 * zero-pad on the left when dlen < clen.
++	 */
++	memcpy(dig_buf + (clen - copy_len), digest, copy_len);
 +
-+out_cleanup_all:
-+	cmh_dma_unmap_single(rctx->iv_dma, CCP_CTRNONCE_SIZE, DMA_TO_DEVICE);
-+out_free_iv:
-+	kfree(rctx->iv_buf);
-+out_unmap_tag:
-+	cmh_dma_unmap_single(rctx->tag_dma, authsize,
-+			     rctx->encrypting ? DMA_FROM_DEVICE :
-+					       DMA_TO_DEVICE);
-+out_free_tag:
-+	kfree(rctx->tag_buf);
-+out_unmap_out:
-+	if (cryptlen > 0)
-+		cmh_dma_unmap_single(rctx->out_dma, cryptlen, DMA_FROM_DEVICE);
-+out_free_out:
-+	kfree_sensitive(rctx->out_buf);
-+out_unmap_in:
-+	if (cryptlen > 0)
-+		cmh_dma_unmap_single(rctx->in_dma, cryptlen, DMA_TO_DEVICE);
-+out_free_in:
-+	kfree_sensitive(rctx->in_buf);
-+out_unmap_aad:
-+	if (rctx->assoclen > 0)
-+		cmh_dma_unmap_single(rctx->aad_dma, rctx->assoclen,
-+				     DMA_TO_DEVICE);
-+out_free_aad:
-+	kfree(rctx->aad_buf);
++	pk_dma = cmh_dma_map_single(pk_buf, ctx->pub_key_len, DMA_TO_DEVICE);
++	dig_dma = cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
++	sig_dma = cmh_dma_map_single(sig_raw, sig_raw_len, DMA_TO_DEVICE);
++	rp_dma = cmh_dma_map_single(rp_buf, clen, DMA_FROM_DEVICE);
++
++	if (cmh_dma_map_error(pk_dma) || cmh_dma_map_error(dig_dma) ||
++	    cmh_dma_map_error(sig_dma) || cmh_dma_map_error(rp_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_ecdsa_verify(&vcq[1], d.core_id, ctx->curve, clen,
++				 pk_dma, dig_dma, sig_dma, rp_dma,
++				 pke_swap_flags(ctx->curve));
++	vcq_add_pke_flush(&vcq[2], d.core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, d.mbx_idx);
++
++out_unmap:
++	if (!cmh_dma_map_error(rp_dma))
++		cmh_dma_unmap_single(rp_dma, clen, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(dig_dma))
++		cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(pk_dma))
++		cmh_dma_unmap_single(pk_dma, ctx->pub_key_len, DMA_TO_DEVICE);
++
++out_free:
++	kfree(rp_buf);
++	kfree(pk_buf);
++	kfree(sig_raw);
++	kfree(dig_buf);
 +	return ret;
 +}
 +
-+static int cmh_ccp_aead_encrypt(struct aead_request *req)
-+{
-+	return cmh_ccp_aead_crypt(req, CCP_OP_ENCRYPT);
-+}
-+
-+static int cmh_ccp_aead_decrypt(struct aead_request *req)
-+{
-+	return cmh_ccp_aead_crypt(req, CCP_OP_DECRYPT);
-+}
-+
-+/* -- rfc7539esp: ESP variant with 4-byte salt + 8-byte IV --------------- */
-+
 +/*
-+ * ESP setkey: 36 bytes = 32-byte ChaCha20 key + 4-byte salt.
-+ * The salt is prepended to the 8-byte per-packet IV from the ESP header
-+ * to form the 12-byte RFC 7539 nonce.
++ * ECDSA sign (synchronous sig_alg)
++ *
++ * @src:  hash digest
++ * @slen: digest length
++ * @dst:  output buffer for struct ecdsa_raw_sig (VLI format)
++ * @dlen: output buffer length
++ *
++ * Returns sizeof(struct ecdsa_raw_sig) on success, negative errno on failure.
 + */
-+static int cmh_ccp_esp_setkey(struct crypto_aead *tfm, const u8 *key,
-+			      unsigned int keylen)
++static int cmh_ecdsa_sign(struct crypto_sig *tfm,
++			  const void *src, unsigned int slen,
++			  void *dst, unsigned int dlen)
 +{
-+	struct cmh_ccp_aead_tfm_ctx *tctx = crypto_aead_ctx(tfm);
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++	u32 clen = ctx->clen;
++	u32 sig_raw_len = 2 * clen;
++	u32 copy_len = min_t(u32, slen, clen);
++	struct core_dispatch dd;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MAX];
++	u8 *dig_buf = NULL, *sig_buf = NULL, *sk_buf = NULL;
++	dma_addr_t dig_dma, sig_dma, sk_dma;
++	int ret, idx;
 +
-+	if (keylen != CHACHA_KEY_SIZE + CCP_ESP_SALT_SIZE)
++	if (ctx->key.mode != CMH_KEY_RAW)
++		return -EINVAL;
++	if (dlen < sizeof(struct ecdsa_raw_sig))
 +		return -EINVAL;
 +
-+	memcpy(tctx->salt, key + CHACHA_KEY_SIZE, CCP_ESP_SALT_SIZE);
-+	return cmh_key_setkey_raw(&tctx->key, key, CHACHA_KEY_SIZE, CORE_ID_CCP);
-+}
-+
-+/* Registration */
-+
-+static struct aead_alg cmh_rfc7539_alg = {
-+	.setkey      = cmh_ccp_aead_setkey,
-+	.setauthsize = cmh_ccp_aead_setauthsize,
-+	.encrypt     = cmh_ccp_aead_encrypt,
-+	.decrypt     = cmh_ccp_aead_decrypt,
-+	.init        = cmh_ccp_aead_init_tfm,
-+	.exit        = cmh_ccp_aead_exit_tfm,
-+	.ivsize      = CCP_AEAD_IV_SIZE,
-+	.maxauthsize = CCP_AEAD_TAG_SIZE,
-+	.base        = {
-+		.cra_name        = "rfc7539(chacha20,poly1305)",
-+		.cra_driver_name = "cri-cmh-rfc7539-chacha20-poly1305",
-+		.cra_priority    = 300,
-+		.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
-+				   CRYPTO_ALG_ASYNC,
-+		.cra_blocksize   = 1,
-+		.cra_ctxsize     = sizeof(struct cmh_ccp_aead_tfm_ctx),
-+		.cra_module      = THIS_MODULE,
-+	},
-+};
-+
-+static struct aead_alg cmh_rfc7539esp_alg = {
-+	.setkey      = cmh_ccp_esp_setkey,
-+	.setauthsize = cmh_ccp_aead_setauthsize,
-+	.encrypt     = cmh_ccp_aead_encrypt,
-+	.decrypt     = cmh_ccp_aead_decrypt,
-+	.init        = cmh_ccp_aead_init_tfm,
-+	.exit        = cmh_ccp_aead_exit_tfm,
-+	.ivsize      = CCP_ESP_IV_SIZE,
-+	.maxauthsize = CCP_AEAD_TAG_SIZE,
-+	.base        = {
-+		.cra_name        = "rfc7539esp(chacha20,poly1305)",
-+		.cra_driver_name = "cri-cmh-rfc7539esp-chacha20-poly1305",
-+		.cra_priority    = 300,
-+		.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
-+				   CRYPTO_ALG_ASYNC,
-+		.cra_blocksize   = 1,
-+		.cra_ctxsize     = sizeof(struct cmh_ccp_aead_tfm_ctx),
-+		.cra_module      = THIS_MODULE,
-+	},
-+};
-+
-+/**
-+ * cmh_ccp_aead_register() - Register ChaCha20-Poly1305 AEAD algorithm with the crypto framework
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_ccp_aead_register(void)
-+{
-+	int ret;
-+
-+	ret = crypto_register_aead(&cmh_rfc7539_alg);
-+	if (ret) {
-+		dev_err(cmh_dev(), "cmh_ccp_aead: failed to register rfc7539 (rc=%d)\n",
-+			ret);
-+		return ret;
++	dig_buf = kzalloc(clen, GFP_KERNEL);
++	sig_buf = kzalloc(sig_raw_len, GFP_KERNEL);
++	sk_buf = kmemdup(ctx->key.raw.data, ctx->key.raw.len, GFP_KERNEL);
++	if (!dig_buf || !sig_buf || !sk_buf) {
++		ret = -ENOMEM;
++		goto out_free;
 +	}
-+	dev_dbg(cmh_dev(), "cmh_ccp_aead: registered rfc7539(chacha20,poly1305)\n");
 +
-+	ret = crypto_register_aead(&cmh_rfc7539esp_alg);
-+	if (ret) {
-+		dev_err(cmh_dev(), "cmh_ccp_aead: failed to register rfc7539esp (rc=%d)\n",
-+			ret);
-+		crypto_unregister_aead(&cmh_rfc7539_alg);
-+		return ret;
++	/*
++	 * Truncate or zero-pad digest to clen bytes, right-aligned.
++	 * Matches ECDSA bits2int: use leftmost min(slen, clen) bytes,
++	 * zero-pad on the left when slen < clen.
++	 */
++	memcpy(dig_buf + (clen - copy_len), src, copy_len);
++
++	dig_dma = cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
++	sig_dma = cmh_dma_map_single(sig_buf, sig_raw_len, DMA_FROM_DEVICE);
++	sk_dma = cmh_dma_map_single(sk_buf, ctx->key.raw.len, DMA_TO_DEVICE);
++
++	if (cmh_dma_map_error(dig_dma) || cmh_dma_map_error(sig_dma) ||
++	    cmh_dma_map_error(sk_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
 +	}
-+	dev_dbg(cmh_dev(), "cmh_ccp_aead: registered rfc7539esp(chacha20,poly1305)\n");
 +
-+	return 0;
++	dd = cmh_core_select_instance(CMH_CORE_PKE);
++
++	idx = 1;
++	vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, sk_dma,
++			  SYS_REF_NONE, ctx->key.raw.len,
++			  ctx->key.raw.sys_type);
++	vcq[idx].id |= pke_swap_flags(ctx->curve);
++	idx++;
++	vcq_add_pke_ecdsa_sign(&vcq[idx++], dd.core_id, ctx->curve, clen,
++			       dig_dma, sig_dma, SYS_REF_TEMP,
++			       clen, pke_swap_flags(ctx->curve));
++	vcq_add_pke_flush(&vcq[idx++], dd.core_id);
++	vcq_set_header(&vcq[0], idx);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, idx, 1, dd.mbx_idx);
++	if (!ret) {
++		/* Sync bounce buffer so CPU sees the DMA-written signature */
++		cmh_dma_sync_for_cpu(sig_dma, sig_raw_len, DMA_FROM_DEVICE);
++
++		/* Encode raw (r||s) into VLI ecdsa_raw_sig for kernel API */
++		ret = ecdsa_raw_to_sig(sig_buf, clen, dst, dlen);
++	}
++
++out_unmap:
++	if (!cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, ctx->key.raw.len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(dig_dma))
++		cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
++
++out_free:
++	kfree_sensitive(sk_buf);
++	kfree(sig_buf);
++	kfree(dig_buf);
++	return ret;
 +}
 +
-+/**
-+ * cmh_ccp_aead_unregister() - Unregister ChaCha20-Poly1305 AEAD algorithms
-+ */
-+void cmh_ccp_aead_unregister(void)
++static int cmh_ecdsa_set_pub_key(struct crypto_sig *tfm,
++				 const void *key, unsigned int keylen)
 +{
-+	crypto_unregister_aead(&cmh_rfc7539esp_alg);
-+	crypto_unregister_aead(&cmh_rfc7539_alg);
-+	dev_dbg(cmh_dev(), "cmh_ccp_aead: unregistered rfc7539/rfc7539esp\n");
-+}
-diff --git a/drivers/crypto/cmh/cmh_ccp_poly.c b/drivers/crypto/cmh/cmh_ccp_poly.c
-new file mode 100644
-index 000000000000..020a98fbe607
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_ccp_poly.c
-@@ -0,0 +1,528 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Kernel Crypto API Poly1305 (ahash) Driver
-+ *
-+ * Registers "poly1305" as an ahash algorithm with the Linux crypto
-+ * subsystem, backed by the CMH CCP core.
-+ *
-+ * Poly1305 is a one-time authenticator that produces a 16-byte MAC.
-+ * It requires two 16-byte keys: r (clamped multiplier) and s (nonce).
-+ *
-+ * Key format: 32 bytes = r_key[0..15] || s_key[16..31]
-+ * This matches the Poly1305 key layout in RFC 7539 S2.5.
-+ *
-+ * VCQ sequence:
-+ *   SYS_CMD_WRITE(s_key) + SYS_CMD_WRITE(r_key)
-+ *   + CCP_CMD_POLY1305_INIT + CCP_CMD_FINAL + CCP_CMD_FLUSH
-+ *
-+ * Both keys are written to SYS_REF_TEMP; the CMH eSW stacks them
-+ * so that POLY1305_INIT finds r_key (most recent) as rkey and
-+ * s_key (previous) as skey.
-+ *
-+ * The ahash interface accumulates data via .update() and submits the
-+ * full VCQ asynchronously in .final().
-+ */
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++	const u8 *d = key;
++	u32 clen = ctx->clen;
++	u32 raw_clen;
 +
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/crypto.h>
-+#include <crypto/internal/hash.h>
-+#include <crypto/scatterwalk.h>
-+#include <linux/slab.h>
-+#include <linux/string.h>
++	/* Accept 04 || X || Y (uncompressed point) */
++	if (keylen < 1 || d[0] != 0x04)
++		return -EINVAL;
++	d++;
++	keylen--;
 +
-+#include "cmh_ccp.h"
-+#include "cmh_vcq.h"
-+#include "cmh_ccp_abi.h"
-+#include "cmh_sys_abi.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_dma.h"
-+#include "cmh_key.h"
++	if (keylen & 1)
++		return -EINVAL;
++	raw_clen = keylen / 2;
 +
-+#define POLY1305_DIGEST_SIZE	16U
-+#define POLY1305_BLOCK_SIZE	16U
-+#define POLY1305_KEY_SIZE	32U	/* r(16) + s(16) */
-+
-+/*
-+ * Maximum accumulated data for Poly1305 -- driver-imposed, not HW.
-+ *
-+ * The CCP core does not expose external save/restore VCQ commands,
-+ * so the driver must accumulate all data in kernel memory via
-+ * .update() and submit it atomically in .final().  This cap limits
-+ * the per-request kernel allocation.
-+ */
-+#define POLY_MAX_DATA		(64 * 1024)
-+
-+/*
-+ * Per-transform context -- stores the raw 32-byte key (r || s).
-+ *
-+ * Only the raw-key path is supported for standalone Poly1305.
-+ */
-+struct cmh_poly_tfm_ctx {
-+	u8  key[POLY1305_KEY_SIZE];
-+	dma_addr_t rkey_dma;
-+	dma_addr_t skey_dma;
-+	u32 keylen;
-+	bool has_key;
-+	spinlock_t         chunk_lock;  /* protects all_chunks */
-+	struct list_head   all_chunks;  /* orphan-safe chunk tracking */
-+};
-+
-+/* Chunk node for O(1) update() appends */
-+struct cmh_poly_chunk {
-+	struct list_head list;
-+	struct list_head tfm_node; /* per-tfm orphan tracking */
-+	u32 len;
-+	u8  data[];
-+};
-+
-+/* Per-request context (lives in ahash_request::__ctx) */
-+
-+/*
-+ * Maximum payload commands:
-+ *   SYS_CMD_WRITE(s) + SYS_CMD_WRITE(r) + POLY1305_INIT
-+ *   + CCP_CMD_FINAL + FLUSH = 5
-+ */
-+#define CMH_POLY_MAX_PAYLOAD	5
-+#define CMH_POLY_MAX_PACKED	(CMH_POLY_MAX_PAYLOAD * 2)
-+
-+struct cmh_poly_reqctx {
-+	struct list_head chunks;
-+	u32  total_len;
-+	u8  *buf;		/* linearised in final() */
-+	/* DMA state for async final */
-+	dma_addr_t in_dma;
-+	dma_addr_t tag_dma;
-+	u8 *tag_buf;
-+	struct vcq_cmd packed[CMH_POLY_MAX_PACKED];
-+};
-+
-+/*
-+ * Export/import: not supported.
-+ *
-+ * The CCP core lacks external save/restore VCQ commands, so there is
-+ * no way to checkpoint intermediate Poly1305 state to host memory.
-+ * Pending eSW ABI extension to add save/restore for the CCP core.
-+ */
-+
-+static void vcq_add_ccp_poly_init(struct vcq_cmd *slot, u32 core_id,
-+				  u64 rkey_ref, u32 rkeylen,
-+				  u64 skey_ref, u32 skeylen)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_POLY1305_INIT);
-+	slot->hwc.ccp.cmd_poly.rkey = rkey_ref;
-+	slot->hwc.ccp.cmd_poly.rkeylen = rkeylen;
-+	slot->hwc.ccp.cmd_poly.skey = skey_ref;
-+	slot->hwc.ccp.cmd_poly.skeylen = skeylen;
-+}
-+
-+static void vcq_add_ccp_poly_final(struct vcq_cmd *slot, u32 core_id,
-+				   u64 input_dma, u64 tag_dma,
-+				   u32 iolen, u32 taglen)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1, CCP_CMD_FINAL);
-+	slot->hwc.ccp.cmd_final.input = input_dma;
-+	slot->hwc.ccp.cmd_final.output = 0;
-+	slot->hwc.ccp.cmd_final.tag = tag_dma;
-+	slot->hwc.ccp.cmd_final.iolen = iolen;
-+	slot->hwc.ccp.cmd_final.taglen = taglen;
-+}
-+
-+static int cmh_poly_setkey(struct crypto_ahash *tfm, const u8 *key,
-+			   unsigned int keylen)
-+{
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+
-+	/* Poly1305: exactly 32 bytes (r[16] + s[16]) */
-+	if (keylen != POLY1305_KEY_SIZE)
++	/*
++	 * Kernel passes ceil(bits/8) per coordinate (e.g. 66 for P-521),
++	 * but our HW ABI uses clen (ALIGN(66,4)=68 for P-521).
++	 * Accept raw_clen <= clen and zero-pad on the left.
++	 */
++	if (raw_clen > clen || raw_clen == 0)
 +		return -EINVAL;
 +
-+	/* Unmap old key DMA if re-keying */
-+	if (tctx->has_key) {
-+		cmh_dma_unmap_single(tctx->rkey_dma, CCP_POLY_KEY_SIZE,
-+				     DMA_TO_DEVICE);
-+		cmh_dma_unmap_single(tctx->skey_dma, CCP_POLY_KEY_SIZE,
-+				     DMA_TO_DEVICE);
-+	}
++	kfree(ctx->pub_key);
++	ctx->pub_key = NULL;
++	ctx->pub_key_len = 0;
 +
-+	memcpy(tctx->key, key, POLY1305_KEY_SIZE);
-+	tctx->keylen = POLY1305_KEY_SIZE;
-+
-+	/*
-+	 * Pre-map both key halves for DMA.  The key buffer lives in
-+	 * the tfm context and is stable until exit_tfm() or re-setkey.
-+	 */
-+	tctx->skey_dma = cmh_dma_map_single(tctx->key + CCP_POLY_KEY_SIZE,
-+					    CCP_POLY_KEY_SIZE,
-+					     DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(tctx->skey_dma)) {
-+		tctx->has_key = false;
++	ctx->pub_key = kzalloc(2 * clen, GFP_KERNEL);
++	if (!ctx->pub_key)
 +		return -ENOMEM;
-+	}
 +
-+	tctx->rkey_dma = cmh_dma_map_single(tctx->key, CCP_POLY_KEY_SIZE,
-+					    DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(tctx->rkey_dma)) {
-+		cmh_dma_unmap_single(tctx->skey_dma, CCP_POLY_KEY_SIZE,
-+				     DMA_TO_DEVICE);
-+		tctx->has_key = false;
-+		return -ENOMEM;
-+	}
-+
-+	tctx->has_key = true;
++	/* Right-align each coordinate to clen bytes */
++	memcpy(ctx->pub_key + (clen - raw_clen), d, raw_clen);
++	memcpy(ctx->pub_key + clen + (clen - raw_clen), d + raw_clen,
++	       raw_clen);
++	ctx->pub_key_len = 2 * clen;
 +	return 0;
 +}
 +
-+static void cmh_poly_free_chunks(struct cmh_poly_reqctx *rctx,
-+				 struct cmh_poly_tfm_ctx *tctx)
++static int cmh_ecdsa_set_priv_key(struct crypto_sig *tfm,
++				  const void *key, unsigned int keylen)
 +{
-+	struct cmh_poly_chunk *c, *tmp;
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
 +
-+	spin_lock_bh(&tctx->chunk_lock);
-+	list_for_each_entry_safe(c, tmp, &rctx->chunks, list) {
-+		list_del(&c->list);
-+		list_del(&c->tfm_node);
-+		kfree_sensitive(c);
-+	}
-+	spin_unlock_bh(&tctx->chunk_lock);
++	if (keylen != ctx->clen)
++		return -EINVAL;
++
++	return cmh_key_setkey_raw(&ctx->key, key, keylen, CORE_ID_PKE);
 +}
 +
-+static int cmh_poly_init(struct ahash_request *req)
++static unsigned int cmh_ecdsa_key_size(struct crypto_sig *tfm)
 +{
-+	struct cmh_poly_reqctx *rctx = ahash_request_ctx(req);
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
 +
-+	memset(rctx, 0, sizeof(*rctx));
-+	INIT_LIST_HEAD(&rctx->chunks);
-+	return 0;
++	/* crypto_sig_keysize() returns bits, not bytes */
++	return pke_curve_bits(ctx->curve);
 +}
 +
-+static int cmh_poly_update(struct ahash_request *req)
++static unsigned int cmh_ecdsa_max_size(struct crypto_sig *tfm)
 +{
-+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+	struct cmh_poly_reqctx *rctx = ahash_request_ctx(req);
-+	struct cmh_poly_chunk *chunk;
-+	gfp_t gfp;
-+	int ret;
++	return sizeof(struct ecdsa_raw_sig);
++}
 +
-+	if (!req->nbytes)
-+		return 0;
-+
-+	if (req->nbytes > POLY_MAX_DATA - rctx->total_len) {
-+		ret = -EINVAL;
-+		goto err_free_chunks;
-+	}
-+
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
-+	chunk = kmalloc(sizeof(*chunk) + req->nbytes, gfp);
-+	if (!chunk) {
-+		ret = -ENOMEM;
-+		goto err_free_chunks;
-+	}
-+
-+	chunk->len = req->nbytes;
-+	if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
-+		memcpy(chunk->data, req->svirt, req->nbytes);
-+	else
-+		scatterwalk_map_and_copy(chunk->data, req->src,
-+					 0, req->nbytes, 0);
-+	list_add_tail(&chunk->list, &rctx->chunks);
-+	spin_lock_bh(&tctx->chunk_lock);
-+	list_add_tail(&chunk->tfm_node, &tctx->all_chunks);
-+	spin_unlock_bh(&tctx->chunk_lock);
-+	rctx->total_len += req->nbytes;
-+	return 0;
-+
-+err_free_chunks:
++static unsigned int cmh_ecdsa_digest_size(struct crypto_sig *tfm)
++{
 +	/*
-+	 * Terminal error -- free all previously accumulated chunks.
-+	 * Callers may not call .final() on error, so they would leak.
++	 * Accept digests up to SHA-512 (64 bytes).  Digests longer
++	 * than the curve order are truncated per ECDSA bits2int.
++	 * Matches kernel ecdsa_digest_size().
 +	 */
-+	cmh_poly_free_chunks(rctx, tctx);
-+	return ret;
++	return SHA512_DIGEST_SIZE;
 +}
 +
-+static void cmh_poly_complete(void *data, int error)
++static int cmh_ecdsa_p256_init(struct crypto_sig *tfm)
 +{
-+	struct ahash_request *req = data;
-+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+	struct cmh_poly_reqctx *rctx = ahash_request_ctx(req);
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
 +
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	if (rctx->total_len > 0)
-+		cmh_dma_unmap_single(rctx->in_dma, rctx->total_len,
-+				     DMA_TO_DEVICE);
-+	cmh_dma_unmap_single(rctx->tag_dma, POLY1305_DIGEST_SIZE,
-+			     DMA_FROM_DEVICE);
-+
-+	if (!error)
-+		memcpy(req->result, rctx->tag_buf, POLY1305_DIGEST_SIZE);
-+
-+	kfree(rctx->tag_buf);
-+	rctx->tag_buf = NULL;
-+	cmh_poly_free_chunks(rctx, tctx);
-+	kfree_sensitive(rctx->buf);
-+	rctx->buf = NULL;
-+	rctx->total_len = 0;
-+	cmh_complete(&req->base, error);
-+}
-+
-+static int cmh_poly_final(struct ahash_request *req)
-+{
-+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+	struct cmh_poly_reqctx *rctx = ahash_request_ctx(req);
-+	struct vcq_cmd cmds[CMH_POLY_MAX_PAYLOAD];
-+	struct core_dispatch d;
-+	s32 target_mbx;
-+	u32 core_id;
-+	u32 idx;
-+	int ret;
-+	gfp_t gfp;
-+
-+	if (!tctx->has_key) {
-+		ret = -ENOKEY;
-+		goto out_free_chunks;
-+	}
-+
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
-+
-+	/* Linearise chunks into a single contiguous buffer for DMA */
-+	if (rctx->total_len > 0) {
-+		struct cmh_poly_chunk *c;
-+		u32 off = 0;
-+
-+		rctx->buf = kmalloc(rctx->total_len, gfp);
-+		if (!rctx->buf) {
-+			ret = -ENOMEM;
-+			goto out_free_chunks;
-+		}
-+		list_for_each_entry(c, &rctx->chunks, list) {
-+			memcpy(rctx->buf + off, c->data, c->len);
-+			off += c->len;
-+		}
-+	}
-+
-+	/* Tag output buffer */
-+	rctx->tag_buf = kzalloc(POLY1305_DIGEST_SIZE, gfp);
-+	if (!rctx->tag_buf) {
-+		ret = -ENOMEM;
-+		goto out_free_buf;
-+	}
-+
-+	rctx->tag_dma = cmh_dma_map_single(rctx->tag_buf,
-+					   POLY1305_DIGEST_SIZE,
-+					    DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(rctx->tag_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free_tag;
-+	}
-+
-+	/* Map input data */
-+	if (rctx->total_len > 0) {
-+		rctx->in_dma = cmh_dma_map_single(rctx->buf, rctx->total_len,
-+						  DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rctx->in_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap_tag;
-+		}
-+	}
-+
-+	/*
-+	 * Key DMA handles are pre-mapped in setkey() and live in
-+	 * the tfm context.  Use them directly for the VCQ writes.
-+	 */
-+
-+	d = cmh_core_select_instance(CMH_CORE_CCP);
-+	target_mbx = d.mbx_idx;
-+	core_id = d.core_id;
-+	idx = 0;
-+
-+	/* Write s_key to SYS_REF_TEMP first (bottom of stack) */
-+	vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP,
-+			  (u64)tctx->skey_dma, SYS_REF_NONE,
-+			  CCP_POLY_KEY_SIZE,
-+			  SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_CCP));
-+
-+	/* Write r_key to SYS_REF_TEMP second (top of stack) */
-+	vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP,
-+			  (u64)tctx->rkey_dma, SYS_REF_NONE,
-+			  CCP_POLY_KEY_SIZE,
-+			  SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_CCP));
-+
-+	/* POLY1305_INIT: rkey=TEMP (top), skey=TEMP (next) */
-+	vcq_add_ccp_poly_init(&cmds[idx++], core_id, SYS_REF_TEMP,
-+			      CCP_POLY_KEY_SIZE, SYS_REF_TEMP,
-+			      CCP_POLY_KEY_SIZE);
-+
-+	/* FINAL: data -> tag */
-+	vcq_add_ccp_poly_final(&cmds[idx++], core_id,
-+			       rctx->total_len > 0 ? (u64)rctx->in_dma : 0,
-+			       (u64)rctx->tag_dma, rctx->total_len,
-+			       POLY1305_DIGEST_SIZE);
-+
-+	vcq_add_flush(&cmds[idx++], core_id);
-+
-+	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
-+					    CMH_POLY_MAX_PACKED, target_mbx,
-+					    cmh_poly_complete, req,
-+					    !!(req->base.flags &
-+					       CRYPTO_TFM_REQ_MAY_BACKLOG),
-+					    cmh_tm_async_timeout_jiffies());
-+	if (ret == -EBUSY)
-+		return -EBUSY;
-+	if (ret)
-+		goto out_unmap_in;
-+
-+	return -EINPROGRESS;
-+
-+out_unmap_in:
-+	if (rctx->total_len > 0 && rctx->in_dma)
-+		cmh_dma_unmap_single(rctx->in_dma, rctx->total_len,
-+				     DMA_TO_DEVICE);
-+out_unmap_tag:
-+	cmh_dma_unmap_single(rctx->tag_dma, POLY1305_DIGEST_SIZE,
-+			     DMA_FROM_DEVICE);
-+out_free_tag:
-+	kfree(rctx->tag_buf);
-+out_free_buf:
-+	kfree_sensitive(rctx->buf);
-+	rctx->buf = NULL;
-+out_free_chunks:
-+	cmh_poly_free_chunks(rctx, tctx);
-+	rctx->total_len = 0;
-+	return ret;
-+}
-+
-+static int cmh_poly_export(struct ahash_request *req, void *out)
-+{
-+	return -EOPNOTSUPP;
-+}
-+
-+static int cmh_poly_import(struct ahash_request *req, const void *in)
-+{
-+	return -EOPNOTSUPP;
-+}
-+
-+static int cmh_poly_finup(struct ahash_request *req)
-+{
-+	int err;
-+
-+	err = cmh_poly_update(req);
-+	if (err)
-+		return err;
-+	return cmh_poly_final(req);
-+}
-+
-+static int cmh_poly_digest(struct ahash_request *req)
-+{
-+	int err;
-+
-+	err = cmh_poly_init(req);
-+	if (err)
-+		return err;
-+	return cmh_poly_finup(req);
-+}
-+
-+static int cmh_poly_init_tfm(struct crypto_ahash *tfm)
-+{
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+
-+	memset(tctx, 0, sizeof(*tctx));
-+	spin_lock_init(&tctx->chunk_lock);
-+	INIT_LIST_HEAD(&tctx->all_chunks);
-+	crypto_ahash_set_reqsize(tfm, sizeof(struct cmh_poly_reqctx));
++	memset(ctx, 0, sizeof(*ctx));
++	ctx->curve = PKE_CURVE_P256;
++	ctx->clen = pke_curve_clen(PKE_CURVE_P256);
 +	return 0;
 +}
 +
-+static void cmh_poly_exit_tfm(struct crypto_ahash *tfm)
++static int cmh_ecdsa_p384_init(struct crypto_sig *tfm)
 +{
-+	struct cmh_poly_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
-+	struct cmh_poly_chunk *c, *tmp;
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
 +
-+	/* Free any orphaned chunks (e.g. testmgr export/reimport poison) */
-+	spin_lock_bh(&tctx->chunk_lock);
-+	list_for_each_entry_safe(c, tmp, &tctx->all_chunks, tfm_node) {
-+		list_del(&c->tfm_node);
-+		kfree_sensitive(c);
-+	}
-+	spin_unlock_bh(&tctx->chunk_lock);
-+
-+	if (tctx->has_key) {
-+		cmh_dma_unmap_single(tctx->rkey_dma, CCP_POLY_KEY_SIZE,
-+				     DMA_TO_DEVICE);
-+		cmh_dma_unmap_single(tctx->skey_dma, CCP_POLY_KEY_SIZE,
-+				     DMA_TO_DEVICE);
-+	}
-+	memzero_explicit(tctx->key, POLY1305_KEY_SIZE);
++	memset(ctx, 0, sizeof(*ctx));
++	ctx->curve = PKE_CURVE_P384;
++	ctx->clen = pke_curve_clen(PKE_CURVE_P384);
++	return 0;
 +}
 +
-+static struct ahash_alg cmh_poly1305_alg = {
-+	.init		= cmh_poly_init,
-+	.update		= cmh_poly_update,
-+	.final		= cmh_poly_final,
-+	.finup		= cmh_poly_finup,
-+	.digest		= cmh_poly_digest,
-+	.export		= cmh_poly_export,
-+	.import		= cmh_poly_import,
-+	.setkey		= cmh_poly_setkey,
-+	.init_tfm	= cmh_poly_init_tfm,
-+	.exit_tfm	= cmh_poly_exit_tfm,
-+	.halg		= {
-+		.digestsize	= POLY1305_DIGEST_SIZE,
-+		.statesize	= sizeof(struct cmh_poly_reqctx),
-+		.base		= {
-+			.cra_name	 = "poly1305",
-+			.cra_driver_name = "cri-cmh-poly1305",
-+			.cra_priority	 = 300,
-+			.cra_flags	 = CRYPTO_ALG_KERN_DRIVER_ONLY |
-+					   CRYPTO_ALG_NO_FALLBACK |
-+					   CRYPTO_ALG_ASYNC |
-+					   CRYPTO_ALG_REQ_VIRT,
-+			.cra_blocksize	 = POLY1305_BLOCK_SIZE,
-+			.cra_ctxsize	 = sizeof(struct cmh_poly_tfm_ctx),
-+			.cra_module	 = THIS_MODULE,
++static int cmh_ecdsa_p521_init(struct crypto_sig *tfm)
++{
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++
++	memset(ctx, 0, sizeof(*ctx));
++	ctx->curve = PKE_CURVE_P521;
++	ctx->clen = pke_curve_clen(PKE_CURVE_P521);
++	return 0;
++}
++
++static int cmh_sm2_init(struct crypto_sig *tfm)
++{
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++
++	memset(ctx, 0, sizeof(*ctx));
++	ctx->curve = PKE_CURVE_SM2;
++	ctx->clen = pke_curve_clen(PKE_CURVE_SM2);
++	return 0;
++}
++
++static void cmh_ecdsa_exit(struct crypto_sig *tfm)
++{
++	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
++
++	cmh_key_destroy(&ctx->key);
++	kfree(ctx->pub_key);
++	ctx->pub_key = NULL;
++}
++
++static struct sig_alg cmh_ecdsa_algs[] = {
++	{
++		.sign		= cmh_ecdsa_sign,
++		.verify		= cmh_ecdsa_verify,
++		.set_pub_key	= cmh_ecdsa_set_pub_key,
++		.set_priv_key	= cmh_ecdsa_set_priv_key,
++		.key_size	= cmh_ecdsa_key_size,
++		.max_size	= cmh_ecdsa_max_size,
++		.digest_size	= cmh_ecdsa_digest_size,
++		.init		= cmh_ecdsa_p256_init,
++		.exit		= cmh_ecdsa_exit,
++		.base = {
++			.cra_name	  = "ecdsa-nist-p256",
++			.cra_driver_name  = "cri-cmh-ecdsa-nist-p256",
++			.cra_priority	  = 300,
++			.cra_module	  = THIS_MODULE,
++			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
++		},
++	},
++	{
++		.sign		= cmh_ecdsa_sign,
++		.verify		= cmh_ecdsa_verify,
++		.set_pub_key	= cmh_ecdsa_set_pub_key,
++		.set_priv_key	= cmh_ecdsa_set_priv_key,
++		.key_size	= cmh_ecdsa_key_size,
++		.max_size	= cmh_ecdsa_max_size,
++		.digest_size	= cmh_ecdsa_digest_size,
++		.init		= cmh_ecdsa_p384_init,
++		.exit		= cmh_ecdsa_exit,
++		.base = {
++			.cra_name	  = "ecdsa-nist-p384",
++			.cra_driver_name  = "cri-cmh-ecdsa-nist-p384",
++			.cra_priority	  = 300,
++			.cra_module	  = THIS_MODULE,
++			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
++		},
++	},
++	{
++		.sign		= cmh_ecdsa_sign,
++		.verify		= cmh_ecdsa_verify,
++		.set_pub_key	= cmh_ecdsa_set_pub_key,
++		.set_priv_key	= cmh_ecdsa_set_priv_key,
++		.key_size	= cmh_ecdsa_key_size,
++		.max_size	= cmh_ecdsa_max_size,
++		.digest_size	= cmh_ecdsa_digest_size,
++		.init		= cmh_ecdsa_p521_init,
++		.exit		= cmh_ecdsa_exit,
++		.base = {
++			.cra_name	  = "ecdsa-nist-p521",
++			.cra_driver_name  = "cri-cmh-ecdsa-nist-p521",
++			.cra_priority	  = 300,
++			.cra_module	  = THIS_MODULE,
++			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
++		},
++	},
++	{
++		.verify		= cmh_ecdsa_verify,
++		.set_pub_key	= cmh_ecdsa_set_pub_key,
++		.key_size	= cmh_ecdsa_key_size,
++		.max_size	= cmh_ecdsa_max_size,
++		.digest_size	= cmh_ecdsa_digest_size,
++		.init		= cmh_sm2_init,
++		.exit		= cmh_ecdsa_exit,
++		.base = {
++			.cra_name	  = "sm2",
++			.cra_driver_name  = "cri-cmh-sm2",
++			.cra_priority	  = 300,
++			.cra_module	  = THIS_MODULE,
++			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
 +		},
 +	},
 +};
 +
 +/**
-+ * cmh_ccp_poly_register() - Register Poly1305 hash algorithm with the crypto framework
++ * cmh_pke_ecdsa_register() - Register ECDSA/SM2 sig algorithms with the crypto framework
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_ccp_poly_register(void)
++int cmh_pke_ecdsa_register(void)
 +{
-+	int ret;
++	int ret, i;
 +
-+	ret = crypto_register_ahash(&cmh_poly1305_alg);
-+	if (ret)
-+		dev_err(cmh_dev(), "cmh_ccp_poly: failed to register poly1305 (rc=%d)\n",
-+			ret);
-+	else
-+		dev_dbg(cmh_dev(), "cmh_ccp_poly: registered poly1305\n");
++	for (i = 0; i < ARRAY_SIZE(cmh_ecdsa_algs); i++) {
++		ret = crypto_register_sig(&cmh_ecdsa_algs[i]);
++		if (ret) {
++			dev_err(cmh_dev(), "cmh: failed to register %s (%d)\n",
++				cmh_ecdsa_algs[i].base.cra_name, ret);
++			goto err_unregister;
++		}
++	}
 +
++	return 0;
++
++err_unregister:
++	while (i--)
++		crypto_unregister_sig(&cmh_ecdsa_algs[i]);
 +	return ret;
 +}
 +
 +/**
-+ * cmh_ccp_poly_unregister() - Unregister Poly1305 hash algorithm from the crypto framework
++ * cmh_pke_ecdsa_unregister() - Unregister ECDSA/SM2 sig algorithms from the crypto framework
 + */
-+void cmh_ccp_poly_unregister(void)
++void cmh_pke_ecdsa_unregister(void)
 +{
-+	crypto_unregister_ahash(&cmh_poly1305_alg);
-+	dev_dbg(cmh_dev(), "cmh_ccp_poly: unregistered poly1305\n");
++	int i = ARRAY_SIZE(cmh_ecdsa_algs);
++
++	while (i--)
++		crypto_unregister_sig(&cmh_ecdsa_algs[i]);
 +}
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index 0a73964b9785..e5b2a86c3149 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -36,6 +36,7 @@
- #include "cmh_sm3.h"
- #include "cmh_aes.h"
- #include "cmh_sm4.h"
-+#include "cmh_ccp.h"
- #include "cmh_mgmt.h"
- #include "cmh_registers.h"
- #include "cmh_debugfs.h"
-@@ -259,6 +260,21 @@ static int cmh_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_sm4_cmac_register;
- 
-+	/* Register CCP ChaCha20 skcipher algorithm */
-+	ret = cmh_ccp_register();
-+	if (ret)
-+		goto err_ccp_register;
-+
-+	/* Register CCP ChaCha20-Poly1305 AEAD (RFC 7539) */
-+	ret = cmh_ccp_aead_register();
-+	if (ret)
-+		goto err_ccp_aead_register;
-+
-+	/* Register CCP Poly1305 shash algorithm */
-+	ret = cmh_ccp_poly_register();
-+	if (ret)
-+		goto err_ccp_poly_register;
-+
- 	/* Register key management device (/dev/cmh_mgmt) */
- 	ret = cmh_mgmt_register();
- 	if (ret)
-@@ -271,6 +287,12 @@ static int cmh_probe(struct platform_device *pdev)
- 	return 0;
- 
- err_mgmt_register:
-+	cmh_ccp_poly_unregister();
-+err_ccp_poly_register:
-+	cmh_ccp_aead_unregister();
-+err_ccp_aead_register:
-+	cmh_ccp_unregister();
-+err_ccp_register:
- 	cmh_sm4_cmac_unregister();
- err_sm4_cmac_register:
- 	cmh_sm4_aead_unregister();
-@@ -319,6 +341,9 @@ static void cmh_remove(struct platform_device *pdev)
- 	cfg = &dev->config;
- 
- 	cmh_mgmt_unregister();
-+	cmh_ccp_poly_unregister();
-+	cmh_ccp_aead_unregister();
-+	cmh_ccp_unregister();
- 	cmh_sm4_cmac_unregister();
- 	cmh_sm4_aead_unregister();
- 	cmh_sm4_unregister();
-diff --git a/drivers/crypto/cmh/include/cmh_ccp.h b/drivers/crypto/cmh/include/cmh_ccp.h
-new file mode 100644
-index 000000000000..363d208cbceb
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_ccp.h
-@@ -0,0 +1,24 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- CCP Crypto API Drivers
-+ *
-+ * Registers CCP algorithms with the Linux crypto subsystem:
-+ *   skcipher: chacha20
-+ *   shash:    poly1305
-+ *   aead:     rfc7539(chacha20poly1305)
-+ */
-+
-+#ifndef CMH_CCP_H
-+#define CMH_CCP_H
-+
-+int  cmh_ccp_register(void);
-+void cmh_ccp_unregister(void);
-+
-+int  cmh_ccp_aead_register(void);
-+void cmh_ccp_aead_unregister(void);
-+
-+int  cmh_ccp_poly_register(void);
-+void cmh_ccp_poly_unregister(void);
-+
-+#endif /* CMH_CCP_H */
 -- 
 2.43.7
 
