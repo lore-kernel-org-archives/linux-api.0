@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5D974302E1;
-	Thu, 16 Jul 2026 14:36:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4340E324B06;
+	Thu, 16 Jul 2026 14:36:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212583; cv=pass; b=aB2UHsVKpMebZEY9sGGQsPQP95SQOl4ereZnKZKQUQr11K11xo+Fnp+0Da9lPTefTAJFqH/8+nUwhSAAiDvaiR94S7uGP9GmLn55DogN6sTBbrIaLg94QL7Ek7isMbdmIGNMroehdbLa2jSK5B8Cf9ni3YOUk2F5GFQPVC4kgP0=
+	t=1784212612; cv=pass; b=LQ8tVPJu4MX2U31lJhcTJBqq3F9AHi/DH6AUpv06kfllhaVZUgO+XZ3Px3nnESpgCJiGAnmyjTqIoimBXL0pyPWjmWoFUdxQ/aUDYmdzJ7gIAeYKDAWsbPx9E/x9C3F1JJoJFcx1xUwkpHUHpA0wBXUINJW6aEHn888M/xD4ImE=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212583; c=relaxed/simple;
-	bh=UF+uKKitkyHE4Bs9P9cDQvid7nKd39UR1kDZcZd11xc=;
+	s=arc-20240116; t=1784212612; c=relaxed/simple;
+	bh=gNIdL9utBeA1Pu407ECCViJPyXb4rWdhO5eR9F/wo2s=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=T/2VEECZ+T8Ravd2O4OJ9Ulsf9RV4n47pfQ1zSSHsmPxS+E3lE5m29lEDSwU0lBrdKZVdmY7GZVGozTHS1do+sQ7ByDnVjyo1et+fynxHc8iCnpRbYs7b8K+kQd4ziTwAU/YMDKjdYHfY4pevZzH5tqDrjUWCF4vW9hHemdX/pU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=Ye3rs0MS; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=L1pGbaLCbG1hehUTdPHIBJNLRoxEVr5Na164qcwOjjWKfBerga4HlCktqvAwD13Nxj1wEWV4E2suMACGmkRdK9evgGeft0ZWj74Y9VBTbLk+lFEzuYehuCD1mtS7nV+PuRJj3+hiorXkujCeYZPIEtLIHg423cSyhNVIhlRwbZA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=MxkEnFl7; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="Ye3rs0MS"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212392; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="MxkEnFl7"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212403; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=jznrEKQdfJK9XlXLcrwXp+M8yZtQRw2PwL7zl54fcjtEVz6vmhH8bl0X+MXWpJRmWfCboECKYLXqtNARRLsmfdXi3brdOq6Promtrd0y2F4BlrHokWOsTFd4/Orz/69DXccypqrEurxZ7tNUYSAcpYwJ3i7YJP9tlZST0Q5/O+w=
+	b=dMV9ZN1HA5HIBvY4+WV4YpiNJFU3cvQjedrufXW1PYD+fjRhIzE1dZfMAM3bdTLIoKSMyAcGdOc8C1mbDETJORaIOoaiFXJsTJExVmYIdldJgYYgPJqW9xMAmz9H8VCR9beMpQXu2HapXvo9Ka38/rg++NrvrwsvKZ94HsrGPlw=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212392; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=4WlGJlssUl95Sy+7ZPm60xZZ+Av02JpGkVDZJY42NWU=; 
-	b=Xkelz1J9SKXGI1ETZ7bxCTxKBpH53gqotNR/jBZjWm0bNQcP0Zp1nZ/m+pRm2NRriNMae33rGCEg4jXMgpkaEMyHP13mAMilGNDq3ewpAe7JFtV01FH0U1KbgUYf4qw49Ed4lChBM9z5T5zaYykg2e+U+3OSmfABS4R4clGuZV8=
+	t=1784212403; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=yb6Cwm/3woTUAoheO4z7KKKAu6lXR9oCBGtztGfVAug=; 
+	b=cfYMuO7L2esHwoKyzWcFcEY0/CiF/Pq+Qv68PEy+L77nPyCCoulRNcQfY9Y086LvBx6Xemug3ccOfPEuKi/SdUJdiJFIKi7XxoO31q9fV8VtmoEaWMSJNwLGkuB9ckQwWSuPnCXy1pXRrYkAC7G/uQq2i5Bp/ZmLiYdDcRBJV7s=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212392;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212403;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=4WlGJlssUl95Sy+7ZPm60xZZ+Av02JpGkVDZJY42NWU=;
-	b=Ye3rs0MS2ukDX+2xyNEMYeevu/o4eWER+D22wvIpwNj1OeTLZYWEJDP6z6/ijY0F
-	sQGMAIOUEUfdNZnL9rP0A6OJnGPU/ervlYSefajfn/w4dJMHer5zULGF2HwEa/qoP3y
-	FG5jUxQdbY8XSQe+/uAyWimxw2ApcipNIRHWj05c=
-Received: by mx.zohomail.com with SMTPS id 1784212390537743.799194073505;
-	Thu, 16 Jul 2026 07:33:10 -0700 (PDT)
+	bh=yb6Cwm/3woTUAoheO4z7KKKAu6lXR9oCBGtztGfVAug=;
+	b=MxkEnFl7cfoArhzoENi4PknhrlsAuitJVyM04IyV0ygMcamDMbtLCiPRIyNRQoZY
+	K0Q623GvfSSRvYsApqZ4muOcfMJSRvYdjMO04lveUVm1vCLLQHqtueHI6PYucgfKhwz
+	IklWLzpodiO2DFjS+MApJH6Ofa/OyqiAGXs7O+jQ=
+Received: by mx.zohomail.com with SMTPS id 1784212400577476.8024498506385;
+	Thu, 16 Jul 2026 07:33:20 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 06/24] exec: expose execveat internals to process builders
-Date: Thu, 16 Jul 2026 22:31:32 +0800
-Message-ID: <35cbc4c456675c2613ed4682d88aad8af83370cf.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 07/24] fork: expose vfork completion helper
+Date: Thu, 16 Jul 2026 22:31:33 +0800
+Message-ID: <daf1064397a3f3ccd11f65f07683edf493e4a435.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,145 +80,52 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Move struct user_arg_ptr and its native and compat constructors to an
-fs-private header. Expose do_execveat_common() within fs so a process
-builder can enter the normal exec path without synthesizing a userspace
-execveat() syscall.
+Allow process builders that call copy_process() directly to attach and
+wait for the existing vfork completion without duplicating its signal
+and task-reference handling.
 
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- MAINTAINERS        |  1 +
- fs/exec.c          | 28 ++++------------------------
- fs/exec_internal.h | 40 ++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 45 insertions(+), 24 deletions(-)
- create mode 100644 fs/exec_internal.h
+ include/linux/sched/task.h | 3 +++
+ kernel/fork.c              | 3 +--
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 8d7f94f09f414..85b1306cb2ff3 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -9757,6 +9757,7 @@ F:	Documentation/userspace-api/ELF.rst
- F:	fs/*binfmt_*.c
- F:	fs/Kconfig.binfmt
- F:	fs/exec.c
-+F:	fs/exec_internal.h
- F:	fs/tests/binfmt_*_kunit.c
- F:	fs/tests/exec_kunit.c
- F:	include/linux/binfmts.h
-diff --git a/fs/exec.c b/fs/exec.c
-index d5993cedc829a..1a256ba26425e 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -76,6 +76,7 @@
+diff --git a/include/linux/sched/task.h b/include/linux/sched/task.h
+index e0c1ca8c6a188..92b4e3bc31e66 100644
+--- a/include/linux/sched/task.h
++++ b/include/linux/sched/task.h
+@@ -14,6 +14,7 @@
  
- #include <trace/events/task.h>
- #include "internal.h"
-+#include "exec_internal.h"
+ struct task_struct;
+ struct rusage;
++struct completion;
+ union thread_union;
+ struct css_set;
  
- #include <trace/events/sched.h>
- 
-@@ -291,17 +292,6 @@ static int bprm_mm_init(struct linux_binprm *bprm)
- 	return err;
+@@ -99,6 +100,8 @@ extern void exit_itimers(struct task_struct *);
+ extern pid_t kernel_clone(struct kernel_clone_args *kargs);
+ struct task_struct *copy_process(struct pid *pid, int trace, int node,
+ 				 struct kernel_clone_args *args);
++int wait_for_vfork_done(struct task_struct *child,
++			struct completion *vfork);
+ struct task_struct *create_io_thread(int (*fn)(void *), void *arg, int node);
+ struct task_struct *fork_idle(int);
+ extern pid_t kernel_thread(int (*fn)(void *), void *arg, const char *name,
+diff --git a/kernel/fork.c b/kernel/fork.c
+index f3f378a85be4c..970810a01bbf6 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1435,8 +1435,7 @@ static void complete_vfork_done(struct task_struct *tsk)
+ 	task_unlock(tsk);
  }
  
--struct user_arg_ptr {
--#ifdef CONFIG_COMPAT
--	bool is_compat;
--#endif
--	union {
--		const char __user *const __user *native;
--#ifdef CONFIG_COMPAT
--		const compat_uptr_t __user *compat;
--#endif
--	} ptr;
--};
- 
- static const char __user *get_user_arg_ptr(struct user_arg_ptr argv, int nr)
+-static int wait_for_vfork_done(struct task_struct *child,
+-				struct completion *vfork)
++int wait_for_vfork_done(struct task_struct *child, struct completion *vfork)
  {
-@@ -1805,10 +1795,9 @@ static int bprm_execve(struct linux_binprm *bprm)
- 	return retval;
- }
- 
--static int do_execveat_common(int fd, struct filename *filename,
--			      struct user_arg_ptr argv,
--			      struct user_arg_ptr envp,
--			      int flags)
-+int do_execveat_common(int fd, struct filename *filename,
-+		       struct user_arg_ptr argv,
-+		       struct user_arg_ptr envp, int flags)
- {
- 	int retval;
- 
-@@ -1935,10 +1924,6 @@ void set_binfmt(struct linux_binfmt *new)
- }
- EXPORT_SYMBOL(set_binfmt);
- 
--static inline struct user_arg_ptr native_arg(const char __user *const __user *p)
--{
--	return (struct user_arg_ptr){.ptr.native = p};
--}
- 
- SYSCALL_DEFINE3(execve,
- 		const char __user *, filename,
-@@ -1963,11 +1948,6 @@ SYSCALL_DEFINE5(execveat,
- 
- #ifdef CONFIG_COMPAT
- 
--static inline struct user_arg_ptr compat_arg(const compat_uptr_t __user *p)
--{
--	return (struct user_arg_ptr){.is_compat = true, .ptr.compat = p};
--}
--
- COMPAT_SYSCALL_DEFINE3(execve, const char __user *, filename,
- 	const compat_uptr_t __user *, argv,
- 	const compat_uptr_t __user *, envp)
-diff --git a/fs/exec_internal.h b/fs/exec_internal.h
-new file mode 100644
-index 0000000000000..bf6a873e98426
---- /dev/null
-+++ b/fs/exec_internal.h
-@@ -0,0 +1,40 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+#ifndef _FS_EXEC_INTERNAL_H
-+#define _FS_EXEC_INTERNAL_H
-+
-+#include <linux/compat.h>
-+#include <linux/compiler_types.h>
-+#include <linux/types.h>
-+
-+struct filename;
-+
-+struct user_arg_ptr {
-+#ifdef CONFIG_COMPAT
-+	bool is_compat;
-+#endif
-+	union {
-+		const char __user *const __user *native;
-+#ifdef CONFIG_COMPAT
-+		const compat_uptr_t __user *compat;
-+#endif
-+	} ptr;
-+};
-+
-+static inline struct user_arg_ptr
-+native_arg(const char __user *const __user *p)
-+{
-+	return (struct user_arg_ptr){.ptr.native = p};
-+}
-+
-+#ifdef CONFIG_COMPAT
-+static inline struct user_arg_ptr compat_arg(const compat_uptr_t __user *p)
-+{
-+	return (struct user_arg_ptr){.is_compat = true, .ptr.compat = p};
-+}
-+#endif
-+
-+int do_execveat_common(int fd, struct filename *filename,
-+		       struct user_arg_ptr argv,
-+		       struct user_arg_ptr envp, int flags);
-+
-+#endif /* _FS_EXEC_INTERNAL_H */
+ 	unsigned int state = TASK_KILLABLE|TASK_FREEZABLE;
+ 	int killed;
 -- 
 2.52.0
 
