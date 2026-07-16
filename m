@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EDC8231E85C;
-	Thu, 16 Jul 2026 14:39:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A559633C194;
+	Thu, 16 Jul 2026 14:40:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212777; cv=pass; b=PHWU/csU5pC5x6QmC2u46epy9V5sU95LzIoLCTjinioiRKoCDHGfEaQlR7WJnDMLFa7leXEN6J3mCQB61lzXoAo+heUFF5uvrC3/YTIM90zMsdCd6+dDwc6DHxHN3Fkb43OTyTjCzM7ZCFI/oGO+98Z0iucy5ul3YaQLunwCQT4=
+	t=1784212807; cv=pass; b=XipZTaZ1/OprfeEgqv+OWogNtayl712m+CKqzMwd8Z8xCIY1OzL+qtZ8Ghp016eZE3rjBywKRGIJ01V0kktW9iHxfelpNzMKUP5WcBA+IENVN65dVK2uMVzyw0lM5yyZT76QTNnxxCujZMVzLL2/O1fN1jxivcl30hWuujEs2Hg=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212777; c=relaxed/simple;
-	bh=E4eKLcP96sqKy8Dezsq799rz0kqd1K5kNdFvFhpEcrQ=;
+	s=arc-20240116; t=1784212807; c=relaxed/simple;
+	bh=mF5J9psbQfP8jUVleGHj/StkoANu/5N4LChUnn1C02M=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=llhtgzZNeNGfRUHlBg8/B73wBTbVio3JDsflTZzcfjWqGA3QyXbrKbAKszn2G3YYP5Il05fVu6XemOgPMmdMoYvew3v6FFDKf7YbWgoP9OiKJ0toXSKpHL8VbkIwcMs+3lwF7TMsHXjAEKNmMR6YlCgg2x52zDYJ1a9hSkvl5o4=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=XNl61S6r; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=LzYhwFahalJh/yZv5+ShRJk+M5p90exMlL56rhB5M/xyM+mFe6r4/ieLfZ6jMQtyLjtTbxM6Jbn96cQoso7YV0vHJoHjXCawLQNchSzCJifSsWOnKXHfaaZKRFxHQ+czLhY8YNJ6KFG/oQfMQdWDq3/6xUutKJBJTk8V3xxxn7o=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=lUOjiNEA; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="XNl61S6r"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212452; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="lUOjiNEA"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212462; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=hy5rDNBZast0eykBaCv6ufiedcfgKRjR6aygvTFCz9TLz+7Ex+FiiuXoE/pX23/5DZINbhepeFFqaDX0bTciMNF6kgyMzXJ2rxo79QmKi6mZoAeFbwyWPEKUiesziMmE9V4zMMQoHdimz8mGwPppX7sfJ/I+RUZauyKckPdC3vI=
+	b=NL5sCBLc0dzSrKk0ctGJxf6xVg7GcEWBWgOTLSiTytPv37cluDJagT9/MuM7186bcBLQyxsMrZpgqVPNe4mklAJqFEnAdRUUFcpSdIUGii0q0NYX5EMysk44mKrtPcpV6J5v5bOOKb3lt5R5j6tE3j8XuGgy9EQ0NRN8NH0536U=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212452; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=Cw1rlTuFfFp7SknXN1+aFGRpA9XFW1cANtJlt4dCukU=; 
-	b=n3i/Q8R4YmNAYHsFnpboyZz1ATCWLh+wgymzuF0CEIN6OSt258N/S8SssncUoaMCKr4iwDtCYIzxpLAJi4rjawMfUxN+AUw6OilC1CAS2erp62FSZiWLuxNmlhp8PH3MEe7nbW7kQ/G1+AQHDkvMjXaFVlTdMn0+8JXsAdx3I/0=
+	t=1784212462; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=arLEymkUVoitQLqfzvX2ap3GpzLfAGuJIPCpZdsJGXY=; 
+	b=KUm1VnpBfYK9SXe+mGXg+Qn3vvLnCACE1XIX1crfmJzmqMUW3W3kke8dmBu/5FgSSNZGJ+nnJeQGSvPpeGrbYMcfStJDCn8NpVIvbrf/PjixfByOh6h3ALtCxOttShGaOfhKoLRNQR/rjCBu2u3xguFN0yW2+Yd+D2LbnbxboN8=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212452;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212462;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=Cw1rlTuFfFp7SknXN1+aFGRpA9XFW1cANtJlt4dCukU=;
-	b=XNl61S6rk5rPBadEXOlRistorXRQ0OvlSyV1M08qb4pTY/UKcLfDPAu54kD5xlB0
-	QXZxQZIQvg8WNBdNoNvXg4Ti4Nd92jFkLHa3EKrfowi1Fth/KzX8rRDKIPaq6r8Dvpk
-	0meql2eoflsNpcBn/2EqTkKAUWhgQocgDFQ0Vr2U=
-Received: by mx.zohomail.com with SMTPS id 1784212448529805.8984322688145;
-	Thu, 16 Jul 2026 07:34:08 -0700 (PDT)
+	bh=arLEymkUVoitQLqfzvX2ap3GpzLfAGuJIPCpZdsJGXY=;
+	b=lUOjiNEAs6gVFsKJ7ywvKHQj6bgQShhP9SBhiAd2VMu3l7Ql7s3RfxW1DptBI0CP
+	49ibTx/3SwuBWhvFvcqhWYc+mdU7WGi1PfJOzrBX8g9dP1KfROPORzf+n0VoF5T/xAB
+	ZXtnxpMJqC6Zlzdxg3QescLRlZH2IuiCV70W7H3E=
+Received: by mx.zohomail.com with SMTPS id 17842124595011012.3223632220755;
+	Thu, 16 Jul 2026 07:34:19 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 12/24] fork: let kernel callers create embryonic tasks
-Date: Thu, 16 Jul 2026 22:31:38 +0800
-Message-ID: <538e494dd8fcc677da24ec985c6e90dde554e7f3.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 13/24] fork: let new tasks start with task work
+Date: Thu, 16 Jul 2026 22:31:39 +0800
+Message-ID: <6a841a3d1ca2e4c5dfeccf1863d4e07290d33351.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,112 +80,58 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-A kernel-created task can become visible before it has installed a new
-executable image or a valid userspace register frame. Exposing such a task
-through ptrace can disclose kernel setup state.
+Process builders need to run setup in the child before its first return
+to userspace without storing a kernel callback in architecture-specific
+saved registers.
 
-Add a task-local embryonic flag and an internal clone argument for callers
-that need this lifecycle. Reject ptrace access until the creator clears the
-flag. Clear it with release ordering and observe it with acquire ordering.
-This orders visibility of the completed exec state with the transition.
-
-Existing fork, vfork, clone, and kernel-thread callers leave the argument
-unset and retain their current behavior.
+Allow an internal clone caller to supply task work. Queue it after the
+last ordinary fork failure check, while the child is still TASK_NEW. A
+NULL work pointer leaves existing clone callers unchanged.
 
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- include/linux/sched.h      | 21 +++++++++++++++++++++
- include/linux/sched/task.h |  1 +
- kernel/fork.c              |  1 +
- kernel/ptrace.c            |  4 ++++
- 4 files changed, 27 insertions(+)
+ include/linux/sched/task.h | 2 ++
+ kernel/fork.c              | 6 ++++++
+ 2 files changed, 8 insertions(+)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 908aff695ef86..031ae92884c3c 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1863,6 +1863,7 @@ static __always_inline bool is_user_task(struct task_struct *task)
- #define PFA_SPEC_IB_DISABLE		5	/* Indirect branch speculation restricted */
- #define PFA_SPEC_IB_FORCE_DISABLE	6	/* Indirect branch speculation permanently restricted */
- #define PFA_SPEC_SSB_NOEXEC		7	/* Speculative Store Bypass clear on execve() */
-+#define PFA_EMBRYONIC_EXEC		8	/* No valid user register frame */
- 
- #define TASK_PFA_TEST(name, func)					\
- 	static inline bool task_##func(struct task_struct *p)		\
-@@ -1905,6 +1906,26 @@ TASK_PFA_CLEAR(SPEC_IB_DISABLE, spec_ib_disable)
- TASK_PFA_TEST(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
- TASK_PFA_SET(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
- 
-+/* Clearing this bit publishes the register and security state from exec. */
-+static inline bool task_is_embryonic_exec(struct task_struct *p)
-+{
-+	return test_bit_acquire(PFA_EMBRYONIC_EXEC, &p->atomic_flags);
-+}
-+
-+/* The task is private during copy_process(), so no publication barrier. */
-+static inline void task_init_embryonic_exec(struct task_struct *p, bool set)
-+{
-+	if (set)
-+		__set_bit(PFA_EMBRYONIC_EXEC, &p->atomic_flags);
-+	else
-+		__clear_bit(PFA_EMBRYONIC_EXEC, &p->atomic_flags);
-+}
-+
-+static inline void task_clear_embryonic_exec(struct task_struct *p)
-+{
-+	clear_bit_unlock(PFA_EMBRYONIC_EXEC, &p->atomic_flags);
-+}
-+
- static inline void
- current_restore_flags(unsigned long orig_flags, unsigned long flags)
- {
 diff --git a/include/linux/sched/task.h b/include/linux/sched/task.h
-index 92b4e3bc31e66..5b7facf12b33b 100644
+index 5b7facf12b33b..830de99aabaed 100644
 --- a/include/linux/sched/task.h
 +++ b/include/linux/sched/task.h
-@@ -45,6 +45,7 @@ struct kernel_clone_args {
+@@ -43,6 +43,8 @@ struct kernel_clone_args {
+ 	int idle;
+ 	int (*fn)(void *);
  	void *fn_arg;
++	/* Run before the new task first returns to userspace. */
++	struct callback_head *task_work;
  	struct cgroup *cgrp;
  	struct css_set *cset;
-+	bool embryonic_exec;
- 	unsigned int kill_seq;
- };
- 
+ 	bool embryonic_exec;
 diff --git a/kernel/fork.c b/kernel/fork.c
-index d16405c037c2f..e3ade83b2d4e2 100644
+index e3ade83b2d4e2..c0584eaa74711 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -2138,6 +2138,7 @@ __latent_entropy struct task_struct *copy_process(
- 	retval = copy_exec_state(clone_flags, p);
- 	if (retval)
- 		goto bad_fork_free;
-+	task_init_embryonic_exec(p, args->embryonic_exec);
- 	p->flags &= ~PF_KTHREAD;
- 	if (args->kthread)
- 		p->flags |= PF_KTHREAD;
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index d041645d9d17d..36eb9b154a397 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -56,6 +56,8 @@ bool ptracer_access_allowed(struct task_struct *tsk)
- 	guard(rcu)();
- 	if (ptrace_parent(tsk) != current)
- 		return false;
-+	if (task_is_embryonic_exec(tsk))
-+		return false;
- 	es = task_exec_state_rcu(tsk);
- 	return READ_ONCE(es->dumpable) == TASK_DUMPABLE_OWNER ||
- 	       ptracer_capable(tsk, es->user_ns);
-@@ -312,6 +314,8 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
- 		WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
- 		return -EPERM;
+@@ -109,6 +109,7 @@
+ #include <uapi/linux/pidfd.h>
+ #include <linux/pidfs.h>
+ #include <linux/tick.h>
++#include <linux/task_work.h>
+ #include <linux/unwind_deferred.h>
+ #include <linux/pgalloc.h>
+ #include <linux/uaccess.h>
+@@ -2504,6 +2505,11 @@ __latent_entropy struct task_struct *copy_process(
+ 		retval = -EINTR;
+ 		goto bad_fork_core_free;
  	}
-+	if (task_is_embryonic_exec(task))
-+		return -EPERM;
++	if (args->task_work) {
++		retval = task_work_add(p, args->task_work, TWA_RESUME);
++		if (WARN_ON_ONCE(retval))
++			goto bad_fork_core_free;
++	}
  
- 	/* May we inspect the given task?
- 	 * This check is used both for attaching with ptrace
+ 	/* No more failure paths after this point. */
+ 
 -- 
 2.52.0
 
