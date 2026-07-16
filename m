@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 178F043148D;
-	Thu, 16 Jul 2026 14:40:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7C5A143F09C;
+	Thu, 16 Jul 2026 14:41:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212840; cv=pass; b=u13J/1njh2AgnNmucLAGq5g57hn3w8Bdfz+YUpuRPyeCNh3QnCcYJvlap7jrhNLWdLkQJQRN1GXdhh3q7XnzNycIGiwozfVkIq8nbqUwqw/VrPer0P7evj6/08FOdPihGFUnYLgmSJTcHPKXTBCvNNLGURsQvIzbwTSvxAX0uns=
+	t=1784212872; cv=pass; b=EVRQikAyAEkIweDeO6lQFujHA3XrkPeKk26hb4S0kdCOzVZQQs8Y1mrR6J+N3x2KYwmmtZ/MxI0iYkH0eEkXVPyfbYjto74qBI/yErBeNbStj3zCYHaANoh6fqnAOU/BCLBQTvH3IVFdIBPCFo2NGLdOiXCQkVY30VvViH00/fA=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212840; c=relaxed/simple;
-	bh=V4NwAJ1qZkkMhpH47WNIJ82d1+cWyktYNdFClDVrmZQ=;
+	s=arc-20240116; t=1784212872; c=relaxed/simple;
+	bh=TGJciS/HWRkZs2JwzmDQRilu0hi73kjsPQiGbrp7mPI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=EALJ6nhVB9wi8gry5/2cz8Pb5yKuOk6W+PFuL1GlrlWuvAuI+7OInuq2uoZCiaQ5svEty4cn5qmQOsTh1uKAUJkQaiiGkcqExF7zUWSOoNGH8TnedoHSd1p4N3y3ZPgDZqyyw5mAsxQPlVLyD4Y0BlcDuTzHPgrjitTXTn1n9ag=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=qxn+h0ds; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=TNoU+zFd3bN66/uqdXIef0yIla9C+a3J55C0skhMgScvbp0XYFOvwObl+5HJHN5/RdtLIgosr3Zp1x1U88NYvMZNFWifb5CFCzP2q5euBpszIQkcWVFopXGT5UhojDOe5dnBmBcSScS7vguCac1tKOUw/AhE+GaTVBxRTIDEJmg=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=jTTOe8Qb; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="qxn+h0ds"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212472; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="jTTOe8Qb"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212480; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=SQCSCmadAAHdXAGgv5VfGXJwPklN1QCdZMEouWgQBUbB6OvLfeN8d7vgPJIq3BTy2OSa2sASTbG5hNNApdAoYMRnuuytyx/wDltVNBoHqNdBrIJump3TYMKsc7KmRp+aXoKyNBAx+BHXOlFZS8XkLlRNGFumQxkLy20Mq5Ve2Fk=
+	b=PIeEPYDFLGgwA2bTk3H8X9leLEPwWCGefeTfHsRrxxCpHQvhSAh6x9xXd5Vku0nOqTkRoGb2dX7qX7DJgpQ1KE3STA8LTmGn4J1HhAOfxHis1BmyrwWGXx4fDh3Gvoq07Wv1PNSIcINVNjaGtR7HE9i7jyc2Jsd7ZPChv9jC4Y4=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212472; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=/Ls7aI2YsKMrYCfbCVyA0Gxy3SdWzDVHyfYWUOskaec=; 
-	b=b/2lj6767VDIqcCN6CWeRzUZwDpPf4/pl95bufrTfW23gCGnWFSAQS2x5/yXhxFFwc76YybzwvV1JCwA8M9bdKTv+x6Xy2kSG1lcjNg4POvjcnbHVZtlkTY5QtzyyiXxWVzHKCh92DpB9HhN3qLngrorna3Dym4t1dgoIUAAQn4=
+	t=1784212480; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=IMza1E+rhNrE4SicI52nJDf/t3lksusUovzMzX60i1w=; 
+	b=VP0KbG/o8srdoVc5GwysbluUT0DSOlwi+52zXmHWZpzNUra/Q3xsSqB1casGsnG5fhoNOmG7JctCy/YoN+bdTWQsj2RCpyk8yQbBrq8okvFj0WJ9UZQSk6pqquc+0KsJZCxteeCiVXT4GVoF5BfbFpzQvS5GiNEtHz7zYSR7FOg=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212472;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212480;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=/Ls7aI2YsKMrYCfbCVyA0Gxy3SdWzDVHyfYWUOskaec=;
-	b=qxn+h0dslvw6oMfd/2dt0iQrHdSMBAk98HreekQ2RjLChX2fY2YCs/Ft/kydrVm7
-	mGSNLiICeCBGXsTtSRrlA3pcQkhLI2kEWjXwcUBQnEdUkvNyH/xMy+gKZrWu0BCGKgD
-	IUaieW66Po9dFMQ0vCi/OXdojRG9FGEc+hSUUWK0=
-Received: by mx.zohomail.com with SMTPS id 1784212468515488.1212460986567;
-	Thu, 16 Jul 2026 07:34:28 -0700 (PDT)
+	bh=IMza1E+rhNrE4SicI52nJDf/t3lksusUovzMzX60i1w=;
+	b=jTTOe8QbcE0FNQMP+8vrP8s5UT4Wi7FibnpPvG8+aNBl6q86aHT3rxLeZEuvRPcV
+	e/NdYYLFXmpKPJ01zXstZYw7jydltdcc35Z0uhO80vfy0tbzruWJKHxvk1SvWKz3jyT
+	ybmgG+iuzaMJKQB9useiDlzaPeCij/LHJegIPnJw=
+Received: by mx.zohomail.com with SMTPS id 1784212478289926.1473874238077;
+	Thu, 16 Jul 2026 07:34:38 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 14/24] pidfd: create and execute spawn builder tasks
-Date: Thu, 16 Jul 2026 22:31:40 +0800
-Message-ID: <8d58bce916b3f13da1ef7f2c7eee13cd7cb78a4c.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 15/24] fork: keep embryonic tasks hidden until exec completes
+Date: Thu, 16 Jul 2026 22:31:41 +0800
+Message-ID: <92e41fa333983c2f5c10251e64f2214c69aed0e1.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,529 +80,205 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Add pidfd_spawn_run() for a taskless builder. Validate the versioned run
-payload, including native and compat pointer-container widths. Allocate a
-numeric pid with the reserved pidfs identity. Create the child through the
-existing vfork backend.
+A spawn task does not gain a valid userspace register frame when
+exec_mmap() installs its private mm. A binary loader can still sleep or
+fail before START_THREAD(). This can expose setup registers to ptrace or a
+late failed-exec core dump. During earlier setup the task also shares the
+source mm, which procfs could expose through the child's PID.
 
-Publish the same future pidfd as the child pidfd before waking the child.
-Queue setup as initial task work so no kernel callback pointers are carried
-through architecture register state. Keep the task embryonic until exec has
-installed a valid userspace image and register frame.
+Hide procfs PID lookup, iteration, and cached dentry revalidation from
+other tasks, deny coredumps, and report coredump skip state through pidfs.
+Allow the embryonic task to use its own proc entries because executable and
+interpreter lookup can legitimately use /proc/self. This does not expose
+source state to another task. Sample the flag before reading published
+credentials; acquire ordering covers the state installed by exec.
 
-A failure before task creation initially leaves the builder configurable.
-Once a task exists, return setup errors after the child exits. A later
-state-machine change tightens the pre-task path to a one-shot claim.
+Release-publish the transition in the exec core after the final binary
+handler succeeds and before audit, tracepoint, ptrace, and connector exec
+events. Every successful exec observer then sees a normal task, while a
+failed exec leaves the task hidden.
 
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- fs/pidfd_spawn.c | 406 ++++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 402 insertions(+), 4 deletions(-)
+ fs/coredump.c      |  4 +++-
+ fs/exec.c          |  2 ++
+ fs/pidfd_spawn.c   |  2 --
+ fs/pidfs.c         |  7 ++++++-
+ fs/proc/base.c     | 11 +++++++++--
+ fs/proc/internal.h | 18 +++++++++++++++++-
+ kernel/ptrace.c    |  2 +-
+ 7 files changed, 38 insertions(+), 8 deletions(-)
 
+diff --git a/fs/coredump.c b/fs/coredump.c
+index ac3cd74808c64..4b2f0b5c7d606 100644
+--- a/fs/coredump.c
++++ b/fs/coredump.c
+@@ -1166,7 +1166,9 @@ void vfs_coredump(const kernel_siginfo_t *siginfo)
+ 		.limit = rlimit(RLIMIT_CORE),
+ 		/* Snapshot MMF_DUMP_FILTER_* (unlocked) and dumpable for the dump. */
+ 		.mm_flags = __mm_flags_get_word(mm),
+-		.dumpable = task_exec_state_get_dumpable(current),
++		.dumpable = task_is_embryonic_exec(current) ?
++			TASK_DUMPABLE_OFF :
++			task_exec_state_get_dumpable(current),
+ 		.vma_meta = NULL,
+ 		.cpu = raw_smp_processor_id(),
+ 	};
+diff --git a/fs/exec.c b/fs/exec.c
+index 1a256ba26425e..292c30e80aecb 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1734,6 +1734,8 @@ static int exec_binprm(struct linux_binprm *bprm)
+ 			fput(exec);
+ 	}
+ 
++	if (task_is_embryonic_exec(current))
++		task_clear_embryonic_exec(current);
+ 	audit_bprm(bprm);
+ 	trace_sched_process_exec(current, old_pid, bprm);
+ 	ptrace_event(PTRACE_EVENT_EXEC, old_vpid);
 diff --git a/fs/pidfd_spawn.c b/fs/pidfd_spawn.c
-index 99e3ef56ecfa3..c0e95c2ddbe6e 100644
+index c0e95c2ddbe6e..41d5cbb49a0f7 100644
 --- a/fs/pidfd_spawn.c
 +++ b/fs/pidfd_spawn.c
-@@ -3,6 +3,7 @@
-  * pidfd-backed process spawn builders
-  */
+@@ -400,8 +400,6 @@ static void pidfd_spawn_child(struct callback_head *work)
+ 	if (!ret)
+ 		ret = do_execveat_common(AT_FDCWD, filename,
+ 					 state->argv, state->envp, 0);
+-	if (!ret)
+-		task_clear_embryonic_exec(current);
  
-+#include <linux/completion.h>
- #include <linux/cred.h>
- #include <linux/file.h>
- #include <linux/fs.h>
-@@ -13,14 +14,50 @@
- #include <linux/pid_namespace.h>
- #include <linux/pidfd_spawn.h>
- #include <linux/pidfs.h>
-+#include <linux/random.h>
- #include <linux/refcount.h>
-+#include <linux/sched/mm.h>
- #include <linux/sched/signal.h>
-+#include <linux/sched/task.h>
-+#include <linux/security.h>
- #include <linux/slab.h>
- #include <linux/syscalls.h>
-+#include <linux/task_work.h>
- #include <linux/uaccess.h>
- #include <uapi/linux/pidfd.h>
-+#include <uapi/linux/wait.h>
-+#include <trace/events/sched.h>
+ 	pidfd_spawn_finish_child(state, filename, ret);
+ 	if (ret) {
+diff --git a/fs/pidfs.c b/fs/pidfs.c
+index d62235e01b351..7a473c049dcd4 100644
+--- a/fs/pidfs.c
++++ b/fs/pidfs.c
+@@ -477,6 +477,7 @@ static long pidfd_info(struct file *file, unsigned int cmd, unsigned long arg)
+ 	struct user_namespace *user_ns;
+ 	struct pidfs_attr *attr;
+ 	const struct cred *c;
++	bool embryonic;
+ 	__u64 mask;
  
-+#include "exec_internal.h"
+ 	BUILD_BUG_ON(sizeof(struct pidfd_info) != PIDFD_INFO_SIZE_VER3);
+@@ -533,12 +534,16 @@ static long pidfd_info(struct file *file, unsigned int cmd, unsigned long arg)
+ 		goto copy_out;
+ 	}
+ 
++	embryonic = task_is_embryonic_exec(task);
+ 	c = get_task_cred(task);
+ 	if (!c)
+ 		return -ESRCH;
+ 
+ 	if ((mask & PIDFD_INFO_COREDUMP) && !kinfo.coredump_mask) {
+-		kinfo.coredump_mask = pidfs_coredump_mask(task_exec_state_get_dumpable(task));
++		enum task_dumpable dumpable = embryonic ?
++			TASK_DUMPABLE_OFF : task_exec_state_get_dumpable(task);
 +
-+static inline void __user *pidfd_spawn_user_ptr(__u64 p)
-+{
-+	return u64_to_user_ptr(p);
-+}
-+
-+static inline bool pidfd_spawn_user_ptr_fits(__u64 p)
-+{
-+#ifdef CONFIG_COMPAT
-+	if (in_compat_syscall())
-+		return p == (__u64)(compat_uptr_t)p;
-+#endif
-+	return p == (__u64)(unsigned long)p;
-+}
-+
-+static inline struct user_arg_ptr pidfd_spawn_user_arg(__u64 p)
-+{
-+#ifdef CONFIG_COMPAT
-+	if (in_compat_syscall())
-+		return compat_arg((compat_uptr_t __user *)
-+				  u64_to_user_ptr(p));
-+#endif
-+	return native_arg(u64_to_user_ptr(p));
-+}
-+
-+#define PIDFD_SPAWN_EXIT_FAILURE	(127 << 8)
- #define PIDFD_SPAWN_MAX_CONFIG_KEY_SIZE	256
-+DEFINE_FREE(pidfd_spawn_dismiss_filename, struct delayed_filename,
-+	    dismiss_delayed_filename(&_T))
++		kinfo.coredump_mask = pidfs_coredump_mask(dumpable);
+ 		kinfo.mask |= PIDFD_INFO_COREDUMP;
+ 		/* No coredump actually took place, so no coredump signal. */
+ 	}
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 6a39de424f62a..bd059ddcce863 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2053,7 +2053,7 @@ static int pid_revalidate(struct inode *dir, const struct qstr *name,
+ 		goto out;
+ 	task = pid_task(proc_pid(inode), PIDTYPE_PID);
  
- enum pidfd_spawn_status {
- 	PIDFD_SPAWN_CONFIGURING,
-@@ -31,14 +68,20 @@ enum pidfd_spawn_status {
- };
+-	if (task) {
++	if (task && proc_task_visible(task)) {
+ 		pid_update_inode(task, inode);
+ 		ret = 1;
+ 	}
+@@ -3492,6 +3492,8 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
+ 	rcu_read_unlock();
+ 	if (!task)
+ 		goto out;
++	if (!proc_task_visible(task))
++		goto out_put_task;
  
- struct pidfd_spawn_state {
--	/* Serializes configuration and payload teardown. */
-+	/* Serializes configuration, launch, cancellation, and payload teardown. */
- 	struct mutex lock;
-+	struct completion done;
-+	struct callback_head task_work;
- 	refcount_t count;
- 	struct pid *pid;
- 	struct mm_struct *creator_mm;
- 	const struct cred *creator_cred;
- 	struct pid_namespace *creator_pid_ns;
-+	struct delayed_filename filename;
- 	char *staged_path;
-+	struct user_arg_ptr argv;
-+	struct user_arg_ptr envp;
-+	int result;
- 	enum pidfd_spawn_status status;
- };
+ 	/* Limit procfs to only ptraceable tasks */
+ 	if (fs_info->hide_pid == HIDEPID_NOT_PTRACEABLE) {
+@@ -3539,11 +3541,12 @@ static bool next_tgid(struct tgid_iter *it)
+ 		if (pid) {
+ 			it->tgid = pid_nr_ns(pid, it->pid_ns);
+ 			it->task = pid_task(pid, PIDTYPE_TGID);
+-			if (it->task) {
++			if (it->task && proc_task_visible(it->task)) {
+ 				get_task_struct(it->task);
+ 				rcu_read_unlock();
+ 				return true;
+ 			}
++			it->task = NULL;
+ 		} else {
+ 			rcu_read_unlock();
+ 			return false;
+@@ -3807,6 +3810,8 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
+ 	rcu_read_unlock();
+ 	if (!task)
+ 		goto out;
++	if (!proc_task_visible(task))
++		goto out_drop_task;
+ 	if (!same_thread_group(leader, task))
+ 		goto out_drop_task;
  
-@@ -80,6 +123,10 @@ pidfd_spawn_configuring_error(const struct pidfd_spawn_state *state)
+@@ -3844,6 +3849,8 @@ static struct task_struct *first_tid(struct pid *pid, int tid, loff_t f_pos,
+ 	task = pid_task(pid, PIDTYPE_PID);
+ 	if (!task)
+ 		goto fail;
++	if (!proc_task_visible(task))
++		goto fail;
  
- static void pidfd_spawn_free_state(struct pidfd_spawn_state *state)
- {
-+	if (!state)
-+		return;
-+
-+	dismiss_delayed_filename(&state->filename);
- 	kfree(state->staged_path);
- 	if (state->creator_mm)
- 		mmdrop(state->creator_mm);
-@@ -136,11 +183,73 @@ pidfd_spawn_state_get_file(struct file *file)
- 	return state;
+ 	/* Attempt to start with the tid of a thread */
+ 	if (tid && nr) {
+diff --git a/fs/proc/internal.h b/fs/proc/internal.h
+index b232e1098117b..81ad44502272e 100644
+--- a/fs/proc/internal.h
++++ b/fs/proc/internal.h
+@@ -147,9 +147,25 @@ static inline struct pid *proc_pid(const struct inode *inode)
+ 	return PROC_I(inode)->pid;
  }
  
-+static void pidfd_spawn_drop_run_data(struct pidfd_spawn_state *state,
-+				      struct filename *filename, int result)
++static inline bool proc_task_visible(struct task_struct *task)
 +{
-+	const struct cred *creator_cred;
-+	struct mm_struct *creator_mm;
-+	struct pid_namespace *creator_pid_ns;
-+	char *staged_path;
-+
 +	/*
-+	 * Run data is one-shot. Detach it under the lock, then drop refs
-+	 * after the child no longer needs the shared setup payload.
++	 * An embryonic task may need its own proc entries during exec setup,
++	 * but it is not a valid userspace process image for other tasks yet.
 +	 */
-+	mutex_lock(&state->lock);
-+	creator_mm = state->creator_mm;
-+	creator_cred = state->creator_cred;
-+	creator_pid_ns = state->creator_pid_ns;
-+	staged_path = state->staged_path;
-+	state->creator_mm = NULL;
-+	state->creator_cred = NULL;
-+	state->creator_pid_ns = NULL;
-+	state->staged_path = NULL;
-+	state->argv = native_arg(NULL);
-+	state->envp = native_arg(NULL);
-+	state->result = result;
-+	pidfd_spawn_set_status(state, PIDFD_SPAWN_SETUP_DONE);
-+	mutex_unlock(&state->lock);
-+
-+	putname(filename);
-+	if (creator_mm)
-+		mmdrop(creator_mm);
-+	if (creator_cred)
-+		put_cred(creator_cred);
-+	if (creator_pid_ns)
-+		put_pid_ns(creator_pid_ns);
-+	kfree(staged_path);
++	return task == current || !task_is_embryonic_exec(task);
 +}
 +
-+static bool pidfd_spawn_same_pid_ns(struct pidfd_spawn_state *state)
-+{
-+	return current->nsproxy->pid_ns_for_children == state->creator_pid_ns;
-+}
-+
- static bool pidfd_spawn_same_creator(struct pidfd_spawn_state *state)
+ static inline struct task_struct *get_proc_task(const struct inode *inode)
  {
-+	/*
-+	 * Holding the pidfd alone is not enough authority to configure or start
-+	 * this builder. A caller must also share the creator's mm, credential
-+	 * object, and child PID namespace.
-+	 *
-+	 * The child PID namespace is part of the builder authority even though no
-+	 * numeric PID is allocated until run.
-+	 */
- 	return current->mm == state->creator_mm &&
- 	       current_cred() == state->creator_cred &&
--	       current->nsproxy->pid_ns_for_children == state->creator_pid_ns;
-+	       pidfd_spawn_same_pid_ns(state);
-+}
-+
-+static int pidfd_spawn_check_startable(struct pidfd_spawn_state *state)
-+{
-+	int ret;
-+
-+	scoped_cond_guard(mutex_intr, return -EINTR, &state->lock) {
-+		ret = pidfd_spawn_configuring_error(state);
-+		if (!ret && !pidfd_spawn_same_creator(state))
-+			ret = -EPERM;
-+	}
-+	return ret;
- }
- 
- static struct filename *pidfd_spawn_get_path(const char __user *value)
-@@ -153,6 +262,31 @@ static struct filename *pidfd_spawn_get_path(const char __user *value)
- 	return no_free_ptr(name);
- }
- 
-+static int
-+pidfd_spawn_get_delayed_path(struct delayed_filename *delayed,
-+			     const char __user *value)
-+{
-+	struct filename *name __free(putname) = NULL;
-+
-+	name = pidfd_spawn_get_path(value);
-+	if (IS_ERR(name))
-+		return PTR_ERR(name);
-+
-+	return putname_to_delayed(delayed, no_free_ptr(name));
-+}
-+
-+static int
-+pidfd_spawn_get_delayed_kernel_path(struct delayed_filename *delayed,
-+				    const char *value)
-+{
-+	struct filename *name __free(putname) = getname_kernel(value);
-+
-+	if (IS_ERR(name))
-+		return PTR_ERR(name);
-+
-+	return putname_to_delayed(delayed, no_free_ptr(name));
-+}
-+
- static char *pidfd_spawn_copy_path(const char __user *value)
- {
- 	struct filename *name __free(putname) = NULL;
-@@ -173,14 +307,14 @@ static int pidfd_spawn_state_set_path(struct pidfd_spawn_state *state,
- {
- 	char *path __free(kfree) = NULL;
- 	char *old __free(kfree) = NULL;
-+	int ret;
- 
- 	path = pidfd_spawn_copy_path(value);
- 	if (IS_ERR(path))
- 		return PTR_ERR(path);
- 
- 	scoped_cond_guard(mutex_intr, return -EINTR, &state->lock) {
--		int ret = pidfd_spawn_configuring_error(state);
--
-+		ret = pidfd_spawn_configuring_error(state);
- 		if (ret)
- 			return ret;
- 		if (!pidfd_spawn_same_creator(state))
-@@ -243,6 +377,230 @@ SYSCALL_DEFINE5(pidfd_config, int, fd, unsigned int, cmd,
- 	return ret;
- }
- 
-+static void pidfd_spawn_finish_child(struct pidfd_spawn_state *state,
-+				     struct filename *filename, int result)
-+{
-+	pidfd_spawn_drop_run_data(state, filename, result);
-+	complete_all(&state->done);
-+}
-+
-+static void pidfd_spawn_child(struct callback_head *work)
-+{
-+	struct pidfd_spawn_state *state =
-+		container_of(work, struct pidfd_spawn_state, task_work);
-+	struct filename *filename;
-+	int ret;
-+
-+	filename = complete_getname(&state->filename);
-+	if (IS_ERR(filename))
-+		ret = PTR_ERR(filename);
-+	else
-+		ret = 0;
-+
-+	if (!ret)
-+		ret = do_execveat_common(AT_FDCWD, filename,
-+					 state->argv, state->envp, 0);
-+	if (!ret)
-+		task_clear_embryonic_exec(current);
-+
-+	pidfd_spawn_finish_child(state, filename, ret);
-+	if (ret) {
-+		pidfd_spawn_state_put(state);
-+		do_group_exit(PIDFD_SPAWN_EXIT_FAILURE);
-+	}
-+	pidfd_spawn_state_put(state);
-+}
-+
-+static int pidfd_spawn_copy_run_args(struct pidfd_spawn_run_args *kargs,
-+				     struct pidfd_spawn_run_args __user *uargs,
-+				     size_t usize)
-+{
-+	int ret;
-+
-+	BUILD_BUG_ON(sizeof(struct pidfd_spawn_run_args) !=
-+		     PIDFD_SPAWN_RUN_SIZE_VER0);
-+
-+	if (usize < PIDFD_SPAWN_RUN_SIZE_VER0)
-+		return -EINVAL;
-+	if (usize > PAGE_SIZE)
-+		return -E2BIG;
-+	ret = copy_struct_from_user(kargs, sizeof(*kargs), uargs, usize);
-+	if (ret)
-+		return ret;
-+	if (kargs->flags || kargs->reserved0 || kargs->reserved[0] ||
-+	    kargs->reserved[1])
-+		return -EINVAL;
-+	if (!kargs->argv)
-+		return -EINVAL;
-+	if (kargs->nr_actions || kargs->actions || kargs->action_size)
-+		return -EINVAL;
-+	if (!pidfd_spawn_user_ptr_fits(kargs->path) ||
-+	    !pidfd_spawn_user_ptr_fits(kargs->argv) ||
-+	    !pidfd_spawn_user_ptr_fits(kargs->envp) ||
-+	    !pidfd_spawn_user_ptr_fits(kargs->actions))
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+
-+static struct task_struct *
-+pidfd_spawn_create_task(struct file *file, struct pidfd_spawn_state *state,
-+			struct kernel_clone_args *clone_args)
-+{
-+	struct pid *pid;
+-	return get_pid_task(proc_pid(inode), PIDTYPE_PID);
 +	struct task_struct *task;
-+	u64 ino;
-+	int ret;
 +
-+	ino = pidfs_future_file_ino(file);
-+	if (!ino)
-+		return ERR_PTR(-EBADF);
-+
-+	pid = alloc_pid_with_pidfs_ino(current->nsproxy->pid_ns_for_children,
-+				       NULL, 0, ino);
-+	if (IS_ERR(pid))
-+		return ERR_CAST(pid);
-+
-+	ret = pidfs_future_file_set_pid(file, pid);
-+	if (ret) {
-+		free_pid(pid);
-+		return ERR_PTR(ret);
++	task = get_pid_task(proc_pid(inode), PIDTYPE_PID);
++	if (task && !proc_task_visible(task)) {
++		put_task_struct(task);
++		return NULL;
 +	}
-+
-+	refcount_inc(&state->count);
-+	task = copy_process(pid, 0, NUMA_NO_NODE, clone_args);
-+	add_latent_entropy();
-+	if (IS_ERR(task)) {
-+		pidfd_spawn_state_put(state);
-+		pidfs_future_file_clear_pid(file, pid);
-+		free_pid(pid);
-+		return task;
-+	}
-+
-+	trace_sched_process_fork(current, task);
-+	get_task_struct(task);
 +	return task;
-+}
-+
-+static void pidfd_spawn_publish_pid(struct file *file,
-+				    struct pidfd_spawn_state *state,
-+				    struct task_struct *task)
-+{
-+	struct pid *pid = get_task_pid(task, PIDTYPE_PID);
-+
-+	pidfs_future_file_publish_pid(file, pid);
-+	/*
-+	 * Publish only after the inode identity, pidfs attributes, and exit-wakeup
-+	 * forwarding are ready. Pair with the acquire loads in pidfd resolution
-+	 * and poll so readers that observe @pid can use ordinary pidfd operations.
-+	 */
-+	smp_store_release(&state->pid, pid);
-+	pidfs_future_file_notify(file);
-+}
-+
-+static void pidfd_spawn_attach_vfork_done(struct task_struct *task,
-+					  struct completion *vfork)
-+{
-+	init_completion(vfork);
-+
-+	task_lock(task);
-+	task->vfork_done = vfork;
-+	task_unlock(task);
-+}
-+
-+static void pidfd_spawn_wait_for_child(struct pidfd_spawn_state *state)
-+{
-+	wait_for_completion(&state->done);
-+}
-+
-+static int pidfd_spawn_finish_vfork(struct pidfd_spawn_state *state,
-+				    struct task_struct *task,
-+				    struct completion *vfork)
-+{
-+	int ret;
-+
-+	ret = wait_for_vfork_done(task, vfork);
-+	if (ret)
-+		return ret;
-+
-+	mutex_lock(&state->lock);
-+	ret = state->result;
-+	pidfd_spawn_set_status(state, PIDFD_SPAWN_STARTED);
-+	mutex_unlock(&state->lock);
-+	return ret;
-+}
-+
-+static int pidfd_spawn_start(struct file *file,
-+			     struct pidfd_spawn_state *state,
-+			     const struct pidfd_spawn_run_args *kargs)
-+{
-+	struct delayed_filename filename
-+		__free(pidfd_spawn_dismiss_filename) = {};
-+	struct delayed_filename drop_filename
-+		__free(pidfd_spawn_dismiss_filename) = {};
-+	struct kernel_clone_args clone_args = {
-+		.flags		= CLONE_VM | CLONE_VFORK | CLONE_UNTRACED,
-+		.exit_signal	= SIGCHLD,
-+		.task_work	= &state->task_work,
-+		.embryonic_exec = true,
-+	};
-+	struct completion vfork;
-+	struct task_struct *task;
-+	int ret;
-+
-+	if (kargs->path) {
-+		ret = pidfd_spawn_get_delayed_path(&filename,
-+						   pidfd_spawn_user_ptr(kargs->path));
-+		if (ret)
-+			return ret;
-+	}
-+
-+	scoped_cond_guard(mutex_intr, return -EINTR, &state->lock) {
-+		ret = pidfd_spawn_configuring_error(state);
-+		if (ret)
-+			return ret;
-+		if (!pidfd_spawn_same_creator(state))
-+			return -EPERM;
-+		if (state->staged_path && kargs->path)
-+			return -EINVAL;
-+		if (!state->staged_path && !kargs->path)
-+			return -EINVAL;
-+		if (state->staged_path) {
-+			ret = pidfd_spawn_get_delayed_kernel_path(&filename,
-+								  state->staged_path);
-+			if (ret)
-+				return ret;
-+		}
-+		state->filename = filename;
-+		INIT_DELAYED_FILENAME(&filename);
-+
-+		state->argv = pidfd_spawn_user_arg(kargs->argv);
-+		state->envp = pidfd_spawn_user_arg(kargs->envp);
-+		pidfd_spawn_set_status(state, PIDFD_SPAWN_STARTING);
-+		reinit_completion(&state->done);
-+
-+		task = pidfd_spawn_create_task(file, state, &clone_args);
-+		if (IS_ERR(task)) {
-+			ret = PTR_ERR(task);
-+			drop_filename = state->filename;
-+			INIT_DELAYED_FILENAME(&state->filename);
-+			state->argv = native_arg(NULL);
-+			state->envp = native_arg(NULL);
-+			state->result = 0;
-+			pidfd_spawn_set_status(state,
-+					       PIDFD_SPAWN_CONFIGURING);
-+			return ret;
-+		}
-+
-+		pidfd_spawn_publish_pid(file, state, task);
-+		pidfd_spawn_attach_vfork_done(task, &vfork);
-+	}
-+
-+	wake_up_new_task(task);
-+	pidfd_spawn_wait_for_child(state);
-+	return pidfd_spawn_finish_vfork(state, task, &vfork);
-+}
-+
- int pidfd_empty_open(unsigned int flags)
- {
- 	struct pidfd_spawn_state *state;
-@@ -257,7 +615,13 @@ int pidfd_empty_open(unsigned int flags)
- 		return -ENOMEM;
- 
- 	mutex_init(&state->lock);
-+	init_completion(&state->done);
-+	init_task_work(&state->task_work, pidfd_spawn_child);
- 	refcount_set(&state->count, 1);
-+	/*
-+	 * Remember the creator so later builder operations cannot be delegated
-+	 * just by passing the pidfd through SCM_RIGHTS or similar fd passing.
-+	 */
- 	mmgrab(current->mm);
- 	state->creator_mm = current->mm;
- 	state->creator_cred = get_current_cred();
-@@ -282,3 +646,37 @@ int pidfd_empty_open(unsigned int flags)
- 	fd_install(pidfd, pidfile);
- 	return pidfd;
  }
-+
-+SYSCALL_DEFINE3(pidfd_spawn_run, int, fd,
-+		struct pidfd_spawn_run_args __user *, uargs, size_t, usize)
-+{
-+	struct pidfd_spawn_run_args kargs;
-+	struct pidfd_spawn_state *state __free(pidfd_spawn_state) = NULL;
-+	int ret;
-+
-+	ret = pidfd_spawn_copy_run_args(&kargs, uargs, usize);
-+	if (ret)
-+		return ret;
-+
-+	CLASS(fd, f)(fd);
-+	if (fd_empty(f))
-+		return -EBADF;
-+
-+	state = pidfd_spawn_state_get_file(fd_file(f));
-+	if (IS_ERR(state))
-+		return PTR_ERR(state);
-+
-+	scoped_cond_guard(mutex_intr, return -ERESTARTNOINTR,
-+			  &current->signal->cred_guard_mutex) {
-+		if (READ_ONCE(current->ptrace))
-+			return -EPERM;
-+		ret = pidfd_spawn_check_startable(state);
-+		if (ret)
-+			return ret;
-+		ret = pidfd_spawn_start(fd_file(f), state, &kargs);
-+	}
-+	if (!ret)
-+		ret = pid_vnr(state->pid);
-+
-+	return ret;
-+}
+ 
+ void task_dump_owner(struct task_struct *task, umode_t mode,
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 36eb9b154a397..59e11dae803c8 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -314,7 +314,7 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
+ 		WARN(1, "denying ptrace access check without PTRACE_MODE_*CREDS\n");
+ 		return -EPERM;
+ 	}
+-	if (task_is_embryonic_exec(task))
++	if (task_is_embryonic_exec(task) && task != current)
+ 		return -EPERM;
+ 
+ 	/* May we inspect the given task?
 -- 
 2.52.0
 
