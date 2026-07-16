@@ -1,40 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 762B542F6F1;
-	Thu, 16 Jul 2026 14:32:57 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C3433D9DD3;
+	Thu, 16 Jul 2026 14:33:34 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212380; cv=pass; b=F2UNVg+IEb6KuzgwThai2YeVESbE9eUbczL0q+zYrE3f9/bKVcRdcU7NlJmYMZqqk6oQI1BdPhiNaG1BzSn2cNSyZVPkpsQEoih3VMS+1E2oR7+qgP/EL2Emo9o21Xv3VQkvl8uF6EWIKmDbQvbzeCbYiOA8sPIB20riudnMmHw=
+	t=1784212416; cv=pass; b=lHibpe6U31J8vZCGNO+nkPTOwE7uLV7G6qrfFsSgWxBzu2TNUz16MT6JMmkHzRh8JdVyzkDbAfAs5kHiHhoAE9Czu0Vrsaofc2vdEnGwa+4mAbMnv3+v+y+eTDo+mJQUDzLQAMMNeQBvIQ48nln4kdTzHXOG1b4C8CEzlvX+JP4=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212380; c=relaxed/simple;
-	bh=BzwqUYgZQkFf33Q9axMJoWVYvEtCBLFdwFjAeBXZGT8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=VJEM75QRUVv8aDYPwFQ8IRHZYFVjoeu8eJhdkwy3fMIP1cBqbucnvMfrUb1lOdF//nRRL7mk2fQ/axfouekO6uzuzCKErUeXMnof0yWQPg3tdWnJNM7KhvEgSmFqf1MAoKyVzQUtFusYjmXNjHBAXB00GjIq7L3JWAHsNnjWNNk=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=N4AokULL; arc=pass smtp.client-ip=136.143.188.15
+	s=arc-20240116; t=1784212416; c=relaxed/simple;
+	bh=KWI+YdvauWU1nRvAg7suCkRdbQKj6i1pSW5RNBvBo+w=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=W8wItWvFOTLZbHXiJzQpDA3TbH7sicmDTfOUfepbED975dtwdlHPUAxZXhTddHhHnPvrehyQwICwoD86d4ajY2ivl1Bt8Gor4CEu094IDBU7cCxs7gDOVCkvpYDU9jnnfJHWqxOU13NJJZFWoYo1ukT+kWrV7XwWGyqF/2bSE4s=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=N24KOIlz; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="N4AokULL"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212336; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="N24KOIlz"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212346; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=fZCIBYJFR2T1GZORZZ84y0hqKpA/34zUnKSZwzkphIVuYmkrRhUdfXRsO8Pbc9A83TfXCJ8nac8Ds8iqRSVNQZ0H88vhPEqud3CRULPWgZnZ/k5AzXIXFegcWelBtw4bgRHmt5o7McK04G1+1xnUob4Y2/W28MwKX07Vda+CR5g=
+	b=ZdJsE/0vEBbNiFKex0KPVSttsR7Q+XLYM59HOOE6NnjfxN48EVscoT6PFAvUOUryJjUioA7U6axJMNlhQQZD3nhTnEH2zd5mNrGamY2NeJZnHiLflFYF50/ig3Yr2knfOsCIKvBTHMpnIrmmQc83p2KLtaC+4q/9SmMOhZY3rN4=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212336; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=5oCdwe2KWEGMRTpHEX8MzuIoOidrsrJEQ6Hx6ATmCPI=; 
-	b=MfVsHkw0i5Wb/dMkMNhDCgRsN8i0su2QCG0Q3V5Xx5VNICtohIDANpP+5xmRaHXCKU9GcMQvUwoXl66UTCump4BCZayoeSvdEdQ4GkzubjkyyftJ/TYQWQpys9hK+ec4GQz46/det+8cij5/2nWuMmInfxOgT+t9AZIfqqlpq3M=
+	t=1784212346; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=vLgQRvjkegtFxDHYyQzzA8SOU5y1blwPrChppwxjEAg=; 
+	b=nhOZOHQHgLC1lNxfAHlk5pJPevjCQBbZ1J8SVcVZRKzn1Bagho0HIQcPC55DCHubIo5qoldoxW1hh+gCuLWnpZKPGes0Q7KVxPh1dyBHmx9f5K+KWbWb5E3GT1Bxz66laJ2uM20ImuoYczTK6vE6FQl+vpil1zY75d5YVLAO0Mw=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212336;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212346;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=5oCdwe2KWEGMRTpHEX8MzuIoOidrsrJEQ6Hx6ATmCPI=;
-	b=N4AokULLXMzramfa4Qwvgx87YW5ak5NKY5sxmc59Wmono8RbzWZvxq9cL6jp4Vh5
-	P/n/xkQaRTpbIbcF7MNHyjS/LU3zcd2S3Yah0w4sQblDit9SIyY/fxxjAr1OZpa5BxD
-	h+Dnf+UTQao3VVbhKI7BSteq3GqKAgzb2xxAObKs=
-Received: by mx.zohomail.com with SMTPS id 1784212333383352.21801644814866;
-	Thu, 16 Jul 2026 07:32:13 -0700 (PDT)
+	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
+	bh=vLgQRvjkegtFxDHYyQzzA8SOU5y1blwPrChppwxjEAg=;
+	b=N24KOIlzocgoLAYjb7tmRFLoKMnyOcUpMYFTPduMUo0Fy6nZgVA9KukniwBxo1lc
+	WDDXubl2fxzluRy1cfdN6UXul6Ow7OQFtJduxPRZhtXtdJpElaiGM5Vgc8Q4VfD6B8v
+	eaqdWXyfueurVyHM/vnJXsPRUYr7Zizo8pysCBQE=
+Received: by mx.zohomail.com with SMTPS id 1784212343415557.0920836372659;
+	Thu, 16 Jul 2026 07:32:23 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -62,11 +63,14 @@ Cc: Kees Cook <kees@kernel.org>,
 	audit@vger.kernel.org,
 	linux-security-module@vger.kernel.org,
 	linux-arch@vger.kernel.org,
-	linux-mm@kvack.org
-Subject: [RFC PATCH 00/24] pidfd: add a minimal process spawn builder
-Date: Thu, 16 Jul 2026 22:31:26 +0800
-Message-ID: <cover.1784204592.git.me@linux.beauty>
+	linux-mm@kvack.org,
+	Li Chen <me@linux.beauty>
+Subject: [RFC PATCH 01/24] pidfd: add spawn builder uapi
+Date: Thu, 16 Jul 2026 22:31:27 +0800
+Message-ID: <0ee77dd90ea5d00b66a3e017488ab64f610cf41a.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
+In-Reply-To: <cover.1784204592.git.me@linux.beauty>
+References: <cover.1784204592.git.me@linux.beauty>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -76,274 +80,162 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Hi,
+Define PIDFD_EMPTY, the fsconfig-style configuration command and path
+key, and versioned run arguments for pidfd spawn builders. Add the
+initial ordered file-action records.
 
-This RFC follows feedback on my earlier spawn_template RFC [1]. That
-proposal made caching the primary interface; this one starts with general
-process construction. Christian suggested a pidfd/pidfs exec builder
-modeled after fsconfig(), with enough semantics for userspace to implement
-posix_spawn() [2], and Kees agreed [3].
+Store userspace pointers in full-width aligned containers on every ABI.
+Keep flags and reserved fields zero so later kernels can extend the
+structures without changing their initial layout.
 
-This RFC is based on linux-next next-20260710 and depends on two pidfs
-fixes that I sent separately:
-
-  * pidfs: preserve thread pidfds reopened by file handle
-    https://lore.kernel.org/all/20260716052726.1032092-1-me@linux.beauty/
-  * pidfs: handle FS_IOC32_GETVERSION in compat ioctl
-    https://lore.kernel.org/all/20260716052822.1034228-1-me@linux.beauty/
-
-The initial implementation is source-based. The executable path can be
-provided with the final run request:
-
-    struct pidfd_spawn_run_args run = {
-        .path = (unsigned long)"/usr/bin/rg",
-        .argv = (unsigned long)argv,
-        .envp = (unsigned long)envp,
-    };
-
-    fd = pidfd_open(0, PIDFD_EMPTY);
-    pidfd_spawn_run(fd, &run, sizeof(run));
-
-Alternatively, the path can be staged before the final run step:
-
-    struct pidfd_spawn_run_args run = {
-        .argv = (unsigned long)argv,
-        .envp = (unsigned long)envp,
-    };
-
-    fd = pidfd_open(0, PIDFD_EMPTY);
-    pidfd_config(fd, PIDFD_CONFIG_SET_STRING,
-                 PIDFD_CONFIG_KEY_PATH, "/usr/bin/rg", 0);
-    pidfd_spawn_run(fd, &run, sizeof(run));
-
-pidfd_open(0, PIDFD_EMPTY) creates a taskless future pidfd with a stable
-pidfs inode, but no task, PID, or process-count charge. pidfd_spawn_run()
-creates the task and PID; after publication the same fd is the child pidfd,
-and a numeric pidfd resolves to the same inode. Live-task operations return
--ESRCH before publication. A terminal pre-task failure wakes poll/epoll
-with POLLERR | POLLHUP.
-
-Source-based mode follows posix_spawn-style defaults. At run time it
-samples the caller's cwd, root, umask, fd table, signal dispositions and
-blocked mask, and namespaces.
-Non-FD_CLOEXEC descriptors remain unless an action changes them; file and
-filesystem state are private child copies before actions. Configuration and
-run stay bound to the creating mm_struct, exact credential object, and
-child PID namespace, so SCM_RIGHTS does not delegate launch authority.
-
-The first authorized run claims the builder before copying its payload, so
-later failures are terminal. Pre-task failure leaves the fd taskless;
-setup or exec failure leaves it as the child pidfd and exits the child with
-status 127. PIDFD_GET_INFO with PIDFD_INFO_EXIT distinguishes them.
-Success returns the positive child PID in the caller's PID namespace.
-
-The RFC supports ordered DUP2, CLOSE_RANGE, and FCHDIR actions in
-extensible UAPI records. This exercises child-private fd and cwd setup, but
-is not the complete posix_spawn() action or attribute surface.
-
-Between task publication and successful exec, the child is explicitly
-embryonic and may not have a valid userspace register frame. Ptrace and
-pidfd_getfd() are denied, procfs treats the PID as absent to other tasks,
-and coredump information reports PIDFD_COREDUMP_SKIP. The child can use its
-own proc entries during executable lookup. Setup runs as initial child task
-work, and successful exec releases this state before exec events are
-published.
-
-Seccomp sees pidfd_spawn_run(), not separate file-action or exec syscalls,
-and cannot inspect the path or action records behind the run pointer. An
-exec-only denylist that allows unknown syscalls therefore does not block
-this initial exec; policy must filter the builder syscall as a unit. Should
-later expansion provide an immutable restriction profile or action mask
-that seccomp can reason about, or is the coarse syscall boundary
-preferable?
-
-LSM exec checks and inherited seccomp state remain active. Child setup uses
-a dedicated AUDIT_PIDFD_SPAWN transaction, not a synthetic AUDIT_SYSCALL.
-Should it be selected through the source pidfd_spawn_run() exit rule? An
-existing rule naming only execve() or execveat() does not select it.
-For source/child correlation, could an auxiliary record carry
-the source PID plus the stable pidfs inode? An already traced source is
-rejected before the claim; ptrace auto-attach is not implemented.
-
-The implementation still uses CLONE_VM | CLONE_VFORK plus exec internally.
-Mateusz suggested that an initial implementation might start with vfork to
-get the API off the ground [4]. That is what this RFC does. It does not yet
-construct a pristine target process without first inheriting source state.
-
-Missing posix_spawn() pieces include open and close file actions, resetids,
-signal masks/defaults, process groups, sessions, scheduler attributes,
-affinity, cgroup placement, PATH lookup/posix_spawnp(), and exec by fd. The
-RFC also does not include pristine/no-source creation or the executable
-metadata/template cache from my earlier work.
-
-John Ericson described a real, partially initialized process that remains
-unscheduled while callers install its state, and linked an exploratory
-FreeBSD proc_new()/proc_setfd()/proc_start() refactoring [5]. This RFC
-implements the source-based mode first; a lower-authority pristine/no-source
-mode would be explicit follow-up work.
-
-Direct process construction is not unprecedented. XNU's posix_spawn path
-does not inherit the parent's address space [6], and Windows
-CreateProcess() accepts explicit startup state [7]. Josh's io_uring_spawn
-LPC slides list "set up process from scratch" as future work and provide
-useful performance context [8]; I am not using those numbers as a claim for
-this RFC.
-
-If the direction is acceptable, I plan to continue toward:
-
-  * the complete file-action and attribute set needed by posix_spawn();
-  * pristine target-process construction and an explicit no-source mode;
-  * PATH/posix_spawnp support, if it belongs on the kernel side; and
-  * an optional executable/template layer for workloads such as agent tool
-    calling and compiler drivers.
-
-The exposed UAPI surface is intentionally limited so the state model and
-kernel/userspace boundary can be reviewed first. If maintainers would
-prefer more posix_spawn semantics or backend work in this RFC, please say
-so and I will adjust the split.
-
-Codex GPT-5.5 and GPT-5.6-sol provided substantial assistance across design
-conceptualization, implementation, patch splitting, code review, development
-of self-test cases, and test planning and execution.
-
-Thanks to Christian, Kees, Mateusz, Gabriel, Josh, Andy, John, and others
-for the review and direction.
-
-[1]: https://patchew.org/linux/20260528095235.2491226-1-me%40linux.beauty/
-[2]: https://lore.kernel.org/all/20260528-madig-fachrichtung-fehlinformation-61117ba640da@brauner/
-[3]: https://lore.kernel.org/all/202606011254.5FCBD65@keescook/
-[4]: https://lore.kernel.org/all/vealb52tv5suireenkke4lul2l3wbnaul2rp3ea545ly5wa5ty@yk3aksvp7skt/
-[5]: https://lore.kernel.org/all/ce71d6df-6851-4e4b-9603-1d55d8d522b8@app.fastmail.com/
-[6]: https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_exec.c#L4039
-[7]: https://learn.microsoft.com/en-us/windows/win32/procthread/creating-processes
-[8]: https://lpc.events/event/16/contributions/1213/attachments/1012/1945/io-uring-spawn.pdf
-
-
-Li Chen (24):
-  pidfd: add spawn builder uapi
-  libfs: allow custom validation of stashed inode data
-  pidfs: add taskless future pidfd inodes
-  pidfd: create taskless spawn builders
-  pidfd: add spawn builder path configuration
-  exec: expose execveat internals to process builders
-  fork: expose vfork completion helper
-  pidfs: attach pids to future pidfd files
-  fork: let process builders supply preallocated pids
-  pidfs: publish future pidfd files
-  pidfd: add spawn builder state tracking
-  fork: let kernel callers create embryonic tasks
-  fork: let new tasks start with task work
-  pidfd: create and execute spawn builder tasks
-  fork: keep embryonic tasks hidden until exec completes
-  audit: add pidfd spawn child contexts
-  pidfd: audit child spawn execution
-  pidfd: make spawn builder execution signal-safe
-  file: expose spawn file-action helpers
-  pidfd: add initial spawn file actions
-  pidfd: consume spawn builders on the first run attempt
-  pidfd: expose spawn builder system calls
-  selftests/pidfd: cover pidfd spawn builders
-  Documentation: describe pidfd spawn builders
-
- Documentation/userspace-api/index.rst         |    1 +
- Documentation/userspace-api/pidfd_spawn.rst   |  247 ++++
- MAINTAINERS                                   |    6 +
- arch/alpha/kernel/syscalls/syscall.tbl        |    2 +
- arch/arm/tools/syscall.tbl                    |    2 +
- arch/arm64/tools/syscall_32.tbl               |    2 +
- arch/m68k/kernel/syscalls/syscall.tbl         |    2 +
- arch/microblaze/kernel/syscalls/syscall.tbl   |    2 +
- arch/mips/kernel/syscalls/syscall_n32.tbl     |    2 +
- arch/mips/kernel/syscalls/syscall_n64.tbl     |    2 +
- arch/mips/kernel/syscalls/syscall_o32.tbl     |    2 +
- arch/parisc/kernel/syscalls/syscall.tbl       |    2 +
- arch/powerpc/kernel/syscalls/syscall.tbl      |    2 +
- arch/s390/kernel/syscalls/syscall.tbl         |    2 +
- arch/sh/kernel/syscalls/syscall.tbl           |    2 +
- arch/sparc/kernel/syscalls/syscall.tbl        |    2 +
- arch/x86/entry/syscalls/syscall_32.tbl        |    2 +
- arch/x86/entry/syscalls/syscall_64.tbl        |    2 +
- arch/xtensa/kernel/syscalls/syscall.tbl       |    2 +
- fs/Makefile                                   |    2 +-
- fs/coredump.c                                 |    4 +-
- fs/exec.c                                     |   30 +-
- fs/exec_internal.h                            |   40 +
- fs/file.c                                     |   11 +-
- fs/internal.h                                 |    3 +
- fs/libfs.c                                    |    5 +-
- fs/open.c                                     |    7 +-
- fs/pidfd_spawn.c                              | 1095 +++++++++++++++
- fs/pidfs.c                                    |  478 ++++++-
- fs/proc/base.c                                |   11 +-
- fs/proc/internal.h                            |   18 +-
- include/linux/audit.h                         |   31 +
- include/linux/pid.h                           |   13 +
- include/linux/pidfd_spawn.h                   |    9 +
- include/linux/pidfs.h                         |   28 +
- include/linux/sched.h                         |   21 +
- include/linux/sched/task.h                    |    6 +
- include/linux/syscalls.h                      |    7 +
- include/uapi/asm-generic/unistd.h             |    8 +-
- include/uapi/linux/audit.h                    |    1 +
- include/uapi/linux/pidfd.h                    |    1 +
- include/uapi/linux/pidfd_spawn.h              |   49 +
- kernel/audit.h                                |    1 +
- kernel/auditsc.c                              |  105 +-
- kernel/fork.c                                 |   26 +-
- kernel/nsproxy.c                              |   11 +-
- kernel/pid.c                                  |   41 +-
- kernel/ptrace.c                               |    4 +
- kernel/signal.c                               |    2 +-
- scripts/syscall.tbl                           |    2 +
- tools/include/uapi/asm-generic/unistd.h       |    8 +-
- tools/include/uapi/linux/pidfd_spawn.h        |   49 +
- .../arch/alpha/entry/syscalls/syscall.tbl     |    2 +
- .../perf/arch/arm/entry/syscalls/syscall.tbl  |    2 +
- .../arch/arm64/entry/syscalls/syscall_32.tbl  |   11 +
- .../arch/mips/entry/syscalls/syscall_n64.tbl  |    2 +
- .../arch/parisc/entry/syscalls/syscall.tbl    |    2 +
- .../arch/powerpc/entry/syscalls/syscall.tbl   |    2 +
- .../perf/arch/s390/entry/syscalls/syscall.tbl |    2 +
- tools/perf/arch/sh/entry/syscalls/syscall.tbl |    2 +
- .../arch/sparc/entry/syscalls/syscall.tbl     |    2 +
- .../arch/x86/entry/syscalls/syscall_32.tbl    |    2 +
- .../arch/x86/entry/syscalls/syscall_64.tbl    |    2 +
- .../arch/xtensa/entry/syscalls/syscall.tbl    |    2 +
- tools/scripts/syscall.tbl                     |    2 +
- tools/testing/selftests/landlock/audit.h      |    6 +-
- tools/testing/selftests/pidfd/.gitignore      |    9 +
- tools/testing/selftests/pidfd/Makefile        |   25 +-
- tools/testing/selftests/pidfd/config          |    6 +
- .../pidfd/pidfd_spawn_accounting_test.c       |  428 ++++++
- .../pidfd/pidfd_spawn_actions_test.c          |  474 +++++++
- .../selftests/pidfd/pidfd_spawn_audit_test.c  |  521 +++++++
- .../selftests/pidfd/pidfd_spawn_common.c      |  512 +++++++
- .../selftests/pidfd/pidfd_spawn_common.h      |   59 +
- .../selftests/pidfd/pidfd_spawn_compat.c      |  221 +++
- .../selftests/pidfd/pidfd_spawn_exec_test.c   |  301 ++++
- .../selftests/pidfd/pidfd_spawn_policy_test.c |  294 ++++
- .../selftests/pidfd/pidfd_spawn_race_test.c   |  923 ++++++++++++
- .../pidfd/pidfd_spawn_security_test.c         | 1242 +++++++++++++++++
- .../selftests/pidfd/pidfd_spawn_test.c        |  550 ++++++++
- 80 files changed, 7938 insertions(+), 81 deletions(-)
- create mode 100644 Documentation/userspace-api/pidfd_spawn.rst
- create mode 100644 fs/exec_internal.h
- create mode 100644 fs/pidfd_spawn.c
- create mode 100644 include/linux/pidfd_spawn.h
+Suggested-by: Christian Brauner <brauner@kernel.org>
+Assisted-by: Codex:gpt-5.6-sol
+Signed-off-by: Li Chen <me@linux.beauty>
+---
+ MAINTAINERS                            |  2 ++
+ include/uapi/linux/pidfd.h             |  1 +
+ include/uapi/linux/pidfd_spawn.h       | 49 ++++++++++++++++++++++++++
+ tools/include/uapi/linux/pidfd_spawn.h | 49 ++++++++++++++++++++++++++
+ 4 files changed, 101 insertions(+)
  create mode 100644 include/uapi/linux/pidfd_spawn.h
  create mode 100644 tools/include/uapi/linux/pidfd_spawn.h
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_accounting_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_actions_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_audit_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_common.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_common.h
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_compat.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_exec_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_policy_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_race_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_security_test.c
- create mode 100644 tools/testing/selftests/pidfd/pidfd_spawn_test.c
 
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 8729cea57c3dd..b63bc1ee0171f 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -21287,7 +21287,9 @@ M:	Christian Brauner <christian@brauner.io>
+ L:	linux-kernel@vger.kernel.org
+ S:	Maintained
+ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git
++F:	include/uapi/linux/pidfd_spawn.h
+ F:	samples/pidfd/
++F:	tools/include/uapi/linux/pidfd_spawn.h
+ F:	tools/testing/selftests/clone3/
+ F:	tools/testing/selftests/pidfd/
+ K:	(?i)pidfd
+diff --git a/include/uapi/linux/pidfd.h b/include/uapi/linux/pidfd.h
+index 0919246a1611c..cad5b722e9f0e 100644
+--- a/include/uapi/linux/pidfd.h
++++ b/include/uapi/linux/pidfd.h
+@@ -10,6 +10,7 @@
+ /* Flags for pidfd_open().  */
+ #define PIDFD_NONBLOCK	O_NONBLOCK
+ #define PIDFD_THREAD	O_EXCL
++#define PIDFD_EMPTY	(1U << 27)
+ #ifdef __KERNEL__
+ #include <linux/sched.h>
+ #define PIDFD_STALE CLONE_PIDFD
+diff --git a/include/uapi/linux/pidfd_spawn.h b/include/uapi/linux/pidfd_spawn.h
+new file mode 100644
+index 0000000000000..46d61e72435cc
+--- /dev/null
++++ b/include/uapi/linux/pidfd_spawn.h
+@@ -0,0 +1,49 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++
++#ifndef _UAPI_LINUX_PIDFD_SPAWN_H
++#define _UAPI_LINUX_PIDFD_SPAWN_H
++
++#include <linux/types.h>
++
++#define PIDFD_SPAWN_RUN_SIZE_VER0	64
++#define PIDFD_SPAWN_ACTION_SIZE_VER0	32
++
++/* Commands for pidfd_config(). */
++#define PIDFD_CONFIG_SET_STRING	0
++
++/* String keys for pidfd_config(). */
++#define PIDFD_CONFIG_KEY_PATH	"path"
++
++struct pidfd_spawn_run_args {
++	__u32 flags;
++	__u32 nr_actions;
++	/* The next four fields are full-width userspace virtual addresses. */
++	__aligned_u64 path;
++	__aligned_u64 argv;
++	__aligned_u64 envp;
++	__aligned_u64 actions;
++	__u32 action_size;
++	__u32 reserved0;
++	__u64 reserved[2];
++};
++
++enum pidfd_spawn_action_type {
++	PIDFD_SPAWN_ACTION_DUP2 = 0,
++	PIDFD_SPAWN_ACTION_CLOSE_RANGE = 1,
++	PIDFD_SPAWN_ACTION_FCHDIR = 2,
++};
++
++struct pidfd_spawn_action {
++	__u32 type;
++	__u32 flags;
++	/*
++	 * DUP2 uses fd as the source and newfd as the destination.
++	 * CLOSE_RANGE uses fd as the first and newfd as the last descriptor.
++	 * FCHDIR uses fd as the directory descriptor and requires newfd to be 0.
++	 */
++	__u32 fd;
++	__u32 newfd;
++	__u64 reserved[2];
++};
++
++#endif /* _UAPI_LINUX_PIDFD_SPAWN_H */
+diff --git a/tools/include/uapi/linux/pidfd_spawn.h b/tools/include/uapi/linux/pidfd_spawn.h
+new file mode 100644
+index 0000000000000..46d61e72435cc
+--- /dev/null
++++ b/tools/include/uapi/linux/pidfd_spawn.h
+@@ -0,0 +1,49 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++
++#ifndef _UAPI_LINUX_PIDFD_SPAWN_H
++#define _UAPI_LINUX_PIDFD_SPAWN_H
++
++#include <linux/types.h>
++
++#define PIDFD_SPAWN_RUN_SIZE_VER0	64
++#define PIDFD_SPAWN_ACTION_SIZE_VER0	32
++
++/* Commands for pidfd_config(). */
++#define PIDFD_CONFIG_SET_STRING	0
++
++/* String keys for pidfd_config(). */
++#define PIDFD_CONFIG_KEY_PATH	"path"
++
++struct pidfd_spawn_run_args {
++	__u32 flags;
++	__u32 nr_actions;
++	/* The next four fields are full-width userspace virtual addresses. */
++	__aligned_u64 path;
++	__aligned_u64 argv;
++	__aligned_u64 envp;
++	__aligned_u64 actions;
++	__u32 action_size;
++	__u32 reserved0;
++	__u64 reserved[2];
++};
++
++enum pidfd_spawn_action_type {
++	PIDFD_SPAWN_ACTION_DUP2 = 0,
++	PIDFD_SPAWN_ACTION_CLOSE_RANGE = 1,
++	PIDFD_SPAWN_ACTION_FCHDIR = 2,
++};
++
++struct pidfd_spawn_action {
++	__u32 type;
++	__u32 flags;
++	/*
++	 * DUP2 uses fd as the source and newfd as the destination.
++	 * CLOSE_RANGE uses fd as the first and newfd as the last descriptor.
++	 * FCHDIR uses fd as the directory descriptor and requires newfd to be 0.
++	 */
++	__u32 fd;
++	__u32 newfd;
++	__u64 reserved[2];
++};
++
++#endif /* _UAPI_LINUX_PIDFD_SPAWN_H */
 -- 
 2.52.0
 
