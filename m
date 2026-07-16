@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9C3433D9DD3;
-	Thu, 16 Jul 2026 14:33:34 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89ED642DA3C;
+	Thu, 16 Jul 2026 14:34:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212416; cv=pass; b=lHibpe6U31J8vZCGNO+nkPTOwE7uLV7G6qrfFsSgWxBzu2TNUz16MT6JMmkHzRh8JdVyzkDbAfAs5kHiHhoAE9Czu0Vrsaofc2vdEnGwa+4mAbMnv3+v+y+eTDo+mJQUDzLQAMMNeQBvIQ48nln4kdTzHXOG1b4C8CEzlvX+JP4=
+	t=1784212452; cv=pass; b=MXKzY8KivUJAF3BY1o38DOcJ5PKWF74qG3/8E1uoMbrX9zxGN71rNqY7QgqMXYzvOwcKO4Ea8PxKTNa1TqMjyz4I5qXo6kX+WwJonwO4IRZX70NdFzrzs/zazNC9nmw8LOVBRNq09byQ7YZFnp1Z+2+7Q+fWAxnSv86vSYgCFLY=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212416; c=relaxed/simple;
-	bh=KWI+YdvauWU1nRvAg7suCkRdbQKj6i1pSW5RNBvBo+w=;
+	s=arc-20240116; t=1784212452; c=relaxed/simple;
+	bh=N1/em5uG7PZ+OUMGS73vWLd7r1zEBl6ddjpVkRYH5pM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=W8wItWvFOTLZbHXiJzQpDA3TbH7sicmDTfOUfepbED975dtwdlHPUAxZXhTddHhHnPvrehyQwICwoD86d4ajY2ivl1Bt8Gor4CEu094IDBU7cCxs7gDOVCkvpYDU9jnnfJHWqxOU13NJJZFWoYo1ukT+kWrV7XwWGyqF/2bSE4s=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=N24KOIlz; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=T1GZ7MAfsiwD8dgPgZSgyEcNHVzkm+ECBwUx/i8OYVKhW7yXOM10t3bfk9j8fUGsJVGaDr099/JDfafj8NIV+AbTr9fss/67vXtnVNZkrlGlFGtmttiBbGnDmg3amVKTFO9kZy5TGRqPocJ8X8OYzMyi8/P1cDE+mH4hPs7nuDI=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=QQNQb9T4; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="N24KOIlz"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212346; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="QQNQb9T4"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212356; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=ZdJsE/0vEBbNiFKex0KPVSttsR7Q+XLYM59HOOE6NnjfxN48EVscoT6PFAvUOUryJjUioA7U6axJMNlhQQZD3nhTnEH2zd5mNrGamY2NeJZnHiLflFYF50/ig3Yr2knfOsCIKvBTHMpnIrmmQc83p2KLtaC+4q/9SmMOhZY3rN4=
+	b=nonvSaIyCSTzbD9P3g5e1pzJYnJYHF8DJ0MfQLtZOfsLzYLfKeUKLqdaYAGqKyKQCIj+eZP3k2jMi/So92N8phqovTBI+z4z9xqlhMl+yP1MatS6eoc0j6bl3r0Bc/Tjt7Rf4UQZUTRhFP7w0BMTLA9OI/gv9BJh6qwQuZBhTVc=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212346; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=vLgQRvjkegtFxDHYyQzzA8SOU5y1blwPrChppwxjEAg=; 
-	b=nhOZOHQHgLC1lNxfAHlk5pJPevjCQBbZ1J8SVcVZRKzn1Bagho0HIQcPC55DCHubIo5qoldoxW1hh+gCuLWnpZKPGes0Q7KVxPh1dyBHmx9f5K+KWbWb5E3GT1Bxz66laJ2uM20ImuoYczTK6vE6FQl+vpil1zY75d5YVLAO0Mw=
+	t=1784212356; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=u8MPSkeEXoEUBttnnhXtqn7icL18NVEhqR4kh84n23M=; 
+	b=lQ4ol/fovBU1oPUkcYPEN6VJlz5o0ubYZEwslFVcPvux/9AZzgfW68+gc2NZ5NlWBj3WKdykuhuNrSz3vQ4WPJibfQ3wOZbvC3LjLtRnBPfKYTvx68RS6A6Khcenx8wmnJaBOOq/DxM0VZ64nV8RQuZCSfnwaoPFcI9Bwj4hOm4=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212346;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212356;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=vLgQRvjkegtFxDHYyQzzA8SOU5y1blwPrChppwxjEAg=;
-	b=N24KOIlzocgoLAYjb7tmRFLoKMnyOcUpMYFTPduMUo0Fy6nZgVA9KukniwBxo1lc
-	WDDXubl2fxzluRy1cfdN6UXul6Ow7OQFtJduxPRZhtXtdJpElaiGM5Vgc8Q4VfD6B8v
-	eaqdWXyfueurVyHM/vnJXsPRUYr7Zizo8pysCBQE=
-Received: by mx.zohomail.com with SMTPS id 1784212343415557.0920836372659;
-	Thu, 16 Jul 2026 07:32:23 -0700 (PDT)
+	bh=u8MPSkeEXoEUBttnnhXtqn7icL18NVEhqR4kh84n23M=;
+	b=QQNQb9T47bra1c/5bj2A9ONcpperFj01d9a8pitGmBE0QFlPgiLmwBBI3+pw8Nw9
+	tJ5qeRwA2nOA5wvT+nxm5hJa7R1OZdPkgQTsJUkgYdgqHVLW3d14RmFtGyg64OSlOHH
+	QRvUwsmOiMZ87zD89hU7Tqb458YXmMBE73k5IHak=
+Received: by mx.zohomail.com with SMTPS id 1784212353185462.13311224881875;
+	Thu, 16 Jul 2026 07:32:33 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 01/24] pidfd: add spawn builder uapi
-Date: Thu, 16 Jul 2026 22:31:27 +0800
-Message-ID: <0ee77dd90ea5d00b66a3e017488ab64f610cf41a.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 02/24] libfs: allow custom validation of stashed inode data
+Date: Thu, 16 Jul 2026 22:31:28 +0800
+Message-ID: <32a639e0eed4fce9c68424748e46ec3b8f575b38.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,162 +80,48 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Define PIDFD_EMPTY, the fsconfig-style configuration command and path
-key, and versioned run arguments for pidfd spawn builders. Add the
-initial ordered file-action records.
+path_from_stashed() assumes that inode->i_private is identical to the
+caller data used to find or create a dentry. That is too strict for an
+inode whose stable identity can later resolve through another object.
 
-Store userspace pointers in full-width aligned containers on every ABI.
-Keep flags and reserved fields zero so later kernels can extend the
-structures without changing their initial layout.
+Add an optional data_matches() callback to stashed_operations. Existing
+users retain the pointer-identity check when no callback is provided.
 
-Suggested-by: Christian Brauner <brauner@kernel.org>
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- MAINTAINERS                            |  2 ++
- include/uapi/linux/pidfd.h             |  1 +
- include/uapi/linux/pidfd_spawn.h       | 49 ++++++++++++++++++++++++++
- tools/include/uapi/linux/pidfd_spawn.h | 49 ++++++++++++++++++++++++++
- 4 files changed, 101 insertions(+)
- create mode 100644 include/uapi/linux/pidfd_spawn.h
- create mode 100644 tools/include/uapi/linux/pidfd_spawn.h
+ fs/internal.h | 1 +
+ fs/libfs.c    | 5 ++++-
+ 2 files changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 8729cea57c3dd..b63bc1ee0171f 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -21287,7 +21287,9 @@ M:	Christian Brauner <christian@brauner.io>
- L:	linux-kernel@vger.kernel.org
- S:	Maintained
- T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git
-+F:	include/uapi/linux/pidfd_spawn.h
- F:	samples/pidfd/
-+F:	tools/include/uapi/linux/pidfd_spawn.h
- F:	tools/testing/selftests/clone3/
- F:	tools/testing/selftests/pidfd/
- K:	(?i)pidfd
-diff --git a/include/uapi/linux/pidfd.h b/include/uapi/linux/pidfd.h
-index 0919246a1611c..cad5b722e9f0e 100644
---- a/include/uapi/linux/pidfd.h
-+++ b/include/uapi/linux/pidfd.h
-@@ -10,6 +10,7 @@
- /* Flags for pidfd_open().  */
- #define PIDFD_NONBLOCK	O_NONBLOCK
- #define PIDFD_THREAD	O_EXCL
-+#define PIDFD_EMPTY	(1U << 27)
- #ifdef __KERNEL__
- #include <linux/sched.h>
- #define PIDFD_STALE CLONE_PIDFD
-diff --git a/include/uapi/linux/pidfd_spawn.h b/include/uapi/linux/pidfd_spawn.h
-new file mode 100644
-index 0000000000000..46d61e72435cc
---- /dev/null
-+++ b/include/uapi/linux/pidfd_spawn.h
-@@ -0,0 +1,49 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+
-+#ifndef _UAPI_LINUX_PIDFD_SPAWN_H
-+#define _UAPI_LINUX_PIDFD_SPAWN_H
-+
-+#include <linux/types.h>
-+
-+#define PIDFD_SPAWN_RUN_SIZE_VER0	64
-+#define PIDFD_SPAWN_ACTION_SIZE_VER0	32
-+
-+/* Commands for pidfd_config(). */
-+#define PIDFD_CONFIG_SET_STRING	0
-+
-+/* String keys for pidfd_config(). */
-+#define PIDFD_CONFIG_KEY_PATH	"path"
-+
-+struct pidfd_spawn_run_args {
-+	__u32 flags;
-+	__u32 nr_actions;
-+	/* The next four fields are full-width userspace virtual addresses. */
-+	__aligned_u64 path;
-+	__aligned_u64 argv;
-+	__aligned_u64 envp;
-+	__aligned_u64 actions;
-+	__u32 action_size;
-+	__u32 reserved0;
-+	__u64 reserved[2];
-+};
-+
-+enum pidfd_spawn_action_type {
-+	PIDFD_SPAWN_ACTION_DUP2 = 0,
-+	PIDFD_SPAWN_ACTION_CLOSE_RANGE = 1,
-+	PIDFD_SPAWN_ACTION_FCHDIR = 2,
-+};
-+
-+struct pidfd_spawn_action {
-+	__u32 type;
-+	__u32 flags;
-+	/*
-+	 * DUP2 uses fd as the source and newfd as the destination.
-+	 * CLOSE_RANGE uses fd as the first and newfd as the last descriptor.
-+	 * FCHDIR uses fd as the directory descriptor and requires newfd to be 0.
-+	 */
-+	__u32 fd;
-+	__u32 newfd;
-+	__u64 reserved[2];
-+};
-+
-+#endif /* _UAPI_LINUX_PIDFD_SPAWN_H */
-diff --git a/tools/include/uapi/linux/pidfd_spawn.h b/tools/include/uapi/linux/pidfd_spawn.h
-new file mode 100644
-index 0000000000000..46d61e72435cc
---- /dev/null
-+++ b/tools/include/uapi/linux/pidfd_spawn.h
-@@ -0,0 +1,49 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+
-+#ifndef _UAPI_LINUX_PIDFD_SPAWN_H
-+#define _UAPI_LINUX_PIDFD_SPAWN_H
-+
-+#include <linux/types.h>
-+
-+#define PIDFD_SPAWN_RUN_SIZE_VER0	64
-+#define PIDFD_SPAWN_ACTION_SIZE_VER0	32
-+
-+/* Commands for pidfd_config(). */
-+#define PIDFD_CONFIG_SET_STRING	0
-+
-+/* String keys for pidfd_config(). */
-+#define PIDFD_CONFIG_KEY_PATH	"path"
-+
-+struct pidfd_spawn_run_args {
-+	__u32 flags;
-+	__u32 nr_actions;
-+	/* The next four fields are full-width userspace virtual addresses. */
-+	__aligned_u64 path;
-+	__aligned_u64 argv;
-+	__aligned_u64 envp;
-+	__aligned_u64 actions;
-+	__u32 action_size;
-+	__u32 reserved0;
-+	__u64 reserved[2];
-+};
-+
-+enum pidfd_spawn_action_type {
-+	PIDFD_SPAWN_ACTION_DUP2 = 0,
-+	PIDFD_SPAWN_ACTION_CLOSE_RANGE = 1,
-+	PIDFD_SPAWN_ACTION_FCHDIR = 2,
-+};
-+
-+struct pidfd_spawn_action {
-+	__u32 type;
-+	__u32 flags;
-+	/*
-+	 * DUP2 uses fd as the source and newfd as the destination.
-+	 * CLOSE_RANGE uses fd as the first and newfd as the last descriptor.
-+	 * FCHDIR uses fd as the directory descriptor and requires newfd to be 0.
-+	 */
-+	__u32 fd;
-+	__u32 newfd;
-+	__u64 reserved[2];
-+};
-+
-+#endif /* _UAPI_LINUX_PIDFD_SPAWN_H */
+diff --git a/fs/internal.h b/fs/internal.h
+index 174f063575558..71cc43e72b33e 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -334,6 +334,7 @@ struct stashed_operations {
+ 				       struct dentry *dentry);
+ 	void (*put_data)(void *data);
+ 	int (*init_inode)(struct inode *inode, void *data);
++	bool (*data_matches)(const struct inode *inode, const void *data);
+ };
+ int path_from_stashed(struct dentry **stashed, struct vfsmount *mnt, void *data,
+ 		      struct path *path);
+diff --git a/fs/libfs.c b/fs/libfs.c
+index 5a0d276379d13..68cc1671b4699 100644
+--- a/fs/libfs.c
++++ b/fs/libfs.c
+@@ -2260,7 +2260,10 @@ int path_from_stashed(struct dentry **stashed, struct vfsmount *mnt, void *data,
+ 	path->dentry = res;
+ 	path->mnt = mntget(mnt);
+ 	VFS_WARN_ON_ONCE(path->dentry->d_fsdata != stashed);
+-	VFS_WARN_ON_ONCE(d_inode(path->dentry)->i_private != data);
++	if (sops->data_matches)
++		VFS_WARN_ON_ONCE(!sops->data_matches(d_inode(path->dentry), data));
++	else
++		VFS_WARN_ON_ONCE(d_inode(path->dentry)->i_private != data);
+ 	return 0;
+ }
+ 
 -- 
 2.52.0
 
