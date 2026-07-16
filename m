@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 489E61D435F;
-	Thu, 16 Jul 2026 14:37:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF066423763;
+	Thu, 16 Jul 2026 14:38:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212679; cv=pass; b=HH8aOLMUbZtlBOT0f7PBT9ByqHTvLEVZmxp25c2Oe5ZBAbxYx3KiL3qIGjHoOTbzPNyfT6d1RzL4psQfMvvGP3p+f4SuN77CSxQRxwt6m/8S6HKd2tvVDP6yFMWBqDaFIElB5CcwJO8nlZfU3MWM71wPm/pXZyqNt3wScRDp0zg=
+	t=1784212711; cv=pass; b=pXbdiZXFvPvua3hP4CN13hn10v2VB7i4EAtt9uMOmPATD1wDfEMSGhJTP4bdiZtDdsgFMXixupduvdHazalm0nluUp9ZViIyeg5FAonVbW9Ny4/kt7GiikoQUtNsFiwAI7dGnRgkkFLLuc2M5WLSmJeN2Iz/pxb3Fi+8wHzFQJo=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212679; c=relaxed/simple;
-	bh=0S223wyaT62YTlyMtGU9bsyyCzfdd4jbU6pXmBqE6CU=;
+	s=arc-20240116; t=1784212711; c=relaxed/simple;
+	bh=Jlnf/7KJHQfGIfh6PO7upfelW445vVJyUcSe9GjDh/k=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=dlyrwmnBhTN3J6IGWOWqO+DJqGPPe1qHmpm+fYvSqjfnqVyLThVcKTRFP3y5q7ViDWKN0IsxnOENuOOPQtWPuyTIu3wXQdoN9u7PHcHpH+3hhKZL+B0inCw0U4uDZNsJXic7r2oatuBTNY2PC+uI2iUGbib+6xLzgkoBZRFBZcU=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=XS7JAmBc; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=PAJUKsnCw94pps5YAqLS6U2iSwQsSUdmmrm8B2qFWJme3QcZ/fBVW/KeakXZJ8rWFuu8maUH/hWmQWeAIFpZeQy8pZWa+cP/jQL4Nsau6/vWuIwmGy3yPTyc1dFYPBNf/Et60JaUw+nBMsPMY4WMq7nmuNlG8mJyyfVgkDeiwrA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=QH3sbyQl; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="XS7JAmBc"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212423; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="QH3sbyQl"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212433; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=mP5Bo8nEM9S+Mw6KA6uiFRlAqKu176gQr+zRP8YXoU73ULcPYeuNuHcwNoAkPaL3v6C/W89/4YaHhryK+wmtlgLBwLRpZGkPr4YTLbh9AYrLcJsOMmmn40Ix5DuBqJTtzLt0g2w37NQbPF7LZr9L7fe9y3r8pfLvvdsNtwQjvig=
+	b=kf3Np9YMkVz7SmzAbmA9Ilnck/MJz74KOTXGRXf9LKGYKx1zBG/kwIc2qdKSN5b32JmHGtuuKezihLN6q0niulAVljKw50eijwtg44jtfkrK7EhXPb3+oS/9jUikszJf599BHIhsRpo8LL/8MSgaA5icFxtERmpU8m7xDnQF2V4=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212423; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=csZJqwFw/LF9jvJifU7Wr9Kub+l+N/C7ZLf6/P48CP4=; 
-	b=gYMXR3sey9S5i81vhtgYUlnAbvQH+FABm9cEuPB2FO2PiJZsTp7Ba8tiyMYE5VnuDYbLEXQNONua+D0WqevLpikCMyTn//L/gOnlKwYIS+5xckf+LJd8+/2xjs5v3i3ebFe51zGpxBLGarakg7agJNEDmrhzjuoUBEK/rR4COMs=
+	t=1784212433; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=+uXJHS4PC2mihbQ3K+CCZilSeUWVhuHe8bqD8OWrn0Y=; 
+	b=W4aGfZGuo7kaVt1subY6WFddzZJmE9j6QUC6E4WTAd/kY1PO17injV2MW54XSpf2U/RT4GYGhnQGJ2rcMv9KDPXXZGlvlp6x4RVL4OAsRy7srIBb+Lu90mCHRgccq1oEyy/3sDkiVORSYHWwKRguiBONT84f2EnUlnLimy+QmnA=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212423;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212433;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=csZJqwFw/LF9jvJifU7Wr9Kub+l+N/C7ZLf6/P48CP4=;
-	b=XS7JAmBc4/sJx8XPkI0/vBhiJxXrqgfyFb0OLS/umUzn0lGKtGl/JzEc4Padd895
-	rMMYGbAPFVb1zgbPNCcvFj1nMZ0KKvfy8cyBeJYKr73sd6XcDRqTuUcRArmydCKGy7k
-	V8LvQMeRsOiLcisUxN4RhP8fDYgkyiDJLUnsIdFs=
-Received: by mx.zohomail.com with SMTPS id 17842124204621023.6986145207051;
-	Thu, 16 Jul 2026 07:33:40 -0700 (PDT)
+	bh=+uXJHS4PC2mihbQ3K+CCZilSeUWVhuHe8bqD8OWrn0Y=;
+	b=QH3sbyQlyiqO6uzo1R20HvNwz9QDXk8tU6MzpcPZproojaC0nhdwCjFc4klSjozV
+	CIcbQAJfrrjYJ3YPRboIEUiFvMdwY4fI5+Guy3qZVSdvJT+mi2DiQ5VaYGktuB7mb7/
+	Pt+KWSJRzECIQDmuDJAJPAmFWu1P9fbeXXzqCBHE=
+Received: by mx.zohomail.com with SMTPS id 178421243027830.582287462494605;
+	Thu, 16 Jul 2026 07:33:50 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 09/24] fork: let process builders supply preallocated pids
-Date: Thu, 16 Jul 2026 22:31:35 +0800
-Message-ID: <129eedc78affaf85e4d552daae1460a43057fb39.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 10/24] pidfs: publish future pidfd files
+Date: Thu, 16 Jul 2026 22:31:36 +0800
+Message-ID: <ccc0ca829719466561e954865512335871d8fe9b.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,138 +80,274 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Process builders can reserve a pidfs identity before copy_process()
-makes a task visible. Add an alloc_pid() variant for a reserved pidfs
-inode, and let copy_process() consume a caller-provided struct pid on
-success.
+Publish an attached future pidfd by transferring pidfs attributes and
+forwarding process-exit wakeups to poll registrations made while the
+file was taskless.
 
-Keep caller ownership on failure. The legacy NULL-pid path continues to
-allocate and free its own pid. Validate the target PID namespace before
-using a preallocated identity.
+Make numeric pidfd opens and file-handle opens wait across the interval
+between task visibility and producer publication. Internal PIDFD_STALE
+callers remain nonblocking so task creation cannot wait on itself.
 
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- include/linux/pid.h |  3 +++
- kernel/fork.c       | 16 ++++++++++++++--
- kernel/pid.c        | 22 ++++++++++++++++++++--
- 3 files changed, 37 insertions(+), 4 deletions(-)
+ fs/pidfs.c            | 127 +++++++++++++++++++++++++++++++++++++++++-
+ include/linux/pidfs.h |   5 ++
+ 2 files changed, 130 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index a29ffe2a5fa8e..fa8acae336f7c 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -142,6 +142,9 @@ extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
+diff --git a/fs/pidfs.c b/fs/pidfs.c
+index 36ee4f210f73f..d62235e01b351 100644
+--- a/fs/pidfs.c
++++ b/fs/pidfs.c
+@@ -116,7 +116,10 @@ struct pidfs_future_file {
+ 	const struct pidfs_future_file_ops *ops;
+ 	struct pidfs_attr *attr;
+ 	struct pid *pid;
++	wait_queue_head_t wait_pidfd;
++	wait_queue_entry_t pid_wait;
+ 	u64 ino;
++	bool pid_wait_attached;
+ };
  
- extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
- 			     size_t set_tid_size);
-+struct pid *alloc_pid_with_pidfs_ino(struct pid_namespace *ns,
-+				     pid_t *set_tid, size_t set_tid_size,
-+				     u64 pidfs_ino);
- extern void free_pid(struct pid *pid);
- void free_pids(struct pid **pids);
- extern void disable_pid_allocation(struct pid_namespace *ns);
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 970810a01bbf6..d16405c037c2f 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -2006,6 +2006,9 @@ static bool need_futex_hash_allocate_default(u64 clone_flags)
-  * It copies the registers, and all the appropriate
-  * parts of the process environment (as per the clone
-  * flags). The actual kick-off is left to the caller.
-+ *
-+ * Except for init_struct_pid, a caller-supplied pid reference remains owned
-+ * by the caller on failure and is transferred to the new task on success.
+ static struct pidfs_node *pidfs_inode_node(const struct inode *inode)
+@@ -137,6 +140,12 @@ pidfs_future_file(const struct inode *inode)
+ 	return container_of(node, struct pidfs_future_file, node);
+ }
+ 
++static bool pidfs_future_file_terminal(struct pidfs_future_file *future)
++{
++	return future && future->ops->is_terminal &&
++	       future->ops->is_terminal(future->data);
++}
++
+ void *pidfs_future_file_data(const struct file *file,
+ 			     const struct pidfs_future_file_ops *ops)
+ {
+@@ -169,6 +178,21 @@ static struct pid *pidfs_inode_pid(const struct inode *inode)
+ 	return pid;
+ }
+ 
++static int pidfs_wait_for_published_pid(struct inode *inode)
++{
++	struct pidfs_future_file *future = pidfs_future_file(inode);
++	int status = -ESRCH;
++	int ret;
++
++	if (!future)
++		return 0;
++
++	ret = wait_event_killable(future->wait_pidfd,
++				  (status = PTR_ERR_OR_ZERO(pidfs_inode_pid(inode))) !=
++				  -ESRCH || pidfs_future_file_terminal(future));
++	return ret ? ret : status;
++}
++
+ #if BITS_PER_LONG == 32
+ 
+ DEFINE_SPINLOCK(pidfs_ino_lock);
+@@ -370,10 +394,22 @@ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
   */
- __latent_entropy struct task_struct *copy_process(
- 					struct pid *pid,
-@@ -2017,6 +2020,7 @@ __latent_entropy struct task_struct *copy_process(
- 	struct task_struct *p;
- 	struct multiprocess_signals delayed;
- 	struct file *pidfile = NULL;
-+	bool allocated_pid = false;
- 	const u64 clone_flags = args->flags;
- 	struct nsproxy *nsp = current->nsproxy;
+ static __poll_t pidfd_poll(struct file *file, struct poll_table_struct *pts)
+ {
++	struct pidfs_future_file *future;
+ 	struct task_struct *task;
+ 	__poll_t poll_flags = 0;
+-	struct pid *pid = pidfd_pid(file);
++	struct pid *pid;
  
-@@ -2317,13 +2321,21 @@ __latent_entropy struct task_struct *copy_process(
++	future = pidfs_future_file(file_inode(file));
++	pid = pidfd_pid(file);
++	if (IS_ERR(pid) && PTR_ERR(pid) == -ESRCH && future) {
++		/* Close the publication race after registering the future wait. */
++		poll_wait(file, &future->wait_pidfd, pts);
++		pid = pidfd_pid(file);
++	}
++
++	if (IS_ERR(pid) && PTR_ERR(pid) == -ESRCH &&
++	    pidfs_future_file_terminal(future))
++		return EPOLLERR | EPOLLHUP;
+ 	if (IS_ERR(pid))
+ 		return PTR_ERR(pid) == -ESRCH ? 0 : EPOLLHUP;
  
- 	stackleak_task_init(p);
+@@ -927,6 +963,8 @@ static void pidfs_evict_inode(struct inode *inode)
+ 		return;
  
--	if (pid != &init_struct_pid) {
-+	if (!pid) {
- 		pid = alloc_pid(p->nsproxy->pid_ns_for_children, args->set_tid,
- 				args->set_tid_size);
- 		if (IS_ERR(pid)) {
- 			retval = PTR_ERR(pid);
- 			goto bad_fork_cleanup_thread;
- 		}
-+		allocated_pid = true;
-+	} else if (pid != &init_struct_pid) {
-+		if (args->set_tid_size ||
-+		    ns_of_pid(pid) != p->nsproxy->pid_ns_for_children ||
-+		    WARN_ON_ONCE(pid_has_task(pid, PIDTYPE_PID))) {
-+			retval = -EINVAL;
-+			goto bad_fork_cleanup_thread;
+ 	future = container_of(node, struct pidfs_future_file, node);
++	if (future->pid_wait_attached)
++		remove_wait_queue(&future->pid->wait_pidfd, &future->pid_wait);
+ 	if (future->ops->release)
+ 		future->ops->release(future->data);
+ 	if (future->attr)
+@@ -934,6 +972,16 @@ static void pidfs_evict_inode(struct inode *inode)
+ 	kfree(future);
+ }
+ 
++static int pidfs_future_pid_wake(wait_queue_entry_t *wait,
++				 unsigned int mode, int sync, void *key)
++{
++	struct pidfs_future_file *future;
++
++	future = container_of(wait, struct pidfs_future_file, pid_wait);
++	wake_up_all(&future->wait_pidfd);
++	return 0;
++}
++
+ static const struct super_operations pidfs_sops = {
+ 	.drop_inode	= inode_just_drop,
+ 	.evict_inode	= pidfs_evict_inode,
+@@ -1068,12 +1116,16 @@ static int pidfs_export_permission(struct handle_to_path_ctx *ctx,
+ static struct file *pidfs_export_open(const struct path *path, unsigned int oflags)
+ {
+ 	struct file *file;
++	int ret;
+ 
+ 	/*
+ 	 * Clear O_LARGEFILE as open_by_handle_at() forces it and raise
+ 	 * O_RDWR as pidfds always are.
+ 	 */
+ 	oflags &= ~O_LARGEFILE;
++	ret = pidfs_wait_for_published_pid(d_inode(path->dentry));
++	if (ret)
++		return ERR_PTR(ret);
+ 	file = dentry_open(path, oflags | O_RDWR, current_cred());
+ 	/* do_dentry_open() strips O_EXCL, which encodes PIDFD_THREAD. */
+ 	if (!IS_ERR(file))
+@@ -1289,6 +1341,17 @@ struct file *pidfs_alloc_file(struct pid *pid, unsigned int flags)
+ 	ret = path_from_stashed(&pid->stashed, pidfs_mnt, get_pid(pid), &path);
+ 	if (ret < 0)
+ 		return ERR_PTR(ret);
++	/*
++	 * A future dentry can be stashed before copy_process() makes its task
++	 * visible. Non-stale callers have already observed the task, so do not
++	 * return that inode until its producer has published the process state.
++	 * PIDFD_STALE is used by pre-task internal callers and must not wait here.
++	 */
++	if (!(flags & PIDFD_STALE)) {
++		ret = pidfs_wait_for_published_pid(d_inode(path.dentry));
++		if (ret)
++			return ERR_PTR(ret);
++	}
+ 
+ 	VFS_WARN_ON_ONCE(!pid->attr);
+ 
+@@ -1317,7 +1380,8 @@ struct file *pidfs_alloc_file(struct pid *pid, unsigned int flags)
+  * associate one preallocated pid with
+  * pidfs_future_file_set_pid(), publish its pidfs metadata with
+  * pidfs_future_file_publish_pid(), make @ops->get_pid() resolve that pid, and
+- * finally wake waiters with pidfs_future_file_notify().
++ * finally wake waiters with pidfs_future_file_notify(). A producer that
++ * becomes terminal without publishing must also notify its waiters.
+  *
+  * A task associated with the future pid must not become runnable before
+  * publication metadata and exit-wakeup forwarding are installed.
+@@ -1378,6 +1442,7 @@ struct file *pidfs_alloc_future_file(const char *name, void *data,
+ 	future->data = data;
+ 	future->ops = ops;
+ 	future->ino = ino;
++	init_waitqueue_head(&future->wait_pidfd);
+ 	inode->i_private = &future->node;
+ 	return file;
+ }
+@@ -1422,6 +1487,60 @@ int pidfs_future_file_set_pid(struct file *file, struct pid *pid)
+ 	return 0;
+ }
+ 
++/**
++ * pidfs_future_file_publish_pid - publish pidfs metadata for a future pid
++ * @file: future pidfs file
++ * @pid: pid previously associated with @file
++ *
++ * This transfers the future inode attributes to @pid and forwards pid exit
++ * wakeups. After it returns, the producer must publish the state used by
++ * @ops->get_pid() before calling pidfs_future_file_notify().
++ */
++void pidfs_future_file_publish_pid(struct file *file, struct pid *pid)
++{
++	struct pidfs_future_file *future = pidfs_future_file(file_inode(file));
++	struct pidfs_attr *unused = NULL;
++
++	if (WARN_ON_ONCE(!future || READ_ONCE(future->pid) != pid))
++		return;
++
++	scoped_guard(spinlock_irq, &pid->wait_pidfd.lock) {
++		if (WARN_ON_ONCE(pid->attr == PIDFS_PID_DEAD))
++			return;
++		if (!pid->attr) {
++			pid->attr = future->attr;
++			future->attr = NULL;
++		} else {
++			unused = future->attr;
++			future->attr = NULL;
 +		}
- 	}
- 
- 	/*
-@@ -2587,7 +2599,7 @@ __latent_entropy struct task_struct *copy_process(
- 		put_unused_fd(pidfd);
- 	}
- bad_fork_free_pid:
--	if (pid != &init_struct_pid)
-+	if (allocated_pid)
- 		free_pid(pid);
- bad_fork_cleanup_thread:
- 	exit_thread(p);
-diff --git a/kernel/pid.c b/kernel/pid.c
-index f55189a3d07d4..010f80177cac8 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -156,8 +156,8 @@ void free_pids(struct pid **pids)
- 			free_pid(pids[tmp]);
- }
- 
--struct pid *alloc_pid(struct pid_namespace *ns, pid_t *arg_set_tid,
--		      size_t arg_set_tid_size)
-+static struct pid *__alloc_pid(struct pid_namespace *ns, pid_t *arg_set_tid,
-+			       size_t arg_set_tid_size, u64 pidfs_ino)
- {
- 	int set_tid[MAX_PID_NS_LEVEL + 1] = {};
- 	int pid_max[MAX_PID_NS_LEVEL + 1] = {};
-@@ -198,6 +198,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *arg_set_tid,
- 	init_waitqueue_head(&pid->wait_pidfd);
- 	INIT_HLIST_HEAD(&pid->inodes);
- 	pidfs_prepare_pid(pid);
-+	pid->ino = pidfs_ino;
- 
- 	/*
- 	 * 2. perm check checkpoint_restore_ns_capable()
-@@ -358,6 +359,23 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *arg_set_tid,
- 	return ERR_PTR(retval);
- }
- 
-+struct pid *alloc_pid(struct pid_namespace *ns, pid_t *arg_set_tid,
-+		      size_t arg_set_tid_size)
-+{
-+	return __alloc_pid(ns, arg_set_tid, arg_set_tid_size, 0);
++	}
++	if (unused)
++		kmem_cache_free(pidfs_attr_cachep, unused);
++
++	init_waitqueue_func_entry(&future->pid_wait, pidfs_future_pid_wake);
++	add_wait_queue(&pid->wait_pidfd, &future->pid_wait);
++	future->pid_wait_attached = true;
 +}
 +
-+struct pid *alloc_pid_with_pidfs_ino(struct pid_namespace *ns,
-+				     pid_t *arg_set_tid,
-+				     size_t arg_set_tid_size,
-+				     u64 pidfs_ino)
++/**
++ * pidfs_future_file_notify - wake future-pidfd state waiters
++ * @file: future pidfs file
++ *
++ * For publication, the producer must call this only after @ops->get_pid() can
++ * return the live pid. The publication must use release ordering paired with
++ * the producer's acquire-side lookup. A taskless terminal producer may call
++ * this after making @ops->is_terminal() return true.
++ */
++void pidfs_future_file_notify(struct file *file)
 +{
-+	if (!pidfs_ino)
-+		return ERR_PTR(-EINVAL);
++	struct pidfs_future_file *future = pidfs_future_file(file_inode(file));
 +
-+	return __alloc_pid(ns, arg_set_tid, arg_set_tid_size, pidfs_ino);
++	if (WARN_ON_ONCE(!future))
++		return;
++	wake_up_all(&future->wait_pidfd);
 +}
 +
- void disable_pid_allocation(struct pid_namespace *ns)
- {
- 	spin_lock(&pidmap_lock);
+ /**
+  * pidfs_future_file_clear_pid - undo an unpublished future-pid association
+  * @file: future pidfs file
+@@ -1444,6 +1563,10 @@ void pidfs_future_file_clear_pid(struct file *file, struct pid *pid)
+ 	if (WARN_ON_ONCE(!future || READ_ONCE(future->pid) != pid))
+ 		return;
+ 
++	if (future->pid_wait_attached) {
++		remove_wait_queue(&pid->wait_pidfd, &future->pid_wait);
++		future->pid_wait_attached = false;
++	}
+ 	WARN_ON_ONCE(cmpxchg(&pid->stashed, dentry, NULL) != dentry);
+ 	dentry->d_fsdata = NULL;
+ 	WARN_ON_ONCE(pid->attr);
+diff --git a/include/linux/pidfs.h b/include/linux/pidfs.h
+index 828e96f769ba1..e4df7f7748487 100644
+--- a/include/linux/pidfs.h
++++ b/include/linux/pidfs.h
+@@ -13,11 +13,14 @@ struct pid;
+  * @get_pid: Return the published, borrowed, non-NULL process identity, or an
+  *	error pointer while the producer is still taskless. The producer must
+  *	keep the returned pid alive for the future inode lifetime.
++ * @is_terminal: Return true when a taskless producer can no longer publish a
++ *	process. Optional; a producer without terminal failures may leave it NULL.
+  * @release: Optionally release producer-owned data when the pidfs inode is
+  *	evicted. If provided, this is called at most once.
+  */
+ struct pidfs_future_file_ops {
+ 	struct pid *(*get_pid)(void *data);
++	bool (*is_terminal)(void *data);
+ 	void (*release)(void *data);
+ };
+ 
+@@ -29,6 +32,8 @@ void *pidfs_future_file_data(const struct file *file,
+ 			     const struct pidfs_future_file_ops *ops);
+ u64 pidfs_future_file_ino(const struct file *file);
+ int pidfs_future_file_set_pid(struct file *file, struct pid *pid);
++void pidfs_future_file_publish_pid(struct file *file, struct pid *pid);
++void pidfs_future_file_notify(struct file *file);
+ void pidfs_future_file_clear_pid(struct file *file, struct pid *pid);
+ void __init pidfs_init(void);
+ void pidfs_prepare_pid(struct pid *pid);
 -- 
 2.52.0
 
