@@ -1,41 +1,41 @@
 Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 565D3426EC1;
-	Thu, 16 Jul 2026 14:42:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 402AE2F7EE4;
+	Thu, 16 Jul 2026 14:43:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784212969; cv=pass; b=Ut9nfw0wOHZnDIvwz1LhYKMKfHgp2hfYSTTZ1N6dsLwk1AVuBdlYi/q8bhGJzvmIMD17qUIXowadoXsYpWUzvoSFyA6gLb7jbevB90k+Z5xy1M8VdZgvooLDHgpvl2C7s9UikP/MMm5EI2YSmpNTOjOAQncK8PRnyDKWTBnJqGI=
+	t=1784213003; cv=pass; b=ZIc08jA+q9Jax3oGgUIY/zDpxWCLejj4HMvHQf1tuDQhmlXiD0NyDj+dAMqu/Hr4jnNao1ZXx7fqN4bKERfOOxivjnr0CmEcD3BGBtGXa+9D8q1hKVi+ltU8Bs8Y/BDYwDdtFWszCFsax6n17CwzkNWhrjxQNxBUQEp/sG5AhS0=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784212969; c=relaxed/simple;
-	bh=PtzUscg965W/PPYH8Jhsm3uaj7VLQ+srAf2DffzD/rE=;
+	s=arc-20240116; t=1784213003; c=relaxed/simple;
+	bh=xwNO/BHEehgIHosWVtKtYquGuqEzDY4uf+4QkMfgcMg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=A5iKUjTwqX04dShEWV9S0sC0Aw0Ya9QjR/phmFTOb/N1e2OqyvoMNjBCUzzL0mOEMDbr8OCFRqkQMLPb0voJuoOhnAi8e6oA98NRML9BOldhzU60qa4UIrJfuet3In1SUcAt65aL4ySu++PwZc19D3oqo75Z7Bp5JA656kQsPsM=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=Z47C+ajA; arc=pass smtp.client-ip=136.143.188.15
+	 MIME-Version; b=gzfJm+dGzQdFtvj1upSp2ASGwHxIAlfxtKP0tnlDS4YVLOUmCxeMFqMnj7A8jj3g1uC8fkco1Y2rgvK+CCyBcUM6GtIUP/Fh34klOyLlQvQrB8BhteZi9xK90skZqrC8IsknHEWXhijdAPi5IvaRIyqpK2seoz8cREfnuX7QyzU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=dQsbi3Vk; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="Z47C+ajA"
-ARC-Seal: i=1; a=rsa-sha256; t=1784212509; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="dQsbi3Vk"
+ARC-Seal: i=1; a=rsa-sha256; t=1784212519; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=WnufU84/GEgtpIBGEeik9vP9s0BAzuJ7ev6IvIGA6iA9Zd9YHdMx52tIFRXNerGqAjgTcFwERIZjk/lRB5gTqCbghz/qUGQWmKvhulqJX4QAEVkruttdPAN1wnY8/qrhAygUBwOW1twWZkr7l8TAKrdR9Z4rbgEsCxn0mwEdOcs=
+	b=jivl9Si2tzrgW2TWRxYTEgSGTrd9fIckk2zQgqpkmOpsYSl0qFMW1jESl/jSN8Gdx1yy/zW9ujsPO6U/Z+j84IUWuuTLjcbsJBk1fBLScDoqhYIoEvn7bJ2WYmlkKzsYcSk5e9R2h7sugIZLWas1C99LzPEL8IKBu0iZ1hJda2w=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1784212509; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=cp63P58EqhNMliQrQZQ8Q/9YAZ3f8xxYXqwfnDAFFKc=; 
-	b=btpuqHAYbrWq+/gjrhjNrLaB2NMUJwoWyq7SQW7+A0i9alf/vU2eA3jImbgAVNx2ghJihFIRcst4SdiYrYFdcZrSji/lr3mgAL1/fk6zLcH2Lpx0ZaDL7u7vbF6Y2YHMqe1frlOyWUD9Z1XkrLJ+tUpcjexizw4pmtu2IpXfZeA=
+	t=1784212519; h=Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=l4c5dTszoqEm6NDTThmAIzODAGvFqwPJuKg6pJyF2JU=; 
+	b=UlOIo6zIxvMm6ZvPr1oDZyFLQlspxpdfJ7AdvTLjPFYNMOtYMaErrEqov10/42UllktxPz98FNh5x9dcmSTqhxpZk1k+ijvgqLxvmmVWAMZjyjKGV9gJE/C2oEo59KyjOt0GkYBV211oniciVPU4+LdBjTPO0L2roPaZu1z2zcg=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212509;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1784212519;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=From:From:To:To:Cc:Cc:Subject:Subject:Date:Date:Message-ID:In-Reply-To:MIME-Version:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=cp63P58EqhNMliQrQZQ8Q/9YAZ3f8xxYXqwfnDAFFKc=;
-	b=Z47C+ajA0NslEJATMGE6sw6Pu/nXEAH4kow1xkWyUD+8Ki/hOqu3EtOJsR//9utK
-	qto1QZ/oCo8IP9oSNax70Lf7Cgi5x3L7j5T6tHlPRwXShZROEaiSLgVwuaS9ihzg98X
-	pHkZQ3XGF0DSJduNdQ4+jgkkwV7vubKDAIlcifvU=
-Received: by mx.zohomail.com with SMTPS id 1784212507685649.0367584656693;
-	Thu, 16 Jul 2026 07:35:07 -0700 (PDT)
+	bh=l4c5dTszoqEm6NDTThmAIzODAGvFqwPJuKg6pJyF2JU=;
+	b=dQsbi3VkI6jCoAjM5LNwtScRr+BQ10uZztyd9ethvs6BQ1bO7Va6o8QVjej7FyCr
+	K9j/0ErAl5wQJvdioQ2YC2zf7xVwoQ5gxOHkcplaMkzJ9oxTWgAckgKgCJzcUK5Mwv8
+	1xlm5c94CTysq10GjBXGRlpwds6xFZxBI5D/tGVg=
+Received: by mx.zohomail.com with SMTPS id 1784212516958201.0119212011324;
+	Thu, 16 Jul 2026 07:35:16 -0700 (PDT)
 From: Li Chen <me@linux.beauty>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Kees Cook <kees@kernel.org>,
@@ -65,9 +65,9 @@ Cc: Kees Cook <kees@kernel.org>,
 	linux-arch@vger.kernel.org,
 	linux-mm@kvack.org,
 	Li Chen <me@linux.beauty>
-Subject: [RFC PATCH 18/24] pidfd: make spawn builder execution signal-safe
-Date: Thu, 16 Jul 2026 22:31:44 +0800
-Message-ID: <9689970b5b584db83756cb38608027876154b92a.1784204592.git.me@linux.beauty>
+Subject: [RFC PATCH 19/24] file: expose spawn file-action helpers
+Date: Thu, 16 Jul 2026 22:31:45 +0800
+Message-ID: <0ef568259d4e7b0ec79e81ee16e0f38bfdab0483.1784204592.git.me@linux.beauty>
 X-Mailer: git-send-email 2.52.0
 In-Reply-To: <cover.1784204592.git.me@linux.beauty>
 References: <cover.1784204592.git.me@linux.beauty>
@@ -80,301 +80,93 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-ZohoMailClient: External
 
-Wait for child setup in a killable and freezable state. If the caller
-is interrupted after task creation, cancel a child that is still
-setting up and normalize restart errors because the spawn operation is
-not idempotent.
-
-Preserve externally delivered fatal signals over setup errors. Complete
-the builder and audit transaction before entering the signal core
-directly, so the callback never returns through an invalid userspace
-frame. The task work can run from an outer get_signal(), so fatal delivery
-deliberately nests get_signal(); the inner path exits and never returns to
-the outer call. The child remains embryonic and nondumpable until exec
-installs a valid frame and mm.
-
-Reject an already traced caller while holding cred_guard_mutex across
-the spawn operation. This prevents CLONE_UNTRACED from becoming an
-escape from an existing ptrace supervisor.
+Process builders need to apply close_range() and fchdir() while
+preparing a child. Split the syscall bodies into internal helpers so
+callers in fs can reuse existing validation and state updates. Keep the
+helpers internal to fs rather than adding new global interfaces.
 
 Assisted-by: Codex:gpt-5.6-sol
 Signed-off-by: Li Chen <me@linux.beauty>
 ---
- fs/pidfd_spawn.c | 189 +++++++++++++++++++++++++++++++++++++++++++++--
- 1 file changed, 183 insertions(+), 6 deletions(-)
+ fs/file.c     | 11 ++++++++---
+ fs/internal.h |  2 ++
+ fs/open.c     |  7 ++++++-
+ 3 files changed, 16 insertions(+), 4 deletions(-)
 
-diff --git a/fs/pidfd_spawn.c b/fs/pidfd_spawn.c
-index 5586926988406..0e52503976c0c 100644
---- a/fs/pidfd_spawn.c
-+++ b/fs/pidfd_spawn.c
-@@ -5,6 +5,7 @@
- 
- #include <asm/syscall.h>
- #include <linux/audit.h>
-+#include <linux/cgroup.h>
- #include <linux/completion.h>
- #include <linux/cred.h>
- #include <linux/file.h>
-@@ -212,8 +213,10 @@ static void pidfd_spawn_drop_run_data(struct pidfd_spawn_state *state,
- 	state->envp = native_arg(NULL);
- 	memset(state->audit_args, 0, sizeof(state->audit_args));
- 	state->audit_syscall = 0;
--	state->result = result;
--	pidfd_spawn_set_status(state, PIDFD_SPAWN_SETUP_DONE);
-+	if (pidfd_spawn_get_status(state) != PIDFD_SPAWN_CANCELLED) {
-+		state->result = result;
-+		pidfd_spawn_set_status(state, PIDFD_SPAWN_SETUP_DONE);
-+	}
- 	mutex_unlock(&state->lock);
- 
- 	putname(filename);
-@@ -226,6 +229,32 @@ static void pidfd_spawn_drop_run_data(struct pidfd_spawn_state *state,
- 	kfree(staged_path);
+diff --git a/fs/file.c b/fs/file.c
+index 628ca07dc4b17..4f4cb1d5752c2 100644
+--- a/fs/file.c
++++ b/fs/file.c
+@@ -805,7 +805,7 @@ static inline void __range_close(struct files_struct *files, unsigned int fd,
  }
  
-+static bool pidfd_spawn_cancel(struct pidfd_spawn_state *state,
-+			       struct task_struct *task)
-+{
-+	bool cancelled = false;
-+
-+	mutex_lock(&state->lock);
-+	if (pidfd_spawn_get_status(state) == PIDFD_SPAWN_STARTING) {
-+		/*
-+		 * Establish SIGKILL group-exit state before publishing
-+		 * cancellation. The child also takes state->lock before committing
-+		 * its setup result, so it cannot return from task work before the
-+		 * signal is pending.
-+		 */
-+		if (WARN_ON_ONCE(do_send_sig_info(SIGKILL, SEND_SIG_PRIV, task,
-+						  PIDTYPE_PID)))
-+			goto out_unlock;
-+		state->result = -ECANCELED;
-+		pidfd_spawn_set_status(state, PIDFD_SPAWN_CANCELLED);
-+		cancelled = true;
-+	}
-+out_unlock:
-+	mutex_unlock(&state->lock);
-+
-+	return cancelled;
-+}
-+
- static bool pidfd_spawn_same_pid_ns(struct pidfd_spawn_state *state)
+ /**
+- * sys_close_range() - Close all file descriptors in a given range.
++ * do_close_range() - Close all file descriptors in a given range.
+  *
+  * @fd:     starting file descriptor to close
+  * @max_fd: last file descriptor to close
+@@ -815,8 +815,7 @@ static inline void __range_close(struct files_struct *files, unsigned int fd,
+  * from @fd up to and including @max_fd are closed.
+  * Currently, errors to close a given file descriptor are ignored.
+  */
+-SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
+-		unsigned int, flags)
++int do_close_range(unsigned int fd, unsigned int max_fd, unsigned int flags)
  {
- 	return current->nsproxy->pid_ns_for_children == state->creator_pid_ns;
-@@ -383,6 +412,35 @@ SYSCALL_DEFINE5(pidfd_config, int, fd, unsigned int, cmd,
- 	return ret;
+ 	struct task_struct *me = current;
+ 	struct files_struct *cur_fds = me->files, *fds = NULL;
+@@ -867,6 +866,12 @@ SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
+ 	return 0;
  }
  
-+static bool pidfd_spawn_child_cancelled(struct pidfd_spawn_state *state)
++SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
++		unsigned int, flags)
 +{
-+	bool cancelled;
-+
-+	mutex_lock(&state->lock);
-+	cancelled = pidfd_spawn_get_status(state) == PIDFD_SPAWN_CANCELLED;
-+	mutex_unlock(&state->lock);
-+
-+	return cancelled;
++	return do_close_range(fd, max_fd, flags);
 +}
 +
-+static bool pidfd_spawn_setup_done(struct pidfd_spawn_state *state)
-+{
-+	bool done = false;
-+
-+	mutex_lock(&state->lock);
-+	switch (pidfd_spawn_get_status(state)) {
-+	case PIDFD_SPAWN_SETUP_DONE:
-+	case PIDFD_SPAWN_STARTED:
-+		done = true;
-+		break;
-+	default:
-+		break;
-+	}
-+	mutex_unlock(&state->lock);
-+
-+	return done;
-+}
-+
- static void pidfd_spawn_save_audit_context(struct pidfd_spawn_state *state)
+ /**
+  * file_close_fd - return file associated with fd
+  * @fd: file descriptor to retrieve file for
+diff --git a/fs/internal.h b/fs/internal.h
+index 71cc43e72b33e..25492194e2883 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -198,6 +198,8 @@ extern struct file *do_file_open_root(const struct path *,
+ extern struct open_how build_open_how(int flags, umode_t mode);
+ extern int build_open_flags(const struct open_how *how, struct open_flags *op);
+ struct file *file_close_fd_locked(struct files_struct *files, unsigned fd);
++int do_close_range(unsigned int fd, unsigned int max_fd, unsigned int flags);
++int do_fchdir(unsigned int fd);
+ 
+ int do_ftruncate(struct file *file, loff_t length, unsigned int flags);
+ int chmod_common(const struct path *path, umode_t mode);
+diff --git a/fs/open.c b/fs/open.c
+index 408925d7bd0b7..bf9d7bdcf487c 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -568,7 +568,7 @@ SYSCALL_DEFINE1(chdir, const char __user *, filename)
+ 	return error;
+ }
+ 
+-SYSCALL_DEFINE1(fchdir, unsigned int, fd)
++int do_fchdir(unsigned int fd)
  {
- 	struct pt_regs *regs = current_pt_regs();
-@@ -399,6 +457,52 @@ static void pidfd_spawn_audit_entry(struct pidfd_spawn_state *state)
- 				state->audit_args[1], state->audit_args[2],
- 				state->audit_args[3]);
+ 	CLASS(fd_raw, f)(fd);
+ 	int error;
+@@ -585,6 +585,11 @@ SYSCALL_DEFINE1(fchdir, unsigned int, fd)
+ 	return error;
  }
-+
-+static int pidfd_spawn_normalize_result(int result)
+ 
++SYSCALL_DEFINE1(fchdir, unsigned int, fd)
 +{
-+	if (result == -ERESTARTSYS || result == -ERESTARTNOINTR ||
-+	    result == -ERESTARTNOHAND || result == -ERESTART_RESTARTBLOCK)
-+		return -EINTR;
-+	return result;
++	return do_fchdir(fd);
 +}
 +
-+static int pidfd_spawn_pending_fatal_signal(void)
-+{
-+	struct sighand_struct *sighand;
-+	sigset_t pending;
-+	unsigned long flags;
-+	int fatal = 0;
-+	int sig;
-+
-+	/*
-+	 * fatal_signal_pending() only recognizes pending SIGKILL. A default-fatal
-+	 * coredump signal remains pending as itself, but must still win over a
-+	 * setup error. Inspect the same pending sets and default dispositions as
-+	 * get_signal() without dequeuing the signal.
-+	 */
-+	sighand = lock_task_sighand(current, &flags);
-+	if (WARN_ON_ONCE(!sighand))
-+		return 0;
-+
-+	sigorsets(&pending, &current->pending.signal,
-+		  &current->signal->shared_pending.signal);
-+	sigandnsets(&pending, &pending, &current->blocked);
-+
-+	for (sig = 1; sig < _NSIG; sig++) {
-+		if (!sigismember(&pending, sig) || sig_kernel_ignore(sig) ||
-+		    sig_kernel_stop(sig) ||
-+		    sighand->action[sig - 1].sa.sa_handler != SIG_DFL)
-+			continue;
-+		if ((current->signal->flags & SIGNAL_UNKILLABLE) &&
-+		    !sig_kernel_only(sig))
-+			continue;
-+		fatal = sig;
-+		break;
-+	}
-+	spin_unlock_irqrestore(&sighand->siglock, flags);
-+	return fatal;
-+}
-+
- static void pidfd_spawn_finish_child(struct pidfd_spawn_state *state,
- 				     struct filename *filename, int result)
+ SYSCALL_DEFINE1(chroot, const char __user *, filename)
  {
-@@ -406,11 +510,40 @@ static void pidfd_spawn_finish_child(struct pidfd_spawn_state *state,
- 	complete_all(&state->done);
- }
- 
-+static __noreturn void
-+pidfd_spawn_deliver_fatal_signal(struct pidfd_spawn_state *state,
-+				 struct filename *filename, int sig)
-+{
-+	struct ksignal ksig;
-+	sigset_t blocked;
-+
-+	/*
-+	 * The callback frame is not a valid userspace signal frame on every
-+	 * architecture. Complete the spawn transaction, then enter the signal
-+	 * core directly instead of returning through the callback trampoline.
-+	 *
-+	 * The embryonic task state prevents ptrace access and coredumps until exec
-+	 * installs a valid userspace frame and private mm. Block other catchable
-+	 * signals so the selected default-fatal signal remains terminal. If the
-+	 * signal core unexpectedly returns, exit without exposing the frame.
-+	 */
-+	pidfd_spawn_finish_child(state, filename, 0);
-+	audit_pidfd_spawn_exit(0, -EINTR);
-+	pidfd_spawn_state_put(state);
-+
-+	sigfillset(&blocked);
-+	sigdelset(&blocked, sig);
-+	set_current_blocked(&blocked);
-+	get_signal(&ksig);
-+	do_group_exit(PIDFD_SPAWN_EXIT_FAILURE);
-+}
-+
- static void pidfd_spawn_child(struct callback_head *work)
- {
- 	struct pidfd_spawn_state *state =
- 		container_of(work, struct pidfd_spawn_state, task_work);
- 	struct filename *filename;
-+	int fatal_sig;
- 	int ret;
- 
- 	pidfd_spawn_audit_entry(state);
-@@ -420,9 +553,27 @@ static void pidfd_spawn_child(struct callback_head *work)
- 	else
- 		ret = 0;
- 
-+	if (pidfd_spawn_child_cancelled(state)) {
-+		ret = -ECANCELED;
-+		pidfd_spawn_finish_child(state, filename, ret);
-+		audit_pidfd_spawn_exit(0, ret);
-+		pidfd_spawn_state_put(state);
-+		do_group_exit(SIGKILL);
-+	}
-+	fatal_sig = pidfd_spawn_pending_fatal_signal();
-+	if (fatal_sig)
-+		pidfd_spawn_deliver_fatal_signal(state, filename, fatal_sig);
-+
- 	if (!ret)
- 		ret = do_execveat_common(AT_FDCWD, filename,
- 					 state->argv, state->envp, 0);
-+	ret = pidfd_spawn_normalize_result(ret);
-+	if (ret) {
-+		fatal_sig = pidfd_spawn_pending_fatal_signal();
-+		if (fatal_sig)
-+			pidfd_spawn_deliver_fatal_signal(state, filename,
-+							 fatal_sig);
-+	}
- 
- 	pidfd_spawn_finish_child(state, filename, ret);
- 	if (ret) {
-@@ -531,9 +682,16 @@ static void pidfd_spawn_attach_vfork_done(struct task_struct *task,
- 	task_unlock(task);
- }
- 
--static void pidfd_spawn_wait_for_child(struct pidfd_spawn_state *state)
-+static int pidfd_spawn_wait_for_child(struct pidfd_spawn_state *state)
- {
--	wait_for_completion(&state->done);
-+	unsigned int wait_state = TASK_KILLABLE | TASK_FREEZABLE;
-+	int ret;
-+
-+	cgroup_enter_frozen();
-+	ret = wait_for_completion_state(&state->done, wait_state);
-+	cgroup_leave_frozen(false);
-+
-+	return pidfd_spawn_normalize_result(ret);
- }
- 
- static int pidfd_spawn_finish_vfork(struct pidfd_spawn_state *state,
-@@ -544,7 +702,7 @@ static int pidfd_spawn_finish_vfork(struct pidfd_spawn_state *state,
- 
- 	ret = wait_for_vfork_done(task, vfork);
- 	if (ret)
--		return ret;
-+		return pidfd_spawn_normalize_result(ret);
- 
- 	mutex_lock(&state->lock);
- 	ret = state->result;
-@@ -624,7 +782,26 @@ static int pidfd_spawn_start(struct file *file,
- 	}
- 
- 	wake_up_new_task(task);
--	pidfd_spawn_wait_for_child(state);
-+	ret = pidfd_spawn_wait_for_child(state);
-+	if (ret) {
-+		int interrupt = ret;
-+
-+		if (pidfd_spawn_setup_done(state)) {
-+			if (pidfd_spawn_finish_vfork(state, task, &vfork))
-+				return interrupt;
-+			return 0;
-+		}
-+		if (!pidfd_spawn_cancel(state, task) &&
-+		    pidfd_spawn_setup_done(state)) {
-+			if (pidfd_spawn_finish_vfork(state, task, &vfork))
-+				return interrupt;
-+			return 0;
-+		}
-+
-+		/* Drop the stack-based completion without waiting for child setup. */
-+		wait_for_vfork_done(task, &vfork);
-+		return interrupt;
-+	}
- 	return pidfd_spawn_finish_vfork(state, task, &vfork);
- }
- 
+ 	struct path path;
 -- 
 2.52.0
 
