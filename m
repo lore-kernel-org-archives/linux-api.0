@@ -1,37 +1,37 @@
 Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6A244417D8D;
-	Fri, 17 Jul 2026 13:55:32 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 231F0417D76;
+	Fri, 17 Jul 2026 13:55:37 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784296533; cv=none; b=O+7zO6IktN0/Ij3g9WtRAQ3Y+WDZkZRhIN58mM3+3II5DgGf84Kk3KE60LsHZ4XXRQ/aA82iBEmSQgMFJBiqOBge5s3D5//uCZNd+16cbc0mS4CazbxRP5MOD5MKPIp8A5kh03hL/3Pft+aOupYK2TZnlkvK8nAH+F+rCJqdRyA=
+	t=1784296538; cv=none; b=Y0nPYxKAiGU3yqmtmW6oxs6bIZz4H+ndFAlaHIrXlUeHLR7TX1jobF3yj6sfJD8xfGqL39V5O/1+/G2UQib2VxWSDKajT6RqmT1ctlczvfy8qmMp4kIQx1TCqXduo5gXyo1Q5Y8+WtNISracgxwp+hJJGtYVnRf4uw83QT+pGOQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784296533; c=relaxed/simple;
-	bh=L9jpBMmhPGfrvMQ24C5TKIHKk5AIbIMEY3U1N5Vrw8k=;
+	s=arc-20240116; t=1784296538; c=relaxed/simple;
+	bh=fQRxyUOwN6lzMEVI8AFQb661iEEh34DcTarVavgXkjg=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=XSrk04AT4KzVs/ZOrC2y2TE7joJ0jer5QINkTLqYUk+e1tGcf+ExRgZzVVt8l7RN9YCrlazFm1e7BBQiRm258hdwgRPCMUei/E5oBg1Ca9W2aHJKB0dpqp5Yb/U7SddUXc7BYfCHyEgGf2icedNRdpnoKz2yd/NLk6MTKhzPwYg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=hfZpahlN; arc=none smtp.client-ip=213.97.179.56
+	 In-Reply-To:To:Cc; b=VjMxz7WXhieyxOUNoh0ShbEPS3m9O2Wm8y7PUTmAWLOHeMayiAzFnecgFMl3CymCPJj7Fbsy7La/qFJHaK2XK1HLKwtOkZwuiRurRu1pBNytalcQ4u1ySpPvTeQhO9kVN4Rhe0uZ3r1iD74K9XVUKUs5Ibu034RuHVNYy6J3uDc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=DvCTdk3y; arc=none smtp.client-ip=213.97.179.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="hfZpahlN"
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="DvCTdk3y"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
 	s=20170329; h=Cc:To:Message-Id:Content-Transfer-Encoding:Content-Type:
 	MIME-Version:Subject:Date:From:From:Reply-To;
-	bh=/bFXJZ9TbqnXOB/wEeuVhQRXWqExLMAdmFSe0YD6uSs=; b=hfZpahlNheXPpD1BnW36M62VAu
-	rlrN6TofIZGqChRkq8GHsiMDC3OH3T+wT3w7Ce8bNz87+aWL0bLpsz9G3weDGCCTZhx1AuPYcJMgn
-	KHxRksvOG8PXh3YN+pgkn9bbYBCnxo199BWc1hAU1MtokQz+fQBXl9borjB5evYC6M6AsA6is9EK+
-	MbkH559dmzkFbf/FIe800RQcjr2nvRwXGorLBG1BgCcMndnCK3hHFUZOoK879sAgUk1rPuN7gSlMM
-	Hi5oJjpPffKStBVWJw1X0ql5yOpPy+nj0dF7pbyamLXDuJrT+zVSXmOVqnAqocgb7KrtjWSXcrn20
-	5bCcZCBg==;
+	bh=Inl8/8OF7icdn7qRzGuxWS4G9tqlBzia12zj0KezmwE=; b=DvCTdk3ymiYp8XDSQsKFehiR4q
+	UVRz7k0yrWjtG8tV2PAE4XG4iT7yEh6zMOm4v4SVei4SGHApbIWis7Ame2FLmAGTGgt0v6fViimAl
+	cAps70L1iY+x2R5XBVYnsbeSw0IcLBQxTaRmGv8EObEIAVwHrWMYDUadW8mOB0NSP6CC8g0RwY06S
+	Lokv+vlMWnSb2lV7Qlm6ZtTmuylO1SbKTcv9oIQm3vcUYFZZRNJJgrrl+FCEYMdXZF9He8LaASbhR
+	K5eIifwuJ78cF8Xd5Lg27MTNpS4g3vq/T0Xq61htgHhA3pDyvKyDp2RUVCT9YONfTXYxOR3VMjiOr
+	BDsOMpFQ==;
 Received: from [179.118.191.219] (helo=[192.168.15.100])
 	by fanzine2.igalia.com with esmtpsa 
 	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
-	id 1wkj2A-00GXeM-JU; Fri, 17 Jul 2026 15:55:22 +0200
+	id 1wkj2F-00GXeM-Lv; Fri, 17 Jul 2026 15:55:27 +0200
 From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-Date: Fri, 17 Jul 2026 10:54:38 -0300
-Subject: [PATCH v4 5/6] prctl: Add support for long user thread names
+Date: Fri, 17 Jul 2026 10:54:39 -0300
+Subject: [PATCH v4 6/6] selftests: prctl: Add test for long thread names
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -40,7 +40,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-Message-Id: <20260717-tonyk-long_name-v4-5-1fedfc870d21@igalia.com>
+Message-Id: <20260717-tonyk-long_name-v4-6-1fedfc870d21@igalia.com>
 References: <20260717-tonyk-long_name-v4-0-1fedfc870d21@igalia.com>
 In-Reply-To: <20260717-tonyk-long_name-v4-0-1fedfc870d21@igalia.com>
 To: Peter Zijlstra <peterz@infradead.org>, 
@@ -58,76 +58,87 @@ Cc: linux-kernel@vger.kernel.org, kernel-dev@igalia.com, linux-mm@kvack.org,
  =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
 X-Mailer: b4 0.15.2
 
-Add support for getting and setting long user thread names with
-PR_{SET,GET}_EXT_NAME.
+Add tests for the new interface to set and get long thread names. The
+kernel should accept the LONG_NAME and returning it accordingly. For the
+old PR_GET_NAME interface, the kernel should truncate the name up to 16
+chars. /proc/<task>/comm should return the same string ad PR_GET_NAME.
 
 Signed-off-by: André Almeida <andrealmeid@igalia.com>
 ---
- include/linux/sched.h      |  2 +-
- include/uapi/linux/prctl.h |  3 +++
- kernel/sys.c               | 15 ++++++++++++++-
- 3 files changed, 18 insertions(+), 2 deletions(-)
+ tools/testing/selftests/prctl/set-process-name.c | 36 ++++++++++++++++++++++++
+ 1 file changed, 36 insertions(+)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 6a48517f01cc..0f1b40a5dbc6 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2018,7 +2018,7 @@ extern void kick_process(struct task_struct *tsk);
+diff --git a/tools/testing/selftests/prctl/set-process-name.c b/tools/testing/selftests/prctl/set-process-name.c
+index 3f7b146d36df..0f20f7deac67 100644
+--- a/tools/testing/selftests/prctl/set-process-name.c
++++ b/tools/testing/selftests/prctl/set-process-name.c
+@@ -9,9 +9,17 @@
  
- extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec);
- #define set_task_comm(tsk, from) ({			\
--	BUILD_BUG_ON(sizeof(from) != TASK_COMM_LEN);	\
-+	BUILD_BUG_ON(sizeof(from) < TASK_COMM_LEN);	\
- 	__set_task_comm(tsk, from, false);		\
- })
+ #include "kselftest_harness.h"
  
-diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
-index b6ec6f693719..a07f8edadd65 100644
---- a/include/uapi/linux/prctl.h
-+++ b/include/uapi/linux/prctl.h
-@@ -56,6 +56,9 @@
- #define PR_SET_NAME    15		/* Set process name */
- #define PR_GET_NAME    16		/* Get process name */
- 
-+#define PR_SET_EXT_NAME    17		/* Set extended process name */
-+#define PR_GET_EXT_NAME    18		/* Get extended process name */
++#ifndef PR_SET_EXT_NAME
++# define PR_SET_EXT_NAME 17
++# define PR_GET_EXT_NAME 18
++#endif
 +
- /* Get/set process endian */
- #define PR_GET_ENDIAN	19
- #define PR_SET_ENDIAN	20
-diff --git a/kernel/sys.c b/kernel/sys.c
-index 3c37b5c1c072..26d5026f9590 100644
---- a/kernel/sys.c
-+++ b/kernel/sys.c
-@@ -2535,7 +2535,7 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 		unsigned long, arg4, unsigned long, arg5)
- {
- 	struct task_struct *me = current;
--	unsigned char comm[TASK_COMM_LEN];
-+	unsigned char comm[TASK_COMM_EXT_LEN];
- 	long error;
+ #define CHANGE_NAME "changename"
++#define LONG_NAME	"change_to_very_long_extended_name"
++#define LONG_NAME_CAP	"change_to_very_"
+ #define EMPTY_NAME ""
+ #define TASK_COMM_LEN 16
++#define TASK_COMM_EXT_LEN 64
+ #define MAX_PATH_LEN 50
  
- 	error = security_task_prctl(option, arg2, arg3, arg4, arg5);
-@@ -2613,6 +2613,19 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
- 		if (copy_to_user((char __user *)arg2, comm, TASK_COMM_LEN))
- 			return -EFAULT;
- 		break;
-+	case PR_SET_EXT_NAME:
-+		comm[TASK_COMM_EXT_LEN - 1] = 0;
-+		if (strncpy_from_user(comm, (char __user *)arg2,
-+				      TASK_COMM_EXT_LEN - 1) < 0)
-+			return -EFAULT;
-+		set_task_comm(me, comm);
-+		proc_comm_connector(me);
-+		break;
-+	case PR_GET_EXT_NAME:
-+		strscpy_pad(comm, me->comm, TASK_COMM_EXT_LEN);
-+		if (copy_to_user((char __user *)arg2, comm, TASK_COMM_EXT_LEN))
-+			return -EFAULT;
-+		break;
- 	case PR_GET_ENDIAN:
- 		error = GET_ENDIAN(me, arg2);
- 		break;
+ int set_name(char *name)
+@@ -25,6 +33,16 @@ int set_name(char *name)
+ 	return res;
+ }
+ 
++int set_ext_name(char *name)
++{
++	int res;
++
++	res = prctl(PR_SET_EXT_NAME, name, NULL, NULL, NULL);
++
++	if (res < 0)
++		return -errno;
++}
++
+ int check_is_name_correct(char *check_name)
+ {
+ 	char name[TASK_COMM_LEN];
+@@ -38,6 +56,19 @@ int check_is_name_correct(char *check_name)
+ 	return !strcmp(name, check_name);
+ }
+ 
++int check_is_ext_name_correct(char *check_name)
++{
++	char name[TASK_COMM_EXT_LEN];
++	int res;
++
++	res = prctl(PR_GET_EXT_NAME, name, NULL, NULL, NULL);
++
++	if (res < 0)
++		return -errno;
++
++	return !strcmp(name, check_name);
++}
++
+ int check_null_pointer(char *check_name)
+ {
+ 	char *name = NULL;
+@@ -82,6 +113,11 @@ TEST(rename_process) {
+ 	EXPECT_GE(set_name(CHANGE_NAME), 0);
+ 	EXPECT_TRUE(check_is_name_correct(CHANGE_NAME));
+ 
++	EXPECT_GE(set_ext_name(LONG_NAME), 0);
++	EXPECT_TRUE(check_is_ext_name_correct(LONG_NAME));
++	EXPECT_TRUE(check_is_name_correct(LONG_NAME_CAP));
++	EXPECT_TRUE(check_name());
++
+ 	EXPECT_GE(set_name(EMPTY_NAME), 0);
+ 	EXPECT_TRUE(check_is_name_correct(EMPTY_NAME));
+ 
 
 -- 
 2.55.0
