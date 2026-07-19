@@ -1,180 +1,146 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-lj1-f176.google.com (mail-lj1-f176.google.com [209.85.208.176])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21B3B325490
-	for <linux-api@vger.kernel.org>; Sat, 18 Jul 2026 19:39:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784403596; cv=none; b=lhOyQec39B4sU9dgFM9GNaPXr/NNZwTJIeOUVv7n1vPCK2pVFf/utUcIBSwXVnyLsVO0FuGWUV63Yv2Jf1+fFw2HHySyrKjStH+sYV3ABZOUUE7KQkjSQ9d/YTwFzOwyW6E1TlieqLnPg/Z0ROLjY3oP0m7TSc9UKgYfXV8YDs0=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784403596; c=relaxed/simple;
-	bh=6HZvEfa/Gg3qLeLXrnqD8wi1HgmNRFlhLvjoQECOQhE=;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F1223914F0
+	for <linux-api@vger.kernel.org>; Sun, 19 Jul 2026 14:12:56 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.208.176
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1784470378; cv=pass; b=rmj99QWFHSVIaxHz+9SX+ZyrMZOW5pDeKKW0wqmIP6YVS7cCzwyZbyfYvYLW0LQL6YJ0V/BjYCQYzq7k/+TCu0TWsUDJGKqhIgAHpSZfwbWe+q+7QLMgEpjlfBijWIReMwOJPiZbfqZmZAyFWEROSuYoafmeKXF4lWWahgauqf4=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1784470378; c=relaxed/simple;
+	bh=Gf39QtDs1NJUG97yBMAnk9ZJwy/ZHg7aeBsaEUjF3/g=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=Wbf8K7wl6NYK8jnHW/FlvxJY7qKInTJFQHidVhEMMCMT6mJB6ZhjLs1biI2ucolhNkGuwdQsYCnAX4Md+wZGMNJ2yrK5br9Oz8UOroIqVAZZwhilEADMqwCP1OlGelGSWvuSy8gUyKcPeQMpODB8s9DPu/yOWLRO1TIQ4Oi0j/4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=irAMvTFd; arc=none smtp.client-ip=100.103.45.18
+	 To:Cc:Content-Type; b=QH9nIWSifTVJrUe0pDAWXy8UstfPxzoycrxPIwsMxR3YWDBJ3VL52UN0/ohBcHRYx1f8xDN9tosGS4kuFfhVwkbQvwBhWE9xAqK6V9ZzuNXIMvpkbNe2t6aZp/KDHibAW8hkOoJNDh7zqKkcE8mEhN8rUHzcBae7C9MVBtorWPo=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net; spf=pass smtp.mailfrom=amacapital.net; dkim=pass (2048-bit key) header.d=amacapital-net.20251104.gappssmtp.com header.i=@amacapital-net.20251104.gappssmtp.com header.b=d9wy5ZKV; arc=pass smtp.client-ip=209.85.208.176
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="irAMvTFd"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C25571F00A3A
-	for <linux-api@vger.kernel.org>; Sat, 18 Jul 2026 19:39:54 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1784403594;
-	bh=wnjvK5TogWv++ZaSJX8JOOWJ2YLUTBtBygq2xMyDmVY=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc;
-	b=irAMvTFdoFcWBxEYRqUVJ8XuL60OzDQA4E/tLc87ray6p7SGrW5aZgT/5U0x4yTQ4
-	 JllVRuKkq1HwAlfgjdnRPCyK/BQ7uCkjOW3tU45xvYzlB+rNbSlHh1TXBrMe6ZrEHq
-	 Yf0Lt6Ec4YPRN2yoQYVt15Ikn3o22SxXh0KoBg8KEArmWloJ7uevrzoM7lwU+oo+L9
-	 cTSZsJM2EfVwG/okgH2V2EGOEQXTHlefKd2m7DF0tfehh5HaQ3GqgF6T+XzKrRn6x7
-	 72pL1QeG257yNbFOKwvF9SyDPEOmITzq2GLuYlKFsHf7w6NbNH79OehB85sJWuT3qy
-	 t53Hd6ArelP6g==
-Received: by mail-lj1-f171.google.com with SMTP id 38308e7fff4ca-39c7ac9b8c3so51521481fa.0
-        for <linux-api@vger.kernel.org>; Sat, 18 Jul 2026 12:39:54 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AHgh+RpBive+1QlfjgdRg/vJ5BYiFnU11BSG6cdwzF8Q0kKXBn6kMPdpN6CQkUQ5OE1xE4JWKwwnJWQGLxU=@vger.kernel.org
-X-Gm-Message-State: AOJu0Yz3tGC3JL42456sWI7QvF7WgrfcnKu/CTze7sP+KvI0Lfp9NFw7
-	rMJnbP+2yLnfM/4ir3gw0ZNUYTGRFWm7FWMNh9HIXDtwy9ktMJ22xWhZ1S4EHScys1T9aPV1grd
-	tfyTkKtGIpOlvBHZheGKuhT8OKaMZzmaNOqn9aCbz
-X-Received: by 2002:a05:6512:318c:b0:5ae:b7d4:7dd7 with SMTP id
- 2adb3069b0e04-5b28f879e58mr1729092e87.24.1784403593038; Sat, 18 Jul 2026
- 12:39:53 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=amacapital-net.20251104.gappssmtp.com header.i=@amacapital-net.20251104.gappssmtp.com header.b="d9wy5ZKV"
+Received: by mail-lj1-f176.google.com with SMTP id 38308e7fff4ca-39c9107baa7so96309711fa.3
+        for <linux-api@vger.kernel.org>; Sun, 19 Jul 2026 07:12:56 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1784470375; cv=none;
+        d=google.com; s=arc-20260327;
+        b=oTS5D8qpujsZHtbup21Qoe4vAIc3PvFLJOdBq//etPuhe/W0EXfeCvLXsv/vTtyj2K
+         oP5iRAMtweHmkcrEkNW9vTDFK16ibDmtmJoOQM88rnfuu22MUV672JXB7hfaI7sm/9EW
+         RUjwncRNSVRnMZhKaLelgdJA4zBc7nPsxdoqPkTuqfNbj0LhzQ4v0Ny2fRG1BUCcp8kh
+         IcbRj1ePnKMRzkJ6CuwJg3q+vEDAP1Lplqal+lOrmmwKtmSGChtIUnbqYABNwNFDI0ym
+         jebrwGYwu5vWni8YQ1R3gg/nTHEiqIZK3+DfX8cqmAseRUPuByM7wqkMZhcs38WQdE9q
+         uJ/w==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=8fnfVrhkwP422PxO/5FsFZHAUY1r3GNO+87kR51xMWc=;
+        fh=AuIzExGaXiix9TIOifwAyamYG0uHpm4xH9flddvCGes=;
+        b=KOE+u/c4tHPILRC5sm9GrJEjB7TsY6Dd2iNW1yQ+bvJ2PTmTbnLYWXHGNDNFwrgD/a
+         1r9cczmxC0oBVUeso/M//cDdsvKma8IN1z7wUjw12IFy1ukOxr7YE01f/wXdBQxCWvTB
+         MDlBwVLCVE59ZwoLggLLEMQ5jwhR1yPJ3P2HmrgP8LKn+QD1b6SOLQlrSqQjC9iNHnmt
+         pa5bdeiBBvqLnUxE5/XrFPYvHeYcbMlRHMY5ryZR04c/panZjhxom7+yHRP6nmw4Dp7f
+         deAqGm5C3O8DhZV7095BrIEwKogWvzbE3J32F5hgzueHQKMCoTA+7LtLQu+SMOBB8BJO
+         jYdg==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amacapital-net.20251104.gappssmtp.com; s=20251104; t=1784470375; x=1785075175; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=8fnfVrhkwP422PxO/5FsFZHAUY1r3GNO+87kR51xMWc=;
+        b=d9wy5ZKVfznR4qbSmLHM5wLxuSjQRPGy4i0VLYQtK5dLLnwGkRiddDA/VLgetiMi05
+         Y+I5UVuKvV9E3SM3HWug7hMlD4PFdtZXvAOxx5/lQIh2bzY+pz1wpzt6Bzg0w3hILDMW
+         e3GsK76nCbgIptHRnYDLRt9rCOZy8ameABUXCEZA8dK9EblMfR74xzbuPGYobV75OCGT
+         5dmKGa4DA83unOer5/p/6wDrCqXELBQgzfxOhfojRcG7ht8/0nlpdK50hruoJQPTrjAj
+         m2PabkRjHvH6MgKwQzHgdBgP8HHyIdR7r2EMuqKn+CkNA0aIbcifu3rVZlrjzFttBdzl
+         Ph6A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1784470375; x=1785075175;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=8fnfVrhkwP422PxO/5FsFZHAUY1r3GNO+87kR51xMWc=;
+        b=VDdYNNk1QiBiu6c0MZ3nnJ8F3P935D6vtE19RsKu0XEvOp90jSRsbclxi/17L6wnOk
+         ktNI7NtJokBid6kvyPMIeN8GXHSXKvAXZ45wCi+YvSpaxLpBH92jDQQSIG5IlSEjfsIN
+         XlSbCuS43izr/UbxiGm+R4d2iR3qCHIelCpBNJruXAaedpyj4S7fXFMqNbA7NdhdFw8R
+         qczSD0VBc2S1vZZscTG0OAmgNmDXdYVqxFNB7LwO0viJyM54ILJdLGhn2Rxsq593NV68
+         EmLUMDdrLSlEQztdA2/qRLxnga2frV6eDhApj9MN3aazCJ/X2/kS/hiENTuhWmaEOxNu
+         f/6g==
+X-Forwarded-Encrypted: i=1; AHgh+Rogc6+9lAdNu9P1cGgAWxSBG7VeO9FE/o/8N6nu+iAkA/tpXPlbicDnDyAZBMcEHx7NNOxemmV4TGM=@vger.kernel.org
+X-Gm-Message-State: AOJu0YydG9dXfpNusIzv5lYjux1/MyPgJMaS9fu9aw5TszMuUjiaNVi7
+	dBLUDaqCsCa7cS1v75p9lJYdn2CCHxNaDEy4Vnwla+hoDdC5Mxnus+uI5CzA497I7K2ZD1SRwR0
+	pjjgI/wOfrbb4XoBCnRvHtXTZ6EVEuCIt6BOaw1k3
+X-Gm-Gg: AfdE7cluXaLRtFixN0YFZgNM6c8D6wNZGa13fUagdJ+qTJS5m8t/iIzzwfxvgy/unLL
+	gmGhAssdm6rs40WgRpYwiDswO5rZBHK3uS61VZhyplIbiJj0SBm0Clr8/O6rK7DHvEfNIoZgTmf
+	Bx/v8FmyBJGBrxGWCA+vW6s5s/qbc4JWCIRatDQmio3rUzr+wx9/HfIEhIbeB/KO//+LTTt0Yjx
+	vMV6UN+KkiiFehammkJdZN7aB7KMteaJ3ANNmqgWpElhR6Bvamm0JRdNgg=
+X-Received: by 2002:a05:6512:3d8f:b0:5b0:1879:1ba9 with SMTP id
+ 2adb3069b0e04-5b28f9a5720mr2256451e87.33.1784470374426; Sun, 19 Jul 2026
+ 07:12:54 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <a49ce818-f38d-41b0-bbf7-80b8aad998b1@app.fastmail.com>
- <20260629-hauer-erhitzen-sobald-96d3dff68707@brauner> <CALCETrVuh0-biOw=TgYN9ERTFAoiki57XeZ3S2T3dO2+hL54gA@mail.gmail.com>
- <20260702-entladen-farbkombinationen-klarheit-fe24cb608f23@brauner> <20260706-dabei-radeln-glitzer-71ecb835029c@brauner>
-In-Reply-To: <20260706-dabei-radeln-glitzer-71ecb835029c@brauner>
-From: Andy Lutomirski <luto@kernel.org>
-Date: Sat, 18 Jul 2026 12:39:39 -0700
-X-Gmail-Original-Message-ID: <CALCETrVjDtBmB+boCUgd069UpZGUB1TCbEn3k1HZQex-_dPgbQ@mail.gmail.com>
-X-Gm-Features: AUfX_mwi8E7EX3ucsAKoGp35lnBZlX3ZZXeZYq3-vf-ZNEwzMurGVJdsjLAABDE
-Message-ID: <CALCETrVjDtBmB+boCUgd069UpZGUB1TCbEn3k1HZQex-_dPgbQ@mail.gmail.com>
-Subject: Re: [RFC] Null Namespaces
-To: Christian Brauner <brauner@kernel.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, 
-	John Ericson <mail@johnericson.me>, Li Chen <me@linux.beauty>, Cong Wang <cwang@multikernel.io>, 
-	linux-arch@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
-	Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@kernel.org>, Ingo Molnar <mingo@redhat.com>, 
-	Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, 
-	"H. Peter Anvin" <hpa@zytor.com>, Jan Kara <jack@suse.cz>, Jonathan Corbet <corbet@lwn.net>, 
-	Shuah Khan <skhan@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Kees Cook <kees@kernel.org>, Sergei Zimmerman <sergei@zimmerman.foo>, 
-	Farid Zakaria <farid.m.zakaria@gmail.com>
+References: <20260715101107.973997-1-mszeredi@redhat.com>
+In-Reply-To: <20260715101107.973997-1-mszeredi@redhat.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Date: Sun, 19 Jul 2026 07:12:42 -0700
+X-Gm-Features: AUfX_mx-VrWAtPNuDviKfVjbn51tqQht-nWAXr-HfoWBbjn3eDOh3hiCtUPefpg
+Message-ID: <CALCETrXYHX+OSwm6vhzQqvdk9Fkbxzh_dGuVm2tjvPJG_x1XdA@mail.gmail.com>
+Subject: Re: [RFC PATCH] fs: allow opening overlayfs/erofs layers through O_ALT
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: Giuseppe Scrivano <gscrivan@redhat.com>, linux-fsdevel@vger.kernel.org, 
+	linux-unionfs@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-erofs@lists.ozlabs.org, Amir Goldstein <amir73il@gmail.com>, 
+	Gao Xiang <hsiangkao@linux.alibaba.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Mon, Jul 6, 2026 at 8:31=E2=80=AFAM Christian Brauner <brauner@kernel.or=
-g> wrote:
+On Wed, Jul 15, 2026 at 3:17=E2=80=AFAM Miklos Szeredi <mszeredi@redhat.com=
+> wrote:
 >
-> On Thu, Jul 02, 2026 at 11:34:01AM +0200, Christian Brauner wrote:
-> > On Mon, Jun 29, 2026 at 02:06:55PM -0700, Andy Lutomirski wrote:
-> > > On Mon, Jun 29, 2026 at 4:45=E2=80=AFAM Christian Brauner <brauner@ke=
-rnel.org> wrote:
-> > > >
-> > >
-> > > > But I guess the even simpler model would be to copy what I've been =
-doing
-> > > > for pidfs:
-> > > >
-> > > > +static struct path nullfs_root_path =3D {};
-> > > > +
-> > > > +void nullfs_get_root(struct path *path)
-> > > > +{
-> > > > +       *path =3D nullfs_root_path;
-> > > > +       path_get(path);
-> > > > +}
-> > > > +
-> > > >  static void __init init_mount_tree(void)
-> > > >  {
-> > > >         struct vfsmount *mnt, *nullfs_mnt;
-> > > > @@ -6209,6 +6217,8 @@ static void __init init_mount_tree(void)
-> > > >         /* Mount mutable rootfs on top of nullfs. */
-> > > >         root.mnt                =3D nullfs_mnt;
-> > > >         root.dentry             =3D nullfs_mnt->mnt_root;
-> > > > +       nullfs_root_path.mnt    =3D nullfs_mnt;
-> > > > +       pidfs_root_path.dentry  =3D nullfs_mnt->mnt_root;
-> > > >
-> > > >         LOCK_MOUNT_EXACT(mp, &root);
-> > > >         if (unlikely(IS_ERR(mp.parent)))
-> > > > diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.=
-h
-> > > > index aadfbf6e0cb3..f55c87c70b78 100644
-> > > > --- a/include/uapi/linux/fcntl.h
-> > > > +++ b/include/uapi/linux/fcntl.h
-> > > > @@ -124,6 +124,7 @@ struct delegation {
-> > > >
-> > > >  #define FD_PIDFS_ROOT                  -10002 /* Root of the pidfs=
- filesystem */
-> > > >  #define FD_NSFS_ROOT                   -10003 /* Root of the nsfs =
-filesystem */
-> > > > +#define FD_NULLFS_ROOT                 -10004 /* Root of the nullf=
-s filesystem */
-> > > >  #define FD_INVALID                     -10009 /* Invalid file desc=
-riptor: -10000 - EBADF =3D -10009 */
-> > > >
-> > > >  /* Generic flags for the *at(2) family of syscalls. */
-> > > >
-> > > > we then add fchroot() (overdue anyway) and then teach both fchdir()=
- and
-> > > > fchroot() to honor FD_NULLFS_ROOT. Then a process may shed its fs s=
-tate
-> > > > and move itself into nullfs. Restrict *chdir() and *chroot() for sa=
-id
-> > > > process via seccomp and it's locked in forever as well.
-> > > >
-> > >
-> > > One thing comes to mind that might need a bit of care: this would giv=
-e
-> > > an API for any task to get an fd to a directory that lives in the ini=
-t
-> > > mount namespace.  It's not at all obvious to me that this is dangerou=
-s
-> > > or even observable (you're not about to find a setuid program in
-> > > nullfs), but I think it's at least worth a tiny bit of consideration.
-> >
-> > Yes, I thought about this as well. But it doesn't have to be this way.
-> > Every mount namespaces has nullfs as it's root ever since I introduced
-> > it. Which means FD_NULLFS_ROOT can also just mean "nullfs within that
-> > specific mount namespace". That's fine.
-> >
-> > For my FD_FAILFS_ROOT proposal it would be enough if we make failfs
-> > SB_KERNMOUNT which means it's logically distinct from every mount
-> > namespace. I think that might be the right thing to do. I need to spend
-> > one or more brain cycles on this though.
+> This is a prototype patch. Needs to be split up!
 >
-> I had to take a long drive on Sunday and I kept thinking about both
-> FD_NULLFS_ROOT and FD_FAILFS_ROOT and ofc there are some things to
-> consider/discuss.
+> 1) O_ALT / OPEN_TREE_ALT
 >
-> I think the straightforward solution to FD_NULLFS_ROOT would be to just:
+>   These open an alternative namespace rooted at dfd - instead of resolvin=
+g
+>   the path in the real filesystem, it resolves it in a virtual tree that
+>   exposes metadata about that file.
 >
-> - make it always available
-> - refer to the caller's mount namespace nullfs
-> - work with fchroot()/fchdir()
+>   This is intended to provide an alternative to adding new ioctls:
 >
-> So I considered two chroot() use-cases for the sake of simplicity:
+>    - provides structured namespace
+>    - allows accessing data through fs ops
 >
-> (1) You want to isolate yourself for the sake of lookup
->
-> (2) You want to isolate yourself to assemble a "private mount tree" but
->     not really be in a separate namespace (very odd use-case... but it
->     helps to make a point).
->
-> The problem with this approach is that everyone who chroots into the
-> nullfs root would suffer from the problem that any mount on top of it is
-> still visible. So that kinda makes it pointless for both (1) and (2).
->
-> Also all mounts that someone else would do would also be visible
-> allowing multiple chroot()ers to affect each others state. That also
-> would somewhat defeat the purpose of the chroot(). So I'm not convinced
-> this is what we should do.
->
+>   Could call this O_META, but O_ALT seems more generic and there could be
+>   uses beyond metadata (e.g. seekable, in-place decompression).
 
-After some contemplation and a long place flight: are we talking about
-nullfs or failfs?  Because I would expect that it's entirely
-impossible to mount anything on top of failfs.  So failfs would be
-useless for #2 but would still solve #1.
+This gives me the willies a bit.  It's very cool, but it has some
+potential security issues that I think we need to watch out for.  As
+sort-of prior art, NTFS supports alternate streams and Reiser4, ahem,
+supported files-as-directories.
+
+Some questions that we would need to consider:
+
+1. Can you open an fd referring to a "directory" within an O_ALT tree?
+ What happens when an unsuspecting process gets such an fd?  Can you
+fchdir to it?  chroot to it?  clone its tree and possibly bind-mount
+it somewhere?
+
+2. Can you bind-mount *onto* something inside O_ALT?
+
+3. Whose creds are used for which operations?
+
+4. Can you mmap the things in O_ALT?  Is this determined per object or
+generically?
+
+5. Would we ever allow FUSE to expose custom things inside O_ALT?
+What contents of O_ALT can a program trust come from the kernel and
+have the expected semantics?
 
 --Andy
+
+--=20
+Andy Lutomirski
+AMA Capital Management, LLC
