@@ -1,110 +1,91 @@
-Received: from mail-qt1-f180.google.com (mail-qt1-f180.google.com [209.85.160.180])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from list.codeweavrs.com (list.codeweavers.com [4.36.192.163])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5E1733D170E
-	for <linux-api@vger.kernel.org>; Mon, 20 Jul 2026 09:22:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.160.180
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784539344; cv=pass; b=DN8QCWOd7MO2txuAh2lorZ0qkwxXpiJJdnARn0QbfBwnv14ZTH2qQR7sk1eJmzTDuXk+tc/39Ban1U7psAkmJkX1YAo+rOgR3u9AqupsWdsvbl4jC40P3hwS00qJmY2JzjOFfjW7gjnmOqpQpqJCUSH7Lq1kknYrmUeFKCNIvuw=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784539344; c=relaxed/simple;
-	bh=v1G/U6rYwbjprWYcPlrHGKT0xVAuOYF1UYTXLhSRnAM=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=kTz5W2RvnmLoB0vudFNW2M0ccsRc6kTlN34e6HkDOq1+5NPRzw7i4bteN1+qb2Nd59R/3LVOzMffKnzgRDf1P67efX9+wNMc3Y97V3PjPP6FTvklaC9rwCCmvcGMNA6drZacZ4Gw8UtbCQB7G9bgMuypEhWt6s7qxsavT05DEjA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=szeredi.hu; spf=pass smtp.mailfrom=szeredi.hu; dkim=pass (1024-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b=aebP9PPQ; arc=pass smtp.client-ip=209.85.160.180
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=szeredi.hu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=szeredi.hu
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3D7BF446828;
+	Mon, 20 Jul 2026 17:35:25 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1784568929; cv=none; b=jm3a87UDPEq+WUYAaxpcU091Z0cNu2U4kfSMai/LgR0UHdH3u+yAjVj0WoQpSCTyvb4ITcii7x/d/fBvGsklrLS7Q9l8dP43BQOGvUgC6iUiaRBYRBYR1fWUNZ8kQUY/NYMshtCILs7VaBu6gqCdewHxzvpaEGE7Ipi7tTQQ5vU=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1784568929; c=relaxed/simple;
+	bh=BbUNTYM56/ulELyMb/+QTJintb3w3cqQTEBM2+tC2vg=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=cG3RmxVPXpGQ6ob6IAL9FTFl//bFIzjCqZzXmOMqkclj+G8gjpWChC7DfPO7JOQUJaQdEaVw1b9FP1zu2ZarCKYIaV5O8CayydZk8VPod07ouGBvaCvW4DqQvDaC18UopK6M0409mAmzqYrxr00XMibUrZF4LcYFYZOTN9BppU8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b=mcZB1qMQ; arc=none smtp.client-ip=4.36.192.163
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b="aebP9PPQ"
-Received: by mail-qt1-f180.google.com with SMTP id d75a77b69052e-51c1372f84dso63043431cf.2
-        for <linux-api@vger.kernel.org>; Mon, 20 Jul 2026 02:22:22 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1784539341; cv=none;
-        d=google.com; s=arc-20260327;
-        b=JM1Vxbm6vy2eA0uYd6V9oSkaXN9CH6XCOBKwlRghvGN4NCS4V21vgUenGWQb7TWU98
-         0F0wzju8fUdO7WIsptcgsU3nr4zmjKw7XCxMKWyXwVMzUshz9aNd6cNr5na5gzpW3KRK
-         4No5iJKaRmkGefM9u/E+42I2HSvGTItZBOMacoAG8Vs5MBCxQJFx0/+xfPt6fQajSmCr
-         WVWde0LqTtfauTt3PA+SDO/d5elqk3CtIBLiuNxk4f1l7A6RrXJyt/i3rrkt6IWTOj9b
-         7TWb5ml64rMN9D2H4tAVv4FZsw+EbxqXCotMLdBKeEE0pov51EBi5Zz2uCrcV0JXQBDM
-         ZaSg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:dkim-signature;
-        bh=ip3jHsFq/3cxVMe2s230B81UAfkN7lmSalsLm8p4Mjs=;
-        fh=AU7jhFgqXpYEB4NIDER0AQdf2TelVJ8TlwGtXNuxN4U=;
-        b=dnoVob/dUDi2X3L9m0rX4PITky1cIfD49EQFfMKVOwTF5h0a5OCMyQeh4yP2GDl+RT
-         IhNfW6u2fZjN3oQOHL+SNIxn6gcvcdMroT6jy6Sf46U5ucBBSmBiOqPy14vK5/SE8fcE
-         a9F5PNPI11R2p5A41oS9wN4F2oyljVyv2SGurAu00npdd5492+qP6TWHIHe4u41znFFi
-         IDb4q7e15Sp5iCyUOfEAXzw4Zy46/MCLIVCmg+bSxrPwxSOwpUa8hiGOJxmUADY4r3Py
-         IaGEIq6PQY/YB9Ve1lWlmUFGJ6BTdnVPGUnkh7UEk/zYfVqgTULc+E0J67ivQSa5Z2k1
-         hwRQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=szeredi.hu; s=google; t=1784539341; x=1785144141; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=ip3jHsFq/3cxVMe2s230B81UAfkN7lmSalsLm8p4Mjs=;
-        b=aebP9PPQR5pm6N7/qxL7c65gZmz19yeADLMgDCVbA7eBNiQ1p0LOsj+dZU4dBMjHkY
-         TYI/0bXSSPxHqc/Th0TyEqYLJLywLtNWBP8SfWlNyozVDr+V17Dw6OwyV2r5IEJqJ1Nz
-         CXeTY+f2ynux3DvQ8s/P3CSutNxD05Upp2Ifs=
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784539341; x=1785144141;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=ip3jHsFq/3cxVMe2s230B81UAfkN7lmSalsLm8p4Mjs=;
-        b=O9ZTsOrwNWj55OxnMJknUlgfMOZG1eLrY/p+8zK8rVSmgs9YfVEqyW2eiWzyfjJkto
-         wWYWsyOQtG5b2L5D25haoOMMpqtYuGGnMY4/KNtHyh6NoTdNJeBaOWVrvlWLPBUZoJsR
-         4rehS+4/vdNP5iUr1t16elW6yJEOdfLBe/Tfi8gOC5SdqWQrYzBGuXM1chBUEZWzamyl
-         PdQvPA5C2ddvF5BTd1a1s5FV6V6zs031XThye7E9/p6I+cDWEwgcJKgx15O7uc3F9FDT
-         hUW0cG+2z0YBtJvFmkqmXmIFdW8bye4XOTmqecSAq5c32/FDPtZ3al52SsLawg0m8bFi
-         J7Vg==
-X-Forwarded-Encrypted: i=1; AHgh+RphKfY2xcys6ca1tmG+ymBFmChJiBrBERrUuHj5ejByUAGe7bG/yDSm6FcwGb2+HHmUFAk4MRy5dVU=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzwD4x7DPR/hiEpXLUiOEHfWZB/cvAO/tiiUwl6Xp2UGYxNUi7l
-	ISJYQ0XwCe+TPeH2R1ozVo7B3nzMtn0YLOY2XIydGsjX9mINVrwEiKrlxF36UcBq741Er92/R7Q
-	FxgnXVM1o9ualqn91k2RQRlTuBYCvnw9FXjML14YYAw==
-X-Gm-Gg: AfdE7clxB6CSLIxlRGQGcY386V/ePTMc3qAX9+Dh0tO2ILkOMhX3n7ltH6v4y35D0WB
-	4l8il2fguJbiJ9croy0Dw9AnALwd9ijRpVE0HyXRldaxTRWL3MLvlCuEonq2w4TOgwIg59/qwFa
-	wWhwZNG61h99Grnr4//CFRRLQ9YpIoKMPEVA4qZR0Dzh3k77rLe0uZ3LpmKPjPDOXGOOFdbnMZe
-	EpOxkEZO9tKUFBlaCbfyO7ZI292HcSr6KfJ0HB2JP+f99BPEC+ZVNpCY3X4E4PgcN17vIGhIls4
-	LxyUtDLED9QhkjB+ww==
-X-Received: by 2002:a05:622a:1192:b0:51a:8c9b:64a2 with SMTP id
- d75a77b69052e-5213d0c7ca4mr116936831cf.70.1784539341012; Mon, 20 Jul 2026
- 02:22:21 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b="mcZB1qMQ"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=list.codeweavers.com; s=list; h=Content-Transfer-Encoding:Content-Type:
+	MIME-Version:References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender
+	:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
+	Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
+	List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=lfHZg+u8ne+vOi+IymxWIYACUEM7LNtzyJvvMTkgCrU=; b=mcZB1qMQS/bbSi7AsDQXpwIRA/
+	8FL9H5UT6Fl9YZrpC99VsYD2uo7Wxvg7tE9BJKOnsD7WRB6CqJ20ta6Jji8mvPbbE5Y2JvM/BVcGn
+	TwgDyGrrB59KiCNpE7cmAKES4AJ66Szs2UfM1HYwFtPPKixyrkwHXAzrw5kXnOGNKJZE9kvr1uLM6
+	sJn/3NxXv6E3VCP30/JVfpsxtHM5Bbp8nDfC8cB12FGqmmwLiRceSdxBFlw5x44zGc2K9B+Z1MT1e
+	Fhn8yFBnZgFdb+PFIq6L2e0ZNDzderWHce55c6xveqZk1rXmgcADl3yzXsvNxqVGniFkS1WYYlHiB
+	x6vH8rQQ==;
+Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
+	by list.codeweavrs.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <zfigura@codeweavers.com>)
+	id 1wlrcg-001Fmy-05;
+	Mon, 20 Jul 2026 12:17:46 -0500
+From: Elizabeth Figura <zfigura@codeweavers.com>
+To: Arnd Bergmann <arnd@arndb.de>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	wine-devel@list.winehq.org,
+	linux-kselftest@vger.kernel.org,
+	=?UTF-8?q?Iv=C3=A1n=20Ezequiel=20Rodriguez?= <ivanrwcm25@gmail.com>,
+	Elizabeth Figura <zfigura@codeweavers.com>
+Subject: [PATCH 2/4] selftests: ntsync: fix wake_all CREATE_EVENT fd expectation
+Date: Mon, 20 Jul 2026 12:17:38 -0500
+Message-ID: <20260720171740.447035-3-zfigura@codeweavers.com>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20260720171740.447035-1-zfigura@codeweavers.com>
+References: <20260720171740.447035-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260715101107.973997-1-mszeredi@redhat.com> <CALCETrXYHX+OSwm6vhzQqvdk9Fkbxzh_dGuVm2tjvPJG_x1XdA@mail.gmail.com>
-In-Reply-To: <CALCETrXYHX+OSwm6vhzQqvdk9Fkbxzh_dGuVm2tjvPJG_x1XdA@mail.gmail.com>
-From: Miklos Szeredi <miklos@szeredi.hu>
-Date: Mon, 20 Jul 2026 11:22:09 +0200
-X-Gm-Features: AUfX_mz0IN3hn5QumsNu3idUZDFLnqeEUQTN9zg17vrQKR01GmrNXzVy6O1zEgw
-Message-ID: <CAJfpeguxCOw4cURjPVOMj5-A7JnLrmy8zx4qE9uwxg7x_Wr+zg@mail.gmail.com>
-Subject: Re: [RFC PATCH] fs: allow opening overlayfs/erofs layers through O_ALT
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Miklos Szeredi <mszeredi@redhat.com>, Giuseppe Scrivano <gscrivan@redhat.com>, 
-	linux-fsdevel@vger.kernel.org, linux-unionfs@vger.kernel.org, 
-	linux-api@vger.kernel.org, linux-erofs@lists.ozlabs.org, 
-	Amir Goldstein <amir73il@gmail.com>, Gao Xiang <hsiangkao@linux.alibaba.com>
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Sun, 19 Jul 2026 at 16:13, Andy Lutomirski <luto@amacapital.net> wrote:
+From: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
 
-> This gives me the willies a bit.  It's very cool, but it has some
-> potential security issues that I think we need to watch out for.  As
-> sort-of prior art, NTFS supports alternate streams and Reiser4, ahem,
-> supported files-as-directories.
+wake_all used EXPECT_EQ(0, objs[3]) after NTSYNC_IOC_CREATE_EVENT.
+The ioctl returns a non-negative file descriptor on success; check
+EXPECT_LE(0, objs[3]) like the other CREATE_* paths. The incorrect
+expectation was noted on list (Mar 2025) but is still present in
+mainline.
 
-I realized that we can keep the creepiness factor minimal by
-introducing this first in procfs only.   That way zero changes are
-needed in the path lookup code:
+Signed-off-by: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
+Reviewed-by: Elizabeth Figura <zfigura@codeweavers.com>
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+---
+ tools/testing/selftests/drivers/ntsync/ntsync.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-sprintf(buf, "/proc/self/fd-alt/%d/%s", base_fd, alt_path);
-alt_fd = open(buf, O_PATH);
+diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
+index e6a37214aa46..12b4b81edf7f 100644
+--- a/tools/testing/selftests/drivers/ntsync/ntsync.c
++++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
+@@ -968,7 +968,7 @@ TEST(wake_all)
+ 	auto_event_args.manual = false;
+ 	auto_event_args.signaled = true;
+ 	objs[3] = ioctl(fd, NTSYNC_IOC_CREATE_EVENT, &auto_event_args);
+-	EXPECT_EQ(0, objs[3]);
++	EXPECT_LE(0, objs[3]);
+ 
+ 	wait_args.timeout = get_abs_timeout(1000);
+ 	wait_args.objs = (uintptr_t)objs;
+-- 
+2.53.0
 
-Thanks,
-Miklos
