@@ -1,34 +1,34 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 00760470430;
-	Thu, 23 Jul 2026 11:30:50 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F0F1471D0A;
+	Thu, 23 Jul 2026 11:30:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784806254; cv=none; b=NWJIldrqcm4oJbwHogk3m4hgrFmm9ZbikRSdGQknXpcP7FuEBt4iZoFINSkbCeerHiYf/CeDqF9/31sJsStms0GYkkyJ6vI/sZ2LMbpFsWunjYdgCvEBevZh57+T5RNJIw0TkCdsEGRdQVvrzUxheh/40sU9InVplRD9PPmmWYs=
+	t=1784806259; cv=none; b=KTKEnQuIH9JCZUIUcApHQhPZ2Cw5TxzKqINeoy1Y4ApbSa6Ajs6qA5TBwtJLjziAPC8ndD0RqIuc/ySAYUSTRF493c+eYWybglTOL3j6gkF/GDhEmN9jbaKHdTuy9/2w+RFIM8r0P36q9jDbAxlHkGPDYOwpqg6fp//tpm51eW4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784806254; c=relaxed/simple;
-	bh=yqO6vurUVKadnYgpnL4LMFtHuyT4slGfIqlnKKYdgCY=;
+	s=arc-20240116; t=1784806259; c=relaxed/simple;
+	bh=nRFC9CX4rCzP8lIbZ4N7tGTayMaHlcSYceXYpg2Mxj0=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=eLWV6mxpyeAAeMiQfBEdS8N3Bwdd89YF8EFmbifW+JFeiiVvZI70Cs+Q2Wk0OLc6Mu0CA6UCseJXR0ZJbWpNyPeVa0Gf7/TMVnZCHHuylPhYvGW2uFrZjFr1szuNf1mKBPtByhxmSZ57BZYYWc7E93RYVD1la+ZyqCdnELxZcRA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=PX+UDEc9; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:To:Cc; b=c1PukNjQEihIL54ZAZZmJyfQYTNLt+fQ5ztRuPDfncYzQCUSs3OKhZavNxdKAxAfKllRiFcuxUrc5cARtkZ3crk0gTkj2qCUS//n3mFL7Su9oPOv9bHMcgtwU16VzyUGSoVfzcBhaAFz84JwU3nWa9pYmhzQtIuovUJ+QSQ81JI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=CuLpC7FD; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="PX+UDEc9"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8D0F81F000E9;
-	Thu, 23 Jul 2026 11:30:46 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="CuLpC7FD"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 35BF61F00A3A;
+	Thu, 23 Jul 2026 11:30:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1784806249;
-	bh=FwpYn/7CVQ0Kudm+A/0Wp/DqAAY0gvJL5RppLdjSL8Q=;
+	s=k20260515; t=1784806253;
+	bh=7wG6mcm6Vty+OoAzAwdyWoiMNMaLRj8Y82jQaGy06/s=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc;
-	b=PX+UDEc9N4UI4hSIG7wzkVlj3XC18kCFee5bSjxnyjKokFRhKcRhoN2wLWJbPNkhW
-	 ObYo9p/lDmp6GNK7llNrVVlQ7ysztJht5Ll3QB2KihJdvFuFFXR5hmQnJjjG89Kl92
-	 8ClwOta63fGbiiuOchOaKIVC8Xqgo+7lQPrageQ9041dMvNXQjozK89YAjHILOhb1a
-	 SeWrpqau3JzMS2Xuw637ZQj5vaHDb1GOjMRQdLqAo8JlsgMhIYP3PNVZTHcODoyalB
-	 938cZ26q+HGaNBHvzQgcz2HMLigfFEbT3oMs5tTbPS7oICK9rAfH66JmKHZX4wHjey
-	 N7ITFibQJR0Sg==
+	b=CuLpC7FD2nFcbHe4KpGdRfsFEtWbReDCYF6tWT6/PnCZrQNBA2nMcUlXkXE0KDizv
+	 Bfj8Lu+rgSoV6pRSODLbtuzniURVUW3YE5FsODbHD7SB7Hd8DzIsVx0hGfrEt0FSSi
+	 K37XPEw6tz0tyA+lUeu/z1+6uh+j3ldThj2KKAkqNvaDM4ARYTgI89AMgA83gtWYTz
+	 JSrB03f49Ryaq6vsaO9o8e8Qw+3dYJWB+5zC4+xQPGv0MFMiTGRqqK5miwAAtmE2sA
+	 1sFIIDmuXm76bmMKjV8w3HrIYDgl0u5mwdu0nmZ5+T5cjxq2rObSuO48n4yq9AfpMC
+	 yHxsSuz9+muOw==
 From: Christian Brauner <brauner@kernel.org>
-Date: Thu, 23 Jul 2026 13:30:23 +0200
-Subject: [PATCH RFC 4/7] fs: support FD_FAILFS_ROOT in fchroot()
+Date: Thu, 23 Jul 2026 13:30:24 +0200
+Subject: [PATCH RFC 5/7] arch: hookup fchroot() system call
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -37,7 +37,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260723-work-failfs-v1-4-3f69b9a9e958@kernel.org>
+Message-Id: <20260723-work-failfs-v1-5-3f69b9a9e958@kernel.org>
 References: <20260723-work-failfs-v1-0-3f69b9a9e958@kernel.org>
 In-Reply-To: <20260723-work-failfs-v1-0-3f69b9a9e958@kernel.org>
 To: linux-fsdevel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, 
@@ -50,117 +50,214 @@ Cc: John Ericson <mail@johnericson.me>, linux-api@vger.kernel.org,
  linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, 
  linux-doc@vger.kernel.org
 X-Mailer: b4 0.16-dev-0e65f
-X-Developer-Signature: v=1; a=openpgp-sha256; l=3927; i=brauner@kernel.org;
- h=from:subject:message-id; bh=yqO6vurUVKadnYgpnL4LMFtHuyT4slGfIqlnKKYdgCY=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQl/g53vvF46aXr1v/LP+l+yd+8nE3f8LTQjhvXEmf/0
- Ayt+eiwsqOUhUGMi0FWTJHFod0kXG45T8Vmo0wNmDmsTCBDGLg4BWAiNv0M/51PfUt+tv/nUq1J
- 64Nrc37cjTZmLz9nYNB99Irlk6prSzYxMpxeza2fUBsZdPTNwnXmazI9p7t90Otc0nOj8eoToYB
- vy7kA
+X-Developer-Signature: v=1; a=openpgp-sha256; l=8736; i=brauner@kernel.org;
+ h=from:subject:message-id; bh=nRFC9CX4rCzP8lIbZ4N7tGTayMaHlcSYceXYpg2Mxj0=;
+ b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQl/g7vSujN3dLLceqA7NOYG//N/O4o8uz933Tiuuj+L
+ wlib+QYOkpZGMS4GGTFFFkc2k3C5ZbzVGw2ytSAmcPKBDKEgYtTACbS2M7wz7zY495zl2r56ZP0
+ TIr6F9gW+6yYxtn+lXvDX2tvg3NKYowMm1ZzrJ/+80bB6vAqvUhRn/sHvv/be01tb23xsWORuft
+ zGAE=
 X-Developer-Key: i=brauner@kernel.org; a=openpgp;
  fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 
-Allow a process to move its root directory into failfs via
-fchroot(FD_FAILFS_ROOT). From that point on every absolute path lookup
-and every absolute symlink fails with EOPNOTSUPP. Combined with
-fchdir(FD_FAILFS_ROOT) this leaves the process with lookups anchored
-at explicit directory file descriptors only. It is the fs_struct
-equivalent of RESOLVE_BENEATH. This allows taks to drop their filesystem
-state completely.
-
-Callers with CAP_SYS_CHROOT in their user namespace may always do
-this, mirroring chroot(2). Unprivileged callers are subject to two
-requirements (which may be loosened later):
-
-(1) no_new_privs must be set
-
-    After entering failfs suid binaries on regular mounts remain
-    reachable via inherited directory file descriptors or the working
-    directory. A setuid program executing with an unusable root
-    directory might be tricked by this. I'm not 100% convinced that this
-    is needed but it feels more secure initially and it also forces more
-    no_new_privs on userspace. So win-win imo.
-
-(2) The caller must not already be chrooted.
-
-    The root directory is what confines .. resolution. The failfs root
-    can never be reached by walking up a real mount tree. A task whose
-    root is failfs has no .. barrier left below the top of its mount
-    tree. A .. walk from any real directory fd it still holds climbs
-    to the mount-namespace root. Which is kinda the point if you want to
-    do fd-based lookup only. If failfs prevented you from doing that
-    then it doesn't make a lot of sense.
-
-    A task that a privileged manager chrooted into a subtree could use
-    chroot()ing into failfs as a way to allow for an inherited fd to
-    resolve it again.
-
-    So reject already-chrooted callers closing that issue without losing
-    anything for the intended self-sandboxing use case.
-
-There's also some thought needed around shared fs_struct state. It's
-obviously possible to chroot into failfs with a shared fs_struct if the
-caller has CAP_SYS_CHROOT and shares the fs_struct or if the caller is
-no_new_privs and shares the fs_struct. The non-chrooted-currently
-requirement still applies.
-
-Once entered, failfs is a throw-away-the-key moment. The task is
-considered chrooted so it cannot create user namespaces to regain
-CAP_SYS_CHROOT. chroot()/fchroot() back out require CAP_SYS_CHROOT.
-
-The only other exit is setns() to a mount namespace file descriptor
-which requires CAP_SYS_ADMIN over the target namespace plus
-CAP_SYS_CHROOT and CAP_SYS_ADMIN in the caller's user namespace and
-resets both root and working directory. A process that closes or never
-had such file descriptors and restricts *chdir()/*chroot()/setns() via
-seccomp has thrown away the key.
+Wire up the fchroot() system call as number 472 on (nearly) all
+architectures.
 
 Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
 ---
- fs/open.c | 24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
+ arch/arm/tools/syscall.tbl                  | 1 +
+ arch/arm64/tools/syscall_32.tbl             | 1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
+ arch/s390/kernel/syscalls/syscall.tbl       | 1 +
+ arch/sh/kernel/syscalls/syscall.tbl         | 1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
+ include/uapi/asm-generic/unistd.h           | 6 +++++-
+ scripts/syscall.tbl                         | 1 +
+ 18 files changed, 22 insertions(+), 1 deletion(-)
 
-diff --git a/fs/open.c b/fs/open.c
-index c57f641f2e29..8adc9f00889a 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -618,6 +618,27 @@ SYSCALL_DEFINE1(chroot, const char __user *, filename)
- 	return error;
- }
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index f31b7afffc34..52e3538cc7df 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -511,3 +511,4 @@
+ 579	common	file_setattr			sys_file_setattr
+ 580	common	listns				sys_listns
+ 581	common	rseq_slice_yield		sys_rseq_slice_yield
++582	common	fchroot				sys_fchroot
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 94351e22bfcf..55717ed32c27 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -486,3 +486,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/arm64/tools/syscall_32.tbl b/arch/arm64/tools/syscall_32.tbl
+index 62d93d88e0fe..df2d1d82fb3c 100644
+--- a/arch/arm64/tools/syscall_32.tbl
++++ b/arch/arm64/tools/syscall_32.tbl
+@@ -483,3 +483,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index 248934257101..ba7a4d8903d0 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -471,3 +471,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 223d26303627..c55a5c96f49b 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -477,3 +477,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 7430714e2b8f..9ae88e4eac61 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -410,3 +410,4 @@
+ 469	n32	file_setattr			sys_file_setattr
+ 470	n32	listns				sys_listns
+ 471	n32	rseq_slice_yield		sys_rseq_slice_yield
++472	n32	fchroot				sys_fchroot
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 630aab9e5425..83dc93a0712f 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -386,3 +386,4 @@
+ 469	n64	file_setattr			sys_file_setattr
+ 470	n64	listns				sys_listns
+ 471	n64	rseq_slice_yield		sys_rseq_slice_yield
++472	n64	fchroot				sys_fchroot
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 128653112284..9c62429c9b7b 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -459,3 +459,4 @@
+ 469	o32	file_setattr			sys_file_setattr
+ 470	o32	listns				sys_listns
+ 471	o32	rseq_slice_yield		sys_rseq_slice_yield
++472	o32	fchroot				sys_fchroot
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index c6331dad9461..88adc4016cce 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -470,3 +470,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 4fcc7c58a105..cfbb70039ff0 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -562,3 +562,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 09a7ef04d979..1b45e68a217b 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -398,3 +398,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 70b315cbe710..ace068dff0de 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -475,3 +475,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 7e71bf7fcd14..5b9fe0e8140f 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -517,3 +517,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index f832ebd2d79b..2c172ef48dfd 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -477,3 +477,4 @@
+ 469	i386	file_setattr		sys_file_setattr
+ 470	i386	listns			sys_listns
+ 471	i386	rseq_slice_yield	sys_rseq_slice_yield
++472	i386	fchroot			sys_fchroot
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 524155d655da..d5b6045b0090 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -396,6 +396,7 @@
+ 469	common	file_setattr		sys_file_setattr
+ 470	common	listns			sys_listns
+ 471	common	rseq_slice_yield	sys_rseq_slice_yield
++472	common	fchroot			sys_fchroot
  
-+static int fchroot_failfs(void)
-+{
-+	struct path path;
-+	int error;
-+
-+	if (!ns_capable(current_user_ns(), CAP_SYS_CHROOT)) {
-+		if (!task_no_new_privs(current))
-+			return -EPERM;
-+		/* Moving the root to failfs lifts the old root's ".." barrier. */
-+		if (current_chrooted())
-+			return -EPERM;
-+	}
-+
-+	failfs_get_root(&path);
-+	error = security_path_chroot(&path);
-+	if (!error)
-+		set_fs_root(current->fs, &path);
-+	path_put(&path);
-+	return error;
-+}
-+
- SYSCALL_DEFINE2(fchroot, int, fd, unsigned int, flags)
- {
- 	int error;
-@@ -625,6 +646,9 @@ SYSCALL_DEFINE2(fchroot, int, fd, unsigned int, flags)
- 	if (flags)
- 		return -EINVAL;
+ #
+ # Due to a historical design error, certain syscalls are numbered differently
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index a9bca4e484de..d354bb231796 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -442,3 +442,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index a627acc8fb5f..5b7e77a7c736 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -863,8 +863,12 @@ __SYSCALL(__NR_listns, sys_listns)
+ #define __NR_rseq_slice_yield 471
+ __SYSCALL(__NR_rseq_slice_yield, sys_rseq_slice_yield)
  
-+	if (fd == FD_FAILFS_ROOT)
-+		return fchroot_failfs();
++/* fs/open.c */
++#define __NR_fchroot 472
++__SYSCALL(__NR_fchroot, sys_fchroot)
 +
- 	CLASS(fd_raw, f)(fd);
- 	if (fd_empty(f))
- 		return -EBADF;
+ #undef __NR_syscalls
+-#define __NR_syscalls 472
++#define __NR_syscalls 473
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
+index 7a42b32b6577..0ab531605120 100644
+--- a/scripts/syscall.tbl
++++ b/scripts/syscall.tbl
+@@ -412,3 +412,4 @@
+ 469	common	file_setattr			sys_file_setattr
+ 470	common	listns				sys_listns
+ 471	common	rseq_slice_yield		sys_rseq_slice_yield
++472	common	fchroot				sys_fchroot
 
 -- 
 2.53.0
