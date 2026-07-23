@@ -1,121 +1,169 @@
-Received: from mail-qt1-f182.google.com (mail-qt1-f182.google.com [209.85.160.182])
+Received: from mail-ot1-f45.google.com (mail-ot1-f45.google.com [209.85.210.45])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 020FA3DE44B
-	for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 08:22:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.160.182
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784794955; cv=pass; b=DAhoUK4WuDO3wz1FgbbcDrN5mqtG7aZwgffuzOLU0nqiojLvBewIb2WOgXYawsqKF4NOTpGEBo/f2bwFjy/kYvlc8OYnZ28HXPJFt9HpkVYQrzqgyNjRw0UqE2B/eMtcr1zBq+W6GrDnHe6puxSKgH+JTQxEGWfTVbGfWSGQnys=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784794955; c=relaxed/simple;
-	bh=aLZSqJ0URF4BgPuBzwI7e5ieUH/kEHL0hZuAQkzXJZI=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=T0YQt2tFz3wlMx4OTiZFyibmQtu7d9R10RCqjyt8pDfKhtwL128D2tnU7OgUkG+Rdjpfz6oYa/G+CmFjlr9zr3LviDfsNrHH/0v35rDj7oTKARYkK5OJK9fJ1+/KpfZQyloU0KiH8Cz+0oFTpLsIY9chlZwALcfsadWh2gOurfI=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=szeredi.hu; spf=pass smtp.mailfrom=szeredi.hu; dkim=pass (1024-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b=gmooZBEP; arc=pass smtp.client-ip=209.85.160.182
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=szeredi.hu
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=szeredi.hu
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D75C412C06
+	for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 09:01:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.45
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1784797270; cv=none; b=CvPZql0bbwIiZ9kHOnKatHwnT9uNZzVzP3JMaSJEMSfRG0SoZy3/ulyLdID7Y0JJqAsIlYDmxIWbRqWsuGRHEnpzZ6AkQDiZtiVq6ii5IFysNaLzj7GNadGS6/wp6unNi3Z+t4KCTsShoNBynIQzwmPTeCNYO1HIs2uh9KhYvnI=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1784797270; c=relaxed/simple;
+	bh=3jTlyr0xcFOTLx1mQk6C+Pf7U8xQRYKxC6jxUP2Vklc=;
+	h=Content-Type:From:Mime-Version:Subject:Date:Message-Id:References:
+	 Cc:In-Reply-To:To; b=pbPsbBeUZQfVqtUah/tfUSZ3i4MFBl5lw0U3vbI6WzHrAYnP091mzymlI0U8oAIxNuFV8clqloOsPDmY6t50wwGvVdLtIc1NULktGcbvs6+h7jcsEBhnHz1NIMa8xuB01m9FJtp6iSBm+TIYkzsPCJLhLi7pzEpkzyMm0v0cOhg=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net; spf=pass smtp.mailfrom=amacapital.net; dkim=pass (2048-bit key) header.d=amacapital-net.20251104.gappssmtp.com header.i=@amacapital-net.20251104.gappssmtp.com header.b=mdm0v8UI; arc=none smtp.client-ip=209.85.210.45
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=szeredi.hu header.i=@szeredi.hu header.b="gmooZBEP"
-Received: by mail-qt1-f182.google.com with SMTP id d75a77b69052e-51c0006ea8eso2800311cf.1
-        for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 01:22:33 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1784794953; cv=none;
-        d=google.com; s=arc-20260327;
-        b=ked6ygWBt90LMDqc6n9mDLaYCtedApEftbls5qpVXUOi/oMgvm8Gtey3Xo1dH5pdWZ
-         G1RIyt2pJIbkN9/dIvR56Ys7A9pmwvFu5O9nf75XQ3vUxSCYRNOFlBPL4dEpgKfdBUMo
-         POBd1IuJE1SjEwdRcJNmxxWJnBOnnaRIbrxJdt4hQRZEe44H5b52pJOnKgRCgpVI6dqA
-         XsXNuD6M5DiF90bvYC8703PrEtnSyBXci0/KFdDMZYkfsjJ5BYuPWJzPl1fGxA5Gi9ok
-         bZ2aET1O6GIXgsR4LXNYmbRHOwyTQaoA6EGMe6FVf/zL/TKQk64bQ8a6hgJOMg3lXtXV
-         YEiQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:dkim-signature;
-        bh=yrgNUo4LIyDIRSBo4rDxodSFyTnV5NyKbJ74rO2CKL8=;
-        fh=QVBY3VWXj3cziD2ulG9jl7PvOJ1LwftTIkdzhzbtjNg=;
-        b=KxB3pfE3Ii1UT9QV01dqQZToABb952HHwFqazqqxmMX5h59ao5454OA5E0KFRgfj9h
-         etkn5xLSTOd8vKu531k5cdRXv7TmBKLG4KT6UZ4U/ddMCxnFT2UvmaiQgvVScSmEJib9
-         ib7VSnjSltdce7ebvAWhA+Y47vX0hM3c6Rgw9unolhdEMrhFIAn9sYcbjsfHrl/pVLQA
-         4rNX7XQFIJbT7hwXEcfOnu9nxDCs78Kxbvqpuw3bFMqKgxXQc/QrfzNChFQQLTGhHJwC
-         L+VFTThA/PrEPDwj4Us+2igrdyctov6K569V0G1nf6ujWTR6gn+zzgNjUS2KEp2Ay4Jk
-         6buw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=amacapital-net.20251104.gappssmtp.com header.i=@amacapital-net.20251104.gappssmtp.com header.b="mdm0v8UI"
+Received: by mail-ot1-f45.google.com with SMTP id 46e09a7af769-7eb34c17b96so250798a34.2
+        for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 02:01:08 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=szeredi.hu; s=google; t=1784794953; x=1785399753; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=yrgNUo4LIyDIRSBo4rDxodSFyTnV5NyKbJ74rO2CKL8=;
-        b=gmooZBEP6yxzO/jbE04k+td9SkYz+eKuMblMAwvIBzhrnGKY0ZIjzo2c0q/9VDXnD0
-         AryreByxDRHFLHtY5UWu3edNIcPikUcl5SBiBdAUu0vVl3eSpKQtPxlL16yEyHF86qnx
-         f04ZpSyS2xSBECpFvI/E+iBe52VtrMurWFjMk=
+        d=amacapital-net.20251104.gappssmtp.com; s=20251104; t=1784797267; x=1785402067; darn=vger.kernel.org;
+        h=to:in-reply-to:cc:references:message-id:date:subject:mime-version
+         :from:content-transfer-encoding:content-type:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=/tPr3qdcawiWwA2VysdP5ZIB8M9hpvOF1iQApSBfOK4=;
+        b=mdm0v8UIGCx1vSluyV40Ba5KwLm/vSIUh7PtS5hwq1lABkZctBbiCDxkig6IRreP15
+         RUxRGZKw9E0F8MppfaStaicI1ZaIitcK5/HKftPyAuj1Es3++TP/Ep+yJx91UoncJjsl
+         YWB7wHWHjYJZ9sOXur/9Likz20caCIQMDnkMYIq56i51IJqtzvXzIUSSH501Shw8xG6H
+         C75VDHbeWItoENF+nML/z0VBEiVItthdzjeFB9tJ3FIpRHc3CoLqD5Vbpkza6qp029nP
+         8BqfQ1n3JE38dnJPKKktfWNB7e19Wor8zWiDrIzegop8mE7HtjaSe7uHGD5YcFQvHVDd
+         1fxw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1784794953; x=1785399753;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=yrgNUo4LIyDIRSBo4rDxodSFyTnV5NyKbJ74rO2CKL8=;
-        b=T5gUCT1gKBg6fqr2xnnC7g8LJcjPHuEvutpvKjIndeJbSIw4bmZ4kLwBMCSkgYSLo/
-         bVKHzP+0nZmbMuw45CK6s7Pd1+Rxj4nRcWKyzfgI1h/h7tqQTBM3NdV+ldn8SCosS28Q
-         UpwDRX6RfpBxCOaJvoghHBIUz4lYOryQ+2UhqK2hzw29fY1nW6aUmnXs9HDd5XZL43oK
-         24zyPYRgs+aD/iGY7oFqOmfmP+My43s5A09vJC8A9rWasuXQK2ABWyQdfqHk816vpATM
-         fHCzBUzxKUfnn+4PfhRL8HLUq/FdHDSjVk9xOUbC+j/XF0uINvx7TmAteax0yIJFR0zw
-         CkBw==
-X-Forwarded-Encrypted: i=1; AHgh+RrnbFIZWry+CE5LqdA97cgYXP4WiNSZEgVFxIGnrcqVN2H4oXANTw54o1i+3q/tmyYAjPHqvWX0Llw=@vger.kernel.org
-X-Gm-Message-State: AOJu0YxCNfMYdWUYH94rNyXYscrZMzimh0D97wfTs8C5Vn/ye3I8SZHB
-	Jt+yI2nIYBKOxmpUJtPVg/Mmyyq94lv/M9RwI2Wgv2QfBB9G32bcczNKlS5JG0DwPYFmypc+JVp
-	lzYdRyq66/DYo6euGS69eSnAF/4TlZT4Of+dm5BEkNQ==
-X-Gm-Gg: AR+sD11DVHt9c7A7xw3tSMhtqTaDbtxDtAO0+A1zmiv9j6C7iFQAAQcw+1dlfU7GlzB
-	JuTId41pxU9ns5AKaBaAj4q4KlWvT82F/DuzUOhaXnQsfohtbvgFrG00ieebpOZrXEsD+zpjLWA
-	KlM+/PkFC73ZXJ4XmpHYpRAnf1rftsLj7V5EYcElreFqwhNbLzOOjzwe3BmKGtHH47p017tSGJk
-	F2RFICpwwxbHyQ0+AgN8vroeWA9orBuHM/OsQb+tRUdZt86jo/cNaMtiEIGqwl3v5lX49zOrwPD
-	kmZQz/25vh2AgY8yfw==
-X-Received: by 2002:a05:622a:14c8:b0:51c:7b12:5fd4 with SMTP id
- d75a77b69052e-5283e012098mr18036511cf.80.1784794952935; Thu, 23 Jul 2026
- 01:22:32 -0700 (PDT)
+        d=1e100.net; s=20251104; t=1784797267; x=1785402067;
+        h=to:in-reply-to:cc:references:message-id:date:subject:mime-version
+         :from:content-transfer-encoding:content-type:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=/tPr3qdcawiWwA2VysdP5ZIB8M9hpvOF1iQApSBfOK4=;
+        b=VFAEmqzxFq89s9t1EphheoxSchM8Sn+3L+NvmLo+1t0jGkbrzbx5/l/GtZhBSgSu0Z
+         kaWCfF4AoJII3qxMUKAzouO+18GDunpAAkQT3/D6sCLEZnbZ+VptlalsN408jrVGkUN3
+         3AfU8vSeHvZeRegRgOWn6wnE1rD2j2663TJcM1rVv3po0IfVN/a3OCjh8V6v7UM3pEP4
+         MMaNeuImzb4qyQjdA+tCDCaQmfjOzgFdHCqy4pUat3+lYaisqxjiDWstpe9ns0Pzjt0n
+         qIB89EZStNXRyYTwHqm+HeMgWbgMY/mo2drlQCDtUG1kcSnN+8e+5f+oCskXzHKQLS7h
+         zxpg==
+X-Forwarded-Encrypted: i=1; AHgh+RpKB18sVuFI+jpejqEekkvSoekY+S4EmDy5gCwsVBOIDLbxF7ke6YXsZCKhElGmGtegcgNZUpXRKvQ=@vger.kernel.org
+X-Gm-Message-State: AOJu0YwHmsGk+fL3d/tc3Jlo9iGZ19Wam8+lUgXlxEs6HFlmNZeYxvzg
+	D4K14uV5fDjnNIxC5OU4i7rkWDR4caS74CiwM1QAfkI2W2KSx+6ZiAx0Hk5cXpqW9Q==
+X-Gm-Gg: AR+sD13OYrNgkyjKNo/MjPtM//ZemXAx9DCce819ch63lRHcrTtClERieXOjrd/5B+U
+	kCybbw3IesbCJCAIxJifCn075JkBvRDzG5/PVWZlqj6XJMEALCbaaUbsFbI8ZZPA/P1XZo30PMO
+	efY5mAcTA/J8P6KNhB7dwwbCkneTDNgTW4hIfK9Cp37VTF41LBgSwaE8qcNksX/wM7DlZwPKSVc
+	KxWOkzWv4kbjV9S3MfvnzB/PQ3qkRBtnDzkDnnkAIlXY0lUVisS6gOMzYC5Jk5Wp/Z8gE6IrGcN
+	jJyx8D697UCVdczD+8Gi4gOFEig/X1q1RzHD4iZqFx7znYwGI2KCZcvr5JVKnQ868Ge4YoEj2sw
+	+z3Z9/O9OK6HeML01eNCilBFooz51kfnrI3lLPxDIwCY6k9+mvhnveBbQDMPM7Cbaakx8TpPHHG
+	guC0l0VGFOXzyDyZv8Oh1pHO11Dm3muo4=
+X-Received: by 2002:a05:6830:3692:b0:7e7:5e4:ee11 with SMTP id 46e09a7af769-7ee4417fc9fmr1388710a34.16.1784797267490;
+        Thu, 23 Jul 2026 02:01:07 -0700 (PDT)
+Received: from smtpclient.apple ([172.58.164.213])
+        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7ee2a03c856sm3082411a34.13.2026.07.23.02.01.06
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 23 Jul 2026 02:01:06 -0700 (PDT)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+From: Andy Lutomirski <luto@amacapital.net>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-References: <20260715101107.973997-1-mszeredi@redhat.com> <20260722-fundort-zogen-kormoran-09fb867f1b59@brauner>
- <CALCETrU9KdLsvZzUE-5sh7KkP5-cPh=hwErGmN=THsDatFJLfA@mail.gmail.com>
-In-Reply-To: <CALCETrU9KdLsvZzUE-5sh7KkP5-cPh=hwErGmN=THsDatFJLfA@mail.gmail.com>
-From: Miklos Szeredi <miklos@szeredi.hu>
-Date: Thu, 23 Jul 2026 10:22:21 +0200
-X-Gm-Features: AUfX_mw-0nrqXevHRitoGqWVZtjfkA0y47FHySyo3TiICVfrOazHUs2Vr34P9VI
-Message-ID: <CAJfpegupwNTaVNZtdQTmvtz9x=ehH59hzsRT7D0=VbhOZvaqrQ@mail.gmail.com>
+Mime-Version: 1.0 (1.0)
 Subject: Re: [RFC PATCH] fs: allow opening overlayfs/erofs layers through O_ALT
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Christian Brauner <brauner@kernel.org>, Miklos Szeredi <mszeredi@redhat.com>, 
-	Giuseppe Scrivano <gscrivan@redhat.com>, linux-fsdevel@vger.kernel.org, 
-	linux-unionfs@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-erofs@lists.ozlabs.org, Amir Goldstein <amir73il@gmail.com>, 
-	Gao Xiang <hsiangkao@linux.alibaba.com>
-Content-Type: text/plain; charset="UTF-8"
+Date: Thu, 23 Jul 2026 11:00:53 +0200
+Message-Id: <6C96C8A7-345E-4388-8EDC-D94E9463D214@amacapital.net>
+References: <CAJfpegupwNTaVNZtdQTmvtz9x=ehH59hzsRT7D0=VbhOZvaqrQ@mail.gmail.com>
+Cc: Christian Brauner <brauner@kernel.org>,
+ Miklos Szeredi <mszeredi@redhat.com>,
+ Giuseppe Scrivano <gscrivan@redhat.com>, linux-fsdevel@vger.kernel.org,
+ linux-unionfs@vger.kernel.org, linux-api@vger.kernel.org,
+ linux-erofs@lists.ozlabs.org, Amir Goldstein <amir73il@gmail.com>,
+ Xiang Gao <hsiangkao@linux.alibaba.com>
+In-Reply-To: <CAJfpegupwNTaVNZtdQTmvtz9x=ehH59hzsRT7D0=VbhOZvaqrQ@mail.gmail.com>
+To: Miklos Szeredi <miklos@szeredi.hu>
+X-Mailer: iPhone Mail (23F77)
 
-On Wed, 22 Jul 2026 at 18:36, Andy Lutomirski <luto@amacapital.net> wrote:
 
-> Other than that question, I think I generally agree with you.  The
-> interesting operations here (getting an fd to something that was
-> previously inaccessible) are different enough from normal path lookups
-> that I think they deserve to be explicit syscalls or syscall modes,
-> not magic links.
 
-This is a super specialized use case.
+> On Jul 23, 2026, at 10:22=E2=80=AFAM, Miklos Szeredi <miklos@szeredi.hu> w=
+rote:
+>=20
+> =EF=BB=BFOn Wed, 22 Jul 2026 at 18:36, Andy Lutomirski <luto@amacapital.ne=
+t> wrote:
+>=20
+>> Other than that question, I think I generally agree with you.  The
+>> interesting operations here (getting an fd to something that was
+>> previously inaccessible) are different enough from normal path lookups
+>> that I think they deserve to be explicit syscalls or syscall modes,
+>> not magic links.
+>=20
+> This is a super specialized use case.
+>=20
+> I sort of agree that doing statmount() as a syscall was not a bad
+> idea.   But new syscall for getting a backing layer, that makes sense
+> on just a couple of filesystems?
+>=20
+> And that leaves us with ioctl.   And ioclt() returning an open fd has
+> it's own problems, besides ioctl being a generally bad interface.
+>=20
+> And we have all these powerful concepts and interfaces for
+> filesystems, why the big resistance to actually using them?.
+>=20
+> Sure, it's easy to misuse, but I don't yet see why this particular
+> case would be a misuse.  Enlighten me please.
+>=20
 
-I sort of agree that doing statmount() as a syscall was not a bad
-idea.   But new syscall for getting a backing layer, that makes sense
-on just a couple of filesystems?
+I think there are are a couple of complications involved with open, openat, e=
+tc that aren=E2=80=99t present with explicit for-the-purpose syscalls:
 
-And that leaves us with ioctl.   And ioclt() returning an open fd has
-it's own problems, besides ioctl being a generally bad interface.
+- O_XYZ flags to open() are all kinds of awful, for historical reasons that a=
+re not fundamental to the concept.
 
-And we have all these powerful concepts and interfaces for
-filesystems, why the big resistance to actually using them?.
+- symlinks. If we have a new API where opening /proc/something/magic/blah ca=
+n access something that ought to be inaccessible when accessed intentionally=
+ and with privilege, a symlink pointing at /proc/something/=E2=80=A6 can cau=
+se the API to be used inadvertently.  Admittedly we have this problem with b=
+asically all symlinks, so this isn=E2=80=99t exactly unique.
 
-Sure, it's easy to misuse, but I don't yet see why this particular
-case would be a misuse.  Enlighten me please.
+- our nasty fs permission model. We gave a sort of gnarly mix of a bit of fd=
+-based permission and mostly mode/ACL-based permissions for path traversal a=
+nd opening, and mapping this nicely only new APIs (as opposed to actual file=
+s and directories) can have unpleasant results.
 
-Thanks,
-Miklos
+Of course, I=E2=80=99m busy arguing (slowly and without a concrete proposal)=
+ that we should have proper capability-like fds, and maybe that=E2=80=99s ki=
+nd of an answer to this:
+
+What if we had an API to get an fd to the =E2=80=9Ccontrol filesystem=E2=80=9D=
+ for a superblock, like your O_ALT but as a real syscall or maybe only acces=
+sible via one of the newer and less janky open variants?  And what if the re=
+sulting fd and the filesystem tree it represented had a few properties that m=
+ade it very different from normal directory fds:
+
+- You cannot mount anything on it or its subdirectories, nor can you open_tr=
+ee or otherwise mount it anywhere.  But you can open_tree the very specific t=
+hings in it that point outside of the special API (e.g. the overlayfs layers=
+).
+
+- Privilege is fully captured by the original call that gets you the fd.  cu=
+rrent->cred is not checked when *using* it except to the extent that you mig=
+ht need privileges over your own namespaces to do operations that might affe=
+ct them.
+
+- You can=E2=80=99t fchdir or (hypothetically) fchroot into it.  (Not sure h=
+ow important this is.)
+
+- Maybe you can=E2=80=99t follow /proc/pid/fd/N links into it either?  Or ma=
+ybe that would break CRIU too badly.
+
+The basic idea here is to try to treat it like an API that happens to use th=
+e open machinery but not as part of the filesystem hierarchy.
+
+One could go even farther and try to remove a bunch of the parts that make i=
+mplementing it tedious.  For example, if this hierarchy had =E2=80=9C/layers=
+/1/options=E2=80=9D, there is really no reason to over open an fd to layers o=
+r layers/1, and if we had a readfile syscall there wouldn=E2=80=99t be a rea=
+son to open an fd to options either.  But maybe this is a silly direction to=
+ move in.
+
+> Thanks,
+> Miklos
