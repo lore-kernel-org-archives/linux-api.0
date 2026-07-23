@@ -1,170 +1,99 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from fhigh-b1-smtp.messagingengine.com (fhigh-b1-smtp.messagingengine.com [202.12.124.152])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B503A4756D9
-	for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 17:00:23 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92E2C3749E8;
+	Thu, 23 Jul 2026 20:08:05 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=202.12.124.152
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784826024; cv=none; b=MzktdJfpl1JZvNNzrcnYjvXah2gjbv1MS0cIi9GsIlF/Av1YQQmhh1MCK8iQ8PDIftqD+J7JeLWgVqeMFKmN+x2GkcFbhzyOhOrI4EvEgOBXHfohBLVUmu/XFFdnjIDuqoTzDGdNxQGABPH6b7UZ/d3Tt6AmQQl84tJCC4Hn5hw=
+	t=1784837290; cv=none; b=ujG8Bpip1mzJQ8+BWz6mGmnEX6o8l/VJR/KXJPRyYHUnr2TRjATRpLfAR7bhw07uDvlRPLDNg2v4m8RsWobptD45yq+QkrA0jUOJ7vO1T19IxKwY7O3nBuYKIDkYLO4QxMrvexUtz2ig+JB4h8GvZoH0Ozp8eiBdNcB0WTJeY38=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784826024; c=relaxed/simple;
-	bh=iU/FwLMLp21DnC5XkG6DrWvVNQxJ1GvDlQBJ5rSY1sc=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=U+Co1+kJM+RijKRN/1xL/oAY8Y4u+5dj+G3V7Nh/oS4lqbb0xMQjyQEO1IILunQT9t/yP3fiEyQbVT66IpfpmzzcApcanVFIyR5f3iX7K2ddJr7eHpxx/SQ2jjlnR44r3shaWF0CId9KIv2umdQlGpmgOSd5rjmfATgU2A1QqaQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=nwrAorHQ; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1784837290; c=relaxed/simple;
+	bh=fBHSlKihB7uqNCvVP8QfQmvnw2yxyQSDkZAa4uWIkcE=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=oocAoP1zSmN5nNmmdMH5kUp73AU2VDzUF1dxRxT2baw1CZs/I5OgAueNWhgGpNvvPPkxEwTUnEXFcKEHWXqriieytbYPZPl2XYxsALzZcma8gRV0HIeJXtQVZgGxb8tVfUfFITAPzgKqzdpybzvnnwY900NKXZGBFreDqNdOevo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=XD1VXPm+; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=jMIIRThN; arc=none smtp.client-ip=202.12.124.152
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="nwrAorHQ"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 596A81F000E9
-	for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 17:00:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1784826023;
-	bh=nFefWNtVN7QpYcSpa/AAomkqDutNWZGuQiuscM0Wu0E=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc;
-	b=nwrAorHQZmPTUc+ZYE7Jx6i6p4JVTrTIXtg08yMk0FTm5NuBuetAXvL2uNQzGFc5I
-	 4L9hmwcd0a9XpOC1tgo6OlUv0EWz2Zvw+G8JzjdZTxQ2wFpR9QbzFE/E1mmSSgY9sd
-	 8szSWtoMWuizg34UwaDZe1JdNcn4FAZnkYfq+L55RX8GH6AQwMZT6Xb5z4U3NKuahQ
-	 oA4Hmnc8BZf54j+dVU8D3GksNinqjyMYlGjD2x/CeSxsje205VvZ4qPPi5/HooLYiT
-	 3/6b1a9DqjMYL8dGfkm63dPy1VI/65dVoLbPfr4IwmY7CpC/XeGwZzQw+MTClnsN80
-	 hqIwpz59pQm/A==
-Received: by mail-lj1-f170.google.com with SMTP id 38308e7fff4ca-39b3931e259so8236721fa.2
-        for <linux-api@vger.kernel.org>; Thu, 23 Jul 2026 10:00:23 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AHgh+Ro/vifTo7efN+57798UicAH+mWWNFhIaUz5CbcmEA4C2zoxo0Cv+5q/FJ9dlkEO62i3S150jXNpbEE=@vger.kernel.org
-X-Gm-Message-State: AOJu0YzGAHokElzvCbhI9PCrQeqtHYGVuRhhVM0zBP+3+iA2O1XjYr/8
-	0UmfXI+lnrHYxP7ZmI8bA5VJBobq+9C7M3XPt0nxcSqfwgvjSLe0vvALP28RIQxwW8ldbDT56+I
-	BK7De6DCxbHn54qGptEEuPMgi/NAUGdM5kgbRNnfe
-X-Received: by 2002:a05:6512:340a:b0:5b0:23c3:4f55 with SMTP id
- 2adb3069b0e04-5b2b2f72e6dmr840383e87.53.1784826005059; Thu, 23 Jul 2026
- 10:00:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="XD1VXPm+";
+	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="jMIIRThN"
+Received: from phl-compute-04.internal (phl-compute-04.internal [10.202.2.44])
+	by mailfhigh.stl.internal (Postfix) with ESMTP id 7025B7A0025;
+	Thu, 23 Jul 2026 16:08:02 -0400 (EDT)
+Received: from phl-frontend-03 ([10.202.2.162])
+  by phl-compute-04.internal (MEProxy); Thu, 23 Jul 2026 16:08:02 -0400
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=codeweavers.com;
+	 h=cc:cc:content-transfer-encoding:content-type:content-type
+	:date:date:from:from:in-reply-to:in-reply-to:message-id
+	:mime-version:references:reply-to:subject:subject:to:to; s=fm1;
+	 t=1784837282; x=1784923682; bh=zvCiZOUeqSGbV5T85kBu0y2rxPDlRejo
+	7kTCDEygPPI=; b=XD1VXPm+ZOpB1a2CysvNlk4iNWrstAJ9d0ORIWWYO1aapx4I
+	I5qo7DsBRjm+KohICjX438kv6tPR6IXbx+3hXpzk9nWA68UfeLbiA7Wf8h6WF5Ec
+	AyKOTHYX9MmP84RTF3sUOYl30WxTGF7Gx75WJkLD2EruKKW1Fsfr8JXg0MYgC3NZ
+	1BwPIgh5UtOHvcY6/pUjBy8U9b2rYeJ1I9EVSXlkRtVWGXzSY2lMEGpxzc2ifh1R
+	WP+AvEggUSjEFo0ZXhym4bzyOyWMLzT3eNIVcHmE/wnfStAfm0KJxheoK3ZQD54r
+	htgD3d2izcxUzu2ifaMyuoVc8ocP96DzUAo+ig==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:cc:content-transfer-encoding
+	:content-type:content-type:date:date:feedback-id:feedback-id
+	:from:from:in-reply-to:in-reply-to:message-id:mime-version
+	:references:reply-to:subject:subject:to:to:x-me-proxy
+	:x-me-sender:x-me-sender:x-sasl-enc; s=fm2; t=1784837282; x=
+	1784923682; bh=zvCiZOUeqSGbV5T85kBu0y2rxPDlRejo7kTCDEygPPI=; b=j
+	MIIRThN//YqQ+xJgFNJcFmvgQ2QgHY5n3D95iMpqJK4ZW1DN5kbHiyocOtwdPYQ7
+	Y4pDqtETGIfwYycUAKXCOl+jd3zBfCg35PrZVdik3YV014LebM+KZfUAwPYYEjtZ
+	3MSRjHKVCV4kUctVgzjD7lRSZ/jD7XwcPAqOhVv8IvRVAVBjrx4A2sdzBHe8Ia3g
+	mmR/4nrzJXgzEVZdTUScV8DkEC5eeHuQH8KwgKiRHaYy0e91rIFIppBggQb5RsPV
+	h1BF7zfK9pT0MIluoxiuXGfdwT7p63cSRMaFLRkiLY496W6SQRLQyhLm37Moff5U
+	NJ9DbEAguQpXO6h38MYSw==
+X-ME-Sender: <xms:onRiahBPlTnk9py_zvWNFcHKfFhLwQCijqUJ8H40wigiXJ8NFEFVFw>
+    <xme:onRiav-__H2us64tClBz9vqGgGzX0NEPUMmcL8gjL_0VVmKskUI3h8Bm8eWHgGRaa
+    0UOgNYgDJql_42hoLSATr9UD4cExn9nmtYjjT6JvZ3vqVqvbQ2wwQ>
+X-ME-Received: <xmr:onRiatTVN6OfeYO-1Zm3BYMyVeL5criM0LNGZKV_EkvEHxDSJLRf73luL0cfT0YmwHUwHjEy9bB8A4Ko6DE>
+X-ME-Proxy-Cause: dmFkZTEymeXF3iGxG+scIyVi9qVVOKytgnKAA8H1b0iB7tfqr3n0dYZOrSDuJCh0jcljor
+    NWRsrQHq9coCfsWkKKJbdEkf9Mbn2/HWFPLm3ANV7ayKe/NaFQNXIwW0YuOLnYo+JRSFJE
+    FKHSWwdPboTGXsk1LWpSycXARRFqd668VadQlNUWueqKDSUaFUQStOaV1TjeBRRl+V0pmE
+    JeTVlV+gPRpOT8PauGE+iq5N4pzE9Mv/OenpWp3w9mj6dPX8a9TZ6eRVjJjet3jysZMxBd
+    /d8EU0nqZ7oAZPbex4PcZIVRqDTRAgevSAWQGC6gU9eIIhPqSnhcd9bmRoZXZK+ffoPiTe
+    2i0I/K2PsGGmHyvht3mADBTyJly27qLoXpzq3GjzQUkDK8BwfH4Hj3NsJOV1u58OT+O1Hf
+    ogw4uIL6fNrbVDvf480GVR0qYL/SscxP8NyfMMUs+KUJExZQym26RqK9eS5RldKB7nx4fm
+    zRL625SCydfVJlniJVENfXXwdmo8TreN+3nkM4B36/hSoAwLfjmJBxvIZ2VzttkNUU4Nwk
+    ud5/DceXu6gWMr65Cd1K9LwoRiYw/AZ+Gci9rhOUIpD1oCXakUA2+Fj9E8GtktW3gVRyQ/
+    /VXgy+ZJ3WPKwRKy06aT/zImnT4dnV3sE9ya1aptKEdsYRAUm+RCwZU0Javg
+X-ME-Proxy: <xmx:onRiajVqHhgJmUSgP6ErBwKIqEEFr3odCGx5N8kqSYO_tvOAMngXpw>
+    <xmx:onRianQP4erPZ1fAuy1N0ReS6QjtVGs6IOS9IWL-tq46fLGwBq9Qdw>
+    <xmx:onRiar3NGj3sLC82NMDHIBhp0Yg4anWdBDkobfUmjpgXL_pjZoCW_w>
+    <xmx:onRianc_mwUeM8eQQj_L_DX2qSNUIWWqrQKTTOyjQhLIoNfxLe5WQA>
+    <xmx:onRianp-PRp0AhmhN37Bso8fwTEgCsM75Mg-ozeFiAr3tMo2bKZ7K9sE>
+Feedback-ID: i01ae4b70:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
+ 23 Jul 2026 16:08:01 -0400 (EDT)
+From: Elizabeth Figura <zfigura@codeweavers.com>
+To: Arnd Bergmann <arnd@arndb.de>,
+ Greg Kroah-Hartman <gregkh@linuxfoundation.org>, wine-devel@list.winehq.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+ wine-devel@list.winehq.org, linux-kselftest@vger.kernel.org,
+ Elizabeth Figura via Wine-Devel <wine-devel@list.winehq.org>
+Subject: Re: [PATCH 0/4] ntsync miscellaneous patches
+Date: Thu, 23 Jul 2026 15:08:01 -0500
+Message-ID: <77603773.Cp5WYEEl3R@camazotz>
+In-Reply-To: <20260720171740.447035-1-zfigura@codeweavers.com>
+References: <20260720171740.447035-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260723-work-failfs-v1-0-3f69b9a9e958@kernel.org>
- <20260723-work-failfs-v1-4-3f69b9a9e958@kernel.org> <CALCETrVDX-PcSJoHFwymh7d=oUKotJQQuh+AzmsA7YQySBzD3w@mail.gmail.com>
- <20260723-mahlt-abhob-semantik-21254c8d36cb@brauner> <CALCETrVezim-eYOFWon1w7FngTgWb2nkuZb_duf9q=TrNqiqkQ@mail.gmail.com>
- <20260723-wutausbruch-aufraffen-gipfel-73767d4aa71f@brauner>
-In-Reply-To: <20260723-wutausbruch-aufraffen-gipfel-73767d4aa71f@brauner>
-From: Andy Lutomirski <luto@kernel.org>
-Date: Thu, 23 Jul 2026 09:59:52 -0700
-X-Gmail-Original-Message-ID: <CALCETrW-ObgCm=Vhm6AiyyS25q+SyXkCvVWB7JEaawmOMCrrpA@mail.gmail.com>
-X-Gm-Features: AUfX_mzIpqWq56DGWqbThFbD7a3b3A0zukUyF0HCSGDpiBebVUYhuKOgAcBFT6k
-Message-ID: <CALCETrW-ObgCm=Vhm6AiyyS25q+SyXkCvVWB7JEaawmOMCrrpA@mail.gmail.com>
-Subject: Re: [PATCH RFC 4/7] fs: support FD_FAILFS_ROOT in fchroot()
-To: Christian Brauner <brauner@kernel.org>
-Cc: Andy Lutomirski <luto@kernel.org>, linux-fsdevel@vger.kernel.org, 
-	Jann Horn <jannh@google.com>, John Ericson <mail@johnericson.me>, linux-api@vger.kernel.org, 
-	"H. Peter Anvin" <hpa@zytor.com>, Kees Cook <kees@kernel.org>, 
-	Farid Zakaria <farid.m.zakaria@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Jan Kara <jack@suse.cz>, linux-kernel@vger.kernel.org, 
-	Jonathan Corbet <corbet@lwn.net>, linux-doc@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="utf-8"
 
-On Thu, Jul 23, 2026 at 7:49=E2=80=AFAM Christian Brauner <brauner@kernel.o=
-rg> wrote:
->
-> On 2026-07-23 06:50 -0700, Andy Lutomirski wrote:
-> > On Thu, Jul 23, 2026 at 6:09=E2=80=AFAM Christian Brauner <brauner@kern=
-el.org> wrote:
-> > >
-> > > On Thu, Jul 23, 2026 at 05:49:06AM -0700, Andy Lutomirski wrote:
-> > > > On Thu, Jul 23, 2026 at 4:37=E2=80=AFAM Christian Brauner <brauner@=
-kernel.org> wrote:
-> > > > >
-> > > > > Once entered, failfs is a throw-away-the-key moment. The task is
-> > > > > considered chrooted so it cannot create user namespaces to regain
-> > > > > CAP_SYS_CHROOT. chroot()/fchroot() back out require CAP_SYS_CHROO=
-T.
-> > > >
-> > > > I kind of alluded to this earlier, but I don't think we should prom=
-ise
-> > > > this.  In particular, I still think we should eventually allow a
-> > > > non-chrooted process with no_new_privs to chroot to any valid
-> > > > directory, and I think we should consider changing the definition o=
-f
-> > > > current_chrooted() such that failfs-as-root would cause it to retur=
-n
-> > > > false.  I'm also not sure why it's useful -- if I want to throw awa=
-y
-> > >
-> > > I had considered that but introducing this change alongside this seri=
-es
-> > > felt too spicy for me.
-> >
-> > I think I agree.  My only actual objection to your series as is is
-> > that your wording seems to make a promise that I think shouldn't be
-> > made.
->
-> Agreed.
->
-> >
-> > >
-> > > > the key to accessing the normal contents of my mountns without
-> > > > changing my mountns, I need to chroot somewhere (like failfs) *and*=
- I
-> > > > need to somehow prevent myself from getting an fd or a magic link b=
-ack
-> > > > to the ordinary mountns contents.  If I somehow get such an fd,
-> > > > preventing my from fchrooting to it doesn't seem to accomplish
-> > > > anything, since I could traverse the fd with openat, etc just as
-> > > > easily, or even fchdir to it and use relative paths.
-> > >
-> > > I think I generally agree with you. My main concern here is mostly ab=
-out
-> > > changing very long-standing behavior here and making failfs special h=
-ere
-> > > feels like it could easily misused.
-> >
-> > I don't think either of us are really suggesting making failfs
-> > special.  I agree about the long-standing behavior.
-> >
-> > >
-> > > >
-> > > > My understanding of the exact workings of the mount tree is possibl=
-y
-> > > > not good enough to specify the semantics I think are correct quite
-> > > > exactly, but I think a decent approximation is that a task should b=
-e
-> > > > considered to be not chrooted if its root is at the top of its moun=
-t
-> > > > tree or is not in a mount tree at all.
-> > >
-> > > If we could altering this definition from the patchset I would be in
-> > > favor of it. I'm curious what your take is though.
-> > >
-> >
-> > I can't quite parse your question.
->
-> Maybe I should shunt everything I write through an LLM so it catches
-> grammatical nonsense.
->
-> It was basically just trying to say "let's not redesign
-> current_chrooted()" in this series - which I already did above.
->
-> > I have three sort-of-concrete proposals:
->
-> The best proposals...
->
-> > (a) current_chrooted returns false if follow_dotdot starting at
-> > current root but with nd->root equal to the namespace root would
-> > succeed and return the current root.  I think this is fairly solid.
-> > The main caveat I can think of is that someone could create a detached
-> > mount tree, chroot to its root, then fork and have the child:
-> >
-> >  - drop privileges
-> >  - set no_new_privs
-> >  - chroot somewhere else
-> >
-> > then the parent or another privileged task mounts that tree somewhere,
-> > and the child could now access the parent of the mountpoint.  Any
-> > actual exploit based on this seems farfetched.
->
-> It would also be easy to prevent unprivileged chroot()ing into detached
-> mount trees. They're easy to recognize and it's not a super common
-> use-case.
+On Monday, 20 July 2026 12:17:36 CDT Elizabeth Figura via Wine-Devel wrote:
+> This is a resend of a series originally submitted as [1], now sent to char-misc.
+> The following is the original cover letter sent with that series.
+> 
+> [1] https://lore.kernel.org/all/20260628024239.152852-1-ivanrwcm25@gmail.com/
 
-In some sense chrooting into a detached mount tree is an entirely
-reasonable operation.  Make your favorite mount tree and chroot there
--- it's like mount-namespaces minus the namespace.
+I've received new patches including an update of one of these; I will resend with those patches included. Sorry for the noise.
+
+
