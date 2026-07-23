@@ -1,34 +1,34 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B41B7471404;
-	Thu, 23 Jul 2026 11:30:42 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 30BAE471CF3;
+	Thu, 23 Jul 2026 11:30:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784806243; cv=none; b=QC3UjomjVDk+VhEV5clMYeh01E5zhU3vQXOK4sl8EaakJq9YyJkcJ9kDU9kjmfJFIhxiF9ySBisFt563ODsa76cHyBvJXGGdj8DgdP1iBa7cl896gkppS8nKWAjnC9Aey9/OnYx76iTAPoMRIvIj55p3V/SAajCqf3KAtKuWMzQ=
+	t=1784806249; cv=none; b=MwfrIDSI1qIFUNQs++k742EDFGpiTWaLLVB86eMHvFU0VwbAdAWAh1jjlvO4QJmNJKC7ih27j+IgwCwEppD6yAhnstJFDOtB9V2uS1/xa1jrrXorC0pQIjbR8srEKLMGtCWkS0IvftIgVQR/Y1kR3Unaxyt4dOzrhOShqC3IIxA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784806243; c=relaxed/simple;
-	bh=tC3xgOSMixqGYj7WJSGU1GS+MJM6f45b2gdvWBDSnRM=;
+	s=arc-20240116; t=1784806249; c=relaxed/simple;
+	bh=QeyHf0dBOuekHuS6Q6V8exUEh7qyASDiJjuWd8I++yM=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=gq8N3xqxheT9vrp6wURzMwhvJ5H6x0fGRGO95Eu1arB13EeyYqc2dYeuPeHJbDUtd4ZivDdhvk6pxyg9hVoHqZn+xlsYbk/ELZZH/AjDoPyGu9eHl0dkRmhsWOVs2qASjZ6GObYMNM5WZv36e14hDRJy5ZfVdXmFX8EC8cTT9jo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=LRG07n0w; arc=none smtp.client-ip=100.103.45.18
+	 In-Reply-To:To:Cc; b=esg5IUnXFQj3MvQfcAY+fthJ7On6k13XtuAQ54Ra1L/Gk8GMi+OSZEl9abpwJsHDe8pxccF5i81C9Wo+PdyC6XUWzK8kaa9TJPcIuy47A2iA+CD812B+8xQ1Tfy66k+4HXFV2aoib4bCuiapdk2Ve+zoZ+1I0JiW8OkAeJHVbFU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=dXvhydE4; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="LRG07n0w"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 52FD81F000E9;
-	Thu, 23 Jul 2026 11:30:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="dXvhydE4"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0278E1F00A3A;
+	Thu, 23 Jul 2026 11:30:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1784806242;
-	bh=pVI7AJeinyX5LZhsfwQWEU7lkoMKsXW0aPkqO59bTGQ=;
+	s=k20260515; t=1784806246;
+	bh=kL222Q7bZV1iEsYup1nUUuglGOFcK2eaek04QbM40+0=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc;
-	b=LRG07n0wokP0EWSSv6KuVJBY1x+0s9JzCmepZxiSYdP+GQf5cCUtkKCePyM+LsJDr
-	 6TtVzU3QNXNUlDhvnW4l/Zctay5ELCX0X6i3v2pkjjRQe6h9bUIqxu+dPyb8YGZ4ic
-	 II8fgFpGSVCt88SdQNjltK/2iIZhU1PdSm3dDvluNFeidLXDC413543diL9LdnX8gL
-	 Em8EAEY0mdL8QHJMItSl/+nkMzEVvVk73vSJAq7Qr9yvKYwwkldJEmnuistn505i/V
-	 yPhIj5Xb52nVnGiZhkwmzTWBzPJBorJXTF9sc2H6HY7gf+zUvwFXAIRVjl1bCv1McG
-	 ua581oHVTZfdA==
+	b=dXvhydE4RCXkBFqhcOoOvoyjbGrViCWMuuM+CfOL6DQ2vDp+KOylOkN7MoT/TNcyU
+	 u7glF1Fwe+PcqyTbQSWWDx7ICK1M5n/4a1UsNn8B6Di2FqS7hBJnXOVvghUeTeZK5y
+	 AxeQwZ5OQ9ndV8TPzF7oncpfdSMLeIkXgktZpWLj4nyRVDxC9v2o/yO5zE1sXuPjHH
+	 Yn2iiUDMpruqXHnRQygiG3le+32DjpDJx/wJu7/tQcXpadCX7QTf+oLI+iROugpNhq
+	 6C6NOFYTQI1ab1BBOqquMEq2v9Gly3zWeJRvNNJXvOwqUFLH3hrZ7XAzKgVG/JHFiX
+	 5BxSPjNhO0GPw==
 From: Christian Brauner <brauner@kernel.org>
-Date: Thu, 23 Jul 2026 13:30:21 +0200
-Subject: [PATCH RFC 2/7] fs: add FD_FAILFS_ROOT and support it in fchdir()
+Date: Thu, 23 Jul 2026 13:30:22 +0200
+Subject: [PATCH RFC 3/7] fs: add fchroot()
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -37,7 +37,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260723-work-failfs-v1-2-3f69b9a9e958@kernel.org>
+Message-Id: <20260723-work-failfs-v1-3-3f69b9a9e958@kernel.org>
 References: <20260723-work-failfs-v1-0-3f69b9a9e958@kernel.org>
 In-Reply-To: <20260723-work-failfs-v1-0-3f69b9a9e958@kernel.org>
 To: linux-fsdevel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>, 
@@ -50,107 +50,89 @@ Cc: John Ericson <mail@johnericson.me>, linux-api@vger.kernel.org,
  linux-kernel@vger.kernel.org, Jonathan Corbet <corbet@lwn.net>, 
  linux-doc@vger.kernel.org
 X-Mailer: b4 0.16-dev-0e65f
-X-Developer-Signature: v=1; a=openpgp-sha256; l=3232; i=brauner@kernel.org;
- h=from:subject:message-id; bh=tC3xgOSMixqGYj7WJSGU1GS+MJM6f45b2gdvWBDSnRM=;
- b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQl/g7/ufmR0v+f/x0+7uafMGP16efzfqd4HQhZddYk2
- Y0rZpm3YUcpC4MYF4OsmCKLQ7tJuNxynorNRpkaMHNYmUCGMHBxCsBE0hIZGc6WLfh0zlvl2AsN
- 8SZt0VmGM0vymxo9zp1mP7eY1UFxkiXD/6pTr780/ZOMnqlV+bpUaWVyhCiPwqrTvMF/5ubdlTQ
- 0ZQIA
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2585; i=brauner@kernel.org;
+ h=from:subject:message-id; bh=QeyHf0dBOuekHuS6Q6V8exUEh7qyASDiJjuWd8I++yM=;
+ b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQl/g5PqWuQ0d+ZpOG8uXtyplb70dLkvMsF112SnijPf
+ 9n70cqso5SFQYyLQVZMkcWh3SRcbjlPxWajTA2YOaxMIEMYuDgFYCKf5Rn+l1vNVrnGuKi6qfFo
+ xYbSi+8WLFp+gsHh8FGhu16nlpRsDWL4H7xHXt9MuVJox9UXym9yr/rVloV1Wr08La+kyCWg6f2
+ ECwA=
 X-Developer-Key: i=brauner@kernel.org; a=openpgp;
  fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
 
-Add a new file descriptor sentinel FD_FAILFS_ROOT following
-FD_PIDFS_ROOT and FD_NSFS_ROOT and teach fchdir() to accept it. A
-process calling fchdir(FD_FAILFS_ROOT) moves its working directory
-into failfs. Every AT_FDCWD-relative lookup afterwards fails with
-EOPNOTSUPP including "." and ".." and getcwd() reports the working
-directory as unreachable from the process root by returning a path
-prefixed with "(unreachable)". Lookups relative to explicit directory
-file descriptors are unaffected.
+Add a file descriptor based counterpart to chroot(2). This has been
+overdue for a long time. It is the natural companion to fchdir() and
+avoids re-resolving a path that the caller already holds a file
+descriptor to. No TOCTOU between resolving the target and changing the
+root. It composes with modern fd-based APIs meaning it works with O_PATH
+file descriptors and file descriptors to detached mount trees created
+via open_tree(OPEN_TREE_CLONE).
 
-The sentinel is the only way in. No privilege or gating is required.
-Setting the working directory to a directory in which every operation
-fails grants nothing and loses nothing that closing file descriptors
-couldn't lose. An unlinked working directory behaves the same way today
-modulo errno. The working directory also plays no role in confining ".."
-resolution so no boundary is weakened.
+The permission model is identical to chroot(2). Rhe caller must have
+CAP_SYS_CHROOT in its user namespace, must pass MAY_EXEC | MAY_CHDIR
+permission checks on the target directory, and LSMs are consulted via
+the same security_path_chroot() hook.
+
+The system call takes a flags argument for future extensibility which
+must currently be zero.
 
 Signed-off-by: Christian Brauner (Amutable) <brauner@kernel.org>
 ---
- fs/failfs.c                | 11 +++++++++++
- fs/internal.h              |  1 +
- fs/open.c                  |  5 ++++-
- include/uapi/linux/fcntl.h |  1 +
- 4 files changed, 17 insertions(+), 1 deletion(-)
+ fs/open.c                | 29 +++++++++++++++++++++++++++++
+ include/linux/syscalls.h |  1 +
+ 2 files changed, 30 insertions(+)
 
-diff --git a/fs/failfs.c b/fs/failfs.c
-index f9d4ba791928..f37e6af9c03c 100644
---- a/fs/failfs.c
-+++ b/fs/failfs.c
-@@ -3,6 +3,7 @@
- #include <linux/fs.h>
- #include <linux/fs/super_types.h>
- #include <linux/fs_context.h>
-+#include <linux/fs_struct.h>
- #include <linux/magic.h>
- #include <linux/mount.h>
- 
-@@ -124,6 +125,16 @@ static int failfs_init_fs_context(struct fs_context *fc)
- 	return 0;
+diff --git a/fs/open.c b/fs/open.c
+index 56b6032d4d81..c57f641f2e29 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -618,6 +618,35 @@ SYSCALL_DEFINE1(chroot, const char __user *, filename)
+ 	return error;
  }
  
-+int failfs_current_chdir(void)
++SYSCALL_DEFINE2(fchroot, int, fd, unsigned int, flags)
 +{
-+	struct path path;
++	int error;
 +
-+	failfs_get_root(&path);
-+	set_fs_pwd(current->fs, &path);
-+	path_put(&path);
++	if (flags)
++		return -EINVAL;
++
++	CLASS(fd_raw, f)(fd);
++	if (fd_empty(f))
++		return -EBADF;
++
++	if (!d_can_lookup(fd_file(f)->f_path.dentry))
++		return -ENOTDIR;
++
++	error = file_permission(fd_file(f), MAY_EXEC | MAY_CHDIR);
++	if (error)
++		return error;
++
++	if (!ns_capable(current_user_ns(), CAP_SYS_CHROOT))
++		return -EPERM;
++
++	error = security_path_chroot(&fd_file(f)->f_path);
++	if (error)
++		return error;
++
++	set_fs_root(current->fs, &fd_file(f)->f_path);
 +	return 0;
 +}
 +
- static struct file_system_type failfs_fs_type = {
- 	.name			= "failfs",
- 	.init_fs_context	= failfs_init_fs_context,
-diff --git a/fs/internal.h b/fs/internal.h
-index b6d38a5794eb..b3c88d999dec 100644
---- a/fs/internal.h
-+++ b/fs/internal.h
-@@ -364,3 +364,4 @@ void pidfs_get_root(struct path *path);
- void nsfs_get_root(struct path *path);
- void failfs_get_root(struct path *path);
- void __init failfs_init(void);
-+int failfs_current_chdir(void);
-diff --git a/fs/open.c b/fs/open.c
-index 408925d7bd0b..56b6032d4d81 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -570,9 +570,12 @@ SYSCALL_DEFINE1(chdir, const char __user *, filename)
- 
- SYSCALL_DEFINE1(fchdir, unsigned int, fd)
+ int chmod_common(const struct path *path, umode_t mode)
  {
--	CLASS(fd_raw, f)(fd);
- 	int error;
- 
-+	if ((int)fd == FD_FAILFS_ROOT)
-+		return failfs_current_chdir();
-+
-+	CLASS(fd_raw, f)(fd);
- 	if (fd_empty(f))
- 		return -EBADF;
- 
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index aadfbf6e0cb3..e43e3de3e9ee 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -124,6 +124,7 @@ struct delegation {
- 
- #define FD_PIDFS_ROOT			-10002 /* Root of the pidfs filesystem */
- #define FD_NSFS_ROOT			-10003 /* Root of the nsfs filesystem */
-+#define FD_FAILFS_ROOT			-10004 /* Root of the failfs filesystem */
- #define FD_INVALID			-10009 /* Invalid file descriptor: -10000 - EBADF = -10009 */
- 
- /* Generic flags for the *at(2) family of syscalls. */
+ 	struct inode *inode = path->dentry->d_inode;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 874d9067a43b..8413b624ad47 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -457,6 +457,7 @@ asmlinkage long sys_faccessat2(int dfd, const char __user *filename, int mode,
+ asmlinkage long sys_chdir(const char __user *filename);
+ asmlinkage long sys_fchdir(unsigned int fd);
+ asmlinkage long sys_chroot(const char __user *filename);
++asmlinkage long sys_fchroot(int fd, unsigned int flags);
+ asmlinkage long sys_fchmod(unsigned int fd, umode_t mode);
+ asmlinkage long sys_fchmodat(int dfd, const char __user *filename,
+ 			     umode_t mode);
 
 -- 
 2.53.0
