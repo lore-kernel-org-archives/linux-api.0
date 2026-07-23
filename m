@@ -1,99 +1,92 @@
-Received: from fhigh-b1-smtp.messagingengine.com (fhigh-b1-smtp.messagingengine.com [202.12.124.152])
+Received: from list.codeweavrs.com (list.codeweavers.com [4.36.192.163])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 92E2C3749E8;
-	Thu, 23 Jul 2026 20:08:05 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=202.12.124.152
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DBEA3E49D0;
+	Thu, 23 Jul 2026 20:13:19 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784837290; cv=none; b=ujG8Bpip1mzJQ8+BWz6mGmnEX6o8l/VJR/KXJPRyYHUnr2TRjATRpLfAR7bhw07uDvlRPLDNg2v4m8RsWobptD45yq+QkrA0jUOJ7vO1T19IxKwY7O3nBuYKIDkYLO4QxMrvexUtz2ig+JB4h8GvZoH0Ozp8eiBdNcB0WTJeY38=
+	t=1784837601; cv=none; b=RggCkS4f/PUjFmlikX8sC6uHWiF7+Zgtoo8ucEuQQIsa7OYsvQBhYmmO1PKfIk0mdBKTqC01Lp50QyUHYEPXd9tbJHMt2WKKum5wrMjech/V1iwaJZ5cLHgwGQwA6XEPnrdVF0OpAQIMLcN+f2eRa2j5dFZ/5osJ1ei5Bqlkm+8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784837290; c=relaxed/simple;
-	bh=fBHSlKihB7uqNCvVP8QfQmvnw2yxyQSDkZAa4uWIkcE=;
+	s=arc-20240116; t=1784837601; c=relaxed/simple;
+	bh=BbUNTYM56/ulELyMb/+QTJintb3w3cqQTEBM2+tC2vg=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=oocAoP1zSmN5nNmmdMH5kUp73AU2VDzUF1dxRxT2baw1CZs/I5OgAueNWhgGpNvvPPkxEwTUnEXFcKEHWXqriieytbYPZPl2XYxsALzZcma8gRV0HIeJXtQVZgGxb8tVfUfFITAPzgKqzdpybzvnnwY900NKXZGBFreDqNdOevo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b=XD1VXPm+; dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b=jMIIRThN; arc=none smtp.client-ip=202.12.124.152
+	 MIME-Version:Content-Type; b=q2MLy9KaTA+FWLXA0KBRRy6DcCIVP+5Q/vyjX7abKNZSCt/YWLvXDhfZ5KIn7doi3ScfkPxW2eCWl5yJ/78Z6eIMK19jSS92hKE6l5lo1f9i0+6qNxdCcNwyxaF7D+s/ZrwpgVEvfJMatl6pQxtlkxmt3W8NC/XsKBvC8t37Yh4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b=cQ9jmLMA; arc=none smtp.client-ip=4.36.192.163
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=codeweavers.com header.i=@codeweavers.com header.b="XD1VXPm+";
-	dkim=pass (2048-bit key) header.d=messagingengine.com header.i=@messagingengine.com header.b="jMIIRThN"
-Received: from phl-compute-04.internal (phl-compute-04.internal [10.202.2.44])
-	by mailfhigh.stl.internal (Postfix) with ESMTP id 7025B7A0025;
-	Thu, 23 Jul 2026 16:08:02 -0400 (EDT)
-Received: from phl-frontend-03 ([10.202.2.162])
-  by phl-compute-04.internal (MEProxy); Thu, 23 Jul 2026 16:08:02 -0400
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=codeweavers.com;
-	 h=cc:cc:content-transfer-encoding:content-type:content-type
-	:date:date:from:from:in-reply-to:in-reply-to:message-id
-	:mime-version:references:reply-to:subject:subject:to:to; s=fm1;
-	 t=1784837282; x=1784923682; bh=zvCiZOUeqSGbV5T85kBu0y2rxPDlRejo
-	7kTCDEygPPI=; b=XD1VXPm+ZOpB1a2CysvNlk4iNWrstAJ9d0ORIWWYO1aapx4I
-	I5qo7DsBRjm+KohICjX438kv6tPR6IXbx+3hXpzk9nWA68UfeLbiA7Wf8h6WF5Ec
-	AyKOTHYX9MmP84RTF3sUOYl30WxTGF7Gx75WJkLD2EruKKW1Fsfr8JXg0MYgC3NZ
-	1BwPIgh5UtOHvcY6/pUjBy8U9b2rYeJ1I9EVSXlkRtVWGXzSY2lMEGpxzc2ifh1R
-	WP+AvEggUSjEFo0ZXhym4bzyOyWMLzT3eNIVcHmE/wnfStAfm0KJxheoK3ZQD54r
-	htgD3d2izcxUzu2ifaMyuoVc8ocP96DzUAo+ig==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-transfer-encoding
-	:content-type:content-type:date:date:feedback-id:feedback-id
-	:from:from:in-reply-to:in-reply-to:message-id:mime-version
-	:references:reply-to:subject:subject:to:to:x-me-proxy
-	:x-me-sender:x-me-sender:x-sasl-enc; s=fm2; t=1784837282; x=
-	1784923682; bh=zvCiZOUeqSGbV5T85kBu0y2rxPDlRejo7kTCDEygPPI=; b=j
-	MIIRThN//YqQ+xJgFNJcFmvgQ2QgHY5n3D95iMpqJK4ZW1DN5kbHiyocOtwdPYQ7
-	Y4pDqtETGIfwYycUAKXCOl+jd3zBfCg35PrZVdik3YV014LebM+KZfUAwPYYEjtZ
-	3MSRjHKVCV4kUctVgzjD7lRSZ/jD7XwcPAqOhVv8IvRVAVBjrx4A2sdzBHe8Ia3g
-	mmR/4nrzJXgzEVZdTUScV8DkEC5eeHuQH8KwgKiRHaYy0e91rIFIppBggQb5RsPV
-	h1BF7zfK9pT0MIluoxiuXGfdwT7p63cSRMaFLRkiLY496W6SQRLQyhLm37Moff5U
-	NJ9DbEAguQpXO6h38MYSw==
-X-ME-Sender: <xms:onRiahBPlTnk9py_zvWNFcHKfFhLwQCijqUJ8H40wigiXJ8NFEFVFw>
-    <xme:onRiav-__H2us64tClBz9vqGgGzX0NEPUMmcL8gjL_0VVmKskUI3h8Bm8eWHgGRaa
-    0UOgNYgDJql_42hoLSATr9UD4cExn9nmtYjjT6JvZ3vqVqvbQ2wwQ>
-X-ME-Received: <xmr:onRiatTVN6OfeYO-1Zm3BYMyVeL5criM0LNGZKV_EkvEHxDSJLRf73luL0cfT0YmwHUwHjEy9bB8A4Ko6DE>
-X-ME-Proxy-Cause: dmFkZTEymeXF3iGxG+scIyVi9qVVOKytgnKAA8H1b0iB7tfqr3n0dYZOrSDuJCh0jcljor
-    NWRsrQHq9coCfsWkKKJbdEkf9Mbn2/HWFPLm3ANV7ayKe/NaFQNXIwW0YuOLnYo+JRSFJE
-    FKHSWwdPboTGXsk1LWpSycXARRFqd668VadQlNUWueqKDSUaFUQStOaV1TjeBRRl+V0pmE
-    JeTVlV+gPRpOT8PauGE+iq5N4pzE9Mv/OenpWp3w9mj6dPX8a9TZ6eRVjJjet3jysZMxBd
-    /d8EU0nqZ7oAZPbex4PcZIVRqDTRAgevSAWQGC6gU9eIIhPqSnhcd9bmRoZXZK+ffoPiTe
-    2i0I/K2PsGGmHyvht3mADBTyJly27qLoXpzq3GjzQUkDK8BwfH4Hj3NsJOV1u58OT+O1Hf
-    ogw4uIL6fNrbVDvf480GVR0qYL/SscxP8NyfMMUs+KUJExZQym26RqK9eS5RldKB7nx4fm
-    zRL625SCydfVJlniJVENfXXwdmo8TreN+3nkM4B36/hSoAwLfjmJBxvIZ2VzttkNUU4Nwk
-    ud5/DceXu6gWMr65Cd1K9LwoRiYw/AZ+Gci9rhOUIpD1oCXakUA2+Fj9E8GtktW3gVRyQ/
-    /VXgy+ZJ3WPKwRKy06aT/zImnT4dnV3sE9ya1aptKEdsYRAUm+RCwZU0Javg
-X-ME-Proxy: <xmx:onRiajVqHhgJmUSgP6ErBwKIqEEFr3odCGx5N8kqSYO_tvOAMngXpw>
-    <xmx:onRianQP4erPZ1fAuy1N0ReS6QjtVGs6IOS9IWL-tq46fLGwBq9Qdw>
-    <xmx:onRiar3NGj3sLC82NMDHIBhp0Yg4anWdBDkobfUmjpgXL_pjZoCW_w>
-    <xmx:onRianc_mwUeM8eQQj_L_DX2qSNUIWWqrQKTTOyjQhLIoNfxLe5WQA>
-    <xmx:onRianp-PRp0AhmhN37Bso8fwTEgCsM75Mg-ozeFiAr3tMo2bKZ7K9sE>
-Feedback-ID: i01ae4b70:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Thu,
- 23 Jul 2026 16:08:01 -0400 (EDT)
+	dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b="cQ9jmLMA"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=list.codeweavers.com; s=list; h=Content-Transfer-Encoding:Content-Type:
+	MIME-Version:References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender
+	:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
+	Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
+	List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=lfHZg+u8ne+vOi+IymxWIYACUEM7LNtzyJvvMTkgCrU=; b=cQ9jmLMAiUbmDlNpRvh2/rqjQD
+	a2ic/5egOdZJT6JzYEioLZXcBqvS7R3ibXrLXX7HoQGYiuKe6+M52jB4t7l93KUNtN5AMfzzLxFvL
+	MnTM8b1GsMs/ZoNt8q9J6ZVIG7DCUfTzlx8UHRiK9B2Cpk3yK8WwtQv5DmdniUM005gjNR97gE40X
+	1z/NNVYlD+AXowq85Wr6E6tQqWdRPo6DjFBuS0/YoboCcPfqR31PtQQw02j8TOzWu4wTfisCi2+4U
+	w92C4I8d+sShpNmPJH5bzeQH7Pt+Me0qh0KuvMhPLOko3MAYJrT7342YuvRse35oa2X9ExTWtgYAf
+	BYDtNpKw==;
+Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
+	by list.codeweavrs.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <zfigura@codeweavers.com>)
+	id 1wmzn6-00AV4U-1b;
+	Thu, 23 Jul 2026 15:13:12 -0500
 From: Elizabeth Figura <zfigura@codeweavers.com>
 To: Arnd Bergmann <arnd@arndb.de>,
- Greg Kroah-Hartman <gregkh@linuxfoundation.org>, wine-devel@list.winehq.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
- wine-devel@list.winehq.org, linux-kselftest@vger.kernel.org,
- Elizabeth Figura via Wine-Devel <wine-devel@list.winehq.org>
-Subject: Re: [PATCH 0/4] ntsync miscellaneous patches
-Date: Thu, 23 Jul 2026 15:08:01 -0500
-Message-ID: <77603773.Cp5WYEEl3R@camazotz>
-In-Reply-To: <20260720171740.447035-1-zfigura@codeweavers.com>
-References: <20260720171740.447035-1-zfigura@codeweavers.com>
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	wine-devel@list.winehq.org,
+	linux-kselftest@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	=?UTF-8?q?Iv=C3=A1n=20Ezequiel=20Rodriguez?= <ivanrwcm25@gmail.com>,
+	Elizabeth Figura <zfigura@codeweavers.com>
+Subject: [PATCH v2 1/5] selftests: ntsync: fix wake_all CREATE_EVENT fd expectation
+Date: Thu, 23 Jul 2026 15:12:57 -0500
+Message-ID: <20260723201301.11826-2-zfigura@codeweavers.com>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20260723201301.11826-1-zfigura@codeweavers.com>
+References: <20260723201301.11826-1-zfigura@codeweavers.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 7Bit
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Monday, 20 July 2026 12:17:36 CDT Elizabeth Figura via Wine-Devel wrote:
-> This is a resend of a series originally submitted as [1], now sent to char-misc.
-> The following is the original cover letter sent with that series.
-> 
-> [1] https://lore.kernel.org/all/20260628024239.152852-1-ivanrwcm25@gmail.com/
+From: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
 
-I've received new patches including an update of one of these; I will resend with those patches included. Sorry for the noise.
+wake_all used EXPECT_EQ(0, objs[3]) after NTSYNC_IOC_CREATE_EVENT.
+The ioctl returns a non-negative file descriptor on success; check
+EXPECT_LE(0, objs[3]) like the other CREATE_* paths. The incorrect
+expectation was noted on list (Mar 2025) but is still present in
+mainline.
 
+Signed-off-by: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
+Reviewed-by: Elizabeth Figura <zfigura@codeweavers.com>
+Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
+---
+ tools/testing/selftests/drivers/ntsync/ntsync.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/testing/selftests/drivers/ntsync/ntsync.c b/tools/testing/selftests/drivers/ntsync/ntsync.c
+index e6a37214aa46..12b4b81edf7f 100644
+--- a/tools/testing/selftests/drivers/ntsync/ntsync.c
++++ b/tools/testing/selftests/drivers/ntsync/ntsync.c
+@@ -968,7 +968,7 @@ TEST(wake_all)
+ 	auto_event_args.manual = false;
+ 	auto_event_args.signaled = true;
+ 	objs[3] = ioctl(fd, NTSYNC_IOC_CREATE_EVENT, &auto_event_args);
+-	EXPECT_EQ(0, objs[3]);
++	EXPECT_LE(0, objs[3]);
+ 
+ 	wait_args.timeout = get_abs_timeout(1000);
+ 	wait_args.objs = (uintptr_t)objs;
+-- 
+2.53.0
 
