@@ -1,91 +1,100 @@
-Received: from list.codeweavrs.com (list.codeweavers.com [4.36.192.163])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DADC3E49C5;
-	Thu, 23 Jul 2026 20:13:19 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=4.36.192.163
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5D983C65F0;
+	Fri, 24 Jul 2026 08:04:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1784837602; cv=none; b=uSD0P7mrm4Aoe72DOuHo8Q3CUq58B8Ff3X/Z4kjnvC0w+Qn2BhPeMT70id8KlOqO0JwW0rL5ONxoNbz65vph9FnR7HqUvqSx0Hw2TTaNYFYb4bT8oF1rG+UpoxWY0I+ZDY5ALHNT1Hy+uiqGnHtgcCzvZPB3MwquH0eVoyGYNy4=
+	t=1784880271; cv=none; b=GqqKZs11Zzabjd7KzOeGy3XrMGewx9DcUZQFjBuzzhB8iYAMRVOnhg0gblTGayv3+2cpPswJYm7caFKMrbNVpJLRFt35uECGxY3qjUWCtm49IVAroYjO3d0KS7m8B2s8PEmize9wn7GB4UeoVV8kyofHLDftEO7jW2UqT/G0FvM=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1784837602; c=relaxed/simple;
-	bh=syfQgoDuHaZrDYKHpmrAqG01+IvjiRi6SEgNM2+X1oM=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=n3TYDKDzkzY96jiY15feoLmHzrs9SNqpth1DhxhF1V/3V26wLTxVB4PNPcdUHZxoTWlw/vJZZg+KKLrNILnpmKu3H8ZyMERHfe6gG3TZSSPwgXHVu1Gg4vsXOIH6jW6BGRSauuOECAFJ8IjBzKNKlB7uxN8DlxlvqANC5vd3No0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com; spf=pass smtp.mailfrom=codeweavers.com; dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b=pS89HMA0; arc=none smtp.client-ip=4.36.192.163
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=codeweavers.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=codeweavers.com
+	s=arc-20240116; t=1784880271; c=relaxed/simple;
+	bh=9KjHpnjrQ11L763ns6b7q1nshB2M2ObqhvgJGHsHT74=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Wk1TW3ZCJFCutBTT7Q1fUpN0JojQY05WKVljM0+QoOqczpqYkzPPS/X18F944E0IaEBG/cAhc6y66Y+naYxuh9ku1bLsWzCJ0C8VShlWAQlfiSLtRK2CZzVL3QTh7X4M0rmD5OV0hKo12zzcgmH3FTf+6AEbt/gsgwzuM1FRMj0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Hg/dhdib; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=list.codeweavers.com header.i=@list.codeweavers.com header.b="pS89HMA0"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=list.codeweavers.com; s=list; h=Content-Transfer-Encoding:Content-Type:
-	MIME-Version:References:In-Reply-To:Message-ID:Date:Subject:Cc:To:From:Sender
-	:Reply-To:Content-ID:Content-Description:Resent-Date:Resent-From:
-	Resent-Sender:Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:
-	List-Unsubscribe:List-Subscribe:List-Post:List-Owner:List-Archive;
-	bh=cGytKmpTZSgV/TsaLNwpn0WgDkhwBsVUwPMmrW//LJk=; b=pS89HMA0RB7fMwiwXVOMws+2nB
-	1U2Ib7m6jf8Msxhh0DyooJ1qT2W2I/MlKxdx5FTBem0YhgfQAlRhSC9ISi8E2kft1OXo4Poks4jT4
-	x538ckI6w89QGm3A4zy3LKz7bdBYJzKjCVB7J/xqwQFRbX6flFOmRw0BXZ3TUL46kqtBOpidAY0Df
-	Zx+aRs6BAy/VtrSOAnViSFE0kkV/CSXBnkMWGr2SOWEsrmhDBIT2uaFSW6CSMLecYtydQ66dRBrPm
-	V1Y2FyySp4I+L49FXWYxi8pdk1fxWPdCD/MpCOpIFg4fJhXEaxNNos6fUo2USNwEbxviaG3v2Ju1V
-	YQL+BEZA==;
-Received: from cw137ip160.mn.codeweavers.com ([10.69.137.160] helo=camazotz.mn.codeweavers.com)
-	by list.codeweavrs.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.96)
-	(envelope-from <zfigura@codeweavers.com>)
-	id 1wmzn6-00AV4U-1e;
-	Thu, 23 Jul 2026 15:13:12 -0500
-From: Elizabeth Figura <zfigura@codeweavers.com>
-To: Arnd Bergmann <arnd@arndb.de>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	wine-devel@list.winehq.org,
-	linux-kselftest@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	=?UTF-8?q?Iv=C3=A1n=20Ezequiel=20Rodriguez?= <ivanrwcm25@gmail.com>,
-	Elizabeth Figura <zfigura@codeweavers.com>
-Subject: [PATCH v2 3/5] ntsync: reject wait ioctls with zero owner
-Date: Thu, 23 Jul 2026 15:12:59 -0500
-Message-ID: <20260723201301.11826-4-zfigura@codeweavers.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260723201301.11826-1-zfigura@codeweavers.com>
-References: <20260723201301.11826-1-zfigura@codeweavers.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Hg/dhdib"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 935DA1F00A3A;
+	Fri, 24 Jul 2026 08:04:24 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1784880269;
+	bh=NRTHZmJYuxwypVNAxCEvs71U+5naG8G0pnvyuh9pSf0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=Hg/dhdibhxOrcsUScmSSll27l/p5+49N5w0BN0rX/Z/i+CfktexkZ38LBXXAlsKdV
+	 hKtOUUBAHtUcP8ZExxlbOyJ2oDsWOhbjYiCIYLMX6rFvaG3BuDMgM2F6DiY+bwqYv4
+	 S/xBiK4wzXxek+/xfVzQF2PJO/5jFLsm1EZa7K9Iw6WPJpLxcVBEFP5TadiFTJCcyu
+	 ihp600ZAxnoSGppeJt0jbvypVArTWpg4GwxffIWjyP9BVtpuPxRMyBnJJItoBh3DWE
+	 anzFX/RZrAwYp4FCKaO3mTjKo7lFbyVhswTD7XqGaBqdBetNTcoJpwcK7qMEKovr+U
+	 wuuUOFYh4d3Kg==
+Date: Fri, 24 Jul 2026 10:04:21 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Jann Horn <jannh@google.com>, John Ericson <mail@johnericson.me>, 
+	Li Chen <me@linux.beauty>, Cong Wang <cwang@multikernel.io>, linux-arch@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@kernel.org>, 
+	Ingo Molnar <mingo@redhat.com>, Borislav Petkov <bp@alien8.de>, 
+	Dave Hansen <dave.hansen@linux.intel.com>, "H. Peter Anvin" <hpa@zytor.com>, Jan Kara <jack@suse.cz>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Kees Cook <kees@kernel.org>, 
+	Sergei Zimmerman <sergei@zimmerman.foo>, Farid Zakaria <farid.m.zakaria@gmail.com>
+Subject: Re: [RFC] Null Namespaces
+Message-ID: <20260724-wagen-melden-gemieden-a45899cdbb7f@brauner>
+References: <a49ce818-f38d-41b0-bbf7-80b8aad998b1@app.fastmail.com>
+ <20260629-hauer-erhitzen-sobald-96d3dff68707@brauner>
+ <CALCETrVuh0-biOw=TgYN9ERTFAoiki57XeZ3S2T3dO2+hL54gA@mail.gmail.com>
+ <20260702-entladen-farbkombinationen-klarheit-fe24cb608f23@brauner>
+ <20260706-dabei-radeln-glitzer-71ecb835029c@brauner>
+ <CALCETrVjDtBmB+boCUgd069UpZGUB1TCbEn3k1HZQex-_dPgbQ@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+In-Reply-To: <CALCETrVjDtBmB+boCUgd069UpZGUB1TCbEn3k1HZQex-_dPgbQ@mail.gmail.com>
 
-From: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
+> > > For my FD_FAILFS_ROOT proposal it would be enough if we make failfs
+> > > SB_KERNMOUNT which means it's logically distinct from every mount
+> > > namespace. I think that might be the right thing to do. I need to spend
+> > > one or more brain cycles on this though.
+> >
+> > I had to take a long drive on Sunday and I kept thinking about both
+> > FD_NULLFS_ROOT and FD_FAILFS_ROOT and ofc there are some things to
+> > consider/discuss.
+> >
+> > I think the straightforward solution to FD_NULLFS_ROOT would be to just:
+> >
+> > - make it always available
+> > - refer to the caller's mount namespace nullfs
+> > - work with fchroot()/fchdir()
+> >
+> > So I considered two chroot() use-cases for the sake of simplicity:
+> >
+> > (1) You want to isolate yourself for the sake of lookup
+> >
+> > (2) You want to isolate yourself to assemble a "private mount tree" but
+> >     not really be in a separate namespace (very odd use-case... but it
+> >     helps to make a point).
+> >
+> > The problem with this approach is that everyone who chroots into the
+> > nullfs root would suffer from the problem that any mount on top of it is
+> > still visible. So that kinda makes it pointless for both (1) and (2).
+> >
+> > Also all mounts that someone else would do would also be visible
+> > allowing multiple chroot()ers to affect each others state. That also
+> > would somewhat defeat the purpose of the chroot(). So I'm not convinced
+> > this is what we should do.
+> >
+> 
+> After some contemplation and a long place flight: are we talking about
+> nullfs or failfs?  Because I would expect that it's entirely
 
-setup_wait() already validates pad and flags but not owner, while
-Documentation/userspace-api/ntsync.rst requires EINVAL when owner is
-zero. Reject early before queueing waiters.
+nullfs
 
-Signed-off-by: Iván Ezequiel Rodriguez <ivanrwcm25@gmail.com>
-Reviewed-by: Elizabeth Figura <zfigura@codeweavers.com>
-Signed-off-by: Elizabeth Figura <zfigura@codeweavers.com>
----
- drivers/misc/ntsync.c | 3 +++
- 1 file changed, 3 insertions(+)
+> impossible to mount anything on top of failfs.  So failfs would be
+> useless for #2 but would still solve #1.
 
-diff --git a/drivers/misc/ntsync.c b/drivers/misc/ntsync.c
-index 02c9d1192812..4a805919bb0c 100644
---- a/drivers/misc/ntsync.c
-+++ b/drivers/misc/ntsync.c
-@@ -875,6 +875,9 @@ static int setup_wait(struct ntsync_device *dev,
- 	if (args->pad || (args->flags & ~NTSYNC_WAIT_REALTIME))
- 		return -EINVAL;
- 
-+	if (!args->owner)
-+		return -EINVAL;
-+
- 	if (size >= sizeof(fds))
- 		return -EINVAL;
- 
--- 
-2.53.0
-
+Yes, failfs can't be mounted on at all.
