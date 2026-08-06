@@ -1,28 +1,28 @@
-Received: from MW6PR02CU001.outbound.protection.outlook.com (mail-westus2azon11022125.outbound.protection.outlook.com [52.101.48.125])
+Received: from MW6PR02CU001.outbound.protection.outlook.com (mail-westus2azon11022122.outbound.protection.outlook.com [52.101.48.122])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 42ACB35838A;
-	Thu,  6 Aug 2026 19:55:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.48.125
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4A51041837A;
+	Thu,  6 Aug 2026 19:55:38 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.48.122
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786046144; cv=fail; b=gyyd96lm2QvmQKcsNYTbnyfkP3MIyBdWqgFQgngvfHg0D1k0E+2k/HGsLt2DLLpQemT4UUxis+13aVCIh6B1qQYddwv1zUr1ucUu4zhL45dP6qTR1gAZ5oiOfjPOCKa8RrU/6eobBWaYlp8VbZN7daXlvYP4o0K3gHPK7VJ5OhE=
+	t=1786046145; cv=fail; b=fb7uUPlzVyKNlIOKMq4rDH1nWmk70Cy2EI1cTbT1HKVvraBEESrOMt8sXY8OA9gqPxk327jsO7QkhsWXd/1itJtwhbQuYLQbRIJyl+65YU/aUOiZRilbe5XRJM1HQaiRwrIUzU8nGHLnLM+j95lI649i3y4r5AnUcwuTNSZaFIc=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786046144; c=relaxed/simple;
-	bh=IZRbANjdzWF/Z/3klJwObwLaYhQ1/lmUC0PwpctNN1M=;
+	s=arc-20240116; t=1786046145; c=relaxed/simple;
+	bh=4+35mHUJF0AbJ5EWWYx3BRsuiKC8kvih83vjNcyH66M=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Qux9BkSgmwiwGTH1t/lTaHMiUhZ0mFrrECk97/D9KcEzSRkbY3gKf1H6h58jCTM5HiwsDzXJFTGMDCySA1JFyUWmOGw5jhsPaoNzcgkXSAzDijHHX5PHwV4c25Xf0ROpkwq4BTezcKJZ4ShTixlpRiBYacjQZ3Q+zo5or0GWzGo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=Khc7VURy; arc=fail smtp.client-ip=52.101.48.125
+	 MIME-Version:Content-Type; b=QWoedksCrM25OpbVA62u/kaIrBYf0orErtsMkytkXW3p7lkE/taw7k3CqIMopIXjZ9jeg6l5us/d2jQX9BJ7aS083N8pzJaT1ysrlmqW+tWsIPxK16Q7EinkMvV3nuu9Fjk0PB/XmjlmlvkcQaBFVKgwmI0DwfoBt8q0KiYzjF4=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=0HYG4Te7; arc=fail smtp.client-ip=52.101.48.122
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="Khc7VURy"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="0HYG4Te7"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=f3U7KPKE/qTBvCbwZ34+IOuxxPAcY89Fuqm/i0Yus9yRVKb4MkrdFHkqVxxKQWpw8YYbAUdTkWxeTAR87xmWleQS0+s/VKNQ44UnFfyP/jJlRpfyOhlu4mh38Z+N6roCKUNpMTzS3iDr7yhVnvdj+x2qjbM1dhSXNvDjOOJWaxTCISrKqYB8wLMLVMQXR52Bz1dT/tqi2XDpK3p9SNnPzzFb5capvS826MfXxEPT/Nez07L1Bw+kB96kM5XrxSbKEEiUUiUfiO3B88yCUsftzsX4XuNy5S/awN21iWGAOhHKlgTL24BDg/RBB3ZU37EHMtN5Mx9TtD1VbZKWDRUlgg==
+ b=lLgdMFfiwSdukVsDI996uxaO3wGnhf7CwiveFGZH+Xx0r8MuMBqFichERBQTlMNy17dof1dy8nyMsTWvqFeSLy+F8Q7twdUV5k83qrbkUtI01VB14xKd7lCiA7RsC4QkAG3lfL6yg+RcVHCCZUh5BZRArgCpQBknzBD8q2/6YQDqoT/m20WIkVTiTDs0cgJax9w8O+WeZpxNm0aDj7uCEE3C7VPp+8n6roVFpyWdiq9qNiIj/pHv59S7Jn5gqiGO7JIrcvjZf0S+jIjnnx7iEac4M+7ZeqQs7pbfUlkKmpOHxh6k5oH3NN74ntmMDdxDxtLqIO48Y3Lpvwote/IYug==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=JRy3IcrUYuXZeYCV2UxYSPO3oVJzLz84j+WY2vspzuU=;
- b=zII4FfC5n83gDXKpcn/s9fnJ0lvfKhYsbtUPcH/Txeyznhi19E+NdSg9dlh/aEslg76w6K8Y3x9cKfAkhU0cpd35sZ/pWY4IupEtjtLvzsWTHDXMqxXy0xnl2YyLcuvk2vSxxbkujiHDwhwWFhipl2mnvj31AQ8YlT094aouSePsuj/iIAyCXBFOEK83SxnEUedRqmeJMmEMKM1OwvTN7UZr0Uv2pJwUMHpnCsksLoDwetP07LjDwhbYjtbYNCOn8VvrrHLUs/bmhaSLAAaMRjaQXBo2EY8VYvf75KHVpXP+gx0Gedg5QhxUOPxBthorLW0JAHLjo/mQ9M6Nt/rzSQ==
+ bh=0eqp2x/lHwxf0CuslvShJl8nyumkU3xtnclqbzUWQwQ=;
+ b=we/Hr8bvEuOVG3014ueY2fwlSnuPQ1ziNglrtK5CsmFSloF5fDBGlzFE1+BVTMjhmegVBkVJXsHxC9F0TrK7ytsqhxZIp8NXfewgbZICWGjvYbI2jdy96KdsxHaaKqIi0o4/7+5jPGETRdsgSUUzEcJ3XrTmeerOx94OcQrQAd1VkWubps8vI96yQeRq8wPqMVxbtdmusOo+N7YxfySXbfXYxo85DA7dQOa+DARjobirWpDoXCuLn9bZvev01D7OMK4+CPnOLrpnWAC0jijpXBto/pwkLPjedm876VWB6EuVvIarsMMoG/4ya+MG/QHYmLrVR9DUWebCsUkbWHRrGw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=JRy3IcrUYuXZeYCV2UxYSPO3oVJzLz84j+WY2vspzuU=;
- b=Khc7VURy3mVM0035R+C61El2UfaY8pvLvCqVIhiswASlh68KqYHJgVUgpXaObCubC1Scj+I+f49XKP0ZrqiWJkU7FqtIb2BcPHV9uviussMQAqfLmeOA5nebHvJ7xBYZ6uCP9ki4mZIUAjEBgqvIJOwcIVG9GIOzafxWkUmiiH8yJn3Drf/bBEqYYYN4EtZwfYuhTdWTEWAXhpeVLrGZV8zKgBv7MVFdDVx4pnKe/kxP7g59tFfrB/woVtV8Gsalg7oZAe3q1Iy3b+wOzW9qk/dpG74WR3/hfrWEANqYSVN48lP90u5U6B22CoWTXWnBuuvosEIAShGFsPf+tPzIWA==
-Received: from SJ0PR05CA0081.namprd05.prod.outlook.com (2603:10b6:a03:332::26)
- by LV2PR04MB9834.namprd04.prod.outlook.com (2603:10b6:408:34c::8) with
+ bh=0eqp2x/lHwxf0CuslvShJl8nyumkU3xtnclqbzUWQwQ=;
+ b=0HYG4Te7TtJiaWUfvB0FYOLjpmuuqFpJIRHGwJPqlSw0Ayq7+IqB7v63i1mWeY+d+ezFwuzRmJ0tyImnIPiypdNqx8sW2z2gRz7kQIQMt+eCTvIdO483bwG7Xwh1olLE44NwPRuBPOGH1bUSMrb/qYrCZ0H/Q4H+fSNc55idfYqxvBizWcTw0j8iuJxHbw0gxw5H2CiXS0cIJWV2jM54kygerVKcXuJHpm46SdqUEAE03qbGOTb4oD/8M5irFYHWU5TqYz9Dok0HKKdEil4SO3dzCemxN0vTZczkQkgp/M6K0FmIfe2RzmFvnNFXo55gJ3Y/b28TTgJzDWAqOXJ99g==
+Received: from MN2PR07CA0002.namprd07.prod.outlook.com (2603:10b6:208:1a0::12)
+ by MW6PR04MB8842.namprd04.prod.outlook.com (2603:10b6:303:243::17) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.292.21; Thu, 6 Aug
- 2026 19:55:30 +0000
-Received: from SJ1PEPF000026C5.namprd04.prod.outlook.com
- (2603:10b6:a03:332:cafe::44) by SJ0PR05CA0081.outlook.office365.com
- (2603:10b6:a03:332::26) with Microsoft SMTP Server (version=TLS1_3,
- cipher=TLS_AES_256_GCM_SHA384) id 15.21.315.8 via Frontend Transport; Thu, 6
- Aug 2026 19:55:29 +0000
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.292.16; Thu, 6 Aug
+ 2026 19:55:29 +0000
+Received: from BL02EPF0001A101.namprd05.prod.outlook.com
+ (2603:10b6:208:1a0:cafe::28) by MN2PR07CA0002.outlook.office365.com
+ (2603:10b6:208:1a0::12) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.292.21 via Frontend Transport; Thu, 6
+ Aug 2026 19:55:28 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,12 +49,12 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- SJ1PEPF000026C5.mail.protection.outlook.com (10.167.244.102) with Microsoft
+ BL02EPF0001A101.mail.protection.outlook.com (10.167.241.132) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.315.6
- via Frontend Transport; Thu, 6 Aug 2026 19:55:29 +0000
+ via Frontend Transport; Thu, 6 Aug 2026 19:55:28 +0000
 Received: from hqxsv-cmdev3-skrishnamoorthy.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id 29D251801769;
-	Thu,  6 Aug 2026 19:55:28 +0000 (UTC)
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTPS id AF2021801761;
+	Thu,  6 Aug 2026 19:55:27 +0000 (UTC)
 From: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
 	Alex Ousherovitch <aousherovitch@rambus.com>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v3 14/19] crypto: cmh - add ECDH/X25519 kpp
-Date: Thu,  6 Aug 2026 12:55:13 -0700
-Message-ID: <20260806195519.2703224-15-skrishnamoorthy@rambus.com>
+Subject: [PATCH v3 07/19] crypto: cmh - add SM3 ahash
+Date: Thu,  6 Aug 2026 12:55:06 -0700
+Message-ID: <20260806195519.2703224-8-skrishnamoorthy@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260806195519.2703224-1-skrishnamoorthy@rambus.com>
 References: <20260806195519.2703224-1-skrishnamoorthy@rambus.com>
@@ -94,36 +94,36 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ1PEPF000026C5:EE_|LV2PR04MB9834:EE_
+X-MS-TrafficTypeDiagnostic: BL02EPF0001A101:EE_|MW6PR04MB8842:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: f1a43b63-c327-4d7c-244e-08def3f4aabe
+X-MS-Office365-Filtering-Correlation-Id: 2ba8ebe3-71ed-471a-142a-08def3f4aa59
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|7416014|23010399003|82310400026|1800799024|376014|36860700016|10067099003|56012099006|11063799006|5023799004|6133799003|3023799007|921020|18002099003|22082099003;
+	BCL:0;ARA:13230040|36860700016|376014|82310400026|23010399003|1800799024|7416014|11063799006|56012099006|10067099003|22082099003|18002099003|3023799007|921020;
 X-Microsoft-Antispam-Message-Info:
-	CDpKAfX8ggnrf218x9gVt20d7FGvf7ac+D5POsT8b2kRLbr7s2uqI8jqIUPxx5Gnyd2U98uFZg32hAX/GnyCIdi0ogRjl+fcvA96SzKdck1KjkL+sG51fzSAA4du7NfkbFoaDB6BScHl672+XbXV+Qpi2UgTe6uPvDvXOl0SP6RRiPqyycRAMgVjrIFwVcaOm6cPjwfxe76I7E+HedUMzaXfwxvyA6up09LbT7ASe4nEErE8FUoZ43LXoB6d+9/mvG3uONi8Y2uslGqsTzRNQr5Zu7EXYLgy10o8voey/wbwTjSpgilDLGkY0aLR6E9lhIFQjJsnhR9saV30rDYxeE7DgzX3f1fnNOVfhn1296NlZeGlk/xcO410J1twIrLgAkraCJxrWhqYQPhxdsFugwPkHD/wE+XHYIKql62FgEBpChzNBhl/p8UnhI3AhiXYWBUG24sVr22GHYgeo7DPQCwXIGqsZOSE5msTLIrk64XjOI2Ru3CRCV+iN2d11XGNlcnVtnlcLdpqMhLwGkvmqg7neHCB+LTkqwGdhYMzb9foDEXRwY471JfeOYGNnjyNBSOiMn95O+8oBnxpQ4riO4/Ymb5rSkQPf9ZGOLs+9O3NJa08Dx73L76rVJf2QuXVOkhYiYMFCb8vzZepwePSnKSwuGzgv5ANMrIOof2CTBAwjFbJ4S6r/E8lBhQY/4ciTeCb+86yp1OB02ubBUlRdwwSQTh9LV0lgcuF3/bUmFn/G29UTCurzyRpE6c3PS2b
+	/tPHgJ/L940+omVj+M+k7PiDWe7kesBRlR5J/u5ZEpFJX7GTMQ7l1yKMogo7WR6zJeJkNoI+3ygcGbBMcmyC3R6hohX8RAoxfwIDCVJA2VvZF/fVyx9uQGVmGvytUsq5vVR/BI7rRsqcbr6VihXwbBitPpX3Gp5gb4g3uDctVPG6XnPW1OHfGfTAa2D1cG1S7+A9DS/vGE2dYCplC9h5D/kaL1OUnDTqrwJzsxpHln9xV1tx9if4X6ILm0boXo9fzd0tfPnLn7qaUE7gw5RuKygVfIQ4CFW0bH1QMZvvjHCmgJ/pOsEV/Z7kIn80Jpgtg5pb7CrghOww2TwLMzEjAPeLcfacll7BMAQ0rkD+D9vhUjwJlXkcgI4Gs4STj0DUVxhnk4YIwpIWr39+zcN6Ce3T1o5Qk+3lkwR0bIu93/Bmz832KwpbAwp8zyXpwPM/OtYMw1Pbu3dJU5eluQwJzeUzjO97pWzXiNFamB3nWGcaO8RrRDExZDX4amOdEYDAXHqs6EUWlttWx8GMZb2LlFW/ZHOPXWWTYwZpBj9WBAdKT7Nx0TZF3oc/1DFtLE93u1ffJlCP8IoFHJbvDLnW0p513QgTZq8bvdUJpeDe10ycbsC9QRX+PWlh+WmARg7+AUWev+E29Dk71Rw7VvZGbaLcl9OlXBqkXm4nbrR6rlFHzbkfDTQVHk+B14GZnnHqMRiwFr0FxrvUWqvo5wyFKJxTGi7ePW9HgbaPw/xE01KikkZPHpStXBiJtagsQ1N7
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(23010399003)(82310400026)(1800799024)(376014)(36860700016)(10067099003)(56012099006)(11063799006)(5023799004)(6133799003)(3023799007)(921020)(18002099003)(22082099003);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(376014)(82310400026)(23010399003)(1800799024)(7416014)(11063799006)(56012099006)(10067099003)(22082099003)(18002099003)(3023799007)(921020);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	MBVK3IiAvGute8MAjT6KAKVVfu1+IOZww8U5gbHWtSp7RkP7nIGr/NqzOYGPLQwE/bDOB1ZibPcBjDDYuE3dpgwzE9DdEKTMFkRJUEIADkbdhOgVbYm/dV6uOF4PV05DGHFSN0+nnEP3svC9OD+crzyv4EcpEnKziia9FxAJf4No9K9zFly5gQJIyTPGc6C0UKNfC6KuC1TqE+o6IawUt4bHKGltfmmR+I80Y+e4rNPSmf6lSccaNleHiwWWzZd25ME31Ryc1vKN1WYtxZlJbwL4JZsMIkPnGQaYlVyAJc1AZTw97f8wERJrAI6cr4nIecrKUKtod5HlcNUeMWP2iW1RZ6vrHuw2TUV5mK/eT8Kthh7bmsx3krjad7o0cF62+bRKu3ljqBoWJq/EdGtrDGUAi9WYzHsnUHPKa7U6e5I08by3HWVDlZuRXs29mKIw
+	KjPN+pcJ3XsVPToPQwQe0u2OyK+Toa9GAxLmVZKiYKGVJ6uiVKOAtgKcDiXeH3QYr28aZ78UrfY2c1uThR40oJCmgDxlcSmzSIBd64zOGaf3kUMzYxsIHucxxL/FCnz+fjzPbvi8bJyWAZTvc8Ru/HJPiG9E/7WMSPn6Aw3YNB3Sb9GTf6IrAEc+aoLKa1nyo1XU8+L0pPr2KTboRriGTZAcKRyvXeDA0qQwEuff8O2uaDhlGNMR1nuRh1f01OZvwc5vesw8z1yK33MxPu4BVKfbDF2+OcRfZPmh6EzMk0D6wqCL0OoJK37M6DtfBLVLixHoLBqw5BE0kGG0YdPQG7lQ4TqX6CZGBzJ7o8zeWDWIj+69sX6+LmKFOFt5Fl/VfF0ft280RWqAAfA7Q9JlcMuUdLpC/1+ojAJ02EredwyrF/muOJIqbOgyzvtY0NDm
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Aug 2026 19:55:29.4885
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 06 Aug 2026 19:55:28.6267
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: f1a43b63-c327-4d7c-244e-08def3f4aabe
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2ba8ebe3-71ed-471a-142a-08def3f4aa59
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	SJ1PEPF000026C5.namprd04.prod.outlook.com
+	BL02EPF0001A101.namprd05.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: LV2PR04MB9834
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MW6PR04MB8842
 
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 
-Register ECDH and X25519 kpp algorithms using the CMH PKE core.
-Supports P-256, P-384, and Curve25519 for key agreement.
+Register the SM3 ahash algorithm using the CMH SM3 core (core ID
+0x05).  Supports incremental update/finup/final and export/import.
 
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
@@ -131,728 +131,784 @@ Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Reviewed-by: Joel Wittenauer <Joel.Wittenauer@cryptography.com>
 Reviewed-by: Thi Nguyen <thin@rambus.com>
 ---
- drivers/crypto/cmh/Makefile       |   3 +-
- drivers/crypto/cmh/cmh_main.c     |   8 +
- drivers/crypto/cmh/cmh_pke_ecdh.c | 663 ++++++++++++++++++++++++++++++
- 3 files changed, 673 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_pke_ecdh.c
+ drivers/crypto/cmh/Makefile          |   3 +-
+ drivers/crypto/cmh/cmh_main.c        |   9 +
+ drivers/crypto/cmh/cmh_sm3.c         | 676 +++++++++++++++++++++++++++
+ drivers/crypto/cmh/include/cmh_sm3.h |  27 ++
+ 4 files changed, 714 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_sm3.c
+ create mode 100644 drivers/crypto/cmh/include/cmh_sm3.h
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index ae1f74a93e99..da420d0ec1fe 100644
+index 3ab154744658..664b2a20bc19 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -32,7 +32,8 @@ cmh-y := \
- 	cmh_rng.o \
- 	cmh_pke_common.o \
- 	cmh_pke_rsa.o \
--	cmh_pke_ecdsa.o
-+	cmh_pke_ecdsa.o \
-+	cmh_pke_ecdh.o
+@@ -18,7 +18,8 @@ cmh-y := \
+ 	cmh_hash.o \
+ 	cmh_hmac.o \
+ 	cmh_cshake.o \
+-	cmh_kmac.o
++	cmh_kmac.o \
++	cmh_sm3.o
  
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
 diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index 82b734b42805..302d975256e8 100644
+index bc47d5ef3f86..9bb7c75d1bf3 100644
 --- a/drivers/crypto/cmh/cmh_main.c
 +++ b/drivers/crypto/cmh/cmh_main.c
-@@ -332,6 +332,11 @@ static int cmh_probe(struct platform_device *pdev)
+@@ -35,6 +35,7 @@
+ #include "cmh_hmac.h"
+ #include "cmh_cshake.h"
+ #include "cmh_kmac.h"
++#include "cmh_sm3.h"
+ #include "cmh_mgmt.h"
+ #include "cmh_registers.h"
+ #include "cmh_debugfs.h"
+@@ -261,6 +262,11 @@ static int cmh_probe(struct platform_device *pdev)
  	if (ret)
- 		goto err_pke_ecdsa_register;
+ 		goto err_kmac_register;
  
-+	/* Register PKE ECDH/X25519 kpp */
-+	ret = cmh_pke_ecdh_register();
++	/* Register SM3 hash algorithm */
++	ret = cmh_sm3_register();
 +	if (ret)
-+		goto err_pke_ecdh_register;
++		goto err_sm3_register;
 +
  	/* Register key management device (/dev/cmh_mgmt) */
  	ret = cmh_mgmt_register();
  	if (ret)
-@@ -344,6 +349,8 @@ static int cmh_probe(struct platform_device *pdev)
+@@ -273,6 +279,8 @@ static int cmh_probe(struct platform_device *pdev)
  	return 0;
  
  err_mgmt_register:
-+	cmh_pke_ecdh_unregister();
-+err_pke_ecdh_register:
- 	cmh_pke_ecdsa_unregister();
- err_pke_ecdsa_register:
- 	cmh_pke_rsa_unregister();
-@@ -404,6 +411,7 @@ static void cmh_remove(struct platform_device *pdev)
++	cmh_sm3_unregister();
++err_sm3_register:
+ 	cmh_kmac_unregister();
+ err_kmac_register:
+ 	cmh_cshake_unregister();
+@@ -307,6 +315,7 @@ static void cmh_remove(struct platform_device *pdev)
  	cfg = &dev->config;
  
  	cmh_mgmt_unregister();
-+	cmh_pke_ecdh_unregister();
- 	cmh_pke_ecdsa_unregister();
- 	cmh_pke_rsa_unregister();
- 	cmh_ccp_poly_unregister();
-diff --git a/drivers/crypto/cmh/cmh_pke_ecdh.c b/drivers/crypto/cmh/cmh_pke_ecdh.c
++	cmh_sm3_unregister();
+ 	cmh_kmac_unregister();
+ 	cmh_cshake_unregister();
+ 	cmh_hmac_unregister();
+diff --git a/drivers/crypto/cmh/cmh_sm3.c b/drivers/crypto/cmh/cmh_sm3.c
 new file mode 100644
-index 000000000000..1b49dd060e52
+index 000000000000..37a66cb1508f
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_pke_ecdh.c
-@@ -0,0 +1,663 @@
++++ b/drivers/crypto/cmh/cmh_sm3.c
+@@ -0,0 +1,676 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- ECDH / X25519 kpp Driver
++ * CMH LKM -- SM3 Hash Driver (CORE_ID_SM3)
 + *
-+ * Registers "ecdh-nist-p256", "ecdh-nist-p384", and "curve25519"
-+ * kpp algorithms with priority 300.
++ * Registers an asynchronous hash (ahash) algorithm for SM3
++ * (GB/T 32905-2016) using the CMH SM3 core.  This is a standalone
++ * driver separate from cmh_hash.c (which handles HC-based SHA-2/3/SHAKE)
++ * because SM3 runs on a different hardware core with its own command
++ * IDs and context layout.
 + *
-+ * - set_secret: decodes private key from kpp_secret + ecdh struct
-+ *   (NIST curves) or raw 32-byte scalar (Curve25519).
-+ *   Stores in cmh_key_ctx: raw keys written via SYS_REF_TEMP.
-+ *   Datastore-referenced keys are only reachable through the ioctl
-+ *   path (cmh_mgmt.c).
++ * Incremental HW update model (same pattern as cmh_hash.c):
 + *
-+ * - generate_public_key: PKE_CMD_ECDH_KEYGEN -> outputs X coordinate
-+ *   (NIST Weierstrass) or full public key (Edwards/Montgomery).
-+ *   For NIST curves, we generate X||Y by calling ECDSA_PUBGEN instead,
-+ *   matching the kernel ecdh.c pattern that outputs uncompressed X||Y.
-+ *
-+ * - compute_shared_secret: PKE_CMD_ECDH -> shared secret X coordinate.
++ *   .init()   -> software-only: zero per-request context
++ *   .update() -> buffer data in holdback; when >= block_size bytes:
++ *                SM3_CMD_INIT [+ RESTORE] + UPDATE + SAVE + FLUSH
++ *                -> return -EINPROGRESS  (else return 0)
++ *   .final()  -> SM3_CMD_INIT [+ RESTORE] [+ UPDATE] + FINAL + FLUSH
++ *   .finup()  -> linearise holdback + new data, then final path
++ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot, zero-copy)
++ *   .export() -> software-only: copy checkpoint + holdback to out
++ *   .import() -> software-only: restore checkpoint + holdback from in
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/slab.h>
++#include <linux/crypto.h>
++#include <crypto/internal/hash.h>
++#include <crypto/scatterwalk.h>
 +#include <linux/scatterlist.h>
-+#include <crypto/kpp.h>
-+#include <crypto/ecdh.h>
-+#include <crypto/internal/kpp.h>
-+#include <crypto/internal/ecc.h>
++#include <linux/slab.h>
++#include <linux/string.h>
 +
-+#include "cmh_pke.h"
-+#include "cmh_sys.h"
-+#include "cmh_sys_abi.h"
++#include "cmh_sm3.h"
++#include "cmh_vcq.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
-+#include "cmh_key.h"
++
++/* Per-Request State */
 +
 +/*
-+ * ECDH key format: kpp_secret header + key_size(u16) + key data.
-+ * We decode this inline to avoid depending on CONFIG_CRYPTO_ECDH.
++ * Exported SM3 state -- serialised by .export(), deserialised by
++ * .import().  This is what statesize advertises to the crypto subsystem.
 + */
-+#define ECDH_KPP_SECRET_MIN_SIZE (sizeof(struct kpp_secret) + sizeof(unsigned short))
-+
-+struct cmh_ecdh_tfm_ctx {
-+	struct cmh_key_ctx key;
-+	u32 curve;		/* PKE_CURVE_* */
-+	u32 clen;		/* coordinate length in bytes */
++struct cmh_sm3_export_state {
++	u8  checkpoint[SM3_CONTEXT_SIZE]; /* SM3 context from last SAVE */
++	u8  buf[CMH_SM3_BLOCK_SIZE];     /* holdback buffer */
++	u32 buf_len;                      /* valid bytes in buf[] */
++	u32 hw_started;                   /* non-zero if checkpoint valid */
 +};
 +
-+static inline struct cmh_ecdh_tfm_ctx *cmh_ecdh_ctx(struct crypto_kpp *tfm)
-+{
-+	return kpp_tfm_ctx(tfm);
-+}
++#define CMH_SM3_MAX_PAYLOAD    5   /* INIT + RESTORE + UPDATE + FINAL/SAVE + FLUSH */
++#define CMH_SM3_MAX_PACKED     (CMH_SM3_MAX_PAYLOAD * 2)
 +
 +/*
-+ * Per-request context for ECDH/X25519 operations.
-+ *
-+ * generate_public_key: single-phase async VCQ.
-+ * compute_shared_secret: 2-phase async VCQ with callback chaining.
-+ *   Phase 1: sys_write(sk) + sys_new(ref) + ecdh(peer) + pflush
-+ *            -> phase1 callback reads ref, submits Phase 2.
-+ *   Phase 2: sys_data(ref, ss_dma) + sys_flush
-+ *            -> phase2 callback extracts shared secret, completes req.
-+ *
-+ * Both phases target the same mbx_idx so the DS reference remains
-+ * valid, since DS objects are MBX-scoped.
++ * Checkpoint embedded inline: the kernel ahash API has no per-request
++ * destructor, so a heap-allocated checkpoint leaks if a request is
++ * abandoned without .final().
 + */
-+struct cmh_ecdh_reqctx {
-+	/* Buffers */
-+	u8 *pk_buf;		/* keygen: output public key */
-+	u8 *peer_buf;		/* compute: peer public key */
-+	u8 *ss_buf;		/* compute: shared secret output */
-+	u64 *ref_buf;		/* compute: DS ref from Phase 1 */
-+	/* DMA handles */
-+	dma_addr_t pk_dma;
-+	dma_addr_t peer_dma;
-+	dma_addr_t ss_dma;
-+	dma_addr_t ref_dma;
-+	/* Sizes and params for Phase 2 re-submit */
-+	u32 out_len;		/* keygen: public key size */
-+	u32 clen;
-+	u32 peer_len;
-+	u32 dma_swap;
-+	int mbx_idx;		/* pinned MBX for Phase 2 */
++struct cmh_sm3_reqctx {
++	int    error;
++	u32    hw_started;
++	u32    buf_len;
++	u32    has_checkpoint;
++	u8     checkpoint[SM3_CONTEXT_SIZE]; /* SM3 context from last SAVE */
++	/* DMA state for current async operation */
++	dma_addr_t ckpt_dma;
++	dma_addr_t save_dma;
++	dma_addr_t data_dma;
++	dma_addr_t digest_dma;
++	u8    *save_buf;
++	u8    *data_buf;
++	u32    data_len;
++	u8    *digest_buf;
++	u8     buf[CMH_SM3_BLOCK_SIZE]; /* holdback for partial block */
++	struct vcq_cmd packed[CMH_SM3_MAX_PACKED];
 +};
 +
++/* VCQ Builders -- SM3 core (CORE_ID_SM3); generic flush from cmh_vcq.h */
++
++static void vcq_add_sm3_init(struct vcq_cmd *slot, u32 core_id)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_INIT);
++	/* SM3 has a single algorithm -- no algo selector field */
++}
++
++static void vcq_add_sm3_update(struct vcq_cmd *slot, u32 core_id, u64 input_phys, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_UPDATE);
++	slot->hwc.sm3.cmd_update.input = input_phys;
++	slot->hwc.sm3.cmd_update.inlen = len;
++}
++
++static void vcq_add_sm3_final(struct vcq_cmd *slot, u32 core_id, u64 digest_phys, u32 outlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_FINAL);
++	slot->hwc.sm3.cmd_final.digest = digest_phys;
++	slot->hwc.sm3.cmd_final.outlen = outlen;
++}
++
++static void vcq_add_sm3_save(struct vcq_cmd *slot, u32 core_id, u64 output_phys, u32 outlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_SAVE);
++	slot->hwc.sm3.cmd_save.output = output_phys;
++	slot->hwc.sm3.cmd_save.outlen = outlen;
++}
++
++static void vcq_add_sm3_restore(struct vcq_cmd *slot, u32 core_id, u64 input_phys, u32 inlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, SM3_CMD_RESTORE);
++	slot->hwc.sm3.cmd_restore.input = input_phys;
++	slot->hwc.sm3.cmd_restore.inlen = inlen;
++}
++
++/* Request Context Cleanup */
++
++static void cmh_sm3_free_reqctx(struct cmh_sm3_reqctx *rctx)
++{
++	rctx->has_checkpoint = 0;
++}
++
++/* VCQ Packing + Submit */
++
++/* ahash Operations */
++
++static int cmh_sm3_init(struct ahash_request *req)
++{
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++
++	memset(rctx, 0, sizeof(*rctx));
++	return 0;
++}
++
 +/*
-+ * set_secret: NIST curves decode kpp_secret + u16 key_size + raw scalar.
-+ * Curve25519 uses raw 32-byte scalar directly.
++ * Update completion -- takes ownership of save_buf as new checkpoint.
 + */
-+static int cmh_ecdh_set_secret_nist(struct crypto_kpp *tfm,
-+				    const void *buf, unsigned int len)
++static void cmh_sm3_update_complete(void *data, int error)
 +{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+	const u8 *ptr = buf;
-+	struct kpp_secret secret;
-+	unsigned short key_size;
-+	int ret;
-+
-+	if (!buf || len < ECDH_KPP_SECRET_MIN_SIZE)
-+		return -EINVAL;
-+
-+	memcpy(&secret, ptr, sizeof(secret));
-+	ptr += sizeof(secret);
-+
-+	if (secret.type != CRYPTO_KPP_SECRET_TYPE_ECDH)
-+		return -EINVAL;
-+	if (len < secret.len)
-+		return -EINVAL;
-+
-+	memcpy(&key_size, ptr, sizeof(key_size));
-+	ptr += sizeof(key_size);
-+
-+	if (key_size == 0) {
-+		/*
-+		 * key_size == 0: generate a validated random private key.
-+		 * Uses the kernel ECC library (FIPS 186-5 A.2.2) to ensure
-+		 * the scalar is in the valid range [2, n-3] for the curve.
-+		 */
-+		u64 priv[ECC_MAX_DIGITS];
-+		unsigned int ndigits = ctx->clen / sizeof(u64);
-+		unsigned int curve_id;
-+		u8 *rnd;
-+
-+		if (secret.len != ECDH_KPP_SECRET_MIN_SIZE)
-+			return -EINVAL;
-+		if (ndigits > ECC_MAX_DIGITS)
-+			return -EINVAL;
-+		/* Reject non-limb-aligned clen to prevent ndigits truncation */
-+		if (ctx->clen % sizeof(u64))
-+			return -EINVAL;
-+
-+		if (ctx->curve == PKE_CURVE_P256)
-+			curve_id = ECC_CURVE_NIST_P256;
-+		else if (ctx->curve == PKE_CURVE_P384)
-+			curve_id = ECC_CURVE_NIST_P384;
-+		else
-+			return -EINVAL;
-+
-+		ret = ecc_gen_privkey(curve_id, ndigits, priv);
-+		if (ret) {
-+			memzero_explicit(priv, sizeof(priv));
-+			return ret;
-+		}
-+
-+		rnd = kmalloc(ctx->clen, GFP_KERNEL);
-+		if (!rnd) {
-+			memzero_explicit(priv, sizeof(priv));
-+			return -ENOMEM;
-+		}
-+
-+		/* Convert VLI (native LE-digit-order) to big-endian bytes */
-+		ecc_swap_digits(priv, (u64 *)rnd, ndigits);
-+		memzero_explicit(priv, sizeof(priv));
-+
-+		ret = cmh_key_setkey_raw(&ctx->key, rnd, ctx->clen,
-+					 CORE_ID_PKE);
-+		kfree_sensitive(rnd);
-+		return ret;
-+	}
-+
-+	if (key_size != ctx->clen)
-+		return -EINVAL;
-+
-+	if (secret.len != ECDH_KPP_SECRET_MIN_SIZE + key_size)
-+		return -EINVAL;
-+
-+	return cmh_key_setkey_raw(&ctx->key, ptr, key_size, CORE_ID_PKE);
-+}
-+
-+static int cmh_ecdh_set_secret_x25519(struct crypto_kpp *tfm,
-+				      const void *buf, unsigned int len)
-+{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+
-+	if (len != pke_curve_clen(PKE_CURVE_25519))
-+		return -EINVAL;
-+
-+	return cmh_key_setkey_raw(&ctx->key, buf, len, CORE_ID_PKE);
-+}
-+
-+static void cmh_ecdh_keygen_complete(void *data, int error)
-+{
-+	struct kpp_request *req = data;
-+	struct cmh_ecdh_reqctx *rctx = kpp_request_ctx(req);
++	struct ahash_request *req = data;
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
 +
 +	if (error == -EINPROGRESS) {
 +		cmh_complete(&req->base, error);
 +		return;
 +	}
 +
-+	if (!cmh_dma_map_error(rctx->pk_dma))
-+		cmh_dma_unmap_single(rctx->pk_dma, rctx->out_len,
-+				     DMA_FROM_DEVICE);
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++	cmh_dma_unmap_single(rctx->save_dma, SM3_CONTEXT_SIZE,
++			     DMA_FROM_DEVICE);
++	cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
++			     DMA_TO_DEVICE);
 +
 +	if (!error) {
-+		int nents;
-+
-+		nents = sg_nents_for_len(req->dst, rctx->out_len);
-+		if (nents < 0 ||
-+		    sg_copy_from_buffer(req->dst, nents,
-+					rctx->pk_buf,
-+					rctx->out_len) != rctx->out_len)
-+			error = -EINVAL;
-+		else
-+			req->dst_len = rctx->out_len;
++		memcpy(rctx->checkpoint, rctx->save_buf, SM3_CONTEXT_SIZE);
++		rctx->has_checkpoint = 1;
++		kfree(rctx->save_buf);
++		rctx->save_buf = NULL;
++		rctx->hw_started = 1;
++	} else {
++		kfree(rctx->save_buf);
++		rctx->save_buf = NULL;
++		rctx->error = error;
 +	}
 +
-+	kfree(rctx->pk_buf);
-+	rctx->pk_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	rctx->data_len = 0;
++
 +	cmh_complete(&req->base, error);
 +}
 +
-+/*
-+ * generate_public_key: For NIST ECDH, use ECDH_KEYGEN which outputs
-+ * the public key X-coordinate.  But the kernel kpp interface expects
-+ * uncompressed X||Y, so we use ECDSA_PUBGEN which gives us (X,Y).
-+ * For Curve25519, ECDH_KEYGEN gives us the Montgomery u-coordinate
-+ * which is the full public key.
-+ */
-+static int cmh_ecdh_generate_public_key(struct kpp_request *req)
++static int cmh_sm3_update(struct ahash_request *req)
 +{
-+	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+	struct cmh_ecdh_reqctx *rctx = kpp_request_ctx(req);
-+	u32 clen = ctx->clen;
-+	bool is_25519 = (ctx->curve == PKE_CURVE_25519);
-+	u32 out_len = is_25519 ? clen : 2 * clen;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MAX];
-+	struct core_dispatch dd;
-+	u32 swap, dma_swap;
-+	int ret, idx;
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	struct vcq_cmd cmds[CMH_SM3_MAX_PAYLOAD];
++	struct core_dispatch d;
++	u32 total_avail, full_len, tail_len, from_src;
++	u32 idx;
++	int ret;
 +	gfp_t gfp;
 +
-+	if (ctx->key.mode != CMH_KEY_RAW)
-+		return -EINVAL;
-+	if (req->dst_len < out_len)
-+		return -EINVAL;
++	if (rctx->error)
++		return rctx->error;
++
++	if (!req->nbytes)
++		return 0;
++
++	/*
++	 * Each update() linearises its data into a single kmalloc buffer.
++	 * Guard against rctx->buf_len + req->nbytes overflowing u32, which
++	 * would mis-select the "buffer only" path below and overrun the
++	 * holdback.  Such an update is far too large to service anyway.
++	 */
++	if (req->nbytes > U32_MAX - rctx->buf_len)
++		return -EMSGSIZE;
 +
 +	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
 +	      GFP_KERNEL : GFP_ATOMIC;
 +
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->out_len = out_len;
-+	rctx->pk_dma = DMA_MAPPING_ERROR;
++	total_avail = rctx->buf_len + req->nbytes;
 +
-+	rctx->pk_buf = kzalloc(out_len, gfp);
-+	if (!rctx->pk_buf)
++	if (total_avail < CMH_SM3_BLOCK_SIZE) {
++		if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
++			memcpy(rctx->buf + rctx->buf_len,
++			       req->svirt, req->nbytes);
++		else
++			scatterwalk_map_and_copy(rctx->buf + rctx->buf_len,
++						 req->src, 0,
++						 req->nbytes, 0);
++		rctx->buf_len = total_avail;
++		return 0;
++	}
++
++	full_len = total_avail - total_avail % CMH_SM3_BLOCK_SIZE;
++	tail_len = total_avail - full_len;
++	from_src = full_len - rctx->buf_len;
++
++	/*
++	 * full_len is user-controlled and can exceed KMALLOC_MAX_SIZE for a
++	 * single large update; __GFP_NOWARN avoids splatting the page
++	 * allocator on an oversized request.
++	 */
++	rctx->data_buf = kmalloc(full_len, gfp | __GFP_NOWARN);
++	if (!rctx->data_buf)
 +		return -ENOMEM;
 +
-+	rctx->pk_dma = cmh_dma_map_single(rctx->pk_buf, out_len,
-+					  DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(rctx->pk_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free;
++	if (rctx->buf_len > 0)
++		memcpy(rctx->data_buf, rctx->buf, rctx->buf_len);
++
++	if (from_src > 0) {
++		if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
++			memcpy(rctx->data_buf + rctx->buf_len,
++			       req->svirt, from_src);
++		else
++			scatterwalk_map_and_copy(rctx->data_buf + rctx->buf_len,
++						 req->src, 0,
++						 from_src, 0);
 +	}
 +
-+	/*
-+	 * The SYS_REF_TEMP key write uses per-curve dma_swap (0 for the
-+	 * little-endian Curve25519 secret), but the PKE compute command
-+	 * itself takes PKE_SWAP_FLAGS for every curve: the HW emits the
-+	 * public-key / shared-secret coordinate in the order PKE_SWAP_FLAGS
-+	 * maps to the expected encoding (the mgmt ECDH keygen does the same
-+	 * and matches RFC 7748).  Do NOT switch the command to dma_swap.
-+	 */
-+	swap = PKE_SWAP_FLAGS;
-+	dma_swap = pke_swap_flags(ctx->curve);
++	if (tail_len > 0) {
++		if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
++			memcpy(rctx->buf, req->svirt + from_src,
++			       tail_len);
++		else
++			scatterwalk_map_and_copy(rctx->buf, req->src,
++						 from_src, tail_len,
++						 0);
++	}
++	rctx->buf_len = tail_len;
++	rctx->data_len = full_len;
 +
-+	dd = cmh_core_select_instance(CMH_CORE_PKE);
++	rctx->save_buf = kzalloc(SM3_CONTEXT_SIZE, gfp);
++	if (!rctx->save_buf) {
++		ret = -ENOMEM;
++		goto err_free;
++	}
 +
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MAX);
-+	idx = 1;
-+	vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, ctx->key.raw.dma,
-+			  SYS_REF_NONE, ctx->key.raw.len,
-+			  ctx->key.raw.sys_type);
-+	vcq[idx].id |= dma_swap;
-+	idx++;
-+	if (is_25519)
-+		vcq_add_pke_ecdh_keygen(&vcq[idx++], dd.core_id, ctx->curve,
-+					clen, rctx->pk_dma, SYS_REF_TEMP,
-+					swap);
-+	else
-+		vcq_add_pke_ecdsa_pubgen(&vcq[idx++], dd.core_id,
-+					 ctx->curve, clen, rctx->pk_dma,
-+					 SYS_REF_TEMP, swap);
-+	vcq_add_pke_flush(&vcq[idx++], dd.core_id);
++	rctx->data_dma = cmh_dma_map_single(rctx->data_buf, full_len,
++					    DMA_TO_DEVICE);
++	if (cmh_dma_map_error(rctx->data_dma)) {
++		ret = -ENOMEM;
++		goto err_free;
++	}
 +
-+	ret = cmh_tm_submit_async(vcq, PKE_VCQ_CMDS_MAX, 1, dd.mbx_idx,
-+				  cmh_ecdh_keygen_complete, req,
-+				  !!(req->base.flags &
-+				     CRYPTO_TFM_REQ_MAY_BACKLOG), 0);
++	rctx->save_dma = cmh_dma_map_single(rctx->save_buf, SM3_CONTEXT_SIZE,
++					    DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(rctx->save_dma)) {
++		ret = -ENOMEM;
++		goto err_unmap_data;
++	}
++
++	rctx->ckpt_dma = DMA_MAPPING_ERROR;
++	if (rctx->has_checkpoint) {
++		rctx->ckpt_dma = cmh_dma_map_single(rctx->checkpoint,
++						    SM3_CONTEXT_SIZE,
++						     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->ckpt_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_save;
++		}
++	}
++
++	d = cmh_core_select_instance(CMH_CORE_SM3);
++	idx = 0;
++
++	vcq_add_sm3_init(&cmds[idx++], d.core_id);
++
++	if (rctx->has_checkpoint)
++		vcq_add_sm3_restore(&cmds[idx++], d.core_id,
++				    (u64)rctx->ckpt_dma, SM3_CONTEXT_SIZE);
++
++	vcq_add_sm3_update(&cmds[idx++], d.core_id,
++			   (u64)rctx->data_dma, full_len);
++
++	vcq_add_sm3_save(&cmds[idx++], d.core_id,
++			 (u64)rctx->save_dma, SM3_CONTEXT_SIZE);
++
++	vcq_add_flush(&cmds[idx++], d.core_id);
++
++	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
++					    CMH_SM3_MAX_PACKED,
++					    d.mbx_idx,
++					    cmh_sm3_update_complete, req,
++					    !!(req->base.flags &
++					       CRYPTO_TFM_REQ_MAY_BACKLOG),
++					    cmh_tm_async_timeout_jiffies());
 +	if (ret == -EBUSY)
 +		return -EBUSY;
-+	if (!ret)
-+		return -EINPROGRESS;
++	if (ret)
++		goto err_unmap_ckpt;
 +
-+	if (!cmh_dma_map_error(rctx->pk_dma))
-+		cmh_dma_unmap_single(rctx->pk_dma, out_len,
-+				     DMA_FROM_DEVICE);
++	return -EINPROGRESS;
 +
-+out_free:
-+	kfree(rctx->pk_buf);
++err_unmap_ckpt:
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++err_unmap_save:
++	cmh_dma_unmap_single(rctx->save_dma, SM3_CONTEXT_SIZE,
++			     DMA_FROM_DEVICE);
++err_unmap_data:
++	cmh_dma_unmap_single(rctx->data_dma, full_len, DMA_TO_DEVICE);
++err_free:
++	kfree(rctx->save_buf);
++	rctx->save_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	rctx->data_len = 0;
 +	return ret;
 +}
 +
-+static void cmh_ecdh_ss_phase2_complete(void *data, int error)
++static void cmh_sm3_final_complete(void *data, int error)
 +{
-+	struct kpp_request *req = data;
-+	struct cmh_ecdh_reqctx *rctx = kpp_request_ctx(req);
++	struct ahash_request *req = data;
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
 +
 +	if (error == -EINPROGRESS) {
 +		cmh_complete(&req->base, error);
 +		return;
 +	}
 +
-+	if (!cmh_dma_map_error(rctx->ss_dma))
-+		cmh_dma_unmap_single(rctx->ss_dma, rctx->clen,
-+				     DMA_FROM_DEVICE);
-+
-+	if (!error) {
-+		int nents;
-+
-+		nents = sg_nents_for_len(req->dst, rctx->clen);
-+		if (nents < 0 ||
-+		    sg_copy_from_buffer(req->dst, nents,
-+					rctx->ss_buf,
-+					rctx->clen) != rctx->clen)
-+			error = -EINVAL;
-+		else
-+			req->dst_len = rctx->clen;
-+	}
-+
-+	kfree(rctx->ref_buf);
-+	rctx->ref_buf = NULL;
-+	kfree_sensitive(rctx->ss_buf);
-+	rctx->ss_buf = NULL;
-+	cmh_complete(&req->base, error);
-+}
-+
-+static void cmh_ecdh_ss_phase1_complete(void *data, int error)
-+{
-+	struct kpp_request *req = data;
-+	struct cmh_ecdh_reqctx *rctx = kpp_request_ctx(req);
-+	struct vcq_cmd vcq[3];
-+	int ret;
-+
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	/* Phase 1-only resource: peer -- always clean up */
-+	if (!cmh_dma_map_error(rctx->peer_dma))
-+		cmh_dma_unmap_single(rctx->peer_dma, rctx->peer_len,
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
 +				     DMA_TO_DEVICE);
-+	kfree(rctx->peer_buf);
-+	rctx->peer_buf = NULL;
++	if (rctx->data_buf)
++		cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
++				     DMA_TO_DEVICE);
++	cmh_dma_unmap_single(rctx->digest_dma, CMH_SM3_DIGEST_SIZE,
++			     DMA_FROM_DEVICE);
 +
-+	if (error)
-+		goto out_cleanup;
++	if (!error)
++		memcpy(req->result, rctx->digest_buf, CMH_SM3_DIGEST_SIZE);
 +
-+	/* Read the DS reference written by Phase 1 */
-+	cmh_dma_sync_for_cpu(rctx->ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	cmh_dma_unmap_single(rctx->ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	rctx->ref_dma = DMA_MAPPING_ERROR;
-+
-+	/* Phase 2: extract shared secret from DS */
-+	vcq_set_header(&vcq[0], 3);
-+	vcq_add_sys_data(&vcq[1], *rctx->ref_buf, rctx->ss_dma,
-+			 rctx->clen);
-+	vcq[1].id |= rctx->dma_swap;
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_async(vcq, 3, 1, rctx->mbx_idx,
-+				  cmh_ecdh_ss_phase2_complete, req,
-+				  true, 0);
-+	if (ret == -EBUSY || !ret)
-+		return;
-+
-+	error = ret;
-+
-+out_cleanup:
-+	if (!cmh_dma_map_error(rctx->ref_dma))
-+		cmh_dma_unmap_single(rctx->ref_dma, sizeof(u64),
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->ss_dma))
-+		cmh_dma_unmap_single(rctx->ss_dma, rctx->clen,
-+				     DMA_FROM_DEVICE);
-+	kfree(rctx->ref_buf);
-+	rctx->ref_buf = NULL;
-+	kfree_sensitive(rctx->ss_buf);
-+	rctx->ss_buf = NULL;
++	kfree(rctx->digest_buf);
++	rctx->digest_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	cmh_sm3_free_reqctx(rctx);
 +	cmh_complete(&req->base, error);
 +}
 +
-+/*
-+ * compute_shared_secret: PKE_CMD_ECDH.
-+ *
-+ * req->src = peer public key (X||Y for NIST, raw 32B for Curve25519).
-+ * Output = shared secret X coordinate (clen bytes).
-+ *
-+ * The CMH ECDH command stores the shared secret in a DS object,
-+ * not directly to DMA.  We create a DS slot with SYS_CMD_NEW,
-+ * reference it via SYS_REF_LAST, then extract the result with a
-+ * second VCQ submission using SYS_CMD_DATA with the actual ref.
-+ */
-+static int cmh_ecdh_compute_shared_secret(struct kpp_request *req)
++static int cmh_sm3_submit_final(struct ahash_request *req,
++				u8 *data_buf, u32 data_len)
 +{
-+	struct crypto_kpp *tfm = crypto_kpp_reqtfm(req);
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+	struct cmh_ecdh_reqctx *rctx = kpp_request_ctx(req);
-+	u32 clen = ctx->clen;
-+	bool is_25519 = (ctx->curve == PKE_CURVE_25519);
-+	u32 peer_len = is_25519 ? clen : 2 * clen;
-+	u32 ss_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
-+	struct vcq_cmd vcq[5];
-+	struct core_dispatch dd;
-+	u32 swap, dma_swap;
-+	int ret, idx, nents;
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	struct vcq_cmd cmds[CMH_SM3_MAX_PAYLOAD];
++	struct core_dispatch d;
++	u32 idx;
++	int ret;
++	gfp_t gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++		   GFP_KERNEL : GFP_ATOMIC;
++
++	rctx->data_buf = data_buf;
++	rctx->data_len = data_len;
++
++	rctx->digest_buf = kzalloc(CMH_SM3_DIGEST_SIZE, gfp);
++	if (!rctx->digest_buf) {
++		ret = -ENOMEM;
++		goto err_free_data;
++	}
++
++	rctx->digest_dma = cmh_dma_map_single(rctx->digest_buf,
++					      CMH_SM3_DIGEST_SIZE,
++					       DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(rctx->digest_dma)) {
++		ret = -ENOMEM;
++		goto err_free_digest;
++	}
++
++	rctx->data_dma = DMA_MAPPING_ERROR;
++	if (data_buf && data_len > 0) {
++		rctx->data_dma = cmh_dma_map_single(data_buf, data_len,
++						    DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->data_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_digest;
++		}
++	}
++
++	rctx->ckpt_dma = DMA_MAPPING_ERROR;
++	if (rctx->has_checkpoint) {
++		rctx->ckpt_dma = cmh_dma_map_single(rctx->checkpoint,
++						    SM3_CONTEXT_SIZE,
++						     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->ckpt_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_data;
++		}
++	}
++
++	d = cmh_core_select_instance(CMH_CORE_SM3);
++	idx = 0;
++
++	vcq_add_sm3_init(&cmds[idx++], d.core_id);
++
++	if (rctx->has_checkpoint)
++		vcq_add_sm3_restore(&cmds[idx++], d.core_id,
++				    (u64)rctx->ckpt_dma, SM3_CONTEXT_SIZE);
++
++	if (data_buf && data_len > 0)
++		vcq_add_sm3_update(&cmds[idx++], d.core_id,
++				   (u64)rctx->data_dma, data_len);
++
++	vcq_add_sm3_final(&cmds[idx++], d.core_id,
++			  (u64)rctx->digest_dma, CMH_SM3_DIGEST_SIZE);
++
++	vcq_add_flush(&cmds[idx++], d.core_id);
++
++	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
++					    CMH_SM3_MAX_PACKED,
++					    d.mbx_idx,
++					    cmh_sm3_final_complete, req,
++					    !!(req->base.flags &
++					       CRYPTO_TFM_REQ_MAY_BACKLOG),
++					    cmh_tm_async_timeout_jiffies());
++	if (ret == -EBUSY)
++		return -EBUSY;
++	if (ret)
++		goto err_unmap_ckpt;
++
++	return -EINPROGRESS;
++
++err_unmap_ckpt:
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, SM3_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++err_unmap_data:
++	if (data_buf && data_len > 0)
++		cmh_dma_unmap_single(rctx->data_dma, data_len,
++				     DMA_TO_DEVICE);
++err_unmap_digest:
++	cmh_dma_unmap_single(rctx->digest_dma, CMH_SM3_DIGEST_SIZE,
++			     DMA_FROM_DEVICE);
++err_free_digest:
++	kfree(rctx->digest_buf);
++	rctx->digest_buf = NULL;
++err_free_data:
++	kfree(data_buf);
++	rctx->data_buf = NULL;
++	cmh_sm3_free_reqctx(rctx);
++	return ret;
++}
++
++static int cmh_sm3_final(struct ahash_request *req)
++{
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	u8 *data_buf = NULL;
++	u32 data_len = 0;
 +	gfp_t gfp;
 +
-+	if (ctx->key.mode != CMH_KEY_RAW)
-+		return -EINVAL;
-+	if (req->src_len < peer_len || req->dst_len < clen)
-+		return -EINVAL;
++	if (rctx->error)
++		return rctx->error;
++
++	if (rctx->buf_len > 0) {
++		gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++		      GFP_KERNEL : GFP_ATOMIC;
++		data_buf = kmalloc(rctx->buf_len, gfp);
++		if (!data_buf)
++			return -ENOMEM;
++		memcpy(data_buf, rctx->buf, rctx->buf_len);
++		data_len = rctx->buf_len;
++		rctx->buf_len = 0;
++	}
++
++	return cmh_sm3_submit_final(req, data_buf, data_len);
++}
++
++static int cmh_sm3_finup(struct ahash_request *req);
++
++/*
++ * One-shot digest -- delegates to init + finup so that all data is
++ * linearised and mapped through cmh_dma_map_single(), which is the
++ * only DMA mapping path aware of all supported DMA backends.
++ */
++static int cmh_sm3_digest(struct ahash_request *req)
++{
++	int ret;
++
++	ret = cmh_sm3_init(req);
++	if (ret)
++		return ret;
++	return cmh_sm3_finup(req);
++}
++
++static int cmh_sm3_finup(struct ahash_request *req)
++{
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	u32 data_len;
++	u8 *data_buf;
++	gfp_t gfp;
++
++	if (rctx->error)
++		return rctx->error;
++
++	data_len = rctx->buf_len + req->nbytes;
++
++	if (data_len == 0)
++		return cmh_sm3_submit_final(req, NULL, 0);
 +
 +	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
 +	      GFP_KERNEL : GFP_ATOMIC;
 +
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->clen = clen;
-+	rctx->peer_len = peer_len;
-+	rctx->pk_dma = DMA_MAPPING_ERROR;
-+	rctx->peer_dma = DMA_MAPPING_ERROR;
-+	rctx->ss_dma = DMA_MAPPING_ERROR;
-+	rctx->ref_dma = DMA_MAPPING_ERROR;
++	data_buf = kmalloc(data_len, gfp | __GFP_NOWARN);
++	if (!data_buf)
++		return -ENOMEM;
 +
-+	rctx->peer_buf = kmalloc(peer_len, gfp);
-+	rctx->ss_buf = kzalloc(clen, gfp);
-+	rctx->ref_buf = kzalloc_obj(u64, gfp);
-+	if (!rctx->peer_buf || !rctx->ss_buf || !rctx->ref_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
++	if (rctx->buf_len > 0)
++		memcpy(data_buf, rctx->buf, rctx->buf_len);
++
++	if (req->nbytes > 0) {
++		if (req->base.flags & CRYPTO_AHASH_REQ_VIRT)
++			memcpy(data_buf + rctx->buf_len,
++			       req->svirt, req->nbytes);
++		else
++			scatterwalk_map_and_copy(data_buf + rctx->buf_len,
++						 req->src, 0,
++						 req->nbytes, 0);
 +	}
 +
-+	nents = sg_nents_for_len(req->src, peer_len);
-+	if (nents < 0 ||
-+	    sg_pcopy_to_buffer(req->src, nents, rctx->peer_buf,
-+			       peer_len, 0) != peer_len) {
-+		ret = -EINVAL;
-+		goto out_free;
-+	}
++	rctx->buf_len = 0;
++	return cmh_sm3_submit_final(req, data_buf, data_len);
++}
 +
-+	rctx->peer_dma = cmh_dma_map_single(rctx->peer_buf, peer_len,
-+					    DMA_TO_DEVICE);
-+	rctx->ss_dma = cmh_dma_map_single(rctx->ss_buf, clen,
-+					  DMA_FROM_DEVICE);
-+	rctx->ref_dma = cmh_dma_map_single(rctx->ref_buf, sizeof(u64),
-+					   DMA_FROM_DEVICE);
-+
-+	if (cmh_dma_map_error(rctx->peer_dma) ||
-+	    cmh_dma_map_error(rctx->ss_dma) ||
-+	    cmh_dma_map_error(rctx->ref_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
++static int cmh_sm3_export(struct ahash_request *req, void *out)
++{
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	struct cmh_sm3_export_state *state = out;
 +
 +	/*
-+	 * The SYS_REF_TEMP key write uses per-curve dma_swap (0 for the
-+	 * little-endian Curve25519 secret), but the PKE compute command
-+	 * itself takes PKE_SWAP_FLAGS for every curve: the HW emits the
-+	 * public-key / shared-secret coordinate in the order PKE_SWAP_FLAGS
-+	 * maps to the expected encoding (the mgmt ECDH keygen does the same
-+	 * and matches RFC 7748).  Do NOT switch the command to dma_swap.
++	 * Zero the whole exported state first: only rctx->buf_len bytes of
++	 * buf[] are populated below and the struct may carry padding, so
++	 * without this the unused tail/padding would leak kernel memory to
++	 * user space through the ahash export.
 +	 */
-+	swap = PKE_SWAP_FLAGS;
-+	dma_swap = pke_swap_flags(ctx->curve);
-+	rctx->dma_swap = dma_swap;
++	memset(state, 0, sizeof(*state));
 +
-+	dd = cmh_core_select_instance(CMH_CORE_PKE);
-+	rctx->mbx_idx = dd.mbx_idx;
++	if (rctx->hw_started && rctx->has_checkpoint)
++		memcpy(state->checkpoint, rctx->checkpoint, SM3_CONTEXT_SIZE);
 +
-+	vcq_set_header(&vcq[0], 5);
-+	idx = 1;
-+	vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, ctx->key.raw.dma,
-+			  SYS_REF_NONE, ctx->key.raw.len,
-+			  ctx->key.raw.sys_type);
-+	vcq[idx].id |= dma_swap;
-+	idx++;
-+	vcq_add_sys_new(&vcq[idx++], 0, rctx->ref_dma, clen);
-+	vcq_add_pke_ecdh(&vcq[idx++], dd.core_id, ctx->curve, clen,
-+			 clen, ss_type, rctx->peer_dma,
-+			 SYS_REF_TEMP, SYS_REF_LAST, swap);
-+	vcq_add_pke_flush(&vcq[idx++], dd.core_id);
++	if (rctx->buf_len > 0)
++		memcpy(state->buf, rctx->buf, rctx->buf_len);
 +
-+	ret = cmh_tm_submit_async(vcq, 5, 1, dd.mbx_idx,
-+				  cmh_ecdh_ss_phase1_complete, req,
-+				  !!(req->base.flags &
-+				     CRYPTO_TFM_REQ_MAY_BACKLOG), 0);
-+	if (ret == -EBUSY)
-+		return -EBUSY;
-+	if (!ret)
-+		return -EINPROGRESS;
++	state->buf_len = rctx->buf_len;
++	state->hw_started = rctx->hw_started;
 +
-+out_unmap:
-+	if (!cmh_dma_map_error(rctx->ss_dma))
-+		cmh_dma_unmap_single(rctx->ss_dma, clen,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->ref_dma))
-+		cmh_dma_unmap_single(rctx->ref_dma, sizeof(u64),
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->peer_dma))
-+		cmh_dma_unmap_single(rctx->peer_dma, peer_len,
-+				     DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree(rctx->ref_buf);
-+	kfree_sensitive(rctx->ss_buf);
-+	kfree(rctx->peer_buf);
-+	return ret;
-+}
-+
-+static unsigned int cmh_ecdh_max_size(struct crypto_kpp *tfm)
-+{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+
-+	/* Max output = X||Y for generate_public_key (NIST) */
-+	return 2 * ctx->clen;
-+}
-+
-+static unsigned int cmh_x25519_max_size(struct crypto_kpp *tfm)
-+{
-+	return pke_curve_clen(PKE_CURVE_25519); /* single coordinate */
-+}
-+
-+static int cmh_ecdh_p256_init(struct crypto_kpp *tfm)
-+{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_P256;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_P256);
-+	tfm->reqsize = sizeof(struct cmh_ecdh_reqctx);
 +	return 0;
 +}
 +
-+static int cmh_ecdh_p384_init(struct crypto_kpp *tfm)
++static int cmh_sm3_import(struct ahash_request *req, const void *in)
 +{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
++	struct cmh_sm3_reqctx *rctx = ahash_request_ctx(req);
++	const struct cmh_sm3_export_state *state = in;
 +
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_P384;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_P384);
-+	tfm->reqsize = sizeof(struct cmh_ecdh_reqctx);
++	memset(rctx, 0, sizeof(*rctx));
++
++	/*
++	 * Holdback invariant: buf_len < block size (a full block is always
++	 * processed, never left in the holdback).  Reject a corrupt state
++	 * that violates it.
++	 */
++	if (state->buf_len >= CMH_SM3_BLOCK_SIZE)
++		return -EINVAL;
++
++	rctx->hw_started = state->hw_started;
++	rctx->buf_len = state->buf_len;
++	memcpy(rctx->buf, state->buf, state->buf_len);
++
++	if (state->hw_started) {
++		memcpy(rctx->checkpoint, state->checkpoint, SM3_CONTEXT_SIZE);
++		rctx->has_checkpoint = 1;
++	}
++
 +	return 0;
 +}
 +
-+static int cmh_x25519_init(struct crypto_kpp *tfm)
-+{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
++/* Transform init (cra_init) */
 +
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_25519;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_25519);
-+	tfm->reqsize = sizeof(struct cmh_ecdh_reqctx);
++static int cmh_sm3_cra_init(struct crypto_tfm *tfm)
++{
++	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
++				 sizeof(struct cmh_sm3_reqctx));
 +	return 0;
 +}
 +
-+static void cmh_ecdh_exit(struct crypto_kpp *tfm)
-+{
-+	struct cmh_ecdh_tfm_ctx *ctx = cmh_ecdh_ctx(tfm);
++/* Registration */
 +
-+	cmh_key_destroy(&ctx->key);
-+}
++static struct ahash_alg cmh_sm3_ahash_alg = {
++	.init    = cmh_sm3_init,
++	.update  = cmh_sm3_update,
++	.final   = cmh_sm3_final,
++	.finup   = cmh_sm3_finup,
++	.digest  = cmh_sm3_digest,
++	.export  = cmh_sm3_export,
++	.import  = cmh_sm3_import,
 +
-+static struct kpp_alg cmh_ecdh_algs[] = {
-+	{
-+		.set_secret		= cmh_ecdh_set_secret_nist,
-+		.generate_public_key	= cmh_ecdh_generate_public_key,
-+		.compute_shared_secret	= cmh_ecdh_compute_shared_secret,
-+		.max_size		= cmh_ecdh_max_size,
-+		.init			= cmh_ecdh_p256_init,
-+		.exit			= cmh_ecdh_exit,
++	.halg = {
++		.digestsize = CMH_SM3_DIGEST_SIZE,
++		.statesize  = sizeof(struct cmh_sm3_export_state),
 +		.base = {
-+			.cra_name	  = "ecdh-nist-p256",
-+			.cra_driver_name  = "rambus-cmh-ecdh-nist-p256",
-+			.cra_priority	  = 300,
-+			.cra_flags	  = CRYPTO_ALG_ASYNC,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdh_tfm_ctx),
-+		},
-+	},
-+	{
-+		.set_secret		= cmh_ecdh_set_secret_nist,
-+		.generate_public_key	= cmh_ecdh_generate_public_key,
-+		.compute_shared_secret	= cmh_ecdh_compute_shared_secret,
-+		.max_size		= cmh_ecdh_max_size,
-+		.init			= cmh_ecdh_p384_init,
-+		.exit			= cmh_ecdh_exit,
-+		.base = {
-+			.cra_name	  = "ecdh-nist-p384",
-+			.cra_driver_name  = "rambus-cmh-ecdh-nist-p384",
-+			.cra_priority	  = 300,
-+			.cra_flags	  = CRYPTO_ALG_ASYNC,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdh_tfm_ctx),
-+		},
-+	},
-+	{
-+		.set_secret		= cmh_ecdh_set_secret_x25519,
-+		.generate_public_key	= cmh_ecdh_generate_public_key,
-+		.compute_shared_secret	= cmh_ecdh_compute_shared_secret,
-+		.max_size		= cmh_x25519_max_size,
-+		.init			= cmh_x25519_init,
-+		.exit			= cmh_ecdh_exit,
-+		.base = {
-+			.cra_name	  = "curve25519",
-+			.cra_driver_name  = "rambus-cmh-curve25519",
-+			.cra_priority	  = 300,
-+			.cra_flags	  = CRYPTO_ALG_ASYNC,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdh_tfm_ctx),
++			.cra_name        = "sm3",
++			.cra_driver_name = "rambus-cmh-sm3",
++			.cra_priority    = 300,
++			.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
++					   CRYPTO_ALG_NO_FALLBACK |
++					   CRYPTO_ALG_ASYNC |
++					   CRYPTO_ALG_REQ_VIRT,
++			.cra_blocksize   = CMH_SM3_BLOCK_SIZE,
++			.cra_ctxsize     = 0,
++			.cra_init        = cmh_sm3_cra_init,
++			.cra_module      = THIS_MODULE,
 +		},
 +	},
 +};
 +
 +/**
-+ * cmh_pke_ecdh_register() - Register ECDH kpp algorithms with the crypto framework
++ * cmh_sm3_register() - Register SM3 hash algorithm with the crypto framework
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_pke_ecdh_register(void)
++int cmh_sm3_register(void)
 +{
-+	int ret, i;
++	int ret;
 +
-+	for (i = 0; i < ARRAY_SIZE(cmh_ecdh_algs); i++) {
-+		ret = crypto_register_kpp(&cmh_ecdh_algs[i]);
-+		if (ret) {
-+			dev_err(cmh_dev(), "cmh: failed to register %s (%d)\n",
-+				cmh_ecdh_algs[i].base.cra_name, ret);
-+			goto err_unregister;
-+		}
++	ret = crypto_register_ahash(&cmh_sm3_ahash_alg);
++	if (ret) {
++		dev_err(cmh_dev(), "sm3: failed to register cmh-sm3 (rc=%d)\n",
++			ret);
++		return ret;
 +	}
 +
++	dev_info(cmh_dev(), "sm3: registered rambus-cmh-sm3 (priority 300)\n");
++	dev_info(cmh_dev(), "sm3: 1 algorithm(s) registered\n");
 +	return 0;
-+
-+err_unregister:
-+	while (i--)
-+		crypto_unregister_kpp(&cmh_ecdh_algs[i]);
-+	return ret;
 +}
 +
 +/**
-+ * cmh_pke_ecdh_unregister() - Unregister ECDH kpp algorithms from the crypto framework
++ * cmh_sm3_unregister() - Unregister SM3 hash algorithm from the crypto framework
 + */
-+void cmh_pke_ecdh_unregister(void)
++void cmh_sm3_unregister(void)
 +{
-+	int i = ARRAY_SIZE(cmh_ecdh_algs);
-+
-+	while (i--)
-+		crypto_unregister_kpp(&cmh_ecdh_algs[i]);
++	crypto_unregister_ahash(&cmh_sm3_ahash_alg);
++	dev_info(cmh_dev(), "sm3: unregistered rambus-cmh-sm3\n");
++	dev_info(cmh_dev(), "sm3: cleaned up\n");
 +}
+diff --git a/drivers/crypto/cmh/include/cmh_sm3.h b/drivers/crypto/cmh/include/cmh_sm3.h
+new file mode 100644
+index 000000000000..2f73537f9c87
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sm3.h
+@@ -0,0 +1,27 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SM3 Hash Driver
++ *
++ * Registers an ahash algorithm for SM3 (GB/T 32905-2016) with the
++ * Linux crypto subsystem using the CMH SM3 core (CORE_ID_SM3).
++ * Uses the same incremental HW update model as cmh_hash.c:
++ *
++ *   .init()   -> software-only: zero per-request context
++ *   .update() -> holdback partial blocks; submit full blocks via
++ *                SM3_CMD_INIT [+ RESTORE] + UPDATE + SAVE + FLUSH
++ *   .final()  -> SM3_CMD_INIT [+ RESTORE] [+ UPDATE] + FINAL + FLUSH
++ *   .digest() -> INIT + UPDATE + FINAL + FLUSH (single-shot)
++ *   .export() -> software-only: copy checkpoint + holdback
++ *   .import() -> software-only: restore checkpoint + holdback
++ */
++
++#ifndef CMH_SM3_H
++#define CMH_SM3_H
++
++#include "cmh_config.h"
++
++int  cmh_sm3_register(void);
++void cmh_sm3_unregister(void);
++
++#endif /* CMH_SM3_H */
 -- 
 2.43.7
 
