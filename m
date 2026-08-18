@@ -1,94 +1,111 @@
-Received: from buffalo.birch.relay.mailchannels.net (buffalo.birch.relay.mailchannels.net [23.83.209.24])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B3672836F;
-	Sat, 15 Aug 2026 04:09:54 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=23.83.209.24
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A92E388E63
+	for <linux-api@vger.kernel.org>; Tue, 18 Aug 2026 07:29:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.129.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1786766997; cv=none; b=gAzWnHV3JGE865ArTsDeg9jhB9EK0hHC3cgCXMzh5ShOrVpyqmLFSr+WQ2M7jm/jEa+7BrOj/tcoWdL4qyV5J2kSwNpklmsIh0trFMPiB4oz2K/maciQ++1W7vQWMoHCJM+CqWZGhS8T+X3Jxp9yqEcGnVYGMg08BCKUJsNLhD4=
+	t=1787038188; cv=none; b=g6eOvPPeAl7iAkzfMxs2XN6/kZlKes9tkNp9cEYSWumJJ588dkpv6UqzIcz8yZah9549ZoN7cxsf7sQ2eEgBT+CbLREqHP2ttk8rctSg2RhB86SEl7z5v0oJro0NsAGpX+Fa4Pji/90lYu5+YigjwQRnSfY5qMN1Z7uzvc9s2Yk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1786766997; c=relaxed/simple;
-	bh=lc0rq7xR25Ol7sYvMYnfF2oc0o89SQWS3k7iGuZjJ8I=;
-	h=From:To:Cc:Subject:Message-ID:In-Reply-To:References:MIME-Version:
-	 Date; b=WAn9jDSNuKJFP1YkEUevGZMqvGP313eN+asiY86MOnML9gAf+raDs/aIb2JXZfqScsZDvVhp0meCV6f0HbEqk58xDksAbSqjYjvSrZDm4v/ntAFkPUTlaVkYZFEWcSaPv3pFuBpMyo4nBNnescb8u8RHkIEsW7JdB6zhOY3uwX4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=laserology.net; spf=pass smtp.mailfrom=laserology.net; dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b=GiJeo+I/; arc=none smtp.client-ip=23.83.209.24
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=laserology.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=laserology.net
+	s=arc-20240116; t=1787038188; c=relaxed/simple;
+	bh=60jt1hm+Obv8HqD7krRcltxiUWF/V74E0KG9DuRNr/c=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=ZalYLGvpbZYZVQvRaMouJex2VeTeWd8qmTAuEAbWA/1uf6xrk+d3Daisc5Es6S1ABLp67CGSUIQl1h+w5POBEfY8k8vdVmyNXi70WIyUiK+I5CCRblZaQocm0lThvPFaNy0vUrvQNiKJAexxBiCKDch/nuyHBD6tRsS0FnXogu4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=ONjLXRo+; arc=none smtp.client-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b="GiJeo+I/"
-X-Sender-Id: hostingeremail|x-authuser|admin@laserology.net
-Received: from relay.mailchannels.net (localhost [127.0.0.1])
-	by relay.mailchannels.net (Postfix) with ESMTP id 519363817EC;
-	Sat, 15 Aug 2026 00:42:45 +0000 (UTC)
-Received: from fr-int-smtpout22.hostinger.io (trex-green-3.trex.outbound.svc.cluster.local [100.117.167.206])
-	(Authenticated sender: hostingeremail)
-	by relay.mailchannels.net (Postfix) with ESMTPA id 3C2D5381FE8;
-	Sat, 15 Aug 2026 00:42:44 +0000 (UTC)
-X-Sender-Id: hostingeremail|x-authuser|admin@laserology.net
-X-MC-Relay: Neutral
-X-MailChannels-SenderId: hostingeremail|x-authuser|admin@laserology.net
-X-MailChannels-Auth-Id: hostingeremail
-X-Name-Interest: 26a45b5761f49bcd_1786754565102_351738541
-X-MC-Loop-Signature: 1786754565102:712002723
-X-MC-Ingress-Time: 1786754565102
-Received: from fr-int-smtpout22.hostinger.io (fr-int-smtpout22.hostinger.io
- [148.222.54.26])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-	by 100.117.167.206 (trex/8.0.2);
-	Sat, 15 Aug 2026 00:42:45 +0000
-Received: from toolbx (unknown [IPv6:2605:59c0:2068:2608:c60b:fd48:4dc7:1cbd])
-	(Authenticated sender: admin@laserology.net)
-	by smtp.hostinger.com (smtp.hostinger.com) with ESMTPSA id 4hML0d0BRkzyP4;
-	Sat, 15 Aug 2026 00:42:40 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=laserology.net;
-	s=hostingermail-a; t=1786754562;
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="ONjLXRo+"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1787038186;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:
-	 content-transfer-encoding:content-transfer-encoding:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
 	 in-reply-to:in-reply-to:references:references;
-	bh=lc0rq7xR25Ol7sYvMYnfF2oc0o89SQWS3k7iGuZjJ8I=;
-	b=GiJeo+I/BoF3oCsWP3rcVNHRyXlOWvoIdPFZT5DNT0W34GLqxEfhdgl00nCyipWeehCS9a
-	mYNrw3xUmvquyuXN8tW8EYlA6KkoQy17vxHDF0NLeudcsn8Oix7R/YoIopd48nbkSgZ+wj
-	+21Og8MgbWovZvVGGhOV2SLznPZsT2q101VGZly6pfKWlV/aIVYQYrPgC6peCdj1XPsJDf
-	xxAxIJbq76fH3RrA678ZHU/+wi0yTa/6d/qGEwz4NH9pykBeU5yjSHqGZQwt92nBModJoa
-	s5v4n0X8Kb8BTJRXCU2xEdJWW8Te7Ufs/XiZBnq09A8vOvlQndZWGxraSARfSw==
-From: Evan Lawrence <development@laserology.net>
-To: dmitry.torokhov@gmail.com
-Cc: development@laserology.net,
-	linux-api@vger.kernel.org,
-	linux-input@vger.kernel.org,
-	miroslav.bendik@gmail.com
-Subject: Re: [PATCH v5] Input: synaptics - add pass-through mode for TrackPoint
-Message-ID: <20260815004214.68767-1-development@laserology.net>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <an9ocXI6b7WEI8D2@google.com>
-References: <an9ocXI6b7WEI8D2@google.com>
+	bh=+x8pfgxpAdfeffVvBTclc7h7taQeubCUNT1m9PIdpe4=;
+	b=ONjLXRo+X0cJ2ErBkMlMXu8UVBefyq7fbc5OaDp5y2pGTOjw/yMXZbTWMnq0r7BACBMaIQ
+	FUuYOMms0Q0HuuD5oKqInFcNcmykqZs0xwNxtuuwezobtQ3fVf7s8sYmB1BgLqsHySyGe7
+	rIg2lBK8TeyxmcMHsZJJjTmcCmY4Fhk=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-107-x644BuzUObC3_jznpDetjw-1; Tue,
+ 18 Aug 2026 03:29:42 -0400
+X-MC-Unique: x644BuzUObC3_jznpDetjw-1
+X-Mimecast-MFC-AGG-ID: x644BuzUObC3_jznpDetjw_1787038179
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 26812180034C;
+	Tue, 18 Aug 2026 07:29:37 +0000 (UTC)
+Received: from fweimer-oldenburg.csb.redhat.com (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A7315180034C;
+	Tue, 18 Aug 2026 07:29:28 +0000 (UTC)
+From: Florian Weimer <fweimer@redhat.com>
+To: Peter Bergner <bergner@oss.tenstorrent.com>
+Cc: Andy Chiu <tchiu@tenstorrent.com>,  Jonathan Corbet <corbet@lwn.net>,
+  Shuah Khan <skhan@linuxfoundation.org>,  Paul Walmsley <pjw@kernel.org>,
+  Palmer Dabbelt <palmer@dabbelt.com>,  Albert Ou <aou@eecs.berkeley.edu>,
+  Alexandre Ghiti <alex@ghiti.fr>,  linux-doc@vger.kernel.org,
+  linux-riscv@lists.infradead.org,  kito.cheng@sifive.com,
+  dfustini@oss.tenstorrent.com,  greentime.hu@sifive.com,  Andrew Jones
+ <andrew.jones@oss.qualcomm.com>,  Nutty Liu <nutty.liu@hotmail.com>,
+  Pincheng Wang <pincheng.plct@isrc.iscas.ac.cn>,  Yao Zihong
+ <zihong.plct@isrc.iscas.ac.cn>,  Xu Lu <luxu.kernel@bytedance.com>,
+  Aleksa Paunovic <aleksa.paunovic@htecgroup.com>,  Jingwei Wang
+ <wangjingwei@iscas.ac.cn>,  Zong Li <zong.li@sifive.com>,  Deepak Gupta
+ <debug@rivosinc.com>,  =?utf-8?Q?Cl=C3=A9ment_L=C3=A9ger?=
+ <cleger@rivosinc.com>,
+  linux-api@vger.kernel.org,  Jeffrey Law <jeffrey.law@oss.qualcomm.com>
+Subject: Re: [PATCH 1/2] riscv: hwprobe: export the availability of vector
+ to user
+In-Reply-To: <d889d09d-951e-4414-95bb-625bcab7af9b@oss.tenstorrent.com> (Peter
+	Bergner's message of "Thu, 6 Aug 2026 12:09:00 -0500")
+References: <20260723222109.2229089-1-tchiu@tenstorrent.com>
+	<20260723222109.2229089-2-tchiu@tenstorrent.com>
+	<87bjbwk0q5.fsf@oldenburg.str.redhat.com>
+	<cc671848-f954-41bf-b7a9-ba34c29593ec@oss.tenstorrent.com>
+	<lhuik5n4v57.fsf@oldenburg.str.redhat.com>
+	<d889d09d-951e-4414-95bb-625bcab7af9b@oss.tenstorrent.com>
+Date: Tue, 18 Aug 2026 09:29:26 +0200
+Message-ID: <lhuzeyjanu1.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Date: Sat, 15 Aug 2026 00:42:40 +0000 (UTC)
-X-CM-Envelope: MS4xfHF7PoVelKQNVpgYwJwKsRbtshPavORooC9iaHbKTqHDbaDZWM0BOwN9SoOIaxPuEuO7w7NpmruUBpxy5cVU67d3mGesR9tkR0gCZK+ROXLrltmw3ToJ His5lypjVA0l/ND8jAjYkNkGoLkOWZH4BIilqABqBkTD0V/r5BC/XSkwUe3O8FXqmH+F7cHY4654SYDDS6/c1YOvN8y+EaSxSnV1t4VOp0fujOO6ZtBl9ln3 lnQJ9IcEbDG4vur1fsRtoiGHc0W6raUDaEc3q/PaeSOmCXX1SPzyDh5cEnwTMRIvnj4TwDAvn4bM3hHxhvFn7agGEI23oz10gpfmdCaU+llPw6Ca/5/P1k95 p/43IjgwpPs4E9Kne0kNrjotaLBsBo+INd9/ygwqYRnltgMZ/j4Wzd+ExTLu/+d/C2M49Oz4
-X-CM-Analysis: v=2.4 cv=V5Av0vni c=1 sm=1 tr=0 ts=6a7fb602 a=bXe6bw2OB92olpQ1pPvang==:617 a=xqWC_Br6kY4A:10 a=0--Fi8ekQfCFXZ83AN0A:9
-X-AuthUser: admin@laserology.net
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
 
-Hi Dmitry,
+* Peter Bergner:
 
-On Thu, Aug 14, 2026 at 07:13:00PM +0000, Dmitry Torokhov wrote:
-> I have not looked at the implementation yet, just a high-level question:
+> On 8/6/26 1:31 AM, Florian Weimer wrote:
+>> 
+>> And if RISCV_HWPROBE_KEY_IMA_EXT_0 comes back at -1, we'd turn on V
+>> unconditionally?
 >
-> What devices need this? Can they work in SMbus/RMI4 mode instead (which
-> should alleviate bandwidth concerns)?
+> No.  The unknown key (RISCV_HWPROBE_KEY_IMA_EXT_0 in this case) field would
+> be reset to -1, but the value field (which is what we test for the presence
+> of V and other extensions in the resolver) is set to 0, so we would not enable
+> any ifuncs in that case.
 
-The target devices are ThinkPad T14/P14s Gen 1/2-class Synaptics pass-through touchpads. The primary test hardware is a ThinkPad T14 Gen 1 (AMD), whose touchpad reports firmware id LEN2064 and whose TrackPoint is an Elan PS/2 device connected through the touchpad's pass-through port.
+I assumed, but didn't write, that there would be a separate probe for
+the V extension.
 
-On this device SMBus/RMI4 is not a viable alternative. Even with psmouse.synaptics_intertouch=1 forced and the touchpad re-probed, it stays in PS/2 mode (no RMI4 device is created). The touchpad's own bandwidth isn't problem; it reports at 75-85 Hz in both modes. The bottleneck is specifically the TrackPoint: behind the pass-through port it is serviced at only 35-40 Hz, but with transparent mode enabled it reaches 75-110 Hz. The exact peak rate may vary by model, but the improvement should be consistently positive.
+> For kernels that know about RISCV_HWPROBE_KEY_IMA_EXT_0, but not the
+> new key RISCV_HWPROBE_KEY_EXT_ENABLED, the key field holding
+> RISCV_HWPROBE_KEY_EXT_ENABLED will be reset to -1 and its value field
+> set to 0, while the value field associated with
+> RISCV_HWPROBE_KEY_IMA_EXT_0 will be set to the "extension is present"
+> value.  This still suffers from the (already existing) we'll enable V
+> ifuncs issue you mentioned if prctl was used to disable V, but as you
+> say, it will be fixed with a kernel upgrade.
 
-The transparent pass-through mode addresses exactly that PS/2 pass-through bottleneck by relaying the guest's raw byte stream directly instead of encapsulating it.
+Okay, that's fair.  I'm happy if there's no difficult-to-test prctl path
+that we need to maintain indefinitely.
 
-I'll follow up with a v6 that also reduces the mode-switch latency by avoiding the ACK-waiting ps2_command() calls on the escape sequence; I will send it as soon as I have tested it.
+Thanks,
+Florian
 
-Thanks, Evan
