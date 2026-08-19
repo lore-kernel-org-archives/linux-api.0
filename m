@@ -1,51 +1,50 @@
-Received: from sender5-op-o15.zoho.com (sender5-op-o15.zoho.com [165.173.182.15])
+Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF976367B90;
-	Wed, 19 Aug 2026 01:15:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=165.173.182.15
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 652AA43C7DF;
+	Wed, 19 Aug 2026 10:20:41 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787102147; cv=pass; b=qj8VgG0xH0UwjR4uB5pYgObcb3qKQSqEWa5yjV1q+lZA/8v8sL+nMDDeQzu8Co7NDlom3xJtLOrgqxXTuo96XQBTAqEZ8wrEH8YBaP1jqesTOV/EnHSw81JJUA2Ci/IxH34VCJilRunTsztCNUynhmvgYyBCwzG3jvkzyOLhgHI=
+	t=1787134843; cv=pass; b=euvGaCWwxCcZlsfIkmUuh0AFnlRVi8Pzr4nKZJpru/RocvQFfJcmmeqLvloOdtjHU4fDR7ULPogcWODqBY5kdkjHuOYsiY2tTp9YXII9b9VxLFwDzWu24mAQXcrTokJDw4yJBLpWDAwlJ4namqCRCAOXIvyD4//W4/FZCbrkcas=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787102147; c=relaxed/simple;
-	bh=iWF4sj6xmzNEKIMaQBKku5GRthkNL3Wi6iteaBUvH2g=;
+	s=arc-20240116; t=1787134843; c=relaxed/simple;
+	bh=UOlxkwCk3cH02PciWDMJUzXhehTpUXfUZwTZLjpkAtM=;
 	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
-	 MIME-Version:Content-Type; b=qvN7VhPbTnovA9hkY1eOjuvGJ0yJfIIJRQF7FDtOZwL8iuAF0CqL2cE0Vdbipe5YeM//12fD0I9xtzXRFIHzros4wF/TOI/s1iknoqJ29Dt5C4jlnU5zfKLoZwu5c4GVSgj7ZNdFE5QnxNO8K4mNEyO18W6PRIB5gJUiQg/JEsQ=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=iq64qdYC; arc=pass smtp.client-ip=165.173.182.15
+	 MIME-Version:Content-Type; b=e2GEbt43CTvZlz5P4BHMW0dekwCOW77Mg42BT+G8WgBdz3WKFxuVhEslD+ky7GUjtToIthipRDAlpsLlgx7C7bWmWIbB81OYq+8fVkwtJMqJyXZg9SsxGCyyI7qML8xPpruF7fISADOMZZUS23lvpwsrieeTx1i2XMcX9NaxdJo=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=Ip3l/sK0; arc=pass smtp.client-ip=136.143.188.15
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="iq64qdYC"
-ARC-Seal: i=1; a=rsa-sha256; t=1787102084; cv=none; 
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="Ip3l/sK0"
+ARC-Seal: i=1; a=rsa-sha256; t=1787134793; cv=none; 
 	d=zohomail.com; s=zohoarc; 
-	b=Vb7w8BxrWfF9lHwWUjEbzRIx6KBRsUigHB1BIq5oHipa4Sd5jus0nZuCNwSMN16h13U89lzH6ju4G911GghpembRCVMf6Yw1CT8w/E/crZljRwsXmE/Li+OUqGXnCiffP8k9tD//Lp24NVcZUbhP1N5p4BakadY5nnGnGkrKlP8=
+	b=WNX19sQNfm9NLQmLvSi+kOC6ZCmTbJJ7WAVY89yP7PTkGWzI48mF+DZEo/5SsPfs5tlb4yuNiWbI8whaohcLtGM2LqnZrmG767uXf79yXwmVAB7O77r7oXZGIBJwqMB8isAop3UQDm++jthDlgiG547f9WvjtvGPheZBrO0zZIM=
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1787102084; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=Q+1yMs/TAg44PdtgHr4whUenCDXTlH65MGNSP0QkUgg=; 
-	b=WzWWhEtFLhl2pB77v6E9NVuvONhpfr1iSWuWwttJmBuNvgr+2o5q3xLfDp00t9v7wxA6TtHtnvNzvU8dXWIOvWkefjmVNqix8VmBZHLHfLyjsAfPFlptN+Qb3+HpTwx+l+7OFJPjiKQdWKN6Hk7kagCTpAvX98Wc1+Uk45k0X3w=
+	t=1787134793; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=xVE/TCa3FajtK4vZ9pzEwtCdg70Sj2GwjXUwN4Rwvtg=; 
+	b=m1yDPOiyrtBnVbwlCc4yAMvn9OuMq60JTYwKYRz96dPuRsHkh9JWEw9jRJLH3KzrYFhz6ZsgmyU4Ktd4Fnar6xtmdHKBdg+FLg6+i/yGf57NH2YOrjMvHpBZ61cXZLwpIjQKTgbmlC7P0LNCnVBro/Xy32P4nrAZOB7taA09dKM=
 ARC-Authentication-Results: i=1; mx.zohomail.com;
 	dkim=pass  header.i=linux.beauty;
 	spf=pass  smtp.mailfrom=me@linux.beauty;
 	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1787102084;
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1787134793;
 	s=zmail; d=linux.beauty; i=me@linux.beauty;
 	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=Q+1yMs/TAg44PdtgHr4whUenCDXTlH65MGNSP0QkUgg=;
-	b=iq64qdYCSRkOo6W1o0SCny2QBrEIZAAUw+Q6FRFTCwzUHg5s0qfJmEOfHSz1ivlZ
-	DnhE8UtxYhGyGliZxovvaGRIYEAuZhGP9XmhynpPXodH7YfeM+jsfwNR5IstCYJqeee
-	qfOU1FA7TEkwqMY9QjgL3LcezQkk/TXcXATx/tvM=
+	bh=xVE/TCa3FajtK4vZ9pzEwtCdg70Sj2GwjXUwN4Rwvtg=;
+	b=Ip3l/sK0bMz2+Y8wX+yCZDGEhK2CXsJvKXXR7Xd+ofltThaYy/FvuKj3spwT7Ap1
+	weE5M/KPPWjWCyFh68NS7xH94NEyG9FJ4Pjo5kahcKAJNReqm9UeS4NZJjb8BVFjZgq
+	VGFBd45ONz+KGEc8vertMQ4mjLlGQRozXLe/zm3w=
 Received: from mail.zoho.com by mx.zohomail.com
-	with SMTP id 1787102084308142.55088526691668; Tue, 18 Aug 2026 18:14:44 -0700 (PDT)
+	with SMTP id 1787134793322567.9703421532414; Wed, 19 Aug 2026 03:19:53 -0700 (PDT)
 Received: from mail.zoho.com by mx.zohomail.com
-	with SMTP id 1787102081175753.1506133241837; Tue, 18 Aug 2026 18:14:41 -0700 (PDT)
-Date: Wed, 19 Aug 2026 09:14:41 +0800
+	with SMTP id 1787134791630896.7239743078507; Wed, 19 Aug 2026 03:19:51 -0700 (PDT)
+Date: Wed, 19 Aug 2026 18:19:51 +0800
 From: Li Chen <me@linux.beauty>
-To: "Justin Suess" <utilityemal77@gmail.com>
+To: "Andy Lutomirski" <luto@kernel.org>
 Cc: "Christian Brauner" <brauner@kernel.org>, "Kees Cook" <kees@kernel.org>,
 	"Gabriel Krisman Bertazi" <krisman@kernel.org>,
 	"Josh Triplett" <josh@joshtriplett.org>,
 	"Mateusz Guzik" <mjguzik@gmail.com>,
-	"Andy Lutomirski" <luto@kernel.org>,
 	"John Ericson" <mail@johnericson.me>,
 	"Jonathan Corbet" <corbet@lwn.net>, "Shuah Khan" <shuah@kernel.org>,
 	"Arnd Bergmann" <arnd@arndb.de>, "Oleg Nesterov" <oleg@redhat.com>,
@@ -63,10 +62,11 @@ Cc: "Christian Brauner" <brauner@kernel.org>, "Kees Cook" <kees@kernel.org>,
 	"linux-security-module" <linux-security-module@vger.kernel.org>,
 	"linux-arch" <linux-arch@vger.kernel.org>,
 	"linux-mm" <linux-mm@kvack.org>
-Message-ID: <1a01795b07a.1f456216580426.3401229391386650127@linux.beauty>
-In-Reply-To: <anJE8SfBLtkh6QSa@zenbox>
-References: <cover.1784204592.git.me@linux.beauty> <anJE8SfBLtkh6QSa@zenbox>
-Subject: Re: [RFC PATCH 00/24] pidfd: add a minimal process spawn builder
+Message-ID: <1a01988cfb7.7f8bf9df842660.5856426206659756785@linux.beauty>
+In-Reply-To: <CALCETrU2sCf_Ab2oDcUuJV53mhaDHTtf7QNqPJuFxV_ESHkbtg@mail.gmail.com>
+References: <cover.1784204592.git.me@linux.beauty> <538e494dd8fcc677da24ec985c6e90dde554e7f3.1784204592.git.me@linux.beauty> <CALCETrU2sCf_Ab2oDcUuJV53mhaDHTtf7QNqPJuFxV_ESHkbtg@mail.gmail.com>
+Subject: Re: [RFC PATCH 12/24] fork: let kernel callers create embryonic
+ tasks
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -79,80 +79,74 @@ Importance: Medium
 User-Agent: Zoho Mail
 X-Mailer: Zoho Mail
 
-Hi Justin,
+Hi Andy,
 
- ---- On Wed, 05 Aug 2026 04:25:25 +0800  Justin Suess <utilityemal77@gmail=
-.com> wrote ---=20
- > On Thu, Jul 16, 2026 at 10:31:26PM +0800, Li Chen wrote:
- > > Hi,
- > >=20
- > > This RFC follows feedback on my earlier spawn_template RFC [1]. That
- > > proposal made caching the primary interface; this one starts with gene=
-ral
- > > process construction. Christian suggested a pidfd/pidfs exec builder
- > > modeled after fsconfig(), with enough semantics for userspace to imple=
-ment
- > > posix_spawn() [2], and Kees agreed [3].
- > >=20
- > > This RFC is based on linux-next next-20260710 and depends on two pidfs
- > > fixes that I sent separately:
- > >=20
- > >   * pidfs: preserve thread pidfds reopened by file handle
- > >     https://lore.kernel.org/all/20260716052726.1032092-1-me@linux.beau=
-ty/
- > >   * pidfs: handle FS_IOC32_GETVERSION in compat ioctl
- > >     https://lore.kernel.org/all/20260716052822.1034228-1-me@linux.beau=
-ty/
- > >=20
- > > The initial implementation is source-based. The executable path can be
- > > provided with the final run request:
- > >=20
- > >     struct pidfd_spawn_run_args run =3D {
- > >         .path =3D (unsigned long)"/usr/bin/rg",
- > This should probably be an FD for the path.
+ ---- On Thu, 16 Jul 2026 23:57:58 +0800  Andy Lutomirski <luto@kernel.org>=
+ wrote ---=20
+ > On Thu, Jul 16, 2026 at 8:52=E2=80=AFAM Li Chen <me@linux.beauty> wrote:
+ > >
+ > > A kernel-created task can become visible before it has installed a new
+ > > executable image or a valid userspace register frame. Exposing such a =
+task
+ > > through ptrace can disclose kernel setup state.
+ > >
+ > > Add a task-local embryonic flag and an internal clone argument for cal=
+lers
+ > > that need this lifecycle. Reject ptrace access until the creator clear=
+s the
+ > > flag. Clear it with release ordering and observe it with acquire order=
+ing.
+ > > This orders visibility of the completed exec state with the transition=
+.
+ > >
+ > > Existing fork, vfork, clone, and kernel-thread callers leave the argum=
+ent
+ > > unset and retain their current behavior.
+ > >
  >=20
- > This way it prevents race conditions over multiple configuration steps.
+ > > --- a/kernel/ptrace.c
+ > > +++ b/kernel/ptrace.c
+ > > @@ -56,6 +56,8 @@ bool ptracer_access_allowed(struct task_struct *tsk)
+ > >         guard(rcu)();
+ > >         if (ptrace_parent(tsk) !=3D current)
+ > >                 return false;
+ > > +       if (task_is_embryonic_exec(tsk))
+ > > +               return false;
+ > >         es =3D task_exec_state_rcu(tsk);
+ > >         return READ_ONCE(es->dumpable) =3D=3D TASK_DUMPABLE_OWNER ||
+ > >                ptracer_capable(tsk, es->user_ns);
+ > > @@ -312,6 +314,8 @@ static int __ptrace_may_access(struct task_struct =
+*task, unsigned int mode)
+ > >                 WARN(1, "denying ptrace access check without PTRACE_MO=
+DE_*CREDS\n");
+ > >                 return -EPERM;
+ > >         }
+ > > +       if (task_is_embryonic_exec(task))
+ > > +               return -EPERM;
+ >=20
+ > Would it be better to use a different error code?  -ECONNREFUSED?
+ > After all, this isn't a permission failure per se.
 
-Thanks, that makes sense. Using an fd avoids the pathname race and pins
-the executable we actually want to run.
+Good point. I'm not sure ECONNREFUSED fits outside connection setup,
+though. ESRCH may make more sense if the task is meant to appear hidden.
+I'll think about this some more.
+ =20
+ > There's a not-locally-obvious gotcha here: reading other process
+ > attributes prior to calling task_is_embryonic_exec may result in
+ > (security-relevant!) data races.  This should at least be documented
+ > -- it's critical to check task_is_embryonic_exec *before* trying to
+ > read credentials.  Also, I think /proc and many pidfd APIs have the
+ > same issue.
 
- > >         .argv =3D (unsigned long)argv,
- > >         .envp =3D (unsigned long)envp,
- > >     };
- > >=20
- > >     fd =3D pidfd_open(0, PIDFD_EMPTY);
- > >     pidfd_spawn_run(fd, &run, sizeof(run));
- > >=20
- > > Alternatively, the path can be staged before the final run step:
- > >=20
- > >     struct pidfd_spawn_run_args run =3D {
- > >         .argv =3D (unsigned long)argv,
- > >         .envp =3D (unsigned long)envp,
- > >     };
- > >=20
- > >     fd =3D pidfd_open(0, PIDFD_EMPTY);
- > >     pidfd_config(fd, PIDFD_CONFIG_SET_STRING,
- > >                  PIDFD_CONFIG_KEY_PATH, "/usr/bin/rg", 0);
- > Same here. Should probably be an FD to the binary instead.
- >=20
- > >     pidfd_spawn_run(fd, &run, sizeof(run));
- > I'm worried this pidfd_spawn_run just adds another varient to the existi=
-ng
- > myriad of exec* syscalls we already have. Would it be better to just hav=
-e this
- > work through execveat(fd, "", argv, envp, AT_EMPTY_PATH) instead?
- >=20
- > (i.e have execveat take a pidfd directly).
- >=20
- > Then you can get rid of pidfd_spawn_run which looks almost structurally
- > identical to execveat (with the argv and envp collapsed).
+Agreed. Patch 15 later in the series already applies this ordering to procf=
+s,
+including cached dentry revalidation, and to PIDFD_GET_INFO.
 
-Thanks, but I'm less sure about using execveat() as the run operation, sinc=
-e it
-normally replaces the caller while the builder creates a new child and
-returns. A separate run operation still seems clearer to me.
+The ordering requirement still needs to be made more explicit. I'll
+document it, move the check ahead of ptrace_parent() in
+ptracer_access_allowed(), and audit the remaining pidfd users before the
+next version.
 
 Regards,
 Li=E2=80=8B
-
 
