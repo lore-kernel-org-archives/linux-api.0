@@ -1,152 +1,145 @@
-Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
+Received: from pdx-out-004.esa.us-west-2.outbound.mail-perimeter.amazon.com (pdx-out-004.esa.us-west-2.outbound.mail-perimeter.amazon.com [44.246.77.92])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 652AA43C7DF;
-	Wed, 19 Aug 2026 10:20:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787134843; cv=pass; b=euvGaCWwxCcZlsfIkmUuh0AFnlRVi8Pzr4nKZJpru/RocvQFfJcmmeqLvloOdtjHU4fDR7ULPogcWODqBY5kdkjHuOYsiY2tTp9YXII9b9VxLFwDzWu24mAQXcrTokJDw4yJBLpWDAwlJ4namqCRCAOXIvyD4//W4/FZCbrkcas=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787134843; c=relaxed/simple;
-	bh=UOlxkwCk3cH02PciWDMJUzXhehTpUXfUZwTZLjpkAtM=;
-	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
-	 MIME-Version:Content-Type; b=e2GEbt43CTvZlz5P4BHMW0dekwCOW77Mg42BT+G8WgBdz3WKFxuVhEslD+ky7GUjtToIthipRDAlpsLlgx7C7bWmWIbB81OYq+8fVkwtJMqJyXZg9SsxGCyyI7qML8xPpruF7fISADOMZZUS23lvpwsrieeTx1i2XMcX9NaxdJo=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=Ip3l/sK0; arc=pass smtp.client-ip=136.143.188.15
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B2DB33F8A2;
+	Thu, 20 Aug 2026 13:02:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=44.246.77.92
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1787230934; cv=none; b=X/7JWHgfqWOZocxIZO4OgofHnZeWGifWntGnUn+0wZnZB02SJzNWd7xg6nZkJYPPeA34wPl0Fu/52eiTa1KrRQW8uqG3J3L5z1JYeSKAIIO6VBFxKGlzDjtPTuf6iPmjhmEf9Y9hWMT1pYgM6aoTMcgQziPHSAosFfFvBjGJesk=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1787230934; c=relaxed/simple;
+	bh=6eDPCzvwfq4ALbMyX+g2YrbSWnbYl2di8/Fa0Ai7KfY=;
+	h=From:To:CC:Subject:Date:Message-ID:MIME-Version:Content-Type; b=hFCFUOrpfJ3vRDQi6GLJUSl/dJnT8d3g4+NZGnfjuxIlQ4vnzDX+ENyBRjRcSWmH2X+3u3GIMI2RtakktKUsiFqrd5T1xtvurUAaJVXnC1K8gotm++1m1pIZFYzM0vCNb+QmJfdLkp8msB5p1LkWDVP07gBo6BWrP1AGqubpmAw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com; spf=pass smtp.mailfrom=amazon.com; dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b=G7lFy+U8; arc=none smtp.client-ip=44.246.77.92
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=amazon.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amazon.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="Ip3l/sK0"
-ARC-Seal: i=1; a=rsa-sha256; t=1787134793; cv=none; 
-	d=zohomail.com; s=zohoarc; 
-	b=WNX19sQNfm9NLQmLvSi+kOC6ZCmTbJJ7WAVY89yP7PTkGWzI48mF+DZEo/5SsPfs5tlb4yuNiWbI8whaohcLtGM2LqnZrmG767uXf79yXwmVAB7O77r7oXZGIBJwqMB8isAop3UQDm++jthDlgiG547f9WvjtvGPheZBrO0zZIM=
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
-	t=1787134793; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
-	bh=xVE/TCa3FajtK4vZ9pzEwtCdg70Sj2GwjXUwN4Rwvtg=; 
-	b=m1yDPOiyrtBnVbwlCc4yAMvn9OuMq60JTYwKYRz96dPuRsHkh9JWEw9jRJLH3KzrYFhz6ZsgmyU4Ktd4Fnar6xtmdHKBdg+FLg6+i/yGf57NH2YOrjMvHpBZ61cXZLwpIjQKTgbmlC7P0LNCnVBro/Xy32P4nrAZOB7taA09dKM=
-ARC-Authentication-Results: i=1; mx.zohomail.com;
-	dkim=pass  header.i=linux.beauty;
-	spf=pass  smtp.mailfrom=me@linux.beauty;
-	dmarc=pass header.from=<me@linux.beauty>
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1787134793;
-	s=zmail; d=linux.beauty; i=me@linux.beauty;
-	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
-	bh=xVE/TCa3FajtK4vZ9pzEwtCdg70Sj2GwjXUwN4Rwvtg=;
-	b=Ip3l/sK0bMz2+Y8wX+yCZDGEhK2CXsJvKXXR7Xd+ofltThaYy/FvuKj3spwT7Ap1
-	weE5M/KPPWjWCyFh68NS7xH94NEyG9FJ4Pjo5kahcKAJNReqm9UeS4NZJjb8BVFjZgq
-	VGFBd45ONz+KGEc8vertMQ4mjLlGQRozXLe/zm3w=
-Received: from mail.zoho.com by mx.zohomail.com
-	with SMTP id 1787134793322567.9703421532414; Wed, 19 Aug 2026 03:19:53 -0700 (PDT)
-Received: from mail.zoho.com by mx.zohomail.com
-	with SMTP id 1787134791630896.7239743078507; Wed, 19 Aug 2026 03:19:51 -0700 (PDT)
-Date: Wed, 19 Aug 2026 18:19:51 +0800
-From: Li Chen <me@linux.beauty>
-To: "Andy Lutomirski" <luto@kernel.org>
-Cc: "Christian Brauner" <brauner@kernel.org>, "Kees Cook" <kees@kernel.org>,
-	"Gabriel Krisman Bertazi" <krisman@kernel.org>,
-	"Josh Triplett" <josh@joshtriplett.org>,
-	"Mateusz Guzik" <mjguzik@gmail.com>,
-	"John Ericson" <mail@johnericson.me>,
-	"Jonathan Corbet" <corbet@lwn.net>, "Shuah Khan" <shuah@kernel.org>,
-	"Arnd Bergmann" <arnd@arndb.de>, "Oleg Nesterov" <oleg@redhat.com>,
-	"Andrew Morton" <akpm@linux-foundation.org>,
-	"Paul Moore" <paul@paul-moore.com>, "Eric Paris" <eparis@redhat.com>,
-	=?UTF-8?Q?=22Micka=C3=ABl_Sala=C3=BCn=22?= <mic@digikod.net>,
-	=?UTF-8?Q?=22G=C3=BCnther_Noack=22?= <gnoack@google.com>,
-	"Alexander Viro" <viro@zeniv.linux.org.uk>,
-	"Jan Kara" <jack@suse.cz>, "linux-api" <linux-api@vger.kernel.org>,
-	"linux-fsdevel" <linux-fsdevel@vger.kernel.org>,
-	"linux-kernel" <linux-kernel@vger.kernel.org>,
-	"linux-kselftest" <linux-kselftest@vger.kernel.org>,
-	"linux-doc" <linux-doc@vger.kernel.org>,
-	"audit" <audit@vger.kernel.org>,
-	"linux-security-module" <linux-security-module@vger.kernel.org>,
-	"linux-arch" <linux-arch@vger.kernel.org>,
-	"linux-mm" <linux-mm@kvack.org>
-Message-ID: <1a01988cfb7.7f8bf9df842660.5856426206659756785@linux.beauty>
-In-Reply-To: <CALCETrU2sCf_Ab2oDcUuJV53mhaDHTtf7QNqPJuFxV_ESHkbtg@mail.gmail.com>
-References: <cover.1784204592.git.me@linux.beauty> <538e494dd8fcc677da24ec985c6e90dde554e7f3.1784204592.git.me@linux.beauty> <CALCETrU2sCf_Ab2oDcUuJV53mhaDHTtf7QNqPJuFxV_ESHkbtg@mail.gmail.com>
-Subject: Re: [RFC PATCH 12/24] fork: let kernel callers create embryonic
- tasks
+	dkim=pass (2048-bit key) header.d=amazon.com header.i=@amazon.com header.b="G7lFy+U8"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=amazon.com; i=@amazon.com; q=dns/txt; s=amazoncorp2;
+  t=1787230933; x=1818766933;
+  h=from:to:cc:subject:date:message-id:mime-version:
+   content-transfer-encoding;
+  bh=ZXxmGYeQ92oV94rXDtDInbSeiKZ5jTA05jjj7SsP3xc=;
+  b=G7lFy+U8+/vjkUqNcBaA5UGmJJEyN2CWjUlr+AlmYFHC41OU5Pnl74Z3
+   XHqxw5t6lb4GslZoRWbob2MV3vtLqjU7/FxEO5TK3zKqv3rSsBPmGtizn
+   7HsaYEJQXnmw9a6bmBEuv01lPFaift2jRD0gSvjPcIOmdvuyIBfyBH5aA
+   rDtzumMHw1ci0Azj/y1gRxhjci3a0mIkqKPB7mrBwAx+HoAQQWue/jf+V
+   0RR5B6sQeKQKn9dBhsk53VseUutmh6uhsEQ07EGtXLFgN5oRDin2P7Xql
+   uSizhYLbGTsLnosFJt5qQ5y3pzUxhD9G/HVTDC/rp007vxImVcygdnhZa
+   g==;
+X-CSE-ConnectionGUID: Va6p8yoHQGG7crGoTawj9A==
+X-CSE-MsgGUID: 5xFm0+6wTb2ygTUSUFBxDQ==
+X-IronPort-AV: E=Sophos;i="6.25,233,1779148800"; 
+   d="scan'208";a="26466404"
+Received: from ip-10-5-0-115.us-west-2.compute.internal (HELO smtpout.naws.us-west-2.prod.farcaster.email.amazon.dev) ([10.5.0.115])
+  by internal-pdx-out-004.esa.us-west-2.outbound.mail-perimeter.amazon.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 20 Aug 2026 13:02:13 +0000
+Received: from EX19MTAUWA002.ant.amazon.com [205.251.233.178:5332]
+ by smtpin.naws.us-west-2.prod.farcaster.email.amazon.dev [10.0.0.76:2525] with esmtp (Farcaster)
+ id 0dac1b51-2824-480a-92b8-4b8b88da920c; Thu, 20 Aug 2026 13:02:12 +0000 (UTC)
+X-Farcaster-Flow-ID: 0dac1b51-2824-480a-92b8-4b8b88da920c
+Received: from EX19D001UWA001.ant.amazon.com (10.13.138.214) by
+ EX19MTAUWA002.ant.amazon.com (10.250.64.202) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.45;
+ Thu, 20 Aug 2026 13:02:12 +0000
+Received: from dev-dsk-jamz-1e-e35f4cd9.us-east-1.amazon.com (10.189.35.140)
+ by EX19D001UWA001.ant.amazon.com (10.13.138.214) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA) id 15.2.2562.45;
+ Thu, 20 Aug 2026 13:02:11 +0000
+From: Jimmy Zuber <jamz@amazon.com>
+To: Miklos Szeredi <miklos@szeredi.hu>
+CC: <fuse-devel@lists.linux.dev>, <linux-fsdevel@vger.kernel.org>,
+	<linux-api@vger.kernel.org>, <linux-kernel@vger.kernel.org>, Shuah Khan
+	<shuah@kernel.org>, <linux-kselftest@vger.kernel.org>
+Subject: [PATCH v3 0/2] fuse: allow FUSE_SYNCFS for privileged userspace servers
+Date: Thu, 20 Aug 2026 13:01:56 +0000
+Message-ID: <20260820130158.254808-1-jamz@amazon.com>
+X-Mailer: git-send-email 2.50.1
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Importance: Medium
-User-Agent: Zoho Mail
-X-Mailer: Zoho Mail
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
+X-ClientProxiedBy: EX19D036UWC004.ant.amazon.com (10.13.139.205) To
+ EX19D001UWA001.ant.amazon.com (10.13.138.214)
 
-Hi Andy,
+FUSE_SYNCFS (propagating syncfs()/sync() to the server) is currently
+enabled only for virtiofs and fuseblk, since an untrusted server can stall
+sync(). Any FUSE filesystem may buffer data in the server that ought to
+reach storage on sync(); the only thing that should gate it is whether the
+/dev/fuse opener is sufficiently privileged to be trusted to block sync.
 
- ---- On Thu, 16 Jul 2026 23:57:58 +0800  Andy Lutomirski <luto@kernel.org>=
- wrote ---=20
- > On Thu, Jul 16, 2026 at 8:52=E2=80=AFAM Li Chen <me@linux.beauty> wrote:
- > >
- > > A kernel-created task can become visible before it has installed a new
- > > executable image or a valid userspace register frame. Exposing such a =
-task
- > > through ptrace can disclose kernel setup state.
- > >
- > > Add a task-local embryonic flag and an internal clone argument for cal=
-lers
- > > that need this lifecycle. Reject ptrace access until the creator clear=
-s the
- > > flag. Clear it with release ordering and observe it with acquire order=
-ing.
- > > This orders visibility of the completed exec state with the transition=
-.
- > >
- > > Existing fork, vfork, clone, and kernel-thread callers leave the argum=
-ent
- > > unset and retain their current behavior.
- > >
- >=20
- > > --- a/kernel/ptrace.c
- > > +++ b/kernel/ptrace.c
- > > @@ -56,6 +56,8 @@ bool ptracer_access_allowed(struct task_struct *tsk)
- > >         guard(rcu)();
- > >         if (ptrace_parent(tsk) !=3D current)
- > >                 return false;
- > > +       if (task_is_embryonic_exec(tsk))
- > > +               return false;
- > >         es =3D task_exec_state_rcu(tsk);
- > >         return READ_ONCE(es->dumpable) =3D=3D TASK_DUMPABLE_OWNER ||
- > >                ptracer_capable(tsk, es->user_ns);
- > > @@ -312,6 +314,8 @@ static int __ptrace_may_access(struct task_struct =
-*task, unsigned int mode)
- > >                 WARN(1, "denying ptrace access check without PTRACE_MO=
-DE_*CREDS\n");
- > >                 return -EPERM;
- > >         }
- > > +       if (task_is_embryonic_exec(task))
- > > +               return -EPERM;
- >=20
- > Would it be better to use a different error code?  -ECONNREFUSED?
- > After all, this isn't a permission failure per se.
+This series lets a plain /dev/fuse server opt in via a new FUSE_HAS_SYNCFS
+INIT flag, honored only when the server opened /dev/fuse with CAP_SYS_ADMIN
+privilege in the initial user namespace -- checked with file_ns_capable() at
+mount time.
 
-Good point. I'm not sure ECONNREFUSED fits outside connection setup,
-though. ESRCH may make more sense if the task is meant to appear hidden.
-I'll think about this some more.
- =20
- > There's a not-locally-obvious gotcha here: reading other process
- > attributes prior to calling task_is_embryonic_exec may result in
- > (security-relevant!) data races.  This should at least be documented
- > -- it's critical to check task_is_embryonic_exec *before* trying to
- > read credentials.  Also, I think /proc and many pidfd APIs have the
- > same issue.
+Extending syncfs propagation to another privileged mount class is not a new
+direction: commit d3906d8f3cee ("fuse: enable FUSE_SYNCFS for all fuseblk
+servers") already did the same for fuseblk. This series applies the same
+reasoning to a plain /dev/fuse server, checking the opener's privilege
+directly rather than inferring it from the mount type.
 
-Agreed. Patch 15 later in the series already applies this ordering to procf=
-s,
-including cached dentry revalidation, and to PIDFD_GET_INFO.
+  Patch 1: the kernel change (UAPI flag + privilege gating).
+  Patch 2: a selftest that speaks the raw FUSE protocol over /dev/fuse, so
+           it can withhold the flag and directly observe whether the
+           FUSE_SYNCFS opcode is forwarded.
 
-The ordering requirement still needs to be made more explicit. I'll
-document it, move the check ahead of ptrace_parent() in
-ptracer_access_allowed(), and audit the remaining pidfd users before the
-next version.
+A matching libfuse change (FUSE_CAP_SYNCFS negotiation) will be sent to the
+libfuse project once the UAPI flag here is settled.
 
-Regards,
-Li=E2=80=8B
+Changes since v2 [2]:
+ - Rebased on current fuse.git for-next.  Since v2, bit 43 and minor
+   version 46 were taken upstream (FUSE_HAS_IO_URING_BUFPOOL); FUSE_HAS_SYNCFS
+   is now bit 44 and bumps the interface to minor version 47.
+ - Selftest: dropped the v2 T4 case (an unprivileged user-namespace mount).
+   With the v2 gating on the /dev/fuse opener's capability, T4 exercised the
+   same "not capable -> withheld" branch as T3 while carrying the userns
+   setup machinery; T3 (opener without CAP_SYS_ADMIN in the initial user
+   namespace) is the surgical test of the gate and is retained.  No kernel
+   behavior change.
+
+Changes since v1 [1]:
+ - Gate on the privilege of the opener (CAP_SYS_ADMIN in init_user_ns at
+   /dev/fuse open time, via file_ns_capable()) rather than on the mount's
+   user namespace.  Miklos pointed out that the v1 check
+   (fc->user_ns == &init_user_ns) tested a property of the mount, not of
+   the server that actually services -- and can stall -- the connection.
+   Being in the initial user namespace is not itself a privilege
+   (e.g. an ordinary sshfs mount qualifies).  Checking the device opener's
+   capability closes that gap.
+ - Selftest: add a case covering exactly that distinction -- a server
+   in the initial user namespace that opened /dev/fuse without
+   CAP_SYS_ADMIN -- which v1 would have wrongly allowed.
+
+Testing: fs/fuse builds clean on the rebased tree.  Built and booted the
+patched kernel; the selftest passes all three cases (T1 forwards
+FUSE_SYNCFS; T2 and T3 withhold it), and a separate check on a
+FUSE_WRITEBACK_CACHE mount confirmed the point of the change: after write()
+the server had received 0 bytes (data dirty in the page cache), and after
+syncfs() it received the full buffered payload followed by FUSE_SYNCFS.
+
+[1] https://lore.kernel.org/20260616151909.916667-1-jamz@amazon.com
+[2] https://lore.kernel.org/20260619170251.1154562-1-jamz@amazon.com
+
+Jimmy Zuber (2):
+  fuse: allow FUSE_SYNCFS for privileged userspace servers
+  selftests/fuse: add test for FUSE_HAS_SYNCFS privilege gating
+
+ fs/fuse/fuse_i.h                              |   9 +
+ fs/fuse/inode.c                               |  28 ++
+ include/uapi/linux/fuse.h                     |  12 +-
+ .../selftests/filesystems/fuse/.gitignore     |   1 +
+ .../selftests/filesystems/fuse/Makefile       |   2 +-
+ .../selftests/filesystems/fuse/test_syncfs.c  | 309 ++++++++++++++++++
+ 6 files changed, 359 insertions(+), 2 deletions(-)
+ create mode 100644 tools/testing/selftests/filesystems/fuse/test_syncfs.c
+
+
+base-commit: d1dbc59200b54944f00251ca4dfbb2b318beca13
+-- 
+2.50.1
 
