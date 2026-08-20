@@ -1,30 +1,30 @@
-Received: from outbound.mr.icloud.com (mr-2004g-snip4-11.eps.apple.com [57.103.69.221])
+Received: from outbound.mr.icloud.com (mr-2003a-snip4-6.eps.apple.com [57.103.69.109])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CF2840960D
-	for <linux-api@vger.kernel.org>; Thu, 20 Aug 2026 19:53:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=57.103.69.221
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF19D3B9616
+	for <linux-api@vger.kernel.org>; Thu, 20 Aug 2026 20:04:08 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=57.103.69.109
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787255628; cv=none; b=FZdtoW5A8YJwSGsKa/9qphNzIGqkUhL8hDgcS/0lm4i+Gv9jmw//Znlhe3Qf2XBqJM3B5jWZir6UyqySDqvgVFmwA+A7wL0fZetyC+nyhqMiFyT75ioVzzex8RVlW5ouWGWpTU6GtHlGcIsWjvmueErZV0upfRS4WxajIj4Tgbc=
+	t=1787256250; cv=none; b=YfkXs3lwF9mhReU0ULVnr2eYKdKxRw49DdUJHVOOEeF53QGVDJNaM+lGrgSkLrXZxr9cnksJU0A/FUu8UbzP+9uL+1vTnpgZXN1BMqJHVGyktOeTk8LL/ztD3hlAXIKfEswiJl7lkpDOl9uICbhMG3Or/x9psuJDrkDIlsTBNyo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787255628; c=relaxed/simple;
+	s=arc-20240116; t=1787256250; c=relaxed/simple;
 	bh=jg0casZhAxprqoE10C7MtAk0ZfADZXgoNnUvUatgdo8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=SGW836Nqi9GcOvLrZTNNB9TDZM7p5tDCkpLlG1vLUU6gAOJLIm3wDUAUJdfW1bwBL6Wma3la1BU7OQlqlAEsH6471HKZd/0cZMILQRdBhXvW67BCpT6hNhvBksEDHuBGnyHGgq6YTvgyVPuMunDt6xP1i3fHmCwcb9r8DYYwhaw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=me.com; spf=pass smtp.mailfrom=me.com; dkim=pass (2048-bit key) header.d=me.com header.i=@me.com header.b=kNv3/Lqy; arc=none smtp.client-ip=57.103.69.221
+	 MIME-Version; b=EgPfolH51pf80eH47zTL0NNv/owoa+dTcxVu4bDVEOOb3IsyHKHKC8XR+axrOFHzAk6NLdalA/TVEJiQZLnEL1KHzOQLsusirbZp73ibnJnc/1VyslatRvOUG1pQCP0NKHMoeLIc6n088QEjCD2dG3C4J/9S+BcRyXb9FYgKjgw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=me.com; spf=pass smtp.mailfrom=me.com; dkim=pass (2048-bit key) header.d=me.com header.i=@me.com header.b=sV6iTrCX; arc=none smtp.client-ip=57.103.69.109
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=me.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=me.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=me.com header.i=@me.com header.b="kNv3/Lqy"
+	dkim=pass (2048-bit key) header.d=me.com header.i=@me.com header.b="sV6iTrCX"
 Received: from outbound.mr.icloud.com (unknown [127.0.0.2])
-	by p00-icloudmta-asmtp-us-west-2a-60-percent-2 (Postfix) with ESMTPS id 8145D18003E8;
-	Thu, 20 Aug 2026 19:53:41 +0000 (UTC)
-X-ICL-RepId: 01a020bc-870b-79ae-9c41-dd756a1e98fa
-X-ICL-Out-Info: HUtFAUMHWwJACUgATUQeDx5WFlZNRAJCTQhABkMAWBxBDkkdXwZfEhVdRVUIRRlTHhccRgxFGVswVB0dDlgGEhZdRV4IGQhdHRkKUFACS1oVVRcOAkIfUB9MFldDWhkcGVoUXBhTRVEfVFhDGUVWaUELTx1dGVscQmRYVwkKBldeWhdeTVoCVk0FSgNfAVsKQglJClgEWAZeC08GXgBeH0EUHlYfRQpcXl0NUh9FAnIdXFZQAlpVEgRACFZQXgheH0wc
-Dkim-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=me.com; s=1a1hai; t=1787255624; x=1789847624; bh=NOr7/E8MqBGfpagwg3zKjxZh7ki2iDE1ETn97o4WWWI=; h=From:To:Subject:Date:Message-ID:MIME-Version:x-icloud-hme; b=kNv3/Lqydfv/eqT3MJ6mKtBYBCRnsf18ml3wRLE2QGFbnpfc6tPpGfLLSnPIFuwoKk9PK+GDdrf/ql+Z1u+0pzkplX92sTtfeU8B+a/D2YQIYEr6rJd4VFG1hoSR1vz8CRsam7QJCQF0b/kteaUaco+Ms8w7YITg7HB68GqYJIKnlMbogPyYVskAngRSoWpWn8yYzuXx1fKer5//7WUrplulQ31gwVjH12TYWVEATsakfH/+dO5dFLdsKjVxp0bV5k4uVMJW+GMzsB/ivhdNxbttunJgaIMvbEAfajOvLmzoEmcLhVBfj9bbcLVUdcj60nCRWXsghkU+JCfC6aIkUg==
+	by p00-icloudmta-asmtp-us-west-2a-100-percent-6 (Postfix) with ESMTPS id 19347180112E;
+	Thu, 20 Aug 2026 20:04:04 +0000 (UTC)
+X-ICL-RepId: 01a020c6-0ae8-7c9b-add5-70d14e590a08
+X-ICL-Out-Info: HUtFAUMHWwJACUgATUQeDx5WFlZNRAJCTQhABkMAWBxBDkkdXwZfEhVdRVUIRRlTHhccRgxFGVswVB0dDlgGEhZdRV4IGQhdHRkKUFACS1oVVRcOAkIfUB9MFldDWhkcGVoUXBhTRVEfVFhDGUVWaUELTx1dGVscQmRYVwkKBldeWhdeTVoCVk0FSgNfAVsKQglKA10EXgteC0AAXgReH0EUHlYfRQpcXl0NUh9FAnIdXFZQAlpVEgRACFZQXgheH0wc
+Dkim-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=me.com; s=1a1hai; t=1787256248; x=1789848248; bh=NOr7/E8MqBGfpagwg3zKjxZh7ki2iDE1ETn97o4WWWI=; h=From:To:Subject:Date:Message-ID:MIME-Version:x-icloud-hme; b=sV6iTrCXmZLWBl548bN9ZsJ3VZe2SQ0ayUdM9PfLG3svVO0R7EXNFE6Ky16w/FcMdav3sUa3ivwf0+2wlzz99yPGd946hjm3Uw+hoZcymBbm2kX7NdtyvWxjuc1AiMr/ylUkVie2syXzKk2xek4T0UpNMH6UwEOORTyniJWSCUhgwM7tzCiYgczZa9iDTFPZ/nAiWQZDJzD7D6id+j8ULOsui2SpxfJAkvCqA8b0quSGEsvFQoU52GKTvLeUbZ5JOgis9LgxEbaa8oOEhAkIJ2MyU4BVPCuRWTK+zWPg/3M3TzIFyfJY/K3HplnsJyLabpz24tyXfuPSPcoxzK3Hyg==
 Received: from ncore (unknown [17.156.200.36])
-	by p00-icloudmta-asmtp-us-west-2a-60-percent-2 (Postfix) with ESMTPSA id 473401800127;
-	Thu, 20 Aug 2026 19:53:39 +0000 (UTC)
+	by p00-icloudmta-asmtp-us-west-2a-100-percent-6 (Postfix) with ESMTPSA id D45CA1800401;
+	Thu, 20 Aug 2026 20:04:02 +0000 (UTC)
 From: Ferran Duarri <ferran.duarri@me.com>
 To: Bjorn Helgaas <bhelgaas@google.com>
 Cc: linux-pci@vger.kernel.org,
@@ -32,8 +32,8 @@ Cc: linux-pci@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Ferran Duarri <ferran.duarri@me.com>
 Subject: [PATCH v2] PCI/sysfs: document the link speed and width attributes
-Date: Thu, 20 Aug 2026 21:53:27 +0200
-Message-ID: <20260820195334.275375-1-ferran.duarri@me.com>
+Date: Thu, 20 Aug 2026 22:03:53 +0200
+Message-ID: <20260820200359.283335-1-ferran.duarri@me.com>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20260820184228.166566-1-ferran.duarri@me.com>
 References: <20260820184228.166566-1-ferran.duarri@me.com>
@@ -44,21 +44,21 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-Proofpoint-GUID: tJ0h-uGttU9CmxXJWyksxF7uJgVHxGH1
-X-Authority-Info-Out: v=2.4 cv=Sc76t/Ru c=1 sm=1 tr=0 ts=6a875b46
+X-Proofpoint-GUID: MPTTA5wnPjJ-9cGoX6doB_fq3BW2zhRu
+X-Authority-Info-Out: v=2.4 cv=Sc76t/Ru c=1 sm=1 tr=0 ts=6a875db5
  cx=c_apl:c_pps:t_out a=9mRn2PO/+PIrVdEbaIuMPg==:117
  a=9mRn2PO/+PIrVdEbaIuMPg==:17 a=Sv0fKeRqtYgA:10 a=x7bEGLp0ZPQA:10
  a=B9nqV3Rn1-QA:10 a=VkNPw1HP01LnGYTKEx00:22 a=HHGDD-5mAAAA:8 a=VwQbUJbxAAAA:8
  a=rE-s9bnNCZdScJG29WsA:9 a=vUQH8iars7gmROI7:21
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwODIwMDE0OSBTYWx0ZWRfX1L66pPapmYYX
- XSEyY3PWNvj36Y2sV9OjYou3G67fJvgOViJlFslw+VOvpeA4Z7lfUyN+8LnaF6gFLrffSCSMP4L
- Kt4LbRPEpjO6HuXs0XA7OyDkdZLqJLDifVB0WCtoFZt/krrqDRaVr5Tg0imxOwSJAUWiA0v4hsm
- K41bRLpcvBMls1DK9str/g5c/Q3GoIKKj/rNAG10/HQSkiePTTOdwO01ss9wH/4Y4UUQoBRtQ9f
- 0cn4llqvBQCOow1JJvGD4GUp+Cj+jwAWGVchk+iyjWmJ6UHBsY3mjtpcjOvJJoLLhaq2unQRlTv
- YshAJkoXiPHR0I2t7amFsRWTyX+Z0xJ0fS+trS5+aK4xiGuLzipZ0ze5vbAUE4=
-X-Proofpoint-ORIG-GUID: tJ0h-uGttU9CmxXJWyksxF7uJgVHxGH1
-X-JNJ: AAAAAAABACBJhwXEMzJu2eI2m/9bAuL20olfCgmSx/Kr3QnAtDnujEP2Sc1PzEqISX3mTQNDzlXLrsgVyppZOPLWb5BK9nsBdwczbfiIeYDGiWfMfgGTabApc2Iwhu9DJ2SGHFKAri6CMpP9IKaZPJbjL2RcpGs//qtTOK9QqagQOEltwI10Gc6Wv19HV005amgm5goWxFtM5+TBtjVcvGVGinxPwIY+P4kVeQHKywXNwCJxr+i2weZ3yybwSrIju3ZB195vE7ryslyeBz2FYHoaAeBH5O3I2t2p/d22vdW84m67WSAFQCM60PWYsozO5uD4+n2VxC8+pFBZvfPvMHyKFIM2z2CqElU+PcNbIn1D4WahsaQWy7VUso/zO0FZoeJ1Ch78+P2fjcpnhedPJ3mE2YuYPSPymaqn/rhdOaqcgZc4zugPpObVio3ZgG96ZWTTjuZUgKrA4dMMHbDRpF4wZF96RD45Q22nXR8xDWKhwO8x6Te3+GfY+PF2+u2+yA0oHEk25+Qvq3o0MsThQo2OcLJ1KYioWoLccq+754ohN7xHIZ/ojUasoG4IXp/pOvt6fwY654iQsIfRT3Ia9+TzvYU71GgqziHIBQYSxJ5e0JlNEKr98jwqzzonJGLOTJpAdYBGI+aTU/OB2zn4k1+cjGNEtrsU+pFKpAc8WGTEKONn22+F8prTDILno3OJEMu3scKiPCwX9liOUIVTOdSrsaQPD5Ue+LsvRMPpI0lfoDJMj0Av79c2hzP4ssW6D5E4fLwB7WjOMaFWqVxrbBLZW/Y8uuCN76tWqHrpOuGai9KwlpMXNVkyqLdiv5DFuvAM8Om7AT2y5p2t7tNp3okHf0SKpurBySrK5bK1P3W7wEiUrUGaK8wRRv0hoCVClaUsnnxcly4ugJLc4jRzR5USVLYuHdnjvQAw1yoB48BfUpApgSEVIEO/XtK38fiBBDODHCOfptJrUPmLxQDy4Elith1nVW8
- Ljayn6UXFDE34IF7dpIlkLVP3LGSBphz/0uYx/KkcHcC0LmyF4cLl/nL55+6fJSCoctdaSXvN0Ayu/dSASPMmvX76RXhPX9RXAbh0XRyieUwc9XgEsM6e+bwUZXCY5DDMXI28Nq6Oz1k2OQoUoNAGgtXahVtNdlkTC4ipYfz3o0FmvV7S/ysH44DXJ3liBzjdNE49HRsVtw==
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYwODIwMDE1MSBTYWx0ZWRfX5jYa7mlgrxZa
+ IuBUfUF/QbUJuGiX3QEj81q6L5J8C3vUj1to4mDY2WYNDJTW8jOmhcmddg7WTX3qHB7MHChA2V8
+ A/W+xt4Okx0LCaqkjxTZMtxbDxyRGwe1ORmqOoSIK4VpkeeqDndG6L/gfS9LqfcXxAykNiqFnZw
+ MAzZcTbJhbavyefj3ZKnUNiFqnVurjwnvLxpBWWku1hqV/T/fYXwClTOa2Hq2xYx4U6Ym0o6sM9
+ KkuMsoh/xKV/n2r5ZQQfZxOHqQebbkVV8AKr/uyHj09jZ9CdeEg8N/lvnX7vWjL7h6qThZx2sPb
+ mcvbTRAWON/Pib0G7ZB0cBE+LQT+cLLsbxPdPGDnQbdGB7RAJeuWAatT+KZh+I=
+X-Proofpoint-ORIG-GUID: MPTTA5wnPjJ-9cGoX6doB_fq3BW2zhRu
+X-JNJ: AAAAAAABRGfCyGZCMG6zdMNDEQEVXR2gGaeyETNr91/CMapOKGAsLnNerO9SxK+3xH285cOrqtv21Q1Fl+Wc1YZv0qFgfCBbuJRcTe+CqlczFyO6J8Ztkw6NjFH5w+vS2ctr/rkYVc4jFpF34bjNpTzHNo+91sC8dOLdHKcFvAfXbrSnz/kWtuuG1zumtVoj0B20S5k55yxx0oWccrhLD13+8BSu0g2TaewTtz6twscwuShh9HMgAZPclPPhMEwF/mJk27+y5UkwXO4//7MixWA1JpXWqUFCWCC1cusWH0O3DG+aWxZQ5Y41akNAKzVqaYJQHDDF4n/v2QeRlGPwePxZ/LRVqiY/kEiGuLUL6Z4Pf7dX2Ku5OwhYMjz4YtQaoyH+sEdytp9p9X56nL0udQpg9g9BX+JuTe3SxD9JE3Ifw41mNgVJJl0/9h/Ewybh6n0ffVEgoIMGoTBefCgtv6VQFSIIng3z53L2FLGwO4NuqDgqkoTR5+zEplolvoRw2slFwK7fJq7+Gbgg5xTYIokOKg633TSUBkyIg5cYHt3i35gqMDpun2lrrBCMmeZgGG4S8rO36fhn7FOH5W2S17/Z62FJ8HciQPEd6soGfqrp2lJ+S6miJgZQY8acoRiZ5oP+WgZWo1sytUu45YzkFGIOLhWhuXojqt/kj+Bav4kEgniEZR2cwL/ns8j6NJLP5cp13DdbDc/ovtvwvWmPD029DyehnGC5eraQDXaKw0y/wjRvO1MVzrLXqerEbP/dH328K4elm6wzrw2QO6VrmmA0Sj8PO/6oa8lNnXQb4Bi8ep6gn4zRjuKFmUyZX45gg6X8ir10OxuXSb4IMIeHsyICzIumAPbFWID1PJw+p9g0en5MFeeDANSZxK19J0/aVFcsdtePdVKquAcOynRQM8GpcFk+7pzcIZ6C5WH0hKZmE/1Um3l/6vxxIx5YDv/olXFislGKNtcm2hpiHNx3OtF2z0G7hLb
+ z+W+nMA9OGEk8j5yP5Lr73oxPkGI/UZGpt/zp3G50Y8l7fl/a6YzuC/mWmppXbRCnKqkpxoRWuOqLeoZmdVD3jaqo7uvjIrLIQmn7ONXo5nNkxH5Gwl/eTCKtMrLEYclITl0IoFfVtdDoUIP3d/u9rlVGvHlQK1SAv9Y+CiLNlfvXo/CjiEE3UG1ExvACXMVFFtnL1Qz7OouwfrzfBpLJdqW5r9jw4fd20w==
 
 max_link_speed, max_link_width, current_link_speed and current_link_width
 have been exported under /sys/bus/pci/devices/.../ since 2018, by
