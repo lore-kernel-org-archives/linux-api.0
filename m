@@ -1,353 +1,183 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from smtp-8fa8.mail.infomaniak.ch (smtp-8fa8.mail.infomaniak.ch [83.166.143.168])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 313CD347FCD;
-	Wed, 26 Aug 2026 17:02:26 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E5EDE48381A
+	for <linux-api@vger.kernel.org>; Wed, 26 Aug 2026 20:23:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=83.166.143.168
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787763755; cv=none; b=gMqDaYM00Q9bt3/3n9Bjz/UPJFCIOOuNnWrFUZTyW12adq6SpCm/nR+qlx3vjLH4Dv+gPIuT4ChKCzkrb4bLjBWIxQjq+oRBXbqOfJIpwSLGfjqlHoL9lLrbpNc5IlKn7KfnocwdFnel55lOwQOJhxEkInN0ycCAbJHjWllB6sQ=
+	t=1787775816; cv=none; b=imd2HgXiG6iGI5uI6LGGlSmS5tFbJ8EYFtzJuX6jpe6IX2C+aZjjWTEThyk6NcZn3FfbJ4bFpcuISSilc2z5XxUPswPpFa2NqXzHxRqzV0fXT0+ATz5J/fh41rnQ8g23UGNZ/0DrX2QYnYyX7E8gHXMGDwq0qCl1+sDNsiW6V+8=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787763755; c=relaxed/simple;
-	bh=u0RKM02wOzuvhntRLoFKu9oNmuIfFheu6cW7Dr4jCJQ=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=iEcEt6X6aK0VV/mHNisM6hNSIkGmvbQ+biu3WYJhuJlWOL2EzZvrtqISjw5gHSTTmvHEOqmBCtJ9qysG3DNFprQnn6GCh8ZWqniYA1CTjBxhAcA3kR+7K9pMxTzJxPmYAbDD6VjzQ7eQKPE8/WjOk2UNWGlcoOPgXFQYv2EYHkw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Bn/DiV/G; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1787775816; c=relaxed/simple;
+	bh=RB9TzG0Q1eRtmVhwIJQ6ZaQRLJ+sLLM+rx40gMOiRKg=;
+	h=Subject:Message-ID:Date:From:To:Cc:MIME-Version:Content-Type; b=sCi4fTrPQ91I8GvAggH12lvyOXXtSjHDO8bbiCz95hKdu73p/MHHv8y8MqmlryTcrSvLlifoUcP8h+MJwunlHPOby9hpiywlKkkQ3tfsnobIRypup6/aP7TlMcaqeBbTF6VhHtpz5YnpAISphcri7U/FfLR1UEBdGnQ+P4THAYw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ikmail.com; spf=pass smtp.mailfrom=ikmail.com; dkim=pass (1024-bit key) header.d=ikmail.com header.i=@ikmail.com header.b=aNrCOEne; arc=none smtp.client-ip=83.166.143.168
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=ikmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ikmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Bn/DiV/G"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E2EBA1F000E9;
-	Wed, 26 Aug 2026 17:02:18 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1787763743;
-	bh=PvMhOpMtgahb/2g6h4rPwkBMlykF3l7pKxLhOb+mM+E=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=Bn/DiV/GuREkqk9gLaLx9oQOgG/zG/4wjB0MvEVME582wC2HbgYlUE3fOR/KD8sYK
-	 oCBf2UdqvnKJ9wytcgrqwQVTkbinysLZ0yZz5oPZlMo9pSqLwYCsXEQhrrzYoxBA0R
-	 wEnMTcMArz+ogjjsExgFwpAwuLvyJovUy67/4qFCwoMeD++JRnmcm4KbH+lKP2QajX
-	 C+XapE8uFFYdvM+bW+q8IsgbwPhHCO9diw1dha1JdZgQBacL8KU9dtB/xdES3J1ndv
-	 vC0o3AN8uuJla0rAs/LFvDPR/bq6bkALmlomtA/wkxeSOibPN2luyhIryddfiEse/P
-	 ilQneArTa5cxg==
-Date: Wed, 26 Aug 2026 18:02:16 +0100
-From: Conor Dooley <conor@kernel.org>
-To: Alex Ousherovitch <aousherovitch@rambus.com>
-Cc: Albert Ou <aou@eecs.berkeley.edu>, Conor Dooley <conor+dt@kernel.org>,
-	"David S. Miller" <davem@davemloft.net>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Krzysztof Kozlowski <krzk+dt@kernel.org>,
-	Palmer Dabbelt <palmer@dabbelt.com>, Paul Walmsley <pjw@kernel.org>,
-	Rob Herring <robh@kernel.org>,
-	Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>,
-	Shuah Khan <shuah@kernel.org>, Alexandre Ghiti <alex@ghiti.fr>,
-	devicetree@vger.kernel.org,
-	Joel Wittenauer <Joel.Wittenauer@cryptography.com>,
-	linux-api@vger.kernel.org, linux-crypto@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-riscv@lists.infradead.org,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Thi Nguyen <thin@rambus.com>
-Subject: Re: [PATCH v4 01/19] dt-bindings: crypto: add Rambus CryptoManager
- Hub
-Message-ID: <20260826-unwritten-marshland-47cdf3c17cad@spud>
-References: <20260825221539.255951-1-aousherovitch@rambus.com>
- <20260825221539.255951-2-aousherovitch@rambus.com>
+	dkim=pass (1024-bit key) header.d=ikmail.com header.i=@ikmail.com header.b="aNrCOEne"
+Received: from smtp-3-0001.mail.infomaniak.ch (unknown [IPv6:2001:1600:4:17::246c])
+	by smtp-3-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4hVbgx2KJlzKQK;
+	Wed, 26 Aug 2026 22:23:25 +0200 (CEST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ikmail.com;
+	s=20210927; t=1787775805;
+	bh=RB9TzG0Q1eRtmVhwIJQ6ZaQRLJ+sLLM+rx40gMOiRKg=;
+	h=Subject:Date:From:To:Cc:Reply-To:From;
+	b=aNrCOEnemcvGX4jYAAzyMN9TrGs2RaJ6IhsCB+Bg2iPDIZLXd6qTKnrutv2Q9viIT
+	 MyeEyIsTXzsDhi5IIvWc9LNAxnAJd9ptgAHW8wVSQ5e69r0kvYYV95tLiLdtEIjWyk
+	 x8xcKzTl/RJn74AZLUyiMdzXARSMHGUWElsP4DHw=
+Received: from unknown by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4hVbgw69kMzT8t;
+	Wed, 26 Aug 2026 22:23:24 +0200 (CEST)
+Subject: [RFC] statx: Define a generic OFFLINE file attribute
+Message-ID: <e06bdbf8-3727-425c-9a82-150848613a6b@mail.infomaniak.com>
+Date: Wed, 26 Aug 2026 22:23:24 +0200
+From: Lukas Mathis <lukas.mathis@ikmail.com>
+To: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>
+Cc: "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Reply-To: Lukas Mathis <lukas.mathis@ikmail.com>
+X-WS-Location: eJxzKUpMKykGAAfpAmU-
+X-Mailer: Infomaniak Workspace (1.3.1341)
+X-WS-User-Origin: eyJpdiI6ImJ5Q1M4RDNzU1FtY25vRFE1R08xK3c9PSIsInZhbHVlIjoiTDFjN1NYWGZBZTJVQjViSHovYmtFdz09IiwibWFjIjoiZjliNDk2ODEyZTNiMzc4MDMzMzY0MzBiZDljNGJmZmQyMzAyNDRkODI3MDJiNjFjMDRiMDhmOTBjYzk2MjMyOSIsInRhZyI6IiJ9
+X-WS-User-Mbox: eyJpdiI6InpxQWd4dVB4Wkk1U0o5ZFpMSkpCa3c9PSIsInZhbHVlIjoiNmF3N0JrbW9XVGgxK2RIQ3F6ajhWQT09IiwibWFjIjoiOTQ2OWI3MWZjYjcwMWM3YzgzMTVmNzhmYzM5YzA4NDQ3YjFkMGU4M2Y2ZTI2MDBjZjhmNjRkY2E0ODdlMTI2MCIsInRhZyI6IiJ9
+X-WS-LOCALE: de_DE
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="ijLsa67cbXpBs7zp"
-Content-Disposition: inline
-In-Reply-To: <20260825221539.255951-2-aousherovitch@rambus.com>
-
---ijLsa67cbXpBs7zp
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
+Feedback-ID: :925ebc4067698a7:ham:e9714dfc98c1edc
+X-Infomaniak-Routing: alpha
 
-On Tue, Aug 25, 2026 at 03:15:20PM -0700, Alex Ousherovitch wrote:
-> Add device tree binding schema for the Rambus CryptoManager Hub (CMH)
-> hardware crypto accelerator.  The binding describes the parent
-> SoC-level node with its SIC register region and one queue@N child
-> node per mailbox the host owns, each carrying a reg (mailbox instance
-> index), an optional interrupt, VCQ ring geometry (rambus,num-slots /
-> rambus,slot-stride-bytes) and a rambus,cores affinity list.  Which crypto=
- cores
-> are present is discovered from the SIC CORE_ENABLE register at probe,
-> not described in the device tree.
->=20
-> Register the 'rambus' vendor prefix for Rambus Inc.
->=20
-> Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
-> Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.=
-com>
-> Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.co=
-m>
-> ---
->  .../bindings/crypto/rambus,cmh-v1030.yaml     | 194 ++++++++++++++++++
->  .../devicetree/bindings/vendor-prefixes.yaml  |   2 +
->  2 files changed, 196 insertions(+)
->  create mode 100644 Documentation/devicetree/bindings/crypto/rambus,cmh-v=
-1030.yaml
->=20
-> diff --git a/Documentation/devicetree/bindings/crypto/rambus,cmh-v1030.ya=
-ml b/Documentation/devicetree/bindings/crypto/rambus,cmh-v1030.yaml
-> new file mode 100644
-> index 000000000000..d9598b0f3bbc
-> --- /dev/null
-> +++ b/Documentation/devicetree/bindings/crypto/rambus,cmh-v1030.yaml
-> @@ -0,0 +1,194 @@
-> +# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
-> +%YAML 1.2
-> +---
-> +$id: http://devicetree.org/schemas/crypto/rambus,cmh-v1030.yaml#
-> +$schema: http://devicetree.org/meta-schemas/core.yaml#
-> +
-> +title: Rambus CryptoManager Hub (CMH) Hardware Crypto Accelerator
-> +
-> +maintainers:
-> +  - Alex Ousherovitch <aousherovitch@rambus.com>
-> +  - Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
-> +  - Joel Wittenauer <Joel.Wittenauer@cryptography.com>
-> +
-> +description: |
-> +  The Rambus CryptoManager Hub (CMH) is a hardware cryptographic acceler=
-ator
-> +  accessed via a mailbox-based VCQ (Virtual Command Queue) interface.  T=
-he
-> +  host writes VCQ command sequences into per-mailbox DMA queue buffers a=
-nd
-> +  rings a doorbell; the CMH eSW processes them and signals completion via
-> +  interrupt.
-> +
-> +  The management host statically partitions the hardware mailboxes across
-> +  the SoC's host interfaces at integration time; the set of mailboxes a
-> +  given host owns is therefore fixed and not runtime-discoverable (a
-> +  mailbox locked to a host reads as unavailable in the SIC availability
-> +  register).  Each owned mailbox is described by a child node.  Which
-> +  crypto cores are present is a fixed silicon-build property indicated by
-> +  the SIC CORE_ENABLE register, so cores are not described in the device
-> +  tree.
-> +
-> +  CMH gates access to a locked mailbox by a hardware HOST ID presented on
-> +  the bus with every access, permitting only the owning host's ID.  An
-> +  integration must present a single, stable HOST ID for all accesses to a
-> +  given mailbox, independent of the issuing CPU (relevant on SMP hosts
-> +  whose interconnect encodes the issuing CPU in the HOST ID).
-> +
-> +properties:
-> +  compatible:
-> +    const: rambus,cmh-v1030
-> +    description:
-> +      Identifies the CryptoManager Hub v1.030 IP revision (register map =
-and
-> +      command ABI).  A specific SoC integration should list its own
-> +      "<vendor>,<soc>-cmh" compatible first with "rambus,cmh-v1030" as a
-> +      fallback; that extended form will be added when such a platform is
-> +      upstreamed.
+Background:
+During the 2024 discussion on additional statx() attributes, the introducti=
+on of a generic STATX_ATTR_OFFLINE attribute was proposed and discussed as =
+a potentially useful cross-filesystem property. The discussion highlighted =
+use cases in HSM systems, network filesystems, and userspace tools that nee=
+d to distinguish fully available files from files whose content is not imme=
+diately accessible.
 
-This commentary should just not be here.
-Instead, do what's been done in sifive,clint.yaml for the clint2. I
-don't feel great about suggesting that, and it feels like it's becoming
-more common - although maybe that's a good thing because it means IP
-vendors are being more proactive about upstreaming.
+Since then, Linux has gained support for pre-content access notifications t=
+hrough FAN_PRE_ACCESS, which provides a mechanism for userspace to supply f=
+ile data before read access proceeds. This addresses a significant part of =
+the data access path for content that is not immediately available locally.
 
-> +
-> +  reg:
-> +    maxItems: 1
-> +    description:
-> +      SIC (System Interface Controller) MMIO region.  The registers of
-> +      mailbox instance N are at offset N * 0x1000 within this region.
-> +
-> +  clocks:
-> +    minItems: 1
-> +    items:
-> +      - description: Main functional clock ("core").
-> +      - description:
-> +          Half-rate "core-div2" clock (present only on configurations wi=
-th
-> +          side-channel-protected cores) or the "rt" real-time tick clock.
-> +      - description: Real-time tick clock ("rt") for the internal timer.
-> +
-> +  clock-names:
-> +    oneOf:
-> +      - items:
-> +          - const: core
-> +      - items:
-> +          - const: core
-> +          - const: core-div2
-> +      - items:
-> +          - const: core
-> +          - const: rt
-> +      - items:
-> +          - const: core
-> +          - const: core-div2
-> +          - const: rt
-> +
-> +  reset-gpios:
-> +    maxItems: 1
-> +    description:
-> +      Host-controlled reset for the CryptoManager Hub.  The hub has two
-> +      external, active-low reset inputs -- a power-on reset and a hard
-> +      reset; where a board routes one of them to a host GPIO, that line =
-is
-> +      described here.
-> +
-> +  "#address-cells":
-> +    const: 1
-> +
-> +  "#size-cells":
-> +    const: 0
-> +
-> +patternProperties:
-> +  "^queue@[0-9a-f]+$":
-> +    type: object
-> +    description:
-> +      One node per hardware mailbox (VCQ command queue) this host owns.
-> +      The set of owned mailboxes is fixed by the management host at
-> +      integration time and enumerated here.
-> +    properties:
-> +      reg:
-> +        maxItems: 1
-> +        description:
-> +          0-based mailbox instance index.  The instance's registers are
-> +          at reg * 0x1000 within the SIC region.
-> +
-> +      interrupts:
-> +        maxItems: 1
-> +        description: Completion/error interrupt for this mailbox.
-> +
-> +      rambus,num-slots:
-> +        $ref: /schemas/types.yaml#/definitions/uint32
-> +        enum: [2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 819=
-2,
-> +               16384, 32768]
-> +        default: 64
-> +        description:
-> +          Number of VCQ ring slots for this mailbox's command queue in
-> +          host DMA memory.  This is a per-board, per-mailbox host-memory
-> +          ring geometry -- boards built around the same SoC (hence the
-> +          same compatible) may use different ring sizes, so it is
-> +          described per mailbox rather than derived from the compatible.
-> +
-> +      rambus,slot-stride-bytes:
-> +        $ref: /schemas/types.yaml#/definitions/uint32
-> +        enum: [128, 256, 512, 1024]
-> +        default: 512
-> +        description:
-> +          Stride in bytes between consecutive VCQ ring slots for this
-> +          mailbox's command queue.  Like rambus,num-slots this is a
-> +          per-board host-memory ring geometry, not derived from the
-> +          compatible.
-> +
-> +      rambus,cores:
-> +        $ref: /schemas/types.yaml#/definitions/uint32-array
-> +        items:
-> +          enum: [0x02, 0x03, 0x04, 0x05, 0x08, 0x09, 0x0a, 0x18]
-> +        description: |
-> +          Core-affinity list: the hardware core IDs whose work is
-> +          dispatched to this mailbox.  A core ID may appear on at most o=
-ne
-> +          mailbox.  Cores not listed on any mailbox are load-balanced
-> +          across all mailboxes.  Optional (default: none -- the mailbox
-> +          only serves the load-balanced pool).
-> +
-> +          Because each core instance has a distinct ID, separate
-> +          instances of the same core type can be pinned to different
-> +          mailboxes.
-> +
-> +          Core IDs:
-> +            0x02 HC, 0x03 AES, 0x04 SM4, 0x05 SM3,
-> +            0x08 HCQ, 0x09 QSE, 0x0a PKE, 0x18 CCP.
+However, userspace still lacks a standardized way to determine whether a fi=
+le's contents are currently available without triggering access.
 
-You could just make this a string array, and then you'd not need this
-mapping of unintelligible hex values. Of course then your driver has to
-do it, but I'd rather see understandable (and portable, since a new
-revision could change the IDs) values in DT.
+This RFC revisits the earlier discussion and proposes a minimal and filesys=
+tem-agnostic solution.
 
-> +
-> +    required:
-> +      - reg
-> +
-> +    additionalProperties: false
-> +
-> +required:
-> +  - compatible
-> +  - reg
-> +  - "#address-cells"
-> +  - "#size-cells"
+Problem Statement:
+Today, userspace applications can determine many file properties through st=
+atx(), but there is no generic mechanism to discover whether file content i=
+s immediately available.
 
-Surely clocks are also mandatory?
+As a result:
+General-purpose tools cannot distinguish between available and unavailable =
+file content.
+Filesystems may implement similar semantics differently.
+Userspace software lacks a common API for querying content availability.
+The recently introduced pre-content access infrastructure can hydrate conte=
+nt when accessed, but applications cannot discover the state beforehand.
+Proposal
 
-pw-bot: changes-requested
+Introduce a new statx() attribute:
+STATX_ATTR_OFFLINE
 
-Cheers,
-Conor.
+Semantic definition
+A file marked with STATX_ATTR_OFFLINE satisfies the following condition:
 
-> +
-> +additionalProperties: false
-> +
-> +examples:
-> +  - |
-> +    soc {
-> +        #address-cells =3D <2>;
-> +        #size-cells =3D <2>;
-> +
-> +        crypto@a4800000 {
-> +            compatible =3D "rambus,cmh-v1030";
-> +            reg =3D <0x0 0xa4800000 0x0 0x41000>;
-> +            clocks =3D <&cmh_core_clk>;
-> +            clock-names =3D "core";
-> +            #address-cells =3D <1>;
-> +            #size-cells =3D <0>;
-> +
-> +            /* Fast symmetric cores dedicated to mailbox 0:
-> +             * HC 0x02, AES 0x03, SM4 0x04, SM3 0x05, CCP 0x18 */
-> +            queue@0 {
-> +                reg =3D <0>;
-> +                interrupts =3D <1>;
-> +                rambus,cores =3D <0x02 0x03 0x04 0x05 0x18>;
-> +            };
-> +
-> +            /* Slow asymmetric/PQC cores dedicated to mailbox 1:
-> +             * HCQ 0x08, QSE 0x09, PKE 0x0a */
-> +            queue@1 {
-> +                reg =3D <1>;
-> +                interrupts =3D <2>;
-> +                rambus,cores =3D <0x08 0x09 0x0a>;
-> +                rambus,num-slots =3D <64>;
-> +                rambus,slot-stride-bytes =3D <512>;
-> +            };
-> +        };
-> +    };
-> diff --git a/Documentation/devicetree/bindings/vendor-prefixes.yaml b/Doc=
-umentation/devicetree/bindings/vendor-prefixes.yaml
-> index 396044f368e7..8b1a8f0a673d 100644
-> --- a/Documentation/devicetree/bindings/vendor-prefixes.yaml
-> +++ b/Documentation/devicetree/bindings/vendor-prefixes.yaml
-> @@ -1371,6 +1371,8 @@ patternProperties:
->      description: RaidSonic Technology GmbH
->    "^ralink,.*":
->      description: Mediatek/Ralink Technology Corp.
-> +  "^rambus,.*":
-> +    description: Rambus Inc.
->    "^ramtron,.*":
->      description: Ramtron International
->    "^raspberrypi,.*":
-> --=20
-> 2.43.7
->=20
+The file's metadata is available, but the file's content is not currently g=
+uaranteed to be immediately accessible without additional retrieval, restor=
+ation, hydration, or staging work.
 
---ijLsa67cbXpBs7zp
-Content-Type: application/pgp-signature; name=signature.asc
+This definition intentionally avoids any assumptions regarding:
+- storage technology
+- retrieval mechanism
+- userspace implementation
+- caching policy
+- filesystem type
 
------BEGIN PGP SIGNATURE-----
+The attribute describes the current availability of file content and nothin=
+g more.
 
-iHUEABYKAB0WIQRh246EGq/8RLhDjO14tDGHoIJi0gUCao8cGAAKCRB4tDGHoIJi
-0sjsAQCs5O4ETXRJy6kouRnk1/OQzmyoUsRPrpeb9rM/21hfJAD9EpAJQfU5xwoJ
-RERZNwRIPTsmZQlDVlrThF4+t3HV5wM=
-=dVOj
------END PGP SIGNATURE-----
+Intended Usage:
+Examples of applications that may benefit from a standardized OFFLINE attri=
+bute include:
 
---ijLsa67cbXpBs7zp--
+- search tools
+- backup software
+- indexing services
+- archiving software
+- HSM implementations
+- filesystem management utilities
+
+Example:
+statx file.dat
+
+could return:
+Attributes OFFLINE
+
+allowing userspace applications to make informed decisions before opening t=
+he file.
+
+Non-Goals:
+This proposal does not attempt to standardize:
+- synchronization status
+- upload status
+- conflict states
+- caching policies
+- retention policies
+- provider-specific metadata
+- graphical user interface behavior
+
+In particular, this RFC intentionally does not propose attributes such as:
+- PINNED
+- SYNC_PENDING
+- ERROR
+
+as these describe userspace policy decisions rather than generic filesystem=
+ content availability.
+
+The proposed attribute only answers one question:
+
+Is the file content currently offline?
+
+Filesystem Support
+
+Filesystems may expose STATX_ATTR_OFFLINE if they can reliably determine th=
+at file data is not immediately available.
+
+Implementation details remain filesystem specific.
+
+A filesystem may map the attribute to:
+
+- persistent inode flags
+- internal metadata
+- remote state information
+- HSM state information
+
+The RFC intentionally does not mandate how the state is stored.
+
+Relationship to Existing Work
+
+This proposal is intended as a direct continuation of the 2024 STATX_ATTR_O=
+FFLINE discussion and follows the same general direction suggested there. T=
+he goal is not to introduce a new subsystem but to define a common userspac=
+e-visible semantic that can be implemented across filesystems and consumed =
+by generic tools.
+
+The proposal is complementary to the recently introduced pre-content access=
+ infrastructure (FAN_PRE_ACCESS). While FAN_PRE_ACCESS addresses content re=
+trieval before access, STATX_ATTR_OFFLINE provides a mechanism for userspac=
+e to determine content availability before attempting access.
+
+Request for Feedback
+
+Is the proposed semantic definition sufficiently generic?
+
+This RFC intentionally focuses on a single, narrowly scoped semantic proper=
+ty in order to maximize reuse across filesystems and userspace tools while =
+minimizing policy decisions in the kernel.
