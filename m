@@ -1,131 +1,142 @@
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 517AA4A2E17;
-	Thu, 27 Aug 2026 17:52:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=217.140.110.172
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4384E4963B3;
+	Thu, 27 Aug 2026 18:14:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787853152; cv=none; b=Gb4CJPRUiKSrCjBoNYA1Lo1H0k0U9j9upT6t7pAeAXBs3/ogYPzi+ASN9kjZ/TTQgoMTDSJqPezFHGJKcRkIrV67O29F6WzqD4TE8oBL3r6MklrvXFrjhpck2qZJa6LuouaWdrqnCyFXTrzKOAZ1mcO+B/uUftcGjypTG6ZO5BU=
+	t=1787854474; cv=none; b=n4msWeFIea9+L8gfGOm0YO/fxI8l+NdNC5H1u5cX8d5C/QEoupcJJ3FKbi8Bm2cuBNM8xw0+YhCLqJeihTDYNGo03mpJpGISR+mSWH/81DLQT3H1ytfxofxt81p6B7R3mlfySlHL0W4dP71RPRpwYpmm04F3SSgseX9U3O/eAto=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787853152; c=relaxed/simple;
-	bh=3Lo+ZdElb1bhCszSyr1ciTzcKatyHt00pcCO0obh9Hk=;
-	h=Message-ID:Date:MIME-Version:Subject:From:To:Cc:References:
-	 In-Reply-To:Content-Type; b=KUEkYgo1itwr0s5bPc4/5pDB8P7yDORdvOaCRGffVCnSxLpOqjt8Wr2rPxeSslZQG/zb7vt+V5L2NW2yrMxQebzdU8P7fwdT6yDW6fCJRb665rU4KSzsVDzzrU131V49sUNeVyyhCcTf+oU2iS57q1G1d1mVqTkAsw/2jeQwC6c=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foss.arm.com; spf=pass smtp.mailfrom=foss.arm.com; dkim=pass (1024-bit key) header.d=foss.arm.com header.i=@foss.arm.com header.b=LLVXzCCV; arc=none smtp.client-ip=217.140.110.172
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=foss.arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=foss.arm.com
+	s=arc-20240116; t=1787854474; c=relaxed/simple;
+	bh=hD6SEZPfkQWz6Ef4vDrsGLc5w6nhOYqqTLzD0CH/ou8=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=Sei5Of1sGnGlbhJe5Q4DTid9YurWfEkOXQp/MAVyzPIybDi8y0DH/I34u4SpaKFJNk4OVeLyPpWK3gslW7EnFRtNiiCtk3rKU7bMFsS58H1H4idG8ike9YpA8Je4+/WCq+bMeZnPjFPHKz2RSKfcxcXxgabHyZGtnZxwigwXxfc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=Vt4ggbUe; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=foss.arm.com header.i=@foss.arm.com header.b="LLVXzCCV"
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id C51F2165C;
-	Thu, 27 Aug 2026 10:52:25 -0700 (PDT)
-Received: from [10.211.55.7] (usa-sjc-mx-foss1.foss.arm.com [172.31.20.19])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id DFB0F3F7D8;
-	Thu, 27 Aug 2026 10:52:28 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=foss.arm.com; s=main;
-	t=1787853149; bh=3Lo+ZdElb1bhCszSyr1ciTzcKatyHt00pcCO0obh9Hk=;
-	h=Date:Subject:From:To:Cc:References:In-Reply-To:From;
-	b=LLVXzCCVqihttZUVw5hf327N6NQF/8OTgVqmkRTWAKwtW7JaJNRd34Dmfeb89URQY
-	 SFvbiIJ41kOlYkwg6d2BlBms8vwwU1klpZ1EkH3E618IMsvMTHTUDoTHcVPSrjx5Ns
-	 UPBGKX1xHk57nyAWP2hBKL9tmsqr2otVNnrPAcSU=
-Message-ID: <3bb672e0-7bc3-434f-904e-aa00394dd01f@foss.arm.com>
-Date: Thu, 27 Aug 2026 12:52:28 -0500
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="Vt4ggbUe"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2219B1F000E9;
+	Thu, 27 Aug 2026 18:14:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1787854472;
+	bh=BLqeMPBBFLZB2XtBVAVDJSZch4XELRlb7qugskkfcMg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=Vt4ggbUetYUKJ27EewJQTpgv3qkZTj9ozDFcDv8WygJ3eSNDoxxMV8fBzZLHs9PnA
+	 xxxnvaoZsrRyYqFAX4UZZ7TYobmBeZx/FTo05GSUCcrTcQLPNZ4Q7bH2F5eXgDrWRw
+	 EcaiZurE6opfx44t9QE5Rqn8848DD59WBL5kcMohlgZX5u+Aug4DF2lxQveaKOL0dc
+	 hxzUv8KwTUFyeWOo0IlkU+1ivw7s8z/EI6UmxNB1uUjkZsvnFefYrGbZttRPQN3kTb
+	 iYuXAjqHBj7mSV8h8Zz3m6/VaOOFGxNvypQ+ewn9m3+dCXKfZn19mHLfXQGCUTk2+X
+	 9S9YOem41Zxmw==
+Date: Thu, 27 Aug 2026 19:14:28 +0100
+From: Mark Brown <broonie@kernel.org>
+To: Bill Roberts <bill.roberts@foss.arm.com>
+Cc: "linux-riscv@lists.infradead.org" <linux-riscv@lists.infradead.org>,
+	linux-arm-kernel@lists.infradead.org,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	linux-hardening@vger.kernel.org, linux-api@vger.kernel.org,
+	dave.hansen@linux.intel.com, rick.p.edgecombe@intel.com,
+	debug@rivosinc.com
+Subject: Re: Shadow Stack Locking Semantics between arch's
+Message-ID: <d20ccb74-69ed-45d7-a810-846904873588@sirena.org.uk>
+References: <a1946d93-370e-4ca9-85d6-60b4a20ffd47@arm.com>
+ <3bb672e0-7bc3-434f-904e-aa00394dd01f@foss.arm.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: Shadow Stack Locking Semantics between arch's
-From: Bill Roberts <bill.roberts@foss.arm.com>
-To: "linux-riscv@lists.infradead.org" <linux-riscv@lists.infradead.org>,
- linux-arm-kernel@lists.infradead.org,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- linux-hardening@vger.kernel.org, linux-api@vger.kernel.org
-Cc: dave.hansen@linux.intel.com, rick.p.edgecombe@intel.com,
- debug@rivosinc.com, broonie@kernel.org
-References: <a1946d93-370e-4ca9-85d6-60b4a20ffd47@arm.com>
-Content-Language: en-US
-In-Reply-To: <a1946d93-370e-4ca9-85d6-60b4a20ffd47@arm.com>
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="Yf0EwlbjDAgbC5GQ"
+Content-Disposition: inline
+In-Reply-To: <3bb672e0-7bc3-434f-904e-aa00394dd01f@foss.arm.com>
+X-Cookie: Exercise caution in your daily affairs.
 
-On 8/27/26 12:15 PM, Bill Roberts wrote:
 
-Sorry resend, wrong outgoing mail server in my client so it got mangled, 
-this one should be proper...
+--Yf0EwlbjDAgbC5GQ
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Howdy folks,
+On Thu, Aug 27, 2026 at 12:52:28PM -0500, Bill Roberts wrote:
 
-If you haven't seen, I have been floating some patches to bring x86-64 
-shadow stack controls over to prctl, and it's generally straight forward.
-The larger motivation, is that I am doing all of this so we can place 
-LSM controls on shadow stack manipulations. For x86 will we need to hook
-the old and new implementations.
+> I have noticed some semantic differences between the arches. Given this
+> example of current thread state, current thread locking state and the
+> new features requested, as shown below:
 
-I have noticed some semantic differences between the arches. Given this 
-example of current thread state, current thread locking state and the
-new features requested, as shown below:
+> unsigned long locked =3D 0x2; // Kernel Task State -> LOCK WRITE
+> unsigned long cur_val =3D 0x3; // Kernel Task State -> WRITE and SHADOWST=
+ACK
+> ENABLED
+> unsigned long new_val =3D 0x0; // Userspace Feature Change via syscall ->
+> DISABLE
 
-unsigned long locked = 0x2; // Kernel Task State -> LOCK WRITE
-unsigned long cur_val = 0x3; // Kernel Task State -> WRITE and 
-SHADOWSTACK ENABLED
-unsigned long new_val = 0x0; // Userspace Feature Change via syscall -> 
-DISABLE
+> | x86-64 | risc-v | arm64 |
+> | ---------- | -------- | --------- |
+> | Works=A0 | Fails=A0 | Fails=A0 =A0 =A0|
 
-| x86-64 | risc-v | arm64 |
-| ---------- | -------- | --------- |
-| Works  | Fails  | Fails     |
+I would not have expected that combination to work at all with the
+prctl() (as opposed to arch_prctl()) interface TBH, if you've locked
+write on you shouldn't be able to disable it.  The reason that works on
+x86 at the minute is that for x86 you can only change one bit at a time
+so the new value when disabling is effectively 0x2, not 0x0.
 
-Besides the locking difference, I have also noticed a few other issues 
-noted below:
+> I am proposing and have questions over the following:
+> 1. What should the behavior be if you had write locked and disable the
+> shadow stack?
+> =A0 - I can argue both ways here, -EPERM or success. I think I and most a=
+rches
+> lead to failure.
 
-Risc-v:
-- shouldn't reject all bits in locking, it supports shadow stack.
-- shouldn't return EINVAL on locking checks
+Given that RISC-V doesn't support control of writes it's moot there
+at the minute, and x86 currently uses arch_prctl() so will need an
+additional API, it seems the path of least resistance is to allow it.
+This also avoids locking writes (or pushes, for arm64) on effectively
+also locking enable which seems neater.
 
-See the code snippets for these below:
+> 2. riscv should check that the low bit is set in locking not just that its
+> 0, it should be 1
 
-if (is_shstk_locked(t))
-                 return -EINVAL;
+I think for ABI compatibility RISC-V will have to continue accepting 0
+as being equivalent to locking PR_SHADOW_STACK_ENABLE (or everything,
+but it only supports that one bit right now).
 
-int arch_lock_shadow_stack_status(struct task_struct *task,
-                                   unsigned long arg)
-{
-         /* If shtstk not supported or not enabled on task, nothing to 
-lock here */
-         if (!is_user_shstk_enabled() ||
-             !is_shstk_enabled(task) || arg != 0)
-                 return -EINVAL;
+> 3. riscv should return -EPERM vs -EINVAL
 
-         set_shstk_lock(task, true);
+If you mean for arch_lock_shadow_stack_status() I think -EINVAL is a
+sensible error code when the system or task does not support shadow
+stacks, I'm not sure we should return -EPERM at all.  On arm64 we
+support locking any bit, not just the ones that we currently know about.
+This is for future proofing, userspace can lock unknown flags.
 
-         return 0;
-}
+> If we can all agree on item 1, that locked bits check can be refactored a=
+nd
+> shared in one of
+> two ways:
+> 1. within prctl itself, before the arch hook is called, we would need
+> helpers per-arch to extract the thread features and lock bits
+> 2. as a helper where folks just pass the unsigned long of the bits to get
+> the result
 
-arm64:
-1. Locking failures return -EBUSY vs -EPERM, I spoke with Mark (on CC) 
-he seemed OK with this,
+For me option 1 seems a bit nicer, and moves more of the implementation
+into generic code which is something we should really be doing in
+general with the shadow stack support - there's a lot of cross arch
+duplication at the minute.  It has been on my list to look at this
+repitition at some point, it had been held up by the clone3() stuff but
+that seems to have died a death for now.
 
-I would like to find a way to rectify this so userspace has a common API.
+--Yf0EwlbjDAgbC5GQ
+Content-Type: application/pgp-signature; name="signature.asc"
 
-I am proposing and have questions over the following:
-1. What should the behavior be if you had write locked and disable the 
-shadow stack?
-   - I can argue both ways here, -EPERM or success. I think I and most 
-arches lead to failure.
-2. riscv should check that the low bit is set in locking not just that 
-its 0, it should be 1
-3. riscv should return -EPERM vs -EINVAL
-4. x86 locking state should fail
+-----BEGIN PGP SIGNATURE-----
 
-If we can all agree on item 1, that locked bits check can be refactored 
-and shared in one of
-two ways:
-1. within prctl itself, before the arch hook is called, we would need 
-helpers per-arch to extract the thread features and lock bits
-2. as a helper where folks just pass the unsigned long of the bits to 
-get the result
+iQEzBAABCgAdFiEEreZoqmdXGLWf4p/qJNaLcl1Uh9AFAmqQfoMACgkQJNaLcl1U
+h9CgJQf/RXCfxOLBrpvqx7CGBBJ+UQyh71H64Yy4Tt40trYCcoJLxK6joixB/sT7
+g0fKTvETGH7NCIr9NJqTGfvOyZ7Bf4gL2ZL79NU5zTtmWdwB21cDG7tmvoXw2mUw
+9SMS62c1y4XEpniYBz7nYA24TgB4ZkpL0J8tOPGVkol0Gjf7ZTnd80JrsdWiYbNY
+pFjWClV4iJ/MEwq0Q7dsrRY/3399co/0ZlRMp2LeLEKGce4gGKgmBAJlSv1wQ/lw
+qhofehL0NPsqRgdVjXpdoUuRwZ9/odMAZav8deL4wvZJiEtppw7em8wuTszq8NxZ
+Ct5MM4+/dYaw4Oh2ftBDOMgYjAL/lA==
+=a0+n
+-----END PGP SIGNATURE-----
 
-Thanks everyone
-
+--Yf0EwlbjDAgbC5GQ--
