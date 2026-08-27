@@ -1,246 +1,184 @@
-Received: from mail-pj1-f43.google.com (mail-pj1-f43.google.com [209.85.216.43])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B3A1C30B53A
-	for <linux-api@vger.kernel.org>; Thu, 27 Aug 2026 07:15:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.43
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91CE4448393;
+	Thu, 27 Aug 2026 17:14:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787814937; cv=none; b=SZi5ERPLB/kbt/Q92hplx+Rd8lGvOQROx5IkMsUCy3BL1YrDAFfz3DeXaEBbNREWCOVzi9mVDPxHa17ede76ATfAH1e/pe7J9qRJ4dcTAXrLiEJdlaTt7fkWoovgTh87BLwfHdUu49LVp2AusJxYTW4STT2yFeh8waEX3uOZMuk=
+	t=1787850868; cv=none; b=WNy3UqV3Gg9Fy77+7f4Qr2x9lnEOvaxGmKgFN3XJ6UoxdLVg11LYPsFNcBcwW9C9KPMZvPGDSzti+WPqlwGLA+y0l61/xaRpo5i3EU1jerDMr9uPmDjWtzcUNT/ueaOx0IygumuBU3Hfr7lM7tIV/XendpFKBjShSpxLzJLwOT4=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787814937; c=relaxed/simple;
-	bh=eEbvmBA+VqV7d+OycmMNi2e9upqto8mUTrACjRl71h0=;
-	h=Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Message-Id:References:To; b=tlT6FgtcWmxnG6CfYGCCW8aN6tcQ4kMTRC8NJ/mM0/2NGVz0wzLqGTw+EbkWSvW/BZiQPDdToba+jnIyRo3DhhRr8FrrjlBHrj6W7uIqxO3YcewzNBmm9pEdUXRuMezK9n87495HaJRRC+0rMzK6RS7yH1HN1yK5ofVxqARq/VE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dilger.ca; spf=pass smtp.mailfrom=dilger.ca; dkim=pass (2048-bit key) header.d=dilger-ca.20251104.gappssmtp.com header.i=@dilger-ca.20251104.gappssmtp.com header.b=KypGqpUq; arc=none smtp.client-ip=209.85.216.43
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dilger.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dilger.ca
+	s=arc-20240116; t=1787850868; c=relaxed/simple;
+	bh=98EnpPCM7ehXne7kJF3UPBdleYIe55GtAC+8kpokhpE=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=HpRNdcJyF5uVmJDQdQqaxn7LFuMcWTY2tkfa7oShKqC3RpjBJ/UQz2aR5c2t3cUr6a3ZEL5unMgAVZgIUWBxRQ/dyBDACdy8ZPM90M5IOgv1foENy4DVCYcccOlfruT51k0izqHmHqfyZsoj2JbYCy3ErRb8HOzFwqfEdH0K6tU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=JCSVox6G; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=dilger-ca.20251104.gappssmtp.com header.i=@dilger-ca.20251104.gappssmtp.com header.b="KypGqpUq"
-Received: by mail-pj1-f43.google.com with SMTP id 98e67ed59e1d1-38e347638adso2317492a91.0
-        for <linux-api@vger.kernel.org>; Thu, 27 Aug 2026 00:15:33 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dilger-ca.20251104.gappssmtp.com; s=20251104; t=1787814931; x=1788419731; darn=vger.kernel.org;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:content-type:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=1zCh3657l86P60/ccD6dgvUaOyv0ZIzzK7+ahPLSOkY=;
-        b=KypGqpUq2WGZEEAr+wiCzMbr2qQjppa5uXB52tbvpBhOeasDYEKKhSzOWsI+kSP9Bw
-         652g42hUVP6Rb0DRIRS8uNlQ7izeiQC9eis6jQiTacSsNEQM5j0Ns1ZQ+TCCn1MVWoUp
-         77A5+T+xD9Ymkc4hycOYRO4JLgOoXNRJYNYP+bb0eqD6ug1m6uwaTADTp+aQhWznmOyt
-         M9QsyDsCdLcuyjkcI/ouIg6Gbr5fdF+1A8Yc1ZIeas1fdC0Agde2Ddj3RZMbLzZd+hby
-         mYyN3OZLJpNCzyCk/86lVQUQqWeZfWLkA3g2Oqs9VCgZmgipLoUw1fHRJ84tt6ofCfQp
-         Fk6Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1787814931; x=1788419731;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:content-type:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=1zCh3657l86P60/ccD6dgvUaOyv0ZIzzK7+ahPLSOkY=;
-        b=TiCsHreg5swsK/RB8Y9qdGlOUqL4ZJZ6dCF2xA1SB5xBTWgNPvNWtf8hBLEM9djmIs
-         ZFtPDjRwzIplxT7iGp9MoOCGhdvdLvDjKrp8snqIwXJ9SKQoXiUc4z64AfgJoIaSN8+Q
-         L+rnICoVe1U3ar/RT5b+ZLrTBruKyUBL1B9lk1Ns8TydO7Z2jX8jzDXnfFKRhX63r2pO
-         +PGWTDgebn3xDj2b84PfpGuTHHZ+s+5fv2oS9KTuhpLOGkGK7atXZ1Fap2YtmPSCLq7E
-         k9fPu7Hf6o9GhGNLHL3MYiTSAnxZ0aBroeY4xvmGxdXcq3o8U/D0+9SM29+pahnLq2rI
-         bKsg==
-X-Forwarded-Encrypted: i=1; AHgh+RpJ2/4XkyoYMq9gKFadvbHOLXYBxx0hxOZwniNFYlnmx8uMjIHAI2npK4LtVamEzSFnEOkh8oPMvl8=@vger.kernel.org
-X-Gm-Message-State: AFuF++lQ+RCn1c3kv0hg5ds3dDzXnpvOzGcdWx9/0LhljM2LGTcHlmF5
-	0Zd8OFhmmEMDAxiMQmXKEdlaSzMJncl3nSbtVfIvm1Yg4Goq+yLpr7EyiBgRq6+rnGtExmdlqaP
-	LQuff
-X-Gm-Gg: AR+sD11JnleXikQUj2jiFwUkRn6HFZa2LxL7RSunFDoJsusNq8udlQJtoT94mmDnWip
-	agipUW92EOaWWY8TiNWmtnAwD4HgurFjWIw7+Y7jxxcKu9RV3KirjxnlZhbZrqmRGCjKjfVtuD3
-	Q9jvdaX80qhOPYhgnTg1FOcqffQ8ealFINcRU+kXgIJBpwDL+C6eF5YDuNYKr8LI/5BDXKUAEIV
-	ZLeLBLnQWhq5uOPkEWcYse7fL+5fPZTnn827diTXT5tf+scK3XQqs4hG47QzfAH6xg5fY2skhUC
-	AOO5YkRP/J7tAHOzKn6zqbO5E7kFR/9//RcjRyGFcJEf2Kc85UmpzFqVKmyVDPNnz+/vL71mOCo
-	hNit/XI4K4EvagIDuH15fOd6hIPJgGs7T4p3HJNDplrlpTa5sSsdQzew7mAQowRbjIBHuNyKyv2
-	AR01hyQhwVD5ufz5u2jaD9SJ2hF3fjIClNHyM6R8USUSGGfV3blUmPshrEs840j7vgHPA0b/4Q8
-	wkl5aeq2aPucRIyaDw=
-X-Received: by 2002:a17:90a:fc47:b0:38e:9045:bac0 with SMTP id 98e67ed59e1d1-3966d1b1f18mr27681280a91.5.1787814931510;
-        Thu, 27 Aug 2026 00:15:31 -0700 (PDT)
-Received: from smtpclient.apple ([2604:3d09:3a84:1700:519f:762d:ed84:5e92])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-396b1992e05sm1553252a91.15.2026.08.27.00.15.30
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 27 Aug 2026 00:15:30 -0700 (PDT)
-Content-Type: text/plain;
-	charset=us-ascii
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="JCSVox6G"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5B6881F000E9;
+	Thu, 27 Aug 2026 17:14:23 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1787850867;
+	bh=4lm/k56nr7IHGEr+v1yjkGgSAWBS975WgKpRUfju9b8=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=JCSVox6GL19a1MTaGMX1VoBUpxeEk51N0QWkSBIaHhujZm9iUPhOUm9Xgpbkd7JZE
+	 a3pL4vSkeI8SVuclpzWy452xIPJC/6fz4FQzcBhyDDfM1pIhBwFNAotSj2W5B2z7Qp
+	 S82CaLweYkZnhheouvTqSWOdOBcKQ88ir5fZuxzmRiNqhPXQ6OeuVCROsQAy85nIQG
+	 iwqGqpl61SDgQjqyiDF6nhCoNkPec6JITmHYh039Xu8xm/8q0zJV2RxsAx1BZS/BYy
+	 /eB/d9RgLwScRO9DvSiaNXdzYOIKF+nKaXhAa5x91SDuar5TmnX4JABSlzXWNypJWb
+	 ADT6YNf+Pwkcw==
+Date: Thu, 27 Aug 2026 18:14:21 +0100
+From: Conor Dooley <conor@kernel.org>
+To: "Ousherovitch, Alex" <aousherovitch@rambus.com>
+Cc: Albert Ou <aou@eecs.berkeley.edu>, Conor Dooley <conor+dt@kernel.org>,
+	"David S. Miller" <davem@davemloft.net>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Krzysztof Kozlowski <krzk+dt@kernel.org>,
+	Palmer Dabbelt <palmer@dabbelt.com>, Paul Walmsley <pjw@kernel.org>,
+	Rob Herring <robh@kernel.org>,
+	"Krishnamoorthy, Saravanakrishnan" <skrishnamoorthy@rambus.com>,
+	Shuah Khan <shuah@kernel.org>, Alexandre Ghiti <alex@ghiti.fr>,
+	"devicetree@vger.kernel.org" <devicetree@vger.kernel.org>,
+	"Wittenauer, Joel" <Joel.Wittenauer@cryptography.com>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	"linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
+	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>,
+	"linux-riscv@lists.infradead.org" <linux-riscv@lists.infradead.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	"Nguyen, Thi" <thin@rambus.com>
+Subject: Re: [PATCH v4 01/19] dt-bindings: crypto: add Rambus CryptoManager
+ Hub
+Message-ID: <20260827-crust-giddy-6888a52871a5@spud>
+References: <20260825221539.255951-1-aousherovitch@rambus.com>
+ <20260825221539.255951-2-aousherovitch@rambus.com>
+ <20260826-unwritten-marshland-47cdf3c17cad@spud>
+ <SA3PR04MB9001B48FBE7B7C3EB81C5338D7AD2@SA3PR04MB9001.namprd04.prod.outlook.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3864.100.1.1.5\))
-Subject: Re: [RFC] statx: Define a generic OFFLINE file attribute
-From: Andreas Dilger <adilger@dilger.ca>
-In-Reply-To: <e06bdbf8-3727-425c-9a82-150848613a6b@mail.infomaniak.com>
-Date: Thu, 27 Aug 2026 01:15:19 -0600
-Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>,
- "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+MIME-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="fecVinCGlQpVGphf"
+Content-Disposition: inline
+In-Reply-To: <SA3PR04MB9001B48FBE7B7C3EB81C5338D7AD2@SA3PR04MB9001.namprd04.prod.outlook.com>
+
+--fecVinCGlQpVGphf
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
-Message-Id: <3F6C9003-B8DE-4CE4-A158-702D29E6CB37@dilger.ca>
-References: <e06bdbf8-3727-425c-9a82-150848613a6b@mail.infomaniak.com>
-To: Lukas Mathis <lukas.mathis@ikmail.com>
-X-Mailer: Apple Mail (2.3864.100.1.1.5)
 
-On Aug 26, 2026, at 14:23, Lukas Mathis <lukas.mathis@ikmail.com> wrote:
+On Thu, Aug 27, 2026 at 01:39:35AM +0000, Ousherovitch, Alex wrote:
+> On Wed, Aug 26, 2026 at 06:02:16PM +0100, Conor Dooley wrote:
+> > On Tue, Aug 25, 2026 at 03:15:20PM -0700, Alex Ousherovitch wrote:
+> > > +      command ABI).  A specific SoC integration should list its own
+> > > +      "<vendor>,<soc>-cmh" compatible first with "rambus,cmh-v1030" =
+as a
+> > > +      fallback; that extended form will be added when such a platfor=
+m is
+> > > +      upstreamed.
+> >
+> > This commentary should just not be here.
+> > Instead, do what's been done in sifive,clint.yaml for the clint2.
 >=20
-> Background:
-> During the 2024 discussion on additional statx() attributes, the =
-introduction of a generic STATX_ATTR_OFFLINE attribute was proposed and =
-discussed as a potentially useful cross-filesystem property. The =
-discussion highlighted use cases in HSM systems, network filesystems, =
-and userspace tools that need to distinguish fully available files from =
-files whose content is not immediately accessible.
+> Will do -- I'll drop the prose and model the compatible on sifive,clint2
+> so the schema itself requires an SoC-specific compatible ahead of the IP
+> fallback:
+>=20
+>     compatible:
+>       items:
+>         - {}
+>         - const: rambus,cmh-v1030
+>=20
+> Since that makes the two-item form the only valid one, I'll also move the
+> binding example (and our test DTs) to it, using a placeholder SoC-specific
+> compatible under the now-registered rambus prefix, e.g.
+>=20
+>     compatible =3D "rambus,<soc>-cmh", "rambus,cmh-v1030";
+>=20
+> and swap in the real "<vendor>,<soc>-cmh" string once the first integrati=
+ng
+> platform is upstreamed.
 
-FYI, there is already `FIEMAP_EXTENT_UNKNOWN` which indicates the same =
-information,
-namely that the file data is inaccessible and cannot be mapped to =
-blocks.
+With the correct syntax, which I think the sifive example I copied from
+doesn't have, but
+Documentation/devicetree/bindings/crypto/inside-secure,safexcel-eip93.yaml
+does, fake compatibles won't be permitted (and we would probably object
+to seeing them too). What we want is the binding to force people to use
+a soc-specific one to pass validation. Unfortunately this does mean you
+can't have an example because it won't pass the validation, which is
+annoying!
 
-Having a statx() flag pass on the same information seems useful, since =
-it should be
-much lighter weight than calling fiemap to get a single bit of =
-information.  However,
-it makes sense that if `STATX_ATTR_OFFLINE` is returned for a file then =
-fiemap
-should also consistently return `FIEMAP_EXTENT_UNKNOWN` for that file.
+>=20
+> > > +      rambus,cores:
+> > > +        $ref: /schemas/types.yaml#/definitions/uint32-array
+> > > +        items:
+> > > +          enum: [0x02, 0x03, 0x04, 0x05, 0x08, 0x09, 0x0a, 0x18]
+> > [...]
+> >
+> > You could just make this a string array, and then you'd not need this
+> > mapping of unintelligible hex values. Of course then your driver has to
+> > do it, but I'd rather see understandable (and portable, since a new
+> > revision could change the IDs) values in DT.
+>=20
+> Agreed, that's clearly better.  The next revision makes rambus,cores a
+> string array and maps the names to core IDs in the driver, so the
+> numbering can change across IP revisions without touching the DT:
+>=20
+>     rambus,cores:
+>       $ref: /schemas/types.yaml#/definitions/string-array
+>       items:
+>         enum: [hc, aes, sm4, sm3, hcq, qse, pke, ccp]
+>=20
+> (keeping the affinity semantics in the description -- a core appears on at
+> most one queue, unlisted cores are load-balanced -- just without the hex
+> table.)
+>=20
+> > > +required:
+> > > +  - compatible
+> > > +  - reg
+> > > +  - "#address-cells"
+> > > +  - "#size-cells"
+> >
+> > Surely clocks are also mandatory?
+>=20
+> They can't be mandatory for this binding -- there may be no clock provider
+> for the node to reference:
+>=20
+> - CMH is shared between hosts.  The SIC presents up to four host
+>    interfaces; a designated management host owns the privileged
+>    configuration (clock, reset and power) while the other hosts are
+>    granted only a subset of mailboxes.  A node describing a non-management
+>    host therefore has no clock/reset provider to point at -- those lines
+>    are driven by the management host or an SoC power controller.
+>=20
+> - Even where a provider exists, only the main "core" clock is always
+>    fitted; "core-div2" is present only on builds that include the
+>    side-channel-protected slow cores, and "rt" is the real-time tick,
+>    which is why clock-names is a oneOf of subsets rather than a fixed
+>    list.
+>=20
+> So I'd keep clocks (and reset-gpios) optional.  I can add a one-line,
+> hardware-framed note to the description if you'd like that rationale on
+> record.
 
-Cheers, Andreas
+Please do, yeah.
 
-> Since then, Linux has gained support for pre-content access =
-notifications through FAN_PRE_ACCESS, which provides a mechanism for =
-userspace to supply file data before read access proceeds. This =
-addresses a significant part of the data access path for content that is =
-not immediately available locally.
->=20
-> However, userspace still lacks a standardized way to determine whether =
-a file's contents are currently available without triggering access.
->=20
-> This RFC revisits the earlier discussion and proposes a minimal and =
-filesystem-agnostic solution.
->=20
-> Problem Statement:
-> Today, userspace applications can determine many file properties =
-through statx(), but there is no generic mechanism to discover whether =
-file content is immediately available.
->=20
-> As a result:
-> General-purpose tools cannot distinguish between available and =
-unavailable file content.
-> Filesystems may implement similar semantics differently.
-> Userspace software lacks a common API for querying content =
-availability.
-> The recently introduced pre-content access infrastructure can hydrate =
-content when accessed, but applications cannot discover the state =
-beforehand.
-> Proposal
->=20
-> Introduce a new statx() attribute:
-> STATX_ATTR_OFFLINE
->=20
-> Semantic definition
-> A file marked with STATX_ATTR_OFFLINE satisfies the following =
-condition:
->=20
-> The file's metadata is available, but the file's content is not =
-currently guaranteed to be immediately accessible without additional =
-retrieval, restoration, hydration, or staging work.
->=20
-> This definition intentionally avoids any assumptions regarding:
-> - storage technology
-> - retrieval mechanism
-> - userspace implementation
-> - caching policy
-> - filesystem type
->=20
-> The attribute describes the current availability of file content and =
-nothing more.
->=20
-> Intended Usage:
-> Examples of applications that may benefit from a standardized OFFLINE =
-attribute include:
->=20
-> - search tools
-> - backup software
-> - indexing services
-> - archiving software
-> - HSM implementations
-> - filesystem management utilities
->=20
-> Example:
-> statx file.dat
->=20
-> could return:
-> Attributes OFFLINE
->=20
-> allowing userspace applications to make informed decisions before =
-opening the file.
->=20
-> Non-Goals:
-> This proposal does not attempt to standardize:
-> - synchronization status
-> - upload status
-> - conflict states
-> - caching policies
-> - retention policies
-> - provider-specific metadata
-> - graphical user interface behavior
->=20
-> In particular, this RFC intentionally does not propose attributes such =
-as:
-> - PINNED
-> - SYNC_PENDING
-> - ERROR
->=20
-> as these describe userspace policy decisions rather than generic =
-filesystem content availability.
->=20
-> The proposed attribute only answers one question:
->=20
-> Is the file content currently offline?
->=20
-> Filesystem Support
->=20
-> Filesystems may expose STATX_ATTR_OFFLINE if they can reliably =
-determine that file data is not immediately available.
->=20
-> Implementation details remain filesystem specific.
->=20
-> A filesystem may map the attribute to:
->=20
-> - persistent inode flags
-> - internal metadata
-> - remote state information
-> - HSM state information
->=20
-> The RFC intentionally does not mandate how the state is stored.
->=20
-> Relationship to Existing Work
->=20
-> This proposal is intended as a direct continuation of the 2024 =
-STATX_ATTR_OFFLINE discussion and follows the same general direction =
-suggested there. The goal is not to introduce a new subsystem but to =
-define a common userspace-visible semantic that can be implemented =
-across filesystems and consumed by generic tools.
->=20
-> The proposal is complementary to the recently introduced pre-content =
-access infrastructure (FAN_PRE_ACCESS). While FAN_PRE_ACCESS addresses =
-content retrieval before access, STATX_ATTR_OFFLINE provides a mechanism =
-for userspace to determine content availability before attempting =
-access.
->=20
-> Request for Feedback
->=20
-> Is the proposed semantic definition sufficiently generic?
->=20
-> This RFC intentionally focuses on a single, narrowly scoped semantic =
-property in order to maximize reuse across filesystems and userspace =
-tools while minimizing policy decisions in the kernel.
->=20
+Thanks,
+Conor.
 
+--fecVinCGlQpVGphf
+Content-Type: application/pgp-signature; name=signature.asc
 
-Cheers, Andreas
+-----BEGIN PGP SIGNATURE-----
 
+iHUEABYKAB0WIQRh246EGq/8RLhDjO14tDGHoIJi0gUCapBwbQAKCRB4tDGHoIJi
+0tg1AQDJxvd89lNx3GSYKYhVSI+ByKuzMH06Aat4j5i/Er7GCAD/bUIEGNkrxnPj
+TriUguZYuEpl11M5MLqp9TSVpc3RUQw=
+=+I7h
+-----END PGP SIGNATURE-----
 
-
-
-
+--fecVinCGlQpVGphf--
