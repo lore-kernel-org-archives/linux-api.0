@@ -1,52 +1,52 @@
 Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.19])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 21BB9358D32;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 56B363AA1A9;
 	Fri, 28 Aug 2026 22:24:00 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.19
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1787955846; cv=none; b=V4UkGASXChplL6U5ziCid8lC6L6R0WNiLPWMgSp+C4z1c1meQq0/mvwGarIp5O9lBSpVcUfZiRvKTODkPVnhIO21oGuXKKY/NBMEljzdCLngB5Ti83EEMeufxe3+FRPrhIl3oVD9WFNVmkVp6C/CzFopoWpi9gdIIwj7j7GvSn8=
+	t=1787955852; cv=none; b=Rx0H40DUKpEocdgv/Z6GX+M+vZxsrB++FAawiGD+wpH+OCaXbePMAXTaDT0rQaYorz+Z7sBe7AOGewLgn3gFEQr/X91wxTUheSpDKr4mi51mNQ3kj22ms//ZhtsFBmE396LN4le0f1jkwq0opqMKBnZvufA/AGpvfHQ++MPMdPw=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1787955846; c=relaxed/simple;
-	bh=hxZbtaZ63m/+A+zqLGDwlA1agw5ugsOGWVeXCl/82Mk=;
+	s=arc-20240116; t=1787955852; c=relaxed/simple;
+	bh=FE9HEPduTEIxPTgkPLJpb410zPHdhLbUT4oqpU/8vxs=;
 	h=From:To:Cc:Subject:Date:Message-Id:In-Reply-To:References:
-	 MIME-Version; b=pPecLwbgZoziuZNWfK9Ic9ime7U7ia71c8Kab7gnL8VRVuqqx0G5BXSlF4BX+VnpgkmJtDne4ODsQC47ihc9mgmxTNNdToR1eZQZxQSBOQ/Ilq/n+EVu+OjUlkvjLkXcDiSu53E9d8nIHaI/ygWOgBIimhdmymjgJ1bFQiFPiwk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=pass smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=YmKT6iqf; arc=none smtp.client-ip=192.198.163.19
+	 MIME-Version; b=l/ilYpmqC2TWQt1Ec0/KroEPYCmxwjBxYqE4w5w+Il+hZjzKHBfo6BjBPf43Jlay2R850A9bPvKROFqI47U5R6oNWbaha7AyQaEISSwojysVvVzEgeKbNxOcmpZER8Nq/J1titmXbi0DEaEizGYHl7CMx5DKtEpFWJO5EOxDpt8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=pass smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=l807Imck; arc=none smtp.client-ip=192.198.163.19
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="YmKT6iqf"
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="l807Imck"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
   t=1787955840; x=1819491840;
   h=from:to:cc:subject:date:message-id:in-reply-to:
    references:mime-version:content-transfer-encoding;
-  bh=hxZbtaZ63m/+A+zqLGDwlA1agw5ugsOGWVeXCl/82Mk=;
-  b=YmKT6iqfJbtFCtx9Zrh8cB4rixc+Pz6gUBYtMSBrIxObYgjARbvP6FK0
-   0OqCvoU/P1XiWTBD86ZzHyFpPvCGdFHjXc+8a4zuTM6kWYNOscToBvUe2
-   GD25vXt60m35rkwyGUEvNw4deJrciiYlVJ3WwetAB/wS9hJ9UjsVrrWtB
-   h3FCy+Bq6rLh7XGNRn4XOc//EaSxG+HRVKzmoJru+kxWVnyqcvHugWuHt
-   4wGUj6N1ayu6AKpnY8koo9HhqZ7cU4rHA0hR5tsAw1hWa/btRgBTEOhk7
-   3MfloOrhRYeRVcCbQyd2WzEw16qNfkHG2KG/p5Q3zsjn4hj2N9yJETaNz
-   w==;
-X-CSE-ConnectionGUID: b3hl+6ycQm6nn7AFmKh7jg==
-X-CSE-MsgGUID: EiCI/gB5RLq0Ta2HWtJqEg==
-X-IronPort-AV: E=McAfee;i="6800,10657,11889"; a="87412379"
+  bh=FE9HEPduTEIxPTgkPLJpb410zPHdhLbUT4oqpU/8vxs=;
+  b=l807Imck+cGxMHLkH/5j9TSuo/7Sh5EK0B9KMIykDSd3vAGVyeE68ELf
+   ntXafwejLUqlb9dYRUeC2P1fRygqdbet1LpZ+RrdpIFEG/azopEyMqq6i
+   84hdgg0IUdKaiDTo8xlg7ZEPnyZadJN9gSP6/GZUmHE8cNlMt2ikV1JDS
+   1CSINH72MLCKyZCscH7ie4WN/BhIeySSH7w+AVNVusA7uMxMXmD6qcF7p
+   0kkNreAz/TzJOErGvbbQReUpb9SRRxsbtFmfbscopdh/8ONJoz5o9+Hte
+   fzJxYoH9BapNSeGQjiuyc5d7FUebX76dBWq1ykmxgxrYCXt3psQpVtkgD
+   A==;
+X-CSE-ConnectionGUID: c/1a1mt1THCvg9tOvYPVEg==
+X-CSE-MsgGUID: ZT5GjM49QxOoFU9hby+Pmw==
+X-IronPort-AV: E=McAfee;i="6800,10657,11889"; a="87412398"
 X-IronPort-AV: E=Sophos;i="6.25,249,1779174000"; 
-   d="scan'208";a="87412379"
+   d="scan'208";a="87412398"
 Received: from fmviesa010.fm.intel.com ([10.60.135.150])
-  by fmvoesa113.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Aug 2026 15:23:58 -0700
-X-CSE-ConnectionGUID: V3IRnfwvR1a36rUdKHkk5Q==
-X-CSE-MsgGUID: Rod7V+T+RB2mi4mg9oS5IA==
+  by fmvoesa113.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Aug 2026 15:23:59 -0700
+X-CSE-ConnectionGUID: t4Vn67LLSsqheMt730Ee7A==
+X-CSE-MsgGUID: lTjHApJRQdOcqrCVWEZs2g==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="6.25,249,1779174000"; 
-   d="scan'208";a="264540288"
+   d="scan'208";a="264540295"
 Received: from b04f130c83f2.jf.intel.com ([10.165.154.98])
-  by fmviesa010.fm.intel.com with ESMTP; 28 Aug 2026 15:23:57 -0700
+  by fmviesa010.fm.intel.com with ESMTP; 28 Aug 2026 15:23:59 -0700
 From: Tim Chen <tim.c.chen@linux.intel.com>
 To: Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@redhat.com>
-Cc: Chen Yu <yu.c.chen@intel.com>,
+Cc: Tim Chen <tim.c.chen@linux.intel.com>,
 	Vincent Guittot <vincent.guittot@linaro.org>,
 	Qais Yousef <qyousef@layalina.io>,
 	K Prateek Nayak <kprateek.nayak@amd.com>,
@@ -64,6 +64,7 @@ Cc: Chen Yu <yu.c.chen@intel.com>,
 	Aubrey Li <aubrey.li@intel.com>,
 	Zhao Liu <zhao1.liu@intel.com>,
 	Chen Yu <yu.chen.surf@gmail.com>,
+	Chen Yu <yu.c.chen@intel.com>,
 	Adam Li <adamli@os.amperecomputing.com>,
 	Aaron Lu <ziqianlu@bytedance.com>,
 	Tim Chen <tim.c.chen@intel.com>,
@@ -73,11 +74,10 @@ Cc: Chen Yu <yu.c.chen@intel.com>,
 	Yi Lai <yi1.lai@intel.com>,
 	Ricardo Neri <ricardo.neri@intel.com>,
 	linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	Tim Chen <tim.c.chen@linux.intel.com>
-Subject: [RFC PATCH 6/7] sched/cache: Extend the enabled debugfs to more modes
-Date: Fri, 28 Aug 2026 15:29:13 -0700
-Message-Id: <fd341106e7e6cbd2f047656650f43ee87c6633c1.1787955777.git.tim.c.chen@linux.intel.com>
+	linux-api@vger.kernel.org
+Subject: [RFC PATCH 7/7] sched/cache: Documentation: document the PR_SCHED_CACHE prctl
+Date: Fri, 28 Aug 2026 15:29:14 -0700
+Message-Id: <86909723689d9c496b5a67ee2a0ecfd0d63e8712.1787955777.git.tim.c.chen@linux.intel.com>
 X-Mailer: git-send-email 2.32.0
 In-Reply-To: <cover.1787955777.git.tim.c.chen@linux.intel.com>
 References: <cover.1787955777.git.tim.c.chen@linux.intel.com>
@@ -89,293 +89,214 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-From: Chen Yu <yu.c.chen@intel.com>
+Add Documentation/scheduler/sched-cache.rst describing cache aware
+scheduling and the PR_SCHED_CACHE prctl() interface: the
+GET/CREATE/SHARE_FROM/DISABLE/ENABLE sub-operations, their arguments,
+the ptrace_may_access() permission model, the return values and how the
+per-task hint composes with the always/advise/never debugfs policy.
 
-A knob named "enabled" under debugfs llc_balancing is used to allow
-the user to turn off and on the cache aware scheduling at runtime.
-Since there is fine-gain control for per task cache-aware scheduling
-control via prctl, enhance the "enabled" knob in to a three-value
-mode, derived from the design of THP:
-always, advise, never.
+Hook it into the scheduler documentation toctree.
 
-The design matrix is as followed:
-                 prctl ENABLE   prctl DISABLE
-  always              Y              Y
-  advise              Y              N
-  never               N              N
-
-Y: cache aware scheduling for the task is enabled
-N: cache aware scheduling for the task is disabled
-
-The default mode is "always".
-
-For backward compatibility, writing "1" or "0" is still accepted and
-is treated as "always" or "never" respectively.
-
-The same modes can also be selected at boot time via the
-sched_cache= kernel command line parameter.
-
-Signed-off-by: Chen Yu <yu.c.chen@intel.com>
+Assisted-by: Claude:claude-opus-4.8
 Signed-off-by: Tim Chen <tim.c.chen@linux.intel.com>
 ---
- .../admin-guide/kernel-parameters.txt         |  3 +
- kernel/sched/cache_sched.c                    |  2 +-
- kernel/sched/debug.c                          | 63 +++++++++++++++++--
- kernel/sched/fair.c                           |  7 ++-
- kernel/sched/sched.h                          | 21 ++++++-
- kernel/sched/topology.c                       | 32 ++++++++--
- 6 files changed, 112 insertions(+), 16 deletions(-)
+ Documentation/scheduler/index.rst       |   1 +
+ Documentation/scheduler/sched-cache.rst | 175 ++++++++++++++++++++++++
+ 2 files changed, 176 insertions(+)
+ create mode 100644 Documentation/scheduler/sched-cache.rst
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index b5493a7f8f22..33b965d4ba19 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -6751,6 +6751,9 @@ Kernel parameters
- 			solution to mutex-based priority inversion.
- 			Format: <bool>
+diff --git a/Documentation/scheduler/index.rst b/Documentation/scheduler/index.rst
+index 17ce8d76befc..5c575593723a 100644
+--- a/Documentation/scheduler/index.rst
++++ b/Documentation/scheduler/index.rst
+@@ -23,5 +23,6 @@ Scheduler
+     sched-stats
+     sched-ext
+     sched-debug
++    sched-cache
  
-+	sched_cache=	[KNL] Set the cache aware scheduling mode.
-+			Format: { "always" | "advise" | "never" }
+     text_files
+diff --git a/Documentation/scheduler/sched-cache.rst b/Documentation/scheduler/sched-cache.rst
+new file mode 100644
+index 000000000000..3144934ffa88
+--- /dev/null
++++ b/Documentation/scheduler/sched-cache.rst
+@@ -0,0 +1,175 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
- 	sched_verbose	[KNL,EARLY] Enables verbose scheduler debug messages.
- 
- 	schedstats=	[KNL,X86] Enable or disable scheduled statistics.
-diff --git a/kernel/sched/cache_sched.c b/kernel/sched/cache_sched.c
-index c4ec6c553cca..c50eb3bebec3 100644
---- a/kernel/sched/cache_sched.c
-+++ b/kernel/sched/cache_sched.c
-@@ -60,7 +60,7 @@ static void sched_cache_group_init(struct sched_cache_group *grp,
- 	grp->next_scan = jiffies;
- 	grp->nr_running_avg = 0;
- 	grp->footprint = 0;
--	grp->enabled = 1;
-+	grp->enabled = 0;
- 	refcount_set(&grp->refcnt, 1);
- 	/*
- 	 * The update to grp->pcpu_sched should not be reordered
-diff --git a/kernel/sched/debug.c b/kernel/sched/debug.c
-index 40584b27ea0c..ddefbaf48d47 100644
---- a/kernel/sched/debug.c
-+++ b/kernel/sched/debug.c
-@@ -211,19 +211,58 @@ static const struct file_operations sched_scaling_fops = {
- };
- 
- #ifdef CONFIG_SCHED_CACHE
++=======================
++Cache Aware Scheduling
++=======================
 +
-+static const char * const sc_modes_names[] = {
-+	[SC_ENABLED_ALWAYS] = "always",
-+	[SC_ENABLED_ADVISE] = "advise",
-+	[SC_ENABLED_NEVER] = "never",
-+};
++Overview
++========
 +
-+static int sched_cache_set_mode(const char *str)
-+{
-+	int mode;
-+	bool val;
++On a machine with several last level caches (LLCs), it can pay off to keep
++a set of cooperating tasks on CPUs that share one LLC, so that the data
++they pass between each other stays cache hot instead of bouncing across
++the interconnect.
 +
-+	mode = match_string(sc_modes_names, ARRAY_SIZE(sc_modes_names), str);
-+	if (mode < 0) {
-+		if (kstrtobool(str, &val))
-+			return mode;
++The scheduler tracks, per group of tasks, how much runtime the group spends
++on each LLC and nudges the group's members towards the LLC where it is most
++active, as long as that LLC is not already overcommitted. This is enabled by
++CONFIG_SCHED_CACHE.
 +
-+		mode = val ? SC_ENABLED_ALWAYS : SC_ENABLED_NEVER;
-+	}
++The unit that is aggregated is a *cache group* (struct sched_cache_group).
++By default every address space (mm) gets its own cache group, so the threads
++of a process are aggregated together and nothing else is. That default is a
++good fit for a classic multi-threaded process, but not for every workload:
 +
-+	WRITE_ONCE(sysctl_sched_cache_mode, mode);
++  - A workload split across cooperating *processes* rather than threads - a
++    database with a process per connection, a browser with a renderer per
++    site, a server and its worker helpers - shares data through shared memory
++    or pipes but never shares an mm, so the default never aggregates it.
 +
-+	return 0;
-+}
++  - A process whose threads do not actually share data is aggregated anyway,
++    just because the threads live in one address space.
 +
-+static int __init setup_sched_cache_mode(char *str)
-+{
-+	return sched_cache_set_mode(str) ? 0 : 1;
-+}
++To cover those cases a process can manage cache group membership explicitly
++through prctl(2).
 +
-+__setup("sched_cache=", setup_sched_cache_mode);
++The prctl() interface
++=====================
 +
- static ssize_t
- sched_cache_enable_write(struct file *filp, const char __user *ubuf,
- 			 size_t cnt, loff_t *ppos)
- {
--	bool val;
-+	char buf[16];
- 	int ret;
- 
--	ret = kstrtobool_from_user(ubuf, cnt, &val);
--	if (ret)
--		return ret;
-+	if (cnt > sizeof(buf) - 1)
-+		return -EINVAL;
- 
--	sysctl_sched_cache_user = val;
-+	if (copy_from_user(buf, ubuf, cnt))
-+		return -EFAULT;
- 
-+	buf[cnt] = 0;
-+	/* 1. parse user provide mode */
-+	ret = sched_cache_set_mode(strstrip(buf));
-+	if (ret < 0)
-+		return ret;
++::
 +
-+	/* 2. adjust the static keys */
- 	sched_cache_active_set();
- 
- 	*ppos += cnt;
-@@ -233,7 +272,19 @@ sched_cache_enable_write(struct file *filp, const char __user *ubuf,
- 
- static int sched_cache_enable_show(struct seq_file *m, void *v)
- {
--	seq_printf(m, "%d\n", sysctl_sched_cache_user);
-+	int mode = READ_ONCE(sysctl_sched_cache_mode);
-+	int i;
++    int prctl(int option, unsigned long subop, unsigned long pid,
++              unsigned long arg4, unsigned long pid_type);
 +
-+	for (i = 0; i < SC_ENABLED_NR; i++) {
-+		if (i)
-+			seq_putc(m, ' ');
-+		if (i == mode)
-+			seq_printf(m, "[%s]", sc_modes_names[i]);
-+		else
-+			seq_puts(m, sc_modes_names[i]);
-+	}
-+	seq_putc(m, '\n');
++with ``option`` set to ``PR_SCHED_CACHE``. The remaining arguments are:
 +
- 	return 0;
- }
- 
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e7c8b031946c..cf83b24e925d 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -1652,7 +1652,7 @@ static int get_pref_llc(struct task_struct *p, struct sched_cache_group *grp)
- 	if (!grp)
- 		return -1;
- 
--	if (!READ_ONCE(grp->enabled))
-+	if (!sched_cache_group_enabled(grp))
- 		return -1;
- 
- 	mm_sched_cpu = READ_ONCE(grp->cpu);
-@@ -1746,7 +1746,7 @@ static void task_tick_cache(struct rq *rq, struct task_struct *p)
- 	    !grp->pcpu_sched)
- 		return;
- 
--	if (!READ_ONCE(grp->enabled))
-+	if (!sched_cache_group_enabled(grp))
- 		return;
- 
- 	epoch = rq->cpu_epoch;
-@@ -10601,6 +10601,9 @@ static enum llc_mig can_migrate_llc_task(int src_cpu, int dst_cpu,
- 	if (!grp)
- 		return mig_unrestricted;
- 
-+	if (!sched_cache_group_enabled(grp))
-+		return mig_unrestricted;
++``subop``
++    Which operation to perform (see below).
 +
- 	cpu = READ_ONCE(grp->cpu);
- 	if (cpu < 0 || cpus_share_cache(src_cpu, dst_cpu))
- 		return mig_unrestricted;
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 7dbe070979d7..d013850dd253 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -4092,9 +4092,17 @@ static inline void mm_cid_switch_to(struct task_struct *prev, struct task_struct
- #endif /* !CONFIG_SCHED_MM_CID */
- 
- #ifdef CONFIG_SCHED_CACHE
-+enum sc_modes {
-+	SC_ENABLED_ALWAYS	= 0,
-+	SC_ENABLED_ADVISE	= 1,
-+	SC_ENABLED_NEVER	= 2,
-+	SC_ENABLED_NR,
-+};
++``pid``
++    The task the operation applies to. ``0`` means the calling task.
 +
- DECLARE_STATIC_KEY_FALSE(sched_cache_present);
- DECLARE_STATIC_KEY_FALSE(sched_cache_active);
--extern int sysctl_sched_cache_user;
-+DECLARE_STATIC_KEY_FALSE(sched_cache_adv);
-+extern int sysctl_sched_cache_mode;
- extern unsigned int llc_aggr_tolerance;
- extern unsigned int llc_epoch_period;
- extern unsigned int llc_epoch_affinity_timeout;
-@@ -4106,6 +4114,17 @@ static inline bool sched_cache_enabled(void)
- 	return static_branch_unlikely(&sched_cache_active);
- }
- 
-+static inline bool sched_cache_group_enabled(struct sched_cache_group *grp)
-+{
-+	if (!static_branch_unlikely(&sched_cache_active))
-+		return false;
++``arg4``
++    Only used by ``PR_SCHED_CACHE_GET`` (output pointer) and
++    ``PR_SCHED_CACHE_SHARE_FROM`` (source pid). Must be ``0`` for every
++    other sub-operation.
 +
-+	if (!static_branch_likely(&sched_cache_adv))
-+		return true;
++``pid_type``
++    One of ``PIDTYPE_PID``, ``PIDTYPE_TGID`` or ``PIDTYPE_PGID`` (0, 1, 2).
++    It selects whether the operation affects just the named thread, its whole
++    thread group, or its process group. ``PR_SCHED_CACHE_GET`` requires
++    ``PIDTYPE_PID``.
 +
-+	return READ_ONCE(grp->enabled);
-+}
++The cache group itself is a kernel object. User space never invents or
++passes a group id; it only names tasks by pid and asks the kernel to create
++a group or to copy one task's group onto another. This follows core
++scheduling, where the cookie is a kernel object and only an obfuscated
++identifier is returned by ``PR_SCHED_CACHE_GET``.
 +
- DEFINE_FREE(sched_cache_group_put, struct sched_cache_group *,
- 	    sched_cache_group_put(_T));
- 
-diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 622e2e01974c..0ae9d270ebf8 100644
---- a/kernel/sched/topology.c
-+++ b/kernel/sched/topology.c
-@@ -853,8 +853,12 @@ DEFINE_STATIC_KEY_FALSE(sched_cache_present);
-  * is active, used by the scheduler.
-  */
- DEFINE_STATIC_KEY_FALSE(sched_cache_active);
--/* user wants cache aware scheduling [0 or 1] */
--int sysctl_sched_cache_user = 1;
-+DEFINE_STATIC_KEY_FALSE(sched_cache_adv);
-+/*
-+ * User provided cache aware scheduling modes:
-+ * always, advise, never.
-+ */
-+int sysctl_sched_cache_mode = SC_ENABLED_ALWAYS;
- 
- /*
-  * Get the effective LLC size in bytes that @cpu's bottom sched_domain
-@@ -952,6 +956,7 @@ static void _sched_cache_active_set(void)
- 	/* hardware does not support */
- 	if (!static_branch_likely(&sched_cache_present)) {
- 		static_branch_disable_cpuslocked(&sched_cache_active);
-+		static_branch_disable_cpuslocked(&sched_cache_adv);
- 		if (sched_debug())
- 			pr_info("%s: cache aware scheduling not supported on this platform\n", __func__);
- 		return;
-@@ -963,14 +968,29 @@ static void _sched_cache_active_set(void)
- 	 * It is not in the critical path, leave as-is
- 	 * for now.
- 	 */
--	if (sysctl_sched_cache_user) {
-+	switch (READ_ONCE(sysctl_sched_cache_mode)) {
-+	case SC_ENABLED_ALWAYS:
-+		static_branch_disable_cpuslocked(&sched_cache_adv);
- 		static_branch_enable_cpuslocked(&sched_cache_active);
- 		if (sched_debug())
--			pr_info("%s: enabling cache aware scheduling\n", __func__);
--	} else {
-+			pr_info("%s: cache aware scheduling switch to [always]\n", __func__);
-+		break;
-+	case SC_ENABLED_ADVISE:
-+		static_branch_enable_cpuslocked(&sched_cache_adv);
-+		static_branch_enable_cpuslocked(&sched_cache_active);
-+		if (sched_debug())
-+			pr_info("%s: cache aware scheduling switch to [advise]\n", __func__);
-+		break;
-+	case SC_ENABLED_NEVER:
- 		static_branch_disable_cpuslocked(&sched_cache_active);
-+		static_branch_disable_cpuslocked(&sched_cache_adv);
- 		if (sched_debug())
--			pr_info("%s: disabling cache aware scheduling\n", __func__);
-+			pr_info("%s: cache aware scheduling switch to [never]\n", __func__);
-+		break;
-+	default:
-+		if (sched_debug())
-+			pr_info("%s: Invalid cache aware scheduling mode\n", __func__);
-+		break;
- 	}
- }
- 
++Sub-operations
++--------------
++
++``PR_SCHED_CACHE_GET``
++    Read back the cache group id of ``pid``. ``arg4`` is a
++    ``__u64 __user *`` that must be 8-byte aligned; the kernel writes an
++    obfuscated hash of the task's cache group there (0 if the task currently
++    has no group). ``pid_type`` must be ``PIDTYPE_PID``.
++
++``PR_SCHED_CACHE_CREATE``
++    Allocate a fresh cache group and install it on the target task(s). This
++    operation is *not* idempotent: each call creates a new group. A caller
++    that wants several tasks in one group should ``CREATE`` once and then
++    ``SHARE_FROM`` for the rest.
++
++``PR_SCHED_CACHE_SHARE_FROM``
++    Copy the cache group of the task named by ``arg4`` (the source) onto the
++    task(s) named by ``pid``. This is how a task joins an existing group.
++
++``PR_SCHED_CACHE_DISABLE`` / ``PR_SCHED_CACHE_ENABLE``
++    Opt the target's cache group out of / back into LLC aggregation. Because
++    the flag lives on the (shared) group, changing it for one member changes
++    it for every task in the group.
++
++Permissions
++-----------
++
++The caller must be able to ``ptrace_may_access(PTRACE_MODE_READ_REALCREDS)``
++every task it touches. For the ``PIDTYPE_TGID`` and ``PIDTYPE_PGID`` scopes
++the access of *all* tasks in the group is checked before *any* task is
++changed, so the operation either applies to the whole group or fails with
++-EPERM without touching anyone. ``PR_SCHED_CACHE_SHARE_FROM`` additionally
++requires access to the source task.
++
++Kernel threads cannot be targeted.
++
++Return value
++------------
++
++Returns 0 on success. On error one of:
++
++``-EINVAL``
++    Unknown sub-operation, out-of-range ``pid``/``pid_type``, ``arg4`` given
++    for a sub-operation that does not take one, misaligned ``GET`` pointer,
++    ``GET`` with a ``pid_type`` other than ``PIDTYPE_PID``, or the target is
++    a kernel thread.
++
++``-ESRCH``
++    The target (or, for ``SHARE_FROM``, the source) task does not exist.
++
++``-EPERM``
++    The caller is not allowed to access the target (or source) task.
++
++``-ENOENT``
++    The source task (``SHARE_FROM``) or target task (``DISABLE``/``ENABLE``)
++    has no cache group.
++
++``-ENOMEM``
++    ``CREATE`` could not allocate a new group.
++
++``-EFAULT``
++    ``GET`` could not write to the ``arg4`` pointer.
++
++Interaction with the system-wide policy
++=======================================
++
++A system-wide policy composes with the per-task hint the same way THP does.
++It is set through debugfs::
++
++    /sys/kernel/debug/sched/llc_balancing/enabled
++
++and takes one of three modes:
++
++``always``
++    Always aggregate, ignoring the per-group disable flag (the default).
++
++``advise``
++    Honour the per-group flag set through ``PR_SCHED_CACHE_DISABLE`` /
++    ``PR_SCHED_CACHE_ENABLE``.
++
++``never``
++    Disable cache aware scheduling entirely.
++
++For backward compatibility the knob still accepts the old boolean spelling on
++write (``1``/``y``/``on`` map to ``always``, ``0``/``n``/``off`` to
++``never``); reads show ``[always] advise never`` with the active mode in
++brackets.
++
++The same three modes can be selected at boot time, before any process has
++had a chance to use the prctl, with the kernel command line parameter::
++
++    sched_cache={always|advise|never}
++
++The debugfs knob can still be written afterwards to change the mode at
++runtime.
++
++Example
++=======
++
++Put a helper process into the same cache group as its parent::
++
++    /* In the parent, once per instance. */
++    prctl(PR_SCHED_CACHE, PR_SCHED_CACHE_CREATE, 0, 0, PIDTYPE_TGID);
++
++    /* In (or on behalf of) each helper. */
++    prctl(PR_SCHED_CACHE, PR_SCHED_CACHE_SHARE_FROM,
++          helper_pid, parent_tgid, PIDTYPE_PID);
 -- 
 2.32.0
 
