@@ -1,37 +1,37 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E52835C68C;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 206FC35C696;
 	Mon, 31 Aug 2026 02:59:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788145152; cv=none; b=fmiFtByHiuwHrd8FtR5q5yfcGCix1eSTHwyNpcTiGaj7W/18KNJgCGEI+fgjSOFH+DoHBS4UzM1xp7Sj8kVSaRDcjbYEcc0eSihQoH22I9vu6kCtnlN0E7v1ucSIUJpdIKH2lXCzmD2la1FSydws+QAHEgbM+9rwrhrpN/i9Ye8=
+	t=1788145152; cv=none; b=B2ArJmQxY4hoEWVTuc0oalGxCLDgiXy5o+wrFv/hdvgs1cvqsEzA9WO9iicCfPQOyALVcspngMiXHIvh25Wr3tkH5ZJK//iKDvoC6tE7clT9IoSiMkQw+PzPOzfSTsFNzmuQkIAFpASvYNK4RBQi3WNVgEQ5QO8SD6obaiSBJxc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1788145152; c=relaxed/simple;
-	bh=diMrWF/LmTzet43A7eKj6E3amyHbnnDa/tpKXigKzZw=;
+	bh=Smhz1v0S65AWaypnb/b+QGQdSN9Z/8SuckCUr7LAkas=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=jD6SdLe+MDOJ2oVvij/3QBObBFNJZHBYLao1p5ExYoyq43hO8apegc4Jofnb/6G1Gm6sHix5Xl5KK7xgv8bRNt7vvtsqjmp9+smTD4g6BsWGvzMHf/Sz0vo1+qB1z9pFTzFGiZLlnrlWxBtq0Hse64TcyyVUn/y1yyGXYQt3MSk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=L55ZscrO; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:To:Cc; b=RZE7w/dDdF2xNcEYyIEHj9Zde1Qd8b+OFhLliqXadjZJSuQyHjDD5uCkGcVhsYb4Lr1dUBySww3rHg3cZFHPEgEehkVJv2l69lGMi+sf2ltOPivWqoWo1SL+bj3T3j5VtKgEs4EAzpIjkCES9cCEiBhAsivG2al2Tq2R9OCZUG4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=NsQ4E4Yt; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="L55ZscrO"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id AE156C2BCFA;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="NsQ4E4Yt"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id C7A88C4AF0B;
 	Mon, 31 Aug 2026 02:59:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=k20201202; t=1788145151;
-	bh=diMrWF/LmTzet43A7eKj6E3amyHbnnDa/tpKXigKzZw=;
+	bh=Smhz1v0S65AWaypnb/b+QGQdSN9Z/8SuckCUr7LAkas=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
-	b=L55ZscrO3tXErkI5OAaHQVqcs+LwX/H1nDJu7RNNoaonWreSTOJeIxhfRUMc9raZ8
-	 L/PX7lVCOgCq68xuX66DqYeLbi6YLPS2tWM7VcZhnlAPqwhR6MhjNr4NI2W+4q1PMx
-	 sdQ6xn6BuBR7vTcYkh1klhUD1B7+IvPEYov/KGm8eadQPWQ1du6NcX8Zls9jI02YRv
-	 zt99AkHvdmb3V/bY3eKcEA/MifNIDgFBV3gqhbwVZV4UF4XBOTv0Tk71jK8+lxDnLU
-	 fa/F0CAd1Dhwy+GsD35dZ9VPiSMq9K24OeeGOZYz1jwDmqPOB+wBkZuDIAvbRq1UYg
-	 WsniX3MNb8dDw==
+	b=NsQ4E4Ythu3E/qH7sO7wDJZIsChxiYTG8DLM7xrEAVG8XSHdq/c6aBwDILQKj8LUP
+	 +M/Poc5USsXWrH7uvMsVy2+OngtVnG8qD42NcH5k5KrQdTToRUHe1WaODy9GT25v+U
+	 AVlE9OhIZalJ5ncJFAwK0kyYoDga1cZ9zuEgmYnAV1huDBG8KZmmZW2SQ7GtSOC1mO
+	 rH8xQS6UHxmqqRplTxONoUJJ41oaXPH5kLsbT1x6i6BjGPV2zx3O70JeHsxovYBB/a
+	 h85e5kh5/W5fcYg8hSA1sBpZlGffZ6m7jNC8Em977qs3N/14ytEVNLq/pgnsP5opqU
+	 vKymxepX01UFQ==
 Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 8B0DCC61DE2;
+	by smtp.lore.kernel.org (Postfix) with ESMTP id AF62FC624A5;
 	Mon, 31 Aug 2026 02:59:11 +0000 (UTC)
 From: Chen Linxuan via B4 Relay <devnull+me.black-desk.cn@kernel.org>
-Date: Mon, 31 Aug 2026 10:59:06 +0800
-Subject: [PATCH v2 1/3] fs: Introduce task path helpers
+Date: Mon, 31 Aug 2026 10:59:08 +0800
+Subject: [PATCH v2 3/3] pidfd: Add task path ioctls
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -40,7 +40,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20260831-pidfd-get-paths-v2-1-c59ea6a21b72@black-desk.cn>
+Message-Id: <20260831-pidfd-get-paths-v2-3-c59ea6a21b72@black-desk.cn>
 References: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn>
 In-Reply-To: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn>
 To: Alexander Viro <viro@zeniv.linux.org.uk>, 
@@ -65,21 +65,21 @@ Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
  Chen Linxuan <me@black-desk.cn>
 X-Mailer: b4 0.15.2
-X-Developer-Signature: v=1; a=openpgp-sha256; l=6540; i=me@black-desk.cn;
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3678; i=me@black-desk.cn;
  s=20260831; h=from:subject:message-id;
- bh=5So2OP5xtxhWElec19b9ZT6vFlwvdbmJSxLeLau4rVo=;
- b=owEBbQKS/ZANAwAKAXYe5hQ5ma6LAcsmYgBqlO38hlMmWYrfhNP7tNxvYyk/trBioVtyxuO0L
- 54fL84jSkCJAjMEAAEKAB0WIQTO1VElAk6xdvy0ZVp2HuYUOZmuiwUCapTt/AAKCRB2HuYUOZmu
- i/oQD/9roMaaNnUmCilRvUZYD8kg+6YObUuwkSY9d99SWki86zWmjnaICnVR+Zb2W8WBtOvGZKB
- 6jJRoML7cvLT2hBpblOSeMCQNQK0aC6E3aAWlPdUCDesQdi77+V2pW7TEnve0oy2yGy2VI4Oehd
- h6cf2M5RlpdB2Qk2wd/ASa7xGgcF0UUx0Je/e6Z8kqyWrqaPGGcEr2kJiyDgQ5TnGcyS7etamrO
- wgif/QpDRx+2UYqUbGnAQh1eHfQFMlfKvI36EjtFBqaUCC5y2MC/AadKqtBcDaq6oJQCf7oS0/k
- dY8MXF5nEsqRAGoex3WZV2FMuRg6b8qo4ytELiFKlNsBY/a59YynuRiMzBqI0MsbAsGFYQznNa5
- 88UDWMfpUTMB/7fS7xwyV1Sc8rI2fR3Vg7bfoRteDU1zUgrnfalv0MZSa+398Y3IBu0q0JRaVp5
- ECbyOznGF4D8gbD0IiXzV6XnInvJTX7UrfKEdzI4XU2UUWFEOyq/uXoTTZ/IOgDK+AR0tPjMbBr
- 0We4F21C4pk/F5ZEhucZ8qdPYzCNRfCNkYt5zk8XXbd7biq9LJoDBPt3zFtDEAmohqdbzTfPeed
- zIt2DrJbd3/iU1BtXbZ1aP04uRnh1E2a+ha+noDPZQ/5tmZQ3OioxmWNeAtrv03A6onDNUibqlZ
- QAHLvTlgoussE/Q==
+ bh=ZADtZNdlB7oE/hBsTTGGqoCz5/1kKnW1D9F4WuU2Sco=;
+ b=owEBbQKS/ZANAwAKAXYe5hQ5ma6LAcsmYgBqlO39Ayt8SEEcYynePriQkVXfWPjAUsBYWbqbX
+ dslGZuXhKOJAjMEAAEKAB0WIQTO1VElAk6xdvy0ZVp2HuYUOZmuiwUCapTt/QAKCRB2HuYUOZmu
+ iyLMD/42sfTAfcQHAYOWOJ+1xkyRw56ENUpVgpNhdtd3yFPnmHrvcsrRE+b8eeBW8lTK1jTZmwh
+ m/b/X7YW+O3DWxXjKeBMihhsiieg2Qjxnuva26Dx82wX5SZBv98ehkyw8pJSdi6Xigi1ChJcTZk
+ wLzpDF0H0qF0bIkVdvgbTgdFyq4GEAksg8fdpq/tzbWs+wM9KDAZ06SgoUsrJULms0Ck61Owig/
+ ta6YSZh9VJSeqbbSe2efkkQ9lZXouB0uRpUgdfY2iYrb/Orprb/V3WpzlU0l1n8eI5sSRC2I4p4
+ qxB1Gga1IWS2P5+r3xvZYQo/5LJV//6ca18irPp9HX9lL+trhCEfNLyIrFxmnkODZqFn7mrXm0V
+ u++2ACXeLlIjQ/Bu3dEma/WRfcYF3cUmNCMv8cbKQnZdJS0MtW9XBnLy5mOT8U3UzFZtSfVzsVe
+ yQUopFXBBAUEWdWGLfZuTAbd6RLLbBYOFSsPHlOPsQtUwRGEy2Osh1/BMpL6oszntsPrL8dH4rp
+ KnftSmefkfh0pWnt17qzNceLjHOlTbMLX0SiU2kzTs1w56pW93DWGqfS50H0fmf9+QCGMeqIEzj
+ 7C9QTjehkhz9odNBtcBgvfXk+28gp8cDxlj7ZOJURuE5ZEALFjSQRRPvLcHmj9h9WyWaR5kuObN
+ BcBuQvS2RLXfJpA==
 X-Developer-Key: i=me@black-desk.cn; a=openpgp;
  fpr=D818ACDD385CAE92D4BAC01A6269794D24791D21
 X-Endpoint-Received: by B4 Relay for me@black-desk.cn/20260831 with
@@ -89,227 +89,114 @@ Reply-To: me@black-desk.cn
 
 From: Chen Linxuan <me@black-desk.cn>
 
-Introduce helpers that acquire a referenced struct path for a task's
-executable, root, and working directory. Reuse them for procfs task
-links and AppArmor executable-path handling instead of duplicating file
-and path reference handling at each call site.
+Add PIDFD_GET_EXE, PIDFD_GET_CWD, and PIDFD_GET_ROOT to return
+close-on-exec O_PATH file descriptors referencing the target task's
+executable, working directory, and root directory.
+
+The new ioctls use the same PTRACE_MODE_READ_FSCREDS permission check
+and nonzero-argument rejection as the existing namespace ioctls.  The
+target is sampled while holding exec_update_lock so that the access
+check and path read cannot race with execve().
+
+This allows userspace to obtain stable path references from a pidfd
+without requiring procfs.
 
 Assisted-by: LLM
 Signed-off-by: Chen Linxuan <me@black-desk.cn>
 ---
- fs/fs_struct.c            | 44 ++++++++++++++++++++++++++++++++++++++++++++
- fs/proc/base.c            | 34 ++--------------------------------
- include/linux/fs_struct.h |  3 +++
- include/linux/mm.h        |  1 +
- kernel/fork.c             | 21 +++++++++++++++++++++
- security/apparmor/task.c  | 12 +++---------
- 6 files changed, 74 insertions(+), 41 deletions(-)
+ fs/pidfs.c                 | 38 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/pidfd.h |  7 +++++++
+ 2 files changed, 45 insertions(+)
 
-diff --git a/fs/fs_struct.c b/fs/fs_struct.c
-index 34699f3b6f88..5c772896260a 100644
---- a/fs/fs_struct.c
-+++ b/fs/fs_struct.c
-@@ -10,6 +10,50 @@
- #include "internal.h"
- #include "mount.h"
+diff --git a/fs/pidfs.c b/fs/pidfs.c
+index 49a1ab0c42f9..b21374f00002 100644
+--- a/fs/pidfs.c
++++ b/fs/pidfs.c
+@@ -4,6 +4,7 @@
+ #include <linux/exportfs.h>
+ #include <linux/file.h>
+ #include <linux/fs.h>
++#include <linux/fs_struct.h>
+ #include <linux/cgroup.h>
+ #include <linux/magic.h>
+ #include <linux/mount.h>
+@@ -510,6 +511,9 @@ static bool pidfs_ioctl_valid(unsigned int cmd)
+ 	case PIDFD_GET_UTS_NAMESPACE:
+ 	case PIDFD_GET_USER_NAMESPACE:
+ 	case PIDFD_GET_PID_NAMESPACE:
++	case PIDFD_GET_EXE:
++	case PIDFD_GET_CWD:
++	case PIDFD_GET_ROOT:
+ 		return true;
+ 	}
  
-+/**
-+ * get_task_root - acquire a reference to the task's root path
-+ * @task: The task.
-+ * @root: The task's root path.
-+ *
-+ * Returns 0 if the task has a root path, or -ENOENT if it does not. The
-+ * caller must release the path through path_put() on success.
-+ */
-+int get_task_root(struct task_struct *task, struct path *root)
+@@ -678,9 +682,31 @@ static struct ns_common *pidfd_get_namespace(struct pid *pid,
+ 	return ns_common;
+ }
+ 
++static int pidfd_get_task_path(struct pid *pid, unsigned int cmd,
++			       unsigned long arg, struct path *path)
 +{
-+	int ret = -ENOENT;
++	CLASS(pidfd_task_locked, task)(pid, arg);
 +
-+	task_lock(task);
-+	if (task->real_fs) {
-+		get_fs_root(task->real_fs, root);
-+		ret = 0;
++	if (IS_ERR(task))
++		return PTR_ERR(task);
++
++	switch (cmd) {
++	case PIDFD_GET_EXE:
++		return get_task_exe_path(task, path);
++	case PIDFD_GET_CWD:
++		return get_task_pwd(task, path);
++	case PIDFD_GET_ROOT:
++		return get_task_root(task, path);
 +	}
-+	task_unlock(task);
 +
-+	return ret;
++	return -EINVAL;
 +}
 +
-+/**
-+ * get_task_pwd - acquire a reference to the task's working directory
-+ * @task: The task.
-+ * @pwd: The task's working directory.
-+ *
-+ * Returns 0 if the task has a working directory, or -ENOENT if it does not.
-+ * The caller must release the path through path_put() on success.
-+ */
-+int get_task_pwd(struct task_struct *task, struct path *pwd)
-+{
-+	int ret = -ENOENT;
+ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	struct ns_common *ns_common = NULL;
++	struct path path __free(path_put) = {};
++	int error;
+ 
+ 	if (!pidfs_ioctl_valid(cmd))
+ 		return -ENOIOCTLCMD;
+@@ -698,6 +724,18 @@ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	if (_IOC_NR(cmd) == _IOC_NR(PIDFD_GET_INFO))
+ 		return pidfd_info(file, cmd, arg);
+ 
++	switch (cmd) {
++	case PIDFD_GET_EXE:
++	case PIDFD_GET_CWD:
++	case PIDFD_GET_ROOT:
++		error = pidfd_get_task_path(pidfd_pid(file), cmd, arg, &path);
++		if (error)
++			return error;
 +
-+	task_lock(task);
-+	if (task->real_fs) {
-+		get_fs_pwd(task->real_fs, pwd);
-+		ret = 0;
++		return FD_ADD(O_CLOEXEC,
++			      dentry_open(&path, O_PATH, current_cred()));
 +	}
-+	task_unlock(task);
 +
-+	return ret;
-+}
+ 	ns_common = pidfd_get_namespace(pidfd_pid(file), cmd, arg);
+ 	if (IS_ERR(ns_common))
+ 		return PTR_ERR(ns_common);
+diff --git a/include/uapi/linux/pidfd.h b/include/uapi/linux/pidfd.h
+index 0919246a1611..95ce1819f423 100644
+--- a/include/uapi/linux/pidfd.h
++++ b/include/uapi/linux/pidfd.h
+@@ -121,4 +121,11 @@ struct pidfd_info {
+ #define PIDFD_GET_UTS_NAMESPACE               _IO(PIDFS_IOCTL_MAGIC, 10)
+ #define PIDFD_GET_INFO                        _IOWR(PIDFS_IOCTL_MAGIC, 11, struct pidfd_info)
+ 
++/* Return an O_PATH file descriptor for the target task's executable. */
++#define PIDFD_GET_EXE                         _IO(PIDFS_IOCTL_MAGIC, 12)
++/* Return an O_PATH file descriptor for the target task's working directory. */
++#define PIDFD_GET_CWD                         _IO(PIDFS_IOCTL_MAGIC, 13)
++/* Return an O_PATH file descriptor for the target task's root directory. */
++#define PIDFD_GET_ROOT                        _IO(PIDFS_IOCTL_MAGIC, 14)
 +
- /*
-  * Replace the fs->{rootmnt,root} with {mnt,dentry}. Put the old values.
-  * It can block.
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 6a39de424f62..7e2c0538323c 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -206,31 +206,10 @@ static unsigned int __init pid_entry_nlink(const struct pid_entry *entries,
- 	return count;
- }
- 
--static int get_task_root(struct task_struct *task, struct path *root)
--{
--	int result = -ENOENT;
--
--	task_lock(task);
--	if (task->real_fs) {
--		get_fs_root(task->real_fs, root);
--		result = 0;
--	}
--	task_unlock(task);
--	return result;
--}
--
- static int proc_cwd_link(struct dentry *dentry, struct path *path,
- 			 struct task_struct *task)
- {
--	int result = -ENOENT;
--
--	task_lock(task);
--	if (task->real_fs) {
--		get_fs_pwd(task->real_fs, path);
--		result = 0;
--	}
--	task_unlock(task);
--	return result;
-+	return get_task_pwd(task, path);
- }
- 
- static int proc_root_link(struct dentry *dentry, struct path *path,
-@@ -1761,16 +1740,7 @@ static const struct file_operations proc_pid_set_comm_operations = {
- static int proc_exe_link(struct dentry *dentry, struct path *exe_path,
- 			 struct task_struct *task)
- {
--	struct file *exe_file;
--
--	exe_file = get_task_exe_file(task);
--	if (exe_file) {
--		*exe_path = exe_file->f_path;
--		path_get(&exe_file->f_path);
--		fput(exe_file);
--		return 0;
--	} else
--		return -ENOENT;
-+	return get_task_exe_path(task, exe_path);
- }
- 
- static int call_proc_get_link(struct dentry *dentry, struct inode *inode, struct path *path_out)
-diff --git a/include/linux/fs_struct.h b/include/linux/fs_struct.h
-index 97eef8d3863d..fb725707754d 100644
---- a/include/linux/fs_struct.h
-+++ b/include/linux/fs_struct.h
-@@ -42,6 +42,9 @@ static inline void get_fs_pwd(struct fs_struct *fs, struct path *pwd)
- 	read_sequnlock_excl(&fs->seq);
- }
- 
-+int get_task_root(struct task_struct *task, struct path *root);
-+int get_task_pwd(struct task_struct *task, struct path *pwd);
-+
- struct fs_struct *switch_fs_struct(struct fs_struct *new_fs);
- 
- extern bool current_chrooted(void);
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index dd09c438fa23..a65f24b2e65b 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -4239,6 +4239,7 @@ extern int set_mm_exe_file(struct mm_struct *mm, struct file *new_exe_file);
- extern int replace_mm_exe_file(struct mm_struct *mm, struct file *new_exe_file);
- extern struct file *get_mm_exe_file(struct mm_struct *mm);
- extern struct file *get_task_exe_file(struct task_struct *task);
-+int get_task_exe_path(struct task_struct *task, struct path *exe_path);
- 
- extern void vm_stat_account(struct mm_struct *, vm_flags_t, long npages);
- 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 416758c8a3d4..a493de3ae5c2 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1371,6 +1371,27 @@ struct file *get_task_exe_file(struct task_struct *task)
- 	return exe_file;
- }
- 
-+/**
-+ * get_task_exe_path - acquire a reference to the task's executable path
-+ * @task: The task.
-+ * @exe_path: The task's executable path.
-+ *
-+ * Returns 0 if the task has an executable path, or -ENOENT if it does not.
-+ * The caller must release the path through path_put() on success.
-+ */
-+int get_task_exe_path(struct task_struct *task, struct path *exe_path)
-+{
-+	struct file *exe_file = get_task_exe_file(task);
-+
-+	if (!exe_file)
-+		return -ENOENT;
-+
-+	*exe_path = exe_file->f_path;
-+	path_get(exe_path);
-+	fput(exe_file);
-+	return 0;
-+}
-+
- /**
-  * get_task_mm - acquire a reference to the task's mm
-  * @task: The task.
-diff --git a/security/apparmor/task.c b/security/apparmor/task.c
-index e16ff4130bc2..05cba261dd34 100644
---- a/security/apparmor/task.c
-+++ b/security/apparmor/task.c
-@@ -13,6 +13,7 @@
-  */
- 
- #include <linux/gfp.h>
-+#include <linux/mm.h>
- #include <linux/ptrace.h>
- #include <linux/task_work.h>
- 
-@@ -330,22 +331,15 @@ int aa_may_ptrace(const struct cred *tracer_cred, struct aa_label *tracer,
- 
- static const char *get_current_exe_path(char *buffer, int buffer_size)
- {
--	struct file *exe_file;
--	struct path p;
-+	struct path p __free(path_put) = {};
- 	const char *path_str;
- 
--	exe_file = get_task_exe_file(current);
--	if (!exe_file)
-+	if (get_task_exe_path(current, &p))
- 		return ERR_PTR(-ENOENT);
--	p = exe_file->f_path;
--	path_get(&p);
- 
- 	if (aa_path_name(&p, FLAG_VIEW_SUBNS, buffer, &path_str, NULL, NULL))
- 		path_str = ERR_PTR(-ENOMEM);
- 
--	fput(exe_file);
--	path_put(&p);
--
- 	return path_str;
- }
- 
+ #endif /* _UAPI_LINUX_PIDFD_H */
 
 -- 
 2.53.0
