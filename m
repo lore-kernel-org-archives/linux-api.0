@@ -1,48 +1,50 @@
 Received: from e3i605.smtp2go.com (e3i605.smtp2go.com [158.120.86.93])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 60B6C392C29
-	for <linux-api@vger.kernel.org>; Fri,  4 Sep 2026 02:44:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E74F40B37A
+	for <linux-api@vger.kernel.org>; Fri,  4 Sep 2026 04:47:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=158.120.86.93
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788489863; cv=none; b=Kv0If2dq5Trdc3bgpnzlHk8Et3rbNL/86Qa2GsAgawJqIs6G1m3Gfrswia3p7/ADoRxbCi8A0GpVO/uWBIg41C9TT0e2NsmiSRCrTdadu2VYMuT/XmchznNlJQOHmZG3xAb18eIjkqXxaQo2tuo6lM7xqxVmKrIZ7z84eYCgzh0=
+	t=1788497238; cv=none; b=TTEmYeUpNf8B07vhH1qQoJH6/CtkPjDNi3ZoNGJ4K+ntph/fqO0K67uJioUuBXIVA/W2F4f5qeVuwELv7ERByWQLj5bdt/abFxxAX3MJLjay359e43ZCWFc9thEhhmJUw3ILcRFbb0Um5CMLUk2IBP1pRylqAzEi1M+XHXOs5Tc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788489863; c=relaxed/simple;
-	bh=HdmRsQ0oWz0pzPHVEpRH/Owyu2ppe304S5oRqL5q5R8=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=M4QXL4w2CLQqqQQBAUVpXrsDcUKSW78QgWulZBZzD1nTIJvTVgAAKgVbt6ExrQnt+3EnPpNGXQQI+guTyqF/Gv++Bxpeqr5sa/RYTdu9wRP3tcf7vOcxlEMlKgYjPNKl5+03CXcrQjHo4Cdm6TKIMFCif4AP9ZK51l1cCFNELUc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ait.place; spf=pass smtp.mailfrom=em943033.ait.place; dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b=ZZnWX9Ck; arc=none smtp.client-ip=158.120.86.93
+	s=arc-20240116; t=1788497238; c=relaxed/simple;
+	bh=9E68qfCxaPzmD3m+GTXzaxJVndMAABhJd88SvAymKvw=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=O+rMf2Ob0acGCr/5Irb7zbW1TnOOuAOxTYePCm5K9s++zKeI96E1qXYovET4lydu6xblAVqW7FfjYgRk6G4icUr63GlPPXKc0VJs6qt2xwRSmT833X4D9yWUjSfngjhYxtPZAA1PDuFn0+o7P3W5wRWUiDRe003hf5QmVFbtgjo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ait.place; spf=pass smtp.mailfrom=em943033.ait.place; dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b=KiSr0QOw; arc=none smtp.client-ip=158.120.86.93
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ait.place
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=em943033.ait.place
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b="ZZnWX9Ck"
+	dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b="KiSr0QOw"
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ait.place;
- i=@ait.place; q=dns/txt; s=s943033; t=1788488951; h=from : subject :
+ i=@ait.place; q=dns/txt; s=s943033; t=1788497230; h=from : subject :
  to : message-id : date : list-unsubscribe : list-unsubscribe-post;
- bh=xXZlOcCTr+E0XNy1fQaeGQiQCz9QBsCdB1zl9NIC7A8=;
- b=ZZnWX9CkluW5GVn1INP0so8SlfenB026DltV8c0njTBUEY5NeNIzK3E1gagq4Bw6cInli
- 2mPYp50tmn8bnM1fZIQknBIduNQVVyl283R/v6ojZtG/na2SSfVz295JSiQwi/PdRETv5Rp
- HOq4PujFQMeobo90qSU6zAcmInfGTJ6RpVe/7v+18DD6YcD7jMIbHSniLbsZHTGJNBpSInO
- Fn+K1VuuvYJILCMjnuksx4l7/yJjtuu4bahyeSS33LhddXSSBkKDU2Ww9GUoTw5PB6eTAqp
- Wpicw8QlXA5YidK3agJhU8vTnzFWaBaJZS/ADXdlt4G40iY/Ktsw1QJNnsQg==
+ bh=621XTYcsZ6zvvOUg6Eb3VR5r2xUBCu+A38ELVbjgWac=;
+ b=KiSr0QOwl0hSk1RrApxg588xTtemNhFpa3B2IsiqWSktwuko/u0Pjp1QQogk7WW1Vla97
+ nX6o5j1vL9blMafp2ChQfb9hC0xb0Fef0eq7bt/Dp9IdGaD7QtVvoptc0D8QijlkxRUpCyO
+ foVre0nBaiSpDtGvjiuNUuiEExx6f0vGk3Ly3vFagvAVbaM24+uB2oFBf9+QTGFgD1s9uCD
+ abOIo9AJ6tP0IQPguToOzr00cf55ffT98kSF6qaMk9WNIdX6dg8s8bN0KeJyNWxUHvLTtL3
+ C/pGJen3lEPtm1IRsW6SxI3hIVAioerO8tl7sqHH3PkX06GW+FVKjYcNrvtw==
 Received: from [10.191.245.51] (helo=omarchy.bb.online.no)
 	by smtpcorp.com with esmtpsa (TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256)
 	(Exim 4.99.4)
-	(envelope-from <ait@ait.place>)
-	id 1x2Jfv-FnQW0hPnlyJ-nLce;
-	Fri, 04 Sep 2026 02:29:07 +0000
-From: ait <ait@ait.place>
-To: ait@ait.place
-Cc: Jonathan Jansen <jonathanjansen@ait.place>,
-	Jiri Kosina <jikos@kernel.org>,
-	Benjamin Tissoires <bentiss@kernel.org>,
-	Dmitry Torokhov <dmitry.torokhov@gmail.com>,
-	linux-input@vger.kernel.org,
+	(envelope-from <jonathanjansen@ait.place>)
+	id 1x2LpT-4o5NDgrjDEn-oUeG;
+	Fri, 04 Sep 2026 04:47:07 +0000
+From: Jonathan Jansen <jonathanjansen@ait.place>
+To: linux-input@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org,
+	jikos@kernel.org,
+	bentiss@kernel.org,
+	dmitry.torokhov@gmail.com,
 	linux-api@vger.kernel.org,
-	Your Name <you@example.com>
-Subject: [PATCH] HID: input: map System Microphone Mute LED
-Date: Fri,  4 Sep 2026 04:29:03 +0200
-Message-ID: <20260904022903.607880-1-ait@ait.place>
+	jonathanjansen@ait.place
+Subject: [PATCH v2] HID: input: map System Microphone Mute LED
+Date: Fri,  4 Sep 2026 06:47:05 +0200
+Message-ID: <20260904044705.1060507-1-jonathanjansen@ait.place>
 X-Mailer: git-send-email 2.55.0
+In-Reply-To: <20260904022903.607880-1-ait@ait.place>
+References: <20260904022903.607880-1-ait@ait.place>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -51,39 +53,31 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-Report-Abuse: Please forward a copy of this message, including all headers, to <abuse-report@smtp2go.com>
-Feedback-ID: 943033m:943033ayMjrpg:943033ssDv2ghnHS
-X-smtpcorp-track: VrFwr5v8VAki.LxPoUAbh7-OI.IrCvHgR8jtM
+Feedback-ID: 943033m:943033ayMjrpg:943033soucOInEYf
+X-smtpcorp-track: U75LmZZdPk0D.7zvV_BR9-jgj.dG1GjQ7O9gc
 
-From: Jonathan Jansen <jonathanjansen@ait.place>
+HUTRR110 defines LED page usage 0x57 as System Microphone Mute.
 
-HUTRR110 (approved 2022, part of HID Usage Tables since v1.4) defines:
+The usage is currently ignored, so the indicator stays dark and
+userspace falls back to per-vendor code in hid-lenovo,
+hid-playstation, hid-plantronics.
 
-  Generic Desktop (0x01)  0xa9  System Microphone Mute  OOC (input)
-  LED Page (0x08)         0x57  System Microphone Mute  OOC (output)
+Map it to a new LED_MICMUTE. It appears as
+/sys/class/leds/inputN::micmute and uses the "audio-micmute"
+trigger from snd-ctl-led, so the LED follows the system-wide
+mic mute state the same way LED_MUTE (page 0x09) already does
+for speaker mute.
 
-The input usage already maps to KEY_MICMUTE, so the button works on
-HUTRR110 devices.  The LED output usage is ignored, though, so the
-indicator stays dark and userspace depends on per-vendor hacks
-(hid-lenovo, hid-lg-g15, hid-playstation, hid-plantronics) or platform
-drivers instead.
-
-Map LED page usage 0x57 to a new LED_MICMUTE input LED.  It shows up
-as /sys/class/leds/inputN::micmute with the "audio-micmute" trigger
-that snd-ctl-led registers, so the LED tracks the audio stack's
-system-wide microphone mute state, like the existing "Mute" (LED page
-0x09) mapping does for speaker mute.
-
-LED_MICMUTE takes the next free input LED code (0x0b, below LED_MAX
-0x0f), so nothing existing breaks.
+LED_MICMUTE takes the next free code (0x0b).
 
 Link: https://www.usb.org/sites/default/files/hutrr110-systemmicrophonemute.pdf
-Cc: Jiri Kosina <jikos@kernel.org>
-Cc: Benjamin Tissoires <bentiss@kernel.org>
-Cc: Dmitry Torokhov <dmitry.torokhov@gmail.com>
-Cc: linux-input@vger.kernel.org
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Your Name <you@example.com>
+
+Signed-off-by: Jonathan Jansen <jonathanjansen@ait.place>
 ---
+
+Notes:
+    Changes since v1: rewrote the commit message; no functional changes.
+
  drivers/hid/hid-debug.c                | 2 +-
  drivers/hid/hid-input.c                | 1 +
  drivers/input/input-leds.c             | 1 +
@@ -140,5 +134,5 @@ index 3528168f7..bc374821c 100644
  #define LED_CNT			(LED_MAX+1)
  
 -- 
-2.51.0
+2.55.0
 
