@@ -1,138 +1,95 @@
-Received: from e3i605.smtp2go.com (e3i605.smtp2go.com [158.120.86.93])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E74F40B37A
-	for <linux-api@vger.kernel.org>; Fri,  4 Sep 2026 04:47:13 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=158.120.86.93
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD3204BB5C7
+	for <linux-api@vger.kernel.org>; Fri,  4 Sep 2026 14:53:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788497238; cv=none; b=TTEmYeUpNf8B07vhH1qQoJH6/CtkPjDNi3ZoNGJ4K+ntph/fqO0K67uJioUuBXIVA/W2F4f5qeVuwELv7ERByWQLj5bdt/abFxxAX3MJLjay359e43ZCWFc9thEhhmJUw3ILcRFbb0Um5CMLUk2IBP1pRylqAzEi1M+XHXOs5Tc=
+	t=1788533614; cv=none; b=jBM0doqGLPKKhtJPoG7iHuC9cZQX0qK002TLxj/TLr0foVEdlhD701oJy7g6MgAEMC0H/0hxXRCv3CNpvNZ2cQNkbQXxS53TAFhFIIZvEVgBw2HpBtcNfaImENv8iCtgrL9h4he/LYMR/69DCxIXUVcv/EbJlkXBtQFnSTdMchA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788497238; c=relaxed/simple;
-	bh=9E68qfCxaPzmD3m+GTXzaxJVndMAABhJd88SvAymKvw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=O+rMf2Ob0acGCr/5Irb7zbW1TnOOuAOxTYePCm5K9s++zKeI96E1qXYovET4lydu6xblAVqW7FfjYgRk6G4icUr63GlPPXKc0VJs6qt2xwRSmT833X4D9yWUjSfngjhYxtPZAA1PDuFn0+o7P3W5wRWUiDRe003hf5QmVFbtgjo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ait.place; spf=pass smtp.mailfrom=em943033.ait.place; dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b=KiSr0QOw; arc=none smtp.client-ip=158.120.86.93
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ait.place
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=em943033.ait.place
+	s=arc-20240116; t=1788533614; c=relaxed/simple;
+	bh=TBJnaG19xsDF+x4w6zx7YtaC12GwukzzbDomstsRk1A=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date:Message-ID:
+	 MIME-Version:Content-Type; b=oQ0dyM3UFs+pDqGoJWupmFbBR5bDWge2+MWdkLjeCypgYE1kPm8HWa8q2W8MVXBnw6qOZX7MAKhk3GneSV2Cw3uPtQIjAYngZUmFzdaQ9DInT3em3gBd5MsvagrKeZoo1g3TLyHWv4Ru6m67/IelnGYRIm7FfjkeHy0tlms7iSw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=g6F6Fpup; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=ait.place header.i=@ait.place header.b="KiSr0QOw"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ait.place;
- i=@ait.place; q=dns/txt; s=s943033; t=1788497230; h=from : subject :
- to : message-id : date : list-unsubscribe : list-unsubscribe-post;
- bh=621XTYcsZ6zvvOUg6Eb3VR5r2xUBCu+A38ELVbjgWac=;
- b=KiSr0QOwl0hSk1RrApxg588xTtemNhFpa3B2IsiqWSktwuko/u0Pjp1QQogk7WW1Vla97
- nX6o5j1vL9blMafp2ChQfb9hC0xb0Fef0eq7bt/Dp9IdGaD7QtVvoptc0D8QijlkxRUpCyO
- foVre0nBaiSpDtGvjiuNUuiEExx6f0vGk3Ly3vFagvAVbaM24+uB2oFBf9+QTGFgD1s9uCD
- abOIo9AJ6tP0IQPguToOzr00cf55ffT98kSF6qaMk9WNIdX6dg8s8bN0KeJyNWxUHvLTtL3
- C/pGJen3lEPtm1IRsW6SxI3hIVAioerO8tl7sqHH3PkX06GW+FVKjYcNrvtw==
-Received: from [10.191.245.51] (helo=omarchy.bb.online.no)
-	by smtpcorp.com with esmtpsa (TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256)
-	(Exim 4.99.4)
-	(envelope-from <jonathanjansen@ait.place>)
-	id 1x2LpT-4o5NDgrjDEn-oUeG;
-	Fri, 04 Sep 2026 04:47:07 +0000
-From: Jonathan Jansen <jonathanjansen@ait.place>
-To: linux-input@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org,
-	jikos@kernel.org,
-	bentiss@kernel.org,
-	dmitry.torokhov@gmail.com,
-	linux-api@vger.kernel.org,
-	jonathanjansen@ait.place
-Subject: [PATCH v2] HID: input: map System Microphone Mute LED
-Date: Fri,  4 Sep 2026 06:47:05 +0200
-Message-ID: <20260904044705.1060507-1-jonathanjansen@ait.place>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <20260904022903.607880-1-ait@ait.place>
-References: <20260904022903.607880-1-ait@ait.place>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="g6F6Fpup"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1788533611;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=lpOLr06SKT9VWUbfIdRTrVaGCYppzQHTCSBPigs1Iqw=;
+	b=g6F6Fpupy5/WGes5L42hWwLg+2zcPfLorZ/ui00eR1lyvCTBZeKtrPr8v3CBYL3ODxoN2k
+	hOxmNC59BtRGPzaZ3+BNQ3ROIwjiV5EzivQ2XuDkABG1deDF8pebLYnOr5RXqKAzSEaXIi
+	f/m+NMJFq8jr3kHYOg8S7ZX7QzXM7Ak=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-20-SGgM8J6hPr6FYVMWtzv7og-1; Fri,
+ 04 Sep 2026 10:53:26 -0400
+X-MC-Unique: SGgM8J6hPr6FYVMWtzv7og-1
+X-Mimecast-MFC-AGG-ID: SGgM8J6hPr6FYVMWtzv7og_1788533602
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F41CD18CD2AB;
+	Fri,  4 Sep 2026 14:53:19 +0000 (UTC)
+Received: from fweimer-thinkpadp1gen4i.stuttmso.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 2752A1955F10;
+	Fri,  4 Sep 2026 14:53:09 +0000 (UTC)
+From: Florian Weimer <fweimer@redhat.com>
+To: Chen Linxuan via B4 Relay <devnull+me.black-desk.cn@kernel.org>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>,  Christian Brauner
+ <brauner@kernel.org>,  Jan Kara <jack@suse.cz>,  Andrew Morton
+ <akpm@linux-foundation.org>,  David Hildenbrand <david@kernel.org>,
+  Lorenzo Stoakes <ljs@kernel.org>,  "Liam R. Howlett"
+ <liam@infradead.org>,  Vlastimil Babka <vbabka@kernel.org>,  Mike Rapoport
+ <rppt@kernel.org>,  Suren Baghdasaryan <surenb@google.com>,  Michal Hocko
+ <mhocko@suse.com>,  Ingo Molnar <mingo@redhat.com>,  Peter Zijlstra
+ <peterz@infradead.org>,  Juri Lelli <juri.lelli@redhat.com>,  Vincent
+ Guittot <vincent.guittot@linaro.org>,  Dietmar Eggemann
+ <dietmar.eggemann@arm.com>,  Steven Rostedt <rostedt@goodmis.org>,  Ben
+ Segall <bsegall@google.com>,  Mel Gorman <mgorman@suse.de>,  Valentin
+ Schneider <vschneid@redhat.com>,  K Prateek Nayak
+ <kprateek.nayak@amd.com>,  Kees Cook <kees@kernel.org>,  John Johansen
+ <john.johansen@canonical.com>,  Georgia Garcia
+ <georgia.garcia@canonical.com>,  Paul Moore <paul@paul-moore.com>,  James
+ Morris <jmorris@namei.org>,  "Serge E. Hallyn" <serge@hallyn.com>,
+  me@black-desk.cn,  linux-fsdevel@vger.kernel.org,
+  linux-kernel@vger.kernel.org,  linux-mm@kvack.org,
+  apparmor@lists.ubuntu.com,  linux-security-module@vger.kernel.org,
+  linux-api@vger.kernel.org
+Subject: Re: [PATCH v2 0/3] pidfd: add task path ioctls
+In-Reply-To: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn> (Chen
+	Linxuan via's message of "Mon, 31 Aug 2026 10:59:05 +0800")
+References: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn>
+Date: Fri, 04 Sep 2026 16:53:07 +0200
+Message-ID: <lhuecf9cbl8.fsf@oldenburg.str.redhat.com>
+User-Agent: Gnus/5.13 (Gnus v5.13)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-Report-Abuse: Please forward a copy of this message, including all headers, to <abuse-report@smtp2go.com>
-Feedback-ID: 943033m:943033ayMjrpg:943033soucOInEYf
-X-smtpcorp-track: U75LmZZdPk0D.7zvV_BR9-jgj.dG1GjQ7O9gc
+Content-Type: text/plain
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
 
-HUTRR110 defines LED page usage 0x57 as System Microphone Mute.
+* Chen Linxuan via:
 
-The usage is currently ignored, so the indicator stays dark and
-userspace falls back to per-vendor code in hid-lenovo,
-hid-playstation, hid-plantronics.
+> This series adds PIDFD_GET_EXE, PIDFD_GET_CWD, and PIDFD_GET_ROOT. Each
+> ioctl takes no argument and returns a close-on-exec O_PATH file
+> descriptor referencing the corresponding task path.  The new ioctls use
+> the same ptrace permission check and nonzero-argument rejection as the
+> existing pidfd namespace ioctls.
 
-Map it to a new LED_MICMUTE. It appears as
-/sys/class/leds/inputN::micmute and uses the "audio-micmute"
-trigger from snd-ctl-led, so the LED follows the system-wide
-mic mute state the same way LED_MUTE (page 0x09) already does
-for speaker mute.
+How would one upgrade the O_PATH descriptor to a full descriptor without
+a mounted /proc?
 
-LED_MICMUTE takes the next free code (0x0b).
-
-Link: https://www.usb.org/sites/default/files/hutrr110-systemmicrophonemute.pdf
-
-Signed-off-by: Jonathan Jansen <jonathanjansen@ait.place>
----
-
-Notes:
-    Changes since v1: rewrote the commit message; no functional changes.
-
- drivers/hid/hid-debug.c                | 2 +-
- drivers/hid/hid-input.c                | 1 +
- drivers/input/input-leds.c             | 1 +
- include/uapi/linux/input-event-codes.h | 1 +
- 4 files changed, 4 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/hid/hid-debug.c b/drivers/hid/hid-debug.c
-index f44e6e708..92a950105 100644
---- a/drivers/hid/hid-debug.c
-+++ b/drivers/hid/hid-debug.c
-@@ -3550,7 +3550,7 @@ static const char *leds[LED_MAX + 1] = {
- 	[LED_KANA] = "Kana",		[LED_SLEEP] = "Sleep",
- 	[LED_SUSPEND] = "Suspend",	[LED_MUTE] = "Mute",
- 	[LED_MISC] = "Misc",		[LED_MAIL] = "Mail",
--	[LED_CHARGING] = "Charging",
-+	[LED_CHARGING] = "Charging",	[LED_MICMUTE] = "Mic Mute",
- };
- 
- static const char *repeats[REP_MAX + 1] = {
-diff --git a/drivers/hid/hid-input.c b/drivers/hid/hid-input.c
-index edd6bbf83..727374dd5 100644
---- a/drivers/hid/hid-input.c
-+++ b/drivers/hid/hid-input.c
-@@ -990,6 +990,7 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel
- 		case 0x27:  map_led (LED_SLEEP);    break;    /*   "Stand-By"                 */
- 		case 0x4c:  map_led (LED_SUSPEND);  break;    /*   "System Suspend"           */
- 		case 0x09:  map_led (LED_MUTE);     break;    /*   "Mute"                     */
-+		case 0x57:  map_led (LED_MICMUTE);  break;    /*   "System Microphone Mute"   */
- 		case 0x4b:  map_led (LED_MISC);     break;    /*   "Generic Indicator"        */
- 		case 0x19:  map_led (LED_MAIL);     break;    /*   "Message Waiting"          */
- 		case 0x4d:  map_led (LED_CHARGING); break;    /*   "External Power Connected" */
-diff --git a/drivers/input/input-leds.c b/drivers/input/input-leds.c
-index b08d1d08d..6522079a4 100644
---- a/drivers/input/input-leds.c
-+++ b/drivers/input/input-leds.c
-@@ -36,6 +36,7 @@ static const struct {
- 	[LED_SLEEP]	= { "sleep" } ,
- 	[LED_SUSPEND]	= { "suspend" },
- 	[LED_MUTE]	= { "mute", AUDIO_TRIGGER("audio-mute") },
-+	[LED_MICMUTE]	= { "micmute", AUDIO_TRIGGER("audio-micmute") },
- 	[LED_MISC]	= { "misc" },
- 	[LED_MAIL]	= { "mail" },
- 	[LED_CHARGING]	= { "charging" },
-diff --git a/include/uapi/linux/input-event-codes.h b/include/uapi/linux/input-event-codes.h
-index 3528168f7..bc374821c 100644
---- a/include/uapi/linux/input-event-codes.h
-+++ b/include/uapi/linux/input-event-codes.h
-@@ -983,6 +983,7 @@
- #define LED_MISC		0x08
- #define LED_MAIL		0x09
- #define LED_CHARGING		0x0a
-+#define LED_MICMUTE		0x0b
- #define LED_MAX			0x0f
- #define LED_CNT			(LED_MAX+1)
- 
--- 
-2.55.0
+Thanks,
+Florian
 
