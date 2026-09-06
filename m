@@ -1,117 +1,209 @@
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from sender4-op-o15.zoho.com (sender4-op-o15.zoho.com [136.143.188.15])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C44A4471273
-	for <linux-api@vger.kernel.org>; Fri,  4 Sep 2026 17:00:39 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.44
-ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1788541241; cv=none; b=bkQN3E2aMV+v2qz6WjMz+9dJodKH5C2953Go3HWYuZqascFOyTMQOXJ5WBHwCjz03O/GJLPA1GQbVAAWVzeqFpAu71kT5dygIyIbS1YYhALShdph6fnIIPz0FiPwdPcEOciTVMlVz3x7lR3JLS7sqGYGoL0Igcsi8ljnZYzj4Lk=
-ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1788541241; c=relaxed/simple;
-	bh=ZdzwbYcSxFp1YM2NzyKteD8bxTtEzteMVXqKaxQGfHw=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=GyeLoR3a8SBIflvITtaVHQYk5uoFYGrLTr6BDW+/GKuQc9MF5N03Msi+ntEvnhyN29YimVgTrvoNqu35piVwPMuCsDRhR9/XEg1EhFwo3rDlgYokWepaBXoIrPaCtAhkpXVrb+BUXPJyS1IZWxYSyzseaDak/C774F45axlS5wI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=black-desk.cn; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.208.44
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=black-desk.cn
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-6a682579c72so1657991a12.1
-        for <linux-api@vger.kernel.org>; Fri, 04 Sep 2026 10:00:39 -0700 (PDT)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1788541238; x=1789146038;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=GyJwn4+ssjywZb/F3JjOY0S6/aIo0tP90S69DFDLuSQ=;
-        b=LA+klc7te3P7V63Hk8zVIedS4QWXYpf5ImrLfZezzfVsjsMSM6oHDBMwA0ZqzaUMLP
-         rAFC/hNUNzH4L1kT+fuVZGbT8KdLT2myVUoZIYUBPTD9J4yxtmz7KMxByMVVNZqbmR3O
-         G2cPYEkZLtlUz4Q13qrLOU1UT4fLhUp2gfuUg8AzXVFPO5iBAPP8ONdIIxtTF/g/C86I
-         xSmtpZhSodz/sue10ha/GWn9rfnyp3eyYYrINkLYG9VgjNnkCOQL6qMYImkSNBOvbmWO
-         5xc2aTRLc9srIztHeop5RdMNPPrErl4j6rx28TrIjD1JVYm+IWFdZP3lbvmA0GkbT8zf
-         m5jg==
-X-Forwarded-Encrypted: i=1; AKwUvBxzYvzPjaoXWGWG63EjZ/MINy9+u+URFpvibGBbqiZ4vohum5hqcuoS+sG+G3sKsWqH9uYOEu1q5ak=@vger.kernel.org
-X-Gm-Message-State: AFuF++lbyyhCbDT8daYjw2qPPS6Ll/pZC3yK/NnFn3G48nB+e1HC642R
-	/lwRVmhVI2V+9J+F5P6KIRSXPdSt+bBbxofKuqLr0sqO3hH3KFpfMa6N2ALnVuKT3TDqPA==
-X-Gm-Gg: AYBFou0gwu2Cv26sfjvivN2tfzZrPXhLy1hkNr2IP8TqKVID2rC8Q/DH7YnLdwipR9P
-	s37i6Vi+3Xgi/ICn5JuT2frWs0Un/DzQo42UxWRtDSDEodBCSPXAfEZadsBOItLHs9u5RGYYE6G
-	/TQo99trVpnsK1uNBKYOR/UU0ZcajewTCnaN2YwkbE1oUrMzJybiJYE9rv4b/XcGWpdvRTcrFJm
-	axfQj8rY3u1NTsR4KfK+qi2USwBpZJjLFJuj/+9VTNA/6xFe1EEzGlnhrbpHY4403a9GxNjgaQZ
-	Z0ztn9DttBPeW9V9lzJZNf32MWmX5GbFK9HynVnycp/EFth3UrmhwC8aruhh92a48LnIosdcxKO
-	z6TA5bNRRPJGBQYYtsbnQVgsYzXYupAcPHU5fB06nASHBX/UFIY1qjznSSSoLdKfMwhnWrxs4Ka
-	y01wZYoQCumRaKt69ZSN4IE5UZBBUXcBxCWA7YPS+C/+Dk66zGPYxyfxx9bkJlN8ur3iN+gnhx9
-	tkA8xM/8Y2zq6NNEZyRhEy+TWfRtN6H5htRvLgeoG1ndw7MmmR5EFiLzGO2RLHq
-X-Received: by 2002:a05:6402:304c:b0:6a6:32f9:e9f2 with SMTP id 4fb4d7f45d1cf-6a7e8f94792mr4011824a12.21.1788541237776;
-        Fri, 04 Sep 2026 10:00:37 -0700 (PDT)
-Received: from mail-wm1-f45.google.com (mail-wm1-f45.google.com. [209.85.128.45])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6a7e66ec5e1sm1500273a12.1.2026.09.04.10.00.36
-        for <linux-api@vger.kernel.org>
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 04 Sep 2026 10:00:36 -0700 (PDT)
-Received: by mail-wm1-f45.google.com with SMTP id 5b1f17b1804b1-49cdc81f40eso8839245e9.2
-        for <linux-api@vger.kernel.org>; Fri, 04 Sep 2026 10:00:36 -0700 (PDT)
-X-Forwarded-Encrypted: i=1; AKwUvBxS6h7xwWQaFHvy2SQJyokUyRqXow1oYDCMY8ghUBBDzng3O96q/cJZiJ3pBwDpzt2/XYzSIGxeivM=@vger.kernel.org
-X-Received: by 2002:a05:6512:3502:b0:5b0:23b4:be97 with SMTP id
- 2adb3069b0e04-5b616ed4b1dmr2357411e87.6.1788540878064; Fri, 04 Sep 2026
- 09:54:38 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D2C5C302146;
+	Sun,  6 Sep 2026 10:51:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=136.143.188.15
+ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1788691904; cv=pass; b=ufZWLrdjmcwgcjs/W5WI3Mz/lMkBpuq50JhHW/VwvWj4u9QPPRC7AyM5PtmowZjtDlxqYqWXoAEtCf80To5CKoWri+pV9lD3VsxMbHf21sYLoS4RsTPK3VXmEVorNdJXKwuEB3ImTncisiYzN78hGjMikGdwPiNTPyxy+/kerDM=
+ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1788691904; c=relaxed/simple;
+	bh=5DEUFarM9EHefZ0wVYQQBuHqPXjSlIFqm4LAKK6cmFQ=;
+	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
+	 MIME-Version:Content-Type; b=axPeIBzikffWUg/f1juGA8pUU+fNLmZY+zhw5F1YL3KAOpTt4+GMD6/UiTlEEoKWlPJH0Sco4aR0RE1fZrVq2g6Yh7ZZQsePnALL9gpJwrZ7hBZByiEnIqPQcXQcJJfL1uDxfIfzZ7bUg9V911Q6eA+LNt/9qohVC7Vz00POVco=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty; spf=pass smtp.mailfrom=linux.beauty; dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b=MrrdizyY; arc=pass smtp.client-ip=136.143.188.15
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.beauty
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key) header.d=linux.beauty header.i=me@linux.beauty header.b="MrrdizyY"
+ARC-Seal: i=1; a=rsa-sha256; t=1788691854; cv=none; 
+	d=zohomail.com; s=zohoarc; 
+	b=HcHv7QGeAJiTzwkPsLHQtIHDXg+2BOTsRnQz63gL5tKUhmSrb+xsES5fvihLNwX7fRBkNlp/y2e9XWkSUnGxybGoddpScOdoipvFHHNsogDA+nnOriuvZFh9U48Js69etl/8831j0h6BBlQ8Ohq8Jh76aQHkt9reQR+fv2vkO2s=
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=zohomail.com; s=zohoarc; 
+	t=1788691854; h=Content-Type:Content-Transfer-Encoding:Cc:Cc:Date:Date:From:From:In-Reply-To:MIME-Version:Message-ID:Subject:Subject:To:To:Message-Id:Reply-To; 
+	bh=rBoSHGzWKBhSuGS8r2av+j/7qxpuVCAqAJc8a/E78no=; 
+	b=YpSRvGr0ZzH6qrZ+qbq04ewCgD+HEWhzNGG5niJ8ZdAMrLyqvIClzi2u9fd0xcMGYavMl4X4lNM48aeWNvgiCS8+0OnLSmc4E1FhO3heka1AsDUf6fqFCNKOi6haJEK8WO7mWQUYMKKWpc516Mfn/6aW5rukRx+vHQ8vygDeSys=
+ARC-Authentication-Results: i=1; mx.zohomail.com;
+	dkim=pass  header.i=linux.beauty;
+	spf=pass  smtp.mailfrom=me@linux.beauty;
+	dmarc=pass header.from=<me@linux.beauty>
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; t=1788691854;
+	s=zmail; d=linux.beauty; i=me@linux.beauty;
+	h=Date:Date:From:From:To:To:Cc:Cc:Message-ID:In-Reply-To:Subject:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:Reply-To;
+	bh=rBoSHGzWKBhSuGS8r2av+j/7qxpuVCAqAJc8a/E78no=;
+	b=MrrdizyYZV3Ev0Xkg+kB7NUWS6PN14cITmMXKJ/oZJt2nUbvveceskVWxdh63bKK
+	XGTSGzsGkaH5x094cI7PomrPqnxP47UUqtkux5UkkWnBVmwMPqaEkZCLosN/1nK4l0k
+	ajHvJCfYOrDP3LmLFinwkZUG/4RlhaUdwQ6aP/5U=
+Received: from mail.zoho.com by mx.zohomail.com
+	with SMTP id 1788691853878565.2585404132941; Sun, 6 Sep 2026 03:50:53 -0700 (PDT)
+Received: from mail.zoho.com by mx.zohomail.com
+	with SMTP id 1788691851513989.1054873609904; Sun, 6 Sep 2026 03:50:51 -0700 (PDT)
+Date: Sun, 06 Sep 2026 18:50:51 +0800
+From: Li Chen <me@linux.beauty>
+To: "Mateusz Guzik" <mjguzik@gmail.com>
+Cc: "Justin Suess" <utilityemal77@gmail.com>,
+	"Christian Brauner" <brauner@kernel.org>,
+	"Kees Cook" <kees@kernel.org>,
+	"Gabriel Krisman Bertazi" <krisman@kernel.org>,
+	"Josh Triplett" <josh@joshtriplett.org>,
+	"Andy Lutomirski" <luto@kernel.org>,
+	"John Ericson" <mail@johnericson.me>,
+	"Jonathan Corbet" <corbet@lwn.net>, "Shuah Khan" <shuah@kernel.org>,
+	"Arnd Bergmann" <arnd@arndb.de>, "Oleg Nesterov" <oleg@redhat.com>,
+	"Andrew Morton" <akpm@linux-foundation.org>,
+	"Paul Moore" <paul@paul-moore.com>, "Eric Paris" <eparis@redhat.com>,
+	=?UTF-8?Q?=22Micka=C3=ABl_Sala=C3=BCn=22?= <mic@digikod.net>,
+	=?UTF-8?Q?=22G=C3=BCnther_Noack=22?= <gnoack@google.com>,
+	"Alexander Viro" <viro@zeniv.linux.org.uk>,
+	"Jan Kara" <jack@suse.cz>, "linux-api" <linux-api@vger.kernel.org>,
+	"linux-fsdevel" <linux-fsdevel@vger.kernel.org>,
+	"linux-kernel" <linux-kernel@vger.kernel.org>,
+	"linux-kselftest" <linux-kselftest@vger.kernel.org>,
+	"linux-doc" <linux-doc@vger.kernel.org>,
+	"audit" <audit@vger.kernel.org>,
+	"linux-security-module" <linux-security-module@vger.kernel.org>,
+	"linux-arch" <linux-arch@vger.kernel.org>,
+	"linux-mm" <linux-mm@kvack.org>
+Message-ID: <1a07657a8e1.4ebd8dda3414368.7718440407238274005@linux.beauty>
+In-Reply-To: <CAGudoHGoOr8rvhSQK+HQp7LmNyE9vP=xTok9eA1ZbV7uaVnMEg@mail.gmail.com>
+References: <cover.1784204592.git.me@linux.beauty> <anJE8SfBLtkh6QSa@zenbox> <1a01795b07a.1f456216580426.3401229391386650127@linux.beauty> <CAGudoHGoOr8rvhSQK+HQp7LmNyE9vP=xTok9eA1ZbV7uaVnMEg@mail.gmail.com>
+Subject: Re: [RFC PATCH 00/24] pidfd: add a minimal process spawn builder
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn> <lhuecf9cbl8.fsf@oldenburg.str.redhat.com>
-In-Reply-To: <lhuecf9cbl8.fsf@oldenburg.str.redhat.com>
-From: Chen Linxuan <me@black-desk.cn>
-Date: Sat, 5 Sep 2026 00:54:26 +0800
-X-Gmail-Original-Message-ID: <CAC1kPDPu41RxMLHpPtz4VqfkEZeu-fYXG76XVZMh8bbQa3okaw@mail.gmail.com>
-X-Gm-Features: AcwNN1UgBltmpHY5GDpzTdve1vmhfclnbN_NvQgKzWwvr0zbygpAGe7Eg-teU9E
-Message-ID: <CAC1kPDPu41RxMLHpPtz4VqfkEZeu-fYXG76XVZMh8bbQa3okaw@mail.gmail.com>
-Subject: Re: [PATCH v2 0/3] pidfd: add task path ioctls
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Chen Linxuan via B4 Relay <devnull+me.black-desk.cn@kernel.org>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, 
-	Andrew Morton <akpm@linux-foundation.org>, David Hildenbrand <david@kernel.org>, 
-	Lorenzo Stoakes <ljs@kernel.org>, "Liam R. Howlett" <liam@infradead.org>, Vlastimil Babka <vbabka@kernel.org>, 
-	Mike Rapoport <rppt@kernel.org>, Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>, 
-	Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, 
-	Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, 
-	Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, 
-	Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, 
-	Valentin Schneider <vschneid@redhat.com>, K Prateek Nayak <kprateek.nayak@amd.com>, 
-	Kees Cook <kees@kernel.org>, John Johansen <john.johansen@canonical.com>, 
-	Georgia Garcia <georgia.garcia@canonical.com>, Paul Moore <paul@paul-moore.com>, 
-	James Morris <jmorris@namei.org>, "Serge E. Hallyn" <serge@hallyn.com>, me@black-desk.cn, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-mm@kvack.org, apparmor@lists.ubuntu.com, 
-	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
+Importance: Medium
+User-Agent: Zoho Mail
+X-Mailer: Zoho Mail
 
-On Fri, Sep 4, 2026 at 10:53=E2=80=AFPM Florian Weimer <fweimer@redhat.com>=
- wrote:
->
-> * Chen Linxuan via:
->
-> > This series adds PIDFD_GET_EXE, PIDFD_GET_CWD, and PIDFD_GET_ROOT. Each
-> > ioctl takes no argument and returns a close-on-exec O_PATH file
-> > descriptor referencing the corresponding task path.  The new ioctls use
-> > the same ptrace permission check and nonzero-argument rejection as the
-> > existing pidfd namespace ioctls.
->
-> How would one upgrade the O_PATH descriptor to a full descriptor without
-> a mounted /proc?
+Hi Mateusz,
 
-For PIDFD_GET_CWD and PIDFD_GET_ROOT, the returned O_PATH descriptor is
-typically used directly as a base directory for openat(2) or passed to
-fchdir(2), so upgrading it to a full descriptor is usually unnecessary.
+> First and a foremost apologies for radio silence, I got really busy
+> with other stuff.
 
-For cases where upgrading an O_PATH descriptor to a full descriptor is
-required without /proc mounted (such as inspecting the executable binary
-from PIDFD_GET_EXE), users can use the newly added O_EMPTYPATH flag with
-openat2(2) (introduced in Linux 7.2) to reopen the O_PATH descriptor.
+Thanks for making time to write such a detailed reply despite being busy
+with other work. Sorry for taking so long to get back to you.
 
+> I don't understand what race is supposed to be addressed either as
+> none of the setup depends on the content binary.
+
+You're right that none of the setup depends on an earlier check of
+the executable. My earlier reply mixed up two different requirements:
+executing whatever a pathname resolves to at exec time, and executing
+a particular file selected earlier.
+
+The posted RFC does the former. It stores the pathname without looking
+up or inspecting the executable during configuration.
+
+The caller-side race I had in mind was this:
+
+caller                  another process        child
+    |                           |                  |
+    | inspect file A via path   |                  |
+    | configure builder         |                  |
+    |                           | replace path     |
+    |                           | with file B      |
+    | spawn_run()               |                  |
+    |                           |      lookup -> B |
+    |                           |      exec B      |
+
+This matters if the caller expects the file it inspected to be the
+one executed. Opening A first, inspecting it through that fd, and
+using the same fd for execution avoids the pathname substitution.
+The fd pins the file's identity, not immutable contents.
+
+> Regardless I don't think this is going to fly as it directly shafts
+> NUMA setups. What's needed is a path to the binary + the PATH
+> envifornment variable or a collection of paths to try out.
+
+I went back to the spawn_template discussion and realized that you had
+already raised these NUMA concerns there, including child-side lookup,
+PATH search, and target-node allocation. Sorry, I should have connected
+your current comment with that earlier explanation.
+
+> At minimum this will allocate a dentry and an inode for usr, bin and
+> coolprog itself.
 >
-> Thanks,
-> Florian
+> Afterwards any path lookup going through usr in that that container
+> will have to fetch memory from a non-local node to traverse it, same
+> thing for the bin subdirectory.
 >
+> This is a self-induced problem when using a fd.
+
+I see how opening the executable in the parent can populate cold
+filesystem metadata on the parent's node, even though the child will
+run on a different node. Making an executable fd mandatory would
+force that early lookup on callers who could otherwise leave it
+to the child.
+
+> A well-known exec-heavy workload where this is fine is compilation.
+> Any big project will do, to give you one trivial example, make -j
+> $BIGNUM modules in the Linux kernel directory.
 >
+> [...]
+>
+> The stock kernel with the fork
+> + exec machinery is doing a shitty job here, but the new mechanism can
+> assure process-specific allocation to come form the target node as
+> long as the scheduler does not mess up.
+
+The compilation example helps too, and this matters even without explicit
+affinity. Moving lookup into the child does not by itself address the
+initial per-task allocations.
+
+> 1. copy in whatever data it needs from userspace
+> 2. if no affinity is specified, ask the scheduler: assuming something
+> forks now, where is it going to run? the answer would be speculative
+> ofc
+> 3. to the minimum allocations needed (task_struct etc.) while passing
+> the node number from above
+> 4. have the newly spawned task handle everything else
+
+I'll look into using the scheduler's speculative placement for those
+initial allocations, then leaving the remaining work to the child
+where it actually runs.
+
+> In the real world userspace notoriously performs failed execs as it
+> makes its way through dirs in provided in PATH, and while you can
+> patch select programs all you want, the mechanism will have to account
+> for it.
+>
+> [...]
+>
+> This in particular means that a failed exec would be very expensive,
+> as it would go through task creation and teardown. Meaning the child
+> needs to be able to figure out where to binary to execute is. And
+> user-visible part has to account for it from the get-go.
+
+Your point about failed execs during PATH search makes sense too.
+Creating and tearing down a task for each candidate would be wasteful.
+I plan to have libc build a list of candidate paths without doing any
+filesystem lookup, and pass that list to the kernel. The child would
+apply its setup once, then try the candidates in order, continuing
+after recoverable exec failures in the same task.
+
+That keeps PATH parsing in libc and lookup in the child. Relative paths
+would stay relative, so they resolve against the child's cwd after file
+actions. A single pathname would just be a one-entry list. This needs
+interface support, and I'll need to work through the exec cleanup and
+error handling to preserve the expected posix_spawnp() behavior.
+
+I'm still unsure whether supporting both modes is a good interface
+design. An fd option seems useful for callers that need to execute
+the same file they opened earlier, while child-side pathname lookup
+would avoid forcing that early lookup on everyone. I'm leaning
+towards keeping both, but haven't settled on that yet.
+
+> I'm going to write more after I go through the patchset, should be next week.
+
+Thanks again for taking the time to explain this. I look forward to
+your further comments.
+
+Regards,
+Li
+
+
