@@ -1,68 +1,68 @@
-Received: from mail-pz2-f12.google.com (mail-pz2-f12.google.com [74.125.228.12])
+Received: from mail-pj1-f48.google.com (mail-pj1-f48.google.com [209.85.216.48])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 868AC37F8B2
-	for <linux-api@vger.kernel.org>; Thu, 10 Sep 2026 20:20:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.12
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4B5863B14AC
+	for <linux-api@vger.kernel.org>; Thu, 10 Sep 2026 20:24:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.216.48
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789071637; cv=none; b=jT2ISPwAZwn6S4JHPVQ7BHKKB9osC+PHiJHrSEh+h2Y7WpHn9ezrHuulBnqmcjLwxliYLbUvbG8xLKVcB/hFtqP+oZNKw0hQLk80QUm1m9Ew0/spVnEByGSOHZojtNCKB3swDR8w2mftyBK6soMdQuSuLZEBcMdjWA/9sVVSIzg=
+	t=1789071855; cv=none; b=JlFZkk7nAdVwCOif8Zr2jh8+HURw8EYR6sTboCd2aXmmyLs0X+4FrbwY8EuYGYXGln8oaUOqArEI12QuCUY48UVIBXqkJfmTl3cdmOWvMkhSanlmM4QCTwNplnIuP/dmu5zhlASxCKkaB9/T13EAggQUVPELcPerTUXwUhtFDjU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789071637; c=relaxed/simple;
-	bh=DjYBwaeeGYt1e1aDrTCZ4BLWAumgQpDp98xUFOLmGg0=;
+	s=arc-20240116; t=1789071855; c=relaxed/simple;
+	bh=h4aCxdhy1tGoV6lGKVJX0x3mhzD+2ezFEQ/0eFlBe+4=;
 	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=QjLMkNpQVNxASZtxpLjRyrS/2qwPrUNVeSjBdfcxwBS2aMA/yAtcUNPDO0Kt/zDdLXkHmjDB4QYJODRHOXD1TVc9ogeBNrYbLERhQDVFfERvHBFUl3Xc7z/jULj/DcMuGJ4rn+OcDWiry43V2KHWPJ1ZWL85Jy2+PvO72cQ0fs4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=g2FYMFgy; arc=none smtp.client-ip=74.125.228.12
+	 In-Reply-To:Content-Type; b=eK7j9fhtYLT47x78yNUwGru8yITc0++rH9InsY88+BoT/gS5oQsuYfEKt/K15ehbhnxRgrp/UIqG9bpOip2P/UEJv6jXE3krX+AQR1IIqKDGIZtdVKamiAAGDWlWCkCBE4kIoXLfg4gfDBtZolzjk1OSh9yV7VoKYr4Bo6IZ2v0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=W5hB4aET; arc=none smtp.client-ip=209.85.216.48
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="g2FYMFgy"
-Received: by mail-pz2-f12.google.com with SMTP id 41be03b00d2f7-cc4bdf8acd6so244154a12.1
-        for <linux-api@vger.kernel.org>; Thu, 10 Sep 2026 13:20:35 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="W5hB4aET"
+Received: by mail-pj1-f48.google.com with SMTP id 98e67ed59e1d1-38759bcd877so176409a91.2
+        for <linux-api@vger.kernel.org>; Thu, 10 Sep 2026 13:24:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789071635; x=1789676435; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1789071851; x=1789676651; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=fGz3QchZ33o5aLs5iAJKQYRzMHRTQN9hz1qfwCgshsM=;
-        b=g2FYMFgyNW6egbjYxoc8/elzFT2iYpinGgMxw6+9SpG7Ob/NRl7yHc1c4JHuag64V/
-         qEcbIU/FAr+Xah7vXGqxLI3jxi7R5emL58tTI5VmHENWNP5z03mrwu8sYi00YuWMN78I
-         ceMebFQYyz3nHQlVO7nloHYQ7KApFhvjMGdjEc1eUtYtGWLn2X7hldbrZR+OHj248Is+
-         V51WeCHQwRBEYryU+InlzyICNP+ihtVQZSoWCJFVClPoUZ5tlYD9dgPIupgsediGtKUM
-         KU1e4XqSycrhrX08qqxcniSkhIIb+N3ZBQPmXojc13MfY2TO9HrRs3lh+wK1u0U1jVBX
-         9nJQ==
+        bh=V0rAC78IGmF6UMoo1efDtTikBTEY+oo8toLUqaRvjb4=;
+        b=W5hB4aETjpYFPz7+aqlkKe68+7eovknFf0GKABeP1CN74iKs3ZCHOhHoTedBZtOm7u
+         u6JeD35sfPyspazqsqC8ZOXp0cPNgvnlttFJZY2/lFJ97zRsEBp1KMDKMBeYCk9PoTrc
+         rC2y+3/z3tz9yOr5oq3uoKpi9grbPdkTvrCBIcN+g0E0dp347l7QBHSEThJj4kzmgbuN
+         c1tYdySZpmrxZXbS/YG1TviQF++BQohiU0Z7v16bnYFc67a/g5qLu4gAyiJO2qRa8Upm
+         RoiqHg9gtmcHtggdL7tAyJyU8c6UdhbEfEIKD2hLy3KHK2wQNZdmsaSeQIhSvvaZw20/
+         9GhA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789071635; x=1789676435;
+        d=1e100.net; s=20251104; t=1789071851; x=1789676651;
         h=content-transfer-encoding:content-type:in-reply-to:from
          :content-language:references:cc:to:subject:user-agent:mime-version
          :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=fGz3QchZ33o5aLs5iAJKQYRzMHRTQN9hz1qfwCgshsM=;
-        b=qs1oSmdvOAkp7AtV/2lL7pfJc7mS0aA9Jyk2FF+ekQHziSu/Y8VQB4ldUJbOpVY6Dc
-         8O+Sih5Cj8nWHgda4LyNrsIyDosJsBlUdvVRg6x28/wlozHRd3mekU1B2YAK6bfoq7A+
-         O0SkKxcxvFe8sou+Kv3jXs0xGc1xsuxw5t3ndXPndTct8Nx7JjN02WNbEZKGbnFeLRp6
-         d3c2CvQUxkfdbIxXe8qnBZnWmKIusfpORe1UOmFwD5bkcoUbiy0GGmMcK8HouRb3dg57
-         m729CBJvk1kITS4JsSyNAO7vyrTtutdXcfN6UuZHwRmXWGGC9yb+AbSuMds0o8dWHsK+
-         ijBw==
-X-Forwarded-Encrypted: i=1; AKwUvBzYzgZcOmrzoY3ZIFp/1fWZg7C7u+fPZTFaRZir/vhQj1Yowj9KtlWq5dVduiENP9KOCcyki+2sYbY=@vger.kernel.org
-X-Gm-Message-State: AFuF++kOGz/t/6cB/g+29KmBUEbjhluHxoFSstfGsdD8VfqGc3Aflow7
-	0v57TyJkEHMqyIlSqryMkYLphwSLxN+/uul93vC93uQkHr2Qi17FSmIc
-X-Gm-Gg: AYBFou0Uza91FyXGZI8FacW63U3miQQ1Xs/KQBEz6lxP1TO6cGDxYw344BIrtev/JFR
-	q3lnhy+GdZJdp0RnOYTO+McJFmTpn+ZiBpB64roPeIcNmjeDOC/N1hIhsEiInAoNSpLuX6wbMVb
-	A6C3uG5F5gZQ1tDLyl/0894j1w6rvM7jbehfX6/z4EmeEdBfGeoW3EsWXayBwazDzClKfRESVmN
-	KKwkn9H99xLe+zJ7noRmjpuswU8Kgl8gMUVXJD2T9qgV0P4s0LlbWO9FVIlmMkr7xU1pTw7N0VT
-	sn0LXQmagyg8ahnxxkk+95uxfjgjGuwzvZv0MvKtve4MH6Ar/cH1NwYZ+xm26ADVXv6NU1ywv7V
-	Bngz+NlYtdOBfC/e76J1egg5VDMX+/Blo5DqCCgPoVjGcuniFXPUIAGAr036qKVbLpo3H/u6RfH
-	3lKByqf9H7obL746+7Fwb+zLRTLxSo3NZj5ssLASEVLH+GMPvTZbhJNT3BC/3QdWiMl957uhA11
-	V5/mH1fOlIx0ntH5bOnkOJJ+DYIscbuLP6nMf4/uax/Dn6D7ddTY+nKkHzv4yIbBg==
-X-Received: by 2002:a17:90b:498c:b0:39b:2b10:d05c with SMTP id 98e67ed59e1d1-39d9bbfa327mr720783a91.5.1789071634324;
-        Thu, 10 Sep 2026 13:20:34 -0700 (PDT)
+        bh=V0rAC78IGmF6UMoo1efDtTikBTEY+oo8toLUqaRvjb4=;
+        b=Awk50oHDq66vyLvcTuZijX2pnAvHRWMmeUwDAUypdIb/sX4f3b94piRmif0RYZ1d8N
+         80cDmlVHcMY54LxgCmzGmz1zY2N65JMbbX/qQz9ZzlLAI9MBV0RCPyYyuY+3yTenSr0m
+         xzZ70yVpnwRnxIZiI4qXLMYO3x+dT1caPG5KKWzhEeELQedR5Mb2kDrHvuDmYe8fi7xn
+         biy3AsGKQ8myBwjb8BlbztvbU8ZVqIIm6jfWWy564Nfuf0QJBhlX8tRZTkydWlQa2hbV
+         Gwag/12ERCmnoxg+tSGQ3JW0r/UZ4uKOyM/hsqMuSnTMBw4qVs5P97BwKA07zQwMvIE8
+         h8Nw==
+X-Forwarded-Encrypted: i=1; AKwUvBw/r+Ce7SDMueEbCK2W4j8vC3cjXN2KknQYxpuP8gOu2G+xRmOgnEekPJnZglrtyQPGO5BeKS0WYvU=@vger.kernel.org
+X-Gm-Message-State: AFuF++lFuMDkvaukSP/+/LfSJqCVNVAMq0k2y1VBIC5/AeQcLtIX+gtm
+	D1ZKT2Bsb7wXBwQAJupzNsodK/M4IxtoxK4vUWhcPUfKxQABimA0ALG1
+X-Gm-Gg: AYBFou0C34MaLB/mSmJa3ywjkaQo9LwYw/jLk1JJtqPZ3qKJSJOej5CiBBVTVg18e2B
+	kK1/iQucmZ5RcQSVW/jc0+/0ajsncGRSbzEE78vL+sEKk5iRp8G8mUx9R25xOnTsN8/RfgmKyCU
+	6IXw+Q5RUKdQRYROcqwX7yRPHTMHmO6XW8JKxzCetMUOGAtmSjufgPPnJJZMlXL6vtf26KOMv3B
+	g1eLbJ9QsrMGPMpkpEMNfscpJpm77uFsL/U3ZK4f0Vs9RT9LtxhYpzNppfMPmN7KINbiimi42AG
+	sGEJaNw38cDnFfslpZXY0ic0uHIyru5rwyv6a4D1FkDRqm/H2OqDaq9dYKf/l38riczbYFN0HcS
+	IzKo3+h/d1U4lF33pl3b0K+TUk9Pw/i3A6yzYA9Qcy73uqN+vWYGejJbRO10+Ca1dSAfY2llU1l
+	Cr8Y06GLMktMXBElQ2ni9fjwYE4QY4btAsLUSU/52y3sdQit8v0wIF2dfOd8a/FiTPf8iMYHNWD
+	bChDK8dlHchwENRsskFEfNj/IURMxXgkYxgjtWDLZEhw2l8ObryZd9+cOuR26t3tQ==
+X-Received: by 2002:a17:90b:5807:b0:398:e96a:8999 with SMTP id 98e67ed59e1d1-39d9c1befffmr644645a91.16.1789071851148;
+        Thu, 10 Sep 2026 13:24:11 -0700 (PDT)
 Received: from [192.168.0.158] (108-228-232-20.lightspeed.sndgca.sbcglobal.net. [108.228.232.20])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-14365bb6ba0sm840993c88.15.2026.09.10.13.20.33
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-14365a598aasm973848c88.1.2026.09.10.13.24.10
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 10 Sep 2026 13:20:33 -0700 (PDT)
-Message-ID: <9e039566-9b89-4d8b-9415-525716004ce7@gmail.com>
-Date: Thu, 10 Sep 2026 13:20:32 -0700
+        Thu, 10 Sep 2026 13:24:10 -0700 (PDT)
+Message-ID: <36c6e08d-4856-47ca-a45a-018cc563846e@gmail.com>
+Date: Thu, 10 Sep 2026 13:24:09 -0700
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -70,721 +70,95 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 15/15] HID: hid-oxp: add X2 auxiliary RGB zones
+Subject: Re: [PATCH 00/15] HID: hid-oxp: fix and extend X2-family controller
+ support
 To: Andrei Aldea <andrei1998@gmail.com>, Jiri Kosina <jikos@kernel.org>,
  Benjamin Tissoires <bentiss@kernel.org>
 Cc: linux-input@vger.kernel.org, linux-kernel@vger.kernel.org,
  Lee Jones <lee@kernel.org>, Pavel Machek <pavel@kernel.org>,
  linux-leds@vger.kernel.org, linux-api@vger.kernel.org
 References: <20260910032115.28669-1-andrei1998@gmail.com>
- <20260910032115.28669-16-andrei1998@gmail.com>
 Content-Language: en-US
 From: "Derek J. Clark" <derekjohn.clark@gmail.com>
-In-Reply-To: <20260910032115.28669-16-andrei1998@gmail.com>
+In-Reply-To: <20260910032115.28669-1-andrei1998@gmail.com>
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 
 
 On 9/9/26 20:21, Andrei Aldea wrote:
-> Add separate multicolor LED devices for the X2 guide button and rear logo
-> using Gen3 zones 5 and 6. Each LED retains independent color, brightness,
-> and monocolor or breathing effect state.
+> This 15-patch series fixes existing hid-oxp configuration and RGB issues
+> and adds controller and lighting support for ONEXPLAYER X2-family devices,
+> including the ONEXPLAYER 3 and X2 Mini Pro.
 >
-> Use the common LED array and type-tagged state introduced earlier.
-> Protect auxiliary state snapshots with scoped spinlocks, serialize output
-> with other RGB operations, and retry a failed command once. Do not alter
-> an auxiliary zone until userspace has supplied valid state, and restore
-> valid cached settings after resume.
+> The fixes correct the M1/M2 defaults, validate input reports and RGB state,
+> correct brightness and color scaling, serialize RGB updates, and make
+> configuration state and delayed-work lifetime local to each HID interface.
+> They also handle controller reinitialization across system suspend.
 >
-> Expose these zones only on the matched ONEXPLAYER 3 and X2 Mini Pro.
-> Physical validation of the latter remains outstanding.
+> The X2 support selects configuration interface 2, supplies the required
+> three-page button map, and adds the Gen3 protocol for joystick-ring zones
+> 1, 2 and 7. The Guide button and rear logo receive independent multicolor
+> LED devices using zones 5 and 6, with monocolor and breathing effects.
+> The final patch documents the controller and lighting sysfs ABI.
 >
-> Document the auxiliary effects together with the existing joystick-ring
-> effects and add the previously omitted controller, mapping, rumble, and
-> ring-lighting ABI. Add the ABI file to the ONEXPLAYER HID maintainer
-> pattern.
+> Patches 1-10 contain behavioral fixes. Patch 11 groups existing declarations.
+> Patch 12 adds X2 button maps and interface selection; patch 13 provides the
+> shared LED representation; patches 14-15 add X2 lighting support.
 >
-> Assisted-by: LLM
-> Reviewed-by: Derek J. Clark <derekjohn.clark@gmail.com>
-> Signed-off-by: Andrei Aldea <andrei1998@gmail.com>
-> ---
->   .../ABI/testing/sysfs-driver-hid-oxp          | 196 +++++++++++
->   MAINTAINERS                                   |   1 +
->   drivers/hid/hid-oxp.c                         | 305 +++++++++++++++++-
->   3 files changed, 497 insertions(+), 5 deletions(-)
+> This series is based on mainline commit
+> 50d05c7c76c96b90462f24debacca971d2e86713.
+>
+> Testing:
+>
+> I tested this series on an ONEXPLAYER 3 running Bazzite 44 with kernel
+> 7.2.0-ogc6.1.fc44.x86_64. Testing covered front controls, rear paddles,
+> Steam and Quick Access behavior, independent RGB effects, brightness/off
+> controls, and suspend/resume restoration. I also built the module with
+> W=1. X2 Mini Pro hardware testing remains outstanding.
+>
+> All 15 patches apply cleanly to the stated base and pass git diff --check
+> and checkpatch.pl with zero errors and zero warnings.
+>
+> Development and review:
+> https://github.com/OpenGamingCollective/linux-unstable/pull/13
+>
+> I used LLM assistance for protocol analysis, implementation,
+> documentation, code review, and test orchestration.
+
+
+Hi Andrei,
+
+Thank you for this, a lot of really good and needed changes are present 
+here that will greatly improve the driver and it takes a load off my plate.
+For the patches with Fixes tags please add Cc: stable@vger.kernel.org in 
+v2. I'd also revisit which patch some of them fix and make sure the tags 
+are correct, RGB and buttons were added in separate patches.
+
+Thanks,
+Derek.
+
+> Andrei Aldea (15):
+>    HID: hid-oxp: fix default M1 and M2 key mappings
+>    HID: hid-oxp: validate input report lengths before decoding
+>    HID: hid-oxp: retain fractional brightness when reading RGB status
+>    HID: hid-oxp: reject invalid Gen2 RGB status values
+>    HID: hid-oxp: fix multicolor LED intensity scaling
+>    HID: hid-oxp: serialize complete RGB updates
+>    HID: hid-oxp: select brightness policy for the new RGB effect
+>    HID: hid-oxp: stop configuration work during teardown
+>    HID: hid-oxp: keep configuration state per HID interface
+>    HID: hid-oxp: handle controller reinitialization across suspend
+>    HID: hid-oxp: group declarations and protocol definitions
+>    HID: hid-oxp: support three-page button maps on X2 controllers
+>    HID: hid-oxp: represent RGB LEDs with a common array
+>    HID: hid-oxp: add Gen3 joystick ring RGB support
+>    HID: hid-oxp: add X2 auxiliary RGB zones
+>
+>   .../ABI/testing/sysfs-driver-hid-oxp          |  196 ++
+>   MAINTAINERS                                   |    1 +
+>   drivers/hid/hid-oxp.c                         | 1743 ++++++++++++++---
+>   3 files changed, 1623 insertions(+), 317 deletions(-)
 >   create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-oxp
 >
-> diff --git a/Documentation/ABI/testing/sysfs-driver-hid-oxp b/Documentation/ABI/testing/sysfs-driver-hid-oxp
-> new file mode 100644
-> index 0000000..7c97f28
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-driver-hid-oxp
-> @@ -0,0 +1,196 @@
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/effect
-> +What:		/sys/class/leds/oxp:rgb:guide_button/effect
-> +What:		/sys/class/leds/oxp:rgb:rear_logo/effect
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write attribute selecting the lighting effect for the LED.
-> +
-> +		The joystick_rings LED supports the following effect names:
-> +
-> +		``aurora``, ``birthday_cake``, ``flowing_light``,
-> +		``chroma_popping``, ``neon``, ``chroma_breathing``, ``dreamy``,
-> +		``warm_sun``, ``cyberpunk``, ``sea_foam``, ``sunset_afterglow``,
-> +		``colorful``, ``monster_woke``, ``green_breathing``,
-> +		``blue_breathing``, ``yellow_breathing``, ``teal_breathing``,
-> +		``purple_breathing``, ``foggy_haze``, and ``monocolor``.
-> +
-> +		The guide_button and rear_logo LEDs support ``monocolor`` and
-> +		``breathing``. These two LEDs were added in August 2026 and are
-> +		available on the ONEXPLAYER 3 and ONEXPLAYER X2 Mini Pro.
-> +
-> +		The ``monocolor`` effect displays the color selected through
-> +		the standard multicolor LED ``multi_intensity`` attribute.
-> +		The auxiliary ``breathing`` effect pulses the selected color.
-> +		Other joystick ring effects select firmware-defined presets.
-> +		The standard brightness and multicolor attributes are documented
-> +		in Documentation/ABI/testing/sysfs-class-led and
-> +		Documentation/ABI/testing/sysfs-class-led-multicolor.
-> +
-> +		Read returns the selected effect name followed by a newline.
-> +		The value may reflect cached driver state rather than a live
-> +		hardware query. The joystick_rings LED may report ``unknown``
-> +		when no known effect has been recorded; this is not a selectable
-> +		effect. Auxiliary effect writes queue the update asynchronously.
-> +
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/effect_index
-> +What:		/sys/class/leds/oxp:rgb:guide_button/effect_index
-> +What:		/sys/class/leds/oxp:rgb:rear_logo/effect_index
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only list of effect names supported by the corresponding
-> +		LED, separated by spaces and terminated by a newline.
-> +
-> +		The supported names are described in the effect entry above.
-> +		The list is specific to each LED and does not include ``unknown``.
-> +		The guide_button and rear_logo attributes were added in August
-> +		2026 and are available on the ONEXPLAYER 3 and ONEXPLAYER X2
-> +		Mini Pro.
-> +
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/enabled
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write enable state for the joystick ring lighting.
-> +
-> +		Write ``true`` to enable lighting or ``false`` to disable it.
-> +		Only these literal names are accepted, not numeric boolean
-> +		values. Read requests lighting status and returns the driver's
-> +		enable state as one of these names followed by a newline.
-> +
-> +		This attribute is not exposed for guide_button or rear_logo.
-> +
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/enabled_index
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only list of names accepted by enabled. Returns
-> +		``false true`` followed by a newline.
-> +
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/speed
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write firmware animation-speed setting for the joystick
-> +		ring lighting. Write a decimal integer from 0 through 9.
-> +		These are firmware levels, not a duration or frequency.
-> +
-> +		Read requests lighting status and returns the driver's speed
-> +		setting as a decimal integer followed by a newline.
-> +		This attribute is not exposed for guide_button or rear_logo.
-> +
-> +What:		/sys/class/leds/oxp:rgb:joystick_rings/speed_range
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only range of values accepted by speed. Returns ``0-9``
-> +		followed by a newline; both endpoints are inclusive.
-> +
-> +What:		/sys/bus/hid/devices/.../gamepad_mode
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write controller mode on the HID configuration interface
-> +		with usage page 0xff00 (shared by Gen2 and X2/Gen3 devices). Write one of the following names:
-> +
-> +		* ``xinput``: normal gamepad input.
-> +		* ``debug``: route controller events to a hidraw interface for
-> +		  input-mapping diagnostics instead of the xpad evdev interface.
-> +
-> +		Read returns the driver's cached mode name followed by a newline,
-> +		not a firmware query. The initial cached mode is ``xinput``.
-> +		Switching to ``xinput`` also reapplies the cached rumble intensity.
-> +
-> +		This attribute and the other controller configuration attributes
-> +		below are attached directly to the selected HID configuration device's
-> +		sysfs directory, not an input device or LED directory. They are
-> +		not exposed on Gen1 configuration interfaces.
-> +
-> +What:		/sys/bus/hid/devices/.../gamepad_mode_index
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only list of supported controller modes. Returns
-> +		``xinput debug`` followed by a newline.
-> +
-> +What:		/sys/bus/hid/devices/.../button_a
-> +What:		/sys/bus/hid/devices/.../button_b
-> +What:		/sys/bus/hid/devices/.../button_x
-> +What:		/sys/bus/hid/devices/.../button_y
-> +What:		/sys/bus/hid/devices/.../button_lb
-> +What:		/sys/bus/hid/devices/.../button_rb
-> +What:		/sys/bus/hid/devices/.../button_lt
-> +What:		/sys/bus/hid/devices/.../button_rt
-> +What:		/sys/bus/hid/devices/.../button_start
-> +What:		/sys/bus/hid/devices/.../button_select
-> +What:		/sys/bus/hid/devices/.../button_l3
-> +What:		/sys/bus/hid/devices/.../button_r3
-> +What:		/sys/bus/hid/devices/.../button_d_up
-> +What:		/sys/bus/hid/devices/.../button_d_down
-> +What:		/sys/bus/hid/devices/.../button_d_left
-> +What:		/sys/bus/hid/devices/.../button_d_right
-> +What:		/sys/bus/hid/devices/.../button_m1
-> +What:		/sys/bus/hid/devices/.../button_m2
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write output mapping for the named physical controller
-> +		button on a HID configuration device with usage page 0xff00.
-> +
-> +		Write one exact, case-sensitive mapping name from
-> +		button_mapping_options, such as ``BTN_A`` or ``KEY_F15``.
-> +		Numeric key codes, multiple names, and arbitrary key names
-> +		are not accepted.
-> +
-> +		Read returns the driver's cached mapping name followed by a
-> +		newline. Writes update that cache and queue the firmware update
-> +		asynchronously; successful writes do not confirm that the
-> +		hardware has already applied the mapping.
-> +
-> +What:		/sys/bus/hid/devices/.../button_mapping_options
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only list of output mapping names accepted by the
-> +		controller button attributes, separated by spaces and terminated by a
-> +		newline. All 18 button attributes accept the same list.
-> +
-> +		The gamepad mapping names are:
-> +
-> +		``BTN_A``, ``BTN_B``, ``BTN_X``, ``BTN_Y``, ``BTN_LB``,
-> +		``BTN_RB``, ``BTN_LT``, ``BTN_RT``, ``BTN_START``, ``BTN_SELECT``,
-> +		``BTN_L3``, ``BTN_R3``, ``DPAD_UP``, ``DPAD_DOWN``,
-> +		``DPAD_LEFT``, ``DPAD_RIGHT``, ``JOY_L_UP``, ``JOY_L_UP_RIGHT``,
-> +		``JOY_L_RIGHT``, ``JOY_L_DOWN_RIGHT``, ``JOY_L_DOWN``,
-> +		``JOY_L_DOWN_LEFT``, ``JOY_L_LEFT``, ``JOY_L_UP_LEFT``,
-> +		``JOY_R_UP``, ``JOY_R_UP_RIGHT``, ``JOY_R_RIGHT``,
-> +		``JOY_R_DOWN_RIGHT``, ``JOY_R_DOWN``, ``JOY_R_DOWN_LEFT``,
-> +		``JOY_R_LEFT``, ``JOY_R_UP_LEFT``, and ``BTN_GUIDE``.
-> +
-> +		Keyboard mapping names are ``KEY_F1`` through ``KEY_F24``.
-> +		There are no ``BTN_M1`` or ``BTN_M2`` output mapping names;
-> +		button_m1 and button_m2 select from the same options as the
-> +		other buttons.
-> +
-> +What:		/sys/bus/hid/devices/.../reset_buttons
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Write-only reset of the controller's button mappings.
-> +		Write the decimal value ``1`` to restore the driver's default
-> +		mappings and send them to the controller. Other values are
-> +		rejected.
-> +
-> +		Main controls map to their corresponding gamepad functions;
-> +		M1 maps to ``KEY_F15`` and M2 to ``KEY_F16``. This resets button
-> +		mappings only, not lighting, rumble, or other device settings.
-> +		It is not a factory reset. Cached mappings are reset before
-> +		the firmware update and are not rolled back if that update fails.
-> +
-> +What:		/sys/bus/hid/devices/.../rumble_intensity
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read/write rumble-intensity level on the HID configuration
-> +		device with usage page 0xff00. Write a decimal integer from 0 through 5. These are
-> +		firmware levels, not percentages or values in physical units.
-> +
-> +		Read returns the driver's cached level as a decimal integer
-> +		followed by a newline. The initial cached value is 5. A write
-> +		sends the firmware command before updating the cached level.
-> +
-> +What:		/sys/bus/hid/devices/.../rumble_intensity_range
-> +Date:		April 2026
-> +Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-> +Description:	Read-only range of values accepted by the rumble_intensity
-> +		attribute. Returns ``0-5`` followed by a newline; both endpoints
-> +		are inclusive.
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index c392ded..fe5a2f6 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -20381,6 +20381,7 @@ ONEXPLAYER HID DRIVER
->   M:	Derek J. Clark <derekjohn.clark@gmail.com>
->   L:	linux-input@vger.kernel.org
->   S:	Maintained
-> +F:	Documentation/ABI/testing/sysfs-driver-hid-oxp
->   F:	drivers/hid/hid-oxp.c
->   
->   ONEXPLAYER PLATFORM EC DRIVER
-> diff --git a/drivers/hid/hid-oxp.c b/drivers/hid/hid-oxp.c
-> index 9a46602..757cef8 100644
-> --- a/drivers/hid/hid-oxp.c
-> +++ b/drivers/hid/hid-oxp.c
-> @@ -45,6 +45,7 @@
->   #define OXP_GET_PROPERTY 0xfc
->   #define OXP_SET_PROPERTY 0xfd
->   #define OXP_EFFECT_MONO_TRUE 0xfe /* actual index for monocolor */
-> +#define OXP_EFFECT_BREATHING_TRUE 0xf0
->   
->   #define OXP_DEVICE_ATTR_RW(_name, _group)                                     \
->   	static ssize_t _name##_store(struct device *dev,                      \
-> @@ -358,6 +359,17 @@ struct oxp_gen_3_rgb_color_report {
->   
->   enum oxp_rgb_type {
->   	OXP_RGB_FULL,
-> +	OXP_RGB_AUX,
-> +};
-> +
-> +enum oxp_rgb_aux_effect {
-> +	OXP_RGB_AUX_EFFECT_MONOCOLOR,
-> +	OXP_RGB_AUX_EFFECT_BREATHING,
-> +};
-> +
-> +static const char *const oxp_rgb_aux_effect_text[] = {
-> +	[OXP_RGB_AUX_EFFECT_MONOCOLOR] = "monocolor",
-> +	[OXP_RGB_AUX_EFFECT_BREATHING] = "breathing",
->   };
->   
->   struct oxp_rgb_full_state {
-> @@ -367,18 +379,30 @@ struct oxp_rgb_full_state {
->   	u8 speed;
->   };
->   
-> +struct oxp_rgb_aux_state {
-> +	enum led_brightness brightness;
-> +	bool valid;
-> +	u8 effect;
-> +	u8 green;
-> +	u8 blue;
-> +	u8 red;
-> +};
-> +
->   struct oxp_rgb_led {
->   	struct mc_subled subled_info[3];
->   	struct led_classdev_mc mc_cdev;
->   	struct delayed_work work;
->   	struct oxp_hid_cfg *cfg;
-> +	spinlock_t state_lock; /* protects auxiliary RGB state */
->   	void *state;
->   	u8 type;
-> +	u8 zone;
->   };
->   
->   struct oxp_rgb_led_desc {
->   	const char *name;
->   	u8 type;
-> +	u8 zone;
->   };
->   
->   struct oxp_attr {
-> @@ -417,6 +441,23 @@ static struct oxp_rgb_full_state *oxp_rgb_full_state(struct oxp_rgb_led *led)
->   	switch (led->type) {
->   	case OXP_RGB_FULL:
->   		return led->state;
-> +	case OXP_RGB_AUX:
-> +		return NULL;
-> +	}
-> +
-> +	return NULL;
-> +}
-> +
-> +static struct oxp_rgb_aux_state *oxp_rgb_aux_state(struct oxp_rgb_led *led)
-> +{
-> +	if (!led)
-> +		return NULL;
-> +
-> +	switch (led->type) {
-> +	case OXP_RGB_FULL:
-> +		return NULL;
-> +	case OXP_RGB_AUX:
-> +		return led->state;
->   	}
->   
->   	return NULL;
-> @@ -473,6 +514,8 @@ static int oxp_rgb_status_store(struct oxp_rgb_led *led, u8 enabled, u8 speed,
->   				u8 brightness);
->   static int oxp_rgb_effect_set(struct oxp_rgb_led *led, u8 effect);
->   
-> +static void oxp_rgb_aux_restore_locked(struct oxp_rgb_led *led);
-> +
->   static void oxp_rgb_restore(struct oxp_hid_cfg *cfg)
->   {
->   	struct oxp_rgb_full_state *state;
-> @@ -510,6 +553,9 @@ static void oxp_rgb_restore(struct oxp_hid_cfg *cfg)
->   					"Error: Failed to restore RGB effect: %i\n",
->   					ret);
->   			break;
-> +		case OXP_RGB_AUX:
-> +			oxp_rgb_aux_restore_locked(led);
-> +			break;
->   		}
->   	}
->   }
-> @@ -842,6 +888,19 @@ static int oxp_gen_3_rgb_property_out(struct oxp_hid_cfg *cfg, u8 *data,
->   	return first_err;
->   }
->   
-> +static int oxp_gen_3_rgb_zone_property_out(struct oxp_hid_cfg *cfg,
-> +					   u8 *data, u8 data_size)
-> +{
-> +	int ret;
-> +
-> +	ret = oxp_gen_3_property_out(cfg, data, data_size);
-> +	/* Retry once if the write or its acknowledgment failed. */
-> +	if (ret)
-> +		ret = oxp_gen_3_property_out(cfg, data, data_size);
-> +
-> +	return ret;
-> +}
-> +
->   static void oxp_gen_3_rgb_fill_color(struct oxp_gen_3_rgb_color_report *report,
->   				     u8 command, u8 zone, u8 red, u8 green,
->   				     u8 blue)
-> @@ -858,6 +917,85 @@ static void oxp_gen_3_rgb_fill_color(struct oxp_gen_3_rgb_color_report *report,
->   	report->final_green = green;
->   }
->   
-> +static bool oxp_rgb_aux_snapshot(struct oxp_rgb_led *led,
-> +				 struct oxp_rgb_aux_state *state)
-> +{
-> +	struct oxp_rgb_aux_state *cached = oxp_rgb_aux_state(led);
-> +
-> +	if (!cached)
-> +		return false;
-> +
-> +	scoped_guard(spinlock_irqsave, &led->state_lock) {
-> +		*state = *cached;
-> +	}
-> +
-> +	return state->valid;
-> +}
-> +
-> +static int oxp_rgb_aux_apply(struct oxp_rgb_led *led,
-> +			     const struct oxp_rgb_aux_state *state)
-> +{
-> +	struct oxp_hid_cfg *cfg = led->cfg;
-> +	unsigned int max_brightness = led->mc_cdev.led_cdev.max_brightness;
-> +	unsigned int brightness = min_t(unsigned int, state->brightness,
-> +						 max_brightness);
-> +	u8 status_data[6] = { OXP_SET_PROPERTY, led->zone, 0x02,
-> +			      OXP_FEAT_DISABLED, 0x05, 0x04 };
-> +	struct oxp_gen_3_rgb_color_report color_report;
-> +	u8 command;
-> +	u8 green;
-> +	u8 blue;
-> +	u8 red;
-> +	int ret;
-> +
-> +	if (brightness)
-> +		status_data[3] = OXP_FEAT_ENABLED;
-> +
-> +	ret = oxp_gen_3_rgb_zone_property_out(cfg, status_data,
-> +					      sizeof(status_data));
-> +	if (ret || !brightness)
-> +		return ret;
-> +
-> +	/* Scale each RGB channel by brightness, rounding to the nearest integer. */
-> +	red = ((unsigned int)state->red * brightness + max_brightness / 2) /
-> +	      max_brightness;
-> +	green = ((unsigned int)state->green * brightness + max_brightness / 2) /
-> +		max_brightness;
-> +	blue = ((unsigned int)state->blue * brightness + max_brightness / 2) /
-> +	       max_brightness;
-> +
-> +	switch (state->effect) {
-> +	case OXP_RGB_AUX_EFFECT_MONOCOLOR:
-> +		command = OXP_EFFECT_MONO_TRUE;
-> +		break;
-> +	case OXP_RGB_AUX_EFFECT_BREATHING:
-> +		command = OXP_EFFECT_BREATHING_TRUE;
-> +		break;
-> +	default:
-> +		return -EINVAL;
-> +	}
-> +
-> +	oxp_gen_3_rgb_fill_color(&color_report, command, led->zone, red, green,
-> +				 blue);
-> +	return oxp_gen_3_rgb_zone_property_out(cfg, (u8 *)&color_report,
-> +					       sizeof(color_report));
-> +}
-> +
-> +static void oxp_rgb_aux_restore_locked(struct oxp_rgb_led *led)
-> +{
-> +	struct oxp_hid_cfg *cfg = led->cfg;
-> +	struct oxp_rgb_aux_state state;
-> +	int ret;
-> +
-> +	if (!oxp_rgb_aux_snapshot(led, &state))
-> +		return;
-> +
-> +	ret = oxp_rgb_aux_apply(led, &state);
-> +	if (ret)
-> +		dev_err(&cfg->hdev->dev,
-> +			"Failed to restore RGB zone %#04x: %i\n", led->zone, ret);
-> +}
-> +
->   static ssize_t gamepad_mode_store(struct device *dev,
->   				  struct device_attribute *attr, const char *buf,
->   				  size_t count)
-> @@ -1913,6 +2051,25 @@ static void oxp_gen_3_rgb_queue(struct oxp_rgb_led *led,
->   			"Error: Failed to write RGB color: %i\n", ret);
->   }
->   
-> +static void oxp_rgb_aux_queue(struct oxp_rgb_led *led)
-> +{
-> +	struct oxp_hid_cfg *cfg = led->cfg;
-> +	struct oxp_rgb_aux_state state;
-> +	int ret;
-> +
-> +	if (!oxp_rgb_aux_snapshot(led, &state))
-> +		return;
-> +
-> +	guard(mutex)(&cfg->rgb_mutex);
-> +	if (READ_ONCE(cfg->suspended) || READ_ONCE(cfg->removing))
-> +		return;
-> +
-> +	ret = oxp_rgb_aux_apply(led, &state);
-> +	if (ret)
-> +		dev_err(led->mc_cdev.led_cdev.dev,
-> +			"Failed to write RGB zone %#04x: %i\n", led->zone, ret);
-> +}
-> +
->   static void oxp_rgb_queue_fn(struct work_struct *work)
->   {
->   	struct oxp_rgb_led *led = container_of(to_delayed_work(work),
-> @@ -1929,6 +2086,9 @@ static void oxp_rgb_queue_fn(struct work_struct *work)
->   		else
->   			oxp_rgb_full_queue(led, led->state);
->   		break;
-> +	case OXP_RGB_AUX:
-> +		oxp_rgb_aux_queue(led);
-> +		break;
->   	}
->   }
->   
-> @@ -1937,16 +2097,112 @@ static void oxp_rgb_brightness_set(struct led_classdev *led_cdev,
->   {
->   	struct led_classdev_mc *mc_cdev = lcdev_to_mccdev(led_cdev);
->   	struct oxp_rgb_led *led = container_of(mc_cdev, struct oxp_rgb_led,
-> -					     mc_cdev);
-> +					       mc_cdev);
->   	struct oxp_hid_cfg *cfg = led->cfg;
-> +	struct oxp_rgb_aux_state *state;
->   
-> -	if (READ_ONCE(cfg->suspended) || READ_ONCE(cfg->removing))
-> +	if (READ_ONCE(cfg->removing))
-> +		return;
-> +
-> +	switch (led->type) {
-> +	case OXP_RGB_FULL:
-> +		if (READ_ONCE(cfg->suspended))
-> +			return;
-> +		led_cdev->brightness = brightness;
-> +		break;
-> +	case OXP_RGB_AUX:
-> +		state = led->state;
-> +		led_cdev->brightness = brightness;
-> +		scoped_guard(spinlock_irqsave, &led->state_lock) {
-> +			state->brightness = brightness;
-> +			state->red = led->subled_info[0].intensity;
-> +			state->green = led->subled_info[1].intensity;
-> +			state->blue = led->subled_info[2].intensity;
-> +			state->valid = true;
-> +		}
-> +		if (READ_ONCE(cfg->suspended))
-> +			return;
-> +		break;
-> +	default:
->   		return;
-> +	}
->   
-> -	led_cdev->brightness = brightness;
->   	mod_delayed_work(system_dfl_wq, &led->work, msecs_to_jiffies(50));
->   }
->   
-> +static ssize_t oxp_rgb_aux_effect_store(struct device *dev,
-> +					struct device_attribute *attr,
-> +					const char *buf, size_t count)
-> +{
-> +	struct oxp_rgb_led *led = oxp_rgb_led_from_dev(dev);
-> +	struct oxp_hid_cfg *cfg = led->cfg;
-> +	struct oxp_rgb_aux_state *state = oxp_rgb_aux_state(led);
-> +	int ret;
-> +
-> +	if (!state || READ_ONCE(cfg->removing))
-> +		return -ENODEV;
-> +
-> +	ret = sysfs_match_string(oxp_rgb_aux_effect_text, buf);
-> +	if (ret < 0)
-> +		return ret;
-> +
-> +	scoped_guard(spinlock_irqsave, &led->state_lock) {
-> +		state->effect = ret;
-> +		state->valid = true;
-> +	}
-> +
-> +	if (!READ_ONCE(cfg->suspended) && !READ_ONCE(cfg->removing))
-> +		mod_delayed_work(system_dfl_wq, &led->work,
-> +				 msecs_to_jiffies(50));
-> +
-> +	return count;
-> +}
-> +
-> +static ssize_t oxp_rgb_aux_effect_show(struct device *dev,
-> +				       struct device_attribute *attr, char *buf)
-> +{
-> +	struct oxp_rgb_led *led = oxp_rgb_led_from_dev(dev);
-> +	struct oxp_hid_cfg *cfg = led->cfg;
-> +	struct oxp_rgb_aux_state state;
-> +
-> +	if (!oxp_rgb_aux_state(led) || READ_ONCE(cfg->removing))
-> +		return -ENODEV;
-> +
-> +	oxp_rgb_aux_snapshot(led, &state);
-> +	if (state.effect >= ARRAY_SIZE(oxp_rgb_aux_effect_text))
-> +		return -EINVAL;
-> +
-> +	return sysfs_emit(buf, "%s\n", oxp_rgb_aux_effect_text[state.effect]);
-> +}
-> +static DEVICE_ATTR_RW_NAMED(oxp_rgb_aux_effect, "effect");
-> +
-> +static ssize_t oxp_rgb_aux_effect_index_show(struct device *dev,
-> +					     struct device_attribute *attr,
-> +					     char *buf)
-> +{
-> +	int count = 0;
-> +	int i;
-> +
-> +	for (i = 0; i < ARRAY_SIZE(oxp_rgb_aux_effect_text); i++)
-> +		count += sysfs_emit_at(buf, count, "%s ",
-> +				       oxp_rgb_aux_effect_text[i]);
-> +	if (count)
-> +		buf[count - 1] = '\n';
-> +
-> +	return count;
-> +}
-> +static DEVICE_ATTR_RO_NAMED(oxp_rgb_aux_effect_index, "effect_index");
-> +
-> +static struct attribute *oxp_rgb_aux_attrs[] = {
-> +	&dev_attr_oxp_rgb_aux_effect.attr,
-> +	&dev_attr_oxp_rgb_aux_effect_index.attr,
-> +	NULL,
-> +};
-> +
-> +static const struct attribute_group oxp_rgb_aux_attr_group = {
-> +	.attrs = oxp_rgb_aux_attrs,
-> +};
-> +
->   static struct attribute *oxp_rgb_attrs[] = {
->   	&dev_attr_effect.attr,
->   	&dev_attr_effect_index.attr,
-> @@ -1966,12 +2222,23 @@ static const struct oxp_rgb_led_desc oxp_rgb_led_descs[] = {
->   		.name = "oxp:rgb:joystick_rings",
->   		.type = OXP_RGB_FULL,
->   	},
-> +	{
-> +		.name = "oxp:rgb:guide_button",
-> +		.type = OXP_RGB_AUX,
-> +		.zone = 0x05,
-> +	},
-> +	{
-> +		.name = "oxp:rgb:rear_logo",
-> +		.type = OXP_RGB_AUX,
-> +		.zone = 0x06,
-> +	},
->   };
->   
->   static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
->   			    const struct oxp_rgb_led_desc *desc)
->   {
->   	struct oxp_rgb_full_state *full_state;
-> +	struct oxp_rgb_aux_state *aux_state;
->   	struct hid_device *hdev = cfg->hdev;
->   	u8 green;
->   	u8 blue;
-> @@ -1979,6 +2246,7 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
->   
->   	led->cfg = cfg;
->   	led->type = desc->type;
-> +	led->zone = desc->zone;
->   
->   	switch (led->type) {
->   	case OXP_RGB_FULL:
-> @@ -1992,6 +2260,20 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
->   		green = 0x22;
->   		blue = 0x99;
->   		break;
-> +	case OXP_RGB_AUX:
-> +		aux_state = devm_kzalloc(&hdev->dev, sizeof(*aux_state),
-> +					 GFP_KERNEL);
-> +		if (!aux_state)
-> +			return -ENOMEM;
-> +		aux_state->red = 0xff;
-> +		aux_state->green = 0xff;
-> +		aux_state->blue = 0xff;
-> +		aux_state->effect = OXP_RGB_AUX_EFFECT_MONOCOLOR;
-> +		led->state = aux_state;
-> +		red = 0xff;
-> +		green = 0xff;
-> +		blue = 0xff;
-> +		break;
->   	default:
->   		return -EINVAL;
->   	}
-> @@ -2020,6 +2302,7 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
->   	led->mc_cdev.led_cdev.brightness_set = oxp_rgb_brightness_set;
->   	led->mc_cdev.num_colors = ARRAY_SIZE(led->subled_info);
->   	led->mc_cdev.subled_info = led->subled_info;
-> +	spin_lock_init(&led->state_lock);
->   	INIT_DELAYED_WORK(&led->work, oxp_rgb_queue_fn);
->   
->   	return 0;
-> @@ -2027,7 +2310,8 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
->   
->   static int oxp_rgb_leds_register(struct oxp_hid_cfg *cfg)
->   {
-> -	int led_count = ARRAY_SIZE(oxp_rgb_led_descs);
-> +	int led_count = cfg->x2_rgb ? ARRAY_SIZE(oxp_rgb_led_descs) : 1;
-> +	const struct attribute_group *attr_group;
->   	struct hid_device *hdev = cfg->hdev;
->   	struct oxp_rgb_led *led;
->   	int ret;
-> @@ -2051,8 +2335,19 @@ static int oxp_rgb_leds_register(struct oxp_hid_cfg *cfg)
->   			return dev_err_probe(&hdev->dev, ret,
->   					     "Failed to create RGB device\n");
->   
-> +		switch (led->type) {
-> +		case OXP_RGB_FULL:
-> +			attr_group = &oxp_rgb_attr_group;
-> +			break;
-> +		case OXP_RGB_AUX:
-> +			attr_group = &oxp_rgb_aux_attr_group;
-> +			break;
-> +		default:
-> +			return -EINVAL;
-> +		}
-> +
->   		ret = devm_device_add_group(led->mc_cdev.led_cdev.dev,
-> -					    &oxp_rgb_attr_group);
-> +					    attr_group);
->   		if (ret)
->   			return dev_err_probe(led->mc_cdev.led_cdev.dev, ret,
->   					     "Failed to create RGB configuration attributes\n");
-
-
-I'm unable to test as these features are not available on my OneXPlayer 
-F1 Pro.
-Reviewed-by: Derek J. Clark <derekjohn.clark@gmail.com>
-
+>
+> base-commit: 50d05c7c76c96b90462f24debacca971d2e86713
