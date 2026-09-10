@@ -1,180 +1,140 @@
-Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0221653ECE9;
-	Thu, 10 Sep 2026 16:50:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6820637E2E5;
+	Thu, 10 Sep 2026 16:50:50 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789059011; cv=none; b=RtOAISAYBb9/gUvyf0VpSkPh+MzVhJpAlWA3i6qevdaeptN5zoIqHRkC82NpH2mulIwZwxODCsP1rGRLDPAJlyaPOCel7N9GRo/2+Zh625z+fDfzyeYGAdqD23xGmtrJMpC4NMKqdaAkusPa3Lx2DzJdVSQ4W9AB8d6vbQ1LBjw=
+	t=1789059052; cv=none; b=NhIWAhlmwRWJFQheK35qpgMpw3Mu62TWEsoNGURRlr8yKo2OQxGlm/COLJRUbjieyhs+MJe/aMab/iLS3rdFrKxG9leM8ds6ex7pNqrqDNJRHiPs1cbfWTQlrQJO1sMWtZG6SkiuwHh2eq7sy4XqMRq8+B3DSQL3o5yBsLHVPQk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789059011; c=relaxed/simple;
-	bh=ZobS2slsYgymP728EIsS1ZZzI/jDqEeK66f+TXlhRLQ=;
-	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=BmoxuR/l2deJbXkIN+z/32Zw/BWWaaENGHfspAS9VG0/T06XvJU8l3D+yQIYJFfBUQcW1zEs8UnW5goU95N3y7cqwL/agb88f20jqdGVGrf9HEDZNUI4HpL+yG98vi98AbWAckUaiiCLBHrGA3vrP95mabo7aH0ujPVf3fIoqys=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=XgKzfBTS; arc=none smtp.client-ip=213.97.179.56
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
+	s=arc-20240116; t=1789059052; c=relaxed/simple;
+	bh=ve+YzAe1THUrssJx9M0hn0ogePi0eRNIQbzjOTvRZBc=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=kRQHszbEPnhkd4isG+5eTIlopqmh1dgMXuxVwELdT0PggxC6IObmP5A8yNh/gJcXXpg0jF1Jq7gJiSIISxXJ5dgJhjMR62sarBh/0RMScoKssK+bXHJa3PdmaluoBBElMYwOGwyKwwP0uFa/1oK3M32xTGKm/9H8bDZs/+sDBng=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=gBOAFJFX; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="XgKzfBTS"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
-	s=20170329; h=Cc:To:Message-Id:Content-Transfer-Encoding:Content-Type:
-	MIME-Version:Subject:Date:From:From:Reply-To;
-	bh=yEhMQLJIbP2So5XydAfHqKEdD7p0FcLEoTOB/mDNo2A=; b=XgKzfBTStCdsvTd4feuEEWqHBK
-	c/YwChzbakcux2jWKS3mVcP+hlWrxBcSNl/EVcm00WoyINZpyl/SeI4nEuyx5DsmOucg1tMizMSGb
-	LBeMHFiIOYEr2CiZzoZ7PzWHVf5oPqHZl0aOFd57yS85eZnXBtuatz2Nfp8hWrat3q6gWSDANou5I
-	I7jg8gh6x+fMNGt/JCcDsE0v2O9PqD6qzkcQbGVpGMw6vs7e4BOC/Rzln9WoQnu6rRaCfgsTFp0rB
-	L4l6ALJSYgBKN8NlGgKV2scyyU7lyMVA9T7XGnOFCeGJFMGh1OR/J2GGuk17HZnzW6vfSddk0a49r
-	DdETPr0w==;
-Received: from [177.172.123.122] (helo=[192.168.15.100])
-	by fanzine2.igalia.com with esmtpsa 
-	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
-	id 1x4hyO-000GV1-5R; Thu, 10 Sep 2026 18:50:04 +0200
-From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-Date: Thu, 10 Sep 2026 13:49:28 -0300
-Subject: [PATCH v6 6/6] selftests: prctl: Add test for long thread names
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="gBOAFJFX"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CC68E1F000FF;
+	Thu, 10 Sep 2026 16:50:48 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1789059050;
+	bh=IqJaHL1SoRN/fotdlqk5VLMGRkmaCB9LrRkSUPHbFYk=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=gBOAFJFXcsUfzZ7HUbA2L4BZ/os79bLL9sOZgRLs+QlBJSJOQ9RapQCnGB3aBUfua
+	 dU4uAhYx4Ex4W7yZ8J1OKmWo9jLpC4xIlQ+FqBupnW42bnSg8aJi/pYdqZ04e92yUd
+	 Kxf5Arcsc6UTWxPzArcx9PNNdg0hyysSJyrgydPuhURYVcHD90qTNOm+fkNsi+Es/p
+	 x0fsJv2vtUtcQSGs4X3uCWnTV2WW9Hjkr7hiJc7NU+nKPWc4v44ugdz21y5vYaZ9TL
+	 0+G/AOSfXmU7SOsAUirPtDS9Tm6eiLyxNMtwHc228ZMAFuVYKTf8WujBfcO/I9+Y+q
+	 ZL+hMLxpHPoig==
+Date: Thu, 10 Sep 2026 18:50:46 +0200
+From: Alejandro Colomar <alx@kernel.org>
+To: "Darrick J. Wong" <djwong@kernel.org>
+Cc: Andrey Albershteyn <aalbersh@kernel.org>, linux-man@vger.kernel.org, 
+	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
+	linux-api@vger.kernel.org
+Subject: Re: [PATCH v2] man/man2: introduce man page for
+ file_getattr/file_setattr syscalls
+Message-ID: <aqLfs-6crlKiqZw9@devuan>
+References: <20260910104120.3964799-1-aalbersh@kernel.org>
+ <aqKgTGHh3nDnM3eh@devuan>
+ <20260910161204.GE6238@frogsfrogsfrogs>
+ <aqLY-1do_4hmZpfI@devuan>
+ <20260910164428.GF6238@frogsfrogsfrogs>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 8bit
-Message-Id: <20260910-tonyk-long_name-v6-6-d70afbf194c5@igalia.com>
-References: <20260910-tonyk-long_name-v6-0-d70afbf194c5@igalia.com>
-In-Reply-To: <20260910-tonyk-long_name-v6-0-d70afbf194c5@igalia.com>
-To: Peter Zijlstra <peterz@infradead.org>, 
- Juri Lelli <juri.lelli@redhat.com>, 
- Vincent Guittot <vincent.guittot@linaro.org>, 
- Steven Rostedt <rostedt@goodmis.org>, 
- Christian Brauner <brauner@kernel.org>, Kees Cook <kees@kernel.org>, 
- Shuah Khan <shuah@kernel.org>, willy@infradead.org, 
- mathieu.desnoyers@efficios.com, David Laight <david.laight.linux@gmail.com>, 
- Linus Torvalds <torvalds@linux-foundation.org>, akpm@linux-foundation.org, 
- Yafang Shao <laoar.shao@gmail.com>, andrii.nakryiko@gmail.com, 
- arnaldo.melo@gmail.com, Petr Mladek <pmladek@suse.com>
-Cc: linux-kernel@vger.kernel.org, kernel-dev@igalia.com, linux-mm@kvack.org, 
- linux-api@vger.kernel.org, linux-trace-kernel@vger.kernel.org, 
- =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-X-Mailer: b4 0.15.2
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="5wzgosbtrgpzmppd"
+Content-Disposition: inline
+In-Reply-To: <20260910164428.GF6238@frogsfrogsfrogs>
 
-Add tests for the new interface to set and get long thread names. The
-kernel should accept the LONG_NAME and returning it accordingly. For the
-old PR_GET_NAME interface, the kernel should truncate the name up to 16
-chars. /proc/<task>/comm should return the same string ad PR_GET_NAME.
 
-While here, fix the check_is_name_correct() logic. It currently returns 1
-for success, or a negative number for error. EXPECT_TRUE() evaluates any
-non-zero value as true, so the error will be evaluated as a success. Make
-the logic more robust and straightforward by returning the results of
-strcmp() and expecting zero as success.
+--5wzgosbtrgpzmppd
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+From: Alejandro Colomar <alx@kernel.org>
+To: "Darrick J. Wong" <djwong@kernel.org>
+Cc: Andrey Albershteyn <aalbersh@kernel.org>, linux-man@vger.kernel.org, 
+	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
+	linux-api@vger.kernel.org
+Subject: Re: [PATCH v2] man/man2: introduce man page for
+ file_getattr/file_setattr syscalls
+Message-ID: <aqLfs-6crlKiqZw9@devuan>
+References: <20260910104120.3964799-1-aalbersh@kernel.org>
+ <aqKgTGHh3nDnM3eh@devuan>
+ <20260910161204.GE6238@frogsfrogsfrogs>
+ <aqLY-1do_4hmZpfI@devuan>
+ <20260910164428.GF6238@frogsfrogsfrogs>
+MIME-Version: 1.0
+In-Reply-To: <20260910164428.GF6238@frogsfrogsfrogs>
 
-Signed-off-by: André Almeida <andrealmeid@igalia.com>
----
-Changes in v5:
- - fix check_is_name_correct() return logic
----
- tools/testing/selftests/prctl/set-process-name.c | 53 +++++++++++++++++++++---
- 1 file changed, 48 insertions(+), 5 deletions(-)
+Hi Darrick,
 
-diff --git a/tools/testing/selftests/prctl/set-process-name.c b/tools/testing/selftests/prctl/set-process-name.c
-index 3f7b146d36df..27a0dbbce4db 100644
---- a/tools/testing/selftests/prctl/set-process-name.c
-+++ b/tools/testing/selftests/prctl/set-process-name.c
-@@ -9,9 +9,17 @@
- 
- #include "kselftest_harness.h"
- 
-+#ifndef PR_SET_EXT_NAME
-+# define PR_SET_EXT_NAME 17
-+# define PR_GET_EXT_NAME 18
-+#endif
-+
- #define CHANGE_NAME "changename"
-+#define LONG_NAME	"change_to_very_long_extended_name"
-+#define LONG_NAME_CAP	"change_to_very_"
- #define EMPTY_NAME ""
- #define TASK_COMM_LEN 16
-+#define TASK_COMM_EXT_LEN 64
- #define MAX_PATH_LEN 50
- 
- int set_name(char *name)
-@@ -25,6 +33,20 @@ int set_name(char *name)
- 	return res;
- }
- 
-+int set_ext_name(char *name)
-+{
-+	int res;
-+
-+	res = prctl(PR_SET_EXT_NAME, name, NULL, NULL, NULL);
-+
-+	if (res < 0)
-+		return -errno;
-+	return res;
-+}
-+
-+/*
-+ * Return 0 if strings match
-+ */
- int check_is_name_correct(char *check_name)
- {
- 	char name[TASK_COMM_LEN];
-@@ -35,7 +57,23 @@ int check_is_name_correct(char *check_name)
- 	if (res < 0)
- 		return -errno;
- 
--	return !strcmp(name, check_name);
-+	return strcmp(name, check_name);
-+}
-+
-+/*
-+ * Return 0 if strings match
-+ */
-+int check_is_ext_name_correct(char *check_name)
-+{
-+	char name[TASK_COMM_EXT_LEN];
-+	int res;
-+
-+	res = prctl(PR_GET_EXT_NAME, name, NULL, NULL, NULL);
-+
-+	if (res < 0)
-+		return -errno;
-+
-+	return strcmp(name, check_name);
- }
- 
- int check_null_pointer(char *check_name)
-@@ -56,8 +94,8 @@ int check_name(void)
- 	pid = getpid();
- 	FILE *fptr = NULL;
- 	char path[MAX_PATH_LEN] = {};
--	char name[TASK_COMM_LEN] = {};
--	char output[TASK_COMM_LEN] = {};
-+	char name[TASK_COMM_EXT_LEN] = {};
-+	char output[TASK_COMM_EXT_LEN] = {};
- 	int j;
- 
- 	j = snprintf(path, MAX_PATH_LEN, "/proc/self/task/%d/comm", pid);
-@@ -80,10 +118,15 @@ int check_name(void)
- TEST(rename_process) {
- 
- 	EXPECT_GE(set_name(CHANGE_NAME), 0);
--	EXPECT_TRUE(check_is_name_correct(CHANGE_NAME));
-+	EXPECT_FALSE(check_is_name_correct(CHANGE_NAME));
-+
-+	EXPECT_GE(set_ext_name(LONG_NAME), 0);
-+	EXPECT_FALSE(check_is_ext_name_correct(LONG_NAME));
-+	EXPECT_FALSE(check_is_name_correct(LONG_NAME_CAP));
-+	EXPECT_TRUE(check_name());
- 
- 	EXPECT_GE(set_name(EMPTY_NAME), 0);
--	EXPECT_TRUE(check_is_name_correct(EMPTY_NAME));
-+	EXPECT_FALSE(check_is_name_correct(EMPTY_NAME));
- 
- 	EXPECT_GE(set_name(CHANGE_NAME), 0);
- 	EXPECT_LT(check_null_pointer(CHANGE_NAME), 0);
+> Date: 2026-09-10 09:44:28-0700
+> From: "Darrick J. Wong" <djwong@kernel.org>
+>
+[...]
+> > > > Should we document FS_IOC_FSGETXATTR in a new FS_IOC_FSGETXATTR(2co=
+nst)
+> > > > manual page?
+> > >=20
+> > > https://www.man7.org/linux/man-pages/man2/ioctl_xfs_fssetxattr.2.html
+> >=20
+> > Thanks!  I didn't know that page.
+> >=20
+> > I see the page uses the constants as XFS_ instead of FS_?  I think the
+>=20
+> The sorded history of the xfs(ish) file attributes calls is that they
+> began their lives as XFS_IOC_FSGETXATTR since they were XFS-specific.
+> Then we tried to make them "generic" by removing the 'X', and that's how
+> we got FS_IOC_FSGETXATTR.  Finally Andrey came along and made them
+> proper syscalls with path-lookup abilities ... but for now they use the
+> same struct as the old XFS_IOC_FSGETXATTR.
+>=20
+> Personally I think we should only document XFS_IOC_FSGETXATTR (in
+> xfsprogs) and file_getattr (in man-pages).  And leave FS_IOC_FSGETXATTR
+> unmentioned.
+>=20
+[...]
+>=20
+> quotactl (and xattrs) have a similar weird history of originating in XFS
+> and later getting yanked into the vfs.  Every time I have to go look up
+> the quota syscalls I just get a headache. :/
 
--- 
-2.55.0
+Thanks!  That makes sense.  :)
 
+
+Cheers,
+Alex
+
+>=20
+> --D
+
+--=20
+<https://www.alejandro-colomar.es>
+
+--5wzgosbtrgpzmppd
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmqi3+AACgkQ64mZXMKQ
+wqnqGA//UFWo6BWamWW0lHUOwM1TBq/jb8eQNiDgOZ8S/EEotA/iGJSxnjFasvcW
+dxSaYDVVfom1gEWv1UDGO56rwVDB2Onwj65k3OJZ+JYm9o04VvRZ5ZeMxWXPXmxV
+AmTpan0viSRx0ZYMiBTDEkDDc0M8qnh5msYUyif4HLnDqVg5JBOBQ6byfd90x8Jw
+wwvC3TR0P8nZDxIPfoRmtk1Y3Cw5R6YNevcv4YILsTA8tMXNoirqE88zSsNRkL6l
+ZY8dwetCnS+FjlI/qDBrWEIHoXh+6Clzbj5Uk1HFE20e0uA/RALMjvr1FQGd95K/
+34yuJMo8K+ydyVjggpWT10D5cIDaZ8RBa4qJadS30l/UGkDkshHLx/dJ0ZvG3tFx
+mfb7x/AfH7PkpE88bAw1IIhf3x9a3YbCNbzjj9Sc+dpBorQebEoZAKlrzqAEH5JR
+gqKy56L6enutEO7UwZp2MkTFcUjM2MvKEIwm3ZCxOxunj7LFtkVl+8Noy8xGdACD
+FhZso906rr4wnHvXmE4mVV6i7QZevqAO7m/EXyl3qnXX5AmeMVKiDZL6nBJx1cFp
+yOX+g/faY3pFJyBZMG1KRptNBTuITHLoig3DJdKbeCbszOOf2E5b7URsM8cxIaUJ
+BmtGCalk11zMO8TJKG/cM3d0gkhI0Fu5T2/BiRPecE6S0iF4vq0=
+=3ZuC
+-----END PGP SIGNATURE-----
+
+--5wzgosbtrgpzmppd--
