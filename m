@@ -1,781 +1,1114 @@
-Received: from mail-oo2-f42.google.com (mail-oo2-f42.google.com [74.125.231.170])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5188A3ACA58
-	for <linux-api@vger.kernel.org>; Thu, 10 Sep 2026 03:21:43 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.231.170
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E6B37489FB6;
+	Thu, 10 Sep 2026 13:20:29 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789010506; cv=none; b=fEvDqF7vpnDYqbwliLl4KEzi16xhnrwpwyr07wtz7ITRxgaH1XVPZ2oWMZXs1czcUJAxDZLoIWU+QDB295oeBnXAQVDnESlRN/mPT3I8YtuLmG+ElGg6867O6d9Nol+ZL9I8iIAu9YzhH+vtsq5KTkjZbkbtuoM9bdMHjj2QhNQ=
+	t=1789046432; cv=none; b=IPXyrqwZkCRMriRob4Lhmw2ufmt61rLMdfNGrTqpCBUhi8Uen5Ipgr5hzf7rocVHmgp33GAZLGJEQ8hpTTii8thN/WRi843rHh0ZvHOxy+G8MD8WHzHduP2wD6Zdj4W6EfwKUde6k/y6+3bG2D3eCZBftsSv8a1e0cCW5WKS5Vg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789010506; c=relaxed/simple;
-	bh=Wk25pDrWZZ8xckY9K4N8F+kJpb59de13eoDp0NRWCAI=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=tofZqx2WBY8JGWcqz2dsftFvhW3FL2qPkWQ2WeZiX28KORnlzOKcXfYJvnRjj8qpR1d4/PLBHUzVM4JPI0lwTAvCrtcmi+UxI01ROFHzWcCjmy90UvmKYuaqE7FydeJT3FlfOAyrESOsf8aOYtj5TpDRgwSLOPE9yIyQ1vsGWs4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=pxKo/Sog; arc=none smtp.client-ip=74.125.231.170
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	s=arc-20240116; t=1789046432; c=relaxed/simple;
+	bh=8VVeWHkBpXbMmrbWQ8jXswqAqK+0g0n1VII/B6x1XjI=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=CLP8UfTye6JFd5XCDew8htHI1fwZQ3dKdcp/A7djjXkO4kxMomObZLAcabiiqpHnTyH2BCanONvERactuq1lVc1urlPTyRiLehWbaK6+78DbUqrmsgtGGPxI9bqP5s7Q9FK0FeE41EuWC3X9BOqvbev266+YZuJ9PAI7/RBLkzI=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=hD5WduAX; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="pxKo/Sog"
-Received: by mail-oo2-f42.google.com with SMTP id 46e09a7af769-801d2f7a00eso164375a34.0
-        for <linux-api@vger.kernel.org>; Wed, 09 Sep 2026 20:21:43 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1789010502; x=1789615302; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=hOmOC07Rob7vDzQ8fVisbebB3r+JqdG7WBbz/t4NVWc=;
-        b=pxKo/Sogex9TpyjqSnsfL5A5474RrtiEHwkLJeCRsF9tISQmRc2LyUcCweDXEPz+4Z
-         5fAh3q+0fKTurut7X6Iuarxluyg8OohC7+coPXSUa9gG7hrFsVq0dGte91eIZeQipTGo
-         cCwmyr59vCOMuAYSTXdaEW3LzIcg9/66daytA8pscL/fG1RPj2nEYLRK7LJ6X8wjt1mN
-         OCn0E01fMnXkWMWv+HBk2I3kj/SU6/WXTWPqy/XoDQa/AowARouNPjyOYwmgXe6f5zvd
-         xL8LNlTII0PrJmGLFeKAc0LjhVdrMamLBH0l6sv2MsPw9FjIgDGbXvWt56kXnHf8vYRi
-         si7w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789010502; x=1789615302;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=hOmOC07Rob7vDzQ8fVisbebB3r+JqdG7WBbz/t4NVWc=;
-        b=H9XF6dGvCCmXxX7kHxUdtQpJRNh9fx0ivXuoORphGdbuPnj25zMTkZQ/lCPrw6Gx35
-         zj7Ba6tM9+XGeyXl7ymahWu2XfiFhTN0yN13RB7izCMG1PpbQdlELbRCsZzQAHZZekL2
-         QSpu/bxxQjRufK24tBteKmkiACi/UqtBbgtZR9DZLyIge2f0A9r9we2gsaDfLN4rlFLr
-         eloSF7Q92EXA9Ebhls808/uJPShTCGB7uJZRWAXn9/ue9CyEvNuGcbzMiucE+XMlCfgo
-         hN4Qvtwan4i0uOF+iewUoxnNGMlEvRdCVKsRuOu/NoRhM8gG62A+RGJZ/PfoPGQypo3h
-         Mtew==
-X-Forwarded-Encrypted: i=1; AKwUvBzOeaVrp9J3sUNSGT0z9seMNst7kPShuBtqO7zbMIBUoMnYd60/3S7dqIAh9UTsnoXGDM05uhMS1Tw=@vger.kernel.org
-X-Gm-Message-State: AFuF++nzqhmxTLMZy5CIFP5zFrShmshG+9I/lrda0Axkv/n5BrrplAmD
-	MqSZJBZaWwx7piZU5eBw1F5eF6Mpuv1QBMA0YWGYc+WENMsy7jF18pI7
-X-Gm-Gg: AYBFou2WndpRA5KA89k4ILshhqANZS6+vVQQneQedfBTyeQpG1lzJ6lQEr2mkdR0JRr
-	5jvf3wXnrlY43QAyLiQ/gadxZkhVXvt/JhvIu2PI7ux4vZligXa4wwgtOweLiy/3PetmnmanSVZ
-	E/y8U/Kg7zzv/+l3KuoxCmybcWpqOcmugWOzXvWgJ6ikFsXPbryqcTySYUoGIVD0yXANlsZhDAX
-	amYRp64iFarFYHXTrhmVNEP9BNSvfUVSqw8Db27Q/RGVcBqzvpzfYcNkB7lnRFpbYcCZvoG7Mji
-	n0TE6h28SEhXDYSuCfUJdMzw8FMC5tu5xWJ6QncOT5lyCiB4OMZ9eMINxZXfQz/POclY2NPaGSA
-	jigeqaw5S5lA1ZGrYLQkwwDE9heaYKcFvx9yimJ4IOCzNBNsUoZfnKd8WDO7dVoqhSs9D4nw56M
-	O2F6cRH8KPrL576KKVPTgdhqWEreVm6QS7DX3FVpJfX/emdR5ioe7hI6bufvgIAqYop+oF5CMgD
-	gXJZI9M0gei4zQ60rnz8zj5HlDMpGrLsaQc4bhSTuyY2e0UrxSHJ7Y=
-X-Received: by 2002:a05:6830:82aa:b0:7e9:e1ca:5316 with SMTP id 46e09a7af769-7fb76b4310dmr15524364a34.0.1789010502075;
-        Wed, 09 Sep 2026 20:21:42 -0700 (PDT)
-Received: from localhost ([76.187.192.44])
-        by smtp.gmail.com with ESMTPSA id 46e09a7af769-7f9f6da9a49sm19758315a34.13.2026.09.09.20.21.41
-        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 09 Sep 2026 20:21:41 -0700 (PDT)
-From: Andrei Aldea <andrei1998@gmail.com>
-To: Jiri Kosina <jikos@kernel.org>,
-	Benjamin Tissoires <bentiss@kernel.org>,
-	"Derek J. Clark" <derekjohn.clark@gmail.com>
-Cc: linux-input@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Lee Jones <lee@kernel.org>,
-	Pavel Machek <pavel@kernel.org>,
-	linux-leds@vger.kernel.org,
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="hD5WduAX"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id DFC8A1F000FF;
+	Thu, 10 Sep 2026 13:20:27 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1789046429;
+	bh=rByy/6Isi/BZwl7ckpTv2ATyl/ZdvEHzVEhDiM5ZCBA=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=hD5WduAXafF+BFy/BoxcDxCSeaiDIcOCc4z/G7t/YF2Dq8E41dRkMlGuX1fms9fuf
+	 W2X1wZTXP+2hvFqYyEx0EQfpJnkSvy1ikRCUiJ7FE3MFED84bWiS6iTXpX/T49OFI7
+	 cxgX03UaRfZsV4PBAWXs+7UhSvx0QWg6PNm6qTItng9URanMrBycZx3TuoEYJGmH+c
+	 j3MvDE/7XlKVwovneJ837c0z8VTkLnbzt7X3Qp9UuiISeQLbe7jmHMhfPsFn5kNG+l
+	 YedjzaPvM+1X/FkcuUPgKS+Ap+yQVm2uppxF89vHYnW0wPiD59+6zMnIyj7AxZdtGd
+	 n7cK8Ljq26lFA==
+Date: Thu, 10 Sep 2026 15:20:25 +0200
+From: Alejandro Colomar <alx@kernel.org>
+To: Andrey Albershteyn <aalbersh@kernel.org>
+Cc: linux-man@vger.kernel.org, linux-xfs@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, djwong@kernel.org, 
 	linux-api@vger.kernel.org
-Subject: [PATCH 15/15] HID: hid-oxp: add X2 auxiliary RGB zones
-Date: Wed,  9 Sep 2026 22:21:15 -0500
-Message-ID: <20260910032115.28669-16-andrei1998@gmail.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20260910032115.28669-1-andrei1998@gmail.com>
-References: <20260910032115.28669-1-andrei1998@gmail.com>
+Subject: Re: [PATCH v2] man/man2: introduce man page for
+ file_getattr/file_setattr syscalls
+Message-ID: <aqKgTGHh3nDnM3eh@devuan>
+References: <20260910104120.3964799-1-aalbersh@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="35gdimbwekpjwnki"
+Content-Disposition: inline
+In-Reply-To: <20260910104120.3964799-1-aalbersh@kernel.org>
 
-Add separate multicolor LED devices for the X2 guide button and rear logo
-using Gen3 zones 5 and 6. Each LED retains independent color, brightness,
-and monocolor or breathing effect state.
 
-Use the common LED array and type-tagged state introduced earlier.
-Protect auxiliary state snapshots with scoped spinlocks, serialize output
-with other RGB operations, and retry a failed command once. Do not alter
-an auxiliary zone until userspace has supplied valid state, and restore
-valid cached settings after resume.
+--35gdimbwekpjwnki
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+From: Alejandro Colomar <alx@kernel.org>
+To: Andrey Albershteyn <aalbersh@kernel.org>
+Cc: linux-man@vger.kernel.org, linux-xfs@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, djwong@kernel.org, 
+	linux-api@vger.kernel.org
+Subject: Re: [PATCH v2] man/man2: introduce man page for
+ file_getattr/file_setattr syscalls
+Message-ID: <aqKgTGHh3nDnM3eh@devuan>
+References: <20260910104120.3964799-1-aalbersh@kernel.org>
+MIME-Version: 1.0
+In-Reply-To: <20260910104120.3964799-1-aalbersh@kernel.org>
 
-Expose these zones only on the matched ONEXPLAYER 3 and X2 Mini Pro.
-Physical validation of the latter remains outstanding.
+Hi Andrey,
 
-Document the auxiliary effects together with the existing joystick-ring
-effects and add the previously omitted controller, mapping, rumble, and
-ring-lighting ABI. Add the ABI file to the ONEXPLAYER HID maintainer
-pattern.
+> Date: 2026-09-10 12:41:18+0200
+> From: Andrey Albershteyn <aalbersh@kernel.org>
+>
+> Add manual pages for file_getattr() and file_setattr() syscalls and
+> struct file_attr used as input/output argument.
+>=20
+> Signed-off-by: Andrey Albershteyn <aalbersh@kernel.org>
+> Link: https://lore.kernel.org/all/20250630-xattrat-syscall-v6-0-c4e3bc352=
+27b@kernel.org/
+>=20
+> ---
+> v2: a few grammar fixes, sashiko.dev fixes (wrong AT_FDCWD combined with
+> AT_EMPTY_PATH description, unused "dfd") and dropped requirement to zero
+> fattr before using file_setattr().
+> ---
+>  man/man2/file_getattr.2      | 279 +++++++++++++++++++++++++++++
+>  man/man2/file_setattr.2      | 333 +++++++++++++++++++++++++++++++++++
+>  man/man2type/file_attr.2type | 187 ++++++++++++++++++++
+>  3 files changed, 799 insertions(+)
+>  create mode 100644 man/man2/file_getattr.2
+>  create mode 100644 man/man2/file_setattr.2
+>  create mode 100644 man/man2type/file_attr.2type
+>=20
+> diff --git a/man/man2/file_getattr.2 b/man/man2/file_getattr.2
+> new file mode 100644
+> index 000000000000..2d9a6d338a5e
+> --- /dev/null
+> +++ b/man/man2/file_getattr.2
+> @@ -0,0 +1,279 @@
+> +.\" Copyright, the authors of the Linux man-pages project
+> +.\"
+> +.\" SPDX-License-Identifier: Linux-man-pages-copyleft
+> +.\"
+> +.TH file_getattr 2 (date) "Linux man-pages (unreleased)"
+> +.SH NAME
+> +file_getattr \- get filesystem inode attributes
+> +.SH SYNOPSIS
+> +.nf
+> +.BR "#include <linux/fcntl.h>" "      /* " AT_* " constants */"
+> +.BR "#include <linux/fs.h>" "         /* struct " file_attr " and " FS_X=
+FLAG_* " constants */"
 
-Assisted-by: LLM
-Reviewed-by: Derek J. Clark <derekjohn.clark@gmail.com>
-Signed-off-by: Andrei Aldea <andrei1998@gmail.com>
----
- .../ABI/testing/sysfs-driver-hid-oxp          | 196 +++++++++++
- MAINTAINERS                                   |   1 +
- drivers/hid/hid-oxp.c                         | 305 +++++++++++++++++-
- 3 files changed, 497 insertions(+), 5 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-driver-hid-oxp
+Most of the time, we don't document in these comments where types come
+=66rom.  They are already documented in the man2type manual page for the
+type, so this is a bit redundant.  We limit these comments to constants.
 
-diff --git a/Documentation/ABI/testing/sysfs-driver-hid-oxp b/Documentation/ABI/testing/sysfs-driver-hid-oxp
-new file mode 100644
-index 0000000..7c97f28
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-driver-hid-oxp
-@@ -0,0 +1,196 @@
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/effect
-+What:		/sys/class/leds/oxp:rgb:guide_button/effect
-+What:		/sys/class/leds/oxp:rgb:rear_logo/effect
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write attribute selecting the lighting effect for the LED.
-+
-+		The joystick_rings LED supports the following effect names:
-+
-+		``aurora``, ``birthday_cake``, ``flowing_light``,
-+		``chroma_popping``, ``neon``, ``chroma_breathing``, ``dreamy``,
-+		``warm_sun``, ``cyberpunk``, ``sea_foam``, ``sunset_afterglow``,
-+		``colorful``, ``monster_woke``, ``green_breathing``,
-+		``blue_breathing``, ``yellow_breathing``, ``teal_breathing``,
-+		``purple_breathing``, ``foggy_haze``, and ``monocolor``.
-+
-+		The guide_button and rear_logo LEDs support ``monocolor`` and
-+		``breathing``. These two LEDs were added in August 2026 and are
-+		available on the ONEXPLAYER 3 and ONEXPLAYER X2 Mini Pro.
-+
-+		The ``monocolor`` effect displays the color selected through
-+		the standard multicolor LED ``multi_intensity`` attribute.
-+		The auxiliary ``breathing`` effect pulses the selected color.
-+		Other joystick ring effects select firmware-defined presets.
-+		The standard brightness and multicolor attributes are documented
-+		in Documentation/ABI/testing/sysfs-class-led and
-+		Documentation/ABI/testing/sysfs-class-led-multicolor.
-+
-+		Read returns the selected effect name followed by a newline.
-+		The value may reflect cached driver state rather than a live
-+		hardware query. The joystick_rings LED may report ``unknown``
-+		when no known effect has been recorded; this is not a selectable
-+		effect. Auxiliary effect writes queue the update asynchronously.
-+
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/effect_index
-+What:		/sys/class/leds/oxp:rgb:guide_button/effect_index
-+What:		/sys/class/leds/oxp:rgb:rear_logo/effect_index
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only list of effect names supported by the corresponding
-+		LED, separated by spaces and terminated by a newline.
-+
-+		The supported names are described in the effect entry above.
-+		The list is specific to each LED and does not include ``unknown``.
-+		The guide_button and rear_logo attributes were added in August
-+		2026 and are available on the ONEXPLAYER 3 and ONEXPLAYER X2
-+		Mini Pro.
-+
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/enabled
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write enable state for the joystick ring lighting.
-+
-+		Write ``true`` to enable lighting or ``false`` to disable it.
-+		Only these literal names are accepted, not numeric boolean
-+		values. Read requests lighting status and returns the driver's
-+		enable state as one of these names followed by a newline.
-+
-+		This attribute is not exposed for guide_button or rear_logo.
-+
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/enabled_index
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only list of names accepted by enabled. Returns
-+		``false true`` followed by a newline.
-+
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/speed
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write firmware animation-speed setting for the joystick
-+		ring lighting. Write a decimal integer from 0 through 9.
-+		These are firmware levels, not a duration or frequency.
-+
-+		Read requests lighting status and returns the driver's speed
-+		setting as a decimal integer followed by a newline.
-+		This attribute is not exposed for guide_button or rear_logo.
-+
-+What:		/sys/class/leds/oxp:rgb:joystick_rings/speed_range
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only range of values accepted by speed. Returns ``0-9``
-+		followed by a newline; both endpoints are inclusive.
-+
-+What:		/sys/bus/hid/devices/.../gamepad_mode
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write controller mode on the HID configuration interface
-+		with usage page 0xff00 (shared by Gen2 and X2/Gen3 devices). Write one of the following names:
-+
-+		* ``xinput``: normal gamepad input.
-+		* ``debug``: route controller events to a hidraw interface for
-+		  input-mapping diagnostics instead of the xpad evdev interface.
-+
-+		Read returns the driver's cached mode name followed by a newline,
-+		not a firmware query. The initial cached mode is ``xinput``.
-+		Switching to ``xinput`` also reapplies the cached rumble intensity.
-+
-+		This attribute and the other controller configuration attributes
-+		below are attached directly to the selected HID configuration device's
-+		sysfs directory, not an input device or LED directory. They are
-+		not exposed on Gen1 configuration interfaces.
-+
-+What:		/sys/bus/hid/devices/.../gamepad_mode_index
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only list of supported controller modes. Returns
-+		``xinput debug`` followed by a newline.
-+
-+What:		/sys/bus/hid/devices/.../button_a
-+What:		/sys/bus/hid/devices/.../button_b
-+What:		/sys/bus/hid/devices/.../button_x
-+What:		/sys/bus/hid/devices/.../button_y
-+What:		/sys/bus/hid/devices/.../button_lb
-+What:		/sys/bus/hid/devices/.../button_rb
-+What:		/sys/bus/hid/devices/.../button_lt
-+What:		/sys/bus/hid/devices/.../button_rt
-+What:		/sys/bus/hid/devices/.../button_start
-+What:		/sys/bus/hid/devices/.../button_select
-+What:		/sys/bus/hid/devices/.../button_l3
-+What:		/sys/bus/hid/devices/.../button_r3
-+What:		/sys/bus/hid/devices/.../button_d_up
-+What:		/sys/bus/hid/devices/.../button_d_down
-+What:		/sys/bus/hid/devices/.../button_d_left
-+What:		/sys/bus/hid/devices/.../button_d_right
-+What:		/sys/bus/hid/devices/.../button_m1
-+What:		/sys/bus/hid/devices/.../button_m2
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write output mapping for the named physical controller
-+		button on a HID configuration device with usage page 0xff00.
-+
-+		Write one exact, case-sensitive mapping name from
-+		button_mapping_options, such as ``BTN_A`` or ``KEY_F15``.
-+		Numeric key codes, multiple names, and arbitrary key names
-+		are not accepted.
-+
-+		Read returns the driver's cached mapping name followed by a
-+		newline. Writes update that cache and queue the firmware update
-+		asynchronously; successful writes do not confirm that the
-+		hardware has already applied the mapping.
-+
-+What:		/sys/bus/hid/devices/.../button_mapping_options
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only list of output mapping names accepted by the
-+		controller button attributes, separated by spaces and terminated by a
-+		newline. All 18 button attributes accept the same list.
-+
-+		The gamepad mapping names are:
-+
-+		``BTN_A``, ``BTN_B``, ``BTN_X``, ``BTN_Y``, ``BTN_LB``,
-+		``BTN_RB``, ``BTN_LT``, ``BTN_RT``, ``BTN_START``, ``BTN_SELECT``,
-+		``BTN_L3``, ``BTN_R3``, ``DPAD_UP``, ``DPAD_DOWN``,
-+		``DPAD_LEFT``, ``DPAD_RIGHT``, ``JOY_L_UP``, ``JOY_L_UP_RIGHT``,
-+		``JOY_L_RIGHT``, ``JOY_L_DOWN_RIGHT``, ``JOY_L_DOWN``,
-+		``JOY_L_DOWN_LEFT``, ``JOY_L_LEFT``, ``JOY_L_UP_LEFT``,
-+		``JOY_R_UP``, ``JOY_R_UP_RIGHT``, ``JOY_R_RIGHT``,
-+		``JOY_R_DOWN_RIGHT``, ``JOY_R_DOWN``, ``JOY_R_DOWN_LEFT``,
-+		``JOY_R_LEFT``, ``JOY_R_UP_LEFT``, and ``BTN_GUIDE``.
-+
-+		Keyboard mapping names are ``KEY_F1`` through ``KEY_F24``.
-+		There are no ``BTN_M1`` or ``BTN_M2`` output mapping names;
-+		button_m1 and button_m2 select from the same options as the
-+		other buttons.
-+
-+What:		/sys/bus/hid/devices/.../reset_buttons
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Write-only reset of the controller's button mappings.
-+		Write the decimal value ``1`` to restore the driver's default
-+		mappings and send them to the controller. Other values are
-+		rejected.
-+
-+		Main controls map to their corresponding gamepad functions;
-+		M1 maps to ``KEY_F15`` and M2 to ``KEY_F16``. This resets button
-+		mappings only, not lighting, rumble, or other device settings.
-+		It is not a factory reset. Cached mappings are reset before
-+		the firmware update and are not rolled back if that update fails.
-+
-+What:		/sys/bus/hid/devices/.../rumble_intensity
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read/write rumble-intensity level on the HID configuration
-+		device with usage page 0xff00. Write a decimal integer from 0 through 5. These are
-+		firmware levels, not percentages or values in physical units.
-+
-+		Read returns the driver's cached level as a decimal integer
-+		followed by a newline. The initial cached value is 5. A write
-+		sends the firmware command before updating the cached level.
-+
-+What:		/sys/bus/hid/devices/.../rumble_intensity_range
-+Date:		April 2026
-+Contact:	Derek J. Clark <derekjohn.clark@gmail.com>
-+Description:	Read-only range of values accepted by the rumble_intensity
-+		attribute. Returns ``0-5`` followed by a newline; both endpoints
-+		are inclusive.
-diff --git a/MAINTAINERS b/MAINTAINERS
-index c392ded..fe5a2f6 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -20381,6 +20381,7 @@ ONEXPLAYER HID DRIVER
- M:	Derek J. Clark <derekjohn.clark@gmail.com>
- L:	linux-input@vger.kernel.org
- S:	Maintained
-+F:	Documentation/ABI/testing/sysfs-driver-hid-oxp
- F:	drivers/hid/hid-oxp.c
- 
- ONEXPLAYER PLATFORM EC DRIVER
-diff --git a/drivers/hid/hid-oxp.c b/drivers/hid/hid-oxp.c
-index 9a46602..757cef8 100644
---- a/drivers/hid/hid-oxp.c
-+++ b/drivers/hid/hid-oxp.c
-@@ -45,6 +45,7 @@
- #define OXP_GET_PROPERTY 0xfc
- #define OXP_SET_PROPERTY 0xfd
- #define OXP_EFFECT_MONO_TRUE 0xfe /* actual index for monocolor */
-+#define OXP_EFFECT_BREATHING_TRUE 0xf0
- 
- #define OXP_DEVICE_ATTR_RW(_name, _group)                                     \
- 	static ssize_t _name##_store(struct device *dev,                      \
-@@ -358,6 +359,17 @@ struct oxp_gen_3_rgb_color_report {
- 
- enum oxp_rgb_type {
- 	OXP_RGB_FULL,
-+	OXP_RGB_AUX,
-+};
-+
-+enum oxp_rgb_aux_effect {
-+	OXP_RGB_AUX_EFFECT_MONOCOLOR,
-+	OXP_RGB_AUX_EFFECT_BREATHING,
-+};
-+
-+static const char *const oxp_rgb_aux_effect_text[] = {
-+	[OXP_RGB_AUX_EFFECT_MONOCOLOR] = "monocolor",
-+	[OXP_RGB_AUX_EFFECT_BREATHING] = "breathing",
- };
- 
- struct oxp_rgb_full_state {
-@@ -367,18 +379,30 @@ struct oxp_rgb_full_state {
- 	u8 speed;
- };
- 
-+struct oxp_rgb_aux_state {
-+	enum led_brightness brightness;
-+	bool valid;
-+	u8 effect;
-+	u8 green;
-+	u8 blue;
-+	u8 red;
-+};
-+
- struct oxp_rgb_led {
- 	struct mc_subled subled_info[3];
- 	struct led_classdev_mc mc_cdev;
- 	struct delayed_work work;
- 	struct oxp_hid_cfg *cfg;
-+	spinlock_t state_lock; /* protects auxiliary RGB state */
- 	void *state;
- 	u8 type;
-+	u8 zone;
- };
- 
- struct oxp_rgb_led_desc {
- 	const char *name;
- 	u8 type;
-+	u8 zone;
- };
- 
- struct oxp_attr {
-@@ -417,6 +441,23 @@ static struct oxp_rgb_full_state *oxp_rgb_full_state(struct oxp_rgb_led *led)
- 	switch (led->type) {
- 	case OXP_RGB_FULL:
- 		return led->state;
-+	case OXP_RGB_AUX:
-+		return NULL;
-+	}
-+
-+	return NULL;
-+}
-+
-+static struct oxp_rgb_aux_state *oxp_rgb_aux_state(struct oxp_rgb_led *led)
-+{
-+	if (!led)
-+		return NULL;
-+
-+	switch (led->type) {
-+	case OXP_RGB_FULL:
-+		return NULL;
-+	case OXP_RGB_AUX:
-+		return led->state;
- 	}
- 
- 	return NULL;
-@@ -473,6 +514,8 @@ static int oxp_rgb_status_store(struct oxp_rgb_led *led, u8 enabled, u8 speed,
- 				u8 brightness);
- static int oxp_rgb_effect_set(struct oxp_rgb_led *led, u8 effect);
- 
-+static void oxp_rgb_aux_restore_locked(struct oxp_rgb_led *led);
-+
- static void oxp_rgb_restore(struct oxp_hid_cfg *cfg)
- {
- 	struct oxp_rgb_full_state *state;
-@@ -510,6 +553,9 @@ static void oxp_rgb_restore(struct oxp_hid_cfg *cfg)
- 					"Error: Failed to restore RGB effect: %i\n",
- 					ret);
- 			break;
-+		case OXP_RGB_AUX:
-+			oxp_rgb_aux_restore_locked(led);
-+			break;
- 		}
- 	}
- }
-@@ -842,6 +888,19 @@ static int oxp_gen_3_rgb_property_out(struct oxp_hid_cfg *cfg, u8 *data,
- 	return first_err;
- }
- 
-+static int oxp_gen_3_rgb_zone_property_out(struct oxp_hid_cfg *cfg,
-+					   u8 *data, u8 data_size)
-+{
-+	int ret;
-+
-+	ret = oxp_gen_3_property_out(cfg, data, data_size);
-+	/* Retry once if the write or its acknowledgment failed. */
-+	if (ret)
-+		ret = oxp_gen_3_property_out(cfg, data, data_size);
-+
-+	return ret;
-+}
-+
- static void oxp_gen_3_rgb_fill_color(struct oxp_gen_3_rgb_color_report *report,
- 				     u8 command, u8 zone, u8 red, u8 green,
- 				     u8 blue)
-@@ -858,6 +917,85 @@ static void oxp_gen_3_rgb_fill_color(struct oxp_gen_3_rgb_color_report *report,
- 	report->final_green = green;
- }
- 
-+static bool oxp_rgb_aux_snapshot(struct oxp_rgb_led *led,
-+				 struct oxp_rgb_aux_state *state)
-+{
-+	struct oxp_rgb_aux_state *cached = oxp_rgb_aux_state(led);
-+
-+	if (!cached)
-+		return false;
-+
-+	scoped_guard(spinlock_irqsave, &led->state_lock) {
-+		*state = *cached;
-+	}
-+
-+	return state->valid;
-+}
-+
-+static int oxp_rgb_aux_apply(struct oxp_rgb_led *led,
-+			     const struct oxp_rgb_aux_state *state)
-+{
-+	struct oxp_hid_cfg *cfg = led->cfg;
-+	unsigned int max_brightness = led->mc_cdev.led_cdev.max_brightness;
-+	unsigned int brightness = min_t(unsigned int, state->brightness,
-+						 max_brightness);
-+	u8 status_data[6] = { OXP_SET_PROPERTY, led->zone, 0x02,
-+			      OXP_FEAT_DISABLED, 0x05, 0x04 };
-+	struct oxp_gen_3_rgb_color_report color_report;
-+	u8 command;
-+	u8 green;
-+	u8 blue;
-+	u8 red;
-+	int ret;
-+
-+	if (brightness)
-+		status_data[3] = OXP_FEAT_ENABLED;
-+
-+	ret = oxp_gen_3_rgb_zone_property_out(cfg, status_data,
-+					      sizeof(status_data));
-+	if (ret || !brightness)
-+		return ret;
-+
-+	/* Scale each RGB channel by brightness, rounding to the nearest integer. */
-+	red = ((unsigned int)state->red * brightness + max_brightness / 2) /
-+	      max_brightness;
-+	green = ((unsigned int)state->green * brightness + max_brightness / 2) /
-+		max_brightness;
-+	blue = ((unsigned int)state->blue * brightness + max_brightness / 2) /
-+	       max_brightness;
-+
-+	switch (state->effect) {
-+	case OXP_RGB_AUX_EFFECT_MONOCOLOR:
-+		command = OXP_EFFECT_MONO_TRUE;
-+		break;
-+	case OXP_RGB_AUX_EFFECT_BREATHING:
-+		command = OXP_EFFECT_BREATHING_TRUE;
-+		break;
-+	default:
-+		return -EINVAL;
-+	}
-+
-+	oxp_gen_3_rgb_fill_color(&color_report, command, led->zone, red, green,
-+				 blue);
-+	return oxp_gen_3_rgb_zone_property_out(cfg, (u8 *)&color_report,
-+					       sizeof(color_report));
-+}
-+
-+static void oxp_rgb_aux_restore_locked(struct oxp_rgb_led *led)
-+{
-+	struct oxp_hid_cfg *cfg = led->cfg;
-+	struct oxp_rgb_aux_state state;
-+	int ret;
-+
-+	if (!oxp_rgb_aux_snapshot(led, &state))
-+		return;
-+
-+	ret = oxp_rgb_aux_apply(led, &state);
-+	if (ret)
-+		dev_err(&cfg->hdev->dev,
-+			"Failed to restore RGB zone %#04x: %i\n", led->zone, ret);
-+}
-+
- static ssize_t gamepad_mode_store(struct device *dev,
- 				  struct device_attribute *attr, const char *buf,
- 				  size_t count)
-@@ -1913,6 +2051,25 @@ static void oxp_gen_3_rgb_queue(struct oxp_rgb_led *led,
- 			"Error: Failed to write RGB color: %i\n", ret);
- }
- 
-+static void oxp_rgb_aux_queue(struct oxp_rgb_led *led)
-+{
-+	struct oxp_hid_cfg *cfg = led->cfg;
-+	struct oxp_rgb_aux_state state;
-+	int ret;
-+
-+	if (!oxp_rgb_aux_snapshot(led, &state))
-+		return;
-+
-+	guard(mutex)(&cfg->rgb_mutex);
-+	if (READ_ONCE(cfg->suspended) || READ_ONCE(cfg->removing))
-+		return;
-+
-+	ret = oxp_rgb_aux_apply(led, &state);
-+	if (ret)
-+		dev_err(led->mc_cdev.led_cdev.dev,
-+			"Failed to write RGB zone %#04x: %i\n", led->zone, ret);
-+}
-+
- static void oxp_rgb_queue_fn(struct work_struct *work)
- {
- 	struct oxp_rgb_led *led = container_of(to_delayed_work(work),
-@@ -1929,6 +2086,9 @@ static void oxp_rgb_queue_fn(struct work_struct *work)
- 		else
- 			oxp_rgb_full_queue(led, led->state);
- 		break;
-+	case OXP_RGB_AUX:
-+		oxp_rgb_aux_queue(led);
-+		break;
- 	}
- }
- 
-@@ -1937,16 +2097,112 @@ static void oxp_rgb_brightness_set(struct led_classdev *led_cdev,
- {
- 	struct led_classdev_mc *mc_cdev = lcdev_to_mccdev(led_cdev);
- 	struct oxp_rgb_led *led = container_of(mc_cdev, struct oxp_rgb_led,
--					     mc_cdev);
-+					       mc_cdev);
- 	struct oxp_hid_cfg *cfg = led->cfg;
-+	struct oxp_rgb_aux_state *state;
- 
--	if (READ_ONCE(cfg->suspended) || READ_ONCE(cfg->removing))
-+	if (READ_ONCE(cfg->removing))
-+		return;
-+
-+	switch (led->type) {
-+	case OXP_RGB_FULL:
-+		if (READ_ONCE(cfg->suspended))
-+			return;
-+		led_cdev->brightness = brightness;
-+		break;
-+	case OXP_RGB_AUX:
-+		state = led->state;
-+		led_cdev->brightness = brightness;
-+		scoped_guard(spinlock_irqsave, &led->state_lock) {
-+			state->brightness = brightness;
-+			state->red = led->subled_info[0].intensity;
-+			state->green = led->subled_info[1].intensity;
-+			state->blue = led->subled_info[2].intensity;
-+			state->valid = true;
-+		}
-+		if (READ_ONCE(cfg->suspended))
-+			return;
-+		break;
-+	default:
- 		return;
-+	}
- 
--	led_cdev->brightness = brightness;
- 	mod_delayed_work(system_dfl_wq, &led->work, msecs_to_jiffies(50));
- }
- 
-+static ssize_t oxp_rgb_aux_effect_store(struct device *dev,
-+					struct device_attribute *attr,
-+					const char *buf, size_t count)
-+{
-+	struct oxp_rgb_led *led = oxp_rgb_led_from_dev(dev);
-+	struct oxp_hid_cfg *cfg = led->cfg;
-+	struct oxp_rgb_aux_state *state = oxp_rgb_aux_state(led);
-+	int ret;
-+
-+	if (!state || READ_ONCE(cfg->removing))
-+		return -ENODEV;
-+
-+	ret = sysfs_match_string(oxp_rgb_aux_effect_text, buf);
-+	if (ret < 0)
-+		return ret;
-+
-+	scoped_guard(spinlock_irqsave, &led->state_lock) {
-+		state->effect = ret;
-+		state->valid = true;
-+	}
-+
-+	if (!READ_ONCE(cfg->suspended) && !READ_ONCE(cfg->removing))
-+		mod_delayed_work(system_dfl_wq, &led->work,
-+				 msecs_to_jiffies(50));
-+
-+	return count;
-+}
-+
-+static ssize_t oxp_rgb_aux_effect_show(struct device *dev,
-+				       struct device_attribute *attr, char *buf)
-+{
-+	struct oxp_rgb_led *led = oxp_rgb_led_from_dev(dev);
-+	struct oxp_hid_cfg *cfg = led->cfg;
-+	struct oxp_rgb_aux_state state;
-+
-+	if (!oxp_rgb_aux_state(led) || READ_ONCE(cfg->removing))
-+		return -ENODEV;
-+
-+	oxp_rgb_aux_snapshot(led, &state);
-+	if (state.effect >= ARRAY_SIZE(oxp_rgb_aux_effect_text))
-+		return -EINVAL;
-+
-+	return sysfs_emit(buf, "%s\n", oxp_rgb_aux_effect_text[state.effect]);
-+}
-+static DEVICE_ATTR_RW_NAMED(oxp_rgb_aux_effect, "effect");
-+
-+static ssize_t oxp_rgb_aux_effect_index_show(struct device *dev,
-+					     struct device_attribute *attr,
-+					     char *buf)
-+{
-+	int count = 0;
-+	int i;
-+
-+	for (i = 0; i < ARRAY_SIZE(oxp_rgb_aux_effect_text); i++)
-+		count += sysfs_emit_at(buf, count, "%s ",
-+				       oxp_rgb_aux_effect_text[i]);
-+	if (count)
-+		buf[count - 1] = '\n';
-+
-+	return count;
-+}
-+static DEVICE_ATTR_RO_NAMED(oxp_rgb_aux_effect_index, "effect_index");
-+
-+static struct attribute *oxp_rgb_aux_attrs[] = {
-+	&dev_attr_oxp_rgb_aux_effect.attr,
-+	&dev_attr_oxp_rgb_aux_effect_index.attr,
-+	NULL,
-+};
-+
-+static const struct attribute_group oxp_rgb_aux_attr_group = {
-+	.attrs = oxp_rgb_aux_attrs,
-+};
-+
- static struct attribute *oxp_rgb_attrs[] = {
- 	&dev_attr_effect.attr,
- 	&dev_attr_effect_index.attr,
-@@ -1966,12 +2222,23 @@ static const struct oxp_rgb_led_desc oxp_rgb_led_descs[] = {
- 		.name = "oxp:rgb:joystick_rings",
- 		.type = OXP_RGB_FULL,
- 	},
-+	{
-+		.name = "oxp:rgb:guide_button",
-+		.type = OXP_RGB_AUX,
-+		.zone = 0x05,
-+	},
-+	{
-+		.name = "oxp:rgb:rear_logo",
-+		.type = OXP_RGB_AUX,
-+		.zone = 0x06,
-+	},
- };
- 
- static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
- 			    const struct oxp_rgb_led_desc *desc)
- {
- 	struct oxp_rgb_full_state *full_state;
-+	struct oxp_rgb_aux_state *aux_state;
- 	struct hid_device *hdev = cfg->hdev;
- 	u8 green;
- 	u8 blue;
-@@ -1979,6 +2246,7 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
- 
- 	led->cfg = cfg;
- 	led->type = desc->type;
-+	led->zone = desc->zone;
- 
- 	switch (led->type) {
- 	case OXP_RGB_FULL:
-@@ -1992,6 +2260,20 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
- 		green = 0x22;
- 		blue = 0x99;
- 		break;
-+	case OXP_RGB_AUX:
-+		aux_state = devm_kzalloc(&hdev->dev, sizeof(*aux_state),
-+					 GFP_KERNEL);
-+		if (!aux_state)
-+			return -ENOMEM;
-+		aux_state->red = 0xff;
-+		aux_state->green = 0xff;
-+		aux_state->blue = 0xff;
-+		aux_state->effect = OXP_RGB_AUX_EFFECT_MONOCOLOR;
-+		led->state = aux_state;
-+		red = 0xff;
-+		green = 0xff;
-+		blue = 0xff;
-+		break;
- 	default:
- 		return -EINVAL;
- 	}
-@@ -2020,6 +2302,7 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
- 	led->mc_cdev.led_cdev.brightness_set = oxp_rgb_brightness_set;
- 	led->mc_cdev.num_colors = ARRAY_SIZE(led->subled_info);
- 	led->mc_cdev.subled_info = led->subled_info;
-+	spin_lock_init(&led->state_lock);
- 	INIT_DELAYED_WORK(&led->work, oxp_rgb_queue_fn);
- 
- 	return 0;
-@@ -2027,7 +2310,8 @@ static int oxp_rgb_led_init(struct oxp_hid_cfg *cfg, struct oxp_rgb_led *led,
- 
- static int oxp_rgb_leds_register(struct oxp_hid_cfg *cfg)
- {
--	int led_count = ARRAY_SIZE(oxp_rgb_led_descs);
-+	int led_count = cfg->x2_rgb ? ARRAY_SIZE(oxp_rgb_led_descs) : 1;
-+	const struct attribute_group *attr_group;
- 	struct hid_device *hdev = cfg->hdev;
- 	struct oxp_rgb_led *led;
- 	int ret;
-@@ -2051,8 +2335,19 @@ static int oxp_rgb_leds_register(struct oxp_hid_cfg *cfg)
- 			return dev_err_probe(&hdev->dev, ret,
- 					     "Failed to create RGB device\n");
- 
-+		switch (led->type) {
-+		case OXP_RGB_FULL:
-+			attr_group = &oxp_rgb_attr_group;
-+			break;
-+		case OXP_RGB_AUX:
-+			attr_group = &oxp_rgb_aux_attr_group;
-+			break;
-+		default:
-+			return -EINVAL;
-+		}
-+
- 		ret = devm_device_add_group(led->mc_cdev.led_cdev.dev,
--					    &oxp_rgb_attr_group);
-+					    attr_group);
- 		if (ret)
- 			return dev_err_probe(led->mc_cdev.led_cdev.dev, ret,
- 					     "Failed to create RGB configuration attributes\n");
+(In a few cases, we document the types too, but those are mistakes that
+ we should fix.)
+
+> +.BR "#include <sys/syscall.h>" "      /* " SYS_* " constants */"
+> +.B #include <unistd.h>
+> +.P
+> +.B long syscall(SYS_file_getattr,
+> +.BI "               int " dirfd ", const char *" pathname ,
+
+We now use 'path' quite consistently for these parameter names.
+See this commit:
+
+	commit a239bc4520d6cb8b4d217510c22eddd7c3fd5d10
+	Author: Alejandro Colomar <alx@kernel.org>
+	Date:   2025-01-15 20:41:01 +0100
+
+	    man/: Consistently use 'path' for parameters referring to pathnames
+	   =20
+	    And use 'pathname' in the descriptions.
+	   =20
+	    'pathname' is the POSIXly correct term, and 'path' is a reasonable
+	    abbreviation for it in parameter names.
+	   =20
+	    Cc: "G. Branden Robinson" <branden@debian.org>
+	    Signed-off-by: Alejandro Colomar <alx@kernel.org>
+
+	diff --git a/man/man2/acct.2 b/man/man2/acct.2
+	index d2d1be1c4fc6..fe3606c17752 100644
+	--- a/man/man2/acct.2
+	+++ b/man/man2/acct.2
+	@@ -12,7 +12,7 @@ .SH SYNOPSIS
+	 .nf
+	 .B #include <unistd.h>
+	 .P
+	-.BI "int acct(const char *_Nullable " filename );
+	+.BI "int acct(const char *_Nullable " path );
+	 .fi
+	 .P
+	 .RS -4
+	@@ -34,10 +34,10 @@ .SH DESCRIPTION
+	 The
+	 .BR acct ()
+	 system call enables or disables process accounting.
+	-If called with the name of an existing file as its argument,
+	+If called with the pathname of an existing file as its argument,
+	 accounting is turned on,
+	-and records for each terminating process are appended to
+	-.I filename
+	+and records for each terminating process
+	+are appended to the file
+	 as it terminates.
+	 An argument of NULL causes accounting to be turned off.
+	 .SH RETURN VALUE
+	...
+
+> +.BI "               struct file_attr *" fattr ", size_t " size ,
+> +.BI "               unsigned int " flags );
+> +.fi
+> +.P
+> +.IR Note :
+> +glibc provides no wrapper for
+> +.BR file_getattr (),
+> +use
+> +.BR syscall (2)
+> +instead.
+
+I've been trying to remove this sentence from manual pages.  This note
+was originally introduced when manual pages used syntax as if the
+wrapper existed, but some years ago we started using syscall()
+explicitly, which already clrearly notices this, so this is superfluous.
+Let's not add more.  (I'll remove the existing ones eventually.)
+
+> +.SH DESCRIPTION
+> +The
+> +.BR file_getattr ()
+> +system call retrieves filesystem file attributes
+> +from the file specified by
+> +.IR pathname .
+> +.P
+> +This system call provides functionality similar to the
+> +.B FS_IOC_FSGETXATTR
+> +.BR ioctl (2)
+> +operation,
+
+Should we document FS_IOC_FSGETXATTR in a new FS_IOC_FSGETXATTR(2const)
+manual page?
+
+> +but with the advantage that the file does not need to be opened.
+> +By using a pathname,
+> +.BR file_getattr ()
+> +can retrieve filesystem file attributes
+> +from all file types,
+> +including special files such as FIFOs, sockets, block devices, character
+> +devices, and symlinks, where opening the targeted inode may not be possi=
+ble.
+
+This seems to be a limitation of FS_IOC_FSGETXATTR(2const), and would be
+more appropriately documented in that page (if we add it).  There, I'd
+document it in CAVEATS.  Then, file_getattr(2) wouldn't need to mention
+this at all, because it's not an issue here.
+
+> +.P
+> +As with
+> +.BR openat (2),
+> +if
+> +.I pathname
+> +is relative,
+> +then it is interpreted relative to the directory
+> +referred to by the file descriptor
+> +.IR dirfd .
+> +The special value
+> +.B AT_FDCWD
+> +could be used to refer to the current working directory of the calling p=
+rocess.
+> +If
+> +.I pathname
+> +is absolute,
+> +then
+> +.I dirfd
+> +is ignored.
+> +.P
+> +The
+> +.I fattr
+> +argument is a pointer to a
+> +.I file_attr
+> +structure.
+> +This structure will be filled with file attributes.
+> +This structure is described in
+> +.BR file_attr(2type) .
+
+The '(2const)' part shouldn't be in bold.  Thus:
+
+	.BR file_attr (2type).
+
+> +.P
+> +The
+> +.I size
+> +argument specifies the size of the buffer pointed to by
+> +.IR fattr .
+
+I'd do: s/buffer/structure/
+
+We say 'size of the buffer' to refer to arrays (and say length,
+to not confuse it with the size in bytes).
+
+> +The size indicates version of the structure in use, refer to
+> +.B file_attr(2type)
+> +for more information on versioning.
+> +.P
+> +Userspace applications should zero-initialize
+
+s/Userspace/User-space/
+
+> +.I struct file_attr
+> +before calling
+> +.BR file_getattr ()
+> +to ensure that fields not filled in by older kernels
+> +will have predictable values.
+> +.P
+> +The
+> +.I flags
+> +argument is a bit mask, available flags are:
+
+The usual language we use for this is:
+
+	The
+	.I flags
+	argument contains
+	a bitwise OR of zero or more of the following constants:
+
+See for example readv(2).
+
+There are some minor variations of this in other pages, and I should
+make them more uniform.
+
+> +.TP
+> +.B AT_EMPTY_PATH
+> +If
+> +.I pathname
+> +is an empty string,
+> +operate on the file referred to by
+> +.IR dirfd .
+> +In this case,
+> +.I dirfd
+> +can refer to any type of file,
+> +not just a directory.
+> +.TP
+> +.B AT_SYMLINK_NOFOLLOW
+> +If
+> +.I pathname
+> +is a symbolic link,
+> +do not dereference it;
+> +instead get attributes of the symbolic link inode itself.
+> +By default, symbolic links are dereferenced.
+> +.SH RETURN VALUE
+> +On success,
+> +zero is returned.
+> +On error,
+> +\-1 is returned,
+> +and
+> +.I errno
+> +is set to indicate the error.
+> +.SH ERRORS
+> +.TP
+> +.B E2BIG
+> +.I size
+> +is too big (larger than
+> +.BR PAGE_SIZE ).
+> +.TP
+> +.B EACCES
+> +Search permission is denied for one of the directories
+> +in the path prefix of
+> +.IR pathname .
+> +.TP
+> +.B EBADF
+> +.I pathname
+> +is relative but
+> +.I dirfd
+> +is neither
+> +.B AT_FDCWD
+> +nor a valid file descriptor.
+> +.TP
+> +.B EBADF
+> +.I pathname
+> +is an empty string,
+> +.B AT_EMPTY_PATH
+> +was specified,
+> +but
+> +.I dirfd
+> +is an invalid file descriptor.
+
+I was wondering: is it valid to specify AT_EMPTY_PATH, use an empty
+string, and use AT_FDCWD as the dirfd?  That should act on the current
+working directory itself, right?  Or is that not supported?
+
+> +.TP
+> +.B EFAULT
+> +.I pathname
+> +or
+> +.I fattr
+> +is an invalid pointer.
+> +.TP
+> +.B EINVAL
+> +Invalid flag specified in
+
+s/Invalid/Unknown/
+
+You may have specified a valid flag, but the kernel is old and doesn't
+yet know it.
+
+> +.IR flags .
+> +.TP
+> +.B EINVAL
+> +.I size
+> +is smaller than
+> +.BR FILE_ATTR_SIZE_VER0 .
+
+perf_event_open(2) reports E2BIG for a size smaller than
+PERF_ATTR_SIZE_VER0.  This seems unnecessarily inconsistent.  I'm not
+sure which I'd say is more appropriate, but I'd expect them to be
+consistent.  I mentioned perf_event_open(2) because that's the only page
+that has a *_VER0 constant and documents an error if a size is smaller
+than it.  There's also mount_setattr(2) which documents
+MOUNT_ATTR_SIZE_VER0, but it's not documented in ERRORS.
+
+I think kernel maintainers should have a look at the different APIs that
+have such a value, and discuss whether the error codes should be made
+uniform retroactively, or whether we should accept the existing
+divergence but decide on an error code for new APIs.
+
+I've CCed linux-api@.
+
+> +.TP
+> +.B ELOOP
+> +Too many symbolic links encountered while resolving
+> +.IR pathname .
+> +.TP
+> +.B ENAMETOOLONG
+> +.I pathname
+> +is too long.
+> +.TP
+> +.B ENOENT
+> +A component of
+> +.I pathname
+> +does not exist,
+> +or
+> +.I pathname
+> +is an empty string and
+> +.B AT_EMPTY_PATH
+> +was not specified in
+> +.IR flags .
+> +.TP
+> +.B ENOMEM
+> +Insufficient kernel memory was available.
+> +.TP
+> +.B ENOTDIR
+> +A component of the path prefix of
+> +.I pathname
+> +is not a directory or,
+
+s/or ,/, or/
+
+> +.I pathname
+> +is relative and
+> +.I dirfd
+> +is a file descriptor referring to a file other than a directory.
+> +.TP
+> +.B EOPNOTSUPP
+> +The filesystem does not support getting attributes on this type of inode.
+> +.SH HISTORY
+> +.SS Linux 6.17
+> +This system call is introduced as a more flexible alternative to the
+> +FS_IOC_FSGETXATTR
+> +.BR ioctl (2)
+> +which could work on any type of file.
+> +.SH NOTES
+> +This system call is designed to be extensible.
+> +The
+> +.I size
+> +argument allows userspace applications to indicate
+> +which version of the
+> +.I file_attr
+> +structure they are using,
+> +enabling the kernel to support both old and new versions
+> +of the structure simultaneously.
+> +.P
+> +If
+> +.I size
+> +is smaller than the structure size the kernel expects,
+> +only the fields that fit within
+> +.I size
+> +will be filled in.
+> +If
+> +.I size
+> +is larger than the kernel's structure size,
+> +the extra bytes are zeroed.
+
+I'd move NOTES to a VERSIONS section (which should go above HISTORY).
+I know the existing pages are a bit inconsistent with this, but I'm
+trying to minimize use of NOTES, which doesn't say much about its
+contents.
+
+> +.SH EXAMPLES
+> +The program below demonstrates the use of
+> +.BR file_getattr ()
+> +to retrieve and display file attributes.
+> +.P
+> +.in +4n
+> +.EX
+> +#include <fcntl.h>
+> +#include <linux/fs.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <sys/syscall.h>
+> +#include <unistd.h>
+> +
+> +#ifndef SYS_file_getattr
+> +#define SYS_file_getattr 467
+> +#endif
+> +
+> +int
+> +main(int argc, char *argv[])
+> +{
+> +    struct file_attr fa =3D { 0 };
+> +    long ret;
+> +
+> +    if (argc !=3D 2) {
+> +        fprintf(stderr, "Usage: %s <filename>\\n", argv[0]);
+
+The backslash should be specified as \[rs] (rs means reverse solidus).
+Thus:
+
+	... <filename> \[rs]n", ...
+
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    ret =3D syscall(SYS_file_getattr, AT_FDCWD, argv[1], &fa, sizeof(fa)=
+, 0);
+> +    if (ret =3D=3D \-1) {
+> +        perror("file_getattr");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    printf("File attributes:\\n");
+> +    printf("  xflags:     0x%llx\\n", (unsigned long long)fa.fa_xflags);
+
+Please use a space after a cast:  (type) val
+
+See:
+	$ cat CONTRIBUTING.d/style/c | sed -n /Spaces/,+7p
+	    Spaces
+		Treat sizeof() and similar operators as functions, not keywords.
+		Use a space after keywords, but not after functions.
+
+		Use a space to separate binary and ternary operators (except
+		`.` and `->`), but not to separate unary operators.
+
+		Use a space between a cast and the expression it converts.
+
+> +    printf("  extsize:    %u\\n", fa.fa_extsize);
+> +    printf("  nextents:   %u\\n", fa.fa_nextents);
+> +    printf("  projid:     %u\\n", fa.fa_projid);
+> +    printf("  cowextsize: %u\\n", fa.fa_cowextsize);
+> +
+> +    /*
+> +     * Try setting NODUMP flag with chattr +d ./foo to see the difference
+> +     */
+> +    if (fa.fa_xflags & FS_XFLAG_NODUMP)
+> +        printf("  NODUMP flag is set\\n");
+> +
+> +    exit(EXIT_SUCCESS);
+> +}
+> +.EE
+> +.in
+> +.SH SEE ALSO
+> +.BR file_setattr (2),
+> +.BR file_attr (2type),
+> +.BR ioctl (2),
+> +.BR ioctl_fs (2),
+> +.BR openat (2)
+> diff --git a/man/man2/file_setattr.2 b/man/man2/file_setattr.2
+
+I'll have a look at the other pages some other time.  I'm going to have
+lunch.  :)
+
+
+Have a lovely day!
+Alex
+
+> new file mode 100644
+> index 000000000000..c340bdcab065
+> --- /dev/null
+> +++ b/man/man2/file_setattr.2
+> @@ -0,0 +1,333 @@
+> +.\" Copyright, the authors of the Linux man-pages project
+> +.\"
+> +.\" SPDX-License-Identifier: Linux-man-pages-copyleft
+> +.\"
+> +.TH file_setattr 2 (date) "Linux man-pages (unreleased)"
+> +.SH NAME
+> +file_setattr \- set filesystem inode attributes
+> +.SH SYNOPSIS
+> +.nf
+> +.BR "#include <linux/fcntl.h>" "      /* Definition of " AT_* " constant=
+s */"
+> +.BR "#include <linux/fs.h>" "         /* Definition of " FILE_ATTR_* \
+> +" and " FS_XFLAG_* " constants */"
+> +.BR "#include <sys/syscall.h>" "      /* Definition of " SYS_* " constan=
+ts */"
+> +.B #include <unistd.h>
+> +.P
+> +.B long syscall(SYS_file_setattr,
+> +.BI "               int " dirfd ", const char *" pathname ,
+> +.BI "               struct file_attr *" fattr ", size_t " size ,
+> +.BI "               unsigned int " flags );
+> +.fi
+> +.P
+> +.IR Note :
+> +glibc provides no wrapper for
+> +.BR file_setattr (),
+> +necessitating the use of
+> +.BR syscall (2).
+> +.SH DESCRIPTION
+> +The
+> +.BR file_setattr ()
+> +system call sets filesystem inode attributes
+> +on the file specified by
+> +.IR pathname .
+> +.P
+> +This system call provides functionality similar to the
+> +.B FS_IOC_FSSETXATTR
+> +.BR ioctl (2)
+> +operation,
+> +but with the advantage that the file does not need to be opened.
+> +By using a pathname instead of requiring an open file descriptor,
+> +.BR file_setattr ()
+> +can manipulate filesystem inode attributes
+> +on all file types,
+> +including special files (FIFOs, sockets, block devices, character device=
+s)
+> +where opening the file may have side effects or may not be possible.
+> +With
+> +.BR ioctl (2),
+> +it is not always possible to obtain a file descriptor that refers
+> +directly to the filesystem inode for special files.
+> +.P
+> +As with
+> +.BR openat (2),
+> +if
+> +.I pathname
+> +is relative,
+> +then it is interpreted relative to the directory
+> +referred to by the file descriptor
+> +.I dirfd
+> +(or the current working directory of the calling process,
+> +if
+> +.I dirfd
+> +is the special value
+> +.BR AT_FDCWD ).
+> +If
+> +.I pathname
+> +is absolute,
+> +then
+> +.I dirfd
+> +is ignored.
+> +.P
+> +The
+> +.I fattr
+> +argument is a pointer to a
+> +.I file_attr
+> +structure,
+> +which specifies the attributes to set on the file.
+> +This structure is described in
+> +.BR file_attr (2type).
+> +User-space applications should use
+> +.B file_getattr(2)
+> +to initialize
+> +.I struct fattr
+> +beforehand.
+> +.P
+> +The
+> +.I size
+> +argument specifies the size of the buffer pointed to by
+> +.IR fattr .
+> +The size indicates version of the structure in use, refer to
+> +.B file_attr(2type)
+> +for more information on versioning.
+> +.P
+> +The
+> +.I flags
+> +argument is a bit mask that can include zero or more of the following va=
+lues:
+> +.TP
+> +.B AT_EMPTY_PATH
+> +If
+> +.I pathname
+> +is an empty string,
+> +operate on the file referred to by
+> +.I dirfd
+> +(which may have been obtained using the
+> +.BR open (2)
+> +.B O_PATH
+> +flag).
+> +In this case,
+> +.I dirfd
+> +can refer to any type of file,
+> +not just a directory.
+> +.TP
+> +.B AT_SYMLINK_NOFOLLOW
+> +If
+> +.I pathname
+> +is a symbolic link,
+> +do not dereference it:
+> +instead set attributes on the symbolic link itself.
+> +By default (i.e., if this flag is not specified),
+> +symbolic links are dereferenced.
+> +.SH RETURN VALUE
+> +On success,
+> +zero is returned.
+> +On error,
+> +\-1 is returned,
+> +and
+> +.I errno
+> +is set to indicate the error.
+> +.SH ERRORS
+> +.TP
+> +.B E2BIG
+> +.I size
+> +is larger than
+> +.BR PAGE_SIZE .
+> +.TP
+> +.B E2BIG
+> +.I size
+> +indicates the version which kernel doesn't support (the size is larger t=
+han the
+> +kernel expects) and new fields are non-zero.
+> +.TP
+> +.B EACCES
+> +Search permission is denied for one of the directories
+> +in the path prefix of
+> +.IR pathname .
+> +(See also
+> +.BR path_resolution (7).)
+> +.TP
+> +.B EBADF
+> +.I pathname
+> +is relative but
+> +.I dirfd
+> +is neither
+> +.B AT_FDCWD
+> +nor a valid file descriptor.
+> +.TP
+> +.B EBADF
+> +.I pathname
+> +is an empty string,
+> +.B AT_EMPTY_PATH
+> +was specified in
+> +.IR flags ,
+> +and
+> +.I dirfd
+> +is an invalid file descriptor.
+> +.TP
+> +.B EFAULT
+> +.I pathname
+> +or
+> +.I fattr
+> +is an invalid pointer.
+> +.TP
+> +.B EINVAL
+> +Invalid flag specified in
+> +.IR flags .
+> +.TP
+> +.B EINVAL
+> +.I size
+> +is smaller than
+> +.BR FILE_ATTR_SIZE_VER0 .
+> +.TP
+> +.B EINVAL
+> +Invalid combination of parameters provided in
+> +.I fattr
+> +for this type of file or filesystem.
+> +.TP
+> +.B ELOOP
+> +Too many symbolic links encountered while resolving
+> +.IR pathname .
+> +.TP
+> +.B ENAMETOOLONG
+> +.I pathname
+> +is too long.
+> +.TP
+> +.B ENOENT
+> +A component of
+> +.I pathname
+> +does not exist,
+> +or
+> +.I pathname
+> +is an empty string and
+> +.B AT_EMPTY_PATH
+> +was not specified in
+> +.IR flags .
+> +.TP
+> +.B ENOMEM
+> +Insufficient kernel memory was available.
+> +.TP
+> +.B ENOTDIR
+> +A component of the path prefix of
+> +.I pathname
+> +is not a directory or,
+> +.I pathname
+> +is relative and
+> +.I dirfd
+> +is a file descriptor referring to a file other than a directory.
+> +.TP
+> +.B EOPNOTSUPP
+> +The filesystem does not support setting attributes on this type of inode.
+> +.TP
+> +.B EPERM
+> +The caller does not have the necessary permissions
+> +to change the file attributes.
+> +.TP
+> +.B EROFS
+> +The file is on a read-only filesystem.
+> +.SH HISTORY
+> +.SS Linux 6.17
+> +This system call is introduced as a more flexible alternative to the
+> +FS_IOC_FSSETXATTR
+> +.BR ioctl (2)
+> +which could work on any type of files.
+> +.SH NOTES
+> +This system call is designed to be extensible.
+> +The
+> +.I size
+> +argument allows user-space applications to indicate
+> +which version of the
+> +.I file_attr
+> +structure they are using,
+> +enabling the kernel to support both old and new versions
+> +of the structure simultaneously.
+> +.P
+> +If
+> +.I size
+> +is smaller than the structure size the kernel expects,
+> +the kernel treats the missing fields as having zero values
+> +(which is a no-op).
+> +If
+> +.I size
+> +is larger than expected,
+> +the kernel checks that all unknown (to the kernel) fields are zero;
+> +if not,
+> +the call fails with
+> +.BR E2BIG .
+> +.SH EXAMPLES
+> +The program below demonstrates the use of
+> +.BR file_setattr ()
+> +to set the
+> +.B FS_XFLAG_NODUMP
+> +flag on a file.
+> +.P
+> +.in +4n
+> +.EX
+> +#include <fcntl.h>
+> +#include <linux/fcntl.h>
+> +#include <linux/fs.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <string.h>
+> +#include <sys/syscall.h>
+> +#include <unistd.h>
+> +
+> +#ifndef SYS_file_getattr
+> +#define SYS_file_getattr 467
+> +#endif
+> +
+> +#ifndef SYS_file_setattr
+> +#define SYS_file_setattr 468
+> +#endif
+> +
+> +int
+> +main(int argc, char *argv[])
+> +{
+> +    struct file_attr fa =3D { 0 };
+> +    int dfd;
+> +    long ret;
+> +
+> +    if (argc !=3D 2) {
+> +        fprintf(stderr, "Usage: %s <filename>\\n", argv[0]);
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    dfd =3D open(argv[1], O_RDONLY);
+> +    if (dfd =3D=3D \-1) {
+> +        perror("open");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    ret =3D syscall(SYS_file_getattr, dfd, "", &fa, sizeof(fa), AT_EMPTY=
+_PATH);
+> +    if (ret =3D=3D \-1) {
+> +        perror("file_getattr");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    printf("Current flags: 0x%llx\\n", (unsigned long long)fa.fa_xflags);
+> +
+> +    fa.fa_xflags |=3D FS_XFLAG_NODUMP;
+> +
+> +    ret =3D syscall(SYS_file_setattr, dfd, "", &fa, sizeof(fa), AT_EMPTY=
+_PATH);
+> +    if (ret =3D=3D \-1) {
+> +        perror("file_setattr");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    ret =3D syscall(SYS_file_getattr, dfd, "", &fa, sizeof(fa), AT_EMPTY=
+_PATH);
+> +    if (ret =3D=3D \-1) {
+> +        perror("file_getattr");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +
+> +    if (fa.fa_xflags & FS_XFLAG_NODUMP)
+> +        printf("flags 0x%llx (NODUMP flag is set)\\n",
+> +            (unsigned long long)fa.fa_xflags);
+> +
+> +    exit(EXIT_SUCCESS);
+> +}
+> +.EE
+> +.in
+> +.SH SEE ALSO
+> +.BR file_getattr (2),
+> +.BR ioctl (2),
+> +.BR ioctl_fs (2),
+> +.BR openat (2),
+> +.BR file_attr (2type),
+> +.BR path_resolution (7)
+> diff --git a/man/man2type/file_attr.2type b/man/man2type/file_attr.2type
+> new file mode 100644
+> index 000000000000..fd426c19f5f0
+> --- /dev/null
+> +++ b/man/man2type/file_attr.2type
+> @@ -0,0 +1,187 @@
+> +.\" Copyright, the authors of the Linux man-pages project
+> +.\"
+> +.\" SPDX-License-Identifier: Linux-man-pages-copyleft
+> +.\"
+> +.TH file_attr 2type (date) "Linux man-pages (unreleased)"
+> +.SH NAME
+> +file_attr \- describe filesystem file attributes to get or set
+> +.SH SYNOPSIS
+> +.EX
+> +.B #include <linux/fs.h>
+> +.P
+> +.B struct file_attr {
+> +.BR "    u64  fa_xflags;" "     /* Extended flags */"
+> +.BR "    u32  fa_extsize;" "    /* Extent size hint */"
+> +.BR "    u32  fa_nextents;" "   /* Number of extents (read-only) */"
+> +.BR "    u32  fa_projid;" "     /* Project identifier */"
+> +.BR "    u32  fa_cowextsize;" " /* CoW extent size hint */"
+> +.B };
+> +.EE
+> +.SH DESCRIPTION
+> +Describes filesystem file attributes
+> +for use with the
+> +.BR file_getattr (2)
+> +and
+> +.BR file_setattr (2)
+> +system calls.
+> +.P
+> +The fields are as follows:
+> +.TP
+> +.I fa_xflags
+> +This field contains file attribute flags.
+> +It is a bit mask consisting of zero or more of the
+> +.B FS_XFLAG_*
+> +flags.
+> +Refer to the section
+> +.B FLAGS
+> +below for a list of all flags.
+> +.TP
+> +.I fa_extsize
+> +Extent size allocator hint in bytes.
+> +This value suggests a preferred extent size
+> +for new allocations to this file.
+> +.TP
+> +.I fa_nextents
+> +Number of data extents in the file (read-only).
+> +This field is filled in by
+> +.BR file_getattr (2)
+> +and is ignored by
+> +.BR file_setattr (2).
+> +.TP
+> +.I fa_projid
+> +Project identifier.
+> +Used by quota systems to group related files.
+> +.TP
+> +.I fa_cowextsize
+> +Copy-on-Write (CoW) extent size hint in bytes.
+> +This value suggests a preferred extent size
+> +for CoW operations.
+> +.SH FLAGS
+> +Flags can be:
+> +.RS
+> +.TP
+> +.B FS_XFLAG_REALTIME
+> +Data is stored in a realtime volume.
+> +.TP
+> +.B FS_XFLAG_IMMUTABLE
+> +File cannot be modified.
+> +.TP
+> +.B FS_XFLAG_APPEND
+> +All writes must append to the end of the file.
+> +.TP
+> +.B FS_XFLAG_SYNC
+> +All writes are synchronous.
+> +.TP
+> +.B FS_XFLAG_NOATIME
+> +Do not update file access time on reads.
+> +.TP
+> +.B FS_XFLAG_NODUMP
+> +Do not include file in backups.
+> +.TP
+> +.B FS_XFLAG_DAX
+> +Use Direct Access (DAX) for I/O operations.
+> +.TP
+> +.B FS_XFLAG_NODEFRAG
+> +Exclude this file from defragmentation operations.
+> +.TP
+> +.B FS_XFLAG_FILESTREAM
+> +Use filestream allocator for this file.
+> +.TP
+> +.B FS_XFLAG_EXTSIZE
+> +Use the extent size hint from the
+> +.I fa_extsize
+> +field.
+> +.TP
+> +.B FS_XFLAG_COWEXTSIZE
+> +Use the CoW extent size hint from the
+> +.I fa_cowextsize
+> +field.
+> +.RE
+> +.P
+> +Directory only flags:
+> +.RS
+> +.TP
+> +.B FS_XFLAG_RTINHERIT
+> +New files created in this directory inherit the realtime flag.
+> +.TP
+> +.B FS_XFLAG_NOSYMLINKS
+> +Disallow creation of symbolic links in this directory.
+> +.TP
+> +.B FS_XFLAG_EXTSZINHERIT
+> +New files created in this directory inherit the extent size hint.
+> +.TP
+> +.B FS_XFLAG_PROJINHERIT
+> +New files created in this directory inherit the project identifier.
+> +.RE
+> +.P
+> +The following flags are read-only:
+> +.RS
+> +.TP
+> +.B FS_XFLAG_PREALLOC
+> +File has preallocated extents.
+> +.TP
+> +.B FS_XFLAG_HASATTR
+> +File has extended attributes.
+> +.TP
+> +.B FS_XFLAG_VERITY
+> +File has fs-verity enabled.
+> +.TP
+> +.B FS_XFLAG_CASEFOLD
+> +The filesystem performs case-insensitive lookups (file and directory name
+> +comparisons ignore case).
+> +.TP
+> +.B FS_XFLAG_CASENONPRESERVING
+> +The filesystem does not preserve the case of file and directory names.
+> +.RE
+> +.P
+> +Not all filesystems support all flags.
+> +Setting unsupported flags may result in an
+> +.B EINVAL
+> +or
+> +.B EOPNOTSUPP
+> +error.
+> +.SH VERSIONS
+> +.SS Structure size
+> +The structure size is defined by
+> +.B FILE_ATTR_SIZE_VER*
+> +which is also a version of the structure being used.
+> +The
+> +.I size
+> +parameter passed to
+> +.BR file_getattr (2)
+> +and
+> +.BR file_setattr (2)
+> +indicates the version of
+> +.I struct file_attr\fP.
+> +.SS FILE_ATTR_SIZE_VER0
+> +Size is 24 bytes.
+> +.SH HISTORY
+> +.SS Linux v6.17
+> +This structure is introduced.
+> +The
+> +.I struct file_attr
+> +provides similar functionality to
+> +.I struct fsxattr
+> +used by the
+> +.B FS_IOC_FSGETXATTR
+> +and
+> +.B FS_IOC_FSSETXATTR
+> +.BR ioctl (2)
+> +operations,
+> +but is designed to be extensible through the
+> +.I size
+> +parameter of the system calls.
+> +.P
+> +Extra fields may be appended to the structure in future kernel versions.
+> +The kernel will expect new fields to be zeros
+> +for older versions of the structure.
+> +Therefore, a user
+> +.I must
+> +zero-fill the structure on initialization to keep compatibility with old=
+er
+> +kernels.
+> +.SS Linux v7.2
+> +The FS_XFLAG_CASEFOLD and FS_XFLAG_CASENONPRESERVING are introduced to e=
+nable
+> +upper layers, such as NFSD, to retrieve case sensitivity information.
+> +.SH SEE ALSO
+> +.BR file_getattr (2),
+> +.BR file_setattr (2)
+> --=20
+> 2.55.0
+>=20
+>=20
+
+--=20
+<https://www.alejandro-colomar.es>
+
+--35gdimbwekpjwnki
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmqirpMACgkQ64mZXMKQ
+wqlSIBAAh/uKhp/pRiyzqj4neJs2lPnnbUCPhO/qxWl4k4O2iljfmOsneb15GpMV
+2386Vqqla7re3jctuyG+XUBKuo4Cdylfi4XRACdJBFnMM17WVmAIkeLAowoDeZPn
+FkNmT5tTO1gCdDLMXiQ4j3VcAtTXw1H3UL3eE91uHwQSd18IpUhK0JKT0uiiJN67
+aHUNxbo2leOp5tPlmqlgTDlC41Fh7XAhJLWx9sE7gwtD6PvF18sjyKjM5NC9B+Ca
+di/Juu7lLFCJHpE1dv/el1ek03G4RHWOKbqDOt755KNIuUq6kMWiHzXFSpQy+iuL
+XhwYoskdkYyQD15aWvAl3jjaVQqpXUNcKGmB+DYFS0eAqMZlDJBUr2TcPaggDrJv
+BMMDgEivHhsnHOV7BCsXwBicTtLEHP9EoRwwruDWDBgJEpukq5VGJfA14ff10vmq
+Uj7djpsoQzepzkKf7Xs5nCFC1Ry7vgo+LKe2jeHdSk+YCoekFpnmadaHPr3lWHCf
+mTS+Ffh1OMXGFhiSzcR1GVWoi2cVYb+/nD8hETDoFVYi4dS0bXma5V4hLZEB7+QP
+GXVpcdg7vgbckhbk2zu7VhTUxXbu7pcz1azVq8CA3DilDAMhM0q8hSyAlc+lLa/F
+YrsvSTFR6aQNidP9feWmUGOmX5Fr571hKNNuVgNHAcvZ7bnwhls=
+=CUnK
+-----END PGP SIGNATURE-----
+
+--35gdimbwekpjwnki--
