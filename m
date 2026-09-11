@@ -1,65 +1,65 @@
-Received: from mail-wm1-f41.google.com (mail-wm1-f41.google.com [209.85.128.41])
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2932E37B3E4
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1924337CD32
 	for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 15:05:17 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789139120; cv=none; b=YpVe4UF44pCuDJem22NjN+oUi489w8b5H1zY9lli8BIpu/6MeV9GplBe0gS5897oI+WctmumlHHDbK5q35X9HRNbg8pSLCGrrS1+8HezJsgbBeR7U2ZCo9helNIlJZx3sKrxY6V9NU9gpOoGlMqwUudYLPl1cXNKf37Fr6M3/5I=
+	t=1789139122; cv=none; b=uW+O4NTsxHAn4PuvfOt4tKwoA/3xrpLK9gYTM2nXST0DTf+frSTda8hvHzrZOIVeCoQEaa6G7CX5wv0/LUVQofbQBkJ/FZNRSTczP3AidfVEnI8EWABui8/JKCLFEQnuaSlAvuBZrY/Vu80zkyaC+AQjPjlBvASkGjej4BZ7I9Q=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789139120; c=relaxed/simple;
-	bh=DtJ9ZpMVzp9pBwNVieDXauBpJyGXCHWbrcsUIqWrCLk=;
+	s=arc-20240116; t=1789139122; c=relaxed/simple;
+	bh=JL+uluzocOxsNsOaPXlEzBUTr48C+sSlS5wULgBtFtM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=cgSPnqMnvaZow1eqXYlgjyBWmZNzgXoyDROE1V+AqVtkzwxBBq5zL5eh5aTIr2pYggJceMUcOHZcAvBUWV6hNpgQNinYCKe4CFOFtN3IJuMGcDsjrjoSg8ipbRBOlpKhJHZiECPbmd0B/ZFYPRiM6uEOX9ptMy0b7WnDhyTmOas=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=I+ZvYA1m; arc=none smtp.client-ip=209.85.128.41
+	 MIME-Version:Content-Type; b=k1Cv5hyAzu6U6pDymnwNyLtuD4gZjQFQL2ebSTVjYR+MBOPVNi0vhtl+iOzS6DLwXYJcFSF+DfboWvEGmA/XTBL/1EUKuhH6DiZhoQRHMTpmyKvG0U5Jnh5md988ZX8CG/W2wVrXnfOXtlaX0/ysEQ5QSXR01Cv/wO8KAtL8h/E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=DPoBfuQE; arc=none smtp.client-ip=209.85.221.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="I+ZvYA1m"
-Received: by mail-wm1-f41.google.com with SMTP id 5b1f17b1804b1-4998b5a63e2so11371405e9.1
-        for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 08:05:16 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="DPoBfuQE"
+Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-48436216a98so664960f8f.0
+        for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 08:05:17 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1789139115; x=1789743915; darn=vger.kernel.org;
+        d=suse.com; s=google; t=1789139116; x=1789743916; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=nniMuKkVKCBrFfej6b+g/WdQXf4DCG9QFf6qRLzwPt4=;
-        b=I+ZvYA1mbICTv0PbrqdQMGSq+gzptDaunsIRkczLkUVPh4RgeYjoWN4vx+l99uj4hc
-         zcO7ZRyK98cOCz0YD10nH0BPzXr57Tz5RI0IcGB8yfMyUZ9Vhww1By2HzkboYWvjEs+k
-         h5mYmWIInmYh27rNaIxNH4K+GM6nqC77p96zle/MtMjRZ4fGPi1zb5KcBkeExtUBpUuA
-         5Rmx/Gcwa6MXoLk3EO5HI9Ut5BuemqDBe5S+Ix+Ahm4A0UySPIX4lovRO03XUBNAbt5n
-         T1ZSHMnHfZRWoh5jbgeGxfcHFdOlPs5VkyPNR54wctreyKisukdw5jGWmJwMBvf6+RA+
-         oWtQ==
+        bh=a258DNEK6aR0v+xDimWu2caaAUdwCvMljBObmnBjN5k=;
+        b=DPoBfuQEnSW5Lg5efeT4TbUM3prqvIUhPd4e5hEY0qDOO+rDm2xucBa0yhmFynP+N3
+         WR6a2Gc2Gg4xPJ+/pv/3qqwEuHoTM9zVDN1DceSyYg43HeUzI6htFkmmQett3GeRPX+S
+         xEQ+K4u9guKtuLvcCJLF7kLfaqhMbAviVHOQ5JWBbVd5vePW+cWI1A/DKoY3mCEzMOkk
+         Y+Hv+yx7UvK8P1P114QbrqXOITDqKZJ8W42XE0Nr58ksWIM7Wqi38tAFD1RGDUieECyv
+         64JK9yPfgwbchvz/IWFnDoeyM4gFoUNujTtTHeHvmhhHodv9ecWYuEs/+7UKTO4ibSdO
+         p3Ow==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789139115; x=1789743915;
+        d=1e100.net; s=20251104; t=1789139116; x=1789743916;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=nniMuKkVKCBrFfej6b+g/WdQXf4DCG9QFf6qRLzwPt4=;
-        b=kI2QRXv3C2KmIi0vkIWl808DtLBnaEK2Y03Y/hFPyEsTfjaYtKft0CTGj8w6rwJPM2
-         3m0UYKhAIjM5oplKhqel58v6qwYw8G4x7oV7PivrIsMJit/25Q/6m9KRUMfhSyhRCVkW
-         O1wENpR0/Gi0VvOp1Wz8d3IqSRi3q4IcbasqV6NzhNN3n36M/VTYJX+OoXjIKL131MAL
-         Wpu7P1nAUllI+7xjeNkzbQB+j+rMw4VluHjHH/SiZG8kH+tqQp78ulQDpjlxuJhAjt3o
-         nnaA0q6HnCgvCCM9i+qCul2XcOeQyf76hHGhtPTMd8KKuzePHML36z2M3qWn6PaIeQ4c
-         6rEQ==
-X-Forwarded-Encrypted: i=1; AKwUvBxYx7yV/ijExUkHf8ZKWAyH6vjup8arWD6eWoKPbuJksUdgNpM8XrWmnas2oF/8u3Vtpoy+kZpCgAo=@vger.kernel.org
-X-Gm-Message-State: AFuF++k1IU7GtfoQH+Hjym23PnnkiupBfEbDGPT8ITpwHZ8bcLAUc6bS
-	tQBra3BWNE+1kdVhNmV47uzCLC5KhWsq1PE64FDVgLlsuwKRCMMfEvAISlPrEFhVag0=
-X-Gm-Gg: AYBFou0lrN/ufpHUZRRIH+94ogKdSFBoSLtdhwHvvsOHZ/TU9b/bF7xkHW9kK8L8RkZ
-	IaE/8vtzH2zh/g9AY75499AuxGMdF0I0n3iwEWOYm5cbra2Ut2qOILS27qsNZ18Coth3yOnHf3T
-	8JeC5Emah0FkLogAmJQIXHG4buk0QwnwnYSsIWTOChP+wbdGDnHR4HXZxqCvL/rtjklCj5z8r8R
-	M7zdGVux6SQzdqZMsomaWj2dF3pfRJN+jdO+nWvhZMYL3o0CDcR/IEnFZwEXBpk9sQdhxhATNmQ
-	QfkzSQ/VNn1oHKdL2GgKGfgLCnG0chJ25CTzqHpSIL+Pq59DHbGSzTA3A88/eXFsKuwyZ2Zb3uV
-	fC6jojgXLPNh/zofU84MRZzzKw3Py3s8vihhitD+9L/soCkAYu7tZAkq1f0xbUKXLAkhIbJ6Eo3
-	nS/VK9lB7RWcFpGWYxW8m8FFdLNNbHAZjn959xdPn6E3CMyN879XSffEjprfaKCKtj41an+tDHD
-	dY5brgCzr/7xvVC
-X-Received: by 2002:a05:600d:6501:20b0:495:48d7:f178 with SMTP id 5b1f17b1804b1-49e61988e73mr40996545e9.11.1789139114793;
-        Fri, 11 Sep 2026 08:05:14 -0700 (PDT)
+        bh=a258DNEK6aR0v+xDimWu2caaAUdwCvMljBObmnBjN5k=;
+        b=VMjoaJHwcX1J5j4zL9H7zuOc36bILR0gfSnq+J4s7ATylhynsdw8SNViH0BVCFWCVL
+         Fb3+Gwy6BCxeh9bEJok5VBU7VsHXv5/CQu56itDXJkmHBW2R3jlldCSbBIZNtGMyPGuf
+         QS5uPgtpgTJUAPfmaHseO2IP9kVHHxaUA14gIzuy5KPfty79owBaTvKevPguHQlUG+LE
+         LrOQ2VlCtEwoIJVBmHG47Cf3mXemF+/yYXBLoXPjDBYuynSHMOu6AD7SxM3Z6VjQ+eCB
+         DtKwls5GYg2yCWk1bRCclg7llUZtOUpjXkA3RerVVE8xRrswnsI5fQqOeyLL2j/XvqIR
+         d+Pg==
+X-Forwarded-Encrypted: i=1; AKwUvBzweJ/QKpu81vUGXiYcrHG0mUENsga8Rp5+JS0fNKHC/J2XG/gEPi4hCUXh9PKaP73MuNoHVUEIZK4=@vger.kernel.org
+X-Gm-Message-State: AFuF++kKw4i+tVGI5dD5IWkOCzU6eEc6YxSVlhXOkOeW1w0BPPw7hk0l
+	2XG6tNunDRXoMYl+n4WqKd7Q82W2kX7ZtbRTk4ucBlS41asccQIcJlZhkjZb3amC+oQ=
+X-Gm-Gg: AYBFou1oFDAEDxMe+M9Peut3FSWKIg0mhvM7IDXNa02BAFwtG93/4EAWKys+6QZkQQS
+	rtxTU9WHw7CS9Q2ze/7ec4TjKHnW6cWf5ykcdHjM0IZlRca9ExqQPeCpo/um+DHrdDIxyIv8xzE
+	/xIHgYUWX4A8k8bRFpYzIRZxY2DJVwNOV0gYgi1wdne1XVWjEWFRDfXQYGkFhf5zuIDZSi9rj62
+	369SHWDzgnrqxLVD2kfJo2W2vTvtOtvOPvSqJyF0QUVkwpdsMn6DbSVgFn0MnY1icq5jWsALhg9
+	DYwtV7dBAR6WHyDod9ooSq0Ec95Fy7gaPvkLF/dsSHRLe7QjCTEjBB+6ssezqH0skamB97lOru6
+	szBK+FP8TNYfI1O+q7jJeL4cnRJu48FcqkskKZUnO2CJJDcLjCmiOoatx6kE9bk/WFjZXBPqkl0
+	Ut75akJFnIL0t7v5bEtOR1HgEvSrRZf6VOb/YIkKlxQJbuRBLcEpGBpr2mJIajwm+R67XG72R68
+	j1mctQ=
+X-Received: by 2002:a05:6000:491e:b0:486:f4b6:3bce with SMTP id ffacd0b85a97d-486f4b63c4fmr559176f8f.24.1789139115924;
+        Fri, 11 Sep 2026 08:05:15 -0700 (PDT)
 Received: from localhost.localdomain ([2001:af0:8000:1409:193:86:92:181])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-486eb350686sm6853579f8f.27.2026.09.11.08.05.13
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-486eb350686sm6853579f8f.27.2026.09.11.08.05.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 08:05:14 -0700 (PDT)
+        Fri, 11 Sep 2026 08:05:15 -0700 (PDT)
 From: Petr Pavlu <petr.pavlu@suse.com>
 To: Jens Axboe <axboe@kernel.dk>,
 	Jakub Kicinski <kuba@kernel.org>,
@@ -90,9 +90,9 @@ Cc: Simon Horman <horms@kernel.org>,
 	dri-devel@lists.freedesktop.org,
 	linux-modules@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 5/6] drm/xe: Include error-injection.h for ALLOW_ERROR_INJECTION()
-Date: Fri, 11 Sep 2026 17:04:05 +0200
-Message-ID: <20260911-module-include-error_injection-v1-5-5da895d8c84d@suse.com>
+Subject: [PATCH 6/6] module: Remove the error-injection.h include from linux/module.h
+Date: Fri, 11 Sep 2026 17:04:06 +0200
+Message-ID: <20260911-module-include-error_injection-v1-6-5da895d8c84d@suse.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
 References: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
@@ -105,337 +105,49 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
-Several drivers/gpu/drm/xe/*.c files use ALLOW_ERROR_INJECTION(), which is
-defined in asm-generic/error-injection.h. They currently rely on this
-header being included indirectly through linux/module.h ->
-linux/error-injection.h.
+linux/module.h appears in roughly 15k #include directives across the
+kernel. This makes it a "hot" header, so it should avoid pulling in
+unnecessary definitions.
 
-Add the missing includes in preparation for removing the
-linux/error-injection.h include from linux/module.h.
+The header currently includes linux/error-injection.h to obtain the
+definition of `struct error_injection_entry`. However, this is unnecessary
+because the type is only referenced in the file as a pointer, for which an
+incomplete type is sufficient.
 
-Remove also the linux/fault-injection.h include, which commit 91b2c42c214f
-("drm/xe: Use fault injection infrastructure to find issues at probe time")
-mistakenly used to provide the definition of ALLOW_ERROR_INJECTION().
+Remove the linux/error-injection.h include from linux/module.h and add it
+to kernel/module/main.c instead, where
+`sizeof(struct error_injection_entry)` is actually needed.
 
 Signed-off-by: Petr Pavlu <petr.pavlu@suse.com>
 ---
- drivers/gpu/drm/xe/xe_device.c                | 2 +-
- drivers/gpu/drm/xe/xe_exec_queue.c            | 1 +
- drivers/gpu/drm/xe/xe_ggtt.c                  | 2 +-
- drivers/gpu/drm/xe/xe_guc.c                   | 1 +
- drivers/gpu/drm/xe/xe_guc_ads.c               | 2 +-
- drivers/gpu/drm/xe/xe_guc_ct.c                | 2 +-
- drivers/gpu/drm/xe/xe_guc_log.c               | 2 +-
- drivers/gpu/drm/xe/xe_guc_relay.c             | 2 +-
- drivers/gpu/drm/xe/xe_hw_engine_class_sysfs.c | 1 +
- drivers/gpu/drm/xe/xe_hw_engine_group.c       | 2 ++
- drivers/gpu/drm/xe/xe_mmio.c                  | 1 +
- drivers/gpu/drm/xe/xe_oa.c                    | 1 +
- drivers/gpu/drm/xe/xe_pm.c                    | 2 +-
- drivers/gpu/drm/xe/xe_pt.c                    | 2 ++
- drivers/gpu/drm/xe/xe_pxp.c                   | 2 ++
- drivers/gpu/drm/xe/xe_sriov.c                 | 2 +-
- drivers/gpu/drm/xe/xe_sync.c                  | 1 +
- drivers/gpu/drm/xe/xe_tile.c                  | 2 +-
- drivers/gpu/drm/xe/xe_tuning.c                | 2 ++
- drivers/gpu/drm/xe/xe_uc_fw.c                 | 2 +-
- drivers/gpu/drm/xe/xe_vm.c                    | 1 +
- drivers/gpu/drm/xe/xe_wa.c                    | 2 +-
- drivers/gpu/drm/xe/xe_wopcm.c                 | 2 +-
- 23 files changed, 27 insertions(+), 12 deletions(-)
+ include/linux/module.h | 1 -
+ kernel/module/main.c   | 1 +
+ 2 files changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/gpu/drm/xe/xe_device.c b/drivers/gpu/drm/xe/xe_device.c
-index ee732e5495f7..fcef8d5fc7ca 100644
---- a/drivers/gpu/drm/xe/xe_device.c
-+++ b/drivers/gpu/drm/xe/xe_device.c
-@@ -7,7 +7,7 @@
- 
- #include <linux/aperture.h>
- #include <linux/delay.h>
--#include <linux/fault-inject.h>
+diff --git a/include/linux/module.h b/include/linux/module.h
+index 96cc98568eea..b3a3d5827384 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -24,7 +24,6 @@
+ #include <linux/jump_label.h>
+ #include <linux/export.h>
+ #include <linux/rbtree_latch.h>
+-#include <linux/error-injection.h>
+ #include <linux/tracepoint-defs.h>
+ #include <linux/srcu.h>
+ #include <linux/static_call_types.h>
+diff --git a/kernel/module/main.c b/kernel/module/main.c
+index d0e1e0bd2ad0..f1392c10907a 100644
+--- a/kernel/module/main.c
++++ b/kernel/module/main.c
+@@ -60,6 +60,7 @@
+ #include <linux/codetag.h>
+ #include <linux/debugfs.h>
+ #include <linux/execmem.h>
 +#include <linux/error-injection.h>
- #include <linux/units.h>
+ #include <uapi/linux/module.h>
+ #include "internal.h"
  
- #include <drm/drm_client.h>
-diff --git a/drivers/gpu/drm/xe/xe_exec_queue.c b/drivers/gpu/drm/xe/xe_exec_queue.c
-index cd053de3c6b5..3e46c14584c4 100644
---- a/drivers/gpu/drm/xe/xe_exec_queue.c
-+++ b/drivers/gpu/drm/xe/xe_exec_queue.c
-@@ -5,6 +5,7 @@
- 
- #include "xe_exec_queue.h"
- 
-+#include <linux/error-injection.h>
- #include <linux/nospec.h>
- 
- #include <drm/drm_device.h>
-diff --git a/drivers/gpu/drm/xe/xe_ggtt.c b/drivers/gpu/drm/xe/xe_ggtt.c
-index 8ec23862477f..e05582ad098a 100644
---- a/drivers/gpu/drm/xe/xe_ggtt.c
-+++ b/drivers/gpu/drm/xe/xe_ggtt.c
-@@ -6,7 +6,7 @@
- #include "xe_ggtt.h"
- 
- #include <kunit/visibility.h>
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- #include <linux/io-64-nonatomic-lo-hi.h>
- #include <linux/sizes.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_guc.c b/drivers/gpu/drm/xe/xe_guc.c
-index 4286bd05c686..34e21a70d5ad 100644
---- a/drivers/gpu/drm/xe/xe_guc.c
-+++ b/drivers/gpu/drm/xe/xe_guc.c
-@@ -5,6 +5,7 @@
- 
- #include "xe_guc.h"
- 
-+#include <linux/error-injection.h>
- #include <linux/iopoll.h>
- #include <drm/drm_managed.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_guc_ads.c b/drivers/gpu/drm/xe/xe_guc_ads.c
-index ff8eee3831aa..41a2b8c807d6 100644
---- a/drivers/gpu/drm/xe/xe_guc_ads.c
-+++ b/drivers/gpu/drm/xe/xe_guc_ads.c
-@@ -5,7 +5,7 @@
- 
- #include "xe_guc_ads.h"
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <drm/drm_managed.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_guc_ct.c b/drivers/gpu/drm/xe/xe_guc_ct.c
-index fe70c0fd85c5..ac6cbbaa6cc0 100644
---- a/drivers/gpu/drm/xe/xe_guc_ct.c
-+++ b/drivers/gpu/drm/xe/xe_guc_ct.c
-@@ -8,7 +8,7 @@
- #include <linux/bitfield.h>
- #include <linux/circ_buf.h>
- #include <linux/delay.h>
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <kunit/static_stub.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_guc_log.c b/drivers/gpu/drm/xe/xe_guc_log.c
-index 538d4df0f7aa..6f0739204d9e 100644
---- a/drivers/gpu/drm/xe/xe_guc_log.c
-+++ b/drivers/gpu/drm/xe/xe_guc_log.c
-@@ -5,7 +5,7 @@
- 
- #include "xe_guc_log.h"
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <linux/utsname.h>
- #include <drm/drm_managed.h>
-diff --git a/drivers/gpu/drm/xe/xe_guc_relay.c b/drivers/gpu/drm/xe/xe_guc_relay.c
-index eed0a750d2eb..e528d95ba7fe 100644
---- a/drivers/gpu/drm/xe/xe_guc_relay.c
-+++ b/drivers/gpu/drm/xe/xe_guc_relay.c
-@@ -5,7 +5,7 @@
- 
- #include <linux/bitfield.h>
- #include <linux/delay.h>
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <drm/drm_managed.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_hw_engine_class_sysfs.c b/drivers/gpu/drm/xe/xe_hw_engine_class_sysfs.c
-index d42e263e0611..ac81f382e7dc 100644
---- a/drivers/gpu/drm/xe/xe_hw_engine_class_sysfs.c
-+++ b/drivers/gpu/drm/xe/xe_hw_engine_class_sysfs.c
-@@ -4,6 +4,7 @@
-  */
- 
- #include <drm/drm_managed.h>
-+#include <linux/error-injection.h>
- #include <linux/kobject.h>
- #include <linux/sysfs.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_hw_engine_group.c b/drivers/gpu/drm/xe/xe_hw_engine_group.c
-index 0804b426b6f9..418ff427ae30 100644
---- a/drivers/gpu/drm/xe/xe_hw_engine_group.c
-+++ b/drivers/gpu/drm/xe/xe_hw_engine_group.c
-@@ -3,6 +3,8 @@
-  * Copyright © 2024 Intel Corporation
-  */
- 
-+#include <linux/error-injection.h>
-+
- #include <drm/drm_managed.h>
- 
- #include "xe_assert.h"
-diff --git a/drivers/gpu/drm/xe/xe_mmio.c b/drivers/gpu/drm/xe/xe_mmio.c
-index 7fa18dfcb5a2..d8f8a2453bb6 100644
---- a/drivers/gpu/drm/xe/xe_mmio.c
-+++ b/drivers/gpu/drm/xe/xe_mmio.c
-@@ -6,6 +6,7 @@
- #include "xe_mmio.h"
- 
- #include <linux/delay.h>
-+#include <linux/error-injection.h>
- #include <linux/io-64-nonatomic-lo-hi.h>
- #include <linux/minmax.h>
- #include <linux/pci.h>
-diff --git a/drivers/gpu/drm/xe/xe_oa.c b/drivers/gpu/drm/xe/xe_oa.c
-index ab09dcff5860..b15c96e35fab 100644
---- a/drivers/gpu/drm/xe/xe_oa.c
-+++ b/drivers/gpu/drm/xe/xe_oa.c
-@@ -5,6 +5,7 @@
- 
- #include <linux/anon_inodes.h>
- #include <linux/delay.h>
-+#include <linux/error-injection.h>
- #include <linux/nospec.h>
- #include <linux/poll.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_pm.c b/drivers/gpu/drm/xe/xe_pm.c
-index a5289a9df8d2..c0489a8d8a62 100644
---- a/drivers/gpu/drm/xe/xe_pm.c
-+++ b/drivers/gpu/drm/xe/xe_pm.c
-@@ -5,7 +5,7 @@
- 
- #include "xe_pm.h"
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- #include <linux/pm_runtime.h>
- #include <linux/suspend.h>
- #include <linux/dmi.h>
-diff --git a/drivers/gpu/drm/xe/xe_pt.c b/drivers/gpu/drm/xe/xe_pt.c
-index a07316a45d79..6c6d9be2717e 100644
---- a/drivers/gpu/drm/xe/xe_pt.c
-+++ b/drivers/gpu/drm/xe/xe_pt.c
-@@ -5,6 +5,8 @@
- 
- #include "xe_pt.h"
- 
-+#include <linux/error-injection.h>
-+
- #include "regs/xe_gtt_defs.h"
- #include "xe_bo.h"
- #include "xe_device.h"
-diff --git a/drivers/gpu/drm/xe/xe_pxp.c b/drivers/gpu/drm/xe/xe_pxp.c
-index 2fef274a585e..2f3632ac201a 100644
---- a/drivers/gpu/drm/xe/xe_pxp.c
-+++ b/drivers/gpu/drm/xe/xe_pxp.c
-@@ -5,6 +5,8 @@
- 
- #include "xe_pxp.h"
- 
-+#include <linux/error-injection.h>
-+
- #include <drm/drm_managed.h>
- #include <uapi/drm/xe_drm.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_sriov.c b/drivers/gpu/drm/xe/xe_sriov.c
-index f3835867fce5..ec254b950daf 100644
---- a/drivers/gpu/drm/xe/xe_sriov.c
-+++ b/drivers/gpu/drm/xe/xe_sriov.c
-@@ -3,7 +3,7 @@
-  * Copyright © 2023 Intel Corporation
-  */
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <drm/drm_managed.h>
- 
-diff --git a/drivers/gpu/drm/xe/xe_sync.c b/drivers/gpu/drm/xe/xe_sync.c
-index 37866768d64c..711de22f4986 100644
---- a/drivers/gpu/drm/xe/xe_sync.c
-+++ b/drivers/gpu/drm/xe/xe_sync.c
-@@ -6,6 +6,7 @@
- #include "xe_sync.h"
- 
- #include <linux/dma-fence-array.h>
-+#include <linux/error-injection.h>
- #include <linux/kthread.h>
- #include <linux/sched/mm.h>
- #include <linux/uaccess.h>
-diff --git a/drivers/gpu/drm/xe/xe_tile.c b/drivers/gpu/drm/xe/xe_tile.c
-index 74d925a337b7..810dfd98d830 100644
---- a/drivers/gpu/drm/xe/xe_tile.c
-+++ b/drivers/gpu/drm/xe/xe_tile.c
-@@ -3,7 +3,7 @@
-  * Copyright © 2023 Intel Corporation
-  */
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <drm/drm_managed.h>
- #include <drm/drm_pagemap_util.h>
-diff --git a/drivers/gpu/drm/xe/xe_tuning.c b/drivers/gpu/drm/xe/xe_tuning.c
-index bcec40ca2d35..d3d38b4380be 100644
---- a/drivers/gpu/drm/xe/xe_tuning.c
-+++ b/drivers/gpu/drm/xe/xe_tuning.c
-@@ -5,6 +5,8 @@
- 
- #include "xe_tuning.h"
- 
-+#include <linux/error-injection.h>
-+
- #include <kunit/visibility.h>
- 
- #include <drm/drm_managed.h>
-diff --git a/drivers/gpu/drm/xe/xe_uc_fw.c b/drivers/gpu/drm/xe/xe_uc_fw.c
-index a8e6f18cc9b4..f17925ad53f5 100644
---- a/drivers/gpu/drm/xe/xe_uc_fw.c
-+++ b/drivers/gpu/drm/xe/xe_uc_fw.c
-@@ -4,7 +4,7 @@
-  */
- 
- #include <linux/bitfield.h>
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- #include <linux/firmware.h>
- 
- #include <drm/drm_managed.h>
-diff --git a/drivers/gpu/drm/xe/xe_vm.c b/drivers/gpu/drm/xe/xe_vm.c
-index 23952ad8951e..f000564f1e59 100644
---- a/drivers/gpu/drm/xe/xe_vm.c
-+++ b/drivers/gpu/drm/xe/xe_vm.c
-@@ -6,6 +6,7 @@
- #include "xe_vm.h"
- 
- #include <linux/dma-fence-array.h>
-+#include <linux/error-injection.h>
- #include <linux/nospec.h>
- 
- #include <drm/drm_drv.h>
-diff --git a/drivers/gpu/drm/xe/xe_wa.c b/drivers/gpu/drm/xe/xe_wa.c
-index 139434946f8f..98d2fdd3ba6f 100644
---- a/drivers/gpu/drm/xe/xe_wa.c
-+++ b/drivers/gpu/drm/xe/xe_wa.c
-@@ -8,7 +8,7 @@
- #include <drm/drm_managed.h>
- #include <kunit/visibility.h>
- #include <linux/compiler_types.h>
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include <generated/xe_device_wa_oob.h>
- #include <generated/xe_wa_oob.h>
-diff --git a/drivers/gpu/drm/xe/xe_wopcm.c b/drivers/gpu/drm/xe/xe_wopcm.c
-index fe65ed246775..7da1e3ebc839 100644
---- a/drivers/gpu/drm/xe/xe_wopcm.c
-+++ b/drivers/gpu/drm/xe/xe_wopcm.c
-@@ -5,7 +5,7 @@
- 
- #include "xe_wopcm.h"
- 
--#include <linux/fault-inject.h>
-+#include <linux/error-injection.h>
- 
- #include "regs/xe_guc_regs.h"
- #include "xe_device.h"
 
 -- 
 2.55.0
