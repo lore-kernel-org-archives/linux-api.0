@@ -1,65 +1,64 @@
-Received: from mail-wr1-f54.google.com (mail-wr1-f54.google.com [209.85.221.54])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FF3937206B
-	for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 15:05:12 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.221.54
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EB93369D6F
+	for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 15:05:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789139114; cv=none; b=u+/4zH7MMbCo9NtkI0mzsZa6Q7wfXVM/6uFcReVn90ICArJuxkRV7ZC0VaiycKY3q3t+CKJUgjDdHZnwmFmAMxqDJ0hZPLKLaugHmuX2mF39y18Pw0GYtNn05dkMTtPbaJ8AfQ7RJ9/tz0kStCev3TkqxTU0WYY1eLeaoiweazo=
+	t=1789139115; cv=none; b=evYX9FLKO6kEKYgMQjp7FMJ0c320aC90OHOzsyRylhYZXn2S2oFOx4LzU1L9qfmDz4Ik1AzSmV8DLt54O63A9+fqzHMMp3qhntBN55uMNdNk0SSscnJ/RhC+iYkN4HGHIomDuqqZxFjVuMOTlIyrkogZ/kAWbaidljpJpV10UDg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789139114; c=relaxed/simple;
-	bh=b5RQb0WbJ1RrTqB8nh+r8QKYRT6EMd81lemOzqrccCw=;
+	s=arc-20240116; t=1789139115; c=relaxed/simple;
+	bh=SulItpOpA28ukZfWYCS1+ezWXd+i3c1ust4snZvaoAY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=tfm1WXSAvlHGuVIj1AC+4s97l3mtBC6rvflYzI/5cuoD19l9KHnqp1MJepyi0nohVPTm2/zIwF9GwvrDG/SAllseshA0flweAo5gy58i6D/CCco7gIcSHVBA6OZTD4fu2vaNZVYWROHJpOVtYiqVRT1FUUX4pHUOla3T3XQ8PyE=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=g2R/ghfw; arc=none smtp.client-ip=209.85.221.54
+	 MIME-Version:Content-Type; b=V6ypg2AXdu0zzqtjzOPMXnLWokBUwouEsaxiTuRMT/KlKEnf6frCu7gb/4WeZM/NOn/Il+R1ZJX2beWLeTWSMGne2BWkRVMqA75f7bs0A2Va+AA6l1i3qrxxLeKfTE7o1GVBqFbzrZ2jbqRepuhNs5wtU7bbYXXUADvqduKId6E=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=dpY9Vw/W; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="g2R/ghfw"
-Received: by mail-wr1-f54.google.com with SMTP id ffacd0b85a97d-48441fa5c37so694472f8f.3
-        for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 08:05:12 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="dpY9Vw/W"
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-49cf4f81d86so7989105e9.2
+        for <linux-api@vger.kernel.org>; Fri, 11 Sep 2026 08:05:13 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1789139111; x=1789743911; darn=vger.kernel.org;
+        d=suse.com; s=google; t=1789139112; x=1789743912; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=glNc1H2atyKhB4WSC099onb1QIuZPymRMjgiGWekzpE=;
-        b=g2R/ghfwA9c7FbD3rDBiA2JMYJ3JDnGvXzdJPZ2/N37pWyUiR5fe/jkoM+S8Xj9Osh
-         Td7vi9tajpjbxZnzNHzkS8e+Dle9y/4gEVbukum/7r4YzBBxcJ9RitqsBzYcQQewkuuT
-         62U8XWflFKwu+bc9ImtwgSwK1mGCbgzHFI7iDs6ufxupSQo7ROowYWmEEkzxfPmCgujL
-         PWtxzIs3VJMWlw1d86Ly2VK+aU/U17WO7B0v3vjjrFWp/wxGHYe78Aj0iov3FPgmgvpA
-         cC7KRxN8jXseYdw1Bh1MCEaK5pIOdGK/enujMajEKDEL2DSR+sgdJSlG1X3pYamUW02S
-         GAuw==
+        bh=7/A+IkvGH5yYLsl3B/FA+2ENzgeK330huKjO7uo/XWA=;
+        b=dpY9Vw/WbRSQ4vAmcbMbVsDNf97x3fiJTZq1V3vuarPpkrVkQMkq7Qw9A3NT1MpM+z
+         L3pCZuHMbsVeZ07kHa79dndIHXwQOCQHY9dcRkLL7qpE1CdxelO59oqkVSOBO5Qd5eNk
+         wxQy4TkrGLSeXDH8DQQ/XCg7NpAnbvI1BRBPTHihUJqcg8DnhFFThHW3iT/mcEpbP3DS
+         IKx8LonNMoHEscVCzKZsJDlxQZ6poGnEY9yZY1WhsCLpJUNdV7vT30jmqvxP9HVX78cf
+         ZLbcHsOOADCJZ+kzBfHM+AGn/66uFYWxppyh3qA1RSoPnSs7px5U0GxR+sv5+QCbGRzL
+         aA2Q==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20251104; t=1789139111; x=1789743911;
+        d=1e100.net; s=20251104; t=1789139112; x=1789743912;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=glNc1H2atyKhB4WSC099onb1QIuZPymRMjgiGWekzpE=;
-        b=TfFecY0bVN5yqzyxgRhXROn57oLsMdtNH7U+tjG8vIszijxva8KXqd/9BYekys14kt
-         nsHDUwqG86z6b6O00VYaC0e5WvpbhuunpeLV1eTSaZc82EXApCkxB/bOH7bNMqEC6SrO
-         nCWoGlRCfwNjHQyX1wi6Q88oVJLDFvlU8wpC1ByKWt9SIQ4GJWskDFWkFwiC6f4+MqTW
-         DlanFV8XzYw9ave7I576867v/qwYtdEeWbi9FpK5UM5sK9sUpMJl0IcJLIW3ElQeXcgQ
-         Rh+094/QiHIJhlH5gFG52I8UhsLuKBLOKMDNlBHBFoohmBHbeFoyyVL9Cab3h3HLmAso
-         fpaw==
-X-Forwarded-Encrypted: i=1; AKwUvBx1eauBJF4MzmLbVYZUge41TUgXP9XKhG41GxclvuoNQIOeeIszvsKGhA8HsjZGtHJEYCA3722cS14=@vger.kernel.org
-X-Gm-Message-State: AFuF++kDbNRDYEFP3M1hMHfT4NiFnHEwblr5bqGmTdN6grbDKbl8UZQx
-	1ExTHyBeglqosd0931nrpiT6/NC1m0WXvkvlWZrcqeGlrcTT4USVCXTnE2HNhdaClSA=
-X-Gm-Gg: AYBFou3BitgN5M2ANkNqH81J7pkV36gbFuaMOEDVB0ArUlnB7f3UI5X49Vh8t7ZZk1N
-	jenYXddzZdSjKTZDJBW9pRWTwuR1HxfjpRy0j3Qeexw8OYoy1lnxUqFPuKoGYDRfurHmmcQMTH9
-	mWF8z0Ou3Nc4BL40fNCuncb5Fe/MNTuv9njo/kAZlWQE21vyksjZ9uo4NJI0JwrfVOg3mvYvGkB
-	TjWUMKAsQLlR4AlgBrdt4YOkZp+fjONsF/RldBlprUpCPiqrlRiPNk9F/sGTnWGINImLFuERnZa
-	HE/8lcEqOXev0udYPXlb3lqanXp+mo+NOgVi65IToX/2FFcvWIfGI7XgkIksYa6NHpvwPGlaY9j
-	HVbvN0jW4rfK1SeOVT3WbVFpBgG8hpvP3nhTGJTxtJNYbWA7qC2gINjQBEgr2+h6VR4AThMz19E
-	9+V4ltmM1eMjJxHzqDV+JYsAHARAeNGnLZgzVjB3E6GdGultdWwfunz464dKQtq/jNqfdkVnqKF
-	MrmX6C7527YJKO7
-X-Received: by 2002:a05:6000:1acf:b0:485:8a46:b3b8 with SMTP id ffacd0b85a97d-486eb32253bmr5503727f8f.32.1789139110499;
-        Fri, 11 Sep 2026 08:05:10 -0700 (PDT)
+        bh=7/A+IkvGH5yYLsl3B/FA+2ENzgeK330huKjO7uo/XWA=;
+        b=j6Why8SczkxDZnXSI4kCJ2jum7JBQ1HSiqt0qNHkiZHB30NQ4DEVjB71JVkhSbC6mp
+         w3DY+J9c+fRpl4fE++frK/T0VOgnDuxJ6+nt6/o6bzWr1rpWZn/nj0GUKyuQcz7Ql2yq
+         8zcm4ftIQ4LfZ4FX2iHVCjdfmvB29SZFIRfcLjlHLj0KzZGORuJ2U7qLpw0fns54RylQ
+         qL/dibrZkpz4/g3ppparJfFfljKHU3IPf8P2iTg1NIKxoS3K4BqKvTLQ9F2mZywIeR7P
+         xvFRVYyXY6EAwcr5e4eKe3MRVm/f5No5wISZnNTTXXW+iAQCDL1ROPk6ZlJqLhTfdHgA
+         Y1pA==
+X-Forwarded-Encrypted: i=1; AKwUvBxRTbt7cX/jPcflgUA2mS+uq6K18wBqY7eVw2+5XYvErGWer5JIRPp1nEZ5xBsi8cWn/m+oh30Mxlw=@vger.kernel.org
+X-Gm-Message-State: AFuF++mHAhn5q1bFTcoGVUV4FYaM1fvbi8uv8Xp4yYAT/t51amvuu5RH
+	hZ4rljaydT0nM/Ifn1Q4B7aARQ6vpGY3JF+5pxJjtGHr4c9/JnLx6sFM45aMr2pxqFs=
+X-Gm-Gg: AYBFou2gfTsWOcmIL+DjGzxMfsb1vmRNx7p2LQT6hK+683bK0THpbs8dLGyESxqu4MU
+	XFlm8/r2Gvm62e+PyLnsOPGrB9h8KqtbD2O4qIkIni1V2gNC3sxVqNeEFTnZRZzx+DRPM4KCpHY
+	F6zF84yFMeF+XMrBeEq1wH7fmZYJJXpAd9oXEEdKqp8XiRbIi+UNK/J1ocKrA8A87MhYFtJhfj6
+	p3rWBwZS2AWg/jRWnP23OZXF4RL1854jkVx16eSvsOWfuJuI3RMrEjYVRGu4y2EWolB7gY2RdBv
+	wBmXTOtSLNdtv64Qu0dE6cWZ9Sab53z65/SMNpN1L3yEsrt1melNeaBwZp7ayOZqUytHGghYxaA
+	0lQg5bZ3WS5mTCBZw1IH9oUeYwI7tRoy3tAxY85Wmi+92IhhMiyVCzlaVdBXZi5cee8H5MRPFQz
+	Y7qPOHVUWQd2H4V43lACpFD+3TPdYlYDrWVeHQ/lM6SAToHlvudJvS6rdebAhYwHM=
+X-Received: by 2002:a05:600d:8498:20b0:49c:fc6c:be15 with SMTP id 5b1f17b1804b1-49e619c6eecmr39713085e9.27.1789139111976;
+        Fri, 11 Sep 2026 08:05:11 -0700 (PDT)
 Received: from localhost.localdomain ([2001:af0:8000:1409:193:86:92:181])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-486eb350686sm6853579f8f.27.2026.09.11.08.05.09
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-486eb350686sm6853579f8f.27.2026.09.11.08.05.10
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 11 Sep 2026 08:05:10 -0700 (PDT)
+        Fri, 11 Sep 2026 08:05:11 -0700 (PDT)
 From: Petr Pavlu <petr.pavlu@suse.com>
 To: Jens Axboe <axboe@kernel.dk>,
 	Jakub Kicinski <kuba@kernel.org>,
@@ -90,9 +89,9 @@ Cc: Simon Horman <horms@kernel.org>,
 	dri-devel@lists.freedesktop.org,
 	linux-modules@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 2/6] net: Include error-injection.h for ALLOW_ERROR_INJECTION()
-Date: Fri, 11 Sep 2026 17:04:02 +0200
-Message-ID: <20260911-module-include-error_injection-v1-2-5da895d8c84d@suse.com>
+Subject: [PATCH 3/6] syscalls: Include error-injection.h for ALLOW_ERROR_INJECTION()
+Date: Fri, 11 Sep 2026 17:04:03 +0200
+Message-ID: <20260911-module-include-error_injection-v1-3-5da895d8c84d@suse.com>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
 References: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
@@ -105,43 +104,44 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
 
-drivers/net/netdevsim/tc.c and net/core/skb_fault_injection.c use
+include/linux/compat.h and include/linux/syscalls.h use
 ALLOW_ERROR_INJECTION(), which is defined in asm-generic/error-injection.h.
-They currently rely on this header being included indirectly through
-linux/module.h -> linux/error-injection.h.
+They currently rely on that header being included indirectly through other
+files, typically via linux/module.h -> linux/error-injection.h.
 
 Add the missing include in preparation for removing the
 linux/error-injection.h include from linux/module.h.
 
 Signed-off-by: Petr Pavlu <petr.pavlu@suse.com>
 ---
- drivers/net/netdevsim/tc.c     | 1 +
- net/core/skb_fault_injection.c | 1 +
+ include/linux/compat.h   | 1 +
+ include/linux/syscalls.h | 1 +
  2 files changed, 2 insertions(+)
 
-diff --git a/drivers/net/netdevsim/tc.c b/drivers/net/netdevsim/tc.c
-index a415e02a6df1..e2d7d3aba193 100644
---- a/drivers/net/netdevsim/tc.c
-+++ b/drivers/net/netdevsim/tc.c
-@@ -1,5 +1,6 @@
- // SPDX-License-Identifier: GPL-2.0
- 
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index 8da0a15c95f4..ad37ca617e65 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -18,6 +18,7 @@
+ #include <linux/aio_abi.h>	/* for aio_context_t */
+ #include <linux/uaccess.h>
+ #include <linux/unistd.h>
 +#include <linux/error-injection.h>
- #include <linux/netdevice.h>
- #include <net/pkt_sched.h>
- #include <net/pkt_cls.h>
-diff --git a/net/core/skb_fault_injection.c b/net/core/skb_fault_injection.c
-index 4235db6bdfad..2c7f519bef80 100644
---- a/net/core/skb_fault_injection.c
-+++ b/net/core/skb_fault_injection.c
-@@ -1,6 +1,7 @@
- // SPDX-License-Identifier: GPL-2.0-only
  
- #include <linux/debugfs.h>
+ #include <asm/compat.h>
+ #include <asm/siginfo.h>
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 8413b624ad47..552d9710a0d5 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -92,6 +92,7 @@ struct file_attr;
+ #include <linux/quota.h>
+ #include <linux/key.h>
+ #include <linux/personality.h>
 +#include <linux/error-injection.h>
- #include <linux/fault-inject.h>
- #include <linux/netdevice.h>
- #include <linux/skbuff.h>
+ #include <trace/syscall.h>
+ 
+ #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
 
 -- 
 2.55.0
