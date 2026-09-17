@@ -1,28 +1,28 @@
-Received: from BL2PR02CU003.outbound.protection.outlook.com (mail-eastusazon11021074.outbound.protection.outlook.com [52.101.52.74])
+Received: from CO1PR03CU002.outbound.protection.outlook.com (mail-westus2azon11020125.outbound.protection.outlook.com [52.101.46.125])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67DBD4B1B38;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BE93F4B0E42;
 	Thu, 17 Sep 2026 22:59:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.52.74
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.46.125
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789686008; cv=fail; b=okbJezYTmZhmOzq7wE1DDJ0cvZsjOwGP8uop7Y75CwQQ3ETB/cLRlgIpNcqjpgKAogkZug8QrJntnBAbSMoYbkQuAP1m9qYqY+HAYYbiwdIJmefqjRrXiAWa86pk815OchokKgtYBmWpk1UJ2JkWgAwjF3kkREhJv/2tRZeczIA=
+	t=1789686012; cv=fail; b=FS4mezgftJWN57wAdAsx/jh6MNq33xJeFNWIHnl8flVXHQQ3oIsymtb3kaTQsDP834Pu5YVizhVodsXha8o3TmHf/ECpx2srAN6n9kO/vcP1H+yftDjSJ5NJitrQahgRTPFmZItiYrJ7bRnmEs1tflL/CPX7QJyAhfsKDMSZoGY=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789686008; c=relaxed/simple;
-	bh=CBqAEkKry/n5P+FEmtQe+yJPFy30XqUu0/orPfMW+44=;
+	s=arc-20240116; t=1789686012; c=relaxed/simple;
+	bh=moc3vZWKNXoveDtHDrSsD6kTbhGbIY0te+MHmI6OTOI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=Vw0bDc8uRqY+QZBmwLA9BQJE/7xQpbZyVe23AcX0rmxKGDaJnTMEn5A8IC28JLIzaIs0Jm/mkLLepZstCd6f4rhRDiLuSSgxa0kn+elZlrqpvWsc/9Paw5PSRDcupoWJjm8sjMig2MBYKdNdtr+np0a4XQfXYf5wuzAFiyyByhA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=uazxL8EZ; arc=fail smtp.client-ip=52.101.52.74
+	 MIME-Version:Content-Type; b=U3U8zSOFOChRTn1dxj28RypN6Fsy6j0acfjozsUcZMWuc7bISIEbDBa88AH/VSj6wWubiFEzXvNexRTgH4F6xdLPmoRBNo5Z2M7OCpsbmktxT7+ogjsJYLyzYIeewZQyKkdw+IHNWcYStJtLsfIdrUdRi1yt0Domcg7fUNYXu7Y=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=YZ7zBd6Q; arc=fail smtp.client-ip=52.101.46.125
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="uazxL8EZ"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="YZ7zBd6Q"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=JZOZXd4ederkaM3olIk3Faev94H5o/h/e4OrBwBAmXw1Tld0KihpZPJl5MEDCJ2qBt1hFZhDevvWhC0gYXHR5OFKQSjT5DCHEqJv8fbmITp5fPOmD2WZyvqJ/8Q1Nc2BLtlT0ynJi1YUqg4Xw8vH3ZYxnjP+aqJxsSQu/YWe571If8q4/iOJjORnPYsMwVIDixy4zWPLRW00qDIBYswPnmkCE7LM6g8cZz73Ohk/BFTFqRE4bGGWkgTPJisTU1DagVzr9dKadZ5wjX2Stba1FRWI/4xPGicaqa5O0qT1rC8fTn5A5YoqqXFJTCxuhJqyZwNnLlGWu9uWJEdj+PQVSQ==
+ b=OCApODLmg16ICHFcDPBYlG6lk6VardmV/1zrUfzukOKHk79NLzYaldjgWtyjJmFhw7tuaaJjmVwSaDi7KDkVITaMD8MJBVHYbCoRroB1Wudz7jee0w4Ge1lHPr3mWfj8bTb4KBYA8CyTc6mDeMX8UCB4pIo8t0nYF47d83YqovQtvlXeQWpeMUaXOfayG8DRI/q3zOntS78f+AQnfHP+8CMhSSPdXDwEJm21X55SFYpXGWOhy/kmZt1cH5Hh71weIHjaEAzdWzbAsG2bbzFrbO0/luGZgS6ANju5QtLA0TzzxftQyezRH1xuEy2V+ysgvK2VL1fRusS01VXWYcsESw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=F65vaCF2DFEcnnF9zk3JH6ZUM/HQ6L+KaUgA+98KEvY=;
- b=dOeAEAiZeRT6eaj3ZQfkQD3Za8Wo21hBdcPgATtJI8ddvfjTPLYFCYJ1/N5giv/O/liUPcat1az/99ZAdR7R5XId0jN6UW33Z+Ff9J35VR4sz9K75CySqPJzxQJBP7TwS0i9VGMzjQl+/yTsfN8/Lv7bDXHKqQQuLfNYd+qeADE+Tn2Y6aQYlRLPUBr82A9nGnj79UZBSWTJSDTkjcrfGQZteMTbD5NnAusDbdntw+lMZV8ioIeAO0INlXt3TxpA0zM/ajOAij3Hf5CZbvSL1S/WISIK+U0evjzMf7DuwE4q2mpJGQoPHZhagDVfOLgr1e83/qUan72fGqJ4pao98w==
+ bh=OXGJn3eORrTkbLfMREWUacJT8vsYt87VmtfyAyz9bsk=;
+ b=Ag/OZE7u74SBXRsyMpE4DRgIXMFYQ5eek53Bnp1cscydC8Pwkg5wnec27S4Pgh8eM8Qt4nJJHnL8eWU4RSm2v4BzKyWm2NimAFpOJhKnYi516zpkQDJjpjhDRLGPeqMJl9FTBN5Vw9b31vd5BroZ/pI0zy/8iAKNq8rnf97pkJYBJNpxNrnRMa827GA04M75r64WOGDkieSOneINkFsVlubZMR4cw7onnJiBkVkmKnvcHs8tN3RCecFn3X0ht6zSnrdGFrSSiLmgnWoG+/LDRoIDzhfyDroQN1YlkEHRHGTk8WBIJ3NZfzlXm5AH0kP21y26VUlWLjo7h9CdjqTa/Q==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=F65vaCF2DFEcnnF9zk3JH6ZUM/HQ6L+KaUgA+98KEvY=;
- b=uazxL8EZHisHzpzomMuF9bt6F6TDsrdPstjd0jJwK6T9lt85Cj5ukfxmk6B1J9lwfAKWEAmsP/PLstSMPIJ5ssUszD1rAEih1swrs+JoGQdNtA6nKJPwdCNZsR0j4VsWv4gyx+u4VeiT2178cLQnt1Kl8r8i4v4j5e3x6smO+dTl9TMwxUoqbcouJCg1tGJCWSS29CGhM/JrAW3aLhKiBHsClPfyApW78k5WsTAH3R3CREHuU2G/LVs9pSiRsJ0rhtZq/T8+Cb2lnbe12JNYJZjCcNmW+wLw+xzGfZVjma8BvYMyhZx/BJWU/GdvFs8ocHFIC4DX5q/7osS1re9hHQ==
-Received: from BN0PR10CA0010.namprd10.prod.outlook.com (2603:10b6:408:143::14)
- by SJ0PR04MB7791.namprd04.prod.outlook.com (2603:10b6:a03:3ac::11) with
+ bh=OXGJn3eORrTkbLfMREWUacJT8vsYt87VmtfyAyz9bsk=;
+ b=YZ7zBd6QSwHTc6BJ2yPqpJ59u1NWx/CQcSI57k0TUyPQKamkMif/YsSgN9h40j6bXzBkN2/l3JpgKXZz6mM16nU4wkgXSHPKnMFLrsPznCsiroarU4s1zjQEfqcRp+sNAYBG9FfLHsPvfWPerXn2rBv0lTqxDzPBzydst5SYfjxaL0s2wIWsxEBEgtPbWVEVMEOt7dAeARG02oGT3Af0SQA6h+pf34l/FtflXFwR6C1jX58fA3L1vUmRFHs4GX06GfKfZMtJajp2NbRo2MREfSJddqGdKQi7mh4J9oMV65C6lHp2D5NA7IO3NhlveD0CajN/5pF/LCIBvQXVYDK+Tw==
+Received: from CH5PR04CA0008.namprd04.prod.outlook.com (2603:10b6:610:1f4::25)
+ by SJ0PR04MB7887.namprd04.prod.outlook.com (2603:10b6:a03:304::13) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.406.12; Thu, 17 Sep
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.13; Thu, 17 Sep
  2026 22:59:33 +0000
-Received: from BN2PEPF0000A800.namprd02.prod.outlook.com
- (2603:10b6:408:143:cafe::21) by BN0PR10CA0010.outlook.office365.com
- (2603:10b6:408:143::14) with Microsoft SMTP Server (version=TLS1_3,
+Received: from BN2PEPF0000A802.namprd02.prod.outlook.com
+ (2603:10b6:610:1f4:cafe::5e) by CH5PR04CA0008.outlook.office365.com
+ (2603:10b6:610:1f4::25) with Microsoft SMTP Server (version=TLS1_3,
  cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.12 via Frontend Transport; Thu,
- 17 Sep 2026 22:59:33 +0000
+ 17 Sep 2026 22:59:32 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- BN2PEPF0000A800.mail.protection.outlook.com (10.167.245.167) with Microsoft
+ BN2PEPF0000A802.mail.protection.outlook.com (10.167.245.171) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.451.8
  via Frontend Transport; Thu, 17 Sep 2026 22:59:32 +0000
 Received: from hqxsv-cmdev3-aousherovitch.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id D46B9180175D;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id B897A180175C;
 	Thu, 17 Sep 2026 22:59:31 +0000 (UTC)
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v5 03/19] crypto: cmh - add key provisioning and management
-Date: Thu, 17 Sep 2026 15:59:12 -0700
-Message-ID: <20260917225929.2494111-4-aousherovitch@rambus.com>
+Subject: [PATCH v5 02/19] crypto: cmh - add core platform driver
+Date: Thu, 17 Sep 2026 15:59:11 -0700
+Message-ID: <20260917225929.2494111-3-aousherovitch@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260917225929.2494111-1-aousherovitch@rambus.com>
 References: <20260917225929.2494111-1-aousherovitch@rambus.com>
@@ -94,7567 +94,9618 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: BN2PEPF0000A800:EE_|SJ0PR04MB7791:EE_
+X-MS-TrafficTypeDiagnostic: BN2PEPF0000A802:EE_|SJ0PR04MB7887:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: f2868f2c-f489-4a45-7184-08df150f565b
+X-MS-Office365-Filtering-Correlation-Id: fe30ac26-71c6-4c70-ab6c-08df150f564d
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|23010399003|82310400026|1800799024|376014|7416014|36860700016|10067099003|3023799007|22082099003|18002099003|6133799003|5023799004|56012099006|11063799006|921020;
+	BCL:0;ARA:13230040|1800799024|23010399003|7416014|376014|82310400026|36860700016|921020|7136999003|18002099003|22082099003|56012099006|3023799007|11063799006|5023799004|10067099003|6133799003;
 X-Microsoft-Antispam-Message-Info:
-	RFCyuuonRSYSKLimzxDr54MhGR2BUKpsHtyRQ2SklHklgibOjCINpvJimkqVG56N8Xxbi4YrTPpNaRFwA1lkHa+CAC2Y/onVk8r2clZ7+LBlBhjMg4xpSSa9BdnPT28WNXwCIGR5JCd1m1RNYOhtjqDl7P88+tQKa0kylL4bmNHZ087+GevhH6Yu6aEobBHgPxDXj4/A1NldJo9QzcHRZ6utOitWPZaxFOakvJFvNpn+cH7K8DM2wsTfn0KF6USf/sxP6vWjEFjSIkjgln4mK+MV3wEoweS4sSvK+HF5BOnQE12EWACPPirmVe/EHNRLFNI/AL06GTBD/qK/bV08F9sJaBg6cxasiml8JT21KccxBDM3eiU7VUmqj+vo3d/3pBjRYB+N1YX1eYeMV7CRVwGf5ca5Cki/aKI5d0C+iWq0SJo8PomnVaxEw6an66zgbMdff2gmEf5lv0P1zG7wmGCGqNu2+rWwyyXJHwbC+JHjcUpKV9lNurNckzjWDPSHBJkgUoMIHibaiFxNqHlpxtqvbh1WUR5Kewq8vNxjAi0ivCHp4rBMKGBbHdCOg09htWIybc7KyCSdsQMeKm2kH9EIRD/+GflEs0WkUmhlYFKdiDKerzzF/fA4ifo5mlIZXFHyqckwBz1oXaF7r40sVpArvRtjcYXsn3zS/CcEHasRaA79OXle9fUzpYa0f7du4/VmQUNWsqZZAJnPlL4eczc10C/6tJPaUGGPyHbBRzocCsM+wLVtApWCkblAy/xB
+	BuQ+AlbRyUa480q4BynQuPXatjZXJE4peUnNzhhhmV/cuGSSNFoNRuvFHqJYn1gMTGkhLJJMM7aaif80x9SK3VlG9nc2MZTv8CByRy+ZwiC4iCFMc7JxXx33YRqcyVtjHE/lvKtufXdxfDS+gAWZcRsTE1FoxnBZE7YuLduK2uPW8gZ8lQNVw/nycBoQ+yaEP3eiaMyWXqQhKErOVIEUWVuvqY4ddRq1hde1JbragCGhxS7O5wt/sKCYy4CuvmFhC+B/r8da94IS2NNKah6zNG7ZW5W73F7pzFDmdkk8oERzXgLJUM8GgGtZ8hyzTWeb/7bkhr6doWECJXzPhq875ze1pqNLdPgG8DOxlYRlvmZK0fpuA2FYxl7t364aZ0eIEfUZ9tyhyiTA/wsnPkPts3NMKvJPpJ7Vy8SnX9RhLIoWqeiQ9WdaGF0pjUqcPmKS0PciUtu4M8LohlN3/D8E7C+qT6TpSr4SSRJMcYNfhwfcv7y60HIKf3y3WTpKw5mdwVMyojm8jcUUcTgW79bh+KxLQDQ+Q00P6x4l951gcGabZQeiJ1NhZXfxgygacv5spp09iQWNPlNefugum6X55HSMLo1NM3kcqj5yrCRs9P5mawd3yeO7UJVNtHCg8wFzTh1QpiWnHXwqxNIqXSUJPAlp1ERk0vR+id/SYpcl4pdbVB1Bk2aTYxN739UsTt9n/jvd5uZmTzqpHjINjzr+aMK3MaEL7JsE2BxHeCKzamfdfIvTc1hoAefQov2Nqz1d
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(23010399003)(82310400026)(1800799024)(376014)(7416014)(36860700016)(10067099003)(3023799007)(22082099003)(18002099003)(6133799003)(5023799004)(56012099006)(11063799006)(921020);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(1800799024)(23010399003)(7416014)(376014)(82310400026)(36860700016)(921020)(7136999003)(18002099003)(22082099003)(56012099006)(3023799007)(11063799006)(5023799004)(10067099003)(6133799003);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	On9cYtXri5Nq7v9pjZ9Ucsw0AsO0CCiCE2SXj5cueWx3TNSiIN69zWcgCyu1kiX8tZ+EkuRRi7nVn/ffJCyssm/LwkFTaXpMei+syNGzq6O+b5eRDatDD0yeXd4nTK/XPbVegqllf4CCNOcWYtLr3TD3sTclS35CzqDK7DdX7kDWHV9jrGVjYD4TvGJCMVoO9hrfMiaoZHaWk0anWLLIq+duk24SIFnHqdKGhOkBgGPwXrNt1eWEhbPpnNcI294L0qwASLGjzHCAdJJxwSc5Vz+ljrNDq5+8C+yOP6eiEHYmnKAguc0krqv/Od8kLkcJo+2KAW/coTngNAHIAV6XLXfE80tcRT6tC86esh3BKkXP7mPkKD6YTcdBW6rFiayg8nAk3YhshQZWhUmbCQTVdL7QRNTmz0AXGsTYDL3lBlQiVmkVioF1M0ZrjZFLX+G/
+	eNKV/yHSdJBIQ9jY91QOLzz2OTOxvZkhDMUhRxuW/0YvPI5KJrpC6SRimb1hAIXt38beCl2gXD4d1n0lGPuANQuguesMWVtN/tj73PNCFHJP2vNSdoFqGrCiM+2uYZ+1pLn0+dAwaTLIqDnWM65laUE56rKyIJFEWFbMFYFl2kYpa7+EKyxRd0bxL8eWYl45bv5ZJWz5vx71lHZMydGmInKA3AUw5Q3LWLmbQdIwDP27oaiAbmTxoNarFPSnSFysip2m80gd9IT0FWwe04eEHlO0sQyXGeZndlwnIyBnUHnuPDr9v0f2/nfxabATMrcwl7mcy/iDGmxma2SKNSIN90MqW9Ze6OuZwaZjwn3r5TN+sJFKiEMs8UHzCZMoqGgLAoCFI+k8VQWTSaH1S3Oo0sx2d0OKR4Q03weIx5VlEnWxET1ICGpnqtOV00qQz+CI
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:32.5116
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:32.4160
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: f2868f2c-f489-4a45-7184-08df150f565b
+X-MS-Exchange-CrossTenant-Network-Message-Id: fe30ac26-71c6-4c70-ab6c-08df150f564d
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	BN2PEPF0000A800.namprd02.prod.outlook.com
+	BN2PEPF0000A802.namprd02.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7791
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7887
 
-The in-kernel crypto API cannot express the CMH management plane, so
-this patch adds a character device (/dev/cmh_mgmt) for it.  The ioctl
-commands fall into two groups; the overlap with the transforms the
-driver also registers is deliberate and bounded:
+Add the Rambus CryptoManager Hub (CMH) hardware crypto accelerator
+core platform driver.  This patch provides:
 
-(1) Operations with no crypto API representation - the majority.  The
-    API has no transform type or verb for these, so a character device
-    is the only available UAPI:
-      - hardware key lifecycle: create, import, export, derive,
-        destroy, enumerate (keystore CRUD) - no keystore verb
-      - KIC key derivation (HKDF, AES-CMAC-KDF, DKEK)
-      - asymmetric key generation (RSA, EC, EdDSA, ML-DSA, SLH-DSA)
-        and public-key derivation - the API has no keygen verb
-      - ML-KEM encapsulate/decapsulate - no kernel KEM API exists
-      - SM2 encrypt/decrypt and key exchange (multi-step GM/T 0003)
-      - EdDSA sign/verify - not registered with the crypto API
-      - EAC Chip Authentication and DRBG (re)configuration
+- Platform driver registration and probe/remove lifecycle
+- Hardware configuration and core discovery
+- Mailbox Queue Interface (MQI) for VCQ command submission
+- Transaction manager with async completion and backlog support
+- Result handler with threaded-IRQ completion
+- DMA buffer management
+- Debugfs instrumentation (when CONFIG_CRYPTO_DEV_CMH_DEBUG=y)
+- Sysfs attributes (fw_version, hw_version, boot_status,
+  mbx_available, mbx_count)
+- Kconfig and Makefile integration
 
-(2) Hardware-held-key operations on algorithms that ARE also
-    registered (RSA decrypt, ECDSA/ML-DSA/SLH-DSA sign, ECDH).  These
-    name the same primitives as the registered akcipher/sig/kpp
-    transforms, but the crypto API set_priv_key()/set_secret() accept
-    only raw key bytes supplied by the caller; they cannot reference a
-    private key that is generated inside, and never leaves, the
-    hardware datastore - the central security property of this device.
-    The ioctl path keeps the private key hardware-resident, while the
-    registered transforms serve raw-key in-kernel users.  The two
-    paths are complementary, not redundant.
+No crypto algorithms are registered yet -- those follow in
+subsequent patches.
 
-The subsystem provides:
+The driver communicates with the hardware via a mailbox-based VCQ
+(Virtual Command Queue) interface.  Each crypto operation is packed
+into VCQ command entries, submitted to a mailbox, and completed
+asynchronously via interrupt.
 
-- Key provisioning: create, import, derive, and destroy hardware keys
-  stored in the CMH datastore
-- System object management: allocate and free CMH system objects
-- Management ioctl interface (/dev/cmh_mgmt): key lifecycle, KIC key
-  derivation, PKE (RSA, ECDSA, ECDH, EdDSA), PQC (ML-KEM, ML-DSA,
-  SLH-DSA), SM2, EAC, and DRBG reseeding
-- SM2 ioctl handlers: encrypt, decrypt, sign, and key exchange --
-  multi-step protocol flows not expressible through the crypto API
-  sig interface
-- UAPI header: cmh_mgmt_ioctl.h (ioctl definitions and structures)
+MODULE_IMPORT_NS(CRYPTO_INTERNAL) imports two symbols:
 
-The device requires CAP_SYS_ADMIN for open() and is built conditionally
-on CONFIG_CRYPTO_DEV_CMH_MGMT (default n); when disabled the ioctl
-interface is absent while all kernel crypto API algorithms remain
-registered.
+  - crypto_cipher_setkey()      [crypto/cipher.c, EXPORT_SYMBOL_NS_GPL]
+  - crypto_cipher_encrypt_one() [crypto/cipher.c, EXPORT_SYMBOL_NS_GPL]
+
+These are the single-block cipher API used for software-fallback paths:
+CCM empty-input tag computation (2 ECB encryptions + XOR) and XCBC(SM4)
+empty-message workaround (3 ECB encryptions + XOR).  No public wrapper
+exists; this is the same pattern used by in-tree crypto/ccm.c,
+crypto/cmac.c, and crypto/xcbc.c.
 
 Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 ---
- Documentation/ABI/testing/cmh-mgmt       |  136 ++
- drivers/crypto/cmh/Kconfig               |   19 +
- drivers/crypto/cmh/Makefile              |   11 +-
- drivers/crypto/cmh/cmh_key.c             |  164 ++
- drivers/crypto/cmh/cmh_main.c            |    9 +
- drivers/crypto/cmh/cmh_mgmt.c            | 1770 ++++++++++++++++++++++
- drivers/crypto/cmh/cmh_mgmt_pke.c        | 1143 ++++++++++++++
- drivers/crypto/cmh/cmh_mgmt_pqc.c        | 1365 +++++++++++++++++
- drivers/crypto/cmh/cmh_pke_sm2.c         |  862 +++++++++++
- drivers/crypto/cmh/cmh_sys.c             |  376 +++++
- drivers/crypto/cmh/include/cmh_key.h     |   82 +
- drivers/crypto/cmh/include/cmh_mgmt.h    |   69 +
- drivers/crypto/cmh/include/cmh_pke.h     |  245 +++
- drivers/crypto/cmh/include/cmh_pke_sm2.h |   30 +
- drivers/crypto/cmh/include/cmh_pqc.h     |   25 +
- drivers/crypto/cmh/include/cmh_sys.h     |  111 ++
- include/uapi/linux/cmh_mgmt_ioctl.h      |  902 +++++++++++
- 17 files changed, 7318 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/ABI/testing/cmh-mgmt
- create mode 100644 drivers/crypto/cmh/cmh_key.c
- create mode 100644 drivers/crypto/cmh/cmh_mgmt.c
- create mode 100644 drivers/crypto/cmh/cmh_mgmt_pke.c
- create mode 100644 drivers/crypto/cmh/cmh_mgmt_pqc.c
- create mode 100644 drivers/crypto/cmh/cmh_pke_sm2.c
- create mode 100644 drivers/crypto/cmh/cmh_sys.c
- create mode 100644 drivers/crypto/cmh/include/cmh_key.h
- create mode 100644 drivers/crypto/cmh/include/cmh_mgmt.h
- create mode 100644 drivers/crypto/cmh/include/cmh_pke.h
- create mode 100644 drivers/crypto/cmh/include/cmh_pke_sm2.h
- create mode 100644 drivers/crypto/cmh/include/cmh_pqc.h
- create mode 100644 drivers/crypto/cmh/include/cmh_sys.h
- create mode 100644 include/uapi/linux/cmh_mgmt_ioctl.h
+ Documentation/ABI/testing/debugfs-driver-cmh  |  171 ++
+ Documentation/ABI/testing/sysfs-driver-cmh    |   67 +
+ Documentation/crypto/device_drivers/cmh.rst   |  357 +++
+ Documentation/crypto/device_drivers/index.rst |    1 +
+ drivers/crypto/Kconfig                        |    1 +
+ drivers/crypto/Makefile                       |    1 +
+ drivers/crypto/cmh/Kconfig                    |   65 +
+ drivers/crypto/cmh/Makefile                   |   25 +
+ drivers/crypto/cmh/cmh_config.c               |  619 +++++
+ drivers/crypto/cmh/cmh_debugfs.c              |  289 +++
+ drivers/crypto/cmh/cmh_dma.c                  |  379 +++
+ drivers/crypto/cmh/cmh_main.c                 |  343 +++
+ drivers/crypto/cmh/cmh_mqi.c                  |  344 +++
+ drivers/crypto/cmh/cmh_rh.c                   | 1178 +++++++++
+ drivers/crypto/cmh/cmh_sysfs.c                |  108 +
+ drivers/crypto/cmh/cmh_txn.c                  | 2173 +++++++++++++++++
+ drivers/crypto/cmh/include/cmh.h              |   24 +
+ drivers/crypto/cmh/include/cmh_aes_abi.h      |   98 +
+ drivers/crypto/cmh/include/cmh_ccp_abi.h      |  108 +
+ drivers/crypto/cmh/include/cmh_config.h       |  105 +
+ drivers/crypto/cmh/include/cmh_debugfs.h      |   90 +
+ drivers/crypto/cmh/include/cmh_dma.h          |  219 ++
+ drivers/crypto/cmh/include/cmh_drbg_abi.h     |   67 +
+ drivers/crypto/cmh/include/cmh_eac_abi.h      |   44 +
+ drivers/crypto/cmh/include/cmh_hc_abi.h       |  162 ++
+ drivers/crypto/cmh/include/cmh_hcq_abi.h      |  221 ++
+ drivers/crypto/cmh/include/cmh_kic_abi.h      |   77 +
+ drivers/crypto/cmh/include/cmh_mqi.h          |   35 +
+ drivers/crypto/cmh/include/cmh_pke_abi.h      |  272 +++
+ drivers/crypto/cmh/include/cmh_qse_abi.h      |  181 ++
+ drivers/crypto/cmh/include/cmh_registers.h    |  161 ++
+ drivers/crypto/cmh/include/cmh_rh.h           |   93 +
+ drivers/crypto/cmh/include/cmh_rng.h          |   31 +
+ drivers/crypto/cmh/include/cmh_sm3_abi.h      |   79 +
+ drivers/crypto/cmh/include/cmh_sm4_abi.h      |  101 +
+ drivers/crypto/cmh/include/cmh_sys_abi.h      |  148 ++
+ drivers/crypto/cmh/include/cmh_sysfs.h        |   14 +
+ drivers/crypto/cmh/include/cmh_txn.h          |  491 ++++
+ drivers/crypto/cmh/include/cmh_vcq.h          |  288 +++
+ 39 files changed, 9230 insertions(+)
+ create mode 100644 Documentation/ABI/testing/debugfs-driver-cmh
+ create mode 100644 Documentation/ABI/testing/sysfs-driver-cmh
+ create mode 100644 Documentation/crypto/device_drivers/cmh.rst
+ create mode 100644 drivers/crypto/cmh/Kconfig
+ create mode 100644 drivers/crypto/cmh/Makefile
+ create mode 100644 drivers/crypto/cmh/cmh_config.c
+ create mode 100644 drivers/crypto/cmh/cmh_debugfs.c
+ create mode 100644 drivers/crypto/cmh/cmh_dma.c
+ create mode 100644 drivers/crypto/cmh/cmh_main.c
+ create mode 100644 drivers/crypto/cmh/cmh_mqi.c
+ create mode 100644 drivers/crypto/cmh/cmh_rh.c
+ create mode 100644 drivers/crypto/cmh/cmh_sysfs.c
+ create mode 100644 drivers/crypto/cmh/cmh_txn.c
+ create mode 100644 drivers/crypto/cmh/include/cmh.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_aes_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_ccp_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_config.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_debugfs.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_dma.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_drbg_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_eac_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_hc_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_hcq_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_kic_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_mqi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_pke_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_qse_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_registers.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_rh.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_rng.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_sm3_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_sm4_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_sys_abi.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_sysfs.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_txn.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_vcq.h
 
-diff --git a/Documentation/ABI/testing/cmh-mgmt b/Documentation/ABI/testing/cmh-mgmt
+diff --git a/Documentation/ABI/testing/debugfs-driver-cmh b/Documentation/ABI/testing/debugfs-driver-cmh
 new file mode 100644
-index 000000000000..7da2630edb20
+index 000000000000..21c2d0fbb171
 --- /dev/null
-+++ b/Documentation/ABI/testing/cmh-mgmt
-@@ -0,0 +1,136 @@
-+What:		/dev/cmh_mgmt
++++ b/Documentation/ABI/testing/debugfs-driver-cmh
+@@ -0,0 +1,171 @@
++What:		/sys/kernel/debug/cmh/mbx<N>/vcqs_submitted
 +Date:		June 2026
 +KernelVersion:	7.1
 +Contact:	linux-crypto@vger.kernel.org
 +Description:
-+		Character device (misc) providing a management and
-+		key-operations ioctl interface to the Rambus CryptoManager Hub
-+		hardware crypto accelerator.  Used for operations that
-+		cannot be represented through the standard in-kernel
-+		crypto API: datastore key CRUD, key derivation,
-+		asymmetric crypto (EdDSA, SM2), and post-quantum crypto
-+		(ML-KEM, ML-DSA, SLH-DSA).
++		(RO) Total number of VCQ command entries submitted to
++		mailbox N since the driver was loaded.
 +
-+		The ioctl magic is 'J'.  All struct arguments are
-+		versioned via a leading __u32 version field set to
-+		CMH_MGMT_V1 (1).
++What:		/sys/kernel/debug/cmh/mbx<N>/vcqs_completed
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Total number of VCQ command completions received
++		from mailbox N.
 +
-+		Ioctl commands are grouped by function:
++What:		/sys/kernel/debug/cmh/mbx<N>/vcqs_errors
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Total number of error completions received from
++		mailbox N.
 +
-+		**Key Management (0x01-0x0E):**
++What:		/sys/kernel/debug/cmh/mbx<N>/queue_full_count
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Number of times the transaction manager skipped
++		mailbox N because its in-flight queue was full.
 +
-+		- CMH_IOCTL_KEY_NEW (0x01): Allocate a new datastore slot.
-+		  Accepts ds_type (CMH_DS_* constant), key length, flags,
-+		  and caller ID.  Returns a 64-bit key reference.
++What:		/sys/kernel/debug/cmh/mbx<N>/max_queue_depth
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) High-water mark of in-flight transactions on
++		mailbox N.
 +
-+		- CMH_IOCTL_KEY_WRITE (0x02): Write key material into
-+		  a previously allocated datastore slot.  Supports
-+		  plaintext or wrapped key import via a wrapping key ref.
++What:		/sys/kernel/debug/cmh/mbx<N>/inject_abort
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(WO) Write any value to inject an MBX_COMMAND_ABORT on
++		mailbox N.  The abort triggers error-IRQ handling that
++		completes all in-flight transactions with -EIO and then
++		issues MBX_COMMAND_RESTART to resume the mailbox.
++		Only available when CONFIG_CRYPTO_DEV_CMH_DEBUG is enabled.
 +
-+		- CMH_IOCTL_KEY_READ (0x03): Read key material from
-+		  a datastore slot, optionally wrapped.  Returns data
-+		  plus a 16-byte SYS header for wrapped reads.
++What:		/sys/kernel/debug/cmh/mbx<N>/force_drain
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(WO) Write any value to unconditionally FLUSH and drain
++		all pending transactions on mailbox N, completing each
++		with -ECANCELED, and reset all recovery bookkeeping
++		(including the wedged flag).  The mailbox is re-enabled
++		for new work immediately; no hardware health verification
++		is performed.  Use as a last-resort recovery when the eSW
++		is unresponsive and normal ABORT/RESTART escalation has
++		not recovered the mailbox.
++		Only available when CONFIG_CRYPTO_DEV_CMH_DEBUG is enabled.
 +
-+		- CMH_IOCTL_KEY_FIND (0x04): Look up a key reference
-+		  by caller ID (CID).
++What:		/sys/kernel/debug/cmh/tm/cmq_posts
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Total number of cmh_tm_post_command() calls (one
++		per crypto request submitted to the transaction manager).
 +
-+		- CMH_IOCTL_KEY_GRANT (0x05): Grant access to a key.
++What:		/sys/kernel/debug/cmh/tm/cmq_depth_max
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) High-water mark of the command queue length.
 +
-+		- CMH_IOCTL_KEY_DELETE (0x06): Delete a datastore slot.
++What:		/sys/kernel/debug/cmh/tm/cmq_eagain_count
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Number of times the command queue was full and
++		returned -EAGAIN to the caller.
 +
-+		- CMH_IOCTL_DS_EXPORT (0x07): Export the entire datastore
-+		  as an encrypted blob.
++What:		/sys/kernel/debug/cmh/tm/backoff_count
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Number of times the transaction manager backed off
++		because all mailbox queues were full.
 +
-+		- CMH_IOCTL_DS_IMPORT (0x08): Import a previously exported
-+		  datastore blob.
++What:		/sys/kernel/debug/cmh/tm/async_timeout_count
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RO) Number of async crypto requests that timed out
++		waiting for hardware completion.
 +
-+		- CMH_IOCTL_KEY_NEW_RANDOM (0x0B): Allocate a datastore
-+		  slot and fill it with hardware-generated random data.
++What:		/sys/kernel/debug/cmh/config/async_timeout_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Async request timeout in milliseconds.  On timeout
++		the driver issues MBX_COMMAND_ABORT; if the eSW is
++		unresponsive, the watchdog escalates through RESTART,
++		FLUSH, and force-drain to bound D-state duration.
 +
-+		- CMH_IOCTL_KEY_LIST (0x0E): List active datastore entries,
-+		  returning CIDs, types, lengths, and flags.
++What:		/sys/kernel/debug/cmh/config/vcq_timeout_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) VCQ command timeout in milliseconds.
 +
-+		**Key Derivation -- KIC (0x09-0x0D):**
++What:		/sys/kernel/debug/cmh/config/slow_op_timeout_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Slow-operation timeout in milliseconds.  Used for
++		operations known to take longer (e.g. RSA key generation,
++		PQC key generation).
 +
-+		- CMH_IOCTL_KIC_HKDF1 (0x09): HKDF-Extract step.
-+		- CMH_IOCTL_KIC_HKDF2 (0x0A): HKDF-Expand step.
-+		- CMH_IOCTL_KIC_AES_CMAC_KDF (0x0C): AES-CMAC KDF.
-+		- CMH_IOCTL_KIC_DKEK_DERIVE (0x0D): DKEK derivation.
++What:		/sys/kernel/debug/cmh/config/drain_timeout_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Drain timeout in milliseconds.  Maximum time to wait
++		for all in-flight transactions to complete during driver
++		removal or suspend.
 +
-+		**EAC -- Error and Alarm (0x0F):**
++What:		/sys/kernel/debug/cmh/config/watchdog_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Result-handler watchdog interval in milliseconds.
++		Detects missed IRQs, stuck mailboxes, and abort-stall
++		conditions.  Clamped to a 10 ms minimum.
 +
-+		- CMH_IOCTL_EAC_READ (0x0F): Read and clear hardware
-+		  error, alarm, and safety notification registers.
++What:		/sys/kernel/debug/cmh/config/drbg_timeout_ms
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) DRBG self-seed timeout in milliseconds.
 +
-+		**PKE -- Public Key Engine (0x10-0x1C):**
++What:		/sys/kernel/debug/cmh/config/cmq_max_depth
++Date:		August 2026
++KernelVersion:	7.2
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Maximum number of pending commands in the central
++		Command Message Queue.
 +
-+		- CMH_IOCTL_PKE_RSA_ENC (0x10): RSA public-key encrypt.
-+		- CMH_IOCTL_PKE_RSA_DEC (0x11): RSA private-key decrypt.
-+		- CMH_IOCTL_PKE_RSA_CRT_DEC (0x12): RSA-CRT decrypt.
-+		- CMH_IOCTL_PKE_RSA_KEYGEN (0x13): RSA key pair generation.
-+		- CMH_IOCTL_PKE_ECDSA_SIGN (0x14): ECDSA sign.
-+		- CMH_IOCTL_PKE_ECDH (0x16): ECDH shared secret.
-+		- CMH_IOCTL_PKE_ECDH_KEYGEN (0x17): ECDH key pair generation.
-+		- CMH_IOCTL_PKE_EDDSA_SIGN (0x18): EdDSA sign (Ed25519/Ed448).
-+		- CMH_IOCTL_PKE_EDDSA_VERIFY (0x19): EdDSA verify.
-+		- CMH_IOCTL_PKE_EC_KEYGEN (0x1A): EC key pair generation.
-+		- CMH_IOCTL_PKE_EC_PUBGEN (0x1B): EC public key derivation.
-+		- CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA (0x1C): EdDSA SCA-protected
-+		  key generation.
++What:		/sys/kernel/debug/cmh/config/backlog_max_depth
++Date:		August 2026
++KernelVersion:	7.2
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		(RW) Maximum depth of the backlog queue for
++		CRYPTO_TFM_REQ_MAY_BACKLOG requests (0 disables backlog).
+diff --git a/Documentation/ABI/testing/sysfs-driver-cmh b/Documentation/ABI/testing/sysfs-driver-cmh
+new file mode 100644
+index 000000000000..07216c4aed63
+--- /dev/null
++++ b/Documentation/ABI/testing/sysfs-driver-cmh
+@@ -0,0 +1,67 @@
++What:		/sys/devices/platform/<dev>/fw_version
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Reports the CryptoManager Hub embedded software (eSW) firmware
++		version as a 32-bit hexadecimal value read from the SIC
++		SW_VERSION register.
 +
-+		**PQC -- Post-Quantum Crypto (0x20-0x2D):**
++		Example: "0x00010002"
 +
-+		- CMH_IOCTL_ML_KEM_KEYGEN (0x20): ML-KEM key pair generation
-+		  (modes 512/768/1024).
-+		- CMH_IOCTL_ML_KEM_ENC (0x21): ML-KEM encapsulation.
-+		- CMH_IOCTL_ML_KEM_DEC (0x22): ML-KEM decapsulation.
-+		- CMH_IOCTL_ML_DSA_KEYGEN (0x23): ML-DSA key pair generation
-+		  (modes 44/65/87).
-+		- CMH_IOCTL_ML_DSA_SIGN (0x24): ML-DSA sign.
-+		- CMH_IOCTL_SLHDSA_KEYGEN (0x28): SLH-DSA key pair generation
-+		  (12 parameter sets).
-+		- CMH_IOCTL_SLHDSA_SIGN (0x29): SLH-DSA sign.
-+		- CMH_IOCTL_SLHDSA_SIGN_PREHASH (0x2D): SLH-DSA prehash sign.
++		Read-only.
 +
-+		**SM2 Operations (0x30-0x37):**
++What:		/sys/devices/platform/<dev>/hw_version
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Reports the CryptoManager Hub hardware version as a 32-bit
++		hexadecimal value read from the SIC HW_VERSION0 register.
 +
-+		- CMH_IOCTL_SM2_ECDH_KEYGEN (0x30): SM2 ephemeral key gen.
-+		- CMH_IOCTL_SM2_ECDH (0x31): SM2 key exchange.
-+		- CMH_IOCTL_SM2_DEC_POINT (0x32): SM2 decrypt (point step).
-+		- CMH_IOCTL_SM2_ENC_POINT (0x33): SM2 encrypt (point step).
-+		- CMH_IOCTL_SM2_ID_DIGEST (0x34): SM2 ID digest (ZA).
-+		- CMH_IOCTL_SM2_ECDH_HASH (0x35): SM2 key exchange hash step.
-+		- CMH_IOCTL_SM2_DEC_HASH (0x36): SM2 decrypt (hash step).
-+		- CMH_IOCTL_SM2_ENC_HASH (0x37): SM2 encrypt (hash step).
++		Example: "0x00000000"
 +
-+		The SM2 encrypt/decrypt hash-step ioctls accept payloads
-+		of at most 32 bytes.  The underlying hardware KDF emits a
-+		single 32-byte SM3 block, so longer messages cannot be
-+		processed in a single command and are rejected with
-+		-EINVAL.
++		Read-only.
 +
-+		**DRBG Management (0x40):**
++What:		/sys/devices/platform/<dev>/boot_status
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Reports the CryptoManager Hub boot status register as a 32-bit
++		hexadecimal value.  This reflects the firmware boot
++		progress and final state:
 +
-+		- CMH_IOCTL_DRBG_CONFIG (0x40): Configure the hardware
-+		  DRBG entropy ratio and security strength.  Normally
-+		  called once at system start-up before hwrng reads.
++		  0x00000066 - firmware booted (post-self-test)
++		  other      - firmware boot in progress or failed
 +
-+		All structs contain ``__reserved`` fields that must be
-+		zero; the driver returns ``-EINVAL`` if any reserved field
-+		is non-zero.  This ensures forward compatibility when
-+		reserved fields gain meaning in future versions.
++		Read-only.
 +
-+		All ioctls return 0 on success or a negative errno on
-+		failure.  Common errors:
++What:		/sys/devices/platform/<dev>/mbx_available
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Reports the mailbox availability bitmap as a 32-bit
++		hexadecimal value read from the SIC MBX_AVAILABILITY
++		register.  Each set bit indicates a hardware mailbox
++		instance that the firmware has made available.
 +
-+		- EINVAL:  Invalid version, parameter, key type, or
-+		  non-zero reserved field.
-+		- ENOENT:  Key reference not found in datastore.
-+		- ENOMEM:  DMA allocation failure.
-+		- EBUSY:   Hardware mailbox full.
-+		- ETIMEDOUT: VCQ operation timed out.
-+		- EFAULT:  Bad user-space pointer.
++		Example: "0x00000003" (mailboxes 0 and 1 available)
 +
-+		The ioctl UAPI header is <linux/cmh_mgmt_ioctl.h>.
-+		All structures, constants, and type definitions are
-+		documented in that header file.
++		Read-only.
++
++What:		/sys/devices/platform/<dev>/mbx_count
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Reports the number of mailboxes the driver has configured,
++		as a decimal integer.  This reflects the driver's active
++		configuration (from DT properties, or a debug-only
++		override), which may be fewer than illustrated by
++		mbx_available.
++
++		Example: "2"
++
++		Read-only.
+diff --git a/Documentation/crypto/device_drivers/cmh.rst b/Documentation/crypto/device_drivers/cmh.rst
+new file mode 100644
+index 000000000000..9accd42e27ab
+--- /dev/null
++++ b/Documentation/crypto/device_drivers/cmh.rst
+@@ -0,0 +1,357 @@
++.. SPDX-License-Identifier: GPL-2.0
++
++=====================================
++Rambus CryptoManager Hub (CMH) Driver
++=====================================
++
++Overview
++========
++
++The ``cmh`` driver supports the Rambus CryptoManager Hub hardware cryptographic
++accelerator.  The hardware is accessed through a mailbox-based VCQ
++(Virtual Command Queue) interface: the driver writes command sequences
++into per-mailbox DMA queue buffers and rings a doorbell register; the
++CryptoManager Hub embedded software (eSW) processes the commands and signals
++completion via a per-mailbox interrupt.
++
++The driver registers algorithms with the Linux kernel crypto subsystem
++and exposes a management character device (``/dev/cmh_mgmt``) for
++operations that have no standard crypto API binding.
++
++Hardware Interface
++==================
++
++The CryptoManager Hub is presented as a platform device matched via Device Tree
++(compatible ``"rambus,cmh-v1030"``).  The driver maps a single MMIO region
++(the SIC -- System Interface Controller) whose sub-regions contain
++per-mailbox doorbell, status, and command queue registers.
++
++The driver manages a configurable number of mailboxes (default 2).
++Each mailbox has a configurable number of slots (default 64) and a
++configurable stride (default 512 bytes per slot).  The driver allocates
++DMA-coherent memory for each mailbox queue during probe.
++
++A mailbox is owned by a single host identity for the duration of a lock,
++and the hardware permits only that identity to access it.  The platform
++must present one consistent HOST ID for all accesses to a given mailbox,
++independent of the issuing CPU; see the device-tree binding for this
++integration requirement.
++
++Interrupts are per-mailbox completion/error interrupts.  The driver
++registers a threaded IRQ handler for each configured mailbox.
++
++The eSW is loaded independently of this driver -- typically by the
++boot firmware or a platform-specific loader -- so the driver does not
++use ``request_firmware()``.  Instead it waits for the eSW to reach
++mission mode during probe, bounded by a fixed timeout.
++
++Supported Algorithms
++====================
++
++The driver registers the following algorithm families:
++
++Hash (ahash)
++  SHA-224, SHA-256, SHA-384, SHA-512, SHA3-224, SHA3-256, SHA3-384,
++  SHA3-512, SHAKE-128, SHAKE-256, cSHAKE-128, cSHAKE-256, KMAC-128,
++  KMAC-256, SM3 (10 hash + 2 cSHAKE + 2 KMAC + 1 SM3 = 15 algorithms)
++
++HMAC (ahash)
++  HMAC-SHA-224, HMAC-SHA-256, HMAC-SHA-384, HMAC-SHA-512,
++  HMAC-SHA3-224, HMAC-SHA3-256, HMAC-SHA3-384, HMAC-SHA3-512
++  (8 algorithms)
++
++Symmetric Ciphers (skcipher)
++  AES: ECB, CBC, CTR, CFB, XTS (5 algorithms)
++  SM4: ECB, CBC, CTR, CFB, XTS (5 algorithms)
++  ChaCha20 (1 algorithm)
++
++AEAD
++  AES-GCM, AES-CCM (2 algorithms)
++  SM4-GCM, SM4-CCM (2 algorithms)
++  ``rfc7539(chacha20,poly1305)``, ``rfc7539esp(chacha20,poly1305)``
++  (2 algorithms)
++
++MAC (ahash)
++  CMAC(AES) (1 algorithm)
++  CMAC(SM4), XCBC(SM4) (2 algorithms)
++  Poly1305 (1 algorithm)
++
++Public-Key, Key Agreement, and PQC Signatures
++  RSA (akcipher, 1 algorithm)
++  ECDSA P-256, P-384, P-521 (sig, 3 algorithms)
++  SM2 (sig, verify-only, 1 algorithm)
++  ECDH P-256, P-384, X25519 (kpp, 3 algorithms)
++  ML-DSA-44, ML-DSA-65, ML-DSA-87 (sig, 3 algorithms)
++  SLH-DSA: all 12 parameter sets (sig, 12 algorithms)
++  LMS, LMS-HSS (sig, verify-only, 2 algorithms)
++  XMSS, XMSS-MT (sig, verify-only, 2 algorithms)
++  (ML-KEM keygen/encaps/decaps is available via ``/dev/cmh_mgmt``
++  only -- see `Limitations`_.)
++
++Hardware RNG
++  DRBG-backed hwrng (``/dev/hwrng``, 1 algorithm)
++
++All algorithm driver names use the ``rambus-cmh-`` prefix (e.g.
++``rambus-cmh-sha256``, ``rambus-cmh-ecb-aes``, ``rambus-cmh-gcm-aes``,
++``rambus-cmh-mldsa44``).  Names generally follow the kernel's hyphenated
++template name; families that have no kernel template (e.g. ML-DSA) use
++the concatenated upstream algorithm name (``mldsa44``).
++
++Most algorithms register at priority 300 (301 for AES-CCM).
++The ML-DSA ``sig`` algorithms register at priority 5001 to
++outrank the kernel's generic software ML-DSA (priority 5000, which is
++verify-only); the CMH driver provides full hardware sign and verify.
++
++Request model
++-------------
++
++All crypto API operations are asynchronous: the driver queues each
++request to its transaction-manager kthread and returns
++``-EINPROGRESS``, invoking the caller's completion callback when the
++hardware finishes.  Requests that set ``CRYPTO_TFM_REQ_MAY_BACKLOG``
++are queued on a bounded backlog when the command queue is full;
++without that flag a full queue is reported as
++``-EBUSY``.  Hardware or eSW failures surface as ``-EIO``, malformed
++requests as ``-EINVAL``, oversized requests as ``-EMSGSIZE`` or
++``-EINVAL`` (see `Data-Size Limits`_), and unresponsive hardware as
++``-ETIMEDOUT``.  The ``/dev/cmh_mgmt`` ioctls are, by contrast,
++synchronous -- each ioctl blocks until the hardware completes.
++
++Driver Architecture
++===================
++
++The driver is structured as follows:
++
++Platform Driver
++  Matches DT compatible ``"rambus,cmh-v1030"``.  Probe initializes all
++  subsystems in order; remove tears them down in reverse.
++
++Configuration
++  Parses and validates DT properties (mailbox counts, slot sizes, and
++  stride values).
++
++MQI (Mailbox Queue Interface)
++  Allocates DMA-coherent queue memory per mailbox.  Manages slot
++  allocation, VCQ command writing, and doorbell ringing.
++
++Transaction Manager
++  A dedicated kthread dequeues crypto requests from a central command
++  queue, builds VCQ command sequences, and submits them to mailbox
++  slots.  Completion is signaled via wait queues.
++
++Response Handler
++  Per-mailbox threaded IRQ handlers walk completed slots, parse
++  results, and fire request completions.  A configurable watchdog
++  timer (the ``watchdog_ms`` debugfs knob, default 200 ms) detects
++  stuck requests and escalates through ABORT, RESTART, and FLUSH
++  recovery.
++
++Key Management (``/dev/cmh_mgmt``)
++  A misc character device providing ioctl-based access to datastore
++  key CRUD, key derivation (KIC), PKE operations (EdDSA, SM2),
++  PQC operations (ML-KEM, ML-DSA, SLH-DSA),
++  EAC error register readback, and DRBG runtime configuration.
++  See ``Documentation/ABI/testing/cmh-mgmt`` for the full ioctl list.
++
++Power Management
++  The driver implements ``DEFINE_SIMPLE_DEV_PM_OPS`` suspend/resume.
++  On suspend, the transaction-manager kthread is stopped and pending
++  transactions are drained, waiting up to ``drain_timeout_ms``
++  (default 10000 ms); resume restarts the kthread.
++
++Module Parameters
++=================
++
++The driver defines no production module parameters.  All mailbox
++topology, per-core affinity, slot counts, and strides are taken from
++Device Tree properties; the eSW boot timeout and queue depths are
++built-in constants, and the runtime-tunable knobs are exposed via
++debugfs (see `debugfs Counters`_ below).
++
++A small set of debug-only parameters is compiled in only with
++``CONFIG_CRYPTO_DEV_CMH_DEBUG``.  They exist solely to force alternate
++geometries at ``insmod`` time during bringup and validation (for
++example, to drive the mailbox-contention and cross-mailbox dispatch
++paths without rebuilding the Device Tree); they default to "use the DT
++value" and have no effect in a production build:
++
++``mbx_count_override`` (uint, default 0)
++  Override the DT mailbox count (0 = use DT) to force fewer
++  mailboxes than the hardware provides.
++
++``mbx_slots_override`` (uint, default 0)
++  Override all per-mailbox slot counts (0 = use DT).
++
++``mbx_round_robin`` (bool, default false)
++  Ignore DT ``rambus,cores`` affinity and round-robin all cores
++  across the configured mailboxes (0 = use DT affinity).
++
++``skip_fw_check`` (bool, default false)
++  Skip the SIC boot status and eSW mission-mode checks at probe.
++  Allows the module to load before the eSW has booted.
++
++sysfs Attributes
++================
++
++The driver exposes five read-only attributes under the platform
++device sysfs directory: ``fw_version``, ``hw_version``,
++``boot_status``, ``mbx_available``, and ``mbx_count``.  See
++``Documentation/ABI/testing/sysfs-driver-cmh`` for the authoritative
++per-attribute description.
++
++debugfs Counters
++================
++
++When built with ``CONFIG_CRYPTO_DEV_CMH_DEBUG``, the driver creates
++``/sys/kernel/debug/cmh/`` with three groups: per-mailbox counters
++(``mbxN/``), transaction-manager statistics (``tm/``), and
++runtime-tunable knobs (``config/``, including ``drain_timeout_ms``,
++``watchdog_ms``, ``cmq_max_depth``, and ``backlog_max_depth``).  See
++``Documentation/ABI/testing/debugfs-driver-cmh`` for the authoritative
++per-file description.
++
++Device Tree Binding
++===================
++
++See ``Documentation/devicetree/bindings/crypto/rambus,cmh-v1030.yaml`` for the
++full DT binding schema and complete, schema-validated examples.  Each
++mailbox owned by the host is a ``queue@N`` child node with its own
++``reg`` (instance index), optional ``interrupts``, optional per-mailbox
++VCQ ring geometry (``rambus,num-slots`` / ``rambus,slot-stride-bytes``,
++defaulting to 64 and 512), and an optional ``rambus,cores`` list pinning
++specific crypto cores to that mailbox.  Which crypto cores are present is read from the
++SIC ``CORE_ENABLE`` register at probe, not described in the device tree.
++
++The parent node may also carry up to three ``clocks`` (the main core
++clock, a half-rate clock present only on configurations with
++side-channel-protected cores, and the real-time tick clock) and an
++optional ``reset-gpios``.  The driver enables every supplied clock and
++acquires the reset line deasserted; it does not drive a reset sequence.
++Both are absent when a separate management controller owns them, in
++which case the driver drives neither.
++
++User-Space Interfaces
++=====================
++
++``/dev/cmh_mgmt``
++  Management character device.  Opening it requires ``CAP_SYS_ADMIN``.
++  See ``Documentation/ABI/testing/cmh-mgmt`` for ioctl documentation.
++  The UAPI header is ``<linux/cmh_mgmt_ioctl.h>``.
++
++In-kernel crypto API
++  All algorithms register with the standard kernel crypto API and are
++  consumed by in-kernel users (dm-crypt, fscrypt, IPsec, kTLS, etc.).
++
++  Keys provisioned inside the hardware via ``/dev/cmh_mgmt`` are
++  referenced by an opaque hardware key identifier and are operated on
++  through the ``/dev/cmh_mgmt`` ioctl interface, without ever exposing
++  plaintext key material to user space.  See
++  ``Documentation/ABI/testing/cmh-mgmt`` for key provisioning.
++
++``/dev/hwrng``
++  The DRBG-backed hardware RNG is available as a standard hwrng device.
++  The driver configures the DRBG at probe with built-in defaults where
++  the firmware permits it (stateless mode, or on the management host);
++  otherwise the management host configures it out of band or via the
++  ``/dev/cmh_mgmt`` ioctl, after which random data becomes available.
++
++Limitations
++===========
++
++- LMS and XMSS support verify-only (no sign/keygen in hardware for
++  stateful hash-based signatures).
++- SM2 sig registration is verify-only (sign via ``/dev/cmh_mgmt`` ioctl).
++- EdDSA (Ed25519/Ed448) is available only through ``/dev/cmh_mgmt``
++  ioctls; no kernel ``sig`` registration.
++- ML-KEM operations (encapsulate/decapsulate/keygen) are available only
++  through ``/dev/cmh_mgmt`` ioctls; no standard kernel crypto API
++  binding exists for KEM.
++
++Data-Size Limits
++================
++
++The driver imposes data-size limits on several APIs.  These are
++driver-level safety caps for kernel memory allocation unless noted
++otherwise.
++
++Symmetric / AEAD / MAC linearization caps:
++
++==============================  =======  =======================================
++Scope                           Limit    Origin
++==============================  =======  =======================================
++AES skcipher                    32 MiB   Driver-imposed DMA linearization cap
++SM4 skcipher                    32 MiB   Driver-imposed DMA linearization cap
++All AEAD + ChaCha20 skcipher    1 MiB    Driver-imposed DMA linearization cap
++==============================  =======  =======================================
++
++MAC and keyed-hash algorithms buffer all input in kernel memory because
++the hardware exposes no keyed-MAC context save/restore.  Rather than
++enforce a hard limit, most of them fall back to a software implementation
++once the buffered input -- or a clone request -- exceeds the window:
++
++====================  =======  =============================================
++Algorithm             Window   Behaviour past the window
++====================  =======  =============================================
++``cmac(aes)``         64 KiB   switch to generic software cmac(aes)
++``cmac(sm4)``         64 KiB   switch to generic software cmac(sm4)
++``xcbc(sm4)``         64 KiB   switch to generic software xcbc(sm4)
++``poly1305``          64 KiB   switch to the in-kernel Poly1305 library
++``hmac(sha*)``        64 KiB   switch to generic software hmac(sha\*)
++``hmac(sha3-*)``      64 KiB   switch to generic software hmac(sha3-\*)
++``kmac128``           64 KiB   hard limit -- reject with -EINVAL
++``kmac256``           64 KiB   hard limit -- reject with -EINVAL
++====================  =======  =============================================
++
++For hmac/cmac/xcbc the driver allocates and keys a matching generic
++software MAC transform itself -- it registers with
++``CRYPTO_ALG_NO_FALLBACK`` and does not rely on the crypto core's
++automatic fallback; poly1305, which has no ``crypto_shash`` provider,
++uses the in-kernel Poly1305 library directly.
++After the switch, both arbitrarily long messages and transform ``clone``
++(``.export()``/``.import()``) work at any length.
++
++KMAC is the exception: there is neither a generic KMAC shash nor a KMAC
++library, and the eSW rejects the save command while ``outlen != 0``
++(always true for KMAC), so it can neither stream nor serialize its state.
++It keeps a hard 64 KiB cap (``.update()`` returns ``-EINVAL`` past it)
++and returns ``-EOPNOTSUPP`` from ``.export()``/``.import()``.  For
++HMAC-SHA3 the same software fallback also avoids exposing the invertible
++Keccak sponge state, which would otherwise allow key recovery; the eSW
++likewise does not expose HMAC-SHA2 save/restore.
++
++Pure hash algorithms (SHA-2, SHA-3, SHAKE, cSHAKE, SM3) have no data
++limit because the hardware supports incremental save/restore.
++
++cSHAKE uses save/restore for ``.export()``/``.import()`` but accumulates
++data in ``.update()`` by design (the Keccak sponge has no block-alignment
++boundary to trigger per-update HW submission, and HC_CMD_GATHER amortizes
++the cost into a single finalize-time submission).
++
++Asymmetric / PQC algorithm limits:
++
++==============================  =========  ====================================
++Scope                           Limit      Origin
++==============================  =========  ====================================
++RSA key size                    4096 bit   HW-imposed
++ML-DSA message                  10 KiB     eSW-imposed (QSE ABI)
++SLH-DSA message                 128 B      eSW-imposed (HCQ ABI)
++SLH-DSA context                 255 B      Spec-imposed (FIPS 205)
++LMS public key                  60 B       eSW-imposed (HCQ ABI)
++LMS message                     256 B      eSW-imposed (HCQ ABI)
++LMS signature                   13,364 B   eSW-imposed (HCQ ABI)
++XMSS public key                 136 B      eSW-imposed (HCQ ABI)
++XMSS message                    64 B       eSW-imposed (HCQ ABI)
++XMSS signature                  27,688 B   eSW-imposed (HCQ ABI)
++SM2 encrypt message             32 B       eSW KDF (single SM3 block)
++==============================  =========  ====================================
++
++Miscellaneous limits:
++
++==============================  =========  ====================================
++Scope                           Limit      Origin
++==============================  =========  ====================================
++cSHAKE/KMAC customization       256 B      VCQ slot layout constraint
++KIC HKDF key                    64 B       Partially eSW-derived
++KIC HKDF label                  56 B       VCQ slot layout constraint
++Key/blob mgmt ioctls            256 KiB    Driver-imposed sanity cap
++==============================  =========  ====================================
+diff --git a/Documentation/crypto/device_drivers/index.rst b/Documentation/crypto/device_drivers/index.rst
+index c81d311ac61b..c0247fc97bf8 100644
+--- a/Documentation/crypto/device_drivers/index.rst
++++ b/Documentation/crypto/device_drivers/index.rst
+@@ -6,4 +6,5 @@ Hardware Device Driver Specific Documentation
+ .. toctree::
+    :maxdepth: 1
+ 
++   cmh
+    octeontx2
+diff --git a/drivers/crypto/Kconfig b/drivers/crypto/Kconfig
+index 0189dfdcbbe1..9716b85b8e4b 100644
+--- a/drivers/crypto/Kconfig
++++ b/drivers/crypto/Kconfig
+@@ -831,4 +831,5 @@ source "drivers/crypto/starfive/Kconfig"
+ source "drivers/crypto/inside-secure/eip93/Kconfig"
+ source "drivers/crypto/ti/Kconfig"
+ 
++source "drivers/crypto/cmh/Kconfig"
+ endif # CRYPTO_HW
+diff --git a/drivers/crypto/Makefile b/drivers/crypto/Makefile
+index 2c33b83f3cfa..dae0d5f0500d 100644
+--- a/drivers/crypto/Makefile
++++ b/drivers/crypto/Makefile
+@@ -46,3 +46,4 @@ obj-y += intel/
+ obj-y += starfive/
+ obj-y += cavium/
+ obj-y += ti/
++obj-$(CONFIG_CRYPTO_DEV_CMH) += cmh/
 diff --git a/drivers/crypto/cmh/Kconfig b/drivers/crypto/cmh/Kconfig
-index fca66d5e2f89..512e7b3bdc59 100644
---- a/drivers/crypto/cmh/Kconfig
+new file mode 100644
+index 000000000000..fca66d5e2f89
+--- /dev/null
 +++ b/drivers/crypto/cmh/Kconfig
-@@ -63,3 +63,22 @@ config CRYPTO_DEV_CMH_DEBUG
- 	  Useful for bringup, validation, and performance analysis.
- 	  Not recommended for production.
- 
+@@ -0,0 +1,65 @@
++# SPDX-License-Identifier: GPL-2.0
++#
++# Rambus CryptoManager Hub (CMH) hardware crypto accelerator
++#
++# The VCQ command and DMA descriptor ABI uses native (host-endian)
++# integer types and is only valid on little-endian hosts: the CMH block
++# and its eSW are co-located on the same little-endian SoC and there is
++# no big-endian deployment.  Gate the driver on !CPU_BIG_ENDIAN rather
++# than byte-swapping an ABI that would never be exercised.
++#
 +
-+config CRYPTO_DEV_CMH_MGMT
-+	bool "CMH management ioctl device (/dev/cmh_mgmt)"
-+	depends on CRYPTO_DEV_CMH
-+	default n
++config CRYPTO_DEV_CMH
++	tristate "Rambus CryptoManager Hub (CMH) hardware crypto accelerator"
++	depends on CRYPTO && OF && HAS_IOMEM && (64BIT || COMPILE_TEST)
++	depends on !CPU_BIG_ENDIAN
++	select CRYPTO_HASH
++	select CRYPTO_SKCIPHER
++	select CRYPTO_AEAD
++	select CRYPTO_AKCIPHER
++	select CRYPTO_SIG
++	select CRYPTO_KPP
++	select CRYPTO_ECC
++	select CRYPTO_RSA
++	select CRYPTO_AES
++	select CRYPTO_CCM
++	select CRYPTO_SM4_GENERIC
++	# Generic software MACs the keyed-MAC drivers allocate and key as
++	# arbitrary-length / transform-clone fallbacks past the 64 KB HW
++	# window: HMAC-SHA-2/SHA-3, CMAC (AES and SM4) and XCBC (SM4).
++	select CRYPTO_HMAC
++	select CRYPTO_SHA256
++	select CRYPTO_SHA512
++	select CRYPTO_SHA3
++	select CRYPTO_CMAC
++	select CRYPTO_XCBC
++	# Poly1305 has no generic ahash/shash; its fallback drives the
++	# poly1305 library (<crypto/poly1305.h>) directly.
++	select CRYPTO_LIB_POLY1305
++	select HW_RANDOM
 +	help
-+	  Expose /dev/cmh_mgmt, a misc device providing ioctl commands
-+	  for operations that have no kernel crypto API binding: hardware
-+	  key lifecycle (create, import, derive, destroy), KIC key
-+	  derivation, PQC keygen/encaps/decaps (ML-KEM, ML-DSA, SLH-DSA),
-+	  EdDSA sign/verify, SM2 key exchange, and DRBG
-+	  configuration.
++	  Driver for the Rambus CryptoManager Hub (CMH) hardware crypto accelerator.
++	  Accesses the hardware via a mailbox-based VCQ (Virtual Command
++	  Queue) interface and registers algorithms with the kernel
++	  crypto subsystem.
 +
-+	  The device requires CAP_SYS_ADMIN.  Disabling this option
-+	  removes the ioctl interface but all kernel crypto API
-+	  algorithms (consumed by in-kernel users and validated by the
-+	  crypto test manager) remain fully functional.
++	  Supported algorithm families: AES (ECB/CBC/CTR/XTS/CFB),
++	  SM4 (ECB/CBC/CTR/XTS/CFB), ChaCha20-Poly1305, AES-GCM, AES-CCM,
++	  SHA-2, SHA-3, SHAKE, CSHAKE, KMAC, SM3, HMAC, AES-CMAC,
++	  SM4-CMAC, SM4-XCBC, RSA, ECDSA, ECDH, SM2, and DRBG (hwrng).
++	  Ioctl-only algorithms: EdDSA, ML-KEM.
 +
-+	  If unsure, say N.
++	  To compile this driver as a module, choose M here.
++
++config CRYPTO_DEV_CMH_DEBUG
++	bool "CMH debug instrumentation (debugfs counters)"
++	depends on CRYPTO_DEV_CMH && DEBUG_FS
++	help
++	  Enable per-mailbox debugfs counters under
++	  /sys/kernel/debug/cmh/ for the CMH driver.
++	  Exposes VCQ submit/complete/error counts, queue depth
++	  high-water marks, and transaction manager backoff statistics.
++
++	  Useful for bringup, validation, and performance analysis.
++	  Not recommended for production.
++
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 742e65e3917e..bb7772555d6a 100644
---- a/drivers/crypto/cmh/Makefile
+new file mode 100644
+index 000000000000..742e65e3917e
+--- /dev/null
 +++ b/drivers/crypto/cmh/Makefile
-@@ -12,7 +12,16 @@ cmh-y := \
- 	cmh_txn.o \
- 	cmh_rh.o \
- 	cmh_dma.o \
--	cmh_sysfs.o
-+	cmh_sysfs.o \
-+	cmh_key.o \
-+	cmh_sys.o
+@@ -0,0 +1,25 @@
++# SPDX-License-Identifier: GPL-2.0
++#
++# Makefile for the Rambus CryptoManager Hub (CMH) hardware crypto accelerator driver.
++#
 +
-+# Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
-+cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
-+	cmh_mgmt.o \
-+	cmh_mgmt_pke.o \
-+	cmh_mgmt_pqc.o \
-+	cmh_pke_sm2.o
- 
- ccflags-y += -I$(src)/include
- 
-diff --git a/drivers/crypto/cmh/cmh_key.c b/drivers/crypto/cmh/cmh_key.c
++obj-$(CONFIG_CRYPTO_DEV_CMH) += cmh.o
++
++cmh-y := \
++	cmh_main.o \
++	cmh_config.o \
++	cmh_mqi.o \
++	cmh_txn.o \
++	cmh_rh.o \
++	cmh_dma.o \
++	cmh_sysfs.o
++
++ccflags-y += -I$(src)/include
++
++# Suppress -Woverride-init for the [0 ... N] = -1 range-initializer pattern
++# (standard kernel idiom for sparse lookup tables with a default value).
++CFLAGS_cmh_config.o += -Wno-override-init
++
++# Debug instrumentation: per-mailbox debugfs counters.
++# cmh_debugfs.o is linked into the composite cmh.o (same tristate).
++cmh-$(CONFIG_CRYPTO_DEV_CMH_DEBUG) += cmh_debugfs.o
+diff --git a/drivers/crypto/cmh/cmh_config.c b/drivers/crypto/cmh/cmh_config.c
 new file mode 100644
-index 000000000000..fde8be50b25c
+index 000000000000..2ef588a3fcb1
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_key.c
-@@ -0,0 +1,164 @@
++++ b/drivers/crypto/cmh/cmh_config.c
+@@ -0,0 +1,619 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Dual Key Path Implementation
++ * CMH LKM -- Configuration from Device Tree
 + *
-+ * Two key provisioning paths are supported:
++ * The CMH device tree node provides:
++ *   - reg: SIC base + size (mandatory)
 + *
-+ * Raw key:  key bytes -> stored in tfm context ->
-+ *   SYS_CMD_WRITE(SYS_REF_TEMP) packed into every crypto VCQ.
-+ *   The raw key buffer is DMA-mapped once at setkey time and remains
-+ *   mapped for the lifetime of the transform (unmapped in destroy).
++ * Per-mailbox child nodes (queue@N):
++ *   - reg: 0-based MBX instance index (mandatory)
++ *   - interrupts: (optional) per-MBX completion IRQ; absent => polling
++ *   - rambus,num-slots / rambus,slot-stride-bytes: (optional) VCQ ring
++ *     geometry (slot count / per-slot stride in bytes, both powers of two)
++ *   - rambus,cores: (optional) crypto core names pinned to this mailbox
 + *
-+ * Raw key DMA lifetime rationale
-+ * ------------------------------
-+ * Raw keys are DMA-mapped at setkey time and the mapping persists
-+ * until the transform is destroyed (cmh_key_destroy).  This is a
-+ * deliberate design choice, consistent with upstream HW crypto
-+ * drivers (CAAM, ccree, CCP) that also map keys at setkey for
-+ * transform-lifetime reuse:
-+ *
-+ *   - The Linux crypto framework expects setkey to prepare the
-+ *     transform for repeated encrypt/decrypt calls.  Remapping the
-+ *     same key on every request would add DMA API overhead per crypto
-+ *     operation with no security benefit.
-+ *   - On destroy, kfree_sensitive() scrubs the key buffer and the
-+ *     DMA mapping is released.  For key-by-ID (persistent), the
-+ *     per-MBX ref cache is zeroed with memzero_explicit().
-+ *   - No key material is ever logged; dev_dbg() messages only show
-+ *     CIDs (content identifiers), not key bytes.
-+ *
-+ * Hardware-required behaviors (not driver policy)
-+ * ------------------------------------------------
-+ * - SYS_REF_TEMP lifetime:  the eSW firmware reclaims temporary
-+ *   datastore objects when the mailbox slot is reused.  This is a
-+ *   hardware constraint; the driver packs SYS_CMD_WRITE into every
-+ *   VCQ to re-provision the raw key for each operation.
-+ * - Mailbox flush (SYS_CMD_FLUSH):  reclaims temp-stack space on the
-+ *   target MBX.  Required by HW to prevent temp-stack exhaustion
-+ *   across multi-VCQ operations.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/slab.h>
-+#include <linux/string.h>
-+
-+#include "cmh_key.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_dma.h"
-+#include "cmh_sys_abi.h"
-+#include <uapi/linux/cmh_mgmt_ioctl.h>
-+
-+/**
-+ * cmh_ds_type_to_core_id() - Map a datastore type to a logical core ID
-+ * @ds_type: Datastore type constant (e.g. CMH_DS_AES_KEY, CMH_DS_SM4_KEY)
-+ *
-+ * Returns the algorithm-family identity (e.g. CORE_ID_AES = 0x03), NOT the
-+ * VCQ dispatch core_id.  With multi-instance, a second AES engine dispatches
-+ * at CORE_ID_AES2 (0x06) but keys are still tagged with CORE_ID_AES (0x03)
-+ * -- the eSW validates against the logical identity, not the dispatch ID.
-+ *
-+ * Return: Logical core ID on success, CORE_ID_NUM for unknown @ds_type.
-+ */
-+u32 cmh_ds_type_to_core_id(u32 ds_type)
-+{
-+	switch (ds_type) {
-+	case CMH_DS_AES_KEY:
-+	case CMH_DS_AES_XTS_KEY:
-+		return CORE_ID_AES;
-+	case CMH_DS_SM4_KEY:
-+		return CORE_ID_SM4;
-+	case CMH_DS_HMAC_KEY:
-+	case CMH_DS_KMAC_KEY:
-+		return CORE_ID_HC;
-+	case CMH_DS_CHACHA20_KEY:
-+		return CORE_ID_CCP;
-+	case CMH_DS_RSA_PRIV_KEY:
-+	case CMH_DS_RSA_PUB_KEY:
-+	case CMH_DS_RSA_CRT_KEY:
-+	case CMH_DS_ECDSA_PRIV_KEY:
-+	case CMH_DS_ECDSA_PUB_KEY:
-+	case CMH_DS_ECDH_PRIV_KEY:
-+	case CMH_DS_EDDSA_PRIV_KEY:
-+	case CMH_DS_SHARED_SECRET:
-+	case CMH_DS_SM2_PRIV_KEY:
-+		return CORE_ID_PKE;
-+	case CMH_DS_ML_KEM_DK:
-+	case CMH_DS_ML_DSA_SK:
-+		return CORE_ID_QSE;
-+	case CMH_DS_SLHDSA_SK:
-+		return CORE_ID_HCQ;
-+	default:
-+		return CORE_ID_NUM;
-+	}
-+}
-+
-+/**
-+ * cmh_key_setkey_raw() - Store a raw key in the key context
-+ * @ctx: Key context to populate
-+ * @key: Pointer to the raw key bytes
-+ * @keylen: Length of @key in bytes
-+ * @core_id: Logical core ID for SYS_TYPE tagging
-+ *
-+ * Duplicates the raw key, DMA-maps the copy for the lifetime of the
-+ * transform, and stores the mapping in @ctx.  Any previously held key
-+ * is destroyed first.
-+ *
-+ * The DMA mapping persists until cmh_key_destroy() is called (typically
-+ * from the algorithm .exit_tfm callback).  This avoids per-request DMA
-+ * mapping overhead and matches the setkey-to-destroy lifetime model used
-+ * by other upstream HW crypto drivers (CAAM, ccree, CCP).  The key
-+ * buffer is freed via kfree_sensitive() on destroy.
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_key_setkey_raw(struct cmh_key_ctx *ctx, const u8 *key,
-+		       u32 keylen, u32 core_id)
-+{
-+	dma_addr_t dma;
-+	u8 *copy;
-+
-+	if (!keylen || !key)
-+		return -EINVAL;
-+
-+	copy = kmemdup(key, keylen, GFP_KERNEL);
-+	if (!copy)
-+		return -ENOMEM;
-+
-+	/* Pre-map for the lifetime of the transform */
-+	dma = cmh_dma_map_single(copy, keylen, DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(dma)) {
-+		kfree_sensitive(copy);
-+		return -ENOMEM;
-+	}
-+
-+	/* Clean up any previous key */
-+	cmh_key_destroy(ctx);
-+
-+	ctx->mode = CMH_KEY_RAW;
-+	ctx->raw.data = copy;
-+	ctx->raw.len = keylen;
-+	ctx->raw.dma = dma;
-+	ctx->raw.sys_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, core_id);
-+
-+	return 0;
-+}
-+
-+/**
-+ * cmh_key_destroy() - Destroy and zero-fill a key context
-+ * @ctx: Key context to destroy
-+ *
-+ * For raw keys, unmaps the DMA buffer and securely frees the key material.
-+ * Resets the key mode to CMH_KEY_NONE.
-+ */
-+void cmh_key_destroy(struct cmh_key_ctx *ctx)
-+{
-+	if (ctx->mode == CMH_KEY_RAW && ctx->raw.data) {
-+		cmh_dma_unmap_single(ctx->raw.dma, ctx->raw.len,
-+				     DMA_TO_DEVICE);
-+		kfree_sensitive(ctx->raw.data);
-+		memzero_explicit(&ctx->raw, sizeof(ctx->raw));
-+	}
-+	ctx->mode = CMH_KEY_NONE;
-+}
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index c037e8daa877..d7753c4630ba 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -31,6 +31,7 @@
- #include "cmh_mqi.h"
- #include "cmh_txn.h"
- #include "cmh_rh.h"
-+#include "cmh_mgmt.h"
- #include "cmh_registers.h"
- #include "cmh_debugfs.h"
- #include "cmh_sysfs.h"
-@@ -201,10 +202,17 @@ static int cmh_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_rh_init;
- 
-+	/* Register key management device (/dev/cmh_mgmt) */
-+	ret = cmh_mgmt_register();
-+	if (ret)
-+		goto err_mgmt_register;
-+
- 	platform_set_drvdata(pdev, dev);
- 
- 	return 0;
- 
-+err_mgmt_register:
-+	cmh_rh_cleanup(cfg);
- err_rh_init:
- 	cmh_tm_cleanup();
- err_tm_init:
-@@ -229,6 +237,7 @@ static void cmh_remove(struct platform_device *pdev)
- 
- 	cfg = &dev->config;
- 
-+	cmh_mgmt_unregister();
- 	cmh_rh_cleanup(cfg);
- 	cmh_tm_cleanup();
- 	cmh_mqi_cleanup(cfg);
-diff --git a/drivers/crypto/cmh/cmh_mgmt.c b/drivers/crypto/cmh/cmh_mgmt.c
-new file mode 100644
-index 000000000000..32719b9f1f6e
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_mgmt.c
-@@ -0,0 +1,1770 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Key Management misc_device (/dev/cmh_mgmt)
-+ *
-+ * Provides ioctl interface for key provisioning (NEW, NEW_RANDOM, WRITE, READ,
-+ * FIND, GRANT, DELETE) and datastore lifecycle (EXPORT, IMPORT).
-+ *
-+ * Each ioctl handler: copy_from_user -> validate -> DMA alloc ->
-+ * build VCQ -> cmh_tm_submit_sync -> copy_to_user -> DMA free.
-+ *
-+ * Access requires CAP_SYS_ADMIN (checked in open()).  The device node
-+ * is mode 0660; DAC further limits access to owner/group.
-+ * CMH eSW enforces per-MBX access control on top of this.
++ * Crypto cores are discovered from the SIC CORE_ENABLE register at probe
++ * (cmh_config_discover_cores), not described in the device tree.
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/miscdevice.h>
-+#include <linux/uaccess.h>
-+#include <linux/slab.h>
-+#include <linux/fs.h>
-+#include <linux/capability.h>
-+#include <linux/mutex.h>
-+#include <linux/overflow.h>
++#include <linux/platform_device.h>
++#include <linux/of.h>
++#include <linux/of_irq.h>
++#include <linux/log2.h>
++#include <linux/string.h>
 +
-+#include "cmh_mgmt.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_key.h"
-+#include "cmh_dma.h"
 +#include "cmh_config.h"
-+#include "cmh_sys_abi.h"
-+#include "cmh_pke.h"
-+#include "cmh_pke_sm2.h"
-+#include "cmh_qse_abi.h"
-+#include "cmh_hcq_abi.h"
-+#include <uapi/linux/cmh_mgmt_ioctl.h>
-+
-+#include <crypto/utils.h>
++#include "cmh_dma.h"
 +
 +/*
-+ * Pin all mgmt ioctls to a single management mailbox (MBX 0).
-+ *
-+ * This is a deliberate, structural choice -- not a performance default.
-+ * The /dev/cmh_mgmt path is *stateful* with respect to the eSW datastore,
-+ * and that state is per-mailbox, so every step of a key's lifecycle must
-+ * land on the same mailbox:
-+ *
-+ * 1. Datastore access control is per-mailbox AND opaque to the driver.
-+ *    SYS_CMD_NEW grants the creating mailbox a (1 << mbx_id) access mask
-+ *    (read/write/execute).  Crucially, the returned 64-bit ref encodes a
-+ *    randomised offset -- NOT the owning mailbox -- so given only a ref
-+ *    (as KEY_GRANT/READ/DELETE/DS_EXPORT receive), the driver cannot
-+ *    recover which mailbox owns the object.  A fixed management mailbox
-+ *    is therefore the only way to guarantee that NEW, WRITE, GRANT, READ
-+ *    and the subsequent hardware-held-key compute ops all share the
-+ *    mailbox that holds the access rights, without exposing mailbox
-+ *    identity in the UABI.  (User space may still widen access to other
-+ *    mailboxes explicitly via KEY_GRANT.)
-+ *
-+ * 2. The eSW SYS_REF_TEMP scratch store is per-mailbox and persists
-+ *    across ioctl calls.  A derivation that writes SYS_REF_TEMP (e.g. a
-+ *    KIC_* derive) must be consumed by a later ioctl on the *same*
-+ *    mailbox (e.g. DS_EXPORT with wrap_key=SYS_REF_TEMP).
-+ *
-+ * Device-tree per-mailbox ``rambus,cores`` affinity applies to the *stateless*
-+ * registered crypto API path (cmh_core_select_instance()), which carries
-+ * no datastore state across calls and is free to balance across mailboxes.
-+ *
-+ * Note: MBX 0 is NOT reserved exclusively for mgmt -- registered crypto
-+ * operations may also land here via TM round-robin (target_mbx = -1).
-+ * This is safe because those ops do not allocate from the temp store.
++ * Debug-only MBX overrides for stress testing.
++ * When non-zero, these override the corresponding DT values, enabling
++ * contention stress tests to force a minimal MBX config
++ * (e.g. mbx_count_override=1 mbx_slots_override=1 for 1 MBX, 2 slots).
 + */
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++static unsigned int mbx_count_override;
++module_param(mbx_count_override, uint, 0444);
++MODULE_PARM_DESC(mbx_count_override,
++		 "[debug] Override DT MBX count (0 = use DT, default: 0)");
 +
-+/* VCQ layout: header + command + flush = 3 entries */
-+#define MGMT_VCQ_CMDS		3
++static unsigned int mbx_slots_override;
++module_param(mbx_slots_override, uint, 0444);
++MODULE_PARM_DESC(mbx_slots_override,
++		 "[debug] Override all MBX slots_log2 (0 = use DT, default: 0)");
++
++static bool mbx_round_robin;
++module_param(mbx_round_robin, bool, 0444);
++MODULE_PARM_DESC(mbx_round_robin,
++		 "[debug] Ignore DT rambus,cores affinity and round-robin all cores across MBXes (0 = use DT affinity, default: 0)");
++#endif
++
++/* -- Core ID -> core_type lookup --------------------------------------- */
 +
 +/*
-+ * Tracks whether any operation has left residual state in the device's
-+ * per-mailbox temporary key store since the last flush.  The device
-+ * reclaims temp storage only on a full mailbox flush (MBX_COMMAND_FLUSH),
-+ * which also terminates any executing command queue with -EPIPE.
++ * Map hardware core IDs (from DT child "reg") to enum cmh_core_type.
 + *
-+ * To avoid killing concurrent in-flight operations, the flush in
-+ * cmh_mgmt_ioctl() is conditional: it fires only when this flag is set.
-+ * Operations that allocate temp storage (currently: KIC derivations
-+ * targeting SYS_REF_TEMP) set this flag on success.
++ * Entries set to -1 are not dispatchable crypto cores: system cores
++ * (SYS, DMA, KIC, TIC, MPU, EMC, EAC) and the DRBG singleton
++ * (handled separately in cmh_rng.c).
 + */
-+static atomic_t mgmt_temp_dirty = ATOMIC_INIT(0);
++static const int core_id_to_type[CORE_ID_NUM] = {
++	[0 ... CORE_ID_NUM - 1] = -1,
++	[CORE_ID_HC]  = CMH_CORE_HC,
++	[CORE_ID_AES] = CMH_CORE_AES,
++	[CORE_ID_SM4] = CMH_CORE_SM4,
++	[CORE_ID_SM3] = CMH_CORE_SM3,
++	[CORE_ID_CCP] = CMH_CORE_CCP,
++	[CORE_ID_PKE] = CMH_CORE_PKE,
++	[CORE_ID_QSE] = CMH_CORE_QSE,
++	[CORE_ID_HCQ] = CMH_CORE_HCQ,
++};
++
++/* Human-readable names for error messages */
++static const char * const core_type_names[CMH_NUM_CORE_TYPES] = {
++	[CMH_CORE_HC]  = "hc",
++	[CMH_CORE_AES] = "aes",
++	[CMH_CORE_SM4] = "sm4",
++	[CMH_CORE_SM3] = "sm3",
++	[CMH_CORE_CCP] = "ccp",
++	[CMH_CORE_PKE] = "pke",
++	[CMH_CORE_QSE] = "qse",
++	[CMH_CORE_HCQ] = "hcq",
++};
++
++/* -- Hardware core discovery ------------------------------------------ */
 +
 +/*
-+ * Serialise the entire management plane.  SYS_REF_TEMP, the temp-dirty
-+ * flush bookkeeping and the datastore are a single shared hardware
-+ * resource, so ioctls -- even from different opens of /dev/cmh_mgmt --
-+ * must not interleave.
++ * Per-core-type discovery descriptor: the dual-rail CORE_ENABLE mask and
++ * the canonical hardware core ID for that type.  DRBG is intentionally
++ * absent -- it is not a dispatchable crypto core (handled by cmh_rng.c).
 + */
-+static DEFINE_MUTEX(cmh_mgmt_lock);
++struct cmh_core_desc {
++	u32 enable_mask;
++	u32 core_id;
++};
++
++static const struct cmh_core_desc cmh_core_descs[CMH_NUM_CORE_TYPES] = {
++	[CMH_CORE_HC]  = { SIC_CORE_ENABLE_HC,  CORE_ID_HC  },
++	[CMH_CORE_AES] = { SIC_CORE_ENABLE_AES, CORE_ID_AES },
++	[CMH_CORE_SM4] = { SIC_CORE_ENABLE_SM4, CORE_ID_SM4 },
++	[CMH_CORE_SM3] = { SIC_CORE_ENABLE_SM3, CORE_ID_SM3 },
++	[CMH_CORE_CCP] = { SIC_CORE_ENABLE_CCP, CORE_ID_CCP },
++	[CMH_CORE_PKE] = { SIC_CORE_ENABLE_PKE, CORE_ID_PKE },
++	[CMH_CORE_QSE] = { SIC_CORE_ENABLE_QSE, CORE_ID_QSE },
++	[CMH_CORE_HCQ] = { SIC_CORE_ENABLE_HCQ, CORE_ID_HCQ },
++};
++
++/* Dual-rail encoding: 0b01 (low bit set, high bit clear) means enabled. */
++static bool cmh_core_enabled(u32 core_enable, u32 mask)
++{
++	return (core_enable & (mask | (mask << 1))) == mask;
++}
++
++/* rambus,cores DT names -> hardware core IDs (see cmh_vcq.h). */
++static const struct cmh_dt_core_name {
++	const char *name;
++	u32 id;
++} cmh_dt_core_names[] = {
++	{ "hc",  CORE_ID_HC },
++	{ "aes", CORE_ID_AES },
++	{ "sm4", CORE_ID_SM4 },
++	{ "sm3", CORE_ID_SM3 },
++	{ "hcq", CORE_ID_HCQ },
++	{ "qse", CORE_ID_QSE },
++	{ "pke", CORE_ID_PKE },
++	{ "ccp", CORE_ID_CCP },
++};
++
++static int cmh_dt_core_id(const char *name)
++{
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(cmh_dt_core_names); i++)
++		if (!strcmp(name, cmh_dt_core_names[i].name))
++			return (int)cmh_dt_core_names[i].id;
++	return -1;
++}
++
++/*
++ * Read a power-of-two DT geometry property (a slot count or a byte stride)
++ * and return its log2 -- the encoding the mailbox QUEUE registers use.  An
++ * absent property yields @def_log2; a present value must be a power of two
++ * whose log2 lies in [@min_log2, @max_log2], otherwise -EINVAL.
++ */
++static int cmh_dt_read_geom_log2(const struct device_node *child,
++				 const char *prop, u32 def_log2,
++				 u32 min_log2, u32 max_log2, u32 *out_log2)
++{
++	u32 val;
++
++	if (of_property_read_u32(child, prop, &val)) {
++		*out_log2 = def_log2;
++		return 0;
++	}
++	if (!is_power_of_2(val) ||
++	    ilog2(val) < min_log2 || ilog2(val) > max_log2)
++		return -EINVAL;
++	*out_log2 = ilog2(val);
++	return 0;
++}
++
++/*
++ * Apply the per-mailbox rambus,cores affinity to the discovered cores.  Each
++ * core ID listed on a mailbox pins that core's instance to the mailbox; a
++ * core listed on no mailbox keeps mbx = -1 (round-robin across mailboxes).
++ */
++static int cmh_config_apply_affinity(struct cmh_config *cfg)
++{
++	unsigned int mi, ci, inst;
++
++	for (mi = 0; mi < cfg->mbx_count; mi++) {
++		struct cmh_mbx_config *m = &cfg->mailboxes[mi];
++
++		for (ci = 0; ci < m->num_cores; ci++) {
++			u32 core_id = m->cores[ci];
++			struct cmh_core_type_cfg *ct;
++			int type;
++
++			if (core_id >= CORE_ID_NUM ||
++			    core_id_to_type[core_id] < 0) {
++				dev_err(cmh_dev(),
++					"mbx[%u]: rambus,cores 0x%02x is not a dispatchable core\n",
++					mi, core_id);
++				return -EINVAL;
++			}
++
++			type = core_id_to_type[core_id];
++			ct = &cfg->core_types[type];
++
++			for (inst = 0; inst < ct->num_instances; inst++) {
++				if (ct->core_ids[inst] != core_id)
++					continue;
++				if (ct->mbx[inst] >= 0) {
++					dev_err(cmh_dev(),
++						"core 0x%02x pinned to more than one mailbox\n",
++						core_id);
++					return -EINVAL;
++				}
++				ct->mbx[inst] = (s32)mi;
++				break;
++			}
++		}
++	}
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++	if (mbx_round_robin) {
++		unsigned int t, j;
++
++		for (t = 0; t < CMH_NUM_CORE_TYPES; t++)
++			for (j = 0; j < cfg->core_types[t].num_instances; j++)
++				cfg->core_types[t].mbx[j] = -1;
++		dev_info(cmh_dev(),
++			 "[debug] mbx_round_robin: dropped all rambus,cores affinity\n");
++	}
++#endif
++
++	return 0;
++}
++
++/* -- Validation -------------------------------------------------------- */
++
++static int cmh_config_validate_core_types(struct cmh_config *cfg)
++{
++	unsigned int i, j, k;
++
++	for (i = 0; i < CMH_NUM_CORE_TYPES; i++) {
++		struct cmh_core_type_cfg *ct = &cfg->core_types[i];
++		const char *name = core_type_names[i];
++
++		/* Zero instances is valid -- core absent from DT */
++		if (ct->num_instances == 0)
++			continue;
++
++		if (ct->num_instances > CMH_MAX_CORE_INSTANCES) {
++			dev_err(cmh_dev(), "%s: num_instances %u > max %u\n",
++				name, ct->num_instances,
++				CMH_MAX_CORE_INSTANCES);
++			return -EINVAL;
++		}
++
++		/* Validate MBX indices */
++		for (j = 0; j < ct->num_instances; j++) {
++			if (ct->mbx[j] >= 0 &&
++			    (u32)ct->mbx[j] >= cfg->mbx_count) {
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++				if (mbx_count_override > 0) {
++					dev_info(cmh_dev(),
++						 "%s: mbx[%u]=%d >= overridden mbx_count %u, auto-assigning\n",
++						 name, j, ct->mbx[j],
++						 cfg->mbx_count);
++					ct->mbx[j] = -1;
++					continue;
++				}
++#endif
++				dev_err(cmh_dev(), "%s: mbx[%u]=%d >= mbx_count %u\n",
++					name, j, ct->mbx[j],
++					cfg->mbx_count);
++				return -EINVAL;
++			}
++		}
++
++		/* No duplicate core IDs within this type */
++		for (j = 1; j < ct->num_instances; j++) {
++			for (k = 0; k < j; k++) {
++				if (ct->core_ids[j] == ct->core_ids[k]) {
++					dev_err(cmh_dev(),
++						"%s: duplicate core_id 0x%02x at [%u] and [%u]\n",
++						name, ct->core_ids[j],
++						k, j);
++					return -EINVAL;
++				}
++			}
++		}
++
++		/* No duplicate MBX within this type (if explicit) */
++		for (j = 1; j < ct->num_instances; j++) {
++			if (ct->mbx[j] < 0)
++				continue;
++			for (k = 0; k < j; k++) {
++				if (ct->mbx[k] == ct->mbx[j]) {
++					dev_err(cmh_dev(),
++						"%s: duplicate mbx %d at [%u] and [%u]\n",
++						name, ct->mbx[j], k, j);
++					return -EINVAL;
++				}
++			}
++		}
++
++		/* All core IDs must fit in VCQ 8-bit field */
++		for (j = 0; j < ct->num_instances; j++) {
++			if (ct->core_ids[j] > CORE_ID_MAX) {
++				dev_err(cmh_dev(),
++					"%s: core_ids[%u]=0x%02x > CORE_ID_MAX\n",
++					name, j, ct->core_ids[j]);
++				return -EINVAL;
++			}
++		}
++	}
++
++	/* Cross-type: no core ID used by more than one type */
++	for (i = 0; i < CMH_NUM_CORE_TYPES; i++) {
++		struct cmh_core_type_cfg *ct_i = &cfg->core_types[i];
++
++		for (j = i + 1; j < CMH_NUM_CORE_TYPES; j++) {
++			struct cmh_core_type_cfg *ct_j = &cfg->core_types[j];
++
++			for (k = 0; k < ct_i->num_instances; k++) {
++				unsigned int m;
++
++				for (m = 0; m < ct_j->num_instances; m++) {
++					if (ct_i->core_ids[k] !=
++					    ct_j->core_ids[m])
++						continue;
++					dev_err(cmh_dev(),
++						"core_id 0x%02x conflict: %s[%u] and %s[%u]\n",
++						ct_i->core_ids[k],
++						core_type_names[i], k,
++						core_type_names[j], m);
++					return -EINVAL;
++				}
++			}
++		}
++	}
++
++	return 0;
++}
++
++static int cmh_config_validate(struct cmh_config *cfg)
++{
++	unsigned int i, j;
++	unsigned long max_instance_end;
++
++	if (cfg->mbx_count == 0 || cfg->mbx_count > CMH_MAX_CONFIGURED_MBX) {
++		dev_err(cmh_dev(), "mbx_count %u out of range (1..%u)\n",
++			cfg->mbx_count, CMH_MAX_CONFIGURED_MBX);
++		return -EINVAL;
++	}
++
++	for (i = 0; i < cfg->mbx_count; i++) {
++		struct cmh_mbx_config *m = &cfg->mailboxes[i];
++
++		if (m->instance >= CMH_MAX_MBX_INSTANCES) {
++			dev_err(cmh_dev(), "mbx_instances[%u]=%u >= %u\n",
++				i, m->instance, CMH_MAX_MBX_INSTANCES);
++			return -EINVAL;
++		}
++
++		if (m->slots_log2 < CMH_MBX_SLOTS_LOG2_MIN ||
++		    m->slots_log2 > CMH_MBX_SLOTS_LOG2_MAX) {
++			dev_err(cmh_dev(), "mbx_slots[%u]=%u out of range (%u..%u)\n",
++				i, m->slots_log2,
++			       CMH_MBX_SLOTS_LOG2_MIN, CMH_MBX_SLOTS_LOG2_MAX);
++			return -EINVAL;
++		}
++
++		if (m->stride_log2 < CMH_MBX_STRIDE_LOG2_MIN ||
++		    m->stride_log2 > CMH_MBX_STRIDE_LOG2_MAX) {
++			dev_err(cmh_dev(), "mbx_strides[%u]=%u out of range (%u..%u)\n",
++				i, m->stride_log2,
++			       CMH_MBX_STRIDE_LOG2_MIN, CMH_MBX_STRIDE_LOG2_MAX);
++			return -EINVAL;
++		}
++
++		/* Check for duplicate instance indices */
++		for (j = 0; j < i; j++) {
++			if (cfg->mailboxes[j].instance == m->instance) {
++				dev_err(cmh_dev(), "duplicate instance %u at indices %u and %u\n",
++					m->instance, j, i);
++				return -EINVAL;
++			}
++		}
++	}
++
++	/* Ensure SIC region is large enough for all requested instances */
++	max_instance_end = 0;
++	for (i = 0; i < cfg->mbx_count; i++) {
++		unsigned long end = ((unsigned long)cfg->mailboxes[i].instance + 1)
++				    << CMH_MBX_INSTANCE_SHIFT;
++		if (end > max_instance_end)
++			max_instance_end = end;
++	}
++
++	if (max_instance_end > cfg->sic_size) {
++		dev_err(cmh_dev(), "sic_size 0x%zx too small for instance requiring 0x%lx\n",
++			cfg->sic_size, max_instance_end);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
++/* -- Public Interface -------------------------------------------------- */
 +
 +/**
-+ * cmh_mgmt_ds_scrub() - Scrub orphaned datastore objects from a failed ioctl
-+ * @ref0: first datastore object ref to scrub, or 0 for none
-+ * @ref1: second datastore object ref to scrub, or 0 for none
++ * cmh_config_init() - Initialize device configuration from platform/DT data
++ * @cfg: Configuration structure to populate
++ * @pdev: Platform device providing DT node and resources
 + *
-+ * Grant-with-no-access wipes the key material and clears the CID (the
-+ * datastore stack space is only reclaimed by a full reset).  Used on error
-+ * paths where a SYS_CMD_NEW object's ref never reached user space, or a later
-+ * command in the same submission failed.  Best-effort: a ref that was never
-+ * created returns -ENOENT.
++ * Parse the "rambus,cmh-v1030" device tree node for MMIO base address,
++ * interrupt specifiers, and per-mailbox properties (instance indices, slot counts,
++ * strides).  When DT properties are absent, fall back to module parameter
++ * arrays.  Populate per-core-type instance configuration from module
++ * parameters, then validate the complete configuration.
++ *
++ * Return: 0 on success, negative errno on failure.
 + */
-+void cmh_mgmt_ds_scrub(u64 ref0, u64 ref1)
++int cmh_config_init(struct cmh_config *cfg, struct platform_device *pdev)
 +{
-+	struct vcq_cmd vcq[4];
-+	u32 idx = 0;
++	struct device_node *np = pdev->dev.of_node;
++	struct resource *res;
++	struct device_node *child;
++	int ret;
 +
-+	if (!ref0 && !ref1)
++	if (!np) {
++		dev_err(&pdev->dev, "device tree node required\n");
++		return -ENODEV;
++	}
++
++	/* SIC base + size from DT "reg" property (mandatory) */
++	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
++	if (!res) {
++		dev_err(cmh_dev(), "missing DT reg resource\n");
++		return -EINVAL;
++	}
++	cfg->sic_base = res->start;
++	cfg->sic_size = resource_size(res);
++
++	/*
++	 * Interrupts are per-mailbox (declared in each mailbox child node)
++	 * and resolved per MBX by cmh_rh_resolve_irqs().  There is no
++	 * top-level interrupt; if no mailbox has one the response handler
++	 * falls back to watchdog-timer polling.
++	 */
++	cfg->sic_mapped = NULL;
++	cfg->fw_ready_timeout_ms = CMH_FW_READY_TIMEOUT_MS;
++
++	/* -- Mailbox configuration from DT child nodes ----------------- */
++
++	cfg->mbx_count = 0;
++	for_each_child_of_node(np, child) {
++		struct cmh_mbx_config *m;
++		int nc, ci;
++
++		if (!of_node_name_eq(child, "queue"))
++			continue;
++
++		if (cfg->mbx_count >= CMH_MAX_CONFIGURED_MBX) {
++			dev_err(cmh_dev(),
++				"too many mailbox nodes in DT (max %u)\n",
++				CMH_MAX_CONFIGURED_MBX);
++			of_node_put(child);
++			return -EINVAL;
++		}
++		m = &cfg->mailboxes[cfg->mbx_count];
++
++		ret = of_property_read_u32(child, "reg", &m->instance);
++		if (ret) {
++			dev_err(cmh_dev(), "mailbox %pOFn: missing 'reg'\n",
++				child);
++			of_node_put(child);
++			return ret;
++		}
++
++		ret = cmh_dt_read_geom_log2(child, "rambus,num-slots",
++					    CMH_DEFAULT_SLOTS_LOG2,
++					    CMH_MBX_SLOTS_LOG2_MIN,
++					    CMH_MBX_SLOTS_LOG2_MAX,
++					    &m->slots_log2);
++		if (ret) {
++			dev_err(cmh_dev(),
++				"mailbox %u: rambus,num-slots not power-of-2 in %u..%u\n",
++				m->instance, 1U << CMH_MBX_SLOTS_LOG2_MIN,
++				1U << CMH_MBX_SLOTS_LOG2_MAX);
++			of_node_put(child);
++			return ret;
++		}
++
++		ret = cmh_dt_read_geom_log2(child, "rambus,slot-stride-bytes",
++					    CMH_DEFAULT_STRIDE_LOG2,
++					    CMH_MBX_STRIDE_LOG2_MIN,
++					    CMH_MBX_STRIDE_LOG2_MAX,
++					    &m->stride_log2);
++		if (ret) {
++			dev_err(cmh_dev(),
++				"mailbox %u: rambus,slot-stride-bytes not power-of-2 in %u..%u\n",
++				m->instance, 1U << CMH_MBX_STRIDE_LOG2_MIN,
++				1U << CMH_MBX_STRIDE_LOG2_MAX);
++			of_node_put(child);
++			return ret;
++		}
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++		if (mbx_slots_override > 0)
++			m->slots_log2 = mbx_slots_override;
++#endif
++
++		/* Optional per-mailbox interrupt (absent => polling). */
++		m->irq = of_irq_get(child, 0);
++		if (m->irq == -EPROBE_DEFER) {
++			of_node_put(child);
++			return -EPROBE_DEFER;
++		}
++		if (m->irq < 0)
++			m->irq = -1;
++
++		/* Optional rambus,cores affinity list (core-name strings). */
++		m->num_cores = 0;
++		nc = of_property_count_strings(child, "rambus,cores");
++		if (nc > 0) {
++			if (nc > CMH_NUM_CORE_TYPES) {
++				dev_err(cmh_dev(),
++					"mailbox %u: too many rambus,cores (%d > %u)\n",
++					m->instance, nc, CMH_NUM_CORE_TYPES);
++				of_node_put(child);
++				return -EINVAL;
++			}
++			for (ci = 0; ci < nc; ci++) {
++				const char *cname;
++				int cid;
++
++				of_property_read_string_index(child,
++							      "rambus,cores",
++							      ci, &cname);
++				cid = cmh_dt_core_id(cname);
++				if (cid < 0) {
++					dev_err(cmh_dev(),
++						"mailbox %u: unknown rambus,cores core '%s'\n",
++						m->instance, cname);
++					of_node_put(child);
++					return -EINVAL;
++				}
++				m->cores[ci] = (u32)cid;
++			}
++			m->num_cores = nc;
++		}
++
++		m->queue_size = (1UL << m->slots_log2) << m->stride_log2;
++		m->dma_handle = 0;
++		m->virt_addr = NULL;
++		m->reg_base = NULL;
++		cfg->mbx_count++;
++	}
++
++	if (cfg->mbx_count == 0) {
++		dev_err(cmh_dev(), "no mailbox child nodes in DT\n");
++		return -EINVAL;
++	}
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++	if (mbx_count_override > 0) {
++		if (mbx_count_override > cfg->mbx_count) {
++			dev_err(cmh_dev(),
++				"mbx_count_override %u > DT count %u\n",
++				mbx_count_override, cfg->mbx_count);
++			return -EINVAL;
++		}
++		dev_info(cmh_dev(), "[debug] overriding mbx_count: %u -> %u\n",
++			 cfg->mbx_count, mbx_count_override);
++		cfg->mbx_count = mbx_count_override;
++	}
++#endif
++
++	/*
++	 * Cores are discovered later (cmh_config_discover_cores) once the
++	 * SIC region is mapped and CORE_ENABLE is readable.  Here we only
++	 * validate the mailbox configuration.
++	 */
++	return cmh_config_validate(cfg);
++}
++
++/**
++ * cmh_config_discover_cores() - Enumerate cores from the CORE_ENABLE register
++ * @cfg: Configuration structure (SIC must already be mapped)
++ *
++ * Reads the SIC CORE_ENABLE register to determine which crypto core types
++ * the silicon build provides, populates cfg->core_types[], applies the
++ * per-mailbox rambus,cores affinity, and validates the result.  Called after
++ * the SIC ioremap.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_config_discover_cores(struct cmh_config *cfg)
++{
++	u32 core_enable;
++	unsigned int type;
++	int ret;
++
++	if (!cfg->sic_mapped) {
++		dev_err(cmh_dev(), "discover_cores: SIC not mapped\n");
++		return -EINVAL;
++	}
++
++	core_enable = cmh_reg_read32(cfg->sic_mapped, R_SIC_CORE_ENABLE);
++	dev_dbg(cmh_dev(), "CORE_ENABLE=0x%08x\n", core_enable);
++
++	for (type = 0; type < CMH_NUM_CORE_TYPES; type++) {
++		const struct cmh_core_desc *d = &cmh_core_descs[type];
++		struct cmh_core_type_cfg *ct = &cfg->core_types[type];
++
++		if (!d->enable_mask)
++			continue;
++		if (!cmh_core_enabled(core_enable, d->enable_mask))
++			continue;
++
++		ct->core_ids[0] = d->core_id;
++		ct->mbx[0] = -1;
++		ct->num_instances = 1;
++		dev_dbg(cmh_dev(), "core %s (0x%02x) present\n",
++			core_type_names[type], d->core_id);
++	}
++
++	ret = cmh_config_apply_affinity(cfg);
++	if (ret)
++		return ret;
++
++	return cmh_config_validate_core_types(cfg);
++}
+diff --git a/drivers/crypto/cmh/cmh_debugfs.c b/drivers/crypto/cmh/cmh_debugfs.c
+new file mode 100644
+index 000000000000..19257d794843
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_debugfs.c
+@@ -0,0 +1,289 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- debugfs Per-MBX Counters and Fault Injection
++ *
++ * Creates the /sys/kernel/debug/cmh/ tree with:
++ *   mbxN/vcqs_submitted   (ro) Total VCQs sent to MBX N
++ *   mbxN/vcqs_completed   (ro) Total completions received
++ *   mbxN/vcqs_errors      (ro) Total error completions
++ *   mbxN/queue_full_count (ro) Times select_mailbox() skipped this MBX
++ *   mbxN/max_queue_depth  (ro) High-water mark of in-flight transactions
++ *   mbxN/inject_abort     (wo) Write any value to inject MBX_COMMAND_ABORT
++ *   mbxN/force_drain      (wo) Write any value to force-drain all pending txns
++ *   tm/cmq_posts          (ro) Total cmh_tm_post_command() calls
++ *   tm/cmq_depth_max      (ro) High-water mark of CMQ length
++ *   tm/cmq_eagain_count   (ro) Times CMQ was full (-EAGAIN)
++ *   tm/backoff_count      (ro) Times TM backed off (all MBX queues full)
++ *   tm/async_timeout_count (ro) Async requests that timed out
++ *
++ * This file is only compiled when CONFIG_CRYPTO_DEV_CMH_DEBUG=y (see Kbuild).
++ * Requires CONFIG_DEBUG_FS=y in the kernel (standard for dev builds).
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/debugfs.h>
++#include <linux/slab.h>
++
++#include "cmh_debugfs.h"
++#include "cmh_config.h"
++#include "cmh_registers.h"
++#include "cmh_dma.h"
++#include "cmh_txn.h"
++#include "cmh_rh.h"
++#include "cmh_rng.h"
++
++/* -- Module State ---------------------------------------------------------- */
++
++static struct {
++	struct dentry		*root;		/* /sys/kernel/debug/cmh/ */
++	struct cmh_mbx_stats	*mbx;		/* array[mbx_count] */
++	struct cmh_tm_stats	 tm;
++	struct cmh_config	*cfg;		/* for inject_abort register access */
++	u32			 mbx_count;
++} dbgfs;
++
++/* -- debugfs file ops for atomic64_t --------------------------------------- */
++
++static int cmh_dbgfs_u64_get(void *data, u64 *val)
++{
++	*val = (u64)atomic64_read((atomic64_t *)data);
++	return 0;
++}
++
++DEFINE_DEBUGFS_ATTRIBUTE(cmh_dbgfs_u64_ro_fops,
++			 cmh_dbgfs_u64_get, NULL, "%llu\n");
++
++/* -- Per-MBX directory ----------------------------------------------------- */
++
++/*
++ * inject_abort -- write-only debugfs file for fault injection.
++ *
++ * Writing any value triggers MBX_COMMAND_ABORT on this mailbox.
++ * The eSW calls mbx_abort() -> mbx_cmd_error(mbx, -EPIPE), fires the
++ * error IRQ, and the LKM RH completes in-flight transactions with -EIO
++ * then issues MBX_COMMAND_RESTART to resume the mailbox.
++ *
++ * Private data points to the MBX index (cast to void *).
++ */
++static ssize_t inject_abort_write(struct file *file,
++				  const char __user *ubuf,
++				  size_t count, loff_t *ppos)
++{
++	u32 idx = (u32)(unsigned long)file->private_data;
++	void __iomem *base;
++
++	if (!dbgfs.cfg || idx >= dbgfs.cfg->mbx_count)
++		return -EINVAL;
++
++	base = dbgfs.cfg->mailboxes[idx].reg_base;
++	dev_warn(cmh_dev(), "debugfs: injecting ABORT on mbx[%u]\n", idx);
++	cmh_reg_write32(MBX_COMMAND_ABORT, base, R_MBX_COMMAND);
++
++	return count;
++}
++
++static const struct file_operations inject_abort_fops = {
++	.owner = THIS_MODULE,
++	.open = simple_open,
++	.write = inject_abort_write,
++	.llseek = noop_llseek,
++};
++
++/*
++ * force_drain -- write-only debugfs file for administrative recovery.
++ *
++ * Writing any value issues MBX_COMMAND_FLUSH, drains all pending
++ * transactions on this mailbox (completing each with -ECANCELED),
++ * and resets all recovery bookkeeping (abort_stall_ticks,
++ * restart_pending, restart_retries, flush_count, wedged).
++ *
++ * Use this to recover D-state processes when the eSW is dead and
++ * normal ABORT/RESTART escalation has not recovered the mailbox.
++ */
++static ssize_t force_drain_write(struct file *file,
++				 const char __user *ubuf,
++				 size_t count, loff_t *ppos)
++{
++	u32 idx = (u32)(unsigned long)file->private_data;
++
++	if (!dbgfs.cfg || idx >= dbgfs.cfg->mbx_count)
++		return -EINVAL;
++
++	cmh_rh_force_drain_mbx(idx);
++	return count;
++}
++
++static const struct file_operations force_drain_fops = {
++	.owner = THIS_MODULE,
++	.open = simple_open,
++	.write = force_drain_write,
++	.llseek = noop_llseek,
++};
++
++static void create_mbx_dir(u32 idx, struct dentry *parent)
++{
++	struct cmh_mbx_stats *s = &dbgfs.mbx[idx];
++	struct dentry *d;
++	char name[16];
++
++	snprintf(name, sizeof(name), "mbx%u", idx);
++	d = debugfs_create_dir(name, parent);
++
++	debugfs_create_file("vcqs_submitted",   0444, d,
++			    &s->vcqs_submitted,   &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("vcqs_completed",   0444, d,
++			    &s->vcqs_completed,   &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("vcqs_errors",      0444, d,
++			    &s->vcqs_errors,      &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("queue_full_count", 0444, d,
++			    &s->queue_full_count, &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("max_queue_depth",  0444, d,
++			    &s->max_queue_depth,  &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("inject_abort",     0200, d,
++			    (void *)(uintptr_t)idx, &inject_abort_fops);
++	debugfs_create_file("force_drain",      0200, d,
++			    (void *)(uintptr_t)idx, &force_drain_fops);
++}
++
++/* -- TM directory ---------------------------------------------------------- */
++
++static void create_tm_dir(struct dentry *parent)
++{
++	struct cmh_tm_stats *s = &dbgfs.tm;
++	struct dentry *d;
++
++	d = debugfs_create_dir("tm", parent);
++
++	debugfs_create_file("cmq_posts",        0444, d,
++			    &s->cmq_posts,        &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("cmq_depth_max",    0444, d,
++			    &s->cmq_depth_max,    &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("cmq_eagain_count", 0444, d,
++			    &s->cmq_eagain_count, &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("backoff_count",    0444, d,
++			    &s->backoff_count,    &cmh_dbgfs_u64_ro_fops);
++	debugfs_create_file("async_timeout_count", 0444, d,
++			    &s->async_timeout_count, &cmh_dbgfs_u64_ro_fops);
++}
++
++/* -- Config directory: timeout tuning ---------------------------------- */
++
++static void create_config_dir(struct dentry *parent)
++{
++	struct dentry *d;
++
++	d = debugfs_create_dir("config", parent);
++
++	/* TM timeouts */
++	debugfs_create_u32("async_timeout_ms",   0644, d,
++			   cmh_tm_timeout_async_ptr());
++	debugfs_create_u32("vcq_timeout_ms",     0644, d,
++			   cmh_tm_timeout_vcq_ptr());
++	debugfs_create_u32("slow_op_timeout_ms", 0644, d,
++			   cmh_tm_timeout_slow_op_ptr());
++	debugfs_create_u32("drain_timeout_ms",   0644, d,
++			   cmh_tm_timeout_drain_ptr());
++
++	/* RH watchdog */
++	debugfs_create_u32("watchdog_ms",        0644, d,
++			   cmh_rh_timeout_watchdog_ptr());
++
++	/* DRBG timeout */
++	debugfs_create_u32("drbg_timeout_ms",    0644, d,
++			   cmh_rng_timeout_drbg_ptr());
++
++	/* TM queue depths */
++	debugfs_create_u32("cmq_max_depth",      0644, d,
++			   cmh_tm_cmq_max_depth_ptr());
++	debugfs_create_u32("backlog_max_depth",  0644, d,
++			   cmh_tm_backlog_max_depth_ptr());
++}
++
++/* -- Public Interface ------------------------------------------------------ */
++
++/**
++ * cmh_debugfs_init() - Create debugfs directory hierarchy for CMH
++ * @cfg: Platform configuration containing mailbox count and register bases.
++ *
++ * Allocates per-mailbox statistics and creates the /sys/kernel/debug/cmh/
++ * tree with per-mailbox counters, fault-injection files, and transaction
++ * manager statistics.  debugfs is optional; failure to create entries does
++ * not prevent module initialisation.
++ */
++void cmh_debugfs_init(struct cmh_config *cfg)
++{
++	u32 mbx_count = cfg->mbx_count;
++	u32 i;
++
++	dbgfs.root = debugfs_create_dir("cmh", NULL);
++	if (IS_ERR_OR_NULL(dbgfs.root)) {
++		if (!IS_ERR(dbgfs.root))
++			dev_warn(cmh_dev(), "debugfs: creation returned NULL -- counters disabled\n");
++		else
++			dev_warn(cmh_dev(), "debugfs: creation failed (rc=%ld) -- counters disabled\n",
++				 PTR_ERR(dbgfs.root));
++		dbgfs.root = NULL;
++		return;  /* debugfs is optional -- never fail module init */
++	}
++
++	dbgfs.mbx_count = mbx_count;
++	dbgfs.cfg = cfg;
++	dbgfs.mbx = kcalloc(mbx_count, sizeof(*dbgfs.mbx), GFP_KERNEL);
++	if (!dbgfs.mbx) {
++		debugfs_remove_recursive(dbgfs.root);
++		dbgfs.root = NULL;
++		return;
++	}
++
++	for (i = 0; i < mbx_count; i++)
++		create_mbx_dir(i, dbgfs.root);
++
++	create_tm_dir(dbgfs.root);
++
++	create_config_dir(dbgfs.root);
++
++	dev_dbg(cmh_dev(), "debugfs: initialized (%u mailboxes)\n", mbx_count);
++}
++
++/**
++ * cmh_debugfs_cleanup() - Remove all CMH debugfs entries
++ *
++ * Tears down the /sys/kernel/debug/cmh/ tree and frees per-mailbox
++ * statistics memory.  Safe to call even if cmh_debugfs_init() was never
++ * called or failed.
++ */
++void cmh_debugfs_cleanup(void)
++{
++	debugfs_remove_recursive(dbgfs.root);
++	dbgfs.root = NULL;
++	kfree(dbgfs.mbx);
++	dbgfs.mbx = NULL;
++	dev_dbg(cmh_dev(), "debugfs: cleaned up\n");
++}
++
++/**
++ * cmh_debugfs_mbx_stats() - Return per-mailbox statistics pointer
++ * @mbx_idx: Zero-based mailbox index.
++ *
++ * Return: Pointer to the statistics structure for @mbx_idx, or NULL if
++ *         debugfs is disabled or @mbx_idx is out of range.
++ */
++struct cmh_mbx_stats *cmh_debugfs_mbx_stats(u32 mbx_idx)
++{
++	if (!dbgfs.mbx || mbx_idx >= dbgfs.mbx_count)
++		return NULL;
++	return &dbgfs.mbx[mbx_idx];
++}
++
++/**
++ * cmh_debugfs_tm_stats() - Return transaction manager statistics pointer
++ *
++ * Return: Pointer to the singleton TM statistics structure.  The pointer
++ *         is always valid (points to static storage).
++ */
++struct cmh_tm_stats *cmh_debugfs_tm_stats(void)
++{
++	return &dbgfs.tm;
++}
+diff --git a/drivers/crypto/cmh/cmh_dma.c b/drivers/crypto/cmh/cmh_dma.c
+new file mode 100644
+index 000000000000..8707a39622e4
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_dma.c
+@@ -0,0 +1,379 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- DMA Operations
++ *
++ * Implements the cmh_dma.h interface using the kernel DMA API
++ * (dma_map_single, dma_alloc_coherent, etc.).
++ *
++ * Scatterlist linearization rationale
++ * ------------------------------------
++ * The eSW firmware supports SCATTERGATHER commands for all core
++ * types (AES_CMD_SCATTERGATHER, SM4_CMD_SCATTERGATHER,
++ * CCP_CMD_SCATTERGATHER, HC_CMD_GATHER), using a proprietary
++ * linked-list-item (LLI) descriptor chain format.  The hash driver
++ * already uses this via cmh_dma_build_sg() + HC_CMD_GATHER.
++ *
++ * For symmetric cipher and AEAD commands, the LKM currently
++ * linearizes scatterlist input into contiguous bounce buffers via
++ * scatterwalk_map_and_copy() rather than building LLI chains from
++ * kernel scatterlists.  This is a deliberate first-submission
++ * simplification with a concrete technical justification:
++ *
++ *   - The hash SG path is unidirectional (DMA_TO_DEVICE gather only).
++ *     Skcipher and AEAD require bidirectional handling: separate src
++ *     and dst scatterlists (which may alias for in-place operations),
++ *     plus AAD and authentication tag regions with distinct DMA
++ *     directions and alignment constraints.
++ *   - The CMH LLI format requires 64-byte aligned descriptor chain
++ *     pointers (the .lli field) with 32-bit length fields.  This
++ *     alignment is automatically satisfied by dma_alloc_coherent()
++ *     for the descriptor array; data buffer addresses have no
++ *     hardware alignment requirement.  Kernel SG entries have no
++ *     alignment guarantee for data, so direct SG-to-LLI translation
++ *     requires per-segment validation, potential splitting at
++ *     descriptor boundaries, and separate chains for src/dst/AAD --
++ *     substantially more complex than the unidirectional hash
++ *     gather case.
++ *   - Each skcipher/AEAD driver caps linearization at
++ *     CMH_AES_MAX_CRYPTLEN / CMH_SM4_MAX_CRYPTLEN (32 MiB).
++ *     Requests exceeding this cap are rejected with -EINVAL.
++ *     In practice, crypto API callers (dm-crypt, IPsec, kernel TLS)
++ *     send page-sized or smaller buffers, so the bounce allocation
++ *     is typically <= PAGE_SIZE and succeeds even under GFP_ATOMIC.
++ *
++ * A shared SG-to-LLI adapter handling bidirectional mappings,
++ * alignment splitting, and in-place src==dst detection for the
++ * skcipher/AEAD/MAC paths is planned as a follow-up series once the
++ * core driver is accepted.
++ *
++ * This linearization pattern is consistent with other upstream HW
++ * crypto drivers that use bounce buffers in their initial
++ * submissions (e.g. ccree, sa2ul, omap-aes).
++ */
++
++#include <linux/kernel.h>
++#include <linux/slab.h>
++#include <linux/dma-mapping.h>
++#include <linux/platform_device.h>
++#include <linux/overflow.h>
++#include <linux/string.h>
++
++#include "cmh_dma.h"
++
++/* Module-global device pointer, set in cmh_dma_init() */
++static struct device *cmh_device;
++
++/**
++ * cmh_dma_init() - Initialize the standard DMA backend
++ * @pdev: Platform device providing the struct device for DMA ops
++ *
++ * Stores the device pointer for use by all DMA wrapper functions.
++ *
++ * Return: 0 (always succeeds for the standard backend).
++ */
++int cmh_dma_init(struct platform_device *pdev)
++{
++	cmh_device = &pdev->dev;
++	return 0;
++}
++
++/**
++ * cmh_dma_cleanup() - Tear down the standard DMA backend
++ *
++ * Clears the stored device pointer.
++ */
++void cmh_dma_cleanup(void)
++{
++	cmh_device = NULL;
++}
++
++/**
++ * cmh_dev() - Return the platform device pointer
++ *
++ * Return: struct device pointer, or NULL outside probe/remove lifecycle.
++ */
++struct device *cmh_dev(void)
++{
++	return cmh_device;
++}
++
++/* -- Streaming DMA -------------------------------------------------------- */
++
++/**
++ * cmh_dma_map_single() - Map a kernel buffer for streaming DMA
++ * @buf:  Kernel virtual address
++ * @size: Buffer length in bytes
++ * @dir:  DMA direction
++ *
++ * Return: DMA address, or a DMA_MAPPING_ERROR value on failure.
++ */
++dma_addr_t cmh_dma_map_single(void *buf, size_t size,
++			      enum dma_data_direction dir)
++{
++	return dma_map_single(cmh_device, buf, size, dir);
++}
++
++/**
++ * cmh_dma_unmap_single() - Unmap a streaming DMA buffer
++ * @addr: DMA address returned by cmh_dma_map_single()
++ * @size: Buffer length in bytes
++ * @dir:  DMA direction (must match the map call)
++ */
++void cmh_dma_unmap_single(dma_addr_t addr, size_t size,
++			  enum dma_data_direction dir)
++{
++	dma_unmap_single(cmh_device, addr, size, dir);
++}
++
++/**
++ * cmh_dma_sync_for_cpu() - Sync a DMA buffer for CPU access
++ * @addr: DMA address of the mapped buffer
++ * @size: Region length in bytes
++ * @dir:  DMA direction
++ */
++void cmh_dma_sync_for_cpu(dma_addr_t addr, size_t size,
++			  enum dma_data_direction dir)
++{
++	dma_sync_single_for_cpu(cmh_device, addr, size, dir);
++}
++
++/**
++ * cmh_dma_sync_for_device() - Sync a DMA buffer for device access
++ * @addr: DMA address of the mapped buffer
++ * @size: Region length in bytes
++ * @dir:  DMA direction
++ */
++void cmh_dma_sync_for_device(dma_addr_t addr, size_t size,
++			     enum dma_data_direction dir)
++{
++	dma_sync_single_for_device(cmh_device, addr, size, dir);
++}
++
++/**
++ * cmh_dma_map_error() - Check whether a DMA mapping failed
++ * @addr: DMA address to check
++ *
++ * Return: Non-zero if @addr indicates a mapping error.
++ */
++int cmh_dma_map_error(dma_addr_t addr)
++{
++	return dma_mapping_error(cmh_device, addr);
++}
++
++/* -- Coherent DMA --------------------------------------------------------- */
++
++/**
++ * cmh_dma_alloc() - Allocate coherent DMA memory
++ * @size:   Allocation size in bytes
++ * @handle: Output DMA address
++ * @gfp:    GFP allocation flags
++ *
++ * Return: Kernel virtual address, or NULL on failure.
++ */
++void *cmh_dma_alloc(size_t size, dma_addr_t *handle, gfp_t gfp)
++{
++	return dma_alloc_coherent(cmh_device, size, handle, gfp);
++}
++
++/**
++ * cmh_dma_free() - Free coherent DMA memory
++ * @size:   Allocation size (must match cmh_dma_alloc)
++ * @virt:   Kernel virtual address
++ * @handle: DMA address
++ */
++void cmh_dma_free(size_t size, void *virt, dma_addr_t handle)
++{
++	dma_free_coherent(cmh_device, size, virt, handle);
++}
++
++/* -- Buffer write helpers ------------------------------------------------- */
++
++/**
++ * cmh_dma_write() - Copy data into a DMA buffer
++ * @dst: Destination (from cmh_dma_alloc)
++ * @src: Source kernel buffer
++ * @len: Byte count
++ */
++void cmh_dma_write(void *dst, const void *src, size_t len)
++{
++	memcpy(dst, src, len);
++}
++
++/**
++ * cmh_dma_fence() - No-op on standard DMA API platforms (coherent)
++ * @ptr: Unused -- present for interface compatibility
++ */
++void cmh_dma_fence(void *ptr)
++{
++	/* Standard DMA API: coherent memory, no cross-slave fence needed */
++}
++
++/**
++ * cmh_dma_zero() - Zero a DMA buffer
++ * @dst: Destination (from cmh_dma_alloc)
++ * @len: Byte count
++ */
++void cmh_dma_zero(void *dst, size_t len)
++{
++	memset(dst, 0, len);
++}
++
++/**
++ * cmh_dma_build_sg() - Build a scatter-gather DMA mapping
++ * @bufs: Array of buffer descriptors to map
++ * @count: Number of entries in @bufs
++ * @gfp: GFP flags for memory allocation
++ *
++ * Allocates a streaming-DMA descriptor array and maps each buffer in @bufs
++ * for DMA-to-device transfer, filling CMH eSW-format scatter-gather
++ * descriptors with linked-list pointers.
++ *
++ * The descriptor array uses streaming DMA (kmalloc + dma_map_single) rather
++ * than dma_alloc_coherent so that cmh_dma_free_sg() -- which calls
++ * dma_unmap_single + kfree -- is safe from any context including BH-disabled
++ * completion callbacks.
++ *
++ * Return: Pointer to the allocated cmh_sg_map on success, NULL on failure.
++ */
++struct cmh_sg_map *cmh_dma_build_sg(const struct cmh_dma_buf *bufs, u32 count,
++				    gfp_t gfp)
++{
++	struct cmh_sg_map *sgm;
++	u32 i;
++
++	if (!count)
++		return NULL;
++
++	sgm = kzalloc(struct_size(sgm, bufs, count), gfp);
++	if (!sgm)
++		return NULL;
++
++	sgm->count = count;
++	sgm->items_size = array_size(count, sizeof(*sgm->items));
++	if (sgm->items_size == SIZE_MAX)
++		goto err_free_sgm;
++
++	/*
++	 * Allocate descriptor array with kmalloc and map for streaming DMA.
++	 * We map first to obtain items_dma (needed for .lli pointers),
++	 * then sync-for-cpu, fill descriptors, and sync-for-device.
++	 *
++	 * The eSW SG walker (struct dma_scattergather_item: u64 lli/src/dst/
++	 * len) requires only natural u64/4-byte alignment of the descriptor
++	 * and its LLI chain pointers -- there is no 64-byte-per-descriptor
++	 * requirement -- so a plain kzalloc (>= ARCH_KMALLOC_MINALIGN) is
++	 * sufficient and DMA-safe.
++	 */
++	sgm->items = kzalloc(sgm->items_size, gfp);
++	if (!sgm->items)
++		goto err_free_sgm;
++
++	sgm->items_dma = cmh_dma_map_single(sgm->items, sgm->items_size,
++					    DMA_TO_DEVICE);
++	if (cmh_dma_map_error(sgm->items_dma))
++		goto err_free_items;
++
++	/* Map each source buffer for device read */
++	for (i = 0; i < count; i++) {
++		dma_addr_t dma;
++
++		if (!bufs[i].len)
++			goto err_unmap;
++		sgm->bufs[i].len = bufs[i].len;
++		dma = cmh_dma_map_single(bufs[i].data, bufs[i].len,
++					 DMA_TO_DEVICE);
++		if (cmh_dma_map_error(dma))
++			goto err_unmap;
++		sgm->bufs[i].dma = dma;
++	}
++
++	/*
++	 * Reclaim CPU ownership of the descriptor buffer.  After
++	 * dma_map_single the device owns the mapping; we must call
++	 * sync_for_cpu before writing regardless of direction.  The
++	 * direction matches the original mapping (DMA_TO_DEVICE) --
++	 * this tells the DMA layer which cache operations apply:
++	 * invalidate so the CPU sees coherent data before we fill
++	 * the SG descriptors and later sync_for_device.
++	 */
++	cmh_dma_sync_for_cpu(sgm->items_dma, sgm->items_size,
++			     DMA_TO_DEVICE);
++
++	/* Fill CMH eSW SG descriptors */
++	for (i = 0; i < count; i++) {
++		u64 lli_val;
++
++		if (i + 1 < count)
++			lli_val = (u64)(sgm->items_dma +
++				(i + 1) * sizeof(*sgm->items));
++		else
++			lli_val = 0;
++
++		sgm->items[i].lli = lli_val;
++		sgm->items[i].src = (u64)sgm->bufs[i].dma;
++		sgm->items[i].dst = 0;
++		sgm->items[i].len = (u64)bufs[i].len;
++	}
++
++	/* Flush descriptor writes to device */
++	cmh_dma_sync_for_device(sgm->items_dma, sgm->items_size,
++				DMA_TO_DEVICE);
++
++	return sgm;
++
++err_unmap:
++	while (i--)
++		cmh_dma_unmap_single(sgm->bufs[i].dma,
++				     sgm->bufs[i].len, DMA_TO_DEVICE);
++	cmh_dma_unmap_single(sgm->items_dma, sgm->items_size,
++			     DMA_TO_DEVICE);
++err_free_items:
++	kfree(sgm->items);
++err_free_sgm:
++	kfree(sgm);
++	return NULL;
++}
++
++/**
++ * cmh_dma_free_sg() - Unmap and free a scatter-gather mapping
++ * @sgm: Scatter-gather mapping created by cmh_dma_build_sg(), or NULL
++ *
++ * Unmaps all DMA-mapped buffers, unmaps and frees the descriptor array,
++ * and releases the cmh_sg_map structure.  Safe to call from any context
++ * (including BH-disabled completion callbacks) because it uses only
++ * dma_unmap_single + kfree -- no vunmap/dma_free_coherent.
++ */
++void cmh_dma_free_sg(struct cmh_sg_map *sgm)
++{
++	u32 i;
++
++	if (!sgm)
 +		return;
 +
-+	vcq_set_header(&vcq[idx++], 2 + !!ref0 + !!ref1);
-+	if (ref0)
-+		vcq_add_sys_grant(&vcq[idx++], ref0, 0, 0, 0);
-+	if (ref1)
-+		vcq_add_sys_grant(&vcq[idx++], ref1, 0, 0, 0);
-+	vcq_add_sys_flush(&vcq[idx++]);
-+	cmh_tm_submit_sync_mbx(vcq, idx, 1, MGMT_MBX);
++	for (i = 0; i < sgm->count; i++)
++		cmh_dma_unmap_single(sgm->bufs[i].dma,
++				     sgm->bufs[i].len, DMA_TO_DEVICE);
++
++	cmh_dma_unmap_single(sgm->items_dma, sgm->items_size,
++			     DMA_TO_DEVICE);
++	kfree(sgm->items);
++	kfree(sgm);
 +}
 +
-+/* -- KEY_NEW -------------------------- */
-+
-+static int cmh_mgmt_key_new(void __user *argp)
++/**
++ * cmh_dma_orphan_free() - Orphan cleanup callback for abandoned DMA buffers
++ * @data: Pointer to a struct cmh_dma_orphan describing the orphaned mapping
++ *
++ * Called by the transaction manager when a synchronous operation times out
++ * and the caller has already returned.  Unmaps the DMA buffer and frees
++ * the backing memory and the orphan descriptor itself.
++ */
++void cmh_dma_orphan_free(void *data)
 +{
-+	struct cmh_ioctl_key_new req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	u64 *ref_buf;
-+	dma_addr_t ref_dma;
++	struct cmh_dma_orphan *o = data;
++
++	cmh_dma_unmap_single(o->addr, o->len, o->dir);
++	kfree_sensitive(o->buf);
++	kfree(o);
++}
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+new file mode 100644
+index 000000000000..c037e8daa877
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -0,0 +1,343 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Platform Driver Entry and Exit
++ *
++ * Responsibilities:
++ *   - Match "rambus,cmh-v1030" DT node via platform_driver
++ *   - Parse device-tree properties via cmh_config_init()
++ *   - ioremap the SIC region
++ *   - Verify CMH boot status (sanity check)
++ *   - Compute per-instance register bases
++ *   - Initialize MBX queues (MQI)
++ *   - Start Transaction Manager kthread
++ *   - Register Response Handler IRQ
++ *   - Register Kernel Crypto API hash algorithms
++ *   - Clean up in reverse order on exit or error
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/slab.h>
++#include <linux/io.h>
++#include <linux/clk.h>
++#include <linux/gpio/consumer.h>
++#include <linux/dma-mapping.h>
++#include <linux/platform_device.h>
++#include <linux/of.h>
++
++#include "cmh.h"
++#include "cmh_dma.h"
++#include "cmh_mqi.h"
++#include "cmh_txn.h"
++#include "cmh_rh.h"
++#include "cmh_registers.h"
++#include "cmh_debugfs.h"
++#include "cmh_sysfs.h"
++
++#include <linux/iopoll.h>
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++static bool skip_fw_check;
++module_param(skip_fw_check, bool, 0444);
++MODULE_PARM_DESC(skip_fw_check,
++		 "[debug] Skip eSW boot status check at probe (default: false)");
++#else
++#define skip_fw_check false
++#endif
++
++/* SIC Sanity Check */
++
++static int cmh_check_sic(struct cmh_config *cfg)
++{
++	const u32 ready = SIC_SW_BOOT_STATUS_MISSION |
++			  SIC_SW_BOOT_STATUS_MISSION2;
++	u32 boot_status;
++	u32 sw_boot;
 +	int ret;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
++	boot_status = cmh_reg_read32(cfg->sic_mapped, R_SIC_BOOT_STATUS);
 +
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	/* DMA buffer for CMH eSW to write back the ref */
-+	ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+	if (!ref_buf)
-+		return -ENOMEM;
-+
-+	*ref_buf = 0;
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ref_dma)) {
-+		kfree(ref_buf);
-+		return -ENOMEM;
++	if ((boot_status & SIC_BOOT_STATUS_MASK) != SIC_BOOT_STATUS_PASS) {
++		dev_err(cmh_dev(), "SIC boot status check failed (0x%02x != 0x%02x)\n",
++			boot_status & SIC_BOOT_STATUS_MASK, SIC_BOOT_STATUS_PASS);
++		return -EIO;
 +	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.len);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
 +
 +	/*
-+	 * Unmap before CPU read: single-phase operation (no re-use of
-+	 * the DMA mapping), so unmap transfers ownership back to the
-+	 * CPU.  On SWIOTLB systems the unmap copies the bounce buffer
-+	 * to the original allocation.  This is the correct pattern for
-+	 * single-shot sync submits where the buffer is not re-mapped.
++	 * Wait for eSW readiness: MISSION signals the primary VCQ engine,
++	 * MISSION2 the sidecar engine (set asynchronously).  The driver
++	 * uses both, so require both bits.
 +	 */
-+	cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf), DMA_FROM_DEVICE);
-+
++	ret = read_poll_timeout(ioread32, sw_boot,
++				(sw_boot & ready) == ready,
++				1000,
++				(unsigned long)cfg->fw_ready_timeout_ms * 1000UL,
++				false,
++				cfg->sic_mapped + R_SIC_SW_BOOT_STATUS);
 +	if (ret) {
-+		/* Scrub a slot sys_new may have created before the failure. */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+		return ret;
++		sw_boot = cmh_reg_read32(cfg->sic_mapped, R_SIC_SW_BOOT_STATUS);
++		dev_err(cmh_dev(), "CMH eSW not ready (sw_boot_status=0x%08x, timeout=%ums)\n",
++			sw_boot, cfg->fw_ready_timeout_ms);
++		return -ETIMEDOUT;
 +	}
 +
-+	req.ref = *ref_buf;
-+	kfree(ref_buf);
-+
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The DS slot was created but its ref never reached
-+		 * userspace, so the caller cannot free it.  Logically
-+		 * delete the orphaned slot before returning.
-+		 */
-+		cmh_mgmt_ds_scrub(req.ref, 0);
-+		dev_warn(cmh_dev(),
-+			 "mgmt: KEY_NEW copy_to_user failed, DS slot cleaned up\n");
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(), "mgmt: KEY_NEW cid=0x%llx len=%u -> ref=0x%llx\n",
-+		req.cid, req.len, req.ref);
 +	return 0;
 +}
 +
-+/* -- KEY_WRITE ------------------------- */
++/* Module Init -- platform driver probe */
 +
-+static int cmh_mgmt_key_write(void __user *argp)
++static int cmh_probe(struct platform_device *pdev)
 +{
-+	struct cmh_ioctl_key_write req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	void *dmabuf;
-+	dma_addr_t dma_addr;
-+	u32 core_id, sys_type;
++	struct cmh_device *dev;
++	struct cmh_config *cfg;
++	struct clk_bulk_data *clks;
++	struct gpio_desc *reset;
++	unsigned int i;
 +	int ret;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	core_id = cmh_ds_type_to_core_id(req.ds_type);
-+	if (core_id == CORE_ID_NUM)
-+		return -EINVAL;
-+	sys_type = SYS_TYPE_SET(req.flags, core_id);
-+
-+	dmabuf = kmalloc(req.len, GFP_KERNEL);
-+	if (!dmabuf)
++	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
++	if (!dev)
 +		return -ENOMEM;
 +
-+	if (copy_from_user(dmabuf, u64_to_user_ptr(req.data),
-+			   req.len)) {
-+		kfree_sensitive(dmabuf);
-+		return -EFAULT;
++	dev->dev = &pdev->dev;
++	cfg = &dev->config;
++
++	/* Declare DMA addressing capability */
++	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
++	if (ret) {
++		ret = dev_err_probe(&pdev->dev, ret,
++				    "dma_set_mask_and_coherent failed\n");
++		goto err_free_dev;
 +	}
 +
-+	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(dma_addr)) {
-+		kfree_sensitive(dmabuf);
-+		return -ENOMEM;
++	/* Initialize DMA backend (standard API or FPGA pool) */
++	ret = cmh_dma_init(pdev);
++	if (ret) {
++		ret = dev_err_probe(&pdev->dev, ret, "DMA init failed\n");
++		goto err_free_dev;
 +	}
 +
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_write(&vcq[1], req.ref, dma_addr, req.wrap_key,
-+			  req.len, sys_type);
-+	/*
-+	 * PKE keys on Weierstrass curves and RSA keys must be byte-swapped
-+	 * when stored in the DS so they match the internal big-endian
-+	 * representation used by the PKE sidecar.  Edwards curve keys
-+	 * (EdDSA) use native byte order and must NOT be swapped.
-+	 */
-+	switch (req.ds_type) {
-+	case CMH_DS_RSA_PRIV_KEY:
-+	case CMH_DS_RSA_PUB_KEY:
-+	case CMH_DS_RSA_CRT_KEY:
-+	case CMH_DS_ECDSA_PRIV_KEY:
-+	case CMH_DS_ECDSA_PUB_KEY:
-+	case CMH_DS_ECDH_PRIV_KEY:
-+	case CMH_DS_SHARED_SECRET:
-+	case CMH_DS_SM2_PRIV_KEY:
-+		vcq[1].id |= PKE_SWAP_FLAGS;
-+		break;
-+	default:
-+		/* EdDSA, symmetric keys -- no swap */
-+		break;
-+	}
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(dma_addr, req.len, DMA_TO_DEVICE);
-+	kfree_sensitive(dmabuf);
-+
++	/* Step 1: Parse and validate configuration (DT + module params) */
++	ret = cmh_config_init(cfg, pdev);
 +	if (ret)
-+		return ret;
++		goto err_dma_init;
 +
-+	dev_dbg(cmh_dev(), "mgmt: KEY_WRITE ref=0x%llx len=%u type=0x%x\n",
-+		req.ref, req.len, sys_type);
-+	return 0;
-+}
-+
-+/* -- KEY_READ -------------------------- */
-+
-+static int cmh_mgmt_key_read(void __user *argp)
-+{
-+	struct cmh_ioctl_key_read req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	void *dmabuf;
-+	dma_addr_t dma_addr;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	dmabuf = kzalloc(req.len, GFP_KERNEL);
-+	if (!dmabuf)
-+		return -ENOMEM;
-+
-+	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(dma_addr)) {
-+		kfree(dmabuf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_read(&vcq[1], req.ref, dma_addr, req.wrap_key, req.len);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(dma_addr, req.len, DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		kfree_sensitive(dmabuf);
-+		return ret;
-+	}
-+
-+	if (copy_to_user(u64_to_user_ptr(req.data),
-+			 dmabuf, req.len)) {
-+		kfree_sensitive(dmabuf);
-+		return -EFAULT;
-+	}
-+
-+	req.out_len = req.len;
-+	kfree_sensitive(dmabuf);
-+
-+	if (copy_to_user(argp, &req, sizeof(req)))
-+		return -EFAULT;
-+
-+	dev_dbg(cmh_dev(), "mgmt: KEY_READ ref=0x%llx len=%u\n",
-+		req.ref, req.out_len);
-+	return 0;
-+}
-+
-+/* -- KEY_FIND -------------------------- */
-+
-+static int cmh_mgmt_key_find(void __user *argp)
-+{
-+	struct cmh_ioctl_key_find req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	struct sys_list_item *item;
-+	dma_addr_t item_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+
-+	item = kzalloc_obj(*item, GFP_KERNEL);
-+	if (!item)
-+		return -ENOMEM;
-+
-+	item_dma = cmh_dma_map_single(item, sizeof(*item), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(item_dma)) {
-+		kfree(item);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_find(&vcq[1], req.cid, item_dma, sizeof(*item));
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(item_dma, sizeof(*item), DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		kfree(item);
-+		return ret;
-+	}
-+
-+	req.ref = item->ref;
-+	req.len = item->len;
-+	req.type = item->type;
-+	kfree(item);
-+
-+	if (copy_to_user(argp, &req, sizeof(req)))
-+		return -EFAULT;
-+
-+	dev_dbg(cmh_dev(), "mgmt: KEY_FIND cid=0x%llx -> ref=0x%llx\n",
-+		req.cid, req.ref);
-+	return 0;
-+}
-+
-+/* -- KEY_LIST ------------------------- */
-+
-+static int cmh_mgmt_key_list(void __user *argp)
-+{
-+	struct cmh_ioctl_key_list req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	struct sys_list_item *item;
-+	dma_addr_t item_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+
-+	if (req.__reserved)
-+		return -EINVAL;
-+
-+	item = kzalloc_obj(*item, GFP_KERNEL);
-+	if (!item)
-+		return -ENOMEM;
-+
-+	item_dma = cmh_dma_map_single(item, sizeof(*item), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(item_dma)) {
-+		kfree(item);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_list(&vcq[1], req.start_ref, item_dma, sizeof(*item));
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(item_dma, sizeof(*item), DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		kfree(item);
-+		return ret;
-+	}
-+
-+	req.ref = item->ref;
-+	req.cid = item->cid;
-+	req.len = item->len;
-+	req.type = item->type;
-+	kfree(item);
-+
-+	if (copy_to_user(argp, &req, sizeof(req)))
-+		return -EFAULT;
-+
-+	return 0;
-+}
-+
-+/* -- KEY_GRANT / KEY_DELETE --------------------- */
-+
-+static int cmh_mgmt_key_grant(void __user *argp, bool is_delete)
-+{
-+	struct cmh_ioctl_key_grant req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+
-+	/* DELETE = GRANT with all permissions zeroed */
-+	if (is_delete) {
-+		req.read = 0;
-+		req.write = 0;
-+		req.execute = 0;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_grant(&vcq[1], req.ref, req.read, req.write, req.execute);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+	if (ret)
-+		return ret;
-+
-+	dev_dbg(cmh_dev(), "mgmt: KEY_%s ref=0x%llx r=0x%llx w=0x%llx x=0x%llx\n",
-+		is_delete ? "DELETE" : "GRANT",
-+		req.ref, req.read, req.write, req.execute);
-+	return 0;
-+}
-+
-+/* -- DS_EXPORT ------------------------- */
-+
-+static int cmh_mgmt_ds_export(void __user *argp)
-+{
-+	struct cmh_ioctl_ds_export req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	void *dmabuf;
-+	dma_addr_t dma_addr;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
 +	/*
-+	 * The eSW writes at least a sys_wrap_hdr into the buffer; reject a
-+	 * request too small to hold it up front.  This also prevents the
-+	 * out-of-bounds read of hdr->wrap/hdr->len below on a short buffer.
++	 * Enable functional clocks and release reset.  Both are optional --
++	 * integrations where a separate management/power controller owns the
++	 * clock and reset lines describe neither, and these calls are
++	 * no-ops.  The hub gates its clocks internally, but
++	 * clk_disable_unused() would otherwise gate an always-on input the
++	 * driver never claimed, so the driver enables whatever clocks the
++	 * device tree provides.  Clocks come up before reset is released (a
++	 * hard reset requires an active clock) and before any SIC register
++	 * access.  The reset line is acquired already deasserted; the driver
++	 * does not drive a reset pulse -- the eSW boots independently and its
++	 * mission-mode readiness is verified separately below, and no in-tree
++	 * platform wires this line for a reset sequence to be exercised.
++	 * devm unwinds both on remove or probe error.
 +	 */
-+	if (req.len < sizeof(struct sys_wrap_hdr))
-+		return -EINVAL;
++	ret = devm_clk_bulk_get_all_enabled(&pdev->dev, &clks);
++	if (ret < 0) {
++		ret = dev_err_probe(&pdev->dev, ret,
++				    "failed to enable clocks\n");
++		goto err_dma_init;
++	}
++
++	reset = devm_gpiod_get_optional(&pdev->dev, "reset", GPIOD_OUT_LOW);
++	if (IS_ERR(reset)) {
++		ret = dev_err_probe(&pdev->dev, PTR_ERR(reset),
++				    "failed to acquire reset GPIO\n");
++		goto err_dma_init;
++	}
++
++	/* Step 2: ioremap the SIC region */
++	cfg->sic_mapped = devm_platform_ioremap_resource(pdev, 0);
++	if (IS_ERR(cfg->sic_mapped)) {
++		ret = dev_err_probe(&pdev->dev, PTR_ERR(cfg->sic_mapped),
++				    "ioremap failed for SIC region\n");
++		cfg->sic_mapped = NULL;
++		goto err_dma_init;
++	}
++
++	/* Step 3: Verify CMH is alive */
++	if (!skip_fw_check) {
++		ret = cmh_check_sic(cfg);
++		if (ret)
++			goto err_dma_init;
++	}
++
++	/* Step 3.5: Discover crypto cores from the SIC CORE_ENABLE register */
++	ret = cmh_config_discover_cores(cfg);
++	if (ret)
++		goto err_dma_init;
++
++	/* Step 4: Compute per-instance register bases */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		struct cmh_mbx_config *m = &cfg->mailboxes[i];
++
++		m->reg_base = cmh_mbx_instance_base(cfg->sic_mapped,
++						    m->instance);
++
++		dev_dbg(cmh_dev(), "mbx[%u] instance=%u reg_base=%p\n",
++			i, m->instance, m->reg_base);
++	}
++
++	cmh_debugfs_init(cfg);
++
++	/* Initialise mailbox queue interface */
++	ret = cmh_mqi_init(cfg);
++	if (ret)
++		goto err_mqi_init;
++
++	/* Initialise transaction manager */
++	ret = cmh_tm_init(cfg);
++	if (ret)
++		goto err_tm_init;
++
++	/* Initialise response handler */
++	ret = cmh_rh_init(cfg);
++	if (ret)
++		goto err_rh_init;
++
++	platform_set_drvdata(pdev, dev);
++
++	return 0;
++
++err_rh_init:
++	cmh_tm_cleanup();
++err_tm_init:
++	cmh_mqi_cleanup(cfg);
++err_mqi_init:
++	cmh_debugfs_cleanup();
++err_dma_init:
++	cmh_dma_cleanup();
++err_free_dev:
++	return ret;
++}
++
++/* Module Exit -- platform driver remove */
++
++static void cmh_remove(struct platform_device *pdev)
++{
++	struct cmh_device *dev = platform_get_drvdata(pdev);
++	struct cmh_config *cfg;
++
++	if (!dev)
++		return;
++
++	cfg = &dev->config;
++
++	cmh_rh_cleanup(cfg);
++	cmh_tm_cleanup();
++	cmh_mqi_cleanup(cfg);
++	cmh_debugfs_cleanup();
++	cmh_dma_cleanup();
++}
++
++static const struct of_device_id cmh_of_match[] = {
++	{ .compatible = "rambus,cmh-v1030" },
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, cmh_of_match);
++
++/*
++ * PM suspend/resume.
++ *
++ * Suspend: drain the TM first (while the RH is still active and can
++ * deliver completions for in-flight transactions), then quiesce the
++ * RH (cancel watchdog, mask HW interrupts).  This ordering ensures
++ * the drain_timeout_ms wait in cmh_tm_quiesce() can actually succeed
++ * -- if we suspended RH first, no completions would be delivered and
++ * the drain would always hit the force-cancel path.
++ *
++ * IRQ handlers remain registered (standard PM pattern: the kernel
++ * disables the IRQ lines during suspend, no need to free/re-request).
++ *
++ * Resume: re-check the SIC/SW boot status, re-synchronise the RH
++ * with hardware (head positions, interrupt masks, watchdog), then
++ * restart the TM kthread.
++ */
++
++static int cmh_suspend(struct device *dev)
++{
++	struct cmh_device *cmh = dev_get_drvdata(dev);
++
++	if (!cmh)
++		return 0;
++
++	cmh_tm_quiesce();
++	cmh_rh_suspend(&cmh->config);
++	return 0;
++}
++
++static int cmh_resume(struct device *dev)
++{
++	struct cmh_device *cmh = dev_get_drvdata(dev);
++	int ret;
++
++	if (!cmh)
++		return 0;
++
++	ret = cmh_check_sic(&cmh->config);
++	if (ret) {
++		dev_err(dev, "resume: CMH eSW health check failed (%d)\n",
++			ret);
++		return ret;
++	}
 +
 +	/*
-+	 * req.len is the exact DMA buffer size given to the eSW.
-+	 * Userspace must size it to at least the export blob:
++	 * cmh_rh_resume() is void: it only re-syncs MMIO head pointers,
++	 * clears stale interrupt status bits (W1C), re-enables interrupt
++	 * masks, and re-arms the watchdog timer -- none of which can fail
++	 * after the SIC health check above has confirmed HW accessibility.
++	 */
++	cmh_rh_resume(&cmh->config);
++
++	ret = cmh_tm_resume();
++	if (ret) {
++		dev_err(dev, "resume: TM restart failed (%d)\n", ret);
++		return ret;
++	}
++	return 0;
++}
++
++static DEFINE_SIMPLE_DEV_PM_OPS(cmh_pm_ops,
++				cmh_suspend,
++				cmh_resume);
++
++/*
++ * Runtime PM is intentionally not implemented.  The CMH hardware does
++ * not expose HLOS-accessible clock gates or power domains -- the eSW
++ * firmware manages HW power state independently.  There is no mechanism
++ * for the kernel to idle, gate clocks, or power down the accelerator
++ * block from HLOS.  If a future platform variant exposes power control
++ * to HLOS (e.g. via a SCMI power domain), runtime PM support can be
++ * added at that time using SET_RUNTIME_PM_OPS and pm_runtime_get/put
++ * around VCQ submission paths.
++ *
++ * System sleep (suspend/resume) is supported via DEFINE_SIMPLE_DEV_PM_OPS
++ * above: suspend quiesces the TM and masks IRQs; resume re-verifies
++ * eSW health (SIC status) and restarts the TM thread.
++ */
++
++static struct platform_driver cmh_driver = {
++	.probe      = cmh_probe,
++	.remove     = cmh_remove,
++	.driver = {
++		.name           = "cmh",
++		.of_match_table = cmh_of_match,
++		.dev_groups     = cmh_sysfs_groups,
++		.pm             = pm_sleep_ptr(&cmh_pm_ops),
++	},
++};
++
++module_platform_driver(cmh_driver);
++
++MODULE_DESCRIPTION("Rambus CryptoManager Hub (CMH) hardware crypto accelerator");
++MODULE_AUTHOR("Alex Ousherovitch <aousherovitch@rambus.com>");
++MODULE_AUTHOR("Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>");
++MODULE_AUTHOR("Joel Wittenauer <Joel.Wittenauer@cryptography.com>");
++MODULE_IMPORT_NS("CRYPTO_INTERNAL");
++MODULE_LICENSE("GPL");
+diff --git a/drivers/crypto/cmh/cmh_mqi.c b/drivers/crypto/cmh/cmh_mqi.c
+new file mode 100644
+index 000000000000..cf1845820d92
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_mqi.c
+@@ -0,0 +1,344 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Mailbox Queue Initializer
++ *
++ * Responsibilities:
++ *   - Allocate queue buffers for each configured mailbox
++ *   - Execute the MBX lock/setup/enable register sequence
++ *   - Readback-verify all critical register writes
++ *   - Hold lock for MBX lifetime (CMH eSW requires it for host access)
++ *   - Clean up (flush + unlock + free) on exit or error
++ *
++ * Register sequence per instance (per CMH MBX hardware specification):
++ *   1. Read R_MBX_LOCK -> non-zero = ownership token acquired
++ *   2. W1C stale R_MBX_INTERRUPT bits (avoids spurious error cascade)
++ *   3. Set R_MBX_INTERRUPT_MASK = MBX_IRQ_MASK
++ *   4. Write QUEUE_LO/HI, SLOTS, STRIDE (queue address + geometry)
++ *   5. Sync TAIL = HEAD (CMH eSW owns HEAD; avoids stale-queue parse)
++ *   6. Readback verify QUEUE_LO/HI/SLOTS/STRIDE
++ *   7. Write COMMAND = MBX_COMMAND_RUN
++ *   8. Lock stays held -- released only in teardown
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/slab.h>
++#include <linux/delay.h>
++#include <linux/jiffies.h>
++#include <linux/io.h>
++#include <linux/iopoll.h>
++
++#include "cmh_mqi.h"
++#include "cmh_dma.h"
++#include "cmh_registers.h"
++#include "cmh_config.h"
++
++/* Flush polling: eSW clears R_MBX_COMMAND to 0 when flush completes */
++#define MBX_FLUSH_POLL_US	50
++#define MBX_FLUSH_TIMEOUT_US	1000000	/* 1 second */
++
++/* MBX Lock / Unlock */
++
++/*
++ * Attempt to acquire the MBX hardware lock.
++ * Returns the lock token (non-zero) on success, 0 on timeout.
++ */
++static u32 cmh_mbx_lock(void __iomem *reg_base, u32 instance)
++{
++	unsigned long deadline = jiffies + msecs_to_jiffies(MBX_LOCK_TIMEOUT_MS);
++	u32 lock;
++
++	while (time_before(jiffies, deadline)) {
++		lock = cmh_reg_read32(reg_base, R_MBX_LOCK);
++		if (lock) {
++			dev_dbg(cmh_dev(), "mbx %u lock acquired (token=0x%08x)\n",
++				instance, lock);
++			return lock;
++		}
++		/* HW lock may be held by CMH eSW -- back off before retry */
++		usleep_range(MBX_LOCK_POLL_MIN_US, MBX_LOCK_POLL_MAX_US);
++	}
++
++	return 0;
++}
++
++/* Release the MBX lock: clear interrupt mask, write token back */
++static void cmh_mbx_unlock(void __iomem *reg_base, u32 lock_val)
++{
++	cmh_reg_write32(0, reg_base, R_MBX_INTERRUPT_MASK);
++	cmh_reg_write32(lock_val, reg_base, R_MBX_LOCK);
++}
++
++/* Register Readback Verification */
++
++static int cmh_verify_reg(void __iomem *base, u32 offset, u32 expected,
++			  const char *name, u32 instance)
++{
++	u32 actual = cmh_reg_read32(base, offset);
++
++	if (actual != expected) {
++		dev_err(cmh_dev(), "mbx %u %s readback mismatch: 0x%08x != 0x%08x\n",
++			instance, name, actual, expected);
++		return -EIO;
++	}
++	return 0;
++}
++
++/* Clear any stale interrupt bits left from a prior module lifecycle. */
++static void cmh_mbx_clear_stale_irqs(void __iomem *base, u32 instance)
++{
++	u32 stale = cmh_reg_read32(base, R_MBX_INTERRUPT);
++
++	if (stale) {
++		cmh_reg_write32(stale, base, R_MBX_INTERRUPT);
++		dev_dbg(cmh_dev(), "mbx %u cleared stale irq bits=0x%x\n",
++			instance, stale);
++	}
++}
++
++/* Read CMH eSW HEAD and set TAIL = HEAD so the queue appears empty. */
++static void cmh_mbx_sync_tail_to_head(void __iomem *base, u32 instance)
++{
++	u32 fw_head = cmh_reg_read32(base, R_MBX_QUEUE_HEAD);
++
++	cmh_reg_write32(fw_head, base, R_MBX_QUEUE_TAIL);
++	if (fw_head)
++		dev_dbg(cmh_dev(), "mbx %u synced tail=%u to fw head\n",
++			instance, fw_head);
++}
++
++/* Per-Mailbox Setup */
++
++static int cmh_mbx_setup_one(struct cmh_mbx_config *mbx)
++{
++	void __iomem *base = mbx->reg_base;
++	u32 addr_lo = lower_32_bits(mbx->dma_handle);
++	u32 addr_hi = upper_32_bits(mbx->dma_handle);
++	u32 lock_val;
++	int ret;
++
++	/* Step 1: Acquire exclusive access */
++	lock_val = cmh_mbx_lock(base, mbx->instance);
++	if (!lock_val) {
++		dev_err(cmh_dev(), "mbx %u lock timeout after %u ms\n",
++			mbx->instance, MBX_LOCK_TIMEOUT_MS);
++		return -ETIMEDOUT;
++	}
++
++	/*
++	 * Step 1.5: Clear stale interrupt bits from a prior module lifecycle.
 +	 *
-+	 *   wrapped:   sizeof(sys_wrap_hdr) + 2*AES_BLOCK_SIZE + obj_len
-+	 *              = 16 + 32 + obj_len  = 48 + obj_len
-+	 *   plaintext: sizeof(sys_wrap_hdr) + obj_len
-+	 *              = 16 + obj_len
++	 * After rmmod, the CMH eSW may leave ERROR_IRQ set in
++	 * R_MBX_INTERRUPT even though STATUS is IDLE.  If we enable
++	 * the mask first, the stale bits immediately trigger the
++	 * CMH eSW interrupt chain, which can cascade into ERROR
++	 * status before the first hash operation.  W1C-clear them first.
++	 */
++	cmh_mbx_clear_stale_irqs(base, mbx->instance);
++
++	/* Step 2: Program interrupt mask (enable DONE/ERROR interrupts) */
++	cmh_reg_write32(MBX_IRQ_MASK, base, R_MBX_INTERRUPT_MASK);
++
++	/* Step 3: Configure queue address (64-bit split) */
++	cmh_reg_write32(addr_lo, base, R_MBX_QUEUE_LO);
++	cmh_reg_write32(addr_hi, base, R_MBX_QUEUE_HI);
++
++	/* Step 4: Configure queue geometry */
++	cmh_reg_write32(mbx->slots_log2, base, R_MBX_QUEUE_SLOTS);
++	cmh_reg_write32(mbx->stride_log2, base, R_MBX_QUEUE_STRIDE);
++
++	/*
++	 * Step 5: Synchronise TAIL to CMH eSW's HEAD.
 +	 *
-+	 * obj_len is known from KEY_NEW or KEY_FIND.  If req.len is
-+	 * too small, the eSW rejects the command and we return -EIO.
++	 * R_MBX_QUEUE_HEAD is read-only from the host side -- only the
++	 * CMH eSW can write it.  On a fresh boot HEAD is 0; after an
++	 * rmmod/insmod cycle it retains the value from the previous
++	 * session (e.g. 44).  Writing 0 from the host is silently
++	 * dropped by the MBX HW.
++	 *
++	 * If we set TAIL=0 while HEAD=44 the CMH eSW sees a non-empty
++	 * queue (head != tail with wrap-around) and immediately tries
++	 * to load a VCQ at the old head offset into our freshly-zeroed
++	 * DMA buffer, causing an "Invalid VCQ" EFAULT -> ECHILD cascade.
++	 *
++	 * Fix: read HEAD and set TAIL = HEAD so the queue looks empty.
 +	 */
-+	dmabuf = kzalloc(req.len, GFP_KERNEL);
-+	if (!dmabuf)
-+		return -ENOMEM;
-+
-+	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(dma_addr)) {
-+		kfree(dmabuf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_export(&vcq[1], req.cid, dma_addr, req.wrap_key, req.len);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(dma_addr, req.len, DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		kfree_sensitive(dmabuf);
-+		return ret;
-+	}
-+
-+	/* Parse actual blob size from the eSW-written header */
-+	{
-+		struct sys_wrap_hdr *hdr = (struct sys_wrap_hdr *)dmabuf;
-+		u64 actual;
-+
-+		if (check_add_overflow((u64)sizeof(*hdr), (u64)hdr->wrap,
-+				       &actual) ||
-+		    check_add_overflow(actual, (u64)hdr->len, &actual) ||
-+		    actual > req.len) {
-+			kfree_sensitive(dmabuf);
-+			return -EIO;
-+		}
-+		req.out_len = (u32)actual;
-+	}
-+
-+	if (copy_to_user(u64_to_user_ptr(req.data),
-+			 dmabuf, req.out_len)) {
-+		kfree_sensitive(dmabuf);
-+		return -EFAULT;
-+	}
-+
-+	kfree_sensitive(dmabuf);
-+
-+	if (copy_to_user(argp, &req, sizeof(req)))
-+		return -EFAULT;
-+
-+	dev_dbg(cmh_dev(), "mgmt: DS_EXPORT wrap_key=0x%llx len=%u\n",
-+		req.wrap_key, req.out_len);
-+	return 0;
-+}
-+
-+/* -- DS_IMPORT ------------------------- */
-+
-+static int cmh_mgmt_ds_import(void __user *argp)
-+{
-+	struct cmh_ioctl_ds_import req;
-+	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
-+	void *dmabuf;
-+	dma_addr_t dma_addr;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	dmabuf = kmalloc(req.len, GFP_KERNEL);
-+	if (!dmabuf)
-+		return -ENOMEM;
-+
-+	if (copy_from_user(dmabuf, u64_to_user_ptr(req.data),
-+			   req.len)) {
-+		kfree_sensitive(dmabuf);
-+		return -EFAULT;
-+	}
-+
-+	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(dma_addr)) {
-+		kfree_sensitive(dmabuf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
-+	vcq_add_sys_import(&vcq[1], dma_addr, req.wrap_key, req.len);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(dma_addr, req.len, DMA_TO_DEVICE);
-+	kfree_sensitive(dmabuf);
-+
-+	if (ret)
-+		return ret;
-+
-+	dev_dbg(cmh_dev(), "mgmt: DS_IMPORT wrap_key=0x%llx len=%u\n",
-+		req.wrap_key, req.len);
-+	return 0;
-+}
-+
-+/* -- KIC key derivation ioctls --------
-+ *
-+ * All four KIC derivation handlers (HKDF1, HKDF2, AES-CMAC-KDF,
-+ * DKEK-derive) share the same two-mode structure and temp-flush pattern.
-+ *
-+ * Temp-storage flush rationale:
-+ *
-+ *   The device maintains a small per-mailbox temporary key store
-+ *   (~960 bytes, LIFO).  A derivation targeting SYS_REF_TEMP allocates
-+ *   from this store; the allocation persists across command-queue
-+ *   boundaries until either (a) a subsequent command consumes it or
-+ *   (b) a mailbox flush resets the store.
-+ *
-+ *   Our single-derivation ioctls produce a temp key with no consumer
-+ *   in the same queue -- the key is consumed by a *later* ioctl
-+ *   (e.g. DS_EXPORT with wrap_key=SYS_REF_TEMP).  If no consumer
-+ *   follows, the allocation persists.  Sequential temp derivations
-+ *   accumulate allocations until the store is exhausted (3--8 calls
-+ *   depending on key size), after which the device returns ENOMEM.
-+ *
-+ *   A mailbox flush (cmh_tm_flush_mbx / MBX_COMMAND_FLUSH) resets the
-+ *   temp store.  It does NOT destroy persistent keys, datastore
-+ *   objects, or DRBG state -- only the command queue and temp store.
-+ *
-+ *   Safe for cross-ioctl temp flows (e.g. export-to-file:
-+ *   HKDF1->TEMP in ioctl 1, then DS_EXPORT with wrap_key=TEMP in
-+ *   ioctl 2): the flush only happens in derivation handlers and in
-+ *   the pre-PKE dispatch path, not in DS_EXPORT/DS_IMPORT, so the
-+ *   temp key survives until consumed.
-+ *
-+ * The ioctl dispatch also flushes before PKE/SM2/PQC ioctls to
-+ * protect them from temp residue left by earlier derivations on the
-+ * same mailbox.  The per-handler flushes here remain necessary
-+ * because sequential temp derivations (without an intervening
-+ * PKE/SM2/PQC ioctl) would still exhaust the store.
-+ */
-+
-+/* -- KIC_HKDF1 ------------------------- */
-+
-+/*
-+ * Derive a key from a KIC base key via one-step HKDF.
-+ *
-+ * Two modes controlled by CMH_KIC_FLAG_TEMP:
-+ *
-+ *   TEMP (flag set) -- 3-command VCQ:
-+ *     [0] SYS header
-+ *     [1] KIC_CMD_HKDF1 (dst=SYS_REF_TEMP)
-+ *     [2] flush
-+ *   Returns SYS_REF_TEMP as ref.  No DS entry created.
-+ *
-+ *   Persistent (flag clear) -- 4-command VCQ:
-+ *     [0] SYS header
-+ *     [1] SYS_CMD_NEW   (allocate DS slot, CMH eSW writes ref)
-+ *     [2] KIC_CMD_HKDF1 (dst=SYS_REF_LAST = just-allocated slot)
-+ *     [3] flush
-+ *   Returns the new DS reference.
-+ */
-+#define KDF_VCQ_MAX		4
-+#define KDF_MAX_KEY_LEN		64
-+#define KDF_MAX_LABEL_LEN	56
-+
-+static int cmh_mgmt_kic_hkdf1(void __user *argp)
-+{
-+	struct cmh_ioctl_kic_hkdf1 req;
-+	struct vcq_cmd vcq[KDF_VCQ_MAX];
-+	bool temp;
-+	u64 *ref_buf = NULL;
-+	void *label_buf = NULL;
-+	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
-+	unsigned int n_cmds;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.key_len || req.key_len > KDF_MAX_KEY_LEN)
-+		return -EINVAL;
-+	if (req.label_len > KDF_MAX_LABEL_LEN)
-+		return -EINVAL;
-+
-+	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
++	cmh_mbx_sync_tail_to_head(base, mbx->instance);
 +
 +	/*
-+	 * Persistent path: need DMA buffer for CMH eSW to write the
-+	 * newly-allocated DS reference.
++	 * Step 6: Readback verify critical registers.
++	 * HOST_INFO is deliberately deferred to after verification -- writing
++	 * it tells the CMH eSW "MBX is ready" and the CMH eSW may inspect
++	 * (and clear) the queue registers immediately.
 +	 */
-+	if (!temp) {
-+		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+		if (!ref_buf)
-+			return -ENOMEM;
-+		*ref_buf = 0;
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			kfree(ref_buf);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	/* DMA buffer for label data (CMH eSW DMA-reads it) */
-+	if (req.label_len > 0) {
-+		label_buf = kzalloc(req.label_len, GFP_KERNEL);
-+		if (!label_buf) {
-+			ret = -ENOMEM;
-+			goto out_ref;
-+		}
-+		if (copy_from_user(label_buf,
-+				   u64_to_user_ptr(req.label),
-+				   req.label_len)) {
-+			ret = -EFAULT;
-+			goto out_label;
-+		}
-+		label_dma = cmh_dma_map_single(label_buf, req.label_len,
-+					       DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(label_dma)) {
-+			ret = -ENOMEM;
-+			goto out_label;
-+		}
-+	}
-+
-+	/* Build VCQ */
-+	memset(vcq, 0, sizeof(vcq));
-+
-+	if (temp) {
-+		/* Flush MBX to reset temp stack -- see KIC section comment */
-+		ret = cmh_tm_flush_mbx(MGMT_MBX);
-+		if (ret)
-+			goto out_unmap_label;
-+
-+		n_cmds = 3;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_kic_hkdf1(&vcq[1], SYS_REF_TEMP, req.base_key,
-+				  label_dma, req.key_len, req.label_len,
-+				   SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[2]);
-+	} else {
-+		n_cmds = 4;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
-+		vcq_add_kic_hkdf1(&vcq[2], SYS_REF_LAST, req.base_key,
-+				  label_dma, req.key_len, req.label_len,
-+				   SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[3]);
-+	}
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
-+
-+	/* Cleanup label DMA */
-+	if (label_buf) {
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+		kfree(label_buf);
-+		label_buf = NULL;
-+	}
-+
++	ret = cmh_verify_reg(base, R_MBX_QUEUE_LO, addr_lo,
++			     "QUEUE_LO", mbx->instance);
 +	if (ret)
-+		goto out_ref;
++		goto err_unlock;
 +
-+	if (temp) {
-+		req.ref = SYS_REF_TEMP;
-+		atomic_set(&mgmt_temp_dirty, 1);
-+	} else {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		req.ref = *ref_buf;
-+		kfree(ref_buf);
-+		ref_buf = NULL;
-+	}
-+
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The derived-key DS slot was created but its ref never
-+		 * reached userspace, so the caller cannot free it.  Logically
-+		 * delete the orphaned slot: grant-with-no-access wipes the key
-+		 * material and clears the CID (temp results use SYS_REF_TEMP
-+		 * and need no cleanup).
-+		 */
-+		if (!temp) {
-+			cmh_mgmt_ds_scrub(req.ref, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: KIC_HKDF1 copy_to_user failed, DS slot cleaned up\n");
-+		}
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(),
-+		"mgmt: KIC_HKDF1 base=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
-+		req.base_key, req.key_len, req.flags, req.ref);
-+	return 0;
-+
-+out_unmap_label:
-+	if (label_buf && !cmh_dma_map_error(label_dma))
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+out_label:
-+	kfree(label_buf);
-+out_ref:
-+	if (ref_buf) {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		/*
-+		 * If sys_new created the slot before a later command in the
-+		 * VCQ failed, the eSW wrote its ref here (0 otherwise); scrub
-+		 * it so a partial failure does not leak a datastore slot.
-+		 */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+	}
-+	return ret;
-+}
-+
-+/* -- KIC_HKDF2 ------------------------- */
-+
-+/*
-+ * Two-step HKDF key derivation.  Same as HKDF1 but adds a salt key
-+ * reference: Step 1: HMAC(salt, base) -> PRK; Step 2: HMAC(PRK, label) -> key.
-+ */
-+
-+static int cmh_mgmt_kic_hkdf2(void __user *argp)
-+{
-+	struct cmh_ioctl_kic_hkdf2 req;
-+	struct vcq_cmd vcq[KDF_VCQ_MAX];
-+	bool temp;
-+	u64 *ref_buf = NULL;
-+	void *label_buf = NULL;
-+	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
-+	unsigned int n_cmds;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.key_len || req.key_len > KDF_MAX_KEY_LEN)
-+		return -EINVAL;
-+	if (req.label_len > KDF_MAX_LABEL_LEN)
-+		return -EINVAL;
-+
-+	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
-+
-+	if (!temp) {
-+		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+		if (!ref_buf)
-+			return -ENOMEM;
-+		*ref_buf = 0;
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			kfree(ref_buf);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	if (req.label_len > 0) {
-+		label_buf = kzalloc(req.label_len, GFP_KERNEL);
-+		if (!label_buf) {
-+			ret = -ENOMEM;
-+			goto out_ref2;
-+		}
-+		if (copy_from_user(label_buf,
-+				   u64_to_user_ptr(req.label),
-+				   req.label_len)) {
-+			ret = -EFAULT;
-+			goto out_label2;
-+		}
-+		label_dma = cmh_dma_map_single(label_buf, req.label_len,
-+					       DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(label_dma)) {
-+			ret = -ENOMEM;
-+			goto out_label2;
-+		}
-+	}
-+
-+	memset(vcq, 0, sizeof(vcq));
-+
-+	if (temp) {
-+		/* Flush MBX to reset temp stack -- see KIC section comment */
-+		ret = cmh_tm_flush_mbx(MGMT_MBX);
-+		if (ret)
-+			goto out_unmap_label2;
-+
-+		n_cmds = 3;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_kic_hkdf2(&vcq[1], SYS_REF_TEMP, req.base_key,
-+				  req.salt_key, label_dma,
-+				   req.key_len, req.label_len,
-+				   SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[2]);
-+	} else {
-+		n_cmds = 4;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
-+		vcq_add_kic_hkdf2(&vcq[2], SYS_REF_LAST, req.base_key,
-+				  req.salt_key, label_dma,
-+				   req.key_len, req.label_len,
-+				   SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[3]);
-+	}
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
-+
-+	if (label_buf) {
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+		kfree(label_buf);
-+		label_buf = NULL;
-+	}
-+
++	ret = cmh_verify_reg(base, R_MBX_QUEUE_HI, addr_hi,
++			     "QUEUE_HI", mbx->instance);
 +	if (ret)
-+		goto out_ref2;
++		goto err_unlock;
 +
-+	if (temp) {
-+		req.ref = SYS_REF_TEMP;
-+		atomic_set(&mgmt_temp_dirty, 1);
-+	} else {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		req.ref = *ref_buf;
-+		kfree(ref_buf);
-+		ref_buf = NULL;
-+	}
-+
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The derived-key DS slot was created but its ref never
-+		 * reached userspace, so the caller cannot free it.  Logically
-+		 * delete the orphaned slot: grant-with-no-access wipes the key
-+		 * material and clears the CID (temp results use SYS_REF_TEMP
-+		 * and need no cleanup).
-+		 */
-+		if (!temp) {
-+			cmh_mgmt_ds_scrub(req.ref, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: KIC_HKDF2 copy_to_user failed, DS slot cleaned up\n");
-+		}
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(),
-+		"mgmt: KIC_HKDF2 base=0x%llx salt=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
-+		req.base_key, req.salt_key, req.key_len, req.flags, req.ref);
-+	return 0;
-+
-+out_unmap_label2:
-+	if (label_buf && !cmh_dma_map_error(label_dma))
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+out_label2:
-+	kfree(label_buf);
-+out_ref2:
-+	if (ref_buf) {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		/*
-+		 * If sys_new created the slot before a later command in the
-+		 * VCQ failed, the eSW wrote its ref here (0 otherwise); scrub
-+		 * it so a partial failure does not leak a datastore slot.
-+		 */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+	}
-+	return ret;
-+}
-+
-+/* -- KIC_AES_CMAC_KDF ------------------ */
-+
-+/*
-+ * Derive a key using AES-CMAC-based KDF (NIST SP800-108 style).
-+ * Base key must be 32 bytes.  Output is always non-PT (the hub driver
-+ * rejects SYS_TYPE_FLAG_PT).
-+ *
-+ * VCQ layout matches HKDF: TEMP mode uses 3 commands, persistent uses 4.
-+ */
-+#define CMAC_KDF_KEY_LEN	32
-+
-+static int cmh_mgmt_kic_aes_cmac_kdf(void __user *argp)
-+{
-+	struct cmh_ioctl_kic_aes_cmac_kdf req;
-+	struct vcq_cmd vcq[KDF_VCQ_MAX];
-+	bool temp;
-+	u64 *ref_buf = NULL;
-+	void *label_buf = NULL;
-+	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
-+	unsigned int n_cmds;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.key_len != CMAC_KDF_KEY_LEN)
-+		return -EINVAL;
-+	if (req.label_len > KDF_MAX_LABEL_LEN)
-+		return -EINVAL;
-+
-+	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
-+
-+	if (!temp) {
-+		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+		if (!ref_buf)
-+			return -ENOMEM;
-+		*ref_buf = 0;
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			kfree(ref_buf);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	if (req.label_len > 0) {
-+		label_buf = kzalloc(req.label_len, GFP_KERNEL);
-+		if (!label_buf) {
-+			ret = -ENOMEM;
-+			goto out_ref_cmac;
-+		}
-+		if (copy_from_user(label_buf,
-+				   u64_to_user_ptr(req.label),
-+				   req.label_len)) {
-+			ret = -EFAULT;
-+			goto out_label_cmac;
-+		}
-+		label_dma = cmh_dma_map_single(label_buf, req.label_len,
-+					       DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(label_dma)) {
-+			ret = -ENOMEM;
-+			goto out_label_cmac;
-+		}
-+	}
-+
-+	memset(vcq, 0, sizeof(vcq));
-+
-+	if (temp) {
-+		/* Flush MBX to reset temp stack -- see KIC section comment */
-+		ret = cmh_tm_flush_mbx(MGMT_MBX);
-+		if (ret)
-+			goto out_unmap_label_cmac;
-+
-+		n_cmds = 3;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_kic_aes_cmac_kdf(&vcq[1], SYS_REF_TEMP,
-+					 req.base_key, label_dma,
-+					 req.key_len, req.label_len,
-+					 SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[2]);
-+	} else {
-+		n_cmds = 4;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
-+		vcq_add_kic_aes_cmac_kdf(&vcq[2], SYS_REF_LAST,
-+					 req.base_key, label_dma,
-+					 req.key_len, req.label_len,
-+					 SYS_TYPE_SET(0, CORE_ID_AES));
-+		vcq_add_sys_flush(&vcq[3]);
-+	}
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
-+
-+	if (label_buf) {
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+		kfree(label_buf);
-+		label_buf = NULL;
-+	}
-+
++	ret = cmh_verify_reg(base, R_MBX_QUEUE_SLOTS, mbx->slots_log2,
++			     "QUEUE_SLOTS", mbx->instance);
 +	if (ret)
-+		goto out_ref_cmac;
++		goto err_unlock;
 +
-+	if (temp) {
-+		req.ref = SYS_REF_TEMP;
-+		atomic_set(&mgmt_temp_dirty, 1);
-+	} else {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		req.ref = *ref_buf;
-+		kfree(ref_buf);
-+		ref_buf = NULL;
-+	}
-+
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The derived-key DS slot was created but its ref never
-+		 * reached userspace, so the caller cannot free it.  Logically
-+		 * delete the orphaned slot: grant-with-no-access wipes the key
-+		 * material and clears the CID (temp results use SYS_REF_TEMP
-+		 * and need no cleanup).
-+		 */
-+		if (!temp) {
-+			cmh_mgmt_ds_scrub(req.ref, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: KIC_AES_CMAC_KDF copy_to_user failed, DS slot cleaned up\n");
-+		}
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(),
-+		"mgmt: KIC_AES_CMAC_KDF base=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
-+		req.base_key, req.key_len, req.flags, req.ref);
-+	return 0;
-+
-+out_unmap_label_cmac:
-+	if (label_buf && !cmh_dma_map_error(label_dma) && label_dma)
-+		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
-+out_label_cmac:
-+	kfree(label_buf);
-+out_ref_cmac:
-+	if (ref_buf) {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		/* Scrub a slot sys_new may have created before the failure. */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+	}
-+	return ret;
-+}
-+
-+/* -- KIC_DKEK_DERIVE ------------------- */
-+
-+/*
-+ * Derive a Key Encryption Key (KEK) from a KIC base key.
-+ * Output is tagged CORE_ID_KIC (usable for further derivation only).
-+ * host_id=0 means the caller's own host; non-zero requires management
-+ * host privilege (eSW enforces this).
-+ */
-+#define DKEK_VCQ_MAX		4
-+
-+static int cmh_mgmt_kic_dkek_derive(void __user *argp)
-+{
-+	struct cmh_ioctl_kic_dkek_derive req;
-+	struct vcq_cmd vcq[DKEK_VCQ_MAX];
-+	bool temp;
-+	u64 *ref_buf = NULL;
-+	void *meta_buf = NULL;
-+	dma_addr_t ref_dma = DMA_MAPPING_ERROR, meta_dma = DMA_MAPPING_ERROR;
-+	unsigned int n_cmds;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.metadata_len > KIC_DKEK_MAX_METADATA)
-+		return -EINVAL;
-+
-+	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
-+
-+	if (!temp) {
-+		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+		if (!ref_buf)
-+			return -ENOMEM;
-+		*ref_buf = 0;
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			kfree(ref_buf);
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	if (req.metadata_len > 0) {
-+		meta_buf = kzalloc(req.metadata_len, GFP_KERNEL);
-+		if (!meta_buf) {
-+			ret = -ENOMEM;
-+			goto out_ref_dkek;
-+		}
-+		if (copy_from_user(meta_buf,
-+				   u64_to_user_ptr(req.metadata),
-+				   req.metadata_len)) {
-+			ret = -EFAULT;
-+			goto out_meta;
-+		}
-+		meta_dma = cmh_dma_map_single(meta_buf, req.metadata_len,
-+					      DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(meta_dma)) {
-+			ret = -ENOMEM;
-+			goto out_meta;
-+		}
-+	}
-+
-+	memset(vcq, 0, sizeof(vcq));
-+
-+	if (temp) {
-+		/* Flush MBX to reset temp stack -- see KIC section comment */
-+		ret = cmh_tm_flush_mbx(MGMT_MBX);
-+		if (ret)
-+			goto out_unmap_meta;
-+
-+		n_cmds = 3;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_kic_dkek_derive(&vcq[1], SYS_REF_TEMP,
-+					req.base_key, req.host_id,
-+					meta_dma, req.metadata_len);
-+		vcq_add_sys_flush(&vcq[2]);
-+	} else {
-+		n_cmds = 4;
-+		vcq_set_header(&vcq[0], n_cmds);
-+		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, KIC_KEY_SIZE);
-+		vcq_add_kic_dkek_derive(&vcq[2], SYS_REF_LAST,
-+					req.base_key, req.host_id,
-+					meta_dma, req.metadata_len);
-+		vcq_add_sys_flush(&vcq[3]);
-+	}
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
-+
-+	if (meta_buf) {
-+		cmh_dma_unmap_single(meta_dma, req.metadata_len,
-+				     DMA_TO_DEVICE);
-+		kfree(meta_buf);
-+		meta_buf = NULL;
-+	}
-+
++	ret = cmh_verify_reg(base, R_MBX_QUEUE_STRIDE, mbx->stride_log2,
++			     "QUEUE_STRIDE", mbx->instance);
 +	if (ret)
-+		goto out_ref_dkek;
++		goto err_unlock;
 +
-+	if (temp) {
-+		req.ref = SYS_REF_TEMP;
-+		atomic_set(&mgmt_temp_dirty, 1);
-+	} else {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		req.ref = *ref_buf;
-+		kfree(ref_buf);
-+		ref_buf = NULL;
-+	}
++	/* Step 7: Enable -- start the mailbox */
++	cmh_reg_write32(MBX_COMMAND_RUN, base, R_MBX_COMMAND);
 +
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The derived-key DS slot was created but its ref never
-+		 * reached userspace, so the caller cannot free it.  Logically
-+		 * delete the orphaned slot: grant-with-no-access wipes the key
-+		 * material and clears the CID (temp results use SYS_REF_TEMP
-+		 * and need no cleanup).
-+		 */
-+		if (!temp) {
-+			cmh_mgmt_ds_scrub(req.ref, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: KIC_DKEK_DERIVE copy_to_user failed, DS slot cleaned up\n");
-+		}
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(),
-+		"mgmt: KIC_DKEK_DERIVE base=0x%llx host=%u meta_len=%u flags=0x%x -> ref=0x%llx\n",
-+		req.base_key, req.host_id, req.metadata_len, req.flags,
-+		req.ref);
-+	return 0;
-+
-+out_unmap_meta:
-+	if (meta_buf && !cmh_dma_map_error(meta_dma) && meta_dma)
-+		cmh_dma_unmap_single(meta_dma, req.metadata_len, DMA_TO_DEVICE);
-+out_meta:
-+	kfree(meta_buf);
-+out_ref_dkek:
-+	if (ref_buf) {
-+		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+		/* Scrub a slot sys_new may have created before the failure. */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+	}
-+	return ret;
-+}
-+
-+/* -- KEY_NEW_RANDOM -- DRBG-backed key generation --- */
-+
-+/*
-+ * Allocate a new datastore slot and fill it with DRBG-generated
-+ * random key material in a single atomic VCQ submission:
-+ *
-+ *   [0] SYS header(5)
-+ *   [1] SYS_CMD_NEW   -- allocate DS slot (CMH eSW writes ref)
-+ *   [2] DRBG_CMD_DATASTORE(SYS_REF_LAST) -- fill with random data
-+ *   [3] DRBG flush -- release DRBG core ownership
-+ *   [4] SYS flush
-+ *
-+ * The DRBG must be configured before this ioctl is used.
-+ * Reuses struct cmh_ioctl_key_new (ds_type, flags, cid, len, ref).
-+ */
-+#define DRBG_KEYGEN_VCQ_CMDS	5
-+
-+static int cmh_mgmt_key_new_random(void __user *argp)
-+{
-+	struct cmh_ioctl_key_new req;
-+	struct vcq_cmd vcq[DRBG_KEYGEN_VCQ_CMDS];
-+	u64 *ref_buf;
-+	dma_addr_t ref_dma;
-+	u32 core_id, sys_type;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	core_id = cmh_ds_type_to_core_id(req.ds_type);
-+	if (core_id == CORE_ID_NUM)
-+		return -EINVAL;
-+	sys_type = SYS_TYPE_SET(req.flags, core_id);
-+
-+	ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
-+	if (!ref_buf)
-+		return -ENOMEM;
-+
-+	*ref_buf = 0;
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
-+				     DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ref_dma)) {
-+		kfree(ref_buf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], DRBG_KEYGEN_VCQ_CMDS);
-+	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.len);
-+	vcq_add_drbg_datastore(&vcq[2], SYS_REF_LAST, req.len, sys_type);
-+	vcq_add_flush(&vcq[3], CORE_ID_DRBG);
-+	vcq_add_sys_flush(&vcq[4]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, DRBG_KEYGEN_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf), DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		/* Scrub a slot sys_new may have created before the failure. */
-+		if (*ref_buf)
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+		kfree(ref_buf);
-+		return ret;
-+	}
-+
-+	req.ref = *ref_buf;
-+	kfree(ref_buf);
-+
-+	if (copy_to_user(argp, &req, sizeof(req))) {
-+		/*
-+		 * The DS slot was created but its ref never reached
-+		 * userspace, so the caller cannot free it.  Logically delete
-+		 * the orphaned slot: grant-with-no-access wipes the key
-+		 * material and clears the CID (it does not reclaim the stack
-+		 * space -- only a datastore reset does).
-+		 */
-+		cmh_mgmt_ds_scrub(req.ref, 0);
-+		dev_warn(cmh_dev(),
-+			 "mgmt: KEY_NEW_RANDOM copy_to_user failed, DS slot cleaned up\n");
-+		return -EFAULT;
-+	}
-+
-+	dev_dbg(cmh_dev(),
-+		"mgmt: KEY_NEW_RANDOM cid=0x%llx len=%u type=0x%x -> ref=0x%llx\n",
-+		req.cid, req.len, sys_type, req.ref);
-+	return 0;
-+}
-+
-+#define EAC_VCQ_CMDS		3	/* header + EAC_READ + flush */
-+
-+static long cmh_mgmt_eac_read(void __user *argp)
-+{
-+	struct cmh_ioctl_eac_read req;
-+	struct eac_read_rsp *rsp;
-+	struct vcq_cmd vcq[EAC_VCQ_CMDS];
-+	dma_addr_t rsp_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved != 0)
-+		return -EINVAL;
-+	if (req.__pad != 0)
-+		return -EINVAL;
++	/* Read status while we still hold the lock */
++	dev_dbg(cmh_dev(), "mbx %u setup: dma=0x%08x%08x slots=%u stride=%u status=0x%08x\n",
++		mbx->instance, addr_hi, addr_lo,
++		 mbx->slots_log2, mbx->stride_log2,
++		 cmh_reg_read32(base, R_MBX_STATUS));
 +
 +	/*
-+	 * Zero the response: the eSW writes the fields it populates, but a
-+	 * partial/aborted read must not copy uninitialised heap back to
-+	 * user space.
++	 * Lock stays held for the lifetime of this MBX session.
++	 *
++	 * mbx->lock_val is the ownership token returned by R_MBX_LOCK at
++	 * acquisition time.  The CMH eSW validates this token on every
++	 * register access and requires it to be written back to release.
++	 * It is NOT a transient mutex -- it persists until teardown.
 +	 */
-+	rsp = kzalloc_obj(*rsp, GFP_KERNEL);
-+	if (!rsp)
-+		return -ENOMEM;
-+
-+	rsp_dma = cmh_dma_map_single(rsp, sizeof(*rsp), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(rsp_dma)) {
-+		kfree(rsp);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], EAC_VCQ_CMDS);
-+	vcq_add_eac_read(&vcq[1], rsp_dma, sizeof(*rsp));
-+	vcq_add_flush(&vcq[2], CORE_ID_EAC);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, EAC_VCQ_CMDS, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(rsp_dma, sizeof(*rsp), DMA_FROM_DEVICE);
-+
-+	if (ret) {
-+		kfree(rsp);
-+		return ret;
-+	}
-+
-+	/* Copy response fields into ioctl struct */
-+	req.mailbox_notification = rsp->mailbox_notification;
-+	req.hw_error = rsp->hw_error;
-+	req.hw_nmi = rsp->hw_nmi;
-+	req.hw_panic = rsp->hw_panic;
-+	req.safety_fatal = rsp->safety_fatal;
-+	req.safety_notification = rsp->safety_notification;
-+	req.sw_info0 = rsp->sw_info0;
-+	req.sw_info1 = rsp->sw_info1;
-+	memcpy(req.sram_bank_errors, rsp->sram_bank_errors,
-+	       sizeof(req.sram_bank_errors));
-+	req.__pad = 0;
-+
-+	kfree(rsp);
-+
-+	if (copy_to_user(argp, &req, sizeof(req)))
-+		return -EFAULT;
++	mbx->lock_val = lock_val;
 +
 +	return 0;
-+}
 +
-+/* -- DRBG CONFIG (management) ------------ */
-+
-+#define DRBG_CONFIG_VCQ_CMDS	4	/* header + RESET + CONFIG + flush */
-+
-+static long cmh_mgmt_drbg_config(void __user *argp)
-+{
-+	struct cmh_ioctl_drbg_config req;
-+	struct vcq_cmd vcq[DRBG_CONFIG_VCQ_CMDS];
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved != 0)
-+		return -EINVAL;
-+	if (req.entropy_ratio > 3)
-+		return -EINVAL;
-+	if (req.security_strength != CMH_DRBG_STRENGTH_128 &&
-+	    req.security_strength != CMH_DRBG_STRENGTH_256)
-+		return -EINVAL;
-+
-+	vcq_set_header(&vcq[0], DRBG_CONFIG_VCQ_CMDS);
-+	vcq_add_drbg_reset(&vcq[1]);
-+	vcq_add_drbg_config(&vcq[2], req.entropy_ratio,
-+			    req.security_strength);
-+	vcq_add_flush(&vcq[3], CORE_ID_DRBG);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, DRBG_CONFIG_VCQ_CMDS, 1, MGMT_MBX);
-+	if (ret)
-+		dev_warn(cmh_dev(), "mgmt: DRBG CONFIG failed (rc=%d)\n", ret);
-+
++err_unlock:
++	cmh_mbx_unlock(base, lock_val);
 +	return ret;
 +}
 +
-+/* -- ioctl dispatch ------------------------ */
++/* Per-Mailbox Teardown */
 +
-+/*
-+ * PKE, SM2, and PQC ioctls use device-internal temporary storage for
-+ * intermediate results.  Residual allocations in the per-mailbox temp
-+ * store (left by prior operations that targeted SYS_REF_TEMP) reduce
-+ * the space available and can cause the device to return ENOMEM.
-+ *
-+ * Flush the mailbox before these operations to reset the temp store,
-+ * but ONLY when the store is actually dirty (mgmt_temp_dirty flag).
-+ * Unconditional flushing would kill in-flight command queues from
-+ * concurrent callers on the same mailbox -- MBX_COMMAND_FLUSH
-+ * terminates any executing queue with -EPIPE and discards all queued
-+ * submissions.
-+ *
-+ * The conditional flush is safe: PKE/SM2/PQC ioctls do not consume
-+ * SYS_REF_TEMP from a prior ioctl (unlike DS_EXPORT/DS_IMPORT which
-+ * may reference a temp key produced by a preceding derivation), so
-+ * clearing the temp store before them loses no needed state.
-+ */
-+static inline bool cmh_mgmt_needs_temp_flush(unsigned int cmd)
++static void cmh_mbx_teardown_one(struct cmh_mbx_config *mbx)
 +{
-+	unsigned int nr = _IOC_NR(cmd);
++	void __iomem *base = mbx->reg_base;
++	u32 status;
 +
-+	/*
-+	 * Range invariant: all PKE/SM2/PQC ioctls must have consecutive
-+	 * NR values between PKE_RSA_ENC (0x10) and SM2_ENC_HASH (0x37).
-+	 * If a new ioctl is added outside this range, update the bounds
-+	 * and adjust these assertions.
-+	 */
-+	BUILD_BUG_ON(_IOC_NR(CMH_IOCTL_PKE_RSA_ENC) != 0x10);
-+	BUILD_BUG_ON(_IOC_NR(CMH_IOCTL_SM2_ENC_HASH) != 0x37);
++	if (!base || !mbx->lock_val)
++		return;
 +
-+	return nr >= _IOC_NR(CMH_IOCTL_PKE_RSA_ENC) &&
-+	       nr <= _IOC_NR(CMH_IOCTL_SM2_ENC_HASH);
++	if (MBX_STATUS_CODE(cmh_reg_read32(base, R_MBX_STATUS)) !=
++	    MBX_STATUS_OFFLINE) {
++		cmh_reg_write32(MBX_COMMAND_FLUSH, base, R_MBX_COMMAND);
++
++		/*
++		 * Wait for the eSW to process the flush before releasing
++		 * the DMA buffer.  The eSW clears R_MBX_COMMAND to zero
++		 * upon completion; if it doesn't within 1 s, log a
++		 * warning and proceed (best-effort teardown).
++		 *
++		 * DMA safety: by this point the RH and TM are already
++		 * shut down (remove order: algos -> RH -> TM -> MQI),
++		 * so no new transactions can be submitted and no
++		 * completions are in flight.  The queue buffer is only
++		 * read by the eSW during active command processing;
++		 * after flush the eSW will not touch it again.
++		 */
++		if (read_poll_timeout(cmh_reg_read32, status,
++				      status == 0,
++				      MBX_FLUSH_POLL_US,
++				      MBX_FLUSH_TIMEOUT_US,
++				      true, base, R_MBX_COMMAND))
++			dev_warn(cmh_dev(),
++				 "mbx %u flush timeout during teardown (status=0x%08x)\n",
++				 mbx->instance,
++				 cmh_reg_read32(base, R_MBX_STATUS));
++	}
++
++	cmh_mbx_unlock(base, mbx->lock_val);
++	mbx->lock_val = 0;
 +}
 +
-+static long cmh_mgmt_ioctl_locked(struct file *file, unsigned int cmd,
-+				  void __user *argp)
++/* Public Interface */
++
++/**
++ * cmh_mqi_init() - Initialize all mailbox queues
++ * @cfg: CMH configuration describing the mailboxes to set up
++ *
++ * Allocates DMA queue buffers for each configured mailbox, then executes
++ * the MBX lock/setup/enable register sequence.  On failure, all
++ * successfully initialized mailboxes are torn down and buffers freed.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mqi_init(struct cmh_config *cfg)
 +{
++	unsigned int i, j;
 +	int ret;
 +
-+	if (cmh_mgmt_needs_temp_flush(cmd) &&
-+	    atomic_xchg(&mgmt_temp_dirty, 0)) {
-+		ret = cmh_tm_flush_mbx(MGMT_MBX);
++	/* Allocate queue buffers */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		struct cmh_mbx_config *m = &cfg->mailboxes[i];
++
++		m->virt_addr = cmh_dma_alloc(m->queue_size, &m->dma_handle,
++					     GFP_KERNEL);
++		if (!m->virt_addr) {
++			ret = -ENOMEM;
++			goto err_free_bufs;
++		}
++
++		dev_dbg(cmh_dev(), "mqi[%u] alloc %zu bytes @ virt=%pK dma=%pad\n",
++			i, m->queue_size, m->virt_addr, &m->dma_handle);
++	}
++
++	/* Lock/setup/enable each mailbox */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		ret = cmh_mbx_setup_one(&cfg->mailboxes[i]);
 +		if (ret) {
-+			/* Flush failed -- the temp region is still dirty. */
-+			atomic_set(&mgmt_temp_dirty, 1);
++			dev_err(cmh_dev(), "mqi[%u] setup failed (rc=%d)\n",
++				i, ret);
++			goto err_teardown;
++		}
++	}
++
++	return 0;
++
++err_teardown:
++	for (j = 0; j < i; j++)
++		cmh_mbx_teardown_one(&cfg->mailboxes[j]);
++err_free_bufs:
++	for (j = 0; j < cfg->mbx_count; j++) {
++		if (cfg->mailboxes[j].virt_addr)
++			cmh_dma_free(cfg->mailboxes[j].queue_size,
++				     cfg->mailboxes[j].virt_addr,
++				     cfg->mailboxes[j].dma_handle);
++		cfg->mailboxes[j].virt_addr = NULL;
++		cfg->mailboxes[j].dma_handle = 0;
++	}
++	return ret;
++}
++
++/**
++ * cmh_mqi_cleanup() - Clean up all mailbox queues
++ * @cfg: CMH configuration describing the mailboxes to tear down
++ *
++ * Tears down each mailbox (flush + unlock) and frees the DMA queue
++ * buffers allocated by cmh_mqi_init().
++ */
++void cmh_mqi_cleanup(struct cmh_config *cfg)
++{
++	unsigned int i;
++
++	for (i = 0; i < cfg->mbx_count; i++) {
++		struct cmh_mbx_config *m = &cfg->mailboxes[i];
++
++		cmh_mbx_teardown_one(m);
++
++		if (m->virt_addr)
++			cmh_dma_free(m->queue_size, m->virt_addr,
++				     m->dma_handle);
++		m->virt_addr = NULL;
++		m->dma_handle = 0;
++	}
++}
+diff --git a/drivers/crypto/cmh/cmh_rh.c b/drivers/crypto/cmh/cmh_rh.c
+new file mode 100644
+index 000000000000..62b6f71f741c
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_rh.c
+@@ -0,0 +1,1178 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Response Handler
++ *
++ * IRQ-driven completion processing using request_threaded_irq():
++ *
++ *   Hardirq:  For each MBX, read R_MBX_INTERRUPT.  If any bit is set,
++ *             W1C-clear it and mark the MBX for threaded processing.
++ *             Return IRQ_WAKE_THREAD if any MBX had work.
++ *
++ *   Thread:   For each pending MBX, read R_MBX_QUEUE_HEAD.  Walk the
++ *             per-MBX transaction queue (oldest first): for every txn
++ *             whose last_vcq_id < new_head, check status, fire the
++ *             completion callback, and free the transaction object.
++ *
++ * The DT "rambus,cmh-v1030" node declares one PLIC interrupt per mailbox,
++ * matching the real CMH ch_sys_interrupt_mbx[N-1:0] topology.
++ * Each MBX gets its own Linux virq; the same hardirq/thread pair
++ * is registered for all of them.  The handler still scans all
++ * mailboxes on every invocation -- this is intentional, as it
++ * provides robustness against coalesced or missed edges.
++ *
++ * IRQ source: resolved from the "rambus,cmh-v1030" DT node at init time.
++ * The module's irq= parameter can override with a single shared IRQ.
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/interrupt.h>
++#include <linux/io.h>
++#include <linux/slab.h>
++#include <linux/atomic.h>
++#include <linux/of.h>
++#include <linux/of_irq.h>
++#include <linux/timer.h>
++#include <linux/jiffies.h>
++
++#include "cmh_rh.h"
++#include "cmh_txn.h"
++#include "cmh_registers.h"
++#include "cmh_config.h"
++#include "cmh_debugfs.h"
++#include "cmh_dma.h"
++
++/* Per-mailbox IRQ bookkeeping */
++struct cmh_rh_mbx {
++	u32        last_head;   /* last-observed MBX head position */
++	atomic_t   irq_bits;   /* interrupt bits saved by hardirq (atomic_or) */
++	bool       pending;     /* threaded handler should process this MBX */
++	bool       restart_pending; /* RESTART issued, awaiting eSW ack */
++	u32        restart_retries; /* watchdog ticks since RESTART issued */
++	u32        flush_count;     /* consecutive failed FLUSH escalations */
++	bool       wedged;          /* recovery failed, MBX offline */
++	u32        abort_stall_ticks; /* ticks since async timeout ABORT issued */
++};
++
++/* Module-level RH state */
++static struct {
++	struct cmh_config      *cfg;
++	int                     irqs[CMH_MAX_CONFIGURED_MBX]; /* per-MBX virqs */
++	u32                     nirqs;          /* number of registered IRQs */
++	struct cmh_rh_mbx      *mbx;            /* array[cfg->mbx_count] */
++	atomic_t                irq_count;      /* hardirq invocation counter */
++	bool                    active;
++} rh;
++
++/*
++ * Serialise the read-last_head / process_mbx / update-last_head
++ * sequence between the threaded IRQ handler (process context) and
++ * the watchdog timer (softirq context).  Without this, a timer
++ * softirq can preempt the kthread mid-sequence, causing both paths
++ * to process the same head advance and prematurely complete a
++ * subsequent transaction before the CMH eSW has written its DMA
++ * output -- leading to data corruption and SLAB freelist poisoning.
++ *
++ * The kthread acquires with spin_lock_bh (disables softirqs), the
++ * watchdog acquires with spin_lock (already in softirq context).
++ */
++static DEFINE_SPINLOCK(rh_process_lock);
++
++/*
++ * Watchdog timer -- missed-IRQ recovery.
++ *
++ * Fires every watchdog_ms while rh.active.  Reads MBX head registers;
++ * if any head has advanced without an IRQ, processes completions and
++ * logs a notice.  Standard kernel pattern, analogous to NIC watchdog
++ * timers.
++ *
++ * Safe from timer/softirq context: cmh_reg_read32() is an MMIO read,
++ * cmh_tm_pop_transaction() uses spin_lock_irqsave(), and TM completion
++ * callbacks (crypto_request_complete et al.) are documented safe from
++ * any context including softirq.  rh_process_lock serialises the
++ * head-read / process / head-update sequence against the threaded
++ * IRQ handler to prevent double-processing of the same completion.
++ *
++ * Default 200 ms (5 fires/s) provides ~10 recovery attempts within
++ * the default vcq_timeout_ms (2 s).  Tune via debugfs config/watchdog_ms
++ * for platforms where interrupt delivery is more reliable (e.g. MSI on
++ * FPGA/silicon -- 500 ms--1 s may suffice as a safety net).
++ */
++#define CMH_RH_WATCHDOG_MS_DEFAULT  200
++
++/*
++ * Floor for watchdog_ms to prevent a zero/near-zero value from
++ * spinning the timer in a tight softirq loop.  Enforced at the
++ * point of use so debugfs writes are never rejected.
++ */
++#define CMH_RH_WATCHDOG_MS_MIN      10
++
++/*
++ * Maximum watchdog ticks to wait for the eSW to process RESTART
++ * before escalating to FLUSH.  At the default 200 ms interval,
++ * 5 retries = 1 s -- generous for an operation that should take
++ * microseconds.  If the eSW hasn't responded by then, issue
++ * MBX_COMMAND_FLUSH to hard-reset the mailbox state.
++ */
++#define CMH_RH_RESTART_MAX_RETRIES  5
++
++/*
++ * Maximum consecutive FLUSH escalations before marking the MBX as
++ * wedged.  Each FLUSH cycle takes RESTART_MAX_RETRIES watchdog ticks
++ * (~1 s at default interval).  Two failed FLUSHes (~2 s total)
++ * strongly indicate the eSW is not processing MBX commands at all.
++ */
++#define CMH_RH_FLUSH_MAX_FAILURES   2
++
++/*
++ * Time budget (ms) after an async timeout ABORT before escalating
++ * to FLUSH + force-drain.  Converted to watchdog ticks at runtime
++ * via abort_stall_ms / watchdog_ms, so the actual wall-clock bound
++ * stays constant regardless of watchdog_ms tuning.
++ *
++ * The stall detector fires when:
++ *   - The head-of-queue transaction is in TXN_TIMED_OUT state
++ *   - HEAD hasn't advanced (eSW didn't process the ABORT)
++ *   - abort_stall_ticks exceeds the derived threshold
++ *
++ * At that point we issue FLUSH + force-drain, completing all pending
++ * transactions with -ETIMEDOUT and waking any blocked waiters.
++ *
++ * Default 5000 ms bounds worst-case D-state to
++ * async_timeout (2 s) + abort_stall (5 s) = ~7 s.
++ */
++#define CMH_RH_ABORT_STALL_MS       5000
++
++static unsigned int watchdog_ms = CMH_RH_WATCHDOG_MS_DEFAULT;
++
++/*
++ * Re-poke R_MBX_QUEUE_TAIL to generate a fresh interrupt to the eSW.
++ * Writing the current value back is a queue no-op but guarantees a
++ * SIC interrupt edge, ensuring the eSW wakes from WFI.
++ */
++static void cmh_rh_poke_tail(void __iomem *base)
++{
++	cmh_tm_poke_tail(base);
++}
++
++/*
++ * Drain all remaining in-flight transactions for a mailbox, completing
++ * each with the given error code.  Called after FLUSH (which discards
++ * all queued VCQs) or when marking a mailbox as wedged.  Updates
++ * last_head to the current hardware HEAD so subsequent polls don't
++ * re-process the same (now-dead) VCQ IDs as successful completions.
++ *
++ * Caller must hold rh_process_lock.
++ */
++static void cmh_rh_drain_mbx(u32 mbx_idx, int error)
++{
++	struct transaction_obj *txn;
++
++	while ((txn = cmh_tm_pop_transaction(mbx_idx)) != NULL) {
++		dev_dbg(cmh_dev(), "rh: mbx[%u] drain vcq=%u..%u err=%d\n",
++			mbx_idx, txn->first_vcq_id,
++			txn->last_vcq_id, error);
++		cmh_txn_finish(txn, error);
++		cmh_tm_txq_completion_notify();
++	}
++
++	rh.mbx[mbx_idx].last_head =
++		cmh_reg_read32(rh.cfg->mailboxes[mbx_idx].reg_base,
++			       R_MBX_QUEUE_HEAD);
++}
++
++/**
++ * cmh_rh_force_drain_mbx() - FLUSH + drain a mailbox from external context
++ * @mbx_idx: Mailbox index to drain
++ *
++ * Issues MBX_COMMAND_FLUSH to the eSW, drains all pending transactions
++ * (completing each with -ECANCELED), and resets all recovery bookkeeping
++ * including the wedged flag.  This is an administrative last-resort
++ * recovery path exposed via debugfs.
++ *
++ * Context: process context.  Acquires rh_process_lock internally.
++ */
++void cmh_rh_force_drain_mbx(u32 mbx_idx)
++{
++	void __iomem *base;
++
++	if (!rh.cfg || !rh.mbx || mbx_idx >= rh.cfg->mbx_count)
++		return;
++
++	base = rh.cfg->mailboxes[mbx_idx].reg_base;
++
++	dev_warn(cmh_dev(), "rh: force-drain mbx[%u] (debugfs)\n", mbx_idx);
++	spin_lock_bh(&rh_process_lock);
++	cmh_reg_write32(MBX_IRQ_MASK, base, R_MBX_INTERRUPT);
++	cmh_reg_write32(MBX_COMMAND_FLUSH, base, R_MBX_COMMAND);
++	cmh_rh_poke_tail(base);
++	cmh_rh_drain_mbx(mbx_idx, -ECANCELED);
++	rh.mbx[mbx_idx].abort_stall_ticks = 0;
++	WRITE_ONCE(rh.mbx[mbx_idx].restart_pending, false);
++	rh.mbx[mbx_idx].restart_retries = 0;
++	rh.mbx[mbx_idx].flush_count = 0;
++	WRITE_ONCE(rh.mbx[mbx_idx].wedged, false);
++	spin_unlock_bh(&rh_process_lock);
++}
++
++/**
++ * cmh_rh_mbx_is_wedged() - Check if a mailbox is permanently wedged
++ * @mbx_idx: Mailbox index to check
++ *
++ * Return: true if the mailbox has failed recovery and is offline.
++ */
++bool cmh_rh_mbx_is_wedged(u32 mbx_idx)
++{
++	if (!rh.mbx || !rh.cfg || mbx_idx >= rh.cfg->mbx_count)
++		return false;
++
++	return READ_ONCE(rh.mbx[mbx_idx].wedged);
++}
++
++/**
++ * cmh_rh_abort_mbx() - Issue MBX_COMMAND_ABORT under rh_process_lock
++ * @mbx_idx: Mailbox index to abort
++ *
++ * Serialises the ABORT write with RESTART/FLUSH commands issued by the
++ * watchdog, preventing command-register clobber races.  Safe to call
++ * from any context (uses spin_lock_bh).
++ */
++void cmh_rh_abort_mbx(u32 mbx_idx)
++{
++	void __iomem *base;
++
++	if (!rh.cfg || !rh.mbx || mbx_idx >= rh.cfg->mbx_count)
++		return;
++
++	base = rh.cfg->mailboxes[mbx_idx].reg_base;
++
++	spin_lock_bh(&rh_process_lock);
++	cmh_reg_write32(MBX_COMMAND_ABORT, base, R_MBX_COMMAND);
++	spin_unlock_bh(&rh_process_lock);
++}
++
++static struct timer_list rh_watchdog;
++
++/*
++ * Hardirq handler -- runs with interrupts disabled.
++ *
++ * Read and W1C-clear R_MBX_INTERRUPT for each mailbox.
++ * If any MBX had a pending interrupt, return IRQ_WAKE_THREAD.
++ * Shared-IRQ safe: returns IRQ_NONE if we didn't handle anything.
++ */
++static irqreturn_t cmh_rh_hardirq(int irq, void *data)
++{
++	struct cmh_config *cfg = data;
++	bool handled = false;
++	u32 i;
++
++	for (i = 0; i < cfg->mbx_count; i++) {
++		void __iomem *base = cfg->mailboxes[i].reg_base;
++		u32 bits;
++
++		bits = cmh_reg_read32(base, R_MBX_INTERRUPT);
++		if (!bits)
++			continue;
++
++		/* W1C: write back the set bits to clear them */
++		cmh_reg_write32(bits, base, R_MBX_INTERRUPT);
++
++		/*
++		 * Accumulate bits atomically so a second hardirq
++		 * firing while the threaded handler runs does not
++		 * overwrite the first set of bits.
++		 */
++		atomic_or((int)bits, &rh.mbx[i].irq_bits);
++		WRITE_ONCE(rh.mbx[i].pending, true);
++		handled = true;
++	}
++
++	/*
++	 * Ordering: the kernel IRQ threading infrastructure
++	 * performs a full barrier between hardirq return and
++	 * the threaded handler invocation.
++	 */
++	if (handled)
++		atomic_inc(&rh.irq_count);
++
++	return handled ? IRQ_WAKE_THREAD : IRQ_NONE;
++}
++
++static void cmh_rh_stat_inc_errors(u32 mbx_idx)
++{
++	struct cmh_mbx_stats *s = cmh_debugfs_mbx_stats(mbx_idx);
++
++	if (s)
++		atomic64_inc(&s->vcqs_errors);
++}
++
++static void cmh_rh_stat_add_completed(u32 mbx_idx, u32 first_vcq, u32 last_vcq)
++{
++	struct cmh_mbx_stats *s = cmh_debugfs_mbx_stats(mbx_idx);
++
++	if (s)
++		atomic64_add(last_vcq - first_vcq + 1, &s->vcqs_completed);
++}
++
++/*
++ * Process completions for a single mailbox.
++ *
++ * Walk the per-MBX transaction queue FIFO.  For each transaction
++ * whose last_vcq_id is strictly less than the new head, fire the
++ * completion callback and free the object.
++ *
++ * "Strictly less than" using signed (s32) arithmetic handles wrap-around:
++ * the CMH eSW uses monotonically increasing 32-bit VCQ IDs.
++ */
++static void cmh_rh_process_mbx(u32 mbx_idx, u32 new_head, u32 irq_bits)
++{
++	struct transaction_obj *txn;
++	int error = 0;
++
++	/* Determine error state from saved IRQ bits */
++	if (irq_bits & MBX_ERROR_IRQ) {
++		void __iomem *base = rh.cfg->mailboxes[mbx_idx].reg_base;
++		u32 status = cmh_reg_read32(base, R_MBX_STATUS);
++
++		error = -EIO;
++		dev_dbg(cmh_dev(), "rh: mbx[%u] error status=0x%08x (code=%u cmd_idx=%u)\n",
++			mbx_idx, status,
++		       MBX_STATUS_ERROR_CODE(status),
++		       MBX_STATUS_CMD_INDEX(status));
++
++		/*
++		 * ECHILD (10) in the parent status means a child VCQ
++		 * failed internally.  Read R_MBX_CHILD for the actual
++		 * root cause (real errno, child core ID, child cmd idx).
++		 */
++		if (MBX_STATUS_ERROR_CODE(status) == ECHILD) {
++			u32 child = cmh_reg_read32(base, R_MBX_CHILD);
++
++			dev_dbg(cmh_dev(),
++				"rh: mbx[%u] child error=0x%08x (core=%u code=%u cmd_idx=%u)\n",
++				mbx_idx, child,
++				MBX_STATUS_CORE_ID(child),
++				MBX_STATUS_ERROR_CODE(child),
++				MBX_STATUS_CMD_INDEX(child));
++		}
++
++		/*
++		 * CMH eSW does not advance head on error -- the MBX is
++		 * stuck in ERROR state until the host issues a recovery
++		 * command.  However, HEAD may have advanced past one or
++		 * more already-completed transactions before the error
++		 * occurred (their completion IRQ may not have been
++		 * processed yet).  Retire those normally first, then
++		 * force-complete the NEXT transaction (the one that
++		 * actually failed) with -EIO.
++		 *
++		 * MBX command semantics after ERROR:
++		 *   CONTINUE -- re-run the same VCQ at HEAD (retry)
++		 *   RESTART  -- advance HEAD+1, skip failed, resume
++		 *   FLUSH    -- HEAD=TAIL, flush all HWCs, discard queue
++		 */
++
++		/* First: retire transactions completed before the error */
++		while ((txn = cmh_tm_peek_transaction(mbx_idx)) != NULL) {
++			if ((s32)(new_head - txn->last_vcq_id) <= 0)
++				break;
++			txn = cmh_tm_pop_transaction(mbx_idx);
++			if (!txn)
++				break;
++			dev_dbg(cmh_dev(),
++				"rh: mbx[%u] pre-error complete vcq=%u..%u\n",
++				mbx_idx, txn->first_vcq_id,
++				txn->last_vcq_id);
++			cmh_txn_finish(txn, 0);
++			cmh_tm_txq_completion_notify();
++		}
++
++		/*
++		 * The transaction that errored is now at the head.  If it is
++		 * multi-VCQ (first_vcq_id != last_vcq_id) it needs special
++		 * care: the eSW has no notion of a VCQ group and RESTART only
++		 * advances HEAD by one, so it would resume the surviving slots
++		 * of THIS transaction -- whose DMA cmh_txn_finish() is about
++		 * to free -- a use-after-free.  FLUSH discards the whole queue
++		 * (HEAD=TAIL) so no surviving slot runs; drain then completes
++		 * this and any following transactions with the error.
++		 */
++		txn = cmh_tm_peek_transaction(mbx_idx);
++		if (txn && txn->first_vcq_id != txn->last_vcq_id) {
++			dev_warn_ratelimited(cmh_dev(),
++					     "rh: mbx[%u] multi-VCQ error vcq=%u..%u -- FLUSH+drain\n",
++					     mbx_idx, txn->first_vcq_id,
++					     txn->last_vcq_id);
++			cmh_rh_stat_inc_errors(mbx_idx);
++			cmh_reg_write32(MBX_IRQ_MASK, base, R_MBX_INTERRUPT);
++			cmh_reg_write32(MBX_COMMAND_FLUSH, base, R_MBX_COMMAND);
++			cmh_rh_poke_tail(base);
++			cmh_rh_drain_mbx(mbx_idx, error);
++			return;
++		}
++
++		/* Now pop and fail the transaction that actually errored */
++		txn = cmh_tm_pop_transaction(mbx_idx);
++		if (txn) {
++			dev_dbg(cmh_dev(), "rh: mbx[%u] error-complete vcq=%u..%u\n",
++				mbx_idx, txn->first_vcq_id,
++				txn->last_vcq_id);
++			cmh_txn_finish(txn, error);
++			cmh_tm_txq_completion_notify();
++		} else {
++			u32 head_reg, tail_reg;
++
++			head_reg = cmh_reg_read32(base, R_MBX_QUEUE_HEAD);
++			tail_reg = cmh_reg_read32(base, R_MBX_QUEUE_TAIL);
++			dev_warn_ratelimited(cmh_dev(),
++					     "rh: mbx[%u] ERROR with empty txn queue (orphaned) status=0x%08x head=%u tail=%u core=%u ecode=%u cmd_idx=%u\n",
++					     mbx_idx, status,
++					     head_reg, tail_reg,
++					     MBX_STATUS_CORE_ID(status),
++					     MBX_STATUS_ERROR_CODE(status),
++					     MBX_STATUS_CMD_INDEX(status));
++		}
++		cmh_rh_stat_inc_errors(mbx_idx);
++
++		/*
++		 * W1C-clear R_MBX_INTERRUPT before issuing RESTART.
++		 *
++		 * The eSW sets MBX_ERROR_IRQ in R_MBX_INTERRUPT when
++		 * it writes ERROR status.  On platforms where the
++		 * hardirq handler runs (IRQ wired to GIC), this bit
++		 * is cleared there.  On polling-only platforms (no
++		 * IRQ line), it must be cleared explicitly before
++		 * issuing a recovery command to de-assert the
++		 * MBX-to-SIC interrupt line.
++		 */
++		cmh_reg_write32(MBX_IRQ_MASK, base, R_MBX_INTERRUPT);
++		cmh_reg_write32(MBX_COMMAND_RESTART, base, R_MBX_COMMAND);
++
++		/*
++		 * Poke R_MBX_QUEUE_TAIL to guarantee the eSW receives
++		 * an interrupt.
++		 *
++		 * Writing R_MBX_COMMAND alone may not produce a new
++		 * SIC interrupt edge if the MBX-to-SIC line is still
++		 * asserted from prior error processing.  The eSW RUN
++		 * handler re-writes ERROR_IRQ to R_MBX_INTERRUPT on
++		 * every spurious wakeup while in ERROR state, which
++		 * can keep the SIC line high on level-triggered HW.
++		 *
++		 * R_MBX_QUEUE_TAIL writes always generate a fresh
++		 * interrupt to the eSW (this is the normal VCQ
++		 * submission path).  Writing the current TAIL value
++		 * back is a no-op from the queue perspective but
++		 * ensures the eSW wakes from WFI and processes the
++		 * RESTART command.
++		 */
++		cmh_rh_poke_tail(base);
++		WRITE_ONCE(rh.mbx[mbx_idx].restart_pending, true);
++		rh.mbx[mbx_idx].restart_retries = 0;
++		return;
++	}
++
++	/*
++	 * Pop completed transactions.  A transaction is complete when
++	 * the CMH eSW has advanced head past its last VCQ ID:
++	 *   (s32)(new_head - txn->last_vcq_id) > 0
++	 * Using signed comparison for correct wrap-around handling.
++	 *
++	 * Multi-VCQ note: a transaction can span multiple parent VCQs
++	 * (e.g. SLH-DSA).  The CMH eSW advances HEAD one VCQ at a time
++	 * and raises a completion interrupt per VCQ, so for a multi-VCQ
++	 * transaction HEAD can legitimately be observed partway through
++	 * the group while the remaining VCQs are still running.  The
++	 * transaction is treated atomically here: it is completed only
++	 * once HEAD has advanced past its last_vcq_id.  An intermediate
++	 * HEAD position is expected and simply causes us to wait.
++	 */
++	while ((txn = cmh_tm_peek_transaction(mbx_idx)) != NULL) {
++		if ((s32)(new_head - txn->last_vcq_id) <= 0) {
++			/*
++			 * Not yet complete.  An intermediate HEAD within a
++			 * multi-VCQ group is normal (the eSW advances HEAD
++			 * per VCQ), so log at debug level and wait for the
++			 * group to finish.
++			 */
++			if (txn->first_vcq_id != txn->last_vcq_id &&
++			    (s32)(new_head - txn->first_vcq_id) > 0)
++				dev_dbg_ratelimited(cmh_dev(),
++						    "rh: mbx[%u] head %u mid-group %u..%u\n",
++						    mbx_idx, new_head,
++						    txn->first_vcq_id,
++						    txn->last_vcq_id);
++			break;
++		}
++
++		txn = cmh_tm_pop_transaction(mbx_idx);
++		if (!txn)
++			break;
++
++		dev_dbg(cmh_dev(), "rh: mbx[%u] complete vcq=%u..%u err=%d\n",
++			mbx_idx, txn->first_vcq_id, txn->last_vcq_id,
++			 error);
++
++		cmh_rh_stat_add_completed(mbx_idx, txn->first_vcq_id,
++					  txn->last_vcq_id);
++
++		cmh_txn_finish(txn, error);
++		cmh_tm_txq_completion_notify();
++	}
++}
++
++/*
++ * Threaded IRQ handler -- runs in process context.
++ *
++ * Walk all MBXes that had pending interrupts.  After processing the
++ * pending set, do a final hardware poll of all MBX head registers to
++ * catch completions whose PLIC interrupt was consumed during an
++ * earlier register access (e.g. an inline interrupt notification
++ * during MMIO can cause the PLIC edge to be claimed before the
++ * hardirq sees it).
++ */
++static irqreturn_t cmh_rh_thread(int irq, void *data)
++{
++	struct cmh_config *cfg = data;
++	u32 i;
++	bool recheck;
++
++	do {
++		recheck = false;
++
++		for (i = 0; i < cfg->mbx_count; i++) {
++			u32 new_head, irq_bits;
++
++			if (!READ_ONCE(rh.mbx[i].pending))
++				continue;
++
++			irq_bits = (u32)atomic_xchg(&rh.mbx[i].irq_bits, 0);
++			WRITE_ONCE(rh.mbx[i].pending, false);
++
++			spin_lock_bh(&rh_process_lock);
++			new_head = cmh_reg_read32(cfg->mailboxes[i].reg_base,
++						  R_MBX_QUEUE_HEAD);
++
++			if (new_head == rh.mbx[i].last_head && !irq_bits) {
++				spin_unlock_bh(&rh_process_lock);
++				continue;
++			}
++
++			cmh_rh_process_mbx(i, new_head, irq_bits);
++			rh.mbx[i].last_head = new_head;
++			spin_unlock_bh(&rh_process_lock);
++		}
++
++		/*
++		 * Re-check: if the hardirq fired again while we were
++		 * processing, pending flags will be set again.
++		 */
++		for (i = 0; i < cfg->mbx_count; i++) {
++			if (READ_ONCE(rh.mbx[i].pending)) {
++				recheck = true;
++				break;
++			}
++		}
++	} while (recheck);
++
++	/*
++	 * Final hardware poll: read every MBX head register and status
++	 * to catch completions or errors whose interrupt was missed.
++	 */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		u32 new_head;
++		u32 status;
++		u32 poll_irq_bits = 0;
++
++		spin_lock_bh(&rh_process_lock);
++		new_head = cmh_reg_read32(cfg->mailboxes[i].reg_base,
++					  R_MBX_QUEUE_HEAD);
++		status = cmh_reg_read32(cfg->mailboxes[i].reg_base,
++					R_MBX_STATUS);
++
++		if (MBX_STATUS_CODE(status) == MBX_STATUS_ERROR) {
++			if (READ_ONCE(rh.mbx[i].wedged)) {
++				spin_unlock_bh(&rh_process_lock);
++				continue;
++			}
++			if (READ_ONCE(rh.mbx[i].restart_pending)) {
++				/*
++				 * HEAD advanced while restart_pending means
++				 * RESTART worked but next VCQ also failed.
++				 * Clear restart state and process new error.
++				 */
++				if (new_head != rh.mbx[i].last_head) {
++					WRITE_ONCE(rh.mbx[i].restart_pending,
++						   false);
++					rh.mbx[i].restart_retries = 0;
++				} else {
++					spin_unlock_bh(&rh_process_lock);
++					continue;
++				}
++			}
++			poll_irq_bits = MBX_ERROR_IRQ;
++		} else {
++			WRITE_ONCE(rh.mbx[i].restart_pending, false);
++			rh.mbx[i].restart_retries = 0;
++			rh.mbx[i].flush_count = 0;
++		}
++
++		if (new_head != rh.mbx[i].last_head || poll_irq_bits) {
++			cmh_rh_process_mbx(i, new_head, poll_irq_bits);
++			rh.mbx[i].last_head = new_head;
++		}
++		spin_unlock_bh(&rh_process_lock);
++	}
++
++	return IRQ_HANDLED;
++}
++
++/*
++ * Watchdog timer callback -- missed-IRQ recovery.
++ *
++ * Reads all MBX head registers.  If any head advanced without a
++ * corresponding IRQ, process the completions here.  Re-arms itself
++ * while rh.active is true.
++ */
++static void cmh_rh_watchdog_fn(struct timer_list *t)
++{
++	u32 i;
++
++	if (!rh.active || !rh.cfg || !rh.mbx)
++		return;
++
++	for (i = 0; i < rh.cfg->mbx_count; i++) {
++		u32 new_head;
++		u32 status;
++		u32 irq_bits = 0;
++
++		spin_lock(&rh_process_lock);
++		new_head = cmh_reg_read32(rh.cfg->mailboxes[i].reg_base,
++					  R_MBX_QUEUE_HEAD);
++		status = cmh_reg_read32(rh.cfg->mailboxes[i].reg_base,
++					R_MBX_STATUS);
++
++		if (MBX_STATUS_CODE(status) == MBX_STATUS_ERROR) {
++			if (READ_ONCE(rh.mbx[i].wedged)) {
++				spin_unlock(&rh_process_lock);
++				continue;
++			}
++			/*
++			 * Back-to-back failure scenario: the crypto API
++			 * (e.g. testmgr) may submit requests continuously.
++			 * If RESTART succeeds but the next VCQ also fails,
++			 * the entire RESTART->IDLE->RUN->ERROR cycle can
++			 * complete within a single 200ms watchdog period.
++			 * Without the HEAD-advance check below, the watchdog
++			 * would mistake the new error for a failed RESTART,
++			 * increment restart_retries, and eventually escalate
++			 * to FLUSH -- wedging the mailbox unnecessarily.
++			 */
++			if (READ_ONCE(rh.mbx[i].restart_pending)) {
++				void __iomem *base =
++					rh.cfg->mailboxes[i].reg_base;
++
++				/*
++				 * HEAD advanced since RESTART was issued:
++				 * RESTART succeeded, this is a fresh error.
++				 * Clear recovery state and process normally.
++				 */
++				if (new_head != rh.mbx[i].last_head) {
++					dev_dbg(cmh_dev(),
++						"rh: watchdog: mbx[%u] head advanced %u->%u during restart -- new error\n",
++						i, rh.mbx[i].last_head,
++						new_head);
++					WRITE_ONCE(rh.mbx[i].restart_pending,
++						   false);
++					rh.mbx[i].restart_retries = 0;
++					goto new_error;
++				}
++
++				rh.mbx[i].restart_retries++;
++				if (rh.mbx[i].restart_retries >
++				    CMH_RH_RESTART_MAX_RETRIES) {
++					rh.mbx[i].flush_count++;
++					if (rh.mbx[i].flush_count >=
++					    CMH_RH_FLUSH_MAX_FAILURES) {
++						u32 hb, ei, cmd;
++
++						cmd = cmh_reg_read32(base, R_MBX_COMMAND);
++						hb = cmh_reg_read32(rh.cfg->sic_mapped,
++								    R_SIC_SW_HEARTBEAT);
++						ei = cmh_reg_read32(rh.cfg->sic_mapped,
++								    R_SIC_SW_ERROR_INFO);
++						dev_crit(cmh_dev(),
++							 "rh: mbx[%u] wedged after %u FLUSHes (cmd=0x%x status=0x%x hb=0x%x err=0x%x)\n",
++							 i,
++							 rh.mbx[i].flush_count,
++							 cmd, status,
++							 hb, ei);
++						WRITE_ONCE(rh.mbx[i].wedged,
++							   true);
++						cmh_rh_drain_mbx(i, -EIO);
++						spin_unlock(&rh_process_lock);
++						continue;
++					}
++					/*
++					 * Backstop: eSW did not respond
++					 * to RESTART within the retry
++					 * budget.  Escalate to FLUSH
++					 * which is a harder reset of
++					 * the eSW mailbox state.
++					 */
++					dev_err(cmh_dev(),
++						"rh: watchdog: mbx[%u] RESTART unresponsive after %u ticks, escalating to FLUSH (attempt %u/%u)\n",
++						i, rh.mbx[i].restart_retries,
++						rh.mbx[i].flush_count,
++						CMH_RH_FLUSH_MAX_FAILURES);
++					cmh_reg_write32(MBX_IRQ_MASK,
++							base,
++							R_MBX_INTERRUPT);
++					cmh_reg_write32(MBX_COMMAND_FLUSH,
++							base,
++							R_MBX_COMMAND);
++					cmh_rh_poke_tail(base);
++					cmh_rh_drain_mbx(i, -EIO);
++					WRITE_ONCE(rh.mbx[i].restart_pending,
++						   false);
++					rh.mbx[i].restart_retries = 0;
++					spin_unlock(&rh_process_lock);
++					continue;
++				}
++				/*
++				 * RESTART was already issued on a prior
++				 * tick but the eSW hasn't cleared the
++				 * ERROR status yet.  Do NOT pop another
++				 * transaction -- that would cascade-kill
++				 * unrelated in-flight work.  Re-poke TAIL
++				 * in case the eSW missed the interrupt.
++				 */
++				cmh_rh_poke_tail(base);
++				dev_dbg_ratelimited(cmh_dev(),
++						    "rh: watchdog: mbx[%u] restart pending (%u/%u) status=0x%08x, re-poke\n",
++						    i,
++						    rh.mbx[i].restart_retries,
++						    CMH_RH_RESTART_MAX_RETRIES,
++						    status);
++				spin_unlock(&rh_process_lock);
++				continue;
++			}
++new_error:
++			dev_dbg_ratelimited(cmh_dev(),
++					    "rh: watchdog: mbx[%u] error status=0x%08x (missed error IRQ) head=%u tail=%u core=%u ecode=%u cmd_idx=%u\n",
++					    i, status, new_head,
++					    cmh_reg_read32(rh.cfg->mailboxes[i].reg_base,
++							   R_MBX_QUEUE_TAIL),
++					    MBX_STATUS_CORE_ID(status),
++					    MBX_STATUS_ERROR_CODE(status),
++					    MBX_STATUS_CMD_INDEX(status));
++			irq_bits = MBX_ERROR_IRQ;
++		} else {
++			/* eSW cleared ERROR -- recovery succeeded */
++			WRITE_ONCE(rh.mbx[i].restart_pending, false);
++			rh.mbx[i].restart_retries = 0;
++			rh.mbx[i].flush_count = 0;
++		}
++
++		if (new_head != rh.mbx[i].last_head || irq_bits) {
++			if (new_head != rh.mbx[i].last_head)
++				dev_dbg_ratelimited(cmh_dev(),
++						    "rh: watchdog: mbx[%u] head %u->%u (missed IRQ recovery)\n",
++						    i, rh.mbx[i].last_head,
++						    new_head);
++			cmh_rh_process_mbx(i, new_head, irq_bits);
++			rh.mbx[i].last_head = new_head;
++			rh.mbx[i].abort_stall_ticks = 0;
++		}
++
++		/*
++		 * Abort-stall detector: if the head-of-queue transaction
++		 * timed out (state == TXN_TIMED_OUT) but the eSW hasn't
++		 * responded (HEAD didn't advance, no ERROR status):
++		 *
++		 *   tick 1:        issue MBX_COMMAND_ABORT (serialised
++		 *                  under rh_process_lock -- safe against
++		 *                  concurrent RESTART/FLUSH)
++		 *   ticks 2..N-1:  wait for eSW to respond with ERROR
++		 *   tick N:         escalate to FLUSH + force-drain
++		 *
++		 * If the eSW responds with ERROR between ticks, the ERROR
++		 * status branch above handles RESTART recovery and resets
++		 * abort_stall_ticks via the restart_pending guard.
++		 */
++		if (!READ_ONCE(rh.mbx[i].wedged) &&
++		    !READ_ONCE(rh.mbx[i].restart_pending)) {
++			struct transaction_obj *head_txn;
++
++			head_txn = cmh_tm_peek_transaction(i);
++			if (head_txn &&
++			    atomic_read(&head_txn->state) == TXN_TIMED_OUT) {
++				unsigned int stall_max;
++				void __iomem *base =
++					rh.cfg->mailboxes[i].reg_base;
++
++				rh.mbx[i].abort_stall_ticks++;
++
++				if (rh.mbx[i].abort_stall_ticks == 1) {
++					dev_warn(cmh_dev(),
++						 "rh: watchdog: mbx[%u] head txn timed out, issuing ABORT\n",
++						 i);
++					cmh_reg_write32(MBX_COMMAND_ABORT,
++							base,
++							R_MBX_COMMAND);
++				}
++
++				stall_max = DIV_ROUND_UP(CMH_RH_ABORT_STALL_MS,
++							 max(watchdog_ms,
++							     CMH_RH_WATCHDOG_MS_MIN));
++				if (rh.mbx[i].abort_stall_ticks >=
++				    stall_max) {
++					dev_err(cmh_dev(),
++						"rh: watchdog: mbx[%u] abort stall (%u ticks) -- FLUSH + drain\n",
++						i, rh.mbx[i].abort_stall_ticks);
++					cmh_reg_write32(MBX_COMMAND_FLUSH,
++							base, R_MBX_COMMAND);
++					cmh_rh_drain_mbx(i, -ETIMEDOUT);
++					rh.mbx[i].abort_stall_ticks = 0;
++				}
++			} else {
++				rh.mbx[i].abort_stall_ticks = 0;
++			}
++		}
++		spin_unlock(&rh_process_lock);
++	}
++
++	if (rh.active) {
++		unsigned int wdog = max(watchdog_ms, CMH_RH_WATCHDOG_MS_MIN);
++
++		mod_timer(&rh_watchdog,
++			  jiffies + msecs_to_jiffies(wdog));
++	}
++}
++
++/*
++ * Resolve per-MBX Linux virqs for the CMH interrupt lines.
++ *
++ * Each mailbox declares its own completion interrupt in its device-tree
++ * child node; cmh_config_init() resolves these to Linux virqs and stores
++ * them in cfg->mailboxes[i].irq (-1 when the mailbox has no interrupt).
++ * IRQ mode requires every configured mailbox to have an interrupt; if
++ * none do (or only some), the response handler uses watchdog polling.
++ *
++ * Populates rh.irqs[] and rh.nirqs.  Returns 0 on success, or a
++ * negative errno if no IRQs could be resolved (polling-only mode).
++ */
++static int cmh_rh_resolve_irqs(struct cmh_config *cfg)
++{
++	u32 i, nwith = 0;
++
++	rh.nirqs = 0;
++
++	for (i = 0; i < cfg->mbx_count; i++)
++		if (cfg->mailboxes[i].irq >= 0)
++			nwith++;
++
++	if (nwith == 0)
++		return -ENODEV;
++
++	if (nwith != cfg->mbx_count) {
++		dev_warn(cmh_dev(),
++			 "rh: only %u/%u mailboxes have IRQs -- falling back to polling\n",
++			 nwith, cfg->mbx_count);
++		return -ENODEV;
++	}
++
++	/*
++	 * Collect distinct virqs.  Multiple mailboxes may be wired to the
++	 * same line; the threaded handler scans all mailboxes, so each
++	 * distinct line needs only one registration.  Requesting (and later
++	 * freeing) a shared line once per mailbox would fail -EBUSY / double
++	 * free.
++	 */
++	rh.nirqs = 0;
++	for (i = 0; i < cfg->mbx_count; i++) {
++		int irq = cfg->mailboxes[i].irq;
++		bool seen = false;
++		u32 j;
++
++		for (j = 0; j < rh.nirqs; j++)
++			if (rh.irqs[j] == irq) {
++				seen = true;
++				break;
++			}
++		if (seen)
++			continue;
++
++		rh.irqs[rh.nirqs++] = irq;
++		dev_dbg(cmh_dev(), "rh: MBX%u -> IRQ %d\n", i, irq);
++	}
++
++	return 0;
++}
++
++/**
++ * cmh_rh_init() - Initialize the response handler
++ * @cfg: Device configuration (mailbox count, MMIO bases, IRQ info)
++ *
++ * Resolve per-mailbox IRQs from the device tree (or module parameter
++ * override), register threaded IRQ handlers (hardirq + kthread), and
++ * arm the missed-IRQ software watchdog timer.  If no IRQs can be
++ * resolved, falls back to watchdog-only polling mode.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_rh_init(struct cmh_config *cfg)
++{
++	unsigned long irqflags;
++	int ret;
++	u32 i;
++
++	rh.cfg = cfg;
++	rh.nirqs = 0;
++	rh.active = false;
++	atomic_set(&rh.irq_count, 0);
++
++	/* Allocate per-MBX tracking */
++	rh.mbx = kcalloc(cfg->mbx_count, sizeof(*rh.mbx), GFP_KERNEL);
++	if (!rh.mbx)
++		return -ENOMEM;
++
++	/* Resolve per-MBX IRQs */
++	if (cmh_rh_resolve_irqs(cfg) < 0) {
++		/*
++		 * No IRQs available.  The watchdog timer provides
++		 * a polling fallback: it reads MBX head registers
++		 * periodically and processes completions.  This is
++		 * slower than IRQ-driven completion but functional.
++		 *
++		 * Completion latency in polling-only mode is bounded
++		 * by the watchdog interval (default 200 ms, tunable
++		 * via debugfs config/watchdog_ms).
++		 */
++		dev_warn(cmh_dev(),
++			 "rh: no IRQs -- using watchdog polling (interval %u ms)\n",
++			 watchdog_ms);
++
++		/* Seed last_head from HW before first watchdog tick */
++		for (i = 0; i < cfg->mbx_count; i++)
++			rh.mbx[i].last_head =
++				cmh_reg_read32(cfg->mailboxes[i].reg_base,
++					       R_MBX_QUEUE_HEAD);
++
++		rh.active = true;
++		timer_setup(&rh_watchdog, cmh_rh_watchdog_fn, 0);
++		mod_timer(&rh_watchdog, jiffies +
++			  msecs_to_jiffies(max(watchdog_ms,
++					       CMH_RH_WATCHDOG_MS_MIN)));
++		return 0;
++	}
++
++	/* Initialize per-MBX state: read current head positions */
++	for (i = 0; i < cfg->mbx_count; i++)
++		rh.mbx[i].last_head = cmh_reg_read32(rh.cfg->mailboxes[i].reg_base,
++						     R_MBX_QUEUE_HEAD);
++
++	/*
++	 * Register threaded IRQ handlers, one per DISTINCT line
++	 * (cmh_rh_resolve_irqs() de-duplicated shared virqs).  The handler
++	 * scans all mailboxes unconditionally, so one registration per line
++	 * covers every mailbox wired to it.
++	 *
++	 * When de-dup collapsed lines (nirqs < mbx_count) at least one line
++	 * is shared across mailboxes -- register IRQF_SHARED.
++	 */
++	irqflags = (rh.nirqs < cfg->mbx_count) ? IRQF_SHARED : 0;
++
++	for (i = 0; i < rh.nirqs; i++) {
++		ret = request_threaded_irq(rh.irqs[i],
++					   cmh_rh_hardirq,
++					   cmh_rh_thread,
++					   irqflags,
++					   "cmh", cfg);
++		if (ret) {
++			dev_err(cmh_dev(), "rh: request_threaded_irq(%d) for MBX%u failed (rc=%d)\n",
++				rh.irqs[i], i, ret);
++			/* Unwind previously registered IRQs */
++			while (i--)
++				free_irq(rh.irqs[i], cfg);
++			rh.nirqs = 0;
++			kfree(rh.mbx);
++			rh.mbx = NULL;
 +			return ret;
 +		}
 +	}
 +
-+	switch (cmd) {
-+	case CMH_IOCTL_KEY_NEW:
-+		return cmh_mgmt_key_new(argp);
-+	case CMH_IOCTL_KEY_WRITE:
-+		return cmh_mgmt_key_write(argp);
-+	case CMH_IOCTL_KEY_READ:
-+		return cmh_mgmt_key_read(argp);
-+	case CMH_IOCTL_KEY_FIND:
-+		return cmh_mgmt_key_find(argp);
-+	case CMH_IOCTL_KEY_GRANT:
-+		return cmh_mgmt_key_grant(argp, false);
-+	case CMH_IOCTL_KEY_DELETE:
-+		return cmh_mgmt_key_grant(argp, true);
-+	case CMH_IOCTL_DS_EXPORT:
-+		return cmh_mgmt_ds_export(argp);
-+	case CMH_IOCTL_DS_IMPORT:
-+		return cmh_mgmt_ds_import(argp);
-+	case CMH_IOCTL_KIC_HKDF1:
-+		return cmh_mgmt_kic_hkdf1(argp);
-+	case CMH_IOCTL_KIC_HKDF2:
-+		return cmh_mgmt_kic_hkdf2(argp);
-+	case CMH_IOCTL_KEY_NEW_RANDOM:
-+		return cmh_mgmt_key_new_random(argp);
-+	case CMH_IOCTL_KIC_AES_CMAC_KDF:
-+		return cmh_mgmt_kic_aes_cmac_kdf(argp);
-+	case CMH_IOCTL_KIC_DKEK_DERIVE:
-+		return cmh_mgmt_kic_dkek_derive(argp);
-+	case CMH_IOCTL_KEY_LIST:
-+		return cmh_mgmt_key_list(argp);
-+	case CMH_IOCTL_EAC_READ:
-+		return cmh_mgmt_eac_read(argp);
-+	/* PKE operations */
-+	case CMH_IOCTL_PKE_RSA_ENC:
-+		return cmh_mgmt_pke_rsa_enc(argp);
-+	case CMH_IOCTL_PKE_RSA_DEC:
-+		return cmh_mgmt_pke_rsa_dec(argp);
-+	case CMH_IOCTL_PKE_RSA_CRT_DEC:
-+		return cmh_mgmt_pke_rsa_crt_dec(argp);
-+	case CMH_IOCTL_PKE_RSA_KEYGEN:
-+		return cmh_mgmt_pke_rsa_keygen(argp);
-+	case CMH_IOCTL_PKE_ECDSA_SIGN:
-+		return cmh_mgmt_pke_ecdsa_sign(argp);
-+	case CMH_IOCTL_PKE_ECDH:
-+		return cmh_mgmt_pke_ecdh(argp);
-+	case CMH_IOCTL_PKE_ECDH_KEYGEN:
-+		return cmh_mgmt_pke_ecdh_keygen(argp);
-+	case CMH_IOCTL_PKE_EDDSA_SIGN:
-+		return cmh_mgmt_pke_eddsa_sign(argp);
-+	case CMH_IOCTL_PKE_EDDSA_VERIFY:
-+		return cmh_mgmt_pke_eddsa_verify(argp);
-+	case CMH_IOCTL_PKE_EC_KEYGEN:
-+		return cmh_mgmt_pke_ec_keygen(argp);
-+	case CMH_IOCTL_PKE_EC_PUBGEN:
-+		return cmh_mgmt_pke_ec_pubgen(argp);
-+	case CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA:
-+		return cmh_mgmt_pke_eddsa_keygen_sca(argp);
-+	/* SM2 operations */
-+	case CMH_IOCTL_SM2_ECDH_KEYGEN:
-+		return cmh_mgmt_sm2_ecdh_keygen(argp);
-+	case CMH_IOCTL_SM2_ECDH:
-+		return cmh_mgmt_sm2_ecdh(argp);
-+	case CMH_IOCTL_SM2_DEC_POINT:
-+		return cmh_mgmt_sm2_dec_point(argp);
-+	case CMH_IOCTL_SM2_ENC_POINT:
-+		return cmh_mgmt_sm2_enc_point(argp);
-+	case CMH_IOCTL_SM2_ID_DIGEST:
-+		return cmh_mgmt_sm2_id_digest(argp);
-+	case CMH_IOCTL_SM2_ECDH_HASH:
-+		return cmh_mgmt_sm2_ecdh_hash(argp);
-+	case CMH_IOCTL_SM2_DEC_HASH:
-+		return cmh_mgmt_sm2_dec_hash(argp);
-+	case CMH_IOCTL_SM2_ENC_HASH:
-+		return cmh_mgmt_sm2_enc_hash(argp);
-+	/* PQC operations */
-+	case CMH_IOCTL_ML_KEM_KEYGEN:
-+		return cmh_mgmt_ml_kem_keygen(argp);
-+	case CMH_IOCTL_ML_KEM_ENC:
-+		return cmh_mgmt_ml_kem_enc(argp);
-+	case CMH_IOCTL_ML_KEM_DEC:
-+		return cmh_mgmt_ml_kem_dec(argp);
-+	case CMH_IOCTL_ML_DSA_KEYGEN:
-+		return cmh_mgmt_ml_dsa_keygen(argp);
-+	case CMH_IOCTL_ML_DSA_SIGN:
-+		return cmh_mgmt_ml_dsa_sign(argp);
-+	case CMH_IOCTL_SLHDSA_KEYGEN:
-+		return cmh_mgmt_slhdsa_keygen(argp);
-+	case CMH_IOCTL_SLHDSA_SIGN:
-+		return cmh_mgmt_slhdsa_sign(argp);
-+	case CMH_IOCTL_SLHDSA_SIGN_PREHASH:
-+		return cmh_mgmt_slhdsa_sign_prehash(argp);
-+	/* DRBG management */
-+	case CMH_IOCTL_DRBG_CONFIG:
-+		return cmh_mgmt_drbg_config(argp);
-+	default:
-+		return -ENOTTY;
++	rh.active = true;
++
++	/* Enable MBX completion interrupts (DONE + ERROR) */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		u32 stale;
++
++		/*
++		 * W1C any interrupt bits that accumulated between
++		 * MQI setup and now (e.g. CMH eSW processing stale
++		 * commands) before enabling the mask.
++		 */
++		stale = cmh_reg_read32(cfg->mailboxes[i].reg_base,
++				       R_MBX_INTERRUPT);
++		if (stale)
++			cmh_reg_write32(stale, cfg->mailboxes[i].reg_base,
++					R_MBX_INTERRUPT);
++
++		cmh_reg_write32(MBX_IRQ_MASK,
++				cfg->mailboxes[i].reg_base,
++				R_MBX_INTERRUPT_MASK);
 +	}
-+}
 +
-+/*
-+ * cmh_mgmt_ioctl() - serialised entry point for /dev/cmh_mgmt
-+ *
-+ * Holds cmh_mgmt_lock across the whole operation so the shared
-+ * management-plane state (SYS_REF_TEMP, datastore) cannot be clobbered
-+ * by a concurrent ioctl on another open of the device.
-+ */
-+static long cmh_mgmt_ioctl(struct file *file, unsigned int cmd,
-+			   unsigned long arg)
-+{
-+	void __user *argp = (void __user *)arg;
-+	long ret;
-+
-+	mutex_lock(&cmh_mgmt_lock);
-+	ret = cmh_mgmt_ioctl_locked(file, cmd, argp);
-+	mutex_unlock(&cmh_mgmt_lock);
-+	return ret;
-+}
-+
-+/* -- File operations ----------------------- */
-+
-+/*
-+ * Capability is checked once at open time.  A privileged process may
-+ * pass the resulting fd to an unprivileged helper -- this delegation
-+ * model is intentional and mirrors /dev/kvm, /dev/loop-control, etc.
-+ */
-+static int cmh_mgmt_open(struct inode *inode, struct file *file)
-+{
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
++	/* Arm missed-IRQ watchdog timer */
++	timer_setup(&rh_watchdog, cmh_rh_watchdog_fn, 0);
++	mod_timer(&rh_watchdog, jiffies +
++		  msecs_to_jiffies(max(watchdog_ms,
++				       CMH_RH_WATCHDOG_MS_MIN)));
 +
 +	return 0;
 +}
 +
-+static const struct file_operations cmh_mgmt_fops = {
-+	.owner          = THIS_MODULE,
-+	.open           = cmh_mgmt_open,
-+	.unlocked_ioctl = cmh_mgmt_ioctl,
-+	.compat_ioctl   = compat_ptr_ioctl,
-+};
++/**
++ * cmh_rh_suspend() - Suspend the response handler
++ * @cfg: Device configuration
++ *
++ * Stop the watchdog timer and mask mailbox interrupts at the hardware
++ * level.  The IRQ handlers remain registered so that resume can
++ * re-enable them without re-requesting.
++ */
++void cmh_rh_suspend(struct cmh_config *cfg)
++{
++	u32 i;
 +
-+static struct miscdevice cmh_mgmt_dev = {
-+	.minor = MISC_DYNAMIC_MINOR,
-+	.name  = "cmh_mgmt",
-+	.fops  = &cmh_mgmt_fops,
-+	.mode  = 0660,
-+};
++	if (!rh.active)
++		return;
 +
-+static bool cmh_mgmt_registered;
++	/*
++	 * Clear rh.active before deleting the timer: the watchdog re-arms
++	 * itself only while rh.active is set, so an in-flight callback will
++	 * not re-queue the timer once this is cleared.  Keep
++	 * timer_delete_sync (not _shutdown) so cmh_rh_resume() can re-arm.
++	 */
++	rh.active = false;
++
++	/* Stop the watchdog before masking HW interrupts */
++	timer_delete_sync(&rh_watchdog);
++
++	/* Mask MBX interrupts at the hardware level */
++	for (i = 0; i < cfg->mbx_count; i++)
++		cmh_reg_write32(0, cfg->mailboxes[i].reg_base,
++				R_MBX_INTERRUPT_MASK);
++
++	/*
++	 * Ensure no threaded IRQ handler is still in-flight.
++	 * After masking, a handler may already have been scheduled.
++	 * synchronize_irq() waits for it to complete before we
++	 * proceed with suspend (which tears down TM state).
++	 */
++	for (i = 0; i < rh.nirqs; i++)
++		synchronize_irq(rh.irqs[i]);
++}
 +
 +/**
-+ * cmh_mgmt_register() - Register the /dev/cmh_mgmt misc device
++ * cmh_rh_resume() - Resume the response handler after suspend
++ * @cfg: Device configuration
++ *
++ * Re-synchronize per-mailbox head tracking with hardware, clear stale
++ * interrupt bits accumulated during the power transition, re-enable
++ * mailbox completion interrupts, and re-arm the watchdog timer.
++ */
++void cmh_rh_resume(struct cmh_config *cfg)
++{
++	u32 i;
++
++	if (!rh.mbx || !cfg)
++		return;
++
++	/* Re-sync per-MBX head tracking with hardware */
++	for (i = 0; i < cfg->mbx_count; i++) {
++		u32 stale;
++
++		rh.mbx[i].last_head =
++			cmh_reg_read32(cfg->mailboxes[i].reg_base,
++				       R_MBX_QUEUE_HEAD);
++
++		/* W1C any stale interrupt bits from the power transition */
++		stale = cmh_reg_read32(cfg->mailboxes[i].reg_base,
++				       R_MBX_INTERRUPT);
++		if (stale)
++			cmh_reg_write32(stale, cfg->mailboxes[i].reg_base,
++					R_MBX_INTERRUPT);
++
++		/* Re-enable MBX completion interrupts */
++		cmh_reg_write32(MBX_IRQ_MASK, cfg->mailboxes[i].reg_base,
++				R_MBX_INTERRUPT_MASK);
++	}
++
++	rh.active = true;
++
++	/* Re-arm the watchdog */
++	mod_timer(&rh_watchdog, jiffies +
++		  msecs_to_jiffies(max(watchdog_ms,
++				       CMH_RH_WATCHDOG_MS_MIN)));
++}
++
++/**
++ * cmh_rh_cleanup() - Clean up the response handler
++ * @cfg: Device configuration
++ *
++ * Stop the watchdog timer, mask mailbox interrupts at the hardware
++ * level, release all registered IRQ handlers, and free per-mailbox
++ * tracking state.  Safe to call even if init was never completed.
++ */
++void cmh_rh_cleanup(struct cmh_config *cfg)
++{
++	if (rh.active) {
++		u32 i;
++
++		/*
++		 * Clear rh.active first (the watchdog re-arm is gated on
++		 * it), then shut the timer down: after timer_shutdown_sync()
++		 * a stray mod_timer() is a no-op, so the callback cannot
++		 * resurrect the timer before rh.mbx is freed.  A later probe
++		 * re-inits it via timer_setup() in cmh_rh_init().
++		 */
++		rh.active = false;
++
++		/* Cancel watchdog before disabling interrupts */
++		timer_shutdown_sync(&rh_watchdog);
++
++		/* Disable MBX interrupts before releasing handlers */
++		for (i = 0; i < cfg->mbx_count; i++)
++			cmh_reg_write32(0,
++					cfg->mailboxes[i].reg_base,
++					R_MBX_INTERRUPT_MASK);
++
++		/* Release all per-MBX IRQs */
++		for (i = 0; i < rh.nirqs; i++)
++			free_irq(rh.irqs[i], cfg);
++		dev_dbg(cmh_dev(), "rh: %u IRQs released\n", rh.nirqs);
++		rh.nirqs = 0;
++	}
++
++	dev_dbg(cmh_dev(), "rh: %u IRQs handled\n",
++		atomic_read(&rh.irq_count));
++
++	kfree(rh.mbx);
++	rh.mbx = NULL;
++}
++
++/* -- debugfs timeout accessor ------------------------------------------ */
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++/**
++ * cmh_rh_timeout_watchdog_ptr() - Return pointer to watchdog_ms for debugfs
++ *
++ * Exposes the Response Handler watchdog timeout for runtime tuning
++ * via debugfs config/ directory.
++ *
++ * Return: pointer to the static watchdog_ms variable.
++ */
++unsigned int *cmh_rh_timeout_watchdog_ptr(void) { return &watchdog_ms; }
++#endif
+diff --git a/drivers/crypto/cmh/cmh_sysfs.c b/drivers/crypto/cmh/cmh_sysfs.c
+new file mode 100644
+index 000000000000..ab482a222167
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_sysfs.c
+@@ -0,0 +1,108 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- sysfs Device Attributes
++ *
++ * Exposes hardware identity and status as read-only sysfs attributes
++ * under /sys/devices/platform/cmh/.  Wired via .dev_groups in the
++ * platform_driver struct -- the driver core creates and removes these
++ * automatically around .probe() / .remove().
++ *
++ * Because .dev_groups is used (not manual sysfs_create_group), the
++ * driver core guarantees that attributes are created after .probe()
++ * sets drvdata and removed before .remove() clears it.  Therefore
++ * platform_get_drvdata() cannot return NULL in any show callback and
++ * no NULL check is needed.  Same pattern as caam/ctrl.c and
++ * ccree/cc_sysfs.c.
++ */
++
++#include <linux/device.h>
++#include <linux/platform_device.h>
++#include <linux/sysfs.h>
++
++#include "cmh.h"
++#include "cmh_registers.h"
++#include "cmh_sysfs.h"
++
++static ssize_t fw_version_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	struct cmh_device *cmh = platform_get_drvdata(to_platform_device(dev));
++	struct cmh_config *cfg = &cmh->config;
++
++	if (!cfg->sic_mapped)
++		return -ENODEV;
++
++	return sysfs_emit(buf, "0x%08x\n",
++			  cmh_reg_read32(cfg->sic_mapped, R_SIC_SW_VERSION));
++}
++static DEVICE_ATTR_RO(fw_version);
++
++static ssize_t hw_version_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
++{
++	struct cmh_device *cmh = platform_get_drvdata(to_platform_device(dev));
++	struct cmh_config *cfg = &cmh->config;
++
++	if (!cfg->sic_mapped)
++		return -ENODEV;
++
++	return sysfs_emit(buf, "0x%08x\n",
++			  cmh_reg_read32(cfg->sic_mapped, R_SIC_HW_VERSION0));
++}
++static DEVICE_ATTR_RO(hw_version);
++
++static ssize_t boot_status_show(struct device *dev,
++				struct device_attribute *attr, char *buf)
++{
++	struct cmh_device *cmh = platform_get_drvdata(to_platform_device(dev));
++	struct cmh_config *cfg = &cmh->config;
++
++	if (!cfg->sic_mapped)
++		return -ENODEV;
++
++	return sysfs_emit(buf, "0x%08x\n",
++			  cmh_reg_read32(cfg->sic_mapped, R_SIC_BOOT_STATUS));
++}
++static DEVICE_ATTR_RO(boot_status);
++
++static ssize_t mbx_available_show(struct device *dev,
++				  struct device_attribute *attr, char *buf)
++{
++	struct cmh_device *cmh = platform_get_drvdata(to_platform_device(dev));
++	struct cmh_config *cfg = &cmh->config;
++
++	if (!cfg->sic_mapped)
++		return -ENODEV;
++
++	return sysfs_emit(buf, "0x%08x\n",
++			  cmh_reg_read32(cfg->sic_mapped, R_SIC_MBX_AVAILABILITY));
++}
++static DEVICE_ATTR_RO(mbx_available);
++
++static ssize_t mbx_count_show(struct device *dev,
++			      struct device_attribute *attr, char *buf)
++{
++	struct cmh_device *cmh = platform_get_drvdata(to_platform_device(dev));
++
++	return sysfs_emit(buf, "%u\n", cmh->config.mbx_count);
++}
++static DEVICE_ATTR_RO(mbx_count);
++
++static struct attribute *cmh_sysfs_attrs[] = {
++	&dev_attr_fw_version.attr,
++	&dev_attr_hw_version.attr,
++	&dev_attr_boot_status.attr,
++	&dev_attr_mbx_available.attr,
++	&dev_attr_mbx_count.attr,
++	NULL,
++};
++
++static const struct attribute_group cmh_sysfs_group = {
++	.attrs = cmh_sysfs_attrs,
++};
++
++const struct attribute_group *cmh_sysfs_groups[] = {
++	&cmh_sysfs_group,
++	NULL,
++};
+diff --git a/drivers/crypto/cmh/cmh_txn.c b/drivers/crypto/cmh/cmh_txn.c
+new file mode 100644
+index 000000000000..0900f903a58a
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_txn.c
+@@ -0,0 +1,2173 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Transaction Manager
++ *
++ * Dedicated kthread that dequeues command messages, builds VCQs in
++ * DMA queue slots, and rings the MBX doorbell.
++ *
++ * Command flow:
++ *   1. Caller posts command_msg via cmh_tm_post_command()
++ *   2. TM thread wakes, dequeues msg from CMQ
++ *   3. Selects mailbox (core-to-MBX affinity, or caller-pinned)
++ *   4. Copies pre-built VCQ entries into DMA slot at tail
++ *   5. Creates transaction_obj, appends to per-MBX txn queue
++ *   6. Writes tail+1 -> R_MBX_QUEUE_TAIL (doorbell)
++ *
++ * The Response Handler (cmh_rh.c) walks per-MBX txn queues
++ * when an IRQ fires and the head advances, firing completion callbacks.
++ *
++ * Transaction state machine
++ * -------------------------
++ * Each async transaction moves through the following states.  DMA
++ * buffers remain mapped and owned by the HW until the COMPLETE state
++ * is reached -- only then are they safe to unmap/free.
++ *
++ *   QUEUED --[TM posts to HW]--> INFLIGHT
++ *   (cmq)   |                       |      \
++ *          |                       |       \--[timer fires]-->
++ *          |                       |            TIMED_OUT
++ *          |                       |               |
++ *          |                  [HW completes /   [HW completes /
++ *          |                   RH pops txn]      RH pops txn]
++ *          |                       |               |
++ *          |                       v               v
++ *          |                    COMPLETE        COMPLETE
++ *          |                   (err=HW rc)    (err=-ETIMEDOUT)
++ *          |
++ *          +--[pre-submit fail]--> freed (callback never fires)
++ *
++ * Note: QUEUED is the command_msg phase (sitting in the CMQ list,
++ * not yet a transaction_obj).  The transaction_obj states tracked
++ * by atomic_cmpxchg are INFLIGHT, TIMED_OUT, and COMPLETE only.
++ *
++ * Completion callback context guarantee:
++ *   The crypto_request_complete() callback is invoked from one of:
++ *     - The RH threaded IRQ handler (process context, BH disabled)
++ *     - The watchdog timer (softirq / timer context)
++ *     - The TM kthread during queue drain/cleanup (process context)
++ *
++ *   It is NEVER invoked from hardirq context.
++ *
++ *   The watchdog path runs from timer softirq because it must recover
++ *   missed IRQs without sleeping.  This is crypto-API-compliant:
++ *   crypto_request_complete() is documented safe from any context
++ *   (including softirq).  Callers must NOT assume process context in
++ *   their completion callbacks -- all operations therein must be
++ *   softirq-safe (no mutex, no GFP_KERNEL, no sleeping locks).
++ *
++ *   For backlog promotion the -EINPROGRESS notification is issued with
++ *   the CMQ spinlock dropped, so a consumer may safely resubmit (or take
++ *   sleeping locks) from that callback without re-entering cmq_lock.
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/kthread.h>
++#include <linux/slab.h>
++#include <linux/delay.h>
++#include <linux/io.h>
++#include <linux/iopoll.h>
++#include <linux/string.h>
++#include <linux/completion.h>
++#include <linux/overflow.h>
++#include <linux/refcount.h>
++
++#include "cmh_txn.h"
++#include "cmh_rh.h"
++#include "cmh_registers.h"
++#include "cmh_config.h"
++#include "cmh_vcq.h"
++#include "cmh_debugfs.h"
++#include "cmh_dma.h"
++
++/* Module State */
++
++static struct {
++	struct cmh_config      *cfg;
++	struct task_struct     *thread;
++	/*
++	 * Gates submission acceptance in cmh_tm_post_command(); the TM
++	 * thread's lifetime is governed by kthread_should_stop(), not this.
++	 */
++	bool                    running;
++
++	/* Command Message Queue (CMQ) */
++	struct list_head        cmq;
++	spinlock_t              cmq_lock;   /* protects cmq + backlog lists */
++	wait_queue_head_t       cmq_waitq;
++
++	/* Backlog queue for CRYPTO_TFM_REQ_MAY_BACKLOG requests */
++	struct list_head        backlog;
++	u32                     backlog_depth;
++
++	/* Per-mailbox transaction queues */
++	struct cmh_mbx_txq     *txqs;       /* array[cfg->mbx_count] */
++
++	/* Round-robin mailbox selector */
++	u32                     next_mbx;
++} tm;
++
++/*
++ * Command Message Queue and backlog depths.  Built-in defaults; a debug
++ * build can tune them at runtime via debugfs config/{cmq_max_depth,
++ * backlog_max_depth}.  Change the #defines to alter the compiled-in
++ * values (backlog 0 disables the backlog).
++ */
++#define CMH_TM_CMQ_MAX_DEPTH		256
++#define CMH_TM_BACKLOG_MAX_DEPTH	1024
++
++static unsigned int cmq_max_depth = CMH_TM_CMQ_MAX_DEPTH;
++static unsigned int backlog_max_depth = CMH_TM_BACKLOG_MAX_DEPTH;
++
++static unsigned int async_timeout_ms = 2000;
++
++#define CMH_TM_BACKOFF_MIN_US   100  /* queue-full backoff range (us) */
++#define CMH_TM_BACKOFF_MAX_US   500
++static unsigned int cmq_depth;       /* current CMQ depth, protected by tm.cmq_lock */
++
++/*
++ * Monotonically increasing counter bumped by cmh_tm_txq_completion_notify().
++ * Used as a generation check in the queue-full backoff predicate so that
++ * wait_event_interruptible_timeout() returns immediately when a TXQ
++ * completion frees a slot, rather than sleeping for the full timeout.
++ */
++static atomic_t txq_completion_gen;
++
++/* -- Debugfs stat helpers (avoid anonymous compound blocks) ------------- */
++
++static void cmh_stat_inc_mbx_queue_full(u32 mbx_idx)
++{
++	struct cmh_mbx_stats *s = cmh_debugfs_mbx_stats(mbx_idx);
++
++	if (s)
++		atomic64_inc(&s->queue_full_count);
++}
++
++static void cmh_stat_record_vcq_submit(u32 mbx_idx, u32 num_vcqs, u32 depth)
++{
++	struct cmh_mbx_stats *s = cmh_debugfs_mbx_stats(mbx_idx);
++
++	if (s) {
++		atomic64_add(num_vcqs, &s->vcqs_submitted);
++		cmh_stat_update_max(&s->max_queue_depth, (s64)depth);
++	}
++}
++
++static void cmh_stat_inc_tm_backoff(void)
++{
++	struct cmh_tm_stats *s = cmh_debugfs_tm_stats();
++
++	if (s)
++		atomic64_inc(&s->backoff_count);
++}
++
++static void cmh_stat_inc_cmq_eagain(void)
++{
++	struct cmh_tm_stats *s = cmh_debugfs_tm_stats();
++
++	if (s)
++		atomic64_inc(&s->cmq_eagain_count);
++}
++
++static void cmh_stat_record_cmq_post(u32 depth)
++{
++	struct cmh_tm_stats *s = cmh_debugfs_tm_stats();
++
++	if (s) {
++		atomic64_inc(&s->cmq_posts);
++		cmh_stat_update_max(&s->cmq_depth_max, (s64)depth);
++	}
++}
++
++static void cmh_stat_inc_async_timeout(void)
++{
++	struct cmh_tm_stats *s = cmh_debugfs_tm_stats();
++
++	if (s)
++		atomic64_inc(&s->async_timeout_count);
++}
++
++/*
++ * Drop one reference on a command_msg; free when the last ref is dropped.
++ * Used by cmh_tm_submit_sync() to share msg ownership between the
++ * waiter (caller) and the TM subsystem (thread or cleanup drain).
++ */
++static void command_msg_put(struct command_msg *msg)
++{
++	if (refcount_dec_and_test(&msg->refs)) {
++		kfree(msg->vcq_data);
++		kfree(msg);
++	}
++}
++
++/*
++ * Drop one reference on a transaction_obj; free when the last ref drops.
++ * Two references are held when the per-request timeout timer is armed:
++ * one for the TXQ owner (RH/cleanup), one for the timer callback.
++ * When no timer is armed, only the owner ref exists.
++ */
++static void txn_put(struct transaction_obj *txn)
++{
++	if (refcount_dec_and_test(&txn->refs))
++		kfree(txn);
++}
++
++/*
++ * Per-request async timeout callback (runs in softirq / timer context).
++ *
++ * This function ONLY marks the transaction state as TIMED_OUT via
++ * atomic cmpxchg and drops the timer reference.  It does NOT fire
++ * the completion callback, does NOT touch DMA buffers, and does NOT
++ * write any MBX registers.
++ *
++ * Rationale: the HW may still be writing to DMA buffers at this
++ * point.  Unmapping or freeing them here would be a use-after-free.
++ * The actual -ETIMEDOUT completion fires later, from process
++ * context, when the RH threaded IRQ pops the transaction after the
++ * HW finishes (or after MBX abort/drain on rmmod/suspend).
++ *
++ * MBX_COMMAND_ABORT is NOT issued here.  It is issued by the RH
++ * watchdog abort-stall detector under rh_process_lock, which
++ * serialises it against RESTART/FLUSH recovery commands.  Writing
++ * ABORT from timer softirq without the lock caused a race where
++ * concurrent timeouts clobbered an in-progress RESTART, wedging
++ * the mailbox.
++ *
++ * Context: softirq (timer).  Must not sleep.
++ */
++static void txn_timeout_fn(struct timer_list *t)
++{
++	struct transaction_obj *txn = timer_container_of(txn, t, timeout_timer);
++	int old;
++
++	old = atomic_cmpxchg(&txn->state, TXN_INFLIGHT, TXN_TIMED_OUT);
++	if (old == TXN_INFLIGHT) {
++		dev_err_ratelimited(cmh_dev(),
++				    "tm: async timeout vcq=%u..%u mbx=%u cmd_id=0x%08x\n",
++				    txn->first_vcq_id,
++				    txn->last_vcq_id, txn->mailbox_idx,
++				    txn->command_id);
++		cmh_stat_inc_async_timeout();
++	}
++
++	txn_put(txn); /* drop timer ref */
++}
++
++/**
++ * cmh_txn_finish() - Complete a popped transaction with FSM + timer cleanup
++ * @txn: Transaction object to complete
++ * @error: Error code from HW (0 on success)
++ *
++ * Three cases:
++ *   1. Normal: state INFLIGHT -> COMPLETE.  Fire callback with HW error.
++ *   2. Timed out: state already TXN_TIMED_OUT (timer marked it).
++ *      Fire callback with -ETIMEDOUT.  DMA is now safe because the
++ *      HW has finished and HEAD has advanced past this VCQ.
++ *   3. Force-cancel (drain/quiesce): handled by caller, not here.
++ */
++void cmh_txn_finish(struct transaction_obj *txn, int error)
++{
++	int old;
++
++	old = atomic_cmpxchg(&txn->state, TXN_INFLIGHT, TXN_COMPLETE);
++
++	/* Dequeue the timer if still pending; drop timer ref if we did */
++	if (timer_delete(&txn->timeout_timer))
++		txn_put(txn);
++
++	if (old == TXN_INFLIGHT) {
++		/* HW completion (may carry error) */
++		if (txn->complete)
++			txn->complete(txn->completion_data, error);
++	} else if (old == TXN_TIMED_OUT) {
++		/* Timer won earlier; now HW is done -- deliver -ETIMEDOUT */
++		if (txn->complete)
++			txn->complete(txn->completion_data, -ETIMEDOUT);
++	}
++
++	txn_put(txn); /* drop owner ref */
++}
++
++/* Mailbox Slot Addressing */
++
++/*
++ * Return a kernel-virtual pointer to the VCQ slot for the given vcqid.
++ * Mirrors CMH eSW's mbx_queue_addr() but uses the kernel virt_addr.
++ */
++static void *mbx_slot_ptr(struct cmh_mbx_config *mbx, u32 vcqid)
++{
++	u32 slot_mask = (1U << mbx->slots_log2) - 1U;
++	u32 slot_offset = (vcqid & slot_mask) << mbx->stride_log2;
++
++	return (u8 *)mbx->virt_addr + slot_offset;
++}
++
++/*
++ * Return the number of free slots in a mailbox queue.
++ */
++static u32 mbx_free_slots(struct cmh_mbx_config *mbx)
++{
++	u32 head = cmh_reg_read32(mbx->reg_base, R_MBX_QUEUE_HEAD);
++	u32 tail = cmh_reg_read32(mbx->reg_base, R_MBX_QUEUE_TAIL);
++	u32 size = 1U << mbx->slots_log2;
++
++	return size - (u32)(tail - head);
++}
++
++/**
++ * cmh_tm_max_cmds_per_vcq() - Return max commands per VCQ slot
++ *
++ * Scans all mailbox configurations and returns the minimum number of
++ * VCQ command entries that fit in a single slot, clamped to the
++ * MIN_VCQ_CMDS..MAX_VCQ_CMDS range.
++ *
++ * Return: Maximum usable VCQ command count per slot.
++ */
++u32 cmh_tm_max_cmds_per_vcq(void)
++{
++	u32 i, min_cmds = MAX_VCQ_CMDS;
++
++	for (i = 0; i < tm.cfg->mbx_count; i++) {
++		u32 stride = 1U << tm.cfg->mailboxes[i].stride_log2;
++		u32 cmds = stride / (u32)sizeof(struct vcq_cmd);
++
++		if (cmds < min_cmds)
++			min_cmds = cmds;
++	}
++
++	if (min_cmds < MIN_VCQ_CMDS)
++		min_cmds = MIN_VCQ_CMDS;
++
++	return min_cmds;
++}
++
++/**
++ * cmh_tm_mbx_count() - Return the number of configured mailboxes
++ *
++ * Return: Number of mailboxes in the current configuration.
++ */
++u32 cmh_tm_mbx_count(void)
++{
++	return tm.cfg->mbx_count;
++}
++
++/* Core-to-MBX Affinity -- Config-Driven Multi-Instance Support */
++
++/*
++ * Per-core-type configuration table.  Each entry holds one or more
++ * (core_id, mbx_idx) instances.  Defaults: single instance per core
++ * type with the standard CORE_ID_* and MBX auto-assigned on first use
++ * (mbx_idx = -1).  Module params can override for explicit assignment
++ * and multi-instance support.
++ *
++ * Round-robin across instances for each new crypto operation.
++ */
++
++struct core_instance_info {
++	u32		core_id;	/* VCQ dispatch core_id */
++	/*
++	 * Assigned MBX index, or -1 (sentinel) for auto-assign on first
++	 * use.  Uses atomic_t for a lockless once-only latch: the first
++	 * caller does atomic_cmpxchg(&mbx_idx, -1, new_mbx); all later
++	 * callers see the winning value via atomic_read().
++	 */
++	atomic_t	mbx_idx;
++};
++
++struct core_type_info {
++	u32		num_instances;
++	struct core_instance_info instances[CMH_MAX_CORE_INSTANCES];
++	atomic_t	next_instance;	/* round-robin counter */
++};
++
++static struct core_type_info core_types[CMH_NUM_CORE_TYPES] = {
++	[CMH_CORE_HC]  = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_HC,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_AES] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_AES,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_SM4] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_SM4,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_SM3] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_SM3,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_CCP] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_CCP,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_PKE] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_PKE,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_QSE] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_QSE,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++	[CMH_CORE_HCQ] = { .num_instances = 1,
++	  .instances = { { .core_id = CORE_ID_HCQ,
++			   .mbx_idx = ATOMIC_INIT(-1) } } },
++};
++
++/* Round-robin counter for auto-assigning MBXes to core instances */
++static atomic_t affinity_next_mbx = ATOMIC_INIT(0);
++
++/**
++ * cmh_tm_affinity_reset() - Reset core-to-MBX affinity state
++ *
++ * Clears all auto-assigned MBX bindings and resets round-robin
++ * counters for both the global MBX allocator and per-core-type
++ * instance selectors.
++ */
++void cmh_tm_affinity_reset(void)
++{
++	u32 i, j;
++
++	atomic_set(&affinity_next_mbx, 0);
++
++	/* Reset multi-instance table */
++	for (i = 0; i < CMH_NUM_CORE_TYPES; i++) {
++		struct core_type_info *ct = &core_types[i];
++
++		atomic_set(&ct->next_instance, 0);
++		for (j = 0; j < ct->num_instances; j++)
++			atomic_set(&ct->instances[j].mbx_idx, -1);
++	}
++}
++
++/**
++ * cmh_core_default_id() - Return default core_id for a core type
++ * @type: Core type selector
++ *
++ * Returns the first-instance core_id for @type without advancing the
++ * round-robin counter.  Used by callers pinned to a fixed MBX (e.g.
++ * mgmt ioctls on MGMT_MBX) that only need the VCQ core_id field.
++ *
++ * Return: VCQ core_id value for the default instance of @type.
++ */
++u32 cmh_core_default_id(enum cmh_core_type type)
++{
++	if (WARN_ON_ONCE(type >= CMH_NUM_CORE_TYPES))
++		return CORE_ID_NUM;
++
++	return core_types[type].instances[0].core_id;
++}
++
++/**
++ * cmh_core_select_instance() - Select a core instance via round-robin
++ * @type: Core type selector
++ *
++ * Round-robin across configured instances, each permanently pinned to
++ * its MBX (auto-assigned on first use if mbx_idx was -1).
++ *
++ * Uses atomic_inc_return (pre-increment), so the very first call for a
++ * given type returns instance[1 % N].  Over the lifetime of the module
++ * the distribution is perfectly balanced; the off-by-one only affects
++ * the first cycle.
++ *
++ * The (u32) cast before the modulo ensures correct behaviour across
++ * the INT_MAX -> INT_MIN wraparound of atomic_t: (u32)INT_MIN =
++ * 0x80000000, and 0x80000000 % N still yields a valid index.
++ *
++ * Return: A core_dispatch with (core_id, mbx_idx) for the selected
++ *         instance.
++ */
++struct core_dispatch cmh_core_select_instance(enum cmh_core_type type)
++{
++	struct core_type_info *ct;
++	struct core_instance_info *inst;
++	struct core_dispatch d;
++	u32 idx, count;
++	s32 mbx, new_mbx, old;
++
++	if (WARN_ON_ONCE(type >= CMH_NUM_CORE_TYPES))
++		return (struct core_dispatch){ .core_id = CORE_ID_NUM, .mbx_idx = -1 };
++
++	ct = &core_types[type];
++
++	/*
++	 * A core type absent from CORE_ENABLE has num_instances == 0 (algs
++	 * for it should never have been reached).  Return CORE_ID_NUM, the
++	 * out-of-range core sentinel: if a caller ignores this and submits,
++	 * the eSW rejects the unknown core rather than the VCQ landing on
++	 * CORE_ID_SYS (0).  Also avoids the divide-by-zero below.
++	 */
++	if (WARN_ONCE(!ct->num_instances,
++		      "cmh: dispatch for absent core type %u\n", type))
++		return (struct core_dispatch){ .core_id = CORE_ID_NUM, .mbx_idx = -1 };
++
++	idx = (u32)atomic_inc_return(&ct->next_instance) % ct->num_instances;
++	inst = &ct->instances[idx];
++
++	d.core_id = inst->core_id;
++
++	mbx = atomic_read(&inst->mbx_idx);
++	if (mbx >= 0) {
++		d.mbx_idx = mbx;
++		return d;
++	}
++
++	/* Auto-assign on first use */
++	count = tm.cfg->mbx_count;
++	new_mbx = (s32)((u32)atomic_inc_return(&affinity_next_mbx) % count);
++	old = atomic_cmpxchg(&inst->mbx_idx, -1, new_mbx);
++
++	if (old >= 0)
++		d.mbx_idx = old;
++	else
++		d.mbx_idx = new_mbx;
++
++	return d;
++}
++
++/**
++ * cmh_core_num_instances() - Return instance count for a core type
++ * @type: Core type selector
++ *
++ * Return: Number of configured instances for @type, or 0 if the core is
++ *         absent from the CORE_ENABLE register.
++ */
++u32 cmh_core_num_instances(enum cmh_core_type type)
++{
++	if (WARN_ON_ONCE(type >= CMH_NUM_CORE_TYPES))
++		return 1;
++
++	return core_types[type].num_instances;
++}
++
++/**
++ * cmh_core_get_instance() - Get dispatch info for a specific instance
++ * @type: Core type selector
++ * @idx: Instance index within @type
++ *
++ * Returns (core_id, mbx_idx) for a specific instance by index,
++ * without advancing the round-robin counter.  Triggers MBX auto-assign
++ * on first use if the instance has no MBX yet.
++ *
++ * Return: A core_dispatch with (core_id, mbx_idx) for instance @idx.
++ */
++struct core_dispatch cmh_core_get_instance(enum cmh_core_type type, u32 idx)
++{
++	struct core_type_info *ct;
++	struct core_instance_info *inst;
++	struct core_dispatch d;
++	u32 count;
++	s32 mbx, new_mbx, old;
++
++	if (WARN_ON_ONCE(type >= CMH_NUM_CORE_TYPES))
++		return (struct core_dispatch){ .core_id = CORE_ID_NUM, .mbx_idx = -1 };
++
++	ct = &core_types[type];
++	if (WARN_ON_ONCE(idx >= ct->num_instances))
++		return (struct core_dispatch){ .core_id = CORE_ID_NUM, .mbx_idx = -1 };
++
++	inst = &ct->instances[idx];
++	d.core_id = inst->core_id;
++
++	mbx = atomic_read(&inst->mbx_idx);
++	if (mbx >= 0) {
++		d.mbx_idx = mbx;
++		return d;
++	}
++
++	/* Auto-assign on first use */
++	count = tm.cfg->mbx_count;
++	new_mbx = (s32)((u32)atomic_inc_return(&affinity_next_mbx) % count);
++	old = atomic_cmpxchg(&inst->mbx_idx, -1, new_mbx);
++
++	if (old >= 0)
++		d.mbx_idx = old;
++	else
++		d.mbx_idx = new_mbx;
++
++	return d;
++}
++
++/**
++ * cmh_tm_txq_completion_notify() - Wake TM thread after RH completion
++ *
++ * Wakes the TM thread after the Response Handler completes a
++ * transaction.  This unblocks the TM if it is waiting for a free MBX
++ * slot.  The generation counter bump ensures the wait_event predicate
++ * evaluates to true on the next check.
++ */
++void cmh_tm_txq_completion_notify(void)
++{
++	atomic_inc(&txq_completion_gen);
++	wake_up_interruptible(&tm.cmq_waitq);
++}
++
++/* Mailbox Selection */
++
++/*
++ * Select a mailbox with at least @slots_needed free slots (round-robin).
++ * Returns mailbox index, or -EAGAIN if no mailbox qualifies.
++ *
++ * Note: the free-slot check here is advisory -- actual slot availability
++ * is enforced by the ring arithmetic under dispatch_lock in submit_vcq().
++ * A TOCTOU gap exists between this check and the subsequent slot write,
++ * but it is safe: the worst case is a spurious -EAGAIN / backoff, never
++ * a ring overcommit.
++ */
++static int select_mailbox(u32 slots_needed)
++{
++	u32 count = tm.cfg->mbx_count;
++	u32 start = tm.next_mbx;
++	bool fits_anywhere = false;
++	u32 i;
++
++	for (i = 0; i < count; i++) {
++		u32 idx = (start + i) % count;
++		struct cmh_mbx_config *m = &tm.cfg->mailboxes[idx];
++
++		if (cmh_rh_mbx_is_wedged(idx))
++			continue;
++
++		/* Could this ring ever hold the request, once drained? */
++		if ((1U << m->slots_log2) >= slots_needed)
++			fits_anywhere = true;
++
++		if (mbx_free_slots(m) >= slots_needed) {
++			tm.next_mbx = (idx + 1) % count;
++			return (int)idx;
++		}
++		cmh_stat_inc_mbx_queue_full(idx);
++	}
++
++	/*
++	 * No mailbox had room now.  If no (non-wedged) mailbox's ring is
++	 * even large enough to ever hold the request, it can never be
++	 * placed -- report a permanent error so the caller fails it rather
++	 * than spinning forever (head-of-line block).
++	 */
++	return fits_anywhere ? -EAGAIN : -EMSGSIZE;
++}
++
++/*
++ * Resolve the target mailbox for a command message.
++ *
++ * If the message has a pinned MBX and it has enough free slots, use it.
++ * Otherwise fall back to round-robin selection.  Returns mailbox index,
++ * or -EAGAIN when no MBX has enough free slots or all are wedged.
++ */
++static int resolve_mbx(struct command_msg *msg)
++{
++	u32 slots = msg->num_vcqs > 0 ? msg->num_vcqs : 1;
++
++	if (msg->target_mbx >= 0 &&
++	    (u32)msg->target_mbx < tm.cfg->mbx_count) {
++		struct cmh_mbx_config *m =
++			&tm.cfg->mailboxes[msg->target_mbx];
++
++		if (cmh_rh_mbx_is_wedged((u32)msg->target_mbx))
++			return -EAGAIN;
++		if ((1U << m->slots_log2) < slots)
++			return -EMSGSIZE; /* never fits this pinned ring */
++		if (mbx_free_slots(m) >= slots)
++			return msg->target_mbx;
++		return -EAGAIN; /* pinned MBX full, retry */
++	}
++
++	return select_mailbox(slots);
++}
++
++/* VCQ Submission */
++
++/*
++ * Serialise all writes to R_MBX_QUEUE_TAIL.  submit_vcq()'s doorbell
++ * advances TAIL while the response handler's cmh_tm_poke_tail()
++ * re-writes the current TAIL to wake the eSW.  The latter is a
++ * read-modify-write running from softirq/timer context on another CPU,
++ * so without this lock it could read a stale TAIL and roll back a
++ * concurrent doorbell, dropping submitted VCQs.
++ */
++static DEFINE_SPINLOCK(cmh_mbx_tail_lock);
++
++/**
++ * cmh_tm_poke_tail() - Re-write R_MBX_QUEUE_TAIL to wake the eSW
++ * @base: Mailbox register base
++ *
++ * Writing the current TAIL back is a queue no-op but generates a fresh
++ * SIC interrupt edge so the eSW wakes from WFI.  Serialised against the
++ * submit_vcq() doorbell so the read-modify-write cannot roll back a
++ * concurrent submission.  Safe from softirq/timer context.
++ */
++void cmh_tm_poke_tail(void __iomem *base)
++{
++	unsigned long flags;
++	u32 tail;
++
++	spin_lock_irqsave(&cmh_mbx_tail_lock, flags);
++	tail = cmh_reg_read32(base, R_MBX_QUEUE_TAIL);
++	cmh_reg_write32(tail, base, R_MBX_QUEUE_TAIL);
++	spin_unlock_irqrestore(&cmh_mbx_tail_lock, flags);
++}
++
++/*
++ * Write VCQ(s) into consecutive DMA slots and ring the doorbell.
++ *
++ * A command_msg may carry one or more VCQs (num_vcqs field).  For a
++ * multi-VCQ message the flat vcq_data array contains N VCQs laid out
++ * contiguously, each starting with its own header whose cmds field
++ * gives that VCQ's entry count.  All VCQs are written to consecutive
++ * MBX slots and tracked by a single transaction_obj.
++ *
++ * Returns 0 on success, negative errno on failure.
++ */
++static int submit_vcq(struct command_msg *msg, u32 mbx_idx)
++{
++	struct cmh_mbx_config *mbx = &tm.cfg->mailboxes[mbx_idx];
++	struct cmh_mbx_txq *txq = &tm.txqs[mbx_idx];
++	struct transaction_obj *txn;
++	const struct vcq_cmd *cmds = msg->vcq_data;
++	u32 num_vcqs = msg->num_vcqs > 0 ? msg->num_vcqs : 1;
++	u32 tail, stride_bytes, offset = 0;
++	unsigned long flags;
++	u32 v;
++
++	mutex_lock(&txq->dispatch_lock);
++
++	/* Read current tail (first VCQ ID) */
++	tail = cmh_reg_read32(mbx->reg_base, R_MBX_QUEUE_TAIL);
++	stride_bytes = 1U << mbx->stride_log2;
++
++	/* Allocate transaction tracking object */
++	txn = kzalloc_obj(*txn, GFP_KERNEL);
++	if (!txn) {
++		mutex_unlock(&txq->dispatch_lock);
++		return -ENOMEM;
++	}
++
++	/* Write each VCQ into a consecutive DMA slot */
++	for (v = 0; v < num_vcqs; v++) {
++		u32 vcq_cmds, copy_size;
++		void *slot;
++
++		/*
++		 * For single-VCQ messages (backward compat) use the
++		 * msg-level vcq_count.  For multi-VCQ, parse the per-VCQ
++		 * header to find each VCQ's command count.
++		 */
++		if (num_vcqs == 1) {
++			vcq_cmds = msg->vcq_count;
++		} else {
++			const struct vcq_hdr *hdr;
++
++			/* Bound the per-VCQ header read within vcq_data. */
++			if (offset >= msg->vcq_count) {
++				dev_err(cmh_dev(),
++					"tm: multi-VCQ %u offset OOB\n", v);
++				mutex_unlock(&txq->dispatch_lock);
++				kfree(txn);
++				return -EINVAL;
++			}
++			hdr = (const struct vcq_hdr *)&cmds[offset].hwc;
++			vcq_cmds = hdr->cmds;
++		}
++
++		copy_size = vcq_cmds * sizeof(struct vcq_cmd);
++		if (copy_size > stride_bytes) {
++			dev_err(cmh_dev(), "tm: VCQ %u too large (%u bytes > stride %u)\n",
++				v, copy_size, stride_bytes);
++			mutex_unlock(&txq->dispatch_lock);
++			kfree(txn);
++			return -EMSGSIZE;
++		}
++
++		if (vcq_cmds < MIN_VCQ_CMDS || vcq_cmds > MAX_VCQ_CMDS) {
++			dev_err(cmh_dev(), "tm: invalid vcq_count %u (range %u..%u)\n",
++				vcq_cmds, MIN_VCQ_CMDS, MAX_VCQ_CMDS);
++			mutex_unlock(&txq->dispatch_lock);
++			kfree(txn);
++			return -EINVAL;
++		}
++
++		/* Bound the VCQ body within vcq_data. */
++		if (vcq_cmds > msg->vcq_count - offset) {
++			dev_err(cmh_dev(),
++				"tm: VCQ %u body exceeds vcq_data\n", v);
++			mutex_unlock(&txq->dispatch_lock);
++			kfree(txn);
++			return -EINVAL;
++		}
++
++		/* Copy pre-built VCQ into DMA slot */
++		slot = mbx_slot_ptr(mbx, tail + v);
++		cmh_dma_write(slot, &cmds[offset], copy_size);
++
++		/* Zero remaining slot bytes to avoid stale data */
++		if (copy_size < stride_bytes)
++			cmh_dma_zero((u8 *)slot + copy_size,
++				     stride_bytes - copy_size);
++
++		offset += vcq_cmds;
++	}
++
++	/* Ensure VCQ data is visible in memory before advancing tail */
++	wmb();
++	/* FPGA: confirm DRAM accepted writes before SIC doorbell (cross-slave) */
++	cmh_dma_fence(mbx_slot_ptr(mbx, tail + num_vcqs - 1));
++
++	/* Fill in transaction spanning all VCQs */
++	txn->first_vcq_id = tail;
++	/* Expose the HW VCQ id so a sync timeout can check HEAD. */
++	WRITE_ONCE(msg->first_vcq_id, tail);
++	txn->last_vcq_id = tail + num_vcqs - 1;
++	txn->mailbox_idx = mbx_idx;
++	txn->command_id = msg->command_id;
++	txn->error_code = 0;
++	txn->complete = msg->complete;
++	txn->completion_data = msg->completion_data;
++	atomic_set(&txn->state, TXN_INFLIGHT);
++	timer_setup(&txn->timeout_timer, txn_timeout_fn, 0);
++	INIT_LIST_HEAD(&txn->list);
++
++	/*
++	 * Set refcount: 2 if a per-txn timer will be armed (one ref for
++	 * the TXQ owner that pops it, one for the timer callback), or 1
++	 * if no timer (sync paths, or async_timeout_ms == 0).
++	 */
++	if (msg->timeout_jiffies)
++		refcount_set(&txn->refs, 2);
++	else
++		refcount_set(&txn->refs, 1);
++
++	/* Enqueue transaction under spinlock */
++	spin_lock_irqsave(&txq->lock, flags);
++	list_add_tail(&txn->list, &txq->head);
++	txq->depth++;
++	spin_unlock_irqrestore(&txq->lock, flags);
++
++	/*
++	 * Arm the per-request timeout BEFORE the doorbell (async only): once
++	 * the doorbell rings, HW can complete and the TXQ can pop and free the
++	 * txn concurrently, so arming afterwards races that free and can leave
++	 * timer_delete() in cmh_txn_finish() unable to drop the timer ref.
++	 */
++	if (msg->timeout_jiffies)
++		mod_timer(&txn->timeout_timer,
++			  jiffies + msg->timeout_jiffies);
++
++	/*
++	 * Ring doorbell: advance tail by number of VCQs submitted.
++	 * Serialise against cmh_tm_poke_tail() so a concurrent re-poke
++	 * cannot roll TAIL back over this advance.
++	 */
++	spin_lock_irqsave(&cmh_mbx_tail_lock, flags);
++	cmh_reg_write32(tail + num_vcqs, mbx->reg_base, R_MBX_QUEUE_TAIL);
++	spin_unlock_irqrestore(&cmh_mbx_tail_lock, flags);
++
++	mutex_unlock(&txq->dispatch_lock);
++
++	cmh_stat_record_vcq_submit(mbx_idx, num_vcqs, txq->depth);
++
++	dev_dbg(cmh_dev(), "tm: submitted %u vcq(s) id=%u..%u to mbx[%u] tail_now=%u\n",
++		num_vcqs, tail, tail + num_vcqs - 1, mbx_idx,
++		 tail + num_vcqs);
++
++	return 0;
++}
++
++/* TM Thread */
++
++static int cmh_tm_thread(void *data)
++{
++	struct command_msg *msg, *bl_promoted;
++	unsigned long flags;
++	int mbx_idx, ret;
++
++	while (!kthread_should_stop()) {
++		/* Wait for work or stop signal */
++		wait_event_interruptible(tm.cmq_waitq,
++					 !list_empty(&tm.cmq) || kthread_should_stop());
++
++		if (kthread_should_stop())
++			break;
++
++		/* Dequeue one command message */
++		spin_lock_irqsave(&tm.cmq_lock, flags);
++		if (list_empty(&tm.cmq)) {
++			spin_unlock_irqrestore(&tm.cmq_lock, flags);
++			continue;
++		}
++		msg = list_first_entry(&tm.cmq, struct command_msg, list);
++		list_del_init(&msg->list);
++		cmq_depth--;
++
++		/*
++		 * Promote one backlogged request into the CMQ now that
++		 * there is room.  The -EINPROGRESS notification is deferred
++		 * until after cmq_lock is dropped (below).
++		 */
++		bl_promoted = NULL;
++		if (!list_empty(&tm.backlog)) {
++			bl_promoted = list_first_entry(&tm.backlog,
++						       struct command_msg, list);
++			list_move_tail(&bl_promoted->list, &tm.cmq);
++			tm.backlog_depth--;
++			cmq_depth++;
++			cmh_stat_record_cmq_post(cmq_depth);
++		}
++
++		spin_unlock_irqrestore(&tm.cmq_lock, flags);
++
++		/*
++		 * Signal -EINPROGRESS for the promoted backlog request with
++		 * cmq_lock dropped: a consumer that resubmits from this
++		 * callback would otherwise re-enter cmq_lock and self-deadlock.
++		 * The promoted msg stays on the CMQ (only this thread dequeues
++		 * it) until a later iteration, so the -EINPROGRESS still
++		 * precedes its final completion.
++		 */
++		if (bl_promoted && bl_promoted->complete)
++			bl_promoted->complete(bl_promoted->completion_data,
++					      -EINPROGRESS);
++
++		/* Select a mailbox: pinned or round-robin */
++		mbx_idx = resolve_mbx(msg);
++
++		if (mbx_idx == -EMSGSIZE) {
++			/*
++			 * The request needs more ring slots than any mailbox
++			 * can ever provide.  Fail it rather than re-queuing:
++			 * retrying would spin forever and head-of-line block
++			 * every other request.
++			 */
++			dev_err(cmh_dev(),
++				"tm: cmd=0x%08x needs %u VCQs, exceeds ring capacity -- rejecting\n",
++				msg->command_id,
++				msg->num_vcqs > 0 ? msg->num_vcqs : 1);
++			if (msg->complete)
++				msg->complete(msg->completion_data, -EMSGSIZE);
++			command_msg_put(msg);
++			continue;
++		}
++
++		if (mbx_idx < 0) {
++			/*
++			 * Queue full -- re-enqueue at front and wait.
++			 *
++			 * Sleep on cmq_waitq with a short timeout.  The RH
++			 * calls cmh_tm_txq_completion_notify() after each
++			 * completed transaction, which bumps the generation
++			 * counter and wakes us immediately.  The timeout is
++			 * a safety net for missed wakeups.
++			 */
++			int gen = atomic_read(&txq_completion_gen);
++			unsigned long tmo;
++
++			spin_lock_irqsave(&tm.cmq_lock, flags);
++			list_add(&msg->list, &tm.cmq);
++			cmq_depth++;
++			spin_unlock_irqrestore(&tm.cmq_lock, flags);
++
++			tmo = usecs_to_jiffies(CMH_TM_BACKOFF_MAX_US);
++			wait_event_interruptible_timeout(tm.cmq_waitq,
++							 kthread_should_stop() ||
++							 atomic_read(&txq_completion_gen) != gen,
++							 tmo ?: 1);
++			cmh_stat_inc_tm_backoff();
++			continue;
++		}
++
++		/* Submit VCQ to selected mailbox */
++		WRITE_ONCE(msg->actual_mbx, mbx_idx);
++		ret = submit_vcq(msg, mbx_idx);
++		if (ret && msg->complete)
++			msg->complete(msg->completion_data, ret);
++		command_msg_put(msg);
++	}
++
++	return 0;
++}
++
++/* Public Interface */
++
++/**
++ * cmh_tm_init() - Initialize the Transaction Manager subsystem
++ * @cfg: Hardware configuration describing mailboxes and core types
++ *
++ * Allocates per-mailbox transaction queues, applies core-type
++ * configuration, and starts the TM kthread.
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_mgmt_register(void)
++int cmh_tm_init(struct cmh_config *cfg)
 +{
-+	int ret;
++	u32 i, j;
 +
-+	/*
-+	 * ABI size guards -- catch silent layout changes at compile time.
-+	 * All ioctl structs use only __u32 and __u64 with explicit padding,
-+	 * guaranteeing identical layout on 32-bit and 64-bit (compat_ptr_ioctl).
-+	 */
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_new) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_write) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_read) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_find) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_list) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_grant) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ds_export) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ds_import) != 24);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_hkdf1) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_hkdf2) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_aes_cmac_kdf) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_dkek_derive) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_enc) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_dec) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_crt_dec) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_keygen) != 64);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdsa_sign) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdh) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdh_keygen) != 24);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_sign) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_verify) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ec_keygen) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ec_pubgen) != 24);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_keygen_sca) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_keygen) != 64);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_enc) != 64);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_dec) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_dsa_keygen) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_dsa_sign) != 48);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_keygen) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_sign) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_sign_prehash) != 64);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh_keygen) != 24);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh) != 56);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_dec_point) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_enc_point) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_id_digest) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh_hash) != 40);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_dec_hash) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_enc_hash) != 32);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_eac_read) != 64);
-+	BUILD_BUG_ON(sizeof(struct cmh_ioctl_drbg_config) != 16);
++	tm.cfg = cfg;
++	tm.next_mbx = 0;
++	cmq_depth = 0;
 +
-+	ret = misc_register(&cmh_mgmt_dev);
-+	if (ret) {
-+		dev_err(cmh_dev(), "mgmt: misc_register failed (rc=%d)\n", ret);
++	cmh_tm_affinity_reset();
++
++	/* Apply per-core-type config from DT child nodes */
++	for (i = 0; i < CMH_NUM_CORE_TYPES; i++) {
++		struct cmh_core_type_cfg *src = &cfg->core_types[i];
++		struct core_type_info *ct = &core_types[i];
++
++		ct->num_instances = src->num_instances;
++		for (j = 0; j < src->num_instances; j++) {
++			ct->instances[j].core_id = src->core_ids[j];
++			if (src->mbx[j] >= 0)
++				atomic_set(&ct->instances[j].mbx_idx,
++					   src->mbx[j]);
++		}
++	}
++
++	/* Initialize CMQ and backlog */
++	INIT_LIST_HEAD(&tm.cmq);
++	INIT_LIST_HEAD(&tm.backlog);
++	tm.backlog_depth = 0;
++	spin_lock_init(&tm.cmq_lock);
++	init_waitqueue_head(&tm.cmq_waitq);
++
++	/* Allocate per-mailbox transaction queues */
++	tm.txqs = kcalloc(cfg->mbx_count, sizeof(*tm.txqs), GFP_KERNEL);
++	if (!tm.txqs)
++		return -ENOMEM;
++
++	for (i = 0; i < cfg->mbx_count; i++) {
++		INIT_LIST_HEAD(&tm.txqs[i].head);
++		spin_lock_init(&tm.txqs[i].lock);
++		mutex_init(&tm.txqs[i].dispatch_lock);
++		tm.txqs[i].depth = 0;
++	}
++
++	/* Start TM thread */
++	tm.thread = kthread_run(cmh_tm_thread, NULL, "cmh_tm");
++	if (IS_ERR(tm.thread)) {
++		int ret = PTR_ERR(tm.thread);
++
++		dev_err(cmh_dev(), "tm: failed to start thread (rc=%d)\n", ret);
++		tm.thread = NULL;
++		kfree(tm.txqs);
++		tm.txqs = NULL;
 +		return ret;
 +	}
 +
-+	cmh_mgmt_registered = true;
++	WRITE_ONCE(tm.running, true);
++
++	return 0;
++}
++
++/*
++ * cmh_tm_stop_and_drain_cmq() - Stop TM thread and drain CMQ/backlog
++ *
++ * Shared preamble for cmh_tm_cleanup() and cmh_tm_quiesce(): stops the
++ * kthread, marks the TM as not running, then splices the CMQ and backlog
++ * to local lists and cancels every pending command_msg outside the lock.
++ */
++static void cmh_tm_stop_and_drain_cmq(void)
++{
++	struct command_msg *msg;
++	unsigned long flags;
++
++	if (tm.thread) {
++		kthread_stop(tm.thread);
++		tm.thread = NULL;
++	}
++	WRITE_ONCE(tm.running, false);
++
++	/*
++	 * Pop each queued command under cmq_lock and cancel it with the lock
++	 * dropped.  list_del_init() fully detaches the node before we release
++	 * the lock, so a concurrent cmh_tm_try_cancel_command() either removes
++	 * the node before we reach it or sees list_empty() and backs off -- it
++	 * can no longer list_del a node that this drain is walking on a private
++	 * list.  Completion callbacks run with cmq_lock dropped (they may
++	 * resubmit or take sleeping locks).
++	 */
++	for (;;) {
++		spin_lock_irqsave(&tm.cmq_lock, flags);
++		msg = list_first_entry_or_null(&tm.cmq, struct command_msg,
++					       list);
++		if (msg) {
++			list_del_init(&msg->list);
++			cmq_depth--;
++		}
++		spin_unlock_irqrestore(&tm.cmq_lock, flags);
++		if (!msg)
++			break;
++		if (msg->complete)
++			msg->complete(msg->completion_data, -ECANCELED);
++		command_msg_put(msg);
++	}
++
++	for (;;) {
++		spin_lock_irqsave(&tm.cmq_lock, flags);
++		msg = list_first_entry_or_null(&tm.backlog, struct command_msg,
++					       list);
++		if (msg) {
++			list_del_init(&msg->list);
++			tm.backlog_depth--;
++		}
++		spin_unlock_irqrestore(&tm.cmq_lock, flags);
++		if (!msg)
++			break;
++		if (msg->complete)
++			msg->complete(msg->completion_data, -ECANCELED);
++		command_msg_put(msg);
++	}
++}
++
++/**
++ * cmh_tm_cleanup() - Tear down the Transaction Manager subsystem
++ *
++ * Stops the TM kthread, drains the CMQ, backlog, and all per-mailbox
++ * transaction queues, notifying waiters with -ECANCELED or -ETIMEDOUT.
++ * Frees all TM-owned resources.
++ *
++ * The eSW/hardware exposes no "stop engines" or global-abort primitive:
++ * MBX_COMMAND_FLUSH discards VCQs still queued in a mailbox but does not
++ * abort a command the engine is already executing.  Teardown therefore
++ * force-completes any residual in-flight transaction on the driver side
++ * rather than waiting on hardware.  This is ordered safely: the caller
++ * (cmh_remove) invokes cmh_rh_cleanup() first, which cancels the
++ * watchdog, masks the MBX interrupts and frees the IRQ handlers, so the
++ * Response Handler can no longer deliver a completion for a transaction
++ * this drain is finishing -- the drain owns every remaining transaction
++ * exclusively.  Consumers are expected to have quiesced by this point
++ * (the crypto core blocks module unload until all transforms are freed,
++ * and the synchronous /dev/cmh_mgmt ioctls complete before returning),
++ * so the residual queue normally holds only already-abandoned entries
++ * such as timed-out transactions.
++ */
++void cmh_tm_cleanup(void)
++{
++	struct transaction_obj *txn, *tmp_txn;
++	unsigned long flags;
++	u32 i;
++
++	cmh_tm_stop_and_drain_cmq();
++
++	/* Drain per-mailbox transaction queues */
++	if (tm.txqs) {
++		for (i = 0; i < tm.cfg->mbx_count; i++) {
++			LIST_HEAD(drain);
++			int old;
++
++			spin_lock_irqsave(&tm.txqs[i].lock, flags);
++			list_splice_init(&tm.txqs[i].head, &drain);
++			tm.txqs[i].depth = 0;
++			spin_unlock_irqrestore(&tm.txqs[i].lock, flags);
++
++			list_for_each_entry_safe(txn, tmp_txn, &drain, list) {
++				list_del(&txn->list);
++
++				if (timer_delete_sync(&txn->timeout_timer))
++					txn_put(txn);
++
++				old = atomic_cmpxchg(&txn->state,
++						     TXN_INFLIGHT,
++						     TXN_COMPLETE);
++				if (txn->complete) {
++					if (old == TXN_INFLIGHT)
++						txn->complete(txn->completion_data,
++							      -ECANCELED);
++					else if (old == TXN_TIMED_OUT)
++						txn->complete(txn->completion_data,
++							      -ETIMEDOUT);
++				}
++
++				txn_put(txn);
++			}
++		}
++		kfree(tm.txqs);
++		tm.txqs = NULL;
++	}
++}
++
++/*
++ * Default drain timeout for suspend/quiesce (milliseconds).
++ * Covers all symmetric + PKE operations.  PQC callers (SLH-DSA sign
++ * at up to 120 s) should complete before system suspend is requested.
++ */
++static unsigned int drain_timeout_ms = 10000;
++
++/**
++ * cmh_tm_quiesce() - Quiesce the TM for suspend or shutdown
++ *
++ * Stops the TM kthread, drains the CMQ and backlog, then waits up to
++ * drain_timeout_ms for in-flight transactions to complete via the
++ * Response Handler.  Any remaining transactions after the deadline
++ * are force-cancelled.
++ */
++void cmh_tm_quiesce(void)
++{
++	struct transaction_obj *txn, *tmp_txn;
++	unsigned long deadline;
++	unsigned long flags;
++	u32 i;
++	bool drained = true;
++
++	cmh_tm_stop_and_drain_cmq();
++
++	/* Wait for in-flight TXQ transactions to complete via RH */
++	if (!tm.txqs)
++		return;
++
++	deadline = jiffies + msecs_to_jiffies(drain_timeout_ms);
++	do {
++		drained = true;
++		for (i = 0; i < tm.cfg->mbx_count; i++) {
++			if (READ_ONCE(tm.txqs[i].depth)) {
++				drained = false;
++				break;
++			}
++		}
++		if (drained)
++			break;
++		usleep_range(1000, 2000);
++	} while (time_before(jiffies, deadline));
++
++	if (!drained) {
++		dev_warn(cmh_dev(),
++			 "tm: quiesce drain timeout (%u ms), cancelling remaining transactions\n",
++			 drain_timeout_ms);
++		/*
++		 * The drain timed out, so the RH is no longer making
++		 * progress.  Quiesce it first -- cmh_rh_suspend() stops the
++		 * watchdog, masks the MBX interrupts and synchronize_irq()s
++		 * out any in-flight handler -- so the force-cancel below owns
++		 * every remaining transaction exclusively.  Without this a
++		 * live RH could concurrently finish/txn_put a transaction we
++		 * are cancelling here (suspend runs cmh_tm_quiesce() before
++		 * cmh_rh_suspend()).  cmh_rh_suspend() is idempotent, so the
++		 * caller's later call is a no-op.
++		 */
++		cmh_rh_suspend(tm.cfg);
++
++		for (i = 0; i < tm.cfg->mbx_count; i++) {
++			LIST_HEAD(drain);
++			int old;
++
++			spin_lock_irqsave(&tm.txqs[i].lock, flags);
++			list_splice_init(&tm.txqs[i].head, &drain);
++			tm.txqs[i].depth = 0;
++			spin_unlock_irqrestore(&tm.txqs[i].lock, flags);
++
++			list_for_each_entry_safe(txn, tmp_txn, &drain, list) {
++				list_del(&txn->list);
++
++				if (timer_delete_sync(&txn->timeout_timer))
++					txn_put(txn);
++
++				old = atomic_cmpxchg(&txn->state,
++						     TXN_INFLIGHT,
++						     TXN_COMPLETE);
++				if (txn->complete) {
++					if (old == TXN_INFLIGHT)
++						txn->complete(txn->completion_data,
++							      -ECANCELED);
++					else if (old == TXN_TIMED_OUT)
++						txn->complete(txn->completion_data,
++							      -ETIMEDOUT);
++				}
++
++				txn_put(txn);
++			}
++		}
++	}
++}
++
++/**
++ * cmh_tm_resume() - Resume the TM after suspend
++ *
++ * Restarts the TM kthread after a prior cmh_tm_quiesce().
++ *
++ * Return: 0 on success, negative errno if kthread creation fails.
++ */
++int cmh_tm_resume(void)
++{
++	if (tm.thread || !tm.cfg)
++		return 0;
++
++	tm.thread = kthread_run(cmh_tm_thread, NULL, "cmh_tm");
++	if (IS_ERR(tm.thread)) {
++		int ret = PTR_ERR(tm.thread);
++
++		dev_err(cmh_dev(), "tm: resume kthread_run failed (%d)\n",
++			ret);
++		tm.thread = NULL;
++		return ret;
++	}
++	WRITE_ONCE(tm.running, true);
 +	return 0;
 +}
 +
 +/**
-+ * cmh_mgmt_unregister() - Unregister the /dev/cmh_mgmt misc device
-+ */
-+void cmh_mgmt_unregister(void)
-+{
-+	if (!cmh_mgmt_registered)
-+		return;
-+
-+	misc_deregister(&cmh_mgmt_dev);
-+	cmh_mgmt_registered = false;
-+}
-diff --git a/drivers/crypto/cmh/cmh_mgmt_pke.c b/drivers/crypto/cmh/cmh_mgmt_pke.c
-new file mode 100644
-index 000000000000..189af114fa43
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_mgmt_pke.c
-@@ -0,0 +1,1143 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH -- PKE ioctl handlers for /dev/cmh_mgmt
++ * cmh_tm_try_cancel_command() - Cancel a queued command message
++ * @msg: Command message to cancel
 + *
-+ * RSA encrypt/decrypt/CRT/keygen, ECDSA sign, ECDH/keygen,
-+ * EdDSA sign/verify, EC keygen/pubgen.
++ * Attempts to remove @msg from the CMQ before the TM thread dequeues
++ * it.  Must be called while @msg is still valid (before the caller's
++ * stack frame that owns it is freed).
 + *
-+ * Split from cmh_mgmt.c for maintainability.
++ * Return: true if @msg was removed, false if already consumed by TM.
 + */
-+
-+#include <linux/kernel.h>
-+#include <linux/uaccess.h>
-+#include <linux/slab.h>
-+#include <linux/overflow.h>
-+
-+#include "cmh_mgmt.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_key.h"
-+#include "cmh_dma.h"
-+#include "cmh_config.h"
-+#include "cmh_pke.h"
-+#include "cmh_pke_abi.h"
-+#include "cmh_sys_abi.h"
-+#include <uapi/linux/cmh_mgmt_ioctl.h>
-+
-+#include <crypto/utils.h>
-+
-+/* -- PKE ioctl helpers ------------------- */
-+
-+/*
-+ * Maximum PKE operand size: 512 bytes (RSA 4096-bit),
-+ * or 2 * 68 = 136 bytes (P-521 coordinate pair).
-+ */
-+#define PKE_MAX_OPERAND	512
-+
-+/* Validate curve ID and return coordinate length; 0 = invalid */
-+static u32 cmh_pke_validate_curve(u32 curve)
++bool cmh_tm_try_cancel_command(struct command_msg *msg)
 +{
-+	return pke_curve_clen(curve);
++	unsigned long flags;
++	bool cancelled = false;
++
++	spin_lock_irqsave(&tm.cmq_lock, flags);
++	if (!list_empty(&msg->list)) {
++		list_del_init(&msg->list);
++		cmq_depth--;
++		cancelled = true;
++	}
++	spin_unlock_irqrestore(&tm.cmq_lock, flags);
++
++	return cancelled;
 +}
 +
 +/**
-+ * cmh_mgmt_pke_rsa_enc() - Handle CMH_MGMT_IOC_PKE_RSA_ENC ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_tm_post_command() - Post a command message to the CMQ
++ * @msg: Pre-built command message to enqueue
 + *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_rsa_enc(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_rsa_enc req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 n_len, e_padded;
-+	u8 *e_buf, *n_buf, *m_buf, *c_buf;
-+	dma_addr_t e_dma, n_dma, m_dma, c_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
-+	    req.bits % 8)
-+		return -EINVAL;
-+	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
-+		return -EINVAL;
-+
-+	n_len = req.bits / 8;
-+	e_padded = ALIGN(req.e_len, 4);
-+
-+	e_buf = kzalloc(e_padded, GFP_KERNEL);
-+	n_buf = kmalloc(n_len, GFP_KERNEL);
-+	m_buf = kmalloc(n_len, GFP_KERNEL);
-+	c_buf = kzalloc(n_len, GFP_KERNEL);
-+	if (!e_buf || !n_buf || !m_buf || !c_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/* Right-align exponent in zero-padded buffer for DMA alignment */
-+	if (copy_from_user(e_buf + e_padded - req.e_len,
-+			   u64_to_user_ptr(req.e), req.e_len) ||
-+	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
-+	    copy_from_user(m_buf, u64_to_user_ptr(req.input), n_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
-+	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
-+	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_TO_DEVICE);
-+	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
-+	    cmh_dma_map_error(m_dma) || cmh_dma_map_error(c_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_rsa_enc(&vcq[1], pke_cid, req.bits, e_padded,
-+			    e_dma, n_dma, m_dma, c_dma, PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(c_dma))
-+		cmh_dma_unmap_single(c_dma, n_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(m_dma))
-+		cmh_dma_unmap_single(m_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(n_dma))
-+		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(e_dma))
-+		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.output), c_buf, n_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree(c_buf);
-+	kfree_sensitive(m_buf);
-+	kfree(n_buf);
-+	kfree(e_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_rsa_dec() - Handle CMH_MGMT_IOC_PKE_RSA_DEC ioctl
-+ * @argp: User-space ioctl argument pointer
++ * Enqueues @msg on the Command Message Queue and wakes the TM thread.
++ * If the CMQ is full, the message may be placed on the backlog queue
++ * (returning -EBUSY) if @msg->backlog_ok is set, or rejected with
++ * -EAGAIN.
 + *
-+ * Return: 0 on success, negative errno on failure.
++ * Return: 0 on success, -EBUSY if backlogged, -EAGAIN if full,
++ *         -ENODEV if TM is not running.
 + */
-+int cmh_mgmt_pke_rsa_dec(void __user *argp)
++int cmh_tm_post_command(struct command_msg *msg)
 +{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++	unsigned long flags;
 +
-+	struct cmh_ioctl_pke_rsa_dec req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 n_len, e_padded;
-+	u8 *e_buf, *n_buf, *c_buf, *m_buf;
-+	dma_addr_t e_dma, n_dma, c_dma, m_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
-+	    req.bits % 8)
-+		return -EINVAL;
-+	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
-+		return -EINVAL;
-+
-+	n_len = req.bits / 8;
-+	e_padded = ALIGN(req.e_len, 4);
-+
-+	e_buf = kzalloc(e_padded, GFP_KERNEL);
-+	n_buf = kmalloc(n_len, GFP_KERNEL);
-+	c_buf = kmalloc(n_len, GFP_KERNEL);
-+	m_buf = kzalloc(n_len, GFP_KERNEL);
-+	if (!e_buf || !n_buf || !c_buf || !m_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/* Right-align exponent in zero-padded buffer for DMA alignment */
-+	if (copy_from_user(e_buf + e_padded - req.e_len,
-+			   u64_to_user_ptr(req.e), req.e_len) ||
-+	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
-+	    copy_from_user(c_buf, u64_to_user_ptr(req.input), n_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
-+	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
-+	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_TO_DEVICE);
-+	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
-+	    cmh_dma_map_error(c_dma) || cmh_dma_map_error(m_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_rsa_dec(&vcq[1], pke_cid, req.bits, e_padded,
-+			    e_dma, n_dma, c_dma, m_dma, req.key_ref,
-+			    PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(m_dma))
-+		cmh_dma_unmap_single(m_dma, n_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(c_dma))
-+		cmh_dma_unmap_single(c_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(n_dma))
-+		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(e_dma))
-+		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.output), m_buf, n_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(m_buf);
-+	kfree(c_buf);
-+	kfree(n_buf);
-+	kfree(e_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_rsa_crt_dec() - Handle CMH_MGMT_IOC_PKE_RSA_CRT_DEC ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_rsa_crt_dec(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_rsa_crt_dec req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 n_len, e_padded;
-+	u8 *e_buf, *n_buf, *c_buf, *m_buf;
-+	dma_addr_t e_dma, n_dma, c_dma, m_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
-+	    req.bits % 8)
-+		return -EINVAL;
-+	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
-+		return -EINVAL;
-+
-+	n_len = req.bits / 8;
-+	e_padded = ALIGN(req.e_len, 4);
-+
-+	e_buf = kzalloc(e_padded, GFP_KERNEL);
-+	n_buf = kmalloc(n_len, GFP_KERNEL);
-+	c_buf = kmalloc(n_len, GFP_KERNEL);
-+	m_buf = kzalloc(n_len, GFP_KERNEL);
-+	if (!e_buf || !n_buf || !c_buf || !m_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/* Right-align exponent in zero-padded buffer for DMA alignment */
-+	if (copy_from_user(e_buf + e_padded - req.e_len,
-+			   u64_to_user_ptr(req.e), req.e_len) ||
-+	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
-+	    copy_from_user(c_buf, u64_to_user_ptr(req.input), n_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
-+	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
-+	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_TO_DEVICE);
-+	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
-+	    cmh_dma_map_error(c_dma) || cmh_dma_map_error(m_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_rsa_crt_dec(&vcq[1], pke_cid, req.bits, e_padded,
-+				e_dma, n_dma, c_dma, m_dma, req.crt_ref,
-+				PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(m_dma))
-+		cmh_dma_unmap_single(m_dma, n_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(c_dma))
-+		cmh_dma_unmap_single(c_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(n_dma))
-+		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(e_dma))
-+		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.output), m_buf, n_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(m_buf);
-+	kfree(c_buf);
-+	kfree(n_buf);
-+	kfree(e_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_rsa_keygen() - Handle CMH_MGMT_IOC_PKE_RSA_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_rsa_keygen(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_rsa_keygen req;
++	spin_lock_irqsave(&tm.cmq_lock, flags);
 +	/*
-+	 * When has_crt, we use a two-VCQ approach (CRI pattern):
-+	 *   VCQ #1: header + SYS_NEW(d) + SYS_NEW(crt) + SYS_FLUSH  (4 slots)
-+	 *   VCQ #2: header + RSA_KEYGEN + PKE_FLUSH + SYS_FLUSH       (4 slots)
-+	 * Without CRT, single VCQ:
-+	 *   header + SYS_NEW(d) + RSA_KEYGEN + PKE_FLUSH + SYS_FLUSH  (5 slots)
++	 * Re-check tm.running under cmq_lock.  cmh_tm_stop_and_drain_cmq()
++	 * clears it and then splices the CMQ under this same lock, so a post
++	 * that wins the lock after the drain sees !running and bails, while
++	 * one that wins before is caught by the splice -- neither leaks a
++	 * message onto a queue nobody will service.
 +	 */
-+	struct vcq_cmd vcq[5];
-+	u32 n_len, e_padded, key_flags, d_ds_len, crt_ds_len;
-+	u8 *e_buf, *n_buf;
-+	u64 *d_ref_buf, *crt_ref_buf;
-+	dma_addr_t e_dma = DMA_MAPPING_ERROR, n_dma = DMA_MAPPING_ERROR;
-+	dma_addr_t d_ref_dma = DMA_MAPPING_ERROR;
-+	dma_addr_t crt_ref_dma = DMA_MAPPING_ERROR;
-+	int idx, ret;
-+	bool has_crt, is_sca;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
-+	    req.bits % 8)
-+		return -EINVAL;
-+	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
-+		return -EINVAL;
-+	if (req.flags & ~CMH_FLAG_MASK)
-+		return -EINVAL;
-+
-+	n_len = req.bits / 8;
-+	has_crt = (req.crt_cid != 0);
-+	e_padded = ALIGN(req.e_len, 4);
-+	key_flags = req.flags & CMH_FLAG_MASK;
-+	is_sca = !!(req.flags & CMH_FLAG_SCA);
-+
-+	/*
-+	 * SCA keys are stored in 2 shares -- DS allocation must be enlarged.
-+	 * CRI reference formulas: cmh_pke_rsa_private_key_size().
-+	 */
-+	if (is_sca) {
-+		d_ds_len = n_len * 2;
-+		crt_ds_len = (7 + n_len / 2) * 4;
-+	} else {
-+		d_ds_len = n_len;
-+		crt_ds_len = 5 * (n_len / 2);
++	if (!READ_ONCE(tm.running)) {
++		spin_unlock_irqrestore(&tm.cmq_lock, flags);
++		return -ENODEV;
 +	}
-+
-+	e_buf = kzalloc(e_padded, GFP_KERNEL);
-+	n_buf = kzalloc(n_len, GFP_KERNEL);
-+	d_ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	crt_ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	if (!e_buf || !n_buf || !d_ref_buf || !crt_ref_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(e_buf + e_padded - req.e_len,
-+			   u64_to_user_ptr(req.e), req.e_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
-+	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_FROM_DEVICE);
-+	d_ref_dma = cmh_dma_map_single(d_ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	crt_ref_dma = cmh_dma_map_single(crt_ref_buf, sizeof(u64),
-+					 DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
-+	    cmh_dma_map_error(d_ref_dma) || cmh_dma_map_error(crt_ref_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	if (has_crt) {
-+		/*
-+		 * Two-VCQ approach (CRI pattern): SYS_REF_LAST can only
-+		 * refer to the most recently created DS object.  When we
-+		 * need both d and crt refs, we must first allocate DS
-+		 * objects, read back the opaque refs, then pass them by
-+		 * value in the keygen VCQ.
-+		 *
-+		 * VCQ #1: allocate both DS objects.
-+		 */
-+		idx = 0;
-+		vcq_set_header(&vcq[idx++], 4);
-+		vcq_add_sys_new(&vcq[idx++], req.d_cid, d_ref_dma, d_ds_len);
-+		vcq_add_sys_new(&vcq[idx++], req.crt_cid, crt_ref_dma,
-+				crt_ds_len);
-+		vcq_add_sys_flush(&vcq[idx++]);
-+
-+		ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
-+		if (ret)
-+			goto out_unmap;
-+
-+		/* Sync DMA so we can read back the opaque refs */
-+		cmh_dma_unmap_single(d_ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+		cmh_dma_unmap_single(crt_ref_dma, sizeof(u64),
-+				     DMA_FROM_DEVICE);
-+		d_ref_dma = DMA_MAPPING_ERROR;
-+		crt_ref_dma = DMA_MAPPING_ERROR;
-+
-+		/*
-+		 * VCQ #2: keygen with resolved refs.
-+		 */
-+		idx = 0;
-+		memset(vcq, 0, sizeof(vcq));
-+		vcq_set_header(&vcq[idx++], 4);
-+
-+		vcq[idx].magic = VCQ_CMD_MAGIC;
-+		vcq[idx].id = VCQ_CMD_ID(pke_cid, PKE_SWAP_FLAGS, 1,
-+					 PKE_CMD_RSA_KEYGEN);
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.bits = req.bits;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.e = e_dma;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.n = n_dma;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.d = *d_ref_buf;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.d_type =
-+			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.crt = *crt_ref_buf;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.crt_type =
-+			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
-+		idx++;
-+
-+		vcq_add_pke_flush(&vcq[idx++], pke_cid);
-+		vcq_add_sys_flush(&vcq[idx++]);
-+
-+		ret = cmh_tm_submit_sync_tmo(vcq, 4, 1, MGMT_MBX,
-+					     cmh_tm_slow_op_timeout_jiffies());
-+	} else {
-+		/*
-+		 * Single-VCQ: only d, so SYS_REF_LAST is unambiguous.
-+		 */
-+		idx = 0;
-+		vcq_set_header(&vcq[idx++], 5);
-+		vcq_add_sys_new(&vcq[idx++], req.d_cid, d_ref_dma, d_ds_len);
-+
-+		vcq[idx].magic = VCQ_CMD_MAGIC;
-+		vcq[idx].id = VCQ_CMD_ID(pke_cid, PKE_SWAP_FLAGS, 1,
-+					 PKE_CMD_RSA_KEYGEN);
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.bits = req.bits;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.e = e_dma;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.n = n_dma;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.d = SYS_REF_LAST;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.d_type =
-+			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.crt = SYS_REF_NONE;
-+		vcq[idx].hwc.pke.cmd_rsa_keygen.crt_type = 0;
-+		idx++;
-+
-+		vcq_add_pke_flush(&vcq[idx++], pke_cid);
-+		vcq_add_sys_flush(&vcq[idx++]);
-+
-+		ret = cmh_tm_submit_sync_tmo(vcq, 5, 1, MGMT_MBX,
-+					     cmh_tm_slow_op_timeout_jiffies());
-+	}
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(crt_ref_dma))
-+		cmh_dma_unmap_single(crt_ref_dma, sizeof(u64),
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(d_ref_dma))
-+		cmh_dma_unmap_single(d_ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(n_dma))
-+		cmh_dma_unmap_single(n_dma, n_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(e_dma))
-+		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
-+
-+	/*
-+	 * Keygen failed after SYS_CMD_NEW created the d/crt objects (VCQ #2 in
-+	 * the CRT path, or the keygen command in the single-VCQ path); scrub
-+	 * the orphans.  Refs are zero unless the eSW wrote them back.
-+	 */
-+	if (ret && (*d_ref_buf || *crt_ref_buf))
-+		cmh_mgmt_ds_scrub(*d_ref_buf, *crt_ref_buf);
-+
-+	if (!ret) {
-+		/* Copy generated modulus and refs back */
-+		if (copy_to_user(u64_to_user_ptr(req.n), n_buf, n_len)) {
-+			ret = -EFAULT;
-+		} else {
-+			req.d_ref = *d_ref_buf;
-+			req.crt_ref = has_crt ? *crt_ref_buf : 0;
-+			if (copy_to_user(argp, &req, sizeof(req)))
-+				ret = -EFAULT;
++	if (cmq_depth >= cmq_max_depth) {
++		if (msg->backlog_ok &&
++		    tm.backlog_depth < backlog_max_depth) {
++			list_add_tail(&msg->list, &tm.backlog);
++			tm.backlog_depth++;
++			spin_unlock_irqrestore(&tm.cmq_lock, flags);
++			return -EBUSY;
 +		}
++		spin_unlock_irqrestore(&tm.cmq_lock, flags);
++		cmh_stat_inc_cmq_eagain();
++		return -EAGAIN;
++	}
++	INIT_LIST_HEAD(&msg->list);
++	list_add_tail(&msg->list, &tm.cmq);
++	cmq_depth++;
++	cmh_stat_record_cmq_post(cmq_depth);
++	spin_unlock_irqrestore(&tm.cmq_lock, flags);
 +
-+		if (ret == -EFAULT) {
++	wake_up_interruptible(&tm.cmq_waitq);
++	return 0;
++}
++
++/* Synchronous Submit (refcounted completion + timeout) */
++
++/*
++ * Heap-allocated sync context with refcounting.
++ *
++ * The completion callback may fire after the waiter has timed out and
++ * returned (e.g. during cmh_tm_cleanup on rmmod).  If the struct lived
++ * on the waiter's stack, the callback would touch freed memory --
++ * triggering a "BUG: spinlock bad magic" on the completion's spinlock.
++ *
++ * Two references are held: one by the waiter, one by the callback.
++ * Whichever runs last frees the struct.
++ */
++struct cmh_sync_ctx {
++	struct completion   done;
++	int                 error;
++	refcount_t          refs;   /* 2: waiter + callback */
++
++	/* Optional orphan cleanup -- called when the last ref drops after
++	 * the waiter abandoned an in-flight VCQ (noabort path).  Lets the
++	 * caller defer DMA-buffer cleanup until the eSW finishes writing.
++	 */
++	void (*orphan_cb)(void *data);
++	void *orphan_data;
++};
++
++static void cmh_sync_ctx_put(struct cmh_sync_ctx *ctx)
++{
++	if (refcount_dec_and_test(&ctx->refs)) {
++		if (ctx->orphan_cb)
++			ctx->orphan_cb(ctx->orphan_data);
++		kfree(ctx);
++	}
++}
++
++static void cmh_sync_complete(void *data, int error)
++{
++	struct cmh_sync_ctx *ctx = data;
++
++	ctx->error = error;
++	complete(&ctx->done);
++	cmh_sync_ctx_put(ctx);
++}
++
++/*
++ * Default VCQ completion timeout (milliseconds), tunable via debugfs
++ * config/vcq_timeout_ms.  Only affects the default timeout used by cmh_tm_submit_sync()
++ * and cmh_tm_submit_sync_mbx(); callers that pass an explicit timeout_hz
++ * (e.g. RSA keygen) are not affected.
++ */
++static unsigned int vcq_timeout_ms = 2000;
++
++/*
++ * Extended timeout for slow crypto operations: RSA keygen, PQC
++ * keygen/sign/verify.  Tunable via debugfs config/slow_op_timeout_ms.
++ */
++static unsigned int slow_op_timeout_ms = 300000;
++
++/**
++ * cmh_tm_submit_sync_tmo() - Synchronous VCQ submit with timeout
++ * @vcq_cmds: Array of pre-built VCQ command entries
++ * @vcq_count: Total number of entries in @vcq_cmds
++ * @num_vcqs: Number of VCQs packed in @vcq_cmds
++ * @target_mbx: Pinned mailbox index, or -1 for round-robin
++ * @timeout_hz: Completion timeout in jiffies
++ *
++ * Posts a VCQ command to the TM, waits for completion up to
++ * @timeout_hz.  On timeout, issues MBX_COMMAND_ABORT if the VCQ is
++ * already in-flight and waits for the RH to drain the aborted
++ * transaction before returning.  Consequently, once this returns
++ * -ETIMEDOUT the HW is no longer accessing the caller's DMA buffers,
++ * so the caller may unmap/free them without orphaning -- there is no
++ * post-return DMA to race.  (The sole exception is the wedged-HW
++ * residual documented at the 5 s abort-timeout branch below.)  Must be
++ * called from process context.
++ *
++ * Return: 0 on success, -ETIMEDOUT, or negative errno.
++ */
++int cmh_tm_submit_sync_tmo(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			   u32 num_vcqs, s32 target_mbx,
++			   unsigned long timeout_hz)
++{
++	struct cmh_sync_ctx *sync;
++	struct command_msg *msg;
++	unsigned long left;
++	int ret;
++
++	/*
++	 * This path sleeps (GFP_KERNEL allocations + wait_for_completion)
++	 * and is not safe from atomic / non-sleepable contexts.  All
++	 * current callers run in process context (crypto API userspace or
++	 * ioctl), so this is never violated today.  Catch it loudly if
++	 * a future caller gets this wrong.
++	 */
++	WARN_ON_ONCE(!in_task());
++
++	sync = kzalloc_obj(*sync, GFP_KERNEL);
++	if (!sync)
++		return -ENOMEM;
++
++	msg = kzalloc_obj(*msg, GFP_KERNEL);
++	if (!msg) {
++		kfree(sync);
++		return -ENOMEM;
++	}
++
++	init_completion(&sync->done);
++	sync->error = 0;
++	refcount_set(&sync->refs, 2);  /* waiter + callback */
++
++	/*
++	 * Heap-copy the caller's VCQ array so the msg owns its data.
++	 * This decouples VCQ lifetime from the caller's stack frame,
++	 * which matters when the TM thread backs off (resolve_mbx
++	 * returns -1) and re-enqueues the msg after the caller's
++	 * wait_for_completion_timeout expires.
++	 */
++	msg->vcq_data = kmemdup(vcq_cmds, vcq_count * sizeof(*vcq_cmds),
++				GFP_KERNEL);
++	if (!msg->vcq_data) {
++		kfree(msg);
++		kfree(sync);
++		return -ENOMEM;
++	}
++
++	INIT_LIST_HEAD(&msg->list);
++	if (WARN_ON_ONCE(vcq_count < MIN_VCQ_CMDS)) {
++		ret = -EINVAL;
++		goto err_free;
++	}
++	msg->command_id = vcq_cmds[1].id;  /* first real command's ID */
++	msg->vcq_count  = vcq_count;
++	msg->num_vcqs   = num_vcqs;
++	msg->target_mbx = target_mbx;
++	msg->actual_mbx = -1;
++	msg->first_vcq_id = U32_MAX;
++	msg->complete   = cmh_sync_complete;
++	msg->completion_data = sync;
++	refcount_set(&msg->refs, 2);       /* waiter + TM subsystem */
++
++	ret = cmh_tm_post_command(msg);
++	if (ret) {
++err_free:
++		kfree(msg->vcq_data);
++		kfree(msg);
++		kfree(sync);  /* callback will never fire */
++		return ret;
++	}
++
++	dev_dbg(cmh_dev(), "tm: submit_sync posted cmd 0x%08x, waiting...\n",
++		msg->command_id);
++
++	left = wait_for_completion_timeout(&sync->done, timeout_hz);
++	if (!left) {
++		dev_err(cmh_dev(),
++			"tm: submit_sync timeout (%lums) cmd=0x%08x\n",
++			timeout_hz * 1000 / HZ, msg->command_id);
++		if (cmh_tm_try_cancel_command(msg)) {
 +			/*
-+			 * The d (and CRT) DS slots were created but their
-+			 * refs never reached userspace, so the caller cannot
-+			 * free them.  Logically delete the orphaned slots.
++			 * Msg was still queued -- TM never saw it.
++			 * Drop the callback ref (no txn will fire it)
++			 * and free msg directly (sole owner).
 +			 */
-+			cmh_mgmt_ds_scrub(*d_ref_buf,
-+					  has_crt ? *crt_ref_buf : 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: RSA_KEYGEN copy_to_user failed, DS slots cleaned up\n");
-+		}
-+	}
-+
-+out_free:
-+	kfree(crt_ref_buf);
-+	kfree(d_ref_buf);
-+	kfree(n_buf);
-+	kfree(e_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_ecdsa_sign() - Handle CMH_MGMT_IOC_PKE_ECDSA_SIGN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_ecdsa_sign(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_ecdsa_sign req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 clen, sig_len, dig_map_len;
-+	u8 *dig_buf, *sig_buf;
-+	dma_addr_t dig_dma, sig_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen || !req.digest_len ||
-+	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+
-+	sig_len = 2 * clen;
-+
-+	/*
-+	 * eSW requires digest_len >= clen.  A hash shorter than clen must
-+	 * be LEFT-padded with zeros (right-aligned) so it keeps its value
-+	 * as a big-endian integer -- trailing zeros would multiply it by
-+	 * 256^k.  When digest_len >= clen the offset is 0 (unchanged) and
-+	 * the eSW applies the ECDSA bits2int leftmost-bits truncation.
-+	 */
-+	dig_map_len = max_t(u32, req.digest_len, clen);
-+
-+	dig_buf = kzalloc(dig_map_len, GFP_KERNEL);
-+	sig_buf = kzalloc(sig_len, GFP_KERNEL);
-+	if (!dig_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(dig_buf + (dig_map_len - req.digest_len),
-+			   u64_to_user_ptr(req.digest), req.digest_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	dig_dma = cmh_dma_map_single(dig_buf, dig_map_len, DMA_TO_DEVICE);
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(dig_dma) || cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_ecdsa_sign(&vcq[1], pke_cid, req.curve, clen,
-+			       dig_dma, sig_dma, req.key_ref,
-+			       dig_map_len, pke_swap_flags(req.curve));
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(dig_dma))
-+		cmh_dma_unmap_single(dig_dma, dig_map_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.signature),
-+				 sig_buf, sig_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree(sig_buf);
-+	kfree(dig_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_ecdh() - Handle CMH_MGMT_IOC_PKE_ECDH ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_ecdh(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_ecdh req;
-+	/* hdr + pke_ecdh(->SYS_REF_TEMP) + pke_flush + sys_data + sys_flush */
-+	struct vcq_cmd vcq[5];
-+	u32 clen, swap, ss_type;
-+	u8 *peer_buf, *ss_buf;
-+	dma_addr_t peer_dma, ss_dma;
-+	int ret, idx;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	/* flags and reserved fields must be zero (raw host output only). */
-+	if (req.flags || req.__reserved || req.__reserved2)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen)
-+		return -EINVAL;
-+
-+	swap = PKE_SWAP_FLAGS;
-+	ss_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
-+
-+	peer_buf = kmalloc(clen, GFP_KERNEL);
-+	ss_buf = kzalloc(clen, GFP_KERNEL);
-+	if (!peer_buf || !ss_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(peer_buf, u64_to_user_ptr(req.peer_key_x), clen)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	peer_dma = cmh_dma_map_single(peer_buf, clen, DMA_TO_DEVICE);
-+	ss_dma = cmh_dma_map_single(ss_buf, clen, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(peer_dma) || cmh_dma_map_error(ss_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	/*
-+	 * Compute the shared secret into SYS_REF_TEMP and read it back in a
-+	 * single VCQ.  The key is a caller-owned persistent DS ref, so it
-+	 * never collides with the temp output.  Doing the temp push (pke_ecdh)
-+	 * and pop (sys_data) in one submission bounds the temp to a single
-+	 * mailbox occupation -- no concurrent mgmt op can interleave a temp --
-+	 * and the read reclaims the slot, so no datastore object leaks.
-+	 */
-+	idx = 0;
-+	vcq_set_header(&vcq[idx++], 5);
-+	vcq_add_pke_ecdh(&vcq[idx++], pke_cid, req.curve, clen, clen,
-+			 ss_type, peer_dma, req.key_ref,
-+			 SYS_REF_TEMP, swap);
-+	vcq_add_pke_flush(&vcq[idx++], pke_cid);
-+	vcq_add_sys_data(&vcq[idx], SYS_REF_TEMP, ss_dma, clen);
-+	vcq[idx++].id |= pke_swap_flags(req.curve);
-+	vcq_add_sys_flush(&vcq[idx++]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(ss_dma))
-+		cmh_dma_unmap_single(ss_dma, clen, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(peer_dma))
-+		cmh_dma_unmap_single(peer_dma, clen, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.output), ss_buf, clen))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(ss_buf);
-+	kfree(peer_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_ecdh_keygen() - Handle CMH_MGMT_IOC_PKE_ECDH_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_ecdh_keygen(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_ecdh_keygen req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 clen, out_len;
-+	u8 *pkx_buf;
-+	dma_addr_t pkx_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen)
-+		return -EINVAL;
-+
-+	/*
-+	 * ECDH_KEYGEN always outputs both X and Y coordinates
-+	 * (2 * clen bytes total) even though only X is useful for
-+	 * the ECDH exchange.  Allocate the full output size to avoid
-+	 * a DMA buffer overflow, but copy only X back to userspace.
-+	 */
-+	out_len = 2 * clen;
-+
-+	pkx_buf = kzalloc(out_len, GFP_KERNEL);
-+	if (!pkx_buf)
-+		return -ENOMEM;
-+
-+	pkx_dma = cmh_dma_map_single(pkx_buf, out_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(pkx_dma)) {
-+		kfree(pkx_buf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_ecdh_keygen(&vcq[1], pke_cid, req.curve, clen,
-+				pkx_dma, req.key_ref,
-+				PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(pkx_dma, out_len, DMA_FROM_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.public_key_x),
-+				 pkx_buf, clen))
-+			ret = -EFAULT;
-+	}
-+
-+	kfree(pkx_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_eddsa_sign() - Handle CMH_MGMT_IOC_PKE_EDDSA_SIGN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_eddsa_sign(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_eddsa_sign req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 klen, sig_len;
-+	u8 *msg_buf, *sig_buf;
-+	dma_addr_t msg_dma, sig_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (!cmh_pke_validate_curve(req.curve) || !req.digest_len ||
-+	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+	if (!pke_curve_is_edwards(req.curve))
-+		return -EINVAL;
-+
-+	klen = pke_eddsa_key_len(req.curve);
-+	sig_len = 2 * klen;
-+
-+	msg_buf = kmalloc(req.digest_len, GFP_KERNEL);
-+	sig_buf = kzalloc(sig_len, GFP_KERNEL);
-+	if (!msg_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(msg_buf, u64_to_user_ptr(req.digest),
-+			   req.digest_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	msg_dma = cmh_dma_map_single(msg_buf, req.digest_len, DMA_TO_DEVICE);
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_eddsa_sign(&vcq[1], pke_cid, req.curve, klen,
-+			       msg_dma, sig_dma, req.key_ref,
-+			       req.digest_len, pke_swap_flags(req.curve));
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(msg_dma))
-+		cmh_dma_unmap_single(msg_dma, req.digest_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.signature),
-+				 sig_buf, sig_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree(sig_buf);
-+	kfree(msg_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_eddsa_verify() - Handle CMH_MGMT_IOC_PKE_EDDSA_VERIFY ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_eddsa_verify(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_eddsa_verify req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 clen, klen, sig_len;
-+	u8 *msg_buf, *sig_buf, *pky_buf, *rp_buf;
-+	dma_addr_t msg_dma, sig_dma, pky_dma, rp_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen || !req.digest_len ||
-+	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
-+		return -EINVAL;
-+	if (!pke_curve_is_edwards(req.curve))
-+		return -EINVAL;
-+
-+	klen = pke_eddsa_key_len(req.curve);
-+	sig_len = 2 * klen;
-+
-+	msg_buf = kmalloc(req.digest_len, GFP_KERNEL);
-+	sig_buf = kmalloc(sig_len, GFP_KERNEL);
-+	pky_buf = kmalloc(klen, GFP_KERNEL);
-+	rp_buf = kzalloc(clen, GFP_KERNEL);
-+	if (!msg_buf || !sig_buf || !pky_buf || !rp_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(msg_buf, u64_to_user_ptr(req.digest),
-+			   req.digest_len) ||
-+	    copy_from_user(sig_buf, u64_to_user_ptr(req.signature),
-+			   sig_len) ||
-+	    copy_from_user(pky_buf, u64_to_user_ptr(req.public_key_y),
-+			   klen)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	msg_dma = cmh_dma_map_single(msg_buf, req.digest_len, DMA_TO_DEVICE);
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_TO_DEVICE);
-+	pky_dma = cmh_dma_map_single(pky_buf, klen, DMA_TO_DEVICE);
-+	rp_dma = cmh_dma_map_single(rp_buf, clen, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(sig_dma) ||
-+	    cmh_dma_map_error(pky_dma) || cmh_dma_map_error(rp_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_eddsa_verify(&vcq[1], pke_cid, req.curve, req.digest_len,
-+				 pky_dma, msg_dma, sig_dma, rp_dma,
-+				 pke_swap_flags(req.curve));
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(rp_dma))
-+		cmh_dma_unmap_single(rp_dma, clen, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(pky_dma))
-+		cmh_dma_unmap_single(pky_dma, klen, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(msg_dma))
-+		cmh_dma_unmap_single(msg_dma, req.digest_len, DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree(rp_buf);
-+	kfree(pky_buf);
-+	kfree(sig_buf);
-+	kfree(msg_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_ec_keygen() - Handle CMH_MGMT_IOC_PKE_EC_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_ec_keygen(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_ec_keygen req;
-+	/* header + SYS_NEW + ECDSA_KEYGEN + flush_pke + flush_sys */
-+	struct vcq_cmd vcq[5];
-+	u32 clen, key_flags, ds_len;
-+	u64 *ref_buf;
-+	dma_addr_t ref_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (req.flags & ~CMH_FLAG_MASK)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen)
-+		return -EINVAL;
-+
-+	key_flags = req.flags & CMH_FLAG_MASK;
-+	/* SCA keys are stored in 2 shares -- allocate double the curve length */
-+	ds_len = (req.flags & CMH_FLAG_SCA) ? clen * 2 : clen;
-+
-+	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	if (!ref_buf)
-+		return -ENOMEM;
-+
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ref_dma)) {
-+		kfree(ref_buf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], 5);
-+	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, ds_len);
-+	vcq_add_pke_ecdsa_keygen(&vcq[2], pke_cid, req.curve, clen,
-+				 SYS_REF_LAST,
-+				 SYS_TYPE_SET(key_flags, CORE_ID_PKE),
-+				 pke_swap_flags(req.curve));
-+	vcq_add_pke_flush(&vcq[3], pke_cid);
-+	vcq_add_sys_flush(&vcq[4]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+
-+	/* Keygen failed after SYS_CMD_NEW; scrub the orphaned slot. */
-+	if (ret && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		req.ref = *ref_buf;
-+		if (copy_to_user(argp, &req, sizeof(req))) {
-+			/*
-+			 * The DS slot was created but its ref never reached
-+			 * userspace, so the caller cannot free it.  Logically
-+			 * delete the orphaned slot before returning.
-+			 */
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: PKE_EC_KEYGEN copy_to_user failed, DS slot cleaned up\n");
-+			ret = -EFAULT;
-+		}
-+	}
-+
-+	kfree(ref_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_ec_pubgen() - Handle CMH_MGMT_IOC_PKE_EC_PUBGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_ec_pubgen(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_ec_pubgen req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 clen, pk_len;
-+	u8 *pk_buf;
-+	dma_addr_t pk_dma;
-+	bool is_ed;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	clen = cmh_pke_validate_curve(req.curve);
-+	if (!clen)
-+		return -EINVAL;
-+
-+	is_ed = pke_curve_is_edwards(req.curve);
-+	pk_len = is_ed ? pke_eddsa_key_len(req.curve) : 2 * clen;
-+
-+	pk_buf = kzalloc(pk_len, GFP_KERNEL);
-+	if (!pk_buf)
-+		return -ENOMEM;
-+
-+	pk_dma = cmh_dma_map_single(pk_buf, pk_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(pk_dma)) {
-+		kfree(pk_buf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	if (is_ed)
-+		vcq_add_pke_eddsa_pubgen(&vcq[1], pke_cid, req.curve,
-+					 pke_eddsa_key_len(req.curve),
-+					 pk_dma, req.key_ref,
-+					 pke_swap_flags(req.curve));
-+	else
-+		vcq_add_pke_ecdsa_pubgen(&vcq[1], pke_cid, req.curve, clen,
-+					 pk_dma, req.key_ref,
-+					 pke_swap_flags(req.curve));
-+	vcq_add_pke_flush(&vcq[2], pke_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(pk_dma, pk_len, DMA_FROM_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.public_key),
-+				 pk_buf, pk_len))
-+			ret = -EFAULT;
-+	}
-+
-+	kfree(pk_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_pke_eddsa_keygen_sca() - Handle CMH_MGMT_IOC_PKE_EDDSA_KEYGEN_SCA ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_pke_eddsa_keygen_sca(void __user *argp)
-+{
-+	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	struct cmh_ioctl_pke_eddsa_keygen_sca req;
-+	/* header + SYS_NEW + EDDSA_KEYGEN_SCA + flush_pke + flush_sys */
-+	struct vcq_cmd vcq[5];
-+	u64 *ref_buf;
-+	dma_addr_t ref_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	/* EdDSA SCA keygen is only supported for Ed448 */
-+	if (req.curve != PKE_CURVE_448)
-+		return -EINVAL;
-+
-+	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	if (!ref_buf)
-+		return -ENOMEM;
-+
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ref_dma)) {
-+		kfree(ref_buf);
-+		return -ENOMEM;
-+	}
-+
-+	vcq_set_header(&vcq[0], 5);
-+	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, PKE_ED448_SK_SCA_LEN);
-+	vcq_add_pke_eddsa_keygen_sca(&vcq[2], pke_cid, req.curve, req.key_ref,
-+				     SYS_REF_LAST);
-+	vcq_add_pke_flush(&vcq[3], pke_cid);
-+	vcq_add_sys_flush(&vcq[4]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
-+
-+	cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+
-+	/* Keygen failed after SYS_CMD_NEW; scrub the orphaned SCA key slot. */
-+	if (ret && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		req.sca_ref = *ref_buf;
-+		if (copy_to_user(argp, &req, sizeof(req))) {
-+			/* Ref never reached user space; scrub the orphan. */
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: EDDSA_KEYGEN_SCA copy_to_user failed, DS slot cleaned up\n");
-+			ret = -EFAULT;
-+		}
-+	}
-+
-+	kfree(ref_buf);
-+	return ret;
-+}
-diff --git a/drivers/crypto/cmh/cmh_mgmt_pqc.c b/drivers/crypto/cmh/cmh_mgmt_pqc.c
-new file mode 100644
-index 000000000000..bc78e09078e2
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_mgmt_pqc.c
-@@ -0,0 +1,1365 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH -- PQC ioctl handlers for /dev/cmh_mgmt
-+ *
-+ * ML-KEM keygen/encapsulate/decapsulate, ML-DSA keygen/sign,
-+ * SLH-DSA keygen/sign (pure + prehash).
-+ *
-+ * Split from cmh_mgmt.c for maintainability.
-+ */
-+
-+#include <linux/kernel.h>
-+#include <linux/uaccess.h>
-+#include <linux/slab.h>
-+#include <linux/overflow.h>
-+
-+#include "cmh_mgmt.h"
-+#include "cmh_sys.h"
-+#include "cmh_txn.h"
-+#include "cmh_key.h"
-+#include "cmh_dma.h"
-+#include "cmh_config.h"
-+#include "cmh_pqc.h"
-+#include "cmh_qse_abi.h"
-+#include "cmh_sys_abi.h"
-+#include <uapi/linux/cmh_mgmt_ioctl.h>
-+
-+#include <crypto/utils.h>
-+
-+/* -- PQC -- ML-KEM -- */
-+
-+/**
-+ * cmh_mgmt_ml_kem_keygen() - Handle CMH_MGMT_IOC_ML_KEM_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_ml_kem_keygen(void __user *argp)
-+{
-+	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
-+
-+	struct cmh_ioctl_ml_kem_keygen req;
-+	struct vcq_cmd vcq[QSE_VCQ_CMDS_MAX];
-+	u32 ek_len, dk_len, seed_len, key_flags;
-+	u32 qse_flags = 0;
-+	bool masked, ds_ref, hw_rng;
-+	u8 *seed_buf = NULL, *z_buf = NULL, *ek_buf, *dk_buf = NULL;
-+	u64 *ref_buf = NULL;
-+	dma_addr_t seed_dma = DMA_MAPPING_ERROR, z_dma = DMA_MAPPING_ERROR;
-+	dma_addr_t ek_dma, dk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
-+	int ret, idx;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (ml_kem_k_idx(req.k) < 0)
-+		return -EINVAL;
-+	if (req.flags & ~(CMH_QSE_FLAG_MASK | CMH_FLAG_MASK))
-+		return -EINVAL;
-+
-+	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
-+	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
-+	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
-+
-+	/*
-+	 * QSE keys only support PT storage -- the eSW dec/sign paths
-+	 * hardcode SYS_TYPE_FLAG_PT when reading the key back.
-+	 * QSE SCA protection uses masking (CMH_QSE_FLAG_MASKED),
-+	 * not the 2-share mechanism (CMH_FLAG_SCA).
-+	 */
-+	key_flags = req.flags & CMH_FLAG_MASK;
-+	if (key_flags && key_flags != CMH_FLAG_PT)
-+		return -EINVAL;
-+	key_flags = CMH_FLAG_PT;
-+
-+	/* Masked keygen must store dk in DS -- polynomial unmasking not supported */
-+	if (masked && !ds_ref)
-+		return -EINVAL;
-+
-+	ek_len = ML_KEM_EK_SIZE(req.k);
-+	dk_len = masked ? ML_KEM_DK_SIZE_MASKED(req.k)
-+			: ML_KEM_DK_SIZE(req.k);
-+	seed_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
-+
-+	if (hw_rng)
-+		qse_flags |= QSE_FLAG_USE_RNG;
-+	if (ds_ref)
-+		qse_flags |= QSE_FLAG_USE_REF;
-+
-+	/*
-+	 * Without HW RNG the caller must supply both seed and z; a 0 pointer
-+	 * with non-zero length is a wild eSW DMA read (F3), not "absent".
-+	 */
-+	if (!hw_rng && (!req.seed || !req.z))
-+		return -EINVAL;
-+
-+	ek_buf = kzalloc(ek_len, GFP_KERNEL);
-+	if (!ek_buf)
-+		return -ENOMEM;
-+
-+	if (!hw_rng && req.seed && req.z) {
-+		seed_buf = kmalloc(seed_len, GFP_KERNEL);
-+		z_buf = kmalloc(seed_len, GFP_KERNEL);
-+		if (!seed_buf || !z_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed),
-+				   seed_len) ||
-+		    copy_from_user(z_buf, u64_to_user_ptr(req.z), seed_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	if (ds_ref) {
-+		ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+		if (!ref_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	} else {
-+		dk_buf = kzalloc(dk_len, GFP_KERNEL);
-+		if (!dk_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	}
-+
-+	/* DMA map */
-+	ek_dma = cmh_dma_map_single(ek_buf, ek_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ek_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (seed_buf) {
-+		seed_dma = cmh_dma_map_single(seed_buf, seed_len,
-+					      DMA_TO_DEVICE);
-+		z_dma = cmh_dma_map_single(z_buf, seed_len, DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(seed_dma) || cmh_dma_map_error(z_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (ds_ref) {
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	} else {
-+		dk_dma = cmh_dma_map_single(dk_buf, dk_len, DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(dk_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	idx = 0;
-+	if (ds_ref) {
-+		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MAX);
-+		idx++;
-+		vcq_add_sys_new(&vcq[idx++], req.dk_cid, ref_dma, dk_len);
-+		vcq_add_qse_ml_kem_keygen(&vcq[idx++], qse_cid, req.k, qse_flags,
-+					  seed_dma, z_dma,
-+					  ek_dma, SYS_REF_LAST,
-+					  SYS_TYPE_SET(key_flags,
-+						       CORE_ID_QSE),
-+					  masked);
-+		vcq_add_qse_flush(&vcq[idx++], qse_cid);
-+		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MAX,
-+					     1, MGMT_MBX);
-+	} else {
-+		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
-+		idx++;
-+		vcq_add_qse_ml_kem_keygen(&vcq[idx++], qse_cid, req.k, qse_flags,
-+					  seed_dma, z_dma,
-+					  ek_dma, dk_dma, 0, masked);
-+		vcq_add_qse_flush(&vcq[idx++], qse_cid);
-+		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
-+					     1, MGMT_MBX);
-+	}
-+
-+out_unmap:
-+	if (ds_ref && !cmh_dma_map_error(ref_dma))
-+		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!ds_ref && dk_buf && !cmh_dma_map_error(dk_dma))
-+		cmh_dma_unmap_single(dk_dma, dk_len, DMA_FROM_DEVICE);
-+	if (z_buf && !cmh_dma_map_error(z_dma))
-+		cmh_dma_unmap_single(z_dma, seed_len, DMA_TO_DEVICE);
-+	if (seed_buf && !cmh_dma_map_error(seed_dma))
-+		cmh_dma_unmap_single(seed_dma, seed_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(ek_dma))
-+		cmh_dma_unmap_single(ek_dma, ek_len, DMA_FROM_DEVICE);
-+
-+	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
-+	if (ret && ds_ref && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.ek), ek_buf, ek_len)) {
-+			ret = -EFAULT;
-+		} else if (ds_ref) {
-+			req.dk_ref = *ref_buf;
-+		} else if (copy_to_user(u64_to_user_ptr(req.dk),
-+					dk_buf, dk_len)) {
-+			ret = -EFAULT;
-+		}
-+		if (!ret && copy_to_user(argp, &req, sizeof(req)))
-+			ret = -EFAULT;
-+		/*
-+		 * A copy_to_user faulted after the DS slot was created, so
-+		 * its ref never reached userspace and the caller cannot free
-+		 * it.  Logically delete the orphaned slot: grant-with-no-access
-+		 * wipes the key material and clears the CID (it does not
-+		 * reclaim the stack space -- only a datastore reset does).
-+		 */
-+		if (ret && ds_ref) {
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: ML_KEM_KEYGEN copy_to_user failed, DS slot cleaned up\n");
-+		}
-+	}
-+
-+out_free:
-+	kfree_sensitive(dk_buf);
-+	kfree(ref_buf);
-+	kfree_sensitive(z_buf);
-+	kfree_sensitive(seed_buf);
-+	kfree(ek_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_ml_kem_enc() - Handle CMH_MGMT_IOC_ML_KEM_ENC ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_ml_kem_enc(void __user *argp)
-+{
-+	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
-+
-+	struct cmh_ioctl_ml_kem_enc req;
-+	struct vcq_cmd vcq[QSE_VCQ_CMDS_MIN];
-+	u32 ek_len, ct_len, ss_out_len;
-+	u32 qse_flags = 0;
-+	bool masked, hw_rng;
-+	u8 *ek_buf, *coin_buf = NULL, *ct_buf, *ss_buf;
-+	dma_addr_t ek_dma, coin_dma = DMA_MAPPING_ERROR, ct_dma, ss_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved || req.__reserved2[0] || req.__reserved2[1])
-+		return -EINVAL;
-+	if (ml_kem_k_idx(req.k) < 0)
-+		return -EINVAL;
-+
-+	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
-+	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
-+
-+	ek_len = ML_KEM_EK_SIZE(req.k);
-+	ct_len = ML_KEM_CT_SIZE(req.k);
-+	ss_out_len = masked ? ML_KEM_SS_LEN_MASKED : ML_KEM_SS_LEN;
-+
-+	if (hw_rng)
-+		qse_flags |= QSE_FLAG_USE_RNG;
-+
-+	/*
-+	 * Without HW RNG the caller must supply the coin; a 0 pointer with
-+	 * non-zero length is a wild eSW DMA read (F3), not "absent".
-+	 */
-+	if (!hw_rng && !req.coin)
-+		return -EINVAL;
-+
-+	ek_buf = kmalloc(ek_len, GFP_KERNEL);
-+	ct_buf = kzalloc(ct_len, GFP_KERNEL);
-+	ss_buf = kzalloc(ss_out_len, GFP_KERNEL);
-+	if (!ek_buf || !ct_buf || !ss_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(ek_buf, u64_to_user_ptr(req.ek), ek_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	if (!hw_rng && req.coin) {
-+		u32 coin_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
-+
-+		coin_buf = kmalloc(coin_len, GFP_KERNEL);
-+		if (!coin_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(coin_buf, u64_to_user_ptr(req.coin),
-+				   coin_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		coin_dma = cmh_dma_map_single(coin_buf, coin_len,
-+					      DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(coin_dma)) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	}
-+
-+	ek_dma = cmh_dma_map_single(ek_buf, ek_len, DMA_TO_DEVICE);
-+	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_FROM_DEVICE);
-+	ss_dma = cmh_dma_map_single(ss_buf, ss_out_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ek_dma) || cmh_dma_map_error(ct_dma) ||
-+	    cmh_dma_map_error(ss_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
-+	vcq_add_qse_ml_kem_enc(&vcq[1], qse_cid, req.k, qse_flags,
-+			       coin_dma, ek_dma, ct_dma, ss_dma, 0, masked);
-+	vcq_add_qse_flush(&vcq[2], qse_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(ss_dma))
-+		cmh_dma_unmap_single(ss_dma, ss_out_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, ct_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ek_dma))
-+		cmh_dma_unmap_single(ek_dma, ek_len, DMA_TO_DEVICE);
-+	if (coin_buf && !cmh_dma_map_error(coin_dma))
-+		cmh_dma_unmap_single(coin_dma,
-+				     masked ? QSE_SEED_LEN_MASKED
-+					    : QSE_SEED_LEN,
-+				     DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.ct), ct_buf, ct_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		/* Unmask ss if masked: ss = share0 ^ share1 */
-+		if (masked) {
-+			crypto_xor(ss_buf, ss_buf + ML_KEM_SS_LEN,
-+				   ML_KEM_SS_LEN);
-+		}
-+		if (copy_to_user(u64_to_user_ptr(req.ss), ss_buf,
-+				 ML_KEM_SS_LEN)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		if (copy_to_user(argp, &req, sizeof(req)))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(ss_buf);
-+	kfree(ct_buf);
-+	kfree(coin_buf);
-+	kfree(ek_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_ml_kem_dec() - Handle CMH_MGMT_IOC_ML_KEM_DEC ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_ml_kem_dec(void __user *argp)
-+{
-+	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
-+
-+	struct cmh_ioctl_ml_kem_dec req;
-+	/* DS_REF path: hdr + ml_kem_dec + qse_flush + sys_data + sys_flush */
-+	struct vcq_cmd vcq[5];
-+	u32 ct_len, dk_len, ss_out_len;
-+	u32 qse_flags = 0;
-+	bool masked, ds_ref;
-+	u8 *ct_buf, *dk_buf = NULL, *ss_buf;
-+	dma_addr_t ct_dma, dk_dma = DMA_MAPPING_ERROR, ss_dma;
-+	u64 dk_ref;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved || req.__reserved2[0] || req.__reserved2[1])
-+		return -EINVAL;
-+	if (ml_kem_k_idx(req.k) < 0)
-+		return -EINVAL;
-+
-+	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
-+	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
-+
-+	ct_len = ML_KEM_CT_SIZE(req.k);
-+	dk_len = masked ? ML_KEM_DK_SIZE_MASKED(req.k)
-+			: ML_KEM_DK_SIZE(req.k);
-+	ss_out_len = masked ? ML_KEM_SS_LEN_MASKED : ML_KEM_SS_LEN;
-+
-+	ct_buf = kmalloc(ct_len, GFP_KERNEL);
-+	ss_buf = kzalloc(ss_out_len, GFP_KERNEL);
-+	if (!ct_buf || !ss_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ct), ct_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_TO_DEVICE);
-+	ss_dma = cmh_dma_map_single(ss_buf, ss_out_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(ss_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	/*
-+	 * dk: if DS_REF flag is set, req.dk is a DS reference.
-+	 * Otherwise, copy raw dk from user-space and use extmem DMA.
-+	 * Masked decaps requires DS ref (polynomial unmasking not supported).
-+	 */
-+	if (ds_ref) {
-+		dk_ref = req.dk;
-+		qse_flags |= QSE_FLAG_USE_REF;
-+	} else {
-+		if (masked) {
-+			ret = -EINVAL;
-+			goto out_unmap;
-+		}
-+		dk_buf = kmalloc(dk_len, GFP_KERNEL);
-+		if (!dk_buf) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+		if (copy_from_user(dk_buf, u64_to_user_ptr(req.dk), dk_len)) {
-+			ret = -EFAULT;
-+			goto out_unmap;
-+		}
-+		dk_dma = cmh_dma_map_single(dk_buf, dk_len, DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(dk_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+		dk_ref = dk_dma;
-+	}
-+
-+	if (ds_ref) {
-+		/*
-+		 * DS_REF decaps: dk and ss both live in the datastore.
-+		 * Compute ss into SYS_REF_TEMP and read it back within a
-+		 * single VCQ.  dk is a caller-owned persistent ref, so it
-+		 * never collides with the temp output.  Keeping the temp push
-+		 * (ml_kem_dec) and pop (sys_data) in one submission bounds the
-+		 * temp to a single mailbox occupation -- no concurrent mgmt op
-+		 * can interleave a temp -- and the read reclaims the slot, so
-+		 * nothing leaks.  qse_flush drains the QSE sidecar (committing
-+		 * the shared-secret DMA) without resetting the temp stack.
-+		 */
-+		vcq_set_header(&vcq[0], 5);
-+		vcq_add_qse_ml_kem_dec(&vcq[1], qse_cid, req.k, qse_flags,
-+				       ct_dma, dk_ref, SYS_REF_TEMP,
-+				       SYS_TYPE_SET(SYS_TYPE_FLAG_PT,
-+						    CORE_ID_QSE),
-+				       masked);
-+		vcq_add_qse_flush(&vcq[2], qse_cid);
-+		vcq_add_sys_data(&vcq[3], SYS_REF_TEMP, ss_dma, ss_out_len);
-+		vcq_add_sys_flush(&vcq[4]);
-+
-+		ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
-+	} else {
-+		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
-+		vcq_add_qse_ml_kem_dec(&vcq[1], qse_cid, req.k, qse_flags,
-+				       ct_dma, dk_ref, ss_dma, 0, masked);
-+		vcq_add_qse_flush(&vcq[2], qse_cid);
-+
-+		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
-+					     1, MGMT_MBX);
-+	}
-+
-+out_unmap:
-+	if (dk_buf && !cmh_dma_map_error(dk_dma))
-+		cmh_dma_unmap_single(dk_dma, dk_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(ss_dma))
-+		cmh_dma_unmap_single(ss_dma, ss_out_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, ct_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (masked) {
-+			crypto_xor(ss_buf, ss_buf + ML_KEM_SS_LEN,
-+				   ML_KEM_SS_LEN);
-+		}
-+		if (copy_to_user(u64_to_user_ptr(req.ss), ss_buf,
-+				 ML_KEM_SS_LEN)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		if (copy_to_user(argp, &req, sizeof(req)))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(dk_buf);
-+	kfree_sensitive(ss_buf);
-+	kfree(ct_buf);
-+	return ret;
-+}
-+
-+/* -- PQC -- ML-DSA -- */
-+
-+/**
-+ * cmh_mgmt_ml_dsa_keygen() - Handle CMH_MGMT_IOC_ML_DSA_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_ml_dsa_keygen(void __user *argp)
-+{
-+	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
-+
-+	struct cmh_ioctl_ml_dsa_keygen req;
-+	struct vcq_cmd vcq[QSE_VCQ_CMDS_MAX];
-+	u32 pk_size, sk_size, seed_len, key_flags;
-+	u32 qse_flags = 0;
-+	bool masked, ds_ref, hw_rng;
-+	u8 *seed_buf = NULL, *pk_buf, *sk_buf = NULL;
-+	u64 *ref_buf = NULL;
-+	dma_addr_t seed_dma = DMA_MAPPING_ERROR, pk_dma;
-+	dma_addr_t sk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
-+	int ret, idx, mi;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	mi = ml_dsa_mode_idx(req.mode);
-+	if (mi < 0)
-+		return -EINVAL;
-+	if (req.flags & ~(CMH_QSE_FLAG_MASK | CMH_FLAG_MASK))
-+		return -EINVAL;
-+
-+	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
-+	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
-+	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
-+
-+	/*
-+	 * QSE keys only support PT storage -- the eSW sign path
-+	 * hardcodes SYS_TYPE_FLAG_PT when reading the key back.
-+	 * QSE SCA protection uses masking (CMH_QSE_FLAG_MASKED),
-+	 * not the 2-share mechanism (CMH_FLAG_SCA).
-+	 */
-+	key_flags = req.flags & CMH_FLAG_MASK;
-+	if (key_flags && key_flags != CMH_FLAG_PT)
-+		return -EINVAL;
-+	key_flags = CMH_FLAG_PT;
-+
-+	if (masked && !ds_ref)
-+		return -EINVAL;
-+
-+	pk_size = ml_dsa_pk_size[mi];
-+	sk_size = masked ? ml_dsa_sk_size_masked[mi] : ml_dsa_sk_size[mi];
-+	seed_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
-+
-+	if (hw_rng)
-+		qse_flags |= QSE_FLAG_USE_RNG;
-+	if (ds_ref)
-+		qse_flags |= QSE_FLAG_USE_REF;
-+
-+	/*
-+	 * Without HW RNG the caller must supply the seed; a 0 pointer with
-+	 * non-zero length is a wild eSW DMA read (F3), not "absent".
-+	 */
-+	if (!hw_rng && !req.seed)
-+		return -EINVAL;
-+
-+	pk_buf = kzalloc(pk_size, GFP_KERNEL);
-+	if (!pk_buf)
-+		return -ENOMEM;
-+
-+	if (!hw_rng && req.seed) {
-+		seed_buf = kmalloc(seed_len, GFP_KERNEL);
-+		if (!seed_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed),
-+				   seed_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	if (ds_ref) {
-+		ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+		if (!ref_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	} else {
-+		sk_buf = kzalloc(sk_size, GFP_KERNEL);
-+		if (!sk_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	}
-+
-+	pk_dma = cmh_dma_map_single(pk_buf, pk_size, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(pk_dma)) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (seed_buf) {
-+		seed_dma = cmh_dma_map_single(seed_buf, seed_len,
-+					      DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(seed_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (ds_ref) {
-+		ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64),
-+					     DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(ref_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	} else {
-+		sk_dma = cmh_dma_map_single(sk_buf, sk_size, DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(sk_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	idx = 0;
-+	if (ds_ref) {
-+		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MAX);
-+		idx++;
-+		vcq_add_sys_new(&vcq[idx++], req.sk_cid, ref_dma, sk_size);
-+		vcq_add_qse_ml_dsa_keygen(&vcq[idx++], qse_cid, req.mode, qse_flags,
-+					  seed_dma, pk_dma,
-+					  SYS_REF_LAST,
-+					  SYS_TYPE_SET(key_flags,
-+						       CORE_ID_QSE),
-+					  masked);
-+		vcq_add_qse_flush(&vcq[idx++], qse_cid);
-+		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MAX,
-+					     1, MGMT_MBX);
-+	} else {
-+		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
-+		idx++;
-+		vcq_add_qse_ml_dsa_keygen(&vcq[idx++], qse_cid, req.mode, qse_flags,
-+					  seed_dma, pk_dma,
-+					  sk_dma, 0, masked);
-+		vcq_add_qse_flush(&vcq[idx++], qse_cid);
-+		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
-+					     1, MGMT_MBX);
-+	}
-+
-+out_unmap:
-+	if (ds_ref && !cmh_dma_map_error(ref_dma))
-+		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!ds_ref && sk_buf && !cmh_dma_map_error(sk_dma))
-+		cmh_dma_unmap_single(sk_dma, sk_size, DMA_FROM_DEVICE);
-+	if (seed_buf && !cmh_dma_map_error(seed_dma))
-+		cmh_dma_unmap_single(seed_dma, seed_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(pk_dma))
-+		cmh_dma_unmap_single(pk_dma, pk_size, DMA_FROM_DEVICE);
-+
-+	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
-+	if (ret && ds_ref && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.pk), pk_buf, pk_size)) {
-+			ret = -EFAULT;
-+		} else if (ds_ref) {
-+			req.sk_ref = *ref_buf;
-+		} else if (copy_to_user(u64_to_user_ptr(req.sk),
-+					sk_buf, sk_size)) {
-+			ret = -EFAULT;
-+		}
-+		if (!ret && copy_to_user(argp, &req, sizeof(req)))
-+			ret = -EFAULT;
-+		/*
-+		 * A copy_to_user faulted after the DS slot was created, so
-+		 * its ref never reached userspace and the caller cannot free
-+		 * it.  Logically delete the orphaned slot: grant-with-no-access
-+		 * wipes the key material and clears the CID (it does not
-+		 * reclaim the stack space -- only a datastore reset does).
-+		 */
-+		if (ret && ds_ref) {
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: ML_DSA_KEYGEN copy_to_user failed, DS slot cleaned up\n");
-+		}
-+	}
-+
-+out_free:
-+	kfree_sensitive(sk_buf);
-+	kfree(ref_buf);
-+	kfree_sensitive(seed_buf);
-+	kfree(pk_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_ml_dsa_sign() - Handle CMH_MGMT_IOC_ML_DSA_SIGN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_ml_dsa_sign(void __user *argp)
-+{
-+	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
-+
-+	struct cmh_ioctl_ml_dsa_sign req;
-+	struct vcq_cmd vcq[QSE_VCQ_CMDS_MIN];
-+	u32 sig_size, copy_len, rnd_len;
-+	u32 qse_flags = 0;
-+	bool masked;
-+	u8 *m_buf, *sig_buf, *sk_buf = NULL, *rnd_buf = NULL;
-+	dma_addr_t m_dma = DMA_MAPPING_ERROR, sig_dma = DMA_MAPPING_ERROR;
-+	dma_addr_t sk_dma = DMA_MAPPING_ERROR;
-+	/*
-+	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
-+	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
-+	 * address and DMA'd from.
-+	 */
-+	dma_addr_t rnd_dma = 0;
-+	u64 sk_ref;
-+	int mi, ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	mi = ml_dsa_mode_idx(req.mode);
-+	if (mi < 0)
-+		return -EINVAL;
-+	if (req.mlen > ML_DSA_MAX_MLEN && req.mlen != ML_DSA_MLEN_EXTERNAL_MU)
-+		return -EINVAL;
-+
-+	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
-+	rnd_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
-+	sig_size = ml_dsa_sig_size[mi];
-+	copy_len = (req.mlen == ML_DSA_MLEN_EXTERNAL_MU)
-+			? ML_DSA_EXTMU_LEN : req.mlen;
-+
-+	/*
-+	 * sk: if DS_REF, req.sk is a DS reference (masked sk lives in DS).
-+	 * Otherwise, copy raw sk from user-space.
-+	 * Masked sign requires DS ref (polynomial unmasking not supported).
-+	 */
-+	if (req.flags & CMH_QSE_FLAG_DS_REF) {
-+		sk_ref = req.sk;
-+		qse_flags |= QSE_FLAG_USE_REF;
-+	} else {
-+		u32 sk_size;
-+
-+		if (masked)
-+			return -EINVAL;
-+		sk_size = ml_dsa_sk_size[mi];
-+		sk_buf = kmalloc(sk_size, GFP_KERNEL);
-+		if (!sk_buf)
-+			return -ENOMEM;
-+		if (copy_from_user(sk_buf, u64_to_user_ptr(req.sk), sk_size)) {
-+			kfree_sensitive(sk_buf);
-+			return -EFAULT;
-+		}
-+	}
-+
-+	m_buf = kmalloc(max_t(u32, copy_len, 1), GFP_KERNEL);
-+	sig_buf = kzalloc(sig_size, GFP_KERNEL);
-+	if (!m_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_len > 0 &&
-+	    copy_from_user(m_buf, u64_to_user_ptr(req.m), copy_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	if (req.rnd) {
-+		rnd_buf = kmalloc(rnd_len, GFP_KERNEL);
-+		if (!rnd_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.rnd),
-+				   rnd_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	if (copy_len > 0) {
-+		m_dma = cmh_dma_map_single(m_buf, copy_len, DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(m_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_size, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	if (sk_buf) {
-+		sk_dma = cmh_dma_map_single(sk_buf, ml_dsa_sk_size[mi],
-+					    DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(sk_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+		sk_ref = sk_dma;
-+	}
-+
-+	if (rnd_buf) {
-+		rnd_dma = cmh_dma_map_single(rnd_buf, rnd_len,
-+					     DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rnd_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
-+	vcq_add_qse_ml_dsa_sign(&vcq[1], qse_cid, req.mode, qse_flags,
-+				rnd_dma, m_dma, sk_ref, sig_dma,
-+				req.mlen, masked);
-+	vcq_add_qse_flush(&vcq[2], qse_cid);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
-+		cmh_dma_unmap_single(rnd_dma, rnd_len, DMA_TO_DEVICE);
-+	if (sk_buf && !cmh_dma_map_error(sk_dma))
-+		cmh_dma_unmap_single(sk_dma, ml_dsa_sk_size[mi],
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_size, DMA_FROM_DEVICE);
-+	if (copy_len > 0 && !cmh_dma_map_error(m_dma))
-+		cmh_dma_unmap_single(m_dma, copy_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_size))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(rnd_buf);
-+	kfree(sig_buf);
-+	kfree(m_buf);
-+	kfree_sensitive(sk_buf);
-+	return ret;
-+}
-+
-+/* -- PQC -- SLH-DSA -- */
-+
-+/**
-+ * cmh_mgmt_slhdsa_keygen() - Handle CMH_MGMT_IOC_SLHDSA_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_slhdsa_keygen(void __user *argp)
-+{
-+	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
-+
-+	struct cmh_ioctl_slhdsa_keygen req;
-+	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MAX];
-+	u32 pk_sz, sk_sz, seed_sz, sk_alloc, vcq_cnt, key_flags;
-+	bool ds_ref;
-+	u8 *seed_buf, *pk_buf, *sk_buf = NULL;
-+	u64 *ref_buf = NULL;
-+	dma_addr_t seed_dma, pk_dma, sk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
-+	int ret, idx;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
-+		return -EINVAL;
-+	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
-+		return -EINVAL;
-+	if (req.flags & ~(CMH_QSE_FLAG_DS_REF | CMH_FLAG_MASK))
-+		return -EINVAL;
-+
-+	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
-+
-+	/*
-+	 * QSE keys only support PT storage -- the eSW sign path
-+	 * hardcodes SYS_TYPE_FLAG_PT when reading the key back.
-+	 * HCQ core sets key type internally during keygen.
-+	 */
-+	key_flags = req.flags & CMH_FLAG_MASK;
-+	if (key_flags && key_flags != CMH_FLAG_PT)
-+		return -EINVAL;
-+	(void)key_flags;
-+
-+	pk_sz = slhdsa_pk_size(req.parameter_set);
-+	sk_sz = slhdsa_sk_size(req.parameter_set);
-+	seed_sz = slhdsa_seed_size(req.parameter_set);
-+
-+	seed_buf = kmalloc(seed_sz, GFP_KERNEL);
-+	pk_buf = kzalloc(pk_sz, GFP_KERNEL);
-+	if (!seed_buf || !pk_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed), seed_sz)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	/*
-+	 * Both paths need ref_buf for sys_new output.  Non-ds_ref also
-+	 * needs sk_buf (+16 for SYS header) to read back via sys_read.
-+	 */
-+	ref_buf = kzalloc(sizeof(u64), GFP_KERNEL);
-+	if (!ref_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+	if (!ds_ref) {
-+		sk_alloc = sk_sz + SYS_WRAP_HDR_SIZE;
-+		sk_buf = kzalloc(sk_alloc, GFP_KERNEL);
-+		if (!sk_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+	}
-+
-+	seed_dma = cmh_dma_map_single(seed_buf, seed_sz, DMA_TO_DEVICE);
-+	pk_dma = cmh_dma_map_single(pk_buf, pk_sz, DMA_FROM_DEVICE);
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(seed_dma) || cmh_dma_map_error(pk_dma) ||
-+	    cmh_dma_map_error(ref_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	if (!ds_ref) {
-+		sk_dma = cmh_dma_map_single(sk_buf, sk_alloc,
-+					    DMA_FROM_DEVICE);
-+		if (cmh_dma_map_error(sk_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	/*
-+	 * SLH-DSA keygen requires seed and sk as DS references.
-+	 * VCQ: hdr + sys_new(sk) + sys_write(seed->TEMP) + keygen + [sys_read] + flush
-+	 */
-+	idx = 0;
-+	if (ds_ref) {
-+		vcq_cnt = HCQ_VCQ_CMDS_MAX - 1; /* hdr+new+write+keygen+flush */
-+		vcq_set_header(&vcq[idx++], vcq_cnt);
-+		vcq_add_sys_new(&vcq[idx++], req.sk_cid, ref_dma,
-+				sk_sz);
-+	} else {
-+		vcq_cnt = HCQ_VCQ_CMDS_MAX; /* hdr+new+write+keygen+read+flush */
-+		vcq_set_header(&vcq[idx++], vcq_cnt);
-+		vcq_add_sys_new(&vcq[idx++], SYS_CID_NONE, ref_dma,
-+				sk_sz);
-+	}
-+	vcq_add_sys_write(&vcq[idx++], SYS_REF_TEMP, seed_dma, 0,
-+			  seed_sz,
-+			  SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_HCQ));
-+	vcq_add_hcq_slhdsa_keygen(&vcq[idx++], hcq_cid, req.parameter_set,
-+				  seed_sz, pk_sz, sk_sz,
-+				  SYS_REF_TEMP, pk_dma, SYS_REF_LAST);
-+	if (!ds_ref)
-+		vcq_add_sys_read(&vcq[idx++], SYS_REF_LAST, sk_dma,
-+				 0, sk_sz + SYS_WRAP_HDR_SIZE);
-+	vcq_add_hcq_flush(&vcq[idx++], hcq_cid);
-+
-+	ret = cmh_tm_submit_sync_tmo(vcq, vcq_cnt, 1, MGMT_MBX,
-+				     cmh_tm_slow_op_timeout_jiffies());
-+
-+out_unmap:
-+	if (!ds_ref && sk_buf && !cmh_dma_map_error(sk_dma))
-+		cmh_dma_unmap_single(sk_dma, sk_alloc, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ref_dma))
-+		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(pk_dma))
-+		cmh_dma_unmap_single(pk_dma, pk_sz, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(seed_dma))
-+		cmh_dma_unmap_single(seed_dma, seed_sz, DMA_TO_DEVICE);
-+
-+	/*
-+	 * Raw-output mode exports the SK to host and keeps no datastore handle,
-+	 * so scrub the object once the readback VCQ has run: grant-with-no-
-+	 * access wipes the exported private key from datastore RAM and revokes
-+	 * its CID.  The slot offset is not reclaimed (the datastore is a bump
-+	 * allocator; only a full reset frees space) -- acceptable on this
-+	 * CAP_SYS_ADMIN path, as for every other DS-allocating mgmt ioctl.
-+	 */
-+	if (!ds_ref && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
-+	if (ret && ds_ref && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.pk), pk_buf, pk_sz)) {
-+			ret = -EFAULT;
-+		} else if (ds_ref) {
-+			req.sk_ref = *ref_buf;
-+		} else if (copy_to_user(u64_to_user_ptr(req.sk),
-+					sk_buf + SYS_WRAP_HDR_SIZE,
-+					sk_sz)) {
-+			ret = -EFAULT;
-+		}
-+		if (!ret && copy_to_user(argp, &req, sizeof(req)))
-+			ret = -EFAULT;
-+		/*
-+		 * A copy_to_user faulted after the DS slot was created, so
-+		 * its ref never reached userspace and the caller cannot free
-+		 * it.  Logically delete the orphaned slot: grant-with-no-access
-+		 * wipes the key material and clears the CID (it does not
-+		 * reclaim the stack space -- only a datastore reset does).
-+		 */
-+		if (ret && ds_ref) {
-+			cmh_mgmt_ds_scrub(*ref_buf, 0);
-+			dev_warn(cmh_dev(),
-+				 "mgmt: SLHDSA_KEYGEN copy_to_user failed, DS slot cleaned up\n");
-+		}
-+	}
-+
-+out_free:
-+	kfree_sensitive(sk_buf);
-+	kfree(ref_buf);
-+	kfree(pk_buf);
-+	kfree_sensitive(seed_buf);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_mgmt_slhdsa_sign() - Handle CMH_MGMT_IOC_SLHDSA_SIGN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_slhdsa_sign(void __user *argp)
-+{
-+	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
-+
-+	struct cmh_ioctl_slhdsa_sign req;
-+	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MIN];
-+	u32 sig_sz, n_val;
-+	u8 *msg_buf, *ctx_buf = NULL, *sig_buf, *rnd_buf = NULL;
-+	dma_addr_t msg_dma = DMA_MAPPING_ERROR, ctx_dma = DMA_MAPPING_ERROR;
-+	/*
-+	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
-+	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
-+	 * address and DMA'd from.
-+	 */
-+	dma_addr_t sig_dma = DMA_MAPPING_ERROR, rnd_dma = 0;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
-+		return -EINVAL;
-+	if (req.msg_len > SLHDSA_MAX_MSG_LEN)
-+		return -EINVAL;
-+	if (req.ctx_len > SLHDSA_MAX_CTX_LEN)
-+		return -EINVAL;
-+
-+	/* ctx_len > 0 with a 0 ctx pointer is a wild eSW DMA read (F3). */
-+	if (req.ctx_len > 0 && !req.ctx)
-+		return -EINVAL;
-+
-+	sig_sz = slhdsa_get_sig_size(req.parameter_set);
-+	n_val = slhdsa_n[req.parameter_set - 1];
-+
-+	msg_buf = kmalloc(max_t(u32, req.msg_len, 1), GFP_KERNEL);
-+	sig_buf = kzalloc(sig_sz, GFP_KERNEL);
-+	if (!msg_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (req.msg_len > 0 &&
-+	    copy_from_user(msg_buf, u64_to_user_ptr(req.msg), req.msg_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	if (req.ctx_len > 0 && req.ctx) {
-+		ctx_buf = kmalloc(req.ctx_len, GFP_KERNEL);
-+		if (!ctx_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(ctx_buf, u64_to_user_ptr(req.ctx),
-+				   req.ctx_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	if (req.add_random) {
-+		rnd_buf = kmalloc(n_val, GFP_KERNEL);
-+		if (!rnd_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.add_random),
-+				   n_val)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_sz, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+	if (req.msg_len > 0) {
-+		msg_dma = cmh_dma_map_single(msg_buf, req.msg_len,
-+					     DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(msg_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (ctx_buf) {
-+		ctx_dma = cmh_dma_map_single(ctx_buf, req.ctx_len,
-+					     DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(ctx_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (rnd_buf) {
-+		rnd_dma = cmh_dma_map_single(rnd_buf, n_val, DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rnd_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	vcq_set_header(&vcq[0], HCQ_VCQ_CMDS_MIN);
-+	vcq_add_hcq_slhdsa_sign(&vcq[1], hcq_cid, req.parameter_set,
-+				req.msg_len, req.ctx_len,
-+				rnd_dma, msg_dma, ctx_dma,
-+				req.sk, sig_dma);
-+	vcq_add_hcq_flush(&vcq[2], hcq_cid);
-+
-+	ret = cmh_tm_submit_sync_tmo(vcq, HCQ_VCQ_CMDS_MIN, 1, MGMT_MBX,
-+				     cmh_tm_slow_op_timeout_jiffies());
-+
-+out_unmap:
-+	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
-+		cmh_dma_unmap_single(rnd_dma, n_val, DMA_TO_DEVICE);
-+	if (ctx_buf && !cmh_dma_map_error(ctx_dma))
-+		cmh_dma_unmap_single(ctx_dma, req.ctx_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_sz, DMA_FROM_DEVICE);
-+	if (req.msg_len > 0 && !cmh_dma_map_error(msg_dma))
-+		cmh_dma_unmap_single(msg_dma, req.msg_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_sz))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(rnd_buf);
-+	kfree(ctx_buf);
-+	kfree(sig_buf);
-+	kfree(msg_buf);
-+	return ret;
-+}
-+
-+/* -- PQC -- SLH-DSA prehash -- */
-+
-+/**
-+ * cmh_mgmt_slhdsa_sign_prehash() - Handle CMH_MGMT_IOC_SLHDSA_SIGN_PREHASH ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_slhdsa_sign_prehash(void __user *argp)
-+{
-+	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
-+
-+	struct cmh_ioctl_slhdsa_sign_prehash req;
-+	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MIN];
-+	u32 sig_sz, n_val, hcq_cmd;
-+	u8 *msg_buf, *ctx_buf = NULL, *sig_buf, *rnd_buf = NULL;
-+	dma_addr_t msg_dma = DMA_MAPPING_ERROR, ctx_dma = DMA_MAPPING_ERROR;
-+	/*
-+	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
-+	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
-+	 * address and DMA'd from.
-+	 */
-+	dma_addr_t sig_dma = DMA_MAPPING_ERROR, rnd_dma = 0;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
-+		return -EINVAL;
-+	if (req.prehash_algo < 1 || req.prehash_algo > HCQ_SLHDSA_PREHASH_SHAKE256)
-+		return -EINVAL;
-+	if (req.msg_len > SLHDSA_MAX_MSG_LEN)
-+		return -EINVAL;
-+	if (req.ctx_len > SLHDSA_MAX_CTX_LEN)
-+		return -EINVAL;
-+
-+	/* ctx_len > 0 with a 0 ctx pointer is a wild eSW DMA read (F3). */
-+	if (req.ctx_len > 0 && !req.ctx)
-+		return -EINVAL;
-+
-+	hcq_cmd = req.digest ? HCQ_CMD_SLHDSA_SIGN_PREHASH_DIGEST
-+			     : HCQ_CMD_SLHDSA_SIGN_PREHASH;
-+
-+	sig_sz = slhdsa_get_sig_size(req.parameter_set);
-+	n_val = slhdsa_n[req.parameter_set - 1];
-+
-+	msg_buf = kmalloc(max_t(u32, req.msg_len, 1), GFP_KERNEL);
-+	sig_buf = kzalloc(sig_sz, GFP_KERNEL);
-+	if (!msg_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (req.msg_len > 0 &&
-+	    copy_from_user(msg_buf, u64_to_user_ptr(req.msg), req.msg_len)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	if (req.ctx_len > 0 && req.ctx) {
-+		ctx_buf = kmalloc(req.ctx_len, GFP_KERNEL);
-+		if (!ctx_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(ctx_buf, u64_to_user_ptr(req.ctx),
-+				   req.ctx_len)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	if (req.add_random) {
-+		rnd_buf = kmalloc(n_val, GFP_KERNEL);
-+		if (!rnd_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
-+		}
-+		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.add_random),
-+				   n_val)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+	}
-+
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_sz, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+	if (req.msg_len > 0) {
-+		msg_dma = cmh_dma_map_single(msg_buf, req.msg_len,
-+					     DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(msg_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (ctx_buf) {
-+		ctx_dma = cmh_dma_map_single(ctx_buf, req.ctx_len,
-+					     DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(ctx_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	if (rnd_buf) {
-+		rnd_dma = cmh_dma_map_single(rnd_buf, n_val, DMA_TO_DEVICE);
-+		if (cmh_dma_map_error(rnd_dma)) {
-+			ret = -ENOMEM;
-+			goto out_unmap;
-+		}
-+	}
-+
-+	vcq_set_header(&vcq[0], HCQ_VCQ_CMDS_MIN);
-+	vcq_add_hcq_slhdsa_sign_prehash(&vcq[1], hcq_cid,
-+					hcq_cmd, req.parameter_set,
-+					req.prehash_algo,
-+					req.msg_len, req.ctx_len,
-+					rnd_dma, msg_dma, ctx_dma,
-+					req.sk, sig_dma);
-+	vcq_add_hcq_flush(&vcq[2], hcq_cid);
-+
-+	ret = cmh_tm_submit_sync_tmo(vcq, HCQ_VCQ_CMDS_MIN, 1, MGMT_MBX,
-+				     cmh_tm_slow_op_timeout_jiffies());
-+
-+out_unmap:
-+	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
-+		cmh_dma_unmap_single(rnd_dma, n_val, DMA_TO_DEVICE);
-+	if (ctx_buf && !cmh_dma_map_error(ctx_dma))
-+		cmh_dma_unmap_single(ctx_dma, req.ctx_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_sz, DMA_FROM_DEVICE);
-+	if (req.msg_len > 0 && !cmh_dma_map_error(msg_dma))
-+		cmh_dma_unmap_single(msg_dma, req.msg_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_sz))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(rnd_buf);
-+	kfree(ctx_buf);
-+	kfree(sig_buf);
-+	kfree(msg_buf);
-+	return ret;
-+}
-+
-+/* -- EAC (Error and Alarm Controller) ---- */
-+
-diff --git a/drivers/crypto/cmh/cmh_pke_sm2.c b/drivers/crypto/cmh/cmh_pke_sm2.c
-new file mode 100644
-index 000000000000..66d818636406
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_pke_sm2.c
-@@ -0,0 +1,862 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SM2 PKE Ioctl Handlers
-+ *
-+ * SM2 (GM/T 0003) is the Chinese national public-key standard over the
-+ * sm2p256v1 curve (256-bit).  It defines three protocols:
-+ *
-+ *   - Signature: reuses ECDSA sign/verify with SM2_CURVE (0x18), handled
-+ *     by the existing cmh_mgmt_pke_ecdsa_{sign,verify}() paths.
-+ *   - Encryption: two-step (ENC_POINT + ENC_HASH / DEC_POINT + DEC_HASH).
-+ *   - Key Exchange: four-step (ECDH_KEYGEN + ID_DIGEST + ECDH + ECDH_HASH).
-+ *
-+ * This file implements the 8 SM2-specific ioctl handlers (0x16--0x1D).
-+ * Sign/verify/keygen/pubgen use the existing ECDSA/EC paths unchanged.
-+ *
-+ * VCQ flag convention (from eSW API):
-+ *   - Most SM2 commands use flags=0 (no swap).
-+ *   - SM2_DEC_POINT and SM2_ECDH_HASH use PKE_SWAP_FLAGS on the
-+ *     PKE command itself.
-+ *   - SM2_ECDH and SM2_ECDH_HASH also apply PKE_SWAP_FLAGS on
-+ *     their sys_new/sys_data VCQ phases: the swap byte-reverses the
-+ *     DS object *payload* into Weierstrass format, not the ref-id
-+ *     writeback, so the datastore ref is read back intact (covered by
-+ *     the SM2 KAT).
-+ */
-+
-+#include <linux/uaccess.h>
-+#include <linux/slab.h>
-+
-+#include "cmh_pke.h"
-+#include "cmh_pke_sm2.h"
-+#include "cmh_sys.h"
-+#include "cmh_dma.h"
-+#include "cmh_txn.h"
-+#include "cmh_mgmt.h"
-+#include "cmh_sys_abi.h"
-+#include <uapi/linux/cmh_mgmt_ioctl.h>
-+
-+/* SM2 fixed sizes (sm2p256v1: 256-bit curve) */
-+#define SM2_CLEN		32U	/* coordinate length */
-+#define SM2_POINT_LEN		64U	/* uncompressed EC point (x||y) */
-+#define SM2_SHARED_KEY_LEN	16U	/* ECDH shared key output */
-+#define SM2_DIGEST_LEN		32U	/* SM3 ZA digest */
-+#define SM2_NONCE_LEN		32U	/* nonce (when caller-provided) */
-+/*
-+ * SM2 enc_hash/dec_hash payload limit.
-+ *
-+ * The eSW PKE driver expands the GM/T 0003.4 KDF by issuing a single SM3
-+ * invocation per command (one 32-byte block of key stream).  Messages
-+ * longer than 32 bytes would require ceil(msg_len / 32) SM3 invocations
-+ * with an incremented counter, which the eSW does not perform; longer
-+ * inputs would silently produce incorrect ciphertext / plaintext.
-+ *
-+ * The eSW PKE SRAM can physically hold up to 4000 bytes of payload, but
-+ * that capacity is unusable until a future eSW change implements the full
-+ * KDF expansion.  Until then we cap the LKM at the 32-byte limit
-+ * documented in Documentation/ABI/testing/cmh-mgmt.
-+ */
-+#define SM2_MAX_MSG_LEN		32U	/* max plaintext for encrypt/decrypt */
-+#define SM2_MAX_ID_LEN		32U	/* max identity string */
-+#define SM2_CT_OVERHEAD		96U	/* C1(64) + C3(32) */
-+#define SM2_MAX_CT_LEN		(SM2_CT_OVERHEAD + SM2_MAX_MSG_LEN) /* 128 */
-+
-+/* -- SM2_ECDH_KEYGEN ------------------- */
-+
-+/**
-+ * cmh_mgmt_sm2_ecdh_keygen() - Handle CMH_MGMT_IOC_SM2_ECDH_KEYGEN ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_sm2_ecdh_keygen(void __user *argp)
-+{
-+	struct cmh_ioctl_sm2_ecdh_keygen req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
-+	u8 *nonce_buf, *sk_buf;
-+	dma_addr_t nonce_dma, sk_dma;
-+	int nonce_dir;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
-+		return -EINVAL;
-+
-+	sk_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	nonce_buf = kzalloc(SM2_NONCE_LEN, GFP_KERNEL);
-+	if (!sk_buf || !nonce_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/*
-+	 * nonce_len=32: caller provides ephemeral scalar r (DMA_TO_DEVICE).
-+	 * nonce_len=0:  HW generates r and writes it back (DMA_FROM_DEVICE).
-+	 * The caller MUST supply a valid nonce pointer in both cases.
-+	 */
-+	if (req.nonce_len) {
-+		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
-+				   SM2_NONCE_LEN)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		nonce_dir = DMA_TO_DEVICE;
-+	} else {
-+		nonce_dir = DMA_FROM_DEVICE;
-+	}
-+
-+	sk_dma = cmh_dma_map_single(sk_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN, nonce_dir);
-+	if (cmh_dma_map_error(sk_dma) || cmh_dma_map_error(nonce_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_ecdh_keygen(&vcq[1], core_id, nonce_dma, sk_dma,
-+				    req.nonce_len, 0);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(nonce_dma))
-+		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, nonce_dir);
-+	if (!cmh_dma_map_error(sk_dma))
-+		cmh_dma_unmap_single(sk_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.session_key),
-+				 sk_buf, SM2_POINT_LEN))
-+			ret = -EFAULT;
-+		/* Write back HW-generated nonce when nonce_len=0 */
-+		if (!ret && !req.nonce_len) {
-+			if (copy_to_user(u64_to_user_ptr(req.nonce),
-+					 nonce_buf, SM2_NONCE_LEN))
-+				ret = -EFAULT;
-+		}
-+	}
-+
-+out_free:
-+	kfree_sensitive(nonce_buf);
-+	kfree_sensitive(sk_buf);
-+	return ret;
-+}
-+
-+/* -- SM2_ECDH -------------------------- */
-+
-+/**
-+ * cmh_mgmt_sm2_ecdh() - Handle CMH_MGMT_IOC_SM2_ECDH ioctl
-+ * @argp: User-space ioctl argument pointer
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_mgmt_sm2_ecdh(void __user *argp)
-+{
-+	struct cmh_ioctl_sm2_ecdh req;
-+	/* keep_ds: hdr+sys_new+sm2_ecdh+pke_flush; readback adds sys_data+flush */
-+	struct vcq_cmd vcq[5];
-+	u32 sp_type, core_id;
-+	u8 *nonce_buf, *peer_pk_buf, *peer_sk_buf, *sp_buf;
-+	u64 *ref_buf;
-+	dma_addr_t nonce_dma, peer_pk_dma, peer_sk_dma, sp_dma, ref_dma;
-+	int nonce_dir, ret, idx;
-+	bool keep_ds;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
-+		return -EINVAL;
-+
-+	keep_ds = (req.shared_point_ref != 0);
-+	sp_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
-+	core_id = cmh_core_default_id(CMH_CORE_PKE);
-+
-+	peer_pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	peer_sk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	sp_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	nonce_buf = kzalloc(SM2_NONCE_LEN, GFP_KERNEL);
-+	if (!peer_pk_buf || !peer_sk_buf || !sp_buf || !ref_buf ||
-+	    !nonce_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(peer_pk_buf, u64_to_user_ptr(req.peer_public_key),
-+			   SM2_POINT_LEN) ||
-+	    copy_from_user(peer_sk_buf, u64_to_user_ptr(req.peer_session_key),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	if (req.nonce_len) {
-+		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
-+				   SM2_NONCE_LEN)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
-+		nonce_dir = DMA_TO_DEVICE;
-+	} else {
-+		nonce_dir = DMA_FROM_DEVICE;
-+	}
-+
-+	peer_pk_dma = cmh_dma_map_single(peer_pk_buf, SM2_POINT_LEN,
-+					 DMA_TO_DEVICE);
-+	peer_sk_dma = cmh_dma_map_single(peer_sk_buf, SM2_POINT_LEN,
-+					 DMA_TO_DEVICE);
-+	sp_dma = cmh_dma_map_single(sp_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN, nonce_dir);
-+
-+	if (cmh_dma_map_error(peer_pk_dma) || cmh_dma_map_error(peer_sk_dma) ||
-+	    cmh_dma_map_error(sp_dma) || cmh_dma_map_error(ref_dma) ||
-+	    cmh_dma_map_error(nonce_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	if (keep_ds) {
-+		/*
-+		 * keep_ds: retain the shared point as a persistent DS object
-+		 * (sys_new) whose ref is handed back for SM2_ECDH_HASH to
-+		 * consume.  The caller owns and later releases it.
-+		 */
-+		idx = 0;
-+		vcq_set_header(&vcq[idx++], 4);
-+		vcq_add_sys_new(&vcq[idx], 0, ref_dma, SM2_POINT_LEN);
-+		vcq[idx++].id |= PKE_SWAP_FLAGS;
-+		vcq_add_pke_sm2_ecdh(&vcq[idx++], core_id, req.nonce_len,
-+				     SM2_CLEN, nonce_dma, peer_pk_dma,
-+				     peer_sk_dma, req.key_ref, SYS_REF_LAST,
-+				     sp_type, 0);
-+		vcq_add_pke_flush(&vcq[idx++], core_id);
-+
-+		ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
-+		if (ret)
-+			goto out_unmap;
-+
-+		/* Sync bounce buffer so CPU sees the DMA-written ref */
-+		cmh_dma_sync_for_cpu(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	} else {
-+		/*
-+		 * Read-back mode: compute into SYS_REF_TEMP and pop it in the
-+		 * same VCQ.  Bounding the temp push (sm2_ecdh) and pop
-+		 * (sys_data) to one submission keeps them within a single
-+		 * mailbox occupation -- no concurrent mgmt op can interleave a
-+		 * temp -- and the read reclaims the slot, so nothing leaks.
-+		 */
-+		idx = 0;
-+		vcq_set_header(&vcq[idx++], 5);
-+		vcq_add_pke_sm2_ecdh(&vcq[idx++], core_id, req.nonce_len,
-+				     SM2_CLEN, nonce_dma, peer_pk_dma,
-+				     peer_sk_dma, req.key_ref, SYS_REF_TEMP,
-+				     sp_type, 0);
-+		vcq_add_pke_flush(&vcq[idx++], core_id);
-+		vcq_add_sys_data(&vcq[idx], SYS_REF_TEMP, sp_dma,
-+				 SM2_POINT_LEN);
-+		vcq[idx++].id |= PKE_SWAP_FLAGS;
-+		vcq_add_sys_flush(&vcq[idx++]);
-+
-+		ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
-+	}
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(nonce_dma))
-+		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, nonce_dir);
-+	if (!cmh_dma_map_error(ref_dma))
-+		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(sp_dma))
-+		cmh_dma_unmap_single(sp_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(peer_sk_dma))
-+		cmh_dma_unmap_single(peer_sk_dma, SM2_POINT_LEN,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(peer_pk_dma))
-+		cmh_dma_unmap_single(peer_pk_dma, SM2_POINT_LEN,
-+				     DMA_TO_DEVICE);
-+
-+	/*
-+	 * keep_ds sys_new may have created the DS slot before the VCQ
-+	 * failed; scrub it so a partial failure does not leak a slot.
-+	 */
-+	if (ret && keep_ds && *ref_buf)
-+		cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+	if (!ret) {
-+		if (!keep_ds) {
-+			if (copy_to_user(u64_to_user_ptr(req.shared_point),
-+					 sp_buf, SM2_POINT_LEN))
-+				ret = -EFAULT;
++			cmh_sync_ctx_put(sync);  /* no txn -> drop cb ref */
++			cmh_sync_ctx_put(sync);  /* drop waiter ref */
++			command_msg_put(msg);    /* matches refcount_set(2) */
++			command_msg_put(msg);
 +		} else {
-+			/* Return DS ref for ECDH_HASH to consume */
-+			u64 __user *sp_refp = (__u64 __user *)
-+				u64_to_user_ptr(req.shared_point_ref);
++			/*
++			 * TM has dequeued msg and the VCQ is in-flight.
++			 * Issue MBX_COMMAND_ABORT to force-stop the VCQ;
++			 * the RH will fire MBX_ERROR_IRQ, complete the
++			 * transaction with -EIO, and issue RESTART.
++			 *
++			 * cmh_rh_abort_mbx() serialises the write under
++			 * rh_process_lock, preventing clobber of a
++			 * concurrent RESTART/FLUSH from the watchdog.
++			 */
++			s32 abrt_mbx = READ_ONCE(msg->actual_mbx);
 +
-+			if (put_user(*ref_buf, sp_refp)) {
-+				/*
-+				 * Failed to deliver the DS ref to
-+				 * userspace.  Logically delete the
-+				 * orphaned slot so it does not leak.
-+				 */
-+				vcq_set_header(&vcq[0], 3);
-+				vcq_add_sys_grant(&vcq[1], *ref_buf,
-+						  0, 0, 0);
-+				vcq_add_sys_flush(&vcq[2]);
-+				cmh_tm_submit_sync_mbx(vcq, 3, 1,
-+						       MGMT_MBX);
-+				dev_warn(cmh_dev(), "SM2 ECDH put_user failed, DS slot cleaned up\n");
-+				ret = -EFAULT;
++			/*
++			 * Only ABORT if our VCQ is the one currently at the
++			 * mailbox HEAD.  ABORT stops whatever executes at
++			 * HEAD, so aborting while a different (older,
++			 * possibly long-running) transaction is at HEAD would
++			 * kill an unrelated request.  If ours is queued behind
++			 * it, the HW has not started ours yet -- leave it to
++			 * the completion wait / watchdog rather than abort
++			 * someone else.
++			 */
++			if (abrt_mbx >= 0 &&
++			    (u32)abrt_mbx < tm.cfg->mbx_count) {
++				void __iomem *abase =
++					tm.cfg->mailboxes[abrt_mbx].reg_base;
++				u32 head = cmh_reg_read32(abase,
++							  R_MBX_QUEUE_HEAD);
++
++				if (READ_ONCE(msg->first_vcq_id) == head) {
++					dev_warn(cmh_dev(),
++						 "tm: aborting mbx[%d] cmd=0x%08x\n",
++						 abrt_mbx, msg->command_id);
++					cmh_rh_abort_mbx((u32)abrt_mbx);
++				}
 +			}
++
++			/*
++			 * Wait for the RH completion (ABORT triggers
++			 * MBX_ERROR_IRQ within microseconds).  Fixed
++			 * 5 s ceiling -- not configurable because if
++			 * ABORT doesn't complete in this window the
++			 * HW is wedged and more waiting won't help.
++			 */
++			left = wait_for_completion_timeout(&sync->done,
++							   5 * HZ);
++			if (!left) {
++				/*
++				 * ABORT did not complete within 5 s -- the HW
++				 * is wedged.  Unlike cmh_tm_submit_sync_noabort,
++				 * this path sets no orphan_cb, so the caller's
++				 * DMA buffers are NOT orphaned here: the caller
++				 * frees them on the -ETIMEDOUT below.  If the
++				 * eSW later recovers and DMAs into them that is
++				 * a use-after-free -- an accepted residual for a
++				 * path that cannot be reached unless ABORT
++				 * itself hangs for 5 s (HW already wedged).
++				 */
++				dev_err(cmh_dev(),
++					"tm: abort timeout (5s) cmd=0x%08x - HW wedged\n",
++					msg->command_id);
++			}
++			cmh_sync_ctx_put(sync);  /* drop waiter ref */
++			command_msg_put(msg);    /* drop waiter ref on msg */
 +		}
-+		/* Write back HW-generated nonce when nonce_len=0 */
-+		if (!ret && !req.nonce_len) {
-+			if (copy_to_user(u64_to_user_ptr(req.nonce),
-+					 nonce_buf, SM2_NONCE_LEN))
-+				ret = -EFAULT;
-+		}
++		return -ETIMEDOUT;
 +	}
 +
-+out_free:
-+	kfree_sensitive(nonce_buf);
-+	kfree(ref_buf);
-+	kfree_sensitive(sp_buf);
-+	kfree(peer_sk_buf);
-+	kfree(peer_pk_buf);
++	ret = sync->error;
++	cmh_sync_ctx_put(sync);  /* drop waiter ref */
++	command_msg_put(msg);    /* drop waiter ref on msg */
 +	return ret;
 +}
 +
-+/* -- SM2_DEC_POINT --------------------- */
-+
 +/**
-+ * cmh_mgmt_sm2_dec_point() - Handle CMH_MGMT_IOC_SM2_DEC_POINT ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_tm_submit_sync_mbx() - Synchronous VCQ submit on a target MBX
++ * @vcq_cmds: Array of pre-built VCQ command entries
++ * @vcq_count: Total number of entries in @vcq_cmds
++ * @num_vcqs: Number of VCQs packed in @vcq_cmds
++ * @target_mbx: Pinned mailbox index, or -1 for round-robin
++ *
++ * Convenience wrapper around cmh_tm_submit_sync_tmo() using the
++ * default vcq_timeout_ms module parameter.
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_mgmt_sm2_dec_point(void __user *argp)
++int cmh_tm_submit_sync_mbx(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			   u32 num_vcqs, s32 target_mbx)
 +{
-+	struct cmh_ioctl_sm2_dec_point req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
-+	u8 *ct_buf, *dp_buf;
-+	dma_addr_t ct_dma, dp_dma;
++	return cmh_tm_submit_sync_tmo(vcq_cmds, vcq_count, num_vcqs,
++				     target_mbx,
++				     msecs_to_jiffies(vcq_timeout_ms));
++}
++
++/**
++ * cmh_tm_async_timeout_jiffies() - Default async per-request timeout
++ *
++ * Return: Timeout in jiffies from the async_timeout_ms module param,
++ *         or 0 if async timeouts are disabled.
++ */
++unsigned long cmh_tm_async_timeout_jiffies(void)
++{
++	return async_timeout_ms ? msecs_to_jiffies(async_timeout_ms) : 0;
++}
++
++/**
++ * cmh_tm_slow_op_timeout_jiffies() - Timeout for slow crypto ops
++ *
++ * Returns the extended timeout used for RSA keygen, PQC keygen/sign,
++ * and similar long-running operations.
++ *
++ * Return: Timeout in jiffies from the slow_op_timeout_ms module param.
++ */
++unsigned long cmh_tm_slow_op_timeout_jiffies(void)
++{
++	return msecs_to_jiffies(slow_op_timeout_ms);
++}
++
++/**
++ * cmh_tm_submit_async() - Asynchronous VCQ submission
++ * @vcq_cmds: Array of pre-built VCQ command entries
++ * @vcq_count: Total number of entries in @vcq_cmds
++ * @num_vcqs: Number of VCQs packed in @vcq_cmds
++ * @target_mbx: Pinned mailbox index, or -1 for round-robin
++ * @callback: Completion callback (see context note below)
++ * @callback_data: Opaque data passed to @callback
++ * @backlog_ok: Allow backlogging if CMQ is full
++ * @timeout_jiffies: Per-request timeout (0 = no timeout)
++ *
++ * Builds a command_msg, heap-copies the VCQ data, and posts it to the
++ * CMQ via cmh_tm_post_command().
++ *
++ * Callback context guarantee:
++ *   The @callback may be invoked from one of:
++ *   - RH threaded IRQ handler (process context, BH disabled)
++ *   - RH watchdog timer (softirq / timer context)
++ *   - TM kthread if submit_vcq() fails post-dequeue
++ *   - cmh_tm_cleanup()/cmh_tm_quiesce() during drain (process context)
++ *   It is NEVER invoked from hardirq context.
++ *
++ *   Because the watchdog path runs from timer softirq, callbacks
++ *   MUST be safe in atomic/softirq context: no mutex, no GFP_KERNEL,
++ *   no sleeping locks.  crypto_request_complete() is safe (documented
++ *   callable from any context).  kfree_sensitive() and
++ *   scatterwalk_map_and_copy() are also safe (non-sleeping).
++ *   Callers must not assume thread affinity (callback may run on any CPU).
++ *
++ * Unlike the _sync variants, this function:
++ *   - Does NOT allocate a cmh_sync_ctx or wait for completion
++ *   - Uses GFP_ATOMIC for internal allocations because the crypto API
++ *     may call ->encrypt/->decrypt/->hash_final from softirq context
++ *     (e.g. network stack via IPsec/TLS); GFP_KERNEL would deadlock.
++ *
++ * The command_msg is single-owner (refcount 1) -- the TM subsystem
++ * owns it after post and frees it after dispatching to the HW.
++ *
++ * DMA buffer ownership: the caller transfers ownership to the callback
++ * on return of 0 or -EBUSY.  On any other return, the caller must
++ * clean up DMA buffers itself -- the callback will never fire.
++ *
++ * Return: 0 on successful post, -EBUSY if backlogged, -ENOMEM,
++ *         -EINVAL, -EAGAIN, or -ENODEV on failure.
++ */
++int cmh_tm_submit_async(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			u32 num_vcqs, s32 target_mbx,
++			cmh_completion_fn callback, void *callback_data,
++			bool backlog_ok, unsigned long timeout_jiffies)
++{
++	struct command_msg *msg;
 +	int ret;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
++	msg = kzalloc_obj(*msg, GFP_ATOMIC);
++	if (!msg)
++		return -ENOMEM;
++
++	msg->vcq_data = kmemdup(vcq_cmds,
++				array_size(vcq_count, sizeof(*vcq_cmds)),
++				GFP_ATOMIC);
++	if (!msg->vcq_data) {
++		kfree(msg);
++		return -ENOMEM;
++	}
++
++	INIT_LIST_HEAD(&msg->list);
++	if (WARN_ON_ONCE(vcq_count < MIN_VCQ_CMDS)) {
++		kfree(msg->vcq_data);
++		kfree(msg);
 +		return -EINVAL;
-+	if (req.ciphertext_len <= SM2_CT_OVERHEAD ||
-+	    req.ciphertext_len > SM2_MAX_CT_LEN)
-+		return -EINVAL;
-+
-+	/* Only need C1 (first 64 bytes) for the sidecar */
-+	ct_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	dp_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	if (!ct_buf || !dp_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
 +	}
++	msg->command_id      = vcq_cmds[1].id;
++	msg->vcq_count       = vcq_count;
++	msg->num_vcqs        = num_vcqs;
++	msg->target_mbx      = target_mbx;
++	msg->actual_mbx      = -1;
++	msg->complete        = callback;
++	msg->completion_data = callback_data;
++	msg->backlog_ok      = backlog_ok;
++	msg->timeout_jiffies = timeout_jiffies;
++	refcount_set(&msg->refs, 1);  /* sole owner: TM subsystem */
 +
-+	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ciphertext),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
++	ret = cmh_tm_post_command(msg);
++	if (ret && ret != -EBUSY) {
++		kfree(msg->vcq_data);
++		kfree(msg);
 +	}
-+
-+	ct_dma = cmh_dma_map_single(ct_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	dp_dma = cmh_dma_map_single(dp_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(dp_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_dec_point(&vcq[1], core_id, req.ciphertext_len, SM2_CLEN,
-+				  ct_dma, dp_dma, req.key_ref,
-+				  PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(dp_dma))
-+		cmh_dma_unmap_single(dp_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.dec_point),
-+				 dp_buf, SM2_POINT_LEN))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(dp_buf);
-+	kfree(ct_buf);
 +	return ret;
 +}
 +
-+/* -- SM2_ENC_POINT --------------------- */
-+
 +/**
-+ * cmh_mgmt_sm2_enc_point() - Handle CMH_MGMT_IOC_SM2_ENC_POINT ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_tm_submit_sync_noabort() - Sync submit without MBX abort on timeout
++ * @vcq_cmds: Array of pre-built VCQ command entries
++ * @vcq_count: Total number of entries in @vcq_cmds
++ * @num_vcqs: Number of VCQs packed in @vcq_cmds
++ * @timeout_hz: Completion timeout in jiffies
++ * @orphan_cb: Optional cleanup callback for abandoned DMA buffers
++ * @orphan_data: Opaque data passed to @orphan_cb
 + *
-+ * Return: 0 on success, negative errno on failure.
++ * On timeout, if the command was still queued it is cancelled and
++ * -EAGAIN is returned (caller may free all resources).  If the VCQ is
++ * already in-flight, the waiter drops its refs and returns -EINPROGRESS
++ * -- the RH callback will fire when the eSW finishes the VCQ and free
++ * the sync_ctx / msg via the refcount mechanism.
++ *
++ * @orphan_cb is invoked when the last ref on the sync_ctx drops after
++ * the waiter abandoned an in-flight VCQ, allowing the caller to defer
++ * DMA-buffer cleanup until the eSW finishes writing.
++ *
++ * This prevents a short-timeout command (e.g. DRBG GENERATE from the
++ * hwrng kthread) from aborting the entire MBX and killing unrelated
++ * long-running operations (e.g. SLH-DSA sign at 120 s).
++ *
++ * Return: 0 on success, -EAGAIN if cancelled from queue,
++ *         -EINPROGRESS if left in-flight, or negative errno.
 + */
-+int cmh_mgmt_sm2_enc_point(void __user *argp)
++int cmh_tm_submit_sync_noabort(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			       u32 num_vcqs, unsigned long timeout_hz,
++			       void (*orphan_cb)(void *), void *orphan_data)
 +{
-+	struct cmh_ioctl_sm2_enc_point req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
-+	u8 *nonce_buf = NULL, *pk_buf, *ct_buf, *ep_buf;
-+	dma_addr_t nonce_dma = DMA_MAPPING_ERROR, pk_dma, ct_dma, ep_dma;
++	struct cmh_sync_ctx *sync;
++	struct command_msg *msg;
++	unsigned long left;
 +	int ret;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
-+		return -EINVAL;
++	WARN_ON_ONCE(!in_task());
 +
-+	pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	ct_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	ep_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	if (!pk_buf || !ct_buf || !ep_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
++	sync = kzalloc_obj(*sync, GFP_KERNEL);
++	if (!sync)
++		return -ENOMEM;
++
++	msg = kzalloc_obj(*msg, GFP_KERNEL);
++	if (!msg) {
++		kfree(sync);
++		return -ENOMEM;
 +	}
 +
-+	if (copy_from_user(pk_buf, u64_to_user_ptr(req.public_key),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
++	init_completion(&sync->done);
++	sync->error = 0;
++	refcount_set(&sync->refs, 2);
++
++	INIT_LIST_HEAD(&msg->list);
++	if (WARN_ON_ONCE(vcq_count < MIN_VCQ_CMDS)) {
++		kfree(msg);
++		kfree(sync);
++		return -EINVAL;
++	}
++	msg->command_id = vcq_cmds[1].id;
++	msg->vcq_data = kmemdup(vcq_cmds, vcq_count * sizeof(*vcq_cmds),
++				GFP_KERNEL);
++	if (!msg->vcq_data) {
++		kfree(msg);
++		kfree(sync);
++		return -ENOMEM;
++	}
++	msg->vcq_count  = vcq_count;
++	msg->num_vcqs   = num_vcqs;
++	msg->target_mbx = -1;
++	msg->actual_mbx = -1;
++	msg->complete   = cmh_sync_complete;
++	msg->completion_data = sync;
++	refcount_set(&msg->refs, 2);
++
++	ret = cmh_tm_post_command(msg);
++	if (ret) {
++		kfree(msg->vcq_data);
++		kfree(msg);
++		kfree(sync);
++		return ret;
 +	}
 +
-+	if (req.nonce_len) {
-+		nonce_buf = kmalloc(SM2_NONCE_LEN, GFP_KERNEL);
-+		if (!nonce_buf) {
-+			ret = -ENOMEM;
-+			goto out_free;
++	left = wait_for_completion_timeout(&sync->done, timeout_hz);
++	if (!left) {
++		if (cmh_tm_try_cancel_command(msg)) {
++			/* Still queued -- TM never saw it, clean up fully */
++			cmh_sync_ctx_put(sync);  /* drop cb ref */
++			cmh_sync_ctx_put(sync);  /* drop waiter ref */
++			command_msg_put(msg);    /* matches refcount_set(2) */
++			command_msg_put(msg);
++			return -EAGAIN;
 +		}
-+		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
-+				   SM2_NONCE_LEN)) {
-+			ret = -EFAULT;
-+			goto out_free;
-+		}
++
++		/*
++		 * In-flight: skip ABORT.  Transfer orphan cleanup
++		 * ownership to sync_ctx -- the RH callback will
++		 * eventually complete this VCQ, and when the last
++		 * ref drops, orphan_cb frees any DMA buffers the
++		 * eSW was still writing to.
++		 */
++		dev_dbg_ratelimited(cmh_dev(),
++				    "tm: noabort timeout (%lums) cmd=0x%08x, leaving in-flight\n",
++				    timeout_hz * 1000 / HZ,
++				    msg->command_id);
++		sync->orphan_cb   = orphan_cb;
++		sync->orphan_data = orphan_data;
++		cmh_sync_ctx_put(sync);
++		command_msg_put(msg);
++		return -EINPROGRESS;
 +	}
 +
-+	pk_dma = cmh_dma_map_single(pk_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	ct_dma = cmh_dma_map_single(ct_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	ep_dma = cmh_dma_map_single(ep_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (nonce_buf)
-+		nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN,
-+					       DMA_TO_DEVICE);
-+	if (cmh_dma_map_error(pk_dma) || cmh_dma_map_error(ct_dma) ||
-+	    cmh_dma_map_error(ep_dma) ||
-+	    (nonce_buf && cmh_dma_map_error(nonce_dma))) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_enc_point(&vcq[1], core_id, nonce_dma, pk_dma, ct_dma,
-+				  ep_dma, req.nonce_len, 0);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (nonce_buf && !cmh_dma_map_error(nonce_dma))
-+		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(ep_dma))
-+		cmh_dma_unmap_single(ep_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(pk_dma))
-+		cmh_dma_unmap_single(pk_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.ciphertext),
-+				 ct_buf, SM2_POINT_LEN) ||
-+		    copy_to_user(u64_to_user_ptr(req.enc_point),
-+				 ep_buf, SM2_POINT_LEN))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(nonce_buf);
-+	kfree(ep_buf);
-+	kfree(ct_buf);
-+	kfree(pk_buf);
++	ret = sync->error;
++	cmh_sync_ctx_put(sync);
++	command_msg_put(msg);
 +	return ret;
 +}
 +
-+/* -- SM2_ID_DIGEST --------------------- */
-+
 +/**
-+ * cmh_mgmt_sm2_id_digest() - Handle CMH_MGMT_IOC_SM2_ID_DIGEST ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_tm_submit_sync() - Synchronous VCQ submit with default timeout
++ * @vcq_cmds: Array of pre-built VCQ command entries
++ * @vcq_count: Total number of entries in @vcq_cmds
++ * @num_vcqs: Number of VCQs packed in @vcq_cmds
++ *
++ * Convenience wrapper: submits via round-robin MBX selection with the
++ * default vcq_timeout_ms.
 + *
 + * Return: 0 on success, negative errno on failure.
 + */
-+int cmh_mgmt_sm2_id_digest(void __user *argp)
++int cmh_tm_submit_sync(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++		       u32 num_vcqs)
 +{
-+	struct cmh_ioctl_sm2_id_digest req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
-+	u8 *id_buf, *pk_buf, *dig_buf;
-+	dma_addr_t id_dma, pk_dma, dig_dma;
-+	int ret;
-+
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.id_len || req.id_len > SM2_MAX_ID_LEN)
-+		return -EINVAL;
-+
-+	id_buf = kmalloc(req.id_len, GFP_KERNEL);
-+	pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	dig_buf = kzalloc(SM2_DIGEST_LEN, GFP_KERNEL);
-+	if (!id_buf || !pk_buf || !dig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	if (copy_from_user(id_buf, u64_to_user_ptr(req.id), req.id_len) ||
-+	    copy_from_user(pk_buf, u64_to_user_ptr(req.public_key),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	id_dma = cmh_dma_map_single(id_buf, req.id_len, DMA_TO_DEVICE);
-+	pk_dma = cmh_dma_map_single(pk_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	dig_dma = cmh_dma_map_single(dig_buf, SM2_DIGEST_LEN,
-+				     DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(id_dma) || cmh_dma_map_error(pk_dma) ||
-+	    cmh_dma_map_error(dig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_id_digest(&vcq[1], core_id, id_dma, pk_dma, dig_dma,
-+				  req.id_len, 0);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(dig_dma))
-+		cmh_dma_unmap_single(dig_dma, SM2_DIGEST_LEN,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(pk_dma))
-+		cmh_dma_unmap_single(pk_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(id_dma))
-+		cmh_dma_unmap_single(id_dma, req.id_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.digest),
-+				 dig_buf, SM2_DIGEST_LEN))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree(dig_buf);
-+	kfree(pk_buf);
-+	kfree(id_buf);
-+	return ret;
++	return cmh_tm_submit_sync_mbx(vcq_cmds, vcq_count, num_vcqs, -1);
 +}
 +
-+/* -- SM2_ECDH_HASH --------------------- */
++#define MBX_FLUSH_TIMEOUT_MS	1000
++#define MBX_FLUSH_POLL_MIN_US	10
++#define MBX_FLUSH_POLL_MAX_US	50
 +
 +/**
-+ * cmh_mgmt_sm2_ecdh_hash() - Handle CMH_MGMT_IOC_SM2_ECDH_HASH ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_tm_flush_mbx() - Issue MBX_COMMAND_FLUSH and wait for completion
++ * @mbx_idx: Mailbox index to flush
 + *
-+ * Return: 0 on success, negative errno on failure.
++ * Resets the eSW child mailbox state: clears the VCQ command queue,
++ * resets head/tail, and -- critically -- resets the child temp stack
++ * via mbx_hdr_init() (sets hdr->temp back to &cmds[MAX_VCQ_CMDS]).
++ *
++ * Why this is needed:
++ *   KIC derivation commands that output to SYS_REF_TEMP allocate on the
++ *   per-MBX child temp LIFO stack (mbx_alloc_temp, each costing
++ *   ROUND_UP(len,4)+56 bytes).  These allocations persist across VCQ
++ *   completions because mbx_vcq_done() does NOT reset the temp stack.
++ *   Without an explicit flush, sequential KIC-TEMP ioctls exhaust the
++ *   ~960-byte temp area and subsequent derives fail with ENOMEM.
++ *
++ * What is NOT affected:
++ *   KIC HW keys, datastore objects, DRBG state -- these survive the
++ *   flush.  Only the queue pointers and temp stack are reset.
++ *
++ * Concurrency:
++ *   Acquires the per-MBX dispatch_lock mutex to serialise with VCQ
++ *   dispatch in submit_vcq().  This prevents the flush from resetting
++ *   head/tail while the TM kthread is writing a VCQ to a DMA slot on
++ *   the same MBX.  The eSW clears R_MBX_COMMAND to zero once the flush
++ *   completes.
++ *
++ * Return: 0 on success, -EINVAL, -ENODEV, -EBUSY, or -ETIMEDOUT.
 + */
-+int cmh_mgmt_sm2_ecdh_hash(void __user *argp)
++int cmh_tm_flush_mbx(s32 mbx_idx)
 +{
-+	struct cmh_ioctl_sm2_ecdh_hash req;
-+	/* Phase 1: hdr + sys_new + sm2_ecdh_hash + pke_flush; reused for Phase 2 */
-+	struct vcq_cmd vcq[4];
-+	u32 sk_type, core_id;
-+	u8 *peer_dig_buf, *dig_buf, *sk_buf;
-+	u64 *ref_buf;
-+	dma_addr_t peer_dig_dma, dig_dma, sk_dma, ref_dma;
++	struct cmh_mbx_config *mbx;
++	struct cmh_mbx_txq *txq;
++	struct transaction_obj *txn;
++	void __iomem *base;
++	u32 reg;
 +	int ret;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.__reserved)
++	if (!tm.cfg || mbx_idx < 0 || (u32)mbx_idx >= tm.cfg->mbx_count)
 +		return -EINVAL;
 +
-+	sk_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
-+	core_id = cmh_core_default_id(CMH_CORE_PKE);
++	mbx = &tm.cfg->mailboxes[mbx_idx];
++	base = mbx->reg_base;
++	if (!base)
++		return -ENODEV;
 +
-+	peer_dig_buf = kmalloc(SM2_DIGEST_LEN, GFP_KERNEL);
-+	dig_buf = kmalloc(SM2_DIGEST_LEN, GFP_KERNEL);
-+	sk_buf = kzalloc(SM2_SHARED_KEY_LEN, GFP_KERNEL);
-+	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
-+	if (!peer_dig_buf || !dig_buf || !sk_buf || !ref_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
++	txq = &tm.txqs[mbx_idx];
++	mutex_lock(&txq->dispatch_lock);
++
++	/* Ensure no command is already pending */
++	if (cmh_reg_read32(base, R_MBX_COMMAND) != 0) {
++		mutex_unlock(&txq->dispatch_lock);
++		return -EBUSY;
 +	}
 +
-+	if (copy_from_user(peer_dig_buf, u64_to_user_ptr(req.peer_id_digest),
-+			   SM2_DIGEST_LEN) ||
-+	    copy_from_user(dig_buf, u64_to_user_ptr(req.id_digest),
-+			   SM2_DIGEST_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
++	cmh_reg_write32(MBX_COMMAND_FLUSH, base, R_MBX_COMMAND);
 +
-+	peer_dig_dma = cmh_dma_map_single(peer_dig_buf, SM2_DIGEST_LEN,
-+					  DMA_TO_DEVICE);
-+	dig_dma = cmh_dma_map_single(dig_buf, SM2_DIGEST_LEN, DMA_TO_DEVICE);
-+	sk_dma = cmh_dma_map_single(sk_buf, SM2_SHARED_KEY_LEN,
-+				    DMA_FROM_DEVICE);
-+	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(peer_dig_dma) || cmh_dma_map_error(dig_dma) ||
-+	    cmh_dma_map_error(sk_dma) || cmh_dma_map_error(ref_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	/*
-+	 * Phase 1: sys_new(shared_key_ref) + SM2_ECDH_HASH
-+	 * The shared_point_ref from the ECDH step is passed directly
-+	 * as a DS reference -- the eSW hub reads it from DS.
-+	 */
-+	vcq_set_header(&vcq[0], 4);
-+	vcq_add_sys_new(&vcq[1], 0, ref_dma, SM2_SHARED_KEY_LEN);
-+	vcq[1].id |= PKE_SWAP_FLAGS;
-+	vcq_add_pke_sm2_ecdh_hash(&vcq[2], core_id, peer_dig_dma, dig_dma,
-+				  req.shared_point_ref, SYS_REF_LAST,
-+				  sk_type, PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[3], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
++	/* Poll until eSW clears the command register */
++	ret = read_poll_timeout(cmh_reg_read32, reg, reg == 0,
++				MBX_FLUSH_POLL_MIN_US,
++				MBX_FLUSH_TIMEOUT_MS * 1000,
++				true, base, R_MBX_COMMAND);
 +	if (ret)
-+		goto out_unmap;
-+
-+	/* Sync bounce buffer so CPU sees the DMA-written ref */
-+	cmh_dma_sync_for_cpu(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+
-+	/* Phase 2: read shared key from DS -> DMA */
-+	vcq_set_header(&vcq[0], 3);
-+	vcq_add_sys_data(&vcq[1], *ref_buf, sk_dma, SM2_SHARED_KEY_LEN);
-+	vcq_add_sys_flush(&vcq[2]);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, 3, 1, MGMT_MBX);
++		dev_err(cmh_dev(), "mbx %u flush timeout (cmd=0x%08x)\n",
++			mbx->instance,
++			cmh_reg_read32(base, R_MBX_COMMAND));
 +
 +	/*
-+	 * Scrub the transient shared-key DS object created in phase 1 -- it
-+	 * is internal to this ioctl and never handed to the caller, so
-+	 * leaving it would leak a finite datastore slot on every call.
++	 * FLUSH discarded every queued VCQ (HEAD=TAIL).  The caller
++	 * contract is that the mailbox is idle here, but defensively
++	 * complete any straggler transaction with -ECANCELED: otherwise
++	 * the response handler would see HEAD jump to TAIL and report the
++	 * discarded request as a successful completion.  dispatch_lock is
++	 * held, so no new submit_vcq() can race this drain.
 +	 */
-+	cmh_mgmt_ds_scrub(*ref_buf, 0);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(ref_dma))
-+		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(sk_dma))
-+		cmh_dma_unmap_single(sk_dma, SM2_SHARED_KEY_LEN,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(dig_dma))
-+		cmh_dma_unmap_single(dig_dma, SM2_DIGEST_LEN, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(peer_dig_dma))
-+		cmh_dma_unmap_single(peer_dig_dma, SM2_DIGEST_LEN,
-+				     DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.shared_key),
-+				 sk_buf, SM2_SHARED_KEY_LEN))
-+			ret = -EFAULT;
++	while ((txn = cmh_tm_pop_transaction((u32)mbx_idx)) != NULL) {
++		cmh_txn_finish(txn, -ECANCELED);
++		cmh_tm_txq_completion_notify();
 +	}
 +
-+out_free:
-+	kfree(ref_buf);
-+	kfree_sensitive(sk_buf);
-+	kfree(dig_buf);
-+	kfree(peer_dig_buf);
++	mutex_unlock(&txq->dispatch_lock);
 +	return ret;
 +}
-+
-+/* -- SM2_DEC_HASH ---------------------- */
 +
 +/**
-+ * cmh_mgmt_sm2_dec_hash() - Handle CMH_MGMT_IOC_SM2_DEC_HASH ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_vcq_pack_and_submit() - Pack payload into VCQs and submit sync
++ * @payload: Array of VCQ command entries (without headers)
++ * @count: Number of entries in @payload
++ * @packed: Caller-provided output buffer for packed VCQ data
++ * @max_packed: Size of @packed buffer in vcq_cmd entries
++ * @target_mbx: Pinned mailbox index, or -1 for round-robin
 + *
-+ * Return: 0 on success, negative errno on failure.
++ * Splits @payload into VCQ-sized chunks, prepends headers, and submits
++ * synchronously.
++ *
++ * Return: 0 on success, -EMSGSIZE if @packed is too small, or
++ *         negative errno from submit.
 + */
-+int cmh_mgmt_sm2_dec_hash(void __user *argp)
++int cmh_vcq_pack_and_submit(const struct vcq_cmd *payload, u32 count,
++			    struct vcq_cmd *packed, u32 max_packed,
++			    s32 target_mbx)
 +{
-+	struct cmh_ioctl_sm2_dec_hash req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 msg_len, core_id;
-+	u8 *ct_buf, *dp_buf, *pt_buf;
-+	dma_addr_t ct_dma, dp_dma, pt_dma;
-+	int ret;
++	u32 max_per_vcq = cmh_tm_max_cmds_per_vcq();
++	u32 max_payload_per = max_per_vcq - 1;
++	u32 num_vcqs = 0, total = 0, i = 0;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (req.ciphertext_len <= SM2_CT_OVERHEAD ||
-+	    req.ciphertext_len > SM2_MAX_CT_LEN)
-+		return -EINVAL;
++	while (i < count) {
++		u32 chunk = min_t(u32, count - i, max_payload_per);
++		u32 vcq_cmds = chunk + 1;
 +
-+	msg_len = req.ciphertext_len - SM2_CT_OVERHEAD;
-+	core_id = cmh_core_default_id(CMH_CORE_PKE);
++		if (total + vcq_cmds > max_packed)
++			return -EMSGSIZE;
 +
-+	ct_buf = kmalloc(req.ciphertext_len, GFP_KERNEL);
-+	dp_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	pt_buf = kzalloc(msg_len, GFP_KERNEL);
-+	if (!ct_buf || !dp_buf || !pt_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
++		vcq_set_header(&packed[total], vcq_cmds);
++		memcpy(&packed[total + 1], &payload[i],
++		       chunk * sizeof(struct vcq_cmd));
++
++		total += vcq_cmds;
++		i += chunk;
++		num_vcqs++;
 +	}
 +
-+	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ciphertext),
-+			   req.ciphertext_len) ||
-+	    copy_from_user(dp_buf, u64_to_user_ptr(req.dec_point),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	ct_dma = cmh_dma_map_single(ct_buf, req.ciphertext_len,
-+				    DMA_TO_DEVICE);
-+	dp_dma = cmh_dma_map_single(dp_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	pt_dma = cmh_dma_map_single(pt_buf, msg_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(dp_dma) ||
-+	    cmh_dma_map_error(pt_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_dec_hash(&vcq[1], core_id, ct_dma, dp_dma, pt_dma,
-+				 req.ciphertext_len, 0);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(pt_dma))
-+		cmh_dma_unmap_single(pt_dma, msg_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(dp_dma))
-+		cmh_dma_unmap_single(dp_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, req.ciphertext_len,
-+				     DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.plaintext),
-+				 pt_buf, msg_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree_sensitive(pt_buf);
-+	kfree_sensitive(dp_buf);
-+	kfree(ct_buf);
-+	return ret;
++	return cmh_tm_submit_sync_mbx(packed, total, num_vcqs, target_mbx);
 +}
-+
-+/* -- SM2_ENC_HASH ---------------------- */
 +
 +/**
-+ * cmh_mgmt_sm2_enc_hash() - Handle CMH_MGMT_IOC_SM2_ENC_HASH ioctl
-+ * @argp: User-space ioctl argument pointer
++ * cmh_vcq_pack_and_submit_async() - Pack payload and submit async
++ * @payload: Array of VCQ command entries (without headers)
++ * @count: Number of entries in @payload
++ * @packed: Caller-provided output buffer for packed VCQ data
++ * @max_packed: Size of @packed buffer in vcq_cmd entries
++ * @target_mbx: Pinned mailbox index, or -1 for round-robin
++ * @callback: Completion callback
++ * @callback_data: Opaque data passed to @callback
++ * @backlog_ok: Allow backlogging if CMQ is full
++ * @timeout_jiffies: Per-request timeout (0 = no timeout)
 + *
-+ * Return: 0 on success, negative errno on failure.
++ * Asynchronous variant of cmh_vcq_pack_and_submit().  Splits @payload
++ * into VCQ-sized chunks, prepends headers, and submits via
++ * cmh_tm_submit_async().
++ *
++ * Return: 0 on success, -EBUSY if backlogged, -EMSGSIZE if @packed
++ *         is too small, or negative errno from submit.
 + */
-+int cmh_mgmt_sm2_enc_hash(void __user *argp)
++int cmh_vcq_pack_and_submit_async(const struct vcq_cmd *payload, u32 count,
++				  struct vcq_cmd *packed, u32 max_packed,
++				  s32 target_mbx,
++				  cmh_completion_fn callback,
++				  void *callback_data,
++				  bool backlog_ok,
++				  unsigned long timeout_jiffies)
 +{
-+	struct cmh_ioctl_sm2_enc_hash req;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u32 ct_len, core_id;
-+	u8 *msg_buf, *ep_buf, *ct_buf;
-+	dma_addr_t msg_dma, ep_dma, ct_dma;
-+	int ret;
++	u32 max_per_vcq = cmh_tm_max_cmds_per_vcq();
++	u32 max_payload_per = max_per_vcq - 1;
++	u32 num_vcqs = 0, total = 0, i = 0;
 +
-+	if (copy_from_user(&req, argp, sizeof(req)))
-+		return -EFAULT;
-+	if (req.version != CMH_MGMT_V1)
-+		return -EINVAL;
-+	if (!req.message_len || req.message_len > SM2_MAX_MSG_LEN)
-+		return -EINVAL;
++	while (i < count) {
++		u32 chunk = min_t(u32, count - i, max_payload_per);
++		u32 vcq_cmds = chunk + 1;
 +
-+	ct_len = SM2_CT_OVERHEAD + req.message_len;
-+	core_id = cmh_core_default_id(CMH_CORE_PKE);
++		if (total + vcq_cmds > max_packed)
++			return -EMSGSIZE;
 +
-+	msg_buf = kmalloc(req.message_len, GFP_KERNEL);
-+	ep_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
-+	ct_buf = kzalloc(ct_len, GFP_KERNEL);
-+	if (!msg_buf || !ep_buf || !ct_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
++		vcq_set_header(&packed[total], vcq_cmds);
++		memcpy(&packed[total + 1], &payload[i],
++		       chunk * sizeof(struct vcq_cmd));
++
++		total += vcq_cmds;
++		i += chunk;
++		num_vcqs++;
 +	}
 +
-+	if (copy_from_user(msg_buf, u64_to_user_ptr(req.message),
-+			   req.message_len) ||
-+	    copy_from_user(ep_buf, u64_to_user_ptr(req.enc_point),
-+			   SM2_POINT_LEN)) {
-+		ret = -EFAULT;
-+		goto out_free;
-+	}
-+
-+	msg_dma = cmh_dma_map_single(msg_buf, req.message_len, DMA_TO_DEVICE);
-+	ep_dma = cmh_dma_map_single(ep_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_FROM_DEVICE);
-+	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(ep_dma) ||
-+	    cmh_dma_map_error(ct_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_sm2_enc_hash(&vcq[1], core_id, msg_dma, ep_dma, ct_dma,
-+				 req.message_len, 0);
-+	vcq_add_pke_flush(&vcq[2], core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(ct_dma))
-+		cmh_dma_unmap_single(ct_dma, ct_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(ep_dma))
-+		cmh_dma_unmap_single(ep_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(msg_dma))
-+		cmh_dma_unmap_single(msg_dma, req.message_len, DMA_TO_DEVICE);
-+
-+	if (!ret) {
-+		if (copy_to_user(u64_to_user_ptr(req.ciphertext),
-+				 ct_buf, ct_len))
-+			ret = -EFAULT;
-+	}
-+
-+out_free:
-+	kfree(ct_buf);
-+	kfree(ep_buf);
-+	kfree_sensitive(msg_buf);
-+	return ret;
++	return cmh_tm_submit_async(packed, total, num_vcqs, target_mbx,
++				   callback, callback_data, backlog_ok,
++				   timeout_jiffies);
 +}
-diff --git a/drivers/crypto/cmh/cmh_sys.c b/drivers/crypto/cmh/cmh_sys.c
++
++/**
++ * cmh_tm_peek_transaction() - Peek at the head of a mailbox TXQ
++ * @mbx_idx: Mailbox index to inspect
++ *
++ * Returns a pointer to the oldest in-flight transaction without
++ * removing it from the queue.  The caller must not free the returned
++ * object.
++ *
++ * Return: Pointer to the head transaction, or NULL if empty.
++ */
++struct transaction_obj *cmh_tm_peek_transaction(u32 mbx_idx)
++{
++	struct cmh_mbx_txq *txq;
++	struct transaction_obj *txn = NULL;
++	unsigned long flags;
++
++	if (!tm.txqs || mbx_idx >= tm.cfg->mbx_count)
++		return NULL;
++
++	txq = &tm.txqs[mbx_idx];
++
++	spin_lock_irqsave(&txq->lock, flags);
++	if (!list_empty(&txq->head))
++		txn = list_first_entry(&txq->head, struct transaction_obj,
++				       list);
++	spin_unlock_irqrestore(&txq->lock, flags);
++
++	return txn;
++}
++
++/**
++ * cmh_tm_pop_transaction() - Remove and return the head of a MBX TXQ
++ * @mbx_idx: Mailbox index to pop from
++ *
++ * Dequeues the oldest in-flight transaction from the per-mailbox
++ * transaction queue.  The caller takes ownership and must eventually
++ * call cmh_txn_finish() or txn_put().
++ *
++ * Return: Pointer to the dequeued transaction, or NULL if empty.
++ */
++struct transaction_obj *cmh_tm_pop_transaction(u32 mbx_idx)
++{
++	struct cmh_mbx_txq *txq;
++	struct transaction_obj *txn;
++	unsigned long flags;
++
++	if (!tm.txqs || mbx_idx >= tm.cfg->mbx_count)
++		return NULL;
++
++	txq = &tm.txqs[mbx_idx];
++
++	spin_lock_irqsave(&txq->lock, flags);
++	if (list_empty(&txq->head)) {
++		spin_unlock_irqrestore(&txq->lock, flags);
++		return NULL;
++	}
++	txn = list_first_entry(&txq->head, struct transaction_obj, list);
++	list_del_init(&txn->list);
++	txq->depth--;
++	spin_unlock_irqrestore(&txq->lock, flags);
++
++	return txn;
++}
++
++/* -- debugfs timeout accessors ----------------------------------------- */
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++/**
++ * cmh_tm_timeout_async_ptr() - Return pointer to async_timeout_ms for debugfs
++ *
++ * Return: pointer to the static async_timeout_ms variable.
++ */
++unsigned int *cmh_tm_timeout_async_ptr(void)    { return &async_timeout_ms; }
++
++/**
++ * cmh_tm_timeout_vcq_ptr() - Return pointer to vcq_timeout_ms for debugfs
++ *
++ * Return: pointer to the static vcq_timeout_ms variable.
++ */
++unsigned int *cmh_tm_timeout_vcq_ptr(void)      { return &vcq_timeout_ms; }
++
++/**
++ * cmh_tm_timeout_slow_op_ptr() - Return pointer to slow_op_timeout_ms for debugfs
++ *
++ * Return: pointer to the static slow_op_timeout_ms variable.
++ */
++unsigned int *cmh_tm_timeout_slow_op_ptr(void)  { return &slow_op_timeout_ms; }
++
++/**
++ * cmh_tm_timeout_drain_ptr() - Return pointer to drain_timeout_ms for debugfs
++ *
++ * Return: pointer to the static drain_timeout_ms variable.
++ */
++unsigned int *cmh_tm_timeout_drain_ptr(void)    { return &drain_timeout_ms; }
++
++/**
++ * cmh_tm_cmq_max_depth_ptr() - Return pointer to cmq_max_depth for debugfs
++ *
++ * Return: pointer to the static cmq_max_depth variable.
++ */
++unsigned int *cmh_tm_cmq_max_depth_ptr(void)    { return &cmq_max_depth; }
++
++/**
++ * cmh_tm_backlog_max_depth_ptr() - Return pointer to backlog_max_depth for debugfs
++ *
++ * Return: pointer to the static backlog_max_depth variable.
++ */
++unsigned int *cmh_tm_backlog_max_depth_ptr(void) { return &backlog_max_depth; }
++#endif
+diff --git a/drivers/crypto/cmh/include/cmh.h b/drivers/crypto/cmh/include/cmh.h
 new file mode 100644
-index 000000000000..b01d058e6d89
+index 000000000000..97a7bc764d9b
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_sys.c
-@@ -0,0 +1,376 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SYS Core VCQ Builders
-+ *
-+ * VCQ builder functions for SYS core datastore commands.  Each function
-+ * populates a single vcq_cmd slot.  Callers (cmh_mgmt.c, cmh_key.c)
-+ * assemble complete VCQs by combining header + command(s) + flush,
-+ * then submit via cmh_tm_submit_sync().
-+ *
-+ * Hardware-required datastore semantics
-+ * --------------------------------------
-+ * The commands below (NEW, WRITE, DATA, FIND, DELETE, FLUSH) are
-+ * direct mappings of the eSW firmware SYS core command set.  The
-+ * eSW maintains per-mailbox datastore namespaces with two object
-+ * classes:
-+ *
-+ *   SYS_REF_TEMP   -- Temporary objects.  Lifetime is scoped to the
-+ *                      current mailbox slot; reclaimed automatically
-+ *                      when the slot is reused or on explicit FLUSH.
-+ *                      Used for raw-key provisioning on every VCQ.
-+ *
-+ *   SYS_REF_PERSIST -- Persistent objects.  Survive across slots;
-+ *                      require explicit DELETE to reclaim.  Identified
-+ *                      by a 64-bit Content ID (CID) and resolved to
-+ *                      a per-MBX ref via SYS_CMD_FIND.
-+ *
-+ * These semantics are hardware requirements, not driver policy.
-+ * The per-MBX temp-stack and per-MBX ref namespace are eSW firmware
-+ * design constraints that cannot be changed by the kernel driver.
-+ */
-+
-+#include <linux/string.h>
-+
-+#include "cmh_sys.h"
-+
-+/**
-+ * vcq_add_sys_flush() - Build a SYS_FLUSH VCQ command
-+ * @slot: VCQ command slot to populate
-+ */
-+void vcq_add_sys_flush(struct vcq_cmd *slot)
-+{
-+	vcq_add_flush(slot, CORE_ID_SYS);
-+}
-+
-+/**
-+ * vcq_add_sys_new() - Build a SYS_NEW VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @cid: Content identifier for the new datastore object
-+ * @ref_dma: DMA address of the object reference buffer
-+ * @len: Length of the object data in bytes
-+ */
-+void vcq_add_sys_new(struct vcq_cmd *slot, u64 cid, u64 ref_dma, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_NEW);
-+	slot->hwc.sys.cmd_new.cid = cid;
-+	slot->hwc.sys.cmd_new.ref = ref_dma;
-+	slot->hwc.sys.cmd_new.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_write() - Build a SYS_WRITE VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference handle
-+ * @src_dma: DMA address of source data buffer
-+ * @wrap_key: Wrapping key reference (0 if none)
-+ * @len: Length of data to write in bytes
-+ * @sys_type: Datastore object type identifier
-+ */
-+void vcq_add_sys_write(struct vcq_cmd *slot, u64 ref, u64 src_dma,
-+		       u64 wrap_key, u32 len, u32 sys_type)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_WRITE);
-+	slot->hwc.sys.cmd_write.ref = ref;
-+	slot->hwc.sys.cmd_write.src = src_dma;
-+	slot->hwc.sys.cmd_write.key = wrap_key;
-+	slot->hwc.sys.cmd_write.len = len;
-+	slot->hwc.sys.cmd_write.type = sys_type;
-+}
-+
-+/**
-+ * vcq_add_sys_read() - Build a SYS_READ VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference handle
-+ * @dst_dma: DMA address of destination buffer
-+ * @wrap_key: Wrapping key reference (0 if none)
-+ * @len: Length of data to read in bytes
-+ */
-+void vcq_add_sys_read(struct vcq_cmd *slot, u64 ref, u64 dst_dma,
-+		      u64 wrap_key, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_READ);
-+	slot->hwc.sys.cmd_read.ref = ref;
-+	slot->hwc.sys.cmd_read.dst = dst_dma;
-+	slot->hwc.sys.cmd_read.key = wrap_key;
-+	slot->hwc.sys.cmd_read.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_data() - Build a SYS_DATA VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference handle
-+ * @dst_dma: DMA address of destination buffer
-+ * @len: Length of data section to read in bytes
-+ */
-+void vcq_add_sys_data(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_DATA);
-+	slot->hwc.sys.cmd_data.ref = ref;
-+	slot->hwc.sys.cmd_data.dst = dst_dma;
-+	slot->hwc.sys.cmd_data.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_find() - Build a SYS_FIND VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @cid: Content identifier to search for
-+ * @dst_dma: DMA address of destination buffer for result
-+ * @len: Length of destination buffer in bytes
-+ */
-+void vcq_add_sys_find(struct vcq_cmd *slot, u64 cid, u64 dst_dma, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_FIND);
-+	slot->hwc.sys.cmd_find.cid = cid;
-+	slot->hwc.sys.cmd_find.dst = dst_dma;
-+	slot->hwc.sys.cmd_find.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_list() - Build a SYS_LIST VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference for enumeration start
-+ * @dst_dma: DMA address of destination buffer for list
-+ * @len: Length of destination buffer in bytes
-+ */
-+void vcq_add_sys_list(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_LIST);
-+	slot->hwc.sys.cmd_list.ref = ref;
-+	slot->hwc.sys.cmd_list.dst = dst_dma;
-+	slot->hwc.sys.cmd_list.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_grant() - Build a SYS_GRANT VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference handle
-+ * @read: Read permission bitmask
-+ * @write: Write permission bitmask
-+ * @execute: Execute permission bitmask
-+ */
-+void vcq_add_sys_grant(struct vcq_cmd *slot, u64 ref, u64 read,
-+		       u64 write, u64 execute)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_GRANT);
-+	slot->hwc.sys.cmd_grant.ref = ref;
-+	slot->hwc.sys.cmd_grant.read = read;
-+	slot->hwc.sys.cmd_grant.write = write;
-+	slot->hwc.sys.cmd_grant.execute = execute;
-+}
-+
-+/**
-+ * vcq_add_sys_export() - Build a SYS_EXPORT VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @cid: Content identifier of object to export
-+ * @dst_dma: DMA address of destination buffer for wrapped blob
-+ * @wrap_key: Wrapping key reference for export
-+ * @len: Length of destination buffer in bytes
-+ */
-+void vcq_add_sys_export(struct vcq_cmd *slot, u64 cid, u64 dst_dma,
-+			u64 wrap_key, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_EXPORT);
-+	slot->hwc.sys.cmd_export.cid = cid;
-+	slot->hwc.sys.cmd_export.dst = dst_dma;
-+	slot->hwc.sys.cmd_export.key = wrap_key;
-+	slot->hwc.sys.cmd_export.len = len;
-+}
-+
-+/**
-+ * vcq_add_sys_import() - Build a SYS_IMPORT VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @src_dma: DMA address of wrapped datastore blob to import
-+ * @wrap_key: Wrapping key reference for unwrapping
-+ * @len: Length of wrapped blob in bytes
-+ */
-+void vcq_add_sys_import(struct vcq_cmd *slot, u64 src_dma,
-+			u64 wrap_key, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_IMPORT);
-+	slot->hwc.sys.cmd_import.src = src_dma;
-+	slot->hwc.sys.cmd_import.key = wrap_key;
-+	slot->hwc.sys.cmd_import.len = len;
-+}
-+
-+/* -- KIC Core VCQ Builders --------------------- */
-+
-+/**
-+ * vcq_add_kic_hkdf1() - Build a KIC HKDF-Expand VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @dst: Datastore reference for derived key output
-+ * @base: Datastore reference for base key input
-+ * @label_dma: DMA address of HKDF label/info buffer
-+ * @key_len: Derived key length in bytes
-+ * @label_len: Length of label buffer in bytes
-+ * @type: Derived key datastore type
-+ */
-+void vcq_add_kic_hkdf1(struct vcq_cmd *slot, u64 dst, u64 base,
-+		       u64 label_dma, u32 key_len, u32 label_len, u32 type)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_HKDF1);
-+	slot->hwc.kic.cmd_hkdf1.dst = dst;
-+	slot->hwc.kic.cmd_hkdf1.base = base;
-+	slot->hwc.kic.cmd_hkdf1.label = label_dma;
-+	slot->hwc.kic.cmd_hkdf1.llen = label_len;
-+	slot->hwc.kic.cmd_hkdf1.len = key_len;
-+	slot->hwc.kic.cmd_hkdf1.type = type;
-+}
-+
-+/**
-+ * vcq_add_kic_hkdf2() - Build a KIC HKDF-with-salt VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @dst: Datastore reference for derived key output
-+ * @base: Datastore reference for base key input
-+ * @salt: Datastore reference for HKDF salt key
-+ * @label_dma: DMA address of HKDF label/info buffer
-+ * @key_len: Derived key length in bytes
-+ * @label_len: Length of label buffer in bytes
-+ * @type: Derived key datastore type
-+ */
-+void vcq_add_kic_hkdf2(struct vcq_cmd *slot, u64 dst, u64 base, u64 salt,
-+		       u64 label_dma, u32 key_len, u32 label_len, u32 type)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_HKDF2);
-+	slot->hwc.kic.cmd_hkdf2.dst = dst;
-+	slot->hwc.kic.cmd_hkdf2.base = base;
-+	slot->hwc.kic.cmd_hkdf2.salt = salt;
-+	slot->hwc.kic.cmd_hkdf2.label = label_dma;
-+	slot->hwc.kic.cmd_hkdf2.llen = label_len;
-+	slot->hwc.kic.cmd_hkdf2.len = key_len;
-+	slot->hwc.kic.cmd_hkdf2.type = type;
-+}
-+
-+/**
-+ * vcq_add_kic_aes_cmac_kdf() - Build a KIC AES-CMAC KDF VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @out_key: Datastore reference for derived key output
-+ * @base_key: Datastore reference for base key input
-+ * @label_dma: DMA address of KDF label buffer
-+ * @key_len: Derived key length in bytes
-+ * @label_len: Length of label buffer in bytes
-+ * @type: Derived key datastore type
-+ */
-+void vcq_add_kic_aes_cmac_kdf(struct vcq_cmd *slot, u64 out_key, u64 base_key,
-+			      u64 label_dma, u32 key_len, u32 label_len,
-+			      u32 type)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_AES_CMAC_KDF);
-+	slot->hwc.kic.cmd_aes_cmac_kdf.base_key = base_key;
-+	slot->hwc.kic.cmd_aes_cmac_kdf.out_key = out_key;
-+	slot->hwc.kic.cmd_aes_cmac_kdf.label = label_dma;
-+	slot->hwc.kic.cmd_aes_cmac_kdf.key_len = key_len;
-+	slot->hwc.kic.cmd_aes_cmac_kdf.label_len = label_len;
-+	slot->hwc.kic.cmd_aes_cmac_kdf.type = type;
-+}
-+
-+/**
-+ * vcq_add_kic_dkek_derive() - Build a KIC DKEK derivation VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @out_key: Datastore reference for derived DKEK output
-+ * @base_key: Datastore reference for base key input
-+ * @host_id: Host identifier for key binding
-+ * @metadata_dma: DMA address of derivation metadata buffer
-+ * @metadata_len: Length of metadata buffer in bytes
-+ */
-+void vcq_add_kic_dkek_derive(struct vcq_cmd *slot, u64 out_key, u64 base_key,
-+			     u32 host_id, u64 metadata_dma, u32 metadata_len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_DKEK_DERIVE);
-+	slot->hwc.kic.cmd_dkek_derive.base_key = base_key;
-+	slot->hwc.kic.cmd_dkek_derive.out_key = out_key;
-+	slot->hwc.kic.cmd_dkek_derive.host_id = host_id;
-+	slot->hwc.kic.cmd_dkek_derive.metadata = metadata_dma;
-+	slot->hwc.kic.cmd_dkek_derive.metadata_len = metadata_len;
-+}
-+
-+/* -- DRBG Core VCQ Builders -------------------- */
-+
-+/**
-+ * vcq_add_drbg_reset() - Build a DRBG reset VCQ command
-+ * @slot: VCQ command slot to populate
-+ *
-+ * Issues DRBG_CMD_RESET which clears the instantiated state, allowing
-+ * a subsequent CONFIG to proceed without a double-instantiate error.
-+ */
-+void vcq_add_drbg_reset(struct vcq_cmd *slot)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_RESET);
-+}
-+
-+/**
-+ * vcq_add_drbg_config() - Build a DRBG configuration VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ratio: Entropy-to-output ratio
-+ * @strength: Security strength in bits
-+ */
-+void vcq_add_drbg_config(struct vcq_cmd *slot, u32 ratio, u32 strength)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_CONFIG);
-+	slot->hwc.drbg.cmd_config.entropy_ratio = ratio;
-+	slot->hwc.drbg.cmd_config.security_strength = strength;
-+}
-+
-+/**
-+ * vcq_add_drbg_datastore() - Build a DRBG datastore setup VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @ref: Datastore object reference handle
-+ * @len: Length of datastore allocation in bytes
-+ * @type: Datastore object type
-+ */
-+void vcq_add_drbg_datastore(struct vcq_cmd *slot, u64 ref, u32 len, u32 type)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_DATASTORE);
-+	slot->hwc.drbg.cmd_datastore.ref = ref;
-+	slot->hwc.drbg.cmd_datastore.len = len;
-+	slot->hwc.drbg.cmd_datastore.type = type;
-+}
-+
-+/* -- EAC Core VCQ Builder ---------------------- */
-+
-+/**
-+ * vcq_add_eac_read() - Build an EAC read VCQ command
-+ * @slot: VCQ command slot to populate
-+ * @dst_dma: DMA address of destination buffer
-+ * @len: Length of data to read in bytes
-+ */
-+void vcq_add_eac_read(struct vcq_cmd *slot, u64 dst_dma, u32 len)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(CORE_ID_EAC, 0, 1, EAC_CMD_READ);
-+	slot->hwc.eac.cmd_read.dst = dst_dma;
-+	slot->hwc.eac.cmd_read.len = len;
-+}
-diff --git a/drivers/crypto/cmh/include/cmh_key.h b/drivers/crypto/cmh/include/cmh_key.h
-new file mode 100644
-index 000000000000..bad69c92b892
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_key.h
-@@ -0,0 +1,82 @@
++++ b/drivers/crypto/cmh/include/cmh.h
+@@ -0,0 +1,24 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Per-transform key context
-+ *
-+ * Per-transform key context used by all keyed crypto algorithms (AES,
-+ * SM4, CCP, HMAC, KMAC).  Stores raw key bytes supplied via the crypto
-+ * API .setkey() callback: the key is DMA-mapped once at setkey time and
-+ * written to SYS_REF_TEMP in every VCQ.
-+ *
-+ * Each keyed algorithm driver embeds a struct cmh_key_ctx in its
-+ * per-transform context and calls cmh_key_setkey_raw() from its
-+ * .setkey() callback.
-+ *
-+ * Raw-key atomicity (SYS_REF_TEMP)
-+ * ---------------------------------
-+ * SYS_CMD_WRITE to SYS_REF_TEMP is packed into the same VCQ as the
-+ * algorithm commands (AES_CMD_INIT, HC_CMD_HMAC, etc.).  SYS_REF_TEMP
-+ * is per-MBX -- the CMH eSW allocates it in the tail of each mailbox's
-+ * own VCQ buffer (mbx_alloc_temp), so concurrent raw-key requests on
-+ * different MBXes do not interfere.
++ * CMH LKM -- Top-level Device Structure
 + */
 +
-+#ifndef CMH_KEY_H
-+#define CMH_KEY_H
++#ifndef CMH_H
++#define CMH_H
++
++#include <linux/device.h>
++
++#include "cmh_config.h"
++
++/**
++ * struct cmh_device - Top-level driver state for a CMH hardware instance
++ * @config: Hardware configuration (core mappings, MBX layout, feature flags)
++ * @dev:    Platform or parent device used for DMA and logging
++ */
++struct cmh_device {
++	struct cmh_config       config;
++	struct device          *dev;
++};
++
++#endif /* CMH_H */
+diff --git a/drivers/crypto/cmh/include/cmh_aes_abi.h b/drivers/crypto/cmh/include/cmh_aes_abi.h
+new file mode 100644
+index 000000000000..0b876dd67773
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_aes_abi.h
+@@ -0,0 +1,98 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- AES Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH AES ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_AES_ABI_H
++#define CMH_AES_ABI_H
 +
 +#include <linux/types.h>
++
++/* AES Block Size */
++
++#define CMH_AES_BLOCK_SIZE	16U
++#define CMH_AES_IV_SIZE		16U
++
++/* AES Modes (per CMH AES ABI) */
++
++#define AES_MODE_ECB		1U
++#define AES_MODE_CBC		2U
++#define AES_MODE_CTR		3U
++#define AES_MODE_CFB		4U
++#define AES_MODE_GCM		5U
++#define AES_MODE_CMAC		6U
++#define AES_MODE_CCM		7U
++#define AES_MODE_XTS		8U
++
++/* AES Operations (per CMH AES ABI) */
++
++#define AES_OP_DECRYPT		1U
++#define AES_OP_ENCRYPT		2U
++
++/* AES Command IDs */
++
++#define AES_CMD_INIT		0x01U
++#define AES_CMD_AAD_UPDATE	0x02U
++#define AES_CMD_AAD_FINAL	0x03U
++#define AES_CMD_UPDATE		0x04U
++#define AES_CMD_FINAL		0x05U
++#define AES_CMD_SCATTERGATHER	0x06U
++#define AES_CMD_CCM_INIT	0x0AU
++#define AES_CMD_AAD_FINAL_AUTH	0x0EU
++
++/* AES Command Structures */
++
++struct aes_cmd_init {
++	u64 key;	/* datastore reference for the key */
++	u64 iv;		/* DMA address of the IV (or nonce in CCM) */
++	u32 keylen;	/* key length in bytes */
++	u32 ivlen;	/* IV length in bytes (0..16) */
++	u32 mode;	/* AES mode (AES_MODE_*) */
++	u32 op;		/* AES operation (AES_OP_*) */
++	u32 aadlen;	/* AAD length or 0 */
++	u32 iolen;	/* plaintext/ciphertext length */
++	u32 taglen;	/* tag length or 0 */
++	u32 xts_offset;	/* XTS block index j; 0 for the skcipher path */
++};
++
++struct aes_cmd_aad_final {
++	u64 data;	/* DMA address of AAD data */
++	u32 datalen;	/* AAD data length */
++};
++
++struct aes_cmd_aad_final_auth {
++	u64 data;	/* DMA address of final AAD data */
++	u32 datalen;	/* final AAD data length */
++	u64 tag;		/* DMA address of tag */
++	u32 taglen;	/* tag length */
++};
++
++struct aes_cmd_update {
++	u64 input;	/* DMA address of input data */
++	u64 output;	/* DMA address of output data */
++	u32 iolen;	/* input/output data length */
++};
++
++struct aes_cmd_final {
++	u64 input;	/* DMA address of last input data */
++	u64 output;	/* DMA address of last output data */
++	u64 tag;	/* DMA address of tag (AEAD only) */
++	u32 iolen;	/* last input/output data length */
++	u32 taglen;	/* tag length (AEAD only) */
++};
++
++/* AES Command Union */
++
++union aes_cmd {
++	struct aes_cmd_init		cmd_init;
++	struct aes_cmd_update		cmd_update;
++	struct aes_cmd_final		cmd_final;
++	struct aes_cmd_aad_final	cmd_aad_final;
++	struct aes_cmd_aad_final_auth	cmd_aad_final_auth;
++};
++
++#endif /* CMH_AES_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_ccp_abi.h b/drivers/crypto/cmh/include/cmh_ccp_abi.h
+new file mode 100644
+index 000000000000..4e3eb9feaec9
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_ccp_abi.h
+@@ -0,0 +1,108 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- CCP Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH CCP ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ *
++ * The CCP core provides three modes:
++ *   - ChaCha20 stream cipher (skcipher)
++ *   - Poly1305 one-time authenticator (shash)
++ *   - ChaCha20-Poly1305 AEAD (RFC 7539)
++ */
++
++#ifndef CMH_CCP_ABI_H
++#define CMH_CCP_ABI_H
++
++#include <linux/types.h>
++
++/* CCP Block Sizes */
++
++#define CCP_CHACHA_BLOCK_SIZE	64U	/* ChaCha20 block = 512 bits */
++#define CCP_POLY_BLOCK_SIZE	16U	/* Poly1305 block = 128 bits */
++#define CCP_CTRNONCE_SIZE	16U	/* 4-byte LE counter + 12-byte nonce */
++#define CCP_POLY_KEY_SIZE	16U	/* r_key and s_key each 16 bytes */
++#define CCP_POLY_TAG_SIZE	16U	/* Poly1305 tag = 128 bits */
++#define CCP_CHACHA_CTR_LEN	4U	/* 32-bit counter */
++
++/* CCP Operations (per CMH CCP ABI) */
++
++#define CCP_OP_DECRYPT		1U
++#define CCP_OP_ENCRYPT		2U
++
++/* CCP Command IDs */
++
++#define CCP_CMD_CHACHA20_INIT	0x01U
++#define CCP_CMD_POLY1305_INIT	0x02U
++#define CCP_CMD_AEAD_INIT	0x03U
++#define CCP_CMD_AAD_UPDATE	0x04U
++#define CCP_CMD_AAD_FINAL	0x05U
++#define CCP_CMD_UPDATE		0x06U
++#define CCP_CMD_FINAL		0x07U
++#define CCP_CMD_SCATTERGATHER	0x08U
++/* CCP_CMD_FLUSH = VCQ_CMD_FLUSH (0xFF) -- defined in cmh_vcq.h */
++
++/* CCP Command Structures */
++
++struct ccp_cmd_chacha {
++	u64 key;		/* datastore reference for the key */
++	u64 ctrnonce;		/* DMA address of the 16-byte counter+nonce */
++	u32 keylen;		/* key length: 16 or 32 bytes */
++	u32 ctrnoncelen;	/* always 16 */
++	u32 ctrlen;		/* counter length: 4 bytes */
++	u32 op;			/* CCP_OP_ENCRYPT or CCP_OP_DECRYPT */
++};
++
++struct ccp_cmd_poly {
++	u64 rkey;		/* datastore reference for the r key */
++	u64 skey;		/* datastore reference for the s key */
++	u32 rkeylen;		/* always 16 */
++	u32 skeylen;		/* always 16 */
++};
++
++struct ccp_cmd_aead {
++	u64 key;		/* datastore reference for the key */
++	u64 ctrnonce;		/* DMA address of the 16-byte counter+nonce */
++	u32 keylen;		/* key length: 32 bytes */
++	u32 ctrnoncelen;	/* always 16 */
++	u32 op;			/* CCP_OP_ENCRYPT or CCP_OP_DECRYPT */
++};
++
++struct ccp_cmd_aad_update {
++	u64 aad;		/* DMA address of AAD data */
++	u32 aadlen;		/* AAD length (must be multiple of 16) */
++};
++
++struct ccp_cmd_aad_final {
++	u64 aad;		/* DMA address of last AAD data */
++	u32 aadlen;		/* last AAD length (any size) */
++};
++
++struct ccp_cmd_update {
++	u64 input;		/* DMA address of input data */
++	u64 output;		/* DMA address of output data */
++	u32 iolen;		/* input/output length */
++};
++
++struct ccp_cmd_final {
++	u64 input;		/* DMA address of last input data */
++	u64 output;		/* DMA address of last output data */
++	u64 tag;		/* DMA address of the 16-byte tag */
++	u32 iolen;		/* last input/output data length */
++	u32 taglen;		/* tag length (always 16) */
++};
++
++/* CCP Command Union */
++
++union ccp_cmd {
++	struct ccp_cmd_chacha	cmd_chacha;
++	struct ccp_cmd_poly	cmd_poly;
++	struct ccp_cmd_aead	cmd_aead;
++	struct ccp_cmd_aad_update cmd_aad_update;
++	struct ccp_cmd_aad_final cmd_aad_final;
++	struct ccp_cmd_update	cmd_update;
++	struct ccp_cmd_final	cmd_final;
++};
++
++#endif /* CMH_CCP_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_config.h b/drivers/crypto/cmh/include/cmh_config.h
+new file mode 100644
+index 000000000000..d3315b0736ba
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_config.h
+@@ -0,0 +1,105 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Configuration Structures and Defaults
++ */
++
++#ifndef CMH_CONFIG_H
++#define CMH_CONFIG_H
++
++#include <linux/types.h>
++#include <linux/dma-mapping.h>
++
++#include "cmh_registers.h"
++#include "cmh_vcq.h"
++
++/* Limits */
++
++/*
++ * Max mailboxes the driver manages simultaneously.  The hardware address
++ * space supports CMH_MAX_MBX_INSTANCES (64) instance indices, but this
++ * compile-time constant caps how many the driver allocates DMA queues,
++ * IRQ slots, and per-transform cache entries for.  To manage more
++ * mailboxes (up to the HW max), increase this value and rebuild the LKM
++ * -- it cannot be changed via module parameters at runtime.
++ */
++#define CMH_MAX_CONFIGURED_MBX    16
++#define CMH_MAX_CORE_INSTANCES    8
++
++/* MBX setup parameter ranges (per CMH hardware specification) */
++#define CMH_MBX_SLOTS_LOG2_MIN        1
++#define CMH_MBX_SLOTS_LOG2_MAX        15
++#define CMH_MBX_STRIDE_LOG2_MIN       7
++#define CMH_MBX_STRIDE_LOG2_MAX       10
++
++/* Default Configuration Values */
++
++#define CMH_DEFAULT_MBX_COUNT         2
++#define CMH_DEFAULT_SLOTS_LOG2        6   /* 2^6 = 64 slots */
++#define CMH_DEFAULT_STRIDE_LOG2       9   /* 2^9 = 512 bytes per slot */
++#define CMH_DEFAULT_IRQ               (-1) /* polling mode */
++#define CMH_FW_READY_TIMEOUT_MS  5000 /* built-in; raise here for a slower eSW boot */
++
++/* Per-Core-Type Instance Configuration */
++
++struct cmh_core_type_cfg {
++	u32	num_instances;
++	u32	core_ids[CMH_MAX_CORE_INSTANCES];
++	s32	mbx[CMH_MAX_CORE_INSTANCES]; /* -1 = auto-assign */
++};
++
++/* Per-Mailbox Configuration */
++
++struct cmh_mbx_config {
++	u32             instance;       /* 0-based MBX instance index (0..63) */
++	u32             slots_log2;     /* log2(slot count), range 1..15 */
++	u32             stride_log2;    /* log2(bytes per slot), range 7..10 */
++	int             irq;            /* per-mailbox virq, -1 if none (poll) */
++	u32             cores[CMH_NUM_CORE_TYPES]; /* rambus,cores affinity IDs */
++	u32             num_cores;      /* number of entries in cores[] */
++	u32             lock_val;       /* MBX lock token (non-zero while held) */
++	dma_addr_t      dma_handle;     /* DMA bus address from dma_alloc_coherent */
++	void           *virt_addr;      /* kernel virtual address of MBXQ buffer */
++	size_t          queue_size;     /* total queue buffer size in bytes */
++	void __iomem   *reg_base;       /* ioremap'd register base for this instance */
++};
++
++/* Global Device Configuration */
++
++struct cmh_config {
++	phys_addr_t                 sic_base;
++	size_t                      sic_size;
++	void __iomem               *sic_mapped;    /* ioremap'd SIC region */
++	u32                         mbx_count;
++	struct cmh_mbx_config       mailboxes[CMH_MAX_CONFIGURED_MBX];
++	unsigned int                fw_ready_timeout_ms; /* FW mission-mode timeout */
++	struct cmh_core_type_cfg    core_types[CMH_NUM_CORE_TYPES];
++};
++
++/* Module Parameter Interface */
++
++struct platform_device;
++
++/**
++ * cmh_config_init() - Populate config from module params and device-tree
++ * @cfg: Configuration structure to fill
++ * @pdev: Platform device (for DT properties and IRQ lookup)
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_config_init(struct cmh_config *cfg, struct platform_device *pdev);
++
++/**
++ * cmh_config_discover_cores() - Enumerate crypto cores from the hardware
++ * @cfg: Configuration structure (SIC must already be mapped)
++ *
++ * Reads the SIC CORE_ENABLE register to determine which crypto core types
++ * the silicon build provides, populates cfg->core_types[], applies the
++ * per-mailbox rambus,cores affinity, and validates the result.  Must be
++ * called after cfg->sic_mapped is valid (i.e. after the SIC ioremap).
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_config_discover_cores(struct cmh_config *cfg);
++
++#endif /* CMH_CONFIG_H */
+diff --git a/drivers/crypto/cmh/include/cmh_debugfs.h b/drivers/crypto/cmh/include/cmh_debugfs.h
+new file mode 100644
+index 000000000000..d85158e23bcf
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_debugfs.h
+@@ -0,0 +1,90 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- debugfs Per-MBX and TM Counters
++ *
++ * Exposes diagnostic counters under /sys/kernel/debug/cmh/:
++ *
++ *   mbxN/vcqs_submitted      Total VCQs sent to MBX N
++ *   mbxN/vcqs_completed      Total completions received
++ *   mbxN/vcqs_errors         Total error completions
++ *   mbxN/queue_full_count    Times select_mailbox() skipped this MBX
++ *   mbxN/max_queue_depth     High-water mark of in-flight transactions
++ *
++ *   tm/cmq_posts             Total cmh_tm_post_command() calls
++ *   tm/cmq_depth_max         High-water mark of CMQ length
++ *   tm/cmq_eagain_count      Times CMQ was full (-EAGAIN)
++ *   tm/backoff_count         Times TM backed off (all MBX queues full)
++ *   tm/async_timeout_count   Async requests that timed out
++ *
++ * Counters are atomic64_t -- safe to read from any context.
++ * When CONFIG_CRYPTO_DEV_CMH_DEBUG is off, all functions become no-ops and the
++ * compiler eliminates the counter code entirely.
++ */
++
++#ifndef CMH_DEBUGFS_H
++#define CMH_DEBUGFS_H
++
++#include <linux/types.h>
++#include <linux/atomic.h>
++
++/* Per-Mailbox Statistics */
++
++struct cmh_mbx_stats {
++	atomic64_t vcqs_submitted;
++	atomic64_t vcqs_completed;
++	atomic64_t vcqs_errors;
++	atomic64_t queue_full_count;
++	atomic64_t max_queue_depth;
++};
++
++/* TM-Level Statistics */
++
++struct cmh_tm_stats {
++	atomic64_t cmq_posts;
++	atomic64_t cmq_depth_max;
++	atomic64_t cmq_eagain_count;
++	atomic64_t backoff_count;
++	atomic64_t async_timeout_count;
++};
++
++/**
++ * cmh_stat_update_max() - Atomically update a high-water mark counter
++ * @counter: atomic64_t counter to update
++ * @val: New candidate value
++ *
++ * Updates @counter to @val if @val exceeds the current maximum.
++ * Lock-free via atomic cmpxchg loop.
++ */
++static inline void cmh_stat_update_max(atomic64_t *counter, s64 val)
++{
++	s64 cur;
++
++	do {
++		cur = atomic64_read(counter);
++		if (val <= cur)
++			return;
++	} while (atomic64_cmpxchg(counter, cur, val) != cur);
++}
++
++/* Interface (stub when CONFIG_CRYPTO_DEV_CMH_DEBUG is off) */
++
++struct cmh_config;
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++
++void cmh_debugfs_init(struct cmh_config *cfg);
++void cmh_debugfs_cleanup(void);
++
++struct cmh_mbx_stats *cmh_debugfs_mbx_stats(u32 mbx_idx);
++struct cmh_tm_stats  *cmh_debugfs_tm_stats(void);
++
++#else /* !CONFIG_CRYPTO_DEV_CMH_DEBUG */
++
++static inline void cmh_debugfs_init(struct cmh_config *c) { }
++static inline void cmh_debugfs_cleanup(void) {}
++static inline struct cmh_mbx_stats *cmh_debugfs_mbx_stats(u32 i) { return NULL; }
++static inline struct cmh_tm_stats  *cmh_debugfs_tm_stats(void)   { return NULL; }
++
++#endif /* CONFIG_CRYPTO_DEV_CMH_DEBUG */
++#endif /* CMH_DEBUGFS_H */
+diff --git a/drivers/crypto/cmh/include/cmh_dma.h b/drivers/crypto/cmh/include/cmh_dma.h
+new file mode 100644
+index 000000000000..7dd0d8311785
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_dma.h
+@@ -0,0 +1,219 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- DMA Interface
++ *
++ * Platform-independent DMA operations for the CMH crypto accelerator.
++ * All functions are implemented in cmh_dma.c (standard kernel DMA API).
++ *
++ * Alternate backends may be linked in place of cmh_dma.c for
++ * non-standard platforms.  Such backends must implement the same
++ * symbol set and may use different allocation and mapping semantics
++ * (e.g. pool-based alloc/free instead of address translation).
++ */
++
++#ifndef CMH_DMA_H
++#define CMH_DMA_H
++
++#include <linux/dma-mapping.h>
++#include <linux/types.h>
++
++#include "cmh_vcq.h"
++
++struct platform_device;
++
++/**
++ * cmh_dma_init() - Initialize the DMA backend
++ * @pdev: Platform device (provides struct device for DMA ops)
++ *
++ * Called early in .probe().  The standard backend stores the device
++ * pointer; alternate backends may set up additional resources.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_dma_init(struct platform_device *pdev);
++
++/**
++ * cmh_dma_cleanup() - Tear down the DMA backend
++ *
++ * Called in .remove() and error paths.  Releases any resources
++ * allocated by cmh_dma_init().
++ */
++void cmh_dma_cleanup(void);
++
++/**
++ * cmh_dev() - Global device accessor
++ *
++ * Returns the struct device * associated with the platform_driver instance.
++ * Valid only between cmh_dma_init() and cmh_dma_cleanup().
++ *
++ * Return: Platform device pointer, or NULL outside lifecycle.
++ */
++struct device *cmh_dev(void);
++
++/* Streaming DMA map / unmap (short-lived per-request buffers) */
++
++dma_addr_t cmh_dma_map_single(void *buf, size_t size,
++			      enum dma_data_direction dir);
++void cmh_dma_unmap_single(dma_addr_t addr, size_t size,
++			  enum dma_data_direction dir);
++
++/*
++ * Sync a DMA_FROM_DEVICE buffer so the CPU sees device-written data.
++ *
++ * Required before reading *buf when SWIOTLB bounce buffering is active
++ * (e.g. arm64 without IOMMU): the device writes to the bounce buffer,
++ * not the original allocation, so the CPU must sync before access.
++ * On architectures without bounce buffers (e.g. rv64) this is a no-op.
++ *
++ * Call between cmh_tm_submit_sync() and the first CPU read of the buffer,
++ * while the mapping is still live (before cmh_dma_unmap_single).
++ */
++void cmh_dma_sync_for_cpu(dma_addr_t addr, size_t size,
++			  enum dma_data_direction dir);
++
++/*
++ * Sync a DMA_TO_DEVICE buffer so the device sees CPU-written data.
++ *
++ * Required after CPU writes to a mapped streaming buffer (e.g. SG
++ * descriptor arrays that need items_dma for .lli pointer calculation
++ * before content is written).  Must be called before the device reads.
++ */
++void cmh_dma_sync_for_device(dma_addr_t addr, size_t size,
++			     enum dma_data_direction dir);
++
++int cmh_dma_map_error(dma_addr_t addr);
++
++/* Coherent DMA alloc / free (long-lived MBX queue buffers) */
++
++void *cmh_dma_alloc(size_t size, dma_addr_t *handle, gfp_t gfp);
++void cmh_dma_free(size_t size, void *virt, dma_addr_t handle);
++
++/**
++ * cmh_dma_write() - Copy data into a DMA-allocated buffer
++ * @dst: Destination pointer (from cmh_dma_alloc)
++ * @src: Source kernel buffer
++ * @len: Number of bytes to copy
++ *
++ * Copies @len bytes from @src to @dst.  @dst must have been obtained
++ * from cmh_dma_alloc().  Abstracted to allow platforms with non-standard
++ * DMA buffer access semantics.
++ */
++void cmh_dma_write(void *dst, const void *src, size_t len);
++
++/**
++ * cmh_dma_fence() - Fence preceding writes to DMA-allocated memory
++ * @ptr: Any pointer into the region that was written
++ *
++ * Ensures all preceding CPU writes to DMA memory are committed to the
++ * target memory controller before subsequent MMIO register writes.
++ *
++ * Required on FPGA platforms where DMA memory and device control
++ * registers reside on different AXI slaves -- a CPU-side wmb() only
++ * orders store dispatch, not arrival at the target.  A read from the
++ * DMA memory slave forces the memory controller to serialize behind
++ * all preceding writes from this CPU before responding, guaranteeing
++ * the data is committed before the doorbell register write is issued.
++ *
++ * On standard DMA API platforms (cache-coherent), this is a no-op.
++ */
++void cmh_dma_fence(void *ptr);
++
++/**
++ * cmh_dma_zero() - Zero a DMA-allocated buffer
++ * @dst: Destination pointer (from cmh_dma_alloc)
++ * @len: Number of bytes to zero
++ */
++void cmh_dma_zero(void *dst, size_t len);
++
++/*
++ * CMH eSW scatter-gather chain -- built with proper DMA mappings.
++ *
++ * The CMH eSW DMAC walks a linked list of dma_scattergather_item
++ * descriptors.  Each .src is the DMA address of an input buffer;
++ * each .lli is the DMA address of the next descriptor (0 = end).
++ *
++ * The descriptor array uses streaming DMA (kmalloc + dma_map_single)
++ * so that cmh_dma_free_sg() is safe from any context -- including
++ * BH-disabled completion callbacks where dma_free_coherent's
++ * vunmap() path would crash on non-coherent architectures.
++ */
++
++/* Input descriptor for cmh_dma_build_sg() -- one per data buffer */
++struct cmh_dma_buf {
++	void *data;
++	u32   len;
++};
++
++/* Opaque handle returned by cmh_dma_build_sg(); pass to cmh_dma_free_sg() */
++struct cmh_sg_map {
++	struct dma_scattergather_item *items;	/* CPU virtual address */
++	dma_addr_t  items_dma;			/* DMA address (pass to GATHER cmd) */
++	size_t      items_size;			/* allocation size */
++	u32         count;
++	struct {
++		dma_addr_t dma;
++		u32        len;
++	} bufs[];				/* per-entry source DMA handles */
++};
++
++/**
++ * cmh_dma_build_sg() - Build a DMA-mapped CMH eSW SG chain
++ * @bufs: Array of kernel buffer descriptors (data pointer + length)
++ * @count: Number of entries in @bufs (must be > 0; returns NULL for 0)
++ * @gfp: Allocation flags (GFP_KERNEL or GFP_ATOMIC)
++ *
++ * Allocates a dma_scattergather_item chain using streaming DMA
++ * (kmalloc + dma_map_single), DMA-maps each source buffer, and
++ * links the descriptors.
++ * The returned cmh_sg_map->items_dma is the address to pass to
++ * vcq_add_hc_gather() (or any core's scatter-gather command).
++ *
++ * Caller contract:
++ *   - Each bufs[i].data must point to DMA-mappable memory (kmalloc,
++ *     page-allocated, or vmalloc with DMA support).  Stack buffers
++ *     are NOT safe.
++ *   - Each bufs[i].len must be > 0.
++ *   - The returned cmh_sg_map must remain alive (not freed) until
++ *     the hardware completes the scatter-gather operation.  Only then
++ *     may cmh_dma_free_sg() be called.
++ *   - There is no hardware-imposed limit on @count, but callers are
++ *     responsible for bounding it to avoid excessive DMA mappings.
++ *     In practice, hash uses <= 2 entries (partial + new data).
++ *
++ * Return: Opaque cmh_sg_map handle, or NULL on allocation/mapping failure.
++ */
++struct cmh_sg_map *cmh_dma_build_sg(const struct cmh_dma_buf *bufs, u32 count,
++				    gfp_t gfp);
++
++/**
++ * cmh_dma_free_sg() - Unmap all buffers and free the SG chain
++ * @sgm: Handle from cmh_dma_build_sg(), or NULL (no-op)
++ */
++void cmh_dma_free_sg(struct cmh_sg_map *sgm);
++
++/*
++ * Orphan-DMA context -- generic helper for the noabort submit path.
++ *
++ * When cmh_tm_submit_sync_noabort() times out with a VCQ still
++ * in-flight, the eSW will continue writing to DMA buffers after the
++ * caller returns.  Callers wrap their DMA state in this struct and
++ * pass cmh_dma_orphan_free as the orphan_cb -- the RH callback frees
++ * the mapping + buffer when the VCQ eventually completes.
++ *
++ * Drain guarantee: cmh_tm_cleanup() calls timer_delete_sync() on each
++ * TXN timeout timer and splices all TXQ entries before invoking their
++ * completion callbacks.  This ensures no orphan callback can race with
++ * or run after TM cleanup completes -- by that point every in-flight
++ * transaction has been force-completed and its orphan_cb invoked.
++ */
++struct cmh_dma_orphan {
++	void                    *buf;
++	dma_addr_t               addr;
++	size_t                   len;
++	enum dma_data_direction  dir;
++};
++
++void cmh_dma_orphan_free(void *data);
++
++#endif /* CMH_DMA_H */
+diff --git a/drivers/crypto/cmh/include/cmh_drbg_abi.h b/drivers/crypto/cmh/include/cmh_drbg_abi.h
+new file mode 100644
+index 000000000000..d4cebfe83d4b
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_drbg_abi.h
+@@ -0,0 +1,67 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- DRBG Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH DRBG ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_DRBG_ABI_H
++#define CMH_DRBG_ABI_H
++
++#include <linux/types.h>
++
++/* DRBG Commands */
++
++#define DRBG_CMD_CONFIG         0x01U
++#define DRBG_CMD_GENERATE       0x02U
++#define DRBG_CMD_DATASTORE      0x03U
++#define DRBG_CMD_RESET          0x04U
++
++/* DRBG Entropy Ratio (per CMH DRBG ABI) */
++
++#define DRBG_ENTROPY_RATIO_ONE          0U
++#define DRBG_ENTROPY_RATIO_ONE_HALF     1U
++#define DRBG_ENTROPY_RATIO_ONE_THIRD    2U
++#define DRBG_ENTROPY_RATIO_ONE_FOURTH   3U
++
++/* DRBG Security Strength (per CMH DRBG ABI) */
++
++#define DRBG_SECURITY_STRENGTH_128      0x00U
++#define DRBG_SECURITY_STRENGTH_256      0x10U
++
++/* DRBG Personalization Data Length */
++
++#define DRBG_PADATA_LEN         16U
++
++/* DRBG Command Structures */
++
++struct drbg_cmd_config {
++	u32 entropy_ratio;      /* drbg_entropy_ratio value */
++	u32 security_strength;  /* drbg_security_strength value */
++	u8  padata[DRBG_PADATA_LEN];
++};
++
++struct drbg_cmd_generate {
++	u64 dst;                /* DMA physical address for output */
++	u32 len;                /* requested output length in bytes */
++	u8  padata[DRBG_PADATA_LEN];
++};
++
++struct drbg_cmd_datastore {
++	u64 ref;                /* datastore reference */
++	u32 len;                /* data length in bytes */
++	u32 type;               /* datastore type */
++	u8  padata[DRBG_PADATA_LEN];
++};
++
++/* DRBG Command Union */
++
++union drbg_cmd {
++	struct drbg_cmd_config    cmd_config;
++	struct drbg_cmd_generate  cmd_generate;
++	struct drbg_cmd_datastore cmd_datastore;
++};
++
++#endif /* CMH_DRBG_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_eac_abi.h b/drivers/crypto/cmh/include/cmh_eac_abi.h
+new file mode 100644
+index 000000000000..f0ebd3de1fb4
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_eac_abi.h
+@@ -0,0 +1,44 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- EAC (Error and Alarm Controller) ABI Definitions
++ *
++ * Kernel-side definitions for the CMH EAC ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_EAC_ABI_H
++#define CMH_EAC_ABI_H
++
++#include <linux/types.h>
++
++/* EAC Commands */
++
++#define EAC_CMD_READ		0x01U
++
++/* EAC Read Response -- eSW writes this to the DMA destination buffer */
++
++struct eac_read_rsp {
++	u64 mailbox_notification; /* bitmask: MBX that raised safety notif */
++	u32 hw_error;             /* bitmask: HWC that raised error */
++	u32 hw_nmi;               /* bitmask: HWC that raised NMI */
++	u32 hw_panic;             /* bitmask: HWC that raised HW panic */
++	u32 safety_fatal;         /* bitmask: HWC that raised fatal safety */
++	u32 safety_notification;  /* bitmask: HWC that raised safety notif */
++	u32 sw_info0;             /* eSW tracing information */
++	u32 sw_info1;             /* eSW tracing information */
++	u32 sram_bank_errors[4];  /* correctable ECC error counts per bank */
++};
++
++/* EAC Command Structures */
++
++struct eac_cmd_read {
++	u64 dst;	/* DMA destination for eac_read_rsp */
++	u32 len;	/* must be >= sizeof(struct eac_read_rsp) */
++};
++
++union eac_cmd {
++	struct eac_cmd_read cmd_read;
++};
++
++#endif /* CMH_EAC_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_hc_abi.h b/drivers/crypto/cmh/include/cmh_hc_abi.h
+new file mode 100644
+index 000000000000..4e8c5ea3c69c
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_hc_abi.h
+@@ -0,0 +1,162 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Hash Core (HC) ABI Definitions
++ *
++ * Kernel-side definitions for the CMH HC (Hash Core) ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_HC_ABI_H
++#define CMH_HC_ABI_H
++
++#include <linux/bits.h>
++#include <linux/types.h>
++
++/* HC Commands */
++
++#define HC_CMD_INIT             0x01U
++#define HC_CMD_HMAC             0x02U
++#define HC_CMD_UPDATE           0x03U
++#define HC_CMD_FINAL            0x04U
++#define HC_CMD_UPDATE2D         0x05U
++#define HC_CMD_SQUEEZE          0x07U
++#define HC_CMD_GATHER           0x08U
++#define HC_CMD_CSHAKE           0x09U
++#define HC_CMD_KMAC             0x0AU
++#define HC_CMD_SAVE             0x0BU
++#define HC_CMD_RESTORE          0x0CU
++
++/* HC Algorithms (per CMH HC ABI) */
++
++#define HC_ALGO_SHA2_224        1U
++#define HC_ALGO_SHA2_256        2U
++#define HC_ALGO_SHA2_384        3U
++#define HC_ALGO_SHA2_512        4U
++#define HC_ALGO_SHA3_224        5U
++#define HC_ALGO_SHA3_256        6U
++#define HC_ALGO_SHA3_384        7U
++#define HC_ALGO_SHA3_512        8U
++#define HC_ALGO_SHAKE128        9U
++#define HC_ALGO_SHAKE256        10U
++
++/* HC Algo Flags */
++
++#define HC_ALGO_FLAG_SCA_KEY    BIT(18)      /* SCA key in 2 shares */
++#define HC_ALGO_FLAG_SCA_OUT    BIT(19)      /* SCA output in 2 shares */
++
++#define HC_ALGO_SET(flags, algo)  (((flags) & 0xFF0000UL) | ((algo) & 0xFFUL))
++#define HC_ALGO_GET(algo)         ((algo) & 0xFFU)
++
++/* Hash Digest Sizes */
++
++#define CMH_SHA224_DIGEST_SIZE  28U
++#define CMH_SHA256_DIGEST_SIZE  32U
++#define CMH_SHA384_DIGEST_SIZE  48U
++#define CMH_SHA512_DIGEST_SIZE  64U
++
++/* SHA-3 digest sizes are the same as SHA-2 for matching output widths */
++#define CMH_SHA3_224_DIGEST_SIZE  28U
++#define CMH_SHA3_256_DIGEST_SIZE  32U
++#define CMH_SHA3_384_DIGEST_SIZE  48U
++#define CMH_SHA3_512_DIGEST_SIZE  64U
++
++/* SHAKE default output lengths (fixed-output ahash registration) */
++#define CMH_SHAKE128_DIGEST_SIZE  32U   /* 128-bit security -> 32 bytes */
++#define CMH_SHAKE256_DIGEST_SIZE  64U   /* 256-bit security -> 64 bytes */
++
++/* HC Context (for SAVE/RESTORE) */
++
++#define HC_CONTEXT_WORDS        149U
++#define HC_CONTEXT_SIZE         (HC_CONTEXT_WORDS * 4 + 4)  /* ctx[149] + crc */
++
++/* cSHAKE function name max length */
++
++#define HC_CSHAKE_MAX_NAMELEN   36U
++
++/*
++ * Maximum customization string (S) length for cSHAKE / KMAC.
++ *
++ * S is packed as inline VCQ data after the CSHAKE/KMAC command slot.
++ * The worst-case VCQ layout (KMAC with raw key + GATHER) uses 5 fixed
++ * slots out of CMH_KMAC_MAX_PAYLOAD (9), leaving 4 inline slots.
++ * Each VCQ slot is 64 bytes, so the safe limit is 4 * 64 = 256 bytes.
++ */
++#define HC_CSHAKE_MAX_CUSTOMLEN 256U
++
++/* HC Command Structures */
++
++struct hc_cmd_init {
++	u32 algo;       /* hc_algo value, optionally ORed with HC_ALGO_FLAG_* */
++};
++
++struct hc_cmd_hmac {
++	u64 key;        /* datastore reference for HMAC key */
++	u32 keylen;     /* key length in bytes */
++	u32 algo;       /* hc_algo value */
++};
++
++struct hc_cmd_update {
++	u64 input;      /* DMA physical address of input data */
++	u32 inlen;      /* input data length in bytes */
++};
++
++struct hc_cmd_final {
++	u64 digest;     /* DMA physical address for output digest */
++	u32 outlen;     /* digest length in bytes */
++};
++
++struct hc_cmd_update2d {
++	u64 input;      /* DMA source address for input data */
++	u64 output;     /* DMA destination address for pass-through data */
++	u32 iolen;      /* input/pass-through data length in bytes */
++};
++
++struct hc_cmd_gather {
++	u64 lista;      /* DMA address of dma_scattergather_item chain */
++	u32 sgcmd;      /* HC sub-command: HC_CMD_UPDATE or HC_CMD_UPDATE2D */
++};
++
++struct hc_cmd_cshake {
++	u64 custom;     /* DMA address for the customization string */
++	u32 customlen;  /* length of the customization string */
++	u32 algo;       /* HC_ALGO_SHAKE128 or HC_ALGO_SHAKE256 */
++	u32 namelen;    /* length of the function name string */
++	u8  name[HC_CSHAKE_MAX_NAMELEN]; /* function name string (inline) */
++};
++
++struct hc_cmd_kmac {
++	u64 key;        /* datastore reference for KMAC key */
++	u64 custom;     /* DMA address for the customization string */
++	u32 keylen;     /* key length in bytes */
++	u32 customlen;  /* length of the customization string */
++	u32 algo;       /* HC_ALGO_SHAKE128 or HC_ALGO_SHAKE256 */
++	u32 outlen;     /* requested output digest length */
++};
++
++struct hc_cmd_save {
++	u64 output;     /* DMA physical address for saved context */
++	u32 outlen;     /* must be HC_CONTEXT_SIZE */
++};
++
++struct hc_cmd_restore {
++	u64 input;      /* DMA physical address of saved context */
++	u32 inlen;      /* must be HC_CONTEXT_SIZE */
++};
++
++/* HC Command Union */
++
++union hc_cmd {
++	struct hc_cmd_init      cmd_init;
++	struct hc_cmd_hmac      cmd_hmac;
++	struct hc_cmd_cshake    cmd_cshake;
++	struct hc_cmd_kmac      cmd_kmac;
++	struct hc_cmd_update    cmd_update;
++	struct hc_cmd_final     cmd_final;
++	struct hc_cmd_update2d  cmd_update2d;
++	struct hc_cmd_gather    cmd_gather;
++	struct hc_cmd_save      cmd_save;
++	struct hc_cmd_restore   cmd_restore;
++};
++
++#endif /* CMH_HC_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_hcq_abi.h b/drivers/crypto/cmh/include/cmh_hcq_abi.h
+new file mode 100644
+index 000000000000..b9fc2a80a408
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_hcq_abi.h
+@@ -0,0 +1,221 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- HCQ Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH HCQ ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_HCQ_ABI_H
++#define CMH_HCQ_ABI_H
++
++#include <linux/compiler_attributes.h>
++#include <linux/types.h>
++
++/* VCQ layout: header + [SYS cmds] + HCQ_CMD + [sys_read] + flush */
++#define HCQ_VCQ_CMDS_MIN	3	/* header + cmd + flush */
++#define HCQ_VCQ_CMDS_MAX	6	/* keygen: hdr+new+write+cmd+read+flush */
++
++/* HCQ Command IDs */
++#define HCQ_CMD_XMSS_VERIFY			0x03U
++#define HCQ_CMD_LMS_VERIFY			0x04U
++#define HCQ_CMD_SLHDSA_VERIFY_INTERNAL		0x05U
++#define HCQ_CMD_SLHDSA_VERIFY			0x06U
++#define HCQ_CMD_SLHDSA_VERIFY_PREHASH		0x07U
++#define HCQ_CMD_SLHDSA_VERIFY_PREHASH_DIGEST	0x08U
++#define HCQ_CMD_SLHDSA_KEYGEN			0x09U
++#define HCQ_CMD_SLHDSA_SIGN_INTERNAL		0x10U
++#define HCQ_CMD_SLHDSA_SIGN			0x11U
++#define HCQ_CMD_SLHDSA_SIGN_PREHASH		0x12U
++#define HCQ_CMD_SLHDSA_SIGN_PREHASH_DIGEST	0x13U
++#define HCQ_CMD_SLHDSA_PUBGEN			0x14U
++
++/* SLH-DSA Parameter Set IDs */
++#define HCQ_SLHDSA_SHAKE_128S	1U
++#define HCQ_SLHDSA_SHAKE_128F	2U
++#define HCQ_SLHDSA_SHAKE_192S	3U
++#define HCQ_SLHDSA_SHAKE_192F	4U
++#define HCQ_SLHDSA_SHAKE_256S	5U
++#define HCQ_SLHDSA_SHAKE_256F	6U
++#define HCQ_SLHDSA_SHA2_128S	7U
++#define HCQ_SLHDSA_SHA2_128F	8U
++#define HCQ_SLHDSA_SHA2_192S	9U
++#define HCQ_SLHDSA_SHA2_192F	10U
++#define HCQ_SLHDSA_SHA2_256S	11U
++#define HCQ_SLHDSA_SHA2_256F	12U
++#define HCQ_SLHDSA_PARAM_MAX	12U
++
++/* SLH-DSA Prehash Algorithm IDs */
++#define HCQ_SLHDSA_PREHASH_SHA256	1U
++#define HCQ_SLHDSA_PREHASH_SHA512	2U
++#define HCQ_SLHDSA_PREHASH_SHAKE128	3U
++#define HCQ_SLHDSA_PREHASH_SHAKE256	4U
++
++/* SLH-DSA size limits */
++#define SLHDSA_MAX_PK_SIZE	64U	/* 2*n, n=32 */
++#define SLHDSA_MAX_SK_SIZE	128U	/* 4*n, n=32 */
++#define SLHDSA_MAX_SEED_SIZE	96U	/* 3*n, n=32 */
++#define SLHDSA_MAX_SIG_SIZE	49856U	/* SHAKE-256f / SHA2-256f */
++#define SLHDSA_MAX_MSG_LEN	128U
++#define SLHDSA_MAX_CTX_LEN	255U
++
++/* LMS/HSS size limits -- derived from eSW HCQ ABI constraints */
++#define LMS_MAX_PK_LEN		60U	/* eSW public-key buffer */
++#define LMS_MAX_MSG_LEN		256U	/* SHS_LMS_MESSAGE_LEN_MAX */
++#define LMS_MAX_SIG_LEN		13364U	/* eSW signature buffer */
++
++/* XMSS/XMSS-MT size limits -- derived from eSW HCQ ABI constraints */
++#define XMSS_MAX_PK_LEN	136U	/* eSW public-key buffer */
++#define XMSS_MAX_MSG_LEN	64U	/* SHS_XMSS_MESSAGE_LEN_MAX */
++#define XMSS_MAX_SIG_LEN	27688U	/* eSW signature buffer */
++
++/* SLH-DSA n-value for each parameter set (index = param_set - 1) */
++extern const u32 slhdsa_n[];
++
++/* SLH-DSA signature sizes (index = param_set - 1) */
++extern const u32 slhdsa_sig_size[];
++
++/* Derive PK/SK/seed sizes from n */
++static inline u32 slhdsa_pk_size(u32 param_set)
++{
++	if (param_set < 1U || param_set > HCQ_SLHDSA_PARAM_MAX)
++		return 0;
++	return 2U * slhdsa_n[param_set - 1U];
++}
++
++static inline u32 slhdsa_sk_size(u32 param_set)
++{
++	if (param_set < 1U || param_set > HCQ_SLHDSA_PARAM_MAX)
++		return 0;
++	return 4U * slhdsa_n[param_set - 1U];
++}
++
++static inline u32 slhdsa_seed_size(u32 param_set)
++{
++	if (param_set < 1U || param_set > HCQ_SLHDSA_PARAM_MAX)
++		return 0;
++	return 3U * slhdsa_n[param_set - 1U];
++}
++
++static inline u32 slhdsa_get_sig_size(u32 param_set)
++{
++	if (param_set < 1U || param_set > HCQ_SLHDSA_PARAM_MAX)
++		return 0;
++	return slhdsa_sig_size[param_set - 1U];
++}
++
++/* HCQ Command Structures -- match CMH eSW ABI exactly */
++
++struct hcq_cmd_xmss_verify {
++	u32 xmss_mt;	/* 0 = XMSS, 1 = XMSS-MT */
++	u32 pk_len;
++	u32 sig_len;
++	u32 dig_len;
++	u64 pk;
++	u64 sig;
++	u64 dig;
++};
++
++struct hcq_cmd_lms_verify {
++	u32 lms_hss;	/* 0 = LMS, 1 = LMS-HSS */
++	u32 pk_len;
++	u32 sig_len;
++	u32 dig_len;
++	u64 pk;
++	u64 sig;
++	u64 dig;
++};
++
++struct hcq_cmd_slhdsa_verify_internal {
++	u32 parameter_set;
++	u32 message_len;
++	u64 message;
++	u64 pk;
++	u64 sig;
++};
++
++struct hcq_cmd_slhdsa_verify {
++	u32 parameter_set;
++	u32 message_len;
++	u64 message;
++	u64 context;
++	u64 pk;
++	u64 sig;
++	u32 context_len;
++};
++
++struct hcq_cmd_slhdsa_verify_prehash {
++	u32 parameter_set;
++	u32 prehash_algo;
++	u32 message_len;
++	u32 context_len;
++	u64 message;
++	u64 context;
++	u64 pk;
++	u64 sig;
++};
++
++struct hcq_cmd_slhdsa_keygen {
++	u32 parameter_set;
++	u32 seed_len;
++	u32 pk_len;
++	u32 sk_len;
++	u64 seed;	/* DS reference */
++	u64 pk;		/* extmem addr */
++	u64 sk;		/* DS reference */
++};
++
++struct hcq_cmd_slhdsa_sign_internal {
++	u32 parameter_set;
++	u32 message_len;
++	u64 add_random;	/* extmem addr, 0 = none */
++	u64 message;
++	u64 sk;		/* DS reference */
++	u64 sig;	/* extmem addr */
++};
++
++struct hcq_cmd_slhdsa_sign {
++	u32 parameter_set;
++	u32 message_len;
++	u64 add_random;
++	u64 message;
++	u64 context;
++	u64 sk;		/* DS reference */
++	u64 sig;	/* extmem addr */
++	u32 context_len;
++};
++
++struct hcq_cmd_slhdsa_sign_prehash {
++	u32 parameter_set;
++	u32 prehash_algo;
++	u32 message_len;
++	u32 context_len;
++	u64 add_random;
++	u64 message;
++	u64 context;
++	u64 sk;		/* DS reference */
++	u64 sig;	/* extmem addr */
++};
++
++struct hcq_cmd_slhdsa_pubgen {
++	u32 parameter_set;
++	u32 sk_len;
++	u64 sk;		/* DS reference */
++	u64 pk;		/* extmem addr */
++};
++
++union hcq_cmd {
++	struct hcq_cmd_xmss_verify		cmd_xmss_verify;
++	struct hcq_cmd_lms_verify		cmd_lms_verify;
++	struct hcq_cmd_slhdsa_verify_internal	cmd_slhdsa_verify_internal;
++	struct hcq_cmd_slhdsa_verify		cmd_slhdsa_verify;
++	struct hcq_cmd_slhdsa_verify_prehash	cmd_slhdsa_verify_prehash;
++	struct hcq_cmd_slhdsa_keygen		cmd_slhdsa_keygen;
++	struct hcq_cmd_slhdsa_sign_internal	cmd_slhdsa_sign_internal;
++	struct hcq_cmd_slhdsa_sign		cmd_slhdsa_sign;
++	struct hcq_cmd_slhdsa_sign_prehash	cmd_slhdsa_sign_prehash;
++	struct hcq_cmd_slhdsa_pubgen		cmd_slhdsa_pubgen;
++};
++
++#endif /* CMH_HCQ_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_kic_abi.h b/drivers/crypto/cmh/include/cmh_kic_abi.h
+new file mode 100644
+index 000000000000..7f4fe3b9fd89
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_kic_abi.h
+@@ -0,0 +1,77 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- KIC Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH KIC ABI (KIC commands only).
++ * Derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_KIC_ABI_H
++#define CMH_KIC_ABI_H
++
++#include <linux/types.h>
++
++/* KIC Commands */
++
++#define KIC_CMD_HKDF1		0x06U
++#define KIC_CMD_HKDF2		0x07U
++#define KIC_CMD_AES_CMAC_KDF	0x08U
++#define KIC_CMD_DKEK_DERIVE	0x09U
++
++/* Maximum key size for KIC operations (bytes) */
++#define KIC_KEY_SIZE		32U
++
++/*
++ * KIC Command Structures
++ *
++ * Field names (llen, len) mirror the CMH eSW ABI register layout.
++ * llen = label length, len = output key length.
++ */
++
++struct kic_cmd_hkdf1 {
++	u64 dst;	/* DS ref for derived key (SYS_REF_LAST) */
++	u64 base;	/* base key reference (e.g., KIC_KEY1) */
++	u64 label;	/* label pointer (0 for inline-next-slot) */
++	u32 llen;	/* label length */
++	u32 len;		/* output key length */
++	u32 type;	/* SYS_TYPE_SET(flags, core_id) */
++};
++
++struct kic_cmd_hkdf2 {
++	u64 dst;	/* DS ref for derived key */
++	u64 base;	/* base key reference */
++	u64 salt;	/* salt key reference (SYS_REF_NONE = no salt) */
++	u64 label;	/* label pointer */
++	u32 llen;	/* label length */
++	u32 len;		/* output key length */
++	u32 type;	/* SYS_TYPE_SET(flags, core_id) */
++};
++
++struct kic_cmd_aes_cmac_kdf {
++	u64 base_key;	/* KIC/DS reference for base key */
++	u64 out_key;	/* DS reference for derived key */
++	u64 label;	/* label DMA address */
++	u32 key_len;	/* base & output key length (must be 32) */
++	u32 label_len;	/* label length */
++	u32 type;	/* SYS_TYPE_SET(flags, core_id) for output */
++};
++
++struct kic_cmd_dkek_derive {
++	u64 base_key;		/* KIC base key reference */
++	u64 out_key;		/* DS reference for the derived KEK */
++	u32 host_id;		/* host ID (0 = caller's own) */
++	u32 metadata_len;	/* metadata length */
++	u64 metadata;		/* metadata DMA address */
++};
++
++/* KIC Command Union */
++
++union kic_cmd {
++	struct kic_cmd_hkdf1 cmd_hkdf1;
++	struct kic_cmd_hkdf2 cmd_hkdf2;
++	struct kic_cmd_aes_cmac_kdf cmd_aes_cmac_kdf;
++	struct kic_cmd_dkek_derive cmd_dkek_derive;
++};
++
++#endif /* CMH_KIC_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_mqi.h b/drivers/crypto/cmh/include/cmh_mqi.h
+new file mode 100644
+index 000000000000..202d52b86fb8
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_mqi.h
+@@ -0,0 +1,35 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Mailbox Queue Initializer
++ *
++ * Allocates DMA-capable queue buffers and programs MBX registers
++ * via the MBX lock/setup/enable/unlock register sequence.
++ */
++
++#ifndef CMH_MQI_H
++#define CMH_MQI_H
++
++#include "cmh_config.h"
++
++#define MBX_LOCK_TIMEOUT_MS     1000
++#define MBX_LOCK_POLL_MIN_US    10
++#define MBX_LOCK_POLL_MAX_US    50
++
++/**
++ * cmh_mqi_init() - Allocate MBX queue buffers and program registers
++ * @cfg: Global device configuration
++ *
++ * Performs the lock/setup/enable/unlock sequence for each configured MBX.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mqi_init(struct cmh_config *cfg);
++
++/**
++ * cmh_mqi_cleanup() - Free MBX queue buffers and release locks
++ * @cfg: Global device configuration
++ */
++void cmh_mqi_cleanup(struct cmh_config *cfg);
++
++#endif /* CMH_MQI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_pke_abi.h b/drivers/crypto/cmh/include/cmh_pke_abi.h
+new file mode 100644
+index 000000000000..e0e7b946b4e3
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_pke_abi.h
+@@ -0,0 +1,272 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- PKE Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH PKE ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_PKE_ABI_H
++#define CMH_PKE_ABI_H
++
++#include <linux/types.h>
++
++/* PKE Command IDs */
++
++#define PKE_CMD_ECDSA_VERIFY		0x03U
++#define PKE_CMD_ECDSA_SIGN		0x04U
++#define PKE_CMD_ECDSA_PUBGEN		0x05U
++#define PKE_CMD_ECDSA_KEYGEN		0x06U
++#define PKE_CMD_EDDSA_VERIFY		0x07U
++#define PKE_CMD_EDDSA_SIGN		0x08U
++#define PKE_CMD_EDDSA_PUBGEN		0x09U
++#define PKE_CMD_ECDH_KEYGEN		0x0AU
++#define PKE_CMD_ECDH			0x0BU
++#define PKE_CMD_RSA_ENC			0x0CU
++#define PKE_CMD_RSA_DEC			0x0DU
++#define PKE_CMD_RSA_KEYGEN		0x0EU
++#define PKE_CMD_RSA_CRT_DEC		0x0FU
++#define PKE_CMD_SM2_ECDH_KEYGEN		0x16U
++#define PKE_CMD_SM2_ECDH		0x17U
++#define PKE_CMD_SM2_DEC_POINT		0x18U
++#define PKE_CMD_SM2_ENC_POINT		0x19U
++#define PKE_CMD_SM2_ID_DIGEST		0x1AU
++#define PKE_CMD_SM2_ECDH_HASH		0x1BU
++#define PKE_CMD_SM2_DEC_HASH		0x1CU
++#define PKE_CMD_SM2_ENC_HASH		0x1DU
++#define PKE_CMD_EDDSA_PRIV_KEYGEN_SCA	0x21U
++#define PKE_CMD_FLUSH			0xFFU
++
++/* EC Curve IDs (per CMH PKE ABI) */
++
++#define PKE_CURVE_P192			0x01U
++#define PKE_CURVE_P224			0x02U
++#define PKE_CURVE_P256			0x03U
++#define PKE_CURVE_P384			0x04U
++#define PKE_CURVE_P521			0x05U
++#define PKE_CURVE_SECP256K1		0x07U
++#define PKE_CURVE_BP192R1		0x11U
++#define PKE_CURVE_BP224R1		0x12U
++#define PKE_CURVE_BP256R1		0x13U
++#define PKE_CURVE_BP320R1		0x14U
++#define PKE_CURVE_BP384R1		0x15U
++#define PKE_CURVE_BP512R1		0x16U
++#define PKE_CURVE_ANSSI_FRP256V1	0x17U
++#define PKE_CURVE_SM2			0x18U
++#define PKE_CURVE_25519			0x21U
++#define PKE_CURVE_448			0x22U
++
++/* PKE Command Structures -- match CMH eSW ABI exactly */
++
++struct pke_cmd_ecdsa_verify {
++	u32 curve;
++	u32 digest_len;
++	u64 public_key;
++	u64 digest;
++	u64 signature;
++	u64 rprime;
++};
++
++struct pke_cmd_ecdsa_sign {
++	u32 curve;
++	u32 secret_key_len;
++	u64 digest;
++	u64 signature;
++	u64 secret_key;		/* DS reference */
++	u32 digest_len;
++};
++
++struct pke_cmd_ecdsa_pubgen {
++	u32 curve;
++	u32 secret_key_len;
++	u64 public_key;
++	u64 secret_key;		/* DS reference */
++};
++
++struct pke_cmd_ecdsa_keygen {
++	u32 curve;
++	u32 secret_key_len;
++	u64 secret_key;		/* DS reference */
++	u32 secret_key_type;
++};
++
++struct pke_cmd_eddsa_verify {
++	u32 curve;
++	u32 digest_len;
++	u64 public_key_y;
++	u64 digest;
++	u64 signature;
++	u64 rprime;
++};
++
++struct pke_cmd_eddsa_sign {
++	u32 curve;
++	u32 secret_key_len;
++	u64 digest;
++	u64 signature;
++	u64 secret_key;		/* DS reference */
++	u32 digest_len;
++};
++
++struct pke_cmd_eddsa_pubgen {
++	u32 curve;
++	u32 secret_key_len;
++	u64 public_key_y;
++	u64 secret_key;		/* DS reference */
++};
++
++struct pke_cmd_ecdh_keygen {
++	u32 curve;
++	u32 secret_key_len;
++	u64 public_key_x;
++	u64 secret_key;		/* DS reference */
++};
++
++struct pke_cmd_ecdh {
++	u32 curve;
++	u32 secret_key_len;
++	u32 shared_secret_len;
++	u32 shared_secret_type;
++	u64 peer_key_x;
++	u64 secret_key;		/* DS reference */
++	u64 shared_secret;	/* DS reference for result */
++};
++
++struct pke_cmd_rsa_enc {
++	u32 bits;
++	u32 e_len;
++	u64 e;
++	u64 n;
++	u64 m;
++	u64 c;
++};
++
++struct pke_cmd_rsa_dec {
++	u32 bits;
++	u32 e_len;
++	u64 e;
++	u64 n;
++	u64 c;
++	u64 m;
++	u64 d;			/* DS reference */
++};
++
++struct pke_cmd_rsa_crt_dec {
++	u32 bits;
++	u32 e_len;
++	u64 e;
++	u64 n;
++	u64 c;
++	u64 m;
++	u64 crt;		/* DS reference */
++};
++
++struct pke_cmd_rsa_keygen {
++	u32 bits;
++	u32 d_type;
++	u64 e;
++	u64 n;
++	u64 d;			/* DS reference */
++	u64 crt;		/* DS reference */
++	u32 crt_type;
++};
++
++struct pke_cmd_eddsa_keygen_sca {
++	u32 curve;
++	u64 secret_key;		/* DS reference: input normal SK */
++	u64 sca_secret_key;	/* DS reference: output blinded SK */
++};
++
++/* SM2 Command Structures */
++
++struct pke_cmd_sm2_ecdh_keygen {
++	u64 nonce;		/* DMA addr (32B input or output) */
++	u64 session_key;	/* DMA addr output (64B) */
++	u32 nonce_len;		/* 0 = HW generates, 32 = caller provides */
++};
++
++struct pke_cmd_sm2_ecdh {
++	u32 nonce_len;		/* 0 or 32 */
++	u32 private_key_len;	/* must be 32 */
++	u64 nonce;		/* DMA addr (32B) */
++	u64 peer_public_key;	/* DMA addr (64B) */
++	u64 peer_session_key;	/* DMA addr (64B) */
++	u64 private_key;		/* DS reference */
++	u64 shared_point;	/* DS reference (output, 64B) */
++	u32 shared_point_type;	/* SYS_TYPE_SET(flags, CORE_ID_PKE) */
++};
++
++struct pke_cmd_sm2_dec_point {
++	u32 ciphertext_len;	/* total CT length (97..128) */
++	u32 private_key_len;	/* must be 32 */
++	u64 ciphertext;		/* DMA addr (64B: C1 point) */
++	u64 dec_point;		/* DMA addr output (64B) */
++	u64 private_key;		/* DS reference */
++};
++
++struct pke_cmd_sm2_enc_point {
++	u64 nonce;		/* DMA addr (32B, optional) */
++	u64 public_key;		/* DMA addr (64B) */
++	u64 ciphertext;		/* DMA addr output (64B: C1) */
++	u64 enc_point;		/* DMA addr output (64B) */
++	u32 nonce_len;		/* 0 or 32 */
++};
++
++struct pke_cmd_sm2_id_digest {
++	u64 id;			/* DMA addr (identity, <=32B) */
++	u64 public_key;		/* DMA addr (64B) */
++	u64 digest;		/* DMA addr output (32B) */
++	u32 id_len;		/* identity length in bytes */
++};
++
++struct pke_cmd_sm2_ecdh_hash {
++	u64 peer_id_digest;	/* DMA addr (32B) */
++	u64 id_digest;		/* DMA addr (32B) */
++	u64 shared_point;	/* DS reference (64B input) */
++	u64 shared_key;		/* DS reference (16B output) */
++	u32 shared_key_type;	/* SYS_TYPE_SET(flags, CORE_ID_PKE) */
++};
++
++struct pke_cmd_sm2_dec_hash {
++	u64 ciphertext;		/* DMA addr (full ciphertext) */
++	u64 dec_point;		/* DMA addr (64B) */
++	u64 plaintext;		/* DMA addr output (ct_len - 96 bytes) */
++	u32 ciphertext_len;	/* 97..128 */
++};
++
++struct pke_cmd_sm2_enc_hash {
++	u64 message;		/* DMA addr (plaintext) */
++	u64 enc_point;		/* DMA addr (64B) */
++	u64 ciphertext;		/* DMA addr output (96 + msg_len) */
++	u32 message_len;	/* 1..32 */
++};
++
++/* PKE Command Union */
++
++union pke_cmd {
++	struct pke_cmd_ecdsa_verify	cmd_ecdsa_verify;
++	struct pke_cmd_ecdsa_sign	cmd_ecdsa_sign;
++	struct pke_cmd_ecdsa_pubgen	cmd_ecdsa_pubgen;
++	struct pke_cmd_ecdsa_keygen	cmd_ecdsa_keygen;
++	struct pke_cmd_eddsa_verify	cmd_eddsa_verify;
++	struct pke_cmd_eddsa_sign	cmd_eddsa_sign;
++	struct pke_cmd_eddsa_pubgen	cmd_eddsa_pubgen;
++	struct pke_cmd_ecdh_keygen	cmd_ecdh_keygen;
++	struct pke_cmd_ecdh		cmd_ecdh;
++	struct pke_cmd_rsa_enc		cmd_rsa_enc;
++	struct pke_cmd_rsa_dec		cmd_rsa_dec;
++	struct pke_cmd_rsa_crt_dec	cmd_rsa_crt_dec;
++	struct pke_cmd_rsa_keygen	cmd_rsa_keygen;
++	struct pke_cmd_eddsa_keygen_sca	cmd_eddsa_keygen_sca;
++	struct pke_cmd_sm2_ecdh_keygen	cmd_sm2_ecdh_keygen;
++	struct pke_cmd_sm2_ecdh		cmd_sm2_ecdh;
++	struct pke_cmd_sm2_dec_point	cmd_sm2_dec_point;
++	struct pke_cmd_sm2_enc_point	cmd_sm2_enc_point;
++	struct pke_cmd_sm2_id_digest	cmd_sm2_id_digest;
++	struct pke_cmd_sm2_ecdh_hash	cmd_sm2_ecdh_hash;
++	struct pke_cmd_sm2_dec_hash	cmd_sm2_dec_hash;
++	struct pke_cmd_sm2_enc_hash	cmd_sm2_enc_hash;
++};
++
++#endif /* CMH_PKE_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_qse_abi.h b/drivers/crypto/cmh/include/cmh_qse_abi.h
+new file mode 100644
+index 000000000000..9834620e21d7
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_qse_abi.h
+@@ -0,0 +1,181 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- QSE Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH QSE ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_QSE_ABI_H
++#define CMH_QSE_ABI_H
++
++#include <linux/bits.h>
++#include <linux/compiler_attributes.h>
++#include <linux/types.h>
++
++/* VCQ layout: header + [SYS_NEW] + QSE_CMD + flush */
++#define QSE_VCQ_CMDS_MIN	3	/* header + cmd + flush */
++#define QSE_VCQ_CMDS_MAX	4	/* header + sys_new + cmd + flush */
++
++/* QSE Flags */
++#define QSE_FLAG_USE_REF	BIT(0)
++#define QSE_FLAG_USE_RNG	BIT(1)
++
++/* QSE Command IDs */
++#define QSE_CMD_ML_KEM_KEYGEN		0x01U
++#define QSE_CMD_ML_KEM_ENC		0x02U
++#define QSE_CMD_ML_KEM_DEC		0x03U
++#define QSE_CMD_ML_DSA_KEYGEN		0x04U
++#define QSE_CMD_ML_DSA_SIGN		0x05U
++#define QSE_CMD_ML_DSA_VERIFY		0x06U
++#define QSE_CMD_ML_KEM_KEYGEN_MASKED	0x07U
++#define QSE_CMD_ML_KEM_ENC_MASKED	0x08U
++#define QSE_CMD_ML_KEM_DEC_MASKED	0x09U
++#define QSE_CMD_ML_DSA_KEYGEN_MASKED	0x0AU
++#define QSE_CMD_ML_DSA_SIGN_MASKED	0x0BU
++
++/* ML-KEM category values */
++#define ML_KEM_K_512		2U
++#define ML_KEM_K_768		3U
++#define ML_KEM_K_1024		4U
++
++/* ML-DSA mode values */
++#define ML_DSA_MODE_44		2U
++#define ML_DSA_MODE_65		3U
++#define ML_DSA_MODE_87		5U
++
++/* ML-DSA special message length for externalMu (pre-hashed 64-byte input) */
++#define ML_DSA_MLEN_EXTERNAL_MU	0xFFFFFFFFU
++#define ML_DSA_EXTMU_LEN	64U	/* actual copy size for externalMu */
++
++/* ML-DSA maximum message length */
++#define ML_DSA_MAX_MLEN		10240U
++
++/* Shared secret size */
++#define ML_KEM_SS_LEN		32U
++#define ML_KEM_SS_LEN_MASKED	64U
++
++/* Seed sizes */
++#define QSE_SEED_LEN		32U
++#define QSE_SEED_LEN_MASKED	64U
++
++/*
++ * ML-KEM size tables -- indexed by (k - 2).
++ *  [0] = ML-KEM-512 (k=2)
++ *  [1] = ML-KEM-768 (k=3)
++ *  [2] = ML-KEM-1024 (k=4)
++ */
++#define ML_KEM_LEVELS		3U
++
++#define ML_KEM_EK_SIZE(k)	(384U * (k) + 32U)
++#define ML_KEM_DK_SIZE(k)	(768U * (k) + 96U)
++#define ML_KEM_DK_SIZE_MASKED(k) (1152U * (k) + 128U)
++
++static inline u32 ml_kem_ct_size(u32 k)
++{
++	u32 du = (k == 4U) ? 11U : 10U;
++	u32 dv = (k == 4U) ? 5U : 4U;
++
++	return 32U * (k * du + dv);
++}
++
++#define ML_KEM_CT_SIZE(k)	ml_kem_ct_size(k)
++
++/*
++ * ML-DSA size tables -- indexed by mode.
++ * Mode values: 2 (ML-DSA-44), 3 (ML-DSA-65), 5 (ML-DSA-87).
++ */
++extern const u32 ml_dsa_pk_size[];
++extern const u32 ml_dsa_sk_size[];
++extern const u32 ml_dsa_sk_size_masked[];
++extern const u32 ml_dsa_sig_size[];
++
++/* Map ML-DSA mode (2/3/5) -> table index (0/1/2) */
++static inline int ml_dsa_mode_idx(u32 mode)
++{
++	switch (mode) {
++	case 2: return 0;
++	case 3: return 1;
++	case 5: return 2;
++	default: return -1;
++	}
++}
++
++/* Map ML-KEM k (2/3/4) -> table index (0/1/2), or -1 if invalid */
++static inline int ml_kem_k_idx(u32 k)
++{
++	if (k >= 2U && k <= 4U)
++		return (int)(k - 2U);
++	return -1;
++}
++
++/* QSE Command Structures -- match CMH eSW ABI exactly */
++
++struct qse_cmd_ml_kem_keygen {
++	u32 k;
++	u32 flags;
++	u64 seed;
++	u64 z;
++	u64 ek;
++	u64 dk;
++	u32 dk_type;
++};
++
++struct qse_cmd_ml_kem_enc {
++	u32 k;
++	u32 flags;
++	u64 coin;
++	u64 ek;
++	u64 ct;
++	u64 ss;
++	u32 ss_type;
++};
++
++struct qse_cmd_ml_kem_dec {
++	u32 k;
++	u32 flags;
++	u64 ct;
++	u64 dk;
++	u64 ss;
++	u32 ss_type;
++};
++
++struct qse_cmd_ml_dsa_keygen {
++	u32 mode;
++	u32 flags;
++	u64 seed;
++	u64 pk;
++	u64 sk;
++	u32 sk_type;
++};
++
++struct qse_cmd_ml_dsa_sign {
++	u32 mode;
++	u32 flags;
++	u64 rnd;
++	u64 m;
++	u64 sk;
++	u64 sig;
++	u32 mlen;
++};
++
++struct qse_cmd_ml_dsa_verify {
++	u32 mode;
++	u32 flags;
++	u64 m;
++	u64 pk;
++	u64 sig;
++	u32 mlen;
++};
++
++union qse_cmd {
++	struct qse_cmd_ml_kem_keygen cmd_ml_kem_keygen;
++	struct qse_cmd_ml_kem_enc    cmd_ml_kem_enc;
++	struct qse_cmd_ml_kem_dec    cmd_ml_kem_dec;
++	struct qse_cmd_ml_dsa_keygen cmd_ml_dsa_keygen;
++	struct qse_cmd_ml_dsa_sign   cmd_ml_dsa_sign;
++	struct qse_cmd_ml_dsa_verify cmd_ml_dsa_verify;
++};
++
++#endif /* CMH_QSE_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_registers.h b/drivers/crypto/cmh/include/cmh_registers.h
+new file mode 100644
+index 000000000000..668cf319cd70
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_registers.h
+@@ -0,0 +1,161 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Hardware Register Definitions
++ *
++ * Derived from the CMH hardware register specification.
++ * All offsets are taken directly from the hardware documentation.
++ */
++
++#ifndef CMH_REGISTERS_H
++#define CMH_REGISTERS_H
++
++#include <linux/io.h>
++#include <linux/types.h>
++
++/* MBX Instance Addressing */
++
++#define CMH_MBX_INSTANCE_SHIFT        12
++#define CMH_MBX_INSTANCE_SIZE         BIT(CMH_MBX_INSTANCE_SHIFT) /* 0x1000 */
++#define CMH_MAX_MBX_INSTANCES         64U
++
++/* MBX Per-Instance Register Offsets */
++
++#define R_MBX_LOCK                    0x000U
++#define R_MBX_HOST_INFO               0x004U
++#define R_MBX_QUEUE_LO                0x008U
++#define R_MBX_QUEUE_HI                0x00CU
++#define R_MBX_QUEUE_SLOTS             0x010U
++#define R_MBX_QUEUE_STRIDE            0x014U
++#define R_MBX_QUEUE_HEAD              0x018U
++#define R_MBX_QUEUE_TAIL              0x01CU
++#define R_MBX_INTERRUPT               0x020U
++#define R_MBX_INTERRUPT_MASK          0x024U
++#define R_MBX_COMMAND                 0x028U
++#define R_MBX_STATUS                  0x02CU
++#define R_MBX_CHILD                   0x030U
++#define R_MBX_ID                      0x034U
++#define R_MBX_HOST_CONFIG             0x038U
++#define R_MBX_SCRATCH                 0x03CU
++
++#define MBX_QUEUE_ALIGNMENT           0x4U
++
++/* MBX Interrupt Bits */
++
++#define MBX_DONE_IRQ                  BIT(0)
++#define MBX_ERROR_IRQ                 BIT(1)
++#define MBX_IRQ_MASK                  (MBX_DONE_IRQ | MBX_ERROR_IRQ)
++
++/* MBX Command Values */
++
++#define MBX_COMMAND_RUN               0x000U
++#define MBX_COMMAND_PAUSE             0xC2FU
++#define MBX_COMMAND_CONTINUE          0x5DBU
++#define MBX_COMMAND_RESTART           0xB78U
++#define MBX_COMMAND_ABORT             0x6F6U
++#define MBX_COMMAND_FLUSH             0x3A5U
++
++/* MBX Status Values */
++
++#define MBX_STATUS_IDLE               0x01U
++#define MBX_STATUS_BUSY               0x10U
++#define MBX_STATUS_HOLD               0x20U
++#define MBX_STATUS_PAUSED             0x28U
++#define MBX_STATUS_SUCCESS            0x40U
++#define MBX_STATUS_ERROR              0x80U
++#define MBX_STATUS_OFFLINE            0x88U  /* ERROR | 0x08: offline/stopped */
++
++#define MBX_MASK_DONE                 (MBX_STATUS_IDLE | MBX_STATUS_SUCCESS)
++#define MBX_MASK_RUNNING              (MBX_STATUS_BUSY | MBX_STATUS_HOLD)
++#define MBX_MASK_STOPPED              MBX_STATUS_OFFLINE
++
++/* MBX Status Field Extraction */
++
++#define MBX_STATUS_CODE(v)            ((v) & 0xFFU)
++#define MBX_STATUS_CORE_ID(v)         (((v) >> 8) & 0xFFU)
++#define MBX_STATUS_ERROR_CODE(v)      (((v) >> 16) & 0xFFU)
++#define MBX_STATUS_CMD_INDEX(v)       (((v) >> 24) & 0xFFU)
++
++/* SIC Register Offsets (relative to SIC base / instance 0 base) */
++
++#define R_SIC_BOOT_STATUS             0x100U
++#define SIC_BOOT_STATUS_MASK          0x77U
++#define SIC_BOOT_STATUS_PASS          0x66U
++
++#define R_SIC_MBX_AVAILABILITY        0x104U
++#define R_SIC_MBX_AVAILABILITY2       0x108U
++
++#define R_SIC_SW_BOOT_STATUS          0x12CU
++#define SIC_SW_BOOT_STATUS_STARTED    BIT(0)
++#define SIC_SW_BOOT_STATUS_READY      BIT(1)
++#define SIC_SW_BOOT_STATUS_MISSION    BIT(6)
++#define SIC_SW_BOOT_STATUS_MISSION2   BIT(7)
++
++#define R_SIC_SW_ERROR_INFO           0x130U
++#define R_SIC_SW_HEARTBEAT            0x154U
++
++#define R_SIC_GPINTERRUPT             0x160U
++
++#define R_SIC_HW_VERSION0             0x200U
++#define R_SIC_SW_VERSION              0x218U
++#define R_SIC_CORE_ENABLE             0x22CU
++
++/*
++ * Per-core dual-rail enable fields within R_SIC_CORE_ENABLE.  Each core
++ * occupies a 2-bit field; the value 0b01 (low bit set, high bit clear)
++ * means enabled.  A core is present iff (val & (mask | mask << 1)) == mask.
++ */
++#define SIC_CORE_ENABLE_HC            0x00001U
++#define SIC_CORE_ENABLE_AES           0x00004U
++#define SIC_CORE_ENABLE_SM4           0x00010U
++#define SIC_CORE_ENABLE_SM3           0x00040U
++#define SIC_CORE_ENABLE_HCQ           0x00100U
++#define SIC_CORE_ENABLE_QSE           0x00400U
++#define SIC_CORE_ENABLE_PKE           0x01000U
++#define SIC_CORE_ENABLE_DRBG          0x04000U
++#define SIC_CORE_ENABLE_CCP           0x10000U
++
++/* Register Access Helpers */
++
++static inline u32 cmh_reg_read32(void __iomem *base, u32 offset)
++{
++	return ioread32((u8 __iomem *)base + offset);
++}
++
++static inline void cmh_reg_write32(u32 value, void __iomem *base, u32 offset)
++{
++	iowrite32(value, (u8 __iomem *)base + offset);
++}
++
++/*
++ * 64-bit register access via two 32-bit reads/writes.  Only correct for
++ * register pairs where split access is defined (e.g. QUEUE_LO/HI).
++ * Do not use for registers requiring atomic 64-bit access.
++ *
++ * No explicit barrier between the two halves is needed: ioread32/iowrite32
++ * include implicit ordering guarantees on all supported architectures
++ * (MMIO accessors are strongly ordered with respect to each other).
++ */
++static inline u64 cmh_reg_read64(void __iomem *base, u32 offset)
++{
++	u32 lo = ioread32((u8 __iomem *)base + offset);
++	u32 hi = ioread32((u8 __iomem *)base + offset + 4);
++
++	return ((u64)hi << 32) | lo;
++}
++
++static inline void cmh_reg_write64(u64 value, void __iomem *base, u32 offset)
++{
++	iowrite32((u32)value, (u8 __iomem *)base + offset);
++	iowrite32((u32)(value >> 32), (u8 __iomem *)base + offset + 4);
++}
++
++/* Return the ioremap'd base for MBX instance N within the SIC region */
++static inline void __iomem *cmh_mbx_instance_base(void __iomem *sic_mapped,
++						  u32 instance)
++{
++	return (u8 __iomem *)sic_mapped +
++	       ((unsigned long)instance << CMH_MBX_INSTANCE_SHIFT);
++}
++
++#endif /* CMH_REGISTERS_H */
+diff --git a/drivers/crypto/cmh/include/cmh_rh.h b/drivers/crypto/cmh/include/cmh_rh.h
+new file mode 100644
+index 000000000000..b182c203a475
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_rh.h
+@@ -0,0 +1,93 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Response Handler
++ *
++ * IRQ-driven completion processing.  Uses request_threaded_irq():
++ *   - Hardirq: read+clear MBX interrupt registers, wake thread
++ *   - Threaded handler: walk per-MBX transaction queues,
++ *     fire completion callbacks, free transaction objects
++ *
++ * The Response Handler consumes transaction_obj entries enqueued
++ * by the Transaction Manager (cmh_txn.c) on each per-mailbox txq.
++ */
++
++#ifndef CMH_RH_H
++#define CMH_RH_H
++
++#include "cmh_config.h"
++
++/**
++ * cmh_rh_init() - Register IRQ handler and start response processing
++ * @cfg: Global device configuration
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int  cmh_rh_init(struct cmh_config *cfg);
++
++/**
++ * cmh_rh_cleanup() - Free IRQ and stop response processing
++ * @cfg: Global device configuration
++ */
++void cmh_rh_cleanup(struct cmh_config *cfg);
++
++/**
++ * cmh_rh_suspend() - Quiesce RH for system suspend
++ * @cfg: Global device configuration
++ *
++ * Cancels the watchdog timer and masks MBX interrupts at the hardware
++ * level.  IRQ handlers remain registered (standard PM pattern).
++ * The threaded IRQ handler stays active so that cmh_tm_quiesce()
++ * (called after this) can still drain in-flight transactions via
++ * IRQ-driven completions.
++ */
++void cmh_rh_suspend(struct cmh_config *cfg);
++
++/**
++ * cmh_rh_resume() - Restart RH after system resume
++ * @cfg: Global device configuration
++ *
++ * Re-synchronises per-MBX head tracking with hardware, clears stale
++ * interrupt bits, re-enables MBX interrupt masks, and re-arms the
++ * watchdog timer.  Must be called before cmh_tm_resume().
++ */
++void cmh_rh_resume(struct cmh_config *cfg);
++
++/* debugfs timeout accessor (debug builds only) */
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++unsigned int *cmh_rh_timeout_watchdog_ptr(void);
++#endif
++
++/**
++ * cmh_rh_force_drain_mbx() - FLUSH + drain all pending transactions on a MBX
++ * @mbx_idx: Mailbox index to drain
++ *
++ * Issues MBX_COMMAND_FLUSH, drains all pending transactions with
++ * -ECANCELED, and resets all recovery bookkeeping (including the
++ * wedged flag).  Safe to call at any time; acquires rh_process_lock.
++ * Intended for debugfs last-resort recovery.
++ */
++void cmh_rh_force_drain_mbx(u32 mbx_idx);
++
++/**
++ * cmh_rh_mbx_is_wedged() - Check if a mailbox is permanently wedged
++ * @mbx_idx: Mailbox index to check
++ *
++ * Returns true if the mailbox has failed RESTART+FLUSH recovery and
++ * is offline.  Used by the TM to avoid submitting new work to a dead
++ * mailbox.
++ *
++ * Return: true if wedged, false otherwise (including out-of-range idx).
++ */
++bool cmh_rh_mbx_is_wedged(u32 mbx_idx);
++
++/**
++ * cmh_rh_abort_mbx() - Issue MBX_COMMAND_ABORT under rh_process_lock
++ * @mbx_idx: Mailbox index to abort
++ *
++ * Serialises the ABORT write with RESTART/FLUSH commands issued by the
++ * watchdog, preventing command-register clobber races.
++ */
++void cmh_rh_abort_mbx(u32 mbx_idx);
++
++#endif /* CMH_RH_H */
+diff --git a/drivers/crypto/cmh/include/cmh_rng.h b/drivers/crypto/cmh/include/cmh_rng.h
+new file mode 100644
+index 000000000000..7d24682890c7
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_rng.h
+@@ -0,0 +1,31 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Hardware RNG (DRBG) Driver
++ *
++ * Registers a struct hwrng backed by the CMH DRBG core.
++ * Each .read() builds a VCQ with DRBG_CMD_GENERATE and submits it
++ * through the Transaction Manager for synchronous completion.
++ *
++ * The DRBG must be configured (CONFIG command) by the management host
++ * before the LKM is loaded -- the LKM only issues GENERATE requests.
++ *
++ * CRNG seeding: hwrng .quality is left at 0, which the hwrng core
++ * elevates to full trust (1024) for a hardware RNG.  Set a fixed
++ * quality in the hwrng initializer to lower the entropy estimate.
++ */
++
++#ifndef CMH_RNG_H
++#define CMH_RNG_H
++
++struct platform_device;
++
++int  cmh_rng_register(struct platform_device *pdev);
++void cmh_rng_unregister(void);
++
++/* debugfs timeout accessor (debug builds only) */
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++unsigned int *cmh_rng_timeout_drbg_ptr(void);
++#endif
++
++#endif /* CMH_RNG_H */
+diff --git a/drivers/crypto/cmh/include/cmh_sm3_abi.h b/drivers/crypto/cmh/include/cmh_sm3_abi.h
+new file mode 100644
+index 000000000000..cbbe80fe18d6
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sm3_abi.h
+@@ -0,0 +1,79 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SM3 Hash Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH SM3 ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_SM3_ABI_H
++#define CMH_SM3_ABI_H
++
++#include <linux/types.h>
++
++/* SM3 Commands */
++
++#define SM3_CMD_INIT            0x01U
++#define SM3_CMD_UPDATE          0x02U
++#define SM3_CMD_FINAL           0x03U
++#define SM3_CMD_UPDATE2D        0x04U
++#define SM3_CMD_GATHER          0x06U
++#define SM3_CMD_SAVE            0x07U
++#define SM3_CMD_RESTORE         0x08U
++
++/* SM3 Digest / Block Sizes */
++
++#define CMH_SM3_DIGEST_SIZE     32U
++#define CMH_SM3_BLOCK_SIZE      64U
++
++/* SM3 Context (for SAVE/RESTORE) */
++
++#define SM3_CONTEXT_WORDS       29U
++#define SM3_CONTEXT_SIZE        (SM3_CONTEXT_WORDS * 4 + 4)  /* ctx[29] + crc */
++
++/* SM3 Command Structures */
++
++struct sm3_cmd_update {
++	u64 input;      /* DMA physical address of input data */
++	u32 inlen;      /* input data length in bytes */
++};
++
++struct sm3_cmd_final {
++	u64 digest;     /* DMA physical address for output digest */
++	u32 outlen;     /* digest length in bytes */
++};
++
++struct sm3_cmd_update2d {
++	u64 input;      /* DMA source address for input data */
++	u64 output;     /* DMA destination address for pass-through data */
++	u32 iolen;      /* input/pass-through data length in bytes */
++};
++
++struct sm3_cmd_gather {
++	u64 lista;      /* DMA address of dma_scattergather_item chain */
++	u32 sgcmd;      /* SM3 sub-command: SM3_CMD_UPDATE or SM3_CMD_UPDATE2D */
++};
++
++struct sm3_cmd_save {
++	u64 output;     /* DMA physical address for saved context */
++	u32 outlen;     /* must be SM3_CONTEXT_SIZE */
++};
++
++struct sm3_cmd_restore {
++	u64 input;      /* DMA physical address of saved context */
++	u32 inlen;      /* must be SM3_CONTEXT_SIZE */
++};
++
++/* SM3 Command Union */
++
++union sm3_cmd {
++	struct sm3_cmd_update   cmd_update;
++	struct sm3_cmd_final    cmd_final;
++	struct sm3_cmd_update2d cmd_update2d;
++	struct sm3_cmd_gather   cmd_gather;
++	struct sm3_cmd_save     cmd_save;
++	struct sm3_cmd_restore  cmd_restore;
++};
++
++#endif /* CMH_SM3_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_sm4_abi.h b/drivers/crypto/cmh/include/cmh_sm4_abi.h
+new file mode 100644
+index 000000000000..a34faea613dc
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sm4_abi.h
+@@ -0,0 +1,101 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SM4 Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH SM4 ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_SM4_ABI_H
++#define CMH_SM4_ABI_H
++
++#include <linux/types.h>
++
++/* SM4 Block Size */
++
++#define CMH_SM4_BLOCK_SIZE	16U
++#define CMH_SM4_IV_SIZE		16U
++#define CMH_SM4_KEY_SIZE	16U	/* SM4 always uses 128-bit keys */
++
++/* SM4 Modes (per CMH SM4 ABI) */
++
++#define SM4_MODE_ECB		1U
++#define SM4_MODE_CBC		2U
++#define SM4_MODE_CTR		3U
++#define SM4_MODE_CFB		5U
++#define SM4_MODE_GCM		6U
++#define SM4_MODE_CMAC		7U
++#define SM4_MODE_CCM		8U
++#define SM4_MODE_XTS		9U
++#define SM4_MODE_XCBC		10U
++
++/* SM4 Operations (per CMH SM4 ABI) */
++
++#define SM4_OP_DECRYPT		1U
++#define SM4_OP_ENCRYPT		2U
++
++/* SM4 Command IDs */
++
++#define SM4_CMD_INIT		0x01U
++#define SM4_CMD_AAD_UPDATE	0x02U
++#define SM4_CMD_AAD_FINAL	0x03U
++#define SM4_CMD_UPDATE		0x04U
++#define SM4_CMD_FINAL		0x05U
++#define SM4_CMD_SCATTERGATHER	0x06U
++#define SM4_CMD_CCM_INIT	0x09U
++
++/* SM4 Command Structures */
++
++struct sm4_cmd_init {
++	u64 key;	/* datastore reference for the key */
++	u64 iv;		/* DMA address of the IV */
++	u32 keylen;	/* key length in bytes (16, or 32 for XTS) */
++	u32 ivlen;	/* IV length in bytes (0..16) */
++	u32 mode;	/* SM4 mode (SM4_MODE_*) */
++	u32 op;		/* SM4 operation (SM4_OP_*) */
++	u32 aadlen;	/* AAD length or 0 */
++	u32 iolen;	/* plaintext/ciphertext length */
++};
++
++struct sm4_cmd_update {
++	u64 input;	/* DMA address of input data */
++	u64 output;	/* DMA address of output data */
++	u32 iolen;	/* input/output data length */
++};
++
++struct sm4_cmd_final {
++	u64 input;	/* DMA address of last input data */
++	u64 output;	/* DMA address of last output data */
++	u64 tag;	/* DMA address of tag (AEAD only) */
++	u32 iolen;	/* last input/output data length */
++	u32 taglen;	/* tag length (AEAD only) */
++};
++
++struct sm4_cmd_aad_final {
++	u64 data;	/* DMA address of AAD data */
++	u32 datalen;	/* AAD data length */
++};
++
++struct sm4_cmd_ccm_init {
++	u64 key;	/* datastore reference for the key */
++	u64 nonce;	/* DMA address of the nonce */
++	u32 keylen;	/* key length in bytes (always 16) */
++	u32 noncelen;	/* nonce length (15 - L) */
++	u32 op;		/* SM4 operation (SM4_OP_*) */
++	u32 aadlen;	/* AAD length */
++	u32 iolen;	/* plaintext/ciphertext length */
++	u32 taglen;	/* tag length */
++};
++
++/* SM4 Command Union */
++
++union sm4_cmd {
++	struct sm4_cmd_init	cmd_init;
++	struct sm4_cmd_update	cmd_update;
++	struct sm4_cmd_final	cmd_final;
++	struct sm4_cmd_aad_final cmd_aad_final;
++	struct sm4_cmd_ccm_init	cmd_ccm_init;
++};
++
++#endif /* CMH_SM4_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_sys_abi.h b/drivers/crypto/cmh/include/cmh_sys_abi.h
+new file mode 100644
+index 000000000000..64110311e552
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sys_abi.h
+@@ -0,0 +1,148 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SYS Core ABI Definitions
++ *
++ * Kernel-side definitions for the CMH SYS ABI.
++ * All constants and layouts derived from the CMH eSW ABI.
++ */
++
++#ifndef CMH_SYS_ABI_H
++#define CMH_SYS_ABI_H
++
++#include <linux/bits.h>
++#include <linux/types.h>
++
++/* SYS Commands (per CMH SYS ABI) */
++
++#define SYS_CMD_RUN		0x01U
++#define SYS_CMD_NOP		0x02U
++#define SYS_CMD_IMPORT		0x07U
++#define SYS_CMD_EXPORT		0x08U
++#define SYS_CMD_NEW		0x0AU
++#define SYS_CMD_READ		0x0BU
++#define SYS_CMD_WRITE		0x0CU
++#define SYS_CMD_GRANT		0x0DU
++#define SYS_CMD_LIST		0x0EU
++#define SYS_CMD_FIND		0x0FU
++#define SYS_CMD_DATA		0x11U
++
++/* SYS Reference Constants */
++
++#define SYS_REF_NONE		0x0000000000000000ULL
++#define SYS_REF_TEMP		0x1111111111111111ULL
++#define SYS_REF_LAST		0xFFFFFFFFFFFFFFFFULL
++
++typedef u64 sys_ref_t;
++
++/* SYS CID */
++
++#define SYS_CID_NONE		0x0000000000000000ULL
++
++/* SYS Type Encoding -- bits [7:0] = core_id, bits [23:16] = flags */
++
++#define SYS_TYPE_FLAG_PT	BIT(16)  /* can be read as plaintext */
++#define SYS_TYPE_FLAG_XC	BIT(17)  /* can be exported over XC bus */
++#define SYS_TYPE_FLAG_SCA	BIT(18)  /* SCA key in 2 shares */
++
++#define SYS_TYPE_SET(flags, core) \
++	(((flags) & 0xFF0000UL) | ((core) & 0xFFUL))
++#define SYS_TYPE_CORE(type)	((type) & 0xFFU)
++#define SYS_TYPE_FLAGS(type)	((type) & 0xFF0000U)
++#define SYS_TYPE_NONE		0U	/* DMA output, no DS storage */
++
++#define SYS_WRAP_HDR_SIZE	16	/* sys_read plaintext header */
++
++/* SYS Command Structures */
++
++struct sys_cmd_new {
++	u64 cid;	/* caller id (name) for the object */
++	u64 ref;	/* DMA address -- CMH eSW writes back reference here */
++	u32 len;	/* size of the new object in bytes */
++};
++
++struct sys_cmd_write {
++	u64 ref;	/* object datastore reference */
++	u64 src;	/* DMA source address of key data */
++	u64 key;	/* wrapping key reference (SYS_REF_NONE = plaintext) */
++	u32 len;	/* source buffer length */
++	u32 type;	/* SYS_TYPE_SET(flags, core_id) */
++};
++
++struct sys_cmd_read {
++	u64 ref;	/* object datastore reference */
++	u64 dst;	/* DMA destination for key data */
++	u64 key;	/* wrapping key reference (SYS_REF_NONE = plaintext) */
++	u32 len;	/* destination buffer length */
++};
++
++struct sys_cmd_data {
++	u64 ref;	/* object datastore reference */
++	u64 dst;	/* DMA destination for object data */
++	u32 len;	/* destination buffer length */
++};
++
++struct sys_cmd_find {
++	u64 cid;	/* caller id to search for */
++	u64 dst;	/* DMA destination for struct sys_list_item */
++	u32 len;	/* destination buffer length */
++};
++
++struct sys_cmd_list {
++	u64 ref;	/* starting DS reference (SYS_REF_NONE = first) */
++	u64 dst;	/* DMA destination for struct sys_list_item */
++	u32 len;	/* destination buffer length */
++};
++
++struct sys_cmd_grant {
++	u64 ref;	/* object datastore reference */
++	u64 read;	/* bitfield: allow read for mailboxes */
++	u64 write;	/* bitfield: allow write for mailboxes */
++	u64 execute;	/* bitfield: allow use for mailboxes */
++};
++
++struct sys_cmd_export {
++	u64 cid;	/* caller id for the response */
++	u64 dst;	/* DMA destination for the export blob */
++	u64 key;	/* wrapping key datastore reference */
++	u32 len;	/* destination buffer length */
++};
++
++struct sys_cmd_import {
++	u64 src;	/* DMA source address of import blob */
++	u64 key;	/* wrapping key datastore reference */
++	u32 len;	/* source buffer length */
++};
++
++/* SYS List/Find Response Item */
++
++struct sys_list_item {
++	u64 ref;	/* object datastore reference */
++	u64 cid;	/* caller id */
++	u32 len;	/* object length */
++	u32 type;	/* object type (SYS_TYPE_SET packed) */
++};
++
++/* Wrapped-read header (prepended to SYS_CMD_READ responses) */
++
++struct sys_wrap_hdr {
++	u64 cid;	/* caller id */
++	u32 wrap;	/* wrap data length following this header */
++	u32 len;	/* object data length following wrap data */
++};
++
++/* SYS Command Union */
++
++union sys_cmd {
++	struct sys_cmd_new	cmd_new;
++	struct sys_cmd_write	cmd_write;
++	struct sys_cmd_read	cmd_read;
++	struct sys_cmd_data	cmd_data;
++	struct sys_cmd_find	cmd_find;
++	struct sys_cmd_list	cmd_list;
++	struct sys_cmd_grant	cmd_grant;
++	struct sys_cmd_export	cmd_export;
++	struct sys_cmd_import	cmd_import;
++};
++
++#endif /* CMH_SYS_ABI_H */
+diff --git a/drivers/crypto/cmh/include/cmh_sysfs.h b/drivers/crypto/cmh/include/cmh_sysfs.h
+new file mode 100644
+index 000000000000..864cf1c8fa00
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sysfs.h
+@@ -0,0 +1,14 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- sysfs Device Attributes
++ */
++
++#ifndef CMH_SYSFS_H
++#define CMH_SYSFS_H
++
++struct attribute_group;
++
++extern const struct attribute_group *cmh_sysfs_groups[];
++
++#endif /* CMH_SYSFS_H */
+diff --git a/drivers/crypto/cmh/include/cmh_txn.h b/drivers/crypto/cmh/include/cmh_txn.h
+new file mode 100644
+index 000000000000..cdfae716adea
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_txn.h
+@@ -0,0 +1,491 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Transaction Manager
++ *
++ * Dedicated kthread managing concurrent VCQ submissions.
++ *
++ * Callers post command_msg objects into the Command Message Queue (CMQ).
++ * The TM thread dequeues them, selects a mailbox, builds VCQ(s) in the
++ * DMA queue slot, creates a transaction_obj, and rings the doorbell.
++ *
++ * The Response Handler (cmh_rh.c) walks per-mailbox transaction queues
++ * when an IRQ fires and fires completion callbacks.
++ */
++
++#ifndef CMH_TXN_H
++#define CMH_TXN_H
++
++#include <linux/types.h>
++#include <linux/list.h>
++#include <linux/spinlock.h>
++#include <linux/completion.h>
++#include <linux/jiffies.h>
++#include <linux/refcount.h>
++#include <linux/mutex.h>
++#include <linux/timer.h>
++#include <crypto/algapi.h>
++
 +#include "cmh_config.h"
 +#include "cmh_vcq.h"
 +
-+/* Key context mode */
-+enum cmh_key_mode {
-+	CMH_KEY_NONE = 0,	/* no key set yet */
-+	CMH_KEY_RAW,		/* raw key bytes in memory */
++/* Command Message (caller -> TM) */
++
++typedef void (*cmh_completion_fn)(void *data, int error);
++
++struct command_msg {
++	struct list_head    list;           /* CMQ linked list node */
++	u32                 command_id;     /* VCQ_CMD_ID(core, flags, span, cmd) */
++	void               *vcq_data;      /* heap-owned copy of VCQ entries */
++	u32                 vcq_count;      /* total vcq_cmd entries across all VCQs */
++	u32                 num_vcqs;       /* how many VCQs in vcq_data (0 or 1 = single) */
++	s32                 target_mbx;     /* MBX index from core affinity, or -1 fallback */
++	s32                 actual_mbx;     /* MBX selected by TM thread, -1 until dispatched */
++	u32                 first_vcq_id;   /* HW VCQ id of first slot, U32_MAX until submitted */
++	cmh_completion_fn   complete;       /* completion callback (may be NULL) */
++	void               *completion_data;
++	refcount_t          refs;           /* submit_sync: 2 = waiter + TM */
++	bool                backlog_ok;     /* accept into backlog when CMQ is full */
++	unsigned long       timeout_jiffies;/* per-txn async timeout (0 = none) */
 +};
 +
-+/* Per-transform key context */
-+struct cmh_key_ctx {
-+	enum cmh_key_mode mode;
-+	struct {
-+		u8 *data;	/* kmemdup'd raw key bytes */
-+		u32 len;	/* key length in bytes */
-+		u32 sys_type;	/* SYS_TYPE_SET(flags, core_id) */
-+		dma_addr_t dma;	/* pre-mapped DMA addr (DMA_TO_DEVICE) */
-+	} raw;
++/* Transaction Object (TM -> RH) */
++
++/* Per-transaction FSM states for async timeout resolution */
++#define TXN_INFLIGHT	0
++#define TXN_COMPLETE	1
++#define TXN_TIMED_OUT	2
++
++struct transaction_obj {
++	struct list_head    list;           /* per-mailbox txn queue node */
++	u32                 first_vcq_id;
++	u32                 last_vcq_id;
++	u32                 mailbox_idx;    /* index into cfg->mailboxes[] */
++	u32                 command_id;     /* VCQ_CMD_ID from first payload cmd */
++	int                 error_code;
++	cmh_completion_fn   complete;
++	void               *completion_data;
++	atomic_t            state;          /* TXN_INFLIGHT / COMPLETE / TIMED_OUT */
++	struct timer_list   timeout_timer;  /* per-request async timeout */
++	refcount_t          refs;           /* owner + timer (if armed) */
 +};
 +
-+/**
-+ * cmh_key_setkey_raw() - Store raw key bytes in the transform context
-+ * @ctx: Per-transform key context
-+ * @key: Raw key bytes
-+ * @keylen: Key length in bytes
-+ * @core_id: Target algorithm core (e.g. CORE_ID_AES)
-+ *
-+ * SYS_TYPE_FLAG_PT is set so the written temp key
-+ * can be read back as plaintext if needed.  The actual SYS_CMD_WRITE
-+ * to SYS_REF_TEMP is deferred to each encrypt/decrypt VCQ, where it
-+ * is packed inline for atomicity.
-+ *
-+ * Return: 0 on success, -ENOMEM on allocation failure.
-+ */
-+int cmh_key_setkey_raw(struct cmh_key_ctx *ctx, const u8 *key,
-+		       u32 keylen, u32 core_id);
++/* Per-Mailbox Transaction Queue */
++
++struct cmh_mbx_txq {
++	struct list_head    head;
++	spinlock_t          lock;           /* protects head list + depth */
++	u32                 depth;          /* number of in-flight transactions */
++	struct mutex        dispatch_lock;  /* serialises VCQ dispatch + MBX flush */
++};
++
++/* Public Interface */
 +
 +/**
-+ * cmh_key_destroy() - Free key resources
-+ * @ctx: Per-transform key context
++ * cmh_tm_init() - Initialise the Transaction Manager
++ * @cfg: Global device configuration (mailbox layout, IRQ, etc.)
 + *
-+ * Zeroises and frees the raw key buffer.
++ * Starts the TM kthread and initialises per-mailbox transaction queues.
++ *
++ * Return: 0 on success, negative errno on failure.
 + */
-+void cmh_key_destroy(struct cmh_key_ctx *ctx);
++int  cmh_tm_init(struct cmh_config *cfg);
 +
 +/**
-+ * cmh_ds_type_to_core_id() - Map datastore key type to core ID
-+ * @ds_type: CMH_DS_* key type constant
-+ *
-+ * Return: Corresponding CORE_ID_*, or CORE_ID_NUM (0x1F) on
-+ *         unrecognised type (caller should return -EINVAL).
++ * cmh_tm_cleanup() - Stop the TM kthread and drain all queues
 + */
-+u32 cmh_ds_type_to_core_id(u32 ds_type);
++void cmh_tm_cleanup(void);
 +
-+#endif /* CMH_KEY_H */
-diff --git a/drivers/crypto/cmh/include/cmh_mgmt.h b/drivers/crypto/cmh/include/cmh_mgmt.h
++/**
++ * cmh_tm_quiesce() - Stop TM kthread and drain in-flight transactions
++ *
++ * Stops the TM kthread, rejects new posts, then waits (with a
++ * configurable timeout) for all per-MBX transaction queues to drain.
++ * If the timeout fires, remaining transactions are cancelled with
++ * -ECANCELED.
++ */
++void cmh_tm_quiesce(void);
++
++/**
++ * cmh_tm_resume() - Restart the TM kthread after resume
++ *
++ * Return: 0 on success, negative errno if the kthread fails to start.
++ */
++int  cmh_tm_resume(void);
++
++/**
++ * cmh_tm_post_command() - Post a command to the TM for submission
++ * @msg: Command message with pre-built VCQ data and completion callback
++ *
++ * Round-robin selects the next MBX with enough free slots for
++ * msg->num_vcqs VCQs.  All VCQs in a message are written to
++ * consecutive slots on the same MBX (back-to-back).
++ * The caller retains ownership of @msg until the completion callback fires.
++ *
++ * Return: 0 on success, -EAGAIN if queue full, -ENODEV if TM stopped.
++ */
++int  cmh_tm_post_command(struct command_msg *msg);
++
++/*
++ * Synchronous submit -- post one or more VCQs and wait for completion.
++ *
++ * Combines post_command + refcounted wait + timeout + cancel into one
++ * call.  This is the standard pattern for all synchronous crypto ops.
++ *
++ * Context: must be called from a sleepable (task) context.
++ *          Performs GFP_KERNEL allocations and sleeps on
++ *          wait_for_completion_timeout().  A WARN_ON_ONCE fires
++ *          if called from atomic / IRQ / softirq context.
++ *
++ * vcq_cmds:   pre-built VCQ array (headers + commands, contiguous)
++ * vcq_count:  total number of vcq_cmd entries across all VCQs
++ * num_vcqs:   number of VCQs in the array (0 or 1 = single VCQ)
++ *
++ * For multi-VCQ submissions, the array contains multiple VCQs laid
++ * out contiguously, each starting with its own header.  All VCQs are
++ * written to consecutive MBX slots and share one transaction object.
++ *
++ * Returns 0 on success, -ETIMEDOUT, or CMH eSW error code.
++ */
++int  cmh_tm_submit_sync(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			u32 num_vcqs);
++
++/*
++ * Synchronous submit pinned to a specific mailbox.
++ * target_mbx: -1 = round-robin, >= 0 = pin to that MBX index.
++ */
++int  cmh_tm_submit_sync_mbx(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			    u32 num_vcqs, s32 target_mbx);
++
++/*
++ * Synchronous submit with explicit timeout.
++ * timeout_hz: completion timeout in jiffies (use msecs_to_jiffies()).
++ */
++
++/*
++ * Extended timeout for slow crypto operations: RSA keygen, PQC
++ * keygen/sign/verify.  Controlled by the slow_op_timeout_ms module
++ * parameter.
++ */
++unsigned long cmh_tm_slow_op_timeout_jiffies(void);
++
++int  cmh_tm_submit_sync_tmo(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			    u32 num_vcqs, s32 target_mbx,
++			    unsigned long timeout_hz);
++
++/*
++ * Synchronous submit that never issues MBX_COMMAND_ABORT on timeout.
++ * Returns -EAGAIN if cancelled from queue, -EINPROGRESS if the VCQ is
++ * left in-flight.  On -EINPROGRESS, @orphan_cb(@orphan_data) will be
++ * called when the VCQ eventually completes (RH callback fires and the
++ * last sync_ctx ref drops).  Use this to defer DMA cleanup.
++ * Safe for background/kthread callers that must not disrupt other MBX work.
++ */
++int  cmh_tm_submit_sync_noabort(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++				u32 num_vcqs, unsigned long timeout_hz,
++				void (*orphan_cb)(void *),
++				void *orphan_data);
++
++/*
++ * Asynchronous submit -- post VCQs and return immediately.
++ *
++ * On successful return (0), the provided @callback may be invoked from
++ * either the RH threaded IRQ context (normal completion path) or the TM
++ * kthread (if VCQ dispatch to the HW ring fails after the message was
++ * posted to the CMQ).  The caller must not assume a specific callback
++ * context.
++ *
++ * After a successful post, the caller must NOT touch VCQ buffers --
++ * ownership transfers to the TM.  If this function returns non-zero,
++ * the message was not posted, the callback will NOT fire, and the caller
++ * must perform cleanup.
++ *
++ * Uses GFP_ATOMIC internally -- the crypto API may invoke driver ops
++ * from softirq context (e.g. IPsec), so GFP_KERNEL would deadlock.
++ *
++ * If @backlog_ok is true and the CMQ is full, the message is placed on
++ * an overflow backlog queue and -EBUSY is returned.  The caller must
++ * treat -EBUSY as "accepted" (like -EINPROGRESS): the callback WILL
++ * fire once the request is promoted from backlog and completes.  When
++ * @backlog_ok is false, CMQ-full returns -EAGAIN (caller must clean up).
++ *
++ * Returns: 0 on successful post, -EBUSY (backlogged -- callback will
++ *          fire), -ENOMEM, -EINVAL (bad vcq_count), -EAGAIN (CMQ full,
++ *          no backlog), -ENODEV.
++ */
++int  cmh_tm_submit_async(struct vcq_cmd *vcq_cmds, u32 vcq_count,
++			 u32 num_vcqs, s32 target_mbx,
++			 cmh_completion_fn callback, void *callback_data,
++			 bool backlog_ok, unsigned long timeout_jiffies);
++
++/**
++ * cmh_tm_async_timeout_jiffies() - Default per-request async timeout
++ *
++ * Returns the debugfs-configurable timeout for symmetric data-path
++ * ops (async_timeout_ms converted to jiffies).  Akcipher/kpp callers
++ * should pass 0 instead (no per-request timeout; vcq_timeout_ms is the
++ * safety net).
++ */
++unsigned long cmh_tm_async_timeout_jiffies(void);
++
++/**
++ * cmh_tm_flush_mbx() - Issue MBX_COMMAND_FLUSH and wait for completion
++ * @mbx_idx: Mailbox index
++ *
++ * Resets the eSW child mailbox state including the temp stack.
++ * Must be called when no VCQ submission is in progress on @mbx_idx.
++ *
++ * Return: 0 on success, -ETIMEDOUT if eSW does not clear the command,
++ *         -EBUSY if a command is already pending.
++ */
++int  cmh_tm_flush_mbx(s32 mbx_idx);
++
++/**
++ * cmh_tm_poke_tail() - Re-write R_MBX_QUEUE_TAIL to wake the eSW
++ * @base: Mailbox register base
++ *
++ * Serialised against the submit_vcq() doorbell so a re-poke cannot roll
++ * back a concurrent submission.  Safe from softirq/timer context.
++ */
++void cmh_tm_poke_tail(void __iomem *base);
++
++/**
++ * cmh_tm_try_cancel_command() - Try to cancel a queued command
++ * @msg: Command message to cancel
++ *
++ * Return: true if removed from CMQ, false if already consumed by the TM thread.
++ */
++bool cmh_tm_try_cancel_command(struct command_msg *msg);
++
++/**
++ * cmh_tm_peek_transaction() - Peek at the oldest transaction on a mailbox
++ * @mbx_idx: Mailbox index
++ *
++ * For use by the Response Handler.  Caller must hold txq->lock or call
++ * from a context where no concurrent pop is possible (e.g. threaded IRQ).
++ *
++ * Return: Pointer to the oldest transaction_obj, or NULL if empty.
++ */
++struct transaction_obj *cmh_tm_peek_transaction(u32 mbx_idx);
++
++/**
++ * cmh_tm_pop_transaction() - Remove and return the oldest transaction
++ * @mbx_idx: Mailbox index
++ *
++ * Return: Pointer to the removed transaction_obj, or NULL if empty.
++ */
++struct transaction_obj *cmh_tm_pop_transaction(u32 mbx_idx);
++
++/**
++ * cmh_txn_finish() - Complete a transaction with FSM + timer handling
++ * @txn: Transaction popped from the TXQ
++ * @error: Error code (0 for success, negative errno)
++ *
++ * Resolves the timer-vs-completion race via atomic cmpxchg, cancels
++ * the per-txn timeout timer if still pending, fires the completion
++ * callback (if this path wins the race), and drops the owner reference.
++ * The transaction is freed when the last reference is dropped.
++ *
++ * Called by the Response Handler after popping a completed transaction.
++ */
++void cmh_txn_finish(struct transaction_obj *txn, int error);
++
++/**
++ * cmh_tm_max_cmds_per_vcq() - Max vcq_cmd entries per MBX slot
++ *
++ * Returns the minimum across all configured MBXes so callers can pack
++ * VCQs without knowing which MBX will be selected.
++ *
++ * Return: At least MIN_VCQ_CMDS (2).
++ */
++u32  cmh_tm_max_cmds_per_vcq(void);
++
++/**
++ * cmh_tm_mbx_count() - Return the number of configured mailboxes
++ *
++ * Return: cfg->mbx_count.
++ */
++u32  cmh_tm_mbx_count(void);
++
++/**
++ * cmh_core_default_id() - Return the default core_id for a core type
++ * @type: Logical core type enum
++ *
++ * Returns the core_id of the first (index-0) instance without advancing
++ * the round-robin counter.  Intended for callers pinned to a fixed MBX
++ * (e.g. mgmt ioctls on MGMT_MBX) that only need the VCQ core_id field.
++ *
++ * In multi-instance configurations the returned core_id is always that
++ * of instance[0], regardless of which MBX instance[0] is assigned to.
++ * Mgmt callers submit on MGMT_MBX (0) -- the eSW accepts any valid
++ * core_id on any MBX for command dispatch.
++ *
++ * Return: u32 core_id.
++ */
++u32  cmh_core_default_id(enum cmh_core_type type);
++
++/**
++ * cmh_core_select_instance() - Multi-instance core dispatch selection
++ * @type: Logical core type enum
++ *
++ * Returns the next (core_id, mbx_idx) pair for @type using round-robin
++ * across configured instances.  On first use for an instance whose MBX
++ * is not pre-assigned, atomically assigns the next available MBX.
++ *
++ * With single-instance defaults, this degenerates to the same behaviour
++ * as the old single-entry core_to_mbx[] table -- one core type, one MBX.
++ *
++ * Return: struct core_dispatch with core_id and mbx_idx.
++ */
++struct core_dispatch cmh_core_select_instance(enum cmh_core_type type);
++
++/**
++ * cmh_core_num_instances() - Return count of configured instances
++ * @type: Logical core type enum
++ *
++ * Return: Number of instances for @type, or 0 if the core is absent from
++ *         the CORE_ENABLE register (not present in this hardware build).
++ */
++u32  cmh_core_num_instances(enum cmh_core_type type);
++
++/**
++ * cmh_core_present() - Test whether a core type was discovered
++ * @type: Logical core type enum
++ *
++ * Return: true if at least one instance of @type is present in hardware,
++ *         false if the core is absent.  Used to gate crypto-API
++ *         registration so an absent core advertises no algorithms.
++ */
++static inline bool cmh_core_present(enum cmh_core_type type)
++{
++	return cmh_core_num_instances(type) > 0;
++}
++
++/**
++ * cmh_core_get_instance() - Get a specific instance by index
++ * @type: Logical core type enum
++ * @idx: Instance index (0-based, must be < cmh_core_num_instances())
++ *
++ * Returns (core_id, mbx_idx) for the given instance without advancing
++ * the round-robin counter.  Triggers auto-assign if the instance has
++ * no MBX yet.
++ *
++ * Return: struct core_dispatch with core_id and mbx_idx.
++ */
++struct core_dispatch cmh_core_get_instance(enum cmh_core_type type, u32 idx);
++
++/**
++ * cmh_tm_affinity_reset() - Reset all core-to-MBX assignments
++ *
++ * Called during init and cleanup.
++ */
++void cmh_tm_affinity_reset(void);
++
++/**
++ * cmh_tm_txq_completion_notify() - Wake TM thread after TXQ completion
++ *
++ * Called by the Response Handler after completing a transaction to
++ * unblock the TM thread if it is waiting for a free MBX slot.
++ */
++void cmh_tm_txq_completion_notify(void);
++
++/*
++ * Pack @count payload commands (no headers) into one or more VCQs
++ * respecting the per-slot size limit, then submit synchronously.
++ *
++ * @payload:    flat array of vcq_cmd entries (no headers)
++ * @count:      number of entries in @payload
++ * @packed:     caller-provided scratch buffer for the packed output
++ * @max_packed: size of @packed in vcq_cmd entries
++ * @target_mbx: -1 = round-robin, >= 0 = pin to this MBX index
++ *
++ * Each VCQ gets its own header.  All VCQs are submitted as a single
++ * back-to-back transaction on the same MBX.
++ */
++int  cmh_vcq_pack_and_submit(const struct vcq_cmd *payload, u32 count,
++			     struct vcq_cmd *packed, u32 max_packed,
++			     s32 target_mbx);
++
++/**
++ * cmh_vcq_pack_and_submit_async() - Pack payload commands and submit async
++ * @payload: Flat array of VCQ command entries (no headers)
++ * @count: Number of entries in @payload
++ * @packed: Caller-provided scratch buffer for packed output
++ * @max_packed: Size of @packed in vcq_cmd entries
++ * @target_mbx: Mailbox index (-1 for round-robin)
++ * @callback: Completion callback
++ * @callback_data: Opaque data passed to @callback
++ * @backlog_ok: If true, accept into backlog when CMQ is full
++ * @timeout_jiffies: Per-request timeout (0 to disable)
++ *
++ * Async variant of cmh_vcq_pack_and_submit().  Returns 0 on successful
++ * post; after a successful post, @callback may run from RH threaded IRQ
++ * context on normal completion, from the TM kthread if VCQ dispatch
++ * fails after posting, or from TM teardown paths such as
++ * cmh_tm_cleanup() / cmh_tm_quiesce() when queued or in-flight work is
++ * cancelled.  Callers must not assume a single callback context.  On
++ * non-zero return, the callback will NOT fire.
++ *
++ * @payload:          flat array of vcq_cmd entries (no headers)
++ * @count:            number of entries in @payload
++ * @packed:           caller-provided scratch buffer for the packed output
++ * @max_packed:       size of @packed in vcq_cmd entries
++ * @target_mbx:       -1 = round-robin, >= 0 = pin to this MBX index
++ * @callback:         completion callback (may run from IRQ or TM context)
++ * @callback_data:    opaque pointer passed to @callback
++ * @backlog_ok:       if true, queue the request when all MBXs are busy
++ * @timeout_jiffies:  maximum wait time for MBX slot (0 = no wait)
++ *
++ * Return: 0 on successful post, -EBUSY (backlogged), negative errno on failure.
++ */
++int  cmh_vcq_pack_and_submit_async(const struct vcq_cmd *payload, u32 count,
++				   struct vcq_cmd *packed, u32 max_packed,
++				   s32 target_mbx,
++				   cmh_completion_fn callback,
++				   void *callback_data,
++				   bool backlog_ok,
++				   unsigned long timeout_jiffies);
++
++/* debugfs timeout accessors (debug builds only) */
++#ifdef CONFIG_CRYPTO_DEV_CMH_DEBUG
++unsigned int *cmh_tm_timeout_async_ptr(void);
++unsigned int *cmh_tm_timeout_vcq_ptr(void);
++unsigned int *cmh_tm_timeout_slow_op_ptr(void);
++unsigned int *cmh_tm_timeout_drain_ptr(void);
++unsigned int *cmh_tm_cmq_max_depth_ptr(void);
++unsigned int *cmh_tm_backlog_max_depth_ptr(void);
++#endif
++
++/* -- Crypto request completion helper ---------------------------------- */
++
++struct device *cmh_dev(void);
++
++/**
++ * cmh_complete() - Complete a crypto request with optional error logging
++ * @req: The async crypto request to complete
++ * @err: Completion code: 0 = success, < 0 = errno, -EINPROGRESS = backlog
++ *	 promotion signal, > 0 = byte count (ahash BLOCK_ONLY leftover the
++ *	 crypto API must re-buffer)
++ *
++ * Logs a rate-limited diagnostic on genuine errors (err < 0), then hands
++ * the request back to the crypto framework.  -EINPROGRESS and non-negative
++ * completions (success, or a positive ahash remainder) are not errors and
++ * are not logged.  Centralizes error reporting so individual algorithm
++ * drivers do not need per-callback logging.
++ */
++static inline void cmh_complete(struct crypto_async_request *req, int err)
++{
++	if (err < 0 && err != -EINPROGRESS) {
++		/*
++		 * For template instances (e.g. hmac(sha3-512-cmh)) the
++		 * driver name will be the outer template's, not ours.
++		 * Still useful for triage -- identifies the failing tfm.
++		 */
++		dev_dbg_ratelimited(cmh_dev(), "op error: alg=%s err=%d\n",
++				    crypto_tfm_alg_driver_name(req->tfm),
++				    err);
++	}
++	crypto_request_complete(req, err);
++}
++
++#endif /* CMH_TXN_H */
+diff --git a/drivers/crypto/cmh/include/cmh_vcq.h b/drivers/crypto/cmh/include/cmh_vcq.h
 new file mode 100644
-index 000000000000..a0da71462bf8
+index 000000000000..8ebcbccd2aca
 --- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_mgmt.h
-@@ -0,0 +1,69 @@
++++ b/drivers/crypto/cmh/include/cmh_vcq.h
+@@ -0,0 +1,288 @@
 +/* SPDX-License-Identifier: GPL-2.0 */
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH -- Key Management misc_device (/dev/cmh_mgmt)
++ * CMH LKM -- VCQ (Virtual Command Queue) Definitions
 + *
-+ * ioctl interface for key CRUD + datastore export/import,
-+ * PKE operations (RSA, ECDSA, ECDH, EdDSA),
-+ * and PQC operations (ML-KEM, ML-DSA, SLH-DSA).
++ * Kernel-side definitions for the CMH VCQ and DMA scatter-gather ABI,
++ * so the LKM can build VCQs without depending on CMH eSW headers.
 + *
-+ * Registered alongside crypto algorithms in module_init,
-+ * unregistered before them in module_exit.
-+ */
-+
-+#ifndef CMH_MGMT_H
-+#define CMH_MGMT_H
-+
-+#ifdef CONFIG_CRYPTO_DEV_CMH_MGMT
-+
-+/*
-+ * Pin all mgmt ioctls to MBX 0 for DS ownership and SYS_REF_TEMP scope.
-+ * Shared by cmh_mgmt.c, cmh_mgmt_pke.c, cmh_mgmt_pqc.c, cmh_pke_sm2.c.
-+ */
-+#define MGMT_MBX	0
-+
-+/* Maximum DMA buffer size for key data / datastore blobs */
-+#define CMH_MGMT_MAX_DATA_LEN	(256 * 1024)  /* 256 KB */
-+
-+/*
-+ * Scrub up to two orphaned datastore objects on an ioctl error path.
-+ * Grant-with-no-access wipes the key material; the datastore stack space
-+ * itself is only reclaimed by a full reset.  Pass 0 to skip.
-+ */
-+void cmh_mgmt_ds_scrub(u64 ref0, u64 ref1);
-+
-+int  cmh_mgmt_register(void);
-+void cmh_mgmt_unregister(void);
-+
-+/* -- PKE ioctl handlers (cmh_mgmt_pke.c) -- */
-+int cmh_mgmt_pke_rsa_enc(void __user *argp);
-+int cmh_mgmt_pke_rsa_dec(void __user *argp);
-+int cmh_mgmt_pke_rsa_crt_dec(void __user *argp);
-+int cmh_mgmt_pke_rsa_keygen(void __user *argp);
-+int cmh_mgmt_pke_ecdsa_sign(void __user *argp);
-+int cmh_mgmt_pke_ecdh(void __user *argp);
-+int cmh_mgmt_pke_ecdh_keygen(void __user *argp);
-+int cmh_mgmt_pke_eddsa_sign(void __user *argp);
-+int cmh_mgmt_pke_eddsa_verify(void __user *argp);
-+int cmh_mgmt_pke_ec_keygen(void __user *argp);
-+int cmh_mgmt_pke_ec_pubgen(void __user *argp);
-+int cmh_mgmt_pke_eddsa_keygen_sca(void __user *argp);
-+
-+/* -- PQC ioctl handlers (cmh_mgmt_pqc.c) -- */
-+int cmh_mgmt_ml_kem_keygen(void __user *argp);
-+int cmh_mgmt_ml_kem_enc(void __user *argp);
-+int cmh_mgmt_ml_kem_dec(void __user *argp);
-+int cmh_mgmt_ml_dsa_keygen(void __user *argp);
-+int cmh_mgmt_ml_dsa_sign(void __user *argp);
-+int cmh_mgmt_slhdsa_keygen(void __user *argp);
-+int cmh_mgmt_slhdsa_sign(void __user *argp);
-+int cmh_mgmt_slhdsa_sign_prehash(void __user *argp);
-+
-+#else /* !CONFIG_CRYPTO_DEV_CMH_MGMT */
-+
-+static inline int  cmh_mgmt_register(void) { return 0; }
-+static inline void cmh_mgmt_unregister(void) { }
-+
-+#endif /* CONFIG_CRYPTO_DEV_CMH_MGMT */
-+
-+#endif /* CMH_MGMT_H */
-diff --git a/drivers/crypto/cmh/include/cmh_pke.h b/drivers/crypto/cmh/include/cmh_pke.h
-new file mode 100644
-index 000000000000..dcfdb3fc3cd6
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_pke.h
-@@ -0,0 +1,245 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- PKE Common Types and Helpers
++ * All constants and layouts are derived from the CMH eSW ABI.
 + *
-+ * Shared definitions for RSA, ECDSA, ECDH, EdDSA, and SM2 drivers.
-+ * Curve -> coordinate-length mapping, VCQ byte-swap flags, and
-+ * common VCQ builder prototypes.
++ * This ABI is little-endian only: the VCQ command and descriptor fields
++ * use native integer types and the CMH block shares the little-endian SoC
++ * with its eSW.  The driver depends on !CPU_BIG_ENDIAN (see the CMH
++ * Kconfig).
++ *
++ * Per-core command definitions live in their own ABI headers (cmh_hc_abi.h,
++ * cmh_aes_abi.h, etc.) and are included here to form the hwc_cmd union.
 + */
 +
-+#ifndef CMH_PKE_H
-+#define CMH_PKE_H
++#ifndef CMH_VCQ_H
++#define CMH_VCQ_H
 +
 +#include <linux/types.h>
-+#include "cmh_vcq.h"
++#include <linux/build_bug.h>
++#include <linux/string.h>
++#include <linux/bits.h>
++
++#include "cmh_hc_abi.h"
++#include "cmh_sm3_abi.h"
++#include "cmh_drbg_abi.h"
++#include "cmh_sys_abi.h"
++#include "cmh_kic_abi.h"
++#include "cmh_aes_abi.h"
++#include "cmh_sm4_abi.h"
++#include "cmh_ccp_abi.h"
 +#include "cmh_pke_abi.h"
++#include "cmh_qse_abi.h"
++#include "cmh_hcq_abi.h"
++#include "cmh_eac_abi.h"
 +
-+/* VCQ byte-swap flags for DMA transfers (per CMH VCQ ABI) */
-+#define VCQ_FLAG_SWAP_BYTES	0x400000U
-+#define VCQ_FLAG_SWAP_WORDS	0x200000U
++/* VCQ Magic Numbers */
 +
-+/* VCQ byte-swap flags for PKE -- big-endian data on LE bus */
-+#define PKE_SWAP_FLAGS	(VCQ_FLAG_SWAP_BYTES | VCQ_FLAG_SWAP_WORDS)
++#define VCQ_HDR_MAGIC           0x01514356U  /* 'V' 'C' 'Q' 0x01 */
++#define VCQ_CMD_MAGIC           0x01444D43U  /* 'C' 'M' 'D' 0x01 */
 +
-+/* VCQ layout: header + [SYS_WRITE] + PKE_CMD + flush */
-+#define PKE_VCQ_CMDS_MIN	3	/* header + cmd + flush */
-+#define PKE_VCQ_CMDS_MAX	4	/* header + SYS_WRITE + cmd + flush */
++/* VCQ Command ID Encoding */
 +
-+/* Max RSA key size in bytes (4096 bits) */
-+#define PKE_RSA_MAX_BYTES	512
-+#define PKE_RSA_MIN_BITS	1024
-+#define PKE_RSA_MAX_BITS	4096
++#define VCQ_CMD_MASK            0x000000FFU
++#define VCQ_SPAN_MASK           0x0000FF00U
++#define VCQ_FLAG_MASK           0x00FF0000U
++#define VCQ_CORE_MASK           0xFF000000U
 +
-+/* EdDSA SCA: Ed448 blinded private key length (bytes) */
-+#define PKE_ED448_SK_SCA_LEN	226
++#define VCQ_CMD_ID(core, flags, span, cmd) \
++	(((u32)(core) << 24) | ((flags) & VCQ_FLAG_MASK) | \
++	 (((u32)(span) << 8) & VCQ_SPAN_MASK) | ((cmd) & VCQ_CMD_MASK))
++
++/* Core IDs (per CMH hardware specification) */
++
++#define CORE_ID_SYS             0x00U
++#define CORE_ID_DMA             0x01U
++#define CORE_ID_HC              0x02U
++#define CORE_ID_AES             0x03U
++#define CORE_ID_SM4             0x04U
++#define CORE_ID_SM3             0x05U
++#define CORE_ID_XC              0x07U
++#define CORE_ID_HCQ             0x08U
++#define CORE_ID_QSE             0x09U
++#define CORE_ID_PKE             0x0AU
++#define CORE_ID_TIC             0x0BU
++#define CORE_ID_KIC             0x0CU
++#define CORE_ID_MPU             0x0EU
++#define CORE_ID_DRBG            0x0FU
++#define CORE_ID_EMC             0x11U
++#define CORE_ID_CCP             0x18U
++#define CORE_ID_EAC             0x1EU
++#define CORE_ID_NUM             0x1FU  /* eSW g_drvs[] array size sentinel */
++#define CORE_ID_MAX             0xFFU  /* VCQ encoding limit (8-bit field) */
 +
 +/**
-+ * pke_curve_clen() - Get EC curve coordinate length in bytes
-+ * @curve: PKE curve identifier (PKE_CURVE_*)
++ * enum cmh_core_type - Logical core type for multi-instance dispatch
++ * @CMH_CORE_HC:         Hash / HMAC / CSHAKE / KMAC (CORE_ID_HC)
++ * @CMH_CORE_AES:        AES (CORE_ID_AES)
++ * @CMH_CORE_SM4:        SM4 (CORE_ID_SM4)
++ * @CMH_CORE_SM3:        SM3 (CORE_ID_SM3)
++ * @CMH_CORE_CCP:        ChaCha20 / Poly1305 (CORE_ID_CCP)
++ * @CMH_CORE_PKE:        RSA / ECDSA / ECDH / EdDSA / SM2 (CORE_ID_PKE)
++ * @CMH_CORE_QSE:        ML-KEM / ML-DSA (CORE_ID_QSE)
++ * @CMH_CORE_HCQ:        SLH-DSA / LMS / XMSS (CORE_ID_HCQ)
++ * @CMH_NUM_CORE_TYPES:  Number of core types (array sizing sentinel)
 + *
-+ * Return: Coordinate length in bytes, or 0 for unknown curves.
++ * Algorithm drivers use this enum (not raw CORE_ID_* constants) for
++ * MBX selection and VCQ dispatch.  Each value indexes into a config
++ * table that maps to one or more (core_id, mbx) pairs.
++ *
++ * Raw CORE_ID_* defines remain for:
++ *   - SYS_TYPE_SET() key-type tags in datastore operations
++ *   - DT child node ``reg`` values (hardware core identity for config lookup)
++ *   - Singleton system cores (SYS, KIC, DRBG, EAC) not in this enum
 + */
-+static inline u32 pke_curve_clen(u32 curve)
++enum cmh_core_type {
++	CMH_CORE_HC = 0,
++	CMH_CORE_AES,
++	CMH_CORE_SM4,
++	CMH_CORE_SM3,
++	CMH_CORE_CCP,
++	CMH_CORE_PKE,
++	CMH_CORE_QSE,
++	CMH_CORE_HCQ,
++	CMH_NUM_CORE_TYPES
++};
++
++/**
++ * struct core_dispatch - VCQ dispatch target returned by core selection
++ * @core_id: Hardware core ID to encode in VCQ_CMD_ID()
++ * @mbx_idx: Mailbox index to submit the VCQ to
++ */
++struct core_dispatch {
++	u32 core_id;
++	s32 mbx_idx;
++};
++
++/* Common VCQ Command (per CMH VCQ ABI) */
++
++#define VCQ_CMD_FLUSH           0xFFU
++
++/**
++ * struct vcq_hdr - VCQ header occupying the first slot of every VCQ
++ * @cmds: Total number of commands including the header itself
++ * @rsvd: Reserved -- used internally by CMH eSW firmware
++ */
++struct vcq_hdr {
++	u32 cmds;
++	u32 rsvd[13];
++};
++
++/* DMA Scatter-Gather Item (per CMH DMAC hardware specification) */
++
++/**
++ * struct dma_scattergather_item - DMA scatter-gather descriptor node
++ * @lli: Next descriptor address (0 = end of list)
++ * @src: Source address for input particle
++ * @dst: Destination address for output particle
++ * @len: Particle length (low 32 bits used by hardware)
++ *
++ * Linked-list node walked by the DMAC hardware.  @lli chains to the
++ * next item or is zero for end-of-list.
++ */
++struct dma_scattergather_item {
++	u64 lli;
++	u64 src;
++	u64 dst;
++	u64 len;
++};
++
++/* Unified HWC Command Union */
++/*
++ * Each per-core ABI header defines a union <core>_cmd.
++ * Add new cores here as they are implemented.
++ */
++
++union hwc_cmd {
++	struct vcq_hdr          hdr;
++	union hc_cmd            hc;
++	union sm3_cmd           sm3;
++	union drbg_cmd          drbg;
++	union sys_cmd           sys;
++	union kic_cmd           kic;
++	union aes_cmd           aes;
++	union sm4_cmd           sm4;
++	union ccp_cmd           ccp;
++	union pke_cmd           pke;
++	union qse_cmd           qse;
++	union hcq_cmd           hcq;
++	union eac_cmd           eac;
++};
++
++/**
++ * struct vcq_cmd - Single VCQ command entry (always 64 bytes)
++ * @magic: VCQ_HDR_MAGIC for the header slot, VCQ_CMD_MAGIC for commands
++ * @id:    Encoded command ID built via VCQ_CMD_ID(core, flags, span, cmd)
++ * @hwc:   Per-core command payload union
++ */
++struct vcq_cmd {
++	u32 magic;
++	u32 id;
++	union hwc_cmd hwc;
++};
++
++static_assert(sizeof(struct vcq_cmd) == 64,
++	      "struct vcq_cmd must be exactly 64 bytes (one VCQ slot)");
++
++/**
++ * vcq_set_header() - Write the standard VCQ header at slot[0]
++ * @slot:       Pointer to the first VCQ slot
++ * @total_cmds: Total number of commands including the header
++ */
++static inline void vcq_set_header(struct vcq_cmd *slot, u32 total_cmds)
 +{
-+	switch (curve) {
-+	case PKE_CURVE_P192:
-+	case PKE_CURVE_BP192R1:
-+		return 24;
-+	case PKE_CURVE_P224:
-+	case PKE_CURVE_BP224R1:
-+		return 28;
-+	case PKE_CURVE_P256:
-+	case PKE_CURVE_SECP256K1:
-+	case PKE_CURVE_BP256R1:
-+	case PKE_CURVE_ANSSI_FRP256V1:
-+	case PKE_CURVE_SM2:
-+	case PKE_CURVE_25519:
-+		return 32;
-+	case PKE_CURVE_BP320R1:
-+		return 40;
-+	case PKE_CURVE_P384:
-+	case PKE_CURVE_BP384R1:
-+		return 48;
-+	case PKE_CURVE_BP512R1:
-+		return 64;
-+	case PKE_CURVE_P521:
-+		return 68; /* ceil(521/8) = 66, ABI uses ALIGN(66, 4) = 68 */
-+	case PKE_CURVE_448:
-+		return 56;
-+	default:
-+		return 0;
-+	}
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_HDR_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_RUN);
++	slot->hwc.hdr.cmds = total_cmds;
++}
++
++/* VCQ Command Limits */
++
++#define MIN_VCQ_CMDS            2U   /* header + at least one command */
++#define MAX_VCQ_CMDS            15U  /* including the header */
++#define MAX_VCQ_SIZE            (MAX_VCQ_CMDS * sizeof(struct vcq_cmd))
++
++/**
++ * vcq_add_inline_data() - Pack inline data into consecutive VCQ slots
++ * @slot:     Pointer to the command slot preceding the inline data
++ * @data:     Source data to copy into subsequent slots
++ * @data_len: Length of @data in bytes
++ *
++ * Appends data starting at slot+1 and updates the span field in
++ * slot->id.  The caller must ensure enough slots are reserved.
++ *
++ * Return: Total number of slots consumed (1 + inline slots).
++ */
++static inline u32 vcq_add_inline_data(struct vcq_cmd *slot,
++				      const void *data, u32 data_len)
++{
++	u32 inline_slots, total_span;
++
++	if (!data_len)
++		return 1;
++
++	inline_slots = (data_len + sizeof(struct vcq_cmd) - 1) /
++		       sizeof(struct vcq_cmd);
++	total_span = 1 + inline_slots;
++
++	/* Zero the inline slots, then copy data */
++	memset(slot + 1, 0, inline_slots * sizeof(struct vcq_cmd));
++	memcpy(slot + 1, data, data_len);
++
++	/* Update span in the command's id field */
++	slot->id = (slot->id & ~VCQ_SPAN_MASK) |
++		   (((u32)total_span << 8) & VCQ_SPAN_MASK);
++
++	return total_span;
 +}
 +
 +/**
-+ * pke_curve_bits() - Get EC curve size in bits
-+ * @curve: PKE curve identifier (PKE_CURVE_*)
-+ *
-+ * Return: Curve size in bits, or 0 for unknown curves.
++ * vcq_add_flush() - Build a generic VCQ_CMD_FLUSH command
++ * @slot:    Pointer to the VCQ slot to populate
++ * @core_id: Hardware core ID for the flush command
 + */
-+static inline u32 pke_curve_bits(u32 curve)
++static inline void vcq_add_flush(struct vcq_cmd *slot, u32 core_id)
 +{
-+	switch (curve) {
-+	case PKE_CURVE_P192:
-+	case PKE_CURVE_BP192R1:
-+		return 192;
-+	case PKE_CURVE_P224:
-+	case PKE_CURVE_BP224R1:
-+		return 224;
-+	case PKE_CURVE_P256:
-+	case PKE_CURVE_SECP256K1:
-+	case PKE_CURVE_BP256R1:
-+	case PKE_CURVE_ANSSI_FRP256V1:
-+	case PKE_CURVE_SM2:
-+	case PKE_CURVE_25519:
-+		return 256;
-+	case PKE_CURVE_BP320R1:
-+		return 320;
-+	case PKE_CURVE_P384:
-+	case PKE_CURVE_BP384R1:
-+		return 384;
-+	case PKE_CURVE_BP512R1:
-+		return 512;
-+	case PKE_CURVE_P521:
-+		return 521;
-+	case PKE_CURVE_448:
-+		return 448;
-+	default:
-+		return 0;
-+	}
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, VCQ_CMD_FLUSH);
 +}
 +
-+/**
-+ * pke_eddsa_key_len() - Get EdDSA key/pubkey length
-+ * @curve: PKE curve identifier (PKE_CURVE_25519 or PKE_CURVE_448)
-+ *
-+ * Ed25519 uses 32 bytes (== clen), Ed448 uses 57 bytes (clen + 1
-+ * flag byte per RFC 8032).  Signature length is 2 * pke_eddsa_key_len().
-+ *
-+ * Return: Key length in bytes.
-+ */
-+static inline u32 pke_eddsa_key_len(u32 curve)
-+{
-+	u32 clen = pke_curve_clen(curve);
++/* Shared HC VCQ Builders -- used by hash, hmac, cshake, kmac drivers */
 +
-+	return (curve == PKE_CURVE_448) ? clen + 1 : clen;
++static inline void vcq_add_hc_init(struct vcq_cmd *slot, u32 core_id,
++				   u32 algo)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_INIT);
++	slot->hwc.hc.cmd_init.algo = algo;
 +}
 +
-+/**
-+ * pke_curve_is_edwards() - Check if curve uses Edwards form
-+ * @curve: PKE curve identifier (PKE_CURVE_*)
-+ *
-+ * Return: true for Curve25519 and Curve448, false otherwise.
-+ */
-+static inline bool pke_curve_is_edwards(u32 curve)
++static inline void vcq_add_hc_final(struct vcq_cmd *slot, u32 core_id,
++				    u64 digest_phys, u32 outlen)
 +{
-+	return curve == PKE_CURVE_25519 || curve == PKE_CURVE_448;
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_FINAL);
++	slot->hwc.hc.cmd_final.digest = digest_phys;
++	slot->hwc.hc.cmd_final.outlen = outlen;
 +}
 +
-+/**
-+ * pke_swap_flags() - Get VCQ byte-swap flags for a given curve
-+ * @curve: PKE curve identifier (PKE_CURVE_*)
-+ *
-+ * Weierstrass curves need byte+word swap; Edwards curves do not.
-+ *
-+ * Return: VCQ swap flags to OR into the command ID.
-+ */
-+static inline u32 pke_swap_flags(u32 curve)
++static inline void vcq_add_hc_gather(struct vcq_cmd *slot, u32 core_id,
++				     u64 lista_phys, u32 sgcmd)
 +{
-+	return pke_curve_is_edwards(curve) ? 0 : PKE_SWAP_FLAGS;
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_GATHER);
++	slot->hwc.hc.cmd_gather.lista = lista_phys;
++	slot->hwc.hc.cmd_gather.sgcmd = sgcmd;
 +}
 +
-+/* Common VCQ builder prototypes */
-+
-+void vcq_add_pke_flush(struct vcq_cmd *slot, u32 core_id);
-+
-+void vcq_add_pke_rsa_enc(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			 u64 e_dma, u64 n_dma, u64 m_dma, u64 c_dma,
-+			 u32 flags);
-+
-+void vcq_add_pke_rsa_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			 u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
-+			 u64 d_ref, u32 flags);
-+
-+void vcq_add_pke_rsa_crt_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			     u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
-+			     u64 crt_ref, u32 flags);
-+
-+void vcq_add_pke_ecdsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
-+			      u64 pk_dma, u64 dig_dma, u64 sig_dma,
-+			      u64 rp_dma, u32 flags);
-+
-+void vcq_add_pke_ecdsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
-+			    u32 dlen, u32 flags);
-+
-+void vcq_add_pke_ecdsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 pk_dma, u64 sk_ref, u32 flags);
-+
-+void vcq_add_pke_ecdsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 sk_ref, u32 sk_type, u32 flags);
-+
-+void vcq_add_pke_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			     u64 pkx_dma, u64 sk_ref, u32 flags);
-+
-+void vcq_add_pke_ecdh(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+		      u32 sslen, u32 ss_type, u64 peer_dma, u64 sk_ref,
-+		      u64 ss_ref, u32 flags);
-+
-+void vcq_add_pke_eddsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
-+			      u64 pky_dma, u64 dig_dma, u64 sig_dma,
-+			      u64 rp_dma, u32 flags);
-+
-+void vcq_add_pke_eddsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
-+			    u32 dlen, u32 flags);
-+
-+void vcq_add_pke_eddsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 pky_dma, u64 sk_ref, u32 flags);
-+
-+void vcq_add_pke_eddsa_keygen_sca(struct vcq_cmd *slot, u32 core_id, u32 curve,
-+				  u64 sk_ref, u64 sca_sk_ref);
-+
-+/* SM2 VCQ builders */
-+
-+void vcq_add_pke_sm2_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
-+				 u64 session_key_dma, u32 nonce_len, u32 flags);
-+
-+void vcq_add_pke_sm2_ecdh(struct vcq_cmd *slot, u32 core_id, u32 nonce_len,
-+			  u32 private_key_len, u64 nonce_dma,
-+			  u64 peer_pk_dma, u64 peer_sk_dma,
-+			  u64 priv_ref, u64 sp_ref, u32 sp_type, u32 flags);
-+
-+void vcq_add_pke_sm2_dec_point(struct vcq_cmd *slot, u32 core_id, u32 ct_len,
-+			       u32 pk_len, u64 ct_dma, u64 dp_dma,
-+			       u64 priv_ref, u32 flags);
-+
-+void vcq_add_pke_sm2_enc_point(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
-+			       u64 pk_dma, u64 ct_dma, u64 ep_dma,
-+			       u32 nonce_len, u32 flags);
-+
-+void vcq_add_pke_sm2_id_digest(struct vcq_cmd *slot, u32 core_id, u64 id_dma,
-+			       u64 pk_dma, u64 dig_dma, u32 id_len,
-+			       u32 flags);
-+
-+void vcq_add_pke_sm2_ecdh_hash(struct vcq_cmd *slot, u32 core_id, u64 peer_dig_dma,
-+			       u64 dig_dma, u64 sp_ref, u64 sk_ref,
-+			       u32 sk_type, u32 flags);
-+
-+void vcq_add_pke_sm2_dec_hash(struct vcq_cmd *slot, u32 core_id, u64 ct_dma,
-+			      u64 dp_dma, u64 pt_dma, u32 ct_len, u32 flags);
-+
-+void vcq_add_pke_sm2_enc_hash(struct vcq_cmd *slot, u32 core_id, u64 msg_dma,
-+			      u64 ep_dma, u64 ct_dma, u32 msg_len, u32 flags);
-+
-+/* Registration */
-+
-+int cmh_pke_rsa_register(void);
-+void cmh_pke_rsa_unregister(void);
-+int cmh_pke_ecdsa_register(void);
-+void cmh_pke_ecdsa_unregister(void);
-+int cmh_pke_ecdh_register(void);
-+void cmh_pke_ecdh_unregister(void);
-+
-+#endif /* CMH_PKE_H */
-diff --git a/drivers/crypto/cmh/include/cmh_pke_sm2.h b/drivers/crypto/cmh/include/cmh_pke_sm2.h
-new file mode 100644
-index 000000000000..a2c7164b8d49
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_pke_sm2.h
-@@ -0,0 +1,30 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SM2 PKE Ioctl Handler Declarations
-+ *
-+ * SM2 signature (GM/T 0003.2) requires the caller to compute
-+ * ZA = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA)
-+ * and pass SM3(ZA || M) as the digest to the sign/verify path.
-+ * The CMH eSW does NOT compute ZA internally; the full
-+ * identity pre-hash is the caller's responsibility.
-+ *
-+ * For the in-kernel akcipher "sm2" algorithm this means the
-+ * caller (e.g. asymmetric_key subsystem) must pre-hash with ZA
-+ * before invoking verify.  The SM2_ID_DIGEST ioctl below can
-+ * compute ZA for userspace callers of the misc-device path.
-+ */
-+
-+#ifndef CMH_PKE_SM2_H
-+#define CMH_PKE_SM2_H
-+
-+int cmh_mgmt_sm2_ecdh_keygen(void __user *argp);
-+int cmh_mgmt_sm2_ecdh(void __user *argp);
-+int cmh_mgmt_sm2_dec_point(void __user *argp);
-+int cmh_mgmt_sm2_enc_point(void __user *argp);
-+int cmh_mgmt_sm2_id_digest(void __user *argp);
-+int cmh_mgmt_sm2_ecdh_hash(void __user *argp);
-+int cmh_mgmt_sm2_dec_hash(void __user *argp);
-+int cmh_mgmt_sm2_enc_hash(void __user *argp);
-+
-+#endif /* CMH_PKE_SM2_H */
-diff --git a/drivers/crypto/cmh/include/cmh_pqc.h b/drivers/crypto/cmh/include/cmh_pqc.h
-new file mode 100644
-index 000000000000..cd4761a0ce5c
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_pqc.h
-@@ -0,0 +1,25 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- PQC Algorithm Registration
-+ *
-+ * Registration/unregistration functions for PQC akcipher algorithms:
-+ * ML-DSA, SLH-DSA, LMS, XMSS.
-+ */
-+
-+#ifndef CMH_PQC_H
-+#define CMH_PQC_H
-+
-+int cmh_pqc_mldsa_register(void);
-+void cmh_pqc_mldsa_unregister(void);
-+
-+int cmh_pqc_slhdsa_register(void);
-+void cmh_pqc_slhdsa_unregister(void);
-+
-+int cmh_pqc_lms_register(void);
-+void cmh_pqc_lms_unregister(void);
-+
-+int cmh_pqc_xmss_register(void);
-+void cmh_pqc_xmss_unregister(void);
-+
-+#endif /* CMH_PQC_H */
-diff --git a/drivers/crypto/cmh/include/cmh_sys.h b/drivers/crypto/cmh/include/cmh_sys.h
-new file mode 100644
-index 000000000000..dd336b67bd65
---- /dev/null
-+++ b/drivers/crypto/cmh/include/cmh_sys.h
-@@ -0,0 +1,111 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- SYS Core VCQ Builders
-+ *
-+ * VCQ builder functions for SYS core commands (NEW, WRITE, READ,
-+ * FIND, GRANT, DATA, EXPORT, IMPORT).  Each builder populates one
-+ * vcq_cmd slot with the appropriate magic, command ID, and payload.
-+ *
-+ * Callers combine these with vcq_set_header() + vcq_add_flush()
-+ * and submit via cmh_tm_submit_sync().
-+ */
-+
-+#ifndef CMH_SYS_H
-+#define CMH_SYS_H
-+
-+#include "cmh_vcq.h"
-+
-+void vcq_add_sys_new(struct vcq_cmd *slot, u64 cid, u64 ref_dma, u32 len);
-+void vcq_add_sys_write(struct vcq_cmd *slot, u64 ref, u64 src_dma,
-+		       u64 wrap_key, u32 len, u32 sys_type);
-+void vcq_add_sys_read(struct vcq_cmd *slot, u64 ref, u64 dst_dma,
-+		      u64 wrap_key, u32 len);
-+void vcq_add_sys_data(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len);
-+void vcq_add_sys_find(struct vcq_cmd *slot, u64 cid, u64 dst_dma, u32 len);
-+void vcq_add_sys_list(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len);
-+void vcq_add_sys_grant(struct vcq_cmd *slot, u64 ref, u64 read,
-+		       u64 write, u64 execute);
-+void vcq_add_sys_export(struct vcq_cmd *slot, u64 cid, u64 dst_dma,
-+			u64 wrap_key, u32 len);
-+void vcq_add_sys_import(struct vcq_cmd *slot, u64 src_dma,
-+			u64 wrap_key, u32 len);
-+
-+/* KIC core VCQ builders */
-+void vcq_add_kic_hkdf1(struct vcq_cmd *slot, u64 dst, u64 base,
-+		       u64 label_dma, u32 key_len, u32 label_len, u32 type);
-+void vcq_add_kic_hkdf2(struct vcq_cmd *slot, u64 dst, u64 base, u64 salt,
-+		       u64 label_dma, u32 key_len, u32 label_len, u32 type);
-+void vcq_add_kic_aes_cmac_kdf(struct vcq_cmd *slot, u64 out_key, u64 base_key,
-+			      u64 label_dma, u32 key_len, u32 label_len,
-+			      u32 type);
-+void vcq_add_kic_dkek_derive(struct vcq_cmd *slot, u64 out_key, u64 base_key,
-+			     u32 host_id, u64 metadata_dma, u32 metadata_len);
-+
-+/* DRBG core VCQ builders */
-+void vcq_add_drbg_reset(struct vcq_cmd *slot);
-+void vcq_add_drbg_config(struct vcq_cmd *slot, u32 ratio, u32 strength);
-+void vcq_add_drbg_datastore(struct vcq_cmd *slot, u64 ref, u32 len, u32 type);
-+
-+/* QSE core VCQ builders */
-+void vcq_add_qse_flush(struct vcq_cmd *slot, u32 core_id);
-+void vcq_add_qse_ml_kem_keygen(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
-+			       u64 seed, u64 z, u64 ek, u64 dk, u32 dk_type,
-+			       bool masked);
-+void vcq_add_qse_ml_kem_enc(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
-+			    u64 coin, u64 ek, u64 ct, u64 ss, u32 ss_type,
-+			    bool masked);
-+void vcq_add_qse_ml_kem_dec(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
-+			    u64 ct, u64 dk, u64 ss, u32 ss_type,
-+			    bool masked);
-+void vcq_add_qse_ml_dsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
-+			       u64 seed, u64 pk, u64 sk, u32 sk_type,
-+			       bool masked);
-+void vcq_add_qse_ml_dsa_sign(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
-+			     u64 rnd, u64 m, u64 sk, u64 sig, u32 mlen,
-+			     bool masked);
-+void vcq_add_qse_ml_dsa_verify(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
-+			       u64 m, u64 pk, u64 sig, u32 mlen);
-+
-+/* HCQ core VCQ builders */
-+void vcq_add_hcq_flush(struct vcq_cmd *slot, u32 core_id);
-+void vcq_add_hcq_slhdsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+			       u32 seed_len, u32 pk_len, u32 sk_len,
-+			       u64 seed, u64 pk, u64 sk);
-+void vcq_add_hcq_slhdsa_sign(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+			     u32 msg_len, u32 ctx_len,
-+			     u64 add_random, u64 msg, u64 ctx,
-+			     u64 sk, u64 sig);
-+void vcq_add_hcq_slhdsa_sign_internal(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+				      u32 msg_len, u64 add_random,
-+				      u64 msg, u64 sk, u64 sig);
-+void vcq_add_hcq_slhdsa_verify(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+			       u32 msg_len, u32 ctx_len,
-+			       u64 msg, u64 ctx, u64 pk, u64 sig);
-+void vcq_add_hcq_slhdsa_sign_prehash(struct vcq_cmd *slot, u32 core_id,
-+				     u32 cmd, u32 param_set, u32 prehash_algo,
-+				     u32 msg_len, u32 ctx_len,
-+				     u64 add_random, u64 msg, u64 ctx,
-+				     u64 sk, u64 sig);
-+void vcq_add_hcq_slhdsa_verify_prehash(struct vcq_cmd *slot, u32 core_id,
-+				       u32 cmd, u32 param_set, u32 prehash_algo,
-+				       u32 msg_len, u32 ctx_len,
-+				       u64 msg, u64 ctx, u64 pk, u64 sig);
-+void vcq_add_hcq_slhdsa_verify_internal(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+					u32 msg_len, u64 msg, u64 pk, u64 sig);
-+void vcq_add_hcq_slhdsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 param_set,
-+			       u32 sk_len, u64 sk, u64 pk);
-+void vcq_add_hcq_lms_verify(struct vcq_cmd *slot, u32 core_id, u32 lms_hss,
-+			    u32 pk_len, u32 sig_len, u32 dig_len,
-+			    u64 pk, u64 sig, u64 dig);
-+void vcq_add_hcq_xmss_verify(struct vcq_cmd *slot, u32 core_id, u32 xmss_mt,
-+			     u32 pk_len, u32 sig_len, u32 dig_len,
-+			     u64 pk, u64 sig, u64 dig);
-+
-+/* SYS core flush */
-+void vcq_add_sys_flush(struct vcq_cmd *slot);
-+
-+/* EAC core VCQ builder */
-+void vcq_add_eac_read(struct vcq_cmd *slot, u64 dst_dma, u32 len);
-+
-+#endif /* CMH_SYS_H */
-diff --git a/include/uapi/linux/cmh_mgmt_ioctl.h b/include/uapi/linux/cmh_mgmt_ioctl.h
-new file mode 100644
-index 000000000000..19748260404a
---- /dev/null
-+++ b/include/uapi/linux/cmh_mgmt_ioctl.h
-@@ -0,0 +1,902 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- Key Management ioctl Interface (User-Space API)
-+ *
-+ * ioctl commands for /dev/cmh_mgmt -- key CRUD, datastore
-+ * export/import, KIC key derivation, PKE, SM2, and PQC operations.
-+ *
-+ * Relationship to the in-kernel crypto API
-+ * -----------------------------------------
-+ * Most commands here have no crypto API representation (no transform
-+ * type or verb exists): keystore CRUD, key generation, KIC key
-+ * derivation, ML-KEM encapsulate/decapsulate, SM2 multi-step
-+ * encrypt/decrypt/key-exchange, EdDSA, EAC, and DRBG configuration.
-+ * For these the character device is the only available UAPI.
-+ *
-+ * A bounded subset names primitives the driver ALSO registers with
-+ * the crypto API, and the overlap is intentional:
-+ *   - Hardware-held-key operations (RSA decrypt, ECDSA/ML-DSA/SLH-DSA
-+ *     sign, ECDH) reference a private key by datastore handle.  The
-+ *     crypto API set_priv_key()/set_secret() take only raw key bytes
-+ *     and cannot name a key that never leaves the hardware; these
-+ *     ioctls keep the key hardware-resident.  The registered
-+ *     transforms serve raw-key in-kernel users -- the paths are
-+ *     complementary.
-+ *
-+ * Multi-step protocol flows are documented above the PKE and SM2
-+ * struct sections.  Single-command ioctls are self-documenting.
-+ *
-+ * Versioned structs: user space sets .version = CMH_MGMT_V1 so the
-+ * driver can extend structs in the future without breaking ABI.
-+ */
-+
-+#ifndef _UAPI_CMH_MGMT_IOCTL_H
-+#define _UAPI_CMH_MGMT_IOCTL_H
-+
-+#include <linux/types.h>
-+#include <linux/ioctl.h>
-+#include <linux/const.h>
-+
-+#define CMH_MGMT_V1		1
-+
-+/* Special reference values */
-+#define CMH_REF_NONE		0x0000000000000000ULL	/* no key (plaintext) */
-+
-+/* Flags for cmh_ioctl_key_new.flags / cmh_ioctl_key_write.flags */
-+#define CMH_FLAG_PT		_BITUL(16)	/* key can be read as plaintext */
-+#define CMH_FLAG_XC		_BITUL(17)	/* key can be exported over XC bus */
-+#define CMH_FLAG_SCA		_BITUL(18)	/* SCA key stored in 2 shares */
-+#define CMH_FLAG_MASK		(CMH_FLAG_PT | CMH_FLAG_XC | CMH_FLAG_SCA)
-+
-+/*
-+ * Datastore key types -- the LKM maps these to core IDs internally.
-+ * User space passes these in cmh_ioctl_key_new.ds_type.
-+ */
-+#define CMH_DS_RAW_VALUE		1
-+#define CMH_DS_AES_KEY			2
-+#define CMH_DS_AES_XTS_KEY		3
-+#define CMH_DS_HMAC_KEY			4
-+#define CMH_DS_KMAC_KEY			5
-+#define CMH_DS_SM4_KEY			6
-+#define CMH_DS_CHACHA20_KEY		7
-+
-+/* PKE key types -- all map to CORE_ID_PKE (0x0A) */
-+#define CMH_DS_RSA_PRIV_KEY		10
-+#define CMH_DS_RSA_PUB_KEY		11
-+#define CMH_DS_RSA_CRT_KEY		12
-+#define CMH_DS_ECDSA_PRIV_KEY		13
-+#define CMH_DS_ECDSA_PUB_KEY		14
-+#define CMH_DS_ECDH_PRIV_KEY		15
-+#define CMH_DS_EDDSA_PRIV_KEY		16
-+#define CMH_DS_SHARED_SECRET		17
-+#define CMH_DS_SM2_PRIV_KEY		18
-+
-+/* QSE key types -- map to CORE_ID_QSE (0x09) */
-+#define CMH_DS_ML_KEM_DK		20
-+#define CMH_DS_ML_DSA_SK		21
-+
-+/* HCQ key types -- map to CORE_ID_HCQ (0x08) */
-+#define CMH_DS_SLHDSA_SK		25
-+
-+/* ioctl argument structures */
-+
-+struct cmh_ioctl_key_new {
-+	__u32 version;		/* must be CMH_MGMT_V1 */
-+	__u32 ds_type;		/* CMH_DS_* key type */
-+	__u32 len;		/* key length in bytes */
-+	__u32 flags;		/* CMH_FLAG_* (e.g. CMH_FLAG_PT) */
-+	__u64 cid;		/* caller ID (name) for the key */
-+	__u64 ref;		/* [out] CMH eSW returns key_ref here */
-+};
-+
-+struct cmh_ioctl_key_write {
-+	__u32 version;
-+	__u32 len;		/* key data length */
-+	__u32 ds_type;		/* CMH_DS_* key type */
-+	__u32 flags;		/* CMH_FLAG_* (e.g. CMH_FLAG_PT) */
-+	__u64 ref;		/* key reference from KEY_NEW */
-+	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
-+	__u64 data;		/* user-space pointer to key material */
-+};
-+
-+/*
-+ * KEY_READ returns the datastore-internal representation of the object.
-+ * For Weierstrass PKE and RSA key types, KEY_WRITE byte-swaps the input
-+ * into the PKE sidecar's big-endian form before storing, so a plaintext
-+ * KEY_READ of such a key returns those big-endian bytes -- it is NOT a
-+ * byte-for-byte echo of the host-order buffer passed to KEY_WRITE.
-+ * Symmetric keys are stored verbatim (no swap) and wrapped reads return
-+ * an opaque blob.  This asymmetry is intentional: KEY_READ exposes the
-+ * stored form the hardware uses.
-+ */
-+struct cmh_ioctl_key_read {
-+	__u32 version;
-+	__u32 len;		/* buffer length */
-+	__u64 ref;		/* key reference */
-+	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
-+	__u64 data;		/* user-space pointer to output buffer */
-+	__u32 out_len;		/* [out] actual bytes written */
-+	__u32 __reserved;
-+};
-+
-+struct cmh_ioctl_key_find {
-+	__u32 version;
-+	__u32 __reserved;
-+	__u64 cid;		/* caller ID to search for */
-+	__u64 ref;		/* [out] resolved key reference */
-+	__u32 len;		/* [out] key length */
-+	__u32 type;		/* [out] key type */
-+};
-+
-+/*
-+ * KEY_LIST -- iterate datastore objects.
-+ *
-+ * Pass start_ref=0 to begin from the first accessible object.
-+ * On return, ref/cid/len/type describe that object.  Pass the
-+ * returned ref as start_ref in the next call to advance.  Iteration
-+ * ends when ref == 0 (no more objects).
-+ */
-+struct cmh_ioctl_key_list {
-+	__u32 version;
-+	__u32 __reserved;
-+	__u64 start_ref;	/* starting DS reference (0 = first) */
-+	__u64 ref;		/* [out] object reference */
-+	__u64 cid;		/* [out] caller ID */
-+	__u32 len;		/* [out] object length */
-+	__u32 type;		/* [out] object type */
-+};
-+
-+struct cmh_ioctl_key_grant {
-+	__u32 version;
-+	__u32 __reserved;
-+	__u64 ref;		/* key reference */
-+	__u64 read;		/* per-MBX read permission bitfield */
-+	__u64 write;		/* per-MBX write permission bitfield */
-+	__u64 execute;		/* per-MBX execute permission bitfield */
-+};
-+
-+/* Export blob overhead beyond the raw object data (bytes) */
-+#define CMH_DS_EXPORT_OVERHEAD_WRAPPED	48	/* 16B hdr + 16B nonce + 16B tag */
-+#define CMH_DS_EXPORT_OVERHEAD_PLAIN	16	/* 16B hdr only */
-+
-+/**
-+ * struct cmh_ioctl_ds_export - Export a datastore object to a wrapped blob
-+ * @version:   protocol version (CMH_MGMT_V1)
-+ * @len:       DMA buffer size; must be >= export blob size:
-+ *               wrapped:   CMH_DS_EXPORT_OVERHEAD_WRAPPED + object_len
-+ *               plaintext: CMH_DS_EXPORT_OVERHEAD_PLAIN + object_len
-+ *             object_len is known from KEY_NEW or KEY_FIND.
-+ *             If too small, the eSW rejects the command (-EIO).
-+ * @cid:       caller ID of the object to export
-+ * @wrap_key:  wrapping key ref (CMH_REF_NONE = plaintext export)
-+ * @data:      user-space pointer to output buffer (at least @len bytes)
-+ * @out_len:   [out] actual blob bytes written on success
-+ * @__reserved: must be zero
-+ */
-+struct cmh_ioctl_ds_export {
-+	__u32 version;
-+	__u32 len;		/* buffer length (see sizing rule above) */
-+	__u64 cid;		/* caller ID for response tagging */
-+	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
-+	__u64 data;		/* user-space pointer to output buffer */
-+	__u32 out_len;		/* [out] actual bytes written */
-+	__u32 __reserved;
-+};
-+
-+struct cmh_ioctl_ds_import {
-+	__u32 version;
-+	__u32 len;		/* blob length */
-+	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
-+	__u64 data;		/* user-space pointer to import blob */
-+};
-+
-+/* Flags for cmh_ioctl_kic_hkdf1.flags / cmh_ioctl_kic_hkdf2.flags */
-+#define CMH_KIC_FLAG_TEMP	0x01	/* store result in TEMP (not persistent DS) */
-+
-+/*
-+ * KIC hardware base key references.
-+ *
-+ * Each CMH device has up to 8 hardware base keys provisioned in OTP/fuses.
-+ * These values are passed in the base_key field of KIC ioctl structs.
-+ * The key valid bitmask is visible via R_KIC_KEY_VALID (MMIO 0x100).
-+ */
-+#define CMH_KIC_KEY1		0x0000000100000001ULL
-+#define CMH_KIC_KEY2		0x0000000200000002ULL
-+#define CMH_KIC_KEY3		0x0000000300000003ULL
-+#define CMH_KIC_KEY4		0x0000000400000004ULL
-+#define CMH_KIC_KEY5		0x0000000500000005ULL
-+#define CMH_KIC_KEY6		0x0000000600000006ULL
-+#define CMH_KIC_KEY7		0x0000000700000007ULL
-+#define CMH_KIC_KEY8		0x0000000800000008ULL
-+
-+struct cmh_ioctl_kic_hkdf1 {
-+	__u32 version;
-+	__u32 key_len;		/* output key length (e.g., 32) */
-+	__u64 base_key;		/* KIC base key reference */
-+	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
-+	__u64 label;		/* user-space pointer to label data */
-+	__u32 label_len;	/* label length in bytes */
-+	__u32 flags;		/* CMH_KIC_FLAG_* */
-+	__u64 ref;		/* [out] derived key reference */
-+};
-+
-+struct cmh_ioctl_kic_hkdf2 {
-+	__u32 version;
-+	__u32 key_len;		/* output key length (e.g., 32) */
-+	__u64 base_key;		/* KIC base key reference */
-+	__u64 salt_key;		/* salt key reference (CMH_REF_NONE = no salt) */
-+	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
-+	__u64 label;		/* user-space pointer to label data */
-+	__u32 label_len;	/* label length in bytes */
-+	__u32 flags;		/* CMH_KIC_FLAG_* */
-+	__u64 ref;		/* [out] derived key reference */
-+};
-+
-+struct cmh_ioctl_kic_aes_cmac_kdf {
-+	__u32 version;
-+	__u32 key_len;		/* base & output key length (must be 32) */
-+	__u64 base_key;		/* KIC base key or DS reference */
-+	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
-+	__u64 label;		/* user-space pointer to label data */
-+	__u32 label_len;	/* label length in bytes */
-+	__u32 flags;		/* CMH_KIC_FLAG_* */
-+	__u64 ref;		/* [out] derived key reference */
-+};
-+
-+#define KIC_DKEK_MAX_METADATA	64	/* max metadata length for DKEK */
-+
-+struct cmh_ioctl_kic_dkek_derive {
-+	__u32 version;
-+	__u32 host_id;		/* target host ID (0 = caller's own) */
-+	__u64 base_key;		/* KIC base key reference */
-+	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
-+	__u64 metadata;		/* user-space pointer to metadata */
-+	__u32 metadata_len;	/* metadata length in bytes */
-+	__u32 flags;		/* CMH_KIC_FLAG_* */
-+	__u64 ref;		/* [out] derived KEK reference */
-+};
-+
-+/* -- PKE ioctl argument structures ----------- */
-+
-+/*
-+ * PKE multi-step protocol flows
-+ *
-+ * RSA encrypt/decrypt:
-+ *   1. KEY_NEW(CMH_DS_RSA_PRIV_KEY) + KEY_WRITE -> priv_ref (or RSA_KEYGEN -> priv_ref)
-+ *   2. RSA_ENC(e, n, plaintext) -> ciphertext         (public key = raw e,n)
-+ *   3. RSA_DEC(e, n, ciphertext, priv_ref) -> plaintext   (or RSA_CRT_DEC)
-+ *
-+ * ECDSA sign:
-+ *   1. EC_KEYGEN(curve) -> priv_ref                    (or KEY_NEW + KEY_WRITE)
-+ *   2. EC_PUBGEN(priv_ref) -> public_key               (raw x||y returned)
-+ *   3. ECDSA_SIGN(digest, priv_ref) -> signature
-+ *   SM2 sign uses the same path with curve=CMH_CURVE_SM2.
-+ *
-+ * ECDH shared secret:
-+ *   1. EC_KEYGEN(curve) -> priv_ref                    (or KEY_NEW + KEY_WRITE)
-+ *   2. ECDH_KEYGEN(priv_ref) -> public_key_x           (derive pub from priv)
-+ *   3. Exchange public keys with peer
-+ *   4. ECDH(peer_key_x, priv_ref) -> shared_secret     (raw to host)
-+ *
-+ * EdDSA sign/verify:
-+ *   1. EC_KEYGEN(CURVE_25519 or CURVE_448) -> priv_ref
-+ *   2. EC_PUBGEN(priv_ref) -> public_key
-+ *   3. EDDSA_SIGN(message, priv_ref) -> signature      (pure EdDSA, not prehash)
-+ *   4. EDDSA_VERIFY(message, signature, public_key_y)
-+ *   For Ed448 SCA: EDDSA_KEYGEN_SCA(priv_ref) -> sca_ref (2-share blinded key)
-+ *
-+ * SM2 encryption (GM/T 0003.4):
-+ *   1. EC_KEYGEN(CMH_CURVE_SM2) -> priv_ref            (or KEY_NEW + KEY_WRITE)
-+ *   2. EC_PUBGEN(priv_ref) -> public_key
-+ *   3. SM2_ENC_POINT(public_key) -> C1, enc_point      (nonce_len=0: HW ephemeral)
-+ *   4. SM2_ENC_HASH(enc_point, message) -> ciphertext   (C1||C3||C2)
-+ *   Decrypt:
-+ *   5. SM2_DEC_POINT(C1, priv_ref) -> dec_point
-+ *   6. SM2_DEC_HASH(ciphertext, dec_point) -> plaintext
-+ *   enc_point and dec_point are raw DMA buffers (64B each), not DS refs.
-+ *
-+ * SM2 key exchange (GM/T 0003.3):
-+ *   1. EC_KEYGEN(CMH_CURVE_SM2) -> priv_ref            (long-lived, persistent DS)
-+ *   2. EC_PUBGEN(priv_ref) -> public_key
-+ *   3. SM2_ID_DIGEST(id, public_key) -> ZA             (SM3-based identity digest)
-+ *   4. SM2_ECDH_KEYGEN(nonce) -> session_key, r        (ephemeral scalar r)
-+ *      - nonce_len=32: caller supplies r (deterministic)
-+ *      - nonce_len=0:  HW generates r, writes it back to .nonce
-+ *      Exchange session_key with peer.
-+ *   5. SM2_ECDH(r, priv_ref, peer_pub, peer_sess) -> shared_point
-+ *      - Must pass the same r from step 4 (nonce_len=32)
-+ *      - shared_point_ref=0: reads back raw shared_point, destroys DS slot
-+ *      - shared_point_ref=&ref: keeps DS slot alive, writes ref for ECDH_HASH
-+ *   6. SM2_ECDH_HASH(shared_point_ref, ZA_self, ZA_peer) -> shared_key (16B)
-+ *      - shared_point_ref is a persistent DS reference from step 5
-+ *      - The DS slot is consumed by the hub; caller should delete it afterward
-+ *   The nonce r is a raw 32-byte scalar in userspace memory between steps 4-5.
-+ *   The shared_point is a persistent DS ref between steps 5-6.
-+ *   The long-lived private key (priv_ref) persists independently.
-+ */
-+
-+struct cmh_ioctl_pke_rsa_enc {
-+	__u32 version;
-+	__u32 bits;		/* RSA key size in bits (1024-4096) */
-+	__u64 e;		/* user-space pointer to public exponent */
-+	__u32 e_len;		/* exponent length in bytes */
-+	__u32 __reserved;
-+	__u64 n;		/* user-space pointer to modulus */
-+	__u64 input;		/* user-space pointer to input data */
-+	__u64 output;		/* user-space pointer to output buffer */
-+};
-+
-+struct cmh_ioctl_pke_rsa_dec {
-+	__u32 version;
-+	__u32 bits;
-+	__u64 e;		/* public exponent */
-+	__u32 e_len;
-+	__u32 __reserved;
-+	__u64 n;		/* modulus */
-+	__u64 input;		/* ciphertext */
-+	__u64 output;		/* plaintext output */
-+	__u64 key_ref;		/* private key DS reference */
-+};
-+
-+struct cmh_ioctl_pke_rsa_crt_dec {
-+	__u32 version;
-+	__u32 bits;
-+	__u64 e;
-+	__u32 e_len;
-+	__u32 __reserved;
-+	__u64 n;
-+	__u64 input;
-+	__u64 output;
-+	__u64 crt_ref;		/* CRT key DS reference */
-+};
-+
-+struct cmh_ioctl_pke_rsa_keygen {
-+	__u32 version;
-+	__u32 bits;		/* key size in bits */
-+	__u64 e;		/* user-space pointer to public exponent */
-+	__u32 e_len;
-+	__u32 flags;		/* CMH_FLAG_* */
-+	__u64 n;		/* [out] user-space pointer to modulus buffer */
-+	__u64 d_cid;		/* CID for private key DS entry */
-+	__u64 d_ref;		/* [out] private key reference */
-+	__u64 crt_cid;		/* CID for CRT key DS entry (0 = skip CRT) */
-+	__u64 crt_ref;		/* [out] CRT key reference */
-+};
-+
-+struct cmh_ioctl_pke_ecdsa_sign {
-+	__u32 version;
-+	__u32 curve;		/* ABI curve ID (e.g. 0x03 = P-256) */
-+	__u64 digest;		/* user-space pointer to hash digest */
-+	__u32 digest_len;	/* digest length in bytes */
-+	__u32 __reserved;
-+	__u64 signature;	/* [out] user-space pointer to (r,s) */
-+	__u64 key_ref;		/* private key DS reference */
-+};
-+
-+struct cmh_ioctl_pke_ecdh {
-+	__u32 version;
-+	__u32 curve;
-+	__u64 peer_key_x;	/* user-space pointer to peer public key X */
-+	__u64 key_ref;		/* private key DS reference */
-+	__u32 flags;		/* reserved, must be 0 */
-+	__u32 __reserved;
-+	__u64 __reserved2;	/* reserved, must be 0 */
-+	__u64 output;		/* [out] raw shared secret */
-+};
-+
-+struct cmh_ioctl_pke_ecdh_keygen {
-+	__u32 version;
-+	__u32 curve;
-+	__u64 key_ref;		/* private key DS reference */
-+	__u64 public_key_x;	/* [out] user-space pointer to public key X */
-+};
-+
-+struct cmh_ioctl_pke_eddsa_sign {
-+	__u32 version;
-+	__u32 curve;		/* CURVE_25519 or CURVE_448 */
-+	__u64 digest;		/* user-space ptr to message (not digest) */
-+	__u32 digest_len;
-+	__u32 __reserved;
-+	__u64 signature;	/* [out] user-space pointer to signature */
-+	__u64 key_ref;		/* private key DS reference */
-+};
-+
-+struct cmh_ioctl_pke_eddsa_verify {
-+	__u32 version;
-+	__u32 curve;
-+	__u64 digest;
-+	__u32 digest_len;
-+	__u32 __reserved;
-+	__u64 signature;
-+	__u64 public_key_y;	/* user-space pointer to public key Y */
-+};
-+
-+struct cmh_ioctl_pke_ec_keygen {
-+	__u32 version;
-+	__u32 curve;
-+	__u32 flags;		/* CMH_FLAG_* */
-+	__u32 __reserved;
-+	__u64 cid;		/* CID for the new key DS entry */
-+	__u64 ref;		/* [out] private key reference */
-+};
-+
-+struct cmh_ioctl_pke_ec_pubgen {
-+	__u32 version;
-+	__u32 curve;
-+	__u64 key_ref;		/* private key DS reference */
-+	__u64 public_key;	/* [out] user-space pointer to public key */
-+};
-+
-+struct cmh_ioctl_pke_eddsa_keygen_sca {
-+	__u32 version;
-+	__u32 curve;		/* must be CURVE_448 */
-+	__u64 key_ref;		/* input: normal Ed448 private key DS ref */
-+	__u64 cid;		/* CID for the new SCA key DS entry */
-+	__u64 sca_ref;		/* [out] SCA private key reference */
-+};
-+
-+/*
-+ * ioctl numbers -- type 'J', sequential.
-+ * 'C' conflicts with OSS sound, CAPI/ISDN, and COSA WAN drivers;
-+ * 'J' is unregistered in Documentation/userspace-api/ioctl/ioctl-number.rst.
-+ */
-+
-+#define CMH_MGMT_IOC_MAGIC	'J'
-+
-+#define CMH_IOCTL_KEY_NEW	_IOWR(CMH_MGMT_IOC_MAGIC, 0x01, struct cmh_ioctl_key_new)
-+#define CMH_IOCTL_KEY_WRITE	_IOW(CMH_MGMT_IOC_MAGIC,  0x02, struct cmh_ioctl_key_write)
-+#define CMH_IOCTL_KEY_READ	_IOWR(CMH_MGMT_IOC_MAGIC, 0x03, struct cmh_ioctl_key_read)
-+#define CMH_IOCTL_KEY_FIND	_IOWR(CMH_MGMT_IOC_MAGIC, 0x04, struct cmh_ioctl_key_find)
-+#define CMH_IOCTL_KEY_GRANT	_IOW(CMH_MGMT_IOC_MAGIC,  0x05, struct cmh_ioctl_key_grant)
-+#define CMH_IOCTL_KEY_DELETE	_IOW(CMH_MGMT_IOC_MAGIC,  0x06, struct cmh_ioctl_key_grant)
-+#define CMH_IOCTL_DS_EXPORT	_IOWR(CMH_MGMT_IOC_MAGIC, 0x07, struct cmh_ioctl_ds_export)
-+#define CMH_IOCTL_DS_IMPORT	_IOW(CMH_MGMT_IOC_MAGIC,  0x08, struct cmh_ioctl_ds_import)
-+#define CMH_IOCTL_KIC_HKDF1	_IOWR(CMH_MGMT_IOC_MAGIC, 0x09, struct cmh_ioctl_kic_hkdf1)
-+#define CMH_IOCTL_KIC_HKDF2	_IOWR(CMH_MGMT_IOC_MAGIC, 0x0A, struct cmh_ioctl_kic_hkdf2)
-+#define CMH_IOCTL_KEY_NEW_RANDOM _IOWR(CMH_MGMT_IOC_MAGIC, 0x0B, struct cmh_ioctl_key_new)
-+#define CMH_IOCTL_KIC_AES_CMAC_KDF _IOWR(CMH_MGMT_IOC_MAGIC, 0x0C, \
-+					struct cmh_ioctl_kic_aes_cmac_kdf)
-+#define CMH_IOCTL_KIC_DKEK_DERIVE _IOWR(CMH_MGMT_IOC_MAGIC, 0x0D, \
-+					struct cmh_ioctl_kic_dkek_derive)
-+#define CMH_IOCTL_KEY_LIST	_IOWR(CMH_MGMT_IOC_MAGIC, 0x0E, struct cmh_ioctl_key_list)
-+
-+/* PKE operation ioctls */
-+#define CMH_IOCTL_PKE_RSA_ENC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x10, \
-+					struct cmh_ioctl_pke_rsa_enc)
-+#define CMH_IOCTL_PKE_RSA_DEC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x11, \
-+					struct cmh_ioctl_pke_rsa_dec)
-+#define CMH_IOCTL_PKE_RSA_CRT_DEC	_IOWR(CMH_MGMT_IOC_MAGIC, 0x12, \
-+					struct cmh_ioctl_pke_rsa_crt_dec)
-+#define CMH_IOCTL_PKE_RSA_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x13, \
-+					struct cmh_ioctl_pke_rsa_keygen)
-+#define CMH_IOCTL_PKE_ECDSA_SIGN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x14, \
-+					struct cmh_ioctl_pke_ecdsa_sign)
-+#define CMH_IOCTL_PKE_ECDH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x16, \
-+					struct cmh_ioctl_pke_ecdh)
-+#define CMH_IOCTL_PKE_ECDH_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x17, \
-+					struct cmh_ioctl_pke_ecdh_keygen)
-+#define CMH_IOCTL_PKE_EDDSA_SIGN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x18, \
-+					struct cmh_ioctl_pke_eddsa_sign)
-+#define CMH_IOCTL_PKE_EDDSA_VERIFY	_IOW(CMH_MGMT_IOC_MAGIC,  0x19, \
-+					struct cmh_ioctl_pke_eddsa_verify)
-+#define CMH_IOCTL_PKE_EC_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x1A, \
-+					struct cmh_ioctl_pke_ec_keygen)
-+#define CMH_IOCTL_PKE_EC_PUBGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x1B, \
-+					struct cmh_ioctl_pke_ec_pubgen)
-+#define CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA	_IOWR(CMH_MGMT_IOC_MAGIC, 0x1C, \
-+					struct cmh_ioctl_pke_eddsa_keygen_sca)
-+
-+/* -- PQC ioctl argument structures ----------- */
-+
-+/*
-+ * PQC operation flags (bits [2:0]).
-+ * PQC keygen ioctls accept CMH_FLAG_PT in bits [18:16] to explicitly
-+ * set the DS key storage attribute when CMH_QSE_FLAG_DS_REF is set.
-+ * CMH_FLAG_SCA and CMH_FLAG_XC are rejected -- QSE SCA protection uses
-+ * polynomial masking (CMH_QSE_FLAG_MASKED), not 2-share storage,
-+ * and the eSW dec/sign paths hardcode SYS_TYPE_FLAG_PT.
-+ * If no CMH_FLAG_* bits are set, DS keys default to CMH_FLAG_PT.
-+ */
-+#define CMH_QSE_FLAG_MASKED	_BITUL(0)	/* use masked (SCA-resistant) HW commands */
-+#define CMH_QSE_FLAG_DS_REF	_BITUL(1)	/* store key output in DS, return ref */
-+#define CMH_QSE_FLAG_HW_RNG	_BITUL(2)	/* use HW RNG for seed/randomness */
-+#define CMH_QSE_FLAG_MASK	(_BITUL(0) | _BITUL(1) | _BITUL(2))
-+
-+/* -- SYS wrap header size -------------------- */
-+/* sys_read prepends a 16-byte header even for plaintext reads */
-+#define CMH_SYS_WRAP_HDR_SIZE	16
-+
-+/* -- Seed / randomness lengths --------------- */
-+
-+#define CMH_QSE_SEED_LEN		32	/* ML-KEM/ML-DSA seed size */
-+#define CMH_QSE_SEED_LEN_MASKED		64	/* seed size for masked mode */
-+
-+/* -- ML-DSA ExternalMu sentinel -------------- */
-+/* Pass this as mlen to use 64-byte pre-hashed mu instead of raw message */
-+#define CMH_ML_DSA_MLEN_EXTERNAL_MU	0xFFFFFFFFU
-+
-+/* -- ML-KEM size macros ---------------------- */
-+
-+#define CMH_ML_KEM_EK_SIZE(k)		(384U * (k) + 32U)
-+#define CMH_ML_KEM_DK_SIZE(k)		(768U * (k) + 96U)
-+/* CT sizes: k=2 -> 768, k=3 -> 1088, k=4 -> 1568 */
-+#define CMH_ML_KEM_CT_SIZE_512		768U
-+#define CMH_ML_KEM_CT_SIZE_768		1088U
-+#define CMH_ML_KEM_CT_SIZE_1024		1568U
-+#define CMH_ML_KEM_SS_LEN		32U
-+
-+/* -- ML-DSA size macros ---------------------- */
-+/* Indexed by mode: [0]=44 (mode=2), [1]=65 (mode=3), [2]=87 (mode=5) */
-+
-+#define CMH_ML_DSA_44_PK_SIZE		1312U
-+#define CMH_ML_DSA_44_SK_SIZE		2560U
-+#define CMH_ML_DSA_44_SIG_SIZE		2420U
-+#define CMH_ML_DSA_65_PK_SIZE		1952U
-+#define CMH_ML_DSA_65_SK_SIZE		4032U
-+#define CMH_ML_DSA_65_SIG_SIZE		3309U
-+#define CMH_ML_DSA_87_PK_SIZE		2592U
-+#define CMH_ML_DSA_87_SK_SIZE		4896U
-+#define CMH_ML_DSA_87_SIG_SIZE		4627U
-+
-+/* -- SLH-DSA parameter set IDs --------------- */
-+
-+#define CMH_SLHDSA_SHAKE_128S		1U
-+#define CMH_SLHDSA_SHAKE_128F		2U
-+#define CMH_SLHDSA_SHAKE_192S		3U
-+#define CMH_SLHDSA_SHAKE_192F		4U
-+#define CMH_SLHDSA_SHAKE_256S		5U
-+#define CMH_SLHDSA_SHAKE_256F		6U
-+#define CMH_SLHDSA_SHA2_128S		7U
-+#define CMH_SLHDSA_SHA2_128F		8U
-+#define CMH_SLHDSA_SHA2_192S		9U
-+#define CMH_SLHDSA_SHA2_192F		10U
-+#define CMH_SLHDSA_SHA2_256S		11U
-+#define CMH_SLHDSA_SHA2_256F		12U
-+#define CMH_SLHDSA_PARAM_MAX		12U
-+
-+/* SLH-DSA prehash algorithm IDs */
-+#define CMH_SLHDSA_PREHASH_SHA256	1U
-+#define CMH_SLHDSA_PREHASH_SHA512	2U
-+#define CMH_SLHDSA_PREHASH_SHAKE128	3U
-+#define CMH_SLHDSA_PREHASH_SHAKE256	4U
-+#define CMH_SLHDSA_PREHASH_MAX		4U
-+
-+/* SLH-DSA n-value table indexed by (param_set - 1) */
-+#define CMH_SLHDSA_N_128		16U
-+#define CMH_SLHDSA_N_192		24U
-+#define CMH_SLHDSA_N_256		32U
-+
-+/* SLH-DSA key sizes: pk = 2*n, sk = 4*n, seed = 3*n */
-+#define CMH_SLHDSA_PK_SIZE(n)		(2U * (n))
-+#define CMH_SLHDSA_SK_SIZE(n)		(4U * (n))
-+#define CMH_SLHDSA_SEED_SIZE(n)		(3U * (n))
-+
-+/* SLH-DSA signature sizes indexed by (param_set - 1) */
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_128S	7856U
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_128F	17088U
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_192S	16224U
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_192F	35664U
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_256S	29792U
-+#define CMH_SLHDSA_SIG_SIZE_SHAKE_256F	49856U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_128S	7856U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_128F	17088U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_192S	16224U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_192F	35664U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_256S	29792U
-+#define CMH_SLHDSA_SIG_SIZE_SHA2_256F	49856U
-+
-+/* -- PKE curve IDs -------------- */
-+
-+#define CMH_CURVE_P192			0x01U
-+#define CMH_CURVE_P224			0x02U
-+#define CMH_CURVE_P256			0x03U
-+#define CMH_CURVE_P384			0x04U
-+#define CMH_CURVE_P521			0x05U
-+#define CMH_CURVE_SECP256K1		0x07U
-+#define CMH_CURVE_BP192R1		0x11U
-+#define CMH_CURVE_BP224R1		0x12U
-+#define CMH_CURVE_BP256R1		0x13U
-+#define CMH_CURVE_BP320R1		0x14U
-+#define CMH_CURVE_BP384R1		0x15U
-+#define CMH_CURVE_BP512R1		0x16U
-+#define CMH_CURVE_SM2			0x18U
-+#define CMH_CURVE_25519			0x21U
-+#define CMH_CURVE_448			0x22U
-+
-+/* ML-KEM */
-+
-+struct cmh_ioctl_ml_kem_keygen {
-+	__u32 version;
-+	__u32 k;		/* security parameter: 2/3/4 */
-+	__u32 flags;		/* CMH_QSE_FLAG_* */
-+	__u32 __reserved;
-+	__u64 seed;		/* user-space pointer to seed (or 0 for HW RNG) */
-+	__u64 z;		/* user-space pointer to z (or 0 for HW RNG) */
-+	__u64 ek;		/* [out] user-space pointer to encapsulation key */
-+	__u64 dk;		/* [out] user-space pointer to decapsulation key
-+				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
-+				 */
-+	__u64 dk_cid;		/* CID for DS entry (if DS_REF) */
-+	__u64 dk_ref;		/* [out] dk DS reference (if DS_REF) */
-+};
-+
-+struct cmh_ioctl_ml_kem_enc {
-+	__u32 version;
-+	__u32 k;
-+	__u32 flags;		/* CMH_QSE_FLAG_* */
-+	__u32 __reserved;
-+	__u64 coin;		/* user-space pointer to random coin (or 0) */
-+	__u64 ek;		/* user-space pointer to encapsulation key */
-+	__u64 ct;		/* [out] user-space pointer to ciphertext */
-+	__u64 ss;		/* [out] user-space pointer to shared secret */
-+	__u64 __reserved2[2];	/* reserved for future use */
-+};
-+
-+struct cmh_ioctl_ml_kem_dec {
-+	__u32 version;
-+	__u32 k;
-+	__u32 flags;		/* CMH_QSE_FLAG_* */
-+	__u32 __reserved;
-+	__u64 ct;		/* user-space pointer to ciphertext */
-+	__u64 dk;		/* user-space pointer to dk or DS ref */
-+	__u64 ss;		/* [out] user-space pointer to shared secret */
-+	__u64 __reserved2[2];	/* reserved for future use */
-+};
-+
-+/* ML-DSA */
-+
-+struct cmh_ioctl_ml_dsa_keygen {
-+	__u32 version;
-+	__u32 mode;		/* security parameter: 2/3/5 */
-+	__u32 flags;		/* CMH_QSE_FLAG_* */
-+	__u32 __reserved;
-+	__u64 seed;		/* user-space pointer to seed (or 0 for HW RNG) */
-+	__u64 pk;		/* [out] user-space pointer to public key */
-+	__u64 sk;		/* [out] user-space pointer to secret key
-+				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
-+				 */
-+	__u64 sk_cid;		/* CID for DS entry (if DS_REF) */
-+	__u64 sk_ref;		/* [out] sk DS reference (if DS_REF) */
-+};
-+
-+struct cmh_ioctl_ml_dsa_sign {
-+	__u32 version;
-+	__u32 mode;
-+	__u32 flags;		/* CMH_QSE_FLAG_* */
-+	__u32 mlen;		/* message length in bytes */
-+	__u64 m;		/* user-space pointer to message */
-+	__u64 sk;		/* user-space pointer to sk or DS ref */
-+	__u64 sig;		/* [out] user-space pointer to signature */
-+	__u64 rnd;		/* user-space pointer to randomness (or 0) */
-+};
-+
-+/* SLH-DSA */
-+
-+struct cmh_ioctl_slhdsa_keygen {
-+	__u32 version;
-+	__u32 parameter_set;	/* HCQ_SLHDSA_SHAKE_128S .. SHA2_256F */
-+	__u32 flags;		/* CMH_QSE_FLAG_DS_REF */
-+	__u32 __reserved;
-+	__u64 seed;		/* user-space pointer to seed */
-+	__u64 pk;		/* [out] user-space pointer to public key */
-+	__u64 sk;		/* [out] user-space pointer to secret key
-+				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
-+				 */
-+	__u64 sk_cid;		/* CID for DS entry (if DS_REF) */
-+	__u64 sk_ref;		/* [out] sk DS reference (if DS_REF) */
-+};
-+
-+struct cmh_ioctl_slhdsa_sign {
-+	__u32 version;
-+	__u32 parameter_set;
-+	__u32 msg_len;
-+	__u32 ctx_len;
-+	__u64 msg;		/* user-space pointer to message */
-+	__u64 ctx;		/* user-space pointer to context (or 0) */
-+	__u64 sk;		/* DS ref for secret key */
-+	__u64 sig;		/* [out] user-space pointer to signature */
-+	__u64 add_random;	/* user-space pointer to addl. randomness (or 0) */
-+};
-+
-+struct cmh_ioctl_slhdsa_sign_prehash {
-+	__u32 version;
-+	__u32 parameter_set;
-+	__u32 prehash_algo;	/* CMH_SLHDSA_PREHASH_* */
-+	__u32 digest;		/* 0 = raw msg (eSW hashes), 1 = pre-computed digest */
-+	__u32 msg_len;
-+	__u32 ctx_len;
-+	__u64 msg;		/* user-space pointer to message/digest */
-+	__u64 ctx;		/* user-space pointer to context (or 0) */
-+	__u64 sk;		/* DS ref for secret key */
-+	__u64 sig;		/* [out] user-space pointer to signature */
-+	__u64 add_random;	/* user-space pointer to addl. randomness (or 0) */
-+};
-+
-+/* -- SM2 ioctl argument structures ----------- */
-+
-+/* SM2 fixed key sizes (sm2p256v1 curve, 256-bit) */
-+#define CMH_SM2_CLEN			32U	/* coordinate length */
-+#define CMH_SM2_PUBKEY_LEN		64U	/* uncompressed (x||y) */
-+#define CMH_SM2_POINT_LEN		64U	/* EC point (x||y) */
-+#define CMH_SM2_SHARED_KEY_LEN		16U	/* ECDH shared key */
-+#define CMH_SM2_DIGEST_LEN		32U	/* SM3 digest (ZA) */
-+/*
-+ * SM2 enc_hash/dec_hash payload limit.
-+ *
-+ * The eSW PKE driver implements only a single-block GM/T 0003.4 KDF
-+ * (one SM3 invocation, 32 bytes of key stream).  Longer messages would
-+ * silently produce incorrect ciphertext / plaintext, so the driver caps
-+ * the payload at 32 bytes.  See Documentation/ABI/testing/cmh-mgmt.
-+ */
-+#define CMH_SM2_MAX_MSG_LEN		32U	/* encrypt/decrypt */
-+#define CMH_SM2_MAX_ID_LEN		32U	/* identity string */
-+#define CMH_SM2_CT_OVERHEAD		96U	/* C1(64) + C3(32) */
-+#define CMH_SM2_MAX_CT_LEN		128U	/* 96 + max_msg = 128 */
-+
-+struct cmh_ioctl_sm2_ecdh_keygen {
-+	__u32 version;
-+	__u32 nonce_len;	/* 0 = HW generates r (written back), 32 = caller provides r */
-+	__u64 nonce;		/* [in/out] user-space pointer to nonce buffer (32B) */
-+	__u64 session_key;	/* [out] user-space pointer to session key R=r*G (64B) */
-+};
-+
-+struct cmh_ioctl_sm2_ecdh {
-+	__u32 version;
-+	__u32 nonce_len;	/* 0 = HW generates (written back), 32 = caller provides */
-+	__u64 nonce;		/* [in/out] user-space pointer to nonce r (32B) */
-+	__u64 peer_public_key;	/* user-space pointer to peer pub key (64B) */
-+	__u64 peer_session_key;	/* user-space pointer to peer session key (64B) */
-+	__u64 key_ref;		/* private key DS reference */
-+	__u64 shared_point;	/* [out] user-space pointer to shared point (64B) */
-+	__u64 shared_point_ref;	/* [in/out] 0 = read-back mode; &ref = keep DS, write ref */
-+};
-+
-+struct cmh_ioctl_sm2_dec_point {
-+	__u32 version;
-+	__u32 ciphertext_len;	/* total ciphertext length (97..128) */
-+	__u64 ciphertext;	/* user-space pointer to ciphertext (64B: C1) */
-+	__u64 dec_point;	/* [out] user-space pointer to dec point (64B) */
-+	__u64 key_ref;		/* private key DS reference */
-+};
-+
-+struct cmh_ioctl_sm2_enc_point {
-+	__u32 version;
-+	__u32 nonce_len;	/* 0 = HW generates, 32 = caller provides */
-+	__u64 nonce;		/* user-space pointer to nonce (or 0) */
-+	__u64 public_key;	/* user-space pointer to public key (64B) */
-+	__u64 ciphertext;	/* [out] user-space pointer to C1 (64B) */
-+	__u64 enc_point;	/* [out] user-space pointer to enc point (64B) */
-+};
-+
-+struct cmh_ioctl_sm2_id_digest {
-+	__u32 version;
-+	__u32 id_len;		/* identity length in bytes (<=32) */
-+	__u64 id;		/* user-space pointer to identity string */
-+	__u64 public_key;	/* user-space pointer to public key (64B) */
-+	__u64 digest;		/* [out] user-space pointer to ZA digest (32B) */
-+};
-+
-+/*
-+ * SM2 ECDH_HASH -- derive shared key from shared point + ZA digests.
-+ *
-+ * IMPORTANT: The digest fields use ABSOLUTE ordering per GM/T 0003.3,
-+ * NOT relative own/peer ordering.  Both parties must pass:
-+ *   peer_id_digest = Z_A (initiator's digest) -- hashed FIRST
-+ *   id_digest      = Z_B (responder's digest) -- hashed SECOND
-+ * The eSW computes: KDF(shared_point || peer_id_digest || id_digest).
-+ */
-+struct cmh_ioctl_sm2_ecdh_hash {
-+	__u32 version;
-+	__u32 __reserved;
-+	__u64 peer_id_digest;	/* ptr to Z_A -- initiator's digest (32B) */
-+	__u64 id_digest;	/* ptr to Z_B -- responder's digest (32B) */
-+	__u64 shared_point_ref;	/* DS reference from SM2_ECDH */
-+	__u64 shared_key;	/* [out] ptr to shared key (16B) */
-+};
-+
-+struct cmh_ioctl_sm2_dec_hash {
-+	__u32 version;
-+	__u32 ciphertext_len;	/* ciphertext length (97..128) */
-+	__u64 ciphertext;	/* user-space pointer to full ciphertext */
-+	__u64 dec_point;	/* user-space pointer to dec point (64B) */
-+	__u64 plaintext;	/* [out] user-space pointer to plaintext */
-+};
-+
-+struct cmh_ioctl_sm2_enc_hash {
-+	__u32 version;
-+	__u32 message_len;	/* message length (1..32) */
-+	__u64 message;		/* user-space pointer to plaintext */
-+	__u64 enc_point;	/* user-space pointer to enc point (64B) */
-+	__u64 ciphertext;	/* [out] user-space pointer to ciphertext */
-+};
-+
-+/* PQC ioctl numbers */
-+#define CMH_IOCTL_ML_KEM_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x20, \
-+					struct cmh_ioctl_ml_kem_keygen)
-+#define CMH_IOCTL_ML_KEM_ENC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x21, \
-+					struct cmh_ioctl_ml_kem_enc)
-+#define CMH_IOCTL_ML_KEM_DEC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x22, \
-+					struct cmh_ioctl_ml_kem_dec)
-+#define CMH_IOCTL_ML_DSA_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x23, \
-+					struct cmh_ioctl_ml_dsa_keygen)
-+#define CMH_IOCTL_ML_DSA_SIGN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x24, \
-+					struct cmh_ioctl_ml_dsa_sign)
-+#define CMH_IOCTL_SLHDSA_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x28, \
-+					struct cmh_ioctl_slhdsa_keygen)
-+#define CMH_IOCTL_SLHDSA_SIGN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x29, \
-+					struct cmh_ioctl_slhdsa_sign)
-+#define CMH_IOCTL_SLHDSA_SIGN_PREHASH	_IOWR(CMH_MGMT_IOC_MAGIC, 0x2D, \
-+					struct cmh_ioctl_slhdsa_sign_prehash)
-+
-+/* SM2 operation ioctls */
-+#define CMH_IOCTL_SM2_ECDH_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x30, \
-+					struct cmh_ioctl_sm2_ecdh_keygen)
-+#define CMH_IOCTL_SM2_ECDH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x31, \
-+					struct cmh_ioctl_sm2_ecdh)
-+#define CMH_IOCTL_SM2_DEC_POINT		_IOWR(CMH_MGMT_IOC_MAGIC, 0x32, \
-+					struct cmh_ioctl_sm2_dec_point)
-+#define CMH_IOCTL_SM2_ENC_POINT		_IOWR(CMH_MGMT_IOC_MAGIC, 0x33, \
-+					struct cmh_ioctl_sm2_enc_point)
-+#define CMH_IOCTL_SM2_ID_DIGEST		_IOWR(CMH_MGMT_IOC_MAGIC, 0x34, \
-+					struct cmh_ioctl_sm2_id_digest)
-+#define CMH_IOCTL_SM2_ECDH_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x35, \
-+					struct cmh_ioctl_sm2_ecdh_hash)
-+#define CMH_IOCTL_SM2_DEC_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x36, \
-+					struct cmh_ioctl_sm2_dec_hash)
-+#define CMH_IOCTL_SM2_ENC_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x37, \
-+					struct cmh_ioctl_sm2_enc_hash)
-+
-+/*
-+ * EAC (Error and Alarm Controller) -- read and clear error registers.
-+ *
-+ * Returns a snapshot of all hardware error/safety/notification registers.
-+ * The eSW atomically reads and clears the registers on each call, so
-+ * successive reads show only new events.
-+ */
-+struct cmh_ioctl_eac_read {
-+	__u32 version;			/* must be CMH_MGMT_V1 */
-+	__u32 __reserved;
-+	__u64 mailbox_notification;	/* [out] MBX safety notification bitmask */
-+	__u32 hw_error;			/* [out] HWC error bitmask */
-+	__u32 hw_nmi;			/* [out] HWC NMI bitmask */
-+	__u32 hw_panic;			/* [out] HWC panic bitmask */
-+	__u32 safety_fatal;		/* [out] HWC fatal safety bitmask */
-+	__u32 safety_notification;	/* [out] HWC safety notification bitmask */
-+	__u32 sw_info0;			/* [out] eSW tracing info */
-+	__u32 sw_info1;			/* [out] eSW tracing info */
-+	__u32 sram_bank_errors[4];	/* [out] correctable ECC error counts */
-+	__u32 __pad;			/* explicit tail padding (prevent info leak) */
-+};
-+
-+/*
-+ * DRBG CONFIG -- configure the hardware DRBG before first use.
-+ *
-+ * This is a management operation normally performed once at system
-+ * start-up.  Must be called before any hwrng reads or DRBG GENERATE
-+ * operations.
-+ */
-+#define CMH_DRBG_RATIO_ONE		0	/* 1:1 entropy ratio */
-+#define CMH_DRBG_RATIO_ONE_HALF		1	/* 1:2 */
-+#define CMH_DRBG_RATIO_ONE_THIRD	2	/* 1:3 */
-+#define CMH_DRBG_RATIO_ONE_FOURTH	3	/* 1:4 */
-+
-+#define CMH_DRBG_STRENGTH_128		0x00	/* 128-bit security */
-+#define CMH_DRBG_STRENGTH_256		0x10	/* 256-bit security */
-+
-+struct cmh_ioctl_drbg_config {
-+	__u32 version;			/* must be CMH_MGMT_V1 */
-+	__u32 entropy_ratio;		/* CMH_DRBG_RATIO_* */
-+	__u32 security_strength;	/* CMH_DRBG_STRENGTH_* */
-+	__u32 __reserved;
-+};
-+
-+/* EAC ioctl number */
-+#define CMH_IOCTL_EAC_READ		_IOWR(CMH_MGMT_IOC_MAGIC, 0x0F, \
-+					struct cmh_ioctl_eac_read)
-+
-+/* DRBG management ioctl number */
-+#define CMH_IOCTL_DRBG_CONFIG		_IOW(CMH_MGMT_IOC_MAGIC, 0x40, \
-+					struct cmh_ioctl_drbg_config)
-+
-+#endif /* _UAPI_CMH_MGMT_IOCTL_H */
++#endif /* CMH_VCQ_H */
 -- 
 2.43.7
 
