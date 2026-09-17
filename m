@@ -1,28 +1,28 @@
-Received: from SA9PR02CU001.outbound.protection.outlook.com (mail-southcentralusazon11023117.outbound.protection.outlook.com [40.93.196.117])
+Received: from BL2PR02CU003.outbound.protection.outlook.com (mail-eastusazon11021110.outbound.protection.outlook.com [52.101.52.110])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C9CAC4B0E56;
-	Thu, 17 Sep 2026 22:59:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=40.93.196.117
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D00734B1CF3;
+	Thu, 17 Sep 2026 22:59:43 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.52.110
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789685989; cv=fail; b=RjxBdDqKbfkXprf3sbNgEYjAQYXaB1ry4LkkMvPXFQ6bL9BJ2TEjTgj6nC8te5GreRJ3dm31DgSQv7QiYtj3fk+81xVtqXFqsMwpAHi0sVg52tqS21mOnb07SiN7BK6lK9aXrCxvzIK3Ocu41QLg5Lff+ttotpUohDjtkH1hZco=
+	t=1789685991; cv=fail; b=BUfyY5xK1I6DJFDWkRsPKV+4RcbW7c+QWm+X11df7NI9bsu6DkG8XfBJY5vkyCK+xP13nMWvM5OyC1lA4baS232pcFMecLiHSjpovUXsBcHjQ1JN7JBf0bFbWpmfUUb/20MdC26UrbVvP8PC81v2UbAq7OxI1JOck56GHdRflGs=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789685989; c=relaxed/simple;
-	bh=aYmyIc7yrrJVuH9cAcHmUByL0mtthYRNnrmrvIX+jow=;
+	s=arc-20240116; t=1789685991; c=relaxed/simple;
+	bh=7YHKUA+DGe1uuqaNhk8GA+c1L59kcm3dlfLIgZnfeLI=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=XZG18EG/dK2HEVAkC7FE+pWeuM7EMF/oKVWvLW+m1tJZT4Q0BBb4tQ46+l3MxMzjEJqCoan93j2/kz5bACRX8+LUBRrJsgzYC0oPmqDGIY4ipi7WZ+nottQoL8ydtrTjwP8meYZ7OHyd1wgFg+kdt/x/E78biAQG2Fz+3G5gry8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=1dNICHlm; arc=fail smtp.client-ip=40.93.196.117
+	 MIME-Version:Content-Type; b=uY8uUNDJ9a2bsmJDRV68OWSpHTfcm3DcH+k399uSQA0UNtiubMFqjxXn+0rPZAypohJdxFvL/HzPjLHY+8pej9GmHOxPW1ByndPLCt7Yu77jdxs09a/9SMeFUyDh4w33o6IXBnvssa/L8bXUA7fOW6aOQ6q3ehBbhkBkAPJAUF0=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=nYEfYa/z; arc=fail smtp.client-ip=52.101.52.110
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="1dNICHlm"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="nYEfYa/z"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=pwkwSbfkfaEK3K/hJz4kjEAnWxF37h5XAMp+48cOHbasToLmrfQ415ln2w6H8omkhzJCUar6drt8igdhiXXy8V1F7c9sTZyY6NOJeO3S3yWQ3aUwV3ydSACG/Jzi05HfAhGOE703bMfpxUSxoK1/jB99doraqSXrbZKMH+qepy1Dn3xyTOiCjR/zcthwdy+tcTyPByT1I4071Dhy44Rn838MN0ZyaKFuWHMIrsTGNBieLwRGTUgfz9KL4ynvhyWZOm9XzmSyae3wXEOTacgXhygNcsVBkLqDuAKgaFbJ3DR0eVv2gpl9DLWloIKcJJMaZgwFMqj1uZybRCYej0YtUA==
+ b=UpkK5RdNgE/FyW32UGd0fBo7ZYifsiZ7oVJY7oPjly7s6g9fEv6VFRaylHoW8TGl1XFtvuDreANY3Wa+OZYFEkE35Vms3fjOHNrwKsdhWIy6jN47WH7tkEFBC6rZQwVZt531AXK4WQRxH4bVGEDfLF4oljhLyRuIwp4NeEaysSjVvVu39hcH/ee8BCj36jK+o9pz4eZF90uUr4PiToG2m1pjiuSBWdvm9JX3px8o+Q19GfWTNNqQ3ZSeMJxTIdz0vZM1YhoW6E++CzRrFAqMQr+DmF15P4ipe2/R/Hk6eEPhrydRrbI9q6tR3K+ZCftfwGcj8j0ubl4eq0lW64d1rw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=z4g/088oTrSVBi4FAMzBlamE8qDbpanGfBDCx6o3TrQ=;
- b=Rhph00IE7i7UYZLo2TJpv+LSMgWYRibKw8Yb7kPGYP2pjZp+fCr74Ktd/ep+WfJKU7vMJ0mUtNFX5yXu3FMgPkkDYKzTPNuBIfDgt6gIjFfHOip85af519kfSyiWPIBcdy4I1ymOBxK8zqKynn/c001g5Ce7+zmLsP55ZgbO0r1hp/emXm8VgXCjJxu7+AOMQ549pzoGlV/N+ENQ6kdZl8uoAB0LiWKNIZbP4LxVnkL92XJmy9QHvEtzvIR1TMUgjihWmA4simZh3YEeAsR0TgACJXo38TJfO3ezraSsQPCOxeF2FeSIRUEjsQbZfJa42XkZptCyJSLxZTHSFKMOpA==
+ bh=nCD5w+Gpy7DCGtPstZab3NCNkV4UwKYMvaiiGog4Odk=;
+ b=oFEDuiufxpCeVTBSxFEc6OosktmLRqMN1eui68kN63vsIK/wL2bUVMJqM7kzXWnTKXaY9fhttWrge/fe7vMy7t08etxBjC6rZWF1xD4ndjP5YtsX+AMC/BRKUAU5rNY9NtkiGGA6hPKpr39WxSGKQRWaEfHLLl3LBSjyKpTvEUWfjokqLpallU0dRkozT8KMY1YbLf9pdGh0PlejRD+6kqhhv+p7MLRURUPE/Qhbff9QFAd5EiOm10E8N4oGMmTFD0uRg5B0e+/FkafQLD3XUSYkeZYrTnMH5nctlXBC4uzaI/zSEBHId8kcwD3eJwAIUtrhTS/BkzX6gqbBLzwm+g==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=z4g/088oTrSVBi4FAMzBlamE8qDbpanGfBDCx6o3TrQ=;
- b=1dNICHlm5kWLqo9JkLNhIXxTNMsQO3AONnbZDWFka706koJ3paQxJ5jRhDMyr19ADI0/UpLJ1uRnoj723/ooDbakmEmC8UHIMYzWpW66AAYi5LznphC7gUHgL9lin4Eap678my8tN+h10HuL7eDlSUtGw8riwOiu3aMAuUjj5TwbmdInLnsQgBmfC7BgFh8cxaG3UTnxfVHqydUq7pi7X9gnpbiEROIKx6FxQpBF3KTEGz8ml+KtaAH1TbTVhHn7OZPfd7J28is9VfCZjPaYBCeNVnlePRWXQGZOu0X8zBz/L8GVYEdQD46E13x7e57Fn6lbjZikqzTR6Fbv4iHZdA==
-Received: from SJ0PR13CA0064.namprd13.prod.outlook.com (2603:10b6:a03:2c4::9)
- by CH0PR04MB8179.namprd04.prod.outlook.com (2603:10b6:610:fc::17) with
+ bh=nCD5w+Gpy7DCGtPstZab3NCNkV4UwKYMvaiiGog4Odk=;
+ b=nYEfYa/zmpgdjNLFm3zp8+9gNM1ctVXUZaj64FHkUznXYtnUktTktDl+TihD7jiHbqPzKsX+NZOooEblk+OryQUxix75MO+Af/wrQZoyHGHE8qQGMM7mxtd2kHyVvSuZGT4qQ1TJt6RcMuMI96zFNiQjko22J/odx4nPZQhKGX5b71tm9qtZKgjRqYe3kZt7Yi1xGsMGz1WVjnKGVOAzjEKWVP3BnH00p9/IvXRx5XpM97AfvjpMkEKZ/uNU26htxWIR/fpzOGCXLoKinRy+joKmU+APZ6x7SV1bapDl6+kMlozfEweH7NGHVboCeH9gtHVQjKf4LocXxdfh72H63w==
+Received: from MN2PR14CA0023.namprd14.prod.outlook.com (2603:10b6:208:23e::28)
+ by SJ0PR04MB7647.namprd04.prod.outlook.com (2603:10b6:a03:32f::8) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.12; Thu, 17 Sep
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.13; Thu, 17 Sep
  2026 22:59:34 +0000
-Received: from SJ1PEPF000026C7.namprd04.prod.outlook.com
- (2603:10b6:a03:2c4:cafe::96) by SJ0PR13CA0064.outlook.office365.com
- (2603:10b6:a03:2c4::9) with Microsoft SMTP Server (version=TLS1_3,
- cipher=TLS_AES_256_GCM_SHA384) id 15.21.451.8 via Frontend Transport; Thu, 17
- Sep 2026 22:59:34 +0000
+Received: from BL6PEPF00020E63.namprd04.prod.outlook.com
+ (2603:10b6:208:23e:cafe::14) by MN2PR14CA0023.outlook.office365.com
+ (2603:10b6:208:23e::28) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.12 via Frontend Transport; Thu,
+ 17 Sep 2026 22:59:33 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- SJ1PEPF000026C7.mail.protection.outlook.com (10.167.244.104) with Microsoft
+ BL6PEPF00020E63.mail.protection.outlook.com (10.167.249.24) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.451.8
  via Frontend Transport; Thu, 17 Sep 2026 22:59:33 +0000
 Received: from hqxsv-cmdev3-aousherovitch.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id 56D9D1801769;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id 0ABBB1801761;
 	Thu, 17 Sep 2026 22:59:32 +0000 (UTC)
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v5 12/19] crypto: cmh - add RSA akcipher
-Date: Thu, 17 Sep 2026 15:59:21 -0700
-Message-ID: <20260917225929.2494111-13-aousherovitch@rambus.com>
+Subject: [PATCH v5 06/19] crypto: cmh - add CSHAKE/KMAC ahash
+Date: Thu, 17 Sep 2026 15:59:15 -0700
+Message-ID: <20260917225929.2494111-7-aousherovitch@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260917225929.2494111-1-aousherovitch@rambus.com>
 References: <20260917225929.2494111-1-aousherovitch@rambus.com>
@@ -94,1340 +94,1742 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ1PEPF000026C7:EE_|CH0PR04MB8179:EE_
+X-MS-TrafficTypeDiagnostic: BL6PEPF00020E63:EE_|SJ0PR04MB7647:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: 7cc00dcb-632c-4d50-683c-08df150f56fa
+X-MS-Office365-Filtering-Correlation-Id: 75e3572e-76cd-487c-032d-08df150f56d2
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|7416014|82310400026|376014|36860700016|23010399003|1800799024|921020|18002099003|22082099003|6133799003|56012099006|11063799006|10067099003|3023799007;
+	BCL:0;ARA:13230040|1800799024|23010399003|376014|7416014|82310400026|36860700016|921020|22082099003|18002099003|56012099006|3023799007|11063799006|5023799004|10067099003|6133799003;
 X-Microsoft-Antispam-Message-Info:
-	YQNggozaMcf3dFv8DnbDbeBp0kWEll5iIrhVvie91CR7ix12E3HTEWdTRjr+YUt2FA5L9RDh1dzPWwtJ7iB9XtpC0ndyO5HlDb/kTgg444MtxQ3kqB00F+ZSJUpYR8XitsHk6TUuifSwXDRiRoJRZIczTNVlaTxaGW8NGCD050LDzTEoMFkCsteXnGj6GzYcvd7qjJjRNEDzOVz9VVbvyWnR+Uq1tsefv8gHcEhh1KF0usgohSEutuFB/UoRRWwaVCUGGaZOfVFRwuxvs6yHyVV0P3YwWoCebsHbfIsctZQW7Of11vRfTVbcC/utA9LscnSUHKdLO4OyC9wyPsCiKgvb8OktR06fZLwOQ+YQaIL97qiV+4pezQ6xPYgIEOMImiFA80M/WBo4YW76FFkE1sV0Zr+/a29oN4OkHXTfUc5x6EjC9MQzT6mpwYlhZo5C3BSek7ACpsIYT2oG9Y5a44ffif8qV7mo0MLimEk5Vtqkc70pVtdHlJcIX0o0FVQ7Lgf2By/bcrATApeLCwHaEcgb74llAutpTyw1RmPFksRs3EgJ58RGllz882bf2M41xbrB2tGdQnhq3l5lqapMaLvswrvxXQuuw2+Sqnmubxf8X0xeu60bWWMIjm0Vuo/vZYM1yX8kjEeOj8vsNRZGU7aaeODpqG7RTSQmYLSw42DMsrK+BPrEd4840xLbUL2Gop5B8kfmRO3qQo+J0EjxeZaVDDrEf/8uBMuuXbSxtvGH2t7kcNGV0mL5utNkbJdM
+	qd5N125H+fhMJSjH026eciV9Y+33nSxK3IK3dFzYqi/wzoO0N7y9lg1RFj/v8XrDmX21s3Zwiqyildz2Laj4ZF5HFoCadlHqCpOo49oiL/luFjClTn7vebf8uw2QNd+1giJcbE0aVHBdfbAnsgpmyxj+9y01k26iFITi8d+3n5NmHoVJIVzL23ScD3cfReWvrybDWTQ7Dd2BLZOtJ7oJDtih7XtiP5s5i11XZ90wXniIaVN6JiGw5KNCxEWXf5tm11zPgoIMi7uMo2d6aPmOa6naXt25irEwYVoD2oO3btefKVRbF6s3/EuqEPtskFI3vORFozlZnLHacoHIg8/zpxkreuqmWD0zQEbSplP3JDyKb4hTExQiDWlg2UlNLofIrQWNwyPyW7gubfoBT0RcS25YlnPFAKYu8CFL2GyhZpR36ybTPqdgRKF1i8uG/CsLgtGe5OffDRiRQM98YU5N1EZ8fthGN68H7jhQ0S4jI9KiXK5tJbPhlXy5qi53P83ZiGgO70MBNA5hDwE2Bag7ir56NHgUBGbeldCjUlM51KbBDkShC+SNQq4rA5jzeE7W4n9zRi1W+YS1cAlNzl0J13iVZxOMvLhh8z4XFXsm5mTrxn7HlNMFGN65/8qzX92jtiiVekl939YUHY/pfhAx5tq5OaJvh5Ux28zEy1x5okQeijyb6oEboHmjfUzoR0GwjIc/46SZdYdz2usYrjUxZEsvNV8GMAHa5T3nw9LTJVy995ouMSde9rpuBE5/ekQp
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(82310400026)(376014)(36860700016)(23010399003)(1800799024)(921020)(18002099003)(22082099003)(6133799003)(56012099006)(11063799006)(10067099003)(3023799007);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(1800799024)(23010399003)(376014)(7416014)(82310400026)(36860700016)(921020)(22082099003)(18002099003)(56012099006)(3023799007)(11063799006)(5023799004)(10067099003)(6133799003);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	GtCbhnGgPG+wLQ/6b6BRpfOqXdtK4xViWKKhgSU6p7XhgI73BzsCrVmMPn9motj6TFjSVkPEV9kn/q8hqSwPa5sooEDZKiqS1sXz7gaZKwI3oWJKnJzxfoq9kv6pzJZqJuo555stusVnE0bgFEkHflEsx+yYSbI9i6OIvqCKypw57W6IaCZsvEB8KrCb76MJAJAa0hiu1j8leuXaK/hS1s3ndivFMng70gUEi0QlIqA2FpUL+2x0+tGQnGhKZsKrwMIDiWJx7uqNsQ9T1aJO1ZsnCIJ3rCSrzO7mrOwy7lQRAQB/24I6/HUYMCSr8cQNF9WbxYNKd4T9HFGBb7W36Q86SA1sz6D1z43/7oj1pDewMi98iNfn8VzXbwLgCYYP9TK/lf5NM1xYn4hR7Mh+fynHvnlJbVGWfrJp4fj59nyIc0YhG6nwOPUmvTZPR6yT
+	VaV7KVYmWPDu4+mH5HkxUK7xB71af4S1r0vGL7M7nGeKrVzYy4kT5DRNwmJQOtfCiyZDAHyfkmyyRfdpT1GBOVVWzr1VVh+MvR9L2VEHhLQfPfQnEzY+GyUuitTaHkE0NwB41Jcip4zwq7I5SBeh+Xs7t9pgUw1e4YfD6E3oK9Ne66WD2/ud9eg7iuMQix67ZLaC6aNqXBe3KgROd1R6i2CH7lLaextPT9sonIpmfwSue38y6KTsHka1h/leFxjrbvBj4gm6qK5FS239g7qOxuDFSCZo78LYciIsgj1vVgmjX8AL1Dmwy5rlgd/VcIwrPycoaNENBWTRp2PhDkT38F7q6s3Bdg3JaH9YQqgaoMYP4N6cf0eTw43DmkWq/qRXYxR7n3wmtLy89OebK1Tu7ids+sULDu03ji9wAepoZ9tHXksimzNIdgWs4LliJXut
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:33.7383
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:33.2858
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 7cc00dcb-632c-4d50-683c-08df150f56fa
+X-MS-Exchange-CrossTenant-Network-Message-Id: 75e3572e-76cd-487c-032d-08df150f56d2
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	SJ1PEPF000026C7.namprd04.prod.outlook.com
+	BL6PEPF00020E63.namprd04.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: CH0PR04MB8179
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7647
 
-Register the RSA akcipher algorithm using the CMH PKE core (core ID
-0x0a).  Supports encrypt, decrypt, sign, and verify operations with
-2048, 3072, and 4096-bit keys.  512- and 1024-bit keys are also
-accepted for legacy/test interoperability.  Includes common PKE
-helpers shared by subsequent ECDSA and ECDH patches.
+Register ahash algorithms for cSHAKE128, cSHAKE256, KMAC128, and
+KMAC256 using the CMH hash core.
+
+cSHAKE is unkeyed, so like SHAKE it is CRYPTO_AHASH_ALG_BLOCK_ONLY and
+supports incremental update and export/import.  KMAC is keyed: the
+hardware has no keyed-MAC save/restore, so (like HMAC) it is not
+block-only and accumulates the input for a single finalize-time
+submission.  KMAC has no generic software equivalent, so its input is
+capped at the 64KB hardware window.
 
 Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 ---
- drivers/crypto/cmh/Makefile         |   4 +-
- drivers/crypto/cmh/cmh_main.c       |   9 +
- drivers/crypto/cmh/cmh_pke_common.c | 578 +++++++++++++++++++++++++
- drivers/crypto/cmh/cmh_pke_rsa.c    | 644 ++++++++++++++++++++++++++++
- 4 files changed, 1234 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_pke_common.c
- create mode 100644 drivers/crypto/cmh/cmh_pke_rsa.c
+ drivers/crypto/cmh/Makefile             |   4 +-
+ drivers/crypto/cmh/cmh_cshake.c         | 873 ++++++++++++++++++++++++
+ drivers/crypto/cmh/cmh_kmac.c           | 690 +++++++++++++++++++
+ drivers/crypto/cmh/cmh_main.c           |  18 +
+ drivers/crypto/cmh/include/cmh_cshake.h |  16 +
+ drivers/crypto/cmh/include/cmh_kmac.h   |  16 +
+ 6 files changed, 1616 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/crypto/cmh/cmh_cshake.c
+ create mode 100644 drivers/crypto/cmh/cmh_kmac.c
+ create mode 100644 drivers/crypto/cmh/include/cmh_cshake.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_kmac.h
 
 diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index 407fd2870f6d..cdbcc8cdac5f 100644
+index acd1827cc084..3ab154744658 100644
 --- a/drivers/crypto/cmh/Makefile
 +++ b/drivers/crypto/cmh/Makefile
-@@ -29,7 +29,9 @@ cmh-y := \
- 	cmh_ccp.o \
- 	cmh_ccp_aead.o \
- 	cmh_ccp_poly.o \
--	cmh_rng.o
-+	cmh_rng.o \
-+	cmh_pke_common.o \
-+	cmh_pke_rsa.o
+@@ -16,7 +16,9 @@ cmh-y := \
+ 	cmh_key.o \
+ 	cmh_sys.o \
+ 	cmh_hash.o \
+-	cmh_hmac.o
++	cmh_hmac.o \
++	cmh_cshake.o \
++	cmh_kmac.o
  
  # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
  cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index b06a5ea0df4f..23346bbf11b0 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -40,6 +40,7 @@
- #include "cmh_aes.h"
- #include "cmh_sm4.h"
- #include "cmh_ccp.h"
-+#include "cmh_pke.h"
- #include "cmh_mgmt.h"
- #include "cmh_registers.h"
- #include "cmh_debugfs.h"
-@@ -286,6 +287,11 @@ static int cmh_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_ccp_poly_register;
- 
-+	/* Register PKE RSA akcipher */
-+	ret = cmh_pke_rsa_register();
-+	if (ret)
-+		goto err_pke_rsa_register;
-+
- 	/* Register key management device (/dev/cmh_mgmt) */
- 	ret = cmh_mgmt_register();
- 	if (ret)
-@@ -296,6 +302,8 @@ static int cmh_probe(struct platform_device *pdev)
- 	return 0;
- 
- err_mgmt_register:
-+	cmh_pke_rsa_unregister();
-+err_pke_rsa_register:
- 	cmh_ccp_poly_unregister();
- err_ccp_poly_register:
- 	cmh_ccp_aead_unregister();
-@@ -352,6 +360,7 @@ static void cmh_remove(struct platform_device *pdev)
- 	cfg = &dev->config;
- 
- 	cmh_mgmt_unregister();
-+	cmh_pke_rsa_unregister();
- 	cmh_ccp_poly_unregister();
- 	cmh_ccp_aead_unregister();
- 	cmh_ccp_unregister();
-diff --git a/drivers/crypto/cmh/cmh_pke_common.c b/drivers/crypto/cmh/cmh_pke_common.c
+diff --git a/drivers/crypto/cmh/cmh_cshake.c b/drivers/crypto/cmh/cmh_cshake.c
 new file mode 100644
-index 000000000000..ab3e2eb7d3f8
+index 000000000000..56a6453a0e4f
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_pke_common.c
-@@ -0,0 +1,578 @@
++++ b/drivers/crypto/cmh/cmh_cshake.c
+@@ -0,0 +1,873 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- PKE Common VCQ Builders
++ * CMH LKM -- Kernel Crypto API CSHAKE Driver
 + *
-+ * VCQ builder functions for all PKE core commands.  Each builder
-+ * populates a single vcq_cmd slot with the appropriate magic,
-+ * command ID, byte-swap flags, and command-specific payload.
++ * Registers cSHAKE-128 and cSHAKE-256 as ahash algorithms using the
++ * CMH Hash Core (HC) via HC_CMD_CSHAKE.
 + *
-+ * RSA commands always use PKE_SWAP_FLAGS (VCQ_FLAG_SWAP_BYTES |
-+ * VCQ_FLAG_SWAP_WORDS).  EC Weierstrass curves (NIST P-*, Brainpool,
-+ * secp256k1, SM2) use PKE_SWAP_FLAGS; Edwards curves (25519, 448)
-+ * use no swap flags.  SM2 commands use per-command flags documented
-+ * in the eSW ABI.
++ * CSHAKE (NIST SP 800-185) extends SHAKE with two domain separation
++ * parameters: function name N and customization string S.  When both
++ * are empty, cSHAKE reduces to plain SHAKE -- the driver falls back to
++ * HC_CMD_INIT in that case (per SP 800-185 S6.2).
 + *
-+ * Callers combine these with vcq_set_header() + vcq_add_flush()
-+ * and submit via cmh_tm_submit_sync().
-+ */
-+
-+#include <linux/string.h>
-+
-+#include "cmh_pke.h"
-+
-+/**
-+ * vcq_add_pke_flush() - Add a PKE flush command to a VCQ slot
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
++ * N and S are set via .setkey() using a self-describing binary header
++ * (matching the upstream authenc precedent):
 + *
-+ * Populates @slot with a flush command for the specified PKE core.
-+ */
-+void vcq_add_pke_flush(struct vcq_cmd *slot, u32 core_id)
-+{
-+	vcq_add_flush(slot, core_id);
-+}
-+
-+/* RSA */
-+
-+/**
-+ * vcq_add_pke_rsa_enc() - Build a VCQ command for RSA public-key encryption
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @bits: RSA key size in bits
-+ * @e_len: Length of the public exponent in bytes
-+ * @e_dma: DMA address of public exponent buffer
-+ * @n_dma: DMA address of modulus buffer
-+ * @m_dma: DMA address of plaintext message buffer
-+ * @c_dma: DMA address of ciphertext output buffer
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_rsa_enc(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			 u64 e_dma, u64 n_dma, u64 m_dma, u64 c_dma,
-+			 u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_RSA_ENC);
-+	slot->hwc.pke.cmd_rsa_enc.bits = bits;
-+	slot->hwc.pke.cmd_rsa_enc.e_len = e_len;
-+	slot->hwc.pke.cmd_rsa_enc.e = e_dma;
-+	slot->hwc.pke.cmd_rsa_enc.n = n_dma;
-+	slot->hwc.pke.cmd_rsa_enc.m = m_dma;
-+	slot->hwc.pke.cmd_rsa_enc.c = c_dma;
-+}
-+
-+/**
-+ * vcq_add_pke_rsa_dec() - Build a VCQ command for RSA private-key decryption
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @bits: RSA key size in bits
-+ * @e_len: Length of the public exponent in bytes
-+ * @e_dma: DMA address of public exponent buffer
-+ * @n_dma: DMA address of modulus buffer
-+ * @c_dma: DMA address of ciphertext input buffer
-+ * @m_dma: DMA address of plaintext output buffer
-+ * @d_ref: Datastore reference for the private exponent
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_rsa_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			 u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
-+			 u64 d_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_RSA_DEC);
-+	slot->hwc.pke.cmd_rsa_dec.bits = bits;
-+	slot->hwc.pke.cmd_rsa_dec.e_len = e_len;
-+	slot->hwc.pke.cmd_rsa_dec.e = e_dma;
-+	slot->hwc.pke.cmd_rsa_dec.n = n_dma;
-+	slot->hwc.pke.cmd_rsa_dec.c = c_dma;
-+	slot->hwc.pke.cmd_rsa_dec.m = m_dma;
-+	slot->hwc.pke.cmd_rsa_dec.d = d_ref;
-+}
-+
-+/**
-+ * vcq_add_pke_rsa_crt_dec() - Build a VCQ command for RSA-CRT decryption
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @bits: RSA key size in bits
-+ * @e_len: Length of the public exponent in bytes
-+ * @e_dma: DMA address of public exponent buffer
-+ * @n_dma: DMA address of modulus buffer
-+ * @c_dma: DMA address of ciphertext input buffer
-+ * @m_dma: DMA address of plaintext output buffer
-+ * @crt_ref: Datastore reference for CRT private key components
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_rsa_crt_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
-+			     u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
-+			     u64 crt_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_RSA_CRT_DEC);
-+	slot->hwc.pke.cmd_rsa_crt_dec.bits = bits;
-+	slot->hwc.pke.cmd_rsa_crt_dec.e_len = e_len;
-+	slot->hwc.pke.cmd_rsa_crt_dec.e = e_dma;
-+	slot->hwc.pke.cmd_rsa_crt_dec.n = n_dma;
-+	slot->hwc.pke.cmd_rsa_crt_dec.c = c_dma;
-+	slot->hwc.pke.cmd_rsa_crt_dec.m = m_dma;
-+	slot->hwc.pke.cmd_rsa_crt_dec.crt = crt_ref;
-+}
-+
-+/* ECDSA */
-+
-+/**
-+ * vcq_add_pke_ecdsa_verify() - Build a VCQ command for ECDSA signature verification
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521)
-+ * @dlen: Digest length in bytes
-+ * @pk_dma: DMA address of public key buffer
-+ * @dig_dma: DMA address of digest buffer
-+ * @sig_dma: DMA address of signature buffer
-+ * @rp_dma: DMA address of r-prime verification output buffer
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_ecdsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
-+			      u64 pk_dma, u64 dig_dma, u64 sig_dma,
-+			      u64 rp_dma, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDSA_VERIFY);
-+	slot->hwc.pke.cmd_ecdsa_verify.curve = curve;
-+	slot->hwc.pke.cmd_ecdsa_verify.digest_len = dlen;
-+	slot->hwc.pke.cmd_ecdsa_verify.public_key = pk_dma;
-+	slot->hwc.pke.cmd_ecdsa_verify.digest = dig_dma;
-+	slot->hwc.pke.cmd_ecdsa_verify.signature = sig_dma;
-+	slot->hwc.pke.cmd_ecdsa_verify.rprime = rp_dma;
-+}
-+
-+/**
-+ * vcq_add_pke_ecdsa_sign() - Build a VCQ command for ECDSA signing
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521)
-+ * @sklen: Secret key length in bytes
-+ * @dig_dma: DMA address of digest buffer
-+ * @sig_dma: DMA address of signature output buffer
-+ * @sk_ref: Datastore reference for the secret key
-+ * @dlen: Digest length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_ecdsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
-+			    u32 dlen, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDSA_SIGN);
-+	slot->hwc.pke.cmd_ecdsa_sign.curve = curve;
-+	slot->hwc.pke.cmd_ecdsa_sign.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_ecdsa_sign.digest = dig_dma;
-+	slot->hwc.pke.cmd_ecdsa_sign.signature = sig_dma;
-+	slot->hwc.pke.cmd_ecdsa_sign.secret_key = sk_ref;
-+	slot->hwc.pke.cmd_ecdsa_sign.digest_len = dlen;
-+}
-+
-+/**
-+ * vcq_add_pke_ecdsa_pubgen() - Build a VCQ command for ECDSA public key generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521)
-+ * @sklen: Secret key length in bytes
-+ * @pk_dma: DMA address of public key output buffer
-+ * @sk_ref: Datastore reference for the secret key
-+ * @flags: VCQ command flags
++ *   struct cshake_cfg { __be32 n_len; __be32 s_len; };
++ *   setkey blob: cshake_cfg || N[n_len] || S[s_len]
 + *
-+ * Generates the public key from an existing private key stored in the
-+ * datastore.
-+ */
-+void vcq_add_pke_ecdsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 pk_dma, u64 sk_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDSA_PUBGEN);
-+	slot->hwc.pke.cmd_ecdsa_pubgen.curve = curve;
-+	slot->hwc.pke.cmd_ecdsa_pubgen.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_ecdsa_pubgen.public_key = pk_dma;
-+	slot->hwc.pke.cmd_ecdsa_pubgen.secret_key = sk_ref;
-+}
-+
-+/**
-+ * vcq_add_pke_ecdsa_keygen() - Build a VCQ command for ECDSA key pair generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521)
-+ * @sklen: Secret key length in bytes
-+ * @sk_ref: Datastore reference for the generated secret key
-+ * @sk_type: Datastore type for the secret key object
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_ecdsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 sk_ref, u32 sk_type, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDSA_KEYGEN);
-+	slot->hwc.pke.cmd_ecdsa_keygen.curve = curve;
-+	slot->hwc.pke.cmd_ecdsa_keygen.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_ecdsa_keygen.secret_key = sk_ref;
-+	slot->hwc.pke.cmd_ecdsa_keygen.secret_key_type = sk_type;
-+}
-+
-+/* ECDH */
-+
-+/**
-+ * vcq_add_pke_ecdh_keygen() - Build a VCQ command for ECDH key pair generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521, X25519, X448)
-+ * @sklen: Secret key length in bytes
-+ * @pkx_dma: DMA address of public key X-coordinate output buffer
-+ * @sk_ref: Datastore reference for the generated secret key
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			     u64 pkx_dma, u64 sk_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDH_KEYGEN);
-+	slot->hwc.pke.cmd_ecdh_keygen.curve = curve;
-+	slot->hwc.pke.cmd_ecdh_keygen.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_ecdh_keygen.public_key_x = pkx_dma;
-+	slot->hwc.pke.cmd_ecdh_keygen.secret_key = sk_ref;
-+}
-+
-+/**
-+ * vcq_add_pke_ecdh() - Build a VCQ command for ECDH shared secret computation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (e.g. NIST P-256, P-384, P-521, X25519, X448)
-+ * @sklen: Secret key length in bytes
-+ * @sslen: Shared secret length in bytes
-+ * @ss_type: Datastore type for the shared secret object
-+ * @peer_dma: DMA address of peer public key buffer
-+ * @sk_ref: Datastore reference for the local secret key
-+ * @ss_ref: Datastore reference for the computed shared secret
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_ecdh(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+		      u32 sslen, u32 ss_type, u64 peer_dma, u64 sk_ref,
-+		      u64 ss_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_ECDH);
-+	slot->hwc.pke.cmd_ecdh.curve = curve;
-+	slot->hwc.pke.cmd_ecdh.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_ecdh.shared_secret_len = sslen;
-+	slot->hwc.pke.cmd_ecdh.shared_secret_type = ss_type;
-+	slot->hwc.pke.cmd_ecdh.peer_key_x = peer_dma;
-+	slot->hwc.pke.cmd_ecdh.secret_key = sk_ref;
-+	slot->hwc.pke.cmd_ecdh.shared_secret = ss_ref;
-+}
-+
-+/* EdDSA */
-+
-+/**
-+ * vcq_add_pke_eddsa_verify() - Build a VCQ command for EdDSA signature verification
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (Ed25519 or Ed448)
-+ * @dlen: Digest (message) length in bytes
-+ * @pky_dma: DMA address of public key Y-coordinate buffer
-+ * @dig_dma: DMA address of digest buffer
-+ * @sig_dma: DMA address of signature buffer
-+ * @rp_dma: DMA address of r-prime verification output buffer
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_eddsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
-+			      u64 pky_dma, u64 dig_dma, u64 sig_dma,
-+			      u64 rp_dma, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_EDDSA_VERIFY);
-+	slot->hwc.pke.cmd_eddsa_verify.curve = curve;
-+	slot->hwc.pke.cmd_eddsa_verify.digest_len = dlen;
-+	slot->hwc.pke.cmd_eddsa_verify.public_key_y = pky_dma;
-+	slot->hwc.pke.cmd_eddsa_verify.digest = dig_dma;
-+	slot->hwc.pke.cmd_eddsa_verify.signature = sig_dma;
-+	slot->hwc.pke.cmd_eddsa_verify.rprime = rp_dma;
-+}
-+
-+/**
-+ * vcq_add_pke_eddsa_sign() - Build a VCQ command for EdDSA signing
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (Ed25519 or Ed448)
-+ * @sklen: Secret key length in bytes
-+ * @dig_dma: DMA address of digest (message) buffer
-+ * @sig_dma: DMA address of signature output buffer
-+ * @sk_ref: Datastore reference for the secret key
-+ * @dlen: Digest (message) length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_eddsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
-+			    u32 dlen, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_EDDSA_SIGN);
-+	slot->hwc.pke.cmd_eddsa_sign.curve = curve;
-+	slot->hwc.pke.cmd_eddsa_sign.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_eddsa_sign.digest = dig_dma;
-+	slot->hwc.pke.cmd_eddsa_sign.signature = sig_dma;
-+	slot->hwc.pke.cmd_eddsa_sign.secret_key = sk_ref;
-+	slot->hwc.pke.cmd_eddsa_sign.digest_len = dlen;
-+}
-+
-+/**
-+ * vcq_add_pke_eddsa_pubgen() - Build a VCQ command for EdDSA public key generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (Ed25519 or Ed448)
-+ * @sklen: Secret key length in bytes
-+ * @pky_dma: DMA address of public key Y-coordinate output buffer
-+ * @sk_ref: Datastore reference for the secret key
-+ * @flags: VCQ command flags
++ * If .setkey() is never called, the driver defaults to plain SHAKE
++ * (N="" S="").  .setkey() is per-tfm, not per-request.
 + *
-+ * Generates the public key from an existing private key stored in the
-+ * datastore.
-+ */
-+void vcq_add_pke_eddsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
-+			      u64 pky_dma, u64 sk_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_EDDSA_PUBGEN);
-+	slot->hwc.pke.cmd_eddsa_pubgen.curve = curve;
-+	slot->hwc.pke.cmd_eddsa_pubgen.secret_key_len = sklen;
-+	slot->hwc.pke.cmd_eddsa_pubgen.public_key_y = pky_dma;
-+	slot->hwc.pke.cmd_eddsa_pubgen.secret_key = sk_ref;
-+}
-+
-+/**
-+ * vcq_add_pke_eddsa_keygen_sca() - Build a VCQ command for EdDSA SCA key generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @curve: Curve identifier (Ed448)
-+ * @sk_ref: Datastore reference for the input secret key
-+ * @sca_sk_ref: Datastore reference for the SCA-masked output key
++ * N is embedded inline in the HC_CMD_CSHAKE struct (max 36 bytes).
++ * S is passed as VCQ inline data following the command slot (multi-span).
 + *
-+ * Blinds an Ed448 private key into a side-channel-protected masked
-+ * form.  No byte-swap flags are used (CRI reference uses flags=0).
-+ */
-+void vcq_add_pke_eddsa_keygen_sca(struct vcq_cmd *slot, u32 core_id, u32 curve,
-+				  u64 sk_ref, u64 sca_sk_ref)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, 0, 1,
-+			      PKE_CMD_EDDSA_PRIV_KEYGEN_SCA);
-+	slot->hwc.pke.cmd_eddsa_keygen_sca.curve = curve;
-+	slot->hwc.pke.cmd_eddsa_keygen_sca.secret_key = sk_ref;
-+	slot->hwc.pke.cmd_eddsa_keygen_sca.sca_secret_key = sca_sk_ref;
-+}
-+
-+/* SM2 */
-+
-+/**
-+ * vcq_add_pke_sm2_ecdh_keygen() - Build a VCQ command for SM2 ECDH ephemeral key generation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @nonce_dma: DMA address of nonce input buffer
-+ * @session_key_dma: DMA address of session key output buffer
-+ * @nonce_len: Nonce length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
-+				 u64 session_key_dma, u32 nonce_len, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1,
-+			      PKE_CMD_SM2_ECDH_KEYGEN);
-+	slot->hwc.pke.cmd_sm2_ecdh_keygen.nonce = nonce_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh_keygen.session_key = session_key_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh_keygen.nonce_len = nonce_len;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_ecdh() - Build a VCQ command for SM2 ECDH shared secret computation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @nonce_len: Nonce length in bytes
-+ * @private_key_len: Private key length in bytes
-+ * @nonce_dma: DMA address of nonce buffer
-+ * @peer_pk_dma: DMA address of peer public key buffer
-+ * @peer_sk_dma: DMA address of peer session key buffer
-+ * @priv_ref: Datastore reference for the local private key
-+ * @sp_ref: Datastore reference for the shared point output
-+ * @sp_type: Datastore type for the shared point object
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_ecdh(struct vcq_cmd *slot, u32 core_id, u32 nonce_len,
-+			  u32 private_key_len, u64 nonce_dma,
-+			  u64 peer_pk_dma, u64 peer_sk_dma,
-+			  u64 priv_ref, u64 sp_ref, u32 sp_type, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_ECDH);
-+	slot->hwc.pke.cmd_sm2_ecdh.nonce_len = nonce_len;
-+	slot->hwc.pke.cmd_sm2_ecdh.private_key_len = private_key_len;
-+	slot->hwc.pke.cmd_sm2_ecdh.nonce = nonce_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh.peer_public_key = peer_pk_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh.peer_session_key = peer_sk_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh.private_key = priv_ref;
-+	slot->hwc.pke.cmd_sm2_ecdh.shared_point = sp_ref;
-+	slot->hwc.pke.cmd_sm2_ecdh.shared_point_type = sp_type;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_dec_point() - Build a VCQ command for SM2 decryption point multiplication
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @ct_len: Ciphertext length in bytes
-+ * @pk_len: Private key length in bytes
-+ * @ct_dma: DMA address of ciphertext input buffer
-+ * @dp_dma: DMA address of decryption point output buffer
-+ * @priv_ref: Datastore reference for the private key
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_dec_point(struct vcq_cmd *slot, u32 core_id, u32 ct_len,
-+			       u32 pk_len, u64 ct_dma, u64 dp_dma,
-+			       u64 priv_ref, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_DEC_POINT);
-+	slot->hwc.pke.cmd_sm2_dec_point.ciphertext_len = ct_len;
-+	slot->hwc.pke.cmd_sm2_dec_point.private_key_len = pk_len;
-+	slot->hwc.pke.cmd_sm2_dec_point.ciphertext = ct_dma;
-+	slot->hwc.pke.cmd_sm2_dec_point.dec_point = dp_dma;
-+	slot->hwc.pke.cmd_sm2_dec_point.private_key = priv_ref;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_enc_point() - Build a VCQ command for SM2 encryption point multiplication
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @nonce_dma: DMA address of nonce buffer
-+ * @pk_dma: DMA address of public key buffer
-+ * @ct_dma: DMA address of ciphertext header output buffer
-+ * @ep_dma: DMA address of encryption point output buffer
-+ * @nonce_len: Nonce length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_enc_point(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
-+			       u64 pk_dma, u64 ct_dma, u64 ep_dma,
-+			       u32 nonce_len, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_ENC_POINT);
-+	slot->hwc.pke.cmd_sm2_enc_point.nonce = nonce_dma;
-+	slot->hwc.pke.cmd_sm2_enc_point.public_key = pk_dma;
-+	slot->hwc.pke.cmd_sm2_enc_point.ciphertext = ct_dma;
-+	slot->hwc.pke.cmd_sm2_enc_point.enc_point = ep_dma;
-+	slot->hwc.pke.cmd_sm2_enc_point.nonce_len = nonce_len;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_id_digest() - Build a VCQ command for SM2 identity digest computation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @id_dma: DMA address of identity string buffer
-+ * @pk_dma: DMA address of public key buffer
-+ * @dig_dma: DMA address of digest output buffer
-+ * @id_len: Identity string length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_id_digest(struct vcq_cmd *slot, u32 core_id, u64 id_dma,
-+			       u64 pk_dma, u64 dig_dma, u32 id_len,
-+			       u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_ID_DIGEST);
-+	slot->hwc.pke.cmd_sm2_id_digest.id = id_dma;
-+	slot->hwc.pke.cmd_sm2_id_digest.public_key = pk_dma;
-+	slot->hwc.pke.cmd_sm2_id_digest.digest = dig_dma;
-+	slot->hwc.pke.cmd_sm2_id_digest.id_len = id_len;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_ecdh_hash() - Build a VCQ command for SM2 ECDH key derivation hash
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @peer_dig_dma: DMA address of peer identity digest buffer
-+ * @dig_dma: DMA address of local identity digest buffer
-+ * @sp_ref: Datastore reference for the shared point
-+ * @sk_ref: Datastore reference for the derived shared key output
-+ * @sk_type: Datastore type for the shared key object
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_ecdh_hash(struct vcq_cmd *slot, u32 core_id, u64 peer_dig_dma,
-+			       u64 dig_dma, u64 sp_ref, u64 sk_ref,
-+			       u32 sk_type, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_ECDH_HASH);
-+	slot->hwc.pke.cmd_sm2_ecdh_hash.peer_id_digest = peer_dig_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh_hash.id_digest = dig_dma;
-+	slot->hwc.pke.cmd_sm2_ecdh_hash.shared_point = sp_ref;
-+	slot->hwc.pke.cmd_sm2_ecdh_hash.shared_key = sk_ref;
-+	slot->hwc.pke.cmd_sm2_ecdh_hash.shared_key_type = sk_type;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_dec_hash() - Build a VCQ command for SM2 decryption hash verification
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @ct_dma: DMA address of ciphertext input buffer
-+ * @dp_dma: DMA address of decryption point buffer
-+ * @pt_dma: DMA address of plaintext output buffer
-+ * @ct_len: Ciphertext length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_dec_hash(struct vcq_cmd *slot, u32 core_id, u64 ct_dma,
-+			      u64 dp_dma, u64 pt_dma, u32 ct_len, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_DEC_HASH);
-+	slot->hwc.pke.cmd_sm2_dec_hash.ciphertext = ct_dma;
-+	slot->hwc.pke.cmd_sm2_dec_hash.dec_point = dp_dma;
-+	slot->hwc.pke.cmd_sm2_dec_hash.plaintext = pt_dma;
-+	slot->hwc.pke.cmd_sm2_dec_hash.ciphertext_len = ct_len;
-+}
-+
-+/**
-+ * vcq_add_pke_sm2_enc_hash() - Build a VCQ command for SM2 encryption hash computation
-+ * @slot: VCQ command slot to populate
-+ * @core_id: PKE hardware core ID
-+ * @msg_dma: DMA address of plaintext message buffer
-+ * @ep_dma: DMA address of encryption point buffer
-+ * @ct_dma: DMA address of ciphertext output buffer
-+ * @msg_len: Message length in bytes
-+ * @flags: VCQ command flags
-+ */
-+void vcq_add_pke_sm2_enc_hash(struct vcq_cmd *slot, u32 core_id, u64 msg_dma,
-+			      u64 ep_dma, u64 ct_dma, u32 msg_len, u32 flags)
-+{
-+	memset(slot, 0, sizeof(*slot));
-+	slot->magic = VCQ_CMD_MAGIC;
-+	slot->id = VCQ_CMD_ID(core_id, flags, 1, PKE_CMD_SM2_ENC_HASH);
-+	slot->hwc.pke.cmd_sm2_enc_hash.message = msg_dma;
-+	slot->hwc.pke.cmd_sm2_enc_hash.enc_point = ep_dma;
-+	slot->hwc.pke.cmd_sm2_enc_hash.ciphertext = ct_dma;
-+	slot->hwc.pke.cmd_sm2_enc_hash.message_len = msg_len;
-+}
-diff --git a/drivers/crypto/cmh/cmh_pke_rsa.c b/drivers/crypto/cmh/cmh_pke_rsa.c
-new file mode 100644
-index 000000000000..251ae8275865
---- /dev/null
-+++ b/drivers/crypto/cmh/cmh_pke_rsa.c
-@@ -0,0 +1,644 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- RSA akcipher Driver
++ * Uses the same streaming transaction model as cmh_hash.c.  cSHAKE is a
++ * sponge XOF, so cra_blocksize is 1 (the Keccak rate 168/136 exceeds
++ * MAX_ALGAPI_BLOCKSIZE).  With CRYPTO_AHASH_ALG_BLOCK_ONLY and blocksize
++ * 1 the Crypto API holds nothing back: .update() absorbs the whole
++ * chunk and the HC core buffers any sub-rate remainder in its SAVEd
++ * context across SAVE/RESTORE, so cSHAKE hashes and clones at any length
++ * with bounded kernel memory.
++ *   .init()   -> software-only
++ *   .update() -> [first: CSHAKE(+S) | resume: CSHAKE(+S)/INIT + RESTORE]
++ *                + UPDATE(all data) + SAVE + FLUSH
++ *   .finup()  -> [first: CSHAKE(+S) | resume: CSHAKE(+S)/INIT + RESTORE]
++ *                [+ UPDATE(residual)] + FINAL + FLUSH (also serves .final)
++ *   .export()/.import() -> serialise the HC checkpoint only;
++ *                the API appends its own partial-block buffer
 + *
-+ * Registers "rsa" akcipher algorithm with the Linux crypto subsystem
-+ * (priority 300, overrides software rsa-generic at 100).
++ * The cSHAKE prefix (function name N, customization string S) is
++ * absorbed once by HC_CMD_CSHAKE on the first submission (bytepad-ded to
++ * a full rate block, so message absorption stays rate-aligned) and is
++ * carried thereafter in the SAVEd sponge state; resume re-establishes
++ * the mode (CSHAKE for keyed N/S, INIT for plain SHAKE) before
++ * HC_CMD_RESTORE.  The HC core supports HC_CMD_SAVE / HC_CMD_RESTORE for
++ * SHAKE/cSHAKE (outlen stays 0, unlike KMAC), which is what enables both
++ * streaming and transform cloning.  This is an sg-only driver (no
++ * CRYPTO_ALG_REQ_VIRT): BLOCK_ONLY buffer prepending assumes scatterlists.
 + *
-+ * Raw RSA operations only (m^e mod n / c^d mod n).  The kernel's
-+ * pkcs1pad() template wraps this for PKCS#1 v1.5 / PSS / OAEP.
-+ *
-+ * Key format: DER-encoded ASN.1, parsed by kernel rsa_parse_pub_key()
-+ * / rsa_parse_priv_key() helpers.
-+ *
-+ * Private key via cmh_key_ctx: raw keys written via SYS_REF_TEMP.
-+ * Datastore-referenced keys are only reachable through the ioctl
-+ * path (cmh_mgmt.c).
++ * .setkey() here configures public domain-separation parameters (N, S),
++ * not a secret key.
 + */
 +
 +#include <linux/module.h>
 +#include <linux/kernel.h>
-+#include <linux/slab.h>
++#include <linux/crypto.h>
++#include <crypto/internal/hash.h>
++#include <crypto/scatterwalk.h>
 +#include <linux/scatterlist.h>
-+#include <crypto/akcipher.h>
-+#include <crypto/internal/akcipher.h>
-+#include <crypto/internal/rsa.h>
++#include <linux/slab.h>
++#include <linux/string.h>
++#include <asm/byteorder.h>
 +
-+#include "cmh_pke.h"
-+#include "cmh_sys.h"
++#include "cmh_cshake.h"
++#include "cmh_vcq.h"
++#include "cmh_hc_abi.h"
++#include "cmh_txn.h"
++#include "cmh_dma.h"
++
++/* Algorithm Table */
++
++struct cmh_cshake_alg_info {
++	u32         hc_algo;
++	u32         digest_size;
++	u32         block_size;   /* cra_blocksize (XOF: 1) */
++	const char *alg_name;
++	const char *drv_name;
++};
++
++static const struct cmh_cshake_alg_info cmh_cshake_algs_info[] = {
++	{
++		.hc_algo     = HC_ALGO_SHAKE128,
++		.digest_size = CMH_SHAKE128_DIGEST_SIZE,
++		.block_size  = 1,   /* XOF */
++		.alg_name    = "cshake128",
++		.drv_name    = "rambus-cmh-cshake128",
++	},
++	{
++		.hc_algo     = HC_ALGO_SHAKE256,
++		.digest_size = CMH_SHAKE256_DIGEST_SIZE,
++		.block_size  = 1,   /* XOF */
++		.alg_name    = "cshake256",
++		.drv_name    = "rambus-cmh-cshake256",
++	},
++};
++
++#define CMH_CSHAKE_ALG_COUNT  ARRAY_SIZE(cmh_cshake_algs_info)
++
++/* Per-Request State */
++
++/*
++ * Max payload slots for a streaming cSHAKE transaction.  Worst case is a
++ * resume with the largest customization string:
++ *   CSHAKE (1) + inline S (4) + RESTORE (1) + UPDATE (1) + SAVE/FINAL (1)
++ *   + FLUSH (1) = 9
++ */
++#define CMH_CSHAKE_MAX_PAYLOAD   9
++#define CMH_CSHAKE_MAX_PACKED    (CMH_CSHAKE_MAX_PAYLOAD * 2)
++
++/* Fail the build if a large customization string would overflow cmds[]. */
++static_assert(CMH_CSHAKE_MAX_PAYLOAD >=
++	      1 + DIV_ROUND_UP(HC_CSHAKE_MAX_CUSTOMLEN,
++			       sizeof(struct vcq_cmd)) + 4);
++
++/*
++ * Exported request state (statesize): the HC checkpoint from the last
++ * SAVE.  The Crypto API appends its own partial-block buffer.  Mirrors
++ * the unkeyed hash driver so cSHAKE streams and clones at any length.
++ */
++struct cmh_cshake_export_state {
++	u8  checkpoint[HC_CONTEXT_SIZE];
++	u32 hw_started;
++};
++
++/*
++ * Stored in ahash_request_ctx().  The checkpoint is embedded inline
++ * (not heap): the kernel ahash API has no per-request destructor, so an
++ * abandoned request must not leak.
++ *
++ * Mapping the inline checkpoint for DMA is safe even on non-coherent
++ * platforms: it is only ever mapped DMA_TO_DEVICE and its bytes are
++ * frozen from dma_map_single() until the matching unmap (it is written
++ * solely in the completion, after the unmap).  CPU writes to adjacent
++ * fields sharing a cacheline never alter the checkpoint bytes, and a
++ * TO_DEVICE unmap performs no cache invalidate; the shared-cacheline
++ * hazard applies only to FROM_DEVICE buffers, which are kmalloc'd.
++ */
++struct cmh_cshake_reqctx {
++	const struct cmh_cshake_alg_info *info;
++	int    error;
++	u32    hw_started;      /* non-zero after first HW submission */
++	u32    has_checkpoint;  /* non-zero if checkpoint[] valid */
++	u32    update_remainder; /* sub-block bytes the API must re-buffer */
++	/* DMA state for the current async operation */
++	dma_addr_t ckpt_dma;   /* RESTORE input */
++	dma_addr_t save_dma;   /* SAVE output (update only) */
++	dma_addr_t data_dma;   /* UPDATE input */
++	dma_addr_t digest_dma; /* FINAL output (final/digest only) */
++	u8    *save_buf;
++	u8    *data_buf;
++	u32    data_len;
++	u8    *digest_buf;
++	u8     checkpoint[HC_CONTEXT_SIZE];  /* HC context from last SAVE */
++	struct vcq_cmd packed[CMH_CSHAKE_MAX_PACKED];
++};
++
++/* Per-Transform State (carries N and S across requests) */
++
++struct cmh_cshake_tfm_ctx {
++	u8  *func_name;     /* N (function name), NULL if empty */
++	u32  func_name_len;
++	u8  *custom;        /* S (customization string), NULL if empty */
++	u32  custom_len;
++};
++
++/* VCQ Builders */
++
++/* VCQ Builders (cSHAKE-specific; shared builders in cmh_hc_abi.h / cmh_vcq.h) */
++
++static void vcq_add_hc_save(struct vcq_cmd *slot, u32 core_id,
++			    u64 output_phys, u32 outlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_SAVE);
++	slot->hwc.hc.cmd_save.output = output_phys;
++	slot->hwc.hc.cmd_save.outlen = outlen;
++}
++
++static void vcq_add_hc_restore(struct vcq_cmd *slot, u32 core_id,
++			       u64 input_phys, u32 inlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_RESTORE);
++	slot->hwc.hc.cmd_restore.input = input_phys;
++	slot->hwc.hc.cmd_restore.inlen = inlen;
++}
++
++static void vcq_add_hc_cshake(struct vcq_cmd *slot, u32 core_id, u32 algo,
++			      const u8 *name, u32 namelen,
++			      u32 customlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_CSHAKE);
++	slot->hwc.hc.cmd_cshake.custom = 0;  /* inline -- CMH eSW reads from next slot(s) */
++	slot->hwc.hc.cmd_cshake.customlen = customlen;
++	slot->hwc.hc.cmd_cshake.algo = algo;
++	slot->hwc.hc.cmd_cshake.namelen = namelen;
++	if (namelen > 0 && name)
++		memcpy(slot->hwc.hc.cmd_cshake.name, name,
++		       min_t(u32, namelen, HC_CSHAKE_MAX_NAMELEN));
++}
++
++/* Add an HC_CMD_UPDATE entry */
++static void vcq_add_hc_update(struct vcq_cmd *slot, u32 core_id, u64 input_phys, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_UPDATE);
++	slot->hwc.hc.cmd_update.input = input_phys;
++	slot->hwc.hc.cmd_update.inlen = len;
++}
++
++/*
++ * Emit the HC prologue that (re-)establishes the sponge mode before an
++ * UPDATE and the trailing SAVE/FINAL:
++ *   cSHAKE (N/S set): CSHAKE [+ inline S]
++ *   plain SHAKE:      INIT
++ * followed by RESTORE when resuming a saved context.  The mode command
++ * is re-issued on resume too: the eSW RESTORE rejects an algo_mode
++ * mismatch, and cSHAKE uses a distinct mode from INIT.  RESTORE then
++ * overwrites the freshly re-absorbed prefix with the saved sponge state.
++ * Returns the next free slot index.
++ */
++static u32 cmh_cshake_emit_prologue(struct vcq_cmd *cmds, u32 idx,
++				    const struct core_dispatch *d,
++				    const struct cmh_cshake_reqctx *rctx,
++				    const struct cmh_cshake_tfm_ctx *tctx,
++				    dma_addr_t ckpt_dma)
++{
++	if (tctx->func_name_len > 0 || tctx->custom_len > 0) {
++		u32 span;
++
++		vcq_add_hc_cshake(&cmds[idx], d->core_id, rctx->info->hc_algo,
++				  tctx->func_name, tctx->func_name_len,
++				  tctx->custom_len);
++		span = vcq_add_inline_data(&cmds[idx], tctx->custom,
++					   tctx->custom_len);
++		idx += span;
++	} else {
++		vcq_add_hc_init(&cmds[idx++], d->core_id, rctx->info->hc_algo);
++	}
++
++	if (rctx->has_checkpoint)
++		vcq_add_hc_restore(&cmds[idx++], d->core_id, (u64)ckpt_dma,
++				   HC_CONTEXT_SIZE);
++
++	return idx;
++}
++
++/* Reset per-request state (no heap held between operations). */
++static void cmh_cshake_free_reqctx(struct cmh_cshake_reqctx *rctx)
++{
++	rctx->has_checkpoint = 0;
++}
++
++/* VCQ Packing + Submit */
++
++/* ahash Operations */
++
++struct cmh_cshake_alg_drv {
++	struct ahash_alg                   alg;
++	const struct cmh_cshake_alg_info  *info;
++};
++
++static const struct cmh_cshake_alg_info *
++cmh_cshake_get_info(struct crypto_ahash *tfm)
++{
++	struct ahash_alg *alg = crypto_ahash_alg(tfm);
++
++	return container_of(alg, struct cmh_cshake_alg_drv, alg)->info;
++}
++
++/*
++ * .setkey() -- parse N and S from the self-describing cshake_cfg header.
++ *
++ * Blob format: cshake_cfg { __be32 n_len; __be32 s_len; } || N || S
++ * If never called, the driver defaults to plain SHAKE (N="" S="").
++ */
++struct cshake_cfg {
++	__be32 n_len;
++	__be32 s_len;
++};
++
++static int cmh_cshake_setkey(struct crypto_ahash *tfm, const u8 *key,
++			     unsigned int keylen)
++{
++	struct cmh_cshake_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cshake_cfg cfg;
++	u32 n_len, s_len;
++	const u8 *ptr;
++
++	if (keylen < sizeof(cfg))
++		return -EINVAL;
++
++	memcpy(&cfg, key, sizeof(cfg));
++	n_len = be32_to_cpu(cfg.n_len);
++	s_len = be32_to_cpu(cfg.s_len);
++
++	if (keylen != sizeof(cfg) + n_len + s_len)
++		return -EINVAL;
++
++	if (n_len > HC_CSHAKE_MAX_NAMELEN)
++		return -EINVAL;
++
++	if (s_len > HC_CSHAKE_MAX_CUSTOMLEN)
++		return -EINVAL;
++
++	/*
++	 * Free previous N and S.  Unlocked against a concurrent .update()/
++	 * .final() that reads them: the crypto API does not issue setkey
++	 * concurrently with an in-flight request on the same tfm, and the
++	 * only frontend that allowed that race (AF_ALG setsockopt vs I/O)
++	 * is not built on this kernel.
++	 */
++	kfree(tctx->func_name);
++	kfree(tctx->custom);
++	tctx->func_name = NULL;
++	tctx->func_name_len = 0;
++	tctx->custom = NULL;
++	tctx->custom_len = 0;
++
++	ptr = key + sizeof(cfg);
++
++	if (n_len > 0) {
++		tctx->func_name = kmemdup(ptr, n_len, GFP_KERNEL);
++		if (!tctx->func_name)
++			return -ENOMEM;
++		tctx->func_name_len = n_len;
++		ptr += n_len;
++	}
++
++	if (s_len > 0) {
++		tctx->custom = kmemdup(ptr, s_len, GFP_KERNEL);
++		if (!tctx->custom) {
++			kfree(tctx->func_name);
++			tctx->func_name = NULL;
++			tctx->func_name_len = 0;
++			return -ENOMEM;
++		}
++		tctx->custom_len = s_len;
++	}
++
++	return 0;
++}
++
++static int cmh_cshake_init(struct ahash_request *req)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++
++	memset(rctx, 0, sizeof(*rctx));
++	rctx->info = cmh_cshake_get_info(tfm);
++
++	return 0;
++}
++
++/*
++ * Update completion -- runs from the threaded IRQ after SAVE.  Takes the
++ * SAVEd context as the new checkpoint.
++ */
++static void cmh_cshake_update_complete(void *data, int error)
++{
++	struct ahash_request *req = data;
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++
++	if (error == -EINPROGRESS) {
++		cmh_complete(&req->base, error);
++		return;
++	}
++
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++	cmh_dma_unmap_single(rctx->save_dma, HC_CONTEXT_SIZE,
++			     DMA_FROM_DEVICE);
++	cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
++			     DMA_TO_DEVICE);
++
++	if (!error) {
++		memcpy(rctx->checkpoint, rctx->save_buf, HC_CONTEXT_SIZE);
++		rctx->has_checkpoint = 1;
++		rctx->hw_started = 1;
++		/* Hand the API the sub-block remainder it must re-buffer. */
++		error = rctx->update_remainder;
++	} else {
++		rctx->error = error;
++	}
++
++	kfree(rctx->save_buf);
++	rctx->save_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	rctx->data_len = 0;
++
++	cmh_complete(&req->base, error);
++}
++
++/*
++ * .update -- absorb the update data in hardware.
++ *
++ * cra_blocksize is 1, so the Crypto API hands over the whole update; it
++ * is submitted as:
++ *   [first: CSHAKE(+S) | resume: CSHAKE(+S)/INIT + RESTORE] + UPDATE +
++ *   SAVE + FLUSH
++ * The HC core buffers any sub-rate remainder into its SAVEd context, so
++ * nothing is held back to the API (the completion returns 0).
++ */
++static int cmh_cshake_update(struct ahash_request *req)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_cshake_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++	struct vcq_cmd cmds[CMH_CSHAKE_MAX_PAYLOAD];
++	struct core_dispatch d;
++	u32 full_len;
++	u32 idx;
++	int ret;
++	gfp_t gfp;
++
++	if (rctx->error)
++		return rctx->error;
++
++	if (!req->nbytes)
++		return 0;
++
++	/* XOF (blocksize 1): absorb everything; HC buffers the sub-rate tail. */
++	full_len = req->nbytes;
++	rctx->update_remainder = 0;
++
++	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++	      GFP_KERNEL : GFP_ATOMIC;
++
++	/*
++	 * Reject a single update whose linearisation would exceed the largest
++	 * kmalloc: return a permanent -EMSGSIZE ("message too long") rather
++	 * than a transient -ENOMEM the client would keep retrying.
++	 */
++	if (full_len > KMALLOC_MAX_SIZE)
++		return -EMSGSIZE;
++
++	rctx->data_buf = kmalloc(full_len, gfp | __GFP_NOWARN);
++	if (!rctx->data_buf)
++		return -ENOMEM;
++
++	scatterwalk_map_and_copy(rctx->data_buf, req->src, 0, full_len, 0);
++
++	rctx->save_buf = kzalloc(HC_CONTEXT_SIZE, gfp);
++	if (!rctx->save_buf) {
++		ret = -ENOMEM;
++		goto err_free;
++	}
++
++	rctx->data_dma = cmh_dma_map_single(rctx->data_buf, full_len,
++					    DMA_TO_DEVICE);
++	if (cmh_dma_map_error(rctx->data_dma)) {
++		ret = -ENOMEM;
++		goto err_free;
++	}
++
++	rctx->save_dma = cmh_dma_map_single(rctx->save_buf, HC_CONTEXT_SIZE,
++					    DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(rctx->save_dma)) {
++		ret = -ENOMEM;
++		goto err_unmap_data;
++	}
++
++	rctx->ckpt_dma = DMA_MAPPING_ERROR;
++	if (rctx->has_checkpoint) {
++		rctx->ckpt_dma = cmh_dma_map_single(rctx->checkpoint,
++						    HC_CONTEXT_SIZE,
++						    DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->ckpt_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_save;
++		}
++	}
++
++	rctx->data_len = full_len;
++
++	d = cmh_core_select_instance(CMH_CORE_HC);
++	idx = cmh_cshake_emit_prologue(cmds, 0, &d, rctx, tctx,
++				       rctx->ckpt_dma);
++
++	vcq_add_hc_update(&cmds[idx++], d.core_id,
++			  (u64)rctx->data_dma, full_len);
++	vcq_add_hc_save(&cmds[idx++], d.core_id,
++			(u64)rctx->save_dma, HC_CONTEXT_SIZE);
++	vcq_add_flush(&cmds[idx++], d.core_id);
++
++	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
++					    CMH_CSHAKE_MAX_PACKED,
++					    d.mbx_idx,
++					    cmh_cshake_update_complete, req,
++					    !!(req->base.flags &
++					       CRYPTO_TFM_REQ_MAY_BACKLOG),
++					    cmh_tm_async_timeout_jiffies());
++	if (ret && ret != -EBUSY)
++		goto err_unmap_ckpt;
++
++	if (ret == -EBUSY)
++		return -EBUSY;
++	return -EINPROGRESS;
++
++err_unmap_ckpt:
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++err_unmap_save:
++	cmh_dma_unmap_single(rctx->save_dma, HC_CONTEXT_SIZE,
++			     DMA_FROM_DEVICE);
++err_unmap_data:
++	cmh_dma_unmap_single(rctx->data_dma, full_len, DMA_TO_DEVICE);
++err_free:
++	kfree(rctx->save_buf);
++	rctx->save_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	rctx->data_len = 0;
++	return ret;
++}
++
++/*
++ * Final completion -- unmap DMA, copy digest, signal done.
++ */
++static void cmh_cshake_final_complete(void *data, int error)
++{
++	struct ahash_request *req = data;
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++
++	if (error == -EINPROGRESS) {
++		cmh_complete(&req->base, error);
++		return;
++	}
++
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++	if (rctx->data_buf)
++		cmh_dma_unmap_single(rctx->data_dma, rctx->data_len,
++				     DMA_TO_DEVICE);
++	cmh_dma_unmap_single(rctx->digest_dma, rctx->info->digest_size,
++			     DMA_FROM_DEVICE);
++
++	if (!error)
++		memcpy(req->result, rctx->digest_buf,
++		       rctx->info->digest_size);
++
++	kfree(rctx->digest_buf);
++	rctx->digest_buf = NULL;
++	kfree(rctx->data_buf);
++	rctx->data_buf = NULL;
++	cmh_cshake_free_reqctx(rctx);
++	cmh_complete(&req->base, error);
++}
++
++/*
++ * Submit the final transaction:
++ *   [first: CSHAKE(+S) | resume: INIT + RESTORE] [+ UPDATE(residual)]
++ *   + FINAL + FLUSH
++ *
++ * @data_buf: linearised residual bytes, or NULL for empty input.
++ *            Ownership transferred -- the callback frees it.
++ */
++static int cmh_cshake_submit_final(struct ahash_request *req,
++				   u8 *data_buf, u32 data_len)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_cshake_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++	const struct cmh_cshake_alg_info *info = rctx->info;
++	struct vcq_cmd cmds[CMH_CSHAKE_MAX_PAYLOAD];
++	struct core_dispatch d;
++	u32 idx;
++	int ret;
++	gfp_t gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++		    GFP_KERNEL : GFP_ATOMIC;
++
++	rctx->data_buf = data_buf;
++	rctx->data_len = data_len;
++
++	rctx->digest_buf = kzalloc(info->digest_size, gfp);
++	if (!rctx->digest_buf) {
++		ret = -ENOMEM;
++		goto err_free_data;
++	}
++
++	rctx->digest_dma = cmh_dma_map_single(rctx->digest_buf,
++					      info->digest_size,
++					      DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(rctx->digest_dma)) {
++		ret = -ENOMEM;
++		goto err_free_digest;
++	}
++
++	rctx->data_dma = DMA_MAPPING_ERROR;
++	if (data_buf && data_len > 0) {
++		rctx->data_dma = cmh_dma_map_single(data_buf, data_len,
++						    DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->data_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_digest;
++		}
++	}
++
++	rctx->ckpt_dma = DMA_MAPPING_ERROR;
++	if (rctx->has_checkpoint) {
++		rctx->ckpt_dma = cmh_dma_map_single(rctx->checkpoint,
++						    HC_CONTEXT_SIZE,
++						    DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rctx->ckpt_dma)) {
++			ret = -ENOMEM;
++			goto err_unmap_data;
++		}
++	}
++
++	d = cmh_core_select_instance(CMH_CORE_HC);
++	idx = cmh_cshake_emit_prologue(cmds, 0, &d, rctx, tctx,
++				       rctx->ckpt_dma);
++
++	if (data_buf && data_len > 0)
++		vcq_add_hc_update(&cmds[idx++], d.core_id,
++				  (u64)rctx->data_dma, data_len);
++
++	vcq_add_hc_final(&cmds[idx++], d.core_id,
++			 (u64)rctx->digest_dma, info->digest_size);
++	vcq_add_flush(&cmds[idx++], d.core_id);
++
++	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
++					    CMH_CSHAKE_MAX_PACKED,
++					    d.mbx_idx,
++					    cmh_cshake_final_complete, req,
++					    !!(req->base.flags &
++					       CRYPTO_TFM_REQ_MAY_BACKLOG),
++					    cmh_tm_async_timeout_jiffies());
++	if (ret == -EBUSY)
++		return -EBUSY;
++	if (ret)
++		goto err_unmap_ckpt;
++
++	return -EINPROGRESS;
++
++err_unmap_ckpt:
++	if (rctx->has_checkpoint)
++		cmh_dma_unmap_single(rctx->ckpt_dma, HC_CONTEXT_SIZE,
++				     DMA_TO_DEVICE);
++err_unmap_data:
++	if (data_buf && data_len > 0)
++		cmh_dma_unmap_single(rctx->data_dma, data_len,
++				     DMA_TO_DEVICE);
++err_unmap_digest:
++	cmh_dma_unmap_single(rctx->digest_dma, info->digest_size,
++			     DMA_FROM_DEVICE);
++err_free_digest:
++	kfree(rctx->digest_buf);
++	rctx->digest_buf = NULL;
++err_free_data:
++	kfree(data_buf);
++	rctx->data_buf = NULL;
++	/*
++	 * Preserve the HC checkpoint on failure: a synchronous rejection is
++	 * retryable, and for a terminal error the inline checkpoint is freed
++	 * with the request context, so it never leaks.  It is cleared only in
++	 * the completion after a successful final().
++	 */
++	return ret;
++}
++
++/*
++ * .finup -- hash any remaining data and finalise in one transaction.
++ * With BLOCK_ONLY the Crypto API prepends the bytes it held back, so
++ * req->src already carries the full tail.  Also serves .final (nbytes
++ * == 0).  Avoids ahash_def_finup(), which would clone via export/import.
++ */
++static int cmh_cshake_finup(struct ahash_request *req)
++{
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++	u32 data_len = req->nbytes;
++	u8 *data_buf = NULL;
++	gfp_t gfp;
++
++	if (rctx->error)
++		return rctx->error;
++
++	if (data_len == 0)
++		return cmh_cshake_submit_final(req, NULL, 0);
++
++	/* Reject an oversized linearisation with a permanent -EMSGSIZE. */
++	if (data_len > KMALLOC_MAX_SIZE)
++		return -EMSGSIZE;
++
++	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++	      GFP_KERNEL : GFP_ATOMIC;
++
++	data_buf = kmalloc(data_len, gfp | __GFP_NOWARN);
++	if (!data_buf)
++		return -ENOMEM;
++
++	scatterwalk_map_and_copy(data_buf, req->src, 0, data_len, 0);
++
++	return cmh_cshake_submit_final(req, data_buf, data_len);
++}
++
++static int cmh_cshake_digest(struct ahash_request *req)
++{
++	int ret;
++
++	ret = cmh_cshake_init(req);
++	if (ret)
++		return ret;
++
++	return cmh_cshake_finup(req);
++}
++
++/*
++ * Export core -- purely software.  Serialise the HC checkpoint (if any);
++ * the Crypto API appends its own partial-block buffer.  The streaming
++ * .update() keeps the checkpoint current after each block.
++ */
++static int cmh_cshake_export(struct ahash_request *req, void *out)
++{
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++	struct cmh_cshake_export_state *state = out;
++
++	/*
++	 * Zero the whole state first: the struct may carry padding, so this
++	 * avoids leaking kernel memory through the ahash export.
++	 */
++	memset(state, 0, sizeof(*state));
++
++	if (rctx->hw_started)
++		memcpy(state->checkpoint, rctx->checkpoint, HC_CONTEXT_SIZE);
++
++	state->hw_started = rctx->hw_started;
++
++	return 0;
++}
++
++/*
++ * Import core -- purely software.  Restore the HC checkpoint; the next
++ * .update()/final op RESTOREs it into HW.  The Crypto API restores its
++ * own partial-block buffer separately.
++ */
++static int cmh_cshake_import(struct ahash_request *req, const void *in)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_cshake_reqctx *rctx = ahash_request_ctx(req);
++	const struct cmh_cshake_export_state *state = in;
++
++	memset(rctx, 0, sizeof(*rctx));
++	rctx->info = cmh_cshake_get_info(tfm);
++
++	rctx->hw_started = state->hw_started;
++
++	if (state->hw_started) {
++		memcpy(rctx->checkpoint, state->checkpoint, HC_CONTEXT_SIZE);
++		rctx->has_checkpoint = 1;
++	}
++
++	return 0;
++}
++
++/* Transform init/exit */
++
++static int cmh_cshake_cra_init(struct crypto_tfm *tfm)
++{
++	struct cmh_cshake_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
++
++	tctx->func_name = NULL;
++	tctx->func_name_len = 0;
++	tctx->custom = NULL;
++	tctx->custom_len = 0;
++	return 0;
++}
++
++static void cmh_cshake_cra_exit(struct crypto_tfm *tfm)
++{
++	struct cmh_cshake_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
++
++	kfree(tctx->func_name);
++	kfree(tctx->custom);
++	tctx->func_name = NULL;
++	tctx->custom = NULL;
++}
++
++/* Registration */
++
++static struct cmh_cshake_alg_drv cmh_cshake_drvs[CMH_CSHAKE_ALG_COUNT];
++
++/**
++ * cmh_cshake_register() - Register cSHAKE-128/256 hash algorithms with the crypto framework
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_cshake_register(void)
++{
++	unsigned int i;
++	int ret;
++
++	if (!cmh_core_present(CMH_CORE_HC))
++		return 0;
++
++	for (i = 0; i < CMH_CSHAKE_ALG_COUNT; i++) {
++		const struct cmh_cshake_alg_info *info =
++			&cmh_cshake_algs_info[i];
++		struct cmh_cshake_alg_drv *drv = &cmh_cshake_drvs[i];
++		struct ahash_alg *alg = &drv->alg;
++
++		drv->info = info;
++
++		alg->init   = cmh_cshake_init;
++		alg->update = cmh_cshake_update;
++		alg->finup  = cmh_cshake_finup;
++		alg->digest = cmh_cshake_digest;
++		alg->export = cmh_cshake_export;
++		alg->import = cmh_cshake_import;
++		alg->setkey = cmh_cshake_setkey;
++
++		alg->halg.digestsize = info->digest_size;
++		alg->halg.statesize  = sizeof(struct cmh_cshake_export_state);
++
++		strscpy(alg->halg.base.cra_name, info->alg_name,
++			CRYPTO_MAX_ALG_NAME);
++		strscpy(alg->halg.base.cra_driver_name, info->drv_name,
++			CRYPTO_MAX_ALG_NAME);
++		alg->halg.base.cra_priority    = 300;
++		alg->halg.base.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
++						 CRYPTO_ALG_NO_FALLBACK |
++						 CRYPTO_ALG_ASYNC |
++						 CRYPTO_ALG_OPTIONAL_KEY |
++						 CRYPTO_AHASH_ALG_BLOCK_ONLY;
++		alg->halg.base.cra_blocksize   = info->block_size;  /* XOF: 1 */
++		alg->halg.base.cra_ctxsize     = sizeof(struct cmh_cshake_tfm_ctx);
++		alg->halg.base.cra_reqsize     = sizeof(struct cmh_cshake_reqctx);
++		alg->halg.base.cra_init        = cmh_cshake_cra_init;
++		alg->halg.base.cra_exit        = cmh_cshake_cra_exit;
++		alg->halg.base.cra_module      = THIS_MODULE;
++
++		ret = crypto_register_ahash(alg);
++		if (ret) {
++			dev_err(cmh_dev(), "cshake: failed to register %s (rc=%d)\n",
++				info->drv_name, ret);
++			while (i--)
++				crypto_unregister_ahash(&cmh_cshake_drvs[i].alg);
++			return ret;
++		}
++
++		dev_dbg(cmh_dev(), "cshake: registered %s (priority 300)\n",
++			info->drv_name);
++	}
++
++	return 0;
++}
++
++/**
++ * cmh_cshake_unregister() - Unregister cSHAKE hash algorithms from the crypto framework
++ */
++void cmh_cshake_unregister(void)
++{
++	unsigned int i;
++
++	if (!cmh_core_present(CMH_CORE_HC))
++		return;
++
++	for (i = 0; i < CMH_CSHAKE_ALG_COUNT; i++) {
++		crypto_unregister_ahash(&cmh_cshake_drvs[i].alg);
++		dev_dbg(cmh_dev(), "cshake: unregistered %s\n",
++			cmh_cshake_algs_info[i].drv_name);
++	}
++}
+diff --git a/drivers/crypto/cmh/cmh_kmac.c b/drivers/crypto/cmh/cmh_kmac.c
+new file mode 100644
+index 000000000000..97ff36af13a0
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_kmac.c
+@@ -0,0 +1,690 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Kernel Crypto API KMAC Driver
++ *
++ * Registers KMAC-128 and KMAC-256 as keyed ahash algorithms using the
++ * CMH Hash Core (HC) via HC_CMD_KMAC.
++ *
++ * KMAC (NIST SP 800-185) is a keyed variant of cSHAKE.  The function
++ * name N is always "KMAC" (hardcoded by the CMH eSW).  The user sets:
++ *   - A key via .setkey() (raw bytes + optional S)
++ *   - An optional customization string S via the setkey blob
++ *
++ * setkey blob format:
++ *   struct kmac_key_param { __be32 keylen; __be32 s_len; };
++ *   blob: kmac_key_param || key[keylen] || S[s_len]
++ *
++ * Uses the same self-contained transaction model as cmh_hmac.c:
++ *   .setkey() -> store raw key (+ S)
++ *   .init()   -> software-only
++ *   .update() -> software-only (accumulate chunks)
++ *   .final()  -> [SYS_CMD_WRITE] + HC_CMD_KMAC [+ inline S] +
++ *               [GATHER] + FINAL + FLUSH
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/crypto.h>
++#include <crypto/internal/hash.h>
++#include <linux/scatterlist.h>
++#include <linux/list.h>
++#include <linux/slab.h>
++#include <linux/string.h>
++#include <asm/byteorder.h>
++
++#include "cmh_kmac.h"
++#include "cmh_vcq.h"
++#include "cmh_hc_abi.h"
 +#include "cmh_sys_abi.h"
++#include "cmh_sys.h"
 +#include "cmh_txn.h"
 +#include "cmh_dma.h"
 +#include "cmh_key.h"
 +
-+struct cmh_rsa_tfm_ctx {
-+	struct cmh_key_ctx key;		/* private key (raw d only) */
-+	u8 *n;				/* modulus (big-endian) */
-+	u8 *e;				/* public exponent (big-endian) */
-+	size_t n_sz;
-+	size_t e_sz;
-+	u32 bits;			/* key size in bits */
-+};
-+
-+static inline struct cmh_rsa_tfm_ctx *cmh_rsa_ctx(struct crypto_akcipher *tfm)
-+{
-+	return akcipher_tfm_ctx(tfm);
-+}
-+
-+struct cmh_rsa_reqctx {
-+	u8 *e_buf;
-+	u8 *n_buf;
-+	u8 *m_buf;
-+	u8 *c_buf;
-+	dma_addr_t e_dma;
-+	dma_addr_t n_dma;
-+	dma_addr_t m_dma;
-+	dma_addr_t c_dma;
-+	u32 key_bytes;
-+	u32 e_padded;
-+	u32 n_sz;
-+};
-+
-+static u32 cmh_rsa_key_bits(size_t n_sz)
-+{
-+	/*
-+	 * Only accept exact modulus sizes supported by the hardware.
-+	 * The programmed RSA width must match the actual modulus buffer
-+	 * length; rounding a shorter modulus up to the next size would
-+	 * let the device read past the end of the DMA buffer.
-+	 */
-+	switch (n_sz) {
-+	case 64:
-+		return 512;
-+	case 128:
-+		return 1024;
-+	case 256:
-+		return 2048;
-+	case 384:
-+		return 3072;
-+	case 512:
-+		return 4096;
-+	default:
-+		return 0;
-+	}
-+}
-+
-+static void cmh_rsa_enc_complete(void *data, int error)
-+{
-+	struct akcipher_request *req = data;
-+	struct cmh_rsa_reqctx *rctx = akcipher_request_ctx(req);
-+
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	if (!cmh_dma_map_error(rctx->c_dma))
-+		cmh_dma_unmap_single(rctx->c_dma, rctx->key_bytes,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->m_dma))
-+		cmh_dma_unmap_single(rctx->m_dma, rctx->key_bytes,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->n_dma))
-+		cmh_dma_unmap_single(rctx->n_dma, rctx->n_sz,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->e_dma))
-+		cmh_dma_unmap_single(rctx->e_dma, rctx->e_padded,
-+				     DMA_TO_DEVICE);
-+
-+	if (!error) {
-+		int nents;
-+
-+		nents = sg_nents_for_len(req->dst, rctx->key_bytes);
-+		if (nents < 0 ||
-+		    sg_copy_from_buffer(req->dst, nents,
-+					rctx->c_buf,
-+					rctx->key_bytes) != rctx->key_bytes)
-+			error = -EINVAL;
-+		else
-+			req->dst_len = rctx->key_bytes;
-+	}
-+
-+	kfree(rctx->c_buf);
-+	rctx->c_buf = NULL;
-+	kfree_sensitive(rctx->m_buf);
-+	rctx->m_buf = NULL;
-+	kfree(rctx->n_buf);
-+	rctx->n_buf = NULL;
-+	kfree(rctx->e_buf);
-+	rctx->e_buf = NULL;
-+	cmh_complete(&req->base, error);
-+}
-+
 +/*
-+ * RSA encrypt: c = m^e mod n (public key operation)
-+ * Also used for signature verification (verify = encrypt for raw RSA).
-+ */
-+static int cmh_rsa_enc(struct akcipher_request *req)
-+{
-+	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+	struct cmh_rsa_reqctx *rctx = akcipher_request_ctx(req);
-+	u32 key_bytes = ctx->bits / 8;
-+	u32 e_padded = ALIGN(ctx->e_sz, 4);
-+	struct core_dispatch d = cmh_core_select_instance(CMH_CORE_PKE);
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	int ret, nents;
-+	gfp_t gfp;
-+
-+	if (!ctx->n || !ctx->e)
-+		return -EINVAL;
-+	if (req->src_len > key_bytes)
-+		return -EINVAL;
-+	if (req->dst_len < key_bytes) {
-+		req->dst_len = key_bytes;
-+		return -EOVERFLOW;
-+	}
-+
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
-+
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->key_bytes = key_bytes;
-+	rctx->e_padded = e_padded;
-+	rctx->n_sz = ctx->n_sz;
-+	rctx->e_dma = DMA_MAPPING_ERROR;
-+	rctx->n_dma = DMA_MAPPING_ERROR;
-+	rctx->m_dma = DMA_MAPPING_ERROR;
-+	rctx->c_dma = DMA_MAPPING_ERROR;
-+
-+	rctx->e_buf = kzalloc(e_padded, gfp);
-+	rctx->n_buf = kmemdup(ctx->n, ctx->n_sz, gfp);
-+	rctx->m_buf = kzalloc(key_bytes, gfp);
-+	rctx->c_buf = kzalloc(key_bytes, gfp);
-+	if (!rctx->e_buf || !rctx->n_buf || !rctx->m_buf || !rctx->c_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	memcpy(rctx->e_buf + e_padded - ctx->e_sz, ctx->e, ctx->e_sz);
-+
-+	nents = sg_nents_for_len(req->src, req->src_len);
-+	if (nents < 0 ||
-+	    sg_pcopy_to_buffer(req->src, nents,
-+			       rctx->m_buf + key_bytes - req->src_len,
-+			       req->src_len, 0) != req->src_len) {
-+		ret = -EINVAL;
-+		goto out_free;
-+	}
-+
-+	rctx->e_dma = cmh_dma_map_single(rctx->e_buf, e_padded,
-+					 DMA_TO_DEVICE);
-+	rctx->n_dma = cmh_dma_map_single(rctx->n_buf, ctx->n_sz,
-+					 DMA_TO_DEVICE);
-+	rctx->m_dma = cmh_dma_map_single(rctx->m_buf, key_bytes,
-+					 DMA_TO_DEVICE);
-+	rctx->c_dma = cmh_dma_map_single(rctx->c_buf, key_bytes,
-+					 DMA_FROM_DEVICE);
-+
-+	if (cmh_dma_map_error(rctx->e_dma) ||
-+	    cmh_dma_map_error(rctx->n_dma) ||
-+	    cmh_dma_map_error(rctx->m_dma) ||
-+	    cmh_dma_map_error(rctx->c_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_rsa_enc(&vcq[1], d.core_id, ctx->bits, e_padded,
-+			    rctx->e_dma, rctx->n_dma, rctx->m_dma,
-+			    rctx->c_dma, PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[2], d.core_id);
-+
-+	ret = cmh_tm_submit_async(vcq, PKE_VCQ_CMDS_MIN, 1, d.mbx_idx,
-+				  cmh_rsa_enc_complete, req,
-+				  !!(req->base.flags &
-+				     CRYPTO_TFM_REQ_MAY_BACKLOG), 0);
-+	if (ret == -EBUSY)
-+		return -EBUSY;
-+	if (!ret)
-+		return -EINPROGRESS;
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(rctx->c_dma))
-+		cmh_dma_unmap_single(rctx->c_dma, key_bytes,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->m_dma))
-+		cmh_dma_unmap_single(rctx->m_dma, key_bytes,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->n_dma))
-+		cmh_dma_unmap_single(rctx->n_dma, ctx->n_sz,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->e_dma))
-+		cmh_dma_unmap_single(rctx->e_dma, e_padded,
-+				     DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree(rctx->c_buf);
-+	kfree_sensitive(rctx->m_buf);
-+	kfree(rctx->n_buf);
-+	kfree(rctx->e_buf);
-+	return ret;
-+}
-+
-+static void cmh_rsa_dec_complete(void *data, int error)
-+{
-+	struct akcipher_request *req = data;
-+	struct cmh_rsa_reqctx *rctx = akcipher_request_ctx(req);
-+
-+	if (error == -EINPROGRESS) {
-+		cmh_complete(&req->base, error);
-+		return;
-+	}
-+
-+	if (!cmh_dma_map_error(rctx->m_dma))
-+		cmh_dma_unmap_single(rctx->m_dma, rctx->key_bytes,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->c_dma))
-+		cmh_dma_unmap_single(rctx->c_dma, rctx->key_bytes,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->n_dma))
-+		cmh_dma_unmap_single(rctx->n_dma, rctx->n_sz,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->e_dma))
-+		cmh_dma_unmap_single(rctx->e_dma, rctx->e_padded,
-+				     DMA_TO_DEVICE);
-+
-+	if (!error) {
-+		int nents;
-+
-+		nents = sg_nents_for_len(req->dst, rctx->key_bytes);
-+		if (nents < 0 ||
-+		    sg_copy_from_buffer(req->dst, nents,
-+					rctx->m_buf,
-+					rctx->key_bytes) != rctx->key_bytes)
-+			error = -EINVAL;
-+		else
-+			req->dst_len = rctx->key_bytes;
-+	}
-+
-+	kfree_sensitive(rctx->m_buf);
-+	rctx->m_buf = NULL;
-+	kfree(rctx->c_buf);
-+	rctx->c_buf = NULL;
-+	kfree(rctx->n_buf);
-+	rctx->n_buf = NULL;
-+	kfree(rctx->e_buf);
-+	rctx->e_buf = NULL;
-+	cmh_complete(&req->base, error);
-+}
-+
-+/*
-+ * RSA decrypt: m = c^d mod n (private key operation)
-+ * Also used for signing (sign = decrypt for raw RSA).
++ * Maximum data that can be accumulated across .update() calls.
++ * The CMH eSW rejects HC_CMD_SAVE when ctx->outlen != 0, which is
++ * always the case for KMAC (eip59_hc_kmac() sets ctx->outlen for
++ * right_encode(outlen) at finalization).  All data must be buffered
++ * in kernel memory and submitted atomically in .final().
 + *
-+ * Private key 'd' is written via SYS_REF_TEMP inline.
++ * The CMH eSW does not serialize outlen into the external save
++ * context, so HC_CMD_SAVE fails for KMAC mode.
 + */
-+static int cmh_rsa_dec(struct akcipher_request *req)
-+{
-+	struct crypto_akcipher *tfm = crypto_akcipher_reqtfm(req);
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+	struct cmh_rsa_reqctx *rctx = akcipher_request_ctx(req);
-+	u32 key_bytes = ctx->bits / 8;
-+	u32 e_padded = ALIGN(ctx->e_sz, 4);
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MAX];
-+	struct core_dispatch dd;
-+	int ret, idx, nents;
-+	gfp_t gfp;
++#define KMAC_MAX_DATA		(64 * 1024)
 +
-+	if (ctx->key.mode != CMH_KEY_RAW)
-+		return -EINVAL;
-+	if (!ctx->n || !ctx->e)
-+		return -EINVAL;
-+	if (req->src_len > key_bytes)
-+		return -EINVAL;
-+	if (req->dst_len < key_bytes) {
-+		req->dst_len = key_bytes;
-+		return -EOVERFLOW;
-+	}
++/* Algorithm Table */
 +
-+	gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
-+	      GFP_KERNEL : GFP_ATOMIC;
++struct cmh_kmac_alg_info {
++	u32         hc_algo;
++	u32         digest_size;
++	const char *alg_name;
++	const char *drv_name;
++};
 +
-+	memset(rctx, 0, sizeof(*rctx));
-+	rctx->key_bytes = key_bytes;
-+	rctx->e_padded = e_padded;
-+	rctx->n_sz = ctx->n_sz;
-+	rctx->e_dma = DMA_MAPPING_ERROR;
-+	rctx->n_dma = DMA_MAPPING_ERROR;
-+	rctx->m_dma = DMA_MAPPING_ERROR;
-+	rctx->c_dma = DMA_MAPPING_ERROR;
-+
-+	rctx->e_buf = kzalloc(e_padded, gfp);
-+	rctx->n_buf = kmemdup(ctx->n, ctx->n_sz, gfp);
-+	rctx->c_buf = kzalloc(key_bytes, gfp);
-+	rctx->m_buf = kzalloc(key_bytes, gfp);
-+	if (!rctx->e_buf || !rctx->n_buf || !rctx->c_buf || !rctx->m_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	memcpy(rctx->e_buf + e_padded - ctx->e_sz, ctx->e, ctx->e_sz);
-+
-+	nents = sg_nents_for_len(req->src, req->src_len);
-+	if (nents < 0 ||
-+	    sg_pcopy_to_buffer(req->src, nents,
-+			       rctx->c_buf + key_bytes - req->src_len,
-+			       req->src_len, 0) != req->src_len) {
-+		ret = -EINVAL;
-+		goto out_free;
-+	}
-+
-+	rctx->e_dma = cmh_dma_map_single(rctx->e_buf, e_padded,
-+					 DMA_TO_DEVICE);
-+	rctx->n_dma = cmh_dma_map_single(rctx->n_buf, ctx->n_sz,
-+					 DMA_TO_DEVICE);
-+	rctx->c_dma = cmh_dma_map_single(rctx->c_buf, key_bytes,
-+					 DMA_TO_DEVICE);
-+	rctx->m_dma = cmh_dma_map_single(rctx->m_buf, key_bytes,
-+					 DMA_FROM_DEVICE);
-+
-+	if (cmh_dma_map_error(rctx->e_dma) ||
-+	    cmh_dma_map_error(rctx->n_dma) ||
-+	    cmh_dma_map_error(rctx->c_dma) ||
-+	    cmh_dma_map_error(rctx->m_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	dd = cmh_core_select_instance(CMH_CORE_PKE);
-+
-+	idx = 1;
-+	vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, ctx->key.raw.dma,
-+			  SYS_REF_NONE, ctx->key.raw.len,
-+			  ctx->key.raw.sys_type);
-+	vcq[idx].id |= PKE_SWAP_FLAGS;
-+	idx++;
-+	vcq_add_pke_rsa_dec(&vcq[idx++], dd.core_id, ctx->bits, e_padded,
-+			    rctx->e_dma, rctx->n_dma, rctx->c_dma,
-+			    rctx->m_dma, SYS_REF_TEMP, PKE_SWAP_FLAGS);
-+	vcq_add_pke_flush(&vcq[idx++], dd.core_id);
-+	vcq_set_header(&vcq[0], idx);
-+
-+	ret = cmh_tm_submit_async(vcq, idx, 1, dd.mbx_idx,
-+				  cmh_rsa_dec_complete, req,
-+				  !!(req->base.flags &
-+				     CRYPTO_TFM_REQ_MAY_BACKLOG), 0);
-+	if (ret == -EBUSY)
-+		return -EBUSY;
-+	if (!ret)
-+		return -EINPROGRESS;
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(rctx->m_dma))
-+		cmh_dma_unmap_single(rctx->m_dma, key_bytes,
-+				     DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(rctx->c_dma))
-+		cmh_dma_unmap_single(rctx->c_dma, key_bytes,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->n_dma))
-+		cmh_dma_unmap_single(rctx->n_dma, ctx->n_sz,
-+				     DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(rctx->e_dma))
-+		cmh_dma_unmap_single(rctx->e_dma, e_padded,
-+				     DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree_sensitive(rctx->m_buf);
-+	kfree(rctx->c_buf);
-+	kfree(rctx->n_buf);
-+	kfree(rctx->e_buf);
-+	return ret;
-+}
-+
-+static int cmh_rsa_set_pub_key(struct crypto_akcipher *tfm,
-+			       const void *key, unsigned int keylen)
-+{
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+	struct rsa_key rsa = {};
-+	u32 bits;
-+	int ret;
-+
-+	/*
-+	 * Re-keying: release any private-key state (and its persistent DMA
-+	 * mapping) left by a prior set_priv_key so it is not leaked until
-+	 * exit_tfm and cannot be mistaken for the new public key.
-+	 */
-+	cmh_key_destroy(&ctx->key);
-+
-+	ret = rsa_parse_pub_key(&rsa, key, keylen);
-+	if (ret)
-+		return ret;
-+
-+	/* Strip ASN.1 leading zero padding from modulus */
-+	while (rsa.n_sz > 0 && rsa.n[0] == 0) {
-+		rsa.n++;
-+		rsa.n_sz--;
-+	}
-+
-+	bits = cmh_rsa_key_bits(rsa.n_sz);
-+	if (!bits)
-+		return -EINVAL;
-+
-+	/* Reject an exponent wider than the modulus (HW buffer bound). */
-+	if (!rsa.e_sz || rsa.e_sz > bits / 8)
-+		return -EINVAL;
-+
-+	kfree(ctx->n);
-+	kfree(ctx->e);
-+	ctx->n = NULL;
-+	ctx->e = NULL;
-+	ctx->n_sz = 0;
-+	ctx->e_sz = 0;
-+
-+	ctx->n = kmemdup(rsa.n, rsa.n_sz, GFP_KERNEL);
-+	ctx->e = kmemdup(rsa.e, rsa.e_sz, GFP_KERNEL);
-+	if (!ctx->n || !ctx->e) {
-+		kfree(ctx->n);
-+		kfree(ctx->e);
-+		ctx->n = NULL;
-+		ctx->e = NULL;
-+		return -ENOMEM;
-+	}
-+
-+	ctx->n_sz = rsa.n_sz;
-+	ctx->e_sz = rsa.e_sz;
-+	ctx->bits = bits;
-+
-+	return 0;
-+}
-+
-+static int cmh_rsa_set_priv_key(struct crypto_akcipher *tfm,
-+				const void *key, unsigned int keylen)
-+{
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+	struct rsa_key rsa = {};
-+	u32 bits, key_bytes;
-+	u8 *d_padded;
-+	int ret;
-+
-+	ret = rsa_parse_priv_key(&rsa, key, keylen);
-+	if (ret)
-+		return ret;
-+
-+	/* Strip ASN.1 leading zero padding from modulus */
-+	while (rsa.n_sz > 0 && rsa.n[0] == 0) {
-+		rsa.n++;
-+		rsa.n_sz--;
-+	}
-+
-+	bits = cmh_rsa_key_bits(rsa.n_sz);
-+	if (!bits || !rsa.d_sz)
-+		return -EINVAL;
-+
-+	key_bytes = bits / 8;
-+
-+	/* Strip ASN.1 leading zero padding from private exponent */
-+	while (rsa.d_sz > 0 && rsa.d[0] == 0) {
-+		rsa.d++;
-+		rsa.d_sz--;
-+	}
-+
-+	if (!rsa.d_sz || rsa.d_sz > key_bytes)
-+		return -EINVAL;
-+
-+	/* Reject an exponent wider than the modulus (HW buffer bound). */
-+	if (!rsa.e_sz || rsa.e_sz > key_bytes)
-+		return -EINVAL;
-+
-+	kfree(ctx->n);
-+	kfree(ctx->e);
-+	ctx->n = NULL;
-+	ctx->e = NULL;
-+	ctx->n_sz = 0;
-+	ctx->e_sz = 0;
-+
-+	ctx->n = kmemdup(rsa.n, rsa.n_sz, GFP_KERNEL);
-+	ctx->e = kmemdup(rsa.e, rsa.e_sz, GFP_KERNEL);
-+	if (!ctx->n || !ctx->e) {
-+		ret = -ENOMEM;
-+		goto err;
-+	}
-+
-+	ctx->n_sz = rsa.n_sz;
-+	ctx->e_sz = rsa.e_sz;
-+	ctx->bits = bits;
-+
-+	/*
-+	 * Left-pad d to key_bytes (big-endian alignment).
-+	 * The CMH eSW resolves SYS_REF_TEMP by checking
-+	 * hdr->len >= key_bytes, so the written buffer must
-+	 * be at least key_bytes wide.
-+	 */
-+	d_padded = kzalloc(key_bytes, GFP_KERNEL);
-+	if (!d_padded) {
-+		ret = -ENOMEM;
-+		goto err;
-+	}
-+	memcpy(d_padded + key_bytes - rsa.d_sz, rsa.d, rsa.d_sz);
-+
-+	ret = cmh_key_setkey_raw(&ctx->key, d_padded, key_bytes,
-+				 CORE_ID_PKE);
-+	kfree_sensitive(d_padded);
-+	if (ret)
-+		goto err;
-+
-+	return 0;
-+err:
-+	kfree(ctx->n);
-+	kfree(ctx->e);
-+	ctx->n = NULL;
-+	ctx->e = NULL;
-+	ctx->n_sz = 0;
-+	ctx->e_sz = 0;
-+	ctx->bits = 0;
-+	return ret;
-+}
-+
-+static unsigned int cmh_rsa_max_size(struct crypto_akcipher *tfm)
-+{
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+
-+	return ctx->n_sz;
-+}
-+
-+static int cmh_rsa_init_tfm(struct crypto_akcipher *tfm)
-+{
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	tfm->reqsize = sizeof(struct cmh_rsa_reqctx);
-+	return 0;
-+}
-+
-+static void cmh_rsa_exit_tfm(struct crypto_akcipher *tfm)
-+{
-+	struct cmh_rsa_tfm_ctx *ctx = cmh_rsa_ctx(tfm);
-+
-+	cmh_key_destroy(&ctx->key);
-+	kfree(ctx->n);
-+	kfree(ctx->e);
-+	ctx->n = NULL;
-+	ctx->e = NULL;
-+}
-+
-+/*
-+ * Raw RSA stays as akcipher (encrypt/decrypt only).  The kernel's
-+ * rsassa-pkcs1 sig template wraps our akcipher for sign/verify,
-+ * matching the upstream split (rsa.c = akcipher,
-+ * rsassa-pkcs1.c = sig template).
-+ */
-+static struct akcipher_alg cmh_rsa_alg = {
-+	.encrypt	= cmh_rsa_enc,
-+	.decrypt	= cmh_rsa_dec,
-+	.set_pub_key	= cmh_rsa_set_pub_key,
-+	.set_priv_key	= cmh_rsa_set_priv_key,
-+	.max_size	= cmh_rsa_max_size,
-+	.init		= cmh_rsa_init_tfm,
-+	.exit		= cmh_rsa_exit_tfm,
-+	.base = {
-+		.cra_name	  = "rsa",
-+		.cra_driver_name  = "rambus-cmh-rsa",
-+		.cra_priority	  = 300,
-+		.cra_flags	  = CRYPTO_ALG_ASYNC,
-+		.cra_module	  = THIS_MODULE,
-+		.cra_ctxsize	  = sizeof(struct cmh_rsa_tfm_ctx),
++static const struct cmh_kmac_alg_info cmh_kmac_algs_info[] = {
++	{
++		.hc_algo     = HC_ALGO_SHAKE128,
++		.digest_size = CMH_SHAKE128_DIGEST_SIZE,
++		.alg_name    = "kmac128",
++		.drv_name    = "rambus-cmh-kmac128",
++	},
++	{
++		.hc_algo     = HC_ALGO_SHAKE256,
++		.digest_size = CMH_SHAKE256_DIGEST_SIZE,
++		.alg_name    = "kmac256",
++		.drv_name    = "rambus-cmh-kmac256",
 +	},
 +};
 +
-+static bool cmh_rsa_registered;
++#define CMH_KMAC_ALG_COUNT  ARRAY_SIZE(cmh_kmac_algs_info)
 +
-+/**
-+ * cmh_pke_rsa_register() - Register RSA akcipher algorithm with the crypto framework
-+ *
-+ * Return: 0 on success, negative errno on failure.
++/* Per-Request State */
++
++struct cmh_kmac_chunk {
++	struct list_head  list;
++	struct list_head  tfm_node; /* per-tfm orphan tracking */
++	u32               len;
++	u8                data[];
++};
++
++/*
++ * Max payload slots for KMAC:
++ *   SYS_CMD_WRITE (1) + KMAC (1) + inline S (3 max) + GATHER (1) +
++ *   FINAL (1) + FLUSH (1) = 8
 + */
-+int cmh_pke_rsa_register(void)
-+{
-+	int ret;
++#define CMH_KMAC_MAX_PAYLOAD   9
++#define CMH_KMAC_MAX_PACKED    (CMH_KMAC_MAX_PAYLOAD * 2)
 +
-+	if (!cmh_core_present(CMH_CORE_PKE))
++struct cmh_kmac_reqctx {
++	const struct cmh_kmac_alg_info *info;
++	int                             error;
++	struct list_head                chunks;
++	u32                             num_chunks;
++	u32                             total_len;
++	/* DMA state for async final */
++	dma_addr_t                      digest_dma;
++	dma_addr_t                      key_dma;
++	u8                             *digest_buf;
++	struct cmh_sg_map              *sgm;
++	u32                             keylen;
++	struct vcq_cmd packed[CMH_KMAC_MAX_PACKED];
++};
++
++/* Per-Transform State (carries key + S across requests) */
++
++struct cmh_kmac_tfm_ctx {
++	struct cmh_key_ctx key;
++	u8  *custom;        /* S (customization string), NULL if empty */
++	u32  custom_len;
++	/*
++	 * protects all_chunks.  Only ever taken from process/softirq context
++	 * (ahash .update/.final and the softirq/threaded-irq completion),
++	 * never from hardirq, so spin_lock_bh() is the correct lock class.
++	 */
++	spinlock_t         chunk_lock;
++	struct list_head   all_chunks;  /* orphan-safe chunk tracking */
++	size_t             tfm_buffered; /* bytes on all_chunks; DoS cap */
++};
++
++/*
++ * Per-transform cap on total bytes buffered across all_chunks.  Bounds
++ * memory an AF_ALG client can pin via repeated open/update/abandon of
++ * request sockets (the crypto API has no per-request destructor).
++ */
++#define CMH_KMAC_TFM_MAX_BUFFERED	(16 * 1024 * 1024)
++
++/* VCQ Builders (KMAC-specific; shared builders in cmh_hc_abi.h / cmh_vcq.h) */
++
++static void vcq_add_hc_kmac(struct vcq_cmd *slot, u32 core_id, u64 key_ref, u32 keylen,
++			    u32 customlen, u32 algo, u32 outlen)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(core_id, 0, 1, HC_CMD_KMAC);
++	slot->hwc.hc.cmd_kmac.key = key_ref;
++	slot->hwc.hc.cmd_kmac.custom = 0;  /* inline */
++	slot->hwc.hc.cmd_kmac.keylen = keylen;
++	slot->hwc.hc.cmd_kmac.customlen = customlen;
++	slot->hwc.hc.cmd_kmac.algo = algo;
++	slot->hwc.hc.cmd_kmac.outlen = outlen;
++}
++
++/* Request Context Cleanup */
++
++static void cmh_kmac_free_chunks(struct cmh_kmac_reqctx *rctx,
++				 struct cmh_kmac_tfm_ctx *tctx)
++{
++	struct cmh_kmac_chunk *chunk, *tmp;
++
++	spin_lock_bh(&tctx->chunk_lock);
++	list_for_each_entry_safe(chunk, tmp, &rctx->chunks, list) {
++		list_del(&chunk->list);
++		list_del(&chunk->tfm_node);
++		tctx->tfm_buffered -= chunk->len;
++		kfree(chunk);
++	}
++	spin_unlock_bh(&tctx->chunk_lock);
++	rctx->num_chunks = 0;
++	rctx->total_len = 0;
++}
++
++static struct cmh_sg_map *
++cmh_kmac_build_sg(struct cmh_kmac_reqctx *rctx, gfp_t gfp)
++{
++	struct cmh_dma_buf *bufs;
++	struct cmh_kmac_chunk *chunk;
++	struct cmh_sg_map *sgm;
++	u32 i;
++
++	bufs = kcalloc(rctx->num_chunks, sizeof(*bufs), gfp);
++	if (!bufs)
++		return NULL;
++
++	i = 0;
++	list_for_each_entry(chunk, &rctx->chunks, list) {
++		bufs[i].data = chunk->data;
++		bufs[i].len = chunk->len;
++		i++;
++	}
++
++	sgm = cmh_dma_build_sg(bufs, rctx->num_chunks, gfp);
++	kfree(bufs);
++	return sgm;
++}
++
++/* VCQ Packing + Submit */
++
++/* ahash Operations */
++
++struct cmh_kmac_alg_drv {
++	struct ahash_alg                 alg;
++	const struct cmh_kmac_alg_info  *info;
++};
++
++static const struct cmh_kmac_alg_info *
++cmh_kmac_get_info(struct crypto_ahash *tfm)
++{
++	struct ahash_alg *alg = crypto_ahash_alg(tfm);
++
++	return container_of(alg, struct cmh_kmac_alg_drv, alg)->info;
++}
++
++/*
++ * setkey blob for KMAC (raw key path):
++ *   struct kmac_key_param { __be32 keylen; __be32 s_len; };
++ *   blob: kmac_key_param || key[keylen] || S[s_len]
++ */
++struct kmac_key_param {
++	__be32 keylen;
++	__be32 s_len;
++};
++
++static int cmh_kmac_setkey(struct crypto_ahash *tfm, const u8 *key,
++			   unsigned int keylen)
++{
++	struct cmh_kmac_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	/* raw key bytes with optional S */
++	{
++		struct kmac_key_param hdr;
++		u32 raw_keylen, s_len;
++		const u8 *ptr;
++
++		if (keylen < sizeof(hdr))
++			return -EINVAL;
++
++		memcpy(&hdr, key, sizeof(hdr));
++		raw_keylen = be32_to_cpu(hdr.keylen);
++		s_len = be32_to_cpu(hdr.s_len);
++
++		if (keylen != sizeof(hdr) + raw_keylen + s_len)
++			return -EINVAL;
++
++		if (raw_keylen == 0)
++			return -EINVAL;
++
++		if (s_len > HC_CSHAKE_MAX_CUSTOMLEN)
++			return -EINVAL;
++
++		ptr = key + sizeof(hdr);
++
++		/* Store raw key */
++		{
++			int ret = cmh_key_setkey_raw(&tctx->key, ptr,
++						     raw_keylen, CORE_ID_HC);
++			if (ret)
++				return ret;
++		}
++		ptr += raw_keylen;
++
++		/*
++		 * Store S.  The raw key (above) and S are replaced without a
++		 * lock against a concurrent .final() reader; safe because the
++		 * crypto API does not issue setkey during an in-flight request
++		 * on the same tfm, and AF_ALG (the only racing frontend) is
++		 * not built on this kernel.
++		 */
++		kfree(tctx->custom);
++		tctx->custom = NULL;
++		tctx->custom_len = 0;
++
++		if (s_len > 0) {
++			tctx->custom = kmemdup(ptr, s_len, GFP_KERNEL);
++			if (!tctx->custom) {
++				cmh_key_destroy(&tctx->key);
++				return -ENOMEM;
++			}
++			tctx->custom_len = s_len;
++		}
++
++		return 0;
++	}
++}
++
++static int cmh_kmac_init(struct ahash_request *req)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_kmac_reqctx *rctx = ahash_request_ctx(req);
++
++	rctx->info = cmh_kmac_get_info(tfm);
++	rctx->error = 0;
++	INIT_LIST_HEAD(&rctx->chunks);
++	rctx->num_chunks = 0;
++	rctx->total_len = 0;
++
++	return 0;
++}
++
++static int cmh_kmac_update(struct ahash_request *req)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_kmac_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cmh_kmac_reqctx *rctx = ahash_request_ctx(req);
++	struct cmh_kmac_chunk *chunk;
++	int nents;
++
++	if (rctx->error)
++		return rctx->error;
++
++	if (!req->nbytes)
 +		return 0;
 +
-+	ret = crypto_register_akcipher(&cmh_rsa_alg);
++	/*
++	 * Cap cumulative input at KMAC_MAX_DATA (64 KB) before the alloc
++	 * below, so sizeof(*chunk) + req->nbytes cannot overflow size_t.
++	 */
++	if (req->nbytes > KMAC_MAX_DATA - rctx->total_len) {
++		rctx->error = -EINVAL;
++		goto err_free_chunks;
++	}
++
++	chunk = kmalloc(sizeof(*chunk) + req->nbytes,
++			req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++			GFP_KERNEL : GFP_ATOMIC);
++	if (!chunk) {
++		rctx->error = -ENOMEM;
++		goto err_free_chunks;
++	}
++
++	chunk->len = req->nbytes;
++	if (req->base.flags & CRYPTO_AHASH_REQ_VIRT) {
++		memcpy(chunk->data, req->svirt, req->nbytes);
++	} else {
++		nents = sg_nents_for_len(req->src, req->nbytes);
++		if (nents < 0 ||
++		    sg_copy_to_buffer(req->src, nents,
++				      chunk->data, req->nbytes) != req->nbytes) {
++			kfree(chunk);
++			rctx->error = -EINVAL;
++			goto err_free_chunks;
++		}
++	}
++
++	spin_lock_bh(&tctx->chunk_lock);
++	if (tctx->tfm_buffered + chunk->len > CMH_KMAC_TFM_MAX_BUFFERED) {
++		spin_unlock_bh(&tctx->chunk_lock);
++		kfree(chunk);
++		rctx->error = -ENOMEM;
++		goto err_free_chunks;
++	}
++	list_add_tail(&chunk->list, &rctx->chunks);
++	list_add_tail(&chunk->tfm_node, &tctx->all_chunks);
++	tctx->tfm_buffered += chunk->len;
++	spin_unlock_bh(&tctx->chunk_lock);
++	rctx->num_chunks++;
++	rctx->total_len += req->nbytes;
++
++	return 0;
++
++err_free_chunks:
++	/*
++	 * Terminal error -- free all previously accumulated chunks.
++	 * The crypto API hash path does not call .final() on error,
++	 * so chunks would be orphaned otherwise.
++	 */
++	cmh_kmac_free_chunks(rctx, tctx);
++	return rctx->error;
++}
++
++static void cmh_kmac_complete(void *data, int error)
++{
++	struct ahash_request *req = data;
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_kmac_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cmh_kmac_reqctx *rctx = ahash_request_ctx(req);
++
++	if (error == -EINPROGRESS) {
++		cmh_complete(&req->base, error);
++		return;
++	}
++
++	cmh_dma_unmap_single(rctx->digest_dma, rctx->info->digest_size,
++			     DMA_FROM_DEVICE);
++
++	if (!error)
++		memcpy(req->result, rctx->digest_buf,
++		       rctx->info->digest_size);
++
++	kfree(rctx->digest_buf);
++	rctx->digest_buf = NULL;
++	cmh_dma_free_sg(rctx->sgm);
++	rctx->sgm = NULL;
++	cmh_kmac_free_chunks(rctx, tctx);
++	cmh_complete(&req->base, error);
++}
++
++static int cmh_kmac_final(struct ahash_request *req)
++{
++	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
++	struct cmh_kmac_tfm_ctx *tctx = crypto_ahash_ctx(tfm);
++	struct cmh_kmac_reqctx *rctx = ahash_request_ctx(req);
++	const struct cmh_kmac_alg_info *info = rctx->info;
++	struct vcq_cmd cmds[CMH_KMAC_MAX_PAYLOAD];
++	struct cmh_sg_map *sgm = NULL;
++	dma_addr_t digest_dma = DMA_MAPPING_ERROR, key_dma = DMA_MAPPING_ERROR;
++	u8 *digest_buf;
++	u64 key_ref;
++	u32 key_len;
++	struct core_dispatch d;
++	s32 target_mbx;
++	u32 core_id;
++	u32 idx;
++	int ret;
++	gfp_t gfp = req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP ?
++		   GFP_KERNEL : GFP_ATOMIC;
++
++	if (rctx->error) {
++		ret = rctx->error;
++		goto out_free;
++	}
++
++	if (tctx->key.mode == CMH_KEY_NONE) {
++		ret = -ENOKEY;
++		goto out_free;
++	}
++
++	if (rctx->num_chunks > 0) {
++		sgm = cmh_kmac_build_sg(rctx, gfp);
++		if (!sgm) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	}
++
++	digest_buf = kzalloc(info->digest_size, gfp);
++	if (!digest_buf) {
++		ret = -ENOMEM;
++		goto out_free_sg;
++	}
++	digest_dma = cmh_dma_map_single(digest_buf, info->digest_size,
++					DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(digest_dma)) {
++		ret = -ENOMEM;
++		goto out_free_digest;
++	}
++
++	/* Resolve key reference */
++	idx = 0;
++
++	key_dma = tctx->key.raw.dma;
++	vcq_add_sys_write(&cmds[idx++], SYS_REF_TEMP, (u64)key_dma,
++			  SYS_REF_NONE, tctx->key.raw.len,
++			  tctx->key.raw.sys_type);
++	key_ref = SYS_REF_TEMP;
++	key_len = tctx->key.raw.len;
++	d = cmh_core_select_instance(CMH_CORE_HC);
++
++	target_mbx = d.mbx_idx;
++
++	core_id = d.core_id;
++
++	{
++		u32 span;
++
++		vcq_add_hc_kmac(&cmds[idx], core_id, key_ref, key_len,
++				tctx->custom_len, info->hc_algo,
++				info->digest_size);
++
++		/* Add inline S data after the KMAC slot */
++		span = vcq_add_inline_data(&cmds[idx], tctx->custom,
++					   tctx->custom_len);
++		idx += span;
++	}
++
++	if (sgm)
++		vcq_add_hc_gather(&cmds[idx++], core_id, (u64)sgm->items_dma,
++				  HC_CMD_UPDATE);
++
++	vcq_add_hc_final(&cmds[idx++], core_id, (u64)digest_dma, info->digest_size);
++	vcq_add_flush(&cmds[idx++], core_id);
++
++	rctx->digest_buf = digest_buf;
++	rctx->digest_dma = digest_dma;
++	rctx->sgm = sgm;
++
++	ret = cmh_vcq_pack_and_submit_async(cmds, idx, rctx->packed,
++					    CMH_KMAC_MAX_PACKED,
++					    target_mbx,
++					    cmh_kmac_complete, req,
++					    !!(req->base.flags &
++					       CRYPTO_TFM_REQ_MAY_BACKLOG),
++					    cmh_tm_async_timeout_jiffies());
++	if (ret == -EBUSY)
++		return -EBUSY;
 +	if (ret) {
-+		dev_err(cmh_dev(),
-+			"cmh: failed to register rsa akcipher (%d)\n",
-+			ret);
++		/*
++		 * Synchronous rejection (e.g. -EAGAIN: CMQ full, no backlog).
++		 * Free only the per-submit transients and keep the accumulated
++		 * chunks intact so the caller can retry the identical final().
++		 * If no retry comes, cra_exit reclaims the orphaned chunks; the
++		 * per-tfm buffered-byte cap bounds how much stays pinned.
++		 */
++		cmh_dma_unmap_single(digest_dma, info->digest_size,
++				     DMA_FROM_DEVICE);
++		kfree(digest_buf);
++		cmh_dma_free_sg(sgm);
++		rctx->digest_buf = NULL;
++		rctx->digest_dma = DMA_MAPPING_ERROR;
++		rctx->sgm = NULL;
 +		return ret;
 +	}
 +
-+	cmh_rsa_registered = true;
++	return -EINPROGRESS;
++
++out_free_digest:
++	kfree(digest_buf);
++
++out_free_sg:
++	cmh_dma_free_sg(sgm);
++
++out_free:
++	cmh_kmac_free_chunks(rctx, tctx);
++	return ret;
++}
++
++static int cmh_kmac_finup(struct ahash_request *req)
++{
++	int ret;
++
++	ret = cmh_kmac_update(req);
++	if (ret)
++		return ret;
++
++	return cmh_kmac_final(req);
++}
++
++static int cmh_kmac_digest(struct ahash_request *req)
++{
++	int ret;
++
++	ret = cmh_kmac_init(req);
++	if (ret)
++		return ret;
++
++	return cmh_kmac_finup(req);
++}
++
++/*
++ * export/import are intentionally unsupported for KMAC.
++ *
++ * Unlike the HMAC / AES-CMAC / SM4-CMAC / Poly1305 accumulators, KMAC has
++ * no software fallback to hand a large or mid-stream state off to, and its
++ * keyed-XOF input is buffered as a chunk list up to KMAC_MAX_DATA (64 KB).
++ * There is no bounded flat state we could serialise into a sane statesize
++ * (the siblings cap a small RAW window and switch to their fallback beyond
++ * it -- KMAC has neither).  Returning -EOPNOTSUPP is non-breaking: the
++ * normal init/update/final and finup paths do not use export/import; only
++ * algif_hash transform cloning (accept() on an already-updated socket)
++ * does, and it degrades gracefully.  statesize is kept non-zero so the
++ * crypto API still allocates a valid (unused) state buffer.
++ */
++static int cmh_kmac_export(struct ahash_request *req, void *out)
++{
++	return -EOPNOTSUPP;
++}
++
++static int cmh_kmac_import(struct ahash_request *req, const void *in)
++{
++	return -EOPNOTSUPP;
++}
++
++/* Transform init/exit */
++
++static int cmh_kmac_cra_init(struct crypto_tfm *tfm)
++{
++	struct cmh_kmac_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
++
++	tctx->key.mode = CMH_KEY_NONE;
++	tctx->custom = NULL;
++	tctx->custom_len = 0;
++	spin_lock_init(&tctx->chunk_lock);
++	INIT_LIST_HEAD(&tctx->all_chunks);
++	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
++				 sizeof(struct cmh_kmac_reqctx));
++	return 0;
++}
++
++static void cmh_kmac_cra_exit(struct crypto_tfm *tfm)
++{
++	struct cmh_kmac_tfm_ctx *tctx = crypto_tfm_ctx(tfm);
++	struct cmh_kmac_chunk *chunk, *tmp;
++
++	/* Free any orphaned chunks (e.g. testmgr export/reimport poison) */
++	spin_lock_bh(&tctx->chunk_lock);
++	list_for_each_entry_safe(chunk, tmp, &tctx->all_chunks, tfm_node) {
++		list_del(&chunk->tfm_node);
++		tctx->tfm_buffered -= chunk->len;
++		kfree(chunk);
++	}
++	spin_unlock_bh(&tctx->chunk_lock);
++
++	cmh_key_destroy(&tctx->key);
++	kfree(tctx->custom);
++	tctx->custom = NULL;
++}
++
++/* Registration */
++
++static struct cmh_kmac_alg_drv cmh_kmac_drvs[CMH_KMAC_ALG_COUNT];
++
++/**
++ * cmh_kmac_register() - Register KMAC-128/256 hash algorithms with the crypto framework
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_kmac_register(void)
++{
++	unsigned int i;
++	int ret;
++
++	if (!cmh_core_present(CMH_CORE_HC))
++		return 0;
++
++	for (i = 0; i < CMH_KMAC_ALG_COUNT; i++) {
++		const struct cmh_kmac_alg_info *info =
++			&cmh_kmac_algs_info[i];
++		struct cmh_kmac_alg_drv *drv = &cmh_kmac_drvs[i];
++		struct ahash_alg *alg = &drv->alg;
++
++		drv->info = info;
++
++		alg->init   = cmh_kmac_init;
++		alg->update = cmh_kmac_update;
++		alg->final  = cmh_kmac_final;
++		alg->finup  = cmh_kmac_finup;
++		alg->digest = cmh_kmac_digest;
++		alg->export = cmh_kmac_export;
++		alg->import = cmh_kmac_import;
++		alg->setkey = cmh_kmac_setkey;
++
++		alg->halg.digestsize = info->digest_size;
++		alg->halg.statesize  = sizeof(struct cmh_kmac_reqctx);
++
++		strscpy(alg->halg.base.cra_name, info->alg_name,
++			CRYPTO_MAX_ALG_NAME);
++		strscpy(alg->halg.base.cra_driver_name, info->drv_name,
++			CRYPTO_MAX_ALG_NAME);
++		alg->halg.base.cra_priority    = 300;
++		alg->halg.base.cra_flags       = CRYPTO_ALG_KERN_DRIVER_ONLY |
++						 CRYPTO_ALG_NO_FALLBACK |
++						 CRYPTO_ALG_ASYNC |
++						 CRYPTO_ALG_REQ_VIRT;
++		alg->halg.base.cra_blocksize   = 1;  /* XOF/keyed XOF */
++		alg->halg.base.cra_ctxsize     = sizeof(struct cmh_kmac_tfm_ctx);
++		alg->halg.base.cra_init        = cmh_kmac_cra_init;
++		alg->halg.base.cra_exit        = cmh_kmac_cra_exit;
++		alg->halg.base.cra_module      = THIS_MODULE;
++
++		ret = crypto_register_ahash(alg);
++		if (ret) {
++			dev_err(cmh_dev(), "kmac: failed to register %s (rc=%d)\n",
++				info->drv_name, ret);
++			while (i--)
++				crypto_unregister_ahash(&cmh_kmac_drvs[i].alg);
++			return ret;
++		}
++
++		dev_dbg(cmh_dev(), "kmac: registered %s (priority 300)\n",
++			info->drv_name);
++	}
++
 +	return 0;
 +}
 +
 +/**
-+ * cmh_pke_rsa_unregister() - Unregister RSA akcipher algorithm from the crypto framework
++ * cmh_kmac_unregister() - Unregister KMAC hash algorithms from the crypto framework
 + */
-+void cmh_pke_rsa_unregister(void)
++void cmh_kmac_unregister(void)
 +{
-+	if (cmh_rsa_registered)
-+		crypto_unregister_akcipher(&cmh_rsa_alg);
-+	cmh_rsa_registered = false;
++	unsigned int i;
++
++	if (!cmh_core_present(CMH_CORE_HC))
++		return;
++
++	for (i = 0; i < CMH_KMAC_ALG_COUNT; i++) {
++		crypto_unregister_ahash(&cmh_kmac_drvs[i].alg);
++		dev_dbg(cmh_dev(), "kmac: unregistered %s\n",
++			cmh_kmac_algs_info[i].drv_name);
++	}
 +}
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+index 589363cc4b28..474b438fc18a 100644
+--- a/drivers/crypto/cmh/cmh_main.c
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -33,6 +33,8 @@
+ #include "cmh_rh.h"
+ #include "cmh_hash.h"
+ #include "cmh_hmac.h"
++#include "cmh_cshake.h"
++#include "cmh_kmac.h"
+ #include "cmh_mgmt.h"
+ #include "cmh_registers.h"
+ #include "cmh_debugfs.h"
+@@ -214,6 +216,16 @@ static int cmh_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		goto err_hmac_register;
+ 
++	/* Register CSHAKE hash algorithms */
++	ret = cmh_cshake_register();
++	if (ret)
++		goto err_cshake_register;
++
++	/* Register KMAC hash algorithms */
++	ret = cmh_kmac_register();
++	if (ret)
++		goto err_kmac_register;
++
+ 	/* Register key management device (/dev/cmh_mgmt) */
+ 	ret = cmh_mgmt_register();
+ 	if (ret)
+@@ -224,6 +236,10 @@ static int cmh_probe(struct platform_device *pdev)
+ 	return 0;
+ 
+ err_mgmt_register:
++	cmh_kmac_unregister();
++err_kmac_register:
++	cmh_cshake_unregister();
++err_cshake_register:
+ 	cmh_hmac_unregister();
+ err_hmac_register:
+ 	cmh_hash_unregister();
+@@ -254,6 +270,8 @@ static void cmh_remove(struct platform_device *pdev)
+ 	cfg = &dev->config;
+ 
+ 	cmh_mgmt_unregister();
++	cmh_kmac_unregister();
++	cmh_cshake_unregister();
+ 	cmh_hmac_unregister();
+ 	cmh_hash_unregister();
+ 	cmh_rh_cleanup(cfg);
+diff --git a/drivers/crypto/cmh/include/cmh_cshake.h b/drivers/crypto/cmh/include/cmh_cshake.h
+new file mode 100644
+index 000000000000..9bafe0baf52f
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_cshake.h
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Kernel Crypto API CSHAKE Driver
++ *
++ * Registers cSHAKE-128 and cSHAKE-256 ahash algorithms using
++ * HC_CMD_CSHAKE with inline customization string S.
++ */
++
++#ifndef CMH_CSHAKE_H
++#define CMH_CSHAKE_H
++
++int  cmh_cshake_register(void);
++void cmh_cshake_unregister(void);
++
++#endif /* CMH_CSHAKE_H */
+diff --git a/drivers/crypto/cmh/include/cmh_kmac.h b/drivers/crypto/cmh/include/cmh_kmac.h
+new file mode 100644
+index 000000000000..b3c92d71a0b6
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_kmac.h
+@@ -0,0 +1,16 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Kernel Crypto API KMAC Driver
++ *
++ * Registers KMAC-128 and KMAC-256 ahash algorithms using
++ * HC_CMD_KMAC with inline customization string S.
++ */
++
++#ifndef CMH_KMAC_H
++#define CMH_KMAC_H
++
++int  cmh_kmac_register(void);
++void cmh_kmac_unregister(void);
++
++#endif /* CMH_KMAC_H */
 -- 
 2.43.7
 
