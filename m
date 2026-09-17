@@ -1,28 +1,28 @@
-Received: from DM1PR04CU001.outbound.protection.outlook.com (mail-centralusazon11020120.outbound.protection.outlook.com [52.101.61.120])
+Received: from BL2PR02CU003.outbound.protection.outlook.com (mail-eastusazon11021074.outbound.protection.outlook.com [52.101.52.74])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 445CB4BF92E;
-	Thu, 17 Sep 2026 22:59:52 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.61.120
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67DBD4B1B38;
+	Thu, 17 Sep 2026 22:59:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.52.74
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789686000; cv=fail; b=DiCM412XgJ0oVNADe+2yP68bneTrUAO16hu9Ww5DpaualXSJCSzlxni4huC3SAJIqnzJ16Yww/Qidol/Sdny5f/Oh/UjlsrCXU35M69pNz36aesWFYecJgeVq91d6cArbf7HEwUFmLuIY3/dh+yQUpKGnGfAf6HWIhbq4QiXVrQ=
+	t=1789686008; cv=fail; b=okbJezYTmZhmOzq7wE1DDJ0cvZsjOwGP8uop7Y75CwQQ3ETB/cLRlgIpNcqjpgKAogkZug8QrJntnBAbSMoYbkQuAP1m9qYqY+HAYYbiwdIJmefqjRrXiAWa86pk815OchokKgtYBmWpk1UJ2JkWgAwjF3kkREhJv/2tRZeczIA=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789686000; c=relaxed/simple;
-	bh=thUvqgeI0nznJk3tprE+iRjfoB5mJIFmRP9qlqAxgwc=;
+	s=arc-20240116; t=1789686008; c=relaxed/simple;
+	bh=CBqAEkKry/n5P+FEmtQe+yJPFy30XqUu0/orPfMW+44=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=mTg78PFTADikHctUD4pSBwv/So0g7GBDqqhz+5Eu4ma5g9VoTtPwFKVlGFmcg1zxb4CXXbIUyv3lKpcHKLGYnE0Tm2WeD88hNZhGaOphxyzt+6Rv811BKAaHLbwwPECOfa4vZ/nqiVp5g30rvai+E6ZdJdGvddLe+Dnqt5XWS0c=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=ha/cf6Ls; arc=fail smtp.client-ip=52.101.61.120
+	 MIME-Version:Content-Type; b=Vw0bDc8uRqY+QZBmwLA9BQJE/7xQpbZyVe23AcX0rmxKGDaJnTMEn5A8IC28JLIzaIs0Jm/mkLLepZstCd6f4rhRDiLuSSgxa0kn+elZlrqpvWsc/9Paw5PSRDcupoWJjm8sjMig2MBYKdNdtr+np0a4XQfXYf5wuzAFiyyByhA=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=uazxL8EZ; arc=fail smtp.client-ip=52.101.52.74
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="ha/cf6Ls"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="uazxL8EZ"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=q+LCvpHnTi67QkPqxEPAgCbei5ZRnyg1Bjq09qKCq+ZZuJyTv3TK+PdGHRzLPUdD+hHs7ew8Oes+dJO0mpAkP2dK9QvxmHQ0/BtoXytsmTmwOwLFDTrfDzaSeSGseBlZNU70kFhcym0fcBbjlOpleNk9mFI2NgzTHhdbS9/Zl0y2VSSV0PPkzNDa0zJT4AZb/uc5TTLFKiNTMkpYTK8VGIVq0EB1yQdUx8meWNQ+FfD3reyCbt2TgdPPVACU3o1wIwiyBNS33X0ui+F4f5RqLGJqQ5pCj4b0DzK09kxdKRFHB3l8Y/YCsE6yhX7vb17kab6U2+liWjtorUQ3JnsVxw==
+ b=JZOZXd4ederkaM3olIk3Faev94H5o/h/e4OrBwBAmXw1Tld0KihpZPJl5MEDCJ2qBt1hFZhDevvWhC0gYXHR5OFKQSjT5DCHEqJv8fbmITp5fPOmD2WZyvqJ/8Q1Nc2BLtlT0ynJi1YUqg4Xw8vH3ZYxnjP+aqJxsSQu/YWe571If8q4/iOJjORnPYsMwVIDixy4zWPLRW00qDIBYswPnmkCE7LM6g8cZz73Ohk/BFTFqRE4bGGWkgTPJisTU1DagVzr9dKadZ5wjX2Stba1FRWI/4xPGicaqa5O0qT1rC8fTn5A5YoqqXFJTCxuhJqyZwNnLlGWu9uWJEdj+PQVSQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=zyaWpSQnjrYz1Ld2zGUVB1ax9Z9dF+S+WyW4plx64aI=;
- b=PKbdEiTFt1dn1RGbm6lgByghXRSXHR/YH0VS3QYjXrxflTnMLNZ318k4cgPCQQAQckX5qYyqZUlw+7OpzeMNoP/CGIE+k8c8m10cLDYg4vRxPawu7HXdvPrnPi5N1Anbatho65FigiX5Jfb9bu0tn0M+TtYE1CWQLHn5eb1Wd6KO2bd9GgTBY0HEVmPh4E8SUEnYoXgHr7HytflZGiCWH+nuF1g7SWs16Gi3SDFPhGlhFtIeHvJbMSc10wziRXAbMT1Jl13CFHz7EJBibqvoZ1HGBGCKfckiUJJrmcXFap/15WJcYfCwNESje8YuA7M52SfkwNjADKMXQrGkB+5cPw==
+ bh=F65vaCF2DFEcnnF9zk3JH6ZUM/HQ6L+KaUgA+98KEvY=;
+ b=dOeAEAiZeRT6eaj3ZQfkQD3Za8Wo21hBdcPgATtJI8ddvfjTPLYFCYJ1/N5giv/O/liUPcat1az/99ZAdR7R5XId0jN6UW33Z+Ff9J35VR4sz9K75CySqPJzxQJBP7TwS0i9VGMzjQl+/yTsfN8/Lv7bDXHKqQQuLfNYd+qeADE+Tn2Y6aQYlRLPUBr82A9nGnj79UZBSWTJSDTkjcrfGQZteMTbD5NnAusDbdntw+lMZV8ioIeAO0INlXt3TxpA0zM/ajOAij3Hf5CZbvSL1S/WISIK+U0evjzMf7DuwE4q2mpJGQoPHZhagDVfOLgr1e83/qUan72fGqJ4pao98w==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=zyaWpSQnjrYz1Ld2zGUVB1ax9Z9dF+S+WyW4plx64aI=;
- b=ha/cf6Ls1ZWALQSrPCw+7W+wUTMewcCa7d62xmqV87Kx3bv/SRyNtDRgSDRvAg1RPu8eYmctGSaDnDD8oJh0TEGyimQhNC8Es9O3j1/tXv2vp/TsF5nomDT9JbQWrz0YiFereyW24PjecrKgkegtICbk/KzxzCAnp7MyEKx4/UOiiUPokR4e0Q+qG3mbSaLoTcPQGFHC3FqOuxElCI2Wh+2f7ZgpiIm7vJw0MocDVKGp5bQQr6W7ML2AFqqFskOpmX/b7HMmAIEUPHWSeluMsyyuXkpBPs89eunoUlBbSkLkMgNLfULhGIi+URy5QrsmHfEkGWAm5rC/dTUUjiamQQ==
-Received: from MW4PR04CA0336.namprd04.prod.outlook.com (2603:10b6:303:8a::11)
- by MN2PR04MB6463.namprd04.prod.outlook.com (2603:10b6:208:1a3::15) with
+ bh=F65vaCF2DFEcnnF9zk3JH6ZUM/HQ6L+KaUgA+98KEvY=;
+ b=uazxL8EZHisHzpzomMuF9bt6F6TDsrdPstjd0jJwK6T9lt85Cj5ukfxmk6B1J9lwfAKWEAmsP/PLstSMPIJ5ssUszD1rAEih1swrs+JoGQdNtA6nKJPwdCNZsR0j4VsWv4gyx+u4VeiT2178cLQnt1Kl8r8i4v4j5e3x6smO+dTl9TMwxUoqbcouJCg1tGJCWSS29CGhM/JrAW3aLhKiBHsClPfyApW78k5WsTAH3R3CREHuU2G/LVs9pSiRsJ0rhtZq/T8+Cb2lnbe12JNYJZjCcNmW+wLw+xzGfZVjma8BvYMyhZx/BJWU/GdvFs8ocHFIC4DX5q/7osS1re9hHQ==
+Received: from BN0PR10CA0010.namprd10.prod.outlook.com (2603:10b6:408:143::14)
+ by SJ0PR04MB7791.namprd04.prod.outlook.com (2603:10b6:a03:3ac::11) with
  Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.12; Thu, 17 Sep
- 2026 22:59:35 +0000
-Received: from SJ5PEPF000001CF.namprd05.prod.outlook.com
- (2603:10b6:303:8a:cafe::1b) by MW4PR04CA0336.outlook.office365.com
- (2603:10b6:303:8a::11) with Microsoft SMTP Server (version=TLS1_3,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.406.12; Thu, 17 Sep
+ 2026 22:59:33 +0000
+Received: from BN2PEPF0000A800.namprd02.prod.outlook.com
+ (2603:10b6:408:143:cafe::21) by BN0PR10CA0010.outlook.office365.com
+ (2603:10b6:408:143::14) with Microsoft SMTP Server (version=TLS1_3,
  cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.12 via Frontend Transport; Thu,
- 17 Sep 2026 22:59:35 +0000
+ 17 Sep 2026 22:59:33 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,12 +49,12 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- SJ5PEPF000001CF.mail.protection.outlook.com (10.167.242.43) with Microsoft
+ BN2PEPF0000A800.mail.protection.outlook.com (10.167.245.167) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.451.8
- via Frontend Transport; Thu, 17 Sep 2026 22:59:34 +0000
+ via Frontend Transport; Thu, 17 Sep 2026 22:59:32 +0000
 Received: from hqxsv-cmdev3-aousherovitch.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id 93E6F1801770;
-	Thu, 17 Sep 2026 22:59:32 +0000 (UTC)
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id D46B9180175D;
+	Thu, 17 Sep 2026 22:59:31 +0000 (UTC)
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
 	Alex Ousherovitch <aousherovitch@rambus.com>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v5 17/19] Documentation: ioctl: add CMH ioctl documentation and register 'J'
-Date: Thu, 17 Sep 2026 15:59:26 -0700
-Message-ID: <20260917225929.2494111-18-aousherovitch@rambus.com>
+Subject: [PATCH v5 03/19] crypto: cmh - add key provisioning and management
+Date: Thu, 17 Sep 2026 15:59:12 -0700
+Message-ID: <20260917225929.2494111-4-aousherovitch@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260917225929.2494111-1-aousherovitch@rambus.com>
 References: <20260917225929.2494111-1-aousherovitch@rambus.com>
@@ -94,1372 +94,7567 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: SJ5PEPF000001CF:EE_|MN2PR04MB6463:EE_
+X-MS-TrafficTypeDiagnostic: BN2PEPF0000A800:EE_|SJ0PR04MB7791:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: 11a5ae9b-3a96-4dff-743d-08df150f577a
+X-MS-Office365-Filtering-Correlation-Id: f2868f2c-f489-4a45-7184-08df150f565b
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|7416014|36860700016|376014|82310400026|23010399003|1800799024|921020|18002099003|22082099003|6133799003|56012099006|11063799006|10067099003|3023799007;
+	BCL:0;ARA:13230040|23010399003|82310400026|1800799024|376014|7416014|36860700016|10067099003|3023799007|22082099003|18002099003|6133799003|5023799004|56012099006|11063799006|921020;
 X-Microsoft-Antispam-Message-Info:
-	njQzSuyF/bCFWHyQ5BNkV3+1TJbOmw4Q5cF6Oa5B7Qe7MuMbZzyPcbFZYPQRSSk7fwgqMWmIbE1FoyTVsiuDWgctomc+yrvWBNpAtuabtiO8Di9HFWuBFW7CR+nzpjL/47JtOEXcXglE/PPemu8fEQvtEOl7ode8QP4KzF35XQt4O8mn2/qvTpnBpgALpQP0B9O7WfMVTZm2iRGoWdo7L3VKdAzUlcNBHTqvD1khXLC/DhzQ33s3SOly1ogUndJAE7yDz+p9GgDowqGiQAz8upiM0Sqlc/qBKujC5ifwV94uGVlYTx/0dFLxLolNye3BV/4RFOTM7TnbKdFTyHTApxcLvkXtHow7vzaPcbgmxYRNRTc4kt0RGzdNq/BZXUkSsO1PF1mS9I9xswd2m51CFYlB3UJ17AYQNaErEFzpHdPeYgY1BotaLqpLBp5y8ntv8LLAwtyP2M8TFpIItAbfeyPlBnnD5o0zPU6SyIhtCj/Mm0Npu7/boMzVRpHzDHJcIVAnbwEkcLQZkkKqJN8jX/jBYIxtARfVSEL1qPL5BSXMLzhz/eVqGCqUyEuhKmM/3+yg0h/E3EyK7cjT/YOhmvmPYKtdokncpRY3FJ5rQJgTiL6Gqg6oLDPRX3FaL9Aut+sosFzmfsMigWUrYDbLJXP/dr3QwwYGUvpJUQJu7EskQ6GhG/YLjgNIHiacwKWUwkqMLvEW1ucqNQ1qj0RFJYJY4dVt8rQ0HyjMRxH/aWUH9yrl7z+yzxgsLWGNf8Lm
+	RFCyuuonRSYSKLimzxDr54MhGR2BUKpsHtyRQ2SklHklgibOjCINpvJimkqVG56N8Xxbi4YrTPpNaRFwA1lkHa+CAC2Y/onVk8r2clZ7+LBlBhjMg4xpSSa9BdnPT28WNXwCIGR5JCd1m1RNYOhtjqDl7P88+tQKa0kylL4bmNHZ087+GevhH6Yu6aEobBHgPxDXj4/A1NldJo9QzcHRZ6utOitWPZaxFOakvJFvNpn+cH7K8DM2wsTfn0KF6USf/sxP6vWjEFjSIkjgln4mK+MV3wEoweS4sSvK+HF5BOnQE12EWACPPirmVe/EHNRLFNI/AL06GTBD/qK/bV08F9sJaBg6cxasiml8JT21KccxBDM3eiU7VUmqj+vo3d/3pBjRYB+N1YX1eYeMV7CRVwGf5ca5Cki/aKI5d0C+iWq0SJo8PomnVaxEw6an66zgbMdff2gmEf5lv0P1zG7wmGCGqNu2+rWwyyXJHwbC+JHjcUpKV9lNurNckzjWDPSHBJkgUoMIHibaiFxNqHlpxtqvbh1WUR5Kewq8vNxjAi0ivCHp4rBMKGBbHdCOg09htWIybc7KyCSdsQMeKm2kH9EIRD/+GflEs0WkUmhlYFKdiDKerzzF/fA4ifo5mlIZXFHyqckwBz1oXaF7r40sVpArvRtjcYXsn3zS/CcEHasRaA79OXle9fUzpYa0f7du4/VmQUNWsqZZAJnPlL4eczc10C/6tJPaUGGPyHbBRzocCsM+wLVtApWCkblAy/xB
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(36860700016)(376014)(82310400026)(23010399003)(1800799024)(921020)(18002099003)(22082099003)(6133799003)(56012099006)(11063799006)(10067099003)(3023799007);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(23010399003)(82310400026)(1800799024)(376014)(7416014)(36860700016)(10067099003)(3023799007)(22082099003)(18002099003)(6133799003)(5023799004)(56012099006)(11063799006)(921020);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	bMYg/jFqc5ceuCPZ7idpIoAi0bdMrJcMsXQnEHDVa2VlYS5LrFEIdKcvg/vx3GnkojWIYtqmcZBgUXrzrEzNO0TOf3q6One5Rt7NLnrUFAq99wV8F5J6FB80XX+vZtsbTrllNKfP8MdTfMp011ycFB+zeayMcT8hlxSRwqpkMxBQ7SpobVeZej8f6Ibn5zRnag7Sj3wZrc35ECyfKZ0ocMwNHNDACeVrkdo6vqXE+yaTIJB8+QazCHRCjaRsLi8x5LTN4sd/SPQJF76a1YnIxI50++ZI89EZ/dIMZyowXHNPKTbX/rDMM1/G3fqz4I4TCOog+kb/pEggXqNcmTP9fbSEZAhdo+gTxhZasFooY6aHDlUEF5RyP9HrvSjdQftnxJdEIhCKkawraiCoWK5iMfzGrjXYlxzXkRjYRkWSf9nxbds/Z5F/q2kznoNQZ0QA
+	On9cYtXri5Nq7v9pjZ9Ucsw0AsO0CCiCE2SXj5cueWx3TNSiIN69zWcgCyu1kiX8tZ+EkuRRi7nVn/ffJCyssm/LwkFTaXpMei+syNGzq6O+b5eRDatDD0yeXd4nTK/XPbVegqllf4CCNOcWYtLr3TD3sTclS35CzqDK7DdX7kDWHV9jrGVjYD4TvGJCMVoO9hrfMiaoZHaWk0anWLLIq+duk24SIFnHqdKGhOkBgGPwXrNt1eWEhbPpnNcI294L0qwASLGjzHCAdJJxwSc5Vz+ljrNDq5+8C+yOP6eiEHYmnKAguc0krqv/Od8kLkcJo+2KAW/coTngNAHIAV6XLXfE80tcRT6tC86esh3BKkXP7mPkKD6YTcdBW6rFiayg8nAk3YhshQZWhUmbCQTVdL7QRNTmz0AXGsTYDL3lBlQiVmkVioF1M0ZrjZFLX+G/
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:34.5775
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:32.5116
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: 11a5ae9b-3a96-4dff-743d-08df150f577a
+X-MS-Exchange-CrossTenant-Network-Message-Id: f2868f2c-f489-4a45-7184-08df150f565b
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	SJ5PEPF000001CF.namprd05.prod.outlook.com
+	BN2PEPF0000A800.namprd02.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR04MB6463
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR04MB7791
 
-Add Documentation/userspace-api/ioctl/cmh_mgmt.rst documenting the
-ioctl commands on the /dev/cmh_mgmt misc device for the Rambus
-CryptoManager Hub (CMH) hardware crypto accelerator driver.  Covers
-key management, KIC key derivation, PKE (RSA, ECDSA, ECDH, EdDSA),
-PQC (ML-KEM, ML-DSA, SLH-DSA), SM2, EAC, and DRBG.  Link the page
-into the userspace-api/ioctl index toctree.
+The in-kernel crypto API cannot express the CMH management plane, so
+this patch adds a character device (/dev/cmh_mgmt) for it.  The ioctl
+commands fall into two groups; the overlap with the transforms the
+driver also registers is deliberate and bounded:
 
-Register ioctl magic number 'J' (0x4A) in ioctl-number.rst.  The
-driver uses ioctls 0x01-0x40.
+(1) Operations with no crypto API representation - the majority.  The
+    API has no transform type or verb for these, so a character device
+    is the only available UAPI:
+      - hardware key lifecycle: create, import, export, derive,
+        destroy, enumerate (keystore CRUD) - no keystore verb
+      - KIC key derivation (HKDF, AES-CMAC-KDF, DKEK)
+      - asymmetric key generation (RSA, EC, EdDSA, ML-DSA, SLH-DSA)
+        and public-key derivation - the API has no keygen verb
+      - ML-KEM encapsulate/decapsulate - no kernel KEM API exists
+      - SM2 encrypt/decrypt and key exchange (multi-step GM/T 0003)
+      - EdDSA sign/verify - not registered with the crypto API
+      - EAC Chip Authentication and DRBG (re)configuration
+
+(2) Hardware-held-key operations on algorithms that ARE also
+    registered (RSA decrypt, ECDSA/ML-DSA/SLH-DSA sign, ECDH).  These
+    name the same primitives as the registered akcipher/sig/kpp
+    transforms, but the crypto API set_priv_key()/set_secret() accept
+    only raw key bytes supplied by the caller; they cannot reference a
+    private key that is generated inside, and never leaves, the
+    hardware datastore - the central security property of this device.
+    The ioctl path keeps the private key hardware-resident, while the
+    registered transforms serve raw-key in-kernel users.  The two
+    paths are complementary, not redundant.
+
+The subsystem provides:
+
+- Key provisioning: create, import, derive, and destroy hardware keys
+  stored in the CMH datastore
+- System object management: allocate and free CMH system objects
+- Management ioctl interface (/dev/cmh_mgmt): key lifecycle, KIC key
+  derivation, PKE (RSA, ECDSA, ECDH, EdDSA), PQC (ML-KEM, ML-DSA,
+  SLH-DSA), SM2, EAC, and DRBG reseeding
+- SM2 ioctl handlers: encrypt, decrypt, sign, and key exchange --
+  multi-step protocol flows not expressible through the crypto API
+  sig interface
+- UAPI header: cmh_mgmt_ioctl.h (ioctl definitions and structures)
+
+The device requires CAP_SYS_ADMIN for open() and is built conditionally
+on CONFIG_CRYPTO_DEV_CMH_MGMT (default n); when disabled the ioctl
+interface is absent while all kernel crypto API algorithms remain
+registered.
 
 Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 ---
- .../userspace-api/ioctl/cmh_mgmt.rst          | 1292 +++++++++++++++++
- Documentation/userspace-api/ioctl/index.rst   |    1 +
- .../userspace-api/ioctl/ioctl-number.rst      |    1 +
- 3 files changed, 1294 insertions(+)
- create mode 100644 Documentation/userspace-api/ioctl/cmh_mgmt.rst
+ Documentation/ABI/testing/cmh-mgmt       |  136 ++
+ drivers/crypto/cmh/Kconfig               |   19 +
+ drivers/crypto/cmh/Makefile              |   11 +-
+ drivers/crypto/cmh/cmh_key.c             |  164 ++
+ drivers/crypto/cmh/cmh_main.c            |    9 +
+ drivers/crypto/cmh/cmh_mgmt.c            | 1770 ++++++++++++++++++++++
+ drivers/crypto/cmh/cmh_mgmt_pke.c        | 1143 ++++++++++++++
+ drivers/crypto/cmh/cmh_mgmt_pqc.c        | 1365 +++++++++++++++++
+ drivers/crypto/cmh/cmh_pke_sm2.c         |  862 +++++++++++
+ drivers/crypto/cmh/cmh_sys.c             |  376 +++++
+ drivers/crypto/cmh/include/cmh_key.h     |   82 +
+ drivers/crypto/cmh/include/cmh_mgmt.h    |   69 +
+ drivers/crypto/cmh/include/cmh_pke.h     |  245 +++
+ drivers/crypto/cmh/include/cmh_pke_sm2.h |   30 +
+ drivers/crypto/cmh/include/cmh_pqc.h     |   25 +
+ drivers/crypto/cmh/include/cmh_sys.h     |  111 ++
+ include/uapi/linux/cmh_mgmt_ioctl.h      |  902 +++++++++++
+ 17 files changed, 7318 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/ABI/testing/cmh-mgmt
+ create mode 100644 drivers/crypto/cmh/cmh_key.c
+ create mode 100644 drivers/crypto/cmh/cmh_mgmt.c
+ create mode 100644 drivers/crypto/cmh/cmh_mgmt_pke.c
+ create mode 100644 drivers/crypto/cmh/cmh_mgmt_pqc.c
+ create mode 100644 drivers/crypto/cmh/cmh_pke_sm2.c
+ create mode 100644 drivers/crypto/cmh/cmh_sys.c
+ create mode 100644 drivers/crypto/cmh/include/cmh_key.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_mgmt.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_pke.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_pke_sm2.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_pqc.h
+ create mode 100644 drivers/crypto/cmh/include/cmh_sys.h
+ create mode 100644 include/uapi/linux/cmh_mgmt_ioctl.h
 
-diff --git a/Documentation/userspace-api/ioctl/cmh_mgmt.rst b/Documentation/userspace-api/ioctl/cmh_mgmt.rst
+diff --git a/Documentation/ABI/testing/cmh-mgmt b/Documentation/ABI/testing/cmh-mgmt
 new file mode 100644
-index 000000000000..c02bac128787
+index 000000000000..7da2630edb20
 --- /dev/null
-+++ b/Documentation/userspace-api/ioctl/cmh_mgmt.rst
-@@ -0,0 +1,1292 @@
-+.. SPDX-License-Identifier: GPL-2.0
-+
-+=============================================
-+CMH Key Management ioctl Interface (cmh_mgmt)
-+=============================================
-+
-+:Author: Cryptography Research, Inc. (CRI)
-+:Maintainer: linux-crypto@vger.kernel.org
-+
-+Introduction
-+============
-+
-+The ``/dev/cmh_mgmt`` character device provides user-space access to key
-+management, key derivation, public-key, and post-quantum cryptographic
-+operations on the CryptoManager Hub (CMH) hardware accelerator.
-+
-+The device is created by the ``cmh`` kernel module as a ``misc_device``.
-+All operations are synchronous -- the ioctl blocks until the hardware
-+completes.  Opening the device requires ``CAP_SYS_ADMIN``.
-+
-+All ioctl argument structures are versioned: user space sets the
-+``version`` field to ``CMH_MGMT_V1`` (currently 1).  This allows the
-+driver to extend structures in the future without breaking the ABI.
-+
-+Data types and ioctl numbers are defined in
-+``<uapi/linux/cmh_mgmt_ioctl.h>``.  The ioctl type letter is ``'J'``
-+(0x4A).
-+
-+Error Handling
-+==============
-+
-+Unless otherwise noted, all ioctls return 0 on success and a negative
-+errno on failure.  Common error codes:
-+
-+========== =============================================================
-+``EINVAL`` Invalid ``version`` field, unsupported parameter, or
-+           out-of-range length.
-+``EFAULT`` Failed to copy data to/from user space.
-+``ENOMEM`` Kernel memory allocation failed.
-+``EIO``    Hardware returned an error (eSW command failure).
-+``ENOENT`` Key not found (``KEY_FIND``, ``KEY_LIST``).
-+========== =============================================================
-+
-+Datastore Concepts
-+==================
-+
-+The CMH hardware maintains an embedded datastore managed by the eSW
-+firmware.  Objects in the datastore are identified by a 64-bit reference
-+(``ref``) and optionally by a 64-bit Content ID (``cid``).
-+
-+Two storage classes exist:
-+
-+**Temporary (SYS_REF_TEMP)**
-+  Lifetime is scoped to a single mailbox slot.  The eSW firmware
-+  reclaims the object when the slot is reused.  Used for raw-key
-+  provisioning via ``KEY_NEW`` + ``KEY_WRITE``.
-+
-+**Persistent (SYS_REF_PERSIST)**
-+  Survives across mailbox slots.  Requires explicit deletion via
-+  ``KEY_DELETE``.  Identified by CID; resolved to a per-mailbox ref
-+  via ``KEY_FIND``.
-+
-+Mailbox Dispatch
-+================
-+
-+All ``/dev/cmh_mgmt`` ioctls are submitted on a single management
-+mailbox.  This is a structural requirement of the eSW datastore model,
-+not a tunable:
-+
-+* Datastore access control is **per-mailbox**.  ``KEY_NEW`` grants the
-+  creating mailbox read/write/execute access; other mailboxes have none
-+  until granted.  The returned 64-bit ``ref`` encodes a randomised
-+  offset and does **not** carry the owning mailbox, so an operation that
-+  receives only a ``ref`` (``KEY_GRANT``, ``KEY_READ``, ``KEY_DELETE``,
-+  ``DS_EXPORT``) cannot itself determine which mailbox owns the object.
-+  Using one fixed management mailbox guarantees that a key's create,
-+  modify, grant, read and hardware-held-key compute steps all share the
-+  mailbox that holds its access rights, without exposing mailbox
-+  identity in the UABI.  User space may still widen a key's access to
-+  additional mailboxes via ``KEY_GRANT``.
-+
-+* The eSW ``SYS_REF_TEMP`` scratch store is per-mailbox and persists
-+  across ioctl calls, so a multi-step flow that derives into
-+  ``SYS_REF_TEMP`` (for example a ``KIC_*`` derivation) and later
-+  consumes it (``DS_EXPORT`` with ``wrap_key = SYS_REF_TEMP``) requires
-+  both calls to use the same mailbox.
-+
-+Per-mailbox ``rambus,cores`` device-tree affinity applies to the *stateless*
-+in-kernel crypto API path, which carries no datastore state between
-+requests and is balanced across mailboxes by the driver.
-+
-+Key Types
-+=========
-+
-+The ``ds_type`` field in ``KEY_NEW`` and ``KEY_WRITE`` selects the
-+datastore object type.  Values are defined as ``CMH_DS_*`` constants:
-+
-+=================================  =====  ==============================
-+Constant                           Value  Description
-+=================================  =====  ==============================
-+``CMH_DS_RAW_VALUE``               1      Raw byte array
-+``CMH_DS_AES_KEY``                 2      AES key (128/192/256-bit)
-+``CMH_DS_AES_XTS_KEY``             3      AES-XTS key (256/512-bit)
-+``CMH_DS_HMAC_KEY``                4      HMAC key
-+``CMH_DS_KMAC_KEY``                5      KMAC key
-+``CMH_DS_SM4_KEY``                 6      SM4 key (128-bit)
-+``CMH_DS_CHACHA20_KEY``            7      ChaCha20 key (256-bit)
-+``CMH_DS_RSA_PRIV_KEY``            10     RSA private key
-+``CMH_DS_RSA_PUB_KEY``             11     RSA public key
-+``CMH_DS_RSA_CRT_KEY``             12     RSA CRT private key
-+``CMH_DS_ECDSA_PRIV_KEY``          13     ECDSA private key
-+``CMH_DS_ECDSA_PUB_KEY``           14     ECDSA public key
-+``CMH_DS_ECDH_PRIV_KEY``           15     ECDH private key
-+``CMH_DS_EDDSA_PRIV_KEY``          16     EdDSA private key
-+``CMH_DS_SHARED_SECRET``           17     Shared secret
-+``CMH_DS_SM2_PRIV_KEY``            18     SM2 private key
-+``CMH_DS_ML_KEM_DK``               20     ML-KEM decapsulation key
-+``CMH_DS_ML_DSA_SK``               21     ML-DSA secret key
-+``CMH_DS_SLHDSA_SK``               25     SLH-DSA secret key
-+=================================  =====  ==============================
-+
-+Key Flags
-+=========
-+
-+The ``flags`` field in ``KEY_NEW`` and ``KEY_WRITE`` is a bitmask:
-+
-+==================  ===========  ========================================
-+Flag                Bit          Description
-+==================  ===========  ========================================
-+``CMH_FLAG_PT``     16           Key can be read as plaintext
-+``CMH_FLAG_XC``     17           Key can be exported over XC bus
-+``CMH_FLAG_SCA``    18           SCA key stored in 2 shares
-+==================  ===========  ========================================
-+
-+Elliptic Curve IDs
-+==================
-+
-+Curve identifiers for PKE operations (``curve`` field):
-+
-+==========================  =====
-+Constant                    Value
-+==========================  =====
-+``CMH_CURVE_P192``          0x01
-+``CMH_CURVE_P224``          0x02
-+``CMH_CURVE_P256``          0x03
-+``CMH_CURVE_P384``          0x04
-+``CMH_CURVE_P521``          0x05
-+``CMH_CURVE_SECP256K1``     0x07
-+``CMH_CURVE_BP192R1``       0x11
-+``CMH_CURVE_BP224R1``       0x12
-+``CMH_CURVE_BP256R1``       0x13
-+``CMH_CURVE_BP320R1``       0x14
-+``CMH_CURVE_BP384R1``       0x15
-+``CMH_CURVE_BP512R1``       0x16
-+``CMH_CURVE_SM2``           0x18
-+``CMH_CURVE_25519``         0x21
-+``CMH_CURVE_448``           0x22
-+==========================  =====
-+
-+Key Management ioctls
-+=====================
-+
-+CMH_IOCTL_KEY_NEW
-+-----------------
-+
-+Create a new empty datastore object.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x01
-+:Argument: ``struct cmh_ioctl_key_new``
-+
-+::
-+
-+  struct cmh_ioctl_key_new {
-+      __u32 version;     /* must be CMH_MGMT_V1 */
-+      __u32 ds_type;     /* CMH_DS_* key type */
-+      __u32 len;         /* key length in bytes */
-+      __u32 flags;       /* CMH_FLAG_* */
-+      __u64 cid;         /* caller ID (name) for the key */
-+      __u64 ref;         /* [out] key reference */
-+  };
-+
-+The returned ``ref`` is used in subsequent ``KEY_WRITE``, ``KEY_READ``,
-+and crypto operation ioctls.
-+
-+CMH_IOCTL_KEY_NEW_RANDOM
-+------------------------
-+
-+Create a new datastore object filled with hardware-generated random data.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0B
-+:Argument: ``struct cmh_ioctl_key_new``
-+
-+Same structure as ``KEY_NEW``.  The hardware DRBG fills the object with
-+``len`` random bytes.
-+
-+CMH_IOCTL_KEY_WRITE
-+-------------------
-+
-+Write key material into a previously created datastore object.
-+
-+:Direction: ``_IOW``
-+:Number: 0x02
-+:Argument: ``struct cmh_ioctl_key_write``
-+
-+::
-+
-+  struct cmh_ioctl_key_write {
-+      __u32 version;
-+      __u32 len;         /* key data length */
-+      __u32 ds_type;     /* CMH_DS_* key type */
-+      __u32 flags;       /* CMH_FLAG_* */
-+      __u64 ref;         /* key reference from KEY_NEW */
-+      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
-+      __u64 data;        /* user-space pointer to key material */
-+  };
-+
-+If ``wrap_key`` is ``CMH_REF_NONE`` (0), key material is written in
-+plaintext.  Otherwise, the data is unwrapped using the specified
-+wrapping key.
-+
-+CMH_IOCTL_KEY_READ
-+------------------
-+
-+Read key material from a datastore object.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x03
-+:Argument: ``struct cmh_ioctl_key_read``
-+
-+::
-+
-+  struct cmh_ioctl_key_read {
-+      __u32 version;
-+      __u32 len;         /* buffer length */
-+      __u64 ref;         /* key reference */
-+      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
-+      __u64 data;        /* user-space pointer to output buffer */
-+      __u32 out_len;     /* [out] actual bytes written */
-+      __u32 __reserved;
-+  };
-+
-+Plaintext reads require the ``CMH_FLAG_PT`` attribute on the key.
-+The eSW prepends a 16-byte header (``CMH_SYS_WRAP_HDR_SIZE``) even
-+for plaintext reads; the output buffer must accommodate this.  The
-+output overhead is ``CMH_DS_EXPORT_OVERHEAD_PLAIN`` (16 bytes) for
-+plaintext reads and ``CMH_DS_EXPORT_OVERHEAD_WRAPPED`` (48 bytes:
-+16-byte header + 16-byte nonce + 16-byte tag) for wrapped reads.
-+
-+CMH_IOCTL_KEY_FIND
-+------------------
-+
-+Resolve a Content ID to a datastore reference.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x04
-+:Argument: ``struct cmh_ioctl_key_find``
-+
-+::
-+
-+  struct cmh_ioctl_key_find {
-+      __u32 version;
-+      __u32 __reserved;
-+      __u64 cid;         /* caller ID to search for */
-+      __u64 ref;         /* [out] resolved key reference */
-+      __u32 len;         /* [out] key length */
-+      __u32 type;        /* [out] key type */
-+  };
-+
-+Returns ``-ENOENT`` if no object with the given CID exists.
-+
-+CMH_IOCTL_KEY_LIST
-+------------------
-+
-+Iterate datastore objects.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0E
-+:Argument: ``struct cmh_ioctl_key_list``
-+
-+::
-+
-+  struct cmh_ioctl_key_list {
-+      __u32 version;
-+      __u32 __reserved;
-+      __u64 start_ref;   /* starting DS reference (0 = first) */
-+      __u64 ref;         /* [out] object reference */
-+      __u64 cid;         /* [out] caller ID */
-+      __u32 len;         /* [out] object length */
-+      __u32 type;        /* [out] object type */
-+  };
-+
-+Pass ``start_ref=0`` to begin from the first object.  On return, pass
-+the returned ``ref`` as ``start_ref`` in the next call.  Iteration ends
-+when ``ref == 0``.
-+
-+CMH_IOCTL_KEY_GRANT
-+-------------------
-+
-+Set per-mailbox access permissions on a datastore object.
-+
-+:Direction: ``_IOW``
-+:Number: 0x05
-+:Argument: ``struct cmh_ioctl_key_grant``
-+
-+::
-+
-+  struct cmh_ioctl_key_grant {
-+      __u32 version;
-+      __u32 __reserved;
-+      __u64 ref;         /* key reference */
-+      __u64 read;        /* per-MBX read permission bitfield */
-+      __u64 write;       /* per-MBX write permission bitfield */
-+      __u64 execute;     /* per-MBX execute permission bitfield */
-+  };
-+
-+CMH_IOCTL_KEY_DELETE
-+--------------------
-+
-+Delete a datastore object (persistent keys only).
-+
-+:Direction: ``_IOW``
-+:Number: 0x06
-+:Argument: ``struct cmh_ioctl_key_grant``
-+
-+Uses the same structure as ``KEY_GRANT``; only the ``ref`` field is
-+used.
-+
-+Datastore Export/Import ioctls
-+==============================
-+
-+CMH_IOCTL_DS_EXPORT
-+-------------------
-+
-+Export the entire datastore as an encrypted blob.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x07
-+:Argument: ``struct cmh_ioctl_ds_export``
-+
-+::
-+
-+  struct cmh_ioctl_ds_export {
-+      __u32 version;
-+      __u32 len;         /* buffer length */
-+      __u64 cid;         /* caller ID for response tagging */
-+      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
-+      __u64 data;        /* user-space pointer to output buffer */
-+      __u32 out_len;     /* [out] actual bytes written */
-+      __u32 __reserved;
-+  };
-+
-+CMH_IOCTL_DS_IMPORT
-+-------------------
-+
-+Import a previously exported datastore blob.
-+
-+:Direction: ``_IOW``
-+:Number: 0x08
-+:Argument: ``struct cmh_ioctl_ds_import``
-+
-+::
-+
-+  struct cmh_ioctl_ds_import {
-+      __u32 version;
-+      __u32 len;         /* blob length */
-+      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
-+      __u64 data;        /* user-space pointer to import blob */
-+  };
-+
-+Key Derivation ioctls (KIC)
-+===========================
-+
-+The Key Initialization Core (KIC) provides hardware key derivation from
-+OTP-provisioned base keys.  Up to 8 base keys are available
-+(``CMH_KIC_KEY1`` through ``CMH_KIC_KEY8``).
-+
-+CMH_IOCTL_KIC_HKDF1
-+--------------------
-+
-+HKDF-based key derivation (single-step, label only).
-+
-+:Direction: ``_IOWR``
-+:Number: 0x09
-+:Argument: ``struct cmh_ioctl_kic_hkdf1``
-+
-+::
-+
-+  struct cmh_ioctl_kic_hkdf1 {
-+      __u32 version;
-+      __u32 key_len;     /* output key length */
-+      __u64 base_key;    /* KIC base key reference */
-+      __u64 cid;         /* CID for the new DS entry */
-+      __u64 label;       /* user-space pointer to label data */
-+      __u32 label_len;   /* label length in bytes */
-+      __u32 flags;       /* CMH_KIC_FLAG_* */
-+      __u64 ref;         /* [out] derived key reference */
-+  };
-+
-+If ``CMH_KIC_FLAG_TEMP`` is set, the result is stored in the temporary
-+datastore (not persistent).
-+
-+CMH_IOCTL_KIC_HKDF2
-+--------------------
-+
-+HKDF-based key derivation (two-step, with salt key).
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0A
-+:Argument: ``struct cmh_ioctl_kic_hkdf2``
-+
-+::
-+
-+  struct cmh_ioctl_kic_hkdf2 {
-+      __u32 version;
-+      __u32 key_len;
-+      __u64 base_key;
-+      __u64 salt_key;    /* salt key reference (CMH_REF_NONE = no salt) */
-+      __u64 cid;
-+      __u64 label;
-+      __u32 label_len;
-+      __u32 flags;
-+      __u64 ref;         /* [out] derived key reference */
-+  };
-+
-+CMH_IOCTL_KIC_AES_CMAC_KDF
-+---------------------------
-+
-+AES-CMAC-based key derivation (NIST SP 800-108).
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0C
-+:Argument: ``struct cmh_ioctl_kic_aes_cmac_kdf``
-+
-+::
-+
-+  struct cmh_ioctl_kic_aes_cmac_kdf {
-+      __u32 version;
-+      __u32 key_len;     /* base & output key length (must be 32) */
-+      __u64 base_key;
-+      __u64 cid;
-+      __u64 label;
-+      __u32 label_len;
-+      __u32 flags;
-+      __u64 ref;         /* [out] derived key reference */
-+  };
-+
-+CMH_IOCTL_KIC_DKEK_DERIVE
-+--------------------------
-+
-+Derive a Device Key Encryption Key (DKEK) for secure key export.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0D
-+:Argument: ``struct cmh_ioctl_kic_dkek_derive``
-+
-+::
-+
-+  struct cmh_ioctl_kic_dkek_derive {
-+      __u32 version;
-+      __u32 host_id;     /* target host ID (0 = caller's own) */
-+      __u64 base_key;
-+      __u64 cid;
-+      __u64 metadata;    /* user-space pointer to metadata */
-+      __u32 metadata_len;
-+      __u32 flags;
-+      __u64 ref;         /* [out] derived KEK reference */
-+  };
-+
-+PKE (Public Key Engine) ioctls
-+==============================
-+
-+RSA Operations
-+--------------
-+
-+CMH_IOCTL_PKE_RSA_ENC
-+~~~~~~~~~~~~~~~~~~~~~~
-+
-+RSA public-key encryption.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x10
-+:Argument: ``struct cmh_ioctl_pke_rsa_enc``
-+
-+::
-+
-+  struct cmh_ioctl_pke_rsa_enc {
-+      __u32 version;
-+      __u32 bits;        /* RSA key size in bits (512-4096) */
-+      __u64 e;           /* user-space pointer to public exponent */
-+      __u32 e_len;       /* exponent length in bytes */
-+      __u32 __reserved;
-+      __u64 n;           /* user-space pointer to modulus */
-+      __u64 input;       /* user-space pointer to input data */
-+      __u64 output;      /* user-space pointer to output buffer */
-+  };
-+
-+The public key (e, n) is passed as raw user-space buffers.
-+
-+CMH_IOCTL_PKE_RSA_DEC
-+~~~~~~~~~~~~~~~~~~~~~~
-+
-+RSA private-key decryption using a datastore key reference.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x11
-+:Argument: ``struct cmh_ioctl_pke_rsa_dec``
-+
-+::
-+
-+  struct cmh_ioctl_pke_rsa_dec {
-+      __u32 version;
-+      __u32 bits;
-+      __u64 e;           /* public exponent */
-+      __u32 e_len;
-+      __u32 __reserved;
-+      __u64 n;           /* modulus */
-+      __u64 input;       /* ciphertext */
-+      __u64 output;      /* plaintext output */
-+      __u64 key_ref;     /* private key DS reference */
-+  };
-+
-+CMH_IOCTL_PKE_RSA_CRT_DEC
-+~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+RSA CRT private-key decryption (faster, uses CRT key format).
-+
-+:Direction: ``_IOWR``
-+:Number: 0x12
-+:Argument: ``struct cmh_ioctl_pke_rsa_crt_dec``
-+
-+::
-+
-+  struct cmh_ioctl_pke_rsa_crt_dec {
-+      __u32 version;
-+      __u32 bits;
-+      __u64 e;
-+      __u32 e_len;
-+      __u32 __reserved;
-+      __u64 n;
-+      __u64 input;
-+      __u64 output;
-+      __u64 crt_ref;     /* CRT key DS reference */
-+  };
-+
-+CMH_IOCTL_PKE_RSA_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate an RSA key pair in hardware.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x13
-+:Argument: ``struct cmh_ioctl_pke_rsa_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_pke_rsa_keygen {
-+      __u32 version;
-+      __u32 bits;        /* key size in bits */
-+      __u64 e;           /* user-space pointer to public exponent */
-+      __u32 e_len;
-+      __u32 flags;       /* CMH_FLAG_* */
-+      __u64 n;           /* [out] user-space pointer to modulus buffer */
-+      __u64 d_cid;       /* CID for private key DS entry */
-+      __u64 d_ref;       /* [out] private key reference */
-+      __u64 crt_cid;     /* CID for CRT key DS entry (0 = skip CRT) */
-+      __u64 crt_ref;     /* [out] CRT key reference */
-+  };
-+
-+Returns private key and optional CRT key as datastore references.
-+The modulus is written back to user space.
-+
-+ECDSA Operations
-+----------------
-+
-+CMH_IOCTL_PKE_ECDSA_SIGN
-+~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+ECDSA signature generation using a datastore private key.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x14
-+:Argument: ``struct cmh_ioctl_pke_ecdsa_sign``
-+
-+::
-+
-+  struct cmh_ioctl_pke_ecdsa_sign {
-+      __u32 version;
-+      __u32 curve;       /* ABI curve ID (e.g. 0x03 = P-256) */
-+      __u64 digest;      /* user-space pointer to hash digest */
-+      __u32 digest_len;  /* digest length in bytes */
-+      __u32 __reserved;
-+      __u64 signature;   /* [out] user-space pointer to (r,s) */
-+      __u64 key_ref;     /* private key DS reference */
-+  };
-+
-+CMH_IOCTL_PKE_ECDH
-+~~~~~~~~~~~~~~~~~~~
-+
-+Compute ECDH shared secret from a peer public key and a datastore
-+private key.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x16
-+:Argument: ``struct cmh_ioctl_pke_ecdh``
-+
-+::
-+
-+  struct cmh_ioctl_pke_ecdh {
-+      __u32 version;
-+      __u32 curve;
-+      __u64 peer_key_x;  /* user-space pointer to peer public key X */
-+      __u64 key_ref;     /* private key DS reference */
-+      __u32 flags;       /* reserved, must be 0 */
-+      __u32 __reserved;
-+      __u64 __reserved2; /* reserved, must be 0 */
-+      __u64 output;      /* [out] raw shared secret */
-+  };
-+
-+CMH_IOCTL_PKE_ECDH_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Derive a public key from a datastore private key.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x17
-+:Argument: ``struct cmh_ioctl_pke_ecdh_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_pke_ecdh_keygen {
-+      __u32 version;
-+      __u32 curve;
-+      __u64 key_ref;       /* private key DS reference */
-+      __u64 public_key_x;  /* [out] user-space pointer to public key X */
-+  };
-+
-+EdDSA Operations
-+----------------
-+
-+CMH_IOCTL_PKE_EDDSA_SIGN
-+~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+EdDSA (Ed25519/Ed448) signature generation.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x18
-+:Argument: ``struct cmh_ioctl_pke_eddsa_sign``
-+
-+::
-+
-+  struct cmh_ioctl_pke_eddsa_sign {
-+      __u32 version;
-+      __u32 curve;       /* CURVE_25519 or CURVE_448 */
-+      __u64 digest;      /* user-space ptr to message (not digest) */
-+      __u32 digest_len;
-+      __u32 __reserved;
-+      __u64 signature;   /* [out] user-space pointer to signature */
-+      __u64 key_ref;     /* private key DS reference */
-+  };
-+
-+Note: the ``digest`` field is the full message (pure EdDSA), not a
-+pre-computed hash.
-+
-+CMH_IOCTL_PKE_EDDSA_VERIFY
-+~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+EdDSA signature verification.
-+
-+:Direction: ``_IOW``
-+:Number: 0x19
-+:Argument: ``struct cmh_ioctl_pke_eddsa_verify``
-+
-+::
-+
-+  struct cmh_ioctl_pke_eddsa_verify {
-+      __u32 version;
-+      __u32 curve;
-+      __u64 digest;
-+      __u32 digest_len;
-+      __u32 __reserved;
-+      __u64 signature;
-+      __u64 public_key_y;  /* user-space pointer to public key Y */
-+  };
-+
-+EC Key Management
-+-----------------
-+
-+CMH_IOCTL_PKE_EC_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate an EC private key in the hardware datastore.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x1A
-+:Argument: ``struct cmh_ioctl_pke_ec_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_pke_ec_keygen {
-+      __u32 version;
-+      __u32 curve;
-+      __u32 flags;       /* CMH_FLAG_* */
-+      __u32 __reserved;
-+      __u64 cid;         /* CID for the new key DS entry */
-+      __u64 ref;         /* [out] private key reference */
-+  };
-+
-+CMH_IOCTL_PKE_EC_PUBGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Derive the public key from a datastore private key.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x1B
-+:Argument: ``struct cmh_ioctl_pke_ec_pubgen``
-+
-+::
-+
-+  struct cmh_ioctl_pke_ec_pubgen {
-+      __u32 version;
-+      __u32 curve;
-+      __u64 key_ref;     /* private key DS reference */
-+      __u64 public_key;  /* [out] user-space pointer to public key */
-+  };
-+
-+CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA
-+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate a 2-share SCA-protected Ed448 private key.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x1C
-+:Argument: ``struct cmh_ioctl_pke_eddsa_keygen_sca``
-+
-+::
-+
-+  struct cmh_ioctl_pke_eddsa_keygen_sca {
-+      __u32 version;
-+      __u32 curve;       /* must be CURVE_448 */
-+      __u64 key_ref;     /* input: normal Ed448 private key DS ref */
-+      __u64 cid;         /* CID for the new SCA key DS entry */
-+      __u64 sca_ref;     /* [out] SCA private key reference */
-+  };
-+
-+Post-Quantum Cryptography (PQC) ioctls
-+=======================================
-+
-+PQC operations support the following flags in the ``flags`` field:
-+
-+============================  ====  ====================================
-+Flag                          Bit   Description
-+============================  ====  ====================================
-+``CMH_QSE_FLAG_MASKED``       0     Use masked (SCA-resistant) HW path
-+``CMH_QSE_FLAG_DS_REF``       1     Store key output in DS, return ref
-+``CMH_QSE_FLAG_HW_RNG``       2     Use HW RNG for seed/randomness
-+============================  ====  ====================================
-+
-+ML-KEM (FIPS 203)
-+-----------------
-+
-+CMH_IOCTL_ML_KEM_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate an ML-KEM key pair.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x20
-+:Argument: ``struct cmh_ioctl_ml_kem_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_ml_kem_keygen {
-+      __u32 version;
-+      __u32 k;           /* security parameter: 2/3/4 */
-+      __u32 flags;       /* CMH_QSE_FLAG_* */
-+      __u32 __reserved;
-+      __u64 seed;        /* user-space pointer to seed (or 0 for HW RNG) */
-+      __u64 z;           /* user-space pointer to z (or 0 for HW RNG) */
-+      __u64 ek;          /* [out] user-space pointer to encapsulation key */
-+      __u64 dk;          /* [out] user-space pointer to decapsulation key,
-+                          *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
-+      __u64 dk_cid;      /* CID for DS entry (if DS_REF) */
-+      __u64 dk_ref;      /* [out] dk DS reference (if DS_REF) */
-+  };
-+
-+Security parameter ``k`` selects the strength: 2 (ML-KEM-512),
-+3 (ML-KEM-768), or 4 (ML-KEM-1024).
-+
-+CMH_IOCTL_ML_KEM_ENC
-+~~~~~~~~~~~~~~~~~~~~~
-+
-+ML-KEM encapsulation.  Produces ciphertext and shared secret.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x21
-+:Argument: ``struct cmh_ioctl_ml_kem_enc``
-+
-+::
-+
-+  struct cmh_ioctl_ml_kem_enc {
-+      __u32 version;
-+      __u32 k;
-+      __u32 flags;       /* CMH_QSE_FLAG_* */
-+      __u32 __reserved;
-+      __u64 coin;        /* user-space pointer to random coin (or 0) */
-+      __u64 ek;          /* user-space pointer to encapsulation key */
-+      __u64 ct;          /* [out] user-space pointer to ciphertext */
-+      __u64 ss;          /* [out] user-space pointer to shared secret */
-+      __u64 __reserved2[2];  /* reserved for future use */
-+  };
-+
-+CMH_IOCTL_ML_KEM_DEC
-+~~~~~~~~~~~~~~~~~~~~~
-+
-+ML-KEM decapsulation.  Recovers shared secret from ciphertext.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x22
-+:Argument: ``struct cmh_ioctl_ml_kem_dec``
-+
-+::
-+
-+  struct cmh_ioctl_ml_kem_dec {
-+      __u32 version;
-+      __u32 k;
-+      __u32 flags;       /* CMH_QSE_FLAG_* */
-+      __u32 __reserved;
-+      __u64 ct;          /* user-space pointer to ciphertext */
-+      __u64 dk;          /* user-space pointer to dk or DS ref */
-+      __u64 ss;          /* [out] user-space pointer to shared secret */
-+      __u64 __reserved2[2];  /* reserved for future use */
-+  };
-+
-+ML-DSA (FIPS 204)
-+-----------------
-+
-+CMH_IOCTL_ML_DSA_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate an ML-DSA key pair.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x23
-+:Argument: ``struct cmh_ioctl_ml_dsa_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_ml_dsa_keygen {
-+      __u32 version;
-+      __u32 mode;        /* security parameter: 2/3/5 */
-+      __u32 flags;       /* CMH_QSE_FLAG_* */
-+      __u32 __reserved;
-+      __u64 seed;        /* user-space pointer to seed (or 0 for HW RNG) */
-+      __u64 pk;          /* [out] user-space pointer to public key */
-+      __u64 sk;          /* [out] user-space pointer to secret key,
-+                          *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
-+      __u64 sk_cid;      /* CID for DS entry (if DS_REF) */
-+      __u64 sk_ref;      /* [out] sk DS reference (if DS_REF) */
-+  };
-+
-+Security parameter ``mode`` selects the strength: 2 (ML-DSA-44),
-+3 (ML-DSA-65), or 5 (ML-DSA-87).
-+
-+.. note::
-+
-+   When ``CMH_QSE_FLAG_DS_REF`` keeps the secret key in the datastore,
-+   the public key returned in ``pk`` is the only copy: there is no
-+   operation to derive the public key from the secret-key reference
-+   for ML-DSA.  User space must persist ``pk`` at keygen time.
-+
-+CMH_IOCTL_ML_DSA_SIGN
-+~~~~~~~~~~~~~~~~~~~~~~
-+
-+ML-DSA signature generation.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x24
-+:Argument: ``struct cmh_ioctl_ml_dsa_sign``
-+
-+::
-+
-+  struct cmh_ioctl_ml_dsa_sign {
-+      __u32 version;
-+      __u32 mode;
-+      __u32 flags;       /* CMH_QSE_FLAG_* */
-+      __u32 mlen;        /* message length in bytes */
-+      __u64 m;           /* user-space pointer to message */
-+      __u64 sk;          /* user-space pointer to sk or DS ref */
-+      __u64 sig;         /* [out] user-space pointer to signature */
-+      __u64 rnd;         /* user-space pointer to randomness (or 0) */
-+  };
-+
-+If ``mlen`` is set to ``CMH_ML_DSA_MLEN_EXTERNAL_MU`` (0xFFFFFFFF),
-+the ``m`` pointer is interpreted as a 64-byte pre-hashed mu value
-+(ExternalMu mode).
-+
-+CMH_IOCTL_SLHDSA_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Generate an SLH-DSA key pair.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x28
-+:Argument: ``struct cmh_ioctl_slhdsa_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_slhdsa_keygen {
-+      __u32 version;
-+      __u32 parameter_set;  /* HCQ_SLHDSA_SHAKE_128S .. SHA2_256F */
-+      __u32 flags;          /* CMH_QSE_FLAG_DS_REF */
-+      __u32 __reserved;
-+      __u64 seed;           /* user-space pointer to seed */
-+      __u64 pk;             /* [out] user-space pointer to public key */
-+      __u64 sk;             /* [out] user-space pointer to secret key,
-+                             *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
-+      __u64 sk_cid;         /* CID for DS entry (if DS_REF) */
-+      __u64 sk_ref;         /* [out] sk DS reference (if DS_REF) */
-+  };
-+
-+.. note::
-+
-+   When ``CMH_QSE_FLAG_DS_REF`` keeps the secret key in the datastore,
-+   the public key returned in ``pk`` is the only copy: there is no
-+   operation to derive the public key from the secret-key reference
-+   for SLH-DSA.  User space must persist ``pk`` at keygen time.
-+
-+CMH_IOCTL_SLHDSA_SIGN
-+~~~~~~~~~~~~~~~~~~~~~~
-+
-+SLH-DSA signature generation (pure mode).
-+
-+:Direction: ``_IOWR``
-+:Number: 0x29
-+:Argument: ``struct cmh_ioctl_slhdsa_sign``
-+
-+::
-+
-+  struct cmh_ioctl_slhdsa_sign {
-+      __u32 version;
-+      __u32 parameter_set;
-+      __u32 msg_len;
-+      __u32 ctx_len;
-+      __u64 msg;         /* user-space pointer to message */
-+      __u64 ctx;         /* user-space pointer to context (or 0) */
-+      __u64 sk;          /* DS ref for secret key */
-+      __u64 sig;         /* [out] user-space pointer to signature */
-+      __u64 add_random;  /* user-space pointer to addl. randomness (or 0) */
-+  };
-+
-+CMH_IOCTL_SLHDSA_SIGN_PREHASH
-+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+SLH-DSA pre-hash signature generation.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x2D
-+:Argument: ``struct cmh_ioctl_slhdsa_sign_prehash``
-+
-+::
-+
-+  struct cmh_ioctl_slhdsa_sign_prehash {
-+      __u32 version;
-+      __u32 parameter_set;
-+      __u32 prehash_algo;  /* CMH_SLHDSA_PREHASH_* */
-+      __u32 digest;        /* 0 = raw msg (eSW hashes), 1 = pre-computed */
-+      __u32 msg_len;
-+      __u32 ctx_len;
-+      __u64 msg;           /* user-space pointer to message/digest */
-+      __u64 ctx;           /* user-space pointer to context (or 0) */
-+      __u64 sk;            /* DS ref for secret key */
-+      __u64 sig;           /* [out] user-space pointer to signature */
-+      __u64 add_random;    /* user-space pointer to addl. randomness (or 0) */
-+  };
-+
-+The ``prehash_algo`` field selects the hash algorithm
-+(``CMH_SLHDSA_PREHASH_SHA256``, etc.).
-+
-+CMH_IOCTL_SM2_ENC_POINT
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x33
-+:Argument: ``struct cmh_ioctl_sm2_enc_point``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_enc_point {
-+      __u32 version;
-+      __u32 nonce_len;   /* 0 = HW generates, 32 = caller provides */
-+      __u64 nonce;       /* user-space pointer to nonce (or 0) */
-+      __u64 public_key;  /* user-space pointer to public key (64B) */
-+      __u64 ciphertext;  /* [out] user-space pointer to C1 (64B) */
-+      __u64 enc_point;   /* [out] user-space pointer to enc point (64B) */
-+  };
-+
-+CMH_IOCTL_SM2_ENC_HASH
-+~~~~~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x37
-+:Argument: ``struct cmh_ioctl_sm2_enc_hash``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_enc_hash {
-+      __u32 version;
-+      __u32 message_len;  /* message length (1..32) */
-+      __u64 message;      /* user-space pointer to plaintext */
-+      __u64 enc_point;    /* user-space pointer to enc point (64B) */
-+      __u64 ciphertext;   /* [out] user-space pointer to ciphertext */
-+  };
-+
-+CMH_IOCTL_SM2_DEC_POINT
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x32
-+:Argument: ``struct cmh_ioctl_sm2_dec_point``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_dec_point {
-+      __u32 version;
-+      __u32 ciphertext_len;  /* total ciphertext length (97..128) */
-+      __u64 ciphertext;      /* user-space pointer to ciphertext (64B: C1) */
-+      __u64 dec_point;       /* [out] user-space pointer to dec point (64B) */
-+      __u64 key_ref;         /* private key DS reference */
-+  };
-+
-+CMH_IOCTL_SM2_DEC_HASH
-+~~~~~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x36
-+:Argument: ``struct cmh_ioctl_sm2_dec_hash``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_dec_hash {
-+      __u32 version;
-+      __u32 ciphertext_len;  /* ciphertext length (97..128) */
-+      __u64 ciphertext;      /* user-space pointer to full ciphertext */
-+      __u64 dec_point;       /* user-space pointer to dec point (64B) */
-+      __u64 plaintext;       /* [out] user-space pointer to plaintext */
-+  };
-+
-+SM2 Key Exchange (GM/T 0003.3)
-+------------------------------
-+
-+The key exchange protocol is a multi-step flow:
-+
-+1. ``EC_KEYGEN(CMH_CURVE_SM2)`` -- generate a long-lived private key.
-+2. ``EC_PUBGEN`` -- derive the public key.
-+3. ``SM2_ID_DIGEST`` -- compute the SM3 identity digest (ZA).
-+4. ``SM2_ECDH_KEYGEN`` -- generate an ephemeral session key.
-+5. Exchange session keys with the peer.
-+6. ``SM2_ECDH`` -- compute the shared point.
-+7. ``SM2_ECDH_HASH`` -- derive the shared key from the shared point
-+   and both parties' ZA digests.
-+
-+CMH_IOCTL_SM2_ECDH_KEYGEN
-+~~~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x30
-+:Argument: ``struct cmh_ioctl_sm2_ecdh_keygen``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_ecdh_keygen {
-+      __u32 version;
-+      __u32 nonce_len;    /* 0 = HW generates r (written back), 32 = caller */
-+      __u64 nonce;        /* [in/out] user-space pointer to nonce buffer (32B) */
-+      __u64 session_key;  /* [out] user-space pointer to R=r*G (64B) */
-+  };
-+
-+``nonce_len`` must be 0 or 32.  If ``nonce_len=0``, the hardware
-+generates the ephemeral scalar and writes it back to the ``nonce``
-+buffer.
-+
-+CMH_IOCTL_SM2_ECDH
-+~~~~~~~~~~~~~~~~~~~
-+
-+:Direction: ``_IOWR``
-+:Number: 0x31
-+:Argument: ``struct cmh_ioctl_sm2_ecdh``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_ecdh {
-+      __u32 version;
-+      __u32 nonce_len;         /* 0 = HW generates, 32 = caller provides */
-+      __u64 nonce;             /* [in/out] user-space pointer to nonce r (32B) */
-+      __u64 peer_public_key;   /* user-space pointer to peer pub key (64B) */
-+      __u64 peer_session_key;  /* user-space pointer to peer session key (64B) */
-+      __u64 key_ref;           /* private key DS reference */
-+      __u64 shared_point;      /* [out] user-space pointer to shared point (64B) */
-+      __u64 shared_point_ref;  /* [in/out] 0 = read-back; &ref = keep DS */
-+  };
-+
-+If ``shared_point_ref`` points to a non-zero value, the shared point
-+is kept in the datastore for use by ``SM2_ECDH_HASH``.
-+
-+CMH_IOCTL_SM2_ID_DIGEST
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Compute the SM3 identity digest (ZA) for a public key and identity
-+string.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x34
-+:Argument: ``struct cmh_ioctl_sm2_id_digest``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_id_digest {
-+      __u32 version;
-+      __u32 id_len;      /* identity length in bytes (<=32) */
-+      __u64 id;          /* user-space pointer to identity string */
-+      __u64 public_key;  /* user-space pointer to public key (64B) */
-+      __u64 digest;      /* [out] user-space pointer to ZA digest (32B) */
-+  };
-+
-+CMH_IOCTL_SM2_ECDH_HASH
-+~~~~~~~~~~~~~~~~~~~~~~~~
-+
-+Derive the shared key from the shared point and ZA digests.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x35
-+:Argument: ``struct cmh_ioctl_sm2_ecdh_hash``
-+
-+::
-+
-+  struct cmh_ioctl_sm2_ecdh_hash {
-+      __u32 version;
-+      __u32 __reserved;
-+      __u64 peer_id_digest;    /* ptr to Z_A -- initiator's digest (32B) */
-+      __u64 id_digest;         /* ptr to Z_B -- responder's digest (32B) */
-+      __u64 shared_point_ref;  /* DS reference from SM2_ECDH */
-+      __u64 shared_key;        /* [out] ptr to shared key (16B) */
-+  };
-+
-+.. important::
-+
-+   The digest fields use **absolute** ordering per GM/T 0003.3, not
-+   relative own/peer ordering.  Both parties must pass:
-+
-+   - ``peer_id_digest`` = Z_A (initiator's digest) -- hashed first
-+   - ``id_digest`` = Z_B (responder's digest) -- hashed second
-+
-+Hardware Management ioctls
-+==========================
-+
-+CMH_IOCTL_EAC_READ
-+-------------------
-+
-+Read and clear the hardware Error and Alarm Controller registers.
-+
-+:Direction: ``_IOWR``
-+:Number: 0x0F
-+:Argument: ``struct cmh_ioctl_eac_read``
-+
-+::
-+
-+  struct cmh_ioctl_eac_read {
-+      __u32 version;
-+      __u32 __reserved;
-+      __u64 mailbox_notification;
-+      __u32 hw_error;
-+      __u32 hw_nmi;
-+      __u32 hw_panic;
-+      __u32 safety_fatal;
-+      __u32 safety_notification;
-+      __u32 sw_info0;
-+      __u32 sw_info1;
-+      __u32 sram_bank_errors[4];
-+      __u32 __pad;
-+  };
-+
-+The eSW atomically reads and clears the registers on each call.
-+Successive reads show only new events since the last read.
-+
-+CMH_IOCTL_DRBG_CONFIG
-+----------------------
-+
-+Configure the hardware DRBG before first use.
-+
-+:Direction: ``_IOW``
-+:Number: 0x40
-+:Argument: ``struct cmh_ioctl_drbg_config``
-+
-+::
-+
-+  struct cmh_ioctl_drbg_config {
-+      __u32 version;
-+      __u32 entropy_ratio;       /* CMH_DRBG_RATIO_* */
-+      __u32 security_strength;   /* CMH_DRBG_STRENGTH_* */
-+      __u32 __reserved;
-+  };
-+
-+This is a management operation normally performed once at system
-+startup.  Must be called before any ``hwrng`` reads or DRBG generate
-+operations.
-+
-+ioctl Number Summary
-+====================
-+
-+======================================  ====  ====  =========================================
-+ioctl                                   Dir   Seq   Argument
-+======================================  ====  ====  =========================================
-+``CMH_IOCTL_KEY_NEW``                   IOWR  0x01  ``cmh_ioctl_key_new``
-+``CMH_IOCTL_KEY_WRITE``                 IOW   0x02  ``cmh_ioctl_key_write``
-+``CMH_IOCTL_KEY_READ``                  IOWR  0x03  ``cmh_ioctl_key_read``
-+``CMH_IOCTL_KEY_FIND``                  IOWR  0x04  ``cmh_ioctl_key_find``
-+``CMH_IOCTL_KEY_GRANT``                 IOW   0x05  ``cmh_ioctl_key_grant``
-+``CMH_IOCTL_KEY_DELETE``                IOW   0x06  ``cmh_ioctl_key_grant``
-+``CMH_IOCTL_DS_EXPORT``                 IOWR  0x07  ``cmh_ioctl_ds_export``
-+``CMH_IOCTL_DS_IMPORT``                 IOW   0x08  ``cmh_ioctl_ds_import``
-+``CMH_IOCTL_KIC_HKDF1``                 IOWR  0x09  ``cmh_ioctl_kic_hkdf1``
-+``CMH_IOCTL_KIC_HKDF2``                 IOWR  0x0A  ``cmh_ioctl_kic_hkdf2``
-+``CMH_IOCTL_KEY_NEW_RANDOM``            IOWR  0x0B  ``cmh_ioctl_key_new``
-+``CMH_IOCTL_KIC_AES_CMAC_KDF``          IOWR  0x0C  ``cmh_ioctl_kic_aes_cmac_kdf``
-+``CMH_IOCTL_KIC_DKEK_DERIVE``           IOWR  0x0D  ``cmh_ioctl_kic_dkek_derive``
-+``CMH_IOCTL_KEY_LIST``                  IOWR  0x0E  ``cmh_ioctl_key_list``
-+``CMH_IOCTL_EAC_READ``                  IOWR  0x0F  ``cmh_ioctl_eac_read``
-+``CMH_IOCTL_PKE_RSA_ENC``               IOWR  0x10  ``cmh_ioctl_pke_rsa_enc``
-+``CMH_IOCTL_PKE_RSA_DEC``               IOWR  0x11  ``cmh_ioctl_pke_rsa_dec``
-+``CMH_IOCTL_PKE_RSA_CRT_DEC``           IOWR  0x12  ``cmh_ioctl_pke_rsa_crt_dec``
-+``CMH_IOCTL_PKE_RSA_KEYGEN``            IOWR  0x13  ``cmh_ioctl_pke_rsa_keygen``
-+``CMH_IOCTL_PKE_ECDSA_SIGN``            IOWR  0x14  ``cmh_ioctl_pke_ecdsa_sign``
-+``CMH_IOCTL_PKE_ECDH``                  IOWR  0x16  ``cmh_ioctl_pke_ecdh``
-+``CMH_IOCTL_PKE_ECDH_KEYGEN``           IOWR  0x17  ``cmh_ioctl_pke_ecdh_keygen``
-+``CMH_IOCTL_PKE_EDDSA_SIGN``            IOWR  0x18  ``cmh_ioctl_pke_eddsa_sign``
-+``CMH_IOCTL_PKE_EDDSA_VERIFY``          IOW   0x19  ``cmh_ioctl_pke_eddsa_verify``
-+``CMH_IOCTL_PKE_EC_KEYGEN``             IOWR  0x1A  ``cmh_ioctl_pke_ec_keygen``
-+``CMH_IOCTL_PKE_EC_PUBGEN``             IOWR  0x1B  ``cmh_ioctl_pke_ec_pubgen``
-+``CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA``      IOWR  0x1C  ``cmh_ioctl_pke_eddsa_keygen_sca``
-+``CMH_IOCTL_ML_KEM_KEYGEN``             IOWR  0x20  ``cmh_ioctl_ml_kem_keygen``
-+``CMH_IOCTL_ML_KEM_ENC``                IOWR  0x21  ``cmh_ioctl_ml_kem_enc``
-+``CMH_IOCTL_ML_KEM_DEC``                IOWR  0x22  ``cmh_ioctl_ml_kem_dec``
-+``CMH_IOCTL_ML_DSA_KEYGEN``             IOWR  0x23  ``cmh_ioctl_ml_dsa_keygen``
-+``CMH_IOCTL_ML_DSA_SIGN``               IOWR  0x24  ``cmh_ioctl_ml_dsa_sign``
-+``CMH_IOCTL_SLHDSA_KEYGEN``             IOWR  0x28  ``cmh_ioctl_slhdsa_keygen``
-+``CMH_IOCTL_SLHDSA_SIGN``               IOWR  0x29  ``cmh_ioctl_slhdsa_sign``
-+``CMH_IOCTL_SLHDSA_SIGN_PREHASH``       IOWR  0x2D  ``cmh_ioctl_slhdsa_sign_prehash``
-+``CMH_IOCTL_SM2_ECDH_KEYGEN``           IOWR  0x30  ``cmh_ioctl_sm2_ecdh_keygen``
-+``CMH_IOCTL_SM2_ECDH``                  IOWR  0x31  ``cmh_ioctl_sm2_ecdh``
-+``CMH_IOCTL_SM2_DEC_POINT``             IOWR  0x32  ``cmh_ioctl_sm2_dec_point``
-+``CMH_IOCTL_SM2_ENC_POINT``             IOWR  0x33  ``cmh_ioctl_sm2_enc_point``
-+``CMH_IOCTL_SM2_ID_DIGEST``             IOWR  0x34  ``cmh_ioctl_sm2_id_digest``
-+``CMH_IOCTL_SM2_ECDH_HASH``             IOWR  0x35  ``cmh_ioctl_sm2_ecdh_hash``
-+``CMH_IOCTL_SM2_DEC_HASH``              IOWR  0x36  ``cmh_ioctl_sm2_dec_hash``
-+``CMH_IOCTL_SM2_ENC_HASH``              IOWR  0x37  ``cmh_ioctl_sm2_enc_hash``
-+``CMH_IOCTL_DRBG_CONFIG``               IOW   0x40  ``cmh_ioctl_drbg_config``
-+======================================  ====  ====  =========================================
-+
-+Relationship to the in-kernel crypto API
-+=========================================
-+
-+The main reason these operations are exposed as ioctls, rather than
-+through the standard in-kernel crypto API, is the CMH datastore key
-+model: an ioctl can operate on a *datastore-referenced* (hardware-held)
-+key, identified only by a ``ref`` or CID, whose raw bytes the CPU never
-+sees.  The standard crypto API cannot express this -- every
-+``.setkey()`` takes raw key material -- so hardware key lifecycle
-+(create, import, derive, grant, destroy) and compute-on-hardware-held-key
-+operations have no crypto API equivalent and are only reachable here.
-+
-+These ioctls remain supported.  Where an operation can *also* be
-+expressed through a standard kernel abstraction, additional in-kernel
-+crypto API bindings may be added over time; when such a binding lands the
-+driver registers through it, and the ioctl continues to be maintained for
-+backward compatibility:
-+
-+- **EdDSA** (``CMH_IOCTL_PKE_EDDSA_*``): a kernel ``sig`` binding may be
-+  added once ed25519/ed448 algorithm types are accepted upstream.
-+
-+- **ML-KEM** (``CMH_IOCTL_ML_KEM_*``): a kernel KEM binding may be added
-+  once the in-flight KEM subsystem series lands.
-+
-+- **Key lifecycle** (``CMH_IOCTL_KEY_*``): integration with the kernel
-+  KEYS subsystem (trusted-keys / encrypted-keys) may be evaluated as a
-+  follow-up series.
-+
-+Operations that are inherently vendor-specific (EAC Chip Authentication,
-+KIC key derivation, SM2 key exchange, DRBG configuration, datastore
-+export/import) have no corresponding kernel abstraction and are expected
-+to remain ioctl-only.
-diff --git a/Documentation/userspace-api/ioctl/index.rst b/Documentation/userspace-api/ioctl/index.rst
-index 475675eae086..bf88bb6b9a6f 100644
---- a/Documentation/userspace-api/ioctl/index.rst
-+++ b/Documentation/userspace-api/ioctl/index.rst
-@@ -12,4 +12,5 @@ IOCTLs
-    ioctl-decoding
++++ b/Documentation/ABI/testing/cmh-mgmt
+@@ -0,0 +1,136 @@
++What:		/dev/cmh_mgmt
++Date:		June 2026
++KernelVersion:	7.1
++Contact:	linux-crypto@vger.kernel.org
++Description:
++		Character device (misc) providing a management and
++		key-operations ioctl interface to the Rambus CryptoManager Hub
++		hardware crypto accelerator.  Used for operations that
++		cannot be represented through the standard in-kernel
++		crypto API: datastore key CRUD, key derivation,
++		asymmetric crypto (EdDSA, SM2), and post-quantum crypto
++		(ML-KEM, ML-DSA, SLH-DSA).
++
++		The ioctl magic is 'J'.  All struct arguments are
++		versioned via a leading __u32 version field set to
++		CMH_MGMT_V1 (1).
++
++		Ioctl commands are grouped by function:
++
++		**Key Management (0x01-0x0E):**
++
++		- CMH_IOCTL_KEY_NEW (0x01): Allocate a new datastore slot.
++		  Accepts ds_type (CMH_DS_* constant), key length, flags,
++		  and caller ID.  Returns a 64-bit key reference.
++
++		- CMH_IOCTL_KEY_WRITE (0x02): Write key material into
++		  a previously allocated datastore slot.  Supports
++		  plaintext or wrapped key import via a wrapping key ref.
++
++		- CMH_IOCTL_KEY_READ (0x03): Read key material from
++		  a datastore slot, optionally wrapped.  Returns data
++		  plus a 16-byte SYS header for wrapped reads.
++
++		- CMH_IOCTL_KEY_FIND (0x04): Look up a key reference
++		  by caller ID (CID).
++
++		- CMH_IOCTL_KEY_GRANT (0x05): Grant access to a key.
++
++		- CMH_IOCTL_KEY_DELETE (0x06): Delete a datastore slot.
++
++		- CMH_IOCTL_DS_EXPORT (0x07): Export the entire datastore
++		  as an encrypted blob.
++
++		- CMH_IOCTL_DS_IMPORT (0x08): Import a previously exported
++		  datastore blob.
++
++		- CMH_IOCTL_KEY_NEW_RANDOM (0x0B): Allocate a datastore
++		  slot and fill it with hardware-generated random data.
++
++		- CMH_IOCTL_KEY_LIST (0x0E): List active datastore entries,
++		  returning CIDs, types, lengths, and flags.
++
++		**Key Derivation -- KIC (0x09-0x0D):**
++
++		- CMH_IOCTL_KIC_HKDF1 (0x09): HKDF-Extract step.
++		- CMH_IOCTL_KIC_HKDF2 (0x0A): HKDF-Expand step.
++		- CMH_IOCTL_KIC_AES_CMAC_KDF (0x0C): AES-CMAC KDF.
++		- CMH_IOCTL_KIC_DKEK_DERIVE (0x0D): DKEK derivation.
++
++		**EAC -- Error and Alarm (0x0F):**
++
++		- CMH_IOCTL_EAC_READ (0x0F): Read and clear hardware
++		  error, alarm, and safety notification registers.
++
++		**PKE -- Public Key Engine (0x10-0x1C):**
++
++		- CMH_IOCTL_PKE_RSA_ENC (0x10): RSA public-key encrypt.
++		- CMH_IOCTL_PKE_RSA_DEC (0x11): RSA private-key decrypt.
++		- CMH_IOCTL_PKE_RSA_CRT_DEC (0x12): RSA-CRT decrypt.
++		- CMH_IOCTL_PKE_RSA_KEYGEN (0x13): RSA key pair generation.
++		- CMH_IOCTL_PKE_ECDSA_SIGN (0x14): ECDSA sign.
++		- CMH_IOCTL_PKE_ECDH (0x16): ECDH shared secret.
++		- CMH_IOCTL_PKE_ECDH_KEYGEN (0x17): ECDH key pair generation.
++		- CMH_IOCTL_PKE_EDDSA_SIGN (0x18): EdDSA sign (Ed25519/Ed448).
++		- CMH_IOCTL_PKE_EDDSA_VERIFY (0x19): EdDSA verify.
++		- CMH_IOCTL_PKE_EC_KEYGEN (0x1A): EC key pair generation.
++		- CMH_IOCTL_PKE_EC_PUBGEN (0x1B): EC public key derivation.
++		- CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA (0x1C): EdDSA SCA-protected
++		  key generation.
++
++		**PQC -- Post-Quantum Crypto (0x20-0x2D):**
++
++		- CMH_IOCTL_ML_KEM_KEYGEN (0x20): ML-KEM key pair generation
++		  (modes 512/768/1024).
++		- CMH_IOCTL_ML_KEM_ENC (0x21): ML-KEM encapsulation.
++		- CMH_IOCTL_ML_KEM_DEC (0x22): ML-KEM decapsulation.
++		- CMH_IOCTL_ML_DSA_KEYGEN (0x23): ML-DSA key pair generation
++		  (modes 44/65/87).
++		- CMH_IOCTL_ML_DSA_SIGN (0x24): ML-DSA sign.
++		- CMH_IOCTL_SLHDSA_KEYGEN (0x28): SLH-DSA key pair generation
++		  (12 parameter sets).
++		- CMH_IOCTL_SLHDSA_SIGN (0x29): SLH-DSA sign.
++		- CMH_IOCTL_SLHDSA_SIGN_PREHASH (0x2D): SLH-DSA prehash sign.
++
++		**SM2 Operations (0x30-0x37):**
++
++		- CMH_IOCTL_SM2_ECDH_KEYGEN (0x30): SM2 ephemeral key gen.
++		- CMH_IOCTL_SM2_ECDH (0x31): SM2 key exchange.
++		- CMH_IOCTL_SM2_DEC_POINT (0x32): SM2 decrypt (point step).
++		- CMH_IOCTL_SM2_ENC_POINT (0x33): SM2 encrypt (point step).
++		- CMH_IOCTL_SM2_ID_DIGEST (0x34): SM2 ID digest (ZA).
++		- CMH_IOCTL_SM2_ECDH_HASH (0x35): SM2 key exchange hash step.
++		- CMH_IOCTL_SM2_DEC_HASH (0x36): SM2 decrypt (hash step).
++		- CMH_IOCTL_SM2_ENC_HASH (0x37): SM2 encrypt (hash step).
++
++		The SM2 encrypt/decrypt hash-step ioctls accept payloads
++		of at most 32 bytes.  The underlying hardware KDF emits a
++		single 32-byte SM3 block, so longer messages cannot be
++		processed in a single command and are rejected with
++		-EINVAL.
++
++		**DRBG Management (0x40):**
++
++		- CMH_IOCTL_DRBG_CONFIG (0x40): Configure the hardware
++		  DRBG entropy ratio and security strength.  Normally
++		  called once at system start-up before hwrng reads.
++
++		All structs contain ``__reserved`` fields that must be
++		zero; the driver returns ``-EINVAL`` if any reserved field
++		is non-zero.  This ensures forward compatibility when
++		reserved fields gain meaning in future versions.
++
++		All ioctls return 0 on success or a negative errno on
++		failure.  Common errors:
++
++		- EINVAL:  Invalid version, parameter, key type, or
++		  non-zero reserved field.
++		- ENOENT:  Key reference not found in datastore.
++		- ENOMEM:  DMA allocation failure.
++		- EBUSY:   Hardware mailbox full.
++		- ETIMEDOUT: VCQ operation timed out.
++		- EFAULT:  Bad user-space pointer.
++
++		The ioctl UAPI header is <linux/cmh_mgmt_ioctl.h>.
++		All structures, constants, and type definitions are
++		documented in that header file.
+diff --git a/drivers/crypto/cmh/Kconfig b/drivers/crypto/cmh/Kconfig
+index fca66d5e2f89..512e7b3bdc59 100644
+--- a/drivers/crypto/cmh/Kconfig
++++ b/drivers/crypto/cmh/Kconfig
+@@ -63,3 +63,22 @@ config CRYPTO_DEV_CMH_DEBUG
+ 	  Useful for bringup, validation, and performance analysis.
+ 	  Not recommended for production.
  
-    cdrom
-+   cmh_mgmt
-    hdio
-diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index 2fc53093752d..25f020c7e367 100644
---- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-+++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-@@ -170,6 +170,7 @@ Code  Seq#    Include File                                             Comments
- 'I'   all    linux/isdn.h                                              conflict!
- 'I'   00-0F  drivers/isdn/divert/isdn_divert.h                         conflict!
- 'I'   40-4F  linux/mISDNif.h                                           conflict!
-+'J'   01-40  uapi/linux/cmh_mgmt_ioctl.h                               Rambus CryptoManager Hub (CMH)
- 'K'   all    linux/kd.h
- 'L'   00-1F  linux/loop.h                                              conflict!
- 'L'   10-1F  drivers/scsi/mpt3sas/mpt3sas_ctl.h                        conflict!
++
++config CRYPTO_DEV_CMH_MGMT
++	bool "CMH management ioctl device (/dev/cmh_mgmt)"
++	depends on CRYPTO_DEV_CMH
++	default n
++	help
++	  Expose /dev/cmh_mgmt, a misc device providing ioctl commands
++	  for operations that have no kernel crypto API binding: hardware
++	  key lifecycle (create, import, derive, destroy), KIC key
++	  derivation, PQC keygen/encaps/decaps (ML-KEM, ML-DSA, SLH-DSA),
++	  EdDSA sign/verify, SM2 key exchange, and DRBG
++	  configuration.
++
++	  The device requires CAP_SYS_ADMIN.  Disabling this option
++	  removes the ioctl interface but all kernel crypto API
++	  algorithms (consumed by in-kernel users and validated by the
++	  crypto test manager) remain fully functional.
++
++	  If unsure, say N.
+diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
+index 742e65e3917e..bb7772555d6a 100644
+--- a/drivers/crypto/cmh/Makefile
++++ b/drivers/crypto/cmh/Makefile
+@@ -12,7 +12,16 @@ cmh-y := \
+ 	cmh_txn.o \
+ 	cmh_rh.o \
+ 	cmh_dma.o \
+-	cmh_sysfs.o
++	cmh_sysfs.o \
++	cmh_key.o \
++	cmh_sys.o
++
++# Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
++cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
++	cmh_mgmt.o \
++	cmh_mgmt_pke.o \
++	cmh_mgmt_pqc.o \
++	cmh_pke_sm2.o
+ 
+ ccflags-y += -I$(src)/include
+ 
+diff --git a/drivers/crypto/cmh/cmh_key.c b/drivers/crypto/cmh/cmh_key.c
+new file mode 100644
+index 000000000000..fde8be50b25c
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_key.c
+@@ -0,0 +1,164 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Dual Key Path Implementation
++ *
++ * Two key provisioning paths are supported:
++ *
++ * Raw key:  key bytes -> stored in tfm context ->
++ *   SYS_CMD_WRITE(SYS_REF_TEMP) packed into every crypto VCQ.
++ *   The raw key buffer is DMA-mapped once at setkey time and remains
++ *   mapped for the lifetime of the transform (unmapped in destroy).
++ *
++ * Raw key DMA lifetime rationale
++ * ------------------------------
++ * Raw keys are DMA-mapped at setkey time and the mapping persists
++ * until the transform is destroyed (cmh_key_destroy).  This is a
++ * deliberate design choice, consistent with upstream HW crypto
++ * drivers (CAAM, ccree, CCP) that also map keys at setkey for
++ * transform-lifetime reuse:
++ *
++ *   - The Linux crypto framework expects setkey to prepare the
++ *     transform for repeated encrypt/decrypt calls.  Remapping the
++ *     same key on every request would add DMA API overhead per crypto
++ *     operation with no security benefit.
++ *   - On destroy, kfree_sensitive() scrubs the key buffer and the
++ *     DMA mapping is released.  For key-by-ID (persistent), the
++ *     per-MBX ref cache is zeroed with memzero_explicit().
++ *   - No key material is ever logged; dev_dbg() messages only show
++ *     CIDs (content identifiers), not key bytes.
++ *
++ * Hardware-required behaviors (not driver policy)
++ * ------------------------------------------------
++ * - SYS_REF_TEMP lifetime:  the eSW firmware reclaims temporary
++ *   datastore objects when the mailbox slot is reused.  This is a
++ *   hardware constraint; the driver packs SYS_CMD_WRITE into every
++ *   VCQ to re-provision the raw key for each operation.
++ * - Mailbox flush (SYS_CMD_FLUSH):  reclaims temp-stack space on the
++ *   target MBX.  Required by HW to prevent temp-stack exhaustion
++ *   across multi-VCQ operations.
++ */
++
++#include <linux/kernel.h>
++#include <linux/slab.h>
++#include <linux/string.h>
++
++#include "cmh_key.h"
++#include "cmh_sys.h"
++#include "cmh_txn.h"
++#include "cmh_dma.h"
++#include "cmh_sys_abi.h"
++#include <uapi/linux/cmh_mgmt_ioctl.h>
++
++/**
++ * cmh_ds_type_to_core_id() - Map a datastore type to a logical core ID
++ * @ds_type: Datastore type constant (e.g. CMH_DS_AES_KEY, CMH_DS_SM4_KEY)
++ *
++ * Returns the algorithm-family identity (e.g. CORE_ID_AES = 0x03), NOT the
++ * VCQ dispatch core_id.  With multi-instance, a second AES engine dispatches
++ * at CORE_ID_AES2 (0x06) but keys are still tagged with CORE_ID_AES (0x03)
++ * -- the eSW validates against the logical identity, not the dispatch ID.
++ *
++ * Return: Logical core ID on success, CORE_ID_NUM for unknown @ds_type.
++ */
++u32 cmh_ds_type_to_core_id(u32 ds_type)
++{
++	switch (ds_type) {
++	case CMH_DS_AES_KEY:
++	case CMH_DS_AES_XTS_KEY:
++		return CORE_ID_AES;
++	case CMH_DS_SM4_KEY:
++		return CORE_ID_SM4;
++	case CMH_DS_HMAC_KEY:
++	case CMH_DS_KMAC_KEY:
++		return CORE_ID_HC;
++	case CMH_DS_CHACHA20_KEY:
++		return CORE_ID_CCP;
++	case CMH_DS_RSA_PRIV_KEY:
++	case CMH_DS_RSA_PUB_KEY:
++	case CMH_DS_RSA_CRT_KEY:
++	case CMH_DS_ECDSA_PRIV_KEY:
++	case CMH_DS_ECDSA_PUB_KEY:
++	case CMH_DS_ECDH_PRIV_KEY:
++	case CMH_DS_EDDSA_PRIV_KEY:
++	case CMH_DS_SHARED_SECRET:
++	case CMH_DS_SM2_PRIV_KEY:
++		return CORE_ID_PKE;
++	case CMH_DS_ML_KEM_DK:
++	case CMH_DS_ML_DSA_SK:
++		return CORE_ID_QSE;
++	case CMH_DS_SLHDSA_SK:
++		return CORE_ID_HCQ;
++	default:
++		return CORE_ID_NUM;
++	}
++}
++
++/**
++ * cmh_key_setkey_raw() - Store a raw key in the key context
++ * @ctx: Key context to populate
++ * @key: Pointer to the raw key bytes
++ * @keylen: Length of @key in bytes
++ * @core_id: Logical core ID for SYS_TYPE tagging
++ *
++ * Duplicates the raw key, DMA-maps the copy for the lifetime of the
++ * transform, and stores the mapping in @ctx.  Any previously held key
++ * is destroyed first.
++ *
++ * The DMA mapping persists until cmh_key_destroy() is called (typically
++ * from the algorithm .exit_tfm callback).  This avoids per-request DMA
++ * mapping overhead and matches the setkey-to-destroy lifetime model used
++ * by other upstream HW crypto drivers (CAAM, ccree, CCP).  The key
++ * buffer is freed via kfree_sensitive() on destroy.
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_key_setkey_raw(struct cmh_key_ctx *ctx, const u8 *key,
++		       u32 keylen, u32 core_id)
++{
++	dma_addr_t dma;
++	u8 *copy;
++
++	if (!keylen || !key)
++		return -EINVAL;
++
++	copy = kmemdup(key, keylen, GFP_KERNEL);
++	if (!copy)
++		return -ENOMEM;
++
++	/* Pre-map for the lifetime of the transform */
++	dma = cmh_dma_map_single(copy, keylen, DMA_TO_DEVICE);
++	if (cmh_dma_map_error(dma)) {
++		kfree_sensitive(copy);
++		return -ENOMEM;
++	}
++
++	/* Clean up any previous key */
++	cmh_key_destroy(ctx);
++
++	ctx->mode = CMH_KEY_RAW;
++	ctx->raw.data = copy;
++	ctx->raw.len = keylen;
++	ctx->raw.dma = dma;
++	ctx->raw.sys_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, core_id);
++
++	return 0;
++}
++
++/**
++ * cmh_key_destroy() - Destroy and zero-fill a key context
++ * @ctx: Key context to destroy
++ *
++ * For raw keys, unmaps the DMA buffer and securely frees the key material.
++ * Resets the key mode to CMH_KEY_NONE.
++ */
++void cmh_key_destroy(struct cmh_key_ctx *ctx)
++{
++	if (ctx->mode == CMH_KEY_RAW && ctx->raw.data) {
++		cmh_dma_unmap_single(ctx->raw.dma, ctx->raw.len,
++				     DMA_TO_DEVICE);
++		kfree_sensitive(ctx->raw.data);
++		memzero_explicit(&ctx->raw, sizeof(ctx->raw));
++	}
++	ctx->mode = CMH_KEY_NONE;
++}
+diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
+index c037e8daa877..d7753c4630ba 100644
+--- a/drivers/crypto/cmh/cmh_main.c
++++ b/drivers/crypto/cmh/cmh_main.c
+@@ -31,6 +31,7 @@
+ #include "cmh_mqi.h"
+ #include "cmh_txn.h"
+ #include "cmh_rh.h"
++#include "cmh_mgmt.h"
+ #include "cmh_registers.h"
+ #include "cmh_debugfs.h"
+ #include "cmh_sysfs.h"
+@@ -201,10 +202,17 @@ static int cmh_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		goto err_rh_init;
+ 
++	/* Register key management device (/dev/cmh_mgmt) */
++	ret = cmh_mgmt_register();
++	if (ret)
++		goto err_mgmt_register;
++
+ 	platform_set_drvdata(pdev, dev);
+ 
+ 	return 0;
+ 
++err_mgmt_register:
++	cmh_rh_cleanup(cfg);
+ err_rh_init:
+ 	cmh_tm_cleanup();
+ err_tm_init:
+@@ -229,6 +237,7 @@ static void cmh_remove(struct platform_device *pdev)
+ 
+ 	cfg = &dev->config;
+ 
++	cmh_mgmt_unregister();
+ 	cmh_rh_cleanup(cfg);
+ 	cmh_tm_cleanup();
+ 	cmh_mqi_cleanup(cfg);
+diff --git a/drivers/crypto/cmh/cmh_mgmt.c b/drivers/crypto/cmh/cmh_mgmt.c
+new file mode 100644
+index 000000000000..32719b9f1f6e
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_mgmt.c
+@@ -0,0 +1,1770 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Key Management misc_device (/dev/cmh_mgmt)
++ *
++ * Provides ioctl interface for key provisioning (NEW, NEW_RANDOM, WRITE, READ,
++ * FIND, GRANT, DELETE) and datastore lifecycle (EXPORT, IMPORT).
++ *
++ * Each ioctl handler: copy_from_user -> validate -> DMA alloc ->
++ * build VCQ -> cmh_tm_submit_sync -> copy_to_user -> DMA free.
++ *
++ * Access requires CAP_SYS_ADMIN (checked in open()).  The device node
++ * is mode 0660; DAC further limits access to owner/group.
++ * CMH eSW enforces per-MBX access control on top of this.
++ */
++
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/miscdevice.h>
++#include <linux/uaccess.h>
++#include <linux/slab.h>
++#include <linux/fs.h>
++#include <linux/capability.h>
++#include <linux/mutex.h>
++#include <linux/overflow.h>
++
++#include "cmh_mgmt.h"
++#include "cmh_sys.h"
++#include "cmh_txn.h"
++#include "cmh_key.h"
++#include "cmh_dma.h"
++#include "cmh_config.h"
++#include "cmh_sys_abi.h"
++#include "cmh_pke.h"
++#include "cmh_pke_sm2.h"
++#include "cmh_qse_abi.h"
++#include "cmh_hcq_abi.h"
++#include <uapi/linux/cmh_mgmt_ioctl.h>
++
++#include <crypto/utils.h>
++
++/*
++ * Pin all mgmt ioctls to a single management mailbox (MBX 0).
++ *
++ * This is a deliberate, structural choice -- not a performance default.
++ * The /dev/cmh_mgmt path is *stateful* with respect to the eSW datastore,
++ * and that state is per-mailbox, so every step of a key's lifecycle must
++ * land on the same mailbox:
++ *
++ * 1. Datastore access control is per-mailbox AND opaque to the driver.
++ *    SYS_CMD_NEW grants the creating mailbox a (1 << mbx_id) access mask
++ *    (read/write/execute).  Crucially, the returned 64-bit ref encodes a
++ *    randomised offset -- NOT the owning mailbox -- so given only a ref
++ *    (as KEY_GRANT/READ/DELETE/DS_EXPORT receive), the driver cannot
++ *    recover which mailbox owns the object.  A fixed management mailbox
++ *    is therefore the only way to guarantee that NEW, WRITE, GRANT, READ
++ *    and the subsequent hardware-held-key compute ops all share the
++ *    mailbox that holds the access rights, without exposing mailbox
++ *    identity in the UABI.  (User space may still widen access to other
++ *    mailboxes explicitly via KEY_GRANT.)
++ *
++ * 2. The eSW SYS_REF_TEMP scratch store is per-mailbox and persists
++ *    across ioctl calls.  A derivation that writes SYS_REF_TEMP (e.g. a
++ *    KIC_* derive) must be consumed by a later ioctl on the *same*
++ *    mailbox (e.g. DS_EXPORT with wrap_key=SYS_REF_TEMP).
++ *
++ * Device-tree per-mailbox ``rambus,cores`` affinity applies to the *stateless*
++ * registered crypto API path (cmh_core_select_instance()), which carries
++ * no datastore state across calls and is free to balance across mailboxes.
++ *
++ * Note: MBX 0 is NOT reserved exclusively for mgmt -- registered crypto
++ * operations may also land here via TM round-robin (target_mbx = -1).
++ * This is safe because those ops do not allocate from the temp store.
++ */
++
++/* VCQ layout: header + command + flush = 3 entries */
++#define MGMT_VCQ_CMDS		3
++
++/*
++ * Tracks whether any operation has left residual state in the device's
++ * per-mailbox temporary key store since the last flush.  The device
++ * reclaims temp storage only on a full mailbox flush (MBX_COMMAND_FLUSH),
++ * which also terminates any executing command queue with -EPIPE.
++ *
++ * To avoid killing concurrent in-flight operations, the flush in
++ * cmh_mgmt_ioctl() is conditional: it fires only when this flag is set.
++ * Operations that allocate temp storage (currently: KIC derivations
++ * targeting SYS_REF_TEMP) set this flag on success.
++ */
++static atomic_t mgmt_temp_dirty = ATOMIC_INIT(0);
++
++/*
++ * Serialise the entire management plane.  SYS_REF_TEMP, the temp-dirty
++ * flush bookkeeping and the datastore are a single shared hardware
++ * resource, so ioctls -- even from different opens of /dev/cmh_mgmt --
++ * must not interleave.
++ */
++static DEFINE_MUTEX(cmh_mgmt_lock);
++
++/**
++ * cmh_mgmt_ds_scrub() - Scrub orphaned datastore objects from a failed ioctl
++ * @ref0: first datastore object ref to scrub, or 0 for none
++ * @ref1: second datastore object ref to scrub, or 0 for none
++ *
++ * Grant-with-no-access wipes the key material and clears the CID (the
++ * datastore stack space is only reclaimed by a full reset).  Used on error
++ * paths where a SYS_CMD_NEW object's ref never reached user space, or a later
++ * command in the same submission failed.  Best-effort: a ref that was never
++ * created returns -ENOENT.
++ */
++void cmh_mgmt_ds_scrub(u64 ref0, u64 ref1)
++{
++	struct vcq_cmd vcq[4];
++	u32 idx = 0;
++
++	if (!ref0 && !ref1)
++		return;
++
++	vcq_set_header(&vcq[idx++], 2 + !!ref0 + !!ref1);
++	if (ref0)
++		vcq_add_sys_grant(&vcq[idx++], ref0, 0, 0, 0);
++	if (ref1)
++		vcq_add_sys_grant(&vcq[idx++], ref1, 0, 0, 0);
++	vcq_add_sys_flush(&vcq[idx++]);
++	cmh_tm_submit_sync_mbx(vcq, idx, 1, MGMT_MBX);
++}
++
++/* -- KEY_NEW -------------------------- */
++
++static int cmh_mgmt_key_new(void __user *argp)
++{
++	struct cmh_ioctl_key_new req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	u64 *ref_buf;
++	dma_addr_t ref_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	/* DMA buffer for CMH eSW to write back the ref */
++	ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++	if (!ref_buf)
++		return -ENOMEM;
++
++	*ref_buf = 0;
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ref_dma)) {
++		kfree(ref_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.len);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	/*
++	 * Unmap before CPU read: single-phase operation (no re-use of
++	 * the DMA mapping), so unmap transfers ownership back to the
++	 * CPU.  On SWIOTLB systems the unmap copies the bounce buffer
++	 * to the original allocation.  This is the correct pattern for
++	 * single-shot sync submits where the buffer is not re-mapped.
++	 */
++	cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf), DMA_FROM_DEVICE);
++
++	if (ret) {
++		/* Scrub a slot sys_new may have created before the failure. */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++		return ret;
++	}
++
++	req.ref = *ref_buf;
++	kfree(ref_buf);
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The DS slot was created but its ref never reached
++		 * userspace, so the caller cannot free it.  Logically
++		 * delete the orphaned slot before returning.
++		 */
++		cmh_mgmt_ds_scrub(req.ref, 0);
++		dev_warn(cmh_dev(),
++			 "mgmt: KEY_NEW copy_to_user failed, DS slot cleaned up\n");
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(), "mgmt: KEY_NEW cid=0x%llx len=%u -> ref=0x%llx\n",
++		req.cid, req.len, req.ref);
++	return 0;
++}
++
++/* -- KEY_WRITE ------------------------- */
++
++static int cmh_mgmt_key_write(void __user *argp)
++{
++	struct cmh_ioctl_key_write req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	void *dmabuf;
++	dma_addr_t dma_addr;
++	u32 core_id, sys_type;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	core_id = cmh_ds_type_to_core_id(req.ds_type);
++	if (core_id == CORE_ID_NUM)
++		return -EINVAL;
++	sys_type = SYS_TYPE_SET(req.flags, core_id);
++
++	dmabuf = kmalloc(req.len, GFP_KERNEL);
++	if (!dmabuf)
++		return -ENOMEM;
++
++	if (copy_from_user(dmabuf, u64_to_user_ptr(req.data),
++			   req.len)) {
++		kfree_sensitive(dmabuf);
++		return -EFAULT;
++	}
++
++	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_TO_DEVICE);
++	if (cmh_dma_map_error(dma_addr)) {
++		kfree_sensitive(dmabuf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_write(&vcq[1], req.ref, dma_addr, req.wrap_key,
++			  req.len, sys_type);
++	/*
++	 * PKE keys on Weierstrass curves and RSA keys must be byte-swapped
++	 * when stored in the DS so they match the internal big-endian
++	 * representation used by the PKE sidecar.  Edwards curve keys
++	 * (EdDSA) use native byte order and must NOT be swapped.
++	 */
++	switch (req.ds_type) {
++	case CMH_DS_RSA_PRIV_KEY:
++	case CMH_DS_RSA_PUB_KEY:
++	case CMH_DS_RSA_CRT_KEY:
++	case CMH_DS_ECDSA_PRIV_KEY:
++	case CMH_DS_ECDSA_PUB_KEY:
++	case CMH_DS_ECDH_PRIV_KEY:
++	case CMH_DS_SHARED_SECRET:
++	case CMH_DS_SM2_PRIV_KEY:
++		vcq[1].id |= PKE_SWAP_FLAGS;
++		break;
++	default:
++		/* EdDSA, symmetric keys -- no swap */
++		break;
++	}
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(dma_addr, req.len, DMA_TO_DEVICE);
++	kfree_sensitive(dmabuf);
++
++	if (ret)
++		return ret;
++
++	dev_dbg(cmh_dev(), "mgmt: KEY_WRITE ref=0x%llx len=%u type=0x%x\n",
++		req.ref, req.len, sys_type);
++	return 0;
++}
++
++/* -- KEY_READ -------------------------- */
++
++static int cmh_mgmt_key_read(void __user *argp)
++{
++	struct cmh_ioctl_key_read req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	void *dmabuf;
++	dma_addr_t dma_addr;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	dmabuf = kzalloc(req.len, GFP_KERNEL);
++	if (!dmabuf)
++		return -ENOMEM;
++
++	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(dma_addr)) {
++		kfree(dmabuf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_read(&vcq[1], req.ref, dma_addr, req.wrap_key, req.len);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(dma_addr, req.len, DMA_FROM_DEVICE);
++
++	if (ret) {
++		kfree_sensitive(dmabuf);
++		return ret;
++	}
++
++	if (copy_to_user(u64_to_user_ptr(req.data),
++			 dmabuf, req.len)) {
++		kfree_sensitive(dmabuf);
++		return -EFAULT;
++	}
++
++	req.out_len = req.len;
++	kfree_sensitive(dmabuf);
++
++	if (copy_to_user(argp, &req, sizeof(req)))
++		return -EFAULT;
++
++	dev_dbg(cmh_dev(), "mgmt: KEY_READ ref=0x%llx len=%u\n",
++		req.ref, req.out_len);
++	return 0;
++}
++
++/* -- KEY_FIND -------------------------- */
++
++static int cmh_mgmt_key_find(void __user *argp)
++{
++	struct cmh_ioctl_key_find req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	struct sys_list_item *item;
++	dma_addr_t item_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++
++	item = kzalloc_obj(*item, GFP_KERNEL);
++	if (!item)
++		return -ENOMEM;
++
++	item_dma = cmh_dma_map_single(item, sizeof(*item), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(item_dma)) {
++		kfree(item);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_find(&vcq[1], req.cid, item_dma, sizeof(*item));
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(item_dma, sizeof(*item), DMA_FROM_DEVICE);
++
++	if (ret) {
++		kfree(item);
++		return ret;
++	}
++
++	req.ref = item->ref;
++	req.len = item->len;
++	req.type = item->type;
++	kfree(item);
++
++	if (copy_to_user(argp, &req, sizeof(req)))
++		return -EFAULT;
++
++	dev_dbg(cmh_dev(), "mgmt: KEY_FIND cid=0x%llx -> ref=0x%llx\n",
++		req.cid, req.ref);
++	return 0;
++}
++
++/* -- KEY_LIST ------------------------- */
++
++static int cmh_mgmt_key_list(void __user *argp)
++{
++	struct cmh_ioctl_key_list req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	struct sys_list_item *item;
++	dma_addr_t item_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++
++	if (req.__reserved)
++		return -EINVAL;
++
++	item = kzalloc_obj(*item, GFP_KERNEL);
++	if (!item)
++		return -ENOMEM;
++
++	item_dma = cmh_dma_map_single(item, sizeof(*item), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(item_dma)) {
++		kfree(item);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_list(&vcq[1], req.start_ref, item_dma, sizeof(*item));
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(item_dma, sizeof(*item), DMA_FROM_DEVICE);
++
++	if (ret) {
++		kfree(item);
++		return ret;
++	}
++
++	req.ref = item->ref;
++	req.cid = item->cid;
++	req.len = item->len;
++	req.type = item->type;
++	kfree(item);
++
++	if (copy_to_user(argp, &req, sizeof(req)))
++		return -EFAULT;
++
++	return 0;
++}
++
++/* -- KEY_GRANT / KEY_DELETE --------------------- */
++
++static int cmh_mgmt_key_grant(void __user *argp, bool is_delete)
++{
++	struct cmh_ioctl_key_grant req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++
++	/* DELETE = GRANT with all permissions zeroed */
++	if (is_delete) {
++		req.read = 0;
++		req.write = 0;
++		req.execute = 0;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_grant(&vcq[1], req.ref, req.read, req.write, req.execute);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++	if (ret)
++		return ret;
++
++	dev_dbg(cmh_dev(), "mgmt: KEY_%s ref=0x%llx r=0x%llx w=0x%llx x=0x%llx\n",
++		is_delete ? "DELETE" : "GRANT",
++		req.ref, req.read, req.write, req.execute);
++	return 0;
++}
++
++/* -- DS_EXPORT ------------------------- */
++
++static int cmh_mgmt_ds_export(void __user *argp)
++{
++	struct cmh_ioctl_ds_export req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	void *dmabuf;
++	dma_addr_t dma_addr;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++	/*
++	 * The eSW writes at least a sys_wrap_hdr into the buffer; reject a
++	 * request too small to hold it up front.  This also prevents the
++	 * out-of-bounds read of hdr->wrap/hdr->len below on a short buffer.
++	 */
++	if (req.len < sizeof(struct sys_wrap_hdr))
++		return -EINVAL;
++
++	/*
++	 * req.len is the exact DMA buffer size given to the eSW.
++	 * Userspace must size it to at least the export blob:
++	 *
++	 *   wrapped:   sizeof(sys_wrap_hdr) + 2*AES_BLOCK_SIZE + obj_len
++	 *              = 16 + 32 + obj_len  = 48 + obj_len
++	 *   plaintext: sizeof(sys_wrap_hdr) + obj_len
++	 *              = 16 + obj_len
++	 *
++	 * obj_len is known from KEY_NEW or KEY_FIND.  If req.len is
++	 * too small, the eSW rejects the command and we return -EIO.
++	 */
++	dmabuf = kzalloc(req.len, GFP_KERNEL);
++	if (!dmabuf)
++		return -ENOMEM;
++
++	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(dma_addr)) {
++		kfree(dmabuf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_export(&vcq[1], req.cid, dma_addr, req.wrap_key, req.len);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(dma_addr, req.len, DMA_FROM_DEVICE);
++
++	if (ret) {
++		kfree_sensitive(dmabuf);
++		return ret;
++	}
++
++	/* Parse actual blob size from the eSW-written header */
++	{
++		struct sys_wrap_hdr *hdr = (struct sys_wrap_hdr *)dmabuf;
++		u64 actual;
++
++		if (check_add_overflow((u64)sizeof(*hdr), (u64)hdr->wrap,
++				       &actual) ||
++		    check_add_overflow(actual, (u64)hdr->len, &actual) ||
++		    actual > req.len) {
++			kfree_sensitive(dmabuf);
++			return -EIO;
++		}
++		req.out_len = (u32)actual;
++	}
++
++	if (copy_to_user(u64_to_user_ptr(req.data),
++			 dmabuf, req.out_len)) {
++		kfree_sensitive(dmabuf);
++		return -EFAULT;
++	}
++
++	kfree_sensitive(dmabuf);
++
++	if (copy_to_user(argp, &req, sizeof(req)))
++		return -EFAULT;
++
++	dev_dbg(cmh_dev(), "mgmt: DS_EXPORT wrap_key=0x%llx len=%u\n",
++		req.wrap_key, req.out_len);
++	return 0;
++}
++
++/* -- DS_IMPORT ------------------------- */
++
++static int cmh_mgmt_ds_import(void __user *argp)
++{
++	struct cmh_ioctl_ds_import req;
++	struct vcq_cmd vcq[MGMT_VCQ_CMDS];
++	void *dmabuf;
++	dma_addr_t dma_addr;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	dmabuf = kmalloc(req.len, GFP_KERNEL);
++	if (!dmabuf)
++		return -ENOMEM;
++
++	if (copy_from_user(dmabuf, u64_to_user_ptr(req.data),
++			   req.len)) {
++		kfree_sensitive(dmabuf);
++		return -EFAULT;
++	}
++
++	dma_addr = cmh_dma_map_single(dmabuf, req.len, DMA_TO_DEVICE);
++	if (cmh_dma_map_error(dma_addr)) {
++		kfree_sensitive(dmabuf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], MGMT_VCQ_CMDS);
++	vcq_add_sys_import(&vcq[1], dma_addr, req.wrap_key, req.len);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, MGMT_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(dma_addr, req.len, DMA_TO_DEVICE);
++	kfree_sensitive(dmabuf);
++
++	if (ret)
++		return ret;
++
++	dev_dbg(cmh_dev(), "mgmt: DS_IMPORT wrap_key=0x%llx len=%u\n",
++		req.wrap_key, req.len);
++	return 0;
++}
++
++/* -- KIC key derivation ioctls --------
++ *
++ * All four KIC derivation handlers (HKDF1, HKDF2, AES-CMAC-KDF,
++ * DKEK-derive) share the same two-mode structure and temp-flush pattern.
++ *
++ * Temp-storage flush rationale:
++ *
++ *   The device maintains a small per-mailbox temporary key store
++ *   (~960 bytes, LIFO).  A derivation targeting SYS_REF_TEMP allocates
++ *   from this store; the allocation persists across command-queue
++ *   boundaries until either (a) a subsequent command consumes it or
++ *   (b) a mailbox flush resets the store.
++ *
++ *   Our single-derivation ioctls produce a temp key with no consumer
++ *   in the same queue -- the key is consumed by a *later* ioctl
++ *   (e.g. DS_EXPORT with wrap_key=SYS_REF_TEMP).  If no consumer
++ *   follows, the allocation persists.  Sequential temp derivations
++ *   accumulate allocations until the store is exhausted (3--8 calls
++ *   depending on key size), after which the device returns ENOMEM.
++ *
++ *   A mailbox flush (cmh_tm_flush_mbx / MBX_COMMAND_FLUSH) resets the
++ *   temp store.  It does NOT destroy persistent keys, datastore
++ *   objects, or DRBG state -- only the command queue and temp store.
++ *
++ *   Safe for cross-ioctl temp flows (e.g. export-to-file:
++ *   HKDF1->TEMP in ioctl 1, then DS_EXPORT with wrap_key=TEMP in
++ *   ioctl 2): the flush only happens in derivation handlers and in
++ *   the pre-PKE dispatch path, not in DS_EXPORT/DS_IMPORT, so the
++ *   temp key survives until consumed.
++ *
++ * The ioctl dispatch also flushes before PKE/SM2/PQC ioctls to
++ * protect them from temp residue left by earlier derivations on the
++ * same mailbox.  The per-handler flushes here remain necessary
++ * because sequential temp derivations (without an intervening
++ * PKE/SM2/PQC ioctl) would still exhaust the store.
++ */
++
++/* -- KIC_HKDF1 ------------------------- */
++
++/*
++ * Derive a key from a KIC base key via one-step HKDF.
++ *
++ * Two modes controlled by CMH_KIC_FLAG_TEMP:
++ *
++ *   TEMP (flag set) -- 3-command VCQ:
++ *     [0] SYS header
++ *     [1] KIC_CMD_HKDF1 (dst=SYS_REF_TEMP)
++ *     [2] flush
++ *   Returns SYS_REF_TEMP as ref.  No DS entry created.
++ *
++ *   Persistent (flag clear) -- 4-command VCQ:
++ *     [0] SYS header
++ *     [1] SYS_CMD_NEW   (allocate DS slot, CMH eSW writes ref)
++ *     [2] KIC_CMD_HKDF1 (dst=SYS_REF_LAST = just-allocated slot)
++ *     [3] flush
++ *   Returns the new DS reference.
++ */
++#define KDF_VCQ_MAX		4
++#define KDF_MAX_KEY_LEN		64
++#define KDF_MAX_LABEL_LEN	56
++
++static int cmh_mgmt_kic_hkdf1(void __user *argp)
++{
++	struct cmh_ioctl_kic_hkdf1 req;
++	struct vcq_cmd vcq[KDF_VCQ_MAX];
++	bool temp;
++	u64 *ref_buf = NULL;
++	void *label_buf = NULL;
++	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
++	unsigned int n_cmds;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.key_len || req.key_len > KDF_MAX_KEY_LEN)
++		return -EINVAL;
++	if (req.label_len > KDF_MAX_LABEL_LEN)
++		return -EINVAL;
++
++	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
++
++	/*
++	 * Persistent path: need DMA buffer for CMH eSW to write the
++	 * newly-allocated DS reference.
++	 */
++	if (!temp) {
++		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++		if (!ref_buf)
++			return -ENOMEM;
++		*ref_buf = 0;
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			kfree(ref_buf);
++			return -ENOMEM;
++		}
++	}
++
++	/* DMA buffer for label data (CMH eSW DMA-reads it) */
++	if (req.label_len > 0) {
++		label_buf = kzalloc(req.label_len, GFP_KERNEL);
++		if (!label_buf) {
++			ret = -ENOMEM;
++			goto out_ref;
++		}
++		if (copy_from_user(label_buf,
++				   u64_to_user_ptr(req.label),
++				   req.label_len)) {
++			ret = -EFAULT;
++			goto out_label;
++		}
++		label_dma = cmh_dma_map_single(label_buf, req.label_len,
++					       DMA_TO_DEVICE);
++		if (cmh_dma_map_error(label_dma)) {
++			ret = -ENOMEM;
++			goto out_label;
++		}
++	}
++
++	/* Build VCQ */
++	memset(vcq, 0, sizeof(vcq));
++
++	if (temp) {
++		/* Flush MBX to reset temp stack -- see KIC section comment */
++		ret = cmh_tm_flush_mbx(MGMT_MBX);
++		if (ret)
++			goto out_unmap_label;
++
++		n_cmds = 3;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_kic_hkdf1(&vcq[1], SYS_REF_TEMP, req.base_key,
++				  label_dma, req.key_len, req.label_len,
++				   SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[2]);
++	} else {
++		n_cmds = 4;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
++		vcq_add_kic_hkdf1(&vcq[2], SYS_REF_LAST, req.base_key,
++				  label_dma, req.key_len, req.label_len,
++				   SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[3]);
++	}
++
++	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
++
++	/* Cleanup label DMA */
++	if (label_buf) {
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++		kfree(label_buf);
++		label_buf = NULL;
++	}
++
++	if (ret)
++		goto out_ref;
++
++	if (temp) {
++		req.ref = SYS_REF_TEMP;
++		atomic_set(&mgmt_temp_dirty, 1);
++	} else {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		req.ref = *ref_buf;
++		kfree(ref_buf);
++		ref_buf = NULL;
++	}
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The derived-key DS slot was created but its ref never
++		 * reached userspace, so the caller cannot free it.  Logically
++		 * delete the orphaned slot: grant-with-no-access wipes the key
++		 * material and clears the CID (temp results use SYS_REF_TEMP
++		 * and need no cleanup).
++		 */
++		if (!temp) {
++			cmh_mgmt_ds_scrub(req.ref, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: KIC_HKDF1 copy_to_user failed, DS slot cleaned up\n");
++		}
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(),
++		"mgmt: KIC_HKDF1 base=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
++		req.base_key, req.key_len, req.flags, req.ref);
++	return 0;
++
++out_unmap_label:
++	if (label_buf && !cmh_dma_map_error(label_dma))
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++out_label:
++	kfree(label_buf);
++out_ref:
++	if (ref_buf) {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		/*
++		 * If sys_new created the slot before a later command in the
++		 * VCQ failed, the eSW wrote its ref here (0 otherwise); scrub
++		 * it so a partial failure does not leak a datastore slot.
++		 */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++	}
++	return ret;
++}
++
++/* -- KIC_HKDF2 ------------------------- */
++
++/*
++ * Two-step HKDF key derivation.  Same as HKDF1 but adds a salt key
++ * reference: Step 1: HMAC(salt, base) -> PRK; Step 2: HMAC(PRK, label) -> key.
++ */
++
++static int cmh_mgmt_kic_hkdf2(void __user *argp)
++{
++	struct cmh_ioctl_kic_hkdf2 req;
++	struct vcq_cmd vcq[KDF_VCQ_MAX];
++	bool temp;
++	u64 *ref_buf = NULL;
++	void *label_buf = NULL;
++	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
++	unsigned int n_cmds;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.key_len || req.key_len > KDF_MAX_KEY_LEN)
++		return -EINVAL;
++	if (req.label_len > KDF_MAX_LABEL_LEN)
++		return -EINVAL;
++
++	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
++
++	if (!temp) {
++		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++		if (!ref_buf)
++			return -ENOMEM;
++		*ref_buf = 0;
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			kfree(ref_buf);
++			return -ENOMEM;
++		}
++	}
++
++	if (req.label_len > 0) {
++		label_buf = kzalloc(req.label_len, GFP_KERNEL);
++		if (!label_buf) {
++			ret = -ENOMEM;
++			goto out_ref2;
++		}
++		if (copy_from_user(label_buf,
++				   u64_to_user_ptr(req.label),
++				   req.label_len)) {
++			ret = -EFAULT;
++			goto out_label2;
++		}
++		label_dma = cmh_dma_map_single(label_buf, req.label_len,
++					       DMA_TO_DEVICE);
++		if (cmh_dma_map_error(label_dma)) {
++			ret = -ENOMEM;
++			goto out_label2;
++		}
++	}
++
++	memset(vcq, 0, sizeof(vcq));
++
++	if (temp) {
++		/* Flush MBX to reset temp stack -- see KIC section comment */
++		ret = cmh_tm_flush_mbx(MGMT_MBX);
++		if (ret)
++			goto out_unmap_label2;
++
++		n_cmds = 3;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_kic_hkdf2(&vcq[1], SYS_REF_TEMP, req.base_key,
++				  req.salt_key, label_dma,
++				   req.key_len, req.label_len,
++				   SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[2]);
++	} else {
++		n_cmds = 4;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
++		vcq_add_kic_hkdf2(&vcq[2], SYS_REF_LAST, req.base_key,
++				  req.salt_key, label_dma,
++				   req.key_len, req.label_len,
++				   SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[3]);
++	}
++
++	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
++
++	if (label_buf) {
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++		kfree(label_buf);
++		label_buf = NULL;
++	}
++
++	if (ret)
++		goto out_ref2;
++
++	if (temp) {
++		req.ref = SYS_REF_TEMP;
++		atomic_set(&mgmt_temp_dirty, 1);
++	} else {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		req.ref = *ref_buf;
++		kfree(ref_buf);
++		ref_buf = NULL;
++	}
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The derived-key DS slot was created but its ref never
++		 * reached userspace, so the caller cannot free it.  Logically
++		 * delete the orphaned slot: grant-with-no-access wipes the key
++		 * material and clears the CID (temp results use SYS_REF_TEMP
++		 * and need no cleanup).
++		 */
++		if (!temp) {
++			cmh_mgmt_ds_scrub(req.ref, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: KIC_HKDF2 copy_to_user failed, DS slot cleaned up\n");
++		}
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(),
++		"mgmt: KIC_HKDF2 base=0x%llx salt=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
++		req.base_key, req.salt_key, req.key_len, req.flags, req.ref);
++	return 0;
++
++out_unmap_label2:
++	if (label_buf && !cmh_dma_map_error(label_dma))
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++out_label2:
++	kfree(label_buf);
++out_ref2:
++	if (ref_buf) {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		/*
++		 * If sys_new created the slot before a later command in the
++		 * VCQ failed, the eSW wrote its ref here (0 otherwise); scrub
++		 * it so a partial failure does not leak a datastore slot.
++		 */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++	}
++	return ret;
++}
++
++/* -- KIC_AES_CMAC_KDF ------------------ */
++
++/*
++ * Derive a key using AES-CMAC-based KDF (NIST SP800-108 style).
++ * Base key must be 32 bytes.  Output is always non-PT (the hub driver
++ * rejects SYS_TYPE_FLAG_PT).
++ *
++ * VCQ layout matches HKDF: TEMP mode uses 3 commands, persistent uses 4.
++ */
++#define CMAC_KDF_KEY_LEN	32
++
++static int cmh_mgmt_kic_aes_cmac_kdf(void __user *argp)
++{
++	struct cmh_ioctl_kic_aes_cmac_kdf req;
++	struct vcq_cmd vcq[KDF_VCQ_MAX];
++	bool temp;
++	u64 *ref_buf = NULL;
++	void *label_buf = NULL;
++	dma_addr_t ref_dma = DMA_MAPPING_ERROR, label_dma = DMA_MAPPING_ERROR;
++	unsigned int n_cmds;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.key_len != CMAC_KDF_KEY_LEN)
++		return -EINVAL;
++	if (req.label_len > KDF_MAX_LABEL_LEN)
++		return -EINVAL;
++
++	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
++
++	if (!temp) {
++		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++		if (!ref_buf)
++			return -ENOMEM;
++		*ref_buf = 0;
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			kfree(ref_buf);
++			return -ENOMEM;
++		}
++	}
++
++	if (req.label_len > 0) {
++		label_buf = kzalloc(req.label_len, GFP_KERNEL);
++		if (!label_buf) {
++			ret = -ENOMEM;
++			goto out_ref_cmac;
++		}
++		if (copy_from_user(label_buf,
++				   u64_to_user_ptr(req.label),
++				   req.label_len)) {
++			ret = -EFAULT;
++			goto out_label_cmac;
++		}
++		label_dma = cmh_dma_map_single(label_buf, req.label_len,
++					       DMA_TO_DEVICE);
++		if (cmh_dma_map_error(label_dma)) {
++			ret = -ENOMEM;
++			goto out_label_cmac;
++		}
++	}
++
++	memset(vcq, 0, sizeof(vcq));
++
++	if (temp) {
++		/* Flush MBX to reset temp stack -- see KIC section comment */
++		ret = cmh_tm_flush_mbx(MGMT_MBX);
++		if (ret)
++			goto out_unmap_label_cmac;
++
++		n_cmds = 3;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_kic_aes_cmac_kdf(&vcq[1], SYS_REF_TEMP,
++					 req.base_key, label_dma,
++					 req.key_len, req.label_len,
++					 SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[2]);
++	} else {
++		n_cmds = 4;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.key_len);
++		vcq_add_kic_aes_cmac_kdf(&vcq[2], SYS_REF_LAST,
++					 req.base_key, label_dma,
++					 req.key_len, req.label_len,
++					 SYS_TYPE_SET(0, CORE_ID_AES));
++		vcq_add_sys_flush(&vcq[3]);
++	}
++
++	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
++
++	if (label_buf) {
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++		kfree(label_buf);
++		label_buf = NULL;
++	}
++
++	if (ret)
++		goto out_ref_cmac;
++
++	if (temp) {
++		req.ref = SYS_REF_TEMP;
++		atomic_set(&mgmt_temp_dirty, 1);
++	} else {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		req.ref = *ref_buf;
++		kfree(ref_buf);
++		ref_buf = NULL;
++	}
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The derived-key DS slot was created but its ref never
++		 * reached userspace, so the caller cannot free it.  Logically
++		 * delete the orphaned slot: grant-with-no-access wipes the key
++		 * material and clears the CID (temp results use SYS_REF_TEMP
++		 * and need no cleanup).
++		 */
++		if (!temp) {
++			cmh_mgmt_ds_scrub(req.ref, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: KIC_AES_CMAC_KDF copy_to_user failed, DS slot cleaned up\n");
++		}
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(),
++		"mgmt: KIC_AES_CMAC_KDF base=0x%llx len=%u flags=0x%x -> ref=0x%llx\n",
++		req.base_key, req.key_len, req.flags, req.ref);
++	return 0;
++
++out_unmap_label_cmac:
++	if (label_buf && !cmh_dma_map_error(label_dma) && label_dma)
++		cmh_dma_unmap_single(label_dma, req.label_len, DMA_TO_DEVICE);
++out_label_cmac:
++	kfree(label_buf);
++out_ref_cmac:
++	if (ref_buf) {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		/* Scrub a slot sys_new may have created before the failure. */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++	}
++	return ret;
++}
++
++/* -- KIC_DKEK_DERIVE ------------------- */
++
++/*
++ * Derive a Key Encryption Key (KEK) from a KIC base key.
++ * Output is tagged CORE_ID_KIC (usable for further derivation only).
++ * host_id=0 means the caller's own host; non-zero requires management
++ * host privilege (eSW enforces this).
++ */
++#define DKEK_VCQ_MAX		4
++
++static int cmh_mgmt_kic_dkek_derive(void __user *argp)
++{
++	struct cmh_ioctl_kic_dkek_derive req;
++	struct vcq_cmd vcq[DKEK_VCQ_MAX];
++	bool temp;
++	u64 *ref_buf = NULL;
++	void *meta_buf = NULL;
++	dma_addr_t ref_dma = DMA_MAPPING_ERROR, meta_dma = DMA_MAPPING_ERROR;
++	unsigned int n_cmds;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.metadata_len > KIC_DKEK_MAX_METADATA)
++		return -EINVAL;
++
++	temp = !!(req.flags & CMH_KIC_FLAG_TEMP);
++
++	if (!temp) {
++		ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++		if (!ref_buf)
++			return -ENOMEM;
++		*ref_buf = 0;
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			kfree(ref_buf);
++			return -ENOMEM;
++		}
++	}
++
++	if (req.metadata_len > 0) {
++		meta_buf = kzalloc(req.metadata_len, GFP_KERNEL);
++		if (!meta_buf) {
++			ret = -ENOMEM;
++			goto out_ref_dkek;
++		}
++		if (copy_from_user(meta_buf,
++				   u64_to_user_ptr(req.metadata),
++				   req.metadata_len)) {
++			ret = -EFAULT;
++			goto out_meta;
++		}
++		meta_dma = cmh_dma_map_single(meta_buf, req.metadata_len,
++					      DMA_TO_DEVICE);
++		if (cmh_dma_map_error(meta_dma)) {
++			ret = -ENOMEM;
++			goto out_meta;
++		}
++	}
++
++	memset(vcq, 0, sizeof(vcq));
++
++	if (temp) {
++		/* Flush MBX to reset temp stack -- see KIC section comment */
++		ret = cmh_tm_flush_mbx(MGMT_MBX);
++		if (ret)
++			goto out_unmap_meta;
++
++		n_cmds = 3;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_kic_dkek_derive(&vcq[1], SYS_REF_TEMP,
++					req.base_key, req.host_id,
++					meta_dma, req.metadata_len);
++		vcq_add_sys_flush(&vcq[2]);
++	} else {
++		n_cmds = 4;
++		vcq_set_header(&vcq[0], n_cmds);
++		vcq_add_sys_new(&vcq[1], req.cid, ref_dma, KIC_KEY_SIZE);
++		vcq_add_kic_dkek_derive(&vcq[2], SYS_REF_LAST,
++					req.base_key, req.host_id,
++					meta_dma, req.metadata_len);
++		vcq_add_sys_flush(&vcq[3]);
++	}
++
++	ret = cmh_tm_submit_sync_mbx(vcq, n_cmds, 1, MGMT_MBX);
++
++	if (meta_buf) {
++		cmh_dma_unmap_single(meta_dma, req.metadata_len,
++				     DMA_TO_DEVICE);
++		kfree(meta_buf);
++		meta_buf = NULL;
++	}
++
++	if (ret)
++		goto out_ref_dkek;
++
++	if (temp) {
++		req.ref = SYS_REF_TEMP;
++		atomic_set(&mgmt_temp_dirty, 1);
++	} else {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		req.ref = *ref_buf;
++		kfree(ref_buf);
++		ref_buf = NULL;
++	}
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The derived-key DS slot was created but its ref never
++		 * reached userspace, so the caller cannot free it.  Logically
++		 * delete the orphaned slot: grant-with-no-access wipes the key
++		 * material and clears the CID (temp results use SYS_REF_TEMP
++		 * and need no cleanup).
++		 */
++		if (!temp) {
++			cmh_mgmt_ds_scrub(req.ref, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: KIC_DKEK_DERIVE copy_to_user failed, DS slot cleaned up\n");
++		}
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(),
++		"mgmt: KIC_DKEK_DERIVE base=0x%llx host=%u meta_len=%u flags=0x%x -> ref=0x%llx\n",
++		req.base_key, req.host_id, req.metadata_len, req.flags,
++		req.ref);
++	return 0;
++
++out_unmap_meta:
++	if (meta_buf && !cmh_dma_map_error(meta_dma) && meta_dma)
++		cmh_dma_unmap_single(meta_dma, req.metadata_len, DMA_TO_DEVICE);
++out_meta:
++	kfree(meta_buf);
++out_ref_dkek:
++	if (ref_buf) {
++		cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++		/* Scrub a slot sys_new may have created before the failure. */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++	}
++	return ret;
++}
++
++/* -- KEY_NEW_RANDOM -- DRBG-backed key generation --- */
++
++/*
++ * Allocate a new datastore slot and fill it with DRBG-generated
++ * random key material in a single atomic VCQ submission:
++ *
++ *   [0] SYS header(5)
++ *   [1] SYS_CMD_NEW   -- allocate DS slot (CMH eSW writes ref)
++ *   [2] DRBG_CMD_DATASTORE(SYS_REF_LAST) -- fill with random data
++ *   [3] DRBG flush -- release DRBG core ownership
++ *   [4] SYS flush
++ *
++ * The DRBG must be configured before this ioctl is used.
++ * Reuses struct cmh_ioctl_key_new (ds_type, flags, cid, len, ref).
++ */
++#define DRBG_KEYGEN_VCQ_CMDS	5
++
++static int cmh_mgmt_key_new_random(void __user *argp)
++{
++	struct cmh_ioctl_key_new req;
++	struct vcq_cmd vcq[DRBG_KEYGEN_VCQ_CMDS];
++	u64 *ref_buf;
++	dma_addr_t ref_dma;
++	u32 core_id, sys_type;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.len || req.len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	core_id = cmh_ds_type_to_core_id(req.ds_type);
++	if (core_id == CORE_ID_NUM)
++		return -EINVAL;
++	sys_type = SYS_TYPE_SET(req.flags, core_id);
++
++	ref_buf = kmalloc_obj(*ref_buf, GFP_KERNEL);
++	if (!ref_buf)
++		return -ENOMEM;
++
++	*ref_buf = 0;
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(*ref_buf),
++				     DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ref_dma)) {
++		kfree(ref_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], DRBG_KEYGEN_VCQ_CMDS);
++	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, req.len);
++	vcq_add_drbg_datastore(&vcq[2], SYS_REF_LAST, req.len, sys_type);
++	vcq_add_flush(&vcq[3], CORE_ID_DRBG);
++	vcq_add_sys_flush(&vcq[4]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, DRBG_KEYGEN_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(ref_dma, sizeof(*ref_buf), DMA_FROM_DEVICE);
++
++	if (ret) {
++		/* Scrub a slot sys_new may have created before the failure. */
++		if (*ref_buf)
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++		kfree(ref_buf);
++		return ret;
++	}
++
++	req.ref = *ref_buf;
++	kfree(ref_buf);
++
++	if (copy_to_user(argp, &req, sizeof(req))) {
++		/*
++		 * The DS slot was created but its ref never reached
++		 * userspace, so the caller cannot free it.  Logically delete
++		 * the orphaned slot: grant-with-no-access wipes the key
++		 * material and clears the CID (it does not reclaim the stack
++		 * space -- only a datastore reset does).
++		 */
++		cmh_mgmt_ds_scrub(req.ref, 0);
++		dev_warn(cmh_dev(),
++			 "mgmt: KEY_NEW_RANDOM copy_to_user failed, DS slot cleaned up\n");
++		return -EFAULT;
++	}
++
++	dev_dbg(cmh_dev(),
++		"mgmt: KEY_NEW_RANDOM cid=0x%llx len=%u type=0x%x -> ref=0x%llx\n",
++		req.cid, req.len, sys_type, req.ref);
++	return 0;
++}
++
++#define EAC_VCQ_CMDS		3	/* header + EAC_READ + flush */
++
++static long cmh_mgmt_eac_read(void __user *argp)
++{
++	struct cmh_ioctl_eac_read req;
++	struct eac_read_rsp *rsp;
++	struct vcq_cmd vcq[EAC_VCQ_CMDS];
++	dma_addr_t rsp_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved != 0)
++		return -EINVAL;
++	if (req.__pad != 0)
++		return -EINVAL;
++
++	/*
++	 * Zero the response: the eSW writes the fields it populates, but a
++	 * partial/aborted read must not copy uninitialised heap back to
++	 * user space.
++	 */
++	rsp = kzalloc_obj(*rsp, GFP_KERNEL);
++	if (!rsp)
++		return -ENOMEM;
++
++	rsp_dma = cmh_dma_map_single(rsp, sizeof(*rsp), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(rsp_dma)) {
++		kfree(rsp);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], EAC_VCQ_CMDS);
++	vcq_add_eac_read(&vcq[1], rsp_dma, sizeof(*rsp));
++	vcq_add_flush(&vcq[2], CORE_ID_EAC);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, EAC_VCQ_CMDS, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(rsp_dma, sizeof(*rsp), DMA_FROM_DEVICE);
++
++	if (ret) {
++		kfree(rsp);
++		return ret;
++	}
++
++	/* Copy response fields into ioctl struct */
++	req.mailbox_notification = rsp->mailbox_notification;
++	req.hw_error = rsp->hw_error;
++	req.hw_nmi = rsp->hw_nmi;
++	req.hw_panic = rsp->hw_panic;
++	req.safety_fatal = rsp->safety_fatal;
++	req.safety_notification = rsp->safety_notification;
++	req.sw_info0 = rsp->sw_info0;
++	req.sw_info1 = rsp->sw_info1;
++	memcpy(req.sram_bank_errors, rsp->sram_bank_errors,
++	       sizeof(req.sram_bank_errors));
++	req.__pad = 0;
++
++	kfree(rsp);
++
++	if (copy_to_user(argp, &req, sizeof(req)))
++		return -EFAULT;
++
++	return 0;
++}
++
++/* -- DRBG CONFIG (management) ------------ */
++
++#define DRBG_CONFIG_VCQ_CMDS	4	/* header + RESET + CONFIG + flush */
++
++static long cmh_mgmt_drbg_config(void __user *argp)
++{
++	struct cmh_ioctl_drbg_config req;
++	struct vcq_cmd vcq[DRBG_CONFIG_VCQ_CMDS];
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved != 0)
++		return -EINVAL;
++	if (req.entropy_ratio > 3)
++		return -EINVAL;
++	if (req.security_strength != CMH_DRBG_STRENGTH_128 &&
++	    req.security_strength != CMH_DRBG_STRENGTH_256)
++		return -EINVAL;
++
++	vcq_set_header(&vcq[0], DRBG_CONFIG_VCQ_CMDS);
++	vcq_add_drbg_reset(&vcq[1]);
++	vcq_add_drbg_config(&vcq[2], req.entropy_ratio,
++			    req.security_strength);
++	vcq_add_flush(&vcq[3], CORE_ID_DRBG);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, DRBG_CONFIG_VCQ_CMDS, 1, MGMT_MBX);
++	if (ret)
++		dev_warn(cmh_dev(), "mgmt: DRBG CONFIG failed (rc=%d)\n", ret);
++
++	return ret;
++}
++
++/* -- ioctl dispatch ------------------------ */
++
++/*
++ * PKE, SM2, and PQC ioctls use device-internal temporary storage for
++ * intermediate results.  Residual allocations in the per-mailbox temp
++ * store (left by prior operations that targeted SYS_REF_TEMP) reduce
++ * the space available and can cause the device to return ENOMEM.
++ *
++ * Flush the mailbox before these operations to reset the temp store,
++ * but ONLY when the store is actually dirty (mgmt_temp_dirty flag).
++ * Unconditional flushing would kill in-flight command queues from
++ * concurrent callers on the same mailbox -- MBX_COMMAND_FLUSH
++ * terminates any executing queue with -EPIPE and discards all queued
++ * submissions.
++ *
++ * The conditional flush is safe: PKE/SM2/PQC ioctls do not consume
++ * SYS_REF_TEMP from a prior ioctl (unlike DS_EXPORT/DS_IMPORT which
++ * may reference a temp key produced by a preceding derivation), so
++ * clearing the temp store before them loses no needed state.
++ */
++static inline bool cmh_mgmt_needs_temp_flush(unsigned int cmd)
++{
++	unsigned int nr = _IOC_NR(cmd);
++
++	/*
++	 * Range invariant: all PKE/SM2/PQC ioctls must have consecutive
++	 * NR values between PKE_RSA_ENC (0x10) and SM2_ENC_HASH (0x37).
++	 * If a new ioctl is added outside this range, update the bounds
++	 * and adjust these assertions.
++	 */
++	BUILD_BUG_ON(_IOC_NR(CMH_IOCTL_PKE_RSA_ENC) != 0x10);
++	BUILD_BUG_ON(_IOC_NR(CMH_IOCTL_SM2_ENC_HASH) != 0x37);
++
++	return nr >= _IOC_NR(CMH_IOCTL_PKE_RSA_ENC) &&
++	       nr <= _IOC_NR(CMH_IOCTL_SM2_ENC_HASH);
++}
++
++static long cmh_mgmt_ioctl_locked(struct file *file, unsigned int cmd,
++				  void __user *argp)
++{
++	int ret;
++
++	if (cmh_mgmt_needs_temp_flush(cmd) &&
++	    atomic_xchg(&mgmt_temp_dirty, 0)) {
++		ret = cmh_tm_flush_mbx(MGMT_MBX);
++		if (ret) {
++			/* Flush failed -- the temp region is still dirty. */
++			atomic_set(&mgmt_temp_dirty, 1);
++			return ret;
++		}
++	}
++
++	switch (cmd) {
++	case CMH_IOCTL_KEY_NEW:
++		return cmh_mgmt_key_new(argp);
++	case CMH_IOCTL_KEY_WRITE:
++		return cmh_mgmt_key_write(argp);
++	case CMH_IOCTL_KEY_READ:
++		return cmh_mgmt_key_read(argp);
++	case CMH_IOCTL_KEY_FIND:
++		return cmh_mgmt_key_find(argp);
++	case CMH_IOCTL_KEY_GRANT:
++		return cmh_mgmt_key_grant(argp, false);
++	case CMH_IOCTL_KEY_DELETE:
++		return cmh_mgmt_key_grant(argp, true);
++	case CMH_IOCTL_DS_EXPORT:
++		return cmh_mgmt_ds_export(argp);
++	case CMH_IOCTL_DS_IMPORT:
++		return cmh_mgmt_ds_import(argp);
++	case CMH_IOCTL_KIC_HKDF1:
++		return cmh_mgmt_kic_hkdf1(argp);
++	case CMH_IOCTL_KIC_HKDF2:
++		return cmh_mgmt_kic_hkdf2(argp);
++	case CMH_IOCTL_KEY_NEW_RANDOM:
++		return cmh_mgmt_key_new_random(argp);
++	case CMH_IOCTL_KIC_AES_CMAC_KDF:
++		return cmh_mgmt_kic_aes_cmac_kdf(argp);
++	case CMH_IOCTL_KIC_DKEK_DERIVE:
++		return cmh_mgmt_kic_dkek_derive(argp);
++	case CMH_IOCTL_KEY_LIST:
++		return cmh_mgmt_key_list(argp);
++	case CMH_IOCTL_EAC_READ:
++		return cmh_mgmt_eac_read(argp);
++	/* PKE operations */
++	case CMH_IOCTL_PKE_RSA_ENC:
++		return cmh_mgmt_pke_rsa_enc(argp);
++	case CMH_IOCTL_PKE_RSA_DEC:
++		return cmh_mgmt_pke_rsa_dec(argp);
++	case CMH_IOCTL_PKE_RSA_CRT_DEC:
++		return cmh_mgmt_pke_rsa_crt_dec(argp);
++	case CMH_IOCTL_PKE_RSA_KEYGEN:
++		return cmh_mgmt_pke_rsa_keygen(argp);
++	case CMH_IOCTL_PKE_ECDSA_SIGN:
++		return cmh_mgmt_pke_ecdsa_sign(argp);
++	case CMH_IOCTL_PKE_ECDH:
++		return cmh_mgmt_pke_ecdh(argp);
++	case CMH_IOCTL_PKE_ECDH_KEYGEN:
++		return cmh_mgmt_pke_ecdh_keygen(argp);
++	case CMH_IOCTL_PKE_EDDSA_SIGN:
++		return cmh_mgmt_pke_eddsa_sign(argp);
++	case CMH_IOCTL_PKE_EDDSA_VERIFY:
++		return cmh_mgmt_pke_eddsa_verify(argp);
++	case CMH_IOCTL_PKE_EC_KEYGEN:
++		return cmh_mgmt_pke_ec_keygen(argp);
++	case CMH_IOCTL_PKE_EC_PUBGEN:
++		return cmh_mgmt_pke_ec_pubgen(argp);
++	case CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA:
++		return cmh_mgmt_pke_eddsa_keygen_sca(argp);
++	/* SM2 operations */
++	case CMH_IOCTL_SM2_ECDH_KEYGEN:
++		return cmh_mgmt_sm2_ecdh_keygen(argp);
++	case CMH_IOCTL_SM2_ECDH:
++		return cmh_mgmt_sm2_ecdh(argp);
++	case CMH_IOCTL_SM2_DEC_POINT:
++		return cmh_mgmt_sm2_dec_point(argp);
++	case CMH_IOCTL_SM2_ENC_POINT:
++		return cmh_mgmt_sm2_enc_point(argp);
++	case CMH_IOCTL_SM2_ID_DIGEST:
++		return cmh_mgmt_sm2_id_digest(argp);
++	case CMH_IOCTL_SM2_ECDH_HASH:
++		return cmh_mgmt_sm2_ecdh_hash(argp);
++	case CMH_IOCTL_SM2_DEC_HASH:
++		return cmh_mgmt_sm2_dec_hash(argp);
++	case CMH_IOCTL_SM2_ENC_HASH:
++		return cmh_mgmt_sm2_enc_hash(argp);
++	/* PQC operations */
++	case CMH_IOCTL_ML_KEM_KEYGEN:
++		return cmh_mgmt_ml_kem_keygen(argp);
++	case CMH_IOCTL_ML_KEM_ENC:
++		return cmh_mgmt_ml_kem_enc(argp);
++	case CMH_IOCTL_ML_KEM_DEC:
++		return cmh_mgmt_ml_kem_dec(argp);
++	case CMH_IOCTL_ML_DSA_KEYGEN:
++		return cmh_mgmt_ml_dsa_keygen(argp);
++	case CMH_IOCTL_ML_DSA_SIGN:
++		return cmh_mgmt_ml_dsa_sign(argp);
++	case CMH_IOCTL_SLHDSA_KEYGEN:
++		return cmh_mgmt_slhdsa_keygen(argp);
++	case CMH_IOCTL_SLHDSA_SIGN:
++		return cmh_mgmt_slhdsa_sign(argp);
++	case CMH_IOCTL_SLHDSA_SIGN_PREHASH:
++		return cmh_mgmt_slhdsa_sign_prehash(argp);
++	/* DRBG management */
++	case CMH_IOCTL_DRBG_CONFIG:
++		return cmh_mgmt_drbg_config(argp);
++	default:
++		return -ENOTTY;
++	}
++}
++
++/*
++ * cmh_mgmt_ioctl() - serialised entry point for /dev/cmh_mgmt
++ *
++ * Holds cmh_mgmt_lock across the whole operation so the shared
++ * management-plane state (SYS_REF_TEMP, datastore) cannot be clobbered
++ * by a concurrent ioctl on another open of the device.
++ */
++static long cmh_mgmt_ioctl(struct file *file, unsigned int cmd,
++			   unsigned long arg)
++{
++	void __user *argp = (void __user *)arg;
++	long ret;
++
++	mutex_lock(&cmh_mgmt_lock);
++	ret = cmh_mgmt_ioctl_locked(file, cmd, argp);
++	mutex_unlock(&cmh_mgmt_lock);
++	return ret;
++}
++
++/* -- File operations ----------------------- */
++
++/*
++ * Capability is checked once at open time.  A privileged process may
++ * pass the resulting fd to an unprivileged helper -- this delegation
++ * model is intentional and mirrors /dev/kvm, /dev/loop-control, etc.
++ */
++static int cmh_mgmt_open(struct inode *inode, struct file *file)
++{
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	return 0;
++}
++
++static const struct file_operations cmh_mgmt_fops = {
++	.owner          = THIS_MODULE,
++	.open           = cmh_mgmt_open,
++	.unlocked_ioctl = cmh_mgmt_ioctl,
++	.compat_ioctl   = compat_ptr_ioctl,
++};
++
++static struct miscdevice cmh_mgmt_dev = {
++	.minor = MISC_DYNAMIC_MINOR,
++	.name  = "cmh_mgmt",
++	.fops  = &cmh_mgmt_fops,
++	.mode  = 0660,
++};
++
++static bool cmh_mgmt_registered;
++
++/**
++ * cmh_mgmt_register() - Register the /dev/cmh_mgmt misc device
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_register(void)
++{
++	int ret;
++
++	/*
++	 * ABI size guards -- catch silent layout changes at compile time.
++	 * All ioctl structs use only __u32 and __u64 with explicit padding,
++	 * guaranteeing identical layout on 32-bit and 64-bit (compat_ptr_ioctl).
++	 */
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_new) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_write) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_read) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_find) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_list) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_key_grant) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ds_export) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ds_import) != 24);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_hkdf1) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_hkdf2) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_aes_cmac_kdf) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_kic_dkek_derive) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_enc) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_dec) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_crt_dec) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_rsa_keygen) != 64);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdsa_sign) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdh) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ecdh_keygen) != 24);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_sign) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_verify) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ec_keygen) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_ec_pubgen) != 24);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_pke_eddsa_keygen_sca) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_keygen) != 64);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_enc) != 64);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_kem_dec) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_dsa_keygen) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_ml_dsa_sign) != 48);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_keygen) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_sign) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_slhdsa_sign_prehash) != 64);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh_keygen) != 24);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh) != 56);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_dec_point) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_enc_point) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_id_digest) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_ecdh_hash) != 40);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_dec_hash) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_sm2_enc_hash) != 32);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_eac_read) != 64);
++	BUILD_BUG_ON(sizeof(struct cmh_ioctl_drbg_config) != 16);
++
++	ret = misc_register(&cmh_mgmt_dev);
++	if (ret) {
++		dev_err(cmh_dev(), "mgmt: misc_register failed (rc=%d)\n", ret);
++		return ret;
++	}
++
++	cmh_mgmt_registered = true;
++	return 0;
++}
++
++/**
++ * cmh_mgmt_unregister() - Unregister the /dev/cmh_mgmt misc device
++ */
++void cmh_mgmt_unregister(void)
++{
++	if (!cmh_mgmt_registered)
++		return;
++
++	misc_deregister(&cmh_mgmt_dev);
++	cmh_mgmt_registered = false;
++}
+diff --git a/drivers/crypto/cmh/cmh_mgmt_pke.c b/drivers/crypto/cmh/cmh_mgmt_pke.c
+new file mode 100644
+index 000000000000..189af114fa43
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_mgmt_pke.c
+@@ -0,0 +1,1143 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH -- PKE ioctl handlers for /dev/cmh_mgmt
++ *
++ * RSA encrypt/decrypt/CRT/keygen, ECDSA sign, ECDH/keygen,
++ * EdDSA sign/verify, EC keygen/pubgen.
++ *
++ * Split from cmh_mgmt.c for maintainability.
++ */
++
++#include <linux/kernel.h>
++#include <linux/uaccess.h>
++#include <linux/slab.h>
++#include <linux/overflow.h>
++
++#include "cmh_mgmt.h"
++#include "cmh_sys.h"
++#include "cmh_txn.h"
++#include "cmh_key.h"
++#include "cmh_dma.h"
++#include "cmh_config.h"
++#include "cmh_pke.h"
++#include "cmh_pke_abi.h"
++#include "cmh_sys_abi.h"
++#include <uapi/linux/cmh_mgmt_ioctl.h>
++
++#include <crypto/utils.h>
++
++/* -- PKE ioctl helpers ------------------- */
++
++/*
++ * Maximum PKE operand size: 512 bytes (RSA 4096-bit),
++ * or 2 * 68 = 136 bytes (P-521 coordinate pair).
++ */
++#define PKE_MAX_OPERAND	512
++
++/* Validate curve ID and return coordinate length; 0 = invalid */
++static u32 cmh_pke_validate_curve(u32 curve)
++{
++	return pke_curve_clen(curve);
++}
++
++/**
++ * cmh_mgmt_pke_rsa_enc() - Handle CMH_MGMT_IOC_PKE_RSA_ENC ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_rsa_enc(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_rsa_enc req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 n_len, e_padded;
++	u8 *e_buf, *n_buf, *m_buf, *c_buf;
++	dma_addr_t e_dma, n_dma, m_dma, c_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
++	    req.bits % 8)
++		return -EINVAL;
++	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
++		return -EINVAL;
++
++	n_len = req.bits / 8;
++	e_padded = ALIGN(req.e_len, 4);
++
++	e_buf = kzalloc(e_padded, GFP_KERNEL);
++	n_buf = kmalloc(n_len, GFP_KERNEL);
++	m_buf = kmalloc(n_len, GFP_KERNEL);
++	c_buf = kzalloc(n_len, GFP_KERNEL);
++	if (!e_buf || !n_buf || !m_buf || !c_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	/* Right-align exponent in zero-padded buffer for DMA alignment */
++	if (copy_from_user(e_buf + e_padded - req.e_len,
++			   u64_to_user_ptr(req.e), req.e_len) ||
++	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
++	    copy_from_user(m_buf, u64_to_user_ptr(req.input), n_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
++	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
++	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_TO_DEVICE);
++	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
++	    cmh_dma_map_error(m_dma) || cmh_dma_map_error(c_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_rsa_enc(&vcq[1], pke_cid, req.bits, e_padded,
++			    e_dma, n_dma, m_dma, c_dma, PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(c_dma))
++		cmh_dma_unmap_single(c_dma, n_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(m_dma))
++		cmh_dma_unmap_single(m_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(n_dma))
++		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(e_dma))
++		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.output), c_buf, n_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(c_buf);
++	kfree_sensitive(m_buf);
++	kfree(n_buf);
++	kfree(e_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_rsa_dec() - Handle CMH_MGMT_IOC_PKE_RSA_DEC ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_rsa_dec(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_rsa_dec req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 n_len, e_padded;
++	u8 *e_buf, *n_buf, *c_buf, *m_buf;
++	dma_addr_t e_dma, n_dma, c_dma, m_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
++	    req.bits % 8)
++		return -EINVAL;
++	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
++		return -EINVAL;
++
++	n_len = req.bits / 8;
++	e_padded = ALIGN(req.e_len, 4);
++
++	e_buf = kzalloc(e_padded, GFP_KERNEL);
++	n_buf = kmalloc(n_len, GFP_KERNEL);
++	c_buf = kmalloc(n_len, GFP_KERNEL);
++	m_buf = kzalloc(n_len, GFP_KERNEL);
++	if (!e_buf || !n_buf || !c_buf || !m_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	/* Right-align exponent in zero-padded buffer for DMA alignment */
++	if (copy_from_user(e_buf + e_padded - req.e_len,
++			   u64_to_user_ptr(req.e), req.e_len) ||
++	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
++	    copy_from_user(c_buf, u64_to_user_ptr(req.input), n_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
++	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
++	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_TO_DEVICE);
++	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
++	    cmh_dma_map_error(c_dma) || cmh_dma_map_error(m_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_rsa_dec(&vcq[1], pke_cid, req.bits, e_padded,
++			    e_dma, n_dma, c_dma, m_dma, req.key_ref,
++			    PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(m_dma))
++		cmh_dma_unmap_single(m_dma, n_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(c_dma))
++		cmh_dma_unmap_single(c_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(n_dma))
++		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(e_dma))
++		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.output), m_buf, n_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(m_buf);
++	kfree(c_buf);
++	kfree(n_buf);
++	kfree(e_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_rsa_crt_dec() - Handle CMH_MGMT_IOC_PKE_RSA_CRT_DEC ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_rsa_crt_dec(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_rsa_crt_dec req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 n_len, e_padded;
++	u8 *e_buf, *n_buf, *c_buf, *m_buf;
++	dma_addr_t e_dma, n_dma, c_dma, m_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
++	    req.bits % 8)
++		return -EINVAL;
++	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
++		return -EINVAL;
++
++	n_len = req.bits / 8;
++	e_padded = ALIGN(req.e_len, 4);
++
++	e_buf = kzalloc(e_padded, GFP_KERNEL);
++	n_buf = kmalloc(n_len, GFP_KERNEL);
++	c_buf = kmalloc(n_len, GFP_KERNEL);
++	m_buf = kzalloc(n_len, GFP_KERNEL);
++	if (!e_buf || !n_buf || !c_buf || !m_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	/* Right-align exponent in zero-padded buffer for DMA alignment */
++	if (copy_from_user(e_buf + e_padded - req.e_len,
++			   u64_to_user_ptr(req.e), req.e_len) ||
++	    copy_from_user(n_buf, u64_to_user_ptr(req.n), n_len) ||
++	    copy_from_user(c_buf, u64_to_user_ptr(req.input), n_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
++	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_TO_DEVICE);
++	c_dma = cmh_dma_map_single(c_buf, n_len, DMA_TO_DEVICE);
++	m_dma = cmh_dma_map_single(m_buf, n_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
++	    cmh_dma_map_error(c_dma) || cmh_dma_map_error(m_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_rsa_crt_dec(&vcq[1], pke_cid, req.bits, e_padded,
++				e_dma, n_dma, c_dma, m_dma, req.crt_ref,
++				PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(m_dma))
++		cmh_dma_unmap_single(m_dma, n_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(c_dma))
++		cmh_dma_unmap_single(c_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(n_dma))
++		cmh_dma_unmap_single(n_dma, n_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(e_dma))
++		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.output), m_buf, n_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(m_buf);
++	kfree(c_buf);
++	kfree(n_buf);
++	kfree(e_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_rsa_keygen() - Handle CMH_MGMT_IOC_PKE_RSA_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_rsa_keygen(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_rsa_keygen req;
++	/*
++	 * When has_crt, we use a two-VCQ approach (CRI pattern):
++	 *   VCQ #1: header + SYS_NEW(d) + SYS_NEW(crt) + SYS_FLUSH  (4 slots)
++	 *   VCQ #2: header + RSA_KEYGEN + PKE_FLUSH + SYS_FLUSH       (4 slots)
++	 * Without CRT, single VCQ:
++	 *   header + SYS_NEW(d) + RSA_KEYGEN + PKE_FLUSH + SYS_FLUSH  (5 slots)
++	 */
++	struct vcq_cmd vcq[5];
++	u32 n_len, e_padded, key_flags, d_ds_len, crt_ds_len;
++	u8 *e_buf, *n_buf;
++	u64 *d_ref_buf, *crt_ref_buf;
++	dma_addr_t e_dma = DMA_MAPPING_ERROR, n_dma = DMA_MAPPING_ERROR;
++	dma_addr_t d_ref_dma = DMA_MAPPING_ERROR;
++	dma_addr_t crt_ref_dma = DMA_MAPPING_ERROR;
++	int idx, ret;
++	bool has_crt, is_sca;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.bits < PKE_RSA_MIN_BITS || req.bits > PKE_RSA_MAX_BITS ||
++	    req.bits % 8)
++		return -EINVAL;
++	if (!req.e_len || req.e_len > PKE_MAX_OPERAND)
++		return -EINVAL;
++	if (req.flags & ~CMH_FLAG_MASK)
++		return -EINVAL;
++
++	n_len = req.bits / 8;
++	has_crt = (req.crt_cid != 0);
++	e_padded = ALIGN(req.e_len, 4);
++	key_flags = req.flags & CMH_FLAG_MASK;
++	is_sca = !!(req.flags & CMH_FLAG_SCA);
++
++	/*
++	 * SCA keys are stored in 2 shares -- DS allocation must be enlarged.
++	 * CRI reference formulas: cmh_pke_rsa_private_key_size().
++	 */
++	if (is_sca) {
++		d_ds_len = n_len * 2;
++		crt_ds_len = (7 + n_len / 2) * 4;
++	} else {
++		d_ds_len = n_len;
++		crt_ds_len = 5 * (n_len / 2);
++	}
++
++	e_buf = kzalloc(e_padded, GFP_KERNEL);
++	n_buf = kzalloc(n_len, GFP_KERNEL);
++	d_ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	crt_ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	if (!e_buf || !n_buf || !d_ref_buf || !crt_ref_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(e_buf + e_padded - req.e_len,
++			   u64_to_user_ptr(req.e), req.e_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	e_dma = cmh_dma_map_single(e_buf, e_padded, DMA_TO_DEVICE);
++	n_dma = cmh_dma_map_single(n_buf, n_len, DMA_FROM_DEVICE);
++	d_ref_dma = cmh_dma_map_single(d_ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	crt_ref_dma = cmh_dma_map_single(crt_ref_buf, sizeof(u64),
++					 DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(e_dma) || cmh_dma_map_error(n_dma) ||
++	    cmh_dma_map_error(d_ref_dma) || cmh_dma_map_error(crt_ref_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	if (has_crt) {
++		/*
++		 * Two-VCQ approach (CRI pattern): SYS_REF_LAST can only
++		 * refer to the most recently created DS object.  When we
++		 * need both d and crt refs, we must first allocate DS
++		 * objects, read back the opaque refs, then pass them by
++		 * value in the keygen VCQ.
++		 *
++		 * VCQ #1: allocate both DS objects.
++		 */
++		idx = 0;
++		vcq_set_header(&vcq[idx++], 4);
++		vcq_add_sys_new(&vcq[idx++], req.d_cid, d_ref_dma, d_ds_len);
++		vcq_add_sys_new(&vcq[idx++], req.crt_cid, crt_ref_dma,
++				crt_ds_len);
++		vcq_add_sys_flush(&vcq[idx++]);
++
++		ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
++		if (ret)
++			goto out_unmap;
++
++		/* Sync DMA so we can read back the opaque refs */
++		cmh_dma_unmap_single(d_ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++		cmh_dma_unmap_single(crt_ref_dma, sizeof(u64),
++				     DMA_FROM_DEVICE);
++		d_ref_dma = DMA_MAPPING_ERROR;
++		crt_ref_dma = DMA_MAPPING_ERROR;
++
++		/*
++		 * VCQ #2: keygen with resolved refs.
++		 */
++		idx = 0;
++		memset(vcq, 0, sizeof(vcq));
++		vcq_set_header(&vcq[idx++], 4);
++
++		vcq[idx].magic = VCQ_CMD_MAGIC;
++		vcq[idx].id = VCQ_CMD_ID(pke_cid, PKE_SWAP_FLAGS, 1,
++					 PKE_CMD_RSA_KEYGEN);
++		vcq[idx].hwc.pke.cmd_rsa_keygen.bits = req.bits;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.e = e_dma;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.n = n_dma;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.d = *d_ref_buf;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.d_type =
++			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
++		vcq[idx].hwc.pke.cmd_rsa_keygen.crt = *crt_ref_buf;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.crt_type =
++			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
++		idx++;
++
++		vcq_add_pke_flush(&vcq[idx++], pke_cid);
++		vcq_add_sys_flush(&vcq[idx++]);
++
++		ret = cmh_tm_submit_sync_tmo(vcq, 4, 1, MGMT_MBX,
++					     cmh_tm_slow_op_timeout_jiffies());
++	} else {
++		/*
++		 * Single-VCQ: only d, so SYS_REF_LAST is unambiguous.
++		 */
++		idx = 0;
++		vcq_set_header(&vcq[idx++], 5);
++		vcq_add_sys_new(&vcq[idx++], req.d_cid, d_ref_dma, d_ds_len);
++
++		vcq[idx].magic = VCQ_CMD_MAGIC;
++		vcq[idx].id = VCQ_CMD_ID(pke_cid, PKE_SWAP_FLAGS, 1,
++					 PKE_CMD_RSA_KEYGEN);
++		vcq[idx].hwc.pke.cmd_rsa_keygen.bits = req.bits;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.e = e_dma;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.n = n_dma;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.d = SYS_REF_LAST;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.d_type =
++			SYS_TYPE_SET(key_flags, CORE_ID_PKE);
++		vcq[idx].hwc.pke.cmd_rsa_keygen.crt = SYS_REF_NONE;
++		vcq[idx].hwc.pke.cmd_rsa_keygen.crt_type = 0;
++		idx++;
++
++		vcq_add_pke_flush(&vcq[idx++], pke_cid);
++		vcq_add_sys_flush(&vcq[idx++]);
++
++		ret = cmh_tm_submit_sync_tmo(vcq, 5, 1, MGMT_MBX,
++					     cmh_tm_slow_op_timeout_jiffies());
++	}
++
++out_unmap:
++	if (!cmh_dma_map_error(crt_ref_dma))
++		cmh_dma_unmap_single(crt_ref_dma, sizeof(u64),
++				     DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(d_ref_dma))
++		cmh_dma_unmap_single(d_ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(n_dma))
++		cmh_dma_unmap_single(n_dma, n_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(e_dma))
++		cmh_dma_unmap_single(e_dma, e_padded, DMA_TO_DEVICE);
++
++	/*
++	 * Keygen failed after SYS_CMD_NEW created the d/crt objects (VCQ #2 in
++	 * the CRT path, or the keygen command in the single-VCQ path); scrub
++	 * the orphans.  Refs are zero unless the eSW wrote them back.
++	 */
++	if (ret && (*d_ref_buf || *crt_ref_buf))
++		cmh_mgmt_ds_scrub(*d_ref_buf, *crt_ref_buf);
++
++	if (!ret) {
++		/* Copy generated modulus and refs back */
++		if (copy_to_user(u64_to_user_ptr(req.n), n_buf, n_len)) {
++			ret = -EFAULT;
++		} else {
++			req.d_ref = *d_ref_buf;
++			req.crt_ref = has_crt ? *crt_ref_buf : 0;
++			if (copy_to_user(argp, &req, sizeof(req)))
++				ret = -EFAULT;
++		}
++
++		if (ret == -EFAULT) {
++			/*
++			 * The d (and CRT) DS slots were created but their
++			 * refs never reached userspace, so the caller cannot
++			 * free them.  Logically delete the orphaned slots.
++			 */
++			cmh_mgmt_ds_scrub(*d_ref_buf,
++					  has_crt ? *crt_ref_buf : 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: RSA_KEYGEN copy_to_user failed, DS slots cleaned up\n");
++		}
++	}
++
++out_free:
++	kfree(crt_ref_buf);
++	kfree(d_ref_buf);
++	kfree(n_buf);
++	kfree(e_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_ecdsa_sign() - Handle CMH_MGMT_IOC_PKE_ECDSA_SIGN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_ecdsa_sign(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_ecdsa_sign req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 clen, sig_len, dig_map_len;
++	u8 *dig_buf, *sig_buf;
++	dma_addr_t dig_dma, sig_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen || !req.digest_len ||
++	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++
++	sig_len = 2 * clen;
++
++	/*
++	 * eSW requires digest_len >= clen.  A hash shorter than clen must
++	 * be LEFT-padded with zeros (right-aligned) so it keeps its value
++	 * as a big-endian integer -- trailing zeros would multiply it by
++	 * 256^k.  When digest_len >= clen the offset is 0 (unchanged) and
++	 * the eSW applies the ECDSA bits2int leftmost-bits truncation.
++	 */
++	dig_map_len = max_t(u32, req.digest_len, clen);
++
++	dig_buf = kzalloc(dig_map_len, GFP_KERNEL);
++	sig_buf = kzalloc(sig_len, GFP_KERNEL);
++	if (!dig_buf || !sig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(dig_buf + (dig_map_len - req.digest_len),
++			   u64_to_user_ptr(req.digest), req.digest_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	dig_dma = cmh_dma_map_single(dig_buf, dig_map_len, DMA_TO_DEVICE);
++	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(dig_dma) || cmh_dma_map_error(sig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_ecdsa_sign(&vcq[1], pke_cid, req.curve, clen,
++			       dig_dma, sig_dma, req.key_ref,
++			       dig_map_len, pke_swap_flags(req.curve));
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(dig_dma))
++		cmh_dma_unmap_single(dig_dma, dig_map_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.signature),
++				 sig_buf, sig_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(sig_buf);
++	kfree(dig_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_ecdh() - Handle CMH_MGMT_IOC_PKE_ECDH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_ecdh(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_ecdh req;
++	/* hdr + pke_ecdh(->SYS_REF_TEMP) + pke_flush + sys_data + sys_flush */
++	struct vcq_cmd vcq[5];
++	u32 clen, swap, ss_type;
++	u8 *peer_buf, *ss_buf;
++	dma_addr_t peer_dma, ss_dma;
++	int ret, idx;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	/* flags and reserved fields must be zero (raw host output only). */
++	if (req.flags || req.__reserved || req.__reserved2)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen)
++		return -EINVAL;
++
++	swap = PKE_SWAP_FLAGS;
++	ss_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
++
++	peer_buf = kmalloc(clen, GFP_KERNEL);
++	ss_buf = kzalloc(clen, GFP_KERNEL);
++	if (!peer_buf || !ss_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(peer_buf, u64_to_user_ptr(req.peer_key_x), clen)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	peer_dma = cmh_dma_map_single(peer_buf, clen, DMA_TO_DEVICE);
++	ss_dma = cmh_dma_map_single(ss_buf, clen, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(peer_dma) || cmh_dma_map_error(ss_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	/*
++	 * Compute the shared secret into SYS_REF_TEMP and read it back in a
++	 * single VCQ.  The key is a caller-owned persistent DS ref, so it
++	 * never collides with the temp output.  Doing the temp push (pke_ecdh)
++	 * and pop (sys_data) in one submission bounds the temp to a single
++	 * mailbox occupation -- no concurrent mgmt op can interleave a temp --
++	 * and the read reclaims the slot, so no datastore object leaks.
++	 */
++	idx = 0;
++	vcq_set_header(&vcq[idx++], 5);
++	vcq_add_pke_ecdh(&vcq[idx++], pke_cid, req.curve, clen, clen,
++			 ss_type, peer_dma, req.key_ref,
++			 SYS_REF_TEMP, swap);
++	vcq_add_pke_flush(&vcq[idx++], pke_cid);
++	vcq_add_sys_data(&vcq[idx], SYS_REF_TEMP, ss_dma, clen);
++	vcq[idx++].id |= pke_swap_flags(req.curve);
++	vcq_add_sys_flush(&vcq[idx++]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(ss_dma))
++		cmh_dma_unmap_single(ss_dma, clen, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(peer_dma))
++		cmh_dma_unmap_single(peer_dma, clen, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.output), ss_buf, clen))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(ss_buf);
++	kfree(peer_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_ecdh_keygen() - Handle CMH_MGMT_IOC_PKE_ECDH_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_ecdh_keygen(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_ecdh_keygen req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 clen, out_len;
++	u8 *pkx_buf;
++	dma_addr_t pkx_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen)
++		return -EINVAL;
++
++	/*
++	 * ECDH_KEYGEN always outputs both X and Y coordinates
++	 * (2 * clen bytes total) even though only X is useful for
++	 * the ECDH exchange.  Allocate the full output size to avoid
++	 * a DMA buffer overflow, but copy only X back to userspace.
++	 */
++	out_len = 2 * clen;
++
++	pkx_buf = kzalloc(out_len, GFP_KERNEL);
++	if (!pkx_buf)
++		return -ENOMEM;
++
++	pkx_dma = cmh_dma_map_single(pkx_buf, out_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(pkx_dma)) {
++		kfree(pkx_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_ecdh_keygen(&vcq[1], pke_cid, req.curve, clen,
++				pkx_dma, req.key_ref,
++				PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(pkx_dma, out_len, DMA_FROM_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.public_key_x),
++				 pkx_buf, clen))
++			ret = -EFAULT;
++	}
++
++	kfree(pkx_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_eddsa_sign() - Handle CMH_MGMT_IOC_PKE_EDDSA_SIGN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_eddsa_sign(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_eddsa_sign req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 klen, sig_len;
++	u8 *msg_buf, *sig_buf;
++	dma_addr_t msg_dma, sig_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (!cmh_pke_validate_curve(req.curve) || !req.digest_len ||
++	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++	if (!pke_curve_is_edwards(req.curve))
++		return -EINVAL;
++
++	klen = pke_eddsa_key_len(req.curve);
++	sig_len = 2 * klen;
++
++	msg_buf = kmalloc(req.digest_len, GFP_KERNEL);
++	sig_buf = kzalloc(sig_len, GFP_KERNEL);
++	if (!msg_buf || !sig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(msg_buf, u64_to_user_ptr(req.digest),
++			   req.digest_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	msg_dma = cmh_dma_map_single(msg_buf, req.digest_len, DMA_TO_DEVICE);
++	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(sig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_eddsa_sign(&vcq[1], pke_cid, req.curve, klen,
++			       msg_dma, sig_dma, req.key_ref,
++			       req.digest_len, pke_swap_flags(req.curve));
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(msg_dma))
++		cmh_dma_unmap_single(msg_dma, req.digest_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.signature),
++				 sig_buf, sig_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(sig_buf);
++	kfree(msg_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_eddsa_verify() - Handle CMH_MGMT_IOC_PKE_EDDSA_VERIFY ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_eddsa_verify(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_eddsa_verify req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 clen, klen, sig_len;
++	u8 *msg_buf, *sig_buf, *pky_buf, *rp_buf;
++	dma_addr_t msg_dma, sig_dma, pky_dma, rp_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen || !req.digest_len ||
++	    req.digest_len > CMH_MGMT_MAX_DATA_LEN)
++		return -EINVAL;
++	if (!pke_curve_is_edwards(req.curve))
++		return -EINVAL;
++
++	klen = pke_eddsa_key_len(req.curve);
++	sig_len = 2 * klen;
++
++	msg_buf = kmalloc(req.digest_len, GFP_KERNEL);
++	sig_buf = kmalloc(sig_len, GFP_KERNEL);
++	pky_buf = kmalloc(klen, GFP_KERNEL);
++	rp_buf = kzalloc(clen, GFP_KERNEL);
++	if (!msg_buf || !sig_buf || !pky_buf || !rp_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(msg_buf, u64_to_user_ptr(req.digest),
++			   req.digest_len) ||
++	    copy_from_user(sig_buf, u64_to_user_ptr(req.signature),
++			   sig_len) ||
++	    copy_from_user(pky_buf, u64_to_user_ptr(req.public_key_y),
++			   klen)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	msg_dma = cmh_dma_map_single(msg_buf, req.digest_len, DMA_TO_DEVICE);
++	sig_dma = cmh_dma_map_single(sig_buf, sig_len, DMA_TO_DEVICE);
++	pky_dma = cmh_dma_map_single(pky_buf, klen, DMA_TO_DEVICE);
++	rp_dma = cmh_dma_map_single(rp_buf, clen, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(sig_dma) ||
++	    cmh_dma_map_error(pky_dma) || cmh_dma_map_error(rp_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_eddsa_verify(&vcq[1], pke_cid, req.curve, req.digest_len,
++				 pky_dma, msg_dma, sig_dma, rp_dma,
++				 pke_swap_flags(req.curve));
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(rp_dma))
++		cmh_dma_unmap_single(rp_dma, clen, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(pky_dma))
++		cmh_dma_unmap_single(pky_dma, klen, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(msg_dma))
++		cmh_dma_unmap_single(msg_dma, req.digest_len, DMA_TO_DEVICE);
++
++out_free:
++	kfree(rp_buf);
++	kfree(pky_buf);
++	kfree(sig_buf);
++	kfree(msg_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_ec_keygen() - Handle CMH_MGMT_IOC_PKE_EC_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_ec_keygen(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_ec_keygen req;
++	/* header + SYS_NEW + ECDSA_KEYGEN + flush_pke + flush_sys */
++	struct vcq_cmd vcq[5];
++	u32 clen, key_flags, ds_len;
++	u64 *ref_buf;
++	dma_addr_t ref_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (req.flags & ~CMH_FLAG_MASK)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen)
++		return -EINVAL;
++
++	key_flags = req.flags & CMH_FLAG_MASK;
++	/* SCA keys are stored in 2 shares -- allocate double the curve length */
++	ds_len = (req.flags & CMH_FLAG_SCA) ? clen * 2 : clen;
++
++	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	if (!ref_buf)
++		return -ENOMEM;
++
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ref_dma)) {
++		kfree(ref_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], 5);
++	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, ds_len);
++	vcq_add_pke_ecdsa_keygen(&vcq[2], pke_cid, req.curve, clen,
++				 SYS_REF_LAST,
++				 SYS_TYPE_SET(key_flags, CORE_ID_PKE),
++				 pke_swap_flags(req.curve));
++	vcq_add_pke_flush(&vcq[3], pke_cid);
++	vcq_add_sys_flush(&vcq[4]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++
++	/* Keygen failed after SYS_CMD_NEW; scrub the orphaned slot. */
++	if (ret && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		req.ref = *ref_buf;
++		if (copy_to_user(argp, &req, sizeof(req))) {
++			/*
++			 * The DS slot was created but its ref never reached
++			 * userspace, so the caller cannot free it.  Logically
++			 * delete the orphaned slot before returning.
++			 */
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: PKE_EC_KEYGEN copy_to_user failed, DS slot cleaned up\n");
++			ret = -EFAULT;
++		}
++	}
++
++	kfree(ref_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_ec_pubgen() - Handle CMH_MGMT_IOC_PKE_EC_PUBGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_ec_pubgen(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_ec_pubgen req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 clen, pk_len;
++	u8 *pk_buf;
++	dma_addr_t pk_dma;
++	bool is_ed;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	clen = cmh_pke_validate_curve(req.curve);
++	if (!clen)
++		return -EINVAL;
++
++	is_ed = pke_curve_is_edwards(req.curve);
++	pk_len = is_ed ? pke_eddsa_key_len(req.curve) : 2 * clen;
++
++	pk_buf = kzalloc(pk_len, GFP_KERNEL);
++	if (!pk_buf)
++		return -ENOMEM;
++
++	pk_dma = cmh_dma_map_single(pk_buf, pk_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(pk_dma)) {
++		kfree(pk_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	if (is_ed)
++		vcq_add_pke_eddsa_pubgen(&vcq[1], pke_cid, req.curve,
++					 pke_eddsa_key_len(req.curve),
++					 pk_dma, req.key_ref,
++					 pke_swap_flags(req.curve));
++	else
++		vcq_add_pke_ecdsa_pubgen(&vcq[1], pke_cid, req.curve, clen,
++					 pk_dma, req.key_ref,
++					 pke_swap_flags(req.curve));
++	vcq_add_pke_flush(&vcq[2], pke_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(pk_dma, pk_len, DMA_FROM_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.public_key),
++				 pk_buf, pk_len))
++			ret = -EFAULT;
++	}
++
++	kfree(pk_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_pke_eddsa_keygen_sca() - Handle CMH_MGMT_IOC_PKE_EDDSA_KEYGEN_SCA ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_pke_eddsa_keygen_sca(void __user *argp)
++{
++	u32 pke_cid = cmh_core_default_id(CMH_CORE_PKE);
++
++	struct cmh_ioctl_pke_eddsa_keygen_sca req;
++	/* header + SYS_NEW + EDDSA_KEYGEN_SCA + flush_pke + flush_sys */
++	struct vcq_cmd vcq[5];
++	u64 *ref_buf;
++	dma_addr_t ref_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	/* EdDSA SCA keygen is only supported for Ed448 */
++	if (req.curve != PKE_CURVE_448)
++		return -EINVAL;
++
++	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	if (!ref_buf)
++		return -ENOMEM;
++
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ref_dma)) {
++		kfree(ref_buf);
++		return -ENOMEM;
++	}
++
++	vcq_set_header(&vcq[0], 5);
++	vcq_add_sys_new(&vcq[1], req.cid, ref_dma, PKE_ED448_SK_SCA_LEN);
++	vcq_add_pke_eddsa_keygen_sca(&vcq[2], pke_cid, req.curve, req.key_ref,
++				     SYS_REF_LAST);
++	vcq_add_pke_flush(&vcq[3], pke_cid);
++	vcq_add_sys_flush(&vcq[4]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
++
++	cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++
++	/* Keygen failed after SYS_CMD_NEW; scrub the orphaned SCA key slot. */
++	if (ret && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		req.sca_ref = *ref_buf;
++		if (copy_to_user(argp, &req, sizeof(req))) {
++			/* Ref never reached user space; scrub the orphan. */
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: EDDSA_KEYGEN_SCA copy_to_user failed, DS slot cleaned up\n");
++			ret = -EFAULT;
++		}
++	}
++
++	kfree(ref_buf);
++	return ret;
++}
+diff --git a/drivers/crypto/cmh/cmh_mgmt_pqc.c b/drivers/crypto/cmh/cmh_mgmt_pqc.c
+new file mode 100644
+index 000000000000..bc78e09078e2
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_mgmt_pqc.c
+@@ -0,0 +1,1365 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH -- PQC ioctl handlers for /dev/cmh_mgmt
++ *
++ * ML-KEM keygen/encapsulate/decapsulate, ML-DSA keygen/sign,
++ * SLH-DSA keygen/sign (pure + prehash).
++ *
++ * Split from cmh_mgmt.c for maintainability.
++ */
++
++#include <linux/kernel.h>
++#include <linux/uaccess.h>
++#include <linux/slab.h>
++#include <linux/overflow.h>
++
++#include "cmh_mgmt.h"
++#include "cmh_sys.h"
++#include "cmh_txn.h"
++#include "cmh_key.h"
++#include "cmh_dma.h"
++#include "cmh_config.h"
++#include "cmh_pqc.h"
++#include "cmh_qse_abi.h"
++#include "cmh_sys_abi.h"
++#include <uapi/linux/cmh_mgmt_ioctl.h>
++
++#include <crypto/utils.h>
++
++/* -- PQC -- ML-KEM -- */
++
++/**
++ * cmh_mgmt_ml_kem_keygen() - Handle CMH_MGMT_IOC_ML_KEM_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_ml_kem_keygen(void __user *argp)
++{
++	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
++
++	struct cmh_ioctl_ml_kem_keygen req;
++	struct vcq_cmd vcq[QSE_VCQ_CMDS_MAX];
++	u32 ek_len, dk_len, seed_len, key_flags;
++	u32 qse_flags = 0;
++	bool masked, ds_ref, hw_rng;
++	u8 *seed_buf = NULL, *z_buf = NULL, *ek_buf, *dk_buf = NULL;
++	u64 *ref_buf = NULL;
++	dma_addr_t seed_dma = DMA_MAPPING_ERROR, z_dma = DMA_MAPPING_ERROR;
++	dma_addr_t ek_dma, dk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
++	int ret, idx;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (ml_kem_k_idx(req.k) < 0)
++		return -EINVAL;
++	if (req.flags & ~(CMH_QSE_FLAG_MASK | CMH_FLAG_MASK))
++		return -EINVAL;
++
++	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
++	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
++	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
++
++	/*
++	 * QSE keys only support PT storage -- the eSW dec/sign paths
++	 * hardcode SYS_TYPE_FLAG_PT when reading the key back.
++	 * QSE SCA protection uses masking (CMH_QSE_FLAG_MASKED),
++	 * not the 2-share mechanism (CMH_FLAG_SCA).
++	 */
++	key_flags = req.flags & CMH_FLAG_MASK;
++	if (key_flags && key_flags != CMH_FLAG_PT)
++		return -EINVAL;
++	key_flags = CMH_FLAG_PT;
++
++	/* Masked keygen must store dk in DS -- polynomial unmasking not supported */
++	if (masked && !ds_ref)
++		return -EINVAL;
++
++	ek_len = ML_KEM_EK_SIZE(req.k);
++	dk_len = masked ? ML_KEM_DK_SIZE_MASKED(req.k)
++			: ML_KEM_DK_SIZE(req.k);
++	seed_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
++
++	if (hw_rng)
++		qse_flags |= QSE_FLAG_USE_RNG;
++	if (ds_ref)
++		qse_flags |= QSE_FLAG_USE_REF;
++
++	/*
++	 * Without HW RNG the caller must supply both seed and z; a 0 pointer
++	 * with non-zero length is a wild eSW DMA read (F3), not "absent".
++	 */
++	if (!hw_rng && (!req.seed || !req.z))
++		return -EINVAL;
++
++	ek_buf = kzalloc(ek_len, GFP_KERNEL);
++	if (!ek_buf)
++		return -ENOMEM;
++
++	if (!hw_rng && req.seed && req.z) {
++		seed_buf = kmalloc(seed_len, GFP_KERNEL);
++		z_buf = kmalloc(seed_len, GFP_KERNEL);
++		if (!seed_buf || !z_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed),
++				   seed_len) ||
++		    copy_from_user(z_buf, u64_to_user_ptr(req.z), seed_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	if (ds_ref) {
++		ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++		if (!ref_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	} else {
++		dk_buf = kzalloc(dk_len, GFP_KERNEL);
++		if (!dk_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	}
++
++	/* DMA map */
++	ek_dma = cmh_dma_map_single(ek_buf, ek_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ek_dma)) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (seed_buf) {
++		seed_dma = cmh_dma_map_single(seed_buf, seed_len,
++					      DMA_TO_DEVICE);
++		z_dma = cmh_dma_map_single(z_buf, seed_len, DMA_TO_DEVICE);
++		if (cmh_dma_map_error(seed_dma) || cmh_dma_map_error(z_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (ds_ref) {
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	} else {
++		dk_dma = cmh_dma_map_single(dk_buf, dk_len, DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(dk_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	idx = 0;
++	if (ds_ref) {
++		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MAX);
++		idx++;
++		vcq_add_sys_new(&vcq[idx++], req.dk_cid, ref_dma, dk_len);
++		vcq_add_qse_ml_kem_keygen(&vcq[idx++], qse_cid, req.k, qse_flags,
++					  seed_dma, z_dma,
++					  ek_dma, SYS_REF_LAST,
++					  SYS_TYPE_SET(key_flags,
++						       CORE_ID_QSE),
++					  masked);
++		vcq_add_qse_flush(&vcq[idx++], qse_cid);
++		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MAX,
++					     1, MGMT_MBX);
++	} else {
++		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
++		idx++;
++		vcq_add_qse_ml_kem_keygen(&vcq[idx++], qse_cid, req.k, qse_flags,
++					  seed_dma, z_dma,
++					  ek_dma, dk_dma, 0, masked);
++		vcq_add_qse_flush(&vcq[idx++], qse_cid);
++		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
++					     1, MGMT_MBX);
++	}
++
++out_unmap:
++	if (ds_ref && !cmh_dma_map_error(ref_dma))
++		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!ds_ref && dk_buf && !cmh_dma_map_error(dk_dma))
++		cmh_dma_unmap_single(dk_dma, dk_len, DMA_FROM_DEVICE);
++	if (z_buf && !cmh_dma_map_error(z_dma))
++		cmh_dma_unmap_single(z_dma, seed_len, DMA_TO_DEVICE);
++	if (seed_buf && !cmh_dma_map_error(seed_dma))
++		cmh_dma_unmap_single(seed_dma, seed_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(ek_dma))
++		cmh_dma_unmap_single(ek_dma, ek_len, DMA_FROM_DEVICE);
++
++	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
++	if (ret && ds_ref && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.ek), ek_buf, ek_len)) {
++			ret = -EFAULT;
++		} else if (ds_ref) {
++			req.dk_ref = *ref_buf;
++		} else if (copy_to_user(u64_to_user_ptr(req.dk),
++					dk_buf, dk_len)) {
++			ret = -EFAULT;
++		}
++		if (!ret && copy_to_user(argp, &req, sizeof(req)))
++			ret = -EFAULT;
++		/*
++		 * A copy_to_user faulted after the DS slot was created, so
++		 * its ref never reached userspace and the caller cannot free
++		 * it.  Logically delete the orphaned slot: grant-with-no-access
++		 * wipes the key material and clears the CID (it does not
++		 * reclaim the stack space -- only a datastore reset does).
++		 */
++		if (ret && ds_ref) {
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: ML_KEM_KEYGEN copy_to_user failed, DS slot cleaned up\n");
++		}
++	}
++
++out_free:
++	kfree_sensitive(dk_buf);
++	kfree(ref_buf);
++	kfree_sensitive(z_buf);
++	kfree_sensitive(seed_buf);
++	kfree(ek_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_ml_kem_enc() - Handle CMH_MGMT_IOC_ML_KEM_ENC ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_ml_kem_enc(void __user *argp)
++{
++	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
++
++	struct cmh_ioctl_ml_kem_enc req;
++	struct vcq_cmd vcq[QSE_VCQ_CMDS_MIN];
++	u32 ek_len, ct_len, ss_out_len;
++	u32 qse_flags = 0;
++	bool masked, hw_rng;
++	u8 *ek_buf, *coin_buf = NULL, *ct_buf, *ss_buf;
++	dma_addr_t ek_dma, coin_dma = DMA_MAPPING_ERROR, ct_dma, ss_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved || req.__reserved2[0] || req.__reserved2[1])
++		return -EINVAL;
++	if (ml_kem_k_idx(req.k) < 0)
++		return -EINVAL;
++
++	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
++	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
++
++	ek_len = ML_KEM_EK_SIZE(req.k);
++	ct_len = ML_KEM_CT_SIZE(req.k);
++	ss_out_len = masked ? ML_KEM_SS_LEN_MASKED : ML_KEM_SS_LEN;
++
++	if (hw_rng)
++		qse_flags |= QSE_FLAG_USE_RNG;
++
++	/*
++	 * Without HW RNG the caller must supply the coin; a 0 pointer with
++	 * non-zero length is a wild eSW DMA read (F3), not "absent".
++	 */
++	if (!hw_rng && !req.coin)
++		return -EINVAL;
++
++	ek_buf = kmalloc(ek_len, GFP_KERNEL);
++	ct_buf = kzalloc(ct_len, GFP_KERNEL);
++	ss_buf = kzalloc(ss_out_len, GFP_KERNEL);
++	if (!ek_buf || !ct_buf || !ss_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(ek_buf, u64_to_user_ptr(req.ek), ek_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (!hw_rng && req.coin) {
++		u32 coin_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
++
++		coin_buf = kmalloc(coin_len, GFP_KERNEL);
++		if (!coin_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(coin_buf, u64_to_user_ptr(req.coin),
++				   coin_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		coin_dma = cmh_dma_map_single(coin_buf, coin_len,
++					      DMA_TO_DEVICE);
++		if (cmh_dma_map_error(coin_dma)) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	}
++
++	ek_dma = cmh_dma_map_single(ek_buf, ek_len, DMA_TO_DEVICE);
++	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_FROM_DEVICE);
++	ss_dma = cmh_dma_map_single(ss_buf, ss_out_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ek_dma) || cmh_dma_map_error(ct_dma) ||
++	    cmh_dma_map_error(ss_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
++	vcq_add_qse_ml_kem_enc(&vcq[1], qse_cid, req.k, qse_flags,
++			       coin_dma, ek_dma, ct_dma, ss_dma, 0, masked);
++	vcq_add_qse_flush(&vcq[2], qse_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(ss_dma))
++		cmh_dma_unmap_single(ss_dma, ss_out_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, ct_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ek_dma))
++		cmh_dma_unmap_single(ek_dma, ek_len, DMA_TO_DEVICE);
++	if (coin_buf && !cmh_dma_map_error(coin_dma))
++		cmh_dma_unmap_single(coin_dma,
++				     masked ? QSE_SEED_LEN_MASKED
++					    : QSE_SEED_LEN,
++				     DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.ct), ct_buf, ct_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		/* Unmask ss if masked: ss = share0 ^ share1 */
++		if (masked) {
++			crypto_xor(ss_buf, ss_buf + ML_KEM_SS_LEN,
++				   ML_KEM_SS_LEN);
++		}
++		if (copy_to_user(u64_to_user_ptr(req.ss), ss_buf,
++				 ML_KEM_SS_LEN)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		if (copy_to_user(argp, &req, sizeof(req)))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(ss_buf);
++	kfree(ct_buf);
++	kfree(coin_buf);
++	kfree(ek_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_ml_kem_dec() - Handle CMH_MGMT_IOC_ML_KEM_DEC ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_ml_kem_dec(void __user *argp)
++{
++	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
++
++	struct cmh_ioctl_ml_kem_dec req;
++	/* DS_REF path: hdr + ml_kem_dec + qse_flush + sys_data + sys_flush */
++	struct vcq_cmd vcq[5];
++	u32 ct_len, dk_len, ss_out_len;
++	u32 qse_flags = 0;
++	bool masked, ds_ref;
++	u8 *ct_buf, *dk_buf = NULL, *ss_buf;
++	dma_addr_t ct_dma, dk_dma = DMA_MAPPING_ERROR, ss_dma;
++	u64 dk_ref;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved || req.__reserved2[0] || req.__reserved2[1])
++		return -EINVAL;
++	if (ml_kem_k_idx(req.k) < 0)
++		return -EINVAL;
++
++	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
++	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
++
++	ct_len = ML_KEM_CT_SIZE(req.k);
++	dk_len = masked ? ML_KEM_DK_SIZE_MASKED(req.k)
++			: ML_KEM_DK_SIZE(req.k);
++	ss_out_len = masked ? ML_KEM_SS_LEN_MASKED : ML_KEM_SS_LEN;
++
++	ct_buf = kmalloc(ct_len, GFP_KERNEL);
++	ss_buf = kzalloc(ss_out_len, GFP_KERNEL);
++	if (!ct_buf || !ss_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ct), ct_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_TO_DEVICE);
++	ss_dma = cmh_dma_map_single(ss_buf, ss_out_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(ss_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	/*
++	 * dk: if DS_REF flag is set, req.dk is a DS reference.
++	 * Otherwise, copy raw dk from user-space and use extmem DMA.
++	 * Masked decaps requires DS ref (polynomial unmasking not supported).
++	 */
++	if (ds_ref) {
++		dk_ref = req.dk;
++		qse_flags |= QSE_FLAG_USE_REF;
++	} else {
++		if (masked) {
++			ret = -EINVAL;
++			goto out_unmap;
++		}
++		dk_buf = kmalloc(dk_len, GFP_KERNEL);
++		if (!dk_buf) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++		if (copy_from_user(dk_buf, u64_to_user_ptr(req.dk), dk_len)) {
++			ret = -EFAULT;
++			goto out_unmap;
++		}
++		dk_dma = cmh_dma_map_single(dk_buf, dk_len, DMA_TO_DEVICE);
++		if (cmh_dma_map_error(dk_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++		dk_ref = dk_dma;
++	}
++
++	if (ds_ref) {
++		/*
++		 * DS_REF decaps: dk and ss both live in the datastore.
++		 * Compute ss into SYS_REF_TEMP and read it back within a
++		 * single VCQ.  dk is a caller-owned persistent ref, so it
++		 * never collides with the temp output.  Keeping the temp push
++		 * (ml_kem_dec) and pop (sys_data) in one submission bounds the
++		 * temp to a single mailbox occupation -- no concurrent mgmt op
++		 * can interleave a temp -- and the read reclaims the slot, so
++		 * nothing leaks.  qse_flush drains the QSE sidecar (committing
++		 * the shared-secret DMA) without resetting the temp stack.
++		 */
++		vcq_set_header(&vcq[0], 5);
++		vcq_add_qse_ml_kem_dec(&vcq[1], qse_cid, req.k, qse_flags,
++				       ct_dma, dk_ref, SYS_REF_TEMP,
++				       SYS_TYPE_SET(SYS_TYPE_FLAG_PT,
++						    CORE_ID_QSE),
++				       masked);
++		vcq_add_qse_flush(&vcq[2], qse_cid);
++		vcq_add_sys_data(&vcq[3], SYS_REF_TEMP, ss_dma, ss_out_len);
++		vcq_add_sys_flush(&vcq[4]);
++
++		ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
++	} else {
++		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
++		vcq_add_qse_ml_kem_dec(&vcq[1], qse_cid, req.k, qse_flags,
++				       ct_dma, dk_ref, ss_dma, 0, masked);
++		vcq_add_qse_flush(&vcq[2], qse_cid);
++
++		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
++					     1, MGMT_MBX);
++	}
++
++out_unmap:
++	if (dk_buf && !cmh_dma_map_error(dk_dma))
++		cmh_dma_unmap_single(dk_dma, dk_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(ss_dma))
++		cmh_dma_unmap_single(ss_dma, ss_out_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, ct_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (masked) {
++			crypto_xor(ss_buf, ss_buf + ML_KEM_SS_LEN,
++				   ML_KEM_SS_LEN);
++		}
++		if (copy_to_user(u64_to_user_ptr(req.ss), ss_buf,
++				 ML_KEM_SS_LEN)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		if (copy_to_user(argp, &req, sizeof(req)))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(dk_buf);
++	kfree_sensitive(ss_buf);
++	kfree(ct_buf);
++	return ret;
++}
++
++/* -- PQC -- ML-DSA -- */
++
++/**
++ * cmh_mgmt_ml_dsa_keygen() - Handle CMH_MGMT_IOC_ML_DSA_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_ml_dsa_keygen(void __user *argp)
++{
++	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
++
++	struct cmh_ioctl_ml_dsa_keygen req;
++	struct vcq_cmd vcq[QSE_VCQ_CMDS_MAX];
++	u32 pk_size, sk_size, seed_len, key_flags;
++	u32 qse_flags = 0;
++	bool masked, ds_ref, hw_rng;
++	u8 *seed_buf = NULL, *pk_buf, *sk_buf = NULL;
++	u64 *ref_buf = NULL;
++	dma_addr_t seed_dma = DMA_MAPPING_ERROR, pk_dma;
++	dma_addr_t sk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
++	int ret, idx, mi;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	mi = ml_dsa_mode_idx(req.mode);
++	if (mi < 0)
++		return -EINVAL;
++	if (req.flags & ~(CMH_QSE_FLAG_MASK | CMH_FLAG_MASK))
++		return -EINVAL;
++
++	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
++	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
++	hw_rng = !!(req.flags & CMH_QSE_FLAG_HW_RNG);
++
++	/*
++	 * QSE keys only support PT storage -- the eSW sign path
++	 * hardcodes SYS_TYPE_FLAG_PT when reading the key back.
++	 * QSE SCA protection uses masking (CMH_QSE_FLAG_MASKED),
++	 * not the 2-share mechanism (CMH_FLAG_SCA).
++	 */
++	key_flags = req.flags & CMH_FLAG_MASK;
++	if (key_flags && key_flags != CMH_FLAG_PT)
++		return -EINVAL;
++	key_flags = CMH_FLAG_PT;
++
++	if (masked && !ds_ref)
++		return -EINVAL;
++
++	pk_size = ml_dsa_pk_size[mi];
++	sk_size = masked ? ml_dsa_sk_size_masked[mi] : ml_dsa_sk_size[mi];
++	seed_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
++
++	if (hw_rng)
++		qse_flags |= QSE_FLAG_USE_RNG;
++	if (ds_ref)
++		qse_flags |= QSE_FLAG_USE_REF;
++
++	/*
++	 * Without HW RNG the caller must supply the seed; a 0 pointer with
++	 * non-zero length is a wild eSW DMA read (F3), not "absent".
++	 */
++	if (!hw_rng && !req.seed)
++		return -EINVAL;
++
++	pk_buf = kzalloc(pk_size, GFP_KERNEL);
++	if (!pk_buf)
++		return -ENOMEM;
++
++	if (!hw_rng && req.seed) {
++		seed_buf = kmalloc(seed_len, GFP_KERNEL);
++		if (!seed_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed),
++				   seed_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	if (ds_ref) {
++		ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++		if (!ref_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	} else {
++		sk_buf = kzalloc(sk_size, GFP_KERNEL);
++		if (!sk_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	}
++
++	pk_dma = cmh_dma_map_single(pk_buf, pk_size, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(pk_dma)) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (seed_buf) {
++		seed_dma = cmh_dma_map_single(seed_buf, seed_len,
++					      DMA_TO_DEVICE);
++		if (cmh_dma_map_error(seed_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (ds_ref) {
++		ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64),
++					     DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(ref_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	} else {
++		sk_dma = cmh_dma_map_single(sk_buf, sk_size, DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(sk_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	idx = 0;
++	if (ds_ref) {
++		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MAX);
++		idx++;
++		vcq_add_sys_new(&vcq[idx++], req.sk_cid, ref_dma, sk_size);
++		vcq_add_qse_ml_dsa_keygen(&vcq[idx++], qse_cid, req.mode, qse_flags,
++					  seed_dma, pk_dma,
++					  SYS_REF_LAST,
++					  SYS_TYPE_SET(key_flags,
++						       CORE_ID_QSE),
++					  masked);
++		vcq_add_qse_flush(&vcq[idx++], qse_cid);
++		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MAX,
++					     1, MGMT_MBX);
++	} else {
++		vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
++		idx++;
++		vcq_add_qse_ml_dsa_keygen(&vcq[idx++], qse_cid, req.mode, qse_flags,
++					  seed_dma, pk_dma,
++					  sk_dma, 0, masked);
++		vcq_add_qse_flush(&vcq[idx++], qse_cid);
++		ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN,
++					     1, MGMT_MBX);
++	}
++
++out_unmap:
++	if (ds_ref && !cmh_dma_map_error(ref_dma))
++		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!ds_ref && sk_buf && !cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, sk_size, DMA_FROM_DEVICE);
++	if (seed_buf && !cmh_dma_map_error(seed_dma))
++		cmh_dma_unmap_single(seed_dma, seed_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(pk_dma))
++		cmh_dma_unmap_single(pk_dma, pk_size, DMA_FROM_DEVICE);
++
++	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
++	if (ret && ds_ref && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.pk), pk_buf, pk_size)) {
++			ret = -EFAULT;
++		} else if (ds_ref) {
++			req.sk_ref = *ref_buf;
++		} else if (copy_to_user(u64_to_user_ptr(req.sk),
++					sk_buf, sk_size)) {
++			ret = -EFAULT;
++		}
++		if (!ret && copy_to_user(argp, &req, sizeof(req)))
++			ret = -EFAULT;
++		/*
++		 * A copy_to_user faulted after the DS slot was created, so
++		 * its ref never reached userspace and the caller cannot free
++		 * it.  Logically delete the orphaned slot: grant-with-no-access
++		 * wipes the key material and clears the CID (it does not
++		 * reclaim the stack space -- only a datastore reset does).
++		 */
++		if (ret && ds_ref) {
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: ML_DSA_KEYGEN copy_to_user failed, DS slot cleaned up\n");
++		}
++	}
++
++out_free:
++	kfree_sensitive(sk_buf);
++	kfree(ref_buf);
++	kfree_sensitive(seed_buf);
++	kfree(pk_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_ml_dsa_sign() - Handle CMH_MGMT_IOC_ML_DSA_SIGN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_ml_dsa_sign(void __user *argp)
++{
++	u32 qse_cid = cmh_core_default_id(CMH_CORE_QSE);
++
++	struct cmh_ioctl_ml_dsa_sign req;
++	struct vcq_cmd vcq[QSE_VCQ_CMDS_MIN];
++	u32 sig_size, copy_len, rnd_len;
++	u32 qse_flags = 0;
++	bool masked;
++	u8 *m_buf, *sig_buf, *sk_buf = NULL, *rnd_buf = NULL;
++	dma_addr_t m_dma = DMA_MAPPING_ERROR, sig_dma = DMA_MAPPING_ERROR;
++	dma_addr_t sk_dma = DMA_MAPPING_ERROR;
++	/*
++	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
++	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
++	 * address and DMA'd from.
++	 */
++	dma_addr_t rnd_dma = 0;
++	u64 sk_ref;
++	int mi, ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	mi = ml_dsa_mode_idx(req.mode);
++	if (mi < 0)
++		return -EINVAL;
++	if (req.mlen > ML_DSA_MAX_MLEN && req.mlen != ML_DSA_MLEN_EXTERNAL_MU)
++		return -EINVAL;
++
++	masked = !!(req.flags & CMH_QSE_FLAG_MASKED);
++	rnd_len = masked ? QSE_SEED_LEN_MASKED : QSE_SEED_LEN;
++	sig_size = ml_dsa_sig_size[mi];
++	copy_len = (req.mlen == ML_DSA_MLEN_EXTERNAL_MU)
++			? ML_DSA_EXTMU_LEN : req.mlen;
++
++	/*
++	 * sk: if DS_REF, req.sk is a DS reference (masked sk lives in DS).
++	 * Otherwise, copy raw sk from user-space.
++	 * Masked sign requires DS ref (polynomial unmasking not supported).
++	 */
++	if (req.flags & CMH_QSE_FLAG_DS_REF) {
++		sk_ref = req.sk;
++		qse_flags |= QSE_FLAG_USE_REF;
++	} else {
++		u32 sk_size;
++
++		if (masked)
++			return -EINVAL;
++		sk_size = ml_dsa_sk_size[mi];
++		sk_buf = kmalloc(sk_size, GFP_KERNEL);
++		if (!sk_buf)
++			return -ENOMEM;
++		if (copy_from_user(sk_buf, u64_to_user_ptr(req.sk), sk_size)) {
++			kfree_sensitive(sk_buf);
++			return -EFAULT;
++		}
++	}
++
++	m_buf = kmalloc(max_t(u32, copy_len, 1), GFP_KERNEL);
++	sig_buf = kzalloc(sig_size, GFP_KERNEL);
++	if (!m_buf || !sig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_len > 0 &&
++	    copy_from_user(m_buf, u64_to_user_ptr(req.m), copy_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (req.rnd) {
++		rnd_buf = kmalloc(rnd_len, GFP_KERNEL);
++		if (!rnd_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.rnd),
++				   rnd_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	if (copy_len > 0) {
++		m_dma = cmh_dma_map_single(m_buf, copy_len, DMA_TO_DEVICE);
++		if (cmh_dma_map_error(m_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++	sig_dma = cmh_dma_map_single(sig_buf, sig_size, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(sig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	if (sk_buf) {
++		sk_dma = cmh_dma_map_single(sk_buf, ml_dsa_sk_size[mi],
++					    DMA_TO_DEVICE);
++		if (cmh_dma_map_error(sk_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++		sk_ref = sk_dma;
++	}
++
++	if (rnd_buf) {
++		rnd_dma = cmh_dma_map_single(rnd_buf, rnd_len,
++					     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rnd_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	vcq_set_header(&vcq[0], QSE_VCQ_CMDS_MIN);
++	vcq_add_qse_ml_dsa_sign(&vcq[1], qse_cid, req.mode, qse_flags,
++				rnd_dma, m_dma, sk_ref, sig_dma,
++				req.mlen, masked);
++	vcq_add_qse_flush(&vcq[2], qse_cid);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, QSE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
++		cmh_dma_unmap_single(rnd_dma, rnd_len, DMA_TO_DEVICE);
++	if (sk_buf && !cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, ml_dsa_sk_size[mi],
++				     DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_size, DMA_FROM_DEVICE);
++	if (copy_len > 0 && !cmh_dma_map_error(m_dma))
++		cmh_dma_unmap_single(m_dma, copy_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_size))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(rnd_buf);
++	kfree(sig_buf);
++	kfree(m_buf);
++	kfree_sensitive(sk_buf);
++	return ret;
++}
++
++/* -- PQC -- SLH-DSA -- */
++
++/**
++ * cmh_mgmt_slhdsa_keygen() - Handle CMH_MGMT_IOC_SLHDSA_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_slhdsa_keygen(void __user *argp)
++{
++	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
++
++	struct cmh_ioctl_slhdsa_keygen req;
++	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MAX];
++	u32 pk_sz, sk_sz, seed_sz, sk_alloc, vcq_cnt, key_flags;
++	bool ds_ref;
++	u8 *seed_buf, *pk_buf, *sk_buf = NULL;
++	u64 *ref_buf = NULL;
++	dma_addr_t seed_dma, pk_dma, sk_dma = DMA_MAPPING_ERROR, ref_dma = DMA_MAPPING_ERROR;
++	int ret, idx;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
++		return -EINVAL;
++	if (req.flags & ~(CMH_QSE_FLAG_DS_REF | CMH_FLAG_MASK))
++		return -EINVAL;
++
++	ds_ref = !!(req.flags & CMH_QSE_FLAG_DS_REF);
++
++	/*
++	 * QSE keys only support PT storage -- the eSW sign path
++	 * hardcodes SYS_TYPE_FLAG_PT when reading the key back.
++	 * HCQ core sets key type internally during keygen.
++	 */
++	key_flags = req.flags & CMH_FLAG_MASK;
++	if (key_flags && key_flags != CMH_FLAG_PT)
++		return -EINVAL;
++	(void)key_flags;
++
++	pk_sz = slhdsa_pk_size(req.parameter_set);
++	sk_sz = slhdsa_sk_size(req.parameter_set);
++	seed_sz = slhdsa_seed_size(req.parameter_set);
++
++	seed_buf = kmalloc(seed_sz, GFP_KERNEL);
++	pk_buf = kzalloc(pk_sz, GFP_KERNEL);
++	if (!seed_buf || !pk_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(seed_buf, u64_to_user_ptr(req.seed), seed_sz)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	/*
++	 * Both paths need ref_buf for sys_new output.  Non-ds_ref also
++	 * needs sk_buf (+16 for SYS header) to read back via sys_read.
++	 */
++	ref_buf = kzalloc(sizeof(u64), GFP_KERNEL);
++	if (!ref_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++	if (!ds_ref) {
++		sk_alloc = sk_sz + SYS_WRAP_HDR_SIZE;
++		sk_buf = kzalloc(sk_alloc, GFP_KERNEL);
++		if (!sk_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++	}
++
++	seed_dma = cmh_dma_map_single(seed_buf, seed_sz, DMA_TO_DEVICE);
++	pk_dma = cmh_dma_map_single(pk_buf, pk_sz, DMA_FROM_DEVICE);
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(seed_dma) || cmh_dma_map_error(pk_dma) ||
++	    cmh_dma_map_error(ref_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	if (!ds_ref) {
++		sk_dma = cmh_dma_map_single(sk_buf, sk_alloc,
++					    DMA_FROM_DEVICE);
++		if (cmh_dma_map_error(sk_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	/*
++	 * SLH-DSA keygen requires seed and sk as DS references.
++	 * VCQ: hdr + sys_new(sk) + sys_write(seed->TEMP) + keygen + [sys_read] + flush
++	 */
++	idx = 0;
++	if (ds_ref) {
++		vcq_cnt = HCQ_VCQ_CMDS_MAX - 1; /* hdr+new+write+keygen+flush */
++		vcq_set_header(&vcq[idx++], vcq_cnt);
++		vcq_add_sys_new(&vcq[idx++], req.sk_cid, ref_dma,
++				sk_sz);
++	} else {
++		vcq_cnt = HCQ_VCQ_CMDS_MAX; /* hdr+new+write+keygen+read+flush */
++		vcq_set_header(&vcq[idx++], vcq_cnt);
++		vcq_add_sys_new(&vcq[idx++], SYS_CID_NONE, ref_dma,
++				sk_sz);
++	}
++	vcq_add_sys_write(&vcq[idx++], SYS_REF_TEMP, seed_dma, 0,
++			  seed_sz,
++			  SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_HCQ));
++	vcq_add_hcq_slhdsa_keygen(&vcq[idx++], hcq_cid, req.parameter_set,
++				  seed_sz, pk_sz, sk_sz,
++				  SYS_REF_TEMP, pk_dma, SYS_REF_LAST);
++	if (!ds_ref)
++		vcq_add_sys_read(&vcq[idx++], SYS_REF_LAST, sk_dma,
++				 0, sk_sz + SYS_WRAP_HDR_SIZE);
++	vcq_add_hcq_flush(&vcq[idx++], hcq_cid);
++
++	ret = cmh_tm_submit_sync_tmo(vcq, vcq_cnt, 1, MGMT_MBX,
++				     cmh_tm_slow_op_timeout_jiffies());
++
++out_unmap:
++	if (!ds_ref && sk_buf && !cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, sk_alloc, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ref_dma))
++		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(pk_dma))
++		cmh_dma_unmap_single(pk_dma, pk_sz, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(seed_dma))
++		cmh_dma_unmap_single(seed_dma, seed_sz, DMA_TO_DEVICE);
++
++	/*
++	 * Raw-output mode exports the SK to host and keeps no datastore handle,
++	 * so scrub the object once the readback VCQ has run: grant-with-no-
++	 * access wipes the exported private key from datastore RAM and revokes
++	 * its CID.  The slot offset is not reclaimed (the datastore is a bump
++	 * allocator; only a full reset frees space) -- acceptable on this
++	 * CAP_SYS_ADMIN path, as for every other DS-allocating mgmt ioctl.
++	 */
++	if (!ds_ref && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	/* Keygen failed after SYS_CMD_NEW (ds_ref mode); scrub the orphan. */
++	if (ret && ds_ref && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.pk), pk_buf, pk_sz)) {
++			ret = -EFAULT;
++		} else if (ds_ref) {
++			req.sk_ref = *ref_buf;
++		} else if (copy_to_user(u64_to_user_ptr(req.sk),
++					sk_buf + SYS_WRAP_HDR_SIZE,
++					sk_sz)) {
++			ret = -EFAULT;
++		}
++		if (!ret && copy_to_user(argp, &req, sizeof(req)))
++			ret = -EFAULT;
++		/*
++		 * A copy_to_user faulted after the DS slot was created, so
++		 * its ref never reached userspace and the caller cannot free
++		 * it.  Logically delete the orphaned slot: grant-with-no-access
++		 * wipes the key material and clears the CID (it does not
++		 * reclaim the stack space -- only a datastore reset does).
++		 */
++		if (ret && ds_ref) {
++			cmh_mgmt_ds_scrub(*ref_buf, 0);
++			dev_warn(cmh_dev(),
++				 "mgmt: SLHDSA_KEYGEN copy_to_user failed, DS slot cleaned up\n");
++		}
++	}
++
++out_free:
++	kfree_sensitive(sk_buf);
++	kfree(ref_buf);
++	kfree(pk_buf);
++	kfree_sensitive(seed_buf);
++	return ret;
++}
++
++/**
++ * cmh_mgmt_slhdsa_sign() - Handle CMH_MGMT_IOC_SLHDSA_SIGN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_slhdsa_sign(void __user *argp)
++{
++	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
++
++	struct cmh_ioctl_slhdsa_sign req;
++	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MIN];
++	u32 sig_sz, n_val;
++	u8 *msg_buf, *ctx_buf = NULL, *sig_buf, *rnd_buf = NULL;
++	dma_addr_t msg_dma = DMA_MAPPING_ERROR, ctx_dma = DMA_MAPPING_ERROR;
++	/*
++	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
++	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
++	 * address and DMA'd from.
++	 */
++	dma_addr_t sig_dma = DMA_MAPPING_ERROR, rnd_dma = 0;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
++		return -EINVAL;
++	if (req.msg_len > SLHDSA_MAX_MSG_LEN)
++		return -EINVAL;
++	if (req.ctx_len > SLHDSA_MAX_CTX_LEN)
++		return -EINVAL;
++
++	/* ctx_len > 0 with a 0 ctx pointer is a wild eSW DMA read (F3). */
++	if (req.ctx_len > 0 && !req.ctx)
++		return -EINVAL;
++
++	sig_sz = slhdsa_get_sig_size(req.parameter_set);
++	n_val = slhdsa_n[req.parameter_set - 1];
++
++	msg_buf = kmalloc(max_t(u32, req.msg_len, 1), GFP_KERNEL);
++	sig_buf = kzalloc(sig_sz, GFP_KERNEL);
++	if (!msg_buf || !sig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (req.msg_len > 0 &&
++	    copy_from_user(msg_buf, u64_to_user_ptr(req.msg), req.msg_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (req.ctx_len > 0 && req.ctx) {
++		ctx_buf = kmalloc(req.ctx_len, GFP_KERNEL);
++		if (!ctx_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(ctx_buf, u64_to_user_ptr(req.ctx),
++				   req.ctx_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	if (req.add_random) {
++		rnd_buf = kmalloc(n_val, GFP_KERNEL);
++		if (!rnd_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.add_random),
++				   n_val)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	sig_dma = cmh_dma_map_single(sig_buf, sig_sz, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(sig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++	if (req.msg_len > 0) {
++		msg_dma = cmh_dma_map_single(msg_buf, req.msg_len,
++					     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(msg_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (ctx_buf) {
++		ctx_dma = cmh_dma_map_single(ctx_buf, req.ctx_len,
++					     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(ctx_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (rnd_buf) {
++		rnd_dma = cmh_dma_map_single(rnd_buf, n_val, DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rnd_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	vcq_set_header(&vcq[0], HCQ_VCQ_CMDS_MIN);
++	vcq_add_hcq_slhdsa_sign(&vcq[1], hcq_cid, req.parameter_set,
++				req.msg_len, req.ctx_len,
++				rnd_dma, msg_dma, ctx_dma,
++				req.sk, sig_dma);
++	vcq_add_hcq_flush(&vcq[2], hcq_cid);
++
++	ret = cmh_tm_submit_sync_tmo(vcq, HCQ_VCQ_CMDS_MIN, 1, MGMT_MBX,
++				     cmh_tm_slow_op_timeout_jiffies());
++
++out_unmap:
++	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
++		cmh_dma_unmap_single(rnd_dma, n_val, DMA_TO_DEVICE);
++	if (ctx_buf && !cmh_dma_map_error(ctx_dma))
++		cmh_dma_unmap_single(ctx_dma, req.ctx_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_sz, DMA_FROM_DEVICE);
++	if (req.msg_len > 0 && !cmh_dma_map_error(msg_dma))
++		cmh_dma_unmap_single(msg_dma, req.msg_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_sz))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(rnd_buf);
++	kfree(ctx_buf);
++	kfree(sig_buf);
++	kfree(msg_buf);
++	return ret;
++}
++
++/* -- PQC -- SLH-DSA prehash -- */
++
++/**
++ * cmh_mgmt_slhdsa_sign_prehash() - Handle CMH_MGMT_IOC_SLHDSA_SIGN_PREHASH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_slhdsa_sign_prehash(void __user *argp)
++{
++	u32 hcq_cid = cmh_core_default_id(CMH_CORE_HCQ);
++
++	struct cmh_ioctl_slhdsa_sign_prehash req;
++	struct vcq_cmd vcq[HCQ_VCQ_CMDS_MIN];
++	u32 sig_sz, n_val, hcq_cmd;
++	u8 *msg_buf, *ctx_buf = NULL, *sig_buf, *rnd_buf = NULL;
++	dma_addr_t msg_dma = DMA_MAPPING_ERROR, ctx_dma = DMA_MAPPING_ERROR;
++	/*
++	 * 0 = "no added randomness": the eSW treats a zero rnd pointer as
++	 * absent.  A garbage DMA_MAPPING_ERROR would be taken as a real
++	 * address and DMA'd from.
++	 */
++	dma_addr_t sig_dma = DMA_MAPPING_ERROR, rnd_dma = 0;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.parameter_set < 1 || req.parameter_set > HCQ_SLHDSA_PARAM_MAX)
++		return -EINVAL;
++	if (req.prehash_algo < 1 || req.prehash_algo > HCQ_SLHDSA_PREHASH_SHAKE256)
++		return -EINVAL;
++	if (req.msg_len > SLHDSA_MAX_MSG_LEN)
++		return -EINVAL;
++	if (req.ctx_len > SLHDSA_MAX_CTX_LEN)
++		return -EINVAL;
++
++	/* ctx_len > 0 with a 0 ctx pointer is a wild eSW DMA read (F3). */
++	if (req.ctx_len > 0 && !req.ctx)
++		return -EINVAL;
++
++	hcq_cmd = req.digest ? HCQ_CMD_SLHDSA_SIGN_PREHASH_DIGEST
++			     : HCQ_CMD_SLHDSA_SIGN_PREHASH;
++
++	sig_sz = slhdsa_get_sig_size(req.parameter_set);
++	n_val = slhdsa_n[req.parameter_set - 1];
++
++	msg_buf = kmalloc(max_t(u32, req.msg_len, 1), GFP_KERNEL);
++	sig_buf = kzalloc(sig_sz, GFP_KERNEL);
++	if (!msg_buf || !sig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (req.msg_len > 0 &&
++	    copy_from_user(msg_buf, u64_to_user_ptr(req.msg), req.msg_len)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (req.ctx_len > 0 && req.ctx) {
++		ctx_buf = kmalloc(req.ctx_len, GFP_KERNEL);
++		if (!ctx_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(ctx_buf, u64_to_user_ptr(req.ctx),
++				   req.ctx_len)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	if (req.add_random) {
++		rnd_buf = kmalloc(n_val, GFP_KERNEL);
++		if (!rnd_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(rnd_buf, u64_to_user_ptr(req.add_random),
++				   n_val)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	sig_dma = cmh_dma_map_single(sig_buf, sig_sz, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(sig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++	if (req.msg_len > 0) {
++		msg_dma = cmh_dma_map_single(msg_buf, req.msg_len,
++					     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(msg_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (ctx_buf) {
++		ctx_dma = cmh_dma_map_single(ctx_buf, req.ctx_len,
++					     DMA_TO_DEVICE);
++		if (cmh_dma_map_error(ctx_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	if (rnd_buf) {
++		rnd_dma = cmh_dma_map_single(rnd_buf, n_val, DMA_TO_DEVICE);
++		if (cmh_dma_map_error(rnd_dma)) {
++			ret = -ENOMEM;
++			goto out_unmap;
++		}
++	}
++
++	vcq_set_header(&vcq[0], HCQ_VCQ_CMDS_MIN);
++	vcq_add_hcq_slhdsa_sign_prehash(&vcq[1], hcq_cid,
++					hcq_cmd, req.parameter_set,
++					req.prehash_algo,
++					req.msg_len, req.ctx_len,
++					rnd_dma, msg_dma, ctx_dma,
++					req.sk, sig_dma);
++	vcq_add_hcq_flush(&vcq[2], hcq_cid);
++
++	ret = cmh_tm_submit_sync_tmo(vcq, HCQ_VCQ_CMDS_MIN, 1, MGMT_MBX,
++				     cmh_tm_slow_op_timeout_jiffies());
++
++out_unmap:
++	if (rnd_buf && !cmh_dma_map_error(rnd_dma))
++		cmh_dma_unmap_single(rnd_dma, n_val, DMA_TO_DEVICE);
++	if (ctx_buf && !cmh_dma_map_error(ctx_dma))
++		cmh_dma_unmap_single(ctx_dma, req.ctx_len, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(sig_dma))
++		cmh_dma_unmap_single(sig_dma, sig_sz, DMA_FROM_DEVICE);
++	if (req.msg_len > 0 && !cmh_dma_map_error(msg_dma))
++		cmh_dma_unmap_single(msg_dma, req.msg_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.sig), sig_buf, sig_sz))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(rnd_buf);
++	kfree(ctx_buf);
++	kfree(sig_buf);
++	kfree(msg_buf);
++	return ret;
++}
++
++/* -- EAC (Error and Alarm Controller) ---- */
++
+diff --git a/drivers/crypto/cmh/cmh_pke_sm2.c b/drivers/crypto/cmh/cmh_pke_sm2.c
+new file mode 100644
+index 000000000000..66d818636406
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_pke_sm2.c
+@@ -0,0 +1,862 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SM2 PKE Ioctl Handlers
++ *
++ * SM2 (GM/T 0003) is the Chinese national public-key standard over the
++ * sm2p256v1 curve (256-bit).  It defines three protocols:
++ *
++ *   - Signature: reuses ECDSA sign/verify with SM2_CURVE (0x18), handled
++ *     by the existing cmh_mgmt_pke_ecdsa_{sign,verify}() paths.
++ *   - Encryption: two-step (ENC_POINT + ENC_HASH / DEC_POINT + DEC_HASH).
++ *   - Key Exchange: four-step (ECDH_KEYGEN + ID_DIGEST + ECDH + ECDH_HASH).
++ *
++ * This file implements the 8 SM2-specific ioctl handlers (0x16--0x1D).
++ * Sign/verify/keygen/pubgen use the existing ECDSA/EC paths unchanged.
++ *
++ * VCQ flag convention (from eSW API):
++ *   - Most SM2 commands use flags=0 (no swap).
++ *   - SM2_DEC_POINT and SM2_ECDH_HASH use PKE_SWAP_FLAGS on the
++ *     PKE command itself.
++ *   - SM2_ECDH and SM2_ECDH_HASH also apply PKE_SWAP_FLAGS on
++ *     their sys_new/sys_data VCQ phases: the swap byte-reverses the
++ *     DS object *payload* into Weierstrass format, not the ref-id
++ *     writeback, so the datastore ref is read back intact (covered by
++ *     the SM2 KAT).
++ */
++
++#include <linux/uaccess.h>
++#include <linux/slab.h>
++
++#include "cmh_pke.h"
++#include "cmh_pke_sm2.h"
++#include "cmh_sys.h"
++#include "cmh_dma.h"
++#include "cmh_txn.h"
++#include "cmh_mgmt.h"
++#include "cmh_sys_abi.h"
++#include <uapi/linux/cmh_mgmt_ioctl.h>
++
++/* SM2 fixed sizes (sm2p256v1: 256-bit curve) */
++#define SM2_CLEN		32U	/* coordinate length */
++#define SM2_POINT_LEN		64U	/* uncompressed EC point (x||y) */
++#define SM2_SHARED_KEY_LEN	16U	/* ECDH shared key output */
++#define SM2_DIGEST_LEN		32U	/* SM3 ZA digest */
++#define SM2_NONCE_LEN		32U	/* nonce (when caller-provided) */
++/*
++ * SM2 enc_hash/dec_hash payload limit.
++ *
++ * The eSW PKE driver expands the GM/T 0003.4 KDF by issuing a single SM3
++ * invocation per command (one 32-byte block of key stream).  Messages
++ * longer than 32 bytes would require ceil(msg_len / 32) SM3 invocations
++ * with an incremented counter, which the eSW does not perform; longer
++ * inputs would silently produce incorrect ciphertext / plaintext.
++ *
++ * The eSW PKE SRAM can physically hold up to 4000 bytes of payload, but
++ * that capacity is unusable until a future eSW change implements the full
++ * KDF expansion.  Until then we cap the LKM at the 32-byte limit
++ * documented in Documentation/ABI/testing/cmh-mgmt.
++ */
++#define SM2_MAX_MSG_LEN		32U	/* max plaintext for encrypt/decrypt */
++#define SM2_MAX_ID_LEN		32U	/* max identity string */
++#define SM2_CT_OVERHEAD		96U	/* C1(64) + C3(32) */
++#define SM2_MAX_CT_LEN		(SM2_CT_OVERHEAD + SM2_MAX_MSG_LEN) /* 128 */
++
++/* -- SM2_ECDH_KEYGEN ------------------- */
++
++/**
++ * cmh_mgmt_sm2_ecdh_keygen() - Handle CMH_MGMT_IOC_SM2_ECDH_KEYGEN ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_ecdh_keygen(void __user *argp)
++{
++	struct cmh_ioctl_sm2_ecdh_keygen req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
++	u8 *nonce_buf, *sk_buf;
++	dma_addr_t nonce_dma, sk_dma;
++	int nonce_dir;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
++		return -EINVAL;
++
++	sk_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
++	nonce_buf = kzalloc(SM2_NONCE_LEN, GFP_KERNEL);
++	if (!sk_buf || !nonce_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	/*
++	 * nonce_len=32: caller provides ephemeral scalar r (DMA_TO_DEVICE).
++	 * nonce_len=0:  HW generates r and writes it back (DMA_FROM_DEVICE).
++	 * The caller MUST supply a valid nonce pointer in both cases.
++	 */
++	if (req.nonce_len) {
++		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
++				   SM2_NONCE_LEN)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		nonce_dir = DMA_TO_DEVICE;
++	} else {
++		nonce_dir = DMA_FROM_DEVICE;
++	}
++
++	sk_dma = cmh_dma_map_single(sk_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN, nonce_dir);
++	if (cmh_dma_map_error(sk_dma) || cmh_dma_map_error(nonce_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_ecdh_keygen(&vcq[1], core_id, nonce_dma, sk_dma,
++				    req.nonce_len, 0);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(nonce_dma))
++		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, nonce_dir);
++	if (!cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.session_key),
++				 sk_buf, SM2_POINT_LEN))
++			ret = -EFAULT;
++		/* Write back HW-generated nonce when nonce_len=0 */
++		if (!ret && !req.nonce_len) {
++			if (copy_to_user(u64_to_user_ptr(req.nonce),
++					 nonce_buf, SM2_NONCE_LEN))
++				ret = -EFAULT;
++		}
++	}
++
++out_free:
++	kfree_sensitive(nonce_buf);
++	kfree_sensitive(sk_buf);
++	return ret;
++}
++
++/* -- SM2_ECDH -------------------------- */
++
++/**
++ * cmh_mgmt_sm2_ecdh() - Handle CMH_MGMT_IOC_SM2_ECDH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_ecdh(void __user *argp)
++{
++	struct cmh_ioctl_sm2_ecdh req;
++	/* keep_ds: hdr+sys_new+sm2_ecdh+pke_flush; readback adds sys_data+flush */
++	struct vcq_cmd vcq[5];
++	u32 sp_type, core_id;
++	u8 *nonce_buf, *peer_pk_buf, *peer_sk_buf, *sp_buf;
++	u64 *ref_buf;
++	dma_addr_t nonce_dma, peer_pk_dma, peer_sk_dma, sp_dma, ref_dma;
++	int nonce_dir, ret, idx;
++	bool keep_ds;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
++		return -EINVAL;
++
++	keep_ds = (req.shared_point_ref != 0);
++	sp_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
++	core_id = cmh_core_default_id(CMH_CORE_PKE);
++
++	peer_pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	peer_sk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	sp_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
++	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	nonce_buf = kzalloc(SM2_NONCE_LEN, GFP_KERNEL);
++	if (!peer_pk_buf || !peer_sk_buf || !sp_buf || !ref_buf ||
++	    !nonce_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(peer_pk_buf, u64_to_user_ptr(req.peer_public_key),
++			   SM2_POINT_LEN) ||
++	    copy_from_user(peer_sk_buf, u64_to_user_ptr(req.peer_session_key),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (req.nonce_len) {
++		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
++				   SM2_NONCE_LEN)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++		nonce_dir = DMA_TO_DEVICE;
++	} else {
++		nonce_dir = DMA_FROM_DEVICE;
++	}
++
++	peer_pk_dma = cmh_dma_map_single(peer_pk_buf, SM2_POINT_LEN,
++					 DMA_TO_DEVICE);
++	peer_sk_dma = cmh_dma_map_single(peer_sk_buf, SM2_POINT_LEN,
++					 DMA_TO_DEVICE);
++	sp_dma = cmh_dma_map_single(sp_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN, nonce_dir);
++
++	if (cmh_dma_map_error(peer_pk_dma) || cmh_dma_map_error(peer_sk_dma) ||
++	    cmh_dma_map_error(sp_dma) || cmh_dma_map_error(ref_dma) ||
++	    cmh_dma_map_error(nonce_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	if (keep_ds) {
++		/*
++		 * keep_ds: retain the shared point as a persistent DS object
++		 * (sys_new) whose ref is handed back for SM2_ECDH_HASH to
++		 * consume.  The caller owns and later releases it.
++		 */
++		idx = 0;
++		vcq_set_header(&vcq[idx++], 4);
++		vcq_add_sys_new(&vcq[idx], 0, ref_dma, SM2_POINT_LEN);
++		vcq[idx++].id |= PKE_SWAP_FLAGS;
++		vcq_add_pke_sm2_ecdh(&vcq[idx++], core_id, req.nonce_len,
++				     SM2_CLEN, nonce_dma, peer_pk_dma,
++				     peer_sk_dma, req.key_ref, SYS_REF_LAST,
++				     sp_type, 0);
++		vcq_add_pke_flush(&vcq[idx++], core_id);
++
++		ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
++		if (ret)
++			goto out_unmap;
++
++		/* Sync bounce buffer so CPU sees the DMA-written ref */
++		cmh_dma_sync_for_cpu(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	} else {
++		/*
++		 * Read-back mode: compute into SYS_REF_TEMP and pop it in the
++		 * same VCQ.  Bounding the temp push (sm2_ecdh) and pop
++		 * (sys_data) to one submission keeps them within a single
++		 * mailbox occupation -- no concurrent mgmt op can interleave a
++		 * temp -- and the read reclaims the slot, so nothing leaks.
++		 */
++		idx = 0;
++		vcq_set_header(&vcq[idx++], 5);
++		vcq_add_pke_sm2_ecdh(&vcq[idx++], core_id, req.nonce_len,
++				     SM2_CLEN, nonce_dma, peer_pk_dma,
++				     peer_sk_dma, req.key_ref, SYS_REF_TEMP,
++				     sp_type, 0);
++		vcq_add_pke_flush(&vcq[idx++], core_id);
++		vcq_add_sys_data(&vcq[idx], SYS_REF_TEMP, sp_dma,
++				 SM2_POINT_LEN);
++		vcq[idx++].id |= PKE_SWAP_FLAGS;
++		vcq_add_sys_flush(&vcq[idx++]);
++
++		ret = cmh_tm_submit_sync_mbx(vcq, 5, 1, MGMT_MBX);
++	}
++
++out_unmap:
++	if (!cmh_dma_map_error(nonce_dma))
++		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, nonce_dir);
++	if (!cmh_dma_map_error(ref_dma))
++		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(sp_dma))
++		cmh_dma_unmap_single(sp_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(peer_sk_dma))
++		cmh_dma_unmap_single(peer_sk_dma, SM2_POINT_LEN,
++				     DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(peer_pk_dma))
++		cmh_dma_unmap_single(peer_pk_dma, SM2_POINT_LEN,
++				     DMA_TO_DEVICE);
++
++	/*
++	 * keep_ds sys_new may have created the DS slot before the VCQ
++	 * failed; scrub it so a partial failure does not leak a slot.
++	 */
++	if (ret && keep_ds && *ref_buf)
++		cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++	if (!ret) {
++		if (!keep_ds) {
++			if (copy_to_user(u64_to_user_ptr(req.shared_point),
++					 sp_buf, SM2_POINT_LEN))
++				ret = -EFAULT;
++		} else {
++			/* Return DS ref for ECDH_HASH to consume */
++			u64 __user *sp_refp = (__u64 __user *)
++				u64_to_user_ptr(req.shared_point_ref);
++
++			if (put_user(*ref_buf, sp_refp)) {
++				/*
++				 * Failed to deliver the DS ref to
++				 * userspace.  Logically delete the
++				 * orphaned slot so it does not leak.
++				 */
++				vcq_set_header(&vcq[0], 3);
++				vcq_add_sys_grant(&vcq[1], *ref_buf,
++						  0, 0, 0);
++				vcq_add_sys_flush(&vcq[2]);
++				cmh_tm_submit_sync_mbx(vcq, 3, 1,
++						       MGMT_MBX);
++				dev_warn(cmh_dev(), "SM2 ECDH put_user failed, DS slot cleaned up\n");
++				ret = -EFAULT;
++			}
++		}
++		/* Write back HW-generated nonce when nonce_len=0 */
++		if (!ret && !req.nonce_len) {
++			if (copy_to_user(u64_to_user_ptr(req.nonce),
++					 nonce_buf, SM2_NONCE_LEN))
++				ret = -EFAULT;
++		}
++	}
++
++out_free:
++	kfree_sensitive(nonce_buf);
++	kfree(ref_buf);
++	kfree_sensitive(sp_buf);
++	kfree(peer_sk_buf);
++	kfree(peer_pk_buf);
++	return ret;
++}
++
++/* -- SM2_DEC_POINT --------------------- */
++
++/**
++ * cmh_mgmt_sm2_dec_point() - Handle CMH_MGMT_IOC_SM2_DEC_POINT ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_dec_point(void __user *argp)
++{
++	struct cmh_ioctl_sm2_dec_point req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
++	u8 *ct_buf, *dp_buf;
++	dma_addr_t ct_dma, dp_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.ciphertext_len <= SM2_CT_OVERHEAD ||
++	    req.ciphertext_len > SM2_MAX_CT_LEN)
++		return -EINVAL;
++
++	/* Only need C1 (first 64 bytes) for the sidecar */
++	ct_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	dp_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
++	if (!ct_buf || !dp_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ciphertext),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	ct_dma = cmh_dma_map_single(ct_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
++	dp_dma = cmh_dma_map_single(dp_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(dp_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_dec_point(&vcq[1], core_id, req.ciphertext_len, SM2_CLEN,
++				  ct_dma, dp_dma, req.key_ref,
++				  PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(dp_dma))
++		cmh_dma_unmap_single(dp_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.dec_point),
++				 dp_buf, SM2_POINT_LEN))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(dp_buf);
++	kfree(ct_buf);
++	return ret;
++}
++
++/* -- SM2_ENC_POINT --------------------- */
++
++/**
++ * cmh_mgmt_sm2_enc_point() - Handle CMH_MGMT_IOC_SM2_ENC_POINT ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_enc_point(void __user *argp)
++{
++	struct cmh_ioctl_sm2_enc_point req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
++	u8 *nonce_buf = NULL, *pk_buf, *ct_buf, *ep_buf;
++	dma_addr_t nonce_dma = DMA_MAPPING_ERROR, pk_dma, ct_dma, ep_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.nonce_len != 0 && req.nonce_len != SM2_NONCE_LEN)
++		return -EINVAL;
++
++	pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	ct_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
++	ep_buf = kzalloc(SM2_POINT_LEN, GFP_KERNEL);
++	if (!pk_buf || !ct_buf || !ep_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(pk_buf, u64_to_user_ptr(req.public_key),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	if (req.nonce_len) {
++		nonce_buf = kmalloc(SM2_NONCE_LEN, GFP_KERNEL);
++		if (!nonce_buf) {
++			ret = -ENOMEM;
++			goto out_free;
++		}
++		if (copy_from_user(nonce_buf, u64_to_user_ptr(req.nonce),
++				   SM2_NONCE_LEN)) {
++			ret = -EFAULT;
++			goto out_free;
++		}
++	}
++
++	pk_dma = cmh_dma_map_single(pk_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
++	ct_dma = cmh_dma_map_single(ct_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	ep_dma = cmh_dma_map_single(ep_buf, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (nonce_buf)
++		nonce_dma = cmh_dma_map_single(nonce_buf, SM2_NONCE_LEN,
++					       DMA_TO_DEVICE);
++	if (cmh_dma_map_error(pk_dma) || cmh_dma_map_error(ct_dma) ||
++	    cmh_dma_map_error(ep_dma) ||
++	    (nonce_buf && cmh_dma_map_error(nonce_dma))) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_enc_point(&vcq[1], core_id, nonce_dma, pk_dma, ct_dma,
++				  ep_dma, req.nonce_len, 0);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (nonce_buf && !cmh_dma_map_error(nonce_dma))
++		cmh_dma_unmap_single(nonce_dma, SM2_NONCE_LEN, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(ep_dma))
++		cmh_dma_unmap_single(ep_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, SM2_POINT_LEN, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(pk_dma))
++		cmh_dma_unmap_single(pk_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.ciphertext),
++				 ct_buf, SM2_POINT_LEN) ||
++		    copy_to_user(u64_to_user_ptr(req.enc_point),
++				 ep_buf, SM2_POINT_LEN))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(nonce_buf);
++	kfree(ep_buf);
++	kfree(ct_buf);
++	kfree(pk_buf);
++	return ret;
++}
++
++/* -- SM2_ID_DIGEST --------------------- */
++
++/**
++ * cmh_mgmt_sm2_id_digest() - Handle CMH_MGMT_IOC_SM2_ID_DIGEST ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_id_digest(void __user *argp)
++{
++	struct cmh_ioctl_sm2_id_digest req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 core_id = cmh_core_default_id(CMH_CORE_PKE);
++	u8 *id_buf, *pk_buf, *dig_buf;
++	dma_addr_t id_dma, pk_dma, dig_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.id_len || req.id_len > SM2_MAX_ID_LEN)
++		return -EINVAL;
++
++	id_buf = kmalloc(req.id_len, GFP_KERNEL);
++	pk_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	dig_buf = kzalloc(SM2_DIGEST_LEN, GFP_KERNEL);
++	if (!id_buf || !pk_buf || !dig_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(id_buf, u64_to_user_ptr(req.id), req.id_len) ||
++	    copy_from_user(pk_buf, u64_to_user_ptr(req.public_key),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	id_dma = cmh_dma_map_single(id_buf, req.id_len, DMA_TO_DEVICE);
++	pk_dma = cmh_dma_map_single(pk_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
++	dig_dma = cmh_dma_map_single(dig_buf, SM2_DIGEST_LEN,
++				     DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(id_dma) || cmh_dma_map_error(pk_dma) ||
++	    cmh_dma_map_error(dig_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_id_digest(&vcq[1], core_id, id_dma, pk_dma, dig_dma,
++				  req.id_len, 0);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(dig_dma))
++		cmh_dma_unmap_single(dig_dma, SM2_DIGEST_LEN,
++				     DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(pk_dma))
++		cmh_dma_unmap_single(pk_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(id_dma))
++		cmh_dma_unmap_single(id_dma, req.id_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.digest),
++				 dig_buf, SM2_DIGEST_LEN))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(dig_buf);
++	kfree(pk_buf);
++	kfree(id_buf);
++	return ret;
++}
++
++/* -- SM2_ECDH_HASH --------------------- */
++
++/**
++ * cmh_mgmt_sm2_ecdh_hash() - Handle CMH_MGMT_IOC_SM2_ECDH_HASH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_ecdh_hash(void __user *argp)
++{
++	struct cmh_ioctl_sm2_ecdh_hash req;
++	/* Phase 1: hdr + sys_new + sm2_ecdh_hash + pke_flush; reused for Phase 2 */
++	struct vcq_cmd vcq[4];
++	u32 sk_type, core_id;
++	u8 *peer_dig_buf, *dig_buf, *sk_buf;
++	u64 *ref_buf;
++	dma_addr_t peer_dig_dma, dig_dma, sk_dma, ref_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.__reserved)
++		return -EINVAL;
++
++	sk_type = SYS_TYPE_SET(SYS_TYPE_FLAG_PT, CORE_ID_PKE);
++	core_id = cmh_core_default_id(CMH_CORE_PKE);
++
++	peer_dig_buf = kmalloc(SM2_DIGEST_LEN, GFP_KERNEL);
++	dig_buf = kmalloc(SM2_DIGEST_LEN, GFP_KERNEL);
++	sk_buf = kzalloc(SM2_SHARED_KEY_LEN, GFP_KERNEL);
++	ref_buf = kzalloc_obj(u64, GFP_KERNEL);
++	if (!peer_dig_buf || !dig_buf || !sk_buf || !ref_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(peer_dig_buf, u64_to_user_ptr(req.peer_id_digest),
++			   SM2_DIGEST_LEN) ||
++	    copy_from_user(dig_buf, u64_to_user_ptr(req.id_digest),
++			   SM2_DIGEST_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	peer_dig_dma = cmh_dma_map_single(peer_dig_buf, SM2_DIGEST_LEN,
++					  DMA_TO_DEVICE);
++	dig_dma = cmh_dma_map_single(dig_buf, SM2_DIGEST_LEN, DMA_TO_DEVICE);
++	sk_dma = cmh_dma_map_single(sk_buf, SM2_SHARED_KEY_LEN,
++				    DMA_FROM_DEVICE);
++	ref_dma = cmh_dma_map_single(ref_buf, sizeof(u64), DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(peer_dig_dma) || cmh_dma_map_error(dig_dma) ||
++	    cmh_dma_map_error(sk_dma) || cmh_dma_map_error(ref_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	/*
++	 * Phase 1: sys_new(shared_key_ref) + SM2_ECDH_HASH
++	 * The shared_point_ref from the ECDH step is passed directly
++	 * as a DS reference -- the eSW hub reads it from DS.
++	 */
++	vcq_set_header(&vcq[0], 4);
++	vcq_add_sys_new(&vcq[1], 0, ref_dma, SM2_SHARED_KEY_LEN);
++	vcq[1].id |= PKE_SWAP_FLAGS;
++	vcq_add_pke_sm2_ecdh_hash(&vcq[2], core_id, peer_dig_dma, dig_dma,
++				  req.shared_point_ref, SYS_REF_LAST,
++				  sk_type, PKE_SWAP_FLAGS);
++	vcq_add_pke_flush(&vcq[3], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, 4, 1, MGMT_MBX);
++	if (ret)
++		goto out_unmap;
++
++	/* Sync bounce buffer so CPU sees the DMA-written ref */
++	cmh_dma_sync_for_cpu(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++
++	/* Phase 2: read shared key from DS -> DMA */
++	vcq_set_header(&vcq[0], 3);
++	vcq_add_sys_data(&vcq[1], *ref_buf, sk_dma, SM2_SHARED_KEY_LEN);
++	vcq_add_sys_flush(&vcq[2]);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, 3, 1, MGMT_MBX);
++
++	/*
++	 * Scrub the transient shared-key DS object created in phase 1 -- it
++	 * is internal to this ioctl and never handed to the caller, so
++	 * leaving it would leak a finite datastore slot on every call.
++	 */
++	cmh_mgmt_ds_scrub(*ref_buf, 0);
++
++out_unmap:
++	if (!cmh_dma_map_error(ref_dma))
++		cmh_dma_unmap_single(ref_dma, sizeof(u64), DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(sk_dma))
++		cmh_dma_unmap_single(sk_dma, SM2_SHARED_KEY_LEN,
++				     DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(dig_dma))
++		cmh_dma_unmap_single(dig_dma, SM2_DIGEST_LEN, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(peer_dig_dma))
++		cmh_dma_unmap_single(peer_dig_dma, SM2_DIGEST_LEN,
++				     DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.shared_key),
++				 sk_buf, SM2_SHARED_KEY_LEN))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(ref_buf);
++	kfree_sensitive(sk_buf);
++	kfree(dig_buf);
++	kfree(peer_dig_buf);
++	return ret;
++}
++
++/* -- SM2_DEC_HASH ---------------------- */
++
++/**
++ * cmh_mgmt_sm2_dec_hash() - Handle CMH_MGMT_IOC_SM2_DEC_HASH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_dec_hash(void __user *argp)
++{
++	struct cmh_ioctl_sm2_dec_hash req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 msg_len, core_id;
++	u8 *ct_buf, *dp_buf, *pt_buf;
++	dma_addr_t ct_dma, dp_dma, pt_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (req.ciphertext_len <= SM2_CT_OVERHEAD ||
++	    req.ciphertext_len > SM2_MAX_CT_LEN)
++		return -EINVAL;
++
++	msg_len = req.ciphertext_len - SM2_CT_OVERHEAD;
++	core_id = cmh_core_default_id(CMH_CORE_PKE);
++
++	ct_buf = kmalloc(req.ciphertext_len, GFP_KERNEL);
++	dp_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	pt_buf = kzalloc(msg_len, GFP_KERNEL);
++	if (!ct_buf || !dp_buf || !pt_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(ct_buf, u64_to_user_ptr(req.ciphertext),
++			   req.ciphertext_len) ||
++	    copy_from_user(dp_buf, u64_to_user_ptr(req.dec_point),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	ct_dma = cmh_dma_map_single(ct_buf, req.ciphertext_len,
++				    DMA_TO_DEVICE);
++	dp_dma = cmh_dma_map_single(dp_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
++	pt_dma = cmh_dma_map_single(pt_buf, msg_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(ct_dma) || cmh_dma_map_error(dp_dma) ||
++	    cmh_dma_map_error(pt_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_dec_hash(&vcq[1], core_id, ct_dma, dp_dma, pt_dma,
++				 req.ciphertext_len, 0);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(pt_dma))
++		cmh_dma_unmap_single(pt_dma, msg_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(dp_dma))
++		cmh_dma_unmap_single(dp_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, req.ciphertext_len,
++				     DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.plaintext),
++				 pt_buf, msg_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree_sensitive(pt_buf);
++	kfree_sensitive(dp_buf);
++	kfree(ct_buf);
++	return ret;
++}
++
++/* -- SM2_ENC_HASH ---------------------- */
++
++/**
++ * cmh_mgmt_sm2_enc_hash() - Handle CMH_MGMT_IOC_SM2_ENC_HASH ioctl
++ * @argp: User-space ioctl argument pointer
++ *
++ * Return: 0 on success, negative errno on failure.
++ */
++int cmh_mgmt_sm2_enc_hash(void __user *argp)
++{
++	struct cmh_ioctl_sm2_enc_hash req;
++	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
++	u32 ct_len, core_id;
++	u8 *msg_buf, *ep_buf, *ct_buf;
++	dma_addr_t msg_dma, ep_dma, ct_dma;
++	int ret;
++
++	if (copy_from_user(&req, argp, sizeof(req)))
++		return -EFAULT;
++	if (req.version != CMH_MGMT_V1)
++		return -EINVAL;
++	if (!req.message_len || req.message_len > SM2_MAX_MSG_LEN)
++		return -EINVAL;
++
++	ct_len = SM2_CT_OVERHEAD + req.message_len;
++	core_id = cmh_core_default_id(CMH_CORE_PKE);
++
++	msg_buf = kmalloc(req.message_len, GFP_KERNEL);
++	ep_buf = kmalloc(SM2_POINT_LEN, GFP_KERNEL);
++	ct_buf = kzalloc(ct_len, GFP_KERNEL);
++	if (!msg_buf || !ep_buf || !ct_buf) {
++		ret = -ENOMEM;
++		goto out_free;
++	}
++
++	if (copy_from_user(msg_buf, u64_to_user_ptr(req.message),
++			   req.message_len) ||
++	    copy_from_user(ep_buf, u64_to_user_ptr(req.enc_point),
++			   SM2_POINT_LEN)) {
++		ret = -EFAULT;
++		goto out_free;
++	}
++
++	msg_dma = cmh_dma_map_single(msg_buf, req.message_len, DMA_TO_DEVICE);
++	ep_dma = cmh_dma_map_single(ep_buf, SM2_POINT_LEN, DMA_TO_DEVICE);
++	ct_dma = cmh_dma_map_single(ct_buf, ct_len, DMA_FROM_DEVICE);
++	if (cmh_dma_map_error(msg_dma) || cmh_dma_map_error(ep_dma) ||
++	    cmh_dma_map_error(ct_dma)) {
++		ret = -ENOMEM;
++		goto out_unmap;
++	}
++
++	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
++	vcq_add_pke_sm2_enc_hash(&vcq[1], core_id, msg_dma, ep_dma, ct_dma,
++				 req.message_len, 0);
++	vcq_add_pke_flush(&vcq[2], core_id);
++
++	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, MGMT_MBX);
++
++out_unmap:
++	if (!cmh_dma_map_error(ct_dma))
++		cmh_dma_unmap_single(ct_dma, ct_len, DMA_FROM_DEVICE);
++	if (!cmh_dma_map_error(ep_dma))
++		cmh_dma_unmap_single(ep_dma, SM2_POINT_LEN, DMA_TO_DEVICE);
++	if (!cmh_dma_map_error(msg_dma))
++		cmh_dma_unmap_single(msg_dma, req.message_len, DMA_TO_DEVICE);
++
++	if (!ret) {
++		if (copy_to_user(u64_to_user_ptr(req.ciphertext),
++				 ct_buf, ct_len))
++			ret = -EFAULT;
++	}
++
++out_free:
++	kfree(ct_buf);
++	kfree(ep_buf);
++	kfree_sensitive(msg_buf);
++	return ret;
++}
+diff --git a/drivers/crypto/cmh/cmh_sys.c b/drivers/crypto/cmh/cmh_sys.c
+new file mode 100644
+index 000000000000..b01d058e6d89
+--- /dev/null
++++ b/drivers/crypto/cmh/cmh_sys.c
+@@ -0,0 +1,376 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SYS Core VCQ Builders
++ *
++ * VCQ builder functions for SYS core datastore commands.  Each function
++ * populates a single vcq_cmd slot.  Callers (cmh_mgmt.c, cmh_key.c)
++ * assemble complete VCQs by combining header + command(s) + flush,
++ * then submit via cmh_tm_submit_sync().
++ *
++ * Hardware-required datastore semantics
++ * --------------------------------------
++ * The commands below (NEW, WRITE, DATA, FIND, DELETE, FLUSH) are
++ * direct mappings of the eSW firmware SYS core command set.  The
++ * eSW maintains per-mailbox datastore namespaces with two object
++ * classes:
++ *
++ *   SYS_REF_TEMP   -- Temporary objects.  Lifetime is scoped to the
++ *                      current mailbox slot; reclaimed automatically
++ *                      when the slot is reused or on explicit FLUSH.
++ *                      Used for raw-key provisioning on every VCQ.
++ *
++ *   SYS_REF_PERSIST -- Persistent objects.  Survive across slots;
++ *                      require explicit DELETE to reclaim.  Identified
++ *                      by a 64-bit Content ID (CID) and resolved to
++ *                      a per-MBX ref via SYS_CMD_FIND.
++ *
++ * These semantics are hardware requirements, not driver policy.
++ * The per-MBX temp-stack and per-MBX ref namespace are eSW firmware
++ * design constraints that cannot be changed by the kernel driver.
++ */
++
++#include <linux/string.h>
++
++#include "cmh_sys.h"
++
++/**
++ * vcq_add_sys_flush() - Build a SYS_FLUSH VCQ command
++ * @slot: VCQ command slot to populate
++ */
++void vcq_add_sys_flush(struct vcq_cmd *slot)
++{
++	vcq_add_flush(slot, CORE_ID_SYS);
++}
++
++/**
++ * vcq_add_sys_new() - Build a SYS_NEW VCQ command
++ * @slot: VCQ command slot to populate
++ * @cid: Content identifier for the new datastore object
++ * @ref_dma: DMA address of the object reference buffer
++ * @len: Length of the object data in bytes
++ */
++void vcq_add_sys_new(struct vcq_cmd *slot, u64 cid, u64 ref_dma, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_NEW);
++	slot->hwc.sys.cmd_new.cid = cid;
++	slot->hwc.sys.cmd_new.ref = ref_dma;
++	slot->hwc.sys.cmd_new.len = len;
++}
++
++/**
++ * vcq_add_sys_write() - Build a SYS_WRITE VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference handle
++ * @src_dma: DMA address of source data buffer
++ * @wrap_key: Wrapping key reference (0 if none)
++ * @len: Length of data to write in bytes
++ * @sys_type: Datastore object type identifier
++ */
++void vcq_add_sys_write(struct vcq_cmd *slot, u64 ref, u64 src_dma,
++		       u64 wrap_key, u32 len, u32 sys_type)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_WRITE);
++	slot->hwc.sys.cmd_write.ref = ref;
++	slot->hwc.sys.cmd_write.src = src_dma;
++	slot->hwc.sys.cmd_write.key = wrap_key;
++	slot->hwc.sys.cmd_write.len = len;
++	slot->hwc.sys.cmd_write.type = sys_type;
++}
++
++/**
++ * vcq_add_sys_read() - Build a SYS_READ VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference handle
++ * @dst_dma: DMA address of destination buffer
++ * @wrap_key: Wrapping key reference (0 if none)
++ * @len: Length of data to read in bytes
++ */
++void vcq_add_sys_read(struct vcq_cmd *slot, u64 ref, u64 dst_dma,
++		      u64 wrap_key, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_READ);
++	slot->hwc.sys.cmd_read.ref = ref;
++	slot->hwc.sys.cmd_read.dst = dst_dma;
++	slot->hwc.sys.cmd_read.key = wrap_key;
++	slot->hwc.sys.cmd_read.len = len;
++}
++
++/**
++ * vcq_add_sys_data() - Build a SYS_DATA VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference handle
++ * @dst_dma: DMA address of destination buffer
++ * @len: Length of data section to read in bytes
++ */
++void vcq_add_sys_data(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_DATA);
++	slot->hwc.sys.cmd_data.ref = ref;
++	slot->hwc.sys.cmd_data.dst = dst_dma;
++	slot->hwc.sys.cmd_data.len = len;
++}
++
++/**
++ * vcq_add_sys_find() - Build a SYS_FIND VCQ command
++ * @slot: VCQ command slot to populate
++ * @cid: Content identifier to search for
++ * @dst_dma: DMA address of destination buffer for result
++ * @len: Length of destination buffer in bytes
++ */
++void vcq_add_sys_find(struct vcq_cmd *slot, u64 cid, u64 dst_dma, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_FIND);
++	slot->hwc.sys.cmd_find.cid = cid;
++	slot->hwc.sys.cmd_find.dst = dst_dma;
++	slot->hwc.sys.cmd_find.len = len;
++}
++
++/**
++ * vcq_add_sys_list() - Build a SYS_LIST VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference for enumeration start
++ * @dst_dma: DMA address of destination buffer for list
++ * @len: Length of destination buffer in bytes
++ */
++void vcq_add_sys_list(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_LIST);
++	slot->hwc.sys.cmd_list.ref = ref;
++	slot->hwc.sys.cmd_list.dst = dst_dma;
++	slot->hwc.sys.cmd_list.len = len;
++}
++
++/**
++ * vcq_add_sys_grant() - Build a SYS_GRANT VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference handle
++ * @read: Read permission bitmask
++ * @write: Write permission bitmask
++ * @execute: Execute permission bitmask
++ */
++void vcq_add_sys_grant(struct vcq_cmd *slot, u64 ref, u64 read,
++		       u64 write, u64 execute)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_GRANT);
++	slot->hwc.sys.cmd_grant.ref = ref;
++	slot->hwc.sys.cmd_grant.read = read;
++	slot->hwc.sys.cmd_grant.write = write;
++	slot->hwc.sys.cmd_grant.execute = execute;
++}
++
++/**
++ * vcq_add_sys_export() - Build a SYS_EXPORT VCQ command
++ * @slot: VCQ command slot to populate
++ * @cid: Content identifier of object to export
++ * @dst_dma: DMA address of destination buffer for wrapped blob
++ * @wrap_key: Wrapping key reference for export
++ * @len: Length of destination buffer in bytes
++ */
++void vcq_add_sys_export(struct vcq_cmd *slot, u64 cid, u64 dst_dma,
++			u64 wrap_key, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_EXPORT);
++	slot->hwc.sys.cmd_export.cid = cid;
++	slot->hwc.sys.cmd_export.dst = dst_dma;
++	slot->hwc.sys.cmd_export.key = wrap_key;
++	slot->hwc.sys.cmd_export.len = len;
++}
++
++/**
++ * vcq_add_sys_import() - Build a SYS_IMPORT VCQ command
++ * @slot: VCQ command slot to populate
++ * @src_dma: DMA address of wrapped datastore blob to import
++ * @wrap_key: Wrapping key reference for unwrapping
++ * @len: Length of wrapped blob in bytes
++ */
++void vcq_add_sys_import(struct vcq_cmd *slot, u64 src_dma,
++			u64 wrap_key, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_SYS, 0, 1, SYS_CMD_IMPORT);
++	slot->hwc.sys.cmd_import.src = src_dma;
++	slot->hwc.sys.cmd_import.key = wrap_key;
++	slot->hwc.sys.cmd_import.len = len;
++}
++
++/* -- KIC Core VCQ Builders --------------------- */
++
++/**
++ * vcq_add_kic_hkdf1() - Build a KIC HKDF-Expand VCQ command
++ * @slot: VCQ command slot to populate
++ * @dst: Datastore reference for derived key output
++ * @base: Datastore reference for base key input
++ * @label_dma: DMA address of HKDF label/info buffer
++ * @key_len: Derived key length in bytes
++ * @label_len: Length of label buffer in bytes
++ * @type: Derived key datastore type
++ */
++void vcq_add_kic_hkdf1(struct vcq_cmd *slot, u64 dst, u64 base,
++		       u64 label_dma, u32 key_len, u32 label_len, u32 type)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_HKDF1);
++	slot->hwc.kic.cmd_hkdf1.dst = dst;
++	slot->hwc.kic.cmd_hkdf1.base = base;
++	slot->hwc.kic.cmd_hkdf1.label = label_dma;
++	slot->hwc.kic.cmd_hkdf1.llen = label_len;
++	slot->hwc.kic.cmd_hkdf1.len = key_len;
++	slot->hwc.kic.cmd_hkdf1.type = type;
++}
++
++/**
++ * vcq_add_kic_hkdf2() - Build a KIC HKDF-with-salt VCQ command
++ * @slot: VCQ command slot to populate
++ * @dst: Datastore reference for derived key output
++ * @base: Datastore reference for base key input
++ * @salt: Datastore reference for HKDF salt key
++ * @label_dma: DMA address of HKDF label/info buffer
++ * @key_len: Derived key length in bytes
++ * @label_len: Length of label buffer in bytes
++ * @type: Derived key datastore type
++ */
++void vcq_add_kic_hkdf2(struct vcq_cmd *slot, u64 dst, u64 base, u64 salt,
++		       u64 label_dma, u32 key_len, u32 label_len, u32 type)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_HKDF2);
++	slot->hwc.kic.cmd_hkdf2.dst = dst;
++	slot->hwc.kic.cmd_hkdf2.base = base;
++	slot->hwc.kic.cmd_hkdf2.salt = salt;
++	slot->hwc.kic.cmd_hkdf2.label = label_dma;
++	slot->hwc.kic.cmd_hkdf2.llen = label_len;
++	slot->hwc.kic.cmd_hkdf2.len = key_len;
++	slot->hwc.kic.cmd_hkdf2.type = type;
++}
++
++/**
++ * vcq_add_kic_aes_cmac_kdf() - Build a KIC AES-CMAC KDF VCQ command
++ * @slot: VCQ command slot to populate
++ * @out_key: Datastore reference for derived key output
++ * @base_key: Datastore reference for base key input
++ * @label_dma: DMA address of KDF label buffer
++ * @key_len: Derived key length in bytes
++ * @label_len: Length of label buffer in bytes
++ * @type: Derived key datastore type
++ */
++void vcq_add_kic_aes_cmac_kdf(struct vcq_cmd *slot, u64 out_key, u64 base_key,
++			      u64 label_dma, u32 key_len, u32 label_len,
++			      u32 type)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_AES_CMAC_KDF);
++	slot->hwc.kic.cmd_aes_cmac_kdf.base_key = base_key;
++	slot->hwc.kic.cmd_aes_cmac_kdf.out_key = out_key;
++	slot->hwc.kic.cmd_aes_cmac_kdf.label = label_dma;
++	slot->hwc.kic.cmd_aes_cmac_kdf.key_len = key_len;
++	slot->hwc.kic.cmd_aes_cmac_kdf.label_len = label_len;
++	slot->hwc.kic.cmd_aes_cmac_kdf.type = type;
++}
++
++/**
++ * vcq_add_kic_dkek_derive() - Build a KIC DKEK derivation VCQ command
++ * @slot: VCQ command slot to populate
++ * @out_key: Datastore reference for derived DKEK output
++ * @base_key: Datastore reference for base key input
++ * @host_id: Host identifier for key binding
++ * @metadata_dma: DMA address of derivation metadata buffer
++ * @metadata_len: Length of metadata buffer in bytes
++ */
++void vcq_add_kic_dkek_derive(struct vcq_cmd *slot, u64 out_key, u64 base_key,
++			     u32 host_id, u64 metadata_dma, u32 metadata_len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_KIC, 0, 1, KIC_CMD_DKEK_DERIVE);
++	slot->hwc.kic.cmd_dkek_derive.base_key = base_key;
++	slot->hwc.kic.cmd_dkek_derive.out_key = out_key;
++	slot->hwc.kic.cmd_dkek_derive.host_id = host_id;
++	slot->hwc.kic.cmd_dkek_derive.metadata = metadata_dma;
++	slot->hwc.kic.cmd_dkek_derive.metadata_len = metadata_len;
++}
++
++/* -- DRBG Core VCQ Builders -------------------- */
++
++/**
++ * vcq_add_drbg_reset() - Build a DRBG reset VCQ command
++ * @slot: VCQ command slot to populate
++ *
++ * Issues DRBG_CMD_RESET which clears the instantiated state, allowing
++ * a subsequent CONFIG to proceed without a double-instantiate error.
++ */
++void vcq_add_drbg_reset(struct vcq_cmd *slot)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_RESET);
++}
++
++/**
++ * vcq_add_drbg_config() - Build a DRBG configuration VCQ command
++ * @slot: VCQ command slot to populate
++ * @ratio: Entropy-to-output ratio
++ * @strength: Security strength in bits
++ */
++void vcq_add_drbg_config(struct vcq_cmd *slot, u32 ratio, u32 strength)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_CONFIG);
++	slot->hwc.drbg.cmd_config.entropy_ratio = ratio;
++	slot->hwc.drbg.cmd_config.security_strength = strength;
++}
++
++/**
++ * vcq_add_drbg_datastore() - Build a DRBG datastore setup VCQ command
++ * @slot: VCQ command slot to populate
++ * @ref: Datastore object reference handle
++ * @len: Length of datastore allocation in bytes
++ * @type: Datastore object type
++ */
++void vcq_add_drbg_datastore(struct vcq_cmd *slot, u64 ref, u32 len, u32 type)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_DRBG, 0, 1, DRBG_CMD_DATASTORE);
++	slot->hwc.drbg.cmd_datastore.ref = ref;
++	slot->hwc.drbg.cmd_datastore.len = len;
++	slot->hwc.drbg.cmd_datastore.type = type;
++}
++
++/* -- EAC Core VCQ Builder ---------------------- */
++
++/**
++ * vcq_add_eac_read() - Build an EAC read VCQ command
++ * @slot: VCQ command slot to populate
++ * @dst_dma: DMA address of destination buffer
++ * @len: Length of data to read in bytes
++ */
++void vcq_add_eac_read(struct vcq_cmd *slot, u64 dst_dma, u32 len)
++{
++	memset(slot, 0, sizeof(*slot));
++	slot->magic = VCQ_CMD_MAGIC;
++	slot->id = VCQ_CMD_ID(CORE_ID_EAC, 0, 1, EAC_CMD_READ);
++	slot->hwc.eac.cmd_read.dst = dst_dma;
++	slot->hwc.eac.cmd_read.len = len;
++}
+diff --git a/drivers/crypto/cmh/include/cmh_key.h b/drivers/crypto/cmh/include/cmh_key.h
+new file mode 100644
+index 000000000000..bad69c92b892
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_key.h
+@@ -0,0 +1,82 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Per-transform key context
++ *
++ * Per-transform key context used by all keyed crypto algorithms (AES,
++ * SM4, CCP, HMAC, KMAC).  Stores raw key bytes supplied via the crypto
++ * API .setkey() callback: the key is DMA-mapped once at setkey time and
++ * written to SYS_REF_TEMP in every VCQ.
++ *
++ * Each keyed algorithm driver embeds a struct cmh_key_ctx in its
++ * per-transform context and calls cmh_key_setkey_raw() from its
++ * .setkey() callback.
++ *
++ * Raw-key atomicity (SYS_REF_TEMP)
++ * ---------------------------------
++ * SYS_CMD_WRITE to SYS_REF_TEMP is packed into the same VCQ as the
++ * algorithm commands (AES_CMD_INIT, HC_CMD_HMAC, etc.).  SYS_REF_TEMP
++ * is per-MBX -- the CMH eSW allocates it in the tail of each mailbox's
++ * own VCQ buffer (mbx_alloc_temp), so concurrent raw-key requests on
++ * different MBXes do not interfere.
++ */
++
++#ifndef CMH_KEY_H
++#define CMH_KEY_H
++
++#include <linux/types.h>
++#include "cmh_config.h"
++#include "cmh_vcq.h"
++
++/* Key context mode */
++enum cmh_key_mode {
++	CMH_KEY_NONE = 0,	/* no key set yet */
++	CMH_KEY_RAW,		/* raw key bytes in memory */
++};
++
++/* Per-transform key context */
++struct cmh_key_ctx {
++	enum cmh_key_mode mode;
++	struct {
++		u8 *data;	/* kmemdup'd raw key bytes */
++		u32 len;	/* key length in bytes */
++		u32 sys_type;	/* SYS_TYPE_SET(flags, core_id) */
++		dma_addr_t dma;	/* pre-mapped DMA addr (DMA_TO_DEVICE) */
++	} raw;
++};
++
++/**
++ * cmh_key_setkey_raw() - Store raw key bytes in the transform context
++ * @ctx: Per-transform key context
++ * @key: Raw key bytes
++ * @keylen: Key length in bytes
++ * @core_id: Target algorithm core (e.g. CORE_ID_AES)
++ *
++ * SYS_TYPE_FLAG_PT is set so the written temp key
++ * can be read back as plaintext if needed.  The actual SYS_CMD_WRITE
++ * to SYS_REF_TEMP is deferred to each encrypt/decrypt VCQ, where it
++ * is packed inline for atomicity.
++ *
++ * Return: 0 on success, -ENOMEM on allocation failure.
++ */
++int cmh_key_setkey_raw(struct cmh_key_ctx *ctx, const u8 *key,
++		       u32 keylen, u32 core_id);
++
++/**
++ * cmh_key_destroy() - Free key resources
++ * @ctx: Per-transform key context
++ *
++ * Zeroises and frees the raw key buffer.
++ */
++void cmh_key_destroy(struct cmh_key_ctx *ctx);
++
++/**
++ * cmh_ds_type_to_core_id() - Map datastore key type to core ID
++ * @ds_type: CMH_DS_* key type constant
++ *
++ * Return: Corresponding CORE_ID_*, or CORE_ID_NUM (0x1F) on
++ *         unrecognised type (caller should return -EINVAL).
++ */
++u32 cmh_ds_type_to_core_id(u32 ds_type);
++
++#endif /* CMH_KEY_H */
+diff --git a/drivers/crypto/cmh/include/cmh_mgmt.h b/drivers/crypto/cmh/include/cmh_mgmt.h
+new file mode 100644
+index 000000000000..a0da71462bf8
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_mgmt.h
+@@ -0,0 +1,69 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH -- Key Management misc_device (/dev/cmh_mgmt)
++ *
++ * ioctl interface for key CRUD + datastore export/import,
++ * PKE operations (RSA, ECDSA, ECDH, EdDSA),
++ * and PQC operations (ML-KEM, ML-DSA, SLH-DSA).
++ *
++ * Registered alongside crypto algorithms in module_init,
++ * unregistered before them in module_exit.
++ */
++
++#ifndef CMH_MGMT_H
++#define CMH_MGMT_H
++
++#ifdef CONFIG_CRYPTO_DEV_CMH_MGMT
++
++/*
++ * Pin all mgmt ioctls to MBX 0 for DS ownership and SYS_REF_TEMP scope.
++ * Shared by cmh_mgmt.c, cmh_mgmt_pke.c, cmh_mgmt_pqc.c, cmh_pke_sm2.c.
++ */
++#define MGMT_MBX	0
++
++/* Maximum DMA buffer size for key data / datastore blobs */
++#define CMH_MGMT_MAX_DATA_LEN	(256 * 1024)  /* 256 KB */
++
++/*
++ * Scrub up to two orphaned datastore objects on an ioctl error path.
++ * Grant-with-no-access wipes the key material; the datastore stack space
++ * itself is only reclaimed by a full reset.  Pass 0 to skip.
++ */
++void cmh_mgmt_ds_scrub(u64 ref0, u64 ref1);
++
++int  cmh_mgmt_register(void);
++void cmh_mgmt_unregister(void);
++
++/* -- PKE ioctl handlers (cmh_mgmt_pke.c) -- */
++int cmh_mgmt_pke_rsa_enc(void __user *argp);
++int cmh_mgmt_pke_rsa_dec(void __user *argp);
++int cmh_mgmt_pke_rsa_crt_dec(void __user *argp);
++int cmh_mgmt_pke_rsa_keygen(void __user *argp);
++int cmh_mgmt_pke_ecdsa_sign(void __user *argp);
++int cmh_mgmt_pke_ecdh(void __user *argp);
++int cmh_mgmt_pke_ecdh_keygen(void __user *argp);
++int cmh_mgmt_pke_eddsa_sign(void __user *argp);
++int cmh_mgmt_pke_eddsa_verify(void __user *argp);
++int cmh_mgmt_pke_ec_keygen(void __user *argp);
++int cmh_mgmt_pke_ec_pubgen(void __user *argp);
++int cmh_mgmt_pke_eddsa_keygen_sca(void __user *argp);
++
++/* -- PQC ioctl handlers (cmh_mgmt_pqc.c) -- */
++int cmh_mgmt_ml_kem_keygen(void __user *argp);
++int cmh_mgmt_ml_kem_enc(void __user *argp);
++int cmh_mgmt_ml_kem_dec(void __user *argp);
++int cmh_mgmt_ml_dsa_keygen(void __user *argp);
++int cmh_mgmt_ml_dsa_sign(void __user *argp);
++int cmh_mgmt_slhdsa_keygen(void __user *argp);
++int cmh_mgmt_slhdsa_sign(void __user *argp);
++int cmh_mgmt_slhdsa_sign_prehash(void __user *argp);
++
++#else /* !CONFIG_CRYPTO_DEV_CMH_MGMT */
++
++static inline int  cmh_mgmt_register(void) { return 0; }
++static inline void cmh_mgmt_unregister(void) { }
++
++#endif /* CONFIG_CRYPTO_DEV_CMH_MGMT */
++
++#endif /* CMH_MGMT_H */
+diff --git a/drivers/crypto/cmh/include/cmh_pke.h b/drivers/crypto/cmh/include/cmh_pke.h
+new file mode 100644
+index 000000000000..dcfdb3fc3cd6
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_pke.h
+@@ -0,0 +1,245 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- PKE Common Types and Helpers
++ *
++ * Shared definitions for RSA, ECDSA, ECDH, EdDSA, and SM2 drivers.
++ * Curve -> coordinate-length mapping, VCQ byte-swap flags, and
++ * common VCQ builder prototypes.
++ */
++
++#ifndef CMH_PKE_H
++#define CMH_PKE_H
++
++#include <linux/types.h>
++#include "cmh_vcq.h"
++#include "cmh_pke_abi.h"
++
++/* VCQ byte-swap flags for DMA transfers (per CMH VCQ ABI) */
++#define VCQ_FLAG_SWAP_BYTES	0x400000U
++#define VCQ_FLAG_SWAP_WORDS	0x200000U
++
++/* VCQ byte-swap flags for PKE -- big-endian data on LE bus */
++#define PKE_SWAP_FLAGS	(VCQ_FLAG_SWAP_BYTES | VCQ_FLAG_SWAP_WORDS)
++
++/* VCQ layout: header + [SYS_WRITE] + PKE_CMD + flush */
++#define PKE_VCQ_CMDS_MIN	3	/* header + cmd + flush */
++#define PKE_VCQ_CMDS_MAX	4	/* header + SYS_WRITE + cmd + flush */
++
++/* Max RSA key size in bytes (4096 bits) */
++#define PKE_RSA_MAX_BYTES	512
++#define PKE_RSA_MIN_BITS	1024
++#define PKE_RSA_MAX_BITS	4096
++
++/* EdDSA SCA: Ed448 blinded private key length (bytes) */
++#define PKE_ED448_SK_SCA_LEN	226
++
++/**
++ * pke_curve_clen() - Get EC curve coordinate length in bytes
++ * @curve: PKE curve identifier (PKE_CURVE_*)
++ *
++ * Return: Coordinate length in bytes, or 0 for unknown curves.
++ */
++static inline u32 pke_curve_clen(u32 curve)
++{
++	switch (curve) {
++	case PKE_CURVE_P192:
++	case PKE_CURVE_BP192R1:
++		return 24;
++	case PKE_CURVE_P224:
++	case PKE_CURVE_BP224R1:
++		return 28;
++	case PKE_CURVE_P256:
++	case PKE_CURVE_SECP256K1:
++	case PKE_CURVE_BP256R1:
++	case PKE_CURVE_ANSSI_FRP256V1:
++	case PKE_CURVE_SM2:
++	case PKE_CURVE_25519:
++		return 32;
++	case PKE_CURVE_BP320R1:
++		return 40;
++	case PKE_CURVE_P384:
++	case PKE_CURVE_BP384R1:
++		return 48;
++	case PKE_CURVE_BP512R1:
++		return 64;
++	case PKE_CURVE_P521:
++		return 68; /* ceil(521/8) = 66, ABI uses ALIGN(66, 4) = 68 */
++	case PKE_CURVE_448:
++		return 56;
++	default:
++		return 0;
++	}
++}
++
++/**
++ * pke_curve_bits() - Get EC curve size in bits
++ * @curve: PKE curve identifier (PKE_CURVE_*)
++ *
++ * Return: Curve size in bits, or 0 for unknown curves.
++ */
++static inline u32 pke_curve_bits(u32 curve)
++{
++	switch (curve) {
++	case PKE_CURVE_P192:
++	case PKE_CURVE_BP192R1:
++		return 192;
++	case PKE_CURVE_P224:
++	case PKE_CURVE_BP224R1:
++		return 224;
++	case PKE_CURVE_P256:
++	case PKE_CURVE_SECP256K1:
++	case PKE_CURVE_BP256R1:
++	case PKE_CURVE_ANSSI_FRP256V1:
++	case PKE_CURVE_SM2:
++	case PKE_CURVE_25519:
++		return 256;
++	case PKE_CURVE_BP320R1:
++		return 320;
++	case PKE_CURVE_P384:
++	case PKE_CURVE_BP384R1:
++		return 384;
++	case PKE_CURVE_BP512R1:
++		return 512;
++	case PKE_CURVE_P521:
++		return 521;
++	case PKE_CURVE_448:
++		return 448;
++	default:
++		return 0;
++	}
++}
++
++/**
++ * pke_eddsa_key_len() - Get EdDSA key/pubkey length
++ * @curve: PKE curve identifier (PKE_CURVE_25519 or PKE_CURVE_448)
++ *
++ * Ed25519 uses 32 bytes (== clen), Ed448 uses 57 bytes (clen + 1
++ * flag byte per RFC 8032).  Signature length is 2 * pke_eddsa_key_len().
++ *
++ * Return: Key length in bytes.
++ */
++static inline u32 pke_eddsa_key_len(u32 curve)
++{
++	u32 clen = pke_curve_clen(curve);
++
++	return (curve == PKE_CURVE_448) ? clen + 1 : clen;
++}
++
++/**
++ * pke_curve_is_edwards() - Check if curve uses Edwards form
++ * @curve: PKE curve identifier (PKE_CURVE_*)
++ *
++ * Return: true for Curve25519 and Curve448, false otherwise.
++ */
++static inline bool pke_curve_is_edwards(u32 curve)
++{
++	return curve == PKE_CURVE_25519 || curve == PKE_CURVE_448;
++}
++
++/**
++ * pke_swap_flags() - Get VCQ byte-swap flags for a given curve
++ * @curve: PKE curve identifier (PKE_CURVE_*)
++ *
++ * Weierstrass curves need byte+word swap; Edwards curves do not.
++ *
++ * Return: VCQ swap flags to OR into the command ID.
++ */
++static inline u32 pke_swap_flags(u32 curve)
++{
++	return pke_curve_is_edwards(curve) ? 0 : PKE_SWAP_FLAGS;
++}
++
++/* Common VCQ builder prototypes */
++
++void vcq_add_pke_flush(struct vcq_cmd *slot, u32 core_id);
++
++void vcq_add_pke_rsa_enc(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
++			 u64 e_dma, u64 n_dma, u64 m_dma, u64 c_dma,
++			 u32 flags);
++
++void vcq_add_pke_rsa_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
++			 u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
++			 u64 d_ref, u32 flags);
++
++void vcq_add_pke_rsa_crt_dec(struct vcq_cmd *slot, u32 core_id, u32 bits, u32 e_len,
++			     u64 e_dma, u64 n_dma, u64 c_dma, u64 m_dma,
++			     u64 crt_ref, u32 flags);
++
++void vcq_add_pke_ecdsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
++			      u64 pk_dma, u64 dig_dma, u64 sig_dma,
++			      u64 rp_dma, u32 flags);
++
++void vcq_add_pke_ecdsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
++			    u32 dlen, u32 flags);
++
++void vcq_add_pke_ecdsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			      u64 pk_dma, u64 sk_ref, u32 flags);
++
++void vcq_add_pke_ecdsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			      u64 sk_ref, u32 sk_type, u32 flags);
++
++void vcq_add_pke_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			     u64 pkx_dma, u64 sk_ref, u32 flags);
++
++void vcq_add_pke_ecdh(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++		      u32 sslen, u32 ss_type, u64 peer_dma, u64 sk_ref,
++		      u64 ss_ref, u32 flags);
++
++void vcq_add_pke_eddsa_verify(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 dlen,
++			      u64 pky_dma, u64 dig_dma, u64 sig_dma,
++			      u64 rp_dma, u32 flags);
++
++void vcq_add_pke_eddsa_sign(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			    u64 dig_dma, u64 sig_dma, u64 sk_ref,
++			    u32 dlen, u32 flags);
++
++void vcq_add_pke_eddsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 curve, u32 sklen,
++			      u64 pky_dma, u64 sk_ref, u32 flags);
++
++void vcq_add_pke_eddsa_keygen_sca(struct vcq_cmd *slot, u32 core_id, u32 curve,
++				  u64 sk_ref, u64 sca_sk_ref);
++
++/* SM2 VCQ builders */
++
++void vcq_add_pke_sm2_ecdh_keygen(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
++				 u64 session_key_dma, u32 nonce_len, u32 flags);
++
++void vcq_add_pke_sm2_ecdh(struct vcq_cmd *slot, u32 core_id, u32 nonce_len,
++			  u32 private_key_len, u64 nonce_dma,
++			  u64 peer_pk_dma, u64 peer_sk_dma,
++			  u64 priv_ref, u64 sp_ref, u32 sp_type, u32 flags);
++
++void vcq_add_pke_sm2_dec_point(struct vcq_cmd *slot, u32 core_id, u32 ct_len,
++			       u32 pk_len, u64 ct_dma, u64 dp_dma,
++			       u64 priv_ref, u32 flags);
++
++void vcq_add_pke_sm2_enc_point(struct vcq_cmd *slot, u32 core_id, u64 nonce_dma,
++			       u64 pk_dma, u64 ct_dma, u64 ep_dma,
++			       u32 nonce_len, u32 flags);
++
++void vcq_add_pke_sm2_id_digest(struct vcq_cmd *slot, u32 core_id, u64 id_dma,
++			       u64 pk_dma, u64 dig_dma, u32 id_len,
++			       u32 flags);
++
++void vcq_add_pke_sm2_ecdh_hash(struct vcq_cmd *slot, u32 core_id, u64 peer_dig_dma,
++			       u64 dig_dma, u64 sp_ref, u64 sk_ref,
++			       u32 sk_type, u32 flags);
++
++void vcq_add_pke_sm2_dec_hash(struct vcq_cmd *slot, u32 core_id, u64 ct_dma,
++			      u64 dp_dma, u64 pt_dma, u32 ct_len, u32 flags);
++
++void vcq_add_pke_sm2_enc_hash(struct vcq_cmd *slot, u32 core_id, u64 msg_dma,
++			      u64 ep_dma, u64 ct_dma, u32 msg_len, u32 flags);
++
++/* Registration */
++
++int cmh_pke_rsa_register(void);
++void cmh_pke_rsa_unregister(void);
++int cmh_pke_ecdsa_register(void);
++void cmh_pke_ecdsa_unregister(void);
++int cmh_pke_ecdh_register(void);
++void cmh_pke_ecdh_unregister(void);
++
++#endif /* CMH_PKE_H */
+diff --git a/drivers/crypto/cmh/include/cmh_pke_sm2.h b/drivers/crypto/cmh/include/cmh_pke_sm2.h
+new file mode 100644
+index 000000000000..a2c7164b8d49
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_pke_sm2.h
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SM2 PKE Ioctl Handler Declarations
++ *
++ * SM2 signature (GM/T 0003.2) requires the caller to compute
++ * ZA = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA)
++ * and pass SM3(ZA || M) as the digest to the sign/verify path.
++ * The CMH eSW does NOT compute ZA internally; the full
++ * identity pre-hash is the caller's responsibility.
++ *
++ * For the in-kernel akcipher "sm2" algorithm this means the
++ * caller (e.g. asymmetric_key subsystem) must pre-hash with ZA
++ * before invoking verify.  The SM2_ID_DIGEST ioctl below can
++ * compute ZA for userspace callers of the misc-device path.
++ */
++
++#ifndef CMH_PKE_SM2_H
++#define CMH_PKE_SM2_H
++
++int cmh_mgmt_sm2_ecdh_keygen(void __user *argp);
++int cmh_mgmt_sm2_ecdh(void __user *argp);
++int cmh_mgmt_sm2_dec_point(void __user *argp);
++int cmh_mgmt_sm2_enc_point(void __user *argp);
++int cmh_mgmt_sm2_id_digest(void __user *argp);
++int cmh_mgmt_sm2_ecdh_hash(void __user *argp);
++int cmh_mgmt_sm2_dec_hash(void __user *argp);
++int cmh_mgmt_sm2_enc_hash(void __user *argp);
++
++#endif /* CMH_PKE_SM2_H */
+diff --git a/drivers/crypto/cmh/include/cmh_pqc.h b/drivers/crypto/cmh/include/cmh_pqc.h
+new file mode 100644
+index 000000000000..cd4761a0ce5c
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_pqc.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- PQC Algorithm Registration
++ *
++ * Registration/unregistration functions for PQC akcipher algorithms:
++ * ML-DSA, SLH-DSA, LMS, XMSS.
++ */
++
++#ifndef CMH_PQC_H
++#define CMH_PQC_H
++
++int cmh_pqc_mldsa_register(void);
++void cmh_pqc_mldsa_unregister(void);
++
++int cmh_pqc_slhdsa_register(void);
++void cmh_pqc_slhdsa_unregister(void);
++
++int cmh_pqc_lms_register(void);
++void cmh_pqc_lms_unregister(void);
++
++int cmh_pqc_xmss_register(void);
++void cmh_pqc_xmss_unregister(void);
++
++#endif /* CMH_PQC_H */
+diff --git a/drivers/crypto/cmh/include/cmh_sys.h b/drivers/crypto/cmh/include/cmh_sys.h
+new file mode 100644
+index 000000000000..dd336b67bd65
+--- /dev/null
++++ b/drivers/crypto/cmh/include/cmh_sys.h
+@@ -0,0 +1,111 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- SYS Core VCQ Builders
++ *
++ * VCQ builder functions for SYS core commands (NEW, WRITE, READ,
++ * FIND, GRANT, DATA, EXPORT, IMPORT).  Each builder populates one
++ * vcq_cmd slot with the appropriate magic, command ID, and payload.
++ *
++ * Callers combine these with vcq_set_header() + vcq_add_flush()
++ * and submit via cmh_tm_submit_sync().
++ */
++
++#ifndef CMH_SYS_H
++#define CMH_SYS_H
++
++#include "cmh_vcq.h"
++
++void vcq_add_sys_new(struct vcq_cmd *slot, u64 cid, u64 ref_dma, u32 len);
++void vcq_add_sys_write(struct vcq_cmd *slot, u64 ref, u64 src_dma,
++		       u64 wrap_key, u32 len, u32 sys_type);
++void vcq_add_sys_read(struct vcq_cmd *slot, u64 ref, u64 dst_dma,
++		      u64 wrap_key, u32 len);
++void vcq_add_sys_data(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len);
++void vcq_add_sys_find(struct vcq_cmd *slot, u64 cid, u64 dst_dma, u32 len);
++void vcq_add_sys_list(struct vcq_cmd *slot, u64 ref, u64 dst_dma, u32 len);
++void vcq_add_sys_grant(struct vcq_cmd *slot, u64 ref, u64 read,
++		       u64 write, u64 execute);
++void vcq_add_sys_export(struct vcq_cmd *slot, u64 cid, u64 dst_dma,
++			u64 wrap_key, u32 len);
++void vcq_add_sys_import(struct vcq_cmd *slot, u64 src_dma,
++			u64 wrap_key, u32 len);
++
++/* KIC core VCQ builders */
++void vcq_add_kic_hkdf1(struct vcq_cmd *slot, u64 dst, u64 base,
++		       u64 label_dma, u32 key_len, u32 label_len, u32 type);
++void vcq_add_kic_hkdf2(struct vcq_cmd *slot, u64 dst, u64 base, u64 salt,
++		       u64 label_dma, u32 key_len, u32 label_len, u32 type);
++void vcq_add_kic_aes_cmac_kdf(struct vcq_cmd *slot, u64 out_key, u64 base_key,
++			      u64 label_dma, u32 key_len, u32 label_len,
++			      u32 type);
++void vcq_add_kic_dkek_derive(struct vcq_cmd *slot, u64 out_key, u64 base_key,
++			     u32 host_id, u64 metadata_dma, u32 metadata_len);
++
++/* DRBG core VCQ builders */
++void vcq_add_drbg_reset(struct vcq_cmd *slot);
++void vcq_add_drbg_config(struct vcq_cmd *slot, u32 ratio, u32 strength);
++void vcq_add_drbg_datastore(struct vcq_cmd *slot, u64 ref, u32 len, u32 type);
++
++/* QSE core VCQ builders */
++void vcq_add_qse_flush(struct vcq_cmd *slot, u32 core_id);
++void vcq_add_qse_ml_kem_keygen(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
++			       u64 seed, u64 z, u64 ek, u64 dk, u32 dk_type,
++			       bool masked);
++void vcq_add_qse_ml_kem_enc(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
++			    u64 coin, u64 ek, u64 ct, u64 ss, u32 ss_type,
++			    bool masked);
++void vcq_add_qse_ml_kem_dec(struct vcq_cmd *slot, u32 core_id, u32 k, u32 flags,
++			    u64 ct, u64 dk, u64 ss, u32 ss_type,
++			    bool masked);
++void vcq_add_qse_ml_dsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
++			       u64 seed, u64 pk, u64 sk, u32 sk_type,
++			       bool masked);
++void vcq_add_qse_ml_dsa_sign(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
++			     u64 rnd, u64 m, u64 sk, u64 sig, u32 mlen,
++			     bool masked);
++void vcq_add_qse_ml_dsa_verify(struct vcq_cmd *slot, u32 core_id, u32 mode, u32 flags,
++			       u64 m, u64 pk, u64 sig, u32 mlen);
++
++/* HCQ core VCQ builders */
++void vcq_add_hcq_flush(struct vcq_cmd *slot, u32 core_id);
++void vcq_add_hcq_slhdsa_keygen(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++			       u32 seed_len, u32 pk_len, u32 sk_len,
++			       u64 seed, u64 pk, u64 sk);
++void vcq_add_hcq_slhdsa_sign(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++			     u32 msg_len, u32 ctx_len,
++			     u64 add_random, u64 msg, u64 ctx,
++			     u64 sk, u64 sig);
++void vcq_add_hcq_slhdsa_sign_internal(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++				      u32 msg_len, u64 add_random,
++				      u64 msg, u64 sk, u64 sig);
++void vcq_add_hcq_slhdsa_verify(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++			       u32 msg_len, u32 ctx_len,
++			       u64 msg, u64 ctx, u64 pk, u64 sig);
++void vcq_add_hcq_slhdsa_sign_prehash(struct vcq_cmd *slot, u32 core_id,
++				     u32 cmd, u32 param_set, u32 prehash_algo,
++				     u32 msg_len, u32 ctx_len,
++				     u64 add_random, u64 msg, u64 ctx,
++				     u64 sk, u64 sig);
++void vcq_add_hcq_slhdsa_verify_prehash(struct vcq_cmd *slot, u32 core_id,
++				       u32 cmd, u32 param_set, u32 prehash_algo,
++				       u32 msg_len, u32 ctx_len,
++				       u64 msg, u64 ctx, u64 pk, u64 sig);
++void vcq_add_hcq_slhdsa_verify_internal(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++					u32 msg_len, u64 msg, u64 pk, u64 sig);
++void vcq_add_hcq_slhdsa_pubgen(struct vcq_cmd *slot, u32 core_id, u32 param_set,
++			       u32 sk_len, u64 sk, u64 pk);
++void vcq_add_hcq_lms_verify(struct vcq_cmd *slot, u32 core_id, u32 lms_hss,
++			    u32 pk_len, u32 sig_len, u32 dig_len,
++			    u64 pk, u64 sig, u64 dig);
++void vcq_add_hcq_xmss_verify(struct vcq_cmd *slot, u32 core_id, u32 xmss_mt,
++			     u32 pk_len, u32 sig_len, u32 dig_len,
++			     u64 pk, u64 sig, u64 dig);
++
++/* SYS core flush */
++void vcq_add_sys_flush(struct vcq_cmd *slot);
++
++/* EAC core VCQ builder */
++void vcq_add_eac_read(struct vcq_cmd *slot, u64 dst_dma, u32 len);
++
++#endif /* CMH_SYS_H */
+diff --git a/include/uapi/linux/cmh_mgmt_ioctl.h b/include/uapi/linux/cmh_mgmt_ioctl.h
+new file mode 100644
+index 000000000000..19748260404a
+--- /dev/null
++++ b/include/uapi/linux/cmh_mgmt_ioctl.h
+@@ -0,0 +1,902 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
++ * CMH LKM -- Key Management ioctl Interface (User-Space API)
++ *
++ * ioctl commands for /dev/cmh_mgmt -- key CRUD, datastore
++ * export/import, KIC key derivation, PKE, SM2, and PQC operations.
++ *
++ * Relationship to the in-kernel crypto API
++ * -----------------------------------------
++ * Most commands here have no crypto API representation (no transform
++ * type or verb exists): keystore CRUD, key generation, KIC key
++ * derivation, ML-KEM encapsulate/decapsulate, SM2 multi-step
++ * encrypt/decrypt/key-exchange, EdDSA, EAC, and DRBG configuration.
++ * For these the character device is the only available UAPI.
++ *
++ * A bounded subset names primitives the driver ALSO registers with
++ * the crypto API, and the overlap is intentional:
++ *   - Hardware-held-key operations (RSA decrypt, ECDSA/ML-DSA/SLH-DSA
++ *     sign, ECDH) reference a private key by datastore handle.  The
++ *     crypto API set_priv_key()/set_secret() take only raw key bytes
++ *     and cannot name a key that never leaves the hardware; these
++ *     ioctls keep the key hardware-resident.  The registered
++ *     transforms serve raw-key in-kernel users -- the paths are
++ *     complementary.
++ *
++ * Multi-step protocol flows are documented above the PKE and SM2
++ * struct sections.  Single-command ioctls are self-documenting.
++ *
++ * Versioned structs: user space sets .version = CMH_MGMT_V1 so the
++ * driver can extend structs in the future without breaking ABI.
++ */
++
++#ifndef _UAPI_CMH_MGMT_IOCTL_H
++#define _UAPI_CMH_MGMT_IOCTL_H
++
++#include <linux/types.h>
++#include <linux/ioctl.h>
++#include <linux/const.h>
++
++#define CMH_MGMT_V1		1
++
++/* Special reference values */
++#define CMH_REF_NONE		0x0000000000000000ULL	/* no key (plaintext) */
++
++/* Flags for cmh_ioctl_key_new.flags / cmh_ioctl_key_write.flags */
++#define CMH_FLAG_PT		_BITUL(16)	/* key can be read as plaintext */
++#define CMH_FLAG_XC		_BITUL(17)	/* key can be exported over XC bus */
++#define CMH_FLAG_SCA		_BITUL(18)	/* SCA key stored in 2 shares */
++#define CMH_FLAG_MASK		(CMH_FLAG_PT | CMH_FLAG_XC | CMH_FLAG_SCA)
++
++/*
++ * Datastore key types -- the LKM maps these to core IDs internally.
++ * User space passes these in cmh_ioctl_key_new.ds_type.
++ */
++#define CMH_DS_RAW_VALUE		1
++#define CMH_DS_AES_KEY			2
++#define CMH_DS_AES_XTS_KEY		3
++#define CMH_DS_HMAC_KEY			4
++#define CMH_DS_KMAC_KEY			5
++#define CMH_DS_SM4_KEY			6
++#define CMH_DS_CHACHA20_KEY		7
++
++/* PKE key types -- all map to CORE_ID_PKE (0x0A) */
++#define CMH_DS_RSA_PRIV_KEY		10
++#define CMH_DS_RSA_PUB_KEY		11
++#define CMH_DS_RSA_CRT_KEY		12
++#define CMH_DS_ECDSA_PRIV_KEY		13
++#define CMH_DS_ECDSA_PUB_KEY		14
++#define CMH_DS_ECDH_PRIV_KEY		15
++#define CMH_DS_EDDSA_PRIV_KEY		16
++#define CMH_DS_SHARED_SECRET		17
++#define CMH_DS_SM2_PRIV_KEY		18
++
++/* QSE key types -- map to CORE_ID_QSE (0x09) */
++#define CMH_DS_ML_KEM_DK		20
++#define CMH_DS_ML_DSA_SK		21
++
++/* HCQ key types -- map to CORE_ID_HCQ (0x08) */
++#define CMH_DS_SLHDSA_SK		25
++
++/* ioctl argument structures */
++
++struct cmh_ioctl_key_new {
++	__u32 version;		/* must be CMH_MGMT_V1 */
++	__u32 ds_type;		/* CMH_DS_* key type */
++	__u32 len;		/* key length in bytes */
++	__u32 flags;		/* CMH_FLAG_* (e.g. CMH_FLAG_PT) */
++	__u64 cid;		/* caller ID (name) for the key */
++	__u64 ref;		/* [out] CMH eSW returns key_ref here */
++};
++
++struct cmh_ioctl_key_write {
++	__u32 version;
++	__u32 len;		/* key data length */
++	__u32 ds_type;		/* CMH_DS_* key type */
++	__u32 flags;		/* CMH_FLAG_* (e.g. CMH_FLAG_PT) */
++	__u64 ref;		/* key reference from KEY_NEW */
++	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
++	__u64 data;		/* user-space pointer to key material */
++};
++
++/*
++ * KEY_READ returns the datastore-internal representation of the object.
++ * For Weierstrass PKE and RSA key types, KEY_WRITE byte-swaps the input
++ * into the PKE sidecar's big-endian form before storing, so a plaintext
++ * KEY_READ of such a key returns those big-endian bytes -- it is NOT a
++ * byte-for-byte echo of the host-order buffer passed to KEY_WRITE.
++ * Symmetric keys are stored verbatim (no swap) and wrapped reads return
++ * an opaque blob.  This asymmetry is intentional: KEY_READ exposes the
++ * stored form the hardware uses.
++ */
++struct cmh_ioctl_key_read {
++	__u32 version;
++	__u32 len;		/* buffer length */
++	__u64 ref;		/* key reference */
++	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
++	__u64 data;		/* user-space pointer to output buffer */
++	__u32 out_len;		/* [out] actual bytes written */
++	__u32 __reserved;
++};
++
++struct cmh_ioctl_key_find {
++	__u32 version;
++	__u32 __reserved;
++	__u64 cid;		/* caller ID to search for */
++	__u64 ref;		/* [out] resolved key reference */
++	__u32 len;		/* [out] key length */
++	__u32 type;		/* [out] key type */
++};
++
++/*
++ * KEY_LIST -- iterate datastore objects.
++ *
++ * Pass start_ref=0 to begin from the first accessible object.
++ * On return, ref/cid/len/type describe that object.  Pass the
++ * returned ref as start_ref in the next call to advance.  Iteration
++ * ends when ref == 0 (no more objects).
++ */
++struct cmh_ioctl_key_list {
++	__u32 version;
++	__u32 __reserved;
++	__u64 start_ref;	/* starting DS reference (0 = first) */
++	__u64 ref;		/* [out] object reference */
++	__u64 cid;		/* [out] caller ID */
++	__u32 len;		/* [out] object length */
++	__u32 type;		/* [out] object type */
++};
++
++struct cmh_ioctl_key_grant {
++	__u32 version;
++	__u32 __reserved;
++	__u64 ref;		/* key reference */
++	__u64 read;		/* per-MBX read permission bitfield */
++	__u64 write;		/* per-MBX write permission bitfield */
++	__u64 execute;		/* per-MBX execute permission bitfield */
++};
++
++/* Export blob overhead beyond the raw object data (bytes) */
++#define CMH_DS_EXPORT_OVERHEAD_WRAPPED	48	/* 16B hdr + 16B nonce + 16B tag */
++#define CMH_DS_EXPORT_OVERHEAD_PLAIN	16	/* 16B hdr only */
++
++/**
++ * struct cmh_ioctl_ds_export - Export a datastore object to a wrapped blob
++ * @version:   protocol version (CMH_MGMT_V1)
++ * @len:       DMA buffer size; must be >= export blob size:
++ *               wrapped:   CMH_DS_EXPORT_OVERHEAD_WRAPPED + object_len
++ *               plaintext: CMH_DS_EXPORT_OVERHEAD_PLAIN + object_len
++ *             object_len is known from KEY_NEW or KEY_FIND.
++ *             If too small, the eSW rejects the command (-EIO).
++ * @cid:       caller ID of the object to export
++ * @wrap_key:  wrapping key ref (CMH_REF_NONE = plaintext export)
++ * @data:      user-space pointer to output buffer (at least @len bytes)
++ * @out_len:   [out] actual blob bytes written on success
++ * @__reserved: must be zero
++ */
++struct cmh_ioctl_ds_export {
++	__u32 version;
++	__u32 len;		/* buffer length (see sizing rule above) */
++	__u64 cid;		/* caller ID for response tagging */
++	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
++	__u64 data;		/* user-space pointer to output buffer */
++	__u32 out_len;		/* [out] actual bytes written */
++	__u32 __reserved;
++};
++
++struct cmh_ioctl_ds_import {
++	__u32 version;
++	__u32 len;		/* blob length */
++	__u64 wrap_key;		/* wrapping key ref (CMH_REF_NONE = plaintext) */
++	__u64 data;		/* user-space pointer to import blob */
++};
++
++/* Flags for cmh_ioctl_kic_hkdf1.flags / cmh_ioctl_kic_hkdf2.flags */
++#define CMH_KIC_FLAG_TEMP	0x01	/* store result in TEMP (not persistent DS) */
++
++/*
++ * KIC hardware base key references.
++ *
++ * Each CMH device has up to 8 hardware base keys provisioned in OTP/fuses.
++ * These values are passed in the base_key field of KIC ioctl structs.
++ * The key valid bitmask is visible via R_KIC_KEY_VALID (MMIO 0x100).
++ */
++#define CMH_KIC_KEY1		0x0000000100000001ULL
++#define CMH_KIC_KEY2		0x0000000200000002ULL
++#define CMH_KIC_KEY3		0x0000000300000003ULL
++#define CMH_KIC_KEY4		0x0000000400000004ULL
++#define CMH_KIC_KEY5		0x0000000500000005ULL
++#define CMH_KIC_KEY6		0x0000000600000006ULL
++#define CMH_KIC_KEY7		0x0000000700000007ULL
++#define CMH_KIC_KEY8		0x0000000800000008ULL
++
++struct cmh_ioctl_kic_hkdf1 {
++	__u32 version;
++	__u32 key_len;		/* output key length (e.g., 32) */
++	__u64 base_key;		/* KIC base key reference */
++	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
++	__u64 label;		/* user-space pointer to label data */
++	__u32 label_len;	/* label length in bytes */
++	__u32 flags;		/* CMH_KIC_FLAG_* */
++	__u64 ref;		/* [out] derived key reference */
++};
++
++struct cmh_ioctl_kic_hkdf2 {
++	__u32 version;
++	__u32 key_len;		/* output key length (e.g., 32) */
++	__u64 base_key;		/* KIC base key reference */
++	__u64 salt_key;		/* salt key reference (CMH_REF_NONE = no salt) */
++	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
++	__u64 label;		/* user-space pointer to label data */
++	__u32 label_len;	/* label length in bytes */
++	__u32 flags;		/* CMH_KIC_FLAG_* */
++	__u64 ref;		/* [out] derived key reference */
++};
++
++struct cmh_ioctl_kic_aes_cmac_kdf {
++	__u32 version;
++	__u32 key_len;		/* base & output key length (must be 32) */
++	__u64 base_key;		/* KIC base key or DS reference */
++	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
++	__u64 label;		/* user-space pointer to label data */
++	__u32 label_len;	/* label length in bytes */
++	__u32 flags;		/* CMH_KIC_FLAG_* */
++	__u64 ref;		/* [out] derived key reference */
++};
++
++#define KIC_DKEK_MAX_METADATA	64	/* max metadata length for DKEK */
++
++struct cmh_ioctl_kic_dkek_derive {
++	__u32 version;
++	__u32 host_id;		/* target host ID (0 = caller's own) */
++	__u64 base_key;		/* KIC base key reference */
++	__u64 cid;		/* CID for the new DS entry (ignored if TEMP) */
++	__u64 metadata;		/* user-space pointer to metadata */
++	__u32 metadata_len;	/* metadata length in bytes */
++	__u32 flags;		/* CMH_KIC_FLAG_* */
++	__u64 ref;		/* [out] derived KEK reference */
++};
++
++/* -- PKE ioctl argument structures ----------- */
++
++/*
++ * PKE multi-step protocol flows
++ *
++ * RSA encrypt/decrypt:
++ *   1. KEY_NEW(CMH_DS_RSA_PRIV_KEY) + KEY_WRITE -> priv_ref (or RSA_KEYGEN -> priv_ref)
++ *   2. RSA_ENC(e, n, plaintext) -> ciphertext         (public key = raw e,n)
++ *   3. RSA_DEC(e, n, ciphertext, priv_ref) -> plaintext   (or RSA_CRT_DEC)
++ *
++ * ECDSA sign:
++ *   1. EC_KEYGEN(curve) -> priv_ref                    (or KEY_NEW + KEY_WRITE)
++ *   2. EC_PUBGEN(priv_ref) -> public_key               (raw x||y returned)
++ *   3. ECDSA_SIGN(digest, priv_ref) -> signature
++ *   SM2 sign uses the same path with curve=CMH_CURVE_SM2.
++ *
++ * ECDH shared secret:
++ *   1. EC_KEYGEN(curve) -> priv_ref                    (or KEY_NEW + KEY_WRITE)
++ *   2. ECDH_KEYGEN(priv_ref) -> public_key_x           (derive pub from priv)
++ *   3. Exchange public keys with peer
++ *   4. ECDH(peer_key_x, priv_ref) -> shared_secret     (raw to host)
++ *
++ * EdDSA sign/verify:
++ *   1. EC_KEYGEN(CURVE_25519 or CURVE_448) -> priv_ref
++ *   2. EC_PUBGEN(priv_ref) -> public_key
++ *   3. EDDSA_SIGN(message, priv_ref) -> signature      (pure EdDSA, not prehash)
++ *   4. EDDSA_VERIFY(message, signature, public_key_y)
++ *   For Ed448 SCA: EDDSA_KEYGEN_SCA(priv_ref) -> sca_ref (2-share blinded key)
++ *
++ * SM2 encryption (GM/T 0003.4):
++ *   1. EC_KEYGEN(CMH_CURVE_SM2) -> priv_ref            (or KEY_NEW + KEY_WRITE)
++ *   2. EC_PUBGEN(priv_ref) -> public_key
++ *   3. SM2_ENC_POINT(public_key) -> C1, enc_point      (nonce_len=0: HW ephemeral)
++ *   4. SM2_ENC_HASH(enc_point, message) -> ciphertext   (C1||C3||C2)
++ *   Decrypt:
++ *   5. SM2_DEC_POINT(C1, priv_ref) -> dec_point
++ *   6. SM2_DEC_HASH(ciphertext, dec_point) -> plaintext
++ *   enc_point and dec_point are raw DMA buffers (64B each), not DS refs.
++ *
++ * SM2 key exchange (GM/T 0003.3):
++ *   1. EC_KEYGEN(CMH_CURVE_SM2) -> priv_ref            (long-lived, persistent DS)
++ *   2. EC_PUBGEN(priv_ref) -> public_key
++ *   3. SM2_ID_DIGEST(id, public_key) -> ZA             (SM3-based identity digest)
++ *   4. SM2_ECDH_KEYGEN(nonce) -> session_key, r        (ephemeral scalar r)
++ *      - nonce_len=32: caller supplies r (deterministic)
++ *      - nonce_len=0:  HW generates r, writes it back to .nonce
++ *      Exchange session_key with peer.
++ *   5. SM2_ECDH(r, priv_ref, peer_pub, peer_sess) -> shared_point
++ *      - Must pass the same r from step 4 (nonce_len=32)
++ *      - shared_point_ref=0: reads back raw shared_point, destroys DS slot
++ *      - shared_point_ref=&ref: keeps DS slot alive, writes ref for ECDH_HASH
++ *   6. SM2_ECDH_HASH(shared_point_ref, ZA_self, ZA_peer) -> shared_key (16B)
++ *      - shared_point_ref is a persistent DS reference from step 5
++ *      - The DS slot is consumed by the hub; caller should delete it afterward
++ *   The nonce r is a raw 32-byte scalar in userspace memory between steps 4-5.
++ *   The shared_point is a persistent DS ref between steps 5-6.
++ *   The long-lived private key (priv_ref) persists independently.
++ */
++
++struct cmh_ioctl_pke_rsa_enc {
++	__u32 version;
++	__u32 bits;		/* RSA key size in bits (1024-4096) */
++	__u64 e;		/* user-space pointer to public exponent */
++	__u32 e_len;		/* exponent length in bytes */
++	__u32 __reserved;
++	__u64 n;		/* user-space pointer to modulus */
++	__u64 input;		/* user-space pointer to input data */
++	__u64 output;		/* user-space pointer to output buffer */
++};
++
++struct cmh_ioctl_pke_rsa_dec {
++	__u32 version;
++	__u32 bits;
++	__u64 e;		/* public exponent */
++	__u32 e_len;
++	__u32 __reserved;
++	__u64 n;		/* modulus */
++	__u64 input;		/* ciphertext */
++	__u64 output;		/* plaintext output */
++	__u64 key_ref;		/* private key DS reference */
++};
++
++struct cmh_ioctl_pke_rsa_crt_dec {
++	__u32 version;
++	__u32 bits;
++	__u64 e;
++	__u32 e_len;
++	__u32 __reserved;
++	__u64 n;
++	__u64 input;
++	__u64 output;
++	__u64 crt_ref;		/* CRT key DS reference */
++};
++
++struct cmh_ioctl_pke_rsa_keygen {
++	__u32 version;
++	__u32 bits;		/* key size in bits */
++	__u64 e;		/* user-space pointer to public exponent */
++	__u32 e_len;
++	__u32 flags;		/* CMH_FLAG_* */
++	__u64 n;		/* [out] user-space pointer to modulus buffer */
++	__u64 d_cid;		/* CID for private key DS entry */
++	__u64 d_ref;		/* [out] private key reference */
++	__u64 crt_cid;		/* CID for CRT key DS entry (0 = skip CRT) */
++	__u64 crt_ref;		/* [out] CRT key reference */
++};
++
++struct cmh_ioctl_pke_ecdsa_sign {
++	__u32 version;
++	__u32 curve;		/* ABI curve ID (e.g. 0x03 = P-256) */
++	__u64 digest;		/* user-space pointer to hash digest */
++	__u32 digest_len;	/* digest length in bytes */
++	__u32 __reserved;
++	__u64 signature;	/* [out] user-space pointer to (r,s) */
++	__u64 key_ref;		/* private key DS reference */
++};
++
++struct cmh_ioctl_pke_ecdh {
++	__u32 version;
++	__u32 curve;
++	__u64 peer_key_x;	/* user-space pointer to peer public key X */
++	__u64 key_ref;		/* private key DS reference */
++	__u32 flags;		/* reserved, must be 0 */
++	__u32 __reserved;
++	__u64 __reserved2;	/* reserved, must be 0 */
++	__u64 output;		/* [out] raw shared secret */
++};
++
++struct cmh_ioctl_pke_ecdh_keygen {
++	__u32 version;
++	__u32 curve;
++	__u64 key_ref;		/* private key DS reference */
++	__u64 public_key_x;	/* [out] user-space pointer to public key X */
++};
++
++struct cmh_ioctl_pke_eddsa_sign {
++	__u32 version;
++	__u32 curve;		/* CURVE_25519 or CURVE_448 */
++	__u64 digest;		/* user-space ptr to message (not digest) */
++	__u32 digest_len;
++	__u32 __reserved;
++	__u64 signature;	/* [out] user-space pointer to signature */
++	__u64 key_ref;		/* private key DS reference */
++};
++
++struct cmh_ioctl_pke_eddsa_verify {
++	__u32 version;
++	__u32 curve;
++	__u64 digest;
++	__u32 digest_len;
++	__u32 __reserved;
++	__u64 signature;
++	__u64 public_key_y;	/* user-space pointer to public key Y */
++};
++
++struct cmh_ioctl_pke_ec_keygen {
++	__u32 version;
++	__u32 curve;
++	__u32 flags;		/* CMH_FLAG_* */
++	__u32 __reserved;
++	__u64 cid;		/* CID for the new key DS entry */
++	__u64 ref;		/* [out] private key reference */
++};
++
++struct cmh_ioctl_pke_ec_pubgen {
++	__u32 version;
++	__u32 curve;
++	__u64 key_ref;		/* private key DS reference */
++	__u64 public_key;	/* [out] user-space pointer to public key */
++};
++
++struct cmh_ioctl_pke_eddsa_keygen_sca {
++	__u32 version;
++	__u32 curve;		/* must be CURVE_448 */
++	__u64 key_ref;		/* input: normal Ed448 private key DS ref */
++	__u64 cid;		/* CID for the new SCA key DS entry */
++	__u64 sca_ref;		/* [out] SCA private key reference */
++};
++
++/*
++ * ioctl numbers -- type 'J', sequential.
++ * 'C' conflicts with OSS sound, CAPI/ISDN, and COSA WAN drivers;
++ * 'J' is unregistered in Documentation/userspace-api/ioctl/ioctl-number.rst.
++ */
++
++#define CMH_MGMT_IOC_MAGIC	'J'
++
++#define CMH_IOCTL_KEY_NEW	_IOWR(CMH_MGMT_IOC_MAGIC, 0x01, struct cmh_ioctl_key_new)
++#define CMH_IOCTL_KEY_WRITE	_IOW(CMH_MGMT_IOC_MAGIC,  0x02, struct cmh_ioctl_key_write)
++#define CMH_IOCTL_KEY_READ	_IOWR(CMH_MGMT_IOC_MAGIC, 0x03, struct cmh_ioctl_key_read)
++#define CMH_IOCTL_KEY_FIND	_IOWR(CMH_MGMT_IOC_MAGIC, 0x04, struct cmh_ioctl_key_find)
++#define CMH_IOCTL_KEY_GRANT	_IOW(CMH_MGMT_IOC_MAGIC,  0x05, struct cmh_ioctl_key_grant)
++#define CMH_IOCTL_KEY_DELETE	_IOW(CMH_MGMT_IOC_MAGIC,  0x06, struct cmh_ioctl_key_grant)
++#define CMH_IOCTL_DS_EXPORT	_IOWR(CMH_MGMT_IOC_MAGIC, 0x07, struct cmh_ioctl_ds_export)
++#define CMH_IOCTL_DS_IMPORT	_IOW(CMH_MGMT_IOC_MAGIC,  0x08, struct cmh_ioctl_ds_import)
++#define CMH_IOCTL_KIC_HKDF1	_IOWR(CMH_MGMT_IOC_MAGIC, 0x09, struct cmh_ioctl_kic_hkdf1)
++#define CMH_IOCTL_KIC_HKDF2	_IOWR(CMH_MGMT_IOC_MAGIC, 0x0A, struct cmh_ioctl_kic_hkdf2)
++#define CMH_IOCTL_KEY_NEW_RANDOM _IOWR(CMH_MGMT_IOC_MAGIC, 0x0B, struct cmh_ioctl_key_new)
++#define CMH_IOCTL_KIC_AES_CMAC_KDF _IOWR(CMH_MGMT_IOC_MAGIC, 0x0C, \
++					struct cmh_ioctl_kic_aes_cmac_kdf)
++#define CMH_IOCTL_KIC_DKEK_DERIVE _IOWR(CMH_MGMT_IOC_MAGIC, 0x0D, \
++					struct cmh_ioctl_kic_dkek_derive)
++#define CMH_IOCTL_KEY_LIST	_IOWR(CMH_MGMT_IOC_MAGIC, 0x0E, struct cmh_ioctl_key_list)
++
++/* PKE operation ioctls */
++#define CMH_IOCTL_PKE_RSA_ENC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x10, \
++					struct cmh_ioctl_pke_rsa_enc)
++#define CMH_IOCTL_PKE_RSA_DEC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x11, \
++					struct cmh_ioctl_pke_rsa_dec)
++#define CMH_IOCTL_PKE_RSA_CRT_DEC	_IOWR(CMH_MGMT_IOC_MAGIC, 0x12, \
++					struct cmh_ioctl_pke_rsa_crt_dec)
++#define CMH_IOCTL_PKE_RSA_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x13, \
++					struct cmh_ioctl_pke_rsa_keygen)
++#define CMH_IOCTL_PKE_ECDSA_SIGN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x14, \
++					struct cmh_ioctl_pke_ecdsa_sign)
++#define CMH_IOCTL_PKE_ECDH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x16, \
++					struct cmh_ioctl_pke_ecdh)
++#define CMH_IOCTL_PKE_ECDH_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x17, \
++					struct cmh_ioctl_pke_ecdh_keygen)
++#define CMH_IOCTL_PKE_EDDSA_SIGN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x18, \
++					struct cmh_ioctl_pke_eddsa_sign)
++#define CMH_IOCTL_PKE_EDDSA_VERIFY	_IOW(CMH_MGMT_IOC_MAGIC,  0x19, \
++					struct cmh_ioctl_pke_eddsa_verify)
++#define CMH_IOCTL_PKE_EC_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x1A, \
++					struct cmh_ioctl_pke_ec_keygen)
++#define CMH_IOCTL_PKE_EC_PUBGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x1B, \
++					struct cmh_ioctl_pke_ec_pubgen)
++#define CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA	_IOWR(CMH_MGMT_IOC_MAGIC, 0x1C, \
++					struct cmh_ioctl_pke_eddsa_keygen_sca)
++
++/* -- PQC ioctl argument structures ----------- */
++
++/*
++ * PQC operation flags (bits [2:0]).
++ * PQC keygen ioctls accept CMH_FLAG_PT in bits [18:16] to explicitly
++ * set the DS key storage attribute when CMH_QSE_FLAG_DS_REF is set.
++ * CMH_FLAG_SCA and CMH_FLAG_XC are rejected -- QSE SCA protection uses
++ * polynomial masking (CMH_QSE_FLAG_MASKED), not 2-share storage,
++ * and the eSW dec/sign paths hardcode SYS_TYPE_FLAG_PT.
++ * If no CMH_FLAG_* bits are set, DS keys default to CMH_FLAG_PT.
++ */
++#define CMH_QSE_FLAG_MASKED	_BITUL(0)	/* use masked (SCA-resistant) HW commands */
++#define CMH_QSE_FLAG_DS_REF	_BITUL(1)	/* store key output in DS, return ref */
++#define CMH_QSE_FLAG_HW_RNG	_BITUL(2)	/* use HW RNG for seed/randomness */
++#define CMH_QSE_FLAG_MASK	(_BITUL(0) | _BITUL(1) | _BITUL(2))
++
++/* -- SYS wrap header size -------------------- */
++/* sys_read prepends a 16-byte header even for plaintext reads */
++#define CMH_SYS_WRAP_HDR_SIZE	16
++
++/* -- Seed / randomness lengths --------------- */
++
++#define CMH_QSE_SEED_LEN		32	/* ML-KEM/ML-DSA seed size */
++#define CMH_QSE_SEED_LEN_MASKED		64	/* seed size for masked mode */
++
++/* -- ML-DSA ExternalMu sentinel -------------- */
++/* Pass this as mlen to use 64-byte pre-hashed mu instead of raw message */
++#define CMH_ML_DSA_MLEN_EXTERNAL_MU	0xFFFFFFFFU
++
++/* -- ML-KEM size macros ---------------------- */
++
++#define CMH_ML_KEM_EK_SIZE(k)		(384U * (k) + 32U)
++#define CMH_ML_KEM_DK_SIZE(k)		(768U * (k) + 96U)
++/* CT sizes: k=2 -> 768, k=3 -> 1088, k=4 -> 1568 */
++#define CMH_ML_KEM_CT_SIZE_512		768U
++#define CMH_ML_KEM_CT_SIZE_768		1088U
++#define CMH_ML_KEM_CT_SIZE_1024		1568U
++#define CMH_ML_KEM_SS_LEN		32U
++
++/* -- ML-DSA size macros ---------------------- */
++/* Indexed by mode: [0]=44 (mode=2), [1]=65 (mode=3), [2]=87 (mode=5) */
++
++#define CMH_ML_DSA_44_PK_SIZE		1312U
++#define CMH_ML_DSA_44_SK_SIZE		2560U
++#define CMH_ML_DSA_44_SIG_SIZE		2420U
++#define CMH_ML_DSA_65_PK_SIZE		1952U
++#define CMH_ML_DSA_65_SK_SIZE		4032U
++#define CMH_ML_DSA_65_SIG_SIZE		3309U
++#define CMH_ML_DSA_87_PK_SIZE		2592U
++#define CMH_ML_DSA_87_SK_SIZE		4896U
++#define CMH_ML_DSA_87_SIG_SIZE		4627U
++
++/* -- SLH-DSA parameter set IDs --------------- */
++
++#define CMH_SLHDSA_SHAKE_128S		1U
++#define CMH_SLHDSA_SHAKE_128F		2U
++#define CMH_SLHDSA_SHAKE_192S		3U
++#define CMH_SLHDSA_SHAKE_192F		4U
++#define CMH_SLHDSA_SHAKE_256S		5U
++#define CMH_SLHDSA_SHAKE_256F		6U
++#define CMH_SLHDSA_SHA2_128S		7U
++#define CMH_SLHDSA_SHA2_128F		8U
++#define CMH_SLHDSA_SHA2_192S		9U
++#define CMH_SLHDSA_SHA2_192F		10U
++#define CMH_SLHDSA_SHA2_256S		11U
++#define CMH_SLHDSA_SHA2_256F		12U
++#define CMH_SLHDSA_PARAM_MAX		12U
++
++/* SLH-DSA prehash algorithm IDs */
++#define CMH_SLHDSA_PREHASH_SHA256	1U
++#define CMH_SLHDSA_PREHASH_SHA512	2U
++#define CMH_SLHDSA_PREHASH_SHAKE128	3U
++#define CMH_SLHDSA_PREHASH_SHAKE256	4U
++#define CMH_SLHDSA_PREHASH_MAX		4U
++
++/* SLH-DSA n-value table indexed by (param_set - 1) */
++#define CMH_SLHDSA_N_128		16U
++#define CMH_SLHDSA_N_192		24U
++#define CMH_SLHDSA_N_256		32U
++
++/* SLH-DSA key sizes: pk = 2*n, sk = 4*n, seed = 3*n */
++#define CMH_SLHDSA_PK_SIZE(n)		(2U * (n))
++#define CMH_SLHDSA_SK_SIZE(n)		(4U * (n))
++#define CMH_SLHDSA_SEED_SIZE(n)		(3U * (n))
++
++/* SLH-DSA signature sizes indexed by (param_set - 1) */
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_128S	7856U
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_128F	17088U
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_192S	16224U
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_192F	35664U
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_256S	29792U
++#define CMH_SLHDSA_SIG_SIZE_SHAKE_256F	49856U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_128S	7856U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_128F	17088U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_192S	16224U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_192F	35664U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_256S	29792U
++#define CMH_SLHDSA_SIG_SIZE_SHA2_256F	49856U
++
++/* -- PKE curve IDs -------------- */
++
++#define CMH_CURVE_P192			0x01U
++#define CMH_CURVE_P224			0x02U
++#define CMH_CURVE_P256			0x03U
++#define CMH_CURVE_P384			0x04U
++#define CMH_CURVE_P521			0x05U
++#define CMH_CURVE_SECP256K1		0x07U
++#define CMH_CURVE_BP192R1		0x11U
++#define CMH_CURVE_BP224R1		0x12U
++#define CMH_CURVE_BP256R1		0x13U
++#define CMH_CURVE_BP320R1		0x14U
++#define CMH_CURVE_BP384R1		0x15U
++#define CMH_CURVE_BP512R1		0x16U
++#define CMH_CURVE_SM2			0x18U
++#define CMH_CURVE_25519			0x21U
++#define CMH_CURVE_448			0x22U
++
++/* ML-KEM */
++
++struct cmh_ioctl_ml_kem_keygen {
++	__u32 version;
++	__u32 k;		/* security parameter: 2/3/4 */
++	__u32 flags;		/* CMH_QSE_FLAG_* */
++	__u32 __reserved;
++	__u64 seed;		/* user-space pointer to seed (or 0 for HW RNG) */
++	__u64 z;		/* user-space pointer to z (or 0 for HW RNG) */
++	__u64 ek;		/* [out] user-space pointer to encapsulation key */
++	__u64 dk;		/* [out] user-space pointer to decapsulation key
++				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
++				 */
++	__u64 dk_cid;		/* CID for DS entry (if DS_REF) */
++	__u64 dk_ref;		/* [out] dk DS reference (if DS_REF) */
++};
++
++struct cmh_ioctl_ml_kem_enc {
++	__u32 version;
++	__u32 k;
++	__u32 flags;		/* CMH_QSE_FLAG_* */
++	__u32 __reserved;
++	__u64 coin;		/* user-space pointer to random coin (or 0) */
++	__u64 ek;		/* user-space pointer to encapsulation key */
++	__u64 ct;		/* [out] user-space pointer to ciphertext */
++	__u64 ss;		/* [out] user-space pointer to shared secret */
++	__u64 __reserved2[2];	/* reserved for future use */
++};
++
++struct cmh_ioctl_ml_kem_dec {
++	__u32 version;
++	__u32 k;
++	__u32 flags;		/* CMH_QSE_FLAG_* */
++	__u32 __reserved;
++	__u64 ct;		/* user-space pointer to ciphertext */
++	__u64 dk;		/* user-space pointer to dk or DS ref */
++	__u64 ss;		/* [out] user-space pointer to shared secret */
++	__u64 __reserved2[2];	/* reserved for future use */
++};
++
++/* ML-DSA */
++
++struct cmh_ioctl_ml_dsa_keygen {
++	__u32 version;
++	__u32 mode;		/* security parameter: 2/3/5 */
++	__u32 flags;		/* CMH_QSE_FLAG_* */
++	__u32 __reserved;
++	__u64 seed;		/* user-space pointer to seed (or 0 for HW RNG) */
++	__u64 pk;		/* [out] user-space pointer to public key */
++	__u64 sk;		/* [out] user-space pointer to secret key
++				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
++				 */
++	__u64 sk_cid;		/* CID for DS entry (if DS_REF) */
++	__u64 sk_ref;		/* [out] sk DS reference (if DS_REF) */
++};
++
++struct cmh_ioctl_ml_dsa_sign {
++	__u32 version;
++	__u32 mode;
++	__u32 flags;		/* CMH_QSE_FLAG_* */
++	__u32 mlen;		/* message length in bytes */
++	__u64 m;		/* user-space pointer to message */
++	__u64 sk;		/* user-space pointer to sk or DS ref */
++	__u64 sig;		/* [out] user-space pointer to signature */
++	__u64 rnd;		/* user-space pointer to randomness (or 0) */
++};
++
++/* SLH-DSA */
++
++struct cmh_ioctl_slhdsa_keygen {
++	__u32 version;
++	__u32 parameter_set;	/* HCQ_SLHDSA_SHAKE_128S .. SHA2_256F */
++	__u32 flags;		/* CMH_QSE_FLAG_DS_REF */
++	__u32 __reserved;
++	__u64 seed;		/* user-space pointer to seed */
++	__u64 pk;		/* [out] user-space pointer to public key */
++	__u64 sk;		/* [out] user-space pointer to secret key
++				 * or [out] DS ref if CMH_QSE_FLAG_DS_REF
++				 */
++	__u64 sk_cid;		/* CID for DS entry (if DS_REF) */
++	__u64 sk_ref;		/* [out] sk DS reference (if DS_REF) */
++};
++
++struct cmh_ioctl_slhdsa_sign {
++	__u32 version;
++	__u32 parameter_set;
++	__u32 msg_len;
++	__u32 ctx_len;
++	__u64 msg;		/* user-space pointer to message */
++	__u64 ctx;		/* user-space pointer to context (or 0) */
++	__u64 sk;		/* DS ref for secret key */
++	__u64 sig;		/* [out] user-space pointer to signature */
++	__u64 add_random;	/* user-space pointer to addl. randomness (or 0) */
++};
++
++struct cmh_ioctl_slhdsa_sign_prehash {
++	__u32 version;
++	__u32 parameter_set;
++	__u32 prehash_algo;	/* CMH_SLHDSA_PREHASH_* */
++	__u32 digest;		/* 0 = raw msg (eSW hashes), 1 = pre-computed digest */
++	__u32 msg_len;
++	__u32 ctx_len;
++	__u64 msg;		/* user-space pointer to message/digest */
++	__u64 ctx;		/* user-space pointer to context (or 0) */
++	__u64 sk;		/* DS ref for secret key */
++	__u64 sig;		/* [out] user-space pointer to signature */
++	__u64 add_random;	/* user-space pointer to addl. randomness (or 0) */
++};
++
++/* -- SM2 ioctl argument structures ----------- */
++
++/* SM2 fixed key sizes (sm2p256v1 curve, 256-bit) */
++#define CMH_SM2_CLEN			32U	/* coordinate length */
++#define CMH_SM2_PUBKEY_LEN		64U	/* uncompressed (x||y) */
++#define CMH_SM2_POINT_LEN		64U	/* EC point (x||y) */
++#define CMH_SM2_SHARED_KEY_LEN		16U	/* ECDH shared key */
++#define CMH_SM2_DIGEST_LEN		32U	/* SM3 digest (ZA) */
++/*
++ * SM2 enc_hash/dec_hash payload limit.
++ *
++ * The eSW PKE driver implements only a single-block GM/T 0003.4 KDF
++ * (one SM3 invocation, 32 bytes of key stream).  Longer messages would
++ * silently produce incorrect ciphertext / plaintext, so the driver caps
++ * the payload at 32 bytes.  See Documentation/ABI/testing/cmh-mgmt.
++ */
++#define CMH_SM2_MAX_MSG_LEN		32U	/* encrypt/decrypt */
++#define CMH_SM2_MAX_ID_LEN		32U	/* identity string */
++#define CMH_SM2_CT_OVERHEAD		96U	/* C1(64) + C3(32) */
++#define CMH_SM2_MAX_CT_LEN		128U	/* 96 + max_msg = 128 */
++
++struct cmh_ioctl_sm2_ecdh_keygen {
++	__u32 version;
++	__u32 nonce_len;	/* 0 = HW generates r (written back), 32 = caller provides r */
++	__u64 nonce;		/* [in/out] user-space pointer to nonce buffer (32B) */
++	__u64 session_key;	/* [out] user-space pointer to session key R=r*G (64B) */
++};
++
++struct cmh_ioctl_sm2_ecdh {
++	__u32 version;
++	__u32 nonce_len;	/* 0 = HW generates (written back), 32 = caller provides */
++	__u64 nonce;		/* [in/out] user-space pointer to nonce r (32B) */
++	__u64 peer_public_key;	/* user-space pointer to peer pub key (64B) */
++	__u64 peer_session_key;	/* user-space pointer to peer session key (64B) */
++	__u64 key_ref;		/* private key DS reference */
++	__u64 shared_point;	/* [out] user-space pointer to shared point (64B) */
++	__u64 shared_point_ref;	/* [in/out] 0 = read-back mode; &ref = keep DS, write ref */
++};
++
++struct cmh_ioctl_sm2_dec_point {
++	__u32 version;
++	__u32 ciphertext_len;	/* total ciphertext length (97..128) */
++	__u64 ciphertext;	/* user-space pointer to ciphertext (64B: C1) */
++	__u64 dec_point;	/* [out] user-space pointer to dec point (64B) */
++	__u64 key_ref;		/* private key DS reference */
++};
++
++struct cmh_ioctl_sm2_enc_point {
++	__u32 version;
++	__u32 nonce_len;	/* 0 = HW generates, 32 = caller provides */
++	__u64 nonce;		/* user-space pointer to nonce (or 0) */
++	__u64 public_key;	/* user-space pointer to public key (64B) */
++	__u64 ciphertext;	/* [out] user-space pointer to C1 (64B) */
++	__u64 enc_point;	/* [out] user-space pointer to enc point (64B) */
++};
++
++struct cmh_ioctl_sm2_id_digest {
++	__u32 version;
++	__u32 id_len;		/* identity length in bytes (<=32) */
++	__u64 id;		/* user-space pointer to identity string */
++	__u64 public_key;	/* user-space pointer to public key (64B) */
++	__u64 digest;		/* [out] user-space pointer to ZA digest (32B) */
++};
++
++/*
++ * SM2 ECDH_HASH -- derive shared key from shared point + ZA digests.
++ *
++ * IMPORTANT: The digest fields use ABSOLUTE ordering per GM/T 0003.3,
++ * NOT relative own/peer ordering.  Both parties must pass:
++ *   peer_id_digest = Z_A (initiator's digest) -- hashed FIRST
++ *   id_digest      = Z_B (responder's digest) -- hashed SECOND
++ * The eSW computes: KDF(shared_point || peer_id_digest || id_digest).
++ */
++struct cmh_ioctl_sm2_ecdh_hash {
++	__u32 version;
++	__u32 __reserved;
++	__u64 peer_id_digest;	/* ptr to Z_A -- initiator's digest (32B) */
++	__u64 id_digest;	/* ptr to Z_B -- responder's digest (32B) */
++	__u64 shared_point_ref;	/* DS reference from SM2_ECDH */
++	__u64 shared_key;	/* [out] ptr to shared key (16B) */
++};
++
++struct cmh_ioctl_sm2_dec_hash {
++	__u32 version;
++	__u32 ciphertext_len;	/* ciphertext length (97..128) */
++	__u64 ciphertext;	/* user-space pointer to full ciphertext */
++	__u64 dec_point;	/* user-space pointer to dec point (64B) */
++	__u64 plaintext;	/* [out] user-space pointer to plaintext */
++};
++
++struct cmh_ioctl_sm2_enc_hash {
++	__u32 version;
++	__u32 message_len;	/* message length (1..32) */
++	__u64 message;		/* user-space pointer to plaintext */
++	__u64 enc_point;	/* user-space pointer to enc point (64B) */
++	__u64 ciphertext;	/* [out] user-space pointer to ciphertext */
++};
++
++/* PQC ioctl numbers */
++#define CMH_IOCTL_ML_KEM_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x20, \
++					struct cmh_ioctl_ml_kem_keygen)
++#define CMH_IOCTL_ML_KEM_ENC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x21, \
++					struct cmh_ioctl_ml_kem_enc)
++#define CMH_IOCTL_ML_KEM_DEC		_IOWR(CMH_MGMT_IOC_MAGIC, 0x22, \
++					struct cmh_ioctl_ml_kem_dec)
++#define CMH_IOCTL_ML_DSA_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x23, \
++					struct cmh_ioctl_ml_dsa_keygen)
++#define CMH_IOCTL_ML_DSA_SIGN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x24, \
++					struct cmh_ioctl_ml_dsa_sign)
++#define CMH_IOCTL_SLHDSA_KEYGEN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x28, \
++					struct cmh_ioctl_slhdsa_keygen)
++#define CMH_IOCTL_SLHDSA_SIGN		_IOWR(CMH_MGMT_IOC_MAGIC, 0x29, \
++					struct cmh_ioctl_slhdsa_sign)
++#define CMH_IOCTL_SLHDSA_SIGN_PREHASH	_IOWR(CMH_MGMT_IOC_MAGIC, 0x2D, \
++					struct cmh_ioctl_slhdsa_sign_prehash)
++
++/* SM2 operation ioctls */
++#define CMH_IOCTL_SM2_ECDH_KEYGEN	_IOWR(CMH_MGMT_IOC_MAGIC, 0x30, \
++					struct cmh_ioctl_sm2_ecdh_keygen)
++#define CMH_IOCTL_SM2_ECDH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x31, \
++					struct cmh_ioctl_sm2_ecdh)
++#define CMH_IOCTL_SM2_DEC_POINT		_IOWR(CMH_MGMT_IOC_MAGIC, 0x32, \
++					struct cmh_ioctl_sm2_dec_point)
++#define CMH_IOCTL_SM2_ENC_POINT		_IOWR(CMH_MGMT_IOC_MAGIC, 0x33, \
++					struct cmh_ioctl_sm2_enc_point)
++#define CMH_IOCTL_SM2_ID_DIGEST		_IOWR(CMH_MGMT_IOC_MAGIC, 0x34, \
++					struct cmh_ioctl_sm2_id_digest)
++#define CMH_IOCTL_SM2_ECDH_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x35, \
++					struct cmh_ioctl_sm2_ecdh_hash)
++#define CMH_IOCTL_SM2_DEC_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x36, \
++					struct cmh_ioctl_sm2_dec_hash)
++#define CMH_IOCTL_SM2_ENC_HASH		_IOWR(CMH_MGMT_IOC_MAGIC, 0x37, \
++					struct cmh_ioctl_sm2_enc_hash)
++
++/*
++ * EAC (Error and Alarm Controller) -- read and clear error registers.
++ *
++ * Returns a snapshot of all hardware error/safety/notification registers.
++ * The eSW atomically reads and clears the registers on each call, so
++ * successive reads show only new events.
++ */
++struct cmh_ioctl_eac_read {
++	__u32 version;			/* must be CMH_MGMT_V1 */
++	__u32 __reserved;
++	__u64 mailbox_notification;	/* [out] MBX safety notification bitmask */
++	__u32 hw_error;			/* [out] HWC error bitmask */
++	__u32 hw_nmi;			/* [out] HWC NMI bitmask */
++	__u32 hw_panic;			/* [out] HWC panic bitmask */
++	__u32 safety_fatal;		/* [out] HWC fatal safety bitmask */
++	__u32 safety_notification;	/* [out] HWC safety notification bitmask */
++	__u32 sw_info0;			/* [out] eSW tracing info */
++	__u32 sw_info1;			/* [out] eSW tracing info */
++	__u32 sram_bank_errors[4];	/* [out] correctable ECC error counts */
++	__u32 __pad;			/* explicit tail padding (prevent info leak) */
++};
++
++/*
++ * DRBG CONFIG -- configure the hardware DRBG before first use.
++ *
++ * This is a management operation normally performed once at system
++ * start-up.  Must be called before any hwrng reads or DRBG GENERATE
++ * operations.
++ */
++#define CMH_DRBG_RATIO_ONE		0	/* 1:1 entropy ratio */
++#define CMH_DRBG_RATIO_ONE_HALF		1	/* 1:2 */
++#define CMH_DRBG_RATIO_ONE_THIRD	2	/* 1:3 */
++#define CMH_DRBG_RATIO_ONE_FOURTH	3	/* 1:4 */
++
++#define CMH_DRBG_STRENGTH_128		0x00	/* 128-bit security */
++#define CMH_DRBG_STRENGTH_256		0x10	/* 256-bit security */
++
++struct cmh_ioctl_drbg_config {
++	__u32 version;			/* must be CMH_MGMT_V1 */
++	__u32 entropy_ratio;		/* CMH_DRBG_RATIO_* */
++	__u32 security_strength;	/* CMH_DRBG_STRENGTH_* */
++	__u32 __reserved;
++};
++
++/* EAC ioctl number */
++#define CMH_IOCTL_EAC_READ		_IOWR(CMH_MGMT_IOC_MAGIC, 0x0F, \
++					struct cmh_ioctl_eac_read)
++
++/* DRBG management ioctl number */
++#define CMH_IOCTL_DRBG_CONFIG		_IOW(CMH_MGMT_IOC_MAGIC, 0x40, \
++					struct cmh_ioctl_drbg_config)
++
++#endif /* _UAPI_CMH_MGMT_IOCTL_H */
 -- 
 2.43.7
 
