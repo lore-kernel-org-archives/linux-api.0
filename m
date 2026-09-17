@@ -1,28 +1,28 @@
-Received: from DM1PR04CU001.outbound.protection.outlook.com (mail-centralusazon11020087.outbound.protection.outlook.com [52.101.61.87])
+Received: from DM1PR04CU001.outbound.protection.outlook.com (mail-centralusazon11020120.outbound.protection.outlook.com [52.101.61.120])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 666E24B4035;
-	Thu, 17 Sep 2026 22:59:51 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.61.87
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 445CB4BF92E;
+	Thu, 17 Sep 2026 22:59:52 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.61.120
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1789685998; cv=fail; b=f5Rr/0K18FCE/qjX0/JE0qL6z70P73cNj3EfwwjG2KxcUCVh7XRzRmyi26ePOCTja4ATAo32ia8lfkCedFfImim6vCXjHIdzppSiShG6Hs9Q/BOA5kUgPxc8f4iRNh6OdkDQuQCqkJSXjDSC2yjT4pc86fhkf98kkPPJms2myFE=
+	t=1789686000; cv=fail; b=DiCM412XgJ0oVNADe+2yP68bneTrUAO16hu9Ww5DpaualXSJCSzlxni4huC3SAJIqnzJ16Yww/Qidol/Sdny5f/Oh/UjlsrCXU35M69pNz36aesWFYecJgeVq91d6cArbf7HEwUFmLuIY3/dh+yQUpKGnGfAf6HWIhbq4QiXVrQ=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1789685998; c=relaxed/simple;
-	bh=1B2gta500JZeA+yoUjbExcL7NVm2RNYOZohnml9gM60=;
+	s=arc-20240116; t=1789686000; c=relaxed/simple;
+	bh=thUvqgeI0nznJk3tprE+iRjfoB5mJIFmRP9qlqAxgwc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=U11LSqXZmHmhF1PGq+xecwtu1by4Mxm0431XzhUOXOwpiho+UpdAqbwCd2E5ZJDF8ySLVIpT5bwYTbBwcWZHP0+uRYwSK9dI8wi6rLbJ2Vul8s4KDgy4hh3cD1w93sNQuXS67cGXe1ptduWN1KPcKxFoRP4QjAC2STbtY79O9w8=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=hJ3KWdXH; arc=fail smtp.client-ip=52.101.61.87
+	 MIME-Version:Content-Type; b=mTg78PFTADikHctUD4pSBwv/So0g7GBDqqhz+5Eu4ma5g9VoTtPwFKVlGFmcg1zxb4CXXbIUyv3lKpcHKLGYnE0Tm2WeD88hNZhGaOphxyzt+6Rv811BKAaHLbwwPECOfa4vZ/nqiVp5g30rvai+E6ZdJdGvddLe+Dnqt5XWS0c=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=ha/cf6Ls; arc=fail smtp.client-ip=52.101.61.120
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="hJ3KWdXH"
+	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="ha/cf6Ls"
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=dwFkGr1eNctC1FGS7hGQH9g06sI6T3HwjdTREh3IxRruPTrsn75Tv67QLFNQWktz/ikmVp6qOqLfmO5vrpG0SfWlKqsgeDrqOLAoZnRsBcK7rNwNizS6zTM7ZRa4nqZXALps8PwClKRyUOFjIR+B4HHYe3fm/Xyzls2ennBZrI2WdSNge8G9SspSrmzQzf09cD1V5y8tvVczKzJYzuHSsX4Ow1Te7KnggIZvw097SE7Y+k9Ee2QPb1Gi2hpzqZmygM8w7EbqPmU1PdMY1hAQezkjDAvSl+XfhzMpaytm+D9UvgnJsj/HoF/+lFSz27+ETQhGzQU9Lt4HHaWI3T8cHQ==
+ b=q+LCvpHnTi67QkPqxEPAgCbei5ZRnyg1Bjq09qKCq+ZZuJyTv3TK+PdGHRzLPUdD+hHs7ew8Oes+dJO0mpAkP2dK9QvxmHQ0/BtoXytsmTmwOwLFDTrfDzaSeSGseBlZNU70kFhcym0fcBbjlOpleNk9mFI2NgzTHhdbS9/Zl0y2VSSV0PPkzNDa0zJT4AZb/uc5TTLFKiNTMkpYTK8VGIVq0EB1yQdUx8meWNQ+FfD3reyCbt2TgdPPVACU3o1wIwiyBNS33X0ui+F4f5RqLGJqQ5pCj4b0DzK09kxdKRFHB3l8Y/YCsE6yhX7vb17kab6U2+liWjtorUQ3JnsVxw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=X2VX9lKohkPpnh4eRIAnB5oaBaH3obl+RR6aSz4YAPk=;
- b=lut7XeF4t18jbozBH7sZ9EZ0T86u8D2q+AF64Cwl3enQFCxf0DH3Xv/fetMHRMxIn+lKVGbo1DcHIjICxHwa6xnfRLfrfhOzB1AFkr+w410jttVAbatD5tGlJrtZBLcwemrmFaqmjcdShjKGD1B1JlGCh84sPE65sqK3mV2/EJNlzLg67AhKQa/MPiGd26QQQuPw1FJSaNdnUkmX6wHU3gUEuYk5cbSt2VWvdf17PioBxa/weUqdBsUB4VKU98FeKncp//uReg0uUbtK8PkaB56mxbwUYnuGZ3JULs9DhXSccNCSHhf6lcRW9XIyu6j9AP8ruPqSRYBfJizAr7IFLA==
+ bh=zyaWpSQnjrYz1Ld2zGUVB1ax9Z9dF+S+WyW4plx64aI=;
+ b=PKbdEiTFt1dn1RGbm6lgByghXRSXHR/YH0VS3QYjXrxflTnMLNZ318k4cgPCQQAQckX5qYyqZUlw+7OpzeMNoP/CGIE+k8c8m10cLDYg4vRxPawu7HXdvPrnPi5N1Anbatho65FigiX5Jfb9bu0tn0M+TtYE1CWQLHn5eb1Wd6KO2bd9GgTBY0HEVmPh4E8SUEnYoXgHr7HytflZGiCWH+nuF1g7SWs16Gi3SDFPhGlhFtIeHvJbMSc10wziRXAbMT1Jl13CFHz7EJBibqvoZ1HGBGCKfckiUJJrmcXFap/15WJcYfCwNESje8YuA7M52SfkwNjADKMXQrGkB+5cPw==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
  192.86.86.210) smtp.rcpttodomain=cryptography.com smtp.mailfrom=rambus.com;
  dmarc=pass (p=reject sp=reject pct=100) action=none header.from=rambus.com;
@@ -30,18 +30,18 @@ ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass (sender ip is
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=X2VX9lKohkPpnh4eRIAnB5oaBaH3obl+RR6aSz4YAPk=;
- b=hJ3KWdXHiFmgoQX2CYuPyHsRozFs36dgEhSgpoAP2E+UkKMUra8dy/MMSPFx4R1Tee7wHVHZHsxxf4e36LQtmug7k5u6P8nMq/OLKhaXlP8SlZwsooa34po5f6XKCZJ4kb2muUtoaN/OZzaU/2kfHQuUEQXnwBuDQGIDpll787BBvKbXtDBkW+av6YpBwtnIZUtsj23TNbl5cSVPQTkCaenHAuq6psuDWulvhip6GRTY3mdoX9uJ86/dmfcVtdM78bLnW+R0uZzBoLnOq3bWGWjPbX6q5oEgyxRa9/VkFs4ZDiv2x3zB3+vcT6GCu1o6qH30D61QMIy6G6Ihdjy1tQ==
-Received: from BN9PR03CA0661.namprd03.prod.outlook.com (2603:10b6:408:10e::6)
- by MN2PR04MB6639.namprd04.prod.outlook.com (2603:10b6:208:1e8::9) with
+ bh=zyaWpSQnjrYz1Ld2zGUVB1ax9Z9dF+S+WyW4plx64aI=;
+ b=ha/cf6Ls1ZWALQSrPCw+7W+wUTMewcCa7d62xmqV87Kx3bv/SRyNtDRgSDRvAg1RPu8eYmctGSaDnDD8oJh0TEGyimQhNC8Es9O3j1/tXv2vp/TsF5nomDT9JbQWrz0YiFereyW24PjecrKgkegtICbk/KzxzCAnp7MyEKx4/UOiiUPokR4e0Q+qG3mbSaLoTcPQGFHC3FqOuxElCI2Wh+2f7ZgpiIm7vJw0MocDVKGp5bQQr6W7ML2AFqqFskOpmX/b7HMmAIEUPHWSeluMsyyuXkpBPs89eunoUlBbSkLkMgNLfULhGIi+URy5QrsmHfEkGWAm5rC/dTUUjiamQQ==
+Received: from MW4PR04CA0336.namprd04.prod.outlook.com (2603:10b6:303:8a::11)
+ by MN2PR04MB6463.namprd04.prod.outlook.com (2603:10b6:208:1a3::15) with
  Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.428.12; Thu, 17 Sep
- 2026 22:59:36 +0000
-Received: from BN2PEPF0000A804.namprd02.prod.outlook.com
- (2603:10b6:408:10e:cafe::78) by BN9PR03CA0661.outlook.office365.com
- (2603:10b6:408:10e::6) with Microsoft SMTP Server (version=TLS1_3,
+ 2026 22:59:35 +0000
+Received: from SJ5PEPF000001CF.namprd05.prod.outlook.com
+ (2603:10b6:303:8a:cafe::1b) by MW4PR04CA0336.outlook.office365.com
+ (2603:10b6:303:8a::11) with Microsoft SMTP Server (version=TLS1_3,
  cipher=TLS_AES_256_GCM_SHA384) id 15.21.428.12 via Frontend Transport; Thu,
- 17 Sep 2026 22:59:36 +0000
+ 17 Sep 2026 22:59:35 +0000
 X-MS-Exchange-Authentication-Results: spf=pass (sender IP is 192.86.86.210)
  smtp.mailfrom=rambus.com; dkim=none (message not signed)
  header.d=none;dmarc=pass action=none header.from=rambus.com;
@@ -49,11 +49,11 @@ Received-SPF: Pass (protection.outlook.com: domain of rambus.com designates
  192.86.86.210 as permitted sender) receiver=protection.outlook.com;
  client-ip=192.86.86.210; helo=hqxsv-psmtppxy02.rambus.com; pr=C
 Received: from hqxsv-psmtppxy02.rambus.com (192.86.86.210) by
- BN2PEPF0000A804.mail.protection.outlook.com (10.167.245.168) with Microsoft
+ SJ5PEPF000001CF.mail.protection.outlook.com (10.167.242.43) with Microsoft
  SMTP Server (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.21.451.8
  via Frontend Transport; Thu, 17 Sep 2026 22:59:34 +0000
 Received: from hqxsv-cmdev3-aousherovitch.rambus.com (hqn-lb-int-float.rambus.com [10.12.20.20])
-	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id 632E4180176B;
+	by hqxsv-psmtppxy02.rambus.com (Postfix) with ESMTP id 93E6F1801770;
 	Thu, 17 Sep 2026 22:59:32 +0000 (UTC)
 From: Alex Ousherovitch <aousherovitch@rambus.com>
 To: Albert Ou <aou@eecs.berkeley.edu>,
@@ -79,9 +79,9 @@ Cc: Alexandre Ghiti <alex@ghiti.fr>,
 	linux-riscv@lists.infradead.org,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Thi Nguyen <thin@rambus.com>
-Subject: [PATCH v5 13/19] crypto: cmh - add ECDSA/SM2 sig
-Date: Thu, 17 Sep 2026 15:59:22 -0700
-Message-ID: <20260917225929.2494111-14-aousherovitch@rambus.com>
+Subject: [PATCH v5 17/19] Documentation: ioctl: add CMH ioctl documentation and register 'J'
+Date: Thu, 17 Sep 2026 15:59:26 -0700
+Message-ID: <20260917225929.2494111-18-aousherovitch@rambus.com>
 X-Mailer: git-send-email 2.43.7
 In-Reply-To: <20260917225929.2494111-1-aousherovitch@rambus.com>
 References: <20260917225929.2494111-1-aousherovitch@rambus.com>
@@ -94,711 +94,1372 @@ MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 X-EOPAttributedMessage: 0
 X-MS-PublicTrafficType: Email
-X-MS-TrafficTypeDiagnostic: BN2PEPF0000A804:EE_|MN2PR04MB6639:EE_
+X-MS-TrafficTypeDiagnostic: SJ5PEPF000001CF:EE_|MN2PR04MB6463:EE_
 Content-Type: text/plain
-X-MS-Office365-Filtering-Correlation-Id: a044d8d0-f228-468b-88b6-08df150f57b7
+X-MS-Office365-Filtering-Correlation-Id: 11a5ae9b-3a96-4dff-743d-08df150f577a
 X-MS-Exchange-SenderADCheck: 1
 X-MS-Exchange-AntiSpam-Relay: 0
 X-Microsoft-Antispam:
-	BCL:0;ARA:13230040|36860700016|376014|23010399003|7416014|1800799024|82310400026|22082099003|18002099003|3023799007|921020|11063799006|10067099003|56012099006;
+	BCL:0;ARA:13230040|7416014|36860700016|376014|82310400026|23010399003|1800799024|921020|18002099003|22082099003|6133799003|56012099006|11063799006|10067099003|3023799007;
 X-Microsoft-Antispam-Message-Info:
-	ZxI9qd+m72RLev2sKimTG0wrfjJkJ0fnutnQJp9m3wt5DhMsdV1nqRjS1WgHl1WSzooPG0BKs4GSBBu5svUcjBfW1K2PGNA3Qh6dW9QCEAMpB1CDCPfbY9xg6sqNnxsjviR09/7u7c00xOK1MCOz62Eo7r3XB4p5n7+ZGS5cQYKDjNXOS6p+rsQeZFZ9g/fdm9T1IHfuCHiaDNRntIQTPq0xuePh1mKDfM/OWhu34p+GnDU/RSK7wE3jl9W7vnaMJe4rrXWZicWnXgNJsFzNFQL1bLkFipfgjJUm/+0GRS7XMkVZZTp+KCTWxunpd+VIfrZi0LFUi1/MWEISc+nHNIaQVA/84+zfhQKwsI2SjtBJCq6kvOOSZMU9S6leOLYtZYEcja+PjL1JiMgvghViKb9xlzvmEp+h5O68Knft/sBbawSe7U4fbsA4ssIbMwumAFYTC2gP4ArTAb9Wk/1ZIcd7qHTgW4A11toZ7z6KdCzYaADKWoKqpMoSCanDcEO4Ea5ExMu0QeFesjMB5j9X93NrNyB8fdNWfvYIX1981GcqCwkJ47JE9vAHcsvvKHHaokQKGJ5tesyofsJhUEAP36OetQ/XdCJl+h2Ia5efyhGUEgfhL9cLGMpixrKXkYqekyp+pHkI6KtmU0pV1Rim9RejzHyT77IZrA12yrWuu3JLW+W/LM29zw2BKDbSpyis5wbJ7bldCi0NY5ZYn5PeMQQKvSJ1VkrB3uKstnYV3CVBaSyKJD8V8ji9oCnDTWUK
+	njQzSuyF/bCFWHyQ5BNkV3+1TJbOmw4Q5cF6Oa5B7Qe7MuMbZzyPcbFZYPQRSSk7fwgqMWmIbE1FoyTVsiuDWgctomc+yrvWBNpAtuabtiO8Di9HFWuBFW7CR+nzpjL/47JtOEXcXglE/PPemu8fEQvtEOl7ode8QP4KzF35XQt4O8mn2/qvTpnBpgALpQP0B9O7WfMVTZm2iRGoWdo7L3VKdAzUlcNBHTqvD1khXLC/DhzQ33s3SOly1ogUndJAE7yDz+p9GgDowqGiQAz8upiM0Sqlc/qBKujC5ifwV94uGVlYTx/0dFLxLolNye3BV/4RFOTM7TnbKdFTyHTApxcLvkXtHow7vzaPcbgmxYRNRTc4kt0RGzdNq/BZXUkSsO1PF1mS9I9xswd2m51CFYlB3UJ17AYQNaErEFzpHdPeYgY1BotaLqpLBp5y8ntv8LLAwtyP2M8TFpIItAbfeyPlBnnD5o0zPU6SyIhtCj/Mm0Npu7/boMzVRpHzDHJcIVAnbwEkcLQZkkKqJN8jX/jBYIxtARfVSEL1qPL5BSXMLzhz/eVqGCqUyEuhKmM/3+yg0h/E3EyK7cjT/YOhmvmPYKtdokncpRY3FJ5rQJgTiL6Gqg6oLDPRX3FaL9Aut+sosFzmfsMigWUrYDbLJXP/dr3QwwYGUvpJUQJu7EskQ6GhG/YLjgNIHiacwKWUwkqMLvEW1ucqNQ1qj0RFJYJY4dVt8rQ0HyjMRxH/aWUH9yrl7z+yzxgsLWGNf8Lm
 X-Forefront-Antispam-Report:
-	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(36860700016)(376014)(23010399003)(7416014)(1800799024)(82310400026)(22082099003)(18002099003)(3023799007)(921020)(11063799006)(10067099003)(56012099006);DIR:OUT;SFP:1102;
+	CIP:192.86.86.210;CTRY:US;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:hqxsv-psmtppxy02.rambus.com;PTR:InfoDomainNonexistent;CAT:NONE;SFS:(13230040)(7416014)(36860700016)(376014)(82310400026)(23010399003)(1800799024)(921020)(18002099003)(22082099003)(6133799003)(56012099006)(11063799006)(10067099003)(3023799007);DIR:OUT;SFP:1102;
 X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
 X-MS-Exchange-AntiSpam-MessageData-0:
-	aqMBHgVEpiduGQnRMeoePrCVQ6PktNdswVX+yzcHMB9DCaRM0sPGVwqjcQ5rXmvoif541fr7csa/Y7C4OhlRUh2ffw1OTtLehDnHuaw58r5fyA4lh9vxlu4qZpNnWpXUPGjeKM43E0lOKsxBBuIoKe3ps3wICVucEqFtJ5NHk5XZ+b4+8uxNwWObAbgugrmGac6R4ImntJM4sFsQyKDQ5VzJ84ne3j58wfUBxUpDmnJAsz/U5C3tA0x/8DwH6h3Moya/+h3hstsbut9KYCnOUkmFp5fnUwIO5+avjOPjAcTJ/WgvaRK0wIlkGunwVI3ShnkSb693UwfmEHmIbxD1Wqn+0+Zhzus3kK+o6Ebl3U4WEkWMgQf9NJWjCpkCQ7iUuNMmXcyvTQhJlgpryPC2l6FP56MN0YlFjh6KwHTiY788IxgVWB0Jn4/pRGBuVdA6
+	bMYg/jFqc5ceuCPZ7idpIoAi0bdMrJcMsXQnEHDVa2VlYS5LrFEIdKcvg/vx3GnkojWIYtqmcZBgUXrzrEzNO0TOf3q6One5Rt7NLnrUFAq99wV8F5J6FB80XX+vZtsbTrllNKfP8MdTfMp011ycFB+zeayMcT8hlxSRwqpkMxBQ7SpobVeZej8f6Ibn5zRnag7Sj3wZrc35ECyfKZ0ocMwNHNDACeVrkdo6vqXE+yaTIJB8+QazCHRCjaRsLi8x5LTN4sd/SPQJF76a1YnIxI50++ZI89EZ/dIMZyowXHNPKTbX/rDMM1/G3fqz4I4TCOog+kb/pEggXqNcmTP9fbSEZAhdo+gTxhZasFooY6aHDlUEF5RyP9HrvSjdQftnxJdEIhCKkawraiCoWK5iMfzGrjXYlxzXkRjYRkWSf9nxbds/Z5F/q2kznoNQZ0QA
 X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:34.7922
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 17 Sep 2026 22:59:34.5775
  (UTC)
-X-MS-Exchange-CrossTenant-Network-Message-Id: a044d8d0-f228-468b-88b6-08df150f57b7
+X-MS-Exchange-CrossTenant-Network-Message-Id: 11a5ae9b-3a96-4dff-743d-08df150f577a
 X-MS-Exchange-CrossTenant-Id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
 X-MS-Exchange-CrossTenant-OriginalAttributedTenantConnectingIp: TenantId=bd0ba799-c2b9-413c-9c56-5d1731c4827c;Ip=[192.86.86.210];Helo=[hqxsv-psmtppxy02.rambus.com]
 X-MS-Exchange-CrossTenant-AuthSource:
-	BN2PEPF0000A804.namprd02.prod.outlook.com
+	SJ5PEPF000001CF.namprd05.prod.outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Anonymous
 X-MS-Exchange-CrossTenant-FromEntityHeader: HybridOnPrem
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR04MB6639
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: MN2PR04MB6463
 
-Register ECDSA and SM2 sig algorithms using the CMH PKE core.
-Supports P-256, P-384, P-521, and SM2 curves for sign and verify
-operations.  SM2 is registered as verify-only via the crypto API;
-full SM2 operations (encrypt, decrypt, key exchange) are available
-through the /dev/cmh_mgmt ioctl interface.
+Add Documentation/userspace-api/ioctl/cmh_mgmt.rst documenting the
+ioctl commands on the /dev/cmh_mgmt misc device for the Rambus
+CryptoManager Hub (CMH) hardware crypto accelerator driver.  Covers
+key management, KIC key derivation, PKE (RSA, ECDSA, ECDH, EdDSA),
+PQC (ML-KEM, ML-DSA, SLH-DSA), SM2, EAC, and DRBG.  Link the page
+into the userspace-api/ioctl index toctree.
+
+Register ioctl magic number 'J' (0x4A) in ioctl-number.rst.  The
+driver uses ioctls 0x01-0x40.
 
 Signed-off-by: Alex Ousherovitch <aousherovitch@rambus.com>
 Co-developed-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 Signed-off-by: Saravanakrishnan Krishnamoorthy <skrishnamoorthy@rambus.com>
 ---
- drivers/crypto/cmh/Makefile        |   3 +-
- drivers/crypto/cmh/cmh_main.c      |   8 +
- drivers/crypto/cmh/cmh_pke_ecdsa.c | 610 +++++++++++++++++++++++++++++
- 3 files changed, 620 insertions(+), 1 deletion(-)
- create mode 100644 drivers/crypto/cmh/cmh_pke_ecdsa.c
+ .../userspace-api/ioctl/cmh_mgmt.rst          | 1292 +++++++++++++++++
+ Documentation/userspace-api/ioctl/index.rst   |    1 +
+ .../userspace-api/ioctl/ioctl-number.rst      |    1 +
+ 3 files changed, 1294 insertions(+)
+ create mode 100644 Documentation/userspace-api/ioctl/cmh_mgmt.rst
 
-diff --git a/drivers/crypto/cmh/Makefile b/drivers/crypto/cmh/Makefile
-index cdbcc8cdac5f..ae1f74a93e99 100644
---- a/drivers/crypto/cmh/Makefile
-+++ b/drivers/crypto/cmh/Makefile
-@@ -31,7 +31,8 @@ cmh-y := \
- 	cmh_ccp_poly.o \
- 	cmh_rng.o \
- 	cmh_pke_common.o \
--	cmh_pke_rsa.o
-+	cmh_pke_rsa.o \
-+	cmh_pke_ecdsa.o
- 
- # Management ioctl device (/dev/cmh_mgmt): key lifecycle, PKE, PQC ioctls.
- cmh-$(CONFIG_CRYPTO_DEV_CMH_MGMT) += \
-diff --git a/drivers/crypto/cmh/cmh_main.c b/drivers/crypto/cmh/cmh_main.c
-index 23346bbf11b0..b5b12f56a68e 100644
---- a/drivers/crypto/cmh/cmh_main.c
-+++ b/drivers/crypto/cmh/cmh_main.c
-@@ -292,6 +292,11 @@ static int cmh_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_pke_rsa_register;
- 
-+	/* Register PKE ECDSA/SM2 sig */
-+	ret = cmh_pke_ecdsa_register();
-+	if (ret)
-+		goto err_pke_ecdsa_register;
-+
- 	/* Register key management device (/dev/cmh_mgmt) */
- 	ret = cmh_mgmt_register();
- 	if (ret)
-@@ -302,6 +307,8 @@ static int cmh_probe(struct platform_device *pdev)
- 	return 0;
- 
- err_mgmt_register:
-+	cmh_pke_ecdsa_unregister();
-+err_pke_ecdsa_register:
- 	cmh_pke_rsa_unregister();
- err_pke_rsa_register:
- 	cmh_ccp_poly_unregister();
-@@ -360,6 +367,7 @@ static void cmh_remove(struct platform_device *pdev)
- 	cfg = &dev->config;
- 
- 	cmh_mgmt_unregister();
-+	cmh_pke_ecdsa_unregister();
- 	cmh_pke_rsa_unregister();
- 	cmh_ccp_poly_unregister();
- 	cmh_ccp_aead_unregister();
-diff --git a/drivers/crypto/cmh/cmh_pke_ecdsa.c b/drivers/crypto/cmh/cmh_pke_ecdsa.c
+diff --git a/Documentation/userspace-api/ioctl/cmh_mgmt.rst b/Documentation/userspace-api/ioctl/cmh_mgmt.rst
 new file mode 100644
-index 000000000000..a23828750368
+index 000000000000..c02bac128787
 --- /dev/null
-+++ b/drivers/crypto/cmh/cmh_pke_ecdsa.c
-@@ -0,0 +1,610 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2026 Cryptography Research, Inc. (CRI).
-+ * CMH LKM -- ECDSA / SM2 Signature Driver (sig_alg, synchronous)
-+ *
-+ * Registers "ecdsa-nist-p256", "ecdsa-nist-p384", and "ecdsa-nist-p521"
-+ * sig algorithms with sign, verify, set_pub_key, and set_priv_key callbacks.
-+ * Registers "sm2" as verify-only (set_pub_key + verify); SM2 sign is
-+ * provided via the cmh_mgmt ioctl path in cmh_pke_sm2.c.
-+ *
-+ * In-kernel consumers typically use verify-only (module signatures, IMA),
-+ * but we provide sign as well for completeness -- matching the CMH eSW
-+ * capability.
-+ *
-+ * Key format: Public key = raw 04 || X || Y (uncompressed).
-+ * Signature format: struct ecdsa_raw_sig (two u64[ECC_MAX_DIGITS] arrays
-+ * in VLI format -- native byte order, LE digit order) for both sign
-+ * output and verify input.  This matches the kernel crypto sig API.
-+ *
-+ * Private key via cmh_key_ctx: raw keys written via SYS_REF_TEMP.
-+ * Datastore-referenced keys are only reachable through the ioctl
-+ * path (cmh_mgmt.c).
-+ *
-+ * SM2 note: The SM2 sig entry is verify-only (no sign/set_priv_key).
-+ * SM2 signature verification requires the digest to be SM3(ZA || M)
-+ * where ZA = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA).
-+ * The ZA identity pre-hash is the caller's responsibility; the driver
-+ * passes the digest directly to the CMH eSW SM2 verify engine.
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/slab.h>
-+#include <crypto/sha2.h>
-+#include <crypto/sig.h>
-+#include <crypto/internal/sig.h>
-+#include <crypto/internal/ecc.h>
-+
-+#include "cmh_pke.h"
-+#include "cmh_sys.h"
-+#include "cmh_sys_abi.h"
-+#include "cmh_txn.h"
-+#include "cmh_dma.h"
-+#include "cmh_key.h"
-+
-+/*
-+ * Number of ECC digits needed for a given coordinate byte length.
-+ * P-256: 4, P-384: 6, P-521/SM2(clen=68): 9.
-+ */
-+static inline unsigned int clen_to_ndigits(u32 clen)
-+{
-+	return DIV_ROUND_UP(clen, sizeof(u64));
-+}
-+
-+struct cmh_ecdsa_tfm_ctx {
-+	struct cmh_key_ctx key;		/* private key (raw only) */
-+	u8 *pub_key;			/* uncompressed (x, y) without 04 prefix */
-+	u32 pub_key_len;
-+	u32 curve;			/* PKE_CURVE_* */
-+	u32 clen;			/* coordinate length in bytes */
-+};
-+
-+static inline struct cmh_ecdsa_tfm_ctx *cmh_ecdsa_ctx(struct crypto_sig *tfm)
-+{
-+	return crypto_sig_ctx(tfm);
-+}
-+
-+/*
-+ * Convert one VLI component (u64 array, LE digit order, native byte order)
-+ * to big-endian byte array of @out_len bytes.  The VLI value is right-aligned
-+ * in the output (leading zero padding added if ndigits*8 < out_len).  If the
-+ * VLI is wider than @out_len, the skipped leading bytes must be zero; a
-+ * non-zero leading byte is malformed caller input and returns -EBADMSG.
-+ *
-+ * Return: 0 on success, -EBADMSG if the value does not fit in @out_len.
-+ */
-+static int ecdsa_vli_to_be(const u64 *vli, unsigned int ndigits,
-+			   u8 *out, unsigned int out_len)
-+{
-+	unsigned int full_len = ndigits * sizeof(u64);
-+	unsigned int i, skip;
-+
-+	memset(out, 0, out_len);
-+
-+	if (full_len <= out_len) {
-+		/* VLI fits entirely -- write at right end of out */
-+		u8 *dst = out + (out_len - full_len);
-+
-+		for (i = 0; i < ndigits; i++)
-+			put_unaligned_be64(vli[ndigits - 1 - i],
-+					   &dst[i * sizeof(u64)]);
-+	} else {
-+		/*
-+		 * VLI wider than out -- the skipped leading bytes MUST be
-+		 * zero.  This runs on caller-supplied signature data, so a
-+		 * non-zero high byte is malformed input: reject it with
-+		 * -EBADMSG rather than WARN_ON_ONCE (which would let an
-+		 * unprivileged caller trip panic_on_warn).
-+		 */
-+		u8 tmp[ECC_MAX_BYTES];
-+
-+		for (i = 0; i < ndigits; i++)
-+			put_unaligned_be64(vli[ndigits - 1 - i],
-+					   &tmp[i * sizeof(u64)]);
-+		skip = full_len - out_len;
-+		if (memchr_inv(tmp, 0, skip))
-+			return -EBADMSG;
-+		memcpy(out, tmp + skip, out_len);
-+	}
-+
-+	return 0;
-+}
-+
-+/*
-+ * Convert big-endian byte array to VLI (u64 array, LE digit order).
-+ * Output is zero-filled to @max_digits entries.
-+ */
-+static void ecdsa_be_to_vli(const u8 *in, unsigned int in_len,
-+			    u64 *vli, unsigned int max_digits)
-+{
-+	u8 tmp[ECC_MAX_BYTES];
-+	unsigned int full_len;
-+	unsigned int i;
-+
-+	if (WARN_ON_ONCE(max_digits > ECC_MAX_DIGITS))
-+		max_digits = ECC_MAX_DIGITS;
-+
-+	full_len = max_digits * sizeof(u64);
-+
-+	memset(tmp, 0, full_len);
-+	if (in_len <= full_len)
-+		memcpy(tmp + (full_len - in_len), in, in_len);
-+	else
-+		memcpy(tmp, in + (in_len - full_len), full_len);
-+
-+	for (i = 0; i < max_digits; i++) {
-+		unsigned int off = (max_digits - 1 - i) * sizeof(u64);
-+
-+		vli[i] = get_unaligned_be64(&tmp[off]);
-+	}
-+}
-+
-+/*
-+ * Extract raw (r || s) big-endian byte arrays from struct ecdsa_raw_sig.
-+ * Each component is written as @clen bytes into @raw_rs.
-+ */
-+static int ecdsa_sig_to_raw(const void *src, unsigned int slen,
-+			    u8 *raw_rs, u32 clen)
-+{
-+	const struct ecdsa_raw_sig *sig = src;
-+	unsigned int ndigits = clen_to_ndigits(clen);
-+	int ret;
-+
-+	if (slen != sizeof(struct ecdsa_raw_sig))
-+		return -EINVAL;
-+
-+	ret = ecdsa_vli_to_be(sig->r, ndigits, raw_rs, clen);
-+	if (ret)
-+		return ret;
-+	return ecdsa_vli_to_be(sig->s, ndigits, raw_rs + clen, clen);
-+}
-+
-+/*
-+ * Encode raw (r || s) big-endian byte arrays into struct ecdsa_raw_sig.
-+ * Returns sizeof(struct ecdsa_raw_sig) on success.
-+ */
-+static int ecdsa_raw_to_sig(const u8 *raw_rs, u32 clen,
-+			    void *dst, unsigned int dlen)
-+{
-+	struct ecdsa_raw_sig *sig = dst;
-+
-+	if (dlen < sizeof(struct ecdsa_raw_sig))
-+		return -ENOSPC;
-+
-+	memset(sig, 0, sizeof(*sig));
-+	ecdsa_be_to_vli(raw_rs, clen, sig->r, ECC_MAX_DIGITS);
-+	ecdsa_be_to_vli(raw_rs + clen, clen, sig->s, ECC_MAX_DIGITS);
-+	return sizeof(struct ecdsa_raw_sig);
-+}
-+
-+/*
-+ * ECDSA verify (synchronous sig_alg)
-+ *
-+ * @src:    struct ecdsa_raw_sig (VLI format)
-+ * @slen:   signature length (must be sizeof(struct ecdsa_raw_sig))
-+ * @digest: hash digest
-+ * @dlen:   digest length
-+ *
-+ * Returns 0 on successful verification, negative errno on failure.
-+ */
-+static int cmh_ecdsa_verify(struct crypto_sig *tfm,
-+			    const void *src, unsigned int slen,
-+			    const void *digest, unsigned int dlen)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+	u32 clen = ctx->clen;
-+	u32 sig_raw_len = 2 * clen;
-+	u32 copy_len = min_t(u32, dlen, clen);
-+	struct core_dispatch d = cmh_core_select_instance(CMH_CORE_PKE);
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MIN];
-+	u8 *sig_raw = NULL, *dig_buf = NULL, *pk_buf = NULL, *rp_buf = NULL;
-+	dma_addr_t pk_dma, dig_dma, sig_dma, rp_dma;
-+	int ret;
-+
-+	if (!ctx->pub_key)
-+		return -EINVAL;
-+
-+	sig_raw = kzalloc(sig_raw_len, GFP_KERNEL);
-+	dig_buf = kzalloc(clen, GFP_KERNEL);
-+	pk_buf = kmemdup(ctx->pub_key, ctx->pub_key_len, GFP_KERNEL);
-+	rp_buf = kzalloc(clen, GFP_KERNEL);
-+	if (!sig_raw || !dig_buf || !pk_buf || !rp_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/* Extract raw (r, s) big-endian from VLI signature */
-+	ret = ecdsa_sig_to_raw(src, slen, sig_raw, clen);
-+	if (ret)
-+		goto out_free;
-+
-+	/*
-+	 * Truncate or zero-pad digest to clen bytes, right-aligned.
-+	 * Matches ECDSA bits2int: use leftmost min(dlen, clen) bytes,
-+	 * zero-pad on the left when dlen < clen.
-+	 */
-+	memcpy(dig_buf + (clen - copy_len), digest, copy_len);
-+
-+	pk_dma = cmh_dma_map_single(pk_buf, ctx->pub_key_len, DMA_TO_DEVICE);
-+	dig_dma = cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
-+	sig_dma = cmh_dma_map_single(sig_raw, sig_raw_len, DMA_TO_DEVICE);
-+	rp_dma = cmh_dma_map_single(rp_buf, clen, DMA_FROM_DEVICE);
-+
-+	if (cmh_dma_map_error(pk_dma) || cmh_dma_map_error(dig_dma) ||
-+	    cmh_dma_map_error(sig_dma) || cmh_dma_map_error(rp_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	vcq_set_header(&vcq[0], PKE_VCQ_CMDS_MIN);
-+	vcq_add_pke_ecdsa_verify(&vcq[1], d.core_id, ctx->curve, clen,
-+				 pk_dma, dig_dma, sig_dma, rp_dma,
-+				 pke_swap_flags(ctx->curve));
-+	vcq_add_pke_flush(&vcq[2], d.core_id);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, PKE_VCQ_CMDS_MIN, 1, d.mbx_idx);
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(rp_dma))
-+		cmh_dma_unmap_single(rp_dma, clen, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(dig_dma))
-+		cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
-+	if (!cmh_dma_map_error(pk_dma))
-+		cmh_dma_unmap_single(pk_dma, ctx->pub_key_len, DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree(rp_buf);
-+	kfree(pk_buf);
-+	kfree(sig_raw);
-+	kfree(dig_buf);
-+	return ret;
-+}
-+
-+/*
-+ * ECDSA sign (synchronous sig_alg)
-+ *
-+ * @src:  hash digest
-+ * @slen: digest length
-+ * @dst:  output buffer for struct ecdsa_raw_sig (VLI format)
-+ * @dlen: output buffer length
-+ *
-+ * Returns sizeof(struct ecdsa_raw_sig) on success, negative errno on failure.
-+ */
-+static int cmh_ecdsa_sign(struct crypto_sig *tfm,
-+			  const void *src, unsigned int slen,
-+			  void *dst, unsigned int dlen)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+	u32 clen = ctx->clen;
-+	u32 sig_raw_len = 2 * clen;
-+	u32 copy_len = min_t(u32, slen, clen);
-+	struct core_dispatch dd;
-+	struct vcq_cmd vcq[PKE_VCQ_CMDS_MAX];
-+	u8 *dig_buf = NULL, *sig_buf = NULL;
-+	dma_addr_t dig_dma, sig_dma;
-+	int ret, idx;
-+
-+	if (ctx->key.mode != CMH_KEY_RAW)
-+		return -EINVAL;
-+	if (dlen < sizeof(struct ecdsa_raw_sig))
-+		return -EINVAL;
-+
-+	dig_buf = kzalloc(clen, GFP_KERNEL);
-+	sig_buf = kzalloc(sig_raw_len, GFP_KERNEL);
-+	if (!dig_buf || !sig_buf) {
-+		ret = -ENOMEM;
-+		goto out_free;
-+	}
-+
-+	/*
-+	 * Truncate or zero-pad digest to clen bytes, right-aligned.
-+	 * Matches ECDSA bits2int: use leftmost min(slen, clen) bytes,
-+	 * zero-pad on the left when slen < clen.
-+	 */
-+	memcpy(dig_buf + (clen - copy_len), src, copy_len);
-+
-+	dig_dma = cmh_dma_map_single(dig_buf, clen, DMA_TO_DEVICE);
-+	sig_dma = cmh_dma_map_single(sig_buf, sig_raw_len, DMA_FROM_DEVICE);
-+
-+	if (cmh_dma_map_error(dig_dma) || cmh_dma_map_error(sig_dma)) {
-+		ret = -ENOMEM;
-+		goto out_unmap;
-+	}
-+
-+	dd = cmh_core_select_instance(CMH_CORE_PKE);
-+
-+	idx = 1;
-+	vcq_add_sys_write(&vcq[idx], SYS_REF_TEMP, ctx->key.raw.dma,
-+			  SYS_REF_NONE, ctx->key.raw.len,
-+			  ctx->key.raw.sys_type);
-+	vcq[idx].id |= pke_swap_flags(ctx->curve);
-+	idx++;
-+	vcq_add_pke_ecdsa_sign(&vcq[idx++], dd.core_id, ctx->curve, clen,
-+			       dig_dma, sig_dma, SYS_REF_TEMP,
-+			       clen, pke_swap_flags(ctx->curve));
-+	vcq_add_pke_flush(&vcq[idx++], dd.core_id);
-+	vcq_set_header(&vcq[0], idx);
-+
-+	ret = cmh_tm_submit_sync_mbx(vcq, idx, 1, dd.mbx_idx);
-+	if (!ret) {
-+		/* Sync bounce buffer so CPU sees the DMA-written signature */
-+		cmh_dma_sync_for_cpu(sig_dma, sig_raw_len, DMA_FROM_DEVICE);
-+
-+		/* Encode raw (r||s) into VLI ecdsa_raw_sig for kernel API */
-+		ret = ecdsa_raw_to_sig(sig_buf, clen, dst, dlen);
-+	}
-+
-+out_unmap:
-+	if (!cmh_dma_map_error(sig_dma))
-+		cmh_dma_unmap_single(sig_dma, sig_raw_len, DMA_FROM_DEVICE);
-+	if (!cmh_dma_map_error(dig_dma))
-+		cmh_dma_unmap_single(dig_dma, clen, DMA_TO_DEVICE);
-+
-+out_free:
-+	kfree(sig_buf);
-+	kfree(dig_buf);
-+	return ret;
-+}
-+
-+static int cmh_ecdsa_set_pub_key(struct crypto_sig *tfm,
-+				 const void *key, unsigned int keylen)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+	const u8 *d = key;
-+	u32 clen = ctx->clen;
-+	u32 raw_clen;
-+
-+	/* Accept 04 || X || Y (uncompressed point) */
-+	if (keylen < 1 || d[0] != 0x04)
-+		return -EINVAL;
-+	d++;
-+	keylen--;
-+
-+	if (keylen & 1)
-+		return -EINVAL;
-+	raw_clen = keylen / 2;
-+
-+	/*
-+	 * Kernel passes ceil(bits/8) per coordinate (e.g. 66 for P-521),
-+	 * but our HW ABI uses clen (ALIGN(66,4)=68 for P-521).
-+	 * Accept raw_clen <= clen and zero-pad on the left.
-+	 */
-+	if (raw_clen > clen || raw_clen == 0)
-+		return -EINVAL;
-+
-+	kfree(ctx->pub_key);
-+	ctx->pub_key = NULL;
-+	ctx->pub_key_len = 0;
-+
-+	ctx->pub_key = kzalloc(2 * clen, GFP_KERNEL);
-+	if (!ctx->pub_key)
-+		return -ENOMEM;
-+
-+	/* Right-align each coordinate to clen bytes */
-+	memcpy(ctx->pub_key + (clen - raw_clen), d, raw_clen);
-+	memcpy(ctx->pub_key + clen + (clen - raw_clen), d + raw_clen,
-+	       raw_clen);
-+	ctx->pub_key_len = 2 * clen;
-+	return 0;
-+}
-+
-+static int cmh_ecdsa_set_priv_key(struct crypto_sig *tfm,
-+				  const void *key, unsigned int keylen)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+	u32 clen = ctx->clen;
-+	u32 api_len = DIV_ROUND_UP(pke_curve_bits(ctx->curve), 8);
-+	u8 padded[ECC_MAX_BYTES];
-+	int ret;
-+
-+	/*
-+	 * The crypto sig API passes the scalar as ceil(field_bits/8) bytes
-+	 * (e.g. 66 for P-521), which may be shorter than the HW width clen
-+	 * (ALIGN(.,4) = 68 for P-521).  Accept exactly that width and
-+	 * left-pad to clen.  A strict "keylen == clen" wrongly rejected the
-+	 * valid 66-byte P-521 key; accepting "keylen <= clen" wrongly
-+	 * admitted malformed short keys.
-+	 */
-+	if (keylen != api_len)
-+		return -EINVAL;
-+
-+	if (keylen == clen)
-+		return cmh_key_setkey_raw(&ctx->key, key, keylen, CORE_ID_PKE);
-+
-+	memset(padded, 0, clen);
-+	memcpy(padded + (clen - keylen), key, keylen);
-+	ret = cmh_key_setkey_raw(&ctx->key, padded, clen, CORE_ID_PKE);
-+	memzero_explicit(padded, clen);
-+	return ret;
-+}
-+
-+static unsigned int cmh_ecdsa_key_size(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	/* crypto_sig_keysize() returns bits, not bytes */
-+	return pke_curve_bits(ctx->curve);
-+}
-+
-+static unsigned int cmh_ecdsa_max_size(struct crypto_sig *tfm)
-+{
-+	return sizeof(struct ecdsa_raw_sig);
-+}
-+
-+static unsigned int cmh_ecdsa_digest_size(struct crypto_sig *tfm)
-+{
-+	/*
-+	 * Accept digests up to SHA-512 (64 bytes).  Digests longer
-+	 * than the curve order are truncated per ECDSA bits2int.
-+	 * Matches kernel ecdsa_digest_size().
-+	 */
-+	return SHA512_DIGEST_SIZE;
-+}
-+
-+static int cmh_ecdsa_p256_init(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_P256;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_P256);
-+	return 0;
-+}
-+
-+static int cmh_ecdsa_p384_init(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_P384;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_P384);
-+	return 0;
-+}
-+
-+static int cmh_ecdsa_p521_init(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_P521;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_P521);
-+	return 0;
-+}
-+
-+static int cmh_sm2_init(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	memset(ctx, 0, sizeof(*ctx));
-+	ctx->curve = PKE_CURVE_SM2;
-+	ctx->clen = pke_curve_clen(PKE_CURVE_SM2);
-+	return 0;
-+}
-+
-+static void cmh_ecdsa_exit(struct crypto_sig *tfm)
-+{
-+	struct cmh_ecdsa_tfm_ctx *ctx = cmh_ecdsa_ctx(tfm);
-+
-+	cmh_key_destroy(&ctx->key);
-+	kfree(ctx->pub_key);
-+	ctx->pub_key = NULL;
-+}
-+
-+static struct sig_alg cmh_ecdsa_algs[] = {
-+	{
-+		.sign		= cmh_ecdsa_sign,
-+		.verify		= cmh_ecdsa_verify,
-+		.set_pub_key	= cmh_ecdsa_set_pub_key,
-+		.set_priv_key	= cmh_ecdsa_set_priv_key,
-+		.key_size	= cmh_ecdsa_key_size,
-+		.max_size	= cmh_ecdsa_max_size,
-+		.digest_size	= cmh_ecdsa_digest_size,
-+		.init		= cmh_ecdsa_p256_init,
-+		.exit		= cmh_ecdsa_exit,
-+		.base = {
-+			.cra_name	  = "ecdsa-nist-p256",
-+			.cra_driver_name  = "rambus-cmh-ecdsa-nist-p256",
-+			.cra_priority	  = 300,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
-+		},
-+	},
-+	{
-+		.sign		= cmh_ecdsa_sign,
-+		.verify		= cmh_ecdsa_verify,
-+		.set_pub_key	= cmh_ecdsa_set_pub_key,
-+		.set_priv_key	= cmh_ecdsa_set_priv_key,
-+		.key_size	= cmh_ecdsa_key_size,
-+		.max_size	= cmh_ecdsa_max_size,
-+		.digest_size	= cmh_ecdsa_digest_size,
-+		.init		= cmh_ecdsa_p384_init,
-+		.exit		= cmh_ecdsa_exit,
-+		.base = {
-+			.cra_name	  = "ecdsa-nist-p384",
-+			.cra_driver_name  = "rambus-cmh-ecdsa-nist-p384",
-+			.cra_priority	  = 300,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
-+		},
-+	},
-+	{
-+		.sign		= cmh_ecdsa_sign,
-+		.verify		= cmh_ecdsa_verify,
-+		.set_pub_key	= cmh_ecdsa_set_pub_key,
-+		.set_priv_key	= cmh_ecdsa_set_priv_key,
-+		.key_size	= cmh_ecdsa_key_size,
-+		.max_size	= cmh_ecdsa_max_size,
-+		.digest_size	= cmh_ecdsa_digest_size,
-+		.init		= cmh_ecdsa_p521_init,
-+		.exit		= cmh_ecdsa_exit,
-+		.base = {
-+			.cra_name	  = "ecdsa-nist-p521",
-+			.cra_driver_name  = "rambus-cmh-ecdsa-nist-p521",
-+			.cra_priority	  = 300,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
-+		},
-+	},
-+	{
-+		.verify		= cmh_ecdsa_verify,
-+		.set_pub_key	= cmh_ecdsa_set_pub_key,
-+		.key_size	= cmh_ecdsa_key_size,
-+		.max_size	= cmh_ecdsa_max_size,
-+		.digest_size	= cmh_ecdsa_digest_size,
-+		.init		= cmh_sm2_init,
-+		.exit		= cmh_ecdsa_exit,
-+		.base = {
-+			.cra_name	  = "sm2",
-+			.cra_driver_name  = "rambus-cmh-sm2",
-+			.cra_priority	  = 300,
-+			.cra_module	  = THIS_MODULE,
-+			.cra_ctxsize	  = sizeof(struct cmh_ecdsa_tfm_ctx),
-+		},
-+	},
-+};
-+
-+/**
-+ * cmh_pke_ecdsa_register() - Register ECDSA/SM2 sig algorithms with the crypto framework
-+ *
-+ * Return: 0 on success, negative errno on failure.
-+ */
-+int cmh_pke_ecdsa_register(void)
-+{
-+	int ret, i;
-+
-+	if (!cmh_core_present(CMH_CORE_PKE))
-+		return 0;
-+
-+	for (i = 0; i < ARRAY_SIZE(cmh_ecdsa_algs); i++) {
-+		ret = crypto_register_sig(&cmh_ecdsa_algs[i]);
-+		if (ret) {
-+			dev_err(cmh_dev(), "cmh: failed to register %s (%d)\n",
-+				cmh_ecdsa_algs[i].base.cra_name, ret);
-+			goto err_unregister;
-+		}
-+	}
-+
-+	return 0;
-+
-+err_unregister:
-+	while (i--)
-+		crypto_unregister_sig(&cmh_ecdsa_algs[i]);
-+	return ret;
-+}
-+
-+/**
-+ * cmh_pke_ecdsa_unregister() - Unregister ECDSA/SM2 sig algorithms from the crypto framework
-+ */
-+void cmh_pke_ecdsa_unregister(void)
-+{
-+	int i = ARRAY_SIZE(cmh_ecdsa_algs);
-+
-+	if (!cmh_core_present(CMH_CORE_PKE))
-+		return;
-+
-+	while (i--)
-+		crypto_unregister_sig(&cmh_ecdsa_algs[i]);
-+}
++++ b/Documentation/userspace-api/ioctl/cmh_mgmt.rst
+@@ -0,0 +1,1292 @@
++.. SPDX-License-Identifier: GPL-2.0
++
++=============================================
++CMH Key Management ioctl Interface (cmh_mgmt)
++=============================================
++
++:Author: Cryptography Research, Inc. (CRI)
++:Maintainer: linux-crypto@vger.kernel.org
++
++Introduction
++============
++
++The ``/dev/cmh_mgmt`` character device provides user-space access to key
++management, key derivation, public-key, and post-quantum cryptographic
++operations on the CryptoManager Hub (CMH) hardware accelerator.
++
++The device is created by the ``cmh`` kernel module as a ``misc_device``.
++All operations are synchronous -- the ioctl blocks until the hardware
++completes.  Opening the device requires ``CAP_SYS_ADMIN``.
++
++All ioctl argument structures are versioned: user space sets the
++``version`` field to ``CMH_MGMT_V1`` (currently 1).  This allows the
++driver to extend structures in the future without breaking the ABI.
++
++Data types and ioctl numbers are defined in
++``<uapi/linux/cmh_mgmt_ioctl.h>``.  The ioctl type letter is ``'J'``
++(0x4A).
++
++Error Handling
++==============
++
++Unless otherwise noted, all ioctls return 0 on success and a negative
++errno on failure.  Common error codes:
++
++========== =============================================================
++``EINVAL`` Invalid ``version`` field, unsupported parameter, or
++           out-of-range length.
++``EFAULT`` Failed to copy data to/from user space.
++``ENOMEM`` Kernel memory allocation failed.
++``EIO``    Hardware returned an error (eSW command failure).
++``ENOENT`` Key not found (``KEY_FIND``, ``KEY_LIST``).
++========== =============================================================
++
++Datastore Concepts
++==================
++
++The CMH hardware maintains an embedded datastore managed by the eSW
++firmware.  Objects in the datastore are identified by a 64-bit reference
++(``ref``) and optionally by a 64-bit Content ID (``cid``).
++
++Two storage classes exist:
++
++**Temporary (SYS_REF_TEMP)**
++  Lifetime is scoped to a single mailbox slot.  The eSW firmware
++  reclaims the object when the slot is reused.  Used for raw-key
++  provisioning via ``KEY_NEW`` + ``KEY_WRITE``.
++
++**Persistent (SYS_REF_PERSIST)**
++  Survives across mailbox slots.  Requires explicit deletion via
++  ``KEY_DELETE``.  Identified by CID; resolved to a per-mailbox ref
++  via ``KEY_FIND``.
++
++Mailbox Dispatch
++================
++
++All ``/dev/cmh_mgmt`` ioctls are submitted on a single management
++mailbox.  This is a structural requirement of the eSW datastore model,
++not a tunable:
++
++* Datastore access control is **per-mailbox**.  ``KEY_NEW`` grants the
++  creating mailbox read/write/execute access; other mailboxes have none
++  until granted.  The returned 64-bit ``ref`` encodes a randomised
++  offset and does **not** carry the owning mailbox, so an operation that
++  receives only a ``ref`` (``KEY_GRANT``, ``KEY_READ``, ``KEY_DELETE``,
++  ``DS_EXPORT``) cannot itself determine which mailbox owns the object.
++  Using one fixed management mailbox guarantees that a key's create,
++  modify, grant, read and hardware-held-key compute steps all share the
++  mailbox that holds its access rights, without exposing mailbox
++  identity in the UABI.  User space may still widen a key's access to
++  additional mailboxes via ``KEY_GRANT``.
++
++* The eSW ``SYS_REF_TEMP`` scratch store is per-mailbox and persists
++  across ioctl calls, so a multi-step flow that derives into
++  ``SYS_REF_TEMP`` (for example a ``KIC_*`` derivation) and later
++  consumes it (``DS_EXPORT`` with ``wrap_key = SYS_REF_TEMP``) requires
++  both calls to use the same mailbox.
++
++Per-mailbox ``rambus,cores`` device-tree affinity applies to the *stateless*
++in-kernel crypto API path, which carries no datastore state between
++requests and is balanced across mailboxes by the driver.
++
++Key Types
++=========
++
++The ``ds_type`` field in ``KEY_NEW`` and ``KEY_WRITE`` selects the
++datastore object type.  Values are defined as ``CMH_DS_*`` constants:
++
++=================================  =====  ==============================
++Constant                           Value  Description
++=================================  =====  ==============================
++``CMH_DS_RAW_VALUE``               1      Raw byte array
++``CMH_DS_AES_KEY``                 2      AES key (128/192/256-bit)
++``CMH_DS_AES_XTS_KEY``             3      AES-XTS key (256/512-bit)
++``CMH_DS_HMAC_KEY``                4      HMAC key
++``CMH_DS_KMAC_KEY``                5      KMAC key
++``CMH_DS_SM4_KEY``                 6      SM4 key (128-bit)
++``CMH_DS_CHACHA20_KEY``            7      ChaCha20 key (256-bit)
++``CMH_DS_RSA_PRIV_KEY``            10     RSA private key
++``CMH_DS_RSA_PUB_KEY``             11     RSA public key
++``CMH_DS_RSA_CRT_KEY``             12     RSA CRT private key
++``CMH_DS_ECDSA_PRIV_KEY``          13     ECDSA private key
++``CMH_DS_ECDSA_PUB_KEY``           14     ECDSA public key
++``CMH_DS_ECDH_PRIV_KEY``           15     ECDH private key
++``CMH_DS_EDDSA_PRIV_KEY``          16     EdDSA private key
++``CMH_DS_SHARED_SECRET``           17     Shared secret
++``CMH_DS_SM2_PRIV_KEY``            18     SM2 private key
++``CMH_DS_ML_KEM_DK``               20     ML-KEM decapsulation key
++``CMH_DS_ML_DSA_SK``               21     ML-DSA secret key
++``CMH_DS_SLHDSA_SK``               25     SLH-DSA secret key
++=================================  =====  ==============================
++
++Key Flags
++=========
++
++The ``flags`` field in ``KEY_NEW`` and ``KEY_WRITE`` is a bitmask:
++
++==================  ===========  ========================================
++Flag                Bit          Description
++==================  ===========  ========================================
++``CMH_FLAG_PT``     16           Key can be read as plaintext
++``CMH_FLAG_XC``     17           Key can be exported over XC bus
++``CMH_FLAG_SCA``    18           SCA key stored in 2 shares
++==================  ===========  ========================================
++
++Elliptic Curve IDs
++==================
++
++Curve identifiers for PKE operations (``curve`` field):
++
++==========================  =====
++Constant                    Value
++==========================  =====
++``CMH_CURVE_P192``          0x01
++``CMH_CURVE_P224``          0x02
++``CMH_CURVE_P256``          0x03
++``CMH_CURVE_P384``          0x04
++``CMH_CURVE_P521``          0x05
++``CMH_CURVE_SECP256K1``     0x07
++``CMH_CURVE_BP192R1``       0x11
++``CMH_CURVE_BP224R1``       0x12
++``CMH_CURVE_BP256R1``       0x13
++``CMH_CURVE_BP320R1``       0x14
++``CMH_CURVE_BP384R1``       0x15
++``CMH_CURVE_BP512R1``       0x16
++``CMH_CURVE_SM2``           0x18
++``CMH_CURVE_25519``         0x21
++``CMH_CURVE_448``           0x22
++==========================  =====
++
++Key Management ioctls
++=====================
++
++CMH_IOCTL_KEY_NEW
++-----------------
++
++Create a new empty datastore object.
++
++:Direction: ``_IOWR``
++:Number: 0x01
++:Argument: ``struct cmh_ioctl_key_new``
++
++::
++
++  struct cmh_ioctl_key_new {
++      __u32 version;     /* must be CMH_MGMT_V1 */
++      __u32 ds_type;     /* CMH_DS_* key type */
++      __u32 len;         /* key length in bytes */
++      __u32 flags;       /* CMH_FLAG_* */
++      __u64 cid;         /* caller ID (name) for the key */
++      __u64 ref;         /* [out] key reference */
++  };
++
++The returned ``ref`` is used in subsequent ``KEY_WRITE``, ``KEY_READ``,
++and crypto operation ioctls.
++
++CMH_IOCTL_KEY_NEW_RANDOM
++------------------------
++
++Create a new datastore object filled with hardware-generated random data.
++
++:Direction: ``_IOWR``
++:Number: 0x0B
++:Argument: ``struct cmh_ioctl_key_new``
++
++Same structure as ``KEY_NEW``.  The hardware DRBG fills the object with
++``len`` random bytes.
++
++CMH_IOCTL_KEY_WRITE
++-------------------
++
++Write key material into a previously created datastore object.
++
++:Direction: ``_IOW``
++:Number: 0x02
++:Argument: ``struct cmh_ioctl_key_write``
++
++::
++
++  struct cmh_ioctl_key_write {
++      __u32 version;
++      __u32 len;         /* key data length */
++      __u32 ds_type;     /* CMH_DS_* key type */
++      __u32 flags;       /* CMH_FLAG_* */
++      __u64 ref;         /* key reference from KEY_NEW */
++      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
++      __u64 data;        /* user-space pointer to key material */
++  };
++
++If ``wrap_key`` is ``CMH_REF_NONE`` (0), key material is written in
++plaintext.  Otherwise, the data is unwrapped using the specified
++wrapping key.
++
++CMH_IOCTL_KEY_READ
++------------------
++
++Read key material from a datastore object.
++
++:Direction: ``_IOWR``
++:Number: 0x03
++:Argument: ``struct cmh_ioctl_key_read``
++
++::
++
++  struct cmh_ioctl_key_read {
++      __u32 version;
++      __u32 len;         /* buffer length */
++      __u64 ref;         /* key reference */
++      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
++      __u64 data;        /* user-space pointer to output buffer */
++      __u32 out_len;     /* [out] actual bytes written */
++      __u32 __reserved;
++  };
++
++Plaintext reads require the ``CMH_FLAG_PT`` attribute on the key.
++The eSW prepends a 16-byte header (``CMH_SYS_WRAP_HDR_SIZE``) even
++for plaintext reads; the output buffer must accommodate this.  The
++output overhead is ``CMH_DS_EXPORT_OVERHEAD_PLAIN`` (16 bytes) for
++plaintext reads and ``CMH_DS_EXPORT_OVERHEAD_WRAPPED`` (48 bytes:
++16-byte header + 16-byte nonce + 16-byte tag) for wrapped reads.
++
++CMH_IOCTL_KEY_FIND
++------------------
++
++Resolve a Content ID to a datastore reference.
++
++:Direction: ``_IOWR``
++:Number: 0x04
++:Argument: ``struct cmh_ioctl_key_find``
++
++::
++
++  struct cmh_ioctl_key_find {
++      __u32 version;
++      __u32 __reserved;
++      __u64 cid;         /* caller ID to search for */
++      __u64 ref;         /* [out] resolved key reference */
++      __u32 len;         /* [out] key length */
++      __u32 type;        /* [out] key type */
++  };
++
++Returns ``-ENOENT`` if no object with the given CID exists.
++
++CMH_IOCTL_KEY_LIST
++------------------
++
++Iterate datastore objects.
++
++:Direction: ``_IOWR``
++:Number: 0x0E
++:Argument: ``struct cmh_ioctl_key_list``
++
++::
++
++  struct cmh_ioctl_key_list {
++      __u32 version;
++      __u32 __reserved;
++      __u64 start_ref;   /* starting DS reference (0 = first) */
++      __u64 ref;         /* [out] object reference */
++      __u64 cid;         /* [out] caller ID */
++      __u32 len;         /* [out] object length */
++      __u32 type;        /* [out] object type */
++  };
++
++Pass ``start_ref=0`` to begin from the first object.  On return, pass
++the returned ``ref`` as ``start_ref`` in the next call.  Iteration ends
++when ``ref == 0``.
++
++CMH_IOCTL_KEY_GRANT
++-------------------
++
++Set per-mailbox access permissions on a datastore object.
++
++:Direction: ``_IOW``
++:Number: 0x05
++:Argument: ``struct cmh_ioctl_key_grant``
++
++::
++
++  struct cmh_ioctl_key_grant {
++      __u32 version;
++      __u32 __reserved;
++      __u64 ref;         /* key reference */
++      __u64 read;        /* per-MBX read permission bitfield */
++      __u64 write;       /* per-MBX write permission bitfield */
++      __u64 execute;     /* per-MBX execute permission bitfield */
++  };
++
++CMH_IOCTL_KEY_DELETE
++--------------------
++
++Delete a datastore object (persistent keys only).
++
++:Direction: ``_IOW``
++:Number: 0x06
++:Argument: ``struct cmh_ioctl_key_grant``
++
++Uses the same structure as ``KEY_GRANT``; only the ``ref`` field is
++used.
++
++Datastore Export/Import ioctls
++==============================
++
++CMH_IOCTL_DS_EXPORT
++-------------------
++
++Export the entire datastore as an encrypted blob.
++
++:Direction: ``_IOWR``
++:Number: 0x07
++:Argument: ``struct cmh_ioctl_ds_export``
++
++::
++
++  struct cmh_ioctl_ds_export {
++      __u32 version;
++      __u32 len;         /* buffer length */
++      __u64 cid;         /* caller ID for response tagging */
++      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
++      __u64 data;        /* user-space pointer to output buffer */
++      __u32 out_len;     /* [out] actual bytes written */
++      __u32 __reserved;
++  };
++
++CMH_IOCTL_DS_IMPORT
++-------------------
++
++Import a previously exported datastore blob.
++
++:Direction: ``_IOW``
++:Number: 0x08
++:Argument: ``struct cmh_ioctl_ds_import``
++
++::
++
++  struct cmh_ioctl_ds_import {
++      __u32 version;
++      __u32 len;         /* blob length */
++      __u64 wrap_key;    /* wrapping key ref (CMH_REF_NONE = plaintext) */
++      __u64 data;        /* user-space pointer to import blob */
++  };
++
++Key Derivation ioctls (KIC)
++===========================
++
++The Key Initialization Core (KIC) provides hardware key derivation from
++OTP-provisioned base keys.  Up to 8 base keys are available
++(``CMH_KIC_KEY1`` through ``CMH_KIC_KEY8``).
++
++CMH_IOCTL_KIC_HKDF1
++--------------------
++
++HKDF-based key derivation (single-step, label only).
++
++:Direction: ``_IOWR``
++:Number: 0x09
++:Argument: ``struct cmh_ioctl_kic_hkdf1``
++
++::
++
++  struct cmh_ioctl_kic_hkdf1 {
++      __u32 version;
++      __u32 key_len;     /* output key length */
++      __u64 base_key;    /* KIC base key reference */
++      __u64 cid;         /* CID for the new DS entry */
++      __u64 label;       /* user-space pointer to label data */
++      __u32 label_len;   /* label length in bytes */
++      __u32 flags;       /* CMH_KIC_FLAG_* */
++      __u64 ref;         /* [out] derived key reference */
++  };
++
++If ``CMH_KIC_FLAG_TEMP`` is set, the result is stored in the temporary
++datastore (not persistent).
++
++CMH_IOCTL_KIC_HKDF2
++--------------------
++
++HKDF-based key derivation (two-step, with salt key).
++
++:Direction: ``_IOWR``
++:Number: 0x0A
++:Argument: ``struct cmh_ioctl_kic_hkdf2``
++
++::
++
++  struct cmh_ioctl_kic_hkdf2 {
++      __u32 version;
++      __u32 key_len;
++      __u64 base_key;
++      __u64 salt_key;    /* salt key reference (CMH_REF_NONE = no salt) */
++      __u64 cid;
++      __u64 label;
++      __u32 label_len;
++      __u32 flags;
++      __u64 ref;         /* [out] derived key reference */
++  };
++
++CMH_IOCTL_KIC_AES_CMAC_KDF
++---------------------------
++
++AES-CMAC-based key derivation (NIST SP 800-108).
++
++:Direction: ``_IOWR``
++:Number: 0x0C
++:Argument: ``struct cmh_ioctl_kic_aes_cmac_kdf``
++
++::
++
++  struct cmh_ioctl_kic_aes_cmac_kdf {
++      __u32 version;
++      __u32 key_len;     /* base & output key length (must be 32) */
++      __u64 base_key;
++      __u64 cid;
++      __u64 label;
++      __u32 label_len;
++      __u32 flags;
++      __u64 ref;         /* [out] derived key reference */
++  };
++
++CMH_IOCTL_KIC_DKEK_DERIVE
++--------------------------
++
++Derive a Device Key Encryption Key (DKEK) for secure key export.
++
++:Direction: ``_IOWR``
++:Number: 0x0D
++:Argument: ``struct cmh_ioctl_kic_dkek_derive``
++
++::
++
++  struct cmh_ioctl_kic_dkek_derive {
++      __u32 version;
++      __u32 host_id;     /* target host ID (0 = caller's own) */
++      __u64 base_key;
++      __u64 cid;
++      __u64 metadata;    /* user-space pointer to metadata */
++      __u32 metadata_len;
++      __u32 flags;
++      __u64 ref;         /* [out] derived KEK reference */
++  };
++
++PKE (Public Key Engine) ioctls
++==============================
++
++RSA Operations
++--------------
++
++CMH_IOCTL_PKE_RSA_ENC
++~~~~~~~~~~~~~~~~~~~~~~
++
++RSA public-key encryption.
++
++:Direction: ``_IOWR``
++:Number: 0x10
++:Argument: ``struct cmh_ioctl_pke_rsa_enc``
++
++::
++
++  struct cmh_ioctl_pke_rsa_enc {
++      __u32 version;
++      __u32 bits;        /* RSA key size in bits (512-4096) */
++      __u64 e;           /* user-space pointer to public exponent */
++      __u32 e_len;       /* exponent length in bytes */
++      __u32 __reserved;
++      __u64 n;           /* user-space pointer to modulus */
++      __u64 input;       /* user-space pointer to input data */
++      __u64 output;      /* user-space pointer to output buffer */
++  };
++
++The public key (e, n) is passed as raw user-space buffers.
++
++CMH_IOCTL_PKE_RSA_DEC
++~~~~~~~~~~~~~~~~~~~~~~
++
++RSA private-key decryption using a datastore key reference.
++
++:Direction: ``_IOWR``
++:Number: 0x11
++:Argument: ``struct cmh_ioctl_pke_rsa_dec``
++
++::
++
++  struct cmh_ioctl_pke_rsa_dec {
++      __u32 version;
++      __u32 bits;
++      __u64 e;           /* public exponent */
++      __u32 e_len;
++      __u32 __reserved;
++      __u64 n;           /* modulus */
++      __u64 input;       /* ciphertext */
++      __u64 output;      /* plaintext output */
++      __u64 key_ref;     /* private key DS reference */
++  };
++
++CMH_IOCTL_PKE_RSA_CRT_DEC
++~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++RSA CRT private-key decryption (faster, uses CRT key format).
++
++:Direction: ``_IOWR``
++:Number: 0x12
++:Argument: ``struct cmh_ioctl_pke_rsa_crt_dec``
++
++::
++
++  struct cmh_ioctl_pke_rsa_crt_dec {
++      __u32 version;
++      __u32 bits;
++      __u64 e;
++      __u32 e_len;
++      __u32 __reserved;
++      __u64 n;
++      __u64 input;
++      __u64 output;
++      __u64 crt_ref;     /* CRT key DS reference */
++  };
++
++CMH_IOCTL_PKE_RSA_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate an RSA key pair in hardware.
++
++:Direction: ``_IOWR``
++:Number: 0x13
++:Argument: ``struct cmh_ioctl_pke_rsa_keygen``
++
++::
++
++  struct cmh_ioctl_pke_rsa_keygen {
++      __u32 version;
++      __u32 bits;        /* key size in bits */
++      __u64 e;           /* user-space pointer to public exponent */
++      __u32 e_len;
++      __u32 flags;       /* CMH_FLAG_* */
++      __u64 n;           /* [out] user-space pointer to modulus buffer */
++      __u64 d_cid;       /* CID for private key DS entry */
++      __u64 d_ref;       /* [out] private key reference */
++      __u64 crt_cid;     /* CID for CRT key DS entry (0 = skip CRT) */
++      __u64 crt_ref;     /* [out] CRT key reference */
++  };
++
++Returns private key and optional CRT key as datastore references.
++The modulus is written back to user space.
++
++ECDSA Operations
++----------------
++
++CMH_IOCTL_PKE_ECDSA_SIGN
++~~~~~~~~~~~~~~~~~~~~~~~~~
++
++ECDSA signature generation using a datastore private key.
++
++:Direction: ``_IOWR``
++:Number: 0x14
++:Argument: ``struct cmh_ioctl_pke_ecdsa_sign``
++
++::
++
++  struct cmh_ioctl_pke_ecdsa_sign {
++      __u32 version;
++      __u32 curve;       /* ABI curve ID (e.g. 0x03 = P-256) */
++      __u64 digest;      /* user-space pointer to hash digest */
++      __u32 digest_len;  /* digest length in bytes */
++      __u32 __reserved;
++      __u64 signature;   /* [out] user-space pointer to (r,s) */
++      __u64 key_ref;     /* private key DS reference */
++  };
++
++CMH_IOCTL_PKE_ECDH
++~~~~~~~~~~~~~~~~~~~
++
++Compute ECDH shared secret from a peer public key and a datastore
++private key.
++
++:Direction: ``_IOWR``
++:Number: 0x16
++:Argument: ``struct cmh_ioctl_pke_ecdh``
++
++::
++
++  struct cmh_ioctl_pke_ecdh {
++      __u32 version;
++      __u32 curve;
++      __u64 peer_key_x;  /* user-space pointer to peer public key X */
++      __u64 key_ref;     /* private key DS reference */
++      __u32 flags;       /* reserved, must be 0 */
++      __u32 __reserved;
++      __u64 __reserved2; /* reserved, must be 0 */
++      __u64 output;      /* [out] raw shared secret */
++  };
++
++CMH_IOCTL_PKE_ECDH_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++Derive a public key from a datastore private key.
++
++:Direction: ``_IOWR``
++:Number: 0x17
++:Argument: ``struct cmh_ioctl_pke_ecdh_keygen``
++
++::
++
++  struct cmh_ioctl_pke_ecdh_keygen {
++      __u32 version;
++      __u32 curve;
++      __u64 key_ref;       /* private key DS reference */
++      __u64 public_key_x;  /* [out] user-space pointer to public key X */
++  };
++
++EdDSA Operations
++----------------
++
++CMH_IOCTL_PKE_EDDSA_SIGN
++~~~~~~~~~~~~~~~~~~~~~~~~~
++
++EdDSA (Ed25519/Ed448) signature generation.
++
++:Direction: ``_IOWR``
++:Number: 0x18
++:Argument: ``struct cmh_ioctl_pke_eddsa_sign``
++
++::
++
++  struct cmh_ioctl_pke_eddsa_sign {
++      __u32 version;
++      __u32 curve;       /* CURVE_25519 or CURVE_448 */
++      __u64 digest;      /* user-space ptr to message (not digest) */
++      __u32 digest_len;
++      __u32 __reserved;
++      __u64 signature;   /* [out] user-space pointer to signature */
++      __u64 key_ref;     /* private key DS reference */
++  };
++
++Note: the ``digest`` field is the full message (pure EdDSA), not a
++pre-computed hash.
++
++CMH_IOCTL_PKE_EDDSA_VERIFY
++~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++EdDSA signature verification.
++
++:Direction: ``_IOW``
++:Number: 0x19
++:Argument: ``struct cmh_ioctl_pke_eddsa_verify``
++
++::
++
++  struct cmh_ioctl_pke_eddsa_verify {
++      __u32 version;
++      __u32 curve;
++      __u64 digest;
++      __u32 digest_len;
++      __u32 __reserved;
++      __u64 signature;
++      __u64 public_key_y;  /* user-space pointer to public key Y */
++  };
++
++EC Key Management
++-----------------
++
++CMH_IOCTL_PKE_EC_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate an EC private key in the hardware datastore.
++
++:Direction: ``_IOWR``
++:Number: 0x1A
++:Argument: ``struct cmh_ioctl_pke_ec_keygen``
++
++::
++
++  struct cmh_ioctl_pke_ec_keygen {
++      __u32 version;
++      __u32 curve;
++      __u32 flags;       /* CMH_FLAG_* */
++      __u32 __reserved;
++      __u64 cid;         /* CID for the new key DS entry */
++      __u64 ref;         /* [out] private key reference */
++  };
++
++CMH_IOCTL_PKE_EC_PUBGEN
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Derive the public key from a datastore private key.
++
++:Direction: ``_IOWR``
++:Number: 0x1B
++:Argument: ``struct cmh_ioctl_pke_ec_pubgen``
++
++::
++
++  struct cmh_ioctl_pke_ec_pubgen {
++      __u32 version;
++      __u32 curve;
++      __u64 key_ref;     /* private key DS reference */
++      __u64 public_key;  /* [out] user-space pointer to public key */
++  };
++
++CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate a 2-share SCA-protected Ed448 private key.
++
++:Direction: ``_IOWR``
++:Number: 0x1C
++:Argument: ``struct cmh_ioctl_pke_eddsa_keygen_sca``
++
++::
++
++  struct cmh_ioctl_pke_eddsa_keygen_sca {
++      __u32 version;
++      __u32 curve;       /* must be CURVE_448 */
++      __u64 key_ref;     /* input: normal Ed448 private key DS ref */
++      __u64 cid;         /* CID for the new SCA key DS entry */
++      __u64 sca_ref;     /* [out] SCA private key reference */
++  };
++
++Post-Quantum Cryptography (PQC) ioctls
++=======================================
++
++PQC operations support the following flags in the ``flags`` field:
++
++============================  ====  ====================================
++Flag                          Bit   Description
++============================  ====  ====================================
++``CMH_QSE_FLAG_MASKED``       0     Use masked (SCA-resistant) HW path
++``CMH_QSE_FLAG_DS_REF``       1     Store key output in DS, return ref
++``CMH_QSE_FLAG_HW_RNG``       2     Use HW RNG for seed/randomness
++============================  ====  ====================================
++
++ML-KEM (FIPS 203)
++-----------------
++
++CMH_IOCTL_ML_KEM_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate an ML-KEM key pair.
++
++:Direction: ``_IOWR``
++:Number: 0x20
++:Argument: ``struct cmh_ioctl_ml_kem_keygen``
++
++::
++
++  struct cmh_ioctl_ml_kem_keygen {
++      __u32 version;
++      __u32 k;           /* security parameter: 2/3/4 */
++      __u32 flags;       /* CMH_QSE_FLAG_* */
++      __u32 __reserved;
++      __u64 seed;        /* user-space pointer to seed (or 0 for HW RNG) */
++      __u64 z;           /* user-space pointer to z (or 0 for HW RNG) */
++      __u64 ek;          /* [out] user-space pointer to encapsulation key */
++      __u64 dk;          /* [out] user-space pointer to decapsulation key,
++                          *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
++      __u64 dk_cid;      /* CID for DS entry (if DS_REF) */
++      __u64 dk_ref;      /* [out] dk DS reference (if DS_REF) */
++  };
++
++Security parameter ``k`` selects the strength: 2 (ML-KEM-512),
++3 (ML-KEM-768), or 4 (ML-KEM-1024).
++
++CMH_IOCTL_ML_KEM_ENC
++~~~~~~~~~~~~~~~~~~~~~
++
++ML-KEM encapsulation.  Produces ciphertext and shared secret.
++
++:Direction: ``_IOWR``
++:Number: 0x21
++:Argument: ``struct cmh_ioctl_ml_kem_enc``
++
++::
++
++  struct cmh_ioctl_ml_kem_enc {
++      __u32 version;
++      __u32 k;
++      __u32 flags;       /* CMH_QSE_FLAG_* */
++      __u32 __reserved;
++      __u64 coin;        /* user-space pointer to random coin (or 0) */
++      __u64 ek;          /* user-space pointer to encapsulation key */
++      __u64 ct;          /* [out] user-space pointer to ciphertext */
++      __u64 ss;          /* [out] user-space pointer to shared secret */
++      __u64 __reserved2[2];  /* reserved for future use */
++  };
++
++CMH_IOCTL_ML_KEM_DEC
++~~~~~~~~~~~~~~~~~~~~~
++
++ML-KEM decapsulation.  Recovers shared secret from ciphertext.
++
++:Direction: ``_IOWR``
++:Number: 0x22
++:Argument: ``struct cmh_ioctl_ml_kem_dec``
++
++::
++
++  struct cmh_ioctl_ml_kem_dec {
++      __u32 version;
++      __u32 k;
++      __u32 flags;       /* CMH_QSE_FLAG_* */
++      __u32 __reserved;
++      __u64 ct;          /* user-space pointer to ciphertext */
++      __u64 dk;          /* user-space pointer to dk or DS ref */
++      __u64 ss;          /* [out] user-space pointer to shared secret */
++      __u64 __reserved2[2];  /* reserved for future use */
++  };
++
++ML-DSA (FIPS 204)
++-----------------
++
++CMH_IOCTL_ML_DSA_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate an ML-DSA key pair.
++
++:Direction: ``_IOWR``
++:Number: 0x23
++:Argument: ``struct cmh_ioctl_ml_dsa_keygen``
++
++::
++
++  struct cmh_ioctl_ml_dsa_keygen {
++      __u32 version;
++      __u32 mode;        /* security parameter: 2/3/5 */
++      __u32 flags;       /* CMH_QSE_FLAG_* */
++      __u32 __reserved;
++      __u64 seed;        /* user-space pointer to seed (or 0 for HW RNG) */
++      __u64 pk;          /* [out] user-space pointer to public key */
++      __u64 sk;          /* [out] user-space pointer to secret key,
++                          *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
++      __u64 sk_cid;      /* CID for DS entry (if DS_REF) */
++      __u64 sk_ref;      /* [out] sk DS reference (if DS_REF) */
++  };
++
++Security parameter ``mode`` selects the strength: 2 (ML-DSA-44),
++3 (ML-DSA-65), or 5 (ML-DSA-87).
++
++.. note::
++
++   When ``CMH_QSE_FLAG_DS_REF`` keeps the secret key in the datastore,
++   the public key returned in ``pk`` is the only copy: there is no
++   operation to derive the public key from the secret-key reference
++   for ML-DSA.  User space must persist ``pk`` at keygen time.
++
++CMH_IOCTL_ML_DSA_SIGN
++~~~~~~~~~~~~~~~~~~~~~~
++
++ML-DSA signature generation.
++
++:Direction: ``_IOWR``
++:Number: 0x24
++:Argument: ``struct cmh_ioctl_ml_dsa_sign``
++
++::
++
++  struct cmh_ioctl_ml_dsa_sign {
++      __u32 version;
++      __u32 mode;
++      __u32 flags;       /* CMH_QSE_FLAG_* */
++      __u32 mlen;        /* message length in bytes */
++      __u64 m;           /* user-space pointer to message */
++      __u64 sk;          /* user-space pointer to sk or DS ref */
++      __u64 sig;         /* [out] user-space pointer to signature */
++      __u64 rnd;         /* user-space pointer to randomness (or 0) */
++  };
++
++If ``mlen`` is set to ``CMH_ML_DSA_MLEN_EXTERNAL_MU`` (0xFFFFFFFF),
++the ``m`` pointer is interpreted as a 64-byte pre-hashed mu value
++(ExternalMu mode).
++
++CMH_IOCTL_SLHDSA_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Generate an SLH-DSA key pair.
++
++:Direction: ``_IOWR``
++:Number: 0x28
++:Argument: ``struct cmh_ioctl_slhdsa_keygen``
++
++::
++
++  struct cmh_ioctl_slhdsa_keygen {
++      __u32 version;
++      __u32 parameter_set;  /* HCQ_SLHDSA_SHAKE_128S .. SHA2_256F */
++      __u32 flags;          /* CMH_QSE_FLAG_DS_REF */
++      __u32 __reserved;
++      __u64 seed;           /* user-space pointer to seed */
++      __u64 pk;             /* [out] user-space pointer to public key */
++      __u64 sk;             /* [out] user-space pointer to secret key,
++                             *       or [out] DS ref if CMH_QSE_FLAG_DS_REF */
++      __u64 sk_cid;         /* CID for DS entry (if DS_REF) */
++      __u64 sk_ref;         /* [out] sk DS reference (if DS_REF) */
++  };
++
++.. note::
++
++   When ``CMH_QSE_FLAG_DS_REF`` keeps the secret key in the datastore,
++   the public key returned in ``pk`` is the only copy: there is no
++   operation to derive the public key from the secret-key reference
++   for SLH-DSA.  User space must persist ``pk`` at keygen time.
++
++CMH_IOCTL_SLHDSA_SIGN
++~~~~~~~~~~~~~~~~~~~~~~
++
++SLH-DSA signature generation (pure mode).
++
++:Direction: ``_IOWR``
++:Number: 0x29
++:Argument: ``struct cmh_ioctl_slhdsa_sign``
++
++::
++
++  struct cmh_ioctl_slhdsa_sign {
++      __u32 version;
++      __u32 parameter_set;
++      __u32 msg_len;
++      __u32 ctx_len;
++      __u64 msg;         /* user-space pointer to message */
++      __u64 ctx;         /* user-space pointer to context (or 0) */
++      __u64 sk;          /* DS ref for secret key */
++      __u64 sig;         /* [out] user-space pointer to signature */
++      __u64 add_random;  /* user-space pointer to addl. randomness (or 0) */
++  };
++
++CMH_IOCTL_SLHDSA_SIGN_PREHASH
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++SLH-DSA pre-hash signature generation.
++
++:Direction: ``_IOWR``
++:Number: 0x2D
++:Argument: ``struct cmh_ioctl_slhdsa_sign_prehash``
++
++::
++
++  struct cmh_ioctl_slhdsa_sign_prehash {
++      __u32 version;
++      __u32 parameter_set;
++      __u32 prehash_algo;  /* CMH_SLHDSA_PREHASH_* */
++      __u32 digest;        /* 0 = raw msg (eSW hashes), 1 = pre-computed */
++      __u32 msg_len;
++      __u32 ctx_len;
++      __u64 msg;           /* user-space pointer to message/digest */
++      __u64 ctx;           /* user-space pointer to context (or 0) */
++      __u64 sk;            /* DS ref for secret key */
++      __u64 sig;           /* [out] user-space pointer to signature */
++      __u64 add_random;    /* user-space pointer to addl. randomness (or 0) */
++  };
++
++The ``prehash_algo`` field selects the hash algorithm
++(``CMH_SLHDSA_PREHASH_SHA256``, etc.).
++
++CMH_IOCTL_SM2_ENC_POINT
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x33
++:Argument: ``struct cmh_ioctl_sm2_enc_point``
++
++::
++
++  struct cmh_ioctl_sm2_enc_point {
++      __u32 version;
++      __u32 nonce_len;   /* 0 = HW generates, 32 = caller provides */
++      __u64 nonce;       /* user-space pointer to nonce (or 0) */
++      __u64 public_key;  /* user-space pointer to public key (64B) */
++      __u64 ciphertext;  /* [out] user-space pointer to C1 (64B) */
++      __u64 enc_point;   /* [out] user-space pointer to enc point (64B) */
++  };
++
++CMH_IOCTL_SM2_ENC_HASH
++~~~~~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x37
++:Argument: ``struct cmh_ioctl_sm2_enc_hash``
++
++::
++
++  struct cmh_ioctl_sm2_enc_hash {
++      __u32 version;
++      __u32 message_len;  /* message length (1..32) */
++      __u64 message;      /* user-space pointer to plaintext */
++      __u64 enc_point;    /* user-space pointer to enc point (64B) */
++      __u64 ciphertext;   /* [out] user-space pointer to ciphertext */
++  };
++
++CMH_IOCTL_SM2_DEC_POINT
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x32
++:Argument: ``struct cmh_ioctl_sm2_dec_point``
++
++::
++
++  struct cmh_ioctl_sm2_dec_point {
++      __u32 version;
++      __u32 ciphertext_len;  /* total ciphertext length (97..128) */
++      __u64 ciphertext;      /* user-space pointer to ciphertext (64B: C1) */
++      __u64 dec_point;       /* [out] user-space pointer to dec point (64B) */
++      __u64 key_ref;         /* private key DS reference */
++  };
++
++CMH_IOCTL_SM2_DEC_HASH
++~~~~~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x36
++:Argument: ``struct cmh_ioctl_sm2_dec_hash``
++
++::
++
++  struct cmh_ioctl_sm2_dec_hash {
++      __u32 version;
++      __u32 ciphertext_len;  /* ciphertext length (97..128) */
++      __u64 ciphertext;      /* user-space pointer to full ciphertext */
++      __u64 dec_point;       /* user-space pointer to dec point (64B) */
++      __u64 plaintext;       /* [out] user-space pointer to plaintext */
++  };
++
++SM2 Key Exchange (GM/T 0003.3)
++------------------------------
++
++The key exchange protocol is a multi-step flow:
++
++1. ``EC_KEYGEN(CMH_CURVE_SM2)`` -- generate a long-lived private key.
++2. ``EC_PUBGEN`` -- derive the public key.
++3. ``SM2_ID_DIGEST`` -- compute the SM3 identity digest (ZA).
++4. ``SM2_ECDH_KEYGEN`` -- generate an ephemeral session key.
++5. Exchange session keys with the peer.
++6. ``SM2_ECDH`` -- compute the shared point.
++7. ``SM2_ECDH_HASH`` -- derive the shared key from the shared point
++   and both parties' ZA digests.
++
++CMH_IOCTL_SM2_ECDH_KEYGEN
++~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x30
++:Argument: ``struct cmh_ioctl_sm2_ecdh_keygen``
++
++::
++
++  struct cmh_ioctl_sm2_ecdh_keygen {
++      __u32 version;
++      __u32 nonce_len;    /* 0 = HW generates r (written back), 32 = caller */
++      __u64 nonce;        /* [in/out] user-space pointer to nonce buffer (32B) */
++      __u64 session_key;  /* [out] user-space pointer to R=r*G (64B) */
++  };
++
++``nonce_len`` must be 0 or 32.  If ``nonce_len=0``, the hardware
++generates the ephemeral scalar and writes it back to the ``nonce``
++buffer.
++
++CMH_IOCTL_SM2_ECDH
++~~~~~~~~~~~~~~~~~~~
++
++:Direction: ``_IOWR``
++:Number: 0x31
++:Argument: ``struct cmh_ioctl_sm2_ecdh``
++
++::
++
++  struct cmh_ioctl_sm2_ecdh {
++      __u32 version;
++      __u32 nonce_len;         /* 0 = HW generates, 32 = caller provides */
++      __u64 nonce;             /* [in/out] user-space pointer to nonce r (32B) */
++      __u64 peer_public_key;   /* user-space pointer to peer pub key (64B) */
++      __u64 peer_session_key;  /* user-space pointer to peer session key (64B) */
++      __u64 key_ref;           /* private key DS reference */
++      __u64 shared_point;      /* [out] user-space pointer to shared point (64B) */
++      __u64 shared_point_ref;  /* [in/out] 0 = read-back; &ref = keep DS */
++  };
++
++If ``shared_point_ref`` points to a non-zero value, the shared point
++is kept in the datastore for use by ``SM2_ECDH_HASH``.
++
++CMH_IOCTL_SM2_ID_DIGEST
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Compute the SM3 identity digest (ZA) for a public key and identity
++string.
++
++:Direction: ``_IOWR``
++:Number: 0x34
++:Argument: ``struct cmh_ioctl_sm2_id_digest``
++
++::
++
++  struct cmh_ioctl_sm2_id_digest {
++      __u32 version;
++      __u32 id_len;      /* identity length in bytes (<=32) */
++      __u64 id;          /* user-space pointer to identity string */
++      __u64 public_key;  /* user-space pointer to public key (64B) */
++      __u64 digest;      /* [out] user-space pointer to ZA digest (32B) */
++  };
++
++CMH_IOCTL_SM2_ECDH_HASH
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++Derive the shared key from the shared point and ZA digests.
++
++:Direction: ``_IOWR``
++:Number: 0x35
++:Argument: ``struct cmh_ioctl_sm2_ecdh_hash``
++
++::
++
++  struct cmh_ioctl_sm2_ecdh_hash {
++      __u32 version;
++      __u32 __reserved;
++      __u64 peer_id_digest;    /* ptr to Z_A -- initiator's digest (32B) */
++      __u64 id_digest;         /* ptr to Z_B -- responder's digest (32B) */
++      __u64 shared_point_ref;  /* DS reference from SM2_ECDH */
++      __u64 shared_key;        /* [out] ptr to shared key (16B) */
++  };
++
++.. important::
++
++   The digest fields use **absolute** ordering per GM/T 0003.3, not
++   relative own/peer ordering.  Both parties must pass:
++
++   - ``peer_id_digest`` = Z_A (initiator's digest) -- hashed first
++   - ``id_digest`` = Z_B (responder's digest) -- hashed second
++
++Hardware Management ioctls
++==========================
++
++CMH_IOCTL_EAC_READ
++-------------------
++
++Read and clear the hardware Error and Alarm Controller registers.
++
++:Direction: ``_IOWR``
++:Number: 0x0F
++:Argument: ``struct cmh_ioctl_eac_read``
++
++::
++
++  struct cmh_ioctl_eac_read {
++      __u32 version;
++      __u32 __reserved;
++      __u64 mailbox_notification;
++      __u32 hw_error;
++      __u32 hw_nmi;
++      __u32 hw_panic;
++      __u32 safety_fatal;
++      __u32 safety_notification;
++      __u32 sw_info0;
++      __u32 sw_info1;
++      __u32 sram_bank_errors[4];
++      __u32 __pad;
++  };
++
++The eSW atomically reads and clears the registers on each call.
++Successive reads show only new events since the last read.
++
++CMH_IOCTL_DRBG_CONFIG
++----------------------
++
++Configure the hardware DRBG before first use.
++
++:Direction: ``_IOW``
++:Number: 0x40
++:Argument: ``struct cmh_ioctl_drbg_config``
++
++::
++
++  struct cmh_ioctl_drbg_config {
++      __u32 version;
++      __u32 entropy_ratio;       /* CMH_DRBG_RATIO_* */
++      __u32 security_strength;   /* CMH_DRBG_STRENGTH_* */
++      __u32 __reserved;
++  };
++
++This is a management operation normally performed once at system
++startup.  Must be called before any ``hwrng`` reads or DRBG generate
++operations.
++
++ioctl Number Summary
++====================
++
++======================================  ====  ====  =========================================
++ioctl                                   Dir   Seq   Argument
++======================================  ====  ====  =========================================
++``CMH_IOCTL_KEY_NEW``                   IOWR  0x01  ``cmh_ioctl_key_new``
++``CMH_IOCTL_KEY_WRITE``                 IOW   0x02  ``cmh_ioctl_key_write``
++``CMH_IOCTL_KEY_READ``                  IOWR  0x03  ``cmh_ioctl_key_read``
++``CMH_IOCTL_KEY_FIND``                  IOWR  0x04  ``cmh_ioctl_key_find``
++``CMH_IOCTL_KEY_GRANT``                 IOW   0x05  ``cmh_ioctl_key_grant``
++``CMH_IOCTL_KEY_DELETE``                IOW   0x06  ``cmh_ioctl_key_grant``
++``CMH_IOCTL_DS_EXPORT``                 IOWR  0x07  ``cmh_ioctl_ds_export``
++``CMH_IOCTL_DS_IMPORT``                 IOW   0x08  ``cmh_ioctl_ds_import``
++``CMH_IOCTL_KIC_HKDF1``                 IOWR  0x09  ``cmh_ioctl_kic_hkdf1``
++``CMH_IOCTL_KIC_HKDF2``                 IOWR  0x0A  ``cmh_ioctl_kic_hkdf2``
++``CMH_IOCTL_KEY_NEW_RANDOM``            IOWR  0x0B  ``cmh_ioctl_key_new``
++``CMH_IOCTL_KIC_AES_CMAC_KDF``          IOWR  0x0C  ``cmh_ioctl_kic_aes_cmac_kdf``
++``CMH_IOCTL_KIC_DKEK_DERIVE``           IOWR  0x0D  ``cmh_ioctl_kic_dkek_derive``
++``CMH_IOCTL_KEY_LIST``                  IOWR  0x0E  ``cmh_ioctl_key_list``
++``CMH_IOCTL_EAC_READ``                  IOWR  0x0F  ``cmh_ioctl_eac_read``
++``CMH_IOCTL_PKE_RSA_ENC``               IOWR  0x10  ``cmh_ioctl_pke_rsa_enc``
++``CMH_IOCTL_PKE_RSA_DEC``               IOWR  0x11  ``cmh_ioctl_pke_rsa_dec``
++``CMH_IOCTL_PKE_RSA_CRT_DEC``           IOWR  0x12  ``cmh_ioctl_pke_rsa_crt_dec``
++``CMH_IOCTL_PKE_RSA_KEYGEN``            IOWR  0x13  ``cmh_ioctl_pke_rsa_keygen``
++``CMH_IOCTL_PKE_ECDSA_SIGN``            IOWR  0x14  ``cmh_ioctl_pke_ecdsa_sign``
++``CMH_IOCTL_PKE_ECDH``                  IOWR  0x16  ``cmh_ioctl_pke_ecdh``
++``CMH_IOCTL_PKE_ECDH_KEYGEN``           IOWR  0x17  ``cmh_ioctl_pke_ecdh_keygen``
++``CMH_IOCTL_PKE_EDDSA_SIGN``            IOWR  0x18  ``cmh_ioctl_pke_eddsa_sign``
++``CMH_IOCTL_PKE_EDDSA_VERIFY``          IOW   0x19  ``cmh_ioctl_pke_eddsa_verify``
++``CMH_IOCTL_PKE_EC_KEYGEN``             IOWR  0x1A  ``cmh_ioctl_pke_ec_keygen``
++``CMH_IOCTL_PKE_EC_PUBGEN``             IOWR  0x1B  ``cmh_ioctl_pke_ec_pubgen``
++``CMH_IOCTL_PKE_EDDSA_KEYGEN_SCA``      IOWR  0x1C  ``cmh_ioctl_pke_eddsa_keygen_sca``
++``CMH_IOCTL_ML_KEM_KEYGEN``             IOWR  0x20  ``cmh_ioctl_ml_kem_keygen``
++``CMH_IOCTL_ML_KEM_ENC``                IOWR  0x21  ``cmh_ioctl_ml_kem_enc``
++``CMH_IOCTL_ML_KEM_DEC``                IOWR  0x22  ``cmh_ioctl_ml_kem_dec``
++``CMH_IOCTL_ML_DSA_KEYGEN``             IOWR  0x23  ``cmh_ioctl_ml_dsa_keygen``
++``CMH_IOCTL_ML_DSA_SIGN``               IOWR  0x24  ``cmh_ioctl_ml_dsa_sign``
++``CMH_IOCTL_SLHDSA_KEYGEN``             IOWR  0x28  ``cmh_ioctl_slhdsa_keygen``
++``CMH_IOCTL_SLHDSA_SIGN``               IOWR  0x29  ``cmh_ioctl_slhdsa_sign``
++``CMH_IOCTL_SLHDSA_SIGN_PREHASH``       IOWR  0x2D  ``cmh_ioctl_slhdsa_sign_prehash``
++``CMH_IOCTL_SM2_ECDH_KEYGEN``           IOWR  0x30  ``cmh_ioctl_sm2_ecdh_keygen``
++``CMH_IOCTL_SM2_ECDH``                  IOWR  0x31  ``cmh_ioctl_sm2_ecdh``
++``CMH_IOCTL_SM2_DEC_POINT``             IOWR  0x32  ``cmh_ioctl_sm2_dec_point``
++``CMH_IOCTL_SM2_ENC_POINT``             IOWR  0x33  ``cmh_ioctl_sm2_enc_point``
++``CMH_IOCTL_SM2_ID_DIGEST``             IOWR  0x34  ``cmh_ioctl_sm2_id_digest``
++``CMH_IOCTL_SM2_ECDH_HASH``             IOWR  0x35  ``cmh_ioctl_sm2_ecdh_hash``
++``CMH_IOCTL_SM2_DEC_HASH``              IOWR  0x36  ``cmh_ioctl_sm2_dec_hash``
++``CMH_IOCTL_SM2_ENC_HASH``              IOWR  0x37  ``cmh_ioctl_sm2_enc_hash``
++``CMH_IOCTL_DRBG_CONFIG``               IOW   0x40  ``cmh_ioctl_drbg_config``
++======================================  ====  ====  =========================================
++
++Relationship to the in-kernel crypto API
++=========================================
++
++The main reason these operations are exposed as ioctls, rather than
++through the standard in-kernel crypto API, is the CMH datastore key
++model: an ioctl can operate on a *datastore-referenced* (hardware-held)
++key, identified only by a ``ref`` or CID, whose raw bytes the CPU never
++sees.  The standard crypto API cannot express this -- every
++``.setkey()`` takes raw key material -- so hardware key lifecycle
++(create, import, derive, grant, destroy) and compute-on-hardware-held-key
++operations have no crypto API equivalent and are only reachable here.
++
++These ioctls remain supported.  Where an operation can *also* be
++expressed through a standard kernel abstraction, additional in-kernel
++crypto API bindings may be added over time; when such a binding lands the
++driver registers through it, and the ioctl continues to be maintained for
++backward compatibility:
++
++- **EdDSA** (``CMH_IOCTL_PKE_EDDSA_*``): a kernel ``sig`` binding may be
++  added once ed25519/ed448 algorithm types are accepted upstream.
++
++- **ML-KEM** (``CMH_IOCTL_ML_KEM_*``): a kernel KEM binding may be added
++  once the in-flight KEM subsystem series lands.
++
++- **Key lifecycle** (``CMH_IOCTL_KEY_*``): integration with the kernel
++  KEYS subsystem (trusted-keys / encrypted-keys) may be evaluated as a
++  follow-up series.
++
++Operations that are inherently vendor-specific (EAC Chip Authentication,
++KIC key derivation, SM2 key exchange, DRBG configuration, datastore
++export/import) have no corresponding kernel abstraction and are expected
++to remain ioctl-only.
+diff --git a/Documentation/userspace-api/ioctl/index.rst b/Documentation/userspace-api/ioctl/index.rst
+index 475675eae086..bf88bb6b9a6f 100644
+--- a/Documentation/userspace-api/ioctl/index.rst
++++ b/Documentation/userspace-api/ioctl/index.rst
+@@ -12,4 +12,5 @@ IOCTLs
+    ioctl-decoding
+ 
+    cdrom
++   cmh_mgmt
+    hdio
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index 2fc53093752d..25f020c7e367 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -170,6 +170,7 @@ Code  Seq#    Include File                                             Comments
+ 'I'   all    linux/isdn.h                                              conflict!
+ 'I'   00-0F  drivers/isdn/divert/isdn_divert.h                         conflict!
+ 'I'   40-4F  linux/mISDNif.h                                           conflict!
++'J'   01-40  uapi/linux/cmh_mgmt_ioctl.h                               Rambus CryptoManager Hub (CMH)
+ 'K'   all    linux/kd.h
+ 'L'   00-1F  linux/loop.h                                              conflict!
+ 'L'   10-1F  drivers/scsi/mpt3sas/mpt3sas_ctl.h                        conflict!
 -- 
 2.43.7
 
