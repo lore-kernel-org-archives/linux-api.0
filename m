@@ -1,165 +1,233 @@
-Received: from PH7PR06CU001.outbound.protection.outlook.com (mail-westus3azon11020142.outbound.protection.outlook.com [52.101.201.142])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E6C356E067;
-	Wed, 23 Sep 2026 20:51:02 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.client-ip=52.101.201.142
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790196667; cv=fail; b=KjxE35GqzAmOyLKObmVioyF99RSjJ7nCPhzhUXaF+dolfmXlY4VH8mFaivfCD9i8Lxv96zLbTHH/5Y+6Dc8GqfnedT+CVCVqqrPPJBfZBqgUQGdwnUFGlg8NGRJTZdZZNox4VFxt/NjOifve2CkjB0R0yieOOZWFcRhvU+0K2vo=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790196667; c=relaxed/simple;
-	bh=irM/a+9wZBPefeUtGt2BTB6HzQuwD+vPCBzxOoU2YDs=;
-	h=From:To:CC:Subject:Date:Message-ID:References:In-Reply-To:
-	 Content-Type:MIME-Version; b=X4kFqBtgNnbS1Hfm3BKtCAU2wOhiv6VqsN0Fc/huyASpLMQ8ObQVc8wARGsaSlBZDy0LptyAFMCYAF1IvFicw+VhpIZ1aTcQNGLFtRoRTUGixSnGGc0jc+rkSdmHOhHKR3zgyGdoZQVgu2rhSpy6jvrrX31nzEKRQ6jQQozLL68=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com; spf=fail smtp.mailfrom=rambus.com; dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b=R0UyrwZ3; arc=fail smtp.client-ip=52.101.201.142
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=rambus.com
-Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=rambus.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6B7835F161;
+	Thu, 24 Sep 2026 17:01:14 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.135.223.130
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1790269276; cv=none; b=QB0990op6VmrBPeFiaFh3dGbXK4KzjEFqq2rWtIU/te23do6/tr5Gp13uCtVPpEdmckcB3WkxpD0TNiA3XHfqNi6+/VFHeBYGBuLFLLl4EuNf9xcuN0GszTvT6XDSV9ZpSVPgk44Oc5Bohwy9LG0aADPCRD9UoercAdWN0Jsbxc=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1790269276; c=relaxed/simple;
+	bh=ooJhgB38QPlK088fZ0OJWYlg3DEOC7xMjtX4/OovQ24=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=YGHrzo9KhmpTVRXcfEUt02XIRS+5m82TaAj1pkWdd5NB7+q7CLl2lbMLofmOlN86lqtGpaRSxtJCcnnX9O8Q8RsRYOpPSzVBuC9jRYZEWjcmo2suNKTa+UG1Rw3QWJgOY7MEIXwY8ZWuaLV52AbniNGwQ9gH6/+TjhXQ4IPBPsY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz; spf=pass smtp.mailfrom=suse.cz; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=Dq8y8fpb; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=Emnmt40d; dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b=q/HhEC8J; dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b=97b27Qav; arc=none smtp.client-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=rambus.com header.i=@rambus.com header.b="R0UyrwZ3"
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=CL4Nepd+qLhBtqbr8PcKSeH8QQ7db+kQbM3xzN4wVZM+rPd1oKgXH3cC7MzFuNrFEWUeOqsLgCfeNolulPrjk3F8fNksfhtl24AEjJ/YQA7aDBR0kguGJvAUiEWEdqH4UM+si/TC+7BVF3nZo+Urs0xQseddcSYH640pluxUAOakyzI3M7g5JqyewFuUazhrVq0wgKXoHQ3NsgyuXpsHtEwvCr/2EXhXhjlJPFhyHELO0inTfzsh211QYQo7iwXqbbtliPCukhJYYEH/M0fijhHmedb+SWTy6AQi6Lz+eddoINJ8kr2Uz06/7HiusKl6lvdM2g+bc0OFcucGJ/qW9g==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
- bh=RbYlQhT4Aq9TWP2c6LFyxCybJnqxPnaUrNzfPZdEuPc=;
- b=GW7JCHOLdLUnL7pBW+MNjZgsObZSGPuEYgMj0N6ptmoSQkz5TyNSDEPPbkr42cFW7vzTy8al7mc4NKTuDeFh9nGMXd1UfUfCRM5vE5eX9nyh1rrRkzMaMeA0yf3Fc3QSw6uReAaQbeoInc74Rjkv+R2b8reYRAemUYz2eLjZBb8qZJXt4SCq7oVkTnu6bDKSZR0XuV+KyVoW3lZ+mySPA3jRc8auusuBYdM5I/rwhoGzd8MV1k1y4vDiFyQ/3+IDZKXVJ61bakOj3plx8qu+yue1YVLawrAQC9eZ0vvgCxkFgN8PfNlTZK2ISWB3i8o2bISODL6qBrFjHx3J1oaIsg==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
- smtp.mailfrom=rambus.com; dmarc=pass action=none header.from=rambus.com;
- dkim=pass header.d=rambus.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=rambus.com;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=RbYlQhT4Aq9TWP2c6LFyxCybJnqxPnaUrNzfPZdEuPc=;
- b=R0UyrwZ3DXDke70gm/cAcKAOu/5JoSXw/jKwQB1peleaf+ZeK5P2dy60LGMgoPR1p4aOHO+0qMbVGZJ9inRhqTwdgL73RHqy5ocG7/cZmWINCUgYiEuRsHXNlmhT/s6U4deybvuc8qYp7HzO4L12loac9fXhZBQWi8BAcan6NvID9vLhsAZ5026zEgR10AXqKdWqshm3iPMFA930COfZvbFA57hjGzB9d8yEAhvz4KbYI+ljNf+7A/YRGKC+SEdZm0RrWfv/EkKX6q3q/fSyZjEw2+F75bVekyga7N8TyICQkhF3Fiapgkj2+8QgeQLRbj4uDnS8gLgdPy7UeqjNTQ==
-Received: from LV8PR04MB9006.namprd04.prod.outlook.com (2603:10b6:408:186::11)
- by LV8PR04MB9241.namprd04.prod.outlook.com (2603:10b6:408:259::11) with
- Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.451.14; Wed, 23 Sep
- 2026 20:50:55 +0000
-Received: from LV8PR04MB9006.namprd04.prod.outlook.com
- ([fe80::3e2f:2514:159c:85b2]) by LV8PR04MB9006.namprd04.prod.outlook.com
- ([fe80::3e2f:2514:159c:85b2%3]) with mapi id 15.21.0451.014; Wed, 23 Sep 2026
- 20:50:55 +0000
-From: "Ousherovitch, Alex" <aousherovitch@rambus.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>
-CC: Albert Ou <aou@eecs.berkeley.edu>, Conor Dooley <conor+dt@kernel.org>,
-	"David S. Miller" <davem@davemloft.net>, Jonathan Corbet <corbet@lwn.net>,
-	Krzysztof Kozlowski <krzk+dt@kernel.org>, Palmer Dabbelt
-	<palmer@dabbelt.com>, Paul Walmsley <pjw@kernel.org>, Rob Herring
-	<robh@kernel.org>, "Krishnamoorthy, Saravanakrishnan"
-	<skrishnamoorthy@rambus.com>, Shuah Khan <shuah@kernel.org>, Alexandre Ghiti
-	<alex@ghiti.fr>, "devicetree@vger.kernel.org" <devicetree@vger.kernel.org>,
-	"Wittenauer, Joel" <Joel.Wittenauer@cryptography.com>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>,
-	"linux-riscv@lists.infradead.org" <linux-riscv@lists.infradead.org>, Shuah
- Khan <skhan@linuxfoundation.org>, "Nguyen, Thi" <thin@rambus.com>
-Subject: RE: [PATCH v5 04/19] crypto: cmh - add SHA-2/SHA-3/SHAKE ahash
-Thread-Topic: [PATCH v5 04/19] crypto: cmh - add SHA-2/SHA-3/SHAKE ahash
-Thread-Index: AQHdRvg30t1+45dAjEm+KmT5OENVbLbbsCeAgAD8JwA=
-Date: Wed, 23 Sep 2026 20:50:55 +0000
-Message-ID:
- <LV8PR04MB9006374FD8621EBF3C7E7F6CD7822@LV8PR04MB9006.namprd04.prod.outlook.com>
-References: <20260917225929.2494111-1-aousherovitch@rambus.com>
- <20260917225929.2494111-5-aousherovitch@rambus.com>
- <arNn_fjy4jamSitO@gondor.apana.org.au>
-In-Reply-To: <arNn_fjy4jamSitO@gondor.apana.org.au>
-Accept-Language: en-US
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-authentication-results: mx.microsoft.com 1; dkim=none (message not signed)
- header.d=none;dmarc=none action=none header.from=rambus.com;
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: LV8PR04MB9006:EE_|LV8PR04MB9241:EE_
-x-ms-office365-filtering-correlation-id: 3f8a87bf-f1d1-4ecd-2227-08df19b45d1f
-x-ms-exchange-senderadcheck: 1
-x-ms-exchange-antispam-relay: 0
-x-microsoft-antispam:
- BCL:0;ARA:13230040|366016|23010399003|7416014|376014|1800799024|38070700021|11063799006|56012099006|4143699003|10067099003|18002099003|22082099003;
-x-microsoft-antispam-message-info:
- hEJ2pw3lF5CpG9i9AXhEm8k6qFDlTehmxpCb7OUxnHjUyBwZmuyRywaZIOlt30BP8iAwXPNaxluzsPMra5qvW21p+Hp/NolPU00gF4QNuRWBTeweOCQ8UbikEWL92lWF3CfUh9w6kq2EefQZeiw6exjtRU7GlGchWo9UUCPoGTGx2LGNKp6hXEK80LlNSh2Xc0Jepa9L6jSKilRMZOLkjZIRXG1u2vxCVB4Q5gRyVKc5DNbnE9Kk2kVCZF5pNfOnJp6hERrXvwaHTV1X6xBSADDXyvLJrBR4KgdY6onkQliBKH+qCxONvGnCjKABlCHumKTQOrjp46XOCNaTKChtNIRw4RG0FDOUNNQXSMN3a5+qPvkWGUzGOOJNv4pOkSS+HBUD0+VVUqsEmZmBGb6Q3H0vRyixeoAPj6woL7f96DxLhlz25TLAlWXVQksM55nL9E60Gtm0g+R7yfM0r0Bu0pjolDPVK+8IUudZSvoni8CVxpsTVlAUuytRkmUR3qCmE5qo/kRUDrxiHkcyEsBt2L+uKmKh5P5AhCd7ht6luN+Ers7pyLOFv7oQFJ4poZVxYxW29Es7NVp8CIgyBf/MVueBazBhIu8+g+U8fS1QwbiXroQrYxo9m4FPABfbNTS+gufDLvPn1dxHyDiwsYyOkWEKhyL8m//cgIoqCjw2l1gGFvIUBRTNGRLXEsk9vpby6q2O26uIRjahdJ1sRSEEZznjAV3EYdNifvyzhVAVa5g=
-x-forefront-antispam-report:
- CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:LV8PR04MB9006.namprd04.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(366016)(23010399003)(7416014)(376014)(1800799024)(38070700021)(11063799006)(56012099006)(4143699003)(10067099003)(18002099003)(22082099003);DIR:OUT;SFP:1102;
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?us-ascii?Q?JOkNtSddroB9sKuxWMQXu6MySCvAQ2aDINDQDIoNVt5DcDV16vfYYNHtAKhV?=
- =?us-ascii?Q?1yYCkHbF3sAvU/Po8kZA+dgkyjpwJLu4Dtun4mQpmTbUI7A3cgo1ogtRvtMd?=
- =?us-ascii?Q?qrp1H/jaftF4OBL9vCnfGz2luwmqCaOmnQE9i0lnUcK0x8ehF5C6Yvk5d4ni?=
- =?us-ascii?Q?8iYtaaEOQlvTFui4H1aYNUVYRnLalckiYVC4q6xFqypBLyUriCu8kmb0HasQ?=
- =?us-ascii?Q?2VOI+NSbfZJ9Q0J3NjmeV6D6UvkWTGxJ61cbWTrC8N12AXqcCAdc8Tj/UHFj?=
- =?us-ascii?Q?zcu338yNU+YoRI/g+itg7IIAh7Xw6MaVNeHsAeemjaVOLKBI3hEQlV3S+1F/?=
- =?us-ascii?Q?0DdrcgHynEsWT/U0Z5noUBTrl3MwJNLg/VkWWyXs6vQefiWH9G6Nmh3bw+SO?=
- =?us-ascii?Q?WbeUCoDtBDmVXcTOvIRJSs/gBma6c9znkIqsiXIns8LrYhVa8cuewbb2gLjX?=
- =?us-ascii?Q?LiF6INCP/nksKWY4NjaHSTWw+8NGtYQ7c71lbJU5wlhjsokECWIp6J3220Kj?=
- =?us-ascii?Q?pn96ab2Ut4epcpPeFQ1zdAxcq1WH4/xV+h2LZ+LN+uCmFen+2Pz73YjwB9Tg?=
- =?us-ascii?Q?izCLEc9/7NOVBPqiQ61MXtlTPPoiOqTHsrYA9dBuRvC9yQ6rFvkcpddaJbyi?=
- =?us-ascii?Q?MZWIgdwPwW0RC9zDQQY31IlS1qA/EbWvldMwJMrifTMPDVLuwvrLkFsSpWfc?=
- =?us-ascii?Q?UiHWBehiJm2HHEC16lm88LHAsLBp3i1ddrHRLUVzqJpDyvWYbVpjN51HbxZM?=
- =?us-ascii?Q?3Uyi7kmCTC/D5GKbKxbjDmQMeutVKk2cL39mO1bQPYGsolVMO+zweQHlIsVd?=
- =?us-ascii?Q?0neijWscnECtmm/g5Cu930URsBO/ogrbOTjlNWFVS1lxqh/3gOnVkYBhmo/g?=
- =?us-ascii?Q?Ca4jSdnYKUB+tXbLBg7VrgipZBA2KRUSDI/VNl8ReVq1qkrC0ZhTUYB7V+x/?=
- =?us-ascii?Q?PPTA48GiKA46dJhRNY94IfW2Zt7g4Oo1+oK78AncYuZak3Uw849AMjUJ9kr+?=
- =?us-ascii?Q?i1SY8lNqKKygPKfKW5uNalmvTBTSiMWBNP/koQAVjoLs6mv5iRdC09pcJfm4?=
- =?us-ascii?Q?h3TPIRRs7s5i3gjYOwG0kiQatYmarGi5erkLP1HW2ZbWSNzFm8O3u2ZePtgG?=
- =?us-ascii?Q?4kg5888CjxI0NL/r5XT7jHjx+8C31hFVoGMNrs8nXlpxjnRy1oufeqIs+5ll?=
- =?us-ascii?Q?PDl1mjK4uRcEQDa77P1g0tFw4dCW39WEpv9qBeiCpYxBlO+sByyY8HCHICDi?=
- =?us-ascii?Q?DAvZT2KFPjMSsqXoI0v0HQcPICFmMILL/Eas6Y8SAs1v7gtlYqDy8d4uJCLD?=
- =?us-ascii?Q?MfzUFo8B6vIwZ/V3YfnREx8V6jpUrtye7riZiFSAuzWNBbZjtZUsSXmYefdD?=
- =?us-ascii?Q?MnXIIRJvy1/+g+l3v86dbKcRHZ3YfelWD1nCGAeS8xNxxdNzq7pwwF7UXNqH?=
- =?us-ascii?Q?Gd8u2Xl0gCe5x0QkG6pKLAh3b3c0p6jM4OQWbw/T7EKfBCooVU4+0cbSfK4H?=
- =?us-ascii?Q?vsV405Ixw380fpzLL+vK7d/CxFRxoJ4SYvI1gFjF7+Vrxo1jPeC0c+xxQycU?=
- =?us-ascii?Q?huaWXCEbQEzqYD9gfCyDkMeBE3yGbWM+BCoC7+S2bI6P8gyF1N8aPuU9YT6y?=
- =?us-ascii?Q?0q6z757jzSroXd7swG0U9rNsN/4qAfSWhQAHzIwXNx1hdRYcIsyi+1LB3abw?=
- =?us-ascii?Q?2BCD+hPlCITPF3V18Ei6B3r2mA4/L3chD9Mzf3EtkL8cxg53MKDV5DyNBA1s?=
- =?us-ascii?Q?z3i9Z8fjQQ=3D=3D?=
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="Dq8y8fpb";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="Emnmt40d";
+	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.b="q/HhEC8J";
+	dkim=permerror (0-bit key) header.d=suse.cz header.i=@suse.cz header.b="97b27Qav"
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 6E0EB219EA;
+	Thu, 24 Sep 2026 17:01:04 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1790269268; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3HW0Sn2F1kXuJYxmIs4JnguZGO0MfEN0+vn7YSbBw8s=;
+	b=Dq8y8fpbrooPvDe+fz9TJxkWRhRjlf5pRPLGJS4WKxYhIlVJ2dN8/KcMt6R7JeGgFauhRP
+	XyS4YbDpvklOMpG8rj5jK+KUot27PnjG2DwZwklen4/97cYvijFmDIPvJOtZuK8F3g96OS
+	2ob2VevWbewhkc/IXnXX6RAF53xdkME=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1790269268;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3HW0Sn2F1kXuJYxmIs4JnguZGO0MfEN0+vn7YSbBw8s=;
+	b=Emnmt40dakyB2rhiu0JFR11bM/ncOnmEX/zGlxH3rqzHjo73rNnz+LMU2Keu5lf+EFaQHc
+	DoAA6b+rf/1IP6Ag==
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
+	t=1790269264; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3HW0Sn2F1kXuJYxmIs4JnguZGO0MfEN0+vn7YSbBw8s=;
+	b=q/HhEC8JNCIA11MYR3fn+365t8+fngPtf7Vgg749bUgVS/jO8xeBBzrLULpV8ZLW4a5em6
+	V6pISMWV5FiX2LDpMEueZy0pYpJ463G3oUeTfN4H/uterZw3T4AumwLJdqcfwhqefbyHfp
+	G11sXyUE4amK+3PtXO6MtgGri1hZEps=
+DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
+	s=susede2_ed25519; t=1790269264;
+	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=3HW0Sn2F1kXuJYxmIs4JnguZGO0MfEN0+vn7YSbBw8s=;
+	b=97b27Qav8QQMnK27QqURwKgt/G6MCwhXkGNTFMMbf0VtcUhP6k+M+TVV659NKMtB/Bb5MR
+	oFpbveN0+0NqVrDw==
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 42C7D13354;
+	Thu, 24 Sep 2026 17:01:04 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id 6+AvCFBXtWrXSAAAD6G6ig
+	(envelope-from <jack@suse.cz>); Thu, 24 Sep 2026 17:01:04 +0000
+Received: by quack3.suse.cz (Postfix, from userid 1000)
+	id C8B32A132E; Thu, 24 Sep 2026 19:00:59 +0200 (CEST)
+Date: Thu, 24 Sep 2026 19:00:59 +0200
+From: Jan Kara <jack@suse.cz>
+To: David Laight <david.laight.linux@gmail.com>
+Cc: Jan Kara <jack@suse.cz>, 
+	Mikko Rantalainen <mikko.rantalainen@peda.net>, Matthew Wilcox <willy@infradead.org>, 
+	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	brauner@kernel.org, viro@zeniv.linux.org.uk, alx@kernel.org, dalias@libc.org
+Subject: Re: [RFC PATCH 0/1] close(): stop exposing non-retryable EINTR
+Message-ID: <e7r623alr6ksfm76hpitkybqkkb2wx2v6jzq2buebhyq7pzxhe@fxqy6ljywt4x>
+References: <20260913193815.2862366-1-mikko.rantalainen@peda.net>
+ <aqcmz5uI7PgN5CT7@casper.infradead.org>
+ <bcdb8f85-d53a-4824-8e34-8d190ec7f4b2@peda.net>
+ <cf83be66-e540-4abf-b377-7e344d62a1dd@peda.net>
+ <wb5ulikmcromcpolaf7icazadijmadrspctqe3ffgnm3bffdwe@t4oz5ond537b>
+ <20260921101907.162d3533@pumpkin>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-X-OriginatorOrg: rambus.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: LV8PR04MB9006.namprd04.prod.outlook.com
-X-MS-Exchange-CrossTenant-Network-Message-Id: 3f8a87bf-f1d1-4ecd-2227-08df19b45d1f
-X-MS-Exchange-CrossTenant-originalarrivaltime: 23 Sep 2026 20:50:55.6655
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: bd0ba799-c2b9-413c-9c56-5d1731c4827c
-X-MS-Exchange-CrossTenant-mailboxtype: HOSTED
-X-MS-Exchange-CrossTenant-userprincipalname: EBPMC5B0wd+HyIGhH4S694BMr424WdIYZvJqDfPtsDRugB/joEzQBxj4NzCXWBEBNUJRmeFqznZV/3nR8FrMxo6FRdI7xOqUydnVO4/IY4Q=
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: LV8PR04MB9241
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260921101907.162d3533@pumpkin>
+X-Spam-Score: -2.30
+X-Spam-Level: 
+X-Spamd-Result: default: False [-2.30 / 50.00];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	MID_RHS_NOT_FQDN(0.50)[];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	MISSING_XM_UA(0.00)[];
+	FREEMAIL_TO(0.00)[gmail.com];
+	ARC_NA(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	RCPT_COUNT_SEVEN(0.00)[11];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	TO_DN_SOME(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_COUNT_THREE(0.00)[3];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
+	RCVD_TLS_LAST(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.cz:email,imap1.dmz-prg2.suse.org:helo,suse.com:email]
+X-Spam-Flag: NO
 
-On Wed, Sep 23, 2026 at 03:47:41PM +1000, Herbert Xu wrote:
-> Why did you set the NO_FALLBACK flag? This is only meant to be used
-> by very specific cases such as s390.
+On Mon 21-09-26 10:19:07, David Laight wrote:
+> On Mon, 21 Sep 2026 10:49:23 +0200
+> Jan Kara <jack@suse.cz> wrote:
+> 
+> > Hi!
+> > 
+> > On Mon 14-09-26 15:40:01, Mikko Rantalainen wrote:
+> > > Mikko Rantalainen (2026-09-14 12:07 Europe/Helsinki):  
+> > > > ---
+> > > > retval = filp_flush(file, current->files);
+> > > > 
+> > > > WARN_ONCE(retval == -EINTR ||
+> > > >           retval == -ERESTARTSYS ||
+> > > >           retval == -ERESTARTNOINTR ||
+> > > >           retval == -ERESTARTNOHAND ||
+> > > >           retval == -ERESTART_RESTARTBLOCK,
+> > > >           "close: ->flush %ps returned interrupt error %d\n",
+> > > >           file->f_op->flush, retval);
+> > > > ---
+> > > > 
+> > > > That would leave the existing userspace ABI unchanged while making
+> > > > remaining offending implementations easier to find and fix.
+> > > > 
+> > > > I also considered retrying filp_flush() inside close(), but I don't
+> > > > think that can be done generically. ->flush() is not documented as
+> > > > safe to restart from the beginning after partial execution, and
+> > > > an interruptible wait could immediately encounter the same
+> > > > still-pending signal again. So fixing the interruptibility at the
+> > > > offending wait seems safer if the above invariant is indeed
+> > > > the intended one.  
+> > > 
+> > > Another thing I noticed is that there are already several paths where
+> > > the kernel calls filp_close() and intentionally ignores its return value.
+> > > 
+> > > For example, close_files() does:
+> > > 
+> > >     filp_close(file, files);
+> > > 
+> > > without checking the result. The same is true for do_close_on_exec(),
+> > > and close_range() explicitly says:
+> > > 
+> > >     Currently, errors to close a given file descriptor are ignored.
+> > > 
+> > > So I don't think a ->flush() implementation can rely on returning EINTR
+> > > and having somebody retry the interrupted operation. There are valid
+> > > close paths where nobody will ever see that return value, even when the
+> > > process itself continues running.
+> > > 
+> > > This seems to strengthen Matthew's point: if some work performed by  
+> > > ->flush() is required for correctness, that work has to tolerate these  
+> > > close paths without depending on userspace retry. Returning an
+> > > interruption result cannot be the recovery mechanism.
+> > > 
+> > > I'm therefore leaning towards treating an observable -EINTR/-ERESTART*
+> > > from ->flush() as suspicious in general, rather than just special-casing
+> > > the close(2) syscall. The fatal-signal case is harmless because the task
+> > > will not observe the result, but close-on-exec and close_range() show
+> > > that unobserved filp_close() errors are already part of normal operation
+> > > as well.
+> > > 
+> > > That also makes me think documenting the intended ->flush() contract
+> > > would be useful: if required close-time work must not depend on the
+> > > caller retrying filp_close(), that seems like an important invariant for
+> > > implementations to know.
+> > > 
+> > > What guarantees must file_operations::flush provide when its caller may
+> > > have no way to act on its return value?
+> > > 
+> > > In any case, I'm now thinking that returning EINTR for close() is a bug
+> > > when file descriptor is already freed. I think the only question is how
+> > > it should be solved. I initially thought it should just be mapped to
+> > > success. Maybe it should be logged as subsystem bug *and* mapped to
+> > > success for userspace instead?  
+> > 
+> > I agree that nobody can sanely assume returning EINTR from open(2) helps
+> > anything (or that userspace is able to do anything based on that).
+> 
+> What about opens of serial ports waiting for modem signals or opens
+> of tape drives waiting for rewind, finding tape marks etc?
 
-Being async, these algs get NEED_FALLBACK forced by ahash_prepare_alg()
-unless NO_FALLBACK is set, so crypto_ahash_init_tfm() tries to allocate a
-same-name synchronous REQ_VIRT provider -- which doesn't work here:
+Err. Not sure how I wrote open(2) there. It should have been close(2)...
 
-- shake128/256, cshake, kmac and poly1305 have no matching provider
-  registered in this tree, so the allocation fails and the transform can't
-  be created at all. NO_FALLBACK is required to instantiate them.
+> > Generally any error (perhaps outside EBADF) from close(2) is at best
+> > informative telling you that something is unhealthy but userspace cannot
+> > sensibly do anything about it.
+> 
+> The program can exit with error to indicate that the output file is
+> likely to be invalid.
 
-- sha2, sha3 and sm3 do have a software provider, so the transform loads,
-  but the auto-fallback can't stand in for the hardware on the streaming
-  path: our exported state is the opaque HW save/restore checkpoint, not
-  the canonical state, so a multi-part export/import round-trip through the
-  fallback misinterprets it (and for SHA-2/SHA-3 the statesize exceeds
-  HASH_MAX_STATESIZE, so ahash_do_req_chain() returns -ENOSYS). A one-shot
-  digest could still use the software provider, but a fallback that only
-  covers one-shot and corrupts streaming isn't usable.
+Yes. That was covered by my paragraph below about "something is unhealthy"
+message.
 
-Same flag as s390, same underlying reason -- no generic transform can stand
-in for the hardware -- though the obstruction differs: protected keys
-there, opaque (and for SHA-2/SHA-3 oversized) HW state here.
+								Honza
 
-Thanks,
-Alex
+> > OTOH this "something is unhealthy" message
+> > does carry some value for possible debugging of the issues by sysadmin so
+> > I'm not sure just ignoring the errors is the right way to go.
+> > 
+> > This raises a question: Are you actually seeing some case where you can see
+> > EINTR returned? Because IMO the best fix is to just fix the .flush method
+> > that can return EINTR to do that only in case of fatal signal and then you
+> > don't have to be doing this special-casing in VFS.
+> > 
+> > 								Honza
+> > 
+> 
+-- 
+Jan Kara <jack@suse.com>
+SUSE Labs, CR
