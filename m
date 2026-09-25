@@ -1,57 +1,57 @@
-Received: from iguana.tulip.relay.mailchannels.net (iguana.tulip.relay.mailchannels.net [23.83.218.253])
+Received: from rusty.tulip.relay.mailchannels.net (rusty.tulip.relay.mailchannels.net [23.83.218.252])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3395B39769B;
-	Fri, 25 Sep 2026 06:25:28 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=23.83.218.253
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 419D541F378;
+	Fri, 25 Sep 2026 06:37:32 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=23.83.218.252
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790317531; cv=none; b=VxEBtccCJMeXbi39FLsnR9crF2CiMNmQd0l6UY6cCInBvROGNEHZqecwABL/OkdHW9Lkn+d2ojFH/iv64du4xqbLqNH+fU71ZJ9+TnKnfGwqHwGUlLTsykM6J+yf8oJUzeLQOumLtPAW1HqwklHzgNmviHyG1b5FqjhFdDEu+pM=
+	t=1790318254; cv=none; b=QM+A1iX7NA01wcAYoGLuG0NXcvomPb73no+poQgzRMOzTNBONZnH7dWqPUJ1u0IlbwwGlVJY+Ry09drbQgvvRIUM8NhirVtTy/tJaW4I5MmDpuZ1KY1dEi4MWHLmbOBI8OaXJPvhFFD9/sUm3R/ve4d/mQGYA9jeY5AzHKK7Zdc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790317531; c=relaxed/simple;
-	bh=+bBb4vrdFEBTj/JEpOvJ92dorJYIQG317cAM7HY5uLo=;
+	s=arc-20240116; t=1790318254; c=relaxed/simple;
+	bh=YGqPYDWhC4i7zOAD3gZF/Wrf24Q2CnyiCjjIhDow910=;
 	h=From:To:Cc:Subject:Message-ID:In-Reply-To:References:MIME-Version:
-	 Date; b=t1RhzLOAjw0KDyBbMxMZa0oQHJGoV77sQrCRFm8rrTuaZ2K4T054jE/yZgmYZ6SUYMLgQR9tsHKbawFdW+xz1g4i7toh+QZ9SMF/pVb1bDVptPM9Gfsp1xgYS6vt0hzD4rqlskfrfFinFyS+sup2dfkAjGzKVa8Z3gY3a9f5Ymw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=laserology.net; spf=pass smtp.mailfrom=laserology.net; dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b=EIBZOl87; arc=none smtp.client-ip=23.83.218.253
+	 Date; b=gWDHM8WbigsZg7eqmhmc9g9KtFAhSJu9ikKQRRLcXi+jID6jRDZybX9pUPckcjEp3JtwWnR4k9RSTqRjcoWiR/usKunDvxoQi4ADiTbUo1y+BmPtM7xic6x5STXyuE/31Uvt1fwndFEFqaHgNX7UPDNav6mbB/5NOCnm1LUWhfA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=laserology.net; spf=pass smtp.mailfrom=laserology.net; dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b=gDcQ4VYt; arc=none smtp.client-ip=23.83.218.252
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=laserology.net
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=laserology.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b="EIBZOl87"
+	dkim=pass (2048-bit key) header.d=laserology.net header.i=@laserology.net header.b="gDcQ4VYt"
 X-Sender-Id: hostingeremail|x-authuser|admin@laserology.net
 Received: from relay.mailchannels.net (localhost [127.0.0.1])
-	by relay.mailchannels.net (Postfix) with ESMTP id BE37A161399;
-	Fri, 25 Sep 2026 06:25:22 +0000 (UTC)
-Received: from de-fra-smtpout8.hostinger.io (100-100-68-17.trex-nlb.outbound.svc.cluster.local [100.100.68.17])
+	by relay.mailchannels.net (Postfix) with ESMTP id 75C76461289;
+	Fri, 25 Sep 2026 06:37:31 +0000 (UTC)
+Received: from fr-int-smtpout20.hostinger.io (100-96-18-208.trex-nlb.outbound.svc.cluster.local [100.96.18.208])
 	(Authenticated sender: hostingeremail)
-	by relay.mailchannels.net (Postfix) with ESMTPA id 766861610DC;
-	Fri, 25 Sep 2026 06:25:21 +0000 (UTC)
+	by relay.mailchannels.net (Postfix) with ESMTPA id 68A38461940;
+	Fri, 25 Sep 2026 06:37:30 +0000 (UTC)
 X-Sender-Id: hostingeremail|x-authuser|admin@laserology.net
 X-MC-Relay: Neutral
 X-MailChannels-SenderId: hostingeremail|x-authuser|admin@laserology.net
 X-MailChannels-Auth-Id: hostingeremail
-X-Bitter-Trouble: 380af66a477ad640_1790317522379_533286278
-X-MC-Loop-Signature: 1790317522379:2966743635
-X-MC-Ingress-Time: 1790317522379
-Received: from de-fra-smtpout8.hostinger.io (de-fra-smtpout8.hostinger.io
- [148.222.55.13])
+X-Drop-Occur: 0f98f8c6740443f8_1790318251278_451908546
+X-MC-Loop-Signature: 1790318251278:1829671893
+X-MC-Ingress-Time: 1790318251277
+Received: from fr-int-smtpout20.hostinger.io (fr-int-smtpout20.hostinger.io
+ [148.222.54.36])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384)
-	by 100.100.68.17 (trex/8.0.2);
-	Fri, 25 Sep 2026 06:25:22 +0000
+	by 100.96.18.208 (trex/8.0.2);
+	Fri, 25 Sep 2026 06:37:31 +0000
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=laserology.net;
-	s=hostingermail1; t=1790317519;
+	s=hostingermail1; t=1790318248;
 	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
 	 to:to:cc:cc:mime-version:mime-version:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=WFItyhy/m+4+f9WJC4296gXFOSXIxofLCMgqwpIZSjI=;
-	b=EIBZOl87kHhGkp+VuMedN5obDN1PHKXYcEiN/xScZD4sEuwhEHmQuSZEfWm7FwJ54VYGNi
-	WtNemkmSIkynJk8DEof4p1bK/3VIjs3AnRqY8kLbFzS2XamsX84Lbz7cYK+p0xFVNFfznT
-	fJV84na7ij06ESwW4G4lXy8JclTMFuegp/nWcFP2dMH54zFuY8A/0dfLg43EGjbGyaDzCb
-	I4HgfAkIcMwvckReDeUXPw3fFwMbouCQMy/HIviVXoyVl08/iMB4eiHKQVRIyzxSG+ES+C
-	g4DH47/6Ykv9mi9noTENsXqMbiW2rHd3gwVFREpUnj8o/3u29wNpEtlGlnG+Xw==
+	bh=YGqPYDWhC4i7zOAD3gZF/Wrf24Q2CnyiCjjIhDow910=;
+	b=gDcQ4VYtVpLgNX5EbEoKY6ryv1QIiUxK08Rk+uXL2r5LB32fJz3u0sMIkY+XcJZWWrbjYi
+	OOz4KsspSXzcZW4jJXyvLUHhk1CAmlqfWG9vzP6CXPUepGwICp7R+KC6OgYihY/wbzEUN/
+	GeZTmGg+DKgvGq+6stkoBCNBYMyY8Ep+OQwVZGLdOd6HGveGChgC9h7Tt/AgMeaU+bNwKo
+	oNzmL23lysQl7puSjj5abBCE2hqH8StHdsepdBl9H0CeolYleJRS8LdheycPj2Aavr0KzD
+	yl1Ygv/QcBDaiIWdcqDdMEoK/gXkWwN2VyTKP3DPLDmIZIHtEUIVtwKVTUeDFg==
 Received: from toolbx (unknown [IPv6:2605:59c0:2068:2608:c60b:fd48:4dc7:1cbd])
 	(Authenticated sender: admin@laserology.net)
-	by smtp.hostinger.com (smtp.hostinger.com) with ESMTPSA id 4hrgg22tWDz3x2G;
-	Fri, 25 Sep 2026 06:25:18 +0000 (UTC)
+	by smtp.hostinger.com (smtp.hostinger.com) with ESMTPSA id 4hrgx31TwCz1xt7;
+	Fri, 25 Sep 2026 06:37:26 +0000 (UTC)
 From: Evan Lawrence <development@laserology.net>
 To: Dmitry Torokhov <dmitry.torokhov@gmail.com>
 Cc: Evan Lawrence <development@laserology.net>,
@@ -59,7 +59,7 @@ Cc: Evan Lawrence <development@laserology.net>,
 	linux-api@vger.kernel.org,
 	Miroslav Bendik <miroslav.bendik@gmail.com>
 Subject: Re: [PATCH v5] Input: synaptics - add pass-through mode for TrackPoint
-Message-ID: <20260925062454.102935-1-development@laserology.net>
+Message-ID: <20260925063705.104607-1-development@laserology.net>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20260815004214.68767-1-development@laserology.net>
 References: <an9ocXI6b7WEI8D2@google.com> <20260815004214.68767-1-development@laserology.net>
@@ -70,41 +70,15 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Date: Fri, 25 Sep 2026 06:25:18 +0000 (UTC)
-X-CM-Envelope: MS4xfOnlRoYS6G4pB6HKufcKy2kROKC+YQJinOmtr9Z6ajAk0lUNUNCWxV6idVktJb/+ICrTXQyB6blu+4ii8UwiYr6/78SpBvBs13JhDNrBR8poCmzUn769 MJwaWVP/FTPbyXIIpqAiu88raxX9+CPDeiNHxbPhwSkzzCPKdF7U6vFcB2/oy6YCL+Sdw80U+PoLYkhyQy4S0tWiDq7nEXYF4mqdNGBcgXWMVImeN3miF5mB b+79TD2G7d423RulHr4BoRt7iwcFiOT9R8nucmwtTOIBZF85NOniQv54J1a43yypTOcKiCWSG8WCn3gy6uMbbQDU0idNQJYIFXnB32RdV5yHCYOp2QeBuHtC Y/1SO8JxDRKXPF9FQ/LRkw2LnoMNqT7AK+hYBjJPBLzC37fim23ElMUCKBucrPP3HTeEqnwm
-X-CM-Analysis: v=2.4 cv=ALriHGRn c=1 sm=1 tr=0 ts=6ab613cf a=bXe6bw2OB92olpQ1pPvang==:617 a=xqWC_Br6kY4A:10 a=NEAV23lmAAAA:8 a=8b8fbwVGRZi1C_-jfXoA:9
+Date: Fri, 25 Sep 2026 06:37:26 +0000 (UTC)
+X-CM-Envelope: MS4xfLoINS+pwsDKhhXJER5c105q3C2PcwGDiaOUESddC4EtP/APEAk8kmje9cYXNtL3Ma3b8W2+8a2hBS4FIUygShmM4TivQ+SpJVYsKBKkz0LrHi4LQ7ht W0fiowayWXSyQroQLaHsKMUr4epJDa2ZIsm1gVpy70JgF/y21FtRCC/0Elr+48QHanbC7aY36trHkl1tzUJu8tkXHLFCeFpjk2EF1x1G1lAW+EDUpROFtMti rJr8/0m1oAx36wWPkK/oL0oAR/rLx/qq/9CJhAxCNQIckDXkOAaxgT27NSyKGTG9aIrVSLX7Yyms07mfdQuRv7GO/snOrXjyLHVs9kr6fWSzYP80f3xF3vx7 mt2h/ZgdZkfHJJHZaVO/LvJD8hcUIvnalOJUV8MDlFBpVc4MsDaIgo3HRm3gtaUtqSUzWJ3f
+X-CM-Analysis: v=2.4 cv=Gq4Q+V1C c=1 sm=1 tr=0 ts=6ab616a8 a=bXe6bw2OB92olpQ1pPvang==:617 a=xqWC_Br6kY4A:10 a=YAInsrs56s76XBf-yU8A:9
 X-AuthUser: admin@laserology.net
 
-Hi Dmitry,
-
-Following up on this thread: I am pausing all work on transparent
-pass-through mode, including the v6 I mentioned (the ACK-waiting latency
-reduction). I'd rather not push a workaround once the real transport works.
-
-The reason is your original question. In my previous reply I said SMBus/RMI4
-was not viable on the T14 Gen 1 because it stayed in PS/2 mode. That turned
-out to be a transport bug, not a device limitation: the AMD FCH needs the
-legacy SMB0001/ASF Host Notify path enabled before rmi_smbus can talk to the
-touchpad. With that in place, the T14 Gen 1 AMD now runs the touchpad (F12)
-and the TrackPoint (F03) natively on RMI4, with no transparent mode and no
-pass-through bandwidth limit. Both devices are working on a T14 Gen 1 AMD and
-on a P14s Gen 2a.
-
-That work is being carried in a machine-specific, not-yet-upstream repository
-together with Spencer Michaels, who did the original T14 Gen 2a
-reverse-engineering:
-
-  https://github.com/SpencerMichaels/t14-amd-gen2-rmi
-
-I'll keep the transparent-mode series archived and would be glad to revive it
-for any machine where RMI4 genuinely cannot work -- but that no longer looks
-like the general answer to your question.
-
-Thanks for the review feedback along the way, and to Miroslav for the
-original transparent-mode work this was based on.
-
-Also, this was my first real foray into kernel work, and parts were
-LLM-assisted; I've reviewed and tested everything on the hardware. Thanks for
-the patience with a newcomer.
+Quick clarification: the T14 Gen 1 / P14s Gen 2a RMI4 support is local to my
+tree only -- I haven't pushed it to Spencer's repo or submitted it anywhere.
+It's early but promising (bring-up works on both machines, no full test matrix
+yet). The only things I've filed there are the two hardware inventories, so I
+didn't mean to imply this had landed or been fully validated.
 
 Evan
