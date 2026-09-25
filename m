@@ -1,41 +1,55 @@
-Received: from mail.hallyn.com (mail.hallyn.com [178.63.66.53])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A590B471402;
-	Fri, 25 Sep 2026 13:06:31 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.63.66.53
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 381954C10C9;
+	Fri, 25 Sep 2026 15:12:26 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790341596; cv=none; b=GXSioNaDm8l/9zjydLPDdJsQpejLc3UAVCu2ipgJK4OUTouWwaezOEhmwqd/JNpUyFZuJNdJFWM+sQ8iuMCtW8S6Ve1vJxdUUs7ymOGMIl8ENe7xN/PJABADEOLWSWJx+Elgj7PhIDCZabOvg79jos4032qIKbRBQSQoGLfockE=
+	t=1790349160; cv=none; b=WcKNs/QjxAbwcAsPKa+9RHCU5hU7IvWAUnRs7r9kTBGPEVGRVmX8hGcGF/jofvF3f0Vy73S1WxfQziJO8FUiaMJnwyWNNc3RBcRk7GZlEY54joENNGueZHAyZzZLIOAKjYmE+rWqywHtf0IOQQfQlhK7Pu3P87ykOMBDlFc/Q44=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790341596; c=relaxed/simple;
-	bh=78O9kZWyXHmb3QRI0o3vBS4521JbbQIxKlPpbFqwmyc=;
+	s=arc-20240116; t=1790349160; c=relaxed/simple;
+	bh=MRSukCWNve3Kzs5BeN87oA6khPyqwIpTypZ7gKzRH3c=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=iXx2AapK3rERkor4ZFnyf18rBxYUFuQhKVekraRv59zbkwUNyPs7XB2Vpy30Oo9SkG+n59/UaHfBOz6qsaYv53rCK1p1mp7ybKyqQN/2qZS5rx/rYaIc+0LYhUjy8GBw+gmt2QWJpKj/lYYxVrUE8FJA9NQxrzbB7GqjDXAklMI=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hallyn.com; spf=unknown smtp.mailfrom=hallyn.com; dkim=pass (2048-bit key) header.d=hallyn.com header.i=@hallyn.com header.b=ZT02gRL4; arc=none smtp.client-ip=178.63.66.53
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hallyn.com
-Authentication-Results: smtp.subspace.kernel.org; spf=tempfail smtp.mailfrom=hallyn.com
+	 Content-Type:Content-Disposition:In-Reply-To; b=eH5tQr8/piYWx5kNKgj1YTIOZrpDXrimLKCF+edONg7cajOWrR40rF+EBqWsEShXIDj4FGz8IC4dACJ+RxSFD66LGWh65Z6Zutts2pC0UosiAt+CRpV5yVDJuIcGaKkwiGCPtC1z5zZDFyhiXPIBNf0QkWpxPLozEuAa2oNCEBA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=BAhy/v8T; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=hallyn.com header.i=@hallyn.com header.b="ZT02gRL4"
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=hallyn.com; s=mail;
-	t=1790341583; bh=78O9kZWyXHmb3QRI0o3vBS4521JbbQIxKlPpbFqwmyc=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=ZT02gRL4AiFFpPHfcQKgeFCbRmRbcJXdUcJ6QxYGpEcxCPRzvvRXL+tPEq9WkdRJ1
-	 w2GBM/E9lSQSuxP8LzcsSWoRJ/iEelqk5YhTzKTrJ9tSW2lMkVeTsOrhIW+wGjOYmY
-	 QRad6lFtLh/vnua+fPezbqyH+xzaMqVhsQeJX20Z0FzEv3wBtNrvyouxgCmjjopYyB
-	 9Vg+saqgBKmaajMK7H5Iz0vamYk/hIxBx5PEUCQPbBEnLUoojiIRaP+VarCtWij2IG
-	 XZE3XCE+O9oVUUcnkHLvAM/A2y4iad2dQ0z1CGMMSSvOLMs03exnDZ8g3y4Rnj47RH
-	 9DXg71wAq7+Cg==
-Received: by mail.hallyn.com (Postfix, from userid 1001)
-	id A470D4CD; Fri, 25 Sep 2026 08:06:23 -0500 (CDT)
-Date: Fri, 25 Sep 2026 08:06:23 -0500
-From: "Serge E. Hallyn" <serge@hallyn.com>
-To: =?utf-8?B?5rSb56We6JG1?= <chengjna@gmail.com>
-Cc: linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [RFC] Proposal for a standard Competitive / Protected Session
- API in Linux
-Message-ID: <arZxz8rz6H6L99l4@hallyn.com>
-References: <CAHDTbUFX=8aAQnwv32hqmwHKkeJR0UA5XfZtMZRD1H+kV7uCzA@mail.gmail.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="BAhy/v8T"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0A6DD1F000FF;
+	Fri, 25 Sep 2026 15:12:13 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1790349141;
+	bh=c5yS4K3YB4cbDqechSUZ/Ihi+uzGED0jeEp/TnJEBhA=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=BAhy/v8TxG6BFYuCpIAX+zhkeekEHZwQXxuuF9RW92bIf3O/Be8NmqqdEryfJWALg
+	 U/D9uKVRaM8f3sG74RyDOjAda0blaOWoy7xbb/potO1QU2j1USwNVqlH9++InDJfTi
+	 OQooqgeolp/H7pt+snwrdA3psFqDp1p1jH1q/8+fl2CmKEJacXTOHI4UuvnEHcwWaS
+	 9atvlZX1qGtA6vt4u7uCDpOt88XcpdJcfljswhb+S7Pqbdgpmg6HXAfTUgkvzuz14F
+	 J1F0aD/9ILLkNRnzjRGWsCjD3sAVn06mCxk0/Lm5hVsE0LcCBGMCS0ivJqjT9unVI5
+	 mXlhb7B3qE4+g==
+Date: Fri, 25 Sep 2026 17:12:11 +0200
+From: Christian Brauner <brauner@kernel.org>
+To: Jann Horn <jannh@google.com>
+Cc: Chen Linxuan <me@black-desk.cn>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
+	Andrew Morton <akpm@linux-foundation.org>, David Hildenbrand <david@kernel.org>, 
+	Lorenzo Stoakes <ljs@kernel.org>, "Liam R. Howlett" <liam@infradead.org>, 
+	Vlastimil Babka <vbabka@kernel.org>, Mike Rapoport <rppt@kernel.org>, 
+	Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>, Ingo Molnar <mingo@redhat.com>, 
+	Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, 
+	Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, 
+	Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, 
+	Valentin Schneider <vschneid@redhat.com>, K Prateek Nayak <kprateek.nayak@amd.com>, 
+	Kees Cook <kees@kernel.org>, John Johansen <john.johansen@canonical.com>, 
+	Georgia Garcia <georgia.garcia@canonical.com>, Paul Moore <paul@paul-moore.com>, 
+	James Morris <jmorris@namei.org>, "Serge E. Hallyn" <serge@hallyn.com>, 
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org, 
+	apparmor@lists.ubuntu.com, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org
+Subject: Re: [PATCH v2 0/3] pidfd: add task path ioctls
+Message-ID: <20260925-gewischt-auftrag-tierzucht-c153cb3f9f74@brauner>
+References: <20260831-pidfd-get-paths-v2-0-c59ea6a21b72@black-desk.cn>
+ <20260831-tauwetter-werkbank-dramen-b37eb4025283@brauner>
+ <CAC1kPDMK_D4nhyRmBHg6KC7SmmCkH73Xtc5DhXeJbSvf3LcqcQ@mail.gmail.com>
+ <CAG48ez1T5-tUHVK_iHsgUtWa-inVdrZxA3E-ZCW0iENJvasKfg@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -45,139 +59,77 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAHDTbUFX=8aAQnwv32hqmwHKkeJR0UA5XfZtMZRD1H+kV7uCzA@mail.gmail.com>
+In-Reply-To: <CAG48ez1T5-tUHVK_iHsgUtWa-inVdrZxA3E-ZCW0iENJvasKfg@mail.gmail.com>
 
-On Fri, Sep 25, 2026 at 05:14:46PM +0800, 洛神葵 wrote:
-> Hello,
+On Mon, Sep 21, 2026 at 10:22:11PM +0200, Jann Horn wrote:
+> On Wed, Sep 2, 2026 at 8:47 AM Chen Linxuan <me@black-desk.cn> wrote:
+> > On Mon, Aug 31, 2026 at 4:49 PM Christian Brauner <brauner@kernel.org> wrote:
+> > > On 2026-08-31 10:59 +0800, Chen Linxuan wrote:
+> > > > Obtaining a target task's executable, working directory, or root
+> > > > currently requires walking procfs symlinks such as /proc/<pid>/exe,
+> > > > /proc/<pid>/cwd, and /proc/<pid>/root.  That makes the operation depend
+> > > > on procfs being mounted and visible to the caller, even when it already
+> > > > holds a pidfd for the target.
+> > > >
+> > > > This series adds PIDFD_GET_EXE, PIDFD_GET_CWD, and PIDFD_GET_ROOT. Each
+> > > > ioctl takes no argument and returns a close-on-exec O_PATH file
+> > > > descriptor referencing the corresponding task path.  The new ioctls use
+> > > > the same ptrace permission check and nonzero-argument rejection as the
+> > > > existing pidfd namespace ioctls.
+> > > >
+> > > > The target task is sampled while holding its exec_update_lock. This
+> > > > keeps the access decision and the task-state read in the same exec
+> > > > critical section, preventing a concurrent execve() from changing the
+> > > > credentials or target state between the check and the use.
+> > > >
+> > > > The first patch factors out helpers for acquiring referenced task paths
+> > > > and reuses them in procfs and AppArmor.  The second patch introduces
+> > > > scoped cleanup for privileged pidfd task access and separates namespace
+> > > > lookup from namespace fd creation.  The final patch uses these pieces to
+> > > > implement the three new ioctls.
+> > > >
+> > > > Signed-off-by: Chen Linxuan <me@black-desk.cn>
+> > > > ---
+> > >
+> > > I really have difficulties forming an opinion on this. So this sounds
+> > > very useful but it has implications.
+> > >
+> > > Right now, pidfd ioctls are available even in situations where the task
+> > > in question would not be accessible via procfs, e.g., when procfs is
+> > > mounted with "hidepid" options or similar. So this would expand the
+> >
+> > One point regarding hidepid: for callers that can pass
+> > PTRACE_MODE_READ_FSCREDS, hidepid does not provide an additional
+> > restriction. With hidepid=1 or hidepid=2, has_pid_permissions() falls
+> > back to ptrace_may_access(..., PTRACE_MODE_READ_FSCREDS), and
+> > hidepid=ptraceable uses that check directly. In addition, the
+> > /proc/<pid>/{exe,cwd,root} links independently perform the same
+> > PTRACE_MODE_READ_FSCREDS check in call_proc_get_link(), regardless of
+> > the hidepid mode.
+> >
+> > So for these specific path lookups, hidepid does not block a caller who
+> > would already pass the check used by the proposed pidfd ioctls.
 > 
-> I would like to propose an idea for a Linux API intended for
-> competitive games, online games, and potentially other applications
-> that require a high-integrity execution environment.
+> Agreed, I think with regards to hidepid there should be no issue here.
 > 
-> Linux already provides a number of relevant security mechanisms,
-> including ptrace restrictions, process memory access controls, LSM,
-> Secure Boot, kernel lockdown, and kernel module signing.
+> If I try to come up with scenarios in which this could introduce
+> additional danger, the main one I can think of would be: A task T1 is
+> running inside a pid namespace and has a unix domain socket connection
+> to a task T2 outside the namespace, with both running as the same
+> EUID; T1 sets SO_PASSPIDFD on its socket to obtain a pidfd pointing to
+> T2 on the next message sent by T2, then T1 uses that to get access to
+> the mount namespace of T2.
 > 
-> However, these mechanisms are currently exposed separately. A game
-> that wants to establish a trusted competitive environment may need to
-> detect and combine several different mechanisms on its own.
-> 
-> I would like to ask whether it would make sense to provide a unified
-> Protected Session / Competitive Session API.
-> 
-> The basic model could be relatively simple.
-> 
-> When a game starts, it requests a protected session, for example:
-> 
-> competitive_session_create(...)
-> 
-> The kernel checks whether the current environment satisfies the
-> requested protection level and returns something similar to:
-> 
-> ALLOWED: the environment satisfies the requested requirements;
-> 
-> DENIED: the environment does not satisfy them, together with a
-> standardized reason.
-> 
-> While the protected session is active, Linux would protect processes
-> belonging to that session from unauthorized interference.
-> 
-> For example, depending on the selected protection level, this could
-> restrict other processes from:
-> 
-> debugging or attaching to the protected process through ptrace;
-> 
-> reading or modifying its process memory;
-> 
-> obtaining sensitive information through /proc;
-> 
-> using other kernel interfaces to observe or interfere with the
-> protected process.
-> 
-> The exact interfaces covered by such a mechanism would of course need
-> further discussion.
-> 
-> The game may explicitly terminate the protected session:
-> 
-> competitive_session_close(...)
-> 
-> Normal system behavior would then be restored.
-> 
-> If the game crashes, is terminated, or the protected process exits,
-> the session should automatically be destroyed by the kernel.
-> 
-> This would ensure that the system cannot accidentally remain in a
-> competitive/protected state if the application fails to shut down
-> cleanly.
-> 
-> A major advantage of this model is that game developers would not need
-> broad permission to scan the user's system, inspect unrelated files,
-> or monitor every other application.
+> Christian, is there some mechanism that already protects against using
+> something like SO_PASSPIDFD to get a pidfd to a process in a parent
+> namespace?
+> Otherwise, should we add something like a "pid_vnr(pid) != 0" check
+> either in these new operations or in SO_PASSPIDFD?
 
-Why would they need to do that anyway?  What are you protecting them
-from exactly?  Cheating?  Secret stealing?  Playing without a license?
+Right now we don't place any hierarchical restrictions on SO_PASSPIDFD
+or SO_PEERPIDFD at all and this is in use by varlink iirc.
 
-This sounds like us going out of our way to enable proprietary software
-to lock us down to protect their "rights" - DRM.
-
-I guess what you're promising us is that "this way you won't be forced
-to run crowdstrike and tenable and intune to be able to play these games".
-But 1. I still prefer to say "then nobody *needs* to play these particular
-games", and 2. I could just compile my own kernel with
-competitive_session_create() being a noop, so you'd still be digging
-around to make sure I didn't do that, right?
-
-> Instead, Linux itself would establish and enforce the protected environment.
-> 
-> The game would only need to know:
-> 
-> "Does the current system satisfy the requirements for this protected session?"
-> 
-> In other words, the API would provide a trusted execution environment
-> for the application rather than granting the application broader
-> system-monitoring privileges.
-> 
-> A simplified lifecycle would look like this:
-> 
-> Game starts
-> |
-> v
-> Request Protected Session
-> |
-> v
-> Linux checks the environment
-> |
-> v
-> ALLOWED / DENIED
-> |
-> v
-> Game enters competitive mode
-> |
-> v
-> Game exits or explicitly closes the session
-> |
-> v
-> Protected Session is automatically destroyed
-> 
-> My main questions are:
-> 
-> Does Linux already provide a unified interface with similar semantics?
-
-I think the closest you could come today is to run it in a
-confidential computing VM like SEV-SNP/TDX.
-
-> If not, would a Protected Session abstraction like this be worth
-> discussing as a generic userspace API?
-
-Possibly, but the first objection you'd have to overcome is that
-you are asking us to reduce our rights on the hardware and software
-that we own.  E.g. not being able to strace to figure out what is
-missing when the software isn't working - yuck.
-
-> Competitive gaming is the most obvious use case, but such a mechanism
-> could potentially also be useful for other applications that need
-> stronger protection of their process integrity or confidentiality, so
-> I do not think it necessarily needs to be designed as a game-specific
-> API.
-> 
-> Thank you.
+What about requiring pid_vnr(pid != 0 for any operations that grant
+access to additional resources. IOW, make the icotl for any ns
+descriptor or cwd/root fail if the caller is outside the pidns
+hierarchy?
