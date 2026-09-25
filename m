@@ -1,37 +1,38 @@
 Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29C0D346E58;
-	Fri, 25 Sep 2026 17:53:41 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BEADC3F86E6;
+	Fri, 25 Sep 2026 17:53:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=213.97.179.56
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790358827; cv=none; b=RfhHtaoKsiikJqnyrf6/aWbHvVxtpAoC8ykN2PEz4qxwlqXzX/nRJBxnL6et+jUEC7IBf9wfyjXbgGBFtoFifQSOWttLqulBOKi4D93+FT1c29/shjdohoOfNsfWkHlVNu2K61M+NjZLos6tVJVxb69T5RX6KdiAeMI5yFZhIVI=
+	t=1790358829; cv=none; b=dHwzilrHj9Q/ER9E7SvlKGicNyXW/a61WQh+u4ukHF4OSblke2TDJkbJgH5PX1Jsy2rXH8sc2hzsAOYoYjczk0xTIEY0AO1qMNlv51F8KVtF9cBbhkNW9I07/5G0B6yvPgrqgTnHHFabS+LTpvsH/nUzcaIYCGev1UaskFwIhXo=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790358827; c=relaxed/simple;
-	bh=f8J+bZF34JOcztQ6nRdQrs1x6p/+jJNS7+5lZYFOgF0=;
-	h=From:Subject:Date:Message-Id:MIME-Version:Content-Type:To:Cc; b=d6B+yVfve2RVYA6YQnzOVmd9TC0YnedQPHzniesY/EpUshjCSx8suoyEYGJfCsO2sQcuMhAx9gyDIkAoyhGbgAhLfZuiGjLpQTDiWGPU/DeMOUZ5Ry+5JJpmWoIi7QLyst4TQbT2VczPQa9aZX9LGHvgqKJgPVrAwUFtdsrFeDY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=IWX7RUZx; arc=none smtp.client-ip=213.97.179.56
+	s=arc-20240116; t=1790358829; c=relaxed/simple;
+	bh=HSXNCnIXv4VV1ReSHAGPYg5GUBU8IufuXcJSaOc5Ti8=;
+	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
+	 In-Reply-To:To:Cc; b=lgOpNc5fLg+AkrqfwjyZa0jaY7hPHt6xuNwv+oicvX8v95zQgJsyjaaA8C8WGpa7stuIFDL3em4N40cejHjxx1mnatqcH9QAcJvesaa/w7eOo0H3fCVeSdC9VIHadafWfw6r17tuahfG/zwvhaZsdh6dNNAERR4jsC+hP+YEz+U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com; spf=pass smtp.mailfrom=igalia.com; dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b=YitHadZS; arc=none smtp.client-ip=213.97.179.56
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="IWX7RUZx"
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.b="YitHadZS"
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
-	s=20170329; h=Cc:To:Content-Transfer-Encoding:Content-Type:MIME-Version:
-	Message-Id:Date:Subject:From:From:Reply-To;
-	bh=N4qMsy6jqzJdMh8PAsMxCmwrbsaWDYUgWh+zjS70TVI=; b=IWX7RUZxkDmTUEzGVrsYLYa4Zl
-	5BJOvbnX5p8O0iFtc9NiQWs+ENDox2fWZHECaNJaqipgAMBMObSdzeeSvf0566lOBn/l3TJNTVCFV
-	0KqvGPsCDtevAp3q3ndtsMV1zmZx/VCXfOqoXyk6kM8EH+7TGI3b1W2//JneV/wdErhEPQnAEn0nj
-	8nUiIsP8JvE/yqQXUA4oRBYS3t/YLCor8nl1EKvYhm+IbpbL9z60OeLtsg16RAXCz3p8/a2zmgnj0
-	SAUsrfkkm+EnT4+bkWD1xY2qCql+JMMNawc/nVz6w6bjnGt7B8iaJwEFv78UcejFrRWNVpmY4l6zW
-	3H/Rc4qQ==;
+	s=20170329; h=Cc:To:Message-Id:Content-Transfer-Encoding:Content-Type:
+	MIME-Version:Subject:Date:From:From:Reply-To;
+	bh=SurK3TGYfpTo583lyRJISR2Hl5XvlB4mz52/MfgA7l0=; b=YitHadZSELd7dJuYpw4ZY7gxlq
+	pNwuz20j2oLjQleFrBRv0lYwN32RIudV2LW+Ryos0532M/Y0/YYAnV5xnrQdKV7pkLHs7gIau4iE3
+	KSS7GDQoeH8rYA0b/nROohgosbOU6l6KkmILEVKQ1vvAohmdR5ZVMoaU6KUOo9Af/SelyVxxKHt1I
+	iotnWwQodIY/ctzx1LARG4Iwn6EZ+4bGs8HoOgJnMYyzSpFimyAfhJkVOPlLTmiL3+aPbOLCzC50W
+	Pk+HPkKvybdp7vmWfrs0jLq/bnBh5XLHRtsiXtb/h1CS8WjnHcCsA7Lu3mNuNBWB8BfKzLRi6FXS7
+	ZPRPOUfw==;
 Received: from [177.172.123.214] (helo=[192.168.15.100])
 	by fanzine2.igalia.com with esmtpsa 
 	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
-	id 1xAA73-007GQg-Vc; Fri, 25 Sep 2026 19:53:33 +0200
+	id 1xAA7A-007GQg-MK; Fri, 25 Sep 2026 19:53:40 +0200
 From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-Subject: [PATCH v7 00/10] futex: Create {set,get}_robust_list2() syscalls
-Date: Fri, 25 Sep 2026 14:53:23 -0300
-Message-Id: <20260925-tonyk-robust_futex-v7-0-d1095991152c@igalia.com>
+Date: Fri, 25 Sep 2026 14:53:25 -0300
+Subject: [PATCH v7 02/10] futex: Use explicit sizes for compat_robust_list
+ structs
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -40,11 +41,9 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/23NQQrCMBCF4auUrI1MYycaV95DRNJmYoPaSNIWR
- Xp30wqK2OU/MN97skjBUWTb7MkC9S4636RYLzJW1bo5EXcmNRMgEIRA3vrmcebBl11sj7Zr6c4
- laENkdCUVsvR4C2TdfUL3h9S1i60Pj2mjL8brm0MBc1xfcOB5LlagVoTK0M6d9MXpZeWvbPR6/
- BpSyFkDR2OtclWY0tDG/hnyY6QpMWvIZABa0gCowZofYxiGF/4oEPM9AQAA
-X-Change-ID: 20250225-tonyk-robust_futex-60adeedac695
+Message-Id: <20260925-tonyk-robust_futex-v7-2-d1095991152c@igalia.com>
+References: <20260925-tonyk-robust_futex-v7-0-d1095991152c@igalia.com>
+In-Reply-To: <20260925-tonyk-robust_futex-v7-0-d1095991152c@igalia.com>
 To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, 
  Darren Hart <dvhart@infradead.org>, Davidlohr Bueso <dave@stgolabs.net>, 
  Arnd Bergmann <arnd@arndb.de>, 
@@ -56,100 +55,275 @@ Cc: linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
  =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
 X-Mailer: b4 0.15.2
 
-Hello,
+There are two functions for handling robust lists during a task exit:
+exit_robust_list() and compat_exit_robust_list(). The first one handles
+either 64-bit or 32-bit lists, depending on the kernel bitness.
+compat_exit_robust_list() exists only in 64-bit kernels that supports
+32-bit syscalls entry points (also known as compat entry points).
 
-Now that we mostly fixed the op_pending race condition, I believe it's time to
-continue the new syscall work. This patchset is adapted to the robust_try_unlock
-mechanics.
+The new syscall set_robust_list2() needs to handle both 64-bit and
+32-bit robust lists, regardless of compat entry being enabled, so it
+needs to have both functions always available.
 
- * Use case
+In preparation for this, use explicit size for struct members of
+compat_robust_list and compat_robust_list_head. Rename the structs and
+compat_exit_robust_list() to make clear which bitness it handles.
 
-The use-case for the new syscalls is detailed in the last patch version:
+Keep exit_robust_list() as it is: used to handle the native bit size of
+the kernel.
 
-  https://lore.kernel.org/lkml/20250626-tonyk-robust_futex-v5-0-179194dbde8f@igalia.com
-
- * The syscall interface
-
-Documented at patches 3/9 "futex: Create set_robust_list2() syscall" and
-4/9 "futex: Create get_robust_list2() syscall".
-
- * Testing
-
-I expanded the current robust list selftest to use the new interface,
-and also ported the original syscall to use the new syscall internals,
-and everything survived the tests. Tested on both x86 and arm64.
-
-This patchset depends on https://lore.kernel.org/lkml/20260922005407.522060-1-andrealmeid@igalia.com/
-
- * Changelog
-
-Changes from v6:
- - Interface now uses CREATE/MODIFY semantics instead of SET. This allows to
- both libc and app to use the lists without conflicts.
- - Rebased on top of mainline, including the new VDSO changes
- - v6: https://lore.kernel.org/r/20251122-tonyk-robust_futex-v6-0-05fea005a0fd@igalia.com
-
-Changes from v5:
- - Complete interface rewrite, there are so many changes but the main
-   ones are the following points
- - Array of robust lists now has a static size, allocated once during the
-   first usage of the list
- - Now that the list of robust lists have a fixed size, I removed the
-   logic of having a command for creating a new index on the list. To
-   simplify things for everyone, userspace just need to call
-   set_robust_list2(head, 32-bit/64-bit type, index).
- - Created get_robust_list2()
- - The new code can be better integrated with the original interface
- - v5: https://lore.kernel.org/r/20250626-tonyk-robust_futex-v5-0-179194dbde8f@igalia.com
-
-Feedback is very welcomed!
-
+Signed-off-by: André Almeida <andrealmeid@igalia.com>
 ---
-André Almeida (10):
-      futex: Skip test_futex_robust_unlock() if not supported
-      futex: Use explicit sizes for compat_robust_list structs
-      futex: Make exit_robust_list32() unconditionally available for 64-bit kernels
-      futex: Create set_robust_list2() syscall
-      futex: Create get_robust_list2() syscall
-      futex: Wire up set_robust_list2 syscall
-      futex: Wire up get_robust_list2 syscall
-      selftests/futex: Expand for set_robust_list2()
-      selftests/futex: Expand for get_robust_list2()
-      futex: Use new robust list API internally
+ include/linux/compat.h      | 13 +++----------
+ include/linux/futex.h       |  4 ++++
+ include/linux/futex_types.h |  2 +-
+ include/linux/sched.h       |  2 --
+ include/uapi/linux/futex.h  | 10 ++++++++++
+ kernel/futex/core.c         | 34 +++++++++++++++++-----------------
+ kernel/futex/syscalls.c     |  9 +++++----
+ 7 files changed, 40 insertions(+), 34 deletions(-)
 
- arch/alpha/kernel/syscalls/syscall.tbl             |   2 +
- arch/arm/tools/syscall.tbl                         |   2 +
- arch/m68k/kernel/syscalls/syscall.tbl              |   2 +
- arch/microblaze/kernel/syscalls/syscall.tbl        |   2 +
- arch/mips/kernel/syscalls/syscall_n32.tbl          |   2 +
- arch/mips/kernel/syscalls/syscall_n64.tbl          |   2 +
- arch/mips/kernel/syscalls/syscall_o32.tbl          |   2 +
- arch/parisc/kernel/syscalls/syscall.tbl            |   2 +
- arch/powerpc/kernel/syscalls/syscall.tbl           |   2 +
- arch/s390/kernel/syscalls/syscall.tbl              |   2 +
- arch/sh/kernel/syscalls/syscall.tbl                |   2 +
- arch/sparc/kernel/syscalls/syscall.tbl             |   2 +
- arch/x86/entry/syscalls/syscall_32.tbl             |   2 +
- arch/x86/entry/syscalls/syscall_64.tbl             |   2 +
- arch/xtensa/kernel/syscalls/syscall.tbl            |   2 +
- include/linux/compat.h                             |  13 +-
- include/linux/futex.h                              |  24 +
- include/linux/futex_types.h                        |   8 +-
- include/linux/sched.h                              |   2 -
- include/uapi/asm-generic/unistd.h                  |   7 +-
- include/uapi/linux/futex.h                         |  28 +
- kernel/futex/core.c                                | 194 +++++--
- kernel/futex/futex.h                               |   5 +
- kernel/futex/syscalls.c                            | 147 +++++-
- kernel/sys_ni.c                                    |   2 +
- scripts/syscall.tbl                                |   2 +
- .../selftests/futex/functional/robust_list.c       | 567 +++++++++++++++++++--
- 27 files changed, 907 insertions(+), 122 deletions(-)
----
-base-commit: fe2ec83746e501645709761605c2464a44fd2929
-change-id: 20250225-tonyk-robust_futex-60adeedac695
+diff --git a/include/linux/compat.h b/include/linux/compat.h
+index 8da0a15c95f4..eceb085efb69 100644
+--- a/include/linux/compat.h
++++ b/include/linux/compat.h
+@@ -389,15 +389,8 @@ struct compat_ifconf {
+ 	compat_caddr_t  ifcbuf;
+ };
+ 
+-struct compat_robust_list {
+-	compat_uptr_t			next;
+-};
+-
+-struct compat_robust_list_head {
+-	struct compat_robust_list	list;
+-	compat_long_t			futex_offset;
+-	compat_uptr_t			list_op_pending;
+-};
++struct robust_list32;
++struct robust_list_head32;
+ 
+ #ifdef CONFIG_COMPAT_OLD_SIGACTION
+ struct compat_old_sigaction {
+@@ -676,7 +669,7 @@ asmlinkage long compat_sys_waitid(int, compat_pid_t,
+ 		struct compat_siginfo __user *, int,
+ 		struct compat_rusage __user *);
+ asmlinkage long
+-compat_sys_set_robust_list(struct compat_robust_list_head __user *head,
++compat_sys_set_robust_list(struct robust_list_head32 __user *head,
+ 			   compat_size_t len);
+ asmlinkage long
+ compat_sys_get_robust_list(int pid, compat_uptr_t __user *head_ptr,
+diff --git a/include/linux/futex.h b/include/linux/futex.h
+index 18ed18d5cbc1..1d1a8a627a8b 100644
+--- a/include/linux/futex.h
++++ b/include/linux/futex.h
+@@ -68,6 +68,10 @@ static inline void futex_init_task(struct task_struct *tsk)
+ 	INIT_LIST_HEAD(&tsk->futex.pi_state_list);
+ 	tsk->futex.state = FUTEX_STATE_OK;
+ 	mutex_init(&tsk->futex.exit_mutex);
++	tsk->futex.robust_list = NULL;
++#ifdef CONFIG_COMPAT
++	tsk->futex.robust_list32 = NULL;
++#endif
+ }
+ 
+ void futex_exit_recursive(struct task_struct *tsk);
+diff --git a/include/linux/futex_types.h b/include/linux/futex_types.h
+index d320c0571f0c..2c9ad20f3be8 100644
+--- a/include/linux/futex_types.h
++++ b/include/linux/futex_types.h
+@@ -23,7 +23,7 @@ struct robust_list_head;
+ struct futex_sched_data {
+ 	struct robust_list_head __user		*robust_list;
+ #ifdef CONFIG_COMPAT
+-	struct compat_robust_list_head __user	*compat_robust_list;
++	struct robust_list_head32 __user *robust_list32;
+ #endif
+ 	struct list_head			pi_state_list;
+ 	struct futex_pi_state			*pi_state_cache;
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 705970d07614..317e55884120 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1360,9 +1360,7 @@ struct task_struct {
+ 	u32				closid;
+ 	u32				rmid;
+ #endif
+-
+ 	struct futex_sched_data		futex;
+-
+ #ifdef CONFIG_PERF_EVENTS
+ 	u8				perf_recursion[PERF_NR_CONTEXTS];
+ 	struct perf_event_context	*perf_event_ctxp;
+diff --git a/include/uapi/linux/futex.h b/include/uapi/linux/futex.h
+index 10a36c551675..b39f8a23a84b 100644
+--- a/include/uapi/linux/futex.h
++++ b/include/uapi/linux/futex.h
+@@ -179,6 +179,16 @@ struct robust_list_head {
+ 	struct robust_list __user *list_op_pending;
+ };
+ 
++struct robust_list32 {
++	__u32 next;
++};
++
++struct robust_list_head32 {
++	struct robust_list32	list;
++	__s32			futex_offset;
++	__u32			list_op_pending;
++};
++
+ /*
+  * Are there any waiters for this robust futex:
+  */
+diff --git a/kernel/futex/core.c b/kernel/futex/core.c
+index a061f54b606d..4b1bf211c3dc 100644
+--- a/kernel/futex/core.c
++++ b/kernel/futex/core.c
+@@ -1235,9 +1235,10 @@ static void __user *futex_uaddr(struct robust_list __user *entry,
+ /*
+  * Fetch a robust-list pointer. Bit 0 signals PI futexes:
+  */
+-static inline int
+-compat_fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **entry,
+-		   compat_uptr_t __user *head, unsigned int *pflags)
++static inline int fetch_robust_entry32(compat_uptr_t *uentry,
++				       struct robust_list __user **entry,
++				       compat_uptr_t __user *head,
++				       unsigned int *pflags)
+ {
+ 	if (get_user(*uentry, head))
+ 		return -EFAULT;
+@@ -1254,9 +1255,9 @@ compat_fetch_robust_entry(compat_uptr_t *uentry, struct robust_list __user **ent
+  *
+  * We silently return on any sign of list-walking problem.
+  */
+-static void compat_exit_robust_list(struct task_struct *curr)
++static void exit_robust_list32(struct task_struct *curr)
+ {
+-	struct compat_robust_list_head __user *head = current->futex.compat_robust_list;
++	struct robust_list_head32 __user *head = curr->futex.robust_list32;
+ 	unsigned int limit = ROBUST_LIST_LIMIT, cur_mod, next_mod, pend_mod;
+ 	struct robust_list __user *entry, *next_entry, *pending;
+ 	compat_uptr_t uentry, next_uentry, upending;
+@@ -1267,7 +1268,7 @@ static void compat_exit_robust_list(struct task_struct *curr)
+ 	 * Fetch the list head (which was registered earlier, via
+ 	 * sys_set_robust_list()):
+ 	 */
+-	if (compat_fetch_robust_entry(&uentry, &entry, &head->list.next, &cur_mod))
++	if (fetch_robust_entry32(&uentry, &entry, &head->list.next, &cur_mod))
+ 		return;
+ 	/*
+ 	 * Fetch the relative futex offset:
+@@ -1278,7 +1279,7 @@ static void compat_exit_robust_list(struct task_struct *curr)
+ 	 * Fetch any possibly pending lock-add first, and handle it
+ 	 * if it exists:
+ 	 */
+-	if (compat_fetch_robust_entry(&upending, &pending, &head->list_op_pending, &pend_mod))
++	if (fetch_robust_entry32(&upending, &pending, &head->list_op_pending, &pend_mod))
+ 		return;
+ 
+ 	next_entry = NULL;	/* avoid warning with gcc */
+@@ -1287,7 +1288,7 @@ static void compat_exit_robust_list(struct task_struct *curr)
+ 		 * Fetch the next entry in the list before calling
+ 		 * handle_futex_death:
+ 		 */
+-		rc = compat_fetch_robust_entry(&next_uentry, &next_entry,
++		rc = fetch_robust_entry32(&next_uentry, &next_entry,
+ 			(compat_uptr_t __user *)&entry->next, &next_mod);
+ 		/*
+ 		 * A pending lock might already be on the list, so
+@@ -1319,20 +1320,20 @@ static void compat_exit_robust_list(struct task_struct *curr)
+ 	}
+ }
+ 
+-static bool compat_robust_list_clear_pending(u32 __user *pop)
++static bool robust_list_clear_pending32(u32 __user *pop)
+ {
+-	struct compat_robust_list_head __user *head = current->futex.compat_robust_list;
++	struct robust_list_head32 __user *head = current->futex.robust_list32;
+ 
+ 	if (!put_user(0U, pop))
+ 		return true;
+ 
+ 	/* See comment in robust_list_clear_pending(). */
+ 	if (pop == &head->list_op_pending)
+-		current->futex.compat_robust_list = NULL;
++		current->futex.robust_list32 = NULL;
+ 	return false;
+ }
+ #else
+-static bool compat_robust_list_clear_pending(u32 __user *pop_addr) { return false; }
++static bool robust_list_clear_pending32(u32 __user *pop_addr) { return false; }
+ #endif
+ 
+ #ifdef CONFIG_FUTEX_PI
+@@ -1435,7 +1436,7 @@ bool futex_robust_list_clear_pending(void __user *pop, unsigned int flags)
+ 		return false;
+ 
+ 	if (IS_ENABLED(CONFIG_64BIT) && size32bit)
+-		return compat_robust_list_clear_pending(pop);
++		return robust_list_clear_pending32(pop);
+ 
+ 	return robust_list_clear_pending(pop);
+ }
+@@ -1464,12 +1465,11 @@ static void futex_cleanup(struct task_struct *tsk)
+ 	}
+ 
+ #ifdef CONFIG_COMPAT
+-	if (unlikely(tsk->futex.compat_robust_list)) {
+-		compat_exit_robust_list(tsk);
+-		tsk->futex.compat_robust_list = NULL;
++	if (unlikely(tsk->futex.robust_list32)) {
++		exit_robust_list32(tsk);
++		tsk->futex.robust_list32 = NULL;
+ 	}
+ #endif
+-
+ 	if (unlikely(!list_empty(&tsk->futex.pi_state_list)))
+ 		exit_pi_state_list(tsk);
+ }
+diff --git a/kernel/futex/syscalls.c b/kernel/futex/syscalls.c
+index 2fa19d9d008d..4a45bace75fc 100644
+--- a/kernel/futex/syscalls.c
++++ b/kernel/futex/syscalls.c
+@@ -39,7 +39,7 @@ static inline void __user *futex_task_robust_list(struct task_struct *p, bool co
+ {
+ #ifdef CONFIG_COMPAT
+ 	if (compat)
+-		return p->futex.compat_robust_list;
++		return p->futex.robust_list32;
+ #endif
+ 	return p->futex.robust_list;
+ }
+@@ -478,13 +478,14 @@ SYSCALL_DEFINE4(futex_requeue,
+ }
+ 
+ #ifdef CONFIG_COMPAT
+-COMPAT_SYSCALL_DEFINE2(set_robust_list, struct compat_robust_list_head __user *, head,
++COMPAT_SYSCALL_DEFINE2(set_robust_list, struct robust_list_head32 __user *, head,
+ 		       compat_size_t, len)
+ {
+ 	if (unlikely(len != sizeof(*head)))
+ 		return -EINVAL;
+ 
+-	current->futex.compat_robust_list = head;
++	current->futex.robust_list32 = head;
++
+ 	return 0;
+ }
+ 
+@@ -492,7 +493,7 @@ COMPAT_SYSCALL_DEFINE3(get_robust_list, int, pid,
+ 			compat_uptr_t __user *, head_ptr,
+ 			compat_size_t __user *, len_ptr)
+ {
+-	struct compat_robust_list_head __user *head = futex_get_robust_list_common(pid, true);
++	struct robust_list_head32 __user *head = futex_get_robust_list_common(pid, true);
+ 
+ 	if (IS_ERR(head))
+ 		return PTR_ERR(head);
 
-Best regards,
---  
-André Almeida <andrealmeid@igalia.com>
+-- 
+2.55.0
 
