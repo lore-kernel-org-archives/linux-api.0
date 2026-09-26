@@ -1,299 +1,247 @@
-Received: from mail-pz2-f39.google.com (mail-pz2-f39.google.com [74.125.228.39])
+Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C33AC3822A3
-	for <linux-api@vger.kernel.org>; Sat, 26 Sep 2026 08:58:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.228.39
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E06E93A9619
+	for <linux-api@vger.kernel.org>; Sat, 26 Sep 2026 10:16:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=209.85.218.41
 ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790413123; cv=pass; b=WLao4oZ6LvFPY3hCCw+VJqLloNOioQo2uPxKeAXJ3FhR7VSVMUUmQquSK1UBe1ZNgNVz6WrDJzwWWn4pSFLWO3YR2DDzTq8Av8YslbOQWlyaDJmF2IZh/YU/9VE0gruUE5Guk0lmj0g46J/xLUck2qe/fRxhqU9E//o9IFFV06M=
+	t=1790417805; cv=pass; b=SkJj/6g2g8e5zx2ru/VUPLqvNGtbV8pjN+A4hzljkVmmHuf9GlFNFf2EV1k/n69jsXiBOsZExGYBBcl2Dt2nmvf/USKp1zZBVwGVPzSwUFiHmXaS1tdDxLpBwbcEYzss79dYC65rIREV0uUGzg70S2H3Lw17UhIwOum/mnI7+mo=
 ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790413123; c=relaxed/simple;
-	bh=OQCD4U8C6TSULpjCMi6zqQfbL1jDsjPO8gEeTcXQ9ac=;
+	s=arc-20240116; t=1790417805; c=relaxed/simple;
+	bh=DlFYvFJLECsxFthzw/eFkvSmzedTUmwOpzdBKfUM0K0=;
 	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=A9+AyQIYT1yHQIKkFNnG26hMKTnTicyDwHdNP/tq5Waqj0S8o5jRtmihU7knO673tUWao6njYBSvFJYEkRS/8yRatds/hj15jQjuvr5TnIkfdgx3smplhyD6vfAXWsQzObuR0o47UK5D9gdGJnX6yavzPvepPvpGBt6sUE/LbEA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CSYTolPR; arc=pass smtp.client-ip=74.125.228.39
+	 To:Cc:Content-Type; b=LeH34zCwcwtpTB2rdfbkNh6ptR8pVQXMIhZ6zUAmXVttrlZE6If5MJabk1bNeHtLohQDrlfzxf37vIVPXmITorfUO9aG4ci1x+YMDPaPop8+6f4JjEcFAjFhjDND4L/2BsWmsTzANnB3TRvYlRQPL2Z4ER+IaxtJs2skvSfuQPU=
+ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=LFrqVxqy; arc=pass smtp.client-ip=209.85.218.41
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CSYTolPR"
-Received: by mail-pz2-f39.google.com with SMTP id d2e1a72fcca58-88098db8dcdso552736b3a.3
-        for <linux-api@vger.kernel.org>; Sat, 26 Sep 2026 01:58:41 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1790413121; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="LFrqVxqy"
+Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-c294ad260fdso263203266b.1
+        for <linux-api@vger.kernel.org>; Sat, 26 Sep 2026 03:16:42 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1790417801; cv=none;
         d=google.com; s=arc-20260327;
-        b=r42WVNz5ftkcx8xfozblj5BeHk4LKABvaVE1kxmqW8W6QscRYL3HWq/lBB6wamudAN
-         LuO2tQ6QNEEGxDO/mtdveHvlusKWnkUqlk6oFWJjzGI3wnpSJuRm8Q0Y8GM8+SEGBoon
-         Go6faXaVEOI+fdzjD9HmyquFD8Uozw1wbnEOukwS6nwxWdsMQfFbxZuoyLdQn/fpWenD
-         dmheuzFUwV1YF8BIhf6+3I89EzWm9NePFlKdAbdkM319Wcx6nDVpEw4yjFQ7X9yiQzI+
-         15YsOGdgxxM3JcWmYmD3K6HzYqaMu7ZRGbpOBXIe0ueUdXgx+2rnpv61d+rdgrwo5DA6
-         hXpQ==
+        b=pflQEwdw2xcsn/KoNcpiYj0rNPOUXj2O0MLyd8RW2K7oJ9RF7W7VacYD68JOBZ0OFz
+         Dxe/PgeGsyjHLN4U3O8QfOGmCYWf+maVFxGKrjrkFqODJIP+Cv3pNDqS9iQc7Eq/66Yn
+         XaWuQCwYfIvdFGFMo1OvVH/+z3ex1wjiBVQNMUdJuq1wQBBNe8SO5pUselTsh1uGgnoR
+         8xIAvRnXU1soKtggcA4iHAym/y6VI1QgUHlUbS7Wd2XfKeD1Pwou66YKPKWNst3fkPXs
+         r/OQvVsGrQ1YYZ0ZxSsdzly8wp+se4tqPR6WCo4IGwkWaRyz13SOX5zduGVYFoZOtJts
+         PPsQ==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=/L09o1VH6+wZLPxn4ggW0hajBAb5iNl9Iz95qERtT3M=;
-        fh=EFBiJeYrG6ZCm1W3ZYSrpmDqe8nlTyl+Pg3pNH3ZHUo=;
-        b=BU9gC5aKkcOqfd5nW/MFAx0QDXvpnKo1BYHe/IpNkr4OvQcvT2StFs2mBccAu74APA
-         +hOuuScYysgjJfgCVzgvIZ2OoR+JQ3AL2upZzOxo1pkGD1NHR5sAcMXzfCzA5OhCzCVp
-         draLrhN7DY94DKDQUvm7R4Q086qjsyo3To5eNDP3v1ok/sT1yR9TUvQwx2CT/xpA7N+k
-         L8lHn/tLjVNLDtT/kgnTWD8jvNG0zdwyn8+O69UsJTXkWgbrO4lAJiu4Q3TMuZ0C7II3
-         AYeGpc3rfvI5m7Tt6cy0fad9ZtHpyYnu2ityiQA1nbBUO20C9gltLCF05vKWHN9elRUK
-         alug==;
+        bh=nuUo8zdKSoKE11B/ziniOjON7mdE/CfW6nfGNWVjAv0=;
+        fh=qWXU2Qn2IP3jdkj0X/bN5HnbZyrKi54piPNP/Z5hzXE=;
+        b=oU4djwHj/a8nErRpUUT+XgRij+ly5B5hPtC7udy31GyVhJfBG554NdOqWcG9LoAQyX
+         Q6/40BUArg1OBdy9n4AogUoW35zaGUkjk519jz6ej+qTr79TBrosl5VeWvv2LyuAQWiX
+         /BJDKx/joxez4q+Kn1/fyqiRm6rm/7WoDP4alkkIATuDrVKWBD4VtlkgIclaLXKWDRUR
+         SIc4KzWdiCdApmNDbXVTNI9OxdSRcWkXijCh/zxY+T/hAc/VjdDrNIDLkVQRSb8hHcxi
+         R3emh521Exy+bLiC5y2zDOiYT3Ier674zkwtQuhgz/iy/JdF570xt/6AvPlxurjODObn
+         Jmnw==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790413121; x=1791017921; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1790417801; x=1791022601; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=/L09o1VH6+wZLPxn4ggW0hajBAb5iNl9Iz95qERtT3M=;
-        b=CSYTolPRzgZlXug8nntuD1ZxxUI7cyA8q/h1dOoSB1wtzFHB/26be7YDhfhxClkn88
-         rq6PxPmpGh8kxrnxM5xisoEVGOSRdNH5kQJDEgF3xU5iMcaRwsg/SlVNFSQkkjNtxaKY
-         i7D6dH0uWDn9cPvHoJNYfNI/9WU2GqAdSW3VF83stEmDsMEA4vkTaaguvLNcE4wIG1ro
-         TrqKxvV5saQ6Vqu38/n7wbaeHbMnmbYe5lzl6vbZ/c+L7wYRL/cbI1AoL38DoXFl2KrB
-         J5d47rUT0q4vjPycTe/J2HPrpglt8Uk0J/FKJuOEEZTodsUuR8Shpp3cC8FaRdM9nBKI
-         X+ww==
+        bh=nuUo8zdKSoKE11B/ziniOjON7mdE/CfW6nfGNWVjAv0=;
+        b=LFrqVxqyv19kzRnHMAXhI4vAik/aMNgEsVTx/84IesLwhxI7w5kcphx7vTNr58KQP0
+         LglTxfx1s/rQs1AxvYmLUpRQYCm2Lp7Cv9igFQ3wNeNpzNemzkmJgb5lUXceKTbkEQVd
+         ue6Dy28OjDCgXTKFM5d28OCJ4CmegTTe7AkpBS0HofQ2GN6ZXBBWEta+Hvf77O5qRFzD
+         ce1oQxToFYp3oIinFdBqmrJeoNzqadISTAz4RAGHvggGMaepTGJTGQRZvoh/Luu6kQML
+         1j/tz19Go6qEO5Ku5KMz7XjE3W5VfNjj2Vff7qdjtUbY41Uo3UXOsM5oWg9RJorWKQTh
+         7Oqw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790413121; x=1791017921;
+        d=1e100.net; s=20260707; t=1790417801; x=1791022601;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=/L09o1VH6+wZLPxn4ggW0hajBAb5iNl9Iz95qERtT3M=;
-        b=z+Y9wn8BPXAKpTrpQSNtRI7ve9FV0a6LShpWqMQeVRNiSMl1Uw9KWV3fM1ZvlAWwGo
-         RsOcpZEOlbKkd5hIrVWOy4upYl+H7F/Aceoe2HjzvLPCj7rVHFxAznit31PHYAtrVUjb
-         VGApTux5PsqMm+MyoJ2pLTy0d46SpfltE4a4h6kcZzugoTduQP7M3YHBGxJlAWNWlmhy
-         18qAd2AJAuIuzGGEVYQxj1aE2VHYECVrH2gVhUaHgEPb0QWuy/aNaYUMDEqoOQ8kXxLc
-         CCo4scnrXuKpg9c8WQcFcgfHpdLJ94B9rwuD4DnMVOB8h5Mj7Plk4oJh85rFK3Puf0+w
-         7Qrw==
-X-Forwarded-Encrypted: i=1; AKwUvBwIGYsna6WMsF/78pnG99HiBEzLH/LA26vDmu3H0lrfQUfmSAXuxPGPxPwCbH9uQv1QXNwFzA36Fe8=@vger.kernel.org
-X-Gm-Message-State: AFuF++muHCSCxuhn5I/jGBqku3KANRtzm9wYrjh+wmOcZhTBT4uZc7Jj
-	C5N4qldyVGa8GkIEJJw6CCzbh5NhNcNC1mwyLF60iGZmewQ7q0wjAIuUH7rTPe5aCDJhUPEfmqi
-	TRxt5UQBi53nSSQ6fQAkpfF7VECa6VRo=
-X-Gm-Gg: AYBFou1eEGHHXlSF5e3Qx01o8NpTa7NgMT+HbFutGaLTQwSUf/2240m3iEuXBMqTLMG
-	mIXPrMxbK5Wfgrce3JB9ICksB1X95TtxPdiSK8EOheUSHHLpOOdGTko241lycky5QDzr6LiHCwp
-	WE0woFCLz9ZIrBrFdH51VNp094BiGROHUj1tyRArm72iCALENi62MH3N+XEAmYu5TUlymxa+TfC
-	amI78dH9SM9y+iVnw6bELC/htHBS4Q2MqBelyOvKirvFa3Lfb1cM4bueNVeNkROS229bBpqh4xb
-	olwrt/j5/35DKTsc8LIb7+ovTO1p7mNylIdEAMtisniJ4SKTh2EP
-X-Received: by 2002:a05:6a00:14c4:b0:878:3705:2513 with SMTP id
- d2e1a72fcca58-87e9dfafffbmr6515627b3a.51.1790413120991; Sat, 26 Sep 2026
- 01:58:40 -0700 (PDT)
+        bh=nuUo8zdKSoKE11B/ziniOjON7mdE/CfW6nfGNWVjAv0=;
+        b=HrC4+SAAFHBSXFLm3x8zHaNea9VAsTPWkoC4nZ9lt+L6NNa7+PngKo6PW4lF+PtwFA
+         kKnQFi4hCRVW+PvLm7IYnLY0g9YTartR2gYRegLmq9RXxVzRp28csOq2vJvCKgi706/q
+         S4hqqQS+cn+IAbuv2PpP0py4hd0OvVTMGEij776bPs1wf7x9ftCHqfpHMY2GpixnGYes
+         fjZQAZeKgHpcQD6rl257gMLHhEZrgt8lt4x8uw2KArDwfdOZXwIdflpkTihbTpd8CCYv
+         PhMwCYVcMcYJZiJruRypBxVsS/XJvqAJhUOYblyy8vBq4qU5CF9yJoabgRTFzLEWB2lo
+         B5YA==
+X-Forwarded-Encrypted: i=1; AKwUvBx9tM6rHmMhrCNQ/DCK8MAabaMZWtO6TtSDATCkpWTAAsan47c0AQVtC+qIXPcDnTzHN2tkcXV8K2Q=@vger.kernel.org
+X-Gm-Message-State: AFuF++nAm1vqx1w8DxcCHccosvMfgtGXVhp3bjxr05XKo5KMTCF1dikD
+	JDpcwN1BnZkfaJMhmANavP8zCaRcfACx5bnoR3/wVb3ex7jrGvoeFu0AONqc0YHwU2n0l/CZVwn
+	8rFwfUPEsbQwf6r1KMRxWSz4Jqg+XFiQ=
+X-Gm-Gg: AYBFou1+Lk2eVMRDcoi76xF8OAjmNiCFyBbD+CQwCwZ2bchC1SMLxzYYeQJuMXKxJyq
+	B7yX2ZP1qKq0oFL5UoIjaB0fGhqiUgkEZGJgKyAsMzROPQnuLRcdcz6iLwXmIylcMgQ6FHeDc9B
+	sr03jur6532Ni0pOT5uIdukqKIJ27xkP2qQ26UaUk4aiJNOtV2IsuDdh+9Yf8kcGgNOAJpZD6cp
+	242cQOGBhiez5/5PJ1K6+m5+8SgRswfXLmkjc8b8pedlC6cAJmot7wVe/SlRVhGAQaY7Glz6exJ
+	B00q94BHs1JvSO53ExS1oU7hYKy4fwLTgAOXiuXR9MvL/V8BVs0KDQCvG3tua3wN+0Y0w13Ffq0
+	/SgW7/cpE914=
+X-Received: by 2002:a17:906:dc89:b0:c26:3341:b8f6 with SMTP id
+ a640c23a62f3a-c2ac23a79a0mr705591166b.31.1790417800888; Sat, 26 Sep 2026
+ 03:16:40 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <CAHDTbUFX=8aAQnwv32hqmwHKkeJR0UA5XfZtMZRD1H+kV7uCzA@mail.gmail.com>
- <arZxz8rz6H6L99l4@hallyn.com>
-In-Reply-To: <arZxz8rz6H6L99l4@hallyn.com>
-From: =?UTF-8?B?5rSb56We6JG1?= <chengjna@gmail.com>
-Date: Sat, 26 Sep 2026 16:58:30 +0800
-X-Gm-Features: AclHuK-bOuJNx3l9TfFNHTrSM9DJ3Be_0lgB2lf05O-Hbf3wNGEnjS7yIL5dJN4
-Message-ID: <CAHDTbUF=PmRfFHzmFnqhpwB7h1paL2DfMQMgFpdAEwUsVWzeWw@mail.gmail.com>
-Subject: Re: [RFC] Proposal for a standard Competitive / Protected Session API
- in Linux
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
+References: <20260926045517.3458413-1-matthias.goergens@gmail.com>
+In-Reply-To: <20260926045517.3458413-1-matthias.goergens@gmail.com>
+From: Kairui Song <ryncsn@gmail.com>
+Date: Sat, 26 Sep 2026 18:16:03 +0800
+X-Gm-Features: AclHuK-9Dsy7rrAClr-629S5BXo_K2Hom1PYuYOl9rMJseRXC4FOvcoZCXsi7Gw
+Message-ID: <CAMgjq7B7jem_dwtUEX7ZJPQm_pKBegR6WS9+B7nFp-gZugpUng@mail.gmail.com>
+Subject: Re: [RFC PATCH v2 0/4] mm/swap: reserve swap areas for deliberate offload
+To: Matthias Goergens <matthias.goergens@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Chris Li <chrisl@kernel.org>, 
+	Youngjun Park <youngjun.park@lge.com>, Baoquan He <baoquan.he@linux.dev>, 
+	Johannes Weiner <hannes@cmpxchg.org>, David Hildenbrand <david@kernel.org>, Michal Hocko <mhocko@kernel.org>, 
+	Shakeel Butt <shakeel.butt@linux.dev>, Kemeng Shi <shikemeng@huaweicloud.com>, 
+	Nhat Pham <nphamcs@gmail.com>, Yosry Ahmed <yosry@kernel.org>, Barry Song <baohua@kernel.org>, 
+	linux-mm@kvack.org, linux-kernel@vger.kernel.org, cgroups@vger.kernel.org, 
+	linux-api@vger.kernel.org, Alejandro Colomar <alx@kernel.org>, linux-man@vger.kernel.org, 
+	Karel Zak <kzak@redhat.com>, util-linux@vger.kernel.org, 
+	Jani Nikula <jani.nikula@linux.intel.com>, 
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>, Rodrigo Vivi <rodrigo.vivi@intel.com>, 
+	Tvrtko Ursulin <tursulin@ursulin.net>, David Airlie <airlied@gmail.com>, 
+	Simona Vetter <simona@ffwll.ch>, intel-gfx@lists.freedesktop.org, 
+	dri-devel@lists.freedesktop.org, "Rafael J . Wysocki" <rafael@kernel.org>, 
+	Pavel Machek <pavel@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, 
+	Will Deacon <will@kernel.org>, linux-pm@vger.kernel.org, 
+	linux-arm-kernel@lists.infradead.org, Shuah Khan <shuah@kernel.org>, 
+	linux-kselftest@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-Hello,
-
-Thank you for the reply. After thinking about it again, I realized
-that my original proposal mixed up two different layers: the
-competitive policy of a gaming platform, and the generic mechanisms
-that the Linux kernel should provide.
-
-I now think that a Competitive Mode / Competitive Session would be
-better implemented by a distribution or gaming platform such as
-SteamOS, rather than being defined directly by the Linux kernel.
-
-For the Linux kernel itself, I think there may only be two generic
-capabilities worth considering.
-
-First, a unified and stable interface for userspace to obtain factual
-information about the current security state of the system, such as
-the boot chain, kernel integrity, module state, and other relevant
-security properties.
-
-Linux itself would not decide whether the system is "trusted". It
-would only report the relevant facts.
-
-SteamOS or another platform could then define its own Competitive
-Profile based on those facts, and a game could decide whether it
-accepts that profile.
-
-Second, a unified Protected Process / Protected Process Group semantic.
-
-The purpose would simply be to allow a process to request stronger
-isolation from unrelated processes that might observe, read, modify,
-debug, or otherwise interfere with its internal state.
-
-This should not take ultimate control of the machine away from its
-owner. The user should still be able to disable the protection, debug
-the process, or modify their own system. The upper layer would simply
-be able to determine that the protected state is no longer valid.
-
-The resulting model could therefore be quite simple:
-
-Linux Kernel:
-- provide a unified interface for security-state information;
-- provide a unified Protected Process primitive.
-
-SteamOS / Game Platform:
-- build a Competitive Session on top of those mechanisms;
-- define its own competitive security policy.
-
-Game:
-- decide whether the current environment is acceptable for ranked or
-competitive play.
-
-For the ordinary competitive-gaming threat model I had in mind, I also
-do not think it is necessary to immediately use a
-confidential-computing environment such as SEV-SNP or TDX. That seems
-more appropriate for a stronger threat model.
-
-Thanks again for the feedback.
-
-Serge E. Hallyn <serge@hallyn.com> =E4=BA=8E2026=E5=B9=B49=E6=9C=8825=E6=97=
-=A5=E5=91=A8=E4=BA=94 21:06=E5=86=99=E9=81=93=EF=BC=9A
+On Sat, Sep 26, 2026 at 12:55=E2=80=AFPM Matthias Goergens
+<matthias.goergens@gmail.com> wrote:
 >
-> On Fri, Sep 25, 2026 at 05:14:46PM +0800, =E6=B4=9B=E7=A5=9E=E8=91=B5 wro=
-te:
-> > Hello,
-> >
-> > I would like to propose an idea for a Linux API intended for
-> > competitive games, online games, and potentially other applications
-> > that require a high-integrity execution environment.
-> >
-> > Linux already provides a number of relevant security mechanisms,
-> > including ptrace restrictions, process memory access controls, LSM,
-> > Secure Boot, kernel lockdown, and kernel module signing.
-> >
-> > However, these mechanisms are currently exposed separately. A game
-> > that wants to establish a trusted competitive environment may need to
-> > detect and combine several different mechanisms on its own.
-> >
-> > I would like to ask whether it would make sense to provide a unified
-> > Protected Session / Competitive Session API.
-> >
-> > The basic model could be relatively simple.
-> >
-> > When a game starts, it requests a protected session, for example:
-> >
-> > competitive_session_create(...)
-> >
-> > The kernel checks whether the current environment satisfies the
-> > requested protection level and returns something similar to:
-> >
-> > ALLOWED: the environment satisfies the requested requirements;
-> >
-> > DENIED: the environment does not satisfy them, together with a
-> > standardized reason.
-> >
-> > While the protected session is active, Linux would protect processes
-> > belonging to that session from unauthorized interference.
-> >
-> > For example, depending on the selected protection level, this could
-> > restrict other processes from:
-> >
-> > debugging or attaching to the protected process through ptrace;
-> >
-> > reading or modifying its process memory;
-> >
-> > obtaining sensitive information through /proc;
-> >
-> > using other kernel interfaces to observe or interfere with the
-> > protected process.
-> >
-> > The exact interfaces covered by such a mechanism would of course need
-> > further discussion.
-> >
-> > The game may explicitly terminate the protected session:
-> >
-> > competitive_session_close(...)
-> >
-> > Normal system behavior would then be restored.
-> >
-> > If the game crashes, is terminated, or the protected process exits,
-> > the session should automatically be destroyed by the kernel.
-> >
-> > This would ensure that the system cannot accidentally remain in a
-> > competitive/protected state if the application fails to shut down
-> > cleanly.
-> >
-> > A major advantage of this model is that game developers would not need
-> > broad permission to scan the user's system, inspect unrelated files,
-> > or monitor every other application.
+> This RFC adds offload-only swap areas for deliberate cold-page offload to
+> backends unsuitable for pressure reclaim. ZFS zvol swap has documented
+> deadlocks under memory pressure [3]; compressed swap is another target
+> because writes may need memory despite free logical slots.
 >
-> Why would they need to do that anyway?  What are you protecting them
-> from exactly?  Cheating?  Secret stealing?  Playing without a license?
+> Explicit proactive reclaim can use these areas alongside conventional
+> swap, ordered by priority. Ordinary reclaim cannot initiate non-zero
+> writes to them, including through retained swap entries. Conventional
+> capacity is not reserved for emergencies. Operators choose the policy;
+> the kernel does not measure headroom or make an allocating backend safe.
 >
-> This sounds like us going out of our way to enable proprietary software
-> to lock us down to protect their "rights" - DRM.
+> TMO/Senpai [4] and DAMON_RECLAIM [5] are related cold-page reclaim
+> approaches. This RFC admits offload-only swap through memory.reclaim and
+> per-node reclaim, but not DAMON. Other related work includes per-cgroup
+> zswap writeback control [6], Virtual Swap Space v4 [1] and swap tiers v10
+> [2].
 >
-> I guess what you're promising us is that "this way you won't be forced
-> to run crowdstrike and tenable and intune to be able to play these games"=
+> The util-linux companion [8] proposes swapon --offload-only and an fstab
+> option. Older swapon silently ignores the fstab token, so persistent
+> activation needs discussion. Apply the separate i915 fix [9] first to avo=
+id
+> a pre-existing folio-lock leak when shmem writeback is skipped.
+>
+> The series fixes zram selftest device tracking and error reporting, adds
+> the swap policy with DRM eligibility checks, and tests routing, workingse=
+t
+> activation and retained-entry write refusal. It is based on mm-new at
+> 995829088503.
+>
+> Feedback is particularly welcome on:
+>
+> - Activation-time eligibility versus backend placement or migration:
+>   is retained-entry refusal, with possible reclaim churn or OOM,
+>   acceptable without migration?
+> - Eligible-capacity accounting, including overcommit limits and OOM
+>   scoring; cache recovery, cluster invalidation and workingset activation=
 .
-> But 1. I still prefer to say "then nobody *needs* to play these particula=
-r
-> games", and 2. I could just compile my own kernel with
-> competitive_session_create() being a noop, so you'd still be digging
-> around to make sure I didn't do that, right?
+> - Persistent activation and visibility: current swap listings do not
+>   expose the policy.
 >
-> > Instead, Linux itself would establish and enforce the protected environ=
-ment.
-> >
-> > The game would only need to know:
-> >
-> > "Does the current system satisfy the requirements for this protected se=
-ssion?"
-> >
-> > In other words, the API would provide a trusted execution environment
-> > for the application rather than granting the application broader
-> > system-monitoring privileges.
-> >
-> > A simplified lifecycle would look like this:
-> >
-> > Game starts
-> > |
-> > v
-> > Request Protected Session
-> > |
-> > v
-> > Linux checks the environment
-> > |
-> > v
-> > ALLOWED / DENIED
-> > |
-> > v
-> > Game enters competitive mode
-> > |
-> > v
-> > Game exits or explicitly closes the session
-> > |
-> > v
-> > Protected Session is automatically destroyed
-> >
-> > My main questions are:
-> >
-> > Does Linux already provide a unified interface with similar semantics?
+> Validation includes x86 builds, affected arm64 MTE objects and builds
+> without swap or memory cgroups. QEMU tests covered routing, retained-entr=
+y
+> recovery, data integrity and cleanup, with negative controls for write
+> refusal and teardown failure.
 >
-> I think the closest you could come today is to run it in a
-> confidential computing VM like SEV-SNP/TDX.
+> I have also been using this policy on my own machine with experimental
+> bcachefs swap support, with no problems observed so far. Deliberate stres=
+s
+> testing is confined to VMs; I do not deliberately stress-test this machin=
+e.
 >
-> > If not, would a Protected Session abstraction like this be worth
-> > discussing as a generic userspace API?
+> Changes since v1, incorporating Sashiko's public review [7]:
 >
-> Possibly, but the first objection you'd have to overcome is that
-> you are asking us to reduce our rights on the hardware and software
-> that we own.  E.g. not being able to strace to figure out what is
-> missing when the software isn't working - yuck.
+> - Improve selftest isolation, retained-swap measurement and memlock skips=
+.
+> - Track allocated zram devices, wait for udev probes and report cleanup
+>   errors without deleting data through a mount that could not be released=
+.
+> - Clarify activation, capacity reporting and conventional fallback limits=
+.
 >
-> > Competitive gaming is the most obvious use case, but such a mechanism
-> > could potentially also be useful for other applications that need
-> > stronger protection of their process integrity or confidentiality, so
-> > I do not think it necessarily needs to be designed as a game-specific
-> > API.
-> >
-> > Thank you.
+> [1] https://patchew.org/linux/20260825153238.2695446-1-nphamcs@gmail.com/
+> [2] https://patchew.org/linux/20260713025644.170839-1-youngjun.park@lge.c=
+om/
+> [3] https://openzfs.github.io/openzfs-docs/Project%20and%20Community/FAQ.=
+html#using-a-zvol-for-a-swap-device-on-linux
+> [4] https://engineering.fb.com/2022/06/20/data-infrastructure/transparent=
+-memory-offloading-more-memory-at-a-fraction-of-the-cost-and-power/
+> [5] https://www.kernel.org/doc/html/latest/admin-guide/mm/damon/reclaim.h=
+tml
+> [6] https://www.kernel.org/doc/html/latest/admin-guide/mm/zswap.html
+> [7] https://sashiko.dev/#/patchset/20260914104501.3960616-1-matthias.goer=
+gens@gmail.com
+> [8] https://github.com/util-linux/util-linux/pull/4633
+> [9] https://lore.kernel.org/all/20260914105606.3997649-1-matthias.goergen=
+s@gmail.com/
+>
+> v1: https://lore.kernel.org/all/20260914104501.3960616-1-matthias.goergen=
+s@gmail.com/
+>
+> Matthias Goergens (4):
+>   selftests: zram: track owned devices and report cleanup failures
+>   mm: restrict offload-only swap to proactive reclaim
+>   selftests: zram: cover offload-only swap policy
+>   selftests: zram: cover retained offload-only entries
+>
+>  Documentation/mm/swap.rst                     | 105 ++++
+>  drivers/gpu/drm/i915/gem/i915_gem_shrinker.c  |   2 +-
+>  .../gpu/drm/i915/gem/selftests/huge_pages.c   |   6 +-
+>  drivers/gpu/drm/msm/msm_gem_shrinker.c        |   2 +-
+>  drivers/gpu/drm/panthor/panthor_gem.c         |   2 +-
+>  drivers/gpu/drm/ttm/ttm_backup.c              |   2 +-
+>  drivers/gpu/drm/xe/tests/xe_bo.c              |   2 +-
+>  include/linux/swap.h                          |  29 +-
+>  include/linux/vm_event_item.h                 |   1 +
+>  mm/memcontrol.c                               |  20 +-
+>  mm/page_io.c                                  |  24 +-
+>  mm/swapfile.c                                 | 123 ++++-
+>  mm/vmscan.c                                   |  31 +-
+>  mm/vmstat.c                                   |   1 +
+>  tools/testing/selftests/zram/.gitignore       |   2 +
+>  tools/testing/selftests/zram/Makefile         |   4 +-
+>  tools/testing/selftests/zram/README           |  20 +-
+>  tools/testing/selftests/zram/config           |  10 +-
+>  tools/testing/selftests/zram/settings         |   1 +
+>  tools/testing/selftests/zram/swap_offload.c   | 425 +++++++++++++++++
+>  .../selftests/zram/workingset_offload.c       | 207 ++++++++
+>  tools/testing/selftests/zram/zram.sh          |   9 +
+>  tools/testing/selftests/zram/zram01.sh        |   9 +-
+>  tools/testing/selftests/zram/zram02.sh        |   9 +-
+>  tools/testing/selftests/zram/zram03.sh        | 174 +++++++
+>  tools/testing/selftests/zram/zram04.sh        | 164 +++++++
+>  tools/testing/selftests/zram/zram05.sh        | 447 ++++++++++++++++++
+>  tools/testing/selftests/zram/zram_lib.sh      | 189 ++++++--
+>  28 files changed, 1926 insertions(+), 94 deletions(-)
+
+Hi Matthias
+
+That's a lot of changes for a rather limited usage. IIUC what it want
+to archive is, for different kind of reclaim, swap operations should
+only go to certain devices?
+
+This really sounds like another usage of the swap tiering design: A
+default per-cgroup tier setup, and a one time tier limit during
+proactive reclaim.
+
+Just like we already have a "swappiness=3D" parameter in the reclaim
+interface, perhaps adding a "swap.tier=3D" would be better and much
+cleaner to achieve the same goal? Based on Youngjun's work here:
+https://lore.kernel.org/all/20260916183437.2946306-1-youngjun.park@lge.com/
