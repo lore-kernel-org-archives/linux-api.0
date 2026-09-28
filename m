@@ -1,522 +1,148 @@
-Received: from mail-ed2-f34.google.com (mail-ed2-f34.google.com [74.125.228.98])
+Received: from mail-pz2-f40.google.com (mail-pz2-f40.google.com [74.125.228.40])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89DD23E411C
-	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 13:07:59 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.228.98
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790600882; cv=pass; b=Yx44nkYpLX3ZbDWsCM4DGuNNPStlZCwZP+PyUP4DnszCRyZrQNup8qcP0b6y4OX8WSdMtwc08pM2VPobK56xtKcNSNvD5h7qR3Q5r91GRFsvcMPDNx5fNHnsTtOlXXfvnZCE2oCb8gOqs2BWe9+fi2B7X+iSaKOPq+82S9jD7QU=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790600882; c=relaxed/simple;
-	bh=xEcymRmGszspdnukJ2qDwmGJzrkJxNGdwFUd0osA0MY=;
-	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
-	 To:Cc:Content-Type; b=ZysX/FcDUAOSo9h1JFn5hyVACH1EhtAdOGsTNyDzBBrvIzLCPxCfmlFThW8WeV9gq6sFI1Yi0E1w1q8TphyC8m/kMjpb8eO4qwLb06iD8/Auc2Mkw09E01Fyao4rIzlSJKKYZHkju/8INB3TAIBu5Iqzw+LDP+aIGR5il9XcFNA=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=ma/yyqIV; arc=pass smtp.client-ip=74.125.228.98
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D4004E56D0
+	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 15:19:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.40
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1790608777; cv=none; b=NnDmzf0/AEDS4lT3/PaW1287CxVYhTqtS+zVejJZPn1AMXuHo6a1VnyXplQiNeNFkVGrGPVEbTxyC1tk7DMBRq19tUDdcmTLn+fVv74caatX+yANJQeHdS2GnqPUrJQ4SBlLcZW4XGdVF/7tjZ73SkyiiReOQisClsrZ3NqaHiE=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1790608777; c=relaxed/simple;
+	bh=0J9ld2otCYxgF2E0poGk2jXS68DDTyUBL9fnmP1RYBM=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=EfyRWZnS69EEyeaVJ5IjN5swgkZ6AETIZr2KjDJKcCR+2ihYOV32EDRv+Ic0/IGhdSIOgwOZi+x8iPpXNS2STv31Hy6W07XXQg4k+pwXm17s9cHyQzhbe46UwQ37CCetvKYXwLMK6vccoiAHbN0Oc98VJp4c3IicoGZ1P9630fA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CzQHRlLm; arc=none smtp.client-ip=74.125.228.40
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="ma/yyqIV"
-Received: by mail-ed2-f34.google.com with SMTP id 4fb4d7f45d1cf-6aafe2a64efso2831483a12.2
-        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 06:07:59 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1790600877; cv=none;
-        d=google.com; s=arc-20260327;
-        b=l7aDyJ03X1NkTawwJTZlmEQhx15IWlEMQVEI2FVEYjJLd3Jim98N5I0Um66S/+pFFr
-         8Ikq7P/zoBTWbMAF/PuepanAQdhAc6kJyL3eO9AY4Mk8HZoky0Bh2ALt0fATvewF6wNC
-         2y17tka3/w0c2t3tvexFUG0mnSb8y58GSHr1nNnM+BecBzKVQL2+AxAA7jpA72dmT4Wd
-         8DZYGnotNfNYsSDXdIAF4ydyxCE5HugVJ9ihNkfNc7Fqq7PkSVqp8uYnD2IfPXEiU2SZ
-         tlh//FH/tX3EnL4IesxVkgxIMUZnfSy0PVmrVSrZOBTAISbQVcXI5ELdFHfJy+Pme17f
-         c+DA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=LocOq6XG/4rm3dtwjOYm+24mahJp9YZapm60UEYrnpU=;
-        fh=F3i77O0m/0W0QffoxP9rxugvq+QyWLECj4X9+5rPyb8=;
-        b=MuohHN6R9gEt201aww1z3vzuMWGxfXKLm7J7VEpU6YLye3PV5kBcs+b3RMiR2Mk8qC
-         mvG6LVB6utp84o8XgtBSJMsp1sb7V1WMCxVsusAnXQLyCxX5pf9/GTlFTUw+TQOze/6s
-         xjwXkqWTAn6rY9l6SoOutlMJ2t9E+7gJsdgs4n2c/bm5+21mUSsLBZsAfVF/53sIvRa6
-         D8WaZp5hZ9r1xA+ed5KROhK67stOBp3D8l4EutdhPE9n0V4dNPUTX4e4dROVSNGwR3xK
-         H5KP8fRjlTNTSoPSlPHRJiu5ahLriwaomB9Oe5ZxLqy60376Bv7voDADgkR5HrVjwdx2
-         n9+A==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CzQHRlLm"
+Received: by mail-pz2-f40.google.com with SMTP id 41be03b00d2f7-cc750a1482fso1725431a12.2
+        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 08:19:35 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790600877; x=1791205677; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=LocOq6XG/4rm3dtwjOYm+24mahJp9YZapm60UEYrnpU=;
-        b=ma/yyqIV6I9wSrTVT0HMFEi1kTrXqW9LVSpyyjZpY03eYHjRr5e5HwmfziYcwnoBBn
-         5EaY3DNnp1RZsV8APCX4HDPAKzrfnxPHK49dwyEP/qL5gk9A8x9e5aiROF/6LAz7foBZ
-         JO15CSz1+UvCIN+LQZttxSQJaJ2Z2ukiM/5OlvzzTWdHlGfriFv/+68B1oHh4dyk6UUu
-         +BYjQjmakJZRfQbJ1iy2PBVGBuLcfrMrvq/wJUjbBwcfsAQRVEH+knwVC/lSuTutMskK
-         Ue4RRpeZ/0/gYoIQz0dTGoqRQNW3TpbU+D1R2GdTtX9IUdS2AJ9cpbQX6eJypS3WRCoG
-         hSTg==
+        d=gmail.com; s=20251104; t=1790608775; x=1791213575; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=b0NvfzIhMgoDaAcmLO9lnbeC2A03mNxAZEcGsZ2ya18=;
+        b=CzQHRlLmV10nWoOYSD7sLJQVfLrx5JXRCrmSvfU9nR+C6zmf0py48vGNJpRLlA/Ct2
+         jkBA800VFPvPt+ZC2aL5bq+LLCoYaqWAJrDYLpn0KD4PkvaGpmxL0E8rPbCkEpH9XgVM
+         K3bHnP5lqCKmq8FHNLFGdOz+aldgmckp4p/MrXjzv8Kav6/Wj5bRaPjJv42jj3y79uPi
+         ydBkyha1SZv/bfEyTpR2Ul5I5bTR0K9Qup9eWBd04QgX7NSCqJZipf0SmbEb1CDURQdP
+         61xQ7P8yB6VxMzf3KigJxhGYUKzgYqILnrHJmoxKAXKJRladOOO2DcnShPRWE5zFHl0w
+         LEiw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790600877; x=1791205677;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=LocOq6XG/4rm3dtwjOYm+24mahJp9YZapm60UEYrnpU=;
-        b=IPCR3JKGcTwlTA8i62aoMyT2M1/8CcEcPoErwoWdFjaGO2Ky4MvEhBIyTKPkWfloxw
-         o64uF5vMCv9zhvUGvfvLdm47nGbekIjUB9y3BZ94xDprErmpO831oKUTa4Wd4eCpyzmJ
-         e2Y6gNdzD8Y3kspqkKeOUTuTeLDxmoN/M9zREm+A53fI5Z3s8NONQ4wAHtInnxnC81AH
-         HnbQR8gmxhppUHXTUkRh8rMRkBGSgGoGwVeddsH3hQ+UxMc5fuQB+171soaxfVzARDA7
-         nuTokhjSHN+v/3k74cVaEUL6O7glDkkp3VE7wl1V/UY/q7hthNMXrO2egRzc2rVs6y5t
-         +BvQ==
-X-Forwarded-Encrypted: i=1; AKwUvBztNxsOXES0h9EjIGgCOXNMz2flOgSttpeUNfDdhmNSTrBNfM5quzY+TPSMxB8BS3Dy5Dah/bQf4f0=@vger.kernel.org
-X-Gm-Message-State: AFuF++kHhkSQ+Q4eNbxMCV6MaqIAb/GxIVzewruvFB8lLp0bLkcdiFS2
-	gVeQgYLpsY5PMT1jVTAC6ojbXUDVvMLro4GZOXsJgaVxFdyf58yN8vz3GSmHFI6fQcIaQyYAOm3
-	jqyPf5fHlgMSdNmJ6vWUbc8uvsitr/blNTZNVrFDcOw==
-X-Gm-Gg: AYBFou3iWzUGvds3Eac4ywbbknlNHCUc51CF2JAeURq7gHaSbHl0WmEG3GAzlXvg1u3
-	R3OerHsbafzcHGdShbszrWVBFmOfp8VKXbxOG4cJew1IA9FONjChY+ijAKZgm4urZszEyxqrkU6
-	H9yHNaYk+CjwHzD6WeHsTk0u4q2X7qMhhgB6gweFwVApN9fuhFSw0owtuv56SO6TG2Nmw5SZIFf
-	HJw0MlCYlt5Z4rqHpb7WuMAKYwFlCqu+2KewI+y/iUgo/bn/C8VnM54s6tAv0KRQZxWAzttB5dU
-	hTudtmOBDwabsJPA0NfUAWD6yX/X8boLpF30f5IpS2ZY/U+hTwaGXqKtKru7Nr6x7toLYZaG03h
-	yGsBzcxDf9X+OxHpdZdwryYW3RvtkEppRMhc3Pczuwlvuqfu/hAIBONFU8HmcPPTWnNaNIM8QR4
-	Csqg4/ld19e0ylQIKdGZ9mn+9t8jp3ODCbfNRI5dDQ
-X-Received: by 2002:a17:907:d005:b0:c26:2151:180a with SMTP id
- a640c23a62f3a-c2ac525fe62mr1010298366b.3.1790600877277; Mon, 28 Sep 2026
- 06:07:57 -0700 (PDT)
+        d=1e100.net; s=20260707; t=1790608775; x=1791213575;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=b0NvfzIhMgoDaAcmLO9lnbeC2A03mNxAZEcGsZ2ya18=;
+        b=l5cdZDeOY2IB+1d2JNAqfjm1LotD/p5+Uwj7Q7FNjrCo5GAY2AwS0DpsZdgbmBXkGZ
+         ujYNJpXccPJtw13Osoy+SJJc4JBuI97pjeUsecmN8/U+wmpGS0lQrmGPAp6o2boNMCcK
+         lyGlrTi7ltq3ldxio7fn97Ra/e96TKZpY5ILZ2nGe2X0gYOx8Ot+DYfyZW/fCvzgxe8J
+         3MPWhq16+IQdiGstevtGtv6Du/hI7sseB1jqjiwQw414cJA8AUR80B48MN2/EuaGiiU2
+         WCNB2UhEKZzOXy0eaH7G9/07tkPpNFl6luFvlALCGsGYmAuD2f+xL5YVLZKBnlZXJCiV
+         nONg==
+X-Forwarded-Encrypted: i=1; AKwUvBzz0dkPhkHufctWFV7+pSAIO8OQw4ORdai+bJ6j323A6UhtRBH9XcMscKVSFIh1TQqRaIH59k6XPKI=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIj1h3PhvAuQMVRav1qKTUuyf6teUdUccew0hp2oVeFQmd5fpUv
+	n7Pfn5xoEu/df5isjZprmkVLE0/PTZhMX5YFh+N/n1TIgron6H/EUvsC
+X-Gm-Gg: AYBFou3dOVznh8lvXJ3Nc0siPX87DwaaGfcF1Qhs1x9P+flK2G6PNvSSY6KKTP8vlMR
+	JmBpRCDgJaWPw/r8O0bo8uOgCXdyNE3lnqHjVx8oA1N8d3jqCnylQNkUOVbtUCwqvx/cYhU7dnK
+	Ef2EW8xS4wtR5XyKBbYjsR7eGyPCM6VTr49N7jfKqu27pNJ9aHJ2T137ykwwKCoYw9I8TUzKzz/
+	2mWU1iX95tqSzN9SVM/yjpO7qlAs9923/TIiaHFmAYBX0sQRmtpdHJezz/jlpKrJY5fhZ+rFM+l
+	DzOcx7AsEDEDRHpknKk/MWhf7WCF9Jfx0boNTt5CQ0zW3TDnDQ9hIa/HcDELQIKGh4pVJTzTJaI
+	qbuoRpsUrY31QqRbiaKDzv8o4BiKhhoOTGhQSnnZ8c00g3oPLzWkFlpnKH+MomPfT+7tJcOAbd7
+	FhZ4y7rbKifkQ/MWBegbMw4NwzBBr1ZBwMqoqLWvyNkS+jTiWAnAWIEMdU3CeXp+s16JU0ziguT
+	BDqFie0dQqzAEWrZyR9foZJ0H8x7gNpseg5l6xEwFZ0tmwPhe9cKYuhfzHaMlyHpfF8xYtjQG/0
+	WrpNmyo+g9GSt78GCLG+V7DSTl9petIga6NIQN9ePq5kbuset2R+Tic658o=
+X-Received: by 2002:a17:90b:384c:b0:39e:5acb:2849 with SMTP id 98e67ed59e1d1-3a0bb576e5cmr8742632a91.17.1790608774215;
+        Mon, 28 Sep 2026 08:19:34 -0700 (PDT)
+Received: from spider.bream-herring.ts.net ([103.6.151.236])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3a0b99e5220sm20891502a91.16.2026.09.28.08.19.26
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 28 Sep 2026 08:19:33 -0700 (PDT)
+From: Matthias Goergens <matthias.goergens@gmail.com>
+To: Chris Li <chrisl@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Kairui Song <kasong@tencent.com>,
+	Johannes Weiner <hannes@cmpxchg.org>,
+	David Hildenbrand <david@kernel.org>,
+	Michal Hocko <mhocko@kernel.org>,
+	Shakeel Butt <shakeel.butt@linux.dev>,
+	Kemeng Shi <shikemeng@huaweicloud.com>,
+	Nhat Pham <nphamcs@gmail.com>,
+	Yosry Ahmed <yosry@kernel.org>,
+	Youngjun Park <youngjun.park@lge.com>,
+	Baoquan He <baoquan.he@linux.dev>,
+	Barry Song <baohua@kernel.org>,
+	linux-mm@kvack.org,
+	linux-kernel@vger.kernel.org,
+	cgroups@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	Alejandro Colomar <alx@kernel.org>,
+	linux-man@vger.kernel.org,
+	Karel Zak <kzak@redhat.com>,
+	util-linux@vger.kernel.org,
+	Jani Nikula <jani.nikula@linux.intel.com>,
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
+	Rodrigo Vivi <rodrigo.vivi@intel.com>,
+	Tvrtko Ursulin <tursulin@ursulin.net>,
+	David Airlie <airlied@gmail.com>,
+	Simona Vetter <simona@ffwll.ch>,
+	intel-gfx@lists.freedesktop.org,
+	dri-devel@lists.freedesktop.org,
+	"Rafael J . Wysocki" <rafael@kernel.org>,
+	Pavel Machek <pavel@kernel.org>,
+	Catalin Marinas <catalin.marinas@arm.com>,
+	Will Deacon <will@kernel.org>,
+	linux-pm@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	Shuah Khan <shuah@kernel.org>,
+	linux-kselftest@vger.kernel.org
+Subject: Re: [RFC PATCH v2 0/4] mm/swap: reserve swap areas for deliberate offload
+Date: Mon, 28 Sep 2026 23:19:24 +0800
+Message-ID: <20260928151924.2686290-1-matthias.goergens@gmail.com>
+X-Mailer: git-send-email 2.55.0
+In-Reply-To: <CACePvbWM8kMjtJbH4vc6Qt=TBZQ-0d-Yj9NOtkepZmtNN3wd9w@mail.gmail.com>
+References: <20260926045517.3458413-1-matthias.goergens@gmail.com> <CACePvbWM8kMjtJbH4vc6Qt=TBZQ-0d-Yj9NOtkepZmtNN3wd9w@mail.gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-References: <20260928111907.72592-1-pepe.schlehofer@gmail.com> <20260928111907.72592-3-pepe.schlehofer@gmail.com>
-In-Reply-To: <20260928111907.72592-3-pepe.schlehofer@gmail.com>
-From: Andy Shevchenko <andy.shevchenko@gmail.com>
-Date: Mon, 28 Sep 2026 16:07:20 +0300
-X-Gm-Features: AclHuK8LrUHy1cNTkceV0KejktAKpvV1sU6tn8Odpjfo0Yk1ssM4v7bILMVuPmU
-Message-ID: <CAHp75VeH70LshOt0qzrvLkZYqDx=43o=34_wmHWkbYcTy7Z3vA@mail.gmail.com>
-Subject: Re: [PATCH v3 2/2] leds: Add support for Turris 1.x LEDs
-To: Josef Schlehofer <pepe.schlehofer@gmail.com>
-Cc: Lee Jones <lee@kernel.org>, Pavel Machek <pavel@kernel.org>, Rob Herring <robh@kernel.org>, 
-	Krzysztof Kozlowski <krzk+dt@kernel.org>, Conor Dooley <conor+dt@kernel.org>, 
-	=?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	=?UTF-8?B?TWFyZWsgQmVow7pu?= <kabel@kernel.org>, 
-	Andy Shevchenko <andy@kernel.org>, Rong Zhang <i@rong.moe>, linux-leds@vger.kernel.org, 
-	devicetree@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Mon, Sep 28, 2026 at 2:19=E2=80=AFPM Josef Schlehofer
-<pepe.schlehofer@gmail.com> wrote:
->
-> From: Pali Roh=C3=A1r <pali@kernel.org>
->
-> Add a driver for the eight RGB LEDs on the front panel of the CZ.NIC
-> Turris 1.x routers. They are driven by the CZ.NIC CPLD firmware, whose
-> source is available at
-> https://gitlab.nic.cz/turris/hw/turris_cpld/-/blob/master/CZ_NIC_Router_C=
-PLD.v
->
-> The LEDs use the multicolor LED class. Every LED except the WiFi LED can
-> also be driven by the CPLD from hardware events, exposed as the private
-> turris1x-cpld trigger. The five LAN LEDs share one set of colour
-> registers, so the colour and brightness set last on any of them apply
-> to all five.
->
-> The controller device exposes the global brightness controlled by the
-> button on the back of the router through `brightness`,
-> `brightness_level`, and `brightness_levels/<N>`. The Turris Omnia
-> driver already has `brightness`, so its ABI entry is extended to cover
-> the Turris 1.x as well.
+Hi Chris,
 
-> Signed-off-by: Pali Roh=C3=A1r <pali@kernel.org>
+Thanks for resolving the conflicts yourself and reviewing it.
 
-> Cc: Marek Beh=C3=BAn <kabel@kernel.org>
-> Cc: Andy Shevchenko <andy@kernel.org>
+> What is the high-level user-visible impact of this series?
 
-Please, move these (Cc list) to the block under the cutter '---' line,
-so it won't pollute the commit message.
+Being able to use more interesting swap backends and logic when the
+machine is not under memory pressure.  It is much easier to write a
+swap backend that may occasionally allocate memory than one that is
+guaranteed never to, so today such backends are either unsafe as swap
+or ruled out (btrfs, for example, refuses swapfiles that are
+copy-on-write, checksummed or compressed).
 
-> Co-developed-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
-> Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
-> ---
+> I am curious: if we never run out of swap file space on the
+> non-offload swap area, does that mean we don't need this patch series?
 
-...
+No: running out of conventional swap isn't the point.  Without the
+series, any active swap area may be written under pressure, so a
+backend that may allocate can't be used as swap at all, however much
+conventional swap there is next to it.
 
->  What:          /sys/class/leds/<led>/device/brightness
-> -Date:          July 2020
-> -KernelVersion: 5.9
-> -Contact:       Marek Beh=C3=BAn <kabel@kernel.org>
+> However, direct reclaim can use both types of swap areas.
 
-> +Date:          July 2020 (Turris Omnia), September 2026 (Turris 1.x)
-> +KernelVersion: 5.9 (Turris Omnia), 7.4 (Turris 1.x)
+In v2 it can't: only memory.reclaim, per-node reclaim and MGLRU's
+debugfs eviction may write new data to an offload-only area; direct
+reclaim, kswapd, MADV_PAGEOUT and DAMON reclaim may not.  But I think
+your suggestion to flip it round is closer to what I want: mark the
+areas whose writes may allocate, and keep pressure reclaim away from
+those, rather than tying it to what started the reclaim.  I'll work
+that into v3, together with Kairui's suggestion to build on the swap
+tiers work.
 
-This is quite unusual. If you want to refer to the kernel version, do
-it in the description. Also note the version (see below more on it).
-
-> +Contact:       Marek Beh=C3=BAn <kabel@kernel.org>, linux-leds@vger.kern=
-el.org
-
-Why? The mailing list is kinda default, no?
-
-...
-
-> +What:          /sys/class/leds/<led>/device/brightness_level
-> +Date:          September 2026
-
-Impossible. Use https://hansen.beer/~dave/phb/ to predict the dates of
-the next release, this is a huge driver that most likely may not make
-v7.4, so the v7.5 is a plausible candidate.
-
-> +Contact:       Josef Schlehofer <pepe.schlehofer@gmail.com>
-> +Description:   (RW) Index (0-7) of the global brightness level in use on=
- the
-> +               Turris 1.x routers. The button on the back side of the ro=
-uter
-> +               steps through the levels. Writing to this file selects a =
-level
-> +               directly. The CPLD keeps the selection across driver unbi=
-nd and
-
-the driver
-
-> +               reboot.
-> +
-> +               Format: %u
-> +
-> +What:          /sys/class/leds/<led>/device/brightness_levels/<N>
-> +Date:          September 2026
-
-As per above
-
-> +Contact:       Josef Schlehofer <pepe.schlehofer@gmail.com>
-> +Description:   (RW) Value of the global brightness level N (0-7) on the
-> +               Turris 1.x routers, one file per level. These are the val=
-ues
-> +               the CPLD firmware steps through when the brightness butto=
-n is
-> +               pressed. Reading returns the value, writing accepts an in=
-teger
-> +               between 0 and 255. The CPLD keeps the values across drive=
-r
-
-the driver
-
-> +               unbind and reboot, and restores the defaults (255 64 32 1=
-6 8 4
-> +               2 0) at power-on and when the reset button is pressed.
-
-...
-
-> +#include <linux/bits.h>
-> +#include <linux/container_of.h>
-> +#include <linux/device.h>
-> +#include <linux/err.h>
-> +#include <linux/io.h>
-> +#include <linux/kstrtox.h>
-> +#include <linux/led-class-multicolor.h>
-> +#include <linux/leds.h>
-> +#include <linux/limits.h>
-> +#include <linux/math.h>
-> +#include <linux/minmax.h>
-
-> +#include <linux/mod_devicetable.h>
-
-Not anymore. Rely on what platform_device.h provides.
-
-> +#include <linux/module.h>
-> +#include <linux/platform_device.h>
-> +#include <linux/property.h>
-> +#include <linux/spinlock.h>
-> +#include <linux/sysfs.h>
-> +#include <linux/types.h>
-
-...
-
-> +struct turris1x_leds {
-> +       void __iomem *regs;
-> +       /* Protects the CPLD LED registers and @reset */
-> +       spinlock_t lock;
-> +       /* Set by turris1x_leds_reset(), after which the LEDs are left al=
-one */
-> +       bool reset;
-> +       struct turris1x_led led[TURRIS1X_LED_NUM];
-
-Please, check the layout of all structures with `pahole`, it might
-suggest a better one.
-
-> +};
-
-...
-
-> +/* Must be called with ddata->lock held */
-
-This is good, but having a lockdep annotation is even better.
-
-> +static void turris1x_led_set_colors(struct turris1x_leds *ddata, struct =
-turris1x_led *led,
-> +                                   enum led_brightness brightness)
-> +{
-> +       struct led_classdev_mc *mc_cdev =3D &led->mc_cdev;
-> +       unsigned int i;
-> +       u8 val;
-> +
-> +       led_mc_calc_color_components(mc_cdev, brightness);
-> +
-> +       /* The colour registers are 8 bits wide, do not let values wrap *=
-/
-> +       for (i =3D 0; i < TURRIS1X_LED_NUM_COLORS; i++) {
-
-for (unsigned int i...) {
-
-> +               val =3D min_t(unsigned int, mc_cdev->subled_info[i].brigh=
-tness, U8_MAX);
-
-No min_t(), it should be an exceptional use, and it was especially
-proven to have issues with < INT_MAX comparisons in some cases. I
-think you mean to have clamp() here.
-
-> +               turris1x_write(ddata, turris1x_color_reg(led->reg, i), va=
-l);
-> +       }
-> +}
-
-...
-
-> +static int turris1x_hwtrig_activate(struct led_classdev *cdev)
-> +{
-> +       struct turris1x_leds *ddata =3D dev_get_drvdata(cdev->dev->parent=
-);
-> +       struct turris1x_led *led =3D to_turris1x_led(cdev);
-> +       unsigned long flags;
-> +       u8 val;
-> +
-> +       spin_lock_irqsave(&ddata->lock, flags);
-
-Why not guard()()?
-
-> +       if (ddata->reset)
-> +               goto unlock;
-> +
-> +       /*
-> +        * If software turned the LED off, the last configured colour was=
- not
-> +        * necessarily written to the CPLD. Write it with max_brightness =
-before
-> +        * the hardware takes over.
-> +        */
-> +       if (!led->on)
-> +               turris1x_led_set_colors(ddata, led, cdev->max_brightness)=
-;
-> +
-> +       /* Disable LED software control */
-> +       val =3D turris1x_read(ddata, TURRIS1X_LED_SW_OVERRIDE_REG);
-> +       turris1x_write(ddata, TURRIS1X_LED_SW_OVERRIDE_REG, val & ~BIT(le=
-d->reg));
-> +
-> +       led->hwtrig =3D true;
-> +
-> +unlock:
-> +       spin_unlock_irqrestore(&ddata->lock, flags);
-> +
-> +       return 0;
-> +}
-
-...
-
-> +       /*
-> +        * Enable or disable the LED under software control. The CPLD ign=
-ores
-> +        * this bit while the hardware trigger drives the LED, so leave i=
-t
-> +        * alone.
-> +        */
-> +       if (!led->hwtrig) {
-> +               val =3D turris1x_read(ddata, TURRIS1X_LED_SW_DISABLE_REG)=
-;
-> +               if (brightness)
-> +                       val &=3D ~BIT(led->reg);
-> +               else
-> +                       val |=3D BIT(led->reg);
-
-If led->reg is unsigned long, you can use __asign_bit() here.
-
-> +               turris1x_write(ddata, TURRIS1X_LED_SW_DISABLE_REG, val);
-> +               led->on =3D !!brightness;
-> +       }
-
-...
-
-> +static int turris1x_led_register(struct device *dev, struct turris1x_led=
-s *ddata,
-> +                                struct fwnode_handle *fwnode, u8 val_sw_=
-override,
-> +                                u8 val_sw_disable)
-> +{
-> +       static const unsigned int colors[TURRIS1X_LED_NUM_COLORS] =3D {
-> +               LED_COLOR_ID_RED, LED_COLOR_ID_GREEN, LED_COLOR_ID_BLUE,
-> +       };
-> +       struct led_init_data init_data =3D {};
-> +       struct led_classdev *cdev;
-> +       struct turris1x_led *led;
-> +       unsigned long flags;
-> +       u8 val, dis;
-> +       u32 reg, color;
-> +       unsigned int i;
-> +       int ret;
-> +
-> +       ret =3D fwnode_property_read_u32(fwnode, "reg", &reg);
-> +       if (ret || reg >=3D TURRIS1X_LED_NUM)
-> +               return dev_err_probe(dev, -EINVAL, "Invalid or missing 'r=
-eg' property\n");
-> +
-> +       ret =3D fwnode_property_read_u32(fwnode, "color", &color);
-> +       if (ret || color !=3D LED_COLOR_ID_RGB)
-> +               return dev_err_probe(dev, -EINVAL, "Invalid or missing 'c=
-olor' property\n");
-
-Do not shadow the error code.
-
-> +       led =3D &ddata->led[reg];
-> +       if (led->registered)
-> +               return dev_err_probe(dev, -EINVAL, "LED %u already regist=
-ered\n", reg);
-
-EBUSY / EEXIST ?
-
-> +       led->reg =3D reg;
-> +
-> +       /* Set the initial colours to those currently in use */
-> +       for (i =3D 0; i < TURRIS1X_LED_NUM_COLORS; i++) {
-
-for (unsigned int i...) {
-
-> +               led->subled_info[i].intensity =3D turris1x_read(ddata, tu=
-rris1x_color_reg(reg, i));
-> +               led->subled_info[i].color_index =3D colors[i];
-> +               led->subled_info[i].channel =3D i;
-> +       }
-> +
-> +       /*
-> +        * LEDs 1-5 (LAN) share one set of colour registers, and the brig=
-htness
-> +        * of an LED is applied by scaling its colour, so all of them sho=
-w the
-> +        * colour and brightness written last. Each LED still keeps its o=
-wn
-> +        * intensities and brightness, so multi_intensity and brightness =
-report
-> +        * what the LED was last given, which is not necessarily what it =
-shows.
-> +        */
-> +       led->mc_cdev.subled_info =3D led->subled_info;
-> +       led->mc_cdev.num_colors =3D TURRIS1X_LED_NUM_COLORS;
-> +
-> +       init_data.fwnode =3D fwnode;
-> +
-> +       cdev =3D &led->mc_cdev.led_cdev;
-> +       cdev->max_brightness =3D 255;
-> +       cdev->brightness_set =3D turris1x_led_brightness_set;
-> +
-> +       /* All LEDs except the WiFi LED can be driven by the hardware tri=
-gger */
-> +       if (reg !=3D TURRIS1X_LED_WIFI) {
-> +               cdev->trigger_type =3D &turris1x_hw_trigger_type;
-> +               cdev->hw_control_trigger =3D turris1x_hw_trigger.name;
-> +       }
-> +
-> +       if (!(val_sw_override & BIT(reg)))
-> +               cdev->default_trigger =3D turris1x_hw_trigger.name;
-> +
-> +       if (!(val_sw_override & BIT(reg)) || !(val_sw_disable & BIT(reg))=
-)
-> +               cdev->brightness =3D cdev->max_brightness;
-> +
-> +       led->on =3D !(val_sw_disable & BIT(reg));
-> +
-> +       ret =3D devm_led_classdev_multicolor_register_ext(dev, &led->mc_c=
-dev, &init_data);
-> +       if (ret)
-> +               return dev_err_probe(dev, ret, "Cannot register LED %u\n"=
-, reg);
-> +
-> +       /*
-> +        * A linux,default-trigger property replaces the hardware trigger=
-, and
-> +        * the CPLD then keeps driving the LED and ignores software contr=
-ol.
-> +        * Take such an LED over in the state the LED core reports.
-> +        */
-> +       spin_lock_irqsave(&ddata->lock, flags);
-> +       val =3D turris1x_read(ddata, TURRIS1X_LED_SW_OVERRIDE_REG);
-> +       if (!led->hwtrig && !(val & BIT(reg))) {
-> +               dis =3D turris1x_read(ddata, TURRIS1X_LED_SW_DISABLE_REG)=
-;
-> +               if (cdev->brightness)
-> +                       dis &=3D ~BIT(reg);
-> +               else
-> +                       dis |=3D BIT(reg);
-> +               turris1x_write(ddata, TURRIS1X_LED_SW_DISABLE_REG, dis);
-> +               led->on =3D !!cdev->brightness;
-> +               turris1x_write(ddata, TURRIS1X_LED_SW_OVERRIDE_REG, val |=
- BIT(reg));
-> +       }
-> +       spin_unlock_irqrestore(&ddata->lock, flags);
-> +
-> +       led->registered =3D true;
-> +
-> +       return 0;
-> +}
-
-...
-
-> +       best_level =3D 0;
-> +       best_error =3D INT_MAX;
-> +       for (level =3D 0; level < TURRIS1X_LED_NUM_LEVELS; level++) {
-
-Ditto.
-
-> +               value =3D turris1x_read(ddata, TURRIS1X_LED_LEVEL_VALUE_R=
-EG + level);
-> +               error =3D abs(value - brightness);
-> +               if (error < best_error) {
-> +                       best_error =3D error;
-> +                       best_level =3D level;
-> +               }
-> +       }
-
-...
-
-> +/* _level is always a literal 0..7, it is pasted, stringified and stored=
- */
-> +#define TURRIS1X_LEVEL_ATTR(_level)                                     =
-       \
-> +       static struct turris1x_level_attr turris1x_level_attr_##_level =
-=3D {      \
-> +               .attr =3D __ATTR(_level, 0644, brightness_level_value_sho=
-w,       \
-> +                              brightness_level_value_store),            =
-       \
-
-Don't we have __ATTR_RW() ?
-
-> +               .level =3D _level,                                       =
-         \
-> +       }
-
-...
-
-> +       device_for_each_child_node_scoped(dev, child) {
-> +               ret =3D turris1x_led_register(dev, ddata, child, val_sw_o=
-verride, val_sw_disable);
-> +               if (ret)
-> +                       return ret;
-> +               count++;
-> +       }
-
-> +       if (!count)
-> +               return dev_err_probe(dev, -ENODEV, "No LED devices found =
-in device tree\n");
-
-We have counting API, so this can be done ahead. Yes, it will iterate
-over the list twice, but I don't think it's an issue.
-
---=20
-With Best Regards,
-Andy Shevchenko
+Thanks,
+Matthias
