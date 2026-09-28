@@ -1,64 +1,66 @@
-Received: from mail-wr2-f35.google.com (mail-wr2-f35.google.com [74.125.225.99])
+Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A7BDE4A0F09
-	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 11:19:14 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.99
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DFB4F4A1DE3
+	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 11:19:16 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790594356; cv=none; b=VDaIzRY10Qn9u2X6d7Ifl82g14ihcihE6zTOPXEB91g4eB7FAWckJABli//r1wiig2eF2rhahXqDNX091YTCAeoCHj0112DDsgn4+QY7YC+Ju1Qj3OVKcw8WPgrQP/y6nccyJuGfKghtsXC8CTj5ME/G6GhW4KI4eWD91LasO5Y=
+	t=1790594358; cv=none; b=pyd562BiBrE9/HVDRjGrHY6l8sWCncYtKUvyWuqYSXNFSYVijAv+Hv4WUm2had78ToO+Cz29UCdJ9Iqi4O2FYVSe9PKLZEGb1yOQij9sTgwqmSpzZKtD3iqmD72Yf9GkEDdtcvOZTzUcLNjhGE2P5JBJfHndALNP8KDGmh0KTOA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790594356; c=relaxed/simple;
-	bh=kO3ynIq/wB6ie8eo0zrTf/NB7cypH/DrpREYSikioVs=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=IBHIRCzP3+O6DnsCM+odDZ/wuwsrgn9nvPAIOJo20Iw7/Sw457UlQI8+xcH4mXD971f3hiYlnALjjkCa06QifaMmdl5mHnRv1voxGWwDkaDTa7jYytVUWU8ysnh247HmGMcyHfLFS7lCNYJq3cXP/DPN32vEsydGtVnuGuCLea4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=QkPMsord; arc=none smtp.client-ip=74.125.225.99
+	s=arc-20240116; t=1790594358; c=relaxed/simple;
+	bh=FAC2S2BY98BVv7gueQcHZnYUQ/AZfH3LCfnoGMI1YY0=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=bwdlQ/j6uKedTZDvc/ndqBlfjYN8Kii4outqpFQOhyLDceSROIeNHG70X5Ki/32Zhta3l7FZ5YiTbMRdtghGxupnffTHbucGjaGJbI00xh02O0iAsDRQaOC7HyRcxGaUGRBVyPzL1fAU3wCZc2D6+i4pOVuMOKwseq4U+kXZJLk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=NDOmDtd6; arc=none smtp.client-ip=74.125.225.140
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="QkPMsord"
-Received: by mail-wr2-f35.google.com with SMTP id ffacd0b85a97d-4885d4825adso1727823f8f.0
-        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 04:19:14 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="NDOmDtd6"
+Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-49b912d3931so22374515e9.3
+        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 04:19:16 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790594353; x=1791199153; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=wc84nfWgNf4LDDPo4HpZtovz6WNxAg7/CHpGE5J6vyA=;
-        b=QkPMsord9VJSackfuNx9kszICrztNypybkDjzQfhCx3uLQAzzisZ63FC1ij24rMPuz
-         PQQWTCmlABDhdeSgaGhEISAGUtv9toayM0hbPsZSR5PEr436Kri5E5CY3PfZQMmDMn8c
-         eHlxu9Dje2wpoYJ6TBT94q5XxUgK2NV6AhnJjb7vdBJbw3VncRjsOH7teYlHT1OIq4dd
-         isH0Ce1hkpppqzI+DbgyrirnHMYTJ7kFfc/daHa5yvf21uKv02Y9l0/Ex6fAle3sMpA6
-         W2jARPsqk7JMN3MV5g7PhkMexO3Ndnl+a0ZOkD6II/X3GChKi9PkptEcEs62Rkigtv3n
-         EkNQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790594353; x=1791199153;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject
+        d=gmail.com; s=20251104; t=1790594355; x=1791199155; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=wc84nfWgNf4LDDPo4HpZtovz6WNxAg7/CHpGE5J6vyA=;
-        b=cOrNd7DGBK4OFFyaY7uO0tzZM8tr/T3r5bwTSPZP1OQp30qnh/nAit2yXsZpaQnbkH
-         RJqq8g3rc6c4+IKhJgUuN/jjehQlTGJIu+Tbw/m72mWVT6H33jgSp0bEI9y6DPlvqa0R
-         mQs6FWuJ36OvJK5tZP1G+1CAI4oRtBt28O2r4ACwSy0xM0hWRfjPgGBrD17G7STTo8vK
-         K2DQYrGH0Hn1jJiYqbZxfIE/4xyQ0d2OnJqPMrum5yMFAe/VcmAma14fx7WbmokXVyeq
-         whbFjwy3H5BG0lcZHQcS4PLwTUVkh2rnIUfrtfsnNQZxs1fX7mZnCE44n7Dq8ovBGd/B
-         Hnkg==
-X-Forwarded-Encrypted: i=1; AKwUvBxwgeBnJiteIHqsVRfOR4K7TFJyHopzLN3ys961VGY70oLt6iryEn0xgtGtUyPJ/Y614rnot4/ihmc=@vger.kernel.org
-X-Gm-Message-State: AFq9FYLTfKcc7t8gAgOymCN8PoISZQ7x/WKrWXI1un3Dclpk1Sluc6dQ
-	FpPvUiHSq3LR4TKoswLbXSf7y0o1nFJVyS8BWiERXymne0kKBbhSIhu5
-X-Gm-Gg: AYBFou2lM8HT7302WyHSi8GZ3x2SEBkm2mm0i8PhaHVN4ySlMo+WJ9ha6AN8LvBycSy
-	UV7go2l+t9d9jTxJwobB3koEjxk2zy/2hBw4IuN7Lu3Wz2YjJem3Bl4cBg/CRsg8rJ+AqPB3F7K
-	HBGFUQZDBUkatMRc7/YRdGQBip4TSdeGKAYxHaUz9ro8Kc95EejRmtMvFXxFV0iUqYfbGd3G7Cs
-	5cB4hWC4qNQ0KMbO/yNbuBHW7ux0AJGWZd4Nagcdq+cSLMZR/7eRomCwqqR5aRD5oiALhdJ7r2h
-	wD7dZzB3NHlVnm/LnywJXPD+0eUBdFaWzSxUJnYaBkmm1A5NRvnE7q+SkoP0qkyK1o8aLpmTjGG
-	hgkKAHS4OXMRfzmnm4me1IiukaGPk9gZs0yVtog2gnP2FjIZRl9XOS+Gj2xwko9NlwPmXH3cv6r
-	pxuJmwypje8L9D+rDTlwpkkHI3+t/Dad6ly8jXtdZKpM72CL82yuJ0iKp1T+vGW1HMOpXzF3jgu
-	coxKZUQ2KXdRkGVbqR/t96j+gDSyShJdHWC3sBkSnuDUlGrnbTm1V2sSAYNMVn0lpW5UFiaAY3k
-	8cizJzEn9ZtZHjC351D69dhL/N3dw6e5Hw93s6a3NQPT6QKLlOk=
-X-Received: by 2002:a05:6000:4108:b0:488:7787:469d with SMTP id ffacd0b85a97d-4887787490dmr17106824f8f.25.1790594352582;
-        Mon, 28 Sep 2026 04:19:12 -0700 (PDT)
+        bh=g+Oi9Zm5MO73aOHmV62OPpimFIugGeyR1K/lg/prrUs=;
+        b=NDOmDtd6UNdWj81OAx0NJuN/cl58zPJcT4EU9N86Y3uFyGbh5GaDG2aBp+FRv1LiHB
+         ZHFx7Iaw0dNU6AGJumRw42fFQ3dj5Y50ax7cQ/Mt2lwQEAmtamR8TERa3COJ+3KFkxBN
+         vcEYFjy/oXa1jLRVEMtJn9WARArpW5B6aieSidYCKzO9IumBiaeLxVgrgQns2AOgJIWJ
+         vZrC4Z33FtZRlCXazfm4aZivsY2SMGrNz6cKcftUL9+0wmQtcE4etZzYBs81rkG9yfwL
+         V7Gy4ASiTQoYfavuBzmRXAM/Wy7ceP5naQ5Cnu86NcTCWonVFu7tAszGV3NMDRbLipR8
+         vBrA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1790594355; x=1791199155;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=g+Oi9Zm5MO73aOHmV62OPpimFIugGeyR1K/lg/prrUs=;
+        b=iXxEDLvLpmjYBw18hU9e2AaIdpc+pNJidTusb8f94syQUHn/B0IZL3iGa/ybc/j3+h
+         i6ruMaaB19fDB0GS2d/D33Uy5WSZPT0nyPgn6JPZOOl6zZKl5otjZlWTrWiqHeBw6fYV
+         gcSgQ4ubYLrlQuwh0YXM9ImG9e0Gio0zuZKI900UsrZhqLX2qAkm1E1T+9bih3HhgIdt
+         njpN0NkCZUOk6hzTNkbyNbZK5uOr1+n/VcAHpobWDeP9MWzGqrlkfVnXWOaRwqaLZW6C
+         iOO1TFnBPaVlFqQac2iYm0TY/orSQe2X6xouUV1KgdQ+PNGu3+H/EN1uQ6o/NaufeEWu
+         Vk7Q==
+X-Forwarded-Encrypted: i=1; AKwUvBwojH6h811hG9giHAt0MlqGQrPMR954uPD6n2BYOruY2SBpzD0k3gvuL7AamZ7Ai8emd+5mlc95fC4=@vger.kernel.org
+X-Gm-Message-State: AFuF++mdNke7xp50RefGVQixW2oy9PbzhVZYeHHPCaTW2IxLn6THWmaN
+	lBr7gKRsXugjfDhJrSEEJFmYX0lj8lLv3unHMY61Sw5bLker/5HXK8F+
+X-Gm-Gg: AYBFou2x8o4q2nHGmiGSlBGqQrzpv2RaLRmk4Vp/SJDrtsH0WkeyrMHOzHvrDeiN7uA
+	dD3jlwb3yne+0aYsRP9PICHJAe+cJaCe9dSGJxMnYe21yhJE3ThmLjn1Cgp9mE7eapVgZ4KHsIb
+	vu5EfI2GfQyXY19nePnCmmSyMyEZCk0z/uFCM0ybRJoV6q3Cc3mrCNcNDJYGghpcXfwTifdfwRO
+	GpNu/sv5tBceK/5y62AdS0yPfu5JJiWYHZqfrY73Z96FIFOHM8Hj9eRwv/t4pwAsDG60WnFfv3R
+	QhUg2ubhYl9hhtQVVB43mDCGvQfFnkd988fbrM+2EqrZsHnS/fADyt8iOLS9btkhnVXZv8fREbh
+	kNJxug1O+Jn8zO2NS7MMSiZxI99GGuip6JsBancvOXyxf6dr2vS6xu8z53XNcifBkYsNbGcJmmF
+	NGCFATGeU0MiaLvQ5eUvpLRfHk56Itxu7tc3OiO5MVodHgvNTF7q5xW+eUSxhnZvKmowNPHe6jl
+	zbVS99sszhGDlkYCcVkv5EIYrVwv15z+iZHHu0+22LtZEg1littVpwaUbVr+cFzVxmrdwjNM0Lb
+	d+nfIJse85RmP3Ht9V6BFBYhy/rT7wxgK6LNCIDs
+X-Received: by 2002:a05:600c:3111:b0:49f:fdca:c34d with SMTP id 5b1f17b1804b1-49ffdcac53bmr98263335e9.8.1790594354962;
+        Mon, 28 Sep 2026 04:19:14 -0700 (PDT)
 Received: from localhost.localdomain (37-188-186-98.red.o2.cz. [37.188.186.98])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4887a34a638sm26164969f8f.9.2026.09.28.04.19.10
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4887a34a638sm26164969f8f.9.2026.09.28.04.19.13
         (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Mon, 28 Sep 2026 04:19:11 -0700 (PDT)
+        Mon, 28 Sep 2026 04:19:14 -0700 (PDT)
 From: Josef Schlehofer <pepe.schlehofer@gmail.com>
 To: Lee Jones <lee@kernel.org>,
 	Pavel Machek <pavel@kernel.org>,
@@ -73,10 +75,12 @@ Cc: =?UTF-8?q?Pali=20Roh=C3=A1r?= <pali@kernel.org>,
 	devicetree@vger.kernel.org,
 	linux-api@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH v3 0/2] leds: Add support for CZ.NIC Turris 1.x LEDs
-Date: Mon, 28 Sep 2026 13:19:05 +0200
-Message-ID: <20260928111907.72592-1-pepe.schlehofer@gmail.com>
+Subject: [PATCH v3 1/2] dt-bindings: leds: Add CZ.NIC Turris 1.x LED controller
+Date: Mon, 28 Sep 2026 13:19:06 +0200
+Message-ID: <20260928111907.72592-2-pepe.schlehofer@gmail.com>
 X-Mailer: git-send-email 2.54.0
+In-Reply-To: <20260928111907.72592-1-pepe.schlehofer@gmail.com>
+References: <20260928111907.72592-1-pepe.schlehofer@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -86,100 +90,179 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-The CZ.NIC Turris 1.x routers have eight RGB LEDs on the front panel,
-driven by the CZ.NIC CPLD firmware. arch/powerpc/boot/dts/turris1x.dts
-already describes the LED controller, but there is no driver for it, so
-Linux cannot control these LEDs.
+From: Pali Rohár <pali@kernel.org>
 
-Pali posted v1 and v2 in July 2022 [1][2] and a RESEND in December 2022
-[3]. The RESEND did not address the review of v2, and Krzysztof NAKed
-the binding [4] and objected to the driver [5] for that reason. Lee
-asked Pavel whether he was happy with the user-space interface [6] and
-later reviewed the driver [7]. Pali answered part of that review [8],
-but no new version followed.
+Add a binding for the LED controller on the front panel of the CZ.NIC
+Turris 1.x routers. The LEDs are controlled by the firmware of the
+CZ.NIC CPLD, which is memory mapped on the local bus.
 
-I am picking the series up. Most of the driver was reworked for v3;
-authorship stays with Pali as the original author. The changelog of
-each patch lists the changes and, for the review points that did not
-lead to a change, the reason.
+The turris1x.dts device tree, which is part of the mainline kernel since
+v6.0, already references this compatible string.
 
-On the user-space interface: the global brightness follows the Turris
-Omnia driver, which already has /sys/class/leds/<led>/device/brightness
-[9]. The Turris 1.x uses the same attribute, documented in the same ABI
-entry. Marek asked in the v1 review for the index of the selected level
-[10], which is brightness_level, and Lee asked for one value per file
-instead of the eight values in one brightness_values file [7], which
-are now brightness_levels/<N>.
+Signed-off-by: Pali Rohár <pali@kernel.org>
+Cc: Marek Behún <kabel@kernel.org>
+Co-developed-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+Signed-off-by: Josef Schlehofer <pepe.schlehofer@gmail.com>
+---
 
-Marek, patch 2/2 extends the brightness entry in
-Documentation/ABI/testing/sysfs-class-led-driver-turris-omnia and adds
-that file to the new MAINTAINERS entry. Could you ack that part?
+Notes:
+    Changes in v3, by Josef Schlehofer:
+    - drop the file name and "binding" from the subject
+    - describe the hardware rather than the driver
+    - fix example indentation and use the merged turris1x.dts node
+    - set Josef Schlehofer as the binding maintainer
+    - constrain color to LED_COLOR_ID_RGB
+    - list the required controller and LED properties
+    - describe the register range and the LED order in the reg properties,
+      and put the SPDX expression in parentheses
+    - pass dt_binding_check with dtschema 2026.9
+    
+    checkpatch asks whether MAINTAINERS needs updating for the new file.
+    The MAINTAINERS entry that covers it is added in 2/2, together with
+    the driver.
 
-The series is based on leds/for-leds-next (05b4738b0078). The driver
-implements hw_offloaded() for its private trigger and sets
-hw_control_trigger, as the hardware control changes there require, so
-it does not build on mainline yet.
-
-Testing on a Turris 1.1:
-- With OpenWrt's 6.18.44 kernel, the driver as it was before that
-  adaptation, built as a module: colour and brightness, the brightness
-  level attributes including invalid writes, the timer trigger, the
-  turris1x-cpld hardware trigger, unbind and bind, and rmmod while
-  triggers ran and a level file was held open, also watched at the
-  panel. After a reboot, the CPLD registers read at the U-Boot prompt
-  still had the WiFi LED's disable bit that the shutdown handler sets,
-  and after sysrq-b, which skips the shutdown, the bit was clear. With
-  linux,default-trigger set in the device tree, the driver took those
-  LEDs over from the CPLD, and the turris1x-cpld trigger gave them back.
-- With a kernel built from leds/for-leds-next and this series, the
-  driver built in: the LEDs except the WiFi LED start under the
-  turris1x-cpld trigger, which trigger_may_offload_to_hw reports as
-  offloaded and under which reading brightness returns ENODATA. Writing
-  a brightness drops the trigger, writing multi_intensity keeps it, the
-  timer trigger works, and unbind and bind give the LEDs back to the
-  CPLD. The WiFi LED has no trigger_may_offload_to_hw. The panel showed
-  the same.
-The lines were rewrapped at 100 columns after these runs, which changes
-no object code (objdump -dr). Neither kernel had lock debugging.
-
-dt_binding_check with dtschema 2026.9 is clean and rejects a bogus
-property added to the example, dtbs_check reports no warning for the LED
-controller in turris1x.dtb, and tools/docs/get_abi.py reports no new
-warning. checkpatch --strict reports only the MAINTAINERS question on
-1/2, answered in its changelog, and a macro argument reuse check on 2/2,
-where the argument is always a literal. Built with W=1 and sparse on
-leds/for-leds-next (05b4738b0078) for powerpc, as a module and built in
-(vmlinux links), and with COMPILE_TEST for x86_64 and arm64 as a module.
-
-[1] https://lore.kernel.org/r/20220705000448.14337-1-pali@kernel.org/
-[2] https://lore.kernel.org/r/20220705155929.25565-1-pali@kernel.org/
-[3] https://lore.kernel.org/r/20221226123630.6515-1-pali@kernel.org/
-[4] https://lore.kernel.org/r/8b829332-5cd7-2910-88db-513716e0919a@kernel.org/
-[5] https://lore.kernel.org/r/d8172c80-a3a0-07f6-97ea-9130c49fab18@kernel.org/
-[6] https://lore.kernel.org/r/Y9Ozg2O41a2iijMc@google.com/
-[7] https://lore.kernel.org/r/Y/iDVlodp9sBkX9D@google.com/
-[8] https://lore.kernel.org/r/20230309203526.5hcfa2w47vqzmny6@pali/
-[9] https://lore.kernel.org/r/20230202234653.ukwpjntws3roacty@pali/
-[10] https://lore.kernel.org/r/20220705143001.7371a256@thinkpad/
-
-Pali Rohár (2):
-  dt-bindings: leds: Add CZ.NIC Turris 1.x LED controller
-  leds: Add support for Turris 1.x LEDs
-
- .../sysfs-class-led-driver-turris-omnia       |  13 +-
- .../testing/sysfs-class-led-driver-turris1x   |  23 +
- .../bindings/leds/cznic,turris1x-leds.yaml    | 132 ++++
- MAINTAINERS                                   |  10 +
- drivers/leds/Kconfig                          |  13 +
- drivers/leds/Makefile                         |   1 +
- drivers/leds/leds-turris-1x.c                 | 609 ++++++++++++++++++
- 7 files changed, 798 insertions(+), 3 deletions(-)
- create mode 100644 Documentation/ABI/testing/sysfs-class-led-driver-turris1x
+ .../bindings/leds/cznic,turris1x-leds.yaml    | 132 ++++++++++++++++++
+ 1 file changed, 132 insertions(+)
  create mode 100644 Documentation/devicetree/bindings/leds/cznic,turris1x-leds.yaml
- create mode 100644 drivers/leds/leds-turris-1x.c
 
-
-base-commit: 05b4738b0078f7d6f154f68068a11c8a0635e9df
+diff --git a/Documentation/devicetree/bindings/leds/cznic,turris1x-leds.yaml b/Documentation/devicetree/bindings/leds/cznic,turris1x-leds.yaml
+new file mode 100644
+index 000000000000..ad7ef7015f0b
+--- /dev/null
++++ b/Documentation/devicetree/bindings/leds/cznic,turris1x-leds.yaml
+@@ -0,0 +1,132 @@
++# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
++%YAML 1.2
++---
++$id: http://devicetree.org/schemas/leds/cznic,turris1x-leds.yaml#
++$schema: http://devicetree.org/meta-schemas/core.yaml#
++
++title: CZ.NIC Turris 1.x LED controller
++
++maintainers:
++  - Josef Schlehofer <pepe.schlehofer@gmail.com>
++
++description:
++  The front panel of the CZ.NIC Turris 1.x routers carries eight RGB LEDs
++  driven by the CPLD firmware running on a Lattice FPGA. The five LAN LEDs
++  share one set of colour registers, so they cannot be given different
++  colours or brightness from each other. The CPLD firmware is open source
++  and available at
++  https://gitlab.nic.cz/turris/hw/turris_cpld/-/blob/master/CZ_NIC_Router_CPLD.v
++
++properties:
++  compatible:
++    const: cznic,turris1x-leds
++
++  reg:
++    description:
++      CPLD address range of the LED registers. It starts at the first colour
++      register, offset 0x13 in the CPLD, and ends at 0x2f; the offsets of
++      the registers inside the range are fixed by the CPLD firmware.
++    maxItems: 1
++
++  "#address-cells":
++    const: 1
++
++  "#size-cells":
++    const: 0
++
++patternProperties:
++  "^multi-led@[0-7]$":
++    type: object
++    $ref: leds-class-multicolor.yaml#
++    unevaluatedProperties: false
++
++    properties:
++      color:
++        const: 9  # LED_COLOR_ID_RGB
++
++      reg:
++        description:
++          Index of the LED, which is also its bit in the CPLD LED control
++          registers. 0 is WAN, 1 to 5 are LAN 5 to LAN 1, 6 is WiFi and 7 is
++          power. The CPLD source calls LEDs 1 to 5 lan1 to lan5 and the WiFi
++          LED status.
++        minimum: 0
++        maximum: 7
++
++    required:
++      - reg
++      - color
++
++required:
++  - compatible
++  - reg
++  - "#address-cells"
++  - "#size-cells"
++
++additionalProperties: false
++
++examples:
++  - |
++    #include <dt-bindings/leds/common.h>
++
++    led-controller@13 {
++        compatible = "cznic,turris1x-leds";
++        reg = <0x13 0x1d>;
++        #address-cells = <1>;
++        #size-cells = <0>;
++
++        multi-led@0 {
++            reg = <0x0>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_WAN;
++        };
++
++        multi-led@1 {
++            reg = <0x1>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_LAN;
++            function-enumerator = <5>;
++        };
++
++        multi-led@2 {
++            reg = <0x2>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_LAN;
++            function-enumerator = <4>;
++        };
++
++        multi-led@3 {
++            reg = <0x3>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_LAN;
++            function-enumerator = <3>;
++        };
++
++        multi-led@4 {
++            reg = <0x4>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_LAN;
++            function-enumerator = <2>;
++        };
++
++        multi-led@5 {
++            reg = <0x5>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_LAN;
++            function-enumerator = <1>;
++        };
++
++        multi-led@6 {
++            reg = <0x6>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_WLAN;
++        };
++
++        multi-led@7 {
++            reg = <0x7>;
++            color = <LED_COLOR_ID_RGB>;
++            function = LED_FUNCTION_POWER;
++        };
++    };
++
++...
 -- 
 2.54.0 (Apple Git-157)
 
