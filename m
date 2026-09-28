@@ -1,68 +1,69 @@
-Received: from mail-pz2-f40.google.com (mail-pz2-f40.google.com [74.125.228.40])
+Received: from mail-pj2-f33.google.com (mail-pj2-f33.google.com [74.125.227.161])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9D4004E56D0
-	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 15:19:35 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.228.40
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 180524E73AD
+	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 15:19:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.227.161
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790608777; cv=none; b=NnDmzf0/AEDS4lT3/PaW1287CxVYhTqtS+zVejJZPn1AMXuHo6a1VnyXplQiNeNFkVGrGPVEbTxyC1tk7DMBRq19tUDdcmTLn+fVv74caatX+yANJQeHdS2GnqPUrJQ4SBlLcZW4XGdVF/7tjZ73SkyiiReOQisClsrZ3NqaHiE=
+	t=1790608787; cv=none; b=YpvutRRwi+LPYEYUeaLb+BKb4ftYNUzGbAUU452pX8cGPDToJpkxxHJHVydMf9L1edYWa87O2K0YlCNei4N+5VG6ep8HHyJ31c0gwkqS8prI3ixJNlSO1qqoKe/HlH/YS86V/A/G62u0MHFnQxUMBzrJ3Fpqg6n9RsubpZHu80c=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790608777; c=relaxed/simple;
-	bh=0J9ld2otCYxgF2E0poGk2jXS68DDTyUBL9fnmP1RYBM=;
+	s=arc-20240116; t=1790608787; c=relaxed/simple;
+	bh=qFYBnXNYmhhsHxNx2COBADOmOdhhnVq5vY9GOOKIOJ8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=EfyRWZnS69EEyeaVJ5IjN5swgkZ6AETIZr2KjDJKcCR+2ihYOV32EDRv+Ic0/IGhdSIOgwOZi+x8iPpXNS2STv31Hy6W07XXQg4k+pwXm17s9cHyQzhbe46UwQ37CCetvKYXwLMK6vccoiAHbN0Oc98VJp4c3IicoGZ1P9630fA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=CzQHRlLm; arc=none smtp.client-ip=74.125.228.40
+	 MIME-Version; b=N33jEXk5YfKE2zV+3nECxOFJy6s9/Tr0rpUSKc2porOO0B8myQ0h7QAiH3pp81Zj25yELvVI4L+Vtqhqq04VPB++aaJgxgmDu5ULN1WUoE9tYXs2hMP7QHHnexVmXfHHFyoJpal+I7YanCBRkm5UlZAdbM3FAIy7bk38PDD4g9U=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Mcv3pLez; arc=none smtp.client-ip=74.125.227.161
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="CzQHRlLm"
-Received: by mail-pz2-f40.google.com with SMTP id 41be03b00d2f7-cc750a1482fso1725431a12.2
-        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 08:19:35 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Mcv3pLez"
+Received: by mail-pj2-f33.google.com with SMTP id 98e67ed59e1d1-3a48b349480so254440a91.3
+        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 08:19:44 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790608775; x=1791213575; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1790608784; x=1791213584; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=b0NvfzIhMgoDaAcmLO9lnbeC2A03mNxAZEcGsZ2ya18=;
-        b=CzQHRlLmV10nWoOYSD7sLJQVfLrx5JXRCrmSvfU9nR+C6zmf0py48vGNJpRLlA/Ct2
-         jkBA800VFPvPt+ZC2aL5bq+LLCoYaqWAJrDYLpn0KD4PkvaGpmxL0E8rPbCkEpH9XgVM
-         K3bHnP5lqCKmq8FHNLFGdOz+aldgmckp4p/MrXjzv8Kav6/Wj5bRaPjJv42jj3y79uPi
-         ydBkyha1SZv/bfEyTpR2Ul5I5bTR0K9Qup9eWBd04QgX7NSCqJZipf0SmbEb1CDURQdP
-         61xQ7P8yB6VxMzf3KigJxhGYUKzgYqILnrHJmoxKAXKJRladOOO2DcnShPRWE5zFHl0w
-         LEiw==
+        bh=h2+B+TCtU6LhjPX3KEHp5ZhDWyuT2oD8RctAdhdkStc=;
+        b=Mcv3pLezAFyOR8F75xJ+N1J+sl5iObide+S4U96tO+DgnijX5Dmv30l2bJPwN1+1O/
+         aDuzJbHgkNaz0lfw14o/KwYbNznQUu7xfoxAvpVI93mnAYbKzBCw1eNQDku74CY+HfZZ
+         PW4KSnS4CPVrTmns0V/auUXCoQVjg+oAMiGULt1W0MA2xWn7cLmEQSDCHD855uvtV9X3
+         gmimRXAP+b8P5tg4Y1swbLZRAvkFTJbDFLJEEFCREXen1/VjjyUloPUHnLfUPQXAU4AV
+         74V9RqUw2P+Fwuuwm6XSQxgYih2pRhfqAVjfgoKGuEwYAv6/0uviPGmqijunI+77tcYn
+         bP3g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790608775; x=1791213575;
+        d=1e100.net; s=20260707; t=1790608784; x=1791213584;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=b0NvfzIhMgoDaAcmLO9lnbeC2A03mNxAZEcGsZ2ya18=;
-        b=l5cdZDeOY2IB+1d2JNAqfjm1LotD/p5+Uwj7Q7FNjrCo5GAY2AwS0DpsZdgbmBXkGZ
-         ujYNJpXccPJtw13Osoy+SJJc4JBuI97pjeUsecmN8/U+wmpGS0lQrmGPAp6o2boNMCcK
-         lyGlrTi7ltq3ldxio7fn97Ra/e96TKZpY5ILZ2nGe2X0gYOx8Ot+DYfyZW/fCvzgxe8J
-         3MPWhq16+IQdiGstevtGtv6Du/hI7sseB1jqjiwQw414cJA8AUR80B48MN2/EuaGiiU2
-         WCNB2UhEKZzOXy0eaH7G9/07tkPpNFl6luFvlALCGsGYmAuD2f+xL5YVLZKBnlZXJCiV
-         nONg==
-X-Forwarded-Encrypted: i=1; AKwUvBzz0dkPhkHufctWFV7+pSAIO8OQw4ORdai+bJ6j323A6UhtRBH9XcMscKVSFIh1TQqRaIH59k6XPKI=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIj1h3PhvAuQMVRav1qKTUuyf6teUdUccew0hp2oVeFQmd5fpUv
-	n7Pfn5xoEu/df5isjZprmkVLE0/PTZhMX5YFh+N/n1TIgron6H/EUvsC
-X-Gm-Gg: AYBFou3dOVznh8lvXJ3Nc0siPX87DwaaGfcF1Qhs1x9P+flK2G6PNvSSY6KKTP8vlMR
-	JmBpRCDgJaWPw/r8O0bo8uOgCXdyNE3lnqHjVx8oA1N8d3jqCnylQNkUOVbtUCwqvx/cYhU7dnK
-	Ef2EW8xS4wtR5XyKBbYjsR7eGyPCM6VTr49N7jfKqu27pNJ9aHJ2T137ykwwKCoYw9I8TUzKzz/
-	2mWU1iX95tqSzN9SVM/yjpO7qlAs9923/TIiaHFmAYBX0sQRmtpdHJezz/jlpKrJY5fhZ+rFM+l
-	DzOcx7AsEDEDRHpknKk/MWhf7WCF9Jfx0boNTt5CQ0zW3TDnDQ9hIa/HcDELQIKGh4pVJTzTJaI
-	qbuoRpsUrY31QqRbiaKDzv8o4BiKhhoOTGhQSnnZ8c00g3oPLzWkFlpnKH+MomPfT+7tJcOAbd7
-	FhZ4y7rbKifkQ/MWBegbMw4NwzBBr1ZBwMqoqLWvyNkS+jTiWAnAWIEMdU3CeXp+s16JU0ziguT
-	BDqFie0dQqzAEWrZyR9foZJ0H8x7gNpseg5l6xEwFZ0tmwPhe9cKYuhfzHaMlyHpfF8xYtjQG/0
-	WrpNmyo+g9GSt78GCLG+V7DSTl9petIga6NIQN9ePq5kbuset2R+Tic658o=
-X-Received: by 2002:a17:90b:384c:b0:39e:5acb:2849 with SMTP id 98e67ed59e1d1-3a0bb576e5cmr8742632a91.17.1790608774215;
-        Mon, 28 Sep 2026 08:19:34 -0700 (PDT)
+        bh=h2+B+TCtU6LhjPX3KEHp5ZhDWyuT2oD8RctAdhdkStc=;
+        b=dGIiMXH2VmYVW/rUDeXsbjmAh3Ags8WAawntgC2vEGqMDDWw4BpMcLWIc0P5XyWAe6
+         SyVJRmCVVF1fTGRfeT9c3AYVKrHPgENq+y6AnJ7k30Oqu+FtMvo5rBVv0hKF9DcoPS8U
+         iZHBfBx0Ocl5sADOXGm2EmUaMrv6f0j+55K+vmSWg1LdMRFDOqMxHucmAsSYf6Zp1Mcy
+         sGDLrpV8fBVe8cHDCzRh4bgt6USZNaynisKUW9w5feR6WctDFcQaWB7TTdNczY57dyD8
+         4ad8eIGnl6qqqE82gHGWTn78hJSG91Z7EDs1p5cmpR8uG+IuagXEFOFhSrd4kpYT4s9W
+         ecnQ==
+X-Forwarded-Encrypted: i=1; AKwUvByQwW2BOjMAFM/LkG60izBZXkpZGs/c1tyWuSYHJbhqk04AYDcKkZjpDkR0zqPK9aIFdMHuuWPYKaM=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKll8t0LMOZrmTtjqqrAJs5oJdq6YATlqffLL95gyvElovHqTLO
+	VxO6m5Vn/9a8Kp6UglodRuJlkjyai7niY/7OIWQIlZkrM61lfal8tUyE
+X-Gm-Gg: AYBFou3VmPsqAQRaFPedCRyhAupHANdjBUNhKt+i17Vb9SpnAGGrH7C8Q9FBkCJMlEL
+	P7gwZk6yuGUzfWFR0S9o0ec5ELvPTmfiLwXiidT/eCNImjk+4HYMV2e6r5f0pvzy5RasIrwTDvX
+	SMUHHg1FCpmb6bb7BlwxZMlClFgUejhB88jBDM5obT4s2X+/2gOuG/+iFZEHAANhf2a2gYqJr+w
+	3PPwIM0dt1Q+wyMuX5KQ836xfTzgXBBR0W09qq2hE5lZGFDPAuNTUo7DdexsXQNUHvaxUxteaNx
+	FsBAcI2pwJVGS+UvVxtIYElSfVBpHUOg6EpND5rnikGEexShb5zifjX4vc8NyOi4CgKcR+J4x87
+	gAQB28t9CCUzRGozo7XiH91XzTs+tA6/jxciBnduGSfaYSM97eS2+luleN3K7HimOCYMRAfxPyq
+	JJtB8+u5nT9tYEVt1emIOfGhwV+bhkKfuJqQLK8ezIcCCFhbQ4Sxz+89dyLjWVmq0pfuN4POCHV
+	9TRLJr36DdL0T3uJ8Jr7fYLHbmQTMKZsFwsxkWIsIwlK9ajgG2gc5EQBqnM2qtngcom3QB0tFBE
+	hOrleWYLTSMi1GqAQuM45gq0T/83uHfkF8kPiVBS/O/CoDepjlC5ybPRNqA=
+X-Received: by 2002:a17:90b:3908:b0:3a0:c20b:2fdf with SMTP id 98e67ed59e1d1-3a0c20b3132mr6450444a91.17.1790608784281;
+        Mon, 28 Sep 2026 08:19:44 -0700 (PDT)
 Received: from spider.bream-herring.ts.net ([103.6.151.236])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3a0b99e5220sm20891502a91.16.2026.09.28.08.19.26
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3a0b9feddd0sm7247965a91.2.2026.09.28.08.19.36
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 28 Sep 2026 08:19:33 -0700 (PDT)
+        Mon, 28 Sep 2026 08:19:43 -0700 (PDT)
 From: Matthias Goergens <matthias.goergens@gmail.com>
-To: Chris Li <chrisl@kernel.org>
+To: Christoph Hellwig <hch@infradead.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Chris Li <chrisl@kernel.org>,
 	Kairui Song <kasong@tencent.com>,
 	Johannes Weiner <hannes@cmpxchg.org>,
 	David Hildenbrand <david@kernel.org>,
@@ -99,11 +100,11 @@ Cc: Andrew Morton <akpm@linux-foundation.org>,
 	Shuah Khan <shuah@kernel.org>,
 	linux-kselftest@vger.kernel.org
 Subject: Re: [RFC PATCH v2 0/4] mm/swap: reserve swap areas for deliberate offload
-Date: Mon, 28 Sep 2026 23:19:24 +0800
-Message-ID: <20260928151924.2686290-1-matthias.goergens@gmail.com>
+Date: Mon, 28 Sep 2026 23:19:34 +0800
+Message-ID: <20260928151934.2686418-1-matthias.goergens@gmail.com>
 X-Mailer: git-send-email 2.55.0
-In-Reply-To: <CACePvbWM8kMjtJbH4vc6Qt=TBZQ-0d-Yj9NOtkepZmtNN3wd9w@mail.gmail.com>
-References: <20260926045517.3458413-1-matthias.goergens@gmail.com> <CACePvbWM8kMjtJbH4vc6Qt=TBZQ-0d-Yj9NOtkepZmtNN3wd9w@mail.gmail.com>
+In-Reply-To: <arn4xOIxFRD8qY_x@infradead.org>
+References: <20260926045517.3458413-1-matthias.goergens@gmail.com> <arn4xOIxFRD8qY_x@infradead.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -112,37 +113,26 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Hi Chris,
+Hi Christoph,
 
-Thanks for resolving the conflicts yourself and reviewing it.
+> Either way block devices must be safe to be called from paging paths,
+> not just for swap but also for file system based paging.  So this is
+> a bug in the implementation, and not something worked around in the
+> swap code.
 
-> What is the high-level user-visible impact of this series?
+Agreed that a backend used for paging has to make progress under
+pressure, and the zvol example was a poor lead.  The series isn't
+meant to excuse a backend that can deadlock; that would still be a bug
+to fix in the backend.
 
-Being able to use more interesting swap backends and logic when the
-machine is not under memory pressure.  It is much easier to write a
-swap backend that may occasionally allocate memory than one that is
-guaranteed never to, so today such backends are either unsafe as swap
-or ruled out (btrfs, for example, refuses swapfiles that are
-copy-on-write, checksummed or compressed).
-
-> I am curious: if we never run out of swap file space on the
-> non-offload swap area, does that mean we don't need this patch series?
-
-No: running out of conventional swap isn't the point.  Without the
-series, any active swap area may be written under pressure, so a
-backend that may allocate can't be used as swap at all, however much
-conventional swap there is next to it.
-
-> However, direct reclaim can use both types of swap areas.
-
-In v2 it can't: only memory.reclaim, per-node reclaim and MGLRU's
-debugfs eviction may write new data to an offload-only area; direct
-reclaim, kswapd, MADV_PAGEOUT and DAMON reclaim may not.  But I think
-your suggestion to flip it round is closer to what I want: mark the
-areas whose writes may allocate, and keep pressure reclaim away from
-those, rather than tying it to what started the reclaim.  I'll work
-that into v3, together with Kairui's suggestion to build on the swap
-tiers work.
+What I'm after is different: backends that are correct but need
+memory to accept a write, where the better policy is to use them for
+cold-page offload when memory isn't tight and keep pressure reclaim on
+areas that don't need to allocate.  Two in-tree examples: zram
+allocates on writes and fails with -ENOMEM, with no fallback, while its
+logical size still shows free slots; and filesystem swapfiles must
+give up copy-on-write, checksums and compression today, because swap
+writes bypass the filesystem.  I'll make that the case for v3 instead.
 
 Thanks,
 Matthias
