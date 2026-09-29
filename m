@@ -1,134 +1,149 @@
-Received: from mail-lr2-f9.google.com (mail-lr2-f9.google.com [74.125.230.73])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 17DBA47DF86
-	for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 23:44:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=pass smtp.client-ip=74.125.230.73
-ARC-Seal:i=2; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790639087; cv=pass; b=gtRWOizvSPaxMLTPBEhufQodWobM90GRpJ/uOEpxS8aHH0i5+lEDfi9800KgBxklrazSPOCs/D25JF6n4wi/filpahxz90h6XlTHBjZ7yyyDUphj5xh4csZ/ACnsnUAMi7xJkAgktawrgUI6zKFjlksq8HkZLqNKIyXhl1sIP/c=
-ARC-Message-Signature:i=2; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790639087; c=relaxed/simple;
-	bh=N8Ru2KZ4gnHPrAukAwiJge7OXCwCBTs64/BeOs5VIkw=;
-	h=MIME-Version:From:Date:Message-ID:Subject:To:Cc:Content-Type; b=HwZgBd5BISZJBSHsGCrnV26ZZy4p29uWZqHJOBEHT63xKtvWAMXSgmCyL4uGnWF3KS38Ipp2teJum9QSGj8L6D0kgKejnYGnktfxMseLHqZGzCygCHzB9Ja3hyuyiz4HyvGUkfWs3/yW3cAdQQKVtzejkbA3T/YfeViTeQU951g=
-ARC-Authentication-Results:i=2; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=U9xfHsZk; arc=pass smtp.client-ip=74.125.230.73
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A2A3333BBC0
+	for <linux-api@vger.kernel.org>; Tue, 29 Sep 2026 00:27:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
+	t=1790641667; cv=none; b=Wxvz3c+y5ISQLOd8Sn+ziA0tTTGkIlbaD1hlsyoHKAyEmaIMIxd/b+fB0Bt2vvEJHcKC6hhNGnCXtrpetp4DTDBQf4ekWhASSJxc1O6nyWd57Do7/td+ST/T9iJmh+XBmXQJeofb+WsoIhKH1iYrHwhsXUTQ+u2CI+k4XKCqGHY=
+ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
+	s=arc-20240116; t=1790641667; c=relaxed/simple;
+	bh=pMvCDTEkuAALUIrceyZBHP9kCx7IfJSFKZfbXoVEGjQ=;
+	h=MIME-Version:References:In-Reply-To:From:Date:Message-ID:Subject:
+	 To:Cc:Content-Type; b=G9O1ReH+Tx+YcADoAQKBHi1Cysu2ylyeLGJas35L8TytdMnrx9Zh2eEUmtgTFD/s7B6EHVQVqAOjkJ29nDfVrP4049Ntu+v5vif7h6hKDvDgJiZ79uyWCsgmSMXW7WWJKYtG4lzOf9Gpme1iCjMdKEcUwJz4E+90qamGIBMGELs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ESq97FFa; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="U9xfHsZk"
-Received: by mail-lr2-f9.google.com with SMTP id 38308e7fff4ca-3a655c007efso22383871fa.1
-        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 16:44:45 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1790639084; cv=none;
-        d=google.com; s=arc-20260327;
-        b=MLg1o0K4SKI6WS9BRJiaGp5hChDPHO02ebct10aMbYVqMNxc4l+fRQIAKrEH2U2wJG
-         ge8mm5WsAKeELJxyo/n3nC3+kn7mXjWQ+kiQ3q7vUdznOySVF03dq60wORXmRavj/twi
-         +qtGuJg22WKjGMRuvU3JRsn2G0WF+maJ5/SuHQzzGj6K1aJBpOLLWPUxGnuUS9gCb4mc
-         f7t/LOqH/3eKVLjjELTZiJ3GHyJ2oyKjoWHAOyFfnVTNTbAcKb42x8E+SnQd+DQeYgYp
-         dVz+zn31xRBQFt5ZSoiw8/WJVQang5LUAMluR2MQ+xdu6Di//GbzacPTNhIMZO5DRliL
-         gIxg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:mime-version:dkim-signature;
-        bh=N8Ru2KZ4gnHPrAukAwiJge7OXCwCBTs64/BeOs5VIkw=;
-        fh=d/ZWs5SEQ2HtReC6eEiLsf3oKeMmlJhTlwYmZW6stDg=;
-        b=aQ/CijJQdZScTbwJWY6EYhc55jsbofcrYa/y+8MrUPqmSpkm3ouw+nD2p/6OjSF9hc
-         Q6FhG9q5OlNd8GiIcxIhtCrWtYDLU6Emr56QwuaK/Uk6sg/is3+qZPXfi+xW+yeA6+Cd
-         O2cyUCAPKkMnYu4DLxzlbkTNFgwibAD5z1ax672/2UhI/nJuYw19rV2tOpv/kFCwpXJK
-         TridfY1dYh3ijZ8KGIAod44voPx4uHvZ7L9LQgLJeR+8LCJyujbJV4MAnFWMC4fL17Hw
-         QrAYWa23L0YhAJa9WBRUM3RZboIdU7en1oBsE2EkQ1+xaCJapdT6Nt45VCXmtCIn7OUb
-         oifQ==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1790639084; x=1791243884; darn=vger.kernel.org;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=N8Ru2KZ4gnHPrAukAwiJge7OXCwCBTs64/BeOs5VIkw=;
-        b=U9xfHsZktYUjcDNnHgiPXqk0uziSRSj6H7tXw10zBThOwv3HwKy30K1k7B2wOACgfU
-         G9+XYl2CnhDqDQEOQ+4WiQsAetQUkkZPDB/9ko0NFpGwmKFM1sqljbjNbT7UGzN715Lf
-         mauQsojCuxseN46ZHmOVBIgl0WZ16iO6zSJJB0tSva7SsEIa4beH3e2RcKyfGTyLj+rt
-         l2WDFPjrng8qXlHoRWmXRMTpSXXRSD2GTb8IuK4KEIEjgr/HHkLRFIdduM7GkzmZW+00
-         Jsyhlt9jpA1yPf/hCPrxqkfx6/JYQHwNxDW2agOoOIgfqqALTw8VbUbFLrVJGTMP413L
-         h9ow==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790639084; x=1791243884;
-        h=content-type:cc:to:subject:message-id:date:from:mime-version
-         :x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=N8Ru2KZ4gnHPrAukAwiJge7OXCwCBTs64/BeOs5VIkw=;
-        b=LJApV4AsSRI2un14mOBz5E8jtjOQLNTCOwYpaG1Ony6OfEsLHnHztD8gv3uYG3ExeV
-         lL50cVtOsOfULhn9QXn+nFbsbbE9B/CeurBaHDLd8F/TtPMzLL5+gYnBbKaH9q6UaZXY
-         GP61XPEoxZHhSSk4v77TY1107IZ4MvHlcPV2xhF75DB1zMKzrQCCbPBVYAY668hlF7eu
-         5+iuIatR25Iir3AoqoXP8OqEX3GHaQ7RIF8Ryq2CAViUZ+Y4f79J4mqagMYbSPtUXlOX
-         c9g+6siv5TIHOJofjwd23lDkxIDEAwEwVCunh2hOER2vAu1BVh/tlC3TTi9mqi+IRSxf
-         D2AQ==
-X-Forwarded-Encrypted: i=1; AKwUvBxMmyrpI0XN48fpVDF7HhC4qO+X5kJn9hwvVdW9LDu34SQUsJKHJVOGceoY/ce32aZocLtI4v67qJ8=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJekrr0Ws+YAqq6iltvoV1UZrLb+axOyVtacV3vkQCV80EKycpE
-	WPH8/9X8mKKNyrY7AYuBswNwisyLPXmCwFAYMGLElR9TtCswss6zjRG/YRYAI6rmDBzyva6jW5P
-	h6mTiv9USgcRuuoHbLaadI3amT6ecESU=
-X-Gm-Gg: AYBFou3k0ohDu8rqplaAxUAat7EGXtX0djPW9RuftXhV192UIpJusorqsz1NjTIjZRk
-	6UcYHSKqrRIWEs8/820KEifg3FqxMgJ8djSvjgy4jNZXB/tIVky9uVrjIySKbINXFMcXRRSLQLK
-	BuGC+iZSpNUZj83CGk8QTS1MJlJMWtPsxi/CpiQOWlPu/I9N8Kc8evmtLfZXIZiCfaCxEoo8X6T
-	Ehc0qKQJMwYI7DBJhYh43+wVr3OwGylw1WpD9WhdxaVbM4c5HML/mBkRif1KlFmcAKOFB0DQMc9
-	gBQ6LElaoie+37LEuP2/6iF/Z08Z2vg+QpalJBNIHBTngufvUeLH1VhBkFgQ9AAeH2VmaOCdFB0
-	261Ab6ezzPkCkV7fZyDLVAuBntqI9omM/ZCxSohVd450b+wGLW74HnNQ3racrX3fqNeC8ne0=
-X-Received: by 2002:a2e:b8c8:0:b0:3a6:772c:2763 with SMTP id
- 38308e7fff4ca-3a6772c2ad3mr10310711fa.0.1790639083996; Mon, 28 Sep 2026
- 16:44:43 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ESq97FFa"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 82E8B1F0089C
+	for <linux-api@vger.kernel.org>; Tue, 29 Sep 2026 00:27:46 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1790641666;
+	bh=APJhL/UXcBCjjwICTLFT+qLin1KDXiRR0y2N5bPp8T8=;
+	h=References:In-Reply-To:From:Date:Subject:To:Cc;
+	b=ESq97FFaS8q6O+WGq8mTMUSToYKUb+XzvsNnBGTw4Yfq//3liXu2B3bAv7bcygdli
+	 EcHwpI4uM9pG+PUVngoWR6FzLO0tgC/0cKz935SPY0E8pLtZbxVA2GkK9LZprUpqw2
+	 kp586WFL9UgLZZQwTNyhbLUWzYUgkY8T2hW91Gxa2Jj7QLSxcnI/egjRJOFsyE6zTH
+	 MQitmOsQu/01PuHkjjIBs3OQA+lJn8aPHg151owirTWk+5lo2DtlA/4bwfsWrrPey4
+	 MOb1YDPRUwN4TweCY78GvrHPfK0ZNR7urK4fizgTgf4M+q8ttD/pIntwgzWSW9hTmc
+	 eAfxlQdMmxqdg==
+Received: by mail-ej2-f43.google.com with SMTP id a640c23a62f3a-c2af9270c53so346517666b.1
+        for <linux-api@vger.kernel.org>; Mon, 28 Sep 2026 17:27:46 -0700 (PDT)
+X-Forwarded-Encrypted: i=1; AKwUvBxnlIrz8KTATiI4VnTO/8Z5MUR8W5F6llfbajwTXhD/A+yUDOlxb9bsOB5cI+2AIYqyNTRUekbHK4M=@vger.kernel.org
+X-Gm-Message-State: AFuF++nGiUVAoBbRWdYggCe7f3+tg0jJtvRlqbUyepbv0zfNbIXVMesI
+	ltuwjAAjzsffOu7K0nZ3S92MNRGfSor/CUzj3o7SSHRbCWedh7/5Z5GbUXH/r0u8zonOwBYz939
+	3IL9EEB21gtsxHi9MfrQwRpiYWFZFO4AcY46Sxnj+CA==
+X-Received: by 2002:a17:907:a909:b0:c26:1649:47b4 with SMTP id
+ a640c23a62f3a-c2ac53fbdb4mr1170576266b.42.1790641665270; Mon, 28 Sep 2026
+ 17:27:45 -0700 (PDT)
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-From: omer zalman <omerzalman42@gmail.com>
-Date: Mon, 28 Sep 2026 19:44:32 -0400
-X-Gm-Features: AclHuK_VsivwmfiG4mYbPPAahvGUwAEkm-1jf-dH6-g7RAdYNo4Yu9FnxlBZi20
-Message-ID: <CAGLNFZes3CXA568n+5_rgoneDh7w-2=MS34ON7n1tq3ezeZzsw@mail.gmail.com>
-Subject: [PATCH] check-uapi: reject zero and malformed job counts
-To: akpm@linux-foundation.org
-Cc: arnd@arndb.de, quic_johmoo@quicinc.com, linux-api@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: multipart/mixed; boundary="00000000000085ee3a065c93a6a5"
-
---00000000000085ee3a065c93a6a5
+References: <20260926045517.3458413-1-matthias.goergens@gmail.com>
+ <CACePvbWM8kMjtJbH4vc6Qt=TBZQ-0d-Yj9NOtkepZmtNN3wd9w@mail.gmail.com> <20260928151924.2686290-1-matthias.goergens@gmail.com>
+In-Reply-To: <20260928151924.2686290-1-matthias.goergens@gmail.com>
+From: Chris Li <chrisl@kernel.org>
+Date: Mon, 28 Sep 2026 14:27:33 -1000
+X-Gmail-Original-Message-ID: <CACePvbW=fZ3G1JwnbiRo+_qsteN2smbbf3jX0UPFmhVyWA5_6A@mail.gmail.com>
+X-Gm-Features: AclHuK_oifA42INPrgsCc_iqlMTCQtFcDVPMyqJSWfGYorE6tGAaJtv8iXHRTRc
+Message-ID: <CACePvbW=fZ3G1JwnbiRo+_qsteN2smbbf3jX0UPFmhVyWA5_6A@mail.gmail.com>
+Subject: Re: [RFC PATCH v2 0/4] mm/swap: reserve swap areas for deliberate offload
+To: Matthias Goergens <matthias.goergens@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Kairui Song <kasong@tencent.com>, 
+	Johannes Weiner <hannes@cmpxchg.org>, David Hildenbrand <david@kernel.org>, Michal Hocko <mhocko@kernel.org>, 
+	Shakeel Butt <shakeel.butt@linux.dev>, Kemeng Shi <shikemeng@huaweicloud.com>, 
+	Nhat Pham <nphamcs@gmail.com>, Yosry Ahmed <yosry@kernel.org>, 
+	Youngjun Park <youngjun.park@lge.com>, Baoquan He <baoquan.he@linux.dev>, 
+	Barry Song <baohua@kernel.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, 
+	cgroups@vger.kernel.org, linux-api@vger.kernel.org, 
+	Alejandro Colomar <alx@kernel.org>, linux-man@vger.kernel.org, Karel Zak <kzak@redhat.com>, 
+	util-linux@vger.kernel.org, Jani Nikula <jani.nikula@linux.intel.com>, 
+	Joonas Lahtinen <joonas.lahtinen@linux.intel.com>, Rodrigo Vivi <rodrigo.vivi@intel.com>, 
+	Tvrtko Ursulin <tursulin@ursulin.net>, David Airlie <airlied@gmail.com>, 
+	Simona Vetter <simona@ffwll.ch>, intel-gfx@lists.freedesktop.org, 
+	dri-devel@lists.freedesktop.org, "Rafael J . Wysocki" <rafael@kernel.org>, 
+	Pavel Machek <pavel@kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, 
+	Will Deacon <will@kernel.org>, linux-pm@vger.kernel.org, 
+	linux-arm-kernel@lists.infradead.org, Shuah Khan <shuah@kernel.org>, 
+	linux-kselftest@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-With -j 0, the per-header loop waits on an empty PID before any
-worker starts. It counts that wait error as an ABI failure even when
-the header passes. Reject non-positive or malformed job counts as
-prerequisite errors before starting the check.
+On Mon, Sep 28, 2026 at 5:19=E2=80=AFAM Matthias Goergens
+<matthias.goergens@gmail.com> wrote:
+>
+> Hi Chris,
+>
+> Thanks for resolving the conflicts yourself and reviewing it.
+>
+> > What is the high-level user-visible impact of this series?
+>
+> Being able to use more interesting swap backends and logic when the
+> machine is not under memory pressure.  It is much easier to write a
+> swap backend that may occasionally allocate memory than one that is
+> guaranteed never to, so today such backends are either unsafe as swap
 
-Signed-off-by: Omer Zalman <omerzalman42@gmail.com>
+I actually don't know of a swap backend that absolutely will not
+allocate memory on swap out yet. Some backends allocate more than
+others. Because the proactive reclaim can write to the non-offloaded
+swap backend. That brings me back to my original question, in what way
+this series helps.
 
-The exact git-format-patch file is attached because Gmail's web
-composer removes tabs from inline diffs.
+So the answer seems to be that previously, some backends were unusable
+by swap, due to possible memory allocation. With this series, those
+back ends are usable for the proactive reclaim now. It is a 0 to 0.5
+improvement because direct reclaim can't use it yet.
 
---00000000000085ee3a065c93a6a5
-Content-Type: application/octet-stream; name="02-check-uapi-job-count.patch"
-Content-Disposition: attachment; filename="02-check-uapi-job-count.patch"
-Content-Transfer-Encoding: base64
-Content-ID: <f_mulw9q5i0>
-X-Attachment-Id: f_mulw9q5i0
 
-RnJvbSAzN2UwZDE4YjdhYWE2MjE5ODFhYzE0MzNmZDRkYmRhYzcyMTk0Njk0IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBPbWVyIFphbG1hbiA8b21lcnphbG1hbjQyQGdtYWlsLmNvbT4K
-RGF0ZTogU3VuLCAyNyBTZXAgMjAyNiAwODo0MToxMCAtMDQwMApTdWJqZWN0OiBbUEFUQ0hdIGNo
-ZWNrLXVhcGk6IHJlamVjdCB6ZXJvIGFuZCBtYWxmb3JtZWQgam9iIGNvdW50cwpUbzogQW5kcmV3
-IE1vcnRvbiA8YWtwbUBsaW51eC1mb3VuZGF0aW9uLm9yZz4KQ2M6IEFybmQgQmVyZ21hbm4gPGFy
-bmRAYXJuZGIuZGU+LCBKb2huIE1vb24gPHF1aWNfam9obW9vQHF1aWNpbmMuY29tPiwgbGludXgt
-YXBpQHZnZXIua2VybmVsLm9yZywgbGludXgta2VybmVsQHZnZXIua2VybmVsLm9yZwoKRnJvbTog
-T21lciBaYWxtYW4gPG9tZXJ6YWxtYW40MkBnbWFpbC5jb20+CgpXaXRoIC1qIDAsIHRoZSBwZXIt
-aGVhZGVyIGxvb3Agd2FpdHMgb24gYW4gZW1wdHkgUElEIGJlZm9yZSBhbnkKd29ya2VyIHN0YXJ0
-cy4gSXQgY291bnRzIHRoYXQgd2FpdCBlcnJvciBhcyBhbiBBQkkgZmFpbHVyZSBldmVuIHdoZW4K
-dGhlIGhlYWRlciBwYXNzZXMuIFJlamVjdCBub24tcG9zaXRpdmUgb3IgbWFsZm9ybWVkIGpvYiBj
-b3VudHMgYXMKcHJlcmVxdWlzaXRlIGVycm9ycyBiZWZvcmUgc3RhcnRpbmcgdGhlIGNoZWNrLgoK
-U2lnbmVkLW9mZi1ieTogT21lciBaYWxtYW4gPG9tZXJ6YWxtYW40MkBnbWFpbC5jb20+Ci0tLQog
-c2NyaXB0cy9jaGVjay11YXBpLnNoIHwgNSArKysrKwogMSBmaWxlIGNoYW5nZWQsIDUgaW5zZXJ0
-aW9ucygrKQoKZGlmZiAtLWdpdCBhL3NjcmlwdHMvY2hlY2stdWFwaS5zaCBiL3NjcmlwdHMvY2hl
-Y2stdWFwaS5zaAppbmRleCBlMzQ5ZDFmLi5hNWI1OTk1IDEwMDY0NAotLS0gYS9zY3JpcHRzL2No
-ZWNrLXVhcGkuc2gKKysrIGIvc2NyaXB0cy9jaGVjay11YXBpLnNoCkBAIC01NzUsNiArNTc1LDEx
-IEBAIG1haW4oKSB7CiAJCWV4ZWMgPiAvZGV2L251bGwgMj4mMQogCWZpCiAKKwlpZiAhIFtbICIk
-TUFYX1RIUkVBRFMiID1+IF4wKlsxLTldWzAtOV0qJCBdXTsgdGhlbgorCQllcHJpbnRmICdlcnJv
-ciAtIEpPQlMgbXVzdCBiZSBhIHBvc2l0aXZlIGludGVnZXJcbicKKwkJZXhpdCAiJEZBSUxfUFJF
-UkVRIgorCWZpCisKIAlydW4gIiRiYXNlX3JlZiIgIiRwYXN0X3JlZiIgIiRhYmlfZXJyb3JfbG9n
-IiAiJEAiCiB9CiAK
---00000000000085ee3a065c93a6a5--
+> or ruled out (btrfs, for example, refuses swapfiles that are
+> copy-on-write, checksummed or compressed).
+>
+> > I am curious: if we never run out of swap file space on the
+> > non-offload swap area, does that mean we don't need this patch series?
+>
+> No: running out of conventional swap isn't the point.  Without the
+> series, any active swap area may be written under pressure, so a
+> backend that may allocate can't be used as swap at all, however much
+> conventional swap there is next to it.
+
+But proactive reclaim can also use the non-offload swap area. So if we
+have plenty of non-offload swap area, both proactive reclaim and
+direct reclaim can use that non-offload area. The value of this series
+isn't apparent. If you don't have a traditional swap-capable backend,
+then your non-offload area is zero.  That is considered a special case
+of running out of non-offload swap area: never having a traditional
+swap area in the first place.
+
+>
+> > However, direct reclaim can use both types of swap areas.
+>
+> In v2 it can't: only memory.reclaim, per-node reclaim and MGLRU's
+
+Sorry I meant proactive reclaim can use both types, nothing constrains
+proactive reclaim.
+
+> debugfs eviction may write new data to an offload-only area; direct
+> reclaim, kswapd, MADV_PAGEOUT and DAMON reclaim may not.  But I think
+> your suggestion to flip it round is closer to what I want: mark the
+
+Flipping it around might provide additional benefit. I know some users
+maintain off tree patches to turn off zswap on the direct reclaim path
+exactly because zswap might allocate more memory before it can free
+some. If the kernel can be smart about it. It provides additional
+value to the status quo.
+
+> areas whose writes may allocate, and keep pressure reclaim away from
+> those, rather than tying it to what started the reclaim.  I'll work
+> that into v3, together with Kairui's suggestion to build on the swap
+> tiers work.
+
+Yes, I feel that cluster-level marking might not be needed, you can
+remember which si has the offload flag. However the per cpu cache
+needs to know which context might require using a different cached
+cluster. That is the trickiest part. The rest of the patch is just
+enough plumbing to preserve whether the swap-out context is proactive
+or not.
+
+Chris
