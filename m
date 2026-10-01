@@ -1,123 +1,247 @@
-Received: from mail-wm2-f12.google.com (mail-wm2-f12.google.com [74.125.225.140])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.13])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2F4BE51C058
-	for <linux-api@vger.kernel.org>; Thu,  1 Oct 2026 15:10:56 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=74.125.225.140
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3309D46A5EE;
+	Thu,  1 Oct 2026 18:32:46 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=192.198.163.13
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1790867458; cv=none; b=dFj71Qqa/UcGudAqQ/37pMd/gIXg1HJ8G3BJpSF+t2TC2HH3UAcCINIyY0HiuW4TobTuH/FUp8+7lAMgJWEaholvVUqyfR9ROXnf0U/I0LPcUgoOfwHzEeKK5JjObtdzivDsT44lM787v+nVhfVvpjKQiOiIOJEs3BMvImWLJJw=
+	t=1790879569; cv=none; b=OGc/ku/tBqcwrOWe3ybknv+WC/wcEkUmPKUdkXbe6wDoeA5XGwlA+ui24bg+2Z/X1RE7YpqIHUqLvoLX1AZz9c+zR5XFm5bn0wiKz2MsJy3z0Z/WtT5krDWIJhhGGAkRb5Q9xRe8RQ/r5WHfSVJcXvdPQSExkW6ixG8WNgGCxY0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1790867458; c=relaxed/simple;
-	bh=v/g5V0DvX7DbXaWcxFQ+1tPtcUqZhm9i5DBwg6+5XvQ=;
-	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
-	 In-Reply-To:Content-Type; b=i1oHffcUlf1VJDqXhCcucVGwDzSCUYTt6jkSTMBzARbvRD4ObNi13d/MPDuvU6LKoHGxcK/wSZ4shH+j2rE/EPapbgCsxAXDYrCr/ng1MOoVxaKamjCyKYnM9+en4UJQIWGS5plMs3FsH969isJhD7fooy0whvdefYnzExMCCHw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com; spf=pass smtp.mailfrom=suse.com; dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b=AiP95NAI; arc=none smtp.client-ip=74.125.225.140
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	s=arc-20240116; t=1790879569; c=relaxed/simple;
+	bh=v7HO9sVs1M61klOQEBu9J2z3I8TacHaHmMywiDQe7pA=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=mP+Shxq95DV9rz+z8aUABry4tXG/8w8CAQ0ACQTmHBJHdy9NneqbJGnd9HG8EPP2nYa5PHfMahML5d3IahJWjWTP/n4zOXD69X0BfyT5sl3GpJ4eQbsQ3OkG4sIT2oJ3Opvgdl3oCreZzOpVk/AzWIe83BdbpNJcf4AHtPY7RDc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com; spf=pass smtp.mailfrom=linux.intel.com; dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b=hO/Gio9C; arc=none smtp.client-ip=192.198.163.13
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=suse.com header.i=@suse.com header.b="AiP95NAI"
-Received: by mail-wm2-f12.google.com with SMTP id 5b1f17b1804b1-4a006bb267eso25609635e9.0
-        for <linux-api@vger.kernel.org>; Thu, 01 Oct 2026 08:10:55 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=suse.com; s=google; t=1790867454; x=1791472254; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=uEqFwwmiLgxzbUfdtxr/SjfsZs2IKekOzMd4LW1gk/0=;
-        b=AiP95NAIGlVILCdx2fiDa96u9dnETu0eV6g2YlJVBoBtvumBMglaWOXWFSV84t6/kz
-         BqOsphx4VuiYuLRPu99byiKeo8RE2xooIDYIHfbh86TZkkv/5UeVSnstEr8348Rz46hZ
-         fve2SenUs/pMePKaFO4+N1wd1ixb8hEaZN5poOv/ul25F2BJ8HpDB1gllxiD829mumCo
-         KwMqRHG1dPu5KZz2QJQ8Nw84T5h2jVBTdjFjfgHVSIpynmep6z56Mo6OL//CvuK2cJIR
-         lzjG/fg06VwwJIAAujnM6PMf0N+p3DPRGdZnLrjVb5AzeoHbOF6WDB6PB/4aecr4uK+l
-         Ck5g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1790867454; x=1791472254;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=uEqFwwmiLgxzbUfdtxr/SjfsZs2IKekOzMd4LW1gk/0=;
-        b=ujBlBQeW1N7Dz5nfy2eThuFCQ50Ult+yDZTRAAc6ArV1zZmjCQWoB5fZSzaTYGUShL
-         qcrCpsRww7lYU9Kt33hsVgMewOxus/J98OGovgnJt8EsgNyBK6ZsMoAJ3OCe/GaPG4xW
-         Pef13y6hRpDsTxM6wcKhy3bQwyxSzebJAiGlfyYRh73KrU8upntkEGFhHk3RAdfxgUSi
-         7FiOUAEQQorDXE1URzeAtJtK1yN0G4ClYgSQl78Uy0an1Pc1AlNNdwDk2oG5cjZX7IbY
-         YkMVGceePBDAGz29EmPNQ2tBHj1ar6Bd2lVQyvZah5jdrulrjmcNl5CqefarB5bM8e5b
-         H1nw==
-X-Forwarded-Encrypted: i=1; AKwUvBw9HxNhRBNw0cVgYGZSICdGhTQ8/o1n3GRiW1XxWUkJNI/A5p+vOcWKhHFkAsrmNm2E7D4xVThhR68=@vger.kernel.org
-X-Gm-Message-State: AFuF++n6TgNAlQmwc9btId9ST4OivWMlrrMt9JfXtjUT3V1nFN88bFCL
-	HPmTCbtXeI+jbmjM6nMUcfTjrUe6CaWluqK0qOQmgDxtw2kD+yL6nkkmflXIPjCeNEM=
-X-Gm-Gg: AYBFou1yaLQPxvBmpx2FNpJozyxYfkcLREO9X6mwL/AOFNSA+4Ho1JvbDWn6B8Hl1M2
-	8/pqiKpTRXlhrRK3aX7eSgiAB3MkK3aQRm+H0b1F4AhQUWKyOXNI4gtsJr9I7PFX7rCtFZzT4SE
-	+S63sb3IedaDcGCK1vAX8QltyHUZpvWE4rqN0i5xC059w3Yg+ZTbB33nV8zXkRDI5Lwj+sm3zT+
-	7JUofaATw32Y1f647HP8tKjujFep/pPk0p13bmQCr0a8adnUVRDZAU7RkjthkBtL2QmGg/j9STs
-	gXyMXl/UUluKSpjV7vhLHt6BgLJi30uqq33s94xiHuKt7KTQUW6lQDLkoSbHuE7ZJRWyv7oKEd3
-	Rz3Qi0yvgtQVPzt6BpyZ4+9SpNGLVUBHEHoZBGwMbpNiO87d4zYBVowmIthNvBKG7gB6RKZ8/6C
-	yPZPPAH7ZPWy4SBTVZ0jdbzCI35dTBXcq0pBXXKOIN0MjFCuNwiLiesRuoYTv4bJtke8Y+R21lK
-	JEm82lZUOalzSVcc+ml3AtFUKb5Goi05fU=
-X-Received: by 2002:a05:600d:8499:20b0:4a0:1e68:d27d with SMTP id 5b1f17b1804b1-4a01e68d354mr47259215e9.9.1790867454233;
-        Thu, 01 Oct 2026 08:10:54 -0700 (PDT)
-Received: from ?IPV6:2a07:de40:8100:0:89a9:fd0e:583d:4a53? ([2001:af0:8000:1409:193:86:92:181])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48b06a2fc98sm6247090f8f.35.2026.10.01.08.10.50
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Thu, 01 Oct 2026 08:10:51 -0700 (PDT)
-Message-ID: <ca910292-5d3d-47b5-ae40-7ca1688f3c06@suse.com>
-Date: Thu, 1 Oct 2026 17:10:50 +0200
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.b="hO/Gio9C"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1790879567; x=1822415567;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=v7HO9sVs1M61klOQEBu9J2z3I8TacHaHmMywiDQe7pA=;
+  b=hO/Gio9CvxznwHSk7PwB6z2Z4TiMRZrrxJupd31Vtp3GMDzEF/S+D/7h
+   cG2U4UjfXYva1iS06T9guh8KieJG9eg8mfVe03Bshc7j7AWpdSrm8cOLT
+   p7cbSRkaaQqHkYPBsZbiP9W3u4heOPp8PYp8TfhDvl5on1ZvqSuNuRR+Y
+   y/KZMioPGi9eRbzJa4DP2822IG9DTXKxgFT5uTauf820GEWVTMO1wgbG8
+   vw2Mv8/00wIaSEAbDnMFWdHLEHjyD4vX/o6eLNmxKRceWRj2sjfdmjpbv
+   JbIu1sh3ebZpSe1uHszF2Rv8+ki8pye7dbLvKargfYuXwL9quyKC0gAie
+   w==;
+X-CSE-ConnectionGUID: NWh8RgApTgi6RfdwnNbxpA==
+X-CSE-MsgGUID: 1AbBX8EsRBSb5HOt8US0hA==
+X-IronPort-AV: E=McAfee;i="6800,10657,11922"; a="94135281"
+X-IronPort-AV: E=Sophos;i="6.27,135,1787036400"; 
+   d="scan'208";a="94135281"
+Received: from fmviesa006.fm.intel.com ([10.60.135.146])
+  by fmvoesa107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Oct 2026 11:32:46 -0700
+X-CSE-ConnectionGUID: d6fCbgTXTvi2mzMNbApUcQ==
+X-CSE-MsgGUID: VneUtzyLTACjiqj0SehDMA==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.27,135,1787036400"; 
+   d="scan'208";a="274693908"
+Received: from abityuts-desk1.ger.corp.intel.com (HELO localhost) ([10.245.244.27])
+  by fmviesa006-auth.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 01 Oct 2026 11:32:43 -0700
+Date: Thu, 1 Oct 2026 21:32:41 +0300
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+To: Miguel Vadillo <miguel.vadillo@intel.com>
+Cc: linux-media@vger.kernel.org, mchehab@kernel.org,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	sakari.ailus@linux.intel.com, hansg@kernel.org,
+	laurent.pinchart@ideasonboard.com, mehdi.djait@bootlin.com,
+	mika.westerberg@linux.intel.com, srini@kernel.org, arun.t@intel.com
+Subject: Re: [PATCH] media: i2c: cvs: Add NVMem-based firmware update support
+Message-ID: <ar6nSbS-FpaI6jYp@ashevche-desk.local>
+References: <20260930182142.108744-1-miguel.vadillo@intel.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH 0/6] Remove the error-injection.h include from
- linux/module.h
-To: petr.pavlu@suse.com
-Cc: Jens Axboe <axboe@kernel.dk>, Jakub Kicinski <kuba@kernel.org>,
- Andrew Lunn <andrew+netdev@lunn.ch>, "David S. Miller"
- <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>,
- Paolo Abeni <pabeni@redhat.com>, Jani Nikula <jani.nikula@linux.intel.com>,
- Rodrigo Vivi <rodrigo.vivi@intel.com>,
- Joonas Lahtinen <joonas.lahtinen@linux.intel.com>,
- Tvrtko Ursulin <tursulin@ursulin.net>,
- Matthew Brost <matthew.brost@intel.com>,
- =?UTF-8?Q?Thomas_Hellstr=C3=B6m?= <thomas.hellstrom@linux.intel.com>,
- Simon Horman <horms@kernel.org>, David Airlie <airlied@gmail.com>,
- Simona Vetter <simona@ffwll.ch>, Francois Dugast
- <francois.dugast@intel.com>, Luis Chamberlain <mcgrof@kernel.org>,
- Daniel Gomez <da.gomez@kernel.org>, Sami Tolvanen <samitolvanen@google.com>,
- Aaron Tomlin <atomlin@atomlin.com>, linux-block@vger.kernel.org,
- netdev@vger.kernel.org, linux-api@vger.kernel.org,
- intel-gfx@lists.freedesktop.org, intel-xe@lists.freedesktop.org,
- dri-devel@lists.freedesktop.org, linux-modules@vger.kernel.org,
- linux-kernel@vger.kernel.org
-References: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
-Content-Language: en-US
-From: Petr Pavlu <petr.pavlu@suse.com>
-In-Reply-To: <20260911-module-include-error_injection-v1-0-5da895d8c84d@suse.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20260930182142.108744-1-miguel.vadillo@intel.com>
+Organization: Intel Finland Oy - BIC 0357606-4 - c/o Alberga Business Park, 6
+ krs, Bertel Jungin Aukio 5, 02600 Espoo
 
-On 9/11/26 5:04 PM, Petr Pavlu wrote:
-> linux/module.h appears in roughly 15k #include directives across the
-> kernel. This makes it a "hot" header, so it should avoid pulling in
-> unnecessary definitions.
+On Wed, Sep 30, 2026 at 11:21:42AM -0700, Miguel Vadillo wrote:
+> Add firmware update support for the Intel CVS device using the kernel
+> NVMem provider framework.
 > 
-> The header currently includes linux/error-injection.h to obtain the
-> definition of `struct error_injection_entry`. However, this is unnecessary
-> because the type is only referenced in the file as a pointer, for which an
-> incomplete type is sufficient.
+> Two NVMem devices are registered per CVS device:
+>  - nvm_active: read-only, exposes the active firmware version by
+>    querying the device over I2C.
+>  - nvm_non_active: write-only, root-only, accepts an incoming firmware
+>    image staged by userspace (e.g. fwupd).
 > 
-> Add explicit includes of linux/error-injection.h to files that use the
-> ALLOW_ERROR_INJECTION() macro and currently rely on it being provided
-> indirectly via linux/module.h. Then remove the linux/error-injection.h
-> include from linux/module.h.
+> Firmware update is triggered via the nvm_authenticate sysfs attribute,
+> which supports the following write values:
+>  1 - Validate staged image, stream to device, and request reset
+>  2 - Validate and stream image only (no reset request)
+>  3 - Request reset for a previously streamed image
+>  0 - Clear update state and reset_pending flag
 > 
-> The first five patches can go through their respective trees if preferred.
-> The final patch depends on the preceding cleanups.
+> On a successful write of 1 or 3, a KOBJ_CHANGE uevent is emitted and
+> nvm_reset_pending is set to signal that a device reset is required to
+> activate the new firmware.
+> 
+> The nvm_version attribute exposes the running firmware version in
+> major.minor decimal format. The device_id attribute exposes the device
+> VID:PID for identification by userspace tools.
+> 
+> Firmware images are streamed to the device in 256-byte or 1KB chunks
+> over I2C depending on device quirks. The staging buffer is vmalloc'd
+> on first write and released once the image has been streamed to the
+> device, or on driver remove if no update was performed.
+> 
+> ABI documentation for all new sysfs attributes is added under
+> Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs.
+> 
+> The kernel does not inspect the firmware image contents. Signature
+> verification and anti-rollback enforcement are performed by the CVS
+> device firmware, which rejects images that fail either check.
 
-I've queued the series on modules-next for 7.4-rc1.
+...
+
+> +Date:		January 2027
+> +KernelVersion:	7.4
+
+Tough deadline, but if there are nothing to address, you have a chance to land
+it as expected.
+
+...
+
+> +static int cvs_do_fw_download(struct icvs *ctx, const u8 *buf, size_t size)
+> +{
+> +	struct icvs_cmd cmd = { };
+> +	size_t chunk_max, chunk, pos;
+> +	int ret, end_ret;
+> +
+> +	if (ctx->quirks & ICVS_FW_BUF_SIZE_256)
+> +		chunk_max = SZ_256;
+> +	else
+> +		chunk_max = SZ_1K;
+> +
+> +	void *fw_buf __free(kfree) = kmalloc(chunk_max + sizeof(__be16),
+> +					     GFP_KERNEL);
+
+Slightly better to read in a form of
+
+	void *fw_buf __free(kfree) =
+		kmalloc(chunk_max + sizeof(__be16), GFP_KERNEL);
+
+> +	if (!fw_buf)
+> +		return -ENOMEM;
+> +
+> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_START);
+> +	ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), ICVS_CMD_TIMEOUT);
+> +	if (ret < 0)
+> +		return ret;
+
+What is the meaning of the positive returned value?
+
+> +	for (pos = 0; pos < size; pos += chunk) {
+> +		chunk = min(chunk_max, size - pos);
+> +		put_unaligned_be16(ICVS_FW_LOADER_DATA, fw_buf);
+> +		memcpy(fw_buf + sizeof(__be16), buf + pos, chunk);
+> +
+> +		ret = cvs_send(ctx, fw_buf, sizeof(__be16) + chunk,
+> +			       ICVS_CMD_TIMEOUT);
+> +		if (ret < 0) {
+> +			dev_err(cvs_dev(ctx),
+> +				"FW data chunk send failed: %d\n", ret);
+> +			break;
+> +		}
+> +	}
+> +
+> +	/* Always send FW_LOADER_END, but keep any earlier DATA error. */
+> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_END);
+> +	end_ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), FW_END_TIMEOUT);
+> +
+> +	return ret < 0 ? ret : end_ret;
+> +}
+
+...
+
+> +	mutex_lock(&ctx->lock);
+
+Why not guard()()? Also how ACQUIRE() macros are co-habit with goto:s?
+
+> +	ctx->nvm.auth_status = 0;
+> +
+> +	switch (val) {
+> +	case ICVS_NVM_AUTH_CLEAR:
+> +		ctx->nvm.flushed = false;
+> +		break;
+> +
+> +	case ICVS_NVM_AUTH_WRITE_ONLY:
+> +	case ICVS_NVM_AUTH_WRITE_AND_AUTH:
+> +		ret = cvs_nvm_validate(ctx);
+> +		if (ret)
+> +			goto err_status;
+> +
+> +		ret = cvs_do_fw_download(ctx, ctx->nvm.buf_data_start,
+> +					 ctx->nvm.buf_data_size);
+> +		if (ret)
+> +			goto err_status;
+> +
+> +		ctx->nvm.flushed = true;
+> +		cvs_nvm_release_buf(&ctx->nvm);
+> +
+> +		if (val == ICVS_NVM_AUTH_WRITE_ONLY)
+> +			break;
+> +
+> +		fallthrough;
+> +
+> +	case ICVS_NVM_AUTH_AUTH_ONLY:
+> +		if (!ctx->nvm.flushed) {
+> +			ret = -ENODATA;
+> +			goto err_status;
+> +		}
+> +
+> +		do_uevent = true;
+> +		break;
+> +	}
+> +
+> +	mutex_unlock(&ctx->lock);
+> +
+> +	if (do_uevent)
+> +		kobject_uevent(&dev->kobj, KOBJ_CHANGE);
+> +
+> +	return count;
+> +
+> +err_status:
+> +	ctx->nvm.auth_status = -ret;
+> +	mutex_unlock(&ctx->lock);
+> +
+> +	return ret;
+
+...
+
+> +static const struct attribute_group *cvs_fw_groups[] = {
+> +	&cvs_fw_group,
+> +	NULL
+> +};
+
+__ATTRIBUTE_GROUPS() ?
+
+...
+
+>  struct icvs {
+>  	struct i2c_client *i2c_client;
+
+>  	int irq;
+>  	wait_queue_head_t hostwake_event;
+>  	bool hostwake_event_arg;
+> +	struct icvs_nvm nvm;
+>  };
+
+Is `pahole` happy with the layout?
 
 -- 
-Thanks,
-Petr
+With Best Regards,
+Andy Shevchenko
+
+
