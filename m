@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CBC183DB63F;
-	Thu,  8 Oct 2026 08:51:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CFC54734CF;
+	Thu,  8 Oct 2026 08:51:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791449471; cv=none; b=q/p5U7V3kWHUcWd7MeVgjJm7A3MH6gGwioTSkshbefiDQYeLvZOMtyPvXwQkbTcVRJENZtBbJU+uvA6qKf3kUlLIWATNJebUDPAfAVq6LDLQrfOVbw45RFGronAcpMwb47TWW1xMdY94jJkab556kofi0xP1mPxZ07IspobVKX8=
+	t=1791449478; cv=none; b=fFvfIh3Qlm5TdR4XQ8DfYKUwGdT1C2QidNHMtObdleWny4HSeh5t1iN7up4f62kKld5bpKVipT2VmPw7tjf/KEyfOYYtPzjuFoJ7jmY8TtFnj1ivOlUl9s2W9mJ5BJgVqWdu08qFg7tIEdCR7a3pOUqSJtLi4mrmMRw0xchy0lU=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791449471; c=relaxed/simple;
-	bh=1MsaOP9o2DmTcRq3Qk3GFcNUANPbX0qWJFg4FaF8LwA=;
+	s=arc-20240116; t=1791449478; c=relaxed/simple;
+	bh=Xm5KjfWsBWsSfSKUgJNuX5mzh+Nf2XPJtO65o7CSIBE=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=QnWxTYtXcOV6oQOGsF8wEaF1NmQ0nFe0ijYAc2URA35eoCAC+ltffTw+VIOZllZh+U0Euz940MKOjRTyM8gz2xyZkxqzXWfrJMnxcOQY1LIVLmHYMNGCV+HpmbBLtJJRx7chHqTyTKlYXuWBoPqK+FsJmnHRjwXyHy8M5TY/ahY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=aAMjmLAF; arc=none smtp.client-ip=100.103.45.18
+	 MIME-Version; b=Q0epB1xUJOyMY05HvAmMxxfAkIEGtTKs7raSEEgcpovHsQhBDlcJ7IRmLUkgd+m1mL50RSe1xHPszfnGATQqMQWigg7WAr+9Lhp+NjSsjQNNiObVohhiA7mr4ZWLmQ+0G4dlZCdxPnf10Uuv6ETQAlIcIf9PmtJT1pvJlKnjQpM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=D0Tmpa9I; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="aAMjmLAF"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4FA951F00898;
-	Thu,  8 Oct 2026 08:51:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="D0Tmpa9I"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E55E11F00899;
+	Thu,  8 Oct 2026 08:51:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791449468;
-	bh=jt+FinmtMMG6zeqcO5Z2pIEr/6VSJzwzhm4lqWZDhIw=;
+	s=k20260515; t=1791449474;
+	bh=frsmZW6G6HK24yF7COZtP/8CVldzdRTZPKbcKzdlCpA=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=aAMjmLAFu87xL2qIjXjRroIPheYdkEPzkdQcAajd//4xZC6RNlafn7LfVTx4owRAS
-	 M6CaOCv5heL5wvtzPASPqJfqIS8ZUX5B5gEfY4ZVfTytuPuL5EhYhozt7p6A8tSep+
-	 BkxnOyJfZhgtUd1/7i0d0w8F/bv/DkCuRDv9GHutA3+kaG5nGKoQsjrV0ZjzYZCfJ5
-	 dCdXrfjh1KHgdcS5nMHe74hzoqZPMYTSqUafmbWHumkYmyb3lOw4Fli1OukeHRVexO
-	 4dF2zxcvsZIzlE7cSvWZEfZ6+oD8oB34njInqspJwEdWr18e/vFCfr0l+85NzW/6MD
-	 vAhkrK5E7dOCA==
+	b=D0Tmpa9IRrpLMgYQ3ErLsJQt2Osj6FqIuvumu+veMP26QOGm+xAuB1XulNcey14De
+	 gMvDkWrWwSzX3zrZqv7w7g+ffb7GdGAg3ll7rzcX9WGfhu0O85rmgks+ZpO63Tq0f3
+	 OqU7uU+CxVs0LRDK7D4t6PEbbngNJwJeHVM9HlXXJnXWo+36+LuGo80kHUeNtwaPW1
+	 zRQHkaoi5w8wQfg7hm+Z36ToQE/91wBrHYGGin6F7IhngsHe/m7zA8ptisSA2imoyp
+	 Oj9WVoMdxTREsF/tDEPr3s7CFmFYLrhhW7BJCC/0cXjeUfZFk9aeYsPJFNdAEqqhTk
+	 cQUKT+Uft1N7w==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-api@vger.kernel.org,
 	linux-kernel@vger.kernel.org
@@ -59,9 +59,9 @@ Cc: Sasha Levin <sashal@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Masami Hiramatsu <mhiramat@kernel.org>,
 	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 08/11] kernel/api: add API specification for sys_write
-Date: Thu,  8 Oct 2026 04:49:48 -0400
-Message-ID: <20261008084956.2911790-9-sashal@kernel.org>
+Subject: [PATCH v5 09/11] kernel/api: add runtime verification selftest
+Date: Thu,  8 Oct 2026 04:49:49 -0400
+Message-ID: <20261008084956.2911790-10-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20261008084956.2911790-1-sashal@kernel.org>
 References: <20261008084956.2911790-1-sashal@kernel.org>
@@ -73,443 +73,1291 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add KAPI-annotated kerneldoc for the sys_write system call in
-fs/read_write.c.
+Add a selftest for CONFIG_KAPI_RUNTIME_CHECKS that exercises
+sys_open/sys_read/sys_write/sys_close through raw syscall() and
+verifies KAPI pre-validation catches invalid parameters while
+allowing valid operations through.
 
-The specification documents parameter constraints (fd, user buffer,
-count), error conditions, locking requirements, signal handling
-behavior, and short write semantics.
+Test cases (TAP output):
+  1-4:   Valid open/read/write/close succeed
+  5-8:   Unknown open flag bits and a NULL path are rejected with EINVAL,
+         while mode bits above 07777 are accepted (the kernel masks them)
+  9-20:  Boundary conditions and error paths (bad and closed fds, zero
+         counts, over-long paths, unmapped buffers, wrong access mode)
+  21-27: Pipe, file descriptor lifecycle and other error paths
+  28-30: A normal open/read/write/close sequence, and read()/write() with
+         a NULL buffer and a zero count returning 0
+  31:    dmesg contains the expected KAPI warning strings
+
+Tests that depend on CONFIG_KAPI_RUNTIME_CHECKS are skipped when an open()
+with an unknown flag bit succeeds, which means the checks are not active.
 
 Assisted-by: LLM
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- fs/read_write.c | 413 ++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 413 insertions(+)
+ MAINTAINERS                                   |    1 +
+ tools/testing/selftests/Makefile              |    1 +
+ tools/testing/selftests/kapi/.gitignore       |    2 +
+ tools/testing/selftests/kapi/Makefile         |    7 +
+ tools/testing/selftests/kapi/kapi_test_util.h |   31 +
+ tools/testing/selftests/kapi/test_kapi.c      | 1163 +++++++++++++++++
+ 6 files changed, 1205 insertions(+)
+ create mode 100644 tools/testing/selftests/kapi/.gitignore
+ create mode 100644 tools/testing/selftests/kapi/Makefile
+ create mode 100644 tools/testing/selftests/kapi/kapi_test_util.h
+ create mode 100644 tools/testing/selftests/kapi/test_kapi.c
 
-diff --git a/fs/read_write.c b/fs/read_write.c
-index b89c688a41992..a9c07c21f5888 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -1041,6 +1041,419 @@ ssize_t ksys_write(unsigned int fd, const char __user *buf, size_t count)
- 	return ret;
- }
+diff --git a/MAINTAINERS b/MAINTAINERS
+index cd15c6a776ae3..1d9e55b6bf5ff 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14128,6 +14128,7 @@ F:	include/linux/kernel_api_spec.h
+ F:	kernel/api/
+ F:	tools/kapi/
+ F:	tools/lib/python/kdoc/kdoc_apispec.py
++F:	tools/testing/selftests/kapi/
  
-+/**
-+ * sys_write - Write data to a file descriptor
-+ * @fd: File descriptor to write to
-+ * @buf: User-space buffer containing data to write
-+ * @count: Maximum number of bytes to write
+ KERNEL AUTOMOUNTER
+ M:	Ian Kent <raven@themaw.net>
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 273853937c254..d5f973eeefc83 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -60,6 +60,7 @@ TARGETS += intel_pstate
+ TARGETS += iommu
+ TARGETS += ipc
+ TARGETS += ir
++TARGETS += kapi
+ TARGETS += kcmp
+ TARGETS += kexec
+ TARGETS += kselftest_harness
+diff --git a/tools/testing/selftests/kapi/.gitignore b/tools/testing/selftests/kapi/.gitignore
+new file mode 100644
+index 0000000000000..e60893d183d81
+--- /dev/null
++++ b/tools/testing/selftests/kapi/.gitignore
+@@ -0,0 +1,2 @@
++# SPDX-License-Identifier: GPL-2.0-only
++test_kapi
+diff --git a/tools/testing/selftests/kapi/Makefile b/tools/testing/selftests/kapi/Makefile
+new file mode 100644
+index 0000000000000..d1bb26541c0b8
+--- /dev/null
++++ b/tools/testing/selftests/kapi/Makefile
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0
++
++TEST_GEN_PROGS := test_kapi
++
++CFLAGS += -static -Wall -Wextra -O2 $(KHDR_INCLUDES)
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/kapi/kapi_test_util.h b/tools/testing/selftests/kapi/kapi_test_util.h
+new file mode 100644
+index 0000000000000..a09871207bfc6
+--- /dev/null
++++ b/tools/testing/selftests/kapi/kapi_test_util.h
+@@ -0,0 +1,31 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
 + *
-+ * long-desc: Writes at most count bytes from the user buffer buf to fd. For
-+ *   seekable files (regular files, block devices), the write begins at the
-+ *   current file offset, and the file offset is advanced by the number of
-+ *   bytes written. If the file was opened with O_APPEND, the file offset is
-+ *   first set to the end of the file before writing. For stream files
-+ *   (FMODE_STREAM, such as pipes, FIFOs, and sockets), the file offset is not
-+ *   used and writing occurs at the position defined by the device. Other
-+ *   files, including many character devices, keep a file offset although a
-+ *   driver may ignore it.
++ * Compatibility helpers for KAPI selftests.
 + *
-+ *   Fewer than count bytes may be written, for example when the filesystem
-+ *   runs out of space, the write reaches RLIMIT_FSIZE, or a signal arrives
-+ *   after some data was written. The caller writes the rest with another
-+ *   write() call.
-+ *
-+ *   On Linux, write() transfers at most MAX_RW_COUNT (INT_MAX & PAGE_MASK,
-+ *   0x7ffff000 with 4KB pages, just under 2GB) bytes per call, regardless of
-+ *   whether the file or filesystem would allow more. This prevents signed
-+ *   arithmetic overflow.
-+ *
-+ *   For regular files, a successful write() does not guarantee that data has been
-+ *   committed to disk. Use fsync(2) or fdatasync(2) if durability is required.
-+ *   For O_SYNC or O_DSYNC files, the kernel automatically syncs data on write.
-+ *
-+ *   POSIX permits writes that are interrupted after partial writes to either
-+ *   return -1 with errno=EINTR, or to return the count of bytes already written.
-+ *   Linux implements the latter behavior: if some data has been written before
-+ *   a signal arrives, write() returns the number of bytes written rather than
-+ *   failing with EINTR.
-+ *
-+ * contexts: process, sleepable
-+ *
-+ * param: fd
-+ *   type: fd, input
-+ *   constraint-type: range(0, INT_MAX)
-+ *   cdesc: Must be a valid, open file descriptor with write permission.
-+ *     The file must have been opened with O_WRONLY or O_RDWR. File descriptors
-+ *     opened with O_RDONLY, O_PATH, or that have been closed return EBADF.
-+ *     Standard file descriptors 0 (stdin), 1 (stdout), 2 (stderr) are valid if
-+ *     open and writable. AT_FDCWD and other special values are not valid.
-+ *
-+ * param: buf
-+ *   type: user_ptr, input
-+ *   constraint-type: buffer(2)
-+ *   cdesc: Must point to a readable user-space region of at least count bytes.
-+ *     The range is checked via access_ok() and a range outside user space
-+ *     fails with EFAULT. NULL is not rejected by that check. With a count of 0
-+ *     the call returns 0 in common cases. With a count above 0 the copy from
-+ *     user space fails with EFAULT, or the call returns a short count if part
-+ *     of the buffer was copied first. O_DIRECT writes may require block-size
-+ *     alignment (see STATX_DIOALIGN).
-+ *
-+ * param: count
-+ *   type: uint, input
-+ *   cdesc: Maximum number of bytes to write. The range buf to buf + count must
-+ *     lie within user space or access_ok() fails with EFAULT, which includes
-+ *     counts that do not fit in ssize_t on 64-bit kernels. On 32-bit kernels
-+ *     such a count reaches rw_verify_area() and fails with EINVAL. A count of
-+ *     0 is passed to the file's write method, which typically returns 0 but
-+ *     may trigger driver-specific side effects. After the checks pass, counts
-+ *     above MAX_RW_COUNT (INT_MAX & PAGE_MASK, 0x7ffff000 with 4KB pages) are
-+ *     clamped.
-+ *
-+ * return:
-+ *   type: int
-+ *   check-type: range
-+ *   success: >= 0
-+ *   desc: On success, returns the number of bytes written (non-negative). Zero
-+ *     indicates that nothing was written (count was 0, or a device-specific
-+ *     write method accepted no data). Non-blocking writes that cannot proceed
-+ *     return -EAGAIN instead. The return value may be less than count due to
-+ *     resource limits, signal interruption, or device constraints (short
-+ *     write). On error, returns a negative error code.
-+ *
-+ * error: EBADF, Bad file descriptor
-+ *   desc: fd is not a valid file descriptor, or fd was not opened for writing.
-+ *     This includes file descriptors opened with O_RDONLY, O_PATH, or file
-+ *     descriptors that have been closed. Also returned if the file structure
-+ *     does not have FMODE_WRITE set.
-+ *
-+ * error: EFAULT, Bad address
-+ *   desc: buf points outside the accessible address space. The buffer address
-+ *     failed access_ok() validation. Can also occur if a fault happens during
-+ *     copy_from_user() when reading data from user space.
-+ *
-+ * error: EINVAL, Invalid argument
-+ *   desc: Returned in several cases: (1) The file has no write or write_iter
-+ *     method (FMODE_CAN_WRITE is not set). (2) The file was opened with
-+ *     O_DIRECT and the buffer alignment, offset, or count does not meet the
-+ *     filesystem's alignment requirements. (3) rw_verify_area() rejects a
-+ *     negative file position, or a position plus count that overflows, on a
-+ *     file without FOP_UNSIGNED_OFFSET. (4) The count, cast to ssize_t, is
-+ *     negative (32-bit kernels only, as 64-bit kernels fail access_ok() first
-+ *     with EFAULT).
-+ *
-+ * error: EAGAIN, Resource temporarily unavailable
-+ *   desc: fd refers to a file (pipe, socket, device) that is marked non-blocking
-+ *     (O_NONBLOCK) and the write would block because the buffer is full.
-+ *     Equivalent to EWOULDBLOCK. The application should retry later or use
-+ *     select/poll/epoll to wait for writability.
-+ *
-+ * error: EINTR, Interrupted system call
-+ *   desc: The call was interrupted by a signal before any data was written. This
-+ *     only occurs if no data has been transferred; if some data was written
-+ *     before the signal, the call returns the number of bytes written. The
-+ *     caller should typically restart the write.
-+ *
-+ * error: EPIPE, Broken pipe
-+ *   desc: fd refers to a pipe or socket whose reading end has been closed.
-+ *     When this condition occurs, the calling process also receives a SIGPIPE
-+ *     signal. If the signal is caught or ignored, EPIPE is still returned.
-+ *     For sockets, MSG_NOSIGNAL (via send()) suppresses the signal. For
-+ *     pwritev2(), the RWF_NOSIGNAL flag suppresses it.
-+ *
-+ * error: EFBIG, File too large
-+ *   desc: The write starts at or beyond a file size limit. The generic write
-+ *     path returns EFBIG when the starting position is at or beyond
-+ *     RLIMIT_FSIZE, in which case the process also receives SIGXFSZ, or at or
-+ *     beyond the maximum file size of the filesystem. Without O_LARGEFILE
-+ *     (32-bit systems only) that maximum is 2GB minus one byte. A write that
-+ *     starts below a limit but would cross it is shortened to end at the
-+ *     limit.
-+ *
-+ * error: ENOSPC, No space left on device
-+ *   desc: The device containing the file has no room for the data. This can
-+ *     occur mid-write resulting in a short write followed by ENOSPC on retry.
-+ *
-+ * error: EDQUOT, Disk quota exceeded
-+ *   desc: The user's quota of disk blocks on the filesystem has been exhausted.
-+ *     Like ENOSPC, this can result in a short write.
-+ *
-+ * error: EIO, Input/output error
-+ *   desc: A low-level I/O error occurred while modifying the inode or writing
-+ *     data. This typically indicates hardware failure, filesystem corruption,
-+ *     or network filesystem timeout. Some data may have been written.
-+ *
-+ * error: EPERM, Operation not permitted
-+ *   desc: The operation was prevented (1) by a file seal (F_SEAL_WRITE or
-+ *     F_SEAL_FUTURE_WRITE on memfd/shmem, or F_SEAL_GROW for a write that
-+ *     extends the file), (2) by a filesystem-specific check, for example ext4
-+ *     refuses writes to an immutable inode, (3) because the file is a
-+ *     read-only block device, (4) by an LSM hook denying the operation, or (5)
-+ *     by a fanotify pre-content (FAN_PRE_ACCESS) listener denying the write.
-+ *
-+ * error: EOVERFLOW, Value too large for defined data type
-+ *   desc: Returned by rw_verify_area() only for files with FOP_UNSIGNED_OFFSET
-+ *     (for example /proc/pid/mem) when the file position is negative, meaning
-+ *     above LLONG_MAX, and count is at least -pos so that the write would wrap
-+ *     past the end of the 64-bit offset space. Files without
-+ *     FOP_UNSIGNED_OFFSET get EINVAL for a negative position or a position
-+ *     plus count that overflows. Exceeding filesystem file size limits is
-+ *     EFBIG, not EOVERFLOW.
-+ *
-+ * error: EDESTADDRREQ, Destination address required
-+ *   desc: fd is a datagram socket for which no peer address has been set using
-+ *     connect(2). Use sendto(2) to specify the destination address.
-+ *
-+ * error: ETXTBSY, Text file busy
-+ *   desc: The file is being used as a swap file (IS_SWAPFILE).
-+ *
-+ * error: EXDEV, Cross-device link
-+ *   desc: When writing to a pipe that has been configured as a watch queue
-+ *     (CONFIG_WATCH_QUEUE), direct write() calls are not supported.
-+ *
-+ * error: ENOMEM, Out of memory
-+ *   desc: Insufficient kernel memory was available for the write operation.
-+ *     For pipes, this occurs when allocating pages for the pipe buffer.
-+ *
-+ * error: ERESTARTSYS, Restart system call (internal)
-+ *   desc: Internal error code indicating the syscall should be restarted. This
-+ *     is converted to EINTR if SA_RESTART is not set on the signal handler, or
-+ *     the syscall is transparently restarted if SA_RESTART is set. User space
-+ *     should not see this error code directly.
-+ *
-+ * error: EACCES, Permission denied
-+ *   desc: The security subsystem (LSM such as SELinux or AppArmor) denied the
-+ *     write operation via security_file_permission(). This can occur even if
-+ *     the file was successfully opened.
-+ *
-+ * lock: file->f_pos_lock
-+ *   type: mutex
-+ *   acquired: true
-+ *   released: true
-+ *   desc: For regular files that require atomic position updates (FMODE_ATOMIC_POS),
-+ *     the f_pos_lock mutex is acquired by fdget_pos() at syscall entry and released
-+ *     by fdput_pos() at syscall exit. This serializes concurrent writes sharing
-+ *     the same file description. Not acquired for stream files (FMODE_STREAM like
-+ *     pipes and sockets) or when the file is not shared.
-+ *
-+ * lock: sb->s_writers (freeze protection)
-+ *   type: custom
-+ *   acquired: true
-+ *   released: true
-+ *   desc: For regular files, file_start_write() acquires freeze protection on
-+ *     the superblock via sb_start_write() before the write, and file_end_write()
-+ *     releases it after. This prevents writes during filesystem freeze. Not
-+ *     acquired for non-regular files (pipes, sockets, devices).
-+ *
-+ * lock: inode->i_rwsem
-+ *   type: semaphore
-+ *   acquired: true
-+ *   released: true
-+ *   desc: For regular files using generic_file_write_iter(), the inode's i_rwsem
-+ *     is acquired in write mode before modifying file data. This is internal to
-+ *     the filesystem and released before return. Not all filesystems use this
-+ *     pattern.
-+ *
-+ * lock: pipe->mutex
-+ *   type: mutex
-+ *   acquired: true
-+ *   released: true
-+ *   desc: For pipes and FIFOs, the pipe's mutex is held while modifying pipe
-+ *     buffers. Released temporarily while waiting for space, then reacquired.
-+ *
-+ * lock: RCU read-side
-+ *   type: rcu
-+ *   acquired: true
-+ *   released: true
-+ *   desc: Taken only when the files_struct is shared with other threads, in
-+ *     which case the fd lookup in fdget() uses RCU and takes a file reference.
-+ *     A private table needs no RCU. The RCU read lock is acquired and released
-+ *     internally by the fd lookup path, not held across the entire syscall.
-+ *     fdput() releases the file reference count, not the RCU lock.
-+ *
-+ * signal: SIGPIPE
-+ *   number: SIGPIPE
-+ *   direction: send
-+ *   action: terminate
-+ *   condition: Writing to a pipe or socket with no readers
-+ *   desc: When writing to a pipe whose read end is closed, or a socket whose
-+ *     peer has closed, SIGPIPE is sent to the calling process. The default
-+ *     action terminates the process. Use signal(SIGPIPE, SIG_IGN) to suppress
-+ *     for write(). EPIPE is returned regardless of signal disposition.
-+ *   timing: during
-+ *
-+ * signal: SIGXFSZ
-+ *   number: SIGXFSZ
-+ *   direction: send
-+ *   action: coredump
-+ *   condition: Write starts at or beyond RLIMIT_FSIZE
-+ *   desc: When a write starts at or beyond the soft file size limit
-+ *     (RLIMIT_FSIZE), generic_write_check_limits() sends SIGXFSZ and the write
-+ *     returns EFBIG. The default action terminates with a core dump. A write
-+ *     that starts below the limit but would cross it is shortened to end at
-+ *     the limit, with no signal. If RLIMIT_FSIZE is RLIM_INFINITY, no signal
-+ *     is sent.
-+ *   timing: during
-+ *
-+ * signal: Any signal
-+ *   direction: receive
-+ *   action: return
-+ *   condition: While blocked waiting for space (pipes, sockets)
-+ *   desc: The syscall may be interrupted by signals while waiting for buffer
-+ *     space to become available. If interrupted before any data is written,
-+ *     returns -EINTR or -ERESTARTSYS. If data was already written, returns the
-+ *     byte count. Restartable if SA_RESTART is set and no data was written.
-+ *   errno: -EINTR
-+ *   timing: during
-+ *   restartable: yes
-+ *
-+ * side-effect: file_position
-+ *   target: file->f_pos
-+ *   condition: For seekable files when write succeeds (returns > 0)
-+ *   desc: The file offset (f_pos) is advanced by the number of bytes written.
-+ *     For files opened with O_APPEND, f_pos is first set to file size. For
-+ *     stream files (FMODE_STREAM such as pipes and sockets), the offset is not
-+ *     used or modified. Position updates are protected by f_pos_lock when
-+ *     shared.
-+ *   reversible: no
-+ *
-+ * side-effect: modify_state
-+ *   target: inode timestamps (mtime, ctime)
-+ *   condition: Before the data is copied, for a non-zero count on the generic
-+ *     write path
-+ *   desc: Updates the file's modification time (mtime) and change time (ctime)
-+ *     via file_update_time(), which runs before the data is copied, so the
-+ *     timestamps can change even if the write then fails or is short. The
-+ *     update is skipped for inodes flagged NOCMTIME and when the timestamps
-+ *     are unchanged. The timestamp precision depends on whether the filesystem
-+ *     type sets FS_MGTIME (multigrain timestamps).
-+ *   reversible: no
-+ *
-+ * side-effect: modify_state
-+ *   target: SUID/SGID bits (mode) and file capabilities
-+ *   condition: Write to a regular file that has S_ISUID, S_ISGID, or file
-+ *     capabilities set, with a non-zero count
-+ *   desc: file_remove_privs() clears S_ISUID, and clears S_ISGID when S_IXGRP
-+ *     is also set or the caller is not in the file's group, unless the caller
-+ *     has CAP_FSETID. File capabilities (the security.capability xattr) are
-+ *     removed as well, regardless of CAP_FSETID. This is a security feature to
-+ *     prevent privilege escalation via modified setuid binaries. It runs before
-+ *     the data is copied.
-+ *   reversible: no
-+ *
-+ * side-effect: modify_state
-+ *   target: file data
-+ *   condition: When write succeeds (returns > 0)
-+ *   desc: Modifies the file's data content. For regular files, data is written
-+ *     to the page cache (buffered I/O) or directly to storage (O_DIRECT).
-+ *     Data is not guaranteed to be persistent until fsync() or fdatasync()
-+ *     completes, or writeback has written it to storage.
-+ *   reversible: no
-+ *
-+ * side-effect: modify_state
-+ *   target: task I/O accounting
-+ *   condition: When CONFIG_TASK_XACCT is enabled and the write method is
-+ *     invoked
-+ *   desc: Updates the current task's I/O accounting statistics. The wchar field
-+ *     (write characters) is incremented by bytes written via add_wchar() only on
-+ *     successful writes (ret > 0). The syscw field (syscall write count) is
-+ *     incremented via inc_syscw() once the write method has been invoked, even
-+ *     if it fails, but not when the FMODE_WRITE, FMODE_CAN_WRITE, access_ok()
-+ *     or rw_verify_area() checks fail. These statistics are visible in
-+ *     /proc/[pid]/io.
-+ *   reversible: no
-+ *
-+ * side-effect: modify_state
-+ *   target: fsnotify events
-+ *   condition: When write returns > 0
-+ *   desc: Generates an FS_MODIFY fsnotify event via fsnotify_modify(), allowing
-+ *     inotify, fanotify, and dnotify watchers to be notified of the write.
-+ *
-+ * capability: CAP_FSETID
-+ *   type: bypass_check
-+ *   allows: Keep the SUID and SGID bits set when the file is written
-+ *   without: SUID is cleared on write, and SGID is cleared if S_IXGRP is set
-+ *     or the caller is not in the file's group
-+ *   condition: Checked in setattr_should_drop_suidgid() during
-+ *     file_remove_privs()
-+ *
-+ * constraint: MAX_RW_COUNT
-+ *   desc: After the access_ok() and rw_verify_area() checks pass, the count
-+ *     parameter is silently clamped to MAX_RW_COUNT (INT_MAX & PAGE_MASK, just
-+ *     under 2GB) to prevent integer overflow in internal calculations. This is
-+ *     transparent to the caller.
-+ *   expr: actual_count = min(count, MAX_RW_COUNT)
-+ *
-+ * constraint: File must be open for writing
-+ *   desc: The file descriptor must have been opened with O_WRONLY or O_RDWR.
-+ *     Files opened with O_RDONLY or O_PATH cannot be written and return EBADF.
-+ *     The file must have both FMODE_WRITE and FMODE_CAN_WRITE flags set.
-+ *   expr: (file->f_mode & FMODE_WRITE) && (file->f_mode & FMODE_CAN_WRITE)
-+ *
-+ * constraint: RLIMIT_FSIZE
-+ *   desc: The size of data written is constrained by the RLIMIT_FSIZE resource
-+ *     limit. In generic_write_check_limits(), a write that starts at or beyond
-+ *     the limit sends SIGXFSZ and returns EFBIG. A write that starts below the
-+ *     limit but would cross it is shortened to limit - pos bytes, with no
-+ *     signal.
-+ *   expr: pos < rlimit(RLIMIT_FSIZE) || rlimit(RLIMIT_FSIZE) == RLIM_INFINITY
-+ *
-+ * constraint: File seals
-+ *   desc: For memfd or shmem files with F_SEAL_WRITE or F_SEAL_FUTURE_WRITE
-+ *     seals applied, all write operations fail with EPERM. With F_SEAL_GROW,
-+ *     writes that would extend file size fail with EPERM.
-+ *
-+ * examples: n = write(fd, buf, sizeof(buf));  // Basic write
-+ *   n = write(STDOUT_FILENO, msg, strlen(msg));  // Write to stdout
-+ *   // Handle short writes:
-+ *   while (total < len) {
-+ *     n = write(fd, buf + total, len - total);
-+ *     if (n < 0) break;
-+ *     total += n;
-+ *   }
-+ *   // Pipe error handling:
-+ *   if (write(pipefd[1], &byte, 1) < 0 && errno == EPIPE)
-+ *     handle_broken_pipe();
-+ *
-+ * notes: The behavior of write() varies significantly depending on the type of
-+ *   file descriptor:
-+ *
-+ *   - Regular files: Writes to the page cache (buffered) or directly to storage
-+ *     (O_DIRECT). Short writes are rare except near RLIMIT_FSIZE or disk full.
-+ *     O_APPEND is atomic for determining write position.
-+ *
-+ *   - Pipes and FIFOs: Blocking by default. Writes up to PIPE_BUF (4096 bytes
-+ *     on Linux) are guaranteed atomic. Larger writes may be interleaved with
-+ *     writes from other processes. Blocks if pipe is full; returns EAGAIN with
-+ *     O_NONBLOCK. SIGPIPE/EPIPE if no readers.
-+ *
-+ *   - Sockets: Behavior depends on socket type and protocol. Stream sockets
-+ *     (TCP) may return partial writes. Datagram sockets (UDP) typically write
-+ *     complete messages or fail. SIGPIPE/EPIPE for broken connections (unless
-+ *     MSG_NOSIGNAL). EDESTADDRREQ for unconnected datagram sockets.
-+ *
-+ *   - Terminals: May block on flow control. Canonical vs raw mode affects
-+ *     behavior. Special characters may be interpreted.
-+ *
-+ *   - Device special files: Behavior is device-specific. Block devices behave
-+ *     similarly to regular files. Character device behavior varies.
-+ *
-+ *   Race condition considerations: Concurrent writes from threads sharing a
-+ *   file description race on the file position. Linux 3.14+ provides atomic
-+ *   position updates via f_pos_lock for regular files (FMODE_ATOMIC_POS), but
-+ *   for maximum safety, use pwrite() for concurrent positioned writes.
-+ *
-+ *   O_DIRECT writes bypass the page cache and typically require buffer and
-+ *   offset alignment to filesystem block size. Query requirements via statx()
-+ *   with STATX_DIOALIGN (Linux 6.1+). Unaligned O_DIRECT writes return EINVAL
-+ *   on most filesystems.
-+ *
-+ *   For zero-copy writes, consider using splice(2), sendfile(2), or vmsplice(2)
-+ *   instead of copying data through user-space buffers with write().
-+ *
-+ *   Partial writes (short writes) must be handled by application code.
-+ *   Applications should loop until all data is written or an error occurs.
++ * __NR_open does not exist on architectures using the generic syscall table
++ * (e.g. arm64, riscv); only __NR_openat does. There the wrapper falls back to
++ * openat(AT_FDCWD, ...), which does not go through sys_open, so the sys_open
++ * KAPI checks are not exercised.
 + */
- SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf,
- 		size_t, count)
- {
++#ifndef KAPI_TEST_UTIL_H
++#define KAPI_TEST_UTIL_H
++
++#include <fcntl.h>
++#include <unistd.h>
++#include <sys/syscall.h>
++
++#ifndef __NR_open
++static inline long kapi_sys_open(const char *pathname, int flags, int mode)
++{
++	return syscall(__NR_openat, AT_FDCWD, pathname, flags, mode);
++}
++#else
++static inline long kapi_sys_open(const char *pathname, int flags, int mode)
++{
++	return syscall(__NR_open, pathname, flags, mode);
++}
++#endif
++
++#endif /* KAPI_TEST_UTIL_H */
+diff --git a/tools/testing/selftests/kapi/test_kapi.c b/tools/testing/selftests/kapi/test_kapi.c
+new file mode 100644
+index 0000000000000..deccb075ee1f9
+--- /dev/null
++++ b/tools/testing/selftests/kapi/test_kapi.c
+@@ -0,0 +1,1163 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
++ *
++ * Userspace selftest for KAPI runtime verification of syscall parameters.
++ *
++ * Exercises sys_open, sys_read, sys_write, and sys_close through raw
++ * syscall() to ensure KAPI pre-validation wrappers interact correctly
++ * with normal kernel error handling.
++ *
++ * Requires CONFIG_KAPI_RUNTIME_CHECKS=y for full coverage; many tests
++ * also pass without it.
++ *
++ * TAP output format.
++ */
++
++#define _GNU_SOURCE
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <unistd.h>
++#include <fcntl.h>
++#include <errno.h>
++#include <signal.h>
++#include <sys/syscall.h>
++#include <sys/stat.h>
++#include <linux/limits.h>
++#include "../kselftest.h"
++#include "kapi_test_util.h"
++
++#define NUM_TESTS 31
++
++/* Set from the SIGPIPE handler. */
++static volatile sig_atomic_t got_sigpipe;
++
++static void tap_ok(const char *desc)
++{
++	ksft_test_result_pass("%s\n", desc);
++}
++
++static void tap_fail(const char *desc, const char *reason)
++{
++	ksft_test_result_fail("%s: %s\n", desc, reason);
++}
++
++static void tap_skip(const char *desc, const char *reason)
++{
++	ksft_test_result_skip("%s: %s\n", desc, reason);
++}
++
++/*
++ * Return true when CONFIG_KAPI_RUNTIME_CHECKS is active: it rejects unknown
++ * open flag bits with EINVAL, while the kernel otherwise ignores them.
++ */
++static bool kapi_runtime_checks_active(void)
++{
++	long ret;
++
++	errno = 0;
++	ret = kapi_sys_open("/dev/null", 0x10000000, 0);
++	if (ret >= 0) {
++		syscall(__NR_close, (int)ret);
++		return false;
++	}
++
++	return errno == EINVAL;
++}
++
++static void sigpipe_handler(int sig)
++{
++	(void)sig;
++	got_sigpipe = 1;
++}
++
++/* ---- Valid operation tests ---- */
++
++/*
++ * Test 1: open a readable file
++ * Returns fd on success.
++ */
++static int test_open_valid(void)
++{
++	errno = 0;
++	long fd = kapi_sys_open("/etc/hostname", O_RDONLY, 0);
++
++	if (fd >= 0) {
++		tap_ok("open valid file");
++	} else {
++		/* /etc/hostname might not exist; try /etc/passwd */
++		errno = 0;
++		fd = kapi_sys_open("/etc/passwd", O_RDONLY, 0);
++		if (fd >= 0)
++			tap_ok("open valid file (fallback /etc/passwd)");
++		else
++			tap_fail("open valid file", strerror(errno));
++	}
++	return (int)fd;
++}
++
++/*
++ * Test 2: read from fd
++ */
++static void test_read_valid(int fd)
++{
++	char buf[256];
++
++	errno = 0;
++	long ret = syscall(__NR_read, fd, buf, sizeof(buf));
++
++	if (ret > 0)
++		tap_ok("read from valid fd");
++	else if (ret == 0)
++		tap_ok("read from valid fd (EOF)");
++	else
++		tap_fail("read from valid fd", strerror(errno));
++}
++
++/*
++ * Test 3: write to /dev/null
++ */
++static void test_write_valid(void)
++{
++	errno = 0;
++	long devnull = kapi_sys_open("/dev/null", O_WRONLY, 0);
++
++	if (devnull < 0) {
++		tap_fail("write to /dev/null (open failed)", strerror(errno));
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)devnull, "hello", 5);
++
++	if (ret == 5)
++		tap_ok("write to /dev/null");
++	else
++		tap_fail("write to /dev/null",
++			 ret < 0 ? strerror(errno) : "short write");
++
++	syscall(__NR_close, (int)devnull);
++}
++
++/*
++ * Test 4: close fd
++ */
++static void test_close_valid(int fd)
++{
++	errno = 0;
++	long ret = syscall(__NR_close, fd);
++
++	if (ret == 0)
++		tap_ok("close valid fd");
++	else
++		tap_fail("close valid fd", strerror(errno));
++}
++
++/* ---- KAPI parameter rejection tests ---- */
++
++/*
++ * Test 5: open with invalid flag bits
++ * 0x10000000 is outside the valid O_* mask, KAPI should reject.
++ */
++static void test_open_invalid_flags(void)
++{
++	long ret;
++
++	if (!kapi_runtime_checks_active()) {
++		tap_skip("open with invalid flags",
++			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
++		return;
++	}
++
++	errno = 0;
++	/*
++	 * Use /dev/null (always present on any sane rootfs) so KAPI's flag
++	 * validation is reached before a path-lookup ENOENT can mask it.
++	 * 0x10000000 is outside the valid O_* mask.
++	 */
++	ret = kapi_sys_open("/dev/null", 0x10000000, 0);
++
++	if (ret == -1 && errno == EINVAL) {
++		tap_ok("open with invalid flags returns EINVAL");
++	} else if (ret >= 0) {
++		tap_fail("open with invalid flags", "expected EINVAL, got success");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EINVAL, got %s",
++			 strerror(errno));
++		tap_fail("open with invalid flags", msg);
++	}
++}
++
++/*
++ * Test 6: open with mode bits above S_IALLUGO
++ * The kernel masks mode with S_IALLUGO (07777), so KAPI must accept it.
++ */
++static void test_open_high_mode_bits(void)
++{
++	const char *desc = "open with mode bits above 07777 creates file";
++	char path[64];
++	struct stat st;
++	mode_t um, want;
++	long fd;
++
++	snprintf(path, sizeof(path), "/tmp/kapi_test_mode.%d", getpid());
++	unlink(path);
++
++	um = umask(0);
++	umask(um);
++	want = 07777 & ~um;
++
++	errno = 0;
++	fd = kapi_sys_open(path, O_CREAT | O_WRONLY | O_EXCL, 0xFFFF);
++	if (fd < 0) {
++		tap_fail(desc, strerror(errno));
++		return;
++	}
++
++	if (fstat((int)fd, &st) < 0) {
++		tap_fail(desc, strerror(errno));
++	} else if ((st.st_mode & 07777) != want) {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected mode %04o, got %04o",
++			 (unsigned int)want, (unsigned int)(st.st_mode & 07777));
++		tap_fail(desc, msg);
++	} else {
++		tap_ok(desc);
++	}
++
++	syscall(__NR_close, (int)fd);
++	unlink(path);
++}
++
++/*
++ * Test 7: open with NULL path
++ * KAPI USER_PATH constraint should reject NULL.
++ */
++static void test_open_null_path(void)
++{
++	errno = 0;
++	long ret = kapi_sys_open(NULL, O_RDONLY, 0);
++
++	if (ret == -1 && errno == EINVAL) {
++		tap_ok("open with NULL path returns EINVAL");
++	} else if (ret == -1 && errno == EFAULT) {
++		/* Kernel may catch this as EFAULT before KAPI */
++		tap_ok("open with NULL path returns EFAULT (acceptable)");
++	} else if (ret >= 0) {
++		tap_fail("open with NULL path", "expected error, got success");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "got %s", strerror(errno));
++		tap_fail("open with NULL path", msg);
++	}
++}
++
++/*
++ * Test 8: open with flag bit 30 set (0x40000000)
++ * This bit is outside the valid O_* mask, KAPI should reject with EINVAL.
++ */
++static void test_open_flag_bit30(void)
++{
++	long ret;
++
++	if (!kapi_runtime_checks_active()) {
++		tap_skip("open with flag bit 30 (0x40000000) returns EINVAL",
++			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
++		return;
++	}
++
++	errno = 0;
++	ret = kapi_sys_open("/dev/null", 0x40000000, 0);
++
++	if (ret == -1 && errno == EINVAL) {
++		tap_ok("open with flag bit 30 (0x40000000) returns EINVAL");
++	} else if (ret >= 0) {
++		tap_fail("open with flag bit 30 (0x40000000) returns EINVAL",
++			 "expected EINVAL, got success");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EINVAL, got %s",
++			 strerror(errno));
++		tap_fail("open with flag bit 30 (0x40000000) returns EINVAL",
++			 msg);
++	}
++}
++
++/* ---- Boundary condition and error path tests ---- */
++
++/*
++ * Test 9: read with fd=-1 should return an error.
++ * With CONFIG_KAPI_RUNTIME_CHECKS=y, KAPI validates the fd first and
++ * rejects negative fds (other than AT_FDCWD) with EINVAL.  Without
++ * KAPI, the kernel returns EBADF.  Accept either.
++ */
++static void test_read_bad_fd(void)
++{
++	char buf[16];
++
++	errno = 0;
++	long ret = syscall(__NR_read, -1, buf, sizeof(buf));
++
++	if (ret == -1 && (errno == EBADF || errno == EINVAL)) {
++		tap_ok("read with fd=-1 returns error");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF/EINVAL, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("read with fd=-1 returns error", msg);
++	}
++}
++
++/*
++ * Test 10: read with count=0 should return 0
++ */
++static void test_read_zero_count(void)
++{
++	char buf[1];
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
++	if (fd < 0) {
++		tap_fail("read with count=0 returns 0",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_read, (int)fd, buf, 0);
++
++	if (ret == 0) {
++		tap_ok("read with count=0 returns 0");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, strerror(errno));
++		tap_fail("read with count=0 returns 0", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 11: write with count=0 should return 0
++ */
++static void test_write_zero_count(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++	if (fd < 0) {
++		tap_fail("write with count=0 returns 0",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)fd, "x", 0);
++
++	if (ret == 0) {
++		tap_ok("write with count=0 returns 0");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, strerror(errno));
++		tap_fail("write with count=0 returns 0", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 12: open with a path longer than PATH_MAX should fail
++ * Expect ENAMETOOLONG or EINVAL.
++ */
++static void test_open_long_path(void)
++{
++	char *longpath;
++	size_t len = PATH_MAX + 256;
++
++	longpath = malloc(len);
++	if (!longpath) {
++		tap_fail("open with path > PATH_MAX", "malloc failed");
++		return;
++	}
++
++	memset(longpath, 'A', len - 1);
++	longpath[0] = '/';
++	longpath[len - 1] = '\0';
++
++	errno = 0;
++	long ret = kapi_sys_open(longpath, O_RDONLY, 0);
++
++	if (ret == -1 && (errno == ENAMETOOLONG || errno == EINVAL)) {
++		tap_ok("open with path > PATH_MAX returns ENAMETOOLONG/EINVAL");
++	} else if (ret >= 0) {
++		tap_fail("open with path > PATH_MAX",
++			 "expected error, got success");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg),
++			 "expected ENAMETOOLONG/EINVAL, got %s",
++			 strerror(errno));
++		tap_fail("open with path > PATH_MAX", msg);
++	}
++
++	free(longpath);
++}
++
++/*
++ * Test 13: read with unmapped user pointer should return EFAULT or EINVAL.
++ * Use a pipe with data so the kernel actually tries to copy to the buffer.
++ */
++static void test_read_unmapped_buf(void)
++{
++	int pipefd[2];
++
++	if (pipe(pipefd) < 0) {
++		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
++			 "pipe() failed");
++		return;
++	}
++
++	/* Write some data so read has something to copy */
++	if (write(pipefd[1], "hello", 5) != 5) {
++		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
++			 "pipe write failed");
++		close(pipefd[0]);
++		close(pipefd[1]);
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_read, pipefd[0], (void *)0xDEAD0000, 16);
++
++	if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
++		tap_ok("read with unmapped buffer returns EFAULT/EINVAL");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg),
++			 "expected EFAULT/EINVAL, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
++			 msg);
++	}
++
++	close(pipefd[0]);
++	close(pipefd[1]);
++}
++
++/*
++ * Test 14: write with unmapped user pointer should return EFAULT or EINVAL.
++ * Use a pipe so the kernel actually tries to copy from the buffer.
++ */
++static void test_write_unmapped_buf(void)
++{
++	int pipefd[2];
++
++	if (pipe(pipefd) < 0) {
++		tap_fail("write with unmapped buffer returns EFAULT/EINVAL",
++			 "pipe() failed");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, pipefd[1], (void *)0xDEAD0000, 16);
++
++	if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
++		tap_ok("write with unmapped buffer returns EFAULT/EINVAL");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg),
++			 "expected EFAULT/EINVAL, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("write with unmapped buffer returns EFAULT/EINVAL",
++			 msg);
++	}
++
++	close(pipefd[0]);
++	close(pipefd[1]);
++}
++
++/*
++ * Test 15: close an already-closed fd should return EBADF
++ */
++static void test_close_already_closed(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
++	if (fd < 0) {
++		tap_fail("close already-closed fd returns EBADF",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	/* Close it once - should succeed */
++	syscall(__NR_close, (int)fd);
++
++	/* Close it again - should fail with EBADF */
++	errno = 0;
++	long ret = syscall(__NR_close, (int)fd);
++
++	if (ret == -1 && errno == EBADF) {
++		tap_ok("close already-closed fd returns EBADF");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
++			 ret == 0 ? "success" : strerror(errno));
++		tap_fail("close already-closed fd returns EBADF", msg);
++	}
++}
++
++/*
++ * Test 16: open /dev/null with O_RDONLY|O_CLOEXEC should succeed
++ */
++static void test_open_valid_cloexec(void)
++{
++	errno = 0;
++	long fd = kapi_sys_open("/dev/null", O_RDONLY | O_CLOEXEC, 0);
++
++	if (fd >= 0) {
++		tap_ok("open /dev/null with O_RDONLY|O_CLOEXEC succeeds");
++		syscall(__NR_close, (int)fd);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected success, got %s",
++			 strerror(errno));
++		tap_fail("open /dev/null with O_RDONLY|O_CLOEXEC succeeds",
++			 msg);
++	}
++}
++
++/*
++ * Test 17: write 0 bytes to /dev/null should return 0
++ */
++static void test_write_zero_devnull(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++	if (fd < 0) {
++		tap_fail("write 0 bytes to /dev/null returns 0",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)fd, "", 0);
++
++	if (ret == 0) {
++		tap_ok("write 0 bytes to /dev/null returns 0");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, strerror(errno));
++		tap_fail("write 0 bytes to /dev/null returns 0", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 18: read from a write-only fd should return EBADF
++ */
++static void test_read_writeonly_fd(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++	if (fd < 0) {
++		tap_fail("read from write-only fd returns EBADF",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	char buf[16];
++
++	errno = 0;
++	long ret = syscall(__NR_read, (int)fd, buf, sizeof(buf));
++
++	if (ret == -1 && errno == EBADF) {
++		tap_ok("read from write-only fd returns EBADF");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("read from write-only fd returns EBADF", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 19: write to a read-only fd should return EBADF
++ */
++static void test_write_readonly_fd(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
++	if (fd < 0) {
++		tap_fail("write to read-only fd returns EBADF",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)fd, "hello", 5);
++
++	if (ret == -1 && errno == EBADF) {
++		tap_ok("write to read-only fd returns EBADF");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("write to read-only fd returns EBADF", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 20: close fd 9999 (likely invalid) should return EBADF
++ */
++static void test_close_fd_9999(void)
++{
++	errno = 0;
++	long ret = syscall(__NR_close, 9999);
++
++	if (ret == -1 && errno == EBADF) {
++		tap_ok("close fd 9999 returns EBADF");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
++			 ret == 0 ? "success" : strerror(errno));
++		tap_fail("close fd 9999 returns EBADF", msg);
++	}
++}
++
++/*
++ * Test 21: read from pipe after write end is closed returns 0 (EOF)
++ */
++static void test_read_closed_pipe(void)
++{
++	int pipefd[2];
++
++	if (pipe(pipefd) < 0) {
++		tap_fail("read from closed pipe returns 0 (EOF)",
++			 "pipe() failed");
++		return;
++	}
++
++	/* Close write end */
++	close(pipefd[1]);
++
++	char buf[16];
++
++	errno = 0;
++	long ret = syscall(__NR_read, pipefd[0], buf, sizeof(buf));
++
++	if (ret == 0) {
++		tap_ok("read from closed pipe returns 0 (EOF)");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, ret < 0 ? strerror(errno) : "n/a");
++		tap_fail("read from closed pipe returns 0 (EOF)", msg);
++	}
++
++	close(pipefd[0]);
++}
++
++/*
++ * Test 22: write to pipe after read end is closed returns EPIPE + SIGPIPE
++ */
++static void test_write_closed_pipe(void)
++{
++	int pipefd[2];
++	struct sigaction sa, old_sa;
++
++	if (pipe(pipefd) < 0) {
++		tap_fail("write to closed pipe returns EPIPE + SIGPIPE",
++			 "pipe() failed");
++		return;
++	}
++
++	/* Install SIGPIPE handler */
++	memset(&sa, 0, sizeof(sa));
++	sa.sa_handler = sigpipe_handler;
++	sigemptyset(&sa.sa_mask);
++	sigaction(SIGPIPE, &sa, &old_sa);
++
++	got_sigpipe = 0;
++
++	/* Close read end */
++	close(pipefd[0]);
++
++	errno = 0;
++	long ret = syscall(__NR_write, pipefd[1], "hello", 5);
++
++	if (ret == -1 && errno == EPIPE && got_sigpipe) {
++		tap_ok("write to closed pipe returns EPIPE + SIGPIPE");
++	} else if (ret == -1 && errno == EPIPE) {
++		tap_ok("write to closed pipe returns EPIPE (SIGPIPE not caught)");
++	} else {
++		char msg[128];
++
++		snprintf(msg, sizeof(msg),
++			 "expected EPIPE, got %s (sigpipe=%d)",
++			 ret >= 0 ? "success" : strerror(errno),
++			 (int)got_sigpipe);
++		tap_fail("write to closed pipe returns EPIPE + SIGPIPE", msg);
++	}
++
++	/* Restore SIGPIPE handler */
++	sigaction(SIGPIPE, &old_sa, NULL);
++	close(pipefd[1]);
++}
++
++/*
++ * Test 23: open with O_DIRECTORY on a non-directory returns ENOTDIR
++ */
++static void test_open_directory_on_file(void)
++{
++	errno = 0;
++	long ret = kapi_sys_open("/dev/null", O_RDONLY | O_DIRECTORY, 0);
++
++	if (ret == -1 && errno == ENOTDIR) {
++		tap_ok("open O_DIRECTORY on non-directory returns ENOTDIR");
++	} else if (ret >= 0) {
++		tap_fail("open O_DIRECTORY on non-directory",
++			 "expected ENOTDIR, got success");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected ENOTDIR, got %s",
++			 strerror(errno));
++		tap_fail("open O_DIRECTORY on non-directory", msg);
++	}
++}
++
++/*
++ * Test 24: open nonexistent file without O_CREAT returns ENOENT
++ */
++static void test_open_nonexistent(void)
++{
++	errno = 0;
++	long ret = kapi_sys_open("/tmp/kapi_nonexistent_file_12345",
++				 O_RDONLY, 0);
++
++	if (ret == -1 && errno == ENOENT) {
++		tap_ok("open nonexistent file without O_CREAT returns ENOENT");
++	} else if (ret >= 0) {
++		tap_fail("open nonexistent file",
++			 "expected ENOENT, got success (file exists?)");
++		syscall(__NR_close, (int)ret);
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected ENOENT, got %s",
++			 strerror(errno));
++		tap_fail("open nonexistent file", msg);
++	}
++}
++
++/*
++ * Test 25: close stdin (fd 0) should succeed
++ * We dup it first so we can restore it.
++ */
++static void test_close_stdin(void)
++{
++	int saved_stdin = dup(0);
++
++	if (saved_stdin < 0) {
++		tap_fail("close stdin succeeds", "cannot dup stdin");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_close, 0);
++
++	if (ret == 0) {
++		tap_ok("close stdin (fd 0) succeeds");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected success, got %s",
++			 strerror(errno));
++		tap_fail("close stdin (fd 0) succeeds", msg);
++	}
++
++	/* Restore stdin */
++	dup2(saved_stdin, 0);
++	close(saved_stdin);
++}
++
++/*
++ * Test 26: read after close returns EBADF
++ */
++static void test_read_after_close(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
++	if (fd < 0) {
++		tap_fail("read after close returns EBADF",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	syscall(__NR_close, (int)fd);
++
++	char buf[16];
++
++	errno = 0;
++	long ret = syscall(__NR_read, (int)fd, buf, sizeof(buf));
++
++	if (ret == -1 && errno == EBADF) {
++		tap_ok("read after close returns EBADF");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
++			 ret >= 0 ? "success" : strerror(errno));
++		tap_fail("read after close returns EBADF", msg);
++	}
++}
++
++/*
++ * Test 27: write with large count
++ * Without KAPI: the kernel clamps count to MAX_RW_COUNT and succeeds.
++ * With KAPI: KAPI validates the buffer against the count and may
++ * return EFAULT/EINVAL since the buffer is smaller than count.
++ * Accept either success or EFAULT/EINVAL.
++ */
++static void test_write_large_count(void)
++{
++	long fd;
++	char buf[64] = "test data";
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++	if (fd < 0) {
++		tap_fail("write with large count handled correctly",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)fd, buf, (size_t)0x7ffff000UL);
++
++	if (ret > 0) {
++		tap_ok("write with large count succeeds (clamped, no KAPI)");
++	} else if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
++		tap_ok("write with large count returns EFAULT/EINVAL (KAPI validates buffer)");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected success or EFAULT, got %s",
++			 ret == 0 ? "zero" : strerror(errno));
++		tap_fail("write with large count handled correctly", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/* ---- Integration tests ---- */
++
++/*
++ * Test 28: full normal syscall path - open, read, write, close
++ * Verify KAPI does not interfere with normal operations.
++ */
++static void test_normal_path(void)
++{
++	long rd_fd, wr_fd;
++	char buf[128];
++	int ok = 1;
++	char reason[128] = "";
++
++	/* Open a readable file */
++	errno = 0;
++	rd_fd = kapi_sys_open("/etc/hostname", O_RDONLY, 0);
++	if (rd_fd < 0) {
++		errno = 0;
++		rd_fd = kapi_sys_open("/etc/passwd", O_RDONLY, 0);
++	}
++	if (rd_fd < 0) {
++		snprintf(reason, sizeof(reason), "open readable file: %s",
++			 strerror(errno));
++		ok = 0;
++	}
++
++	/* Read from it */
++	if (ok) {
++		errno = 0;
++		long n = syscall(__NR_read, (int)rd_fd, buf, sizeof(buf));
++
++		if (n < 0) {
++			snprintf(reason, sizeof(reason), "read: %s",
++				 strerror(errno));
++			ok = 0;
++		}
++	}
++
++	/* Open /dev/null for writing */
++	wr_fd = -1;
++	if (ok) {
++		errno = 0;
++		wr_fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++		if (wr_fd < 0) {
++			snprintf(reason, sizeof(reason),
++				 "open /dev/null: %s", strerror(errno));
++			ok = 0;
++		}
++	}
++
++	/* Write to /dev/null */
++	if (ok) {
++		errno = 0;
++		long n = syscall(__NR_write, (int)wr_fd, "test", 4);
++
++		if (n != 4) {
++			snprintf(reason, sizeof(reason), "write: %s",
++				 n < 0 ? strerror(errno) : "short write");
++			ok = 0;
++		}
++	}
++
++	/* Close both fds */
++	if (rd_fd >= 0) {
++		errno = 0;
++		if (syscall(__NR_close, (int)rd_fd) != 0 && ok) {
++			snprintf(reason, sizeof(reason), "close read fd: %s",
++				 strerror(errno));
++			ok = 0;
++		}
++	}
++
++	if (wr_fd >= 0) {
++		errno = 0;
++		if (syscall(__NR_close, (int)wr_fd) != 0 && ok) {
++			snprintf(reason, sizeof(reason), "close write fd: %s",
++				 strerror(errno));
++			ok = 0;
++		}
++	}
++
++	if (ok)
++		tap_ok("normal syscall path (open/read/write/close) works");
++	else
++		tap_fail("normal syscall path (open/read/write/close) works",
++			 reason);
++}
++
++/*
++ * Test 29: read with a NULL buffer and count=0 should return 0
++ * No access is performed, so KAPI must not reject the NULL pointer.
++ */
++static void test_read_null_zero_count(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
++	if (fd < 0) {
++		tap_fail("read with NULL buffer and count=0 returns 0",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_read, (int)fd, NULL, 0);
++
++	if (ret == 0) {
++		tap_ok("read with NULL buffer and count=0 returns 0");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, strerror(errno));
++		tap_fail("read with NULL buffer and count=0 returns 0", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 30: write with a NULL buffer and count=0 should return 0
++ * No access is performed, so KAPI must not reject the NULL pointer.
++ */
++static void test_write_null_zero_count(void)
++{
++	long fd;
++
++	errno = 0;
++	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
++	if (fd < 0) {
++		tap_fail("write with NULL buffer and count=0 returns 0",
++			 "cannot open /dev/null");
++		return;
++	}
++
++	errno = 0;
++	long ret = syscall(__NR_write, (int)fd, NULL, 0);
++
++	if (ret == 0) {
++		tap_ok("write with NULL buffer and count=0 returns 0");
++	} else {
++		char msg[64];
++
++		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
++			 ret, strerror(errno));
++		tap_fail("write with NULL buffer and count=0 returns 0", msg);
++	}
++
++	syscall(__NR_close, (int)fd);
++}
++
++/*
++ * Test 31: verify dmesg contains KAPI warnings for the invalid tests
++ */
++static void test_dmesg_warnings(void)
++{
++	int kmsg_fd;
++
++	if (!kapi_runtime_checks_active()) {
++		tap_skip("dmesg contains expected KAPI warnings",
++			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
++		return;
++	}
++
++	kmsg_fd = open("/dev/kmsg", O_RDONLY | O_NONBLOCK);
++	if (kmsg_fd < 0) {
++		tap_skip("dmesg contains expected KAPI warnings",
++			 "cannot open /dev/kmsg");
++		return;
++	}
++
++	char line[4096];
++	int found_invalid_bits = 0;
++	int found_null = 0;
++	ssize_t n;
++
++	for (;;) {
++		n = read(kmsg_fd, line, sizeof(line) - 1);
++		if (n > 0) {
++			line[n] = '\0';
++			if (strstr(line, "contains invalid bits"))
++				found_invalid_bits++;
++			if (strstr(line, "NULL") && strstr(line, "not allowed"))
++				found_null++;
++		} else if (n == -1 && errno == EPIPE) {
++			/* Ring buffer wrapped, continue reading */
++			continue;
++		} else {
++			/* EAGAIN (no more messages) or other error */
++			break;
++		}
++	}
++
++	close(kmsg_fd);
++
++	if (found_invalid_bits >= 2 && found_null >= 1) {
++		tap_ok("dmesg contains expected KAPI warnings");
++	} else {
++		char msg[128];
++
++		snprintf(msg, sizeof(msg),
++			 "expected invalid_bits>=2 null>=1, got invalid_bits=%d null=%d",
++			 found_invalid_bits, found_null);
++		tap_fail("dmesg contains expected KAPI warnings", msg);
++	}
++}
++
++int main(void)
++{
++	ksft_print_header();
++	ksft_set_plan(NUM_TESTS);
++
++	/* Valid operations (1-4) */
++	int fd = test_open_valid();
++
++	if (fd >= 0)
++		test_read_valid(fd);
++	else
++		tap_fail("read from valid fd", "no fd from open");
++
++	test_write_valid();
++
++	if (fd >= 0)
++		test_close_valid(fd);
++	else
++		tap_fail("close valid fd", "no fd from open");
++
++	/* KAPI parameter validation (5-8) */
++	test_open_invalid_flags();
++	test_open_high_mode_bits();
++	test_open_null_path();
++	test_open_flag_bit30();
++
++	/* Boundary conditions and error paths (9-20) */
++	test_read_bad_fd();
++	test_read_zero_count();
++	test_write_zero_count();
++	test_open_long_path();
++	test_read_unmapped_buf();
++	test_write_unmapped_buf();
++	test_close_already_closed();
++	test_open_valid_cloexec();
++	test_write_zero_devnull();
++	test_read_writeonly_fd();
++	test_write_readonly_fd();
++	test_close_fd_9999();
++
++	/* Pipe and lifecycle tests (21-27) */
++	test_read_closed_pipe();
++	test_write_closed_pipe();
++	test_open_directory_on_file();
++	test_open_nonexistent();
++	test_close_stdin();
++	test_read_after_close();
++	test_write_large_count();
++
++	/* Integration (28-31) */
++	test_normal_path();
++	test_read_null_zero_count();
++	test_write_null_zero_count();
++	test_dmesg_warnings();
++
++	ksft_finished();
++	return 0;
++}
 -- 
 2.53.0
 
