@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0878047045C;
-	Thu,  8 Oct 2026 08:50:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B67BF409635;
+	Thu,  8 Oct 2026 08:50:27 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791449430; cv=none; b=GENvwvGofwDL0okENYFI+3jP8S77ki0tGB/AXsiXhwCUKL+2ecm/c5G+OqxRYJ8uyNPbSZ0sqmWJUt8jGBeiosP0a4WbOhrWQ9i8oSS0jKdbZ2vVGzv56VsoM7q3ZAl5xb9ZKxA/nfLiPc5OciorHDf3gMZn5DTWu8z2OocSnCQ=
+	t=1791449433; cv=none; b=FJVj6sEMd2F94Mi1cAr6jRp1RfBXMAeuHAa37zyrhRCJMzAtsldN00yb9NsiMY3cMt4q/Pcexfu4fJYVcC2VxE60P5kLY2/lByl+/8o8t/i1r6gm7dU9f8FdoBhVUaO8xmLNpBrnzuj5ts0dMwXZ0Igf0ZIMXwUdbh9R1bAWazA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791449430; c=relaxed/simple;
-	bh=6tcou1E1OXIz02wbeg8cDqxMKWSdpx64rncGVfe+8qk=;
+	s=arc-20240116; t=1791449433; c=relaxed/simple;
+	bh=0YwOpe8/y2f5gBQNUj19gyhsSAiw+G58tdIKCjcCwfU=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version:Content-Type; b=SCUrpYvLUxSYUZMHVkbBwg4u9ui1wmSWK05H3vgAVgbl2I8jpHjNSXMwPuUl0jGNKa9QnPDYJkldatFaHVaUvDHQ6iSEK4y1unlyR4aLufwXHr8P0nsbKMcAKJUK9lcT+1/jIOVRh7W3Gtw1XrCxbIsU65eIjUa5BtGxLTWTUkc=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=RfNuowvt; arc=none smtp.client-ip=100.103.45.18
+	 MIME-Version:Content-Type; b=hiJizd/23pYHo2NV72HmKDjkvIybEv6+9s7GOixJxT4Eh8az8LBTVtoou4q5UEKtU+wDBUM/SGF+5jizxwpkbxVu8bkMj2/TpMJKYokfb34D6CHB69wACQXK4wn6XgUNokn86lL1RaZFEpfBJgQlY1YiKEwk6MXg9EQBcnOjHSs=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=deBsZxCc; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="RfNuowvt"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 079EB1F00898;
-	Thu,  8 Oct 2026 08:50:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="deBsZxCc"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1A4201F000FF;
+	Thu,  8 Oct 2026 08:50:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791449420;
-	bh=jDsepahtKEYSXFacljULtZgvRWDR63jL4As/g4r24Z0=;
+	s=k20260515; t=1791449427;
+	bh=lAmlB/ddmE5bmcmYAV+dWIjuVYwLHa6D7VTYgpW2HG4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=RfNuowvtAG3S82kHgSKWTrlMaDG/yFaQHOHKVBzz7ug4WCEJvTJ5bE8nJ1T+lA98o
-	 hqWvNgirLOLp6ULLxqxWoYkwb3dfM/WneoDLj6vDi2tahuIXFUFHfxFNAO11DrMJ6V
-	 zX6NRpmWecvpbqREdjqdq2uC6+wYp0/lg5fBkVVjBpgTSH4fgGFxNwFcJdrg91mFiT
-	 ZO8p6iIYrFIyQEUF8YJPEDXva5j9DqF/ctCIx6jjhsaC23XLnTdK+5TozCqzWCDPFe
-	 xWThtq0PGFeFSuEPthqsr/QenYSztdxFWfqEcCG6NHW/HzsrR6dc9JW+5eXLkeFyUo
-	 NhbEX+b4QYz8g==
+	b=deBsZxCcA2v+EICzSDeOKjAwpiPgbW2ruhGhprWFkVrZQUJdDL9FrYV/YC216zh0S
+	 La+A/iItb65Je6PulL6UTMqeRsyVzdj9NoYFeM0RSLe321hfcPmmWcRMgI+QUxiPqo
+	 bexpbOwq/pSca8zE/XtNPYZn6mWr/xYx+o1+/7T7rJYQCAWOYdIkqUJ0zYcZ1G3Qvu
+	 mkMw4hLW1dUNIuL+sVr+CqiySTTKsaQ30qhaCM8786fqcK1i2geL7mNMgIuXPrfEz1
+	 3G3vsVo0N22363eWiRMD8DnUSNk/xpI7kUpQSgta/wI1jLofWgqRHA7HRxsNy7ORzy
+	 JSGFOTsXXRmrQ==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-api@vger.kernel.org,
 	linux-kernel@vger.kernel.org
@@ -59,9 +59,9 @@ Cc: Sasha Levin <sashal@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Masami Hiramatsu <mhiramat@kernel.org>,
 	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 01/11] kernel/api: introduce kernel API specification framework
-Date: Thu,  8 Oct 2026 04:49:41 -0400
-Message-ID: <20261008084956.2911790-2-sashal@kernel.org>
+Subject: [PATCH v5 02/11] kernel/api: enable kerneldoc-based API specifications
+Date: Thu,  8 Oct 2026 04:49:42 -0400
+Message-ID: <20261008084956.2911790-3-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20261008084956.2911790-1-sashal@kernel.org>
 References: <20261008084956.2911790-1-sashal@kernel.org>
@@ -74,4384 +74,1793 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Add a framework for formally documenting kernel APIs with inline
-specifications. This framework provides:
+Add support for extracting API specifications from kernel-doc comments
+and generating C macro invocations for the kernel API specification
+framework.
 
-- Structured API documentation with parameter specifications, return
-  values, error conditions, and execution context requirements
-- Runtime validation capabilities for debugging
-  (CONFIG_KAPI_RUNTIME_CHECKS)
-- Support for both internal kernel APIs and system calls
+Changes include:
+- New kdoc_apispec.py module for generating API spec macros
+- Updates to tools/docs/kernel-doc to support the -apispec output format
+- Build system integration in Makefile.build
+- Support for API-specific sections in kernel-doc comments
 
-The framework stores specifications in a dedicated ELF section and
-provides infrastructure for:
-- Runtime querying of API documentation
-- Integration with existing SYSCALL_DEFINE macros
-
-A KUnit suite (CONFIG_KAPI_KUNIT_TEST) covers registration, lookup,
-parameter and return value validation, and JSON export.
-
-No specifications are added here; subsequent patches add them for
-individual syscalls. With CONFIG_KAPI_SPEC=n the SYSCALL_DEFINEx()
-expansion is unchanged. CONFIG_KAPI_RUNTIME_CHECKS is a debug option:
-a syscall whose arguments violate its specification returns -EINVAL
-without running.
+kernel-doc recognises the KAPI sections only in -apispec mode, so its
+other output formats are unchanged. With CONFIG_KAPI_SPEC=y, Kbuild
+generates <file>.apispec.h for each built source that has a contexts:
+or context-flags: line plus another KAPI section, and force-includes it
+when compiling that source.
 
 Assisted-by: LLM
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- Documentation/dev-tools/index.rst           |    1 +
- Documentation/dev-tools/kernel-api-spec.rst |  615 ++++++++
- MAINTAINERS                                 |   11 +
- arch/x86/include/asm/syscall_wrapper.h      |    3 +-
- include/asm-generic/vmlinux.lds.h           |   14 +
- include/linux/kapi_syscall.h                |   35 +
- include/linux/kernel_api_spec.h             | 1226 ++++++++++++++++
- include/linux/syscalls.h                    |   42 +-
- init/Kconfig                                |    2 +
- kernel/Makefile                             |    1 +
- kernel/api/Kconfig                          |   54 +
- kernel/api/Makefile                         |   10 +
- kernel/api/internal.h                       |   25 +
- kernel/api/kapi_kunit.c                     |  720 ++++++++++
- kernel/api/kernel_api_spec.c                | 1415 +++++++++++++++++++
- 15 files changed, 4172 insertions(+), 2 deletions(-)
- create mode 100644 Documentation/dev-tools/kernel-api-spec.rst
- create mode 100644 include/linux/kapi_syscall.h
- create mode 100644 include/linux/kernel_api_spec.h
- create mode 100644 kernel/api/Kconfig
- create mode 100644 kernel/api/Makefile
- create mode 100644 kernel/api/internal.h
- create mode 100644 kernel/api/kapi_kunit.c
- create mode 100644 kernel/api/kernel_api_spec.c
+ .gitignore                                  |    1 +
+ Documentation/dev-tools/kernel-api-spec.rst |   24 +
+ Makefile                                    |    1 +
+ scripts/Makefile.build                      |   26 +
+ tools/docs/kernel-doc                       |   12 +-
+ tools/lib/python/kdoc/kdoc_apispec.py       | 1391 +++++++++++++++++++
+ tools/lib/python/kdoc/kdoc_files.py         |   12 +-
+ tools/lib/python/kdoc/kdoc_parser.py        |  101 +-
+ 8 files changed, 1558 insertions(+), 10 deletions(-)
+ create mode 100644 tools/lib/python/kdoc/kdoc_apispec.py
 
-diff --git a/Documentation/dev-tools/index.rst b/Documentation/dev-tools/index.rst
-index 59cbb77b33ff4..8d3768645d96c 100644
---- a/Documentation/dev-tools/index.rst
-+++ b/Documentation/dev-tools/index.rst
-@@ -36,6 +36,7 @@ Documentation/process/debugging/index.rst
-    kunit/index
-    ktap
-    checkuapi
-+   kernel-api-spec
-    gpio-sloppy-logic-analyzer
-    autofdo
-    propeller
+diff --git a/.gitignore b/.gitignore
+index 9875120ea7bde..37e6cd1d83fc9 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -12,6 +12,7 @@
+ #
+ .*
+ *.a
++*.apispec.h
+ *.asn1.[ch]
+ *.bc
+ *.bin
 diff --git a/Documentation/dev-tools/kernel-api-spec.rst b/Documentation/dev-tools/kernel-api-spec.rst
-new file mode 100644
-index 0000000000000..4fb412b2720d3
---- /dev/null
+index 4fb412b2720d3..03b32d3718c8e 100644
+--- a/Documentation/dev-tools/kernel-api-spec.rst
 +++ b/Documentation/dev-tools/kernel-api-spec.rst
-@@ -0,0 +1,615 @@
-+.. SPDX-License-Identifier: GPL-2.0
-+
-+======================================
-+Kernel API Specification Framework
-+======================================
-+
-+:Author: Sasha Levin <sashal@kernel.org>
-+
-+.. contents:: Table of Contents
-+   :depth: 3
-+   :local:
-+
-+Introduction
-+============
-+
-+The Kernel API Specification Framework (KAPI) describes kernel APIs in a
-+machine-readable form. The descriptions are written as kerneldoc annotations
-+next to the implementation and compiled into the kernel. They can be used to
-+check system call arguments at runtime and can be read back through debugfs or
-+the ``kapi`` tool.
-+
-+Purpose and Goals
-+-----------------
-+
-+The framework aims to:
-+
-+1. **Improve API Documentation**: Provide structured, inline documentation that
-+   lives alongside the code and is maintained as part of the development process.
-+
-+2. **Enable Runtime Validation**: Optionally validate API usage at runtime to catch
-+   common programming errors during development and testing.
-+
-+3. **Support Tooling**: Export API specifications in machine-readable formats for
-+   use by static analyzers, documentation generators, and development tools.
-+
-+4. **Formalize Contracts**: Explicitly document API contracts including parameter
-+   constraints, execution contexts, locking requirements, and side effects.
-+
-+Architecture Overview
-+=====================
-+
-+Components
-+----------
-+
-+The framework consists of several key components:
-+
-+1. **Core Framework** (``kernel/api/kernel_api_spec.c``)
-+
-+   - API specification registration and storage
-+   - Runtime validation engine
-+   - Specification lookup and querying
-+
-+2. **DebugFS Interface** (``kernel/api/kapi_debugfs.c``)
-+
-+   - Runtime introspection via ``/sys/kernel/debug/kapi/``
-+   - Per-API detailed specification output
-+   - List of all registered API specifications
-+
-+3. **kapi Tool** (``tools/kapi/``)
-+
-+   - Userspace utility for extracting specifications
-+   - Multiple input sources (source, binary, debugfs)
-+   - Multiple output formats (plain, JSON, RST)
-+   - Testing and validation utilities
-+
-+Data Model
-+----------
-+
-+The framework uses a hierarchical data model::
-+
-+    kernel_api_spec
-+    ├── Basic Information
-+    │   ├── name (API function name)
-+    │   ├── version (specification version)
-+    │   └── description (human-readable description)
-+    │
-+    ├── Parameters (up to 16)
-+    │   └── kapi_param_spec
-+    │       ├── name
-+    │       ├── type (int, pointer, fd, path, etc.)
-+    │       ├── flags (in, out, inout, optional, etc.)
-+    │       ├── constraints (range, mask, enum values)
-+    │       └── description
-+    │
-+    ├── Return Value
-+    │   └── kapi_return_spec
-+    │       ├── type
-+    │       ├── success conditions
-+    │       └── validation rules
-+    │
-+    ├── Error Conditions (up to 32)
-+    │   └── kapi_error_spec
-+    │       ├── error code
-+    │       ├── name
-+    │       ├── condition
-+    │       └── description
-+    │
-+    ├── Execution Context
-+    │   ├── allowed contexts (process, interrupt, etc.)
-+    │   ├── locking requirements
-+    │   └── preemption/interrupt state
-+    │
-+    └── Side Effects
-+        ├── memory allocation
-+        ├── state changes
-+        └── signal handling
-+
-+Usage Guide
-+===========
-+
-+Basic API Specification
-+-----------------------
-+
-+API specifications are written as KAPI-annotated kerneldoc comments directly in
-+the source file, immediately preceding the function implementation. With
-+``CONFIG_KAPI_SPEC`` enabled, Kbuild runs ``kernel-doc -apispec`` on each
-+built-in C file that has a ``contexts:`` (or ``context-flags:``) line plus at
-+least one of ``api-type:``, ``param:``, ``error:``, ``capability:``,
-+``signal:``, ``lock:``, ``state-trans:``, ``constraint:``, ``side-effect:`` or
-+``long-desc:``, and compiles the generated header into that file. The ``kapi``
-+tool reads the same annotations, or the specifications in a built kernel, for
-+use outside the kernel build.
-+
-+The following is an excerpt of the ``sys_read`` specification in
-+``fs/read_write.c``, trimmed for length:
-+
-+.. code-block:: c
-+
-+    /**
-+     * sys_read - Read data from a file descriptor
-+     * @fd: File descriptor to read from
-+     * @buf: User-space buffer to read data into
-+     * @count: Maximum number of bytes to read
-+     *
-+     * long-desc: Attempts to read up to count bytes from file descriptor fd into
-+     *   the buffer starting at buf. ...
-+     *
-+     * contexts: process, sleepable
-+     *
-+     * param: fd
-+     *   type: fd, input
-+     *   constraint-type: range(0, INT_MAX)
-+     *
-+     * param: buf
-+     *   type: user_ptr, output
-+     *   constraint-type: buffer(2)
-+     *
-+     * param: count
-+     *   type: uint, input
-+     *
-+     * return:
-+     *   type: int
-+     *   check-type: range
-+     *   success: >= 0
-+     *   desc: On success, returns the number of bytes read (non-negative). ...
-+     *
-+     * error: EBADF, Bad file descriptor
-+     *   desc: fd is not a valid file descriptor, or fd was not opened for
-+     *     reading. ...
-+     */
-+    SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
-+
-+DSL reference:
-+
-+* ``contexts:`` — comma-separated list of call contexts.  Accepted tokens:
-+  ``process``, ``softirq``, ``hardirq``, ``nmi``, ``atomic``, ``sleepable``,
-+  ``preempt_disabled``, ``irq_disabled``.  ``context-flags:`` with
-+  ``|``-joined ``KAPI_CTX_*`` constants is equivalent.
-+* ``type:`` — parameter type plus direction/qualifier flags on a single
-+  line.  Type aliases (case-insensitive): ``int``, ``uint``, ``ptr``,
-+  ``fd``, ``path``, ``user_ptr`` (or ``uptr``), ``struct``, ``union``,
-+  ``enum``, ``func_ptr``, ``array``, ``custom``.  Flag aliases:
-+  ``input``, ``output``, ``inout``, ``user``, ``optional``, ``const``,
-+  ``volatile``, ``dma``, ``aligned``.
-+* ``constraint-type:`` — a ``KAPI_CONSTRAINT_*`` enum token or a
-+  function-call expression.  ``range(lo, hi)``, ``mask(expr)``,
-+  ``enum(v1, v2, …)``, ``buffer(size_param_idx)``, ``alignment(N)``,
-+  ``user_string``, ``user_path``, ``user_ptr``, ``power_of_two``,
-+  ``page_aligned``, ``nonzero``.  ``user_string`` takes its length limits
-+  from ``range:``.  The function-call
-+  form populates the matching aux fields
-+  (``range:`` / ``valid-mask:`` / ``size-param:``).
-+* ``lock: … type:`` accepts ``mutex``, ``spinlock``, ``rwlock``,
-+  ``seqlock``, ``rcu``, ``semaphore``, ``custom`` or ``KAPI_LOCK_*``.
-+* ``signal: … direction:`` accepts ``receive``, ``send``, ``handle``,
-+  ``block``, ``ignore`` (bitmask, joinable with ``|`` or ``,``).
-+* ``signal: … action:`` accepts ``default``, ``terminate``, ``coredump``,
-+  ``stop``, ``continue``, ``custom``, ``return``, ``restart``,
-+  ``queue``, ``discard``, ``transform``.
-+* ``signal: … timing:`` accepts ``before``, ``during``, ``after``.
-+* ``capability: … type:`` accepts ``bypass_check``, ``increase_limit``,
-+  ``override_restriction``, ``grant_permission``, ``modify_behavior``,
-+  ``access_resource``, ``perform_operation``.
-+* ``side-effect:`` accepts the snake_case effect names
-+  (``alloc_memory``, ``free_memory``, ``modify_state``, ``signal_send``,
-+  ``file_position``, ``lock_acquire``, ``lock_release``,
-+  ``resource_create``, ``resource_destroy``, ``schedule``, ``hardware``,
-+  ``network``, ``filesystem``, ``process_state``, ``irreversible``)
-+  joined with ``|`` — for example ``side-effect: resource_create | alloc_memory``.
-+* ``return: … type:`` reuses the ``type:`` aliases above.
-+* ``return: … check-type:`` accepts ``exact``, ``range``,
-+  ``fd``, ``no_return``.  ``success:``
-+  gives the success value for ``exact`` (an integer, optionally
-+  written ``= N``) and the lower bound for ``range`` (``>= N``); the
-+  other check types do not use it.  The ``type:`` of a return block
-+  is also kept as written (for example ``int``) in the
-+  human-readable ``type_name`` of ``struct kapi_return_spec``.
-+* ``error:`` takes a ``NAME, one-line summary`` header followed
-+  by optional indented ``desc:`` / ``condition:`` subfields.
-+* ``lock:`` and ``signal:`` take an indented ``desc:`` subfield
-+  for the long-form description; ``signal:`` also accepts
-+  ``number:`` (the signal constant, for example ``SIGPIPE``),
-+  ``errno:``, ``priority:``, ``restartable:``, ``interruptible:``,
-+  and ``queue:`` subfields.
-+* ``state-trans:`` takes ``from:``, ``to:``, ``object:``,
-+  optional ``condition:``, and ``desc:`` subfields.  The condition is
-+  stored in its own field, apart from the description.
-+* ``long-desc:`` is a free-form multi-line prose block that
-+  populates ``long_description`` in the spec.  ``notes:`` is a
-+  free-form block of the same kind.  In both, a blank line starts a
-+  new paragraph, a line starting with ``- `` stays on its own line so
-+  bullet lists survive, and any other wrapped line is joined to the
-+  previous one with a space.  ``examples:`` keeps one example per
-+  line, preserving the relative indentation of nested code.  The
-+  line breaks are stored as ``\n`` in the generated strings, which
-+  have no length limit.
-+* A subfield line inside a block starts with one of the subfield
-+  names of that block followed by ``:``.  Every other line, even one
-+  with a colon in the middle of a sentence, continues the previous
-+  subfield.
-+* ``param-count:`` is optional; the parser counts ``param:`` blocks and
-+  warns when an explicit count disagrees.
-+
-+System Call Specification
-+-------------------------
-+
-+System calls are documented inline in the implementation file (e.g., ``fs/open.c``)
-+using KAPI-annotated kerneldoc comments. When ``CONFIG_KAPI_RUNTIME_CHECKS`` is
-+enabled, the ``SYSCALL_DEFINEx`` macros automatically look up the specification
-+and validate parameters before and after the syscall executes.
-+
-+Runtime Validation
-+==================
-+
-+Enabling Validation
-+-------------------
-+
-+Runtime validation is controlled by kernel configuration:
-+
-+1. Enable ``CONFIG_KAPI_SPEC`` to build the framework
-+2. Enable ``CONFIG_KAPI_RUNTIME_CHECKS`` for runtime validation
-+
-+Validation Behavior
-+-------------------
-+
-+When ``CONFIG_KAPI_RUNTIME_CHECKS`` is enabled, every system call that has a
-+specification is validated in its ``SYSCALL_DEFINEx()`` wrapper: the arguments
-+are checked against the parameter constraints before the handler runs, and the
-+return value is checked against the return specification afterwards. Violations
-+are reported via ``pr_warn_ratelimited`` to avoid flooding the kernel log. On
-+the return side only a successful ``fd`` return that is not a valid file
-+descriptor is reported. Any other value that does not satisfy the success check
-+is treated as an error and accepted, and error codes that the specification
-+does not list are only logged at debug level.
-+The execution context recorded in a specification is not checked at runtime.
-+The option is available on x86 and on architectures that use the generic
-+``__SYSCALL_DEFINEx()``.
-+
-+Custom Validators
-+-----------------
-+
-+``KAPI_CONSTRAINT_CUSTOM`` calls the ``validate`` function of the parameter
-+specification. Kerneldoc annotations cannot set it, so it is only available to a
-+``struct kapi_param_spec`` that is filled in by hand:
-+
-+.. code-block:: c
-+
-+    static bool validate_buffer_size(s64 value)
-+    {
-+        size_t size = (size_t)value;
-+
-+        return size > 0 && size <= MAX_BUFFER_SIZE;
-+    }
-+
-+    /* In the parameter definition: */
-+    .constraint_type = KAPI_CONSTRAINT_CUSTOM,
-+    .validate = validate_buffer_size,
-+
-+Performance Considerations
-+==========================
-+
-+Memory Overhead
-+---------------
-+
-+Each compiled spec is 26400 bytes (``readelf -sW vmlinux | grep
-+__kapi_spec_``), dominated by the fixed-bound arrays
-+``struct_specs[8]`` (11584 bytes), ``signal_masks[32]`` (4864),
-+``signals[32]`` (3328) and ``params[16]`` (1920). With
-+the five syscall specs in this series, ``.kapi_specs`` and the backing
-+``.rodata`` objects occupy ~132 KB. Building with ``CONFIG_KAPI_SPEC=n``
-+emits no code or data from the framework.
-+
-+Runtime Overhead
-+----------------
-+
-+When ``CONFIG_KAPI_RUNTIME_CHECKS`` is enabled, each validated
-+call pays for a parameter walk plus the per-constraint check
-+(range/mask/enum/align/user-ptr/user-path/user-string).
-+The cost depends on the parameter count and the constraints involved;
-+profile before enabling on workloads where syscall latency matters.
-+``CONFIG_KAPI_RUNTIME_CHECKS=n`` compiles the validators away
-+entirely.
-+
-+The kapi Tool
-+=============
-+
-+Overview
-+--------
-+
-+The ``kapi`` tool is a userspace utility that extracts and displays kernel API
-+specifications from multiple sources. It provides a unified interface to access
-+API documentation whether from compiled kernels, source code, or runtime systems.
-+
-+Installation
-+------------
-+
-+Build the tool from the kernel source tree::
-+
-+    $ cd tools/kapi
-+    $ cargo build --release
-+
-+    # Optional: Install system-wide
-+    $ cargo install --path .
-+
-+The tool requires Rust and Cargo to build. The binary will be available at
-+``tools/kapi/target/release/kapi``.
-+
-+Command-Line Usage
-+------------------
-+
-+Basic syntax::
-+
-+    kapi [OPTIONS] [API_NAME]
-+
-+Options:
-+
-+- ``--vmlinux <PATH>``: Extract from compiled kernel binary
-+- ``--source <PATH>``: Extract from kernel source code
-+- ``--debugfs <PATH>``: Extract from debugfs (default: /sys/kernel/debug)
-+- ``-f, --format <FORMAT>``: Output format (plain, json, rst)
-+- ``-h, --help``: Display help information
-+- ``-V, --version``: Display version information
-+
-+Input Modes
-+-----------
-+
-+**1. Source Code Mode**
-+
-+Extract specifications directly from kernel source::
-+
-+    # Scan entire kernel source tree
-+    $ kapi --source /path/to/linux
-+
-+    # Extract from specific file
-+    $ kapi --source fs/open.c
-+
-+    # Get details for specific API
-+    $ kapi --source /path/to/linux sys_close
-+
-+**2. Vmlinux Mode**
-+
-+Extract from compiled kernel with debug symbols::
-+
-+    # List all APIs in vmlinux
-+    $ kapi --vmlinux ./vmlinux
-+
-+    # Get specific syscall details
-+    $ kapi --vmlinux ./vmlinux sys_read
-+
-+**3. Debugfs Mode**
-+
-+Extract from running kernel via debugfs::
-+
-+    # Use default debugfs path
-+    $ kapi
-+
-+    # Use custom debugfs mount
-+    $ kapi --debugfs /mnt/debugfs
-+
-+    # Get specific API from running kernel
-+    $ kapi sys_write
-+
-+Output Formats
-+--------------
-+
-+The samples below are shortened; ``...`` marks omitted output.
-+
-+**Plain Text Format** (default)::
-+
-+    $ kapi --source . sys_read
-+
-+    Detailed information for sys_read:
-+    ==================================
-+    Description: Read data from a file descriptor
-+
-+    Detailed Description:
-+      Attempts to read up to count bytes from file descriptor fd into the buffer starting at buf. ...
-+
-+    Execution Context:
-+      - KAPI_CTX_PROCESS
-+      - KAPI_CTX_SLEEPABLE
-+
-+    Parameters (3):
-+      [0] fd (unsigned int fd)
-+          File descriptor to read from
-+          Flags: IN
-+          ...
-+
-+**JSON Format**::
-+
-+    $ kapi --source . --format json sys_read
-+    {
-+      "api_details": {
-+        "name": "sys_read",
-+        "description": "Read data from a file descriptor",
-+        "long_description": "Attempts to read up to count bytes from file descriptor fd into the buffer starting at buf. ...",
-+        "context_flags": [
-+          "KAPI_CTX_PROCESS",
-+          "KAPI_CTX_SLEEPABLE"
-+        ],
-+        ...
-+      }
-+    }
-+
-+**ReStructuredText Format**::
-+
-+    $ kapi --source . --format rst sys_read
-+
-+    sys_read
-+    ========
-+
-+    **Read data from a file descriptor**
-+
-+    Attempts to read up to count bytes from file descriptor fd into the buffer starting at buf. ...
-+
-+Usage Examples
-+--------------
-+
-+**Generate complete API documentation**::
-+
-+    # Export all kernel APIs to JSON
-+    $ kapi --source /path/to/linux --format json > kernel-apis.json
-+
-+    # Generate RST documentation for all syscalls
-+    $ kapi --vmlinux ./vmlinux --format rst > syscalls.rst
-+
-+    # List APIs from specific subsystem
-+    $ kapi --source fs/
-+
-+**Integration with other tools**::
-+
-+    # List the names of all APIs
-+    $ kapi --format json | jq -r '.apis[].name'
-+
-+    # Generate markdown documentation
-+    $ kapi --format rst sys_madvise | pandoc -f rst -t markdown
-+
-+**Debugging and analysis**::
-+
-+    # Check if specific API exists
-+    $ kapi --source . my_custom_api || echo "API not found"
-+
-+Implementation Details
-+----------------------
-+
-+The tool extracts API specifications from three sources:
-+
-+1. **Source Code**: Parses KAPI-annotated kerneldoc comments in C files, using
-+   the same selection rule as Kbuild; regular expressions only locate the
-+   ``SYSCALL_DEFINEx()`` or function that follows each comment
-+2. **Vmlinux**: Reads the ``.kapi_specs`` ELF section from compiled kernels
-+3. **Debugfs**: Reads from ``/sys/kernel/debug/kapi/`` filesystem interface
-+
-+The tool supports all KAPI specification types:
-+
-+- System calls (kerneldoc annotations)
-+- Kernel functions (kerneldoc annotations with KAPI tags)
-+
-+IDE Integration
-+---------------
-+
-+Modern IDEs can use the specification data for:
-+
-+- Parameter hints
-+- Type checking
-+- Context validation
-+- Error code documentation
-+
-+Best Practices
-+==============
-+
-+Writing Specifications
-+----------------------
-+
-+1. **Be Comprehensive**: Document all parameters, errors, and side effects
-+2. **Keep Updated**: Update specs when API behavior changes
-+3. **Use Examples**: Include usage examples in descriptions
-+4. **Validate Constraints**: Define realistic constraints for parameters
-+5. **Document Context**: Clearly specify allowed execution contexts
-+
-+Maintenance
-+-----------
-+
-+1. **Version Specifications**: Increment version when API changes
-+2. **Deprecation**: Mark deprecated APIs and suggest replacements
-+3. **Cross-reference**: Link related APIs in descriptions
-+4. **Test Specifications**: Verify specs match implementation
-+
-+Common Patterns
-+---------------
-+
-+**Optional Parameters**:
-+
-+.. code-block:: c
-+
-+    /**
-+     * @optional_arg: Optional argument (may be NULL)
-+     *
-+     * param: optional_arg
-+     *   type: KAPI_TYPE_PTR
-+     *   flags: KAPI_PARAM_IN | KAPI_PARAM_OPTIONAL
-+     */
-+
-+**Buffer with Size Parameter**:
-+
-+.. code-block:: c
-+
-+    /**
-+     * @buf: User-space buffer
-+     *
-+     * param: buf
-+     *   type: KAPI_TYPE_USER_PTR
-+     *   flags: KAPI_PARAM_OUT | KAPI_PARAM_USER
-+     *   constraint-type: KAPI_CONSTRAINT_BUFFER
-+     *   size-param: 2
-+     */
-+
-+**Callback Functions**:
-+
-+.. code-block:: c
-+
-+    /**
-+     * @callback: Callback function
-+     *
-+     * param: callback
-+     *   type: KAPI_TYPE_FUNC_PTR
-+     *   flags: KAPI_PARAM_IN
-+     */
-+
-+Troubleshooting
-+===============
-+
-+Common Issues
-+-------------
-+
-+**Specification Not Found**
-+
-+A syscall that is missing from ``/sys/kernel/debug/kapi/list`` has no
-+specification. Ensure the KAPI-annotated kerneldoc comment is in the same
-+translation unit as the function implementation, is named ``sys_<name>`` for
-+``SYSCALL_DEFINEx(<name>, ...)``, and has a ``contexts:`` line plus one more
-+KAPI section as described above.
-+
-+**Validation Failures**::
-+
-+    kapi: Parameter fd: invalid file descriptor -1
-+
-+    Solution: Check parameter constraints or adjust specification if
-+    the constraint is incorrect.
-+
-+Debug Options
-+-------------
-+
-+Violations are logged with ``pr_warn_ratelimited()``. Error codes that a
-+specification does not list are logged with ``pr_debug()``; with
-+``CONFIG_DYNAMIC_DEBUG`` they can be enabled with::
-+
-+    echo 'file kernel_api_spec.c +p' > /sys/kernel/debug/dynamic_debug/control
-+
-+Contributing
-+============
-+
-+Submitting Specifications
-+-------------------------
-+
-+1. Add specifications to the same file as the API implementation
-+2. Follow existing patterns and naming conventions
-+3. Test with CONFIG_KAPI_RUNTIME_CHECKS enabled
-+4. Run scripts/checkpatch.pl on your changes
-+
-+Review Criteria
-+---------------
-+
-+Specifications will be reviewed for:
-+
-+1. **Completeness**: All parameters and errors documented
-+2. **Accuracy**: Specification matches implementation
-+3. **Clarity**: Descriptions are clear and helpful
-+4. **Consistency**: Follows framework conventions
-+5. **Performance**: No unnecessary runtime overhead
-+
-+Contact
-+-------
-+
-+- Maintainer: Sasha Levin <sashal@kernel.org>
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 65e8a4b5c90b1..cd15c6a776ae3 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -14118,6 +14118,17 @@ W:	https://linuxtv.org
- T:	git git://linuxtv.org/media.git
- F:	drivers/media/radio/radio-keene*
+@@ -180,6 +180,19 @@ DSL reference:
+   from ``range:``.  The function-call
+   form populates the matching aux fields
+   (``range:`` / ``valid-mask:`` / ``size-param:``).
++* ``arch-mask:`` — extends a ``mask(...)`` constraint with bits that
++  are valid only on a named architecture.  The form is
++  ``arch-mask: <arch> = <bits-expr>`` and may appear multiple times.
++  The named arch must be one of the known short names
++  (``alpha``, ``arc``, ``arm``, ``arm64``, ``csky``, ``hexagon``,
++  ``loongarch``, ``m68k``, ``microblaze``, ``mips``, ``nios2``,
++  ``openrisc``, ``parisc``, ``powerpc``, ``riscv``, ``s390``, ``sh``,
++  ``sparc``, ``um``, ``x86``, ``xtensa``); the generator translates it
++  to the matching ``CONFIG_*`` symbol and emits the bits inside an
++  ``#ifdef`` so a single generated apispec.h compiles on every
++  architecture and folds in the arch-specific bits at compile time.
++  Use this for PROT/MAP bits whose UAPI symbols are defined only on
++  the matching arch.
+ * ``lock: … type:`` accepts ``mutex``, ``spinlock``, ``rwlock``,
+   ``seqlock``, ``rcu``, ``semaphore``, ``custom`` or ``KAPI_LOCK_*``.
+ * ``signal: … direction:`` accepts ``receive``, ``send``, ``handle``,
+@@ -266,6 +279,17 @@ The execution context recorded in a specification is not checked at runtime.
+ The option is available on x86 and on architectures that use the generic
+ ``__SYSCALL_DEFINEx()``.
  
-+KERNEL API SPECIFICATION FRAMEWORK (KAPI)
-+M:	Sasha Levin <sashal@kernel.org>
-+L:	linux-api@vger.kernel.org
-+S:	Maintained
-+F:	Documentation/dev-tools/kernel-api-spec.rst
-+F:	include/linux/kapi_syscall.h
-+F:	include/linux/kernel_api_spec.h
-+F:	kernel/api/
-+F:	tools/kapi/
-+F:	tools/lib/python/kdoc/kdoc_apispec.py
++.. warning::
 +
- KERNEL AUTOMOUNTER
- M:	Ian Kent <raven@themaw.net>
- L:	autofs@vger.kernel.org
-diff --git a/arch/x86/include/asm/syscall_wrapper.h b/arch/x86/include/asm/syscall_wrapper.h
-index 7e88705e907f4..54b70c2cac8ac 100644
---- a/arch/x86/include/asm/syscall_wrapper.h
-+++ b/arch/x86/include/asm/syscall_wrapper.h
-@@ -223,11 +223,12 @@ extern long __ia32_sys_ni_syscall(const struct pt_regs *regs);
- #define __SYSCALL_DEFINEx(x, name, ...)					\
- 	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
- 	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
-+	__KAPI_SYSCALL_DEFINEx(x, name, __VA_ARGS__)			\
- 	__X64_SYS_STUBx(x, name, __VA_ARGS__)				\
- 	__IA32_SYS_STUBx(x, name, __VA_ARGS__)				\
- 	static long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
- 	{								\
--		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
-+		long ret = __KAPI_DO_SYS(name)(__MAP(x,__SC_CAST,__VA_ARGS__));\
- 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
- 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
- 		return ret;						\
-diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
-index b2988aa12f664..b754fa182a6a3 100644
---- a/include/asm-generic/vmlinux.lds.h
-+++ b/include/asm-generic/vmlinux.lds.h
-@@ -296,6 +296,19 @@
- #define TRACE_SYSCALLS()
- #endif
++   Userspace errno is affected when this option is on. For syscalls that
++   violate their parameter specification, KAPI short-circuits the call and
++   returns ``-EINVAL`` from the validator **before** the real handler runs.
++   That errno can differ from what the real handler would have produced for
++   the same condition (for example, ``-ENOMEM`` from an allocation path or
++   ``-EFAULT`` from a deeper copy-in). ``CONFIG_KAPI_RUNTIME_CHECKS`` is a
++   debug-only option; do not enable it on production kernels or in
++   userspace-visible test environments where error-code fidelity matters.
++
+ Custom Validators
+ -----------------
  
-+#ifdef CONFIG_KAPI_SPEC
-+/*
-+ * .kapi_specs is an array of pointers (see DEFINE_KERNEL_API_SPEC()). Align
-+ * __start_kapi_specs to at least pointer alignment so that no padding
-+ * separates it from the first entry.
-+ */
-+#define KAPI_SPECS()							\
-+	. = ALIGN(8);							\
-+	BOUNDED_SECTION_BY(.kapi_specs, _kapi_specs)
-+#else
-+#define KAPI_SPECS()
-+#endif
+diff --git a/Makefile b/Makefile
+index 7c855e6fe5448..fd7917f78fa45 100644
+--- a/Makefile
++++ b/Makefile
+@@ -2251,6 +2251,7 @@ clean: $(clean-dirs)
+ 		-o -name '*.ll' \
+ 		-o -name '*.gcno' \
+ 		-o -name '*.long-type-*.txt' \
++		-o -name '*.apispec.h' \
+ 		\) -type f -print \
+ 		-o -name '.tmp_*' -print \
+ 		| xargs rm -rf
+diff --git a/scripts/Makefile.build b/scripts/Makefile.build
+index 4349108e75e1f..6fa9ae47fb2c8 100644
+--- a/scripts/Makefile.build
++++ b/scripts/Makefile.build
+@@ -175,6 +175,32 @@ ifneq ($(KBUILD_EXTRA_WARN),)
+ endif
+ endif
+ 
++ifeq ($(CONFIG_KAPI_SPEC),y)
++# kernel-doc -apispec emits a spec only for comments with two or more KAPI
++# sections; pick files with a contexts: (or context-flags:) line and one more
++# KAPI section.
++has-apispec = $(if $(strip $(1)),$(shell \
++	grep -lE '^[[:space:]]*\*[[:space:]]*(contexts|context-flags):' $(1) 2>/dev/null | \
++	xargs -r grep -lE '^[[:space:]]*\*[[:space:]]*(api-type|param|error|capability|signal|lock|state-trans|constraint|side-effect|long-desc):'))
++apispec-c-files := $(call has-apispec, \
++	$(patsubst $(obj)/%.o,$(src)/%.c, \
++		$(filter-out %/built-in.a,$(real-obj-y))))
++apispec-y := $(patsubst $(src)/%.c,$(obj)/%.apispec.h,$(apispec-c-files))
++always-y += $(apispec-y)
++targets += $(apispec-y)
 +
- #ifdef CONFIG_BPF_EVENTS
- #define BPF_RAW_TP() STRUCT_ALIGN();				\
- 	BOUNDED_SECTION_BY(__bpf_raw_tp_map, __bpf_raw_tp)
-@@ -485,6 +498,7 @@
- 		. = ALIGN(8);						\
- 		BOUNDED_SECTION_BY(__tracepoints_ptrs, ___tracepoints_ptrs) \
- 		*(__tracepoints_strings)/* Tracepoints: strings */	\
-+		KAPI_SPECS()						\
- 	}								\
- 									\
- 	.rodata1          : AT(ADDR(.rodata1) - LOAD_OFFSET) {		\
-diff --git a/include/linux/kapi_syscall.h b/include/linux/kapi_syscall.h
++quiet_cmd_apispec = APISPEC $@
++      cmd_apispec = PYTHONDONTWRITEBYTECODE=1 $(PYTHON3) $(KERNELDOC) -apispec \
++                    $(KDOCFLAGS) $< > $@
++
++$(obj)/%.apispec.h: $(src)/%.c $(KERNELDOC) \
++		$(wildcard $(srctree)/tools/lib/python/kdoc/*.py) FORCE
++	$(call if_changed,apispec)
++
++$(apispec-y:.apispec.h=.o): $(obj)/%.o: $(obj)/%.apispec.h
++$(apispec-y:.apispec.h=.o): private c_flags += -include $(obj)/$*.apispec.h
++endif
++
+ # Compile C sources (.c)
+ # ---------------------------------------------------------------------------
+ 
+diff --git a/tools/docs/kernel-doc b/tools/docs/kernel-doc
+index d9192c3f1645e..4c45c0d6cfa94 100755
+--- a/tools/docs/kernel-doc
++++ b/tools/docs/kernel-doc
+@@ -250,6 +250,8 @@ def main():
+                          help="Output reStructuredText format (default).")
+     out_fmt.add_argument("-N", "-none", "--none", action="store_true",
+                          help="Do not output documentation, only warnings.")
++    out_fmt.add_argument("-apispec", "--apispec", action="store_true",
++                         help="Output C macro invocations for kernel API specifications.")
+ 
+     out_fmt.add_argument("-y", "--yaml-file", "--yaml",
+                          help="Stores kernel-doc output on a yaml file.")
+@@ -326,6 +328,7 @@ def main():
+     #
+     from kdoc.kdoc_files import KernelFiles             # pylint: disable=C0415
+     from kdoc.kdoc_output import RestFormat, ManFormat  # pylint: disable=C0415
++    from kdoc.kdoc_apispec import ApiSpecFormat         # pylint: disable=C0415
+ 
+     yaml_content = set()
+     if args.yaml_file:
+@@ -351,12 +354,16 @@ def main():
+             out_style = None
+             n_outputs += 1
+ 
++        if args.apispec:
++            out_style = ApiSpecFormat()
++            n_outputs += 1
++
+         if  args.rst or n_outputs == 0:
+             n_outputs += 1
+             out_style = RestFormat()
+ 
+         if n_outputs > 1:
+-             parser.error("Those arguments are muttually exclusive: --man, --rst, --none, except when generating a YAML file.")
++             parser.error("Those arguments are muttually exclusive: --man, --rst, --none, --apispec, except when generating a YAML file.")
+ 
+         elif not n_outputs:
+             out_style = RestFormat()
+@@ -365,7 +372,8 @@ def main():
+                          yaml_file=args.yaml_file, yaml_content=yaml_content,
+                          out_style=out_style, werror=args.werror,
+                          wreturn=args.wreturn, wshort_desc=args.wshort_desc,
+-                         wcontents_before_sections=args.wcontents_before_sections)
++                         wcontents_before_sections=args.wcontents_before_sections,
++                         apispec=args.apispec)
+ 
+     kfiles.parse(args.files, export_file=args.export_file)
+ 
+diff --git a/tools/lib/python/kdoc/kdoc_apispec.py b/tools/lib/python/kdoc/kdoc_apispec.py
 new file mode 100644
-index 0000000000000..bc9387e0e052c
+index 0000000000000..fb8e243a7b77d
 --- /dev/null
-+++ b/include/linux/kapi_syscall.h
-@@ -0,0 +1,35 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
-+ *
-+ * Spec lookup and syscall validation entry points of the kernel API
-+ * specification framework, kept apart from <linux/kernel_api_spec.h> so that
-+ * <linux/syscalls.h> can declare them cheaply.
-+ */
-+
-+#ifndef _LINUX_KAPI_SYSCALL_H
-+#define _LINUX_KAPI_SYSCALL_H
-+
-+#include <linux/types.h>
-+
-+struct kernel_api_spec;
-+
-+const struct kernel_api_spec *kapi_get_spec(const char *name);
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+int kapi_validate_syscall_params(const struct kernel_api_spec *spec,
-+				 const s64 *params, int param_count);
-+int kapi_validate_syscall_return(const struct kernel_api_spec *spec, s64 retval);
-+#else
-+static inline int kapi_validate_syscall_params(const struct kernel_api_spec *spec,
-+					       const s64 *params, int param_count)
-+{
-+	return 0;
-+}
-+static inline int kapi_validate_syscall_return(const struct kernel_api_spec *spec, s64 retval)
-+{
-+	return 0;
-+}
-+#endif
-+
-+#endif /* _LINUX_KAPI_SYSCALL_H */
-diff --git a/include/linux/kernel_api_spec.h b/include/linux/kernel_api_spec.h
-new file mode 100644
-index 0000000000000..f72ef5cd73b38
---- /dev/null
-+++ b/include/linux/kernel_api_spec.h
-@@ -0,0 +1,1226 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
-+ *
-+ * kernel_api_spec.h - Kernel API Specification Framework
-+ *
-+ * Structures and macros for specifying kernel APIs in a human and
-+ * machine-readable form: parameters, return values, error conditions,
-+ * and constraints.
-+ */
-+
-+#ifndef _LINUX_KERNEL_API_SPEC_H
-+#define _LINUX_KERNEL_API_SPEC_H
-+
-+#include <linux/array_size.h>
-+#include <linux/bits.h>
-+#include <linux/compiler.h>
-+#include <linux/errno.h>
-+#include <linux/kapi_syscall.h>
-+#include <linux/kernel.h>
-+#include <linux/stringify.h>
-+#include <linux/types.h>
-+
-+struct sigaction;
-+
-+#define KAPI_MAX_PARAMS		16
-+#define KAPI_MAX_ERRORS		32
-+#define KAPI_MAX_CONSTRAINTS	32
-+#define KAPI_MAX_LOCKS		16
-+#define KAPI_MAX_SIGNALS	32
-+#define KAPI_MAX_NAME_LEN	128
-+#define KAPI_MAX_DESC_LEN	512
-+#define KAPI_MAX_CAPABILITIES	8
-+
-+/* Magic numbers for section validation (ASCII mnemonics) */
-+#define KAPI_MAGIC_PARAMS	0x4B415031	/* 'KAP1' */
-+#define KAPI_MAGIC_RETURN	0x4B415232	/* 'KAR2' */
-+#define KAPI_MAGIC_ERRORS	0x4B414533	/* 'KAE3' */
-+#define KAPI_MAGIC_LOCKS	0x4B414C34	/* 'KAL4' */
-+#define KAPI_MAGIC_CONSTRAINTS	0x4B414335	/* 'KAC5' */
-+#define KAPI_MAGIC_INFO		0x4B414936	/* 'KAI6' */
-+#define KAPI_MAGIC_SIGNALS	0x4B415337	/* 'KAS7' */
-+#define KAPI_MAGIC_SIGMASK	0x4B414D38	/* 'KAM8' */
-+#define KAPI_MAGIC_STRUCTS	0x4B415439	/* 'KAT9' */
-+#define KAPI_MAGIC_EFFECTS	0x4B414641	/* 'KAFA' */
-+#define KAPI_MAGIC_TRANS	0x4B415442	/* 'KATB' */
-+#define KAPI_MAGIC_CAPS		0x4B414343	/* 'KACC' */
-+
-+/**
-+ * enum kapi_param_type - Parameter type classification
-+ * @KAPI_TYPE_VOID: void type
-+ * @KAPI_TYPE_INT: Integer types (int, long, etc.)
-+ * @KAPI_TYPE_UINT: Unsigned integer types
-+ * @KAPI_TYPE_PTR: Pointer types
-+ * @KAPI_TYPE_STRUCT: Structure types
-+ * @KAPI_TYPE_UNION: Union types
-+ * @KAPI_TYPE_ENUM: Enumeration types
-+ * @KAPI_TYPE_FUNC_PTR: Function pointer types
-+ * @KAPI_TYPE_ARRAY: Array types
-+ * @KAPI_TYPE_FD: File descriptor - range-checked only
-+ * @KAPI_TYPE_USER_PTR: User space pointer - validated for access and size
-+ * @KAPI_TYPE_PATH: Pathname - validated for access and path limits
-+ * @KAPI_TYPE_CUSTOM: Custom/complex types
-+ */
-+enum kapi_param_type {
-+	KAPI_TYPE_VOID = 0,
-+	KAPI_TYPE_INT,
-+	KAPI_TYPE_UINT,
-+	KAPI_TYPE_PTR,
-+	KAPI_TYPE_STRUCT,
-+	KAPI_TYPE_UNION,
-+	KAPI_TYPE_ENUM,
-+	KAPI_TYPE_FUNC_PTR,
-+	KAPI_TYPE_ARRAY,
-+	KAPI_TYPE_FD,		/* File descriptor - range-checked only */
-+	KAPI_TYPE_USER_PTR,	/* User space pointer - validated for access and size */
-+	KAPI_TYPE_PATH,		/* Pathname - validated for access and path limits */
-+	KAPI_TYPE_CUSTOM,
-+};
-+
-+/**
-+ * enum kapi_param_flags - Parameter attribute flags
-+ * @KAPI_PARAM_IN: Input parameter
-+ * @KAPI_PARAM_OUT: Output parameter
-+ * @KAPI_PARAM_INOUT: Input/output parameter
-+ * @KAPI_PARAM_OPTIONAL: Optional parameter (can be NULL)
-+ * @KAPI_PARAM_CONST: Const qualified parameter
-+ * @KAPI_PARAM_VOLATILE: Volatile qualified parameter
-+ * @KAPI_PARAM_USER: User space pointer
-+ * @KAPI_PARAM_DMA: DMA-capable memory required
-+ * @KAPI_PARAM_ALIGNED: Alignment requirements
-+ */
-+enum kapi_param_flags {
-+	KAPI_PARAM_IN		= (1 << 0),
-+	KAPI_PARAM_OUT		= (1 << 1),
-+	KAPI_PARAM_INOUT	= (KAPI_PARAM_IN | KAPI_PARAM_OUT),
-+	KAPI_PARAM_OPTIONAL	= (1 << 3),
-+	KAPI_PARAM_CONST	= (1 << 4),
-+	KAPI_PARAM_VOLATILE	= (1 << 5),
-+	KAPI_PARAM_USER		= (1 << 6),
-+	KAPI_PARAM_DMA		= (1 << 7),
-+	KAPI_PARAM_ALIGNED	= (1 << 8),
-+};
-+
-+/**
-+ * enum kapi_context_flags - Function execution context flags
-+ * @KAPI_CTX_PROCESS: Can be called from process context
-+ * @KAPI_CTX_SOFTIRQ: Can be called from softirq context
-+ * @KAPI_CTX_HARDIRQ: Can be called from hardirq context
-+ * @KAPI_CTX_NMI: Can be called from NMI context
-+ * @KAPI_CTX_ATOMIC: Must be called in atomic context
-+ * @KAPI_CTX_SLEEPABLE: May sleep
-+ * @KAPI_CTX_PREEMPT_DISABLED: Requires preemption disabled
-+ * @KAPI_CTX_IRQ_DISABLED: Requires interrupts disabled
-+ */
-+enum kapi_context_flags {
-+	KAPI_CTX_PROCESS	= (1 << 0),
-+	KAPI_CTX_SOFTIRQ	= (1 << 1),
-+	KAPI_CTX_HARDIRQ	= (1 << 2),
-+	KAPI_CTX_NMI		= (1 << 3),
-+	KAPI_CTX_ATOMIC		= (1 << 4),
-+	KAPI_CTX_SLEEPABLE	= (1 << 5),
-+	KAPI_CTX_PREEMPT_DISABLED = (1 << 6),
-+	KAPI_CTX_IRQ_DISABLED	= (1 << 7),
-+};
-+
-+/**
-+ * enum kapi_lock_type - Lock types used/required by the function
-+ * @KAPI_LOCK_NONE: No locking requirements
-+ * @KAPI_LOCK_MUTEX: Mutex lock
-+ * @KAPI_LOCK_SPINLOCK: Spinlock
-+ * @KAPI_LOCK_RWLOCK: Read-write lock
-+ * @KAPI_LOCK_SEQLOCK: Sequence lock
-+ * @KAPI_LOCK_RCU: RCU lock
-+ * @KAPI_LOCK_SEMAPHORE: Semaphore
-+ * @KAPI_LOCK_CUSTOM: Custom locking mechanism
-+ */
-+enum kapi_lock_type {
-+	KAPI_LOCK_NONE = 0,
-+	KAPI_LOCK_MUTEX,
-+	KAPI_LOCK_SPINLOCK,
-+	KAPI_LOCK_RWLOCK,
-+	KAPI_LOCK_SEQLOCK,
-+	KAPI_LOCK_RCU,
-+	KAPI_LOCK_SEMAPHORE,
-+	KAPI_LOCK_CUSTOM,
-+};
-+
-+/**
-+ * enum kapi_constraint_type - Types of parameter constraints
-+ * @KAPI_CONSTRAINT_NONE: No constraint
-+ * @KAPI_CONSTRAINT_RANGE: Numeric range constraint
-+ * @KAPI_CONSTRAINT_MASK: Bitmask constraint
-+ * @KAPI_CONSTRAINT_ENUM: Enumerated values constraint
-+ * @KAPI_CONSTRAINT_ALIGNMENT: Alignment constraint (must be aligned to specified boundary)
-+ * @KAPI_CONSTRAINT_POWER_OF_TWO: Value must be a power of two
-+ * @KAPI_CONSTRAINT_PAGE_ALIGNED: Value must be page-aligned
-+ * @KAPI_CONSTRAINT_NONZERO: Value must be non-zero
-+ * @KAPI_CONSTRAINT_USER_STRING: Userspace null-terminated string with length range
-+ * @KAPI_CONSTRAINT_USER_PATH: Userspace pathname string (validated for accessibility and PATH_MAX)
-+ * @KAPI_CONSTRAINT_USER_PTR: Userspace pointer (validated for accessibility and size)
-+ * @KAPI_CONSTRAINT_BUFFER: Userspace buffer pointer (validated by copy_to/from_user)
-+ * @KAPI_CONSTRAINT_CUSTOM: Custom validation function
-+ */
-+enum kapi_constraint_type {
-+	KAPI_CONSTRAINT_NONE = 0,
-+	KAPI_CONSTRAINT_RANGE,
-+	KAPI_CONSTRAINT_MASK,
-+	KAPI_CONSTRAINT_ENUM,
-+	KAPI_CONSTRAINT_ALIGNMENT,
-+	KAPI_CONSTRAINT_POWER_OF_TWO,
-+	KAPI_CONSTRAINT_PAGE_ALIGNED,
-+	KAPI_CONSTRAINT_NONZERO,
-+	KAPI_CONSTRAINT_USER_STRING,
-+	KAPI_CONSTRAINT_USER_PATH,
-+	KAPI_CONSTRAINT_USER_PTR,
-+	KAPI_CONSTRAINT_BUFFER,
-+	KAPI_CONSTRAINT_CUSTOM,
-+};
-+
-+/**
-+ * struct kapi_param_spec - Parameter specification
-+ * @name: Parameter name
-+ * @type_name: Type name as string
-+ * @type: Parameter type classification
-+ * @flags: Parameter attribute flags
-+ * @size: Size in bytes (for arrays/buffers)
-+ * @alignment: Required alignment
-+ * @min_value: Minimum valid value (for numeric types)
-+ * @max_value: Maximum valid value (for numeric types)
-+ * @valid_mask: Valid bits mask (for flag parameters)
-+ * @enum_values: Array of valid enumerated values
-+ * @enum_count: Number of valid enumerated values
-+ * @constraint_type: Type of constraint applied
-+ * @validate: Custom validation function
-+ * @description: Human-readable description
-+ * @constraints: Additional constraints description
-+ * @size_param_idx: 1-based index of the parameter that determines size,
-+ *                  or 0 if this parameter has a fixed size
-+ * @size_multiplier: Multiplier for size calculation (e.g., sizeof(struct))
-+ */
-+struct kapi_param_spec {
-+	const char *name;
-+	const char *type_name;
-+	enum kapi_param_type type;
-+	u32 flags;
-+	size_t size;
-+	size_t alignment;
-+	s64 min_value;
-+	s64 max_value;
-+	u64 valid_mask;
-+	const s64 *enum_values;
-+	u32 enum_count;
-+	enum kapi_constraint_type constraint_type;
-+	bool (*validate)(s64 value);
-+	const char *description;
-+	const char *constraints;
-+	int size_param_idx;	/* 1-based param index for dynamic size; 0 if N/A */
-+	size_t size_multiplier;	/* Size per unit (e.g., sizeof(struct epoll_event)) */
-+};
-+
-+/**
-+ * struct kapi_error_spec - Error condition specification
-+ * @error_code: Error code value
-+ * @name: Error code name (e.g., "EINVAL")
-+ * @condition: Condition that triggers this error
-+ * @description: Detailed error description
-+ */
-+struct kapi_error_spec {
-+	int error_code;
-+	const char *name;
-+	const char *condition;
-+	const char *description;
-+};
-+
-+/**
-+ * enum kapi_return_check_type - Return value check types
-+ * @KAPI_RETURN_EXACT: Success is an exact value
-+ * @KAPI_RETURN_RANGE: Success is within a range
-+ * @KAPI_RETURN_ERROR_CHECK: Success is when NOT in error list
-+ * @KAPI_RETURN_FD: Return value is a file descriptor (>= 0 is success)
-+ * @KAPI_RETURN_CUSTOM: Custom validation function
-+ * @KAPI_RETURN_NO_RETURN: Function does not return (e.g., exec on success)
-+ */
-+enum kapi_return_check_type {
-+	KAPI_RETURN_EXACT,
-+	KAPI_RETURN_RANGE,
-+	KAPI_RETURN_ERROR_CHECK,
-+	KAPI_RETURN_FD,
-+	KAPI_RETURN_CUSTOM,
-+	KAPI_RETURN_NO_RETURN,
-+};
-+
-+/**
-+ * struct kapi_return_spec - Return value specification
-+ * @type_name: Return type name
-+ * @type: Return type classification
-+ * @check_type: Type of success check to perform
-+ * @success_value: Exact value indicating success (for EXACT)
-+ * @success_min: Minimum success value (for RANGE)
-+ * @success_max: Maximum success value (for RANGE)
-+ * @error_values: Array of error values (for ERROR_CHECK)
-+ * @error_count: Number of error values
-+ * @is_success: Custom function to check success
-+ * @description: Return value description
-+ */
-+struct kapi_return_spec {
-+	const char *type_name;
-+	enum kapi_param_type type;
-+	enum kapi_return_check_type check_type;
-+	s64 success_value;
-+	s64 success_min;
-+	s64 success_max;
-+	const s64 *error_values;
-+	u32 error_count;
-+	bool (*is_success)(s64 retval);
-+	const char *description;
-+};
-+
-+/**
-+ * enum kapi_lock_scope - Lock acquisition/release scope
-+ * @KAPI_LOCK_INTERNAL: Lock is acquired and released within the function (common case)
-+ * @KAPI_LOCK_ACQUIRES: Function acquires lock but does not release it
-+ * @KAPI_LOCK_RELEASES: Function releases lock (must be held on entry)
-+ * @KAPI_LOCK_CALLER_HELD: Lock must be held by caller throughout the call
-+ */
-+enum kapi_lock_scope {
-+	KAPI_LOCK_INTERNAL = 0,
-+	KAPI_LOCK_ACQUIRES,
-+	KAPI_LOCK_RELEASES,
-+	KAPI_LOCK_CALLER_HELD,
-+};
-+
-+/**
-+ * struct kapi_lock_spec - Lock requirement specification
-+ * @lock_name: Name of the lock
-+ * @lock_type: Type of lock
-+ * @scope: Lock scope (internal, acquires, releases, or caller-held)
-+ * @description: Additional lock requirements
-+ */
-+struct kapi_lock_spec {
-+	const char *lock_name;
-+	enum kapi_lock_type lock_type;
-+	enum kapi_lock_scope scope;
-+	const char *description;
-+};
-+
-+/**
-+ * struct kapi_constraint_spec - Additional constraint specification
-+ * @name: Constraint name
-+ * @description: Constraint description
-+ * @expression: Formal expression (if applicable)
-+ */
-+struct kapi_constraint_spec {
-+	const char *name;
-+	const char *description;
-+	const char *expression;
-+};
-+
-+/**
-+ * enum kapi_signal_direction - Signal flow direction
-+ * @KAPI_SIGNAL_RECEIVE: Function may receive this signal
-+ * @KAPI_SIGNAL_SEND: Function may send this signal
-+ * @KAPI_SIGNAL_HANDLE: Function handles this signal specially
-+ * @KAPI_SIGNAL_BLOCK: Function blocks this signal
-+ * @KAPI_SIGNAL_IGNORE: Function ignores this signal
-+ */
-+enum kapi_signal_direction {
-+	KAPI_SIGNAL_RECEIVE	= (1 << 0),
-+	KAPI_SIGNAL_SEND	= (1 << 1),
-+	KAPI_SIGNAL_HANDLE	= (1 << 2),
-+	KAPI_SIGNAL_BLOCK	= (1 << 3),
-+	KAPI_SIGNAL_IGNORE	= (1 << 4),
-+};
-+
-+/**
-+ * enum kapi_signal_action - What the function does with the signal
-+ * @KAPI_SIGNAL_ACTION_DEFAULT: Default signal action applies
-+ * @KAPI_SIGNAL_ACTION_TERMINATE: Causes termination
-+ * @KAPI_SIGNAL_ACTION_COREDUMP: Causes termination with core dump
-+ * @KAPI_SIGNAL_ACTION_STOP: Stops the process
-+ * @KAPI_SIGNAL_ACTION_CONTINUE: Continues a stopped process
-+ * @KAPI_SIGNAL_ACTION_CUSTOM: Custom handling described in notes
-+ * @KAPI_SIGNAL_ACTION_RETURN: Returns from syscall with EINTR
-+ * @KAPI_SIGNAL_ACTION_RESTART: Restarts the syscall
-+ * @KAPI_SIGNAL_ACTION_QUEUE: Queues the signal for later delivery
-+ * @KAPI_SIGNAL_ACTION_DISCARD: Discards the signal
-+ * @KAPI_SIGNAL_ACTION_TRANSFORM: Transforms to another signal
-+ */
-+enum kapi_signal_action {
-+	KAPI_SIGNAL_ACTION_DEFAULT = 0,
-+	KAPI_SIGNAL_ACTION_TERMINATE,
-+	KAPI_SIGNAL_ACTION_COREDUMP,
-+	KAPI_SIGNAL_ACTION_STOP,
-+	KAPI_SIGNAL_ACTION_CONTINUE,
-+	KAPI_SIGNAL_ACTION_CUSTOM,
-+	KAPI_SIGNAL_ACTION_RETURN,
-+	KAPI_SIGNAL_ACTION_RESTART,
-+	KAPI_SIGNAL_ACTION_QUEUE,
-+	KAPI_SIGNAL_ACTION_DISCARD,
-+	KAPI_SIGNAL_ACTION_TRANSFORM,
-+};
-+
-+/**
-+ * struct kapi_signal_spec - Signal specification
-+ * @signal_num: Signal number (e.g., SIGKILL, SIGTERM)
-+ * @signal_name: Signal name as string
-+ * @direction: Direction flags (OR of kapi_signal_direction)
-+ * @action: What happens when signal is received
-+ * @target: Description of target process/thread for sent signals
-+ * @condition: Condition under which signal is sent/received/handled
-+ * @description: Detailed description of signal handling
-+ * @restartable: Whether syscall is restartable after this signal
-+ * @sa_flags_required: Required signal action flags (SA_*)
-+ * @sa_flags_forbidden: Forbidden signal action flags
-+ * @error_on_signal: Error code returned when signal occurs (-EINTR, etc)
-+ * @transform_to: Signal number to transform to (if action is TRANSFORM)
-+ * @timing: When signal can occur ("entry", "during", "exit", "anytime")
-+ * @priority: Signal handling priority (lower processed first)
-+ * @interruptible: Whether this operation is interruptible by this signal
-+ * @queue_behavior: How signal is queued ("realtime", "standard", "coalesce")
-+ * @state_required: Required process state for signal to be delivered
-+ * @state_forbidden: Forbidden process state for signal delivery
-+ */
-+struct kapi_signal_spec {
-+	int signal_num;
-+	const char *signal_name;
-+	u32 direction;
-+	enum kapi_signal_action action;
-+	const char *target;
-+	const char *condition;
-+	const char *description;
-+	bool restartable;
-+	u32 sa_flags_required;
-+	u32 sa_flags_forbidden;
-+	int error_on_signal;
-+	int transform_to;
-+	const char *timing;
-+	u8 priority;
-+	bool interruptible;
-+	const char *queue_behavior;
-+	u32 state_required;
-+	u32 state_forbidden;
-+};
-+
-+/**
-+ * struct kapi_signal_mask_spec - Signal mask specification
-+ * @mask_name: Name of the signal mask
-+ * @signals: Array of signal numbers in the mask
-+ * @signal_count: Number of signals in the mask
-+ * @description: Description of what this mask represents
-+ */
-+struct kapi_signal_mask_spec {
-+	const char *mask_name;
-+	int signals[KAPI_MAX_SIGNALS];
-+	u32 signal_count;
-+	const char *description;
-+};
-+
-+/**
-+ * struct kapi_struct_field - Structure field specification
-+ * @name: Field name
-+ * @type: Field type classification
-+ * @type_name: Type name as string
-+ * @offset: Offset within structure
-+ * @size: Size of field in bytes
-+ * @flags: Field attribute flags
-+ * @constraint_type: Type of constraint applied
-+ * @min_value: Minimum valid value (for numeric types)
-+ * @max_value: Maximum valid value (for numeric types)
-+ * @valid_mask: Valid bits mask (for flag fields)
-+ * @enum_values: Comma-separated list of valid enum values (for enum types)
-+ * @description: Field description
-+ */
-+struct kapi_struct_field {
-+	const char *name;
-+	enum kapi_param_type type;
-+	const char *type_name;
-+	size_t offset;
-+	size_t size;
-+	u32 flags;
-+	enum kapi_constraint_type constraint_type;
-+	s64 min_value;
-+	s64 max_value;
-+	u64 valid_mask;
-+	const char *enum_values;	/* Comma-separated list of valid enum values */
-+	const char *description;
-+};
-+
-+/**
-+ * struct kapi_struct_spec - Structure type specification
-+ * @name: Structure name
-+ * @size: Total size of structure
-+ * @alignment: Required alignment
-+ * @field_count: Number of fields
-+ * @fields: Field specifications
-+ * @description: Structure description
-+ */
-+struct kapi_struct_spec {
-+	const char *name;
-+	size_t size;
-+	size_t alignment;
-+	u32 field_count;
-+	struct kapi_struct_field fields[KAPI_MAX_PARAMS];
-+	const char *description;
-+};
-+
-+/**
-+ * enum kapi_capability_action - What the capability allows
-+ * @KAPI_CAP_BYPASS_CHECK: Bypasses a check entirely
-+ * @KAPI_CAP_INCREASE_LIMIT: Increases or removes a limit
-+ * @KAPI_CAP_OVERRIDE_RESTRICTION: Overrides a restriction
-+ * @KAPI_CAP_GRANT_PERMISSION: Grants permission that would otherwise be denied
-+ * @KAPI_CAP_MODIFY_BEHAVIOR: Changes the behavior of the operation
-+ * @KAPI_CAP_ACCESS_RESOURCE: Allows access to restricted resources
-+ * @KAPI_CAP_PERFORM_OPERATION: Allows performing a privileged operation
-+ */
-+enum kapi_capability_action {
-+	KAPI_CAP_BYPASS_CHECK = 0,
-+	KAPI_CAP_INCREASE_LIMIT,
-+	KAPI_CAP_OVERRIDE_RESTRICTION,
-+	KAPI_CAP_GRANT_PERMISSION,
-+	KAPI_CAP_MODIFY_BEHAVIOR,
-+	KAPI_CAP_ACCESS_RESOURCE,
-+	KAPI_CAP_PERFORM_OPERATION,
-+};
-+
-+/**
-+ * struct kapi_capability_spec - Capability requirement specification
-+ * @capability: The capability constant (e.g., CAP_IPC_LOCK)
-+ * @cap_name: Capability name as string
-+ * @action: What the capability allows (kapi_capability_action)
-+ * @allows: Description of what the capability allows
-+ * @without_cap: What happens without the capability
-+ * @check_condition: Condition when capability is checked
-+ * @priority: Check priority (lower checked first)
-+ * @alternative: Alternative capabilities that can be used
-+ * @alternative_count: Number of alternative capabilities
-+ */
-+struct kapi_capability_spec {
-+	int capability;
-+	const char *cap_name;
-+	enum kapi_capability_action action;
-+	const char *allows;
-+	const char *without_cap;
-+	const char *check_condition;
-+	u8 priority;
-+	int alternative[KAPI_MAX_CAPABILITIES];
-+	u32 alternative_count;
-+};
-+
-+/**
-+ * enum kapi_side_effect_type - Types of side effects
-+ * @KAPI_EFFECT_NONE: No side effects
-+ * @KAPI_EFFECT_ALLOC_MEMORY: Allocates memory
-+ * @KAPI_EFFECT_FREE_MEMORY: Frees memory
-+ * @KAPI_EFFECT_MODIFY_STATE: Modifies global/shared state
-+ * @KAPI_EFFECT_SIGNAL_SEND: Sends signals
-+ * @KAPI_EFFECT_FILE_POSITION: Modifies file position
-+ * @KAPI_EFFECT_LOCK_ACQUIRE: Acquires locks
-+ * @KAPI_EFFECT_LOCK_RELEASE: Releases locks
-+ * @KAPI_EFFECT_RESOURCE_CREATE: Creates system resources (FDs, PIDs, etc)
-+ * @KAPI_EFFECT_RESOURCE_DESTROY: Destroys system resources
-+ * @KAPI_EFFECT_SCHEDULE: May cause scheduling/context switch
-+ * @KAPI_EFFECT_HARDWARE: Interacts with hardware
-+ * @KAPI_EFFECT_NETWORK: Network I/O operation
-+ * @KAPI_EFFECT_FILESYSTEM: Filesystem modification
-+ * @KAPI_EFFECT_PROCESS_STATE: Modifies process state
-+ * @KAPI_EFFECT_IRREVERSIBLE: Effect cannot be undone
-+ */
-+enum kapi_side_effect_type {
-+	KAPI_EFFECT_NONE = 0,
-+	KAPI_EFFECT_ALLOC_MEMORY = (1 << 0),
-+	KAPI_EFFECT_FREE_MEMORY = (1 << 1),
-+	KAPI_EFFECT_MODIFY_STATE = (1 << 2),
-+	KAPI_EFFECT_SIGNAL_SEND = (1 << 3),
-+	KAPI_EFFECT_FILE_POSITION = (1 << 4),
-+	KAPI_EFFECT_LOCK_ACQUIRE = (1 << 5),
-+	KAPI_EFFECT_LOCK_RELEASE = (1 << 6),
-+	KAPI_EFFECT_RESOURCE_CREATE = (1 << 7),
-+	KAPI_EFFECT_RESOURCE_DESTROY = (1 << 8),
-+	KAPI_EFFECT_SCHEDULE = (1 << 9),
-+	KAPI_EFFECT_HARDWARE = (1 << 10),
-+	KAPI_EFFECT_NETWORK = (1 << 11),
-+	KAPI_EFFECT_FILESYSTEM = (1 << 12),
-+	KAPI_EFFECT_PROCESS_STATE = (1 << 13),
-+	KAPI_EFFECT_IRREVERSIBLE = (1 << 14),
-+};
-+
-+/**
-+ * struct kapi_side_effect - Side effect specification
-+ * @type: Bitmask of effect types
-+ * @target: What is affected (e.g., "process memory", "file descriptor table")
-+ * @condition: Condition under which effect occurs
-+ * @description: Detailed description of the effect
-+ * @reversible: Whether the effect can be undone
-+ */
-+struct kapi_side_effect {
-+	u32 type;
-+	const char *target;
-+	const char *condition;
-+	const char *description;
-+	bool reversible;
-+};
-+
-+/**
-+ * struct kapi_state_transition - State transition specification
-+ * @from_state: Starting state description
-+ * @to_state: Ending state description
-+ * @condition: Condition for transition
-+ * @object: Object whose state changes
-+ * @description: Detailed description
-+ */
-+struct kapi_state_transition {
-+	const char *from_state;
-+	const char *to_state;
-+	const char *condition;
-+	const char *object;
-+	const char *description;
-+};
-+
-+#define KAPI_MAX_STRUCT_SPECS	8
-+#define KAPI_MAX_SIDE_EFFECTS	32
-+#define KAPI_MAX_STATE_TRANS	8
-+
-+/**
-+ * struct kernel_api_spec - Complete kernel API specification
-+ * @name: Function name
-+ * @version: API version
-+ * @description: Brief description
-+ * @long_description: Detailed description
-+ * @context_flags: Execution context flags
-+ * @param_count: Number of parameters
-+ * @params: Parameter specifications
-+ * @return_spec: Return value specification
-+ * @error_count: Number of possible errors
-+ * @errors: Error specifications
-+ * @lock_count: Number of lock specifications
-+ * @locks: Lock requirement specifications
-+ * @constraint_count: Number of additional constraints
-+ * @constraints: Additional constraint specifications
-+ * @examples: Usage examples
-+ * @notes: Additional notes
-+ * @signal_count: Number of signal specifications
-+ * @signals: Signal handling specifications
-+ * @signal_mask_count: Number of signal mask specifications
-+ * @signal_masks: Signal mask specifications
-+ * @struct_spec_count: Number of structure specifications
-+ * @struct_specs: Structure type specifications
-+ * @side_effect_count: Number of side effect specifications
-+ * @side_effects: Side effect specifications
-+ * @state_trans_count: Number of state transition specifications
-+ * @state_transitions: State transition specifications
-+ * @capability_count: Number of required capabilities
-+ * @capabilities: Required capability specifications
-+ * @param_magic: Magic value marking the start of the params array
-+ * @return_magic: Magic value marking the return spec
-+ * @error_magic: Magic value marking the start of the errors array
-+ * @lock_magic: Magic value marking the start of the locks array
-+ * @constraint_magic: Magic value marking the constraints array
-+ * @info_magic: Magic value marking the info block (examples, notes)
-+ * @signal_magic: Magic value marking the start of the signals array
-+ * @sigmask_magic: Magic value marking the signal masks array
-+ * @struct_magic: Magic value marking the struct specs array
-+ * @effect_magic: Magic value marking the side effects array
-+ * @trans_magic: Magic value marking the state transitions array
-+ * @cap_magic: Magic value marking the capabilities array
-+ */
-+struct kernel_api_spec {
-+	const char *name;
-+	u32 version;
-+	const char *description;
-+	const char *long_description;
-+	u32 context_flags;
-+
-+	/* Parameters */
-+	u32 param_magic;  /* 0x4B415031 = 'KAP1' */
-+	u32 param_count;
-+	struct kapi_param_spec params[KAPI_MAX_PARAMS];
-+
-+	/* Return value */
-+	u32 return_magic; /* 0x4B415232 = 'KAR2' */
-+	struct kapi_return_spec return_spec;
-+
-+	/* Errors */
-+	u32 error_magic;  /* 0x4B414533 = 'KAE3' */
-+	u32 error_count;
-+	struct kapi_error_spec errors[KAPI_MAX_ERRORS];
-+
-+	/* Locking */
-+	u32 lock_magic;   /* 0x4B414C34 = 'KAL4' */
-+	u32 lock_count;
-+	struct kapi_lock_spec locks[KAPI_MAX_LOCKS];
-+
-+	/* Constraints */
-+	u32 constraint_magic; /* 0x4B414335 = 'KAC5' */
-+	u32 constraint_count;
-+	struct kapi_constraint_spec constraints[KAPI_MAX_CONSTRAINTS];
-+
-+	/* Additional information */
-+	u32 info_magic;   /* 0x4B414936 = 'KAI6' */
-+	const char *examples;
-+	const char *notes;
-+
-+	/* Signal specifications */
-+	u32 signal_magic; /* 0x4B415337 = 'KAS7' */
-+	u32 signal_count;
-+	struct kapi_signal_spec signals[KAPI_MAX_SIGNALS];
-+
-+	/* Signal mask specifications */
-+	u32 sigmask_magic; /* 0x4B414D38 = 'KAM8' */
-+	u32 signal_mask_count;
-+	struct kapi_signal_mask_spec signal_masks[KAPI_MAX_SIGNALS];
-+
-+	/* Structure specifications */
-+	u32 struct_magic; /* 0x4B415439 = 'KAT9' */
-+	u32 struct_spec_count;
-+	struct kapi_struct_spec struct_specs[KAPI_MAX_STRUCT_SPECS];
-+
-+	/* Side effects */
-+	u32 effect_magic; /* 0x4B414641 = 'KAFA' */
-+	u32 side_effect_count;
-+	struct kapi_side_effect side_effects[KAPI_MAX_SIDE_EFFECTS];
-+
-+	/* State transitions */
-+	u32 trans_magic;  /* 0x4B415442 = 'KATB' */
-+	u32 state_trans_count;
-+	struct kapi_state_transition state_transitions[KAPI_MAX_STATE_TRANS];
-+
-+	/* Capability specifications */
-+	u32 cap_magic;    /* 0x4B414343 = 'KACC' */
-+	u32 capability_count;
-+	struct kapi_capability_spec capabilities[KAPI_MAX_CAPABILITIES];
-+};
-+
-+/* Macros for defining API specifications */
-+
-+/**
-+ * DEFINE_KERNEL_API_SPEC - Define a kernel API specification
-+ * @func_name: Function name to specify
-+ *
-+ * The ``.kapi_specs`` section holds an array of pointers to
-+ * fully-defined ``kernel_api_spec`` instances, tightly packed so
-+ * iteration ``for (pp = __start_kapi_specs; pp < __stop_kapi_specs;
-+ * pp++)`` advances by one pointer each step regardless of the real
-+ * spec struct size.
-+ */
-+#define DEFINE_KERNEL_API_SPEC(func_name)					\
-+	extern const struct kernel_api_spec __kapi_spec_##func_name;		\
-+	static const struct kernel_api_spec * const				\
-+	__kapi_spec_ptr_##func_name __used __section(".kapi_specs") =		\
-+		&__kapi_spec_##func_name;					\
-+	const struct kernel_api_spec __kapi_spec_##func_name = {		\
-+		.name = __stringify(func_name),					\
-+		.version = 1,
-+
-+/**
-+ * KAPI_DESCRIPTION - Set API description
-+ * @desc: Description string
-+ */
-+#define KAPI_DESCRIPTION(desc) \
-+	.description = desc,
-+
-+/**
-+ * KAPI_LONG_DESC - Set detailed API description
-+ * @desc: Detailed description string
-+ */
-+#define KAPI_LONG_DESC(desc) \
-+	.long_description = desc,
-+
-+/**
-+ * KAPI_CONTEXT - Set execution context flags
-+ * @flags: Context flags (OR'ed KAPI_CTX_* values)
-+ */
-+#define KAPI_CONTEXT(flags) \
-+	.context_flags = flags,
-+
-+/**
-+ * KAPI_PARAM - Define a parameter specification
-+ * @idx: Parameter index (0-based)
-+ * @pname: Parameter name
-+ * @ptype: Type name string
-+ * @pdesc: Parameter description
-+ */
-+#define KAPI_PARAM(idx, pname, ptype, pdesc) \
-+	.params[idx] = {			\
-+		.name = pname,			\
-+		.type_name = ptype,		\
-+		.description = pdesc,
-+
-+#define KAPI_PARAM_TYPE(ptype) \
-+		.type = ptype,
-+
-+#define KAPI_PARAM_FLAGS(pflags) \
-+		.flags = pflags,
-+
-+#define KAPI_PARAM_SIZE(psize) \
-+		.size = psize,
-+
-+#define KAPI_PARAM_RANGE(pmin, pmax) \
-+		.min_value = pmin,	\
-+		.max_value = pmax,
-+
-+#define KAPI_PARAM_CONSTRAINT_TYPE(ctype) \
-+		.constraint_type = ctype,
-+
-+#define KAPI_PARAM_CONSTRAINT(desc) \
-+		.constraints = desc,
-+
-+#define KAPI_PARAM_VALID_MASK(mask) \
-+		.valid_mask = mask,
-+
-+/**
-+ * KAPI_PARAM_ENUM_VALUES - Set the valid values of an enumerated parameter
-+ * @...: Variadic list of valid values
-+ */
-+#define KAPI_PARAM_ENUM_VALUES(...) \
-+		.enum_values = (const s64[]){ __VA_ARGS__ }, \
-+		.enum_count = sizeof((const s64[]){ __VA_ARGS__ }) / sizeof(s64),
-+
-+#define KAPI_PARAM_ALIGNMENT(align) \
-+		.alignment = align,
-+
-+/*
-+ * Store the 1-based parameter index so the zero-initialised default
-+ * (no dynamic sizing) remains distinguishable from "uses param 0".
-+ */
-+#define KAPI_PARAM_SIZE_PARAM(idx) \
-+		.size_param_idx = (idx) + 1,
-+
-+/**
-+ * KAPI_PARAM_COUNT - Set the number of parameters
-+ * @n: Number of parameters
-+ */
-+#define KAPI_PARAM_COUNT(n) \
-+	.param_magic = KAPI_MAGIC_PARAMS, \
-+	.param_count = n,
-+
-+/**
-+ * KAPI_RETURN - Define return value specification
-+ * @rtype: Return type name
-+ * @rdesc: Return value description
-+ */
-+#define KAPI_RETURN(rtype, rdesc) \
-+	.return_magic = KAPI_MAGIC_RETURN, \
-+	.return_spec = {		\
-+		.type_name = rtype,	\
-+		.description = rdesc,
-+
-+#define KAPI_RETURN_SUCCESS(val, ...) \
-+		.success_value = val,
-+
-+#define KAPI_RETURN_TYPE(rtype) \
-+		.type = rtype,
-+
-+#define KAPI_RETURN_CHECK_TYPE(ctype) \
-+		.check_type = ctype,
-+
-+#define KAPI_RETURN_ERROR_VALUES(values) \
-+		.error_values = values,
-+
-+#define KAPI_RETURN_ERROR_COUNT(count) \
-+		.error_count = count,
-+
-+#define KAPI_RETURN_SUCCESS_RANGE(min, max) \
-+		.success_min = min, \
-+		.success_max = max,
-+
-+/**
-+ * KAPI_ERROR - Define an error condition
-+ * @idx: Error index
-+ * @ecode: Error code value
-+ * @ename: Error name
-+ * @econd: Error condition
-+ * @edesc: Error description
-+ */
-+#define KAPI_ERROR(idx, ecode, ename, econd, edesc) \
-+	.errors[idx] = {			\
-+		.error_code = ecode,		\
-+		.name = ename,			\
-+		.condition = econd,		\
-+		.description = edesc,		\
-+	},
-+
-+/**
-+ * KAPI_ERROR_COUNT - Set the number of errors
-+ * @n: Number of errors
-+ */
-+#define KAPI_ERROR_COUNT(n) \
-+	.error_magic = KAPI_MAGIC_ERRORS, \
-+	.error_count = n,
-+
-+/**
-+ * KAPI_LOCK - Define a lock requirement
-+ * @idx: Lock index
-+ * @lname: Lock name
-+ * @ltype: Lock type
-+ */
-+#define KAPI_LOCK(idx, lname, ltype) \
-+	.locks[idx] = {			\
-+		.lock_name = lname,	\
-+		.lock_type = ltype,
-+
-+#define KAPI_LOCK_ACQUIRED \
-+		.scope = KAPI_LOCK_ACQUIRES,
-+
-+#define KAPI_LOCK_RELEASED \
-+		.scope = KAPI_LOCK_RELEASES,
-+
-+#define KAPI_LOCK_HELD_ENTRY \
-+		.scope = KAPI_LOCK_CALLER_HELD,
-+
-+#define KAPI_LOCK_HELD_EXIT \
-+		.scope = KAPI_LOCK_CALLER_HELD,
-+
-+#define KAPI_LOCK_DESC(ldesc) \
-+		.description = ldesc,
-+
-+/**
-+ * KAPI_CONSTRAINT - Define an additional constraint
-+ * @idx: Constraint index
-+ * @cname: Constraint name
-+ * @cdesc: Constraint description
-+ */
-+#define KAPI_CONSTRAINT(idx, cname, cdesc) \
-+	.constraints[idx] = {		\
-+		.name = cname,		\
-+		.description = cdesc,
-+
-+#define KAPI_CONSTRAINT_EXPR(expr) \
-+		.expression = expr,
-+
-+/**
-+ * KAPI_EXAMPLES - Set API usage examples
-+ * @ex: Examples string
-+ */
-+#define KAPI_EXAMPLES(ex) \
-+	.info_magic = KAPI_MAGIC_INFO, \
-+	.examples = ex,
-+
-+/**
-+ * KAPI_NOTES - Set API notes
-+ * @n: Notes string
-+ */
-+#define KAPI_NOTES(n) \
-+	.notes = n,
-+
-+
-+/**
-+ * KAPI_SIGNAL - Define a signal specification
-+ * @idx: Signal index
-+ * @signum: Signal number (e.g., SIGKILL)
-+ * @signame: Signal name string
-+ * @dir: Direction flags
-+ * @act: Action taken
-+ */
-+#define KAPI_SIGNAL(idx, signum, signame, dir, act) \
-+	.signals[idx] = {			\
-+		.signal_num = signum,		\
-+		.signal_name = signame,		\
-+		.direction = dir,		\
-+		.action = act,
-+
-+#define KAPI_SIGNAL_TARGET(tgt) \
-+		.target = tgt,
-+
-+#define KAPI_SIGNAL_CONDITION(cond) \
-+		.condition = cond,
-+
-+#define KAPI_SIGNAL_DESC(desc) \
-+		.description = desc,
-+
-+#define KAPI_SIGNAL_RESTARTABLE \
-+		.restartable = true,
-+
-+#define KAPI_SIGNAL_SA_FLAGS_REQ(flags) \
-+		.sa_flags_required = flags,
-+
-+#define KAPI_SIGNAL_SA_FLAGS_FORBID(flags) \
-+		.sa_flags_forbidden = flags,
-+
-+#define KAPI_SIGNAL_ERROR(err) \
-+		.error_on_signal = err,
-+
-+#define KAPI_SIGNAL_TRANSFORM(sig) \
-+		.transform_to = sig,
-+
-+#define KAPI_SIGNAL_TIMING(when) \
-+		.timing = when,
-+
-+#define KAPI_SIGNAL_PRIORITY(prio) \
-+		.priority = prio,
-+
-+#define KAPI_SIGNAL_INTERRUPTIBLE \
-+		.interruptible = true,
-+
-+#define KAPI_SIGNAL_QUEUE(behavior) \
-+		.queue_behavior = behavior,
-+
-+#define KAPI_SIGNAL_STATE_REQ(state) \
-+		.state_required = state,
-+
-+#define KAPI_SIGNAL_STATE_FORBID(state) \
-+		.state_forbidden = state,
-+
-+#define KAPI_SIGNAL_COUNT(n) \
-+	.signal_magic = KAPI_MAGIC_SIGNALS, \
-+	.signal_count = n,
-+
-+/**
-+ * KAPI_SIGNAL_MASK - Define a signal mask specification
-+ * @idx: Mask index
-+ * @name: Mask name
-+ * @desc: Mask description
-+ */
-+#define KAPI_SIGNAL_MASK(idx, name, desc) \
-+	.signal_masks[idx] = {		\
-+		.mask_name = name,	\
-+		.description = desc,
-+
-+/*
-+ * KAPI_SIGNAL_MASK_SIGNALS - Specify signals in a signal mask
-+ * @...: Variadic list of signal numbers
-+ *
-+ * Usage:
-+ *   KAPI_SIGNAL_MASK(0, "blocked", "Signals blocked during operation")
-+ *   KAPI_SIGNAL_MASK_SIGNALS(SIGINT, SIGTERM, SIGQUIT)
-+ *   },
-+ */
-+#define KAPI_SIGNAL_MASK_SIGNALS(...) \
-+		.signals = { __VA_ARGS__ }, \
-+		.signal_count = sizeof((int[]){ __VA_ARGS__ }) / sizeof(int),
-+
-+/**
-+ * KAPI_SIGNAL_MASK_COUNT - Set the number of signal mask specifications
-+ * @n: Number of signal masks
-+ */
-+#define KAPI_SIGNAL_MASK_COUNT(n) \
-+	.sigmask_magic = KAPI_MAGIC_SIGMASK, \
-+	.signal_mask_count = n,
-+
-+/**
-+ * KAPI_STRUCT_SPEC - Define a structure specification
-+ * @idx: Structure spec index
-+ * @sname: Structure name
-+ * @sdesc: Structure description
-+ */
-+#define KAPI_STRUCT_SPEC(idx, sname, sdesc) \
-+	.struct_specs[idx] = {		\
-+		.name = #sname,		\
-+		.description = sdesc,
-+
-+#define KAPI_STRUCT_SIZE(ssize, salign) \
-+		.size = ssize,		\
-+		.alignment = salign,
-+
-+#define KAPI_STRUCT_FIELD_COUNT(n) \
-+		.field_count = n,
-+
-+/**
-+ * KAPI_STRUCT_FIELD - Define a structure field
-+ * @fidx: Field index
-+ * @fname: Field name
-+ * @ftype: Field type (KAPI_TYPE_*)
-+ * @ftype_name: Type name as string
-+ * @fdesc: Field description
-+ */
-+#define KAPI_STRUCT_FIELD(fidx, fname, ftype, ftype_name, fdesc) \
-+		.fields[fidx] = {	\
-+			.name = fname,	\
-+			.type = ftype,	\
-+			.type_name = ftype_name, \
-+			.description = fdesc,
-+
-+#define KAPI_FIELD_OFFSET(foffset) \
-+			.offset = foffset,
-+
-+#define KAPI_FIELD_SIZE(fsize) \
-+			.size = fsize,
-+
-+#define KAPI_FIELD_FLAGS(fflags) \
-+			.flags = fflags,
-+
-+#define KAPI_FIELD_CONSTRAINT_RANGE(min, max) \
-+			.constraint_type = KAPI_CONSTRAINT_RANGE, \
-+			.min_value = min, \
-+			.max_value = max,
-+
-+#define KAPI_FIELD_CONSTRAINT_MASK(mask) \
-+			.constraint_type = KAPI_CONSTRAINT_MASK, \
-+			.valid_mask = mask,
-+
-+#define KAPI_FIELD_CONSTRAINT_ENUM(values) \
-+			.constraint_type = KAPI_CONSTRAINT_ENUM, \
-+			.enum_values = values,
-+
-+/* Counter for structure specifications */
-+#define KAPI_STRUCT_SPEC_COUNT(n) \
-+	.struct_magic = KAPI_MAGIC_STRUCTS, \
-+	.struct_spec_count = n,
-+
-+/* Additional lock-related macros */
-+#define KAPI_LOCK_COUNT(n) \
-+	.lock_magic = KAPI_MAGIC_LOCKS, \
-+	.lock_count = n,
-+
-+/**
-+ * KAPI_SIDE_EFFECT - Define a side effect
-+ * @idx: Side effect index
-+ * @etype: Effect type bitmask (OR'ed KAPI_EFFECT_* values)
-+ * @etarget: What is affected
-+ * @edesc: Effect description
-+ */
-+#define KAPI_SIDE_EFFECT(idx, etype, etarget, edesc) \
-+	.side_effects[idx] = {		\
-+		.type = etype,		\
-+		.target = etarget,	\
-+		.description = edesc,
-+
-+#define KAPI_EFFECT_CONDITION(cond) \
-+		.condition = cond,
-+
-+#define KAPI_EFFECT_REVERSIBLE \
-+		.reversible = true,
-+
-+/**
-+ * KAPI_STATE_TRANS - Define a state transition
-+ * @idx: State transition index
-+ * @obj: Object whose state changes
-+ * @from: From state
-+ * @to: To state
-+ * @desc: Transition description
-+ */
-+#define KAPI_STATE_TRANS(idx, obj, from, to, desc) \
-+	.state_transitions[idx] = {	\
-+		.object = obj,		\
-+		.from_state = from,	\
-+		.to_state = to,		\
-+		.description = desc,
-+
-+#define KAPI_STATE_TRANS_COND(cond) \
-+		.condition = cond,
-+
-+/* Counters for side effects and state transitions */
-+#define KAPI_SIDE_EFFECT_COUNT(n) \
-+	.effect_magic = KAPI_MAGIC_EFFECTS, \
-+	.side_effect_count = n,
-+
-+#define KAPI_STATE_TRANS_COUNT(n) \
-+	.trans_magic = KAPI_MAGIC_TRANS, \
-+	.state_trans_count = n,
-+
-+/* Helper macros for common side effect patterns */
-+#define KAPI_EFFECTS_MEMORY	(KAPI_EFFECT_ALLOC_MEMORY | KAPI_EFFECT_FREE_MEMORY)
-+#define KAPI_EFFECTS_LOCKING	(KAPI_EFFECT_LOCK_ACQUIRE | KAPI_EFFECT_LOCK_RELEASE)
-+#define KAPI_EFFECTS_RESOURCES	(KAPI_EFFECT_RESOURCE_CREATE | KAPI_EFFECT_RESOURCE_DESTROY)
-+#define KAPI_EFFECTS_IO		(KAPI_EFFECT_NETWORK | KAPI_EFFECT_FILESYSTEM)
-+
-+/* Common signal timing constants */
-+#define KAPI_SIGNAL_TIME_ENTRY		"entry"
-+#define KAPI_SIGNAL_TIME_DURING		"during"
-+#define KAPI_SIGNAL_TIME_EXIT		"exit"
-+#define KAPI_SIGNAL_TIME_ANYTIME	"anytime"
-+#define KAPI_SIGNAL_TIME_BLOCKING	"while_blocked"
-+#define KAPI_SIGNAL_TIME_SLEEPING	"while_sleeping"
-+#define KAPI_SIGNAL_TIME_BEFORE		"before"
-+#define KAPI_SIGNAL_TIME_AFTER		"after"
-+
-+/* Common signal queue behaviors */
-+#define KAPI_SIGNAL_QUEUE_STANDARD	"standard"
-+#define KAPI_SIGNAL_QUEUE_REALTIME	"realtime"
-+#define KAPI_SIGNAL_QUEUE_COALESCE	"coalesce"
-+#define KAPI_SIGNAL_QUEUE_REPLACE	"replace"
-+#define KAPI_SIGNAL_QUEUE_DISCARD	"discard"
-+
-+/* Process state flags for signal delivery */
-+#define KAPI_SIGNAL_STATE_RUNNING	BIT(0)
-+#define KAPI_SIGNAL_STATE_SLEEPING	BIT(1)
-+#define KAPI_SIGNAL_STATE_STOPPED	BIT(2)
-+#define KAPI_SIGNAL_STATE_TRACED	BIT(3)
-+#define KAPI_SIGNAL_STATE_ZOMBIE	BIT(4)
-+#define KAPI_SIGNAL_STATE_DEAD		BIT(5)
-+
-+/* Capability specification macros */
-+
-+/**
-+ * KAPI_CAPABILITY - Define a capability requirement
-+ * @idx: Capability index
-+ * @cap: Capability constant (e.g., CAP_IPC_LOCK)
-+ * @name: Capability name string
-+ * @act: Action type (kapi_capability_action)
-+ */
-+#define KAPI_CAPABILITY(idx, cap, name, act) \
-+	.capabilities[idx] = {		\
-+		.capability = cap,	\
-+		.cap_name = name,	\
-+		.action = act,
-+
-+#define KAPI_CAP_ALLOWS(desc) \
-+		.allows = desc,
-+
-+#define KAPI_CAP_WITHOUT(desc) \
-+		.without_cap = desc,
-+
-+#define KAPI_CAP_CONDITION(cond) \
-+		.check_condition = cond,
-+
-+#define KAPI_CAP_PRIORITY(prio) \
-+		.priority = prio,
-+
-+/*
-+ * KAPI_CAP_ALTERNATIVE - Capabilities that can be used instead
-+ * @...: Variadic list of capability numbers
-+ */
-+#define KAPI_CAP_ALTERNATIVE(...) \
-+		.alternative = { __VA_ARGS__ }, \
-+		.alternative_count = sizeof((int[]){ __VA_ARGS__ }) / sizeof(int),
-+
-+/* Counter for capability specifications */
-+#define KAPI_CAPABILITY_COUNT(n) \
-+	.cap_magic = KAPI_MAGIC_CAPS, \
-+	.capability_count = n,
-+
-+/* Validation and runtime checking */
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+bool kapi_validate_param(const struct kapi_param_spec *param_spec, s64 value);
-+bool kapi_validate_param_with_context(const struct kapi_param_spec *param_spec,
-+				       s64 value, const s64 *all_params, int param_count);
-+bool kapi_check_return_success(const struct kapi_return_spec *return_spec, s64 retval);
-+bool kapi_validate_return_value(const struct kernel_api_spec *spec, s64 retval);
-+void kapi_check_context(const struct kernel_api_spec *spec);
-+#else
-+static inline bool kapi_validate_param(const struct kapi_param_spec *param_spec, s64 value)
-+{
-+	return true;
-+}
-+static inline bool
-+kapi_validate_param_with_context(const struct kapi_param_spec *param_spec,
-+				 s64 value, const s64 *all_params, int param_count)
-+{
-+	return true;
-+}
-+static inline bool kapi_check_return_success(const struct kapi_return_spec *return_spec, s64 retval)
-+{
-+	return true;
-+}
-+static inline bool kapi_validate_return_value(const struct kernel_api_spec *spec, s64 retval)
-+{
-+	return true;
-+}
-+static inline void kapi_check_context(const struct kernel_api_spec *spec) {}
-+#endif
-+
-+/* Export/query functions */
-+int kapi_export_json(const struct kernel_api_spec *spec, char *buf, size_t size);
-+
-+/* Registration for dynamic APIs */
-+int kapi_register_spec(const struct kernel_api_spec *spec);
-+void kapi_unregister_spec(const char *name);
-+
-+#define KAPI_CONSTRAINT_COUNT(n) \
-+	.constraint_magic = KAPI_MAGIC_CONSTRAINTS, \
-+	.constraint_count = n,
-+
-+#endif /* _LINUX_KERNEL_API_SPEC_H */
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 8413b624ad478..b062bac9ea1ed 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -94,6 +94,10 @@ struct file_attr;
- #include <linux/personality.h>
- #include <trace/syscall.h>
- 
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+#include <linux/kapi_syscall.h>
-+#endif
-+
- #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
- /*
-  * It may be useful for an architecture to override the definitions of the
-@@ -237,6 +241,41 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
- 
- #define __PROTECT(...) asmlinkage_protect(__VA_ARGS__)
- 
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+/*
-+ * Convert integers as (s64)(a) does, and pointers through unsigned long so
-+ * they are not sign-extended on 32-bit. (unsigned long)(t)0 is an integer
-+ * constant expression only if t is an integer type.
-+ */
-+#define __SC_CAST_TO_S64(t, a)						\
-+	((__force s64)__builtin_choose_expr(				\
-+		__is_constexpr((__force unsigned long)(t)0),		\
-+		(a), (__force unsigned long)(a)))
-+
-+#define __KAPI_DO_SYS(name)	__do_kapi_sys##name
-+#define __KAPI_SYSCALL_DEFINEx(x, name, ...)				\
-+	static inline long __do_kapi_sys##name(__MAP(x, __SC_DECL, __VA_ARGS__)) \
-+	{								\
-+		const struct kernel_api_spec *__spec = kapi_get_spec("sys" #name); \
-+		long ret;						\
-+									\
-+		if (__spec) {						\
-+			s64 __params[x] = { __MAP(x, __SC_CAST_TO_S64, __VA_ARGS__) }; \
-+			int __ret = kapi_validate_syscall_params(__spec, __params, x); \
-+									\
-+			if (__ret)					\
-+				return __ret;				\
-+		}							\
-+		ret = __do_sys##name(__MAP(x, __SC_ARGS, __VA_ARGS__));	\
-+		if (__spec)						\
-+			kapi_validate_syscall_return(__spec, (s64)ret);	\
-+		return ret;						\
-+	}
-+#else
-+#define __KAPI_DO_SYS(name)	__do_sys##name
-+#define __KAPI_SYSCALL_DEFINEx(x, name, ...)
-+#endif
-+
- /*
-  * The asmlinkage stub is aliased to a function named __se_sys_*() which
-  * sign-extends 32-bit ints to longs whenever needed. The actual work is
-@@ -255,10 +294,11 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
- 		__attribute__((alias(__stringify(__se_sys##name))));	\
- 	ALLOW_ERROR_INJECTION(sys##name, ERRNO);			\
- 	static inline long __do_sys##name(__MAP(x,__SC_DECL,__VA_ARGS__));\
-+	__KAPI_SYSCALL_DEFINEx(x, name, __VA_ARGS__)			\
- 	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__));	\
- 	asmlinkage long __se_sys##name(__MAP(x,__SC_LONG,__VA_ARGS__))	\
- 	{								\
--		long ret = __do_sys##name(__MAP(x,__SC_CAST,__VA_ARGS__));\
-+		long ret = __KAPI_DO_SYS(name)(__MAP(x,__SC_CAST,__VA_ARGS__));\
- 		__MAP(x,__SC_TEST,__VA_ARGS__);				\
- 		__PROTECT(x, ret,__MAP(x,__SC_ARGS,__VA_ARGS__));	\
- 		return ret;						\
-diff --git a/init/Kconfig b/init/Kconfig
-index ad592fdf29af4..66c23c4147498 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -2306,6 +2306,8 @@ source "kernel/Kconfig.kexec"
- 
- source "kernel/liveupdate/Kconfig"
- 
-+source "kernel/api/Kconfig"
-+
- endmenu		# General setup
- 
- source "arch/Kconfig"
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 1e1a31673577d..7fd43127d5eee 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -59,6 +59,7 @@ obj-y += dma/
- obj-y += entry/
- obj-y += unwind/
- obj-$(CONFIG_MODULES) += module/
-+obj-$(CONFIG_KAPI_SPEC) += api/
- 
- obj-$(CONFIG_KCMP) += kcmp.o
- obj-$(CONFIG_FREEZER) += freezer.o
-diff --git a/kernel/api/Kconfig b/kernel/api/Kconfig
-new file mode 100644
-index 0000000000000..1cd55b252f0d5
---- /dev/null
-+++ b/kernel/api/Kconfig
-@@ -0,0 +1,54 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+#
-+# Kernel API Specification Framework Configuration
-+#
-+
-+config KAPI_SPEC
-+	bool "Kernel API Specification Framework"
-+	help
-+	  This option enables the kernel API specification framework,
-+	  which provides formal documentation of kernel APIs in both
-+	  human and machine-readable formats.
-+
-+	  The framework allows developers to document APIs inline with
-+	  their implementation, including parameter specifications,
-+	  return values, error conditions, locking requirements, and
-+	  execution context constraints.
-+
-+	  When enabled, API specifications can be queried at runtime
-+	  and exported in JSON format through debugfs.
-+
-+	  If unsure, say N.
-+
-+config KAPI_RUNTIME_CHECKS
-+	bool "Runtime API specification checks"
-+	depends on KAPI_SPEC
-+	depends on DEBUG_KERNEL
-+	# The hook is only in the generic and the x86 __SYSCALL_DEFINEx()
-+	depends on X86 || !ARCH_HAS_SYSCALL_WRAPPER
-+	help
-+	  Validate the arguments and the return value of system calls that
-+	  have an API specification, in their SYSCALL_DEFINEx() wrapper.
-+	  Violations are reported with pr_warn_ratelimited(). This adds
-+	  overhead to every system call.
-+
-+	  DEBUG-ONLY: Enabling this changes the errno seen by userspace for
-+	  syscalls that violate their parameter specification. On violation
-+	  the validator short-circuits the syscall and returns -EINVAL
-+	  before the real handler runs, masking whatever errno the handler
-+	  would otherwise have produced. Do not enable on production
-+	  kernels.
-+
-+	  If unsure, say N.
-+
-+config KAPI_KUNIT_TEST
-+	tristate "KUnit tests for KAPI framework" if !KUNIT_ALL_TESTS
-+	depends on KAPI_SPEC
-+	depends on KUNIT
-+	default KUNIT_ALL_TESTS
-+	help
-+	  KUnit tests for the Kernel API Specification Framework.
-+	  Tests registration, lookup, validation constraints, and
-+	  JSON export functionality.
-+
-+	  If unsure, say N.
-diff --git a/kernel/api/Makefile b/kernel/api/Makefile
-new file mode 100644
-index 0000000000000..6e14ca243980c
---- /dev/null
-+++ b/kernel/api/Makefile
-@@ -0,0 +1,10 @@
++++ b/tools/lib/python/kdoc/kdoc_apispec.py
+@@ -0,0 +1,1391 @@
++#!/usr/bin/env python3
 +# SPDX-License-Identifier: GPL-2.0
-+#
-+# Makefile for the Kernel API Specification Framework
-+#
-+
-+# Core API specification framework
-+obj-y				+= kernel_api_spec.o
-+
-+# KUnit tests
-+obj-$(CONFIG_KAPI_KUNIT_TEST) += kapi_kunit.o
-diff --git a/kernel/api/internal.h b/kernel/api/internal.h
-new file mode 100644
-index 0000000000000..b6112bcc2e8d0
---- /dev/null
-+++ b/kernel/api/internal.h
-@@ -0,0 +1,25 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
-+ *
-+ * Internal declarations shared by the KAPI core and its debugfs
-+ * interface. Not part of the public kernel API.
-+ */
-+
-+#ifndef _KERNEL_API_INTERNAL_H
-+#define _KERNEL_API_INTERNAL_H
-+
-+#include <linux/kernel_api_spec.h>
-+
-+/*
-+ * Section boundaries for the `.kapi_specs` array. Defined by the
-+ * linker script in include/asm-generic/vmlinux.lds.h.
-+ */
-+extern const struct kernel_api_spec * const __start_kapi_specs[];
-+extern const struct kernel_api_spec * const __stop_kapi_specs[];
-+
-+const char *kapi_param_type_to_string(enum kapi_param_type type);
-+const char *kapi_lock_type_to_string(enum kapi_lock_type type);
-+const char *kapi_lock_scope_to_string(enum kapi_lock_scope scope);
-+
-+#endif /* _KERNEL_API_INTERNAL_H */
-diff --git a/kernel/api/kapi_kunit.c b/kernel/api/kapi_kunit.c
-new file mode 100644
-index 0000000000000..4f6f874c33b86
---- /dev/null
-+++ b/kernel/api/kapi_kunit.c
-@@ -0,0 +1,720 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
-+ *
-+ * KUnit tests for the Kernel API Specification Framework
-+ *
-+ * Tests registration, lookup, validation, and JSON export functionality.
-+ */
-+
-+#include <kunit/test.h>
-+#include <linux/kernel_api_spec.h>
-+#include <linux/string.h>
-+#include <linux/slab.h>
-+#include <linux/capability.h>
-+#include <linux/mm.h>
-+#include <linux/signal.h>
-+#include <linux/uaccess.h>
-+
-+static void init_test_spec(struct kernel_api_spec *spec, const char *name)
-+{
-+	memset(spec, 0, sizeof(*spec));
-+	spec->name = name;
-+	spec->version = 1;
-+	spec->description = "Test API";
-+}
-+
-+/* kapi_register_spec with valid spec returns 0 */
-+static void test_register_valid(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	init_test_spec(spec, "test_register_valid");
-+
-+	ret = kapi_register_spec(spec);
-+	KUNIT_EXPECT_EQ(test, ret, 0);
-+
-+	kapi_unregister_spec("test_register_valid");
-+	kfree(spec);
-+}
-+
-+/* kapi_get_spec returns registered spec */
-+static void test_lookup_registered(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	const struct kernel_api_spec *found;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	init_test_spec(spec, "test_lookup_func");
-+
-+	ret = kapi_register_spec(spec);
-+	KUNIT_ASSERT_EQ(test, ret, 0);
-+
-+	found = kapi_get_spec("test_lookup_func");
-+	KUNIT_EXPECT_PTR_EQ(test, found, (const struct kernel_api_spec *)spec);
-+
-+	kapi_unregister_spec("test_lookup_func");
-+	kfree(spec);
-+}
-+
-+/* Double registration returns -EEXIST */
-+static void test_double_register(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	init_test_spec(spec, "test_double_reg");
-+
-+	ret = kapi_register_spec(spec);
-+	KUNIT_ASSERT_EQ(test, ret, 0);
-+
-+	ret = kapi_register_spec(spec);
-+	KUNIT_EXPECT_EQ(test, ret, -EEXIST);
-+
-+	kapi_unregister_spec("test_double_reg");
-+	kfree(spec);
-+}
-+
-+/* Unregister makes spec unfindable */
-+static void test_unregister(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	const struct kernel_api_spec *found;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	init_test_spec(spec, "test_unreg_func");
-+
-+	ret = kapi_register_spec(spec);
-+	KUNIT_ASSERT_EQ(test, ret, 0);
-+
-+	kapi_unregister_spec("test_unreg_func");
-+
-+	found = kapi_get_spec("test_unreg_func");
-+	KUNIT_EXPECT_NULL(test, found);
-+
-+	kfree(spec);
-+}
-+
-+/* kapi_get_spec(NULL) returns NULL */
-+static void test_get_spec_null(struct kunit *test)
-+{
-+	const struct kernel_api_spec *found;
-+
-+	found = kapi_get_spec(NULL);
-+	KUNIT_EXPECT_NULL(test, found);
-+}
-+
-+/* kapi_register_spec(NULL) returns -EINVAL */
-+static void test_register_null(struct kunit *test)
-+{
-+	int ret;
-+
-+	ret = kapi_register_spec(NULL);
-+	KUNIT_EXPECT_EQ(test, ret, -EINVAL);
-+}
-+
-+/* Spec with a NULL name is rejected */
-+static void test_register_null_name(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	/* spec->name == NULL after zero-init; registration rejects it. */
-+	ret = kapi_register_spec(spec);
-+	KUNIT_EXPECT_EQ(test, ret, -EINVAL);
-+
-+	kfree(spec);
-+}
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+
-+/* RANGE constraint - value in range is valid */
-+static void test_constraint_range_valid(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_param";
-+	param.constraint_type = KAPI_CONSTRAINT_RANGE;
-+	param.min_value = 0;
-+	param.max_value = 100;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 50));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 100));
-+
-+	param.min_value = -10;
-+	param.max_value = -1;
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, -10));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, -1));
-+
-+	/* An unsigned maximum such as U64_MAX reads as -1 */
-+	param.min_value = 0;
-+	param.max_value = (s64)U64_MAX;
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, S64_MAX));
-+}
-+
-+/* RANGE constraint - value out of range is invalid */
-+static void test_constraint_range_invalid(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_param";
-+	param.constraint_type = KAPI_CONSTRAINT_RANGE;
-+	param.min_value = 0;
-+	param.max_value = 100;
-+
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, -1));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 101));
-+
-+	param.min_value = -10;
-+	param.max_value = -1;
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, -11));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 5));
-+}
-+
-+/* MASK constraint - valid bits pass */
-+static void test_constraint_mask_valid(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_flags";
-+	param.constraint_type = KAPI_CONSTRAINT_MASK;
-+	param.valid_mask = 0xFF;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0x00));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0x0F));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0xFF));
-+}
-+
-+/* MASK constraint - extra bits fail */
-+static void test_constraint_mask_invalid(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_flags";
-+	param.constraint_type = KAPI_CONSTRAINT_MASK;
-+	param.valid_mask = 0xFF;
-+
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0x100));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0x1FF));
-+}
-+
-+/* POWER_OF_TWO constraint */
-+static void test_constraint_power_of_two(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_pot";
-+	param.constraint_type = KAPI_CONSTRAINT_POWER_OF_TWO;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 1));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 2));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 4));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 8));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 3));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 5));
-+}
-+
-+/* PAGE_ALIGNED constraint */
-+static void test_constraint_page_aligned(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_page";
-+	param.constraint_type = KAPI_CONSTRAINT_PAGE_ALIGNED;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, PAGE_SIZE));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 2 * PAGE_SIZE));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 1));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, PAGE_SIZE - 1));
-+}
-+
-+/* NONZERO constraint */
-+static void test_constraint_nonzero(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_nz";
-+	param.constraint_type = KAPI_CONSTRAINT_NONZERO;
-+
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 1));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, -1));
-+}
-+
-+/* Return value validation - success */
-+static void test_return_validation(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	spec->name = "test_ret";
-+	spec->return_magic = KAPI_MAGIC_RETURN;
-+	spec->return_spec.check_type = KAPI_RETURN_EXACT;
-+	spec->return_spec.success_value = 0;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, 0));
-+}
-+
-+/* Return value validation - known error */
-+static void test_return_known_error(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	spec->name = "test_ret_err";
-+	spec->return_magic = KAPI_MAGIC_RETURN;
-+	spec->return_spec.check_type = KAPI_RETURN_FD;
-+	spec->error_count = 1;
-+	spec->errors[0].error_code = -ENOENT;
-+	spec->errors[0].name = "ENOENT";
-+
-+	/* -ENOENT is in the error list, so it's valid */
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, -ENOENT));
-+}
-+
-+/* Return value validation - unknown error */
-+static void test_return_unknown_error(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	spec->name = "test_ret_unk";
-+	spec->return_magic = KAPI_MAGIC_RETURN;
-+	spec->return_spec.check_type = KAPI_RETURN_FD;
-+	spec->error_count = 1;
-+	spec->errors[0].error_code = -ENOENT;
-+	spec->errors[0].name = "ENOENT";
-+
-+	/* -EPERM is not in the error list, but unlisted errors are accepted
-+	 * since filesystem/device-specific errors may not be exhaustively listed
-+	 */
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, -EPERM));
-+}
-+
-+/* ALIGNMENT constraint */
-+static void test_constraint_alignment(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_align";
-+	param.constraint_type = KAPI_CONSTRAINT_ALIGNMENT;
-+	param.alignment = 8;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 8));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 16));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 1));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 7));
-+}
-+
-+/* FD validation rejects values > INT_MAX */
-+static void test_fd_int_overflow(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_fd";
-+	param.type = KAPI_TYPE_FD;
-+	param.constraint_type = KAPI_CONSTRAINT_NONE;
-+
-+	/* Value that overflows int: 0x100000003 -> truncates to 3 */
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0x100000003LL));
-+}
-+
-+/* ENUM constraint */
-+static const s64 test_enum_vals[] = { 1, 5, 10 };
-+
-+static void test_constraint_enum(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_enum";
-+	param.constraint_type = KAPI_CONSTRAINT_ENUM;
-+	param.enum_values = test_enum_vals;
-+	param.enum_count = ARRAY_SIZE(test_enum_vals);
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 1));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 5));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 10));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 3));
-+	KUNIT_EXPECT_FALSE(test, kapi_validate_param(&param, 11));
-+}
-+
-+/* BUFFER constraint always accepts (size checked at runtime) */
-+static void test_constraint_buffer(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	param.name = "test_buf";
-+	param.constraint_type = KAPI_CONSTRAINT_BUFFER;
-+
-+	/* Buffer constraint doesn't validate the value itself */
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_param(&param, 4096));
-+}
-+
-+/* RETURN_RANGE check type */
-+static void test_return_range(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	spec->name = "test_ret_range";
-+	spec->return_magic = KAPI_MAGIC_RETURN;
-+	spec->return_spec.check_type = KAPI_RETURN_RANGE;
-+	spec->return_spec.success_min = 0;
-+	spec->return_spec.success_max = 100;
-+
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, 0));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, 50));
-+	KUNIT_EXPECT_TRUE(test, kapi_validate_return_value(spec, 100));
-+}
-+
-+static void init_dyn_buf_param(struct kapi_param_spec *param)
-+{
-+	param->name = "buf";
-+	param->type = KAPI_TYPE_USER_PTR;
-+	param->constraint_type = KAPI_CONSTRAINT_BUFFER;
-+	param->size_param_idx = 2;
-+}
-+
-+static bool validate_dyn_buf(const struct kapi_param_spec *param,
-+			     const void __user *ptr, s64 count)
-+{
-+	s64 params[] = { (s64)(unsigned long)ptr, count };
-+
-+	return kapi_validate_param_with_context(param, params[0], params,
-+						ARRAY_SIZE(params));
-+}
-+
-+/* Dynamic buffer: any pointer is accepted when the size is 0 */
-+static void test_dyn_buf_zero_count(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+	const void __user *kernel_addr = (void __user *)-(unsigned long)PAGE_SIZE;
-+
-+	init_dyn_buf_param(&param);
-+
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, NULL, 0));
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, (void __user *)PAGE_SIZE, 0));
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, kernel_addr, 0));
-+}
-+
-+/* Dynamic buffer: NULL is rejected when the size is non-zero */
-+static void test_dyn_buf_null_nonzero_count(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+
-+	init_dyn_buf_param(&param);
-+
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, NULL, 1));
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, NULL, PAGE_SIZE));
-+}
-+
-+/*
-+ * Some architectures (separate user address space, !MMU) accept any address
-+ * in access_ok(), so the rejection cases below only apply where it bounds
-+ * user ranges.
-+ */
-+static bool kapi_rejects_kernel_addr(const void __user *addr)
-+{
-+	return !access_ok(addr, 1);
-+}
-+
-+static bool kapi_bounds_user_range(const void __user *base)
-+{
-+	return access_ok(base, PAGE_SIZE) && !access_ok(base, 3 * PAGE_SIZE);
-+}
-+
-+/* Dynamic buffer: addresses outside user space are rejected when the size is non-zero */
-+static void test_dyn_buf_kernel_addr(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+	const void __user *kernel_addr = (void __user *)-(unsigned long)PAGE_SIZE;
-+	const void __user *top = (void __user *)ULONG_MAX;
-+
-+	init_dyn_buf_param(&param);
-+
-+	if (!kapi_rejects_kernel_addr(kernel_addr) || !kapi_rejects_kernel_addr(top))
-+		kunit_skip(test, "access_ok() accepts kernel addresses on this architecture");
-+
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, kernel_addr, 1));
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, top, 1));
-+}
-+
-+/* Dynamic buffer: an unset size_multiplier means byte units */
-+static void test_dyn_buf_default_multiplier(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+	const void __user *near_top = (void __user *)(TASK_SIZE_MAX - 2 * PAGE_SIZE);
-+
-+	init_dyn_buf_param(&param);
-+
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, (void __user *)PAGE_SIZE, 16));
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, near_top, 0));
-+
-+	if (!kapi_bounds_user_range(near_top))
-+		kunit_skip(test, "access_ok() does not bound user ranges on this architecture");
-+
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, near_top, PAGE_SIZE));
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, near_top, 3 * PAGE_SIZE));
-+}
-+
-+/* Dynamic buffer: explicit multiplier scales the size, negative and overflowing counts fail */
-+static void test_dyn_buf_multiplier_and_bad_count(struct kunit *test)
-+{
-+	struct kapi_param_spec param = {};
-+	const void __user *near_top = (void __user *)(TASK_SIZE_MAX - 2 * PAGE_SIZE);
-+
-+	init_dyn_buf_param(&param);
-+	param.size_multiplier = 8;
-+
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, (void __user *)PAGE_SIZE,
-+						  (s64)(SIZE_MAX / 8 + 1)));
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, (void __user *)PAGE_SIZE, -1));
-+
-+	if (!kapi_bounds_user_range(near_top))
-+		kunit_skip(test, "access_ok() does not bound user ranges on this architecture");
-+
-+	KUNIT_EXPECT_TRUE(test, validate_dyn_buf(&param, near_top, PAGE_SIZE / 8));
-+	KUNIT_EXPECT_FALSE(test, validate_dyn_buf(&param, near_top, PAGE_SIZE));
-+}
-+
-+#endif /* CONFIG_KAPI_RUNTIME_CHECKS */
-+
-+static const struct kernel_api_spec kapi_test_macro_spec = {
-+	.name = "test_macro_spec",
-+	KAPI_SIGNAL_MASK_COUNT(1)
-+	KAPI_SIGNAL_MASK(0, "blocked", "Signals blocked while waiting")
-+		KAPI_SIGNAL_MASK_SIGNALS(SIGINT, SIGTERM, SIGQUIT)
-+	},
-+	KAPI_CAPABILITY_COUNT(1)
-+	KAPI_CAPABILITY(0, CAP_SYS_ADMIN, "CAP_SYS_ADMIN", KAPI_CAP_BYPASS_CHECK)
-+		KAPI_CAP_ALTERNATIVE(CAP_SYS_RESOURCE, CAP_NET_ADMIN)
-+	},
-+};
-+
-+/* Signal mask and capability alternative macros fill in their counts */
-+static void test_signal_mask_and_cap_alternative(struct kunit *test)
-+{
-+	const struct kernel_api_spec *spec = &kapi_test_macro_spec;
-+	char *buf;
-+
-+	KUNIT_EXPECT_EQ(test, spec->signal_mask_count, 1U);
-+	KUNIT_EXPECT_EQ(test, spec->signal_masks[0].signal_count, 3U);
-+	KUNIT_EXPECT_EQ(test, spec->signal_masks[0].signals[2], SIGQUIT);
-+	KUNIT_EXPECT_EQ(test, spec->capabilities[0].alternative_count, 2U);
-+	KUNIT_EXPECT_EQ(test, spec->capabilities[0].alternative[1], CAP_NET_ADMIN);
-+
-+	buf = kunit_kzalloc(test, 8192, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_NULL(test, buf);
-+	KUNIT_ASSERT_GT(test, kapi_export_json(spec, buf, 8192), 0);
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"blocked\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"alternatives\""));
-+}
-+
-+/* Unregister non-existent spec is a no-op */
-+static void test_unregister_nonexistent(struct kunit *test)
-+{
-+	/* Should not crash or error */
-+	kapi_unregister_spec("nonexistent_spec_xyz");
-+}
-+
-+/* Multiple specs can be registered and looked up */
-+static void test_multiple_specs(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec1, *spec2;
-+	const struct kernel_api_spec *found;
-+
-+	spec1 = kzalloc_obj(*spec1, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec1);
-+	spec2 = kzalloc_obj(*spec2, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec2);
-+
-+	init_test_spec(spec1, "multi_spec_1");
-+	init_test_spec(spec2, "multi_spec_2");
-+
-+	KUNIT_ASSERT_EQ(test, kapi_register_spec(spec1), 0);
-+	KUNIT_ASSERT_EQ(test, kapi_register_spec(spec2), 0);
-+
-+	found = kapi_get_spec("multi_spec_1");
-+	KUNIT_EXPECT_PTR_EQ(test, found, (const struct kernel_api_spec *)spec1);
-+
-+	found = kapi_get_spec("multi_spec_2");
-+	KUNIT_EXPECT_PTR_EQ(test, found, (const struct kernel_api_spec *)spec2);
-+
-+	kapi_unregister_spec("multi_spec_1");
-+	kapi_unregister_spec("multi_spec_2");
-+	kfree(spec1);
-+	kfree(spec2);
-+}
-+
-+/* JSON export produces valid output */
-+static void test_json_export(struct kunit *test)
-+{
-+	static const s64 enum_vals[] = { 3, -1 };
-+	static const s64 err_vals[] = { -EINVAL, -EFAULT };
-+	struct kernel_api_spec *spec;
-+	char *buf;
-+	int ret;
-+
-+	spec = kzalloc_obj(*spec, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+
-+	buf = kzalloc(4096, GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, buf);
-+
-+	init_test_spec(spec, "test_json");
-+	spec->param_count = 1;
-+	spec->params[0].name = "arg0";
-+	spec->params[0].type_name = "int";
-+	spec->params[0].constraint_type = KAPI_CONSTRAINT_ENUM;
-+	spec->params[0].enum_values = enum_vals;
-+	spec->params[0].enum_count = ARRAY_SIZE(enum_vals);
-+	spec->params[0].valid_mask = 0xff;
-+	spec->params[0].size_param_idx = 2;
-+	spec->return_spec.check_type = KAPI_RETURN_ERROR_CHECK;
-+	spec->return_spec.error_values = err_vals;
-+	spec->return_spec.error_count = ARRAY_SIZE(err_vals);
-+
-+	ret = kapi_export_json(spec, buf, 4096);
-+	KUNIT_EXPECT_GT(test, ret, 0);
-+
-+	/* Verify it starts with '{' and ends with '}' */
-+	KUNIT_EXPECT_EQ(test, buf[0], '{');
-+	KUNIT_ASSERT_GT(test, ret, 1);
-+	/* Find last non-whitespace char */
-+	while (ret > 0 && (buf[ret - 1] == '\n' || buf[ret - 1] == ' '))
-+		ret--;
-+	KUNIT_EXPECT_EQ(test, buf[ret - 1], '}');
-+
-+	/* Verify key fields are present */
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"name\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"test_json\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"parameters\""));
-+
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"constraint_type\": \"enum\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"enum_values\": [3, -1]"));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"valid_mask\": \"0xff\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"size_param_idx\": 1"));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"error_values\": [-22, -14]"));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"state_transitions\""));
-+	KUNIT_EXPECT_NOT_NULL(test, strstr(buf, "\"struct_specs\""));
-+
-+	kfree(buf);
-+	kfree(spec);
-+}
-+
-+/* JSON export with NULL args returns -EINVAL */
-+static void test_json_export_null(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	char buf[64];
-+	int ret;
-+
-+	ret = kapi_export_json(NULL, buf, sizeof(buf));
-+	KUNIT_EXPECT_EQ(test, ret, -EINVAL);
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+	init_test_spec(spec, "test");
-+
-+	ret = kapi_export_json(spec, NULL, 64);
-+	KUNIT_EXPECT_EQ(test, ret, -EINVAL);
-+
-+	ret = kapi_export_json(spec, buf, 0);
-+	KUNIT_EXPECT_EQ(test, ret, -EINVAL);
-+}
-+
-+/* JSON export into a buffer that is too small reports -E2BIG */
-+static void test_json_export_small_buffer(struct kunit *test)
-+{
-+	struct kernel_api_spec *spec;
-+	char buf[64];
-+	int ret;
-+
-+	spec = kunit_kzalloc(test, sizeof(*spec), GFP_KERNEL);
-+	KUNIT_ASSERT_NOT_ERR_OR_NULL(test, spec);
-+	init_test_spec(spec, "test_small");
-+
-+	ret = kapi_export_json(spec, buf, sizeof(buf));
-+
-+	KUNIT_EXPECT_EQ(test, ret, -E2BIG);
-+}
-+
-+static struct kunit_case kapi_test_cases[] = {
-+	KUNIT_CASE(test_register_valid),
-+	KUNIT_CASE(test_lookup_registered),
-+	KUNIT_CASE(test_double_register),
-+	KUNIT_CASE(test_unregister),
-+	KUNIT_CASE(test_get_spec_null),
-+	KUNIT_CASE(test_register_null),
-+	KUNIT_CASE(test_register_null_name),
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+	KUNIT_CASE(test_constraint_range_valid),
-+	KUNIT_CASE(test_constraint_range_invalid),
-+	KUNIT_CASE(test_constraint_mask_valid),
-+	KUNIT_CASE(test_constraint_mask_invalid),
-+	KUNIT_CASE(test_constraint_power_of_two),
-+	KUNIT_CASE(test_constraint_page_aligned),
-+	KUNIT_CASE(test_constraint_nonzero),
-+	KUNIT_CASE(test_return_validation),
-+	KUNIT_CASE(test_return_known_error),
-+	KUNIT_CASE(test_return_unknown_error),
-+	KUNIT_CASE(test_constraint_alignment),
-+	KUNIT_CASE(test_fd_int_overflow),
-+	KUNIT_CASE(test_constraint_enum),
-+	KUNIT_CASE(test_constraint_buffer),
-+	KUNIT_CASE(test_return_range),
-+	KUNIT_CASE(test_dyn_buf_zero_count),
-+	KUNIT_CASE(test_dyn_buf_null_nonzero_count),
-+	KUNIT_CASE(test_dyn_buf_kernel_addr),
-+	KUNIT_CASE(test_dyn_buf_default_multiplier),
-+	KUNIT_CASE(test_dyn_buf_multiplier_and_bad_count),
-+#endif
-+	KUNIT_CASE(test_signal_mask_and_cap_alternative),
-+	KUNIT_CASE(test_unregister_nonexistent),
-+	KUNIT_CASE(test_multiple_specs),
-+	KUNIT_CASE(test_json_export),
-+	KUNIT_CASE(test_json_export_null),
-+	KUNIT_CASE(test_json_export_small_buffer),
-+	{}
-+};
-+
-+static struct kunit_suite kapi_test_suite = {
-+	.name = "kapi",
-+	.test_cases = kapi_test_cases,
-+};
-+
-+kunit_test_suite(kapi_test_suite);
-+
-+MODULE_DESCRIPTION("KUnit tests for Kernel API Specification Framework");
-+MODULE_LICENSE("GPL");
-diff --git a/kernel/api/kernel_api_spec.c b/kernel/api/kernel_api_spec.c
-new file mode 100644
-index 0000000000000..c3b220104c04b
---- /dev/null
-+++ b/kernel/api/kernel_api_spec.c
-@@ -0,0 +1,1415 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
-+ *
-+ * kernel_api_spec.c - Kernel API Specification Framework Implementation
-+ *
-+ * Provides runtime support for kernel API specifications including validation,
-+ * export to various formats, and querying capabilities.
-+ */
-+
-+#define pr_fmt(fmt) "kapi: " fmt
-+
-+#include <linux/kernel.h>
-+#include <linux/kernel_api_spec.h>
-+#include <linux/string.h>
-+#include <linux/slab.h>
-+#include <linux/list.h>
-+#include <linux/mutex.h>
-+#include <linux/export.h>
-+#include <linux/preempt.h>
-+#include <linux/hardirq.h>
-+#include <linux/file.h>
-+#include <linux/fdtable.h>
-+#include <linux/uaccess.h>
-+#include <linux/limits.h>
-+#include <linux/fcntl.h>
-+#include <linux/mm.h>
-+#include <linux/ratelimit.h>
-+
-+#include "internal.h"
-+
-+/* Dynamic API registration */
-+static LIST_HEAD(dynamic_api_specs);
-+static DEFINE_MUTEX(api_spec_mutex);
-+
-+struct dynamic_api_spec {
-+	struct list_head list;
-+	const struct kernel_api_spec *spec;
-+};
-+
-+/*
-+ * __kapi_find_spec_locked - Internal lookup, caller must hold api_spec_mutex
-+ */
-+static const struct kernel_api_spec *__kapi_find_spec_locked(const char *name)
-+{
-+	const struct kernel_api_spec * const *pp;
-+	struct dynamic_api_spec *dyn_spec;
-+
-+	for (pp = __start_kapi_specs; pp < __stop_kapi_specs; pp++) {
-+		const struct kernel_api_spec *spec = *pp;
-+
-+		if (spec && spec->name && strcmp(spec->name, name) == 0)
-+			return spec;
-+	}
-+
-+	list_for_each_entry(dyn_spec, &dynamic_api_specs, list) {
-+		if (dyn_spec->spec->name &&
-+		    strcmp(dyn_spec->spec->name, name) == 0)
-+			return dyn_spec->spec;
-+	}
-+
-+	return NULL;
-+}
-+
-+/**
-+ * kapi_get_spec - Get API specification by name
-+ * @name: Function name to look up
-+ *
-+ * Return: Pointer to the API specification, or NULL if not found. The
-+ * pointer stays valid for specifications in the ``.kapi_specs`` ELF section
-+ * (built-in, statically defined). A dynamically registered spec stays valid
-+ * only until kapi_unregister_spec() is called for it, so the caller must
-+ * serialize against unregistration.
-+ *
-+ * Context: May sleep. Do not call under spinlock or in IRQ context.
-+ */
-+const struct kernel_api_spec *kapi_get_spec(const char *name)
-+{
-+	const struct kernel_api_spec *spec;
-+
-+	if (!name)
-+		return NULL;
-+
-+	mutex_lock(&api_spec_mutex);
-+	spec = __kapi_find_spec_locked(name);
-+	mutex_unlock(&api_spec_mutex);
-+
-+	return spec;
-+}
-+EXPORT_SYMBOL_GPL(kapi_get_spec);
-+
-+/**
-+ * kapi_register_spec - Register a dynamic API specification
-+ * @spec: API specification to register
-+ *
-+ * Return: 0 on success, negative error code on failure
-+ */
-+int kapi_register_spec(const struct kernel_api_spec *spec)
-+{
-+	struct dynamic_api_spec *dyn_spec;
-+	int ret = 0;
-+
-+	if (!spec || !spec->name || !spec->name[0])
-+		return -EINVAL;
-+
-+	dyn_spec = kzalloc_obj(*dyn_spec, GFP_KERNEL);
-+	if (!dyn_spec)
-+		return -ENOMEM;
-+
-+	dyn_spec->spec = spec;
-+
-+	mutex_lock(&api_spec_mutex);
-+
-+	/* Check if already exists while holding lock to prevent races */
-+	if (__kapi_find_spec_locked(spec->name)) {
-+		ret = -EEXIST;
-+		kfree(dyn_spec);
-+	} else {
-+		list_add_tail(&dyn_spec->list, &dynamic_api_specs);
-+	}
-+
-+	mutex_unlock(&api_spec_mutex);
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(kapi_register_spec);
-+
-+/**
-+ * kapi_unregister_spec - Unregister a dynamic API specification
-+ * @name: Name of API to unregister
-+ */
-+void kapi_unregister_spec(const char *name)
-+{
-+	struct dynamic_api_spec *dyn_spec, *tmp;
-+
-+	if (!name)
-+		return;
-+
-+	mutex_lock(&api_spec_mutex);
-+	list_for_each_entry_safe(dyn_spec, tmp, &dynamic_api_specs, list) {
-+		if (dyn_spec->spec->name &&
-+		    strcmp(dyn_spec->spec->name, name) == 0) {
-+			list_del(&dyn_spec->list);
-+			kfree(dyn_spec);
-+			break;
-+		}
-+	}
-+	mutex_unlock(&api_spec_mutex);
-+}
-+EXPORT_SYMBOL_GPL(kapi_unregister_spec);
-+
-+/**
-+ * kapi_param_type_to_string - Convert parameter type to string
-+ * @type: Parameter type
-+ *
-+ * Return: String representation of type
-+ */
-+const char *kapi_param_type_to_string(enum kapi_param_type type)
-+{
-+	static const char * const type_names[] = {
-+		[KAPI_TYPE_VOID] = "void",
-+		[KAPI_TYPE_INT] = "int",
-+		[KAPI_TYPE_UINT] = "uint",
-+		[KAPI_TYPE_PTR] = "pointer",
-+		[KAPI_TYPE_STRUCT] = "struct",
-+		[KAPI_TYPE_UNION] = "union",
-+		[KAPI_TYPE_ENUM] = "enum",
-+		[KAPI_TYPE_FUNC_PTR] = "function_pointer",
-+		[KAPI_TYPE_ARRAY] = "array",
-+		[KAPI_TYPE_FD] = "file_descriptor",
-+		[KAPI_TYPE_USER_PTR] = "user_pointer",
-+		[KAPI_TYPE_PATH] = "pathname",
-+		[KAPI_TYPE_CUSTOM] = "custom",
-+	};
-+
-+	if (type >= ARRAY_SIZE(type_names))
-+		return "unknown";
-+
-+	return type_names[type];
-+}
-+
-+/**
-+ * kapi_lock_type_to_string - Convert lock type to string
-+ * @type: Lock type
-+ *
-+ * Return: String representation of lock type
-+ */
-+const char *kapi_lock_type_to_string(enum kapi_lock_type type)
-+{
-+	static const char * const lock_names[] = {
-+		[KAPI_LOCK_NONE] = "none",
-+		[KAPI_LOCK_MUTEX] = "mutex",
-+		[KAPI_LOCK_SPINLOCK] = "spinlock",
-+		[KAPI_LOCK_RWLOCK] = "rwlock",
-+		[KAPI_LOCK_SEQLOCK] = "seqlock",
-+		[KAPI_LOCK_RCU] = "rcu",
-+		[KAPI_LOCK_SEMAPHORE] = "semaphore",
-+		[KAPI_LOCK_CUSTOM] = "custom",
-+	};
-+
-+	if (type >= ARRAY_SIZE(lock_names))
-+		return "unknown";
-+
-+	return lock_names[type];
-+}
-+
-+/**
-+ * kapi_lock_scope_to_string - Convert lock scope to string
-+ * @scope: Lock scope
-+ *
-+ * Return: String representation of lock scope
-+ */
-+const char *kapi_lock_scope_to_string(enum kapi_lock_scope scope)
-+{
-+	static const char * const scope_names[] = {
-+		[KAPI_LOCK_INTERNAL] = "internal",
-+		[KAPI_LOCK_ACQUIRES] = "acquires",
-+		[KAPI_LOCK_RELEASES] = "releases",
-+		[KAPI_LOCK_CALLER_HELD] = "caller_held",
-+	};
-+
-+	if (scope >= ARRAY_SIZE(scope_names))
-+		return "unknown";
-+
-+	return scope_names[scope];
-+}
-+
-+/**
-+ * return_check_type_to_string - Convert return check type to string
-+ * @type: Return check type
-+ *
-+ * Return: String representation of return check type
-+ */
-+static const char *return_check_type_to_string(enum kapi_return_check_type type)
-+{
-+	static const char * const check_names[] = {
-+		[KAPI_RETURN_EXACT] = "exact",
-+		[KAPI_RETURN_RANGE] = "range",
-+		[KAPI_RETURN_ERROR_CHECK] = "error_check",
-+		[KAPI_RETURN_FD] = "file_descriptor",
-+		[KAPI_RETURN_CUSTOM] = "custom",
-+		[KAPI_RETURN_NO_RETURN] = "no_return",
-+	};
-+
-+	if (type >= ARRAY_SIZE(check_names))
-+		return "unknown";
-+
-+	return check_names[type];
-+}
-+
-+/**
-+ * capability_action_to_string - Convert capability action to string
-+ * @action: Capability action
-+ *
-+ * Return: String representation of capability action
-+ */
-+static const char *capability_action_to_string(enum kapi_capability_action action)
-+{
-+	static const char * const action_names[] = {
-+		[KAPI_CAP_BYPASS_CHECK] = "bypass_check",
-+		[KAPI_CAP_INCREASE_LIMIT] = "increase_limit",
-+		[KAPI_CAP_OVERRIDE_RESTRICTION] = "override_restriction",
-+		[KAPI_CAP_GRANT_PERMISSION] = "grant_permission",
-+		[KAPI_CAP_MODIFY_BEHAVIOR] = "modify_behavior",
-+		[KAPI_CAP_ACCESS_RESOURCE] = "access_resource",
-+		[KAPI_CAP_PERFORM_OPERATION] = "perform_operation",
-+	};
-+
-+	if (action >= ARRAY_SIZE(action_names))
-+		return "unknown";
-+
-+	return action_names[action];
-+}
-+
-+/**
-+ * constraint_type_to_string - Convert constraint type to string
-+ * @type: Constraint type
-+ *
-+ * Return: String representation of constraint type
-+ */
-+static const char *constraint_type_to_string(enum kapi_constraint_type type)
-+{
-+	static const char * const constraint_names[] = {
-+		[KAPI_CONSTRAINT_NONE] = "none",
-+		[KAPI_CONSTRAINT_RANGE] = "range",
-+		[KAPI_CONSTRAINT_MASK] = "mask",
-+		[KAPI_CONSTRAINT_ENUM] = "enum",
-+		[KAPI_CONSTRAINT_ALIGNMENT] = "alignment",
-+		[KAPI_CONSTRAINT_POWER_OF_TWO] = "power_of_two",
-+		[KAPI_CONSTRAINT_PAGE_ALIGNED] = "page_aligned",
-+		[KAPI_CONSTRAINT_NONZERO] = "nonzero",
-+		[KAPI_CONSTRAINT_USER_STRING] = "user_string",
-+		[KAPI_CONSTRAINT_USER_PATH] = "user_path",
-+		[KAPI_CONSTRAINT_USER_PTR] = "user_ptr",
-+		[KAPI_CONSTRAINT_BUFFER] = "buffer",
-+		[KAPI_CONSTRAINT_CUSTOM] = "custom",
-+	};
-+
-+	if (type >= ARRAY_SIZE(constraint_names))
-+		return "unknown";
-+
-+	return constraint_names[type];
-+}
-+
-+/*
-+ * kapi_json_escape - Write a JSON-escaped string into a buffer
-+ * @buf: Output buffer
-+ * @size: Remaining space in buffer
-+ * @str: Input string to escape
-+ *
-+ * Escapes backslash, double-quote, and control characters for JSON output.
-+ * Return: Number of bytes written (via scnprintf semantics)
-+ */
-+static int kapi_json_escape(char *buf, size_t size, const char *str)
-+{
-+	int ret = 0;
-+	const char *p;
-+
-+	if (!str || size == 0)
-+		return 0;
-+
-+	for (p = str; *p && ret < size - 1; p++) {
-+		switch (*p) {
-+		case '\\':
-+			ret += scnprintf(buf + ret, size - ret, "\\\\");
-+			break;
-+		case '"':
-+			ret += scnprintf(buf + ret, size - ret, "\\\"");
-+			break;
-+		case '\n':
-+			ret += scnprintf(buf + ret, size - ret, "\\n");
-+			break;
-+		case '\r':
-+			ret += scnprintf(buf + ret, size - ret, "\\r");
-+			break;
-+		case '\t':
-+			ret += scnprintf(buf + ret, size - ret, "\\t");
-+			break;
-+		default:
-+			if ((unsigned char)*p < 0x20) {
-+				ret += scnprintf(buf + ret, size - ret,
-+						 "\\u%04x", (unsigned char)*p);
-+			} else {
-+				ret += scnprintf(buf + ret, size - ret,
-+						 "%c", *p);
-+			}
-+			break;
-+		}
-+	}
-+
-+	if (ret < size)
-+		buf[ret] = '\0';
-+
-+	return ret;
-+}
-+
-+static int kapi_json_str(char *buf, size_t size, const char *str)
-+{
-+	int ret = 0;
-+
-+	ret += scnprintf(buf, size, "\"");
-+	ret += kapi_json_escape(buf + ret, size - ret, str);
-+	ret += scnprintf(buf + ret, size - ret, "\"");
-+	return ret;
-+}
-+
-+static int kapi_json_s64_list(char *buf, size_t size, const s64 *vals, u32 count)
-+{
-+	int ret = scnprintf(buf, size, "[");
-+	u32 i;
-+
-+	for (i = 0; vals && i < count; i++)
-+		ret += scnprintf(buf + ret, size - ret, "%s%lld",
-+				 i ? ", " : "", vals[i]);
-+
-+	ret += scnprintf(buf + ret, size - ret, "]");
-+	return ret;
-+}
-+
-+static int kapi_json_struct_spec(char *buf, size_t size,
-+				 const struct kapi_struct_spec *st)
-+{
-+	int ret;
-+	u32 i;
-+
-+	ret = scnprintf(buf, size, "    {\n      \"name\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, st->name);
-+	ret += scnprintf(buf + ret, size - ret,
-+		",\n      \"size\": %zu,\n      \"alignment\": %zu,\n      \"description\": ",
-+		st->size, st->alignment);
-+	ret += kapi_json_str(buf + ret, size - ret, st->description);
-+	ret += scnprintf(buf + ret, size - ret, ",\n      \"fields\": [\n");
-+
-+	for (i = 0; i < st->field_count && i < KAPI_MAX_PARAMS; i++) {
-+		const struct kapi_struct_field *field = &st->fields[i];
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"        {\n          \"name\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, field->name);
-+		ret += scnprintf(buf + ret, size - ret, ",\n          \"type\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, field->type_name);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n"
-+			"          \"type_class\": \"%s\",\n"
-+			"          \"offset\": %zu,\n"
-+			"          \"size\": %zu,\n"
-+			"          \"flags\": \"0x%x\",\n"
-+			"          \"constraint_type\": \"%s\",\n"
-+			"          \"min_value\": %lld,\n"
-+			"          \"max_value\": %lld,\n"
-+			"          \"valid_mask\": \"0x%llx\",\n"
-+			"          \"enum_values\": ",
-+			kapi_param_type_to_string(field->type),
-+			field->offset, field->size, field->flags,
-+			constraint_type_to_string(field->constraint_type),
-+			field->min_value, field->max_value, field->valid_mask);
-+		ret += kapi_json_str(buf + ret, size - ret, field->enum_values);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n          \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, field->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n        }%s\n",
-+			(i < st->field_count - 1) ? "," : "");
-+	}
-+
-+	ret += scnprintf(buf + ret, size - ret, "      ]\n    }");
-+	return ret;
-+}
-+
-+/**
-+ * kapi_export_json - Export API specification to JSON format
-+ * @spec: API specification to export
-+ * @buf: Buffer to write JSON to
-+ * @size: Size of buffer
-+ *
-+ * Return: Number of bytes written, -EINVAL on bad arguments, or -E2BIG
-+ * if the output did not fit in @buf (the contents are then incomplete)
-+ */
-+int kapi_export_json(const struct kernel_api_spec *spec, char *buf, size_t size)
-+{
-+	int ret = 0;
-+	int i, j;
-+
-+	if (!spec || !buf || size == 0)
-+		return -EINVAL;
-+
-+	ret = scnprintf(buf, size, "{\n  \"name\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->name);
-+	ret += scnprintf(buf + ret, size - ret,
-+			 ",\n  \"version\": %u,\n  \"description\": ",
-+			 spec->version);
-+	ret += kapi_json_str(buf + ret, size - ret, spec->description);
-+	ret += scnprintf(buf + ret, size - ret, ",\n  \"long_description\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->long_description);
-+	ret += scnprintf(buf + ret, size - ret,
-+			 ",\n  \"context_flags\": \"0x%x\",\n",
-+			 spec->context_flags);
-+
-+	/* Parameters */
-+	ret += scnprintf(buf + ret, size - ret, "  \"parameters\": [\n");
-+
-+	for (i = 0; i < spec->param_count && i < KAPI_MAX_PARAMS; i++) {
-+		const struct kapi_param_spec *param = &spec->params[i];
-+
-+		ret += scnprintf(buf + ret, size - ret, "    {\n      \"name\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, param->name);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"type\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, param->type_name);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"type_class\": \"%s\",\n      \"flags\": \"0x%x\",\n      \"description\": ",
-+			kapi_param_type_to_string(param->type),
-+			param->flags);
-+		ret += kapi_json_str(buf + ret, size - ret, param->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"constraint_type\": \"%s\",\n      \"constraint_desc\": ",
-+			constraint_type_to_string(param->constraint_type));
-+		ret += kapi_json_str(buf + ret, size - ret, param->constraints);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n"
-+			"      \"min_value\": %lld,\n"
-+			"      \"max_value\": %lld,\n"
-+			"      \"valid_mask\": \"0x%llx\",\n"
-+			"      \"enum_values\": ",
-+			param->min_value, param->max_value, param->valid_mask);
-+		ret += kapi_json_s64_list(buf + ret, size - ret,
-+					  param->enum_values, param->enum_count);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"size\": %zu,\n      \"alignment\": %zu,\n      \"size_param_idx\": ",
-+			param->size, param->alignment);
-+		if (param->size_param_idx > 0)
-+			ret += scnprintf(buf + ret, size - ret, "%d",
-+					 param->size_param_idx - 1);
-+		else
-+			ret += scnprintf(buf + ret, size - ret, "null");
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"size_multiplier\": %zu\n    }%s\n",
-+			param->size_multiplier,
-+			(i < spec->param_count - 1) ? "," : "");
-+	}
-+
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Return value */
-+	ret += scnprintf(buf + ret, size - ret, "  \"return\": {\n    \"type\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->return_spec.type_name);
-+	ret += scnprintf(buf + ret, size - ret,
-+		",\n"
-+		"    \"type_class\": \"%s\",\n"
-+		"    \"check_type\": \"%s\",\n"
-+		"    \"success_value\": %lld,\n"
-+		"    \"success_min\": %lld,\n"
-+		"    \"success_max\": %lld,\n"
-+		"    \"error_values\": ",
-+		kapi_param_type_to_string(spec->return_spec.type),
-+		return_check_type_to_string(spec->return_spec.check_type),
-+		spec->return_spec.success_value,
-+		spec->return_spec.success_min,
-+		spec->return_spec.success_max);
-+	ret += kapi_json_s64_list(buf + ret, size - ret,
-+				  spec->return_spec.error_values,
-+				  spec->return_spec.error_count);
-+
-+	ret += scnprintf(buf + ret, size - ret, ",\n    \"description\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->return_spec.description);
-+	ret += scnprintf(buf + ret, size - ret, "\n  },\n");
-+
-+	/* Errors */
-+	ret += scnprintf(buf + ret, size - ret, "  \"errors\": [\n");
-+
-+	for (i = 0; i < spec->error_count && i < KAPI_MAX_ERRORS; i++) {
-+		const struct kapi_error_spec *error = &spec->errors[i];
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"    {\n      \"code\": %d,\n      \"name\": ",
-+			error->error_code);
-+		ret += kapi_json_str(buf + ret, size - ret, error->name);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"condition\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, error->condition);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, error->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n    }%s\n",
-+			(i < spec->error_count - 1) ? "," : "");
-+	}
-+
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Locks */
-+	ret += scnprintf(buf + ret, size - ret, "  \"locks\": [\n");
-+
-+	for (i = 0; i < spec->lock_count && i < KAPI_MAX_LOCKS; i++) {
-+		const struct kapi_lock_spec *lock = &spec->locks[i];
-+
-+		ret += scnprintf(buf + ret, size - ret, "    {\n      \"name\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, lock->lock_name);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"type\": \"%s\",\n      \"scope\": \"%s\",\n      \"description\": ",
-+			kapi_lock_type_to_string(lock->lock_type),
-+			kapi_lock_scope_to_string(lock->scope));
-+		ret += kapi_json_str(buf + ret, size - ret, lock->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n    }%s\n",
-+			(i < spec->lock_count - 1) ? "," : "");
-+	}
-+
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Capabilities */
-+	ret += scnprintf(buf + ret, size - ret, "  \"capabilities\": [\n");
-+
-+	for (i = 0; i < spec->capability_count && i < KAPI_MAX_CAPABILITIES; i++) {
-+		const struct kapi_capability_spec *cap = &spec->capabilities[i];
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"    {\n      \"capability\": %d,\n      \"name\": ",
-+			cap->capability);
-+		ret += kapi_json_str(buf + ret, size - ret, cap->cap_name);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"action\": \"%s\",\n      \"allows\": ",
-+			capability_action_to_string(cap->action));
-+		ret += kapi_json_str(buf + ret, size - ret, cap->allows);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"without_cap\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, cap->without_cap);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"check_condition\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, cap->check_condition);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"priority\": %u", cap->priority);
-+
-+		if (cap->alternative_count > 0) {
-+			ret += scnprintf(buf + ret, size - ret,
-+				",\n      \"alternatives\": [");
-+			for (j = 0; j < cap->alternative_count && j < KAPI_MAX_CAPABILITIES; j++) {
-+				ret += scnprintf(buf + ret, size - ret,
-+					"%s%d", j ? ", " : "",
-+					cap->alternative[j]);
-+			}
-+			ret += scnprintf(buf + ret, size - ret, "]");
-+		}
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n    }%s\n",
-+			(i < spec->capability_count - 1) ? "," : "");
-+	}
-+
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Constraints */
-+	ret += scnprintf(buf + ret, size - ret, "  \"constraints\": [\n");
-+	for (i = 0; i < spec->constraint_count && i < KAPI_MAX_CONSTRAINTS; i++) {
-+		const struct kapi_constraint_spec *con = &spec->constraints[i];
-+
-+		ret += scnprintf(buf + ret, size - ret, "    {\n      \"name\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, con->name);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, con->description);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"expression\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, con->expression);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n    }%s\n",
-+			(i < spec->constraint_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Signals */
-+	ret += scnprintf(buf + ret, size - ret, "  \"signals\": [\n");
-+	for (i = 0; i < spec->signal_count && i < KAPI_MAX_SIGNALS; i++) {
-+		const struct kapi_signal_spec *sig = &spec->signals[i];
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"    {\n      \"signal_num\": %d,\n      \"signal_name\": ",
-+			sig->signal_num);
-+		ret += kapi_json_str(buf + ret, size - ret, sig->signal_name);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"direction\": \"0x%x\",\n      \"action\": %u,\n      \"target\": ",
-+			sig->direction, sig->action);
-+		ret += kapi_json_str(buf + ret, size - ret, sig->target);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"condition\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, sig->condition);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, sig->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n"
-+			"      \"restartable\": %s,\n"
-+			"      \"sa_flags_required\": \"0x%x\",\n"
-+			"      \"sa_flags_forbidden\": \"0x%x\",\n"
-+			"      \"error_on_signal\": %d,\n"
-+			"      \"transform_to\": %d,\n"
-+			"      \"timing\": ",
-+			sig->restartable ? "true" : "false",
-+			sig->sa_flags_required,
-+			sig->sa_flags_forbidden,
-+			sig->error_on_signal,
-+			sig->transform_to);
-+		ret += kapi_json_str(buf + ret, size - ret, sig->timing);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"priority\": %u,\n      \"interruptible\": %s,\n      \"queue_behavior\": ",
-+			sig->priority,
-+			sig->interruptible ? "true" : "false");
-+		ret += kapi_json_str(buf + ret, size - ret, sig->queue_behavior);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"state_required\": \"0x%x\",\n      \"state_forbidden\": \"0x%x\"\n    }%s\n",
-+			sig->state_required,
-+			sig->state_forbidden,
-+			(i < spec->signal_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Side effects */
-+	ret += scnprintf(buf + ret, size - ret, "  \"side_effects\": [\n");
-+	for (i = 0; i < spec->side_effect_count && i < KAPI_MAX_SIDE_EFFECTS; i++) {
-+		const struct kapi_side_effect *eff = &spec->side_effects[i];
-+
-+		ret += scnprintf(buf + ret, size - ret,
-+			"    {\n      \"type\": \"0x%x\",\n      \"target\": ",
-+			eff->type);
-+		ret += kapi_json_str(buf + ret, size - ret, eff->target);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"condition\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, eff->condition);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, eff->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			",\n      \"reversible\": %s\n    }%s\n",
-+			eff->reversible ? "true" : "false",
-+			(i < spec->side_effect_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* State transitions */
-+	ret += scnprintf(buf + ret, size - ret, "  \"state_transitions\": [\n");
-+	for (i = 0; i < spec->state_trans_count && i < KAPI_MAX_STATE_TRANS; i++) {
-+		const struct kapi_state_transition *trans = &spec->state_transitions[i];
-+
-+		ret += scnprintf(buf + ret, size - ret, "    {\n      \"object\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, trans->object);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"from_state\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, trans->from_state);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"to_state\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, trans->to_state);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"condition\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, trans->condition);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, trans->description);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"\n    }%s\n",
-+			(i < spec->state_trans_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Signal masks */
-+	ret += scnprintf(buf + ret, size - ret, "  \"signal_masks\": [\n");
-+	for (i = 0; i < spec->signal_mask_count && i < KAPI_MAX_SIGNALS; i++) {
-+		const struct kapi_signal_mask_spec *mask = &spec->signal_masks[i];
-+
-+		ret += scnprintf(buf + ret, size - ret, "    {\n      \"name\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, mask->mask_name);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"description\": ");
-+		ret += kapi_json_str(buf + ret, size - ret, mask->description);
-+		ret += scnprintf(buf + ret, size - ret, ",\n      \"signals\": [");
-+		for (j = 0; j < mask->signal_count && j < KAPI_MAX_SIGNALS; j++)
-+			ret += scnprintf(buf + ret, size - ret, "%s%d",
-+					 j ? ", " : "", mask->signals[j]);
-+		ret += scnprintf(buf + ret, size - ret,
-+			"]\n    }%s\n",
-+			(i < spec->signal_mask_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Structure specifications */
-+	ret += scnprintf(buf + ret, size - ret, "  \"struct_specs\": [\n");
-+	for (i = 0; i < spec->struct_spec_count && i < KAPI_MAX_STRUCT_SPECS; i++) {
-+		ret += kapi_json_struct_spec(buf + ret, size - ret,
-+					     &spec->struct_specs[i]);
-+		ret += scnprintf(buf + ret, size - ret, "%s\n",
-+				 (i < spec->struct_spec_count - 1) ? "," : "");
-+	}
-+	ret += scnprintf(buf + ret, size - ret, "  ],\n");
-+
-+	/* Additional info */
-+	ret += scnprintf(buf + ret, size - ret, "  \"examples\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->examples);
-+	ret += scnprintf(buf + ret, size - ret, ",\n  \"notes\": ");
-+	ret += kapi_json_str(buf + ret, size - ret, spec->notes);
-+	ret += scnprintf(buf + ret, size - ret, "\n}\n");
-+
-+	/* scnprintf() never writes past size - 1, so a full buffer means truncation */
-+	if (ret >= size - 1)
-+		return -E2BIG;
-+
-+	return ret;
-+}
-+EXPORT_SYMBOL_GPL(kapi_export_json);
-+
-+#ifdef CONFIG_KAPI_RUNTIME_CHECKS
-+
-+/**
-+ * kapi_validate_fd - Validate that a file descriptor value is in valid range
-+ * @fd: File descriptor to validate
-+ *
-+ * Only the numeric range is checked: AT_FDCWD or a non-negative value.
-+ * Openness is left to the syscall, since the fd can be closed between check
-+ * and use. Other negative values are rejected here, so a syscall such as
-+ * close() fails with EINVAL for them rather than EBADF.
-+ *
-+ * Return: true if fd is in valid range, false otherwise
-+ */
-+static bool kapi_validate_fd(int fd)
-+{
-+	return fd == AT_FDCWD || fd >= 0;
-+}
-+
-+/**
-+ * kapi_validate_user_ptr - Validate that a user pointer is accessible
-+ * @ptr: User pointer to validate
-+ * @size: Size in bytes to validate
-+ *
-+ * Return: true if user memory is accessible, false otherwise
-+ */
-+static bool kapi_validate_user_ptr(const void __user *ptr, size_t size)
-+{
-+	/* NULL pointers are not valid; caller handles optional case */
-+	if (!ptr)
-+		return false;
-+
-+	return access_ok(ptr, size);
-+}
-+
-+/**
-+ * kapi_validate_user_ptr_with_params - Validate user pointer with dynamic size
-+ * @param_spec: Parameter specification
-+ * @ptr: User pointer to validate
-+ * @all_params: Array of all parameter values
-+ * @param_count: Number of parameters
-+ *
-+ * Return: true if user memory is accessible, false otherwise
-+ */
-+static bool kapi_validate_user_ptr_with_params(const struct kapi_param_spec *param_spec,
-+						const void __user *ptr,
-+						const s64 *all_params,
-+						int param_count)
-+{
-+	size_t actual_size;
-+
-+	/* NULL is allowed for optional parameters */
-+	if (!ptr && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+		return true;
-+
-+	/*
-+	 * size_param_idx is stored 1-based (0 means "no dynamic sizing").
-+	 * Convert to a real index before looking into all_params.
-+	 */
-+	if (param_spec->size_param_idx > 0 &&
-+	    param_spec->size_param_idx - 1 < param_count) {
-+		s64 count = all_params[param_spec->size_param_idx - 1];
-+		size_t unit = param_spec->size_multiplier ?: 1;
-+
-+		if (count < 0) {
-+			pr_warn_ratelimited("Parameter %s: size determinant is negative (%lld)\n",
-+				param_spec->name, count);
-+			return false;
-+		}
-+
-+		/* A zero-length access never dereferences the pointer */
-+		if (count == 0)
-+			return true;
-+
-+		if (count > SIZE_MAX / unit) {
-+			pr_warn_ratelimited("Parameter %s: size calculation overflow\n",
-+				param_spec->name);
-+			return false;
-+		}
-+
-+		actual_size = (size_t)count * unit;
-+	} else {
-+		actual_size = param_spec->size;
-+	}
-+
-+	return kapi_validate_user_ptr(ptr, actual_size);
-+}
-+
-+/**
-+ * kapi_validate_path - Validate that a pathname is accessible and within limits
-+ * @path: User pointer to pathname
-+ * @param_spec: Parameter specification
-+ *
-+ * Return: true if path is valid, false otherwise
-+ */
-+static bool kapi_validate_path(const char __user *path,
-+				const struct kapi_param_spec *param_spec)
-+{
-+	size_t len;
-+
-+	/* NULL is allowed for optional parameters */
-+	if (!path && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+		return true;
-+
-+	if (!path) {
-+		pr_warn_ratelimited("Parameter %s: NULL path not allowed\n", param_spec->name);
-+		return false;
-+	}
-+
-+	if (!access_ok(path, 1)) {
-+		pr_warn_ratelimited("Parameter %s: path pointer %p not accessible\n",
-+			param_spec->name, path);
-+		return false;
-+	}
-+
-+	/*
-+	 * Use strnlen_user to check the path length and accessibility.
-+	 * Note: strnlen_user() is subject to TOCTOU -- the measured length
-+	 * may change if another thread modifies the user memory. This is
-+	 * acceptable since the kernel re-copies and re-validates the path
-+	 * later in the syscall path. This check is best-effort.
-+	 */
-+	len = strnlen_user(path, PATH_MAX + 1);
-+	if (len == 0) {
-+		pr_warn_ratelimited("Parameter %s: invalid path pointer %p\n",
-+			param_spec->name, path);
-+		return false;
-+	}
-+
-+	if (len > PATH_MAX) {
-+		pr_warn_ratelimited("Parameter %s: path too long (exceeds PATH_MAX)\n",
-+			param_spec->name);
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
-+/**
-+ * kapi_validate_user_string - Validate a userspace null-terminated string
-+ * @str: User pointer to string
-+ * @param_spec: Parameter specification containing length constraints
-+ *
-+ * Validates that the userspace string pointer is accessible and that the
-+ * string length (excluding null terminator) is within the range specified
-+ * by min_value and max_value in the parameter specification.
-+ *
-+ * Return: true if string is valid, false otherwise
-+ */
-+static bool kapi_validate_user_string(const char __user *str,
-+				       const struct kapi_param_spec *param_spec)
-+{
-+	size_t len;
-+	size_t max_check_len;
-+
-+	/* NULL is allowed for optional parameters */
-+	if (!str && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+		return true;
-+
-+	if (!str) {
-+		pr_warn_ratelimited("Parameter %s: NULL string not allowed\n", param_spec->name);
-+		return false;
-+	}
-+
-+	if (!access_ok(str, 1)) {
-+		pr_warn_ratelimited("Parameter %s: string pointer %p not accessible\n",
-+			param_spec->name, str);
-+		return false;
-+	}
-+
-+	/*
-+	 * Use strnlen_user to check the string length and validate accessibility.
-+	 * Check up to max_value + 1 to detect strings that are too long.
-+	 * If max_value is 0 or unset, use PATH_MAX as a reasonable default.
-+	 *
-+	 * Note: strnlen_user() is subject to TOCTOU -- see comment in
-+	 * kapi_validate_path() above. This check is best-effort.
-+	 */
-+	max_check_len = param_spec->max_value > 0 ?
-+			(size_t)param_spec->max_value + 1 : PATH_MAX + 1;
-+	len = strnlen_user(str, max_check_len);
-+
-+	if (len == 0) {
-+		pr_warn_ratelimited("Parameter %s: invalid string pointer %p\n",
-+			param_spec->name, str);
-+		return false;
-+	}
-+
-+	/*
-+	 * strnlen_user returns the length including the null terminator.
-+	 * Convert to string length (excluding terminator) for range check.
-+	 */
-+	len--;
-+
-+	if (param_spec->min_value > 0 && len < (size_t)param_spec->min_value) {
-+		pr_warn_ratelimited("Parameter %s: string too short (%zu < %lld)\n",
-+			param_spec->name, len, param_spec->min_value);
-+		return false;
-+	}
-+
-+	if (param_spec->max_value > 0 && len > (size_t)param_spec->max_value) {
-+		pr_warn_ratelimited("Parameter %s: string too long (%zu > %lld)\n",
-+			param_spec->name, len, param_spec->max_value);
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
-+/**
-+ * kapi_validate_user_ptr_constraint - Validate a userspace pointer with size
-+ * @ptr: User pointer to validate
-+ * @param_spec: Parameter specification containing size
-+ *
-+ * Validates that the userspace pointer is accessible and that the memory
-+ * region of the specified size can be accessed. The size is taken from
-+ * the param_spec->size field.
-+ *
-+ * Return: true if pointer is valid, false otherwise
-+ */
-+static bool kapi_validate_user_ptr_constraint(const void __user *ptr,
-+					       const struct kapi_param_spec *param_spec)
-+{
-+	/* NULL is allowed for optional parameters */
-+	if (!ptr && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+		return true;
-+
-+	if (!ptr) {
-+		pr_warn_ratelimited("Parameter %s: NULL pointer not allowed\n", param_spec->name);
-+		return false;
-+	}
-+
-+	if (param_spec->size == 0) {
-+		pr_warn_ratelimited("Parameter %s: size not specified for user pointer validation\n",
-+			param_spec->name);
-+		return false;
-+	}
-+
-+	if (!access_ok(ptr, param_spec->size)) {
-+		pr_warn_ratelimited("Parameter %s: user pointer %p not accessible for %zu bytes\n",
-+			param_spec->name, ptr, param_spec->size);
-+		return false;
-+	}
-+
-+	return true;
-+}
-+
-+/*
-+ * check_user_ptr is false once the pointer was validated against its dynamic
-+ * size; the fixed-size check would reject NULL even when that size is 0.
-+ */
-+static bool kapi_validate_param_checks(const struct kapi_param_spec *param_spec,
-+				       s64 value, bool check_user_ptr)
-+{
-+	int i;
-+
-+	/* Special handling for file descriptor type */
-+	if (param_spec->type == KAPI_TYPE_FD &&
-+	    !(param_spec->flags & KAPI_PARAM_OPTIONAL)) {
-+		if (value < INT_MIN || value > INT_MAX) {
-+			pr_warn_ratelimited("Parameter %s: file descriptor %lld out of int range\n",
-+				param_spec->name, value);
-+			return false;
-+		}
-+		if (!kapi_validate_fd((int)value)) {
-+			pr_warn_ratelimited("Parameter %s: invalid file descriptor %lld\n",
-+				param_spec->name, value);
-+			return false;
-+		}
-+	}
-+
-+	/* Special handling for user pointer type */
-+	if (check_user_ptr && param_spec->type == KAPI_TYPE_USER_PTR) {
-+		const void __user *ptr = (const void __user *)(unsigned long)value;
-+
-+		/* NULL is allowed for optional parameters */
-+		if (!ptr && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+			return true;
-+
-+		if (!kapi_validate_user_ptr(ptr, param_spec->size)) {
-+			pr_warn_ratelimited("Parameter %s: invalid user pointer %p (size: %zu)\n",
-+				param_spec->name, ptr, param_spec->size);
-+			return false;
-+		}
-+	}
-+
-+	/* Special handling for path type */
-+	if (param_spec->type == KAPI_TYPE_PATH) {
-+		const char __user *path = (const char __user *)(unsigned long)value;
-+
-+		if (!kapi_validate_path(path, param_spec))
-+			return false;
-+	}
-+
-+	switch (param_spec->constraint_type) {
-+	case KAPI_CONSTRAINT_NONE:
-+	case KAPI_CONSTRAINT_BUFFER:
-+		return true;
-+
-+	case KAPI_CONSTRAINT_RANGE:
-+		/*
-+		 * If max_value is below min_value, it was likely set from an
-+		 * unsigned constant (e.g. SIZE_MAX) that overflowed s64.  Treat
-+		 * as no upper bound; only check the minimum.
-+		 */
-+		if (param_spec->max_value >= param_spec->min_value) {
-+			if (value < param_spec->min_value ||
-+			    value > param_spec->max_value) {
-+				pr_warn_ratelimited("Parameter %s value %lld out of range [%lld, %lld]\n",
-+					param_spec->name, value,
-+					param_spec->min_value,
-+					param_spec->max_value);
-+				return false;
-+			}
-+		} else {
-+			if (value < param_spec->min_value) {
-+				pr_warn_ratelimited("Parameter %s value %lld below minimum %lld\n",
-+					param_spec->name, value,
-+					param_spec->min_value);
-+				return false;
-+			}
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_MASK:
-+		if (value & ~param_spec->valid_mask) {
-+			pr_warn_ratelimited("Parameter %s value 0x%llx contains invalid bits (valid mask: 0x%llx)\n",
-+				param_spec->name, value, param_spec->valid_mask);
-+			return false;
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_ENUM:
-+		if (!param_spec->enum_values || param_spec->enum_count == 0)
-+			return true;
-+
-+		for (i = 0; i < param_spec->enum_count; i++) {
-+			if (value == param_spec->enum_values[i])
-+				return true;
-+		}
-+		pr_warn_ratelimited("Parameter %s value %lld not in valid enumeration\n",
-+			param_spec->name, value);
-+		return false;
-+
-+	case KAPI_CONSTRAINT_ALIGNMENT:
-+		if (param_spec->alignment == 0) {
-+			pr_warn_ratelimited("Parameter %s: alignment constraint specified but alignment is 0\n",
-+				param_spec->name);
-+			return false;
-+		}
-+		if (param_spec->alignment & (param_spec->alignment - 1)) {
-+			pr_warn_ratelimited("Parameter %s: alignment %zu is not a power of two\n",
-+				param_spec->name, param_spec->alignment);
-+			return false;
-+		}
-+		if (value & (param_spec->alignment - 1)) {
-+			pr_warn_ratelimited("Parameter %s value 0x%llx not aligned to %zu boundary\n",
-+				param_spec->name, value, param_spec->alignment);
-+			return false;
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_POWER_OF_TWO:
-+		if (value == 0 || (value & (value - 1))) {
-+			pr_warn_ratelimited("Parameter %s value %lld is not a power of two\n",
-+				param_spec->name, value);
-+			return false;
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_PAGE_ALIGNED:
-+		if (value & (PAGE_SIZE - 1)) {
-+			pr_warn_ratelimited("Parameter %s value 0x%llx not page-aligned (PAGE_SIZE=%ld)\n",
-+				param_spec->name, value, PAGE_SIZE);
-+			return false;
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_NONZERO:
-+		if (value == 0) {
-+			pr_warn_ratelimited("Parameter %s must be non-zero\n", param_spec->name);
-+			return false;
-+		}
-+		return true;
-+
-+	case KAPI_CONSTRAINT_USER_STRING:
-+		return kapi_validate_user_string((const char __user *)(unsigned long)value,
-+						 param_spec);
-+
-+	case KAPI_CONSTRAINT_USER_PATH:
-+		return kapi_validate_path((const char __user *)(unsigned long)value, param_spec);
-+
-+	case KAPI_CONSTRAINT_USER_PTR:
-+		return kapi_validate_user_ptr_constraint((const void __user *)(unsigned long)value,
-+							 param_spec);
-+
-+	case KAPI_CONSTRAINT_CUSTOM:
-+		if (param_spec->validate)
-+			return param_spec->validate(value);
-+		return true;
-+
-+	default:
-+		return true;
-+	}
-+}
-+
-+/**
-+ * kapi_validate_param - Validate a parameter against its specification
-+ * @param_spec: Parameter specification
-+ * @value: Parameter value to validate
-+ *
-+ * Return: true if valid, false otherwise
-+ */
-+bool kapi_validate_param(const struct kapi_param_spec *param_spec, s64 value)
-+{
-+	return kapi_validate_param_checks(param_spec, value, true);
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_param);
-+
-+/**
-+ * kapi_validate_param_with_context - Validate parameter with access to all params
-+ * @param_spec: Parameter specification
-+ * @value: Parameter value to validate
-+ * @all_params: Array of all parameter values
-+ * @param_count: Number of parameters
-+ *
-+ * Return: true if valid, false otherwise
-+ */
-+bool kapi_validate_param_with_context(const struct kapi_param_spec *param_spec,
-+				       s64 value, const s64 *all_params, int param_count)
-+{
-+	/* Special handling for user pointer type with dynamic sizing */
-+	if (param_spec->type == KAPI_TYPE_USER_PTR) {
-+		const void __user *ptr = (const void __user *)(unsigned long)value;
-+
-+		/* NULL is allowed for optional parameters */
-+		if (!ptr && (param_spec->flags & KAPI_PARAM_OPTIONAL))
-+			return true;
-+
-+		if (!kapi_validate_user_ptr_with_params(param_spec, ptr, all_params, param_count)) {
-+			pr_warn_ratelimited("Parameter %s: invalid user pointer %p\n",
-+				param_spec->name, ptr);
-+			return false;
-+		}
-+		return kapi_validate_param_checks(param_spec, value, false);
-+	}
-+
-+	/* For other types, fall back to regular validation */
-+	return kapi_validate_param(param_spec, value);
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_param_with_context);
-+
-+/**
-+ * kapi_validate_syscall_params - Validate all syscall parameters together
-+ * @spec: API specification
-+ * @params: Array of parameter values
-+ * @param_count: Number of parameters
-+ *
-+ * Return: -EINVAL if any parameter is invalid, 0 if all valid
-+ */
-+int kapi_validate_syscall_params(const struct kernel_api_spec *spec,
-+				 const s64 *params, int param_count)
-+{
-+	int i;
-+
-+	if (!spec || !params)
-+		return 0;
-+
-+	/* Validate that we have the expected number of parameters */
-+	if (param_count != spec->param_count) {
-+		pr_warn_ratelimited("API %s: parameter count mismatch (expected %u, got %d)\n",
-+			spec->name, spec->param_count, param_count);
-+		return -EINVAL;
-+	}
-+
-+	/* Validate each parameter with context */
-+	for (i = 0; i < spec->param_count && i < KAPI_MAX_PARAMS; i++) {
-+		const struct kapi_param_spec *param_spec = &spec->params[i];
-+
-+		if (!kapi_validate_param_with_context(param_spec, params[i], params, param_count)) {
-+			if (strncmp(spec->name, "sys_", 4) == 0) {
-+				/* For syscalls, we can return EINVAL to userspace */
-+				return -EINVAL;
-+			}
-+		}
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_syscall_params);
-+
-+/**
-+ * kapi_check_return_success - Check if return value indicates success
-+ * @return_spec: Return specification
-+ * @retval: Return value to check
-+ *
-+ * Return: true if the return value indicates success according to the spec.
-+ */
-+bool kapi_check_return_success(const struct kapi_return_spec *return_spec, s64 retval)
-+{
-+	u32 i;
-+
-+	if (!return_spec)
-+		return true;
-+
-+	switch (return_spec->check_type) {
-+	case KAPI_RETURN_EXACT:
-+		return retval == return_spec->success_value;
-+
-+	case KAPI_RETURN_RANGE:
-+		return retval >= return_spec->success_min &&
-+		       retval <= return_spec->success_max;
-+
-+	case KAPI_RETURN_ERROR_CHECK:
-+		/* Success if NOT in error list */
-+		if (return_spec->error_values) {
-+			for (i = 0; i < return_spec->error_count; i++) {
-+				if (retval == return_spec->error_values[i])
-+					return false;
-+			}
-+		}
-+		return true;
-+
-+	case KAPI_RETURN_FD:
-+		/* File descriptors: >= 0 is success, < 0 is error */
-+		return retval >= 0;
-+
-+	case KAPI_RETURN_CUSTOM:
-+		if (return_spec->is_success)
-+			return return_spec->is_success(retval);
-+		fallthrough;
-+
-+	default:
-+		return true;
-+	}
-+}
-+EXPORT_SYMBOL_GPL(kapi_check_return_success);
-+
-+/**
-+ * kapi_validate_return_value - Validate that return value matches spec
-+ * @spec: API specification
-+ * @retval: Return value to validate
-+ *
-+ * Return: false if the spec is a KAPI_RETURN_FD check and a successful @retval
-+ * is not a valid file descriptor, true otherwise.
-+ *
-+ * kapi_check_return_success() runs first. A value that does not satisfy it is
-+ * treated as an error and is accepted. An error code that is not listed in the
-+ * spec is only logged with pr_debug().
-+ */
-+bool kapi_validate_return_value(const struct kernel_api_spec *spec, s64 retval)
-+{
-+	int i;
-+	bool is_success;
-+
-+	if (!spec)
-+		return true; /* No spec means we can't validate */
-+
-+	/* First check if this is a success return */
-+	is_success = kapi_check_return_success(&spec->return_spec, retval);
-+
-+	if (is_success) {
-+		/* Special validation for file descriptor returns */
-+		if (spec->return_spec.check_type == KAPI_RETURN_FD) {
-+			if (retval > INT_MAX || !kapi_validate_fd((int)retval)) {
-+				pr_warn_ratelimited("API %s returned invalid file descriptor %lld\n",
-+					spec->name, retval);
-+				return false;
-+			}
-+		}
-+		return true;
-+	}
-+
-+	if (spec->error_count == 0) {
-+		pr_debug("API %s returned unspecified error %lld\n",
-+			 spec->name, retval);
-+		return true;
-+	}
-+
-+	for (i = 0; i < spec->error_count && i < KAPI_MAX_ERRORS; i++) {
-+		if (retval == spec->errors[i].error_code)
-+			return true;
-+	}
-+
-+	/*
-+	 * Error not in spec - log at debug level since filesystem-specific and
-+	 * device-specific error codes may not be exhaustively listed.
-+	 */
-+	pr_debug("API %s returned error code %lld not listed in spec\n",
-+		 spec->name, retval);
-+
-+	return true;
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_return_value);
-+
-+/**
-+ * kapi_validate_syscall_return - Validate syscall return value
-+ * @spec: API specification
-+ * @retval: Return value
-+ *
-+ * Return: always 0. A return value that does not match the spec is only
-+ * logged and the syscall result is left unchanged.
-+ */
-+int kapi_validate_syscall_return(const struct kernel_api_spec *spec, s64 retval)
-+{
-+	if (!spec)
-+		return 0;
-+
-+	/* Skip return validation if return spec was not defined */
-+	if (spec->return_magic != KAPI_MAGIC_RETURN)
-+		return 0;
-+
-+	if (!kapi_validate_return_value(spec, retval)) {
-+		/* Log the violation but don't change the return value */
-+		pr_warn_ratelimited("KAPI: Syscall %s returned unspecified value %lld\n",
-+				    spec->name, retval);
-+	}
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(kapi_validate_syscall_return);
-+
-+/**
-+ * kapi_check_context - Check if current context matches API requirements
-+ * @spec: API specification to check against
-+ */
-+void kapi_check_context(const struct kernel_api_spec *spec)
-+{
-+	bool valid = false;
-+	u32 ctx;
-+
-+	if (!spec)
-+		return;
-+
-+	ctx = spec->context_flags;
-+
-+	if (!ctx)
-+		return;
-+
-+	/* Check if we're in an allowed context */
-+	if ((ctx & KAPI_CTX_PROCESS) && !in_interrupt())
-+		valid = true;
-+
-+	if ((ctx & KAPI_CTX_SOFTIRQ) && in_softirq())
-+		valid = true;
-+
-+	if ((ctx & KAPI_CTX_HARDIRQ) && in_hardirq())
-+		valid = true;
-+
-+	if ((ctx & KAPI_CTX_NMI) && in_nmi())
-+		valid = true;
-+
-+	if (!valid)
-+		WARN_ONCE(1, "API %s called from invalid context\n", spec->name);
-+
-+	/* Check specific requirements */
-+	if ((ctx & KAPI_CTX_ATOMIC) && preemptible())
-+		WARN_ONCE(1, "API %s requires atomic context\n", spec->name);
-+
-+	if ((ctx & KAPI_CTX_SLEEPABLE) && !preemptible())
-+		WARN_ONCE(1, "API %s requires sleepable context\n", spec->name);
-+}
-+EXPORT_SYMBOL_GPL(kapi_check_context);
-+
-+#endif /* CONFIG_KAPI_RUNTIME_CHECKS */
++# Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
++
++"""
++Generate C macro invocations for kernel API specifications from kernel-doc comments.
++
++This module creates C header files with API specification macros that match
++the kernel API specification framework in include/linux/kernel_api_spec.h.
++"""
++
++from kdoc.kdoc_output import OutputFormat
++import re
++import sys
++
++
++# Valid KAPI effect types
++VALID_EFFECT_TYPES = {
++    'KAPI_EFFECT_NONE', 'KAPI_EFFECT_MODIFY_STATE', 'KAPI_EFFECT_PROCESS_STATE',
++    'KAPI_EFFECT_IRREVERSIBLE', 'KAPI_EFFECT_SCHEDULE', 'KAPI_EFFECT_FILESYSTEM',
++    'KAPI_EFFECT_HARDWARE', 'KAPI_EFFECT_ALLOC_MEMORY', 'KAPI_EFFECT_FREE_MEMORY',
++    'KAPI_EFFECT_SIGNAL_SEND', 'KAPI_EFFECT_FILE_POSITION', 'KAPI_EFFECT_LOCK_ACQUIRE',
++    'KAPI_EFFECT_LOCK_RELEASE', 'KAPI_EFFECT_RESOURCE_CREATE', 'KAPI_EFFECT_RESOURCE_DESTROY',
++    'KAPI_EFFECT_NETWORK'
++}
++
++# DSL aliases mapping short tokens to their canonical KAPI_* C
++# identifier. Unknown tokens pass through unchanged.
++_CTX_ALIASES = {
++    'process':          'KAPI_CTX_PROCESS',
++    'softirq':          'KAPI_CTX_SOFTIRQ',
++    'hardirq':          'KAPI_CTX_HARDIRQ',
++    'nmi':              'KAPI_CTX_NMI',
++    'atomic':           'KAPI_CTX_ATOMIC',
++    'sleepable':        'KAPI_CTX_SLEEPABLE',
++    'preempt_disabled': 'KAPI_CTX_PREEMPT_DISABLED',
++    'irq_disabled':     'KAPI_CTX_IRQ_DISABLED',
++}
++_TYPE_ALIASES = {
++    'int':      'KAPI_TYPE_INT',
++    'uint':     'KAPI_TYPE_UINT',
++    'ptr':      'KAPI_TYPE_PTR',
++    'struct':   'KAPI_TYPE_STRUCT',
++    'union':    'KAPI_TYPE_UNION',
++    'enum':     'KAPI_TYPE_ENUM',
++    'func_ptr': 'KAPI_TYPE_FUNC_PTR',
++    'array':    'KAPI_TYPE_ARRAY',
++    'fd':       'KAPI_TYPE_FD',
++    'user_ptr': 'KAPI_TYPE_USER_PTR',
++    'uptr':     'KAPI_TYPE_USER_PTR',
++    'path':     'KAPI_TYPE_PATH',
++    'custom':   'KAPI_TYPE_CUSTOM',
++}
++_FLAG_ALIASES = {
++    'input':    'KAPI_PARAM_IN',
++    'in':       'KAPI_PARAM_IN',
++    'output':   'KAPI_PARAM_OUT',
++    'out':      'KAPI_PARAM_OUT',
++    'inout':    'KAPI_PARAM_INOUT',
++    'optional': 'KAPI_PARAM_OPTIONAL',
++    'const':    'KAPI_PARAM_CONST',
++    'volatile': 'KAPI_PARAM_VOLATILE',
++    'user':     'KAPI_PARAM_USER',
++    'dma':      'KAPI_PARAM_DMA',
++    'aligned':  'KAPI_PARAM_ALIGNED',
++}
++
++
++def _canon_token(tok, table):
++    """Look up `tok` (case-insensitive) in `table`. Unknown tokens
++    pass through verbatim."""
++    t = tok.strip()
++    if not t:
++        return ''
++    return table.get(t.lower(), t)
++
++
++def _canon_context_expr(expr):
++    """Canonicalise a context flag expression. Accepts '|'- or
++    ','-joined tokens; returns a '|'-joined string of KAPI_CTX_*
++    identifiers ready for KAPI_CONTEXT()."""
++    if not expr:
++        return expr
++    sep = ',' if ',' in expr and '|' not in expr else '|'
++    tokens = [_canon_token(t, _CTX_ALIASES) for t in expr.split(sep)]
++    return ' | '.join(t for t in tokens if t)
++
++
++def _canon_flags_expr(expr):
++    """Canonicalise a parameter flags expression. Accepts '|'- or
++    ','-joined KAPI_PARAM_* tokens or their aliases; returns a
++    '|'-joined canonical string."""
++    if not expr:
++        return expr
++    sep = ',' if ',' in expr and '|' not in expr else '|'
++    tokens = [_canon_token(t, _FLAG_ALIASES) for t in expr.split(sep)]
++    return ' | '.join(t for t in tokens if t)
++
++
++# Alias tables for enum families used as block-attribute values
++# (lock type, signal direction/action/timing, return check type) and
++# for the top-level `side-effect:` bitmask.
++_LOCK_TYPE_ALIASES = {
++    'none':      'KAPI_LOCK_NONE',
++    'mutex':     'KAPI_LOCK_MUTEX',
++    'spinlock':  'KAPI_LOCK_SPINLOCK',
++    'rwlock':    'KAPI_LOCK_RWLOCK',
++    'seqlock':   'KAPI_LOCK_SEQLOCK',
++    'rcu':       'KAPI_LOCK_RCU',
++    'semaphore': 'KAPI_LOCK_SEMAPHORE',
++    'custom':    'KAPI_LOCK_CUSTOM',
++}
++_SIGNAL_DIR_ALIASES = {
++    'receive': 'KAPI_SIGNAL_RECEIVE',
++    'send':    'KAPI_SIGNAL_SEND',
++    'handle':  'KAPI_SIGNAL_HANDLE',
++    'block':   'KAPI_SIGNAL_BLOCK',
++    'ignore':  'KAPI_SIGNAL_IGNORE',
++}
++_SIGNAL_ACTION_ALIASES = {
++    'default':   'KAPI_SIGNAL_ACTION_DEFAULT',
++    'terminate': 'KAPI_SIGNAL_ACTION_TERMINATE',
++    'coredump':  'KAPI_SIGNAL_ACTION_COREDUMP',
++    'stop':      'KAPI_SIGNAL_ACTION_STOP',
++    'continue':  'KAPI_SIGNAL_ACTION_CONTINUE',
++    'custom':    'KAPI_SIGNAL_ACTION_CUSTOM',
++    'return':    'KAPI_SIGNAL_ACTION_RETURN',
++    'restart':   'KAPI_SIGNAL_ACTION_RESTART',
++    'queue':     'KAPI_SIGNAL_ACTION_QUEUE',
++    'discard':   'KAPI_SIGNAL_ACTION_DISCARD',
++    'transform': 'KAPI_SIGNAL_ACTION_TRANSFORM',
++}
++_SIGNAL_TIMING_ALIASES = {
++    'before': 'KAPI_SIGNAL_TIME_BEFORE',
++    'during': 'KAPI_SIGNAL_TIME_DURING',
++    'after':  'KAPI_SIGNAL_TIME_AFTER',
++}
++_EFFECT_ALIASES = {
++    'none':             'KAPI_EFFECT_NONE',
++    'alloc_memory':     'KAPI_EFFECT_ALLOC_MEMORY',
++    'free_memory':      'KAPI_EFFECT_FREE_MEMORY',
++    'modify_state':     'KAPI_EFFECT_MODIFY_STATE',
++    'signal_send':      'KAPI_EFFECT_SIGNAL_SEND',
++    'file_position':    'KAPI_EFFECT_FILE_POSITION',
++    'lock_acquire':     'KAPI_EFFECT_LOCK_ACQUIRE',
++    'lock_release':     'KAPI_EFFECT_LOCK_RELEASE',
++    'resource_create':  'KAPI_EFFECT_RESOURCE_CREATE',
++    'resource_destroy': 'KAPI_EFFECT_RESOURCE_DESTROY',
++    'schedule':         'KAPI_EFFECT_SCHEDULE',
++    'hardware':         'KAPI_EFFECT_HARDWARE',
++    'network':          'KAPI_EFFECT_NETWORK',
++    'filesystem':       'KAPI_EFFECT_FILESYSTEM',
++    'process_state':    'KAPI_EFFECT_PROCESS_STATE',
++    'irreversible':     'KAPI_EFFECT_IRREVERSIBLE',
++}
++_RETURN_CHECK_ALIASES = {
++    'exact':       'KAPI_RETURN_EXACT',
++    'range':       'KAPI_RETURN_RANGE',
++    'error_check': 'KAPI_RETURN_ERROR_CHECK',
++    'fd':          'KAPI_RETURN_FD',
++    'custom':      'KAPI_RETURN_CUSTOM',
++    'no_return':   'KAPI_RETURN_NO_RETURN',
++}
++
++# Mapping from short architecture name (as used under arch/<name>/) to the
++# kernel CONFIG_* symbol that selects that architecture. Used by the
++# `arch-mask:` DSL form to wrap arch-specific mask bits in #ifdef so a
++# single generated apispec.h compiles on every architecture and folds
++# the right bits into the mask at compile time.
++_ARCH_CONFIG = {
++    'alpha':       'CONFIG_ALPHA',
++    'arc':         'CONFIG_ARC',
++    'arm':         'CONFIG_ARM',
++    'arm64':       'CONFIG_ARM64',
++    'csky':        'CONFIG_CSKY',
++    'hexagon':     'CONFIG_HEXAGON',
++    'loongarch':   'CONFIG_LOONGARCH',
++    'm68k':        'CONFIG_M68K',
++    'microblaze':  'CONFIG_MICROBLAZE',
++    'mips':        'CONFIG_MIPS',
++    'nios2':       'CONFIG_NIOS2',
++    'openrisc':    'CONFIG_OPENRISC',
++    'parisc':      'CONFIG_PARISC',
++    'powerpc':     'CONFIG_PPC',
++    'riscv':       'CONFIG_RISCV',
++    's390':        'CONFIG_S390',
++    'sh':          'CONFIG_SUPERH',
++    'sparc':       'CONFIG_SPARC',
++    'um':          'CONFIG_UML',
++    'x86':         'CONFIG_X86',
++    'xtensa':      'CONFIG_XTENSA',
++}
++
++
++def _canon_bitmask_expr(expr, table):
++    """Canonicalise a bitmask expression (e.g. signal direction/timing,
++    side-effect flags). Accepts `|`- or `,`-joined tokens and returns a
++    `|`-joined canonical KAPI_* string."""
++    if not expr:
++        return expr
++    sep = ',' if ',' in expr and '|' not in expr else '|'
++    tokens = [_canon_token(t, table) for t in expr.split(sep)]
++    return ' | '.join(t for t in tokens if t)
++
++
++# Types that carry user-space pointer semantics. A param with one of
++# these types implicitly gets KAPI_PARAM_USER.
++_IMPLIES_USER_FLAG = {'KAPI_TYPE_USER_PTR', 'KAPI_TYPE_PATH'}
++
++
++def _split_type_line(value):
++    """Split a 'type:' line into (type, [flags...]).
++
++    Accepts a single-token value (e.g. 'KAPI_TYPE_UINT' or 'uint')
++    leaving flags empty, or a comma-separated form
++    (e.g. 'uint, input, user') where the first token is the type and
++    subsequent tokens are flag aliases.
++
++    When the type is user-space (user_ptr, path), KAPI_PARAM_USER is
++    added to the flags list if not already present."""
++    parts = [p.strip() for p in value.split(',') if p.strip()]
++    if not parts:
++        return None, []
++    ty = _canon_token(parts[0], _TYPE_ALIASES)
++    flags = [_canon_token(f, _FLAG_ALIASES) for f in parts[1:]]
++    if ty in _IMPLIES_USER_FLAG and 'KAPI_PARAM_USER' not in flags:
++        flags.append('KAPI_PARAM_USER')
++    return ty, flags
++
++
++def _split_constraint_expr(value):
++    """Parse a constraint expression into (canonical_type, extras).
++
++    Shapes:
++        NAME                              e.g. 'user_path', 'nonzero'
++        NAME ( ARG (, ARG)* )             e.g. 'range(0, 4096)', 'buffer(2)'
++
++    Returns None for free text. Otherwise returns
++    (constraint_type, {aux_field: value, ...}) where the aux fields map
++    onto the matching param-range / param-mask / param-size /
++    param-enum-values / param-constraint slots.
++    """
++    t = value.strip()
++    if not t:
++        return None
++    # Split NAME ( ARGS )
++    lp = t.find('(')
++    rp = t.rfind(')')
++    if lp > 0 and rp > lp:
++        name = t[:lp].strip()
++        args_raw = t[lp + 1:rp].strip()
++    elif lp < 0:
++        name = t
++        args_raw = None
++    else:
++        return None
++    # Bareword must be a single identifier; multi-word values are free text.
++    if not name or any(c.isspace() for c in name):
++        return None
++    key = name.lower()
++    table = {
++        'range':          ('KAPI_CONSTRAINT_RANGE',       'param-range'),
++        'mask':           ('KAPI_CONSTRAINT_MASK',        'param-mask'),
++        'enum':           ('KAPI_CONSTRAINT_ENUM',        'param-enum-values'),
++        'alignment':      ('KAPI_CONSTRAINT_ALIGNMENT',   'param-alignment'),
++        'align':          ('KAPI_CONSTRAINT_ALIGNMENT',   'param-alignment'),
++        'power_of_two':   ('KAPI_CONSTRAINT_POWER_OF_TWO', None),
++        'page_aligned':   ('KAPI_CONSTRAINT_PAGE_ALIGNED', None),
++        'nonzero':        ('KAPI_CONSTRAINT_NONZERO',      None),
++        'user_string':    ('KAPI_CONSTRAINT_USER_STRING',  'param-size'),
++        'user_path':      ('KAPI_CONSTRAINT_USER_PATH',    None),
++        'user_ptr':       ('KAPI_CONSTRAINT_USER_PTR',     None),
++        'buffer':         ('KAPI_CONSTRAINT_BUFFER',       'param-size-param'),
++        'custom':         ('KAPI_CONSTRAINT_CUSTOM',       'param-constraint'),
++    }
++    if key not in table:
++        return None
++    ctype, aux_key = table[key]
++    extras = {}
++    if aux_key and args_raw is not None:
++        extras[aux_key] = args_raw
++    return ctype, extras
++
++
++# Subfield names consumed per block type. An indented line opens a new
++# subfield only when it starts with one of these followed by ':'; any
++# other line continues the previous subfield.
++_SIGNAL_SUBFIELDS = frozenset({
++    'direction', 'action', 'condition', 'desc', 'errno', 'timing',
++    'priority', 'restartable', 'interruptible', 'number', 'target',
++    'queue', 'queue_behavior', 'transform', 'transform_to', 'transform-to',
++    'sa_flags_required', 'sa-flags-required',
++    'sa_flags_forbidden', 'sa-flags-forbidden',
++    'state_required', 'state-required',
++    'state_forbidden', 'state-forbidden',
++})
++_LOCK_SUBFIELDS = frozenset({
++    'type', 'scope', 'acquired', 'released', 'held-on-entry',
++    'held-on-exit', 'desc',
++})
++_CONSTRAINT_SUBFIELDS = frozenset({'desc', 'expr'})
++_SIDE_EFFECT_SUBFIELDS = frozenset({'target', 'desc', 'condition', 'reversible'})
++_STATE_TRANS_SUBFIELDS = frozenset({'object', 'from', 'to', 'condition', 'desc'})
++_CAPABILITY_SUBFIELDS = frozenset({
++    'type', 'allows', 'without', 'condition', 'priority', 'desc',
++})
++_RETURN_SUBFIELDS = frozenset({
++    'type', 'check-type', 'success', 'success-range', 'error-values', 'desc',
++})
++
++_RETURN_INT = r'-?(?:0[xX][0-9a-fA-F]+|0[bB][01]+|\d+)[uUlL]*'
++_RETURN_EXACT_RE = re.compile(rf'^(?:==?\s*)?({_RETURN_INT})$')
++_RETURN_RANGE_RE = re.compile(rf'^>=\s*({_RETURN_INT})$')
++
++
++def _fold_paragraphs(content):
++    """Fold free-form prose into paragraphs.
++
++    Blank lines separate paragraphs ("\\n\\n"); wrapped lines inside a
++    paragraph are joined with spaces, except that a line starting with
++    "- " always begins a new line so bullet lists survive."""
++    paragraphs = []
++    current = []
++    for line in content.split('\n'):
++        line = line.strip()
++        if not line:
++            if current:
++                paragraphs.append(current)
++                current = []
++        elif line.startswith('- ') or not current:
++            current.append(line)
++        else:
++            current[-1] += ' ' + line
++    if current:
++        paragraphs.append(current)
++    return '\n\n'.join('\n'.join(p) for p in paragraphs) or None
++
++
++def _fold_lines(content):
++    """Keep every line of a block on its own line.
++
++    The indentation shared by the continuation lines is removed so that
++    relative indentation (nested code) is preserved; runs of blank lines
++    collapse into one."""
++    lines = [line.rstrip() for line in content.expandtabs().split('\n')]
++    while lines and not lines[0]:
++        lines.pop(0)
++    while lines and not lines[-1]:
++        lines.pop()
++    if not lines:
++        return None
++
++    indents = [len(line) - len(line.lstrip()) for line in lines[1:] if line]
++    base = min(indents) if indents else 0
++
++    out = []
++    for line in lines:
++        if line:
++            line = line[min(base, len(line) - len(line.lstrip())):]
++        elif out and not out[-1]:
++            continue
++        out.append(line)
++    return '\n'.join(out)
++
++
++def _return_success_macro(check_type, value):
++    """Translate a return `success:` value into the macro matching the
++    check type, or None when the check type does not use one (or the
++    value is not a plain integer expression)."""
++    if check_type in ('', 'KAPI_RETURN_EXACT'):
++        m = _RETURN_EXACT_RE.match(value)
++        return f"KAPI_RETURN_SUCCESS({m.group(1)})" if m else None
++    if check_type == 'KAPI_RETURN_RANGE':
++        m = _RETURN_RANGE_RE.match(value)
++        return f"KAPI_RETURN_SUCCESS_RANGE({m.group(1) if m else 0}, S64_MAX)"
++    return None
++
++
++class ApiSpecFormat(OutputFormat):
++    """Generate C macro invocations for kernel API specifications"""
++
++    def __init__(self):
++        super().__init__()
++        self.header_written = False
++
++    def msg(self, fname, name, args):
++        """Handles a single entry from kernel-doc parser"""
++        if not self.header_written:
++            header = self._generate_header()
++            self.header_written = True
++        else:
++            header = ""
++
++        self.data = ""
++        result = super().msg(fname, name, args)
++        return header + (result if result else self.data)
++
++    def _generate_header(self):
++        """Generate the file header"""
++        return (
++            "/* SPDX-License-Identifier: GPL-2.0 */\n"
++            "/* Auto-generated from kerneldoc annotations - DO NOT EDIT */\n\n"
++            "#include <linux/capability.h>\n"
++            "#include <linux/errno.h>\n"
++            "#include <linux/fcntl.h>\n"
++            "#include <linux/kernel_api_spec.h>\n"
++            "#include <linux/signal.h>\n"
++            "#include <linux/stat.h>\n\n"
++        )
++
++    def _format_macro_param(self, value, multiline=False):
++        """Format a value for use in C macro parameter.
++
++        Every string field in the kernel structs is a `const char *`, so
++        there is no length limit. Newlines become spaces unless
++        `multiline` is set, in which case they are kept as "\\n" escapes.
++        """
++        if value is None:
++            return '""'
++        value = str(value).replace('\\', '\\\\').replace('"', '\\"')
++        value = value.replace('\t', ' ').replace('\r', '').replace('\0', '')
++        value = value.replace('\n', '\\n' if multiline else ' ')
++        return f'"{value}"'
++
++    def _get_section(self, sections, key):
++        """Get first line from sections, checking with and without @ prefix and case variants"""
++        for variant in [key, key.capitalize(), key.title()]:
++            for prefix in ['', '@']:
++                full_key = prefix + variant
++                if full_key in sections:
++                    content = sections[full_key].strip()
++                    # Return only first line to avoid mixing sections
++                    return content.split('\n')[0].strip() if content else ''
++        return None
++
++    def _get_raw_section(self, sections, key):
++        """Get full section content, checking with and without @ prefix and case variants"""
++        for variant in [key, key.capitalize(), key.title()]:
++            for prefix in ['', '@']:
++                full_key = prefix + variant
++                if full_key in sections:
++                    return sections[full_key]
++        return ''
++
++    def _get_multiline_section(self, sections, key, fold=_fold_paragraphs):
++        """Get a multi-line section, structured by `fold`.
++
++        This is used for fields like notes, long-desc, and examples that
++        can span multiple lines in the kerneldoc comment.
++        """
++        content = self._get_raw_section(sections, key)
++        return fold(content) if content else None
++
++    def _parse_indented_items(self, section_content, item_parser):
++        """Generic parser for indented items.
++
++        Args:
++            section_content: Raw section content
++            item_parser: Function that takes (lines, start_index) and returns (item, next_index)
++
++        Returns:
++            List of parsed items
++        """
++        if not section_content:
++            return []
++
++        items = []
++        lines = section_content.strip().split('\n')
++        i = 0
++
++        while i < len(lines):
++            if not lines[i].strip():
++                i += 1
++                continue
++
++            # Check if this is a main item (not indented)
++            if not lines[i].startswith((' ', '\t')):
++                item, i = item_parser(lines, i)
++                if item:
++                    items.append(item)
++            else:
++                i += 1
++
++        return items
++
++    def _parse_subfields(self, lines, start_idx, keys):
++        """Parse indented subfields starting from start_idx+1.
++
++        A line opens a new subfield only if it starts with one of `keys`
++        followed by ':'; every other line continues the previous one.
++        Blank lines inside the block are skipped when more indented
++        lines follow.
++
++        Returns: (dict of subfields, next index)
++        """
++        subfields = {}
++        i = start_idx + 1
++
++        current_key = None
++        while i < len(lines):
++            if not lines[i].strip():
++                nxt = i + 1
++                while nxt < len(lines) and not lines[nxt].strip():
++                    nxt += 1
++                if nxt == len(lines) or not lines[nxt].startswith((' ', '\t')):
++                    break
++                i = nxt
++                continue
++            if not lines[i].startswith((' ', '\t')):
++                break
++            line = lines[i].strip()
++            key, sep, value = line.partition(':')
++            key = key.strip()
++            if sep and key in keys:
++                current_key = key
++                subfields[current_key] = value.strip()
++            elif current_key:
++                subfields[current_key] = (subfields[current_key] + ' ' + line).strip()
++            i += 1
++
++        return subfields, i
++
++    def _parse_signal_item(self, lines, i):
++        """Parse a single signal specification"""
++        signal = {'name': lines[i].strip()}
++        subfields, next_i = self._parse_subfields(lines, i, _SIGNAL_SUBFIELDS)
++
++        # `direction` and `timing` are bitmasks of KAPI_SIGNAL_* /
++        # KAPI_SIGNAL_TIME_* values; `action` is a single
++        # KAPI_SIGNAL_ACTION_* enum. All three canonicalise aliases to
++        # their KAPI_* spelling.
++        raw_direction = subfields.get('direction', 'KAPI_SIGNAL_RECEIVE')
++        raw_action    = subfields.get('action',    'KAPI_SIGNAL_ACTION_RETURN')
++        raw_timing    = subfields.get('timing')
++        # `errno:` carries the signal's errno-on-return. The plain
++        # `error:` spelling cannot be used inside a signal block
++        # because kerneldoc promotes it to a top-level `error:` section.
++        signal.update({
++            'direction':     _canon_bitmask_expr(raw_direction, _SIGNAL_DIR_ALIASES),
++            'action':        _canon_token(raw_action, _SIGNAL_ACTION_ALIASES),
++            'condition':     subfields.get('condition'),
++            'desc':          subfields.get('desc'),
++            'error':         subfields.get('errno'),
++            'timing':        _canon_bitmask_expr(raw_timing, _SIGNAL_TIMING_ALIASES)
++                              if raw_timing else None,
++            'priority':      subfields.get('priority'),
++            'restartable':   subfields.get('restartable', '').lower() == 'yes',
++            'interruptible': subfields.get('interruptible', '').lower() == 'yes',
++            'number':        subfields.get('number', '0'),
++            # Additional struct fields. These are optional; if absent, no
++            # KAPI_SIGNAL_* macro is emitted and the field stays at its
++            # zero-initialised default.
++            'target':        subfields.get('target'),
++            'queue':         subfields.get('queue') or subfields.get('queue_behavior'),
++            'transform':     subfields.get('transform') or subfields.get('transform_to')
++                              or subfields.get('transform-to'),
++            'sa_flags_required':  subfields.get('sa_flags_required')
++                                    or subfields.get('sa-flags-required'),
++            'sa_flags_forbidden': subfields.get('sa_flags_forbidden')
++                                    or subfields.get('sa-flags-forbidden'),
++            'state_required':     subfields.get('state_required')
++                                    or subfields.get('state-required'),
++            'state_forbidden':    subfields.get('state_forbidden')
++                                    or subfields.get('state-forbidden'),
++        })
++
++        return signal, next_i
++
++    def _parse_error_item(self, lines, i):
++        """Parse a single error specification"""
++        line = lines[i].strip()
++
++        # Skip desc: lines
++        if line.startswith('desc:'):
++            return None, i + 1
++
++        # Check for error pattern
++        if not re.match(r'^[A-Z][A-Z0-9_]+,', line):
++            return None, i + 1
++
++        error = {'line': line, 'desc': ''}
++
++        # Look for desc: and condition: subfields
++        i += 1
++        desc_lines = []
++        while i < len(lines):
++            next_line = lines[i].strip()
++            if next_line.startswith('desc:'):
++                desc_lines.append(next_line[5:].strip())
++                i += 1
++            elif next_line.startswith('condition:'):
++                error['condition'] = next_line[10:].strip()
++                i += 1
++            elif not next_line:
++                break
++            elif not desc_lines and re.match(r'^[A-Z][A-Z0-9_]+,', next_line):
++                # New error entry, but only if we haven't started a desc block
++                break
++            else:
++                desc_lines.append(next_line)
++                i += 1
++
++        if desc_lines:
++            error['desc'] = ' '.join(desc_lines)
++
++        return error, i
++
++    def _parse_lock_item(self, lines, i):
++        """Parse a single lock specification.
++
++        Two shapes are accepted:
++          * inline `NAME, TYPE` on the main line; or
++          * `NAME` on the main line with `type:` as an indented
++            subfield.
++        Lock-type values are canonicalised to KAPI_LOCK_* spellings.
++        """
++        head = lines[i].strip()
++        if not head:
++            return None, i + 1
++
++        parts = head.split(',', 1)
++        subfields, next_i = self._parse_subfields(lines, i, _LOCK_SUBFIELDS)
++
++        name = parts[0].strip()
++        type_raw = (parts[1].strip() if len(parts) >= 2
++                    else subfields.get('type', '').strip())
++        if not name or not type_raw:
++            return None, next_i
++
++        lock = {
++            'name': name,
++            'type': _canon_token(type_raw, _LOCK_TYPE_ALIASES),
++        }
++
++        for field in ['acquired', 'released', 'held-on-entry', 'held-on-exit']:
++            if subfields.get(field, '').lower() in ('true', 'yes'):
++                lock[field] = True
++
++        lock['desc'] = subfields.get('desc', '')
++
++        return lock, next_i
++
++    def _parse_constraint_item(self, lines, i):
++        """Parse a single constraint specification"""
++        line = lines[i].strip()
++
++        # NAME, description form
++        if ',' in line:
++            parts = line.split(',', 1)
++            constraint = {
++                'name': parts[0].strip(),
++                'desc': parts[1].strip() if len(parts) > 1 else '',
++                'expr': None
++            }
++        else:
++            constraint = {'name': line, 'desc': '', 'expr': None}
++
++        subfields, next_i = self._parse_subfields(lines, i, _CONSTRAINT_SUBFIELDS)
++
++        if 'desc' in subfields:
++            constraint['desc'] = (constraint['desc'] + ' ' + subfields['desc']).strip()
++        constraint['expr'] = subfields.get('expr')
++
++        return constraint, next_i
++
++    def _parse_side_effect_item(self, lines, i):
++        """Parse a single side effect specification"""
++        line = lines[i].strip()
++
++        # Defaults for the subfield form
++        effect = {
++            'type': line,
++            'target': '',
++            'desc': '',
++            'condition': None,
++            'reversible': False
++        }
++
++        # Inline comma-separated form
++        if ',' in line:
++            # Handle condition and reversible flags
++            cond_match = re.search(r',\s*condition=([^,]+?)(?:\s*,\s*reversible=(yes|no)\s*)?$', line)
++            if cond_match:
++                effect['condition'] = cond_match.group(1).strip()
++                effect['reversible'] = cond_match.group(2) == 'yes'
++                line = line[:cond_match.start()]
++            elif ', reversible=yes' in line:
++                effect['reversible'] = True
++                line = line.replace(', reversible=yes', '')
++            elif ', reversible=no' in line:
++                line = line.replace(', reversible=no', '')
++
++            parts = line.split(',', 2)
++            if len(parts) >= 1:
++                effect['type'] = parts[0].strip()
++            if len(parts) >= 2:
++                effect['target'] = parts[1].strip()
++            if len(parts) >= 3:
++                effect['desc'] = parts[2].strip()
++        else:
++            # Multi-line format with subfields
++            subfields, next_i = self._parse_subfields(
++                lines, i, _SIDE_EFFECT_SUBFIELDS)
++            effect.update({
++                'target': subfields.get('target', ''),
++                'desc': subfields.get('desc', ''),
++                'condition': subfields.get('condition'),
++                'reversible': subfields.get('reversible', '').lower() == 'yes'
++            })
++            return effect, next_i
++
++        return effect, i + 1
++
++    def _parse_state_trans_item(self, lines, i):
++        """Parse a single state transition specification"""
++        line = lines[i].strip()
++
++        trans = {
++            'target': line,
++            'from': '',
++            'to': '',
++            'condition': '',
++            'desc': ''
++        }
++
++        # Inline comma-separated form
++        if ',' in line:
++            parts = line.split(',', 3)
++            if len(parts) >= 1:
++                trans['target'] = parts[0].strip()
++            if len(parts) >= 2:
++                trans['from'] = parts[1].strip()
++            if len(parts) >= 3:
++                trans['to'] = parts[2].strip()
++            if len(parts) >= 4:
++                trans['desc'] = parts[3].strip()
++            return trans, i + 1
++        else:
++            # Multi-line format with subfields
++            subfields, next_i = self._parse_subfields(
++                lines, i, _STATE_TRANS_SUBFIELDS)
++            trans.update({
++                'target': subfields.get('object', line),
++                'from': subfields.get('from', ''),
++                'to': subfields.get('to', ''),
++                'condition': subfields.get('condition', ''),
++                'desc': subfields.get('desc', '')
++            })
++            return trans, next_i
++
++    def _process_parameters(self, sections, parameterlist, parameterdescs, parametertypes):
++        """Process and output parameter specifications"""
++        param_count = len(parameterlist)
++        if param_count > 0:
++            self.data += f"\n\tKAPI_PARAM_COUNT({param_count})\n"
++
++        for param_idx, param in enumerate(parameterlist):
++            param_name = param.strip()
++            param_desc = parameterdescs.get(param_name, '').strip()
++            param_ctype = parametertypes.get(param_name, '')
++
++            # Parse parameter specifications
++            param_section = self._get_raw_section(sections, 'param')
++            param_specs = {}
++            if param_section:
++                param_specs = self._parse_param_spec(param_section, param_name)
++
++            self.data += f"\n\tKAPI_PARAM({param_idx}, {self._format_macro_param(param_name)}, "
++            self.data += f"{self._format_macro_param(param_ctype)}, {self._format_macro_param(param_desc)})\n"
++
++            # Add parameter attributes
++            for key, macro in [
++                ('param-type', 'KAPI_PARAM_TYPE'),
++                ('param-flags', 'KAPI_PARAM_FLAGS'),
++                ('param-size', 'KAPI_PARAM_SIZE'),
++                ('param-alignment', 'KAPI_PARAM_ALIGNMENT'),
++            ]:
++                if key in param_specs:
++                    self.data += f"\t\t{macro}({param_specs[key]})\n"
++
++            # Handle constraint type
++            if 'param-constraint-type' in param_specs:
++                ctype = param_specs['param-constraint-type']
++                self.data += f"\t\tKAPI_PARAM_CONSTRAINT_TYPE({ctype})\n"
++
++            # Handle range
++            if 'param-range' in param_specs and ',' in param_specs['param-range']:
++                min_val, max_val = param_specs['param-range'].split(',', 1)
++                self.data += f"\t\tKAPI_PARAM_RANGE({min_val.strip()}, {max_val.strip()})\n"
++
++            # Handle mask. If `arch-mask:` lines are present, fall back
++            # to a raw `.valid_mask = (...)` initializer so we can wrap
++            # arch-specific bits in #ifdef CONFIG_<ARCH> ... #endif, which
++            # is illegal inside a function-like macro argument.
++            if 'param-mask' in param_specs:
++                arch_masks = param_specs.get('param-arch-mask') or []
++                if arch_masks:
++                    base = param_specs['param-mask']
++                    self.data += f"\t\t.valid_mask = ({base})"
++                    for arch, bits in arch_masks:
++                        config = _ARCH_CONFIG.get(arch.lower())
++                        if config is None:
++                            sys.stderr.write(
++                                f"kdoc_apispec: unknown arch '{arch}' in "
++                                f"arch-mask: line; skipping\n")
++                            continue
++                        self.data += (f"\n#ifdef {config}\n"
++                                      f"\t\t\t| ({bits})\n"
++                                      f"#endif\n")
++                    self.data += "\t\t,\n"
++                else:
++                    self.data += (
++                        f"\t\tKAPI_PARAM_VALID_MASK("
++                        f"{param_specs['param-mask']})\n")
++
++            # Handle enum values
++            if 'param-enum-values' in param_specs:
++                self.data += f"\t\tKAPI_PARAM_ENUM_VALUES({param_specs['param-enum-values']})\n"
++
++            # Handle size parameter index
++            if 'param-size-param' in param_specs:
++                self.data += f"\t\tKAPI_PARAM_SIZE_PARAM({param_specs['param-size-param']})\n"
++
++            # Handle constraint description
++            if 'param-constraint' in param_specs:
++                self.data += f"\t\tKAPI_PARAM_CONSTRAINT({self._format_macro_param(param_specs['param-constraint'])})\n"
++
++            self.data += "\t},\n"
++
++    def _parse_param_spec(self, section_content, param_name):
++        """Parse parameter specifications from indented format"""
++        specs = {}
++        lines = section_content.strip().split('\n')
++        current_item = None
++
++        # Map to expected keys
++        field_map = {
++            'type': 'param-type',
++            'flags': 'param-flags',
++            'size': 'param-size',
++            'constraint-type': 'param-constraint-type',
++            'constraint': 'param-constraint',
++            'cdesc': 'param-constraint',
++            'range': 'param-range',
++            'mask': 'param-mask',
++            'valid-mask': 'param-mask',
++            'valid-values': 'param-enum-values',
++            'alignment': 'param-alignment',
++            'size-param': 'param-size-param',
++            'struct-type': 'param-struct-type',
++            'arch-mask': 'param-arch-mask',
++        }
++
++        i = 0
++        while i < len(lines):
++            line = lines[i]
++            if not line.strip():
++                i += 1
++                continue
++
++            # Check if this is our parameter (non-indented line)
++            if not line.startswith((' ', '\t')):
++                parts = line.strip().split(',', 1)
++                current_item = param_name if parts[0].strip() == param_name else None
++                if current_item and len(parts) > 1:
++                    specs['param-type'] = parts[1].strip()
++                i += 1
++            elif current_item == param_name:
++                # Parse subfield
++                stripped = line.strip()
++                if ':' in stripped:
++                    key, value = stripped.split(':', 1)
++                    key = key.strip()
++                    value = value.strip()
++
++                    # Collect continuation lines (indented lines without a colon that
++                    # defines a new key, i.e., lines that are pure continuations)
++                    i += 1
++                    while i < len(lines):
++                        next_line = lines[i]
++                        # Stop if we hit a non-indented line (new param)
++                        if next_line.strip() and not next_line.startswith((' ', '\t')):
++                            break
++                        next_stripped = next_line.strip()
++                        # Stop if we hit a new key (contains colon with known key prefix)
++                        if next_stripped and ':' in next_stripped:
++                            potential_key = next_stripped.split(':', 1)[0].strip()
++                            if potential_key in field_map or potential_key in ['type', 'desc']:
++                                break
++                        # This is a continuation line
++                        if next_stripped:
++                            value = value + ' ' + next_stripped
++                        i += 1
++
++                    if key in field_map:
++                        # Clean up the value - remove excessive whitespace
++                        value = ' '.join(value.split())
++                        mapped = field_map[key]
++                        if mapped == 'param-type':
++                            # Single token sets the type; additional
++                            # comma-separated tokens are flags OR'd
++                            # into param-flags.
++                            ty, extra_flags = _split_type_line(value)
++                            if ty:
++                                specs['param-type'] = ty
++                            if extra_flags:
++                                existing = specs.get('param-flags', '')
++                                merged = (existing + ' | ' if existing else '') \
++                                         + ' | '.join(extra_flags)
++                                specs['param-flags'] = merged
++                        elif mapped == 'param-flags':
++                            specs['param-flags'] = _canon_flags_expr(value)
++                        elif mapped == 'param-constraint-type':
++                            # Accepts a KAPI_CONSTRAINT_* token or a
++                            # function-call expression like
++                            # `range(0, 4096)` / `mask(0xff)` /
++                            # `buffer(2)` that also populates the
++                            # matching aux field.
++                            parsed = _split_constraint_expr(value)
++                            if parsed is not None:
++                                ctype, extras = parsed
++                                specs['param-constraint-type'] = ctype
++                                for aux_k, aux_v in extras.items():
++                                    specs[aux_k] = aux_v
++                            else:
++                                specs['param-constraint-type'] = value
++                        elif mapped == 'param-arch-mask':
++                            # `arch-mask: <arch> = <bits>`: multiple
++                            # entries accumulate into a list of
++                            # (arch, bits) tuples that the emitter
++                            # turns into per-arch #ifdef-guarded mask
++                            # contributions.
++                            if '=' in value:
++                                arch, bits = value.split('=', 1)
++                                specs.setdefault(mapped, []).append(
++                                    (arch.strip(), bits.strip()))
++                        else:
++                            specs[mapped] = value
++                else:
++                    i += 1
++            else:
++                i += 1
++
++        return specs
++
++    def _validate_effect_type(self, effect_type):
++        """Validate and normalize effect type"""
++        if 'KAPI_EFFECT_' in effect_type and effect_type not in VALID_EFFECT_TYPES:
++            if '|' in effect_type:
++                parts = [p.strip() for p in effect_type.split('|')]
++                valid_parts = []
++                for p in parts:
++                    if p in VALID_EFFECT_TYPES:
++                        valid_parts.append(p)
++                    else:
++                        print(f"warning: unrecognized effect type '{p}', "
++                              f"defaulting to KAPI_EFFECT_MODIFY_STATE", file=sys.stderr)
++                        valid_parts.append('KAPI_EFFECT_MODIFY_STATE')
++                return ' | '.join(valid_parts)
++            print(f"warning: unrecognized effect type '{effect_type}', "
++                  f"defaulting to KAPI_EFFECT_MODIFY_STATE", file=sys.stderr)
++            return 'KAPI_EFFECT_MODIFY_STATE'
++
++        return effect_type
++
++    def _has_api_spec(self, sections):
++        """Check if this function has an API specification.
++
++        Returns True if a `contexts:` or `context-flags:` section is present
++        together with at least one other KAPI section. Regular kernel-doc
++        comments that only use a common section name like 'return' or
++        'error' do not produce a spec.
++        """
++        context_keys = ['context-flags', 'contexts']
++        indicators = [
++            'api-type', 'param', 'error', 'capability', 'signal', 'lock',
++            'state-trans', 'constraint', 'side-effect', 'long-desc'
++        ]
++
++        def has_section(names):
++            return any(key.lower().startswith(name) or
++                       key.lower().startswith('@' + name)
++                       for key in sections.keys() for name in names)
++
++        return has_section(context_keys) and has_section(indicators)
++
++    def out_function(self, fname, name, args):
++        """Generate API spec for a function"""
++        function_name = args.get('function', name)
++        sections = args.sections if hasattr(args, 'sections') else args.get('sections', {})
++
++        if not self._has_api_spec(sections):
++            return
++
++        parameterlist = args.parameterlist if hasattr(args, 'parameterlist') else args.get('parameterlist', [])
++        parameterdescs = args.parameterdescs if hasattr(args, 'parameterdescs') else args.get('parameterdescs', {})
++        parametertypes = args.parametertypes if hasattr(args, 'parametertypes') else args.get('parametertypes', {})
++        purpose = args.get('purpose', '')
++
++        # Start macro invocation
++        self.data += f"DEFINE_KERNEL_API_SPEC({function_name})\n"
++
++        # Basic info
++        if purpose:
++            self.data += f"\tKAPI_DESCRIPTION({self._format_macro_param(purpose)})\n"
++
++        long_desc = self._get_multiline_section(sections, 'long-desc')
++        if long_desc:
++            self.data += f"\tKAPI_LONG_DESC({self._format_macro_param(long_desc, True)})\n"
++
++        # Context flags. `contexts:` and `context-flags:` both work;
++        # tokens canonicalise to KAPI_CTX_* for KAPI_CONTEXT().
++        context = (self._get_section(sections, 'contexts')
++                   or self._get_section(sections, 'context-flags'))
++        if context:
++            self.data += f"\tKAPI_CONTEXT({_canon_context_expr(context)})\n"
++
++        # Process parameters
++        self._process_parameters(sections, parameterlist, parameterdescs, parametertypes)
++
++        # Process return value
++        self._process_return(sections)
++
++        # Process errors
++        errors = self._parse_indented_items(
++            self._get_raw_section(sections, 'error'),
++            self._parse_error_item
++        )
++
++        if errors:
++            self.data += f"\n\tKAPI_ERROR_COUNT({len(errors)})\n"
++
++            for idx, error in enumerate(errors):
++                self._output_error(idx, error)
++
++        # Process signals
++        signals = self._parse_indented_items(
++            self._get_raw_section(sections, 'signal'),
++            self._parse_signal_item
++        )
++
++        if signals:
++            self.data += f"\n\tKAPI_SIGNAL_COUNT({len(signals)})\n"
++
++            for idx, signal in enumerate(signals):
++                self._output_signal(idx, signal)
++
++        # Process other specifications
++        self._process_locks(sections)
++        self._process_constraints(sections)
++        self._process_side_effects(sections)
++        self._process_state_transitions(sections)
++        self._process_capabilities(sections)
++
++        # Add examples and notes
++        for key, macro, fold in [
++            ('examples', 'KAPI_EXAMPLES', _fold_lines),
++            ('notes', 'KAPI_NOTES', _fold_paragraphs),
++        ]:
++            value = self._get_multiline_section(sections, key, fold)
++            if value:
++                self.data += f"\n\t{macro}({self._format_macro_param(value, True)})\n"
++
++        self.data += "\n};\n\n"
++
++    def _process_return(self, sections):
++        """Process the return value specification from kerneldoc annotations"""
++        raw = self._get_raw_section(sections, 'return')
++        if not raw:
++            return
++
++        # Parse subfields from the return section, handling continuation lines
++        lines = raw.strip().split('\n')
++        subfields = {}
++        current_key = None
++        for line in lines:
++            stripped = line.strip()
++            key, sep, value = stripped.partition(':')
++            key = key.strip()
++            if sep and key in _RETURN_SUBFIELDS:
++                current_key = key
++                subfields[current_key] = value.strip()
++            elif current_key and stripped:
++                # Continuation line
++                subfields[current_key] += ' ' + stripped
++
++        ret_type = subfields.get('type', '')
++        check_type = subfields.get('check-type', '')
++        desc = subfields.get('desc', '')
++        success = subfields.get('success', '')
++
++        if not ret_type and not desc:
++            return
++
++        # Canonicalise short aliases:
++        #   type: int             -> KAPI_TYPE_INT
++        #   check-type: fd        -> KAPI_RETURN_FD
++        # The type name itself is kept as written.
++        type_name = ret_type
++        if ret_type:
++            ret_type = _canon_token(ret_type, _TYPE_ALIASES)
++        if check_type:
++            check_type = _canon_token(check_type, _RETURN_CHECK_ALIASES)
++
++        self.data += f"\n\tKAPI_RETURN({self._format_macro_param(type_name)}, "
++        self.data += f"{self._format_macro_param(desc)})\n"
++
++        if ret_type:
++            self.data += f"\t\tKAPI_RETURN_TYPE({ret_type})\n"
++
++        if check_type:
++            self.data += f"\t\tKAPI_RETURN_CHECK_TYPE({check_type})\n"
++
++        if success:
++            macro = _return_success_macro(check_type, success)
++            if macro:
++                self.data += f"\t\t{macro}\n"
++            elif check_type in ('', 'KAPI_RETURN_EXACT'):
++                sys.stderr.write(
++                    f"kdoc_apispec: ignoring unsupported success value "
++                    f"'{success}' for an exact return check\n")
++
++        self.data += "\t},\n"
++
++    def _output_error(self, idx, error):
++        """Output a single error specification"""
++        # Format: NAME, description
++        parts = error['line'].split(',', 1)
++        if len(parts) < 2:
++            return
++
++        name = parts[0].strip()
++        short_desc = parts[1].strip()
++        code = f"-{name}"
++
++        condition = error.get('condition') or short_desc
++        long_desc = error.get('desc', '') or short_desc
++
++        self.data += f"\n\tKAPI_ERROR({idx}, {code}, {self._format_macro_param(name)}, "
++        self.data += f"{self._format_macro_param(condition)},\n\t\t   {self._format_macro_param(long_desc)})\n"
++
++    def _output_signal(self, idx, signal):
++        """Output a single signal specification"""
++        self.data += f"\n\tKAPI_SIGNAL({idx}, {signal['number']}, "
++        self.data += f"{self._format_macro_param(signal['name'])}, "
++        self.data += f"{signal['direction']}, {signal['action']})\n"
++
++        # String-valued subfields emitted as KAPI_SIGNAL_* macros.
++        if signal.get('condition'):
++            self.data += f"\t\tKAPI_SIGNAL_CONDITION({self._format_macro_param(signal['condition'])})\n"
++        if signal.get('desc'):
++            self.data += f"\t\tKAPI_SIGNAL_DESC({self._format_macro_param(signal['desc'])})\n"
++        if signal.get('error'):
++            # KAPI_SIGNAL_ERROR expects a numeric/token expression
++            # (e.g. -EINTR), not a quoted string.
++            self.data += f"\t\tKAPI_SIGNAL_ERROR({signal['error']})\n"
++
++        # Enum-valued subfields emitted as unquoted tokens.
++        if signal.get('timing'):
++            self.data += f"\t\tKAPI_SIGNAL_TIMING({signal['timing']})\n"
++        if signal.get('priority'):
++            self.data += f"\t\tKAPI_SIGNAL_PRIORITY({signal['priority']})\n"
++
++        # Boolean flag subfields.
++        if signal.get('restartable'):
++            self.data += "\t\tKAPI_SIGNAL_RESTARTABLE\n"
++        if signal.get('interruptible'):
++            self.data += "\t\tKAPI_SIGNAL_INTERRUPTIBLE\n"
++
++        # Additional struct fields, emitted only when present in the
++        # kerneldoc.
++        if signal.get('target'):
++            self.data += f"\t\tKAPI_SIGNAL_TARGET({self._format_macro_param(signal['target'])})\n"
++        if signal.get('queue'):
++            self.data += f"\t\tKAPI_SIGNAL_QUEUE({self._format_macro_param(signal['queue'])})\n"
++        if signal.get('transform'):
++            # Numeric/token expression (e.g. SIGKILL), not a quoted string.
++            self.data += f"\t\tKAPI_SIGNAL_TRANSFORM({signal['transform']})\n"
++        if signal.get('sa_flags_required'):
++            self.data += f"\t\tKAPI_SIGNAL_SA_FLAGS_REQ({signal['sa_flags_required']})\n"
++        if signal.get('sa_flags_forbidden'):
++            self.data += f"\t\tKAPI_SIGNAL_SA_FLAGS_FORBID({signal['sa_flags_forbidden']})\n"
++        if signal.get('state_required'):
++            self.data += f"\t\tKAPI_SIGNAL_STATE_REQ({signal['state_required']})\n"
++        if signal.get('state_forbidden'):
++            self.data += f"\t\tKAPI_SIGNAL_STATE_FORBID({signal['state_forbidden']})\n"
++
++        self.data += "\t},\n"
++
++    def _process_locks(self, sections):
++        """Process lock specifications"""
++        locks = self._parse_indented_items(
++            self._get_raw_section(sections, 'lock'),
++            self._parse_lock_item
++        )
++
++        if locks:
++            self.data += f"\n\tKAPI_LOCK_COUNT({len(locks)})\n"
++
++            for idx, lock in enumerate(locks):
++                self.data += f"\n\tKAPI_LOCK({idx}, {self._format_macro_param(lock['name'])}, {lock['type']})\n"
++
++                # `.scope` is zero-initialised to KAPI_LOCK_INTERNAL
++                # (acquired-and-released). Emit KAPI_LOCK_ACQUIRED /
++                # KAPI_LOCK_RELEASED only when exactly one of the flags
++                # is true; emitting both would double-initialise `.scope`
++                # which breaks `-Werror=override-init` at W=1.
++                acquired = bool(lock.get('acquired'))
++                released = bool(lock.get('released'))
++                if acquired and not released:
++                    self.data += "\t\tKAPI_LOCK_ACQUIRED\n"
++                elif released and not acquired:
++                    self.data += "\t\tKAPI_LOCK_RELEASED\n"
++
++                if lock.get('desc'):
++                    self.data += f"\t\tKAPI_LOCK_DESC({self._format_macro_param(lock['desc'])})\n"
++
++                self.data += "\t},\n"
++
++    def _process_constraints(self, sections):
++        """Process constraint specifications"""
++        constraints = self._parse_indented_items(
++            self._get_raw_section(sections, 'constraint'),
++            self._parse_constraint_item
++        )
++
++        if constraints:
++            self.data += f"\n\tKAPI_CONSTRAINT_COUNT({len(constraints)})\n"
++
++            for idx, constraint in enumerate(constraints):
++                self.data += f"\n\tKAPI_CONSTRAINT({idx}, {self._format_macro_param(constraint['name'])},\n"
++                self.data += f"\t\t\t{self._format_macro_param(constraint['desc'])})\n"
++
++                if constraint.get('expr'):
++                    self.data += f"\t\tKAPI_CONSTRAINT_EXPR({self._format_macro_param(constraint['expr'])})\n"
++
++                self.data += "\t},\n"
++
++    def _process_side_effects(self, sections):
++        """Process side effect specifications"""
++        effects = self._parse_indented_items(
++            self._get_raw_section(sections, 'side-effect'),
++            self._parse_side_effect_item
++        )
++
++        if effects:
++            self.data += f"\n\tKAPI_SIDE_EFFECT_COUNT({len(effects)})\n"
++
++            for idx, effect in enumerate(effects):
++                # Canonicalise aliases (alloc_memory, modify_state, ...)
++                # to KAPI_EFFECT_*. Accepts '|' or ',' as separators.
++                effect_type = _canon_bitmask_expr(effect['type'], _EFFECT_ALIASES)
++                effect_type = self._validate_effect_type(effect_type)
++
++                self.data += f"\n\tKAPI_SIDE_EFFECT({idx}, {effect_type},\n"
++                self.data += f"\t\t\t {self._format_macro_param(effect['target'])},\n"
++                self.data += f"\t\t\t {self._format_macro_param(effect['desc'])})\n"
++
++                if effect.get('condition'):
++                    self.data += f"\t\tKAPI_EFFECT_CONDITION({self._format_macro_param(effect['condition'])})\n"
++
++                if effect.get('reversible'):
++                    self.data += "\t\tKAPI_EFFECT_REVERSIBLE\n"
++
++                self.data += "\t},\n"
++
++    def _process_state_transitions(self, sections):
++        """Process state transition specifications"""
++        transitions = self._parse_indented_items(
++            self._get_raw_section(sections, 'state-trans'),
++            self._parse_state_trans_item
++        )
++
++        if transitions:
++            self.data += f"\n\tKAPI_STATE_TRANS_COUNT({len(transitions)})\n"
++
++            for idx, trans in enumerate(transitions):
++                self.data += f"\n\tKAPI_STATE_TRANS({idx}, {self._format_macro_param(trans['target'])}, "
++                self.data += f"{self._format_macro_param(trans['from'])}, {self._format_macro_param(trans['to'])},\n"
++                self.data += f"\t\t\t {self._format_macro_param(trans['desc'])})\n"
++
++                if trans.get('condition'):
++                    self.data += f"\t\tKAPI_STATE_TRANS_COND({self._format_macro_param(trans['condition'])})\n"
++
++                self.data += "\t},\n"
++
++    def _process_capabilities(self, sections):
++        """Process capability specifications"""
++        cap_section = self._get_raw_section(sections, 'capability')
++        if not cap_section:
++            return
++
++        lines = cap_section.strip().split('\n')
++        capabilities = []
++        i = 0
++
++        while i < len(lines):
++            line = lines[i].strip()
++            # Skip empty lines and subfield lines (they'll be parsed with their parent)
++            if not line or line.startswith(('allows:', 'without:', 'condition:', 'priority:', 'type:', 'desc:')):
++                i += 1
++                continue
++
++            cap_info = {'line': line}
++
++            # Parse subfields
++            subfields, next_i = self._parse_subfields(
++                lines, i, _CAPABILITY_SUBFIELDS)
++            cap_info.update(subfields)
++            capabilities.append(cap_info)
++            i = next_i
++
++        if capabilities:
++            # Filter out "none" capabilities (no capability required)
++            valid_caps = [cap for cap in capabilities if cap['line'].strip().lower() != 'none']
++
++            if not valid_caps:
++                return
++
++            self.data += f"\n\tKAPI_CAPABILITY_COUNT({len(valid_caps)})\n"
++
++            for idx, cap in enumerate(valid_caps):
++                line = cap['line']
++                parts = line.split(',', 2)
++
++                # Two forms are accepted:
++                # 1. "CAP_NAME" with type/desc as subfields
++                # 2. "CAP_NAME, TYPE, description"
++                if len(parts) >= 2:
++                    # Comma-separated form
++                    cap_name = parts[0].strip()
++                    cap_type = parts[1].strip()
++                    cap_desc = parts[2].strip() if len(parts) > 2 else cap.get('desc', cap_name)
++                else:
++                    # Subfield form: capability name on main line
++                    cap_name = line.strip()
++                    cap_type = cap.get('type', 'KAPI_CAP_PERFORM_OPERATION')
++                    cap_desc = cap.get('desc', cap_name)
++
++                # Map capability type aliases to KAPI_CAP_* enum values.
++                cap_type_map = {
++                    'required':             'KAPI_CAP_PERFORM_OPERATION',
++                    'bypass':               'KAPI_CAP_BYPASS_CHECK',
++                    'grant':                'KAPI_CAP_GRANT_PERMISSION',
++                    'override':             'KAPI_CAP_OVERRIDE_RESTRICTION',
++                    'access':               'KAPI_CAP_ACCESS_RESOURCE',
++                    'modify':               'KAPI_CAP_MODIFY_BEHAVIOR',
++                    'limit':                'KAPI_CAP_INCREASE_LIMIT',
++                    'bypass_check':         'KAPI_CAP_BYPASS_CHECK',
++                    'increase_limit':       'KAPI_CAP_INCREASE_LIMIT',
++                    'override_restriction': 'KAPI_CAP_OVERRIDE_RESTRICTION',
++                    'grant_permission':     'KAPI_CAP_GRANT_PERMISSION',
++                    'modify_behavior':      'KAPI_CAP_MODIFY_BEHAVIOR',
++                    'access_resource':      'KAPI_CAP_ACCESS_RESOURCE',
++                    'perform_operation':    'KAPI_CAP_PERFORM_OPERATION',
++                }
++                cap_type = cap_type_map.get(cap_type, cap_type)
++
++                # Any BYPASS variant maps to KAPI_CAP_BYPASS_CHECK
++                if 'BYPASS' in cap_type and cap_type != 'KAPI_CAP_BYPASS_CHECK':
++                    cap_type = 'KAPI_CAP_BYPASS_CHECK'
++
++                # Ensure cap_type is a valid enum
++                valid_types = [
++                    'KAPI_CAP_BYPASS_CHECK', 'KAPI_CAP_INCREASE_LIMIT',
++                    'KAPI_CAP_OVERRIDE_RESTRICTION', 'KAPI_CAP_GRANT_PERMISSION',
++                    'KAPI_CAP_MODIFY_BEHAVIOR', 'KAPI_CAP_ACCESS_RESOURCE',
++                    'KAPI_CAP_PERFORM_OPERATION'
++                ]
++                if cap_type not in valid_types:
++                    cap_type = 'KAPI_CAP_PERFORM_OPERATION'
++
++                self.data += f"\n\tKAPI_CAPABILITY({idx}, {cap_name}, {self._format_macro_param(cap_desc)}, {cap_type})\n"
++
++                for key, macro in [
++                    ('allows', 'KAPI_CAP_ALLOWS'),
++                    ('without', 'KAPI_CAP_WITHOUT'),
++                    ('condition', 'KAPI_CAP_CONDITION'),
++                    ('priority', 'KAPI_CAP_PRIORITY'),
++                ]:
++                    if cap.get(key):
++                        value = self._format_macro_param(cap[key]) if key != 'priority' else cap[key]
++                        self.data += f"\t\t{macro}({value})\n"
++
++                self.data += "\t},\n"
++
++    # Skip output methods for non-function types
++    def out_enum(self, fname, name, args): pass
++    def out_typedef(self, fname, name, args): pass
++    def out_struct(self, fname, name, args): pass
++    def out_doc(self, fname, name, args): pass
+diff --git a/tools/lib/python/kdoc/kdoc_files.py b/tools/lib/python/kdoc/kdoc_files.py
+index ed82b6e6ab25b..5b81a1e4cc9e9 100644
+--- a/tools/lib/python/kdoc/kdoc_files.py
++++ b/tools/lib/python/kdoc/kdoc_files.py
+@@ -94,13 +94,14 @@ class KdocConfig():
+     """
+     def __init__(self, verbose=False, werror=False, wreturn=False,
+                  wshort_desc=False, wcontents_before_sections=False,
+-                 logger=None):
++                 logger=None, apispec=False):
+ 
+         self.verbose = verbose
+         self.werror = werror
+         self.wreturn = wreturn
+         self.wshort_desc =  wshort_desc
+         self.wcontents_before_sections = wcontents_before_sections
++        self.apispec = apispec
+ 
+         if logger:
+             self.log = logger
+@@ -159,6 +160,10 @@ class KernelFiles():
+     ``yaml_content``
+         Defines what will be inside the YAML file.
+ 
++    ``apispec``
++        If True, also parse the kernel API specification sections used
++        by the ``-apispec`` output. Default: False.
++
+     Note:
+         There are two type of parsers defined here:
+ 
+@@ -232,7 +237,8 @@ class KernelFiles():
+     def __init__(self, verbose=False, out_style=None, xforms=None,
+                  werror=False, wreturn=False, wshort_desc=False,
+                  wcontents_before_sections=False,
+-                 yaml_file=None, yaml_content=None, logger=None):
++                 yaml_file=None, yaml_content=None, logger=None,
++                 apispec=False):
+         """
+         Initialize startup variables and parse all files.
+         """
+@@ -271,7 +277,7 @@ class KernelFiles():
+         # used to send control configuration to KernelDoc class. As such,
+         # those variables are read-only inside the KernelDoc.
+         self.config = KdocConfig(verbose, werror, wreturn, wshort_desc,
+-                                 wcontents_before_sections, logger)
++                                 wcontents_before_sections, logger, apispec)
+ 
+         # Override log warning, as we want to count errors
+         self.config.warning = self.warning
+diff --git a/tools/lib/python/kdoc/kdoc_parser.py b/tools/lib/python/kdoc/kdoc_parser.py
+index d9ad1ddc87dd1..a29fdccda8aee 100644
+--- a/tools/lib/python/kdoc/kdoc_parser.py
++++ b/tools/lib/python/kdoc/kdoc_parser.py
+@@ -30,6 +30,23 @@ from kdoc.kdoc_item import KdocItem
+ # Allow whitespace at end of comment start.
+ doc_start = KernRe(r'^/\*\*\s*$', cache=False)
+ 
++# Sections that are allowed to be duplicated for API specifications
++# These represent lists of items (multiple errors, signals, etc.)
++ALLOWED_DUPLICATE_SECTIONS = {
++    'param', '@param',
++    'error', '@error',
++    'signal', '@signal',
++    'lock', '@lock',
++    'side-effect', '@side-effect',
++    'state-trans', '@state-trans',
++    'capability', '@capability',
++    'constraint', '@constraint',
++    'validation-group', '@validation-group',
++    'validation-rule', '@validation-rule',
++    'validation-flag', '@validation-flag',
++    'struct-field', '@struct-field',
++}
++
+ doc_end = KernRe(r'\*/', cache=False)
+ doc_com = KernRe(r'\s*\*\s*', cache=False)
+ doc_com_body = KernRe(r'\s*\* ?', cache=False)
+@@ -48,6 +65,71 @@ doc_sect = doc_com + \
+     KernRe(r'\s*(@[.\w]+|@\.\.\.|' + known_section_names + r')\s*:([^:].*)?$',
+            flags=re.I, cache=False)
+ 
++# API specification section names (for KAPI spec framework), only
++# recognized when generating -apispec output
++# Format: (base_name, has_count_variant, has_other_variants)
++# Sections with has_count_variant=True need negative lookahead in kapi_doc_sect
++# to avoid matching 'error' when 'error-count' is intended
++_kapi_base_sections = [
++    # (name, needs_lookahead, additional_variants)
++    ('api-type', False, []),
++    ('api-version', False, []),
++    ('param', True, []),  # has param-count
++    ('struct', True, ['struct-type', 'struct-field', 'struct-field-[a-z\\-]+']),
++    ('validation-group', False, []),
++    ('validation-policy', False, []),
++    ('validation-flag', False, []),
++    ('validation-rule', False, []),
++    ('error', True, ['error-code', 'error-condition']),
++    ('capability', True, []),
++    ('signal', True, []),
++    ('lock', True, []),
++    ('context-flags', False, []),
++    ('contexts', False, []),
++    ('return', True, ['return-type', 'return-check', 'return-check-type',
++                      'return-success', 'return-desc']),
++    ('long-desc', False, []),
++    ('constraint', True, []),
++    ('side-effect', True, []),
++    ('state-trans', True, []),
++]
++
++def _build_kapi_patterns():
++    """Build KAPI section patterns from the base definitions."""
++    validation_parts = []  # For kapi_known_sections (simple validation)
++    parsing_parts = []     # For kapi_doc_sect (with negative lookaheads)
++
++    for name, has_count, variants in _kapi_base_sections:
++        # Add base name (with optional @ prefix)
++        validation_parts.append(f'@?{name}')
++        if has_count:
++            # Need negative lookahead to not match 'name-count' or 'name-*'
++            parsing_parts.append(f'@?{name}(?!-)')
++            validation_parts.append(f'@?{name}-count')
++            parsing_parts.append(f'@?{name}-count')
++        else:
++            parsing_parts.append(f'@?{name}')
++
++        # Add variants
++        for variant in variants:
++            validation_parts.append(f'@?{variant}')
++            parsing_parts.append(f'@?{variant}')
++
++    # Add catch-all for kapi-* extensions
++    validation_parts.append(r'@?kapi-.*')
++    parsing_parts.append(r'@?kapi-.*')
++
++    return '|'.join(validation_parts), '|'.join(parsing_parts)
++
++_kapi_validation_pattern, _kapi_parsing_pattern = _build_kapi_patterns()
++
++kapi_known_sections = KernRe(known_section_names + '|' +
++                             _kapi_validation_pattern, flags=re.I)
++kapi_doc_sect = doc_com + \
++    KernRe(r'\s*(@[.\w\-]+|@\.\.\.|' + known_section_names + '|' +
++           _kapi_parsing_pattern + r')\s*:([^:].*)?$',
++           flags=re.I, cache=False)
++
+ doc_content = doc_com_body + KernRe(r'(.*)', cache=False)
+ doc_inline_start = KernRe(r'^\s*/\*\*\s*$', cache=False)
+ doc_inline_sect = KernRe(r'\s*\*\s*(@\s*[\w][\w\.]*\s*):(.*)', cache=False)
+@@ -214,7 +296,9 @@ class KernelEntry:
+         else:
+             if name in self.sections and self.sections[name] != "":
+                 # Only warn on user-specified duplicate section names
+-                if name != SECTION_DEFAULT:
++                # Skip warning for sections that are expected to have duplicates
++                # (like error, param, signal, etc. for API specifications)
++                if name != SECTION_DEFAULT and name not in ALLOWED_DUPLICATE_SECTIONS:
+                     self.emit_msg(self.new_start_line,
+                                   f"duplicate section name '{name}'")
+                 # Treat as a new paragraph - add a blank line
+@@ -255,6 +339,13 @@ class KernelDoc:
+         self.xforms = xforms
+         self.store_src = store_src
+ 
++        if self.config.apispec:
++            self.known_sections = kapi_known_sections
++            self.doc_sect = kapi_doc_sect
++        else:
++            self.known_sections = known_sections
++            self.doc_sect = doc_sect
++
+         tokenizer_set_log(self.config.log, f"{self.fname}: CMatch: ")
+ 
+         # Initial state for the state machines
+@@ -611,7 +702,7 @@ class KernelDoc:
+         """
+         for section in self.entry.sections:
+             if section not in self.entry.parameterlist and \
+-               not known_sections.search(section):
++               not self.known_sections.search(section):
+                 hint = self.get_suggestions_hint(section, self.entry.parameterlist)
+                 if decl_type == 'function':
+                     dname = f"{decl_type} parameter"
+@@ -1314,12 +1405,12 @@ class KernelDoc:
+         """
+         Helper function to determine if a new section is being started.
+         """
+-        if doc_sect.search(line):
++        if self.doc_sect.search(line):
+             self.state = state.BODY
+             #
+             # Pick out the name of our new section, tweaking it if need be.
+             #
+-            newsection = doc_sect.group(1)
++            newsection = self.doc_sect.group(1)
+             if newsection.lower() == 'description':
+                 newsection = 'Description'
+             elif newsection.lower() == 'context':
+@@ -1334,7 +1425,7 @@ class KernelDoc:
+             #
+             # Initialize the contents, and get the new section going.
+             #
+-            newcontents = doc_sect.group(2)
++            newcontents = self.doc_sect.group(2)
+             if not newcontents:
+                 newcontents = ""
+             self.dump_section()
 -- 
 2.53.0
 
