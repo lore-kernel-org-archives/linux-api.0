@@ -1,31 +1,31 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5CFC54734CF;
-	Thu,  8 Oct 2026 08:51:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9F72C47605A;
+	Thu,  8 Oct 2026 08:51:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791449478; cv=none; b=fFvfIh3Qlm5TdR4XQ8DfYKUwGdT1C2QidNHMtObdleWny4HSeh5t1iN7up4f62kKld5bpKVipT2VmPw7tjf/KEyfOYYtPzjuFoJ7jmY8TtFnj1ivOlUl9s2W9mJ5BJgVqWdu08qFg7tIEdCR7a3pOUqSJtLi4mrmMRw0xchy0lU=
+	t=1791449484; cv=none; b=r7Vv7JVN7UDSH6HfkaIHqvxTBbGryE9etFxyeFdedodrxCtKbqGAREOOyRfjf8vZSzAWyWKOtAvBWxcAB/xzE+RR7An9lE4f4RG2xXUolTtPgxGFruhnM84BCb8RpvlKtdZxs1GoAsMQk9BtUBTpJFYcBwEI1eYGimFsEwSTHlc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791449478; c=relaxed/simple;
-	bh=Xm5KjfWsBWsSfSKUgJNuX5mzh+Nf2XPJtO65o7CSIBE=;
+	s=arc-20240116; t=1791449484; c=relaxed/simple;
+	bh=VRzKBeVBLvYBmi58DpwoyfnIMalrX3V/KtnoC4gOC6I=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=Q0epB1xUJOyMY05HvAmMxxfAkIEGtTKs7raSEEgcpovHsQhBDlcJ7IRmLUkgd+m1mL50RSe1xHPszfnGATQqMQWigg7WAr+9Lhp+NjSsjQNNiObVohhiA7mr4ZWLmQ+0G4dlZCdxPnf10Uuv6ETQAlIcIf9PmtJT1pvJlKnjQpM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=D0Tmpa9I; arc=none smtp.client-ip=100.103.45.18
+	 MIME-Version; b=fXip3UyZgQrjzTfRcY9L4KB4aGB52JaBcwfthmSVMOzDhN9HF8ugJnZCFa5FQb9VZoY0Y57nISXeZEMfkpyNkqpQ8udByY+SE8+rOzfgh05eXXbeZXRNazYe9wM+31YrAR025RTuc2ByKUz0eU4jyZ7TPyJW8WU8czOIxePKhsk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=mSmrhk2W; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="D0Tmpa9I"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E55E11F00899;
-	Thu,  8 Oct 2026 08:51:08 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="mSmrhk2W"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 604101F000FF;
+	Thu,  8 Oct 2026 08:51:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791449474;
-	bh=frsmZW6G6HK24yF7COZtP/8CVldzdRTZPKbcKzdlCpA=;
+	s=k20260515; t=1791449481;
+	bh=RkyCbOC3YBa2fB7CaAz6SWtNUe1uEcQCgcfAVlsBQ9k=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=D0Tmpa9IRrpLMgYQ3ErLsJQt2Osj6FqIuvumu+veMP26QOGm+xAuB1XulNcey14De
-	 gMvDkWrWwSzX3zrZqv7w7g+ffb7GdGAg3ll7rzcX9WGfhu0O85rmgks+ZpO63Tq0f3
-	 OqU7uU+CxVs0LRDK7D4t6PEbbngNJwJeHVM9HlXXJnXWo+36+LuGo80kHUeNtwaPW1
-	 zRQHkaoi5w8wQfg7hm+Z36ToQE/91wBrHYGGin6F7IhngsHe/m7zA8ptisSA2imoyp
-	 Oj9WVoMdxTREsF/tDEPr3s7CFmFYLrhhW7BJCC/0cXjeUfZFk9aeYsPJFNdAEqqhTk
-	 cQUKT+Uft1N7w==
+	b=mSmrhk2WnyDzuYt+RyCxLNZwmO2ocjR3NpFGOYsvap4hzvtjIUitQTKPTyDM1PCij
+	 e3fgkB9KnHsOyEzc/21Jvgz0e4BRH7AifGDUnZTHUohtXkU6qjf4STLP8ALDyZ/svF
+	 ZlNwz8WB2PsbqwftKrjDcobt8MmBIB6ksWOKYeL/IngJUu2VFEMgyyO+3XpL/MfxvO
+	 t71mRvsq27i9wx2ffxZV6ubvGCuU2mxs3azTKJNyudzcZqcrwJlOlul2XSdMD5i7j6
+	 5jnD2bEOYTCfCHvEDu/HSl4gtrxbH3hJGs4xIU+orMZ/MRE21OiMvieYDGaEYHrfce
+	 Y6n6FWpdrHNKg==
 From: Sasha Levin <sashal@kernel.org>
 To: linux-api@vger.kernel.org,
 	linux-kernel@vger.kernel.org
@@ -59,9 +59,9 @@ Cc: Sasha Levin <sashal@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Masami Hiramatsu <mhiramat@kernel.org>,
 	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 09/11] kernel/api: add runtime verification selftest
-Date: Thu,  8 Oct 2026 04:49:49 -0400
-Message-ID: <20261008084956.2911790-10-sashal@kernel.org>
+Subject: [PATCH v5 10/11] kernel/api: add API specification for sys_madvise
+Date: Thu,  8 Oct 2026 04:49:50 -0400
+Message-ID: <20261008084956.2911790-11-sashal@kernel.org>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <20261008084956.2911790-1-sashal@kernel.org>
 References: <20261008084956.2911790-1-sashal@kernel.org>
@@ -73,1291 +73,582 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a selftest for CONFIG_KAPI_RUNTIME_CHECKS that exercises
-sys_open/sys_read/sys_write/sys_close through raw syscall() and
-verifies KAPI pre-validation catches invalid parameters while
-allowing valid operations through.
+Add KAPI-annotated kerneldoc for the sys_madvise system call in
+mm/madvise.c.
 
-Test cases (TAP output):
-  1-4:   Valid open/read/write/close succeed
-  5-8:   Unknown open flag bits and a NULL path are rejected with EINVAL,
-         while mode bits above 07777 are accepted (the kernel masks them)
-  9-20:  Boundary conditions and error paths (bad and closed fds, zero
-         counts, over-long paths, unmapped buffers, wrong access mode)
-  21-27: Pipe, file descriptor lifecycle and other error paths
-  28-30: A normal open/read/write/close sequence, and read()/write() with
-         a NULL buffer and a zero count returning 0
-  31:    dmesg contains the expected KAPI warning strings
-
-Tests that depend on CONFIG_KAPI_RUNTIME_CHECKS are skipped when an open()
-with an unknown flag bit succeeds, which means the checks are not active.
+The specification documents the parameters (start, len_in, behavior),
+per-behavior error conditions, lock acquisition (mmap_lock read and
+write modes plus the per-VMA fast path, mmu_gather and mmu_notifier
+brackets), signal handling, side effects, capability requirements
+(CAP_SYS_ADMIN for MADV_HWPOISON and MADV_SOFT_OFFLINE), mseal
+interaction, and how each behavior skips pages or reports errors.
 
 Assisted-by: LLM
 Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
- MAINTAINERS                                   |    1 +
- tools/testing/selftests/Makefile              |    1 +
- tools/testing/selftests/kapi/.gitignore       |    2 +
- tools/testing/selftests/kapi/Makefile         |    7 +
- tools/testing/selftests/kapi/kapi_test_util.h |   31 +
- tools/testing/selftests/kapi/test_kapi.c      | 1163 +++++++++++++++++
- 6 files changed, 1205 insertions(+)
- create mode 100644 tools/testing/selftests/kapi/.gitignore
- create mode 100644 tools/testing/selftests/kapi/Makefile
- create mode 100644 tools/testing/selftests/kapi/kapi_test_util.h
- create mode 100644 tools/testing/selftests/kapi/test_kapi.c
+ mm/madvise.c | 549 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 549 insertions(+)
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index cd15c6a776ae3..1d9e55b6bf5ff 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -14128,6 +14128,7 @@ F:	include/linux/kernel_api_spec.h
- F:	kernel/api/
- F:	tools/kapi/
- F:	tools/lib/python/kdoc/kdoc_apispec.py
-+F:	tools/testing/selftests/kapi/
+diff --git a/mm/madvise.c b/mm/madvise.c
+index eeee82cf2b3f4..4eb29922a2150 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -2018,6 +2018,555 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	return error;
+ }
  
- KERNEL AUTOMOUNTER
- M:	Ian Kent <raven@themaw.net>
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 273853937c254..d5f973eeefc83 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -60,6 +60,7 @@ TARGETS += intel_pstate
- TARGETS += iommu
- TARGETS += ipc
- TARGETS += ir
-+TARGETS += kapi
- TARGETS += kcmp
- TARGETS += kexec
- TARGETS += kselftest_harness
-diff --git a/tools/testing/selftests/kapi/.gitignore b/tools/testing/selftests/kapi/.gitignore
-new file mode 100644
-index 0000000000000..e60893d183d81
---- /dev/null
-+++ b/tools/testing/selftests/kapi/.gitignore
-@@ -0,0 +1,2 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+test_kapi
-diff --git a/tools/testing/selftests/kapi/Makefile b/tools/testing/selftests/kapi/Makefile
-new file mode 100644
-index 0000000000000..d1bb26541c0b8
---- /dev/null
-+++ b/tools/testing/selftests/kapi/Makefile
-@@ -0,0 +1,7 @@
-+# SPDX-License-Identifier: GPL-2.0
-+
-+TEST_GEN_PROGS := test_kapi
-+
-+CFLAGS += -static -Wall -Wextra -O2 $(KHDR_INCLUDES)
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/kapi/kapi_test_util.h b/tools/testing/selftests/kapi/kapi_test_util.h
-new file mode 100644
-index 0000000000000..a09871207bfc6
---- /dev/null
-+++ b/tools/testing/selftests/kapi/kapi_test_util.h
-@@ -0,0 +1,31 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
++/**
++ * sys_madvise - Give advice about use of memory
++ * @start: Starting virtual address of the range to advise on
++ * @len_in: Length of the range in bytes
++ * @behavior: Advice (a MADV_* constant) the kernel should apply to the range
 + *
-+ * Compatibility helpers for KAPI selftests.
++ * long-desc: Provides the kernel with advice or directions about the address
++ *   range starting at start and extending for len_in bytes. The advice is
++ *   selected by behavior, which is one of the MADV_* constants defined in
++ *   <sys/mman.h>. The behaviors fall into three groups. The hint group
++ *   updates VMA flags (MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL,
++ *   MADV_DONTFORK, MADV_DOFORK, MADV_DONTDUMP, MADV_DODUMP, MADV_WIPEONFORK,
++ *   MADV_KEEPONFORK, MADV_MERGEABLE, MADV_UNMERGEABLE, MADV_HUGEPAGE,
++ *   MADV_NOHUGEPAGE). The immediate-action group performs work synchronously
++ *   while preserving page contents (MADV_WILLNEED, MADV_COLD, MADV_PAGEOUT,
++ *   MADV_POPULATE_READ, MADV_POPULATE_WRITE, MADV_COLLAPSE, MADV_GUARD_REMOVE,
++ *   MADV_SOFT_OFFLINE). The destructive group discards, replaces or
++ *   invalidates page contents (MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_FREE,
++ *   MADV_REMOVE, MADV_GUARD_INSTALL, MADV_HWPOISON). MADV_GUARD_INSTALL
++ *   belongs to the destructive group because it zaps any existing pages in
++ *   the range before installing PTE guard markers.
 + *
-+ * __NR_open does not exist on architectures using the generic syscall table
-+ * (e.g. arm64, riscv); only __NR_openat does. There the wrapper falls back to
-+ * openat(AT_FDCWD, ...), which does not go through sys_open, so the sys_open
-+ * KAPI checks are not exercised.
-+ */
-+#ifndef KAPI_TEST_UTIL_H
-+#define KAPI_TEST_UTIL_H
-+
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <sys/syscall.h>
-+
-+#ifndef __NR_open
-+static inline long kapi_sys_open(const char *pathname, int flags, int mode)
-+{
-+	return syscall(__NR_openat, AT_FDCWD, pathname, flags, mode);
-+}
-+#else
-+static inline long kapi_sys_open(const char *pathname, int flags, int mode)
-+{
-+	return syscall(__NR_open, pathname, flags, mode);
-+}
-+#endif
-+
-+#endif /* KAPI_TEST_UTIL_H */
-diff --git a/tools/testing/selftests/kapi/test_kapi.c b/tools/testing/selftests/kapi/test_kapi.c
-new file mode 100644
-index 0000000000000..deccb075ee1f9
---- /dev/null
-+++ b/tools/testing/selftests/kapi/test_kapi.c
-@@ -0,0 +1,1163 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (C) 2026 Sasha Levin <sashal@kernel.org>
++ *   start must be page-aligned; len_in is rounded up to the next page
++ *   boundary internally. Once those validation checks pass, a zero-length
++ *   range succeeds without performing work. The kernel rejects ranges that
++ *   wrap (start + PAGE_ALIGN(len_in) < start) and ranges where len_in is
++ *   non-zero but rounds up to zero. Address tagging bits are stripped
++ *   from start before VMA lookup for every behavior except MADV_HWPOISON
++ *   and MADV_SOFT_OFFLINE, which receive the raw start value because they
++ *   bypass the VMA walk entirely.
 + *
-+ * Userspace selftest for KAPI runtime verification of syscall parameters.
++ *   The kernel return value reports whether any error condition was
++ *   encountered, not whether the requested work was performed. The
++ *   relationship between the return code and the work done varies by
++ *   handler:
 + *
-+ * Exercises sys_open, sys_read, sys_write, and sys_close through raw
-+ * syscall() to ensure KAPI pre-validation wrappers interact correctly
-+ * with normal kernel error handling.
++ *     - Hint behaviors set or clear VMA flags; how the flag is used later
++ *       depends on the behavior. MADV_DONTFORK / MADV_DOFORK set or clear
++ *       VM_DONTCOPY, which dup_mmap() honors, so the child does not get the
++ *       mapping. MADV_MERGEABLE / MADV_UNMERGEABLE control whether KSM scans
++ *       the VMA. MADV_NOHUGEPAGE blocks the fault-time, MADV_COLLAPSE and
++ *       khugepaged THP paths for the VMA. MADV_HUGEPAGE makes the VMA
++ *       eligible for THP when the transparent_hugepage mode is "madvise" and
++ *       increases defrag effort; it does not force allocation, which still
++ *       depends on the global mode, VMA suitability, defrag GFP policy, and
++ *       allocation or memcg-charge success. MADV_WIPEONFORK does not wipe
++ *       pages at fork time; the child VMA's pages are not copied, and the
++ *       child sees zero-filled pages when it first touches them.
++ *       MADV_KEEPONFORK clears VM_WIPEONFORK. MADV_DONTDUMP / MADV_DODUMP set
++ *       or clear VM_DONTDUMP, although always_dump_vma() still includes gate,
++ *       vm_ops-named or arch-named VMAs in a core dump. MADV_NORMAL /
++ *       MADV_RANDOM / MADV_SEQUENTIAL set or clear VM_RAND_READ / VM_SEQ_READ,
++ *       which only steer read-ahead.
 + *
-+ * Requires CONFIG_KAPI_RUNTIME_CHECKS=y for full coverage; many tests
-+ * also pass without it.
++ *     - Walk-and-skip handlers (MADV_COLD, MADV_PAGEOUT, MADV_FREE,
++ *       MADV_GUARD_REMOVE) traverse the range and silently skip pages or
++ *       PMDs that fail per-page preconditions (absent, special, device,
++ *       shared, non-LRU, unsplittable, locked, etc.), returning 0 even
++ *       when most or all pages were skipped.
 + *
-+ * TAP output format.
++ *     - Bulk-backend handlers delegate the requested range to a single
++ *       backend call: MADV_DONTNEED and MADV_DONTNEED_LOCKED to
++ *       zap_vma_range_batched(), MADV_REMOVE to vfs_fallocate(),
++ *       MADV_WILLNEED on regular files to vfs_fadvise(). The backend's
++ *       return is propagated for MADV_REMOVE and discarded for
++ *       MADV_WILLNEED; DAX files short-circuit MADV_WILLNEED entirely.
++ *
++ *     - Stop-on-error handlers (MADV_POPULATE_READ, MADV_POPULATE_WRITE,
++ *       MADV_SOFT_OFFLINE) walk the range but surface the first per-page
++ *       failure as an errno (-EHWPOISON, -EFAULT, -ENOMEM, ...) rather
++ *       than skipping silently.
++ *
++ *     - Hybrid handlers combine modes: MADV_WILLNEED walks for anonymous
++ *       and shmem ranges but bulk-calls vfs_fadvise() for regular files;
++ *       MADV_COLLAPSE walks PMD-by-PMD and tracks the last scan failure
++ *       so transient skips coexist with terminal errors;
++ *       MADV_GUARD_INSTALL walks to install markers and re-walks after
++ *       zap_vma_range() to clear pre-existing pages, retrying up to
++ *       MAX_MADVISE_GUARD_RETRIES; MADV_HWPOISON walks pages but folds
++ *       memory_failure()'s -EOPNOTSUPP back to 0.
++ *
++ *   Applications that need to know whether a specific page was acted on
++ *   must verify the result through other means (e.g. /proc/[pid]/smaps,
++ *   page faults, read-after-write).
++ *
++ *   On success, madvise() returns 0; unlike read(2) and write(2) it has no
++ *   notion of partial completion at the syscall boundary. When the range
++ *   spans multiple VMAs, the kernel applies the advice to each in turn. For
++ *   the behaviors that walk VMAs (all except MADV_POPULATE_*, MADV_HWPOISON
++ *   and MADV_SOFT_OFFLINE), an unmapped gap inside the range causes the call
++ *   to return -ENOMEM after processing the mapped portions, rather than
++ *   aborting at the gap, although the walk stops at the first per-VMA error.
++ *   MADV_POPULATE_* stops at the first failure, and MADV_HWPOISON and
++ *   MADV_SOFT_OFFLINE bypass the walk, so an unmapped address gives -EFAULT.
++ *
++ *   POSIX defines posix_madvise(3) for a portable subset (POSIX_MADV_NORMAL,
++ *   _RANDOM, _SEQUENTIAL, _WILLNEED, _DONTNEED). Linux MADV_DONTNEED is
++ *   destructive: it discards the contents of the affected anonymous pages and
++ *   subsequent reads return zero. POSIX permits but does not require
++ *   destruction, so portable code that needs the POSIX semantics should use
++ *   posix_madvise(3) instead.
++ *
++ * contexts: process, sleepable
++ *
++ * param: start
++ *   type: uint, input
++ *   constraint-type: page_aligned
++ *   cdesc: Starting virtual address of the range. Must be aligned to
++ *     PAGE_SIZE. An unaligned start always returns -EINVAL, even when
++ *     len_in is zero. Address tag bits, where supported by the architecture,
++ *     are cleared via untagged_addr() before the range is interpreted, with
++ *     the exception of MADV_HWPOISON and MADV_SOFT_OFFLINE, which receive
++ *     the raw start value because they bypass the VMA walk.
++ *
++ * param: len_in
++ *   type: uint, input
++ *   cdesc: Length of the range in bytes. Internally rounded up to a multiple
++ *     of PAGE_SIZE. A len_in of 0 is accepted and the call is a no-op that
++ *     returns 0. A non-zero len_in that rounds up to 0 (i.e. wraps around)
++ *     returns -EINVAL, as does a range whose end (start + PAGE_ALIGN(len_in))
++ *     would wrap below start.
++ *
++ * param: behavior
++ *   type: int, input
++ *   cdesc: One of the MADV_* constants from <sys/mman.h>. See the long
++ *     description above for the full list and the three semantic groups
++ *     (hint, immediate-action, destructive). Behaviors gated by Kconfig
++ *     (KSM, transparent hugepage, memory failure) return -EINVAL when the
++ *     underlying support is disabled. A few architectures (notably alpha)
++ *     renumber values; portable code should always use the symbolic names.
++ *
++ * return:
++ *   type: int
++ *   check-type: exact
++ *   success: 0
++ *   desc: On success, returns 0. On error, returns a negative error code.
++ *     There is no partial-success indication; either the entire processed
++ *     range succeeded, or an error is returned and an unspecified prefix of
++ *     the range may have been advised.
++ *
++ * error: EINVAL, Invalid argument
++ *   desc: Invalid input (unknown or Kconfig-disabled MADV_*, unaligned start,
++ *     range wrap, non-zero len_in rounding up to zero) or a VMA filter.
++ *     DONTNEED/FREE reject VM_PFNMAP, VM_LOCKED (not DONTNEED_LOCKED) and
++ *     misaligned hugetlb; FREE non-anonymous; WIPEONFORK file or shared; REMOVE
++ *     VM_LOCKED or no file; COLD/PAGEOUT LOCKED/PFNMAP/HUGETLB; DOFORK
++ *     VM_SPECIAL; KEEPONFORK VM_DROPPABLE; DODUMP SPECIAL/DROPPABLE; GUARD_*
++ *     SPECIAL/HUGETLB (INSTALL also LOCKED); COLLAPSE if not possible;
++ *     POPULATE_* on bad permissions.
++ *
++ * error: ENOMEM, Cannot allocate memory
++ *   desc: For VMA-walking behaviors, a gap between mapped VMAs inside the range
++ *     gives -ENOMEM after the mapped subranges have been processed, unless a
++ *     per-VMA error ends the walk first. MADV_POPULATE_* stops at the first
++ *     failure and returns -ENOMEM when the region has no VMA or
++ *     faultin_page_range() exhausts memory. MADV_COLLAPSE returns -ENOMEM when
++ *     its struct collapse_control cannot be allocated, and when
++ *     madvise_collapse_errno() maps SCAN_ALLOC_HUGE_PAGE_FAIL (no hugepage
++ *     available) to it.
++ *
++ * error: EAGAIN, Resource temporarily unavailable
++ *   desc: For the VMA-flag-mutating behaviors, an internal -ENOMEM from VMA
++ *     splitting is translated to -EAGAIN before being returned to userspace,
++ *     advising the caller that a transient kernel resource shortage
++ *     prevented the update. Also returned by MADV_COLLAPSE via
++ *     madvise_collapse_errno() for transient scan failures (folio lock
++ *     contention, LRU isolation failure, dirty/writeback) where retrying
++ *     the call may succeed.
++ *
++ * error: EIO, Input/output error
++ *   desc: For MADV_REMOVE, an I/O error from the underlying filesystem's
++ *     FALLOC_FL_PUNCH_HOLE handler is propagated back as -EIO, and
++ *     MADV_SOFT_OFFLINE returns -EIO when soft_offline_page() cannot handle
++ *     the page. MADV_HWPOISON reports an unhandled page as -EBUSY; -EIO can
++ *     reach it only from a ZONE_DEVICE pagemap's ->memory_failure()
++ *     callback. MADV_WILLNEED and MADV_PAGEOUT do not surface filesystem or
++ *     device I/O errors: vfs_fadvise() returns are discarded by
++ *     madvise_willneed() and the pageout walk is invoked through a void
++ *     helper, so transient I/O failures during read-ahead or page-out are
++ *     silently dropped.
++ *
++ * error: EBADF, Bad file descriptor
++ *   desc: Returned by MADV_WILLNEED when applied to a non-file-backed VMA
++ *     and the kernel was built without CONFIG_SWAP, so there is neither a
++ *     file to read-ahead from nor a swap device to fault from.
++ *
++ * error: EACCES, Permission denied
++ *   desc: Returned by MADV_REMOVE when the target VMA fails
++ *     vma_is_shared_maywrite(), which needs both VM_SHARED and VM_MAYWRITE.
++ *     Private file mappings and shared mappings of files not opened for
++ *     writing are refused, while a PROT_READ MAP_SHARED mapping of a file
++ *     opened O_RDWR is accepted. Punching a hole through a refused mapping
++ *     would either be invisible to other mappers or bypass file write
++ *     permission.
++ *
++ * error: EPERM, Operation not permitted
++ *   desc: Returned in two situations. First, MADV_HWPOISON and
++ *     MADV_SOFT_OFFLINE require CAP_SYS_ADMIN; the inject-error handler
++ *     refuses non-privileged callers. Second, on 64-bit kernels, a discard
++ *     operation (MADV_FREE, MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_REMOVE,
++ *     MADV_DONTFORK, MADV_WIPEONFORK, MADV_GUARD_INSTALL) is refused on a
++ *     read-only anonymous VMA that has been sealed with mseal(2), to prevent
++ *     bypassing the seal by discarding mapped data.
++ *
++ * error: EINTR, Interrupted system call
++ *   desc: Returned when a fatal signal is delivered while the call is
++ *     waiting to acquire the mmap write lock for a VMA-flag-mutating
++ *     behavior (mmap_write_lock_killable() returns -EINTR), or when
++ *     MADV_POPULATE_READ/MADV_POPULATE_WRITE is interrupted while faulting
++ *     in pages (faultin_page_range() returns -EINTR). Only a fatal signal
++ *     interrupts these waits, so the task is being killed and user space
++ *     does not normally see the error.
++ *
++ * error: EHWPOISON, Memory page has hardware error
++ *   desc: MADV_POPULATE_READ or MADV_POPULATE_WRITE encountered a page that
++ *     has been marked as containing a hardware-detected memory error and
++ *     could not be faulted in. MADV_HWPOISON also returns it when
++ *     memory_failure() finds the page already poisoned.
++ *
++ * error: EFAULT, Bad address
++ *   desc: MADV_POPULATE_READ or MADV_POPULATE_WRITE attempted to fault in a
++ *     page whose mapping raised VM_FAULT_SIGBUS or VM_FAULT_SIGSEGV (for
++ *     example, a file-backed page beyond the end of the file).
++ *     MADV_HWPOISON and MADV_SOFT_OFFLINE return a get_user_pages_fast()
++ *     failure, typically -EFAULT for an unmapped address.
++ *
++ * error: EBUSY, Device or resource busy
++ *   desc: Returned by MADV_COLLAPSE via madvise_collapse_errno() in two
++ *     specific scan-failure modes: SCAN_CGROUP_CHARGE_FAIL (the new
++ *     hugepage cannot be charged to the memory cgroup) and
++ *     SCAN_EXCEED_NONE_PTE (too many absent PTEs in the candidate range
++ *     for a synchronous collapse). Other transient collapse failures are
++ *     reported as -EAGAIN; non-transient ones as -EINVAL. MADV_HWPOISON and
++ *     MADV_SOFT_OFFLINE also return -EBUSY when the page cannot be handled.
++ *
++ * error: EOPNOTSUPP, Operation not supported
++ *   desc: MADV_REMOVE propagates vfs_fallocate() errors verbatim, so a
++ *     filesystem without FALLOC_FL_PUNCH_HOLE support fails with -EOPNOTSUPP
++ *     (other propagated errors include -EPERM, -ETXTBSY and -ENOSPC).
++ *     MADV_SOFT_OFFLINE also returns it when soft offlining is disabled via
++ *     /proc/sys/vm/enable_soft_offline or the event is filtered by
++ *     hwpoison_filter(); MADV_HWPOISON folds that case to 0.
++ *
++ * lock: mm->mmap_lock (read mode)
++ *   type: semaphore
++ *   acquired: yes
++ *   released: yes
++ *   desc: Taken for read for MADV_REMOVE, MADV_WILLNEED, MADV_COLD,
++ *     MADV_PAGEOUT, MADV_COLLAPSE, MADV_POPULATE_READ and
++ *     MADV_POPULATE_WRITE, and as the fallback when the per-VMA lock path
++ *     declines. It is dropped and retaken around vfs_fadvise() (WILLNEED on
++ *     regular files), vfs_fallocate() and userfaultfd_remove() (REMOVE, and
++ *     DONTNEED or FREE with UFFD_FEATURE_EVENT_REMOVE), the anon and file
++ *     collapse paths (COLLAPSE) and inside faultin_page_range()
++ *     (POPULATE_*), so the VMA must be looked up again afterwards.
++ *
++ * lock: mm->mmap_lock (write mode; killable)
++ *   type: semaphore
++ *   acquired: yes
++ *   released: yes
++ *   desc: Acquired in killable write mode for behaviors that modify
++ *     vma->vm_flags or split/merge VMAs (MADV_NORMAL, MADV_RANDOM,
++ *     MADV_SEQUENTIAL, MADV_DONTFORK, MADV_DOFORK, MADV_DONTDUMP, MADV_DODUMP,
++ *     MADV_WIPEONFORK, MADV_KEEPONFORK, MADV_MERGEABLE, MADV_UNMERGEABLE,
++ *     MADV_HUGEPAGE, MADV_NOHUGEPAGE). If the acquisition is killed by a
++ *     fatal signal, the syscall returns -EINTR before any VMA is touched.
++ *
++ * lock: per-VMA read lock (vma->vm_refcnt)
++ *   type: custom
++ *   acquired: yes
++ *   released: yes
++ *   desc: Tried first for MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_FREE,
++ *     MADV_GUARD_INSTALL and MADV_GUARD_REMOVE via lock_vma_under_rcu(). The
++ *     lock is a reference on the VMA (vm_refcnt), not an rwsem. The per-VMA
++ *     path is taken only when the requested range fits within a single VMA,
++ *     the target mm is the caller's mm, the VMA is not armed with
++ *     userfaultfd, and, for MADV_GUARD_INSTALL on an anonymous VMA, an
++ *     anon_vma is already attached. Otherwise the code falls back to the
++ *     mmap read lock above.
++ *
++ * lock: mmu_gather TLB batch
++ *   type: custom
++ *   acquired: yes
++ *   released: yes
++ *   desc: For MADV_DONTNEED, MADV_DONTNEED_LOCKED and MADV_FREE a single
++ *     tlb_gather_mmu() / tlb_finish_mmu() pair (madvise_init_tlb() and
++ *     madvise_finish_tlb()) wraps the whole syscall, batching TLB invalidation
++ *     across all VMAs in the range. MADV_COLD and MADV_PAGEOUT build a
++ *     short-lived gather inside the handler. MADV_GUARD_INSTALL builds a
++ *     transient gather via zap_vma_range() each time the retry loop clears
++ *     pre-existing pages, and none if the range is already empty.
++ *     MADV_GUARD_REMOVE never gathers.
++ *
++ * lock: mmu_notifier invalidate range
++ *   type: custom
++ *   acquired: yes
++ *   released: yes
++ *   desc: All zap-based paths -- MADV_DONTNEED, MADV_DONTNEED_LOCKED, the
++ *     zap branch of MADV_GUARD_INSTALL via zap_vma_range(), and
++ *     MADV_FREE's own walk -- bracket their work with
++ *     mmu_notifier_invalidate_range_start()/_end() so secondary MMUs (KVM,
++ *     IOMMU SVA, etc.) observe the page clearing.
++ *
++ * signal: Any fatal signal
++ *   direction: receive
++ *   action: return
++ *   condition: Acquiring the mmap write lock or faulting in pages for
++ *     MADV_POPULATE_*
++ *   desc: A pending fatal signal aborts mmap_write_lock_killable() (used by
++ *     the VMA-flag-mutating behaviors) and faultin_page_range() (used by
++ *     MADV_POPULATE_READ and MADV_POPULATE_WRITE), in both cases surfacing as
++ *     -EINTR. Only a fatal signal interrupts these waits, so the task is
++ *     being killed and user space does not normally see the error.
++ *   errno: -EINTR
++ *   timing: during
++ *   restartable: no
++ *
++ * side-effect: modify_state
++ *   target: vma->vm_flags
++ *   condition: Hint-group behaviors (MADV_NORMAL, MADV_RANDOM, MADV_SEQUENTIAL,
++ *     MADV_DONTFORK, MADV_DOFORK, MADV_DONTDUMP, MADV_DODUMP, MADV_WIPEONFORK,
++ *     MADV_KEEPONFORK, MADV_MERGEABLE, MADV_UNMERGEABLE, MADV_HUGEPAGE,
++ *     MADV_NOHUGEPAGE)
++ *   desc: Sets or clears VM_RAND_READ, VM_SEQ_READ, VM_DONTCOPY,
++ *     VM_DONTDUMP, VM_WIPEONFORK, VM_MERGEABLE, VM_HUGEPAGE or VM_NOHUGEPAGE
++ *     on the affected VMAs, splitting or merging VMAs as needed. Reversible
++ *     with the inverse advice (MADV_DOFORK undoes MADV_DONTFORK), except
++ *     that the inverse call's VMA filter still applies (DOFORK rejects
++ *     VM_SPECIAL, DODUMP rejects non-hugetlb VM_SPECIAL or VM_DROPPABLE,
++ *     KEEPONFORK rejects VM_DROPPABLE).
++ *   reversible: yes
++ *
++ * side-effect: free_memory | modify_state | irreversible
++ *   target: page tables and resident pages within the range
++ *   condition: MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_FREE
++ *   desc: MADV_DONTNEED zaps PTEs, releasing the pages or swap slots so the
++ *     next access faults in zero-filled anonymous pages or re-reads the
++ *     file. MADV_DONTNEED_LOCKED is identical but tolerates VM_LOCKED.
++ *     MADV_FREE marks anonymous pages lazy-freeable; clean pages may be
++ *     reclaimed under memory pressure and a write before reclaim cancels
++ *     the lazy free. Discarded data cannot be recovered.
++ *   reversible: no
++ *
++ * side-effect: filesystem | irreversible
++ *   target: backing file (FALLOC_FL_PUNCH_HOLE)
++ *   condition: MADV_REMOVE
++ *   desc: Calls vfs_fallocate(FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE) on
++ *     the backing file, deallocating the corresponding file blocks. The hole
++ *     is visible to all mappers of the file and to read(2)/write(2)
++ *     callers; subsequent reads return zero. Filesystem freeze protection,
++ *     i_rwsem and any quota/space accounting are taken by the underlying
++ *     fallocate path.
++ *   reversible: no
++ *
++ * side-effect: modify_state | schedule
++ *   target: LRU lists and page reclaim
++ *   condition: MADV_COLD, MADV_PAGEOUT
++ *   desc: MADV_COLD deactivates the affected pages, moving them to the
++ *     inactive LRU and clearing PG_referenced/PG_young so they are reclaimed
++ *     sooner under pressure. MADV_PAGEOUT additionally calls reclaim_pages()
++ *     to write dirty pages out and drop clean ones synchronously. Page data
++ *     is preserved (rereads will fault in the same content), but the I/O and
++ *     LRU bookkeeping cannot be undone.
++ *   reversible: no
++ *
++ * side-effect: modify_state
++ *   target: page tables (faultin)
++ *   condition: MADV_POPULATE_READ, MADV_POPULATE_WRITE
++ *   desc: Walks the requested range with faultin_page_range(), populating
++ *     PTEs by triggering read or write faults so subsequent accesses do not
++ *     fault. Equivalent to touching every page in the range while suppressing
++ *     SIGBUS/SIGSEGV through the syscall return value. Allocations made by
++ *     faultin are not undone on partial failure.
++ *   reversible: no
++ *
++ * side-effect: modify_state | schedule
++ *   target: transparent hugepage layout
++ *   condition: MADV_COLLAPSE
++ *   desc: Synchronously coalesces base pages in the range into a PMD-sized
++ *     transparent hugepage when the mapping permits. Performs the same page
++ *     migration and zeroing that khugepaged would do asynchronously; the
++ *     range's data is preserved across the collapse.
++ *   reversible: no
++ *
++ * side-effect: free_memory | modify_state | irreversible
++ *   target: PTE marker (PTE_MARKER_GUARD)
++ *   condition: MADV_GUARD_INSTALL, MADV_GUARD_REMOVE
++ *   desc: MADV_GUARD_INSTALL installs PTE_MARKER_GUARD entries that cause
++ *     subsequent accesses to deliver SIGSEGV without consuming physical
++ *     memory; existing pages already mapped in the range are zapped via
++ *     zap_vma_range() before the markers are installed, so any
++ *     prior contents are lost. MADV_GUARD_REMOVE clears the markers but
++ *     does not (and cannot) restore zapped data.
++ *   reversible: no
++ *
++ * side-effect: hardware | irreversible
++ *   target: physical page (memory_failure)
++ *   condition: MADV_HWPOISON
++ *   desc: MADV_HWPOISON marks the affected pages as containing an
++ *     unrecoverable hardware error using the same machine-check path that
++ *     real ECC failures take. This affects physical memory bookkeeping
++ *     kernel-wide, and madvise() has no inverse. The poison can be cleared
++ *     through unpoison_memory() (the hwpoison-inject debugfs interface).
++ *     Intended for testing the memory-failure pipeline; restricted to
++ *     CAP_SYS_ADMIN.
++ *   reversible: no
++ *
++ * side-effect: hardware
++ *   target: physical page (soft_offline_page)
++ *   condition: MADV_SOFT_OFFLINE
++ *   desc: Migrates the contents off the affected pages and removes them from
++ *     the buddy allocator. Page contents are preserved. madvise() has no
++ *     inverse. The pages can be brought back through unpoison_memory() (the
++ *     hwpoison-inject debugfs interface). Intended for testing the
++ *     memory-failure pipeline; restricted to CAP_SYS_ADMIN.
++ *   reversible: no
++ *
++ * side-effect: modify_state
++ *   target: KSM merge state (vm_flags & VM_MERGEABLE)
++ *   condition: MADV_MERGEABLE, MADV_UNMERGEABLE
++ *   desc: Toggles VM_MERGEABLE, the VMA's eligibility for the kernel
++ *     same-page merger. MADV_MERGEABLE lets ksmd later replace identical
++ *     anonymous pages with shared, write-protected copies and is silently
++ *     ignored on KSM-incompatible VMAs. MADV_UNMERGEABLE synchronously
++ *     calls break_ksm(), which faults each KSM page in the range back to an
++ *     exclusive copy, before clearing VM_MERGEABLE. An -ENOMEM from either
++ *     advice is returned as -EAGAIN. The flag toggle is reversible by
++ *     issuing the inverse advice.
++ *   reversible: yes
++ *
++ * side-effect: modify_state
++ *   target: userfaultfd event queue
++ *   condition: MADV_DONTNEED, MADV_DONTNEED_LOCKED, MADV_FREE, MADV_REMOVE
++ *     on a VMA whose userfaultfd context negotiated UFFD_FEATURE_EVENT_REMOVE
++ *   desc: Generates a UFFD_EVENT_REMOVE notification covering the discarded
++ *     range so userfaultfd monitors observing the mapping see the
++ *     invalidation. The event is queued before the discard takes effect; the
++ *     monitor cannot veto it.
++ *   reversible: no
++ *
++ * capability: CAP_SYS_ADMIN
++ *   type: perform_operation
++ *   allows: Inject memory errors via MADV_HWPOISON or MADV_SOFT_OFFLINE
++ *   without: Both behaviors return -EPERM
++ *   condition: Checked at entry to madvise_inject_error() before any pages
++ *     are looked up
++ *
++ * constraint: Page-aligned start
++ *   desc: start must lie on a page boundary; otherwise the call returns
++ *     -EINVAL before any VMA is consulted.
++ *   expr: (start & (PAGE_SIZE - 1)) == 0
++ *
++ * constraint: Length rounded up to PAGE_SIZE
++ *   desc: The effective range length is PAGE_ALIGN(len_in). A non-zero len_in
++ *     that overflows during rounding, or a (start, end) range that wraps,
++ *     is rejected with -EINVAL.
++ *   expr: end = start + PAGE_ALIGN(len_in); end >= start
++ *
++ * constraint: Behavior must be supported
++ *   desc: behavior must be one of the MADV_* values listed under the
++ *     behavior parameter. Behaviors gated by Kconfig (KSM, THP, memory
++ *     failure) are rejected with -EINVAL when the corresponding option is
++ *     disabled in the running kernel.
++ *
++ * constraint: mseal-protected discards
++ *   desc: On 64-bit kernels, a discard operation (FREE, DONTNEED,
++ *     DONTNEED_LOCKED, REMOVE, DONTFORK, WIPEONFORK, GUARD_INSTALL) against
++ *     a sealed anonymous VMA is rejected unless the mapping is currently
++ *     writable -- both VM_WRITE in vm_flags and arch_vma_access_permitted()
++ *     allowing write -- so that mseal(2) cannot be bypassed by instructing
++ *     the kernel to throw the data away. File-backed sealed VMAs and
++ *     writable sealed VMAs are not subject to this restriction.
++ *   expr: !is_discard(behavior) || !vma_is_sealed(vma) ||
++ *     !vma_is_anonymous(vma) || ((vma->vm_flags & VM_WRITE) &&
++ *     arch_vma_access_permitted(vma, true, false, false))
++ *
++ * constraint: MADV_FREE requires anonymous mappings
++ *   desc: MADV_FREE is defined only over anonymous mappings; the handler
++ *     requires vma_is_anonymous() (no vm_ops) and rejects file-backed VMAs,
++ *     including shared anonymous (shmem) VMAs, with -EINVAL.
++ *   expr: vma_is_anonymous(vma)
++ *
++ * constraint: MADV_WIPEONFORK requires private anonymous mappings
++ *   desc: MADV_WIPEONFORK rejects file-backed mappings and shared anonymous
++ *     mappings; only MAP_PRIVATE anonymous VMAs accept it. Both rejections
++ *     surface as -EINVAL.
++ *   expr: !vma->vm_file && !(vma->vm_flags & VM_SHARED)
++ *
++ * constraint: MADV_REMOVE requires a shared file mapping that may be written
++ *   desc: MADV_REMOVE rejects VM_LOCKED VMAs and VMAs without an associated
++ *     file/mapping/host inode with -EINVAL. It rejects VMAs failing
++ *     vma_is_shared_maywrite() (VM_SHARED and VM_MAYWRITE) with -EACCES,
++ *     which covers private file mappings and shared mappings of files not
++ *     opened for writing, but not a PROT_READ MAP_SHARED mapping of a file
++ *     opened O_RDWR.
++ *   expr: !(vma->vm_flags & VM_LOCKED) && vma->vm_file &&
++ *     vma->vm_file->f_mapping && vma->vm_file->f_mapping->host &&
++ *     vma_is_shared_maywrite(vma)
++ *
++ * constraint: MADV_COLD / MADV_PAGEOUT VMA filter
++ *   desc: Both behaviors require LRU-managed pages; they reject VMAs that
++ *     are mlocked, raw-PFN or hugetlb.
++ *   expr: !(vma->vm_flags & (VM_LOCKED | VM_PFNMAP | VM_HUGETLB))
++ *
++ * examples: madvise(p, len, MADV_SEQUENTIAL);  // set VM_SEQ_READ on the VMA
++ *   madvise(p, len, MADV_POPULATE_WRITE);  // prefault writable PTEs
++ *   madvise(p, len, MADV_DONTNEED);        // discard anonymous pages
++ *   madvise(p, len, MADV_GUARD_INSTALL);   // install SIGSEGV guard pages
++ *
++ * notes: Behavior introduction history (mainline): MADV_FREE in 4.5,
++ *   MADV_WIPEONFORK / MADV_KEEPONFORK in 4.14, MADV_COLD / MADV_PAGEOUT in
++ *   5.4, MADV_POPULATE_READ / MADV_POPULATE_WRITE in 5.14,
++ *   MADV_DONTNEED_LOCKED in 5.18, MADV_COLLAPSE in 6.1, MADV_GUARD_INSTALL /
++ *   MADV_GUARD_REMOVE in 6.13. Code that wants to remain portable to older
++ *   kernels must handle -EINVAL gracefully and fall back.
++ *
++ *   process_madvise(2) applies the same advice values to another process
++ *   identified by a pidfd. When the target mm is the caller's own (the
++ *   pidfd refers to the caller), any locally-supported MADV_* value is
++ *   accepted. When the target is a different mm, the behavior must be in
++ *   the non-destructive remote subset (MADV_COLD, MADV_PAGEOUT,
++ *   MADV_WILLNEED, MADV_COLLAPSE) or the call returns -EINVAL, and the
++ *   caller must hold CAP_SYS_NICE.
++ *
++ *   MADV_PAGEOUT on a non-anonymous VM_MAYSHARE mapping is a silent no-op
++ *   returning 0 unless can_do_file_pageout() holds, meaning the caller owns
++ *   the file or is capable over it (file_owner_or_capable(), which honors
++ *   the mount idmap) or may write it (file_permission(MAY_WRITE)). On a
++ *   private file mapping that fails the same test, only anonymous pages are
++ *   paged out. MADV_COLD has no such filter.
++ *
++ *   MADV_GUARD_INSTALL retries up to MAX_MADVISE_GUARD_RETRIES (3) times
++ *   when it loses races with concurrent faulting or khugepaged. If those
++ *   retries are exhausted the handler returns -ERESTARTNOINTR via
++ *   restart_syscall(), which sets TIF_SIGPENDING so the return path runs
++ *   signal handling. madvise() is then transparently re-executed with the
++ *   same arguments, after any handler for a pending signal has run, unless
++ *   a fatal signal terminates the task first. The caller never observes an
++ *   errno from the restart itself and the call appears to make eventual
++ *   forward progress.
++ *
++ *   anon_vma_prepare() failures inside MADV_GUARD_INSTALL bypass the
++ *   ENOMEM-to-EAGAIN translation that applies to the VMA-flag-mutating
++ *   behaviors and surface as -ENOMEM directly.
++ *
++ *   Architecture note: alpha defines MADV_DONTNEED as 6 (not 4) and reserves
++ *   MADV_SPACEAVAIL=5; portable code must use the symbolic names from
++ *   <sys/mman.h>.
 + */
-+
-+#define _GNU_SOURCE
-+#include <stdbool.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <fcntl.h>
-+#include <errno.h>
-+#include <signal.h>
-+#include <sys/syscall.h>
-+#include <sys/stat.h>
-+#include <linux/limits.h>
-+#include "../kselftest.h"
-+#include "kapi_test_util.h"
-+
-+#define NUM_TESTS 31
-+
-+/* Set from the SIGPIPE handler. */
-+static volatile sig_atomic_t got_sigpipe;
-+
-+static void tap_ok(const char *desc)
-+{
-+	ksft_test_result_pass("%s\n", desc);
-+}
-+
-+static void tap_fail(const char *desc, const char *reason)
-+{
-+	ksft_test_result_fail("%s: %s\n", desc, reason);
-+}
-+
-+static void tap_skip(const char *desc, const char *reason)
-+{
-+	ksft_test_result_skip("%s: %s\n", desc, reason);
-+}
-+
-+/*
-+ * Return true when CONFIG_KAPI_RUNTIME_CHECKS is active: it rejects unknown
-+ * open flag bits with EINVAL, while the kernel otherwise ignores them.
-+ */
-+static bool kapi_runtime_checks_active(void)
-+{
-+	long ret;
-+
-+	errno = 0;
-+	ret = kapi_sys_open("/dev/null", 0x10000000, 0);
-+	if (ret >= 0) {
-+		syscall(__NR_close, (int)ret);
-+		return false;
-+	}
-+
-+	return errno == EINVAL;
-+}
-+
-+static void sigpipe_handler(int sig)
-+{
-+	(void)sig;
-+	got_sigpipe = 1;
-+}
-+
-+/* ---- Valid operation tests ---- */
-+
-+/*
-+ * Test 1: open a readable file
-+ * Returns fd on success.
-+ */
-+static int test_open_valid(void)
-+{
-+	errno = 0;
-+	long fd = kapi_sys_open("/etc/hostname", O_RDONLY, 0);
-+
-+	if (fd >= 0) {
-+		tap_ok("open valid file");
-+	} else {
-+		/* /etc/hostname might not exist; try /etc/passwd */
-+		errno = 0;
-+		fd = kapi_sys_open("/etc/passwd", O_RDONLY, 0);
-+		if (fd >= 0)
-+			tap_ok("open valid file (fallback /etc/passwd)");
-+		else
-+			tap_fail("open valid file", strerror(errno));
-+	}
-+	return (int)fd;
-+}
-+
-+/*
-+ * Test 2: read from fd
-+ */
-+static void test_read_valid(int fd)
-+{
-+	char buf[256];
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, fd, buf, sizeof(buf));
-+
-+	if (ret > 0)
-+		tap_ok("read from valid fd");
-+	else if (ret == 0)
-+		tap_ok("read from valid fd (EOF)");
-+	else
-+		tap_fail("read from valid fd", strerror(errno));
-+}
-+
-+/*
-+ * Test 3: write to /dev/null
-+ */
-+static void test_write_valid(void)
-+{
-+	errno = 0;
-+	long devnull = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+
-+	if (devnull < 0) {
-+		tap_fail("write to /dev/null (open failed)", strerror(errno));
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)devnull, "hello", 5);
-+
-+	if (ret == 5)
-+		tap_ok("write to /dev/null");
-+	else
-+		tap_fail("write to /dev/null",
-+			 ret < 0 ? strerror(errno) : "short write");
-+
-+	syscall(__NR_close, (int)devnull);
-+}
-+
-+/*
-+ * Test 4: close fd
-+ */
-+static void test_close_valid(int fd)
-+{
-+	errno = 0;
-+	long ret = syscall(__NR_close, fd);
-+
-+	if (ret == 0)
-+		tap_ok("close valid fd");
-+	else
-+		tap_fail("close valid fd", strerror(errno));
-+}
-+
-+/* ---- KAPI parameter rejection tests ---- */
-+
-+/*
-+ * Test 5: open with invalid flag bits
-+ * 0x10000000 is outside the valid O_* mask, KAPI should reject.
-+ */
-+static void test_open_invalid_flags(void)
-+{
-+	long ret;
-+
-+	if (!kapi_runtime_checks_active()) {
-+		tap_skip("open with invalid flags",
-+			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
-+		return;
-+	}
-+
-+	errno = 0;
-+	/*
-+	 * Use /dev/null (always present on any sane rootfs) so KAPI's flag
-+	 * validation is reached before a path-lookup ENOENT can mask it.
-+	 * 0x10000000 is outside the valid O_* mask.
-+	 */
-+	ret = kapi_sys_open("/dev/null", 0x10000000, 0);
-+
-+	if (ret == -1 && errno == EINVAL) {
-+		tap_ok("open with invalid flags returns EINVAL");
-+	} else if (ret >= 0) {
-+		tap_fail("open with invalid flags", "expected EINVAL, got success");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EINVAL, got %s",
-+			 strerror(errno));
-+		tap_fail("open with invalid flags", msg);
-+	}
-+}
-+
-+/*
-+ * Test 6: open with mode bits above S_IALLUGO
-+ * The kernel masks mode with S_IALLUGO (07777), so KAPI must accept it.
-+ */
-+static void test_open_high_mode_bits(void)
-+{
-+	const char *desc = "open with mode bits above 07777 creates file";
-+	char path[64];
-+	struct stat st;
-+	mode_t um, want;
-+	long fd;
-+
-+	snprintf(path, sizeof(path), "/tmp/kapi_test_mode.%d", getpid());
-+	unlink(path);
-+
-+	um = umask(0);
-+	umask(um);
-+	want = 07777 & ~um;
-+
-+	errno = 0;
-+	fd = kapi_sys_open(path, O_CREAT | O_WRONLY | O_EXCL, 0xFFFF);
-+	if (fd < 0) {
-+		tap_fail(desc, strerror(errno));
-+		return;
-+	}
-+
-+	if (fstat((int)fd, &st) < 0) {
-+		tap_fail(desc, strerror(errno));
-+	} else if ((st.st_mode & 07777) != want) {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected mode %04o, got %04o",
-+			 (unsigned int)want, (unsigned int)(st.st_mode & 07777));
-+		tap_fail(desc, msg);
-+	} else {
-+		tap_ok(desc);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+	unlink(path);
-+}
-+
-+/*
-+ * Test 7: open with NULL path
-+ * KAPI USER_PATH constraint should reject NULL.
-+ */
-+static void test_open_null_path(void)
-+{
-+	errno = 0;
-+	long ret = kapi_sys_open(NULL, O_RDONLY, 0);
-+
-+	if (ret == -1 && errno == EINVAL) {
-+		tap_ok("open with NULL path returns EINVAL");
-+	} else if (ret == -1 && errno == EFAULT) {
-+		/* Kernel may catch this as EFAULT before KAPI */
-+		tap_ok("open with NULL path returns EFAULT (acceptable)");
-+	} else if (ret >= 0) {
-+		tap_fail("open with NULL path", "expected error, got success");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "got %s", strerror(errno));
-+		tap_fail("open with NULL path", msg);
-+	}
-+}
-+
-+/*
-+ * Test 8: open with flag bit 30 set (0x40000000)
-+ * This bit is outside the valid O_* mask, KAPI should reject with EINVAL.
-+ */
-+static void test_open_flag_bit30(void)
-+{
-+	long ret;
-+
-+	if (!kapi_runtime_checks_active()) {
-+		tap_skip("open with flag bit 30 (0x40000000) returns EINVAL",
-+			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
-+		return;
-+	}
-+
-+	errno = 0;
-+	ret = kapi_sys_open("/dev/null", 0x40000000, 0);
-+
-+	if (ret == -1 && errno == EINVAL) {
-+		tap_ok("open with flag bit 30 (0x40000000) returns EINVAL");
-+	} else if (ret >= 0) {
-+		tap_fail("open with flag bit 30 (0x40000000) returns EINVAL",
-+			 "expected EINVAL, got success");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EINVAL, got %s",
-+			 strerror(errno));
-+		tap_fail("open with flag bit 30 (0x40000000) returns EINVAL",
-+			 msg);
-+	}
-+}
-+
-+/* ---- Boundary condition and error path tests ---- */
-+
-+/*
-+ * Test 9: read with fd=-1 should return an error.
-+ * With CONFIG_KAPI_RUNTIME_CHECKS=y, KAPI validates the fd first and
-+ * rejects negative fds (other than AT_FDCWD) with EINVAL.  Without
-+ * KAPI, the kernel returns EBADF.  Accept either.
-+ */
-+static void test_read_bad_fd(void)
-+{
-+	char buf[16];
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, -1, buf, sizeof(buf));
-+
-+	if (ret == -1 && (errno == EBADF || errno == EINVAL)) {
-+		tap_ok("read with fd=-1 returns error");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF/EINVAL, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("read with fd=-1 returns error", msg);
-+	}
-+}
-+
-+/*
-+ * Test 10: read with count=0 should return 0
-+ */
-+static void test_read_zero_count(void)
-+{
-+	char buf[1];
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("read with count=0 returns 0",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, (int)fd, buf, 0);
-+
-+	if (ret == 0) {
-+		tap_ok("read with count=0 returns 0");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, strerror(errno));
-+		tap_fail("read with count=0 returns 0", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 11: write with count=0 should return 0
-+ */
-+static void test_write_zero_count(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("write with count=0 returns 0",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)fd, "x", 0);
-+
-+	if (ret == 0) {
-+		tap_ok("write with count=0 returns 0");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, strerror(errno));
-+		tap_fail("write with count=0 returns 0", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 12: open with a path longer than PATH_MAX should fail
-+ * Expect ENAMETOOLONG or EINVAL.
-+ */
-+static void test_open_long_path(void)
-+{
-+	char *longpath;
-+	size_t len = PATH_MAX + 256;
-+
-+	longpath = malloc(len);
-+	if (!longpath) {
-+		tap_fail("open with path > PATH_MAX", "malloc failed");
-+		return;
-+	}
-+
-+	memset(longpath, 'A', len - 1);
-+	longpath[0] = '/';
-+	longpath[len - 1] = '\0';
-+
-+	errno = 0;
-+	long ret = kapi_sys_open(longpath, O_RDONLY, 0);
-+
-+	if (ret == -1 && (errno == ENAMETOOLONG || errno == EINVAL)) {
-+		tap_ok("open with path > PATH_MAX returns ENAMETOOLONG/EINVAL");
-+	} else if (ret >= 0) {
-+		tap_fail("open with path > PATH_MAX",
-+			 "expected error, got success");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg),
-+			 "expected ENAMETOOLONG/EINVAL, got %s",
-+			 strerror(errno));
-+		tap_fail("open with path > PATH_MAX", msg);
-+	}
-+
-+	free(longpath);
-+}
-+
-+/*
-+ * Test 13: read with unmapped user pointer should return EFAULT or EINVAL.
-+ * Use a pipe with data so the kernel actually tries to copy to the buffer.
-+ */
-+static void test_read_unmapped_buf(void)
-+{
-+	int pipefd[2];
-+
-+	if (pipe(pipefd) < 0) {
-+		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
-+			 "pipe() failed");
-+		return;
-+	}
-+
-+	/* Write some data so read has something to copy */
-+	if (write(pipefd[1], "hello", 5) != 5) {
-+		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
-+			 "pipe write failed");
-+		close(pipefd[0]);
-+		close(pipefd[1]);
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, pipefd[0], (void *)0xDEAD0000, 16);
-+
-+	if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
-+		tap_ok("read with unmapped buffer returns EFAULT/EINVAL");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg),
-+			 "expected EFAULT/EINVAL, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("read with unmapped buffer returns EFAULT/EINVAL",
-+			 msg);
-+	}
-+
-+	close(pipefd[0]);
-+	close(pipefd[1]);
-+}
-+
-+/*
-+ * Test 14: write with unmapped user pointer should return EFAULT or EINVAL.
-+ * Use a pipe so the kernel actually tries to copy from the buffer.
-+ */
-+static void test_write_unmapped_buf(void)
-+{
-+	int pipefd[2];
-+
-+	if (pipe(pipefd) < 0) {
-+		tap_fail("write with unmapped buffer returns EFAULT/EINVAL",
-+			 "pipe() failed");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, pipefd[1], (void *)0xDEAD0000, 16);
-+
-+	if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
-+		tap_ok("write with unmapped buffer returns EFAULT/EINVAL");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg),
-+			 "expected EFAULT/EINVAL, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("write with unmapped buffer returns EFAULT/EINVAL",
-+			 msg);
-+	}
-+
-+	close(pipefd[0]);
-+	close(pipefd[1]);
-+}
-+
-+/*
-+ * Test 15: close an already-closed fd should return EBADF
-+ */
-+static void test_close_already_closed(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("close already-closed fd returns EBADF",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	/* Close it once - should succeed */
-+	syscall(__NR_close, (int)fd);
-+
-+	/* Close it again - should fail with EBADF */
-+	errno = 0;
-+	long ret = syscall(__NR_close, (int)fd);
-+
-+	if (ret == -1 && errno == EBADF) {
-+		tap_ok("close already-closed fd returns EBADF");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
-+			 ret == 0 ? "success" : strerror(errno));
-+		tap_fail("close already-closed fd returns EBADF", msg);
-+	}
-+}
-+
-+/*
-+ * Test 16: open /dev/null with O_RDONLY|O_CLOEXEC should succeed
-+ */
-+static void test_open_valid_cloexec(void)
-+{
-+	errno = 0;
-+	long fd = kapi_sys_open("/dev/null", O_RDONLY | O_CLOEXEC, 0);
-+
-+	if (fd >= 0) {
-+		tap_ok("open /dev/null with O_RDONLY|O_CLOEXEC succeeds");
-+		syscall(__NR_close, (int)fd);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected success, got %s",
-+			 strerror(errno));
-+		tap_fail("open /dev/null with O_RDONLY|O_CLOEXEC succeeds",
-+			 msg);
-+	}
-+}
-+
-+/*
-+ * Test 17: write 0 bytes to /dev/null should return 0
-+ */
-+static void test_write_zero_devnull(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("write 0 bytes to /dev/null returns 0",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)fd, "", 0);
-+
-+	if (ret == 0) {
-+		tap_ok("write 0 bytes to /dev/null returns 0");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, strerror(errno));
-+		tap_fail("write 0 bytes to /dev/null returns 0", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 18: read from a write-only fd should return EBADF
-+ */
-+static void test_read_writeonly_fd(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("read from write-only fd returns EBADF",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	char buf[16];
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, (int)fd, buf, sizeof(buf));
-+
-+	if (ret == -1 && errno == EBADF) {
-+		tap_ok("read from write-only fd returns EBADF");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("read from write-only fd returns EBADF", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 19: write to a read-only fd should return EBADF
-+ */
-+static void test_write_readonly_fd(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("write to read-only fd returns EBADF",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)fd, "hello", 5);
-+
-+	if (ret == -1 && errno == EBADF) {
-+		tap_ok("write to read-only fd returns EBADF");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("write to read-only fd returns EBADF", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 20: close fd 9999 (likely invalid) should return EBADF
-+ */
-+static void test_close_fd_9999(void)
-+{
-+	errno = 0;
-+	long ret = syscall(__NR_close, 9999);
-+
-+	if (ret == -1 && errno == EBADF) {
-+		tap_ok("close fd 9999 returns EBADF");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
-+			 ret == 0 ? "success" : strerror(errno));
-+		tap_fail("close fd 9999 returns EBADF", msg);
-+	}
-+}
-+
-+/*
-+ * Test 21: read from pipe after write end is closed returns 0 (EOF)
-+ */
-+static void test_read_closed_pipe(void)
-+{
-+	int pipefd[2];
-+
-+	if (pipe(pipefd) < 0) {
-+		tap_fail("read from closed pipe returns 0 (EOF)",
-+			 "pipe() failed");
-+		return;
-+	}
-+
-+	/* Close write end */
-+	close(pipefd[1]);
-+
-+	char buf[16];
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, pipefd[0], buf, sizeof(buf));
-+
-+	if (ret == 0) {
-+		tap_ok("read from closed pipe returns 0 (EOF)");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, ret < 0 ? strerror(errno) : "n/a");
-+		tap_fail("read from closed pipe returns 0 (EOF)", msg);
-+	}
-+
-+	close(pipefd[0]);
-+}
-+
-+/*
-+ * Test 22: write to pipe after read end is closed returns EPIPE + SIGPIPE
-+ */
-+static void test_write_closed_pipe(void)
-+{
-+	int pipefd[2];
-+	struct sigaction sa, old_sa;
-+
-+	if (pipe(pipefd) < 0) {
-+		tap_fail("write to closed pipe returns EPIPE + SIGPIPE",
-+			 "pipe() failed");
-+		return;
-+	}
-+
-+	/* Install SIGPIPE handler */
-+	memset(&sa, 0, sizeof(sa));
-+	sa.sa_handler = sigpipe_handler;
-+	sigemptyset(&sa.sa_mask);
-+	sigaction(SIGPIPE, &sa, &old_sa);
-+
-+	got_sigpipe = 0;
-+
-+	/* Close read end */
-+	close(pipefd[0]);
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, pipefd[1], "hello", 5);
-+
-+	if (ret == -1 && errno == EPIPE && got_sigpipe) {
-+		tap_ok("write to closed pipe returns EPIPE + SIGPIPE");
-+	} else if (ret == -1 && errno == EPIPE) {
-+		tap_ok("write to closed pipe returns EPIPE (SIGPIPE not caught)");
-+	} else {
-+		char msg[128];
-+
-+		snprintf(msg, sizeof(msg),
-+			 "expected EPIPE, got %s (sigpipe=%d)",
-+			 ret >= 0 ? "success" : strerror(errno),
-+			 (int)got_sigpipe);
-+		tap_fail("write to closed pipe returns EPIPE + SIGPIPE", msg);
-+	}
-+
-+	/* Restore SIGPIPE handler */
-+	sigaction(SIGPIPE, &old_sa, NULL);
-+	close(pipefd[1]);
-+}
-+
-+/*
-+ * Test 23: open with O_DIRECTORY on a non-directory returns ENOTDIR
-+ */
-+static void test_open_directory_on_file(void)
-+{
-+	errno = 0;
-+	long ret = kapi_sys_open("/dev/null", O_RDONLY | O_DIRECTORY, 0);
-+
-+	if (ret == -1 && errno == ENOTDIR) {
-+		tap_ok("open O_DIRECTORY on non-directory returns ENOTDIR");
-+	} else if (ret >= 0) {
-+		tap_fail("open O_DIRECTORY on non-directory",
-+			 "expected ENOTDIR, got success");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected ENOTDIR, got %s",
-+			 strerror(errno));
-+		tap_fail("open O_DIRECTORY on non-directory", msg);
-+	}
-+}
-+
-+/*
-+ * Test 24: open nonexistent file without O_CREAT returns ENOENT
-+ */
-+static void test_open_nonexistent(void)
-+{
-+	errno = 0;
-+	long ret = kapi_sys_open("/tmp/kapi_nonexistent_file_12345",
-+				 O_RDONLY, 0);
-+
-+	if (ret == -1 && errno == ENOENT) {
-+		tap_ok("open nonexistent file without O_CREAT returns ENOENT");
-+	} else if (ret >= 0) {
-+		tap_fail("open nonexistent file",
-+			 "expected ENOENT, got success (file exists?)");
-+		syscall(__NR_close, (int)ret);
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected ENOENT, got %s",
-+			 strerror(errno));
-+		tap_fail("open nonexistent file", msg);
-+	}
-+}
-+
-+/*
-+ * Test 25: close stdin (fd 0) should succeed
-+ * We dup it first so we can restore it.
-+ */
-+static void test_close_stdin(void)
-+{
-+	int saved_stdin = dup(0);
-+
-+	if (saved_stdin < 0) {
-+		tap_fail("close stdin succeeds", "cannot dup stdin");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_close, 0);
-+
-+	if (ret == 0) {
-+		tap_ok("close stdin (fd 0) succeeds");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected success, got %s",
-+			 strerror(errno));
-+		tap_fail("close stdin (fd 0) succeeds", msg);
-+	}
-+
-+	/* Restore stdin */
-+	dup2(saved_stdin, 0);
-+	close(saved_stdin);
-+}
-+
-+/*
-+ * Test 26: read after close returns EBADF
-+ */
-+static void test_read_after_close(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("read after close returns EBADF",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+
-+	char buf[16];
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, (int)fd, buf, sizeof(buf));
-+
-+	if (ret == -1 && errno == EBADF) {
-+		tap_ok("read after close returns EBADF");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected EBADF, got %s",
-+			 ret >= 0 ? "success" : strerror(errno));
-+		tap_fail("read after close returns EBADF", msg);
-+	}
-+}
-+
-+/*
-+ * Test 27: write with large count
-+ * Without KAPI: the kernel clamps count to MAX_RW_COUNT and succeeds.
-+ * With KAPI: KAPI validates the buffer against the count and may
-+ * return EFAULT/EINVAL since the buffer is smaller than count.
-+ * Accept either success or EFAULT/EINVAL.
-+ */
-+static void test_write_large_count(void)
-+{
-+	long fd;
-+	char buf[64] = "test data";
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("write with large count handled correctly",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)fd, buf, (size_t)0x7ffff000UL);
-+
-+	if (ret > 0) {
-+		tap_ok("write with large count succeeds (clamped, no KAPI)");
-+	} else if (ret == -1 && (errno == EFAULT || errno == EINVAL)) {
-+		tap_ok("write with large count returns EFAULT/EINVAL (KAPI validates buffer)");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected success or EFAULT, got %s",
-+			 ret == 0 ? "zero" : strerror(errno));
-+		tap_fail("write with large count handled correctly", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/* ---- Integration tests ---- */
-+
-+/*
-+ * Test 28: full normal syscall path - open, read, write, close
-+ * Verify KAPI does not interfere with normal operations.
-+ */
-+static void test_normal_path(void)
-+{
-+	long rd_fd, wr_fd;
-+	char buf[128];
-+	int ok = 1;
-+	char reason[128] = "";
-+
-+	/* Open a readable file */
-+	errno = 0;
-+	rd_fd = kapi_sys_open("/etc/hostname", O_RDONLY, 0);
-+	if (rd_fd < 0) {
-+		errno = 0;
-+		rd_fd = kapi_sys_open("/etc/passwd", O_RDONLY, 0);
-+	}
-+	if (rd_fd < 0) {
-+		snprintf(reason, sizeof(reason), "open readable file: %s",
-+			 strerror(errno));
-+		ok = 0;
-+	}
-+
-+	/* Read from it */
-+	if (ok) {
-+		errno = 0;
-+		long n = syscall(__NR_read, (int)rd_fd, buf, sizeof(buf));
-+
-+		if (n < 0) {
-+			snprintf(reason, sizeof(reason), "read: %s",
-+				 strerror(errno));
-+			ok = 0;
-+		}
-+	}
-+
-+	/* Open /dev/null for writing */
-+	wr_fd = -1;
-+	if (ok) {
-+		errno = 0;
-+		wr_fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+		if (wr_fd < 0) {
-+			snprintf(reason, sizeof(reason),
-+				 "open /dev/null: %s", strerror(errno));
-+			ok = 0;
-+		}
-+	}
-+
-+	/* Write to /dev/null */
-+	if (ok) {
-+		errno = 0;
-+		long n = syscall(__NR_write, (int)wr_fd, "test", 4);
-+
-+		if (n != 4) {
-+			snprintf(reason, sizeof(reason), "write: %s",
-+				 n < 0 ? strerror(errno) : "short write");
-+			ok = 0;
-+		}
-+	}
-+
-+	/* Close both fds */
-+	if (rd_fd >= 0) {
-+		errno = 0;
-+		if (syscall(__NR_close, (int)rd_fd) != 0 && ok) {
-+			snprintf(reason, sizeof(reason), "close read fd: %s",
-+				 strerror(errno));
-+			ok = 0;
-+		}
-+	}
-+
-+	if (wr_fd >= 0) {
-+		errno = 0;
-+		if (syscall(__NR_close, (int)wr_fd) != 0 && ok) {
-+			snprintf(reason, sizeof(reason), "close write fd: %s",
-+				 strerror(errno));
-+			ok = 0;
-+		}
-+	}
-+
-+	if (ok)
-+		tap_ok("normal syscall path (open/read/write/close) works");
-+	else
-+		tap_fail("normal syscall path (open/read/write/close) works",
-+			 reason);
-+}
-+
-+/*
-+ * Test 29: read with a NULL buffer and count=0 should return 0
-+ * No access is performed, so KAPI must not reject the NULL pointer.
-+ */
-+static void test_read_null_zero_count(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_RDONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("read with NULL buffer and count=0 returns 0",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_read, (int)fd, NULL, 0);
-+
-+	if (ret == 0) {
-+		tap_ok("read with NULL buffer and count=0 returns 0");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, strerror(errno));
-+		tap_fail("read with NULL buffer and count=0 returns 0", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 30: write with a NULL buffer and count=0 should return 0
-+ * No access is performed, so KAPI must not reject the NULL pointer.
-+ */
-+static void test_write_null_zero_count(void)
-+{
-+	long fd;
-+
-+	errno = 0;
-+	fd = kapi_sys_open("/dev/null", O_WRONLY, 0);
-+	if (fd < 0) {
-+		tap_fail("write with NULL buffer and count=0 returns 0",
-+			 "cannot open /dev/null");
-+		return;
-+	}
-+
-+	errno = 0;
-+	long ret = syscall(__NR_write, (int)fd, NULL, 0);
-+
-+	if (ret == 0) {
-+		tap_ok("write with NULL buffer and count=0 returns 0");
-+	} else {
-+		char msg[64];
-+
-+		snprintf(msg, sizeof(msg), "expected 0, got %ld (errno=%s)",
-+			 ret, strerror(errno));
-+		tap_fail("write with NULL buffer and count=0 returns 0", msg);
-+	}
-+
-+	syscall(__NR_close, (int)fd);
-+}
-+
-+/*
-+ * Test 31: verify dmesg contains KAPI warnings for the invalid tests
-+ */
-+static void test_dmesg_warnings(void)
-+{
-+	int kmsg_fd;
-+
-+	if (!kapi_runtime_checks_active()) {
-+		tap_skip("dmesg contains expected KAPI warnings",
-+			 "CONFIG_KAPI_RUNTIME_CHECKS not enabled");
-+		return;
-+	}
-+
-+	kmsg_fd = open("/dev/kmsg", O_RDONLY | O_NONBLOCK);
-+	if (kmsg_fd < 0) {
-+		tap_skip("dmesg contains expected KAPI warnings",
-+			 "cannot open /dev/kmsg");
-+		return;
-+	}
-+
-+	char line[4096];
-+	int found_invalid_bits = 0;
-+	int found_null = 0;
-+	ssize_t n;
-+
-+	for (;;) {
-+		n = read(kmsg_fd, line, sizeof(line) - 1);
-+		if (n > 0) {
-+			line[n] = '\0';
-+			if (strstr(line, "contains invalid bits"))
-+				found_invalid_bits++;
-+			if (strstr(line, "NULL") && strstr(line, "not allowed"))
-+				found_null++;
-+		} else if (n == -1 && errno == EPIPE) {
-+			/* Ring buffer wrapped, continue reading */
-+			continue;
-+		} else {
-+			/* EAGAIN (no more messages) or other error */
-+			break;
-+		}
-+	}
-+
-+	close(kmsg_fd);
-+
-+	if (found_invalid_bits >= 2 && found_null >= 1) {
-+		tap_ok("dmesg contains expected KAPI warnings");
-+	} else {
-+		char msg[128];
-+
-+		snprintf(msg, sizeof(msg),
-+			 "expected invalid_bits>=2 null>=1, got invalid_bits=%d null=%d",
-+			 found_invalid_bits, found_null);
-+		tap_fail("dmesg contains expected KAPI warnings", msg);
-+	}
-+}
-+
-+int main(void)
-+{
-+	ksft_print_header();
-+	ksft_set_plan(NUM_TESTS);
-+
-+	/* Valid operations (1-4) */
-+	int fd = test_open_valid();
-+
-+	if (fd >= 0)
-+		test_read_valid(fd);
-+	else
-+		tap_fail("read from valid fd", "no fd from open");
-+
-+	test_write_valid();
-+
-+	if (fd >= 0)
-+		test_close_valid(fd);
-+	else
-+		tap_fail("close valid fd", "no fd from open");
-+
-+	/* KAPI parameter validation (5-8) */
-+	test_open_invalid_flags();
-+	test_open_high_mode_bits();
-+	test_open_null_path();
-+	test_open_flag_bit30();
-+
-+	/* Boundary conditions and error paths (9-20) */
-+	test_read_bad_fd();
-+	test_read_zero_count();
-+	test_write_zero_count();
-+	test_open_long_path();
-+	test_read_unmapped_buf();
-+	test_write_unmapped_buf();
-+	test_close_already_closed();
-+	test_open_valid_cloexec();
-+	test_write_zero_devnull();
-+	test_read_writeonly_fd();
-+	test_write_readonly_fd();
-+	test_close_fd_9999();
-+
-+	/* Pipe and lifecycle tests (21-27) */
-+	test_read_closed_pipe();
-+	test_write_closed_pipe();
-+	test_open_directory_on_file();
-+	test_open_nonexistent();
-+	test_close_stdin();
-+	test_read_after_close();
-+	test_write_large_count();
-+
-+	/* Integration (28-31) */
-+	test_normal_path();
-+	test_read_null_zero_count();
-+	test_write_null_zero_count();
-+	test_dmesg_warnings();
-+
-+	ksft_finished();
-+	return 0;
-+}
+ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ {
+ 	return do_madvise(current->mm, start, len_in, behavior);
 -- 
 2.53.0
 
