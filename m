@@ -1,50 +1,46 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from mail.hallyn.com (mail.hallyn.com [178.63.66.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3FD94734CF;
-	Thu,  8 Oct 2026 08:51:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 06E7816F288;
+	Thu,  8 Oct 2026 12:49:44 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=178.63.66.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791449489; cv=none; b=I/FvVGphQFtTPJFMP6LoP76bDyi592WCS+kCPSez0H8vbizb8VL2Oh/E1bEHB8Cgwcjsxt4EYyuUlaSgNaQ9uE59CEphp5ot+tWNFCixcMnGbAOtreFq5GLZHjkO94D+5V9vpqGsXZvCZH7WsqqClLfxPxYcfzdjBqhJ1B+tBaw=
+	t=1791463788; cv=none; b=KQLEVmBGbXB33VWZ7umYDXbb62W/nJBGe915cF5tJ3UQoKLNObe38FerH4RP1FEY+3ztN2PVmdJthDLuZMpZB8G1npvKrnpFUZqzvP2vogHQE7z5PPG0AzE5s7I9LNZvpNCON9eRFxFpRbwx6qSdLQ/K4xDw3m49vhv2AQvlHAs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791449489; c=relaxed/simple;
-	bh=y3mksDWJ1cnx2vUcwBui9kRBD7D1m6dYAJo/BBdmKFw=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=YxoKqOJ3FPHlCOKCU6erPyYzDvBd9k8jcxKlS6aKcAS0rHiuBaKtciy1ph8N/NFm020E+dTVpkZPXxp+Nf3H/TUTBx904c19UkJzMK6EPVccxR0RP0i+hSta5xLKGbfJI89P7V5ravFdc5UYct23rtMw+5aBgBi6A0bFhnmz5k4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=E+QZGOj7; arc=none smtp.client-ip=100.103.45.18
+	s=arc-20240116; t=1791463788; c=relaxed/simple;
+	bh=eg2eF5WdEMdt34nj0FYxuhcYUtLs+J8124YlNA4NW5s=;
+	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To; b=ifpGFTR7bg+wFKBX/DROScmIxZuONhU8+HJSuOFkVSdCkd8m0vbAuu9TnqY9z8jXXS4+TUBOXiE13U2cBT8IAw/d7k1jov7Sn+dYxtE/y3QQCVHOvPGwnJ3SmjYEtqdP69d8cStEKXr9xPD/fyi7SbMi7rU9iQYZriRFgq61TmA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hallyn.com; spf=unknown smtp.mailfrom=hallyn.com; dkim=pass (2048-bit key) header.d=hallyn.com header.i=@hallyn.com header.b=xuq3rrrc; arc=none smtp.client-ip=178.63.66.53
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hallyn.com
+Authentication-Results: smtp.subspace.kernel.org; spf=tempfail smtp.mailfrom=hallyn.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="E+QZGOj7"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id B14291F00898;
-	Thu,  8 Oct 2026 08:51:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1791449487;
-	bh=9HBsK9JWrsaB9tSfr6Gh6KHk9xHWrytrLennN91BCx4=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=E+QZGOj7Ry9R0+RX0ixIWYO29bD2e9nS/g09b8uihB6NY3mfwAg2JGWMCm4adYndW
-	 tXaVADQVVoxNQABaq0QKTeAo/HTao57IsZCrp1D57QeHg8NdR73hb2ksTz8VTIeu1W
-	 mPFAl1FYOb5Xh6+S3RZdQbF15hU1DNK+E0h6Yn/JuXBmaOrFR0sVfbdmrFw9fo39vN
-	 WGi4Df/NyfOWMnv2KD5paQx+8pL7RL39bk0T9NP3qVX+Vhi0A+9Zun0RqchYsvQoZk
-	 /gqaDj+9Ofd4O1f0UI8XbUmrGKpuw8xXZGyNWeFHAPdXGWSHQmA5x6sa0qDpsAn7kV
-	 Gvimn4EdY4pUg==
-From: Sasha Levin <sashal@kernel.org>
-To: linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Cc: Sasha Levin <sashal@kernel.org>,
-	linux-doc@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org,
-	linux-kbuild@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	workflows@vger.kernel.org,
-	tools@kernel.org,
-	x86@kernel.org,
+	dkim=pass (2048-bit key) header.d=hallyn.com header.i=@hallyn.com header.b="xuq3rrrc"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=hallyn.com; s=mail;
+	t=1791463775; bh=eg2eF5WdEMdt34nj0FYxuhcYUtLs+J8124YlNA4NW5s=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=xuq3rrrcVM5JSgP3/ei5klyYCuIgT/nOxD77RrPtSu6CFk1TnOklWIb008mFknegf
+	 GJtI01hz03OL4dxnK1ySXeLAVn3oMV3ahRKiPIFnBUrBgUMte9Ly286MVokmWK0sg7
+	 SNBUaaXs1URV4RHg/l8HL9wQ5t2Uhg3YSI0AvlCdO6H69vkZq2iLYlo+UDFO38sof9
+	 bjG5jCxR1Iu4pUfl8N1T5461LpivevkO4GyHYmXV/HyCM23COlsWBivl1i3ON+kXwn
+	 kYdUzE8Q5MjkOgdvBTElg0gp8/8R+u+wl/z3eALqpJ/+5h4IVPqCMUr5Sh80gljYOO
+	 5TxUCdQ4IMW4Q==
+Received: by mail.hallyn.com (Postfix, from userid 1001)
+	id 05281876; Thu,  8 Oct 2026 07:49:34 -0500 (CDT)
+Date: Thu, 8 Oct 2026 07:49:34 -0500
+From: "Serge E. Hallyn" <serge@hallyn.com>
+To: Sasha Levin <sashal@kernel.org>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+	linux-kbuild@vger.kernel.org, linux-kselftest@vger.kernel.org,
+	workflows@vger.kernel.org, tools@kernel.org, x86@kernel.org,
 	Thomas Gleixner <tglx@kernel.org>,
 	"Paul E . McKenney" <paulmck@kernel.org>,
 	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
 	Jonathan Corbet <corbet@lwn.net>,
 	Dmitry Vyukov <dvyukov@google.com>,
 	Randy Dunlap <rdunlap@infradead.org>,
-	Cyril Hrubis <chrubis@suse.cz>,
-	Kees Cook <kees@kernel.org>,
+	Cyril Hrubis <chrubis@suse.cz>, Kees Cook <kees@kernel.org>,
 	Jake Edge <jake@lwn.net>,
 	David Laight <david.laight.linux@gmail.com>,
 	Gabriele Paoloni <gpaoloni@redhat.com>,
@@ -59,313 +55,378 @@ Cc: Sasha Levin <sashal@kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Masami Hiramatsu <mhiramat@kernel.org>,
 	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH v5 11/11] kernel/api: add syscall enter/exit tracepoints
-Date: Thu,  8 Oct 2026 04:49:51 -0400
-Message-ID: <20261008084956.2911790-12-sashal@kernel.org>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <20261008084956.2911790-1-sashal@kernel.org>
+Subject: Re: [PATCH v5 05/11] kernel/api: add API specification for sys_open
+Message-ID: <aseRXi7hMWBBc0tB@hallyn.com>
 References: <20261008084956.2911790-1-sashal@kernel.org>
+ <20261008084956.2911790-6-sashal@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261008084956.2911790-6-sashal@kernel.org>
 
-Add two tracepoints to the CONFIG_KAPI_RUNTIME_CHECKS syscall validation
-path so the framework's behavior can be observed without the noise and
-loss of pr_warn_ratelimited():
+On Thu, Oct 08, 2026 at 04:49:45AM -0400, Sasha Levin wrote:
+> Add KAPI-annotated kerneldoc for the sys_open system call in fs/open.c.
+> 
+> The specification documents parameter constraints (pathname, flags
+> bitmask, permission mode), 24 error conditions, locking requirements,
+> side effects, required capabilities, and usage examples.
+> 
+> Assisted-by: LLM
+> Signed-off-by: Sasha Levin <sashal@kernel.org>
 
-  kapi_syscall_enter - the spec name, the raw argument values, and a
-                       rendered "name=value" list of the specified
-                       parameters (pointer-like values in hex, signed
-                       integers and file descriptors in decimal)
-  kapi_syscall_exit  - the spec name, the return value, and whether it
-                       matched the specification (spec_match)
+I know Kees and Jonathan and others asked for exactly this.  But one
+downside to this is it makes just paging through fs/open.c a lot more
+painful.  Maybe it's worth it.  Maybe "noone will ever do that again" bc
+that's why we have ai and tools.  But a) that's how I've historically
+done a lot of code research, b) IMO something like a manpages section 2
+under Documentation/ would be a great place for this, and c) we can also
+use tools to always sync these, or even show/edit in a single view when
+you want  ('kdocedit fs/open.c').
 
-Both fire only for syscalls that have a KAPI specification and live
-inside the existing CONFIG_KAPI_RUNTIME_CHECKS region, so they exist
-exactly when the runtime checks do; they compile to no-ops without
-CONFIG_TRACEPOINTS and stay dormant until enabled. The parameter list
-is rendered only when the enter tracepoint is enabled.
-
-kapi_syscall_exit is also emitted on the parameter-validation rejection
-path -- where the validator returns -EINVAL and the real handler is
-skipped -- with spec_match=0, so every kapi_syscall_enter has a matching
-exit.
-
-Assisted-by: LLM
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- Documentation/dev-tools/kernel-api-spec.rst | 31 ++++++++
- MAINTAINERS                                 |  1 +
- include/trace/events/kapi.h                 | 74 +++++++++++++++++++
- kernel/api/kernel_api_spec.c                | 79 +++++++++++++++++----
- 4 files changed, 173 insertions(+), 12 deletions(-)
- create mode 100644 include/trace/events/kapi.h
-
-diff --git a/Documentation/dev-tools/kernel-api-spec.rst b/Documentation/dev-tools/kernel-api-spec.rst
-index 95b72060f8ef8..818c9b966a0c0 100644
---- a/Documentation/dev-tools/kernel-api-spec.rst
-+++ b/Documentation/dev-tools/kernel-api-spec.rst
-@@ -312,6 +312,37 @@ specification. Kerneldoc annotations cannot set it, so it is only available to a
-     .constraint_type = KAPI_CONSTRAINT_CUSTOM,
-     .validate = validate_buffer_size,
- 
-+Tracepoints
-+-----------
-+
-+When ``CONFIG_KAPI_RUNTIME_CHECKS`` is enabled, the syscall validation path emits
-+two ftrace tracepoints (in the ``kapi`` trace system) for every syscall that has a
-+specification:
-+
-+- ``kapi_syscall_enter`` -- fired before parameter validation, recording the spec
-+  name, the raw syscall argument values, and -- when the spec provides parameter
-+  metadata -- a rendered ``name=value`` list: signed integer and file descriptor
-+  values are shown in decimal, all other values in hex, and an unnamed parameter
-+  as ``arg``.
-+- ``kapi_syscall_exit`` -- fired after the handler returns, or in place of the
-+  handler when parameter validation rejects the call (the handler is skipped and
-+  ``-EINVAL`` is returned). Records the spec name, the return value, and
-+  ``spec_match``: 0 when the parameters were rejected or a successful ``fd`` return
-+  was not a valid file descriptor, and 1 otherwise. Error codes missing from the
-+  spec do not clear it.
-+
-+Unlike the ``pr_warn_ratelimited`` violation reports, the tracepoints capture every
-+spec'd call rather than only violations, and can be filtered with the usual ftrace
-+facilities. They require ``CONFIG_TRACEPOINTS`` and stay dormant
-+until enabled::
-+
-+    # echo 1 > /sys/kernel/tracing/events/kapi/enable
-+    # cat /sys/kernel/tracing/trace
-+     ...  kapi_syscall_enter: sys_read(fd=3, buf=0x7ffd46780b58, count=0x340)
-+     ...  kapi_syscall_exit: sys_read = 832 spec_match=1
-+     ...  kapi_syscall_enter: sys_open(filename=0x480300, flags=268435456, mode=0x0)
-+     ...  kapi_syscall_exit: sys_open = -22 spec_match=0
-+
- DebugFS Interface
- =================
- 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 1d9e55b6bf5ff..20020705921a6 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -14125,6 +14125,7 @@ S:	Maintained
- F:	Documentation/dev-tools/kernel-api-spec.rst
- F:	include/linux/kapi_syscall.h
- F:	include/linux/kernel_api_spec.h
-+F:	include/trace/events/kapi.h
- F:	kernel/api/
- F:	tools/kapi/
- F:	tools/lib/python/kdoc/kdoc_apispec.py
-diff --git a/include/trace/events/kapi.h b/include/trace/events/kapi.h
-new file mode 100644
-index 0000000000000..47828f3338828
---- /dev/null
-+++ b/include/trace/events/kapi.h
-@@ -0,0 +1,74 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM kapi
-+
-+#if !defined(_TRACE_KAPI_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_KAPI_H
-+
-+#include <linux/tracepoint.h>
-+
-+/* Max length of the rendered "name=value, ..." parameter list. */
-+#define KAPI_TP_PARAMS_LEN 256
-+
-+/*
-+ * Emitted from the CONFIG_KAPI_RUNTIME_CHECKS syscall validation path for
-+ * syscalls that have a KAPI specification: kapi_syscall_enter fires before
-+ * parameter validation, kapi_syscall_exit after the handler returns.
-+ * @name is the spec name, e.g. "sys_open".
-+ *
-+ * kapi_syscall_enter carries both the raw argument values (args[]) and, when
-+ * the spec provides parameter metadata, a rendered "name=value" list (params,
-+ * built by the caller): pointer-like values in hex, integers and fds in decimal.
-+ */
-+TRACE_EVENT(kapi_syscall_enter,
-+
-+	TP_PROTO(const char *name, int nargs, const s64 *args, const char *params),
-+
-+	TP_ARGS(name, nargs, args, params),
-+
-+	TP_STRUCT__entry(
-+		__string(	name,	name	)
-+		__field(	int,	nargs	)
-+		__array(	u64,	args,	6	)
-+		__string(	params,	params	)
-+	),
-+
-+	TP_fast_assign(
-+		__assign_str(name);
-+		__entry->nargs = nargs;
-+		memset(__entry->args, 0, sizeof(__entry->args));
-+		if (args && nargs > 0)
-+			memcpy(__entry->args, args,
-+			       min_t(int, nargs, 6) * sizeof(__entry->args[0]));
-+		__assign_str(params);
-+	),
-+
-+	TP_printk("%s(%s)", __get_str(name), __get_str(params))
-+);
-+
-+TRACE_EVENT(kapi_syscall_exit,
-+
-+	TP_PROTO(const char *name, long ret, bool spec_match),
-+
-+	TP_ARGS(name, ret, spec_match),
-+
-+	TP_STRUCT__entry(
-+		__string(	name,		name		)
-+		__field(	long,		ret		)
-+		__field(	bool,		spec_match	)
-+	),
-+
-+	TP_fast_assign(
-+		__assign_str(name);
-+		__entry->ret = ret;
-+		__entry->spec_match = spec_match;
-+	),
-+
-+	TP_printk("%s = %ld spec_match=%d",
-+		  __get_str(name), __entry->ret, __entry->spec_match)
-+);
-+
-+#endif /* _TRACE_KAPI_H */
-+
-+/* This part must be outside protection */
-+#include <trace/define_trace.h>
-diff --git a/kernel/api/kernel_api_spec.c b/kernel/api/kernel_api_spec.c
-index c3b220104c04b..993674ce67789 100644
---- a/kernel/api/kernel_api_spec.c
-+++ b/kernel/api/kernel_api_spec.c
-@@ -751,6 +751,45 @@ EXPORT_SYMBOL_GPL(kapi_export_json);
- 
- #ifdef CONFIG_KAPI_RUNTIME_CHECKS
- 
-+#define CREATE_TRACE_POINTS
-+#include <trace/events/kapi.h>
-+
-+/*
-+ * Render a syscall's parameters as a "name=value, ..." string for the
-+ * kapi_syscall_enter tracepoint.  Names come from the spec; pointer-like
-+ * values are shown in hex, integers and file descriptors in decimal.
-+ */
-+static void kapi_trace_format_params(const struct kernel_api_spec *spec,
-+				     const s64 *args, int nargs,
-+				     char *buf, size_t size)
-+{
-+	int i, used = 0;
-+
-+	buf[0] = '\0';
-+	/* Bound by the caller-supplied arg count; the spec arity may differ. */
-+	for (i = 0; args && i < nargs && i < 6; i++) {
-+		const char *name = "arg";
-+		bool dec = false;
-+
-+		if (i < spec->param_count) {
-+			const struct kapi_param_spec *ps = &spec->params[i];
-+
-+			if (ps->name)
-+				name = ps->name;
-+			dec = ps->type == KAPI_TYPE_INT || ps->type == KAPI_TYPE_FD;
-+		}
-+
-+		used += scnprintf(buf + used, size - used, "%s%s=",
-+				  i ? ", " : "", name);
-+		if (dec)
-+			used += scnprintf(buf + used, size - used, "%lld",
-+					  (long long)args[i]);
-+		else
-+			used += scnprintf(buf + used, size - used, "0x%llx",
-+					  (unsigned long long)args[i]);
-+	}
-+}
-+
- /**
-  * kapi_validate_fd - Validate that a file descriptor value is in valid range
-  * @fd: File descriptor to validate
-@@ -1211,16 +1250,24 @@ EXPORT_SYMBOL_GPL(kapi_validate_param_with_context);
- int kapi_validate_syscall_params(const struct kernel_api_spec *spec,
- 				 const s64 *params, int param_count)
- {
--	int i;
-+	int i, ret = 0;
- 
- 	if (!spec || !params)
- 		return 0;
- 
-+	if (trace_kapi_syscall_enter_enabled()) {
-+		char pbuf[KAPI_TP_PARAMS_LEN];
-+
-+		kapi_trace_format_params(spec, params, param_count, pbuf, sizeof(pbuf));
-+		trace_kapi_syscall_enter(spec->name, param_count, params, pbuf);
-+	}
-+
- 	/* Validate that we have the expected number of parameters */
- 	if (param_count != spec->param_count) {
- 		pr_warn_ratelimited("API %s: parameter count mismatch (expected %u, got %d)\n",
- 			spec->name, spec->param_count, param_count);
--		return -EINVAL;
-+		ret = -EINVAL;
-+		goto out;
- 	}
- 
- 	/* Validate each parameter with context */
-@@ -1230,12 +1277,22 @@ int kapi_validate_syscall_params(const struct kernel_api_spec *spec,
- 		if (!kapi_validate_param_with_context(param_spec, params[i], params, param_count)) {
- 			if (strncmp(spec->name, "sys_", 4) == 0) {
- 				/* For syscalls, we can return EINVAL to userspace */
--				return -EINVAL;
-+				ret = -EINVAL;
-+				goto out;
- 			}
- 		}
- 	}
- 
--	return 0;
-+out:
-+	/*
-+	 * Emit the exit event on the rejection path too (the wrapper
-+	 * short-circuits the handler on a non-zero return), so every
-+	 * kapi_syscall_enter has a matching kapi_syscall_exit.
-+	 */
-+	if (ret)
-+		trace_kapi_syscall_exit(spec->name, ret, false);
-+
-+	return ret;
- }
- EXPORT_SYMBOL_GPL(kapi_validate_syscall_params);
- 
-@@ -1353,18 +1410,16 @@ EXPORT_SYMBOL_GPL(kapi_validate_return_value);
-  */
- int kapi_validate_syscall_return(const struct kernel_api_spec *spec, s64 retval)
- {
-+	bool valid = true;
-+
- 	if (!spec)
- 		return 0;
- 
--	/* Skip return validation if return spec was not defined */
--	if (spec->return_magic != KAPI_MAGIC_RETURN)
--		return 0;
-+	/* Validate against the return spec when one was defined */
-+	if (spec->return_magic == KAPI_MAGIC_RETURN)
-+		valid = kapi_validate_return_value(spec, retval);
- 
--	if (!kapi_validate_return_value(spec, retval)) {
--		/* Log the violation but don't change the return value */
--		pr_warn_ratelimited("KAPI: Syscall %s returned unspecified value %lld\n",
--				    spec->name, retval);
--	}
-+	trace_kapi_syscall_exit(spec->name, retval, valid);
- 
- 	return 0;
- }
--- 
-2.53.0
-
+> ---
+>  fs/open.c | 324 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 324 insertions(+)
+> 
+> diff --git a/fs/open.c b/fs/open.c
+> index 6b1c14e684a93..92808ab20d52a 100644
+> --- a/fs/open.c
+> +++ b/fs/open.c
+> @@ -1424,6 +1424,330 @@ int do_sys_open(int dfd, const char __user *filename, int flags, umode_t mode)
+>  }
+>  
+>  
+> +/**
+> + * sys_open - Open or create a file
+> + * @filename: Pathname of the file to open or create
+> + * @flags: File access mode and behavior flags (O_RDONLY, O_WRONLY, O_RDWR, etc.)
+> + * @mode: File permission bits for newly created files (only with O_CREAT/O_TMPFILE)
+> + *
+> + * long-desc: Opens the file named by filename, relative to the current
+> + *   working directory if the path is relative. With O_CREAT, the file is
+> + *   created if it does not exist. With O_TMPFILE, filename must name an
+> + *   existing directory, in which an unnamed file is created. A new file gets
+> + *   mode & ~umask as its permission bits.
+> + *
+> + *   The low two bits of flags (O_ACCMODE) select the access mode: O_RDONLY,
+> + *   O_WRONLY or O_RDWR. File creation and file status flags are ORed in.
+> + *
+> + *   File creation flags: O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC, O_DIRECTORY,
+> + *   O_NOFOLLOW, O_CLOEXEC, O_TMPFILE, O_EMPTYPATH. O_EMPTYPATH permits an
+> + *   empty filename, which for open() refers to the current working directory.
+> + *
+> + *   File status flags: O_APPEND, FASYNC, O_DIRECT, O_DSYNC, O_LARGEFILE,
+> + *   O_NOATIME, O_NONBLOCK (O_NDELAY), O_PATH, O_SYNC. These become part of the
+> + *   file's open file description and can be retrieved with fcntl(F_GETFL). Only
+> + *   O_APPEND, O_NONBLOCK, O_DIRECT, O_NOATIME and FASYNC can be changed later
+> + *   with fcntl(F_SETFL).
+> + *
+> + *   On success the lowest-numbered file descriptor not currently open in the
+> + *   process is returned.
+> + *
+> + *   On 64-bit systems, O_LARGEFILE is automatically added to the flags. On 32-bit
+> + *   systems, files larger than 2GB require O_LARGEFILE to be explicitly set.
+> + *
+> + *   open() is equivalent to openat(AT_FDCWD, filename, flags, mode).
+> + *
+> + * contexts: process, sleepable
+> + *
+> + * param: filename
+> + *   type: path, input
+> + *   constraint-type: user_path
+> + *   cdesc: Must be a valid null-terminated path string in user memory.
+> + *     Maximum path length is PATH_MAX (4096 bytes) including null terminator.
+> + *     For relative paths, resolution starts from current working directory.
+> + *     The path is followed (symlinks resolved) unless O_NOFOLLOW is specified.
+> + *
+> + * param: flags
+> + *   type: int, input
+> + *   constraint-type: mask(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY |
+> + *                         O_TRUNC | O_APPEND | O_NONBLOCK | O_NDELAY | O_DSYNC | O_SYNC |
+> + *                         FASYNC | O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW |
+> + *                         O_NOATIME | O_CLOEXEC | O_PATH | O_TMPFILE | O_EMPTYPATH)
+> + *   cdesc: Should be one of O_RDONLY (0), O_WRONLY (1), or O_RDWR (2) as the
+> + *     access mode. Additional flags may be ORed. O_CREAT combined with
+> + *     O_DIRECTORY or O_TMPFILE, O_TMPFILE without O_DIRECTORY, and O_TMPFILE
+> + *     with read-only mode return EINVAL. With O_PATH, open() silently drops
+> + *     every other flag except O_DIRECTORY, O_NOFOLLOW, O_CLOEXEC and
+> + *     O_EMPTYPATH (only openat2() rejects them with EINVAL). Unknown flags are
+> + *     silently ignored for backward compatibility (unlike openat2 which
+> + *     rejects them).
+> + *
+> + * param: mode
+> + *   type: uint, input
+> + *   cdesc: Only meaningful when O_CREAT or O_TMPFILE is specified in
+> + *     flags. Specifies the file mode bits (permissions and setuid/setgid/sticky
+> + *     bits) for a newly created file. The effective mode is (mode & ~umask).
+> + *     When O_CREAT/O_TMPFILE is not set, mode is ignored. Mode values exceeding
+> + *     S_IALLUGO (07777) are masked off.
+> + *
+> + * return:
+> + *   type: int
+> + *   check-type: fd
+> + *   success: >= 0
+> + *   desc: On success, returns a new file descriptor (non-negative integer).
+> + *     The returned file descriptor is the lowest-numbered descriptor not
+> + *     currently open for the process. On error, returns a negative error code.
+> + *
+> + * error: EACCES, Permission denied
+> + *   desc: The requested access to the file is not allowed, or search permission
+> + *     is denied for one of the directories in the path prefix of pathname, or
+> + *     the file did not exist yet and write access to the parent directory is
+> + *     not allowed, or O_TRUNC is specified but write permission is denied, or
+> + *     pathname is a device special file on a nodev mount, or O_CREAT on an
+> + *     existing FIFO or regular file in a sticky directory is refused by
+> + *     protected_fifos or protected_regular, or a security module denies the
+> + *     open.
+> + *
+> + * error: EAGAIN, Resource temporarily unavailable
+> + *   desc: O_NONBLOCK was specified and a conflicting lease is held on the file,
+> + *     so the open would have to wait for the lease to break. break_lease()
+> + *     returns -EWOULDBLOCK, which has the same value as EAGAIN.
+> + *
+> + * error: EBUSY, Device or resource busy
+> + *   desc: O_EXCL was specified in flags and pathname refers to a block device
+> + *     that is in use by the system (e.g., it is mounted).
+> + *
+> + * error: EDQUOT, Disk quota exceeded
+> + *   desc: O_CREAT is specified and the file does not exist, and the user's quota
+> + *     of disk blocks or inodes on the filesystem has been exhausted.
+> + *
+> + * error: EEXIST, File exists
+> + *   desc: O_CREAT and O_EXCL were specified in flags, but pathname already exists.
+> + *     This error is atomic with respect to file creation - it prevents race
+> + *     conditions (TOCTOU) when creating files.
+> + *
+> + * error: EFAULT, Bad address
+> + *   desc: pathname points outside the process's accessible address space.
+> + *
+> + * error: EINTR, Interrupted system call
+> + *   desc: A signal arrived while the open was blocked waiting for the partner
+> + *     of a FIFO open (fifo_open), waiting for a conflicting lease to break
+> + *     (__break_lease), or inside a driver's open method. The kernel-internal
+> + *     -ERESTARTSYS is reported as EINTR unless the handler uses SA_RESTART.
+> + *
+> + * error: EINVAL, Invalid argument
+> + *   desc: Returned for several conditions: (1) Invalid O_* flag combinations
+> + *     (O_CREAT with O_DIRECTORY, O_CREAT with O_TMPFILE, O_TMPFILE without
+> + *     O_DIRECTORY, O_TMPFILE with read-only access). (2) O_DIRECT requested
+> + *     but the filesystem does not support it.
+> + *
+> + * error: EISDIR, Is a directory
+> + *   desc: pathname refers to a directory and the access requested involved
+> + *     writing (O_WRONLY, O_RDWR, or O_TRUNC). Also returned when O_CREAT is
+> + *     specified and pathname names an existing directory or ends in a slash.
+> + *
+> + * error: ELOOP, Too many symbolic links
+> + *   desc: Too many symbolic links were encountered in resolving pathname, or
+> + *     O_NOFOLLOW was specified but pathname refers to a symbolic link. With
+> + *     O_PATH and O_NOFOLLOW the symbolic link itself is opened instead.
+> + *
+> + * error: EMFILE, Too many open files
+> + *   desc: The per-process limit on the number of open file descriptors has been
+> + *     reached. This limit is RLIMIT_NOFILE (default typically 1024, max set by
+> + *     /proc/sys/fs/nr_open).
+> + *
+> + * error: ENAMETOOLONG, File name too long
+> + *   desc: pathname was too long, exceeding PATH_MAX (4096) bytes, or a single
+> + *     path component exceeded NAME_MAX (usually 255) bytes.
+> + *
+> + * error: ENFILE, Too many open files in system
+> + *   desc: The system-wide limit on the total number of open files has been
+> + *     reached (/proc/sys/fs/file-max). Processes with CAP_SYS_ADMIN can exceed
+> + *     this limit.
+> + *
+> + * error: ENODEV, No such device
+> + *   desc: The filesystem or driver open method failed with ENODEV, or the
+> + *     file's inode has no file operations assigned. A device special file with
+> + *     no registered device fails with ENXIO instead.
+> + *
+> + * error: ENOENT, No such file or directory
+> + *   desc: A directory component in pathname does not exist or is a dangling
+> + *     symbolic link, or O_CREAT is not set and the named file does not exist,
+> + *     or pathname is an empty string and O_EMPTYPATH is not specified.
+> + *
+> + * error: ENOMEM, Out of memory
+> + *   desc: The kernel could not allocate sufficient memory for the file structure,
+> + *     path lookup structures, or the filename buffer.
+> + *
+> + * error: ENOSPC, No space left on device
+> + *   desc: O_CREAT was specified and the file does not exist, and the directory
+> + *     or filesystem containing the file has no room for a new file entry.
+> + *
+> + * error: ENOTDIR, Not a directory
+> + *   desc: A component used as a directory in pathname is not actually a directory,
+> + *     or O_DIRECTORY was specified and pathname was not a directory.
+> + *
+> + * error: ENXIO, No such device or address
+> + *   desc: O_NONBLOCK | O_WRONLY is set and the named file is a FIFO and no
+> + *     process has the FIFO open for reading. Also returned when opening a device
+> + *     special file whose device does not exist (chrdev_open, blkdev_open), or
+> + *     when opening a socket inode.
+> + *
+> + * error: EOPNOTSUPP, Operation not supported
+> + *   desc: The filesystem containing pathname does not support O_TMPFILE.
+> + *
+> + * error: EOVERFLOW, Value too large for defined data type
+> + *   desc: pathname refers to a regular file that is too large to be opened.
+> + *     This occurs on 32-bit systems without O_LARGEFILE when the file size
+> + *     exceeds 2GB (2^31 - 1 bytes).
+> + *
+> + * error: EPERM, Operation not permitted
+> + *   desc: O_NOATIME flag was specified but the effective UID of the caller did
+> + *     not match the owner of the file and the caller is not privileged, or the
+> + *     file is append-only and O_TRUNC was specified or write mode without
+> + *     O_APPEND, or the file is immutable, or a seal prevents the operation.
+> + *
+> + * error: EROFS, Read-only file system
+> + *   desc: pathname refers to a file on a read-only filesystem and write access
+> + *     was requested.
+> + *
+> + * error: ETXTBSY, Text file busy
+> + *   desc: Write access or O_TRUNC was requested for an executable image that
+> + *     is currently being executed, or O_TRUNC was requested on an active swap
+> + *     file. A swap file can otherwise be opened for writing.
+> + *
+> + * lock: files->file_lock
+> + *   type: spinlock
+> + *   acquired: true
+> + *   released: true
+> + *   desc: Acquired when allocating a file descriptor slot. Held briefly during
+> + *     fd allocation via alloc_fd() and released before the syscall returns.
+> + *
+> + * lock: inode->i_rwsem (parent directory)
+> + *   type: semaphore
+> + *   acquired: true
+> + *   released: true
+> + *   desc: Conditional, taken only when the final component is not resolved by
+> + *     the lockless dcache lookup. lookup_open() takes it exclusively with
+> + *     inode_lock() when O_CREAT is set and shared with inode_lock_shared()
+> + *     otherwise. Slow-path lookup of path components takes it shared. Released
+> + *     when the lookup returns. The open path has no killable variant.
+> + *
+> + * lock: RCU read-side
+> + *   type: rcu
+> + *   acquired: true
+> + *   released: true
+> + *   desc: Path lookup uses RCU mode initially for performance. If RCU lookup
+> + *     fails (returns -ECHILD), falls back to reference-based lookup.
+> + *
+> + * signal: Any signal
+> + *   direction: receive
+> + *   action: return
+> + *   condition: When blocked in an interruptible wait
+> + *   desc: The syscall may be interrupted while waiting for the partner of a
+> + *     FIFO open (fifo_open), for a conflicting lease to break (__break_lease),
+> + *     or inside a driver's open method. The wait returns -ERESTARTSYS, which
+> + *     is restarted after the handler with SA_RESTART and reported as EINTR
+> + *     otherwise.
+> + *   errno: -EINTR
+> + *   timing: during
+> + *   restartable: yes
+> + *
+> + * side-effect: resource_create | alloc_memory
+> + *   target: file descriptor, file structure, dentry cache
+> + *   desc: Allocates a new file descriptor in the process's fd table. Allocates
+> + *     a struct file from the filp slab cache. May allocate dentries and inodes
+> + *     during path lookup. System-wide file count (nr_files) is incremented.
+> + *   reversible: yes
+> + *
+> + * side-effect: filesystem
+> + *   target: filesystem, inode
+> + *   condition: When O_CREAT is specified and file doesn't exist
+> + *   desc: Creates a new file on the filesystem. Creates new inode, allocates
+> + *     data blocks as needed, and creates directory entry. Updates parent
+> + *     directory mtime and ctime.
+> + *   reversible: no
+> + *
+> + * side-effect: filesystem
+> + *   target: file content
+> + *   condition: When O_TRUNC is specified for existing file
+> + *   desc: Truncates the file to zero length, releasing data blocks. Updates
+> + *     file mtime and ctime. May trigger notifications to lease holders.
+> + *   reversible: no
+> + *
+> + * side-effect: modify_state
+> + *   target: inode timestamps
+> + *   condition: When a symlink is followed, or O_TRUNC or O_CREAT takes effect
+> + *   desc: Opening does not update the atime of the opened file. Reads update it
+> + *     later, and O_NOATIME only affects those reads. Following a symlink in
+> + *     the path may update the symlink's atime, subject to the mount atime
+> + *     options. O_TRUNC and file creation update mtime and ctime.
+> + *
+> + * capability: CAP_DAC_OVERRIDE
+> + *   type: bypass_check
+> + *   allows: Bypass file read, write, and execute permission checks
+> + *   without: Standard DAC (discretionary access control) checks are applied
+> + *   condition: Checked when file permission would otherwise deny access
+> + *
+> + * capability: CAP_DAC_READ_SEARCH
+> + *   type: bypass_check
+> + *   allows: Bypass read permission on files and search permission on directories
+> + *   without: Must have read permission on file or search permission on directory
+> + *   condition: Checked during path traversal and file open
+> + *
+> + * capability: CAP_FOWNER
+> + *   type: bypass_check
+> + *   allows: Use O_NOATIME on files not owned by caller
+> + *   without: O_NOATIME returns EPERM if caller is not file owner
+> + *   condition: Checked when O_NOATIME is specified and caller is not owner
+> + *
+> + * capability: CAP_SYS_ADMIN
+> + *   type: increase_limit
+> + *   allows: Exceed the system-wide file limit (file-max)
+> + *   without: Returns ENFILE when system limit is reached
+> + *   condition: Checked in alloc_empty_file() when nr_files >= max_files
+> + *
+> + * constraint: RLIMIT_NOFILE (per-process fd limit)
+> + *   desc: The returned file descriptor must be less than the process's
+> + *     RLIMIT_NOFILE limit. Default is typically 1024, maximum is controlled
+> + *     by /proc/sys/fs/nr_open (default 1048576). Exceeding returns EMFILE.
+> + *   expr: fd < rlimit(RLIMIT_NOFILE)
+> + *
+> + * constraint: file-max (system-wide limit)
+> + *   desc: System-wide limit on open files in /proc/sys/fs/file-max. Processes
+> + *     without CAP_SYS_ADMIN receive ENFILE when this limit is reached. The
+> + *     limit is computed based on system memory at boot time.
+> + *   expr: nr_files < files_stat.max_files || capable(CAP_SYS_ADMIN)
+> + *
+> + * constraint: PATH_MAX
+> + *   desc: Maximum length of pathname including null terminator is PATH_MAX
+> + *     (4096 bytes). Individual path components must not exceed NAME_MAX (255).
+> + *
+> + * examples: fd = open("/etc/passwd", O_RDONLY);  // Read existing file
+> + *   fd = open("/tmp/newfile", O_WRONLY | O_CREAT | O_TRUNC, 0644);  // Create/truncate
+> + *   fd = open("/tmp/lockfile", O_WRONLY | O_CREAT | O_EXCL, 0600);  // Exclusive create
+> + *   fd = open("/dev/null", O_RDWR);  // Open device
+> + *   fd = open("/tmp", O_RDONLY | O_DIRECTORY);  // Open directory
+> + *   fd = open("/tmp", O_TMPFILE | O_RDWR, 0600);  // Anonymous temp file
+> + *
+> + * notes: O_RDONLY is defined as 0, so (flags & O_RDONLY) always evaluates to zero.
+> + *   Test access mode using (flags & O_ACCMODE) == O_RDONLY.
+> + *
+> + *   When O_CREAT is specified without O_EXCL, there is a race condition between
+> + *   testing for file existence and creating it. Use O_CREAT | O_EXCL for atomic
+> + *   exclusive file creation.
+> + *
+> + *   O_CLOEXEC should be used in multithreaded programs to prevent file descriptor
+> + *   leaks to child processes between fork() and execve().
+> + *
+> + *   O_DIRECT has alignment requirements that vary by filesystem. Use statx()
+> + *   with STATX_DIOALIGN (Linux 6.1+) to query requirements. Unaligned I/O may
+> + *   fail with EINVAL or fall back to buffered I/O.
+> + *
+> + *   O_PATH opens a file descriptor that can be used only for certain operations
+> + *   (fstat, dup, fcntl, close, fchdir on directories, as dirfd for *at() calls).
+> + *   I/O operations will fail with EBADF.
+> + */
+>  SYSCALL_DEFINE3(open, const char __user *, filename, int, flags, umode_t, mode)
+>  {
+>  	if (force_o_largefile())
+> -- 
+> 2.53.0
+> 
