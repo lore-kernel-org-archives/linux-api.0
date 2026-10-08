@@ -1,114 +1,293 @@
-Received: from abb.hmeau.com (abb.hmeau.com [180.181.231.80])
+Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 25ABF3E832B;
-	Thu,  8 Oct 2026 08:20:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=180.181.231.80
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08AC946AF0A;
+	Thu,  8 Oct 2026 08:50:13 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791447645; cv=none; b=NymuOURWNBFr7s8OPmmb++51qumoBlNP1SCTFg2QgnZ3EQTYZoFsr0bNWULGMpgaVGgliAmv13rCQIpuZ3BG1UxLi37ECRjkW3VxGD5SxOnakO/nAEMkfQpcsnwdImCVjcteKttSSZDKK+J3daFrknzp07Vu9YMm6HCXa5QQObQ=
+	t=1791449417; cv=none; b=B3/88Cyug9TGNYL4LJJimz+1jcCyX/S3Aj2jwru2or8EsDIKRvE5MY42COUv2aCbFhi8a5kIeju9nAldjXJxuvuCayNKsSgXBUelKBYWRcqa2tdgS9KyLJGtq6O80OFjvEw3tRRlAM88ZVhhFBeY6gnQpB+gP9SqR7fOLhyiwpI=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791447645; c=relaxed/simple;
-	bh=3Sk5NaZ/Bu8SSP7FCPJME86fIAMU7VYaUos3Ntjb9D4=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=o+IoyJxLvqbicr2m2CRzNyW6Kh0vuEBfuHe2MZ/0HEkW6xPAd1UVqXODraEnvdlsXbdhqYU24kxr7BTNuKQ/CkHek/yn/cPsasV38dyB5YW1yLCwqjpg5YwnhEoyAbJMlEMyaznW9H7I8gL2BF+dEAKoldjb6tJiMYKGA0dp7B8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au; spf=pass smtp.mailfrom=gondor.apana.org.au; dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b=qIxLCF/Q; arc=none smtp.client-ip=180.181.231.80
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=gondor.apana.org.au
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gondor.apana.org.au
+	s=arc-20240116; t=1791449417; c=relaxed/simple;
+	bh=Y81cjMEOGGoKTTzPC6sX5h2TI6CFz1ACqqBTB/kZF9o=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=X8wDuwFC5TYHsTNXyiT5CkLkh/9Tjwfx+HrwixI71Fnn3/g10ro4ep6xwpawdEROCapWq1pLGdDuhJyaheiu4IQP16m5WCeU0bNjhOOMlg5dwjhb3M9eMPzLeGzh50bRvJGSAQLKJkosFniccaVySQVTQ5os11pHYVu+vFklC+4=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=mGPOeGbs; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gondor.apana.org.au header.i=@gondor.apana.org.au header.b="qIxLCF/Q"
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=gondor.apana.org.au; s=h01; h=In-Reply-To:Content-Type:MIME-Version:
-	References:Message-ID:Subject:Cc:To:From:Date:cc:to:subject:message-id:date:
-	from:content-type:reply-to; bh=f+02SRQjVsyruBBOH2rFMcrG5d5kk7OJLtCYx/Hk4oE=; 
-	b=qIxLCF/QxXzMTk8lXa6At1c596QKDAvp786bHbFiuzcoMfTd4O27ktRYjko4QEFPll8B5QiNvUQ
-	KjGZLkLw9w2S1ILK199IhveDxcNy8oYIjU3nsJukTri5cRbTy16PJaBnvmzDYCu5NyV0Eg2wKh9fU
-	wYgE9FNQX5ANkJlTFxjVlvjOomN2D4D8KppBmrsYoAjuCBnLSFZ18GXH9rh6RmPjKe2wg1xe9mVHh
-	KVnUmsOMDu5PjsDG3ABak+ExL135uwuVuqZz2fyImsjiOMaOf2m1Z4y7i3evsCdIf7K/4IqlgBj/a
-	AQlX307+j3t8F4NoSqi/b6qPSItUhRX3ZLeg==;
-Received: from loth.rohan.me.apana.org.au ([192.168.167.2])
-	by formenos.hmeau.com with smtp (Exim 4.98.2 #2 (Debian))
-	id 1xEjMY-00000001nfj-1PAN;
-	Thu, 08 Oct 2026 16:20:27 +0800
-Received: by loth.rohan.me.apana.org.au (sSMTP sendmail emulation); Thu, 08 Oct 2026 19:20:26 +1100
-Date: Thu, 8 Oct 2026 19:20:26 +1100
-From: Herbert Xu <herbert@gondor.apana.org.au>
-To: "Ousherovitch, Alex" <aousherovitch@rambus.com>
-Cc: Albert Ou <aou@eecs.berkeley.edu>, Conor Dooley <conor+dt@kernel.org>,
-	"David S. Miller" <davem@davemloft.net>,
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="mGPOeGbs"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 578F21F000FF;
+	Thu,  8 Oct 2026 08:50:07 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1791449413;
+	bh=a4DZfgRtRM1DfMkYwTNcvGcIRfoRHzGzJb+Heok6HXU=;
+	h=From:To:Cc:Subject:Date;
+	b=mGPOeGbsJ/bnNsddkZbUm/ydGEL0szfbmw6AdL97ACeU3sTLPEkyRS7f3RiWIqxvm
+	 /MxFgsw0TaQ35kQFj+940bytBDQpSoxbyOKTat4qiT0/eQBbr4eHWHa9vkddp2bWeX
+	 HQhtzEcVnOvcy7fqzsjZyMjeFzxMPH8RQtOjecjVVyVqJB7YeufNKpxacbDQMxJXZ9
+	 7CcyLzCmtPk74kfmB7aEUL3I24Wi6SHz7vaq87HV9D8ke74ODRQep0fK6dW22Dhl6P
+	 aT2UpAVpul/lC/zwYDnTvRpNAgU5XDuRpt+iLlAD9lOJplrDuOcuarRKjq7y14iEhU
+	 ccw+iySavEnrw==
+From: Sasha Levin <sashal@kernel.org>
+To: linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Cc: Sasha Levin <sashal@kernel.org>,
+	linux-doc@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-kbuild@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	workflows@vger.kernel.org,
+	tools@kernel.org,
+	x86@kernel.org,
+	Thomas Gleixner <tglx@kernel.org>,
+	"Paul E . McKenney" <paulmck@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
 	Jonathan Corbet <corbet@lwn.net>,
-	Krzysztof Kozlowski <krzk+dt@kernel.org>,
-	Palmer Dabbelt <palmer@dabbelt.com>, Paul Walmsley <pjw@kernel.org>,
-	Rob Herring <robh@kernel.org>,
-	"Krishnamoorthy, Saravanakrishnan" <skrishnamoorthy@rambus.com>,
-	Shuah Khan <shuah@kernel.org>, Alexandre Ghiti <alex@ghiti.fr>,
-	"devicetree@vger.kernel.org" <devicetree@vger.kernel.org>,
-	"Wittenauer, Joel" <Joel.Wittenauer@cryptography.com>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"linux-crypto@vger.kernel.org" <linux-crypto@vger.kernel.org>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>,
-	"linux-riscv@lists.infradead.org" <linux-riscv@lists.infradead.org>,
+	Dmitry Vyukov <dvyukov@google.com>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Cyril Hrubis <chrubis@suse.cz>,
+	Kees Cook <kees@kernel.org>,
+	Jake Edge <jake@lwn.net>,
+	David Laight <david.laight.linux@gmail.com>,
+	Gabriele Paoloni <gpaoloni@redhat.com>,
+	Mauro Carvalho Chehab <mchehab@kernel.org>,
+	Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Masahiro Yamada <masahiroy@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
-	"Nguyen, Thi" <thin@rambus.com>
-Subject: Re: [PATCH v5 04/19] crypto: cmh - add SHA-2/SHA-3/SHAKE ahash
-Message-ID: <asdSSjBML72-YaGq@gondor.apana.org.au>
-References: <20260917225929.2494111-1-aousherovitch@rambus.com>
- <20260917225929.2494111-5-aousherovitch@rambus.com>
- <arNn_fjy4jamSitO@gondor.apana.org.au>
- <LV8PR04MB9006374FD8621EBF3C7E7F6CD7822@LV8PR04MB9006.namprd04.prod.outlook.com>
- <arn4XYwPYt6i2k7d@gondor.apana.org.au>
- <SJ0PR04MB8406AD1C92438FBCBA2EEED4D7962@SJ0PR04MB8406.namprd04.prod.outlook.com>
+	Arnd Bergmann <arnd@arndb.de>,
+	Nathan Chancellor <nathan@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Masami Hiramatsu <mhiramat@kernel.org>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH v5 00/11] Kernel API Specification Framework
+Date: Thu,  8 Oct 2026 04:49:40 -0400
+Message-ID: <20261008084956.2911790-1-sashal@kernel.org>
+X-Mailer: git-send-email 2.53.0
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <SJ0PR04MB8406AD1C92438FBCBA2EEED4D7962@SJ0PR04MB8406.namprd04.prod.outlook.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Oct 05, 2026 at 05:04:25PM +0000, Ousherovitch, Alex wrote:
->
-> > Please also elaborate what you mean by opaque checkpoint, does it
-> > contain the entire hash state or not?
-> 
-> It holds everything needed to resume, but not in a portable layout.  The
-> SAVE output is a fixed-size hardware container (600 bytes worst case)
-> holding the core's internal state, the buffered partial block, the block
-> counters, the mode and a CRC.  The state portion varies by algorithm:
-> 
->   - SHA-3/SHAKE: the 200-byte Keccak state is stored as two shares (the
->     core is DPA/side-channel protected), so it is not the canonical
->     state.
->   - SHA-2: a single 64-byte register block plus the partial block and
->     byte count, in a hardware-internal layout.
->   - Keyed SHA-3 HMAC state cannot be saved by the hardware at all.
+This series adds machinery for documenting kernel APIs in a machine-readable
+form. The kernel promises not to break user space, but the contract of each
+interface is written down only as prose in man pages and comments, which tools
+cannot check.
 
-So it sounds like the info is there.  Is it possible to transform
-this to the format that we use?
+Specifications can document parameter types, valid ranges, constraints, and
+alignment requirements. They capture return value semantics including success
+conditions and error codes with their meaning. Execution context requirements,
+capabilities, locking constraints, signal handling behavior, and side effects
+can all be formally specified.
 
-> None of these is the canonical export format the API needs, so the
-> fallback/digest-only model above is the right fit and we are not pursuing
-> incremental hashing upstream.
+These specifications live alongside the code they document and are both
+human-readable and machine-parseable. They can be validated at runtime when
+CONFIG_KAPI_RUNTIME_CHECKS is enabled, exported via debugfs for userspace
+tools, and extracted from either vmlinux or source code.
 
-That's we have the export and import functions, to transcribe
-the hardware hash state into a standard format.
+The intent is for static analyzers, test generators and documentation tools
+to consume these specifications. This series adds the framework, the
+extraction tool, and specifications for five syscalls.
 
-> One process question, if you don't mind: we would like to fold as much as
-> possible into v6 rather than spinning several revisions.  Have you had a
-> chance to look at the rest of the series, or should we expect further
-> comments on the remaining patches?  No rush at all -- it would just help
-> us decide whether to post v6 now or hold it until the rest of your
-> feedback has landed.
+The implementation includes a core framework with ELF section storage,
+kerneldoc integration for inline specification, a debugfs interface for runtime
+querying, ftrace tracepoints that report each spec'd syscall's parameters and
+return value, and a Rust-based extraction tool (tools/kapi) supporting JSON,
+RST, and plain text output formats. Example specifications are provided for the
+four fundamental file syscalls (sys_open, sys_close, sys_read, sys_write) and
+for sys_madvise. The series also includes a KUnit test suite with 33 tests and
+a runtime verification selftest with 31 TAP tests.
 
-I would appreciate it if you can break the series into smaller
-chunks.  Perhaps add the algorithms which are the least problematic
-first.
+The series is also available in the "spec" branch of:
 
-Thanks,
+  https://git.kernel.org/pub/scm/linux/kernel/git/sashal/kapi.git
+
+Changes since v4:
+
+- Rebase onto v7.3-rc6: the sys_open spec accepts O_EMPTYPATH, the madvise
+  spec follows the zap_vma_range() rename, and tools/kapi declares Rust 1.85
+  to match the kernel minimum.
+
+- CONFIG_KAPI_RUNTIME_CHECKS builds on 32-bit and on architectures without
+  a syscall wrapper, and depends on X86 || !ARCH_HAS_SYSCALL_WRAPPER since
+  other architectures never reach the hook. __SYSCALL_DEFINEx gains small
+  hooks instead of a duplicated copy, with the prototypes in
+  <linux/kapi_syscall.h>.
+
+- Correct the syscall specs against the implementation (O_CREAT|O_DIRECTORY,
+  O_PATH flag masking, EOVERFLOW and RLIMIT_FSIZE handling, SUID/SGID
+  clearing, close() error sources, lock descriptions, madvise locking).
+
+- kdoc_apispec.py: keep paragraph and line structure in long-desc, notes and
+  examples, stop truncating fields at colons or 512 characters, and emit
+  state-transition conditions and exact success values.
+
+- debugfs exports the complete spec as JSON without a fixed-size buffer.
+  tools/kapi gives the same result from --vmlinux and --debugfs, and from
+  --source wherever no preprocessor evaluation is needed.
+
+- kernel-doc recognises the KAPI sections only in -apispec mode, so its
+  other output is unchanged. Kbuild generates headers only for sources
+  with a contexts: line plus another KAPI section, regenerates them when
+  the generator changes, and no longer reads stdin when a directory has
+  no such sources.
+
+- Fix KAPI_CAP_ALTERNATIVE and add KAPI_SIGNAL_MASK_COUNT.
+
+Changes since v3:
+
+- Fix the build with CONFIG_KAPI_SPEC=y: scripts/Makefile.build now derives the
+  list of instrumented sources from $(real-obj-y)/$(real-obj-m) instead of a
+  recursive find, and the detection regex matches "contexts:" (the token the
+  syscalls actually use). The previous "context-flags:"-only match found no
+  files, so no *.apispec.h was generated and the guarded includes failed to
+  compile.
+
+- Force-include the generated *.apispec.h via a per-object -include cflag in
+  scripts/Makefile.build rather than a manual "#include" at the end of each
+  instrumented source; the include blocks are dropped from fs/open.c and
+  fs/read_write.c.
+
+- kernel/Makefile: drop the redundant "obj- += api/"; the
+  obj-$(CONFIG_KAPI_SPEC) gate already covers 'make clean'.
+
+- kernel/api/Makefile: build kernel_api_spec.o with obj-y now that the subdir
+  gate lives in kernel/Makefile.
+
+- kernel/api/Kconfig: drop the tautological "default n" from KAPI_SPEC,
+  KAPI_RUNTIME_CHECKS and KAPI_SPEC_DEBUGFS.
+
+- Add an API specification for sys_madvise.
+
+- Add ftrace tracepoints on the runtime-check path: kapi_syscall_enter (spec
+  name and named parameter values) and kapi_syscall_exit (return value and
+  spec match).
+
+Changes since v2:
+
+- Replace statically sized arrays in the spec structs with const char *
+  pointers to reduce memory footprint and remove string truncation.
+
+- Simplify the kerneldoc DSL to short tokens (e.g. `type: uint, input`,
+  `contexts: process, softirq`, `constraint-type: range(0, KMAX)`,
+  `side-effect: alloc_memory`) in place of raw KAPI_* enum names.
+
+- tools/kapi: commit Cargo.lock for reproducible offline builds, add a
+  Makefile and README, expand the kerneldoc parser to cover the full
+  DSL, and refactor the vmlinux extractor for the const-pointer layout.
+
+- tools/lib/python/kdoc/kdoc_apispec.py expanded to match the DSL so
+  scripts/kernel-doc --apispec emits the structure the extractor consumes.
+
+References:
+
+  v4: https://lore.kernel.org/all/20260529233311.1901670-1-sashal@kernel.org/
+  v3: https://lore.kernel.org/all/20260424165130.2306833-1-sashal@kernel.org/
+  v2: https://lore.kernel.org/all/20260322121026.869758-1-sashal@kernel.org/
+  v1: https://lore.kernel.org/all/20260313150928.2637368-1-sashal@kernel.org/
+  RFC v5: https://lore.kernel.org/lkml/20251218204239.4159453-1-sashal@kernel.org/
+  RFC v4: https://lore.kernel.org/lkml/20250825181434.3340805-1-sashal@kernel.org/
+  RFC v3: https://lore.kernel.org/lkml/20250711114248.2288591-1-sashal@kernel.org/
+  RFC v2: https://lore.kernel.org/lkml/20250624180742.5795-1-sashal@kernel.org/
+  RFC v1: https://lore.kernel.org/lkml/20250614134858.790460-1-sashal@kernel.org/
+
+
+
+Sasha Levin (11):
+  kernel/api: introduce kernel API specification framework
+  kernel/api: enable kerneldoc-based API specifications
+  kernel/api: add debugfs interface for kernel API specifications
+  tools/kapi: add kernel API specification extraction tool
+  kernel/api: add API specification for sys_open
+  kernel/api: add API specification for sys_close
+  kernel/api: add API specification for sys_read
+  kernel/api: add API specification for sys_write
+  kernel/api: add runtime verification selftest
+  kernel/api: add API specification for sys_madvise
+  kernel/api: add syscall enter/exit tracepoints
+
+ .gitignore                                    |    1 +
+ Documentation/dev-tools/index.rst             |    1 +
+ Documentation/dev-tools/kernel-api-spec.rst   |  648 ++++
+ MAINTAINERS                                   |   13 +
+ Makefile                                      |    1 +
+ arch/x86/include/asm/syscall_wrapper.h        |    3 +-
+ fs/open.c                                     |  557 +++
+ fs/read_write.c                               |  710 ++++
+ include/asm-generic/vmlinux.lds.h             |   14 +
+ include/linux/kapi_syscall.h                  |   35 +
+ include/linux/kernel_api_spec.h               | 1226 ++++++
+ include/linux/syscalls.h                      |   42 +-
+ include/trace/events/kapi.h                   |   74 +
+ init/Kconfig                                  |    2 +
+ kernel/Makefile                               |    1 +
+ kernel/api/Kconfig                            |   74 +
+ kernel/api/Makefile                           |   13 +
+ kernel/api/internal.h                         |   25 +
+ kernel/api/kapi_debugfs.c                     |  553 +++
+ kernel/api/kapi_kunit.c                       |  720 ++++
+ kernel/api/kernel_api_spec.c                  | 1470 ++++++++
+ mm/madvise.c                                  |  549 +++
+ scripts/Makefile.build                        |   26 +
+ tools/docs/kernel-doc                         |   12 +-
+ tools/kapi/.gitignore                         |    3 +
+ tools/kapi/Cargo.lock                         |  679 ++++
+ tools/kapi/Cargo.toml                         |   20 +
+ tools/kapi/Makefile                           |   33 +
+ tools/kapi/README.md                          |   33 +
+ tools/kapi/src/extractor/debugfs.rs           | 1704 +++++++++
+ tools/kapi/src/extractor/kerneldoc_parser.rs  | 3335 +++++++++++++++++
+ tools/kapi/src/extractor/mod.rs               |  442 +++
+ tools/kapi/src/extractor/source_parser.rs     |  531 +++
+ .../src/extractor/vmlinux/binary_utils.rs     |  461 +++
+ tools/kapi/src/extractor/vmlinux/mod.rs       | 1160 ++++++
+ tools/kapi/src/formatter/json.rs              |  659 ++++
+ tools/kapi/src/formatter/mod.rs               |  220 ++
+ tools/kapi/src/formatter/plain.rs             |  679 ++++
+ tools/kapi/src/formatter/rst.rs               |  802 ++++
+ tools/kapi/src/main.rs                        |  123 +
+ tools/lib/python/kdoc/kdoc_apispec.py         | 1391 +++++++
+ tools/lib/python/kdoc/kdoc_files.py           |   12 +-
+ tools/lib/python/kdoc/kdoc_parser.py          |  101 +-
+ tools/testing/selftests/Makefile              |    1 +
+ tools/testing/selftests/kapi/.gitignore       |    2 +
+ tools/testing/selftests/kapi/Makefile         |    7 +
+ tools/testing/selftests/kapi/kapi_test_util.h |   31 +
+ tools/testing/selftests/kapi/test_kapi.c      | 1163 ++++++
+ 48 files changed, 20350 insertions(+), 12 deletions(-)
+ create mode 100644 Documentation/dev-tools/kernel-api-spec.rst
+ create mode 100644 include/linux/kapi_syscall.h
+ create mode 100644 include/linux/kernel_api_spec.h
+ create mode 100644 include/trace/events/kapi.h
+ create mode 100644 kernel/api/Kconfig
+ create mode 100644 kernel/api/Makefile
+ create mode 100644 kernel/api/internal.h
+ create mode 100644 kernel/api/kapi_debugfs.c
+ create mode 100644 kernel/api/kapi_kunit.c
+ create mode 100644 kernel/api/kernel_api_spec.c
+ create mode 100644 tools/kapi/.gitignore
+ create mode 100644 tools/kapi/Cargo.lock
+ create mode 100644 tools/kapi/Cargo.toml
+ create mode 100644 tools/kapi/Makefile
+ create mode 100644 tools/kapi/README.md
+ create mode 100644 tools/kapi/src/extractor/debugfs.rs
+ create mode 100644 tools/kapi/src/extractor/kerneldoc_parser.rs
+ create mode 100644 tools/kapi/src/extractor/mod.rs
+ create mode 100644 tools/kapi/src/extractor/source_parser.rs
+ create mode 100644 tools/kapi/src/extractor/vmlinux/binary_utils.rs
+ create mode 100644 tools/kapi/src/extractor/vmlinux/mod.rs
+ create mode 100644 tools/kapi/src/formatter/json.rs
+ create mode 100644 tools/kapi/src/formatter/mod.rs
+ create mode 100644 tools/kapi/src/formatter/plain.rs
+ create mode 100644 tools/kapi/src/formatter/rst.rs
+ create mode 100644 tools/kapi/src/main.rs
+ create mode 100644 tools/lib/python/kdoc/kdoc_apispec.py
+ create mode 100644 tools/testing/selftests/kapi/.gitignore
+ create mode 100644 tools/testing/selftests/kapi/Makefile
+ create mode 100644 tools/testing/selftests/kapi/kapi_test_util.h
+ create mode 100644 tools/testing/selftests/kapi/test_kapi.c
+
 -- 
-Email: Herbert Xu <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+2.53.0
+
