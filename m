@@ -1,63 +1,63 @@
-Received: from mail-pl1-f179.google.com (mail-pl1-f179.google.com [209.85.214.179])
+Received: from mail-pl1-f181.google.com (mail-pl1-f181.google.com [209.85.214.181])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E2E7A4E9C00
-	for <linux-api@vger.kernel.org>; Fri,  9 Oct 2026 15:39:22 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 902954E9C28
+	for <linux-api@vger.kernel.org>; Fri,  9 Oct 2026 15:39:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.181
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791560367; cv=none; b=C5G1y9yat0uwigs3PncTKjczddX0xknQbTe3yh9QbB0dmOEku58iFhyxKdVdWTyMMoI2iFQgE2vffewcNH/1kd4gqOvRsbBoi7Z2rvHy9z7BQ8IYK00FWr2YUzSbG+/mhohQpg+0abI6WYQ8u8cxVY/ybFoE44xc2cIfBf/Jm/Q=
+	t=1791560370; cv=none; b=iBqnGQrpm/3magxEcfvhTY+4Nj2HM+UF+Peyz8H4w6xDEOP0SmHmSPvCJ6sGpySFSGZtAl96Q4eD7aa+hg+ggLzs0t6vFu1ErD3vKM1QbTEbQo2TLLfNxRItHS4AA8WMk7TvyISw6LeogMHtI0Eafbg1UTNJgR7UD614c29L+2s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791560367; c=relaxed/simple;
-	bh=7KQOT4/YmaGTqbBEFf/jux4/hF/llbFyRPtq++sAfS0=;
+	s=arc-20240116; t=1791560370; c=relaxed/simple;
+	bh=+Rw07kfriWEyCGpVzJxK6mSgxAao1ypqtfUdivitgpc=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=lwAc2RKKDKgoJPpv/fYFQp8u+WDxYDsADHDc4cxq1YCqnOfykOW9xTEv/IquRL8km98/RiF4wyMXWJRF4gO42cQV8FmnrPhrvbffcFD/vVc0HOhzqT67V/zdWIBzR7thovKmzD7d7GeU77ND0LaH67YxnfROS+8q+1BMAxbODkg=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=MfRm3k1G; arc=none smtp.client-ip=209.85.214.179
+	 MIME-Version; b=ABr502cLojX9qfc8jtHHQeb8AwGCKmjnMCPLmHtF6a0pNIvDn/ObwqDR8gSI+MF1ImDtJOAikSqR/6UpFd+uNCpxDv359AHFOPtZUmh9ibBrFylNbyI0DlFLnaCUlOqyO/9Xn6IlejdCrqEWz46vX1eJ53RK1PY+bhSaue3UNwM=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=YZPJFDXB; arc=none smtp.client-ip=209.85.214.181
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="MfRm3k1G"
-Received: by mail-pl1-f179.google.com with SMTP id d9443c01a7336-2e8455755f3so4653705ad.0
-        for <linux-api@vger.kernel.org>; Fri, 09 Oct 2026 08:39:22 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="YZPJFDXB"
+Received: by mail-pl1-f181.google.com with SMTP id d9443c01a7336-2e2c837fa12so20646835ad.1
+        for <linux-api@vger.kernel.org>; Fri, 09 Oct 2026 08:39:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791560362; x=1792165162; darn=vger.kernel.org;
+        d=gmail.com; s=20251104; t=1791560368; x=1792165168; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=QCWuqJzkl7WxbzU0hxEOW4t98SL56glPEqj/2QQfXyk=;
-        b=MfRm3k1Gurq5irLB6I1YCyEttfZSKz2kGuhEAWHa+hiJpeBCrkVwoHLenFn0WWqJfy
-         i4kryNpyG6CIPw24s11vdNDm3LbwogVKQ0yj2w0+OvACB0jZIjF3EqKiDqpgq1YiWbnt
-         QH4Jx7RxcRGzeGICrbB4JTeQlZYF2iWdv0tPsieMmV6HkT1WPWDwhtRgJCvt6nBTC+3G
-         gLQFQ2fgZmqismVRiZLfzSdDHj+Je+bQKLjNz550VbLh0rrl6+oaPj3IEQGfnkgy0s1B
-         6K1t+pZUg7ceYG7mxBSOWK7hsQ4yVDNzeD4YE2kzAtfYxIKMfgi2+k/Z30ITnndRd/03
-         XlnA==
+        bh=PkPwa+ResHmZ7LdsIwsHxXNe9JhyIG2QiRNQ9+4WsYI=;
+        b=YZPJFDXBJhN9r7Gztqxrun5SPp3gutm/XTwS4a6fqz2Hvw8mfZc1msshKuE7TcfxMr
+         Pa6tjSLYvKouIWUn4WTHt0Efjmtsp8lpvXAHl/KvFACdaKswrKM5nDYxciQA4ni2ykue
+         5Gb2/1W/8k6LiuW6Sg/AmJvwzwrjzzRazja97aY06/h9JOTKvSyLUJJTkIM8Qixj6TqL
+         ZqMCQfocCth6rRq6kuezcc05NR7Zapyhjwk0crenHOFvTvX7IiOsI1yQqSqUXE+je10a
+         BUnkyDN/4QrETulYIALYgGPJUZA9GLBd94cZdQb1kT4CJIyGgzMLdeWcK6ZvFIBl3Z1J
+         RLMw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791560362; x=1792165162;
+        d=1e100.net; s=20260707; t=1791560368; x=1792165168;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=QCWuqJzkl7WxbzU0hxEOW4t98SL56glPEqj/2QQfXyk=;
-        b=OEJarhlhGvyXXrSsfBkakY0o5IA/n50Jtsz0XwzErlDLFCD7byr/6wJqY+F8pyKGWs
-         7EsbUxMxYRrDV/6MCOevvau7x0NvNeNgd5T47iG2JdZ8WEO36zMK0+70Z9tSkQsdSdVu
-         BO0Q89Ky2QkJh2u86MdH6Qfq+EqiIPthTyDH8ZK1doaxbuDKsttd0SdlciM1biRQfL9X
-         9+Hl4+fcD24pJKhLOSV8rWxzrLNv5bzrl2Jedkcalt7qdCmOhmAx8PeoCNqSDGPPPXQa
-         S16E3A1tcnh3AiJzP/ZDCTW3AUhvLZdkVX5Hnbrs9QrDWex3vrKXOwltdG28yETsOGce
-         GO5A==
-X-Forwarded-Encrypted: i=1; AKwUvBzfnN8XIC3KtQyfRMa+3AGG/KlyChyfq2vT2PV2LPgCAOjHdJWe7uCdQ9fDohC4aCk1uiA5gAbpsYo=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJx0JLZjWeHxry/HhRddfxvpNsrktIpae7dwp11OVgDzB8LAgG+
-	OiXAlSlzMPm+m2nOGJMEg7lMNKjdivAf+4gUwE6UX2g0UyulPbz05490
-X-Gm-Gg: AYBFou1lgXRNfbna5PzNxZz5D9BmquJQUg/w09W/J3tZm9qpihbFyshix2ImCr0pbiu
-	DAuGsLkU7tjZ95HXnz6reiapfjSj9PJoOiQBgbdoqz7qJ/ucOOBr2mQA338Cl/x/bh+dvWrjtww
-	lnoAnLLrNiJw4Q/P5knftXrIuj+uCGB6ZOwPB+okISL7KR2DQTycCplEC1XJ4RCF34EyWUtnx8v
-	QXfcI4n92rAjvmD0gafWSZWv3jg5YYcW/ZF/WdU9I+baO53pC1UPc080FmHunfYUhTBdHKMx5Fd
-	CE8pu7pjcji/U38b5upjy81YpxYt7XrEtf4A4UHvd62ggc/GBQSATILhA6YFXyrqXhCmaS63zNI
-	MXdggmEFCvxeBC2xVZHbqhXMOPWgbTahVxes4OSPm4kntHv1AEc8Jv1jtXGDt03bMu9bEYvqv0d
-	pvkjlURlBoSAbOGUTMiiRmXtJct/1NLtKaguaCHJhHb3QClULaFEJJZ1sIHKFSfO3wYw6u
-X-Received: by 2002:a17:903:2a8b:b0:2e8:3d48:4d82 with SMTP id d9443c01a7336-2e842dfd143mr19132405ad.60.1791560361898;
-        Fri, 09 Oct 2026 08:39:21 -0700 (PDT)
+        bh=PkPwa+ResHmZ7LdsIwsHxXNe9JhyIG2QiRNQ9+4WsYI=;
+        b=izkiuzv+nm05SxZ7hhKTbFUdFbjV+nroVMkyevCshgZeCmlmp2Raf9/bMKeoTYdoQY
+         zEA8F7WQrfWgLuu9+MD8x7iUM+IdXVjWmAqLrjLJMeikJoigQyz8AdBnuDKCgGO41440
+         IrXVEwbhX/bEPHn3LbfzBnat9oDpL4dSRNWQzUpnv+PzFR2jeyE06+ywrne95k9ijLCA
+         dQN96Odk+RoJPw9tFyTfx6A5J3xkSuIyetecdbPFtRfUTiM38baCcELLJcRoqvqSsZhf
+         0CsM04CsnNSB/fJQHiXCVck+OweGkuoUBNxaAm5Pvyryv+opYiGk45S3wAmWlCduIE6F
+         gjpA==
+X-Forwarded-Encrypted: i=1; AKwUvBzSSwPfhADZ2uQvThAtaIZE7X3C8LUohhIcXsneLK3JYIHKtLdRzyCGjPvwqXtRTGhm2ABYo7Jv59o=@vger.kernel.org
+X-Gm-Message-State: AFq9FYI1Y9GNAeHSObOQTsW4VAg9zFDsZ45K6daDwpDKMCvGmoHLS8FT
+	02w7uQyfFjL0OilaC0forqcxmEtKBtOcHMtWoP168HMrgkFkJDlO4sXKOQVwDuzQ+cQ=
+X-Gm-Gg: AYBFou2WS/yvrA5dakMHGgUBjYLfbJtIcheQ7ewQ04b8ib9xNJg3BEAwjycjKqB9aWM
+	jNXGu4XtkWnZKwr5PJeG4E1QKCCpun2bN2mltc3L4thM2ffPj3r9bZtr6WP7VNcxQ2kVrvYt2Nv
+	HR0wtYK+dN8snlph1kkjBX/u5O31FLBGZw2bZ6MoWKKPjt/3ynbDoDfHCnefI2h/D1Q5vHyZxCp
+	mH44tCRomgIvd023xI2p6ShbOYiIRwWQ9xRXPwTz5M4nQydugAda6ajNH4qY+biFhEpZM5oWQTT
+	80U17gYlw7tPGochzsg3E+hxPNdpC39jY8joWdu8gQYxm+CsdPfHuppoTkQ7OHJiLYAwP8/KOKC
+	EwqBUHPJwSKG/uUFbSvGvVjc/Z6dlcdzw36y4QAc8LJB9KD2vqFskJbWCO9xPwpKgkiP6S1zYN2
+	Jc40cBbhN8yFj/zyfFWgS2emfRk5bHyAMaqVO/vZcWymu46R1XSDRCGtNATn+ibFCPYUN7xw==
+X-Received: by 2002:a17:903:41c1:b0:2dd:c053:82f3 with SMTP id d9443c01a7336-2e842ce20a2mr18707215ad.42.1791560367626;
+        Fri, 09 Oct 2026 08:39:27 -0700 (PDT)
 Received: from mincom1 ([14.67.155.18])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2e8421ae999sm11847705ad.31.2026.10.09.08.39.18
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2e8421ae999sm11847705ad.31.2026.10.09.08.39.25
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Oct 2026 08:39:20 -0700 (PDT)
+        Fri, 09 Oct 2026 08:39:27 -0700 (PDT)
 From: Jihong Min <hurryman2212@gmail.com>
 To: Guenter Roeck <linux@roeck-us.net>,
 	linux-hwmon@vger.kernel.org
@@ -67,9 +67,9 @@ Cc: Jonathan Corbet <corbet@lwn.net>,
 	linux-api@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org
-Subject: [PATCH 2/5] hwmon: Expose attribute validation and string helpers
-Date: Sat, 10 Oct 2026 00:38:41 +0900
-Message-ID: <c0e04710f5a3a555e9d7b42b8f9ee369311cca4c.1791559095.git.hurryman2212@gmail.com>
+Subject: [PATCH 4/5] hwmon: Reject truncated attribute names
+Date: Sat, 10 Oct 2026 00:38:43 +0900
+Message-ID: <c9a2e5f5a8bf08545a999c6ab70aa058eae947dc.1791559095.git.hurryman2212@gmail.com>
 X-Mailer: git-send-email 2.53.0
 In-Reply-To: <cover.1791531025.git.hurryman2212@gmail.com>
 References: <cover.1791531025.git.hurryman2212@gmail.com>
@@ -81,112 +81,31 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Expose the core's string classification and sysfs template validation
-through the kernel hwmon API. Let drivers query these properties without
-maintaining separate attribute tables.
-
-Reuse the helpers when creating attributes.
+Large channel numbers can produce truncated or conflicting attribute
+names. Return -EOVERFLOW if a generated name does not fit its buffer.
 
 Assisted-by: Codex:gpt-6-astra
 Signed-off-by: Jihong Min <hurryman2212@gmail.com>
 ---
- drivers/hwmon/hwmon.c | 30 +++++++++++++++++++++++++-----
- include/linux/hwmon.h |  3 +++
- 2 files changed, 28 insertions(+), 5 deletions(-)
+ drivers/hwmon/hwmon.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/hwmon/hwmon.c b/drivers/hwmon/hwmon.c
-index 10d2df3efdfa..bed16cfd4f1c 100644
+index bed16cfd4f1c..288f356980e4 100644
 --- a/drivers/hwmon/hwmon.c
 +++ b/drivers/hwmon/hwmon.c
-@@ -502,7 +502,14 @@ static ssize_t hwmon_attr_store(struct device *dev,
- 	return count;
- }
- 
--static bool is_string_attr(enum hwmon_sensor_types type, u32 attr)
-+/**
-+ * hwmon_is_string_attr - test whether an attribute returns a string
-+ * @type: sensor type
-+ * @attr: attribute identifier
-+ *
-+ * Return: true for string attributes, false otherwise.
-+ */
-+bool hwmon_is_string_attr(enum hwmon_sensor_types type, u32 attr)
- {
- 	return (type == hwmon_temp && attr == hwmon_temp_label) ||
- 	       (type == hwmon_in && attr == hwmon_in_label) ||
-@@ -513,6 +520,7 @@ static bool is_string_attr(enum hwmon_sensor_types type, u32 attr)
- 	       (type == hwmon_humidity && attr == hwmon_humidity_label) ||
- 	       (type == hwmon_fan && attr == hwmon_fan_label);
- }
-+EXPORT_SYMBOL_GPL(hwmon_is_string_attr);
- 
- static const struct attribute *hwmon_genattr(const void *drvdata,
- 					     enum hwmon_sensor_types type,
-@@ -526,7 +534,7 @@ static const struct attribute *hwmon_genattr(const void *drvdata,
- 	struct attribute *a;
- 	umode_t mode;
- 	const char *name;
--	bool is_string = is_string_attr(type, attr);
-+	bool is_string = hwmon_is_string_attr(type, attr);
- 
- 	mode = hwmon_is_visible(ops, drvdata, type, attr, index);
- 	if (!mode)
-@@ -776,6 +784,20 @@ static const int __templates_size[] = {
- 	[hwmon_intrusion] = ARRAY_SIZE(hwmon_intrusion_attr_templates),
- };
- 
-+/**
-+ * hwmon_is_valid_attr - test whether an attribute has a sysfs template
-+ * @type: sensor type
-+ * @attr: attribute identifier
-+ *
-+ * Return: true for supported sysfs attributes, false otherwise.
-+ */
-+bool hwmon_is_valid_attr(enum hwmon_sensor_types type, u32 attr)
-+{
-+	return (unsigned int)type < ARRAY_SIZE(__templates) &&
-+	       attr < __templates_size[type] && __templates[type][attr];
-+}
-+EXPORT_SYMBOL_GPL(hwmon_is_valid_attr);
-+
- int hwmon_notify_event(struct device *dev, enum hwmon_sensor_types type,
- 		       u32 attr, int channel)
- {
-@@ -843,14 +865,12 @@ static int hwmon_genattrs(const void *drvdata,
- 			  const struct hwmon_channel_info *info)
- {
- 	const char * const *templates;
--	int template_size;
- 	int i, aindex = 0;
- 
- 	if (info->type >= ARRAY_SIZE(__templates))
- 		return -EINVAL;
- 
- 	templates = __templates[info->type];
--	template_size = __templates_size[info->type];
- 
- 	for (i = 0; info->config[i]; i++) {
- 		u32 attr_mask = info->config[i];
-@@ -861,7 +881,7 @@ static int hwmon_genattrs(const void *drvdata,
- 
- 			attr = __ffs(attr_mask);
- 			attr_mask &= ~BIT(attr);
--			if (attr >= template_size || !templates[attr])
-+			if (!hwmon_is_valid_attr(info->type, attr))
- 				continue;	/* attribute is invisible */
- 			a = hwmon_genattr(drvdata, info->type, attr, i,
- 					  templates[attr], ops);
-diff --git a/include/linux/hwmon.h b/include/linux/hwmon.h
-index d48e0aa82bc5..b026aa317630 100644
---- a/include/linux/hwmon.h
-+++ b/include/linux/hwmon.h
-@@ -138,6 +138,9 @@ devm_hwmon_device_register_with_info(struct device *dev,
- 
- void hwmon_device_unregister(struct device *dev);
- 
-+bool hwmon_is_valid_attr(enum hwmon_sensor_types type, u32 attr);
-+bool hwmon_is_string_attr(enum hwmon_sensor_types type, u32 attr);
-+
- int hwmon_notify_event(struct device *dev, enum hwmon_sensor_types type,
- 		       u32 attr, int channel);
+@@ -553,8 +553,12 @@ static const struct attribute *hwmon_genattr(const void *drvdata,
+ 	if (type == hwmon_chip) {
+ 		name = template;
+ 	} else {
+-		scnprintf(hattr->name, sizeof(hattr->name), template,
+-			  index + hwmon_attr_base(type));
++		if (snprintf(hattr->name, sizeof(hattr->name), template,
++			     index + hwmon_attr_base(type)) >=
++		    sizeof(hattr->name)) {
++			kfree(hattr);
++			return ERR_PTR(-EOVERFLOW);
++		}
+ 		name = hattr->name;
+ 	}
  
