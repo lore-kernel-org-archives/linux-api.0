@@ -1,255 +1,162 @@
-Received: from mail-pg1-f179.google.com (mail-pg1-f179.google.com [209.85.215.179])
+Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 24B794E9C28
-	for <linux-api@vger.kernel.org>; Fri,  9 Oct 2026 15:39:30 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.179
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59A8534CFD0
+	for <linux-api@vger.kernel.org>; Sat, 10 Oct 2026 10:16:42 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791560373; cv=none; b=MY9usw+4tqgAF4dWS2WYF4W0U/GZRjhWJ5oT7LFGD4H0QzKjddgWFHcHZNu0fb7KjpY8WorLxRUbjGTV56rFvNrmtikxyGlcKxc0iiQoTmgeYEDxi7jakv2lHwa4nsGbQQw87ljU6K9xRATlXskgy6tT/Eg9eoY4QN7kDOzQy+Y=
+	t=1791627404; cv=none; b=BgOthFGtkIjcuWbW4cj7ir5dzG2D7/P/3NpB7Zdf3YLlgeUV5QuU25g8AkQMoY5nQnOHvm/SdkWGrhR5Nb7IuBrqZ74WiGND+dsbmGaMqRUhLAIdYBkmn61IeZNmvFAuq0Cf/Jfk5R4HGYDZA1nbPgznwjetXeb9E8ugBCulr00=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1791560373; c=relaxed/simple;
-	bh=GbihQDT60TkSUyG8sRpe6wSrJ+mv6j+gTgXLREuoT34=;
-	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=awXC2FhrtMbE5fvXPwarsMgYG3ZTeiAnXlNWnG+X9jiTFCZuQfAFEwESyvhhEJOXCNHQ5u7V5K3c/z5+6JlfW6xrxMTHX7WqLymPAeJCbhMkT6NWVfNjX1eScTpqg614fZYhL/GodAmxQDxtB+ljtvjf2veEGiqczVfJIj/kWoQ=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=gFOlrWbV; arc=none smtp.client-ip=209.85.215.179
+	s=arc-20240116; t=1791627404; c=relaxed/simple;
+	bh=e1njbT5bJi85eZxLY/530NAqny3vA2RxrG3AcqTroqM=;
+	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=TgiTtQorekeA+gcrwCJ8Yr23sbnWFX19wTvmmCPHKq4WNTFLnxriIfqUZcKq0fKu3s2qB7rQqVxUGbM5x5i/0pnF5OdXkqfHfwfjchkewaaXEs0xsl95GDWEyQVlAYFPNvCWfKilMonqW7RN2F9gLAdCZIUjojXDgsj0LYf+flk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=FR1FfYT8; arc=none smtp.client-ip=209.85.128.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="gFOlrWbV"
-Received: by mail-pg1-f179.google.com with SMTP id 41be03b00d2f7-cc4c7fab7b6so4502734a12.0
-        for <linux-api@vger.kernel.org>; Fri, 09 Oct 2026 08:39:30 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="FR1FfYT8"
+Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-4a17baef589so3728415e9.0
+        for <linux-api@vger.kernel.org>; Sat, 10 Oct 2026 03:16:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1791560370; x=1792165170; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=Oc43EGm7NUZeK/eRaBYRasWqtzt/BRe/LMfh582Cs/s=;
-        b=gFOlrWbVchPXW7Fv1lrAWM7LwrJzN6r4LFXrTby/IRpy2rTuTYO4/E0iVyV8m92wWV
-         fzzFTFSI2cCRmzkblMtob7vTQLRW3rRuS25RAPWXFoa5mqRD97SGCNV0WP4THCJMLvhM
-         aMxRlvGLV2W2JuwHVhsHJcbyw978meTN4JbPTjj/u/E9RsP5JkOKdBu3zJ/2tf4mer3v
-         OFiZdGBUwjgTvyC8K+YAlBdOJ6+6W1QaMJOC8bL4ue1eU+0gsQfwwIrtUjCdLQ503jPH
-         V3IlyjfKfwtLsavmygJA43G4vrXhYr6QNzEFgVOqROopUemQPCxhY5pxFsg6K85XqDn3
-         qvNg==
+        d=gmail.com; s=20251104; t=1791627400; x=1792232200; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=KFVRilLphheYZDM+G1ugCIoIXs4pytm2C1ieeD0EW20=;
+        b=FR1FfYT8YfmSQOC1Rkc7IdHGm8OO8r+6IwE34Ci01l39dqznbYJWn/THZWL/GkgHkL
+         GH7MkmEVQbKELGm1wgh1I+hMqp2v0bpTYlnYDDu0Qm9CJ+GcnqygjuI7Cn6OlT52SY1y
+         vKsIbpBT9vJznnJGfTx8xM+3vSCjhKGrjjwtWKyo2U/pMRuCqCv6J7AJxbdr6/FcTLdE
+         GJ/cErDO5MgQh6lfwOp0pUFkm2Sz0iub59bew6Hxt5PIihk1//4Zlr4zwGJtRp2xXlWt
+         8mSDqM1kCdhwXHIBNPNKfBcMDb6I24nQZ7GXJ5DPfw6vrq2boSCjZIC1S9rJMNsFN4HB
+         IEgQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1791560370; x=1792165170;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Oc43EGm7NUZeK/eRaBYRasWqtzt/BRe/LMfh582Cs/s=;
-        b=SHAocm5KweM11pT1gYOTH5Im0IT3gPPHaPr+ryflSSHs8p32lkTVaZ4eow8pvpFO1c
-         CfFe3GyuQBhxFnPo6Z2kclS/DVBnWhiyRkdNEifUqu/IPw8MaXHWEVXulx2K4EgfoEmG
-         9gaEsb8DMCPsbgFmrcaWSQrdA8e1mPq48zrQee4cxlIqWO9TBAQd4IAZ9IirnQwj1Rp/
-         glDMW3hKVubzPpNRIVW7NzL3qBxIm/JmmUL2h0bcP14rDZYy3YSATsQ1WeEjGLcNm0Ev
-         9VYAEzxqeIUDU8f0wQnQ4Wk3t3nJ869N89gHR+l96tRCC7HC4pXEZabB5rlV9d4g84aC
-         oMCg==
-X-Forwarded-Encrypted: i=1; AKwUvBw02AHWJ/RCjpxizDWl1OyH/76Jk5SpQzyQQA2NY6bfm15+Dq6fngryJKIMuQtBRah1dqPtbZMRwMM=@vger.kernel.org
-X-Gm-Message-State: AFq9FYLt3i1iJ9v8QSBMEJFKL2BPuLqr/LUjLvw8zPeRX+OlsRY4ZSCb
-	LD3bxbrC1GRqVzvpWMctaiOYBmZ9lQ9M7uJI4UK3Cf4Z9wwi84Iaob8j
-X-Gm-Gg: AYBFou09CtGbR2927Zw4NaukHbLpzd6kaxmoOdLk/ufaaD2KBjUvbmNDrMd+C2j6juI
-	yFFpYNi5srE/EoPqrDT53sLnO1vFFvir5qMMcIMPDxXcxOUUDWG1/AgyiDmFUMrr6upqrAaoob4
-	ejxYFnSRANYNjxme17AZNt4S/C39/r46CBNy4lQREhvy/9z87fKdDzLPbXElkrwy+sgVpzW2wSY
-	vU2r0Gu5A2rxz312TY9iKOn2ygGJnYOmB5qy651iks3uJ8yhuXHTuEQeMxpfQCpLnOU21Vp8DQZ
-	TRD0Xmyg+REhTh9xrb6bsMvYuydJnTf1ekC8odUJD/SIDEfBq1n5fBL6g8W1JdH+A3vcqAhA0x3
-	2klTKUhmZ2Lg008nDht4TXlq0eWOU2lGBF2G3uf0l2F+wk0Kbs+BD9liTSW4bts6e47CqpUzwHH
-	M+f0uPg4SbephrhNZFLs7sF5byHl5wQXEurB4nCtQBsVVe8ewyjiNj8JIhmLUsaI47QVIc4qEv8
-	GYTrFc=
-X-Received: by 2002:a17:902:d50a:b0:2e3:1bb4:610d with SMTP id d9443c01a7336-2e842f31562mr21457435ad.50.1791560370363;
-        Fri, 09 Oct 2026 08:39:30 -0700 (PDT)
-Received: from mincom1 ([14.67.155.18])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2e8421ae999sm11847705ad.31.2026.10.09.08.39.27
+        d=1e100.net; s=20260707; t=1791627400; x=1792232200;
+        h=content-transfer-encoding:content-type:mime-version:message-id:date
+         :subject:cc:to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=KFVRilLphheYZDM+G1ugCIoIXs4pytm2C1ieeD0EW20=;
+        b=mlvT9ehITkrtbwX7bkQJCFn2bcViWCBMpdvYcjJtDODAqyfkdMvWZEoyBetwInVeWX
+         tcG9qt7LXQSkZpIElYV9cDKShWksHY8bw2uJd+Ww5bDZaIB2AKludFlj0brCeMg6u//C
+         Z3YZdoWd6sVNByQxUg2StrKWmhQjiOi/si5Y9bSYwuVosseJJWuM4+CZrpVu/+z0BPIB
+         XSBBr7dzy9d6Br9jx8b5kPhAQfIzWIaOkB1chrz7Do1sf2N/Dsg3pfspQtQhN+U0VWlq
+         mvKRBsXOVOmU+fvOnR3Yjf1E9Qv8g7cDUdK8TPbgkjSsX7o1lUVVBl/kDJoRghOhU+uB
+         awpA==
+X-Forwarded-Encrypted: i=1; AKwUvBwpGsWTMLkRxdx6M7y3eopoOTAnHxf3m9jthI7+4ML7i703INYKoMVDpdt8uYYyhIqAyRkIWmUafyc=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJCdmn3/KXTTI2wkY/rsI9J54/+pnEwFp09Pjk2BrErd7a9dfGH
+	W+BRfmqZsLJ7C9gIEDoWBR183ySlyfEoqURMoa311cTDnIeBvNfrKhjk
+X-Gm-Gg: AYBFou2Ko61PlaX77OB3APtqvE3CqpjRbsV8GrsydmksTMIVrSmx391HtuKF89f470Z
+	W4FRly0mW9UtmDtaLTz2CLMqfyBFuJ1eCSlELR/1JgM39N8nNzNL+SZIIw4UHdYWBmZf8ugGJVw
+	TKfVOjDlAIEfKrEQtVtF66LdMWKo2FbJXUzWQqdHfc1AHt+ZG2XBneR86vv4IC+wt7MOBENm6qP
+	opr18W9fzzvr12V8td6OYe63JOYgXB/2jOGgR6Wlf1bgapU1WEMe7eL2nDdhudH7WmbEVJg1Xpo
+	40KPuYL5lapJa4p7O8sE4zLmPhh75qVGLGEkDdtDp6SO7f5DInKF4gGxV5lZccL2WIs15WSlLDO
+	Ggw82Rum/vUimA3F/Xc2dbwCTgi+Hr3MJP/Gn1+FTjRfk8Z1S8/bdWtmHlkzouxFk9Qo+r3Td/3
+	09Mag2hGf9xPPtPC7cZ8rMqgjVE5xm+81gdXtahmqlo8udgCG+C02paW3h1ug=
+X-Received: by 2002:a05:600c:4593:b0:4a1:7ed5:99e8 with SMTP id 5b1f17b1804b1-4a18e49bffbmr90382875e9.22.1791627400129;
+        Sat, 10 Oct 2026 03:16:40 -0700 (PDT)
+Received: from ASUS ([85.105.252.11])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48db98c38f4sm9417856f8f.27.2026.10.10.03.16.37
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 09 Oct 2026 08:39:29 -0700 (PDT)
-From: Jihong Min <hurryman2212@gmail.com>
-To: Guenter Roeck <linux@roeck-us.net>,
-	linux-hwmon@vger.kernel.org
-Cc: Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
+        Sat, 10 Oct 2026 03:16:39 -0700 (PDT)
+From: Bartu Alev <bartualev@gmail.com>
+To: platform-driver-x86@vger.kernel.org
+Cc: ilpo.jarvinen@linux.intel.com,
+	hansg@kernel.org,
+	luke@ljones.dev,
+	denis.benato@linux.dev,
+	benato.denis96@gmail.com,
+	corentin.chary@gmail.com,
 	linux-api@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH 5/5] docs: hwmon: Document the uhwmon userspace interface
-Date: Sat, 10 Oct 2026 00:38:44 +0900
-Message-ID: <c02aeee5b7e7a5d159d4df5baabe925e16814e94.1791559095.git.hurryman2212@gmail.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <cover.1791531025.git.hurryman2212@gmail.com>
-References: <cover.1791531025.git.hurryman2212@gmail.com>
+	linux-kernel@vger.kernel.org,
+	Bartu Alev <bartualev@gmail.com>
+Subject: [PATCH v3 0/5] platform/x86: asus-wmi: TUF keyboard shutdown naming and RGB readback
+Date: Sat, 10 Oct 2026 13:15:56 +0300
+Message-ID: <20261010101601.888709-1-bartualev@gmail.com>
+X-Mailer: git-send-email 2.56.0
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-Document the uhwmon UAPI for developers implementing userspace hwmon
-drivers. Cover device registration, request handling, notifications
-and device lifetime.
+This series fixes the name of the fourth TUF keyboard power state and
+makes the TUF keyboard RGB attributes readable.
 
-Assisted-by: Codex:gpt-6-astra
-Signed-off-by: Jihong Min <hurryman2212@gmail.com>
----
- Documentation/hwmon/index.rst  |   1 +
- Documentation/hwmon/uhwmon.rst | 141 +++++++++++++++++++++++++++++++++
- 2 files changed, 142 insertions(+)
- create mode 100644 Documentation/hwmon/uhwmon.rst
+The fourth flag of kbd_rgb_state was labelled "keyboard" and treated as
+a no-op since it was introduced.  In hardware it gates the backlight
+during the ACPI S5 power-off sequence: with the bit set the keyboard
+lights up white while the machine powers off, with the bit clear the
+machine powers off dark.  Patch 2 renames the field and carries a Fixes
+tag for stable.
 
-diff --git a/Documentation/hwmon/index.rst b/Documentation/hwmon/index.rst
-index 9955a525436a..88c6388e7c5c 100644
---- a/Documentation/hwmon/index.rst
-+++ b/Documentation/hwmon/index.rst
-@@ -12,6 +12,7 @@ Hardware Monitoring
-    submitting-patches
-    sysfs-interface
-    userspace-tools
-+   uhwmon
- 
- Hardware Monitoring Kernel Drivers
- ==================================
-diff --git a/Documentation/hwmon/uhwmon.rst b/Documentation/hwmon/uhwmon.rst
-new file mode 100644
-index 000000000000..155f1a965d16
---- /dev/null
-+++ b/Documentation/hwmon/uhwmon.rst
-@@ -0,0 +1,141 @@
-+.. SPDX-License-Identifier: GPL-2.0-only
-+
-+Userspace hardware monitoring
-+=============================
-+
-+Copyright (C) 2026 Jihong Min <hurryman2212@gmail.com>
-+
-+``uhwmon`` connects userspace drivers to ``hwmon_ops`` through the control
-+device ``/dev/uhwmon``. The hwmon core creates and formats sysfs attributes.
-+The daemon supplies values in the units defined by :doc:`sysfs-interface`.
-+
-+Enable ``CONFIG_HWMON`` and ``CONFIG_SENSORS_UHWMON`` and load ``uhwmon``.
-+Include ``<linux/uhwmon.h>``.
-+
-+Register a device
-+-----------------
-+
-+Open ``/dev/uhwmon`` with ``O_RDWR`` for each device. Zero-initialize all
-+UAPI structures.
-+
-+Call ``UHWMON_CREATE`` with the NUL-terminated chip name, attribute array and
-+its count in ``struct uhwmon_create``. Each ``struct uhwmon_attribute`` contains:
-+
-+* ``type``, ``attr``: hwmon enum IDs, not ``HWMON_*`` bitmasks.
-+* ``channel``: zero-based index; zero for chip attributes.
-+* ``mode``: nonzero permissions using only bits from 0644.
-+* ``flags``: zero, or ``UHWMON_ATTR_CONSTANT`` for read-only constants.
-+* ``value``: a constant number, otherwise zero.
-+* ``text``: pointer to a constant label, otherwise zero.
-+* ``size``: NUL-inclusive label capacity from 1 to ``PAGE_SIZE``; zero
-+  for numbers.
-+
-+Labels are read-only, NUL-terminated and omit the trailing newline.
-+
-+Handle requests
-+---------------
-+
-+Read a ``struct uhwmon_request`` and write a ``struct uhwmon_reply`` on the
-+owning file. Request and reply headers are 24 bytes. Only successful label
-+replies append ``size`` bytes of text. Buffers smaller than the message are
-+rejected with ``EINVAL``.
-+
-+``struct uhwmon_request``:
-+
-+* ``id``: request identifier; copy it into the reply.
-+* ``attr``: index in the registered attribute array.
-+* ``op``: ``UHWMON_READ`` or ``UHWMON_WRITE``.
-+* ``value``: number to apply for a write; zero for a read.
-+
-+``struct uhwmon_reply``:
-+
-+* ``id``: the request's identifier.
-+* ``status``: zero on success or a negative errno; use ``-ENODATA`` for
-+  unavailable or stale readings. Return ``-EINTR`` only before applying a write.
-+* ``reserved``: zero.
-+* ``value``: successful numeric read result; ignored otherwise.
-+* ``text``: NUL-terminated result of a successful label read; absent otherwise.
-+
-+Numbers use signed 64-bit fields and must fit the kernel's ``long``,
-+except for energy64 reads.
-+Discard replies rejected with ``ESTALE`` (canceled request).
-+
-+This example registers ``temp1_input`` and ``temp1_enable`` and reports
-+42000 millidegrees Celsius while enabled:
-+
-+.. code-block:: c
-+
-+	struct uhwmon_attribute attrs[] = {
-+		{ .type = hwmon_temp, .attr = hwmon_temp_input, .mode = 0444 },
-+		{ .type = hwmon_temp, .attr = hwmon_temp_enable, .mode = 0644 },
-+	};
-+	struct uhwmon_create create = {
-+		.name = (uintptr_t)"example",
-+		.attrs = (uintptr_t)attrs,
-+		.num_attrs = 2,
-+	};
-+	struct uhwmon_request req;
-+	struct uhwmon_reply reply = {};
-+	int enabled = 1;
-+
-+	if (ioctl(fd, UHWMON_CREATE, &create) < 0)
-+		return;
-+
-+	for (;;) {
-+		if (read(fd, &req, sizeof(req)) < 0) {
-+			if (errno == EINTR)
-+				continue;
-+			break;
-+		}
-+		reply.id = req.id;
-+		reply.status = -EINVAL;
-+		if (req.attr == 0 && req.op == UHWMON_READ) {
-+			reply.value = 42000;
-+			reply.status = enabled ? 0 : -ENODATA;
-+		} else if (req.attr == 1 && req.op == UHWMON_READ) {
-+			reply.value = enabled;
-+			reply.status = 0;
-+		} else if (req.attr == 1 && req.op == UHWMON_WRITE &&
-+			   (req.value == 0 || req.value == 1)) {
-+			enabled = req.value;
-+			reply.status = 0;
-+		}
-+		if (write(fd, &reply, sizeof(reply)) < 0 && errno != ESTALE)
-+			break; // Fatal error.
-+	}
-+
-+Disconnect and reconnect
-+------------------------
-+
-+Sysfs requests can be interrupted or restarted before delivery to the daemon.
-+After delivery, they wait for a reply or disconnection; only fatal signals
-+can interrupt this wait. Completed replies take precedence over signals.
-+
-+Releasing the last control file reference disconnects the daemon: dynamic
-+reads return ``ENODATA``, writes return ``ENODEV``, and constants remain readable.
-+Closing an fd does not cancel I/O in another thread; duplicated fds retain
-+ownership. Interrupt blocked control reads or use ``UHWMON_DESTROY``.
-+
-+The device persists after disconnection. To reconnect, open a new control fd
-+and register the same name and attribute array, including constant values.
-+
-+``UHWMON_DESTROY`` removes the device. Close and reopen the control file
-+before registering another device.
-+
-+Notify changes
-+--------------
-+
-+The kernel cannot detect changes to values held by the daemon. After changing
-+a value, call ``UHWMON_NOTIFY`` with its 32-bit attribute index. This wakes
-+sysfs pollers waiting for ``POLLPRI`` and sends a ``KOBJ_CHANGE`` uevent with
-+``NAME=<attribute>``. Applications read the attribute again from offset 0 to
-+get the new value. The notification carries no value and does not replace a
-+read reply.
-+
-+For example, after changing ``enabled``, notify listeners of ``temp1_enable``:
-+
-+.. code-block:: c
-+
-+	__u32 index = 1; /* attrs[1]: temp1_enable */
-+	if (ioctl(fd, UHWMON_NOTIFY, &index) < 0)
-+		return;
+The remaining patches prepare and add readback.  DSTS device 0x0010005B
+evaluates the DSDT method EC0.KBLS(), which returns a 16-byte snapshot
+of the EC's keyboard state: lighting mode, red, green and blue levels,
+animation speed, and the four power flags.  Both kbd_rgb_mode and
+kbd_rgb_state become readable and report the write format with the
+command word fixed at 1.
+
+Responses to the v2 review:
+
+Ilpo:
+- Documentation: patch 5 adds the missing ABI entries.
+- Errno: the helper already separates the cases.
+  asus_wmi_evaluate_method_buf() returns -EIO for a failed evaluation
+  and -ENODEV for an unsupported DEVID.  The readback keeps the
+  err < 0 ? err : -ENODEV normalization for the positive ACPI integers
+  that leak through, and the AML signature check returns -ENODEV as
+  well.
+- Named defines: patch 3 names the three speed codes and the four state
+  bits, and the decoding comments are gone.
+- Struct: patch 4 parses the status buffer through a packed struct.
+
+Denis:
+- DEVID naming: the write DEVID is now ASUS_WMI_DEVID_TUF_RGB_CMD
+  (patch 1) and the read DEVID is ASUS_WMI_DEVID_TUF_RGB_READ_STATUS,
+  as you suggested.
+- -ENODATA: asus_wmi_evaluate_method_buf() already returns -ENODATA for
+  empty buffers, so no extra handling was added.
+
+Provenance: the KBLS buffer layout and the speed-code semantics were
+recovered by static analysis of the EC firmware (ITE IT5570VG),
+assisted by an LLM-driven toolchain; the readback patch carries an
+Assisted-by tag.  Tested on a TUF Gaming A15 (FA507NV): the v2
+readback on kernel 7.2.6, and the S5 behaviour of the shutdown flag by
+A/B testing both values.
+
+Changes in v3, relative to v2:
+- split into five patches, one logical change each
+- renamed the write DEVID to ASUS_WMI_DEVID_TUF_RGB_CMD and the new one
+  to ASUS_WMI_DEVID_TUF_RGB_READ_STATUS, per Denis Benato
+- named the speed codes and the power state bits and dropped the
+  decoding comments
+- parse the status buffer through a packed struct
+- added the ABI documentation, with the attributes documented at their
+  real location under /sys/class/leds/asus::kbd_backlight/ and worded
+  for all laptops that expose the zonal RGB devices, not only TUF
+  models
+- added linux-api to Cc, which the earlier versions missed
+
+v2: https://lore.kernel.org/all/20260926005625.171560-1-bartualev@gmail.com/
+v1: https://lore.kernel.org/all/20260925200744.129714-1-bartualev@gmail.com/
+
+Bartu Alev (5):
+  platform/x86: asus-wmi: rename TUF RGB state DEVID to _CMD
+  platform/x86: asus-wmi: fix TUF keyboard power state shutdown naming
+  platform/x86: asus-wmi: name the TUF keyboard RGB state and speed
+    codes
+  platform/x86: asus-wmi: add TUF keyboard RGB readback support
+  Documentation/ABI: asus-wmi: document TUF keyboard RGB attributes
+
+ .../ABI/testing/sysfs-platform-asus-wmi       |  42 ++++++
+ drivers/platform/x86/asus-wmi.c               | 123 +++++++++++++++---
+ include/linux/platform_data/x86/asus-wmi.h    |   5 +-
+ 3 files changed, 153 insertions(+), 17 deletions(-)
+
+
+base-commit: af32da41b0327b9c6a37856ba82b6760d6c8d10e
+-- 
+2.56.0
+
