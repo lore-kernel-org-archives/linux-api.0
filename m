@@ -1,38 +1,37 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-1.web.codeaurora.org [10.30.226.201])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B81193BB68F;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C86E23D5C2C;
 	Sat, 10 Oct 2026 10:21:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=10.30.226.201
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1791627681; cv=none; b=Yl3NsZB+PoKGaV3S6NudSVmZoqd2pLNLwBo6+mVELix4IYSJylv7bdC+wLHdiDabz7o0t4tWZ0vvDP8+K1WUQLprGvIL+EHQYAXgcTeHYWti1hY/x9Ih68eE10RwJDxj6VhNDaUVZL0lVWmg7iDaESoWacxOjc5XEcyZvWReWAw=
+	t=1791627681; cv=none; b=WDoVALX4hw4xLhCC3tVAJ+93DnfzS/Hak8mlBVMb44V2SntJnxjHZN3W5fQepOelJqTerY3YFMq9Usail/TYqpUmoIZaqlvJiRgle2F0zJZE59DC0qtoANN2od4PFbBPD/mBJhDICwPSU30y2OmuWoI8H3f8lh43iRLoScaHTcc=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1791627681; c=relaxed/simple;
-	bh=FuZv+/q1fgHer56ZAWw1d0q3ANk/3SFdNvfTLly1e90=;
+	bh=BiDhF0lWhO+RibDA9WeMERuRdkka0ag7+4GwzhkWFAU=;
 	h=From:Date:Subject:MIME-Version:Content-Type:Message-Id:References:
-	 In-Reply-To:To:Cc; b=Rx/SoqNRPehWsaCHOIdny1dJrePI1014Qw/SjsoiB8beVES3RGSc5TODG1lave2WBQA7a0qzPwCezcTojL4Ti637ia2HSwOOgGNVT/cnvq7e2i/MUfVwmS7Ory76Cc9SztwuXp+IClCzx6IeJ56EbdybqrIRI1RRwmp7NKhWTGM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=HefMOBe/; arc=none smtp.client-ip=10.30.226.201
+	 In-Reply-To:To:Cc; b=oHu2ETmOyT3TNNdaFHzHHAubQPa+Lz0VxmJwSgXg22l+ysoRUKEhuQ3qKMj8B57ljXRY1RM0N5yXwHWo9XW5KVUbiyeUOOKHc/RK2BBH6VUnk4l2K6sBBxBOXHq7yPBceWtU30ek4Wiv0jOSlB3q4m7OtgBaal2BpyFuv+a5GMU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TDXUulI1; arc=none smtp.client-ip=10.30.226.201
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="HefMOBe/"
-Received: by smtp.kernel.org (Postfix) with ESMTPS id 562F4C2BCB9;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TDXUulI1"
+Received: by smtp.kernel.org (Postfix) with ESMTPS id 8313DC4AF0D;
 	Sat, 10 Oct 2026 10:21:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=kernel.org;
 	s=k20201202; t=1791627681;
-	bh=FuZv+/q1fgHer56ZAWw1d0q3ANk/3SFdNvfTLly1e90=;
+	bh=BiDhF0lWhO+RibDA9WeMERuRdkka0ag7+4GwzhkWFAU=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To:From;
-	b=HefMOBe/BnQHO4U5Vnp7s6RmAEVZybkSoKxIpcZsesK+eUqBGd7g7xxvTxpzVpCUB
-	 UiLYg5e5m5UbhAP3pifazgFgaeSwpgwtIRYghs8Xi4OAw7SVFoQ4j4kjGsF4xUhlDk
-	 4P2dU4gTGoqCl/N4jQfchne6eTwk2A/Int5SdtedGQsfK935sYYeeLl3ZBrr5AXcSc
-	 xbON/5uUDq2ac+hACEtyZXc6hHikwMxeQzuximNoX114Hcnjl6/9leH25ARXdNPAaD
-	 NdEXX3QXXpYHs33RRQjaJ0DOyPj10xG9mtrlca8VMQT6cJ66fxCwZ7uzPTo7zwmw6X
-	 45oBS9RUb59iQ==
+	b=TDXUulI1yj97mFsigwyY8lPT7DgDBxv8zQUTW/1lJ1QmZ1wTiSEV+5CeXrTNr5w77
+	 5ASMnbKot0jieLm4m3lWhPa4kwzA5DGL0WcX7Mw3p3gdyGKFfqHDKiGt6Xp33rt2wE
+	 St4QbvvaM5pvNYlT6MeoPNX5kEKpecYJiV6fvfRaewnZS60BN2rnXb6Wq2Y7TVUdxD
+	 F3cwvyOYuBQoKDYsxi1AWYUD39dI+qGRYxUMyyowLaIauwybaezw/EZGzhLxADXpKu
+	 LiqwVvzNTicPwltG0vlb/VnQlmuUTLY5r7k0zoiCedAAzM5gfzulFESfgEK7AFOBXm
+	 lzotTP8kPSzOg==
 Received: from aws-us-west-2-korg-lkml-1.web.codeaurora.org (localhost.localdomain [127.0.0.1])
-	by smtp.lore.kernel.org (Postfix) with ESMTP id 3053ECA6017;
+	by smtp.lore.kernel.org (Postfix) with ESMTP id 657DCCA9EC0;
 	Sat, 10 Oct 2026 10:21:21 +0000 (UTC)
 From: Chen Linxuan via B4 Relay <devnull+me.black-desk.cn@kernel.org>
-Date: Sat, 10 Oct 2026 18:20:50 +0800
-Subject: [PATCH v3 1/4] pidfd: restrict task access ioctls to the caller's
- pid namespace
+Date: Sat, 10 Oct 2026 18:20:53 +0800
+Subject: [PATCH v3 4/4] pidfd: Add task path ioctls
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -41,7 +40,7 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261010-pidfd-get-paths-v3-1-f245440b2b30@black-desk.cn>
+Message-Id: <20261010-pidfd-get-paths-v3-4-f245440b2b30@black-desk.cn>
 References: <20261010-pidfd-get-paths-v3-0-f245440b2b30@black-desk.cn>
 In-Reply-To: <20261010-pidfd-get-paths-v3-0-f245440b2b30@black-desk.cn>
 To: Alexander Viro <viro@zeniv.linux.org.uk>, 
@@ -66,21 +65,21 @@ Cc: linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
  Chen Linxuan <me@black-desk.cn>
 X-Mailer: b4 0.15.2
-X-Developer-Signature: v=1; a=openpgp-sha256; l=2240; i=me@black-desk.cn;
+X-Developer-Signature: v=1; a=openpgp-sha256; l=3684; i=me@black-desk.cn;
  s=20260831; h=from:subject:message-id;
- bh=ZFhe6igvJd4uMFSrgyXSrlw/Pf3UD8vwdWrIzJThCwk=;
- b=owEBbQKS/ZANAwAKAXYe5hQ5ma6LAcsmYgBqyhGbwdr4RORhdN9GzarNd1upM7l3SBuv2j7+5
- M5Vfu1jfYqJAjMEAAEKAB0WIQTO1VElAk6xdvy0ZVp2HuYUOZmuiwUCasoRmwAKCRB2HuYUOZmu
- i1ZjEADeM+TRIHmXm1K3ljsbCmJXeQECqXkRs4A1DVU3R0hrJUwIoq97CU2fSSgcJ2rl+MtEbDW
- 6nX3DGAmt4fIa1MEdyoH0Bd0Z3HPIunFVu7oBNvfCdRFUPoXpJdoLLR6N2qkFTmbol406QnWGD9
- ccDtowKgDXT64e0LGg5A97UYH2tGqHpWroGsgHrg4dIPsoSDydzf9qk9M2yElfq/kCjc0X2XP7p
- rTODO1CgcXD6tdpvBhlE5xfAkxJglbbhyuB39rwv12DVL6yXuR+xxA7u3MX3XwcXim6fBCQBfQA
- BrIu0XBOAUXLvV7V/IW/5g+tbOH/zKkjlWS1CzHi3fs17Uv+GfuGbJ67YC0LzKyhpki1xsh/8IU
- lszpVys3+rnT+b3zw6FuhZhvOgqFibKezDeyieH7R8dYY+07aHp28h7RRIemZnkkQdrRG/MUBcc
- To+qPae2CpHDfzZp2QirkTGXLNIEEV6x5f6HoQlm9Elmgyc7WaGQ0fga8q4TOwVvzMTeCCmRTt4
- od7L8erLn6CwtoKvYXbLeRujmoIFFM2k1kJxeR9CubO51sJH8q4mrRJWwcMo7Tw27yMrT+Ptd9w
- F3UR/Rk1JPvbHy2Oz15U59VFqXgkuDcVyOMXgXypZKtE+ZCth1jX8UHEViu4wW5AWQVw0JV3G1C
- +hOE64bf3nsV8og==
+ bh=+1T/PPCKeQZBRhmKsitYw/Ec11LSxu55a/COLMCLNMo=;
+ b=owEBbQKS/ZANAwAKAXYe5hQ5ma6LAcsmYgBqyhGeHSAru4tTGfalbmhoJcNYCzEfByYH/LxTw
+ ceuZnHmKJqJAjMEAAEKAB0WIQTO1VElAk6xdvy0ZVp2HuYUOZmuiwUCasoRngAKCRB2HuYUOZmu
+ i5twEADKSVdmpTk/nlZ00M+zdAAWq5/SBTf3ZXGeIyz2tgTjNQ2eIUOYGbg+Sy1YQmPJN4KfCEi
+ EBLl26OkJC+9e21ly5xdiJF2opwxIM6FprQCfbAvvR0tYFo3M6YaBcXyhNJRJrMKFxZRtUCH3g8
+ cFqLBHG0tDO0fwV6aad/1Y7Fl41Xm2eQX1DsBPwgBk3VqVHFiX+v8XO1Ml0p7YdBIXkJRr69gzQ
+ xDOXqz5g9mlj+uFKJVORHK0/LN86AwA00XSrkxPWAGKkJ70eHJhScBwPlFHQHQaWKysfR95hYBx
+ 1dHy2E7U0N9Y0/pucsHV1ADMNBuFGnorz8bSVQ3blRYwYpCLM68esUqA4vbxv/xNfgcOb30dkWq
+ M71eXmfaKuFDmb8CYrE0obRhgU99t4i8C+uJmAlNUe8roFQ1llVN3HlT6ywworrKBiY9rnKXJaF
+ 7cesgSX3fAg1oHxwk5iCbhu8WD8TAVyQcf3mcxOwmIcfgxWkSfulqzWQpS7ZMzhVTHoUEvEmOnM
+ 5WC2NJs2rzbhaR7fDzElKWOvmHIpKPiUC+osQx18XlH+lcQ0fd6ib7mmBZzpVNsKoSNwIGLMCym
+ hShy2bj27Y6swxJQZUarquzHkgabidlDe/III2wz2oyUriSdk01Q7Iwz6WOhaooZi0Z+I6okj2m
+ OGvuJ09FgJHBJJg==
 X-Developer-Key: i=me@black-desk.cn; a=openpgp;
  fpr=D818ACDD385CAE92D4BAC01A6269794D24791D21
 X-Endpoint-Received: by B4 Relay for me@black-desk.cn/20260831 with
@@ -90,56 +89,114 @@ Reply-To: me@black-desk.cn
 
 From: Chen Linxuan <me@black-desk.cn>
 
-pidfds can cross pid namespace boundaries: a task may obtain one for a
-process outside of its own pid namespace hierarchy through SO_PASSPIDFD
-or SO_PEERPIDFD, via SCM_RIGHTS, or through file descriptor inheritance.
+Add PIDFD_GET_EXE, PIDFD_GET_CWD, and PIDFD_GET_ROOT to return
+close-on-exec O_PATH file descriptors referencing the target task's
+executable, working directory, and root directory.
 
-The namespace ioctls gate access with a ptrace check against the
-target's credentials only. That check does not account for the pid
-namespace relationship between the caller and the target, so a task
-inside a pid namespace can use a pidfd obtained across that boundary to
-acquire namespace file descriptors of a task outside of its hierarchy.
+The ioctls acquire the target through the shared task acquisition
+helper and are thus subject to the same checks as the namespace
+ioctls. The target is sampled while holding exec_update_lock so that
+the access check and the path read cannot race with execve().
 
-procfs exposes the equivalent information only for tasks visible in the
-reader's pid namespace, and PIDFD_GET_INFO already answers with -EREMOTE
-for targets outside the caller's hierarchy. Extend that policy to the
-namespace ioctls: fail with -EREMOTE unless the target is visible in the
-caller's active pid namespace. Callers in ancestor pid namespaces are
-unaffected.
+This allows userspace to obtain stable path references from a pidfd
+without requiring procfs.
 
-Unlike PIDFD_GET_INFO, the visibility check is performed after the task
-lookup here, so reaped targets outside of the caller's pid namespace
-hierarchy answer -ESRCH instead of -EREMOTE.
-
-Link: https://lore.kernel.org/all/CAG48ez1T5-tUHVK_iHsgUtWa-inVdrZxA3E-ZCW0iENJvasKfg@mail.gmail.com
-Link: https://lore.kernel.org/all/20260925-gewischt-auftrag-tierzucht-c153cb3f9f74@brauner
-Suggested-by: Jann Horn <jannh@google.com>
-Suggested-by: Christian Brauner <brauner@kernel.org>
 Assisted-by: LLM
 Signed-off-by: Chen Linxuan <me@black-desk.cn>
 ---
- fs/pidfs.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ fs/pidfs.c                 | 38 ++++++++++++++++++++++++++++++++++++++
+ include/uapi/linux/pidfd.h |  7 +++++++
+ 2 files changed, 45 insertions(+)
 
 diff --git a/fs/pidfs.c b/fs/pidfs.c
-index a6a643f15d08..791f7efceabe 100644
+index 82ab4dee55e5..e945c77bdc0e 100644
 --- a/fs/pidfs.c
 +++ b/fs/pidfs.c
-@@ -556,6 +556,14 @@ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	if (arg)
- 		return -EINVAL;
+@@ -4,6 +4,7 @@
+ #include <linux/exportfs.h>
+ #include <linux/file.h>
+ #include <linux/fs.h>
++#include <linux/fs_struct.h>
+ #include <linux/cgroup.h>
+ #include <linux/magic.h>
+ #include <linux/mount.h>
+@@ -510,6 +511,9 @@ static bool pidfs_ioctl_valid(unsigned int cmd)
+ 	case PIDFD_GET_UTS_NAMESPACE:
+ 	case PIDFD_GET_USER_NAMESPACE:
+ 	case PIDFD_GET_PID_NAMESPACE:
++	case PIDFD_GET_EXE:
++	case PIDFD_GET_CWD:
++	case PIDFD_GET_ROOT:
+ 		return true;
+ 	}
  
-+	/*
-+	 * Require the target to be visible in the caller's pid namespace
-+	 * for operations that grant access to its resources, mirroring
-+	 * procfs and PIDFD_GET_INFO.
-+	 */
-+	if (!pid_in_current_pidns(pidfd_pid(file)))
-+		return -EREMOTE;
+@@ -687,9 +691,31 @@ static struct ns_common *pidfd_get_namespace(struct pid *pid,
+ 	return ns_common;
+ }
+ 
++static int pidfd_get_task_path(struct pid *pid, unsigned int cmd,
++			       unsigned long arg, struct path *path)
++{
++	CLASS(pidfd_task_locked, task)(pid, arg);
 +
- 	/*
- 	 * We're trying to open a file descriptor to the namespace so perform a
- 	 * filesystem cred ptrace check. Hold @task's exec_update_lock for the
++	if (IS_ERR(task))
++		return PTR_ERR(task);
++
++	switch (cmd) {
++	case PIDFD_GET_EXE:
++		return get_task_exe_path(task, path);
++	case PIDFD_GET_CWD:
++		return get_task_pwd(task, path);
++	case PIDFD_GET_ROOT:
++		return get_task_root(task, path);
++	}
++
++	return -EINVAL;
++}
++
+ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	struct ns_common *ns_common = NULL;
++	struct path path __free(path_put) = {};
++	int error;
+ 
+ 	if (!pidfs_ioctl_valid(cmd))
+ 		return -ENOIOCTLCMD;
+@@ -707,6 +733,18 @@ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	if (_IOC_NR(cmd) == _IOC_NR(PIDFD_GET_INFO))
+ 		return pidfd_info(file, cmd, arg);
+ 
++	switch (cmd) {
++	case PIDFD_GET_EXE:
++	case PIDFD_GET_CWD:
++	case PIDFD_GET_ROOT:
++		error = pidfd_get_task_path(pidfd_pid(file), cmd, arg, &path);
++		if (error)
++			return error;
++
++		return FD_ADD(O_CLOEXEC,
++			      dentry_open(&path, O_PATH, current_cred()));
++	}
++
+ 	ns_common = pidfd_get_namespace(pidfd_pid(file), cmd, arg);
+ 	if (IS_ERR(ns_common))
+ 		return PTR_ERR(ns_common);
+diff --git a/include/uapi/linux/pidfd.h b/include/uapi/linux/pidfd.h
+index 0919246a1611..95ce1819f423 100644
+--- a/include/uapi/linux/pidfd.h
++++ b/include/uapi/linux/pidfd.h
+@@ -121,4 +121,11 @@ struct pidfd_info {
+ #define PIDFD_GET_UTS_NAMESPACE               _IO(PIDFS_IOCTL_MAGIC, 10)
+ #define PIDFD_GET_INFO                        _IOWR(PIDFS_IOCTL_MAGIC, 11, struct pidfd_info)
+ 
++/* Return an O_PATH file descriptor for the target task's executable. */
++#define PIDFD_GET_EXE                         _IO(PIDFS_IOCTL_MAGIC, 12)
++/* Return an O_PATH file descriptor for the target task's working directory. */
++#define PIDFD_GET_CWD                         _IO(PIDFS_IOCTL_MAGIC, 13)
++/* Return an O_PATH file descriptor for the target task's root directory. */
++#define PIDFD_GET_ROOT                        _IO(PIDFS_IOCTL_MAGIC, 14)
++
+ #endif /* _UAPI_LINUX_PIDFD_H */
 
 -- 
 2.55.0
