@@ -1,64 +1,64 @@
-Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
+Received: from mail-ed1-f47.google.com (mail-ed1-f47.google.com [209.85.208.47])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F7B75372DC
-	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:51:41 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.48
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2CB4B539766
+	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:51:47 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.47
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792075907; cv=none; b=GcUYLXyr6/+yo4mZ8hwnl6dbsE+/Yfno8MkBzbJ7OkZIlZREkhyMFXE6lK/1wSm5ukvlcchwg5zrmxsFKcv+1jEsm6nzqqN7M70520NtVzPnvlYn16iqPeNac09pLu7D8uiTnWoebrlueu1jR3dKW9JydYdF0zxCi2UsGtXzwDE=
+	t=1792075911; cv=none; b=KJQTVld5T9EYpY3bOsTwf9SLhbYEVbrIij1P/Xo5en9sUly8EXBF7WCDCVqw9yiYIwiqoJ30ytXJy9PlW/O4gtznUbvzzMB78sZkSk8wz0MYHSFyWtchQhxGIBz/aX+H7ILYH1CuUZD6pY5gtB8a2FtlLYzlF6oXpa5QZvI3uuQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792075907; c=relaxed/simple;
-	bh=B9jHo5U4PNobvOUN7YCBE44hahJY+g/2cYxayD5Z4A4=;
+	s=arc-20240116; t=1792075911; c=relaxed/simple;
+	bh=KVEAiqbl6IuDTRIezarvZlwSgO8Tb/h/2tVPPIkdNxM=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=KaqAf7sbcG8lvXdnvdNVd+MERkYqBpdTQxKNvygojoBkDyae0NUYpJsmpahFX5s8ngt00YoAS271JJFydLKm3IwaV2yqk5HI4oeqAp3P7FnMFZMJp5N8edVwBbyAUSBDGGuIiak7TeowfUlN3R+Ri5JmbP3lpU5oDaeWpyihFOw=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=pb5aa6s6; arc=none smtp.client-ip=209.85.218.48
+	 MIME-Version; b=PXsick2Ysxux3swNEDt2lcc/zr5HHEbgIVwyC+wcadFKYy14jJZSjSMorndwt0IsH5DAjC83JYjI5W5zSwQntDeC9nv+v6l+HWYK6ezt416ZDlYIoDJGi2Jhw1QkpDj21xY929whgx1m+woFb90Z6tyrrt7u1Fm9s1w+akmq5os=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=v4XLdDEq; arc=none smtp.client-ip=209.85.208.47
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="pb5aa6s6"
-Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-c2acc1e170cso918519466b.1
-        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:51:41 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="v4XLdDEq"
+Received: by mail-ed1-f47.google.com with SMTP id 4fb4d7f45d1cf-6a642495d81so7151580a12.2
+        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:51:46 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075900; x=1792680700; darn=vger.kernel.org;
+        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075905; x=1792680705; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=YPC2Jcbcaqf9XJGk0jTHq3PvGkavq3LRWDoW0PM2bwU=;
-        b=pb5aa6s6EncTZ1rKbRW8ry3Tvq98FNH4me1waH7XRHawMqmpJn0N97eNO10v8S8Be5
-         KXFLHHKroPHf/gpWwMIdmyppwW1KHGLeWjkFzot1tUck+N8HNFMwF+/K/rChHtpvQd/F
-         mForHU4R1mPb4GWq3f8wL2Z20oEIYqmVUsZBSQjL/eXnKoCROZHgZQoAJ4YfGYklxh98
-         tWu0EYZ3ogL7aeg4ppMPoGyrbc03b3D+KufBQaJqPvOu6fBfvsWfZal3n/2mWNAAoBV7
-         bf72X8f+dVqquoWH6/6N3Q3oSvVMfXnqU8uYG8Dv6DLd5QoYAVKUIgvb0ByyI/+okNXO
-         z5hA==
+        bh=plaafK8UcwoHglDJ6hTuZLsoFF7+2MSMvzUe5uMOCGk=;
+        b=v4XLdDEqzsdAE28HHK05ZfMgyqXLbSL/w2I839bstAQdxF+LfbWU+CUmnPrGkxb6qX
+         qV60Mg7JP4enoETGlQsWECh3qrzpJoPln/J7y4Oyyaqu9m+7oKTptSI6wR+2vcEw0e2q
+         QDqs1Zm5MzXPdmjQ7FNprPOcZCw7J/vpT6FyrgPKNXT88q+w+bbDPodje4jlIoFClrlP
+         QeDgOc+MnPcWXj+GHXk+64c2VOPoOYTXNs2ZUcBTSxM3J6NW8BpDpCtJ4TvdOjFUn4Q4
+         g2RZaAVnbSYhuGIjespsz1AL0/Jak83CuvTZJcjnsATnWjHnoV93KUwrSuJqb2urIoif
+         Opmg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792075900; x=1792680700;
+        d=1e100.net; s=20260707; t=1792075905; x=1792680705;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=YPC2Jcbcaqf9XJGk0jTHq3PvGkavq3LRWDoW0PM2bwU=;
-        b=wkCuwzyA+0umttkaPiBgNokkvkcGFG0Bz9ZxB2XAihkFxAr/sJaZ6UP5Fyyq23iDsY
-         R+zgI/URcXF7XKSuy0UMtMbksn2O1o40GWotdDWZOgxyFbRK6RI5r8XL8Kq/g7R3SFJw
-         A5h2fV6XDQyiTETPyy/8Zn0BA5UBvj2PZ6l3o8Z/vrOvzZJ4PVJMxItRJdz58GfubViu
-         tAmVs06QXq+5+s4bY6ZOZE39GFvj8VciZZlzevpaHaBf4hW1GWL7e+PhH7+alps6phLx
-         LbdPIInHRGYSl0ol41WKsSlS8cZVdoqn4+sTmNCdDR4KH7+gsJAplkaytNZDlJtNhOrF
-         l1xQ==
-X-Forwarded-Encrypted: i=1; AKwUvBxg1cyFaauhrnRDUwwM3yG5qH66T2WFlsyaKZTEFVykqL1AwusUyMe/kYJo72DIOP9+DwQH0Ui1/dk=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJ2YyJP6KMNHaNw/Wwnn/Gd58FbmkNM2MoeETzmj4VuqZe4B/pU
-	ye/pDhyuYTnzQ7hnpkNK2qJNgWTooMjMETKv1I2OJRU2wwKbA7RYXED9Ojxdc4zdZ5w=
-X-Gm-Gg: AYBFou3pBsK4CCnb3j2x9WeVqEwKKFcp9ydl4sdY74TL4ZrFVWNHj/ZNocUzW/v9hCE
-	Dq9rWQHlSH+/b4U6sMbosRyuP3TewgCE+J6cJZgIWzeQb8rwIN290QjY0GydN9aaVXmHegxqcVm
-	0Ehg1+bhQa/QUte1d4ujGAFKCoZ0Po+PQ7jU1AxVZ5CO0qZgZqVtpOvoHRvXU0eyHrNg3349Ns4
-	Pe/oLzgTG+5xHIpaOd3nEDOFezE7etHudCjV0SBkrXymEECdU/z16JmbQRd4KFIQ4/09IGQi/mW
-	nbGMwRnQJdXo0eVgtov1tn1IBUIf/zDTkYgnwB31HrIO3YfdWUg5Ak9CMb1qmxprEmiprQxv3Fh
-	o4OopfuFyOuBiumrc85ahgLareH+HnmeIAbouo2v3xl9+Q2Wvv3A6JJtB5+4DseLA1pv8zpdAM0
-	Z7KyAP6lfR2WZWabFYKDSDR3CyErUWiJSdO/hZoO8+kfbXSkW222ejIsBab1CXQZpaxh29FR0vT
-	CqGf2cydw==
-X-Received: by 2002:a17:907:3e1d:b0:c31:70a5:4c3b with SMTP id a640c23a62f3a-c31a9a2fcccmr1904815366b.3.1792075897931;
-        Thu, 15 Oct 2026 07:51:37 -0700 (PDT)
+        bh=plaafK8UcwoHglDJ6hTuZLsoFF7+2MSMvzUe5uMOCGk=;
+        b=AVxff9FrQgsMCXOa/cypnTVD+Qc1owQuBpx1KWdzUw4Po4ceAw8viSQsyO1VqjZ6kd
+         3Xfl+jFBLiH7FDs3r7QqlUOQSIeRA6eQ0gB072wCZgEmVXbx6L020hfp/wwZ2vvemlYW
+         YrVsZ8Gmbb40yy8HOTB4ih7uCte/jrqA5eGzS/dFQ2joMUoUZdrfqkn5MPHoa+dcMNiU
+         JaZyjdrOZStVnzO6ykV8FzGKPNQ/8ABXkf7oHksdMLxDm8KIUEWNArVkuyJ5XJNnSgjC
+         cHdMT2LS0ZtjouTfC6772550do6Gti6Y4TgZseRMNJE7vRpIW9ejWTP/3fqZwyxDNh9J
+         ohvQ==
+X-Forwarded-Encrypted: i=1; AKwUvByNe6sOW75uJK3ZCx5L4v5uHFHF1LHjUrj5K2EuOoZ3YANhAnc7KzAPfyL2gU6C9AzpdoxpZUxd+Mk=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLc8p5/WcnHtCuZ71hySOCz5/ozHHTgk2qXrflX5RSqyUxEB/p6
+	c3uUDPLeT+I68YDjnv831x2CUSFMLDH5iy9vaMN4VXIxN1yds18uuUfWjEiGVd5M2Fg=
+X-Gm-Gg: AYBFou29ijaIaYgp69Q3IwfRZz2TmX3cQebOILkfpzheLqjw+ZYpkL5dqEBi7D3kCLX
+	cnMDQAM7Mw/3+6SemdTiaiZcQCv7L7YG9HGC3idsxNuuyHzjed6UFb7egBXTFsVUSa4xICxIzSL
+	IGlOsu+YaCIFRx2kei8ahRwJ5H8sHwuB4oBmMCsA4J0YjBNG3NuE4vEjlHyp/tHqdYgwWuYJchn
+	olPdXVOGUqo3oNqyY4dQaRdyZQwjk7PqXZl5hbGi00oXogdVNJC7kv0niqe0J+uRvZCdzFVk1LN
+	zQFT8RBCC3lEpcfb2tzmHMr3ULzDULPMHKkoG8RA7UAAF9tV3i411NvCkQTwZOOzwnX0JCXwVHd
+	m0yJCRmJcFiVoIqRDRBlgERnWmjkrjat5oL7ZDmRnnvpV2jwdy+htLU+83I161eutlg+42YIJda
+	cvUSeaek2Ih6OWym5sM8c6oDg9UTmP1jvmhsMaQHtprSvOc0G8hu7CBQYUvTKtllV6+ao3gEScI
+	s7JyIDlSx4=
+X-Received: by 2002:a05:6402:a252:10b0:6b1:e87d:5b60 with SMTP id 4fb4d7f45d1cf-6b1e87d5d99mr5709715a12.15.1792075905176;
+        Thu, 15 Oct 2026 07:51:45 -0700 (PDT)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c3ed9640497sm137715566b.22.2026.10.15.07.51.37
+        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6b203862c4esm2667364a12.16.2026.10.15.07.51.42
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Oct 2026 07:51:37 -0700 (PDT)
+        Thu, 15 Oct 2026 07:51:43 -0700 (PDT)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -89,9 +89,9 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com,
 	peter.fang@intel.com
-Subject: [PATCH RFC 10/20] ctlv: Prepare event queue support
-Date: Thu, 15 Oct 2026 16:50:43 +0200
-Message-ID: <20261015145053.3664509-11-jiri@resnulli.us>
+Subject: [PATCH RFC 11/20] ctlv: Prepare runtime introspection
+Date: Thu, 15 Oct 2026 16:50:44 +0200
+Message-ID: <20261015145053.3664509-12-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261015145053.3664509-1-jiri@resnulli.us>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
@@ -105,975 +105,550 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Add per-open subscriptions, bounded event queues and event creation for
-CTLV families. Add the generated root family kernel bindings now that their
-message and event helpers are available.
+Add handlers that expose registered families, effective operations and
+message schemas through the CTLV root family.
 
-The event and generated root objects can be compile-checked here.
-CONFIG_CTLV remains unwired until device dispatch completes the module.
+The introspection object can be compile-checked here. CONFIG_CTLV remains
+unwired until device dispatch completes the module.
 
 Assisted-by: Cursor: GPT-5.6 Sol
 Assisted-by: Cursor: Claude Opus 5.5
 Signed-off-by: Jiri Pirko <jiri@nvidia.com>
 ---
- drivers/ctlv/Makefile       |   2 +-
- drivers/ctlv/device.h       |  38 ++
- drivers/ctlv/event.c        | 713 ++++++++++++++++++++++++++++++++++++
- drivers/ctlv/event.h        |  69 ++++
- drivers/ctlv/internal.h     |   7 +
- include/linux/ctlv.h        |  27 ++
- include/linux/ctlv_family.h |  11 +
- 7 files changed, 866 insertions(+), 1 deletion(-)
- create mode 100644 drivers/ctlv/device.h
- create mode 100644 drivers/ctlv/event.c
- create mode 100644 drivers/ctlv/event.h
+ drivers/ctlv/Makefile        |   3 +-
+ drivers/ctlv/introspection.c | 512 +++++++++++++++++++++++++++++++++++
+ 2 files changed, 514 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/ctlv/introspection.c
 
 diff --git a/drivers/ctlv/Makefile b/drivers/ctlv/Makefile
-index 4455062f83d7..e631ccd68994 100644
+index e631ccd68994..4d09fe26c1d0 100644
 --- a/drivers/ctlv/Makefile
 +++ b/drivers/ctlv/Makefile
-@@ -1,4 +1,4 @@
+@@ -1,4 +1,5 @@
  # SPDX-License-Identifier: GPL-2.0
  obj-$(CONFIG_CTLV) += ctlv.o
  
--ctlv-y += blob.o blob_desc.o builder.o message.o schema.o
-+ctlv-y += blob.o blob_desc.o builder.o event.o message.o schema.o
-diff --git a/drivers/ctlv/device.h b/drivers/ctlv/device.h
+-ctlv-y += blob.o blob_desc.o builder.o event.o message.o schema.o
++ctlv-y += blob.o blob_desc.o builder.o event.o introspection.o message.o \
++	  schema.o
+diff --git a/drivers/ctlv/introspection.c b/drivers/ctlv/introspection.c
 new file mode 100644
-index 000000000000..916a346c30ed
+index 000000000000..7460dfa6d661
 --- /dev/null
-+++ b/drivers/ctlv/device.h
-@@ -0,0 +1,38 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+#ifndef _CTLV_DEVICE_H
-+#define _CTLV_DEVICE_H
-+
-+#include <linux/device.h>
-+#include <linux/list.h>
-+#include <linux/spinlock.h>
-+#include <linux/types.h>
-+#include <linux/wait.h>
-+
-+struct ctlv_event_record;
-+struct ctlv_family;
-+struct ctlv_op_entry;
-+
-+struct ctlv_device {
-+	struct device dev;
-+
-+	const struct ctlv_family *family;
-+
-+	struct ctlv_op_entry *ops;
-+	u32 ops_count;
-+
-+	/* Everything about the queues, and nothing family code runs under. */
-+	spinlock_t events_lock;
-+	struct list_head files;
-+	bool dead_announced;
-+	wait_queue_head_t event_context_wait;
-+	u32 active_event_contexts;
-+	bool events_live;
-+	u32 events_count;
-+	const struct ctlv_op_entry *overflow_op;
-+	const struct ctlv_op_entry *removed_op;
-+	u32 queue_min;
-+	u32 queue_reserved;
-+	u32 queue_default;
-+};
-+
-+#endif /* _CTLV_DEVICE_H */
-diff --git a/drivers/ctlv/event.c b/drivers/ctlv/event.c
-new file mode 100644
-index 000000000000..0f68d33e031c
---- /dev/null
-+++ b/drivers/ctlv/event.c
-@@ -0,0 +1,713 @@
++++ b/drivers/ctlv/introspection.c
+@@ -0,0 +1,512 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
 + *
-+ * Per-open event queues and loss reporting.
++ * Root-family discovery queries and their fragmentation.
 + */
 +
 +#include <linux/bitmap.h>
-+#include <linux/build_bug.h>
++#include <linux/bits.h>
++#include <linux/cleanup.h>
 +#include <linux/ctlv.h>
 +#include <linux/ctlv_gen.h>
-+#include <linux/err.h>
 +#include <linux/errno.h>
-+#include <linux/list.h>
-+#include <linux/minmax.h>
-+#include <linux/overflow.h>
-+#include <linux/poll.h>
-+#include <linux/sizes.h>
 +#include <linux/slab.h>
 +#include <linux/spinlock.h>
-+#include <linux/string.h>
-+#include <linux/uaccess.h>
-+#include <linux/wait.h>
++#include <linux/types.h>
 +
-+#include "builder.h"
 +#include "device.h"
-+#include "event.h"
 +#include "internal.h"
-+#include "message.h"
 +#include "schema.h"
 +
-+/* Header and root form one naturally aligned copy range. */
-+static_assert(offsetof(struct ctlv_event_record, root) ==
-+	      offsetof(struct ctlv_event_record, hdr) + sizeof(struct ctlv_event_hdr));
-+static_assert(sizeof(struct ctlv_event_hdr) % CTLV_ALIGNTO == 0);
++/* A cursor packs the record and member where fragmentation resumes. */
++#define CTLV_INTROSPECTION_MEMBER_SHIFT 48
++#define CTLV_INTROSPECTION_RECORD_MASK GENMASK_ULL(CTLV_INTROSPECTION_MEMBER_SHIFT - 1, 0)
 +
-+static u32 ctlv_event_len(const struct ctlv_op_entry *op)
++struct ctlv_introspection_dump_position {
++	u64 record;
++	u32 member;
++};
++
++static void ctlv_introspection_dump_resume(struct ctlv_introspection_dump_position *pos, u64 cursor)
 +{
-+	return op->sizes.event_record_max_len;
++	pos->record = cursor & CTLV_INTROSPECTION_RECORD_MASK;
++	pos->member = cursor >> CTLV_INTROSPECTION_MEMBER_SHIFT;
 +}
 +
-+int ctlv_event_sizes(struct ctlv_device *ctlvdev)
++static u64 ctlv_introspection_dump_cursor(const struct ctlv_introspection_dump_position *pos)
 +{
-+	u32 largest = 0;
-+	u32 index;
++	return pos->record | (u64)pos->member << CTLV_INTROSPECTION_MEMBER_SHIFT;
++}
 +
-+	for (index = 0; index < ctlvdev->ops_count; index++) {
-+		const struct ctlv_op_entry *op = &ctlvdev->ops[index];
++/* The immutable root-first chain always has generation zero. */
++static bool ctlv_introspection_family_record(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
++					     const struct ctlv_family *family,
++					     struct ctlv_introspection_dump_position *pos)
++{
++	const struct ctlv_family_schema *schema = family->schema;
 +
-+		if (op->schema->type != CTLV_OP_TYPE_EVENT)
-+			continue;
-+		largest = max(largest, ctlv_event_len(op));
-+		if (op->schema->op_id == CTLV_OP_EVENT_OVERFLOW)
-+			ctlvdev->overflow_op = op;
-+		else if (op->schema->op_id == CTLV_OP_DEVICE_REMOVED)
-+			ctlvdev->removed_op = op;
++	if (!ctlv_family_entry_start(reply, entry))
++		return false;
++	if (pos->member == 0) {
++		if (!ctlv_family_id_put(entry, schema->family_id))
++			return false;
++		pos->member = 1;
 +	}
-+	/* Every chain inherits the root, so every device has both of them. */
-+	if (WARN_ON_ONCE(!ctlvdev->overflow_op || !ctlvdev->removed_op))
-+		return -EINVAL;
-+
-+	ctlvdev->queue_reserved =
-+		ctlv_event_len(ctlvdev->overflow_op) + ctlv_event_len(ctlvdev->removed_op);
-+	ctlvdev->queue_min = largest + ctlvdev->queue_reserved;
-+	if (ctlvdev->queue_min > CTLV_MAX_EVENT_QUEUE_LEN)
-+		return -EMSGSIZE;
-+	ctlvdev->queue_default =
-+		clamp(max(SZ_256K, 4 * largest), ctlvdev->queue_min, CTLV_MAX_EVENT_QUEUE_LEN);
-+	return 0;
-+}
-+
-+void ctlv_event_device_init(struct ctlv_device *ctlvdev)
-+{
-+	spin_lock_init(&ctlvdev->events_lock);
-+	INIT_LIST_HEAD(&ctlvdev->files);
-+	init_waitqueue_head(&ctlvdev->event_context_wait);
-+}
-+
-+void ctlv_event_contexts_start(struct ctlv_device *ctlvdev)
-+{
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (WARN_ON_ONCE(ctlvdev->events_live || ctlvdev->active_event_contexts))
-+		return;
-+	ctlvdev->events_live = true;
-+}
-+
-+void ctlv_event_contexts_stop(struct ctlv_device *ctlvdev)
-+{
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	ctlvdev->events_live = false;
-+}
-+
-+static bool ctlv_event_contexts_idle(struct ctlv_device *ctlvdev)
-+{
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	return !ctlvdev->active_event_contexts;
-+}
-+
-+void ctlv_event_contexts_wait(struct ctlv_device *ctlvdev)
-+{
-+	wait_event(ctlvdev->event_context_wait, ctlv_event_contexts_idle(ctlvdev));
-+}
-+
-+/* @room bounds storage from the header through the root. */
-+static struct ctlv_event_record *ctlv_event_record_alloc(u32 room, gfp_t gfp)
-+{
-+	struct ctlv_event_record *rec;
-+
-+	rec = kmalloc(struct_size(rec, root, room - sizeof(rec->hdr)), gfp);
-+	if (!rec)
-+		return NULL;
-+	INIT_LIST_HEAD(&rec->node);
-+	rec->len = 0;
-+	rec->room = room;
-+	rec->reserved = false;
-+	return rec;
-+}
-+
-+/* Core events use root schemas and may outlive the device family. */
-+static void ctlv_event_record_build(struct ctlv_op_ctx *ctx, struct ctlv_event_record *rec,
-+				    const struct ctlv_op_entry *op)
-+{
-+	ctx->family = &ctlv_family;
-+	ctx->op = op;
-+	ctlv_message_output_init(&ctx->output, ctx, rec->root, rec->room - sizeof(rec->hdr),
-+				 &op->schema->reply);
-+	ctlv_message_root(&ctx->output_root, &ctx->output);
-+	ctx->deepest = &ctx->output_root;
-+}
-+
-+/* The padding is written rather than left as the allocation found it. */
-+static void ctlv_event_record_done(struct ctlv_op_ctx *ctx, struct ctlv_event_record *rec)
-+{
-+	u32 root_len = ctx->output.root->len;
-+
-+	rec->len = sizeof(rec->hdr) + CTLV_ALIGN(root_len);
-+	rec->hdr.length = rec->len;
-+	memset(rec->root + root_len, 0, rec->len - sizeof(rec->hdr) - root_len);
-+}
-+
-+static struct ctlv_event_record *ctlv_event_record_reserve(struct ctlv_device *ctlvdev,
-+							   const struct ctlv_op_entry *op)
-+{
-+	struct ctlv_event_record *rec;
-+
-+	rec = ctlv_event_record_alloc(ctlv_event_len(op), GFP_KERNEL_ACCOUNT);
-+	if (!rec)
-+		return NULL;
-+	rec->hdr.flags = 0;
-+	rec->hdr.op_id = op->schema->op_id;
-+	rec->reserved = true;
-+	return rec;
-+}
-+
-+int ctlv_event_file_init(struct ctlv_file *cfile)
-+{
-+	struct ctlv_device *ctlvdev = cfile->ctlvdev;
-+	struct ctlv_op_ctx ctx = { .ctlvdev = ctlvdev };
-+
-+	INIT_LIST_HEAD(&cfile->node);
-+	INIT_LIST_HEAD(&cfile->records);
-+	init_waitqueue_head(&cfile->readers);
-+	mutex_init(&cfile->reading);
-+	cfile->queue_len = ctlvdev->queue_default;
-+	cfile->queue_used = ctlvdev->queue_reserved;
-+
-+	cfile->subscribed = bitmap_zalloc(ctlvdev->events_count, GFP_KERNEL_ACCOUNT);
-+	cfile->overflow = ctlv_event_record_reserve(ctlvdev, ctlvdev->overflow_op);
-+	cfile->removed = ctlv_event_record_reserve(ctlvdev, ctlvdev->removed_op);
-+	if (!cfile->subscribed || !cfile->overflow || !cfile->removed) {
-+		ctlv_event_file_exit(cfile);
-+		return -ENOMEM;
++	if (pos->member == 1) {
++		if (!ctlv_family_name_put(entry, schema->name))
++			return false;
++		pos->member = 2;
 +	}
-+	ctlv_event_record_build(&ctx, cfile->removed, ctlvdev->removed_op);
-+	ctlv_event_record_done(&ctx, cfile->removed);
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	list_add_tail(&cfile->node, &ctlvdev->files);
-+	return 0;
++	ctlv_nest_end(entry);
++	pos->member = 0;
++	return true;
 +}
 +
-+void ctlv_event_file_exit(struct ctlv_file *cfile)
++int ctlv_families_dump_query(void *priv, struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
++			     struct ctlv_cursor *reply)
 +{
-+	struct ctlv_event_record *rec, *next;
++	const struct ctlv_family *family = ctx->family;
++	u32 levels = ctlv_family_levels(family);
++	struct ctlv_cursor entry;
++	struct ctlv_introspection_dump_position pos;
 +
-+	scoped_guard(spinlock, &cfile->ctlvdev->events_lock)
-+		list_del_init(&cfile->node);
++	ctlv_introspection_dump_resume(&pos, ctlv_op_query_cursor(ctx));
++	for (; pos.record < levels; pos.record++) {
++		const struct ctlv_family *ancestor =
++			ctlv_family_ancestor(family, levels - 1 - pos.record);
 +
-+	/* Unreachable records are ours; reserved records free by identity. */
-+	list_for_each_entry_safe(rec, next, &cfile->records, node)
-+		if (!rec->reserved)
-+			kfree(rec);
-+	kfree(cfile->overflow);
-+	kfree(cfile->removed);
-+	bitmap_free(cfile->subscribed);
-+	mutex_destroy(&cfile->reading);
-+}
-+
-+static void ctlv_event_queue_add(struct ctlv_file *cfile, struct ctlv_event_record *rec)
-+{
-+	list_add_tail(&rec->node, &cfile->records);
-+	wake_up_interruptible(&cfile->readers);
-+}
-+
-+static void ctlv_event_queue_link(struct ctlv_file *cfile, struct ctlv_event_record *rec)
-+{
-+	rec->hdr.sequence = ++cfile->sequence;
-+	ctlv_event_queue_add(cfile, rec);
-+}
-+
-+/* One reserved marker aggregates each contiguous drop epoch. */
-+static void ctlv_event_queue_dropped(struct ctlv_file *cfile, u64 sequence)
-+{
-+	if (!cfile->overflowing) {
-+		cfile->overflowing = true;
-+		cfile->first_dropped = sequence;
-+		cfile->dropped = 0;
-+		if (!cfile->reading_overflow)
-+			ctlv_event_queue_add(cfile, cfile->overflow);
++		if (!ctlv_introspection_family_record(reply, &entry, ancestor, &pos))
++			return ctlv_op_query_more(ctx, 0, ctlv_introspection_dump_cursor(&pos));
 +	}
-+	cfile->last_dropped = sequence;
-+	cfile->dropped++;
-+}
-+
-+/* Delivered and dropped subscribed events both consume a sequence number. */
-+static void ctlv_event_queue_event(struct ctlv_file *cfile, const struct ctlv_op_entry *op,
-+				   struct ctlv_event_record *rec)
-+{
-+	u64 sequence;
-+
-+	lockdep_assert_held(&cfile->ctlvdev->events_lock);
-+	if (!test_bit(op->event_index, cfile->subscribed))
-+		return;
-+	sequence = ++cfile->sequence;
-+	if (cfile->overflowing || !rec || cfile->queue_used + rec->len > cfile->queue_len) {
-+		ctlv_event_queue_dropped(cfile, sequence);
-+		return;
-+	}
-+	cfile->queue_used += rec->len;
-+	rec->hdr.sequence = sequence;
-+	list_move_tail(&rec->node, &cfile->records);
-+	wake_up_interruptible(&cfile->readers);
-+}
-+
-+static void ctlv_event_free(struct ctlv_op_ctx *ctx);
-+
-+struct ctlv_op_ctx *ctlv_event_create(struct ctlv_device *ctlvdev, u64 op_id,
-+				      struct ctlv_cursor **reply, gfp_t gfp)
-+{
-+	const struct ctlv_op_entry *op;
-+	struct ctlv_op_ctx *ctx;
-+	void *out;
-+	u32 room;
-+	int ret;
-+
-+	ctx = kzalloc_obj(*ctx, gfp);
-+	if (!ctx)
-+		return ERR_PTR(-ENOMEM);
-+	scoped_guard(spinlock, &ctlvdev->events_lock) {
-+		const struct ctlv_family *family;
-+
-+		if (!ctlvdev->events_live) {
-+			ret = -ENODEV;
-+			goto err_free_ctx;
-+		}
-+		if (WARN_ON_ONCE(ctlvdev->active_event_contexts == U32_MAX)) {
-+			ret = -EOVERFLOW;
-+			goto err_free_ctx;
-+		}
-+		/* Admission pins the op until emit or abort. */
-+		family = READ_ONCE(ctlvdev->family);
-+		if (!family) {
-+			ret = -ENODEV;
-+			goto err_free_ctx;
-+		}
-+		get_device(&ctlvdev->dev);
-+		ctlvdev->active_event_contexts++;
-+		ctx->ctlvdev = ctlvdev;
-+		ctx->family = family;
-+	}
-+
-+	op = ctlv_op_find(ctlvdev, op_id);
-+	if (WARN_ON_ONCE(!op) || WARN_ON_ONCE(op->schema->type != CTLV_OP_TYPE_EVENT)) {
-+		ret = -EINVAL;
-+		goto err_put_ctx;
-+	}
-+	room = ctlv_event_len(op) - sizeof(struct ctlv_event_hdr);
-+	out = kmalloc(room, gfp);
-+	if (!out) {
-+		ret = -ENOMEM;
-+		goto err_put_ctx;
-+	}
-+
-+	ctx->gfp = gfp;
-+	ctx->op = op;
-+	ctlv_message_output_init(&ctx->output, ctx, out, room, &op->schema->reply);
-+	ctlv_message_root(&ctx->output_root, &ctx->output);
-+	ctx->deepest = &ctx->output_root;
-+	*reply = &ctx->output_root;
-+	return ctx;
-+
-+err_put_ctx:
-+	ctlv_event_free(ctx);
-+	return ERR_PTR(ret);
-+err_free_ctx:
-+	kfree(ctx);
-+	return ERR_PTR(ret);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_event_create, "CTLV");
-+
-+static void ctlv_event_free(struct ctlv_op_ctx *ctx)
-+{
-+	struct ctlv_device *ctlvdev = ctx->ctlvdev;
-+	bool wake;
-+
-+	kfree(ctx->output.root);
-+	kfree(ctx);
-+
-+	scoped_guard(spinlock, &ctlvdev->events_lock) {
-+		if (WARN_ON_ONCE(!ctlvdev->active_event_contexts))
-+			wake = true;
-+		else
-+			wake = !--ctlvdev->active_event_contexts;
-+	}
-+	if (wake)
-+		wake_up_all(&ctlvdev->event_context_wait);
-+	put_device(&ctlvdev->dev);
-+}
-+
-+/* Reject an incomplete or schema-invalid family event before queueing. */
-+static int ctlv_event_finish(struct ctlv_op_ctx *ctx)
-+{
-+	struct ctlv_error refused = {};
-+
-+	/* Whatever poisoned it has warned about it already. */
-+	if (ctx->output.poison)
-+		return ctx->output.poison;
-+	if (WARN_ON_ONCE(ctx->deepest != &ctx->output_root)) {
-+		/* A cursor of a frame that has returned is not followed. */
-+		ctx->deepest = &ctx->output_root;
-+		return -EINVAL;
-+	}
-+	if (WARN_ON_ONCE(ctlv_schema_validate(&ctx->output, &refused)))
-+		return -EINVAL;
-+	return 0;
-+}
-+
-+/* Allocate subscriber records before taking queue spinlocks. */
-+static void ctlv_event_copies(struct ctlv_op_ctx *ctx, u32 len, struct list_head *spare, u32 wanted)
-+{
-+	const struct ctlv_attr *root = ctx->output.root;
-+	struct ctlv_event_record *rec;
-+
-+	while (wanted--) {
-+		rec = ctlv_event_record_alloc(len, ctx->gfp);
-+		if (!rec)
-+			return;
-+		rec->len = len;
-+		rec->hdr.length = len;
-+		rec->hdr.flags = 0;
-+		rec->hdr.op_id = ctx->op->schema->op_id;
-+		/* Padded, since what is copied out is the whole record. */
-+		memcpy_and_pad(rec->root, len - sizeof(rec->hdr), root, root->len, 0);
-+		list_add_tail(&rec->node, spare);
-+	}
-+}
-+
-+static void ctlv_event_deliver(struct ctlv_op_ctx *ctx, struct list_head *spare)
-+{
-+	struct ctlv_device *ctlvdev = ctx->ctlvdev;
-+	struct ctlv_event_record *rec;
-+	struct ctlv_file *cfile;
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (ctlvdev->dead_announced)
-+		return;
-+	list_for_each_entry(cfile, &ctlvdev->files, node) {
-+		rec = list_first_entry_or_null(spare, struct ctlv_event_record, node);
-+		ctlv_event_queue_event(cfile, ctx->op, rec);
-+	}
-+}
-+
-+int ctlv_event_emit(struct ctlv_op_ctx *ctx)
-+{
-+	struct ctlv_device *ctlvdev = ctx->ctlvdev;
-+	struct ctlv_event_record *rec, *next;
-+	struct ctlv_file *cfile;
-+	u32 len, wanted = 0;
-+	LIST_HEAD(spare);
-+	int ret;
-+
-+	if (WARN_ON_ONCE(ctx->file))
-+		return -EINVAL;
-+	ret = ctlv_event_finish(ctx);
-+	if (ret)
-+		goto out_free;
-+
-+	len = sizeof(struct ctlv_event_hdr) + CTLV_ALIGN(ctx->output.root->len);
-+	scoped_guard(spinlock, &ctlvdev->events_lock) {
-+		if (ctlvdev->dead_announced)
-+			goto out_free;
-+		list_for_each_entry(cfile, &ctlvdev->files, node)
-+			if (test_bit(ctx->op->event_index, cfile->subscribed))
-+				wanted++;
-+	}
-+	if (wanted) {
-+		ctlv_event_copies(ctx, len, &spare, wanted);
-+		ctlv_event_deliver(ctx, &spare);
-+		list_for_each_entry_safe(rec, next, &spare, node)
-+			kfree(rec);
-+	}
-+
-+out_free:
-+	ctlv_event_free(ctx);
-+	return ret;
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_event_emit, "CTLV");
-+
-+void ctlv_event_abort(struct ctlv_op_ctx *ctx)
-+{
-+	if (WARN_ON_ONCE(ctx->file))
-+		return;
-+	ctlv_event_free(ctx);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_event_abort, "CTLV");
-+
-+void ctlv_event_lost(struct ctlv_device *ctlvdev, u64 op_id)
-+{
-+	const struct ctlv_op_entry *op;
-+	struct ctlv_file *cfile;
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (!ctlvdev->events_live || ctlvdev->dead_announced)
-+		return;
-+	op = ctlv_op_find(ctlvdev, op_id);
-+	if (WARN_ON_ONCE(!op) || WARN_ON_ONCE(op->schema->type != CTLV_OP_TYPE_EVENT))
-+		return;
-+	list_for_each_entry(cfile, &ctlvdev->files, node)
-+		ctlv_event_queue_event(cfile, op, NULL);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_event_lost, "CTLV");
-+
-+void ctlv_event_op_changed(struct ctlv_device *ctlvdev, const struct ctlv_op_entry *op,
-+			   bool disabled, u64 generation)
-+{
-+	struct ctlv_cursor *reply;
-+	struct ctlv_op_ctx *ctx;
-+
-+	ctx = ctlv_op_changed_create(ctlvdev, &reply, GFP_NOWAIT);
-+	if (IS_ERR(ctx)) {
-+		ctlv_event_lost(ctlvdev, CTLV_OP_OP_CHANGED);
-+		return;
-+	}
-+	ctlv_op_id_put(reply, op->schema->op_id);
-+	ctlv_op_disabled_put(reply, disabled);
-+	ctlv_op_state_generation_put(reply, generation);
-+	ctlv_event_emit(ctx);
-+}
-+
-+void ctlv_event_device_dead(struct ctlv_device *ctlvdev)
-+{
-+	struct ctlv_file *cfile;
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (WARN_ON_ONCE(ctlvdev->dead_announced))
-+		return;
-+	list_for_each_entry(cfile, &ctlvdev->files, node)
-+		ctlv_event_queue_link(cfile, cfile->removed);
-+	/* Publish dead only after terminal records are queued. */
-+	ctlvdev->dead_announced = true;
-+	list_for_each_entry(cfile, &ctlvdev->files, node)
-+		wake_up_interruptible(&cfile->readers);
-+}
-+
-+/* Materialize the final loss count when taking the marker. */
-+static void ctlv_event_overflow_fill(struct ctlv_file *cfile)
-+{
-+	struct ctlv_device *ctlvdev = cfile->ctlvdev;
-+	struct ctlv_op_ctx ctx = { .ctlvdev = ctlvdev };
-+	struct ctlv_cursor *root;
-+
-+	ctlv_event_record_build(&ctx, cfile->overflow, ctlvdev->overflow_op);
-+	cfile->overflow->hdr.sequence = cfile->first_dropped;
-+	root = &ctx.output_root;
-+	ctlv_event_first_sequence_put(root, cfile->first_dropped);
-+	ctlv_event_last_sequence_put(root, cfile->last_dropped);
-+	ctlv_event_dropped_count_put(root, cfile->dropped);
-+	/* Reserved storage is the most this event can be, so it all fits. */
-+	WARN_ON_ONCE(ctx.output.poison);
-+	ctlv_event_record_done(&ctx, cfile->overflow);
-+
-+	cfile->reading_overflow = true;
-+	cfile->overflowing = false;
-+	cfile->first_reported = cfile->first_dropped;
-+	cfile->last_reported = cfile->last_dropped;
-+	cfile->dropped_reported = cfile->dropped;
-+	cfile->dropped = 0;
-+}
-+
-+static struct ctlv_event_record *ctlv_event_queue_take(struct ctlv_file *cfile)
-+{
-+	struct ctlv_event_record *rec;
-+
-+	guard(spinlock)
-+		(&cfile->ctlvdev->events_lock);
-+	rec = list_first_entry_or_null(&cfile->records, struct ctlv_event_record, node);
-+	if (!rec)
-+		return NULL;
-+	list_del_init(&rec->node);
-+	if (rec == cfile->overflow)
-+		ctlv_event_overflow_fill(cfile);
-+	else if (!rec->reserved)
-+		cfile->queue_used -= rec->len;
-+	return rec;
-+}
-+
-+/* Restore an undelivered record, merging an overflow marker's epoch. */
-+static void ctlv_event_queue_untake(struct ctlv_file *cfile, struct ctlv_event_record *rec)
-+{
-+	guard(spinlock)
-+		(&cfile->ctlvdev->events_lock);
-+	if (rec == cfile->overflow) {
-+		cfile->reading_overflow = false;
-+		cfile->first_dropped = cfile->first_reported;
-+		if (!cfile->overflowing)
-+			cfile->last_dropped = cfile->last_reported;
-+		cfile->dropped += cfile->dropped_reported;
-+		cfile->overflowing = true;
-+	} else if (!rec->reserved) {
-+		cfile->queue_used += rec->len;
-+	}
-+	list_add(&rec->node, &cfile->records);
-+}
-+
-+/* Requeue a marker if another loss epoch opened while it was out. */
-+static void ctlv_event_queue_consumed(struct ctlv_file *cfile, struct ctlv_event_record *rec)
-+{
-+	if (rec == cfile->overflow) {
-+		guard(spinlock)
-+			(&cfile->ctlvdev->events_lock);
-+		cfile->reading_overflow = false;
-+		if (cfile->overflowing)
-+			ctlv_event_queue_add(cfile, rec);
-+		return;
-+	}
-+	if (!rec->reserved)
-+		kfree(rec);
-+}
-+
-+static bool ctlv_event_waiting(struct ctlv_file *cfile)
-+{
-+	struct ctlv_device *ctlvdev = cfile->ctlvdev;
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	return !list_empty(&cfile->records) || ctlvdev->dead_announced;
-+}
-+
-+ssize_t ctlv_event_file_read(struct ctlv_file *cfile, char __user *buf, size_t len, bool blocking)
-+{
-+	struct ctlv_device *ctlvdev = cfile->ctlvdev;
-+	struct ctlv_event_record *rec;
-+	ssize_t ret;
-+
-+	/* dup() and SCM_RIGHTS share one serialized queue. */
-+	if (mutex_lock_interruptible(&cfile->reading))
-+		return -ERESTARTSYS;
-+
-+	while (!(rec = ctlv_event_queue_take(cfile))) {
-+		/* Drained, and the device is gone. */
-+		if (READ_ONCE(ctlvdev->dead_announced)) {
-+			ret = -ENODEV;
-+			goto out_unlock;
-+		}
-+		if (!blocking) {
-+			ret = -EAGAIN;
-+			goto out_unlock;
-+		}
-+		ret = wait_event_interruptible(cfile->readers, ctlv_event_waiting(cfile));
-+		if (ret) {
-+			ret = -ERESTARTSYS;
-+			goto out_unlock;
-+		}
-+	}
-+
-+	if (rec->len > len) {
-+		ctlv_event_queue_untake(cfile, rec);
-+		ret = -EMSGSIZE;
-+		goto out_unlock;
-+	}
-+	if (copy_to_user(buf, &rec->hdr, rec->len)) {
-+		ctlv_event_queue_untake(cfile, rec);
-+		ret = -EFAULT;
-+		goto out_unlock;
-+	}
-+	ret = rec->len;
-+	ctlv_event_queue_consumed(cfile, rec);
-+
-+out_unlock:
-+	mutex_unlock(&cfile->reading);
-+	return ret;
-+}
-+
-+__poll_t ctlv_event_file_poll(struct ctlv_file *cfile, struct file *filp,
-+			      struct poll_table_struct *wait)
-+{
-+	struct ctlv_device *ctlvdev = cfile->ctlvdev;
-+	__poll_t mask = 0;
-+
-+	poll_wait(filp, &cfile->readers, wait);
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (!list_empty(&cfile->records))
-+		mask |= EPOLLIN | EPOLLRDNORM;
-+	/* Which a reader sees beside what it has not drained yet. */
-+	if (ctlvdev->dead_announced)
-+		mask |= EPOLLHUP;
-+	return mask;
-+}
-+
-+/* Validate every ID before changing any subscription. */
-+static const struct ctlv_op_entry *ctlv_event_subscription_find(struct ctlv_device *ctlvdev,
-+								u64 op_id)
-+{
-+	const struct ctlv_op_entry *op = ctlv_op_find(ctlvdev, op_id);
-+
-+	return op && op->schema->type == CTLV_OP_TYPE_EVENT ? op : NULL;
-+}
-+
-+static int ctlv_event_subscriptions_set(struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
-+					struct ctlv_input_ref ref, bool subscribe)
-+{
-+	struct ctlv_device *ctlvdev = ctx->ctlvdev;
-+	struct ctlv_cursor attr;
-+
-+	for (ctlv_input_attr(&attr, request, ref); ctlv_attr_ok(&attr); ctlv_attr_next(&attr)) {
-+		u64 op_id = ctlv_attr_u64(&attr);
-+
-+		if (!ctlv_event_subscription_find(ctlvdev, op_id))
-+			return ctlv_op_errorf(ctx, -EOPNOTSUPP,
-+					      "op %#llx is not an event this device emits",
-+					      (unsigned long long)op_id);
-+	}
-+
-+	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	for (ctlv_input_attr(&attr, request, ref); ctlv_attr_ok(&attr); ctlv_attr_next(&attr)) {
-+		u64 op_id = ctlv_attr_u64(&attr);
-+		const struct ctlv_op_entry *op = ctlv_event_subscription_find(ctlvdev, op_id);
-+
-+		if (subscribe)
-+			set_bit(op->event_index, ctx->file->subscribed);
-+		else
-+			clear_bit(op->event_index, ctx->file->subscribed);
-+	}
-+	return 0;
-+}
-+
-+int ctlv_subscriptions_add_action(void *priv, struct ctlv_op_ctx *ctx,
-+				  const struct ctlv_cursor *request, struct ctlv_cursor *reply)
-+{
-+	return ctlv_event_subscriptions_set(ctx, request, ctlv_subscriptions_add_event_op_id_ref(),
-+					    true);
-+}
-+
-+int ctlv_subscriptions_remove_action(void *priv, struct ctlv_op_ctx *ctx,
-+				     const struct ctlv_cursor *request, struct ctlv_cursor *reply)
-+{
-+	return ctlv_event_subscriptions_set(ctx, request,
-+					    ctlv_subscriptions_remove_event_op_id_ref(), false);
-+}
-+
-+int ctlv_event_queue_get_query(void *priv, struct ctlv_op_ctx *ctx,
-+			       const struct ctlv_cursor *request, struct ctlv_cursor *reply)
-+{
-+	struct ctlv_file *cfile = ctx->file;
-+
-+	scoped_guard(spinlock, &ctx->ctlvdev->events_lock) {
-+		ctlv_event_queue_len_put(reply, cfile->queue_len);
-+		ctlv_event_queue_used_put(reply, cfile->queue_used);
-+	}
-+	/* One state, whole, so there is never a second fragment of it. */
 +	return ctlv_op_query_done(ctx, 0);
 +}
 +
-+/* Resizing never discards queued records or reserved capacity. */
-+int ctlv_event_queue_set_action(void *priv, struct ctlv_op_ctx *ctx,
-+				const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++/* Snapshot published-op state and generation once per fragment. */
++struct ctlv_op_snapshot {
++	unsigned long *disabled;
++	u64 generation;
++};
++
++static int ctlv_introspection_snapshot_take(struct ctlv_device *ctlvdev,
++					    struct ctlv_op_snapshot *snapshot)
 +{
-+	struct ctlv_device *ctlvdev = ctx->ctlvdev;
-+	u64 len = ctlv_event_queue_set_event_queue_len_get(request);
-+
-+	if (len < ctlvdev->queue_min || len > CTLV_MAX_EVENT_QUEUE_LEN)
-+		return ctlv_op_errorf(ctx, -EINVAL, "event queue length %llu is outside %u..%u",
-+				      (unsigned long long)len, ctlvdev->queue_min,
-+				      CTLV_MAX_EVENT_QUEUE_LEN);
-+
++	if (ctlvdev->dynamic_ops_count) {
++		snapshot->disabled = bitmap_zalloc(ctlvdev->dynamic_ops_count, GFP_KERNEL);
++		if (!snapshot->disabled)
++			return -ENOMEM;
++	}
 +	guard(spinlock)
-+		(&ctlvdev->events_lock);
-+	if (len < ctx->file->queue_used)
-+		return ctlv_op_error(ctx, -EBUSY,
-+				     "event queue contains more data than the requested limit");
-+	ctx->file->queue_len = len;
++		(&ctlvdev->transition_lock);
++	snapshot->generation = ctlvdev->state_generation;
++	if (snapshot->disabled)
++		bitmap_copy(snapshot->disabled, ctlvdev->disabled, ctlvdev->dynamic_ops_count);
 +	return 0;
 +}
-diff --git a/drivers/ctlv/event.h b/drivers/ctlv/event.h
-new file mode 100644
-index 000000000000..80898c770034
---- /dev/null
-+++ b/drivers/ctlv/event.h
-@@ -0,0 +1,69 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+#ifndef _CTLV_EVENT_H
-+#define _CTLV_EVENT_H
 +
-+#include <linux/gfp_types.h>
-+#include <linux/list.h>
-+#include <linux/mutex.h>
-+#include <linux/poll.h>
-+#include <linux/types.h>
-+#include <linux/wait.h>
-+
-+#include <uapi/linux/ctlv.h>
-+
-+struct ctlv_device;
-+struct ctlv_op_entry;
-+struct file;
-+struct poll_table_struct;
-+
-+struct ctlv_event_record {
-+	struct list_head node;
-+	u32 len;
-+	u32 room;
-+	bool reserved;
-+	struct ctlv_event_hdr hdr;
-+	u8 root[] __aligned(8);
-+};
-+
-+struct ctlv_file {
-+	struct ctlv_device *ctlvdev;
-+	struct list_head node;
-+
-+	struct list_head records;
-+	u32 queue_len;
-+	u32 queue_used;
-+	u64 sequence;
-+	unsigned long *subscribed;
-+	struct ctlv_event_record *overflow;
-+	struct ctlv_event_record *removed;
-+	bool overflowing;
-+	u64 first_dropped;
-+	u64 last_dropped;
-+	u64 dropped;
-+	bool reading_overflow;
-+	u64 first_reported;
-+	u64 last_reported;
-+	u64 dropped_reported;
-+
-+	wait_queue_head_t readers;
-+	/* One reader of this description at a time, however many hold it. */
-+	struct mutex reading;
-+};
-+
-+int ctlv_event_sizes(struct ctlv_device *ctlvdev);
-+void ctlv_event_device_init(struct ctlv_device *ctlvdev);
-+void ctlv_event_contexts_start(struct ctlv_device *ctlvdev);
-+void ctlv_event_contexts_stop(struct ctlv_device *ctlvdev);
-+void ctlv_event_contexts_wait(struct ctlv_device *ctlvdev);
-+void ctlv_event_device_dead(struct ctlv_device *ctlvdev);
-+int ctlv_event_file_init(struct ctlv_file *cfile);
-+void ctlv_event_file_exit(struct ctlv_file *cfile);
-+ssize_t ctlv_event_file_read(struct ctlv_file *cfile, char __user *buf,
-+			     size_t len, bool blocking);
-+__poll_t ctlv_event_file_poll(struct ctlv_file *cfile, struct file *filp,
-+			      struct poll_table_struct *wait);
-+void ctlv_event_op_changed(struct ctlv_device *ctlvdev,
-+			   const struct ctlv_op_entry *op, bool disabled,
-+			   u64 generation);
-+
-+#endif /* _CTLV_EVENT_H */
-diff --git a/drivers/ctlv/internal.h b/drivers/ctlv/internal.h
-index f74724269628..7e6ec9d1f73e 100644
---- a/drivers/ctlv/internal.h
-+++ b/drivers/ctlv/internal.h
-@@ -16,6 +16,7 @@
- #include "message.h"
- 
- struct task_struct;
-+struct ctlv_file;
- 
- #define CTLV_ERROR_MESSAGE_LEN 256
- 
-@@ -29,6 +30,7 @@ struct ctlv_op_entry {
- 	struct ctlv_op_sizes sizes;
- 	u32 state_index;
- 	bool absent;
-+	u32 event_index;
- };
- 
- struct ctlv_error {
-@@ -52,9 +54,12 @@ struct ctlv_query_fragment {
- };
- 
- struct ctlv_op_ctx {
-+	struct ctlv_device *ctlvdev;
- 	const struct ctlv_family *family;
-+	struct ctlv_file *file;
- 	/* Compared against current and never followed: identity, not a hold. */
- 	const struct task_struct *submitter;
-+	gfp_t gfp;
- 	const struct ctlv_op_entry *op;
- 
- 	struct ctlv_msg request;
-@@ -71,4 +76,6 @@ struct ctlv_op_ctx {
- 	struct ctlv_error error;
- };
- 
-+struct ctlv_op_entry *ctlv_op_find(struct ctlv_device *ctlvdev, u64 op_id);
-+
- #endif /* _CTLV_INTERNAL_H */
-diff --git a/include/linux/ctlv.h b/include/linux/ctlv.h
-index dd2206cccfb5..cdfe3e8e930d 100644
---- a/include/linux/ctlv.h
-+++ b/include/linux/ctlv.h
-@@ -164,4 +164,31 @@ int ctlv_blob_read(struct ctlv_blob *blob, u64 offset, void *dst, size_t len);
- int ctlv_blob_write(struct ctlv_blob *blob, u64 offset, const void *src,
- 		    size_t len);
- 
-+/**
-+ * ctlv_event_lost - Report an event that could not be created.
-+ * @ctlvdev: CTLV device
-+ * @op_id: event operation ID
-+ *
-+ * This does not allocate or sleep. It is not for interrupt context.
-+ */
-+void ctlv_event_lost(struct ctlv_device *ctlvdev, u64 op_id);
-+
-+/**
-+ * ctlv_event_emit - Validate and publish a completed event.
-+ * @ctx: context returned by a generated event create helper
-+ *
-+ * This consumes @ctx. It is not for interrupt context.
-+ *
-+ * Return: 0, or a negative error.
-+ */
-+int ctlv_event_emit(struct ctlv_op_ctx *ctx);
-+
-+/**
-+ * ctlv_event_abort - Discard an event under construction.
-+ * @ctx: context returned by a generated event create helper
-+ *
-+ * This consumes @ctx. It is not for interrupt context.
-+ */
-+void ctlv_event_abort(struct ctlv_op_ctx *ctx);
-+
- #endif /* _LINUX_CTLV_H */
-diff --git a/include/linux/ctlv_family.h b/include/linux/ctlv_family.h
-index 5cdcdfeec651..4f5141fc7ccf 100644
---- a/include/linux/ctlv_family.h
-+++ b/include/linux/ctlv_family.h
-@@ -338,6 +338,17 @@ bool ctlv_nest_start(struct ctlv_cursor *nest, struct ctlv_cursor *child,
- 
- struct ctlv_blob *ctlv_blob_resolve(struct ctlv_op_ctx *ctx,
- 				    const struct ctlv_cursor *blob);
-+struct ctlv_op_ctx *ctlv_event_create(struct ctlv_device *ctlvdev, u64 op_id,
-+				      struct ctlv_cursor **event, gfp_t gfp);
-+
-+#define CTLV_EVENT_CREATE(_name, _op_id)			\
-+static inline struct ctlv_op_ctx *				\
-+_name##_create(struct ctlv_device *ctlvdev,			\
-+	       struct ctlv_cursor **reply, gfp_t gfp)		\
-+{								\
-+	return ctlv_event_create(ctlvdev, (_op_id), reply, gfp);	\
++static bool ctlv_introspection_op_disabled(const struct ctlv_op_snapshot *snapshot,
++					   const struct ctlv_op_entry *op)
++{
++	if (op->state_index == CTLV_OP_STATE_NONE)
++		return false;
++	return test_bit(op->state_index, snapshot->disabled);
 +}
 +
- #define __CTLV_DEFINE_PUT(_name, _type, _put_fn, _attr_id, _kind) \
- static inline bool _name##_put(struct ctlv_cursor *nest,		\
- 			       _type value)			\
++/* Report effective lengths, including descendant fills. */
++enum ctlv_introspection_op_field {
++	CTLV_INTROSPECTION_OP_FIELD_ID,
++	CTLV_INTROSPECTION_OP_FIELD_TYPE,
++	CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY,
++	CTLV_INTROSPECTION_OP_FIELD_DISABLED,
++	CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN,
++	CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN,
++	CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_MIN_LEN,
++	CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_SUGGESTED_LEN,
++	CTLV_INTROSPECTION_OP_FIELD_EVENT_RECORD_MAX_LEN,
++	CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS,
++	CTLV_INTROSPECTION_OP_FIELD_END,
++};
++
++static bool ctlv_introspection_op_field_put(struct ctlv_cursor *entry,
++					    const struct ctlv_op_snapshot *snapshot,
++					    const struct ctlv_op_entry *op, u32 member)
++{
++	const struct ctlv_op_sizes *sizes = &op->sizes;
++
++	switch (member) {
++	case CTLV_INTROSPECTION_OP_FIELD_ID:
++		return ctlv_op_id_put(entry, op->schema->op_id);
++	case CTLV_INTROSPECTION_OP_FIELD_TYPE:
++		return ctlv_op_type_put(entry, op->schema->type);
++	case CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY:
++		return ctlv_op_availability_put(entry, op->schema->availability);
++	case CTLV_INTROSPECTION_OP_FIELD_DISABLED:
++		return ctlv_op_disabled_put(entry, ctlv_introspection_op_disabled(snapshot, op));
++	case CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN:
++		return ctlv_op_request_max_len_put(entry, sizes->request_max_len);
++	case CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN:
++		/* Zero is a reply that acknowledges and no more. */
++		return ctlv_op_action_reply_max_len_put(entry, sizes->action_reply_max_len);
++	case CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_MIN_LEN:
++		return ctlv_op_query_reply_min_len_put(entry, sizes->query_reply_min_len);
++	case CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_SUGGESTED_LEN:
++		return ctlv_op_query_reply_suggested_len_put(entry,
++							     sizes->query_reply_suggested_len);
++	case CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS:
++		return ctlv_op_fd_access_put(entry, op->schema->fd_access);
++	default:
++		return ctlv_op_event_record_max_len_put(entry, sizes->event_record_max_len);
++	}
++}
++
++static bool ctlv_introspection_op_field_applies(const struct ctlv_op_entry *op, u32 member)
++{
++	switch (member) {
++	case CTLV_INTROSPECTION_OP_FIELD_ID:
++	case CTLV_INTROSPECTION_OP_FIELD_TYPE:
++		return true;
++	case CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY:
++	case CTLV_INTROSPECTION_OP_FIELD_DISABLED:
++	case CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN:
++	case CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS:
++		return op->schema->type != CTLV_OP_TYPE_EVENT;
++	case CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN:
++		return op->schema->type == CTLV_OP_TYPE_ACTION;
++	case CTLV_INTROSPECTION_OP_FIELD_EVENT_RECORD_MAX_LEN:
++		return op->schema->type == CTLV_OP_TYPE_EVENT;
++	default:
++		return op->schema->type == CTLV_OP_TYPE_QUERY;
++	}
++}
++
++static bool ctlv_introspection_op_record(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
++					 const struct ctlv_op_snapshot *snapshot,
++					 const struct ctlv_op_entry *op,
++					 struct ctlv_introspection_dump_position *pos)
++{
++	if (!ctlv_op_entry_start(reply, entry))
++		return false;
++	for (; pos->member < CTLV_INTROSPECTION_OP_FIELD_END; pos->member++) {
++		if (!ctlv_introspection_op_field_applies(op, pos->member))
++			continue;
++		if (!ctlv_introspection_op_field_put(entry, snapshot, op, pos->member))
++			return false;
++	}
++	ctlv_nest_end(entry);
++	pos->member = 0;
++	return true;
++}
++
++int ctlv_ops_dump_query(void *priv, struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
++			struct ctlv_cursor *reply)
++{
++	struct ctlv_device *ctlvdev = ctx->ctlvdev;
++	struct ctlv_op_snapshot snapshot = {};
++	struct ctlv_cursor entry;
++	struct ctlv_introspection_dump_position pos;
++	int ret;
++
++	ret = ctlv_introspection_snapshot_take(ctlvdev, &snapshot);
++	if (ret)
++		return ret;
++	unsigned long *disabled __free(bitmap) = snapshot.disabled;
++
++	/* The published index is immutable, so a cursor into it holds. */
++	ctlv_introspection_dump_resume(&pos, ctlv_op_query_cursor(ctx));
++	for (; pos.record < ctlvdev->ops_count; pos.record++)
++		if (!ctlv_introspection_op_record(reply, &entry, &snapshot,
++						  &ctlvdev->ops[pos.record], &pos))
++			return ctlv_op_query_more(ctx, snapshot.generation,
++						  ctlv_introspection_dump_cursor(&pos));
++	return ctlv_op_query_done(ctx, snapshot.generation);
++}
++
++/* A leaf-count cursor permits a fragment boundary at any tree depth. */
++
++/* One nest of the description: the placement of one node of the schema. */
++struct ctlv_introspection_frame {
++	struct ctlv_cursor nest;
++	u64 attr_id;
++	bool open;
++	/* Which node this stands for, so that a re-entry can be measured. */
++	const struct ctlv_schema_tree *tree;
++	u32 node;
++};
++
++/* The frames outlive the walk, a fragment's open nests having to stay alive. */
++struct ctlv_introspection_walk {
++	const struct ctlv_family *family;
++	struct ctlv_cursor *root;
++	struct ctlv_introspection_frame *frames;
++	u64 ordinal;
++	u64 resume;
++	int error;
++};
++
++/* One member of one node, which is every leaf this reply has. */
++struct ctlv_introspection_field {
++	u64 attr_id;
++	u8 kind;
++	u64 value;
++};
++
++/* Three every node has, the widest bounds, a unit, a scale, a re-entry. */
++#define CTLV_INTROSPECTION_MAX_FIELDS 10
++
++struct ctlv_introspection_fields {
++	struct ctlv_introspection_field fields[CTLV_INTROSPECTION_MAX_FIELDS];
++	u32 fields_count;
++};
++
++static void ctlv_introspection_field(struct ctlv_introspection_fields *fields, u64 attr_id, u8 kind,
++				     u64 value)
++{
++	if (WARN_ON_ONCE(fields->fields_count == CTLV_INTROSPECTION_MAX_FIELDS))
++		return;
++	fields->fields[fields->fields_count++] = (struct ctlv_introspection_field){
++		.attr_id = attr_id,
++		.kind = kind,
++		.value = value,
++	};
++}
++
++static void ctlv_introspection_uint(struct ctlv_introspection_fields *fields, u64 attr_id,
++				    u64 value)
++{
++	ctlv_introspection_field(fields, attr_id, CTLV_SCHEMA_UINT, value);
++}
++
++/* Emit only constraints for this node's payload kind. */
++static void ctlv_introspection_node_fields(struct ctlv_introspection_fields *fields,
++					   const struct ctlv_node_schema *node, u32 reenters)
++{
++	ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_ATTR_ID, node->attr_id);
++	ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_KIND, node->kind);
++	ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_MAX_OCCURRENCES, node->max_occurrences);
++
++	switch (node->kind) {
++	case CTLV_SCHEMA_UINT:
++	case CTLV_SCHEMA_SINT:
++	case CTLV_SCHEMA_ENUM:
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_MIN, node->range.min);
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_MAX, node->range.max);
++		break;
++	case CTLV_SCHEMA_FLAGS:
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_FLAGS_MASK, node->flags_mask);
++		break;
++	case CTLV_SCHEMA_STRING:
++	case CTLV_SCHEMA_BINARY:
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_MIN_LENGTH, node->length.min_len);
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_MAX_LENGTH, node->length.max_len);
++		break;
++	case CTLV_SCHEMA_BLOB:
++		ctlv_introspection_field(fields, CTLV_ATTR_SCHEMA_BLOB_DIRECTION, CTLV_SCHEMA_ENUM,
++					 node->blob.direction);
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_BLOB_BACKINGS,
++					node->blob.backings);
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_BLOB_MAX_LENGTH,
++					node->blob.max_len);
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_BLOB_ALIGNMENT,
++					node->blob.alignment);
++		break;
++	default:
++		break;
++	}
++
++	if (node->unit != CTLV_UNIT_NONE) {
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_UNIT, node->unit);
++		ctlv_introspection_field(fields, CTLV_ATTR_SCHEMA_SCALE, CTLV_SCHEMA_SINT,
++					 node->scale);
++	}
++	if (reenters)
++		ctlv_introspection_uint(fields, CTLV_ATTR_SCHEMA_REENTERS, reenters);
++}
++
++/* A nest is opened by the first thing written inside it. */
++static bool ctlv_introspection_open(struct ctlv_introspection_walk *walk, u32 depth)
++{
++	struct ctlv_introspection_frame *frame = &walk->frames[depth];
++	struct ctlv_cursor *up = walk->root;
++
++	if (frame->open)
++		return true;
++	if (depth) {
++		if (!ctlv_introspection_open(walk, depth - 1))
++			return false;
++		up = &walk->frames[depth - 1].nest;
++	}
++	if (!ctlv_nest_start(up, &frame->nest, frame->attr_id, CTLV_SCHEMA_NEST))
++		return false;
++	frame->open = true;
++	return true;
++}
++
++/* Skipped leaves advance the ordinal; a failed write remains the resume point. */
++static bool ctlv_introspection_put(struct ctlv_introspection_walk *walk, u32 depth,
++				   const struct ctlv_introspection_field *field)
++{
++	struct ctlv_cursor *nest = &walk->frames[depth].nest;
++	bool ok;
++
++	if (walk->ordinal < walk->resume) {
++		walk->ordinal++;
++		return true;
++	}
++	if (!ctlv_introspection_open(walk, depth))
++		return false;
++	if (field->kind == CTLV_SCHEMA_SINT)
++		ok = ctlv_put_s64(nest, field->attr_id, field->kind, field->value);
++	else
++		ok = ctlv_put_u64(nest, field->attr_id, field->kind, field->value);
++	if (!ok)
++		return false;
++	walk->ordinal++;
++	return true;
++}
++
++/* Re-entry targets an ancestor with the same child range. */
++static u32 ctlv_introspection_reenters(struct ctlv_introspection_walk *walk, u32 depth,
++				       const struct ctlv_schema_tree *tree,
++				       const struct ctlv_node_schema *node)
++{
++	u32 levels;
++
++	for (levels = 1; levels <= depth; levels++) {
++		const struct ctlv_introspection_frame *up = &walk->frames[depth - levels];
++
++		if (up->tree == tree &&
++		    tree->node_schemas[up->node].first_child == node->first_child)
++			return levels;
++	}
++	/* A back edge to nothing is metadata this core cannot describe. */
++	WARN_ON_ONCE(1);
++	walk->error = -EINVAL;
++	return 0;
++}
++
++static bool ctlv_introspection_node(struct ctlv_introspection_walk *walk, u32 depth,
++				    const struct ctlv_schema_tree *tree, u32 index);
++
++/* Filled stub members inherit the stub placement's optionality. */
++static bool ctlv_introspection_children(struct ctlv_introspection_walk *walk, u32 depth,
++					const struct ctlv_schema_tree *tree, u32 index,
++					bool force_optional)
++{
++	const struct ctlv_node_schema *node = &tree->node_schemas[index];
++	u32 i;
++
++	if (WARN_ON_ONCE(depth + 1 >= CTLV_MAX_NEST_DEPTH)) {
++		/* Deeper than a specification may declare, so unreachable. */
++		walk->error = -EINVAL;
++		return false;
++	}
++	for (i = 0; i < node->children_count; i++) {
++		u32 child = node->first_child + i;
++		bool required = !force_optional && i < node->required_children_count;
++
++		walk->frames[depth + 1] = (struct ctlv_introspection_frame){
++			.attr_id = required ? CTLV_ATTR_SCHEMA_ATTRS :
++					      CTLV_ATTR_SCHEMA_OPTIONAL_ATTRS,
++			.tree = tree,
++			.node = child,
++		};
++		if (!ctlv_introspection_node(walk, depth + 1, tree, child))
++			return false;
++	}
++	for (i = 0; i < tree->stub_schemas_count; i++) {
++		const struct ctlv_stub_schema *stub_schema = &tree->stub_schemas[i];
++		const struct ctlv_stub_fill_schema *fill_schema;
++
++		if (stub_schema->node != index)
++			continue;
++		fill_schema =
++			ctlv_schema_fill(walk->family, stub_schema->family_id, stub_schema->set_id);
++		/* Nothing of this chain filled it, so it contributes none. */
++		if (!fill_schema)
++			continue;
++		/* A fill schema's root is the stub, its children the members. */
++		if (!ctlv_introspection_children(walk, depth, &fill_schema->members, 0,
++						 force_optional || stub_schema->optional))
++			return false;
++	}
++	return true;
++}
++
++/* One node, into the nest that stands for it. */
++static bool ctlv_introspection_node(struct ctlv_introspection_walk *walk, u32 depth,
++				    const struct ctlv_schema_tree *tree, u32 index)
++{
++	const struct ctlv_node_schema *node = &tree->node_schemas[index];
++	struct ctlv_introspection_fields fields = {};
++	u32 reenters = 0;
++	u32 i;
++
++	if (node->reenters) {
++		reenters = ctlv_introspection_reenters(walk, depth, tree, node);
++		if (!reenters)
++			return false;
++	}
++	ctlv_introspection_node_fields(&fields, node, reenters);
++	for (i = 0; i < fields.fields_count; i++)
++		if (!ctlv_introspection_put(walk, depth, &fields.fields[i]))
++			return false;
++	/*
++	 * A node that re-enters a level says so instead of listing that level's
++	 * members again, which is what makes an unbounded nesting describable.
++	 */
++	if (!node->reenters && !ctlv_introspection_children(walk, depth, tree, index, false))
++		return false;
++	if (walk->frames[depth].open)
++		ctlv_nest_end(&walk->frames[depth].nest);
++	return true;
++}
++
++/* One of the two messages of an op, the root of it being a node like any. */
++static bool ctlv_introspection_message(struct ctlv_introspection_walk *walk, u64 attr_id,
++				       const struct ctlv_schema_tree *tree)
++{
++	/* An op without such a message has nothing to describe. */
++	if (!tree->node_schemas)
++		return true;
++	walk->frames[0] = (struct ctlv_introspection_frame){
++		.attr_id = attr_id,
++		.tree = tree,
++	};
++	return ctlv_introspection_node(walk, 0, tree, 0);
++}
++
++int ctlv_op_schema_get_query(void *priv, struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
++			     struct ctlv_cursor *reply)
++{
++	struct ctlv_introspection_walk walk = {
++		.family = ctx->family,
++		.root = reply,
++		.resume = ctlv_op_query_cursor(ctx),
++	};
++	const struct ctlv_op_entry *op;
++
++	/* Describe published ops regardless of current dynamic state. */
++	op = ctlv_op_find(ctx->ctlvdev, ctlv_op_schema_get_op_id_get(request));
++	if (!op)
++		return -EOPNOTSUPP;
++
++	/*
++	 * One frame per level the reply may nest, too many for the stack: a
++	 * description is one level deeper than the message it describes.
++	 */
++	struct ctlv_introspection_frame *frames __free(kfree) =
++		kcalloc(CTLV_MAX_NEST_DEPTH, sizeof(*frames), GFP_KERNEL);
++
++	if (!frames)
++		return -ENOMEM;
++	walk.frames = frames;
++
++	if (!ctlv_introspection_message(&walk, CTLV_ATTR_SCHEMA_REQUEST, &op->schema->request) ||
++	    !ctlv_introspection_message(&walk, CTLV_ATTR_SCHEMA_REPLY, &op->schema->reply)) {
++		if (walk.error)
++			return walk.error;
++		/* A schema is immutable, so there is nothing to be stale. */
++		return ctlv_op_query_more(ctx, 0, walk.ordinal);
++	}
++	return ctlv_op_query_done(ctx, 0);
++}
 -- 
 2.56.0
 
