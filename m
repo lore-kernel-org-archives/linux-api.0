@@ -1,210 +1,121 @@
-Received: from out30-119.freemail.mail.aliyun.com (out30-119.freemail.mail.aliyun.com [115.124.30.119])
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 609EE568FC7;
-	Thu, 15 Oct 2026 17:50:44 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=115.124.30.119
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F7CC481A94
+	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 20:14:03 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=170.10.133.124
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792086658; cv=none; b=PqirbS1o1owLR0ZAF9WTK+6edTxrL/uelmSOv8vFeWOoKNx5/KAuHgMF9YR+w0HUNk87SVtfr/CQAPqTXn7VuEqP5uxC5S3awXVUAp8XrRXxmO05JE5R4iEJdaNEKuAE7GEfFzWyAGpw3D4+5G7ByWQrjnslCro6mqhwOQbfFA8=
+	t=1792095245; cv=none; b=nAdjJV/uIGZMCEexzeMxbncbVGP15WqNPUxIsFbb+K4vY8duUv+gVcrhExL3T+5wGnYnTy5ikJVF9olG4IOMnDe9UX/jQOeZdD72MX0ma5axkMYMwS7XQt/2QGyJo/72/EiBNTVWXzapXCQkAkUho3mlls9xJs9gxERmZIZTGbg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792086658; c=relaxed/simple;
-	bh=R2WBw4Gg/cmC7jy75LHrgAUEe03aD6Qo0tsbSlw1dKc=;
-	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=PpbiuBN7rfMF/y6vK4iCZVjjo9tVS1921DVNBPrO1MWmsW4heE72HJD2Jpva49BH8yq9RMZ/XokB7sNMcLvbnz8UpGCwzfSvnFZz4k/aJJKm5h57LhyKHwk8oRlBVXvPHXfNtyKz42tZ10Bpw80J1gx/jwlUp5xEfhthNNavAVY=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com; spf=pass smtp.mailfrom=linux.alibaba.com; dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b=Xf47+RNj; arc=none smtp.client-ip=115.124.30.119
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
+	s=arc-20240116; t=1792095245; c=relaxed/simple;
+	bh=SnbfDLY4tTJqB1v8LhA/WdScgHkhh06wd2LjFSIubrE=;
+	h=Message-ID:Date:MIME-Version:Subject:To:Cc:References:From:
+	 In-Reply-To:Content-Type; b=trhbp82/Km7mFeMfFQPC1lTnmwO5nr/8BGRdFiqCzUWtNA5SdyZoLoSsQ3BZ/40a+WhDd8VvzdhvKNAGWrRwiYTjmhSjVyD8jtNa+HYXufx2S5JmsaENCq39k/lprec9abSW3HzvOCc6wqJxER9ockzFkVi1cN5JeAHH2xw8SoQ=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com; spf=pass smtp.mailfrom=redhat.com; dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b=NGd0BrrN; arc=none smtp.client-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.b="Xf47+RNj"
-DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux.alibaba.com; s=default;
-	t=1792086642; h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type;
-	bh=l9Q5YpqYpJd9onDCM8db0IqtokPYusPa72Hj4TffybM=;
-	b=Xf47+RNj10Y46QI+kiYGuHrMBPjCkgHYFzOcbqy+sYmUn7K/aN4q8LLw+ysEjWzz41Cb5K/P1qA/e6yYVfWqz8NkRQNXDDrTuq3wf5zOz6TQwYL7mUrd/mCSyvG3WV/Jx4CqKvwqPxyok55LjFkShaCUL37RzXRJuK4Vod2rRGA=
-X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R231e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033037033178;MF=peng_wang@linux.alibaba.com;NM=1;PH=DS;RN=19;SR=0;TI=SMTPD_---0XCsOve5_1792086640;
-Received: from localhost(mailfrom:peng_wang@linux.alibaba.com fp:SMTPD_---0XCsOve5_1792086640 cluster:ay36)
-          by smtp.aliyun-inc.com;
-          Fri, 16 Oct 2026 01:50:41 +0800
-Date: Fri, 16 Oct 2026 01:50:40 +0800
-From: Peng Wang <peng_wang@linux.alibaba.com>
-To: Waiman Long <longman@redhat.com>
-Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	"Rafael J . Wysocki" <rafael@kernel.org>,
-	Danilo Krummrich <dakr@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Masami Hiramatsu <mhiramat@kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>,
-	He Rongguang <herongguang@linux.alibaba.com>,
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	driver-core@lists.linux.dev, linux-trace-kernel@vger.kernel.org,
-	cgroups@vger.kernel.org
-Subject: Re: [RFC PATCH 2/2] cpu: Add sysfs control of full dynticks policy
-Message-ID: <atEScHbaEEqOtzQw@MacBook-Pro.local>
-Reply-To: Peng Wang <peng_wang@linux.alibaba.com>
-References: <cover.1792067271.git.peng_wang@linux.alibaba.com>
- <e93ef15796946485eaaecd774141378351307940.1792067271.git.peng_wang@linux.alibaba.com>
- <5f2b1519-6693-4d5c-afb7-4202a6d48365@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.b="NGd0BrrN"
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1792095242;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=UYRSFyiULvh6szKRePAOtHKD+7/o0oF90IjOubYIGB4=;
+	b=NGd0BrrNNpUaHMu1wF9oB7YWTthf+jJTtMx5f6hyc54RnkIwCH/rSMl9ngcTLKjrWhqaDb
+	zH6LP1SPTj3Y2M+SaoKB0A3Fj3Y8BEqkC46kUu1RetC2nDRsCO6wCc2jIEtGTokfJsqCs3
+	ffUwcqng3WmNf7Vu9Pq24zjtipuWND0=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-600-IdpI9AU0N62UZVqT0kj7fQ-1; Thu,
+ 15 Oct 2026 20:13:56 +0000
+X-MC-Unique: IdpI9AU0N62UZVqT0kj7fQ-1
+X-Mimecast-MFC-AGG-ID: IdpI9AU0N62UZVqT0kj7fQ_1792095234
+Received: from mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.95])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A9BBB1955F1A;
+	Thu, 15 Oct 2026 20:13:53 +0000 (UTC)
+Received: from [100.91.18.181] (headnet03.pony-001.prod.iad2.dc.redhat.com [10.2.32.114])
+	by mx-prod-int-10.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id 6D8397C6;
+	Thu, 15 Oct 2026 20:13:50 +0000 (UTC)
+Message-ID: <f12ad8ee-4cad-4c7e-a0c9-c22fe894f14c@redhat.com>
+Date: Thu, 15 Oct 2026 16:13:49 -0400
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <5f2b1519-6693-4d5c-afb7-4202a6d48365@redhat.com>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH 0/2] tick/nohz: Add runtime control of non-idle tick
+ suppression
+To: Peng Wang <peng_wang@linux.alibaba.com>
+Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
+ Frederic Weisbecker <frederic@kernel.org>, Ingo Molnar <mingo@kernel.org>,
+ Thomas Gleixner <tglx@kernel.org>,
+ Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+ "Rafael J . Wysocki" <rafael@kernel.org>, Danilo Krummrich
+ <dakr@kernel.org>, Steven Rostedt <rostedt@goodmis.org>,
+ Masami Hiramatsu <mhiramat@kernel.org>,
+ Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+ Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>,
+ He Rongguang <herongguang@linux.alibaba.com>, linux-kernel@vger.kernel.org,
+ linux-api@vger.kernel.org, driver-core@lists.linux.dev,
+ linux-trace-kernel@vger.kernel.org, cgroups@vger.kernel.org
+References: <cover.1792067271.git.peng_wang@linux.alibaba.com>
+ <8d10bb84-d312-4be0-8c43-ddd602850a1d@redhat.com>
+ <atER8P0ws6Gg4GWE@MacBook-Pro.local>
+Content-Language: en-US
+From: Waiman Long <longman@redhat.com>
+In-Reply-To: <atER8P0ws6Gg4GWE@MacBook-Pro.local>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Scanned-By: MIMEDefang 3.6 on 10.30.177.95
 
-On Thu, Oct 15, 2026 at 12:07:14PM -0400, Waiman Long wrote:
-> 
-> On 10/15/26 8:43 AM, Peng Wang wrote:
-> > Expose nohz_full_allowed under /sys/devices/system/cpu/ as the subset of
-> > nohz_full CPUs permitted to suppress their non-idle scheduler tick.
-> > 
-> > Writes replace the entire list; reads report policy, not current tick
-> > state. Reject invalid input before updating policy. Document asynchronous
-> > revocation, offline CPU configuration and persistence across hotplug.
-> > The existing nohz_full attribute continues to report membership.
-> > 
-> > Co-developed-by: He Rongguang <herongguang@linux.alibaba.com>
-> > Signed-off-by: He Rongguang <herongguang@linux.alibaba.com>
-> > Signed-off-by: Peng Wang <peng_wang@linux.alibaba.com>
-> > ---
-> >   .../ABI/testing/sysfs-devices-system-cpu      | 40 ++++++++++++++++
-> >   drivers/base/cpu.c                            | 46 +++++++++++++++++++
-> >   2 files changed, 86 insertions(+)
-> > 
-> > diff --git a/Documentation/ABI/testing/sysfs-devices-system-cpu b/Documentation/ABI/testing/sysfs-devices-system-cpu
-> > index 82d10d556cc89..edf3408fd84c8 100644
-> > --- a/Documentation/ABI/testing/sysfs-devices-system-cpu
-> > +++ b/Documentation/ABI/testing/sysfs-devices-system-cpu
-> > @@ -767,6 +767,46 @@ Description:	Preferred MTE tag checking mode
-> >   		See also: Documentation/arch/arm64/memory-tagging-extension.rst
-> > +What:		/sys/devices/system/cpu/nohz_full_allowed
-> 
-> I do have a problem with the name of this sysfs file. nohz_full is more than
-> just the tick. The naming may introduce the wrong impression that all
-> nohz_full behavior can be controlled. May be a name like "nohz_tick_allowed"
-> which is much more specific will be better.
+On 10/15/26 1:48 PM, Peng Wang wrote:
+> On Thu, Oct 15, 2026 at 12:00:25PM -0400, Waiman Long wrote:
+>> On 10/15/26 8:43 AM, Peng Wang wrote:
+>>> Workloads and their need for periodic ticks can change after boot.
+>>> This series lets userspace choose at runtime which CPUs in the boot-time
+>>> nohz_full set retain the non-idle scheduler tick and which are permitted
+>>> to stop it, while preserving the existing isolation configuration.
+>>>
+>>> The first patch adds a per-CPU tick dependency; the second exposes a
+>>> sysfs CPU list. Permission defaults to all nohz_full CPUs. Revocation
+>>> uses the existing asynchronous kick. Idle tick suppression is unchanged,
+>>> and policy persists across hotplug.
+>> So you are basically setting up more nohz_full CPUs than the system actually
+>> needs to use at the moment and so want to disable nohz/tick part of
+>> nohz_full CPUs that don't need it. Can you elaborate more about the problems
+>> solve by introducing this new behavior?
+> Hi Waiman,
+>
+> Yes. We have CPU-pinned workloads that benefit from reduced periodic
+> tick interference. The desired tick policy changes with CPU allocation.
+>
+> With spare capacity, we allow selected nohz_full CPUs to stop their
+> tick. When capacity is fully allocated, we prefer to retain the
+> non-idle periodic tick across CPUs, avoiding an additional difference
+> in tick interference between housekeeping and nohz_full CPUs.
+What problem does that cause?
+> A CPU may still have only one runnable task in either case, so the
+> existing tick dependencies do not express this policy.
+>
+> This series keeps the boot-time nohz_full CPU set, context tracking,
+> RCU offloading and housekeeping configuration unchanged. It only
+> controls whether those CPUs may stop their non-idle tick. The policy
+> can be changed without taking CPUs offline.
 
-Hi Waiman,
+So the policy is to make the tick keeps running when there is only one 
+running task. Right? I am just not clear about the advantage of doing 
+that. Is there a use case that will require this particular feature? I 
+doubt this will get accepted unless there is a compelling reason to show 
+why we will want to have this feature.
 
-Agreed, nohz_tick_allowed describes the scope more accurately.
-If the control remains in sysfs, I'll use that name in the next version.
+Cheers,
+Longman
 
-Thanks,
-Peng
-
-> 
-> Regards,
-> Longman
-> 
-> > +Date:		October 2026
-> > +Contact:	Linux kernel mailing list <linux-kernel@vger.kernel.org>
-> > +Description:
-> > +		(RW) CPUs permitted to stop the scheduler tick while non-idle.
-> > +		Available with CONFIG_NO_HZ_FULL. The default is the complete
-> > +		nohz_full CPU list. Readback reports permission, not the current
-> > +		tick state: all the usual tick dependencies still apply.
-> > +
-> > +		A write replaces the entire list, using CPU-list syntax (for
-> > +		example, "1-3,5"). An empty line revokes permission from all
-> > +		nohz_full CPUs. Invalid input is rejected without changing
-> > +		policy. A parsed list containing CPUs outside nohz_full fails
-> > +		with EINVAL. CPU numbers beyond the mask range and numeric
-> > +		overflows are rejected by the CPU-list parser with ERANGE and
-> > +		EOVERFLOW, respectively. Input must be shorter than PAGE_SIZE
-> > +		bytes, otherwise E2BIG is returned. Embedded NULs and newlines
-> > +		other than a trailing newline are rejected with EINVAL. Valid
-> > +		writes without an active nohz_full configuration fail with
-> > +		EOPNOTSUPP.
-> > +
-> > +		Reads fail with EOVERFLOW if the formatted output reaches
-> > +		PAGE_SIZE - 1 bytes, rather than returning a potentially
-> > +		truncated CPU list.
-> > +
-> > +		Revoking permission adds a per-CPU tick dependency. Online CPUs
-> > +		are notified through the existing asynchronous kick mechanism
-> > +		to restart a stopped non-idle tick. A successful write means
-> > +		the policy is updated and any needed notification is queued;
-> > +		it does not wait for tick restart. Changes to multiple CPUs
-> > +		are not simultaneous. Granting permission only removes this
-> > +		dependency and does not force the tick to stop.
-> > +
-> > +		Offline CPUs may be configured without sending notifications.
-> > +		Policy persists across CPU offline/online. Idle tick suppression
-> > +		is unchanged; the policy applies when a CPU leaves idle.
-> > +
-> > +		This interface does not change nohz_full membership, context
-> > +		tracking, RCU offloading, or housekeeping configuration.
-> > +
-> >   What:		/sys/devices/system/cpu/nohz_full
-> >   Date:		Apr 2015
-> >   Contact:	Linux kernel mailing list <linux-kernel@vger.kernel.org>
-> > diff --git a/drivers/base/cpu.c b/drivers/base/cpu.c
-> > index 69e52fed42415..299ce61cef895 100644
-> > --- a/drivers/base/cpu.c
-> > +++ b/drivers/base/cpu.c
-> > @@ -324,6 +324,51 @@ static ssize_t nohz_full_show(struct device *dev,
-> >   	return sysfs_emit(buf, "\n");
-> >   }
-> >   static DEVICE_ATTR_RO(nohz_full);
-> > +
-> > +static ssize_t nohz_full_allowed_show(struct device *dev,
-> > +				      struct device_attribute *attr, char *buf)
-> > +{
-> > +	cpumask_var_t mask;
-> > +	ssize_t ret;
-> > +
-> > +	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-> > +		return -ENOMEM;
-> > +
-> > +	tick_nohz_full_get_allowed(mask);
-> > +	ret = sysfs_emit(buf, "%*pbl\n", cpumask_pr_args(mask));
-> > +
-> > +	free_cpumask_var(mask);
-> > +
-> > +	/* Never present a truncated CPU list as the complete policy. */
-> > +	return ret == PAGE_SIZE - 1 ? -EOVERFLOW : ret;
-> > +}
-> > +
-> > +static ssize_t nohz_full_allowed_store(struct device *dev,
-> > +				       struct device_attribute *attr,
-> > +				       const char *buf, size_t count)
-> > +{
-> > +	cpumask_var_t mask;
-> > +	int ret;
-> > +
-> > +	/* kernfs may truncate an oversized write to PAGE_SIZE. */
-> > +	if (count >= PAGE_SIZE)
-> > +		return -E2BIG;
-> > +	if (memchr(buf, '\0', count) ||
-> > +	    (count > 1 && memchr(buf, '\n', count - 1)))
-> > +		return -EINVAL;
-> > +
-> > +	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-> > +		return -ENOMEM;
-> > +
-> > +	ret = cpulist_parse(buf, mask);
-> > +	if (!ret)
-> > +		ret = tick_nohz_full_set_allowed(mask);
-> > +
-> > +	free_cpumask_var(mask);
-> > +
-> > +	return ret ? ret : count;
-> > +}
-> > +static DEVICE_ATTR_RW(nohz_full_allowed);
-> >   #endif
-> >   #ifdef CONFIG_CRASH_HOTPLUG
-> > @@ -525,6 +570,7 @@ static struct attribute *cpu_root_attrs[] = {
-> >   	&dev_attr_housekeeping.attr,
-> >   #ifdef CONFIG_NO_HZ_FULL
-> >   	&dev_attr_nohz_full.attr,
-> > +	&dev_attr_nohz_full_allowed.attr,
-> >   #endif
-> >   #ifdef CONFIG_CRASH_HOTPLUG
-> >   	&dev_attr_crash_hotplug.attr,
-> 
