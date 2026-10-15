@@ -1,64 +1,66 @@
-Received: from mail-pf1-f174.google.com (mail-pf1-f174.google.com [209.85.210.174])
+Received: from mail-pg1-f176.google.com (mail-pg1-f176.google.com [209.85.215.176])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3BB3B275870
-	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 00:36:06 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.210.174
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6BE7928488F
+	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 00:36:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.215.176
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792024567; cv=none; b=oIvDQNK3s3yyAuPWRcKe6Dvfekh8m/unKjdjSfJD8YYtoXySXu+S7dx2cDa2owIg5MznqNY9VhQqKGbht9FRyz04eEiH+is8Sv12RrNxqJb0PxDRKUBy94qEG0u772crqgj2TOO1lr4fgIIz37nuLz6xRFakx8ACEq//fo1z30Y=
+	t=1792024572; cv=none; b=mf0Vd/F+MysbxNas6ghtCsmUpGvxDNhQ0jAwBbPalsRwDTEsFvXAmBVzNzCEJV+yCNLnzVm5mYk63+p/+JBceq0ocHSjOwD82nzmOQikGHJc+QvQ/JfmCzktNqo+5m2OO0CecJL0VvFRwGbPiI1tsKF2///MTHBoMuKRnmh3zgA=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792024567; c=relaxed/simple;
-	bh=tSPi96q0gKsSRiasC6iBV/3WZ9GHJV0D/I9hhkAMllE=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version:Content-Type; b=goZV+qz7g7E9KK3hYbHJn/C7aSZgMhXg7cn6H1vN09ZJMfMzRlrrNlBVGGsgL0P3Pq02J2APT3sf3lGNkXKRX2FbpoqsMZolT5GMWXttnIoaL32TE5VDcGcgQBAJ+4RBq3KnAJ4UyeBHj425LDn1cfCJOpu9a5zvWfBrbvDHnA8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=cpBZB2KI; arc=none smtp.client-ip=209.85.210.174
+	s=arc-20240116; t=1792024572; c=relaxed/simple;
+	bh=PT9ArUjUozHhUUTYiMZwczp/mL27AYQ8/pAM0UOxD9Y=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version:Content-Type; b=NmZv6YLzBqmOSN7BmioU1TK6+JEBuVHBnHDBw8ddOwx7D/n7DlUAHgsfGnLZvfKlUZyY5YGtaPXe4qMa2PoMe5Ztzg2ggvLQIY2P76k/jwNPwqrTOr+0pgC0LE5i2rvaVDL1JcuFAD+uPShI95uR+d8dyzYvkiQG4f7z8AF2sNw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b=Bo4iQtam; arc=none smtp.client-ip=209.85.215.176
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="cpBZB2KI"
-Received: by mail-pf1-f174.google.com with SMTP id d2e1a72fcca58-88b5f43cb8aso399521b3a.3
-        for <linux-api@vger.kernel.org>; Wed, 14 Oct 2026 17:36:05 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.b="Bo4iQtam"
+Received: by mail-pg1-f176.google.com with SMTP id 41be03b00d2f7-cd61a2dfd7aso533086a12.1
+        for <linux-api@vger.kernel.org>; Wed, 14 Oct 2026 17:36:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1792024565; x=1792629365; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=2jmI3TmHjjc2dO7/6GxNzkWpciqllTf2rNHSrqi8488=;
-        b=cpBZB2KI31rx1UkAL7nlclVDnru8X2hwZIUNJ4kpXx02hkWbUCzDdJ8sMhreuF5Uxz
-         daxtO2bL6WyxxnmNyVKaDhoR1MYLm80eVLr+bcrsAJhFRUXDBnBF+U+kBFkVTgZRbyd+
-         whWhvjL7ZZdRuDWwlRiHrtjXxzbMA1waQoI0hk6pzH32DW51BqouBd89I/vD3LXpQI26
-         PcXCuzlWaRg9cThsBU3t62M4LiMoFhcs9VQRk0VhfR2an1kwdzLRxOoi0/OYMTTjO2Of
-         Jm3N11xPDf9qFBg/hEl6Pc92mmmQlPf7GJVlEaLIsU25E+TgTHcOzJ/Hu5emhL8BVr9n
-         WdcQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792024565; x=1792629365;
-        h=content-transfer-encoding:content-type:mime-version:message-id:date
-         :subject:cc:to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject
+        d=gmail.com; s=20251104; t=1792024571; x=1792629371; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=2jmI3TmHjjc2dO7/6GxNzkWpciqllTf2rNHSrqi8488=;
-        b=j0qILtQBMtrVJK97ZebtpKbqH1Pni9BiI5TSxy8e+XXBNWaO1hmLIhg8nqrOVrSa0k
-         KarEyLgdMYNaFD1+PivgfTDOXMNH6phiy135QbgirFz4/Mmj5CPyI4zgWSXdp6OsOhu1
-         6OFkh8m9t09es8Mw61Nld2l0XusGEo+Ua6GQW6fzyyJGftOjr9ELGxn8TdSaEB9KeHqy
-         f6GK7b3veOcqiGA3vU0WGl+Qznd5fOtZnfq0bBA+sS143wX43p6KhOaz83aHsyUM3FlP
-         1xtvCAKvQtI0wCS/hsAwVPCoWEcb9N68Krh9wRxRlLlU/rpkSQm0j8QFwWNjdpAyHLbN
-         NqCA==
-X-Forwarded-Encrypted: i=1; AKwUvBwwdV0pdJ5rDn77szUuOAx7DHafEnQXn6YNIPm/7pBHIRKLzq3uvI5ZIDye0gAzlXmPvxtjhcsxgGU=@vger.kernel.org
-X-Gm-Message-State: AFq9FYI1VrTkVLp7gje2DztvexHgpiJCalkcyZZsEB79unoFb6BWuvJ0
-	6GBOoeOtx7Bx6XiKnuoVzU2ZSG4PP8/OJeP0hxi/U5hCsyvwldhlPgiC
-X-Gm-Gg: AYBFou3Abfaxm2rgGk0CuyAt5Jhi00IKB2JgNk2vHqysN4xxKaoB4k0nOJN5uUn9d0e
-	ZfTWN+jcPJbzIVx0gertWBfm2VhgkBFRZ/XrYw/psNKgbuej92kdJQDs+ydxdf+khDt5bbdf/9B
-	GYy7gqSH+Sa7NcH8PGmic8v0zrz+9sz9/3GOZ0o7rQOugfD6JQEW4C65exn2Gsab1+TqLHGYcVD
-	6Uc8l1py8GvnHzIfN9EJqodwwG77yT7fIq5rPj2qYJjJGhhlKs7QMguxYGKrHn1L32WtNepW3Sw
-	RfS9EP+0GFbKeR9Dp0OP9TTZNIyLlLUZRTIFlmVT+A2lgCq8Z10i8rqDi8AD8WDP2TaFlseT8/h
-	qGxwFiEtHhagajO65iJwd8DhlOY0yvqqvri2w7inMLI/pxVFjQlDv2KIH+TDhy2NABq3EWLi3Kr
-	MXm3eZARgixqYt/kF0SHRCLow8ewnSbSTU+STu2uXlnfZIN0FATq7PWbpsscikbYKGp6bk2bfQC
-	eZrPXk4kBn2o8KTSjsNuzVmhQFMIIGfC+kP/MB/J75DpR5oRmT0ljo/AVGqI2En54u+778RziGS
-	FiZOsHG3GVaa3BxsVw==
-X-Received: by 2002:a05:6a00:3cc7:b0:880:e4a7:b1aa with SMTP id d2e1a72fcca58-897c8895ce5mr15777684b3a.55.1792024565315;
-        Wed, 14 Oct 2026 17:36:05 -0700 (PDT)
+        bh=cQYVQp3cNq+IO9sRvJYpEZ43wUtWXqrA+QLO7PX+bJk=;
+        b=Bo4iQtamKZEss0aPPv1Vejqy69BgsrxgDctwYE40z1yYgUo7oaAnhAP48PyDglhEKh
+         R3+y6FrnAIMDkF5wRfBVhrRboSJmE++9wj1qw8w+/kAhtsV98gnorHrikNoqfLTT1XyL
+         fI+DVZ+nshXxmktHtD6bCc9mxKF7Dm2cLtHsNULCZAW9Py2wS3APZ/kEw579ycYvKAHN
+         kodNd1Q83LnL+Y+WNzhfLk6EXyLae2asqHr/LxAhSsplpqdCNLhoK8bR2MEgVkc5ymUw
+         xsi3aVfnpEq2Zz7ehEdzLdvcivhELTbWZb2rkzOroTA6/pc9Ujjhs9vAKqipTArDHgfK
+         aRhg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792024571; x=1792629371;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:message-id:date:subject:cc:to:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=cQYVQp3cNq+IO9sRvJYpEZ43wUtWXqrA+QLO7PX+bJk=;
+        b=SURIqcjBV1pQcUfYXR4vYtBnOKwq4yTuduEZ+Q2cYFemUaZ2Rdqlt3L3KaMvIyJ2zG
+         hINNVLpfUWffn+ACMOEqUwyKFKM4gq2QI7cKrUPtqxmjt6DyB3rtf3ep60EnDTqFhFGD
+         3TEi8EelCucIpgmEqt3KsyAtcqtgS4L/ImRJB353hAv88iOWHZh/TnpYOir63xwChlC7
+         rgByA5igchddsRHLsd3ZQSJtC4kfjZJP5qP6IkK5BeJpIrUSccgCDLIjo/BeJF2ZA7pe
+         2KEVaL8BHcbhzMDYpdYzxW69JK2SgyVxv/3kxYtcL1cxuZOxVeqI3Tsilt+Hit9SoKbF
+         taLg==
+X-Forwarded-Encrypted: i=1; AKwUvByCFf0xhdUT2EjU67qQ4+/xizRwCurzjED8o/8EDg+2rfz5h03zD4DQBKiBi/LCjEjy+N/SfV9SwqA=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKmt8js7udhAQqn+2i866oezNhPxtp4QFrO2ElLFgm50rDeuUz4
+	eLxoTNM1irq02c6//H9h0XO0HxBTP0M7q4BPm8QxNVBMu8dtS6NjiPdF
+X-Gm-Gg: AYBFou2IYZxl074XFEtz91jIhGY476wKgqonb7fbPSDGgawIs44+RNTAuG9bVLjsYuc
+	iL9iu1wi9QjWaMxZ8mICTXNG4nbi8yD4zVbCrevhdYqD40aRve1U1/MHzNOALLwc4qbxIwb6clD
+	YI460aa4GlnbsNuiWK6jCFbLPpC4u8SunTXy9cXc7EyV3yFLuFyRKIv+Q3QRJOSFk2SVcMzhqD9
+	vQCQJLS6hbMpR/HJCDzBVSFGtDI3oRNPZ6f90B9X13rEYUaYNQLnDGAOixeOMR5Z7D4WK/zmrfm
+	NeXd1hFofrYOV0eXO5O9Scc1nlfuCLfoEoT3NykACZiJ7pa26iGbYBMEAXciqsWiRIW846L/2gF
+	TzU6czmiNt5HPaSkg2NVTlLzkLdrQJ6uuOVGEhfl/fDjHHgpYpJH2o1EkMTNwxIsZ5T1LO4u24+
+	1rqK2zBnK2qaCSgS2VN1mvYijXymT7tsysCI4Kx8y1q+EpKPHCMU8jFLUA4kFwppC3OnybiNbWW
+	gNvogQ6iBurNgBOh80lYAmgan3vCu03jfMsF6amxi4PR4Qi4DVyuZoMRf/oiM5zzeOfw8QSBRA4
+	4M8ut5gnaDDfRvf2
+X-Received: by 2002:a17:90b:1d4f:b0:3a4:fe48:d410 with SMTP id 98e67ed59e1d1-3ab3a954001mr14475363a91.30.1792024570657;
+        Wed, 14 Oct 2026 17:36:10 -0700 (PDT)
 Received: from localhost.localdomain ([183.96.175.225])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-89d8050da10sm1567176b3a.53.2026.10.14.17.36.01
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3ac944a9365sm1651372a91.14.2026.10.14.17.36.07
         (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
-        Wed, 14 Oct 2026 17:36:04 -0700 (PDT)
+        Wed, 14 Oct 2026 17:36:09 -0700 (PDT)
 From: Joonho Lee <mynameisjune111@gmail.com>
 To: Takashi Iwai <tiwai@suse.de>
 Cc: Takashi Iwai <tiwai@suse.com>,
@@ -66,9 +68,11 @@ Cc: Takashi Iwai <tiwai@suse.com>,
 	linux-sound@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	linux-api@vger.kernel.org
-Subject: [RFC PATCH v4 0/2] ALSA: pcm: preserve capture tail during drain
-Date: Thu, 15 Oct 2026 09:35:59 +0900
-Message-ID: <rfc-v4-core-capture-drain-0.b56779f7976d4657@gmail.com>
+Subject: [RFC PATCH v4 1/2] ALSA: pcm: allow capture reads while draining
+Date: Thu, 15 Oct 2026 09:36:05 +0900
+Message-ID: <rfc-v4-core-capture-drain-1.b56779f7976d4657@gmail.com>
+In-Reply-To: <rfc-v4-core-capture-drain-0.b56779f7976d4657@gmail.com>
+References: <rfc-v4-core-capture-drain-0.b56779f7976d4657@gmail.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -78,104 +82,104 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
-This v4 replaces both patches in the core capture-drain v3 series. It
-follows Takashi Iwai's suggestion to refresh linked pointers in a helper
-before drain-init and fixes three tail-handling problems in patch 1.
+Capture drain can leave buffered samples in DRAINING, but the transfer
+state check rejects reads in that state. Allow capture reads to consume
+the remaining frames while preserving the playback state check.
 
-Patch 1 allows buffered capture reads in DRAINING. When drain wakes a
-reader waiting for data, wait_for_avail() returns the remaining frame
-count. Capture EOF uses snd_pcm_drain_done(), so a linked playback stream
-can continue draining. DELAY and SYNC_PTR(HWSYNC) use the cached final
-capture pointer without calling the driver again after capture stops.
-Sashiko's review identified these three problems in the earlier patch.
+When drain wakes a blocked capture reader, return the actual available
+frame count from wait_for_avail(). A zero count would make the transfer
+loop discard a nonempty tail. Finish capture EOF with snd_pcm_drain_done()
+so the state transition applies to that substream and leaves a linked
+playback stream draining its queued data.
 
-Patch 2 takes snd_pcm_link_rwsem for reading and updates each running
-member under its own stream lock. It calls snd_pcm_update_hw_ptr() for
-both playback and capture. The helper runs after the existing pause-resume
-step, allowing a paused capture stream to receive its final update.
-The pause and drain-init actions remain outside the link rwsem.
+Allow capture hwsync to use the cached final pointer in DRAINING. Capture
+has already stopped, so DELAY and SYNC_PTR(HWSYNC) can report its remaining
+frames without another driver pointer callback. Playback retains its
+existing pointer update.
 
-A pointer error follows the ordinary XRUN path and returns -EPIPE before
-drain-init. This restores v2's group-wide error handling. V3 instead put
-the failing member in SETUP and could return success from blocking drain
-while another member retained its tail. V4 removes v3's notify argument
-and the conditional notifications in the pointer update code.
+Synthetic atomic and nonatomic tests reproduce dropped tail frames,
+linked playback stopping at capture EOF, and rejected position queries.
+With this change, a blocked read gets all 64 tail frames, playback stays
+DRAINING at capture EOF, and the queries succeed with no extra callback.
 
-Previous core v3:
-https://lore.kernel.org/all/rfc-v3-core-capture-drain-0.cf2e307fcac34b6a@gmail.com/
-Takashi's latest suggestion:
-https://lore.kernel.org/all/87jynkcn60.wl-tiwai@suse.de/
-My implementation and test report:
-https://lore.kernel.org/all/core-drain-helper-reply.0c1099dbd0ca4a37@gmail.com/
-
-The separate five-patch virtio-snd lifetime v3 series is unchanged:
-https://lore.kernel.org/all/cover.1791881787.git.mynameisjune111@gmail.com/
-Apply those five patches to the public base below, then these two patches.
-Remove both old core patches before applying v4. Core has no dependency
-on the generic control-wait or VZ compatibility RFC. The lifetime stack
-is pinned here to reproduce the tested integration. Neither companion
-RFC is revised by this series. A future VZ revision will need the new
-core prerequisite IDs.
-
-Validation used ARM64 QEMU with KASAN and lockdep:
-- 26 linked-stream checks passed across atomic and nonatomic modes,
-  including paused drain, first/later member pointer errors, normal XRUN
-  handling, tail reads, and unlink/prepare/reopen recovery.
-- The three patch-1 failures were reproduced with the helper and the old
-  first patch in both locking modes. All six corresponding fixed cases
-  passed: a blocked reader received all 64 final frames, capture EOF
-  left linked playback in DRAINING, and both position queries succeeded
-  without another pointer callback.
-- Four additional blocked-reader runs compared baseline and fixed modules
-  in both modes with a stronger gate: thread sleep and a pointer callback
-  after START. They confirmed the baseline loss and fixed 64-frame read.
-- The 10 existing lifecycle and timeout/reset scenarios passed, including
-  held STOP/RELEASE, SIGKILL, reset, and subsequent I/O recovery.
-- No KASAN, lockdep, or panic diagnostics appeared in the 54 selected
-  logs, which include the baseline behavioral-failure comparisons.
-
-The full Image and modules were first built with the new helper and the
-old first patch. After fixing the three tail issues, sound/core was
-rebuilt with W=1 against that same configuration and symbol versions,
-and the corrected PCM module was used for the runs above. The module
-build had no warnings or errors. The full build had 517 existing
--Woverride-init warnings in arch/arm64 outside sound/. The exported v4
-core source matches the tested source byte for byte.
-
-These tests use synthetic drivers and modified fault/reset backends.
-Physical-device and Virtualization.framework microphone testing of this
-core revision is still pending. Concurrent LINK, wraparound, and
-forward/rewind behavior have not been exercised by this test set.
-The updated reproducer and logs are local; the earlier public package
-contains an older core revision. There is no new reproducer upload for
-this candidate.
-
-One design question remains: the helper releases the link rwsem before
-drain-init, and snd_pcm_link() permits another RUNNING stream to join in
-that interval. That member could enter drain-init without a refresh by
-the helper. Should this change protect the membership across both steps,
-or should concurrent linking be handled separately? I have reviewed this
-interval in the source but have not reproduced it with a stress test.
-
-Do the restored group-wide XRUN/-EPIPE behavior and cached capture hwsync
-semantics look appropriate? Which physical-driver coverage would you
-want before this can move beyond RFC?
-
-LLM assistance was used for implementation, reproducer development,
-analysis, and documentation. I reviewed the changes and test evidence.
 Assisted-by: LLM
-
-Joonho Lee (2):
-  ALSA: pcm: allow capture reads while draining
-  ALSA: pcm: refresh linked pointers before draining
-
+Signed-off-by: Joonho Lee <mynameisjune111@gmail.com>
+---
  sound/core/pcm_lib.c    | 16 ++++++++++------
- sound/core/pcm_native.c | 27 ++++++++++++++++++++++++++-
- 2 files changed, 36 insertions(+), 7 deletions(-)
+ sound/core/pcm_native.c |  2 +-
+ 2 files changed, 11 insertions(+), 7 deletions(-)
 
-base-commit: 8d70e364e866bdfca81eee24d0688fac9472cfb9
-prerequisite-patch-id: 39fb327a004c966ab90f66a34a64bbdbb3ffb475
-prerequisite-patch-id: 7c6bc344656fd839ae0d697ba18d66ac0b47827a
-prerequisite-patch-id: 9dd290ac3147fa7b49a475d7df8a6172778f2860
-prerequisite-patch-id: f4c24a5e441343a690f4ac2437f181c815bc23d0
-prerequisite-patch-id: ab4a5b770247a65272ab7af18a75a147daf81287
+diff --git a/sound/core/pcm_lib.c b/sound/core/pcm_lib.c
+index 4d665b4148d7..e8f6a9da4a4c 100644
+--- a/sound/core/pcm_lib.c
++++ b/sound/core/pcm_lib.c
+@@ -2009,8 +2009,8 @@ static int wait_for_avail(struct snd_pcm_substream *substream,
+ 		case SNDRV_PCM_STATE_DRAINING:
+ 			if (is_playback)
+ 				err = -EPIPE;
+-			else 
+-				avail = 0; /* indicate draining */
++			else
++				avail = snd_pcm_avail(substream);
+ 			goto _endloop;
+ 		case SNDRV_PCM_STATE_OPEN:
+ 		case SNDRV_PCM_STATE_SETUP:
+@@ -2208,13 +2208,17 @@ static int pcm_sanity_check(struct snd_pcm_substream *substream)
+ 	return 0;
+ }
+ 
+-static int pcm_accessible_state(struct snd_pcm_runtime *runtime)
++static int pcm_accessible_state(struct snd_pcm_substream *substream)
+ {
++	struct snd_pcm_runtime *runtime = substream->runtime;
++
+ 	switch (runtime->state) {
+ 	case SNDRV_PCM_STATE_PREPARED:
+ 	case SNDRV_PCM_STATE_RUNNING:
+ 	case SNDRV_PCM_STATE_PAUSED:
+ 		return 0;
++	case SNDRV_PCM_STATE_DRAINING:
++		return substream->stream == SNDRV_PCM_STREAM_CAPTURE ? 0 : -EBADFD;
+ 	case SNDRV_PCM_STATE_XRUN:
+ 		return -EPIPE;
+ 	case SNDRV_PCM_STATE_SUSPENDED:
+@@ -2320,7 +2324,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
+ 	nonblock = !!(substream->f_flags & O_NONBLOCK);
+ 
+ 	snd_pcm_stream_lock_irq(substream);
+-	err = pcm_accessible_state(runtime);
++	err = pcm_accessible_state(substream);
+ 	if (err < 0)
+ 		goto _end_unlock;
+ 
+@@ -2348,7 +2352,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
+ 		if (!avail) {
+ 			if (!is_playback &&
+ 			    runtime->state == SNDRV_PCM_STATE_DRAINING) {
+-				snd_pcm_stop(substream, SNDRV_PCM_STATE_SETUP);
++				snd_pcm_drain_done(substream);
+ 				goto _end_unlock;
+ 			}
+ 			if (nonblock) {
+@@ -2388,7 +2392,7 @@ snd_pcm_sframes_t __snd_pcm_lib_xfer(struct snd_pcm_substream *substream,
+ 		atomic_dec(&runtime->buffer_accessing);
+ 		if (err < 0)
+ 			goto _end_unlock;
+-		err = pcm_accessible_state(runtime);
++		err = pcm_accessible_state(substream);
+ 		if (err < 0)
+ 			goto _end_unlock;
+ 		appl_ptr += frames;
+diff --git a/sound/core/pcm_native.c b/sound/core/pcm_native.c
+index defbb2977efe..657e77d33b21 100644
+--- a/sound/core/pcm_native.c
++++ b/sound/core/pcm_native.c
+@@ -3014,7 +3014,7 @@ static int do_pcm_hwsync(struct snd_pcm_substream *substream)
+ 	switch (substream->runtime->state) {
+ 	case SNDRV_PCM_STATE_DRAINING:
+ 		if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
+-			return -EBADFD;
++			return 0;
+ 		fallthrough;
+ 	case SNDRV_PCM_STATE_RUNNING:
+ 		return snd_pcm_update_hw_ptr(substream);
