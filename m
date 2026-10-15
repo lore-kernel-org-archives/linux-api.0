@@ -1,64 +1,64 @@
-Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
+Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F2DA13B19A3
-	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:52:08 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.218.45
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C11E053E2ED
+	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:52:11 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.53
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792075933; cv=none; b=LpvAhq/+OomRENliWM43qT06TjY6QMTlAaG1l4ClZkS+o2vLxP5640inJe6hfj1rbl6Mi0HGVtZK3KfUmjd/FIq+IgQ2ItSeyYaHj0eT1GYQwIzRqdqU5u3hMbzNkv+dZfoRteTYvTf8zS4fz6y7+BvjevTRYDGB6k2hJ2aA+PA=
+	t=1792075937; cv=none; b=IPtPIHcXgZmGMA0ekhxXhh1d+FkCb3+Exmsfm25AFQCYbImj7L9bIpZUD+VmHh8GfvfJBx/6EZFRvrqK2nfLVm+onrPKPoJiKSzVG5Jok/wWPPEvuEkK9xqu1rt4FeIkn6O1ttTSrNcX7xAl4U0aHpEIBWsdHIszpxoXDoanGyE=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792075933; c=relaxed/simple;
-	bh=rNQbhegal9uJ2RV6EvMg4tporEsShlLGYjXsWN4gNxU=;
+	s=arc-20240116; t=1792075937; c=relaxed/simple;
+	bh=uTA5OqX6aCayYRXD94t69B3dcQ+q2y5pRQaAguIpFNY=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=q9V4pN5MW8XoLPH4ItbU55n/rltk43DSWfT+Hx9SXcyYE05cD+dVKHt7V4yuw+kaYvvwpvFCfFBUzhQpO8qnlq+RjeCGKe2OzomkL1GrpDkooFcLl09m/upBiTAwtLtKaT3Ii/MWlnhqFPG7qT94UcRbwkJ7mWa2mwLtnzhfKi8=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=nnU8dxUo; arc=none smtp.client-ip=209.85.218.45
+	 MIME-Version; b=A7CzGOf+U1R1TqV6V1ykqhT8rjDNXCrv3SnwhXJ5TbNfyw+mmHhazScOlvp8JTkaUVJ1Xl3LNDkacO6kKILiK/6v3bjPpGH9oO0zcsUjz7PhOzgyXdg4Wmg1NnX0oeuFvhLQ0VBpoEc+1OwsgPbR0B9mJNCggJSLyd74FPJ++a8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=Y4+Mw9ce; arc=none smtp.client-ip=209.85.208.53
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="nnU8dxUo"
-Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-c247f6687dcso817703366b.2
-        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:52:08 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="Y4+Mw9ce"
+Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-6b1f31c63ebso102987a12.0
+        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:52:11 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075927; x=1792680727; darn=vger.kernel.org;
+        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075930; x=1792680730; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=oMl1mVVq45+OUljVDeNvidHDab+EYetd2tlCIoE187k=;
-        b=nnU8dxUozLcdS+aRJo6mAULKBFVK6DPoAx9+QAumr2m7MLRdpM8WIu6N84qdZGpf3O
-         5h2AsaOEzBzKY+/XqB5vHf1sjlICKPQ8KqfZ0zLQCD5BgL/5QHcWZ0s4M/++eZFpiAl8
-         3/Hjd887nG3ia/JnrenXk7dqWaseebe9jpxTAQChUL18jL3nWSHYyb8rBPveSmjpYPln
-         WJnaJu163In7ZQ8P0lHk5Yxgro6UG9wTkSWa6G38uQnhVOLlG1TyGydCJGMTDpXQp4Bk
-         aVmNJFpBnRO2YCU+mCWQRiWD0dWDDVG7ccDPVM+v7/Y5lTRR/ZrBnLIyCVmbj2QFsTm8
-         5KWw==
+        bh=NsmR4AMRImZA17bfh34rZkIDYhK7cJ0pMdRSE8RA0ss=;
+        b=Y4+Mw9ceRUTc7vwTcJUO0SwwIfG61jE23mMgKRctX8j0lIq+ZlZOF38U1ChEy+cmcR
+         kIfgXr46PW+2qo5Ng8cd4D5ehi5ApTHrswxeOe+XBDNqqeaY5xtTbqp5g+1rgHwY9bR5
+         I/yM1VkE6zPDbPBHcqvYYBy6l/9ykyGm3v0RfMFgWz301tMdzut31WU2Zc//MlqlsC5r
+         NkX/llfrMSPsntAsjcDdCHiECq0VgKvRZQWr8vqoPgI1m18W0Tl5MIhnGCAra6snbkgs
+         K3gIFSe34N+NhZoPmOppnHFAtoDd0jGpnEWZQDyIUisUpCeCeXOeg76wQZHTwSuHD/dA
+         wOvw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792075927; x=1792680727;
+        d=1e100.net; s=20260707; t=1792075930; x=1792680730;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=oMl1mVVq45+OUljVDeNvidHDab+EYetd2tlCIoE187k=;
-        b=nWmZ7Trp8Wu74hqrmX1Wiyo6w4qcRwCwJ1cJN+DgsiMO/HeouWA3YiB9lkM/tWq7lR
-         2JnZfGgCxhPW1WcD/lV9LMltvYJbkUeS8ITgLVbHl5X9M7dMUmQNvjZGfJtrNOQelHyh
-         hsoPFikaigoTZnhDZT76+b4gi9TwdrV4k3vcyis9eZHbE2hUcvyxQiTKQ165v7KIEX9C
-         ynsYxUHOiekgfs1a/RE1OiA3bj/Gy3xr+qB0JGT4gJnzP6UOXTiy8VDjzUj7QfW5zN/e
-         vXxRzXYCyDWi+IA8VZAjdUpc1ISxqOp+7BN6P92WubYakzLZRgNjVUZ6UEDlNlnjpCe9
-         8vEw==
-X-Forwarded-Encrypted: i=1; AKwUvBwWTU0I2lJRuE6zLLl3usDB1PUlL4ofVQns69A4XFZRScaU9tjxSnxFwAeP6DCP2f2Ei4ZYQDi1FS8=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKzKbC2IkRITLb49yfT5yFHrB0SR+KnjwszMOk3dnmQmlVmCJbP
-	AOG5s/IfoF8WwmhFk15s+0uCB7AkZRpsZfNQ4HFlRVhWs5s4hflT9/QVbFAPPsj+rJA=
-X-Gm-Gg: AYBFou2DYrMkYwTzWLNykjPgu+6JMrOiI5TzL/416HXVw/aG66/64AZ7e7vYKbBOLFb
-	4XKGnAhMiOCJEGy84m/Ub1mEBJPS82SW8U0UHP5HijtSThc25dQn2efn3O/zxvO5Eg/ks+XaDLk
-	Of4u9Vq57R+mBr7xNFCDUGDw5nwBJ28dtkJLRlwKD0zq7ecBkknk+Wm5u2/LnoVH66koLPef8Wy
-	WEWnn8Ycb/WUi1T8XIDzvLzD4e68HyTKWOwRFXK20dYqjo05QginvoTWLCJC8xmG3FNRnRKZPmb
-	2Giq93pKbXtURH0jRI3VDuUv3oTHzp1B7zno/LWnO6zsPixZTJWSYCAPBtlaGVQpEPeMzkGqLdY
-	/Yp62fUIbEBlQyWcIFW1FPTlHkM9Zs+PJJ/LgrYynXOnN6D3udkRlu/ULTeNNzximIH4VGcr5VK
-	xKIMuq/Rk25zOF8sTWFhFS6we/FaXlZJByJ3IsFC54EjWXQ6BuWBseOti8n/kuL+itkkcRxK2Kf
-	KeDzA8OOQ==
-X-Received: by 2002:a17:907:9801:b0:c2d:be57:f73a with SMTP id a640c23a62f3a-c31a9fcedffmr1984085566b.13.1792075926438;
-        Thu, 15 Oct 2026 07:52:06 -0700 (PDT)
+        bh=NsmR4AMRImZA17bfh34rZkIDYhK7cJ0pMdRSE8RA0ss=;
+        b=Uz8Wjh4luAoBJBkzgZaAVXGSeNEOXeFJHQxMg3A6BXN4x9uBcr5XYQR+RpbKe+K/hU
+         SgkppwubC9obH/7klzaN1dVr2eMC207swEzLW0BV5D+hU1FwXe1EFnLE/tlQtleuSgrs
+         CUUFDKLj6tiNx6QF2adIv9w1nYqoqbc7p9cTw4w41KQmK63KB63nNdGekTaukTE9EGLp
+         ZD343X5HTs/PvnCK/vIxTWhOZfdOEN1/FhCkg7ss0pH9bQ0l6cWvt6H2rdmDvI7WpL74
+         I/Xd45jQbd76P7RnX1W6GwQRr7O6f2LKAQaMqU9yy18yC3Xfr8hifav9pzIhN5CUiEQF
+         TgUg==
+X-Forwarded-Encrypted: i=1; AKwUvByTq2DACjmH43wvP8Y5dYKKny1ZmNmpa3o82Ry8gvA5X707AhTHHwGUxJoYx3m5tVOJVL8kHPQ8A0g=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJgEBiu9WYRtzr+vUJPnebw4CME0YTCch0Cc1uICBavVNfHLp8M
+	ZZCh+C5/03Yn4/Khdd+iR6jf6ZQ5796pYFu/ruawD/xeQoyrCzqjJyX2S8TIzHB6yiI=
+X-Gm-Gg: AYBFou1yH170CyNcsEGH095DgDEfwnUvllmJ1Wuj0JaciszyLEvVJHZM+yg1OnjL6It
+	Iv0SfuGr15oQd0x0gNbcvNWFRwbR4VPosoLbYj2zJu+wZrEY6Z/gaMLyhQ3Dd59apmk0djTSei+
+	V5sHRJk7X7xvD3jsPietlsb1VX2K3A8wVnUxdAQN3icHKSP84gG5MMeNZ5FyaJA+fvB6i16427h
+	SAtyKB0X8KvKM0i2igtd8GHdjDSz/uECNaLKhcssVFSUqFocXJk8lWgZH4vwqwtozJ0wFeE17oE
+	AwvQz8WyKq7um9soCR8JcAbZ4eGXNFWdzcv4HvCEFoHgbigwDvgLCCHynHHyRXKxQsRupZfCzRv
+	CNwbgThdezHziedZoqy+Pf5YiVLQsXsCBSBUL9Ji5yquGrtpvKa7m3QdI/Zx/gAahuF8ZlyW4lI
+	OjRxrvfgqI76+IP2WTJuPdb4nHTwHPnfB3UbNavIaDdHpDJlSGCCd2OqUOJNMqKiMtu0uAhwTc7
+	UaK25EudA==
+X-Received: by 2002:a17:907:9708:b0:c2a:ac35:95fb with SMTP id a640c23a62f3a-c40223da0b9mr27472066b.24.1792075929766;
+        Thu, 15 Oct 2026 07:52:09 -0700 (PDT)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c3eda433582sm137880866b.64.2026.10.15.07.52.05
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c3ed9b3f0a6sm137223866b.43.2026.10.15.07.52.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Oct 2026 07:52:06 -0700 (PDT)
+        Thu, 15 Oct 2026 07:52:09 -0700 (PDT)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -89,9 +89,9 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com,
 	peter.fang@intel.com
-Subject: [PATCH RFC 16/20] attestation: Prepare measurement register journal
-Date: Thu, 15 Oct 2026 16:50:49 +0200
-Message-ID: <20261015145053.3664509-17-jiri@resnulli.us>
+Subject: [PATCH RFC 17/20] attestation: Add CTLV operation handling
+Date: Thu, 15 Oct 2026 16:50:50 +0200
+Message-ID: <20261015145053.3664509-18-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261015145053.3664509-1-jiri@resnulli.us>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
@@ -105,751 +105,618 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Add static MR state, append-only INFO and EXTEND records, and journal
-notifications.
-
-The journal objects can be compile-checked here. CONFIG_ATTESTATION remains
-unwired until the CTLV operation handlers complete the module.
+Translate CTLV evidence, MR and journal operations to the provider core and
+wire the attestation family into the kernel build.
 
 Assisted-by: Cursor: GPT-5.6 Sol
 Assisted-by: Cursor: Claude Opus 5.5
 Signed-off-by: Jiri Pirko <jiri@nvidia.com>
 ---
- Documentation/driver-api/attestation.rst |   8 +
- drivers/attestation/Makefile             |   2 +-
- drivers/attestation/core/core.c          |  76 ++++-
- drivers/attestation/core/events.c        |  65 ++++
- drivers/attestation/core/internal.h      |  79 ++++-
- drivers/attestation/core/mr.c            | 376 +++++++++++++++++++++++
- 6 files changed, 600 insertions(+), 6 deletions(-)
- create mode 100644 drivers/attestation/core/events.c
- create mode 100644 drivers/attestation/core/mr.c
+ Documentation/driver-api/attestation.rst |   4 +
+ drivers/Kconfig                          |   2 +
+ drivers/Makefile                         |   1 +
+ drivers/attestation/Makefile             |   3 +-
+ drivers/attestation/core/core.c          |   2 +
+ drivers/attestation/core/ctlv.c          | 520 +++++++++++++++++++++++
+ 6 files changed, 531 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/attestation/core/ctlv.c
 
 diff --git a/Documentation/driver-api/attestation.rst b/Documentation/driver-api/attestation.rst
-index 6d0cf9095c66..3cddd853aaa0 100644
+index 3cddd853aaa0..5ce121ded05f 100644
 --- a/Documentation/driver-api/attestation.rst
 +++ b/Documentation/driver-api/attestation.rst
-@@ -27,6 +27,14 @@ callback, journal commit and event emission with one instance mutex.
- Fixed MRs are listed in the provider descriptor.  Their property storage
- remains valid until ``ctlv_destroy()`` or failed-creation unwind completes.
+@@ -35,6 +35,10 @@ and event before invoking ``mr_extend``.  A successful callback is followed
+ only by infallible publication, so userspace observes the same ordered
+ journal.
  
-+MR journal
-+==========
-+
-+MR extension is transactional.  The core allocates the complete journal entry
-+and event before invoking ``mr_extend``.  A successful callback is followed
-+only by infallible publication, so userspace observes the same ordered
-+journal.
++``MR_READ`` uses ``mr_read_generation`` only to validate query continuation;
++the returned ``mr.generation`` is the journal boundary at which the values
++were read.
 +
  Teardown
  ========
  
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index 9acc7f74c5c8..971db1f0192c 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -27,6 +27,8 @@ source "drivers/connector/Kconfig"
+ 
+ source "drivers/ctlv/Kconfig"
+ 
++source "drivers/attestation/Kconfig"
++
+ source "drivers/firmware/Kconfig"
+ 
+ source "drivers/fwctl/Kconfig"
+diff --git a/drivers/Makefile b/drivers/Makefile
+index f2c0c3a367ea..2b4dfc8e256b 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -136,6 +136,7 @@ obj-$(CONFIG_INFINIBAND)	+= infiniband/
+ obj-y				+= firmware/
+ obj-$(CONFIG_FWCTL)		+= fwctl/
+ obj-$(CONFIG_CTLV)		+= ctlv/
++obj-$(CONFIG_ATTESTATION)	+= attestation/
+ obj-$(CONFIG_CRYPTO)		+= crypto/
+ obj-$(CONFIG_SUPERH)		+= sh/
+ obj-y				+= clocksource/
 diff --git a/drivers/attestation/Makefile b/drivers/attestation/Makefile
-index 8a75558a7013..e7c9cb2dfec0 100644
+index e7c9cb2dfec0..e520fee2e90d 100644
 --- a/drivers/attestation/Makefile
 +++ b/drivers/attestation/Makefile
-@@ -1,4 +1,4 @@
+@@ -1,4 +1,5 @@
  # SPDX-License-Identifier: GPL-2.0
  obj-$(CONFIG_ATTESTATION) += attestation.o
  
--attestation-y := core/core.o
-+attestation-y := core/core.o core/events.o core/mr.o
+-attestation-y := core/core.o core/events.o core/mr.o
++attestation-y := core/core.o core/ctlv.o core/events.o core/mr.o \
++		 generated/ctlv_attestation_gen.o
 diff --git a/drivers/attestation/core/core.c b/drivers/attestation/core/core.c
-index e112d3a0ff2b..6db8ed093e93 100644
+index 6db8ed093e93..3fb58f344663 100644
 --- a/drivers/attestation/core/core.c
 +++ b/drivers/attestation/core/core.c
-@@ -157,6 +157,13 @@ bool attestation_registered(struct attestation *att)
- 	return registered;
- }
- 
-+void attestation_mr_changed(struct attestation *att)
-+{
-+	lockdep_assert_held(&att->lock);
-+	att->log->generation++;
-+	att->mr_read_generation++;
-+}
-+
- void attestation_stop(struct attestation *att)
- {
- 	lockdep_assert_held(&att->lock);
-@@ -165,6 +172,38 @@ void attestation_stop(struct attestation *att)
- 	xa_unlock(&attestation_instances);
- }
- 
-+static struct attestation_mr *attestation_mr_alloc(struct attestation *att,
-+						   const struct attestation_mr_props *props)
-+{
-+	struct attestation_mr *mr;
-+	int ret;
-+
-+	ret = attestation_mr_props_validate(att->provider, props);
-+	if (ret)
-+		return ERR_PTR(ret);
-+	if (xa_load(&att->mrs, props->id))
-+		return ERR_PTR(-EEXIST);
-+	mr = kzalloc_obj(*mr, GFP_KERNEL);
-+	if (!mr)
-+		return ERR_PTR(-ENOMEM);
-+	mr->props = props;
-+	ret = xa_insert(&att->mrs, props->id, mr, GFP_KERNEL);
-+	if (ret) {
-+		kfree(mr);
-+		return ERR_PTR(ret);
-+	}
-+	return mr;
-+}
-+
-+struct attestation_mr *attestation_mr_lookup_live(struct attestation *att, unsigned int mr_id)
-+{
-+	struct attestation_mr *mr;
-+
-+	lockdep_assert_held(&att->lock);
-+	mr = xa_load(&att->mrs, mr_id);
-+	return mr ? mr : ERR_PTR(-ENOENT);
-+}
-+
- void attestation_provide_ops(struct attestation *att)
- {
- 	const struct attestation_provider *provider = att->provider;
-@@ -174,37 +213,66 @@ void attestation_provide_ops(struct attestation *att)
- 		ctlv_attestation_evidence_get_provide(ctlvdev);
- 		ctlv_attestation_evidence_get_enable(ctlvdev);
+@@ -326,6 +326,7 @@ int ctlv_attestation_op_pre(void *priv, struct ctlv_op_ctx *ctx)
  	}
-+	if (provider->mrs_count) {
-+		ctlv_attestation_mr_get_provide(ctlvdev);
-+		ctlv_attestation_mr_dump_provide(ctlvdev);
-+		ctlv_attestation_mr_log_get_provide(ctlvdev);
-+		if (provider->mr_read)
-+			ctlv_attestation_mr_read_provide(ctlvdev);
-+		if (provider->mr_extend)
-+			ctlv_attestation_mr_extend_provide(ctlvdev);
-+	}
- }
- 
- int attestation_core_init(struct attestation *att, struct ctlv_device *ctlvdev,
- 			  const struct attestation_provider *provider)
- {
-+	size_t index;
- 	int ret;
- 
- 	ret = attestation_provider_validate(provider);
- 	if (ret)
- 		return ret;
- 	mutex_init(&att->lock);
-+	xa_init(&att->mrs);
- 	att->ctlvdev = ctlvdev;
- 	att->provider = provider;
-+	for (index = 0; index < provider->mrs_count; index++) {
-+		struct attestation_mr *mr;
-+
-+		mr = attestation_mr_alloc(att, &provider->mrs[index]);
-+		if (IS_ERR(mr)) {
-+			ret = PTR_ERR(mr);
-+			goto err_mrs;
-+		}
-+	}
- 	ret = attestation_registry_insert(att);
- 	if (ret)
--		goto err_core;
-+		goto err_mrs;
- 	attestation_provide_ops(att);
- 	att->initialized = true;
  	return 0;
- 
--err_core:
-+err_mrs:
- 	attestation_core_fini(att);
- 	return ret;
  }
++EXPORT_SYMBOL_NS_GPL(ctlv_attestation_op_pre, "ATTESTATION");
  
- void attestation_core_fini(struct attestation *att)
+ void ctlv_attestation_op_post(void *priv, struct ctlv_op_ctx *ctx)
  {
-+	struct attestation_mr *mr;
-+	unsigned long index;
-+
- 	if (!att->ctlvdev)
- 		return;
- 	if (att->initialized)
- 		attestation_registry_remove(att);
-+	xa_for_each(&att->mrs, index, mr) {
-+		xa_erase(&att->mrs, index);
-+		kfree(mr);
-+	}
-+	attestation_mr_log_free(att->log);
-+	xa_destroy(&att->mrs);
- 	mutex_destroy(&att->lock);
- 	att->ctlvdev = NULL;
+@@ -333,6 +334,7 @@ void ctlv_attestation_op_post(void *priv, struct ctlv_op_ctx *ctx)
+ 
+ 	mutex_unlock(&att->lock);
  }
-@@ -222,7 +290,11 @@ int ctlv_attestation_init(struct ctlv_device *ctlvdev, const void *init_info, vo
- int ctlv_attestation_post_init(struct ctlv_device *ctlvdev, void *priv)
++EXPORT_SYMBOL_NS_GPL(ctlv_attestation_op_post, "ATTESTATION");
+ 
+ static int __init attestation_module_init(void)
  {
- 	struct attestation *att = priv;
-+	int ret;
- 
-+	ret = attestation_mr_log_init(att);
-+	if (ret)
-+		return ret;
- 	xa_lock(&attestation_instances);
- 	__xa_set_mark(&attestation_instances, att->index, ATTESTATION_REGISTERED);
- 	xa_unlock(&attestation_instances);
-diff --git a/drivers/attestation/core/events.c b/drivers/attestation/core/events.c
+diff --git a/drivers/attestation/core/ctlv.c b/drivers/attestation/core/ctlv.c
 new file mode 100644
-index 000000000000..2cf8df4b6479
+index 000000000000..ff19400843c2
 --- /dev/null
-+++ b/drivers/attestation/core/events.c
-@@ -0,0 +1,65 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+#include <linux/err.h>
-+
-+#include "internal.h"
-+
-+int attestation_events_prepare(struct attestation *att, struct attestation_event_batch *events)
-+{
-+	struct attestation_event *event = &events->mr_log;
-+
-+	lockdep_assert_held(&att->lock);
-+	event->ctx = ctlv_attestation_mr_log_entry_appended_create(att->ctlvdev, &event->reply,
-+								   GFP_KERNEL);
-+	if (IS_ERR(event->ctx)) {
-+		int ret = PTR_ERR(event->ctx);
-+
-+		event->ctx = NULL;
-+		event->reply = NULL;
-+		return ret;
-+	}
-+	return 0;
-+}
-+
-+void attestation_events_abort(struct attestation_event_batch *events)
-+{
-+	struct attestation_event *event = &events->mr_log;
-+
-+	if (!event->ctx)
-+		return;
-+	ctlv_event_abort(event->ctx);
-+	event->ctx = NULL;
-+	event->reply = NULL;
-+}
-+
-+static void attestation_event_finish(struct attestation_event *event, int ret)
-+{
-+	if (ret) {
-+		pr_err("attestation event encoding failed: %d\n", ret);
-+		ctlv_event_abort(event->ctx);
-+	} else {
-+		ret = ctlv_event_emit(event->ctx);
-+		if (ret)
-+			pr_err("attestation event emission failed: %d\n", ret);
-+	}
-+	event->ctx = NULL;
-+	event->reply = NULL;
-+}
-+
-+void attestation_mr_log_event_emit(struct attestation_event_batch *events,
-+				   const struct attestation_mr_log_entry *entry)
-+{
-+	struct attestation_event *event = &events->mr_log;
-+	struct ctlv_cursor nested;
-+	int ret;
-+
-+	if (!event->ctx)
-+		return;
-+	if (!ctlv_attestation_notification_entry_start(event->reply, &nested)) {
-+		ret = -EMSGSIZE;
-+		goto out;
-+	}
-+	ret = attestation_mr_log_entry_encode(&nested, entry);
-+	ctlv_nest_end(&nested);
-+out:
-+	attestation_event_finish(event, ret);
-+}
-diff --git a/drivers/attestation/core/internal.h b/drivers/attestation/core/internal.h
-index 767c02275d0f..64dca12a3d04 100644
---- a/drivers/attestation/core/internal.h
-+++ b/drivers/attestation/core/internal.h
-@@ -11,25 +11,98 @@
- 
- #define ATTESTATION_REGISTERED XA_MARK_1
- 
-+enum attestation_mr_log_entry_type {
-+	ATTESTATION_MR_LOG_ENTRY_INFO,
-+	ATTESTATION_MR_LOG_ENTRY_EXTEND,
-+};
-+
-+struct attestation_mr_log_entry {
-+	unsigned int mr_generation;
-+	unsigned int mr_id;
-+	enum attestation_mr_log_entry_type type;
-+};
-+
-+struct attestation_mr_log_entry_info {
-+	struct attestation_mr_log_entry entry;
-+	struct attestation_mr_props props;
-+};
-+
-+struct attestation_mr_log_entry_extend {
-+	struct attestation_mr_log_entry entry;
-+	struct attestation_digest_set values;
-+};
-+
-+struct attestation_mr_log {
-+	unsigned int generation;
-+	struct xarray entries;
-+};
-+
- struct attestation {
- 	struct ctlv_device *ctlvdev;
- 	const struct attestation_provider *provider;
- 	unsigned int index;
- 
--	/* Mutable instance state. */
-+	/* Mutable instance, MR, and journal state. */
- 	struct mutex lock;
-+	unsigned int mr_read_generation;
- 
-+	struct xarray mrs;
-+	struct attestation_mr_log *log;
- 	bool initialized;
- };
- 
--int attestation_core_init(struct attestation *att,
--			  struct ctlv_device *ctlvdev,
-+struct attestation_mr {
-+	const struct attestation_mr_props *props;
-+};
-+
-+struct attestation_event {
-+	struct ctlv_op_ctx *ctx;
-+	struct ctlv_cursor *reply;
-+};
-+
-+struct attestation_event_batch {
-+	struct attestation_event mr_log;
-+};
-+
-+struct attestation_mr_change {
-+	struct attestation_mr *mr;
-+	struct attestation_mr_log_entry_extend *entry;
-+	struct attestation_event_batch events;
-+};
-+
-+int attestation_core_init(struct attestation *att, struct ctlv_device *ctlvdev,
- 			  const struct attestation_provider *provider);
- void attestation_core_fini(struct attestation *att);
- bool attestation_registered(struct attestation *att);
- void attestation_stop(struct attestation *att);
-+void attestation_mr_changed(struct attestation *att);
- 
- int attestation_provider_validate(const struct attestation_provider *provider);
- void attestation_provide_ops(struct attestation *att);
- 
-+struct attestation_mr *attestation_mr_lookup_live(struct attestation *att, unsigned int mr_id);
-+int attestation_mr_values_validate(const struct attestation_mr *mr,
-+				   const struct attestation_digest_set *values);
-+int attestation_mr_log_init(struct attestation *att);
-+struct attestation_mr_log_entry_info *attestation_mr_info_alloc(const struct attestation_mr *mr);
-+void attestation_mr_log_entry_free(struct attestation_mr_log_entry *entry);
-+void attestation_mr_log_free(struct attestation_mr_log *log);
-+void attestation_mr_log_append(struct attestation *att, struct attestation_mr_log_entry *entry);
-+struct attestation_mr_change *
-+attestation_mr_change_prepare(struct attestation *att, struct attestation_mr *mr,
-+			      const struct attestation_digest_set *values);
-+const struct attestation_mr_log_entry *
-+attestation_mr_extend_locked(struct attestation *att, struct attestation_mr_change *change);
-+void attestation_mr_change_free(struct attestation_mr_change *change);
-+
-+int attestation_events_prepare(struct attestation *att, struct attestation_event_batch *events);
-+void attestation_events_abort(struct attestation_event_batch *events);
-+void attestation_mr_log_event_emit(struct attestation_event_batch *events,
-+				   const struct attestation_mr_log_entry *entry);
-+
-+int attestation_mr_log_entry_encode(struct ctlv_cursor *reply,
-+				    const struct attestation_mr_log_entry *entry);
-+int attestation_mr_props_encode(struct ctlv_cursor *reply, const struct attestation_mr *mr,
-+				bool include_id);
-+
- #endif /* _ATTESTATION_INTERNAL_H */
-diff --git a/drivers/attestation/core/mr.c b/drivers/attestation/core/mr.c
-new file mode 100644
-index 000000000000..db80cbd2b582
---- /dev/null
-+++ b/drivers/attestation/core/mr.c
-@@ -0,0 +1,376 @@
++++ b/drivers/attestation/core/ctlv.c
+@@ -0,0 +1,520 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +#include <crypto/hash_info.h>
 +#include <linux/cleanup.h>
 +#include <linux/err.h>
++#include <linux/limits.h>
 +#include <linux/slab.h>
++#include <linux/sort.h>
 +#include <linux/string.h>
 +
 +#include "internal.h"
 +
-+int attestation_mr_values_validate(const struct attestation_mr *mr,
-+				   const struct attestation_digest_set *values)
++static const struct attestation_evidence_supported_object *
++attestation_evidence_object_find(const struct attestation_evidence_caps *caps, const char *format)
 +{
 +	size_t index;
 +
-+	if (!values || !values->values || values->values_count != mr->props->algorithms_count)
-+		return -EINVAL;
-+	for (index = 0; index < values->values_count; index++)
-+		if (values->values[index].algorithm != mr->props->algorithms[index])
-+			return -EINVAL;
-+	return 0;
-+}
++	for (index = 0; index < caps->objects_count; index++) {
++		const struct attestation_evidence_supported_object *object = &caps->objects[index];
 +
-+static int attestation_digest_set_copy(struct attestation_digest_set *dst,
-+				       const struct attestation_digest_set *src)
-+{
-+	size_t index;
-+
-+	if (!src || !src->values || !src->values_count)
-+		return -EINVAL;
-+	for (index = 0; index < src->values_count; index++) {
-+		enum hash_algo algorithm = src->values[index].algorithm;
-+
-+		if (algorithm >= HASH_ALGO__LAST || !hash_digest_size[algorithm] ||
-+		    (index && src->values[index - 1].algorithm >= algorithm))
-+			return -EINVAL;
++		if (!strcmp(object->format, format))
++			return object;
 +	}
-+	dst->values =
-+		kmemdup_array(src->values, src->values_count, sizeof(*src->values), GFP_KERNEL);
-+	if (!dst->values)
-+		return -ENOMEM;
-+	dst->values_count = src->values_count;
-+	return 0;
++	return NULL;
 +}
 +
-+static void attestation_digest_set_free(struct attestation_digest_set *set)
++static int attestation_device_caps_put(struct attestation *att, struct ctlv_cursor *reply)
 +{
-+	kfree(set->values);
-+	set->values = NULL;
-+	set->values_count = 0;
-+}
-+
-+struct attestation_mr_log_entry_info *attestation_mr_info_alloc(const struct attestation_mr *mr)
-+{
-+	struct attestation_mr_log_entry_info *info;
-+	enum hash_algo *algorithms;
-+	char *name;
-+
-+	info = kzalloc_obj(*info, GFP_KERNEL);
-+	if (!info)
-+		return ERR_PTR(-ENOMEM);
-+	name = kstrdup(mr->props->name, GFP_KERNEL);
-+	if (!name)
-+		goto err_info;
-+	algorithms = kmemdup_array(mr->props->algorithms, mr->props->algorithms_count,
-+				   sizeof(*algorithms), GFP_KERNEL);
-+	if (!algorithms)
-+		goto err_name;
-+	info->entry.type = ATTESTATION_MR_LOG_ENTRY_INFO;
-+	info->entry.mr_id = mr->props->id;
-+	info->props = *mr->props;
-+	info->props.name = name;
-+	info->props.algorithms = algorithms;
-+	return info;
-+
-+err_name:
-+	kfree(name);
-+err_info:
-+	kfree(info);
-+	return ERR_PTR(-ENOMEM);
-+}
-+
-+void attestation_mr_log_entry_free(struct attestation_mr_log_entry *entry)
-+{
-+	if (!entry)
-+		return;
-+	switch (entry->type) {
-+	case ATTESTATION_MR_LOG_ENTRY_INFO: {
-+		struct attestation_mr_log_entry_info *info =
-+			container_of(entry, typeof(*info), entry);
-+
-+		kfree(info->props.algorithms);
-+		kfree(info->props.name);
-+		kfree(info);
-+		break;
-+	}
-+	case ATTESTATION_MR_LOG_ENTRY_EXTEND: {
-+		struct attestation_mr_log_entry_extend *extend =
-+			container_of(entry, typeof(*extend), entry);
-+
-+		attestation_digest_set_free(&extend->values);
-+		kfree(extend);
-+		break;
-+	}
-+	}
-+}
-+
-+void attestation_mr_log_free(struct attestation_mr_log *log)
-+{
-+	struct attestation_mr_log_entry *entry;
-+	unsigned long index;
-+
-+	if (!log)
-+		return;
-+	xa_for_each(&log->entries, index, entry) {
-+		xa_erase(&log->entries, index);
-+		attestation_mr_log_entry_free(entry);
-+	}
-+	xa_destroy(&log->entries);
-+	kfree(log);
-+}
-+
-+void attestation_mr_log_append(struct attestation *att, struct attestation_mr_log_entry *entry)
-+{
-+	struct attestation_mr_log *log = att->log;
-+
-+	xa_store(&log->entries, entry->mr_generation, entry, GFP_NOWAIT);
-+}
-+
-+int attestation_mr_log_init(struct attestation *att)
-+{
-+	struct attestation_mr_log_entry_info **infos;
-+	struct attestation_mr_log *log;
-+	struct attestation_mr *mr;
-+	unsigned long mr_id;
-+	size_t count = 0;
-+	size_t index = 0;
-+	int ret = -ENOMEM;
-+
-+	xa_for_each(&att->mrs, mr_id, mr)
-+		count++;
-+	log = kzalloc_obj(*log, GFP_KERNEL);
-+	if (!log)
-+		return -ENOMEM;
-+	xa_init(&log->entries);
-+	infos = kcalloc(count, sizeof(*infos), GFP_KERNEL);
-+	if (count && !infos)
-+		goto err_log;
-+	xa_for_each(&att->mrs, mr_id, mr) {
-+		infos[index] = attestation_mr_info_alloc(mr);
-+		if (IS_ERR(infos[index])) {
-+			ret = PTR_ERR(infos[index]);
-+			infos[index] = NULL;
-+			goto err_infos;
-+		}
-+		index++;
-+	}
-+
-+	att->log = log;
-+	index = 0;
-+	xa_for_each(&att->mrs, mr_id, mr) {
-+		struct attestation_mr_log_entry *entry = &infos[index]->entry;
-+
-+		if (log->generation == UINT_MAX) {
-+			ret = -EOVERFLOW;
-+			goto err_attached;
-+		}
-+		entry->mr_generation = ++log->generation;
-+		ret = xa_insert(&log->entries, entry->mr_generation, entry, GFP_KERNEL);
-+		if (ret)
-+			goto err_attached;
-+		infos[index++] = NULL;
-+	}
-+	kfree(infos);
-+	return 0;
-+
-+err_attached:
-+	att->log = NULL;
-+	attestation_mr_log_free(log);
-+	log = NULL;
-+err_infos:
-+	for (index = 0; index < count; index++)
-+		if (infos[index])
-+			attestation_mr_log_entry_free(&infos[index]->entry);
-+	kfree(infos);
-+err_log:
-+	attestation_mr_log_free(log);
-+	return ret;
-+}
-+
-+static struct attestation_mr_log_entry_extend *
-+attestation_extend_alloc(enum attestation_mr_log_entry_type type, size_t size,
-+			 struct attestation_mr *mr, const struct attestation_digest_set *values)
-+{
-+	struct attestation_mr_log_entry_extend *extend;
-+	int ret;
-+
-+	extend = kzalloc(size, GFP_KERNEL);
-+	if (!extend)
-+		return ERR_PTR(-ENOMEM);
-+	extend->entry.type = type;
-+	extend->entry.mr_id = mr->props->id;
-+	ret = attestation_digest_set_copy(&extend->values, values);
-+	if (ret) {
-+		kfree(extend);
-+		return ERR_PTR(ret);
-+	}
-+	return extend;
-+}
-+
-+struct attestation_mr_change *
-+attestation_mr_change_prepare(struct attestation *att, struct attestation_mr *mr,
-+			      const struct attestation_digest_set *values)
-+{
-+	struct attestation_mr_change *change;
-+	int ret;
-+
-+	lockdep_assert_held(&att->lock);
-+	change = kzalloc_obj(*change, GFP_KERNEL);
-+	if (!change)
-+		return ERR_PTR(-ENOMEM);
-+	change->mr = mr;
-+	change->entry = attestation_extend_alloc(ATTESTATION_MR_LOG_ENTRY_EXTEND,
-+						 sizeof(*change->entry), mr, values);
-+	if (IS_ERR(change->entry)) {
-+		ret = PTR_ERR(change->entry);
-+		goto err_change;
-+	}
-+	ret = attestation_events_prepare(att, &change->events);
-+	if (ret)
-+		goto err_entry;
-+	return change;
-+
-+err_entry:
-+	attestation_mr_log_entry_free(&change->entry->entry);
-+err_change:
-+	kfree(change);
-+	return ERR_PTR(ret);
-+}
-+
-+const struct attestation_mr_log_entry *
-+attestation_mr_extend_locked(struct attestation *att, struct attestation_mr_change *change)
-+{
-+	struct attestation_mr_log_entry_extend *extend = change->entry;
-+	struct attestation_mr_log_entry *entry = &extend->entry;
-+	int ret;
-+
-+	lockdep_assert_held(&att->lock);
-+	if (att->log->generation == UINT_MAX) {
-+		attestation_stop(att);
-+		return ERR_PTR(-EOVERFLOW);
-+	}
-+	entry->mr_generation = att->log->generation + 1;
-+	ret = xa_reserve(&att->log->entries, entry->mr_generation, GFP_KERNEL);
-+	if (ret)
-+		return ERR_PTR(ret);
-+	ret = att->provider->mr_extend(att, change->mr->props->id, &extend->values);
-+	if (ret) {
-+		xa_release(&att->log->entries, entry->mr_generation);
-+		return ERR_PTR(ret);
-+	}
-+	attestation_mr_changed(att);
-+	attestation_mr_log_append(att, entry);
-+	attestation_mr_log_event_emit(&change->events, entry);
-+	change->entry = NULL;
-+	return entry;
-+}
-+
-+void attestation_mr_change_free(struct attestation_mr_change *change)
-+{
-+	if (!change)
-+		return;
-+	attestation_events_abort(&change->events);
-+	if (change->entry)
-+		attestation_mr_log_entry_free(&change->entry->entry);
-+	kfree(change);
-+}
-+
-+int attestation_mr_props_encode(struct ctlv_cursor *reply, const struct attestation_mr *mr,
-+				bool include_id)
-+{
-+	u64 caps = 0;
-+	size_t index;
++	const struct attestation_provider *provider = att->provider;
++	struct ctlv_cursor caps_nest, group, object;
 +	bool ok = true;
++	size_t index;
++	u64 flags;
 +
-+	if (include_id)
-+		ok &= ctlv_attestation_mr_id_put(reply, mr->props->id);
-+	ok &= ctlv_attestation_mr_name_put(reply, mr->props->name);
-+	for (index = 0; index < mr->props->algorithms_count; index++)
-+		ok &= ctlv_attestation_mr_supported_hash_algo_put(reply,
-+								  mr->props->algorithms[index]);
-+	if (mr->props->has_register_index)
-+		ok &= ctlv_attestation_mr_register_index_put(reply, mr->props->register_index);
-+	if (mr->props->readable)
-+		caps |= CTLV_ATTESTATION_MR_CAPS_READ;
-+	if (mr->props->extendable)
-+		caps |= CTLV_ATTESTATION_MR_CAPS_EXTEND;
-+	ok &= ctlv_attestation_mr_caps_put(reply, caps);
++	if (!ctlv_attestation_device_caps_start(reply, &caps_nest))
++		return -EMSGSIZE;
++	if (provider->evidence_caps) {
++		const struct attestation_evidence_caps *caps = provider->evidence_caps;
++		u64 blob_class = CTLV_ATTESTATION_EVIDENCE_BLOB_CLASS_PRIMARY;
++		u64 representation = CTLV_ATTESTATION_EVIDENCE_REPRESENTATION_RAW;
++		u64 max_output_length = caps->max_total_output_length;
++
++		if (!ctlv_attestation_cap_evidence_start(&caps_nest, &group))
++			return -EMSGSIZE;
++		ok &= ctlv_attestation_cap_min_challenge_length_put(&group,
++								    caps->min_challenge_length);
++		ok &= ctlv_attestation_cap_max_challenge_length_put(&group,
++								    caps->max_challenge_length);
++		ok &= ctlv_attestation_cap_max_total_output_length_put(&group, max_output_length);
++		for (index = 0; index < caps->objects_count; index++) {
++			const struct attestation_evidence_supported_object *cap =
++				&caps->objects[index];
++
++			if (!ctlv_attestation_cap_object_start(&group, &object)) {
++				ok = false;
++				break;
++			}
++			ok &= ctlv_attestation_cap_blob_class_put(&object, blob_class);
++			ok &= ctlv_attestation_cap_format_put(&object, cap->format);
++			ok &= ctlv_attestation_cap_representation_put(&object, representation);
++			ok &= ctlv_attestation_cap_max_length_put(&object, cap->max_length);
++			ctlv_nest_end(&object);
++		}
++		ctlv_nest_end(&group);
++	}
++	if (provider->mrs_count) {
++		if (!ctlv_attestation_cap_mr_start(&caps_nest, &group))
++			return -EMSGSIZE;
++		flags = 0;
++		if (provider->mr_read)
++			flags |= CTLV_ATTESTATION_MR_DEVICE_CAPS_READ;
++		if (provider->mr_extend)
++			flags |= CTLV_ATTESTATION_MR_DEVICE_CAPS_EXTEND;
++		ok &= ctlv_attestation_cap_mr_flags_put(&group, flags);
++		ctlv_nest_end(&group);
++	}
++	ctlv_nest_end(&caps_nest);
 +	return ok ? 0 : -EMSGSIZE;
 +}
 +
-+static int attestation_values_encode(struct ctlv_cursor *reply,
++int ctlv_attestation_device_get_action(void *priv, struct ctlv_op_ctx *ctx,
++				       const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++{
++	struct attestation *att = priv;
++	struct ctlv_cursor info;
++	int ret;
++
++	ret = attestation_device_caps_put(att, reply);
++	if (ret)
++		return ret;
++	if (!ctlv_attestation_device_info_start(reply, &info))
++		return -EMSGSIZE;
++	ret = ctlv_stub_fill(ctx, request, &info);
++	ctlv_nest_end(&info);
++	return ret;
++}
++
++static int
++attestation_evidence_decode_objects(struct attestation *att, struct ctlv_op_ctx *ctx,
++				    const struct ctlv_cursor *request,
++				    struct attestation_evidence_request *decoded,
++				    struct attestation_evidence_object_request **objects_out)
++{
++	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
++	struct attestation_evidence_object_request *objects;
++	struct ctlv_cursor object;
++	size_t count = 0, index = 0, previous;
++
++	ctlv_attestation_evidence_get_evidence_object_for_each(&object, request) count++;
++	objects = kcalloc(count, sizeof(*objects), GFP_KERNEL);
++	if (!objects)
++		return -ENOMEM;
++	ctlv_attestation_evidence_get_evidence_object_for_each(&object, request)
++	{
++		const struct attestation_evidence_supported_object *supported;
++		const char *format;
++		size_t total = 0;
++
++		format = ctlv_attestation_evidence_get_object_evidence_format_get(&object);
++		supported = attestation_evidence_object_find(caps, format);
++		if (!supported) {
++			kfree(objects);
++			return -EOPNOTSUPP;
++		}
++		for (previous = 0; previous < index; previous++)
++			if (objects[previous].supported_object == supported) {
++				kfree(objects);
++				return -EINVAL;
++			}
++		objects[index].supported_object = supported;
++		objects[index].output =
++			ctlv_attestation_evidence_get_object_evidence_data_resolve(ctx, &object);
++		if (IS_ERR(objects[index].output)) {
++			int ret = PTR_ERR(objects[index].output);
++
++			objects[index].output = NULL;
++			while (index)
++				ctlv_blob_put(objects[--index].output);
++			kfree(objects);
++			return ret;
++		}
++		if (ctlv_blob_len(objects[index].output) < supported->max_length) {
++			for (previous = 0; previous <= index; previous++)
++				ctlv_blob_put(objects[previous].output);
++			kfree(objects);
++			return -EMSGSIZE;
++		}
++		for (previous = 0; previous <= index; previous++) {
++			if (check_add_overflow(total, ctlv_blob_len(objects[previous].output),
++					       &total) ||
++			    total > caps->max_total_output_length) {
++				for (previous = 0; previous <= index; previous++)
++					ctlv_blob_put(objects[previous].output);
++				kfree(objects);
++				return -E2BIG;
++			}
++		}
++		index++;
++	}
++	decoded->objects = objects;
++	decoded->objects_count = count;
++	*objects_out = objects;
++	return 0;
++}
++
++static int attestation_evidence_request_decode(struct attestation *att, struct ctlv_op_ctx *ctx,
++					       const struct ctlv_cursor *request,
++					       struct attestation_evidence_request *decoded,
++					       struct attestation_evidence_object_request **objects)
++{
++	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
++	u32 challenge_length;
++
++	decoded->challenge =
++		ctlv_attestation_evidence_get_evidence_challenge_get(request, &challenge_length);
++	decoded->challenge_length = challenge_length;
++	if (challenge_length < caps->min_challenge_length ||
++	    challenge_length > caps->max_challenge_length)
++		return -EINVAL;
++	return attestation_evidence_decode_objects(att, ctx, request, decoded, objects);
++}
++
++static void attestation_evidence_request_free(struct attestation_evidence_object_request *objects,
++					      size_t count)
++{
++	while (count) {
++		count--;
++		if (objects[count].output)
++			ctlv_blob_put(objects[count].output);
++	}
++	kfree(objects);
++}
++
++int ctlv_attestation_evidence_get_action(void *priv, struct ctlv_op_ctx *ctx,
++					 const struct ctlv_cursor *request,
++					 struct ctlv_cursor *reply)
++{
++	struct attestation_evidence_object_request *objects = NULL;
++	struct attestation_evidence_request decoded = {};
++	struct attestation_evidence_result result = {};
++	struct attestation *att = priv;
++	bool mr_dependent = false;
++	size_t index;
++	int put_ret;
++	int ret;
++
++	ret = attestation_evidence_request_decode(att, ctx, request, &decoded, &objects);
++	if (ret)
++		goto out;
++	result.object_lengths =
++		kcalloc(decoded.objects_count, sizeof(*result.object_lengths), GFP_KERNEL);
++	if (!result.object_lengths) {
++		ret = -ENOMEM;
++		goto out;
++	}
++	for (index = 0; index < decoded.objects_count; index++)
++		mr_dependent |= decoded.objects[index].supported_object->binds_mrs;
++	ret = att->provider->evidence_get(att, &decoded, &result);
++	if (ret)
++		goto out;
++	for (index = 0; index < decoded.objects_count; index++) {
++		if (result.object_lengths[index] >
++			    decoded.objects[index].supported_object->max_length ||
++		    result.object_lengths[index] > ctlv_blob_len(decoded.objects[index].output)) {
++			ret = -E2BIG;
++			goto out;
++		}
++	}
++	for (index = 0; index < decoded.objects_count; index++) {
++		put_ret = ctlv_blob_put(decoded.objects[index].output);
++		objects[index].output = NULL;
++		if (!ret)
++			ret = put_ret;
++	}
++	if (ret)
++		goto out;
++	if (mr_dependent && !ctlv_attestation_mr_generation_put(reply, att->log->generation)) {
++		ret = -EMSGSIZE;
++		goto out;
++	}
++	for (index = 0; index < decoded.objects_count; index++)
++		if (!ctlv_attestation_evidence_object_length_put(reply,
++								 result.object_lengths[index])) {
++			ret = -EMSGSIZE;
++			goto out;
++		}
++out:
++	kfree(result.object_lengths);
++	attestation_evidence_request_free(objects, decoded.objects_count);
++	return ret;
++}
++
++int ctlv_attestation_mr_get_action(void *priv, struct ctlv_op_ctx *ctx,
++				   const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++{
++	struct attestation *att = priv;
++	struct attestation_mr *mr;
++	u64 id = ctlv_attestation_mr_get_mr_id_get(request);
++
++	if (id > UINT_MAX)
++		return -ERANGE;
++	mr = attestation_mr_lookup_live(att, id);
++	return IS_ERR(mr) ? PTR_ERR(mr) : attestation_mr_props_encode(reply, mr, false);
++}
++
++int ctlv_attestation_mr_dump_query(void *priv, struct ctlv_op_ctx *ctx,
++				   const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++{
++	struct attestation *att = priv;
++	struct attestation_mr *mr;
++	struct ctlv_cursor nested;
++	unsigned long id;
++	u64 cursor = ctlv_op_query_cursor(ctx);
++	unsigned int generation = att->log->generation;
++	int ret;
++
++	if (cursor && ctlv_op_query_generation(ctx) != generation)
++		return -ESTALE;
++	id = cursor ? cursor - 1 : 0;
++	mr = xa_find(&att->mrs, &id, UINT_MAX, XA_PRESENT);
++	while (mr) {
++		if (!ctlv_attestation_mr_item_start(reply, &nested))
++			return ctlv_op_query_more(ctx, generation, id + 1);
++		ret = attestation_mr_props_encode(&nested, mr, true);
++		ctlv_nest_end(&nested);
++		if (ret)
++			return ret;
++		mr = xa_find_after(&att->mrs, &id, UINT_MAX, XA_PRESENT);
++	}
++	return ctlv_op_query_done(ctx, generation);
++}
++
++static int attestation_mr_values_put(struct ctlv_cursor *reply,
 +				     const struct attestation_digest_set *values)
 +{
 +	struct ctlv_cursor nested;
 +	size_t index;
-+	bool ok = true;
++	bool ok;
 +
 +	for (index = 0; index < values->values_count; index++) {
 +		const struct attestation_digest *value = &values->values[index];
++		enum hash_algo algorithm = value->algorithm;
++		size_t length = hash_digest_size[algorithm];
 +
 +		if (!ctlv_attestation_mr_value_start(reply, &nested))
 +			return -EMSGSIZE;
-+		ok &= ctlv_attestation_mr_hash_algo_put(&nested, value->algorithm);
-+		ok &= ctlv_attestation_mr_data_put(&nested, value->data,
-+						   hash_digest_size[value->algorithm]);
++		ok = ctlv_attestation_mr_hash_algo_put(&nested, algorithm);
++		ok &= ctlv_attestation_mr_data_put(&nested, value->data, length);
 +		ctlv_nest_end(&nested);
++		if (!ok)
++			return -EMSGSIZE;
 +	}
-+	return ok ? 0 : -EMSGSIZE;
++	return 0;
 +}
 +
-+static int attestation_mr_info_encode(struct ctlv_cursor *reply,
-+				      const struct attestation_mr_props *props)
++int ctlv_attestation_mr_read_query(void *priv, struct ctlv_op_ctx *ctx,
++				   const struct ctlv_cursor *request, struct ctlv_cursor *reply)
 +{
-+	u64 caps = 0;
-+	size_t index;
-+	bool ok;
-+
-+	ok = ctlv_attestation_mr_name_put(reply, props->name);
-+	for (index = 0; index < props->algorithms_count; index++)
-+		ok &= ctlv_attestation_mr_supported_hash_algo_put(reply,
-+								  props->algorithms[index]);
-+	if (props->has_register_index)
-+		ok &= ctlv_attestation_mr_register_index_put(reply, props->register_index);
-+	if (props->readable)
-+		caps |= CTLV_ATTESTATION_MR_CAPS_READ;
-+	if (props->extendable)
-+		caps |= CTLV_ATTESTATION_MR_CAPS_EXTEND;
-+	ok &= ctlv_attestation_mr_caps_put(reply, caps);
-+	return ok ? 0 : -EMSGSIZE;
-+}
-+
-+int attestation_mr_log_entry_encode(struct ctlv_cursor *reply,
-+				    const struct attestation_mr_log_entry *entry)
-+{
-+	struct ctlv_cursor nested;
-+	bool ok;
++	struct attestation_digest_set values = {};
++	struct attestation *att = priv;
++	struct attestation_mr *mr;
++	u64 id;
 +	int ret;
 +
-+	ok = ctlv_attestation_mr_generation_put(reply, entry->mr_generation);
-+	ok &= ctlv_attestation_mr_id_put(reply, entry->mr_id);
-+	ok &= ctlv_attestation_log_event_put(reply, entry->type == ATTESTATION_MR_LOG_ENTRY_INFO ?
-+							    CTLV_ATTESTATION_MR_LOG_EVENT_INFO :
-+							    CTLV_ATTESTATION_MR_LOG_EVENT_EXTEND);
-+	if (!ok)
-+		return -EMSGSIZE;
-+
-+	if (entry->type == ATTESTATION_MR_LOG_ENTRY_INFO) {
-+		const struct attestation_mr_log_entry_info *info =
-+			container_of(entry, typeof(*info), entry);
-+
-+		if (!ctlv_attestation_log_mr_start(reply, &nested))
-+			return -EMSGSIZE;
-+		ret = attestation_mr_info_encode(&nested, &info->props);
-+		ctlv_nest_end(&nested);
-+		return ret;
-+	}
-+
-+	ret = attestation_values_encode(reply,
-+					&container_of(entry,
-+						      const struct attestation_mr_log_entry_extend,
-+						      entry)
-+						 ->values);
++	if (ctlv_op_query_cursor(ctx) &&
++	    ctlv_op_query_generation(ctx) != att->mr_read_generation)
++		return -ESTALE;
++	id = ctlv_attestation_mr_read_mr_id_get(request);
++	if (id > UINT_MAX)
++		return -ERANGE;
++	mr = attestation_mr_lookup_live(att, id);
++	if (IS_ERR(mr))
++		return PTR_ERR(mr);
++	if (!mr->props->readable)
++		return -EOPNOTSUPP;
++	values.values_count = mr->props->algorithms_count;
++	values.values = kcalloc(values.values_count, sizeof(*values.values), GFP_KERNEL);
++	if (!values.values)
++		return -ENOMEM;
++	for (id = 0; id < values.values_count; id++)
++		values.values[id].algorithm = mr->props->algorithms[id];
++	ret = att->provider->mr_read(att, mr->props->id, &values);
++	if (!ret)
++		ret = attestation_mr_values_validate(mr, &values);
++	if (!ret && !ctlv_attestation_mr_generation_put(reply, att->log->generation))
++		ret = -EMSGSIZE;
++	if (!ret)
++		ret = attestation_mr_values_put(reply, &values);
++	kfree(values.values);
 +	if (ret)
 +		return ret;
++	return ctlv_op_query_done(ctx, att->mr_read_generation);
++}
++
++static int attestation_digest_compare(const void *left, const void *right)
++{
++	const struct attestation_digest *a = left;
++	const struct attestation_digest *b = right;
++
++	return (int)a->algorithm - (int)b->algorithm;
++}
++
++static int attestation_mr_extend_decode(const struct ctlv_cursor *request,
++					struct attestation_digest_set *values)
++{
++	struct ctlv_cursor item;
++	size_t count = 0, index = 0;
++
++	ctlv_attestation_mr_extend_mr_value_for_each(&item, request) count++;
++	values->values = kcalloc(count, sizeof(*values->values), GFP_KERNEL);
++	if (!values->values)
++		return -ENOMEM;
++	values->values_count = count;
++	ctlv_attestation_mr_extend_mr_value_for_each(&item, request)
++	{
++		struct attestation_digest *value = &values->values[index++];
++		u32 length;
++		const void *data;
++		u64 algorithm;
++
++		algorithm =
++			ctlv_attestation_mr_extend_value_mr_hash_algo_get(&item);
++		if (algorithm >= HASH_ALGO__LAST || !hash_digest_size[algorithm])
++			return -EINVAL;
++		data = ctlv_attestation_mr_extend_value_mr_data_get(&item, &length);
++		if (length != hash_digest_size[algorithm])
++			return -EINVAL;
++		value->algorithm = algorithm;
++		memcpy(value->data, data, length);
++	}
++	sort(values->values, values->values_count, sizeof(*values->values),
++	     attestation_digest_compare, NULL);
 +	return 0;
++}
++
++int ctlv_attestation_mr_extend_action(void *priv, struct ctlv_op_ctx *ctx,
++				      const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++{
++	struct attestation_digest_set values = {};
++	struct attestation_mr_change *change;
++	const struct attestation_mr_log_entry *entry;
++	struct attestation *att = priv;
++	struct attestation_mr *mr;
++	u64 id;
++	int ret;
++
++	id = ctlv_attestation_mr_extend_mr_id_get(request);
++	if (id > UINT_MAX)
++		return -ERANGE;
++	mr = attestation_mr_lookup_live(att, id);
++	if (IS_ERR(mr))
++		return PTR_ERR(mr);
++	if (!mr->props->extendable)
++		return -EOPNOTSUPP;
++	ret = attestation_mr_extend_decode(request, &values);
++	if (ret)
++		goto out_values;
++	ret = attestation_mr_values_validate(mr, &values);
++	if (ret)
++		goto out_values;
++	change = attestation_mr_change_prepare(att, mr, &values);
++	if (IS_ERR(change)) {
++		ret = PTR_ERR(change);
++		goto out_values;
++	}
++	entry = attestation_mr_extend_locked(att, change);
++	if (IS_ERR(entry))
++		ret = PTR_ERR(entry);
++	else if (!ctlv_attestation_mr_generation_put(reply, entry->mr_generation))
++		ret = -EMSGSIZE;
++	attestation_mr_change_free(change);
++out_values:
++	kfree(values.values);
++	return ret;
++}
++
++static bool attestation_log_selected(const unsigned int *ids, size_t count, unsigned int id)
++{
++	size_t index;
++
++	if (!count)
++		return true;
++	for (index = 0; index < count; index++)
++		if (ids[index] == id)
++			return true;
++	return false;
++}
++
++int ctlv_attestation_mr_log_get_query(void *priv, struct ctlv_op_ctx *ctx,
++				      const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++{
++	struct attestation *att = priv;
++	struct attestation_mr_log_entry *entry;
++	struct ctlv_cursor item, nested;
++	unsigned int ids[256];
++	size_t ids_count = 0, index;
++	unsigned int start, end;
++	unsigned long xa_index;
++	u64 boundary;
++	u64 cursor = ctlv_op_query_cursor(ctx);
++	int ret;
++
++	ctlv_attestation_mr_log_get_mr_selection_for_each(&item, request)
++	{
++		u64 id = ctlv_attestation_mr_log_get_selection_mr_id_get(&item);
++
++		if (id > UINT_MAX)
++			return -ERANGE;
++		for (index = 0; index < ids_count; index++)
++			if (ids[index] == id)
++				return -EINVAL;
++		ids[ids_count++] = id;
++	}
++	if (cursor)
++		boundary = ctlv_op_query_generation(ctx);
++	else
++		boundary = att->log->generation;
++	if (boundary > UINT_MAX || boundary > att->log->generation)
++		return -ESTALE;
++	end = boundary;
++	if (ctlv_attestation_mr_log_get_mr_end_generation_present(request)) {
++		u64 requested_end = ctlv_attestation_mr_log_get_mr_end_generation_get(request);
++
++		end = min_t(u64, end, requested_end);
++	}
++	start = 1;
++	if (ctlv_attestation_mr_log_get_mr_start_generation_present(request)) {
++		u64 value = ctlv_attestation_mr_log_get_mr_start_generation_get(request);
++
++		if (value > UINT_MAX)
++			return -EINVAL;
++		start = value;
++	}
++	if (att->log->generation && start > end)
++		return -EINVAL;
++	if (!cursor && att->log->generation) {
++		if (!ctlv_attestation_mr_start_generation_put(reply, start) ||
++		    !ctlv_attestation_mr_end_generation_put(reply, end))
++			return -EMSGSIZE;
++	}
++	xa_index = cursor ? cursor : start;
++	entry = xa_find(&att->log->entries, &xa_index, end, XA_PRESENT);
++	while (entry && !attestation_log_selected(ids, ids_count, entry->mr_id))
++		entry = xa_find_after(&att->log->entries, &xa_index, end, XA_PRESENT);
++	if (!entry)
++		return ctlv_op_query_done(ctx, boundary);
++	if (!cursor)
++		return ctlv_op_query_more(ctx, boundary, entry->mr_generation);
++	if (!ctlv_attestation_log_entry_start(reply, &nested))
++		return -EMSGSIZE;
++	ret = attestation_mr_log_entry_encode(&nested, entry);
++	ctlv_nest_end(&nested);
++	if (ret)
++		return ret;
++	entry = xa_find_after(&att->log->entries, &xa_index, end, XA_PRESENT);
++	while (entry && !attestation_log_selected(ids, ids_count, entry->mr_id))
++		entry = xa_find_after(&att->log->entries, &xa_index, end, XA_PRESENT);
++	if (entry)
++		return ctlv_op_query_more(ctx, boundary, entry->mr_generation);
++	return ctlv_op_query_done(ctx, boundary);
 +}
 -- 
 2.56.0
