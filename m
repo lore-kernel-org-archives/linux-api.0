@@ -1,62 +1,64 @@
-Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+Received: from mail-ed1-f42.google.com (mail-ed1-f42.google.com [209.85.208.42])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA9203B71AC
-	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:51:01 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.50
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3C3852417DE
+	for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 14:51:12 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.208.42
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792075865; cv=none; b=C9hSBP1FBdRza9Du3qUU5SXvMw4ML4BawYinkMpNIfqPIZPWbEXftlEBxd/c5KxvCQTLewpv4tvGYiW/hYGZhUwDMD3ASrkIQcCZKpQnr4SCC3lEqP1AU9wT9V7P0b1FP+o85fW50Umt2W0BPLhGpqTkI7FCW4gn5k3/6Dtib6o=
+	t=1792075875; cv=none; b=VWQnjhSjxJ8NEBt7pxwF4ADVDAMnwAm6aMpGk9vthwqr1q1zmkHgZd1act6BX1rSpAjbcElotBHazZ9PFrhlLTm3NK8wMPW1o+ztbZid3KLYSnCKw56TJr5xlbgCbzk6oKTUaSmsQviGf83Vwxo++BIXK+9G8X620SB0expowvs=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792075865; c=relaxed/simple;
-	bh=30pkOtZgf9ME4AwuW1ixELazskhl9vK+QR4jNkkbEPw=;
-	h=From:To:Cc:Subject:Date:Message-ID:MIME-Version; b=Via36PJpWdcBWv2mM2nxeh5wd8mgpO/axN3OY1HQPqQCvqxzyOLl9MKKPTFmbT+Z1tXK6czx3OUbFqytFi4TpeP1e7Fx8Sw+YnKm+y+Aj9nGg/F3b8/ooXMLytffJWUJrtBrafJRKI2hs7R3BOEf45EhBNBNdb5QBwg+DYWiFO0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=cZBl14wu; arc=none smtp.client-ip=209.85.208.50
+	s=arc-20240116; t=1792075875; c=relaxed/simple;
+	bh=F5r+xnrA4CGvtpaYQfZhqC4H8jARl4t9Ytg/hO1UzPs=;
+	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
+	 MIME-Version; b=K0HMT+APcm90J82uu6lq1CFKuKPzQbL5L1CZFF1OWysC8T86hlLnBycsx5sPCTuD28CTI/B24bT2EmPH1OlgH1kZXiaSLlDaKE4Hv8hRSp2wTctBb4H18BzEYwXdjKWhSEy4zP+alRlZkc6jq2XCgN+v5JOmNDw1L9k7rvjmaAo=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us; spf=none smtp.mailfrom=resnulli.us; dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b=YZFShJeL; arc=none smtp.client-ip=209.85.208.42
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="cZBl14wu"
-Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-6acbdbc1725so3113032a12.3
-        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:51:01 -0700 (PDT)
+	dkim=pass (2048-bit key) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.b="YZFShJeL"
+Received: by mail-ed1-f42.google.com with SMTP id 4fb4d7f45d1cf-6a642495d81so7150080a12.2
+        for <linux-api@vger.kernel.org>; Thu, 15 Oct 2026 07:51:12 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075860; x=1792680660; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=wJJUWKqlF+gd3ZMu1go4tClyLr+/3z2AgdparxQCI4I=;
-        b=cZBl14wuxRuixyycotbT0uMHXxHkmNJJ38y2m94hJK3eB6Iqhx+Hq2HS30+2GLIZgC
-         VFXB+4YAwncKqySEhsGr53Hh0n5zh8RgjX4Q0a9bK7VAUtRSrZ6y9AaANDWMWyavbbuj
-         1q1WMfqXu00VupsxKqE9hpslw+CZcwIY98xKXOunrucjpn5gNOAHokYjreaErxSY7WgW
-         1K8Bi2Xty6ABUoYW9IQRLw4MwAWxIbra/1sapDJH/ozgxGXPYiGZrf2ZLbUs5zUKD/T+
-         9dZCfqEFU6GO4s/oXPFilGh/zJQMdR3hAODtRs5Gl8aNo3fd9rkqRcBmSyxRTZb/T64g
-         Nq6A==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792075860; x=1792680660;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792075870; x=1792680670; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=wJJUWKqlF+gd3ZMu1go4tClyLr+/3z2AgdparxQCI4I=;
-        b=nr0834bRRkN+JTjFr32nHzytn5jCcI37W/9JYrzYBQ6DQmjEtNDEirJbi2LSb5mVnI
-         IcHEA9X/qvFABPlwrJ1f/GXBsJpKCb+XB7k3CT0pZ67uzJ560GPV0PO0wzoqY3kkg+SJ
-         syPInDTdhiXvP4ZLLcb0/BKzl6HLNcemO7qve97xU93qH9QEX51Gl6irOoiUm1jlUllN
-         wktBSczHutvJ2T21IJ9FOD1xPcWzLnFDQI5rZppqHWmUG/BfrVpY9eBxourKv7wEazXf
-         gjb3WstQRDs65+xxpKJ+MaS9v3hE4KGm9q1cQtznDZaLYdZcGQJApDWptkLWHqgLoM5Q
-         yymg==
-X-Forwarded-Encrypted: i=1; AKwUvByrB2zOlI1I5xK7VxdaJHpBpZ74sDjrqol4uzh+Tb0S483NJK61etDfjGccTMGKpHfoG/xVhxr96GA=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJr9q0yuy1GU4d0mrB5ga97YclqqRBpMUCB8GxBGK+XP/sqtUP6
-	50ZfMZhVnPRz6gG3488jnus3H12r+vMBuqnopP790Nc4afYwsoCJjBmxHHaRsk4Eo+M=
-X-Gm-Gg: AYBFou0B8HJhg/fXcBN5fDQaNmGXKD1xD0fnZDPCe+pghtbGX8PpFUc0zc1X/WZCvxH
-	lA4m39de7PGKQCDSKrhzPWtniSTWtkU3RXieBtHKg2Yiz8HL0MPSnLjTqSIuNfwakV01Jh0A0sl
-	Ueb6Adip2FVbyn2akfZGy8s7AjIgLdgNU4vhHQQQn8z53qSOBi4IeTrrHhAEvKjJ+OBZmtn5NSU
-	dBdwngTVrVIicL4ZMLcmcjQGXpUHb7661JN7UTDlLpnYkt8nhIR5x5toN25oWnrIZEFvc8KKZIT
-	Ddd3KX7eBPAxcOBDyPJ70WdifY/ooaBiDu+l6dHums26Emsjjdy6Pe4fiqCRXookriDiEfuT011
-	Uo/TmqCcx0q2uUvYjWZUH9wrTi1eCEfyW9v1fFm6EYlxxA1StuqRjm/fVi89kSVibCgwZsErt1s
-	boop26yVyrVC1wdLLc3G1trhPjJhDW4UHjxLbKEBTmaH+1EQeThc1Hc98az/Lrkk9wLSSJE4FGG
-	WpwXv5r/Q==
-X-Received: by 2002:a05:6402:27c8:b0:6ac:94cf:9f1d with SMTP id 4fb4d7f45d1cf-6b1e49eb8bcmr7444996a12.21.1792075859704;
-        Thu, 15 Oct 2026 07:50:59 -0700 (PDT)
+        bh=EDyYymZBfmY19ILWRWtCUVhEY9kXzhwbJCQOgIxxpWM=;
+        b=YZFShJeLJ3LdWRinTlSSLpA5uOiGgZmFXq0U60N/CY2KDUbOvrVn8F3LQrSBhFbrm0
+         Vs0LggE0Xa/qWPIl1kBmdg2ACZ9FeCAlbRJ/E02E1JP04/x8RYjC1KgjIvMACl7ZzWqR
+         P0hYe//KUVxsQoR+gTfYYafS6XT8up/WoLEJ9sT8A91/3vxh2YegccaJd7zUuJFD5F0C
+         DV3HZfPvYzdGnf3TE6H6Z/wXCaalqZsErMOHNbR5pizeV+JL/NKEqZ7etULZy7Tu5ic6
+         mOr4UieKOR9mVdAk9KNz5v9GYCAvRofucxZJQUvWhPwYlkj6a1Y1An14Lu536ZmzagWa
+         yk2Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792075870; x=1792680670;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=EDyYymZBfmY19ILWRWtCUVhEY9kXzhwbJCQOgIxxpWM=;
+        b=1Bpjs6c5lMFBRLVaqiuDCeB2uZBugFiB/nRQ51NAdt6euVE9Sg5OPHGTyujzd+Ctbv
+         XbzOdySe9nOd1H+gTrdcwsrtzbJV/wUYAvAam8wO740oomZZxsRwekYgTXkr5SbKVu6I
+         N1rN9B7TNy+1/omRfkpvvyF6mJtTzygf3oKhePLeJNJV/aiPBtUqF8cr7hFxF9fAyPzy
+         EoHqFcBb7Ea+C7s+R/a1nvweC849fUEvLwkS7u9aokt7RN9wqI7nTKwi9TsYG1JPQWr6
+         yfY1+xU42IjluSWXc63lsSa0u2urqiF5ABHGhTttb0+jQOOwd1ANO8ZY8wZS8tes2gtW
+         3Lyg==
+X-Forwarded-Encrypted: i=1; AKwUvBz+cEtMqQn3+KN/5D7XMT09m3WQGLJyj2389LHAuZJusHb9/wQpWlJihshGG8JPkdi//x+fUApykFk=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKBIGkyzvoTt4284v87RygSvn0gzNKpfC2H+KoyimTW6MzfC4EC
+	9SeQkAp+U5GYVk325OS041zHpB7VYPoVNTWV3sWbTPczgPMkjG+7Xm/CSAvuVowPkHE=
+X-Gm-Gg: AYBFou2SkqFHW2o5d7g0QU/+VNuIGiRLmAmZQVy/co8apiCMVe47cYgWwjfO8ypVFHk
+	ENC300N0hg7JDj8pu0QNQ48Kl/Ru09ntOQPs/RkpSrk4FBsWdorA1U2pWrAZSJLGTrm/MuNzy5V
+	YnJ6iP8phWTQ9KJUQEjGt081MJA+sUwlEo95sFa7C1nje3jFaINjc3cqwMu+JYD0aH3DwqqKLKW
+	qqhB3etrflzcKEOH4G9YXKjL22tQupT8d1eUFzcVswz3QkQu4zleOr45hSg/MaSBZtelbXtbCjF
+	yp6cuhCOoUDwLshfKmLlRiRVjGWxqEo18ArYPwaCnjijX1PN6pZgDkJTq3N6gzzgjXNefrk64ZS
+	i7Dcxj1s2g/Pd2OeqRp1OhC9WsvgO/TClbdNJdLNbpYxhruB3nctRdT3arkwUX5GXLblEwdpbem
+	N7bY+fon4D0JwMt4piN1R4dktyAlMg3RNa2OSe0SdLJjwvjSW6x1yqqUGiau7XKgOBVHuIIsW1l
+	TBHP+6kQg==
+X-Received: by 2002:a17:907:d9e:b0:c3f:dce3:20d5 with SMTP id a640c23a62f3a-c3fdce338bcmr94256266b.22.1792075870320;
+        Thu, 15 Oct 2026 07:51:10 -0700 (PDT)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id 4fb4d7f45d1cf-6b203862c4esm2665322a12.16.2026.10.15.07.50.56
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c3eda61fa8asm136811066b.67.2026.10.15.07.51.09
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 15 Oct 2026 07:50:59 -0700 (PDT)
+        Thu, 15 Oct 2026 07:51:09 -0700 (PDT)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -87,10 +89,12 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com,
 	peter.fang@intel.com
-Subject: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX support
-Date: Thu, 15 Oct 2026 16:50:33 +0200
-Message-ID: <20261015145053.3664509-1-jiri@resnulli.us>
+Subject: [PATCH RFC 02/20] ctlv: Add the UAPI wire format and family API
+Date: Thu, 15 Oct 2026 16:50:35 +0200
+Message-ID: <20261015145053.3664509-3-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
+In-Reply-To: <20261015145053.3664509-1-jiri@resnulli.us>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -101,260 +105,622 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Linux has several attestation interfaces tied to individual technologies.
-That makes evidence retrieval, measurement registers, device state and
-kernel consumers provider-specific.
+Define CTLV's common TLV transport, ioctl, event records, identifiers
+and limits. Add the in-kernel API used by family implementations and
+generated code.
 
-This series introduces a common attestation subsystem. Its goal is to
-support platform, TEE and device providers through one model, including
-TPM2, TDX, SEV-SNP, Arm CCA, FIRME, Caliptra and PCI/TSM-backed devices.
-This first series implements the common subsystem and a TDX provider.
-Existing native TDX tsm_mr and tsm_report interfaces remain independent.
-
-Attestation devices use CTLV, a schema-driven character-device TLV UAPI.
-Compared with sysfs or configfs, CTLV executes one validated request
-atomically instead of assembling a transaction through several files.
-Compared with netlink, an opened device fd directly identifies authority
-and lifetime, can be delegated normally, and owns its event queue. CTLV
-also provides:
-
-  - generated kernel metadata, UAPI constants and documentation;
-  - strict type, bounds, nesting and required-field validation;
-  - runtime operation and schema introspection;
-  - family inheritance and extension points;
-  - fragmented queries with generation checks;
-  - per-fd event subscription, overflow reporting and removal notification;
-  - large input and output blobs.
-
-The attestation family exposes capabilities, evidence, measurement-register
-topology and operations, an append-only MR journal and journal
-notifications. This first ABI contains the paths exercised by TDX. Extended
-evidence classes, dynamic registers, record payloads, verdict recording and
-device-security transitions follow with providers that need them and are out
-of scope of this initial patchset. The broader direction is illustrated here:
-
-https://github.com/jpirko/linux_mlxsw/commits/wip_attestation_all_1
-
-That branch also contains additional providers (test and sim),
-attestation core extensions, libctlv and ctlvctl. With the tools
-and kernel specifications, an attestation device can be used as follows:
-
-  # Discover CTLV devices and their family chains.
-  ctlvctl --spec-dir Documentation/ctlv/specs list
-
-  # Inspect the root-family lineage and attestation capabilities.
-  ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 families-dump
-  ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 device-get
-
-  # List the measurement registers of the attestation device.
-  ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 mr-dump
-
-  # Read RTMR0 (MR 1).
-  ctlvctl --spec-dir Documentation/ctlv/specs \
-          query ctlv0 mr-read mr.id=1
-
-  # Extend RTMR0 with 48 zero bytes (SHA-384).
-  digest=$(printf '%096d' 0)
-  ctlvctl --spec-dir Documentation/ctlv/specs \
-          exec ctlv0 mr-extend --json \
-          '{"id":1,"value":[{"hash-algo":5,"data":"hex:'"$digest"'"}]}'
-
-  # Retrieve the RTMR0 journal.
-  ctlvctl --spec-dir Documentation/ctlv/specs \
-          query ctlv0 mr-log-get --json '{"selection":[{"id":1}]}'
-
-The 20 patches are organized as follows:
-
-  1-13    add CTLV, its generator and documentation
-  14-17   add the base attestation family and implementation
-  18-20   expose the native TDX service and add the TDX family
-
-Note to reviewers: Please focus on the overall design, UAPI and internal
-attestation-provider API. The internal CTLV and attestation implementations
-remain rough around the edges.
-
-Jiri Pirko (20):
-  ctlv: Add the schema language and generator
-  ctlv: Add the UAPI wire format and family API
-  ctlv: Add the root family specification and generated files
-  Documentation: ctlv: Add userspace ABI
-  ctlv: Prepare message input handling
-  ctlv: Prepare blob descriptor validation
-  ctlv: Prepare schema validation
-  ctlv: Prepare message output handling
-  ctlv: Prepare VA blob handling
-  ctlv: Prepare event queue support
-  ctlv: Prepare runtime introspection
-  ctlv: Add device and operation dispatch
-  Documentation: ctlv: Describe how to write a family
-  attestation: Add the base family specification and generated files
-  attestation: Prepare provider and instance core
-  attestation: Prepare measurement register journal
-  attestation: Add CTLV operation handling
-  tdx-guest: Expose the native attestation service API
-  attestation: Add the TDX family specification and generated files
-  attestation: Add the TDX family implementation
-
- .../ctlv/abi/ctlv-attestation-tdx.yaml        |   22 +
- Documentation/ctlv/abi/ctlv-attestation.yaml  |  184 ++
- Documentation/ctlv/abi/ctlv.yaml              |  186 ++
- Documentation/ctlv/abi/families.registry.yaml |    9 +
- Documentation/ctlv/ctlv-registry-schema.yaml  |   38 +
- Documentation/ctlv/ctlv-schema.yaml           |  359 ++++
- Documentation/ctlv/families.yaml              |   15 +
- .../ctlv/generated-files-schema.yaml          |   64 +
- Documentation/ctlv/generated-files.yaml       |   31 +
- .../ctlv/specs/ctlv-attestation-tdx.yaml      |   30 +
- .../ctlv/specs/ctlv-attestation.yaml          |  347 ++++
- Documentation/ctlv/specs/ctlv.yaml            |  379 ++++
- Documentation/driver-api/attestation.rst      |   64 +
- Documentation/driver-api/ctlv.rst             |  422 +++++
- Documentation/driver-api/index.rst            |    2 +
- Documentation/userspace-api/ctlv.rst          |  507 ++++++
- Documentation/userspace-api/index.rst         |    1 +
- .../userspace-api/ioctl/ioctl-number.rst      |    2 +
- Documentation/virt/coco/tdx-guest.rst         |   18 +
- MAINTAINERS                                   |   26 +
- drivers/Kconfig                               |    4 +
- drivers/Makefile                              |    2 +
- drivers/attestation/Kconfig                   |   26 +
- drivers/attestation/Makefile                  |   10 +
- drivers/attestation/core/core.c               |  354 ++++
- drivers/attestation/core/ctlv.c               |  520 ++++++
- drivers/attestation/core/events.c             |   65 +
- drivers/attestation/core/internal.h           |  108 ++
- drivers/attestation/core/mr.c                 |  376 ++++
- .../generated/ctlv_attestation_gen.c          |  234 +++
- .../generated/ctlv_attestation_gen.h          |  198 +++
- .../generated/ctlv_attestation_tdx_gen.c      |   61 +
- .../generated/ctlv_attestation_tdx_gen.h      |   66 +
- drivers/attestation/providers/tdx.c           |  277 +++
- drivers/ctlv/Kconfig                          |   12 +
- drivers/ctlv/Makefile                         |    5 +
- drivers/ctlv/blob.c                           |  355 ++++
- drivers/ctlv/blob.h                           |   15 +
- drivers/ctlv/blob_desc.c                      |  102 ++
- drivers/ctlv/blob_desc.h                      |   29 +
- drivers/ctlv/builder.c                        |  374 ++++
- drivers/ctlv/builder.h                        |   14 +
- drivers/ctlv/core.c                           | 1517 +++++++++++++++++
- drivers/ctlv/ctlv_gen.c                       |  229 +++
- drivers/ctlv/device.h                         |   55 +
- drivers/ctlv/event.c                          |  713 ++++++++
- drivers/ctlv/event.h                          |   69 +
- drivers/ctlv/internal.h                       |   81 +
- drivers/ctlv/introspection.c                  |  512 ++++++
- drivers/ctlv/message.c                        |  403 +++++
- drivers/ctlv/message.h                        |   92 +
- drivers/ctlv/schema.c                         | 1047 ++++++++++++
- drivers/ctlv/schema.h                         |   50 +
- drivers/virt/coco/tdx-guest/tdx-guest.c       |  258 ++-
- include/linux/attestation.h                   |  138 ++
- include/linux/ctlv.h                          |  249 +++
- include/linux/ctlv_family.h                   |  551 ++++++
- include/linux/ctlv_gen.h                      |  137 ++
- include/linux/tdx-guest.h                     |   75 +
- include/uapi/linux/ctlv.h                     |  183 ++
- include/uapi/linux/ctlv_attestation_gen.h     |  252 +++
- include/uapi/linux/ctlv_attestation_tdx_gen.h |   44 +
- include/uapi/linux/ctlv_families_gen.h        |   17 +
- include/uapi/linux/ctlv_gen.h                 |  271 +++
- tools/ctlv/Makefile                           |   59 +
- tools/ctlv/ctlv-regen.sh                      |   55 +
- tools/ctlv/ctlvgen/__init__.py                |    1 +
- tools/ctlv/ctlvgen/cli.py                     |  172 ++
- tools/ctlv/ctlvgen/lib/__init__.py            |    1 +
- tools/ctlv/ctlvgen/lib/cgen.py                |  825 +++++++++
- tools/ctlv/ctlvgen/lib/compat.py              |  821 +++++++++
- tools/ctlv/ctlvgen/lib/errors.py              |   14 +
- tools/ctlv/ctlvgen/lib/gen_family.py          |  347 ++++
- tools/ctlv/ctlvgen/lib/gen_kernel.py          |  517 ++++++
- tools/ctlv/ctlvgen/lib/gen_uapi.py            |  223 +++
- tools/ctlv/ctlvgen/lib/outputs.py             |  329 ++++
- tools/ctlv/ctlvgen/lib/semantics.py           |  893 ++++++++++
- tools/ctlv/ctlvgen/lib/sizes.py               |  238 +++
- tools/ctlv/ctlvgen/lib/spec.py                |  583 +++++++
- tools/ctlv/ctlvgen/lib/tree.py                |   71 +
- tools/ctlv/ctlvgen/lib/yamlload.py            |   83 +
- tools/ctlv/pyproject.toml                     |   22 +
- tools/ctlv/requirements.txt                   |    2 +
- 83 files changed, 18084 insertions(+), 28 deletions(-)
- create mode 100644 Documentation/ctlv/abi/ctlv-attestation-tdx.yaml
- create mode 100644 Documentation/ctlv/abi/ctlv-attestation.yaml
- create mode 100644 Documentation/ctlv/abi/ctlv.yaml
- create mode 100644 Documentation/ctlv/abi/families.registry.yaml
- create mode 100644 Documentation/ctlv/ctlv-registry-schema.yaml
- create mode 100644 Documentation/ctlv/ctlv-schema.yaml
- create mode 100644 Documentation/ctlv/families.yaml
- create mode 100644 Documentation/ctlv/generated-files-schema.yaml
- create mode 100644 Documentation/ctlv/generated-files.yaml
- create mode 100644 Documentation/ctlv/specs/ctlv-attestation-tdx.yaml
- create mode 100644 Documentation/ctlv/specs/ctlv-attestation.yaml
- create mode 100644 Documentation/ctlv/specs/ctlv.yaml
- create mode 100644 Documentation/driver-api/attestation.rst
- create mode 100644 Documentation/driver-api/ctlv.rst
- create mode 100644 Documentation/userspace-api/ctlv.rst
- create mode 100644 drivers/attestation/Kconfig
- create mode 100644 drivers/attestation/Makefile
- create mode 100644 drivers/attestation/core/core.c
- create mode 100644 drivers/attestation/core/ctlv.c
- create mode 100644 drivers/attestation/core/events.c
- create mode 100644 drivers/attestation/core/internal.h
- create mode 100644 drivers/attestation/core/mr.c
- create mode 100644 drivers/attestation/generated/ctlv_attestation_gen.c
- create mode 100644 drivers/attestation/generated/ctlv_attestation_gen.h
- create mode 100644 drivers/attestation/generated/ctlv_attestation_tdx_gen.c
- create mode 100644 drivers/attestation/generated/ctlv_attestation_tdx_gen.h
- create mode 100644 drivers/attestation/providers/tdx.c
- create mode 100644 drivers/ctlv/Kconfig
- create mode 100644 drivers/ctlv/Makefile
- create mode 100644 drivers/ctlv/blob.c
- create mode 100644 drivers/ctlv/blob.h
- create mode 100644 drivers/ctlv/blob_desc.c
- create mode 100644 drivers/ctlv/blob_desc.h
- create mode 100644 drivers/ctlv/builder.c
- create mode 100644 drivers/ctlv/builder.h
- create mode 100644 drivers/ctlv/core.c
- create mode 100644 drivers/ctlv/ctlv_gen.c
- create mode 100644 drivers/ctlv/device.h
- create mode 100644 drivers/ctlv/event.c
- create mode 100644 drivers/ctlv/event.h
- create mode 100644 drivers/ctlv/internal.h
- create mode 100644 drivers/ctlv/introspection.c
- create mode 100644 drivers/ctlv/message.c
- create mode 100644 drivers/ctlv/message.h
- create mode 100644 drivers/ctlv/schema.c
- create mode 100644 drivers/ctlv/schema.h
- create mode 100644 include/linux/attestation.h
+Assisted-by: Cursor: GPT-5.6 Sol
+Assisted-by: Cursor: Claude Opus 5.5
+Signed-off-by: Jiri Pirko <jiri@nvidia.com>
+---
+ .../userspace-api/ioctl/ioctl-number.rst      |   2 +
+ MAINTAINERS                                   |   2 +
+ include/linux/ctlv.h                          |  55 +++
+ include/linux/ctlv_family.h                   | 316 ++++++++++++++++++
+ include/uapi/linux/ctlv.h                     | 183 ++++++++++
+ 5 files changed, 558 insertions(+)
  create mode 100644 include/linux/ctlv.h
  create mode 100644 include/linux/ctlv_family.h
- create mode 100644 include/linux/ctlv_gen.h
- create mode 100644 include/linux/tdx-guest.h
  create mode 100644 include/uapi/linux/ctlv.h
- create mode 100644 include/uapi/linux/ctlv_attestation_gen.h
- create mode 100644 include/uapi/linux/ctlv_attestation_tdx_gen.h
- create mode 100644 include/uapi/linux/ctlv_families_gen.h
- create mode 100644 include/uapi/linux/ctlv_gen.h
- create mode 100644 tools/ctlv/Makefile
- create mode 100755 tools/ctlv/ctlv-regen.sh
- create mode 100644 tools/ctlv/ctlvgen/__init__.py
- create mode 100755 tools/ctlv/ctlvgen/cli.py
- create mode 100644 tools/ctlv/ctlvgen/lib/__init__.py
- create mode 100644 tools/ctlv/ctlvgen/lib/cgen.py
- create mode 100644 tools/ctlv/ctlvgen/lib/compat.py
- create mode 100644 tools/ctlv/ctlvgen/lib/errors.py
- create mode 100644 tools/ctlv/ctlvgen/lib/gen_family.py
- create mode 100644 tools/ctlv/ctlvgen/lib/gen_kernel.py
- create mode 100644 tools/ctlv/ctlvgen/lib/gen_uapi.py
- create mode 100644 tools/ctlv/ctlvgen/lib/outputs.py
- create mode 100644 tools/ctlv/ctlvgen/lib/semantics.py
- create mode 100644 tools/ctlv/ctlvgen/lib/sizes.py
- create mode 100644 tools/ctlv/ctlvgen/lib/spec.py
- create mode 100644 tools/ctlv/ctlvgen/lib/tree.py
- create mode 100644 tools/ctlv/ctlvgen/lib/yamlload.py
- create mode 100644 tools/ctlv/pyproject.toml
- create mode 100644 tools/ctlv/requirements.txt
 
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index 2fc53093752d..e545669c773c 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -386,6 +386,8 @@ Code  Seq#    Include File                                             Comments
+                                                                        <mailto:linux-hyperv@vger.kernel.org>
+ 0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
+                                                                        <mailto:pasha.tatashin@soleen.com>
++0xBB  00-0F  uapi/linux/ctlv.h                                         CTLV
++                                                                       <mailto:jiri@resnulli.us>
+ 0xC0  00-0F  linux/usb/iowarrior.h
+ 0xCA  00-0F  uapi/misc/cxl.h                                           Dead since 6.15
+ 0xCA  10-2F  uapi/misc/ocxl.h
+diff --git a/MAINTAINERS b/MAINTAINERS
+index a8508fbae37d..8ab0d6a7a2fd 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -7006,6 +7006,8 @@ M:	Jiri Pirko <jiri@resnulli.us>
+ L:	linux-kernel@vger.kernel.org
+ S:	Maintained
+ F:	Documentation/ctlv/
++F:	include/linux/ctlv*.h
++F:	include/uapi/linux/ctlv*.h
+ F:	tools/ctlv/
+ 
+ CTU CAN FD DRIVER
+diff --git a/include/linux/ctlv.h b/include/linux/ctlv.h
+new file mode 100644
+index 000000000000..addb893f4b8d
+--- /dev/null
++++ b/include/linux/ctlv.h
+@@ -0,0 +1,55 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
++ *
++ * CTLV family API.
++ */
++#ifndef _LINUX_CTLV_H
++#define _LINUX_CTLV_H
++
++#include <linux/types.h>
++
++#include <uapi/linux/ctlv.h>
++
++struct ctlv_device;
++struct ctlv_family;
++struct ctlv_msg;
++struct ctlv_op_ctx;
++struct ctlv_schema_tree;
++
++/**
++ * struct ctlv_cursor - One attr position in one message.
++ * @msg: the message this position is in, core-private bookkeeping
++ * @attr: the attr itself, or NULL when a lookup found nothing
++ * @parent: reading, the nest containing @attr, NULL at the root
++ * @up: writing, cursor of the nest containing @attr, NULL at the root. The
++ *	chain of them is the open-nest stack
++ * @start: writing, where @attr begins in the message. An append reaches what
++ *	it lengthens through the buffer rather than through @attr, that buffer
++ *	being the core's own
++ * @tree: schema tree the node belongs to, which is a fill's own tree for an
++ *	attr that arrived through one
++ * @node: index of the node within @tree
++ * @depth: nesting levels above this position, the root being zero
++ * @index_nest_scope: schema scope used to read members of the physical nest
++ * @index_scope: core-private schema scope containing this attr
++ *
++ * Fixed-size, so family code can put a child cursor on the stack. The members
++ * belong to the core: a family reaches a message through what was generated
++ * for the op it answers. One direction at a time, a helper of the other
++ * direction refusing the cursor.
++ */
++struct ctlv_cursor {
++	struct ctlv_msg *msg;
++	const struct ctlv_attr *attr;
++	const struct ctlv_attr *parent;
++	struct ctlv_cursor *up;
++	size_t start;
++	const struct ctlv_schema_tree *tree;
++	u32 node;
++	u32 depth;
++	u32 index_nest_scope;
++	u32 index_scope;
++};
++
++#endif /* _LINUX_CTLV_H */
+diff --git a/include/linux/ctlv_family.h b/include/linux/ctlv_family.h
+new file mode 100644
+index 000000000000..1ae4d3a536f7
+--- /dev/null
++++ b/include/linux/ctlv_family.h
+@@ -0,0 +1,316 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
++ *
++ * CTLV family metadata and generated-code support.
++ */
++#ifndef _LINUX_CTLV_FAMILY_H
++#define _LINUX_CTLV_FAMILY_H
++
++#include <linux/ctlv.h>
++#include <linux/gfp_types.h>
++#include <linux/kobject.h>
++#include <linux/types.h>
++
++#include <uapi/linux/ctlv.h>
++
++/* op-schema-get needs one level to describe the declared schema. */
++#define CTLV_MAX_DECLARED_NEST_DEPTH (CTLV_MAX_NEST_DEPTH - 1)
++
++struct ctlv_node_schema {
++	u64 attr_id;
++	u8 kind;
++	u8 unit;
++	s8 scale;
++	bool reenters;
++	u32 max_occurrences;
++	u32 first_child;
++	u32 children_count;
++	u32 required_children_count;
++	union {
++		struct {
++			u64 min;
++			u64 max;
++		} range;
++		u64 flags_mask;
++		struct {
++			u32 min_len;
++			u32 max_len;
++		} length;
++		struct {
++			u64 max_len;
++			u32 alignment;
++			u16 backings;
++			u8 direction;
++		} blob;
++	};
++};
++
++#define CTLV_NODE_SCHEMA_UNLIMITED 0
++
++#define __CTLV_NODE_SCHEMA(_attr, _kind, _occurrences, ...)	\
++	{ .attr_id = (_attr), .kind = (_kind),			\
++	  .max_occurrences = (_occurrences), __VA_ARGS__ }
++
++#define __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required)	\
++	.first_child = (_first), .children_count = (_count),	\
++	.required_children_count = (_required)
++
++#define CTLV_NODE_SCHEMA_ROOT(_first, _count, _required)	\
++	__CTLV_NODE_SCHEMA(CTLV_ATTR_ROOT, CTLV_SCHEMA_NEST, 1,	\
++			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
++
++#define CTLV_NODE_SCHEMA_NEST(_attr, _occurrences, _first, _count, _required) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_NEST, _occurrences,	\
++			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
++
++#define CTLV_NODE_SCHEMA_NEST_REENTERS(_attr, _occurrences, _first, _count, _required) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_NEST, _occurrences,	\
++			   .reenters = true,				\
++			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
++
++#define CTLV_NODE_SCHEMA_UINT(_attr, _occurrences, _min, _max)	\
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_UINT, _occurrences,	\
++			   .range = { .min = (_min), .max = (_max) })
++
++#define CTLV_NODE_SCHEMA_UINT_UNIT(_attr, _occurrences, _min, _max, _unit, _scale) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_UINT, _occurrences,	\
++			   .range = { .min = (_min), .max = (_max) },	\
++			   .unit = (_unit), .scale = (_scale))
++
++#define CTLV_NODE_SCHEMA_SINT(_attr, _occurrences, _min, _max)	\
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_SINT, _occurrences,	\
++			   .range = { .min = (_min), .max = (_max) })
++
++#define CTLV_NODE_SCHEMA_SINT_UNIT(_attr, _occurrences, _min, _max, _unit, _scale) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_SINT, _occurrences,	\
++			   .range = { .min = (_min), .max = (_max) },	\
++			   .unit = (_unit), .scale = (_scale))
++
++#define CTLV_NODE_SCHEMA_ENUM(_attr, _occurrences, _max)	\
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_ENUM, _occurrences,	\
++			   .range = { .min = 1, .max = (_max) })
++
++#define CTLV_NODE_SCHEMA_FLAGS(_attr, _occurrences, _mask)	\
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_FLAGS, _occurrences,	\
++			   .flags_mask = (_mask))
++
++#define CTLV_NODE_SCHEMA_BOOL(_attr, _occurrences)		\
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BOOL, _occurrences)
++
++#define CTLV_NODE_SCHEMA_STRING(_attr, _occurrences, _min, _max) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_STRING, _occurrences,	\
++			   .length = { .min_len = (_min), .max_len = (_max) })
++
++#define CTLV_NODE_SCHEMA_BINARY(_attr, _occurrences, _min, _max) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BINARY, _occurrences,	\
++			   .length = { .min_len = (_min), .max_len = (_max) })
++
++#define CTLV_NODE_SCHEMA_BLOB(_attr, _occurrences, _max, _alignment, _backings, _dir) \
++	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BLOB, _occurrences,	\
++			   .blob = { .max_len = (_max),			\
++				     .alignment = (_alignment),		\
++				     .backings = (_backings),		\
++				     .direction = (_dir) })
++
++struct ctlv_stub_schema {
++	u16 family_id;
++	u32 set_id;
++	u32 node;
++	bool optional;
++};
++
++#define __CTLV_STUB_SCHEMA(_family, _set, _node, _optional)	\
++	{ .family_id = (_family), .set_id = (_set),		\
++	  .node = (_node), .optional = (_optional) }
++
++#define CTLV_STUB_SCHEMA(_family, _set, _node)			\
++	__CTLV_STUB_SCHEMA(_family, _set, _node, false)
++
++#define CTLV_STUB_SCHEMA_OPTIONAL(_family, _set, _node)		\
++	__CTLV_STUB_SCHEMA(_family, _set, _node, true)
++
++struct ctlv_schema_tree {
++	const struct ctlv_node_schema *node_schemas;
++	u32 node_schemas_count;
++	const struct ctlv_stub_schema *stub_schemas;
++	u32 stub_schemas_count;
++};
++
++#define CTLV_SCHEMA_TREE(_name) {				\
++	.node_schemas = _name##_node_schemas,			\
++	.node_schemas_count = ARRAY_SIZE(_name##_node_schemas),	\
++}
++
++#define CTLV_SCHEMA_TREE_STUBS(_name) {				\
++	.node_schemas = _name##_node_schemas,			\
++	.node_schemas_count = ARRAY_SIZE(_name##_node_schemas),	\
++	.stub_schemas = _name##_stub_schemas,			\
++	.stub_schemas_count = ARRAY_SIZE(_name##_stub_schemas),	\
++}
++
++#define CTLV_SCHEMA_TREE_NONE() { }
++
++struct ctlv_stub_fill_schema {
++	u16 family_id;
++	u32 set_id;
++	struct ctlv_schema_tree members;
++};
++
++#define CTLV_STUB_FILL_SCHEMA(_family, _set, _name) {		\
++	.family_id = (_family),					\
++	.set_id = (_set),					\
++	.members = CTLV_SCHEMA_TREE(_name##_fill),		\
++}
++
++struct ctlv_op_sizes {
++	u32 request_max_len;
++	u32 action_reply_max_len;
++	u32 query_reply_min_len;
++	u32 query_reply_suggested_len;
++	u32 event_record_max_len;
++};
++
++struct ctlv_op_schema {
++	u64 op_id;
++	u8 type;
++	u8 fd_access;
++	u8 availability;
++	bool optional;
++	bool pre_post;
++	struct ctlv_schema_tree request;
++	struct ctlv_schema_tree reply;
++	struct ctlv_op_sizes sizes;
++};
++
++#define __CTLV_OP_SCHEMA(_op, _type, _availability, ...)	\
++	{ .op_id = (_op), .type = (_type),			\
++	  .availability = (_availability), __VA_ARGS__ }
++
++#define CTLV_OP_SCHEMA_ACTION(_op, _access, _availability, _request_len, _reply_len, \
++			      _request, _reply, ...)			\
++	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_ACTION, _availability,	\
++			 .fd_access = (_access),			\
++			 .request = _request, .reply = _reply,		\
++			 .sizes = {					\
++				.request_max_len = (_request_len),	\
++				.action_reply_max_len = (_reply_len),	\
++			 },						\
++			 __VA_ARGS__)
++
++#define CTLV_OP_SCHEMA_QUERY(_op, _access, _availability, _request_len, _reply_min, \
++			     _reply_suggested, _request, _reply, ...)	\
++	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_QUERY, _availability,	\
++			 .fd_access = (_access),			\
++			 .request = _request, .reply = _reply,		\
++			 .sizes = {					\
++				.request_max_len = (_request_len),	\
++				.query_reply_min_len = (_reply_min),	\
++				.query_reply_suggested_len =		\
++					(_reply_suggested),		\
++			 },						\
++			 __VA_ARGS__)
++
++#define CTLV_OP_SCHEMA_EVENT(_op, _record_len, _reply, ...)	\
++	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_EVENT,		\
++			 CTLV_OP_AVAILABILITY_FIXED,			\
++			 .reply = _reply,				\
++			 .sizes = {					\
++				.event_record_max_len = (_record_len),	\
++			 },						\
++			 __VA_ARGS__)
++
++struct ctlv_family_schema {
++	const char *name;
++	u16 family_id;
++	const struct ctlv_op_schema *ops;
++	u32 ops_count;
++	const struct ctlv_stub_fill_schema *stub_fill_schemas;
++	u32 stub_fill_schemas_count;
++};
++
++/* Leave half of a uevent environment to the device model. */
++#define CTLV_UEVENT_MAX_LEN (UEVENT_BUFFER_SIZE / 2)
++#define CTLV_UEVENT_MAX_VARS (UEVENT_NUM_ENVP / 2)
++
++struct ctlv_input_ref {
++	const struct ctlv_schema_tree *tree;
++	u64 attr_id;
++	u32 node;
++	u32 slot;
++	u8 kind;
++};
++
++typedef int (*ctlv_action_fn)(void *priv, struct ctlv_op_ctx *ctx,
++			      const struct ctlv_cursor *request,
++			      struct ctlv_cursor *reply);
++typedef int (*ctlv_query_fn)(void *priv, struct ctlv_op_ctx *ctx,
++			     const struct ctlv_cursor *request,
++			     struct ctlv_cursor *reply);
++typedef int (*ctlv_op_pre_fn)(void *priv, struct ctlv_op_ctx *ctx);
++typedef void (*ctlv_op_post_fn)(void *priv, struct ctlv_op_ctx *ctx);
++
++struct ctlv_op {
++	union {
++		ctlv_action_fn action;
++		ctlv_query_fn query;
++	};
++	ctlv_op_pre_fn pre;
++	ctlv_op_post_fn post;
++};
++
++#define CTLV_OP_ACTION(_name) { .action = _name##_action }
++#define CTLV_OP_QUERY(_name) { .query = _name##_query }
++#define CTLV_OP_ACTION_PRE_POST(_name)				\
++	{ .action = _name##_action, .pre = _name##_pre,		\
++	  .post = _name##_post }
++#define CTLV_OP_QUERY_PRE_POST(_name)				\
++	{ .query = _name##_query, .pre = _name##_pre,		\
++	  .post = _name##_post }
++
++typedef size_t (*ctlv_family_priv_size_fn)(void);
++typedef const void *(*ctlv_family_pre_init_fn)(const void *init_info);
++typedef int (*ctlv_family_init_fn)(struct ctlv_device *ctlvdev,
++				   const void *init_info, void *priv);
++typedef int (*ctlv_family_post_init_fn)(struct ctlv_device *ctlvdev,
++					void *priv);
++typedef void (*ctlv_family_pre_fini_fn)(struct ctlv_device *ctlvdev,
++					void *priv);
++typedef void (*ctlv_family_fini_fn)(struct ctlv_device *ctlvdev, void *priv);
++
++typedef int (*ctlv_stub_fill_fn)(void *priv, struct ctlv_op_ctx *ctx,
++				 const struct ctlv_cursor *request,
++				 struct ctlv_cursor *nest);
++
++struct ctlv_stub_ops {
++	u16 family_id;
++	u32 set_id;
++	ctlv_stub_fill_fn fill;
++};
++
++#define CTLV_STUB_OPS(_family, _set, _name) {			\
++	.family_id = (_family),					\
++	.set_id = (_set),					\
++	.fill = _name##_fill,					\
++}
++
++struct ctlv_family {
++	const struct ctlv_family_schema *schema;
++	const struct ctlv_family *parent;
++	const struct ctlv_op *ops;
++	u32 ops_count;
++	ctlv_op_pre_fn pre;
++	ctlv_op_post_fn post;
++	ctlv_family_priv_size_fn priv_size;
++	ctlv_family_pre_init_fn pre_init;
++	ctlv_family_init_fn init;
++	ctlv_family_post_init_fn post_init;
++	ctlv_family_pre_fini_fn pre_fini;
++	ctlv_family_fini_fn fini;
++	const struct ctlv_stub_ops *stub_ops;
++	u32 stub_ops_count;
++};
++
++extern const struct ctlv_family ctlv_family;
++
++#endif /* _LINUX_CTLV_FAMILY_H */
+diff --git a/include/uapi/linux/ctlv.h b/include/uapi/linux/ctlv.h
+new file mode 100644
+index 000000000000..6bc0d1a296e6
+--- /dev/null
++++ b/include/uapi/linux/ctlv.h
+@@ -0,0 +1,183 @@
++/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
++/*
++ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
++ *
++ * CTLV transport UAPI: the TLV wire format, the op-execution ioctl, the event
++ * record header and transport limits. Schema-free; a family's constants
++ * are generated into <linux/<family>_gen.h>, the root family's into
++ * <linux/ctlv_gen.h>.
++ */
++#ifndef _UAPI_LINUX_CTLV_H
++#define _UAPI_LINUX_CTLV_H
++
++#include <linux/ioctl.h>
++#include <linux/types.h>
++
++/**
++ * struct ctlv_attr - Attr header.
++ * @len: this header plus its payload, excluding this attr's trailing padding
++ * @flags: CTLV_ATTR_F_* bits
++ * @attr_id: complete attr ID, or CTLV_ATTR_ROOT for a message root
++ *
++ * Attrs are aligned to CTLV_ALIGNTO, which is why @attr_id is __aligned_u64: a
++ * 32-bit ABI would otherwise align this structure to four bytes. A nested
++ * payload is the concatenation of CTLV_ALIGN(child.len) bytes per child, so
++ * child padding counts inside the containing attr's @len while a leaf's own
++ * padding does not. Scalar payloads are native-endian. Within each request
++ * root or nest, occurrences of one @attr_id are contiguous; different IDs
++ * otherwise have no required order.
++ */
++struct ctlv_attr {
++	__u32 len;
++	__u32 flags;
++	__aligned_u64 attr_id;
++};
++
++#define CTLV_ALIGNTO 8
++#define CTLV_ALIGN(_len) (((_len) + CTLV_ALIGNTO - 1) & ~(CTLV_ALIGNTO - 1))
++
++/* Set exactly on root and nested attrs, clear on scalar attrs. */
++#define CTLV_ATTR_F_NESTED		(1U << 0)
++/* Query fragments: set on the root and each nest logically open at the end. */
++#define CTLV_ATTR_F_FRAG_MORE		(1U << 1)
++/*
++ * A request attr, never the root, that a device whose schema does not declare
++ * its ID skips whole instead of refusing the message. An ID that schema does
++ * declare is held to it wherever it appears, so this asks to be forgiven what
++ * this kernel has never heard of and nothing else.
++ */
++#define CTLV_ATTR_F_IGNORE_IF_UNKNOWN	(1U << 2)
++
++/* Root attr: carries CTLV_ATTR_F_NESTED, valid only at a message start. */
++#define CTLV_ATTR_ROOT 0ULL
++
++/* Complete attr: family in bits 63..48, group in 47..32, attr in 31..0. */
++#define CTLV_ATTR(_family, _group, _attr)	\
++	(((__u64)(_family) << 48) |		\
++	 ((__u64)(_group) << 32) |		\
++	 (__u64)(_attr))
++
++#define CTLV_ATTR_FAMILY(_attr)	((__u16)((_attr) >> 48))
++#define CTLV_ATTR_GROUP(_attr)	((__u16)((_attr) >> 32))
++#define CTLV_ATTR_NUMBER(_attr)	((__u32)(_attr))
++
++/* Complete op: family in bits 63..48, zero in 47..32, op in 31..0. */
++#define CTLV_OP(_family, _op)	\
++	(((__u64)(_family) << 48) | (__u64)(_op))
++
++#define CTLV_OP_FAMILY(_op)		((__u16)((_op) >> 48))
++#define CTLV_OP_NUMBER(_op)		((__u32)(_op))
++
++/**
++ * enum ctlv_unit - CTLV-defined unit of an integer attr payload.
++ * @CTLV_UNIT_NONE: dimensionless
++ * @CTLV_UNIT_SECONDS: seconds
++ * @CTLV_UNIT_HERTZ: hertz
++ * @CTLV_UNIT_BYTES: bytes
++ * @CTLV_UNIT_CELSIUS: degrees Celsius
++ *
++ * A payload is value * 10^scale of this unit, from the decimal scale the attr
++ * declares alongside. Changing either is an ABI break.
++ */
++enum ctlv_unit {
++	CTLV_UNIT_NONE = 0,
++	CTLV_UNIT_SECONDS,
++	CTLV_UNIT_HERTZ,
++	CTLV_UNIT_BYTES,
++	CTLV_UNIT_CELSIUS,
++};
++
++/**
++ * enum ctlv_schema_kind - CTLV-defined form of one attr payload.
++ * @CTLV_SCHEMA_UINT: unsigned integer payload bounded by a range
++ * @CTLV_SCHEMA_SINT: signed integer payload bounded by a range
++ * @CTLV_SCHEMA_BOOL: one payload byte holding zero or one
++ * @CTLV_SCHEMA_STRING: NUL-terminated string payload bounded by length
++ * @CTLV_SCHEMA_BINARY: opaque payload bounded by length
++ * @CTLV_SCHEMA_ENUM: unsigned integer payload restricted to a range
++ * @CTLV_SCHEMA_FLAGS: unsigned integer payload restricted to a mask
++ * @CTLV_SCHEMA_NEST: nested payload described by further nodes
++ * @CTLV_SCHEMA_BLOB: blob descriptor nest
++ *
++ * Exactly one form applies to an attr. These are the values op-schema-get
++ * reports, and the set is append-only.
++ */
++enum ctlv_schema_kind {
++	CTLV_SCHEMA_UINT,
++	CTLV_SCHEMA_SINT,
++	CTLV_SCHEMA_BOOL,
++	CTLV_SCHEMA_STRING,
++	CTLV_SCHEMA_BINARY,
++	CTLV_SCHEMA_ENUM,
++	CTLV_SCHEMA_FLAGS,
++	CTLV_SCHEMA_NEST,
++	CTLV_SCHEMA_BLOB,
++};
++
++/**
++ * struct ctlv_op_exec - Op-execution ioctl argument.
++ * @op_id: complete op ID; zero is invalid
++ * @request: struct ctlv_attr __user *, the mandatory complete request root
++ * @reply: struct ctlv_attr __user *, the success reply or the error
++ *	information
++ * @request_len: readable bytes beginning at @request, at least one root header;
++ *	the transport copy boundary, which may exceed the root's own length
++ * @reply_len: writable bytes beginning at @reply; input only, never
++ *	overwritten by the kernel
++ * @generation: query only; zero on a first fragment, the previously returned
++ *	value on continuation, and the query generation on output. Actions must
++ *	set zero.
++ * @cursor: query only; zero starts a query and a nonzero value resumes it. On
++ *	output it is the next cursor when the root carries
++ *	CTLV_ATTR_F_FRAG_MORE and zero when no further fragment exists. Actions
++ *	must set zero.
++ * @reserved: must be zero
++ *
++ * No size field: the ioctl number encodes the structure size and @reserved
++ * covers compatible growth. @request and @reply are fixed-width
++ * representations of userspace pointers so that the compat layout is identical.
++ */
++struct ctlv_op_exec {
++	__aligned_u64 op_id;
++	__aligned_u64 request;
++	__aligned_u64 reply;
++	__u32 request_len;
++	__u32 reply_len;
++	__aligned_u64 generation;
++	__aligned_u64 cursor;
++	__aligned_u64 reserved[2];
++};
++
++#define CTLV_IOC_MAGIC 0xBB
++
++#define CTLV_IOC_OP_EXEC _IOWR(CTLV_IOC_MAGIC, 0x00, struct ctlv_op_exec)
++
++/**
++ * struct ctlv_event_hdr - Header of one queued event record.
++ * @length: complete record length, this header plus the aligned root
++ * @flags: must be zero
++ * @op_id: complete op ID of the event op that produced the record
++ * @sequence: per open file description sequence number, assigned to every
++ *	eligible enqueue attempt including dropped ones
++ *
++ * Exactly one root attr follows the header, and one read() returns one record.
++ */
++struct ctlv_event_hdr {
++	__u32 length;
++	__u32 flags;
++	__aligned_u64 op_id;
++	__aligned_u64 sequence;
++};
++
++/* Implementation limits, not wire-field maxima: raising them is compatible. */
++
++/* Request roots, action replies, query reply fragments and event roots. */
++#define CTLV_MAX_INLINE_MESSAGE_LEN	0x100000	/* 1 MiB */
++/* Includes the error information root. */
++#define CTLV_MAX_ERROR_LEN		0x4000		/* 16 KiB */
++/* The root attr is at depth zero. */
++#define CTLV_MAX_NEST_DEPTH		32
++#define CTLV_DEFAULT_QUERY_REPLY_LEN	0x10000		/* 64 KiB */
++#define CTLV_MAX_EVENT_QUEUE_LEN	0x1000000	/* 16 MiB */
++
++#endif /* _UAPI_LINUX_CTLV_H */
 -- 
 2.56.0
 
