@@ -1,44 +1,44 @@
 Received: from ewsoutbound.kpnmail.nl (ewsoutbound.kpnmail.nl [195.121.94.186])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59A803E40E3
-	for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 14:37:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 431224519AA
+	for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 14:37:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.121.94.186
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792161428; cv=none; b=NJox+Ar4WAhdbi9yiax3nqil73E5QHxJljzAma0SN4ylUTKAXz7mp6rnD9SpqwZjHuf/jPb1EG5pHBJBmVmEBzX3QIHQhcR/NpfXy+2+cDPV6qIaXa/NVpulk0mPbdikgSE2oOHTwEMNlVYpucAPnlraO/VHVJKVNVZikiMFkgY=
+	t=1792161430; cv=none; b=SLbbJotrAoCEK0+BBlDqXb6ondfz9+kwQlmAomf88RWxKlIqrmWazLhnTe968HlGr3Rpim9IHPmE3ftzopeHxCOwcBuNqyX/7vz/K/+VZiV59Np7rqWXl8X5d02jhatOLKvrVWHl8aNLMg664BaBUpv8xc5ZlZJTpJbrUQdgQq0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792161428; c=relaxed/simple;
-	bh=wwls92PitzLmDhbKssKKIVWrw2H8a8z4bnHLZa+rdMs=;
+	s=arc-20240116; t=1792161430; c=relaxed/simple;
+	bh=TvFgq/dwnhWhXTs1Ma/IRs/wNwaqTxXDSC+rQuWR4A8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=k5EZDRzlikC0iQLCwjG5KPkWWOlYnYKAU0mI4vRhMie/x8lcTqTAC5Ft+/8M3zZ9QoiL/VA59MZhsFIiRT7kHwA6LyxSz//XZH3+DcBycNesGCaIinJlMGMj09hWFSf85FsIvUGxPkyP4nnadqVm1ifReGF/dohxIw+3oGHbiEM=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl; spf=pass smtp.mailfrom=xs4all.nl; dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b=dzika6LT; arc=none smtp.client-ip=195.121.94.186
+	 MIME-Version; b=EZLkGkPwTvDySAcwKJsuQfDGRQ4CUAkYKeQTPbqsYrwpuZw9Wc7BKSo0/4bvexkZm0WXeoPu9s00Rhr7yW1YdjfKrlqhbYomM18zZYdmlheWIYTEdW1l5Hh3mU6HtX5bYqVoFujSGt/xhUpD7vBRRFSnO6TZ5Ldw72y2mKaX4rU=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl; spf=pass smtp.mailfrom=xs4all.nl; dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b=gUJgLTom; arc=none smtp.client-ip=195.121.94.186
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xs4all.nl
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="dzika6LT"
-X-KPN-MessageId: 090f8e1f-c96f-11f1-bfc1-00505699b430
+	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="gUJgLTom"
+X-KPN-MessageId: 0b54b103-c96f-11f1-bfc1-00505699b430
 Received: from smtp.kpnmail.nl (unknown [10.31.155.5])
 	by ewsoutbound.so.kpn.org (Halon) with ESMTPS
-	id 090f8e1f-c96f-11f1-bfc1-00505699b430;
-	Fri, 16 Oct 2026 16:36:55 +0200 (CEST)
+	id 0b54b103-c96f-11f1-bfc1-00505699b430;
+	Fri, 16 Oct 2026 16:36:59 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=xs4all.nl; s=xs4all01;
 	h=mime-version:message-id:date:subject:to:from;
-	bh=rzTiTkvseb0XHWvj+0sWDRmMWlm2vYd7SdITT0Nc0O0=;
-	b=dzika6LTS9lQMctq+NWvGksyDhCdGT13QXkLmU/XTGvglXUp/CiwqdNU4/JVfE+stqdMxPeQ3AeOf
-	 VoVz89CxjPG2UinHquHBX9OuiQA1cQhHNwv2ASxEtO2GRozJ7bTrxa2cpbRxAlll4INSxHJPN4SaHs
-	 EsrAZfcMdCFyALipDrWcZrDdPCOo7Ij/OzO/cMJvdZp2TRIdtgxXzYWTlNHytEa8amttF5OlgLiR2c
-	 I1NURbyiq3dMrtsnaa1JiXEpgsorNIhpgMIeOkmCXCikd5BQWSoZnLhZwve3VDSGXJ3cwLq06QFzpq
-	 UTmZMynfEKafArYN26CiOsbAAsbrixA==
-X-KPN-MID: 33|X0ViaWWBENgXXh7BgleSwB+IIWrZgrEil+2ZrpJqyEtQ7vDN8j53ecFlVoJAeHI
- Aca6UBmrsj6D9iJkJ1kwbKULyVxvpm8Kzj1IIac5ogHo=
+	bh=78MPMbGST82mWlZceaziz908IXxPoLSfDnc6dkhjDFU=;
+	b=gUJgLTomvrpoEmVthqDGPC0VMtucjAPJ0Ujg556yXIzTeKbBvbvBejtHfQtga+fmXw85V0oiYuYwc
+	 b9lHpkjDrUcj2K311LNhGozFk1W8S9X+sEFVk3sQpc1UB+UJPJuPaIfQtaxgPrFKmZBNcmz0qIVrwv
+	 PdPvX4rBrFk/DBiQD+2np+jFkYmYR5SG9ZcjLSX2RQv7vGFkQAaGOhcDfMv9DED6gKoQYbvzVJdjZO
+	 t8lLSfcBEJKHJ8Wrp3QSUCQasHh/O+MOc2HIxs2ANIZZYjqg7mUWfHPvwnF8uIEp67QB7MFRDIMBZt
+	 Cs1izK1h+PipAGKjj+XXp3mttEa454A==
+X-KPN-MID: 33|yO7hHp2coDkb47xWUTfPL8uZ9ZpE5VRjZrcJxWqu/4dE7QtswDnJaUj/5ROK5sq
+ OPDA2+duUJ1XMPXNvnaf+YyvTdYfCcHhqQHRmDCG8qAw=
 X-KPN-VerifiedSender: Yes
-X-CMASSUN: 33|x56zy5WImxZoRdPvOXX1zd7ltVaNatg3DKe1ebeDjOJY5ibnvskIg3c1HmeVuMl
- 3ZL5+qPOa84vbxCk5Z3vIhg==
+X-CMASSUN: 33|KQ8RAKI3I98DUEYV6HY0paGr2Jr1o2AJp/jID2ZY3FWY60y4EPX18pAJP42uP0H
+ BGYbPh/EFzSS+a/ffbo7v6w==
 Received: from daedalus.home (unknown [178.228.137.172])
 	by smtp.xs4all.nl (Halon) with ESMTPSA
-	id 08cb7528-c96f-11f1-a202-00505699b758;
-	Fri, 16 Oct 2026 16:36:55 +0200 (CEST)
+	id 0b0e0ac6-c96f-11f1-a202-00505699b758;
+	Fri, 16 Oct 2026 16:36:59 +0200 (CEST)
 From: Jori Koolstra <jkoolstra@xs4all.nl>
 To: Christian Brauner <brauner@kernel.org>,
 	Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -52,9 +52,9 @@ Cc: linux-fsdevel@vger.kernel.org,
 	Amir Goldstein <amir73il@gmail.com>,
 	Aleksa Sarai <cyphar@cyphar.com>,
 	Jori Koolstra <jkoolstra@xs4all.nl>
-Subject: [PATCH v7 01/12] fs/namei.c: use trailing_slashes()
-Date: Fri, 16 Oct 2026 16:37:55 +0200
-Message-ID: <20261016143806.2946578-2-jkoolstra@xs4all.nl>
+Subject: [PATCH v7 02/12] vfs: prepare vfs_creat|mkdir_no_perm for reuse in lookup_open()
+Date: Fri, 16 Oct 2026 16:37:56 +0200
+Message-ID: <20261016143806.2946578-3-jkoolstra@xs4all.nl>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261016143806.2946578-1-jkoolstra@xs4all.nl>
 References: <20261016143806.2946578-1-jkoolstra@xs4all.nl>
@@ -66,105 +66,151 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-There are several places in fs/namei.c that can use the
-trailing_slashes() function to improve context. To allow this broader
-use its signature is changed to take a struct qstr instead of a struct
-nameidata.
+To implement O_CREAT|O_DIRECTORY we will have to repeat some of the
+logic that is now in vfs_mkdir() (e.g. do error checks in the same
+order). Separate this out in vfs_mkdir_no_perm(), which does all the
+non-permission related work of vfs_mkdir(). Permission checking for the
+lookup_open() path is timed differently because we may just be doing an
+open and no create. Similar considerations give rise to
+vfs_create_no_perm().
 
-Reviewed-by: NeilBrown <neil@brown.name>
 Signed-off-by: Jori Koolstra <jkoolstra@xs4all.nl>
 ---
- fs/namei.c | 28 +++++++++++++++-------------
- 1 file changed, 15 insertions(+), 13 deletions(-)
+ fs/namei.c | 77 +++++++++++++++++++++++++++++++++++++-----------------
+ 1 file changed, 53 insertions(+), 24 deletions(-)
 
 diff --git a/fs/namei.c b/fs/namei.c
-index c87c14ee1a25..839258260ad5 100644
+index 839258260ad5..ab09dd7f7475 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -2810,9 +2810,16 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
- 	return s;
+@@ -4195,6 +4195,24 @@ static inline umode_t vfs_prepare_mode(struct mnt_idmap *idmap,
+ 	return mode;
  }
  
-+static inline bool trailing_slashes(const struct qstr *last)
++static inline
++int vfs_create_no_perm(struct mnt_idmap *idmap, struct dentry *dentry,
++		       umode_t mode, struct delegated_inode *di)
 +{
-+	/* last->len is set by hash_name() to the length of the current
-+	 * component ->name, terminating with '/' or a NUL character. */
-+	return (bool)last->name[last->len];
++	struct inode *dir = d_inode(dentry->d_parent);
++	int error;
++
++	error = try_break_deleg(dir, LEASE_BREAK_DIR_CREATE, di);
++	if (error)
++		return error;
++
++	error = dir->i_op->create(idmap, dir, dentry, mode);
++	if (!error)
++		fsnotify_create(dir, dentry);
++
++	return error;
 +}
 +
- static inline const char *lookup_last(struct nameidata *nd)
- {
--	if (nd->last_type == LAST_NORM && nd->last.name[nd->last.len])
-+	if (nd->last_type == LAST_NORM && trailing_slashes(&nd->last))
- 		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
- 
- 	return walk_component(nd, WALK_TRAILING);
-@@ -4724,17 +4731,12 @@ struct file *vfs_lookup_open(struct path *parent, struct qstr *last,
+ /**
+  * vfs_create - create new file
+  * @idmap:	idmap of the mount the inode was found from
+@@ -4227,13 +4245,8 @@ int vfs_create(struct mnt_idmap *idmap, struct dentry *dentry, umode_t mode,
+ 	error = security_inode_create(dir, dentry, mode);
+ 	if (error)
+ 		return error;
+-	error = try_break_deleg(dir, LEASE_BREAK_DIR_CREATE, di);
+-	if (error)
+-		return error;
+-	error = dir->i_op->create(idmap, dir, dentry, mode);
+-	if (!error)
+-		fsnotify_create(dir, dentry);
+-	return error;
++
++	return vfs_create_no_perm(idmap, dentry, mode, di);
  }
- EXPORT_SYMBOL_FOR_MODULES(vfs_lookup_open, "nfsd");
+ EXPORT_SYMBOL(vfs_create);
  
--static inline bool trailing_slashes(struct nameidata *nd)
--{
--	return (bool)nd->last.name[nd->last.len];
--}
--
- static struct dentry *lookup_fast_for_open(struct nameidata *nd, int open_flag)
- {
- 	struct dentry *dentry;
- 
- 	if (open_flag & O_CREAT) {
--		if (trailing_slashes(nd))
-+		if (trailing_slashes(&nd->last))
- 			return ERR_PTR(-EISDIR);
- 
- 		/* Don't bother on an O_EXCL create */
-@@ -4742,7 +4744,7 @@ static struct dentry *lookup_fast_for_open(struct nameidata *nd, int open_flag)
- 			return NULL;
+@@ -4447,6 +4460,7 @@ static struct dentry *atomic_open(const struct path *path, struct dentry *dentry
+ 		dput(dentry);
+ 		dentry = ERR_PTR(error);
  	}
++
+ 	return dentry;
+ }
  
--	if (trailing_slashes(nd))
-+	if (trailing_slashes(&nd->last))
- 		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
- 
- 	dentry = lookup_fast(nd);
-@@ -5116,7 +5118,7 @@ static struct dentry *filename_create(int dfd, struct filename *name,
- 	 * Do the final lookup.  Suppress 'create' if there is a trailing
- 	 * '/', and a directory wasn't requested.
- 	 */
--	if (last.name[last.len] && !want_dir)
-+	if (trailing_slashes(&last) && !want_dir)
- 		create_flags &= ~LOOKUP_CREATE;
- 	dentry = start_dirop(path->dentry, &last, reval_flag | create_flags);
- 	if (IS_ERR(dentry))
-@@ -5732,7 +5734,7 @@ int filename_unlinkat(int dfd, struct filename *name)
- 		goto exit_drop_write;
- 
- 	/* Why not before? Because we want correct error value */
--	if (unlikely(last.name[last.len])) {
-+	if (unlikely(trailing_slashes(&last))) {
- 		if (d_is_dir(dentry))
- 			error = -EISDIR;
- 		else
-@@ -6334,16 +6336,16 @@ int filename_renameat2(int olddfd, struct filename *from,
- 	if (flags & RENAME_EXCHANGE) {
- 		if (!d_is_dir(rd.new_dentry)) {
- 			error = -ENOTDIR;
--			if (new_last.name[new_last.len])
-+			if (trailing_slashes(&new_last))
- 				goto exit_unlock;
+@@ -4573,6 +4587,7 @@ static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
+ 			dentry = res;
  		}
  	}
- 	/* unless the source is a directory trailing slashes give -ENOTDIR */
- 	if (!d_is_dir(rd.old_dentry)) {
- 		error = -ENOTDIR;
--		if (old_last.name[old_last.len])
-+		if (trailing_slashes(&old_last))
- 			goto exit_unlock;
--		if (!(flags & RENAME_EXCHANGE) && new_last.name[new_last.len])
-+		if (!(flags & RENAME_EXCHANGE) && trailing_slashes(&new_last))
- 			goto exit_unlock;
- 	}
++
+ 	if (dentry->d_inode || !(op->open_flag & O_CREAT)) {
+ 		/*
+ 		 * No need to create a file.  If lookup returned a positive
+@@ -5387,6 +5402,33 @@ SYSCALL_DEFINE3(mknod, const char __user *, filename, umode_t, mode, unsigned, d
+ 	return filename_mknodat(AT_FDCWD, name, mode, dev);
+ }
  
++static inline
++struct dentry *vfs_mkdir_no_perm(struct mnt_idmap *idmap, struct inode *dir,
++				 struct dentry *dentry, umode_t mode,
++				 struct delegated_inode *di)
++{
++	unsigned max_links = dir->i_sb->s_max_links;
++	struct dentry *de;
++	int error;
++
++	if (max_links && dir->i_nlink >= max_links)
++		return ERR_PTR(-EMLINK);
++
++	error = try_break_deleg(dir, LEASE_BREAK_DIR_CREATE, di);
++	if (error)
++		return ERR_PTR(error);
++
++	de = dir->i_op->mkdir(idmap, dir, dentry, mode);
++	if (IS_ERR(de))
++		return de;
++	if (de) {
++		dput(dentry);
++		dentry = de;
++	}
++	fsnotify_mkdir(dir, dentry);
++	return dentry;
++}
++
+ /**
+  * vfs_mkdir - create directory returning correct dentry if possible
+  * @idmap:		idmap of the mount the inode was found from
+@@ -5414,7 +5456,6 @@ struct dentry *vfs_mkdir(struct mnt_idmap *idmap, struct inode *dir,
+ 			 struct delegated_inode *delegated_inode)
+ {
+ 	int error;
+-	unsigned max_links = dir->i_sb->s_max_links;
+ 	struct dentry *de;
+ 
+ 	error = may_create_dentry(idmap, dir, dentry);
+@@ -5430,24 +5471,12 @@ struct dentry *vfs_mkdir(struct mnt_idmap *idmap, struct inode *dir,
+ 	if (error)
+ 		goto err;
+ 
+-	error = -EMLINK;
+-	if (max_links && dir->i_nlink >= max_links)
+-		goto err;
+-
+-	error = try_break_deleg(dir, LEASE_BREAK_DIR_CREATE, delegated_inode);
+-	if (error)
++	de = vfs_mkdir_no_perm(idmap, dir, dentry, mode, delegated_inode);
++	if (IS_ERR(de)) {
++		error = PTR_ERR(de);
+ 		goto err;
+-
+-	de = dir->i_op->mkdir(idmap, dir, dentry, mode);
+-	error = PTR_ERR(de);
+-	if (IS_ERR(de))
+-		goto err;
+-	if (de) {
+-		dput(dentry);
+-		dentry = de;
+ 	}
+-	fsnotify_mkdir(dir, dentry);
+-	return dentry;
++	return de;
+ 
+ err:
+ 	end_creating(dentry);
 -- 
 2.56.0
 
