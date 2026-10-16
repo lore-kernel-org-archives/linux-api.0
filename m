@@ -1,44 +1,44 @@
 Received: from ewsoutbound.kpnmail.nl (ewsoutbound.kpnmail.nl [195.121.94.185])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E64A837755A
-	for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 14:37:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 85C8E4D2EE4
+	for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 14:37:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.121.94.185
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792161444; cv=none; b=IfFFu1I72SduOzGIGEzX/XUNDcrqst0R3YaPLeP+aZebTCygkWaaKZdxsB2JlBNABPbxZcCwwlg1kQhWl+1HVWtgGN2sQ2XfqJ6RBX6mQeqeTl7dI7YHzYq3sKzZSxbVg6mrcmuHrzkz7Og50wMzkPve3Yie1szBhjsCogJiNmk=
+	t=1792161444; cv=none; b=PKcNG5LBVVHRWElHnFZ8HDFi69TfZ4v1X2zYo4rcMxhdau/2vVZIaBV6iWcha7B5fj4JkNgfi3j9BGYvgiXUpjk4P1yBh+4czIHAMU1QRQP8u2W/a3c2dfDz7t0N8m5RrnAbf9kIWGrkdrFUFSKm8FDOsxPqxj9R/ZbXDdk5ce0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
 	s=arc-20240116; t=1792161444; c=relaxed/simple;
-	bh=db3t3SLMaE5wUMdZy9nxNXDoVE66uYdw2Xc3Fqc26UA=;
+	bh=kI4CvoBqwq+FfW3CQYO5fcVPpk7JpfRW+eBNodHBGN8=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=R3Ck7ngcOnhWXGZlK7Lo0FS6LdhUfULI8dSdh/1WFfOtz1Rkwm8PELmjwCDSiUw7/dBepUcwYEJ5m3nzqEYq92j7MTMbylP4aKOruJtMJ4wpt4KQ6ViYOcfFVLBLdmCQ1dS6uxLkGV4N+CP9LgzfMg7Bno9pGVzo6ykZIW36jSk=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl; spf=pass smtp.mailfrom=xs4all.nl; dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b=n3CyEnHV; arc=none smtp.client-ip=195.121.94.185
+	 MIME-Version; b=iEI7EqAhJQIC2/TMWwlrazHghpW4AewPDzdT3CwjF4u30wmAT6hg+SifoRQLEJCT7UVTAcf62reVY2I164GHpEsU/K3KFcn3LZpidv3YA0b39VSiDRFIEJGQGwwd8QPwVg7RcYqav2cekMjmYmmJGPMEwxLhtlmvLmqeh6aNyU8=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl; spf=pass smtp.mailfrom=xs4all.nl; dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b=pTzJznn2; arc=none smtp.client-ip=195.121.94.185
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xs4all.nl
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="n3CyEnHV"
-X-KPN-MessageId: 146e1159-c96f-11f1-9e93-005056999439
+	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="pTzJznn2"
+X-KPN-MessageId: 10948f38-c96f-11f1-9e93-005056999439
 Received: from smtp.kpnmail.nl (unknown [10.31.155.5])
 	by ewsoutbound.so.kpn.org (Halon) with ESMTPS
-	id 146e1159-c96f-11f1-9e93-005056999439;
-	Fri, 16 Oct 2026 16:37:14 +0200 (CEST)
+	id 10948f38-c96f-11f1-9e93-005056999439;
+	Fri, 16 Oct 2026 16:37:08 +0200 (CEST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
 	d=xs4all.nl; s=xs4all01;
 	h=mime-version:message-id:date:subject:to:from;
-	bh=D3EEWYYkwC8DyARDmtg/iTxbMv+cBjwnGlGgHxIhuRY=;
-	b=n3CyEnHVoEIj2aRCkMXnA2cZ6PlSJCBQDr/HhWg/OOmf/iLwZBqKAPs1BcY6+a0z76oa3LM8x3cxr
-	 8+tTUCcr12lN/70Rt3P00FeeY1Fk1kEqWJAvVjQ6iCRP1E6zkGlLsMSaP06Tbi2WSGqQ1np40kkit/
-	 trtRPZXBuI9wyo4NegzaaCy9u06vKMQQqzPNFp4ja27D9TCgHTO8vThgpVlG/9GDVooUioqXAbPLcz
-	 lIaIp1kSvxj3Vx4MowbVSdunvcpAp+UEpern4by3kBPLfJJVMpfSg4LwcoPWh0kDnimxvZws5t2wEW
-	 y6amwSiYhtoWB2jSgTS00lUfg1HVeLQ==
-X-KPN-MID: 33|3f2O/EKeGRHyCsYzof/BZFSZ18lEhlVz2DSJJ4Cef49cTBQLCeTY9QrJYqEtpeA
- +0AuSPdRLaI5AUocD86OTK25X6OompI9duRV6DPyQZ+I=
+	bh=3mm/w1EXXI67RyDCAz9DR5/sv5ocQ8avN+Cr+GA9AaA=;
+	b=pTzJznn2EgyUzXXXATR96AGaRVggULpumTvsFhGXh3B/G6sVEyvfeHmqMJ0DZ3TZHg7bSDRsUjO0A
+	 KXW1CyKkQCPdZA+6C1zMArs9R+iPNicCJ1zzitgTjdC8u4kkwwAUGkfMDp/Ha4VD4zPZkpKUucTxq9
+	 cFg3U5b6YrBt3bL1N1d824Q3tw+30e1RJD7VIjXVfvvCaEnSC+jj/Vi91pyt4OKA45wr7czmHWTDmS
+	 T/UQWKsEaZDITup5xz/N57sVKg/9tT3G+5yCRUUJ81sTCfn1wKk9l3MA4m6HAjFs0b8Ri1z15BEya8
+	 sWUzUZ0XU+8K3KoCq9ne4hklviF/5Hg==
+X-KPN-MID: 33|LscIXE6pUo/OESTC534fUFqQIsGB5zcoDUbDwjcCAdB+KMQxaVZOUPLmZdMAe4J
+ kFdn0UFV+jbJK0xPvMlEAIIjOtSbxQJwq5d742NS9Ue8=
 X-KPN-VerifiedSender: Yes
-X-CMASSUN: 33|MBu+FYC3YOBbhhyJF65R8mWgB32WSLOsRiu/ufWj0cMOnp2dyryktJfwDcgZQ0X
- L4VVUv41+D4HOUU5fOW96uA==
+X-CMASSUN: 33|YCdb5T4qjy7hPExlGFDuXVKIRp4oWANuPRBgRiEmwyDdlr2C/oRS/8GDMBGdpLo
+ r32w734PqkfRkRe5XEROEog==
 Received: from daedalus.home (unknown [178.228.137.172])
 	by smtp.xs4all.nl (Halon) with ESMTPSA
-	id 142b6dc5-c96f-11f1-a202-00505699b758;
-	Fri, 16 Oct 2026 16:37:14 +0200 (CEST)
+	id 104fe31d-c96f-11f1-a202-00505699b758;
+	Fri, 16 Oct 2026 16:37:08 +0200 (CEST)
 From: Jori Koolstra <jkoolstra@xs4all.nl>
 To: Christian Brauner <brauner@kernel.org>,
 	Alexander Viro <viro@zeniv.linux.org.uk>,
@@ -52,9 +52,9 @@ Cc: linux-fsdevel@vger.kernel.org,
 	Amir Goldstein <amir73il@gmail.com>,
 	Aleksa Sarai <cyphar@cyphar.com>,
 	Jori Koolstra <jkoolstra@xs4all.nl>
-Subject: [PATCH v7 07/12] kernfs: hold kernfs_iattr_rwsem when initializing a new inode
-Date: Fri, 16 Oct 2026 16:38:01 +0200
-Message-ID: <20261016143806.2946578-8-jkoolstra@xs4all.nl>
+Subject: [PATCH v7 05/12] vfs: lookup_open(): use vfs_create_no_perm()
+Date: Fri, 16 Oct 2026 16:37:59 +0200
+Message-ID: <20261016143806.2946578-6-jkoolstra@xs4all.nl>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261016143806.2946578-1-jkoolstra@xs4all.nl>
 References: <20261016143806.2946578-1-jkoolstra@xs4all.nl>
@@ -66,67 +66,72 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-kernfs_refresh_inode() copies the uid, gid, timestamps and nlink of a
-kernfs_node into its VFS inode. Since commit 9caf69614225 ("kernfs:
-Introduce separate rwsem to protect inode attributes.") these are
-protected by kernfs_iattr_rwsem.
+We can replace the code in the no create_error/negative dentry found
+from lookup case in lookup_open() with the vfs_create_no_perm() helper.
 
-kernfs_init_inode() calls kernfs_refresh_inode(), but was not converted.
-Its callers in turn hold kernfs_rwsem (kernfs_iop_lookup(),
-kernfs_fill_super()) or no lock at all (__kernfs_fh_to_dentry()),
-neither of which excludes a concurrent
-kernfs_setattr()/kernfs_iop_setattr().
-
-Take kernfs_iattr_rwsem for reading around the refresh in
-kernfs_init_inode(). This nests inside kernfs_rwsem, which matches
-kernfs_link_sibling() and kernfs_unlink_sibling().
-
-Also, kernfs_get_inode() then does not need to hold kernfs_rwsem, so
-drop it from kernfs_fill_super().
-
-Fixes: 9caf69614225 ("kernfs: Introduce separate rwsem to protect inode attributes.")
+Reviewed-by: NeilBrown <neil@brown.name>
 Signed-off-by: Jori Koolstra <jkoolstra@xs4all.nl>
 ---
- fs/kernfs/inode.c | 3 ++-
- fs/kernfs/mount.c | 3 ---
- 2 files changed, 2 insertions(+), 4 deletions(-)
+ fs/namei.c | 25 +++++++------------------
+ 1 file changed, 7 insertions(+), 18 deletions(-)
 
-diff --git a/fs/kernfs/inode.c b/fs/kernfs/inode.c
-index abb286bc3474..83f2007498db 100644
---- a/fs/kernfs/inode.c
-+++ b/fs/kernfs/inode.c
-@@ -204,7 +204,8 @@ static void kernfs_init_inode(struct kernfs_node *kn, struct inode *inode)
- 	inode->i_generation = kernfs_gen(kn);
+diff --git a/fs/namei.c b/fs/namei.c
+index 000d8841a8ec..b864aa426102 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -4459,8 +4459,14 @@ static struct dentry *atomic_open(const struct path *path, struct dentry *dentry
+ 		}
+ 		dput(dentry);
+ 		dentry = ERR_PTR(error);
++	} else {
++		if (file->f_mode & FMODE_CREATED)
++			fsnotify_create(dir_inode, dentry);
++		if (file->f_mode & FMODE_OPENED)
++			fsnotify_open(file);
+ 	}
  
- 	set_default_inode_attr(inode, kn->mode);
--	kernfs_refresh_inode(kn, inode);
-+	scoped_guard(rwsem_read, &kernfs_root(kn)->kernfs_iattr_rwsem)
-+		kernfs_refresh_inode(kn, inode);
++
+ 	return dentry;
+ }
  
- 	/* initialize inode according to type */
- 	switch (kernfs_type(kn)) {
-diff --git a/fs/kernfs/mount.c b/fs/kernfs/mount.c
-index a57399021c8b..202a5ca2bd34 100644
---- a/fs/kernfs/mount.c
-+++ b/fs/kernfs/mount.c
-@@ -283,7 +283,6 @@ struct dentry *kernfs_node_dentry(struct kernfs_node *kn,
- static int kernfs_fill_super(struct super_block *sb, struct kernfs_fs_context *kfc)
- {
- 	struct kernfs_super_info *info = kernfs_info(sb);
--	struct kernfs_root *kf_root = kfc->root;
- 	struct inode *inode;
- 	struct dentry *root;
+@@ -4610,22 +4616,12 @@ static struct dentry *lookup_open(struct nameidata *nd, struct file *file,
+ 		goto out_dput;
+ 	}
  
-@@ -304,9 +303,7 @@ static int kernfs_fill_super(struct super_block *sb, struct kernfs_fs_context *k
- 	sb->s_shrink->seeks = 0;
+-	error = try_break_deleg(dir_inode, LEASE_BREAK_DIR_CREATE, &delegated_inode);
+-	if (error)
+-		goto out_dput;
+-
+-	error = dir_inode->i_op->create(idmap, dir_inode, dentry, mode);
++	error = vfs_create_no_perm(idmap, dentry, mode, &delegated_inode);
+ 	if (error)
+ 		goto out_dput;
  
- 	/* get root inode, initialize and unlock it */
--	down_read(&kf_root->kernfs_rwsem);
- 	inode = kernfs_get_inode(sb, info->root->kn);
--	up_read(&kf_root->kernfs_rwsem);
- 	if (!inode) {
- 		pr_debug("kernfs: could not get root inode\n");
- 		return -ENOMEM;
+ 	file->f_mode |= FMODE_CREATED;
+ out:
+-	if (!IS_ERR(dentry)) {
+-		if (file->f_mode & FMODE_CREATED)
+-			fsnotify_create(dir_inode, dentry);
+-		if (file->f_mode & FMODE_OPENED)
+-			fsnotify_open(file);
+-	}
+ 	if ((open_flag & O_CREAT) || create_error)
+ 		inode_unlock(dir_inode);
+ 	else
+@@ -5245,13 +5241,6 @@ struct file *dentry_create(struct path *path, int flags, umode_t mode,
+ 			/* Drop the extra reference */
+ 			dput(orig_dentry);
+ 
+-		if (!error) {
+-			if (file->f_mode & FMODE_CREATED)
+-				fsnotify_create(dir->d_inode, dentry);
+-			if (file->f_mode & FMODE_OPENED)
+-				fsnotify_open(file);
+-		}
+-
+ 		path->dentry = dentry;
+ 
+ 	} else {
 -- 
 2.56.0
 
