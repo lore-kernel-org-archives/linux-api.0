@@ -1,113 +1,96 @@
-Received: from ewsoutbound.kpnmail.nl (ewsoutbound.kpnmail.nl [195.121.94.186])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
+Received: from mail-pl1-f199.google.com (mail-pl1-f199.google.com [209.85.214.199])
+	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F159A3D3CED
-	for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 23:58:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=195.121.94.186
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC4A83932C2
+	for <linux-api@vger.kernel.org>; Sat, 17 Oct 2026 05:04:09 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.214.199
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792195087; cv=none; b=KaWg+rWG95lkN/Jt4pdrAFt8zCjepS8h87e1xZRRKhNjhqEVKjaqmVf4PDSgPut8ODCCZp6nKCV5B89ja+BNScE6K2pkxduuIlDAfi9+pkPkYFfXUT16dBwe90WdrxlehihdsKPs2GdpbI/baccPuR+ARzsrDogx/yRE7M5tikU=
+	t=1792213451; cv=none; b=GAeVMbDx4L2oFQJfGXRjhrG+nvr4CBZsVtuKMPyEGjOBodyyTU9V5/dQEvSHDsBPasHiU5UpefncpE4NUP48NZZFEGErjIGHtfNm0cJFMDnTtNdPD23cyYD+SmZINIsszkofmJjQIax7Om4YRbwyDksf2ahW5bJjMzdKRvExE0s=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792195087; c=relaxed/simple;
-	bh=Sol7b/YHIC7fBZ3r1UNj405eVEsThuaewoMzP6GaWnY=;
-	h=Date:From:To:Cc:Message-ID:In-Reply-To:References:Subject:
-	 MIME-Version:Content-Type; b=Nb6xHl+/is9hZNA197fRhELS1wfjScK/dmPzv90cyPGYZn4y0lxZsScd0T7adOGzVCdTs5uh02KuHy/QCgOJVI1qvFHTSHvP/ktPq7TXCami8dp+gbK+4zPc4l3fRdQAlwO6EcLd8IXy8ZZryQ1HZ+m6Q2B4rMZoe7VfJrI0IS0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl; spf=pass smtp.mailfrom=xs4all.nl; dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b=ulsBXqxM; arc=none smtp.client-ip=195.121.94.186
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=xs4all.nl
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xs4all.nl
+	s=arc-20240116; t=1792213451; c=relaxed/simple;
+	bh=8BLUOuobsXVPK0Hk4WClUwg69wNv/LObwP6VEuCQQpk=;
+	h=Date:In-Reply-To:Mime-Version:References:Message-ID:Subject:From:
+	 To:Cc:Content-Type; b=grU1S3FiOgMCt1x4PKjWPJq3/C+xfZFtXyeoQq8iXvPnsznkbbCgiHX33r29DMYor1XxLFnXWM6/4T539IQNbafebtx7SCo9E6BdWKI32cpgy+LKTE46HKUXeNohKQn/wCxpjjFiwj9PKGkedQJY4/OKSj7Z+zuEs88OoDaadjw=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com; spf=pass smtp.mailfrom=flex--kuniyu.bounces.google.com; dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b=vuFAi4DJ; arc=none smtp.client-ip=209.85.214.199
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--kuniyu.bounces.google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=xs4all.nl header.i=@xs4all.nl header.b="ulsBXqxM"
-X-KPN-MessageId: 6aa0dac5-c9bd-11f1-bfc1-00505699b430
-Received: from mta.kpnmail.nl (unknown [10.31.161.188])
-	by ewsoutbound.so.kpn.org (Halon) with ESMTPS
-	id 6aa0dac5-c9bd-11f1-bfc1-00505699b430;
-	Sat, 17 Oct 2026 01:58:00 +0200 (CEST)
-Received: from mtaoutbound.kpnmail.nl (unknown [10.128.135.189])
-	by mta.kpnmail.nl (Halon) with ESMTP
-	id 6a9f658b-c9bd-11f1-ac19-00505699693e;
-	Sat, 17 Oct 2026 01:58:00 +0200 (CEST)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.b="vuFAi4DJ"
+Received: by mail-pl1-f199.google.com with SMTP id d9443c01a7336-2e8dd9b9743so5130945ad.1
+        for <linux-api@vger.kernel.org>; Fri, 16 Oct 2026 22:04:09 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=xs4all.nl; s=xs4all01;
-	h=content-type:mime-version:subject:message-id:to:from:date;
-	bh=nP905omsFDEXnfiXjNt86xtCsoYoZxyqyX9+gdjuAdU=;
-	b=ulsBXqxMEkKXsns1ECCv5AxFghkyHl2HTQGrLPX8zAXOsxllIlMbeQMeigZgghOt+f/MeCMCwmlAL
-	 HuUzxAaBiucl5xoXzdtw1vCYdIpD18fg1vfLn7JOVnq75AkxOu8F+V6qn22jES2F7iggK3nsK2n6Uh
-	 RbUO6Xc9R+4Aipt1mn+V94awoDZPc0T3bRFST2jaGLX/cmLv6Tr5cXDPVogss447QLXeMn43jP9Het
-	 U8M5OFlZnIPrOp0PPH2TVt1Ktk5cjIyWMDrJunx5K05Jz5dSldnfy95IdQPweFTlL1mBdGKcyiDxUs
-	 R+/zjPqOPBIYVffYmBnOuCrvl1k+HXA==
-X-KPN-MID: 33|4KkrTwsmvmLPOjDbP8/4VvjI5Egql+PqJfiQryUT8cMhNzTGJUqLK422dFR66ox
- TYPYn83v2Xzepu18SFQsr4uN+h4W2PfTRxOc6N9g5LOk=
-X-CMASSUN: 33|V02M0cnroX7SueAXwXU36SMJsDpH0uyW++JyHN9fUXFj+hzmu1qcBwgy6fsTQRc
- vC7lcEr8X1+WO5p3WZGGBiw==
-X-KPN-VerifiedSender: Yes
-Received: from cpxoxapps-mh04 (cpxoxapps-mh04.personalcloud.so.kpn.org [10.128.135.210])
-	by mtaoutbound.kpnmail.nl (Halon) with ESMTPSA
-	id 6a92e50e-c9bd-11f1-8edd-00505699eff2;
-	Sat, 17 Oct 2026 01:57:59 +0200 (CEST)
-Date: Sat, 17 Oct 2026 01:57:59 +0200 (CEST)
-From: Jori Koolstra <jkoolstra@xs4all.nl>
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Christian Brauner <brauner@kernel.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, Jeff Layton <jlayton@kernel.org>,
-	NeilBrown <neil@brown.name>, Amir Goldstein <amir73il@gmail.com>,
-	Aleksa Sarai <cyphar@cyphar.com>
-Message-ID: <2059185467.1255949.1792195079917@kpc.webmail.kpnmail.nl>
-In-Reply-To: <2026101626-idealist-overshoot-26d6@gregkh>
-References: <20261016143806.2946578-1-jkoolstra@xs4all.nl>
- <20261016143806.2946578-8-jkoolstra@xs4all.nl>
- <2026101626-idealist-overshoot-26d6@gregkh>
-Subject: Re: [PATCH v7 07/12] kernfs: hold kernfs_iattr_rwsem when
- initializing a new inode
+        d=google.com; s=20251104; t=1792213449; x=1792818249; darn=vger.kernel.org;
+        h=content-type:cc:to:from:subject:message-id:references:mime-version
+         :in-reply-to:date:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=gV9/cHPnIlfRbaMaPitg64wMYECZnHJw7L0U4tqnfHE=;
+        b=vuFAi4DJZ3XmakwcmpGKv0lcssWG4LtJUbgyNBHPfk0cJswBAE71rjmLlge6JknNij
+         z7yxz4PyXTYr+H5tr/54ENmWbB3973pECVnzStvnUsRZ4aqYOAlo0cEtPVOVpMC4uuh5
+         QlpWLZIInRvg0LsOWmXAo7hcX8g8Km4gc1OYddz/KlNZ2fee6aVmHaJz+9c52KTu44oo
+         euBZTJQjdAzKpE0JnjWfQXtIZqc+UI8HX7JkvTd/OGkbEI4VObrThX8hC85RKX29lk2r
+         tr/047uTvpJTcwHheKedmxp0VyfUaa0OcEiIRkcmR/hZAMtZbd4Q8RsKLCfEw18NwtAJ
+         bP+w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792213449; x=1792818249;
+        h=content-type:cc:to:from:subject:message-id:references:mime-version
+         :in-reply-to:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=gV9/cHPnIlfRbaMaPitg64wMYECZnHJw7L0U4tqnfHE=;
+        b=aTBbVExIGKvFCVsrDlQJboQnlXwmotp8mj/TsPxpUcIFSVWr5RM2Iiq8JDNewsCmFq
+         HGJWWJCqVWBKd20caf64pxCGqDaXlrEBj7Sg0ftYZFjYl+WmzqxEnlIsnuyBp9+bND6S
+         OL6e2J9v+qZztneaedeiYSbkT+BpwMk+Lm8/d3V0FOazAtxTikL0QZqECQtDYStor3lT
+         FAzxcv++SZu40cnLOoRx3x9FrarWgLB+7lXsN03WlmUZqMZRbGa7QqfxgpbSOkHwURrd
+         6cyO5T4jxUzVAXziWZBYLaW/Qgm1EXXCTfGFJ6Swh4L7NXkT67UwmJdP763fZ/QTem82
+         WXpg==
+X-Forwarded-Encrypted: i=1; AKwUvBw76vfSp9qrDvGZt18664DKL34uLOAoYTexIw9N8TIkbhq+BI3NiM7BrzimswsJNbIttUIp8G8Kog0=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIq7oER13SHJUsgDC0UiQihKYtCOHXEn/eQ8zvkB4oVEGBI9D48
+	+hxXtrIwPRPFC4eQAr2fgcTMd7TE1VlGsew5EH5O2L2loR0VttHKKROHWJxJLLq88dnH6cqfGai
+	Gu4DPvA==
+X-Received: from plbkm15.prod.google.com ([2002:a17:903:27cf:b0:2e9:5442:b91a])
+ (user=kuniyu job=prod-delivery.src-stubby-dispatcher) by 2002:a17:903:22c1:b0:2e9:6788:9372
+ with SMTP id d9443c01a7336-2e9a6d3668fmr18323965ad.62.1792213448706; Fri, 16
+ Oct 2026 22:04:08 -0700 (PDT)
+Date: Sat, 17 Oct 2026 05:04:08 +0000
+In-Reply-To: <tencent_A643419B56079E9A448D97922763FF069F08@qq.com>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-X-Priority: 3
-Importance: Normal
+Mime-Version: 1.0
+References: <tencent_A643419B56079E9A448D97922763FF069F08@qq.com>
+Message-ID: <atMBc9DNAnFhsR9V@google.com>
+Subject: Re: [PATCH net v3] net: unix: reject negative max_dgram_qlen values
+From: kuniyu@google.com
+To: Yingjie Wang <1075151112@qq.com>
+Cc: netdev@vger.kernel.org, davem@davemloft.net, edumazet@google.com, 
+	kuba@kernel.org, pabeni@redhat.com, horms@kernel.org, corbet@lwn.net, 
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, stable@vger.kernel.org, skhan@linuxfoundation.org, 
+	rdunlap@infradead.org
+Content-Type: text/plain; charset="us-ascii"
 
-
-> Op 16-10-2026 10:50 EDT schreef Greg Kroah-Hartman <gregkh@linuxfoundation.org>:
+On Fri, 16 Oct 2026 11:02:58 +0800, Yingjie Wang wrote:
+> net.unix.max_dgram_qlen is parsed as a signed int and copied to the u32
+> sock::sk_max_ack_backlog when an AF_UNIX socket is created.  Consequently,
+> a negative value such as -1 is accepted and converted to UINT_MAX.  Since
+> the receive queue length is also u32, its fullness check cannot become true
+> for that limit.
 > 
->  
-> On Fri, Oct 16, 2026 at 04:38:01PM +0200, Jori Koolstra wrote:
-> > kernfs_refresh_inode() copies the uid, gid, timestamps and nlink of a
-> > kernfs_node into its VFS inode. Since commit 9caf69614225 ("kernfs:
-> > Introduce separate rwsem to protect inode attributes.") these are
-> > protected by kernfs_iattr_rwsem.
-> > 
-> > kernfs_init_inode() calls kernfs_refresh_inode(), but was not converted.
-> > Its callers in turn hold kernfs_rwsem (kernfs_iop_lookup(),
-> > kernfs_fill_super()) or no lock at all (__kernfs_fh_to_dentry()),
-> > neither of which excludes a concurrent
-> > kernfs_setattr()/kernfs_iop_setattr().
-> > 
-> > Take kernfs_iattr_rwsem for reading around the refresh in
-> > kernfs_init_inode(). This nests inside kernfs_rwsem, which matches
-> > kernfs_link_sibling() and kernfs_unlink_sibling().
-> > 
-> > Also, kernfs_get_inode() then does not need to hold kernfs_rwsem, so
-> > drop it from kernfs_fill_super().
+> max_dgram_qlen has no documented negative sentinel.  Its existing signed
+> interface represents nonnegative values only through INT_MAX; negative bit
+> patterns are not a supported encoding for the upper half of the u32
+> consumer range.
 > 
-> Oh, nice, this fixes the issue of kernfs not keeping the inode like we
-> talked about at LPC?  Can't argue with this tiny patch, nice work!
-
-No, that part is included in the patch following this one. This is a bit of
-preliminary work to fix the locking around kernfs_refresh_inode(). I think the
-memory requirement for the allocated inodes is not a blocker (but you judge, since
-you told me that's the primary concern here). The inode allocation only happens
-for userspace mkdir(2) calls afaict, and then you probably want to do a lookuo
-anyway.
-
-I see there's some work by a Meta team on kernfs. Since I'm in that code now
-I'll try to review that soon.
-
-Enjoy the weekend!
-Jori.
-
+> Switch to proc_dointvec_minmax and make the established 0..INT_MAX input
+> range explicit.  This rejects negative values without adding new accepted
+> values or changing the default and zero-value behavior.  Very large valid
+> values can still make the queue limit impractical to reach; this change
+> corrects the input domain rather than imposing a new resource ceiling.
 > 
-> Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+> Cc: stable@vger.kernel.org
+> Assisted-by: Codex:gpt-5
+> Signed-off-by: Yingjie Wang <1075151112@qq.com>
+
+Reviewed-by: Kuniyuki Iwashima <kuniyu@google.com>
