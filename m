@@ -1,32 +1,32 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 395E53939B1;
-	Sat, 17 Oct 2026 19:08:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB1F63E44F8;
+	Sat, 17 Oct 2026 19:22:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792264110; cv=none; b=AeKy9W20tcgVEgBSbsWzRoDl4TCz8XDyhkKqqJ6vJ4EXOhSXkilTecUFzXvCblaNpHTVsUPU8sULUVbg2nBeqtRKNl63mlCZRYCH4VFTqEiFHswM3JPUTC8tqbTH5C7/rFid+9kcZ/mOa/P7koKoBK1J78oZ6u83YNgT4cRzgN0=
+	t=1792264979; cv=none; b=HREC0zabqacdaZEAjMvJdEWwZepY494rZ9UbxFZUPd6xlXiko7faix/+91y7NEDXh+bFy1/WcYD1T7DEt5DdzOTWfVmYD74aSOvQXiPl8y66ig/0ybm2huTB6COtqRlaexOfjm9EJSXOu5M3qAumdbxEZLUNNT+yEiXvYDNf1XQ=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792264110; c=relaxed/simple;
-	bh=cko0LxyGoNoWA3Sia1nfNENkgSFWJiUV23tmjXF/d8U=;
+	s=arc-20240116; t=1792264979; c=relaxed/simple;
+	bh=iUQY4+7HSoLaBb60jFM/tTO/LHqOP7tcbkc2ajWfxvk=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=IaTfRpBeHozDcdsJvceqck2d7RH2jL+l/OH/V/X86LTbS1ljytexIJY9YdxuOMA+wSNlfBhc0xj6XCVCp6UIET6kVe9RMJYdn+rcOL2wiDZ0cSSbabAis71vhIgeC2kr3NAhhIrBQ7iA+RrC+K5OU3WjHa6VZePAyXoaBCgmFr0=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TaSk11uM; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=dtLjQDqjVTNy6NjCX+kjZMVtT6++XSSLh9XvU9gJOH5fySw6gjwbbA1W8Kk6AaBjfba7f31H9WJnu5WpTjPssE95LMXeLQSWMH2Iu1lBhrueGFBklmBOdgcrnk3AJyPQbWlDZ+RGXBkVa6tmLujWafZG7KIIRTejSSRtRCQZSfk=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=AZM+ADv4; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TaSk11uM"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3466C1F000C4;
-	Sat, 17 Oct 2026 19:08:28 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="AZM+ADv4"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id AB7C31F000C4;
+	Sat, 17 Oct 2026 19:22:56 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792264108;
-	bh=cko0LxyGoNoWA3Sia1nfNENkgSFWJiUV23tmjXF/d8U=;
+	s=k20260515; t=1792264977;
+	bh=OONfiEuJZp2QNI0FjSs0RzhjRXwPO3yVnFTCpoHyjFs=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=TaSk11uMLCtEiiuw9dYfP9dVjuwaoykNjRQe/I3urVaQJb+9wPALxTE344RrD10yX
-	 FY8dihwJ421Z8actkQ97BXBQJnKZJgmqMM1DEClRSqDm13T+iEXwdC9Sn8E0JIezs/
-	 5jOG2l8hOSKsk0gR9+gp+6gURzeRr0FM0JefT33vsF2dXvsh5Yr+tMPQzaP/Ua8+40
-	 UQrHN2yQS6ZzxSFPeu1JMQq6vZa0eTQWlQgBPYlf7y8u+aabGZ+V5grE/Uj6oeJUga
-	 rp/ggZr1KSgAKCSAteSNgvT6huhgBJoFaSK2GY1WAac2qL9/1pNNTL+dALnUGXavAP
-	 87RD+NLw6nNTg==
-Date: Sat, 17 Oct 2026 22:08:25 +0300
+	b=AZM+ADv477n/ZHphD6yHLuvZ0s3S9MKN18c1z2xXM3hNxvq0IYVcf/Hu3frVT1qos
+	 6vc4Sz3L03yI1XFGS/Hk6V9vlOe3z3Y1KUxa+Uv/lH0UaeQRZ3jHYW0CKzsgyqmuWG
+	 pTfdrr6KmxaIApEVTDTER2w4WpWmG29uGY/Vvr4cvoTJ4DmvcgCwcdGJ55YvydgvA2
+	 dl8t/d5oBYmUAoRG7qq4NNfV1/DSMN44EVbJ43CtDUN+8r9jSNs61a2AextuGvJn6K
+	 THL55h1UXzBB1gEBOksuCXDvkWMfCX8uE0/IKOCd+bJOTYbZcvdfF8vtUhfLpdNkhU
+	 2megWx820XP7g==
+Date: Sat, 17 Oct 2026 22:22:53 +0300
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Dionna Glaze <drdeeglaze@gmail.com>
 Cc: Jason Gunthorpe <jgg@nvidia.com>, Jiri Pirko <jiri@resnulli.us>,
@@ -42,11 +42,12 @@ Cc: Jason Gunthorpe <jgg@nvidia.com>, Jiri Pirko <jiri@resnulli.us>,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
 Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
  support
-Message-ID: <atPHqYfR4i731Nfw@kernel.org>
+Message-ID: <atPLDSEN7wodAf-f@kernel.org>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
  <20261016234354.GA664420@nvidia.com>
  <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
  <atPHHNVJ2w0bkJIC@kernel.org>
+ <atPHqYfR4i731Nfw@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -55,16 +56,33 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <atPHHNVJ2w0bkJIC@kernel.org>
+In-Reply-To: <atPHqYfR4i731Nfw@kernel.org>
 
-On Sat, Oct 17, 2026 at 10:06:08PM +0300, Jarkko Sakkinen wrote:
-> It has zero-copy data types for TPM2, it can interpret and present
-> both commands and response at the scale of the whole TCG spec, has
-> zero dependencies, does not allocate memory i.e. can point directly
-> into wire and is from the get go to be importable to an enclave
-> entry point, OS kernels and pre-boot firmware.
+On Sat, Oct 17, 2026 at 10:08:29PM +0300, Jarkko Sakkinen wrote:
+> On Sat, Oct 17, 2026 at 10:06:08PM +0300, Jarkko Sakkinen wrote:
+> > It has zero-copy data types for TPM2, it can interpret and present
+> > both commands and response at the scale of the whole TCG spec, has
+> > zero dependencies, does not allocate memory i.e. can point directly
+> > into wire and is from the get go to be importable to an enclave
+> > entry point, OS kernels and pre-boot firmware.
+> 
+> Enclave entry point would make sense if you wanted to do a vTPM.
+> I.e. it is also fully symmetric when it comes to the end point.
 
-Enclave entry point would make sense if you wanted to do a vTPM.
-I.e. it is also fully symmetric when it comes to the end point.
+Actually if we imagine tpm2-protocol as an alternative that would revert
+at large portion of the work required otherwise. tpm2-protocol crate
+gives you already capability to do whatever TPM commands.
+
+The other part is really then just "early tis" and "early crb" drivers.
+
+I'm not favoring Rust here or suggesting that but it is good to bring
+also this angle.
+
+How I would approach "full Rust" alternative would be to write clean TCG
+only TIS and CRB drivers in Rust despite redundancy with the C code.
+They have their role and at least would "light my fire" more than
+fighting in the bushes with the legacy code, doesn't it?
+
+Sorry for the extra response. Just flushing out the alts.
 
 Br, Jarkko
