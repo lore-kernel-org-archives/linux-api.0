@@ -1,32 +1,32 @@
 Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3739D3A542B;
-	Sat, 17 Oct 2026 19:06:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 395E53939B1;
+	Sat, 17 Oct 2026 19:08:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792263969; cv=none; b=bwPJX0ihmM5OT5daQBNWOudSi8GZaB0u9YcwGTMXuQgNPnegArU3ocCaip2ukVphG0s8IX9wLoXLVzha4MrNMklIe47Oo4kij4JaUFv9/cxAKc/9RXQqFJX6rpSC/23aKoWVBGEYtVh0gPBmoVIn6SWxfu24B4xW9wMwSM5vvDg=
+	t=1792264110; cv=none; b=AeKy9W20tcgVEgBSbsWzRoDl4TCz8XDyhkKqqJ6vJ4EXOhSXkilTecUFzXvCblaNpHTVsUPU8sULUVbg2nBeqtRKNl63mlCZRYCH4VFTqEiFHswM3JPUTC8tqbTH5C7/rFid+9kcZ/mOa/P7koKoBK1J78oZ6u83YNgT4cRzgN0=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792263969; c=relaxed/simple;
-	bh=i6dC7Gb0ndxFtpavZSmCzK65DY2ECoLUqL2W9aT9IG0=;
+	s=arc-20240116; t=1792264110; c=relaxed/simple;
+	bh=cko0LxyGoNoWA3Sia1nfNENkgSFWJiUV23tmjXF/d8U=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=j3Ft/NNcc3Ea13F24PaCu+MEfrBBmi/P6PVzXd97RwXrrWPfefrFMc+6UyySlyXztwvRx6YH++NBemnpWRUFs4FwhDZSGAL4kf3mAJ7HvLiCfdVu2UhvBVW+ZwLy5CNdwBbNzOfV6JQdYDV2sYkWKSTTUSCBkKzp/R8MZAcLRbA=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=ab3YQKLi; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=IaTfRpBeHozDcdsJvceqck2d7RH2jL+l/OH/V/X86LTbS1ljytexIJY9YdxuOMA+wSNlfBhc0xj6XCVCp6UIET6kVe9RMJYdn+rcOL2wiDZ0cSSbabAis71vhIgeC2kr3NAhhIrBQ7iA+RrC+K5OU3WjHa6VZePAyXoaBCgmFr0=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=TaSk11uM; arc=none smtp.client-ip=100.103.45.18
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="ab3YQKLi"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 2B7811F000C4;
-	Sat, 17 Oct 2026 19:06:07 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="TaSk11uM"
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3466C1F000C4;
+	Sat, 17 Oct 2026 19:08:28 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792263967;
-	bh=ajLC8mkk50RHMw7Urd9PrK4QoCFzGuQMoIysPTSBY4E=;
+	s=k20260515; t=1792264108;
+	bh=cko0LxyGoNoWA3Sia1nfNENkgSFWJiUV23tmjXF/d8U=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=ab3YQKLipR+i93ddz+0I23rbhBcG8sVpei4gwRer9ETup17+ddxwxITi2G+AbMXor
-	 CQs69vW0CEY2NPevcsv5WELJo55mGVubIXp9emKBZ19Y4v5J+Vl+TLn4QddWaosPvH
-	 6ZjgPyIkCoQzAkC04akEQKqmEp6Yw+K+RDa3fLJOD6JUAmpc2/rCoULi7tpYKF61KD
-	 PB29N2gZohbFAIlpNboXOrmpk8Mi85AUWc8yg8To0TkDgOJ/zY4rs+M3Xw/7Y6gpu1
-	 qqKAhUe/GRp2tUQwLcawXFBH1kPiR48ODRqZasWSdQ0fm8Itep3wbI5/ZsXWGhD3Gs
-	 xtrGHPtjUAhsA==
-Date: Sat, 17 Oct 2026 22:06:04 +0300
+	b=TaSk11uMLCtEiiuw9dYfP9dVjuwaoykNjRQe/I3urVaQJb+9wPALxTE344RrD10yX
+	 FY8dihwJ421Z8actkQ97BXBQJnKZJgmqMM1DEClRSqDm13T+iEXwdC9Sn8E0JIezs/
+	 5jOG2l8hOSKsk0gR9+gp+6gURzeRr0FM0JefT33vsF2dXvsh5Yr+tMPQzaP/Ua8+40
+	 UQrHN2yQS6ZzxSFPeu1JMQq6vZa0eTQWlQgBPYlf7y8u+aabGZ+V5grE/Uj6oeJUga
+	 rp/ggZr1KSgAKCSAteSNgvT6huhgBJoFaSK2GY1WAac2qL9/1pNNTL+dALnUGXavAP
+	 87RD+NLw6nNTg==
+Date: Sat, 17 Oct 2026 22:08:25 +0300
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Dionna Glaze <drdeeglaze@gmail.com>
 Cc: Jason Gunthorpe <jgg@nvidia.com>, Jiri Pirko <jiri@resnulli.us>,
@@ -42,10 +42,11 @@ Cc: Jason Gunthorpe <jgg@nvidia.com>, Jiri Pirko <jiri@resnulli.us>,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
 Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
  support
-Message-ID: <atPHHNVJ2w0bkJIC@kernel.org>
+Message-ID: <atPHqYfR4i731Nfw@kernel.org>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
  <20261016234354.GA664420@nvidia.com>
  <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
+ <atPHHNVJ2w0bkJIC@kernel.org>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -54,66 +55,16 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
+In-Reply-To: <atPHHNVJ2w0bkJIC@kernel.org>
 
-On Sat, Oct 17, 2026 at 11:16:07AM -0700, Dionna Glaze wrote:
-> +Jarkko
-> The TPM driver is pretty entrenched and heavily used by different user
-> space applications, so it seems really ambitious to bundle in TPM
-> here.
+On Sat, Oct 17, 2026 at 10:06:08PM +0300, Jarkko Sakkinen wrote:
+> It has zero-copy data types for TPM2, it can interpret and present
+> both commands and response at the scale of the whole TCG spec, has
+> zero dependencies, does not allocate memory i.e. can point directly
+> into wire and is from the get go to be importable to an enclave
+> entry point, OS kernels and pre-boot firmware.
 
-This is something on the table thanks to Trenchboot and its early boot
-code.
-
-One key atom is prepared to be robust in early environments i.e.,
-struct tpm_buf. I rewrote it as it is the atom here albeit not very
-visible change as itself.
-
-I think rest is to define how to cut and decouple the current code,
-and how it is split to source modules so that the right stuff gets 
-linked to the target binaries.
-
-I think with enough trouble tpm_tis for instance could have a flagged
-early boot version. I would actually do a tpm_tis_early.c source module
-for this, which would never be linked to kernel but would wire like
-the rest of the driver to the framework.
-
-The actual hard part is to re-engineer tpm_chip, tpm_chip_ops and
-transmit flow perhaps so that the framework is easy to decouple,
-structs are not pain to manage in early boot code, and that
-type off stuff, which you really need to just fight through.
-
-Overall, there's work but not really "unknown unknowns". I'm happy
-to review this but have limited capacity to push through the bushes
-as I have my hands full of keyrings right now.
-
-
-> Consider that you have to do a lot of command interpretation to know
-> whether a user is getting or extending a PCR value, or whether it's
-> systemd doing an NVPCR thingamajig.
-> I don't think you can intercept commands and translate to intent for
-> any kind of extension to be correctly tracked by your MR journalling
-> addition here.
-> Can you explain a little more what your intent is?
-
-I'm a bit lost of the context here but I have a tool, which I think is
-the most accurate TPM2 protocol presentation there really is but it is in
-Rust:
-
-https://crates.io/crates/tpm2-protocol
-
-It has zero-copy data types for TPM2, it can interpret and present
-both commands and response at the scale of the whole TCG spec, has
-zero dependencies, does not allocate memory i.e. can point directly
-into wire and is from the get go to be importable to an enclave
-entry point, OS kernels and pre-boot firmware.
-
-It is designed to be importable and test harness compiles only with
-rustc to demonstrate this.
-
-I don't know how much it is used but at least Valve is doing
-something with it.
+Enclave entry point would make sense if you wanted to do a vTPM.
+I.e. it is also fully symmetric when it comes to the end point.
 
 Br, Jarkko
-
-
