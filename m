@@ -1,173 +1,115 @@
-Received: from smtp.kernel.org (aws-us-west-2-korg-mail-alma10-1.taild15c8.ts.net [100.103.45.18])
+Received: from scc-mailout-kit-02.scc.kit.edu (scc-mailout-kit-02.scc.kit.edu [129.13.231.82])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF96F2E8DE3;
-	Sun, 18 Oct 2026 11:25:27 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=100.103.45.18
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FB331E1A3D;
+	Sun, 18 Oct 2026 14:19:28 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=129.13.231.82
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792322729; cv=none; b=OaBgJgmvg2DIIjmkCtvkYNTYBv5OAxfC08nBj87CXY6iQU6L/4a5Ol29DM9gBnlgbloaVIYJ8TxltgkzdzMlx166W8Iuvgu2AruQQqx6iJVS0qzrbVPVm7aaBXJtumEAEOX4cLwyR36KAocvyOQ7dNaY4ARULKHh7iodWV9pP/A=
+	t=1792333173; cv=none; b=m8O/e6l5b9ZzSncVp4GOdYK5FlTSfwbLA0qUGvn3Wa25BS4t5s9OyWJQEXES40jEw1H9YGAIdPPQ/P2e8hnHgnK4KXH4ZQ0M9t755wz1kmNCwFX6tsIxEs4v4Dc41MAQRAxbsSE8jHJLfqnf2VLY4W1X1vy62P9lGAJhJW+uQzY=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792322729; c=relaxed/simple;
-	bh=YXEbt7adFo+dexbod2va1AxkyH7DgF28ROcWNGv34Go=;
+	s=arc-20240116; t=1792333173; c=relaxed/simple;
+	bh=XS+7Ohg/JZrIPFioI9xORmtb/pxRJL0TyhsUKFvVfmc=;
 	h=Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To; b=Qqjo0+maAZTCPY6IMfJpuuabkfUfZONmg5NddbCQEBuTar9TSb/xSXtxZIBpR+A8io5NmDW1bdz8aB5x9PhGCwMc4p29F8WfDFj7HXZn8JBDrn1R2GyxvksgEfoL0/MK1eRbjTupMrrX+dkGZ0F37ymxyMG8dsYoVVOBHi3w/9k=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b=MpQFnsmb; arc=none smtp.client-ip=100.103.45.18
+	 Content-Type:Content-Disposition:In-Reply-To; b=Ytchu5NXqFX/m92A3IdRwKrf3Xv0w9wB6OtJZ+mSaGAAN/tqylW2axtjLVe4GBBkGBI302tRK1N0QUk2PRxOjDcCvV93KCf15Qr6yKlJo9yxHRbSS+x5+W2NfmFuXOiNPXtDyq2t3JWzA0iln2DGeEVpnzR8gMpq9f9/l8CktCY=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=usta.de; spf=pass smtp.mailfrom=usta.de; dkim=pass (2048-bit key) header.d=usta.de header.i=@usta.de header.b=gn+0oWKX; dkim=permerror (0-bit key) header.d=usta.de header.i=@usta.de header.b=jBxkvpUE; arc=none smtp.client-ip=129.13.231.82
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=usta.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=usta.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.b="MpQFnsmb"
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D5E5E1F000C4;
-	Sun, 18 Oct 2026 11:25:21 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792322727;
-	bh=cixWUuqQ0NcxfW0CqKPoz4+R+nlMujR/LsShltuR9Hc=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MpQFnsmb4CkmMj+Nu2FJHr4A1be2p2sXuJDBCH0Y1pM83XcMpV3WIusRfXg5k1lsm
-	 8wyN+A32d5HvtDfi0lItDUiLlgXx+SKfpjr3DvbBSSD2gm1N8BaPDw5sIEAqWx0AsH
-	 Dp5KD4Ky5bp8gCgD7MPz+4blAa/5z/ncEThUnvjDFM2KYkfsjkc7WTVLV6kEf11VCe
-	 dWcx5H01Ur2qfivQiCtfAXOCyu0vb4e+08K+n9e/Il4htCmY+IkfNXguCzKXdXA64o
-	 9EneQvaUr1+qHAVmmUGbNGUD4TtMKT2+H9GsYqp0Bcj0b3H58qB50I5YQpD10EzY8X
-	 wBB1nOd7yUALw==
-Date: Sun, 18 Oct 2026 13:25:17 +0200
-From: Alejandro Colomar <alx@kernel.org>
-To: Thomas Gleixner <tglx@kernel.org>
-Cc: =?utf-8?B?RGFuacOrbCBIw7ZyY2huZXI=?= <dbjh@gmx.net>, 
-	linux-man@vger.kernel.org, Ingo Schwarze <schwarze@openbsd.org>, victorm007@yahoo.com, 
-	t.piekarski@deloquencia.de, linux-api@vger.kernel.org, x86@kernel.org
+	dkim=pass (2048-bit key) header.d=usta.de header.i=@usta.de header.b="gn+0oWKX";
+	dkim=permerror (0-bit key) header.d=usta.de header.i=@usta.de header.b="jBxkvpUE"
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=usta.de;
+	s=kit2; h=In-Reply-To:Content-Type:MIME-Version:References:Message-ID:Subject
+	:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
+	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
+	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
+	List-Post:List-Owner:List-Archive;
+	bh=OV6UBuBD4T165hyrcQCpKCqje1pxW6lCCaRZ+/xF7ws=; b=gn+0oWKX777r191Pm6bwj9kRbP
+	PAbZvly5WoMy+qCuRlV2P3lz/qakK/gJBXamLTgvRc4nXnHRWJ5rBUk74mclx6JfAJ2oo+0/nLSI6
+	4VjkpVUBBSUzDNx8cXAlB4UnKAxJqoCoo0CJ5G5EWkuzv59uyAGyAdlBogic3686K7Pchcwb/wCqw
+	+P4QtE11SEPu6YjFj/69YTcXf1uSXPTCsxALTzwO35VZyBrutU0KNtsTxqMTWHBY3C57KwWsDxkgD
+	wTfN1kEbzeatfLIvt/BVQo4ahncKHOpi2gqYvijvUzkeJeUOggGczvvSb3h9ZM1SiMb0N9TfryIBN
+	C2zB6UxA==;
+DKIM-Signature: v=1; a=ed25519-sha256; q=dns/txt; c=relaxed/relaxed; d=usta.de
+	; s=kit2ed25519; h=In-Reply-To:Content-Type:MIME-Version:References:
+	Message-ID:Subject:Cc:To:From:Date:Sender:Reply-To:Content-Transfer-Encoding:
+	Content-ID:Content-Description:Resent-Date:Resent-From:Resent-Sender:
+	Resent-To:Resent-Cc:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:
+	List-Subscribe:List-Post:List-Owner:List-Archive;
+	bh=OV6UBuBD4T165hyrcQCpKCqje1pxW6lCCaRZ+/xF7ws=; b=jBxkvpUE0v8N4eRv2odv5eZ5QV
+	ieylrr18tGFuVGKNwrj+a359TX3FuIJOtsGMJopzwObbzDjTTvbc1CM78SDQ==;
+Received: from hekate.asta.kit.edu ([2a00:1398:5:f401::77])
+	by scc-mailout-kit-02.scc.kit.edu with esmtps (TLS1.3:ECDHE_SECP256R1__RSA_PSS_RSAE_SHA256__AES_256_GCM:256)
+	(envelope-from <schwarze@usta.de>)
+	id 1xIRZX-00000003UG4-326X;
+	Sun, 18 Oct 2026 16:09:13 +0200
+Received: from imap-2.asta.kit.edu ([2a00:1398:5:f400::36])
+	by hekate.asta.kit.edu with esmtp (Exim 4.98.2)
+	(envelope-from <schwarze@usta.de>)
+	id 1xIRZX-0000000GdCt-0pOA;
+	Sun, 18 Oct 2026 16:09:11 +0200
+Received: from isnote.usta.de ([84.177.232.110])
+	by imap-2.asta.kit.edu with ESMTPSA
+	id 6iTZOAbT1GoNpxMA4A1LTA
+	(envelope-from <schwarze@usta.de>); Sun, 18 Oct 2026 16:09:10 +0200
+Date: Sun, 18 Oct 2026 16:09:09 +0200
+From: Ingo Schwarze <schwarze@usta.de>
+To: Alejandro Colomar <alx@kernel.org>
+Cc: Thomas Gleixner <tglx@kernel.org>,
+	=?iso-8859-1?Q?Dani=EBl_H=F6rchner?= <dbjh@gmx.net>,
+	linux-man@vger.kernel.org, victorm007@yahoo.com,
+	t.piekarski@deloquencia.de, linux-api@vger.kernel.org,
+	x86@kernel.org
 Subject: Re: Suggestions for an improvement to the man page "iopl - change
  I/O privilege level".
-Message-ID: <atSsS8Pw9Pzixb7g@debian>
+Message-ID: <atTTBYFr1OvYNSjH@isnote.usta.de>
 References: <trinity-4d271f4c-4816-435f-b8c9-53eef0ff29c7-1786468770978@trinity-msg-rest-gmx-gmx-live-d7f776569-bpnnk>
  <asvEtnxChV2-dELG@debian>
  <asvFcQvNlx6Oq9Gc@debian>
  <87ecdqewg2.ffs@fw13>
+ <atSsS8Pw9Pzixb7g@debian>
 Precedence: bulk
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="tuzsc32fezsqfbzr"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <87ecdqewg2.ffs@fw13>
+In-Reply-To: <atSsS8Pw9Pzixb7g@debian>
 
+Hello,
 
---tuzsc32fezsqfbzr
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-From: Alejandro Colomar <alx@kernel.org>
-To: Thomas Gleixner <tglx@kernel.org>
-Cc: =?utf-8?B?RGFuacOrbCBIw7ZyY2huZXI=?= <dbjh@gmx.net>, 
-	linux-man@vger.kernel.org, Ingo Schwarze <schwarze@openbsd.org>, victorm007@yahoo.com, 
-	t.piekarski@deloquencia.de, linux-api@vger.kernel.org, x86@kernel.org
-Subject: Re: Suggestions for an improvement to the man page "iopl - change
- I/O privilege level".
-Message-ID: <atSsS8Pw9Pzixb7g@debian>
-References: <trinity-4d271f4c-4816-435f-b8c9-53eef0ff29c7-1786468770978@trinity-msg-rest-gmx-gmx-live-d7f776569-bpnnk>
- <asvEtnxChV2-dELG@debian>
- <asvFcQvNlx6Oq9Gc@debian>
- <87ecdqewg2.ffs@fw13>
-MIME-Version: 1.0
-In-Reply-To: <87ecdqewg2.ffs@fw13>
-
-Hi Thomas,
-
-> Date: 2026-10-15 18:54:21+0200
+Alejandro Colomar wrote on Sun, Oct 18, 2026 at 01:25:17PM +0200:
 > From: Thomas Gleixner <tglx@kernel.org>
->
-> On Sun, Oct 11 2026 at 19:26, Alejandro Colomar wrote:
-> >> > However, as far as I can tell, all mentioned BSDs have dropped
-> >> > that functionality, but NetBSD and OpenBSD retained their version
-> >> > of iopl(): i386_iopl(), x86_64_iopl() (NetBSD/x86_64) and
-> >> > amd64_iopl() (OpenBSD/x86_64). FreeBSD and DragonFly BSD set the
-> >> > IOPL of the relevant process to 3 in the kernel, when the process
-> >> > successfully opens /dev/io.
-> >> > In other words, the BSD projects all preferred to drop their
-> >> > versions of ioperm() in favor of continuing to provide user
-> >> > programs a way to change the IOPL. It is interesting and perhaps
-> >> > noteworthy that the Linux project appears to head in the opposite
-> >> > direction.
-> >
-> > Ingo, Thomas, do you have any comments from the OpenBSD and Linux sides?
->=20
-> The 'iopl() is slower' comment is just voodoo as it really does not
-> matter whether a syscall at setup time takes a bit longer or not. But
-> 30+ years ago syscall performance bragging was part of the game :)
->=20
-> Though the difference between iopl() and ioperm() is not only that
-> ioperm() provides a more granular control than iopl() over the I/O ports
-> which can be accessed.
->=20
-> Up to Linux 5.4 iopl() was implemented using the IOPL bits in
-> EFLAGS. Setting them to '3' allows user space to access not only all I/O
-> ports via IN/INS/OUT/OUTS, but also allows user space to use CLI/STI.
->=20
-> ioperm() was there first (as of Linux 0.96). It allows not only to have
-> more granular control over the accessible IO ports but also avoids the
-> CLI/STI enablement.
->=20
-> iopl() followed in 0.97 and was deprecated after we changed the iopl()
-> implementation in 5.5 to utilize the IOPERM bitmap, which effectively
-> prevents the usage of CLI/STI in user space. Ancient X-Servers used to
-> utilize CLI/STI in user space for serialization, but that code has long
-> reached the ugly code museum.
->=20
-> Aside of the syscalls the permission bitmap can also be changed via
-> X86 specific VT IOCTLs.
->=20
-> In all cases the caller must have RAWIO capabilities. The syscalls and
-> the IOCTLs can be disabled at compile time and the security framework
-> can lock them down, i.e. disable them.
->=20
-> So in pratice these syscalls and IOCTLs are ancient ballast and any
-> modern distro should not need them anymore.
 
-Thanks!  I'll keep the manual pages unchanged.
+>> So in pratice these syscalls and IOCTLs are ancient ballast and any
+>> modern distro should not need them anymore.
 
+Same in OpenBSD; by default, securelevel(7) and sysctl(2) block
+access to them.  The most important place where they are still
+occasionally used are some very old X11 video drivers that that do
+not use kernel mode setting but instead use libpciaccess to access
+PCI devices directly.  It appears they are also used by some
+coreboot-utils programs, but we did not investigate what exactly
+the purpose is there.  No other use case came up when i asked around
+among developers.
 
-Have a lovely day!
-Alex
+> Thanks!  I'll keep the manual pages unchanged.
 
->=20
-> Though at least in the enterprise world there have been binary only
-> vendor "value add" programs which depended on them. At least that was the
-> case seven years ago.
->=20
-> But as kernels might have the syscalls disabled or security measures
-> make them unacessible at runtime, these syscalls and IOCTLs might be
-> indeed just nostalgia.
->=20
-> My personal preference would be to just delete them, but if there is a
-> legitimate use case then I prefer to have ioperm() as that allows at
-> least fine granular permission checks via the syscall security controls
-> instead of having the binary all or nothing iopl() mechanism.
->=20
-> Thanks,
->=20
->         tglx
->=20
+An improvement resulted in OpenBSD manual pages though:
 
---=20
-<https://www.alejandro-colomar.es>
+  https://man.openbsd.org/?query=iopl&apropos=1        # two related pages
+  https://marc.info/?l=openbsd-cvs&m=179214240879202   # commit message
 
---tuzsc32fezsqfbzr
-Content-Type: application/pgp-signature; name="signature.asc"
+In general, i believe it is valuable when people adhere to standards
+and take care to write portable code.  However, this does not apply to
+the present case of low-level hardware control where operations are
+unavoidably highly system- and hardware-dependent.
 
------BEGIN PGP SIGNATURE-----
+Getting rid of these functions may or may not ultimately become a
+goal in OpenBSD, but it appears developers working in the area
+currently see no urgency.  There is very little risk because these
+finctions have been disabled by default for quite some time now.
 
-iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmrUrJ0ACgkQ64mZXMKQ
-wqkTEBAAl/7yzHfwnEjVwmG8mnlqpkWROWx37AxI6geSLBvGQwkm+/lTDyExf488
-3mG2Ti2rDGp0xDNJFxb4GFI+dtWijnJwTRymqRqbg8dX6L3/yait8PSw4d20eukW
-fU/vEAH8NIykKpJWOnaOqTdRuVEXxtUt1BkYX8kyPx+APQFyTc0k9dg+a0Zvo4uT
-HdzZUHWnT0goh9z/URIwDHKMErDEob408RLC0gZNWSDTzepi3UPb9/B4SbPckX5K
-ZpgtNLEOkPEQfmod03B0B39krXIM7qb2sDzh0KHh2a8+wk85PITyn1KDmql3s+u/
-J0fZn98ALxT4EaO38CjQt1NazHNVx5QOB0QOsovw8F1XB0pFtir4bf2H6TFvDbUx
-4Bh9ovc729Y3QxuZRPSXT3Pyzi3cai0gN+QtYPdGDyLAE3DXAg9SFN9Wd8TH2ekS
-qZ5+KuLbDW6uCKh00gXOKHpDnXnfoxqGfzGIf5VO/JSvh5oTfjXs0qLWG9cuDmZa
-7a0pDG5siNCkvDEKWrWuD2U73iEsw3hhd+3mSjGeKA6jam+rYNkrn5OhehnXKvOM
-w/Ofp3vq/HQfFFLYa9x4apEksFposfyf2mWtvhgLhPmY0fazp7Fc2hoC88ObuWt0
-C+IsyMk8vH0k8pqYQjzSmb5HyNg6FzXN/XV0CsO4bjk4m6cv+Nw=
-=584s
------END PGP SIGNATURE-----
-
---tuzsc32fezsqfbzr--
+Yours,
+  Ingo
