@@ -1,50 +1,50 @@
-Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2AD8F3AEF2E
-	for <linux-api@vger.kernel.org>; Mon, 19 Oct 2026 04:17:45 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.42
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2BD983B05BF
+	for <linux-api@vger.kernel.org>; Mon, 19 Oct 2026 04:17:49 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.51
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792383468; cv=none; b=ELC8N6LmKZ3SEFZ3ZJLYLzhVBGjgb7nez6LMghJZrsJvAhO4Hn7IOgQTHvOEYgLLmt2FIPRf4yYiXQ1RtOxk0WDcpK4HEU9Q4CtBXSuBv4YTUCL7gSgLi53i2hm6biZIeP1c14TYTvxrCNllb/AF9GnQJPONvURAONxDFpCer3U=
+	t=1792383474; cv=none; b=W/4bckLCLNZmDq4Bvmhe4YQufzP+3t9hxtJd0jLXojdLGrOi3xDL7SzWYMlfvswah9isYJpQgAhco+QjZKfizLsLH32KmSpY4B5XvtMcTv3z8SqwLb02S/rlJ3eSp6uT1lKATbRjwhp6Kw0bRNEcafFKk+f9UBojNoNZf51eVGg=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792383468; c=relaxed/simple;
-	bh=6UQH4pjDLJJcHG+9dqNMXnzrLS5UHtXkIQtIAQbwMkQ=;
+	s=arc-20240116; t=1792383474; c=relaxed/simple;
+	bh=FYHRXerYv843D1MeVQZ+xDe2F9xLIe44YumaoTpwF+c=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=ejJ00uCSJoJbkgGEwd2DO5//xHydZOpAe2Q0tDN0Aw8gs0kl8Yn4H1Hg1JYYxghMf+3dBUjyjwxoapGeaqZBIZ13bUJVgc2ocbLH4tzQuwc2K19AFFkHYWgzCt8gK+c2dUp5ryIgPGkPMmAscLNvg0rnPXLwBwTu4f/uBYIWaDo=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.42
+	 MIME-Version; b=k+t+dwqXutVGfkmsV5flDPcB+FhdBmpkvUWwhh19LJxE8DFgCuVhT9Eg0UBEm40DFnjTKl/BkChmjEE6CXdNjY24mn/RdsgI0PWfjkU/Nkq4K/Ohatk7hcY6dEFBXBMArm97TEh/hKtHDf6S1nK7qgpyODAAjs70NZDl/xxxKvc=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.51
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-4a16d39964bso1432075e9.0
-        for <linux-api@vger.kernel.org>; Sun, 18 Oct 2026 21:17:44 -0700 (PDT)
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4a16d39964bso1432165e9.0
+        for <linux-api@vger.kernel.org>; Sun, 18 Oct 2026 21:17:48 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792383463; x=1792988263;
+        d=1e100.net; s=20260707; t=1792383467; x=1792988267;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=qOMCTjC64dDCmvXRNrHhbEr83M4dRxjQ0wqq08TklHU=;
-        b=uaKROWob2fAVUTT9cmcqW0pAY6xLvlm/SvIfvgNNIpCKqnmYOV+fuCOZSxR3rlcobK
-         rDhuLye2Om8IyY0x5YlHIRoc7sXWv0dQ534CN1ajmFVcNMXwgA8i44xZD2Qoc7+Bdsmt
-         XxlpA+9gSoEu9at3VUtQl1oU+sq+l9fcVtpch+fc9rg+WYbWF9jBOwmSCB7rX7l0xZeX
-         8kM+SDo+j7/tpmHpZ1yBZJGrknPDupBzt9MPI5rNutshEzxMsbucy/Bz1MxJv9kZwNme
-         xM5Xk+hsnwdswQlRRQKxuQoRH/kCf+4ZFbqd0ayo7tfeZrSMSp1y/hfAhrIt1qMXyqm8
-         Q2Hg==
-X-Forwarded-Encrypted: i=1; AKwUvBwDjtqxMN1wlz4ZLhjXx8Mo68je0JZ2ExFecEH/wxutdzwNmEHU14ZNYR2m9XDN88diO3chQCAYZJY=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIrcUBc/0+is0c/KGo/5eR7+J1gR7aiCSPxjoi/cXmDLQ7dMNqX
-	c913vQzLo7qReMbpOPZ90zZOK8em18L/fUwDgef+dZU/2R5j6NpUI7bD
-X-Gm-Gg: AYBFou1NPEpXa6xEcWFMvDe4BSdK7dl/G/B0EY9Lgvn7iP66U6tGfChK4jm4NnPtoGc
-	vwVdYZkOBHL+o+JwG4UlTvck8LpNEDzk721qO90FGYF0hT9Dn/U8T5Ae5s7GO1CvoI4HheNU7Jw
-	IelVvtuIXzm1kjpwEA75UR2cpPsn6sMdqsMW/pCu9pjCym1Ooub8s/1XEZJQte9IV9kjbeZ13rc
-	Q2666VHuzH5ruqb6NE++JKFDMLN0bwD3/HjigWDVwseW298O0KRstY2iimz3pQiqB6pBH0li606
-	WO9VsrXZXCq0U/NsHR9yNTyZgl/b5k+INhWAEru8bH118JA9RsAO72REJL7hz9A3RYHw7jJx/rT
-	aEwEOBVbh7CsaKdltozD6g6TWB1Z6SDSc1MfCn8agQOLb0ZVTQqEDfnVL476V3306Ho19Qfq0n3
-	mLgXiEupAlQArBRqOESjrUpIUSq4OjT3+7yuoZNt2D89GC4f5QmMx9CdkdM7KfHII7/+Pwgq24k
-	2wu7XPMdEj6AbYL6XxVpW3Zht1jfq4YvHMcqIMFadTTPDI=
-X-Received: by 2002:a05:600c:c168:b0:4a1:e725:27be with SMTP id 5b1f17b1804b1-4a1e72527f3mr32847965e9.2.1792383463106;
-        Sun, 18 Oct 2026 21:17:43 -0700 (PDT)
+        bh=vmmZ+r1GKeiajAMO/Oqv+74SZCyvFxDg0X3dCh5FB8k=;
+        b=KwmrRpgP6JAZX2mBV6Ud1ndErjmkITM1gJrLkNqOGbu8bRg95GSlWcFJN2UQ4ms34N
+         1QdK/KDvDfD4Wx6qBxrpX2/cRSA4LzlyrqzY+QBoRJ+RHeqckzNGjizc8+iayJ8/0h+O
+         ofF7s2lo26k9D2bkO5LcdFrKTFKG39hYlsioR0x9+cmJGlSbuKgT9lxblugmFk+CQYjo
+         kxkIBHbUeY+fRkvKzQsqP5DIeGVLaxsCFUYBivlGoGEU9BNCnwTbOUfocFwqT2tTyomC
+         yMHuDf/DkjuFxg8VF1Y5aTAHZqODQ6QCRh2dh8YmpRYUM2sEPCqDRhHRO8kHrqIwX41C
+         rFGQ==
+X-Forwarded-Encrypted: i=1; AKwUvByPRuE75w3SD8WVjvK6GGsEtIVbhREUZGUrKWkBOTpYMFMTq4EOMfSKH8S8m/xp74nNgUJU8zbP+Ss=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJFi80lhtj8BwMQ+VgCdwzkSvNzU/wVtTgBiv8Guj6A0InRxg68
+	m693dc35SsUKw3I4LAxJhgbxYjNzH4mKs0UZldaKUAV+B+0vqqvS2IpIn+NxY8sps4Q=
+X-Gm-Gg: AYBFou1oUzNxEluCjrJLbcFL+6WteJUJLr3Q5WOgonCi4wQ5kLpIKy2cITb0ip8cO1r
+	gXwlcu9nXyneMsNcz/cqZYpj4I6yVaMvuvYVdulIEIDrFqOj5Z0Mg0uinBh2/rIU6p6gMYLI6c0
+	NIS3efQhMkkvcrreyL7rK7wZBvbfL8ObvQ7b5bvqXpKEdjsV/cK2HHkQt6GGxJcUN7b+Qhjc4T6
+	3fGMu8MVGZMwFa9x8e50uVHhkVtOKAvILDeq7GcuwLPIG1lo94+rIQ1yjyockIOXqlsBb0hnXnN
+	hkol9/mzzwbZ3cmlOqLBluszSZP2YyNllc9uhuKEiON9keGDT5am3Wspo2/GYCwJ9EUpr221+x4
+	2Y4CH/BnEFgI0IBDC9v2Bb+35RYg8inSw5B7+Sgi5A3/u/38Tw7GSvmJaYd38TjQlkp0Gvj9wn6
+	HUuHwCyN2XWgiwFdH6cnDpMMgzpi6lK/Y1CirPhssm17cuAKXfoxVR/FJ3UJYDaTmns/bDNk3DK
+	/R0oLWXk13SSp3hsqoChH+GLOxrkpclPhI9huC2o2CU3gw=
+X-Received: by 2002:a05:600c:c0da:b0:4a1:e000:fdf with SMTP id 5b1f17b1804b1-4a1e0001230mr57715215e9.0.1792383467032;
+        Sun, 18 Oct 2026 21:17:47 -0700 (PDT)
 Received: from spartian.home ([2a01:cb1c:76:ed00:602f:c5f4:d108:b925])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48dfd500e75sm20090449f8f.42.2026.10.18.21.17.39
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48dfd500e75sm20090449f8f.42.2026.10.18.21.17.43
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Oct 2026 21:17:41 -0700 (PDT)
+        Sun, 18 Oct 2026 21:17:44 -0700 (PDT)
 From: Aurelien DESBRIERES <aurelien@hackers.camp>
 To: Aurelien DESBRIERES <aurelien@hackers.camp>,
 	Jonathan Corbet <corbet@lwn.net>,
@@ -58,9 +58,9 @@ Cc: linux-fsdevel@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	aurelien.desbrieres@gmail.com,
 	linux-api@vger.kernel.org
-Subject: [RFC PATCH 03/18] beamfs: add CRC32 and Reed-Solomon layer
-Date: Mon, 19 Oct 2026 06:17:13 +0200
-Message-ID: <20261019041728.327785-4-aurelien@hackers.camp>
+Subject: [RFC PATCH 04/18] beamfs: add error budget, alerts and clock
+Date: Mon, 19 Oct 2026 06:17:14 +0200
+Message-ID: <20261019041728.327785-5-aurelien@hackers.camp>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20261019041728.327785-1-aurelien@hackers.camp>
 References: <20261019041728.327785-1-aurelien@hackers.camp>
@@ -72,814 +72,585 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-CRC32 and Reed-Solomon FEC built on lib/reed_solomon: RS(255,239) over
-GF(2^8), primitive polynomial 0x187, sixteen parity symbols for each
-239-byte subblock, so up to eight corrupted symbols per codeword are
-corrected.
+budget.c records, for each data block, the largest number of symbols
+corrected in any of its codewords: a high-water mark of the correction
+capacity the block has used, which reads as the margin it has left.
 
-The decoder keeps its scratch buffers in struct rs_control, so one
-rs_control shared by concurrent callers corrupts their intermediate
-state and reports spurious uncorrectable codewords. beamfs allocates
-one rs_control per possible CPU. rslib.h does not state this contract;
-a patch documenting it was posted to linux-kernel on 2026-05-13.
+alert.c sends a KOBJ_CHANGE uevent on the filesystem's kobject when a
+threshold is crossed: a block reached zero margin, uncorrectable
+codewords within an interval, or blocks at zero margin. Notifications
+are rate-limited per class; what to do about them is left to
+userspace.
+
+clock.c anchors the monotonic timestamps of the event journal to the
+wall clock, with the accuracy of that clock as declared by the
+clock_source module parameter.
 
 Assisted-by: LLM
 Signed-off-by: Aurelien DESBRIERES <aurelien@hackers.camp>
 ---
- fs/beamfs/edac.c | 785 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 785 insertions(+)
- create mode 100644 fs/beamfs/edac.c
+ fs/beamfs/alert.c  | 153 +++++++++++++++++++++++++++
+ fs/beamfs/budget.c | 252 +++++++++++++++++++++++++++++++++++++++++++++
+ fs/beamfs/clock.c  | 132 ++++++++++++++++++++++++
+ 3 files changed, 537 insertions(+)
+ create mode 100644 fs/beamfs/alert.c
+ create mode 100644 fs/beamfs/budget.c
+ create mode 100644 fs/beamfs/clock.c
 
-diff --git a/fs/beamfs/edac.c b/fs/beamfs/edac.c
+diff --git a/fs/beamfs/alert.c b/fs/beamfs/alert.c
 new file mode 100644
-index 000000000000..1c823bb29611
+index 000000000000..27fcba769742
 --- /dev/null
-+++ b/fs/beamfs/edac.c
-@@ -0,0 +1,785 @@
++++ b/fs/beamfs/alert.c
+@@ -0,0 +1,153 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * beamfs - EDAC layer: CRC32 + Reed-Solomon FEC
++ * beamfs -- threshold alerting
++ *
 + * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
 + *
-+ * Reed-Solomon encoding/decoding uses the kernel's lib/reed_solomon
-+ * library (RS(255,239) over GF(2^8), primitive polynomial 0x187)
-+ * rather than a private codec: the library is already in the kernel,
-+ * well tested, and used by NAND MTD drivers, the RAM oops logger and
-+ * dm-verity FEC.
++ * Everything beamfs knows about its own health is already recorded:
++ * dmesg carries each uncorrectable, the RS journal holds coordinates,
++ * the error budget holds remaining margin. All of it has to be looked
++ * at, and on an unattended system nobody looks.
 + *
-+ * RS parameters, as passed to init_rs():
-+ *   symsize = 8                  (GF(2^8))
-+ *   fcr     = 0                  (first consecutive root)
-+ *   prim    = 1                  (primitive element)
-+ *   nroots  = BEAMFS_RS_PARITY = 16 (parity symbols)
-+ *   data per subblock: BEAMFS_SUBBLOCK_DATA = 239 bytes
-+ *   codeword length:   255 bytes (BEAMFS_SUBBLOCK_TOTAL)
++ * This notifies. A uevent on the filesystem's kobject when a threshold
++ * is crossed, which udev, systemd or a bare daemon can act on. The
++ * kernel says a line has been crossed and stops there; deciding what
++ * that means -- page an operator, schedule a copy, ground the aircraft
++ * -- is policy, and policy does not belong in a filesystem.
++ *
++ * Three thresholds, each answering a different question:
++ *
++ *   a block reached zero margin      is this volume about to lose data
++ *   uncorrectables in an interval    is it losing data now
++ *   blocks at zero margin            how much of it is at the edge
++ *
++ * Rate-limited per event class, because the failure mode this must not
++ * have is a volume degrading fast enough to bury the operator in
++ * notifications about it.
++ *
++ * No overlap with the report side: this signals that something
++ * happened, and the RS journal, read by the userspace decoder, says
++ * what. A notification carrying its own diagnosis would duplicate the
++ * decoder and drift from it.
 + */
 +
-+#include <linux/kernel.h>
-+#include <linux/crc32.h>
-+#include <linux/slab.h>
-+#include <linux/rslib.h>
++#include <linux/fs.h>
++#include <linux/kobject.h>
++#include <linux/jiffies.h>
++#include "beamfs.h"
++
++/* Minimum gap between two notifications of the same class. */
++#define BEAMFS_ALERT_INTERVAL_MS 60000
++
++/*
++ * beamfs_alert -- emit one, if the class has not fired recently.
++ *
++ * @class: index into the per-class rate limiter
++ * @reason: short token, the thing a udev rule matches on
++ * @detail: what was seen, for a human reading the log
++ */
++static void beamfs_alert(struct super_block *sb, unsigned int class,
++			 const char *reason, const char *detail)
++{
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	char *envp[4];
++	char buf_reason[64];
++	char buf_detail[96];
++	unsigned long now = jiffies;
++
++	if (class >= BEAMFS_ALERT_CLASSES)
++		return;
++	if (!sbi->s_kobj.state_initialized)
++		return;
++
++	/*
++	 * time_before handles wraparound; a zero last_alert means never,
++	 * and jiffies zero at boot would otherwise suppress the first
++	 * alert of the machine's life.
++	 */
++	if (sbi->s_alert_last[class] &&
++	    time_before(now, sbi->s_alert_last[class] +
++			msecs_to_jiffies(BEAMFS_ALERT_INTERVAL_MS)))
++		return;
++	sbi->s_alert_last[class] = now ? now : 1;
++
++	snprintf(buf_reason, sizeof(buf_reason), "BEAMFS_REASON=%s", reason);
++	snprintf(buf_detail, sizeof(buf_detail), "BEAMFS_DETAIL=%s", detail);
++
++	envp[0] = buf_reason;
++	envp[1] = buf_detail;
++	envp[2] = "BEAMFS_ALERT=1";
++	envp[3] = NULL;
++
++	kobject_uevent_env(&sbi->s_kobj, KOBJ_CHANGE, envp);
++
++	pr_warn("beamfs: alert %s: %s\n", reason, detail);
++}
++
++/*
++ * beamfs_alert_uncorrectable -- a block could not be recovered.
++ *
++ * The most serious of the three: data has been lost, not merely put at
++ * risk. Fires on the first one and then no more often than the
++ * interval, since a volume shedding blocks would otherwise bury the
++ * operator in notices about it.
++ */
++void beamfs_alert_uncorrectable(struct super_block *sb, u64 phys)
++{
++	char detail[96];
++
++	snprintf(detail, sizeof(detail), "block %llu unrecoverable",
++		 (unsigned long long)phys);
++	beamfs_alert(sb, BEAMFS_ALERT_UNCORRECTABLE, "uncorrectable", detail);
++}
++
++/*
++ * beamfs_alert_margin -- a block has no correction capacity left.
++ *
++ * It still reads correctly. The next upset in the wrong subblock does
++ * not, and this is the only warning that will come before that read.
++ * Which is the whole argument for the error budget: without it there
++ * is nothing to notify about until the data is already gone.
++ */
++void beamfs_alert_margin(struct super_block *sb, u64 phys, unsigned int used)
++{
++	char detail[96];
++
++	if (used < BEAMFS_ERROR_BUDGET_MAX)
++		return;
++
++	snprintf(detail, sizeof(detail),
++		 "block %llu has consumed all %u correctable symbols",
++		 (unsigned long long)phys, (unsigned int)BEAMFS_ERROR_BUDGET_MAX);
++	beamfs_alert(sb, BEAMFS_ALERT_MARGIN, "no-margin", detail);
++}
++
++/*
++ * beamfs_alert_check_rate -- has correction activity crossed the line?
++ *
++ * Called by the scrubber at the end of a sweep, where a whole-volume
++ * figure exists. s_alert_rate_limit is the number of corrections per
++ * sweep an operator is willing to see; zero disables the check, which
++ * is the default because the right number depends on the deployment
++ * and inventing one would produce either noise or silence.
++ */
++void beamfs_alert_check_rate(struct super_block *sb)
++{
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	u64 delta;
++	char detail[96];
++
++	if (!sbi->s_alert_rate_limit)
++		return;
++
++	delta = sbi->s_scrub_corrected - sbi->s_alert_last_corrected;
++	sbi->s_alert_last_corrected = sbi->s_scrub_corrected;
++
++	if (delta < sbi->s_alert_rate_limit)
++		return;
++
++	snprintf(detail, sizeof(detail),
++		 "%llu blocks corrected in one sweep, limit %u",
++		 delta, sbi->s_alert_rate_limit);
++	beamfs_alert(sb, BEAMFS_ALERT_RATE, "correction-rate", detail);
++}
+diff --git a/fs/beamfs/budget.c b/fs/beamfs/budget.c
+new file mode 100644
+index 000000000000..61e858d3cfe8
+--- /dev/null
++++ b/fs/beamfs/budget.c
+@@ -0,0 +1,252 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * beamfs -- per-block error budget
++ *
++ * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
++ *
++ * How much correction capacity a block has left, rather than how many
++ * corrections it has had.
++ *
++ * The RS journal holds the last 64 events. That answers "what happened
++ * recently" and says nothing about the state of the volume: a block
++ * that has quietly taken seven of its eight correctable symbols reads
++ * back perfectly and is one upset away from unrecoverable, and nothing
++ * anywhere would say so before the read that fails.
++ *
++ * One byte per data block records the worst subblock's corrected-symbol
++ * count. An operator can then ask how much margin is left -- a fuel
++ * gauge rather than an odometer.
++ *
++ * btrfs and ZFS count corrections and do not report margin, because
++ * with redundancy elsewhere there is no margin to report: a bad copy is
++ * replaced from a good one and the question does not arise. On a single
++ * device it does, and the answer is finite and worth knowing.
++ *
++ * The byte is a high-water mark, not a running total. What matters is
++ * the worst any subblock of the block has been, since that is the one
++ * that will saturate first; a count that decayed would report a
++ * healthier block than the medium justifies.
++ */
++
++#include <linux/fs.h>
++#include <linux/buffer_head.h>
++#include "beamfs.h"
++
++/* Is the feature active on this volume? */
++static bool budget_active(struct beamfs_sb_info *sbi)
++{
++	return sbi->s_budget_blk != 0 && sbi->s_budget_len != 0;
++}
++
++/*
++ * Where the byte for @phys lives: which region block, and the offset
++ * within it. Computed, not looked up -- a table mapping blocks to
++ * slots would be metadata needing protection of its own, and the
++ * recursion has to stop somewhere.
++ */
++static bool budget_slot(struct super_block *sb, u64 phys,
++			u64 *region_blk, u32 *offset)
++{
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	u64 index;
++
++	if (!budget_active(sbi) || phys < sbi->s_data_start)
++		return false;
++
++	index = phys - sbi->s_data_start;
++	*region_blk = sbi->s_budget_blk + index / BEAMFS_BLOCK_SIZE;
++	*offset = (u32)(index % BEAMFS_BLOCK_SIZE);
++
++	return *region_blk < sbi->s_budget_blk + sbi->s_budget_len;
++}
++
++/*
++ * beamfs_budget_record -- note that @phys needed @symbols corrections.
++ *
++ * Raises the high-water mark if this is the worst the block has seen.
++ * A no-op when the value would not change, so a volume being read
++ * repeatedly does not rewrite the region for nothing.
++ */
++void beamfs_budget_record(struct super_block *sb, u64 phys,
++			  unsigned int symbols)
++{
++	struct buffer_head *bh;
++	u64 region_blk;
++	u32 offset;
++	u8 capped;
++
++	if (!symbols || !budget_slot(sb, phys, &region_blk, &offset))
++		return;
++
++	capped = (u8)min_t(unsigned int, symbols, BEAMFS_ERROR_BUDGET_MAX);
++
++	bh = sb_bread(sb, region_blk);
++	if (!bh)
++		return;
++
++	if (((u8 *)bh->b_data)[offset] < capped) {
++		lock_buffer(bh);
++		((u8 *)bh->b_data)[offset] = capped;
++		unlock_buffer(bh);
++		mark_buffer_dirty(bh);
++
++		/*
++		 * Only on the transition. A block already at the limit
++		 * that gets corrected again has not crossed anything, and
++		 * notifying every time would say the same thing forever.
++		 */
++		beamfs_alert_margin(sb, phys, capped);
++	}
++	brelse(bh);
++}
++
++/*
++ * The next block at or past @from whose margin has fallen to @threshold.
++ *
++ * The budget region is one byte per block -- a quarter of a per mille of
++ * the volume -- so reading it end to end costs four thousand times less
++ * than sweeping the data it describes. It is already the index of where
++ * attention is due; nothing needed building, only reading.
++ *
++ * That asymmetry is the point. A block that has spent six of its eight
++ * correctable symbols is two upsets from unrecoverable and should be
++ * looked at often. A block that has never needed a correction can wait.
++ * Sweeping both at one rate spends the same effort on 262051 untouched
++ * blocks as on the one that matters -- measured, on a volume with
++ * exactly that shape.
++ *
++ * Returns the block number, or 0 when the region holds nothing above the
++ * threshold from @from onward. Reads a budget block at a time rather than
++ * a byte, since the caller walks forward and the buffer cache will have
++ * the next byte already.
++ */
++u64 beamfs_budget_next_worn(struct super_block *sb, u64 from, u8 threshold)
++{
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	u64 first, last, phys;
++
++	if (!sbi->s_budget_len)
++		return 0;
++
++	first = max_t(u64, from, sbi->s_data_start);
++	last  = sbi->s_data_start + sbi->s_nblocks;
++	phys  = first;
++
++	/*
++	 * One block read per 4096 blocks examined, not one per block.
++	 *
++	 * The region is a flat array of one byte per data block, so a
++	 * single 4096-byte read covers 4096 of them. Going through
++	 * beamfs_budget_read for each would cost an sb_bread and a brelse
++	 * per byte: on a 58 GiB volume that is 15115022 calls to find one
++	 * worn block, and the sweep asks once per step, every hundred
++	 * milliseconds at the default pace.
++	 */
++	while (phys < last) {
++		struct buffer_head *bh;
++		u64 region_blk;
++		u32 offset;
++		u32 span;
++		const u8 *p;
++		u32 i;
++
++		if (!budget_slot(sb, phys, &region_blk, &offset))
++			return 0;
++
++		/* Blocks described by the remainder of this region block. */
++		span = min_t(u64, BEAMFS_BLOCK_SIZE - offset, last - phys);
++
++		bh = sb_bread(sb, region_blk);
++		if (!bh) {
++			/*
++			 * Unreadable region block: skip what it covered
++			 * rather than stop. A wear scan that gives up on
++			 * one bad block stops watching everything past it.
++			 */
++			phys += span;
++			continue;
++		}
++
++		p = (const u8 *)bh->b_data + offset;
++		for (i = 0; i < span; i++) {
++			if (p[i] >= threshold) {
++				brelse(bh);
++				return phys + i;
++			}
++		}
++		brelse(bh);
++		phys += span;
++	}
++	return 0;
++}
++
++/*
++ * beamfs_budget_read -- worst corrected-symbol count seen for @phys.
++ *
++ * Returns 0 when the feature is off or the byte cannot be read, which
++ * reads as "no wear known" rather than "no wear" -- the distinction
++ * belongs to the caller.
++ */
++u8 beamfs_budget_read(struct super_block *sb, u64 phys)
++{
++	struct buffer_head *bh;
++	u64 region_blk;
++	u32 offset;
++	u8 v;
++
++	if (!budget_slot(sb, phys, &region_blk, &offset))
++		return 0;
++
++	bh = sb_bread(sb, region_blk);
++	if (!bh)
++		return 0;
++	v = ((u8 *)bh->b_data)[offset];
++	brelse(bh);
++
++	return v;
++}
++
++/*
++ * beamfs_budget_histogram -- how many blocks sit at each wear level.
++ *
++ * @hist must hold BEAMFS_ERROR_BUDGET_MAX + 1 entries. Index n is the
++ * number of blocks whose worst subblock needed n corrections, so
++ * hist[0] is untouched blocks and hist[MAX] is blocks with no margin
++ * left.
++ *
++ * The whole region is read, which on a 931 GiB volume is about 233 MiB.
++ * That is a deliberate cost paid on request: the alternative is
++ * maintaining counters in memory, which would have to be reconstructed
++ * at mount anyway and would drift against the medium in between.
++ */
++void beamfs_budget_histogram(struct super_block *sb, u64 *hist)
++{
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	u64 blk;
++	u64 seen = 0;
++
++	memset(hist, 0, (BEAMFS_ERROR_BUDGET_MAX + 1) * sizeof(*hist));
++	if (!budget_active(sbi))
++		return;
++
++	for (blk = 0; blk < sbi->s_budget_len; blk++) {
++		struct buffer_head *bh = sb_bread(sb, sbi->s_budget_blk + blk);
++		u32 i;
++
++		if (!bh)
++			continue;
++
++		for (i = 0; i < BEAMFS_BLOCK_SIZE; i++) {
++			u8 v = ((u8 *)bh->b_data)[i];
++
++			if (seen >= sbi->s_nblocks)
++				break;
++			seen++;
++			if (v > BEAMFS_ERROR_BUDGET_MAX)
++				v = BEAMFS_ERROR_BUDGET_MAX;
++			hist[v]++;
++		}
++		brelse(bh);
++		cond_resched();
++	}
++}
+diff --git a/fs/beamfs/clock.c b/fs/beamfs/clock.c
+new file mode 100644
+index 000000000000..55ea9977af1f
+--- /dev/null
++++ b/fs/beamfs/clock.c
+@@ -0,0 +1,132 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * beamfs -- clock anchor for the radiation event journal
++ *
++ * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
++ *
++ * Journal entries carry ktime_get_ns(): monotonic since boot, which
++ * orders events exactly and dates none of them. That is the right
++ * clock for an entry -- it cannot jump, so the interval between two
++ * corrections is good to the timer's resolution, and a burst of forty
++ * upsets inside three milliseconds reads as exactly that.
++ *
++ * What it cannot say is when. This supplies the other half: what the
++ * wall clock read at a known point on the monotonic scale, and what
++ * that wall clock was worth at the time.
++ *
++ * Declaring the uncertainty rather than implying a precision is the
++ * whole point. A journal that dates events to the nanosecond on a
++ * machine synchronised by NTP is claiming something it cannot support,
++ * and an auditor who notices that has reason to doubt everything else
++ * in it. Instrumentation states its source and its error; so does this.
++ */
++
++#include <linux/fs.h>
++#include <linux/buffer_head.h>
++#include <linux/timekeeping.h>
++#include <linux/moduleparam.h>
 +#include "beamfs.h"
 +
 +/*
-+ * RS codec handles -- ONE PER POSSIBLE CPU.
++ * What the wall clock is worth, declared rather than guessed.
 + *
-+ * lib/reed_solomon/decode_rs.c uses scratch buffers (lambda, syn, b,
-+ * t, omega, root, reg, loc) stored inside rs_control->buffers[]. A
-+ * shared rs_control across concurrent callers races on those buffers,
-+ * producing spurious 'uncorrectable' results under parallel decode
-+ * load (reproduced May 2026: 8 parallel sha256sum on a beamfs RO
-+ * mount -> 160+ uncorrectable per batch).
++ * The obvious approach -- ask the timekeeping core whether NTP thinks
++ * it is synchronised -- does not work from a module: do_adjtimex is
++ * not exported, and nothing else exposes STA_UNSYNC. Which is just as
++ * well, because "NTP reports itself synchronised" is a weak claim to
++ * build a forensic record on: it says a daemon is running, not that
++ * the clock is right.
 + *
-+ * This is the library's documented contract: rslib.h describes
-+ * rs_control as per instance, and decode_rs8()'s kernel-doc says the
-+ * caller has to ensure that decoder invocations are serialized.
++ * So it is declared. An operator who has deployed PTP with hardware
++ * timestamping knows it and says so; one who has an RTC and nothing
++ * else says that. The journal then carries a claim its owner made
++ * rather than one this code inferred.
 + *
-+ * Per-CPU allocation gives each CPU its own rs_control + buffers[].
-+ * Combined with preempt-disable via get_cpu_ptr/put_cpu_ptr, this
-+ * eliminates the race without locks.
++ * MiFID II takes the same line on trade timestamps: the requirement is
++ * traceability to a stated reference, not a number on its own. A
++ * timestamp whose provenance is unstated is not evidence, whatever its
++ * resolution.
++ *
++ * The interval between two entries is unaffected by any of this. Those
++ * come from ktime_get_ns(), are good to the timer's resolution, and
++ * need no anchor at all -- a burst of forty upsets inside three
++ * milliseconds reads as exactly that on the worst-served machine.
 + */
-+static struct rs_control * __percpu *beamfs_rs_ctrl_pcpu;
++static u32 beamfs_clock_source = BEAMFS_CLOCK_UNKNOWN;
++module_param_named(clock_source, beamfs_clock_source, uint, 0644);
++MODULE_PARM_DESC(clock_source,
++		 "Wall-clock quality for journal anchoring: 0 unknown, 1 RTC, 2 NTP, 3 hardware (PTP/GPS)");
 +
-+/*
-+ * A codeword's worth of scratch, per cpu.
-+ *
-+ * Interleaving means a codeword's symbols are not contiguous, and
-+ * encode_rs8 takes a contiguous buffer: lib/reed_solomon has no notion
-+ * of a stride and is not ours to change. So the symbols are gathered
-+ * into this and handed over.
-+ *
-+ * Per cpu rather than on the stack: 239 bytes is a quarter of a
-+ * kernel frame, and this sits under iomap and writeback, where the
-+ * frame is already deep. Per cpu rather than from the scratch pool:
-+ * this file has no super_block and should not need one -- it is the
-+ * codec, not the filesystem.
-+ *
-+ * Taken with get_cpu_ptr, which disables preemption for the length of
-+ * one codeword: 239 bytes of Galois arithmetic, microseconds.
-+ */
-+static u8 * __percpu *beamfs_rs_scratch_pcpu;
-+
-+/*
-+ * beamfs_rs_init_tables - initialize the RS codec
-+ * Called once from beamfs_init() before any mount.
-+ *
-+ * Returns 0, or -ENOMEM when the per-CPU codecs cannot be set up.
-+ * A CPU left without a scratch buffer is not an error.
-+ */
-+int beamfs_rs_init_tables(void)
++static u32 beamfs_clock_quality(void)
 +{
-+	unsigned int cpu, missing = 0;
-+	struct rs_control *ctrl;
++	u32 q = READ_ONCE(beamfs_clock_source);
++
++	if (q > BEAMFS_CLOCK_HARDWARE)
++		q = BEAMFS_CLOCK_UNKNOWN;
 +
 +	/*
-+	 * init_rs(symsize=8, gfpoly=0x187, fcr=0, prim=1, nroots=16)
-+	 *   -> GF(2^8), primitive poly x^8+x^7+x^2+x+1, 16 parity symbols
-+	 *      (corrects up to 8 errors per shortened RS(255,239) subblock).
-+	 *
-+	 * Per-CPU: alloc the per-CPU pointer slot, then init_rs once per
-+	 * possible CPU. Each rs_control carries its own scratch buffers[].
++	 * A machine that has never had its clock set cannot be
++	 * hardware-disciplined whatever the parameter says. Cheap
++	 * sanity, and it catches the common case of an embedded board
++	 * booting with no RTC and a clock_source setting copied from
++	 * elsewhere.
 +	 */
-+	beamfs_rs_scratch_pcpu = alloc_percpu(u8 *);
-+	if (!beamfs_rs_scratch_pcpu) {
-+		/*
-+		 * Not fatal: the contiguous paths never touch it and the
-+		 * interleaved ones check before use, so a volume that
-+		 * needs interleaving refuses rather than the module.
-+		 */
-+		pr_err("beamfs: no per-CPU RS scratch; interleaved blocks will be refused\n");
-+	}
++	if (q > BEAMFS_CLOCK_UNKNOWN &&
++	    ktime_get_real_seconds() < 1000000000LL)
++		return BEAMFS_CLOCK_UNKNOWN;
 +
-+	beamfs_rs_ctrl_pcpu = alloc_percpu(struct rs_control *);
-+	if (!beamfs_rs_ctrl_pcpu) {
-+		free_percpu(beamfs_rs_scratch_pcpu);
-+		beamfs_rs_scratch_pcpu = NULL;
-+		pr_err("beamfs: failed to alloc per-CPU RS ctrl array\n");
-+		return -ENOMEM;
-+	}
-+
-+	for_each_possible_cpu(cpu) {
-+		ctrl = init_rs(8, 0x187, 0, 1, BEAMFS_RS_PARITY);
-+		if (!ctrl) {
-+			pr_err("beamfs: failed to init RS codec for CPU %u\n",
-+			       cpu);
-+			beamfs_rs_exit_tables();
-+			return -ENOMEM;
-+		}
-+		*per_cpu_ptr(beamfs_rs_ctrl_pcpu, cpu) = ctrl;
-+		/*
-+		 * Not fatal either way: the contiguous paths do not use
-+		 * the scratch, and the interleaved ones check for it.
-+		 * Without the per-CPU array there is nowhere to keep one.
-+		 */
-+		if (beamfs_rs_scratch_pcpu) {
-+			u8 *scratch = kmalloc(BEAMFS_SUBBLOCK_DATA, GFP_KERNEL);
-+
-+			if (!scratch)
-+				missing++;
-+			*per_cpu_ptr(beamfs_rs_scratch_pcpu, cpu) = scratch;
-+		}
-+	}
-+
-+	if (missing)
-+		pr_warn("beamfs: no RS scratch on %u CPU(s); interleaved blocks will be refused there\n",
-+			missing);
-+
-+	pr_debug("beamfs: RS codec initialized per-CPU (RS(%d,%d), %u CPUs)\n",
-+		 BEAMFS_SUBBLOCK_TOTAL, BEAMFS_SUBBLOCK_DATA,
-+		 num_possible_cpus());
-+	return 0;
++	return q;
 +}
 +
 +/*
-+ * beamfs_rs_exit_tables - release the RS codec, at module exit or after
-+ * a failed beamfs_rs_init_tables
++ * beamfs_clock_anchor -- record the two clocks at one instant.
++ *
++ * Sampled as close together as the code can manage; the gap between
++ * the two reads is a handful of nanoseconds and is not the dominant
++ * error by several orders of magnitude.
++ *
++ * Called at mount and refreshed by the scrubber, so drift is bounded
++ * by the refresh interval instead of accumulating from mount. A volume
++ * left mounted six months would otherwise be dated by a reading six
++ * months stale.
 + */
-+void beamfs_rs_exit_tables(void)
++void beamfs_clock_anchor(struct super_block *sb)
 +{
-+	unsigned int cpu;
-+	struct rs_control *ctrl;
++	struct beamfs_sb_info *sbi = BEAMFS_SB(sb);
++	u64 mono, real;
++	u32 quality;
 +
-+	if (!beamfs_rs_ctrl_pcpu)
-+		return;
++	quality = beamfs_clock_quality();
++	mono = ktime_get_ns();
++	real = ktime_get_real_ns();
 +
-+	for_each_possible_cpu(cpu) {
-+		ctrl = *per_cpu_ptr(beamfs_rs_ctrl_pcpu, cpu);
-+		if (ctrl) {
-+			free_rs(ctrl);
-+			*per_cpu_ptr(beamfs_rs_ctrl_pcpu, cpu) = NULL;
-+		}
++	sbi->s_anchor_mono = mono;
++	sbi->s_anchor_real = real;
++	sbi->s_anchor_quality = quality;
++
++	if (sbi->s_beamfs_sb) {
++		sbi->s_beamfs_sb->s_anchor_mono = cpu_to_le64(mono);
++		sbi->s_beamfs_sb->s_anchor_real = cpu_to_le64(real);
++		sbi->s_beamfs_sb->s_anchor_quality = cpu_to_le32(quality);
++		beamfs_dirty_super(sbi);
 +	}
-+
-+	if (beamfs_rs_scratch_pcpu) {
-+		unsigned int cpu2;
-+
-+		for_each_possible_cpu(cpu2)
-+			kfree(*per_cpu_ptr(beamfs_rs_scratch_pcpu, cpu2));
-+		free_percpu(beamfs_rs_scratch_pcpu);
-+		beamfs_rs_scratch_pcpu = NULL;
-+	}
-+
-+	free_percpu(beamfs_rs_ctrl_pcpu);
-+	beamfs_rs_ctrl_pcpu = NULL;
 +}
 +
 +/*
-+ * Shannon entropy term LUT in Q16.16 fixed point.
++ * beamfs_clock_to_real -- turn a journal timestamp into a wall time.
 + *
-+ * LUT[N][k] = round(-(k/N) * log2(k/N) * 2^16) for N in [1,8],
-+ *           = 0 for k == 0 (or N == 0, unused).
-+ *
-+ * N is the number of corrected positions in a codeword, at most
-+ * BEAMFS_RS_PARITY / 2, and k how many of them fall in one bin. The
-+ * entries are generated from the formula above, not typed: a change
-+ * to BEAMFS_RS_PARITY means regenerating the table, not editing it.
++ * Returns 0 when there is no anchor, which the caller must read as
++ * "no date available" rather than "the epoch". An entry older than the
++ * anchor converts to a time before it, which is correct: the monotonic
++ * scale is continuous across the anchor.
 + */
-+static const __u32 beamfs_rs_entropy_term_q16_16[9][9] = {
-+	[0] = { 0, },	/* [0] unused */
-+	[1] = {     0,     0,     0,     0,     0,     0,     0,     0,     0 },
-+	[2] = {     0, 32768,     0,     0,     0,     0,     0,     0,     0 },
-+	[3] = {     0, 34624, 25557,     0,     0,     0,     0,     0,     0 },
-+	[4] = {     0, 32768, 32768, 20400,     0,     0,     0,     0,     0 },
-+	[5] = {     0, 30434, 34654, 28979, 16878,     0,     0,     0,     0 },
-+	[6] = {     0, 28235, 34624, 32768, 25557, 14365,     0,     0,     0 },
-+	[7] = {     0, 26283, 33842, 34333, 30235, 22724, 12493,     0,     0 },
-+	[8] = {     0, 24576, 32768, 34776, 32768, 27774, 20400, 11047,     0 },
-+};
-+
-+/*
-+ * beamfs_rs_compute_entropy_q16_16 -- Shannon entropy estimator over the
-+ * spatial distribution of corrected byte positions in an RS codeword.
-+ *
-+ * @positions:      byte positions corrected (output of beamfs_rs_decode)
-+ * @n_positions:    number of valid entries; MUST be in [1, BEAMFS_RS_PARITY/2]
-+ * @code_len_bytes: data length of the codeword, in [n_positions, 239]
-+ *
-+ * Returns Shannon H = sum_{bin} LUT[N][k_bin] in Q16.16 fixed point,
-+ * range [0, 3*65536). Deterministic, no FPU; one u32 division per
-+ * position for bin index computation.
-+ *
-+ * Pre: positions != NULL, 1 <= n_positions <= BEAMFS_RS_PARITY/2,
-+ *      code_len_bytes >= n_positions
-+ *
-+ * Caller decides whether to set BEAMFS_RS_EVENT_FLAG_ENTROPY_VALID:
-+ * a single sample (n_positions == 1) yields H = 0 mathematically
-+ * but is forensically non-significant; beamfs_log_rs_event_flagged
-+ * does not call this for one and leaves the flag clear.
-+ */
-+__u32 beamfs_rs_compute_entropy_q16_16(const u8 *positions,
-+				       unsigned int n_positions,
-+				      size_t code_len_bytes)
++u64 beamfs_clock_to_real(struct beamfs_sb_info *sbi, u64 mono)
 +{
-+	unsigned int bin_count[BEAMFS_RS_ENTROPY_BINS];
-+	__u32 h = 0;
-+	unsigned int i, b;
-+
-+	if (WARN_ON_ONCE(!positions))
-+		return 0;
-+	if (WARN_ON_ONCE(n_positions == 0 ||
-+			 n_positions > BEAMFS_RS_PARITY / 2))
-+		return 0;
-+	if (WARN_ON_ONCE(code_len_bytes < n_positions ||
-+			 code_len_bytes > BEAMFS_SUBBLOCK_DATA))
++	if (!sbi->s_anchor_real)
 +		return 0;
 +
-+	memset(bin_count, 0, sizeof(bin_count));
++	if (mono >= sbi->s_anchor_mono)
++		return sbi->s_anchor_real + (mono - sbi->s_anchor_mono);
 +
-+	for (i = 0; i < n_positions; i++) {
-+		/* bin = pos * BINS / code_len. u32 product fits since
-+		 * pos < 239 and BINS = 8, max product = 238 * 8 = 1904.
-+		 */
-+		unsigned int idx = (unsigned int)positions[i];
-+		unsigned int bin;
-+
-+		if (WARN_ON_ONCE(idx >= code_len_bytes))
-+			return 0;
-+		bin = (idx * BEAMFS_RS_ENTROPY_BINS) /
-+		      (unsigned int)code_len_bytes;
-+		if (WARN_ON_ONCE(bin >= BEAMFS_RS_ENTROPY_BINS))
-+			return 0;
-+		bin_count[bin]++;
-+	}
-+
-+	/* H = sum over bins of LUT[N][k_bin]. Bins with k=0 contribute 0
-+	 * by LUT convention. Total guaranteed < 3 * 65536.
-+	 */
-+	for (b = 0; b < BEAMFS_RS_ENTROPY_BINS; b++)
-+		h += beamfs_rs_entropy_term_q16_16[n_positions][bin_count[b]];
-+
-+	return h;
-+}
-+
-+/*
-+ * beamfs_rs_encode - encode @len data bytes, produce BEAMFS_RS_PARITY parity
-+ * @data:   input data (@len bytes, must be <= BEAMFS_SUBBLOCK_DATA)
-+ * @len:    number of data bytes (BEAMFS_SUBBLOCK_DATA for the bitmap path,
-+ *          BEAMFS_INODE_RS_DATA for inodes, etc.)
-+ * @parity: output parity (BEAMFS_RS_PARITY bytes)
-+ *
-+ * lib/reed_solomon supports shortened RS codes natively: passing a
-+ * length less than BEAMFS_SUBBLOCK_DATA produces a valid codeword,
-+ * mathematically equivalent to padding the data with zeros up to the
-+ * full subblock length. The same length must be passed to the matching
-+ * beamfs_rs_decode call.
-+ *
-+ * encode_rs8() takes the data as bytes and returns the parity in a u16
-+ * buffer, one symbol in the low byte of each entry.
-+ */
-+int beamfs_rs_encode(u8 *data, size_t len, u8 *parity)
-+{
-+	u16 par[BEAMFS_RS_PARITY];
-+	struct rs_control **ctrl_p;
-+	struct rs_control *ctrl;
-+	int i;
-+
-+	if (!beamfs_rs_ctrl_pcpu)
-+		return -EINVAL;
-+	if (len > BEAMFS_SUBBLOCK_DATA)
-+		return -EINVAL;
-+
-+	memset(par, 0, sizeof(par));
-+	ctrl_p = get_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+	ctrl = *ctrl_p;
-+	if (!ctrl) {
-+		put_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+		return -EINVAL;
-+	}
-+	encode_rs8(ctrl, data, len, par, 0);
-+	put_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+
-+	for (i = 0; i < BEAMFS_RS_PARITY; i++)
-+		parity[i] = (u8)par[i];
-+
-+	return 0;
-+}
-+
-+/*
-+ * beamfs_rs_decode -- decode and correct a shortened RS codeword in place,
-+ *                    optionally exposing the list of corrected byte
-+ *                    positions for forensic entropy logging.
-+ *
-+ * @data:          data bytes (@len bytes), corrected in place on success
-+ * @len:           number of data bytes (must match the length passed to encode)
-+ * @parity:        parity bytes (BEAMFS_RS_PARITY); read, never rewritten
-+ * @positions:     optional output, up to @max_positions entries; on a
-+ *                 positive return holds the corrected DATA byte positions
-+ *                 in [0, len), ascending. May be NULL if no entropy
-+ *                 logging is needed.
-+ * @max_positions: capacity of @positions; ignored if @positions is NULL.
-+ *
-+ * Returns:
-+ *   < 0  uncorrectable (-EBADMSG) or invalid input (-EINVAL)
-+ *   = 0  no errors detected
-+ *   > 0  with @positions: the number of DATA bytes corrected, which is
-+ *        the number of entries written to @positions; without it, the
-+ *        number of symbols corrected, parity included.
-+ *
-+ * decode_rs8() either applies its corrections or reports them (see
-+ * lib/reed_solomon/decode_rs.c: with eras_pos and corr it stores each
-+ * correction's position and pattern and touches nothing). Asked to
-+ * report, we apply the data corrections ourselves and leave the
-+ * parity alone: the 239-byte snapshot this function used to take, to
-+ * find the corrected bytes by diff, is gone from the stack. A parity
-+ * symbol decode_rs8 would have corrected is not counted when the
-+ * caller wants positions, so that the count it gets is the count of
-+ * entries it may read: alloc.c and the others hand that count on to
-+ * the journal.
-+ */
-+int beamfs_rs_decode(u8 *data, size_t len, u8 *parity,
-+		     u8 *positions, unsigned int max_positions,
-+		    const char *who)
-+{
-+	u16 par[BEAMFS_RS_PARITY];
-+	u16 corr[BEAMFS_RS_PARITY];
-+	int pos[BEAMFS_RS_PARITY];
-+	int i, j, nerr;
-+	unsigned int n_data = 0;
-+
-+	if (!beamfs_rs_ctrl_pcpu)
-+		return -EINVAL;
-+	if (len > BEAMFS_SUBBLOCK_DATA)
-+		return -EINVAL;
-+	if (positions && max_positions == 0)
-+		return -EINVAL;
-+
-+	for (i = 0; i < BEAMFS_RS_PARITY; i++)
-+		par[i] = parity[i];
-+
-+	/*
-+	 * Per-CPU: get_cpu_ptr disables preemption while decode runs in
-+	 * the CPU-local rs_control. decode_rs8 is pure computation, no
-+	 * allocs, no sleeps -- preempt-disable is safe.
-+	 */
-+	{
-+		struct rs_control **ctrl_p = get_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+		struct rs_control *ctrl = *ctrl_p;
-+
-+		if (!ctrl) {
-+			put_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+			return -EINVAL;
-+		}
-+		nerr = decode_rs8(ctrl, data, par, len,
-+				  NULL, 0, pos, 0, corr);
-+		put_cpu_ptr(beamfs_rs_ctrl_pcpu);
-+	}
-+
-+	if (nerr < 0) {
-+		/*
-+		 * Silent here, on purpose.
-+		 *
-+		 * This function knows a length and nothing else -- not the
-+		 * block, not which of the sixteen subblocks, not what owns
-+		 * it. Every caller has results[] and its own context, and
-+		 * reports from there.
-+		 */
-+		return -EBADMSG;
-+	}
-+	if (nerr > BEAMFS_RS_PARITY)
-+		return -EBADMSG;
-+
-+	/*
-+	 * Positions come out in locator order; the journal and its
-+	 * entropy estimate were written for ascending ones.
-+	 */
-+	for (i = 1; i < nerr; i++) {
-+		int p = pos[i];
-+		u16 c = corr[i];
-+
-+		for (j = i - 1; j >= 0 && pos[j] > p; j--) {
-+			pos[j + 1] = pos[j];
-+			corr[j + 1] = corr[j];
-+		}
-+		pos[j + 1] = p;
-+		corr[j + 1] = c;
-+	}
-+
-+	for (i = 0; i < nerr; i++) {
-+		if (pos[i] < 0 || pos[i] >= (int)len)
-+			continue;	/* a parity symbol: the copy is dropped */
-+		data[pos[i]] ^= (u8)corr[i];
-+		if (positions && n_data < max_positions)
-+			positions[n_data] = (u8)pos[i];
-+		n_data++;
-+	}
-+
-+	if (positions)
-+		return (int)min(n_data, max_positions);
-+	return nerr;
-+}
-+
-+/*
-+ * Where symbol @i of codeword @sub lives once interleaved.
-+ *
-+ * Contiguous, codeword j owns bytes [j*239, (j+1)*239): a nine-byte
-+ * burst lands entirely in it and takes it past correction.
-+ *
-+ * Interleaved, the same burst puts at most one symbol in any codeword.
-+ * 129 consecutive bytes are needed to lose one, for not a byte of
-+ * extra parity.
-+ *
-+ * The parity stays with its codeword, sixteen bytes in a row: nine bad
-+ * bytes among them still lose that codeword. Spreading the parity as
-+ * well would take a different on-disk layout.
-+ */
-+static inline size_t rs_woven_off(unsigned int sub, size_t i,
-+				  unsigned int n_subblocks)
-+{
-+	return i * n_subblocks + sub;
-+}
-+
-+/*
-+ * Gather one codeword out of an interleaved block.
-+ *
-+ * @scratch must hold @data_len bytes. The caller owns it: this runs on
-+ * the writeback path and an allocation here would be one more thing to
-+ * fail under the memory pressure that writeback is trying to relieve.
-+ */
-+static void rs_gather(const u8 *blk, unsigned int sub, size_t data_len,
-+		      unsigned int n_subblocks, u8 *scratch)
-+{
-+	size_t i;
-+
-+	for (i = 0; i < data_len; i++)
-+		scratch[i] = blk[rs_woven_off(sub, i, n_subblocks)];
-+}
-+
-+static void rs_scatter(u8 *blk, unsigned int sub, size_t data_len,
-+		       unsigned int n_subblocks, const u8 *scratch)
-+{
-+	size_t i;
-+
-+	for (i = 0; i < data_len; i++)
-+		blk[rs_woven_off(sub, i, n_subblocks)] = scratch[i];
-+}
-+
-+/*
-+ * beamfs_rs_encode_woven -- encode a block whose symbols are interleaved.
-+ *
-+ * @data_buf:      the interleaved data area, @data_len * @n_subblocks bytes
-+ * @parity_buf:    where the parity goes, @n_subblocks codewords of it
-+ * @parity_stride: bytes from one codeword's parity to the next
-+ *
-+ * Same contract as beamfs_rs_encode_region, same return values. The
-+ * difference is where the symbols of a codeword are read from.
-+ */
-+int beamfs_rs_encode_woven(u8 *data_buf, u8 *parity_buf, size_t parity_stride,
-+			   size_t data_len, unsigned int n_subblocks)
-+{
-+	unsigned int i;
-+	int ret = 0;
-+	u8 **sp, *scratch;
-+
-+	if (!data_buf || !parity_buf || !beamfs_rs_scratch_pcpu)
-+		return -EINVAL;
-+	if (data_len > BEAMFS_SUBBLOCK_DATA)
-+		return -EINVAL;
-+
-+	/*
-+	 * Preemption off for the whole block rather than per codeword:
-+	 * sixteen encodes of 239 bytes, and taking the pointer sixteen
-+	 * times costs more than holding it once.
-+	 */
-+	sp = get_cpu_ptr(beamfs_rs_scratch_pcpu);
-+	scratch = *sp;
-+	if (!scratch) {
-+		put_cpu_ptr(beamfs_rs_scratch_pcpu);
-+		return -ENOMEM;
-+	}
-+
-+	for (i = 0; i < n_subblocks; i++) {
-+		rs_gather(data_buf, i, data_len, n_subblocks, scratch);
-+		ret = beamfs_rs_encode(scratch, data_len,
-+				       parity_buf + (size_t)i * parity_stride);
-+		if (ret < 0)
-+			break;
-+	}
-+
-+	put_cpu_ptr(beamfs_rs_scratch_pcpu);
-+	return ret < 0 ? ret : 0;
-+}
-+
-+/*
-+ * beamfs_rs_decode_woven -- decode one, correcting in place.
-+ *
-+ * A codeword that decodes is written back into the block; one that
-+ * does not is left as it was, so a caller that ignores the result
-+ * reads what the medium gave rather than a half-corrected mixture.
-+ */
-+int beamfs_rs_decode_woven(u8 *data_buf, u8 *parity_buf, size_t parity_stride,
-+			   size_t data_len, unsigned int n_subblocks,
-+			   int *results, const char *who)
-+{
-+	unsigned int i;
-+	int worst = 0;
-+	u8 **sp, *scratch;
-+
-+	if (!data_buf || !parity_buf || !beamfs_rs_scratch_pcpu)
-+		return -EINVAL;
-+	if (data_len > BEAMFS_SUBBLOCK_DATA)
-+		return -EINVAL;
-+
-+	sp = get_cpu_ptr(beamfs_rs_scratch_pcpu);
-+	scratch = *sp;
-+	if (!scratch) {
-+		put_cpu_ptr(beamfs_rs_scratch_pcpu);
-+		return -ENOMEM;
-+	}
-+
-+	for (i = 0; i < n_subblocks; i++) {
-+		int rc;
-+
-+		rs_gather(data_buf, i, data_len, n_subblocks, scratch);
-+		rc = beamfs_rs_decode(scratch, data_len,
-+				      parity_buf + (size_t)i * parity_stride,
-+				      NULL, 0, who);
-+		if (results)
-+			results[i] = rc;
-+		if (rc < 0) {
-+			worst = rc;
-+			continue;
-+		}
-+		rs_scatter(data_buf, i, data_len, n_subblocks, scratch);
-+		if (rc > worst)
-+			worst = rc;
-+	}
-+
-+	put_cpu_ptr(beamfs_rs_scratch_pcpu);
-+	return worst;
-+}
-+
-+/*
-+ * Encode a 4096-byte block in the grouped layout.
-+ *
-+ * The block is its own argument rather than a data pointer and a
-+ * parity pointer: the two are at fixed offsets within it and passing
-+ * them apart invites the mismatch that cost an afternoon -- woven
-+ * functions expecting a compact area, callers handing them an
-+ * alternating one.
-+ *
-+ * Returns 0, or the first encode failure.
-+ */
-+int beamfs_rs_encode_block(u8 *block)
-+{
-+	if (!block)
-+		return -EINVAL;
-+
-+	return beamfs_rs_encode_woven(block + BEAMFS_DATA_WOVEN_OFF,
-+				      block + BEAMFS_DATA_WOVEN_PARITY_OFF,
-+				      BEAMFS_RS_PARITY,
-+				      BEAMFS_SUBBLOCK_DATA,
-+				      BEAMFS_DATA_INLINE_SUBBLOCKS);
-+}
-+
-+/*
-+ * Decode one, correcting in place.
-+ *
-+ * @results, when given, holds one entry per codeword: the number of
-+ * symbols corrected, or negative for one that would not decode.
-+ *
-+ * Returns the worst of those, so a caller that wants only "is this
-+ * block sound" can test the return and a caller that wants to log
-+ * which codewords suffered has the array.
-+ */
-+int beamfs_rs_decode_block(u8 *block, int *results, const char *who)
-+{
-+	if (!block)
-+		return -EINVAL;
-+
-+	return beamfs_rs_decode_woven(block + BEAMFS_DATA_WOVEN_OFF,
-+				      block + BEAMFS_DATA_WOVEN_PARITY_OFF,
-+				      BEAMFS_RS_PARITY,
-+				      BEAMFS_SUBBLOCK_DATA,
-+				      BEAMFS_DATA_INLINE_SUBBLOCKS,
-+				      results, who);
-+}
-+
-+/*
-+ * Read @len bytes of user data at @off out of a block.
-+ *
-+ * Grouped, the data is contiguous but the symbols of a codeword are
-+ * not: byte @off of the user's data is at @off within the data area,
-+ * because interleaving moves symbols within a codeword and not the
-+ * bytes the user sees. The two are the same array read two ways.
-+ *
-+ * This exists so nothing outside edac has to know that.
-+ */
-+void beamfs_block_read(const u8 *block, size_t off, size_t len, u8 *out)
-+{
-+	memcpy(out, block + BEAMFS_DATA_WOVEN_OFF + off, len);
-+}
-+
-+void beamfs_block_write(u8 *block, size_t off, size_t len, const u8 *in)
-+{
-+	memcpy(block + BEAMFS_DATA_WOVEN_OFF + off, in, len);
-+}
-+
-+/*
-+ * beamfs_rs_encode_region -- encode N RS(255,239) shortened subblocks
-+ * across a region.
-+ *
-+ * @data_buf:      base pointer of the data region
-+ * @data_stride:   distance in bytes between the start of two
-+ *                 consecutive data subblocks (e.g.
-+ *                 BEAMFS_SUBBLOCK_TOTAL=255 for the bitmap)
-+ * @parity_buf:    base pointer of the parity region (may equal
-+ *                 data_buf + data_len when data and parity alternate)
-+ * @parity_stride: distance between the start of two consecutive
-+ *                 parity blobs (e.g. BEAMFS_SUBBLOCK_TOTAL=255 for
-+ *                 the bitmap, BEAMFS_RS_PARITY=16 for contiguous
-+ *                 parity placement)
-+ * @data_len:      number of data bytes per subblock (e.g.
-+ *                 BEAMFS_SUBBLOCK_DATA=239 for a full subblock)
-+ * @n_subblocks:   number of subblocks to encode
-+ *
-+ * Returns 0 on success, negative on the first encode failure.
-+ * On failure the buffer is in an indeterminate state.
-+ */
-+int beamfs_rs_encode_region(u8 *data_buf, size_t data_stride,
-+			    u8 *parity_buf, size_t parity_stride,
-+			   size_t data_len, unsigned int n_subblocks)
-+{
-+	unsigned int i;
-+
-+	if (!data_buf || !parity_buf)
-+		return -EINVAL;
-+
-+	/*
-+	 * Contiguous only: codeword i is @data_len bytes at
-+	 * data_buf + i * data_stride, its parity at
-+	 * parity_buf + i * parity_stride. Nothing here interleaves.
-+	 *
-+	 * A data block on a volume with BEAMFS_FEATURE_INCOMPAT_RS_INTERLEAVE
-+	 * goes to beamfs_rs_encode_woven instead; beamfs_seal_data_block
-+	 * makes that choice. Data blocks on other volumes, directory blocks,
-+	 * parity region blocks and the bitmap come here with a stride of
-+	 * BEAMFS_SUBBLOCK_TOTAL, data and parity alternating every 255
-+	 * bytes. The superblock, the indirect-block slots and rsbench pass
-+	 * other strides.
-+	 */
-+
-+	for (i = 0; i < n_subblocks; i++) {
-+		u8 *d = data_buf   + (size_t)i * data_stride;
-+		u8 *p = parity_buf + (size_t)i * parity_stride;
-+		int rc = beamfs_rs_encode(d, data_len, p);
-+
-+		if (rc < 0)
-+			return rc;
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * beamfs_rs_decode_region -- decode N RS(255,239) shortened subblocks
-+ * across a region. Symmetric to beamfs_rs_encode_region.
-+ *
-+ * @results:          optional, n_subblocks entries. On exit each
-+ *                    entry holds the return value of beamfs_rs_decode
-+ *                    for the corresponding subblock: < 0 uncorrectable,
-+ *                    = 0 no errors, > 0 number of corrected symbols.
-+ *                    Pass NULL to skip per-subblock reporting.
-+ * @positions_buf:    optional, flat array of n_subblocks * positions_stride
-+ *                    int entries. On a positive results[i], the first
-+ *                    results[i] entries of positions_buf[i*stride ..] hold
-+ *                    the corrected DATA positions for subblock i. May be
-+ *                    NULL (then positions_stride must be 0).
-+ * @positions_stride: slot count per subblock in positions_buf; should be
-+ *                    >= BEAMFS_RS_PARITY/2. Ignored if positions_buf NULL.
-+ *
-+ * Returns 0 if every subblock decoded successfully, the first
-+ * negative error otherwise. Decoding does not stop on error: all
-+ * subblocks are processed, results[] reflects the per-subblock
-+ * outcome, and the first negative error is the one returned.
-+ */
-+int beamfs_rs_decode_region(u8 *data_buf, size_t data_stride,
-+			    u8 *parity_buf, size_t parity_stride,
-+			   size_t data_len, unsigned int n_subblocks,
-+			   int *results,
-+			   u8 *positions_buf,
-+			   unsigned int positions_stride,
-+			   const char *who)
-+{
-+	unsigned int i;
-+	int worst = 0;
-+
-+	if (!data_buf || !parity_buf)
-+		return -EINVAL;
-+	if (positions_buf && positions_stride == 0)
-+		return -EINVAL;
-+	if (!positions_buf && positions_stride != 0)
-+		return -EINVAL;
-+
-+	for (i = 0; i < n_subblocks; i++) {
-+		u8 *d = data_buf   + (size_t)i * data_stride;
-+		u8 *p = parity_buf + (size_t)i * parity_stride;
-+		u8 *pos = positions_buf
-+			? positions_buf + (size_t)i * positions_stride
-+			: NULL;
-+		int rc = beamfs_rs_decode(d, data_len, p,
-+					 pos, positions_stride, who);
-+
-+		if (results)
-+			results[i] = rc;
-+		if (rc < 0 && worst >= 0)
-+			worst = rc;
-+	}
-+	return worst;
-+}
-+
-+/*
-+ * beamfs_crc32 - compute CRC32 checksum
-+ * @buf: data buffer
-+ * @len: length in bytes
-+ *
-+ * Uses the kernel's hardware-accelerated crc32_le (same as ext4/btrfs).
-+ * Seed 0xFFFFFFFF, final XOR 0xFFFFFFFF (standard CRC-32/ISO-HDLC).
-+ */
-+__u32 beamfs_crc32(const void *buf, size_t len)
-+{
-+	return crc32_le(0xFFFFFFFF, buf, len) ^ 0xFFFFFFFF;
-+}
-+
-+/*
-+ * beamfs_crc32_sb -- compute CRC32 over the meaningful regions of the
-+ *                   superblock, excluding s_crc32 itself and s_pad.
-+ *
-+ * Coverage (computed at compile time from struct layout):
-+ *   region A: [0, offsetof(s_crc32))         -- magic, counters,
-+ *                                               version, flags
-+ *   region B: [offsetof(s_uuid), offsetof(s_pad)) -- uuid, label,
-+ *                                               RS journal,
-+ *                                               bitmap_blk, features,
-+ *                                               protection scheme
-+ * Total coverage: BEAMFS_SB_RS_COVERAGE_BYTES, asserted at build time
-+ * by BUILD_BUG_ON below.
-+ *
-+ * Chained via crc32_le without intermediate XOR. Must match the
-+ * userspace mkfs.beamfs::crc32_sb() byte-for-byte so that superblocks
-+ * formatted by mkfs validate at mount time.
-+ *
-+ * On-disk format compatibility: a superblock written by an mkfs whose
-+ * struct layout differs from this kernel's fails this CRC. Images of
-+ * an older on-disk version do not get this far: fill_super refuses
-+ * them on s_version first.
-+ */
-+__u32 beamfs_crc32_sb(const struct beamfs_super_block *fsb)
-+{
-+	const u8 *base = (const u8 *)fsb;
-+	const size_t off_crc32 = offsetof(struct beamfs_super_block, s_crc32);
-+	const size_t off_uuid  = offsetof(struct beamfs_super_block, s_uuid);
-+	const size_t off_pad   = offsetof(struct beamfs_super_block, s_pad);
-+	u32 c;
-+
-+	BUILD_BUG_ON(sizeof_field(struct beamfs_super_block, s_crc32) != 4);
-+	BUILD_BUG_ON(off_uuid != off_crc32 + 4);
-+	BUILD_BUG_ON(off_crc32 + (off_pad - off_uuid) !=
-+		     BEAMFS_SB_RS_COVERAGE_BYTES);
-+
-+	c = crc32_le(0xFFFFFFFF, base, off_crc32);
-+	c = crc32_le(c, base + off_uuid, off_pad - off_uuid);
-+	return c ^ 0xFFFFFFFF;
++	return sbi->s_anchor_real - (sbi->s_anchor_mono - mono);
 +}
 -- 
 2.55.0
