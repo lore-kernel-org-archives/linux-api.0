@@ -1,50 +1,50 @@
-Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
+Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 48B9D3C3F64
-	for <linux-api@vger.kernel.org>; Mon, 19 Oct 2026 04:18:04 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.49
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0DD643C1F36
+	for <linux-api@vger.kernel.org>; Mon, 19 Oct 2026 04:18:02 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.client-ip=209.85.128.52
 ARC-Seal:i=1; a=rsa-sha256; d=subspace.kernel.org; s=arc-20240116;
-	t=1792383491; cv=none; b=LWaPNp35JYkjDX0qi4FapryZQGYn9NsREmg8x9Aer5zqQ0jDI4hNUHa27A9Xg8meLGowXCqsNMukg9IHdXKKgBSp2hSKcHZsV6rc9dcFxvZ4yHuR8hhnptoHbECsazgb7soFl9/lh9twSh0ZTr63ZIRhrdb3qh6eVs6MVlNz1Yk=
+	t=1792383493; cv=none; b=ICN0Yz4KPLCdLRaq3mNwfR98fIqhBcVPknbEJ+iUDNTRU8vgBduqYqxu28namwBgTwpAavM3hEvrFEkr5XP8/tnPgIxMRwDS0sfUmX70duhHny/bac/P2bYju4i0M05Gzw8Ji4AmyMSkG9hYeliAeav1cmOXEUTGj9a2D7+0khk=
 ARC-Message-Signature:i=1; a=rsa-sha256; d=subspace.kernel.org;
-	s=arc-20240116; t=1792383491; c=relaxed/simple;
-	bh=oE5kzAgqLo1likBqsZsbwoH2X9fxEFOOjeWbVvumXjc=;
+	s=arc-20240116; t=1792383493; c=relaxed/simple;
+	bh=Qpil57+6eIKTNVuRSLjykLBWDN39W1H9IfQOGHCtL00=;
 	h=From:To:Cc:Subject:Date:Message-ID:In-Reply-To:References:
-	 MIME-Version; b=i2qIwW4x3J7vk9vJ5nFhBOZ6v05Pm3xaRippTfqEuaMVrJpxVq37Q7XQsfDH7MaX4ZRWPAg3I+Oy0pY9w6/YpMVtz4j+WogCMy6f/tnKg6CHRab4GSwkI6EjKT6sK22r3wm2BqHIm2pk8SmbfjkumQzjKiOEIQN8D0a6D/Ws8H4=
-ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.49
+	 MIME-Version; b=WqXAU9hDRlm28BLloJXVAJdizt3+B4Gl1DymwJ9wKtm2DArxCv+yq4rjTnZBXoeo/JTSQp5WOma+/UGR+HsZCHbayctGsp/7ilYSL0OcjmYi50tFvID+A+ocuRtQ0iEYlGRtsfwhynvagHyTyEmwV6OV3unZfhxPoQy2OeP5KtA=
+ARC-Authentication-Results:i=1; smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp; spf=pass smtp.mailfrom=gmail.com; arc=none smtp.client-ip=209.85.128.52
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=hackers.camp
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-4a17ce1dc00so2098455e9.1
-        for <linux-api@vger.kernel.org>; Sun, 18 Oct 2026 21:18:04 -0700 (PDT)
+Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-49e71fc84bbso1144675e9.3
+        for <linux-api@vger.kernel.org>; Sun, 18 Oct 2026 21:18:02 -0700 (PDT)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792383483; x=1792988283;
+        d=1e100.net; s=20260707; t=1792383481; x=1792988281;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=c+MkjuN+lEsWJZ1kOqNsI5zRWTUQRQd9JZH1J8sAEIU=;
-        b=0LGCyswFHwy79wtlMi7u77Y3o/x2W+5fIL9V2NZm4++dxg+yaV16rY2aCWWr03M7F/
-         ADb66OOawFw90Fm1StAzuMf+/r4gyLop/eM5fs8AufVeaZtt7H2pUs5Sbbp1T4r9Z2Zp
-         ylgqZLZQ8Cg1tWvllAD7Qz2FsvgPkYXTvZwKCBdXM8qpcWHFV8vdSFyG9PtuLwrxIdBP
-         ncH8+6F6qmw3KxqcWXCGcvbl0SkNVZyaV+5IWmprscX17OR+B3Fy/jpsgYB/s+J+40se
-         IFF3AhEalUKiymQknkKddz3mD8442Hpnk/4HTgF0TbCkDFjVXoHDpUXm3FFjAlAatLrq
-         BeCA==
-X-Forwarded-Encrypted: i=1; AKwUvBy1AiNJqSW7+qpabzqkE55euslvQCPnG7rurEoH9X9lFo+/V7f2G56LNu4V+7B1JPKqoBTvsu+7BXc=@vger.kernel.org
-X-Gm-Message-State: AFq9FYL9af0yGa3+QMhe+dKjHckQJVccx5hnQWa7vnpCyYda+jZO8HSm
-	PdL/45gUT6+UUbk3CfhFKCkWRajxQeGpxsi8vRuyRccIxrkz2x8EKuBv
-X-Gm-Gg: AYBFou0zhQEIQVl6mqImfa9tHtfPKHQr4MR9L10X5W2jhvWBBNUcJo3ipiqTamZ/a0B
-	uYZyaK+W5HrQwTSMUOAaI0LLJYT/1fsfosrDksWp6/0g5suqcLKTQit3DjZWVpYpKIO+0HbkAox
-	xhqXEtfZTjbxd4Oq40SfBy6tX4pZ6OrhBZcTC4oH6xSfhv6bJkFFVzuK+nmuAQFcHo5V0wea0Ei
-	spNZi4Idy+KxXngGeVJdN6jwInATnWc7vsN9eJrRRjmlSSZGjLSypb2e3szLBzF+5p96qRHlv11
-	2W0NdgnztPgH+pHmp/qX0zxF6SXEhc6HODfzMa/sjVvBCPFM0jzRnZRy/6uvt7Ba9c/owmd1uFk
-	hZNwBwLblyhF6nwGYAxIDxmL073SO/JRyMyfihRCzs96dR7h2LwmqC54qPhCInTebQGKbckJdta
-	PzXI153/0iF2mzIbFdeNEg7T4fkUL+Do21BMTXQFep7LaZH8DmwH+X18jyJRa6NFzLegHIpCY6J
-	eh/amSfNnmah5d03T8ikgDY7yYD0gDn/oQ6
-X-Received: by 2002:a05:6000:2013:b0:48e:412:3825 with SMTP id ffacd0b85a97d-48e07997862mr10570187f8f.2.1792383483012;
-        Sun, 18 Oct 2026 21:18:03 -0700 (PDT)
+        bh=cpBWPXKg6oU2MnrZcsyvdvuswc0YBhyiy214bNTZkzw=;
+        b=H4cGnKI6VRaCzL/Tn0b/+YA2q7cV2OcLoCgS+CUDCEYu6ZclNiFTOD1/iyqBbDriST
+         mmlwaDTJEKaXAkpNz6MC7t6XIs3Ie24djbM3B65YEzbsh5QDDnM03P6NbxJRdf4Gv0dy
+         yUweICTdD8XrGnh7xCkmsV1PrhRmxSoB+faOrlOBhxwXlq9TdyiHY3HfZFlauiFsQrr3
+         jDzWDkg2b49i6cDa+vB5OE9C9Lm91qNVIZ/U0Xe9TrWQeNwrR7ftVX6VWok9z3itDfnn
+         KnNjb+6o1PkSPfDqVv36AbpTuZ5VpxHDsFNaKVU36e3qzDTbxuVFfGMwZawYMWcOw7gq
+         lSxQ==
+X-Forwarded-Encrypted: i=1; AKwUvBzzR8CYWFyt2PRfjb329pSNblFCkwSz+hPdfhveYmLg+Kl9bc4B9zRTJYU5JVr+M7Gzx1Syn/mKoV8=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIeRdNkdQR+k88bwKgxlI1WhECTb+Fwr8hqvHxaylAWCvLHiyBQ
+	k3mD4yrafVPHigy7B4XP/Zh0cv2eioce8vgQ+7lXi6Mwldz+qWZm/O6U
+X-Gm-Gg: AYBFou29kIVytu5FkCUX9UuKKwxak0O2O4uedXvVENwctAl8mYztdigeeSzVKmJYJYu
+	z/2Q2gC+/b0gizpN6tfXCdJEqxhJV6MjxQEmvVGl7AKDDoC0skg4WgRqUON5881LmnWytl1xh07
+	TEhGfzEyFqgnJDqpdWQaGeTfPnYPm08kr7HTJAnkmuzOP3GRyttIY8Z4ShFm9vmA39eJW1OlYiM
+	BGuH26/xyV2mMoeK1ydttUAPUjgSY9hmatBJkaeqg9w7LHCA1J6En73AcT7YL3I9HXNBcxk7Wn2
+	+nZ3Te3wxIO6isPOMcIL70o6pljIe795TY6eMp7ZiskYdunTsXJ6ACHLjIGBDYz3+pVoyibrc+0
+	GJ+vzZEUaUYNHWf1r5oJ6afpI4aB8lk8BH8/ZMS+kc7BfnXbc30/ozkR4s6EqbaRBE9POKcTOi1
+	ikBBJqzQVhwE2w/DWkw00YEACos5eo13ckP6AnmmuUtV/qvoJjiMvHphJkrbvk46gGGNoMk45fR
+	IT6mU1ofpS5EwYRba27l6U/qc+FkjcUuQ16
+X-Received: by 2002:a05:6000:2313:b0:48e:ac:a9ef with SMTP id ffacd0b85a97d-48e07f9e63emr10910894f8f.5.1792383480747;
+        Sun, 18 Oct 2026 21:18:00 -0700 (PDT)
 Received: from spartian.home ([2a01:cb1c:76:ed00:602f:c5f4:d108:b925])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48dfd500e75sm20090449f8f.42.2026.10.18.21.18.00
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48dfd500e75sm20090449f8f.42.2026.10.18.21.17.59
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 18 Oct 2026 21:18:02 -0700 (PDT)
+        Sun, 18 Oct 2026 21:18:00 -0700 (PDT)
 From: Aurelien DESBRIERES <aurelien@hackers.camp>
 To: Aurelien DESBRIERES <aurelien@hackers.camp>,
 	Jonathan Corbet <corbet@lwn.net>,
@@ -58,9 +58,9 @@ Cc: linux-fsdevel@vger.kernel.org,
 	linux-doc@vger.kernel.org,
 	aurelien.desbrieres@gmail.com,
 	linux-api@vger.kernel.org
-Subject: [RFC PATCH 10/18] beamfs: add iomap file operations
-Date: Mon, 19 Oct 2026 06:17:20 +0200
-Message-ID: <20261019041728.327785-11-aurelien@hackers.camp>
+Subject: [RFC PATCH 09/18] beamfs: add namespace operations
+Date: Mon, 19 Oct 2026 06:17:19 +0200
+Message-ID: <20261019041728.327785-10-aurelien@hackers.camp>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20261019041728.327785-1-aurelien@hackers.camp>
 References: <20261019041728.327785-1-aurelien@hackers.camp>
@@ -72,575 +72,1559 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-file.c holds the file, inode and address_space operations of the
-iomap-based path used by the INODE_UNIVERSAL scheme (scheme 5). That
-path does not maintain the parity of indirect blocks, so the kernel
-refuses to mount the scheme and mkfs.beamfs refuses to format it: on
-volumes mkfs.beamfs creates, file data takes the inline path of the
-next four patches. inode.c and namei.c choose between the two from the
-volume's scheme.
+Directory entry operations: create, mkdir, unlink, rmdir, link and
+rename.
 
 Assisted-by: LLM
 Signed-off-by: Aurelien DESBRIERES <aurelien@hackers.camp>
 ---
- fs/beamfs/file.c | 549 +++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 549 insertions(+)
- create mode 100644 fs/beamfs/file.c
+ fs/beamfs/namei.c | 1538 +++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 1538 insertions(+)
+ create mode 100644 fs/beamfs/namei.c
 
-diff --git a/fs/beamfs/file.c b/fs/beamfs/file.c
+diff --git a/fs/beamfs/namei.c b/fs/beamfs/namei.c
 new file mode 100644
-index 000000000000..553d177e5c31
+index 000000000000..80b03c54d8fa
 --- /dev/null
-+++ b/fs/beamfs/file.c
-@@ -0,0 +1,549 @@
++++ b/fs/beamfs/namei.c
+@@ -0,0 +1,1538 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * beamfs - File operations
-+ * Author: roastercode - Aurelien DESBRIERES <aurelien@hackers.camp>
++ * beamfs - Filename / directory entry operations
++ * Author: Aurelien DESBRIERES <aurelien@hackers.camp>
++ *
++ * Implements: create, mkdir, unlink, rmdir, link, symlink, rename
 + */
++
 +#include <linux/fs.h>
-+#include <linux/mm.h>
-+#include <linux/iomap.h>
-+#include <linux/pagemap.h>
 +#include <linux/buffer_head.h>
-+#include <linux/fiemap.h>
++#include <linux/pagemap.h>
++#include <linux/slab.h>
++#include <linux/time.h>
++#include <linux/fs_dirent.h>
 +#include "beamfs.h"
++#include "beamfs_trace.h"
 +
-+/* Forward declaration - defined after iomap_ops */
-+static ssize_t beamfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from);
-+
-+/*
-+ * generic_file_fsync() was removed along with sync_mapping_buffers() and
-+ * the i_private_list mechanism it drove. Metadata buffer_heads owned by
-+ * an inode now live in a per-inode mapping_metadata_bhs list, flushed
-+ * through mmb_fsync(); ext2_fsync() has the same shape.
-+ */
-+static int beamfs_fsync(struct file *file, loff_t start, loff_t end,
-+			int datasync)
-+{
-+	return simple_fsync(file, start, end, datasync);
-+}
-+
-+const struct file_operations beamfs_file_operations = {
-+	.llseek         = generic_file_llseek,
-+	.read_iter      = generic_file_read_iter,
-+	.write_iter     = beamfs_file_write_iter,
-+	.mmap           = generic_file_mmap,
-+	.fsync          = beamfs_fsync,
-+	.splice_read    = filemap_splice_read,
-+};
-+
-+const struct inode_operations beamfs_file_inode_operations = {
-+	.getattr        = simple_getattr,
-+	.fiemap         = beamfs_fiemap,  /* S2.2: file-precise bench targeting */
-+};
++/* ------------------------------------------------------------------ */
++/* Helper: write a raw beamfs_inode to disk                             */
++/* ------------------------------------------------------------------ */
 +
 +/*
-+ * beamfs_iomap_begin -- map a file range to disk blocks for iomap.
-+ * Handles read (no allocation) and write (allocate on demand).
-+ * Supports direct blocks (iblock 0..11) and single indirect
-+ * (iblock 12..523, covering up to ~2 MiB per file).
++ * The inode has to reach the medium the way the bitmap does.
++ *
++ * beamfs_write_bitmap_block encodes and dirties a bitmap block on every
++ * allocation and every free, and put_super/sync_fs then sync_dirty_buffer
++ * every one of them: the bitmap is on disk whatever the flusher does.
++ * The inode had only mark_buffer_dirty, and beamfs_write_inode ignored
++ * wbc->sync_mode entirely, so a WB_SYNC_ALL from unmount returned
++ * without waiting for anything.
++ *
++ * That asymmetry is the generic/464 leak. Measured on the failing
++ * volume: the bitmap block was written, twenty-four of twenty-five
++ * inodes seen in the trace were still 0xcd -- never written at all --
++ * and 112 blocks were marked used in the bitmap with no inode left to
++ * reference them. The volume mounted with 201 files totalling zero
++ * bytes.
++ *
++ * ext2 ends __ext2_write_inode with:
++ *
++ *     mark_buffer_dirty(bh);
++ *     if (do_sync) {
++ *             sync_dirty_buffer(bh);
++ *             ...
++ *     }
++ *
++ * and ext2_write_inode passes wbc->sync_mode == WB_SYNC_ALL. This does
++ * the same.
 + */
-+static int beamfs_iomap_begin(struct inode *inode, loff_t pos, loff_t length,
-+			      unsigned int flags, struct iomap *iomap,
-+			     struct iomap *srcmap)
++static int beamfs_write_inode_raw_flags(struct inode *inode, bool sync)
 +{
-+	struct beamfs_inode_info *fi  = BEAMFS_I(inode);
++	if (beamfs_failed(inode->i_sb))
++		return -EIO;
++
 +	struct super_block      *sb  = inode->i_sb;
-+	u64  iblock    = pos >> BEAMFS_BLOCK_SHIFT;
-+	u64  new_block;
-+	u64  phys;
++	struct beamfs_sb_info    *sbi = BEAMFS_SB(sb);
++	struct beamfs_inode_info *fi  = BEAMFS_I(inode);
++	struct beamfs_inode      *raw;
++	struct buffer_head      *bh;
++	unsigned long            inodes_per_block;
++	unsigned long            block, offset;
 +
-+	iomap->offset = iblock << BEAMFS_BLOCK_SHIFT;
-+	iomap->length = BEAMFS_BLOCK_SIZE;
-+	iomap->bdev   = sb->s_bdev;
-+	iomap->flags  = 0;
++	inodes_per_block = BEAMFS_BLOCK_SIZE / sizeof(struct beamfs_inode);
++	block  = le64_to_cpu(sbi->s_beamfs_sb->s_inode_table_blk)
++		 + (inode->i_ino - 1) / inodes_per_block;
++	offset = (inode->i_ino - 1) % inodes_per_block;
 +
-+	if (iblock < BEAMFS_DIRECT_BLOCKS) {
-+		/* --- Direct block --- */
-+		phys = le64_to_cpu(fi->i_direct[iblock]);
-+		if (phys) {
-+			iomap->type = IOMAP_MAPPED;
-+			iomap->addr = phys << BEAMFS_BLOCK_SHIFT;
-+			return 0;
++	bh = beamfs_bread(sb, block, "directory");
++	if (!bh)
++		return -EIO;
++
++	raw = (struct beamfs_inode *)bh->b_data + offset;
++
++	raw->i_mode   = cpu_to_le16(inode->i_mode);
++	raw->i_uid    = cpu_to_le32(i_uid_read(inode));
++	raw->i_gid    = cpu_to_le32(i_gid_read(inode));
++	raw->i_nlink  = cpu_to_le16(inode->i_nlink);
++	raw->i_size   = cpu_to_le64(inode->i_size);
++	raw->i_atime  = cpu_to_le64(inode_get_atime_sec(inode) * NSEC_PER_SEC
++				     + inode_get_atime_nsec(inode));
++	raw->i_mtime  = cpu_to_le64(inode_get_mtime_sec(inode) * NSEC_PER_SEC
++				     + inode_get_mtime_nsec(inode));
++	raw->i_ctime  = cpu_to_le64(inode_get_ctime_sec(inode) * NSEC_PER_SEC
++				     + inode_get_ctime_nsec(inode));
++	raw->i_flags  = cpu_to_le32(fi->i_flags);
++
++	memcpy(raw->i_direct, fi->i_direct, sizeof(fi->i_direct));
++	raw->i_indirect  = fi->i_indirect;
++	raw->i_dindirect = fi->i_dindirect;
++	raw->i_tindirect = fi->i_tindirect;
++
++	/*
++	 * cpu_to_le32, because i_crc32 is __le32 and beamfs_crc32 returns
++	 * host order. Assigning one to the other wrote the checksum in
++	 * whatever order the CPU used -- invisible on the little-endian
++	 * machines this has run on, and a volume no big-endian host could
++	 * mount. sparse called it: "incorrect type in assignment".
++	 */
++	raw->i_crc32 = cpu_to_le32(beamfs_inode_crc(raw));
++
++	/*
++	 * Compute RS parity over the first BEAMFS_INODE_RS_DATA bytes
++	 * (everything up to i_reserved, including i_crc32). Parity goes
++	 * into i_reserved[0..15]; i_reserved[16..83] is forced to zero so
++	 * the layout is deterministic and any non-zero byte there at read
++	 * time signals a tampered inode.
++	 *
++	 * Under BEAMFS_DATA_PROTECTION_INODE_UNIVERSAL this parity is the
++	 * authoritative correction record for the inode. mkfs.beamfs writes
++	 * the equivalent parity on the root inode at format time; the
++	 * kernel maintains it on every subsequent inode write.
++	 */
++	memset(&raw->i_reserved[BEAMFS_RS_PARITY], 0,
++	       sizeof(raw->i_reserved) - BEAMFS_RS_PARITY);
++	beamfs_rs_encode((u8 *)raw, BEAMFS_INODE_RS_DATA, raw->i_reserved);
++
++	trace_beamfs_write_inode(inode->i_sb->s_dev, inode->i_ino, sync,
++				 (u64)le64_to_cpu(fi->i_indirect), 0);
++	mark_buffer_dirty(bh);
++	if (sync) {
++		sync_dirty_buffer(bh);
++		if (buffer_req(bh) && !buffer_uptodate(bh)) {
++			brelse(bh);
++			return -EIO;
 +		}
-+		if (!(flags & IOMAP_WRITE)) {
-+			iomap->type = IOMAP_HOLE;
-+			iomap->addr = IOMAP_NULL_ADDR;
-+			return 0;
-+		}
-+		new_block = beamfs_alloc_block(sb, inode);
-+		if (!new_block) {
-+			pr_err("beamfs: iomap: no free blocks\n");
-+			return -ENOSPC;
-+		}
-+		fi->i_direct[iblock] = cpu_to_le64(new_block);
-+		mark_inode_dirty(inode);
-+		iomap->type = IOMAP_MAPPED;
-+		iomap->addr = new_block << BEAMFS_BLOCK_SHIFT;
-+		return 0;
 +	}
++	brelse(bh);
 +
-+	if (iblock < BEAMFS_DIRECT_BLOCKS + BEAMFS_INDIRECT_PTRS) {
-+		/* --- Single indirect block --- */
-+		u64 indirect_slot = iblock - BEAMFS_DIRECT_BLOCKS;
-+		u64 indirect_blk  = le64_to_cpu(fi->i_indirect);
-+		struct buffer_head *ibh;
-+		__le64 *ptrs;
-+
-+		if (!indirect_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			indirect_blk = beamfs_alloc_block(sb, inode);
-+			if (!indirect_blk) {
-+				pr_err("beamfs: iomap: no free blocks for indirect\n");
-+				return -ENOSPC;
-+			}
-+			ibh = sb_getblk(sb, indirect_blk);
-+			if (!ibh) {
-+				beamfs_free_block(sb, indirect_blk, inode);
-+				return -EIO;
-+			}
-+			lock_buffer(ibh);
-+			memset(ibh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(ibh);
-+			unlock_buffer(ibh);
-+			mark_buffer_dirty(ibh);
-+			brelse(ibh);
-+			fi->i_indirect = cpu_to_le64(indirect_blk);
-+			mark_inode_dirty(inode);
-+		}
-+
-+		ibh = sb_bread(sb, indirect_blk);
-+		if (!ibh)
-+			return -EIO;
-+		ptrs = (__le64 *)ibh->b_data;
-+		phys = le64_to_cpu(ptrs[indirect_slot]);
-+
-+		if (phys) {
-+			brelse(ibh);
-+			iomap->type = IOMAP_MAPPED;
-+			iomap->addr = phys << BEAMFS_BLOCK_SHIFT;
-+			return 0;
-+		}
-+		if (!(flags & IOMAP_WRITE)) {
-+			brelse(ibh);
-+			iomap->type = IOMAP_HOLE;
-+			iomap->addr = IOMAP_NULL_ADDR;
-+			return 0;
-+		}
-+		new_block = beamfs_alloc_block(sb, inode);
-+		if (!new_block) {
-+			brelse(ibh);
-+			pr_err("beamfs: iomap: no free blocks\n");
-+			return -ENOSPC;
-+		}
-+		ptrs[indirect_slot] = cpu_to_le64(new_block);
-+		mark_buffer_dirty(ibh);
-+		brelse(ibh);
-+		iomap->type = IOMAP_MAPPED;
-+		iomap->addr = new_block << BEAMFS_BLOCK_SHIFT;
-+		return 0;
-+	}
-+
-+	if (iblock < BEAMFS_MAX_IBLOCK_DINDIRECT) {
-+		/* --- Double indirect block (scheme=5 iomap path) --- */
-+		u64 didx = iblock - BEAMFS_MAX_IBLOCK_INDIRECT;
-+		u64 l1_slot = didx / BEAMFS_INDIRECT_PTRS;
-+		u64 l2_slot = didx % BEAMFS_INDIRECT_PTRS;
-+		u64 dindirect_blk, l1_blk;
-+		struct buffer_head *ibh, *l1bh;
-+		__le64 *ptrs;
-+
-+		dindirect_blk = le64_to_cpu(fi->i_dindirect);
-+		if (!dindirect_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			dindirect_blk = beamfs_alloc_block(sb, inode);
-+			if (!dindirect_blk) {
-+				pr_err("beamfs: iomap: no free blocks for dindirect\n");
-+				return -ENOSPC;
-+			}
-+			ibh = sb_getblk(sb, dindirect_blk);
-+			if (!ibh) {
-+				beamfs_free_block(sb, dindirect_blk, inode);
-+				return -EIO;
-+			}
-+			lock_buffer(ibh);
-+			memset(ibh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(ibh);
-+			unlock_buffer(ibh);
-+			mark_buffer_dirty(ibh);
-+			brelse(ibh);
-+			fi->i_dindirect = cpu_to_le64(dindirect_blk);
-+			mark_inode_dirty(inode);
-+		}
-+
-+		ibh = sb_bread(sb, dindirect_blk);
-+		if (!ibh)
-+			return -EIO;
-+		ptrs = (__le64 *)ibh->b_data;
-+		l1_blk = le64_to_cpu(ptrs[l1_slot]);
-+		if (!l1_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				brelse(ibh);
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			l1_blk = beamfs_alloc_block(sb, inode);
-+			if (!l1_blk) {
-+				brelse(ibh);
-+				pr_err("beamfs: iomap: no free blocks for dindirect L1\n");
-+				return -ENOSPC;
-+			}
-+			l1bh = sb_getblk(sb, l1_blk);
-+			if (!l1bh) {
-+				beamfs_free_block(sb, l1_blk, inode);
-+				brelse(ibh);
-+				return -EIO;
-+			}
-+			lock_buffer(l1bh);
-+			memset(l1bh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(l1bh);
-+			unlock_buffer(l1bh);
-+			mark_buffer_dirty(l1bh);
-+			brelse(l1bh);
-+			ptrs[l1_slot] = cpu_to_le64(l1_blk);
-+			mark_buffer_dirty(ibh);
-+		}
-+		brelse(ibh);
-+
-+		l1bh = sb_bread(sb, l1_blk);
-+		if (!l1bh)
-+			return -EIO;
-+		ptrs = (__le64 *)l1bh->b_data;
-+		phys = le64_to_cpu(ptrs[l2_slot]);
-+
-+		if (phys) {
-+			brelse(l1bh);
-+			iomap->type = IOMAP_MAPPED;
-+			iomap->addr = phys << BEAMFS_BLOCK_SHIFT;
-+			return 0;
-+		}
-+		if (!(flags & IOMAP_WRITE)) {
-+			brelse(l1bh);
-+			iomap->type = IOMAP_HOLE;
-+			iomap->addr = IOMAP_NULL_ADDR;
-+			return 0;
-+		}
-+		new_block = beamfs_alloc_block(sb, inode);
-+		if (!new_block) {
-+			brelse(l1bh);
-+			pr_err("beamfs: iomap: no free blocks (dindirect data)\n");
-+			return -ENOSPC;
-+		}
-+		ptrs[l2_slot] = cpu_to_le64(new_block);
-+		mark_buffer_dirty(l1bh);
-+		brelse(l1bh);
-+		iomap->type = IOMAP_MAPPED;
-+		iomap->addr = new_block << BEAMFS_BLOCK_SHIFT;
-+		return 0;
-+	}
-+
-+	if (iblock < BEAMFS_MAX_IBLOCK_TINDIRECT) {
-+		/* --- Triple indirect block (scheme=5 iomap path) --- */
-+		u64 tidx = iblock - BEAMFS_MAX_IBLOCK_DINDIRECT;
-+		u64 l1_slot = tidx / (BEAMFS_INDIRECT_PTRS * BEAMFS_INDIRECT_PTRS);
-+		u64 l2_slot = (tidx / BEAMFS_INDIRECT_PTRS) % BEAMFS_INDIRECT_PTRS;
-+		u64 l3_slot = tidx % BEAMFS_INDIRECT_PTRS;
-+		u64 tindirect_blk, l1_blk, l2_blk;
-+		struct buffer_head *ibh, *l1bh, *l2bh;
-+		__le64 *ptrs;
-+
-+		tindirect_blk = le64_to_cpu(fi->i_tindirect);
-+		if (!tindirect_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			tindirect_blk = beamfs_alloc_block(sb, inode);
-+			if (!tindirect_blk) {
-+				pr_err("beamfs: iomap: no free blocks for tindirect\n");
-+				return -ENOSPC;
-+			}
-+			ibh = sb_getblk(sb, tindirect_blk);
-+			if (!ibh) {
-+				beamfs_free_block(sb, tindirect_blk, inode);
-+				return -EIO;
-+			}
-+			lock_buffer(ibh);
-+			memset(ibh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(ibh);
-+			unlock_buffer(ibh);
-+			mark_buffer_dirty(ibh);
-+			brelse(ibh);
-+			fi->i_tindirect = cpu_to_le64(tindirect_blk);
-+			mark_inode_dirty(inode);
-+		}
-+
-+		ibh = sb_bread(sb, tindirect_blk);
-+		if (!ibh)
-+			return -EIO;
-+		ptrs = (__le64 *)ibh->b_data;
-+		l1_blk = le64_to_cpu(ptrs[l1_slot]);
-+		if (!l1_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				brelse(ibh);
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			l1_blk = beamfs_alloc_block(sb, inode);
-+			if (!l1_blk) {
-+				brelse(ibh);
-+				pr_err("beamfs: iomap: no free blocks for tindirect L1\n");
-+				return -ENOSPC;
-+			}
-+			l1bh = sb_getblk(sb, l1_blk);
-+			if (!l1bh) {
-+				beamfs_free_block(sb, l1_blk, inode);
-+				brelse(ibh);
-+				return -EIO;
-+			}
-+			lock_buffer(l1bh);
-+			memset(l1bh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(l1bh);
-+			unlock_buffer(l1bh);
-+			mark_buffer_dirty(l1bh);
-+			brelse(l1bh);
-+			ptrs[l1_slot] = cpu_to_le64(l1_blk);
-+			mark_buffer_dirty(ibh);
-+		}
-+		brelse(ibh);
-+
-+		l1bh = sb_bread(sb, l1_blk);
-+		if (!l1bh)
-+			return -EIO;
-+		ptrs = (__le64 *)l1bh->b_data;
-+		l2_blk = le64_to_cpu(ptrs[l2_slot]);
-+		if (!l2_blk) {
-+			if (!(flags & IOMAP_WRITE)) {
-+				brelse(l1bh);
-+				iomap->type = IOMAP_HOLE;
-+				iomap->addr = IOMAP_NULL_ADDR;
-+				return 0;
-+			}
-+			l2_blk = beamfs_alloc_block(sb, inode);
-+			if (!l2_blk) {
-+				brelse(l1bh);
-+				pr_err("beamfs: iomap: no free blocks for tindirect L2\n");
-+				return -ENOSPC;
-+			}
-+			l2bh = sb_getblk(sb, l2_blk);
-+			if (!l2bh) {
-+				beamfs_free_block(sb, l2_blk, inode);
-+				brelse(l1bh);
-+				return -EIO;
-+			}
-+			lock_buffer(l2bh);
-+			memset(l2bh->b_data, 0, BEAMFS_BLOCK_SIZE);
-+			set_buffer_uptodate(l2bh);
-+			unlock_buffer(l2bh);
-+			mark_buffer_dirty(l2bh);
-+			brelse(l2bh);
-+			ptrs[l2_slot] = cpu_to_le64(l2_blk);
-+			mark_buffer_dirty(l1bh);
-+		}
-+		brelse(l1bh);
-+
-+		l2bh = sb_bread(sb, l2_blk);
-+		if (!l2bh)
-+			return -EIO;
-+		ptrs = (__le64 *)l2bh->b_data;
-+		phys = le64_to_cpu(ptrs[l3_slot]);
-+
-+		if (phys) {
-+			brelse(l2bh);
-+			iomap->type = IOMAP_MAPPED;
-+			iomap->addr = phys << BEAMFS_BLOCK_SHIFT;
-+			return 0;
-+		}
-+		if (!(flags & IOMAP_WRITE)) {
-+			brelse(l2bh);
-+			iomap->type = IOMAP_HOLE;
-+			iomap->addr = IOMAP_NULL_ADDR;
-+			return 0;
-+		}
-+		new_block = beamfs_alloc_block(sb, inode);
-+		if (!new_block) {
-+			brelse(l2bh);
-+			pr_err("beamfs: iomap: no free blocks (tindirect data)\n");
-+			return -ENOSPC;
-+		}
-+		ptrs[l3_slot] = cpu_to_le64(new_block);
-+		mark_buffer_dirty(l2bh);
-+		brelse(l2bh);
-+		iomap->type = IOMAP_MAPPED;
-+		iomap->addr = new_block << BEAMFS_BLOCK_SHIFT;
-+		return 0;
-+	}
-+
-+	/* Beyond triple indirect: not supported */
-+	pr_err_ratelimited("beamfs: iomap: offset beyond tindirect blocks\n");
-+	return -EOPNOTSUPP;
-+}
-+
-+static int beamfs_iomap_end(struct inode *inode, loff_t pos, loff_t length,
-+			    ssize_t written, unsigned int flags,
-+			   struct iomap *iomap)
-+{
 +	return 0;
 +}
 +
-+static const struct iomap_ops beamfs_iomap_ops = {
-+	.iomap_begin = beamfs_iomap_begin,
-+	.iomap_end   = beamfs_iomap_end,
-+};
++int beamfs_write_inode_raw(struct inode *inode)
++{
++	return beamfs_write_inode_raw_flags(inode, false);
++}
++
++/* ------------------------------------------------------------------ */
++/* Helper: directory block resolver (direct + indirect)                */
++/* ------------------------------------------------------------------ */
 +
 +/*
-+ * S2.2: fiemap support for file-precise bench targeting (TODO.md l.1979).
-+ * Thin wrapper over iomap_fiemap() reusing beamfs_iomap_ops. Pattern
-+ * follows fs/ext2/inode.c::ext2_fiemap() (kernel 7.0.x). Required by
-+ * userspace filefrag(8) to expose the file -> physical block mapping
-+ * for beamfs-bench file-level RS-FEC validation.
++ * beamfs_dir_get_block -- look up or allocate a directory data block.
 + *
-+ * Shared by both schemes (UNIVERSAL_INLINE and INODE_UNIVERSAL) since
-+ * both use the same direct[12] + indirect[512] block layout, handled
-+ * uniformly by beamfs_iomap_begin().
++ * @dir:        directory inode
++ * @block_idx:  0-based logical block index. Range 0..(12 + 512 - 1)
++ *              = 0..523 = direct (12) + single indirect (512).
++ * @alloc:      if true, allocate on demand. If false, lookup only.
++ * @out_block:  resolved physical block number on success. Set to 0 if
++ *              the block is a HOLE and @alloc is false.
++ *
++ * Returns:
++ *   0    success (*out_block set)
++ *   -ENOSPC  no free blocks (when @alloc=true)
++ *   -EIO     indirect block read failure
++ *   -EINVAL  block_idx >= 524 (caller bug)
++ *
++ * Direct vs indirect mapping:
++ *   block_idx < 12  -> fi->i_direct[block_idx]
++ *   block_idx < 524 -> via fi->i_indirect, slot=(block_idx - 12)
++ *
++ * Newly allocated blocks (both data and indirect) are zeroed before
++ * being installed. A new directory block also gets one free record,
++ * d_ino == 0, spanning its 3824-byte payload, then its parity.
 + */
-+int beamfs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
-+		  u64 start, u64 len)
++int beamfs_dir_get_block(struct inode *dir, unsigned int block_idx,
++			 bool alloc, u64 *out_block)
 +{
-+	int ret;
-+	loff_t i_size;
++	struct super_block       *sb = dir->i_sb;
++	struct beamfs_inode_info *fi = BEAMFS_I(dir);
++	struct buffer_head       *ibh;
++	struct buffer_head       *dbh;
++	__le64                   *ptrs;
++	u64                       block_no;
++	u64                       indirect_blk;
++	u64                       indirect_slot;
 +
-+	inode_lock(inode);
-+	i_size = i_size_read(inode);
++	if (!out_block)
++		return -EINVAL;
++	*out_block = 0;
++
++	if (block_idx >= BEAMFS_DIRECT_BLOCKS + BEAMFS_INDIRECT_PTRS)
++		return -EINVAL;
++
++	/* --- Direct --- */
++	if (block_idx < BEAMFS_DIRECT_BLOCKS) {
++		block_no = le64_to_cpu(fi->i_direct[block_idx]);
++		if (block_no) {
++			*out_block = block_no;
++			return 0;
++		}
++		if (!alloc)
++			return 0;
++
++		block_no = beamfs_alloc_block(sb, dir);
++		if (!block_no)
++			return -ENOSPC;
++		dbh = sb_getblk(sb, block_no);
++		if (!dbh) {
++			beamfs_free_block(sb, block_no, dir);
++			return -EIO;
++		}
++		/*
++		 * A new directory block is one free record covering the
++		 * whole payload, then parity over it.
++		 *
++		 * Zeroing alone used to be enough because every slot was a
++		 * fixed 268 bytes and an all-zero slot read as free. With
++		 * variable-length records the walk needs a d_rec_len to
++		 * step by, and a block of zeros would stop it at the first
++		 * entry -- so the block has to say, once, that all 3824
++		 * bytes are available.
++		 */
++		lock_buffer(dbh);
++		memset(dbh->b_data, 0, BEAMFS_BLOCK_SIZE);
++		((struct beamfs_dir_entry *)dbh->b_data)->d_rec_len =
++			cpu_to_le16(BEAMFS_DATA_INLINE_BYTES);
++		beamfs_dirent_encode(dbh);
++		set_buffer_uptodate(dbh);
++		unlock_buffer(dbh);
++		mark_buffer_dirty(dbh);
++		brelse(dbh);
++
++		fi->i_direct[block_idx] = cpu_to_le64(block_no);
++		/*
++		 * What a directory block holds, not what it occupies.
++		 *
++		 * A block is 4096 bytes on the medium and carries 3824 of
++		 * payload; the rest is Reed-Solomon parity. Counting the
++		 * whole block puts 272 bytes of parity inside i_size, and
++		 * a walk that trusts i_size reads them as a directory
++		 * record. The one at the end of the root happens to
++		 * decode as a zero length and stop the walk; nothing
++		 * makes that true of the next block.
++		 */
++		dir->i_size += BEAMFS_DATA_INLINE_BYTES;
++		mark_inode_dirty(dir);
++		*out_block = block_no;
++		return 0;
++	}
++
++	/* --- Indirect --- */
++	indirect_slot = block_idx - BEAMFS_DIRECT_BLOCKS;
++	indirect_blk  = le64_to_cpu(fi->i_indirect);
++
++	/* Allocate indirect block on demand if missing. */
++	if (!indirect_blk) {
++		if (!alloc)
++			return 0;
++		indirect_blk = beamfs_alloc_block(sb, dir);
++		if (!indirect_blk)
++			return -ENOSPC;
++		ibh = sb_getblk(sb, indirect_blk);
++		if (!ibh) {
++			beamfs_free_block(sb, indirect_blk, dir);
++			return -EIO;
++		}
++		lock_buffer(ibh);
++		memset(ibh->b_data, 0, BEAMFS_BLOCK_SIZE);
++		set_buffer_uptodate(ibh);
++		beamfs_ind_parity_update(sb, ibh, dir);
++		unlock_buffer(ibh);
++		/*
++		 * On the inode's metadata list, like every other site that
++		 * dirties an indirect block: a buffer attached to nothing
++		 * is never flushed by __writeback_single_inode.
++		 */
++		mmb_mark_buffer_dirty(ibh, &BEAMFS_I(dir)->i_metadata_bhs);
++		brelse(ibh);
++		fi->i_indirect = cpu_to_le64(indirect_blk);
++		mark_inode_dirty(dir);
++	}
++
++	ibh = beamfs_bread(sb, indirect_blk, "directory");
++	if (!ibh)
++		return -EIO;
++	ptrs = (__le64 *)ibh->b_data;
++	block_no = le64_to_cpu(ptrs[indirect_slot]);
++
++	if (block_no) {
++		brelse(ibh);
++		*out_block = block_no;
++		return 0;
++	}
++
++	if (!alloc) {
++		brelse(ibh);
++		return 0;
++	}
++
++	block_no = beamfs_alloc_block(sb, dir);
++	if (!block_no) {
++		brelse(ibh);
++		return -ENOSPC;
++	}
++	dbh = sb_getblk(sb, block_no);
++	if (!dbh) {
++		beamfs_free_block(sb, block_no, dir);
++		brelse(ibh);
++		return -EIO;
++	}
++	/* Same as the direct case: one free record, then parity. */
++	lock_buffer(dbh);
++	memset(dbh->b_data, 0, BEAMFS_BLOCK_SIZE);
++	((struct beamfs_dir_entry *)dbh->b_data)->d_rec_len =
++		cpu_to_le16(BEAMFS_DATA_INLINE_BYTES);
++	beamfs_dirent_encode(dbh);
++	set_buffer_uptodate(dbh);
++	unlock_buffer(dbh);
++	mark_buffer_dirty(dbh);
++	brelse(dbh);
++
 +	/*
-+	 * iomap_fiemap() returns -EINVAL for len == 0. Trim the request to
-+	 * the file size but never below 1 to keep the call valid for empty
-+	 * files (where it will simply return zero extents).
++	 * A directory's indirect block needs its parity like a file's.
++	 *
++	 * This file had no parity update at all, so a directory
++	 * that grew past twelve blocks allocated an indirect block, filled
++	 * it with pointers, and left the parity region describing nothing.
++	 * The checker then read it as beyond correction and orphaned the
++	 * whole subtree.
++	 *
++	 * generic/310 shows it on inode 3, the test directory: twelve
++	 * direct blocks full, indirect block 18455 holding six valid
++	 * pointers, and its parity slot zero across all 256 bytes -- the
++	 * six blocks below reported lost.
 +	 */
-+	if (i_size == 0)
-+		i_size = 1;
-+	len = min_t(u64, len, i_size);
-+	ret = iomap_fiemap(inode, fieinfo, start, len, &beamfs_iomap_ops);
-+	inode_unlock(inode);
++	lock_buffer(ibh);
++	ptrs[indirect_slot] = cpu_to_le64(block_no);
++	beamfs_ind_parity_update(sb, ibh, dir);
++	unlock_buffer(ibh);
++	mmb_mark_buffer_dirty(ibh, &BEAMFS_I(dir)->i_metadata_bhs);
++	brelse(ibh);
++	/* Payload, not block size -- see the note above. */
++	dir->i_size += BEAMFS_DATA_INLINE_BYTES;
++	mark_inode_dirty(dir);
++	*out_block = block_no;
++	return 0;
++}
++
++/* ------------------------------------------------------------------ */
++/* Helper: add a directory entry to a directory inode                  */
++/* ------------------------------------------------------------------ */
++
++static int beamfs_add_dirent(struct inode *dir, const struct qstr *name,
++			     unsigned long ino, u8 file_type)
++{
++	struct super_block      *sb = dir->i_sb;
++	struct buffer_head      *bh;
++	struct beamfs_dir_entry *de;
++	u8      *payload;
++	u64      block_no;
++	u32      offset, place;
++	u16      want;
++	unsigned int i;
++	int      ret = -ENOSPC;
++
++	if (name->len > BEAMFS_MAX_FILENAME)
++		return -ENAMETOOLONG;
++
++	want = (u16)BEAMFS_DIRENT_LEN(name->len);
++
++	payload = beamfs_scratch_get(sb);
++	if (!payload)
++		return -ENOMEM;
++
++	/*
++	 * Search first, allocate only when nothing has room.
++	 *
++	 * Asking dir_get_block to allocate on every pass gave the
++	 * directory a fresh block per attempt: generic/006 ran out of
++	 * space after 1047 files where it wanted 4096, and the blocks it
++	 * burned were never linked to anything, so entries written into
++	 * them were invisible to the next walk. That is where the stale
++	 * handles and the missing renames came from too.
++	 */
++	for (i = 0; i < BEAMFS_DIRECT_BLOCKS + BEAMFS_INDIRECT_PTRS; i++) {
++		int rc = beamfs_dir_get_block(dir, i, false, &block_no);
++
++		if (rc) {
++			ret = rc;
++			goto out;
++		}
++		if (!block_no) {
++			/*
++			 * End of what exists: take one more block, under the
++			 * allocation mutex, as a file takes one. The walks
++			 * that hold that mutex alone, beamfs_getattr's count
++			 * and the scrubber's, then see the directory whole.
++			 */
++			mutex_lock(&BEAMFS_I(dir)->i_alloc_mutex);
++			rc = beamfs_dir_get_block(dir, i, true, &block_no);
++			mutex_unlock(&BEAMFS_I(dir)->i_alloc_mutex);
++			if (rc) {
++				ret = rc;
++				goto out;
++			}
++			if (!block_no) {
++				ret = -ENOSPC;
++				goto out;
++			}
++		}
++
++		bh = beamfs_bread(sb, block_no, "directory");
++		if (!bh) {
++			ret = -EIO;
++			goto out;
++		}
++
++		rc = beamfs_dirent_decode(sb, bh, payload);
++		if (rc < 0) {
++			brelse(bh);
++			ret = rc;
++			goto out;
++		}
++
++		/*
++		 * Look for a record with room to spare.
++		 *
++		 * A deleted entry leaves its record in place with d_ino
++		 * zeroed, so the space it held is reusable without
++		 * compacting the block. An entry in use can also give up
++		 * its tail if its record is longer than its name needs --
++		 * which is how ext2 has done it since 1993, and what keeps
++		 * a directory from fragmenting as names come and go.
++		 */
++		offset = 0;
++		while (offset < BEAMFS_DATA_INLINE_BYTES) {
++			u16 rec, used;
++			u32 next;
++
++			de = (struct beamfs_dir_entry *)(payload + offset);
++			if (!beamfs_dirent_valid(de, offset))
++				break;
++
++			rec  = le16_to_cpu(de->d_rec_len);
++			used = de->d_ino ?
++			       (u16)BEAMFS_DIRENT_LEN(de->d_name_len) : 0;
++
++			if (!de->d_ino && rec >= want) {
++				/* Free record, large enough as it stands. */
++				place = offset;
++				goto place_it;
++			}
++			if (de->d_ino && rec - used >= want &&
++			    beamfs_dirent_place(offset + used, want) ==
++			    offset + used) {
++				/* Split the tail off a live record. */
++				de->d_rec_len = cpu_to_le16(used);
++				place = offset + used;
++				goto place_it;
++			}
++
++			next = beamfs_dirent_next(de, offset);
++			if (next == BEAMFS_DIRENT_NOSPACE)
++				break;
++			offset = next;
++		}
++		brelse(bh);
++		continue;
++
++place_it:
++		de = (struct beamfs_dir_entry *)(payload + place);
++		{
++			u16 rec = le16_to_cpu(de->d_rec_len);
++			u16 keep = want;
++
++			/*
++			 * Take what the name needs and leave the rest as a
++			 * free record.
++			 *
++			 * Keeping the whole thing gave a 24-byte name the
++			 * 3800 bytes the free record happened to span: the
++			 * block held one more entry and no others, and the
++			 * walk stepped 3800 bytes straight past the end. So
++			 * generic/006 stopped at 1047 files of 4096, and
++			 * anything written afterwards was invisible to
++			 * lookup while add_dirent still found the space --
++			 * "already present", and rename's del_dirent
++			 * failing after its add.
++			 *
++			 * The remainder becomes a free record only when it
++			 * can hold a header; below that it stays as slack
++			 * on this one, which is what ext2 does.
++			 */
++			if (rec >= (u16)(want + BEAMFS_DIRENT_MIN_LEN)) {
++				struct beamfs_dir_entry *rest =
++					(struct beamfs_dir_entry *)
++					(payload + place + want);
++
++				memset(rest, 0, BEAMFS_DIRENT_HDR_LEN);
++				rest->d_rec_len = cpu_to_le16(rec - want);
++			} else {
++				keep = max(rec, want);
++			}
++
++			memset(de, 0, BEAMFS_DIRENT_HDR_LEN);
++			de->d_ino       = cpu_to_le64(ino);
++			de->d_rec_len   = cpu_to_le16(keep);
++			de->d_name_len  = (u8)name->len;
++			de->d_file_type = file_type;
++			memcpy(de->d_name, name->name, name->len);
++		}
++
++		lock_buffer(bh);
++		memcpy(bh->b_data, payload, BEAMFS_DATA_INLINE_BYTES);
++		beamfs_dirent_encode(bh);
++		set_buffer_uptodate(bh);
++		unlock_buffer(bh);
++		mark_buffer_dirty(bh);
++		brelse(bh);
++
++		/*
++		 * The directory changed, so its times did too. Without
++		 * these, generic/003 reports that mtime and ctime stand
++		 * still across a file creation.
++		 */
++		inode_set_mtime_to_ts(dir, current_time(dir));
++		inode_set_ctime_to_ts(dir, current_time(dir));
++		mark_inode_dirty(dir);
++
++		ret = 0;
++		goto out;
++	}
++
++out:
++	beamfs_scratch_put(sb, payload);
++	return ret;
++}
++
++/* ------------------------------------------------------------------ */
++/* Helper: remove a directory entry from a directory                   */
++/* ------------------------------------------------------------------ */
++
++static int beamfs_del_dirent(struct inode *dir, const struct qstr *name)
++{
++	struct super_block      *sb = dir->i_sb;
++	struct buffer_head      *bh;
++	struct beamfs_dir_entry *de, *prev;
++	u8      *payload;
++	u64      block_no;
++	u32      offset, prev_off;
++	unsigned int i;
++	int      ret = -ENOENT;
++
++	payload = beamfs_scratch_get(sb);
++	if (!payload)
++		return -ENOMEM;
++
++	for (i = 0; i < BEAMFS_DIRECT_BLOCKS + BEAMFS_INDIRECT_PTRS; i++) {
++		int rc = beamfs_dir_get_block(dir, i, false, &block_no);
++
++		if (rc) {
++			ret = rc;
++			goto out;
++		}
++		if (!block_no)
++			break;
++
++		bh = beamfs_bread(sb, block_no, "directory");
++		if (!bh)
++			continue;
++
++		rc = beamfs_dirent_decode(sb, bh, payload);
++		if (rc < 0) {
++			brelse(bh);
++			ret = rc;
++			goto out;
++		}
++
++		offset = 0;
++		prev_off = BEAMFS_DIRENT_NOSPACE;
++		while (offset < BEAMFS_DATA_INLINE_BYTES) {
++			u32 next;
++
++			de = (struct beamfs_dir_entry *)(payload + offset);
++			if (!beamfs_dirent_valid(de, offset))
++				break;
++
++			if (de->d_ino &&
++			    de->d_name_len == name->len &&
++			    !memcmp(de->d_name, name->name, name->len)) {
++				/*
++				 * Fold the record into its predecessor when
++				 * that one is free and in the same subblock,
++				 * so the space comes back as a single free
++				 * record rather than a hole nothing can use.
++				 * Otherwise zero d_ino and leave the record,
++				 * which add_dirent will find.
++				 *
++				 * Never into a live predecessor.
++				 *
++				 * Growing a live entry's d_rec_len to cover
++				 * the space just released makes the walk
++				 * step over that space, so anything written
++				 * there afterwards is invisible: rename put
++				 * the new name in the hole, del_dirent could
++				 * not find the old one, and the directory
++				 * ended up with both -- "already present",
++				 * then drop_nlink below zero when rm caught
++				 * up. ext2 merges only into free records for
++				 * exactly this reason.
++				 *
++				 * Zeroing d_ino and leaving the record where
++				 * it is costs nothing: add_dirent reuses a
++				 * free record and splits what it does not
++				 * need.
++				 */
++				de->d_ino = 0;
++
++				if (prev_off != BEAMFS_DIRENT_NOSPACE) {
++					prev = (struct beamfs_dir_entry *)
++						(payload + prev_off);
++
++					if (!prev->d_ino &&
++					    prev_off / BEAMFS_SUBBLOCK_DATA ==
++					    offset / BEAMFS_SUBBLOCK_DATA)
++						le16_add_cpu(&prev->d_rec_len,
++							     le16_to_cpu(de->d_rec_len));
++				}
++
++				lock_buffer(bh);
++				memcpy(bh->b_data, payload,
++				       BEAMFS_DATA_INLINE_BYTES);
++				beamfs_dirent_encode(bh);
++				set_buffer_uptodate(bh);
++				unlock_buffer(bh);
++				mark_buffer_dirty(bh);
++				brelse(bh);
++
++				/*
++				 * Removing an entry changes the directory as
++				 * much as adding one does, so mtime and ctime
++				 * move here too.
++				 */
++				inode_set_mtime_to_ts(dir, current_time(dir));
++				inode_set_ctime_to_ts(dir, current_time(dir));
++				mark_inode_dirty(dir);
++
++				ret = 0;
++				goto out;
++			}
++
++			next = beamfs_dirent_next(de, offset);
++			if (next == BEAMFS_DIRENT_NOSPACE)
++				break;
++			prev_off = offset;
++			offset = next;
++		}
++		brelse(bh);
++	}
++
++out:
++	beamfs_scratch_put(sb, payload);
++	return ret;
++}
++
++/* ------------------------------------------------------------------ */
++/* Helper: allocate and initialize a new VFS inode                     */
++/* ------------------------------------------------------------------ */
++
++struct inode *beamfs_new_inode(struct inode *dir, umode_t mode)
++{
++	struct super_block   *sb = dir->i_sb;
++	struct inode         *inode;
++	struct beamfs_inode_info *fi;
++	u64                   ino;
++
++	ino = beamfs_alloc_inode_num(sb);
++	if (!ino)
++		return ERR_PTR(-ENOSPC);
++
++	inode = new_inode(sb);
++	if (!inode)
++		return ERR_PTR(-ENOMEM);
++
++	inode_init_owner(&nop_mnt_idmap, inode, dir, mode);
++	inode->i_ino    = ino;
++	inode->i_size   = 0;
++	inode_set_atime_to_ts(inode, current_time(inode));
++	inode_set_mtime_to_ts(inode, current_time(inode));
++	inode_set_ctime_to_ts(inode, current_time(inode));
++
++	fi = BEAMFS_I(inode);
++	memset(fi->i_direct, 0, sizeof(fi->i_direct));
++	fi->i_indirect  = 0;
++	fi->i_dindirect = 0;
++	fi->i_flags     = 0;
++
++	if (S_ISDIR(mode)) {
++		inode->i_op  = &beamfs_dir_inode_operations;
++		inode->i_fop = &beamfs_dir_operations;
++		set_nlink(inode, 2);
++	} else {
++		struct beamfs_sb_info *sbi = BEAMFS_SB(inode->i_sb);
++
++		if (sbi->s_scheme == BEAMFS_DATA_PROTECTION_UNIVERSAL_INLINE) {
++			/*
++			 * v2 INLINE: per-block RS FEC requires gather/scatter
++			 * across 16 subblocks per disk block. Single-page
++			 * folios only; large folios deferred to v2.1.
++			 * Dedicated i_op carries setattr/truncate (sub-step 6).
++			 */
++			inode->i_op = &beamfs_inline_inode_operations;
++			inode->i_fop = &beamfs_inline_file_operations;
++			inode->i_mapping->a_ops = &beamfs_inline_aops;
++			mapping_set_folio_order_range(inode->i_mapping, 0, 0);
++		} else {
++			/* legacy iomap path (scheme=5 INODE_UNIVERSAL) */
++			inode->i_op = &beamfs_file_inode_operations;
++			inode->i_fop = &beamfs_file_operations;
++			inode->i_mapping->a_ops = &beamfs_aops;
++		}
++		set_nlink(inode, 1);
++	}
++
++	if (insert_inode_locked(inode) < 0) {
++		make_bad_inode(inode);
++		iput(inode);
++		return ERR_PTR(-EIO);
++	}
++	mark_inode_dirty(inode);
++	trace_beamfs_inode_dirty(inode->i_sb->s_dev, inode->i_ino,
++				 (unsigned long)inode_state_read_once(inode));
++	return inode;
++}
++
++/* ------------------------------------------------------------------ */
++/* create - create a regular file                                       */
++/* ------------------------------------------------------------------ */
++
++static int beamfs_create(const struct mnt_idmap *idmap, struct inode *dir,
++			 struct dentry *dentry, umode_t mode)
++{
++	struct inode *inode;
++	int           ret;
++
++	inode = beamfs_new_inode(dir, mode | S_IFREG);
++	if (IS_ERR(inode))
++		return PTR_ERR(inode);
++
++	ret = beamfs_write_inode_raw(inode);
++	if (ret)
++		goto out_iput;
++
++	ret = beamfs_add_dirent(dir, &dentry->d_name, inode->i_ino, DT_REG);
++	if (ret)
++		goto out_iput;
++
++	ret = beamfs_write_inode_raw(dir);
++	if (ret)
++		goto out_iput;
++
++	d_instantiate(dentry, inode);
++	unlock_new_inode(inode);
++	return 0;
++
++out_iput:
++	/*
++	 * The inode was allocated, written to disk with nlink=1, and
++	 * never linked. beamfs_evict_inode frees an inode only when
++	 * nlink has reached zero, so releasing it here without
++	 * decrementing leaves it allocated on the medium with no name --
++	 * space that nothing can reach and nothing will reclaim.
++	 *
++	 * generic/204 fills the inode table and shows the result: 1678
++	 * inodes, contiguous from 14707 to the end of the table, all
++	 * mode 0100644 nlink=1 size=0, every one of them a create that
++	 * failed after the inode was written.
++	 *
++	 * mkdir below already does this, twice, because a directory is
++	 * born with nlink=2. discard_new_inode is what the VFS provides
++	 * for an inode that was never published -- btrfs, ceph, ext2,
++	 * jfs, ntfs3 and udf all use it on this path.
++	 */
++	inode_dec_link_count(inode);
++	discard_new_inode(inode);
++	return ret;
++}
++
++/* ------------------------------------------------------------------ */
++/* mkdir - create a directory                                          */
++/* ------------------------------------------------------------------ */
++
++static struct dentry *beamfs_mkdir(const struct mnt_idmap *idmap, struct inode *dir,
++				   struct dentry *dentry, umode_t mode)
++{
++	struct inode *inode;
++	int           ret;
++
++	inode_inc_link_count(dir);
++
++	inode = beamfs_new_inode(dir, mode | S_IFDIR);
++	if (IS_ERR(inode)) {
++		inode_dec_link_count(dir);
++		return ERR_CAST(inode);
++	}
++
++	/* Add . and .. entries */
++	ret = beamfs_add_dirent(inode, &(struct qstr)QSTR_INIT(".", 1),
++				inode->i_ino, DT_DIR);
++	if (ret)
++		goto out_fail;
++
++	ret = beamfs_add_dirent(inode, &(struct qstr)QSTR_INIT("..", 2),
++				dir->i_ino, DT_DIR);
++	if (ret)
++		goto out_fail;
++
++	ret = beamfs_write_inode_raw(inode);
++	if (ret)
++		goto out_fail;
++
++	ret = beamfs_add_dirent(dir, &dentry->d_name, inode->i_ino,
++				DT_DIR);
++	if (ret)
++		goto out_fail;
++
++	ret = beamfs_write_inode_raw(dir);
++	if (ret)
++		goto out_fail;
++
++	d_instantiate(dentry, inode);
++	unlock_new_inode(inode);
++	return NULL;
++
++out_fail:
++	/* Twice: a directory is born with nlink=2. */
++	inode_dec_link_count(inode);
++	inode_dec_link_count(inode);
++	discard_new_inode(inode);
++	inode_dec_link_count(dir);
++	return ERR_PTR(ret);
++}
++
++/* ------------------------------------------------------------------ */
++/* unlink - remove a file                                              */
++/* ------------------------------------------------------------------ */
++
++static int beamfs_unlink(struct inode *dir, struct dentry *dentry)
++{
++	struct inode *inode = d_inode(dentry);
++	int           ret;
++
++	ret = beamfs_del_dirent(dir, &dentry->d_name);
++	if (ret)
++		return ret;
++
++	inode_set_ctime_to_ts(inode, current_time(inode));
++	inode_dec_link_count(inode);
++	/*
++	 * The operation has succeeded and the name is gone from the
++	 * tree; failing it now would be a lie. But an inode that does
++	 * not reach the medium is a link count the next mount disagrees
++	 * with, and saying nothing is how that becomes a checker's
++	 * problem weeks later.
++	 */
++	{
++		int _w = beamfs_write_inode_raw(dir);
++
++		if (_w)
++			pr_err_ratelimited("beamfs: unlink: parent inode %llu not written: %d\n",
++					   (unsigned long long)dir->i_ino, _w);
++	}
++	return 0;
++}
++
++/* ------------------------------------------------------------------ */
++/* rmdir - remove an empty directory                                   */
++/* ------------------------------------------------------------------ */
++
++/*
++ * beamfs_dir_is_empty -- does @inode hold anything but . and .. ?
++ *
++ * i_nlink is not the answer. A regular file does not bump its parent's
++ * link count, so a directory full of files still reads nlink == 2 and
++ * the obvious test says empty. rmdir made that mistake and could never
++ * remove anything; rename made the mirror image of it and silently
++ * destroyed the target's contents -- caught by xfstests generic/023,
++ * where "dire/tree -> Directory not empty" came back as success.
++ *
++ * The blocks have to be walked. Holes are skipped rather than treated
++ * as the end: a directory with a freed slot followed by live entries
++ * is not empty, and stopping at the first hole would say it was.
++ */
++static int beamfs_dir_is_empty(struct inode *inode)
++{
++	struct super_block      *sb = inode->i_sb;
++	struct buffer_head      *bh;
++	struct beamfs_dir_entry *de;
++	u8      *payload;
++	u64      block_no;
++	u32      offset;
++	unsigned int i;
++	/*
++	 * Zero means empty. rmdir treats any non-zero return as the
++	 * reason it cannot proceed and hands it straight back, so this is
++	 * an error code and not a predicate -- getting that backwards
++	 * made every rmdir on an empty directory fail.
++	 */
++	int      ret = 0;
++
++	payload = beamfs_scratch_get(sb);
++	if (!payload)
++		return -ENOMEM;
++
++	for (i = 0; i < BEAMFS_DIRECT_BLOCKS + BEAMFS_INDIRECT_PTRS; i++) {
++		int rc = beamfs_dir_get_block(inode, i, false, &block_no);
++
++		if (rc) {
++			ret = rc;
++			goto out;
++		}
++		if (!block_no)
++			break;
++
++		bh = beamfs_bread(sb, block_no, "directory");
++		if (!bh)
++			continue;
++
++		rc = beamfs_dirent_decode(sb, bh, payload);
++		brelse(bh);
++		if (rc < 0) {
++			ret = rc;
++			goto out;
++		}
++
++		offset = 0;
++		while (offset < BEAMFS_DATA_INLINE_BYTES) {
++			u32 next;
++
++			de = (struct beamfs_dir_entry *)(payload + offset);
++			if (!beamfs_dirent_valid(de, offset))
++				break;
++
++			if (de->d_ino &&
++			    !(de->d_name_len == 1 && de->d_name[0] == '.') &&
++			    !(de->d_name_len == 2 && de->d_name[0] == '.' &&
++			      de->d_name[1] == '.')) {
++				ret = -ENOTEMPTY;
++				goto out;
++			}
++
++			next = beamfs_dirent_next(de, offset);
++			if (next == BEAMFS_DIRENT_NOSPACE)
++				break;
++			offset = next;
++		}
++	}
++
++out:
++	beamfs_scratch_put(sb, payload);
++	return ret;
++}
++
++static int beamfs_rmdir(struct inode *dir, struct dentry *dentry)
++{
++	struct inode            *inode = d_inode(dentry);
++	int                      ret;
++
++	/* Same walk rename needs; one implementation for both. */
++	ret = beamfs_dir_is_empty(inode);
++	if (ret)
++		return ret;
++
++	ret = beamfs_del_dirent(dir, &dentry->d_name);
++	if (ret)
++		return ret;
++
++	inode_dec_link_count(inode);
++	inode_dec_link_count(inode);
++	inode_dec_link_count(dir);
++	{
++		int _w = beamfs_write_inode_raw(dir);
++
++		/* See unlink: the rmdir has happened either way. */
++		if (_w)
++			pr_err_ratelimited("beamfs: rmdir: parent inode %llu not written: %d\n",
++					   (unsigned long long)dir->i_ino, _w);
++	}
++	return 0;
++}
++
++/* ------------------------------------------------------------------ */
++/* link - create a hard link                                           */
++/* ------------------------------------------------------------------ */
++
++static int beamfs_link(struct dentry *old_dentry, struct inode *dir,
++		       struct dentry *dentry)
++{
++	struct inode *inode = d_inode(old_dentry);
++	int           ret;
++
++	inode_set_ctime_to_ts(inode, current_time(inode));
++	inode_inc_link_count(inode);
++
++	ret = beamfs_add_dirent(dir, &dentry->d_name, inode->i_ino,
++				fs_umode_to_dtype(inode->i_mode));
++	if (ret) {
++		inode_dec_link_count(inode);
++		return ret;
++	}
++
++	{
++		int _w = beamfs_write_inode_raw(inode);
++
++		if (!_w)
++			_w = beamfs_write_inode_raw(dir);
++		if (_w)
++			pr_err_ratelimited("beamfs: link: inode %llu or parent %llu not written: %d\n",
++					   (unsigned long long)inode->i_ino,
++					   (unsigned long long)dir->i_ino, _w);
++	}
++	d_instantiate(dentry, inode);
++	ihold(inode);
++	return 0;
++}
++
++/* ------------------------------------------------------------------ */
++/* symlink - create a symbolic link                                    */
++/* ------------------------------------------------------------------ */
++
++/*
++ * Put a long target in a data block and point i_direct[0] at it.
++ *
++ * The block is written through the same RS encoder as file data, so the
++ * target is protected exactly as a file of the same length would be.
++ * The tail is zeroed rather than left as whatever the allocator
++ * returned: a symlink is read by length, but an uninitialised tail
++ * still means the block's parity covers bytes nobody chose.
++ */
++static int beamfs_symlink_store_block(struct inode *inode, const char *target,
++				      size_t len)
++{
++	struct beamfs_inode_info *fi = BEAMFS_I(inode);
++	struct super_block *sb = inode->i_sb;
++	struct buffer_head *bh;
++	u64 phys;
++	u8 *staging;
++	int ret = 0;
++
++	staging = beamfs_scratch_get(sb);
++	if (!staging)
++		return -ENOMEM;
++	memset(staging, 0, BEAMFS_DATA_INLINE_BYTES);
++	memcpy(staging, target, len);
++
++	phys = beamfs_alloc_block(sb, inode);
++	if (!phys) {
++		beamfs_scratch_put(sb, staging);
++		return -ENOSPC;
++	}
++
++	bh = sb_getblk(sb, phys);
++	if (!bh) {
++		beamfs_free_block(sb, phys, inode);
++		beamfs_scratch_put(sb, staging);
++		return -EIO;
++	}
++
++	lock_buffer(bh);
++	memset(bh->b_data, 0, BEAMFS_BLOCK_SIZE);
++	/*
++	 * A symlink's target is a data block, so it follows the volume's
++	 * data layout.
++	 *
++	 * This laid it down in sixteen runs 255 apart and encoded it the
++	 * same way, whatever the volume did, so on a capsule volume the
++	 * kernel read back sixteen uncorrectable subblocks and an empty
++	 * path. generic/360 is exactly that: md5 of nothing where the
++	 * target should be, on a block holding 1051 intact bytes of it
++	 * and a parity area of zeros.
++	 */
++	beamfs_lay_data_payload(sb, (u8 *)bh->b_data, staging);
++	/*
++	 * The descriptor too, before the seal, as for any data block: on
++	 * a DATA_CSUM volume a target without one failed its check on
++	 * every read. Logical block 0, what the reader checks it against.
++	 */
++	beamfs_stamp_data_block(sb, (u8 *)bh->b_data, staging, inode->i_ino, 0);
++	{
++		int _e = beamfs_seal_data_block(sb, (u8 *)bh->b_data);
++
++		if (_e < 0)
++			pr_err_ratelimited("beamfs: symlink block encode failed: %d\n",
++					   _e);
++	}
++	set_buffer_uptodate(bh);
++	unlock_buffer(bh);
++	mark_buffer_dirty(bh);
++	ret = sync_dirty_buffer(bh);
++	brelse(bh);
++	beamfs_scratch_put(sb, staging);
++
++	if (ret) {
++		beamfs_free_block(sb, phys, inode);
++		return ret;
++	}
++
++	fi->i_direct[0] = cpu_to_le64(phys);
++	return 0;
++}
++
++/*
++ * beamfs_symlink -- create a symbolic link in directory @dir.
++ *
++ * A target shorter than i_direct[] (96 bytes) is stored inline, in the
++ * bytes of i_direct[]. A longer one, up to what a data block holds,
++ * goes in a data block whose number is in i_direct[0]; i_size tells the
++ * two apart. Anything longer, or an empty target, gets -ENAMETOOLONG.
++ */
++static int beamfs_symlink(const struct mnt_idmap *idmap, struct inode *dir,
++			  struct dentry *dentry, const char *symname)
++{
++	struct inode             *inode;
++	struct beamfs_inode_info *fi;
++	size_t                    len;
++	int                       ret;
++
++	len = strlen(symname);
++	/*
++	 * PATH_MAX is the ceiling the VFS enforces. Ninety-six bytes was not
++	 * a design limit, it was the size of the field the short form
++	 * happens to reuse, and any absolute path of moderate depth exceeds
++	 * it -- generic/360 links to a 1019-byte path and got ENAMETOOLONG.
++	 * The limit is what a data block holds, beamfs_block_payload():
++	 * 3808 bytes in a capsule, 3824 in the alternating layout. Held to
++	 * BEAMFS_DATA_INLINE_BYTES, a capsule cut a target of 3809 to 3824
++	 * bytes to 3808. Longer, up to PATH_MAX, is still refused.
++	 */
++	if (len == 0 || len > beamfs_block_payload(dir->i_sb))
++		return -ENAMETOOLONG;
++
++	inode = beamfs_new_inode(dir, S_IFLNK | 0777);
++	if (IS_ERR(inode))
++		return PTR_ERR(inode);
++
++	fi = BEAMFS_I(inode);
++	memset(fi->i_direct, 0, sizeof(fi->i_direct));
++
++	if (len < sizeof(fi->i_direct)) {
++		/*
++		 * Short form: the target lives in i_direct[] as raw bytes,
++		 * carried to disk by write_inode_raw's verbatim memcpy and
++		 * covered by the inode's own CRC and RS parity.
++		 */
++		memcpy(fi->i_direct, symname, len);
++	} else {
++		/*
++		 * Long form: the target goes in a data block, and
++		 * i_direct[0] holds its number. i_size tells the two apart
++		 * on the way back, so nothing new is needed on disk.
++		 *
++		 * A block brings the RS codewords with it, so a long target
++		 * ends up better protected than a short one -- which is the
++		 * right way round, since it carries more to lose.
++		 */
++		ret = beamfs_symlink_store_block(inode, symname, len);
++		if (ret)
++			goto out_iput;
++	}
++
++	inode->i_size = len;
++	inode->i_op = &beamfs_symlink_inode_operations;
++
++	ret = beamfs_write_inode_raw(inode);
++	if (ret)
++		goto out_iput;
++
++	ret = beamfs_add_dirent(dir, &dentry->d_name, inode->i_ino, DT_LNK);
++	if (ret)
++		goto out_iput;
++
++	ret = beamfs_write_inode_raw(dir);
++	if (ret)
++		goto out_iput;
++
++	d_instantiate(dentry, inode);
++	unlock_new_inode(inode);
++	return 0;
++
++out_iput:
++	/*
++	 * As in beamfs_create: the inode was written with nlink=1 and
++	 * never linked, so the link is dropped before the inode is
++	 * discarded, or it stays allocated on the medium with no name.
++	 */
++	inode_dec_link_count(inode);
++	discard_new_inode(inode);
 +	return ret;
 +}
 +
 +/*
-+ * Write path - beamfs_iomap_write_ops
-+ * get_folio/put_folio use generic helpers (no journaling required).
++ * beamfs_get_link -- VFS i_op->get_link callback.
++ *
++ * A short target is returned in place from i_direct[], which lives as
++ * long as the in-memory inode. A long one is read from its data block
++ * into a buffer the VFS frees through @done.
 + */
-+static struct folio *beamfs_iomap_get_folio(struct iomap_iter *iter,
-+					    loff_t pos, unsigned int len)
++static const char *beamfs_get_link(struct dentry *dentry,
++				   struct inode *inode,
++				   struct delayed_call *done)
 +{
-+	return iomap_get_folio(iter, pos, len);
++	struct beamfs_inode_info *fi = BEAMFS_I(inode);
++	struct super_block *sb = inode->i_sb;
++	struct buffer_head *bh;
++	loff_t len = i_size_read(inode);
++	u64 phys;
++	char *buf;
++	int ret;
++
++	if (len < (loff_t)sizeof(fi->i_direct))
++		return (const char *)fi->i_direct;
++
++	/*
++	 * Long form. RCU-walk cannot take the buffer lock or sleep on a
++	 * read, so hand it back to the caller for a ref-walk retry.
++	 */
++	if (!dentry)
++		return ERR_PTR(-ECHILD);
++
++	if (len > beamfs_block_payload(sb))
++		return ERR_PTR(-EUCLEAN);
++
++	phys = le64_to_cpu(fi->i_direct[0]);
++	if (!phys)
++		return ERR_PTR(-EUCLEAN);
++
++	/*
++	 * kzalloc and not the mount reserve: this buffer is handed to the
++	 * VFS through set_delayed_call(kfree_link), so the kernel frees
++	 * it long after this function returns and it cannot come from a
++	 * pool this filesystem owns.
++	 */
++	buf = kzalloc(BEAMFS_DATA_INLINE_BYTES + 1, GFP_NOFS);
++	if (!buf)
++		return ERR_PTR(-ENOMEM);
++
++	bh = beamfs_bread(sb, phys, "directory");
++	if (!bh) {
++		kfree(buf);
++		return ERR_PTR(-EIO);
++	}
++
++	lock_buffer(bh);
++	ret = beamfs_inline_decode_symlink(sb, bh, phys, inode, buf,
++					   (u32)len);
++	unlock_buffer(bh);
++	brelse(bh);
++
++	if (ret) {
++		kfree(buf);
++		return ERR_PTR(ret);
++	}
++
++	buf[len] = '\0';
++	set_delayed_call(done, kfree_link, buf);
++	return buf;
 +}
 +
-+static void beamfs_iomap_put_folio(struct inode *inode, loff_t pos,
-+				   unsigned int copied, struct folio *folio)
-+{
-+	folio_unlock(folio);
-+	folio_put(folio);
-+}
-+
-+static const struct iomap_write_ops beamfs_iomap_write_ops = {
-+	.get_folio = beamfs_iomap_get_folio,
-+	.put_folio = beamfs_iomap_put_folio,
++const struct inode_operations beamfs_symlink_inode_operations = {
++	.getattr  = beamfs_getattr,
++	.get_link = beamfs_get_link,
 +};
 +
-+static ssize_t beamfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
++/* ------------------------------------------------------------------ */
++/* write_inode - VFS super_op: persist inode to disk                  */
++/* ------------------------------------------------------------------ */
++
++int beamfs_write_inode(struct inode *inode, struct writeback_control *wbc)
 +{
-+	return iomap_file_buffered_write(iocb, from, &beamfs_iomap_ops,
-+					 &beamfs_iomap_write_ops, NULL);
++	bool sync = wbc->sync_mode == WB_SYNC_ALL;
++	int ret, mret, sret;
++
++	/*
++	 * Flush the inode's metadata buffers, not just the inode.
++	 *
++	 * The indirect blocks are attached to i_metadata_bhs by
++	 * mmb_mark_buffer_dirty on every pointer install. Nothing empties
++	 * that list except beamfs_fsync -- and generic/464 never calls
++	 * fsync. ext2 has the same list but its indirect blocks also live
++	 * in the block device's page cache, which sync_blockdev empties at
++	 * unmount; a buffer only on the private list is written by nobody.
++	 *
++	 * That is the leak. An overnight run caught it 107 times over 2414
++	 * loops: the owning inode was on disk in every single case, but
++	 * carrying an old state -- inode 41 took 1037 mark_inode_dirty
++	 * calls and reached write_inode once. __writeback_single_inode
++	 * reads and clears I_DIRTY before calling ->write_inode, so every
++	 * pointer installed during that window leaves the inode looking
++	 * clean, and its indirect block sits dirty on a list no one walks.
++	 *
++	 * Writing the buffers here, on the same call that writes the
++	 * inode, keeps the two together: whatever i_indirect points at is
++	 * on the medium by the time the inode naming it is.
++	 */
++	/*
++	 * The volume's shared metadata first -- bitmap blocks and parity
++	 * regions, see s_shared_bhs -- so that whatever this inode's
++	 * pointers rely on is on the medium before the inode naming them.
++	 */
++	{
++		int had = mmb_has_buffers(&BEAMFS_SB(inode->i_sb)->s_shared_bhs);
++
++		sret = mmb_sync(&BEAMFS_SB(inode->i_sb)->s_shared_bhs);
++		trace_beamfs_mmb(inode->i_sb->s_dev, inode->i_ino,
++				 "write_inode shared", had, sret);
++	}
++	ret = beamfs_write_inode_raw_flags(inode, sync);
++
++	{
++		int had = mmb_has_buffers(&BEAMFS_I(inode)->i_metadata_bhs);
++
++		mret = mmb_sync(&BEAMFS_I(inode)->i_metadata_bhs);
++		trace_beamfs_mmb(inode->i_sb->s_dev, inode->i_ino,
++				 "write_inode sync", had, mret);
++	}
++	if (!ret)
++		ret = mret;
++	if (!ret)
++		ret = sret;
++
++	/*
++	 * Tell the VFS this inode may have metadata in flight.
++	 *
++	 * __writeback_single_inode calls ->sync_inode_metadata only for an
++	 * inode carrying I_METADATA_WRITEBACK, and nothing sets that flag
++	 * but the filesystem itself. beamfs declared the operation and
++	 * never set the flag, so the operation was never called once --
++	 * zero times in a 414000-line trace of generic/464 -- and the only
++	 * thing writing the metadata buffers was this function.
++	 *
++	 * That is not enough. An inode written by WB_SYNC_NONE writeback
++	 * leaves its buffers queued, and the WB_SYNC_ALL pass that should
++	 * wait for them skipped the call that waits. ext2, ext4, fat,
++	 * minix and bfs all set it here, at the end of ->write_inode, for
++	 * the same reason.
++	 */
++	set_inode_metadata_writeback(inode);
++
++	return ret;
 +}
 +
-+/*
-+ * Writeback path - beamfs_writeback_ops
-+ */
-+static ssize_t beamfs_writeback_range(struct iomap_writepage_ctx *wpc,
-+				      struct folio *folio, u64 offset,
-+				     unsigned int len, u64 end_pos)
-+{
-+	if ((loff_t)offset < wpc->iomap.offset ||
-+	    (loff_t)offset >= wpc->iomap.offset + (loff_t)wpc->iomap.length) {
-+		int ret;
++/* ------------------------------------------------------------------ */
++/* rename - move/rename a directory entry                              */
++/* ------------------------------------------------------------------ */
 +
-+		memset(&wpc->iomap, 0, sizeof(wpc->iomap));
-+		ret = beamfs_iomap_begin(wpc->inode,
-+					 offset, INT_MAX, 0,
-+					&wpc->iomap, NULL);
++static int beamfs_rename(const struct mnt_idmap *idmap,
++			 struct inode *old_dir, struct dentry *old_dentry,
++			struct inode *new_dir, struct dentry *new_dentry,
++			unsigned int flags)
++{
++	struct inode *old_inode = d_inode(old_dentry);
++	struct inode *new_inode = d_inode(new_dentry);
++	int	      is_dir    = S_ISDIR(old_inode->i_mode);
++	int	      ret;
++
++	/* No RENAME_EXCHANGE or RENAME_WHITEOUT. */
++	if (flags & ~RENAME_NOREPLACE)
++		return -EINVAL;
++
++	if (flags & RENAME_NOREPLACE && new_inode)
++		return -EEXIST;
++
++	/*
++	 * If destination exists, unlink it first.
++	 * For directories: target must be empty, which takes a walk of
++	 * its blocks (beamfs_dir_is_empty) -- nlink cannot tell.
++	 */
++	if (new_inode) {
++		if (is_dir) {
++			ret = beamfs_dir_is_empty(new_inode);
++			if (ret)
++				return ret;
++		}
++
++		ret = beamfs_del_dirent(new_dir, &new_dentry->d_name);
++		if (ret)
++			return ret;
++
++		if (is_dir) {
++			inode_dec_link_count(new_inode);
++			inode_dec_link_count(new_inode);
++			inode_dec_link_count(new_dir);
++		} else {
++			inode_dec_link_count(new_inode);
++		}
++
++		inode_set_ctime_to_ts(new_inode, current_time(new_inode));
++	}
++
++	/* Add entry in new_dir */
++	ret = beamfs_add_dirent(new_dir, &new_dentry->d_name,
++				old_inode->i_ino,
++			       is_dir ? DT_DIR : DT_REG);
++	if (ret) {
++		/*
++		 * The destination was unlinked above, before this was
++		 * attempted. Failing now without putting it back loses
++		 * a file that existed when the call started, and the
++		 * caller is told the rename did not happen -- so the
++		 * loss is silent.
++		 *
++		 * The name goes back to the inode it named. The link
++		 * counts were lowered above and are raised again here,
++		 * in the same order.
++		 */
++		if (new_inode) {
++			int back = beamfs_add_dirent(new_dir,
++						     &new_dentry->d_name,
++						     new_inode->i_ino,
++						     S_ISDIR(new_inode->i_mode)
++						     ? DT_DIR : DT_REG);
++
++			if (back) {
++				pr_err("beamfs: rename: '%.*s' was removed from inode %llu and could not be restored: add %d, restore %d\n",
++				       (int)new_dentry->d_name.len,
++				       new_dentry->d_name.name,
++				       (unsigned long long)new_dir->i_ino,
++				       ret, back);
++			} else {
++				if (S_ISDIR(new_inode->i_mode)) {
++					inode_inc_link_count(new_inode);
++					inode_inc_link_count(new_inode);
++					inode_inc_link_count(new_dir);
++				} else {
++					inode_inc_link_count(new_inode);
++				}
++			}
++		}
++		return ret;
++	}
++
++	/* Remove entry from old_dir */
++	ret = beamfs_del_dirent(old_dir, &old_dentry->d_name);
++	if (ret) {
++		int undo;
++
++		/*
++		 * Put it back, rather than leaving two names for one
++		 * inode.
++		 *
++		 * The inode's link count was not raised for the name
++		 * just added, so two entries share one link: the first
++		 * unlink frees the inode and the other entry is left
++		 * naming a free one. generic/076 came back with five of
++		 * those and two inodes no directory reached, which is
++		 * the same event seen from the other side.
++		 *
++		 * Removing what this call added restores the directory
++		 * to what it was, and the caller gets an honest error
++		 * instead of a filesystem that disagrees with itself.
++		 * It cannot fail for want of space -- the record is
++		 * there and only its d_ino is cleared -- and if it does
++		 * fail anyway there is nothing further to try, so say
++		 * both errors and let fsck see a bounded mess rather
++		 * than a silent one.
++		 */
++		undo = beamfs_del_dirent(new_dir, &new_dentry->d_name);
++		pr_err("beamfs: rename: could not remove '%.*s' from inode %llu after adding '%.*s' to inode %llu: %d; rollback %s\n",
++		       (int)old_dentry->d_name.len, old_dentry->d_name.name,
++		       (unsigned long long)old_dir->i_ino,
++		       (int)new_dentry->d_name.len, new_dentry->d_name.name,
++		       (unsigned long long)new_dir->i_ino,
++		       ret, undo ? "FAILED" : "done");
++		return ret;
++	}
++
++	/*
++	 * Update ".." in the moved directory to point to new_dir.
++	 * Also fix nlink on old_dir and new_dir.
++	 */
++	if (is_dir && old_dir != new_dir) {
++		struct qstr dotdot = QSTR_INIT("..", 2);
++
++		ret = beamfs_del_dirent(old_inode, &dotdot);
++		if (ret)
++			return ret;
++
++		ret = beamfs_add_dirent(old_inode, &dotdot,
++					new_dir->i_ino, DT_DIR);
++		if (ret)
++			return ret;
++
++		inode_dec_link_count(old_dir);
++		inode_inc_link_count(new_dir);
++
++		ret = beamfs_write_inode_raw(old_inode);
 +		if (ret)
 +			return ret;
 +	}
-+	return iomap_add_to_ioend(wpc, folio, offset, end_pos, len);
-+}
 +
-+static const struct iomap_writeback_ops beamfs_writeback_ops = {
-+	.writeback_range  = beamfs_writeback_range,
-+	.writeback_submit = iomap_ioend_writeback_submit,
-+};
++	/* Update timestamps */
++	inode_set_ctime_to_ts(old_inode, current_time(old_inode));
++	inode_set_mtime_to_ts(old_dir,   current_time(old_dir));
++	inode_set_ctime_to_ts(old_dir,   current_time(old_dir));
++	inode_set_mtime_to_ts(new_dir,   current_time(new_dir));
++	inode_set_ctime_to_ts(new_dir,   current_time(new_dir));
 +
-+static int beamfs_writepages(struct address_space *mapping,
-+			     struct writeback_control *wbc)
-+{
-+	struct iomap_writepage_ctx wpc = {
-+		.inode = mapping->host,
-+		.wbc   = wbc,
-+		.ops   = &beamfs_writeback_ops,
-+	};
++	/* Persist all touched inodes */
++	ret = beamfs_write_inode_raw(old_inode);
++	if (ret)
++		return ret;
 +
-+	return iomap_writepages(&wpc);
-+}
++	ret = beamfs_write_inode_raw(old_dir);
++	if (ret)
++		return ret;
 +
-+/*
-+ * Read path - uses iomap_bio_read_ops (kernel-provided)
-+ */
-+static int beamfs_read_folio(struct file *file, struct folio *folio)
-+{
-+	struct iomap_read_folio_ctx ctx = {
-+		.ops       = &iomap_bio_read_ops,
-+		.cur_folio = folio,
-+	};
++	if (old_dir != new_dir) {
++		ret = beamfs_write_inode_raw(new_dir);
++		if (ret)
++			return ret;
++	}
 +
-+	iomap_read_folio(&beamfs_iomap_ops, &ctx, NULL);
++	if (new_inode) {
++		int _w = beamfs_write_inode_raw(new_inode);
++
++		if (_w)
++			pr_err_ratelimited("beamfs: rename: replaced inode %llu not written: %d\n",
++					   (unsigned long long)new_inode->i_ino, _w);
++	}
++
 +	return 0;
 +}
 +
-+static void beamfs_readahead(struct readahead_control *rac)
-+{
-+	struct iomap_read_folio_ctx ctx = {
-+		.ops = &iomap_bio_read_ops,
-+		.rac = rac,
-+	};
++/* ------------------------------------------------------------------ */
++/* dir inode_operations - exported                                     */
++/* ------------------------------------------------------------------ */
 +
-+	iomap_readahead(&beamfs_iomap_ops, &ctx, NULL);
-+}
-+
-+static sector_t beamfs_bmap(struct address_space *mapping, sector_t block)
-+{
-+	return iomap_bmap(mapping, block, &beamfs_iomap_ops);
-+}
-+
-+const struct address_space_operations beamfs_aops = {
-+	.read_folio       = beamfs_read_folio,
-+	.readahead        = beamfs_readahead,
-+	.writepages       = beamfs_writepages,
-+	.bmap             = beamfs_bmap,
-+	.dirty_folio      = iomap_dirty_folio,
-+	.invalidate_folio = iomap_invalidate_folio,
-+	.release_folio    = iomap_release_folio,
-+	.migrate_folio    = filemap_migrate_folio,
++const struct inode_operations beamfs_dir_inode_operations = {
++	.lookup  = beamfs_lookup,
++	.create  = beamfs_create,
++	.mkdir   = beamfs_mkdir,
++	.unlink  = beamfs_unlink,
++	.rmdir   = beamfs_rmdir,
++	.link    = beamfs_link,
++	.symlink = beamfs_symlink,
++	.rename  = beamfs_rename,
++	.getattr = beamfs_getattr,
 +};
 -- 
 2.55.0
