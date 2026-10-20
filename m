@@ -1,46 +1,46 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792539068;
-	b=DBvBKbTioDfb4B0phP2NR79kpo+R1Hf6VRKZbLMHqE+ZnQKOOZalKgy2smLG3m5UmXdJ
-	 Js5RGvAzYholjr1ta4l/Bdb+dzI5Rsz7Rv8LMkb5rb8/94riqCpEHHJQ3U2paZBnWhJnm
-	 mvtFK/2Cd1Km4LhIoL1ydBUepM6aYolN57TqPbzFqlC7QDf10XhSccPAj6QtrxCSV6JwH
-	 ncyT2+mFgC1g7U+ui2qppJdfi21bls02loIiopMY9I3ntniahfVzr2yRvbVZM+r9rO2aK
-	 VwH5ztpSissSCVjBiYUReR4qAUE8WTGdsDWP+4c8IBbKUosYMgbz5nx1+WftKxdOthg==
+	t=1792539570;
+	b=1n5PGTy/OW0MlWPolc93PR9QuGb9rF5DJ88OpngXOCty0CYLf07KxFNa0GS6xXwkWErg
+	 zY8Q4dGTUbEE9PudOD0fmo5CNkCLiK+cZnuRpfT1p5Rsf85Kf7+TAaZXgfGmdHFL4ZrIR
+	 XOwQMLMS0vx7qv9LuCjDJMMBEi4846cXq4onC3oWSbDoWPenOWi1FAHx2GE7ySaXwH8aP
+	 bHfxaDYmjU9FOPWtkoMjKUQE8VJrSVNd8Bp/aVbYpS9i3sqyuBHMi3kbWJrs2CovApe1r
+	 r1Ociroc0xujeQkxE+FrlpPyNeZ390ICSvZn+1kKDNzjsY8HUM7vJ0TXre+5wsNFySA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792539068;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792539570;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 In-Reply-To:References:X-Mailer:MIME-Version:Content-Type:
 	 Content-Transfer-Encoding;
-	bh=NQ7Q//r/zh1Th3NpvcNkh5KF9pBS8Ytb4Y1WhggDB7w=;
-	b=00f5XcUDyH46mUo8tR5DDBs8eLWyjWjjVhQn58UbDxkMqrkiR9ud7YcTdbFLghbMqP5f
-	 HRKS7kJoz4/OLqBYhTlebxmDpyYty3R5KVM4UDUbNE+2ByvCsDMkNXDnMbO8lraGDBCkU
-	 F+g7Lm6RqyGOq5U782yu7uC3DXX4yA5DgOeYcIY64IfaAvG+kbCkRd6BQpl8LC3lr0HgB
-	 s6lTyhptw48UwNVS80fKyRP9ltTS7YiKI0jGlMzToMToZMsMr8xlIsZ32AclrqfilVzah
-	 dOdV0ILAtzDstX/J0oMPYYF/ohMxmT4SokQ6gJUQFgBqslgddPSWbLfWb2sI1CrEd5A==
+	bh=MvPKh2LFCRo5HFkIjF2qDl5qC/wMMf/toViD9nxJYC0=;
+	b=C4cLb/Frx/qBOKkL+xJH6G3nDa9knripWNJLJLUzYTh3o4Q1sHoZiBH156xr2Fau7UXC
+	 oYg6SIo2PtWEPI4E0SDscXq33TEYBDmw+uRJFpsuAuUfZOgOQg7Hm1hVSnAgzglA/IVaZ
+	 Ahcir2W7rn3cdqEPlQN2rx3ZAhJz+pj5jwKY09eBkUr9sfm2c2pc6pww8h6E2BBW0q//F
+	 ebagaHCmqyenIsV3RDG3J3dQ0fQysFspn4oroQsDCVteybA+4fEQs9m1TYJaZu0S/0uvi
+	 H21iHS61RYLx04h1S4ele6QDlqa2thvbOTrAomxoCLfQmLGzQngp4+WPkTzbkUyORXg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WAkwyGlt;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="Nau/Q4LF";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 295F9606A31C;
-	Tue, 20 Oct 2026 23:31:08 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F157606A319;
+	Tue, 20 Oct 2026 23:39:30 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WAkwyGlt
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A805B1F000C9;
-	Tue, 20 Oct 2026 23:31:01 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Nau/Q4LF
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3DB4D1F000C9;
+	Tue, 20 Oct 2026 23:39:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792539068;
-	bh=NQ7Q//r/zh1Th3NpvcNkh5KF9pBS8Ytb4Y1WhggDB7w=;
+	s=k20260515; t=1792539569;
+	bh=MvPKh2LFCRo5HFkIjF2qDl5qC/wMMf/toViD9nxJYC0=;
 	h=Date:From:To:Cc:Subject:In-Reply-To:References;
-	b=WAkwyGlt+bt1fAKH9pe9wYemnWX/5rJ2wCeF3QVo5GV71Y/6pXM0De/SKP26gyzUt
-	 86WEx3mK1Igv7o8NSefg9Ya8MIUzSa5rqSEiuRHelbVIvbCNfcJkjIZM6KNHQTJSSM
-	 6ESx+/yy0sB5rkPO79zw21fIx54LXZFyaYoRvbPzS3ehTqgd2U/j8FesPKxo93xq6V
-	 t3XNItj1TL1+r8hoQ7AmSxdHey+6FZpKMXFMXncWCsAVfwv9KCiM6VZ1vzVUzyiKsp
-	 Wq61lZDnDI8HLNk0G+Xnb6Zd/jWXzFX4Q7Y+z3+3CpZgEFBYqdNG0N5rzPWxDxDzVX
-	 yqMpaJ+K8A4Ng==
-Date: Wed, 21 Oct 2026 00:30:56 +0100
+	b=Nau/Q4LFrwosrfYQpQ+p0FIoHHf1KpsvhH26jv59Sn/U/x/EA5+nAoav6rAnDS8BA
+	 RiQ7lhIBhhs3+50lQVutaVM03jVaq49QF40fqbIEi469uvbG7+bLvN8SIYiuXCcpEi
+	 0VFQT2ZURPZ0qdzAiuI+XZgiq/ssnsDdedIpx69+lH80Zc1uUiYJi5kF0nf4U+DknV
+	 rAzgqxrM7nX6/e2/uhHpLguBPh0Rhfz3mcETzqagf5fWjcdrKuTEoqdqsRFPMV5F8g
+	 Adv70qRaGSD+Rg0PVPUVibeacB0h37KeuWZsdvcZjPWtSPiI2cXz2/q9l04IWfphOz
+	 plFGSCwHK5vXg==
+Date: Wed, 21 Oct 2026 00:39:18 +0100
 From: Jonathan Cameron <jic23@kernel.org>
 To: Jiri Pirko <jiri@resnulli.us>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
@@ -54,12 +54,12 @@ Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
  rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
  dave.hansen@linux.intel.com, sathyanarayanan.kuppuswamy@linux.intel.com,
  peter.fang@intel.com
-Subject: Re: [PATCH RFC 03/20] ctlv: Add the root family specification and
- generated files
-Message-ID: <20261021003056.354a40ad@jic23-hlaptop>
-In-Reply-To: <20261015145053.3664509-4-jiri@resnulli.us>
+Subject: Re: [PATCH RFC 02/20] ctlv: Add the UAPI wire format and family API
+Message-ID: <20261021003918.36151a58@jic23-hlaptop>
+In-Reply-To: <20261021000003.71f78d99@jic23-hlaptop>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
-	<20261015145053.3664509-4-jiri@resnulli.us>
+	<20261015145053.3664509-3-jiri@resnulli.us>
+	<20261021000003.71f78d99@jic23-hlaptop>
 X-Mailer: Claws Mail 4.4.0 (GTK 3.24.52; x86_64-pc-linux-gnu)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -74,24 +74,29 @@ Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 
 
-> diff --git a/Documentation/ctlv/abi/ctlv.yaml b/Documentation/ctlv/abi/ctlv.yaml
-> new file mode 100644
-> index 000000000000..fa11bce98f46
-> --- /dev/null
-> +++ b/Documentation/ctlv/abi/ctlv.yaml
-> @@ -0,0 +1,186 @@
-> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
-> +%YAML 1.2
-> +---
-> +# Checked-in ABI snapshot of the ctlv family, written by
-> +# "make -C tools/ctlv abi-update".
-> +#
-> +# The checker compares this family's declarations and inherited stub fills
-> +# against this file. Updating it is how a UAPI change gets reviewed; an update
+> > +/**
+> > + * struct ctlv_attr - Attr header.
+> > + * @len: this header plus its payload, excluding this attr's trailing padding
+> > + * @flags: CTLV_ATTR_F_* bits
+> > + * @attr_id: complete attr ID, or CTLV_ATTR_ROOT for a message root
+> > + *
+> > + * Attrs are aligned to CTLV_ALIGNTO, which is why @attr_id is __aligned_u64: a
+> > + * 32-bit ABI would otherwise align this structure to four bytes. A nested
+> > + * payload is the concatenation of CTLV_ALIGN(child.len) bytes per child, so
+> > + * child padding counts inside the containing attr's @len while a leaf's own  
+> 
+> Whilst I get what you mean, leaf doesn't feel like a clear concept in this
+> comment block.  Maybe 'this attrs own padding does not.' or something like that?
+Ignore this one - lack of coffee...  Leaf is indeed clearly defined as most nested
+child.
 
-Slightly confusing text: 'it' is unclear, checker or this file?
-
-> +# that removes or renumbers anything, narrows a bound, or makes a placement
-> +# required is an ABI break, whatever this file says afterwards.
-
-
+> 
+> > + * padding does not. Scalar payloads are native-endian. Within each request
+> > + * root or nest, occurrences of one @attr_id are contiguous; different IDs
+> > + * otherwise have no required order.
+> > + */
+> > +struct ctlv_attr {
+> > +	__u32 len;
+> > +	__u32 flags;
+> > +	__aligned_u64 attr_id;
+> > +};
