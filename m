@@ -1,111 +1,76 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=148.163.158.5
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792509809;
-	b=Kx2Z4yfj6MvAMP7bu+CdS9/f9a61sEBo7GNmFOo03IYwq0PdlMDpMZLPVH1mewOEFMTZ
-	 s615PsEWAczTCW/QndMAUwYEmNsoBKe007JydRKV4jkigPQlmEOIz4AxP0NCEFhydWVXI
-	 jVUJSNPXBZAYXqX6nDXXJnd0GmGkQijcfakDqnlyi/uMkpRS5qAu4DvuHjtGKN4Dbim8r
-	 ZX13vD0S31GXFbS1sOJqvSuOIQ7ozQdvxNHqF3Kutp3zhxsG2JQl4jM1B8Cq1+aS1NEtK
-	 4NmHVk+AHO62ajVBVJeVguXUKcmGPxmZ8gyRk7sJQ2f+fofuhm7Ic8KVDviHqIlfgnw==
+	t=1792512672;
+	b=KsYUX//0wq4oGsu4J2n/toq2AMRFSswHx/9F5ZaHk7QzLYCSVEzAW4z4/mxcvZP3OJ8x
+	 Anpzx2MNgUUiLmmCrSohmO+ceBdXGv487ZF9q4RGrA9ejQ1NWI/2ANNrppmvXa3RCkLzB
+	 eyqbf8bcBrv+ntj6kR13hs8weoLM2hxdmqOpm7UhxUXMd9gTTRWJ1FPO3IDSOnNnVQLPR
+	 xQBtXxQxF06ld0d7sBBW+BwmK4EYn7eDdo0ZFID7q4seitKxKV6psfQlIurxd3X51UdE8
+	 HURl+W38DoXocNykKtYx4PBK0CiYcbmR4cBP7OVqHXJyzV4xydXNcxzyrEP5bfxo7Hg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792509809;
-	h=DMARC-Filter:Received:DKIM-Signature:Received:Received:Received:
-	 Received:Received:Received:Received:Message-ID:Subject:From:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date:
-	 MIME-Version:User-Agent:X-TM-AS-GCONF:X-Proofpoint-Reinject:
-	 X-Proofpoint-Spam-Info:X-Proofpoint-GUID:X-Proofpoint-ORIG-GUID:
-	 X-Authority-Analysis:X-Proofpoint-Spam-Details-Enc:
-	 X-Proofpoint-Virus-Version:X-Proofpoint-Spam-Details;
-	bh=LyHQMbJikx7xBSFYKoXIMj/0bcUbQtzrUPaXCrP3rzk=;
-	b=IW7kKvl6ybD0ZQCH8UNqcSQinaqyHrpET+WAbk6f3w/PyS2bfaMUjKtSZGCq5eI6GcRV
-	 K/Fy9ksZOiLO4WX1pL3oJhBDqvXekbzDURcCgy8Txopnu+PlQJvRsOgvZFMOCUMnWn2O7
-	 d+DLsNT8iJyKjJSczk2C6JTDyi/+dvrzX0hHMFj2KmgOMKMJ6Wz2DhCA/YKDZgFC+bssJ
-	 Lsw+VnOGQWlM7Psbb0AeBlOqvd77XXInvQCwaAjw8k4YhNkjRo6TMSqOLN+xUKAOIYq3A
-	 xsgBBRmx5W4PdTJzAc/86PFsZDYq5M7llak0tY9i9UhQ+yK42eq78PlzwtoC1V0d05w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792512672;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:Content-Transfer-Encoding:In-Reply-To;
+	bh=qGagtzPPLeE5JUUJiGkA5WeVK5upm/IW7i7tq6L22jA=;
+	b=gCmdbdRasR/AstaeIolUPfzSSAnYa4KWg5YYM5fMGfkdV4U8nK2CAAZtI+1/3NfvTC3I
+	 rSMKFGrTJ68gZUsKaeGPrQRycMQW/Cq0CuAT2fep+0K3xAnYf7VttA5zUTHU6o24RK76r
+	 EHgk9rung9mOYJkbU55p8Fg3KYatJ1tMEQiZneagGpjw5xEXPPWfnwdxDbq/nkYZBLitS
+	 HLBGE0LU7Y6XnbOfDQES/gQOFRIVVwsYx1SIstEm6Rtv+INmYgswlfIj/I/zo/9iungRu
+	 yW3ipofok7r4pOTxpv08dw+3F7hXX3B8+lwFT/utVOqBdtUlnctfjHVDQEhuzjKF3Fw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.ibm.com;
-	spf=pass smtp.mailfrom=linux.ibm.com;
-	dkim=pass header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=FfTQ7Vy5;
-	arc=none smtp.remote-ip=148.163.158.5
-Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3B6BB606A32D;
-	Tue, 20 Oct 2026 15:23:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3B6BB606A32D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
+	dmarc=pass header.from=arm.com;
+	spf=pass smtp.mailfrom=arm.com;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=DbShED55;
+	arc=none smtp.remote-ip=217.140.110.172
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id BB1A3606A31D;
+	Tue, 20 Oct 2026 16:11:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BB1A3606A31D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=FfTQ7Vy5
-Received: from pps.filterd (m0353725.ppops.net [127.0.0.1])
-	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 69KDEKqA1400981;
-	Tue, 20 Oct 2026 15:22:35 GMT
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
-	:content-transfer-encoding:content-type:date:from:in-reply-to
-	:message-id:mime-version:references:subject:to; s=pp1; bh=LyHQMb
-	Jikx7xBSFYKoXIMj/0bcUbQtzrUPaXCrP3rzk=; b=FfTQ7Vy5O1tW33td2mLFln
-	OU4X/oa3JqFpxv2V5ONpQHtGO5H6tTa8DtnvpEwRn4XAaLpdr+EE4C83nMg4yFWb
-	TlbKN0k0h0mUQ8jYsz2MjVoUjmtXyYoPWBqq1EqnDmnB8lPx+z1ruCKYWH4rdBIU
-	QWzKJYHQS0xD7ZBALLB8a2IQE7Nba8jE5WDK/td81Vn88yTro1hIxVGSWQ8VxWXA
-	5k6I5uWaQEJeei+FAckNQc8KBfSHjo2m4pSb36B0y1MdDUblEWwePsq56XNtY0yy
-	mA9j91ek9xim3WZ/65S857PM/B/7zvFXwF1Ix/z7ykywXlwXOHZrUCLbu9dyRDfg
-	==
-Received: from ppma13.dal12v.mail.ibm.com (dd.9e.1632.ip4.static.sl-reverse.com [50.22.158.221])
-	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4hdw583fr0-1
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Tue, 20 Oct 2026 15:22:34 +0000 (GMT)
-Received: from pps.filterd (ppma13.dal12v.mail.ibm.com [127.0.0.1])
-	by ppma13.dal12v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 69KDK1iG350728;
-	Tue, 20 Oct 2026 15:22:33 GMT
-Received: from smtprelay03.wdc07v.mail.ibm.com ([172.16.1.70])
-	by ppma13.dal12v.mail.ibm.com (PPS) with ESMTPS id 4hcnjh2ejb-1
-	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
-	Tue, 20 Oct 2026 15:22:33 +0000 (GMT)
-Received: from smtpav03.wdc07v.mail.ibm.com (smtpav03.wdc07v.mail.ibm.com [10.39.53.230])
-	by smtprelay03.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 69KFLkDu2949858
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
-	Tue, 20 Oct 2026 15:21:46 GMT
-Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id F0F9C58054;
-	Tue, 20 Oct 2026 15:22:32 +0000 (GMT)
-Received: from smtpav03.wdc07v.mail.ibm.com (unknown [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 1AFBD5805C;
-	Tue, 20 Oct 2026 15:22:30 +0000 (GMT)
-Received: from li-43857255-d5e6-4659-90f1-fc5cee4750ad.ibm.com (unknown [9.61.185.52])
-	by smtpav03.wdc07v.mail.ibm.com (Postfix) with ESMTP;
-	Tue, 20 Oct 2026 15:22:29 +0000 (GMT)
-Message-ID: <aa00515a0f364fea0150cf1550a09d9400e4632f.camel@linux.ibm.com>
+	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=DbShED55
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id A766C152B;
+	Tue, 20 Oct 2026 09:11:07 -0700 (PDT)
+Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 412653F7D8;
+	Tue, 20 Oct 2026 09:11:06 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
+	t=1792512670; bh=Onq6jxRqEq1WaTY8fGmgczAqDI9uWyGv9j4N9Vll460=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=DbShED55IdZ5GqRBbk415/IcFxQD5ednAiW31MbR9Rn1dtNulHbKnhX4wEJI3XFbs
+	 So+6u7EYH07FhsbRc0NWVaadc13WVhntS6CtJqRJQy7gS9S0cW3VjfLRdokRqWdJnl
+	 7dkTDfkWhwCDWfk/tw8ZbIKAh3fG4SMLUV5JGvtQ=
+Date: Tue, 20 Oct 2026 17:11:03 +0100
+From: Yeoreum Yun <yeoreum.yun@arm.com>
+To: Mimi Zohar <zohar@linux.ibm.com>
+Cc: Jason Gunthorpe <jgg@nvidia.com>, Dionna Glaze <drdeeglaze@gmail.com>,
+	Jiri Pirko <jiri@resnulli.us>, Jarkko Sakkinen <jarkko@kernel.org>,
+	linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de,
+	ksinyuk@kernel.org, rodrigo.vivi@intel.com, cedric.xing@intel.com,
+	sameo@meta.com, James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
+	roberto.sassu@huawei.com
 Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
  support
-From: Mimi Zohar <zohar@linux.ibm.com>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: Dionna Glaze <drdeeglaze@gmail.com>, Jiri Pirko <jiri@resnulli.us>,
-        Jarkko Sakkinen <jarkko@kernel.org>, linux-coco@lists.linux.dev,
-        linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-        x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
-        david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
-        rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
-        James.Bottomley@hansenpartnership.com, aik@amd.com,
-        jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
-        jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
-        suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
-        elena.reshetova@intel.com, dave.hansen@linux.intel.com,
-        sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
-        roberto.sassu@huawei.com
-In-Reply-To: <20261020140655.GV13920@nvidia.com>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
-	 <20261016234354.GA664420@nvidia.com>
-	 <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
-	 <20261017203407.GM13920@nvidia.com> <atPgqROZZxnihYfC@kernel.org>
-	 <20261017231007.GP13920@nvidia.com>
-	 <CANwfdvVJRv6++MJ8OCUnHSR_5nVD8Yv6eTmYxxqfzxEk0sNfpA@mail.gmail.com>
-	 <atX9fugGUsI0hGcA@FV6GYCPJ69>
-	 <CANwfdvUhuQ6L+w+91iDZD=diMmaJ6_2ZsFKkcoiKWOmPMC1oKg@mail.gmail.com>
-	 <a69c7e7ac4fd07a9c375faadc599e96bb8c8534e.camel@linux.ibm.com>
-	 <20261020140655.GV13920@nvidia.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 20 Oct 2026 11:22:29 -0400
+Message-ID: <ateSly15N5mLrM1m@e129823.arm.com>
+References: <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
+ <20261017203407.GM13920@nvidia.com>
+ <atPgqROZZxnihYfC@kernel.org>
+ <20261017231007.GP13920@nvidia.com>
+ <CANwfdvVJRv6++MJ8OCUnHSR_5nVD8Yv6eTmYxxqfzxEk0sNfpA@mail.gmail.com>
+ <atX9fugGUsI0hGcA@FV6GYCPJ69>
+ <CANwfdvUhuQ6L+w+91iDZD=diMmaJ6_2ZsFKkcoiKWOmPMC1oKg@mail.gmail.com>
+ <a69c7e7ac4fd07a9c375faadc599e96bb8c8534e.camel@linux.ibm.com>
+ <20261020140655.GV13920@nvidia.com>
+ <aa00515a0f364fea0150cf1550a09d9400e4632f.camel@linux.ibm.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -115,101 +80,73 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Evolution 3.58.3 (3.58.3-2.fc43) 
-X-TM-AS-GCONF: 00
-X-Proofpoint-Reinject: loops=2 maxloops=12
-X-Proofpoint-Spam-Info: AW1haW4tMjYxMDIwMDA2MCBTYWx0ZWRfXy+5R0tKb354o
- J8BGXeAuPxh5pjl5jo5BRmfiDIpfcKZpe0k2MOPBtXBUzXGWS05C5UL3hvFB/25WuZSputgV4dT
- xJUpEGNuzrQrc9R/B3GHKTKPuZqlgFg=
-X-Proofpoint-GUID: xv6GHz6zNLONi6YmOmB4pcqCAEDlm5mZ
-X-Proofpoint-ORIG-GUID: thjdnNims9VKADJbfk5fg0P1T2nPqtkL
-X-Authority-Analysis: v=2.4 cv=UOBIjyfy c=1 sm=1 tr=0 ts=6ad7873b cx=c_pps
- a=AfN7/Ok6k8XGzOShvHwTGQ==:117 a=AfN7/Ok6k8XGzOShvHwTGQ==:17
- a=IkcTkHD0fZMA:10 a=660iZSQnnn4A:10 a=VkNPw1HP01LnGYTKEx00:22
- a=RnoormkPH1_aCDwRdu11:22 a=V8glGbnc2Ofi9Qvn3v5h:22 a=Cc2t5CyIl5whlRMK8MMA:9
- a=QEXdDO2ut3YA:10
-X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYxMDIwMDA2MCBTYWx0ZWRfX8JlxZhTEPV2s
- vT0JtiPCTq1/pMMvpW3NfmWghQTaE4RggoTVC+Z+EBpSpq60kk+zpnMIxVafbJoDPv5Q9fEajxV
- 34FsnIoJ0Q05xe3bcjVlrAwwrosgHNR7yROBqfOD27g5BmMYWg7kcKOuYa4egReyLkY8ZI2yvi6
- Cg4HxX6zy7F0GEhoOagcTF6hMKAYV06Y4atMeBw31an8GzpKM0hfC/cOBkveC9BHQMSwSHd9LIX
- deZIbCoUHHbm8uNT0GuGat19zrjsh47VBoQ9fASnyvyYPFzbaYLEbbsQiApSjp2AzuJC+gsYS7M
- TIwwItigRI4fqsu/6NO2QbbWi31iS3E85NsGX0NY1rw4u1S529CqvyH6x8jCX0VI6cn0dz+PIux
- DqYz6lW1wyLJ/OFQc3thit/n0mtmPtXmsY7Go2XRPWNc0EJgpVNrYkr6/pLlh9mnsbe2r0wo2km
- xEEDHNXrk/qZiBseLZw==
-X-Proofpoint-Virus-Version: vendor=baseguard
- engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.134,FMLib:17.12.100.49
- definitions=2026-10-20_02,2026-10-19_02,2025-10-01_01
-X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
- malwarescore=0 clxscore=1015 suspectscore=0 spamscore=0 priorityscore=1501
- lowpriorityscore=0 adultscore=0 impostorscore=0 bulkscore=0 phishscore=0
- classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
- reason=mlx scancount=1 engine=8.22.0-2610190000 definitions=main-2610200060
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <aa00515a0f364fea0150cf1550a09d9400e4632f.camel@linux.ibm.com>
 
-On Tue, 2026-10-20 at 11:06 -0300, Jason Gunthorpe wrote:
-> On Tue, Oct 20, 2026 at 09:45:13AM -0400, Mimi Zohar wrote:
-> > On Mon, 2026-10-19 at 09:10 -0700, Dionna Glaze wrote:
-> > > On Mon, Oct 19, 2026 at 5:08=E2=80=AFAM Jiri Pirko <jiri@resnulli.us>=
- wrote:
-> > > >=20
-> > > > Yeah, I was thinking about this and went back and forth. In the end=
-, the
-> > > > only reason for leaving it unbounded is to allow multiple independe=
-nt
-> > > > users of the same register. For example, IMA and systemd could shar=
-e a
-> > > > TDX RTMR. The systemd side would read the journal through the
-> > > > attestation device and the IMA side through securityfs, but both ar=
-e
-> > > > views of the same journal. If one side truncated it, the other coul=
-d no
-> > > > longer replay the RTMR. Isn't this the valid usecase? Do you see ho=
-w to
-> > > > resolve this?
-> > > >=20
-> > >=20
-> > > Bright minds have spent a significant amount of time working on this.
-> > >=20
-> > > +Roberto Sassu, +Mimi Zohar
-> >=20
-> > Dionna, thank you for including us in this discussion.
-> >=20
-> > Based on my questioning AI, it sounds like the purpose of this patch se=
-t is to
-> > introduce a vendor-agnostic common attestation subsystem framework that=
- can act
-> > as an internal kernel multiplexor for any measurement consumer, like IM=
-A or
-> > DRTM. By providing a direct kernel-to-kernel call path, it allows measu=
-rements
-> > to be routed to different Roots of Trust (ROT)=E2=80=94such as physical=
- motherboard
-> > TPMs, Intel TDX RTMRs, AMD SEV-SNP registers, and PCIe SPDM devices=E2=
-=80=94without
-> > hardcoding IMA to specific device drivers.
->=20
-> Yeah, I would say that is the eventual goal, this patch series would
-> be the first small step along those lines
->=20
-> > To support this framework, IMA requires a strict, atomic execution sequ=
-ence to
-> > maintain the Measure =E2=86=92 Extend =E2=86=92 Execute (Measure Before=
- Use) guarantee. This
-> > initializes early during the late_initcall phase within the initramfs (=
-via
-> > dracut).
-> >=20
-> > If the new subsystem introduces a direct kernel-to-kernel multiplexing =
-call
-> > path, how will it ensure the mandatory synchronous wait behavior when e=
-xtending
-> > multiple hardware backends?
->=20
-> Everything has this 'measure before use' requirement. Why would this
-> be hard? Just loop over all the configured measurement targets if
-> thats the plan? Maybe I'm missing something?
+Hi,
 
-As long as the measurements aren't queued, but actually wait for the multip=
-le
-ROTs to complete, it isn't a problem.
+> On Tue, 2026-10-20 at 11:06 -0300, Jason Gunthorpe wrote:
+> > On Tue, Oct 20, 2026 at 09:45:13AM -0400, Mimi Zohar wrote:
+> > > On Mon, 2026-10-19 at 09:10 -0700, Dionna Glaze wrote:
+> > > > On Mon, Oct 19, 2026 at 5:08 AM Jiri Pirko <jiri@resnulli.us> wrote:
+> > > > > 
+> > > > > Yeah, I was thinking about this and went back and forth. In the end, the
+> > > > > only reason for leaving it unbounded is to allow multiple independent
+> > > > > users of the same register. For example, IMA and systemd could share a
+> > > > > TDX RTMR. The systemd side would read the journal through the
+> > > > > attestation device and the IMA side through securityfs, but both are
+> > > > > views of the same journal. If one side truncated it, the other could no
+> > > > > longer replay the RTMR. Isn't this the valid usecase? Do you see how to
+> > > > > resolve this?
+> > > > > 
+> > > > 
+> > > > Bright minds have spent a significant amount of time working on this.
+> > > > 
+> > > > +Roberto Sassu, +Mimi Zohar
+> > > 
+> > > Dionna, thank you for including us in this discussion.
+> > > 
+> > > Based on my questioning AI, it sounds like the purpose of this patch set is to
+> > > introduce a vendor-agnostic common attestation subsystem framework that can act
+> > > as an internal kernel multiplexor for any measurement consumer, like IMA or
+> > > DRTM. By providing a direct kernel-to-kernel call path, it allows measurements
+> > > to be routed to different Roots of Trust (ROT)—such as physical motherboard
+> > > TPMs, Intel TDX RTMRs, AMD SEV-SNP registers, and PCIe SPDM devices—without
+> > > hardcoding IMA to specific device drivers.
+> > 
+> > Yeah, I would say that is the eventual goal, this patch series would
+> > be the first small step along those lines
+> > 
+> > > To support this framework, IMA requires a strict, atomic execution sequence to
+> > > maintain the Measure → Extend → Execute (Measure Before Use) guarantee. This
+> > > initializes early during the late_initcall phase within the initramfs (via
+> > > dracut).
+> > > 
+> > > If the new subsystem introduces a direct kernel-to-kernel multiplexing call
+> > > path, how will it ensure the mandatory synchronous wait behavior when extending
+> > > multiple hardware backends?
+> > 
+> > Everything has this 'measure before use' requirement. Why would this
+> > be hard? Just loop over all the configured measurement targets if
+> > thats the plan? Maybe I'm missing something?
+> 
+> As long as the measurements aren't queued, but actually wait for the multiple
+> ROTs to complete, it isn't a problem.
 
-Mimi
+But, I have a related concern about deferred probing of RoT devices.
+
+For example, if TPM probing is deferred until after the attestation
+subsystem has been initialized, how would the subsystem handle the
+TPM becoming available later (This is reason for IMA_INIT_LATE_SYNC).
+
+In particular, when I see breifly proviers/tdx.c and imange for TPM,
+once if it's failed to get tpm_default_chip() in module_init(),
+There is no way to retry and TPM seems not to be exported as RoT device.
+
+Am I missing something?
+
+-- 
+Sincerely,
+Yeoreum Yun
