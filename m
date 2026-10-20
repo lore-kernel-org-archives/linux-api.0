@@ -1,100 +1,113 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792505229;
-	b=Z6KgdKwAAEAR7WB75tW8JGuLOYNoWqjjcVWnttBGO5JeBY0lSiucLxLI/xFx1oNs8DKI
-	 Dy+OOKGsFtzMk+PkKcjIIqGjabR92gMVhbAKMkFwlY/PUlPBGQR3D0SHjdGqUZqpB7JRJ
-	 2t8MuLmCZiyLkV2rhnGyxLXvyaepq4qZPBpBBkwPIYBht+/MJcLEkI3oBcVlAlW9oyoVc
-	 ifzW3WF794sCARttxDKEOj+dFf3xduCaWphVsxc1VEwMDIlqjcsuyQR0Jp3Gko/ZhrCln
-	 hfGeNzkjznYnqSR0990TwPLgFEqAjHxX4/12TN+jKTyWocn2hWeevfP6sSIiQvutGHA==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792505229;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=4gjHPXmCn70UaULysoVyHSyhywjis8FMubgn3n0iN+w=;
-	b=NttjplNxbMeztvSyQINUPVfx9lspiFO55lQlCRJ8HKDd5IkmLW57PrvM8CwlYf2tUhjD
-	 qQTLkzu3NQYz8Nxlm4+ZFSCeo5ErP9sDk1WP9RdCZUiUfks5KcJl0pxIif1NKT022vmuC
-	 Zm+uo8/+xyBlDXz86+boJ6e6ZIeDca8GND3e80xwrqYLVITIDDd/HxVcwQAUVBP9xYd4m
-	 6QE+3eFOzAtf/R1rWbfZzCtBkajSpcQdOJp3cWr33lQnPniB5kHJQbSUEk7fv3axs0hL5
-	 Hbg9vtSEpq16seqrfrEdXXg03R4k+clov+E9Os/HeEMyi7FQUMsQKUpurgKYjHK1fFw==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=resnulli.us;
-	spf=none smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b=tsIqjQmj;
-	arc=none smtp.remote-ip=209.85.221.41
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=52.101.43.53
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1792505235;
+	b=clrY1C0FKaCEZmkSoxgxS5Qh+Zcq54JaNsfLndzQZLxJoehBD/MTQzMILc01QXgX6F+2
+	 mtuAreRpxKA6Lr/S360NTJJkUSJLi57sdLgltZqljeOE38UoUZxPUlBez9204BPkbxEHo
+	 8ioru8evUX/3MbHoiPdenfkMtFVAqLqK/Qd89DNqetucqAQN67+2u6PBr3//r+8prQR/j
+	 JcJdB6AYFxj0KuqOtZc/3S6FM0CcAOGz4b3Y85DFsR6gJMpJECi7gSISRMURq51f6P8aM
+	 fj1sh8jM0aPVPZubDnv7bCsKKQ0yu3IP9oIQTCdTbFi5ZSJTk88jyjEHYMAG0mVgyfw==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792505235;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:Date:From:To:Cc:
+	 Subject:Message-ID:References:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding:In-Reply-To:X-ClientProxiedBy:MIME-Version:
+	 X-MS-PublicTrafficType:X-MS-TrafficTypeDiagnostic:
+	 X-MS-Office365-Filtering-Correlation-Id:X-MS-Exchange-SenderADCheck:
+	 X-MS-Exchange-AntiSpam-Relay:X-Microsoft-Antispam:
+	 X-Microsoft-Antispam-Message-Info:X-Forefront-Antispam-Report:
+	 X-MS-Exchange-AntiSpam-MessageData-ChunkCount:
+	 X-MS-Exchange-AntiSpam-MessageData-0:X-OriginatorOrg:
+	 X-MS-Exchange-CrossTenant-Network-Message-Id:
+	 X-MS-Exchange-CrossTenant-AuthSource:X-MS-Exchange-CrossTenant-AuthAs:
+	 X-MS-Exchange-CrossTenant-OriginalArrivalTime:
+	 X-MS-Exchange-CrossTenant-FromEntityHeader:
+	 X-MS-Exchange-CrossTenant-Id:X-MS-Exchange-CrossTenant-MailboxType:
+	 X-MS-Exchange-CrossTenant-UserPrincipalName:
+	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
+	bh=vQYJWqcAONnzK3eNNgqMHY/bCnCXZdHHBqUo5ZldEtk=;
+	b=dp75RNKb7SLDx1grdT14pP1IQW6nbyHNPk7SD+goF5AvwdOiYWpJ0/6Q2EoNGeEt0QGC
+	 yMyFnQH7yit3dhP6BOu1nUl8espNPyK8yBF2sa+Z3DohMYZaPHu3SZBZpV9Csvk8B5gVY
+	 637cYe3FhWrJUPJS4klUAcl5yS0mo4vludI4UAp/Lw+TLBpVJcFQ4yP+WyXi90ao2Nwnd
+	 Q9uQB2+AMPb/JRcSrTeVJeSCbvQ3RR3McVQhOhVuUifkobUhjEjl5+LnRQWO4J+bABLwp
+	 7oWFJaEXKJWXQjGG/E71ZZIp/ptizQIkphPAjvqyZgXuPWKXBOnKQcqRyA/c5Mi5HwQ==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=nvidia.com;
+	spf=fail smtp.mailfrom=nvidia.com;
+	dkim=pass header.d=Nvidia.com header.i=@Nvidia.com header.a=rsa-sha256 header.s=selector2 header.b=P2PXNJHU;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=52.101.43.53
+Received: from SJ2PR03CU001.outbound.protection.outlook.com (mail-westusazon11012053.outbound.protection.outlook.com [52.101.43.53])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F311606A325
-	for <linux-api@vger.kernel.org>; Tue, 20 Oct 2026 14:07:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0F311606A325
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=resnulli.us
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 26E5E606A32E;
+	Tue, 20 Oct 2026 14:07:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 26E5E606A32E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=nvidia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b=tsIqjQmj
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-48b042c0728so1021953f8f.1
-        for <linux-api@vger.kernel.org>; Tue, 20 Oct 2026 07:07:06 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792505225; x=1793110025; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=4gjHPXmCn70UaULysoVyHSyhywjis8FMubgn3n0iN+w=;
-        b=tsIqjQmj1fU1tfpLvcrgyrBRhrj7LtlUxquUdDe7xmr6xxyjiTGmd6/do0ipGIfJIj
-         KZEiiI25qWShs00fvGYv4dQzT/YJ3X3avR+7M3iNfhxBJoWz8hmtNK1m95U/+sZByvrL
-         UZpGUcxw4YUtIvSpYVfcBapqP7NR1pvfI4pcVpODNcUKGLu1Lv1uBW3Tnlyt6WqcMGxg
-         ivA+yVXSBOhp6FwXKVZc01FNd/vcYoW9/6V8HhzmKY5H8rvoeDImvAfK3qSANFu0i8vV
-         ByEautfEfwZci1CQDD2aIKmNCVjDw/7+6Fi8qgQldf8RkV4ZWowoSmfemPsWzpGZn8nD
-         1VOg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792505225; x=1793110025;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=4gjHPXmCn70UaULysoVyHSyhywjis8FMubgn3n0iN+w=;
-        b=bDNk8VA/9DZeOBtncwmVphQjLdrWr6U75JlW40cV//OmmFw6mxyPIY5Yi3sDG3Hixd
-         oKSXueHQlPO4lCvRYzeMhyaofLVGddp1yIRPcSaLUVuMUMkNlL8Ew2DgJ1iqMamo86VW
-         sOYpEvrEtAFXg4n8dNE0Y61uc8XntOdiD5y7gVz+Em1+LzSg80P+45oz5Py48z4OBwWF
-         lf3P4/hYgxmic09FxgDzbXNKzSIU4ngM/FN1IrXrZ2USywXxAxcaA9ZI8a3SKlKKLUro
-         FElRkTsbwNsfroWUmVj2IS8QewBTWMUrcjX3jnTpne74KTg2duVko+mhqq295T4RzKGf
-         bP2w==
-X-Forwarded-Encrypted: i=1; AKwUvByP4zoovWoAN3mHYv4X7oQzZfAUJ+XIbXJmxdE3/HHC9GojTDJV5F0m4ZqSL6k4/L5CZk8kZEdrBZo=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKghPlwl8YAJN5vbnRoGniJvXUKLrimzUE/ABVueG/DRDQou9aR
-	Qq3/DYgXe9uhQI2+4Ba0rmI/d7vJUhKODoA40qm/keCQgqleBa2JgM5UfFX4tJvGsyE=
-X-Gm-Gg: AYBFou2+MtHhhpswAceTqTurkO/7j62sZlPXVS0HRTPKsi/xMWwwtHrbt2HxGIiYwCM
-	dUOxf5vR7RqnMjZFJXZaV8FL3950qBE4ffhSlyuAmDaj4qpAmMPKXqso9+nIwd3V3dzonj0emYa
-	p/TehoR4PbMSRgVZIQrBGOKbVYLkXuYvxkMKdLVVm42YQaHJ4qqc5P3cupabfLWRL93d+1x+rcX
-	B2KISgiU0YJLBFcuUbi1/f9mm0X0J/MtX4fkaiPPy64H/rqIS/Bdr5hqEA0QGOEy8R5cDdQNHyY
-	AXAG2joAQ6xCSUuO+KMdgHlZVF32X8U3iQhOw443uLu3wj5YD5VcQZ7PAqt/FryaMoXC354NGPr
-	BjBu7BiQAAnz9Zs8DlxSUchJ7UcUV8ShOyGX3+hPNgkfG0ut0f4CdSwVWjMZqkG3zZnJCmBzHBL
-	vmoSA2g1Fnz1MNolxnOcQ44RD2K44qp2zAQqglh9ZbSaGUh2uNPVWUMaSt5CAJ2Ll6AAhK7y9wm
-	33hHWAHX33NvFk=
-X-Received: by 2002:a05:6000:490f:b0:48b:9d80:53a5 with SMTP id ffacd0b85a97d-48e07bbe5d5mr22481939f8f.10.1792505222787;
-        Tue, 20 Oct 2026 07:07:02 -0700 (PDT)
-Received: from localhost ([85.163.81.98])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e1d8214b5sm6798703f8f.41.2026.10.20.07.07.02
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 20 Oct 2026 07:07:02 -0700 (PDT)
-Date: Tue, 20 Oct 2026 16:06:58 +0200
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 04/20] Documentation: ctlv: Add userspace ABI
-Message-ID: <atdjqGI1GvONVJuK@FV6GYCPJ69>
+	dkim=pass (2048-bit key, unprotected) header.d=Nvidia.com header.i=@Nvidia.com header.a=rsa-sha256 header.s=selector2 header.b=P2PXNJHU
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=mqm6HNS4LhPuOuSJR7HKXh5ExSSdd0tzYunBwSQVdXZcHXGwJNdz3RmDJg2y/W2gty6D4WCRhPVybLIuN7c7fdro6Fh4Qld/Cn59NbwAuR8lpuE6pgs3G5QqGXyxyGjLDj/wEcK54L6CCKsT9Nr7wlR+uuyzhQtCk5COkxReIpvcaxZ2a6ZXSsK1PysHkLIXIBpvzQSX1cmQlxEE08ZEYpkLqdHryE2OG0pk1W3fEXqsVN3Pwhwb/vELJhnZhX8HdThpvq2POjSHvx3uNnkkbe0HaM43+/FhQ0jdXSXZ7xmbUuC2br+j/V7rMN/esnmYFQ21PkRPByZDNbbQKsjVlQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=vQYJWqcAONnzK3eNNgqMHY/bCnCXZdHHBqUo5ZldEtk=;
+ b=Erli6om0LyaSsayyBZHBOueVzw9QhfGKhWzMDyIUCaI1TYhSTzWLpDk0qPsbH2yPZKMxK143z2VKo6ckZ+fzkYmCfP2l/rdfHSDRkKc2Yt03GsuRgZCBwh/FOFZraysVaWAogGsJwZfQNjJ++cagTaXefpnVhF5aHj9TMHIe+x0KiMGM4BOqozCz5UTEx7yW1+gGNHzTzkP9eCH/h7R9B1vP4n+tEHagjYPJRljjaxGVlO/gEK89Hd0NbQYDOlLIrbGVZ8gKeNWbRYuIBC18T6It8CvOk5BNBKjl9YLG0CWN67CUeCrXA9cGDW/d790L8aIs8FItntF+CCzu4OybJg==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
+ dkim=pass header.d=nvidia.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=vQYJWqcAONnzK3eNNgqMHY/bCnCXZdHHBqUo5ZldEtk=;
+ b=P2PXNJHUrTD+fkl7pifsthG8oz2Nynt0qdm9RJIkpGNg2XKmYiK1kXl73KSTRW7mi8hD8i/kTZaG4h1AoEc2TtyEyjDu7Bw8vIr7C0VnzZLFR8nD22cii3N02/mTtSfgOmxrFJxUcMCKK7uCHfdahrVGKIBhGLapUgw8z0EwBXLyQ1kzrgwlGAYa9nz0pRCnaPUMbOqcpeapcKYYkSTClGrHRxSqilgIcQGxt1NlYKxEvRlkMLOvZi9UYoEFQZFDod2oVt+kBvwnULVwWSXHfFElpVuLnjSsP1l1CPLInnMeDHLW2jX24VSZNuzShNols2KX9PezzxhoqxPxyxU9Cw==
+Authentication-Results: mx.microsoft.com 1; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=nvidia.com;
+Received: from CHBPR12MB731189.namprd12.prod.outlook.com
+ (2603:10b6:610:33d::12) by DM4PR12MB6158.namprd12.prod.outlook.com
+ (2603:10b6:8:a9::20) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.546.15; Tue, 20 Oct
+ 2026 14:06:56 +0000
+Received: from CHBPR12MB731189.namprd12.prod.outlook.com
+ ([fe80::b0e5:123d:fe06:e10d]) by CHBPR12MB731189.namprd12.prod.outlook.com
+ ([fe80::b0e5:123d:fe06:e10d%6]) with mapi id 15.21.0546.012; Tue, 20 Oct 2026
+ 14:06:56 +0000
+Date: Tue, 20 Oct 2026 11:06:55 -0300
+From: Jason Gunthorpe <jgg@nvidia.com>
+To: Mimi Zohar <zohar@linux.ibm.com>
+Cc: Dionna Glaze <drdeeglaze@gmail.com>, Jiri Pirko <jiri@resnulli.us>,
+	Jarkko Sakkinen <jarkko@kernel.org>, linux-coco@lists.linux.dev,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
+	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
+	roberto.sassu@huawei.com
+Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
+ support
+Message-ID: <20261020140655.GV13920@nvidia.com>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-5-jiri@resnulli.us>
- <179245258505.58760.6612247594755628055.b4-review@b4>
+ <20261016234354.GA664420@nvidia.com>
+ <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
+ <20261017203407.GM13920@nvidia.com>
+ <atPgqROZZxnihYfC@kernel.org>
+ <20261017231007.GP13920@nvidia.com>
+ <CANwfdvVJRv6++MJ8OCUnHSR_5nVD8Yv6eTmYxxqfzxEk0sNfpA@mail.gmail.com>
+ <atX9fugGUsI0hGcA@FV6GYCPJ69>
+ <CANwfdvUhuQ6L+w+91iDZD=diMmaJ6_2ZsFKkcoiKWOmPMC1oKg@mail.gmail.com>
+ <a69c7e7ac4fd07a9c375faadc599e96bb8c8534e.camel@linux.ibm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <a69c7e7ac4fd07a9c375faadc599e96bb8c8534e.camel@linux.ibm.com>
+X-ClientProxiedBy: CH0P220CA0001.NAMP220.PROD.OUTLOOK.COM
+ (2603:10b6:610:ef::19) To CHBPR12MB731189.namprd12.prod.outlook.com
+ (2603:10b6:610:33d::12)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,304 +117,112 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <179245258505.58760.6612247594755628055.b4-review@b4>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: CHBPR12MB731189:EE_|DM4PR12MB6158:EE_
+X-MS-Office365-Filtering-Correlation-Id: 998990e9-b665-4b9a-d952-08df2eb36643
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|23010399003|1800799024|376014|7416014|366016|6133799003|10067099003|18002099003|22082099003|11063799006|4143699003|56012099006;
+X-Microsoft-Antispam-Message-Info:
+	K/rszYfC5ilAYUoYYuikSKhO9DWsZJoH7DDSzifnOBWwc6TFeWR/JVoOzjeOGK+f2JE1uvP9TixdYyXwJdqod35wmK75YEdt67LCpaj8PW13ICXq7zBP0ZI/Yh78uN5EUTp500nXsoDHFpLHFY+TZ/zwaJAROFuU/bRevra7/6DXcYvCNOHpxRYqplHKdVDDYKI5bTbhwNjXWOdf/TlA25rg2i7swcqfSLjpRrATSHtsKKz8lcsg3Ygg0y8+xQhbrWFdzjzD+b0OIUpr2wlimZYChIX8zj44od3gBD7hKyimuje26Nuc+/cTQ3Vypd3EU1Z8GCx8A/gn0vbcnFZ6560fCpMjnnpdXf16Exy/xubnrG8cXeptJpF0nJx1pbGIhG8fdkXAfJqqz92uYWt9OapF0WHaXwsFnR22TtoRm6u2GBTpzvPYHFVXlrvRY58AAjod6VYe9IXmS3EB7ueIVvgk8CT5I3XxoQ5Bd77PJT4c+wJr+gXlSwDFq9p3rO3u3vhaHJCsfBiMdp7UnrYEYoOK3qnzc36bmXk9DSH6jAsrKaaFxEmKAbLeAteM+b0J3iJZBzDGcXVNa9k2EZbLsukOD+VtMc7QY7Z5npkYruKovUDyBAiZ8PsQNE0eCKQeCvOqySvAFcAgrntsno0ZO3JISeRKq2+Ggb2G1u/PXI0=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CHBPR12MB731189.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(23010399003)(1800799024)(376014)(7416014)(366016)(6133799003)(10067099003)(18002099003)(22082099003)(11063799006)(4143699003)(56012099006);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?dm1qbldXM2ViZThnZTZpcVJtMmdya3phdmpabkJXeEh6dTFiaFpDMUdSYVFW?=
+ =?utf-8?B?KzlGcGFNdkR6QmdLaitrZWJqSDZhSHNndjE2QmMveFZGZzVIbWdKOWJUK0xI?=
+ =?utf-8?B?VDlSM1ZpQm1oYUdTQjZRdXV5WlRYamxNSTR1TlFTc2ZSYVVFbFZHVUk5WFIz?=
+ =?utf-8?B?SUtZRCs3ZlJSNFdiajBGdmRQcytucEtDOVR5S2kxc0I4bE94Y0NDYWtPUUVj?=
+ =?utf-8?B?SmkwdzdOKzZWVnRhNGZvNVU5U2JkM2VLVkJwMWxMZGpnTnpIanJCTi9kQlZU?=
+ =?utf-8?B?TUtJTmQ2c1FPUkVVbFFabFdKYStUUm5LWW9KNk5pVkpWOTJLU3k2bm0rd3RJ?=
+ =?utf-8?B?Y0p6bGZFR1Y5VFh1NGpxcFo1Y0cxYWxsOUFVT0hONUZsWnB0NXlDbEN3Mllv?=
+ =?utf-8?B?NFRROUVFS1JZN2pkWnA3MlhJL29XZWNyK0dseHRPUytKdnZqY1hDQVVyaEh4?=
+ =?utf-8?B?MWt5by8rM2lEZjd1bmJCSll4SzRBNmFDT3hnRi92NlpiM3poSllxM2VhTWd2?=
+ =?utf-8?B?VUl6dU1VQytLVlpxUFFCRGFDOUhlN3FyUFF5ck52R0ZJV21lWDdzMlUweE1y?=
+ =?utf-8?B?QTA0eUJuK0FXS3hLZklxc2Iwclp2V3B0RXNMYlgvakV6OG5TWXdSRFVXSkJj?=
+ =?utf-8?B?RXpJV0IvcURId3hLMnBsdHhBMmlBMnNiM3BVZDZLa042eDkzQ3liL3NGOVpp?=
+ =?utf-8?B?eXJlTkRVN2ppeHVVTFlaeHE2KzJEeTZCWHE3clgrV1JwLzR3RmFjQThwSThw?=
+ =?utf-8?B?VWxpVERPaFJMQjNOOWIxQytuWjdFd3gxeS9waks5UzhCWlFQbVdhdldCTjhK?=
+ =?utf-8?B?aW5sZzgwNCtTVi9WMHhWMnQ3ODdwbmxGeUtXQzllZGpaYUh0RS9jK1VFT3oy?=
+ =?utf-8?B?MFI4aWxzNnZPazRpZFZ0aXZhY0puM0cvamZuV21RRE53enNTUktyZURoOHE3?=
+ =?utf-8?B?cGhPQ3NSUDhFMThmY0w4M3BGNzVJMkhQRTlaL25oWUpCYllENDNsR0JRNmxo?=
+ =?utf-8?B?UEJwdE1RMW5FUWp6ZEFicWsyMDRrNjBhUjRGdnRMcXJHUUYzL2pPajhPUjlQ?=
+ =?utf-8?B?TWRxLzVRK0lQNDhFL1NReFAvQUZHQ0FFcm80TUxpWXFFNDVtUzE3WmJoS3VX?=
+ =?utf-8?B?TlE4UVd1YVgzMDdTellEbHFFZmQvNWc0N2xEYlRQODNiTUVnNVJiaEFSSXpw?=
+ =?utf-8?B?djBDUkxyK25hTk01T21xN2tMTHNNWlNuQktFTXJGM1RjSElQd05GVVk4b29h?=
+ =?utf-8?B?U05kZXppemEwS3h4dk8xN3NTK0l6NXcvY0tXLzVFenh3ZTJuSy94cGlhZDd3?=
+ =?utf-8?B?SG1WTFd5QmJ1Q3d2dWV3aGhKRWhOWmZNZUtuWUlwU0hKaGpPUnZnU3d4UVRV?=
+ =?utf-8?B?c0pLSXlpRVBMVkU3bk5lNkl0R3VNYjhBR1c1R0Fvd3NwTHlLNTNoUmthdmNq?=
+ =?utf-8?B?RDlZbXBhTVVLaE9PSU9JanNMS29jV1dqTGJjdy9IcWthYW1lTTJqSURId3Mz?=
+ =?utf-8?B?ZXZqajIvV2p4bWtST1dOaVRaZnRoZnAzTTNBV3l2cWhmUVhNNUh0cjdlV2hX?=
+ =?utf-8?B?b1Bta1RsNkh5eVlnNGw3Wlh2UGt4OWhzV0hwR0RaSE5DT1FhQmhWUnpuREJZ?=
+ =?utf-8?B?WG5GMTlNcWtNM2ticUtzUHBMMHkxZzh5YUpocjNvN1ArNEI1bGdORjJSN0Yv?=
+ =?utf-8?B?eUNQQXJITTZwVm9KNDVCeittbEtaUHhHeUFjM2M1TUhSL0piR0UrYngrdHZJ?=
+ =?utf-8?B?dUhvc2dqeHl1a1BsdzlQMmNLK1FTMHdzV043eUhsWXpINXhyeUpoN2x5L2xx?=
+ =?utf-8?B?emJPSXdXaFdXaFhmVVY1TXRSUnRIK3pHeE9BWGFWK2hNQzNBZW5SeExFbmp6?=
+ =?utf-8?B?UjBjak0wdmhscmhUVHdGaWN3aGJWR0NidEpJcy9SVy9Gb3dMNG51dXF5eEpF?=
+ =?utf-8?B?WUhMbjM4UFBQTGtkZHJEOTJ6allPL2I5L1NOZDBzNmN4emVuWjRwVjdOYzZJ?=
+ =?utf-8?B?WGdrUHRLL2hOMlk4dXRrZ2ZKdUpLSlBvYVNTQTVqKzVobit0SzFNMFFYR29D?=
+ =?utf-8?B?Umc0cUdqWjR0Z1VrTk5xNkhaeGZjbkRCVVVQa21iK3hZTTZLcnhrV2ZZZjQw?=
+ =?utf-8?B?QmpTekRDRHZzY0kyQWtSSHJBbGR3QjNWRy9pRnBSeENIUkIvOWtzTjVpaUt5?=
+ =?utf-8?B?WW1TSm9pbUYvaHhvdjF2Rzk0V1h6ZWQ4Y2hQa01KdFQzMHl4ZE5TeVRwU1I1?=
+ =?utf-8?B?WmpUeHd5RzN6d20zT1dCTUs5NXd6M3hhcVd1ZERSdnZoYUN1QUEvY2dxOFVH?=
+ =?utf-8?Q?zISqWq9mCG/L4VxNPe?=
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 998990e9-b665-4b9a-d952-08df2eb36643
+X-MS-Exchange-CrossTenant-AuthSource: CHBPR12MB731189.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 20 Oct 2026 14:06:56.0672
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: zn5OmPhVL/KmLdlyHOr13PlU9ajIH9elpTEjr9VeTYV0mF/FpYavGFPvByq7HuPS
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM4PR12MB6158
 
-Tue, Oct 20, 2026 at 01:29:45AM +0200, jgg@nvidia.com wrote:
->> Describe the CTLV transport, discovery, wire format and userspace
->> compatibility rules.
->> 
->> Assisted-by: Cursor: GPT-5.6 Sol
->> Assisted-by: Cursor: Claude Opus 5.5
->> Signed-off-by: Jiri Pirko <jiri@nvidia.com>
->> ---
->>  Documentation/userspace-api/ctlv.rst  | 507 ++++++++++++++++++++++++++
->>  Documentation/userspace-api/index.rst |   1 +
->>  MAINTAINERS                           |   1 +
->>  3 files changed, 509 insertions(+)
->>  create mode 100644 Documentation/userspace-api/ctlv.rst
->>
->> diff --git a/Documentation/userspace-api/ctlv.rst b/Documentation/userspace-api/ctlv.rst
->> new file mode 100644
->> index 00000000000000..5ebca3d4d94af8
->> --- /dev/null
->> +++ b/Documentation/userspace-api/ctlv.rst
->> @@ -0,0 +1,507 @@
->> +.. SPDX-License-Identifier: GPL-2.0
->> +
->> +==================
->> +CTLV userspace ABI
->> +==================
->> +
->> +:Author: Jiri Pirko
->> +
->
->This could use an introduction:
->
->Char-Device Tag Length Value (CTLV) is a flexible way to describe system calls
->delivered over ioctl for a kernel subsystem. It provides a 64 bit operation
->number with variable length input/output arguments described in a YAML schema.
->The arguments are serialized using a TLV scheme. Strong support for
->forwards/backward compatability is baked into the schema design.
->
->CTLV excels for uAPIs that are too unconstrained to fit in simple structs.
->Things that have arrays of arrays, variable size structs, variable sized data,
->strings and similar which are challenging to represent.
->
->As a transport CTLV uses a global number space. Inspection tools like
->strace/seccomp can always decode a CTLV ioctl without having to know what
->subsystem is using it. The global number space is organized into families, which
->roughly corresponds to a subsystem.
->
->A family describes what its devices accept in YAML, a generator turns that into
->kernel metadata and UAPI headers, and CTLV validates every message before a
->family callback sees it. Userspace sees one character device per instance, one
->ioctl, and ``read()`` for events.
+On Tue, Oct 20, 2026 at 09:45:13AM -0400, Mimi Zohar wrote:
+> On Mon, 2026-10-19 at 09:10 -0700, Dionna Glaze wrote:
+> > On Mon, Oct 19, 2026 at 5:08 AM Jiri Pirko <jiri@resnulli.us> wrote:
+> > > 
+> > > Yeah, I was thinking about this and went back and forth. In the end, the
+> > > only reason for leaving it unbounded is to allow multiple independent
+> > > users of the same register. For example, IMA and systemd could share a
+> > > TDX RTMR. The systemd side would read the journal through the
+> > > attestation device and the IMA side through securityfs, but both are
+> > > views of the same journal. If one side truncated it, the other could no
+> > > longer replay the RTMR. Isn't this the valid usecase? Do you see how to
+> > > resolve this?
+> > > 
+> > 
+> > Bright minds have spent a significant amount of time working on this.
+> > 
+> > +Roberto Sassu, +Mimi Zohar
+> 
+> Dionna, thank you for including us in this discussion.
+> 
+> Based on my questioning AI, it sounds like the purpose of this patch set is to
+> introduce a vendor-agnostic common attestation subsystem framework that can act
+> as an internal kernel multiplexor for any measurement consumer, like IMA or
+> DRTM. By providing a direct kernel-to-kernel call path, it allows measurements
+> to be routed to different Roots of Trust (ROT)—such as physical motherboard
+> TPMs, Intel TDX RTMRs, AMD SEV-SNP registers, and PCIe SPDM devices—without
+> hardcoding IMA to specific device drivers.
 
-okay, looks great.
+Yeah, I would say that is the eventual goal, this patch series would
+be the first small step along those lines
 
+> To support this framework, IMA requires a strict, atomic execution sequence to
+> maintain the Measure → Extend → Execute (Measure Before Use) guarantee. This
+> initializes early during the late_initcall phase within the initramfs (via
+> dracut).
+> 
+> If the new subsystem introduces a direct kernel-to-kernel multiplexing call
+> path, how will it ensure the mandatory synchronous wait behavior when extending
+> multiple hardware backends?
 
->
->> +CTLV is a transport for device control interfaces. A family describes what its
->> +devices accept in YAML, a generator turns that into kernel metadata and UAPI
->> +headers, and CTLV validates every message before a family callback sees it.
->> +Userspace sees one character device per instance, one ioctl, and ``read()`` for
->> +events.
->> +
->> +This document is the ABI. What each family accepts is specified under
->> +``Documentation/ctlv/specs``; writing a family is :doc:`/driver-api/ctlv`.
->> +
->> +Why a TLV transport
->> +===================
->> +
->> +CTLV puts the rules of every operation in one description and validates them
->> +once:
->> +
->> +- One ioctl carries every operation of every family, so a new operation is a
->> +  new specification entry, not a new ioctl number.
->> +- Attributes are optional or required by declaration, so a message can grow
->> +  without breaking a caller that does not know the new attribute.
->> +- An unknown attribute is refused on a request and tolerated on a reply, so a
->> +  new kernel can say more to an old program. A request may mark an attribute an
->> +  old kernel is welcome to skip, so a new program can say more too.
->> +- Bounds, lengths, occurrence counts and nesting depth are checked before a
->> +  family callback runs.
->> +
->> +Devices
->> +=======
->> +
->> +Each registered instance appears as a character device in the ``ctlv`` class
->> +with a dynamic minor::
->> +
->> +    /dev/ctlv0
->> +    /sys/class/ctlv/ctlv0
->> +
->> +Sysfs shows class membership, the ``dev`` number and the device-model link to
->> +the parent device. There is no family sysfs attribute; ``families-dump`` on an
->> +open descriptor is the authoritative answer to what a device is.
->
->I've tried to like this but, I really am not a fan. I think it
->reflects too much of a netlink influence.
+Everything has this 'measure before use' requirement. Why would this
+be hard? Just loop over all the configured measurement targets if
+thats the plan? Maybe I'm missing something?
 
-Well, yes and no. In contrast with Generic Netlink, CTLV builds on
-inheritance. So *every* CTLV family is child of "root" CTLV family. So
-if user opens any /dev/ctlvX, the "root" CTLV family ops work. Then the
-families-dump op reveals the inheritance chain from root to the leaf.
-The idea is to allow generic tool to work on upper family level and
-allowing some driver-specific tool to work on the leaf.
-Think of it as a part of introspection of a device.
-
-
->
->My two biggest problems:
->
->1) This prevents us from incrementally using CTLV as a more robust
->   uAPI. Like if I wanted to start using it in vfio for new uAPI I
->   cannot
-
-I don't think that the existance of family-dump prevents you that. I
-have idea of a split that would allow you to attach CTVL ioctl on
-existing fd. Will try to sketch it and implement it.
-
-
->
->2) It destroys the kernel concept of a cdev subsystem, where we have a
->   distinct class, /dev/ directory and cdev nodes.
->
->   Lots of tooling and userspace is geared toward working this way. A
->   completely unstable /dev/ctlvX that could be *anything* will need a
->   meaningful new methodology in userspace. For instance anyone doing
->   containers that wants to pass these is going to need special
->   tooling.
-
-The node is not opaque before open, though. It is a device-model child
-of the device that registered it, so /sys/class/ctlv/ctlv0/device
-points at that parent, and its uevents carry the family and its
-ancestry (CTLV_FAMILY, CTLV_COMPATIBLE_*).
-
-udev can name it from the same properties. ctlv0 is no more stable
-than sda or event3, and it gets a stable name the same way: a rule
-matches the family or the parent and adds a symlink, as /dev/disk/by-id
-does for disks, e.g.:
-
-    SUBSYSTEM=="ctlv", ENV{CTLV_FAMILY}=="ctlv-attestation-tdx", \
-        SYMLINK+="attestation/tdx"
-
-A container is then given /dev/attestation/tdx rather than whichever
-ctlvN it happened to get; no special tooling is involved. The Discovery
-section later in the doc has the details.
-
-
->
->> [ ... 143 lines skipped ... ]
->> +An attribute ID names the family that declared it, a group within that family
->> +and an attribute within that group::
->> +
->> +    63           48 47           32 31                             0
->> +    +--------------+--------------+--------------------------------+
->> +    |    family    |    group     |             attr               |
->> +    +--------------+--------------+--------------------------------+
->> +
->> +    CTLV_ATTR(family, group, attr)
->> +    CTLV_ATTR_FAMILY(attr) / CTLV_ATTR_GROUP(attr) / CTLV_ATTR_NUMBER(attr)
->> +
->> +An operation ID is the same shape with the group bits zero::
->> +
->> +    CTLV_OP(family, op)
->> +    CTLV_OP_FAMILY(op) / CTLV_OP_NUMBER(op)
->> +
->> +Use generated complete IDs. A family's header defines every ID it declares
->> +and includes its parent's.
->
->I'm OK with this, it seems like a fine design, very netlink inspired.
-
-Netlink actually does not have it. Attr id is not global as it is here.
-
-
->
->One of the nice properties is an external tool, like strace or a
->seccomp does have enough information to capture the entire operation,
->including all parameters.
->
->Though I wonder how much trouble it will be for userspace to form
->these things.. It has to pre-determine how much memory it needs then
->fill in this structure. That's not so easy to use.
->
->How hard would it be to accept a linked list, or array, of buffer
->frags? With some strict rule that a leaf attribute cannot span frags?
->
->My thinking is userspace could allocate frag by frag as it builds the
->message instead of being forced to do a size, allocate, fill sequence?
-
-There are no frags on the request side (reply has them).
-The entire message is a single buf. For request, all arrays are bounded
-and this is enforced for every family attribute. The introspection
-provides kernel-computed max size of buffer for ever op request.
-Then during processing, kernel copies the whole request buffer before it
-parses it.
-
-I deliberatelly made this limitation to keeps things simple. Makes
-sense?
-
-
->
->> +
->> +Request occurrence order
->> +------------------------
->> +
->> +Occurrences of one attribute ID must be contiguous within each request root or
->> +nest. ``A A B`` is valid, while ``A B A`` is not. An ignored unknown attribute
->> +is not an occurrence of any known attribute, but it ends the preceding run, so
->> +``A ignored-unknown A`` is also invalid. Different IDs otherwise have no
->> +required numeric or schema order.
->
->I'm not entirely sure what this is trying to say. Is it just a single
->ID must be contiguous if it is repeated?
-
-Yes it is a limitation of ordering of attributes that occur multiple
-times in message/nest (arrays). Will reword.
-
-
->
->> +
->> +Attributes a kernel may skip
->> +----------------------------
->> +
->> +A request attribute, the root aside, may carry
->> +``CTLV_ATTR_F_IGNORE_IF_UNKNOWN``. If no family the device answers declares
->> +that complete ID, the kernel steps over the whole attribute without looking
->> +inside it; without the bit, an attribute the schema does not place where it
->> +appears fails the request as it always has.
->> +
->> +The bit forgives an ID this kernel has never heard of and nothing else. An ID
->> +the device's schema declares somewhere is held to that schema, so an attribute
->> +sent where it does not belong fails whether the bit is set or not, and one sent
->> +where it does belong is checked as usual. Every other rule applies too: the
->> +length has to fit its nest and the header may carry no bit the format does not
->> +define. Replies and events never carry it.
->
->This is pretty hard to read. AI?
-
-Okay, will reword.
-
-
->
->> +
->> +This is how a program built against a newer version of a family talks to an
->> +older kernel. What that kernel knows is validated, what it does not is
->> +ignored, and a caller that has to know which is which asks ``op-schema-get``
->> +first.
->> +
->> +Executing an operation
->> +======================
->> +
->> +One ioctl executes every operation::
->> +
->> +    struct ctlv_op_exec {
->> +            __aligned_u64 op_id;
->> +            __aligned_u64 request;      /* struct ctlv_attr __user * */
->> +            __aligned_u64 reply;        /* struct ctlv_attr __user * */
->> +            __u32 request_len;
->> +            __u32 reply_len;
->> +            __aligned_u64 generation;   /* queries only */
->> +            __aligned_u64 cursor;       /* queries only */
->> +            __aligned_u64 reserved[2];  /* must be zero */
->> +    };
->> +
->> +    #define CTLV_IOC_OP_EXEC _IOWR(0xBB, 0x00, struct ctlv_op_exec)
->
->Generally I've ben frowning on using the size arugment for ioctl. This
->means you can never make that struct bigger, and that's historically
->been a bad choice...
->
->I've mostly been using this:
->
->  #define IOMMU_DESTROY _IO(IOMMUFD_TYPE, IOMMUFD_CMD_DESTROY)
->
->And then put a length at the top of the struct and do the
->
->        ret = copy_struct_from_user(ucmd.cmd, op->size, ucmd.ubuffer,
->                                    ucmd.user_size);
->
->Kind of thing so there is a solid compatability story.
-
-Okay, makes sense.
-
-
->
->> [ ... 81 lines skipped ... ]
->> +``ENOMEM``
->> +    The kernel could not allocate what the operation needed.
->> +
->
->EOVERFLOW for check_overflow failures
-
-Okay.
-
-
-Thanks!
-
->
->-- 
->Jason
+Jason
