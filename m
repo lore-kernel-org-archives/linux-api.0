@@ -1,103 +1,108 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=198.37.111.173
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.48
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792500587;
-	b=Ufeovq8Z723Vhg/JvhPrgOQO5xnSRxEdyRjqwe5P5Dt1HSr9MgoyoFObHws8nOwiFFX2
-	 ELsynx8HW+8+FnYVP+BO38OPEsPpII1DKwqPk8dUDzGwALnYknn0U8todVjcOGbKhIq9A
-	 6wqAIeuvVi4xA1maXhBd8VH2au98H4i+GxBm7gKNTnMZJoFXWf2rHVmDMjUdqJDHh8Idr
-	 TwLijoBgSLkOpWUA7HwjWhrabw4Q3VDGX7RHDlLfqddFUIUSoS9MTk1x3wJH2wQKumq3j
-	 xgvNkGbqVHvle07aiP84vUVNwdd2JS7+z7HCRPHQ2F+fVFF6YK71aQXchb3yKilucbA==
+	t=1792500923;
+	b=kdItIgVO/mxJ884/VGLU5MhJxo92nlkM+v5Lark20icAdAapduTTIziiUf8sgsgDzo9t
+	 lLsJS/dpcafXJ/MliuodhOhpKJS299ue7kGsPvxAgGXGci4C4fC1ENouPkIOjIPia90BW
+	 9PtptGRWwOQtAkU9JVc2fKspBfYsUH7ezvE57G1RLipueCyIBKJktR6aCIF2JYTeRBqKX
+	 y3xrfg8bE/yk+HnHAeVZcuxSJ7fgEsd0Nzfd0miFln+XGfU9lDFBL7Li7tlcCLIqAsNfK
+	 IkLqomayEwoJ4So3JBAdrzitJvqLoU0ha2m5ZmYoLfViBT1q0oxnZDL/ToBrIBWMidA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792500587;
-	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:Subject:From:To:Cc:
-	 Date:In-Reply-To:References:Autocrypt:Content-Type:
-	 Content-Transfer-Encoding:User-Agent:MIME-Version;
-	bh=TIOCIITuSbPT2liliRicmMIM7M6l7fcTvqwiPQyOtNw=;
-	b=P3qcUsXQ//AA7x7CswRmqV2A87fWDuhEqj/BoADjlOGF2IguneoLCp2hAEU1Mub8mxe8
-	 7pDQk5EX2OYvkrZyjhE421hqE+GtMaMkJawTORIgnjfT7zZpOhdFBpBZ3Zn5w6QtTFbMg
-	 S/J+nZPFwngMlornhxMv6qCmskwJgJLkWc/gMEuGIegSc8Q5LboclmhJ3yCDNYAG5J6As
-	 gsInHWixsUuAgo5C2sO0JMc4WolsYXTlchZ45E5bKfmwISGev+IBifMaDDYM73jk5NVIg
-	 l1+AIoYtFfSZGGBkq92b+6CoKqiLD0FKo17/DOfr+ZELoBz3aPl9GgRHgXjHWqEpOTQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792500923;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=XQOUTOVFh8JzZI9kzVmkfR5g5tplHfGAGARfyUUcUvk=;
+	b=g1/U/xVmB+O83Npw1OStwclTKyuHLGI3Q2wD15lJu3GqT12kYEQNAbCRPjX5+ie+XB7B
+	 K4PKITPCpfKz7flA/1N0t6FfVZ1YwwNge1I75/FOm9doG3aq8W7t1Z42wwpcN3on7fHgj
+	 xa1paQJm8VcnIBhBe92M98iv41188GHBpOO9zHM01AFb7gkwpBTKzj/xGwfg3amP+u+lZ
+	 Sb/g9ryVh4G6e40hA3Ahe6Yq3PSh5xteGCKoTcsvxasyqm+IZTa84L5GTVQHdXy6wOI//
+	 WjKe5IgtRy+3sISwRVXUHMEG4gg1maUYL8Q/p+jU2zOl27pZ8oFzfC6uime6yNURUag==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=HansenPartnership.com;
-	spf=pass smtp.mailfrom=HansenPartnership.com;
-	dkim=pass header.d=hansenpartnership.com header.i=@hansenpartnership.com header.a=rsa-sha256 header.s=20151216 header.b=dVs7pl3h;
-	arc=none smtp.remote-ip=198.37.111.173
-Received: from lamorak.hansenpartnership.com (lamorak.hansenpartnership.com [198.37.111.173])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=AwG15E1Z;
+	arc=none smtp.remote-ip=209.85.219.48
+Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com [209.85.219.48])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B1A4606A31B;
-	Tue, 20 Oct 2026 12:49:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5B1A4606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=HansenPartnership.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=HansenPartnership.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 040BB606A31F
+	for <linux-api@vger.kernel.org>; Tue, 20 Oct 2026 12:55:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 040BB606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=hansenpartnership.com header.i=@hansenpartnership.com header.a=rsa-sha256 header.s=20151216 header.b=dVs7pl3h
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-	d=hansenpartnership.com; s=20151216; t=1792500585;
-	bh=VLXJnQpgYJsKuCzhfylAqjVbAh/vojMAxeKyxjm/3TA=;
-	h=Message-ID:Subject:From:To:Date:In-Reply-To:References:From;
-	b=dVs7pl3hCB3VWFPSgI+hHOexpiUyS/N9H3kuThBW+L8MzuKlAjsYIVX7pTAnVNPNm
-	 khcRTxSYm0O4T17yeuI6drMgpKYOgs43KW3wlEpT/1Imr8tPyyoVR9dWRThcwLFaj4
-	 2IAvrcvFLhjSiLZGwcwIJAHunDVrrcIwmW8UEWMc=
-Received: from lingrow.int.hansenpartnership.com (unknown [IPv6:2601:5c4:4300:d341::8309])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519MLKEM768 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by lamorak.hansenpartnership.com (Postfix) with ESMTPSA id 5CF861C0118;
-	Tue, 20 Oct 2026 08:49:44 -0400 (EDT)
-Message-ID: <31f7f221d7b63732d057abe064e5b23869103600.camel@HansenPartnership.com>
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-To: Jason Gunthorpe <jgg@nvidia.com>, Dionna Glaze <drdeeglaze@gmail.com>
-Cc: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, 
-	kvm@vger.kernel.org, linux-doc@vger.kernel.org, david.quigley@intel.com, 
-	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
- cedric.xing@intel.com, 	sameo@meta.com, aik@amd.com,
- jpiotrowski@nvidia.com, qinkun@google.com, 	pgonda@google.com,
- jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com, 
-	jarkko@kernel.org
-Date: Tue, 20 Oct 2026 08:49:43 -0400
-In-Reply-To: <20261017203407.GM13920@nvidia.com>
+	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=AwG15E1Z
+Received: by mail-qv1-f48.google.com with SMTP id 6a1803df08f44-91b54d1e9cdso28582316d6.1
+        for <linux-api@vger.kernel.org>; Tue, 20 Oct 2026 05:55:22 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1792500922; x=1793105722; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=XQOUTOVFh8JzZI9kzVmkfR5g5tplHfGAGARfyUUcUvk=;
+        b=AwG15E1ZRPKZS56zseZDToB2Qd9YJbTawLLcr9h1GLur1yCKOphB9CZeYoOaDMSbVa
+         RrPlrw5eMLSbJOuslxyszTx4NmEnv744KuWIwG3DizDX0uWRbErpkLwFCuAWB+o9DRFg
+         UDL4ypgxiss5CkG9v/9yYGF/Wsp/f2dCLf4e6CR3fB+jtf8r2d9o3+KYLDv1ozPWgId0
+         qwRZmFOw7C/Ek9a3K6UDlQQsnDrTtjosSM7fZhX5JREOkWrFCKLppw8Pmb/qLty56lpP
+         ZYj8Ee583y70a0njyljl7Z1GKpSK+nqzpOa7hK8N2VSD0I3LKpuHkedfhTxNE2H7j0za
+         9QeA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792500922; x=1793105722;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=XQOUTOVFh8JzZI9kzVmkfR5g5tplHfGAGARfyUUcUvk=;
+        b=CFPJ9Z5aT6XPoLxYytRFX/BPzQEV3fIgJsOeIob2Aib6oZVAZx3KKxg6I8NdS8k+yl
+         Ml+3hrokuhwMtKvT/Q82Vdzk56dqAbPBTYalXUSPWXMpqgftKR472PV3WlKKKAA/ocZo
+         BkywARxcx+xS24df++75cSzk9HqBLe/VnSLsiwTWXPOWvJ5qtJPszejXtDwHii4yY0Xa
+         e66on/K4U/sbnD8j1BH0dlcJZWZlWc/Hc9YJSGno/4XDuaofW3a2ZF9tmY7OyLwjrvOv
+         FhNGHyZZSoZcQEu2UyO54pQh0ZX7DTrm5fA7iWPblTeSEvpB9E/UfU6QXf6utGaIYMIU
+         tZfw==
+X-Forwarded-Encrypted: i=1; AKwUvBwlLwAdDvWoBeqDgy42Vap1JYqPdGtZGZRfcz7S+OuWDqc0YiuqVYN6VXxikoJiywhUI8IMDQ/ZoDA=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLJIBX7Azf1izG7wCWHXLhxS1IAdIrlDK3jYTQTgeJ2gq8RCN18
+	FwMsPX6ziNG71BxTvl8Gm8oizmBEyxR+GQknjBlbxbMgRfWMAP3S36HDey2dkg2PDBQ=
+X-Gm-Gg: AYBFou3CpdqVJdPWAxpNcRiNk+WRW5NGuz3PN/1mj3dlrYhPabdBxRgTFgR0CZrkGx2
+	l9RJqfi60ZZ+e5oZ17hVCCdMT3g2s21oT9g2Ux1dC88hZ67xMd8yoVqsNEwU4Ln1YEnwWwe2RUW
+	ervft2EcYRmFp+x7KhXuct2qid3DfMfiUZ/36hWBPCI2uN31d6R+zDS50+Qv4lZIA7dq948GPql
+	huh6HWSpOC91xAZJrJPvYpjFpIPNWY3YtMCJGxOA5PfGgGLLWiiBsV9CMKauy2a/Nt/rNF3gezE
+	lQq+MbmvTsjsqoG/Rw5OlB/C5NlgsZPJcSwgEtGYb/xoOLlOn9QBtluFMOp3cGmhMS6lMlA+d5v
+	p3H3QAS7rDFLaWzp7sGDNZ/A97EWtNEg6EuhH9Lszw4KVdxUSnFDJ1UUS0GMy/EmFqsRGs8S39e
+	04uqNMkm4p3dVEbiRs5PdKOGYQTF2ZKlSnhLib0/sRYRTZ0vCoRf5YJigIild+7v1jy/UBeumE1
+	dRWTku2TzasxwtU1RDYKNIL+4so7iWGEmO0a8IywyullGS8i0up1frC
+X-Received: by 2002:a05:6214:626:b0:917:8752:8214 with SMTP id 6a1803df08f44-91bdec2e198mr180120836d6.1.1792500921889;
+        Tue, 20 Oct 2026 05:55:21 -0700 (PDT)
+Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91c03da5b4asm26796476d6.0.2026.10.20.05.55.21
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 20 Oct 2026 05:55:21 -0700 (PDT)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xJ9NA-0000000CTFP-3VJ7;
+	Tue, 20 Oct 2026 09:55:20 -0300
+Date: Tue, 20 Oct 2026 09:55:20 -0300
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de,
+	ksinyuk@kernel.org, rodrigo.vivi@intel.com, cedric.xing@intel.com,
+	sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 03/20] ctlv: Add the root family specification and
+ generated files
+Message-ID: <20261020125520.GN14213@ziepe.ca>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
-	 <20261016234354.GA664420@nvidia.com>
-	 <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
-	 <20261017203407.GM13920@nvidia.com>
-Autocrypt: addr=James.Bottomley@HansenPartnership.com;
- keydata=mQENBE58FlABCADPM714lRLxGmba4JFjkocqpj1/6/Cx+IXezcS22azZetzCXDpm2MfNE
- lecY3qkFjfnoffQiw5rrOO0/oRSATOh8+2fmJ6el7naRbDuh+i8lVESfdlkoqX57H5R8h/UTIp6gn
- 1mpNlxjQv6QSZbl551zQ1nmkSVRbA5TbEp4br5GZeJ58esmYDCBwxuFTsSsdzbOBNthLcudWpJZHU
- RfMc0ew24By1nldL9F37AktNcCipKpC2U0NtGlJjYPNSVXrCd1izxKmO7te7BLP+7B4DNj1VRnaf8
- X9+VIApCi/l4Kdx+ZR3aLTqSuNsIMmXUJ3T8JRl+ag7kby/KBp+0OpotABEBAAG0N0phbWVzIEJvd
- HRvbWxleSA8SmFtZXMuQm90dG9tbGV5QEhhbnNlblBhcnRuZXJzaGlwLmNvbT6JAVgEEwEIAEICGw
- MGCwkIBwMCBhUIAgkKCwQWAgMBAh4BAheAAhkBFiEE1WBuc8i0YnG+rZrfgUrkfCFIVNYFAml2ZBI
- FCS3GUMIACgkQgUrkfCFIVNZKjQf/deRzlXZClKxTC/Ee2yEPqqS7mm/INUA49KdQQ5oIhSxkUBy0
- 9J4qjMIo5F8ZFkFTqikBqeL35LKu7O7rn8WETfX8Bxvos3HUsl3jHo34DES4MUFIpoQPgtiLRGwLb
- K0cVCAArR2u2qj4ABmTRrs1I1kvdjEw6gatOuXtEe/j5O2fvfzTq9GBr0Q3n2IAsFXi4hLlx6VPE8
- tyWUZ8BWJKtih3JAeUiXFvASL3McV0rV9RnU0VbjEQEhSE7PMYhWpnDC9AyBb0lXJllQRvC3NSkUB
- 8KVQgNNxRPss0WE/nBoZ4dFA42jTyzTz8lNylxZoAWV7WJb3QxVg4oCodRVrxxrQhSmFtZXMgQm90
- dG9tbGV5IDxqZWpiQGtlcm5lbC5vcmc+iQFVBBMBCAA/AhsDBgsJCAcDAgYVCAIJCgsEFgIDAQIeA
- QIXgBYhBNVgbnPItGJxvq2a34FK5HwhSFTWBQJgS5mYBQkbNYS9AAoJEIFK5HwhSFTWBpwIAL5Bk3
- 5FB34U6iHmDzzgdCbxLTs43T/YQyJpcGIvopBvnI/fDY8oSG6Df64/O6B+1R+A8TDp6ZG5ysUWnCC
- 6GuIaEHemBYkitMPglR6+sGCMQY7O0mlsPvdssvKK1KI9Bno4VU6ogaF2qVzefSqg1Djmf/DcsxWP
- rI/jdJ8FB5AYR2rjIdDFc+zRdAJuavo1/anyY2wgpFh/3R8IOYAEfWV9nGgYkf9+tA4EIn1sxE0I3
- L5oW2N3mbyRrkzuBwO8ztMCwqEPk7moWzhokcZqMXiAIahaZdkashJC+s2X2RZSGCy+g+pvY5NN4B
- BVG5XwLgVBqbHMTcxE0fbmPqz+q6O0LEphbWVzIEJvdHRvbWxleSA8amVqYkBoYW5zZW5wYXJ0bmV
- yc2hpcC5jb20+iQFXBBMBCABBFiEE1WBuc8i0YnG+rZrfgUrkfCFIVNYFAmODZ5ACGwMFCRs1hL0F
- CwkIBwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgkQgUrkfCFIVNZu0Af/TzvL2/NdgAcw9uN3x60H8
- jc4QUq14VpxcFEFEMpcj1morkX/G93V+56HBBaXZj+yK8PhxIA/SIz+sU7C/0YvKuvzakP8ZX/7WJ
- e32SOUtjfr/VTaqjIBzNj6OxLvZpmNbBw7s6DwhhNpHOWqJ/1ml+PtDRDV71IB58yVqQjp1xlNKVl
- ZppcJ5908EJzsFnRIVjiQiDSKoppqB2BCibBbrWcln7CiWMyOC/cco6SIn6twH+f7+aivJ3xGcOE2
- a9gBKF5rNi9TBoX9oyPmshv/TDmnohsVrH7AYXlGYfZTk15SWEiROh1QX8/uD9wl/gcIv5EDUpT/F
- L2jzOsA5663bw==
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2 
+ <20261015145053.3664509-4-jiri@resnulli.us>
+ <179245258505.58760.6060356114682279013.b4-review@b4>
+ <atdeH3nA_gkLwPLM@FV6GYCPJ69>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -107,52 +112,54 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <atdeH3nA_gkLwPLM@FV6GYCPJ69>
 
-On Sat, 2026-10-17 at 17:34 -0300, Jason Gunthorpe wrote:
-> On Sat, Oct 17, 2026 at 11:16:07AM -0700, Dionna Glaze wrote:
->=20
-> > > About 3 months ago we started looking simultaneously how to
-> > > support roots of trust (ROT) HW in place of TPM and how to
-> > > respond to the feedback on the netlink proposal for the TSM SPDM.
-> >=20
-> > Given that I was tagged on this thread and not that one, I'd
-> > appreciate a pointer to which you mean.
->=20
-> https://lore.kernel.org/all/20260705220819.2472765-2-djbw@kernel.org/
->=20
-> And then later this:
->=20
-> https://lore.kernel.org/all/20260921131911.532d81f4@kernel.org/
->=20
-> Basically: No netlink.
+On Tue, Oct 20, 2026 at 02:28:55PM +0200, Jiri Pirko wrote:
+> Tue, Oct 20, 2026 at 01:29:45AM +0200, jgg@nvidia.com wrote:
+> >> [ ... 238 lines skipped ... ]
+> >> --- /dev/null
+> >> +++ b/Documentation/ctlv/families.yaml
+> >> @@ -0,0 +1,13 @@
+> >> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
+> >> +%YAML 1.2
+> >> +---
+> >> +# Append-only registry of CTLV family names, indexed by family ID: the entry at
+> >> +# index N has family ID N, up to 65535. The root family owns ID 0 and heads the
+> >> +# list, and every other entry comes after the entry of the family it inherits.
+> >> +# An entry may be marked deprecated, but never reordered, removed, renamed or
+> >> +# reused, its position being its wire identity. Every entry must have a
+> >> +# specification in specs/<name>.yaml, and is added by the change that adds the
+> >> +# implementation. Fixtures under tools/ctlv/tests/ are not registered.
+> >> +
+> >> +families:
+> >> +  - ctlv
+> >
+> >I see where you are coming from with this, but it is going to be
+> >problematic from a global kernel perspective. Given CTLV is imagined
+> >as a general tool for any subsystem we cannot control the tree that
+> >things merge through. It will not be like netdev where there is one
+> >authoritative tree with a linear history.
+> >
+> >So if Bob and Jane maintainers both add their own subsystems by the
+> >time it gets to Linus the IDs will get scrambled, and bisection will
+> >be lost. 
+> >
+> >Either changes to this file must be strictly done in a single tree
+> >with shared branches (which is going to be a bit hard process wise)
+> >
+> >Or we need to put the ID #s here and have some simple process to
+> >coordinate them during the development process. Since new families are
+> >probably rare it shouldn't be a big deal
+> 
+> Exactly. Collision is not very likely. Explicit ID or implicit, scramble
+> would still happen. And in that case it is resolvable.
 
-That may be the local driver for this particular patch set, but the
-conversation about how general a system for tracking attestations
-should be is much older.  When this all first started as coco TSM, it
-was very much an Intel only RTMR tracker for TDX.  The arguments for
-adding TPM2 are simple: SEV-SNP doesn't have RTMRs, so if the system
-were to cover non-Intel confidential computing then it would have to
-include TPM because the way SEV-SNP was going with the SVSM was to
-include an enclave protected TPM to do the post launch measurements.
+I think because of process if it is kept like this we will have to
+merge 'dead code' to reserve spots for people doing new work..
 
-However, the next observation is that there's really nothing
-Confidential Computing specific about this (it's just exposing
-measurements and log entries) so if it were to be provably general, it
-should also work for the existing TPM logging and attestations of
-measured boot, so it seemed reasonable to add that from the beginning
-to make sure of the generality.
+But at a minimum this comment above needs a big fat warning not to
+change this file without consulting with XYZ to coordinate merging.
 
-Finally, there are uses for non-repudiable logging even from user space
-(attested build systems for instance, or the use case we had when I was
-at IBM: attested firewall changes) so if the kernel exposed a generic
-system for doing this regardless of underlying technology that would be
-great.
-
-I get that there are some things that can't be generalised, like the
-form of the signed quote which is highly technology specific, but it
-does look like the logging and extension piece is similar enough to
-admit a unified interface.
-
-Regards,
-
-James
+Jason
