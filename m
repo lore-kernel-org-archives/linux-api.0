@@ -1,56 +1,56 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552609;
-	b=tuvzwwFaYT9bXoDLq4eXrznsJYIToZ4tnJrH9zqeB/zocppDHxhQtRXKXlo5aV0lgC+w
-	 a0QpUeNQmzlqBp+zaVz0smkNAl03rc7I7kR0/LFv1BVSIYh+Z34PoKq/nJbioTvyJusb6
-	 bVIvPF08Ssf7KmXskj9E8sJ6QbXYXFNCnYr/IVksuKjRzKuWfN7QTTw9hbKfYen6luhdB
-	 EODU0OXnI0UPYAbjaYUWrCNbex2UC3/Ov4XfvELxVBLWwLhZLEQXEYciyev7Zh6cM/fxf
-	 uBH0tkLop/zmA+QyGAwSz5Ula8oyiMGtav9d/BpBB5Zp60n+XklIoEDq3B/pej2sb+A==
+	t=1792552616;
+	b=r3KaUMOm9zmdo8evta9gm5kRlv0KQzImqJnm5hUuiOMZxNRAiCe5jV7/nJhy6YDsZ4Vv
+	 GQfIIyvtbgBjJbaWHnIv+33TX+jg7EmXUck67Ll1DkEhM+3TK0TYcbH2q6MMinweIa8Zc
+	 cpVoE//I+YbpL7tkoW1D2fQtNZREOAhf+a1vaJAd6/kf+wxJs5mDSLB6uQjCwafx4rVK8
+	 vEdrJeDO46JU3RaD0eu+FX1V8Zm9XHQ1rm6E7O1Tw8fhv9kqMQNPv/iGn+LHgO083F/BJ
+	 H/UVhnfaSul/gPGjvQ+o6mhQB4BvB4wuyFy+wjNbMbcpf4UDSLV71qASwePyLVx3YRA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552609;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552616;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=XPetBJfDkAzAZ8UTDQicbQRK+iH8jjbopwvCHr+wr6I=;
-	b=xlRKqqNnHr5O2yYiHYPDxlX6Xrp63nWY9XDVOY5Ly/pIbS6Gd0vm3t8GDN8qzivoNUEp
-	 B7pDyQdjxfIY81Vbx1f28QUtwUcva9WqSryJk2RYW+btwyeX5D6sOd/FUpJ96oEj8tAy2
-	 y3Bc9zo4hqIe+seRORQEDx56+tC+EaRd4iUwfNrUoGDPmntyqntd2sUQiSVveAzkUPiSu
-	 X0QEsMrjF2NcjuX+qUxUK9FXLkOZrUYPBGsHTBNjDwO6eILxgTsPP2pTChVZ2xkMZYoyk
-	 8sxHUX47lvcw+QXHIbaemqTOcX9NyNyvdbGUZYEshnbhYwkOUv3hM4BP82WbDBu1NKw==
+	bh=nt7cLHURNtluowmxthejngLoiwA2fJyKtvuq7clRERg=;
+	b=i95E/nxy3t+mJN9u6KRYcr1aaquLD+E8jafHfGhIRI7yQk80y5UNl6KGu8mlrKdERqc2
+	 Rkkm5J0wNrDB6pSTrXevCD6GHRaSknOICjpA16I8YuWXrxgbx9BPClugOlii2HZpSzhrJ
+	 lqGHJuv9xj3OJjjwTg7YEy0VzDeZL81VcaFDlcaY3G4QVfRlYDeaYmKITNiPp7S2K5YLB
+	 fPTQhPmALnfTxg154TWnXVHep+Sl/DEcP8KuQ75mCfLva9wo0BRniJNUKyOqCIOe/q2ie
+	 5KP+OW93p45nP82ikD2YBWgTovkn4SVQuUPJsVRjkp22+A9ln7t2WzFW2fFWN4Y3h3w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=MvZnv28O;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b="GcJO0/JQ";
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BE5A607095A;
-	Wed, 21 Oct 2026 03:16:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5BE5A607095A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C19260A3828;
+	Wed, 21 Oct 2026 03:16:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1C19260A3828
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=MvZnv28O
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=GcJO0/JQ
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552606; bh=vR17OcW5DP2to57LMQkJCXz9sOVicwks2xNBVa+gK/c=;
+	t=1792552613; bh=GH5CB0HbuaUqvadscjavGQud3VU7e+MvMkrRNnhpO6g=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=MvZnv28OBDboO1Uckg4VHuK/UCnr5rurzSeDn9rh3CM8Oi+8NpNgWNtkIccYx5qyF
-	 ndW6QFNpKp4H1P/4JvmDSWzdVIoAEaNqTq0xoPzvfxt/e9z2vys6oMeRq/oKDBtAKX
-	 +aN+sOmHrfuEdV51ZZ2r9g7Wr8TdKTAbfDMuwOcjaJRjx2hJlcsYGzARDsqfxqV/ox
-	 pXIMjzH5sYuB/rluXQcqmrcXuXG3EFvM9A7sdlk/Mb+bGwKBVX2e/Nd0FT74brAjMl
-	 Uv8wqwMlruNGr/0anQBZWwG1U3ZR6i99bXdWRuTg5MYbLZTBKM77f30XEu7RAoTaFi
-	 ZGVDd4t4+1GaQ==
+	b=GcJO0/JQrcbzRRu5HNXnLUK64YbzdNVel1wJAZ5J9U9jhxmdjqaQOaQvFprktqegE
+	 76FFEgyQbMj0CXvjhvA4SKm17w6vnIpwxx9u/aFrkQwUDUo/SR5j9FFWT4Ed7fbTQg
+	 awEhLlIB9kXG6nZsFuNsOvaRpPfEJFgS7MD3GamXLtOWfUgSocCyYuS9ZO85xXeYpD
+	 kqNYj1NQIujn4tRpYkih8sLXiYW9T8HdcesTot6B8gFzq2X//DSKXzx+3bZBhYwv8z
+	 df0LWFHtR6/B9p8t36exn/n/vD2/EwmFKYaZ7x28jtLEej3mEF28SLxTUrREHPPaaH
+	 5V9yONXAqEPEw==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id B90608A096E;
-	Wed, 21 Oct 2026 05:16:45 +0200 (CEST)
-Message-ID: <1151adfbb3aeae57cb26df8723287857f8d0af57.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id A0A128A090C;
+	Wed, 21 Oct 2026 05:16:52 +0200 (CEST)
+Message-ID: <875406238f051dbc4b95221b301b311dc0b75f67.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 25/41] uidgid: parse and print ids in their text form
+Subject: [RFC PATCH v2 27/41] audit: log UUID and GUID ids in full
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -69,7 +69,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:45 +0200
+Date: Wed, 21 Oct 2026 05:15:47 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -79,243 +79,438 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-Add helpers for interfaces that pass ids as text:
+Audit records print ids with from_kuid(&init_user_ns, ...), which gives
+-1 for a UUID or GUID. 4294967295 is what audit uses for "unset", so a
+UUID user's actions would be logged as if there were no login user.
 
-- make_kuid_str()/make_kgid_str() parse what kuid_str() writes: a
-  decimal number, a UUID, or a GUID in braces,
-- kuid_str_munged()/kgid_str_munged() write an id as seen from a user
-  namespace, the overflow id if it has no mapping there,
-- kuid_str_signed()/kgid_str_signed() write a legacy id as a signed
-  number, for output that used "%d",
-- KUID_STR() and friends wrap them as expressions with a buffer of the
-  enclosing block, so that printf-like calls can replace
-  "%u", from_kuid(&init_user_ns, uid) by "%s", KUID_STR(uid) and print
-  legacy ids exactly as before.
+Print all ids in audit records with KUID_STR()/KGID_STR(): classic ids
+come out exactly as before (signed where the format was "%d"), UUIDs and
+GUIDs in their text form. The binary AUDIT_SIGNAL_INFO reply keeps its
+32 bit field.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- include/linux/uidgid.h |  19 ++++++
- kernel/uidgid_r.c      | 152 +++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 167 insertions(+), 4 deletions(-)
+ drivers/tty/tty_audit.c              |  7 ++--
+ kernel/audit.c                       | 50 ++++++++++++-------------
+ kernel/auditsc.c                     | 55 ++++++++++++++--------------
+ net/core/dev.c                       |  8 ++--
+ net/netlabel/netlabel_user.c         |  4 +-
+ security/apparmor/file.c             |  8 ++--
+ security/integrity/integrity_audit.c |  6 +--
+ security/ipe/audit.c                 | 12 +++---
+ security/selinux/selinuxfs.c         |  8 ++--
+ security/selinux/ss/services.c       |  4 +-
+ 10 files changed, 78 insertions(+), 84 deletions(-)
 
-diff --git a/include/linux/uidgid.h b/include/linux/uidgid.h
-index ac7786f760..03ece8a4cb 100644
---- a/include/linux/uidgid.h
-+++ b/include/linux/uidgid.h
-@@ -190,6 +190,25 @@ static inline u32 kgid_hash(kgid_t gid)
- 
- char *kuid_str(kuid_t uid, char buf[KID_STR_LEN]);
- char *kgid_str(kgid_t gid, char buf[KID_STR_LEN]);
-+char *kuid_str_signed(kuid_t uid, char buf[KID_STR_LEN]);
-+char *kgid_str_signed(kgid_t gid, char buf[KID_STR_LEN]);
-+
-+/*
-+ * The text form of an id as an expression, in a buffer that lives until
-+ * the end of the enclosing block -- for "%s" in place of "%u" (or "%d",
-+ * with the _D variants, which write a legacy id as a signed number) of
-+ * from_kuid(&init_user_ns, uid) in printf-like calls.
-+ */
-+#define KUID_STR(uid)	kuid_str(uid, (char [KID_STR_LEN]) {})
-+#define KGID_STR(gid)	kgid_str(gid, (char [KID_STR_LEN]) {})
-+#define KUID_STR_D(uid)	kuid_str_signed(uid, (char [KID_STR_LEN]) {})
-+#define KGID_STR_D(gid)	kgid_str_signed(gid, (char [KID_STR_LEN]) {})
-+char *kuid_str_munged(struct user_namespace *to, kuid_t uid,
-+		      char buf[KID_STR_LEN]);
-+char *kgid_str_munged(struct user_namespace *to, kgid_t gid,
-+		      char buf[KID_STR_LEN]);
-+kuid_t make_kuid_str(struct user_namespace *from, const char *str);
-+kgid_t make_kgid_str(struct user_namespace *from, const char *str);
- 
- #ifdef CONFIG_USER_NS
- 
-diff --git a/kernel/uidgid_r.c b/kernel/uidgid_r.c
-index d71aecddb2..9bba60f413 100644
---- a/kernel/uidgid_r.c
-+++ b/kernel/uidgid_r.c
-@@ -12,6 +12,7 @@
- #include <linux/uidgid.h>
- #include <linux/uidgid_r.h>
- #include <linux/user_namespace.h>
-+#include <linux/uuid.h>
- 
- /*
-  * Whether @id is well formed: a known type, reserved bytes zero, a UUID of
-@@ -278,11 +279,12 @@ int put_kgid_r(struct user_namespace *to, kgid_t kgid,
- }
- EXPORT_SYMBOL(put_kgid_r);
- 
--static char *kid_str(u32 type, u32 legacy, const uuid_t *b, char *buf)
-+static char *kid_str(u32 type, u32 legacy, const uuid_t *b, char *buf,
-+		     bool sgn)
+diff --git a/drivers/tty/tty_audit.c b/drivers/tty/tty_audit.c
+index d014af6ab0..03ad4961b8 100644
+--- a/drivers/tty/tty_audit.c
++++ b/drivers/tty/tty_audit.c
+@@ -65,8 +65,6 @@ static void tty_audit_log(const char *description, dev_t dev,
  {
- 	switch (type) {
- 	case KID_LEGACY:
--		snprintf(buf, KID_STR_LEN, "%u", legacy);
-+		snprintf(buf, KID_STR_LEN, sgn ? "%d" : "%u", legacy);
- 		break;
- 	case KID_UUID:
- 		snprintf(buf, KID_STR_LEN, "%pUb", b);
-@@ -304,7 +306,7 @@ static char *kid_str(u32 type, u32 legacy, const uuid_t *b, char *buf)
-  */
- char *kuid_str(kuid_t uid, char buf[KID_STR_LEN])
- {
--	return kid_str(uid.type, __kuid_val(uid), &uid.uuid, buf);
-+	return kid_str(uid.type, __kuid_val(uid), &uid.uuid, buf, false);
- }
- EXPORT_SYMBOL(kuid_str);
+ 	struct audit_buffer *ab;
+ 	pid_t pid = task_pid_nr(current);
+-	uid_t uid = from_kuid(&init_user_ns, task_uid(current));
+-	uid_t loginuid = from_kuid(&init_user_ns, audit_get_loginuid(current));
+ 	unsigned int sessionid = audit_get_sessionid(current);
+ 	char name[TASK_COMM_LEN];
  
-@@ -318,6 +320,148 @@ EXPORT_SYMBOL(kuid_str);
-  */
- char *kgid_str(kgid_t gid, char buf[KID_STR_LEN])
+@@ -74,8 +72,9 @@ static void tty_audit_log(const char *description, dev_t dev,
+ 	if (!ab)
+ 		return;
+ 
+-	audit_log_format(ab, "%s pid=%u uid=%u auid=%u ses=%u major=%d minor=%d comm=",
+-			 description, pid, uid, loginuid, sessionid,
++	audit_log_format(ab, "%s pid=%u uid=%s auid=%s ses=%u major=%d minor=%d comm=",
++			 description, pid, KUID_STR(task_uid(current)),
++			 KUID_STR(audit_get_loginuid(current)), sessionid,
+ 			 MAJOR(dev), MINOR(dev));
+ 	get_task_comm(name, current);
+ 	audit_log_untrustedstring(ab, name);
+diff --git a/kernel/audit.c b/kernel/audit.c
+index 9412af9144..ed4ac5c88d 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -1128,7 +1128,6 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+ static void audit_log_common_recv_msg(struct audit_context *context,
+ 					struct audit_buffer **ab, u16 msg_type)
  {
--	return kid_str(gid.type, __kgid_val(gid), &gid.uuid, buf);
-+	return kid_str(gid.type, __kgid_val(gid), &gid.uuid, buf, false);
+-	uid_t uid = from_kuid(&init_user_ns, current_uid());
+ 	pid_t pid = task_tgid_nr(current);
+ 
+ 	if (!audit_enabled && msg_type != AUDIT_USER_AVC) {
+@@ -1139,7 +1138,7 @@ static void audit_log_common_recv_msg(struct audit_context *context,
+ 	*ab = audit_log_start(context, GFP_KERNEL, msg_type);
+ 	if (unlikely(!*ab))
+ 		return;
+-	audit_log_format(*ab, "pid=%d uid=%u ", pid, uid);
++	audit_log_format(*ab, "pid=%d uid=%s ", pid, KUID_STR(current_uid()));
+ 	audit_log_session_info(*ab);
+ 	audit_log_task_context(*ab);
  }
- EXPORT_SYMBOL(kgid_str);
-+
-+/**
-+ * kuid_str_signed - like kuid_str(), but a legacy uid as a signed number
-+ * @uid: the kuid
-+ * @buf: buffer of KID_STR_LEN bytes
-+ *
-+ * For callers that used to print from_kuid() with "%d".
-+ *
-+ * Return: @buf.
-+ */
-+char *kuid_str_signed(kuid_t uid, char buf[KID_STR_LEN])
-+{
-+	return kid_str(uid.type, __kuid_val(uid), &uid.uuid, buf, true);
-+}
-+EXPORT_SYMBOL(kuid_str_signed);
-+
-+/**
-+ * kgid_str_signed - like kgid_str(), but a legacy gid as a signed number
-+ * @gid: the kgid
-+ * @buf: buffer of KID_STR_LEN bytes
-+ *
-+ * For callers that used to print from_kgid() with "%d".
-+ *
-+ * Return: @buf.
-+ */
-+char *kgid_str_signed(kgid_t gid, char buf[KID_STR_LEN])
-+{
-+	return kid_str(gid.type, __kgid_val(gid), &gid.uuid, buf, true);
-+}
-+EXPORT_SYMBOL(kgid_str_signed);
-+
-+/*
-+ * Parses the text forms of kuid_str() -- a decimal number, a UUID, a GUID
-+ * in braces -- with an optional trailing newline.
-+ */
-+static int kid_r_from_str(const char *str, struct __kernel_uid_r *id)
-+{
-+	char buf[KID_STR_LEN];
-+	size_t len = strlen(str);
-+
-+	if (len && str[len - 1] == '\n')
-+		len--;
-+	if (!len || len >= sizeof(buf))
-+		return -EINVAL;
-+	memcpy(buf, str, len);
-+	buf[len] = '\0';
-+	memset(id, 0, sizeof(*id));
-+
-+	if (len == UUID_STRING_LEN) {
-+		id->type = UID_R_UUID;
-+		return uuid_parse(buf, (uuid_t *)id->uuid);
-+	}
-+	if (len == UUID_STRING_LEN + 2 && buf[0] == '{' && buf[len - 1] == '}') {
-+		buf[len - 1] = '\0';
-+		id->type = UID_R_GUID;
-+		return guid_parse(buf + 1, (guid_t *)id->guid);
-+	}
-+	id->type = UID_R_LEGACY;
-+	return kstrtou32(buf, 10, &id->legacy);
-+}
-+
-+/**
-+ * make_kuid_str - map the text form of a uid into a kuid
-+ * @from: user namespace the uid is in
-+ * @str: a decimal number, a UUID, or a GUID in braces; a trailing newline
-+ *       is allowed
-+ *
-+ * Return: the kuid, INVALID_UID if @str is malformed or has no mapping in
-+ * @from.
-+ */
-+kuid_t make_kuid_str(struct user_namespace *from, const char *str)
-+{
-+	struct __kernel_uid_r id;
-+
-+	if (kid_r_from_str(str, &id))
-+		return INVALID_UID;
-+	return make_kuid_r(from, &id);
-+}
-+EXPORT_SYMBOL(make_kuid_str);
-+
-+/**
-+ * make_kgid_str - map the text form of a gid into a kgid
-+ * @from: user namespace the gid is in
-+ * @str: a decimal number, a UUID, or a GUID in braces; a trailing newline
-+ *       is allowed
-+ *
-+ * Return: the kgid, INVALID_GID if @str is malformed or has no mapping in
-+ * @from.
-+ */
-+kgid_t make_kgid_str(struct user_namespace *from, const char *str)
-+{
-+	struct __kernel_uid_r id;
-+
-+	if (kid_r_from_str(str, &id))
-+		return INVALID_GID;
-+	return make_kgid_r(from, &id);
-+}
-+EXPORT_SYMBOL(make_kgid_str);
-+
-+/**
-+ * kuid_str_munged - text form of a kuid in a user namespace
-+ * @to: user namespace the uid is wanted in
-+ * @uid: the kuid
-+ * @buf: buffer of KID_STR_LEN bytes
-+ *
-+ * Return: @buf, holding the uid in @to like kuid_str() does, overflowuid if
-+ * @uid has no mapping there.
-+ */
-+char *kuid_str_munged(struct user_namespace *to, kuid_t uid,
-+		      char buf[KID_STR_LEN])
-+{
-+	if (!kuid_has_mapping(to, uid))
-+		snprintf(buf, KID_STR_LEN, "%u", overflowuid);
-+	else if (uid_is_legacy(uid))
-+		snprintf(buf, KID_STR_LEN, "%u", from_kuid(to, uid));
-+	else
-+		kuid_str(uid, buf);
-+	return buf;
-+}
-+EXPORT_SYMBOL(kuid_str_munged);
-+
-+/**
-+ * kgid_str_munged - text form of a kgid in a user namespace
-+ * @to: user namespace the gid is wanted in
-+ * @gid: the kgid
-+ * @buf: buffer of KID_STR_LEN bytes
-+ *
-+ * Return: @buf, holding the gid in @to like kgid_str() does, overflowgid if
-+ * @gid has no mapping there.
-+ */
-+char *kgid_str_munged(struct user_namespace *to, kgid_t gid,
-+		      char buf[KID_STR_LEN])
-+{
-+	if (!kgid_has_mapping(to, gid))
-+		snprintf(buf, KID_STR_LEN, "%u", overflowgid);
-+	else if (gid_is_legacy(gid))
-+		snprintf(buf, KID_STR_LEN, "%u", from_kgid(to, gid));
-+	else
-+		kgid_str(gid, buf);
-+	return buf;
-+}
-+EXPORT_SYMBOL(kgid_str_munged);
+@@ -1658,10 +1657,10 @@ static void audit_log_multicast(int group, const char *op, int err)
+ 
+ 	cred = current_cred();
+ 	tty = audit_get_tty();
+-	audit_log_format(ab, "pid=%u uid=%u auid=%u tty=%s ses=%u",
++	audit_log_format(ab, "pid=%u uid=%s auid=%s tty=%s ses=%u",
+ 			 task_tgid_nr(current),
+-			 from_kuid(&init_user_ns, cred->uid),
+-			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++			 KUID_STR(cred->uid),
++			 KUID_STR(audit_get_loginuid(current)),
+ 			 tty ? tty_name(tty) : "(none)",
+ 			 audit_get_sessionid(current));
+ 	audit_put_tty(tty);
+@@ -2230,9 +2229,8 @@ void audit_log_d_path(struct audit_buffer *ab, const char *prefix,
+ void audit_log_session_info(struct audit_buffer *ab)
+ {
+ 	unsigned int sessionid = audit_get_sessionid(current);
+-	uid_t auid = from_kuid(&init_user_ns, audit_get_loginuid(current));
+-
+-	audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
++	audit_log_format(ab, "auid=%s ses=%u",
++			 KUID_STR(audit_get_loginuid(current)), sessionid);
+ }
+ 
+ void audit_log_key(struct audit_buffer *ab, char *key)
+@@ -2465,20 +2463,20 @@ void audit_log_task_info(struct audit_buffer *ab)
+ 	cred = current_cred();
+ 	tty = audit_get_tty();
+ 	audit_log_format(ab,
+-			 " ppid=%d pid=%d auid=%u uid=%u gid=%u"
+-			 " euid=%u suid=%u fsuid=%u"
+-			 " egid=%u sgid=%u fsgid=%u tty=%s ses=%u",
++			 " ppid=%d pid=%d auid=%s uid=%s gid=%s"
++			 " euid=%s suid=%s fsuid=%s"
++			 " egid=%s sgid=%s fsgid=%s tty=%s ses=%u",
+ 			 task_ppid_nr(current),
+ 			 task_tgid_nr(current),
+-			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
+-			 from_kuid(&init_user_ns, cred->uid),
+-			 from_kgid(&init_user_ns, cred->gid),
+-			 from_kuid(&init_user_ns, cred->euid),
+-			 from_kuid(&init_user_ns, cred->suid),
+-			 from_kuid(&init_user_ns, cred->fsuid),
+-			 from_kgid(&init_user_ns, cred->egid),
+-			 from_kgid(&init_user_ns, cred->sgid),
+-			 from_kgid(&init_user_ns, cred->fsgid),
++			 KUID_STR(audit_get_loginuid(current)),
++			 KUID_STR(cred->uid),
++			 KGID_STR(cred->gid),
++			 KUID_STR(cred->euid),
++			 KUID_STR(cred->suid),
++			 KUID_STR(cred->fsuid),
++			 KGID_STR(cred->egid),
++			 KGID_STR(cred->sgid),
++			 KGID_STR(cred->fsgid),
+ 			 tty ? tty_name(tty) : "(none)",
+ 			 audit_get_sessionid(current));
+ 	audit_put_tty(tty);
+@@ -2693,7 +2691,6 @@ static void audit_log_set_loginuid(kuid_t koldloginuid, kuid_t kloginuid,
+ 				   unsigned int sessionid, int rc)
+ {
+ 	struct audit_buffer *ab;
+-	uid_t uid, oldloginuid, loginuid;
+ 	struct tty_struct *tty;
+ 
+ 	if (!audit_enabled)
+@@ -2703,15 +2700,14 @@ static void audit_log_set_loginuid(kuid_t koldloginuid, kuid_t kloginuid,
+ 	if (!ab)
+ 		return;
+ 
+-	uid = from_kuid(&init_user_ns, task_uid(current));
+-	oldloginuid = from_kuid(&init_user_ns, koldloginuid);
+-	loginuid = from_kuid(&init_user_ns, kloginuid);
+ 	tty = audit_get_tty();
+ 
+-	audit_log_format(ab, "pid=%d uid=%u", task_tgid_nr(current), uid);
++	audit_log_format(ab, "pid=%d uid=%s", task_tgid_nr(current),
++			 KUID_STR(task_uid(current)));
+ 	audit_log_task_context(ab);
+-	audit_log_format(ab, " old-auid=%u auid=%u tty=%s old-ses=%u ses=%u res=%d",
+-			 oldloginuid, loginuid, tty ? tty_name(tty) : "(none)",
++	audit_log_format(ab, " old-auid=%s auid=%s tty=%s old-ses=%u ses=%u res=%d",
++			 KUID_STR(koldloginuid), KUID_STR(kloginuid),
++			 tty ? tty_name(tty) : "(none)",
+ 			 oldsessionid, sessionid, !rc);
+ 	audit_put_tty(tty);
+ 	audit_log_end(ab);
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 2b9ce0b525..08d8f5af46 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -1104,9 +1104,9 @@ static int audit_log_pid_context(struct audit_context *context, pid_t pid,
+ 	if (!ab)
+ 		return rc;
+ 
+-	audit_log_format(ab, "opid=%d oauid=%d ouid=%d oses=%d", pid,
+-			 from_kuid(&init_user_ns, auid),
+-			 from_kuid(&init_user_ns, uid), sessionid);
++	audit_log_format(ab, "opid=%d oauid=%s ouid=%s oses=%d", pid,
++			 KUID_STR_D(auid),
++			 KUID_STR_D(uid), sessionid);
+ 	if (lsmprop_is_set(prop) && audit_log_obj_ctx(ab, prop))
+ 		rc = 1;
+ 
+@@ -1309,9 +1309,9 @@ static void audit_log_fcaps(struct audit_buffer *ab, struct audit_names *name)
+ 	}
+ 	audit_log_cap(ab, "cap_fp", &name->fcap.permitted);
+ 	audit_log_cap(ab, "cap_fi", &name->fcap.inheritable);
+-	audit_log_format(ab, " cap_fe=%d cap_fver=%x cap_frootid=%d",
++	audit_log_format(ab, " cap_fe=%d cap_fver=%x cap_frootid=%s",
+ 			 name->fcap.fE, name->fcap_ver,
+-			 from_kuid(&init_user_ns, name->fcap.rootid));
++			 KUID_STR_D(name->fcap.rootid));
+ }
+ 
+ static void audit_log_time(struct audit_context *context, struct audit_buffer **ab)
+@@ -1380,9 +1380,9 @@ static void show_special(struct audit_context *context, int *call_panic)
+ 				context->socketcall.args[i]);
+ 		break; }
+ 	case AUDIT_IPC:
+-		audit_log_format(ab, "ouid=%u ogid=%u mode=%#ho",
+-				 from_kuid(&init_user_ns, context->ipc.uid),
+-				 from_kgid(&init_user_ns, context->ipc.gid),
++		audit_log_format(ab, "ouid=%s ogid=%s mode=%#ho",
++				 KUID_STR(context->ipc.uid),
++				 KGID_STR(context->ipc.gid),
+ 				 context->ipc.mode);
+ 		if (lsmprop_is_set(&context->ipc.oprop)) {
+ 			if (audit_log_obj_ctx(ab, &context->ipc.oprop))
+@@ -1534,13 +1534,13 @@ static void audit_log_name(struct audit_context *context, struct audit_names *n,
+ 		audit_log_format(ab, " name=(null)");
+ 
+ 	if (n->ino != AUDIT_INO_UNSET)
+-		audit_log_format(ab, " inode=%llu dev=%02x:%02x mode=%#ho ouid=%u ogid=%u rdev=%02x:%02x",
++		audit_log_format(ab, " inode=%llu dev=%02x:%02x mode=%#ho ouid=%s ogid=%s rdev=%02x:%02x",
+ 				 n->ino,
+ 				 MAJOR(n->dev),
+ 				 MINOR(n->dev),
+ 				 n->mode,
+-				 from_kuid(&init_user_ns, n->uid),
+-				 from_kgid(&init_user_ns, n->gid),
++				 KUID_STR(n->uid),
++				 KGID_STR(n->gid),
+ 				 MAJOR(n->rdev),
+ 				 MINOR(n->rdev));
+ 	if (lsmprop_is_set(&n->oprop) &&
+@@ -1632,18 +1632,18 @@ static void audit_log_uring(struct audit_context *ctx)
+ 				 ctx->return_code);
+ 	audit_log_format(ab,
+ 			 " items=%d"
+-			 " ppid=%d pid=%d uid=%u gid=%u euid=%u suid=%u"
+-			 " fsuid=%u egid=%u sgid=%u fsgid=%u",
++			 " ppid=%d pid=%d uid=%s gid=%s euid=%s suid=%s"
++			 " fsuid=%s egid=%s sgid=%s fsgid=%s",
+ 			 ctx->name_count,
+ 			 task_ppid_nr(current), task_tgid_nr(current),
+-			 from_kuid(&init_user_ns, cred->uid),
+-			 from_kgid(&init_user_ns, cred->gid),
+-			 from_kuid(&init_user_ns, cred->euid),
+-			 from_kuid(&init_user_ns, cred->suid),
+-			 from_kuid(&init_user_ns, cred->fsuid),
+-			 from_kgid(&init_user_ns, cred->egid),
+-			 from_kgid(&init_user_ns, cred->sgid),
+-			 from_kgid(&init_user_ns, cred->fsgid));
++			 KUID_STR(cred->uid),
++			 KGID_STR(cred->gid),
++			 KUID_STR(cred->euid),
++			 KUID_STR(cred->suid),
++			 KUID_STR(cred->fsuid),
++			 KGID_STR(cred->egid),
++			 KGID_STR(cred->sgid),
++			 KGID_STR(cred->fsgid));
+ 	audit_log_task_context(ab);
+ 	audit_log_key(ab, ctx->filterkey);
+ 	audit_log_end(ab);
+@@ -1715,9 +1715,8 @@ static void audit_log_exit(void)
+ 			audit_log_cap(ab, "pi", &axs->new_pcap.inheritable);
+ 			audit_log_cap(ab, "pe", &axs->new_pcap.effective);
+ 			audit_log_cap(ab, "pa", &axs->new_pcap.ambient);
+-			audit_log_format(ab, " frootid=%d",
+-					 from_kuid(&init_user_ns,
+-						   axs->fcap.rootid));
++			audit_log_format(ab, " frootid=%s",
++					 KUID_STR_D(axs->fcap.rootid));
+ 			break; }
+ 
+ 		}
+@@ -2894,10 +2893,10 @@ static void audit_log_task(struct audit_buffer *ab)
+ 	sessionid = audit_get_sessionid(current);
+ 	current_uid_gid(&uid, &gid);
+ 
+-	audit_log_format(ab, "auid=%u uid=%u gid=%u ses=%u",
+-			 from_kuid(&init_user_ns, auid),
+-			 from_kuid(&init_user_ns, uid),
+-			 from_kgid(&init_user_ns, gid),
++	audit_log_format(ab, "auid=%s uid=%s gid=%s ses=%u",
++			 KUID_STR(auid),
++			 KUID_STR(uid),
++			 KGID_STR(gid),
+ 			 sessionid);
+ 	audit_log_task_context(ab);
+ 	audit_log_format(ab, " pid=%d comm=", task_tgid_nr(current));
+diff --git a/net/core/dev.c b/net/core/dev.c
+index e76762e293..a726352114 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -9718,12 +9718,12 @@ int __dev_set_promiscuity(struct net_device *dev, int inc, bool notify)
+ 			current_uid_gid(&uid, &gid);
+ 			audit_log(audit_context(), GFP_ATOMIC,
+ 				  AUDIT_ANOM_PROMISCUOUS,
+-				  "dev=%s prom=%d old_prom=%d auid=%u uid=%u gid=%u ses=%u",
++				  "dev=%s prom=%d old_prom=%d auid=%s uid=%s gid=%s ses=%u",
+ 				  dev->name, (dev->flags & IFF_PROMISC),
+ 				  (old_flags & IFF_PROMISC),
+-				  from_kuid(&init_user_ns, audit_get_loginuid(current)),
+-				  from_kuid(&init_user_ns, uid),
+-				  from_kgid(&init_user_ns, gid),
++				  KUID_STR(audit_get_loginuid(current)),
++				  KUID_STR(uid),
++				  KGID_STR(gid),
+ 				  audit_get_sessionid(current));
+ 		}
+ 
+diff --git a/net/netlabel/netlabel_user.c b/net/netlabel/netlabel_user.c
+index 0da652844d..31ac4a0fcb 100644
+--- a/net/netlabel/netlabel_user.c
++++ b/net/netlabel/netlabel_user.c
+@@ -92,8 +92,8 @@ struct audit_buffer *netlbl_audit_start_common(int type,
+ 	if (audit_buf == NULL)
+ 		return NULL;
+ 
+-	audit_log_format(audit_buf, "netlabel: auid=%u ses=%u",
+-			 from_kuid(&init_user_ns, audit_info->loginuid),
++	audit_log_format(audit_buf, "netlabel: auid=%s ses=%u",
++			 KUID_STR(audit_info->loginuid),
+ 			 audit_info->sessionid);
+ 	audit_log_subj_ctx(audit_buf, &audit_info->prop);
+ 
+diff --git a/security/apparmor/file.c b/security/apparmor/file.c
+index 3e74b613db..74a168edae 100644
+--- a/security/apparmor/file.c
++++ b/security/apparmor/file.c
+@@ -60,10 +60,10 @@ static void file_audit_cb(struct audit_buffer *ab, void *va)
+ 		audit_log_format(ab, " denied_mask=\"%s\"", str);
+ 	}
+ 	if (ad->request & AA_AUDIT_FILE_MASK) {
+-		audit_log_format(ab, " fsuid=%d",
+-				 from_kuid(&init_user_ns, fsuid));
+-		audit_log_format(ab, " ouid=%d",
+-				 from_kuid(&init_user_ns, ad->fs.ouid));
++		audit_log_format(ab, " fsuid=%s",
++				 KUID_STR_D(fsuid));
++		audit_log_format(ab, " ouid=%s",
++				 KUID_STR_D(ad->fs.ouid));
+ 	}
+ 
+ 	if (ad->peer) {
+diff --git a/security/integrity/integrity_audit.c b/security/integrity/integrity_audit.c
+index d8d9e5ff1c..cc4959182a 100644
+--- a/security/integrity/integrity_audit.c
++++ b/security/integrity/integrity_audit.c
+@@ -47,10 +47,10 @@ void integrity_audit_message(int audit_msgno, struct inode *inode,
+ 	ab = audit_log_start(audit_context(), GFP_KERNEL, audit_msgno);
+ 	if (!ab)
+ 		return;
+-	audit_log_format(ab, "pid=%d uid=%u auid=%u ses=%u",
++	audit_log_format(ab, "pid=%d uid=%s auid=%s ses=%u",
+ 			 task_pid_nr(current),
+-			 from_kuid(&init_user_ns, current_uid()),
+-			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++			 KUID_STR(current_uid()),
++			 KUID_STR(audit_get_loginuid(current)),
+ 			 audit_get_sessionid(current));
+ 	audit_log_task_context(ab);
+ 	audit_log_format(ab, " op=%s cause=%s comm=", op, cause);
+diff --git a/security/ipe/audit.c b/security/ipe/audit.c
+index 93fb59fbdd..ace64cf218 100644
+--- a/security/ipe/audit.c
++++ b/security/ipe/audit.c
+@@ -220,8 +220,8 @@ void ipe_audit_policy_activation(const struct ipe_policy *const op,
+ 		audit_log_format(ab, " ");
+ 	}
+ 	audit_policy(ab, AUDIT_NEW_ACTIVE_POLICY_FMT, np);
+-	audit_log_format(ab, " auid=%u ses=%u lsm=ipe res=1",
+-			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++	audit_log_format(ab, " auid=%s ses=%u lsm=ipe res=1",
++			 KUID_STR(audit_get_loginuid(current)),
+ 			 audit_get_sessionid(current));
+ 
+ 	audit_log_end(ab);
+@@ -248,8 +248,8 @@ void ipe_audit_policy_load(const struct ipe_policy *const p)
+ 		err = PTR_ERR(p);
+ 	}
+ 
+-	audit_log_format(ab, " auid=%u ses=%u lsm=ipe res=%d errno=%d",
+-			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++	audit_log_format(ab, " auid=%s ses=%u lsm=ipe res=%d errno=%d",
++			 KUID_STR(audit_get_loginuid(current)),
+ 			 audit_get_sessionid(current), !err, err);
+ 
+ 	audit_log_end(ab);
+@@ -269,10 +269,10 @@ void ipe_audit_enforce(bool new_enforce, bool old_enforce)
+ 		return;
+ 
+ 	audit_log(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS,
+-		  "enforcing=%d old_enforcing=%d auid=%u ses=%u"
++		  "enforcing=%d old_enforcing=%d auid=%s ses=%u"
+ 		  " enabled=1 old-enabled=1 lsm=ipe res=1",
+ 		  new_enforce, old_enforce,
+-		  from_kuid(&init_user_ns, audit_get_loginuid(current)),
++		  KUID_STR(audit_get_loginuid(current)),
+ 		  audit_get_sessionid(current));
+ 
+ 	audit_log_end(ab);
+diff --git a/security/selinux/selinuxfs.c b/security/selinux/selinuxfs.c
+index c7d9147697..7db30ead97 100644
+--- a/security/selinux/selinuxfs.c
++++ b/security/selinux/selinuxfs.c
+@@ -163,10 +163,10 @@ static ssize_t sel_write_enforce(struct file *file, const char __user *buf,
+ 		if (length)
+ 			goto out;
+ 		audit_log(audit_context(), GFP_KERNEL, AUDIT_MAC_STATUS,
+-			"enforcing=%d old_enforcing=%d auid=%u ses=%u"
++			"enforcing=%d old_enforcing=%d auid=%s ses=%u"
+ 			" enabled=1 old-enabled=1 lsm=selinux res=1",
+ 			new_value, old_value,
+-			from_kuid(&init_user_ns, audit_get_loginuid(current)),
++			KUID_STR(audit_get_loginuid(current)),
+ 			audit_get_sessionid(current));
+ 		enforcing_set(new_value);
+ 		if (new_value)
+@@ -581,8 +581,8 @@ static ssize_t sel_write_load(struct file *file, const char __user *buf,
+ 	selinux_policy_commit(&load_state);
+ 	length = count;
+ 	audit_log(audit_context(), GFP_KERNEL, AUDIT_MAC_POLICY_LOAD,
+-		"auid=%u ses=%u lsm=selinux res=1",
+-		from_kuid(&init_user_ns, audit_get_loginuid(current)),
++		"auid=%s ses=%u lsm=selinux res=1",
++		KUID_STR(audit_get_loginuid(current)),
+ 		audit_get_sessionid(current));
+ 
+ out_unlock:
+diff --git a/security/selinux/ss/services.c b/security/selinux/ss/services.c
+index da77ad769c..dd42142e20 100644
+--- a/security/selinux/ss/services.c
++++ b/security/selinux/ss/services.c
+@@ -3012,11 +3012,11 @@ int security_set_bools(u32 len, const int *values)
+ 		if (new_state != old_state) {
+ 			audit_log(audit_context(), GFP_ATOMIC,
+ 				AUDIT_MAC_CONFIG_CHANGE,
+-				"bool=%s val=%d old_val=%d auid=%u ses=%u",
++				"bool=%s val=%d old_val=%d auid=%s ses=%u",
+ 				sym_name(&newpolicy->policydb, SYM_BOOLS, i),
+ 				new_state,
+ 				old_state,
+-				from_kuid(&init_user_ns, audit_get_loginuid(current)),
++				KUID_STR(audit_get_loginuid(current)),
+ 				audit_get_sessionid(current));
+ 			newpolicy->policydb.bool_val_to_struct[i]->state = new_state;
+ 		}
 -- 
 2.56.0
 
