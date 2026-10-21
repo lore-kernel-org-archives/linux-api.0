@@ -1,57 +1,57 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552629;
-	b=Wulik+IFOG69T6YesJ7wZxEqO/wcHz8rkGrr8D2YAtRmcWusunmLhDAkveN2bwje3ST/
-	 nEUXxJuJYn9zQLeydz7umdfLzl93eQjkojEzmwkbCC82lJ4XgvxygvJcjRVmCqiUkuH42
-	 PtBn6LJB5actBNV0+cCIabIwcbqGaYsNSpiDQ1yaJYhwdTZKYvsfpp5IhkYwvrFcZOwPb
-	 dwsrzlycnsDMxuf8hi/LV9pjz1UitZQ8/eLH8KeHxuR+8AXPnCdVEoAsHVJnrUhLU5enD
-	 xkh+dudQGg/E92zNEccQdo2k5z4cPcxPzSb7pR6lh4Rb0yegQp+k1Kuykiv/4wAzGsg==
+	t=1792552642;
+	b=dK80fWA7IsaNsTU2ji3zEoE3FvMJsfxEdNC2PjNYo8fNday/T8rpL5EfS9qvxzZRX/IU
+	 O17tMeL9U0OO7f6CR5NNvw+RTnDtVZst+/SxpeTwRAKBOEMt42ShhCXOF/VAVPTCjYn0L
+	 kXmLAHUCgQKskvZUO9xDYjG6LyDPlkqMmyMds2Zpjj8zOc5NLvgmZSul7pNtpqrDJUl1r
+	 KfnJvo9kKOkTmKavOMCAybt+8KELIUWrmvIwzLySxD17eIRbKaJJlR4nefVe0c3QKypOF
+	 yl3rqgjP7hLvSOeup5Q6lbBWBLEqwEFoPVUGS0iRlESfudvWUBXbtRTtUxwOFHfnV5g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552629;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552642;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=FoLPiglPVl+us8byBrCSfkhrNtfDFOmejE84GKuPLI4=;
-	b=pEhqURwOHzzvNmBxnVqaXKIsSbGZu9reFpyyFEJRQmmUXoJdcNBmpe3YpcA9FSwtz4p7
-	 hvmBf9bYxIvnBCk5srkgsSyuFXXZyu7GwMxhp3xr6hL6vWMxjf29fo5vYMd7XqQIy6jE1
-	 XWXOitTHvE+J+j1ZmcatFIXlB+PVcyWZaVTxzjK3AUqIkcnNJ0LaSN7yxzlcBiBie9YGX
-	 16UHmiNpB3jo8krURJ0ZE2MaCqWkNndf4jsoC8p8ciFOygh4VDPfUbDbdeJdZe1BoifkE
-	 wBVexiX/cJUqZVuRTi3lBQKeTrv7Gb47SZZmOdJQpbCG65ZHR5zIs0hKPdpofcg/7GA==
+	bh=tdj0VV7sirueGx4sdVLtYMWM+BMK+LmplvK9FFGAILo=;
+	b=VjzwFqwfGTfb5B27wmLGnj4Cy6jlnrl3xqVMrLsKcCJNG423lP6cNrcx53GAtVs+JdWF
+	 HOGvh5a8XgZvdQmGHIKQIR5QtKYbhmU5KBzCVSM5edSqkjIkaMT0OSOH9JiwGT5TPWlPd
+	 sGSqAV3nfxTbBnGWPiyjXppy24SPQMajajYH4u/55ZHocOIKExMVuT4SLfZc15Qq/CL+5
+	 jkJBCIZL/rWukwTO2/dMnAGFSToitp7/rMpHDmKkYycVYcqPgXPpb1VIP/np65gS1Q+d8
+	 n6mqadmmtIyo65VkGJhy4gfEN/VaC1qv8DM6xnWU87N7LNGU3P8DC92gWRLUe2Vb6ug==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=C3J+2AEb;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=ZRz84cAN;
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01D5860A3804;
-	Wed, 21 Oct 2026 03:17:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 01D5860A3804
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1526460A3E63;
+	Wed, 21 Oct 2026 03:17:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1526460A3E63
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=C3J+2AEb
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=ZRz84cAN
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552627; bh=ahHoP+KmbDaq9577t3A0gEq/i+cqumLAzataSt6r+6c=;
+	t=1792552640; bh=Vws6vCdcEF3qUKpK8cPCFQjsf4YRBxpo4ZNVRrSM11s=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=C3J+2AEby3bLJTrGHPCSjycXT81E/5aDLawJ2xISQvBK61i9IDIPm6YIPoaXeHgqX
-	 0cipNhvyMNcVHOLKRdJqr3ZAzf07fD9STA2bdUEP7JL0AvdfBwXDUkOJ4n0oQ4lYrI
-	 42bpYDCofI3uf5AQzJkIc0BIJ5Qd7pQ9Tdqy4QGMHuTHgn0ZbZN++xe/0RWIapOa3o
-	 g23X6hU8LtdtJy7KHeut9KO72V3dMhWvgJlIy3UkIcj3e6RmcGPbxEtTNEVaN2hWBn
-	 rWHygFseUiWCwLshJLkRc6I6b+DZo5KrEFdVkynl5ZS/Lc7SD4S/rSHSSoMKPiI4Sf
-	 buEXQedcnWrbQ==
+	b=ZRz84cANoQeEua855iQ9k3LYxDZP/yGFssDaUiW7U/6rUhzxS9w5N4W32JZiZfNVq
+	 Ba4DfguYLYboJNUmVcd0l+n7UBTitI3fMhx/QiiLP9RKYcHtntRsJd/m8DOl6T2qin
+	 ofaiGqRLOHWuBAbKv+vl3x4Wx+4/5klCI7ZwLYo21xT6xXY4MhcE6fIo1ur0/NJRmt
+	 cIl5/2XWEg6TYNNPWFdHBWIlQkiD2tz3sUnlxD6WXy5nV1ToibP9S3CfnPcxbuiF+n
+	 nX+HjySuSoKGkRTdVC2eVwzeFghyD4eUoWZkzo5TW88TZCe508x3MN6tYmKGHl+4tA
+	 Guv8oDGJ+v0hw==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id 7988A8A090D;
-	Wed, 21 Oct 2026 05:17:06 +0200 (CEST)
-Message-ID: <1ced8bf416de4e9600904aafeefd29ed20fd2064.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id BF59E8A0927;
+	Wed, 21 Oct 2026 05:17:19 +0200 (CEST)
+Message-ID: <d93b11e2c7d4e82e0076dddf812cc5137bc34771.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 31/41] ext4: add the uid_r feature for UUID and GUID
- owners
+Subject: [RFC PATCH v2 35/41] Documentation: describe UUID and GUID user and
+ group ids
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -70,7 +70,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:51 +0200
+Date: Wed, 21 Oct 2026 05:15:55 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -80,289 +80,208 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-Add a read-only compatible feature, uid_r, that lets inodes have UUID
-and GUID owners and groups. The inode gains i_uid_r_type and
-i_gid_r_type (0: the classic i_uid/i_gid apply) and 16 bytes for each
-id after i_projid, which grows i_extra_isize from 32 to 68 bytes; only
-filesystems with the feature reserve the room in new inodes, others
-keep the old size.
-
-For a UUID or GUID the classic fields hold 0xffffffff. Kernels without
-the feature may only mount read-only, and see such files as owned by an
-id nobody has.
-
-With the feature the superblock gets SB_I_UID_R. Inodes from before it,
-or with in-inode xattrs in the way, are expanded when they get such an
-owner, as for project ids; -EOVERFLOW if that fails. The feature needs
-inodes of at least 196 bytes, so in practice 256.
+Describe __kernel_uid_r_t, the rules for UUID and GUID ids (overflow
+ids in classic interfaces, the initial user namespace only, filesystems
+with SB_I_UID_R), the *_r system calls, the extended interfaces (statx,
+socket credentials, siginfo, SysV IPC, keyctl, POSIX ACLs, procfs,
+audit) and the current limitations.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- fs/ext4/ext4.h  |  26 ++++++++++-
- fs/ext4/inode.c | 115 +++++++++++++++++++++++++++++++++++++++++++++++-
- fs/ext4/super.c |  16 ++++++-
- 3 files changed, 152 insertions(+), 5 deletions(-)
+ Documentation/userspace-api/index.rst |   1 +
+ Documentation/userspace-api/uid_r.rst | 169 ++++++++++++++++++++++++++
+ 2 files changed, 170 insertions(+)
+ create mode 100644 Documentation/userspace-api/uid_r.rst
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 724a27e8be..1cba42b410 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -850,8 +850,29 @@ struct ext4_inode {
- 	__le32  i_crtime_extra; /* extra FileCreationtime (nsec << 2 | epoch) */
- 	__le32  i_version_hi;	/* high 32 bits for 64-bit version */
- 	__le32	i_projid;	/* Project ID */
-+	/* uid_r feature: a UUID or GUID owner and group, see EXT4_ID_R_* */
-+	__u8	i_uid_r_type;	/* kind of i_uid_r, EXT4_ID_R_LEGACY: i_uid */
-+	__u8	i_gid_r_type;	/* kind of i_gid_r, EXT4_ID_R_LEGACY: i_gid */
-+	__le16	i_id_r_reserved;
-+	__u8	i_uid_r[16];	/* UUID (RFC 9562 order) or GUID owner */
-+	__u8	i_gid_r[16];	/* UUID (RFC 9562 order) or GUID group */
- };
+diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+index a68b1bea57..fcac7703fa 100644
+--- a/Documentation/userspace-api/index.rst
++++ b/Documentation/userspace-api/index.rst
+@@ -22,6 +22,7 @@ System calls
+    ioctl/index
+    mseal
+    rseq
++   uid_r
  
-+/*
-+ * Kinds of i_uid_r/i_gid_r. For a UUID or GUID the classic i_uid/i_gid
-+ * fields hold 0xffffffff, which kernels without uid_r -- they may only
-+ * mount read-only -- see as an id nobody has.
-+ */
-+#define EXT4_ID_R_LEGACY	0
-+#define EXT4_ID_R_UUID		1
-+#define EXT4_ID_R_GUID		2
+ Security-related interfaces
+ ===========================
+diff --git a/Documentation/userspace-api/uid_r.rst b/Documentation/userspace-api/uid_r.rst
+new file mode 100644
+index 0000000000..c080485455
+--- /dev/null
++++ b/Documentation/userspace-api/uid_r.rst
+@@ -0,0 +1,169 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
-+/* i_extra_isize of inodes without and with the uid_r fields */
-+#define EXT4_EXTRA_ISIZE_BASE	(offsetofend(struct ext4_inode, i_projid) - \
-+				 EXT4_GOOD_OLD_INODE_SIZE)
-+#define EXT4_EXTRA_ISIZE_UID_R	(sizeof(struct ext4_inode) - \
-+				 EXT4_GOOD_OLD_INODE_SIZE)
++===========================================
++UUID and GUID user and group ids (``*_r``)
++===========================================
 +
- #define EXT4_EPOCH_BITS 2
- #define EXT4_EPOCH_MASK ((1 << EXT4_EPOCH_BITS) - 1)
- #define EXT4_NSEC_MASK  (~0UL << EXT4_EPOCH_BITS)
-@@ -2214,6 +2235,7 @@ static inline struct mapping_metadata_bhs *ext4_i_metadata_bhs(
- #define EXT4_FEATURE_RO_COMPAT_VERITY		0x8000
- #define EXT4_FEATURE_RO_COMPAT_ORPHAN_PRESENT	0x10000 /* Orphan file may be
- 							   non-empty */
-+#define EXT4_FEATURE_RO_COMPAT_UID_R		0x20000 /* UUID and GUID owners */
- 
- #define EXT4_FEATURE_INCOMPAT_COMPRESSION	0x0001
- #define EXT4_FEATURE_INCOMPAT_FILETYPE		0x0002
-@@ -2313,6 +2335,7 @@ EXT4_FEATURE_RO_COMPAT_FUNCS(readonly,		READONLY)
- EXT4_FEATURE_RO_COMPAT_FUNCS(project,		PROJECT)
- EXT4_FEATURE_RO_COMPAT_FUNCS(verity,		VERITY)
- EXT4_FEATURE_RO_COMPAT_FUNCS(orphan_present,	ORPHAN_PRESENT)
-+EXT4_FEATURE_RO_COMPAT_FUNCS(uid_r,		UID_R)
- 
- EXT4_FEATURE_INCOMPAT_FUNCS(compression,	COMPRESSION)
- EXT4_FEATURE_INCOMPAT_FUNCS(filetype,		FILETYPE)
-@@ -2373,7 +2396,8 @@ EXT4_FEATURE_INCOMPAT_FUNCS(casefold,		CASEFOLD)
- 					 EXT4_FEATURE_RO_COMPAT_QUOTA |\
- 					 EXT4_FEATURE_RO_COMPAT_PROJECT |\
- 					 EXT4_FEATURE_RO_COMPAT_VERITY |\
--					 EXT4_FEATURE_RO_COMPAT_ORPHAN_PRESENT)
-+					 EXT4_FEATURE_RO_COMPAT_ORPHAN_PRESENT |\
-+					 EXT4_FEATURE_RO_COMPAT_UID_R)
- 
- #define EXTN_FEATURE_FUNCS(ver) \
- static inline bool ext4_has_unknown_ext##ver##_compat_features(struct super_block *sb) \
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 26f0f9714f..bed8d535a6 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -4780,6 +4780,75 @@ static int ext4_inode_blocks_set(struct ext4_inode *raw_inode,
- 	return 0;
- }
- 
-+/*
-+ * uid_r: a UUID or GUID owner and group live in i_uid_r and i_gid_r of
-+ * inodes with room for them; i_uid and i_gid then hold 0xffffffff.
-+ */
-+static int ext4_inode_set_id_r(struct inode *inode, struct ext4_inode *raw_inode)
-+{
-+	struct ext4_inode_info *ei = EXT4_I(inode);
-+	bool fits = EXT4_INODE_SIZE(inode->i_sb) > EXT4_GOOD_OLD_INODE_SIZE &&
-+		    EXT4_FITS_IN_INODE(raw_inode, ei, i_gid_r);
-+	bool legacy = uid_is_legacy(inode->i_uid) && gid_is_legacy(inode->i_gid);
++Besides the classic 32 bit numbers, user and group ids can be UUIDs
++(RFC 9562, version 4) or Microsoft GUIDs. A process can run as such a
++user, files can be owned by one, and ACLs, keys, IPC objects, sockets and
++signals carry them. The classic system calls keep their 32 bit ids; a new
++family of calls, named after them with an ``_r`` suffix, and extensions of
++existing interfaces handle all kinds of id.
 +
-+	if (!legacy && (!ext4_has_feature_uid_r(inode->i_sb) || !fits))
-+		return -EOVERFLOW;
-+	if (!fits || !ext4_has_feature_uid_r(inode->i_sb))
-+		return 0;
++The id type
++===========
 +
-+	raw_inode->i_id_r_reserved = 0;
-+	if (uid_is_legacy(inode->i_uid)) {
-+		raw_inode->i_uid_r_type = EXT4_ID_R_LEGACY;
-+		memset(raw_inode->i_uid_r, 0, sizeof(raw_inode->i_uid_r));
-+	} else {
-+		BUILD_BUG_ON(KID_UUID != EXT4_ID_R_UUID ||
-+			     KID_GUID != EXT4_ID_R_GUID);
-+		raw_inode->i_uid_r_type = inode->i_uid.type;
-+		memcpy(raw_inode->i_uid_r, inode->i_uid.uuid.b,
-+		       sizeof(raw_inode->i_uid_r));
-+	}
-+	if (gid_is_legacy(inode->i_gid)) {
-+		raw_inode->i_gid_r_type = EXT4_ID_R_LEGACY;
-+		memset(raw_inode->i_gid_r, 0, sizeof(raw_inode->i_gid_r));
-+	} else {
-+		raw_inode->i_gid_r_type = inode->i_gid.type;
-+		memcpy(raw_inode->i_gid_r, inode->i_gid.uuid.b,
-+		       sizeof(raw_inode->i_gid_r));
-+	}
-+	return 0;
-+}
++``<linux/uidgid_r.h>`` defines ``__kernel_uid_r_t`` (and
++``__kernel_gid_r_t``, the same type)::
 +
-+static int ext4_inode_get_id_r(struct inode *inode, struct ext4_inode *raw_inode)
-+{
-+	struct ext4_inode_info *ei = EXT4_I(inode);
-+	uuid_t id;
++	typedef struct __kernel_uid_r {
++		__u32 type;
++		union {
++			__u32 legacy;
++			__u8 uuid[16];
++			__u8 guid[16];
++		};
++	} __kernel_uid_r_t;
 +
-+	if (!ext4_has_feature_uid_r(inode->i_sb) ||
-+	    EXT4_INODE_SIZE(inode->i_sb) <= EXT4_GOOD_OLD_INODE_SIZE ||
-+	    !EXT4_FITS_IN_INODE(raw_inode, ei, i_gid_r))
-+		return 0;
++``type`` is one of:
 +
-+	if (raw_inode->i_uid_r_type > EXT4_ID_R_GUID ||
-+	    raw_inode->i_gid_r_type > EXT4_ID_R_GUID) {
-+		ext4_error_inode(inode, __func__, __LINE__, 0,
-+				 "iget: bad uid_r kind %u/%u",
-+				 raw_inode->i_uid_r_type,
-+				 raw_inode->i_gid_r_type);
-+		return -EFSCORRUPTED;
-+	}
-+	if (raw_inode->i_uid_r_type != EXT4_ID_R_LEGACY) {
-+		memcpy(id.b, raw_inode->i_uid_r, sizeof(id.b));
-+		inode->i_uid = raw_inode->i_uid_r_type == EXT4_ID_R_UUID ?
-+			       KUIDT_INIT_UUID(id) : KUIDT_INIT_GUID(*(guid_t *)&id);
-+	}
-+	if (raw_inode->i_gid_r_type != EXT4_ID_R_LEGACY) {
-+		memcpy(id.b, raw_inode->i_gid_r, sizeof(id.b));
-+		inode->i_gid = raw_inode->i_gid_r_type == EXT4_ID_R_UUID ?
-+			       KGIDT_INIT_UUID(id) : KGIDT_INIT_GUID(*(guid_t *)&id);
-+	}
-+	return 0;
-+}
++``UID_R_NONE`` (0)
++	No id. An all-zero id is never root. The ``set*id_r()`` and
++	``chown_r()`` calls take it, like a ``NULL`` pointer or a classic
++	``-1``, as "leave unchanged".
 +
- static int ext4_fill_raw_inode(struct inode *inode, struct ext4_inode *raw_inode)
- {
- 	struct ext4_inode_info *ei = EXT4_I(inode);
-@@ -4792,8 +4861,10 @@ static int ext4_fill_raw_inode(struct inode *inode, struct ext4_inode *raw_inode
- 	err = ext4_inode_blocks_set(raw_inode, ei);
- 
- 	raw_inode->i_mode = cpu_to_le16(inode->i_mode);
-+	/* a UUID or GUID owner: 0xffffffff here, the id in i_uid_r */
- 	i_uid = i_uid_read(inode);
- 	i_gid = i_gid_read(inode);
-+	err = err ?: ext4_inode_set_id_r(inode, raw_inode);
- 	i_projid = from_kprojid(&init_user_ns, ei->i_projid);
- 	if (!(test_opt(inode->i_sb, NO_UID32))) {
- 		raw_inode->i_uid_low = cpu_to_le16(low_16_bits(i_uid));
-@@ -5435,6 +5506,9 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
- 	}
- 	i_uid_write(inode, i_uid);
- 	i_gid_write(inode, i_gid);
-+	ret = ext4_inode_get_id_r(inode, raw_inode);
-+	if (ret)
-+		goto bad_inode;
- 	ei->i_projid = make_kprojid(&init_user_ns, i_projid);
- 	set_nlink(inode, le16_to_cpu(raw_inode->i_links_count));
- 
-@@ -5547,8 +5621,7 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
- 		if (ei->i_extra_isize == 0) {
- 			/* The extra space is currently unused. Use it. */
- 			BUILD_BUG_ON(sizeof(struct ext4_inode) & 3);
--			ei->i_extra_isize = sizeof(struct ext4_inode) -
--					    EXT4_GOOD_OLD_INODE_SIZE;
-+			ei->i_extra_isize = EXT4_SB(inode->i_sb)->s_want_extra_isize;
- 		} else {
- 			ret = ext4_iget_extra_inode(inode, raw_inode, ei);
- 			if (ret)
-@@ -6006,6 +6079,40 @@ static void ext4_wait_for_tail_page_commit(struct inode *inode)
-  *
-  * Called with inode->i_rwsem down.
-  */
-+/*
-+ * An inode from before uid_r, or with in-inode xattrs in the way, may
-+ * lack room for i_uid_r and i_gid_r: make it, before it gets a UUID or
-+ * GUID owner or group.
-+ */
-+static int ext4_make_room_for_id_r(struct mnt_idmap *idmap,
-+				   struct inode *inode, struct iattr *attr)
-+{
-+	struct ext4_iloc iloc;
-+	bool legacy = true;
-+	int err;
++``UID_R_LEGACY`` (1)
++	A classic id in ``legacy``.
 +
-+	if (attr->ia_valid & ATTR_UID)
-+		legacy = uid_is_legacy(from_vfsuid(idmap, i_user_ns(inode),
-+						   attr->ia_vfsuid));
-+	if (attr->ia_valid & ATTR_GID)
-+		legacy &= gid_is_legacy(from_vfsgid(idmap, i_user_ns(inode),
-+						    attr->ia_vfsgid));
-+	if (legacy)
-+		return 0;
-+	if (!ext4_has_feature_uid_r(inode->i_sb))
-+		return -EOVERFLOW;
++``UID_R_UUID`` (2)
++	A UUID in ``uuid``, in network byte order. It must be version 4 with
++	the RFC 9562 variant.
 +
-+	err = ext4_get_inode_loc(inode, &iloc);
-+	if (err)
-+		return err;
-+	if (EXT4_FITS_IN_INODE(ext4_raw_inode(&iloc), EXT4_I(inode), i_gid_r)) {
-+		brelse(iloc.bh);
-+		return 0;
-+	}
-+	err = ext4_expand_extra_isize(inode, EXT4_EXTRA_ISIZE_UID_R, &iloc);
-+	return err ? -EOVERFLOW : 0;
-+}
++``UID_R_GUID`` (3)
++	A GUID in ``guid`` as Windows stores it: Data1, Data2 and Data3
++	little endian. The nil GUID is not allowed.
 +
- int ext4_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
- 		 struct iattr *attr)
- {
-@@ -6045,6 +6152,10 @@ int ext4_setattr(struct mnt_idmap *idmap, struct dentry *dentry,
- 	    i_gid_needs_update(idmap, attr, inode)) {
- 		handle_t *handle;
- 
-+		error = ext4_make_room_for_id_r(idmap, inode, attr);
-+		if (error)
-+			return error;
++Bytes past the member ``type`` selects must be zero. The struct is 20
++bytes on every ABI, so none of the calls needs a compat variant.
 +
- 		/* (user+group)*(old+new) structure, inode write (sb,
- 		 * inode block, ? - but truncate inode update has it) */
- 		handle = ext4_journal_start(inode, EXT4_HT_QUOTA,
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index d636b89090..34ac087c32 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -4613,9 +4613,17 @@ static int ext4_inode_info_init(struct super_block *sb,
- 		sb->s_time_min = EXT4_TIMESTAMP_MIN;
- 	}
- 
-+	if (ext4_has_feature_uid_r(sb) &&
-+	    sbi->s_inode_size < EXT4_GOOD_OLD_INODE_SIZE + EXT4_EXTRA_ISIZE_UID_R) {
-+		ext4_msg(sb, KERN_ERR, "uid_r needs inodes of at least %zu bytes",
-+			 EXT4_GOOD_OLD_INODE_SIZE + EXT4_EXTRA_ISIZE_UID_R);
-+		return -EINVAL;
-+	}
++The text form of an id (in procfs, audit records, key descriptions and
++``/proc/<pid>/loginuid``) is a decimal number, a UUID
++``xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`` or a GUID in braces
++``{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}``.
 +
- 	if (sbi->s_inode_size > EXT4_GOOD_OLD_INODE_SIZE) {
--		sbi->s_want_extra_isize = sizeof(struct ext4_inode) -
--			EXT4_GOOD_OLD_INODE_SIZE;
-+		/* room for the uid_r fields in new inodes only if needed */
-+		sbi->s_want_extra_isize = ext4_has_feature_uid_r(sb) ?
-+			EXT4_EXTRA_ISIZE_UID_R : EXT4_EXTRA_ISIZE_BASE;
- 		if (ext4_has_feature_extra_isize(sb)) {
- 			unsigned v, max = (sbi->s_inode_size -
- 					   EXT4_GOOD_OLD_INODE_SIZE);
-@@ -5437,6 +5445,10 @@ static int __ext4_fill_super(struct fs_context *fc, struct super_block *sb)
- 	/* HSM events are allowed by default. */
- 	sb->s_iflags |= SB_I_ALLOW_HSM;
- 
-+	/* uid_r: inodes can have UUID and GUID owners */
-+	if (ext4_has_feature_uid_r(sb) && !test_opt(sb, NO_UID32))
-+		sb->s_iflags |= SB_I_UID_R;
++Rules
++=====
 +
- 	err = ext4_check_feature_compatibility(sb, es, silent);
- 	if (err)
- 		goto failed_mount;
++- Interfaces with 32 bit ids show a UUID or GUID as the overflow id
++  (``/proc/sys/kernel/overflowuid`` and ``overflowgid``), as the 16 bit
++  system calls do for ids above 65535.
++
++- UUIDs and GUIDs are not part of any ``uid_map`` or ``gid_map``: they
++  exist in the initial user namespace only. Elsewhere they show as the
++  overflow id, can't be set, and no capability in another namespace gives
++  privilege over them. Only ``CAP_SETUID``/``CAP_SETGID`` in the initial
++  namespace can switch to one.
++
++- Idmapped mounts map classic ids and pass UUIDs and GUIDs unchanged, on
++  filesystems of the initial user namespace.
++
++- Only filesystems that can store them accept UUID and GUID owners and ACL
++  entries; others refuse with ``EOVERFLOW``, for ``chown`` as well as for
++  creating a file as such a user. tmpfs and ramfs do, and ext4 with the
++  ``uid_r`` feature (``mke2fs -O uid_r``; a read-only compatible feature,
++  inodes of at least 256 bytes). ``tune2fs -O uid_r`` turns it on later; on
++  a mounted filesystem through ``EXT4_IOC_SET_TUNE_SB_PARAM``, which makes
++  it usable at once, otherwise at the next mount or remount.
++
++System calls
++============
++
++All take pointers to ``__kernel_uid_r_t`` and return 0 or a negative
++error, unless noted otherwise.
++
++=================  =======================================================
++``getuid_r``       ``(uid_r *uid)``, also ``geteuid_r``, ``getgid_r``,
++                   ``getegid_r``
++``setuid_r``       ``(const uid_r *uid)``, also ``setgid_r``
++``setreuid_r``     ``(const uid_r *ruid, const uid_r *euid)``, also
++                   ``setregid_r``
++``setresuid_r``    ``(const uid_r *ruid, const uid_r *euid, const uid_r
++                   *suid)``, also ``setresgid_r``
++``getresuid_r``    ``(uid_r *ruid, uid_r *euid, uid_r *suid)``, also
++                   ``getresgid_r``; ``NULL`` pointers are skipped
++``setfsuid_r``     ``(const uid_r *uid, uid_r *old)``, also
++                   ``setfsgid_r``. Unlike ``setfsuid()`` it fails with
++                   ``EPERM`` instead of silently, and returns the old id
++                   in ``*old``; a ``NULL`` *uid* only queries it.
++``getgroups_r``    ``(int size, gid_r *list)``, returns the number of
++                   groups like ``getgroups()``
++``setgroups_r``    ``(int size, const gid_r *list)``; "no id" is not
++                   allowed in the list
++``chown_r``        ``(const char *path, const uid_r *user, const gid_r
++                   *group)``, also ``lchown_r``, ``fchown_r(int fd, ...)``
++                   and ``fchownat_r(int dfd, const char *path, ..., int
++                   flags)``
++=================  =======================================================
++
++Supplementary groups are sorted by kind (classic, UUID, GUID) and value.
++
++Other interfaces
++================
++
++``statx()``
++	``STATX_UID_R`` and ``STATX_GID_R`` report ``stx_uid_r`` and
++	``stx_gid_r``.
++
++Sockets
++	``SO_PEERCRED_R`` returns a ``struct __kernel_ucred_r`` (pid, uid,
++	gid), ``SO_PEERGROUPS_R`` the peer's groups as ``__kernel_gid_r_t``.
++	``SO_PASSCRED_R`` asks for ``SCM_CREDENTIALS_R`` messages with a
++	``struct __kernel_ucred_r``; they can be sent with the rules of
++	``SCM_CREDENTIALS``. Netlink keeps classic ids in its messages.
++
++Signals
++	``siginfo_t`` has ``si_uid_r``, the sender's uid, at offset 96 in
++	every layout; ``signalfd_siginfo`` has ``ssi_uid_r``. It is
++	``UID_R_NONE`` where the kernel doesn't set it; ``waitid()`` fills it
++	in.
++
++System V IPC
++	``IPC_STAT_R`` and ``IPC_SET_R`` for ``msgctl()``, ``semctl()`` and
++	``shmctl()`` read and set a ``struct ipc_perm_r`` (key, mode, uid,
++	gid, cuid, cgid).
++
++Keys
++	``KEYCTL_CHOWN_R`` takes ``__kernel_uid_r_t`` owner and group.
++
++POSIX ACLs
++	Version 3 of the ACL xattr format (``POSIX_ACL_XATTR_VERSION_R``)
++	has ``struct posix_acl_xattr_entry_r`` entries with an id kind and
++	16 bytes of id. ``getxattr()`` returns version 3 only if an entry is
++	a UUID or GUID; ``setxattr()`` takes both versions.
++
++procfs
++	``/proc/<pid>/status`` has ``Uid_r:``, ``Gid_r:`` and ``Groups_r:``
++	lines with the text form of the ids; ``/proc/<pid>/loginuid`` reads
++	and writes UUIDs and GUIDs as text.
++
++Audit
++	Records show UUIDs and GUIDs in their text form; classic ids are
++	printed as before.
++
++RPCSEC_GSS upcalls
++	The text (v1) upcall to gssd names a UUID or GUID user as
++	``uid_r=<text form>`` instead of ``uid=<number>``; gssd versions that
++	don't know it find no ``uid=`` and refuse the upcall. A downcall for
++	such a user starts with the uid ``-1`` (never valid) followed by the
++	user as ``__kernel_uid_r_t``, then the usual fields. The binary (v0)
++	upcall can't carry such users and fails with ``EACCES``.
++
++Limitations
++===========
++
++- Quotas don't account UUID and GUID owners; quota files hold 32 bit ids.
++- RPCSEC_GSS needs a gssd that knows ``uid_r=`` for UUID and GUID users.
++- UUID and GUID users can't create unprivileged ublk devices.
++- Audit filter rules, SafeSetID policies and IMA policy rules name
++  classic ids only.
 -- 
 2.56.0
 
