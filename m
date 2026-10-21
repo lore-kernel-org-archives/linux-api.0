@@ -1,57 +1,57 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552541;
-	b=dtamUW8HC8ctCWlbT+TcAa+dlo4AJvSDM/3FYgl/ZBfodR0YgmEVTdvSqxb5x9WAMW8W
-	 nI/WAu62fh3eYg4lKbr+fJAVdOls/wr8QB3eqWtKCdj1y3XGGGWg/JvKtDO6FLIjFo/v/
-	 72QLGRRbYdNZXrm0qqvNwP5vvc1Mcsoy51J9qhJYbyv6gDqd3g827HmcywosaKbh8/hMv
-	 ACaekgzRgKbQ0KKspqT2OJatZLKEn/d9HUPw4GIJcCgAg9FRjcsTpKJmu7+1KZnhZccD5
-	 F0Ob3m4lpLBEHmQ5gcbs0jD8PVJY16Ix4KoXRwQmcx5LWY6ALU2zvwaVDMpUn8YdLEw==
+	t=1792552532;
+	b=mVdkdy5yEJMiqQex+oUab0nurPZzLG0x8TIz6+JdILr2k7P0oinX5Aj/NyB1t/gk8CwO
+	 COcL+4TzSozMLWstYr0H5dU8fGMVT3fbS65JOOoJK+fK4JyRos0L/40M65+975/bORB4y
+	 YSb8LmL4Jk8s9G58VD7h042AVcMegMz6jojhyAU9toEeZmBOF0X+TqE4DkFZR3wnEBAZv
+	 el7AGt2RE0Mc61IXINB/Rxrmnxom75ZCZbbslELfKh3XSBL/0h6GGvYf6768r4Z29jOuE
+	 7NoKmGPFXXAvBAb/TK7n14g0ERk5U6NG3JNqV57Pd0I4J+anQWCLH5hCzhhBbhHv8UA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552541;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552532;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=ilgWZq8lBu3cTHC4tjsY3+OD0RL/20qOT/gfO/+8/Ns=;
-	b=uLc/2UuvDCXDdpUTh5mFJ6Zt05TYI70cLuGwznTval6jBvtC+IIkZWIO8wmlK9vdJUHg
-	 w5N1IyeQFeFZqML980Vsbg7bV6xdsTissaKRAdIiHhL6YYY5KaxglJ3rbhQ1z5LV5k7e8
-	 QmVwy1u3LmHLcmq4hwALBa+orqtSdM3BfSqCk71TEH5goeVIh1hB2R9yXVb8rOfv6+MSS
-	 Nxcotqlg3gOKNplUj0l6LqiQxV5JxjSDeAF+YL3HkOfxjSfJKco9yBQ/Hx1o/1dfOWRWl
-	 QR4Imwbjd25I3ZxngpIE/55Q4ErOURboreVrgdlpK44nZUdGBJsw8pRRmMGwosADpDQ==
+	bh=2Rr2bO9okDTnKQK7n2lk4waHPtLw2M+XqSbjGvsVjiU=;
+	b=kxJ1KQE/8J0FNYE0omUAQpsrrErDAHQUXyNjbgCjDuGhgYwlxxZeDvJZM5ndKSOJddXA
+	 PSHnh6+DW3Nx9oQIWE4HdCopMxnDgKLwUcymFKjwUIEfNEPJI+tRUSxRKdfDP8xFdZp+b
+	 JSrdYdptZGplT+wMqmLKg7cjUBpPCmeZ5z+4njpO1kB0VbIWw43wtyDFni0qrpY0nFx+7
+	 4YxiFRfRFYNeGOmA15VVESqrLUP6GvxpyQRjdBCEz1DvjlelOhI2iTwNh/FfO64PyZj2A
+	 mxxG+wDbwEGWY3UhTo0KgzXxIzckZKPgBWm7aqbIxzc0dtichn5nZ52ev3j3bApmu/A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=fmvA1BUI;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=G6WTKipf;
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 717D3606A33C;
-	Wed, 21 Oct 2026 03:15:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 717D3606A33C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14D25606A31B;
+	Wed, 21 Oct 2026 03:15:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 14D25606A31B
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=fmvA1BUI
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=G6WTKipf
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552538; bh=qWM7jvTDWgnk6/SLc5fl/wvoe0XSEzsjigl1XiisGY4=;
+	t=1792552527; bh=ZfG1SosqlxBe8ziMkADyGjmN09svT+4JHhKhTcpS7n0=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=fmvA1BUI9rAIY0k7Lbp7tPKh+8RUjmcHfFo82dzNAmLF4PCA6sf/9cetHzoNvM8m+
-	 2bTH6w1iJKcwrlHlo8epNQOBYq1PkVRYLXnXQQwfcQyOlgoaYVgz5unl37kW7RUgdo
-	 6zHZafd49DOH5I5qEPddUuCDJk9E62uoKYgw28sOjOzK6Ydl27ObEf9x2Pq5SudfN1
-	 +uJDvYoRnrkk1xadlP9i4Qlx6v+GGzurcGwezUevYgBFtJZfpqmVonqQ9glhLrmsyK
-	 tSQ+/qleC7T8wlJ+TUsM2NbVAKlA2/7OAe1XFnO/SOgzKrHEpW0xuRqk1Jm9budQAB
-	 4AMfhG0kzUuFw==
+	b=G6WTKipfrRpsgqmp7VeEQmAz1k+70ZU6flTO7Z4P5DVP0Ogu11+Hvw/c3+wVLm5Mg
+	 Epk9RoKjnjmkOX3ZYMsICS8LmzzMc488Ty4pxYQIzZx24rafgNgb56wp0ehNDWyU8i
+	 x1juHOsrDZThhoYETUw7hdXH14EUWOnEaq3qfoGueNajXZFnneUDlnGNBkpalIXTPe
+	 fYKKbmo1n7O0T1syFNB6V5cD3DVH7hk0ZZELsEeLICiP3OHi3rPPHnXuQM1vEmr8Ok
+	 XUqJltcsbj0ISJGCGgmQgWy0fvQkzPt9KloCgjiA+n63+5ETdXc+77Cn8nTNq8aJdD
+	 vUqP3agDGkZ0Q==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id E5EF78A08F6;
-	Wed, 21 Oct 2026 05:15:37 +0200 (CEST)
-Message-ID: <ec61dbb90e69bf33d17565d628ff59eaad8837f3.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id F17EB8A08DF;
+	Wed, 21 Oct 2026 05:15:26 +0200 (CEST)
+Message-ID: <423713b22f1cfa384f3df8cddc91e81d35c52d8a.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 05/41] af_unix: keep sender ids in skb->cb only when
- they are classic ids
+Subject: [RFC PATCH v2 02/41] uapi: add <linux/uidgid_r.h> for 128 bit capable
+ user and group ids
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -70,7 +70,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:25 +0200
+Date: Wed, 21 Oct 2026 05:15:22 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -80,145 +80,80 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-unix_skb_parms has to fit into the 48 bytes of skb->cb. With kuid_t and
-kgid_t growing to hold UUIDs and GUIDs the two of them alone would take
-40 bytes.
+User and group ids are 32 bit numbers. Identities that come from
+elsewhere -- UUIDs handed out by a directory service, or the GUIDs of a
+Windows domain -- have to be squeezed into that range through mapping
+tables kept in userspace, and the kernel never sees who a process really
+is.
 
-Store classic ids as 32 bit values as before, and only for a UUID or
-GUID allocate a small struct unix_skb_ids for both, freed together with
-the pid reference in unix_destruct_scm(). AF_UNIX skbs carrying a pid
-reference are never cloned, so the pointer has a single owner.
-Senders with classic ids see no change and no allocation.
+Add a tagged id for a new family of system calls (named after the
+classic ones with an _r suffix): a classic 32 bit id, an RFC 9562
+version 4 UUID, or a Microsoft GUID in the byte order Windows stores it
+in. Type 0 is "no id", so a zero-initialized id is never root, and lets
+the set*id_r() calls express "unchanged" without a magic number.
+
+The struct has no 64 bit members and the same layout on all ABIs, so
+none of the new calls needs a compat entry point.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- net/unix/af_unix.c | 50 +++++++++++++++++++++++++++++++++++++++-------
- net/unix/af_unix.h | 11 ++++++++--
- 2 files changed, 52 insertions(+), 9 deletions(-)
+ include/uapi/linux/uidgid_r.h | 45 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 45 insertions(+)
+ create mode 100644 include/uapi/linux/uidgid_r.h
 
-diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 42cffeafc8..2b17310534 100644
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -1969,11 +1969,46 @@ static void unix_peek_fds(struct scm_cookie *scm, struct sk_buff *skb)
- 	unix_peek_fpl(scm->fp);
- }
- 
+diff --git a/include/uapi/linux/uidgid_r.h b/include/uapi/linux/uidgid_r.h
+new file mode 100644
+index 0000000000..c3b1cb2ae2
+--- /dev/null
++++ b/include/uapi/linux/uidgid_r.h
+@@ -0,0 +1,45 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 +/*
-+ * The sender's ids, in the skb itself for legacy ids; UUIDs and GUIDs don't
-+ * fit in skb->cb and come from an allocation, freed with the pid reference
-+ * in unix_destruct_scm().
++ * User and group ids for the *_r system calls: a classic 32 bit id, a
++ * UUID or a Microsoft GUID.
++ *
++ * The classic system calls (getuid(), chown(), ...) keep their 32 bit
++ * ids; for an id that has no 32 bit form they see the overflow id
++ * (/proc/sys/kernel/overflowuid and overflowgid), like the 16 bit system
++ * calls do for ids above 65535.
 + */
-+static int unix_skb_set_ids(struct sk_buff *skb, kuid_t uid, kgid_t gid)
-+{
-+	struct unix_skb_ids *ids = NULL;
++#ifndef _UAPI_LINUX_UIDGID_R_H
++#define _UAPI_LINUX_UIDGID_R_H
 +
-+	if (!uid_is_legacy(uid) || !gid_is_legacy(gid)) {
-+		ids = kmalloc_obj(*ids, GFP_KERNEL_ACCOUNT);
-+		if (!ids)
-+			return -ENOMEM;
-+		ids->uid = uid;
-+		ids->gid = gid;
-+	}
-+	kfree(UNIXCB(skb).ids);
-+	UNIXCB(skb).ids = ids;
-+	UNIXCB(skb).uid = __kuid_val(uid);
-+	UNIXCB(skb).gid = __kgid_val(gid);
-+	return 0;
-+}
++#include <linux/types.h>
 +
-+static kuid_t unix_skb_uid(const struct sk_buff *skb)
-+{
-+	return UNIXCB(skb).ids ? UNIXCB(skb).ids->uid : KUIDT_INIT(UNIXCB(skb).uid);
-+}
++/*
++ * Kinds of id (__kernel_uid_r_t.type). An all-zero id is UID_R_NONE, so a
++ * zero-initialized id never stands for root.
++ */
++#define UID_R_NONE	0	/* no id: "unchanged" or "not set" */
++#define UID_R_LEGACY	1	/* classic 32 bit id in .legacy */
++#define UID_R_UUID	2	/* RFC 9562 UUID, version 4, in .uuid */
++#define UID_R_GUID	3	/* Microsoft GUID in .guid */
 +
-+static kgid_t unix_skb_gid(const struct sk_buff *skb)
-+{
-+	return UNIXCB(skb).ids ? UNIXCB(skb).ids->gid : KGIDT_INIT(UNIXCB(skb).gid);
-+}
++#define UID_R_SIZE	16	/* bytes of .uuid and .guid */
 +
- static void unix_destruct_scm(struct sk_buff *skb)
- {
- 	struct scm_cookie scm = {};
- 
- 	swap(scm.pid, UNIXCB(skb).pid);
-+	kfree(UNIXCB(skb).ids);
-+	UNIXCB(skb).ids = NULL;
- 
- 	if (UNIXCB(skb).fp)
- 		unix_detach_fds(&scm, skb);
-@@ -1992,20 +2027,21 @@ static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool sen
- 	int err = 0;
- 
- 	UNIXCB(skb).pid = get_pid(scm->pid);
--	UNIXCB(skb).uid = scm->creds.uid;
--	UNIXCB(skb).gid = scm->creds.gid;
- 	UNIXCB(skb).fp = NULL;
-+	skb->destructor = unix_wfree;
-+	err = unix_skb_set_ids(skb, scm->creds.uid, scm->creds.gid);
-+	if (err)
-+		return err;
- 	unix_get_secdata(scm, skb);
- 	if (scm->fp && send_fds)
- 		err = unix_attach_fds(scm, skb);
- 
--	skb->destructor = unix_wfree;
- 	return err;
- }
- 
- static void unix_skb_to_scm(struct sk_buff *skb, struct scm_cookie *scm)
- {
--	scm_set_cred(scm, UNIXCB(skb).pid, UNIXCB(skb).uid, UNIXCB(skb).gid);
-+	scm_set_cred(scm, UNIXCB(skb).pid, unix_skb_uid(skb), unix_skb_gid(skb));
- 	unix_set_secdata(scm, skb);
- }
- 
-@@ -2039,7 +2075,7 @@ static int unix_maybe_add_creds(struct sk_buff *skb, const struct sock *sk,
- 			return err;
- 
- 		UNIXCB(skb).pid = get_pid(pid);
--		current_uid_gid(&UNIXCB(skb).uid, &UNIXCB(skb).gid);
-+		return unix_skb_set_ids(skb, current_uid(), current_gid());
- 	}
- 
- 	return 0;
-@@ -2049,8 +2085,8 @@ static bool unix_skb_scm_eq(struct sk_buff *skb,
- 			    struct scm_cookie *scm)
- {
- 	return UNIXCB(skb).pid == scm->pid &&
--	       uid_eq(UNIXCB(skb).uid, scm->creds.uid) &&
--	       gid_eq(UNIXCB(skb).gid, scm->creds.gid) &&
-+	       uid_eq(unix_skb_uid(skb), scm->creds.uid) &&
-+	       gid_eq(unix_skb_gid(skb), scm->creds.gid) &&
- 	       unix_secdata_eq(scm, skb);
- }
- 
-diff --git a/net/unix/af_unix.h b/net/unix/af_unix.h
-index 8119dbeef3..e861a430cf 100644
---- a/net/unix/af_unix.h
-+++ b/net/unix/af_unix.h
-@@ -10,10 +10,17 @@
- 
- struct sock *unix_peer_get(struct sock *sk);
- 
--struct unix_skb_parms {
--	struct pid		*pid;		/* skb credentials	*/
-+/* The sender's ids, when either is a UUID or GUID */
-+struct unix_skb_ids {
- 	kuid_t			uid;
- 	kgid_t			gid;
-+};
++/*
++ * .uuid holds the UUID in network byte order, as RFC 9562 lays it out.
++ * .guid holds the GUID as Windows stores it: Data1, Data2 and Data3 little
++ * endian, Data4 as is.
++ *
++ * Bytes past the member .type selects are reserved and must be zero.
++ */
++typedef struct __kernel_uid_r {
++	__u32 type;
++	union {
++		__u32 legacy;
++		__u8 uuid[UID_R_SIZE];
++		__u8 guid[UID_R_SIZE];
++	};
++} __kernel_uid_r_t;
 +
-+struct unix_skb_parms {
-+	struct pid		*pid;		/* skb credentials	*/
-+	struct unix_skb_ids	*ids;		/* uid and gid, or NULL	*/
-+	uid_t			uid;		/* for ids NULL: legacy	*/
-+	gid_t			gid;		/* uid and gid		*/
- 	struct scm_fp_list	*fp;		/* Passed files		*/
- #ifdef CONFIG_SECURITY_NETWORK
- 	u32			secid;		/* Security ID		*/
++typedef __kernel_uid_r_t __kernel_gid_r_t;
++
++#endif /* _UAPI_LINUX_UIDGID_R_H */
 -- 
 2.56.0
 
