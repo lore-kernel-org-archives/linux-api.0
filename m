@@ -1,57 +1,56 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552619;
-	b=yqb4sK5B/RsvXnltaUObQIiE6EQngNnpUnm/s057asAzjhp+wfqG8Bilfr7ddHp+cwnr
-	 5PuGA1qYsAYlAz5io/ewX5AdAZmdiZ0BAPJPORsaNGVibo5Bknc7new0YC85WqOYUHytI
-	 MPXC9YqDye/iTXNTD/T6WfdBzyHPB4UXhs5bFX5/MojrAdzidS19T/7icfgaG2hKzyzdZ
-	 HE4c+e91LnmUfGLyBnjbI5nWQUxhz5EkG7ltJozm2pBU1BZtrUmF/UqvCbhosNSnYrMpm
-	 ivheX08wS4h/hq4lSCGBbBXIB5otTWiGJaThItBWRwbrMS8t6Eu1yyOZ/FAWT9t3tNQ==
+	t=1792552636;
+	b=5AL1FcCdcXVete/8UGTaCwzuVnKZEl499mX5eU3vU2kkalyi/fVYo2y1XcpgmKPsKJ1U
+	 dHLP7oL/lbd1jtyDFHZY5KlfnmjdDrJ9RDV/hVLjDKseM8cHuLXdCi7xLDrajdO6Q+UQo
+	 Cyi0sddZoSFbirGLuAadFxPrLenbuW2cSaLbk0WzvGYZwNlz/edjzHczwgOndbXxvu9w1
+	 LJj5LGveq5AhfmW57ykMdfVHu/35m/DVX2J3FL/RXJ8KLxqjIOSHZzVWk91U0UlRKCQCD
+	 p2NFMoZeD+mSfPBmplFmetHsT2Jc6+Cf50rQzi8Cc1Ds7KzRye8gMpKKz6STU7YOldg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552619;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552636;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=DGpOL1alo4UJiM0Ho8CtIv0oQYcetUD0hsrP92D8HMc=;
-	b=g4Q+BRkVtr/6f/K685XtHl2YR02ZjqlydfC5ro18BLrImIbDxnGTbRxk2sgqavQ55ydr
-	 6xYgdDbPla7fh4aJnRryiAjYAYEtOsWRo1PlvHgpj1ZBf5TIJxcVo4vZIQj9GSq0+y9gy
-	 IwzFtIdeY58MELZ8s5CzJSFQ1SzdnzYis4h6LVyPiaPB1biLCMAWgwipDl0Y+UW04FtzP
-	 WtUFrdCGQqvcSFPbTEQXoYyCku9CbBJsWIiSHUD3q7E319gOB2mytpjDBEA1eUll9T5I6
-	 r9hw1UZ+yZQuZD/kFI9nxixSTlJ1t3Arqy9Ou5U6W/BNlGOSVjTEso6+0d/5SYzwUTw==
+	bh=PYtCM8AZCT6uaJfSrx0BOZ+0uHQZVP/Z/KdzZbvlZJ0=;
+	b=aTEW6LXwuVuxk/5ELvlqs5IHdKpwphNQ+T85mDtZYMmizvTAme5x9LTMtlyvzL2LLVJX
+	 /MGJx1M4ani0U3nQvpZ1ORdCV+bQuAHDsY6Zkh4W0mhxMTcbS/pgZOO2zhzLpBmgvTle9
+	 7NConjwvBL58xClLUdSEEWyOavvBaBc/VjCzkMbiLybt4xgELOzakH1Zxu7Vp6xDpZgUk
+	 u2nThS1gT9RuVMktE5TLaAq7nDJwcIsRSZNQQZuJAUtD63zqhdLS9+Cqdhv+cl7MV0iXM
+	 EUkQbC1IcSpgRh3LMR4e9Hzypqa2tf5ufNNrFkN8VTLWuyYIpid+atwa+fOMoQtuEwA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=f4CKs3WW;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=aFbSe6vz;
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD928606A334;
-	Wed, 21 Oct 2026 03:16:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CD928606A334
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B58160779CD;
+	Wed, 21 Oct 2026 03:17:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8B58160779CD
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=f4CKs3WW
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=aFbSe6vz
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552616; bh=VRBxDdnvXqALD2rzbv+EwPGrvd8Aj3j3z/QOZub3dbw=;
+	t=1792552633; bh=YMnWTj9au5/Tn2L6+FyQDCou1t3SlsDfGkZwpfIj2wQ=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=f4CKs3WWrWAUtUA2NGbEiD2VqCGTpmWPQALpTmfujgSfhuKpUZTBo5urvDI7oRumn
-	 Mky25dJKdbumsGH/cp7T+CelOLAifIbww3yEbmrAAiI0K7Jf1AojXiWS2C2QLwDIYs
-	 SxH6hvgRN9HhMSUrd25wHtrDnJ+9Fool/AkuT6ks/uDgdODqIarHFxad6I+dN1GZIc
-	 NbBQWLvGeBUZtS0qc89wydGBQO5wRonEr8z9FtGBMLFkVlVEX85RXE7PUEbXNH6WpK
-	 7VEPKSHUFDltm0Gjyk5J9RL0ebxmiZQM0aA/diF0sKnd0E3RJ2pkN9Kkb7MN4gRw4/
-	 i9+KJtiNPHMwg==
+	b=aFbSe6vzYnxQOasfNGnMc2AmHeAZd3awQACfsGIMhiWm7a1jy9iung+k6mmkjFihq
+	 ezNd4/Ui7rvTHMmta86DrGE8P6szY3N5L4fkDoDUhsZ/eYBqCVqUYIGHkpzB+9ZocS
+	 c4Ymndv2T7OnAih6Ot/XyhNVCkNdjEllYepyKl4lbnCl0U6/F9euiOVI3icLH4oP1v
+	 anVB/8Gq388jBYOiTKjaRD2IapP6bra4n8DZYK/IvvSKZAT33N4ZfNObDWx6bZfVNC
+	 +KRpXtyIeADEHZ3b9OlmFjwXnDY8PY3ON1IUx9QsoX8hRd+INdCEEJMPUYUFZvZx1R
+	 wxOW0gXCilXsg==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id D7BB48A098B;
-	Wed, 21 Oct 2026 05:16:55 +0200 (CEST)
-Message-ID: <ef85db692c151f13d4749f6c6f4fc7372a2ab0b4.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id 391D48A08F4;
+	Wed, 21 Oct 2026 05:17:13 +0200 (CEST)
+Message-ID: <d8a3b0587e8123c56058d097fbd2d5fa00cf7bd6.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 28/41] net: add SO_PEERCRED_R, SO_PEERGROUPS_R and
- SCM_CREDENTIALS_R
+Subject: [RFC PATCH v2 33/41] posix_acl: support UUID and GUID entries
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -70,7 +69,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:48 +0200
+Date: Wed, 21 Oct 2026 05:15:53 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -80,485 +79,273 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-Services authenticate AF_UNIX peers with SO_PEERCRED, SO_PEERGROUPS and
-SCM_CREDENTIALS, which carry 32 bit ids: a UUID or GUID user shows up
-as the overflow id there.
+The ACL xattrs carry 32 bit ids, so ACL_USER and ACL_GROUP entries for
+UUID and GUID users and groups could neither be set nor shown.
 
-Add variants with __kernel_uid_r_t ids:
+Add version 3 of the xattr format, whose entries hold an id kind and
+16 bytes of id. setxattr() takes version 2 and 3; getxattr() returns
+version 3 only if the ACL has such an entry the caller can see, so
+existing tools keep getting version 2 for everything else.
 
-- SO_PEERCRED_R returns a struct __kernel_ucred_r of the peer,
-- SO_PEERGROUPS_R its supplementary groups as __kernel_gid_r_t,
-- SO_PASSCRED_R asks for SCM_CREDENTIALS_R messages, with a struct
-  __kernel_ucred_r, next to or instead of SCM_CREDENTIALS (a separate
-  option, so receivers sizing their control buffer for SCM_CREDENTIALS
-  don't get truncated), and SCM_CREDENTIALS_R can be sent with the same
-  privilege rules as SCM_CREDENTIALS.
-
-The classic SCM_CREDENTIALS sending path now shares the checks and pid
-handling with it. Netlink keeps classic ids in its skbs, so it hands out
-the overflow id for UUID senders in SCM_CREDENTIALS_R too.
+set_posix_acl() refuses UUID and GUID entries with -EOVERFLOW on
+filesystems without SB_I_UID_R, whose ACL formats can't store them.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- arch/alpha/include/uapi/asm/socket.h  |  5 ++
- arch/mips/include/uapi/asm/socket.h   |  5 ++
- arch/parisc/include/uapi/asm/socket.h |  5 ++
- arch/sparc/include/uapi/asm/socket.h  |  5 ++
- include/linux/socket.h                |  1 +
- include/net/sock.h                    |  4 +-
- include/uapi/asm-generic/socket.h     |  5 ++
- include/uapi/linux/socket.h           |  9 +++
- net/core/scm.c                        | 94 ++++++++++++++++++---------
- net/core/sock.c                       | 84 ++++++++++++++++++++++++
- net/unix/af_unix.c                    |  3 +-
- 11 files changed, 186 insertions(+), 34 deletions(-)
+ fs/posix_acl.c                       | 123 ++++++++++++++++++++++++++-
+ include/linux/posix_acl_xattr.h      |  31 +++++++
+ include/uapi/linux/posix_acl_xattr.h |  19 +++++
+ 3 files changed, 171 insertions(+), 2 deletions(-)
 
-diff --git a/arch/alpha/include/uapi/asm/socket.h b/arch/alpha/include/uapi/asm/socket.h
-index 946a5fad26..3f1dd0e766 100644
---- a/arch/alpha/include/uapi/asm/socket.h
-+++ b/arch/alpha/include/uapi/asm/socket.h
-@@ -153,10 +153,15 @@
- #define SO_PASSRIGHTS		83
- 
- #define SO_INQ			84
-+
- #define SCM_INQ			SO_INQ
- 
- #define SO_RIGHTS_NOTRUNC      85
- 
-+#define SO_PEERCRED_R		86
-+#define SO_PEERGROUPS_R		87
-+#define SO_PASSCRED_R		88
-+
- #if !defined(__KERNEL__)
- 
- #if __BITS_PER_LONG == 64
-diff --git a/arch/mips/include/uapi/asm/socket.h b/arch/mips/include/uapi/asm/socket.h
-index f1641dde13..a2bbd153a9 100644
---- a/arch/mips/include/uapi/asm/socket.h
-+++ b/arch/mips/include/uapi/asm/socket.h
-@@ -164,10 +164,15 @@
- #define SO_PASSRIGHTS		83
- 
- #define SO_INQ			84
-+
- #define SCM_INQ			SO_INQ
- 
- #define SO_RIGHTS_NOTRUNC      85
- 
-+#define SO_PEERCRED_R		86
-+#define SO_PEERGROUPS_R		87
-+#define SO_PASSCRED_R		88
-+
- #if !defined(__KERNEL__)
- 
- #if __BITS_PER_LONG == 64
-diff --git a/arch/parisc/include/uapi/asm/socket.h b/arch/parisc/include/uapi/asm/socket.h
-index f3a3815c7d..72751399a8 100644
---- a/arch/parisc/include/uapi/asm/socket.h
-+++ b/arch/parisc/include/uapi/asm/socket.h
-@@ -145,10 +145,15 @@
- #define SO_PASSRIGHTS		0x4051
- 
- #define SO_INQ			0x4052
-+
- #define SCM_INQ			SO_INQ
- 
- #define SO_RIGHTS_NOTRUNC	0x4053
- 
-+#define SO_PEERCRED_R		0x4054
-+#define SO_PEERGROUPS_R		0x4055
-+#define SO_PASSCRED_R		0x4056
-+
- #if !defined(__KERNEL__)
- 
- #if __BITS_PER_LONG == 64
-diff --git a/arch/sparc/include/uapi/asm/socket.h b/arch/sparc/include/uapi/asm/socket.h
-index 7907f3b1f0..39162ca456 100644
---- a/arch/sparc/include/uapi/asm/socket.h
-+++ b/arch/sparc/include/uapi/asm/socket.h
-@@ -146,10 +146,15 @@
- #define SO_PASSRIGHTS            0x005c
- 
- #define SO_INQ                   0x005d
-+
- #define SCM_INQ                  SO_INQ
- 
- #define SO_RIGHTS_NOTRUNC        0x005e
- 
-+#define SO_PEERCRED_R            0x005f
-+#define SO_PEERGROUPS_R          0x0060
-+#define SO_PASSCRED_R            0x0061
-+
- #if !defined(__KERNEL__)
- 
- 
-diff --git a/include/linux/socket.h b/include/linux/socket.h
-index 5a5eb12501..b8e7ba6ffe 100644
---- a/include/linux/socket.h
-+++ b/include/linux/socket.h
-@@ -193,6 +193,7 @@ static inline size_t msg_data_left(const struct msghdr *msg)
- #define SCM_CREDENTIALS 0x02		/* rw: struct ucred		*/
- #define SCM_SECURITY	0x03		/* rw: security label		*/
- #define SCM_PIDFD	0x04		/* ro: pidfd (int)		*/
-+#define SCM_CREDENTIALS_R 0x05		/* rw: struct __kernel_ucred_r	*/
- 
- struct ucred {
- 	__u32	pid;
-diff --git a/include/net/sock.h b/include/net/sock.h
-index 0986d94665..7055afcf0d 100644
---- a/include/net/sock.h
-+++ b/include/net/sock.h
-@@ -358,6 +358,7 @@ struct sk_filter;
-   *	@sk_scm_security: flagged by SO_PASSSEC to recv SCM_SECURITY
-   *	@sk_scm_pidfd: flagged by SO_PASSPIDFD to recv SCM_PIDFD
-   *	@sk_scm_rights: flagged by SO_PASSRIGHTS to recv SCM_RIGHTS
-+  *	@sk_scm_credentials_r: flagged by SO_PASSCRED_R to recv SCM_CREDENTIALS_R
-   *	@sk_scm_unused: unused flags for scm_recv()
-   *	@ns_tracker: tracker for netns reference
-   *	@sk_user_frags: xarray of pages the user is holding a reference on.
-@@ -565,7 +566,8 @@ struct sock {
- 				sk_scm_security : 1,
- 				sk_scm_pidfd : 1,
- 				sk_scm_rights : 1,
--				sk_scm_unused : 4;
-+				sk_scm_credentials_r : 1,
-+				sk_scm_unused : 3;
- 		};
- 	};
- 	u8			sk_clockid;
-diff --git a/include/uapi/asm-generic/socket.h b/include/uapi/asm-generic/socket.h
-index 84ea7b9293..f3445c32ca 100644
---- a/include/uapi/asm-generic/socket.h
-+++ b/include/uapi/asm-generic/socket.h
-@@ -148,10 +148,15 @@
- #define SO_PASSRIGHTS		83
- 
- #define SO_INQ			84
-+
- #define SCM_INQ			SO_INQ
- 
- #define SO_RIGHTS_NOTRUNC	85
- 
-+#define SO_PEERCRED_R		86
-+#define SO_PEERGROUPS_R		87
-+#define SO_PASSCRED_R		88
-+
- #if !defined(__KERNEL__)
- 
- #if __BITS_PER_LONG == 64 || (defined(__x86_64__) && defined(__ILP32__))
-diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
-index d3fcd3b5ec..38d3cd814a 100644
---- a/include/uapi/linux/socket.h
-+++ b/include/uapi/linux/socket.h
-@@ -2,6 +2,8 @@
- #ifndef _UAPI_LINUX_SOCKET_H
- #define _UAPI_LINUX_SOCKET_H
- 
+diff --git a/fs/posix_acl.c b/fs/posix_acl.c
+index 18b302f941..bcb0663fe2 100644
+--- a/fs/posix_acl.c
++++ b/fs/posix_acl.c
+@@ -19,6 +19,8 @@
+ #include <linux/cred.h>
+ #include <linux/posix_acl.h>
+ #include <linux/posix_acl_xattr.h>
 +#include <linux/uidgid_r.h>
-+
- /*
-  * Desired design of maximum size and alignment (see RFC2553)
-  */
-@@ -35,4 +37,11 @@ struct __kernel_sockaddr_storage {
- #define SOCK_TXREHASH_DISABLED	0
- #define SOCK_TXREHASH_ENABLED	1
++#include <linux/unaligned.h>
+ #include <linux/xattr.h>
+ #include <linux/export.h>
+ #include <linux/user_namespace.h>
+@@ -741,16 +743,62 @@ static int posix_acl_fix_xattr_common(const void *value, size_t size)
+ 		return -EINVAL;
+ 	if (size < sizeof(struct posix_acl_xattr_header))
+ 		return -EINVAL;
+-	if (header->a_version != cpu_to_le32(POSIX_ACL_XATTR_VERSION))
++	if (header->a_version == cpu_to_le32(POSIX_ACL_XATTR_VERSION_R))
++		count = posix_acl_xattr_count_r(size);
++	else if (header->a_version == cpu_to_le32(POSIX_ACL_XATTR_VERSION))
++		count = posix_acl_xattr_count(size);
++	else
+ 		return -EOPNOTSUPP;
  
-+/* SO_PEERCRED_R and SCM_CREDENTIALS_R: struct ucred with UUIDs and GUIDs */
-+struct __kernel_ucred_r {
-+	__u32			pid;
-+	__kernel_uid_r_t	uid;
-+	__kernel_gid_r_t	gid;
-+};
-+
- #endif /* _UAPI_LINUX_SOCKET_H */
-diff --git a/net/core/scm.c b/net/core/scm.c
-index f0d44ecdb1..7e40f7de12 100644
---- a/net/core/scm.c
-+++ b/net/core/scm.c
-@@ -40,22 +40,19 @@
- #include <net/cls_cgroup.h>
- #include <net/af_unix.h>
- 
--
- /*
-  *	Only allow a user to send credentials, that they could set with
-  *	setu(g)id.
-  */
- 
--static __inline__ int scm_check_creds(struct ucred *creds)
-+static int scm_check_kcreds(u32 pid, kuid_t uid, kgid_t gid)
- {
- 	const struct cred *cred = current_cred();
--	kuid_t uid = make_kuid(cred->user_ns, creds->uid);
--	kgid_t gid = make_kgid(cred->user_ns, creds->gid);
- 
- 	if (!uid_valid(uid) || !gid_valid(gid))
+-	count = posix_acl_xattr_count(size);
+ 	if (count < 0)
  		return -EINVAL;
  
--	if ((creds->pid == task_tgid_vnr(current) ||
-+	if ((pid == task_tgid_vnr(current) ||
- 	     ns_capable(task_active_pid_ns(current)->user_ns, CAP_SYS_ADMIN)) &&
- 	    ((uid_eq(uid, cred->uid)   || uid_eq(uid, cred->euid) ||
- 	      uid_eq(uid, cred->suid)) || ns_capable(cred->user_ns, CAP_SETUID)) &&
-@@ -163,6 +160,30 @@ static inline int scm_replace_pid(struct scm_cookie *scm, struct pid *pid)
- 	return 0;
+ 	return count;
  }
  
-+/* The sender's pid in @p is @pid, and the sender ids @uid and @gid */
-+static int scm_set_creds(struct scm_cookie *p, u32 pid, kuid_t uid, kgid_t gid)
++/* The entries of a version 3 ACL xattr into @acl; -EINVAL if malformed */
++static int posix_acl_from_xattr_r(struct user_namespace *userns,
++				  const struct posix_acl_xattr_entry_r *entry,
++				  struct posix_acl *acl)
 +{
-+	int err;
++	struct __kernel_uid_r id;
 +
-+	if (!p->pid || pid_vnr(p->pid) != pid) {
-+		struct pid *kpid = find_get_pid(pid);
++	for (int n = 0; n < acl->a_count; n++, entry++) {
++		struct posix_acl_entry *acl_e = &acl->a_entries[n];
 +
-+		if (!kpid)
-+			return -ESRCH;
-+		/* pass a struct pid reference from find_get_pid() to
-+		 * scm_replace_pid().
-+		 */
-+		err = scm_replace_pid(p, kpid);
-+		if (err) {
-+			put_pid(kpid);
-+			return err;
++		acl_e->e_tag  = le16_to_cpu(entry->e_tag);
++		acl_e->e_perm = le16_to_cpu(entry->e_perm);
++
++		memset(&id, 0, sizeof(id));
++		id.type = le32_to_cpu(entry->e_type);
++		if (id.type == UID_R_LEGACY)
++			id.legacy = get_unaligned_le32(entry->e_id);
++		else
++			memcpy(id.uuid, entry->e_id, sizeof(id.uuid));
++
++		switch (acl_e->e_tag) {
++		case ACL_USER_OBJ:
++		case ACL_GROUP_OBJ:
++		case ACL_MASK:
++		case ACL_OTHER:
++			break;
++		case ACL_USER:
++			acl_e->e_uid = make_kuid_r(userns, &id);
++			if (!uid_valid(acl_e->e_uid))
++				return -EINVAL;
++			break;
++		case ACL_GROUP:
++			acl_e->e_gid = make_kgid_r(userns, &id);
++			if (!gid_valid(acl_e->e_gid))
++				return -EINVAL;
++			break;
++		default:
++			return -EINVAL;
 +		}
 +	}
-+	p->creds.uid = uid;
-+	p->creds.gid = gid;
 +	return 0;
 +}
 +
- int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
- {
- 	const struct proto_ops *ops = READ_ONCE(sock->ops);
-@@ -203,35 +224,33 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
- 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct ucred)))
- 				goto error;
- 			memcpy(&creds, CMSG_DATA(cmsg), sizeof(struct ucred));
--			err = scm_check_creds(&creds);
--			if (err)
--				goto error;
--
--			if (!p->pid || pid_vnr(p->pid) != creds.pid) {
--				struct pid *pid;
--				err = -ESRCH;
--				pid = find_get_pid(creds.pid);
--				if (!pid)
--					goto error;
--
--				/* pass a struct pid reference from
--				 * find_get_pid() to scm_replace_pid().
--				 */
--				err = scm_replace_pid(p, pid);
--				if (err) {
--					put_pid(pid);
--					goto error;
--				}
--			}
--
--			err = -EINVAL;
- 			uid = make_kuid(current_user_ns(), creds.uid);
- 			gid = make_kgid(current_user_ns(), creds.gid);
--			if (!uid_valid(uid) || !gid_valid(gid))
-+			err = scm_check_kcreds(creds.pid, uid, gid);
-+			if (!err)
-+				err = scm_set_creds(p, creds.pid, uid, gid);
-+			if (err)
- 				goto error;
+ /**
+  * posix_acl_from_xattr - convert POSIX ACLs from backing store to VFS format
+  * @userns: the filesystem's idmapping
+@@ -795,6 +843,13 @@ struct posix_acl *posix_acl_from_xattr(struct user_namespace *userns,
+ 		return ERR_PTR(-ENOMEM);
+ 	acl_e = acl->a_entries;
+ 
++	if (header->a_version == cpu_to_le32(POSIX_ACL_XATTR_VERSION_R)) {
++		if (posix_acl_from_xattr_r(userns, (const void *)(header + 1),
++					   acl))
++			goto fail;
++		return acl;
++	}
++
+ 	for (end = entry + count; entry != end; acl_e++, entry++) {
+ 		acl_e->e_tag  = le16_to_cpu(entry->e_tag);
+ 		acl_e->e_perm = le16_to_cpu(entry->e_perm);
+@@ -874,6 +929,61 @@ posix_acl_to_xattr(struct user_namespace *user_ns, const struct posix_acl *acl,
+ }
+ EXPORT_SYMBOL (posix_acl_to_xattr);
+ 
++/* Like vfs_posix_acl_to_xattr(), in version 3 */
++static ssize_t vfs_posix_acl_to_xattr_r(struct mnt_idmap *idmap,
++					struct inode *inode,
++					const struct posix_acl *acl,
++					void *buffer, size_t size)
++{
++	struct posix_acl_xattr_header *ext_acl = buffer;
++	struct posix_acl_xattr_entry_r *ext_entry;
++	struct user_namespace *fs_userns = i_user_ns(inode);
++	struct user_namespace *caller_userns = current_user_ns();
++	struct __kernel_uid_r id;
++	ssize_t real_size;
++	bool mapped;
++
++	real_size = posix_acl_xattr_size_r(acl->a_count);
++	if (!buffer)
++		return real_size;
++	if (real_size > size)
++		return -ERANGE;
++
++	ext_entry = (void *)(ext_acl + 1);
++	ext_acl->a_version = cpu_to_le32(POSIX_ACL_XATTR_VERSION_R);
++
++	for (int n = 0; n < acl->a_count; n++, ext_entry++) {
++		const struct posix_acl_entry *acl_e = &acl->a_entries[n];
++
++		ext_entry->e_tag  = cpu_to_le16(acl_e->e_tag);
++		ext_entry->e_perm = cpu_to_le16(acl_e->e_perm);
++		memset(&id, 0, sizeof(id));
++		mapped = true;
++		switch (acl_e->e_tag) {
++		case ACL_USER:
++			mapped = from_kuid_r(caller_userns, vfsuid_into_kuid(
++				make_vfsuid(idmap, fs_userns, acl_e->e_uid)), &id);
++			break;
++		case ACL_GROUP:
++			mapped = from_kgid_r(caller_userns, vfsgid_into_kgid(
++				make_vfsgid(idmap, fs_userns, acl_e->e_gid)), &id);
 +			break;
 +		}
-+		/* SCM_CREDENTIALS with __kernel_uid_r_t ids */
-+		case SCM_CREDENTIALS_R:
-+		{
-+			struct __kernel_ucred_r creds;
-+			struct user_namespace *ns = current_user_ns();
-+			kuid_t uid;
-+			kgid_t gid;
- 
--			p->creds.uid = uid;
--			p->creds.gid = gid;
-+			if (cmsg->cmsg_len != CMSG_LEN(sizeof(creds)))
-+				goto error;
-+			memcpy(&creds, CMSG_DATA(cmsg), sizeof(creds));
-+			uid = make_kuid_r(ns, &creds.uid);
-+			gid = make_kgid_r(ns, &creds.gid);
-+			err = scm_check_kcreds(creds.pid, uid, gid);
-+			if (!err)
-+				err = scm_set_creds(p, creds.pid, uid, gid);
-+			if (err)
-+				goto error;
- 			break;
- 		}
- 		default:
-@@ -526,8 +545,8 @@ static bool __scm_recv_common(struct sock *sk, struct msghdr *msg,
- 			      struct scm_cookie *scm, int flags)
- {
- 	if (!msg->msg_control) {
--		if (sk->sk_scm_credentials || sk->sk_scm_pidfd ||
--		    scm->fp || scm_has_secdata(sk))
-+		if (sk->sk_scm_credentials || sk->sk_scm_credentials_r ||
-+		    sk->sk_scm_pidfd || scm->fp || scm_has_secdata(sk))
- 			msg->msg_flags |= MSG_CTRUNC;
- 
- 		scm_destroy(scm);
-@@ -545,6 +564,17 @@ static bool __scm_recv_common(struct sock *sk, struct msghdr *msg,
- 		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS, sizeof(ucreds), &ucreds);
- 	}
- 
-+	if (sk->sk_scm_credentials_r) {
-+		struct user_namespace *current_ns = current_user_ns();
-+		struct __kernel_ucred_r ucreds;
-+
-+		memset(&ucreds, 0, sizeof(ucreds));
-+		ucreds.pid = scm->creds.pid;
-+		from_kuid_r_munged(current_ns, scm->creds.uid, &ucreds.uid);
-+		from_kgid_r_munged(current_ns, scm->creds.gid, &ucreds.gid);
-+		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS_R, sizeof(ucreds), &ucreds);
-+	}
-+
- 	scm_passec(sk, msg, scm);
- 
- 	return true;
-diff --git a/net/core/sock.c b/net/core/sock.c
-index 300bc75ce1..d34da446b0 100644
---- a/net/core/sock.c
-+++ b/net/core/sock.c
-@@ -1585,6 +1585,13 @@ int sk_setsockopt(struct sock *sk, int level, int optname,
- 			ret = -EOPNOTSUPP;
- 		break;
- 
-+	case SO_PASSCRED_R:
-+		if (sk_may_scm_recv(sk))
-+			sk->sk_scm_credentials_r = valbool;
-+		else
-+			ret = -EOPNOTSUPP;
-+		break;
-+
- 	case SO_INCOMING_CPU:
- 		reuseport_update_incoming_cpu(sk, val);
- 		break;
-@@ -1714,6 +1721,34 @@ static void cred_to_ucred(struct pid *pid, const struct cred *cred,
- 	}
- }
- 
-+static void cred_to_ucred_r(struct pid *pid, const struct cred *cred,
-+			    struct __kernel_ucred_r *ucred)
-+{
-+	struct user_namespace *current_ns = current_user_ns();
-+
-+	memset(ucred, 0, sizeof(*ucred));
-+	ucred->pid = pid_vnr(pid);
-+	if (cred) {
-+		from_kuid_r_munged(current_ns, cred->euid, &ucred->uid);
-+		from_kgid_r_munged(current_ns, cred->egid, &ucred->gid);
-+	}
-+}
-+
-+static int groups_to_user_r(sockptr_t dst, const struct group_info *src)
-+{
-+	struct user_namespace *user_ns = current_user_ns();
-+	__kernel_gid_r_t gid;
-+	int i;
-+
-+	for (i = 0; i < src->ngroups; i++) {
-+		from_kgid_r_munged(user_ns, src->gid[i], &gid);
-+		if (copy_to_sockptr_offset(dst, i * sizeof(gid), &gid, sizeof(gid)))
-+			return -EFAULT;
-+	}
-+
-+	return 0;
-+}
-+
- static int groups_to_user(sockptr_t dst, const struct group_info *src)
- {
- 	struct user_namespace *user_ns = current_user_ns();
-@@ -1900,6 +1935,13 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
- 		v.val = sk->sk_scm_rights;
- 		break;
- 
-+	case SO_PASSCRED_R:
-+		if (!sk_may_scm_recv(sk))
-+			return -EOPNOTSUPP;
-+
-+		v.val = sk->sk_scm_credentials_r;
-+		break;
-+
- 	case SO_PEERCRED:
- 	{
- 		struct ucred peercred;
-@@ -1915,6 +1957,23 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
- 		goto lenout;
- 	}
- 
-+	/* Like SO_PEERCRED, with uid and gid as __kernel_uid_r_t */
-+	case SO_PEERCRED_R:
-+	{
-+		struct __kernel_ucred_r peercred;
-+
-+		if (len > sizeof(peercred))
-+			len = sizeof(peercred);
-+
-+		spin_lock(&sk->sk_peer_lock);
-+		cred_to_ucred_r(sk->sk_peer_pid, sk->sk_peer_cred, &peercred);
-+		spin_unlock(&sk->sk_peer_lock);
-+
-+		if (copy_to_sockptr(optval, &peercred, len))
-+			return -EFAULT;
-+		goto lenout;
-+	}
-+
- 	case SO_PEERPIDFD:
- 	{
- 		struct pid *peer_pid;
-@@ -1980,6 +2039,31 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
- 		goto lenout;
- 	}
- 
-+	/* Like SO_PEERGROUPS, with an array of __kernel_gid_r_t */
-+	case SO_PEERGROUPS_R:
-+	{
-+		const struct cred *cred;
-+		int ret, n;
-+
-+		cred = sk_get_peer_cred(sk);
-+		if (!cred)
-+			return -ENODATA;
-+
-+		n = cred->group_info->ngroups;
-+		if (len < n * sizeof(__kernel_gid_r_t)) {
-+			len = n * sizeof(__kernel_gid_r_t);
-+			put_cred(cred);
-+			return copy_to_sockptr(optlen, &len, sizeof(int)) ? -EFAULT : -ERANGE;
++		/* no mapping: the classic -1, as in version 2 */
++		if (!mapped) {
++			id.type = UID_R_LEGACY;
++			id.legacy = ACL_UNDEFINED_ID;
 +		}
-+		len = n * sizeof(__kernel_gid_r_t);
-+
-+		ret = groups_to_user_r(optval, cred->group_info);
-+		put_cred(cred);
-+		if (ret)
-+			return ret;
-+		goto lenout;
++		ext_entry->e_type = cpu_to_le32(id.type);
++		memset(ext_entry->e_id, 0, sizeof(ext_entry->e_id));
++		if (id.type == UID_R_LEGACY)
++			put_unaligned_le32(id.legacy, ext_entry->e_id);
++		else if (id.type != UID_R_NONE)
++			memcpy(ext_entry->e_id, id.uuid, sizeof(ext_entry->e_id));
 +	}
++	return real_size;
++}
 +
- 	case SO_PEERNAME:
- 	{
- 		struct sockaddr_storage address;
-diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 2b17310534..f2e1e88e83 100644
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -803,7 +803,8 @@ static void copy_peercred(struct sock *sk, struct sock *peersk)
+ /**
+  * vfs_posix_acl_to_xattr - convert from kernel to userspace representation
+  * @idmap: idmap of the mount
+@@ -902,6 +1012,11 @@ static ssize_t vfs_posix_acl_to_xattr(struct mnt_idmap *idmap,
+ 	vfsuid_t vfsuid;
+ 	vfsgid_t vfsgid;
  
- static bool unix_may_passcred(const struct sock *sk)
- {
--	return sk->sk_scm_credentials || sk->sk_scm_pidfd;
-+	return sk->sk_scm_credentials || sk->sk_scm_credentials_r ||
-+	       sk->sk_scm_pidfd;
++	/* UUIDs and GUIDs the caller can see need version 3 */
++	if (posix_acl_has_id_r(acl) && current_user_ns() == &init_user_ns)
++		return vfs_posix_acl_to_xattr_r(idmap, inode, acl, buffer,
++						size);
++
+ 	real_size = posix_acl_xattr_size(acl->a_count);
+ 	if (!buffer)
+ 		return real_size;
+@@ -956,6 +1071,10 @@ set_posix_acl(struct mnt_idmap *idmap, struct dentry *dentry,
+ 		int ret = posix_acl_valid(inode->i_sb->s_user_ns, acl);
+ 		if (ret)
+ 			return ret;
++		/* UUID and GUID entries only where the filesystem stores them */
++		if (posix_acl_has_id_r(acl) &&
++		    !(inode->i_sb->s_iflags & SB_I_UID_R))
++			return -EOVERFLOW;
+ 	}
+ 	return inode->i_op->set_acl(idmap, dentry, acl, type);
+ }
+diff --git a/include/linux/posix_acl_xattr.h b/include/linux/posix_acl_xattr.h
+index 9e1892525e..307d543bce 100644
+--- a/include/linux/posix_acl_xattr.h
++++ b/include/linux/posix_acl_xattr.h
+@@ -32,6 +32,37 @@ posix_acl_xattr_count(size_t size)
+ 	return size / sizeof(struct posix_acl_xattr_entry);
  }
  
- static int unix_listen(struct socket *sock, int backlog)
++static inline size_t
++posix_acl_xattr_size_r(int count)
++{
++	return (sizeof(struct posix_acl_xattr_header) +
++		(count * sizeof(struct posix_acl_xattr_entry_r)));
++}
++
++static inline int
++posix_acl_xattr_count_r(size_t size)
++{
++	if (size < sizeof(struct posix_acl_xattr_header))
++		return -1;
++	size -= sizeof(struct posix_acl_xattr_header);
++	if (size % sizeof(struct posix_acl_xattr_entry_r))
++		return -1;
++	return size / sizeof(struct posix_acl_xattr_entry_r);
++}
++
++/* Whether an ACL_USER or ACL_GROUP entry of @acl is a UUID or GUID */
++static inline bool posix_acl_has_id_r(const struct posix_acl *acl)
++{
++	for (int n = 0; n < acl->a_count; n++) {
++		const struct posix_acl_entry *e = &acl->a_entries[n];
++
++		if ((e->e_tag == ACL_USER && !uid_is_legacy(e->e_uid)) ||
++		    (e->e_tag == ACL_GROUP && !gid_is_legacy(e->e_gid)))
++			return true;
++	}
++	return false;
++}
++
+ #ifdef CONFIG_FS_POSIX_ACL
+ struct posix_acl *posix_acl_from_xattr(struct user_namespace *user_ns,
+ 				       const void *value, size_t size);
+diff --git a/include/uapi/linux/posix_acl_xattr.h b/include/uapi/linux/posix_acl_xattr.h
+index 506380f0b9..a44a515079 100644
+--- a/include/uapi/linux/posix_acl_xattr.h
++++ b/include/uapi/linux/posix_acl_xattr.h
+@@ -36,4 +36,23 @@ struct posix_acl_xattr_header {
+ 	__le32			a_version;
+ };
+ 
++/*
++ * Version 3: the ids of ACL_USER and ACL_GROUP entries can also be UUIDs
++ * and GUIDs. e_type is a UID_R_* kind (<linux/uidgid_r.h>); a classic id
++ * is in the first four bytes of e_id, little endian, a UUID or GUID takes
++ * all of it in the byte order of __kernel_uid_r_t. Other entries have
++ * e_type UID_R_NONE.
++ *
++ * getxattr() returns version 2 unless an entry has a UUID or GUID;
++ * setxattr() takes both.
++ */
++#define POSIX_ACL_XATTR_VERSION_R	0x0003
++
++struct posix_acl_xattr_entry_r {
++	__le16			e_tag;
++	__le16			e_perm;
++	__le32			e_type;
++	__u8			e_id[16];
++};
++
+ #endif	/* __UAPI_POSIX_ACL_XATTR_H */
 -- 
 2.56.0
 
