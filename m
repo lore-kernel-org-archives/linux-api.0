@@ -1,111 +1,77 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.177
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.14
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792571629;
-	b=zPapHt7+DK2PQfuTT2XBVekAWyq7ylGMLIyyH7ymPSTbOuY0s/b/vwWde6PMfpBunb5A
-	 oMXay3Z7Tcyxb/df0/61KhfcPoBTQ9JwafzTU87oNqIJSyFYGanudL/ERhxab0KYiWpvs
-	 uwzDdfDzV951l6Apag18rsHF6Kzhq7tMaSSJK95wztqXrFP7+QvM/p6zo9e/kuDWB6wRk
-	 FXX79JqofoJznmmJhtLipgGvpc1piN7z4xKTyJl5izt20/U0iTD5wsZYHpCQGP/EU+IJv
-	 SMVashRPfySr7hM/u8I6YWdNMsX2KD6qdY12Ih144ocbB+Lan2wbWK5Eo/3E7Rw33vg==
+	t=1792577219;
+	b=ojM7ebErQ35dQjyoQjKpk0sWOEmcynvKBv4bW34F1DWzaNmwAGjwmv83XoJous4AMqzK
+	 ivrkDQPqreX2jhAjERxLoL6o/DCbkhNIFpG5j/1FriwMnOOSMf3jOydhrXSQCeBRkX6p5
+	 7nduYzkc+XwKTYMyax/XIaJ60Ya3l71G3nlcn0JZFU+IAy57yjfZ0u72O7GKXnD9GzvQR
+	 zSrqzNebgQHpcjTEL3VuuBIh7ePu3P1EeJQxaQwi3b5d9bur+0ScHiGQSeSyJZWmqUkT7
+	 RXxTvtY2ropr/ltai7HQio1gV6scUycsEnlFHQVz9vIheNjweind7wjh4jKgPh+FSsg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792571629;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:Content-Transfer-Encoding:
-	 In-Reply-To;
-	bh=xztp8CA2EuYwLkJWXTD7L/r6UpbaCRk0H8KiI8WbX/0=;
-	b=Sfy8rwVmXEuNkLbWoILgVPzEfVvMtymy3IEN6gvX4p07aF277P/ib55HqBJKQ0i8eDu7
-	 lJJ1ZmbnCwLcSFs6CO1JfQNdaKPyuPKMi43ue6xOpGxThVVjy1X8StB7xq0ctnknkXdOG
-	 uISL+szCKtmjNrQ+VdckWyL6pM+CV/jGiceMxSfuYKHW6h5I5vNzBmculvm9Bn0Bw24DM
-	 ziuoh1lDq0Y1eKPeYRroppZHUxq9xkkf7HQmXHW3fFYb5mUAA4ZHvU98N4tKiLq+hgywt
-	 wq0K2sWrSrvcQfxEgqcdcGX1Dl/QrWHPYo526fj5MmvqdsvdxU/xcxvpKFA+bfHzscg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792577219;
+	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
+	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
+	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:To:cc:
+	 Subject:In-Reply-To:Message-ID:References:MIME-Version:Content-Type;
+	bh=AwR/mWAjfllw9cCm4QRkuwIqpiC8gCFh6BB36vMgvbM=;
+	b=2Trh+dVry3XClZFOI2dbYQLLPG0AWQVjRbcb/Bz2C+GfyGksYtkTvJkj1LI38dlnRWq6
+	 Tt/xqR0/IPnHsJ2w/NCl6+iGLtXjH4qO0BxPmf6IjYFO6g9kKWyXyA3BvvXdYTKXQtOIu
+	 2djIpIhY9K7nxIpRdrREzH9WyZL2UHf8Tc7nkcx6jKqBSV7o41iX4+XYeN+IOvENs5Vx/
+	 p704GsNQw6DS4uMDrByLRo9X3RVDeHUty/VRLVSkiTC3dzthfy2eGHebT3zl2uAkjvksc
+	 xnM5vHAoHwpsAeTqc9iJmL1NtJGgkmLwWnOUAb/sB9W0jmD+hJfeZJabUggRGsq+0ww==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=resnulli.us;
-	spf=none smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b=r1hMRlHN;
-	arc=none smtp.remote-ip=209.85.208.177
-Received: from mail-lj1-f177.google.com (mail-lj1-f177.google.com [209.85.208.177])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=linux.intel.com;
+	spf=pass smtp.mailfrom=linux.intel.com;
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=iJ5OCrmk;
+	arc=none smtp.remote-ip=192.198.163.14
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.14])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3DBF606A320
-	for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 08:33:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A3DBF606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=resnulli.us
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 46B62606A31E;
+	Wed, 21 Oct 2026 10:06:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 46B62606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli-us.20251104.gappssmtp.com header.i=@resnulli-us.20251104.gappssmtp.com header.a=rsa-sha256 header.s=20251104 header.b=r1hMRlHN
-Received: by mail-lj1-f177.google.com with SMTP id 38308e7fff4ca-3a808f09021so3569431fa.0
-        for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 01:33:47 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli-us.20251104.gappssmtp.com; s=20251104; t=1792571626; x=1793176426; darn=vger.kernel.org;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :content-type:mime-version:references:message-id:subject:cc:to:from
-         :date:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=xztp8CA2EuYwLkJWXTD7L/r6UpbaCRk0H8KiI8WbX/0=;
-        b=r1hMRlHNKxIdoWis5K35C0U6pBm/7vNAgzUYPNgxOyTuaDmbox0SdKa3Ggu77kAXo9
-         rx0sLojY9MY9eLFQIVMHli3lNQZF2pRQk1oj9UIPHdLe+glHwLaXZMBcNRKoKzrAGHCm
-         RLbhUnQIZKY/yfqBWeMKXDCbkqoQKxbCGe9L2+zfRkPFrs/VO6vJRcJF9R6Lh6G4gaTz
-         TGLocTMhr3rye1aGRVzJwZyy8sUY+ZPXNgASDnkSNH6lSPL7LJ5xacv81opcvCqAzqkh
-         PYvYMLTGXfSCpamswAeCascR7b80RgejQnTkoh6SIcsrWyzSurXxqIr7FEhSXISWAsPj
-         bDMg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792571626; x=1793176426;
-        h=in-reply-to:content-transfer-encoding:content-disposition
-         :content-type:mime-version:references:message-id:subject:cc:to:from
-         :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=xztp8CA2EuYwLkJWXTD7L/r6UpbaCRk0H8KiI8WbX/0=;
-        b=vfeveOeSH4KcAt1dl6M9jwLbsmxbP2iVQD/pxcC0dsYsh9akrlGwFEDT5ICahF5kON
-         S39wBoYIaS/IC2ixwH9gD2RkQz+/StlCGeDA/jMJn3WhTY/whaoHgDkGBmUXfQFCI9Xy
-         CAp0QgxqFt2KjakFir8vY4Iq+I/+BvmBd4dlm0GhKfTyN7uLD1Izllz5cC16eZxpSer2
-         coGU95Axofhou6xENs3dPlJE9TY0VCtE4Ve+TM+y2xIZOznFAIw2/gZprIFhuJQZb883
-         BTl+gemRvQrrd8m3Ob30jw2eiUxmy38i8rgLSUUsdF2xe9FkUi5NjW0zRVZ7Xw7n40I7
-         HSsQ==
-X-Forwarded-Encrypted: i=1; AKwUvBzazp4tEmTzlaszjLvYwusP/4EbbkpTZuoNTq5mL3zYR1D5x73GcsycKEhTFalsUSnso3/6X2aXwWA=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJsTI/lmmj3qcbAFYZhlAh0tdhBz+fWhgjOXSAgoRZdX/Bc398Z
-	rbSTUQIKTbyljXJalDaHL4Hy5JK+wwiQHCcevrThzOvhHKCaXcyOmaM8j32wniba0qA=
-X-Gm-Gg: AYBFou3NQUwnDs3eNNOYvyDJZmk8NEghdG44oPySlAra9WnzCn+BPUiPffthLEgLxE2
-	noUFzMbbTsCKq2/yCBhTFB8ySEr58C6wNWZZpsNgbk6Enr1+Uw/gqJv0j5e1e5bsjOJhkJhyw8X
-	bHoOj+02r/F4hcB0bzmyFNHHvlnBqwprQpVr+wX+cFz7P3ntu3ccBCfSzza6IoqMJecqtEJsGwa
-	rykEgMvn2ERGWfvPmwsyWqnjX2d1FpNCTnHCYPyD5bBlw+bOq13bsUSohe+ecTeZf/+Nil+0i6v
-	wB8KAzPjqdNzcMzZx8coXAjzdyiiFynKBFctM0DYfO9K4C2ifwzZHGGYey0MzPqCDtkmEkFoKg5
-	AF2lb7V5NX5f/FAP6fQn5PzBLvEuppjUvlF6EK6q2o/KdNrv/cuXYOEUlY2PicIBcD1y6P9CLvW
-	fIKrkg7swctnAq3nrDmluWazgNQ6AEiqHSNMjzgrkq57IrK7kPRokIbO+f0m4b1v2vy49e9ZJLF
-	hRFoyMCQd6EBCOhXJ4td9BRogW/6/j+S69OrM9hnJuYfw2bv4VsfVmsiB8crlMnXLM=
-X-Received: by 2002:a2e:be10:0:b0:3a6:692d:b7ed with SMTP id 38308e7fff4ca-3ac441af820mr4315381fa.20.1792571625331;
-        Wed, 21 Oct 2026 01:33:45 -0700 (PDT)
-Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-3ac43772cb3sm4553341fa.16.2026.10.21.01.33.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Oct 2026 01:33:44 -0700 (PDT)
-Date: Wed, 21 Oct 2026 10:33:42 +0200
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: Dionna Glaze <drdeeglaze@gmail.com>, 
-	Jarkko Sakkinen <jarkko@kernel.org>, linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com, 
-	cedric.xing@intel.com, sameo@meta.com, James.Bottomley@hansenpartnership.com, 
-	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com, 
-	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com, roberto.sassu@huawei.com, 
-	zohar@linux.ibm.com
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-Message-ID: <ath4vwt7KGyDXKVJ@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261016234354.GA664420@nvidia.com>
- <CANwfdvXFLJpC4Bc1PwRoUUP20fu2K8b+FHZ1JLLFXAikC-cBaw@mail.gmail.com>
- <20261017203407.GM13920@nvidia.com>
- <atPgqROZZxnihYfC@kernel.org>
- <20261017231007.GP13920@nvidia.com>
- <CANwfdvVJRv6++MJ8OCUnHSR_5nVD8Yv6eTmYxxqfzxEk0sNfpA@mail.gmail.com>
- <atX9fugGUsI0hGcA@FV6GYCPJ69>
- <CANwfdvUhuQ6L+w+91iDZD=diMmaJ6_2ZsFKkcoiKWOmPMC1oKg@mail.gmail.com>
- <20261019225658.GS13920@nvidia.com>
+	dkim=pass (2048-bit key, unprotected) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=iJ5OCrmk
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1792577219; x=1824113219;
+  h=from:date:to:cc:subject:in-reply-to:message-id:
+   references:mime-version;
+  bh=ddfeBxUm3ZEEfef8gk5qFC+/ow3vU2YA9UAWO5ssV2Y=;
+  b=iJ5OCrmkwp7IUc96u7c1PN9ktuOrzpORf+loEUFHaDdd69MjVT33h6/J
+   cqXt0T5yDONSbiwHkwTPiCJ6a8ROOOXcymz7XQ6ginarDOZyDNk6yUWpj
+   QzudobuHF43anzMJZF4La7eQIdZL6oNw149Ex20Sv/L8L1oJ202NV2oQ+
+   Olp1SC+mJjQSI/iRZvpRRP0PdvWLx1z/XcixKY9yqcrOFsA4zJFXKqzjr
+   YifM+/p7tt3wqxiGIFB39QntsbKcYjnBLPgI2wUWHO07lU46sLGWj7EJ2
+   Qip9smsp1CUaZYcNP+OuRFCPeMmo2YKHf866/3oui9OPE2MZecIlnPJL1
+   A==;
+X-CSE-ConnectionGUID: JFsMsnCvRK2ab9FZaxQ1/w==
+X-CSE-MsgGUID: MDJb+Yz2R/+xWaWMTxOD7A==
+X-IronPort-AV: E=McAfee;i="6800,10657,11941"; a="1313756"
+X-IronPort-AV: E=Sophos;i="6.27,169,1787036400"; 
+   d="scan'208";a="1313756"
+Received: from fmviesa011.fm.intel.com ([10.60.135.151])
+  by fmvoesa108.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Oct 2026 03:06:58 -0700
+X-CSE-ConnectionGUID: eqe3AZTfTpaD1ytC/EQvvg==
+X-CSE-MsgGUID: /iJAJg9RRnappbuCo+BvRw==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.27,169,1787036400"; 
+   d="scan'208";a="4888835"
+Received: from ijarvine-mobl1.ger.corp.intel.com (HELO localhost) ([10.245.245.75])
+  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 21 Oct 2026 03:06:55 -0700
+From: =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
+Date: Wed, 21 Oct 2026 13:06:49 +0300 (EEST)
+To: Bartu Alev <bartualev@gmail.com>
+cc: platform-driver-x86@vger.kernel.org, Hans de Goede <hansg@kernel.org>, 
+    luke@ljones.dev, denis.benato@linux.dev, benato.denis96@gmail.com, 
+    corentin.chary@gmail.com, linux-api@vger.kernel.org, 
+    LKML <linux-kernel@vger.kernel.org>
+Subject: Re: [PATCH v3 0/5] platform/x86: asus-wmi: TUF keyboard shutdown
+ naming and RGB readback
+In-Reply-To: <20261010101601.888709-1-bartualev@gmail.com>
+Message-ID: <f090ad2d-55b7-237b-864f-cee7917568fc@linux.intel.com>
+References: <20261010101601.888709-1-bartualev@gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -115,45 +81,93 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20261019225658.GS13920@nvidia.com>
+Content-Type: text/plain; charset=US-ASCII
 
-Tue, Oct 20, 2026 at 12:56:58AM +0200, jgg@nvidia.com wrote:
->On Mon, Oct 19, 2026 at 09:10:31AM -0700, Dionna Glaze wrote:
->> On Mon, Oct 19, 2026 at 5:08 AM Jiri Pirko <jiri@resnulli.us> wrote:
->> >
->> > Yeah, I was thinking about this and went back and forth. In the end, the
->> > only reason for leaving it unbounded is to allow multiple independent
->> > users of the same register. For example, IMA and systemd could share a
->> > TDX RTMR. The systemd side would read the journal through the
->> > attestation device and the IMA side through securityfs, but both are
->> > views of the same journal. If one side truncated it, the other could no
->> > longer replay the RTMR. Isn't this the valid usecase? Do you see how to
->> > resolve this?
->> >
->> 
->> Bright minds have spent a significant amount of time working on this.
->> 
->> +Roberto Sassu, +Mimi Zohar
->> IMA logs and systemd logs are both system level concerns that are
->> relevant to the OS construction, not individual users,
->> so I would just say to reroute IMA to use ctlv using a kernel config
->> setting, then make systemd the new system manager of the holistic log.
->> The securityfs log contents can simply say, "log managed by ctlv" in
->> this setting, in the form of the template identifier.
->> For policy violations, only the 0... extend needs to go to ctlv.
->> IMA can still keep its violation log as a ring buffer when it's not a
->> 1-to-1 violation to extension
->> https://www.youtube.com/watch?v=gyYUYbdiN_4
+On Sat, 10 Oct 2026, Bartu Alev wrote:
+
+> This series fixes the name of the fourth TUF keyboard power state and
+> makes the TUF keyboard RGB attributes readable.
+> 
+> The fourth flag of kbd_rgb_state was labelled "keyboard" and treated as
+> a no-op since it was introduced.  In hardware it gates the backlight
+> during the ACPI S5 power-off sequence: with the bit set the keyboard
+> lights up white while the machine powers off, with the bit clear the
+> machine powers off dark.  Patch 2 renames the field and carries a Fixes
+> tag for stable.
+> 
+> The remaining patches prepare and add readback.  DSTS device 0x0010005B
+> evaluates the DSDT method EC0.KBLS(), which returns a 16-byte snapshot
+> of the EC's keyboard state: lighting mode, red, green and blue levels,
+> animation speed, and the four power flags.  Both kbd_rgb_mode and
+> kbd_rgb_state become readable and report the write format with the
+> command word fixed at 1.
+> 
+> Responses to the v2 review:
+> 
+> Ilpo:
+> - Documentation: patch 5 adds the missing ABI entries.
+> - Errno: the helper already separates the cases.
+>   asus_wmi_evaluate_method_buf() returns -EIO for a failed evaluation
+>   and -ENODEV for an unsupported DEVID.  The readback keeps the
+>   err < 0 ? err : -ENODEV normalization for the positive ACPI integers
+>   that leak through, and the AML signature check returns -ENODEV as
+>   well.
+> - Named defines: patch 3 names the three speed codes and the four state
+>   bits, and the decoding comments are gone.
+> - Struct: patch 4 parses the status buffer through a packed struct.
 >
->I think for now we should not include a new dynamic log here, the uAPI
->around this Jiri drafted can remain a future step. I don't want to
->open complicated discussions about new functionality at this
->stage. The whole CTLV idea in general is a big enough thing to bite
->off for this series.
+> Denis:
+> - DEVID naming: the write DEVID is now ASUS_WMI_DEVID_TUF_RGB_CMD
+>   (patch 1) and the read DEVID is ASUS_WMI_DEVID_TUF_RGB_READ_STATUS,
+>   as you suggested.
+> - -ENODATA: asus_wmi_evaluate_method_buf() already returns -ENODATA for
+>   empty buffers, so no extra handling was added.
+> 
+> Provenance: the KBLS buffer layout and the speed-code semantics were
+> recovered by static analysis of the EC firmware (ITE IT5570VG),
+> assisted by an LLM-driven toolchain; the readback patch carries an
+> Assisted-by tag.  Tested on a TUF Gaming A15 (FA507NV): the v2
+> readback on kernel 7.2.6, and the S5 behaviour of the shutdown flag by
+> A/B testing both values.
+> 
+> Changes in v3, relative to v2:
+> - split into five patches, one logical change each
+> - renamed the write DEVID to ASUS_WMI_DEVID_TUF_RGB_CMD and the new one
+>   to ASUS_WMI_DEVID_TUF_RGB_READ_STATUS, per Denis Benato
+> - named the speed codes and the power state bits and dropped the
+>   decoding comments
+> - parse the status buffer through a packed struct
+> - added the ABI documentation, with the attributes documented at their
+>   real location under /sys/class/leds/asus::kbd_backlight/ and worded
+>   for all laptops that expose the zonal RGB devices, not only TUF
+>   models
+> - added linux-api to Cc, which the earlier versions missed
+> 
+> v2: https://lore.kernel.org/all/20260926005625.171560-1-bartualev@gmail.com/
+> v1: https://lore.kernel.org/all/20260925200744.129714-1-bartualev@gmail.com/
+> 
+> Bartu Alev (5):
+>   platform/x86: asus-wmi: rename TUF RGB state DEVID to _CMD
+>   platform/x86: asus-wmi: fix TUF keyboard power state shutdown naming
+>   platform/x86: asus-wmi: name the TUF keyboard RGB state and speed
+>     codes
 
-Okay, dropping the log from this set.
+Thanks.
 
-[..]
+I took the first 3 patches into the review-ilpo-next branch now as there 
+is another series that conflicts/overlaps with them.
+
+>   platform/x86: asus-wmi: add TUF keyboard RGB readback support
+
+v2 thread has my thoughts about this one.
+
+>   Documentation/ABI: asus-wmi: document TUF keyboard RGB attributes
+> 
+>  .../ABI/testing/sysfs-platform-asus-wmi       |  42 ++++++
+>  drivers/platform/x86/asus-wmi.c               | 123 +++++++++++++++---
+>  include/linux/platform_data/x86/asus-wmi.h    |   5 +-
+>  3 files changed, 153 insertions(+), 17 deletions(-)
+
+-- 
+ i.
+
