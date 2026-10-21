@@ -1,102 +1,99 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792592605;
-	b=EilCd8AUf7Rr9nAxKByKj2lmG7Jsp5XoBFm5lxQNjSRQnH6vBzeAhK9A88pU6MxmhH3w
-	 C/cZ94Vg4D3VmdxwQ9mGWZvjECc7wtK8UwbnAmRhtjbZiZATk+5sV062GOwsgBTnKtWzM
-	 MFBOingLRYW+E1ha1iptBlpJbGdRrJ7DD7jaErqbfgf/gMRu7J+r0TIbwZsEvglO0c37T
-	 P5Jp2wzQKdo+fm8AfAGH1K5Mc3CHa6+08K8tY/cVhhYdt7jLuC5cYFqRnllyG8P7k0pu2
-	 Xi3cYVNQkaAKvh5pYYW3E6KKe87rwyVY9HyBZEpkcFc2XLEoFJNA8pIoUEdSvbPLwxQ==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792592605;
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.42
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1792592814;
+	b=0joCJiI4zo6LuT8PAisbH4IkMmp8f87BKw2CuzR9HdZq9gV9KgwXSkdd6+ExLUeHS1U1
+	 VH81YWDjV/ixN6HOHG92YGZ+iSjg1jQGWbZWw47rl8l3tvbAp8XR3HCidygEaNh7t1MfH
+	 TU0mbl47DeAXiRoQlU9RSTCFBF9H0DYmeT4+wVfd/uhVuIVSBhsjPpT5gx6PlH2T6WojM
+	 N1GwVdh/nPY4L5d07mvXldblLNuP932SR5fj+zLk5Klatjcq4/GYAmr/NWsSDLqrCd60F
+	 1IGMPiG/WqsvZWxWHM3izV9ZA+udv6U8zmcSYsfBujocciTnZiSRCZ9ESee28nbJFtQ==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792592814;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=iuEnBt+F5UUTH/XMt7g5zZaMh5IRL3eqw/WM+8xQBzo=;
-	b=0VLn1dT7vdP1wiiD2tYdVWdrIfuNPgL9FFqr6HZr7tRPUIlzoqJKVbWChvt208f1aDuF
-	 41vWqWEeT9s2CP04zGieBXCpnuRf2Mzeuc9kzKeDlyyebBwXq0WVfjmtZtTBjPpZVTAmE
-	 HPTWirj3uVyST8bUIgw32RMVyKT2fxY3V6evA8z/mF18d8Op1bY/Ppe1bIKMD/j1Taahw
-	 xZqQ4ovletsNUY/vXdfrUXuOlJuyy4NeC1eI+XF/ghV3dteE2b1CQPG1TmP8qUK3kOF3D
-	 vUBzZ3cmBLSGSzo1isYSZTx5Q7quykmvxRSeH4fN6EpDOwGBHL2UxJz9LhVxoQHDIwg==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=C4Na7Qt4;
-	arc=none smtp.remote-ip=209.85.128.50
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type;
+	bh=HZWCDTWe8myvVLhLnC3gRwnDw2Z9dfDRU9KvUScIux8=;
+	b=Oqso6O6Sw3BG+QIvTjWjHD2xPm7Ja7VXML8AM0xAhOBtA6luL6prspKmQVqqBCq4AT6O
+	 1j2xzqrYZsjp7OzUmyffWOtH4OY07Js0f3TmV02Em8SlVmIwZOBHXCzhJDltV/ApIqlSC
+	 e7Vvd5PdDEF18cxLb90iskOzqh9+p8TgwGwBfXuT/DSHqkuJ/QV4PwmMOp6ftt8KpTw/C
+	 SrAaV+/hCQn6wY3lwGOQtzKKy3V+dlT9Ep5iuwvfUvUoCTnV73hT5MQCpA446rCh6/rZy
+	 HZR0SojjR/K1wUpNFqvgio7K85lw+7OKT7wVxJrbIDCkMX7228Kq0WxMWS3eifzgs8g==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=BRqHAhOJ;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.42
+Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com [209.85.218.42])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE84860A261C
-	for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 14:23:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AE84860A261C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A66D606A31F
+	for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 14:26:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2A66D606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=C4Na7Qt4
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4a2000d5fb1so3658735e9.1
-        for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 07:23:24 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=BRqHAhOJ
+Received: by mail-ej1-f42.google.com with SMTP id a640c23a62f3a-c445c95d553so101781466b.1
+        for <linux-api@vger.kernel.org>; Wed, 21 Oct 2026 07:26:54 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1792592812; cv=none;
+        d=google.com; s=arc-20260327;
+        b=kZgNY4sjCY7VDhF6Lrz6pRMmjdlUHY4c1EpXQCWGQpBIYW/4d8Wv2xPNAodiayqiCK
+         3Mmd147Tu8LgmT/wY8BmY9lsbgm8VD81XQngZQ7G99f7SX3c+y0lFc8D4XjexMngoCMA
+         N6jOtnJp0j1GekLz4k857yAQFMgCWh6wLY2Q/Q6pmikfnrsY8B9/BoHCY3JLcvton42C
+         AV+HTpUBfUcvotk8mbXJtrScJHDzr/TKV6sDs1FDXwB6kL9LqgL+3gsrm397MxHqGZgC
+         PeIIkKWYpOgEYr1HBY1Ps/cfTdQd3q5qjPGsP/OhiHSgoNzNwpY4oImOF7tfBGiF0ZAl
+         4i9Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:dkim-signature;
+        bh=HZWCDTWe8myvVLhLnC3gRwnDw2Z9dfDRU9KvUScIux8=;
+        fh=gsXabcqd91Zeze4077bGKjk+PHUBNNoKLdD7HXxjOaI=;
+        b=b7S3CWDYVFOXLXLY6Z/VSx/1YwwJz4Mpi6ICSpI4D5N1jCtafY+FgJDnaZvFfXIMx9
+         1dsEYiB51IR7D1n4kHsGaIYZOzgC/WeB8ZuiMHw3Q3Eapud/JYYMlZlgIOyf+WCifkyZ
+         xJNwogyD1awErEOMaQbkVZn/w5RW1Xa9i8WRwSh7dDhrhfMr/tk459ENUa+jkVyGAZ/r
+         kFjfFVF03lIg1RckFshpbFDCL5Q1C3ooT4ITDuf5W0eDMhAmolDkzvYmqYBCqrmdfnMh
+         Y0wUb9zPnP88KjSYOAYz4wi/F09oozPuu8vhpwl451FONjp46evCiwx4EJjI4cwnsmfr
+         hRQA==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1792592603; x=1793197403; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=iuEnBt+F5UUTH/XMt7g5zZaMh5IRL3eqw/WM+8xQBzo=;
-        b=C4Na7Qt4QPYOnjreA475v12gom9L6cej5R4nItHHXln44tIP/GcaClek6mHF01Z0/j
-         SDhmNM8WHQDlXWXPojgndMS/5tEriQwyoUn+pA116DzaN/nDlff0hDnlxG66IZckjgAc
-         4AcbsRpXDVXIP8S0nxHLtIEl4ei7IQ5UZD879wobk0Ke5jl34776yjHI5E8Rr3qoy4tn
-         +AhtC8q6sVhG1I1YnTZsR4SFQQB4MZ1WX1RIJTvc24pqnykiVVJ0lhVf741nEGy2/nMQ
-         a/pueUWBye7AFk46vDNkFzUr00rAB13Q1W4sGgnDE3bDdxFxpLZy8Ky4UMwwM7eV4LO5
-         +GYQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792592603; x=1793197403;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=gmail.com; s=20251104; t=1792592812; x=1793197612; darn=vger.kernel.org;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=iuEnBt+F5UUTH/XMt7g5zZaMh5IRL3eqw/WM+8xQBzo=;
-        b=GWWT9dBulvggO8Ex2i/ujMawFqLN66qK1Wc3iBtpZgjqqhkl2mzHlKqI6zgELwb8n9
-         AkU5HdGbrqiQDoy4k+UXvV5o78vZtwpCamgcIwForlpLGrD6USBIk9WdSNB3BOLUb+Vm
-         CaeAz4ycqf6hO7E96rtOKK1UdDvvD+WyDiwPpIishjSGbr36XXLXUu0caF8oHM7BsIh0
-         8ggodCBWSqWDMAhR7KD17/XQP4F36c3UK/rdw76Aiea8PJScUayqaXOPUiiTUwZXg+KP
-         47gFAsBLs+w1lMfz6ulEZERXDcjbCJunaX7s3MMGc9uEHVmplLoJ4/Xe8PS3JXyDgJYX
-         NUag==
-X-Forwarded-Encrypted: i=1; AKwUvBxckRBhkFrGHt7s5q8FdurzhasVe5EcWCFjpFnrgKJZJ8hfMaUzNdi5mEHdxLsPMzxA3gjPe3X/984=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJP0CInTCDNzLDk4yMxNVneUIvEDT8SUTIDiAXfb55egsGYbiL1
-	astumv6OBxHJhirzD78Qa8N9OuSelnvOrddO1Lt12Y5JkN+0TPd3xEEtS01Zhu3XAwY=
-X-Gm-Gg: AYBFou1bvFiTgS3CM2TSHNgQAw3ktWO7FWg6DFN6kY2UV9dz5elI/ZpqA9BmN/yvfps
-	kGeMRMgUkg2qWuJmoLkBJ3lcfuSFhix/ypRUGHRjldPbIpcVfukN7gilgsfMQOJ7FJGHcJyBClf
-	5DcFMAiXd61rJ2Wgo7xCdjuFl43q8gG1hmIMn2q/aCtRW6tM1GhMl3PghUDv/tsZZKJChyYNMdX
-	b30Ah0aESug/PIPzVQXHdUjw7cEz9t3HhKArc9Whk8v/AE0IA076jlMOs/qfhq1Q2x09tOJ6HQw
-	Z2Vrxo5lO69QZLgHxa2+nGHCWRA7MvRu7dDoPexgzhHL1iEq+XMOSo7dgrCvvYdMKe9xlsjL30U
-	9Z53tkWMIqeossacQEWq7aHG0SvEaV9a9BTHBpOntUS7yK/1nLdO7K7pXuc1ReQo6ChGxkw0bH/
-	G5cALrikNM65vUJNciyH66QPWPpR5Lq3Htu81XDvwm92N5Jioc7ww4/7LQoKm8gUi5IsYY8BlMv
-	OvqM+gRHx/oNzI+Zctj1nCxh7HOieTa/NI1mM15gq0Xgr2/dcgWBf1LOH9CQd2OagGou04o/2HL
-	g8vX8zgeDOrN
-X-Received: by 2002:a05:600d:4447:10b0:4a1:d459:db4b with SMTP id 5b1f17b1804b1-4a1fdd32773mr37078515e9.24.1792592601425;
-        Wed, 21 Oct 2026 07:23:21 -0700 (PDT)
-Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e258424bcsm5744427f8f.55.2026.10.21.07.23.20
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 21 Oct 2026 07:23:21 -0700 (PDT)
-Date: Wed, 21 Oct 2026 16:23:17 +0200
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 13/20] Documentation: ctlv: Describe how to write a
- family
-Message-ID: <atjEgLYpgbZNzfkZ@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-14-jiri@resnulli.us>
- <179245258505.58760.3972297562218204862.b4-review@b4>
+        bh=HZWCDTWe8myvVLhLnC3gRwnDw2Z9dfDRU9KvUScIux8=;
+        b=BRqHAhOJRFQGCZ0436cerbXsvDGcjOTtcEFCOpJRV+nbVKbSAKMl662tBLFTfb2Sg5
+         NFxQNyHoxxgYHQR13h13k71ankQp/N0fxgwfPZdFZZwD0LZwBvhOQiky2tnvBNcGVE92
+         vpRJ7hzp6lhKrZveGyDGkQ94JZjS5rrim4/SQCOenhyqo5st97RuKWVFwTkWZQ5bTbIw
+         iWX7FjROAHIvHplEaKREmJYGpSp7sUQFKLAPhXVjYlSpM8WQnUK4iSviJf2DCzgxJwf5
+         mmlBS+ISZT3vDsrX9Xx3+f3KYgz6TnHUVdIwJP9bY9OfNIdfJdTh5lFsIo+qwhCRzOmH
+         nAiA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792592812; x=1793197612;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=HZWCDTWe8myvVLhLnC3gRwnDw2Z9dfDRU9KvUScIux8=;
+        b=mAsjtieL9fOM1sL8SDXuX4R1VrLMZCQTQuuUrPoj3yKfF2Q6LbvOngtuBatBu7PVke
+         rcCkQMrvqvxaV/p+gUJqc81ZPe/xS6QcMZYu4OSgllVySyB1OQigsyVfBhk3gpZLjhde
+         D71TRuwlnLy0fP01W2HLlj166rRxS/1zd9qMMA53cwMCrg0TQwTOI8GFPP2UiqujcmaH
+         Xmdbf4sgcdMdxhdU7Y4LfUBljC2/MLVomctaR5C4W4RFYU3JCGi8ja3HH3oE6ZlcHF5T
+         mc2Ch0zDV+A9e7ZrgseDhnM263E0vAHgQyoYjnYhpxHYAoHq3e8Ku+rv0C7wT3u6ylNc
+         zDHw==
+X-Forwarded-Encrypted: i=1; AKwUvBwT89pafSKPkJZ76jdOeWLX5UFLeiG34gHefXR3jMh+zYEcSTfNFAhnVkxqi5cqijx9+ShsJZCAwwo=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIuKMsR365Bgh68IrBE+xszyeIEiM4IlceGmLdEc94DfJwq663/
+	eCR1vyLzcw72jzVGUiGPgr6XbUip1h1jDovXjWSOm4gyQ3EDSx7T45UghPQ68tXQAU1sY8bLw5E
+	fkrFzcF0e+yHfLOM0IQMZhQjJfg1fSFc=
+X-Gm-Gg: AYBFou1V2nGXIpSKGbWTPZxVBFpLgOqwHSh/ELQ+M/blEkZ131C/GabVBfcMR6pLgji
+	kJsxbdjXa5iVskPQFRHHUdkljs8q23V5LhFaEQkLoSh9XHAXfbHkfsQJbxL0+aJdvOCRfL5CNP9
+	quivufaoFIVuWEtpE5IVuNLN4wdJ4diLKU/IhLeHr9ijIv3IAfdfbrCJSgfUUy4ppZSvvZxwExV
+	kcRD0yFffytjrjnphCLBwvuNUzAaZ9Xpy3o/0+aqTI9eUbUt1NR5/SnFBzOq6Nepfh9zfpX5jkQ
+	df9aQ5VOswajowG9MZycdQbs8kPHR4zO0fuOf/PLMnDSLToP09U7tlbYzGeZNR/EZcPQ/gfWdoB
+	SrVdhdAodHKgzQSV2zofFHQf/uz/hj/MFwrvb
+X-Received: by 2002:a17:906:c105:b0:c33:ca5e:8ddb with SMTP id
+ a640c23a62f3a-c46796b58cdmr190770166b.28.1792592812271; Wed, 21 Oct 2026
+ 07:26:52 -0700 (PDT)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -106,277 +103,43 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <179245258505.58760.3972297562218204862.b4-review@b4>
+References: <cover.1792552161.git.jan.koester@tuxist.de>
+In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
+From: Lionel Cons <lionelcons1972@gmail.com>
+Date: Wed, 21 Oct 2026 16:26:15 +0200
+X-Gm-Features: AclHuK9oo5ZYObAiFZur0ih7xDKEBxlKdO-BvoDx6w0mXhpoTx1_PdEXJcogV54
+Message-ID: <CAPJSo4UJPnhLFAYRXE-_M2_Nin6=Ff02AjayD10cB7946MvJDQ@mail.gmail.com>
+Subject: Adding dreaded Windows SID-style, or. Repeating history, the bad
+ chapters. UUID/GUIDRe: [RFC PATCH v2 00/41] UUID and GUID user and group ids
+ (*_r system calls)
+To: Jan Koester <jan.koester@tuxist.de>
+Cc: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	"Serge E. Hallyn" <serge@hallyn.com>, Jan Kara <jack@suse.cz>, "Theodore Y. Ts'o" <tytso@mit.edu>, 
+	Paul Moore <paul@paul-moore.com>, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, 
+	linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-arch@vger.kernel.org, linux-ext4@vger.kernel.org, 
+	linux-nfs <linux-nfs@vger.kernel.org>, linux-cifs@vger.kernel.org, 
+	netdev@vger.kernel.org, audit@vger.kernel.org, keyrings@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
 
-Tue, Oct 20, 2026 at 01:29:45AM +0200, jgg@nvidia.com wrote:
->> [ ... 34 lines skipped ... ]
->> +Add the specification, registry entry, and output manifest entry in one change::
->> +
->> +    Documentation/ctlv/specs/ctlv-example.yaml
->> +    Documentation/ctlv/families.yaml
->> +    Documentation/ctlv/generated-files.yaml
->> +
->> +``families.yaml`` is append-only. Its array index is the family ID and is part
->> +of every generated attribute and operation ID. Never reorder, remove, rename,
->> +or reuse an entry. ``Documentation/ctlv/abi/families.registry.yaml`` is the
->> +checked-in registry ABI. The output manifest selects the generated UAPI,
->> +kernel and userspace paths and generation modes.
->> +
->> +Generate and verify them with::
->> +
->> +    make -C tools/ctlv regen
->> +    make -C tools/ctlv all
->> +
+On Wed, 21 Oct 2026 at 13:24, Jan Koester <jan.koester@tuxist.de> wrote:
 >
->Maybe mention to inspect git diff and ensure nothing unexpected
->changed?
-
-Okay.
-
-
+> Hi,
 >
->> +Never edit a generated output. Change the YAML or generator and regenerate it.
->> +Optional RST reference pages are written to
->> +``Documentation/output/ctlv/families`` by::
->> +
->> +    make -C tools/ctlv docs
->> +
->> +Write the specification
->> +=======================
->> +
->
->Before introducing the YAML, write out in a more plain text form
->exactly what system calls the example is aiming to create with. I came
->up with:
->
->For an example, define two system calls from userspace that look like this::
->
->    item_set_action(u64 index, string label?, blob data?) -> status;
->    items_dump_query() -> { u64 index; string label?; }[];
->
->And one event::
->
->    item_changed_event -> { u64 index; string label?; };
->
->``index`` is 0..4095, ``label`` is at most 63 bytes excluding NUL, and ``data``
->is at most 1 MiB with 8-byte alignment.
+> this RFC series lets a user or group id be a UUID (RFC 9562, version 4)
+> or a Microsoft GUID as well as a classic 32-bit number. Processes can run
+> as such a user, files can be owned by one, and credentials, ACLs, keys,
+> System V IPC, sockets, signals, audit and procfs carry the whole id.
 
-Okay.
+Are you Linnux guys aware that this is just a variation of the
+*DREADED* Windows SID that this patch tries to introduce, just with a
+new name?
+Maybe, before doing this, read about Windows SIDs, and why they are so hated.
 
+Secondly, the whole idea of doing 128bit hashes as UUID is not new,
+IBM DFS had it, and had many iterations of security issues via hash
+collision exploits. 40 years later all this horror comes back. Does
+history really have to repeat itself?
 
->
->> +.. code-block:: yaml
->> +
->> +    # SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
->> +    %YAML 1.2
->> +    ---
->> +    family:
->> +      name: ctlv-example
->> +      inherits: ctlv
->> +      post-init: true
->> +      pre-fini: true
->> +
->> +    attr-groups:
->> +      - name: item
->> +        attrs:
->> +          - name: index
->> +            type: uint
->> +            max: 4095
->> +          - name: label
->> +            type: string
->> +            max-length: 63
->> +          - name: data
->> +            blob:
->> +              direction: input
->> +              allowed-backings: [ va ]
->> +              max-length: 1048576
->> +              alignment: 8
->> +      - name: list
->> +        attrs:
->> +          - name: item
->> +            attrs: item-reply
->> +            max-occurrences: unlimited
->> +
->> +    attr-sets:
->> +      - name: item-request
->> +        attrs: item.index
->> +        optional-attrs:
->> +          - item.label
->> +          - item.data
->> +      - name: item-reply
->> +        attrs: item.index
->> +        optional-attrs: item.label
->> +      - name: items-reply
->> +        optional-attrs: list.item
->
->I haven't quite figured out what attr-sets is about. I think these
->blocks should have some # comments with more guidance what is going on.
-
-"group" defines attrs with all the description once. "set" just puts
-together multiple atrrs from multiple groups. Will try to document it
-more clearly.
-
-
->
->> +
->> +    ops:
->> +      - name: item-set
->> +        type: action
->> +        optional: true
->> +        request:
->> +          attrs: item-request
->> +      - name: items-dump
->> +        type: query
->> +        availability: dynamic
->> +        pre-post: true
->> +        reply:
->> +          attrs: items-reply
->> +        suggested-reply-length: 4096
->> +      - name: item-changed
->> +        type: event
->> +        reply:
->> +          attrs: item-reply
->> +
->> +An attribute has one payload form: ``type``, ``enum``, ``flags``, ``attrs``, or
->> +``blob``. An attr set names one message level. ``attrs`` are required and
->> +``optional-attrs`` are optional. Its bounds and membership are ABI.
->
->The attribute first point of view is maybe a little too netlinky, I
->prefer to think of this as a system call first, with a first class
->'query' to get a list of things
->
->Alot of stuff this is going to deal with won't be the netlink esque
->'dump a table, set a table' kind of flow, but a bunch of different
->system calls with arguments.
-
-
-Can you elaborate a bit more about this please? I'm not clear about what
-you mean by this. "'query' to get a list of things" sound cryptic to me.
-Are you talking about doc or about family yaml as well?
-
-
-
->
->> +
->> +Inheritance and extension points
->> +================================
->> +
->> +A descendant implements only the operations it declares. Inherited operations
->> +keep the callbacks and operation hooks of their declaring family. Every module
->> +therefore depends on the module containing its parent implementation.
->> +
->
->This section seems hard to understand, it is missing something
->explaining the purpose an intended usage of this mechanism. I think I
->get it.. 
->
->Maybe structure this to be an improvement to the first example solving
->a specific problem 'like the HW driver need to add per-driver
->things to the scheme'
-
-Okay.
-
->
->Also please use a more neutral term like "HW driver" not vendor
->throughout.
-
-Okay.
-
->
->> +A parent reserves an extension point with an empty stub set:
->> +
->> +.. code-block:: yaml
->> +
->> +    attr-groups:
->> +      - name: device
->> +        attrs:
->> +          - name: details
->> +            attrs: details-extension
->> +
->> +    attr-sets:
->> +      - name: details-extension
->> +        stub: true
->> +      - name: device-reply
->> +        optional-attrs: device.details
->> +
->> +A child fills that same set:
->> +
->> +.. code-block:: yaml
->> +
->> +    family:
->> +      name: ctlv-example-vendor
->> +      inherits: ctlv-example
->> +      pre-init: true
->> +
->> +    attr-groups:
->> +      - name: vendor
->> +        attrs:
->> +          - name: serial
->> +            type: uint
->> +
->> +    attr-sets:
->> +      - name: details-extension
->> +        optional-attrs: vendor.serial
->> +
->> +The parent implementation opens the physical nest and delegates its members:
->> +
->> +.. code-block:: c
->> +
->> +    if (ctlv_example_device_details_start(reply, &details)) {
->> +            ret = ctlv_stub_fill(ctx, request_details, &details);
->> +            ctlv_nest_end(&details);
->> +            if (ret)
->> +                    return ret;
->> +    }
->> +
->> +The generated child callback fills it:
->> +
->> +.. code-block:: c
->> +
->> +    int ctlv_example_vendor_details_extension_fill(
->> +                            void *priv, struct ctlv_op_ctx *ctx,
->> +                            const struct ctlv_cursor *request,
->> +                            struct ctlv_cursor *nest)
->> +    {
->> +            ctlv_example_vendor_vendor_serial_put(nest,
->> +                                                   example_serial(priv));
->> +            return 0;
->> +    }
->
->I suppose this like RDMA and each HW driver using this gets its own
->full scheme tree that only has its own stuff in it?
-
-It's the "family". Each child inheriting a subsystem family. It fills
-up the subsystem family defines stubs/extensions. It can add ops too.
-
-
->
->What about userspace, it "knows" somehow what to do?
-
-Userspace sees the family chain. It also has ability to do introspection
-seeing right away which op supports with attrs in which nests.
-
->
->> +
->> +An unfilled stub contributes no nest or message length. Neither side names the
->> +family on the other side.
->
->One of the things I feel strongly about from iommufd is that it should
->be really obvious what HW drivers is being affiliated with these
->operations that have a HW driver struct linked to them.
->
->So, like, if userspace does a query and gets back an item that has one
->of these extended structs it should have a trivial way to branch to
->the right handler for it. Inspecting the attributes doesn't seem like
->a great way to go about that?
->
->Is there some place to put an ID of 'ctlv-example-vendor' someplace?
->Like in the nest start somehow?
-
-Already there. Each attr including nest contains family id. So a fill
-of a parent stub/extension by HW driver contains a family id of that
-family.
-
-
+Lionel
