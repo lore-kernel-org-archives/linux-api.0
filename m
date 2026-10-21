@@ -1,56 +1,57 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552626;
-	b=dUzqwv4EGp87HrBPFsc7x1SRge8BDwRLvNyskpKmmdm/ERd1qxVJuPbibxoYvbSn4GN9
-	 m1WxLBcUNqE8viYlqfdVc6TG8b3lqY+tXmbPeD9tasVCMnAZSCrmXk8tAPSzvRXvZfOFU
-	 IDSuutJnzaFSNjKyrrJtsfaesk6+A6Q9kkVFNDMgp/tKFRmxHlimgJZxFBV2m2+AOogvj
-	 8eGxCTUwRnEaq8ZOMbJVjjdpl9i0qdoLaYdd0qBBE6z7pmNznJHukTHiUt6F5zdGllIgu
-	 fuUS7Cls57wVo31+xGO6okGmAxiqleFC56v3YxLrPNINo4waNkk081zeNCnpHJu4FBg==
+	t=1792552619;
+	b=yqb4sK5B/RsvXnltaUObQIiE6EQngNnpUnm/s057asAzjhp+wfqG8Bilfr7ddHp+cwnr
+	 5PuGA1qYsAYlAz5io/ewX5AdAZmdiZ0BAPJPORsaNGVibo5Bknc7new0YC85WqOYUHytI
+	 MPXC9YqDye/iTXNTD/T6WfdBzyHPB4UXhs5bFX5/MojrAdzidS19T/7icfgaG2hKzyzdZ
+	 HE4c+e91LnmUfGLyBnjbI5nWQUxhz5EkG7ltJozm2pBU1BZtrUmF/UqvCbhosNSnYrMpm
+	 ivheX08wS4h/hq4lSCGBbBXIB5otTWiGJaThItBWRwbrMS8t6Eu1yyOZ/FAWT9t3tNQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552626;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552619;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=xPPuSjLhDbMViYqpEHpt4dnNVDTdoh5q6lqQYXei5pA=;
-	b=CVfys4/AvH9+AelNGIOEupJoRwXW4NrB54AskXcZkiaYPTpdYaKpzyZ6sV8VgByR7fis
-	 FyX5nZnybT4fwr8n8rV2v9L8/Ui4BYQ/uYT3bOk4RpJ8NKUYNxeH5qfYeg7mI2fUv7Jog
-	 3/Qr1wQEWTuesearNXiuJ50Fm+PFg2+kFjZg1plYmgQTVjZY6UcUoPKz0iSoXSgdEn2PV
-	 whqSdfZBeVCOLLNgmXISpmqk1cJX7Jh110mQj3l7uRz8OKohVO1Y/DNQFBiabRdaOtX4H
-	 sKouaUM3E/wztBkLPrcmmNCocs2bvZKq0pAzaortdYLJ5QxXU6wNPHwlkz+9AJrBUAQ==
+	bh=DGpOL1alo4UJiM0Ho8CtIv0oQYcetUD0hsrP92D8HMc=;
+	b=g4Q+BRkVtr/6f/K685XtHl2YR02ZjqlydfC5ro18BLrImIbDxnGTbRxk2sgqavQ55ydr
+	 6xYgdDbPla7fh4aJnRryiAjYAYEtOsWRo1PlvHgpj1ZBf5TIJxcVo4vZIQj9GSq0+y9gy
+	 IwzFtIdeY58MELZ8s5CzJSFQ1SzdnzYis4h6LVyPiaPB1biLCMAWgwipDl0Y+UW04FtzP
+	 WtUFrdCGQqvcSFPbTEQXoYyCku9CbBJsWIiSHUD3q7E319gOB2mytpjDBEA1eUll9T5I6
+	 r9hw1UZ+yZQuZD/kFI9nxixSTlJ1t3Arqy9Ou5U6W/BNlGOSVjTEso6+0d/5SYzwUTw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=l6sqAx24;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=f4CKs3WW;
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DE3256074AF1;
-	Wed, 21 Oct 2026 03:17:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DE3256074AF1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD928606A334;
+	Wed, 21 Oct 2026 03:16:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CD928606A334
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=l6sqAx24
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=f4CKs3WW
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552623; bh=7OhuYr1jzT08GfwqsT/yDIHMI0ebaXemXLD2jKJdeak=;
+	t=1792552616; bh=VRBxDdnvXqALD2rzbv+EwPGrvd8Aj3j3z/QOZub3dbw=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=l6sqAx24f32iFDvNQPYmCz2mQIork2CZho4QaX7n4duiJm715lhI3Hl0W1nvJIYDv
-	 AVQWyb0V6WKgAm3CYTdY1Z1aXftHAxnwKahEkibu627MXgGu7fG1F5yESuDetRxXWP
-	 TpndRpd6PjP3HjXXz24bsk7FI83JMlw+lrUaUQj9+f1HAuNvcivO270Z1COlxj2Q70
-	 TPFi2s4yHDpkEyEDkgaocDWQrbL/pyurE9jFfqNjU2zg6TqFNcRGyrMxveCwdx7v1t
-	 KFn2xp0OIhZOarnx/1nxNeYc3c2hNrzKi7GCbEOV5FSzGZaW/BGgWLgrtIgsSo/yc+
-	 zMbdRey63iHAg==
+	b=f4CKs3WWrWAUtUA2NGbEiD2VqCGTpmWPQALpTmfujgSfhuKpUZTBo5urvDI7oRumn
+	 Mky25dJKdbumsGH/cp7T+CelOLAifIbww3yEbmrAAiI0K7Jf1AojXiWS2C2QLwDIYs
+	 SxH6hvgRN9HhMSUrd25wHtrDnJ+9Fool/AkuT6ks/uDgdODqIarHFxad6I+dN1GZIc
+	 NbBQWLvGeBUZtS0qc89wydGBQO5wRonEr8z9FtGBMLFkVlVEX85RXE7PUEbXNH6WpK
+	 7VEPKSHUFDltm0Gjyk5J9RL0ebxmiZQM0aA/diF0sKnd0E3RJ2pkN9Kkb7MN4gRw4/
+	 i9+KJtiNPHMwg==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id 24F018A07DE;
-	Wed, 21 Oct 2026 05:17:03 +0200 (CEST)
-Message-ID: <b086aef70fd4516d33c535b4ea3d5d6f204c0af7.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id D7BB48A098B;
+	Wed, 21 Oct 2026 05:16:55 +0200 (CEST)
+Message-ID: <ef85db692c151f13d4749f6c6f4fc7372a2ab0b4.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 30/41] ipc: add IPC_STAT_R and IPC_SET_R
+Subject: [RFC PATCH v2 28/41] net: add SO_PEERCRED_R, SO_PEERGROUPS_R and
+ SCM_CREDENTIALS_R
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -69,7 +70,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:50 +0200
+Date: Wed, 21 Oct 2026 05:15:48 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -79,613 +80,485 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-The ids of SysV message queues, semaphore sets and shared memory
-segments reach userspace in struct ipc64_perm, 32 bits each, so a UUID
-or GUID owner shows up as the overflow id and can't be set at all.
+Services authenticate AF_UNIX peers with SO_PEERCRED, SO_PEERGROUPS and
+SCM_CREDENTIALS, which carry 32 bit ids: a UUID or GUID user shows up
+as the overflow id there.
 
-Rather than doubling every *id64_ds, add two commands shared by
-msgctl(), semctl() and shmctl() that work on a struct ipc_perm_r with
-key, mode, and uid, gid, cuid and cgid as __kernel_uid_r_t:
+Add variants with __kernel_uid_r_t ids:
 
-- IPC_STAT_R reads it, with the permission checks of IPC_STAT,
-- IPC_SET_R sets uid, gid and mode like IPC_SET does (a message queue
-  keeps its size).
+- SO_PEERCRED_R returns a struct __kernel_ucred_r of the peer,
+- SO_PEERGROUPS_R its supplementary groups as __kernel_gid_r_t,
+- SO_PASSCRED_R asks for SCM_CREDENTIALS_R messages, with a struct
+  __kernel_ucred_r, next to or instead of SCM_CREDENTIALS (a separate
+  option, so receivers sizing their control buffer for SCM_CREDENTIALS
+  don't get truncated), and SCM_CREDENTIALS_R can be sent with the same
+  privilege rules as SCM_CREDENTIALS.
 
-The IPC_SET path now works on the kernel ids of a struct ipc_set_ids,
-which the classic command fills from its ipc64_perm. The audit record
-of IPC_SET has the new owner as a kuid as well and logs it like the
-other audit ids, in the initial user namespace.
+The classic SCM_CREDENTIALS sending path now shares the checks and pid
+handling with it. Netlink keeps classic ids in its skbs, so it hands out
+the overflow id for UUID senders in SCM_CREDENTIALS_R too.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- include/linux/audit.h    |   8 +--
- include/uapi/linux/ipc.h |  17 ++++++
- ipc/msg.c                |  40 ++++++++++----
- ipc/sem.c                |  31 ++++++++---
- ipc/shm.c                |  32 ++++++++---
- ipc/util.c               | 112 +++++++++++++++++++++++++++++++++++----
- ipc/util.h               |  23 +++++++-
- kernel/audit.h           |   4 +-
- kernel/auditsc.c         |   8 +--
- 9 files changed, 226 insertions(+), 49 deletions(-)
+ arch/alpha/include/uapi/asm/socket.h  |  5 ++
+ arch/mips/include/uapi/asm/socket.h   |  5 ++
+ arch/parisc/include/uapi/asm/socket.h |  5 ++
+ arch/sparc/include/uapi/asm/socket.h  |  5 ++
+ include/linux/socket.h                |  1 +
+ include/net/sock.h                    |  4 +-
+ include/uapi/asm-generic/socket.h     |  5 ++
+ include/uapi/linux/socket.h           |  9 +++
+ net/core/scm.c                        | 94 ++++++++++++++++++---------
+ net/core/sock.c                       | 84 ++++++++++++++++++++++++
+ net/unix/af_unix.c                    |  3 +-
+ 11 files changed, 186 insertions(+), 34 deletions(-)
 
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 45abb3722d..a769f04e45 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -428,7 +428,7 @@ static inline void audit_ptrace(struct task_struct *t)
+diff --git a/arch/alpha/include/uapi/asm/socket.h b/arch/alpha/include/uapi/asm/socket.h
+index 946a5fad26..3f1dd0e766 100644
+--- a/arch/alpha/include/uapi/asm/socket.h
++++ b/arch/alpha/include/uapi/asm/socket.h
+@@ -153,10 +153,15 @@
+ #define SO_PASSRIGHTS		83
  
- 				/* Private API (for audit.c only) */
- extern void __audit_ipc_obj(struct kern_ipc_perm *ipcp);
--extern void __audit_ipc_set_perm(unsigned long qbytes, uid_t uid, gid_t gid, umode_t mode);
-+extern void __audit_ipc_set_perm(unsigned long qbytes, kuid_t uid, kgid_t gid, umode_t mode);
- extern void __audit_bprm(struct linux_binprm *bprm);
- extern int __audit_socketcall(int nargs, unsigned long *args);
- extern int __audit_sockaddr(int len, void *addr);
-@@ -460,7 +460,7 @@ static inline void audit_fd_pair(int fd1, int fd2)
- 	if (unlikely(!audit_dummy_context()))
- 		__audit_fd_pair(fd1, fd2);
- }
--static inline void audit_ipc_set_perm(unsigned long qbytes, uid_t uid, gid_t gid, umode_t mode)
-+static inline void audit_ipc_set_perm(unsigned long qbytes, kuid_t uid, kgid_t gid, umode_t mode)
- {
- 	if (unlikely(!audit_dummy_context()))
- 		__audit_ipc_set_perm(qbytes, uid, gid, mode);
-@@ -652,8 +652,8 @@ static inline void audit_seccomp_actions_logged(const char *names,
- { }
- static inline void audit_ipc_obj(struct kern_ipc_perm *ipcp)
- { }
--static inline void audit_ipc_set_perm(unsigned long qbytes, uid_t uid,
--					gid_t gid, umode_t mode)
-+static inline void audit_ipc_set_perm(unsigned long qbytes, kuid_t uid,
-+					kgid_t gid, umode_t mode)
- { }
- static inline void audit_bprm(struct linux_binprm *bprm)
- { }
-diff --git a/include/uapi/linux/ipc.h b/include/uapi/linux/ipc.h
-index 5995fc9d67..e927564fbb 100644
---- a/include/uapi/linux/ipc.h
-+++ b/include/uapi/linux/ipc.h
-@@ -3,6 +3,7 @@
- #define _UAPI_LINUX_IPC_H
- 
- #include <linux/types.h>
-+#include <linux/uidgid_r.h>
- 
- #define IPC_PRIVATE ((__kernel_key_t) 0)  
- 
-@@ -40,6 +41,22 @@ struct ipc_perm
- #define IPC_SET  1     /* set ipc_perm options */
- #define IPC_STAT 2     /* get ipc_perm options */
- #define IPC_INFO 3     /* see ipcs */
-+#define IPC_SET_R  21  /* set uid, gid and mode from struct ipc_perm_r */
-+#define IPC_STAT_R 22  /* get struct ipc_perm_r */
+ #define SO_INQ			84
 +
-+/*
-+ * The ids and mode of an ipc object for IPC_STAT_R and IPC_SET_R, which
-+ * also hold UUIDs and GUIDs; IPC_SET_R uses uid, gid and mode. The other
-+ * attributes of the object come from IPC_STAT.
-+ */
-+struct ipc_perm_r {
-+	__kernel_key_t		key;
-+	__u32			mode;
+ #define SCM_INQ			SO_INQ
+ 
+ #define SO_RIGHTS_NOTRUNC      85
+ 
++#define SO_PEERCRED_R		86
++#define SO_PEERGROUPS_R		87
++#define SO_PASSCRED_R		88
++
+ #if !defined(__KERNEL__)
+ 
+ #if __BITS_PER_LONG == 64
+diff --git a/arch/mips/include/uapi/asm/socket.h b/arch/mips/include/uapi/asm/socket.h
+index f1641dde13..a2bbd153a9 100644
+--- a/arch/mips/include/uapi/asm/socket.h
++++ b/arch/mips/include/uapi/asm/socket.h
+@@ -164,10 +164,15 @@
+ #define SO_PASSRIGHTS		83
+ 
+ #define SO_INQ			84
++
+ #define SCM_INQ			SO_INQ
+ 
+ #define SO_RIGHTS_NOTRUNC      85
+ 
++#define SO_PEERCRED_R		86
++#define SO_PEERGROUPS_R		87
++#define SO_PASSCRED_R		88
++
+ #if !defined(__KERNEL__)
+ 
+ #if __BITS_PER_LONG == 64
+diff --git a/arch/parisc/include/uapi/asm/socket.h b/arch/parisc/include/uapi/asm/socket.h
+index f3a3815c7d..72751399a8 100644
+--- a/arch/parisc/include/uapi/asm/socket.h
++++ b/arch/parisc/include/uapi/asm/socket.h
+@@ -145,10 +145,15 @@
+ #define SO_PASSRIGHTS		0x4051
+ 
+ #define SO_INQ			0x4052
++
+ #define SCM_INQ			SO_INQ
+ 
+ #define SO_RIGHTS_NOTRUNC	0x4053
+ 
++#define SO_PEERCRED_R		0x4054
++#define SO_PEERGROUPS_R		0x4055
++#define SO_PASSCRED_R		0x4056
++
+ #if !defined(__KERNEL__)
+ 
+ #if __BITS_PER_LONG == 64
+diff --git a/arch/sparc/include/uapi/asm/socket.h b/arch/sparc/include/uapi/asm/socket.h
+index 7907f3b1f0..39162ca456 100644
+--- a/arch/sparc/include/uapi/asm/socket.h
++++ b/arch/sparc/include/uapi/asm/socket.h
+@@ -146,10 +146,15 @@
+ #define SO_PASSRIGHTS            0x005c
+ 
+ #define SO_INQ                   0x005d
++
+ #define SCM_INQ                  SO_INQ
+ 
+ #define SO_RIGHTS_NOTRUNC        0x005e
+ 
++#define SO_PEERCRED_R            0x005f
++#define SO_PEERGROUPS_R          0x0060
++#define SO_PASSCRED_R            0x0061
++
+ #if !defined(__KERNEL__)
+ 
+ 
+diff --git a/include/linux/socket.h b/include/linux/socket.h
+index 5a5eb12501..b8e7ba6ffe 100644
+--- a/include/linux/socket.h
++++ b/include/linux/socket.h
+@@ -193,6 +193,7 @@ static inline size_t msg_data_left(const struct msghdr *msg)
+ #define SCM_CREDENTIALS 0x02		/* rw: struct ucred		*/
+ #define SCM_SECURITY	0x03		/* rw: security label		*/
+ #define SCM_PIDFD	0x04		/* ro: pidfd (int)		*/
++#define SCM_CREDENTIALS_R 0x05		/* rw: struct __kernel_ucred_r	*/
+ 
+ struct ucred {
+ 	__u32	pid;
+diff --git a/include/net/sock.h b/include/net/sock.h
+index 0986d94665..7055afcf0d 100644
+--- a/include/net/sock.h
++++ b/include/net/sock.h
+@@ -358,6 +358,7 @@ struct sk_filter;
+   *	@sk_scm_security: flagged by SO_PASSSEC to recv SCM_SECURITY
+   *	@sk_scm_pidfd: flagged by SO_PASSPIDFD to recv SCM_PIDFD
+   *	@sk_scm_rights: flagged by SO_PASSRIGHTS to recv SCM_RIGHTS
++  *	@sk_scm_credentials_r: flagged by SO_PASSCRED_R to recv SCM_CREDENTIALS_R
+   *	@sk_scm_unused: unused flags for scm_recv()
+   *	@ns_tracker: tracker for netns reference
+   *	@sk_user_frags: xarray of pages the user is holding a reference on.
+@@ -565,7 +566,8 @@ struct sock {
+ 				sk_scm_security : 1,
+ 				sk_scm_pidfd : 1,
+ 				sk_scm_rights : 1,
+-				sk_scm_unused : 4;
++				sk_scm_credentials_r : 1,
++				sk_scm_unused : 3;
+ 		};
+ 	};
+ 	u8			sk_clockid;
+diff --git a/include/uapi/asm-generic/socket.h b/include/uapi/asm-generic/socket.h
+index 84ea7b9293..f3445c32ca 100644
+--- a/include/uapi/asm-generic/socket.h
++++ b/include/uapi/asm-generic/socket.h
+@@ -148,10 +148,15 @@
+ #define SO_PASSRIGHTS		83
+ 
+ #define SO_INQ			84
++
+ #define SCM_INQ			SO_INQ
+ 
+ #define SO_RIGHTS_NOTRUNC	85
+ 
++#define SO_PEERCRED_R		86
++#define SO_PEERGROUPS_R		87
++#define SO_PASSCRED_R		88
++
+ #if !defined(__KERNEL__)
+ 
+ #if __BITS_PER_LONG == 64 || (defined(__x86_64__) && defined(__ILP32__))
+diff --git a/include/uapi/linux/socket.h b/include/uapi/linux/socket.h
+index d3fcd3b5ec..38d3cd814a 100644
+--- a/include/uapi/linux/socket.h
++++ b/include/uapi/linux/socket.h
+@@ -2,6 +2,8 @@
+ #ifndef _UAPI_LINUX_SOCKET_H
+ #define _UAPI_LINUX_SOCKET_H
+ 
++#include <linux/uidgid_r.h>
++
+ /*
+  * Desired design of maximum size and alignment (see RFC2553)
+  */
+@@ -35,4 +37,11 @@ struct __kernel_sockaddr_storage {
+ #define SOCK_TXREHASH_DISABLED	0
+ #define SOCK_TXREHASH_ENABLED	1
+ 
++/* SO_PEERCRED_R and SCM_CREDENTIALS_R: struct ucred with UUIDs and GUIDs */
++struct __kernel_ucred_r {
++	__u32			pid;
 +	__kernel_uid_r_t	uid;
 +	__kernel_gid_r_t	gid;
-+	__kernel_uid_r_t	cuid;
-+	__kernel_gid_r_t	cgid;
 +};
++
+ #endif /* _UAPI_LINUX_SOCKET_H */
+diff --git a/net/core/scm.c b/net/core/scm.c
+index f0d44ecdb1..7e40f7de12 100644
+--- a/net/core/scm.c
++++ b/net/core/scm.c
+@@ -40,22 +40,19 @@
+ #include <net/cls_cgroup.h>
+ #include <net/af_unix.h>
  
+-
  /*
-  * Version flags for semctl, msgctl, and shmctl commands
-diff --git a/ipc/msg.c b/ipc/msg.c
-index 62996b97f0..a3f5287e54 100644
---- a/ipc/msg.c
-+++ b/ipc/msg.c
-@@ -398,8 +398,10 @@ copy_msqid_from_user(struct msqid64_ds *out, void __user *buf, int version)
-  * to be held in write mode.
-  * NOTE: no locks must be held, the rwsem is taken inside this function.
+  *	Only allow a user to send credentials, that they could set with
+  *	setu(g)id.
   */
-+/* IPC_SET_R is IPC_SET without a new queue size */
- static int msgctl_down(struct ipc_namespace *ns, int msqid, int cmd,
--			struct ipc64_perm *perm, int msg_qbytes)
-+			const struct ipc_set_ids *set, int msg_qbytes,
-+			bool set_qbytes)
+ 
+-static __inline__ int scm_check_creds(struct ucred *creds)
++static int scm_check_kcreds(u32 pid, kuid_t uid, kgid_t gid)
  {
- 	struct kern_ipc_perm *ipcp;
- 	struct msg_queue *msq;
-@@ -409,7 +411,7 @@ static int msgctl_down(struct ipc_namespace *ns, int msqid, int cmd,
- 	rcu_read_lock();
+ 	const struct cred *cred = current_cred();
+-	kuid_t uid = make_kuid(cred->user_ns, creds->uid);
+-	kgid_t gid = make_kgid(cred->user_ns, creds->gid);
  
- 	ipcp = ipcctl_obtain_check(ns, &msg_ids(ns), msqid, cmd,
--				      perm, msg_qbytes);
-+				      set, msg_qbytes);
- 	if (IS_ERR(ipcp)) {
- 		err = PTR_ERR(ipcp);
- 		goto out_unlock1;
-@@ -431,18 +433,19 @@ static int msgctl_down(struct ipc_namespace *ns, int msqid, int cmd,
- 	{
- 		DEFINE_WAKE_Q(wake_q);
- 
--		if (msg_qbytes > ns->msg_ctlmnb &&
-+		if (set_qbytes && msg_qbytes > ns->msg_ctlmnb &&
- 		    !capable(CAP_SYS_RESOURCE)) {
- 			err = -EPERM;
- 			goto out_unlock1;
- 		}
- 
- 		ipc_lock_object(&msq->q_perm);
--		err = ipc_update_perm(perm, ipcp);
-+		err = ipc_update_perm(set, ipcp);
- 		if (err)
- 			goto out_unlock0;
- 
--		msq->q_qbytes = msg_qbytes;
-+		if (set_qbytes)
-+			msq->q_qbytes = msg_qbytes;
- 
- 		msq->q_ctime = ktime_get_real_seconds();
- 		/*
-@@ -598,6 +601,7 @@ static long ksys_msgctl(int msqid, int cmd, struct msqid_ds __user *buf, int ver
- {
- 	struct ipc_namespace *ns;
- 	struct msqid64_ds msqid64;
-+	struct ipc_set_ids set;
- 	int err;
- 
- 	if (msqid < 0 || cmd < 0)
-@@ -628,10 +632,17 @@ static long ksys_msgctl(int msqid, int cmd, struct msqid_ds __user *buf, int ver
- 	case IPC_SET:
- 		if (copy_msqid_from_user(&msqid64, buf, version))
- 			return -EFAULT;
--		return msgctl_down(ns, msqid, cmd, &msqid64.msg_perm,
--				   msqid64.msg_qbytes);
-+		ipc64_perm_to_set_ids(&msqid64.msg_perm, &set);
-+		return msgctl_down(ns, msqid, cmd, &set, msqid64.msg_qbytes, true);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids((void __user *)buf, &set))
-+			return -EFAULT;
-+		return msgctl_down(ns, msqid, IPC_SET, &set, 0, false);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &msg_ids(ns), msqid,
-+				  security_msg_queue_msgctl, (void __user *)buf);
- 	case IPC_RMID:
--		return msgctl_down(ns, msqid, cmd, NULL, 0);
-+		return msgctl_down(ns, msqid, cmd, NULL, 0, false);
- 	default:
- 		return  -EINVAL;
- 	}
-@@ -734,6 +745,7 @@ static long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr, int versio
- 	struct ipc_namespace *ns;
- 	int err;
- 	struct msqid64_ds msqid64;
-+	struct ipc_set_ids set;
- 
- 	ns = current->nsproxy->ipc_ns;
- 
-@@ -763,9 +775,17 @@ static long compat_ksys_msgctl(int msqid, int cmd, void __user *uptr, int versio
- 	case IPC_SET:
- 		if (copy_compat_msqid_from_user(&msqid64, uptr, version))
- 			return -EFAULT;
--		return msgctl_down(ns, msqid, cmd, &msqid64.msg_perm, msqid64.msg_qbytes);
-+		ipc64_perm_to_set_ids(&msqid64.msg_perm, &set);
-+		return msgctl_down(ns, msqid, cmd, &set, msqid64.msg_qbytes, true);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids(uptr, &set))
-+			return -EFAULT;
-+		return msgctl_down(ns, msqid, IPC_SET, &set, 0, false);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &msg_ids(ns), msqid,
-+				  security_msg_queue_msgctl, uptr);
- 	case IPC_RMID:
--		return msgctl_down(ns, msqid, cmd, NULL, 0);
-+		return msgctl_down(ns, msqid, cmd, NULL, 0, false);
- 	default:
+ 	if (!uid_valid(uid) || !gid_valid(gid))
  		return -EINVAL;
- 	}
-diff --git a/ipc/sem.c b/ipc/sem.c
-index 5ec41de7e8..ab456991e4 100644
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -1599,7 +1599,7 @@ copy_semid_from_user(struct semid64_ds *out, void __user *buf, int version)
-  * NOTE: no locks must be held, the rwsem is taken inside this function.
-  */
- static int semctl_down(struct ipc_namespace *ns, int semid,
--		       int cmd, struct semid64_ds *semid64)
-+		       int cmd, const struct ipc_set_ids *set)
- {
- 	struct sem_array *sma;
- 	int err;
-@@ -1608,8 +1608,7 @@ static int semctl_down(struct ipc_namespace *ns, int semid,
- 	down_write(&sem_ids(ns).rwsem);
- 	rcu_read_lock();
  
--	ipcp = ipcctl_obtain_check(ns, &sem_ids(ns), semid, cmd,
--				      &semid64->sem_perm, 0);
-+	ipcp = ipcctl_obtain_check(ns, &sem_ids(ns), semid, cmd, set, 0);
- 	if (IS_ERR(ipcp)) {
- 		err = PTR_ERR(ipcp);
- 		goto out_unlock1;
-@@ -1629,7 +1628,7 @@ static int semctl_down(struct ipc_namespace *ns, int semid,
- 		goto out_up;
- 	case IPC_SET:
- 		sem_lock(sma, NULL, -1);
--		err = ipc_update_perm(&semid64->sem_perm, ipcp);
-+		err = ipc_update_perm(set, ipcp);
- 		if (err)
- 			goto out_unlock0;
- 		sma->sem_ctime = ktime_get_real_seconds();
-@@ -1653,6 +1652,7 @@ static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int v
- 	struct ipc_namespace *ns;
- 	void __user *p = (void __user *)arg;
- 	struct semid64_ds semid64;
-+	struct ipc_set_ids set;
- 	int err;
- 
- 	if (semid < 0)
-@@ -1694,9 +1694,16 @@ static long ksys_semctl(int semid, int semnum, int cmd, unsigned long arg, int v
- 	case IPC_SET:
- 		if (copy_semid_from_user(&semid64, p, version))
- 			return -EFAULT;
--		fallthrough;
-+		ipc64_perm_to_set_ids(&semid64.sem_perm, &set);
-+		return semctl_down(ns, semid, cmd, &set);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids(p, &set))
-+			return -EFAULT;
-+		return semctl_down(ns, semid, IPC_SET, &set);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &sem_ids(ns), semid, security_sem_semctl, p);
- 	case IPC_RMID:
--		return semctl_down(ns, semid, cmd, &semid64);
-+		return semctl_down(ns, semid, cmd, NULL);
- 	default:
- 		return -EINVAL;
- 	}
-@@ -1776,6 +1783,7 @@ static long compat_ksys_semctl(int semid, int semnum, int cmd, int arg, int vers
- 	void __user *p = compat_ptr(arg);
- 	struct ipc_namespace *ns;
- 	struct semid64_ds semid64;
-+	struct ipc_set_ids set;
- 	int err;
- 
- 	ns = current->nsproxy->ipc_ns;
-@@ -1808,9 +1816,16 @@ static long compat_ksys_semctl(int semid, int semnum, int cmd, int arg, int vers
- 	case IPC_SET:
- 		if (copy_compat_semid_from_user(&semid64, p, version))
- 			return -EFAULT;
--		fallthrough;
-+		ipc64_perm_to_set_ids(&semid64.sem_perm, &set);
-+		return semctl_down(ns, semid, cmd, &set);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids(p, &set))
-+			return -EFAULT;
-+		return semctl_down(ns, semid, IPC_SET, &set);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &sem_ids(ns), semid, security_sem_semctl, p);
- 	case IPC_RMID:
--		return semctl_down(ns, semid, cmd, &semid64);
-+		return semctl_down(ns, semid, cmd, NULL);
- 	default:
- 		return -EINVAL;
- 	}
-diff --git a/ipc/shm.c b/ipc/shm.c
-index bb1a721a3e..33f30941c2 100644
---- a/ipc/shm.c
-+++ b/ipc/shm.c
-@@ -993,7 +993,7 @@ static void shm_get_stat(struct ipc_namespace *ns, unsigned long *rss,
-  * NOTE: no locks must be held, the rwsem is taken inside this function.
-  */
- static int shmctl_down(struct ipc_namespace *ns, int shmid, int cmd,
--		       struct shmid64_ds *shmid64)
-+		       const struct ipc_set_ids *set)
- {
- 	struct kern_ipc_perm *ipcp;
- 	struct shmid_kernel *shp;
-@@ -1002,8 +1002,7 @@ static int shmctl_down(struct ipc_namespace *ns, int shmid, int cmd,
- 	down_write(&shm_ids(ns).rwsem);
- 	rcu_read_lock();
- 
--	ipcp = ipcctl_obtain_check(ns, &shm_ids(ns), shmid, cmd,
--				      &shmid64->shm_perm, 0);
-+	ipcp = ipcctl_obtain_check(ns, &shm_ids(ns), shmid, cmd, set, 0);
- 	if (IS_ERR(ipcp)) {
- 		err = PTR_ERR(ipcp);
- 		goto out_unlock1;
-@@ -1023,7 +1022,7 @@ static int shmctl_down(struct ipc_namespace *ns, int shmid, int cmd,
- 		goto out_up;
- 	case IPC_SET:
- 		ipc_lock_object(&shp->shm_perm);
--		err = ipc_update_perm(&shmid64->shm_perm, ipcp);
-+		err = ipc_update_perm(set, ipcp);
- 		if (err)
- 			goto out_unlock0;
- 		shp->shm_ctim = ktime_get_real_seconds();
-@@ -1246,6 +1245,7 @@ static long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf, int ver
- 	int err;
- 	struct ipc_namespace *ns;
- 	struct shmid64_ds sem64;
-+	struct ipc_set_ids set;
- 
- 	if (cmd < 0 || shmid < 0)
- 		return -EINVAL;
-@@ -1284,9 +1284,17 @@ static long ksys_shmctl(int shmid, int cmd, struct shmid_ds __user *buf, int ver
- 	case IPC_SET:
- 		if (copy_shmid_from_user(&sem64, buf, version))
- 			return -EFAULT;
--		fallthrough;
-+		ipc64_perm_to_set_ids(&sem64.shm_perm, &set);
-+		return shmctl_down(ns, shmid, cmd, &set);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids((void __user *)buf, &set))
-+			return -EFAULT;
-+		return shmctl_down(ns, shmid, IPC_SET, &set);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &shm_ids(ns), shmid, security_shm_shmctl,
-+				  (void __user *)buf);
- 	case IPC_RMID:
--		return shmctl_down(ns, shmid, cmd, &sem64);
-+		return shmctl_down(ns, shmid, cmd, NULL);
- 	case SHM_LOCK:
- 	case SHM_UNLOCK:
- 		return shmctl_do_lock(ns, shmid, cmd);
-@@ -1440,6 +1448,7 @@ static long compat_ksys_shmctl(int shmid, int cmd, void __user *uptr, int versio
- {
- 	struct ipc_namespace *ns;
- 	struct shmid64_ds sem64;
-+	struct ipc_set_ids set;
- 	int err;
- 
- 	ns = current->nsproxy->ipc_ns;
-@@ -1479,9 +1488,16 @@ static long compat_ksys_shmctl(int shmid, int cmd, void __user *uptr, int versio
- 	case IPC_SET:
- 		if (copy_compat_shmid_from_user(&sem64, uptr, version))
- 			return -EFAULT;
--		fallthrough;
-+		ipc64_perm_to_set_ids(&sem64.shm_perm, &set);
-+		return shmctl_down(ns, shmid, cmd, &set);
-+	case IPC_SET_R:
-+		if (ipc_perm_r_to_set_ids(uptr, &set))
-+			return -EFAULT;
-+		return shmctl_down(ns, shmid, IPC_SET, &set);
-+	case IPC_STAT_R:
-+		return ipc_stat_r(ns, &shm_ids(ns), shmid, security_shm_shmctl, uptr);
- 	case IPC_RMID:
--		return shmctl_down(ns, shmid, cmd, &sem64);
-+		return shmctl_down(ns, shmid, cmd, NULL);
- 	case SHM_LOCK:
- 	case SHM_UNLOCK:
- 		return shmctl_do_lock(ns, shmid, cmd);
-diff --git a/ipc/util.c b/ipc/util.c
-index 1737d776bc..bc4df56193 100644
---- a/ipc/util.c
-+++ b/ipc/util.c
-@@ -681,28 +681,117 @@ int ipcget(struct ipc_namespace *ns, struct ipc_ids *ids,
-  * @in:  the permission given as input.
-  * @out: the permission of the ipc to set.
-  */
--int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
-+int ipc_update_perm(const struct ipc_set_ids *in, struct kern_ipc_perm *out)
- {
--	kuid_t uid = make_kuid(current_user_ns(), in->uid);
--	kgid_t gid = make_kgid(current_user_ns(), in->gid);
--	if (!uid_valid(uid) || !gid_valid(gid))
--		return -EINVAL;
-+	if (in->err)
-+		return in->err;
- 
--	out->uid = uid;
--	out->gid = gid;
-+	out->uid = in->uid;
-+	out->gid = in->gid;
- 	out->mode = (out->mode & ~S_IRWXUGO)
- 		| (in->mode & S_IRWXUGO);
- 
+-	if ((creds->pid == task_tgid_vnr(current) ||
++	if ((pid == task_tgid_vnr(current) ||
+ 	     ns_capable(task_active_pid_ns(current)->user_ns, CAP_SYS_ADMIN)) &&
+ 	    ((uid_eq(uid, cred->uid)   || uid_eq(uid, cred->euid) ||
+ 	      uid_eq(uid, cred->suid)) || ns_capable(cred->user_ns, CAP_SETUID)) &&
+@@ -163,6 +160,30 @@ static inline int scm_replace_pid(struct scm_cookie *scm, struct pid *pid)
  	return 0;
  }
  
-+/**
-+ * ipc64_perm_to_set_ids - the IPC_SET ids and mode of a classic ipc64_perm
-+ * @in: user permissions
-+ * @out: kernel ids and mode, -EINVAL in @out->err if an id is invalid
-+ */
-+void ipc64_perm_to_set_ids(const struct ipc64_perm *in, struct ipc_set_ids *out)
++/* The sender's pid in @p is @pid, and the sender ids @uid and @gid */
++static int scm_set_creds(struct scm_cookie *p, u32 pid, kuid_t uid, kgid_t gid)
 +{
-+	out->uid = make_kuid(current_user_ns(), in->uid);
-+	out->gid = make_kgid(current_user_ns(), in->gid);
-+	out->mode = in->mode;
-+	out->err = uid_valid(out->uid) && gid_valid(out->gid) ? 0 : -EINVAL;
-+}
++	int err;
 +
-+/**
-+ * ipc_perm_r_to_set_ids - the IPC_SET_R ids and mode of a struct ipc_perm_r
-+ * @in: user permissions
-+ * @out: kernel ids and mode, -EINVAL in @out->err if an id is invalid
-+ *
-+ * Return: 0 or -EFAULT.
-+ */
-+int ipc_perm_r_to_set_ids(const struct ipc_perm_r __user *in,
-+			  struct ipc_set_ids *out)
-+{
-+	struct ipc_perm_r perm;
++	if (!p->pid || pid_vnr(p->pid) != pid) {
++		struct pid *kpid = find_get_pid(pid);
 +
-+	if (copy_from_user(&perm, in, sizeof(perm)))
-+		return -EFAULT;
-+	out->uid = make_kuid_r(current_user_ns(), &perm.uid);
-+	out->gid = make_kgid_r(current_user_ns(), &perm.gid);
-+	out->mode = perm.mode;
-+	out->err = uid_valid(out->uid) && gid_valid(out->gid) ? 0 : -EINVAL;
++		if (!kpid)
++			return -ESRCH;
++		/* pass a struct pid reference from find_get_pid() to
++		 * scm_replace_pid().
++		 */
++		err = scm_replace_pid(p, kpid);
++		if (err) {
++			put_pid(kpid);
++			return err;
++		}
++	}
++	p->creds.uid = uid;
++	p->creds.gid = gid;
 +	return 0;
 +}
 +
-+/**
-+ * ipc_stat_r - IPC_STAT_R of an ipc object
-+ * @ns: ipc namespace
-+ * @ids: the table of ids where to look for the object
-+ * @id: the id of the object
-+ * @security: the security hook of the object's kind, asked for IPC_STAT
-+ * @buf: where to put the struct ipc_perm_r
-+ *
-+ * Return: 0 or a negative error code.
-+ */
-+int ipc_stat_r(struct ipc_namespace *ns, struct ipc_ids *ids, int id,
-+	       int (*security)(struct kern_ipc_perm *, int),
-+	       struct ipc_perm_r __user *buf)
+ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
+ {
+ 	const struct proto_ops *ops = READ_ONCE(sock->ops);
+@@ -203,35 +224,33 @@ int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *p)
+ 			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct ucred)))
+ 				goto error;
+ 			memcpy(&creds, CMSG_DATA(cmsg), sizeof(struct ucred));
+-			err = scm_check_creds(&creds);
+-			if (err)
+-				goto error;
+-
+-			if (!p->pid || pid_vnr(p->pid) != creds.pid) {
+-				struct pid *pid;
+-				err = -ESRCH;
+-				pid = find_get_pid(creds.pid);
+-				if (!pid)
+-					goto error;
+-
+-				/* pass a struct pid reference from
+-				 * find_get_pid() to scm_replace_pid().
+-				 */
+-				err = scm_replace_pid(p, pid);
+-				if (err) {
+-					put_pid(pid);
+-					goto error;
+-				}
+-			}
+-
+-			err = -EINVAL;
+ 			uid = make_kuid(current_user_ns(), creds.uid);
+ 			gid = make_kgid(current_user_ns(), creds.gid);
+-			if (!uid_valid(uid) || !gid_valid(gid))
++			err = scm_check_kcreds(creds.pid, uid, gid);
++			if (!err)
++				err = scm_set_creds(p, creds.pid, uid, gid);
++			if (err)
+ 				goto error;
++			break;
++		}
++		/* SCM_CREDENTIALS with __kernel_uid_r_t ids */
++		case SCM_CREDENTIALS_R:
++		{
++			struct __kernel_ucred_r creds;
++			struct user_namespace *ns = current_user_ns();
++			kuid_t uid;
++			kgid_t gid;
+ 
+-			p->creds.uid = uid;
+-			p->creds.gid = gid;
++			if (cmsg->cmsg_len != CMSG_LEN(sizeof(creds)))
++				goto error;
++			memcpy(&creds, CMSG_DATA(cmsg), sizeof(creds));
++			uid = make_kuid_r(ns, &creds.uid);
++			gid = make_kgid_r(ns, &creds.gid);
++			err = scm_check_kcreds(creds.pid, uid, gid);
++			if (!err)
++				err = scm_set_creds(p, creds.pid, uid, gid);
++			if (err)
++				goto error;
+ 			break;
+ 		}
+ 		default:
+@@ -526,8 +545,8 @@ static bool __scm_recv_common(struct sock *sk, struct msghdr *msg,
+ 			      struct scm_cookie *scm, int flags)
+ {
+ 	if (!msg->msg_control) {
+-		if (sk->sk_scm_credentials || sk->sk_scm_pidfd ||
+-		    scm->fp || scm_has_secdata(sk))
++		if (sk->sk_scm_credentials || sk->sk_scm_credentials_r ||
++		    sk->sk_scm_pidfd || scm->fp || scm_has_secdata(sk))
+ 			msg->msg_flags |= MSG_CTRUNC;
+ 
+ 		scm_destroy(scm);
+@@ -545,6 +564,17 @@ static bool __scm_recv_common(struct sock *sk, struct msghdr *msg,
+ 		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS, sizeof(ucreds), &ucreds);
+ 	}
+ 
++	if (sk->sk_scm_credentials_r) {
++		struct user_namespace *current_ns = current_user_ns();
++		struct __kernel_ucred_r ucreds;
++
++		memset(&ucreds, 0, sizeof(ucreds));
++		ucreds.pid = scm->creds.pid;
++		from_kuid_r_munged(current_ns, scm->creds.uid, &ucreds.uid);
++		from_kgid_r_munged(current_ns, scm->creds.gid, &ucreds.gid);
++		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS_R, sizeof(ucreds), &ucreds);
++	}
++
+ 	scm_passec(sk, msg, scm);
+ 
+ 	return true;
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 300bc75ce1..d34da446b0 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -1585,6 +1585,13 @@ int sk_setsockopt(struct sock *sk, int level, int optname,
+ 			ret = -EOPNOTSUPP;
+ 		break;
+ 
++	case SO_PASSCRED_R:
++		if (sk_may_scm_recv(sk))
++			sk->sk_scm_credentials_r = valbool;
++		else
++			ret = -EOPNOTSUPP;
++		break;
++
+ 	case SO_INCOMING_CPU:
+ 		reuseport_update_incoming_cpu(sk, val);
+ 		break;
+@@ -1714,6 +1721,34 @@ static void cred_to_ucred(struct pid *pid, const struct cred *cred,
+ 	}
+ }
+ 
++static void cred_to_ucred_r(struct pid *pid, const struct cred *cred,
++			    struct __kernel_ucred_r *ucred)
 +{
-+	struct user_namespace *user_ns = current_user_ns();
-+	struct kern_ipc_perm *ipcp;
-+	struct ipc_perm_r perm;
-+	int err;
++	struct user_namespace *current_ns = current_user_ns();
 +
-+	memset(&perm, 0, sizeof(perm));
-+	rcu_read_lock();
-+	ipcp = ipc_obtain_object_check(ids, id);
-+	if (IS_ERR(ipcp)) {
-+		err = PTR_ERR(ipcp);
-+		goto out_unlock;
++	memset(ucred, 0, sizeof(*ucred));
++	ucred->pid = pid_vnr(pid);
++	if (cred) {
++		from_kuid_r_munged(current_ns, cred->euid, &ucred->uid);
++		from_kgid_r_munged(current_ns, cred->egid, &ucred->gid);
 +	}
-+
-+	err = -EACCES;
-+	if (ipcperms(ns, ipcp, S_IRUGO))
-+		goto out_unlock;
-+
-+	err = security(ipcp, IPC_STAT);
-+	if (err)
-+		goto out_unlock;
-+
-+	ipc_lock_object(ipcp);
-+	if (!ipc_valid_object(ipcp)) {
-+		ipc_unlock_object(ipcp);
-+		err = -EIDRM;
-+		goto out_unlock;
-+	}
-+	perm.key = ipcp->key;
-+	perm.mode = ipcp->mode;
-+	from_kuid_r_munged(user_ns, ipcp->uid, &perm.uid);
-+	from_kgid_r_munged(user_ns, ipcp->gid, &perm.gid);
-+	from_kuid_r_munged(user_ns, ipcp->cuid, &perm.cuid);
-+	from_kgid_r_munged(user_ns, ipcp->cgid, &perm.cgid);
-+	ipc_unlock_object(ipcp);
-+	rcu_read_unlock();
-+
-+	return copy_to_user(buf, &perm, sizeof(perm)) ? -EFAULT : 0;
-+
-+out_unlock:
-+	rcu_read_unlock();
-+	return err;
 +}
 +
- /**
-  * ipcctl_obtain_check - retrieve an ipc object and check permissions
-  * @ns:  ipc namespace
-  * @ids:  the table of ids where to look for the ipc
-  * @id:   the id of the ipc to retrieve
-  * @cmd:  the cmd to check
-- * @perm: the permission to set
-+ * @set: the ids and mode to set
-  * @extra_perm: one extra permission parameter used by msq
-  *
-  * This function does some common audit and permissions check for some IPC_XXX
-@@ -718,7 +807,8 @@ int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out)
-  */
- struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
- 					struct ipc_ids *ids, int id, int cmd,
--					struct ipc64_perm *perm, int extra_perm)
-+					const struct ipc_set_ids *set,
-+					int extra_perm)
- {
- 	kuid_t euid;
- 	int err = -EPERM;
-@@ -732,8 +822,8 @@ struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
- 
- 	audit_ipc_obj(ipcp);
- 	if (cmd == IPC_SET)
--		audit_ipc_set_perm(extra_perm, perm->uid,
--				   perm->gid, perm->mode);
-+		audit_ipc_set_perm(extra_perm, set->uid,
-+				   set->gid, set->mode);
- 
- 	euid = current_euid();
- 	if (uid_eq(euid, ipcp->cuid) || uid_eq(euid, ipcp->uid)  ||
-diff --git a/ipc/util.h b/ipc/util.h
-index a55d6cebe6..b0d57f4e64 100644
---- a/ipc/util.h
-+++ b/ipc/util.h
-@@ -177,10 +177,29 @@ struct kern_ipc_perm *ipc_obtain_object_idr(struct ipc_ids *ids, int id);
- 
- void kernel_to_ipc64_perm(struct kern_ipc_perm *in, struct ipc64_perm *out);
- void ipc64_perm_to_ipc_perm(struct ipc64_perm *in, struct ipc_perm *out);
--int ipc_update_perm(struct ipc64_perm *in, struct kern_ipc_perm *out);
++static int groups_to_user_r(sockptr_t dst, const struct group_info *src)
++{
++	struct user_namespace *user_ns = current_user_ns();
++	__kernel_gid_r_t gid;
++	int i;
 +
-+/*
-+ * The new owner, group and mode of IPC_SET/IPC_SET_R. @err is an error of
-+ * their conversion, reported once the object has been found.
-+ */
-+struct ipc_set_ids {
-+	kuid_t uid;
-+	kgid_t gid;
-+	umode_t mode;
-+	int err;
-+};
++	for (i = 0; i < src->ngroups; i++) {
++		from_kgid_r_munged(user_ns, src->gid[i], &gid);
++		if (copy_to_sockptr_offset(dst, i * sizeof(gid), &gid, sizeof(gid)))
++			return -EFAULT;
++	}
 +
-+void ipc64_perm_to_set_ids(const struct ipc64_perm *in, struct ipc_set_ids *out);
-+int ipc_perm_r_to_set_ids(const struct ipc_perm_r __user *in,
-+			  struct ipc_set_ids *out);
-+int ipc_update_perm(const struct ipc_set_ids *in, struct kern_ipc_perm *out);
- struct kern_ipc_perm *ipcctl_obtain_check(struct ipc_namespace *ns,
- 					     struct ipc_ids *ids, int id, int cmd,
--					     struct ipc64_perm *perm, int extra_perm);
-+					     const struct ipc_set_ids *set,
-+					     int extra_perm);
-+int ipc_stat_r(struct ipc_namespace *ns, struct ipc_ids *ids, int id,
-+	       int (*security)(struct kern_ipc_perm *, int),
-+	       struct ipc_perm_r __user *buf);
- 
- static inline void ipc_update_pid(struct pid **pos, struct pid *pid)
++	return 0;
++}
++
+ static int groups_to_user(sockptr_t dst, const struct group_info *src)
  {
-diff --git a/kernel/audit.h b/kernel/audit.h
-index 92d5e723d5..6195f13882 100644
---- a/kernel/audit.h
-+++ b/kernel/audit.h
-@@ -168,8 +168,8 @@ struct audit_context {
- 			umode_t			mode;
- 			struct lsm_prop		oprop;
- 			int			has_perm;
--			uid_t			perm_uid;
--			gid_t			perm_gid;
-+			kuid_t			perm_uid;
-+			kgid_t			perm_gid;
- 			umode_t			perm_mode;
- 			unsigned long		qbytes;
- 		} ipc;
-diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 08d8f5af46..9abe0615a1 100644
---- a/kernel/auditsc.c
-+++ b/kernel/auditsc.c
-@@ -1395,10 +1395,10 @@ static void show_special(struct audit_context *context, int *call_panic)
- 			if (unlikely(!ab))
- 				return;
- 			audit_log_format(ab,
--				"qbytes=%lx ouid=%u ogid=%u mode=%#ho",
-+				"qbytes=%lx ouid=%s ogid=%s mode=%#ho",
- 				context->ipc.qbytes,
--				context->ipc.perm_uid,
--				context->ipc.perm_gid,
-+				KUID_STR(context->ipc.perm_uid),
-+				KGID_STR(context->ipc.perm_gid),
- 				context->ipc.perm_mode);
- 		}
+ 	struct user_namespace *user_ns = current_user_ns();
+@@ -1900,6 +1935,13 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
+ 		v.val = sk->sk_scm_rights;
  		break;
-@@ -2585,7 +2585,7 @@ void __audit_ipc_obj(struct kern_ipc_perm *ipcp)
-  *
-  * Called only after audit_ipc_obj().
-  */
--void __audit_ipc_set_perm(unsigned long qbytes, uid_t uid, gid_t gid, umode_t mode)
-+void __audit_ipc_set_perm(unsigned long qbytes, kuid_t uid, kgid_t gid, umode_t mode)
- {
- 	struct audit_context *context = audit_context();
  
++	case SO_PASSCRED_R:
++		if (!sk_may_scm_recv(sk))
++			return -EOPNOTSUPP;
++
++		v.val = sk->sk_scm_credentials_r;
++		break;
++
+ 	case SO_PEERCRED:
+ 	{
+ 		struct ucred peercred;
+@@ -1915,6 +1957,23 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
+ 		goto lenout;
+ 	}
+ 
++	/* Like SO_PEERCRED, with uid and gid as __kernel_uid_r_t */
++	case SO_PEERCRED_R:
++	{
++		struct __kernel_ucred_r peercred;
++
++		if (len > sizeof(peercred))
++			len = sizeof(peercred);
++
++		spin_lock(&sk->sk_peer_lock);
++		cred_to_ucred_r(sk->sk_peer_pid, sk->sk_peer_cred, &peercred);
++		spin_unlock(&sk->sk_peer_lock);
++
++		if (copy_to_sockptr(optval, &peercred, len))
++			return -EFAULT;
++		goto lenout;
++	}
++
+ 	case SO_PEERPIDFD:
+ 	{
+ 		struct pid *peer_pid;
+@@ -1980,6 +2039,31 @@ int sk_getsockopt(struct sock *sk, int level, int optname,
+ 		goto lenout;
+ 	}
+ 
++	/* Like SO_PEERGROUPS, with an array of __kernel_gid_r_t */
++	case SO_PEERGROUPS_R:
++	{
++		const struct cred *cred;
++		int ret, n;
++
++		cred = sk_get_peer_cred(sk);
++		if (!cred)
++			return -ENODATA;
++
++		n = cred->group_info->ngroups;
++		if (len < n * sizeof(__kernel_gid_r_t)) {
++			len = n * sizeof(__kernel_gid_r_t);
++			put_cred(cred);
++			return copy_to_sockptr(optlen, &len, sizeof(int)) ? -EFAULT : -ERANGE;
++		}
++		len = n * sizeof(__kernel_gid_r_t);
++
++		ret = groups_to_user_r(optval, cred->group_info);
++		put_cred(cred);
++		if (ret)
++			return ret;
++		goto lenout;
++	}
++
+ 	case SO_PEERNAME:
+ 	{
+ 		struct sockaddr_storage address;
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 2b17310534..f2e1e88e83 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -803,7 +803,8 @@ static void copy_peercred(struct sock *sk, struct sock *peersk)
+ 
+ static bool unix_may_passcred(const struct sock *sk)
+ {
+-	return sk->sk_scm_credentials || sk->sk_scm_pidfd;
++	return sk->sk_scm_credentials || sk->sk_scm_credentials_r ||
++	       sk->sk_scm_pidfd;
+ }
+ 
+ static int unix_listen(struct socket *sock, int backlog)
 -- 
 2.56.0
 
