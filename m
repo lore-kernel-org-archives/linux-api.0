@@ -1,57 +1,56 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=173.212.254.19
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792552649;
-	b=14o+IYlccJBrW5vRrBPokgbQmEqr0GEz7olOIxRqzbNbJuZNKjfxiooBQiFzvGjAHnZn
-	 OEykgpk9HU35Hpwnh4l/U4SlEYoGUi8vbBtYopNvYLlLMKPR9QZ2DeMq3/zfpvKyVVwSC
-	 U11qgAaT8gJXoe7AyaeniCtLJcmWd46zLrzFz4pzAG5qzL8MnGZZfMaWNUM/LZ8sVWyFv
-	 PBFO7TiSpBNy9+zuUtpWQS1iOZZxz5BGHgX0xxFeXwHn5fOIORIwACGQIrWfs/8xGhT87
-	 MYQLSZXg5wU8R4LVxSILs8uM6kVM6582SBR5onkvYPikT7ESZiYT0d5aNUWPOnXM0wQ==
+	t=1792552663;
+	b=zUl95No3DHynTKURJsUWv6k0yIEW2Iyw6r98x3LQEXUCnK15OJO8jOLOvh2MslY0dqGw
+	 GRkP/Ls8fteAb4siaIVXhvQZtQlGuYCkvdJKU02InHUAO+yXQbSyTqYK8OElApxODf58C
+	 RJD7Iik6uWpXaIkBYjAO1uZC2vSKtGAKTrmlRgsYXIlNT6I9JP2/0RnDw2AgyiDhqxhyP
+	 z9wb8f2o46pvXl9n0YbbnBu2b0nyqSFOngGSsXrge0D7/lmz+icnLQ08XJutvorTqjjy3
+	 nyvDSt5LjuWBFnRPgC2Azm0mnp5v92iZRdCDmD4/tqTjk+biKNi46JrO4bd7vtsTgCg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792552649;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792552663;
 	h=DMARC-Filter:DKIM-Signature:Received:Message-ID:In-Reply-To:
 	 References:From:Subject:To:Cc:Date;
-	bh=oRt9qfEi+p8qUULjCKJqlBA1X8SXZXrIxCFrVnW5VVU=;
-	b=yHrSOHZtMFQeIuLIH3enQSykIGyNP8SjhaQcE24Z/9s2ki3RFG32ZM8z6q5jLTiYhO2u
-	 j/HDwkvPi/GRZktZo9zn5dv3cngNWPNHXIoI7z4i84z040RXqWTljG3JyQDSNQ/aif/wx
-	 anpwqALbSjjSt1qkrrJcfbeQiFValvIJ61rV/e7PMGoug8fYPYBXAxfAW3LTKb/U2u9ic
-	 XWvwiQYmMtSqDvk8/rRm19lFc04qsHsrTdXiiUnn41po3v640sTU+tD3hq+jK9KoNO6c3
-	 2qM3OSA7NfpPIHrHKpIVXhLR0gG9YNAXIpE5AjBEY99flyeC0BQOXwMpsBqi8gPDdxQ==
+	bh=y32/ROgNC7BgAXo+nbH2255cc57LBlEzLSh+9uilSGk=;
+	b=qTQrc29KB5QFubcBhsJB9TSj8FHx8kEnWu/IWJIjmbSDlPOC70Zzj+BCbOK3tzI5gzQK
+	 4Do+4BhApRSseRjqaCDp3AtAKAQmHAwzxyuqrvuI+wJnlpwlzhLE2EJaETHHJjW2DLQJj
+	 2EedrJYR3WLXaALC0ivGSuXfU0Ai8APbTluPDCqQQ+cYvvAqgJiGYpgynpQQISeT8c+51
+	 hAj1cYb9Ax/G4cvQVVzroWl8w4v8SvKJ6D36zR7Nk+eaWqsx/HBDiVtrbfLS7/tvinKB4
+	 EilNmBY02R69nBs6dQtStXRKVCbQRZzYPx5QLhlec4NXtCemGaJbHexZG92ETtu+ClQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=tuxist.de;
 	spf=fail smtp.mailfrom=tuxist.de;
-	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=R785T3m5;
+	dkim=pass header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=mpgsQu8z;
 	arc=none smtp.remote-ip=173.212.254.19
 Received: from groupware.tuxist.de (groupware.tuxist.de [173.212.254.19])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4FC01607989B;
-	Wed, 21 Oct 2026 03:17:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4FC01607989B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1D2FC606A324;
+	Wed, 21 Oct 2026 03:17:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1D2FC606A324
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=tuxist.de
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=R785T3m5
+	dkim=pass (2048-bit key, unprotected) header.d=tuxist.de header.i=@tuxist.de header.a=rsa-sha256 header.s=201705 header.b=mpgsQu8z
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=tuxist.de; s=201705;
-	t=1792552647; bh=By5SErF411UlG+UD7wAO5DvMmpoYoPV1ixNvax7vY5k=;
+	t=1792552661; bh=mzSPlQGBuMO7y2s2jl+wM34YIMvxDwXoEWlZHf1iIwY=;
 	h=In-Reply-To:References:From:Subject:To:Cc:Date:From;
-	b=R785T3m5bgtSyo9fxe7Yl7YsVN5IjxC8VRMfBOP34MmJEb54/VI8Wrg5YhXPcEnvy
-	 UXZeBelZjOmKSqHbJn6lIGTEv0sRKYs+lIok5vbyAiRucG0H/cR8mOC4GCNRWMwJGL
-	 CGiHcQcxk7RnMrUloMLC7tUfwx4d8VO6WmKYxKBI9sf4ZLvlpLHgKU3xVlM1FNbrWz
-	 K549N0QRaJLSlafOVuDqi7z7jIWbNpkUfreoPdEX2OfiagwTq8uVxC3i+oGyeTPhJ/
-	 b3/B63cjG/oxqWVAeDs4Gggk17kQgThfuOF+28PlHClj/csNRzhBwi8cr/uMcpxh5e
-	 qVGkAhAGHTBkA==
+	b=mpgsQu8zZ8116Z0hmW2qTEd1s/Mc78aoSlh8KJAfXQj18ol4SKv81K7GVHvppXSzJ
+	 9FtfQMYu8BWozwLggMww43+IvU3oExktKDVmu5vhQoTKbH44zmgEATAkvkedhDKSx4
+	 ECrWx62uwOhPCRgybGgJJ1YQKbA9I5iDQLfb3sTS1W2XWhE848crYOFdDKdl09cjke
+	 B5U50HIobLhumcuc0etOKdkObl9atBr7BFo+7JR8ITut6JQNkPvdMPg5r5TKJ+Yjr2
+	 9PZoGTqcBggIOohJEa6HCIoQ5lLMHyBs2jcHRnX8RfWoMYuQmcklFVq4YBmIDzkJTg
+	 famVp94H35eTA==
 Received: from [10.1.1.106] (unknown [10.1.2.1])
 	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
 	(No client certificate requested)
-	by groupware.tuxist.de (Postfix) with ESMTPSA id 024278A0904;
-	Wed, 21 Oct 2026 05:17:26 +0200 (CEST)
-Message-ID: <8bb654a6a07fa2c000a965f72629138eec3f87b1.1792552161.git.jan.koester@tuxist.de>
+	by groupware.tuxist.de (Postfix) with ESMTPSA id C04EC8A0938;
+	Wed, 21 Oct 2026 05:17:40 +0200 (CEST)
+Message-ID: <59c60ce7d56e4198e148dde225c10313df019359.1792552161.git.jan.koester@tuxist.de>
 In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
 References: <cover.1792552161.git.jan.koester@tuxist.de>
 From: Jan Koester <jan.koester@tuxist.de>
-Subject: [RFC PATCH v2 37/41] ovl: allow UUID and GUID owners when the upper
- layer does
+Subject: [RFC PATCH v2 41/41] Documentation: uid_r: describe SMB and NFSv4
 To: Christian Brauner <brauner@kernel.org>,
     Alexander Viro <viro@zeniv.linux.org.uk>,
     "Serge E. Hallyn" <serge@hallyn.com>
@@ -70,7 +69,7 @@ Cc: Jan Kara <jack@suse.cz>,
     audit@vger.kernel.org,
     keyrings@vger.kernel.org,
     linux-kernel@vger.kernel.org
-Date: Wed, 21 Oct 2026 05:15:57 +0200
+Date: Wed, 21 Oct 2026 05:16:01 +0200
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -80,35 +79,49 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 
-Changes to an overlay land in its upper layer, so whether the overlay
-can store UUID and GUID owners is the upper layer's business: take
-SB_I_UID_R over from it. Copy-up of such an owner from a lower layer
-into an upper layer without the flag keeps failing with -EOVERFLOW.
-
-This is what a live system with a tmpfs over a read-only image needs
-to give files to UUID and GUID users.
+ksmbd's login extension and SIDs for UUID and GUID users, NFSv4 owner
+strings, and what AUTH_SYS and the SMB3 POSIX extensions can't carry.
 
 Assisted-by: Claude:claude-opus-5-5
 
 Signed-off-by: Jan Koester <jan.koester@tuxist.de>
 ---
- fs/overlayfs/super.c | 3 +++
- 1 file changed, 3 insertions(+)
+ Documentation/userspace-api/uid_r.rst | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
 
-diff --git a/fs/overlayfs/super.c b/fs/overlayfs/super.c
-index bd0a3f9039..df1e451019 100644
---- a/fs/overlayfs/super.c
-+++ b/fs/overlayfs/super.c
-@@ -1455,6 +1455,9 @@ static int ovl_fill_super_creds(struct fs_context *fc, struct super_block *sb)
+diff --git a/Documentation/userspace-api/uid_r.rst b/Documentation/userspace-api/uid_r.rst
+index c080485455..d16d4317f5 100644
+--- a/Documentation/userspace-api/uid_r.rst
++++ b/Documentation/userspace-api/uid_r.rst
+@@ -159,11 +159,28 @@ RPCSEC_GSS upcalls
+ 	user as ``__kernel_uid_r_t``, then the usual fields. The binary (v0)
+ 	upcall can't carry such users and fails with ``EACCES``.
  
- 		sb->s_stack_depth = upper_sb->s_stack_depth;
- 		sb->s_time_gran = upper_sb->s_time_gran;
-+		/* changes land in the upper layer: its kinds of owner */
-+		if (upper_sb->s_iflags & SB_I_UID_R)
-+			sb->s_iflags |= SB_I_UID_R;
- 	}
- 	oe = ovl_get_lowerstack(sb, ctx, ofs, layers);
- 	err = PTR_ERR(oe);
++SMB (ksmbd)
++	The login response extension (``struct ksmbd_login_response_ext``)
++	carries the user's ids as ``__kernel_uid_r_t`` with
++	``KSMBD_LOGIN_EXT_ID_R`` and the supplementary groups as
++	``__kernel_gid_r_t`` with ``KSMBD_LOGIN_EXT_GROUPS_R``. Such users and
++	groups appear in security descriptors as
++	``S-1-22-<kind>-w0-w1-w2-w3``: kind 3 and 4 for a UUID user and group,
++	5 and 6 for a GUID user and group, w0 to w3 the 16 bytes of the id as
++	big endian words.
++
++NFSv4
++	Owners and ACL principals that are UUIDs or GUIDs travel as their text
++	form, on the server and the client, with or without idmapd.
++
+ Limitations
+ ===========
+ 
+ - Quotas don't account UUID and GUID owners; quota files hold 32 bit ids.
+ - RPCSEC_GSS needs a gssd that knows ``uid_r=`` for UUID and GUID users.
++- NFS with AUTH_SYS sends a 32 bit uid: a UUID or GUID user on a client
++  reaches the server as the overflow id.
++- The SMB3 POSIX extensions' fixed size SID fields show the overflow id.
+ - UUID and GUID users can't create unprivileged ublk devices.
+ - Audit filter rules, SafeSetID policies and IMA policy rules name
+   classic ids only.
 -- 
 2.56.0
 
