@@ -1,110 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=66.163.187.152
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792687379;
-	b=Nn+iQ0k+3CNfvL1ClYTFYwerJY1szB76rg50i7fcyJWZv8WTjdpFliggd7J3FH2PxS0k
-	 7YjtmFGFZXO2V1EZ0YiS0pZvbfJz4AO6zZWtPegR/Js/B1k5+HwhKREyCIEvMkJE51HhL
-	 HxD6Nmnd0XHQ+wAmz+WNyuxV7Fr7/Yxhxv34nRqDQ70Xb5r7YLYwgDBh9LZs78BChSe5Y
-	 6Mx4YkdesQWnqF55zcVBFEKI8TLam12z0d6k6cTT2l33MRjtMSvXpxJg2iTITvBe4G2P3
-	 RgozjSHXuzNUkVCdFaH9kXAYwJmjmGWBvFb2fIAuCJCO+6vyLmUjxlO7g0I5nRr6Yfg==
+	t=1792688426;
+	b=Cjbdh5F14YLrk3uJ5CKRPYm+P3FdXtnylp+OB1ziO+wk7vUmxf5VWU/iwjvLiPRPYCuv
+	 x8vUfCsmqhZ3zBsa7kJEMTd9/FD8zTFxbq+csuSVZ2n++1iZiCSzzL0wh7QKy6yzC84mj
+	 8SToV7vCcPP2B2hjVG3nXjMBYtH1+n590Aq7/KDWv19NvMpIP6mQ4zvEoubCXqGU9OP0Z
+	 uTQS4ALC4tUB7N3ES8byFCzS2purkdoKyDys54i7ZcysyhC5+8FHg/bDcEN+FoZqJX5Bq
+	 B4EfGXJUUTt01Cpdt9SEhCEzR8auzWdjauS2Z/w8oTYjrZJwGiDKKC3EJ3DaEprJNVw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792687379;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=bb9yPFVCzZYVNrPWeZ2XIQWqfvcxCLSzUADzdeC7Nqs=;
-	b=Uyu3TfvV543Sol0B8Oydj6mA1DMImcCQfk83lx29UiFcqG1vo5IwRZRXA+2LGXbcXXGH
-	 OtB4oaaAcG/w8Zdc+n5eK3pz0tw/ipyAOmSE0Ii/EEbdNED+Y1WbTVB5b1opyUp3Gg8kN
-	 rl25i0spoTSLYmRsjqHUruB/boJ6WvQ974K7fphKXHwE4h6wpVFnpYUiXrqrzBNA5i98C
-	 OhFgiqbpMH1JFRXbVsJovex4LHPlGGv+6nNCQ5JerAuGBopiacYErorBKWnGBHj0eImvl
-	 sd+NHuFULhKzUCK1GBoKhDI8X753Hd9NscCZHehNx1Jyr6IHdaqIVdv/qQ+DGDS7naA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792688426;
+	h=DMARC-Filter:DKIM-Signature:X-SONIC-DKIM-SIGN:X-YMail-OSG:X-Sonic-MF:
+	 X-Sonic-ID:Received:Received:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:To:Cc:References:Content-Language:From:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding:X-Mailer;
+	bh=RLhaJlQZZNoYg6hcgIAk04w24uGo5Qnp+frkN1FOTxs=;
+	b=z+KbRwDzPA8OLLpPnWIJP09PPee/fwrmLIFN3IwMYOUFaoG5MBxy5b3sjCHMXd+Qh71Y
+	 XpSppLXSCvJLGLlOJTMtHIdq3azhjw+xZHOd7U4AQRf6wOjN2awqRB9pieU59KO5joghs
+	 lzFyM6e3kEMdZANXVDLHItRNXIceXpst8BgNDobX5cenhYAKT9kqZHvHgDVJp8LpWQZwH
+	 RorySc72n+9Wwz8Fu80+vvsHuxMifAJYvDHRXczj0aujOrUp7jgzwqySKx0JdaEjWTlkK
+	 Xn5YxY+wyOwjdbYkDREqIoC59Qbmwdi5PzUzA0N+s5p/OUY34Zy888ANmWemJ7AKXPQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=ziepe.ca;
-	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XHbnFoHb;
-	arc=none smtp.remote-ip=209.85.219.50
-Received: from mail-qv1-f50.google.com (mail-qv1-f50.google.com [209.85.219.50])
+	dmarc=pass header.from=schaufler-ca.com;
+	spf=pass smtp.mailfrom=schaufler-ca.com;
+	dkim=pass header.d=yahoo.com header.i=@yahoo.com header.a=rsa-sha256 header.s=s2048 header.b=EPxXXTv2;
+	arc=none smtp.remote-ip=66.163.187.152
+Received: from sonic316-26.consmr.mail.ne1.yahoo.com (sonic316-26.consmr.mail.ne1.yahoo.com [66.163.187.152])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1AB12606A31B
-	for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 16:42:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1AB12606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C8CA606A320
+	for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 17:00:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8C8CA606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=schaufler-ca.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=schaufler-ca.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XHbnFoHb
-Received: by mail-qv1-f50.google.com with SMTP id 6a1803df08f44-9196d8543cbso732326d6.1
-        for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 09:42:58 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1792687378; x=1793292178; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=bb9yPFVCzZYVNrPWeZ2XIQWqfvcxCLSzUADzdeC7Nqs=;
-        b=XHbnFoHbaZMsVLw6MWmIqP2d7qgOxfCHBEepcjJ8Id9E0Eb+q5QzJCpkTQIX9gPT+R
-         86fXPk5bXM8iK9x0dOBj1/E2JEn3tDHeoJ6AMdVbgJ1k1N3E3ICq/Q2MPhf+rIAxcnIF
-         4+YWBGgJRMzlwe44a5LXp5z+24tXHKxJBq9xrY2xG4eX+Fk5gs/erZ8cIQv0oixJAix3
-         455u4iWnpKjwepSQH8FuUSOS67fCspG4I/LkwbzlBZQUxBu3+wbUk5fmbVx/4k9mofae
-         MlLjnMWqo8lm6PHNvrktYdzNb19ERFmaMkW8ZJFpc/nZn6Cvx+irDmyLf02/GTWvFBrZ
-         RPsQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792687378; x=1793292178;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=bb9yPFVCzZYVNrPWeZ2XIQWqfvcxCLSzUADzdeC7Nqs=;
-        b=O4xB86FltOHmkSXLyBL6r2w+J3+4hcRwNDM7qXtgQKbvWjfRhSo8fQIh9nWqNr7GVj
-         9FHj1VxHunTu7yCzHBZoC06x57tHWFwmJySndXBJwRokEnUvzfKFFhs+Mq3TmG/cFjdj
-         g13oszwoYoEC+VHzqBxcd0gJyPmSAPm+gDm9m4AMqmhuhurSYHAh3zlep3TF2C/F0EQ0
-         24HnPYTOssCzKOmghN45pE7meIgKc4pK73iW4OPZSuHXdNXtAiH3v1YlZuPZRzr5RiRz
-         eAh0XT/tSevmU0Ie0Iy44b3/nmzg1wr95aFuQu6fuN0osN5uGGZEe13KruGc0On1+Bpb
-         3amg==
-X-Forwarded-Encrypted: i=1; AKwUvBy8AzDCO6sikRNiaRtURaKddNEXQs0BsaxOHsrmJl/H0/eBCm9skcyWSBUQ6totzmWS0a6QtF39D38=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIhwxFxbyPcQtYoesmvusr/92vIIxGfEbkx5gnlfnpbxdqt5vHv
-	sl/bJ3EtC9+sAXG/qEzXXvapEynma6+k6w61Xui+Y3TzmgTZQo6rGk+UGQzlBfwF4UiddsO6qf/
-	DwQVj
-X-Gm-Gg: AYBFou1jX+DA+K+7ArTPoozrsjCxoLnXVd6vwG7OFrD76/r3bvcoUY/Per7YxjEbmmw
-	1HtB555mOFi1xFtuUb0RZLnYXpeDHMg9PmHfG418tR7WrIPXmY6KvxBBijkTtALXD4BNRYYs9hv
-	VSDB5pdf9sics5JwXbZQYPqjZx2mg29rC3bp2Wv6FoOuLEAvVut+BSJmih05YLPAUC7AFmp6ST3
-	QVTdqIAoDVDJuKqEjb6KmXaBVdHhzcOFko3vwqTDXcT7ATS1o7wU7l47DynDVpEmhoRgLy3DJ+0
-	b0tJthUHEqDQE2W3zHJHOln3Pc7cuk1T4IoLXkDYIW7W2lsF/IMHd9EDQ4HTK+b4YzNTjSqmOJu
-	diO2izP+Zo0aJFrN7h4z9vPlNX7PE22UAdppakF/8YdEk6lTl6dvSFkkzMg3r6O+gmewJwZHpTz
-	vg85musz+bk7cEPgurfhzdxeZHcTKEgj5LOmQ2mdx8UjAJLOTh88Rj2Iumxr0CFSBFvzVpCOR7o
-	9uvRdTXn+WMxTn+JpNxT1eGggBTpmGTLazs30fvYXjGyBxyGiq4qcur5LytOVsxmeFtIOrd/JPu
-	3pgCGqlzJvZzQXewXEKlfsWsQCkQ7S073rPpHA==
-X-Received: by 2002:a05:6214:6017:b0:91c:3632:fdc3 with SMTP id 6a1803df08f44-91c3632fe59mr9119646d6.3.1792687377918;
-        Thu, 22 Oct 2026 09:42:57 -0700 (PDT)
-Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91c37060bb5sm1460126d6.24.2026.10.22.09.42.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 22 Oct 2026 09:42:57 -0700 (PDT)
-Received: from jgg by wakko with local (Exim 4.97)
-	(envelope-from <jgg@ziepe.ca>)
-	id 1xJvsW-0000000FUPr-2EHZ;
-	Thu, 22 Oct 2026 13:42:56 -0300
-Date: Thu, 22 Oct 2026 13:42:56 -0300
-From: Jason Gunthorpe <jgg@ziepe.ca>
-To: Jiri Pirko <jiri@resnulli.us>
-Cc: "Aneesh Kumar K.V" <aneesh.kumar@kernel.org>,
-	linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
-	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de,
-	ksinyuk@kernel.org, rodrigo.vivi@intel.com, cedric.xing@intel.com,
-	sameo@meta.com, drdeeglaze@gmail.com,
-	James.Bottomley@hansenpartnership.com, aik@amd.com,
-	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
-	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-Message-ID: <20261022164256.GB3381610@ziepe.ca>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <yq5a7bjajaco.fsf@kernel.org>
- <atooh7uO2RauUTfY@FV6GYCPJ69>
+	dkim=pass (2048-bit key, unprotected) header.d=yahoo.com header.i=@yahoo.com header.a=rsa-sha256 header.s=s2048 header.b=EPxXXTv2
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1792688424; bh=RLhaJlQZZNoYg6hcgIAk04w24uGo5Qnp+frkN1FOTxs=; h=Date:Subject:To:Cc:References:From:In-Reply-To:From:Subject:Reply-To; b=EPxXXTv2yOAfkDeBVlGeldcmNKyITO49k9DX4W1JG3YiE2Z74mj7AwH3HL1ng4JuL4XxI3I2isrYof/PHPDdpVN996WJqCpMr0pkAFvfwFV5SZwp46MjvTMeRQ1GAR9zWWRo2FJCRnFND+/SktiTxIiWFnlf6zJXk7OnBYGNhvJQAnPIKH2weZ2rIVCG114sIM4XTNPZeFllAM6QUMRqMiXedWD6b/nwKU/1Rawon/5NquZ9uPQA/EwsDnXni/1UMKx8zZ7u+NlrBG67+RD4mNZntTeEcqw1rJ1tjqkse2NY9afIeqwb598x3ZMaZSUOdkg6HOr+ubgMCK5VFGysJw==
+X-SONIC-DKIM-SIGN: v=1; a=rsa-sha256; c=relaxed/relaxed; d=yahoo.com; s=s2048; t=1792688424; bh=NrkW7Nzc52jx8owV4g5TQ09TCsBPGhlT5UFiu1qUhoH=; h=X-Sonic-MF:Date:Subject:To:From:From:Subject; b=J0fJxifRcTTaKtm1kfx9ZO5CcKbTJMtfN18e9pWizD1uERM7sGK7bnuACDtqKSMxG+tL6Hy+iXDn0i1QM11uB/3ZiH1zb5BWyuvJEiQF6uL57etcG/GTtwLmHKIA+ra+3JKSOYo5rJhod2/xvS/4gu84qPKamy1shn0r662FSD191d0r/Qu1oFRHYOknkPo5Ccfe4FICXhvLChyIseUzh8oIbLwWdcePDbYO5UpdZ7QZq8Y0+NhQVvkbZXPIiiYqa7eA3FNVN/+AQ1OYqhzlYBqmx1/R+Vo+oOZzbU+xmNaDpfS3LG5AZNq72SvA21YMSlBfdqfJ9BRQXY53D/eSfA==
+X-YMail-OSG: xRD30LcVM1l1oAWUFc3wSEmkOWJMjiD2Jw1_JGIU9Bdii66XxC5fX401cOGqfnB
+ W4hkfMQKIcRII8bT.rM1fo.855tYR0AsXM5AG5UG6WzBitDsVK2h7Wjx0s37e1372WH_8mlt7JX6
+ _6jRINfXlTnxTR_21HJwSLhWQThvcWhBT2zsXPC5LYdjE4N7Gj4br9VVpYumqpUgjIlBOj6p5krK
+ aNHtytIbJ..6O2nnRC1PmkkfILLQ62ZGoPtM1uhFCc3Xjwg7am7Era7juk2bFyI9FSTboGets_zm
+ AhhfffgPfIr.RiYkKOZM3sG2W0sovPZPZwgb_DHu1pvsAbsJN119nN8dlJ3XlGc7X4uZT2d4oKZK
+ F0aRM0Z7zXFfG2S_5iib_3a9_s3ptZi.K0Zy35ekZh_rDQICVey1vlANnUpuIV8WibgDK06yPdno
+ ap29UZlv7P.xsaYVTWU4_AGVX1fHV0cXuiqYZE.zLonqzqnQM..e38uwxx9OCyMi8A4PdyyBY.Dl
+ Zs9k.G69vmbM6oJqYPnQ5AsNDS.kdW.IuhxIdW.7DrsP_PHBGZBGmxr3dCeBNHpKQBM1I5dQK.WT
+ VuI3c_4lX.Vbej9sn9BNpMMPf4P2djGeKXOFjib_d9G1KXuU2VUEpCWTpnGAKWN.P72xQLPNtRso
+ yYN2svrh4sPjWXhnH1g6GauSpLPf64jyzs86EtT_Wea0htZ_180xUpFJ.dOtcxv6a7BjQ6wW.USw
+ enbtthrK0owLhL2HWC0.z1I.MBapxkZM7d41Djh7hiRZHyULXOp5AhqWVNk.RauEQGMYXwyOzHq3
+ LRuDUZxNE_BbMfol99ddoBDvLyNk0qONeuU0qT0GGBPwJu4J6t.9Jy6ZReHksf3C5pse8IcnUWpJ
+ oiVak20A8O0z82cBUMMPCq5mrJhaopEEjAtomXD8asxCgmOwbLDwMNpaTPMw_pGsi_VdIs6_28RL
+ TuA8CaMXHGMSRA71Ic4aOGUXqECu0PudSoQs.uqjXnNnLHnypRxns6kbJUHBWVdoFTxFFo5hQR0N
+ JCvfRnIwGfZ2hDFMNLSp2c.zRJ2HjBCGtLayGcFM3rD9.rP3uTQ6GCuKe_7pQgfCbVNbxjRzxsgS
+ Obo3VPPf0GtkxoO40P.33d5dMb116c.0y2HIIzG4b_0mVAZmhr8ECM8_oL_74oDzXHgkNIcRuGMw
+ ADNkAH4KfWAI1xaSFM3PUM0xA8wK24KEeOG6GbGHKg6nE2R4eSAEwKhme3rwMdP4kv3qpLnWr4GH
+ eaM3ZtVYjDlXjMQHOS2JfWYHn8oNto9ZV6NCcZPc2sEOhIHp9cyudxIDTgiTpFRj1V54Bi_eai4Z
+ HBxTUzS7tmHZ72ylhKjwgJrSbpJogTzD9BFKYDvFlWmLAd213iaHFTAX5Mz47ywgusMAqmLhwHV0
+ jV5YJZcSSQnVap5iiecEXGI_1NigxWNhtYR7fDNHw0QZz3IEWh01sI8SHI4yibnh.YuTSR5qecoC
+ 2O6q4yD0Gki77xehQHLlekwqIiOuKNZVEWvg4PqGxLW6NwnMor9q0WTpleTQhMZWBFCTxQRub9XG
+ PVGsC0w4bAqIz55qdZDgRM9vwy801Bhe0nb52zQqoOBH0KX0sOmwCLSLaycKTzwWdMTOsW8u9sPI
+ QCWyQJ3A5aUCDmMG6bLwmidewITkoRGE.1JH6er9_3gzJtrh02TOjUYsZQbKY_ECIs6MA8vOZ0Nb
+ veczfcbR9IMqtdArlPM9Vnq4COpIpnlDjd7lNDodwAokDwCqTmzF6lKaDI4coWoaVzc84axARzS7
+ lpmxdvAhDwr_unQu_3UAAD4bzArovBsOBvvjB.J5pWDQyKMPh0u0DwfoiJhO_pEPlRYGIlVHGbyW
+ _DNJ.C00e4RhbKOnLWG5HjNzDpuaMXqg.YQXDb8H49fOCq0LbXwgtISGQzL0KRTsjCEmuT279hfK
+ WRgWseJ3cTB.XuCCb4v54PgI6L19VIVuD1WHvDuelGQX3_j0_gFiRcUpW_Gzr35PJAsnyvD6IrAP
+ xjDKCMLU611h1cfL2Y2Zp8VcB_M1tga3Fn5y1tRIcyNO0xJYATmHWwk3wNBW9SAwBTvFttcbSUH7
+ _0H0_Dnx_YrIZN4whokDOFEzjGbKb5sMjH9W2wcuAsUpAlqfMboL2WcZZa2vgR_AlJSOGt1DffQm
+ sxr1vQZe1ZsTq3yVIoz7hsl..S6bA2N2bLevEq7L4IM8zaRmvlQd6SuI3NGEdQde4sUeuvoQDh7d
+ pa00D8_nGDTxFDWGfGA61OH6654zf.YQIVLkRaa1bB2LtWAsAipxG1Tq1pZqHpQVXqxG_eQ--
+X-Sonic-MF: <casey@schaufler-ca.com>
+X-Sonic-ID: f4d52385-1c22-46e9-a768-7fe9b7b03ed3
+Received: from sonic.gate.mail.ne1.yahoo.com by sonic316.consmr.mail.ne1.yahoo.com with HTTP; Thu, 22 Oct 2026 17:00:24 +0000
+Received: by hermes--production-gq1-fd7994565-wwgbc (Yahoo Inc. Hermes SMTP Server) with ESMTPA ID b52a058941d94202e488719cef4d9678;
+          Thu, 22 Oct 2026 17:00:19 +0000 (UTC)
+Message-ID: <018ca365-ce9b-424c-b600-bd9c8aefc9a1@schaufler-ca.com>
+Date: Thu, 22 Oct 2026 10:00:16 -0700
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -114,71 +83,46 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <atooh7uO2RauUTfY@FV6GYCPJ69>
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v2 00/41] UUID and GUID user and group ids (*_r system
+ calls)
+To: Jan Koester <jan.koester@tuxist.de>,
+ Christian Brauner <brauner@kernel.org>,
+ Alexander Viro <viro@zeniv.linux.org.uk>, "Serge E. Hallyn"
+ <serge@hallyn.com>
+Cc: Jan Kara <jack@suse.cz>, "Theodore Y. Ts'o" <tytso@mit.edu>,
+ Paul Moore <paul@paul-moore.com>, Arnd Bergmann <arnd@arndb.de>,
+ linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+ linux-security-module@vger.kernel.org, linux-arch@vger.kernel.org,
+ linux-ext4@vger.kernel.org, linux-nfs@vger.kernel.org,
+ linux-cifs@vger.kernel.org, netdev@vger.kernel.org, audit@vger.kernel.org,
+ keyrings@vger.kernel.org, linux-kernel@vger.kernel.org,
+ Casey Schaufler <casey@schaufler-ca.com>
+References: <cover.1792552161.git.jan.koester@tuxist.de>
+Content-Language: en-US
+From: Casey Schaufler <casey@schaufler-ca.com>
+In-Reply-To: <cover.1792552161.git.jan.koester@tuxist.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+X-Mailer: WebService/1.1.26740 mail.backend.jedi.jws.acl:role.jedi.acl.token.atz.jws.hermes.yahoo
 
-On Thu, Oct 22, 2026 at 05:38:22PM +0200, Jiri Pirko wrote:
-> >I am using this to understand what the IDE setup flow would look like,
-> >but it is unclear whether the connect flow belongs in an attestation
-> >framework. I understand the desire to pass the certificate slot number
-> >as part of connect, and sysfs is probably not a suitable interface for
-> >that. However, is CTLV the interface we want to use for connect?
-> 
-> I was thinking about this and "connect" really does not belong in the
-> attestation CTLV (same applies to "lock"). I was thinking about some
-> parallel PCITSM CTLV instance, but that does not really click as well.
-> 
-> Currently I'm thinking we can maintain existing "connect" in sysfs and
-> extend it with "lock" sysfs knob for Realm side. Both would create
-> ctlv-attestation-spdm instance. The same spdm instance may be created
-> for other non-PCI-backed device.
-> 
-> The proposed host flow is:
-> 
->     sysfs connect: select tsmN and prepare the connection
->         -> negotiate SPDM and discover certificates
->         -> register ctlv-attestation-spdm instance in DISCOVERED state
+On 10/20/2026 8:15 PM, Jan Koester wrote:
+> Hi,
 >
->     SPDM_GET
->         -> populated certificate slots and digests
-> 
->     EVIDENCE_GET(CERT_CHAIN, blob-instance=slot) /*optional*/
->         -> retrieve candidate certificate chain for appraisal
-> 
->     SPDM_AUTHENTICATE(device-generation, spdm-slot=selected_slot)
->         -> authenticate the selected chain
->         -> complete backend-required session and IDE setup
-> 
->     sysfs disconnect
->         -> remove the attestation instance
->         -> destroy the native connection
+> this RFC series lets a user or group id be a UUID (RFC 9562, version 4)
+> or a Microsoft GUID as well as a classic 32-bit number. Processes can run
+> as such a user, files can be owned by one, and credentials, ACLs, keys,
+> System V IPC, sockets, signals, audit and procfs carry the whole id.
 
-This made sense to me, I haven't reached all the details of SPDM, but
-this is like what we discussed at LPC.
+I can't see this being acceptable for a variety of reasons, including
+but not limited to performance and configuration complexity. It's a
+general solution for a special case or two, and the impact is significant.
 
-I don't know how much SPDM stuff is done at 'sysfs connect' time vs
-how much is done at the first request. None of that leaks to UAPI so
-it doesn't matter.
+If you're willing to use a UUID and/or GUID in addition to a UID/GID
+instead of in place of it you could consider implementing this as an
+LSM. There are a number of issues you'd still run into there (e.g. UDS
+attributes) and I can't say if the resulting behavior would be what
+you're looking for. I also can't say that the security community would
+necessarily be any happier with it than the general population, but if
+you really want this it might be worth a shot.
 
-This changes things so IDE does not setup until SPDM_AUTHENTICATE,
-which seems reasonable to me given all the constraints.
-
-> The slot is therefore selected after discovery, rather than supplied to
-> connect. The attestation instance represents the prepared connection; it
-> does not exist beforehand as a controller for a disconnected PCI function.
-> 
-> This requires a staged native backend. It is not how existing automatic
-> sysfs connect behaves today, and those backends would retain their
-> existing behavior.
-
-I don't know what we do with the half completed sev stuff. I would
-prefer everything align to the same flow, obviously.
-
-> ># ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 connect pci.generation=0 pci.tsm-id=0
-
-It is pretty cool you could just make some edits to the schema and
-then use them through this general tool, kinda like sysfs, but not
-like sysfs.
-
-Jason
