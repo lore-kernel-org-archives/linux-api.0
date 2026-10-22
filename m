@@ -1,84 +1,85 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.51
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792659685;
-	b=jlTCDCnzDTlZZ6iSyO286GPCLhRBdbVR+350/bvRlxsKzmkqdJrj1K9IK4KJyhYh6D3x
-	 SxKEzbZ2qR3Ps98O4nxBcU7392JpqDOUYUlkaqBlx5IjEi5hxGSsGy6qgvkUuLaI7Jm16
-	 1VXR1YRNCz9EdztKIV30UvdlAWon3jXYNuqbbNgqdXiCL2UZfko/DLdKyA0XNag6OHhwW
-	 8g3Vll0zaeOshARdjFU0DUT8hgTbgclD7Qh1qExVo2PWppr+rbUyBHUle5PYzqoeB+tuo
-	 c3ug8++dVM0fEDJaeIrnpn2zXZCuTXvMUfeD+HCKVyjwVBQJiQw9hhbqSz7sZTGSWKA==
+	t=1792659847;
+	b=RZ5onUE5Xylh8KhUmxPP++riKyDAb7+3gIBk08I0WrtzNqrWBBKkOBrFGtOA4mvCsAPw
+	 9oPa3lZm/auJ96ZEP+jo0TO3qT+vv40K/3KWup4jICWmcSq15hMia6oMMWas16Sj3wz4F
+	 n71BZ/jDWGoOfomzoXadBz0FwH/1F1a/zI3kxh5oNNU1/F7/oIk3suW3LsAuvIV3ZqI/J
+	 YCvrUEAPkQEwzQL6TGFAD9mlNnxe28UrMSRdhSdcrIO58WNorJkbk00cvPPa+LqA+tA3g
+	 h8BoQmJYwYdU7XPC6KWZXVE4nrNytq8nOPrlubbhDJ+k1sOIU/zS84Qy2oWc217Q1NQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792659685;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792659847;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=1M91N4x2jkXM5IsJ1QyquMgQ5eQNEUvnCoLpXjporvk=;
-	b=rIllXSKGRGaPWMm/a086zXeRbpCg5Nxe1mG/W/4SrJDW4gJf0gO4D8lt/aE6ohGHwEOi
-	 gvU26qLUldfIhhUK3b3xl8XGZUHlK5qBUxdBh9VYPlvAVdDARgjLsNfGOUr+XzxBUzrVj
-	 aMeZUxRS3aCmeuV7hgURrnfhO8e8Et0eBifhiakJMvu9poPrtECurBevei3A8SaTj2LbS
-	 +QZinlDRuQ2d3ebzOt+UE/dOyw9yTbfqL+NeQ4tnnjDpiFvyNTD4iLtYw766ONuZM7jcp
-	 r554yoaHfI67Z4dPhrkxlAFNJMrxirp2cLxep/9vXPzDkzrsnI6KamEYfCKU3l8l2Eg==
+	bh=ywQR7I909P3DB3xy2MhLfJ7Uj6kbu1uDVGYoaUPJ8FQ=;
+	b=3906tglWJqCaL+D9LHTvZku3kIzb01OSVFhf0LNFmQ1YjXbccMedk/pyhInHM7RNpK62
+	 pAUuvtFRCMdo1qHDdg/+VLc4yZn/MFaQI76/7DopSe2vIyQ8ILTCkoylBH1hRuNSfVndl
+	 FJwwPuRmZrkk6DfoZaLMpMlX23JpmJ/3phK+pwnGz0w5y+6god3M5WJS9KazQJgxTLlWQ
+	 gPGWbj5aXsJPXRaiUR6lsjzQiYLepZqzzuWmH+hqSohmoOhObdkI5S+YUb4ZfEiVPtAr/
+	 5qRfK+lnpxndMfMx43MHfjLW2GwzhicbDTdBMeDhl2Nsj9cF/UCUBGKepLBsYNZM2fQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=Xm48qF+c;
-	arc=none smtp.remote-ip=209.85.221.47
-Received: from mail-wr1-f47.google.com (mail-wr1-f47.google.com [209.85.221.47])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=szZbgIim;
+	arc=none smtp.remote-ip=209.85.221.51
+Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 31BF3606A320
-	for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 09:01:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 31BF3606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E58B0606A31B
+	for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 09:04:06 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E58B0606A31B
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=Xm48qF+c
-Received: by mail-wr1-f47.google.com with SMTP id ffacd0b85a97d-48bbb06e746so956954f8f.3
-        for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 02:01:23 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=szZbgIim
+Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-48b060ec084so1209910f8f.0
+        for <linux-api@vger.kernel.org>; Thu, 22 Oct 2026 02:04:06 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1792659682; x=1793264482; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1792659845; x=1793264645; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=1M91N4x2jkXM5IsJ1QyquMgQ5eQNEUvnCoLpXjporvk=;
-        b=Xm48qF+cavnI98CF+FEn/aOxyHWgeA3QXlxnHWpH3APrUrU8fL5Hv7ngylFDNiVRFf
-         KLRVlNPYWp5uQRbptpw7dmjARCTX6hyvPjudnH1BR9vJkURRrYYlYsQ4xIGz3EY4nmtx
-         DNKCGAE6z/pV56Q1SmnhXJGfaqt3IIO14tP+14apQIkSbLbaI0Lc9wrxsBqDX4YZSZbo
-         YAWQMfGUijXDz9xbZO0Hp5w2IX3uQnKAZOqRiKKnJcMMWeJUVV9CbO/7a9ZhwP8I3ntm
-         v/lg6DzpLwRLx620WELZZ4owoq2j/v8lkWWZCgphvLuUOyAH4G/QMGpqypk/XZtDnUf9
-         Ixxg==
+        bh=ywQR7I909P3DB3xy2MhLfJ7Uj6kbu1uDVGYoaUPJ8FQ=;
+        b=szZbgIimY4VfP2msuRmNHXQOrJ/oJn+pAGeueFnH8YBVSaGbdeIgcX6nKDckSPlnk2
+         99svFjyJhjQ5FaGEfxNmgNRoCK6ha2HpuFWphTZx6nRyMb8L3sFRFX3tt1hSmRJbA4Zs
+         jSB19PjcUEZj25AqcyHerhGLHnqDiSzeUOENrBEoJkvEYzTV1M2G1PNUgLlDKZpGZrgy
+         ydrwVI6xYeg6aM2vyzPDKx2SxytoMVt08WwmtACcvEGV6Yn/cwYSO2ra6xlyvimBA6tD
+         mNm9hKiceEMVV7bvUYL3geJgehge8VlwzBPSfy1xM0u1XsWpsf2dDLX9rvLlP4CWS1IN
+         zexQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792659682; x=1793264482;
+        d=1e100.net; s=20260707; t=1792659845; x=1793264645;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=1M91N4x2jkXM5IsJ1QyquMgQ5eQNEUvnCoLpXjporvk=;
-        b=nRS0fd1k+tOzmjmsVStLXhQFkAbtJDE5L+tK+4mpHyH4XIjFDvD82u2S3mXiUQsJy/
-         evOPyAUHcyGZcvBHXnGRwprtars1XbJxN0yUcJVuESbxsdLVYYjQ4ELyOqeWE7QcleCi
-         HKjKG6aM/lpTxqqFq3ls5s1MN/anIIBEUK3DtZENAXinfziPAeLgRbcki3hHFipCxYxJ
-         bnYnlzxxzKcKpCuSdNcDfZXEWVFMUzgEuHUfixXbPgDHCZCXvTw5HITB4jy6HXTICXNY
-         we7z+GHYuEsipWpLYMrXfc0fjCPT80I4/u5n8VEL1JRlKMF7GmjBl3jpgBB1h6u1SNyc
-         xulg==
-X-Forwarded-Encrypted: i=1; AKwUvBwZ8cXlcBMDEFe/NFrKB6YIQ8CJrgyklMqdJzcthHhNT4NqMNUz+5nVPFGq9FkxU34Egg2sYa1Em4Q=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJatQjbS+hKOfG4vSNpcg6AKCg3BgQDuQtsr3fWYtDf6RxAyDFw
-	0OKr/YdFefMfHyhjGCmtbFf9R8nKRNvgCfXwbQFrm+DvBdnpTB67QAyIimJVQB54C18=
-X-Gm-Gg: AYBFou1c+oC/MZEmXCvFjC2tIKC1FHSwaXcoIvpQ7Hgx12hwr8j2V3iiFANRYNGJOS1
-	sXLmxOp6gy8bZTasPUGoxU9M2qmBQTibwim+NQdTjOThwKOVyyHabnN3mufziGUwesCz1tJziFU
-	DBrdLRV4gue58V9o6cgu+0JIs7ChG4g/IY8/i9qI8CJ+dSPdcMUf7GByCjFUaH5bftUVbJvlrfw
-	frG43B0KHRGX5/I+Yp5KWWKeeCp5pTs1IMpFDA3A8C98DfEsve5DggghuyD65hl9qp/MnRftzpO
-	6MtwPaD9L22hjQYsNTRYENxUJyYAdAKTC/AVW1dvOJcksdpRbGsXBvY+7qcidOP+Ln3zjXbR24P
-	ms55yotrOE1TrR9McQxn4OsHF7W4Nm3fV0Ud6wX+YbTroTKp22l0kd1hnmdXHZUSlNjLrdS/0p0
-	UzIMoAvfCreDhskbmi6Ai5uf6lYlP0cNGeuGbKmc9V6o/xo0CGPp7o9f21SM62hZ1fAMX1lzrjJ
-	bqgBimT9QebfqCouzWi4KqtLMtglM93DVP9jeJsE+rHBA3oOR2uEfbRXxydyQ7e
-X-Received: by 2002:a05:6000:e46:b0:48d:b940:af7a with SMTP id ffacd0b85a97d-48e26511828mr6746766f8f.55.1792659682008;
-        Thu, 22 Oct 2026 02:01:22 -0700 (PDT)
+        bh=ywQR7I909P3DB3xy2MhLfJ7Uj6kbu1uDVGYoaUPJ8FQ=;
+        b=2Nq53DL0inaydTnM4T/1u0S2SJMJccnQZfBGgAHOAOuOtHFhMLFpQaBjDM2IZHmRey
+         IpwwdTfuduAHeOuG2IT1vJ21WlBF8qygNhNtQGs2NaMJFN/LsNqigSUdeTTdK5nd3Rnu
+         I5T+xh/i64oP/eK9D69AGEDdGYI/39tgfMtssHrwIsA+Hq4cTO8J5jBiHdVAia/lHc0c
+         SgjL+MFR6zD3xR3D1fepoVDykKBVKsP/AV/5W13yTfNrUV3fsi2vCeEcfJzgAFdxXnND
+         AaEi8TVcArfSA8YWZlfq5AxayJ7EmhFAUaFTk0hSabtmeAOxUmFV4VufrapXjIoj04+G
+         bEmg==
+X-Forwarded-Encrypted: i=1; AKwUvBzoUAaYrK9H2rOIGzwgE88H0ee6R/Qby01SKeavudTOQ7UBJBVZjtsxtnk+t3GA7/ASQYdct8R9smg=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIVAFOFhIjFMEnwSg5/4b1F2Xx9PTLntNB/Nlfn4Jkvmf340Lxy
+	gnSXmXTz+eheL6CsTHBnXzBVMPmlVaBlqJFoXl0iDVoedlQISUnMcsTMWMKCYWf3X5U=
+X-Gm-Gg: AYBFou04rtjlsrXADtawzOnkHXA03ZL5XIq4tT7FcWWTiQfJ17kdZntDJkTpv9elhiw
+	xtoh74KhJwx866kfBbyvUjoJ2I0A4nomkocDyh0mou3YmUoV1jxdhX07nRPqi1juoLd0LCUkdvC
+	8GFYsvRdsHLuJBEUHk4eRkpnmU/S1naUACGzsGU7mJHmk8PqS9DpvJUvK08DvZFKipo+R6UjY6Q
+	4AV0YGotoWgBjXSovpkamoQ0TanMrOS0YWWeELY6TmXwgoGOw48dSC6+8La/Te90ExPi3B0XaIb
+	Q9YYeBGAUhwAd2Az/ccoITpC9gLwjXGEJGTPQ6SQ1sSwe75gFmR0JkCsXp/ys9tsIk9MUmxgGmv
+	sQHAMcXpmOfPEzx4EYN/brpRH68IqgdDAVjiPPkyJFezGqSK2hNdS3tV+rAurH7ORhOHsCnmK6l
+	YwdAcNSCgTA+gsaB/xcFyGl01T8WKwu+lkIpG65Rpipn79yN8icvHRDRKEIt+ldwn97JXEWDGBt
+	8w2LAPOkLFJ23wpnI0DJyHgGFiteDseqTKC5lcNh1zb0RziM0QqmYQ0pR355EtNUOlPJOo1bZ6L
+	buwm5lVAZQ==
+X-Received: by 2002:a5d:6f11:0:b0:48b:9d80:53a5 with SMTP id ffacd0b85a97d-48e2649399cmr9647538f8f.10.1792659845013;
+        Thu, 22 Oct 2026 02:04:05 -0700 (PDT)
 Received: from localhost ([128.77.52.125])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e25834086sm11228550f8f.34.2026.10.22.02.01.21
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e2a034fc2sm7010484f8f.5.2026.10.22.02.04.04
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 22 Oct 2026 02:01:21 -0700 (PDT)
-Date: Thu, 22 Oct 2026 11:01:17 +0200
+        Thu, 22 Oct 2026 02:04:04 -0700 (PDT)
+Date: Thu, 22 Oct 2026 11:04:00 +0200
 From: Jiri Pirko <jiri@resnulli.us>
 To: Jonathan Cameron <jic23@kernel.org>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
@@ -90,11 +91,11 @@ Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 04/20] Documentation: ctlv: Add userspace ABI
-Message-ID: <atnJUfh0_Y3BRKx3@FV6GYCPJ69>
+Subject: Re: [PATCH RFC 10/20] ctlv: Prepare event queue support
+Message-ID: <atnRAOJFuw8WqQ4Y@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-5-jiri@resnulli.us>
- <20261021011122.2cd96901@jic23-hlaptop>
+ <20261015145053.3664509-11-jiri@resnulli.us>
+ <20261021021208.6909d4e3@jic23-hlaptop>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -106,240 +107,250 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261021011122.2cd96901@jic23-hlaptop>
+In-Reply-To: <20261021021208.6909d4e3@jic23-hlaptop>
 
-Wed, Oct 21, 2026 at 02:11:22AM +0200, jic23@kernel.org wrote:
->On Thu, 15 Oct 2026 16:50:37 +0200
+Wed, Oct 21, 2026 at 03:12:08AM +0200, jic23@kernel.org wrote:
+>On Thu, 15 Oct 2026 16:50:43 +0200
 >Jiri Pirko <jiri@resnulli.us> wrote:
 >
 >> From: Jiri Pirko <jiri@nvidia.com>
 >> 
->> Describe the CTLV transport, discovery, wire format and userspace
->> compatibility rules.
+>> Add per-open subscriptions, bounded event queues and event creation for
+>> CTLV families. Add the generated root family kernel bindings now that their
+>> message and event helpers are available.
+>> 
+>> The event and generated root objects can be compile-checked here.
+>> CONFIG_CTLV remains unwired until device dispatch completes the module.
 >> 
 >> Assisted-by: Cursor: GPT-5.6 Sol
 >> Assisted-by: Cursor: Claude Opus 5.5
 >> Signed-off-by: Jiri Pirko <jiri@nvidia.com>
->In general looks good to me - this let me get my head around
->what was going on nicely (I think!).  A few trivial comments.
->> ---
->>  Documentation/userspace-api/ctlv.rst  | 507 ++++++++++++++++++++++++++
->>  Documentation/userspace-api/index.rst |   1 +
->>  MAINTAINERS                           |   1 +
->>  3 files changed, 509 insertions(+)
->>  create mode 100644 Documentation/userspace-api/ctlv.rst
->> 
->> diff --git a/Documentation/userspace-api/ctlv.rst b/Documentation/userspace-api/ctlv.rst
+>Nothing fundamental - just a few passing comments.
+>
+>I'm running low on time, so will take a closer look at
+>this in a future revision.
+>
+>> diff --git a/drivers/ctlv/event.c b/drivers/ctlv/event.c
 >> new file mode 100644
->> index 000000000000..5ebca3d4d94a
+>> index 000000000000..0f68d33e031c
 >> --- /dev/null
->> +++ b/Documentation/userspace-api/ctlv.rst
+>> +++ b/drivers/ctlv/event.c
+>> @@ -0,0 +1,713 @@
+>> +// SPDX-License-Identifier: GPL-2.0-only
+>> +/*
+>> + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
+>> + *
+>> + * Per-open event queues and loss reporting.
+>> + */
+>> +
+>> +#include <linux/bitmap.h>
+>> +#include <linux/build_bug.h>
 >
->> +Discovery
->> +---------
->> +
->> +Both uevents, addition and removal, carry the family chain as numbered
->> +properties::
->> +
->> +    CTLV_FAMILY=ctlv-accelerator-foo
->> +    CTLV_COMPATIBLE_0=ctlv
->> +    CTLV_COMPATIBLE_1=ctlv-accelerator
->> +    CTLV_COMPATIBLE_2=ctlv-accelerator-foo
->> +    CTLV_COMPATIBLE_N=3
->> +
->> +``CTLV_FAMILY`` is the family the device answers as, the numbered properties
->> +are its ancestry from the root to that family, and
->> +``CTLV_COMPATIBLE_N`` is how many there are. An index never moves: changing a
->> +family's parent is an ABI
->> +break, adding a descendant only appends.
->
->Odd line wrap.
+>cleanup.h given you are making quite a bit of use
+>of guard() in here.
 
-Will fix.
+Okay.
 
 
 >
+>> +#include <linux/ctlv.h>
+>> +#include <linux/ctlv_gen.h>
+>> +#include <linux/err.h>
+>> +#include <linux/errno.h>
+>> +#include <linux/list.h>
+>> +#include <linux/minmax.h>
+>> +#include <linux/overflow.h>
+>> +#include <linux/poll.h>
+>> +#include <linux/sizes.h>
+>> +#include <linux/slab.h>
+>> +#include <linux/spinlock.h>
+>> +#include <linux/string.h>
+>> +#include <linux/uaccess.h>
+>> +#include <linux/wait.h>
 >> +
->> +A program that wants every device, including ones appearing while it starts,
->> +must listen before it looks, which closes the window between enumerating and
->> +subscribing::
+>> +#include "builder.h"
+>> +#include "device.h"
+>> +#include "event.h"
+>> +#include "internal.h"
+>> +#include "message.h"
+>> +#include "schema.h"
 >
->> +A whole message with every offset, for a request of one integer and one nest
->> +carrying a string and a further nest::
 >> +
->> +    offset  attribute                       len  flags   contents
->> +    ------  ------------------------------  ---  ------  ----------------
->> +         0  root                            120  NESTED  attr_id = 0
->> +        16  .. chunks                        24  -       8-byte integer
->> +        40  .. chunk                         80  NESTED
->> +        56     .. label                      19  -       "ab" and its NUL
->> +        80     .. item                       40  NESTED
->> +        96        .. value                   24  -       8-byte integer
->> +       120  end of message
+>> +struct ctlv_op_ctx *ctlv_event_create(struct ctlv_device *ctlvdev, u64 op_id,
+>> +				      struct ctlv_cursor **reply, gfp_t gfp)
+>> +{
+>> +	const struct ctlv_op_entry *op;
+>> +	struct ctlv_op_ctx *ctx;
+>> +	void *out;
+>> +	u32 room;
+>> +	int ret;
 >> +
->> +    +--------------------------------------------------------------+ 0
->> +    | root: len = 120, flags = NESTED, attr_id = 0                 |
->> +    +--------------------------------------------------------------+ 16
+>> +	ctx = kzalloc_obj(*ctx, gfp);
+>> +	if (!ctx)
+>> +		return ERR_PTR(-ENOMEM);
+>> +	scoped_guard(spinlock, &ctlvdev->events_lock) {
 >
->Diagram wise, should chunks and chunk be shown nested inside root like your
->.. above is indicating?
+>Generally mixing anything cleanup.h with gotos is
+>a bad idea. Tends to get Linus saying your code needs
+>restructuring even if it isn't an actual bug.
 
-Oh sure. Missed that.
-
-
->
->> +    | chunks: len = 24 | payload: 8 bytes                          |
->> +    +--------------------------------------------------------------+ 40
->> +    | chunk: len = 80, flags = NESTED                              |
->> +    |   +--------------------------------------------------------+ | 56
->> +    |   | label: len = 19 | payload: 'a' 'b' 0 | 5 bytes padding | |
->> +    |   +--------------------------------------------------------+ | 80
->> +    |   | item: len = 40, flags = NESTED                         | |
->> +    |   |   +--------------------------------------------------+ | | 96
->> +    |   |   | value: len = 24 | payload: 8 bytes               | | |
->> +    |   |   +--------------------------------------------------+ | | 120
->> +    +--------------------------------------------------------------+
->> +
->> +``label.len`` is 19: its header and three payload bytes, not the five bytes of
->> +padding after it. ``chunk`` counts those five, its ``len`` of 80 being its
->> +header plus ``CTLV_ALIGN(19)`` plus ``CTLV_ALIGN(40)``. A walk over a nest's
->> +children advances by ``CTLV_ALIGN(child.len)``, a walk of one payload by
->> +``child.len``.
->
->...
->
->> +
->> +Request occurrence order
->> +------------------------
->> +
->> +Occurrences of one attribute ID must be contiguous within each request root or
->> +nest. ``A A B`` is valid, while ``A B A`` is not. An ignored unknown attribute
->> +is not an occurrence of any known attribute, but it ends the preceding run, so
->
->An ignored unknown attribute, whilst not understood, ends the preceding run, so ..
->
->(or something like that to avoid saying unknown is not known ;))
-
-True, this is already subject to reword anyway :)
+Okay. Will rework.
 
 
 >
->> +``A ignored-unknown A`` is also invalid. Different IDs otherwise have no
->> +required numeric or schema order.
+>> +		const struct ctlv_family *family;
 >> +
+>> +		if (!ctlvdev->events_live) {
+>> +			ret = -ENODEV;
+>> +			goto err_free_ctx;
+>> +		}
+>> +		if (WARN_ON_ONCE(ctlvdev->active_event_contexts == U32_MAX)) {
+>> +			ret = -EOVERFLOW;
+>> +			goto err_free_ctx;
+>> +		}
+>> +		/* Admission pins the op until emit or abort. */
+>> +		family = READ_ONCE(ctlvdev->family);
+>> +		if (!family) {
+>> +			ret = -ENODEV;
+>> +			goto err_free_ctx;
+>> +		}
+>> +		get_device(&ctlvdev->dev);
+>> +		ctlvdev->active_event_contexts++;
+>> +		ctx->ctlvdev = ctlvdev;
+>> +		ctx->family = family;
+>> +	}
+>> +
+>> +	op = ctlv_op_find(ctlvdev, op_id);
+>> +	if (WARN_ON_ONCE(!op) || WARN_ON_ONCE(op->schema->type != CTLV_OP_TYPE_EVENT)) {
+>> +		ret = -EINVAL;
+>> +		goto err_put_ctx;
+>> +	}
+>> +	room = ctlv_event_len(op) - sizeof(struct ctlv_event_hdr);
+>> +	out = kmalloc(room, gfp);
+>> +	if (!out) {
+>> +		ret = -ENOMEM;
+>> +		goto err_put_ctx;
+>> +	}
+>> +
+>> +	ctx->gfp = gfp;
+>> +	ctx->op = op;
+>> +	ctlv_message_output_init(&ctx->output, ctx, out, room, &op->schema->reply);
+>> +	ctlv_message_root(&ctx->output_root, &ctx->output);
+>> +	ctx->deepest = &ctx->output_root;
+>> +	*reply = &ctx->output_root;
+>> +	return ctx;
+>> +
+>> +err_put_ctx:
+>> +	ctlv_event_free(ctx);
+>> +	return ERR_PTR(ret);
+>> +err_free_ctx:
+>> +	kfree(ctx);
+>> +	return ERR_PTR(ret);
 >
->> +
->> +Executing an operation
->> +======================
->> +
->> +One ioctl executes every operation::
->> +
->> +    struct ctlv_op_exec {
->> +            __aligned_u64 op_id;
->> +            __aligned_u64 request;      /* struct ctlv_attr __user * */
->> +            __aligned_u64 reply;        /* struct ctlv_attr __user * */
->> +            __u32 request_len;
->> +            __u32 reply_len;
->> +            __aligned_u64 generation;   /* queries only */
->> +            __aligned_u64 cursor;       /* queries only */
->> +            __aligned_u64 reserved[2];  /* must be zero */
->> +    };
->> +
->> +    #define CTLV_IOC_OP_EXEC _IOWR(0xBB, 0x00, struct ctlv_op_exec)
->> +
->> +``request_len`` is how many bytes the kernel may read at ``request`` and
->> +``reply_len`` how many it may write at ``reply``. They are copy boundaries, not
->> +message lengths: a root's ``len`` may be shorter than ``request_len``, the
->> +bytes after it being ignored, and may not be longer. 
->
->I don't really mind this but why have this relaxed? Whatever sent this request
->just filled in the root len so why wouldn't it use the same value for this structure?
+>Two different error paths also tend to indicate code needs
+>a rethink and maybe splitting into a couple of functions for the
+>different stages.
 
-Yeah, I was thinking about having it relaxed or not. I did eventually go
-with "why not". Makes userspace live perhaps a *bit* more easier having
-one buffer and buffer_size for multiple op calls.
-
-
->
->
->>``reply_len`` is never
->> +overwritten; the length written is the reply root's ``len``. The pointers are
->> +fixed-width so a 32-bit and a 64-bit process pass the same structure, and in
->> +place of a size field the ioctl number encodes the size and ``reserved``, which
->> +must be zero, covers compatible growth.
->> +
->> +Every action and query carries a physical request root, including an empty
->> +request. ``request_len`` is therefore at least one attr header and at most the
->> +1 MiB transport limit.
->
->Why this particular limit?  Any thought to making that discoverable rather
->than fixed? (with a minimum to allow the operation for the length to be discovered).
-
-OPS_DUMP exposes max size per op already. This limit serves different
-purpose. It is a safeguard againt insane family yaml author. If he would
-try to fit in ridiculously long binary attr, it would provide a clue to
-use blob attr instead. I think that 1M is too big. I would perhaps go
-with 64k initially. As it is kernel internal limit, could be changed in
-any time. Makes sense?
+Okay, will do.
 
 
 >
->Maybe it is better to just have fixed size.  I wonder if ultimately we
->may end up with cases where the tlv is just passed on to firmware / device
->(because it is nice and convenient!) and having to split or marshall
->multiple messages would be a pain.
+>> +}
+>> +EXPORT_SYMBOL_NS_GPL(ctlv_event_create, "CTLV");
+>
+>
+>
+>> +
+>> +ssize_t ctlv_event_file_read(struct ctlv_file *cfile, char __user *buf, size_t len, bool blocking)
+>> +{
+>> +	struct ctlv_device *ctlvdev = cfile->ctlvdev;
+>> +	struct ctlv_event_record *rec;
+>> +	ssize_t ret;
+>> +
+>> +	/* dup() and SCM_RIGHTS share one serialized queue. */
+>> +	if (mutex_lock_interruptible(&cfile->reading))
+>> +		return -ERESTARTSYS;
+>
+>	ACQUIRE() magic should work here and let you do direct returns on error.
 
-hmm. tlvs passed to device would work, you would just have to take care
-of the blobs inside.
+Okay.
 
 
 >
->> The ``request-max-len`` reported by ``ops-dump`` is the
->> +maximum request composed from the known schema; a newer caller may exceed it
->> +with well-formed unknown attrs marked ``IGNORE_IF_UNKNOWN``, up to the
->> +transport limit.
+>> +
+>> +	while (!(rec = ctlv_event_queue_take(cfile))) {
+>> +		/* Drained, and the device is gone. */
+>> +		if (READ_ONCE(ctlvdev->dead_announced)) {
+>> +			ret = -ENODEV;
+>> +			goto out_unlock;
+>> +		}
+>> +		if (!blocking) {
+>> +			ret = -EAGAIN;
+>> +			goto out_unlock;
+>> +		}
+>> +		ret = wait_event_interruptible(cfile->readers, ctlv_event_waiting(cfile));
+>> +		if (ret) {
+>> +			ret = -ERESTARTSYS;
+>> +			goto out_unlock;
+>> +		}
+>> +	}
+>> +
+>> +	if (rec->len > len) {
+>> +		ctlv_event_queue_untake(cfile, rec);
+>> +		ret = -EMSGSIZE;
+>> +		goto out_unlock;
+>> +	}
+>> +	if (copy_to_user(buf, &rec->hdr, rec->len)) {
+>> +		ctlv_event_queue_untake(cfile, rec);
+>> +		ret = -EFAULT;
+>> +		goto out_unlock;
+>> +	}
+>> +	ret = rec->len;
+>> +	ctlv_event_queue_consumed(cfile, rec);
+>> +
+>> +out_unlock:
+>> +	mutex_unlock(&cfile->reading);
+>> +	return ret;
+>> +}
 >
+>> +static int ctlv_event_subscriptions_set(struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
+>> +					struct ctlv_input_ref ref, bool subscribe)
+>> +{
+>> +	struct ctlv_device *ctlvdev = ctx->ctlvdev;
+>> +	struct ctlv_cursor attr;
 >> +
->> +Events
->> +======
+>> +	for (ctlv_input_attr(&attr, request, ref); ctlv_attr_ok(&attr); ctlv_attr_next(&attr)) {
+>> +		u64 op_id = ctlv_attr_u64(&attr);
 >> +
->> +An event reaches a file description that asked for it, and only that one:
+>> +		if (!ctlv_event_subscription_find(ctlvdev, op_id))
+>> +			return ctlv_op_errorf(ctx, -EOPNOTSUPP,
+>> +					      "op %#llx is not an event this device emits",
+>> +					      (unsigned long long)op_id);
+>> +	}
 >> +
->> +1. subscribe with the ``subscriptions-add`` action, naming operation IDs;
->> +2. read records with ``read()``, one complete record per call;
->> +3. unsubscribe with ``subscriptions-remove``.
->> +
->> +``poll()`` reports readability when a record is queued. Each record is a
->> +header followed by exactly one root attribute::
->> +
->> +    struct ctlv_event_hdr {
->> +            __u32 length;             /* header + aligned root */
->> +            __u32 flags;              /* zero */
->> +            __aligned_u64 op_id;      /* the event op that produced it */
->> +            __aligned_u64 sequence;   /* per file description */
->> +    };
->> +
->> +One ``read()`` returns one record, the header and the aligned root::
->> +
->> +    +---------------------------------------------------------------+ 0
->> +    | length = 24 + CTLV_ALIGN(root.len)     | flags = 0            |
->> +    +---------------------------------------------------------------+ 8
->> +    | op_id: the event operation that produced this record          |
->> +    +---------------------------------------------------------------+ 16
->> +    | sequence: counted per file description                        |
->> +    +---------------------------------------------------------------+ 24
->> +    | root: len, flags = NESTED, attr_id = 0                        |
->> +    |   the event's attributes, exactly as a reply carries them      |
+>> +	guard(spinlock)
+>> +		(&ctlvdev->events_lock);
 >
->stray space.
+>That looks odd. 
+>	guard(spinlock)(&ctlvdev->events_lock);
+>is more familiar form to me anyway.
 
-Will fix.
-
-
-Thanks!
+True. Will fix.
 
 
 >
->> +    +---------------------------------------------------------------+ length
+>> +	for (ctlv_input_attr(&attr, request, ref); ctlv_attr_ok(&attr); ctlv_attr_next(&attr)) {
+>> +		u64 op_id = ctlv_attr_u64(&attr);
+>> +		const struct ctlv_op_entry *op = ctlv_event_subscription_find(ctlvdev, op_id);
+>> +
+>> +		if (subscribe)
+>> +			set_bit(op->event_index, ctx->file->subscribed);
+>> +		else
+>> +			clear_bit(op->event_index, ctx->file->subscribed);
 >
+>		assign_bit()
+>
+>> +	}
+>> +	return 0;
+>> +}
 >
