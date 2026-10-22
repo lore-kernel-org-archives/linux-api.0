@@ -1,59 +1,65 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792661283;
-	b=drmhf+myopomNJY7qi8pIw23WJXsGTgURss+E6/uygf8Cy+HUCV3HfIw2ubwZmZelNPG
-	 yVaQORj9TEGTIbgmQh2ZgkxEiRCKoet4m4SrbimM7Hwq3vrCp8Ja+/t7sNwhK5+fn0h7g
-	 MdM8nQMwT03X1VkPhk2tOjePrQPXZ5USLNEFG2qAlopwv8wZdcb3hKVR2vfuB74UH2h0l
-	 aBvhl9rGbYGmI34pb1E944D8Su+UnQIwktXrwsfdOZiR0GlNuJKsUuLVnUvt+L+2oopze
-	 f/tLcV2cIgm7+u+mup4SxIpplM/Xo/DWMyaRMZ7HTUh/575faN8cgs8RY1+lU1sbrmw==
+	t=1792665058;
+	b=AM/WaYnQQIo/cGJUnEK2D7n/FB885lzckMb+gqllqamkf/uGfsN2pGB0do6kLgnbGW3+
+	 A5uWBb39rwekyGnTuxkmxqVjQZ0yjrRzOiGsEgHp3ZKSPB3tIwL5crR8QQ1kVp2oElJk9
+	 gDu2oaeTjkLk0Zx49fIyq1/8Qv2kfjFgZc+9FFNj/cwGp0f6C32Uw/obTQK4zrTL4qqNT
+	 UkTvT56Dt4wD1Y/vRII+Ouscflb9KkFQ6W7BxOl+c0qmHMoHa1IzO6PskwdbWqQIqZAp6
+	 oREgnpC08G7npW1lt0I222s5K+FrZbgh5qaRHcyPzYmEsCWusoVLKJSnMIoCmtEqiQQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792661283;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=FN3sRWyIdvl/+txcRkdmNsRbF+3/wV+Y8oZpnnSep1g=;
-	b=tlJ7clgp/A8iC3SMglFEwCocWBQVUZt/y7FTYTgKqD6LaDVzIDh3TTaWpLqlC4T4ARch
-	 TUkbvIfFwMnuTY5QQLLIWffJSCHDE2tqkibPMd8e7o5BpYnBR0/4Jh7NhM6ZKZD7lI4wG
-	 tD9okAmmN66bY2UiljQyUZSE3OXPYAqAyMJnNXG00VFvzKduoFdEO3lnlVN35ypQMMqg3
-	 ObcrSkwHY8/g5ZjSrbjuIM9jtHpnzF1hLXzqampW4IXoIlx+qS7jq2OR/L7OknJESLyqZ
-	 tAfsG4HL7UuJuvAOJU1BZTDOHp/Qts+P9bAIrf+LJjeYzdvxKxP78rQdIy/k2TwzFTQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792665058;
+	h=Received:DKIM-Signature:X-Mailer:From:To:Cc:Subject:In-Reply-To:
+	 References:Date:Message-ID:MIME-Version:Content-Type;
+	bh=cAdUEYTyoJImjLe4kG0fs9d/mimG75V4j7IdQG63j78=;
+	b=xHXN06dzvrardeULtr40DacLDVaEiBfjSyHqqi+k6LRwBc9cWIloqahmsJy4nAeYpxbF
+	 /Pg/Tki5CSVqukSp2sptUlQUt5EwnvUbYXYlwmbI/okDBVqeTaHGI6X1peCN8hCUTrZHx
+	 CJon6WzZwDrEBz+mN2PTEE15W87jMxQUuvvKMJKG065CbtvWsDQ/4cioZPmwb0k5ysZ5+
+	 ZLhjUxAbExQQUbrfmmSCMIG7pUi3pckEAtTmLCRFHmzWGB/BhiFKvPgu/Kf6tAXk/q01u
+	 I5QFCL1VbnUjvxp4SGQY9/NDJU5XZ1OCbiF+y3671NRstS3B9VdURc0bfTEoJRHUaZg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="P/PWFc/Y";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AugG4S2f;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 53AC7606A32C;
-	Thu, 22 Oct 2026 09:28:03 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 299EB606A319;
+	Thu, 22 Oct 2026 10:30:57 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=P/PWFc/Y
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id AA7731F000C1;
-	Thu, 22 Oct 2026 09:27:59 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AugG4S2f
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 620D41F000C1;
+	Thu, 22 Oct 2026 10:30:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792661283;
-	bh=FN3sRWyIdvl/+txcRkdmNsRbF+3/wV+Y8oZpnnSep1g=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=P/PWFc/YqvNU9ei16AIqKNdonKgOZYumNRDLlo+P2fkaRl2z2u1m+0KDcIGi5BPwN
-	 n+KN0LI5kzdGg/2zjH8zUpGhcBd99yne/RpX9Fw5JfYfWsTBI/+VwgYU/2IgzHdS+L
-	 0/IN0LpNt33sgel/q7GwhD+80qsQOX7gFCgNGbCc1s/YB25kpGdbBh6J4bVS1oBBpJ
-	 hEpEZn+SDUo2zBMlSwBnCTHluBxGzR724CnM+jqHLlSTN+7ZG5zGEskcyQJ4e0C6Tg
-	 fguVbNU8PNdqBXgpnHdwGpkWUCwJvovFAuf5IQPo7d9JVqQiePxRhbQhO0pxe/NP9g
-	 L4GIXe/B1pRdA==
-Date: Thu, 22 Oct 2026 11:27:55 +0200
-From: Alejandro Colomar <alx@kernel.org>
-To: Andrey Albershteyn <aalbersh@kernel.org>
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
-	djwong@kernel.org
-Subject: Re: [PATCH v5 2/3] man/man2: introduce man page for file_getattr(2)
- syscall
-Message-ID: <atnVqseSsHGMkzpH@debian>
-References: <20260916115141.3500780-1-aalbersh@kernel.org>
- <20260929130234.3547891-3-aalbersh@kernel.org>
- <asvBPbDfCIVm71jg@debian>
- <as9EIPE2lLJs9ram@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
- <atj5s3WAmsjv9aq9@debian>
- <atnFn3-KSPD3qmJU@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
+	s=k20260515; t=1792665057;
+	bh=cAdUEYTyoJImjLe4kG0fs9d/mimG75V4j7IdQG63j78=;
+	h=From:To:Cc:Subject:In-Reply-To:References:Date;
+	b=AugG4S2fl9ZI1ikXQgoMQEAel//Gz6cQMDUvE51bYXTbvidiwPlSQBCxdxm+Kq9RM
+	 dq8oFYELOKPEWxsU+r0ve6TVIc0cm8l0m1+5Tcy3/sm/kS1wGtA+jiXPVus8iIF7gc
+	 0zoILL/U70KVeOQNzp3sq5N35I9xLgAExuAKj7PbwKUedAaByW3xIo0qWopytpmZO0
+	 zehL9I+iov8lCqw6RdYBcN/pchtgTVbYALHB2VQVtk9H0ryPEdr6Vi01DE9CCCl5Qz
+	 pGwCxgn1YU2YsuLUMZLGI3uvHnwurh4DWh8lB4lBGWFiGQqIc94kZy/ceLfldGhP3U
+	 +DvCq1We37oew==
+X-Mailer: emacs 31.1 (via feedmail 11-beta-1 I)
+From: Aneesh Kumar K.V <aneesh.kumar@kernel.org>
+To: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de,
+	ksinyuk@kernel.org, rodrigo.vivi@intel.com,
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@HansenPartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org,
+	rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
+	dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
+ support
+In-Reply-To: <20261015145053.3664509-1-jiri@resnulli.us>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+Date: Thu, 22 Oct 2026 16:00:47 +0530
+Message-ID: <yq5a7bjajaco.fsf@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -63,125 +69,138 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="pjwzvbitjiassypm"
-Content-Disposition: inline
-In-Reply-To: <atnFn3-KSPD3qmJU@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
+Content-Type: text/plain
 
+Jiri Pirko <jiri@resnulli.us> writes:
 
---pjwzvbitjiassypm
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-From: Alejandro Colomar <alx@kernel.org>
-To: Andrey Albershteyn <aalbersh@kernel.org>
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>, 
-	djwong@kernel.org
-Subject: Re: [PATCH v5 2/3] man/man2: introduce man page for file_getattr(2)
- syscall
-Message-ID: <atnVqseSsHGMkzpH@debian>
-References: <20260916115141.3500780-1-aalbersh@kernel.org>
- <20260929130234.3547891-3-aalbersh@kernel.org>
- <asvBPbDfCIVm71jg@debian>
- <as9EIPE2lLJs9ram@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
- <atj5s3WAmsjv9aq9@debian>
- <atnFn3-KSPD3qmJU@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
-MIME-Version: 1.0
-In-Reply-To: <atnFn3-KSPD3qmJU@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
-
-Hi Andrey,
-
-> Date: 2026-10-22 10:43:08+0200
-> From: Andrey Albershteyn <aalbersh@kernel.org>
+> From: Jiri Pirko <jiri@nvidia.com>
 >
-[...]
-> > Sorry that I missed this email.  I had an attack from a nation-state,
-> > and had to be very careful with my hardware and communications.  I will
-> > probably say something more detailed on the mailing list, but I'll only
-> > share some details encrypted with very few people to not give too much
-> > information that might help them.  Anyway, when I got back to normal, I
-> > missed this and some other emails.
->=20
-> oh, sorry to here that, hope you're safe now
+> Linux has several attestation interfaces tied to individual technologies.
+> That makes evidence retrieval, measurement registers, device state and
+> kernel consumers provider-specific.
+>
+> This series introduces a common attestation subsystem. Its goal is to
+> support platform, TEE and device providers through one model, including
+> TPM2, TDX, SEV-SNP, Arm CCA, FIRME, Caliptra and PCI/TSM-backed devices.
+> This first series implements the common subsystem and a TDX provider.
+> Existing native TDX tsm_mr and tsm_report interfaces remain independent.
+>
+> Attestation devices use CTLV, a schema-driven character-device TLV UAPI.
+> Compared with sysfs or configfs, CTLV executes one validated request
+> atomically instead of assembling a transaction through several files.
+> Compared with netlink, an opened device fd directly identifies authority
+> and lifetime, can be delegated normally, and owns its event queue. CTLV
+> also provides:
+>
+>   - generated kernel metadata, UAPI constants and documentation;
+>   - strict type, bounds, nesting and required-field validation;
+>   - runtime operation and schema introspection;
+>   - family inheritance and extension points;
+>   - fragmented queries with generation checks;
+>   - per-fd event subscription, overflow reporting and removal notification;
+>   - large input and output blobs.
+>
+> The attestation family exposes capabilities, evidence, measurement-register
+> topology and operations, an append-only MR journal and journal
+> notifications. This first ABI contains the paths exercised by TDX. Extended
+> evidence classes, dynamic registers, record payloads, verdict recording and
+> device-security transitions follow with providers that need them and are out
+> of scope of this initial patchset. The broader direction is illustrated here:
+>
+> https://github.com/jpirko/linux_mlxsw/commits/wip_attestation_all_1
+>
+> That branch also contains additional providers (test and sim),
+> attestation core extensions, libctlv and ctlvctl. With the tools
+> and kernel specifications, an attestation device can be used as follows:
+>
+>   # Discover CTLV devices and their family chains.
+>   ctlvctl --spec-dir Documentation/ctlv/specs list
+>
+>   # Inspect the root-family lineage and attestation capabilities.
+>   ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 families-dump
+>   ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 device-get
+>
+>   # List the measurement registers of the attestation device.
+>   ctlvctl --spec-dir Documentation/ctlv/specs query ctlv0 mr-dump
+>
+>   # Read RTMR0 (MR 1).
+>   ctlvctl --spec-dir Documentation/ctlv/specs \
+>           query ctlv0 mr-read mr.id=1
+>
+>   # Extend RTMR0 with 48 zero bytes (SHA-384).
+>   digest=$(printf '%096d' 0)
+>   ctlvctl --spec-dir Documentation/ctlv/specs \
+>           exec ctlv0 mr-extend --json \
+>           '{"id":1,"value":[{"hash-algo":5,"data":"hex:'"$digest"'"}]}'
+>
+>   # Retrieve the RTMR0 journal.
+>   ctlvctl --spec-dir Documentation/ctlv/specs \
+>           query ctlv0 mr-log-get --json '{"selection":[{"id":1}]}'
+>
+> The 20 patches are organized as follows:
+>
+>   1-13    add CTLV, its generator and documentation
+>   14-17   add the base attestation family and implementation
+>   18-20   expose the native TDX service and add the TDX family
+>
 
-Yes, I am.  They infected my phone, but let me free after several hours,
-and they couldn't infect my laptop as far as I could detect.  I got a
-new phone, but luckily I didn't have to buy a new laptop.
+I am using this to understand what the IDE setup flow would look like,
+but it is unclear whether the connect flow belongs in an attestation
+framework. I understand the desire to pass the certificate slot number
+as part of connect, and sysfs is probably not a suitable interface for
+that. However, is CTLV the interface we want to use for connect?
 
-> > And yes, this text seems good to me.  I see your new revision, so I'll
-> > review that.  BTW, I wonder why there's this difference between
-> > openat(2); was it on purpose? =20
->=20
-> Not on purpose, but because file_getattr() uses newer
-> filename_maybe_null() interface which works with a NULL.
+My patches end up doing the following. I am also unsure whether this is
+the intended workflow for the attestation framework.
 
-Hmmmm.
+# ./ctlvctl/ctlvctl --spec-dir=./specs/ ops ctlv0
+# ctlv/ctlv-attestation/ctlv-attestation-pci, generation 1
+families-dump           query   read    fixed   request 16      reply 112..65536
+ops-dump                query   read    fixed   request 16      reply 56..65536
+op-schema-get           query   read    fixed   request 40      reply 552..65536
+subscriptions-add       action  read    fixed   request 6160
+subscriptions-remove    action  read    fixed   request 6160
+event-queue-get         query   read    fixed   request 16      reply 40..65536
+event-queue-set         action  read    fixed   request 40
+op-changed              event   record 112
+event-overflow          event   record 112
+device-removed          event   record 40
+device-get              action  read    fixed   request 16      reply 12984
+evidence-get            action  read-write      dynamic disabled        request 26800   reply 472
+device-state-changed    event   record 64
+mr-log-entry-appended   event   record 73416
+evidence-accept         action  read-write      dynamic disabled        request 64
+evidence-accept-clear   action  read-write      dynamic disabled        request 16
+devsec-state-get        query   read    dynamic disabled        request 16      reply 40..1024
+devsec-run              action  read-write      dynamic disabled        request 64      reply 40
+evidence-state-changed  event   record 112
+state-get               action  read    fixed   request 16      reply 184
+connect                 action  read-write      dynamic enabled request 88      reply 40
+disconnect              action  read-write      dynamic disabled        request 40      reply 40
+lock                    action  read-write      dynamic disabled        request 64      reply 40
+unlock                  action  read-write      dynamic disabled        request 40      reply 40
+evidence-refresh        action  read-write      dynamic disabled        request 88      reply 40
 
->=20
-> > Should we maybe require that callers use
-> > an empty string with file_getattr(2) too?
->=20
-> I don't have opinion on that, this could be done by dropping the
->=20
-> > > 	with the divergence that
-> > > 	.I path
-> > > 	can be NULL meaning an empty string.
->=20
-> then.
+# ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 state-get
+# state-get, 1 fragment, generation 0
+  pci.generation 0
+  pci.connected 0
+  pci.locked 0
+  pci.accepted 0
+# 
 
-I'm worried about this, because people might experimentally realize
-about the fact that NULL is accepted, and by saying that it behaves
-exactly like openat(2), we might confuse them to think that openat(2)
-also accepts it, so I think it's better to tell the truth.
+# ./ctlvctl/ctlvctl --spec-dir=./specs/ schema ctlv0 connect                
+connect (action)
+request:
+  root nest
+    pci.generation required uint [0, 4294967295]
+    pci.tsm-id required uint [0, 2147483647]
+    pci.cert-slot optional uint [0, 7]
+reply:
+  root nest
+    pci.generation required uint [0, 4294967295]
+# 
 
->=20
-> > Or perhaps allow NULL in
-> > openat(2)?  (I prefer the former.)
->=20
-> This, probably, would be not easy to change without any particular
-> reason
+# ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 connect pci.generation=0 pci.tsm-id=0
 
-I've been lately thinking that we should have an at(2) manual page that
-describes the common features of all *at(2) syscalls.
-
-I'll CC you and linux-api@ to discuss details about it, and know which
-syscalls behave differently, because we should probably provide a
-unified UX, and only deviate when there's a good reason.  Once such a
-page exists, we could just refer to it in all *at(2) manual pages,
-instead of repeating all the details every time.
-
-But for this page, I'll take the text as is, I think.
-
-
-Have a lovely day!
-Alex
-
->=20
-> --=20
-> - Andrey
-
---=20
-<https://www.alejandro-colomar.es>
-
---pjwzvbitjiassypm
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmrZ1xoACgkQ64mZXMKQ
-wqmq0g//Vg5DDmOZ+ATIOwjWNR82KPU1ARvKusGnqD0UZqqFLdtAqBNaRSfIdQzg
-/J9NNbPzeQrL2dKUGnzHojVuMrvUNnNViDPsdB+GtA/3MXD8n46p0SLPGS4yvtUw
-n4IwvbhW5tmxhxta1kjGFowS4blAAlbnCErmI/35zsouUqrMIghYnNK34FGromjU
-t6YiFGQs+06uKCExMFlnUmQM8iOTdxCl2WNNCtQVIIHt5RBFQ+p/+zCj2/xH1izo
-kPfjdl6cem80TjGwGHdUmKLNO0dNYqvc+9Ezr9PDN2uR72TwsnuEAq0t7onilt16
-51507ZA9STXYnzCx1JOTpf1JGXHSVCT2Z/nYXYrYvedHQZi7TbdX9vtDiq1R8ZHp
-NpiUTII20jfRa9akuaSSodKmKKd1hSylKYcqrMR+eznxOwAc8sK8t+8leD0ys5QM
-ss9kQRPcIaJNsuIwrG4rl1N1hiLrKO0y299r/g94N+ew1zDBA9hEIvy4tTUjCPvT
-OtzPEopaC/axNIND9K1Bnqu9xD87ep7N+3dEsrEHps2t6CMjLriUTzeVwgUvltC/
-gLIPvLC7nMcl7vg8uViGF9dQoF4p09P7wIzEOrtI0WEaL9ywnxYMu9dvucUNfkg0
-N8KMdkauJ0y2zMW/AjREBBLv5tI3U4p2m2GQovKRbl5W7wk0Cn8=
-=wHGo
------END PGP SIGNATURE-----
-
---pjwzvbitjiassypm--
+-aneesh
