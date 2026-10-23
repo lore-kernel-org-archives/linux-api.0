@@ -1,54 +1,124 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.175
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792763795;
-	b=ll9pUf3eS4NUpK00XiJg89CuA3lZmoeY0U29OG6dsMi+sV/gACAfNtSkLAeJRaQ2KG/O
-	 uv2EDXSv+FthY0iv0X79pmCv7EoM082xstkLpMwH+txAKf15qQzKozK9Rf5dhFU5wTPl0
-	 yQXR6dlD9Audwwm7BErjpion+XuLzY9zDWL7rRtLdIxCulvbGkFbDTSuQm2JrKNTXvhYb
-	 efHprDJtQnUbQu2POsboptUZwX55+ac15dlX9us6Ea6CadS9Ld1nHQ+HpQOUp6QN76PbB
-	 xA1UbqN1N4KmkoVTdauy3vc0lyngbmllLgnneExuBEvAVjwhB6lhVQjrZXysF//Wu0g==
+	t=1792764742;
+	b=1+twvgjZHN82xtvGo8W3T+/pwK8yCm5YLUzwypO6wBRLekcd5Xh5SHBy/Oxmd4Dz7HHO
+	 g+7MGVcG3D3GLNgUhiTcv5lek6p2AHajD/kxSxALan4xHybt2XGD+zm7Fd12Ity8GFHZt
+	 7FKzExuEsue9tBOBSLUMt2GxyMniGocS74eYtbf/gTffQYCliHuAvKbQU0nwcBVQtGjoi
+	 sLGv+nExprXDU0OkfAB93BH5Dzrj8PMx9d4+yfXBXmP6lHpgU7zHr/VR2EH+FVfRfwvba
+	 YHNBrjFXmGGgFEDoydXvmqXf7yMPnHuu0iVRcAipxsaSksO7YU3WzOuKtTL8k8vSHSw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792763795;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=lIJyEq8ZKuIwJ9GhjyFiU/zdqQFZt2seSEYMO8dYYws=;
-	b=rqDwYH1wanwLsrhCIVdqWuNpNkj4kgkgTySNuAI+CWHPp1Eh4B+jRKgxVdEWuDM2p++u
-	 xLkeeCnzGfupxMCwzdFursQ8a3VuBmKahS2CUxFLjMoZL1nlnkE3mOzpeXjkFinocFzAh
-	 nPhSwQwE4JTorsSG4hCVJagRU6lj/O4tZFBpwnYWme3w4pMT4CvvF/70gjr0WpPK03lOg
-	 JA9qKQrFOmDRNSX7U47dzZFplDrtae55YBHXHQMecGUHbvWJeJ1s2ixN7FiuoVn+o3nba
-	 DEYFRXLUWmaAU6puoU3C9FixeUq2jVWrJs9RcA/C4QHtP4672iQFuQGDNmEI2zgqqNA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792764742;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
+	b=4x4bCBWzFj8PA/Mhb2zV2i9v+8g1H3/8OtjHimL5HA5CawbvwpvXitiaOOv5N+tCh9yX
+	 2/CY3nN0zIRowSZRfoFSDz2doqhK2K+0hX5WLeubOAYOt2YNCquI7uY6fH1Tz2NOgH/f6
+	 atmi8NgqcwDfU3iDHwz8LWgBjpdt57YqZZnS73C2Cs/nzO0RMPLB7MWztmRpzmgJUQlrM
+	 iW/04YtGadwssoRy3Yxl9d12X6j8Xj+yn+xd5Tkeppc64IpsqAz86W0zlQ+wSyQiFUUa/
+	 KZ0nCiIm6FQb8HJZEHSbatWRVylAJaQxBULit5IQjPhO38TB4U7YUMeXSSokehPMn8g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MPB1CMTS;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XJJ6FvlZ;
+	arc=none smtp.remote-ip=209.85.222.175
+Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com [209.85.222.175])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7FC35606A31B;
-	Fri, 23 Oct 2026 13:56:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14D34606A31E
+	for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 14:12:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 14D34606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MPB1CMTS
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5E3EA1F01825;
-	Fri, 23 Oct 2026 13:56:33 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792763795;
-	bh=lIJyEq8ZKuIwJ9GhjyFiU/zdqQFZt2seSEYMO8dYYws=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MPB1CMTSu4zCHKYvwWZBFqExMatWRRpkb16SY8XSpHTd3Ozd1PdRtZPLUfXdjguYi
-	 dvdNW2dCmykiljYG8gKy6ZIEcO5ONl2y1u0TL7RkRTCKQllycezL9oSzkgFqGEDJ2s
-	 boSp8scc5dsiM0JHucAq2B8OBsV+m9NxCXx8bZ/DE12IerpVVbN+ZsVxkrocETfiG9
-	 XqgvX72CLJ35n/Qus5aFYwq5no5/tL+7tXsPlLzygY+E952GLJlAkrww69YYEEWrUl
-	 9a3GZeuNO/BWOY0hpy1asVsGRez/xgL80nLRD6QdvU2RynOVIWXgoH07/qQqOPnqOJ
-	 pF7PRQ64Ywtpw==
-Date: Fri, 23 Oct 2026 15:56:30 +0200
-From: Alejandro Colomar <alx@kernel.org>
-To: Andrey Albershteyn <aalbersh@kernel.org>
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v6 2/2] man/man2: introduce man page for file_setattr(2)
- syscall
-Message-ID: <attnd98FtIIuGYA-@debian>
-References: <20261021141010.314835-1-aalbersh@kernel.org>
- <20261021141010.314835-3-aalbersh@kernel.org>
+	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XJJ6FvlZ
+Received: by mail-qk1-f175.google.com with SMTP id af79cd13be357-93e4c00d71aso84862985a.3
+        for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 07:12:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1792764741; x=1793369541; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
+        b=XJJ6FvlZqxo85XzvMv3kvaZAtfiHwhOx8sBMHh97IiPVXdiYFm54L4CeUcxoOzzNvt
+         gW+kVZ5P6SiTD6i3qbbWqaK7N3DN+3iChx5c+N5ynHcYMSMfW3HvhvT9ZIl7yY4FD0Ix
+         OcxHouZP40lKVsKApA5S3figCXfZVQ5fGlQRJfyQnR1vO9veiYbbk+xedFHTt6HtsYeG
+         7tA0YHNoXFR4ZshrmdNr6q3G2SLk9NVJZ09vuF5/ocFe5M8xR/jCGR3A7lq5V/cGI/X3
+         1M54/n3yKnC/wLHUP/du9/EMWrxSUFPTjcDMvQYzNxQaB0/Cg4NMgodVwBAx3xXhzQjm
+         XA6Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1792764741; x=1793369541;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
+        b=ccHOnBF0nVfFaNKhK13Wxf8ZXRPG3IpPZfPUXNiF5Wlt3eiX+oKhrKtwgP6qNEED+P
+         t5N6tnAFP8eaRIHOSFOX/yQSA5MlUP77LbzeAErqAohZs2BY4a/xlGmwOBVcDYO+TpCH
+         g0IpGY4VANz5zjM2iQZGHfK10krJRkERQz4eJhqi/fMmQjj8lne8brZMKAJ5N3GBe6u1
+         V+YOsEddmEmZhu8oeCsFeDKSJ2zlPwtgrqkJHLxZfwiCiEbSman/g2YCzYScNtLk3p93
+         eYYfNI7Ti1fgM9+D/ddA3BIqeoJdg0ig7DR7/jNxGHJINAbW53fa4Eap5FjuFNOlvug+
+         P3wg==
+X-Forwarded-Encrypted: i=1; AKwUvByUz1gh9sTbnkO50dWCDPU5/b+w84eHJPUk7rpaC4jyczhset/GAtqbtAozl5NGECmsCecfk/TFNRs=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKHpGLZeaXl5r32XEtW/mvPF1ZIMwSF/Mk6YoGdWmrP+sjoq+r/
+	fp2goJr7V5bCfbaNiQZ22y8YLipKt0xvoxhKWqx2s786mDioLMLOSlK25qP+a1zbRFU=
+X-Gm-Gg: AYBFou39+lsvnvpZlLRknylXDDVwYp3Niu8cth2JJdtFuYou6njReJWynDAHvxbaNVr
+	fxBx2eGGrjLf4HkhKLn2lsLIboay/Kgq8+foMVg+6Y8kwJ7yLxyIU2VcN8SArTvSq5J2uYaWILB
+	PrQTi7wPwE4sZITbtlhyvlRJt8TeTLAWJpP1uSi4gWLjpLOTQdcAJ2vvXaPb9V38vBlrf7/7YYY
+	s9nkMCGtyqo+WcePJFzb3MfeYTvbzahiivCXWLPrdTtKDvcpQ1wr1v9zKuzUyD3uPQmdj3wvLpq
+	0C8PS+jE4LZvDeqGF4vV/J5w378cXexib1ieHRi+wUNq31M8EjitaQsvrXyUPhSoLQTaws6aZgO
+	53jqHB74rAQP591IfOoobuGQddgpq3TZ/EZwMCM16H4WO64V1f3bYuz/8a8Ut7+uxVnulfK+9gX
+	oc6Na24BjlyvWHrFjIbWkVZZmkLkGqN8+D5ZcCccGR6x1wXU+c0rdKIROiiNkmPL0TWf9DdwvDw
+	dzz+8DG/TrPNT8QOUs++87Q/gZ2xUY2esgh0dl+PWXQAa6rpX8jsBQ7dnX37Zqb6YDu1pGMMEoM
+	cOMljcxetfW1Jx9CcC25o5ifD/V8pjSse11ksw==
+X-Received: by 2002:a05:620a:280d:b0:93f:53d1:54c7 with SMTP id af79cd13be357-93f6f8249ddmr448815485a.70.1792764740975;
+        Fri, 23 Oct 2026 07:12:20 -0700 (PDT)
+Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-94047b32ed6sm25764985a.34.2026.10.23.07.12.19
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 23 Oct 2026 07:12:19 -0700 (PDT)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xKG0I-0000000Gigv-2y8C;
+	Fri, 23 Oct 2026 11:12:18 -0300
+Date: Fri, 23 Oct 2026 11:12:18 -0300
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
+Cc: "Jiang, Dave" <dave.jiang@intel.com>,
+	"linux-coco@lists.linux.dev" <linux-coco@lists.linux.dev>,
+	"jiri@resnulli.us" <jiri@resnulli.us>,
+	"kvm@vger.kernel.org" <kvm@vger.kernel.org>,
+	"pgonda@google.com" <pgonda@google.com>,
+	"jic23@kernel.org" <jic23@kernel.org>,
+	"drdeeglaze@gmail.com" <drdeeglaze@gmail.com>,
+	"James.Bottomley@HansenPartnership.com" <James.Bottomley@hansenpartnership.com>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	"Xing, Cedric" <cedric.xing@intel.com>,
+	"alistair.francis@wdc.com" <alistair.francis@wdc.com>,
+	"dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
+	"Reshetova, Elena" <elena.reshetova@intel.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"ankita@nvidia.com" <ankita@nvidia.com>,
+	"jpiotrowski@nvidia.com" <jpiotrowski@nvidia.com>,
+	"kas@kernel.org" <kas@kernel.org>,
+	"Quigley, David" <david.quigley@intel.com>,
+	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+	"sathyanarayanan.kuppuswamy@linux.intel.com" <sathyanarayanan.kuppuswamy@linux.intel.com>,
+	"Vivi, Rodrigo" <rodrigo.vivi@intel.com>,
+	"lukas@wunner.de" <lukas@wunner.de>,
+	"suzuki.poulose@arm.com" <suzuki.poulose@arm.com>,
+	"ksinyuk@kernel.org" <ksinyuk@kernel.org>,
+	"Fang, Peter" <peter.fang@intel.com>,
+	"sameo@meta.com" <sameo@meta.com>, "aik@amd.com" <aik@amd.com>,
+	"x86@kernel.org" <x86@kernel.org>,
+	"qinkun@google.com" <qinkun@google.com>
+Subject: Re: [PATCH RFC 20/20] attestation: Add the TDX family implementation
+Message-ID: <20261023141218.GD3977851@ziepe.ca>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-21-jiri@resnulli.us>
+ <ed52bb6d48c87ab8023bf2165cadffa259e21725.camel@intel.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -58,268 +128,69 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
-	protocol="application/pgp-signature"; boundary="6lplldpsfphxly7c"
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261021141010.314835-3-aalbersh@kernel.org>
+In-Reply-To: <ed52bb6d48c87ab8023bf2165cadffa259e21725.camel@intel.com>
 
+On Thu, Oct 22, 2026 at 10:07:28PM +0000, Edgecombe, Rick P wrote:
+> On Thu, 2026-10-15 at 16:50 +0200, Jiri Pirko wrote:
+> > Connect the attestation family to the native TDX service. Expose
+> > TDREPORT, Quote, MRTD and RTMR operations while preserving the existing
+> > native interfaces.
+> 
+> Along the lines of some of the other commenters I'm not clear on the benefits of
+> the unified TD/VM attestation part of this.
+> 
+> Especially when you talk about a TD report, it is pretty specific to TDX. So
+> calling user code is going to need to know about TDX anyway. In fact the report
+> won't have all the details of the TD either. Going forward it's main function is
+> to serve as a nonce transport blob and it only has TD details because of legacy
+> constraints about SGX based attestation. So just a quirky TDX specific part of
+> the flow on the way to get a quote.
 
---6lplldpsfphxly7c
-Content-Type: text/plain; protected-headers=v1; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-From: Alejandro Colomar <alx@kernel.org>
-To: Andrey Albershteyn <aalbersh@kernel.org>
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH v6 2/2] man/man2: introduce man page for file_setattr(2)
- syscall
-Message-ID: <attnd98FtIIuGYA-@debian>
-References: <20261021141010.314835-1-aalbersh@kernel.org>
- <20261021141010.314835-3-aalbersh@kernel.org>
-MIME-Version: 1.0
-In-Reply-To: <20261021141010.314835-3-aalbersh@kernel.org>
+I think in the way this stuff ended up being used the userspace isn't
+actually aware. It just wants the VM's ROT to sign a challenge and
+forward the resulting blobs to a remote verifier. The verifier needs
+to be aware of the format, but the collection agent should not need
+special knowledge.
 
-> Date: 2026-10-21 16:10:05+0200
-> From: Andrey Albershteyn <aalbersh@kernel.org>
->
-> Add manual pages for file_setattr() syscall.
->=20
-> Link: https://lore.kernel.org/all/20250630-xattrat-syscall-v6-0-c4e3bc352=
-27b@kernel.org/
-> Signed-off-by: Andrey Albershteyn <aalbersh@kernel.org>
+ie from the perspective of systemd-report it doesn't make alot of
+sense to have it know every single special configfs path and protocol
+for each CC vendor just to get a 'sign my challenge' operation.
 
-Hi Andrey,
+That's the general north star here. We'd like all the vendors to be
+able to do collection without having to change systemd for every new
+innovation. Again I'm looking at 5-10 ROTs in our platforms, it is not
+desirable to go and teach systemd about each of them.
 
-I've applied this patch with some tweaks.  Thanks!
+So broadly, this requires a challenge to go in, a signed blob to come
+out, possibly some suppelmentary blob[s] (like certificates), and then
+labels for what is inside each.
 
+Userspace would collect all the blobs and the labels then ship them to
+the verifier which has to understand how the data described by the
+label is organized.
 
-Cheers,
-Alex
+I don't know what "nonce transport blob" means in the future, nonce
+without signature sounds like a strange thing.
 
-> ---
->  man/man2/file_setattr.2 | 183 ++++++++++++++++++++++++++++++++++++++++
->  1 file changed, 183 insertions(+)
->  create mode 100644 man/man2/file_setattr.2
->=20
-> diff --git a/man/man2/file_setattr.2 b/man/man2/file_setattr.2
-> new file mode 100644
-> index 000000000000..b11c9ff9277f
-> --- /dev/null
-> +++ b/man/man2/file_setattr.2
-> @@ -0,0 +1,183 @@
-> +.\" Copyright, the authors of the Linux man-pages project
-> +.\"
-> +.\" SPDX-License-Identifier: Linux-man-pages-copyleft
-> +.\"
-> +.TH file_setattr 2 (date) "Linux man-pages (unreleased)"
-> +.SH NAME
-> +file_setattr \- set filesystem file attributes
-> +.SH SYNOPSIS
-> +.nf
-> +.BR "#include <linux/fcntl.h>" "      /* Definition of " AT_* " constant=
-s */"
-> +.BR "#include <linux/fs.h>" "         /* Definition of " FS_XFLAG_* " co=
-nstants */"
-> +.BR "#include <sys/syscall.h>" "      /* Definition of " SYS_* " constan=
-ts */"
-> +.B #include <unistd.h>
-> +.P
-> +.B long syscall(SYS_file_setattr,
-> +.BI "               int " dirfd ", const char *" path ,
-> +.BI "               const struct file_attr *" fattr ", size_t " size ,
-> +.BI "               unsigned int " flags );
-> +.fi
-> +.SH DESCRIPTION
-> +The
-> +.BR file_setattr ()
-> +system call sets filesystem file attributes
-> +on the file specified by path.
-> +.P
-> +The
-> +.IR dirfd ,
-> +.IR path ,
-> +.IR size ,
-> +and
-> +.I flags
-> +arguments behave in the same way as in
-> +.BR file_getattr (2).
-> +The
-> +.IR fattr ,
-> +is read-only argument with
-> +file attributes to set.
-> +User-space applications should use
-> +.BR file_getattr (2)
-> +to initialize
-> +.I fattr
-> +argument beforehand.
-> +.SH RETURN VALUE
-> +On success,
-> +zero is returned.
-> +On error,
-> +\-1 is returned,
-> +and
-> +.I errno
-> +is set to indicate the error.
-> +.SH ERRORS
-> +The errors are the same as returned by
-> +.BR file_getattr (2)
-> +with the addition of following ones:
-> +.TP
-> +.B E2BIG
-> +.I size
-> +indicates a version which the kernel doesn't support
-> +(the size is larger than the kernel expects)
-> +and new fields are non-zero.
-> +.TP
-> +.B EINVAL
-> +Invalid combination of parameters provided in
-> +.I fattr
-> +for this type of file or filesystem.
-> +.TP
-> +.B EPERM
-> +The caller does not have the necessary permissions
-> +to change the file attributes.
-> +.TP
-> +.B EROFS
-> +The file is on a read-only filesystem.
-> +.SH HISTORY
-> +Linux 6.17
-> +.SH NOTES
-> +This system call is designed to be extensible.
-> +The
-> +.I size
-> +argument allows user-space applications to indicate
-> +which version of the
-> +.I file_attr
-> +structure they are using,
-> +enabling the kernel to support both old and new versions
-> +of the structure simultaneously.
-> +.P
-> +If
-> +.I size
-> +is smaller than the structure size the kernel expects,
-> +the kernel treats the missing fields as having zero values
-> +(which is a no-op).
-> +If
-> +.I size
-> +is larger than expected,
-> +the kernel checks that all unknown (to the kernel) fields are zero;
-> +if not,
-> +the call fails with
-> +.BR E2BIG .
-> +.SH EXAMPLES
-> +The program below demonstrates the use of
-> +.BR file_setattr ()
-> +to set the
-> +.B FS_XFLAG_NODUMP
-> +flag on a file.
-> +.P
-> +.in +4n
-> +.\" SRC BEGIN (file_setattr.c)
-> +.EX
-> +#define _GNU_SOURCE
-> +#include <fcntl.h>
-> +#include <linux/fs.h>
-> +#include <stdio.h>
-> +#include <stdlib.h>
-> +#include <string.h>
-> +#include <sys/syscall.h>
-> +#include <unistd.h>
-> +\&
-> +#ifndef SYS_file_getattr
-> +#define SYS_file_getattr 467
-> +#endif
-> +\&
-> +#ifndef SYS_file_setattr
-> +#define SYS_file_setattr 468
-> +#endif
-> +\&
-> +int
-> +main(int argc, char *argv[])
-> +{
-> +    struct file_attr fa;
-> +    int dfd;
-> +    long ret;
-> +\&
-> +    if (argc !=3D 2) {
-> +        fprintf(stderr, "Usage: %s <filename>\[rs]n", argv[0]);
-> +        exit(EXIT_FAILURE);
-> +    }
-> +\&
-> +    dfd =3D open(argv[1], O_RDONLY);
-> +    if (dfd =3D=3D \-1) {
-> +        perror("open");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +\&
-> +    ret =3D syscall(SYS_file_getattr, dfd, "", &fa, sizeof(fa),
-> +                  AT_EMPTY_PATH);
-> +    if (ret =3D=3D \-1) {
-> +        perror("file_getattr");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +\&
-> +    printf("Current flags: 0x%w64x\[rs]n", fa.fa_xflags);
-> +\&
-> +    fa.fa_xflags |=3D FS_XFLAG_NODUMP;
-> +\&
-> +    ret =3D syscall(SYS_file_setattr, dfd, "", &fa, sizeof(fa),
-> +                  AT_EMPTY_PATH);
-> +    if (ret =3D=3D \-1) {
-> +        perror("file_setattr");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +\&
-> +    ret =3D syscall(SYS_file_getattr, dfd, "", &fa, sizeof(fa),
-> +                  AT_EMPTY_PATH);
-> +    if (ret =3D=3D \-1) {
-> +        perror("file_getattr");
-> +        exit(EXIT_FAILURE);
-> +    }
-> +\&
-> +    if (fa.fa_xflags & FS_XFLAG_NODUMP)
-> +        printf("flags 0x%w64x (NODUMP flag is set)\[rs]n", fa.fa_xflags);
-> +\&
-> +    exit(EXIT_SUCCESS);
-> +}
-> +.EE
-> +.\" SRC END
-> +.in
-> +.SH SEE ALSO
-> +.BR file_getattr (2),
-> +.BR ioctl (2),
-> +.BR ioctl_fs (2),
-> +.BR openat (2),
-> +.BR file_attr (2type),
-> +.BR path_resolution (7),
-> +.BR ioctl_xfs_fssetxattr (2)
-> --=20
-> 2.56.0
->=20
->=20
+> One idea... Not sure on it. We are currently working on support for DICE based
+> attestation for TDX. This is an industry standard and AFAIU other vendors will
+> (want to?) support it too. Perhaps if we could have a single way to ask for for
+> DICE based quote, it could make a cross vendor interface more useful? Callers
+> could just call and get some standard format they can understand. It might take
+> some work on the TDX side to ensure the DICE format quote.
 
---=20
-<https://www.alejandro-colomar.es>
+Yes other people have asked about DICE interfaces for other ROT
+devices. AFAICT DICE is more about having a standard data format, and
+you are right about everything..
 
---6lplldpsfphxly7c
-Content-Type: application/pgp-signature; name="signature.asc"
+Like SPDM I imagine a set of interfaces defined by the DICE specs, but
+we'd probably still want to have the basic 'sign a nonce' interface
+for opaque transport.
 
------BEGIN PGP SIGNATURE-----
+So from a TDX perspective, what would you want to have as labeled
+blobs for this kind of operation, now and later and maybe someday with
+DICE?
 
-iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmrbZ40ACgkQ64mZXMKQ
-wqnfYA/+M1RS8G+Fb54XK+3BeSdRr1wQ7l7BiSa/aYW+J4IAfYIggc7wF+5The7a
-qTkeRYSTFVtXjjEkkDfU/Zd54kjegSURkzdN5jjBYx4WHhE7VTqY4r0YrnwwF5D2
-jl4aK6MkHJ4MdXRVskEsE0sCX/yQn2+gY7TWGv6+J0JDbGe2zBgrpp/L8AvkBB+w
-ReLGG4RG/ntJb22cusjYEKHiSaSpV5xP4KH0IxviJLKkqi4R0k+YMietwUYhSNlO
-xUB8NSUgam55jm3uAr/lnfZUwEk7BvEJX7wRuFwD1qictgKamVnfd/XzzByqf+lQ
-TwEMz9rcNfkuraeftG1dIPUJRdVRBA0KwQPGgHlOHmIwnx2d+7hEHXEAC0efZLD1
-nZ11iGql30ikBZ7hWdv1tG7tZQbCnmu86FEQhro2xtQa1YOKN4bDRmAp7ql7aZgD
-Y5jwubN4cWrA0QP2qM8Z6Ihq7ng++mdRvlttqI5im6lmYCZ/7DPCH9xNyLPvAT9c
-We6rT0GIV68aBXYYYAgckYwi3SW1uggyR3gSW8cLydhmyvc8sHzPoyw2lznl4SE8
-Y6w2kCD9U87KIW310D73g3PNlDF3j5Z8HObd/1iGvwlDVy27CDWFAmPhp9qAClDU
-ppP3o0RsyzfY8zYbOp0DRUUaePBi9OVCBNX2hjUEV2LYIH1H710=
-=FcUn
------END PGP SIGNATURE-----
-
---6lplldpsfphxly7c--
+Jason
