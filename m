@@ -1,124 +1,110 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.175
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.176
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792764742;
-	b=1+twvgjZHN82xtvGo8W3T+/pwK8yCm5YLUzwypO6wBRLekcd5Xh5SHBy/Oxmd4Dz7HHO
-	 g+7MGVcG3D3GLNgUhiTcv5lek6p2AHajD/kxSxALan4xHybt2XGD+zm7Fd12Ity8GFHZt
-	 7FKzExuEsue9tBOBSLUMt2GxyMniGocS74eYtbf/gTffQYCliHuAvKbQU0nwcBVQtGjoi
-	 sLGv+nExprXDU0OkfAB93BH5Dzrj8PMx9d4+yfXBXmP6lHpgU7zHr/VR2EH+FVfRfwvba
-	 YHNBrjFXmGGgFEDoydXvmqXf7yMPnHuu0iVRcAipxsaSksO7YU3WzOuKtTL8k8vSHSw==
+	t=1792765242;
+	b=i1gK6gmv7akl66Zgw78aLzlU9jDDgoACHIQdKw9FKaCnqF/Szwo219hIvjYHFnQyO9oq
+	 LuE6ZrXzj0lG4HvJpRYMQifXscNxWo9rF2iw/Bvo6IbWouWr6rQykTbuNt0DqttzDTygv
+	 wCUlaFKZSmKn0p+zdPiQhzur7GqljtabS/IBLbojDm16coZ0uEpwWvPgQ1wR5T07IGN+f
+	 PY67+mGleRu2nPdZQtxUGW+XoCcq7zSeyHcQKdZf16uw/ufLZ2yZN/ddhA3h/Z+ECq/dl
+	 LB01IhcCQSncSXM78B1Hu73SPG7B9YmYB3nUdtBK7eX9ugHis6A+zmRIqxR3S6Zf1gQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792764742;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792765242;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
-	b=4x4bCBWzFj8PA/Mhb2zV2i9v+8g1H3/8OtjHimL5HA5CawbvwpvXitiaOOv5N+tCh9yX
-	 2/CY3nN0zIRowSZRfoFSDz2doqhK2K+0hX5WLeubOAYOt2YNCquI7uY6fH1Tz2NOgH/f6
-	 atmi8NgqcwDfU3iDHwz8LWgBjpdt57YqZZnS73C2Cs/nzO0RMPLB7MWztmRpzmgJUQlrM
-	 iW/04YtGadwssoRy3Yxl9d12X6j8Xj+yn+xd5Tkeppc64IpsqAz86W0zlQ+wSyQiFUUa/
-	 KZ0nCiIm6FQb8HJZEHSbatWRVylAJaQxBULit5IQjPhO38TB4U7YUMeXSSokehPMn8g==
+	bh=/6hrkJLl8+7F6s+nQ7oM4f8Xx3u++n7ObY70TM6xwZM=;
+	b=mNmKqPt3scEfRpQNJDnBpIpioEZV8wAau+9lpLqPS87V7OjWZLdSPvsbB++n8BGG6jEO
+	 +/3YtHhGRIRDUYw6PF8MOyHQFF1T0N39FpMqKll+psRAVQrTAOF9ap5PLGWtqIS6Q02L2
+	 YE76eKe7guFK17ulL+Z9m9Geu5bZhHvHGbPpe/nVHFY9591fsIqvf1gBd7CvNq8AjNSE3
+	 N8kXfeHicTTq5TYRbzhYdogIo7UocsEXrRi0+rWtthR5wkt+e6jC7klaxIUS9xMqTRBNN
+	 8wVtenTc8dYt6z6TM8Pq8pUE6rN3DGY46i58EdS0Wz96bGEL2Kd3lDFrM1lr4kHxnrQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=none header.from=ziepe.ca;
 	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XJJ6FvlZ;
-	arc=none smtp.remote-ip=209.85.222.175
-Received: from mail-qk1-f175.google.com (mail-qk1-f175.google.com [209.85.222.175])
+	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=Z24Tmepm;
+	arc=none smtp.remote-ip=209.85.160.176
+Received: from mail-qt1-f176.google.com (mail-qt1-f176.google.com [209.85.160.176])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 14D34606A31E
-	for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 14:12:21 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 14D34606A31E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1C671606A31E
+	for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 14:20:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1C671606A31E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=XJJ6FvlZ
-Received: by mail-qk1-f175.google.com with SMTP id af79cd13be357-93e4c00d71aso84862985a.3
-        for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 07:12:21 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=Z24Tmepm
+Received: by mail-qt1-f176.google.com with SMTP id d75a77b69052e-5366ae57896so9140331cf.3
+        for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 07:20:42 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1792764741; x=1793369541; darn=vger.kernel.org;
+        d=ziepe.ca; s=google; t=1792765241; x=1793370041; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
-        b=XJJ6FvlZqxo85XzvMv3kvaZAtfiHwhOx8sBMHh97IiPVXdiYFm54L4CeUcxoOzzNvt
-         gW+kVZ5P6SiTD6i3qbbWqaK7N3DN+3iChx5c+N5ynHcYMSMfW3HvhvT9ZIl7yY4FD0Ix
-         OcxHouZP40lKVsKApA5S3figCXfZVQ5fGlQRJfyQnR1vO9veiYbbk+xedFHTt6HtsYeG
-         7tA0YHNoXFR4ZshrmdNr6q3G2SLk9NVJZ09vuF5/ocFe5M8xR/jCGR3A7lq5V/cGI/X3
-         1M54/n3yKnC/wLHUP/du9/EMWrxSUFPTjcDMvQYzNxQaB0/Cg4NMgodVwBAx3xXhzQjm
-         XA6Q==
+        bh=/6hrkJLl8+7F6s+nQ7oM4f8Xx3u++n7ObY70TM6xwZM=;
+        b=Z24TmepmqvR1bRh/4zM+g2igTOR83MH9soRnIdGRSlAfFQDPUGRtFOY9hIiE///81M
+         gn1/oeDUKKO5QvidSRSIWE23M60jPneoos4wvqV9I4e+WIBRQ7nZbEx3u9pGTbZ+93mo
+         v29+lwhRyxercl5mWfe6Lw6ns5PNvqZ2WVy/STNJGyhe9GkO6+u43vn+OgWZlPzn7brm
+         KupP7TBsEpn/837/k/d6XjDcCZUehB/rdoMXI/Bx+gclxYRi9m7A+0ETt91nuQqxDW8H
+         JSf2ssQUryFdfHbm8dPWKZA9612PpU/6R+wt+M6hxFMCrJYA4E1yt1pYxw8IKTQEWl4v
+         iU+g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792764741; x=1793369541;
+        d=1e100.net; s=20260707; t=1792765241; x=1793370041;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=oJA2TtslEJ+KdyUtrabQXqX04jIwVEOHlYhkzmtq54M=;
-        b=ccHOnBF0nVfFaNKhK13Wxf8ZXRPG3IpPZfPUXNiF5Wlt3eiX+oKhrKtwgP6qNEED+P
-         t5N6tnAFP8eaRIHOSFOX/yQSA5MlUP77LbzeAErqAohZs2BY4a/xlGmwOBVcDYO+TpCH
-         g0IpGY4VANz5zjM2iQZGHfK10krJRkERQz4eJhqi/fMmQjj8lne8brZMKAJ5N3GBe6u1
-         V+YOsEddmEmZhu8oeCsFeDKSJ2zlPwtgrqkJHLxZfwiCiEbSman/g2YCzYScNtLk3p93
-         eYYfNI7Ti1fgM9+D/ddA3BIqeoJdg0ig7DR7/jNxGHJINAbW53fa4Eap5FjuFNOlvug+
-         P3wg==
-X-Forwarded-Encrypted: i=1; AKwUvByUz1gh9sTbnkO50dWCDPU5/b+w84eHJPUk7rpaC4jyczhset/GAtqbtAozl5NGECmsCecfk/TFNRs=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKHpGLZeaXl5r32XEtW/mvPF1ZIMwSF/Mk6YoGdWmrP+sjoq+r/
-	fp2goJr7V5bCfbaNiQZ22y8YLipKt0xvoxhKWqx2s786mDioLMLOSlK25qP+a1zbRFU=
-X-Gm-Gg: AYBFou39+lsvnvpZlLRknylXDDVwYp3Niu8cth2JJdtFuYou6njReJWynDAHvxbaNVr
-	fxBx2eGGrjLf4HkhKLn2lsLIboay/Kgq8+foMVg+6Y8kwJ7yLxyIU2VcN8SArTvSq5J2uYaWILB
-	PrQTi7wPwE4sZITbtlhyvlRJt8TeTLAWJpP1uSi4gWLjpLOTQdcAJ2vvXaPb9V38vBlrf7/7YYY
-	s9nkMCGtyqo+WcePJFzb3MfeYTvbzahiivCXWLPrdTtKDvcpQ1wr1v9zKuzUyD3uPQmdj3wvLpq
-	0C8PS+jE4LZvDeqGF4vV/J5w378cXexib1ieHRi+wUNq31M8EjitaQsvrXyUPhSoLQTaws6aZgO
-	53jqHB74rAQP591IfOoobuGQddgpq3TZ/EZwMCM16H4WO64V1f3bYuz/8a8Ut7+uxVnulfK+9gX
-	oc6Na24BjlyvWHrFjIbWkVZZmkLkGqN8+D5ZcCccGR6x1wXU+c0rdKIROiiNkmPL0TWf9DdwvDw
-	dzz+8DG/TrPNT8QOUs++87Q/gZ2xUY2esgh0dl+PWXQAa6rpX8jsBQ7dnX37Zqb6YDu1pGMMEoM
-	cOMljcxetfW1Jx9CcC25o5ifD/V8pjSse11ksw==
-X-Received: by 2002:a05:620a:280d:b0:93f:53d1:54c7 with SMTP id af79cd13be357-93f6f8249ddmr448815485a.70.1792764740975;
-        Fri, 23 Oct 2026 07:12:20 -0700 (PDT)
+        bh=/6hrkJLl8+7F6s+nQ7oM4f8Xx3u++n7ObY70TM6xwZM=;
+        b=ZpUg6J5S2itgSvX42SrBBxUY496/IHL/MsNVXXmP8ZecMs2TqIOm80+Gfx/Q8FnWfH
+         qDBN1Y1J5c1hzd3R+ZsAmJ1VrBDpmm1Zdgye/xQ9oki3zzJOKX/UmnY4MJyT+tDE4YNt
+         W2AgU4reRIH5u7CX/CWIIuYJ7C/Sxct4uugD9Hx/S6QBQIrxu/B3msdeE3c1O84SF6aY
+         aS3rqZkyK2ZWNSqkwo5ci1kGG1Dhf8eMDdyVtg7R0ufmPVsrXGD5RCA12ywzGn/0fFlB
+         g4owEJT4cPAzLhGc157fRNHBYNW3t5vf1daRphSo4s//T49VL63TO2xBYX784gbq6Rp6
+         1LSw==
+X-Forwarded-Encrypted: i=1; AKwUvBzVcovwpxR4PGuD9ICnS7Mjo/UlVmb4CoU8Q/mbM9qPYmhcyvDD0u9D9iHLs8FBx790dVZchMCLchY=@vger.kernel.org
+X-Gm-Message-State: AFq9FYL/88aaus0Q/+rGpr0Hg8YD+Fpd2Ww9d0DZNSYwgNOqcckx8tq7
+	2bjBnuk1p7cG4dcfsk6dwlGxNiDv6lbNZwfyfPMGuR1Dk1tSWie/KYxo1rJFaAgndKA=
+X-Gm-Gg: AYBFou1C2cPQZSZUxchW92ofsM9yfRu1UjRjN2Il47HSEAPkUnZjOM7JhauRwfrDkde
+	f/a2GR66THaUUFv862/TMQEU3OaLTrBlPuO6k7hSTlbvsxgT2iUntc5UaBVzfKtxky5qBRnLYju
+	8UYS/oNMG3H4fPU4DWvZyfiLz8CRcqbFIL/fA6jk++nrTgE79guLGYdH1yE3QJULeJt0A5saRpd
+	cI8EPPNzPo/5liFg5Q11+3L3mRS8Txc5vFUtxJ0CmBypi6vyWJj0MhIhSZsw+WtF0e5zQJRtDHe
+	Ei2A1XdT6MXSj68sBBKlEKI8qREvPxp+I2vWIrVcL9IiACd2tYa8jH0iHwZTg/9WiDr1msK+X9X
+	AGp4PW/A90vsALhpf5yMwojrMFM++6ws5Dwcd3x943uORCJL2J0Nn7Iz1gGJuUuux029OcHRlxD
+	weDE9v320r+4dFq8ni27fK8N2T4/JcMUjWmv+wgQOSL0nLR/tNtuwtn+LCVd6geChpL4fFCl+H1
+	4TAMJzrO3l7MEcO3eRPZBg5vlN5xPpL86nnjwxG2jNHdu5M7UJdDXlzQfU1P/FVU1BQHy+LqNxE
+	ZuIFc94Csjag0TmNJ1VtofHPEt/0Wd1ktc1QHA==
+X-Received: by 2002:a05:622a:1246:b0:533:32f3:1db9 with SMTP id d75a77b69052e-536c2696164mr33421181cf.11.1792765240843;
+        Fri, 23 Oct 2026 07:20:40 -0700 (PDT)
 Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-94047b32ed6sm25764985a.34.2026.10.23.07.12.19
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-536c1872a8fsm17665301cf.23.2026.10.23.07.20.39
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2026 07:12:19 -0700 (PDT)
+        Fri, 23 Oct 2026 07:20:39 -0700 (PDT)
 Received: from jgg by wakko with local (Exim 4.97)
 	(envelope-from <jgg@ziepe.ca>)
-	id 1xKG0I-0000000Gigv-2y8C;
-	Fri, 23 Oct 2026 11:12:18 -0300
-Date: Fri, 23 Oct 2026 11:12:18 -0300
+	id 1xKG8M-0000000Gj4Z-31qZ;
+	Fri, 23 Oct 2026 11:20:38 -0300
+Date: Fri, 23 Oct 2026 11:20:38 -0300
 From: Jason Gunthorpe <jgg@ziepe.ca>
-To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
-Cc: "Jiang, Dave" <dave.jiang@intel.com>,
-	"linux-coco@lists.linux.dev" <linux-coco@lists.linux.dev>,
-	"jiri@resnulli.us" <jiri@resnulli.us>,
-	"kvm@vger.kernel.org" <kvm@vger.kernel.org>,
-	"pgonda@google.com" <pgonda@google.com>,
-	"jic23@kernel.org" <jic23@kernel.org>,
-	"drdeeglaze@gmail.com" <drdeeglaze@gmail.com>,
-	"James.Bottomley@HansenPartnership.com" <James.Bottomley@hansenpartnership.com>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"Xing, Cedric" <cedric.xing@intel.com>,
-	"alistair.francis@wdc.com" <alistair.francis@wdc.com>,
-	"dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-	"Reshetova, Elena" <elena.reshetova@intel.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"ankita@nvidia.com" <ankita@nvidia.com>,
-	"jpiotrowski@nvidia.com" <jpiotrowski@nvidia.com>,
-	"kas@kernel.org" <kas@kernel.org>,
-	"Quigley, David" <david.quigley@intel.com>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"sathyanarayanan.kuppuswamy@linux.intel.com" <sathyanarayanan.kuppuswamy@linux.intel.com>,
-	"Vivi, Rodrigo" <rodrigo.vivi@intel.com>,
-	"lukas@wunner.de" <lukas@wunner.de>,
-	"suzuki.poulose@arm.com" <suzuki.poulose@arm.com>,
-	"ksinyuk@kernel.org" <ksinyuk@kernel.org>,
-	"Fang, Peter" <peter.fang@intel.com>,
-	"sameo@meta.com" <sameo@meta.com>, "aik@amd.com" <aik@amd.com>,
-	"x86@kernel.org" <x86@kernel.org>,
-	"qinkun@google.com" <qinkun@google.com>
-Subject: Re: [PATCH RFC 20/20] attestation: Add the TDX family implementation
-Message-ID: <20261023141218.GD3977851@ziepe.ca>
+To: "Aneesh Kumar K.V" <aneesh.kumar@kernel.org>
+Cc: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
+	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
+	drdeeglaze@gmail.com, James.Bottomley@hansenpartnership.com,
+	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com,
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com,
+	ankita@nvidia.com, suzuki.poulose@arm.com, kas@kernel.org,
+	rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
+	dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
+ support
+Message-ID: <20261023142038.GE3977851@ziepe.ca>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-21-jiri@resnulli.us>
- <ed52bb6d48c87ab8023bf2165cadffa259e21725.camel@intel.com>
+ <yq5a7bjajaco.fsf@kernel.org>
+ <atooh7uO2RauUTfY@FV6GYCPJ69>
+ <yq5av76sj10a.fsf@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -130,67 +116,106 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ed52bb6d48c87ab8023bf2165cadffa259e21725.camel@intel.com>
+In-Reply-To: <yq5av76sj10a.fsf@kernel.org>
 
-On Thu, Oct 22, 2026 at 10:07:28PM +0000, Edgecombe, Rick P wrote:
-> On Thu, 2026-10-15 at 16:50 +0200, Jiri Pirko wrote:
-> > Connect the attestation family to the native TDX service. Expose
-> > TDREPORT, Quote, MRTD and RTMR operations while preserving the existing
-> > native interfaces.
+On Fri, Oct 23, 2026 at 01:34:53PM +0530, Aneesh Kumar K.V wrote:
+
+> CCA currently takes the device identity index during pdev_create. I am
+> investigating how to retrieve the certificate chains for all slots. For
+> now, I have implemented the sequence below.
+
+Yeah, I think the consensus at LPC was this may be a gap in CCA.
+
+For now I can imainge CCA just doesn't let you query the certificates,
+and we'd need an ECN to correct it someday once all the kernel parts
+are settled.
+
+I broadly hope we can use the software SPDM implementation to really
+flesh out the uapi and make sure that everyone is happy with it. Then
+we get what subset we get from the first generation of products.
+
+Something like if userspace can't get the slot information early it
+just hardwires slot 0 and goes forward.
+
+> echo tsm0 > /sys/bus/pci/devices/$DEVICE/tsm/connect
 > 
-> Along the lines of some of the other commenters I'm not clear on the benefits of
-> the unified TD/VM attestation part of this.
+> ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 device-get                                                               
+> # device-get, 1 fragment, generation 0                                                                                      
+>   device.generation 0            
+>   device.caps                                                                                                               
+>     cap.evidence                                                                                                            
+>       cap.min-challenge-length 0                                                                                            
+>       cap.max-challenge-length 0                                                                                            
+>       cap.max-total-output-length 369098752                                                                                 
+>       cap.evidence-flags evidence-accept
+>       cap.object                                                                                                            
+>         cap.blob-class cert-chain                                                                                           
+>         cap.blob-instance 0                                                                                                 
+>         cap.format spdm-cert-chain
+>         cap.representation raw                                                                                              
+>         cap.representation tcb-digest                                                                                       
+>         cap.hash-algo 4                                                                                                     
+>         cap.hash-algo 5          
+>         cap.hash-algo 6                                                                                                     
+>         cap.max-length 16777216                                                                                             
+>   device.info                                                                                                               
+>     pci.name 0000:02:00.0                       
 > 
-> Especially when you talk about a TD report, it is pretty specific to TDX. So
-> calling user code is going to need to know about TDX anyway. In fact the report
-> won't have all the details of the TD either. Going forward it's main function is
-> to serve as a nonce transport blob and it only has TD details because of legacy
-> constraints about SGX based attestation. So just a quirky TDX specific part of
-> the flow on the way to get a quote.
+> I think we can use evidence-refresh to select the blob-instance for the
+> desired slot once the CCA specification supports that.
 
-I think in the way this stuff ended up being used the userspace isn't
-actually aware. It just wants the VM's ROT to sign a challenge and
-forward the resulting blobs to a remote verifier. The verifier needs
-to be aware of the format, but the collection agent should not need
-special knowledge.
+Jiri these ctlv outputs are really neat, it would be nice to include
+some of them in the commit messages so people can get a sense of how
+this looks without running it?
 
-ie from the perspective of systemd-report it doesn't make alot of
-sense to have it know every single special configfs path and protocol
-for each CC vendor just to get a 'sign my challenge' operation.
+>  ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 state-get                                                                
+> # state-get, 1 fragment, generation 0
+>   pci.generation 0                                                                                                          
+>   pci.connected 1                                                                                                           
+>   pci.locked 0                                                                                                              
+>   pci.accepted 0                 
+>   pci.tsm-id 0                                                                                                              
+>   pci.dsm 0000:02:00.0                                                                                                      
+> 
+> device is marked connected, but IDE is not setup as indicated by pci.accepted = 0
+ 
+> ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 evidence-get --json '{
+> "evidence.challenge": "hex:", "evidence.object": [{
+> "evidence.blob-class": "cert-chain", "evidence.format":
+> "spdm-cert-chain", "evidence.blob-instance": 0,
+> "evidence.representation": "raw", "evidence.data": { "file":
+> "/tmp/cert0.bin", "data-buf-size": 16777216 } }] }'
+> # evidence-get, 1 fragment, generation 0                                                                                    
+>   device.generation 0                                                                                                       
+>   evidence.generation 1                                                                                                     
+>   evidence.object-length 1632           
+> 
+> 
+> I added the file: attribute to verify the evidence blob's contents. ie,
+> we can do:
+> 
+> # file cert0.bin  
+> cert0.bin: Certificate, Version=3
+> 
+> ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 evidence-accept device.generation=0 evidence.generation=1
+> # acknowledged
+> ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 state-get
+> # state-get, 1 fragment, generation 0
+>   pci.generation 0
+>   pci.connected 1
+>   pci.locked 0
+>   pci.accepted 1
+>   pci.tsm-id 0
+>   pci.dsm 0000:02:00.0
 
-That's the general north star here. We'd like all the vendors to be
-able to do collection without having to change systemd for every new
-innovation. Again I'm looking at 5-10 ROTs in our platforms, it is not
-desirable to go and teach systemd about each of them.
+I believe this broadly matches what was discussed at LPC.
 
-So broadly, this requires a challenge to go in, a signed blob to come
-out, possibly some suppelmentary blob[s] (like certificates), and then
-labels for what is inside each.
+I really like that we can break down the steps from SPDM setup so we
+can get more information to userspace to have better logging if things
+go weird.
 
-Userspace would collect all the blobs and the labels then ship them to
-the verifier which has to understand how the data described by the
-label is organized.
+Seeing this makes me much more comfortable that CTLV is really adding
+value here, these data formats are pretty complex in the end..
 
-I don't know what "nonce transport blob" means in the future, nonce
-without signature sounds like a strange thing.
-
-> One idea... Not sure on it. We are currently working on support for DICE based
-> attestation for TDX. This is an industry standard and AFAIU other vendors will
-> (want to?) support it too. Perhaps if we could have a single way to ask for for
-> DICE based quote, it could make a cross vendor interface more useful? Callers
-> could just call and get some standard format they can understand. It might take
-> some work on the TDX side to ensure the DICE format quote.
-
-Yes other people have asked about DICE interfaces for other ROT
-devices. AFAICT DICE is more about having a standard data format, and
-you are right about everything..
-
-Like SPDM I imagine a set of interfaces defined by the DICE specs, but
-we'd probably still want to have the basic 'sign a nonce' interface
-for opaque transport.
-
-So from a TDX perspective, what would you want to have as labeled
-blobs for this kind of operation, now and later and maybe someday with
-DICE?
-
+Thanks,
 Jason
