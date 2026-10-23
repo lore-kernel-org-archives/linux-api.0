@@ -1,109 +1,67 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.178
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792765596;
-	b=VbK6CJ3qsAduS0FfBh2hDgt2Ehr6qmrSCU77+5ptT/MlX5Rqv0I84qvqyPH+EdO/T8iH
-	 eNZjs5a8upQKQuBwocJH7yMx31wYNsYJcT+puZpI8EN/BWjRwZZ2BcgJsL1NGj9TfKmZM
-	 KTEIqIhjfjGekzeZfkntubiQRHUjzO4dTLShPZLrtJAG4BESRXY3ldZxze/RlnDrNZ5Hq
-	 mSLd2u44C/usnJoQ6I+cPKCIk5lkvWfi/wkvVCyru8dl9d4JipIoWIyK9riW9Q4Ih7pU4
-	 ToUIMjmTKAbaUllnMt8RBdruzLgOGbdjooppBuZAW8EpJjD3Vwql/lTpvpt/NifNTBw==
+	t=1792767625;
+	b=qO+HK7su27uQjH3QKFvpOm9gjuzQsV4fQdjyLVl+qD8fcF8qk16xuFugS/0rjjkNnD2p
+	 vWBvKqTbFwAmQjT9ScMyNPGxQxjj2SnUH+dg74hlUF8oB3g2BdoUWgzDL7+fKLTKIkeWs
+	 2WnnbjfBon3pguQ0Ke2BTGrx+xEDbP3QbzuRHtb9eFpt+b03fDlJXvXnk7bGTNv9ter5g
+	 dKJYKCjpQ3qZc9k9aEkaJFcjk+pBUKUzAt9wgNl+6afVucoR7pvuT73a4oha8CbymcABZ
+	 +Ac4XAypRfrrZterfzejJ9EUDUvss/yTbPK/PMo/28A/t6FDAhXpBB4OgeZW2Twmy2w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792765596;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=0RgIg1l+3ifUtXqxbecqEIvcyWwa/dmFWxjX5pMBv2k=;
-	b=uk+EoKffCIv012FNzjX7HhTIi832bBN4HpwjkXbimXmXJCwYixTMc2l3C1UwCwIPm2c+
-	 ubv/rKXZDqYSB2RO+ZHmRUckdyJhpG3F/Fa4OzBqFQJdX5dlh70SemYrdvhRdkQnj/NVP
-	 Z/d8ceP/WKgBUnuWQxP0aYuvZi3hmT9gsByGpGA3uZlsraSJ5XBpndI4kgvCjEHXg5LeV
-	 GfGw7IbhSXxJ+OZd9IWjIyn5oWw3xwLnTDLhk/AOimHvIcRj8iLU+aR98UoRPGl3pAhyI
-	 asCF4QmsBG5IYLOLPTeOYjsp4wwzqqezkTVHkkqIqx5UJ9Z4xPBCOwU83Z/TdKEjclw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792767625;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding:In-Reply-To;
+	bh=7bmXE9eB7alT01S68+GEqtmKgfMF4L3T/lFunQRLqUY=;
+	b=ZUJxBXOnns9WIn+yeEkOZaDDgNfVzU7NUMjhVrq5ZnXTIS9U6YPoEJ5LKKlUymJhsqOn
+	 D+66SAY+JoLsY/DUf9lTRFg0KDjkB9ZFdI+806/r49leo7S97uMKnXZi7aVpEMXq9sjQH
+	 ez2k/eLS+H8Qy+k7Vq0iQge6CNBRqFU7l6+O+lkdK8loMZ9jChS+nYZzkEBtFhYqqprs7
+	 CzSJf6mMbvzN0QB6uLeaT6yrLA8P6a00zEo78b5cCr7Efp4T26kByTjj3TrlbKwLE0ZvV
+	 7pwlv6xQA+7vZpQG7JdyngnHBOvPpWOllgiv50/JJMApIgj3Bqkgnh6RNxgYLTd5B8g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=ziepe.ca;
-	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=DuYf6d6E;
-	arc=none smtp.remote-ip=209.85.160.178
-Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com [209.85.160.178])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Qz65DyB1;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2FDBA606A31B
-	for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 14:26:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2FDBA606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 73BBE606A32A;
+	Fri, 23 Oct 2026 15:00:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=DuYf6d6E
-Received: by mail-qt1-f178.google.com with SMTP id d75a77b69052e-536c8f958d7so3413311cf.1
-        for <linux-api@vger.kernel.org>; Fri, 23 Oct 2026 07:26:35 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1792765595; x=1793370395; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=0RgIg1l+3ifUtXqxbecqEIvcyWwa/dmFWxjX5pMBv2k=;
-        b=DuYf6d6Eamd3Mim9JzP6lyLqHMZQ7cyKJdqyD3vzB6Sr2u0uVSkWpIdZeTI1JCnN61
-         NIFACP66viSHxdE7SDl5Z0vkYsbly/8y1CfaZRItrer83OcRPXUOgkf7EFlW4VGlKxdh
-         Ibu8s0eq8atFnKpxTif1E8wcf/K+m39TnPCWSxdLLek+ly/BYkiswbugga0oEPTHxpsq
-         0aLlYBRgbYl8s/ZSMNb9ZITEEZ494ZrhiPsfXxG6KKufF1DcVU0B+j0htKw9QXGscyHG
-         1HHHpGtDXP5Ie9+0fnY1zPNtuSAYT2zAG1Js2cHKYqmmzY+Pz52DZZlyK/Tuivj1tXdV
-         b3Tg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1792765595; x=1793370395;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=0RgIg1l+3ifUtXqxbecqEIvcyWwa/dmFWxjX5pMBv2k=;
-        b=sCwQwqGa2CSw/8A5q9y2EuuzvFa5GEyqhDWEWRQyWIJr3lmzb8CMCZW+PNeyB+F9bt
-         FvCZmD1LR2B0xHvDVL4aX4njbn5fhI4tFSxZiO7OKFvwl9K0pszgiqwNfI1HOihTEIdC
-         UjMlmT2M1l6Ld3P8OYXqiMnW/7g1M2qAnlO0by7zyFJgdzm90aLeI5dtVfQPP2PHllkq
-         4ZpKykJBOtU9P6b9G0g82SyHpvrKekZtt6V+3cjDAYO/3PIbEbiX++xeS9g7FXBslU2x
-         XAqMC86cq1DKSKOl45/ZFbFAAbfZNKsTow0CTegvR9XqVa8jf5JVtPZhl7tknwsAcbWn
-         PM1w==
-X-Forwarded-Encrypted: i=1; AKwUvByodfCBYg9F02af4y8yjcY8SUBVM9lKqkxMSkr55P2eNAq/2vQODAcUsKCuzn+QYnWb3NAmwrer7ZA=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIWWemND2g7CcaA/jEGDSN2+ApnbJ/FYp1QE6XwmaLrlpsHcEWL
-	bdvNvbau9qId91WoovfkojFHmR45YXnuueIWDv/as9hCT/XAentfiF4DzSuigQY5NBw=
-X-Gm-Gg: AYBFou3n/iOlYlNPyxMa5ejyV8ph2zOHTzRAzGhrEq4/wlbkmJcyaRLn6l1gKSjQEfq
-	zpWcAD3sgj5fWmfB64tBJcnS0QxPQl0vUgfm76Q9FYGU4UDInxEOzILxDrLFxPvj29t52CDO4Tg
-	LbZlE4Xqzu3xQZmXbySgTApbtHvHFLz1aXUqSy3Itv+YRaP2AcSe7r5sBB3idAAIKPdBkr0Rr8P
-	r91Zz1FWZ5Fhdu38mMXIERB8rgf/+4TPOFACXGuxyWiLFqyZMmhOQXoxXxrTXD2/qiFyk8dQfGu
-	2OkOkq+DswDGES7gtHEqe5FDaKr54+k8+5b7l7RVViJqFGI8n8WpFReVWhrNTJXbxedYTYN9FcP
-	xKDBdudich1w8/F/xwNQLGPA/Kv90fQhqdpIVwEhaqj0/YTy99XNW4t5FukWx9t7KLfH7InhHFP
-	ueWGynmisNLO4P3NYIRQ3qyM5fvLn6pPAQeJx7eR/kHNeI0qw/cu8Xx1AP2EabJhzPWMjjWYAyL
-	OSxklNjS4gRdjDZ/KvJGUDnWvxq7z+zYUaPVTRAApR+eedckAyRhR+IE56kOV+nNzfl3KCwVMYc
-	EBBV8rG/5dEsD6OC0rxUP3XYw+AyJBSSFJwQeA==
-X-Received: by 2002:a05:622a:5b93:b0:535:a5fa:ee02 with SMTP id d75a77b69052e-536c2700643mr30249831cf.66.1792765594917;
-        Fri, 23 Oct 2026 07:26:34 -0700 (PDT)
-Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-536c18afef6sm17177241cf.27.2026.10.23.07.26.33
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 23 Oct 2026 07:26:34 -0700 (PDT)
-Received: from jgg by wakko with local (Exim 4.97)
-	(envelope-from <jgg@ziepe.ca>)
-	id 1xKGE5-0000000GjLW-1mzI;
-	Fri, 23 Oct 2026 11:26:33 -0300
-Date: Fri, 23 Oct 2026 11:26:33 -0300
-From: Jason Gunthorpe <jgg@ziepe.ca>
-To: Jiri Pirko <jiri@resnulli.us>
-Cc: Jonathan Cameron <jic23@kernel.org>, linux-coco@lists.linux.dev,
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Qz65DyB1
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BD8A31F031E1;
+	Fri, 23 Oct 2026 15:00:24 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792767625;
+	bh=7bmXE9eB7alT01S68+GEqtmKgfMF4L3T/lFunQRLqUY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=Qz65DyB1QDCzSVoTx6uXxOvKWmS2R8mZfO/NABTvk6rz5211L+k2sd4Q78SicBJf3
+	 XCIFj4bAp7tM5Y3XNl1UU5I7263BbMzbmnko44BmpQ3Qi4yBNFCAUJGkB1t6mrEO41
+	 aTQBhN+7NSKFyrjWT1ic+L6pwJcZYx8ZFqJQrn3eTC/eOmluVsO4F+oYmwIThkcswq
+	 csTH2oIj7EBF3ecJsX+wD2pHDOQJTrfyoAPo117BmBIvEjbYN1wLCTEyMiqR5vQo08
+	 kZMp7tzKASXXaved61t48KwGVAKSJcn6fTEa17pMahgcsanyhmFlzyrU+kzrwWj2MV
+	 9YJvxGqJ28AwA==
+Date: Fri, 23 Oct 2026 17:00:22 +0200
+From: Frederic Weisbecker <frederic@kernel.org>
+To: Peng Wang <peng_wang@linux.alibaba.com>
+Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
+	Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	"Rafael J . Wysocki" <rafael@kernel.org>,
+	Danilo Krummrich <dakr@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Masami Hiramatsu <mhiramat@kernel.org>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Waiman Long <longman@redhat.com>, Tejun Heo <tj@kernel.org>,
+	He Rongguang <herongguang@linux.alibaba.com>,
 	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
-	drdeeglaze@gmail.com, James.Bottomley@hansenpartnership.com,
-	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com,
-	pgonda@google.com, alistair.francis@wdc.com, ankita@nvidia.com,
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 12/20] ctlv: Add device and operation dispatch
-Message-ID: <20261023142633.GF3977851@ziepe.ca>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-13-jiri@resnulli.us>
- <20261021022505.6fe1b1bb@jic23-hlaptop>
- <20261022184313.GD3381610@ziepe.ca>
- <attZl_0TNMDLgi4U@FV6GYCPJ69>
+	driver-core@lists.linux.dev, linux-trace-kernel@vger.kernel.org,
+	cgroups@vger.kernel.org
+Subject: Re: [RFC PATCH v2 1/2] tick/nohz: Add a policy dependency for full
+ dynticks
+Message-ID: <att2hiYaaHTIkzG9@localhost.localdomain>
+References: <cover.1792242566.git.peng_wang@linux.alibaba.com>
+ <58bc33cb018a2651e9cc3fc02baad7de4d543705.1792242566.git.peng_wang@linux.alibaba.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -113,55 +71,181 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <attZl_0TNMDLgi4U@FV6GYCPJ69>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <58bc33cb018a2651e9cc3fc02baad7de4d543705.1792242566.git.peng_wang@linux.alibaba.com>
 
-On Fri, Oct 23, 2026 at 02:58:33PM +0200, Jiri Pirko wrote:
-> >> Jason did some nice handling in the fwctl stuff for
-> >> device alloc and hand over after device_initialize()
-> >> (I've copied it into a few places recently :)
-> >> 
-> >> I'd like to see something similar here as it made
-> >> it easier to follow lifetimes etc.
-> >
-> >This is really at the wrong layer.. Attestation subsystem is the lead
-> >subsystem, it should be allocating the struct device memory and the
-> >driver should see the typical
-> >
-> >  struct attestation_dev *adev;
-> >
-> >  adev = attestation_alloc()
-> >  [..]
-> >  attestation_register(adev)
+Le Sat, Oct 17, 2026 at 09:13:41PM +0800, Peng Wang a écrit :
+> Cloud hosts may pin vCPU threads one-to-one to host CPUs. At full
+> allocation this includes the housekeeping CPUs, which always retain
+> their non-idle tick. Operators want comparable performance for otherwise
+> equivalent vCPUs. Retaining the non-idle tick on nohz_full CPUs as well
+> avoids one placement-dependent difference in host tick interference.
+> With spare capacity, selected CPUs may stop the tick to reduce host
+> scheduler-tick interference with vCPUs.
 > 
-> Er, the driver would call attestation_create() which will be a wrapper
-> of ctvl_create. The reason is inheritance chain and each parent being
-> passed info to and doing its own init()
+> Allocation changes as VMs are created or destroyed while other VMs
+> remain running. A vCPU thread may be the only runnable task in either
+> state, so existing tick dependencies do not express this policy.
 
-We really want it to look like the above so we get proper container_of
-stuff.
+I'm not sure I understand correctly what you are trying to solve.
+Are you saying that you want to keep the tick running when there
+is more than one vCPU per CPU? Because the scheduler already takes
+care of that.
 
-struct driver_attestion_dev {
-   struct attestaion_dev adev;
-}
+> 
+> Add a per-CPU POLICY dependency within the boot-time nohz_full set.
+> Permission defaults to enabled. The policy can be changed without
+> taking CPUs offline. Revoking permission uses the existing asynchronous
+> kick; granting it leaves all other dependencies effective. Preserve
+> POLICY across CPU hotplug and report it in tick_stop tracing.
+> 
+> Idle tick suppression, nohz_full membership, context tracking, RCU
+> offloading and housekeeping configuration are unchanged.
 
-driver_adev = attestaion_alloc(..)
+This still keeps the overhead of nohz_full even if the tick stays on, right?
+(RCU nocb, kernel <-> user overhead, etc...). Isn't it a problem for you?
 
-Don't want "create" to allocate the memory, it is upside down. The
-fixed memory ctvl needs should be buried in the attestaion_Dev
+Thanks.
 
-struct attestation_dev {
-   struct device dev;    // sysfs dev inside class attestation
-   struct ctlv_XX ctlv;  // ctlv instance
-   struct cdev cdev;
+> 
+> Co-developed-by: He Rongguang <herongguang@linux.alibaba.com>
+> Signed-off-by: He Rongguang <herongguang@linux.alibaba.com>
+> Signed-off-by: Peng Wang <peng_wang@linux.alibaba.com>
+> ---
+>  include/linux/tick.h         |  8 +++++--
+>  include/trace/events/timer.h |  3 ++-
+>  kernel/time/tick-sched.c     | 42 ++++++++++++++++++++++++++++++++++++
+>  3 files changed, 50 insertions(+), 3 deletions(-)
+> 
+> diff --git a/include/linux/tick.h b/include/linux/tick.h
+> index b121c5d53e308..8b250f245ff31 100644
+> --- a/include/linux/tick.h
+> +++ b/include/linux/tick.h
+> @@ -111,9 +111,10 @@ enum tick_dep_bits {
+>  	TICK_DEP_BIT_SCHED		= 2,
+>  	TICK_DEP_BIT_CLOCK_UNSTABLE	= 3,
+>  	TICK_DEP_BIT_RCU		= 4,
+> -	TICK_DEP_BIT_RCU_EXP		= 5
+> +	TICK_DEP_BIT_RCU_EXP		= 5,
+> +	TICK_DEP_BIT_POLICY		= 6
+>  };
+> -#define TICK_DEP_BIT_MAX TICK_DEP_BIT_RCU_EXP
+> +#define TICK_DEP_BIT_MAX TICK_DEP_BIT_POLICY
+>  
+>  #define TICK_DEP_MASK_NONE		0
+>  #define TICK_DEP_MASK_POSIX_TIMER	(1 << TICK_DEP_BIT_POSIX_TIMER)
+> @@ -122,6 +123,7 @@ enum tick_dep_bits {
+>  #define TICK_DEP_MASK_CLOCK_UNSTABLE	(1 << TICK_DEP_BIT_CLOCK_UNSTABLE)
+>  #define TICK_DEP_MASK_RCU		(1 << TICK_DEP_BIT_RCU)
+>  #define TICK_DEP_MASK_RCU_EXP		(1 << TICK_DEP_BIT_RCU_EXP)
+> +#define TICK_DEP_MASK_POLICY		(1 << TICK_DEP_BIT_POLICY)
+>  
+>  #ifdef CONFIG_NO_HZ_COMMON
+>  extern bool tick_nohz_enabled;
+> @@ -205,6 +207,8 @@ extern void tick_nohz_dep_set_signal(struct task_struct *tsk,
+>  extern void tick_nohz_dep_clear_signal(struct signal_struct *signal,
+>  				       enum tick_dep_bits bit);
+>  extern bool tick_nohz_cpu_hotpluggable(unsigned int cpu);
+> +extern bool tick_nohz_full_get_allowed(unsigned int cpu);
+> +extern int tick_nohz_full_set_allowed(unsigned int cpu, bool allowed);
+>  
+>  /*
+>   * The below are tick_nohz_[set,clear]_dep() wrappers that optimize off-cases
+> diff --git a/include/trace/events/timer.h b/include/trace/events/timer.h
+> index 3aa0608c63611..dff9579cd90eb 100644
+> --- a/include/trace/events/timer.h
+> +++ b/include/trace/events/timer.h
+> @@ -435,7 +435,8 @@ TRACE_EVENT(itimer_expire,
+>  		tick_dep_name(SCHED)			\
+>  		tick_dep_name(CLOCK_UNSTABLE)		\
+>  		tick_dep_name(RCU)			\
+> -		tick_dep_name_end(RCU_EXP)
+> +		tick_dep_name(RCU_EXP)			\
+> +		tick_dep_name_end(POLICY)
+>  
+>  #undef tick_dep_name
+>  #undef tick_dep_mask_name
+> diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+> index 87e2a7a875265..0d6fcc3736bae 100644
+> --- a/kernel/time/tick-sched.c
+> +++ b/kernel/time/tick-sched.c
+> @@ -375,6 +375,11 @@ static bool check_tick_dependency(atomic_t *dep)
+>  		return true;
+>  	}
+>  
+> +	if (val & TICK_DEP_MASK_POLICY) {
+> +		trace_tick_stop(0, TICK_DEP_MASK_POLICY);
+> +		return true;
+> +	}
+> +
+>  	return false;
+>  }
+>  
+> @@ -561,6 +566,39 @@ void tick_nohz_dep_clear_cpu(int cpu, enum tick_dep_bits bit)
+>  }
+>  EXPORT_SYMBOL_GPL(tick_nohz_dep_clear_cpu);
+>  
+> +/* Read policy, not whether a CPU currently has its tick stopped. */
+> +bool tick_nohz_full_get_allowed(unsigned int cpu)
+> +{
+> +	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
+> +
+> +	/* CPU teardown resets and restores this bit under stop_machine(). */
+> +	return !(atomic_read(&ts->tick_dep_mask) & TICK_DEP_MASK_POLICY);
+> +}
+> +
+> +int tick_nohz_full_set_allowed(unsigned int cpu, bool allowed)
+> +{
+> +	struct tick_sched *ts = per_cpu_ptr(&tick_cpu_sched, cpu);
+> +
+> +	if (!tick_nohz_full_cpu(cpu))
+> +		return -EINVAL;
+> +
+> +	/* CPU device removal may wait for an active sysfs callback. */
+> +	if (!cpus_read_trylock())
+> +		return -EBUSY;
+> +
+> +	if (allowed) {
+> +		tick_nohz_dep_clear_cpu(cpu, TICK_DEP_BIT_POLICY);
+> +	} else if (cpu_online(cpu)) {
+> +		/* The existing kick requests an asynchronous restart. */
+> +		tick_nohz_dep_set_cpu(cpu, TICK_DEP_BIT_POLICY);
+> +	} else {
+> +		/* Record policy without queuing irq_work on an offline CPU. */
+> +		atomic_or(TICK_DEP_MASK_POLICY, &ts->tick_dep_mask);
+> +	}
+> +	cpus_read_unlock();
+> +	return 0;
+> +}
+> +
+>  /*
+>   * Set a per-task tick dependency. RCU needs this. Also posix CPU timers
+>   * in order to elapse per task timers.
+> @@ -1533,6 +1571,7 @@ void tick_sched_timer_dying(int cpu)
+>  {
+>  	struct tick_sched *ts = &per_cpu(tick_cpu_sched, cpu);
+>  	unsigned long idle_calls, idle_sleeps;
+> +	int policy;
+>  
+>  	/* This must happen before hrtimers are migrated! */
+>  	if (tick_sched_flag_test(ts, TS_FLAG_HIGHRES))
+> @@ -1540,7 +1579,10 @@ void tick_sched_timer_dying(int cpu)
+>  
+>  	idle_calls = ts->idle_calls;
+>  	idle_sleeps = ts->idle_sleeps;
+> +	/* Preserve only the policy dependency across CPU offline/online. */
+> +	policy = atomic_read(&ts->tick_dep_mask) & TICK_DEP_MASK_POLICY;
+>  	memset(ts, 0, sizeof(*ts));
+> +	atomic_set(&ts->tick_dep_mask, policy);
+>  	ts->idle_calls = idle_calls;
+>  	ts->idle_sleeps = idle_sleeps;
+>  }
+> -- 
+> 2.47.0
+> 
 
-   const struct attestation_ops *ops;
-}
-
-That's the essential skeleton of what a subsystem should look like in
-linux, ctvl shouldn't co-opt it, it should embed like cdev does.
-
-Look at fwctl for reference
-
-Jason
+-- 
+Frederic Weisbecker
+SUSE Labs
