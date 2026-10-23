@@ -1,66 +1,54 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1792742704;
-	b=gDTUeM+Aosq/BcrgQnV7U1Iy1SO4lD+N8R7Mz+cdydRqjb38xA/hp1PeheUhG+vHfwsn
-	 GCAaqLq1iOoGij+XVXnha+iwvxr1PCfv8bZYPt5oy0u2k5Ki9TJUnVjMV8CgSY4IlDYGd
-	 MI19fJEm0WoLTfl9QPolDC7R+Tbf20d1d94RFrXZ5TugTfvd+54jtjl0RCJsPDMI29wBT
-	 sHv+GHHaJycecJw7/WJq9LteYj3gR8kTnK9bW9pdX7Uo2veT9kxk1vmXKzqWkfcC14PW5
-	 o1cLSyP3S29fjOWpfoBH0Upe7Geq2wI3jVlel9wIUxseVfxLdFmwO47Ff0lzaeP42vw==
+	t=1792754901;
+	b=QUOmSSpN3rnJPzNa8ThF5KGkCRqT065D6ztKvedt/KSi0RdULZUThEJ0z+W4dgQEvBmk
+	 0dvD5qTTHt5dun7bh+7cMV9QcA92VOGn5zS2vsDmVFpttNAscSOoP6MDXNuyCcbtj3H4I
+	 EMkgCeMAglg8Ya+JuQWe/2iXmCpdldEjGPjr3xUlGWf68nJhYBuHu1qGP9OapavxE9x9S
+	 Dbc9gzarVh7G0LF/tZqTnSY7Uhv806TR1k9L6NzT1VodM1VGfkJQBETQ2/lCoxNnC5IYf
+	 wC0NCujkNwFf57eMJRQ91GONnsvEZcmrfeSKlggVsYxht1IzGGRXZF1VJD29A1pPByg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792742704;
-	h=Received:DKIM-Signature:X-Mailer:From:To:Cc:Subject:In-Reply-To:
-	 References:Date:Message-ID:MIME-Version:Content-Type;
-	bh=m2tmSGXuQRVKV0r4MiiAuAOPVUluBMUb7eqsLcZmIXU=;
-	b=FUeZVafAaoiU5FIe+bjFddaMHiG+RM7LoMC37SNkhLkfncEtr4ff8EuaVbS9YtCaoacj
-	 7T9yrXF822KhBAjpd7Ti2iVaFFBnTZf0wIsi6MS4KZ4bC1sT+aYjUfqTvC6I955zOwWQE
-	 rK6CkO7NPnL9emWuJC01thItBu91tuvafBC7D7uuoArkPXLoze20HAaw3DUBv6MktETZE
-	 /5fg4OxZSqBSs47a2olag23pU3SaMQtkDOCa5CeF/cvSdQhFOz115U+rO86A3b9wQwFEo
-	 snLXTE2LE4m3QwaEPzHpv43wiLe+FSJUwBDzKicktNDW0ezCnJoXRZdnDHdex1U0mMw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1792754901;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=4KzbfWb4R5EF9vQndbPyhzkZkHPodQ4prV025x9/ldo=;
+	b=AijFimZOJWbQFW/T4tH3rSpJCDqyOT8GlVnEvL8dOvJrZPjkneM/h2qOPZU/W6MRIpc9
+	 JPecSgV1BwtuDTKLtXoAnpdK2e1p7g8I6ZkdctyJE6othLd9Yge0YAwo3pTThTg13dsW4
+	 y1c/YDcPohBz3o7XFesHQpnvBuYGS1V7481PsBKOB5zjxPPgxV6ps4bXycFdYFD9RZhj9
+	 pUKhoG++8sLJLEo+TJPWypRIaCyPwGHn/Y9CI34xy5lWQnrL7gRAgMSaFICFTonabaJDB
+	 VTz0IXaGOTUdqPdD9HdRChYpRUnzFXpzLIhWiuV4jmqeoq08Naf6604saf3/LDsbTgg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lBruzr1e;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=kKGPAaof;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8C0DF606A31D;
-	Fri, 23 Oct 2026 08:05:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CFD9C606A31A;
+	Fri, 23 Oct 2026 11:28:20 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lBruzr1e
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A0D521F01825;
-	Fri, 23 Oct 2026 08:04:56 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=kKGPAaof
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id F04ED1F01825;
+	Fri, 23 Oct 2026 11:28:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1792742704;
-	bh=m2tmSGXuQRVKV0r4MiiAuAOPVUluBMUb7eqsLcZmIXU=;
-	h=From:To:Cc:Subject:In-Reply-To:References:Date;
-	b=lBruzr1ee/0GkWnTWhoGc3vOszw1v2kglMLuJvfcNuqHtY/xPVO2mI6cP0MfiS6Aq
-	 8gdL6khYEHCDWyhE4rqSPItnrbF2BSSK8O1qTqBFnL8cOLwBpLhz/EgwUL9XaN22J9
-	 QqRxo2Ye7X68+GtPQcWcDWfwal4n/Ss0UA0oeOpoBJLZhwX/JBgs2CuUIPeUcecC/6
-	 kjj95Pc51jlPFVehIFzBeUF9QyR8VtHy3svgRAqLLvqnpyWiCSh0f4kUl6Nb4kpS1r
-	 jmbxXesjaIirUOBO+URQbV5l3DU/3NKgJcIu2o6ZGdKG9otHiiNnyI2D3fh8fAF8ow
-	 U9c7g+3FcDh+Q==
-X-Mailer: emacs 31.1 (via feedmail 11-beta-1 I)
-From: Aneesh Kumar K.V <aneesh.kumar@kernel.org>
-To: Jiri Pirko <jiri@resnulli.us>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
-	linux-doc@vger.kernel.org, jgg@ziepe.ca,
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
-	drdeeglaze@gmail.com, James.Bottomley@hansenpartnership.com,
-	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com,
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com,
-	ankita@nvidia.com, suzuki.poulose@arm.com, kas@kernel.org,
-	rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
-	dave.hansen@linux.intel.com,
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-In-Reply-To: <atooh7uO2RauUTfY@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <yq5a7bjajaco.fsf@kernel.org> <atooh7uO2RauUTfY@FV6GYCPJ69>
-Date: Fri, 23 Oct 2026 13:34:53 +0530
-Message-ID: <yq5av76sj10a.fsf@kernel.org>
+	s=k20260515; t=1792754900;
+	bh=4KzbfWb4R5EF9vQndbPyhzkZkHPodQ4prV025x9/ldo=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=kKGPAaofBrEX7ssLlFpzdZw3es7F0Zv/mPcfDWbhJhFaUcg/SCeBw9GLn4abp+5hD
+	 nTWKoDrbvJqwjAQ0hMn62gCFhAmCiYRJSAsi+AtQgM2APlcILhrMbQMs1r7yQoiPAA
+	 rXHiFbZ36uObjTepfLoo74ryNPGF3+a+ukmv53FCOXrVd9AGdOs4QfE3Uehz1yJ6ck
+	 mYFivhGed/lsICkoBuikZJKTdw+ulAxxXvFER1mtALtgQN5DkqW15+QfOvZTaQdpmx
+	 9UMz7N0EtQ6S6KEpxShco6Fza1eEtmBFsjX+rAdcHaPawuLokt8AXmABDXDjtG+BmH
+	 MsDzshzGMrs+g==
+Date: Fri, 23 Oct 2026 13:28:11 +0200
+From: Alejandro Colomar <alx@kernel.org>
+To: Andrey Albershteyn <aalbersh@kernel.org>
+Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v6 1/2] man/man2: introduce man page for file_getattr(2)
+ syscall
+Message-ID: <attEnAMmcV2YuwtN@debian>
+References: <20261021141010.314835-1-aalbersh@kernel.org>
+ <20261021141010.314835-2-aalbersh@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -70,134 +58,337 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="544li3fyfgezh5tt"
+Content-Disposition: inline
+In-Reply-To: <20261021141010.314835-2-aalbersh@kernel.org>
 
-Jiri Pirko <jiri@resnulli.us> writes:
 
-> Thu, Oct 22, 2026 at 12:30:47PM +0200, aneesh.kumar@kernel.org wrote:
->>Jiri Pirko <jiri@resnulli.us> writes:
->>
->>> From: Jiri Pirko <jiri@nvidia.com>
->>>
+--544li3fyfgezh5tt
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+From: Alejandro Colomar <alx@kernel.org>
+To: Andrey Albershteyn <aalbersh@kernel.org>
+Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-xfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH v6 1/2] man/man2: introduce man page for file_getattr(2)
+ syscall
+Message-ID: <attEnAMmcV2YuwtN@debian>
+References: <20261021141010.314835-1-aalbersh@kernel.org>
+ <20261021141010.314835-2-aalbersh@kernel.org>
+MIME-Version: 1.0
+In-Reply-To: <20261021141010.314835-2-aalbersh@kernel.org>
 
- [ ... 67 lines skipped ... ] 
+Hi Andrey,
 
->>>
->>
->>I am using this to understand what the IDE setup flow would look like,
->>but it is unclear whether the connect flow belongs in an attestation
->>framework. I understand the desire to pass the certificate slot number
->>as part of connect, and sysfs is probably not a suitable interface for
->>that. However, is CTLV the interface we want to use for connect?
+> Date: 2026-10-21 16:10:04+0200
+> From: Andrey Albershteyn <aalbersh@kernel.org>
 >
-> I was thinking about this and "connect" really does not belong in the
-> attestation CTLV (same applies to "lock"). I was thinking about some
-> parallel PCITSM CTLV instance, but that does not really click as well.
->
-> Currently I'm thinking we can maintain existing "connect" in sysfs and
-> extend it with "lock" sysfs knob for Realm side. Both would create
-> ctlv-attestation-spdm instance. The same spdm instance may be created
-> for other non-PCI-backed device.
->
-> The proposed host flow is:
->
->     sysfs connect: select tsmN and prepare the connection
->         -> negotiate SPDM and discover certificates
->         -> register ctlv-attestation-spdm instance in DISCOVERED state
->
->     SPDM_GET
->         -> populated certificate slots and digests
->
->     EVIDENCE_GET(CERT_CHAIN, blob-instance=slot) /*optional*/
->         -> retrieve candidate certificate chain for appraisal
->
->     SPDM_AUTHENTICATE(device-generation, spdm-slot=selected_slot)
->         -> authenticate the selected chain
->         -> complete backend-required session and IDE setup
->
->     sysfs disconnect
->         -> remove the attestation instance
->         -> destroy the native connection
->
-> The slot is therefore selected after discovery, rather than supplied to
-> connect. The attestation instance represents the prepared connection; it
-> does not exist beforehand as a controller for a disconnected PCI function.
->
+> Add manual page for file_getattr().
+>=20
+> Link: https://lore.kernel.org/all/20250630-xattrat-syscall-v6-0-c4e3bc352=
+27b@kernel.org/
+> Reviewed-by: Alejandro Colomar <alx@kernel.org>
+> Signed-off-by: Andrey Albershteyn <aalbersh@kernel.org>
 
-CCA currently takes the device identity index during pdev_create. I am
-investigating how to retrieve the certificate chains for all slots. For
-now, I have implemented the sequence below.
-
-echo tsm0 > /sys/bus/pci/devices/$DEVICE/tsm/connect
-
-./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 device-get                                                               
-# device-get, 1 fragment, generation 0                                                                                      
-  device.generation 0            
-  device.caps                                                                                                               
-    cap.evidence                                                                                                            
-      cap.min-challenge-length 0                                                                                            
-      cap.max-challenge-length 0                                                                                            
-      cap.max-total-output-length 369098752                                                                                 
-      cap.evidence-flags evidence-accept
-      cap.object                                                                                                            
-        cap.blob-class cert-chain                                                                                           
-        cap.blob-instance 0                                                                                                 
-        cap.format spdm-cert-chain
-        cap.representation raw                                                                                              
-        cap.representation tcb-digest                                                                                       
-        cap.hash-algo 4                                                                                                     
-        cap.hash-algo 5          
-        cap.hash-algo 6                                                                                                     
-        cap.max-length 16777216                                                                                             
-  device.info                                                                                                               
-    pci.name 0000:02:00.0                       
-
-I think we can use evidence-refresh to select the blob-instance for the
-desired slot once the CCA specification supports that.
-
- ./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 state-get                                                                
-# state-get, 1 fragment, generation 0
-  pci.generation 0                                                                                                          
-  pci.connected 1                                                                                                           
-  pci.locked 0                                                                                                              
-  pci.accepted 0                 
-  pci.tsm-id 0                                                                                                              
-  pci.dsm 0000:02:00.0                                                                                                      
-
-device is marked connected, but IDE is not setup as indicated by pci.accepted = 0
+Thanks!  I've applied the patch (with very minor tweaks in the commit
+message an the diff).
 
 
-./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 evidence-get --json '{
-"evidence.challenge": "hex:", "evidence.object": [{
-"evidence.blob-class": "cert-chain", "evidence.format":
-"spdm-cert-chain", "evidence.blob-instance": 0,
-"evidence.representation": "raw", "evidence.data": { "file":
-"/tmp/cert0.bin", "data-buf-size": 16777216 } }] }'
-# evidence-get, 1 fragment, generation 0                                                                                    
-  device.generation 0                                                                                                       
-  evidence.generation 1                                                                                                     
-  evidence.object-length 1632           
+Have a lovely day!
+Alex
 
+> ---
+>  man/man2/file_getattr.2 | 252 ++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 252 insertions(+)
+>  create mode 100644 man/man2/file_getattr.2
+>=20
+> diff --git a/man/man2/file_getattr.2 b/man/man2/file_getattr.2
+> new file mode 100644
+> index 000000000000..9963eeaa7caf
+> --- /dev/null
+> +++ b/man/man2/file_getattr.2
+> @@ -0,0 +1,252 @@
+> +.\" Copyright, the authors of the Linux man-pages project
+> +.\"
+> +.\" SPDX-License-Identifier: Linux-man-pages-copyleft
+> +.\"
+> +.TH file_getattr 2 (date) "Linux man-pages (unreleased)"
+> +.SH NAME
+> +file_getattr \- get filesystem file attributes
+> +.SH SYNOPSIS
+> +.nf
+> +.BR "#include <linux/fcntl.h>" "      /* " AT_* " constants */"
+> +.BR "#include <linux/fs.h>" "         /* " FS_XFLAG_* " constants */"
+> +.BR "#include <sys/syscall.h>" "      /* " SYS_* " constants */"
+> +.B #include <unistd.h>
+> +.P
+> +.B long syscall(SYS_file_getattr,
+> +.BI "               int " dirfd ", const char *" path ,
+> +.BI "               struct file_attr *" fattr ", size_t " size ,
+> +.BI "               unsigned int " flags );
+> +.fi
+> +.SH DESCRIPTION
+> +The
+> +.BR file_getattr ()
+> +system call retrieves filesystem file attributes
+> +of the file
+> +specified by path.
+> +.P
+> +The
+> +.I dirfd
+> +and
+> +.I path
+> +arguments behave in the same way as in
+> +.BR openat (2),
+> +with the difference that
+> +.I path
+> +can be NULL meaning an empty string.
+> +.P
+> +The
+> +.I fattr
+> +argument is a pointer to a
+> +.I file_attr
+> +structure.
+> +This structure will be filled with file attributes.
+> +This structure is described in
+> +.BR file_attr (2type).
+> +.P
+> +The
+> +.I size
+> +argument specifies the size of the structure pointed to by
+> +.IR fattr .
+> +The size indicates the version of the structure in use,
+> +and should always be specified as
+> +.IR sizeof(struct file_attr) .
+> +.P
+> +The
+> +.I flags
+> +argument contains a bitwise OR of zero or more of the following constant=
+s:
+> +.TP
+> +.B AT_EMPTY_PATH
+> +If
+> +.I path
+> +is an empty string,
+> +operate on the file referred to by
+> +.IR dirfd .
+> +In this case,
+> +.I dirfd
+> +can refer to any type of file,
+> +not just a directory.
+> +.TP
+> +.B AT_SYMLINK_NOFOLLOW
+> +If
+> +.I path
+> +is a symbolic link,
+> +do not dereference it;
+> +instead,
+> +get attributes of the symbolic link inode itself.
+> +.SH RETURN VALUE
+> +On success,
+> +zero is returned.
+> +On error,
+> +\-1 is returned,
+> +and
+> +.I errno
+> +is set to indicate the error.
+> +.SH ERRORS
+> +.TP
+> +.B E2BIG
+> +.I size
+> +is too big (larger than
+> +.BR PAGE_SIZE ).
+> +.TP
+> +.B EACCES
+> +Search permission is denied for one of the directories
+> +in the path prefix of
+> +.IR path .
+> +.TP
+> +.B EBADF
+> +.I path
+> +is relative but
+> +.I dirfd
+> +is neither
+> +.B AT_FDCWD
+> +nor a valid file descriptor.
+> +.TP
+> +.B EBADF
+> +.I path
+> +is an empty string,
+> +.B AT_EMPTY_PATH
+> +was specified,
+> +but
+> +.I dirfd
+> +is neither
+> +.B AT_FDCWD
+> +nor a valid file descriptor.
+> +.TP
+> +.B EFAULT
+> +.I path
+> +or
+> +.I fattr
+> +is an invalid pointer.
+> +.TP
+> +.B EINVAL
+> +Unknown flags specified in
+> +.IR flags .
+> +.TP
+> +.B EINVAL
+> +.I size
+> +is smaller than
+> +.BR FILE_ATTR_SIZE_VER0 .
+> +.TP
+> +.B ELOOP
+> +Too many symbolic links encountered while resolving
+> +.IR path .
+> +.TP
+> +.B ENAMETOOLONG
+> +.I path
+> +is too long.
+> +.TP
+> +.B ENOENT
+> +A component of
+> +.I path
+> +does not exist.
+> +.TP
+> +.B ENOENT
+> +.I path
+> +is an empty string and
+> +.B AT_EMPTY_PATH
+> +was not specified in
+> +.IR flags .
+> +.TP
+> +.B ENOMEM
+> +Insufficient kernel memory was available.
+> +.TP
+> +.B ENOTDIR
+> +A component of the path prefix of
+> +.I path
+> +is not a directory.
+> +.TP
+> +.B ENOTDIR
+> +.I path
+> +is relative and
+> +.I dirfd
+> +is a file descriptor referring to a file other than a directory.
+> +.TP
+> +.B EOPNOTSUPP
+> +The filesystem does not support getting attributes on this type of inode.
+> +.SH HISTORY
+> +Linux 6.17
+> +.SH NOTES
+> +This system call is designed to be extensible.
+> +The
+> +.I size
+> +argument allows user-space applications to indicate
+> +which version of the
+> +.I file_attr
+> +structure they are using,
+> +enabling the kernel to support both old and new versions
+> +of the structure simultaneously.
+> +.P
+> +If
+> +.I size
+> +is smaller than the structure size the kernel expects,
+> +only the fields that fit within
+> +.I size
+> +will be filled in.
+> +If
+> +.I size
+> +is larger than the kernel's structure size,
+> +the extra bytes are zeroed.
+> +.SH EXAMPLES
+> +The program below demonstrates the use of
+> +.BR file_getattr ()
+> +to retrieve and display file attributes.
+> +.P
+> +.in +4n
+> +.\" SRC BEGIN (file_getattr.c)
+> +.EX
+> +#define _GNU_SOURCE
+> +#include <fcntl.h>
+> +#include <linux/fs.h>
+> +#include <stdio.h>
+> +#include <stdlib.h>
+> +#include <sys/syscall.h>
+> +#include <unistd.h>
+> +\&
+> +#ifndef SYS_file_getattr
+> +#define SYS_file_getattr 467
+> +#endif
+> +\&
+> +int
+> +main(int argc, char *argv[])
+> +{
+> +    struct file_attr fa;
+> +    long ret;
+> +\&
+> +    if (argc !=3D 2) {
+> +        fprintf(stderr, "Usage: %s <filename>\[rs]n", argv[0]);
+> +        exit(EXIT_FAILURE);
+> +    }
+> +\&
+> +    ret =3D syscall(SYS_file_getattr, AT_FDCWD, argv[1], &fa,
+> +                  sizeof(fa), 0);
+> +    if (ret =3D=3D \-1) {
+> +        perror("file_getattr");
+> +        exit(EXIT_FAILURE);
+> +    }
+> +\&
+> +    printf("File attributes:\[rs]n");
+> +    printf("  xflags:     0x%w64x\[rs]n", fa.fa_xflags);
+> +    printf("  extsize:    %w32u\[rs]n", fa.fa_extsize);
+> +    printf("  nextents:   %w32u\[rs]n", fa.fa_nextents);
+> +    printf("  projid:     %w32u\[rs]n", fa.fa_projid);
+> +    printf("  cowextsize: %w32u\[rs]n", fa.fa_cowextsize);
+> +\&
+> +    /*
+> +     * Try setting NODUMP flag with chattr +d ./foo to see
+> +     * the difference.
+> +     */
+> +    if (fa.fa_xflags & FS_XFLAG_NODUMP)
+> +        printf("  NODUMP flag is set\[rs]n");
+> +\&
+> +    exit(EXIT_SUCCESS);
+> +}
+> +.EE
+> +.\" SRC END
+> +.in
+> +.SH SEE ALSO
+> +.BR file_setattr (2),
+> +.BR file_attr (2type),
+> +.BR ioctl (2),
+> +.BR ioctl_fs (2),
+> +.BR openat (2),
+> +.BR ioctl_xfs_fssetxattr (2)
+> --=20
+> 2.56.0
+>=20
+>=20
 
-I added the file: attribute to verify the evidence blob's contents. ie,
-we can do:
+--=20
+<https://www.alejandro-colomar.es>
 
-# file cert0.bin  
-cert0.bin: Certificate, Version=3
+--544li3fyfgezh5tt
+Content-Type: application/pgp-signature; name="signature.asc"
 
-./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 evidence-accept device.generation=0 evidence.generation=1
-# acknowledged
-./ctlvctl/ctlvctl --spec-dir=./specs/ exec ctlv0 state-get
-# state-get, 1 fragment, generation 0
-  pci.generation 0
-  pci.connected 1
-  pci.locked 0
-  pci.accepted 1
-  pci.tsm-id 0
-  pci.dsm 0000:02:00.0
+-----BEGIN PGP SIGNATURE-----
 
+iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmrbRMsACgkQ64mZXMKQ
+wqnYSg/8C3uP8izC0yO8ulYgq2QII1Fx6GtDZM2RzUS5nbltbs3B6TQ+qygT2EII
+ziOHSjXT0ZWFNG8xqjTTOt2DUv3j+GlE39idwNwDuBSvA7xiCfF7u7rVqlEdg1HE
+GNh/MJjVS5Y7oEldxPHDBeeK6JJifXiJMfaLGbYawQFMJYHarXWv59vUjskbe8D7
+0Hr4sPBax6iAmAAGhBdcDsK47I4zlej+VRsOkOU1vqHoJjmhtMekPEanrKlXKhBZ
+QVfuX925iv7x/fDqonc7sCVbnoFu/CRTwV3J5nuyN9TeN3t2ISSlc38a3A1bzB05
+kkeSUg2IauZqgn5lN26lGaWePUCMToYKkDtmd8WCP/BYBXkKjJiQJv0buQxyv5Ed
+oVXe87WxwZT1ulzJYcnMH5gQPsRfr0YC8yowwFKCH5UTKdu1I3Hz4Ivtx3KBj1Mm
+52X4Kd4F30bMYM0HsE1coCQy48chzyVoCNh3YYFN9rUOzhTyDK4iDm3a+pFmsCAL
+br6EYUbmmxI3fSmuJ2YHILh4pK3CeV7r/gcIqyZSP/vaWLbE+85E/6xVgE5pHl6A
++qTqXaEDyiuL07Q0cPM9A11GwJOuvWXSJLKk9oOJbD2YSD/cdNkorGjqO36BX1j2
+ncQfr73e8VIszvaxfDMRZgRckmGXSSRjXzcK6ge4sYeUjlRwjUs=
+=BQwW
+-----END PGP SIGNATURE-----
 
-I am wondering why we need 'devsec-run' ops. Isn't that already the result of
-'evidence-accept'?
-
--aneesh
+--544li3fyfgezh5tt--
