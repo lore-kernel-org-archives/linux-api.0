@@ -1,168 +1,60 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=52.103.23.10
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1792844506;
-	b=oSLVdf0QAzSn87lGQmPxBoy3VygslKVmR0IoDkUESjjqN+W7kZRf6ZmEJW3fhHZ+IcYG
-	 JL7oFk2owvpVOIPopTjMeg6RWr1wLhLHdXcI28RQv4RcL7DRFji27eKc7Bv669LtWuhjO
-	 qg4S36hJXBwIjZRw/INJPOvuVGJMWsLwinuzqCGvcYq4Nu0/PuMvV4stmHT9ovZSydmiI
-	 t2Ed6zkG2Lehj/KqOcc6yubWrdkfE4J9pXXGZIHs4VWvxaXKhEODPquWlpm7VrY7FB9Ku
-	 3b52u26rHNxKGfGcziZ9bk/j2rfPNV/6/N4zyoOLUHBseKzrcB2YSV5R+hVsm1JOZjA==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1792844506;
-	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:CC:Subject:
-	 Thread-Topic:Thread-Index:Date:Message-ID:References:In-Reply-To:
-	 Accept-Language:Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
-	 x-ms-publictraffictype:x-ms-traffictypediagnostic:
-	 x-ms-office365-filtering-correlation-id:x-microsoft-antispam:
-	 x-microsoft-antispam-message-info:
-	 x-ms-exchange-antispam-messagedata-chunkcount:
-	 x-ms-exchange-antispam-messagedata-0:Content-Type:
-	 Content-Transfer-Encoding:MIME-Version:X-OriginatorOrg:
-	 X-MS-Exchange-CrossTenant-AuthAs:X-MS-Exchange-CrossTenant-AuthSource:
-	 X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg:
-	 X-MS-Exchange-CrossTenant-Network-Message-Id:
-	 X-MS-Exchange-CrossTenant-originalarrivaltime:
-	 X-MS-Exchange-CrossTenant-fromentityheader:
-	 X-MS-Exchange-CrossTenant-id:
-	 X-MS-Exchange-CrossTenant-rms-persistedconsumerorg:
-	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
-	bh=gOmA1ZeGF8a3S6Vxtj6eyuD9Thm+qTYkpGAnGLekx8Y=;
-	b=enQ/AR0Hmp+wmCQb8hEc1isqP+5mEzz1G9htexaziT9evpZJFoYHb+j4sHuIK7g6k4fx
-	 gYGHgg224IPIdflBoZHed1dLLdvndXTe3ZDDMs+Ic0XA4Jyup+rgT0yslofyqPd/T6vQD
-	 rZgIUFF0KOS0vM5hfAvytbcKAhHFRktlmpI7UggVMbHS/M2u+rMqKKNE45YEzh6EpY0I6
-	 HHankQOJ8+bWP2mRLIu17j2r13yGeipMq6sNbLXx4SAJCezkDSeeMLmPGEM7ZGOGAIgoV
-	 0tGwW8qyIUmL5hBgpEeZ/A/WrEX3kYvj8AF3u76Z9J3qkjo0ZKpboA9TH0kDIhv7DOA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=outlook.com;
-	spf=pass smtp.mailfrom=outlook.com;
-	dkim=pass header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b=vRFw8ujB;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=52.103.23.10
-Received: from PH8PR06CU001.outbound.protection.outlook.com (mail-westus3azolkn19012010.outbound.protection.outlook.com [52.103.23.10])
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1792848203;
+	b=DxGskP0Pt+c16JpqK1scvOeaC0KkS2OgkNFIGFr5ZR06XhClhfgYtSAPmDv8wllav33B
+	 5xTN51xqjRsF3aP6H+sc6KeF6u6eUJCxwKF3C3mnYz+p8ZjvurHiuw1qvb0yd5hWvC8Ud
+	 W/+sXwNw9ZhECrNwaqpPF2qMCA0cjQgCr8hH7w423NGtDuo/e+2P0yu/NrKaFAjS6/H03
+	 YRbfPRSIoKhnyGg1zvQ+DS5bxqIrqoaElphgIb2GgdDKoKep+NZt1JfRoUZqRaB/ahjoZ
+	 py4Kc61HjYzeVy9nXEX9AN2JRwnGlNHMNtwLN82QlcYOA6E8Zpi5Z3EuZaz9n5tE67w==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1792848203;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=AenfdRm90WrSjoi864BFabnLzqWgO/qqA3F0PRLFjp0=;
+	b=L3u/c/TVi4fnca8dkn+MkD1lnrw/b87sNi1CYaywsZxDRcpqibg7IRDtKb2214an2kw/
+	 TEvwRI/GK1NP/dVBZEwsHhteNTmJ2gYIQCy690o0Qxo4Zu9RKZ9AmBIxH1iYvZe6L1n97
+	 +aXY4xFZSVUU+RHmIZZwhhwfdU5vh5QEBsa0R0Fld0IWzo9Y+VV0h44mnMiNLfC9pHzUI
+	 2bD2jENDK4xQoW+13VpeV0kZhiuH3xUhZTRI1hEKPgijQIa4B7r2+9vWGUKIAx5q+Edbh
+	 69HmPndCLUIvWPW45atle9oBKcEGp+IWjRBBgHiGOy12nDt2TYQ7QAto1EEqA2oSxeA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=napl7AQi;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D03BF606A337;
-	Sat, 24 Oct 2026 12:21:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D03BF606A337
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=outlook.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=outlook.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 332E1606A31A;
+	Sat, 24 Oct 2026 13:23:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b=vRFw8ujB
-ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=NvpkLtYHf8F28dcj6mEml/DZPFAgi9YoE4+HAe9OnX9Lw5xF1cE6gkHbkmBaIpF5lDVm55oa9PTSzexjiy67R3ZlYAZI+Fmz6/LrNv1hQVSgRPI8ExkO3iaqQzPI6w9CiWCHWanTdyxy+mYm/rzzuNMY4MLxDMAaeUr0PvIDwFhtifRu++YjssLPmGn3gDUZm7BzGA/LLLiPV8KVKThNdz4Q4UgBAWvOw5uZetSuCa177ZuoGZ6+BBLp0GWc1cUlqTZESxE8Ie8QM32cAJOrULkVCKvuMjJ+e3DoTjDc5M3qt2+HnqqynU3TVEtzIRsF1Q2JbjT3P70GizTAIGQnhw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
- s=arcselector10001; h=From:Date:Subject:Message-ID:MIME-Version;
- bh=gOmA1ZeGF8a3S6Vxtj6eyuD9Thm+qTYkpGAnGLekx8Y=;
- b=kcv3I+b6PfbBAe6NOgjU9pRS2e8STRHsWym63rFBGEi+jdGGEJSorliUTYtx2RNOaWLf6cL0i5yWhAAl71uoUg2WffdHM08RX/A4Gn4RvtyeMTW4agDp1qM+7cEZyeLvigA93CTvZxWWX7O9dgGoHWvdwSaJDgDhZDUEJDzrRIGL1ouvx9vnLUdXYGlHVm+O4SA51FYdak7LuN4gpAB8fI+6nxY5JnvN3s6JjSdrahUf4VrKn+leex40YmnCufuqVFDLahSsVwkC0iDv6eD4NoHeFLfWPoEKRKgMB1l3IClV/vMMUkQGLBOEFeFWy6vEYFi3FEaJqjhhyTZSHtWh+Q==
-ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
- dkim=none; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=outlook.com;
- s=selector1;
- h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=gOmA1ZeGF8a3S6Vxtj6eyuD9Thm+qTYkpGAnGLekx8Y=;
- b=vRFw8ujBXi20xwulJcaHIG+Hn74bbHu1C+GBsyT3iQcVv/j3B+LWcLyOMxR1Nr95ED+lZhTzaceF9QAqR5Yd8pu1VopZjyejU+WLyR4Qx1IgVnIdr+yRM4nQx/cEyA8MvCLndK2cgNwPczWRWkHzAmc5fT+ZCKA11Lpc/DHg3NpJHY1oIaD1Yxp1XSURVie0heRkzQOv9+sGkJKiq+SiwfoxdcRJ5x/g9hMJQ8gcRZuLqnVVLncRODJFh6G9hFoSudOYwnFNd73gEV7Q8hsylmQibi0jZayFva82A23+DlYWdtebtiBebs/pitqbvEzBayWPXBxFAqHSlB79hclInA==
-Received: from SA3PR05MB10385.namprd05.prod.outlook.com
- (2603:10b6:806:39d::17) by PH7PR05MB9058.namprd05.prod.outlook.com
- (2603:10b6:510:1fe::5) with Microsoft SMTP Server (version=TLS1_2,
- cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.546.20; Sat, 24 Oct
- 2026 12:21:43 +0000
-Received: from SA3PR05MB10385.namprd05.prod.outlook.com
- ([fe80::e22f:a0f5:fcb0:9b0d]) by SA3PR05MB10385.namprd05.prod.outlook.com
- ([fe80::e22f:a0f5:fcb0:9b0d%6]) with mapi id 15.21.0546.017; Sat, 24 Oct 2026
- 12:21:43 +0000
-From: Yingjie Wang <x-professor@outlook.com>
-To: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, Manfred Spraul
-	<manfred@colorfullife.com>, Alexey Gladkov <legion@kernel.org>, "Eric W .
- Biederman" <ebiederm@xmission.com>
-CC: Yingjie Wang <x-professor@outlook.com>, Vasily Averin
-	<vasily.averin@linux.dev>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt
-	<shakeel.butt@linux.dev>, =?utf-8?B?TWljaGFsIEtvdXRuw70=?=
-	<mkoutny@suse.com>, Michal Hocko <mhocko@suse.com>, Alejandro Colomar
-	<alx@kernel.org>, "linux-kernel@vger.kernel.org"
-	<linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>,
-	"cgroups@vger.kernel.org" <cgroups@vger.kernel.org>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"linux-man@vger.kernel.org" <linux-man@vger.kernel.org>
-Subject: [PATCH v3 3/3] ipc/sem: remove obsolete SEMOPM fragmentation warning
-Thread-Topic: [PATCH v3 3/3] ipc/sem: remove obsolete SEMOPM fragmentation
- warning
-Thread-Index: AQHdY7I78TSz9U0Vs0GMc6gS5bS33A==
-Date: Sat, 24 Oct 2026 12:21:43 +0000
-Message-ID:
- <7959bcd834d1579c13f244d4aea7ab655d2b0051.1792808260.git.x-professor@outlook.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=napl7AQi
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 4B4EB1F01825;
+	Sat, 24 Oct 2026 13:23:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1792848202;
+	bh=AenfdRm90WrSjoi864BFabnLzqWgO/qqA3F0PRLFjp0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=napl7AQi2UiTBpTwoXjQ8MJt+9SLLnPFu7CuUVg7W/aRolDGozszZGUlIaGY+Cq/N
+	 OM471O3WWvM9+LNDFoZVYSx2OjzdA0u+FiDe6SRoEIwe9QgI2HgFtNIw0KfL8rNN1C
+	 32HI0xaj8v6w0CTprcI98iFZnFQKn2n+ja77zSSYDNUIBkUxaAMMZmyL7RNCmzuvYM
+	 xXu8APRXiotFV/J3gUsH3y1ycY8zXwuC6YoPteRB/kTOqpq87i/lshG/WOt9KNJ7l2
+	 2y5CPcgneTBH/sgUMaPQpWYCZHPWj3xP7tQ4BRrLucpNUdwqSrf25DUssebpwne0sm
+	 AqfzKMgSYqN6Q==
+Date: Sat, 24 Oct 2026 15:23:11 +0200
+From: Alejandro Colomar <alx@kernel.org>
+To: Yingjie Wang <x-professor@outlook.com>
+Cc: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, 
+	Manfred Spraul <manfred@colorfullife.com>, Alexey Gladkov <legion@kernel.org>, 
+	"Eric W . Biederman" <ebiederm@xmission.com>, Vasily Averin <vasily.averin@linux.dev>, 
+	Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeel.butt@linux.dev>, 
+	Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>, Michal Hocko <mhocko@suse.com>, 
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, 
+	"cgroups@vger.kernel.org" <cgroups@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, 
+	"linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>, 
+	linux-hardening@vger.kernel.org
+Subject: Re: [PATCH v3 2/3] ipc/sem: reject negative SEMOPM values
+Message-ID: <atyvbQ5xxtxcxBZE@debian>
 References: <cover.1792808260.git.x-professor@outlook.com>
-In-Reply-To: <cover.1792808260.git.x-professor@outlook.com>
-Accept-Language: en-US, zh-CN
-Content-Language: en-US
-X-MS-Has-Attach:
-X-MS-TNEF-Correlator:
-x-ms-publictraffictype: Email
-x-ms-traffictypediagnostic: SA3PR05MB10385:EE_|PH7PR05MB9058:EE_
-x-ms-office365-filtering-correlation-id: 0979b97e-1d04-426e-04d8-08df31c95d92
-x-microsoft-antispam:
- BCL:0;ARA:14566002|19110799012|8060799015|8062599012|31061999003|25010399006|4140399003|24021099003|16051099003|38102599003|15080799012|24121999003|22091999003|40105399003|52005399003|26121999007|102099032|440099028|3412199025|1710799026;
-x-microsoft-antispam-message-info:
- =?utf-8?B?RmZuQkRiVlhvSmh3U3JHUGUvMG53c0FsTHFWWHNIY3RRYi9XZk53L1Q3NUpF?=
- =?utf-8?B?Ym9sTUdIK05kSEhNU0FaV2RyczhiRlpSTk91c3BycENCbWRNL0laSTJwWm5k?=
- =?utf-8?B?ZW9RL2F0NFdpellMQkhqNDFTL0RBUFpBK0JhcURQYldVVnNPOGliaVRCdDJi?=
- =?utf-8?B?R3M3SElSd1p2anE5MzhjT0tPKzJuNEhkbDQvVGN6UjdnQVQ0VmdkelNuTlNx?=
- =?utf-8?B?Ull6b0dlcCtpL1FWRWZycGhtVTRQM29vbUxaY0wrL2s2ZDZhSVBiQys2QkZs?=
- =?utf-8?B?dlkwRXpmSGVTeDJMbTBPWnl6VzFadzh1ODl5Y1FmSzRnc3NjUXdJbWNjNzl1?=
- =?utf-8?B?REVlUkhXaWx2MEF3N0JaS0tKSFRqaVRzYStDZ2lUSDllNGp5emVwQjJPZ1dm?=
- =?utf-8?B?dkNvQ2dyUk1Rc3dsdHhONU93MUE5MTdLbXNnWFZWRnp6NnFZWFM0eDlCUlRa?=
- =?utf-8?B?OUlXVUpXSkRmR05sMi94ZERZd1pPdVNjOHVUTUtwUU1YWmpySjVwR0RzSEVU?=
- =?utf-8?B?RXJ0WU9oRmh0M3dub0Q2amtOanZSS0RtTkwwOFYvSDQzMWdOS01HT29ETkpt?=
- =?utf-8?B?QkU2ZWlQVTdia0xjZ08rdU5yTzk3T2liUDd6aUhUMFRiWTRHdSsyeFZHdEJu?=
- =?utf-8?B?d0NpenYzZERISTRmZVNNWmJoOEZ2a0krdWhNRGhiU3o5Y0ZEd3dSVWRWYm1F?=
- =?utf-8?B?RVpwM2JFdVN4ajArWTQ1dGFmMjdEKzFPbE9BU3FWRWdMUTQvSFg3RTZmT3FB?=
- =?utf-8?B?VkxsdXRuYkdkRWI4WTZUMWFtNjVTRlNxaWdsazZQelkyRk9PNy9yM1BrZFpo?=
- =?utf-8?B?eUdNR2p6bU5aQjZCcldMQjhuVUVmUU16RVZOMFJ3ZWJJSjRHK0t5Q0xUZEpm?=
- =?utf-8?B?eW5LRXp0cUtLNTJCZmEzSmRsaWpsNTh0WnRyMGd5ZFNJU04yUERjeDZmcmNJ?=
- =?utf-8?B?Z3VqaGZtVm5NQjVEK1A2VjY0TU96QjU3a2l3REtkMjUzamNPempsSndhYkdZ?=
- =?utf-8?B?Rkd0cUUyQzMwZ0ovQm5zNmxScm43b29NQmlsMUZ0Z0FHbXlZMElCTExHRk9F?=
- =?utf-8?B?eXlubS9Ma1JQOHFiNXlFWUl4ZStLRzdhdHdtaXRMZi9LdEtoWEF6b1AxeEh1?=
- =?utf-8?B?QWcvdkQ4RmVtMnNxZUJ3UW9rd3NqczJDaTd0R1VJYkM2aEp6OTlmUGJ1OUxv?=
- =?utf-8?B?SEtwTStxQUZHSjkraE5LTUhoalRxeGQxdGZXbWRNMUNPU0FycE41eTZnNUJo?=
- =?utf-8?B?N3BwNEJ2bEc3cmRDS1pWd0RBQ1ZMRGlXK1orTTZkQ3hNWHVoVFZiM2E3Qnpz?=
- =?utf-8?B?NUNwMnBHNnBrWmxPZFduc0FqL2Z1K042NHp2YzZ1YkxMK0pLK3diVm5FWG1a?=
- =?utf-8?B?WDN1d0d1RlVMN2oyOFQ1Vm13bmdHcDNkTWVFWGo5MHNXVUxZdGpkZkJLRXVr?=
- =?utf-8?B?SnprZnoyZFdEWDMyVlBIWDN3bEFWMFcxYWVrWVJ0MmxjWFFRLzVNVW5tUllF?=
- =?utf-8?Q?0OxTMGiCW3BHFstuZUjjo2meAGe?=
-x-ms-exchange-antispam-messagedata-chunkcount: 1
-x-ms-exchange-antispam-messagedata-0:
- =?utf-8?B?MHZJS1grR21xOUp5eTIwTnpnTHRuQm1CWTYySTR3N1JzVUxYbDc2ZEdHZU1I?=
- =?utf-8?B?VC9POFA5MXN2OUxoWWVST1ZYLzZFNzFYRFdRc3lRNWMzRERFbzdFKzRWY29T?=
- =?utf-8?B?Qm5ITzhRWEp0Z1ZjMG9jcVB0R3ZKQmRWdVhJakxydDhPZmpmZDBoT2FITWZY?=
- =?utf-8?B?OUhJM1MraXV3enE2bFNNK1liR1lhQm1MTXhjWWtJRUlXK0VPVjdlTW1aOHRD?=
- =?utf-8?B?dkJNZlZWVkhOTk4rbG9vYy96MGw1bVBES1pmcDdZbUdxc1MxRGFtb1NVcEZM?=
- =?utf-8?B?OHNXV0VaRk9XdDNBbVkxc21VeG81WVJDUWRnb1lGOWpLemJidGdSeFlaZU8x?=
- =?utf-8?B?cG5lQ0NIVHRkcGhFd25FNDRtNDFqbnc3MHRZMXVZemw5Ymx4ODNTZlJ6bGJh?=
- =?utf-8?B?OHhCSkk2OFFSNGJ5VFk5VzZFRzBFYTZMMnRReFd5enhOajF6VTRxaHdEUHNR?=
- =?utf-8?B?c2haN2NQNVVCQlZSQnlhMmVERlIyRUR6WUlrYlk1enQ5dC9wVzBOZlhWWnRu?=
- =?utf-8?B?RFgvWnRCK0xlbm5RdzdxVHh2cFBWUUdKRUM4R0ZLSHdvVUZrSnBpdExBTHF1?=
- =?utf-8?B?bUZHUDd5TkswNXM0UkhVYTRTWm1SUlg3UXZuUFBQRjdPWkF5NkVBTHl0azIr?=
- =?utf-8?B?cVFkZUVVY0VwT1lQNmR0UUNhbHpSQUpvYlV5SjF2c09PVDM4Z0RsSldIL0Fi?=
- =?utf-8?B?cjZkRWQ1SHZvenJmc1FhdDFPcC9PRC9FcTV4Zmx1SjdUb0dHWWkwZ2dRdnU0?=
- =?utf-8?B?SjUwbW5EcGJjc2tQQzNhSkltNnh2UmlJODl6dkVucVBQWlVScUhGZXN4WjhV?=
- =?utf-8?B?ZWdCWjluN1kxaVg2L3J0OFVoMUJCM3FBdVQwallCYmVONmFXb05pMTM5Sjlj?=
- =?utf-8?B?SXdHeG4wb0doNkg0Z1RQNG9zTm1yYUZ1V2FDcGdoRXk4UEVEZ1RxSStBYmNj?=
- =?utf-8?B?THJES0xKZnNNTlpMQ3FKWjR5Z2pJZzlwcElFY1FQeHF1RXRzZmJnL2VVdmc4?=
- =?utf-8?B?ZWY1a1hUSzh3R2d1RnRpRGx6RnlhanB0bVhLMWVuRVZVQndkVTJXTHlwUTlK?=
- =?utf-8?B?OTlZU3k3QVFiaUVxSjdzaElVcjY4QmFRaUZuMDllRVpaQkQxdU50YnVTTmRr?=
- =?utf-8?B?MGxMYXRrUnRNbkI5UmwzWlJtbHRpVDVjSUlINWNaZ0NxbXczTDlNcElyc3FH?=
- =?utf-8?B?bVQ5b1d4elNRVGdBZ282MC8yR1ZCWkdVQVB2N2kwVEIva3NUcE9ucng5SVBs?=
- =?utf-8?B?aUtpQ1Q3U3VvZFNvNC8xUzdibXU0UlJVL0d3ZGY2NDdkd21mYU5lS1pKYVZS?=
- =?utf-8?B?ajJaUmd0cnVNMHpQdFgyb1NVejNRRm1OdWtQbGhMSFRId0lkWUxXc3dhVGVB?=
- =?utf-8?B?OXY3eHVtemx6VlNVd0ZsanJvY2lpSldOc2dra1lqa3g3K1ZWQ3N0T2ZBbVRF?=
- =?utf-8?B?ZWx3NVFFSm93dUF1S0lYK2ZCVWcrblhlOGpVZm9wWHNDcHN3bnhLV3UvdlVK?=
- =?utf-8?B?QkhJNER5RUV3aDRlYnAxdVhlbHVrd01qSVROc3k2V0IzQmJDangzVE9PdE9K?=
- =?utf-8?B?TkYvc202R0JacVpOaFdnU3FmVVQxcUo3U0V4TmFHN0VzcUpIamFKTVptcWpZ?=
- =?utf-8?B?R21sZG1rMWNmeUxXc050amltdXRseGNlV0MxM0lYRVloYThBSEJ2WUdjclZ5?=
- =?utf-8?B?alMxV1lncTVYMytCYUpEbGNqR1VBRWpJSWVLZHhUVGozdlFraEd0Zmd4NFdo?=
- =?utf-8?B?cEhQeTNXcDB5RmExUWphbCtKZVJpcFpNMXBKYWhnUWk1dGhGWFlUSERDSitF?=
- =?utf-8?B?WWNRK3IwVUJjVDRkRlA1NFRFTFpXVFRRTnFLRXZMN1hQS1RCU2RETjk1U0tn?=
- =?utf-8?Q?ewY5ANLcIgXdM?=
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+ <c2c9cb6d741fd9290c835679f9c209b147f74f64.1792808260.git.x-professor@outlook.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -172,48 +64,236 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-X-OriginatorOrg: outlook.com
-X-MS-Exchange-CrossTenant-AuthAs: Internal
-X-MS-Exchange-CrossTenant-AuthSource: SA3PR05MB10385.namprd05.prod.outlook.com
-X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
-X-MS-Exchange-CrossTenant-Network-Message-Id: 0979b97e-1d04-426e-04d8-08df31c95d92
-X-MS-Exchange-CrossTenant-originalarrivaltime: 24 Oct 2026 12:21:43.7422
- (UTC)
-X-MS-Exchange-CrossTenant-fromentityheader: Hosted
-X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
-X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
-X-MS-Exchange-Transport-CrossTenantHeadersStamped: PH7PR05MB9058
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="3ypnmqpyuzbufluf"
+Content-Disposition: inline
+In-Reply-To: <c2c9cb6d741fd9290c835679f9c209b147f74f64.1792808260.git.x-professor@outlook.com>
 
-VGhlIFVBUEkgY29tbWVudCBhZHZpc2VzIGtlZXBpbmcgU0VNT1BNIGF0IG9yIGJlbG93IDEwMDAg
-YmVjYXVzZSBhIGxhcmdlcgpvcGVyYXRpb24gYXJyYXkgbWF5IGZhaWwgZHVlIHRvIHBoeXNpY2Fs
-IG1lbW9yeSBmcmFnbWVudGF0aW9uLgoKQ29tbWl0IGU0MjQzYjgwNjJjMSAoImlwYy9zZW06IHBs
-YXkgbmljZXIgd2l0aCBsYXJnZSBuc29wcyBhbGxvY2F0aW9ucyIpCmNoYW5nZWQgdGhlIG9wZXJh
-dGlvbiBhcnJheSB0byBrdm1hbGxvYygpIHNwZWNpZmljYWxseSB0byBzdXBwb3J0IGxhcmdlcgpj
-b25maWd1cmVkIGxpbWl0cywgd2l0aCB2bWFsbG9jIGZhbGxiYWNrIHdoZW4gYSBwaHlzaWNhbGx5
-IGNvbnRpZ3VvdXMKYWxsb2NhdGlvbiBpcyB1bmF2YWlsYWJsZS4KClJlcGxhY2UgdGhlIG9ic29s
-ZXRlIHdhcm5pbmcgd2l0aCBhIGRlc2NyaXB0aW9uIG9mIHRoZSBjb21waWxlZC1pbgpkZWZhdWx0
-IGFuZCB0aGUgcnVudGltZSBzeXNjdGwuCgpTaWduZWQtb2ZmLWJ5OiBZaW5namllIFdhbmcgPHgt
-cHJvZmVzc29yQG91dGxvb2suY29tPgpSZXZpZXdlZC1ieTogTWFuZnJlZCBTcHJhdWwgPG1hbmZy
-ZWRAY29sb3JmdWxsaWZlLmNvbT4KLS0tCiBpbmNsdWRlL3VhcGkvbGludXgvc2VtLmggfCA3ICsr
-Ky0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyksIDQgZGVsZXRpb25zKC0pCgpk
-aWZmIC0tZ2l0IGEvaW5jbHVkZS91YXBpL2xpbnV4L3NlbS5oIGIvaW5jbHVkZS91YXBpL2xpbnV4
-L3NlbS5oCmluZGV4IDc1YWEzYjI3M2NkOTkuLmQ5Zjk2MWExNTkyYzcgMTAwNjQ0Ci0tLSBhL2lu
-Y2x1ZGUvdWFwaS9saW51eC9zZW0uaAorKysgYi9pbmNsdWRlL3VhcGkvbGludXgvc2VtLmgKQEAg
-LTcxLDE2ICs3MSwxNSBAQCBzdHJ1Y3QgIHNlbWluZm8gewogICogVGhlIHZhbHVlcyBoYXMgYmVl
-biBjaG9zZW4gdG8gYmUgbGFyZ2VyIHRoYW4gbmVjZXNzYXJ5IGZvciBhbnkKICAqIGtub3duIGNv
-bmZpZ3VyYXRpb24uCiAgKgotICogU0VNT1BNIHNob3VsZCBub3QgYmUgaW5jcmVhc2VkIGJleW9u
-ZCAxMDAwLCBvdGhlcndpc2UgdGhlcmUgaXMgdGhlCi0gKiByaXNrIHRoYXQgc2Vtb3AoKS9zZW10
-aW1lZG9wKCkgZmFpbHMgZHVlIHRvIGtlcm5lbCBtZW1vcnkgZnJhZ21lbnRhdGlvbiB3aGVuCi0g
-KiBhbGxvY2F0aW5nIHRoZSBzb3AgYXJyYXkuCisgKiBTRU1PUE0gaXMgdGhlIGRlZmF1bHQgbWF4
-aW11bSBudW1iZXIgb2Ygb3BlcmF0aW9ucyBwZXIgc2Vtb3AoKSBjYWxsLiBUaGUKKyAqIHJ1bnRp
-bWUgbGltaXQgY2FuIGJlIGNoYW5nZWQgdGhyb3VnaCAvcHJvYy9zeXMva2VybmVsL3NlbS4KICAq
-LwogCiAKICNkZWZpbmUgU0VNTU5JICAzMjAwMCAgICAgICAgICAgLyogPD0gSVBDTU5JICBtYXgg
-IyBvZiBzZW1hcGhvcmUgaWRlbnRpZmllcnMgKi8KICNkZWZpbmUgU0VNTVNMICAzMjAwMCAgICAg
-ICAgICAgLyogPD0gSU5UX01BWCBtYXggbnVtIG9mIHNlbWFwaG9yZXMgcGVyIGlkICovCiAjZGVm
-aW5lIFNFTU1OUyAgKFNFTU1OSSpTRU1NU0wpIC8qIDw9IElOVF9NQVggbWF4ICMgb2Ygc2VtYXBo
-b3JlcyBpbiBzeXN0ZW0gKi8KLSNkZWZpbmUgU0VNT1BNICA1MDAJICAgICAgICAvKiA8PSAxIDAw
-MCBtYXggbnVtIG9mIG9wcyBwZXIgc2Vtb3AgY2FsbCAqLworI2RlZmluZSBTRU1PUE0gIDUwMAkg
-ICAgICAgIC8qIDw9IElOVF9NQVggbWF4IG51bSBvZiBvcHMgcGVyIHNlbW9wIGNhbGwgKi8KICNk
-ZWZpbmUgU0VNVk1YICAzMjc2NyAgICAgICAgICAgLyogPD0gMzI3Njcgc2VtYXBob3JlIG1heGlt
-dW0gdmFsdWUgKi8KICNkZWZpbmUgU0VNQUVNICBTRU1WTVggICAgICAgICAgLyogYWRqdXN0IG9u
-IGV4aXQgbWF4IHZhbHVlICovCiAKLS0gCjIuNDMuMAoK
+
+--3ypnmqpyuzbufluf
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+From: Alejandro Colomar <alx@kernel.org>
+To: Yingjie Wang <x-professor@outlook.com>
+Cc: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, 
+	Manfred Spraul <manfred@colorfullife.com>, Alexey Gladkov <legion@kernel.org>, 
+	"Eric W . Biederman" <ebiederm@xmission.com>, Vasily Averin <vasily.averin@linux.dev>, 
+	Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeel.butt@linux.dev>, 
+	Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>, Michal Hocko <mhocko@suse.com>, 
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, 
+	"cgroups@vger.kernel.org" <cgroups@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, 
+	"linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>, 
+	linux-hardening@vger.kernel.org
+Subject: Re: [PATCH v3 2/3] ipc/sem: reject negative SEMOPM values
+Message-ID: <atyvbQ5xxtxcxBZE@debian>
+References: <cover.1792808260.git.x-professor@outlook.com>
+ <c2c9cb6d741fd9290c835679f9c209b147f74f64.1792808260.git.x-professor@outlook.com>
+MIME-Version: 1.0
+In-Reply-To: <c2c9cb6d741fd9290c835679f9c209b147f74f64.1792808260.git.x-professor@outlook.com>
+
+Hi Yingjie,
+
+> Date: 2026-10-24 12:21:42+0000
+> From: Yingjie Wang <x-professor@outlook.com>
+>
+> The SEMOPM field has been stored as an int while semop() receives an
+> unsigned operation count since the beginning of Git history. A negative
+> SEMOPM accepted by proc_dointvec() is converted to a large unsigned value
+> in the comparison, defeating the intended operation-count limit.
+>=20
+> Commit 50ec499b9a43 ("sysctl: allow change system v ipc sysctls inside ipc
+> namespace") made kernel.sem writable by IPC namespace owners without
+> capabilities in the initial user namespace.
+>=20
+> Parse writes against a temporary copy and validate SEMOPM and SEMMNI
+> before changing the live settings. Hold a per-namespace mutex from the
+> snapshot through publication so concurrent sysctl writers cannot publish
+> stale values for fields they did not supply. Access the live fields with
+> READ_ONCE() and WRITE_ONCE(), preserving the per-field access semantics of
+> proc_dointvec(). Read requests continue to use proc_dointvec() directly.
+>=20
+> Failed writes leave the live settings unchanged. Successful partial writes
+> change only the supplied fields relative to the latest locked snapshot.
+> The writer mutex retains the existing per-field visibility for readers.
+>=20
+> Keep zero and positive SEMOPM values valid. Zero continues to reject every
+> non-empty semop() request.
+>=20
+> Suggested-by: Andrew Morton <akpm@linux-foundation.org>
+> Link: https://lore.kernel.org/r/20261016155905.2a659b7bb7d61f33467a3263@l=
+inux-foundation.org
+> Link: https://lore.kernel.org/r/51c93c19-f1dd-455f-8698-6b1ee30eb630@colo=
+rfullife.com
+> Fixes: 1da177e4c3f4 ("Linux-2.6.12-rc2")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Yingjie Wang <x-professor@outlook.com>
+> Reviewed-by: Manfred Spraul <manfred@colorfullife.com>
+> ---
+>  include/linux/ipc_namespace.h |  3 +++
+>  ipc/ipc_sysctl.c              | 35 ++++++++++++++++++++++++++---------
+>  ipc/sem.c                     |  1 +
+>  ipc/util.h                    |  9 ---------
+>  4 files changed, 30 insertions(+), 18 deletions(-)
+>=20
+> diff --git a/include/linux/ipc_namespace.h b/include/linux/ipc_namespace.h
+> index 12faca29bbb9c..c06568ccfca88 100644
+> --- a/include/linux/ipc_namespace.h
+> +++ b/include/linux/ipc_namespace.h
+> @@ -4,6 +4,7 @@
+> =20
+>  #include <linux/err.h>
+>  #include <linux/idr.h>
+> +#include <linux/mutex.h>
+>  #include <linux/rwsem.h>
+>  #include <linux/notifier.h>
+>  #include <linux/nsproxy.h>
+> @@ -31,6 +32,8 @@ struct ipc_ids {
+>  struct ipc_namespace {
+>  	struct ipc_ids	ids[3];
+> =20
+> +	/* Serialize kernel.sem writers. */
+> +	struct mutex	sem_ctls_mutex;
+>  	int		sem_ctls[4];
+>  	int		used_sems;
+> =20
+> diff --git a/ipc/ipc_sysctl.c b/ipc/ipc_sysctl.c
+> index d038d944257f6..a05e28e67c305 100644
+> --- a/ipc/ipc_sysctl.c
+> +++ b/ipc/ipc_sysctl.c
+> @@ -51,21 +51,38 @@ static int proc_ipc_auto_msgmni(const struct ctl_tabl=
+e *table, int write,
+>  static int proc_ipc_sem_dointvec(const struct ctl_table *table, int writ=
+e,
+>  	void *buffer, size_t *lenp, loff_t *ppos)
+>  {
+> +	struct ctl_table ipc_table;
+>  	struct ipc_namespace *ns =3D
+>  		container_of(table->data, struct ipc_namespace, sem_ctls);
+> -	int ret, semmni;
+> +	int sem_ctls[ARRAY_SIZE(ns->sem_ctls)];
+> +	size_t i;
+> +	int ret;
+> +
+> +	if (!write)
+> +		return proc_dointvec(table, write, buffer, lenp, ppos);
+> =20
+> -	semmni =3D ns->sem_ctls[3];
+> -	ret =3D proc_dointvec(table, write, buffer, lenp, ppos);
+> +	mutex_lock(&ns->sem_ctls_mutex);
+> +	for (i =3D 0; i < ARRAY_SIZE(sem_ctls); i++)
+> +		sem_ctls[i] =3D READ_ONCE(ns->sem_ctls[i]);
+> =20
+> -	if (!ret)
+> -		ret =3D sem_check_semmni(ns);
+> +	memcpy(&ipc_table, table, sizeof(ipc_table));
+
+Why memcpy(3)?  Being a structure, we could use simple assignment, which
+is type safe.
+
+	ipc_table =3D *table;
+
+memcpy(3) is way too powerful for this, and that can be dangerous.
+A few ways where it is easy to screw a call to memcpy(3) are:
+
+-  Size of destination doesn't match size of input.
+-  Size argument doesn't match size of destination.
+-  Type of input doesn't match type of destination.
+-  You may forget to copy a flexible array member.
+
+In some cases, you really want to defeat those, and then memcpy(3) is
+useful (or you're copying an array, and then you have no choice), but if
+not, memccpy(3) is not the best tool.
+
+[CC +=3D linux-hardening]
+
+
+Have a lovely day!
+Alex
+
+> +	ipc_table.data =3D sem_ctls;
+> =20
+> -	/*
+> -	 * Reset the semmni value if an error happens.
+> -	 */
+> +	ret =3D proc_dointvec(&ipc_table, write, buffer, lenp, ppos);
+>  	if (ret)
+> -		ns->sem_ctls[3] =3D semmni;
+> +		goto out_unlock;
+> +
+> +	if (sem_ctls[2] < 0 ||
+> +	    sem_ctls[3] < 0 || sem_ctls[3] > ipc_mni) {
+> +		ret =3D -ERANGE;
+> +		goto out_unlock;
+> +	}
+> +
+> +	for (i =3D 0; i < ARRAY_SIZE(sem_ctls); i++)
+> +		WRITE_ONCE(ns->sem_ctls[i], sem_ctls[i]);
+> +
+> +out_unlock:
+> +	mutex_unlock(&ns->sem_ctls_mutex);
+>  	return ret;
+>  }
+> =20
+> diff --git a/ipc/sem.c b/ipc/sem.c
+> index a8c9807175520..0f7d32c12993f 100644
+> --- a/ipc/sem.c
+> +++ b/ipc/sem.c
+> @@ -249,6 +249,7 @@ static int sysvipc_sem_proc_show(struct seq_file *s, =
+void *it);
+> =20
+>  void sem_init_ns(struct ipc_namespace *ns)
+>  {
+> +	mutex_init(&ns->sem_ctls_mutex);
+>  	ns->sc_semmsl =3D SEMMSL;
+>  	ns->sc_semmns =3D SEMMNS;
+>  	ns->sc_semopm =3D SEMOPM;
+> diff --git a/ipc/util.h b/ipc/util.h
+> index a55d6cebe6d3b..51b4efa3d6db0 100644
+> --- a/ipc/util.h
+> +++ b/ipc/util.h
+> @@ -245,15 +245,6 @@ int ipcget(struct ipc_namespace *ns, struct ipc_ids =
+*ids,
+>  void free_ipcs(struct ipc_namespace *ns, struct ipc_ids *ids,
+>  		void (*free)(struct ipc_namespace *, struct kern_ipc_perm *));
+> =20
+> -static inline int sem_check_semmni(struct ipc_namespace *ns) {
+> -	/*
+> -	 * Check semmni range [0, ipc_mni]
+> -	 * semmni is the last element of sem_ctls[4] array
+> -	 */
+> -	return ((ns->sem_ctls[3] < 0) || (ns->sem_ctls[3] > ipc_mni))
+> -		? -ERANGE : 0;
+> -}
+> -
+>  #ifdef CONFIG_COMPAT
+>  #include <linux/compat.h>
+>  struct compat_ipc_perm {
+> --=20
+> 2.43.0
+>=20
+
+--=20
+<https://www.alejandro-colomar.es>
+
+--3ypnmqpyuzbufluf
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmrcsTcACgkQ64mZXMKQ
+wqnKRRAAt8enQI5cXjKMqVjXRh1pd0f04+raK2ShM3YQhaynNwX7pqaPuQu7CNYn
+XS4UU//IYiVQhRD+/a6w8QixgPRqvYbpQiVSPaOexM4TmCwbciR/XIs0PBVcyjFI
+5GRV9vJBf0c3U1Lcsc2rLqtQT5X7OWK9nEjwHdrKSbYu1JOynmH43gBP+b4wyLW2
+4Jhurv34jdrxGZ+oBgMBBOmSJcr3C7CIUj7kOgaJO6uA4w7d6KVcuwgHraP25Qat
++kEhFgs9G7SkzZ8QLOSzUhmY59tkAzuNuqpMRM4LfqOaNNrr8LJKEJLW5/BiZzu6
+DewbIzVND0w+PwohgGESVpj+fbEjO3CMlln6tAtmneIB5rrNa5kcqLUyKdhszDIB
+BeV2nVRI13zzbs7tuPa1V4/YAB53+QH+JkYadnDkwwEcKs3gGw6TA48g4Sr/L0nu
+cBp7f/yslXDqiSxIyUwt1Y2AxUX/5zDzTn4/DqDyxUrWwsc6B07X0IY0rvLDSBWJ
+Q68dB2r9lsFdzqdMpBb06OdBl2D/no3BEu/Xni7ROwc2RwlOK9gUS86ILuvIwpGU
+jtPOTnbk7c3NRO6/xmPMPVCqGrsm5HIJEfkL2x8Gvfzp3+hnIh+37aj6/Gc9lfLn
+qEEiMnILRfHuz52Lk+6KQxg4ZjFU11gtlKYtqoo0H4Gm1yGkTnM=
+=dC3A
+-----END PGP SIGNATURE-----
+
+--3ypnmqpyuzbufluf--
