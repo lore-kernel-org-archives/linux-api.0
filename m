@@ -1,75 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.199
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793052393;
-	b=ZARQGAHbLOnA9y6NPOqcL2DZHb4BPKaCb11Gnj4lT6VEBzrfx0PJdG+DaqEGgp0+svTE
-	 1o189r13Q9F9px9bvZAM0f/FUwmMq+XNxMbfpuy3yrhZHljhpadAw7SitvCKavRV4PdcF
-	 ftOjnv9Zv64roXdaIqmOKBMq8wu6F+FIFehzo/+NY6Ad9FZeF+4PLKq4xH4xNXaf5t8RX
-	 J6slveqLCMqg2Fe5saAVLCsHQBKT2o7h4XJlf1BfP8q7BXYCwEl8QyNyArSlYVnnNp1SJ
-	 FQRgkGciGN49xGtElPO2ftbcEjUhuo2Y0RbMT/nKUn8gBW60ZqxfYIWz1e6U0ic8Ebw==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793052393;
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.41
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793054818;
+	b=GyK0VM7nVnU8VzVQScmChzyuRkKA5EzEPZhVfYNAVnQHD1SzY+e4+CG6tzs+WVWt6yNi
+	 kZehU9Jr6a0/7WyBXNeEsPOe56J8SMZoDil8A+oYr7876GW3hOKNznqITcmiI3levTDm/
+	 EaAJwR19WWz/lvbjNpByOKhn934zduEh+KM6MfHNkf/4EIZrQe7Izd1+om7cEAuwO+n3K
+	 +0EtE+RakPX5+Vl3pawdk+tDNrj5xAXte1PjCLk5oAIKcmX2bdBU5+39sSyMdlsFaCrBU
+	 ipf6Y1CJX9SzxIAqrcxN7qiw3N8re7qTwZakd/X8bscFjx5LBnLIgpK07q6sFjcByoQ==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793054818;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
-	 Mime-Version:References:X-Mailer:Message-ID:Subject:From:To:Cc:
-	 Content-Type;
-	bh=JbeI020SnpugISxSyc+z9N6JHGvPCZP0HYKr/jk1BYM=;
-	b=dcb9Ww5S/XTto+urdlb3kmqvqZQuw5nVV77eZ485c9RfK9KtMXejSlNoDyA0y83HM1AS
-	 5ty7Aeq5a7bxQWqYEkYOgAaNcaPMimFYBDUx0xgo+T1xGNw8zQs+SD5WW0zMdLkDoE64n
-	 69pFnKP6qmMqfYQdZorjNymN32tCb6Q3jiSfyq3fk6ez1idRXwv1UU2oMnUpMZyaSCzNH
-	 JTfvWtqY46yK7iV4dnfx6gSuAM7hfIcksWArYjnY4BrwkXahB60xmU/J/xoCOdwEfNeNO
-	 3wip7+OrNLxJr1gsN9rZj8t+LM5rSGdPyNEV1p/67DIlkAMD5RpaQ846JvQcx8GVctw==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=google.com;
-	spf=pass smtp.mailfrom=flex--skhawaja.bounces.google.com;
-	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20251104 header.b=TPbFrQyD;
-	arc=none smtp.remote-ip=209.85.210.199
-Received: from mail-pf1-f199.google.com (mail-pf1-f199.google.com [209.85.210.199])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=sKnr+HaOzY7Irrp2H9F7r4w2uph5h2kmhEeFaXwyEMA=;
+	b=RWJXBS6DG9+X67EuuX3sKn37gsY621We5u2vQ7TCsSJ1yKseFTwXp9Ys13gzcDvp/sv7
+	 FIlviBJyYx0xi8de+rRjahSbIceuGD5/BzzrFw4bhwofWyEsusMSrZqbC68SjDUs30a9b
+	 g4hXjKGI/HSgjgywRiQglmUosuwMpuqBfSbyu6eScMCkCV5ZdyqSljYOn0aXfJkvvOc4u
+	 23fmMYO6dqXK5gH6jIh9yehnBfXnOXtI6ujpiPBUHDzYYcWv+WBfe4Ex8uIMwvmpDRE1W
+	 mo5wG9xruZ+l7P8YXRciy1PWHLWe711yq/+T4EC5J6qZg6DzCh8t1vurySQAbw8S8nQ==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=none header.from=amacapital.net;
+	spf=pass smtp.mailfrom=amacapital.net;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.41
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36FF5606A33D
-	for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 22:06:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 36FF5606A33D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--skhawaja.bounces.google.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20251104 header.b=TPbFrQyD
-Received: by mail-pf1-f199.google.com with SMTP id d2e1a72fcca58-88c768885b4so6047067b3a.0
-        for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 15:06:32 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 47F6D606A31F
+	for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 22:46:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 47F6D606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-5bcc6094d7fso2766050e87.2
+        for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 15:46:48 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1793054806; cv=none;
+        d=google.com; s=arc-20260327;
+        b=i7V5mftoamVLsPJnkM04bSe8Mw/94nt53nRBs5WdPWUeycIRxWhphIl34HSVrgENr0
+         j0duJJ0Zxd0fpt5Z0ModmL5/nxBKoB9j5yPz2JeUiorOHPH22KxKhJExd6TVL1YSZGlN
+         xZJQZClK711dqdCMVwkMz/Yy9EyYt5CDtLZbU20peH+WwjRw1Y3rLc/+z+m3Pm8l5D09
+         euxXtLAdv/2vASYCrMASOaWm4dnw2GhjZKKghrNqipUbQwlcViNGMEm1dDhZnORmpMB1
+         yTLtjMb1tQb1Uub3W0oB5cjc/2L/akiEmZYxoUBDMlxc5LQUET4rPOxJdkBATrk6wB/7
+         BUVA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=sKnr+HaOzY7Irrp2H9F7r4w2uph5h2kmhEeFaXwyEMA=;
+        fh=Wdn/+sZTOmC91NeY9ixY1eTg4nn9ClRABcuyehYvrPk=;
+        b=q+GS920B/thSiaSEdd0O/UEMVyFEEsAuz6agSsHjZBwZFbYhxfTK8PRpVhi4FwQ5mF
+         yFcQIDIRR/mmwCAZ1HzRA+tBKInXQPzZ1EoF1GMcKl/cOztjsKi2yfV9M3OGaPlb9ajy
+         AdipmQBCwtyT7ZTtNeGYuGQQb5BvcgYsnTRsn6fjscdKVMZ0eijrdbYnIkcKBeDyxfu9
+         ymSeOXRMBYWgIqbIosKf9Vee+EoHLLsjt0gyYHrQCDLM/MIqpamNScJod/jcaPMBfSRs
+         MFJYGyPI5wk4SZv40Lwc54DtjWG6MXq4PljwhItVv6UIUX1y981vH5haUFfOisS++SkD
+         a5Gw==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20251104; t=1793052392; x=1793657192; darn=vger.kernel.org;
-        h=content-type:cc:to:from:subject:message-id:references:mime-version
-         :in-reply-to:date:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=JbeI020SnpugISxSyc+z9N6JHGvPCZP0HYKr/jk1BYM=;
-        b=TPbFrQyDnQ3X2ODTkC5Ghf3QJey5ayVfOW9a6h/mIXdaI4wS7Zuy7Lm3Ye14m2RZIr
-         W/ysoFKbYw6B010/w/3MTtieRdYsfbDLUbTd9sRVoRySVf9nuhXNUMjL8VyUSGhNyDUt
-         FxdLBk6fq4BekRTUR170BUsK1G0XLlrtqliDoAu7JTbzUnCWYKSQs9hDza91b+0AEGH0
-         cz76REwf49YYA/LjIZ1GnRJA0+6lAEKCfmbxkUsBNzCEkD4TcOdoVp4T4lhhR6Q6RNpl
-         ++GYdo0/v+KIeLNVAQzc6JOcJ8EiAyTL7xBr3qGRdPVjSvpu9FAoqpr5seFlRHyosc7m
-         sFow==
+        d=amacapital-net.20251104.gappssmtp.com; s=20251104; t=1793054806; x=1793659606; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=sKnr+HaOzY7Irrp2H9F7r4w2uph5h2kmhEeFaXwyEMA=;
+        b=IOFsVvG3NSAD3HQiNhWpL3xOBWeFRtR3M7DeFYRGlG9024CAVL0BclZq+S6ghRSIWE
+         E0Kt3NMTpMvEFh9m8yx+vpnYuCtqzZQ28yrkGkOHmwbJ+OS/FnBciKMvh34M+kcoCCOl
+         Z2Ecmb6YILV0KENHnULJ6ha+jfnuhTE9OmQOtmZ4JYXTLGs8Ff0itsup6BKnrxJgen/W
+         L8r30Qn2tTTSYPH+0TiIunxBTdq1zvhjrLsS3Hp9Fc6rUz+0kj+oXRMP1K7i4huM3ZrC
+         CXMi12Rhds0KfLfi2+y10IxrDw+vVJgAyThh0UFHJXCkL+0SIlxgIVMgZv1LIlbPYKCO
+         87Eg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793052392; x=1793657192;
-        h=content-type:cc:to:from:subject:message-id:references:mime-version
-         :in-reply-to:date:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=JbeI020SnpugISxSyc+z9N6JHGvPCZP0HYKr/jk1BYM=;
-        b=q22fR2JBeLMaEpBTFt6RweSOrbwMQrNgePBCvMnfi6W8H+/4Zw8HNWw01tDpH47bcI
-         SbVnzQ/srhI7wP1EiHEtD/HHm/PUkPqgmY3FjRM+ri7rjJYVC8qiqhe9/qnnif1KJjM0
-         0kXLH1RrRTvRUo21+4CnQNn+0kCn9lCiHiSbxD11HFkYrq6aSrKdb0xWQ+0WfDP5jAJE
-         Lsko40W4fq1KaeHS1v/okCbpk5drPuf/XYcg47gJf70VJ96o56dtFF2sHJjDEbMi2a7u
-         ALRBzc96lHxaZVrn0Z6i5xqN8ZqOJGi+LtdNI51wzAvMmMcl4W8aP8lNIOUcbR7Tw0Qt
-         2mEQ==
-X-Forwarded-Encrypted: i=1; AKwUvBxaj3INZaW0T9YUS2P20HML6IeKPY4sj1TuBx8Qfeq6w4tSnORGc7sF4sFUggDnor/JKkCzmmFNLCY=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJMXzCEJA+vLtDwSd1nXRvBHa97/WiVjRpx/BhFgFe5RQ7P4lS6
-	IXm6EP1nXgkvn5AIR42SWO68x81WeL4i6Eay0yaKIZDs9WPMBOr7RzDIYlCe923ZN4HWP07duEW
-	b+xh4fSibmfTy2w==
-X-Received: from pgdo1-n2.prod.google.com ([2002:a05:6a02:6201:20b0:cd6:b08a:e7cb])
- (user=skhawaja job=prod-delivery.src-stubby-dispatcher) by
- 2002:a05:6a21:4e0b:b0:3e1:8890:8400 with SMTP id adf61e73a8af0-3e7bfbdb8dcmr6859849637.15.1793052392197;
- Mon, 26 Oct 2026 15:06:32 -0700 (PDT)
-Date: Mon, 26 Oct 2026 22:05:46 +0000
-In-Reply-To: <20261026220546.3114241-1-skhawaja@google.com>
+        d=1e100.net; s=20260707; t=1793054806; x=1793659606;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=sKnr+HaOzY7Irrp2H9F7r4w2uph5h2kmhEeFaXwyEMA=;
+        b=aiihc5eSQwAhpvvj7qRA58Rf9Qw9Xg0f7RNjS9wkFb2zYA9LcKQ7SbYo20/YHzvcmp
+         UncbxMaEPbOTL+RjVNIRHNkxX/ouCxYe+Ya8Y9caxDNEWtH/dhSFRLcVmZbRMvA99viB
+         qA+BXqnx84H2sG4r517Wc2bEabdjBVqj9pSzuAk2P6m09bTpCG3PHj8cBPZAnXmuV+ul
+         0FUum+tEUmVtdK+YlnCjDLMlo5/9JD+mMR8QfpRNv8xQurh2s/PYxrbCGclcVPpReNlp
+         Cr+qDgXeFHvCreeVABMgPUsio0QHKlQ8I1LPzUmNYGums6ilu5OKLnSzhV/JB8LiQa84
+         MOdw==
+X-Forwarded-Encrypted: i=1; AKwUvBwEOTuDUxBxGxKGnb/sVPVUJOpjabbCWdX88dmcJdsB1EKrElrIz463VbpltOfHP3pmQ88adEbn4vs=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLXstInyTeXf5wAMXMyboD7Bj0iX/2EtvSS1ZFWFpvyCfJ5r8qh
+	oALyx6ID5G4w9+CZEkwJDmTBfPH7stA0E+upN0SigDD/5sBhdOpRBRHMxSaWcw3HOc2ssj8pyrM
+	IoK8prk4LVwakFjvyTDtFcrlLwwbkJutyngN4xTXO
+X-Gm-Gg: AYBFou1JLR0/C+uCOAglC4beRMEo9hyRhp2q/0Zpr0wHbWalRrWsbn2+xVDQ3W+JjN/
+	Ihpk8dniNQcTcBCtOS858geCLXrZD4OTKr8tjMoCaf94Hq58+qDhdnhIHId53y+xMeRi5QfTvPm
+	qltcyeSKn00xyDNKH10kpMyo9GvWfqW5TPyjW3jFC6iPbykOMqTOx45VaYbTua9OeuBtVP2/iJI
+	pHqGspKGL2VPrMg/ure6dlkLDdavf7LhVB0DoiTRw9AgaBRyJILtJCDDIa/dbqHEAhQUtuMGsPQ
+	iX82jHK0eGRcQO+7uHA7XBBE3RGz8hjyXgtNcxbKq+ty+HIgVUbn0n8AKALS1NH+gWY+6fwkYs/
+	8NIl3nRdhRV1tCMEGMm3CKTMQFLQ3ogK56w==
+X-Received: by 2002:a05:6512:3e0d:b0:5bc:e28c:1349 with SMTP id
+ 2adb3069b0e04-5bfb71fd555mr2854881e87.56.1793054806319; Mon, 26 Oct 2026
+ 15:46:46 -0700 (PDT)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -78,14 +100,17 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
+MIME-Version: 1.0
 References: <20261026220546.3114241-1-skhawaja@google.com>
-X-Mailer: git-send-email 2.56.0.307.g5fe7bd680c-goog
-Message-ID: <20261026220546.3114241-3-skhawaja@google.com>
-Subject: [PATCH 2/2] selftests/memfd: add F_SEAL_PUNCH_HOLE tests
-From: Samiullah Khawaja <skhawaja@google.com>
-To: Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>
-Cc: Baolin Wang <baolin.wang@linux.alibaba.com>, David Hildenbrand <david@kernel.org>, 
+In-Reply-To: <20261026220546.3114241-1-skhawaja@google.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Date: Mon, 26 Oct 2026 15:46:34 -0700
+X-Gm-Features: AclHuK_ddIvC0f7JBYWchwOFfRRqT-a0AZ_RsWY_MxD_DGe6_YpRsBjkP2gzVDw
+Message-ID: <CALCETrXNEWQNPjtuHnTfVFOafeJ7APXq288Cq16Q5adDNYx9+A@mail.gmail.com>
+Subject: Re: [PATCH 0/2] mm/memfd: add F_SEAL_PUNCH_HOLE
+To: Samiullah Khawaja <skhawaja@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, 
+	Baolin Wang <baolin.wang@linux.alibaba.com>, David Hildenbrand <david@kernel.org>, 
 	Muchun Song <muchun.song@linux.dev>, Oscar Salvador <osalvador@suse.de>, 
 	Jeff Layton <jlayton@kernel.org>, Chuck Lever <cel@kernel.org>, 
 	Alexander Aring <alex.aring@gmail.com>, Shuah Khan <shuah@kernel.org>, Jason Gunthorpe <jgg@ziepe.ca>, 
@@ -93,190 +118,62 @@ Cc: Baolin Wang <baolin.wang@linux.alibaba.com>, David Hildenbrand <david@kernel
 	Jeff Xu <jeffxu@google.com>, David Matlack <dmatlack@google.com>, 
 	Pasha Tatashin <tatashin@google.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, 
 	linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, Samiullah Khawaja <skhawaja@google.com>
+	linux-kernel@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Add tests for the new F_SEAL_PUNCH_HOLE seal. Like the rest of
-memfd_test, they run on shmem memfds by default and on hugetlbfs memfds
-when memfd_test is invoked with the "hugetlbfs" argument.
+On Mon, Oct 26, 2026 at 3:06=E2=80=AFPM Samiullah Khawaja <skhawaja@google.=
+com> wrote:
+>
+> This series introduces F_SEAL_PUNCH_HOLE, a new memfd seal that prevents
+> holes from being punched into a shmem or hugetlbfs memfd while leaving
+> the file fully writable.
+>
+> Background
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>
+> Drivers such as udmabuf and iommufd (via IOMMU_IOAS_MAP_FILE) use
+> memfd_pin_folios() to pin the folios backing a memfd and hand them to a
+> device for DMA. Pinning keeps those folios allocated, but it does not
+> keep them in the file. If userspace later calls
+> fallocate(FALLOC_FL_PUNCH_HOLE) or madvise(MADV_REMOVE) on the range,
+> the folios are dropped from the page cache while the device continues
+> to use them. The pin holder is never notified, and from that point on
+> the device and the file silently diverge.
+>
+> The existing seals only partially address this. F_SEAL_SHRINK prevents
+> pages from being dropped by truncation, which is why udmabuf requires
+> it. Hole punching, however, is only blocked by F_SEAL_WRITE and
+> F_SEAL_FUTURE_WRITE, and both of those also forbid writes. That makes
+> them unusable for memory that must stay writable, such as guest RAM or
+> DMA buffers, and udmabuf explicitly rejects memfds that carry them.
+>
+> Proposal
+> =3D=3D=3D=3D=3D=3D=3D=3D
+>
+> F_SEAL_PUNCH_HOLE fills this gap. Once it is set,
+> fallocate(FALLOC_FL_PUNCH_HOLE) and madvise(MADV_REMOVE) fail with
+> -EPERM, while reads, writes and resizing are unaffected. Combined with
+> F_SEAL_SHRINK, it guarantees that userspace cannot remove pages from
+> the memfd while the memfd remains writable.
 
-mfd_assert_write() checks that the file can be written, and then also
-checks that a hole can be punched into it. The second check no longer
-holds once F_SEAL_PUNCH_HOLE is set. Move the write checks into
-__mfd_assert_write() and the punch check into mfd_assert_punch_hole(),
-and have mfd_assert_write() call both, so the existing tests keep doing
-exactly what they did before.
+How does this solve the problem?  F_SEAL is about a userspace
+contract, and if there are existing users of the APIs in question, it
+makes very little sense to start making those users fail because they
+haven't taken the appropriate seal.
 
-Add mfd_fail_punch_hole(), which checks that both
-fallocate(FALLOC_FL_PUNCH_HOLE) and madvise(MADV_REMOVE) fail with
-EPERM, and use it in two new tests. SEAL-PUNCH-HOLE sets only the new
-seal and checks that punching a hole fails, while writing, shrinking and
-growing the file still work. SEAL-PUNCH-HOLE-SHRINK adds F_SEAL_SHRINK
-as well and checks that the file can neither have holes punched into it
-nor be shrunk, while it can still grow.
+Would it make more sense for the drivers in question to set some flag
+(refcount?) on the file to block hole punching?  Or perhaps to have
+the hole punch code notice that it's trying to punch out a folio that
+is pinned or otherwise referenced and to refuse to do it?
 
-Signed-off-by: Samiullah Khawaja <skhawaja@google.com>
----
- tools/testing/selftests/memfd/memfd_test.c | 111 ++++++++++++++++++++-
- 1 file changed, 110 insertions(+), 1 deletion(-)
+To some extent, the issue you're describing is maybe broader than just
+the APIs you're contemplating.  If I open a file and then do something
+in thread A that GUP's the file and punch a hole in the file in thread
+B, I'm doing something weird, and I can imagine plenty of ways it
+could go wrong.  (Especially if it's GUP for write.  I hope we already
+get that case right.)
 
-diff --git a/tools/testing/selftests/memfd/memfd_test.c b/tools/testing/selftests/memfd/memfd_test.c
-index cdab3a837624..095c5eb255af 100644
---- a/tools/testing/selftests/memfd/memfd_test.c
-+++ b/tools/testing/selftests/memfd/memfd_test.c
-@@ -35,6 +35,10 @@
- 
- #define F_SEAL_EXEC	0x0020
- 
-+#ifndef F_SEAL_PUNCH_HOLE
-+#define F_SEAL_PUNCH_HOLE	0x0040
-+#endif
-+
- #define F_WX_SEALS (F_SEAL_SHRINK | \
- 		    F_SEAL_GROW | \
- 		    F_SEAL_WRITE | \
-@@ -455,7 +459,7 @@ static void mfd_assert_fork_private_write(int fd)
- 	munmap(p, mfd_def_size);
- }
- 
--static void mfd_assert_write(int fd)
-+static void __mfd_assert_write(int fd)
- {
- 	ssize_t l;
- 	void *p;
-@@ -523,6 +527,11 @@ static void mfd_assert_write(int fd)
- 
- 	*(char *)p = 0;
- 	munmap(p, mfd_def_size);
-+}
-+
-+static void mfd_assert_punch_hole(int fd)
-+{
-+	int r;
- 
- 	/* verify PUNCH_HOLE works */
- 	r = fallocate(fd,
-@@ -535,6 +544,49 @@ static void mfd_assert_write(int fd)
- 	}
- }
- 
-+static void mfd_fail_punch_hole(int fd)
-+{
-+	void *p;
-+	int r;
-+
-+	/* verify PUNCH_HOLE fails */
-+	r = fallocate(fd,
-+		      FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
-+		      0,
-+		      mfd_def_size);
-+	if (r >= 0 || errno != EPERM) {
-+		printf("expected EPERM on fallocate(PUNCH_HOLE), but got %d: %m\n",
-+		       r);
-+		abort();
-+	}
-+
-+	/* verify MADV_REMOVE fails, it punches a hole as well */
-+	p = mmap(NULL,
-+		 mfd_def_size,
-+		 PROT_READ | PROT_WRITE,
-+		 MAP_SHARED,
-+		 fd,
-+		 0);
-+	if (p == MAP_FAILED) {
-+		printf("mmap() failed: %m\n");
-+		abort();
-+	}
-+
-+	r = madvise(p, mfd_def_size, MADV_REMOVE);
-+	if (r >= 0 || errno != EPERM) {
-+		printf("expected EPERM on madvise(MADV_REMOVE), but got %d: %m\n",
-+		       r);
-+		abort();
-+	}
-+	munmap(p, mfd_def_size);
-+}
-+
-+static void mfd_assert_write(int fd)
-+{
-+	__mfd_assert_write(fd);
-+	mfd_assert_punch_hole(fd);
-+}
-+
- static void mfd_fail_write(int fd)
- {
- 	ssize_t l;
-@@ -1117,6 +1169,61 @@ static void test_seal_resize(void)
- 	close(fd);
- }
- 
-+/*
-+ * Test SEAL_PUNCH_HOLE
-+ * Test whether SEAL_PUNCH_HOLE actually prevents punching holes, but still
-+ * allows writing and resizing
-+ */
-+static void test_seal_punch_hole(void)
-+{
-+	int fd;
-+
-+	printf("%s SEAL-PUNCH-HOLE\n", memfd_str);
-+
-+	fd = mfd_assert_new("kern_memfd_seal_punch_hole",
-+			    mfd_def_size,
-+			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-+	mfd_assert_has_seals(fd, 0);
-+	mfd_assert_add_seals(fd, F_SEAL_PUNCH_HOLE);
-+	mfd_assert_has_seals(fd, F_SEAL_PUNCH_HOLE);
-+
-+	mfd_assert_read(fd);
-+	__mfd_assert_write(fd);
-+	mfd_fail_punch_hole(fd);
-+	mfd_assert_shrink(fd);
-+	mfd_assert_grow(fd);
-+	mfd_assert_grow_write(fd);
-+
-+	close(fd);
-+}
-+
-+/*
-+ * Test SEAL_PUNCH_HOLE | SEAL_SHRINK
-+ * Test whether SEAL_PUNCH_HOLE | SEAL_SHRINK prevents removing pages from
-+ * the file
-+ */
-+static void test_seal_punch_hole_shrink(void)
-+{
-+	int fd;
-+
-+	printf("%s SEAL-PUNCH-HOLE-SHRINK\n", memfd_str);
-+
-+	fd = mfd_assert_new("kern_memfd_seal_punch_hole_shrink",
-+			    mfd_def_size,
-+			    MFD_CLOEXEC | MFD_ALLOW_SEALING);
-+	mfd_assert_has_seals(fd, 0);
-+	mfd_assert_add_seals(fd, F_SEAL_PUNCH_HOLE | F_SEAL_SHRINK);
-+	mfd_assert_has_seals(fd, F_SEAL_PUNCH_HOLE | F_SEAL_SHRINK);
-+
-+	mfd_assert_read(fd);
-+	__mfd_assert_write(fd);
-+	mfd_fail_punch_hole(fd);
-+	mfd_fail_shrink(fd);
-+	mfd_assert_grow(fd);
-+
-+	close(fd);
-+}
-+
- /*
-  * Test SEAL_EXEC
-  * Test fd is created with exec and allow sealing.
-@@ -1736,6 +1843,8 @@ int main(int argc, char **argv)
- 	test_seal_shrink();
- 	test_seal_grow();
- 	test_seal_resize();
-+	test_seal_punch_hole();
-+	test_seal_punch_hole_shrink();
- 
- 	if (pid_ns_supported()) {
- 		test_sysctl_simple();
--- 
-2.56.0.307.g5fe7bd680c-goog
-
+--=20
+Andy Lutomirski
+AMA Capital Management, LLC
