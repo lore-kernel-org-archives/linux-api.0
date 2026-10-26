@@ -1,98 +1,65 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793037987;
-	b=3JI5f5Ke2AjOBgcmSSLY1JOqK5lQ3vfied569cIfnWjNNzQ13VKNFYNnQ6/HceYvKNPK
-	 UTs53yMB72AUC+4GkOxgFgd7DivvZy2WtjnfgWO7kedof8f1cMaZEl8MV45L07ygxmaKL
-	 n78eY18IlJUPDo2AQOoW/ttn7oblTrfOj6KAQCQwyZMRF94+VwJREAmgE2otcDbQxpzg0
-	 5ye2o2B6UmckyOb0ZafDY2BXmv3rls3R22/TTenAkCUVdKZASeM9ow3KNgbd0CFzjsYIm
-	 JgxoouKcgdcLuNaCFAnDfPwmpKIGWC4AkI6ynBD8MDI2C6MhfRgeDnsGJTv7NtoX/dQ==
+	t=1793040920;
+	b=nbDsfZUr/7UvHjxmGP3yUU3l3bM7c0yg4xa2PsE+3SW3/Puf/Tg7F8LxbDMbtM8/6Qr+
+	 bH4OwOuzRTW5q+4ImqH4zCbuavvCTP1df+qO6sZ2HMmrJNWlrfACvMaNXhmtJE+6nEAPG
+	 CQCtUPOCTrOcrKYi0oY5dZsDaAVypPhZ8skLgzBOd28g0S+nUIi9p2do3mW4/gWhV+nqK
+	 Y15dmLnLvWfNrFc4T/92CFZG5kRSZwqkxdugkTbYEQc/c/fRlx26jlk4VmapJo/snRoAK
+	 LE8pY/94LiCcLErK/eCDP4GOMSsUYeDKFdrxsJZABRHqyGwjzocBWHQ8XTi/JGwnsJQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793037987;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=xHfjRrcnHq0gMjmE8KEiw2pb4RTHUukE8vXn8oTU6AA=;
-	b=ETagkJVwuSPZ7YMivwQKDRvlQXp2tdU43pMR2ISBLhjkhuz01Rj/BMDUrh/S00HkMPB4
-	 2TTZnFfUvEFzt8PVJSu2tPte6TVrAwvuVLxHZ+4sca5StPf5L7Zw/4vA354fDpUyX2MzC
-	 pXQqOdCTkrG5vDJ41hnFsR5nGFzYrAiSyUOWrTLW6eMccbEqX+xNvc2KQG5wGkJdKHwKj
-	 F3TKeBUaJOeuWWR7QNIuVmSseTtG7lzOAF+YLJK6Ls090osxz52g57TWxJOftt2dMB9am
-	 8mGAkZFT7aJE4pkDeHMqcT4tgAjiP3++Cp7vMBe8IH81yGFlzq0K45kq59Es6E/0CtA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793040920;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To;
+	bh=14SSH2xspvz4Z2D51/Zkd8I93a9ufoZlVP5JLi7O9/0=;
+	b=JIgLQUNUVTXqXhQFgjo0FU4L3oDDSZn8wY2sfxJjgK1QX023Zmha84D7l9jd0Ih87mBj
+	 QM09BA0qR1gvhomUblhAJfnj3X6i31l4+DaXSbhTwMWS+nwUz9nOhh/9saE7hY1A4PJB1
+	 Jpyk/hQFLFE7hvo67IhHEaqRiJrzFyfh4GYNSYeWx0BFV5TFhBcoDVob6vtCTLR5lEl/c
+	 DhwtgL14NAl+AaYwQiYC5a9SZFdwnu+mlpcU/BJQRvMQNg+2+xwtHd5WDh9HKWBNf7oV2
+	 VT23aZH3CHxFYv8m64qYehFJu9c3qS5yEd+oAEXKzvzm3aTxfPEdRPD72iwmxVNhrwA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=o6YgJ9hw;
-	arc=none smtp.remote-ip=209.85.221.41
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 120FB606A31D
-	for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 18:06:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 120FB606A31D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	dmarc=pass header.from=arm.com;
+	spf=pass smtp.mailfrom=arm.com;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=tCuj2i4B;
+	arc=none smtp.remote-ip=217.140.110.172
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8D63B606A322;
+	Mon, 26 Oct 2026 18:55:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8D63B606A322
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20251104 header.b=o6YgJ9hw
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-48c4d99c32bso2307162f8f.1
-        for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 11:06:26 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20251104; t=1793037985; x=1793642785; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=xHfjRrcnHq0gMjmE8KEiw2pb4RTHUukE8vXn8oTU6AA=;
-        b=o6YgJ9hwBkPl3jqVNbqlawnck8SEmLFj67acDobAFAJHw7IAOdzm/7GapKqpsYzHHb
-         4/AxJx7EygdI7UDzPpEFU732U3zq5O6cUfZm0WevnyLaJyO9qa4Hy8IE7UFyTokTzkbo
-         yhV16Dc0zG8els4Pu3fRhtKSr7i9yagF+hH+WH/fSljpWZxrw6HASGVpq3NheTiVMajf
-         6Iqn/VwO9D1HJX2aZQxY/VKSduQz8+CO/TId8cWkSSj0fK5WCPK+4YExuTDUNZLx03Dg
-         zgKOSf7WnGEHBhMXzuL88lL8Wy2rujcNbbfSLj4/BmuWunGkZNy5v4qu/MLmu/HDu8y9
-         jIuA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793037985; x=1793642785;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=xHfjRrcnHq0gMjmE8KEiw2pb4RTHUukE8vXn8oTU6AA=;
-        b=Q8HFWfgUjb89kt1vQ0ogx0y0QzB1a/D+qwWXypdjS1UUW4ohLc0Fz4cadMd7vgY4/+
-         Lp8g2YCQY1K6fI+thY3mqMM1QFE/wO8PQWocKQnhoCSYhEwyeyPV7sln4SlKD9HJsq/j
-         Fb8B2un7/7TpjWT8d0uZ7pYWvP5/mMEqUgDlPtPxhk5l6H58BZy52ufYMsY6Vc9Ct1In
-         ocU+iazJhCSsMnh5+OU13/CpwfTHtFGTHOwebY7QElORs0IxkbCM11uwCMD/5LPoTKTR
-         cja3BHM3iSuhNsnNArbVD9FNTAJBXb3b037jUthQW5903fGZmTFE09m/KQYXD9djN1Oj
-         vS9Q==
-X-Forwarded-Encrypted: i=1; AKwUvBzuifiPWK/6VmmIGrpQFnmRW1hC1UDIq/aXDLsA2+roGOtVyVmvQx6fl6WCvv7HtFAMo2kJ0SiLgdU=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKneIGrUqTaN5sRk+zDkrdSJh5Fnr6sYe3wFX04jPOenceadZ5p
-	lhVy+NT7L6HK7azFAxzV66Js/mFlFSfJAvrBDAEChCh9rHX/RwT8wQty
-X-Gm-Gg: AYBFou2tOhPJkDaB4AFcNvXe1JK3tEBVdtWmDytN1X9ToZZSlkpdPJ0eY3SlaGiQnPf
-	JUyUOjeAkV4IMMXeZezFks4z20ylkCPNuHO4FXERv3Sn1ufHlU5lRUxMhMlOQLdu2ZepvF7eeJJ
-	JfiBqdKq+Ut7Yr49ZIEuxWEQoGKuVFkM9CYKlPMWExXac9C85a/3eO/ARcAqoTJBju5QRBGf5gq
-	E7/pmKKNQFwgLhPfnapvc9Go4qen0AfQMrwDodUQJ4/8GtIhWXtRYC9WbwBWxEnt9ynCiH0GDHE
-	37pryu+WLjgvKr/P1wzQUZT+lb5Q3d9F997vgX8oXCgqI4B5QEMcEk3kganjS14EJmjfDvBxhLk
-	AbN7rMWn+MqwGZY7eh8T2R1dp8E0RpkMBWd8PKKnnag6uDQSbXXobWpwgPuMkED1tYKwk17cvOd
-	KhgJg5UDBRqapKw1X0TgIRfM6ryv6BFEz1siBn6Yw09rqtkCWNtl5q2OgTHfohcIByDnGb/wp8g
-	3qGbDmoCAImKioeZUwEEBhBkUQXtWwTqGD8NmLD2WMXkBuQJYVKoxszvBjot/XwytE9W0FVVasQ
-	8xl7LnG9EP8FCgvxzWb29D4v9Jo=
-X-Received: by 2002:a05:6000:2405:b0:48e:517b:cf21 with SMTP id ffacd0b85a97d-48e517bcfedmr5799152f8f.26.1793037985247;
-        Mon, 26 Oct 2026 11:06:25 -0700 (PDT)
-Received: from andreayoga.wind3.hub ([31.189.109.255])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e3ebd48fasm17694846f8f.31.2026.10.26.11.06.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Oct 2026 11:06:24 -0700 (PDT)
-From: Andrea Parri <parri.andrea@gmail.com>
-To: Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>
-Cc: Andrea Parri <parri.andrea@gmail.com>,
-	Jan Kara <jack@suse.cz>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	linux-fsdevel@vger.kernel.org,
-	linux-block@vger.kernel.org,
-	linux-btrfs@vger.kernel.org,
-	linux-mm@kvack.org,
-	linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH] iov_iter: take an unsigned long segment count in import_iovec()
-Date: Mon, 26 Oct 2026 19:06:18 +0100
-Message-ID: <20261026180619.4147910-1-parri.andrea@gmail.com>
-X-Mailer: git-send-email 2.53.0
+	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=tCuj2i4B
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 9A78B1650;
+	Mon, 26 Oct 2026 11:55:15 -0700 (PDT)
+Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 1BFD73F7B4;
+	Mon, 26 Oct 2026 11:55:15 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
+	t=1793040918; bh=grAifNQFEPgBmDPA0bMF2OF2I2wR4YLNKySbPPiNVTg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=tCuj2i4BCX9GVFYpjwkmDDh6Di2a23RtoXy8Y+Fnmmkweuz0CcZ3GKyYa4jhCInQS
+	 1HvLA0/aCOjFGk+/J15OaP7AwFD79X88MbqB+aB6PcqRhb9nPfEy+1jjf7O2XRxCLd
+	 aE39cIhVviEDVoGZ2H0Xn86zwrwIu9HRjwiLYgxg=
+Date: Mon, 26 Oct 2026 18:55:12 +0000
+From: Yeoreum Yun <yeoreum.yun@arm.com>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com,
+	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 02/20] ctlv: Add the UAPI wire format and family API
+Message-ID: <at-iEMxN98nie1Qr@e129823.arm.com>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-3-jiri@resnulli.us>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -102,135 +69,704 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261015145053.3664509-3-jiri@resnulli.us>
 
-readv(), writev() and their positional variants, process_vm_readv(),
-process_vm_writev(), vmsplice(), process_madvise(), vectored aio and
-the btrfs encoded I/O ioctls all take a full-width segment count, and
-all of them hand it to import_iovec() or __import_iovec().  Those take
-an unsigned int count, so on 64-bit kernels the upper 32 bits are
-dropped before iovec_from_user() checks the count against UIO_MAXIOV.
+Hi,
 
-A count of 0x100000001 is therefore imported as one segment: writev()
-on a pipe writes a byte and readv() reads it back, instead of both
-failing with EINVAL.  A count of 0x100000000 returns 0 as an empty
-vector.
+> From: Jiri Pirko <jiri@nvidia.com>
+> 
+> Define CTLV's common TLV transport, ioctl, event records, identifiers
+> and limits. Add the in-kernel API used by family implementations and
+> generated code.
+> 
+> Assisted-by: Cursor: GPT-5.6 Sol
+> Assisted-by: Cursor: Claude Opus 5.5
+> Signed-off-by: Jiri Pirko <jiri@nvidia.com>
+> ---
+>  .../userspace-api/ioctl/ioctl-number.rst      |   2 +
+>  MAINTAINERS                                   |   2 +
+>  include/linux/ctlv.h                          |  55 +++
+>  include/linux/ctlv_family.h                   | 316 ++++++++++++++++++
+>  include/uapi/linux/ctlv.h                     | 183 ++++++++++
+>  5 files changed, 558 insertions(+)
+>  create mode 100644 include/linux/ctlv.h
+>  create mode 100644 include/linux/ctlv_family.h
+>  create mode 100644 include/uapi/linux/ctlv.h
+> 
+> diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+> index 2fc53093752d..e545669c773c 100644
+> --- a/Documentation/userspace-api/ioctl/ioctl-number.rst
+> +++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+> @@ -386,6 +386,8 @@ Code  Seq#    Include File                                             Comments
+>                                                                         <mailto:linux-hyperv@vger.kernel.org>
+>  0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
+>                                                                         <mailto:pasha.tatashin@soleen.com>
+> +0xBB  00-0F  uapi/linux/ctlv.h                                         CTLV
+> +                                                                       <mailto:jiri@resnulli.us>
+>  0xC0  00-0F  linux/usb/iowarrior.h
+>  0xCA  00-0F  uapi/misc/cxl.h                                           Dead since 6.15
+>  0xCA  10-2F  uapi/misc/ocxl.h
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index a8508fbae37d..8ab0d6a7a2fd 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -7006,6 +7006,8 @@ M:	Jiri Pirko <jiri@resnulli.us>
+>  L:	linux-kernel@vger.kernel.org
+>  S:	Maintained
+>  F:	Documentation/ctlv/
+> +F:	include/linux/ctlv*.h
+> +F:	include/uapi/linux/ctlv*.h
+>  F:	tools/ctlv/
+>  
+>  CTU CAN FD DRIVER
+> diff --git a/include/linux/ctlv.h b/include/linux/ctlv.h
+> new file mode 100644
+> index 000000000000..addb893f4b8d
+> --- /dev/null
+> +++ b/include/linux/ctlv.h
+> @@ -0,0 +1,55 @@
+> +/* SPDX-License-Identifier: GPL-2.0-only */
+> +/*
+> + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
+> + *
+> + * CTLV family API.
+> + */
+> +#ifndef _LINUX_CTLV_H
+> +#define _LINUX_CTLV_H
+> +
+> +#include <linux/types.h>
+> +
+> +#include <uapi/linux/ctlv.h>
+> +
+> +struct ctlv_device;
+> +struct ctlv_family;
+> +struct ctlv_msg;
+> +struct ctlv_op_ctx;
+> +struct ctlv_schema_tree;
+> +
+> +/**
+> + * struct ctlv_cursor - One attr position in one message.
+> + * @msg: the message this position is in, core-private bookkeeping
+> + * @attr: the attr itself, or NULL when a lookup found nothing
+> + * @parent: reading, the nest containing @attr, NULL at the root
+> + * @up: writing, cursor of the nest containing @attr, NULL at the root. The
+> + *	chain of them is the open-nest stack
+> + * @start: writing, where @attr begins in the message. An append reaches what
+> + *	it lengthens through the buffer rather than through @attr, that buffer
+> + *	being the core's own
+> + * @tree: schema tree the node belongs to, which is a fill's own tree for an
+> + *	attr that arrived through one
+> + * @node: index of the node within @tree
+> + * @depth: nesting levels above this position, the root being zero
+> + * @index_nest_scope: schema scope used to read members of the physical nest
+> + * @index_scope: core-private schema scope containing this attr
+> + *
+> + * Fixed-size, so family code can put a child cursor on the stack. The members
+> + * belong to the core: a family reaches a message through what was generated
+> + * for the op it answers. One direction at a time, a helper of the other
+> + * direction refusing the cursor.
+> + */
+> +struct ctlv_cursor {
+> +	struct ctlv_msg *msg;
+> +	const struct ctlv_attr *attr;
+> +	const struct ctlv_attr *parent;
+> +	struct ctlv_cursor *up;
+> +	size_t start;
+> +	const struct ctlv_schema_tree *tree;
+> +	u32 node;
+> +	u32 depth;
+> +	u32 index_nest_scope;
+> +	u32 index_scope;
+> +};
+> +
+> +#endif /* _LINUX_CTLV_H */
+> diff --git a/include/linux/ctlv_family.h b/include/linux/ctlv_family.h
+> new file mode 100644
+> index 000000000000..1ae4d3a536f7
+> --- /dev/null
+> +++ b/include/linux/ctlv_family.h
+> @@ -0,0 +1,316 @@
+> +/* SPDX-License-Identifier: GPL-2.0-only */
+> +/*
+> + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
+> + *
+> + * CTLV family metadata and generated-code support.
+> + */
+> +#ifndef _LINUX_CTLV_FAMILY_H
+> +#define _LINUX_CTLV_FAMILY_H
+> +
+> +#include <linux/ctlv.h>
+> +#include <linux/gfp_types.h>
+> +#include <linux/kobject.h>
+> +#include <linux/types.h>
+> +
+> +#include <uapi/linux/ctlv.h>
+> +
+> +/* op-schema-get needs one level to describe the declared schema. */
+> +#define CTLV_MAX_DECLARED_NEST_DEPTH (CTLV_MAX_NEST_DEPTH - 1)
+> +
+> +struct ctlv_node_schema {
+> +	u64 attr_id;
+> +	u8 kind;
+> +	u8 unit;
+> +	s8 scale;
+> +	bool reenters;
+> +	u32 max_occurrences;
+> +	u32 first_child;
+> +	u32 children_count;
+> +	u32 required_children_count;
+> +	union {
+> +		struct {
+> +			u64 min;
+> +			u64 max;
+> +		} range;
+> +		u64 flags_mask;
+> +		struct {
+> +			u32 min_len;
+> +			u32 max_len;
+> +		} length;
+> +		struct {
+> +			u64 max_len;
+> +			u32 alignment;
+> +			u16 backings;
+> +			u8 direction;
+> +		} blob;
+> +	};
+> +};
+> +
+> +#define CTLV_NODE_SCHEMA_UNLIMITED 0
+> +
+> +#define __CTLV_NODE_SCHEMA(_attr, _kind, _occurrences, ...)	\
+> +	{ .attr_id = (_attr), .kind = (_kind),			\
+> +	  .max_occurrences = (_occurrences), __VA_ARGS__ }
+> +
+> +#define __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required)	\
+> +	.first_child = (_first), .children_count = (_count),	\
+> +	.required_children_count = (_required)
+> +
+> +#define CTLV_NODE_SCHEMA_ROOT(_first, _count, _required)	\
+> +	__CTLV_NODE_SCHEMA(CTLV_ATTR_ROOT, CTLV_SCHEMA_NEST, 1,	\
+> +			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
+> +
+> +#define CTLV_NODE_SCHEMA_NEST(_attr, _occurrences, _first, _count, _required) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_NEST, _occurrences,	\
+> +			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
+> +
+> +#define CTLV_NODE_SCHEMA_NEST_REENTERS(_attr, _occurrences, _first, _count, _required) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_NEST, _occurrences,	\
+> +			   .reenters = true,				\
+> +			   __CTLV_NODE_SCHEMA_CHILDREN(_first, _count, _required))
+> +
+> +#define CTLV_NODE_SCHEMA_UINT(_attr, _occurrences, _min, _max)	\
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_UINT, _occurrences,	\
+> +			   .range = { .min = (_min), .max = (_max) })
+> +
+> +#define CTLV_NODE_SCHEMA_UINT_UNIT(_attr, _occurrences, _min, _max, _unit, _scale) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_UINT, _occurrences,	\
+> +			   .range = { .min = (_min), .max = (_max) },	\
+> +			   .unit = (_unit), .scale = (_scale))
+> +
+> +#define CTLV_NODE_SCHEMA_SINT(_attr, _occurrences, _min, _max)	\
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_SINT, _occurrences,	\
+> +			   .range = { .min = (_min), .max = (_max) })
+> +
+> +#define CTLV_NODE_SCHEMA_SINT_UNIT(_attr, _occurrences, _min, _max, _unit, _scale) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_SINT, _occurrences,	\
+> +			   .range = { .min = (_min), .max = (_max) },	\
+> +			   .unit = (_unit), .scale = (_scale))
+> +
+> +#define CTLV_NODE_SCHEMA_ENUM(_attr, _occurrences, _max)	\
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_ENUM, _occurrences,	\
+> +			   .range = { .min = 1, .max = (_max) })
+> +
+> +#define CTLV_NODE_SCHEMA_FLAGS(_attr, _occurrences, _mask)	\
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_FLAGS, _occurrences,	\
+> +			   .flags_mask = (_mask))
+> +
+> +#define CTLV_NODE_SCHEMA_BOOL(_attr, _occurrences)		\
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BOOL, _occurrences)
+> +
+> +#define CTLV_NODE_SCHEMA_STRING(_attr, _occurrences, _min, _max) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_STRING, _occurrences,	\
+> +			   .length = { .min_len = (_min), .max_len = (_max) })
+> +
+> +#define CTLV_NODE_SCHEMA_BINARY(_attr, _occurrences, _min, _max) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BINARY, _occurrences,	\
+> +			   .length = { .min_len = (_min), .max_len = (_max) })
+> +
+> +#define CTLV_NODE_SCHEMA_BLOB(_attr, _occurrences, _max, _alignment, _backings, _dir) \
+> +	__CTLV_NODE_SCHEMA(_attr, CTLV_SCHEMA_BLOB, _occurrences,	\
+> +			   .blob = { .max_len = (_max),			\
+> +				     .alignment = (_alignment),		\
+> +				     .backings = (_backings),		\
+> +				     .direction = (_dir) })
+> +
+> +struct ctlv_stub_schema {
+> +	u16 family_id;
+> +	u32 set_id;
+> +	u32 node;
+> +	bool optional;
+> +};
+> +
+> +#define __CTLV_STUB_SCHEMA(_family, _set, _node, _optional)	\
+> +	{ .family_id = (_family), .set_id = (_set),		\
+> +	  .node = (_node), .optional = (_optional) }
+> +
+> +#define CTLV_STUB_SCHEMA(_family, _set, _node)			\
+> +	__CTLV_STUB_SCHEMA(_family, _set, _node, false)
+> +
+> +#define CTLV_STUB_SCHEMA_OPTIONAL(_family, _set, _node)		\
+> +	__CTLV_STUB_SCHEMA(_family, _set, _node, true)
+> +
+> +struct ctlv_schema_tree {
+> +	const struct ctlv_node_schema *node_schemas;
+> +	u32 node_schemas_count;
+> +	const struct ctlv_stub_schema *stub_schemas;
+> +	u32 stub_schemas_count;
+> +};
+> +
+> +#define CTLV_SCHEMA_TREE(_name) {				\
+> +	.node_schemas = _name##_node_schemas,			\
+> +	.node_schemas_count = ARRAY_SIZE(_name##_node_schemas),	\
+> +}
+> +
+> +#define CTLV_SCHEMA_TREE_STUBS(_name) {				\
+> +	.node_schemas = _name##_node_schemas,			\
+> +	.node_schemas_count = ARRAY_SIZE(_name##_node_schemas),	\
+> +	.stub_schemas = _name##_stub_schemas,			\
+> +	.stub_schemas_count = ARRAY_SIZE(_name##_stub_schemas),	\
+> +}
+> +
+> +#define CTLV_SCHEMA_TREE_NONE() { }
+> +
+> +struct ctlv_stub_fill_schema {
+> +	u16 family_id;
+> +	u32 set_id;
+> +	struct ctlv_schema_tree members;
+> +};
+> +
+> +#define CTLV_STUB_FILL_SCHEMA(_family, _set, _name) {		\
+> +	.family_id = (_family),					\
+> +	.set_id = (_set),					\
+> +	.members = CTLV_SCHEMA_TREE(_name##_fill),		\
+> +}
+> +
+> +struct ctlv_op_sizes {
+> +	u32 request_max_len;
+> +	u32 action_reply_max_len;
+> +	u32 query_reply_min_len;
+> +	u32 query_reply_suggested_len;
+> +	u32 event_record_max_len;
+> +};
+> +
+> +struct ctlv_op_schema {
+> +	u64 op_id;
+> +	u8 type;
+> +	u8 fd_access;
+> +	u8 availability;
+> +	bool optional;
+> +	bool pre_post;
+> +	struct ctlv_schema_tree request;
+> +	struct ctlv_schema_tree reply;
+> +	struct ctlv_op_sizes sizes;
+> +};
+> +
+> +#define __CTLV_OP_SCHEMA(_op, _type, _availability, ...)	\
+> +	{ .op_id = (_op), .type = (_type),			\
+> +	  .availability = (_availability), __VA_ARGS__ }
+> +
+> +#define CTLV_OP_SCHEMA_ACTION(_op, _access, _availability, _request_len, _reply_len, \
+> +			      _request, _reply, ...)			\
+> +	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_ACTION, _availability,	\
+> +			 .fd_access = (_access),			\
+> +			 .request = _request, .reply = _reply,		\
+> +			 .sizes = {					\
+> +				.request_max_len = (_request_len),	\
+> +				.action_reply_max_len = (_reply_len),	\
+> +			 },						\
+> +			 __VA_ARGS__)
+> +
+> +#define CTLV_OP_SCHEMA_QUERY(_op, _access, _availability, _request_len, _reply_min, \
+> +			     _reply_suggested, _request, _reply, ...)	\
+> +	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_QUERY, _availability,	\
+> +			 .fd_access = (_access),			\
+> +			 .request = _request, .reply = _reply,		\
+> +			 .sizes = {					\
+> +				.request_max_len = (_request_len),	\
+> +				.query_reply_min_len = (_reply_min),	\
+> +				.query_reply_suggested_len =		\
+> +					(_reply_suggested),		\
+> +			 },						\
+> +			 __VA_ARGS__)
+> +
+> +#define CTLV_OP_SCHEMA_EVENT(_op, _record_len, _reply, ...)	\
+> +	__CTLV_OP_SCHEMA(_op, CTLV_OP_TYPE_EVENT,		\
+> +			 CTLV_OP_AVAILABILITY_FIXED,			\
+> +			 .reply = _reply,				\
+> +			 .sizes = {					\
+> +				.event_record_max_len = (_record_len),	\
+> +			 },						\
+> +			 __VA_ARGS__)
+> +
+> +struct ctlv_family_schema {
+> +	const char *name;
+> +	u16 family_id;
+> +	const struct ctlv_op_schema *ops;
+> +	u32 ops_count;
+> +	const struct ctlv_stub_fill_schema *stub_fill_schemas;
+> +	u32 stub_fill_schemas_count;
+> +};
+> +
+> +/* Leave half of a uevent environment to the device model. */
+> +#define CTLV_UEVENT_MAX_LEN (UEVENT_BUFFER_SIZE / 2)
+> +#define CTLV_UEVENT_MAX_VARS (UEVENT_NUM_ENVP / 2)
+> +
+> +struct ctlv_input_ref {
+> +	const struct ctlv_schema_tree *tree;
+> +	u64 attr_id;
+> +	u32 node;
+> +	u32 slot;
+> +	u8 kind;
+> +};
+> +
+> +typedef int (*ctlv_action_fn)(void *priv, struct ctlv_op_ctx *ctx,
+> +			      const struct ctlv_cursor *request,
+> +			      struct ctlv_cursor *reply);
+> +typedef int (*ctlv_query_fn)(void *priv, struct ctlv_op_ctx *ctx,
+> +			     const struct ctlv_cursor *request,
+> +			     struct ctlv_cursor *reply);
+> +typedef int (*ctlv_op_pre_fn)(void *priv, struct ctlv_op_ctx *ctx);
+> +typedef void (*ctlv_op_post_fn)(void *priv, struct ctlv_op_ctx *ctx);
+> +
+> +struct ctlv_op {
+> +	union {
+> +		ctlv_action_fn action;
+> +		ctlv_query_fn query;
+> +	};
+> +	ctlv_op_pre_fn pre;
+> +	ctlv_op_post_fn post;
+> +};
+> +
+> +#define CTLV_OP_ACTION(_name) { .action = _name##_action }
+> +#define CTLV_OP_QUERY(_name) { .query = _name##_query }
+> +#define CTLV_OP_ACTION_PRE_POST(_name)				\
+> +	{ .action = _name##_action, .pre = _name##_pre,		\
+> +	  .post = _name##_post }
+> +#define CTLV_OP_QUERY_PRE_POST(_name)				\
+> +	{ .query = _name##_query, .pre = _name##_pre,		\
+> +	  .post = _name##_post }
+> +
+> +typedef size_t (*ctlv_family_priv_size_fn)(void);
+> +typedef const void *(*ctlv_family_pre_init_fn)(const void *init_info);
+> +typedef int (*ctlv_family_init_fn)(struct ctlv_device *ctlvdev,
+> +				   const void *init_info, void *priv);
+> +typedef int (*ctlv_family_post_init_fn)(struct ctlv_device *ctlvdev,
+> +					void *priv);
+> +typedef void (*ctlv_family_pre_fini_fn)(struct ctlv_device *ctlvdev,
+> +					void *priv);
+> +typedef void (*ctlv_family_fini_fn)(struct ctlv_device *ctlvdev, void *priv);
+> +
+> +typedef int (*ctlv_stub_fill_fn)(void *priv, struct ctlv_op_ctx *ctx,
+> +				 const struct ctlv_cursor *request,
+> +				 struct ctlv_cursor *nest);
+> +
+> +struct ctlv_stub_ops {
+> +	u16 family_id;
+> +	u32 set_id;
+> +	ctlv_stub_fill_fn fill;
+> +};
+> +
+> +#define CTLV_STUB_OPS(_family, _set, _name) {			\
+> +	.family_id = (_family),					\
+> +	.set_id = (_set),					\
+> +	.fill = _name##_fill,					\
+> +}
+> +
+> +struct ctlv_family {
+> +	const struct ctlv_family_schema *schema;
+> +	const struct ctlv_family *parent;
+> +	const struct ctlv_op *ops;
+> +	u32 ops_count;
+> +	ctlv_op_pre_fn pre;
+> +	ctlv_op_post_fn post;
+> +	ctlv_family_priv_size_fn priv_size;
+> +	ctlv_family_pre_init_fn pre_init;
+> +	ctlv_family_init_fn init;
+> +	ctlv_family_post_init_fn post_init;
+> +	ctlv_family_pre_fini_fn pre_fini;
+> +	ctlv_family_fini_fn fini;
+> +	const struct ctlv_stub_ops *stub_ops;
+> +	u32 stub_ops_count;
+> +};
+> +
+> +extern const struct ctlv_family ctlv_family;
+> +
+> +#endif /* _LINUX_CTLV_FAMILY_H */
+> diff --git a/include/uapi/linux/ctlv.h b/include/uapi/linux/ctlv.h
+> new file mode 100644
+> index 000000000000..6bc0d1a296e6
+> --- /dev/null
+> +++ b/include/uapi/linux/ctlv.h
+> @@ -0,0 +1,183 @@
+> +/* SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause) */
+> +/*
+> + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
+> + *
+> + * CTLV transport UAPI: the TLV wire format, the op-execution ioctl, the event
+> + * record header and transport limits. Schema-free; a family's constants
+> + * are generated into <linux/<family>_gen.h>, the root family's into
+> + * <linux/ctlv_gen.h>.
+> + */
+> +#ifndef _UAPI_LINUX_CTLV_H
+> +#define _UAPI_LINUX_CTLV_H
+> +
+> +#include <linux/ioctl.h>
+> +#include <linux/types.h>
+> +
+> +/**
+> + * struct ctlv_attr - Attr header.
+> + * @len: this header plus its payload, excluding this attr's trailing padding
+> + * @flags: CTLV_ATTR_F_* bits
+> + * @attr_id: complete attr ID, or CTLV_ATTR_ROOT for a message root
+> + *
+> + * Attrs are aligned to CTLV_ALIGNTO, which is why @attr_id is __aligned_u64: a
+> + * 32-bit ABI would otherwise align this structure to four bytes. A nested
+> + * payload is the concatenation of CTLV_ALIGN(child.len) bytes per child, so
+> + * child padding counts inside the containing attr's @len while a leaf's own
+> + * padding does not. Scalar payloads are native-endian. Within each request
+> + * root or nest, occurrences of one @attr_id are contiguous; different IDs
+> + * otherwise have no required order.
+> + */
+> +struct ctlv_attr {
+> +	__u32 len;
+> +	__u32 flags;
+> +	__aligned_u64 attr_id;
+> +};
+> +
+> +#define CTLV_ALIGNTO 8
+> +#define CTLV_ALIGN(_len) (((_len) + CTLV_ALIGNTO - 1) & ~(CTLV_ALIGNTO - 1))
+> +
+> +/* Set exactly on root and nested attrs, clear on scalar attrs. */
+> +#define CTLV_ATTR_F_NESTED		(1U << 0)
+> +/* Query fragments: set on the root and each nest logically open at the end. */
+> +#define CTLV_ATTR_F_FRAG_MORE		(1U << 1)
+> +/*
+> + * A request attr, never the root, that a device whose schema does not declare
+> + * its ID skips whole instead of refusing the message. An ID that schema does
+> + * declare is held to it wherever it appears, so this asks to be forgiven what
+> + * this kernel has never heard of and nothing else.
+> + */
+> +#define CTLV_ATTR_F_IGNORE_IF_UNKNOWN	(1U << 2)
+> +
+> +/* Root attr: carries CTLV_ATTR_F_NESTED, valid only at a message start. */
+> +#define CTLV_ATTR_ROOT 0ULL
+> +
+> +/* Complete attr: family in bits 63..48, group in 47..32, attr in 31..0. */
+> +#define CTLV_ATTR(_family, _group, _attr)	\
+> +	(((__u64)(_family) << 48) |		\
+> +	 ((__u64)(_group) << 32) |		\
+> +	 (__u64)(_attr))
+> +
+> +#define CTLV_ATTR_FAMILY(_attr)	((__u16)((_attr) >> 48))
+> +#define CTLV_ATTR_GROUP(_attr)	((__u16)((_attr) >> 32))
+> +#define CTLV_ATTR_NUMBER(_attr)	((__u32)(_attr))
+> +
+> +/* Complete op: family in bits 63..48, zero in 47..32, op in 31..0. */
+> +#define CTLV_OP(_family, _op)	\
+> +	(((__u64)(_family) << 48) | (__u64)(_op))
+> +
+> +#define CTLV_OP_FAMILY(_op)		((__u16)((_op) >> 48))
+> +#define CTLV_OP_NUMBER(_op)		((__u32)(_op))
+> +
+> +/**
+> + * enum ctlv_unit - CTLV-defined unit of an integer attr payload.
+> + * @CTLV_UNIT_NONE: dimensionless
+> + * @CTLV_UNIT_SECONDS: seconds
+> + * @CTLV_UNIT_HERTZ: hertz
+> + * @CTLV_UNIT_BYTES: bytes
+> + * @CTLV_UNIT_CELSIUS: degrees Celsius
+> + *
+> + * A payload is value * 10^scale of this unit, from the decimal scale the attr
+> + * declares alongside. Changing either is an ABI break.
+> + */
+> +enum ctlv_unit {
+> +	CTLV_UNIT_NONE = 0,
+> +	CTLV_UNIT_SECONDS,
+> +	CTLV_UNIT_HERTZ,
+> +	CTLV_UNIT_BYTES,
+> +	CTLV_UNIT_CELSIUS,
+> +};
+> +
+> +/**
+> + * enum ctlv_schema_kind - CTLV-defined form of one attr payload.
+> + * @CTLV_SCHEMA_UINT: unsigned integer payload bounded by a range
+> + * @CTLV_SCHEMA_SINT: signed integer payload bounded by a range
+> + * @CTLV_SCHEMA_BOOL: one payload byte holding zero or one
+> + * @CTLV_SCHEMA_STRING: NUL-terminated string payload bounded by length
+> + * @CTLV_SCHEMA_BINARY: opaque payload bounded by length
+> + * @CTLV_SCHEMA_ENUM: unsigned integer payload restricted to a range
+> + * @CTLV_SCHEMA_FLAGS: unsigned integer payload restricted to a mask
+> + * @CTLV_SCHEMA_NEST: nested payload described by further nodes
+> + * @CTLV_SCHEMA_BLOB: blob descriptor nest
+> + *
+> + * Exactly one form applies to an attr. These are the values op-schema-get
+> + * reports, and the set is append-only.
+> + */
+> +enum ctlv_schema_kind {
+> +	CTLV_SCHEMA_UINT,
+> +	CTLV_SCHEMA_SINT,
+> +	CTLV_SCHEMA_BOOL,
+> +	CTLV_SCHEMA_STRING,
+> +	CTLV_SCHEMA_BINARY,
+> +	CTLV_SCHEMA_ENUM,
+> +	CTLV_SCHEMA_FLAGS,
+> +	CTLV_SCHEMA_NEST,
+> +	CTLV_SCHEMA_BLOB,
+> +};
+> +
+> +/**
+> + * struct ctlv_op_exec - Op-execution ioctl argument.
+> + * @op_id: complete op ID; zero is invalid
+> + * @request: struct ctlv_attr __user *, the mandatory complete request root
+> + * @reply: struct ctlv_attr __user *, the success reply or the error
+> + *	information
+> + * @request_len: readable bytes beginning at @request, at least one root header;
+> + *	the transport copy boundary, which may exceed the root's own length
+> + * @reply_len: writable bytes beginning at @reply; input only, never
+> + *	overwritten by the kernel
+> + * @generation: query only; zero on a first fragment, the previously returned
+> + *	value on continuation, and the query generation on output. Actions must
+> + *	set zero.
+> + * @cursor: query only; zero starts a query and a nonzero value resumes it. On
+> + *	output it is the next cursor when the root carries
+> + *	CTLV_ATTR_F_FRAG_MORE and zero when no further fragment exists. Actions
+> + *	must set zero.
+> + * @reserved: must be zero
+> + *
+> + * No size field: the ioctl number encodes the structure size and @reserved
+> + * covers compatible growth. @request and @reply are fixed-width
+> + * representations of userspace pointers so that the compat layout is identical.
+> + */
+> +struct ctlv_op_exec {
+> +	__aligned_u64 op_id;
+> +	__aligned_u64 request;
+> +	__aligned_u64 reply;
+> +	__u32 request_len;
+> +	__u32 reply_len;
+> +	__aligned_u64 generation;
+> +	__aligned_u64 cursor;
+> +	__aligned_u64 reserved[2];
+> +};
+> +
+> +#define CTLV_IOC_MAGIC 0xBB
+> +
+> +#define CTLV_IOC_OP_EXEC _IOWR(CTLV_IOC_MAGIC, 0x00, struct ctlv_op_exec)
+> +
+> +/**
+> + * struct ctlv_event_hdr - Header of one queued event record.
+> + * @length: complete record length, this header plus the aligned root
+> + * @flags: must be zero
+> + * @op_id: complete op ID of the event op that produced the record
+> + * @sequence: per open file description sequence number, assigned to every
+> + *	eligible enqueue attempt including dropped ones
+> + *
+> + * Exactly one root attr follows the header, and one read() returns one record.
+> + */
+> +struct ctlv_event_hdr {
+> +	__u32 length;
+> +	__u32 flags;
+> +	__aligned_u64 op_id;
+> +	__aligned_u64 sequence;
+> +};
+> +
+> +/* Implementation limits, not wire-field maxima: raising them is compatible. */
+> +
+> +/* Request roots, action replies, query reply fragments and event roots. */
+> +#define CTLV_MAX_INLINE_MESSAGE_LEN	0x100000	/* 1 MiB */
+> +/* Includes the error information root. */
+> +#define CTLV_MAX_ERROR_LEN		0x4000		/* 16 KiB */
+> +/* The root attr is at depth zero. */
+> +#define CTLV_MAX_NEST_DEPTH		32
 
-import_iovec() was added with an unsigned int count, but the helper it
-wrapped, rw_copy_check_uvector(), took an unsigned long, as does
-iovec_from_user() today.  Until v4.1, readv(), writev(), preadv(),
-pwritev(), process_vm_readv(), process_vm_writev() and vectored aio
-therefore failed these counts with EINVAL, as did vmsplice() until
-v4.18.
+JFYI, when I tested with CTLV_MAX_NEST_DEPTH as 32 and try to run
+ctlv_msg_test_as_deep_as_the_core_allows() message_kunit.c test,
+It experiences the *real stack overflow* on FVP
+(lesser value (e.g. 16) is fine):
 
-Widen nr_segs in both import helpers so the UIO_MAXIOV check sees the
-count the caller passed.  Callers with 32-bit counts are unaffected.
+[    3.834419]     ok 22 ctlv_msg_test_the_bit_where_it_means_nothing
+[    3.836499]     ok 23 ctlv_msg_test_a_bit_no_version_declares
+[    3.837852] Insufficient stack space to handle exception!
+[    3.837875] ESR: 0x0000000096000047 -- DABT (current EL)
+[    3.837916] FAR: 0xffff800084efffe0
+[    3.837953] Task stack:     [0xffff800084f00000..0xffff800084f04000]
+[    3.838001] IRQ stack:      [0xffff800083d50000..0xffff800083d54000]
+[    3.838049] Overflow stack: [0xffff00087b7c3150..0xffff00087b7c4150]
+[    3.838114] CPU: 7 UID: 0 PID: 257 Comm: kunit_try_catch Tainted: G                 N
+** replaying previous printk message **
+[    3.838114] CPU: 7 UID: 0 PID: 257 Comm: kunit_try_catch Tainted: G                 N  7.3.0-rc4+ #1216 PREEMPTLAZY
+[    3.838219] Tainted: [N]=TEST
+[    3.838249] Hardware name:  , BIOS
+[    3.838279] pstate: 21400009 (nzCv daif +PAN -UAO -TCO +DIT -SSBS BTYPE=--)
+[    3.838360] pc : __kmalloc_flags_noprof+0x10/0x540
+[    3.838433] lr : __alloc_empty_sheaf+0x48/0x88
+[    3.838501] sp : ffff800084efffa0
+[    3.838534] x29: ffff800084f00030 x28: 0000000000000400 x27: 0000000000000400
+[    3.838657] x26: ffff000803d721c0 x25: 0000000000000000 x24: 0000000000400cc0
+[    3.838780] x23: ffff00087b7e3398 x22: 16e0800080564b98 x21: ffff0008000a0900
+[    3.838908] x20: 0000000000000000 x19: ffff000800013600 x18: 0000000000000000
+[    3.839029] x17: 0000000000000001 x16: 0000000000000002 x15: ffffffff00000001
+[    3.839150] x14: 0000001c000001c0 x13: ffffffff00000001 x12: ffff000800013500
+[    3.839275] x11: ffff00080370a800 x10: 0000000000000060 x9 : ffff8000805627d0
+[    3.839401] x8 : 0000000000000000 x7 : ffffffff00000001 x6 : 0000001d000001d0
+[    3.839521] x5 : ffff800080567b68 x4 : 00000000ffffffff x3 : 0000000000000004
+[    3.839640] x2 : 0000000000000dc0 x1 : 0000000000000008 x0 : 0000000000000080
+[    3.839761] Kernel panic - not syncing: kernel stack overflow
+[    3.841533] CPU: 7 UID: 0 PID: 257 Comm: kunit_try_catch Tainted: G                 N  7.3.0-rc4+ #1216 PREEMPTLAZY
+[    3.841783] Tainted: [N]=TEST
+[    3.841877] Hardware name:  , BIOS
+[    3.841980] Call trace:
+[    3.842065]  show_stack+0x20/0x40 (C)
+[    3.842246]  __dump_stack+0x28/0x48
+[    3.842427]  dump_stack_lvl+0x28/0xb0
+[    3.842609]  dump_stack+0x18/0x34
+[    3.842788]  vpanic+0x208/0x5b8
+[    3.842944]  panic+0x54/0x60
+[    3.843096]  nmi_panic+0xc0/0xc8
+[    3.843273]  panic_bad_stack+0x10c/0x128
+[    3.843466]  handle_bad_stack+0x34/0x38
+[    3.843622]  __bad_stack+0x98/0xa0
+[    3.843773]  __kmalloc_flags_noprof+0x10/0x540 (P)
+[    3.843950]  __pcs_replace_empty_main+0x2ac/0x3e8
+[    3.844139]  __kmalloc_node_track_caller_noprof+0x440/0x520
+[    3.844328]  krealloc_node_align_noprof+0x178/0x390
+[    3.844509]  kvrealloc_node_align_noprof+0x98/0x130
+[    3.844690]  ctlv_schema_index_scope_add+0xb0/0x3f8
+[    3.844882]  ctlv_schema_check_indexed_nest+0x1e8/0x958
 
-AI assistance was used to find the bug, develop the fix, and run the
-reproducers.
+(repeat ctlv_schema_check_attr()/ctlv_schema_check_indexed_nest())
 
-Fixes: bc917be81059 ("saner iov_iter initialization primitives")
-Signed-off-by: Andrea Parri <parri.andrea@gmail.com>
----
-Tested on x86_64 with virtme-ng, base 734bef548a96e vs patched:
-readv, writev, preadv, pwritev, preadv2, pwritev2, vectored aio,
-process_madvise, process_vm_readv, process_vm_writev and vmsplice with
-counts 0, 1, 1024, 1025, UINT_MAX, 2^32, 2^32+1, 2^32+1024, 2^32+1025
-and ULONG_MAX (LONG_MAX for aio).  The base kernel accepts 2^32,
-2^32+1 and 2^32+1024 on every path; the patched kernel rejects every
-count above 1024 with EINVAL.  Also built every caller with
-allmodconfig W=1, and lib/iov_iter.o and the readv, vmsplice and
-process_vm callers with i386 defconfig W=1.
+[    3.856919]  ctlv_schema_check_attr+0x3dc/0x538
+[    3.857105]  ctlv_schema_check_indexed_nest+0x788/0x958
+[    3.857301]  ctlv_schema_validate+0x88/0x180
+[    3.857482]  ctlv_msg_test_as_deep_as_the_core_allows+0x11c/0x1e8
+[    3.857698]  kunit_try_run_case+0x64/0x188
+[    3.857878]  kunit_generic_run_threadfn_adapter+0x30/0x68
+[    3.858086]  kthread+0x10c/0x140
+[    3.858245]  ret_from_fork+0x10/0x20
+[    3.858398] SMP: stopping secondary CPUs
+[    3.858630] Kernel Offset: disabled
+[    3.858720] CPU features: 0x0,00000000,00b0802e,9f190bc3,2affe72f
+[    3.858872] Memory Limit: none
+[    3.858976] ---[ end Kernel panic - not syncing: kernel stack overflow ]---
 
-Reproducer (64-bit userspace):
-  cc -Wall -Wextra -O2 repro.c -o repro
-  ./repro
+[...]
 
-// SPDX-License-Identifier: GPL-2.0-only
-#define _GNU_SOURCE
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/syscall.h>
-#include <sys/uio.h>
-#include <unistd.h>
+I think it might be good to configurable according to architecture
+unless it's not good to reduce the CTLV_MAX_NEST_DEPTH number
+otherwise, increasing stack size when CTLV is enabled seems unresonable...
 
-int main(void)
-{
-	char source = 'x', received = '-';
-	struct iovec wiov = { .iov_base = &source, .iov_len = 1 };
-	struct iovec riov = { .iov_base = &received, .iov_len = 1 };
-	const unsigned long count = (1UL << 32) + 1;
-	long wret, rret;
-	int pipefd[2], werr;
-
-	if (pipe(pipefd)) {
-		perror("pipe");
-		return EXIT_FAILURE;
-	}
-	errno = 0;
-	wret = syscall(SYS_writev, pipefd[1], &wiov, count);
-	werr = errno;
-	close(pipefd[1]);
-	errno = 0;
-	rret = syscall(SYS_readv, pipefd[0], &riov, count);
-	printf("writev=%ld (%s) readv=%ld (%s) byte=%c\n",
-	       wret, strerror(werr), rret, strerror(errno), received);
-	close(pipefd[0]);
-	return EXIT_SUCCESS;
-}
-
- include/linux/uio.h | 8 ++++----
- lib/iov_iter.c      | 6 +++---
- 2 files changed, 7 insertions(+), 7 deletions(-)
-
-diff --git a/include/linux/uio.h b/include/linux/uio.h
-index fe2e985d74d24..529c6cd53df7a 100644
---- a/include/linux/uio.h
-+++ b/include/linux/uio.h
-@@ -362,11 +362,11 @@ struct iovec *iovec_from_user(const struct iovec __user *uvector,
- 		unsigned long nr_segs, unsigned long fast_segs,
- 		struct iovec *fast_iov, bool compat);
- ssize_t import_iovec(int type, const struct iovec __user *uvec,
--		 unsigned nr_segs, unsigned fast_segs, struct iovec **iovp,
--		 struct iov_iter *i);
-+		 unsigned long nr_segs, unsigned int fast_segs,
-+		 struct iovec **iovp, struct iov_iter *i);
- ssize_t __import_iovec(int type, const struct iovec __user *uvec,
--		 unsigned nr_segs, unsigned fast_segs, struct iovec **iovp,
--		 struct iov_iter *i, bool compat);
-+		 unsigned long nr_segs, unsigned int fast_segs,
-+		 struct iovec **iovp, struct iov_iter *i, bool compat);
- int import_ubuf(int type, void __user *buf, size_t len, struct iov_iter *i);
- 
- static inline void iov_iter_ubuf(struct iov_iter *i, unsigned int direction,
-diff --git a/lib/iov_iter.c b/lib/iov_iter.c
-index 2072c04e99d05..55cf2ff5bfdad 100644
---- a/lib/iov_iter.c
-+++ b/lib/iov_iter.c
-@@ -1362,8 +1362,8 @@ static ssize_t __import_iovec_ubuf(int type, const struct iovec __user *uvec,
- }
- 
- ssize_t __import_iovec(int type, const struct iovec __user *uvec,
--		 unsigned nr_segs, unsigned fast_segs, struct iovec **iovp,
--		 struct iov_iter *i, bool compat)
-+		 unsigned long nr_segs, unsigned int fast_segs,
-+		 struct iovec **iovp, struct iov_iter *i, bool compat)
- {
- 	ssize_t total_len = 0;
- 	unsigned long seg;
-@@ -1434,7 +1434,7 @@ ssize_t __import_iovec(int type, const struct iovec __user *uvec,
-  * Return: Negative error code on error, bytes imported on success
-  */
- ssize_t import_iovec(int type, const struct iovec __user *uvec,
--		 unsigned nr_segs, unsigned fast_segs,
-+		 unsigned long nr_segs, unsigned int fast_segs,
- 		 struct iovec **iovp, struct iov_iter *i)
- {
- 	return __import_iovec(type, uvec, nr_segs, fast_segs, iovp, i,
-
-base-commit: 734bef548a96e8774d6eef5dfa2026c6edc4e80b
 -- 
-2.53.0
-
+Sincerely,
+Yeoreum Yun
