@@ -1,81 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793025935;
-	b=hj+d/jHQkfimHDhiMWi7O4+4XCvTLgdgVeRlDI6mkK4ZuO466hFwHVeAw5qElh99kOO6
-	 7l17+m7MCsJcIdh+5L/+XtvFuqcd45xKhkPcOIPW+plhIuVun2OKG6ESIlO0H5XECGVWM
-	 0zA2cqWnYwyYYbCR95Ah3Olt/ka6aDt0+rhyotMFFcRVFr+vgo0tCwh4fktKZWhAnBN6f
-	 dHy05vY7+MZ6gXIPga9L4a1288WJJot4G/r+m+Hnpu+hayXx9uV5eyFhmUif0pn1yaiDA
-	 dS4V+lKHGxCA059N7lV9iAXgElzAZuvpUrtmolcEWdCoco9Nq0Bq/Kk28iDySdhk3Gw==
+	t=1793026356;
+	b=STvXr84lc+SLTK+7B9czgcw/nt5CXc8y1+zLNPEk8HdAHo28XrezAgUBmvm+Rg1eSy/V
+	 p3Yc5mgX3Bj8WYxOtMWyAsA88mrWBKShx9W0hciGYAZJYrxEpCR3HUK1GBoa0OE7KM2mr
+	 Rt6pdYH+j7VxgivhZRpTCNxRqCibOHJruBFHPuFIz7CimRL4sUEMYWE797M1YGhYrtWHt
+	 OB6tD7AsmLLGYBu1CQiApLFZ5XZvw0f1jq/GgFEaqsaf0mX2arTPM3yS8Y/Qa0oMz/vgY
+	 5UX8h3j08ek8Zy+p9qOWlDHG+2TCHKACgTV+XYTNYXbK2dtDRGGga30LwvS6PIf/4Jw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793025935;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793026356;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=BTyJwIZ3wmc9oIYfv63SnUqHORvshzUvmQqM3M2r5gM=;
-	b=sxFqpyFP/A4ezxMRmlqTlUAk8a4sY6yAZoJwVieI+JMhpumewoVYbs5L3WJvzZeUIpEa
-	 mQw28e2peAo9szgKoMlM9crJnKQsz6I80FsVdxO+5dMI7qL4cJEAxg7Y9HxcU4kNFoQfo
-	 ECF9zsju4MWixsPV/HC3qT5+i6xbIJJViO6VhFS4P19g65/9RC06PI/Yl9AM/mOtwSJbG
-	 3MO+3COHjr7dBEw/S4GBb0ubLu86JnPWCSsUIh6nRn9z6Mwiat+PMNrmTSK2fARIWLMS/
-	 kmePWOLmcZ7nf+iL4qQ5M+DNjTKqBVAHI7fDOP9rJVsx9yeoy+M6kWIj2aLTcscE8MA==
+	bh=VdhjTRpZkzPz14e+11oPuZMjIuI1bMnZdjQ9c48oYKg=;
+	b=lSyF/6BL2jJDUquZBrbQMcBbwPIhhzRZBgfvjOX+mmQ9rew3U9kK95y/E7gNALZydPg1
+	 1Ea1SaUduUOgzv7USiC8EEAMOH0UIHOyueMiwrgMjXlIUXFBK5vB80kCEQB1XgLsb2hb2
+	 b8Mm3I0MPj3aqZ/xvg9vdbL4WJbmB0luh0LjCEnyS8pihe5cGeHfZI1npAVBA68Buqrbb
+	 rNyoJqJKr5jzpTl67ByMzec05KBREYmvEHTim9t5+DFw4ZQMULpwLuUwa8YYUp2QxgR/X
+	 +qYWL1pc9EaYcjf4TaGr7Tqb7fYtCv7/M73ovZ84jwP4XoBj5CLsip6bSqsYGjamecg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.218.47
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=mXmlo9KF;
+	arc=none smtp.remote-ip=209.85.128.47
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D0AE3606A320
-	for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 14:45:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D0AE3606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BB592606A328
+	for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 14:52:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BB592606A328
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-c43373ae89aso462968066b.3
-        for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 07:45:28 -0700 (PDT)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=mXmlo9KF
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-49d05d51553so21457015e9.2
+        for <linux-api@vger.kernel.org>; Mon, 26 Oct 2026 07:52:35 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793025927; x=1793630727; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1793026354; x=1793631154; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=BTyJwIZ3wmc9oIYfv63SnUqHORvshzUvmQqM3M2r5gM=;
-        b=NaHhzKNABkMC6wPd56SklKTLcrQYlfIh5spEFmqO7cf478BMxIsRJr4GJdsQzMnSsI
-         rdTHhnF71aRCmn/ZbWzRcAHNKccrrw4wdLKTXgtF7lVYmL/I0tNSmfXZGnPPcKVl+2Yl
-         x/dU7kIekZQCU2z+mtWPUnGySnvBvr6joKf+sfeGKvdFtmYt9dSLMTJesO7CKx2gOyWj
-         F7XkhsdJkfue1Pp3MdFYVpe8zPO/ElN6+Hl27s2XKWj4Ttuwb4puQdX4nJm5KZchfBO/
-         R8eFcLnpn2qGsfM3RVIy2yrHCfMIG6pg+Q6Fi66PGXs+F6CEx+JXB0tkqciFCTf+D4JX
-         SK8A==
+        bh=VdhjTRpZkzPz14e+11oPuZMjIuI1bMnZdjQ9c48oYKg=;
+        b=mXmlo9KFfO7C9F1JFA8jDMW1R6BdkfNbBAtAR+uIFFX3PSFcODnFdrXZa1KfFJtQfe
+         1wYn7NZZoJaxDL/t967U1Hs0rKedL8HWe0MeuV+kdfVc3BgbfLpnErhoLHo2A3dwbhUD
+         zuGqlNbTM0JhttmPQXgO33kNqvh+2vXB3bJYAqHbdjWU8UdCdUlN7nPYBUAnXyEWLQdu
+         BSAnyLX/VZB+uFlqnUMpVx8Kl0DqyQ1tQ7+6tZcZoJp5PfXjNV+HXKz1BjRGvXtiACbB
+         bVxAk59302VeDMsvIwuK58TpeDB3KNVK9NVhLsRFkUhIN1VwsdfhXArbGQKmp878hYXv
+         FhNQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793025927; x=1793630727;
+        d=1e100.net; s=20260707; t=1793026354; x=1793631154;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=BTyJwIZ3wmc9oIYfv63SnUqHORvshzUvmQqM3M2r5gM=;
-        b=spiMuG/ODO/bM5JH+Rz9Vqp66tobSydtM5UKRilzT+eiN+SkXVAEq4GMvROLNy+KAq
-         z8LW0M38my908+cE3S5YZbE9AkqgDxn6ceq0jETk0+xiz0kj6lBKMtlNWxqiw8lO+VZo
-         ECq6x7aHEA1YjjOw6Bf5TLKVspoThQKm/iBZZDMsEDZYLgsSEt8Lcy6YKFrs6OsSVb0e
-         MEdHtqwyuaXd59PzCo5Ml2+DCQ1cCbVdp6czr/a3Xo2HyyoHl6WbtshbTDICbShtzgNV
-         SL06uFtVp1zdGPwgKUVm1r5nZIqJf1Pimyl6oGG5hpfbnIj/PsEN2ayfWm9L3xl/DWLH
-         PAcA==
-X-Forwarded-Encrypted: i=1; AKwUvBwA9kPsIpfQB1hVrmM+looYd/0+8QBAkKFBO8zzlnSAqBE3A0sme4si5AouaE6NUrq8Yv7Dmq/tnkI=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKaegXgZ39RGMjZ89fCjvMOEBQUrck61Bdd1txu2RfFMf1IOie/
-	aNivrgY3QfYtJzMt4AXD6bTO5i8xx6Ab2xrdz2an9vF5aKjSjJaj8YG5bv9xzG2bg5g=
-X-Gm-Gg: AYBFou3CiXL/M077KajXQyr8eCHV74t8lMy5NdXXwa2uo2ENqgTGuzn+dsmHGOq6sMr
-	aNUishuGjNYOs9KO8k5/fLoXwj+Coz73X0jSTE34f1rIxZrAThBbp+C2Nw5hfhs+F9RITSoBqVf
-	TqluyIZFSXn/ZMbaGchJ9hKiEyXI3H+02FKzXIAR1Ex3mBopy97A13YNVY1vk3dW/GPttsJjF+n
-	TChhL/Ins8itrkGyDkF1pIBBkKlBhsm0uKgrV+Lxwu0gpMcY/2RphKj8MiT27fm/9z609+JVfAE
-	TOyiF+q6hp/3LnhD87ZPlMbf3/etqbngJ/cDK4d8CYaBx0Xmg4IyIgR0OPaIBMuoAEqAR8xQUuo
-	JPRlq5deA8GWN8tQ2BI39DiH/fg5fxXa8OrAFMwNcjMwcbLnmdI6CKObdCMzFDwlRiFuKcd9AzT
-	EtkAu/ojXKzSkQly/G71w+1FdgoMOzWSzxj3/9Zoyte9mt+bHNXHo4VRxzv0+XpB9h/kv4oElZ5
-	c3FLgOVxQmCHnrx7WXt/Vtj8TCw/wPUs4/Hu2orYaz3/qlcnIqFL4t+chzRzhAs
-X-Received: by 2002:a17:906:c111:b0:c29:f5d5:5a97 with SMTP id a640c23a62f3a-c46bde8850amr767885666b.33.1793025926980;
-        Mon, 26 Oct 2026 07:45:26 -0700 (PDT)
+        bh=VdhjTRpZkzPz14e+11oPuZMjIuI1bMnZdjQ9c48oYKg=;
+        b=ppsA3mra9dB3U5kXTjU9KaXm5FUPLA42XkOMTNN8KbcaJxEG/T+70lOQSdQTavKiEj
+         8l+AzFoQrWXjzyqfOOK9yhY7lHxz40mgvhsBvU2L4XgHmvoqf0crxNmgS0J8V6Bndym4
+         JSSsvHZPr4vHVkAmClNOT9J2fyiI8eKqKHuz1UajYwIKDnuUKnCo+IisomfDLCczOr5o
+         NWQkH9xPg+c2Sq8n5TswjqJIODiy+r1MZXMZ4A6V+Xzibs368d/2whj2VLlYprLminMr
+         jdEgaUjrAybsH83eIFtbhgb5W+YRbaSN1Z35mWUbcFuUn7TYo8GcpDuxOWXKxLJo2gDt
+         cH3A==
+X-Forwarded-Encrypted: i=1; AKwUvBx4uDjzYFmSixu+TEGGEhhdsG7zdVNmTyfPQMLBNijxtKwopsG0IzRSbwHr2mUXttIzU59uIu7VEvM=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIlk5IRcCvVD0uZro4sJowjSG4cH43MQpbFxUOeuzE5z9QCdnss
+	S56acohEuSbUvriU1AfMCP5MOwEh/0O8hmHP+M0St2LgB9DFbZPIJTZy8rkexFoYzYA=
+X-Gm-Gg: AYBFou0qmHgGvJ1L0a7AQVil9k7pousVTY/2002lb7a76STDVP1bR3kRPy/DyQG08En
+	XyBo3/nmkZQH5xpNVDWz4GH+TtVWP6OvwA57Ef+kzpdbk9cbiHiZV2wuU4QRmoHPSfDS7UADqNt
+	X97fa3M38VUVFKAAZue+dN63Pk309NFz3hM9jotJsfQenKXsevyNIQaL6BgVouALrcni7/9ks5S
+	EBYi/R5x/NlU7/g5JTqNYOIazvmIG/Gtt7v3uUJfJ2M7Eo+KbGjt75sVGcfbqdzxNFs5nSRfn0j
+	5nPG4jQakWdljvzCHyqvuScCOjG4Xtl9ArYpdIKqoRRPp8Ix9YgqHM0R6+H3gyO4l2TSN+PVsUV
+	ssMkFbmOjwfdhXb2rNHJrYNtMukjtu4DdKBitMiraNKpEp0DOae8BB+icPtM7w3UwLsesWG9kL7
+	O85rF8kXH4x5dCX+BWc58hSWUF4dM3AT6gKr3DDa/8PH6r/R1Mo94a00IzC63FqI03blkhLMLRB
+	QFxzN9vsbxEUIj2xVsrolTn200X6uMEU/1OuY1y7BK3N158rFbZmh1xsS6dnsgnMg==
+X-Received: by 2002:a05:600c:3493:b0:4a2:a6e:80f5 with SMTP id 5b1f17b1804b1-4a35ac9d0e8mr130236665e9.11.1793026353844;
+        Mon, 26 Oct 2026 07:52:33 -0700 (PDT)
 Received: from localhost ([208.127.45.13])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c46bd7981a7sm325130766b.72.2026.10.26.07.45.26
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a35a04ad39sm528356935e9.1.2026.10.26.07.52.33
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 26 Oct 2026 07:45:26 -0700 (PDT)
-Date: Mon, 26 Oct 2026 15:45:22 +0100
+        Mon, 26 Oct 2026 07:52:33 -0700 (PDT)
+Date: Mon, 26 Oct 2026 15:52:30 +0100
 From: Jiri Pirko <jiri@resnulli.us>
 To: Jason Gunthorpe <jgg@nvidia.com>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
@@ -87,11 +90,11 @@ Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 10/20] ctlv: Prepare event queue support
-Message-ID: <at9ncuDFz_vI-0W1@FV6GYCPJ69>
+Subject: Re: [PATCH RFC 11/20] ctlv: Prepare runtime introspection
+Message-ID: <at9nsxtGOl3N5PJR@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-11-jiri@resnulli.us>
- <179302367451.58760.3073439917920385955.b4-review@b4>
+ <20261015145053.3664509-12-jiri@resnulli.us>
+ <179302367452.58760.11808905856343064399.b4-review@b4>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -103,30 +106,246 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <179302367451.58760.3073439917920385955.b4-review@b4>
+In-Reply-To: <179302367452.58760.11808905856343064399.b4-review@b4>
 
 Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
->> Add per-open subscriptions, bounded event queues and event creation for
->> CTLV families. Add the generated root family kernel bindings now that their
->> message and event helpers are available.
->> 
->> The event and generated root objects can be compile-checked here.
->> CONFIG_CTLV remains unwired until device dispatch completes the module.
->> 
->> Assisted-by: Cursor: GPT-5.6 Sol
->> Assisted-by: Cursor: Claude Opus 5.5
->> Signed-off-by: Jiri Pirko <jiri@nvidia.com>
->> ---
->>  drivers/ctlv/Makefile       |   2 +-
->>  drivers/ctlv/device.h       |  38 ++
->>  drivers/ctlv/event.c        | 713 ++++++++++++++++++++++++++++++++++++
->>  drivers/ctlv/event.h        |  69 ++++
->>  drivers/ctlv/internal.h     |   7 +
->>  include/linux/ctlv.h        |  27 ++
->>  include/linux/ctlv_family.h |  11 +
->>  7 files changed, 866 insertions(+), 1 deletion(-)
+>> [ ... 53 lines skipped ... ]
+>> +/* A cursor packs the record and member where fragmentation resumes. */
+>> +#define CTLV_INTROSPECTION_MEMBER_SHIFT 48
+>> +#define CTLV_INTROSPECTION_RECORD_MASK GENMASK_ULL(CTLV_INTROSPECTION_MEMBER_SHIFT - 1, 0)
 >
->If we are deferring the mr log, then events can be defered too? That
->would save another 1kloc to look at right now.
+>Use genmask for everything:
+>
+> #define CTLV_INTROSPECTION_MEMBER_MASK GENMASK_U64(63, 48)
+> #define CTLV_INTROSPECTION_RECORD_MASK GENMASK_U64(47, 0)
+>
+>	pos->record = FIELD_GET(CTLV_INTROSPECTION_RECORD_MASK, cursor);
+>	pos->member = FIELD_GET(CTLV_INTROSPECTION_MEMBER_MASK, cursor);
+>
+>	return FIELD_PREP(CTLV_INTROSPECTION_RECORD_MASK, pos->record) |
+>	       FIELD_PREP(CTLV_INTROSPECTION_MEMBER_MASK, pos->member);
+>
+>> +
+>> +struct ctlv_introspection_dump_position {
+>> +	u64 record;
+>> +	u32 member;
+>
+>Maybe a comment describing how record and member are encoded for each
+>of the users?
+>
+>> [ ... 13 lines skipped ... ]
+>> +/* The immutable root-first chain always has generation zero. */
+>
+>This comment seems out of place, it should be closer to the 0's it
+>refers to a function below
+>
+>> +static bool ctlv_introspection_family_record(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
+>> +					     const struct ctlv_family *family,
+>> +					     struct ctlv_introspection_dump_position *pos)
+>> +{
+>> +	const struct ctlv_family_schema *schema = family->schema;
+>> +
+>> +	if (!ctlv_family_entry_start(reply, entry))
+>> +		return false;
+>
+>I'm finding it quite hard to go from this statement to the YAML. I get this:
+>
+>CTLV_NEST_START(ctlv_family_entry, CTLV_ATTR_FAMILY_ENTRY, CTLV_SCHEMA_NEST)
+>
+>I asked AI and it said it was this:
+>
+>attr-sets:
+>  - name: family-entry
+>    attrs:
+>      - family.id
+>      - family.name
+>
+>Which is some cyclical reference to this one:
+>
+>attr-groups:
+>  # One record per family of the chain a device answers, as reported by
+>  # families-dump.
+>  - name: family
+>    attrs:
+>      - name: id
+>        type: uint
+>      - name: name
+>        type: string
+>        max-length: 63
+>      - name: entry
+>        attrs: family-entry
+>        max-occurrences: unlimited
+>
+>But having poked it some more I see that AI was wrong, and it is the
+>reverse..
 
-Okay.
+Yep. Already spotted. Will fix.
+
+>
+>But.. Where is the actual op? I finally see it is here:
+>
+>ops:
+>  - name: families-dump
+>    type: query
+>    fd-access: read
+>    reply:
+>      attrs: family.entry
+>
+>So.. The op points to family.entry which points back to family.id and
+>family.name through the attr-sets? I queried AI for a while and came
+>to this:
+>
+>  The confusing part is that the family group contains both the leaf
+>  attributes and the container that holds them. Their grouping
+>  establishes names and attribute IDs; it doesn't imply
+>  nesting. Nesting comes from attrs: family-entry.
+
+True, will fix.
+
+
+>
+>I don't have a constructive idea yet. I've been trying to understand
+>the yaml in this series for a while now, and I think it is just
+>unreadable in this organization. The information is spread about all
+>over the place and it is very hard to construct an idea of what is
+>actually in a particular system call. Maybe the missing html
+>generation would be helpful..
+>
+>Poking at AI some more I understand it is like this because this is
+>how the ABI numbers are generated, things need to be in these lists so
+>they can be automatically numbered.
+>
+>Going the other way isn't much better..
+>
+>ops:
+>  - name: device-get
+>    type: action
+>    fd-access: read
+>    reply:
+>      attrs: device-reply
+>
+>Okay, so then I see:
+>
+>  - name: device-reply
+>    attrs:
+>      - device.caps
+>      - device.info
+>
+>Uh, why do we have this extra layer? but OK..
+>
+>attr-groups:
+>  - name: device
+>    attrs:
+>      - name: caps
+>        attrs: device-caps
+>
+>Er.. 
+>
+>  - name: device-caps
+>    optional-attrs:
+>      - cap.evidence
+>      - cap.mr
+>
+>Getting closer!!
+>
+>  - name: cap
+>    attrs:
+>      - name: evidence
+>        attrs: evidence-cap
+>
+>Oh, apparently not..
+>
+>  - name: evidence-cap
+>    attrs:
+>      - cap.min-challenge-length
+>      - cap.max-challenge-length
+>      - cap.max-total-output-length
+>      - cap.object
+>
+>This time for sure!
+>
+>  - name: cap
+>    attrs:
+>      - name: min-challenge-length
+>        type: uint
+>
+>It is too much, this going back and forth to the sets is very
+>obfuscating. Everything is called attr. There is no editor aid to jump
+>between the sections, by the time you figure out what type a single
+>value is you've lost the trail for the rest of it.
+>
+>This isn't even that complicated, if I ask AI to explain it in a C ish
+>language:
+>
+>struct device_get_reply {
+>	struct {
+>		optional struct {
+>			uint min_challenge_length;
+>			uint max_challenge_length;
+>			uint max_total_output_length;
+>			struct {
+>				enum blob_class;
+>				string format;
+>				enum representation;
+>				uint max_length;
+>			} objects[];
+>		} evidence;
+>
+>		optional struct {
+>			flags mr_flags; /* read, extend */
+>		} mr;
+>	} caps;
+>
+>	struct {
+>		/* device-info: filled by the derived family */
+>	} info;
+>};
+>
+>I think the yaml names are not helping, calling everything attrs
+>everywhere is really confusing. At least the transition into a nest
+>and an attr-set should be more clearly marked in the yaml..
+>
+>The yaml would be significantly better if it was layed out according
+>to the actual semantic flow instead of artificially being twisted into
+>this need to put everything into a linear list. AI invented this:
+>
+>device-get:
+>  request: {}
+>  reply:
+>    caps:
+>      evidence?:
+>        min-challenge-length: uint
+>        max-challenge-length: uint
+>        max-total-output-length: uint
+>        objects[]:
+>          blob-class: evidence-blob-class
+>          format: string
+>          representation: evidence-representation
+>          max-length: uint
+>      mr?:
+>        mr-flags: mr-device-caps
+>    info:
+>      $extend: device-info
+>
+>So.. how about could we drop the sets, use a direct description of the
+>layout and do something else for the ID numbering? Maybe the numbering
+>can be solved directly by only listing the names in:
+
+I didn't want to have a lot of duplications. Netlink show us that the
+same attr, or attr group (or nest) is often used in multiple ops. It is
+not good to repeat them each time (multiple obvious reasons), so I came
+with the sets and groups. But I will think about how to make this
+possible to be formatted in more readable way.
+
+
+>
+>numbering:
+>  - device-get.reply
+>  - device-get.reply.caps
+>  - device-get.caps.evidence
+>  -[..]
+>
+>?
+>
+>-- 
+>Jason
