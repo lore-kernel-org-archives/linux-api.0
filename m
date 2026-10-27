@@ -1,97 +1,65 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793096476;
-	b=D9XOKVRPNdkT5qGrj+v7v8UZ/Tk29ZYysS594FVB/oa7dJkzm/UwyYVCKkDAeFhfwfts
-	 g/42Cpz5JMauvzpWMpoEVXCFDCpHC1mJ3QXHaO3ttN7HGWe8FuoAmvvvSZ8hwbtrJaXkN
-	 IkjQ0HWgZviQvUhj00evpJ/q/VsDNzrsU9Dz4WEt0MDxHCYho9Z0iWXnM0OpzNKxPx8St
-	 B1zT8yiOyWPzBDfG6zp6vO25WesTm5cGmGUJz5SgkIdRCpzbcLLZ2FyIuuFDMrNSKABRv
-	 w5EuEYcEWslSjylCz15skN0lMPccDAdQAEmYWC6G91x/YrS9P8fEbrD96iSp+zmm7Wg==
+	t=1793104710;
+	b=o5TWNo3NlgU2pr/z8e8gh48zuDQM18zifKRjGfmSBi9S2NOpXo1YoicbHgEIrsqoUBji
+	 4kqgeiySztu+rU7F8p+NZUV09uuqNzIehleRsSY9/JrvyqFlnVIPFx4n+j8nT9sb9w4GS
+	 YpDZRBlf9+S88SBZiIECCfBBHCYGXFVB76Mr+yonWiUiYekNDTUhqnu+Q/xDzcOHfue6j
+	 RaLRxmls+W3aOauACTyqczb3sk0FKRuejA/PyERsU/hc9Ur8+/Eex69CJpMplC/Sr+7yq
+	 CJdR8ZAZW/AeF9WM9L199e1m3Z74r7Dvi+iNkKNCwUvHoZSugAJa9a4X78fJdN4U0oQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793096476;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=UcwPjZxaDPQUX38SRpQk0U6z694ngHdtvb+qpNBNolI=;
-	b=Pw3IQKn/NAl/AQmkQEd1oEhog/ljIcBnbJAXaHN6K0VPeeEQ4jvx9YB03OCU+Azq+ENt
-	 +tVmqlwa3zB7UiJAoxXaNcxarVQkFmr6Nna8D3ah9Fg80qWt1/+nmc3qgEWmK1JTbFM6W
-	 QJEIwPYVXBuNkIzOFOGXsb2a+RM3HCIqleYzlkgkY/NythMp5fy+3iuC7w6alVuOeP9wx
-	 uLc2dB5GJenp0Lq34fkt5R66zgl94P4KjwXanHfG0WuO6FyNB5zSoy/L2HUPlk8QaHe7k
-	 rL+dvKOe2TFLBJ8bGNUYhTKTTRPxZDvRL1yaaoIqJvyhGL6JIvwMB1ZPGvDCP4asaag==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793104710;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To;
+	bh=qN+oFteBBnu0qCEf7Z79N2pFESAzJvFrXcLvl6PgY1Y=;
+	b=054RjRV77eJQgJr9WLI2WGdBU4HnuvMauySTBJh9nAGCjDZWh5ar1EKeEmBT2Qs7V0G7
+	 gogQ8QyXaYUGmnpMMY9gQECE6cfhaEd9FkdG+ZbayB69Jz02TrU9dE0u6WlxHMw64eedZ
+	 56SLeo0IprfkjPVJMPtl9ERg+xnXjYkbY6+SwxmXf7eTO/kSBMuVANcBf+hZCxK4VERHt
+	 /YpyLmLHjQvxgZCONgX55CpaESs2qhZJRZv7RXO7mhjXlykNqvQR/1WhPnxJIUOLNnId5
+	 t/CabxtWLytC+m6jXnIYTdnBYcRVcTVuNT69grgoeMWCLgNAHgXRcU7g2G/43y3y1Lw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.167.53
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E20EC606A31F
-	for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 10:21:10 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E20EC606A31F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5be4a2d94adso3365996e87.0
-        for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 03:21:10 -0700 (PDT)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793096469; x=1793701269; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=UcwPjZxaDPQUX38SRpQk0U6z694ngHdtvb+qpNBNolI=;
-        b=U+w+DA7TBbOTsHJ6Enxe39JVFHvrncv5jY+jSoyIQ2z35qjZXvHp3LNnblKOrPL29A
-         y7RE8O/DkYqgtM6po8VciEwy++8yrr0fF30EYhF2VKGclIBsioakCbCgAaR3HRFnnwZB
-         fNYBW+FeTixill9nrDRoI+IpNCTqA55IxLFeHUBlMQlaa8qrSxKDiIACxU0UkJDj8UMh
-         lR0on/o9rFsPmneK/FCtabwWiYP65MsxMx5JUTisdHYPgy2j9M05xRVHhql1vdZyRtw4
-         WoBKFMRyWdL7bNEs8rMdYK3MSTXgnm/TWIMlL9+E1AX8il/kxYBgNEFH0Q32f/iPJK2Q
-         TN1w==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793096469; x=1793701269;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=UcwPjZxaDPQUX38SRpQk0U6z694ngHdtvb+qpNBNolI=;
-        b=rM6zm9JiD1IDEUYHfc+71VxZnNvynhNijJ+Frx5HDFfOnZpWcmlXiCZ+qgjiYRqtdc
-         6yIiHqm8p3ROvIo+wVecil15TzQjsx+ulyOZ4SkPF3SsrcEJJ5COF+WaUlIIRlNYISqD
-         nG5P6doc0PQnVAJ1NeMOhmppIu8Y3p7DkFKrVMXrDmqT/hC/q7LokmshI/JRAuhJtdkj
-         X4SbecacJnWB5HQWgJinGRKLdP3ZfcoDN/ZsgW9FFLQimp2+YbNO6DwahUW2BWX9dGzv
-         XBXZXIeI0GppeQdi1xMXiCrBPl3Xfm67OsdnKeACZGiyaB5XptsUqN7X9HUEnCPr7kNf
-         7uAA==
-X-Forwarded-Encrypted: i=1; AKwUvBzLSP2N2+FjHxYzxu2sbasADcz9qD7jWJO0HLYFOxOc19v8jRIL3OcLW2FuFF1BnKFcGX4FL6Oxi60=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJaCJjlHkWR9HQ5ZZnn+HqOWnd/MWDnM7vF9ZLItI3t3Lpp4bzf
-	xbFPBEeDMApoLXH8ruDLywII6wdsAtlqCPXoQ8tz26j/tEGmWpmUS7MRxEfvsZ+zARQ=
-X-Gm-Gg: AYBFou0F2DcJ037Vkj7Z3Dt4MDMF07Tybpuz1sRuuIZG5jKHg5H/LU3g8+Dswxu0Xy7
-	Lo4tD4HE/byj0fsnm2usFCfxTPGo+SvIs8N2WsZqUbqSP92kyT0LhOG6pyA2vgZdsRRr8Y0sNqe
-	Itl5EQKbbApwDWkVaNHqOh44neQ1ZYcjsn+pXaM0FHM4OObeTra5UQdX/Pei4slnl9iM+7xX/DI
-	IaUiqlg5CHYDGO9fPulXYLDJ0pPWa8jVKIHpvObp2XjvF4jilfSeVFhKqMEYW9i23f9UiCsCzB9
-	V+zX8JKMyiVIcSpT0+lIA4MHTLnaYjv0SpT05OvsZyywaz4aGAqqODsaZVkUgfacR3NEUjAXxJ/
-	sjOt/6SCKpW+Sa4bKQBDzNDda4anzW4A/JFJqfOTBy5+T1awZpAsPAmXbjQUfKYsPv/VUqoEyWk
-	hAl2rQmEfh+TvnqJLOXr6WP0s/wpXWQjOLvPlwJBMts47N9VJkxYdAUJfKQ/9o8vybQbx3dvRGx
-	idzS3sOBIKtrCIrjyB9Z+GhwPCY0ObDjHjEwnmQGmFZcP7TQ9PwcOoLul5PvtFB
-X-Received: by 2002:a05:6512:2211:b0:5be:4d37:3bc0 with SMTP id 2adb3069b0e04-5bfb71fe90cmr3245577e87.62.1793096468475;
-        Tue, 27 Oct 2026 03:21:08 -0700 (PDT)
-Received: from localhost ([208.127.45.21])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5bfb7a6aca4sm2051901e87.15.2026.10.27.03.21.06
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 27 Oct 2026 03:21:07 -0700 (PDT)
-Date: Tue, 27 Oct 2026 11:21:02 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	dmarc=pass header.from=arm.com;
+	spf=pass smtp.mailfrom=arm.com;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=K9Nmp3Ym;
+	arc=none smtp.remote-ip=217.140.110.172
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 0E481606A31D;
+	Tue, 27 Oct 2026 12:38:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0E481606A31D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=K9Nmp3Ym
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 2D5C115A1;
+	Tue, 27 Oct 2026 05:38:25 -0700 (PDT)
+Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 24FD13F871;
+	Tue, 27 Oct 2026 05:38:24 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
+	t=1793104708; bh=AsQV8EPRWv/nZtGsAUNcNbWRUUJk7ZparFQR6Yrsrl8=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=K9Nmp3Ymll4ZjvGr4zTYwZFV+35ZQwesqboMyB7EIqAfv5qOu9RyO9XG9N+fpdzCo
+	 ULo58NND3GpJE273n6AvoGflscj1dRlINrrfQ6JxS0i+U388wwr+SauPBi98yZpGEr
+	 RxFv1WHb6q4sjcTeU2HZmV9Br7fuJRF2zXZbhbN8=
+Date: Tue, 27 Oct 2026 12:38:21 +0000
+From: Yeoreum Yun <yeoreum.yun@arm.com>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com,
+	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 11/20] ctlv: Prepare runtime introspection
-Message-ID: <auB61re2C6eN3BmW@FV6GYCPJ69>
+Subject: Re: [PATCH RFC 10/20] ctlv: Prepare event queue support
+Message-ID: <auCbPdoaMq9oWoQ_@e129823.arm.com>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-12-jiri@resnulli.us>
- <179302367452.58760.11808905856343064399.b4-review@b4>
+ <20261015145053.3664509-11-jiri@resnulli.us>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -103,59 +71,79 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <179302367452.58760.11808905856343064399.b4-review@b4>
+In-Reply-To: <20261015145053.3664509-11-jiri@resnulli.us>
 
-Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
->> [ ... 53 lines skipped ... ]
->> +/* A cursor packs the record and member where fragmentation resumes. */
->> +#define CTLV_INTROSPECTION_MEMBER_SHIFT 48
->> +#define CTLV_INTROSPECTION_RECORD_MASK GENMASK_ULL(CTLV_INTROSPECTION_MEMBER_SHIFT - 1, 0)
->
->Use genmask for everything:
->
-> #define CTLV_INTROSPECTION_MEMBER_MASK GENMASK_U64(63, 48)
-> #define CTLV_INTROSPECTION_RECORD_MASK GENMASK_U64(47, 0)
->
->	pos->record = FIELD_GET(CTLV_INTROSPECTION_RECORD_MASK, cursor);
->	pos->member = FIELD_GET(CTLV_INTROSPECTION_MEMBER_MASK, cursor);
->
->	return FIELD_PREP(CTLV_INTROSPECTION_RECORD_MASK, pos->record) |
->	       FIELD_PREP(CTLV_INTROSPECTION_MEMBER_MASK, pos->member);
->
-
-Okay.
+Hi Jiri,
 
 
->> +
->> +struct ctlv_introspection_dump_position {
->> +	u64 record;
->> +	u32 member;
->
->Maybe a comment describing how record and member are encoded for each
->of the users?
+[...]
 
-Okay.
+> +int ctlv_event_emit(struct ctlv_op_ctx *ctx)
+> +{
+> +	struct ctlv_device *ctlvdev = ctx->ctlvdev;
+> +	struct ctlv_event_record *rec, *next;
+> +	struct ctlv_file *cfile;
+> +	u32 len, wanted = 0;
+> +	LIST_HEAD(spare);
+> +	int ret;
+> +
+> +	if (WARN_ON_ONCE(ctx->file))
+> +		return -EINVAL;
+> +	ret = ctlv_event_finish(ctx);
+> +	if (ret)
+> +		goto out_free;
+> +
+> +	len = sizeof(struct ctlv_event_hdr) + CTLV_ALIGN(ctx->output.root->len);
+> +	scoped_guard(spinlock, &ctlvdev->events_lock) {
+> +		if (ctlvdev->dead_announced)
+> +			goto out_free;
+> +		list_for_each_entry(cfile, &ctlvdev->files, node)
+> +			if (test_bit(ctx->op->event_index, cfile->subscribed))
+> +				wanted++;
+> +	}
+
+Suppose at the time of here, the number of subscriber is 1.
+However, before calling the ctlv_event_deliver(), another task hold the
+event_lock() to register new subscriber. for example:
 
 
->
->> [ ... 13 lines skipped ... ]
->> +/* The immutable root-first chain always has generation zero. */
->
->This comment seems out of place, it should be closer to the 0's it
->refers to a function below
+Task 1 (emit)					Task 2 (new subscriber B)
 
-Okay.
+wanted = 1
+unlock events_lock.
+						Register subscription.
+allocate one record
+ctlv_event_delver()
+
+  grab events_lock.
+    Deliver former subscribe event to old one.
+    new subscriber B will call ctlv_event_queue_event() with NULL.
+
+When this happens, new subscriber B would receive overflow event
+via ctlv_event_queue_dropped() though it was registered right before.
+
+Is this intended? It doesn't make sense that subscribe B receives
+the overflow event in this situation...
 
 
->
->> +static bool ctlv_introspection_family_record(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
->> +					     const struct ctlv_family *family,
->> +					     struct ctlv_introspection_dump_position *pos)
->> +{
->> +	const struct ctlv_family_schema *schema = family->schema;
->> +
->> +	if (!ctlv_family_entry_start(reply, entry))
->> +		return false;
->
+> +	if (wanted) {
+> +		ctlv_event_copies(ctx, len, &spare, wanted);
+> +		ctlv_event_deliver(ctx, &spare);
+> +		list_for_each_entry_safe(rec, next, &spare, node)
+> +			kfree(rec);
+> +	}
+> +
+> +out_free:
+> +	ctlv_event_free(ctx);
+> +	return ret;
+> +}
+> +EXPORT_SYMBOL_NS_GPL(ctlv_event_emit, "CTLV");
+> +
 
-[..]
+[...]
+
+Thanks!
+
+-- 
+Sincerely,
+Yeoreum Yun
