@@ -1,79 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793089354;
-	b=cNjnm5GNf/oT6rj1SErgg2aZJTJumEtgVUUTQi1EANemZiedVhhjHayrJn9Ee8zDkYGH
-	 +V1c08Ny31amZj+70dqSuPuCeouHKf3XM7Z3fKT6UzdCErXjD+g/O7Rb5d+UW+mPFlrYg
-	 nUvAREMKQtt9U6sZDfr1dIQ1619OyYyU5TRAhJumFGg/7cH0R/DAJEXdKdCLA8QYAN9Q7
-	 Yt0Olvs+YK4q9YiLTJkFNuAjSW2ozmRJrX80aQV7ZSm7YD+tW4WLr9CkLzHEfvO9LH4LQ
-	 j4ZJNFGdTX4/iF/oXdLDkiJM6YntM3yPwnnESdxOdDB5Ef2ZMvgufjEES2Z3V+xDTrg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793089354;
-	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
-	 Content-Type:Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=bQHl5Db/0ezayzRrpU0bJsA12QKy5afydCLTaoVWx0s=;
-	b=LJMyOC57kC5U3BCcnaEjTMbvrG4A8OmGZKP+1A5ryMUIi3A9Q8zkD+hHjkM/8esWYWCv
-	 C7o2I2XtA59zw9L/hWISJOGO1GFFvuDmW6FhQqVmh+dhysFnIVN7gFIVQ6+52nVBJGdhQ
-	 FFbLDL1B3hwedfKNvTQf28KCCJBNVscTw41DGoFBSR79C0y1E/1JKCl5b80/hXNxcjpyO
-	 mTH3QFJ4OoY397m5T02N9v0GF2LQ4F/7X9SNfN5srxYQfXWRZv4XcyQcX9fJbJiBrOYmz
-	 VlYNhcJF1nzL746USv4wNzkZnzyhhkpBjeg/t10jGOTo2IuFXFgbv8Bc39mpJw+2DvA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YjgDH625;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 36BF9606A31A;
-	Tue, 27 Oct 2026 08:22:33 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YjgDH625
-Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
-ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
-	t=1793089353;
-	b=FlfTCVBFO9ZVUeM66NMBH2BX1vKpD8WrHQGDLHKaLD7+uiyWs8S2B4GvTA16NWs6z5lP
-	 dT+FlfvAqiv94EnhZ9o0aXPCgF1ztcx7oo8TQkM8SmikWbVrt30xn9Ucc+DeqY90JK/Jy
-	 II/+MFt8cSoRnAd+7zuxbFAS5BGytT9jiiZ7kw548L/g6mzmmpZNJqnT3k9uMchcTCa/G
-	 CsY23ClAePPLJP7vfjP1oMiTBCFsKZTm/ns3XxOkbRK9tEQekbbf0/Wn8jnVAGXkAGhmK
-	 WEWiKQFkRdrD/TnRDFu+oiBHKtWhnLZRmqMRfWYVxlXUNYTTp1VfzFy9aPS9Bl9bb9Q==
-ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
-	c=relaxed/relaxed; t=1793089353;
-	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
-	 Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=bQHl5Db/0ezayzRrpU0bJsA12QKy5afydCLTaoVWx0s=;
-	b=SpTvHLjNs03ofh04lmqhjzbMQOHfWgTdRXPYfqcUtWB3zjtlZyiX/7Mouu7clFmk9vhP
-	 OUmwbc9w/dvfqlseXTYQcDb6cv965YA572oKAb8dW4Sj9f5Rzn4IWhhAbelsu65GiciHc
-	 p+CGrHpjOnUh+WXe4CENTP2MEZiRh9EpPqIcHSowILTAXDs6D/AD+CY4Pznw/hE2oUKez
-	 qRteXF936sd1BP68+p/mt9BuxwynSXfMWHwHTJmd5soRzCfOXv2e7w0McfiqwAD9wqf8V
-	 9Yyw8KmqDoChp9zTSgBzRJ/GipxN7p4sf2MmkLoIiexBUEfM54BTMoPG+6nThI/qWLw==
-ARC-Authentication-Results: i=1; smtp.kernel.org; 
-	arc=none smtp.remote-ip=100.80.115.77
-Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1793090090;
+	b=kuTLatDy47aP/RSBQ8Xto1eJ1GlQWKImF2yYLi443h1EI4yDrGjsD7xF84+WVHiaOkdb
+	 hlP+6Qyqt5hvvs5zas4eCCj59KH0OB54CBidR1ps7EfXyUmbSCq/zknGWpFe2FqHMwRmx
+	 4UiPx3rbcvfrUzQpuUXHFjDHdjAuZyF+CiFjuxeXmEVDrAawZaVdjs2titCOO5VF4ztPN
+	 1aGp/N2rq5pnkAf7vwAAIkrwm/3KDWgyT2UJNbdiBsxKASUxtgn89GJ14Sfbu/aN7duRS
+	 R5Zt3hopMEhvYO3wkMIvo5ZFvYqWiG05q9qZsMmyJ35fkB4ADzhRaCCF/J0gOM6CrDg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793090090;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
+	b=khLgCQmSseLyuXp+uTKALpbr4APsPtdujraYeQBjzsmPq2tYXsE7HKF2tZjuOrF30Qfr
+	 KyONOuj+LeUMbUJ0z+i6y7M5OCfOwGMKhJh2wkqlm4EMLJqiPGbWgw+vYtQJc8tJJbCZh
+	 EoXiX+p27Hc52YuvaXXjsyQvk+iOZCDsqePdoJd3YeWY8E1rCh1HyTJ55JxVU2l50zIpk
+	 MkEogdQvsc+MQm1kwEuKVllfY7KhMatJZ/aP9KVfncnsiuTar3bO/U+6IK/85hGFoqcJZ
+	 BTKjsMz4RuSVPR8VBB4gJeOOPanX7Xb4jLSbc3KA0M1A2uim9fY18Hzw051S8PWJdGg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	arc=none smtp.remote-ip=209.85.128.50
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.kernel.org (Postfix) with ESMTPS id 484EB1F031EF;
-	Tue, 27 Oct 2026 08:22:32 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793089353;
-	bh=bQHl5Db/0ezayzRrpU0bJsA12QKy5afydCLTaoVWx0s=;
-	h=From:Date:Subject:To:Cc:Reply-To;
-	b=YjgDH625KFaeZOTEkwqJIaLTLb6sq4UCfSccTv/SOsoovpCo2ddiRQMHcAh+QRCee
-	 dQ2wCZfbbKdqaxuWQ6LBWS48r/+v3TdEDzty12FE21AniMW0zXe0pfmAM8w66F1niN
-	 fPnosyGOC5Si45hSzdYJAw0rEhFy4G9KCE962gP5BrvHaGWBM363yIjehY613gVNNc
-	 /M2i37KRG6zXLvalnr0m18ePVbD8MwiZT2X3+U1XQphzNaAcIsoFKe0ZqNaZgbBxeD
-	 uHcpJui8GKRwzfdnBCZzptQ4+F9kqauj2FoX00UIQbRD/bZ/oy7JliMBAyxBR5+5C+
-	 ExBZ45h7RQ0WQ==
-Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
-	by lkml.kernel.org (Postfix) with ESMTP id 9C51545035;
-	Tue, 27 Oct 2026 08:22:31 +0000 (UTC)
-From: Chen Linxuan via B4 Relay <devnull+me.black-desk.cn@kernel.org>
-Date: Tue, 27 Oct 2026 16:22:15 +0800
-Subject: [PATCH] pidfd: restrict task access ioctls to the caller's pid
- namespace
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 677A2606A324
+	for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 08:34:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 677A2606A324
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4a35db1f202so20996995e9.3
+        for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 01:34:43 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=resnulli.us; s=google; t=1793090082; x=1793694882; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
+        b=o3vw+R6WJM/xY5JqumC6/LUb4K4obMv0LWE2BkRABhu2x+bsyUqCR820A7ZCHwkfnC
+         Sn/+pQ3m+CYjUbeS9jCMjyJImOaj+z8d/dCOu4EFG3Y1ZhqfTxLIi/tMTL2aAS0KAZjH
+         peSCp75+tsY1riFXx52/4tof5ojkSxcnPvRzAH7xQ0h3ImgmU9w0joDiMP/Pi1uMSjFx
+         bljGGs0wwgGfu9RqNIdZk/gyQ20assvRY1Gzxql5mzVbAXwP0jDEfcY68G9+Uy9858pf
+         CbKr3I6NEEEgEcALs+KrHMjLGmUbg8SPUS8dRewMi3C/7X8PLL31gMcyyHhQAVMuvFwa
+         KxbA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793090082; x=1793694882;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
+        b=TbGp7hW3eE9d+mt/zbwtnypPgHK9rdm8W4FDdLBerbQ2gFd+cEadiqk+kypYmAIri5
+         /3O5r62z+sqdeoRdYGkuSsB1GysCLyaEGXRX3/McroBf6PHOccfkd4bT3uxbRz0Y3y2Z
+         2Dzup6zgwJ5Sl/tOcp79i8edj/Wub3KbO2bl3RRH/ScPhiOSdDDeSLymDbPpKUAhpdw6
+         /R5jLD9QYQP58RbCPQyWstG0PzNezTb5Ziv2S/iPmrN3n992oDKK8ODO80izjwNCVctZ
+         64LLRvGZq+E9hmR1Y9ohn75DVAkapiypCg3jMz07tuRSltpHvESdzMgSM1tbGaxtrjWx
+         wTsg==
+X-Forwarded-Encrypted: i=1; AKwUvBx6N+428pCTkejzXEMAxfX5pb1Vi/ssR86UhjuH6I7ecPKS02JtsfOpPYmPNO9d7hbw3QcZ8BcOYIw=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKNIRkVamUXopiU/uXP35/RBW0X3rkH/qbHIkQ66ldkaxi7i4lt
+	ZcApDJL2oIuRLY/i63n0Cdpt410OKujv3Wb7jB3nCfjUwC1bm/WwpMvWodsZ1iKJJgY=
+X-Gm-Gg: AYBFou09wVIIIf/GUsyKFESNptb+D/qHVUTeDCPYsYEh/qPYYtr7J+t8TF2AofzkDXv
+	NL845SgK5buCt8CuYyC2njrOA5Pcy+yKfoCFZSTgmxjRyWJtypgL8YOFubyyRr2r5Ol6djb5uRF
+	nOpCYF0JlLTU11unA712NWaJFCq9C4pyj/T48uvfKkYjljLUdc0M4L416yR9qBzgI6FNXdxyrcP
+	cWDnPDoFnfgXROVevjLqugIfAD2X93eHOItbm+saYKvD2+ojyUFpl+T3CJyIWZPwLwEqc4iaMOz
+	k9S+JVVQHOTLOB6ywa5jOIYGBSgNdgndAuX0on0r9ad0VpWrBP1EkXiCOo3h/UNRxSyY9z5VUxI
+	Vnj7iCuGOqeEFrEZsL6EFznhk2DElIYBrb5TsVzA5yVX5cvU/OMFciq6q+lQ8XBuYDkTSGzp6xk
+	/EVWotagXupuQY6U2vPXpay34JnuZ8KT8noGn/WKEoJeMktEkBMXeSA5/SrULdwUbEuinuzF1Vt
+	TKDs0cHB6cDeIzkDk50mmNcM5aXggNCoRnK/9pjNP71XOjP3n+pfcZCcnOB7OmA
+X-Received: by 2002:a05:600c:19d4:b0:4a2:18d4:f9e0 with SMTP id 5b1f17b1804b1-4a35acbbcaamr167523235e9.25.1793090082317;
+        Tue, 27 Oct 2026 01:34:42 -0700 (PDT)
+Received: from localhost ([128.77.52.125])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a35a55e99fsm261457975e9.4.2026.10.27.01.34.41
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 27 Oct 2026 01:34:41 -0700 (PDT)
+Date: Tue, 27 Oct 2026 09:34:38 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Jonathan Cameron <jic23@kernel.org>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 01/20] ctlv: Add the schema language and generator
+Message-ID: <auBhwll-zJAaLXRf@FV6GYCPJ69>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-2-jiri@resnulli.us>
+ <20261020233132.793b7e97@jic23-hlaptop>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -83,109 +101,44 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Message-Id: <20261027-pidfd-task-access-v1-1-d46cf0fa4ca1@black-desk.cn>
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/yXMQQqDMBBA0avIrB2IoRjsVcRFMhl1FKxkbCkE7
- 95Ul2/xfwblJKzwrDIk/ojKayto6gpo9tvEKLEYrLFtY6zDXeIY8fC6oidiVQyuc0zBtsY/oHR
- 74lG+17Mfbus7LEzHfwTn+QP6aJ3EdQAAAA==
-X-Change-ID: 20261027-pidfd-task-access-b797ecb260a4
-To: Christian Brauner <brauner@kernel.org>, Jann Horn <jannh@google.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
- linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
- linux-api@vger.kernel.org, Chen Linxuan <me@black-desk.cn>
-X-Mailer: b4 0.16.0
-X-Developer-Signature: v=1; a=openpgp-sha256; l=2904; i=me@black-desk.cn;
- s=20260831; h=from:subject:message-id;
- bh=NJGDJ4tAiDZhLhTR/ki/QbOLj26AyQQxFTXud2F+Uxo=;
- b=owEBbQKS/ZANAwAKAXYe5hQ5ma6LAcsmYgBq4F9CKxRS8zvMiS4Y5tBkX2gAQZ6Z9+krgSBb7
- LCi8zk6uRGJAjMEAAEKAB0WIQTO1VElAk6xdvy0ZVp2HuYUOZmuiwUCauBfQgAKCRB2HuYUOZmu
- i0UeD/0TIMg45/Wr71eH7wN89I0/aoj2TDmRpMs9bVru+UZ4bdPCFngLgH/SlvX5qXbTKMcoWTu
- 7rCblQ287n/0JHBRCJb8XogWmNO0yBE+REFNUcvLNgkbknTlNpAvLs17N8h16nAL3xUqjw93GcO
- vUXYDFbUu5rY3iU8q5IQ9rpDBq5mYM7vTkSIIY0KXR90L19CF0rqpm2P3Nq/1xWhpcRAfyc42Ii
- SGBgp53CyL0n/D90VZ7ZcHZjBiduN6cwZFma5LO39Gh12eu8qhqd6IzGDDv/LbCVg6S1vlv8c/E
- WqlTcgNTk+bDOqATlOtcvfjiVi0IxrSqlRWYphFs11fJ3Am0EPW6b8+7/nC5Qfyay4Syy9Ou8dF
- opuGz9/JrGnZGtDbfLg1kU0tLx/NsgltEqhriT3L2nZLfSWAYV3zC4A7LFw1A2PIYEBzuYwGEs1
- 26ufm52NX6NrJTfmjRV27LvRm6uhO+sxDt1I6F0VbAKUUF+qA00EKr/fesJL1YNVvTdj6qJoHOi
- umDQZEUpr3IRYUQt5RhUPa7F5QF8x99WlGOW/i5m1laCXa5sMtJOM2pCVXDR31tGaIdD8/O7Agf
- +gvCZrBOevdtWPuoFcS+7ETCWiR6b6Xp+hKzs5hIDAvRyvJI41rknc86fSuvV47zqs3k9adALLE
- JjLzh7sObruOqVA==
-X-Developer-Key: i=me@black-desk.cn; a=openpgp;
- fpr=D818ACDD385CAE92D4BAC01A6269794D24791D21
-X-Endpoint-Received: by B4 Relay for me@black-desk.cn/20260831 with
- auth_id=991
-X-Original-From: Chen Linxuan <me@black-desk.cn>
-Reply-To: me@black-desk.cn
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261020233132.793b7e97@jic23-hlaptop>
 
-From: Chen Linxuan <me@black-desk.cn>
+Wed, Oct 21, 2026 at 12:31:32AM +0200, jic23@kernel.org wrote:
+>On Thu, 15 Oct 2026 16:50:34 +0200
+>Jiri Pirko <jiri@resnulli.us> wrote:
+>
 
-pidfds can cross pid namespace boundaries: a task may obtain one for a
-process outside of its own pid namespace hierarchy through SO_PASSPIDFD
-or SO_PEERPIDFD, via SCM_RIGHTS, or through file descriptor inheritance.
+[..]
 
-The namespace ioctls gate access with a ptrace check against the
-target's credentials only. That check does not account for the pid
-namespace relationship between the caller and the target, so a task
-inside a pid namespace can use a pidfd obtained across that boundary to
-acquire namespace file descriptors of a task outside of its hierarchy.
+>> +      A named attr set, a whole attr group, or one exact attr as
+>> +      "group.attr". There are no tuple selectors and no cross-family
+>> +      qualification.
+>> +    type: string
+>> +    pattern: ^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+(-[a-z0-9]+)*)?$
+>> +
+>> +  selectors:
+>> +    oneOf:
+>> +      - $ref: '#/$defs/selector'
+>> +      - type: array
+>> +        minItems: 1
+>> +        items:
+>> +          $ref: '#/$defs/selector'
+>
+>My yaml is terrible (and all learnt form reviewing DT bindings which are
+>undoubtedly perfect :) but random LLM agrees with me that you can simplify
+>this as it's a local definition.  I think doing so makes life a little
+>easier for reader by indicating it is thing defined a few lines up.
+>
+>            $ref: 'selector'
+>
+>I don't care that much though.
 
-procfs exposes the equivalent information only for tasks visible in the
-reader's pid namespace, and PIDFD_GET_INFO already answers with -EREMOTE
-for targets outside the caller's hierarchy. Extend that policy to the
-namespace ioctls: fail with -EREMOTE unless the target is visible in the
-caller's active pid namespace. Callers in ancestor pid namespaces are
-unaffected.
-
-Unlike PIDFD_GET_INFO, the visibility check is performed after the task
-lookup here, so reaped targets outside of the caller's pid namespace
-hierarchy answer -ESRCH instead of -EREMOTE.
-
-Link: https://lore.kernel.org/all/CAG48ez1T5-tUHVK_iHsgUtWa-inVdrZxA3E-ZCW0iENJvasKfg@mail.gmail.com
-Link: https://lore.kernel.org/all/20260925-gewischt-auftrag-tierzucht-c153cb3f9f74@brauner
-Suggested-by: Jann Horn <jannh@google.com>
-Suggested-by: Christian Brauner <brauner@kernel.org>
-Signed-off-by: Chen Linxuan <me@black-desk.cn>
----
-This patch was previously submitted as patch 1/4 of the task path ioctl
-series v3. It is now submitted independently because it changes access
-to existing namespace ioctls and does not depend on the new path ioctls.
-
-The code and commit message are unchanged from v3 1/4. The patch has
-been rebased onto current mainline. A revised task path ioctl series
-will follow separately and depend on this patch.
-
-Previous submission:
-https://lore.kernel.org/all/20261010-pidfd-get-paths-v3-1-f245440b2b30@black-desk.cn/
----
- fs/pidfs.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/fs/pidfs.c b/fs/pidfs.c
-index 7f8c323ce6cb..cfb93c4ccf23 100644
---- a/fs/pidfs.c
-+++ b/fs/pidfs.c
-@@ -556,6 +556,14 @@ static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	if (arg)
- 		return -EINVAL;
- 
-+	/*
-+	 * Require the target to be visible in the caller's pid namespace
-+	 * for operations that grant access to its resources, mirroring
-+	 * procfs and PIDFD_GET_INFO.
-+	 */
-+	if (!pid_in_current_pidns(pidfd_pid(file)))
-+		return -EREMOTE;
-+
- 	/*
- 	 * We're trying to open a file descriptor to the namespace so perform a
- 	 * filesystem cred ptrace check. Hold @task's exec_update_lock for the
-
----
-base-commit: d135ab453a7400a34930bdda1ef4bdc8acfac80e
-change-id: 20261027-pidfd-task-access-b797ecb260a4
-
-Best regards,
---  
-Chen Linxuan <me@black-desk.cn>
+Tried it: $ref is resolved as a URI against the schema's $id, so
+'selector' doesn't resolve. '#/$defs/selector' is the shortest form that
+works without an extra $id line in every definition, and it is what DT
+bindings use, so I'm keeping it.
 
 
+[..]
