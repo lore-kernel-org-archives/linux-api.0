@@ -1,97 +1,98 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.48
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793090090;
-	b=kuTLatDy47aP/RSBQ8Xto1eJ1GlQWKImF2yYLi443h1EI4yDrGjsD7xF84+WVHiaOkdb
-	 hlP+6Qyqt5hvvs5zas4eCCj59KH0OB54CBidR1ps7EfXyUmbSCq/zknGWpFe2FqHMwRmx
-	 4UiPx3rbcvfrUzQpuUXHFjDHdjAuZyF+CiFjuxeXmEVDrAawZaVdjs2titCOO5VF4ztPN
-	 1aGp/N2rq5pnkAf7vwAAIkrwm/3KDWgyT2UJNbdiBsxKASUxtgn89GJ14Sfbu/aN7duRS
-	 R5Zt3hopMEhvYO3wkMIvo5ZFvYqWiG05q9qZsMmyJ35fkB4ADzhRaCCF/J0gOM6CrDg==
+	t=1793095400;
+	b=k66Ve7saQ1Bhq0D6Z62A4XRLxCIZvleJuM0qvA/juyFbMPh8b8j8Hc1pE03fUr7p6IlH
+	 Pp+bVGYmPr90JGbrF++2LUkeMzXe4ewCD7HAL0QwHqoN/dWnRkMZ555jq8q+kkYJWgW73
+	 pPpbO36sXgfVw/78ND7ZulaHCJH5WE08MhsVm7rcI8gPxsYOzmLE0rApOn/y9hhxgSPzK
+	 1NAtvT7e47cgjjI5lnjd4H1Au7CdvCujBeVTYbUOjNYbUvz8tzLsgH11EwQVDpTseu38t
+	 HYxZJcPBl7oQfzba1DHd1Pq79DtvFECQp1utwc04kLyucSnP9v8OJ3X3IqPoQoO02ww==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793090090;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793095400;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
-	b=khLgCQmSseLyuXp+uTKALpbr4APsPtdujraYeQBjzsmPq2tYXsE7HKF2tZjuOrF30Qfr
-	 KyONOuj+LeUMbUJ0z+i6y7M5OCfOwGMKhJh2wkqlm4EMLJqiPGbWgw+vYtQJc8tJJbCZh
-	 EoXiX+p27Hc52YuvaXXjsyQvk+iOZCDsqePdoJd3YeWY8E1rCh1HyTJ55JxVU2l50zIpk
-	 MkEogdQvsc+MQm1kwEuKVllfY7KhMatJZ/aP9KVfncnsiuTar3bO/U+6IK/85hGFoqcJZ
-	 BTKjsMz4RuSVPR8VBB4gJeOOPanX7Xb4jLSbc3KA0M1A2uim9fY18Hzw051S8PWJdGg==
+	bh=B/ZpDq3DjZV/62zmns9uwG24EjevmhON4QmJ/2QUaFc=;
+	b=DA0f3648lkU8XCI1d/0SYyDLYsB0bkvS8z3MVR25W8ITPlSz0i1oO2nLNrS5uSr5wq+9
+	 9IuYFVgRQGfBlMhh/6SfG/9q7Z0KsUfAJBWfoBbYWwGbV8Qq4OGuMfgtatN3awKimJ0Re
+	 YjuuWGFbNxOm4oXdHMCpCW8UplVdtUFeKMaIBElqgzD+ekr01KG6ZRGD3fTR8j05ijjRZ
+	 GmEEgZM1m90PgI1rnChY9f3KUthbeGIv4rRKk07P3GwBr1vcz/W3vkgLSM5R2gHt/plvq
+	 4sjvteI3I1XoHFBiAMwrdlpz1CV8GLY5/FaLKbttkMXzUMoy9VFW9Jx6Zk9i5Ifa8sg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.128.50
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	arc=none smtp.remote-ip=209.85.218.48
+Received: from mail-ej1-f48.google.com (mail-ej1-f48.google.com [209.85.218.48])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 677A2606A324
-	for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 08:34:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 677A2606A324
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74B80606A31F
+	for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 10:03:14 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 74B80606A31F
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4a35db1f202so20996995e9.3
-        for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 01:34:43 -0700 (PDT)
+Received: by mail-ej1-f48.google.com with SMTP id a640c23a62f3a-c423b145922so528124166b.3
+        for <linux-api@vger.kernel.org>; Tue, 27 Oct 2026 03:03:14 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793090082; x=1793694882; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1793095393; x=1793700193; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
-        b=o3vw+R6WJM/xY5JqumC6/LUb4K4obMv0LWE2BkRABhu2x+bsyUqCR820A7ZCHwkfnC
-         Sn/+pQ3m+CYjUbeS9jCMjyJImOaj+z8d/dCOu4EFG3Y1ZhqfTxLIi/tMTL2aAS0KAZjH
-         peSCp75+tsY1riFXx52/4tof5ojkSxcnPvRzAH7xQ0h3ImgmU9w0joDiMP/Pi1uMSjFx
-         bljGGs0wwgGfu9RqNIdZk/gyQ20assvRY1Gzxql5mzVbAXwP0jDEfcY68G9+Uy9858pf
-         CbKr3I6NEEEgEcALs+KrHMjLGmUbg8SPUS8dRewMi3C/7X8PLL31gMcyyHhQAVMuvFwa
-         KxbA==
+        bh=B/ZpDq3DjZV/62zmns9uwG24EjevmhON4QmJ/2QUaFc=;
+        b=EKwpsigzwDmZPRkvIpX1b4c0/rz7uhtPntV0JfCYEz0s3pcwkOGnsL5Nzc3IENmwos
+         3sbhs5QgQhWDLpAOwIEmEB+wgVol0pjCngvClscZPLVgXpK6vwt6ozQLK9jHaqZpS7Wx
+         UAwHaOAiTlSXV7JOhQYBkg+WaE7NJjWYx0Q2jkUKe51KAl6u7hwDCeM2xNigR7jQ+Esl
+         2TD+6FVjssyPooQGV77/khcqAuzCs5MkcZsRcYmk+07Rxjllua9OU3dnOSkEIb4tDpCN
+         GKiS0GgWXoNCU/s9g+GrCc6/QeqrtOgD8LLSneSwbAfEJ6r0lK+DJ5aWEsAXcsoc+VP0
+         o0eQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793090082; x=1793694882;
+        d=1e100.net; s=20260707; t=1793095393; x=1793700193;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=JBm8ffaCoPQH1JzTyc8e2It/Betu/HEG2/vRVRWiTUw=;
-        b=TbGp7hW3eE9d+mt/zbwtnypPgHK9rdm8W4FDdLBerbQ2gFd+cEadiqk+kypYmAIri5
-         /3O5r62z+sqdeoRdYGkuSsB1GysCLyaEGXRX3/McroBf6PHOccfkd4bT3uxbRz0Y3y2Z
-         2Dzup6zgwJ5Sl/tOcp79i8edj/Wub3KbO2bl3RRH/ScPhiOSdDDeSLymDbPpKUAhpdw6
-         /R5jLD9QYQP58RbCPQyWstG0PzNezTb5Ziv2S/iPmrN3n992oDKK8ODO80izjwNCVctZ
-         64LLRvGZq+E9hmR1Y9ohn75DVAkapiypCg3jMz07tuRSltpHvESdzMgSM1tbGaxtrjWx
-         wTsg==
-X-Forwarded-Encrypted: i=1; AKwUvBx6N+428pCTkejzXEMAxfX5pb1Vi/ssR86UhjuH6I7ecPKS02JtsfOpPYmPNO9d7hbw3QcZ8BcOYIw=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKNIRkVamUXopiU/uXP35/RBW0X3rkH/qbHIkQ66ldkaxi7i4lt
-	ZcApDJL2oIuRLY/i63n0Cdpt410OKujv3Wb7jB3nCfjUwC1bm/WwpMvWodsZ1iKJJgY=
-X-Gm-Gg: AYBFou09wVIIIf/GUsyKFESNptb+D/qHVUTeDCPYsYEh/qPYYtr7J+t8TF2AofzkDXv
-	NL845SgK5buCt8CuYyC2njrOA5Pcy+yKfoCFZSTgmxjRyWJtypgL8YOFubyyRr2r5Ol6djb5uRF
-	nOpCYF0JlLTU11unA712NWaJFCq9C4pyj/T48uvfKkYjljLUdc0M4L416yR9qBzgI6FNXdxyrcP
-	cWDnPDoFnfgXROVevjLqugIfAD2X93eHOItbm+saYKvD2+ojyUFpl+T3CJyIWZPwLwEqc4iaMOz
-	k9S+JVVQHOTLOB6ywa5jOIYGBSgNdgndAuX0on0r9ad0VpWrBP1EkXiCOo3h/UNRxSyY9z5VUxI
-	Vnj7iCuGOqeEFrEZsL6EFznhk2DElIYBrb5TsVzA5yVX5cvU/OMFciq6q+lQ8XBuYDkTSGzp6xk
-	/EVWotagXupuQY6U2vPXpay34JnuZ8KT8noGn/WKEoJeMktEkBMXeSA5/SrULdwUbEuinuzF1Vt
-	TKDs0cHB6cDeIzkDk50mmNcM5aXggNCoRnK/9pjNP71XOjP3n+pfcZCcnOB7OmA
-X-Received: by 2002:a05:600c:19d4:b0:4a2:18d4:f9e0 with SMTP id 5b1f17b1804b1-4a35acbbcaamr167523235e9.25.1793090082317;
-        Tue, 27 Oct 2026 01:34:42 -0700 (PDT)
-Received: from localhost ([128.77.52.125])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4a35a55e99fsm261457975e9.4.2026.10.27.01.34.41
+        bh=B/ZpDq3DjZV/62zmns9uwG24EjevmhON4QmJ/2QUaFc=;
+        b=lA7tUav73vI4tz6pkmJuWuIyMyFUdi8Hf9rnRnXDsS6t0PE3g3tn++WAtxTP8jCloh
+         1TsxsbZEDDDRolIg228iWTJMXA7SiS/IaZi1PQnS/tUywpreERYQ7RGBE7Q3ZpKbQHET
+         DBj0MyBM86nqrR2r+9ZPj7zR0mCPGzc77LCR6FqTPwJDIbc1Fhj+JG3FotZ8lSxw0GcZ
+         nnunOd9DiFC7xfGowddhAj987ZHUAsX1xrj7PDxX2FoiKn07PcHFtz01ZJJJaFvBi7eA
+         uiInnUY8QDMCCwrz52E7tcdn1UcZKayuwMpB11qSdsXtbXqeLlbwK74K7iu648WonaFz
+         XlKA==
+X-Forwarded-Encrypted: i=1; AKwUvBzGtU9G3fGYYhhBS0wFXHeVFCej+7u1nK/wRJgjf1q+0vKGsGWrM/8FJK0agk+mDG1ZabdW//wgCRM=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJPkXqsW9BAYd/yavXxDc9Wg49OFO6Bhz2U3WmTB/fZBFcips/F
+	Idmiw0xKxLSzEttNtl1kreNCz0cCKqqxeafa5IPDbqg9m5ZLJ9DAD0JerihTLV3XLls=
+X-Gm-Gg: AYBFou0nkrK1g0jiVsSotWws3dJUO2c9lZCDM+4+L77ekqptOt4iylaoJivY7zn6N3d
+	qbmRURmZqUyDJv14tTECldV/lzVPvPwUMdXbz89xp/9a5zHZYSUy+1AbXmMi7L4GgrRDJR3oZe9
+	dEiHaknhvq3wfYtNqD2eX+Kcb/k95fvDsm3ywPi/Ck2h6JW9oanIlkgRdPsqhmAMR8+uIC69tRG
+	cQSQ84uSWB7JZMb3FZ9E4VKAgC5rE3xWt1ylUQvsatE+wgrrXHrGq+8kWozxxWJThiYs/OXmZg+
+	EY55n60qGj6G3/6kdXnJKaPWvjFPlxnOyX5yKKcSlYwOHgxZlDRHfqveEh8cfMW+SiMeXhOKaPX
+	1cB4GsjEdURMjCvhBW4NLCFwJTTv7X56QNvo1F9J071wgTqsPwO03hYK3YsUoQn6/5JVgF3wf8w
+	igz7yIizRHa5hLy3HIIX8z3Z8GS5bX+ms/CBobGFfOH9Z1gQjbq1X3/28cGxNbuVbxzs9uhC9Zy
+	GrzxPLSdEl0uKroAHyQdaWlsW5Agtgf32Z/cjxm3uSI4pekxR6eV2GuFCXYQHN6
+X-Received: by 2002:a17:907:728f:b0:c3e:d18c:1d7d with SMTP id a640c23a62f3a-c46bddc42dcmr1033526666b.22.1793095392233;
+        Tue, 27 Oct 2026 03:03:12 -0700 (PDT)
+Received: from localhost ([208.127.45.21])
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c46bd790afasm420098366b.68.2026.10.27.03.03.11
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 27 Oct 2026 01:34:41 -0700 (PDT)
-Date: Tue, 27 Oct 2026 09:34:38 +0100
+        Tue, 27 Oct 2026 03:03:11 -0700 (PDT)
+Date: Tue, 27 Oct 2026 11:03:07 +0100
 From: Jiri Pirko <jiri@resnulli.us>
-To: Jonathan Cameron <jic23@kernel.org>
+To: Jason Gunthorpe <jgg@nvidia.com>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
 	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
 	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
 	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
 	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, alistair.francis@wdc.com, ankita@nvidia.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 01/20] ctlv: Add the schema language and generator
-Message-ID: <auBhwll-zJAaLXRf@FV6GYCPJ69>
+Subject: Re: [PATCH RFC 18/20] tdx-guest: Expose the native attestation
+ service API
+Message-ID: <auB21VZhFg3sDcXz@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-2-jiri@resnulli.us>
- <20261020233132.793b7e97@jic23-hlaptop>
+ <20261015145053.3664509-19-jiri@resnulli.us>
+ <179302367453.58760.3338436189030317197.b4-review@b4>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -103,42 +104,14 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261020233132.793b7e97@jic23-hlaptop>
+In-Reply-To: <179302367453.58760.3338436189030317197.b4-review@b4>
 
-Wed, Oct 21, 2026 at 12:31:32AM +0200, jic23@kernel.org wrote:
->On Thu, 15 Oct 2026 16:50:34 +0200
->Jiri Pirko <jiri@resnulli.us> wrote:
+Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
+>> Share TDREPORT, Quote and measurement-register operations with one
+>> in-kernel client while preserving the existing misc, TSM report and TSM
+>> MR interfaces. Tie clients to service initialization and removal.
 >
+>The tdx stuff should just be an attestation driver, we don't need to
+>make these kinds of linkages..
 
-[..]
-
->> +      A named attr set, a whole attr group, or one exact attr as
->> +      "group.attr". There are no tuple selectors and no cross-family
->> +      qualification.
->> +    type: string
->> +    pattern: ^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+(-[a-z0-9]+)*)?$
->> +
->> +  selectors:
->> +    oneOf:
->> +      - $ref: '#/$defs/selector'
->> +      - type: array
->> +        minItems: 1
->> +        items:
->> +          $ref: '#/$defs/selector'
->
->My yaml is terrible (and all learnt form reviewing DT bindings which are
->undoubtedly perfect :) but random LLM agrees with me that you can simplify
->this as it's a local definition.  I think doing so makes life a little
->easier for reader by indicating it is thing defined a few lines up.
->
->            $ref: 'selector'
->
->I don't care that much though.
-
-Tried it: $ref is resolved as a URI against the schema's $id, so
-'selector' doesn't resolve. '#/$defs/selector' is the shortest form that
-works without an extra $id line in every definition, and it is what DT
-bindings use, so I'm keeping it.
-
-
-[..]
+Okay.
