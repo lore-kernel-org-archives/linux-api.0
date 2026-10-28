@@ -1,88 +1,88 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793231572;
-	b=KmsjhNxhHTR4gNgCykaqZ8z6PN7ucTF93hpFPz76/RvhNQRG6fg4pmBE6ttNEnk2EZkJ
-	 DHzwT9d3y8TYzcSh1FAkghk19+VJh7yNUyT+M2PATeFwgCauXRhghl4eRHxUvdVZekrIc
-	 9NHfMZwyqXUVU8p+aDT/UecZt4VNlYLvO48KXyk7ENoisu4cqZXKm3ItJ90SU2VWge4fp
-	 6cFATGYknjNSDtS2xSYxJnqeRU7c/OIOS1+5D5dMy2ClnFcsyb8T1lHBYp4lO86lvCdjt
-	 aSNnoHg+Wi/inl9z4SA6/4bCQ8v/wImQPAfJSuUTE++XoCdObq5fVfhbnabibJl+dqA==
+	t=1793231575;
+	b=ngQ0sYe1f+bvhZaC5xPXNc47G9CEzn1PUH3zbQZv1POGHEm9icEDZjydK0PexcmavZKR
+	 n6y2/UX0YMfcnVS82N7wZIOt1eMxgPcFTqFf1tTvw5rwvr+Rb3HSC/ljMpm2i5ttE5f1Y
+	 I3rtcb1PPyoIRhj2GDKPzYskcH9eDHTkSuMV7Ea3KIv/v3nd3aTg0ykp3tfw6oC6Ev4Ux
+	 lI+wIteMv1XfEM96pDWp564z1On7EAcYb24EjraItLMOV39krC6F4Lc59xbqBh9kR3QEt
+	 X+KOC7Y5G2CiMRLoAfulrz6mBOT+IimFwpC6RN/os4mcYgzDsLy1qupPj9v5Wtw7n1w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793231572;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793231575;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:Date:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:
 	 Message-Id:References:In-Reply-To:To:Cc:X-Mailer;
-	bh=Af/thxHkdC33DwjakI5xWjPNHFxWjZZYhh+Bu6x+bIY=;
-	b=JSk8x7ci6jXx6lw8W0ZzhNuxgkcQ7+C2gu1PhSk2A8S/YaXcEMjIN6VCroemDPSLIrOV
-	 dJ1RZ45/0jpY2PYOgV1hWllxG4bxAOmJ3BMC7L3+IV+aVb0hdRdaNMOmfcxkrPsfUyBqr
-	 muOs1qFH5qNSDAXORqa7S11W/eHLuZ1TevFtKiqIQMArj79f1JptdufJKpd9FVFGsfG/U
-	 5nohDiOAcMXOxtdSUh8CygILSlpSDHhfVliQ1YUTFIeBmisf4ZnQESv6ol4hGVlBaUGVf
-	 86NRM3ZK+QL04L1fgSDpQslPGDiVdXsUFAcp1daT8LXsiCmEejbdQvhkBGk98wrAV7g==
+	bh=NShZ2F0kBjLdK/kOL2KImL5dsxE3V0Ajk4CzI2p8lPA=;
+	b=Xtep+7wMLhVBnaHFrS0sYdviRosVq7NdG1BC+c5hlDmtWvx8m9ioNsHGKA5dXC1V+NjH
+	 0/q7FCl9mHa/UHSNkAo/0Btm5A72Qz9/SzyJwLNEM4A7vfM4t35Yd7pX83uUxmq53T9IZ
+	 5eSUCev8P0E9nE5ykHIcz6coFN4MYcy4a0AQuBKWZPRcDzxmHDp2MA6WoEJOVkmirfD3e
+	 BH1/EaVNtQ5W6FKQJDYYvRMXgJfuQRZk/Foom+XmFpgNaTWRKhAOojTbGECl31NWruw5h
+	 8XobYN6LKJWJACxGf22kv/IjIaTLJYZiDl6+1M68UqFdmFGHnCc5jeBglACc0HRNEfQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="tz3/ZhqO";
-	arc=none smtp.remote-ip=209.85.128.54
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ObkCEo3A;
+	arc=none smtp.remote-ip=209.85.128.50
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF23D606A31D
-	for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 23:52:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CF23D606A31D
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 04268606A32A
+	for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 23:52:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 04268606A32A
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=tz3/ZhqO
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4a35ac4475dso11740475e9.2
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 16:52:51 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ObkCEo3A
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4a9a8d6cea8so2092125e9.1
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 16:52:54 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793231570; x=1793836370; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793231573; x=1793836373; darn=vger.kernel.org;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=Af/thxHkdC33DwjakI5xWjPNHFxWjZZYhh+Bu6x+bIY=;
-        b=tz3/ZhqOSq/4R96dJeMcTZkaw+Vc/rO4vrKCwX8tmlE1VkQHb7ISJg4vu4UgrGrSWN
-         HR2qTFgXP+BZMukXElx0qveSAehKEU7QfyZxw8uLICrEr0fuZq7mVt713Wge1mviC6ce
-         z5DqakgxpAMIhIfbg3KPHm3m6f5LOFDhxZ+zGeMFV2MzwHVTLdP78tBelA8fGOOe5BQX
-         OHJR5u9KCi0KNhngnNRuyo16vpr0DkBLrS2gu6FUYCIYOrcP3dBng9iA/uhkdbU3TQCD
-         kWKuxAwDaOtz5UPdKvrfn2139sgAvMVHxUBs3ARODIpcXmF67dRNPDucjak9nxAXhwpZ
-         Fclg==
+        bh=NShZ2F0kBjLdK/kOL2KImL5dsxE3V0Ajk4CzI2p8lPA=;
+        b=ObkCEo3ApCzCdBf4QLwsQw/gIczNDklONgJYDnqaoOVsGgVKSXJd1tmG+Fb9fp36Xf
+         IehrQMgYCyhhPhaLmhhcKSOrjNJvduh5BBlwvzyJWINxNfc4D4egOaL+ipRrR4BMopOo
+         pDXhxZhRFRaST0XknNmt7hs5S80V8oJkGKD6Nnwh5WxsPB3iaqnSqeXqLWT+gv8ud4U6
+         h8k1gtTDdl9XqbTz4X42aMDBoVrbWk+L/OlKYbvkBgloVrKIgN0DDv91RCKwfpgmG3RB
+         P/li0F84zo5DTVY80qFPH+ZeihHTt9xqd6jLQ9QLdb+IMVnNAtK9gGe1YhG8vuU1LsuR
+         wQZg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793231570; x=1793836370;
+        d=1e100.net; s=20260707; t=1793231573; x=1793836373;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=Af/thxHkdC33DwjakI5xWjPNHFxWjZZYhh+Bu6x+bIY=;
-        b=nxQCzE1mJnPpABZm6Nhh/EhYRtssOVqMstWnTdxc7sKZuD92r8idJPoGCB3o2+FZ9U
-         I7ORlLBuKHQOYt1tdFNNxrylGcelxF88piw0sVL/ZwYJmh6RrIapkYot408t8gxOW/lf
-         v890BZ4f51JSCEIxhO2FvJuoPxOgUnchfg5jG1TQ9RxDkUPHzSeod5Tcr4GW7nIyJg12
-         x3ynrBYfFlOPnz37FF7UbsH68KAbK46yrFsLAATpipHEzcWBFdkSMjW0d0imJP94N1mg
-         cuTfLWReKRTEjr+0XNQv1PnrcxRNtgIDxvxtFC7AV1aQf9d2p07HLXOBKuxTJLYpr0ro
-         lA7w==
-X-Forwarded-Encrypted: i=1; AKwUvByfRhVSoqbu/kxSkXNYbdmlqTUunqILR+uBT0fk4vitcdGGDOLXh9k9XdUPiWlq53nB2tLh6MtrhgA=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJEQC/kgSGiX/OE8onBjnOR9PzxruK1fepnomI4lpvBptS12X4F
-	8ZWdwRj78tnaxz0jAUqj2Z0NFUgLHrQbxnvMmpIuAHgKqxSRJfL3vU0Y
-X-Gm-Gg: AYBFou2iTTMkXmJ0fQsyyVAJYj+yf/h1frNIMcvXzFF6vX2vVx01N8wVfqaBQWY/unT
-	1t8NOIiodVaPhQRWb3t5mynMDm6GoUoGdXh1VWPxsPn9ztoq7GJR4cwlzSSg0r/WQHXsoSKe/mi
-	OP0tV2DYXA/tyv0DwuPO1mn56bHPvMRptYvkqZfbghIvci/rqp89jOrJmt6Utghd6TFGN57OJdB
-	mWFo/tZX3D5HJoV6PrrAdJXinBOTt2jUk9HL/y2t4JeQDIJbx9v21HtFJhqjySNC5JWYjzIQMev
-	dITxh9viBfQ+OmjEO/aY/8gZFIX5sqv25azeeHKhEJJq/e//61OJeg1NgcqmpWU17BxEOXXuVSI
-	6ncCfeczcSdwIu0oRXQZEeX6BxeMjbz1VIZj0kygjtTUBsLP3+qfzDpC3GJFxUtMPO0ZOBLttRJ
-	ZHQ676ht3qoCH6da1SEpQ/cjydm9SuB15ZBpilxVbhrbikyPLIccJ5NwqlfK2eNWA3c1xqYBe3k
-	+/AqYfaKY/77V1697I2dFu914kn/O07U6RaGFltRka8+vHPqTjr1QIpiTYEU/Skidkgl0GE0m+z
-	lgbk7gfSvictPR0Vxq+y+tCxfuw=
-X-Received: by 2002:a05:600c:3115:b0:4a1:f7f4:7cf2 with SMTP id 5b1f17b1804b1-4a966774db9mr87067605e9.17.1793231570159;
-        Wed, 28 Oct 2026 16:52:50 -0700 (PDT)
+        bh=NShZ2F0kBjLdK/kOL2KImL5dsxE3V0Ajk4CzI2p8lPA=;
+        b=2IE4seAvIrhNqoKnVwMCDZdtpTejP9NC5ujZV8hUTREh1Zo9965J/3gr7z5QB3K6Mo
+         tjLl3EX3zsT/Sil4jg5m8AdfiBkdIYtfTQY/zJx0UDzib/ZiKchF6wzHcaT5nRd9ahc4
+         sEaQs1iz4jUio/rU1ZAova8pi3jVcWT8WndpzPFEfvW2+HzX2TFL9vREson/2WOZcdAn
+         OzQU9i8oVk7SOfbKvFGG7Ol1LKrhMF7lpl88MDiNQiIIjSwoR02y3gwoJC2sbBPZdH+0
+         7dCYHkEN4c7Q0OZUvhi2XQYJlo5ePGDqWmHEmsfKlXOYhpDWW4TRWw01LNpnkCfJwKEl
+         uZ9Q==
+X-Forwarded-Encrypted: i=1; AKwUvByfGYspZvphwSCDRqbbSrQ1gqrzF7AqQnUHH6ufM3r8w6TQX7xWwqVPhzoJoZAKj49eloyPsQXKiWM=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIdYjZFYUtaIV5vQVG+clgtNCENkx2APDAjPOQw7E7zptdYMvMd
+	rE57B6xq5Nf+oRHz2z1IJOLvDgJ+9hygawR9F24i4CeA/nvazkNZyCjF
+X-Gm-Gg: AYBFou3jQdPpPSUlaqKugGm6HU/cMM987CuvsUW/trcler1/jMpJiDNj7N23ROIZna+
+	4leHmPLKc/QKWZruwQTLlwuuXY51pww/XvF888142z10giEtenPxk4gdeiEzIGAOhCT3IrkrR+w
+	dL+IMvLbWAoKLYlnhqvBO5k4L8E4sV/46gvEFEUdlnS4Ll+TiWlhmpiboQwoxSw4XfFQnBeWt4X
+	fbX7j6bRF0x+WxC9wt9AyLi4FjygfBFp76NfU9TLnev7VTMN++/aahU0UqGCgbJbpggwBnYpoMY
+	H22aLNWXIaR0F+MRwitW3VpUUVrzY9qfghs/CzC+WBv+b8qqxgORMYaS/7mU4uTFXV8kFXhGl5I
+	Zvvv7ZWnA2wGPAy/zv+2GlfguMlwk/SW7xWWs3wUrubvXoQreErzk7M5IYcpwq0rcEB+ZzUo83g
+	cF69FNzFYF/l0qlOyhWCsGM73tRC2z5v6A9TXPADZD6n5kLghWlxDm6Z7qyU+gAt7pikn6Z9j5/
+	FLMmERrLSAGun19q5yq705Qgc19gucJ+KDOnfJthfT3SXNXacwxsH0o+BAm8z54W3prp+xuvSDU
+	f9NBB9q5k4TBRCE4d8qv5y8MlOU=
+X-Received: by 2002:a05:600c:621a:b0:4a2:10f9:37db with SMTP id 5b1f17b1804b1-4aa871e8be0mr25693755e9.7.1793231573393;
+        Wed, 28 Oct 2026 16:52:53 -0700 (PDT)
 Received: from [127.0.1.1] ([85.105.252.11])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa80f04785sm23669055e9.4.2026.10.28.16.52.46
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa80f04785sm23669055e9.4.2026.10.28.16.52.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 28 Oct 2026 16:52:49 -0700 (PDT)
+        Wed, 28 Oct 2026 16:52:53 -0700 (PDT)
 From: Bartu Alev <bartualev@gmail.com>
-Date: Thu, 29 Oct 2026 02:48:51 +0300
-Subject: [PATCH v4 1/2] platform/x86: asus-wmi: add TUF keyboard RGB
- readback support
+Date: Thu, 29 Oct 2026 02:48:52 +0300
+Subject: [PATCH v4 2/2] Documentation/ABI: asus-wmi: document TUF keyboard
+ RGB attributes
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -94,7 +94,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261029-asus-tuf-rgb-v4-v4-1-0d3b877d2c30@gmail.com>
+Message-Id: <20261029-asus-tuf-rgb-v4-v4-2-0d3b877d2c30@gmail.com>
 References: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com>
 In-Reply-To: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com>
 To: Corentin Chary <corentin.chary@gmail.com>, 
@@ -106,169 +106,77 @@ Cc: platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org,
  Bartu Alev <bartualev@gmail.com>
 X-Mailer: b4 0.15.2
 
-The TUF keyboard RGB attributes kbd_rgb_mode and kbd_rgb_state are
-write-only, so userspace tools keep their own copy of the lighting
-configuration and lose track of it whenever the EC changes state on its
-own: after a firmware reset or a boot into another operating system the
-tools show a stale configuration until the user rewrites every field.
+The kbd_rgb_mode and kbd_rgb_state attributes predate their
+documentation: they were introduced as write-only interfaces and never
+received ABI entries.  The readback support now being added makes the
+omission visible, since the read format is part of the interface.
 
-DSTS device 0x0010005B evaluates the DSDT method EC0.KBLS(), which
-snapshots the EC's host-visible keyboard state into a 16-byte buffer:
-lighting mode, red, green and blue levels, animation speed, and the
-four power-state flags.  The first byte is a constant 1 written by the
-AML, which distinguishes a KBLS reply from any other object the method
-could return.
+Describe both attributes, their positional write formats, the write
+verbs, and the readback form.  The attributes are gated on WMI device
+presence rather than on the laptop model, and userspace tools route
+several non-TUF ASUS lines through the same devices, so the
+description says ASUS laptops that expose the WMI zonal RGB devices
+instead of claiming TUF models only.
 
-Add kbd_rgb_read_status() to evaluate and validate that buffer, parse
-it through a packed struct, and convert both attributes to
-DEVICE_ATTR_RW.  The read returns the write format with "n/a" in the
-command position: the command word belongs to the write verb (apply
-now or save to flash) and both verbs update the EC mirror the same
-way, so there is no state to report there.  The three EC speed codes
-map back to the sysfs indices 0 to 2.
-
-Readback was verified against the EC firmware: the status bytes mirror
-EC RAM at 0x0B22 to 0x0B2E, and the speed codes 0xe1, 0xeb and 0xf5
-select animation step thresholds of 30, 20 and 10 ticks per phase,
-which matches the slow, normal and fast labels.  Tested on a TUF
-Gaming A15 (FA507NV).
-
-Suggested-by: Denis Benato <denis.benato@linux.dev>
 Signed-off-by: Bartu Alev <bartualev@gmail.com>
 ---
- drivers/platform/x86/asus-wmi.c            | 83 +++++++++++++++++++++++++++++-
- include/linux/platform_data/x86/asus-wmi.h |  3 ++
- 2 files changed, 84 insertions(+), 2 deletions(-)
+ Documentation/ABI/testing/sysfs-platform-asus-wmi | 46 +++++++++++++++++++++++
+ 1 file changed, 46 insertions(+)
 
-diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
-index b33ebdb21aa2..054d1d684bb0 100644
---- a/drivers/platform/x86/asus-wmi.c
-+++ b/drivers/platform/x86/asus-wmi.c
-@@ -1062,6 +1062,65 @@ static DEVICE_ATTR_RW(gpu_mux_mode);
- #define TUF_KBD_RGB_SPEED_SLOW		0xe1
- #define TUF_KBD_RGB_SPEED_NORMAL	0xeb
- #define TUF_KBD_RGB_SPEED_FAST		0xf5
-+/* TUF keyboard RGB status readback *******************************************/
-+struct asus_wmi_kbd_rgb_status {
-+	u8 signature;
-+	u8 mode;
-+	u8 red;
-+	u8 green;
-+	u8 blue;
-+	u8 speed;
-+	u8 state;
-+	u8 unused[9];
-+} __packed;
+diff --git a/Documentation/ABI/testing/sysfs-platform-asus-wmi b/Documentation/ABI/testing/sysfs-platform-asus-wmi
+index f9825c6150b5..23e5f265f722 100644
+--- a/Documentation/ABI/testing/sysfs-platform-asus-wmi
++++ b/Documentation/ABI/testing/sysfs-platform-asus-wmi
+@@ -238,3 +238,49 @@ Description:
+ 		Set if the MCU can go in to low-power mode on system sleep
+ 			* 0 - False,
+ 			* 1 - True
 +
-+static int kbd_rgb_read_status(struct asus_wmi_kbd_rgb_status *status)
-+{
-+	int err;
++What:		/sys/class/leds/asus::kbd_backlight/kbd_rgb_mode
++Date:		Oct 2026
++KernelVersion:	7.4
++Contact:	Bartu Alev <bartualev@gmail.com>
++Description:
++		Controls the keyboard RGB lighting on ASUS laptops that
++		expose the WMI zonal RGB devices (the kernel names them
++		"TUF" for historical reasons; TUF models have them and so
++		do some other ASUS lines).  Writes take six positional
++		values:
 +
-+	err = asus_wmi_evaluate_method_buf(ASUS_WMI_METHODID_DSTS,
-+					   ASUS_WMI_DEVID_TUF_RGB_READ_STATUS,
-+					   0, (u8 *)status, sizeof(*status));
-+	if (err)
-+		return err < 0 ? err : -ENODEV;
++		    <cmd> <mode> <red> <green> <blue> <speed>
 +
-+	/* The AML writes a constant 1 here; anything else is not a KBLS reply */
-+	if (status->signature != 1)
-+		return -ENODEV;
++		cmd is 1 to save the setting to flash or 0 to apply it for
++		the current boot only.  mode selects the animation, 0 is
++		static; mode 9 and modes 12 and above are sent as 10.  red,
++		green and blue are 0 to 255.  speed is 0 (slow), 1 (normal)
++		or 2 (fast).
 +
-+	return 0;
-+}
++		Reads return the current hardware configuration in the same
++		positional format, except the command word, which reads as
++		n/a because it only applies to writes.  Reads fail with
++		-ENODEV on hardware without readback support.
 +
-+static ssize_t kbd_rgb_mode_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
-+{
-+	struct asus_wmi_kbd_rgb_status status = {};
-+	u32 speed;
-+	int err;
++What:		/sys/class/leds/asus::kbd_backlight/kbd_rgb_state
++Date:		Oct 2026
++KernelVersion:	7.4
++Contact:	Bartu Alev <bartualev@gmail.com>
++Description:
++		Controls when the keyboard RGB backlight is lit, on the
++		hardware that exposes kbd_rgb_mode.  Writes take five
++		positional values:
 +
-+	err = kbd_rgb_read_status(&status);
-+	if (err)
-+		return err;
++		    <cmd> <boot> <awake> <sleep> <shutdown>
 +
-+	switch (status.speed) {
-+	case TUF_KBD_RGB_SPEED_SLOW:
-+		speed = 0;
-+		break;
-+	case TUF_KBD_RGB_SPEED_FAST:
-+		speed = 2;
-+		break;
-+	case TUF_KBD_RGB_SPEED_NORMAL:
-+	default:
-+		speed = 1;
-+		break;
-+	}
++		cmd is 1 to save the setting to flash or 0 to apply it for
++		the current boot only.  Each flag is 1 or 0: boot, awake
++		and sleep enable the backlight during boot, normal
++		operation and suspend, and shutdown keeps the backlight lit
++		while the machine powers off (S5).
 +
-+	/* The command word belongs to the write verb, so report n/a. */
-+	return sysfs_emit(buf, "n/a %d %d %d %d %d\n",
-+			  status.mode, status.red, status.green, status.blue,
-+			  speed);
-+}
-+
- static ssize_t kbd_rgb_mode_store(struct device *dev,
- 				 struct device_attribute *attr,
- 				 const char *buf, size_t count)
-@@ -1114,7 +1173,7 @@ static ssize_t kbd_rgb_mode_store(struct device *dev,
- 
- 	return count;
- }
--static DEVICE_ATTR_WO(kbd_rgb_mode);
-+static DEVICE_ATTR_RW(kbd_rgb_mode);
- 
- static DEVICE_STRING_ATTR_RO(kbd_rgb_mode_index, 0444,
- 			     "cmd mode red green blue speed");
-@@ -1135,6 +1194,26 @@ static const struct attribute_group kbd_rgb_mode_group = {
- #define TUF_KBD_RGB_STATE_AWAKE		BIT(3)
- #define TUF_KBD_RGB_STATE_SLEEP		BIT(5)
- #define TUF_KBD_RGB_STATE_SHUTDOWN	BIT(7)
-+static ssize_t kbd_rgb_state_show(struct device *dev,
-+				  struct device_attribute *attr, char *buf)
-+{
-+	struct asus_wmi_kbd_rgb_status status = {};
-+	u8 state;
-+	int err;
-+
-+	err = kbd_rgb_read_status(&status);
-+	if (err)
-+		return err;
-+
-+	state = status.state;
-+
-+	return sysfs_emit(buf, "n/a %d %d %d %d\n",
-+			  !!(state & TUF_KBD_RGB_STATE_BOOT),
-+			  !!(state & TUF_KBD_RGB_STATE_AWAKE),
-+			  !!(state & TUF_KBD_RGB_STATE_SLEEP),
-+			  !!(state & TUF_KBD_RGB_STATE_SHUTDOWN));
-+}
-+
- static ssize_t kbd_rgb_state_store(struct device *dev,
- 				 struct device_attribute *attr,
- 				 const char *buf, size_t count)
-@@ -1166,7 +1245,7 @@ static ssize_t kbd_rgb_state_store(struct device *dev,
- 
- 	return count;
- }
--static DEVICE_ATTR_WO(kbd_rgb_state);
-+static DEVICE_ATTR_RW(kbd_rgb_state);
- 
- static DEVICE_STRING_ATTR_RO(kbd_rgb_state_index, 0444,
- 			     "cmd boot awake sleep shutdown");
-diff --git a/include/linux/platform_data/x86/asus-wmi.h b/include/linux/platform_data/x86/asus-wmi.h
-index 66c7ab35d6c8..393fd3c5949a 100644
---- a/include/linux/platform_data/x86/asus-wmi.h
-+++ b/include/linux/platform_data/x86/asus-wmi.h
-@@ -166,6 +166,9 @@
- /* TUF laptop RGB power/state */
- #define ASUS_WMI_DEVID_TUF_RGB_CMD	0x00100057
- 
-+/* TUF laptop RGB keyboard status readback */
-+#define ASUS_WMI_DEVID_TUF_RGB_READ_STATUS	0x0010005B
-+
- /* Bootup sound control */
- #define ASUS_WMI_DEVID_BOOT_SOUND	0x00130022
- 
++		Reads return the current flags in the same positional format,
++		except the command word, which reads as n/a because it only
++		applies to writes.  Reads fail with -ENODEV on hardware
++		without readback support.
 
 -- 
 2.56.0
