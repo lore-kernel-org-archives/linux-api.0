@@ -1,68 +1,72 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.11
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.70
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793214966;
-	b=LoE2T0oMymMA+TyFWsK9G0ob2o1NX36w9V4AMYptNu4N8OZRJags4rjBJQACdl9rRVWW
-	 fo9+7ubs+7i9lFiXaG0KElj10FYTQsV8RIEl5SwxFYzpZlUXYeYTA3ko5RWDtYtckc8BX
-	 U9pHKT32Fh+ZmPnH4ovGr33pt976Rl2wqvac0/NXfoH/cccaD9bSNruksVXtJ2cmWFKpP
-	 4b6Edq6WOApZzK6Wkj9HOuDeU9ugY1vH6Rqn8Z1RuUoSAaJP0yQknFw27KE0YPvZRMKV9
-	 WUScb92U7YVWd8v/COzTjIEm1JtSEBXuulIe1Fnmlps+aB5ENjEWQCqdQuORaJJg+Dg==
+	t=1793225893;
+	b=HH9bZcD2S1/1T4lIMUebJCrJu28cR5QtpFOIRA3xaBP9yNidOuOeIVrd2qB25w5mOQPT
+	 uBG+ff+5Cum/vNU34hhnkWhzSHY8wfXYzNFLx/Gugt1ycl3rg7X6uLdDUsrqEXTZDX1XF
+	 7/GDL9xDOZ34slyW2jkZPlEHjayzi72nBmdD8OtYcPpTJflPLdPYBwBOOb5EYMO4LZuGp
+	 Y825jvGsQ+mJwAh6E4SyDfcwq9p0xoRjqdiqYvvwzoaswe1jbNCTS/maxxZFI0h5q7ONX
+	 AQFhllpPU2fvGzczy7CL14QJqa1/1Psllfk5l5XGQDvlb4MyYEYC0YoGxwjpsMSmjuQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793214966;
-	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
-	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:Message-ID:Date:
-	 MIME-Version:User-Agent:Subject:To:Cc:References:From:
-	 Content-Language:In-Reply-To:Content-Type:Content-Transfer-Encoding;
-	bh=qGezakZ14m2S2fBQBFRj+wGiFP2dTv5zD8y12G0rUYk=;
-	b=2GZLSHDIljejuGewTekxce/iGkE7szgKFWKuWM4ZX/ZsnBIfOGOZCaro6m8c/OkGd2wr
-	 cEcYju55I4zutfGXYDjNEnBO+jwdy1P4ZX0XqAj/SwKh0Tul7UiY5m9DURY5Gedo6KcJb
-	 tyoLctwcxL1KmILcwk+5i6JXRdlpq4EclwtSn9bWc+za5zFf8xqrTx/Bafte0Eo1IBLDH
-	 NaMbYixSQOE99KrCeiX1qpOLtVYbkD+Gja/GtBfF1G3SbddEZrzcTu9dg7OogBUpgY4hp
-	 QXgvICzkwEuodKVdes5bFhPMhU1JXKDFbQWS4+1bOF44C8ylGyLtxj00Sx9ysu2fMBA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793225893;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:Mime-Version:
+	 X-Mailer:Message-ID:Subject:From:To:Cc:Content-Type;
+	bh=zdrXXSLELVsSwHMVPbcUtO/5ayyZxJyxQiN0TcFmn/A=;
+	b=FnJg8gWiKwX16uOc6tbCQS2nUgtyw2+094IqY4euGfsOuk7Tn5wy0d5VEttGZuE+3iBK
+	 txywg193g6BDDKIayV5xl74E5aqFnlNFJBfQd2+YIzAGWbGKyafbmyws3zteDq6QWJcnH
+	 AvYcODcXccuSCCfAi3wndZy8jb0Ie5shoja3iqpYSkIJ20WrpNas6rnjHcuLBz7lBgW2l
+	 ipudT5gbCQpNYvumX+gvCkpQs9f+nQwo17DQj0MVBl0ogxOtgZLTPWOsAkt4GLs75tqc1
+	 AGtV9m0klpeuZaptF3h5N3yFiNCvfcJD0TtyRgNlh/CXCAW2d1UxJUTBIY5DH45VeFg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=intel.com;
-	spf=pass smtp.mailfrom=intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=WTpmk2h7;
-	arc=none smtp.remote-ip=192.198.163.11
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.11])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=flex--halg.bounces.google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=R0rY2M8Z;
+	arc=none smtp.remote-ip=209.85.218.70
+Received: from mail-ej1-f70.google.com (mail-ej1-f70.google.com [209.85.218.70])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DF9C5606A31A;
-	Wed, 28 Oct 2026 19:16:04 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DF9C5606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59CC2606A31D
+	for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 22:18:12 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 59CC2606A31D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--halg.bounces.google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=WTpmk2h7
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1793214965; x=1824750965;
-  h=message-id:date:mime-version:subject:to:cc:references:
-   from:in-reply-to:content-transfer-encoding;
-  bh=rRZl7q5Yb7g0I0jNr9cXRIGHWPDX6gfnH7Raa8Tf3Aw=;
-  b=WTpmk2h7GCigQjqCLBxWyahsrnr2uqPKkkZVDaJkHcVaZfxrQuljiUDf
-   cjqYYVTz3cNpH/1ODUzZXSwnyqMBJMPFOx34unWGoNcjkyCZjnz03e1f5
-   qldEzfIyf8kIRaPqHJGEcItNdR+8zExSx7l6K5MD2t85HLQoHcy9mEUna
-   ftI61v+YNp28T8hVPNUZXr6jQ7Y8Y8Dif8HrjU976ftNCKDPX/9yuopkh
-   yS8JQj6Ziwemod8q4aZhUymOvAz6FaXJ798CWNxr+l4Rgsb2L0z1CrDzQ
-   C8H2n/FgSqZrZ03N3bL2vg00Xrb0ysZcLiPguXUrpgyU9e+bBjAuWS2NH
-   w==;
-X-CSE-ConnectionGUID: 1x4qVIq3QQiCT/9xlP9y3A==
-X-CSE-MsgGUID: 3vvemW/HRhK+k3s0oxfnyA==
-X-IronPort-AV: E=McAfee;i="6800,10657,11949"; a="1859741"
-X-IronPort-AV: E=Sophos;i="6.27,183,1787036400"; 
-   d="scan'208";a="1859741"
-Received: from orviesa009.jf.intel.com ([10.64.159.149])
-  by fmvoesa105.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Oct 2026 12:16:04 -0700
-X-CSE-ConnectionGUID: 20RWCkcZQhGqvEM8MSfJZg==
-X-CSE-MsgGUID: FZXQX+YnQMKd+y8FCbeiDg==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.27,183,1787036400"; 
-   d="scan'208";a="4987771"
-Received: from iherna2-mobl4.amr.corp.intel.com (HELO [10.125.108.227]) ([10.125.108.227])
-  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 28 Oct 2026 12:16:02 -0700
-Message-ID: <c57c45bb-5047-4aa9-9f06-6ac5f36ff3ce@intel.com>
-Date: Wed, 28 Oct 2026 12:16:01 -0700
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=R0rY2M8Z
+Received: by mail-ej1-f70.google.com with SMTP id a640c23a62f3a-c2e8c76334fso138082966b.1
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 15:18:12 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20260707; t=1793225891; x=1793830691; darn=vger.kernel.org;
+        h=content-type:cc:to:from:subject:message-id:mime-version:date:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=zdrXXSLELVsSwHMVPbcUtO/5ayyZxJyxQiN0TcFmn/A=;
+        b=R0rY2M8ZBUpsVK5bvV77N25RxUNl/lUiEIl/l/IxVInBY6WYxjElllaIF5TS+q6dcU
+         z0XpP3NNHCu9S89x/gTlWHBVP7dA9wWeYXTc0glEmrZPaKSnw3haEyProTm/RxyhTpeK
+         bgJtiEw+QO4eJlE6D3wwySmvlU8Tg8ja0ActR9YXpRuTwOQRSDKukk9jzd1pAT0O/7jf
+         GRxAUBTrmV4J3lwkf2Ay5hI5EI/MZtN14zKbwi3wSxtgUnXQSNSy/BenMyQTitov8cer
+         jS1iH/9a990RSGgwDGJWTSCO26h5zi3DAFhRsB6P7SX8T1pnUzd5RmcSiJnQAh79zmm+
+         naQA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793225891; x=1793830691;
+        h=content-type:cc:to:from:subject:message-id:mime-version:date
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=zdrXXSLELVsSwHMVPbcUtO/5ayyZxJyxQiN0TcFmn/A=;
+        b=lkAUcCW/xY98170887ttex9LRICDcEr36HqjSUfXm8ju4G1B+GekXrlp7Ayylzue0I
+         HIam06u3VnM/+y6I9AZC+WerEUrdX+9+5KYLR8sSm+MDc2AJgb0jhkL1Wit2FX/vsaES
+         YvEdnbYfgXBg6ziYi+bUJbvcz7QGHhzeoIxubN0zmlYxlga+II2Fwi+YCVK3qPNNHGdC
+         ZE4f+aYubY5WRg7MziOCPFM7VXG+6G//GcTJAEeQgBJzAHIDYDqsMgTMCaF4Aq4cwkoU
+         PBmUXjXR+/+BSejHxNGK1D2DKcEpM2zQTbvw+fH38heUfTDif9J8SmgTYlws7BzyR7Uf
+         /YRw==
+X-Forwarded-Encrypted: i=1; AKwUvBz+npCWkZdgqU0dz+WTEt1KIM4pCYIYcRv6EMbMpuPYWh9qr2RBtbAPhTMH4C2strjiF+UBFvVzCzA=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJAMb1vTbDWl9jQ+6dbkQzRrDp1ihE3SDPoRR3eNon4tqnGYTRM
+	A55/dH2t2Ro+3k5nXiFeOxefcEUBAJqNEAKmIwFZK0biiO7hutUASWAeq+VXO5vvwBXk0XnIpQ=
+	=
+X-Received: from educ16.prod.google.com ([2002:a05:6402:1010:b0:6b4:1882:2675])
+ (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a17:907:608e:b0:c46:8b87:c1f4
+ with SMTP id a640c23a62f3a-c49bded259fmr314393966b.20.1793225890525; Wed, 28
+ Oct 2026 15:18:10 -0700 (PDT)
+Date: Wed, 28 Oct 2026 22:16:57 +0000
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -71,120 +75,204 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-To: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev,
- linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org,
- kvm@vger.kernel.org, linux-doc@vger.kernel.org, david.quigley@intel.com,
- lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
- cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
- James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com,
- qinkun@google.com, pgonda@google.com, jic23@kernel.org,
- alistair.francis@wdc.com, ankita@nvidia.com, suzuki.poulose@arm.com,
- kas@kernel.org, rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
- dave.hansen@linux.intel.com, sathyanarayanan.kuppuswamy@linux.intel.com,
- peter.fang@intel.com
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <592d643f-e97d-4de8-9a87-e47d57dc8457@intel.com>
- <20261027193629.GK1685504@ziepe.ca>
- <5f33aeed-a20d-4881-9ccf-a69bc308d348@intel.com>
- <20261027234658.GL1685504@ziepe.ca>
-From: Dave Jiang <dave.jiang@intel.com>
-Content-Language: en-US
-In-Reply-To: <20261027234658.GL1685504@ziepe.ca>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+X-Mailer: git-send-email 2.56.0.313.g2479322e68-goog
+Message-ID: <20261028221705.3915340-1-halg@google.com>
+Subject: [PATCH 0/8] userns: per-namespace capability bounding set and opt-in
+ netns loopback
+From: "Hallgrimur H. Gunnarsson" <halg@google.com>
+To: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
+	Randy Dunlap <rdunlap@infradead.org>, Jann Horn <jannh@google.com>, 
+	"=?UTF-8?q?G=C3=BCnther=20Noack?=" <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-api@vger.kernel.org, containers@lists.linux.dev, netdev@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, "Hallgrimur H. Gunnarsson" <halg@google.com>
+Content-Type: text/plain; charset="UTF-8"
+
+When an unprivileged process creates a new user namespace, it is granted
+a full set of capabilities (CAP_FULL_SET) scoped to that namespace.
+While these capabilities are isolated to the namespace, they allow
+unprivileged local users to reach deep kernel subsystems (most notably
+networking configuration and raw sockets via CAP_NET_ADMIN and
+CAP_NET_RAW) that historically assumed a trusted caller and have
+accounted for a large share of local privilege escalation
+vulnerabilities.
+
+Many workloads and sandboxes use unprivileged user namespaces strictly
+for basic UID/GID, mount, PID, or network isolation and never need
+high-risk capabilities like CAP_NET_ADMIN or CAP_NET_RAW. Likewise,
+system administrators often want a host-wide policy ceiling restricting
+which capabilities unprivileged user namespaces may acquire, without
+disabling unprivileged user namespaces altogether.
+
+Prior work by Jonathan Calmels [1] proposed addressing this via a sixth
+per-thread capability set (cap_userns) alongside a global sysctl mask.
+During that discussion [1, 2], feedback (e.g. from Casey Schaufler)
+suggested that rather than adding another per-thread capability set and
+prctl() interface, capability restrictions could be integrated directly
+into struct user_namespace and configured via clone3(). At the same
+time, as noted in [1], a clone3() flag alone is not sufficient for
+administrators who need to enforce a host-wide ceiling on unprivileged
+user namespaces without modifying every userspace callsite.
+
+This series combines both pieces of feedback: it embeds a capability
+bounding set (cap_bset) directly into struct user_namespace, reusing
+the existing task cap_bset, cap_permitted, and cap_effective sets on
+namespace entry, and provides both a system-wide sysctl ceiling for
+unprivileged user namespaces and a CLONE_NEWUSER_BSET flag for
+voluntary per-namespace restriction via clone3().
+
+In addition, because restricting CAP_NET_ADMIN at user namespace
+creation time prevents userspace from bringing up the loopback
+interface in new network namespaces, the series first introduces
+an opt-in flag to automatically enable loopback on network namespace
+creation:
+
+1. Opt-in loopback activation on netns creation (Patch 1)
+
+  New network namespaces start with the loopback interface (lo) DOWN by
+  default, requiring CAP_NET_ADMIN over the owning user namespace to
+  bring it up. To block external network access while preserving
+  localhost networking, sandboxes commonly create an isolated network
+  namespace with only the loopback interface enabled.
+
+  However, requiring a sandbox to hold CAP_NET_ADMIN in a new user
+  namespace solely to bring loopback up conflicts with reducing the
+  CAP_NET_ADMIN attack surface. Today, an unprivileged sandbox must
+  start with CAP_NET_ADMIN to bring loopback up, drop it, and then
+  block CAP_NET_ADMIN from being regained in nested user namespaces
+  (e.g. via seccomp or max_user_namespaces limits). Conversely, when
+  CAP_NET_ADMIN is restricted at user namespace creation time (via the
+  sysctl ceiling or CLONE_NEWUSER_BSET introduced in Patches 2-3, or
+  via LSMs such as Landlock), tasks inside the new namespace never
+  acquire CAP_NET_ADMIN and cannot bring loopback up from userspace,
+  breaking localhost networking for unprivileged sandboxes.
+
+  Introduce the CLONE_NEWNET_LOOPBACK flag for clone3() and the
+  corresponding UNSHARE_NEWNET_LOOPBACK flag for unshare(), which imply
+  CLONE_NEWNET and automatically bring the loopback device up in
+  copy_net_ns() before returning the new network namespace. Making this
+  an explicit opt-in preserves default network namespace semantics
+  while allowing unprivileged sandboxes to create an isolated network
+  namespace with functional localhost networking without ever holding
+  CAP_NET_ADMIN.
+
+2. Per-user-namespace capability bounding set & sysctl ceiling (Patch 2)
+
+  Add cap_bset to struct user_namespace (initialized to CAP_FULL_SET in
+  init_user_ns) and introduce a system-wide sysctl ceiling for
+  unprivileged users at:
+    /proc/sys/kernel/unprivileged_userns_caps_allowed
+  (defaulting to CAP_FULL_SET).
+
+  When a new user namespace is created:
+  - Privileged creators (holding CAP_SYS_ADMIN in the parent user
+    namespace) inherit cap_bset from the parent user namespace.
+  - Unprivileged creators (lacking CAP_SYS_ADMIN in the parent user
+    namespace) have the child namespace's bounding set constrained by
+    the sysctl ceiling combined with any effective capabilities the
+    creator already holds in the parent namespace:
+        child_bset = parent_bset & (sysctl_ceiling | creator_effective)
+    Allowing the creator to retain capabilities it already holds in the
+    parent namespace ensures that a process granted a specific
+    capability (e.g. CAP_NET_ADMIN) does not lose it when creating a
+    nested user namespace.
+
+  When a task enters a user namespace via clone()/unshare() or
+  setns(), its cap_bset, cap_permitted, and cap_effective sets are
+  clamped to user_ns->cap_bset. In addition, cap_capable_helper() is
+  updated so that implicit capabilities granted to the parent-namespace
+  owner of a user namespace are likewise bounded by the owned
+  namespace's cap_bset.
+
+3. Per-namespace restriction via clone3() (Patch 3)
+
+  Introduce CLONE_NEWUSER_BSET and add cap_bset to struct clone_args.
+  When specified alongside CLONE_NEWUSER, the new user namespace's
+  bounding set is further intersected with the requested cap_bset mask,
+  allowing container runtimes and sandboxes to drop unneeded capabilities
+  from a user namespace at creation time even when permitted by the
+  global sysctl.
+
+4. Introspection via NS_USER_GET_INFO (Patch 4)
+
+  While tasks inside a user namespace see their initial ceiling in
+  /proc/<pid>/status (CapBnd), threads may subsequently drop
+  individual capabilities from their per-thread bounding set. Add
+  an extensible NS_USER_GET_INFO ioctl on userns file descriptors
+  to allow userspace to directly query a user namespace's cap_bset.
+
+5. Selftests (Patches 5-8)
+
+  Add kselftest suites covering CLONE_NEWNET_LOOPBACK, the sysctl
+  ceiling, creator capability retention, nested monotonicity,
+  parent-owner bounding, CLONE_NEWUSER_BSET and NS_USER_GET_INFO.
+
+[1] https://lore.kernel.org/all/20240609104355.442002-1-jcalmels@3xx0.net/
+[2] https://lwn.net/Articles/978846/
+
+Note on tree routing:
+
+While Patch 1 (CLONE_NEWNET_LOOPBACK) touches net/core/net_namespace.c,
+most of its changes add clone3()/unshare() flag plumbing in
+include/uapi/linux/sched.h, kernel/fork.c, and kernel/nsproxy.c, which
+Patch 3 (CLONE_NEWUSER_BSET) builds directly on top of. To avoid
+merge conflicts in kernel/fork.c and include/uapi/linux/sched.h, it
+may be simplest to route the entire series through a single tree, e.g.
+a namespace branch in vfs.git with Acked-by from the netdev and
+capabilities/credentials maintainers, or whichever tree the maintainers
+prefer.
+
+Hallgrimur H. Gunnarsson (8):
+  net: introduce CLONE_NEWNET_LOOPBACK to auto-enable loopback
+  userns: introduce capability bounding set for user namespaces
+  userns: allow restricting capability bounding set via clone3()
+  nsfs: add NS_USER_GET_INFO ioctl to inspect user namespace
+    capabilities
+  selftests/net: add test suite for CLONE_NEWNET_LOOPBACK
+  selftests/capabilities: tests for user namespace capability bounding
+    set
+  selftests/capabilities: add clone3() tests for CLONE_NEWUSER_BSET
+  selftests/nsfs: add tests for NS_USER_GET_INFO ioctl
+
+ Documentation/admin-guide/sysctl/kernel.rst   |  37 ++
+ fs/nsfs.c                                     |  29 +
+ include/linux/cred.h                          |   3 +-
+ include/linux/sched/task.h                    |   1 +
+ include/linux/user_namespace.h                |  20 +-
+ include/uapi/linux/nsfs.h                     |  17 +
+ include/uapi/linux/sched.h                    |   9 +
+ kernel/cred.c                                 |  10 +-
+ kernel/fork.c                                 |  38 +-
+ kernel/nsproxy.c                              |   9 +
+ kernel/user.c                                 |   1 +
+ kernel/user_namespace.c                       | 100 +++-
+ net/core/net_namespace.c                      |  11 +
+ security/commoncap.c                          |   8 +-
+ .../testing/selftests/capabilities/.gitignore |   1 +
+ tools/testing/selftests/capabilities/Makefile |   2 +-
+ .../capabilities/userns_bounding_set_test.c   | 566 ++++++++++++++++++
+ .../selftests/clone3/clone3_selftests.h       |   1 +
+ .../selftests/filesystems/nsfs/.gitignore     |   1 +
+ .../selftests/filesystems/nsfs/Makefile       |   4 +-
+ .../selftests/filesystems/nsfs/userns.c       | 120 ++++
+ tools/testing/selftests/net/.gitignore        |   1 +
+ tools/testing/selftests/net/Makefile          |   1 +
+ tools/testing/selftests/net/loopback_netns.c  | 103 ++++
+ 24 files changed, 1069 insertions(+), 24 deletions(-)
+ create mode 100644 tools/testing/selftests/capabilities/userns_bounding_set_test.c
+ create mode 100644 tools/testing/selftests/filesystems/nsfs/userns.c
+ create mode 100644 tools/testing/selftests/net/loopback_netns.c
 
 
+base-commit: cee9395acd8043be0644b25c34bfa86623f2b935
+-- 
+2.56.0.313.g2479322e68-goog
 
-On 10/27/26 4:46 PM, Jason Gunthorpe wrote:
-> On Tue, Oct 27, 2026 at 04:09:19PM -0700, Dave Jiang wrote:
-> 
->> There are two issues for TDX Connect. One, the device info is collected at
->> SPDM connect (TDH.SPDM.CONNECT), not at lock. TDH.TDI.BIND only returns the
->> interface report. So the measurements a TD sees at lock can be from well
->> before the lock. To get measurements taken after the bind, the TD has to
->> ask the VMM for a recollection with its own nonce.
-> 
-> IMHO measurements taken before lock must never be made visible through
-> this interface, it defeats the security property of evidence within
-> the locked session. I would expect the guest kernel TDX driver to
-> prevent this.
-
-Agreed. I'll change the guest driver so the lock asks the VMM for a
-recollection with a nonce the driver picks. Each lock then costs one
-recollection.
-
->  
->> Second, a device may take a runtime firmware update of equal or higher SVN
->> while its TDIs stay locked, unless the lock sets NO_FW_UPDATE. The
->> TD isn't
-> 
-> Sure, any of the live update things are not really relevant, the
-> evidence can change asynchronously and without notification, so we can
-> just ignore the issue. If the guest opts into live update then it can
-> only rely on things like min svn.
-
-makes sense
-
-> 
->>> I'm a bit puzzled by this optional challenge concept, I haven't tried
->>> to read SPDM spec yet, but it really has a way to omit the challenge
->>> from the reply? It doesn't just replace it with 0 or something?
->>
->> SPDM puts the requester's nonce in the GET_MEASUREMENTS request, and only when
->> the request asks for a signature. The MEASUREMENTS response always carries the
->> responder's own nonce, and the signature covers the request too. An unsigned
->> request has no nonce and gets an unsigned response.
-> 
-> Returning an unsigned collection seems like an interesting use case,
-> but why would you want to do that in the first place?
-
-I don't have a use case for it. That was answering whether SPDM can
-leave the nonce out.
-
-> 
->> The empty challenge in my provider means something else though: don't
->> recollect, return the evidence collected earlier. So it's less "omit the
->> nonce" and more "no new collection". Maybe that's better as an explicit flag
->> than an empty challenge?
-> 
-> I'm not sure 'no new collection' is an especially useful thing. Since
-> the kernel won't be validating the signature you still need to pass
-> the expected nonce from the prior collection back to userspace so it
-> can check it.
-> 
-> Is there some specific use case for this?
-
-Getting the lock event's evidence. With the suggested lock change above, the
-guest driver collects it during the lock. But the lock is a sysfs write and
-returns nothing. Userspace still has to read the evidence to appraise it before
-run. The device was already locked when it was collected, so the read needs no
-new collection.
-
-Userspace doesn't need the expected nonce passed back. The guest driver picks
-the nonce for the lock's collection and checks it before publishing. If userspace
-sends a challenge instead, that nonce is its own. The collection's nonce is in the
-evidence in the GET_MEASUREMENTS request that asked for the signature.
-
-> 
->>>> 6. tdx_attestation_test's discovery_and_construction_fields expects an
->>>>    inheritance chain of 4, but the TDX family inherits ctlv-attestation
->>>>    directly, which gives 3. In a real TDX guest it fails with
->>>>    "Expected 4 (4) == ctlv_chain_len(self->dev) (3)".
->>>
->>> I would have naively guessed this should inherent from some SPDM family?
->>
->> The TDX family is the TD's own attestation (TD report, Quote and RTMRs), with
->> no device or SPDM in it. In wip_attestation_all_1 it inherits ctlv-attestation
->> directly, so I think the test's 4 is what's stale. Jiri would know for sure.
-> 
-> I think TDX report/quote/rtmrs should be a different familiy from TDX device
-> assignment SPDM. They are completely different things.
-
-Yes. That's how wip_attestation_all_1 has it, and the device side is the SPDM family in the POC.
-
-DJ
