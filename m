@@ -1,74 +1,74 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.70
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.72
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793225911;
-	b=l+Gyr68wzEFhANBCyrkvQoZZw4n3eioJ5HZJJv9QVhRwCXovlUgGgOaujh+OAyysAocS
-	 XcTSkcYQRPKaSQtPjI0YpFK297KLJZyfcd0jlpoHJcvH7y8kvPQJWIajBOVr/k5pcevna
-	 a5p0t9n+eyqTbIjKWFgUMsFEvi5b+tThBqE4MtcFkXZJ135fU6AfLkT3KHjwzjZnbzOS1
-	 NeMDnzfBid0jJvuoYOZsHpVAuDouH8o+HgifUunGxg1Uh7Ekil2zFIiuGM26qlYCN/Yx1
-	 N0D5qjkI2qPl6MmFjxdzWxrQJuekjmjgU/75LvQbJPuyiXwyIj7a61YC6YgHScVQwmA==
+	t=1793225914;
+	b=G0fuSu1VdEc+4psKr8CHAoPfVGszKYAXKPhfUvWmvmha80A1kmXobBNNYULEVTisMSwn
+	 kM98m4Ow8rxZJ2vSWx86aU7p2wvUGXTPZspLzFJtnrBO/8l47lvMo73bzr09OtdcL24c1
+	 PfDmJYYX4FAV9MrXaJT7hwXkcgKhbtwcI06uYfvaLoauEZB38VNCNLXuOH2tO/VBN/lKa
+	 R/leV3vrLnoPfPW0B6JHTxBj+4qRLEIs38UkkKbw8DiqxjOS2BH6bxc5tAS8hXrbM48YT
+	 nF+w01WemVH9sTRZH/IhMmOPkZ0UxVSGFcjHgC5RqxuFa2BSocs/2XHQfl0p5lbddZQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793225911;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793225914;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
 	 Mime-Version:References:X-Mailer:Message-ID:Subject:From:To:Cc:
 	 Content-Type;
-	bh=IliLvxEFhtUoKzlsMTRJTupCYDKTYP3W6Uvf0vlrqBM=;
-	b=drIWt6A1GlzUK5Riv/AdtMnHKl9VtB7g3r6K2PHpxvIQMvoHghgEjbTQ8rCNQ3oPQBD+
-	 djs/HfnpfCpZL5Hu3mTq6ZMpdAEfLBkwzORXjBiLTnTkc/2rnqDwNOflvWyxhd6+DD61R
-	 J0GuSTIFCKg2XLNJfJZrHm5VlpSZrf20p9YsrS0WQcupGDNZ8jmkDQt4HhPzJ3vsZ9OLW
-	 VVHkXPq+YYoxromACz3s9F4SZPd7IsePEsdZYTq5VGyZ8Z/CnHaZcc8zpVhkeUx3LVANL
-	 +9mcFwC+sFsI/9d6t8K6aurhTTdoRiVT8UbNj4tFJYNQgTYPhlih9OpMoYgvx+eQkog==
+	bh=O3jI53IvGMjui3qM6yb8MAnyltVbJGBw/n9i8mncKWg=;
+	b=HvgKAbcl0NSgFHbXMUxHNP+Ej8YCK144HQPujbSJGTxzddI4s66syaB4y8TdMVqsjS7N
+	 avFUa/zORVDhXHnw2uYr3hP4wfhSidbkJt+RXNIMwbn2DdaAkaI+iPx7k28O/IgBOgatB
+	 qzbaLL8j32bnbMAewew3zgyIEjD05bOLvbhBBkYWfDPei4yvr8dbLQUH77Jz98HKgGyex
+	 lC0B3w+TvEdBciqEbN5Z6bcQ47gBW0I5dkFJzkGFDeeJKD5D3GZiwfBTXKoLJkqZZQQYC
+	 qWflwL6421i1suwERSU4CLym0VhdEFCIz/gRxllFK7H0esZBTVKSYHinjoHvQUGFIxA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=google.com;
 	spf=pass smtp.mailfrom=flex--halg.bounces.google.com;
-	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=gYALcxqy;
-	arc=none smtp.remote-ip=209.85.218.70
-Received: from mail-ej1-f70.google.com (unknown [209.85.218.70])
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=ZocZJ6fm;
+	arc=none smtp.remote-ip=209.85.218.72
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com [209.85.218.72])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8EFC460A6F76
-	for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 22:18:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8EFC460A6F76
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A31060A5BC4
+	for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 22:18:20 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8A31060A5BC4
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--halg.bounces.google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=gYALcxqy
-Received: by mail-ej1-f70.google.com with SMTP id a640c23a62f3a-c41b03cd1dcso129296866b.3
-        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 15:18:26 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=ZocZJ6fm
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-c41dae9db9dso147782266b.2
+        for <linux-api@vger.kernel.org>; Wed, 28 Oct 2026 15:18:20 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20260707; t=1793225895; x=1793830695; darn=vger.kernel.org;
+        d=google.com; s=20260707; t=1793225899; x=1793830699; darn=vger.kernel.org;
         h=content-type:cc:to:from:subject:message-id:references:mime-version
          :in-reply-to:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=IliLvxEFhtUoKzlsMTRJTupCYDKTYP3W6Uvf0vlrqBM=;
-        b=gYALcxqyt70MQ79J9EPFtsq/ZeSTxirIEH01aK2bomk/GvpfcsAjBJqb4Y09rzuNLt
-         mO44k7f46rtJ9wunMGpfQFt9lPWqgkNaiFl0SALdNHuEVLvyiq5kt/KV0iSWPCT3tP1c
-         zWS2yVnyhtdinRcEUS5DF+dd6ZPtqU4//4OhOvSQSXIQEeSpBlOhVgl5N3HoKZ8HyqgM
-         0mOlVcGpmjZAg21fMo5VhSqBp3oUNBCE57ekigI3J8RJl6Rr/QajW+JDtCDvJeRQt3ph
-         p+hNl2pv82gkoFDKvZA/guZs8SZ56A95NQsHaEdHFIKKnIsIwK+zXnT381OZUxwV0rNz
-         Rg8Q==
+        bh=O3jI53IvGMjui3qM6yb8MAnyltVbJGBw/n9i8mncKWg=;
+        b=ZocZJ6fmNbV1TfdYdsOMCEl0qWX8N3eFzH/u4GRw09k6dmxM/tq2H/RruUScFwtoFY
+         LlLlFx/WAwBD+j19yldTxYyQKpxfNoqfQimaMqQ1ZZx9H5MrwNdEgryllmDk834aXdgT
+         n525rXNjQTppvAF3SeM4QeqsRs/nddO07X5aZRYGgacWMN+ovuxez+GkR31/sil69fLK
+         E1MuMlQU8Cvtwpsp+kKlDyunAYnV2JIRJ/WrUnNqwTR6tuTWtZWZsc4pmXwjpr7sK2NK
+         1QFGq77AxEUSq/bZC4ZovdO1+8DqqbFpKRA60xvycYhhr3jS+O2OjNZPaPNicnj4Vm53
+         IAnw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793225895; x=1793830695;
+        d=1e100.net; s=20260707; t=1793225899; x=1793830699;
         h=content-type:cc:to:from:subject:message-id:references:mime-version
          :in-reply-to:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=IliLvxEFhtUoKzlsMTRJTupCYDKTYP3W6Uvf0vlrqBM=;
-        b=JcniryZBpGKNgm8J6Vjwg6O1pnxu5mt14EqLtBZseZqP/wjplsC6norwMTb3b9Ze7J
-         MfqqwTyr37xsafLaLzpX5uxOp21PCmFxCBcXt1++9qok8Zx7Hz8ZSdXReEd9NMimtq8B
-         oRvJzezUmumR3drU/w29+OhAkKq23G9cxHOMh8y5hj753wUfFdJmBKv3EfOUNCgrzaJN
-         JzEq9RTghjIzzMIuUWX9bnekmtx1f46w/wE0i7rUQPdgzqv6TZjRPRogDblrlZvqdNqJ
-         6Ua2gte7aLkv9IcMF0hJRiMTEeBOuf7mnDRt/iIhjRDrGLeEZIN4gkGp5wQTDJ3IMSrj
-         2GRw==
-X-Forwarded-Encrypted: i=1; AKwUvByNIR3j4tQFnE4xOn1f8aEuwcIWAfRrsmYzvDdtwfd2rsxdFXpR04KqKZZJFQpenljlEWm40fN+ww4=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKQycgd+pPPMM5Pbsfi+xmSv7S4arViGmUH4Vl1snUtQrc0b/F8
-	z0FrXtAKCNuzNzsVE+fBSwX2I9PiRCvYRL7+CcIM7Piu3Jg0QmKwJuESPsnt9Xc0eIEl5YXwBA=
+        bh=O3jI53IvGMjui3qM6yb8MAnyltVbJGBw/n9i8mncKWg=;
+        b=WoPD1wJyVYG19Jsqh4a3kenqLSA5gYmd2EHkByObjRdZ8siLjlpz0bZ6Xcj6UlYXY5
+         Ad7hTvmg/M0nGElh4++cy6oG/0/SIekM4+3V4nfrBa7dNm4BbVxQQxZDZwyIRGNzPiCS
+         zNsXKnivvVdBvKgKTii+jkqQ7YbxmolzLSmfUJPl1X5uvZpeO4/eeaQK094C1+I5tKsV
+         fiu7Mb2wouxNAL09BatNg+HXMUafUrIxcENgV7/u5xV5sN5BQontFDgh0UyhBqGNO5n3
+         WHps5xqdMHQg8UbACJLbS947jx14lKt8GX1JFJ2TGWjwkhzgSx2r5+MPSIcHPWSeTj16
+         IShw==
+X-Forwarded-Encrypted: i=1; AKwUvBxOFBH8H+lCdwQlnsgCXgTP8CH4DhL7rJOZ5mdWGxNZc6VmQgOtYgcWhKa1A6j+ye3sq8kl6QMHqZ8=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKkCloXTkR83fhWzEaOE6dTldqfSYjaD7pt8O+pY+MNei8/Nfqi
+	ohv33rceYU8+ThyuXQYS7J025Uz4NIK6NIgt4arf7Nh621ZZODL9gcZl4ephF9pgQ4IojNNQEw=
 	=
-X-Received: from ejad9.prod.google.com ([2002:a17:906:409:b0:c32:473d:4a4b])
- (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a17:907:3f88:b0:c40:80eb:c54e
- with SMTP id a640c23a62f3a-c49bddac533mr311667066b.4.1793225894675; Wed, 28
- Oct 2026 15:18:14 -0700 (PDT)
-Date: Wed, 28 Oct 2026 22:17:01 +0000
+X-Received: from ejbch15.prod.google.com ([2002:a17:906:c2cf:b0:c2e:81fe:4522])
+ (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a17:907:980c:b0:c2e:4d39:b5a1
+ with SMTP id a640c23a62f3a-c49bdf2c6efmr324604666b.17.1793225898939; Wed, 28
+ Oct 2026 15:18:18 -0700 (PDT)
+Date: Wed, 28 Oct 2026 22:17:05 +0000
 In-Reply-To: <20261028221705.3915340-1-halg@google.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -81,9 +81,8 @@ Precedence: list
 Mime-Version: 1.0
 References: <20261028221705.3915340-1-halg@google.com>
 X-Mailer: git-send-email 2.56.0.313.g2479322e68-goog
-Message-ID: <20261028221705.3915340-5-halg@google.com>
-Subject: [PATCH 4/8] nsfs: add NS_USER_GET_INFO ioctl to inspect user
- namespace capabilities
+Message-ID: <20261028221705.3915340-9-halg@google.com>
+Subject: [PATCH 8/8] selftests/nsfs: add tests for NS_USER_GET_INFO ioctl
 From: "Hallgrimur H. Gunnarsson" <halg@google.com>
 To: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
 	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
@@ -100,102 +99,166 @@ Cc: Jan Kara <jack@suse.cz>, James Morris <jmorris@namei.org>, Simon Horman <hor
 	linux-kernel@vger.kernel.org, "Hallgrimur H. Gunnarsson" <halg@google.com>
 Content-Type: text/plain; charset="UTF-8"
 
-With the introduction of a capability bounding set for user namespaces,
-userspace needs a way to inspect the capability ceiling enforced on a
-given user namespace.
-
-Introduce the NS_USER_GET_INFO ioctl on nsfs file descriptors to query
-user namespace metadata, mirroring the extensible structure pattern
-used by NS_MNT_GET_INFO.
+Add tests for the NS_USER_GET_INFO ioctl to verify user namespace
+capability bounding set inspection and validate error paths.
 
 Signed-off-by: Hallgrimur H. Gunnarsson <halg@google.com>
 ---
- fs/nsfs.c                 | 29 +++++++++++++++++++++++++++++
- include/uapi/linux/nsfs.h | 17 +++++++++++++++++
- 2 files changed, 46 insertions(+)
+ .../selftests/filesystems/nsfs/.gitignore     |   1 +
+ .../selftests/filesystems/nsfs/Makefile       |   4 +-
+ .../selftests/filesystems/nsfs/userns.c       | 120 ++++++++++++++++++
+ 3 files changed, 123 insertions(+), 2 deletions(-)
+ create mode 100644 tools/testing/selftests/filesystems/nsfs/userns.c
 
-diff --git a/fs/nsfs.c b/fs/nsfs.c
-index c3b6ae76594a..50711362d792 100644
---- a/fs/nsfs.c
-+++ b/fs/nsfs.c
-@@ -170,6 +170,17 @@ static int copy_ns_info_to_user(const struct mnt_namespace *mnt_ns,
- 	return 0;
- }
+diff --git a/tools/testing/selftests/filesystems/nsfs/.gitignore b/tools/testing/selftests/filesystems/nsfs/.gitignore
+index 92a8249006d1..b0a59f5d49fc 100644
+--- a/tools/testing/selftests/filesystems/nsfs/.gitignore
++++ b/tools/testing/selftests/filesystems/nsfs/.gitignore
+@@ -1,4 +1,5 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ owner
+ pidns
++userns
+ iterate_mntns
+diff --git a/tools/testing/selftests/filesystems/nsfs/Makefile b/tools/testing/selftests/filesystems/nsfs/Makefile
+index 231aaa7dfd95..9408d7948621 100644
+--- a/tools/testing/selftests/filesystems/nsfs/Makefile
++++ b/tools/testing/selftests/filesystems/nsfs/Makefile
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+-TEST_GEN_PROGS := owner pidns iterate_mntns
++TEST_GEN_PROGS := owner pidns iterate_mntns userns
  
-+static int copy_user_ns_info_to_user(const struct user_namespace *user_ns,
-+				     struct user_ns_info __user *uinfo,
-+				     size_t usize, struct user_ns_info *kinfo)
-+{
-+	kinfo->size = min(usize, sizeof(*kinfo));
-+	kinfo->spare = 0;
-+	kinfo->cap_bset = user_ns->cap_bset.val;
+-CFLAGS := -Wall -Werror
++CFLAGS += -Wall -Werror $(KHDR_INCLUDES)
+ 
+ include ../../lib.mk
+diff --git a/tools/testing/selftests/filesystems/nsfs/userns.c b/tools/testing/selftests/filesystems/nsfs/userns.c
+new file mode 100644
+index 000000000000..70661a495afc
+--- /dev/null
++++ b/tools/testing/selftests/filesystems/nsfs/userns.c
+@@ -0,0 +1,120 @@
++// SPDX-License-Identifier: GPL-2.0
++#define _GNU_SOURCE
 +
-+	return copy_struct_to_user(uinfo, usize, kinfo, sizeof(*kinfo), NULL);
++#include <errno.h>
++#include <fcntl.h>
++#include <sched.h>
++#include <sys/ioctl.h>
++#include <sys/syscall.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <unistd.h>
++#include <linux/nsfs.h>
++#include <linux/sched.h>
++#include <linux/types.h>
++
++#include "../../clone3/clone3_selftests.h"
++#include "../../kselftest_harness.h"
++
++TEST(user_get_info_self)
++{
++	struct user_ns_info info = {};
++	int fd;
++
++	fd = open("/proc/self/ns/user", O_RDONLY | O_CLOEXEC);
++	ASSERT_GE(fd, 0) {
++		TH_LOG("Failed to open /proc/self/ns/user: %m");
++	}
++
++	ASSERT_EQ(0, ioctl(fd, NS_USER_GET_INFO, &info)) {
++		TH_LOG("ioctl(NS_USER_GET_INFO) failed on self: %m");
++	}
++	close(fd);
++
++	EXPECT_EQ(USER_NS_INFO_SIZE_VER0, info.size);
++	EXPECT_EQ(0, info.spare);
++	EXPECT_NE(0ULL, info.cap_bset);
 +}
 +
- static bool nsfs_ioctl_valid(unsigned int cmd)
- {
- 	switch (cmd) {
-@@ -194,6 +205,8 @@ static bool nsfs_ioctl_valid(unsigned int cmd)
- 		return extensible_ioctl_valid(cmd, NS_MNT_GET_NEXT, MNT_NS_INFO_SIZE_VER0);
- 	case _IOC_NR(NS_MNT_GET_PREV):
- 		return extensible_ioctl_valid(cmd, NS_MNT_GET_PREV, MNT_NS_INFO_SIZE_VER0);
-+	case _IOC_NR(NS_USER_GET_INFO):
-+		return extensible_ioctl_valid(cmd, NS_USER_GET_INFO, USER_NS_INFO_SIZE_VER0);
- 	}
- 
- 	return false;
-@@ -360,6 +373,22 @@ static long ns_ioctl(struct file *filp, unsigned int ioctl,
- 		ret = fd_publish(fdf);
- 		break;
- 	}
-+	case _IOC_NR(NS_USER_GET_INFO): {
-+		struct user_ns_info __user *uinfo = (struct user_ns_info __user *)arg;
-+		struct user_ns_info kinfo = {};
-+		size_t usize = _IOC_SIZE(ioctl);
++TEST(user_get_info_restricted_bset)
++{
++	struct __clone_args args = {
++		.flags = CLONE_NEWUSER | CLONE_NEWUSER_BSET,
++		.exit_signal = SIGCHLD,
++		.cap_bset = 0,
++	};
++	int status;
++	pid_t pid;
 +
-+		if (ns->ns_type != CLONE_NEWUSER)
-+			return -EINVAL;
++	pid = sys_clone3(&args, sizeof(args));
++	ASSERT_GE(pid, 0);
 +
-+		if (!uinfo)
-+			return -EINVAL;
++	if (pid == 0) {
++		struct user_ns_info info = {};
++		int fd;
 +
-+		if (usize < USER_NS_INFO_SIZE_VER0)
-+			return -EINVAL;
++		fd = open("/proc/self/ns/user", O_RDONLY | O_CLOEXEC);
++		if (fd < 0)
++			_exit(1);
 +
-+		return copy_user_ns_info_to_user(to_user_ns(ns), uinfo, usize, &kinfo);
++		if (ioctl(fd, NS_USER_GET_INFO, &info) != 0) {
++			close(fd);
++			_exit(2);
++		}
++		close(fd);
++
++		if (info.cap_bset != 0)
++			_exit(3);
++
++		_exit(0);
 +	}
- 	default:
- 		ret = -ENOTTY;
- 	}
-diff --git a/include/uapi/linux/nsfs.h b/include/uapi/linux/nsfs.h
-index 007fed5971b4..d2996d47c857 100644
---- a/include/uapi/linux/nsfs.h
-+++ b/include/uapi/linux/nsfs.h
-@@ -44,6 +44,23 @@ struct mnt_ns_info {
- #define NS_GET_MNTNS_ID		_IOR(NSIO, 5,  __u64)
- #define NS_GET_ID		_IOR(NSIO, 13, __u64)
- 
-+/**
-+ * struct user_ns_info - information about a user namespace
-+ * @size: size of this structure
-+ * @spare: reserved for future use
-+ * @cap_bset: capability bounding set of the user namespace
-+ */
-+struct user_ns_info {
-+	__u32 size;
-+	__u32 spare;
-+	__u64 cap_bset;
-+};
 +
-+#define USER_NS_INFO_SIZE_VER0 16 /* sizeof first published struct */
++	ASSERT_EQ(pid, waitpid(pid, &status, 0));
++	ASSERT_TRUE(WIFEXITED(status));
++	EXPECT_EQ(0, WEXITSTATUS(status));
++}
 +
-+/* Get information about user namespace. */
-+#define NS_USER_GET_INFO	_IOR(NSIO, 14, struct user_ns_info)
++TEST(user_get_info_invalid_ns_type)
++{
++	struct user_ns_info info = {};
++	int mntns_fd;
 +
- enum init_ns_ino {
- 	IPC_NS_INIT_INO		= 0xEFFFFFFFU,
- 	UTS_NS_INIT_INO		= 0xEFFFFFFEU,
++	mntns_fd = open("/proc/self/ns/mnt", O_RDONLY | O_CLOEXEC);
++	ASSERT_GE(mntns_fd, 0) {
++		TH_LOG("Failed to open /proc/self/ns/mnt: %m");
++	}
++
++	EXPECT_EQ(-1, ioctl(mntns_fd, NS_USER_GET_INFO, &info));
++	EXPECT_EQ(EINVAL, errno);
++
++	close(mntns_fd);
++}
++
++TEST(user_get_info_buffer_too_small)
++{
++	__u32 small_buf = 0;
++	int fd;
++
++	fd = open("/proc/self/ns/user", O_RDONLY | O_CLOEXEC);
++	ASSERT_GE(fd, 0);
++
++	/* Encode a buffer size smaller than USER_NS_INFO_SIZE_VER0 (4B vs 16B) */
++	EXPECT_EQ(-1, ioctl(fd, _IOR(NSIO, 14, __u32), &small_buf));
++
++	close(fd);
++}
++
++TEST(user_get_info_null_arg)
++{
++	int fd;
++
++	fd = open("/proc/self/ns/user", O_RDONLY | O_CLOEXEC);
++	ASSERT_GE(fd, 0);
++
++	EXPECT_EQ(-1, ioctl(fd, NS_USER_GET_INFO, NULL));
++	EXPECT_EQ(EINVAL, errno);
++
++	close(fd);
++}
++
++TEST_HARNESS_MAIN
 -- 
 2.56.0.313.g2479322e68-goog
 
