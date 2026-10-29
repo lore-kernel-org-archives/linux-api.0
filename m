@@ -1,71 +1,110 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.181
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793282537;
-	b=ZbmJCcl+bo8Til7SD8n+G/jwTzOYEIBoCaeYvQQbsUgoLyOdOLrPYCcXwAYN5rUBEw+B
-	 V7WPGE+ADOfezLyvdQ4S1TfHMp8kbIMGu36ezLG+GLdNXDFASSVc+rMj1y1ynYE/aSf8u
-	 dE9qR46cQ8vXiMSeaszvr98Up9m/zNBscSBPDWCkuEFtH5rm7xeu14zR1UZVq6xky2+hu
-	 7m+jb06ssa4vnLxp4yb+Ac0svnmzDXPiz0ndeNSF0EL4UaORHCDCUaMcgHBMSH5/VBKJl
-	 m6Hm2sjuWrI6ab9Cx3zjuZAvXq9+G9jmSX/rB2gYf968xhWcfU2m+KXi4l85z2scvHg==
+	t=1793283001;
+	b=Bxwz/6kNdtgkvHl8osQz5Jj8mJzqMaJuVHu2gh+6nOrZ0PQe6P6wkupcsyMlkOCnWfHZ
+	 iROp6L/VAvjwjOe84eYi9cLyC4NJ94uy/9XWD3wJKUp8Dco8Im+gPSunNE9Oxb5K1hdCS
+	 P3qp5eKz03lLsv3a2G2ftclrk1kFYMcUD0bGzB4gerDcEVw8ycghsfCmepyV9wy8BRQFe
+	 YSJeGApQC4/Plufhj4nKB19gBkQR/HDim4JKXs/t90i17cymlzmrsTNL7iQEjwlrZrBj6
+	 n7NG1jP8pHdjVfQRVBBoaeAEYBIDLKV7RmuuC3uZQDEminnuw55f+lVwMIfQNHzt9AQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793282537;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding:In-Reply-To;
-	bh=sw9b5i5WLSBIXyPstV+YM76/P9T1C9sWYcZnq+XWeW0=;
-	b=O7eQS2XN77u7DgyRsMYQVnO6h0Pmjh74Ijq48k4n52IyCno39idoQ1S2+aJTmiFZaqYv
-	 /n9ucrxgZPCwYY4e07poG3n04JkuM09fy8nJAQJ9bArCSw3Rn1CUX+oHY2CkNaVHhHbuh
-	 FeW5/jT1tjdKEQlT6kYv+zWsZqQxnY0oh0taGtKm4RaRbwLfwy6a+ROZ70TCep9mCkx/u
-	 Bz/+aFjN8WhYLo1c6znTjLtsZwKh8dyQKwRbNSAjeU/kVdmcf99yfpqkiA14xtyFUgCG+
-	 IlkXt2hIfkPb7sKPZxGoyU7TizkSYM7Rwhv0bsRImB6EqBiJ4/HqkaTnJrNHKJTIisw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793283001;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=u/mTL+S+jT7oJspNq9ZedMuDxLFktRxLqgiEWs4bjJc=;
+	b=0h696YC6agcrAEoBKRUyBo53lfvVM2RAyxr6+BMl03UdUBS3aypqzcKZmMjn0EUVlh6x
+	 zZv5+xzfpG0VHHLqad8744c7sQ35Cebs1IyVE7dUuYFJ+g8Uf2ULmNLM5JIm8DKT6q23a
+	 bZ5artwGPM7C74Q6kfc60Vz4v1crCo3cG5FQ0MKzYy6UpRg8pQaChTMrgCe26q6rIuEUg
+	 g+h24W44WHFzRhwtybbGOlhKUndYVgoiXTHE4XgX2m0CvF3a4fzGPBgjsJ8vPGEmKfomI
+	 pWxA7z8w6FjsoWx/t0SsiVhX5sTfgPFALNtWcJMXDoKjS8deCaCIwAh+0drI4HVgWMQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MC1JJf+V;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	arc=none smtp.remote-ip=209.85.222.181
+Received: from mail-qk1-f181.google.com (mail-qk1-f181.google.com [209.85.222.181])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F406D606A31D;
-	Thu, 29 Oct 2026 14:02:16 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MC1JJf+V
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 12AA71F01825;
-	Thu, 29 Oct 2026 14:02:15 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793282536;
-	bh=sw9b5i5WLSBIXyPstV+YM76/P9T1C9sWYcZnq+XWeW0=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MC1JJf+Vgr7VTcro43Hgd+be34yLuBACy41tB9UT8aTU/+EzRekP8IF/K/vKujBbI
-	 PJvcYGlmTu9Fruo1jhk/qornxAqtHRSM8NZuIK3SA7KLLm66sEgQVIiQ1P+xWqKgFC
-	 4JH1WO/i0OV3hp8z1h80pHFrxoEbWqKerj//C+3RJKk2lQOY5aKVNgagqClCY9uHKk
-	 9rBgUhfTq01/ibUK7j/aWeW9Xd2E2YyQWawwcu5/msyJtiojL8JTRoTcXndFKVQpZn
-	 8fJ7CLymIVVGhnF8jX2GJKXGHvAghDcsqzjNN/OsVdpeoFx0FJdS6Q71CJDpkMzQ3s
-	 RDWgG3ZxcRKmA==
-Date: Thu, 29 Oct 2026 15:02:13 +0100
-From: Frederic Weisbecker <frederic@kernel.org>
-To: Peng Wang <peng_wang@linux.alibaba.com>
-Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	"Rafael J . Wysocki" <rafael@kernel.org>,
-	Danilo Krummrich <dakr@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Masami Hiramatsu <mhiramat@kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Waiman Long <longman@redhat.com>, Tejun Heo <tj@kernel.org>,
-	He Rongguang <herongguang@linux.alibaba.com>,
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 158F8606A320
+	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 14:09:57 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 158F8606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+Received: by mail-qk1-f181.google.com with SMTP id af79cd13be357-93e7ad9f78dso247291685a.1
+        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 07:09:57 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1793282997; x=1793887797; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=u/mTL+S+jT7oJspNq9ZedMuDxLFktRxLqgiEWs4bjJc=;
+        b=oqoCkjVszR8u8wCAtEPVJAxDRDmSU97Ltyl0epD2Lt3u2UIIXdVHNDGujjYdwY6WRE
+         SKBt6uYgdBnT6o5KdL7GbgHiWWlXLYlzp8oWVtx/63snb1x0A/98UMN9nSo5V6B5ls/h
+         9u535mipY84FplFJ5MHPeqQly0KmoyExjUBmnPmbZgYUFhtaNmzu1pOR7TqeL6ghQvnJ
+         wb2AWZsJdkzFI9sCrqTqK7UV5M+ZSaa+yHEEkToHs9S+zZdwlj+JO6pofP8F4CYTjz8w
+         BisOYjY7MDZGSlzjpRbTYDWgiYT+BJxMePPhJG1Ck8ZG82Y4PAMfi9RC0ZL1zm8pkkMN
+         jT8Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793282997; x=1793887797;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=u/mTL+S+jT7oJspNq9ZedMuDxLFktRxLqgiEWs4bjJc=;
+        b=tYZvPRC/RIHuwRMHii0uTJQTneZxHVBySJlt+r+t7N16SyJqbysw9IGpwQDBTGJJQh
+         DA/x8lazD7BcAJkba3X8OjtmutfwYOqjNBPJMO0LC+Yj9qY0l/mWUh94IftMUuRg6lzF
+         LDfB8ZoQaQLdKAYCEtxVQZC8RrbJWOTx+tzKOFODi6oCGjavAPgn13EB5qU0vhKVy+19
+         8ePaqbzGkqU0OlDZKVSUD2iHUPpkejYe3oRs75BBMc34uvGftvaSSy0qq3p9w8olPYCR
+         Le+IvpTAivC0bd2PZBfcaoJJl/veB+0hLGIMvwcwbbJyxZtKMghZ8PotWtN3KVZ7sTbh
+         SLTg==
+X-Forwarded-Encrypted: i=1; AKwUvBxQJmf/vl/Yn90XnAJ7AVd3PIN82VARWr/6wDX2YwIJyq0wj8i4OYD2Csl4FqovTdQMlyqp5X/dL8U=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLrsrNhSVgNH/wIJqsrxWhXOPFKYD6kH6MDoEpdN1Dc5omZsQ8K
+	XdtIAJ/fBTXcajtd7BNCKy6TPKePpbKOSbZCUdL8SlH6dna8QyKXKlhRuTXFKJNE0/Y=
+X-Gm-Gg: AYBFou2tvgnpQBnMMLYIX+er3bQgBOdDhY21G8hDp8jG/ZJpCcjIoQ4kBunPdUfQaMZ
+	36nDv7dWOzcfluZmA5thzRQkfyFUvMikj1J9nUfPcRQdB/cvBv300hJGEnfPCblQw5Du/kwiYSo
+	ifoTE216aYMdLji9NEH9LwJ6e2jyyj49ePkI+dVTtxifSqrD83Y+UVwtrnfcvYssZxuBom4hZrR
+	ltMcH62YjfD7CJ4OVtNcY6a4zcVSplmRF9MagaZr+yc+H3kD6uTuwPjtach20OhpmL02BwZN8w9
+	BzLFNLaRuW5kHmmFZnZ/SBwU6NemxoNkYzU6syHWfOcW7+5oiuONM4bzFIRPG6EETWqfRiBwrXx
+	tVnMS6OMFUtuFQ+yzpAgQqbOmkwUHJoUDY4jhHIXO4TwOxT5+tFUTYY8M5asRyNY6NflR7tRV9Q
+	EUpJmxgCSAHDFAgv2sXOKyv+PK3SJ06zaVDbPMuDZZfiBYfkmMzpOeIYyv075EhC8Y718v0A+PN
+	trsS2/C1v/vV5dCHmwXAilpnglfLAmCsR/CAl9bDUNT654YLQEkOJOxg5Qx+Aa2hOm0E7s+OSaO
+	G1Q/tEp3mBGfT7LXFKlA7JADfKfSCS9u7smqr1Z4LfOXeefOTNuxvCx4r+3jllfj7RmUI4xFl+E
+	UjqxjgitSg5E=
+X-Received: by 2002:a05:620a:29c5:b0:93f:59b8:e28a with SMTP id af79cd13be357-94408cf4114mr838476185a.28.1793282996749;
+        Thu, 29 Oct 2026 07:09:56 -0700 (PDT)
+Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91c47cb4f56sm162421066d6.35.2026.10.29.07.09.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 29 Oct 2026 07:09:56 -0700 (PDT)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xMQpH-0000000FhyS-1U83;
+	Thu, 29 Oct 2026 11:09:55 -0300
+Date: Thu, 29 Oct 2026 11:09:55 -0300
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: Dave Jiang <dave.jiang@intel.com>
+Cc: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev,
 	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	driver-core@lists.linux.dev, linux-trace-kernel@vger.kernel.org,
-	cgroups@vger.kernel.org
-Subject: Re: [RFC PATCH v2 1/2] tick/nohz: Add a policy dependency for full
- dynticks
-Message-ID: <auNR5c6hXlb_FFkB@localhost.localdomain>
-References: <cover.1792242566.git.peng_wang@linux.alibaba.com>
- <58bc33cb018a2651e9cc3fc02baad7de4d543705.1792242566.git.peng_wang@linux.alibaba.com>
- <att2hiYaaHTIkzG9@localhost.localdomain>
- <atuMJiJEwbzGjiu4@MacBook-Pro.local>
- <auIbt5JAC2cHw5jr@localhost.localdomain>
- <auLqmMdd8RIdf6st@U-3K7XLPQ6-0046.local>
+	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
+	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
+	drdeeglaze@gmail.com, James.Bottomley@hansenpartnership.com,
+	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com,
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com,
+	ankita@nvidia.com, suzuki.poulose@arm.com, kas@kernel.org,
+	rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
+	dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
+ support
+Message-ID: <20261029140955.GO1685504@ziepe.ca>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <592d643f-e97d-4de8-9a87-e47d57dc8457@intel.com>
+ <20261027193629.GK1685504@ziepe.ca>
+ <5f33aeed-a20d-4881-9ccf-a69bc308d348@intel.com>
+ <20261027234658.GL1685504@ziepe.ca>
+ <c57c45bb-5047-4aa9-9f06-6ac5f36ff3ce@intel.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -75,43 +114,94 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <auLqmMdd8RIdf6st@U-3K7XLPQ6-0046.local>
+In-Reply-To: <c57c45bb-5047-4aa9-9f06-6ac5f36ff3ce@intel.com>
 
-Le Thu, Oct 29, 2026 at 02:41:28PM +0800, Peng Wang a écrit :
-> Hi Frederic,
+On Wed, Oct 28, 2026 at 12:16:01PM -0700, Dave Jiang wrote:
 > 
-> > Do you mean that your database runs better when hosts CPUs are in nohz_full?
 > 
-> Yes. In our database tests, suppressing the host's non-idle
-> periodic tick improved performance, with the rest of the host
-> configuration unchanged.
-
-Out of curiosity, for such database tests, only the host tick is off, not the guest
-tick, right?
-
-> > But how does this new interface help? Ie: why is it worse to have all CPUs in
+> On 10/27/26 4:46 PM, Jason Gunthorpe wrote:
+> > On Tue, Oct 27, 2026 at 04:09:19PM -0700, Dave Jiang wrote:
+> > 
+> >> There are two issues for TDX Connect. One, the device info is collected at
+> >> SPDM connect (TDH.SPDM.CONNECT), not at lock. TDH.TDI.BIND only returns the
+> >> interface report. So the measurements a TD sees at lock can be from well
+> >> before the lock. To get measurements taken after the bind, the TD has to
+> >> ask the VMM for a recollection with its own nonce.
+> > 
+> > IMHO measurements taken before lock must never be made visible through
+> > this interface, it defeats the security property of evidence within
+> > the locked session. I would expect the guest kernel TDX driver to
+> > prevent this.
 > 
-> The tick policy itself can therefore affect guest performance.
-> A large host runs VMs for many customers with different workloads.
-> Customers create and release VMs independently, so the same host
-> CPU can be reassigned to a different workload while other VMs
-> remain running.
+> Agreed. I'll change the guest driver so the lock asks the VMM for a
+> recollection with a nonce the driver picks. Each lock then costs one
+> recollection.
+
+I do not understand why cached evidence exists in the host. What
+reason is there to ever provide a stale signed evidence? None.
+
+Other things may make more sense to capture once and are not permitted
+to change, but evidence is not one of them.
+
+> >> The empty challenge in my provider means something else though: don't
+> >> recollect, return the evidence collected earlier. So it's less "omit the
+> >> nonce" and more "no new collection". Maybe that's better as an explicit flag
+> >> than an empty challenge?
+> > 
+> > I'm not sure 'no new collection' is an especially useful thing. Since
+> > the kernel won't be validating the signature you still need to pass
+> > the expected nonce from the prior collection back to userspace so it
+> > can check it.
+> > 
+> > Is there some specific use case for this?
 > 
-> We want to choose whether to retain the non-idle tick or allow its
-> suppression for the workload currently assigned to each CPU, and
-> revisit that choice when the CPU is reassigned. Per-CPU control
-> lets us do this without rebooting or taking CPUs offline.
+> Getting the lock event's evidence. With the suggested lock change
+> above, the guest driver collects it during the lock. But the lock is
+> a sysfs write and returns nothing. Userspace still has to read the
+> evidence to appraise it before run. The device was already locked
+> when it was collected, so the read needs no new collection.
 
-Ok in that case, do you know about the current work in progress
-to make nohz_full opt-able through cpusets? It implies taking the
-target CPUs offline shortly but the policy is to be setup before VM
-is launched, right?
+Why collect evidence during lock with a useless kernel made up nonce?
+What is that even for?
 
-Thanks.
+Signed evidence must always be collected with a userspace provided
+nonce. Any path that doesn't do that is pointless and I wonder why it
+exists at all.
 
--- 
-Frederic Weisbecker
-SUSE Labs
+I imagine lock should only put the TDI into the locked
+state. Attestation should later collect the evidence with a user
+provide nonce.
+
+Do not collect evidence during locked. Do not hold stale signed
+evidence in the kernel for later retrieval.
+
+Again, we need a flow where we get into locked and know we are
+continuously in the same locked session until we reach run and dma
+enable. That should not be done with evidence or evidence generations,
+it must be some contract inside the TDX driver to provide a locked
+session generation.
+
+Under these rules it does not matter when we collect the evidence. Any
+time during the session is sufficient, it does not have to be done
+instantly during locked.
+
+How TDX does this is up to its spec, if TDX has to capture evidence
+and do evidence compares internally thats awful, but has to be hidden
+in TDX and not leak to userspace in any way.
+
+ARM should do it with the sequence numbers I mentioned earlier.
+
+> The guest driver picks the nonce for the lock's collection and
+> checks it before publishing. If userspace sends a challenge instead,
+> that nonce is its own. The collection's nonce is in the evidence in
+> the GET_MEASUREMENTS request that asked for the signature.
+
+Unless the kernel is decoding the evidence to check the nonce this is
+security broken. I'd rather not have the kernel decode the evidence
+like this, so the nonce should always be known to userspace and
+userspace/verifier should be checking the signature covers the
+expected nonce.
+
+Jason
