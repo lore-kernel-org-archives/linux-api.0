@@ -1,75 +1,48 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=115.124.30.111
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793289782;
-	b=0lkZiUAJSsY1f3ZM71XZ5aB8s5f5/BpkFbcozkQdKtQVHi1Z5s3tp1xfmtKON3WqZpV2
-	 TArzTO3KXQ1GYgWILNdBLTQCdlqlG+Q2Uc+v4s9vPcWHW4lyr3tM5xjk4Z7nB/+Kr6EIe
-	 yom2drew08k3O7oEXHqGs85cVC4zXdkrZ1ttTZOM43lo3eTcvlfh8hEghRlHXaun920XX
-	 yNvj12E3MX2ilS/5Wivq/vLQmry9EWEu7Ze3oJMI9bDn4GJ+cGuw6oQJKeMqgU8jvP3qT
-	 eIzFmLOb5cTmJRi6jwwl4E0up1rnYEteWyTAUJ60zahx2kC7SswOqJZlh3K1TnsO2IA==
+	t=1793291362;
+	b=UTBxLh8ssNqOoYnoMmxpvT/K+Lzq9YZmVC+QPSaWKCbEhrICBbNhwqgD2B0Mw0GXy/VP
+	 0yaAASr84cedCk8dhVNok3Tf3p2/jeGqdLgADTNIfDKgxcPY6iB8bgDbqJS9gDQ8mhvNP
+	 cD/JygrPJGUjJJ+EzHqADjuToh1xmOH7K7lnQVxki+Z/FbvAV2ESbsaZzcPc1VW/WRFYt
+	 QghS0AgN/dyxBhroMGC5pc17m/5fBNIRfyYyDUX53DIh1X7lUdzdLLXOLO/32WaJCK0Q+
+	 O/BhcsSQz/NrJMVNkJ5c2k6FBfamCcnz5HBnPcDz//XuENfGCZq/grvO7xQ7GdgNbeg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793289782;
-	h=DMARC-Filter:DKIM-Signature:X-Alimail-AntiSpam:Received:Date:From:To:
-	 Cc:Subject:Message-ID:Reply-To:References:MIME-Version:Content-Type:
-	 Content-Disposition:Content-Transfer-Encoding:In-Reply-To;
-	bh=PPW5Q0x3JdxJm44k3yT7XZsAyL8QT3/iKNWG1q7+ESA=;
-	b=yZXwookd7EAvQt7SRz63rT0WVal4QgnnDy7yARA+XiAGbBdkASH+6lPMnhkg/zpAY324
-	 FGyyq8tVVG9HgoZlpj/VdN/p0nyScYxLojG7b/izBni9XAbq5fea48PR4ilwGHcrReqUu
-	 3fhNjNe9XHy1crciYkbPvP22yx73Vhx5aucz3hblIB5Vnz9PSX2fLV96xNVZNdpEm1EuV
-	 jMJksHi7eDRxP0/FRMFB47b2xJvMQvyw2bcmd8q7QX6iroWHKLnNZ/PGrIbLsKhChoDdd
-	 IatWzWpUdFYph6vU3pK7x4DG+sPyKdlwFLycZz2RVwL+N13PfgPNjiz6pDZsTqlz46g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793291362;
+	h=Received:DKIM-Signature:From:Date:Subject:MIME-Version:Content-Type:
+	 Content-Transfer-Encoding:Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:
+	 X-Mailer:X-Developer-Signature:X-Developer-Key;
+	bh=93xDr8w82b19+okAmBRAJJIEwEanVvAKuiNDWCkwccU=;
+	b=zOvNDX/KAQHN4wkZWehRDEwxQkHAiFg8J5uzy9JRGtuaCpKbXhzxOoAnO5TyBzQeuWLG
+	 H218XfBHBjqovMhpa6h607kS0Wh5pkMYps48E3VbKW1dSTJa0ka1JoOG+B7tuqx96GMzr
+	 x88KC4G39SlppXw4CcGIzuVDUzRwkxqCyjD7f4tTcYdvpcahgD6D23ofMJ2kW0wqUNqTv
+	 QYiasBFwNg9NbVhRlu5P/NIrQAGcdVO+rWWLYagCIL6M/JCh+I/rhCF8xKPsXZsAeQEZP
+	 Nw4rD959b1MFH5Cb1aPVmRAy7rHixIwoAC5nmfVmQo1agVjw3G1aqsInVXAdWsboq3g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.alibaba.com;
-	spf=pass smtp.mailfrom=linux.alibaba.com;
-	dkim=pass header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=j+eXamop;
-	arc=none smtp.remote-ip=115.124.30.111
-Received: from out30-111.freemail.mail.aliyun.com (out30-111.freemail.mail.aliyun.com [115.124.30.111])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JV6VxyNn;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3961A606A31C;
-	Thu, 29 Oct 2026 16:02:59 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3961A606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.alibaba.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.alibaba.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 508FC606A31A;
+	Thu, 29 Oct 2026 16:29:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.alibaba.com header.i=@linux.alibaba.com header.a=rsa-sha256 header.s=default header.b=j+eXamop
-DKIM-Signature:v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux.alibaba.com; s=default;
-	t=1793289775; h=Date:From:To:Subject:Message-ID:MIME-Version:Content-Type;
-	bh=PPW5Q0x3JdxJm44k3yT7XZsAyL8QT3/iKNWG1q7+ESA=;
-	b=j+eXamopFcprMv9/BmpQ8UhrDYG7GrwvSCkH6W7MuhlrwJylVyWVljRGfHiwzRYR8rbzlCVF0ZCWHY6UxlxCXvkspPzEImWGDZIjnOh+whFHBMmokgvNqFuixT9Ag8XZitMVHTysnTEKfNIA1plYRuqWtcL3pOs+76wYJZiS9KE=
-X-Alimail-AntiSpam:AC=PASS;BC=-1|-1;BR=01201311R181e4;CH=green;DM=||false|;DS=||;FP=0|-1|-1|-1|0|-1|-1|-1;HT=maildocker-contentspam033032089153;MF=peng_wang@linux.alibaba.com;NM=1;PH=DS;RN=19;SR=0;TI=SMTPD_---0XDjrWUn_1793289774;
-Received: from localhost(mailfrom:peng_wang@linux.alibaba.com fp:SMTPD_---0XDjrWUn_1793289774 cluster:ay36)
-          by smtp.aliyun-inc.com;
-          Fri, 30 Oct 2026 00:02:54 +0800
-Date: Fri, 30 Oct 2026 00:02:53 +0800
-From: Peng Wang <peng_wang@linux.alibaba.com>
-To: Frederic Weisbecker <frederic@kernel.org>
-Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	"Rafael J . Wysocki" <rafael@kernel.org>,
-	Danilo Krummrich <dakr@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Masami Hiramatsu <mhiramat@kernel.org>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Waiman Long <longman@redhat.com>, Tejun Heo <tj@kernel.org>,
-	He Rongguang <herongguang@linux.alibaba.com>,
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	driver-core@lists.linux.dev, linux-trace-kernel@vger.kernel.org,
-	cgroups@vger.kernel.org
-Subject: Re: [RFC PATCH v2 1/2] tick/nohz: Add a policy dependency for full
- dynticks
-Message-ID: <auNuLZiBZyHLFYUr@MacBook-Pro.local>
-Reply-To: Peng Wang <peng_wang@linux.alibaba.com>
-References: <cover.1792242566.git.peng_wang@linux.alibaba.com>
- <58bc33cb018a2651e9cc3fc02baad7de4d543705.1792242566.git.peng_wang@linux.alibaba.com>
- <att2hiYaaHTIkzG9@localhost.localdomain>
- <atuMJiJEwbzGjiu4@MacBook-Pro.local>
- <auIbt5JAC2cHw5jr@localhost.localdomain>
- <auLqmMdd8RIdf6st@U-3K7XLPQ6-0046.local>
- <auNR5c6hXlb_FFkB@localhost.localdomain>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JV6VxyNn
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 460A61F01816;
+	Thu, 29 Oct 2026 16:29:21 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793291361;
+	bh=93xDr8w82b19+okAmBRAJJIEwEanVvAKuiNDWCkwccU=;
+	h=From:Date:Subject:To:Cc;
+	b=JV6VxyNnWjqmNfds/4LUOXe2jzMABiRnDaKVUlmw8r+MF6vIciFzR9yD+uurFZqbh
+	 LkNdeYviciSyVf5rECzuje5TQmB3qZuBHNawqdrTd3tjIz2bvQ+WnQUsvCtSYt+UYc
+	 grLJFm9BZxsqbjppIB8KqxvN04daxTI6qiJCWE4KRr77ksqJLpqRNsyUDXgfymLPr/
+	 r6HuoSWXnHnjFw2pVYw6ez3wz2V8zRAhEU8X1JmmMBJFaMH84HAxypRhdQFGhoNO6m
+	 6Do4hSpaZEpxxaZzzuI6kkdUipDO2OMtaB40dbU1dBoupqg59dLmkWhTJLayTsEF/5
+	 GrYMLP4UNOG4Q==
+From: Jeff Layton <jlayton@kernel.org>
+Date: Thu, 29 Oct 2026 12:28:16 -0400
+Subject: [PATCH] statx: add STATX_ATTR_MULTIGRAIN_TIMESTAMP
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -79,64 +52,92 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=gb2312
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <auNR5c6hXlb_FFkB@localhost.localdomain>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
+X-B4-Tracking: v=1; b=H4sIAAAAAAAC/6tWKk4tykwtVrJSqFYqSi3LLM7MzwNyDHUUlJIzE
+ vPSU3UzU4B8JSMDIzNDAyNL3dz0kszcVN3iksSSCl0js0QjI8s0y2TjJBMloJaCotS0zAqwcdG
+ xtbUAKYGiuF4AAAA=
+X-Change-ID: 20261029-mgtime-statx-26a229f9c3b4
+To: Alexander Viro <viro@zeniv.linux.org.uk>, 
+ Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>
+Cc: Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, 
+ Jeff Layton <jlayton@kernel.org>
+X-Mailer: b4 0.14.3
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2097; i=jlayton@kernel.org;
+ h=from:subject:message-id; bh=oP2L+9LClokU54StxbsCJCbiCwIJ6fU+GF/E/fV4FoI=;
+ b=owEBbQKS/ZANAwAKAQAOaEEZVoIVAcsmYgBq43RgzWEmuVIIKB54jXWJNr5QYNdiZaozWwMsN
+ XgR4HDlSg+JAjMEAAEKAB0WIQRLwNeyRHGyoYTq9dMADmhBGVaCFQUCauN0YAAKCRAADmhBGVaC
+ FTOdD/4rxg0XwgVuFc9lFXsGxeMYI6lwWI5J1dCyUFLV0j1qsVC92V4J4sx0AZnLYbaSlUxER+T
+ PAsn9tD5RaAZmDzB+2ywDVRI1a/NUodorSOescDyukg/NqA1ee3d+TEmteEG/UeGkwPL1b7VltU
+ kn8GmqvHmhzKD3IhWap+0L0A+72uq2UTQRd0F4NFpBXGdYc4yQZ2Q5gn/nj1Z3wnGmWdAtJeQaA
+ vpUW45sOhpV5dwQ8M028D+CpwNYa6TXFecw2LNMuSplYgemQtdBiKfg8ll+4N78MKG01KhtSdOH
+ JXIbbYrqdJPjEQjf1avwI8eQ34yek7XUmOgl7vqzuW/aWE+tTvi3nyJd6y6rHnedSmcRMGzuaj9
+ a74oEcU0ML1Mck9nc/azjsD1twDbaXgIanRzXc7vQky/T+Ojb18fZJr8yPJD7SDGh7NmSYm61XC
+ djI7gWnwlx+DpEgjZydqsCsFnrl1Ft9E4C+4zjaF404DkwP4NJ60CGNRfwgaRGjvTZqzlKIaKaJ
+ QSLG4LPnFtLRVhuwjEXY9ddOokeP/77xgjxd82b5zv5RY1Hgi0o8MQjM9ZYfVky5c4y7JOJ+LQ/
+ h/ve+bKCOzSJt2KIoYTvxpeN/eZp6jEUa9m8L4J+kyzop6WQB0tTfSfNB3MAtoG0A+MGI3CPu9T
+ kFcS2YPwFtzxXBw==
+X-Developer-Key: i=jlayton@kernel.org; a=openpgp;
+ fpr=4BC0D7B24471B2A184EAF5D3000E684119568215
 
-On Thu, Oct 29, 2026 at 03:02:13PM +0100, Frederic Weisbecker wrote:
-> Le Thu, Oct 29, 2026 at 02:41:28PM +0800, Peng Wang a éãrit :
-> > Hi Frederic,
-> > 
-> > > Do you mean that your database runs better when hosts CPUs are in nohz_full?
-> > 
-> > Yes. In our database tests, suppressing the host's non-idle
-> > periodic tick improved performance, with the rest of the host
-> > configuration unchanged.
-> 
-> Out of curiosity, for such database tests, only the host tick is off, not the guest
-> tick, right?
+Userland has no way to tell whether a file's timestamps are multigrain,
+i.e. whether successive changes after a query are guaranteed to yield
+distinct timestamps.
 
-Yes. Only the host's non-idle tick policy changed. The guest did
-not use nohz_full, and its tick configuration was unchanged.
+Add STATX_ATTR_MULTIGRAIN_TIMESTAMP and set it in vfs_getattr_nosec()
+when is_mgtime() is true (IOP_MGTIME is set from FS_MGTIME at inode
+init). Always advertise it in attributes_mask.
 
-> 
-> > > But how does this new interface help? Ie: why is it worse to have all CPUs in
-> > 
-> > The tick policy itself can therefore affect guest performance.
-> > A large host runs VMs for many customers with different workloads.
-> > Customers create and release VMs independently, so the same host
-> > CPU can be reassigned to a different workload while other VMs
-> > remain running.
-> > 
-> > We want to choose whether to retain the non-idle tick or allow its
-> > suppression for the workload currently assigned to each CPU, and
-> > revisit that choice when the CPU is reassigned. Per-CPU control
-> > lets us do this without rebooting or taking CPUs offline.
-> 
-> Ok in that case, do you know about the current work in progress
-> to make nohz_full opt-able through cpusets? It implies taking the
-> target CPUs offline shortly but the policy is to be setup before VM
-> is launched, right?
+Suggested-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jeff Layton <jlayton@kernel.org>
+---
+HCH suggested this when I posted the fstest for multigrain timestamps. I
+think it makes sense. If this looks good, I'll plan to send a manpage
+update for statx(2).
+---
+ fs/stat.c                 | 6 +++++-
+ include/uapi/linux/stat.h | 1 +
+ 2 files changed, 6 insertions(+), 1 deletion(-)
 
-Not always. Waiman mentioned the cpuset work earlier; it could
-cover selecting the policy before a new VM starts.
+diff --git a/fs/stat.c b/fs/stat.c
+index a2e63c6c45b7..67b9f1784b23 100644
+--- a/fs/stat.c
++++ b/fs/stat.c
+@@ -206,9 +206,13 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
+ 	if (IS_VERITY(inode))
+ 		stat->attributes |= STATX_ATTR_VERITY;
+ 
++	if (is_mgtime(inode))
++		stat->attributes |= STATX_ATTR_MULTIGRAIN_TIMESTAMP;
++
+ 	stat->attributes_mask |= (STATX_ATTR_AUTOMOUNT |
+ 				  STATX_ATTR_DAX |
+-				  STATX_ATTR_VERITY);
++				  STATX_ATTR_VERITY |
++				  STATX_ATTR_MULTIGRAIN_TIMESTAMP);
+ 
+ 	idmap = mnt_idmap(path->mnt);
+ 	if (inode->i_op->getattr) {
+diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+index 1686861aae20..b978860590b1 100644
+--- a/include/uapi/linux/stat.h
++++ b/include/uapi/linux/stat.h
+@@ -255,6 +255,7 @@ struct statx {
+ #define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
+ #define STATX_ATTR_DAX			0x00200000 /* File is currently in DAX state */
+ #define STATX_ATTR_WRITE_ATOMIC		0x00400000 /* File supports atomic write operations */
++#define STATX_ATTR_MULTIGRAIN_TIMESTAMP	0x00800000 /* File uses multigrain timestamps */
+ 
+ 
+ #endif /* _UAPI_LINUX_STAT_H */
 
-Some customers express a preference for host tick suppression
-through the management interface when changing workloads within
-a running VM. The host operator decides whether to allow
-suppression on the CPUs backing that VM.
+---
+base-commit: c339f4010dea8b0d754f84ace70cd1b089878ef8
+change-id: 20261029-mgtime-statx-26a229f9c3b4
 
-We want to support revisiting that decision while keeping those
-CPUs online and the VM running, with nohz_full membership
-unchanged. Could such an operation fit into the cpuset work?
+Best regards,
+-- 
+Jeff Layton <jlayton@kernel.org>
 
-Thanks,
-Peng
-
-> 
-> Thanks.
-> 
-> -- 
-> Frederic Weisbecker
-> SUSE Labs
