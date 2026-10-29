@@ -1,48 +1,73 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793291362;
-	b=UTBxLh8ssNqOoYnoMmxpvT/K+Lzq9YZmVC+QPSaWKCbEhrICBbNhwqgD2B0Mw0GXy/VP
-	 0yaAASr84cedCk8dhVNok3Tf3p2/jeGqdLgADTNIfDKgxcPY6iB8bgDbqJS9gDQ8mhvNP
-	 cD/JygrPJGUjJJ+EzHqADjuToh1xmOH7K7lnQVxki+Z/FbvAV2ESbsaZzcPc1VW/WRFYt
-	 QghS0AgN/dyxBhroMGC5pc17m/5fBNIRfyYyDUX53DIh1X7lUdzdLLXOLO/32WaJCK0Q+
-	 O/BhcsSQz/NrJMVNkJ5c2k6FBfamCcnz5HBnPcDz//XuENfGCZq/grvO7xQ7GdgNbeg==
+	t=1793292554;
+	b=FE4MX0fuK9vKkLaIlxo5lIDQDaCZ0Atx14cMIjML04LAlQg2d535zUp7N/gLdQxEDHGa
+	 uo6pq4dTCc5hqu/IB/XHQWoS8gz5a0KdfdpfzKggibs1FH9n0JyT/XTrWuP0ZWNzME918
+	 OhWAPiXh+ceAcg+62ATlC3hZaos3SFTK/QxzwrWRj63j6PU03pDJ1tillznbcHSXBWEkL
+	 F8bZ1469vW72mPyV7mCamkS3rcSlY3tktLQTB0acMF9KVCtUoYZah91rza+y8zx8XuyUn
+	 Henjs5lkZuLI0OBf/eBHhIInWqO2pY6K/V7sTvBz0AMq8nEjgcrJtarVCf5chUorn8A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793291362;
-	h=Received:DKIM-Signature:From:Date:Subject:MIME-Version:Content-Type:
-	 Content-Transfer-Encoding:Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:
-	 X-Mailer:X-Developer-Signature:X-Developer-Key;
-	bh=93xDr8w82b19+okAmBRAJJIEwEanVvAKuiNDWCkwccU=;
-	b=zOvNDX/KAQHN4wkZWehRDEwxQkHAiFg8J5uzy9JRGtuaCpKbXhzxOoAnO5TyBzQeuWLG
-	 H218XfBHBjqovMhpa6h607kS0Wh5pkMYps48E3VbKW1dSTJa0ka1JoOG+B7tuqx96GMzr
-	 x88KC4G39SlppXw4CcGIzuVDUzRwkxqCyjD7f4tTcYdvpcahgD6D23ofMJ2kW0wqUNqTv
-	 QYiasBFwNg9NbVhRlu5P/NIrQAGcdVO+rWWLYagCIL6M/JCh+I/rhCF8xKPsXZsAeQEZP
-	 Nw4rD959b1MFH5Cb1aPVmRAy7rHixIwoAC5nmfVmQo1agVjw3G1aqsInVXAdWsboq3g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793292554;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding:In-Reply-To;
+	bh=5wi6r2Bh1Iv9QLbnNFqtqG0uwuLtzn/pkDXD94Z+vfY=;
+	b=k5gVCJOWbrHdytBdkHQcBnlNqANwRa7Xp5iy0CCVoVHwLAR1U5Jh6YQpf7kccXnB03bp
+	 ga09urW2SnKnLLobEVuH4UiN+Cv1+UXT0W8s+rBzTcLlnEoIqZwipu+7YNvtKJZ8aZy8U
+	 AO2qkDPYc4gjQBxOEriAD1QoAvyNMWVi+9fJCm79kVBOw6qUUkPpGL5TcPpoecwdazgCp
+	 AmeRkSqR0fcT8Q+AwViTUopQWzWi90i4VBtGTiDOuHyqwTSDV0JC5pFU1hR3GFkULn+C4
+	 +tCbVlKwZQsadVU66a54QAlFKA8deP8LpCgp0+XGS2X6xCqmd04eUdPTUpdeeu+7FRg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JV6VxyNn;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jo8fCLzQ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 508FC606A31A;
-	Thu, 29 Oct 2026 16:29:22 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E2D14606A31A;
+	Thu, 29 Oct 2026 16:49:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JV6VxyNn
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 460A61F01816;
-	Thu, 29 Oct 2026 16:29:21 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jo8fCLzQ
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E314D1F01816;
+	Thu, 29 Oct 2026 16:49:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793291361;
-	bh=93xDr8w82b19+okAmBRAJJIEwEanVvAKuiNDWCkwccU=;
-	h=From:Date:Subject:To:Cc;
-	b=JV6VxyNnWjqmNfds/4LUOXe2jzMABiRnDaKVUlmw8r+MF6vIciFzR9yD+uurFZqbh
-	 LkNdeYviciSyVf5rECzuje5TQmB3qZuBHNawqdrTd3tjIz2bvQ+WnQUsvCtSYt+UYc
-	 grLJFm9BZxsqbjppIB8KqxvN04daxTI6qiJCWE4KRr77ksqJLpqRNsyUDXgfymLPr/
-	 r6HuoSWXnHnjFw2pVYw6ez3wz2V8zRAhEU8X1JmmMBJFaMH84HAxypRhdQFGhoNO6m
-	 6Do4hSpaZEpxxaZzzuI6kkdUipDO2OMtaB40dbU1dBoupqg59dLmkWhTJLayTsEF/5
-	 GrYMLP4UNOG4Q==
-From: Jeff Layton <jlayton@kernel.org>
-Date: Thu, 29 Oct 2026 12:28:16 -0400
-Subject: [PATCH] statx: add STATX_ATTR_MULTIGRAIN_TIMESTAMP
+	s=k20260515; t=1793292553;
+	bh=5wi6r2Bh1Iv9QLbnNFqtqG0uwuLtzn/pkDXD94Z+vfY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=jo8fCLzQXKF02wU2RYT3THNRYIo6oYKarU7ZSxQMGfgseSFX22gAow3w3didTfBiN
+	 IDtqFugaiIQBFdhlXyAlM9Hb+KbjcnS4Kh0WQ5OePvIjoe35IpI5JqjQ/RB4Ad1rDg
+	 LQieX2k5UTDQqOazFftaFHd/HB56LjtJIg9PwAuDvcnuRwtga0nV8oUsThcSBImJYt
+	 mhEi7EM1F8PUgGauhXwwZ9LiiEF9fqBXghIsvYfiBpyUArpgidd/n4P2eB6/ronNaC
+	 qX1DjrimPuZpkw77rx3TVi4ThEGAufAa/w5ag8O75EfYgjhfpT9lmIdAagdu0RrbSU
+	 I5uBDOmRqYoIQ==
+Date: Thu, 29 Oct 2026 17:49:10 +0100
+From: Frederic Weisbecker <frederic@kernel.org>
+To: Peng Wang <peng_wang@linux.alibaba.com>
+Cc: Anna-Maria Behnsen <anna-maria@linutronix.de>,
+	Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@kernel.org>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	"Rafael J . Wysocki" <rafael@kernel.org>,
+	Danilo Krummrich <dakr@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Masami Hiramatsu <mhiramat@kernel.org>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Waiman Long <longman@redhat.com>, Tejun Heo <tj@kernel.org>,
+	He Rongguang <herongguang@linux.alibaba.com>,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	driver-core@lists.linux.dev, linux-trace-kernel@vger.kernel.org,
+	cgroups@vger.kernel.org
+Subject: Re: [RFC PATCH v2 1/2] tick/nohz: Add a policy dependency for full
+ dynticks
+Message-ID: <auN5Bku9w2VDZFFX@localhost.localdomain>
+References: <cover.1792242566.git.peng_wang@linux.alibaba.com>
+ <58bc33cb018a2651e9cc3fc02baad7de4d543705.1792242566.git.peng_wang@linux.alibaba.com>
+ <att2hiYaaHTIkzG9@localhost.localdomain>
+ <atuMJiJEwbzGjiu4@MacBook-Pro.local>
+ <auIbt5JAC2cHw5jr@localhost.localdomain>
+ <auLqmMdd8RIdf6st@U-3K7XLPQ6-0046.local>
+ <auNR5c6hXlb_FFkB@localhost.localdomain>
+ <auNuLZiBZyHLFYUr@MacBook-Pro.local>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -52,92 +77,50 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
-X-B4-Tracking: v=1; b=H4sIAAAAAAAC/6tWKk4tykwtVrJSqFYqSi3LLM7MzwNyDHUUlJIzE
- vPSU3UzU4B8JSMDIzNDAyNL3dz0kszcVN3iksSSCl0js0QjI8s0y2TjJBMloJaCotS0zAqwcdG
- xtbUAKYGiuF4AAAA=
-X-Change-ID: 20261029-mgtime-statx-26a229f9c3b4
-To: Alexander Viro <viro@zeniv.linux.org.uk>, 
- Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>
-Cc: Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org, 
- linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, 
- Jeff Layton <jlayton@kernel.org>
-X-Mailer: b4 0.14.3
-X-Developer-Signature: v=1; a=openpgp-sha256; l=2097; i=jlayton@kernel.org;
- h=from:subject:message-id; bh=oP2L+9LClokU54StxbsCJCbiCwIJ6fU+GF/E/fV4FoI=;
- b=owEBbQKS/ZANAwAKAQAOaEEZVoIVAcsmYgBq43RgzWEmuVIIKB54jXWJNr5QYNdiZaozWwMsN
- XgR4HDlSg+JAjMEAAEKAB0WIQRLwNeyRHGyoYTq9dMADmhBGVaCFQUCauN0YAAKCRAADmhBGVaC
- FTOdD/4rxg0XwgVuFc9lFXsGxeMYI6lwWI5J1dCyUFLV0j1qsVC92V4J4sx0AZnLYbaSlUxER+T
- PAsn9tD5RaAZmDzB+2ywDVRI1a/NUodorSOescDyukg/NqA1ee3d+TEmteEG/UeGkwPL1b7VltU
- kn8GmqvHmhzKD3IhWap+0L0A+72uq2UTQRd0F4NFpBXGdYc4yQZ2Q5gn/nj1Z3wnGmWdAtJeQaA
- vpUW45sOhpV5dwQ8M028D+CpwNYa6TXFecw2LNMuSplYgemQtdBiKfg8ll+4N78MKG01KhtSdOH
- JXIbbYrqdJPjEQjf1avwI8eQ34yek7XUmOgl7vqzuW/aWE+tTvi3nyJd6y6rHnedSmcRMGzuaj9
- a74oEcU0ML1Mck9nc/azjsD1twDbaXgIanRzXc7vQky/T+Ojb18fZJr8yPJD7SDGh7NmSYm61XC
- djI7gWnwlx+DpEgjZydqsCsFnrl1Ft9E4C+4zjaF404DkwP4NJ60CGNRfwgaRGjvTZqzlKIaKaJ
- QSLG4LPnFtLRVhuwjEXY9ddOokeP/77xgjxd82b5zv5RY1Hgi0o8MQjM9ZYfVky5c4y7JOJ+LQ/
- h/ve+bKCOzSJt2KIoYTvxpeN/eZp6jEUa9m8L4J+kyzop6WQB0tTfSfNB3MAtoG0A+MGI3CPu9T
- kFcS2YPwFtzxXBw==
-X-Developer-Key: i=jlayton@kernel.org; a=openpgp;
- fpr=4BC0D7B24471B2A184EAF5D3000E684119568215
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <auNuLZiBZyHLFYUr@MacBook-Pro.local>
 
-Userland has no way to tell whether a file's timestamps are multigrain,
-i.e. whether successive changes after a query are guaranteed to yield
-distinct timestamps.
+Le Fri, Oct 30, 2026 at 12:02:53AM +0800, Peng Wang a écrit :
+> > Ok in that case, do you know about the current work in progress
+> > to make nohz_full opt-able through cpusets? It implies taking the
+> > target CPUs offline shortly but the policy is to be setup before VM
+> > is launched, right?
+> 
+> Not always. Waiman mentioned the cpuset work earlier; it could
+> cover selecting the policy before a new VM starts.
+> 
+> Some customers express a preference for host tick suppression
+> through the management interface when changing workloads within
+> a running VM. The host operator decides whether to allow
+> suppression on the CPUs backing that VM.
 
-Add STATX_ATTR_MULTIGRAIN_TIMESTAMP and set it in vfs_getattr_nosec()
-when is_mgtime() is true (IOP_MGTIME is set from FS_MGTIME at inode
-init). Always advertise it in attributes_mask.
+I think people should know ahead if they will run latency critical workloads
+or common workloads in their VMs. Because those are completely different.
 
-Suggested-by: Christoph Hellwig <hch@lst.de>
-Signed-off-by: Jeff Layton <jlayton@kernel.org>
----
-HCH suggested this when I posted the fstest for multigrain timestamps. I
-think it makes sense. If this looks good, I'll plan to send a manpage
-update for statx(2).
----
- fs/stat.c                 | 6 +++++-
- include/uapi/linux/stat.h | 1 +
- 2 files changed, 6 insertions(+), 1 deletion(-)
+> 
+> We want to support revisiting that decision while keeping those
+> CPUs online and the VM running, with nohz_full membership
+> unchanged. Could such an operation fit into the cpuset work?
 
-diff --git a/fs/stat.c b/fs/stat.c
-index a2e63c6c45b7..67b9f1784b23 100644
---- a/fs/stat.c
-+++ b/fs/stat.c
-@@ -206,9 +206,13 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
- 	if (IS_VERITY(inode))
- 		stat->attributes |= STATX_ATTR_VERITY;
- 
-+	if (is_mgtime(inode))
-+		stat->attributes |= STATX_ATTR_MULTIGRAIN_TIMESTAMP;
-+
- 	stat->attributes_mask |= (STATX_ATTR_AUTOMOUNT |
- 				  STATX_ATTR_DAX |
--				  STATX_ATTR_VERITY);
-+				  STATX_ATTR_VERITY |
-+				  STATX_ATTR_MULTIGRAIN_TIMESTAMP);
- 
- 	idmap = mnt_idmap(path->mnt);
- 	if (inode->i_op->getattr) {
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index 1686861aae20..b978860590b1 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -255,6 +255,7 @@ struct statx {
- #define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
- #define STATX_ATTR_DAX			0x00200000 /* File is currently in DAX state */
- #define STATX_ATTR_WRITE_ATOMIC		0x00400000 /* File supports atomic write operations */
-+#define STATX_ATTR_MULTIGRAIN_TIMESTAMP	0x00800000 /* File uses multigrain timestamps */
- 
- 
- #endif /* _UAPI_LINUX_STAT_H */
+If that is really necessary then I guess we can have a file to control that
+in cpuset once the nohz_full interface is ready. Though I'm a bit skeptical due
+to the overhead of user <-> kernel transitions and housekeeping.
 
----
-base-commit: c339f4010dea8b0d754f84ace70cd1b089878ef8
-change-id: 20261029-mgtime-statx-26a229f9c3b4
+Thanks.
 
-Best regards,
+> 
+> Thanks,
+> Peng
+> 
+> > 
+> > Thanks.
+> > 
+> > -- 
+> > Frederic Weisbecker
+> > SUSE Labs
+
 -- 
-Jeff Layton <jlayton@kernel.org>
-
+Frederic Weisbecker
+SUSE Labs
