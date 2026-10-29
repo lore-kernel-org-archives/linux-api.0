@@ -1,101 +1,104 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.179
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.180
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793302738;
-	b=3KRy2kqPrryokNO1BiqKqMJ7Xfy+Lp9fnPZSRSEIyBhYhr6HTdNmff+XzIZbMKosDCzD
-	 AY+p5GRIQ4SDrtD3E5XPcijx216gDoDAsxPDC0CqJn2gnRsADn+BB4iyL4gnIdHkDtZu+
-	 yrlgWlY11QVnIdwmRdCUyRrlECyxM1A4BvT/vPsY4NrG1fEiA/ZM604HMmSLvX3C16rzf
-	 SBVuhqT+2V5x+qXHU6M6zbvgaz96F7XxmN5X502Xs9XnWN90aNLz+t4+NS9uwyxaKiqp9
-	 ULn9ubVU3K683YpiTHE8hhmqhJSBTWMxCEZavudJzItK5edU+FC4iOvneemnAS5sIkw==
+	t=1793315793;
+	b=qcrW0AN4QEREv5rdRntE6Zvjhfty+9L/2pe0HsItflgYiuRJutBCfb7P0i4AIIGnJ8Ou
+	 lDODUzAmGkT5sWeJA2DfRPZoRzZwPrnmR8Y9gvBy5LKNimw5xk+z2IjGLfN1srmtc0owo
+	 apmLZXb8GFY91m+dozyQUrDv18IFzHqjBGlX+cQ4VZ4WYB5002rZx57Z6gMMrrWtMRfe5
+	 bA4sFZrrAH9ovNR4fdjB3T/Q2evNYnNgbzBoRTczabKRYXNOkAn+38zQyDntQ1cSjoJj0
+	 4t0om0Uw6OU1zch2xo7Rq1f3+m0tAOX6vpOgcBo5XkPr1Q6bCDKs999LYZTtq/vaiCQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793302738;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793315793;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
-	b=Ry85wgPM60zt91icI0ogJT9QYbCaMNMW0544tCzRXOFElD/JIaRBQ72TKUm4nmI7plMM
-	 CB9VyRVQDBgRmuPPZoT1SPEo3t0uoa9s/0NP7itY8ngzPsXCP3wAtGB/nUY2+otSNE4mD
-	 kfaDALCeDtoThtIpOQ7CdkgCZt5rWB7WLPzHetdMjnqMtEZygP5fGyHhSz5Zwu3jdhnxV
-	 3d7NHOpHykHzMmPGv7mQFFSqq75LIosFUO7rftyv3c1nh+3xb0eei8IXrNt9z2VChhZq/
-	 8oRBJ1/02QoQ1wTeO6+I16ay+a2QqqBpWhIvzCUnefBgjSB5iVptFrrpOReM361Q2Gw==
+	 Content-Type:Content-Disposition:Content-Transfer-Encoding:
+	 In-Reply-To;
+	bh=3fmE280TvwYgL1SpHpcTgt7nw3en3MelpBcz6M9OOWk=;
+	b=mdDD9A2QqZpRkoZTfEe61dJnFMV/RjCnG4Di4/6RyJqtjxeH7lWZVeaBagYSUfjYZvpH
+	 LVAhFoMFpLO6N6+E9220RFgWhxwWiLPkZUjgWKkTvaqYfTk+KgLPHO2qVhTkZDirVVY/R
+	 3liJA7ppzydIX1/N3/XylVaARhZblImuQTJxWc31gwgnP2xKz8h+UnIvaH/81MZHT3PXI
+	 MEpclyfALvgjbqjRCmahtCFbryW/37UnNWcUo4EAdcxEGDHBDPRaQf20MnVFqpaWGWNBE
+	 buDvppp9AN6AKZXn4h6dxhhoqmjWOseosXu5FMUjbCv15+mpcpPTu2A/1fXRcrS4adA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.208.179
-Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=pkArMhrE;
+	arc=none smtp.remote-ip=209.85.214.180
+Received: from mail-pl1-f180.google.com (mail-pl1-f180.google.com [209.85.214.180])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FE71606A31F
-	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 19:38:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3FE71606A31F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-3a9841363b5so291501fa.2
-        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 12:38:55 -0700 (PDT)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 784EA606A31C
+	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 23:16:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 784EA606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=pkArMhrE
+Received: by mail-pl1-f180.google.com with SMTP id d9443c01a7336-2e9f6a16afcso13375ad.1
+        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 16:16:33 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793302734; x=1793907534; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
-        b=FNBa56KT/9Dp2z4RqTJX4SmEdUz5QF0XsrQGqBzBDcfvePMHkyjRSZHgA2dL4abyfy
-         Z5mCosjvFkTxPpDmCgqoP7G7lT2FVFFUQ0YpXNjOUhaorkhdgy63Iaj0z/fMjsNDNf/C
-         B7N559oM1aQ463TkFMl4hlBO/WHCqunTmnc/UsMFfppEpnpGG5WUa9uxWJFZXCt4Mw4m
-         rz9/qKuz3+niyjl8T1wW4UCRCMZX5MVtZiU3CO2A9BHdOcdEtVxmOzi+D8+vZa+Jmmo5
-         /rJGHoehxWckvC7h0zyK1y6pn3xGNLKqI4ReeBj7jtQ2yBzeEYj7vSzrelBOMx5CX0az
-         WXnw==
+        d=google.com; s=20260707; t=1793315793; x=1793920593; darn=vger.kernel.org;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :content-type:mime-version:references:message-id:subject:cc:to:from
+         :date:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=3fmE280TvwYgL1SpHpcTgt7nw3en3MelpBcz6M9OOWk=;
+        b=pkArMhrE1jC7hZiUFJ5bFlNREJAg/sMOcRWZOq9fGPBFun1oHDlSrITxDOErkPefMg
+         wKP5BsVjYN24s8kTH56YdJ0ePck1+gSp2JP2CBe9i9cKQrci8fnvezDohh4IxqHAQwXr
+         FuSYH6xJm4NrElJ5IYikZh0atmfVVDudq8DFYwVZn5YQjqG4pJcpY1xiarMqVGLYsNhw
+         2INQvbECPAe6u5CkFosje88KshBFSv2LZ/shCNlaEKyU8jRcz9mngNUaN/+Ls3e46pco
+         vXWbIru49VFW3yblEFZ5u+kqFvWKxzYwntufZRBawc24oPtI0it3Xc5kA3QzYYkE8Ed0
+         ME6A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793302734; x=1793907534;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
-        b=maCd/wObjRh+SuMqNEhUg3jOhWdy4UwI8IXyYF1p6jaVjldutdBA0Tf8+aGTHNyb9/
-         VgTCBlVU6/+5Ljs8ApN6nGEyo2SySilnFpw9Uwb33YVn0qVo7m4Rq4jMjE724SHHFPph
-         gG77i+V2+zsd0LlU5uTP7SU1gtE1A2270Ru+kQeB6NVUrUxvMe0nkYFECTnzNclcjYE3
-         Rlxf4HKNtPNkuwBi2az4Lnyh1mntI/JEUHyYmffl39C+mtKNbYUHl5S5+XZHWvAN2jdo
-         4cnlh8WR2t1QYSBS1l67kPgy8ktUzaXFYRDFlLECw9ATs1tTD7HR7PlLMqfHDx01efc0
-         dwNg==
-X-Forwarded-Encrypted: i=1; AKwUvByJRQ3s+ATeCq6+HHl1uFgjFnTOlfy4OtNVoYF62K6SWQ4d82ZPFj56sAoVU03GeLI1C6ZTk9ivG1I=@vger.kernel.org
-X-Gm-Message-State: AFq9FYJi64hAzGvFgZpAhXTsntO1nTGAt0VgyAsJautaGnP8ItWWO1El
-	wmdn4wL2sW6/Ej9VqKoVXVMJSvm/6Bv9tW5qk8biCNI6GrxG7Vt6gD5b5A6ZIqFA6gM=
-X-Gm-Gg: AYBFou0xxckNaOi67tV/o3QpDlUqC1EJx2ZUIe1hBpm1rIx65nOvcHsPCQ24d7W+tUM
-	95rqs2m75L2PiRMEONIXNBAdWwhnQIKsENt0aRVQvQgKQueXmGzdlZS/5TCj2Pitg/28TGHY2Fj
-	M/xVHlIkG6W4L/b4BIo3edSMxuD143J10ezUq77k7rKLwU79SRiZ8Z6eWm02UVMaYUy8xntynO7
-	OllMHXjPELWu01mMCraZ6lph9Em2Dz4vD6++i1msvCyocRqI4hvA8v1GnGH4bxFAFVE8zQ/zfGL
-	Bs6jRkurFYScf1LTstDyFsjVgtPC2XVEdWA5DdtjhL19dRkcZHp4EWAoZYpQ/UKSp/NDWnowjhK
-	vFBCEujThdmnpo4fSgMDZwR/u9gRZbMoTVAiKd9dhdcTmKIpU9sc6VGTxoMzqYoM8crGYUrFYnZ
-	Uu+z9sCR5J0ijq1IuEC/FDoJYTJJMrKT+Eiy/uIXWc3zGf3+CFA8KsQ+gJcOKFeXKPCjEY2KlWH
-	TINRpzS7sOBKhsq9zPxIUZxTq+7HLUjpJ9ovPo7kSMIXDzncW/1pXmSJrA8kXZaucPnKNBh81ZT
-	BEdv9FSvsge8+Y5cg3zueEIgJ4qoqAs3y4QKEHsDnOIlj6tDwFblUImj4wg=
-X-Received: by 2002:a05:6512:3f03:b0:5be:414b:a84b with SMTP id 2adb3069b0e04-5bfcadda82dmr2380923e87.51.1793302734163;
-        Thu, 29 Oct 2026 12:38:54 -0700 (PDT)
-Received: from localhost ([208.127.45.21])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5bfd7ef0c2esm69050e87.50.2026.10.29.12.38.53
+        d=1e100.net; s=20260707; t=1793315793; x=1793920593;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :content-type:mime-version:references:message-id:subject:cc:to:from
+         :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=3fmE280TvwYgL1SpHpcTgt7nw3en3MelpBcz6M9OOWk=;
+        b=aCcEeWMo8l2FmeUCfTPHAZ8TzSKJostLJPNGcvNvHSD09U7DVDVzA/nlMVz9QilVCH
+         ecoNf2rqnYTsmv5grjtt7HWtEaiQLawNxrChV/1O/de0rhHH+fs8chRHmCw0VfcOc8Uk
+         xCgkwiVBr5EVHStNjiNqRnA4uGuCY0zR8jDeaRraMjoqbV1M0TAbvLI1eaf8ctkQIt6I
+         doxhtydUNbEZ80kdyXjKJALObRM7tyexqFZzHzjA11slvIvJavM/B4WeTYuQtsFo4+MJ
+         +UQp5v4p8KAHH8iBqFRhBWgnynw2dWC6ywyhIY6SwJAJxV0Hjdg2S67aRKxHtG2pBYo3
+         Bt1g==
+X-Forwarded-Encrypted: i=1; AKwUvBwtDvY42wL5uFCrcTCrle1D1Jzos1DsUewubqlao6TaCh1/Q86lxWFSB8h7XIEV3g6tbTIWoQWVwZo=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLorgtF4FhOnLCsCwokzUOo2NOrOjioS3W3xyvtGtvrfNkTgqdG
+	AML7h5a7tJCsyMDQwBoWadw3TYRVmVCyFcFEWycyocTyFdchfHxTrwdGqeS2xiKe2Q==
+X-Gm-Gg: AYBFou36xi1LtYHiCv2ppbNhR6TVfxfrtn0GZkH6Zg1BGvN2gzQJdG3kGmBpvo3+TSh
+	EtNZiMfX1oGzzDngrRV/f4am7pBTdyEr9LVPtYWJA1f7TT4NzcAXGOBOO53YL68d3CLrqnjyYkv
+	BWo37Ygc4yeIBfW41GWY9ni8At1pfbBlZeLIvv7pgEYkRTAFx03WMp3vp24IxGjPbPdAfqigez7
+	WzGulioG/WgOc0y4KbAR5Bb3iRSBSvURENvjP8i1tptHeIda3ZG8WfEau9iiY7YpnNuQCTjBuYN
+	LrL8bjlTq3cF3NIExCWkHfOLI6u5TJbBzH5XQd5EKU56PRsX3yEA4TG2usm2yqa8n8O+n4anyjg
+	y/eD8bjytq04jV7sGIiRMoZeS7CtRzCBoJv915Hci2z6oBGdDz+Tm++QzltihWz5QZnQu3jIsZT
+	7O/ltKxPQ5Xjl+oFgwOCXlcfcUqzacVqTkXxr/nO/KlvfmZ4ZkCCp0Kuyfo5YA2HQA65n5/dCGj
+	lHoLmK4N/RtJT9RHlONDbRob/R2eJaELbKFfd3WHwtOQgJXC8i6jSKtJJCSHHHU7P4YkFegnEWW
+	VUX1KKRErVCq1COHFJzeiFMfGFNTqpplzLMnH39IS99VQ5v9Y1I/0GGeMytJBQhxe8wGQJZ1yuO
+	gtNkkU4Q3V04t+XGFDiMhCA==
+X-Received: by 2002:a17:902:d2ce:b0:2eb:188a:1c06 with SMTP id d9443c01a7336-2eb1ec12e12mr7097365ad.9.1793315792099;
+        Thu, 29 Oct 2026 16:16:32 -0700 (PDT)
+Received: from google.com (25.75.145.34.bc.googleusercontent.com. [34.145.75.25])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3ae84542a13sm1362240a91.5.2026.10.29.16.16.30
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 29 Oct 2026 12:38:53 -0700 (PDT)
-Date: Thu, 29 Oct 2026 20:38:49 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com, 
-	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
- and generated files
-Message-ID: <auOgwlGeW-vRGVb0@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-15-jiri@resnulli.us>
- <179302367452.58760.3782556786585774917.b4-review@b4>
- <auMX4kbsflE9kK3Q@FV6GYCPJ69>
- <20261029184324.GE3734323@nvidia.com>
+        Thu, 29 Oct 2026 16:16:30 -0700 (PDT)
+Date: Thu, 29 Oct 2026 23:16:27 +0000
+From: Samiullah Khawaja <skhawaja@google.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, 
+	Hugh Dickins <hughd@google.com>, Baolin Wang <baolin.wang@linux.alibaba.com>, 
+	David Hildenbrand <david@kernel.org>, Muchun Song <muchun.song@linux.dev>, 
+	Oscar Salvador <osalvador@suse.de>, Jeff Layton <jlayton@kernel.org>, Chuck Lever <cel@kernel.org>, 
+	Alexander Aring <alex.aring@gmail.com>, Shuah Khan <shuah@kernel.org>, Jason Gunthorpe <jgg@ziepe.ca>, 
+	Gerd Hoffmann <kraxel@redhat.com>, Vivek Kasireddy <vivek.kasireddy@intel.com>, 
+	Jeff Xu <jeffxu@google.com>, David Matlack <dmatlack@google.com>, 
+	Pasha Tatashin <tatashin@google.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/2] mm/memfd: add F_SEAL_PUNCH_HOLE
+Message-ID: <auPKfqh_YjRU9Ui3@google.com>
+References: <20261026220546.3114241-1-skhawaja@google.com>
+ <CALCETrXNEWQNPjtuHnTfVFOafeJ7APXq288Cq16Q5adDNYx9+A@mail.gmail.com>
+ <auEksxfAi9lHFXmT@google.com>
+ <CALCETrXDY2e8x2kdr-FQvFLs-Y7FwNozXGDvqqM6yvVA7QLV3g@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -105,50 +108,168 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Disposition: inline
-In-Reply-To: <20261029184324.GE3734323@nvidia.com>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <CALCETrXDY2e8x2kdr-FQvFLs-Y7FwNozXGDvqqM6yvVA7QLV3g@mail.gmail.com>
 
-Thu, Oct 29, 2026 at 07:43:24PM +0100, jgg@nvidia.com wrote:
->On Thu, Oct 29, 2026 at 11:04:58AM +0100, Jiri Pirko wrote:
->> Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
->> 
->> [..]
->> 
+On Tue, Oct 27, 2026 at 08:57:29PM -0700, Andy Lutomirski wrote:
+>On Tue, Oct 27, 2026 at 3:55 PM Samiullah Khawaja <skhawaja@google.com> wrote:
+>>
+>> On Mon, Oct 26, 2026 at 03:46:34PM -0700, Andy Lutomirski wrote:
+>> >On Mon, Oct 26, 2026 at 3:06 PM Samiullah Khawaja <skhawaja@google.com> wrote:
+>> >>
+>> >> This series introduces F_SEAL_PUNCH_HOLE, a new memfd seal that prevents
+>> >> holes from being punched into a shmem or hugetlbfs memfd while leaving
+>> >> the file fully writable.
+>> >>
+>> >> Background
+>> >> ==========
+>> >>
+>> >> Drivers such as udmabuf and iommufd (via IOMMU_IOAS_MAP_FILE) use
+>> >> memfd_pin_folios() to pin the folios backing a memfd and hand them to a
+>> >> device for DMA. Pinning keeps those folios allocated, but it does not
+>> >> keep them in the file. If userspace later calls
+>> >> fallocate(FALLOC_FL_PUNCH_HOLE) or madvise(MADV_REMOVE) on the range,
+>> >> the folios are dropped from the page cache while the device continues
+>> >> to use them. The pin holder is never notified, and from that point on
+>> >> the device and the file silently diverge.
+>> >>
+>> >> The existing seals only partially address this. F_SEAL_SHRINK prevents
+>> >> pages from being dropped by truncation, which is why udmabuf requires
+>> >> it. Hole punching, however, is only blocked by F_SEAL_WRITE and
+>> >> F_SEAL_FUTURE_WRITE, and both of those also forbid writes. That makes
+>> >> them unusable for memory that must stay writable, such as guest RAM or
+>> >> DMA buffers, and udmabuf explicitly rejects memfds that carry them.
+>> >>
+>> >> Proposal
+>> >> ========
+>> >>
+>> >> F_SEAL_PUNCH_HOLE fills this gap. Once it is set,
+>> >> fallocate(FALLOC_FL_PUNCH_HOLE) and madvise(MADV_REMOVE) fail with
+>> >> -EPERM, while reads, writes and resizing are unaffected. Combined with
+>> >> F_SEAL_SHRINK, it guarantees that userspace cannot remove pages from
+>> >> the memfd while the memfd remains writable.
 >> >
->> >=======
->> >
->> >device-get:
->> >  request: {}
->> >  reply:
->> >    caps:
->> >      evidence?:
->> >        min-challenge-length: uint
->> >        max-challenge-length: uint
->> >
->> >Did anyone implement a variable length challenge? That seems a bit
->> >strange. There is also a very important crypto warning here that the
->> 
->> Yes. TPM2_Quote accepts variable-length qualifyingData, represented by
->> TPM2B_DATA with an explicit length. This varies per request on the same
->> TPM:
->> 
->> [1] TPM Library Part 2, section 10.3.3, page 136: TPM2B_DATA.
->> https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_2_Structures_Version_185_pub_c0a962a931.pdf#page=136
->> 
->> [2] Part 3, section 18.4.2, page 158: TPM2_Quote qualifyingData.
->> https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_3_Commands_Version_185_pub_87a5c10230.pdf#page=158
->> 
->> The PSA Attestation API, section 4.4, also requires one implementation to
->> support 32-, 48-, and 64-byte challenges:
->> https://arm-software.github.io/psa-api/attestation/1.0/api/api.html
->> 
->> FIRME DEN0149 1.0 ALP2, section 8.12, Table 8.23, page 100, likewise
->> defines an explicit Platform challenge size parameter in x4[31:0].
->> FIRME itself does not mandate the specific 32/48/64-byte set:
->> https://documentation-service.arm.com/static/699c3b70b60ef220b14ec14d?token=#page=100
+>> >How does this solve the problem?  F_SEAL is about a userspace
+>> >contract, and if there are existing users of the APIs in question, it
+>> >makes very little sense to start making those users fail because they
+>> >haven't taken the appropriate seal.
+>>
+>> It doesn't change any existing behaviour, nothing starts failing for
+>> users that don't set the seal, and drivers wouldn't require it. It's
+>> opt-in. Userspace that wants the guarantee seals the memfd, and a
+>> kernel user that pins it can check for the seal and rely on the pages
+>> staying in the file. For example, the iommufd live update path could
+>> skip verifying the pinned pages at preserve time when the seal is
+>> present,
+>> and do the full check otherwise.
 >
->I feel like userspace needs to know the difference between 'any size
->between 0 and 100 and 'exactly one of 32, 64, 128' ?
+>Can you clarify the API you're proposing and the issue?  It seems to
+>me like the user is expected to preserve HWPT state by creating a
+>memfd, then using some new API to tell the driver to "persist" its
+>state into the memfd (possibly by binding its existing state as folios
+>into the memfd)?  And userspace is supposed to seal the memfd against
+>growing and shrinking but not against writes?
+>
+>What if the user writes to the file?  What if the user populates
+>pages/folios into the file before using it to preserve HWPT?  What if
+>the user mmaps the file?
+>
+>Have I understood this correctly at all?  Why does memfd make sense?
+>If the goal is to attach a bunch of pre-existing pages to a file so
+>that the page preservation machinery can preserve them, wouldn't it
+>make more sense to have a handoverfd mechanism where the kernel can
+>make a handoverfd that stores its purpose and logically represents
+>some pages but does *not* allow read or write or fallocate or any
+>other user operation that actually acts on the data or its memory
+>layout?
+>
 
-True.
+Not quite. Let me elaborate my use case.
+
+For live update we need to preserve HWPT (iommu domain) so the devices
+can continue to do DMA during live update. Domains are preserved by
+preserving page tables and relevant data structures using KHO.
+
+To make sure that the devices can only DMA to preserved memory, the user
+preserves the memfds (into KHO) that are mapped in the preserved hwpts.
+During iommufd preservation we need to check that the memory backing the
+iommu mappings is preserved. We do this by checking if the mapped memfd
+is preserved, but if the memfd had a hole punched into it before its
+preservation then the punched pages will not be preserved. For this we
+need to do a complete page table walk and test each page separately.
+
+A punch hole seal, before the memfd preservation, allows iommufd to
+optimize the validation path and avoid doing full page walks.
+
+The HWPTs are not preserved into memfd; the memfds are mapped into HWPT
+and we need to make sure that the mapped memfd has not mutated and the
+pages mapped from it are preserved. Also it is ok if the user writes to
+the file or mmaps it.
+
+>>
+>> https://lore.kernel.org/all/arVYa_90j0oN1hnu@google.com/
+>> >
+>> >Would it make more sense for the drivers in question to set some flag
+>> >(refcount?) on the file to block hole punching?  Or perhaps to have
+>> >the hole punch code notice that it's trying to punch out a folio that
+>> >is pinned or otherwise referenced and to refuse to do it?
+>>
+>> The pins already keep the memory alive while it's used for DMA; the
+>> problem is only that the page silently stops being part of the file.
+>> Refusing to punch pinned folios on every file would change behaviour for
+>> existing users: fallocate() would start failing whenever a page is
+>> pinned, even briefly by O_DIRECT. A flag set on the file by long-term
+>> pinners would avoid the short-term case, but it would still make punches
+>> start failing for existing users of those drivers, which is why I went
+>> for an opt-in seal.
+>
+>Wait a moment here.  Given my comments above, I'm not sure this is
+>relevant to this patchset, but...
+>
+>As far as I know, right now, a program can open a file, register some
+>of its pages with io_uring or RDMA, and then use io_uring or RDMA to
+>write to those pages later.
+>
+>And another program can open that same file and use fallocate to punch a hole.
+>
+>And then the first program thinks it's reading into the file, and it
+>ends up not reading into the file.  Which makes the hole punch
+>operation rather different from the write-zeros operation that it's
+>supposed to be a fancy version of.
+>
+>Now this doesn't sound like a security problem per se, since the
+>offending hole-puncher needed write access (admittedly that write
+>access is only needed at hole punch time, not in the indefinite future
+>when weird behavior happens).  But this whole sequence seems highly
+>suspect to me.
+>
+>Are you *sure* it wouldn't make sense for a GUP'd or similar reference
+>(whether pinned or not) to *actually preserve that folio's status as
+>part of the file*?  Or maybe for there to be an extra pin bit to do
+>this?  Because the current behavior is pretty strange.  And I'm not at
+>all convinced that anyone would really object if the kernel prevents
+>hole-punching a range with an active GUP, especially if this behavior
+>is restricted to writable GUPs.
+>
+>I admit that truncate seems slightly different in the sense that it
+>seems more likely that someone would be annoyed by an inability to
+>truncate a file.  But still, truncate does have the same issue.  Maybe
+>extending a file could notice that there is still a folio covering the
+>newly extended range and stick that back into the file?  Seems messy.
+
+For live update either approach works. If pinned pages cannot be punched
+or truncated, iommufd can rely on that directly and the seal is not
+needed. I went with an opt-in seal only to avoid changing existing
+behaviour. If folks are fine with blocking punch hole and truncate on
+pinned pages, I can send patches for that instead.
+
+>
+>
+>-- 
+>Andy Lutomirski
+>AMA Capital Management, LLC
+
+Thanks,
+Sami
