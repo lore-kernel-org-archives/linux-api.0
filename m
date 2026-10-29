@@ -1,16 +1,16 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=52.103.20.6
 ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793250208;
-	b=AqGjJqNpQidEGb78PY0GLXJsi/HiIpRXbCBHqjEqFQv/46jlGKAVCOiFgtBmnbJC5JE5
-	 bJrW+XvmY0sM85u4Ra7/aJ+zVeFM+DXIkxgIVLo/eyYnzHOlODZWjphxwrOLipqX2eF/W
-	 MHEJvG22tNcelVxRevk+kTnvosVHOqdWtlja8E3fPNpiMwlS//E2FCBgy5KmZT7FxJ8vm
-	 pNGiCnm5zJ4onvmL1z6wbzuH53RUE1NQamk1D66XpWEfus2pEjV/Vk4vim+m3tmYHhwgN
-	 faC51pn6mq4hsGLIWcXB1oGULw0S6G7SWolLm26WnCHc1v+UHfTCtR9gamW441rJyiA==
+	t=1793250209;
+	b=sL6wUt4WcpDXhXPIObQNiV0m1VMRE/qzG1Dxg2qDjABZNnhcW4gKWIvBrKEh6DHx7Avt
+	 H6gAhbjaapg3H8ewcJwJBvPDxco62c04z1c1ooV9oUQah1Rdt3/Q8+LSADDbEteVnwk7Q
+	 9w9ep+Q0wJyeBIXOflWayEJk+EJKuZLDSPd5f3RhNAt0Rp5LF2myQLVkdA33RzxE6NKKQ
+	 ApFDopfZBKj5GNUrNQxjM2RxQZeJq99NmE0PrsDp4O+W9/xDg9EcVgT41vCQsC9XT0nUH
+	 IjtIljPJK+INmRAkGorhxU/sAebCUedNXtALIIrV8QETLXK7xEtf3+tcN7HBEhYwgaA==
 ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793250208;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793250209;
 	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:CC:Subject:
-	 Thread-Topic:Thread-Index:Date:Message-ID:Accept-Language:
-	 Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
+	 Thread-Topic:Thread-Index:Date:Message-ID:References:In-Reply-To:
+	 Accept-Language:Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
 	 x-ms-publictraffictype:x-ms-traffictypediagnostic:
 	 x-ms-office365-filtering-correlation-id:x-microsoft-antispam:
 	 x-microsoft-antispam-message-info:
@@ -25,50 +25,50 @@ ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
 	 X-MS-Exchange-CrossTenant-id:
 	 X-MS-Exchange-CrossTenant-rms-persistedconsumerorg:
 	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
-	bh=DqiFzpc0xHaVGhfwxqUGFRgPJkquueCfeSJ73YunQ7U=;
-	b=NF8/DScyvy53XKRwP+viWcpsVyhcB9jsbhHTWuYTp4jkEEBw2IjNLCQ/ejosaQZaxv6g
-	 9BMVyXGrRSIGnAypwGcGMuJVdPCaniXHm5hzO+quc5vlFon3mSMgR8mPwyfUmalaMLaSN
-	 khnHr9SN9spLRFCqZTz5wLpnmvadRY4Shc2frF2GeyXlGwNpeFeZyBVRP+DPHn7LtYPul
-	 itse7KX6lAk8sRsXnZIvj7K1TF1mJUDIgNGq8Mmc0Ued5H3DlNPwjq1ZMlmToa7e/EvyL
-	 dxxSnQz6gYb0uIPt5NIEioPGv3E/iKCVvYrBtDCnllldlR57xzYNfNtEim1xWifGrBw==
+	bh=6z2+lcwnTNMK+TXPFvXZSmWKT2dCLGjDpjZ35yEwilA=;
+	b=G0LqVf2vouUi11hZdPVZhVikwAO+thpCqrZQtB6shEEY46kTxZw3ufWhitrhsjpBEn8f
+	 BxUAF5u8MV6xF8LpOg+Fh2VgdBjJrlYOQ/1v3uZddWR7ZZ2kS/wByAcYxZgo0WolWnSi7
+	 nQVffnvekweP68pkg/eOQVnV8Z9xJXroEk14lHPOYqRBjd5fXlxF23X9tQszyE8fqYPaA
+	 +ooJ1e22QT34gKqn8ld2WurmSYkFe8LqfryeUQYBibQbB52n7Sr7ecjpawerI3C7Yh2zP
+	 ijoxxEITVyhOY/kalc0WnQPvW16q0yM0aXBJjv4RBjRhh/oZjnM4cmw+3kRna126/Og==
 ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=outlook.com;
 	spf=pass smtp.mailfrom=outlook.com;
-	dkim=pass header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b=iwwagKXA;
+	dkim=pass header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b="RVA1/VSD";
 	arc=pass header.oldest-pass=0 smtp.remote-ip=52.103.20.6
 Received: from CH1PR05CU001.outbound.protection.outlook.com (mail-northcentralusazolkn19010006.outbound.protection.outlook.com [52.103.20.6])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EBEA7606A324;
-	Thu, 29 Oct 2026 05:03:27 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EBEA7606A324
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A5467606A32C;
+	Thu, 29 Oct 2026 05:03:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A5467606A32C
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=outlook.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=outlook.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b=iwwagKXA
+	dkim=pass (2048-bit key, unprotected) header.d=outlook.com header.i=@outlook.com header.a=rsa-sha256 header.s=selector1 header.b=RVA1/VSD
 ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
- b=wQD+kwU6+cDduEpL+RNr9JeO6seyyMQ+vPVe20a+MX05hoBi155UWIIaPbF1Wzp0VtqMBAScilSRDDS+a7G0PAh9sfa8ipSHoCaxAkFKYvrTvg31I1iJfVyMWewrxqyx+uVcZMbjLYozTZc5CwX/qAo6ch5ikZ+nNOsk0wvx8sozber5uYXzzHh9r3ua0x8HIHzvB//bdu97SxBV3JFb7IOdLSRHk2oaPJiD8U1/P435I9v3VDYJvC9YOBwUDZ8q28SSHUZeNw+ADdGSNlxYEO69T7swJyMOL4rhu+rz8D36ZgiKzEZAxuX3N64lw651HiepQjzjGwWvNdo1UpUe2A==
+ b=NpE7EKXQ8y0Oa6rxKmYx4Ch/2Oj3NGBm/pSa/Eqt+Ljl79vZRBLyhhWzLPlDTA+fr3X9LpQwOX/z2OqNxBc0GA6qDvQxuFZzoY54kY12tJlOSFNKTasaMbMTXxq+0csONWUN6plGr9CUKug3HUYQJdMpf8gX3qjXnKzR6GEKopoP45GdzqHR4PlgVX7RrCtVctvN0RDIggU2rxi4MbNTxd3wElIUM8JTYxpSzVL/oWRWmCkfZXm7MDoVaTpMzOJxVtJ/Hzdvcf/flSkrs4T0Tzuyp2+PuHTBZzEgXW4bP0yyUaeohQZxkypKp0Jcw0ulP3QkYdQRF7hVyLgcecK3Dg==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
  s=arcselector10001; h=From:Date:Subject:Message-ID:MIME-Version;
- bh=DqiFzpc0xHaVGhfwxqUGFRgPJkquueCfeSJ73YunQ7U=;
- b=rDTzXKPKr8eWvKghwmFJBvtYedJnCJ6v5F4wmrDR7EaayhTugDIGiF42ews7JSL0RcpcoLH063uvnyM9hESEsIGyIxALkohhafJF3ujmDbPu9IAe+rMd+Djd2O/iocLsKlp/Fc++If9dZwP3/SX7wNOdFyDrMzdTx9Atq5iE6ppZKf94RDfPq+XK0PZyHI1mC5p3gnKOomwyctFWTkmkuWYKXasKFMtG6JYvba1U45MtI371MWQyNuc/WMYB153jAy9b6H/r6JTsE9EajY1oxa4InmPMCekvwl77cumEqEZPOKA48GKmLYjBdbAeQ1T2lAJCZ6CgHk4NWzqm3gQ/Pg==
+ bh=6z2+lcwnTNMK+TXPFvXZSmWKT2dCLGjDpjZ35yEwilA=;
+ b=MJlS5OHTcbVsttRZtLMhMsd7jS40Rmu47nGhZ1HBPLkO1DGm+mevc/Rh4YsapejoWFi+w0Fxu1jOVh1McMMunWDtQiklLP4r8Cfu4/h82lNmowGYRg9mIZuW2Y5YRrzIvkcyDZe4lo/BGpEhRYauizYAuefyd2ADq3hdz4/O7RkcAOJXwaGNOVAcoJ3dRLnqljs3mj2JyhlaIQdJIaf4ZhzqT0Svns7IsjEjS0WhsRp1bh2tlnm1A5QVIkiw18gAC2r+tqi4T5kHMzawJZpFsP4dzqdKjM+d67TmRSs5H6pTrtFpE2p3D1zrGa3tkYwiHyI9NU9GKX4Y8MCptpiPOQ==
 ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=none; dmarc=none;
  dkim=none; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=outlook.com;
  s=selector1;
  h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
- bh=DqiFzpc0xHaVGhfwxqUGFRgPJkquueCfeSJ73YunQ7U=;
- b=iwwagKXAZrLSw1xZ4Xt7VXy2zjir8HyjgvdHqH3i/QRkDwmzDnNE/MykCouSvOHh8O0whnIBZcedO9QrcJ/UZCSCS+BYV/skZbzWz+IiAmLgV5Y/KA230AW4phRdAtICIMgD8100xcYN1zuWyHgLSuOyMkZ5jNenDirrNY3uRDuqnY+z/qVRrNK/IKcks2maIO7KPrBYzQR2LD35kEHrpkfqwRets0InzfZehcE5k8EZ5KocypaARxcW138V/7uFYgJdNJTCL1GrtFNUL7CXQ/lRefR3lDtL4A57Ulung0uwUCf1UUSSIhfUb45oke8bnF5tsjMndOu7tofZ5KCQpA==
+ bh=6z2+lcwnTNMK+TXPFvXZSmWKT2dCLGjDpjZ35yEwilA=;
+ b=RVA1/VSDthgCdsmxj5MgNGz/qiCA6Hj8ytwVDlJ5g864y596OJ2/VEn4H7GwtzeGe4r3VbPM/wAc2fzD28Mq+v5C0PQ1gEl7AfGKH/+dRaWRxDOlbNy1IwPnqzDTwW5RChULHywKOFvHYWh1UCInIcNk4h8Xe4HrnaCty98IMw1uU94evrxVOmvj7nM4MlGdU3sILzEyhTwFDqX9diMIQ01/C4oK/y91lFccOH+oUcEHapckJChSLLxZovoaR9lzNwGkeUKXug+qy9LcfLqKwoLz+3Pv5HEhWQNOIFzD27Hm0KuA2baiT8QKU56DH18O7ZOi9mrgoQj1UZCM6A4vwg==
 Received: from SA3PR05MB10385.namprd05.prod.outlook.com
  (2603:10b6:806:39d::17) by SJ0PR05MB8214.namprd05.prod.outlook.com
  (2603:10b6:a03:390::19) with Microsoft SMTP Server (version=TLS1_2,
  cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.546.22; Thu, 29 Oct
- 2026 05:03:24 +0000
+ 2026 05:03:25 +0000
 Received: from SA3PR05MB10385.namprd05.prod.outlook.com
  ([fe80::e22f:a0f5:fcb0:9b0d]) by SA3PR05MB10385.namprd05.prod.outlook.com
  ([fe80::e22f:a0f5:fcb0:9b0d%6]) with mapi id 15.21.0546.021; Thu, 29 Oct 2026
- 05:03:24 +0000
+ 05:03:25 +0000
 From: Yingjie Wang <x-professor@outlook.com>
 To: "akpm@linux-foundation.org" <akpm@linux-foundation.org>, Manfred Spraul
 	<manfred@colorfullife.com>, Alexey Gladkov <legion@kernel.org>, "Eric W .
@@ -82,74 +82,79 @@ CC: Yingjie Wang <x-professor@outlook.com>, Vasily Averin
 	"cgroups@vger.kernel.org" <cgroups@vger.kernel.org>,
 	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
 	"linux-man@vger.kernel.org" <linux-man@vger.kernel.org>,
-	"linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>
-Subject: [PATCH v5 0/3] ipc/sem: account dynamic sops arrays and validate
- SEMOPM
-Thread-Topic: [PATCH v5 0/3] ipc/sem: account dynamic sops arrays and validate
- SEMOPM
-Thread-Index: AQHdZ2LT/+5o4bKjo02vICQcsvNQYg==
-Date: Thu, 29 Oct 2026 05:03:24 +0000
-Message-ID: <cover.1793250194.git.x-professor@outlook.com>
+	"linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>,
+	"stable@vger.kernel.org" <stable@vger.kernel.org>
+Subject: [PATCH v5 1/3] ipc/sem: account dynamically allocated sops arrays to
+ memcg
+Thread-Topic: [PATCH v5 1/3] ipc/sem: account dynamically allocated sops
+ arrays to memcg
+Thread-Index: AQHdZ2LUNgBTxImF/0OyY2v2GPuaFw==
+Date: Thu, 29 Oct 2026 05:03:25 +0000
+Message-ID:
+ <07d9034ec1fb5b6fd5eed2cf60ef3c84d5149e51.1793250194.git.x-professor@outlook.com>
+References: <cover.1793250194.git.x-professor@outlook.com>
+In-Reply-To: <cover.1793250194.git.x-professor@outlook.com>
 Accept-Language: en-US, zh-CN
 Content-Language: en-US
 X-MS-Has-Attach:
 X-MS-TNEF-Correlator:
 x-ms-publictraffictype: Email
 x-ms-traffictypediagnostic: SA3PR05MB10385:EE_|SJ0PR05MB8214:EE_
-x-ms-office365-filtering-correlation-id: 6f74eb51-4ead-4e3e-a0f2-08df3579f5e7
+x-ms-office365-filtering-correlation-id: d66ccbf1-c9a0-449c-80c6-08df3579f696
 x-microsoft-antispam:
- BCL:0;ARA:14566002|31061999003|12121999013|38102599003|24021099003|4140399003|15080799012|19110799012|8062599012|8060799015|25010399006|2604032031799003|5062599005|22091999003|21061999006|11091999009|24121999003|1602099012|10035399007|52005399003|40105399003|26121999007|102099032|4302099013|440099028|3412199025|1710799026;
+ BCL:0;ARA:14566002|31061999003|10092599007|12121999013|38102599003|24021099003|4140399003|15080799012|19110799012|8062599012|8060799015|25010399006|2604032031799003|22091999003|41001999006|21061999006|11091999009|24121999003|1602099012|10035399007|52005399003|40105399003|26121999007|102099032|4302099013|440099028|3412199025|1710799026;
 x-microsoft-antispam-message-info:
- =?iso-8859-1?Q?/T66Q5us69k/LX5YG+RBFZjjj/HMqSlnoXKuEG5jAF4C5XLatTgGAHYAlv?=
- =?iso-8859-1?Q?58k584IKehcNUPd4bryMpckjFNG18bEDSWXE+NqF2ro+brUqyNNwYO4xuE?=
- =?iso-8859-1?Q?aMQ75TIwY0H5riTF4j6j2tcBnB5VMyBYVrgHeh6eTFWCQyY8yBnH05obXB?=
- =?iso-8859-1?Q?sCOmAWye6MgU8DnGx2v1xl8oOtnRiD09hPYkLuJ5Y7Ad4UynH+HCMEBYhj?=
- =?iso-8859-1?Q?qwhJiLDNFTa7BYVwlMjC0cfNJ/jxBiBMNFxUJ0flHmuENDI1NzqeydFcco?=
- =?iso-8859-1?Q?rDPMnS9L2SWR8U+g06VhQHSlm5QzNGA4IWMuIoZ0PQe0qR2ErJQeNyDD8q?=
- =?iso-8859-1?Q?+2M67iP5AlPVIkdLJ8Kbad2ryg8iQZTk7TJ7DN6bVNjyt+4l5bEr9fbs8M?=
- =?iso-8859-1?Q?+/AJHevdJvH9qMZekUzOcp0rxe6jKz1PK4jMZdIT5ZH+4FZ7PClPmQbQvD?=
- =?iso-8859-1?Q?q23dYt3rLrTVvXpYavLiQkNODnXYLPMwJ4r3VNWmSVroQEG6fnEFwa2SUS?=
- =?iso-8859-1?Q?0kOzaC0hB3N3m+5XdetSIHZGjqHblNB22K2UmLs5mfWRuI/rv5TixZyy5Z?=
- =?iso-8859-1?Q?WslSjckRCKxVDyKzmpKZjTHj/4v80/8mC4Qoenzf3f101bhOMngq35gHLY?=
- =?iso-8859-1?Q?qrWVHitj81SxNPcujbAmTZXlkC1Dj3a1PqUCEMppV9X5/vpBilbUvitvsp?=
- =?iso-8859-1?Q?DGezC7bSjRO2GgBSmaDwx8RFr53QXTN4RYjotWdfd5/I2K+c7vWCbDZC4V?=
- =?iso-8859-1?Q?ZXLtxBPHVjvX5V0OUJDhXmQODLKmuFzSs30gWuVn0bxAZlqSou7kCovci4?=
- =?iso-8859-1?Q?mlcvsdHFeKYIABaBMlzUFUY3hVJxxCfOSV9JUoigFXJFawGC5mTuwJsuGq?=
- =?iso-8859-1?Q?a6NQ4DIf3K5Dn8UCnjcOy1+fDOZmeqH63w4drBH5sjuKa3vEDYd9hZr3dL?=
- =?iso-8859-1?Q?0Y8YkLMkEI1liK77yW1mHFn7sdUr7NXjQGFp8SuG9+phCAeyHkDC9Mbxrn?=
- =?iso-8859-1?Q?3Tcxt/fRFGd6aoJOLuJmfxdiV7O+3AGZoES0YFTSvipM4HnVh+SUmIehsL?=
- =?iso-8859-1?Q?iYIz/iWJtOp6NV08Ih+ktj0MEDKQR3yhwyHzULqIgN6VPsEcWK9Wdgfk7f?=
- =?iso-8859-1?Q?wkuTMRQ75Q31Q6e8du+YQsPBWDytlyg1Nz6AOq4SeuFu0QBjKvMF9RGhZb?=
- =?iso-8859-1?Q?oK57HVZ4ZKk63Qq3rCTix+aD/UvTpV0zndTcwth9zWblWSoxoby/MY2Eju?=
- =?iso-8859-1?Q?BBQ9ovHA8X2qtKYb7fjVwJVsGn5QDJsFhTXNvXq9FDUFST8pvAjIhipJ59?=
- =?iso-8859-1?Q?vAPc2f952M/ZVodk6GFtA3TIWtg2CJy7e6/hNcT6HbXxe9k=3D?=
+ =?iso-8859-1?Q?tFSayAlT3buO0qTTbYOgEURe+L2XmPMFosF7+gnAMLTi+9GIBCFKwPx0+X?=
+ =?iso-8859-1?Q?5FviBfr75Ng44xOOwQzZTy3Uviv9BgJK3NeSwi+aSFFtTJprxA6E5brtga?=
+ =?iso-8859-1?Q?oTZlWvXnInlNSTKOqvELsnIaseEcLZe2p6hQ1h1zhX8IAZ/Y5BgW8NFc/1?=
+ =?iso-8859-1?Q?OG4E7hFfZEFa+EJuJ0QueY+GwKmdvJkVyieWFIssZ1yk4zyxGEDETjCb7E?=
+ =?iso-8859-1?Q?5PDz62L6P9mhDNLe/z/KS0z8Z64WCtPd6Cn5pDEnM7521FcMPzm7QW/Fm+?=
+ =?iso-8859-1?Q?uCDavoqJlTQ6d/p9E7H7Ja/jO+2ok1lbKLsM3lRdKtCzg/k+vK2rLc03cb?=
+ =?iso-8859-1?Q?NSfILu14UrsGpfoxmRlkboW/Tv2YfzwGAweRAX0jrQeInuOTqM0qS+LumR?=
+ =?iso-8859-1?Q?V372bnZAVALBOhvbVyZP46EvklWr/owqB12dunuQiIlP2mFfBwN/QeY9la?=
+ =?iso-8859-1?Q?dVjVPTROrUfEsav0GU1Bq2rZ+ezAu2pX12BT1h6quXp1wtovt8cgMZPHT5?=
+ =?iso-8859-1?Q?Dez9gFICLhHOtIhF7NC58AFBvDUdZNzVwEyaqHCa57JPdIh+tZqwCJ2AWe?=
+ =?iso-8859-1?Q?30z47hGHPk/6lUUheIDxhkZnc+huN2csaHEa0F+A3AyoVkZCtYI+upv8na?=
+ =?iso-8859-1?Q?wWbA7fJ6K8phIi/RD8Oa9Z529EtTOw9pbE+pg4hGPN2fLmbwoBpbQP1dAj?=
+ =?iso-8859-1?Q?INAKE6sws4+SNYg2B+3PG3ukkfaWv4DhckCCb6ES67QYKVZw/FiXQcsERD?=
+ =?iso-8859-1?Q?ourOkifo91JxwPVcR27ofmonWb+Moq9asDSL8WKvUIli+wWaKabvTvw6r6?=
+ =?iso-8859-1?Q?whHeJmu8rLjO+40aUD1jTXqK2v4TTX8dAYwYrQBxrm2C22ukl88dR2ko6S?=
+ =?iso-8859-1?Q?FAZ9fLITfnecmEiQoEQJ6w2VKdjv63QEmrOveA/kzKbgaVLsbz00Ehkn/W?=
+ =?iso-8859-1?Q?SgFtMdvv2sZnB8Mkm5lizs5nPUCu7SsvhvqCJ88LxZm0BMkqODcNblV20u?=
+ =?iso-8859-1?Q?IoLevxRuuLCxBe6cVfrD6T9P/GMNbc2Wv3zXu+p0K++yaL+hkmVlNaqj41?=
+ =?iso-8859-1?Q?BpSiOpggAwd3dOfZKNDOUYnZKJLfnp/jk5VFwqOTMN1Db6BTG7h6/0i1eK?=
+ =?iso-8859-1?Q?MD3CwsJe4L5j15y9h8vJql7Pr+y5kiswJ95RxPDtlyr2Ej6PDV4FyONMiF?=
+ =?iso-8859-1?Q?Bgb/G0RTcLKd+KvhYkrdY12YgiKh2dc+ADosjfEzMayraMB1HniQryuU3y?=
+ =?iso-8859-1?Q?KhgiAX3gXJfoCdlFtWxdXhRy2Iv6arRtfi9bt6AVRdOLOzgYBL+r2Qy7x8?=
+ =?iso-8859-1?Q?FOeH+IasWyOBHr8HM0yxTPeRgmYZmpYUyN2fEh8pUeQdq8MIvrCJ0AofNG?=
+ =?iso-8859-1?Q?kJFGQotvBpz64kwRFdHREhNziXQEZoKg=3D=3D?=
 x-ms-exchange-antispam-messagedata-chunkcount: 1
 x-ms-exchange-antispam-messagedata-0:
- =?iso-8859-1?Q?xUUg8A4AYh1WW1VxZaWVHDbOqwbZJcdhicIx44k7sIVQzwnA20zvmM7yVl?=
- =?iso-8859-1?Q?3KdTHKyHz1YCg4tRH3ArOdDWBYY++wEWcrTw5KpGeDaacq0JISLw2t7vr/?=
- =?iso-8859-1?Q?ojGj91UWkjv+CQ2JMCGrQGaFh7AP30WN8QFkKQqYqQdLUdOibkltzuKgei?=
- =?iso-8859-1?Q?WDojaxAZfvdEGelISOpDp+hBPq2V05++MsXCAFMlJcXZOSVAoPau+WyvDg?=
- =?iso-8859-1?Q?WQOQTmulC8yfkxkBE7ZcySa/i8JdZ5n9f0wv1rwM5hmoxthKxD7klfLdN0?=
- =?iso-8859-1?Q?CbphK5MhEQbCukXtrCarQftcTnQks6nQbWLQ/XtwWuaqGnMOmEvgEfqMFL?=
- =?iso-8859-1?Q?QdBsIUwB3rqCAnwWzdgj/SkvnbDqrNY2vXxo3bYw3o0G8GNs+Yle9/GxkM?=
- =?iso-8859-1?Q?G/aXINipoW8Vn4n5yfjmMlQukwBLgUhCeSZSudVgbQCdSqjOJlUBZUYF1k?=
- =?iso-8859-1?Q?90hCfL/bHDPHrjXanS8liXVLZteZpx9/SwfzgcIPLi1mlzM/dOehIpy8Tb?=
- =?iso-8859-1?Q?w8ebQ7AbX9E26ejOsuFOc+6SlxbKkzzhDB8HNqyjuYRTzjrUL+Jg/nJyPg?=
- =?iso-8859-1?Q?/IPPoxK1jso50maTDBwu+aM60Ki8JhQEHrgMynz/0LKEopayfWcRohtHxR?=
- =?iso-8859-1?Q?smd7/i25DkE4IDtlRkSbegs2tk2bmdpaPe7COvF7RBJ1pj061uYsMSDS1+?=
- =?iso-8859-1?Q?pAJZF4ECgjmhc0eds2gNUfIXHnTFFJjdJFuI8pzbi3+HYZoATCmauDXco8?=
- =?iso-8859-1?Q?h882hVhdx+/MUvWhmK2EwThaWNZGmOFlp0BPgjiJ3CoLJ5ag6yD069hHVi?=
- =?iso-8859-1?Q?/WhhPoqf9R7pyFJ2G4EmhyJO1q4jNs4Yjf4D+F91y+OlE2Kzhy1Z3XKDD8?=
- =?iso-8859-1?Q?+ePzZx0FC42mcSBgcQPe3jlimyOEhU0+LLeIX6aQulyMI1+jxsvN8MN3bK?=
- =?iso-8859-1?Q?9iY9S8K0nOL2JbeLUfb7C6OYvIpUI3l7T/mLFC6bbhsK5XqcwjpOOyo5E+?=
- =?iso-8859-1?Q?m1p9dZGYP6SW046eUz8oNZpDtEF3r32yN802i+gmKfNnHVKjXkTRjlJLVz?=
- =?iso-8859-1?Q?vX3fJQVWDq3Gg3tFZttkiVUT79R33QGB2RXLMHP9c0JZSEw4a75FQD45FK?=
- =?iso-8859-1?Q?L2pWPPt6aoMsR7xZv8gqR6PNXkwG9ja3gC8D6zojfscGn9XqYSNIfPKC6Z?=
- =?iso-8859-1?Q?2vOqLzkqCVxFA6xQZvBJQBL4wD3cYZXLXSMzWql/J86pBadz4ThGLmgr1h?=
- =?iso-8859-1?Q?fupPuNVgMTtnZT347Uv954HN0pXQ4bUOAjzPfrjYkkSPrS+zs9it6RLA9T?=
- =?iso-8859-1?Q?Nj6MVKZumNiOKO5SihHTK41E5o+qNcjLkGf6X0jKc7h3IW+AlsVvvIX6oJ?=
- =?iso-8859-1?Q?BiyX7IjhmzrW/kKOv8SuzDUJZ240lEqj9n3ixGzr1Iv/FWOqWHIiU6l5Qv?=
- =?iso-8859-1?Q?uPpDroksjgsrD3i3?=
+ =?iso-8859-1?Q?BGAU4+3OvCa1ltVi0iFIcXsqdsJpQphV1QZRVcKpavmvmsz8d8/PXfp0tu?=
+ =?iso-8859-1?Q?Qnq9Eaeq8qWyQI18s/TuSEIWYUDvkDsWZg+CHUGP0RJs1LnE8VKxysYei6?=
+ =?iso-8859-1?Q?wIJx22LqnMIsKRL58EpFKSOgn2kRg6tyOnQnKMpn1A+5kiDDmSZgjwnsNF?=
+ =?iso-8859-1?Q?fFN8Psgl+ZgJcEevc97tl7X33/KrPK0puS/u7w8EO4vZNo9fifEOV8i27A?=
+ =?iso-8859-1?Q?w//I3Ja/s/1MRKOnB/xPX9gYpmXTTwwN9SgcnxU9WN5sYB7ESybed0o61S?=
+ =?iso-8859-1?Q?vzv4/ZIfwgtlADDuHh55T+eC0g1fbcmhEavhp6v6lfQJKuKkEXdPHMbOoR?=
+ =?iso-8859-1?Q?bz8thXZoAwBvcH+GMnm/Bu6QIQEdgXFLuYfuQrUAPXIx7Vd4GAhH6oUz+i?=
+ =?iso-8859-1?Q?cuxcLFEAoxDQxTrmTFlUe4lfSvFie+CAhVv1+DrOvp5Bz7o9u2w/1oMRjL?=
+ =?iso-8859-1?Q?ysG01V5opMDLIyVT4XdmqqCJCMB4RxXO9UXrZQ/739wRmNX+syOOIqYxgR?=
+ =?iso-8859-1?Q?NdCaQ0oY4vwt/+vZKQflOP5CMLzfy+PQbvtcrUno1QaM5gbwa9IlZPKGIb?=
+ =?iso-8859-1?Q?XGnnveJY/X6NIf8c3H2xYZA8e33nUbSdtYjiC+IMAnKHRshTcifWgWNc0s?=
+ =?iso-8859-1?Q?iIxrj7ZTt0UMr9RCeXAvCcuvlCww5LO/ylELtIPQqChmt22ZY3YveEpOA7?=
+ =?iso-8859-1?Q?6iMDE/xAwMSbB+K+vRHrkD0alRxodPZtdPfRj+dKARVLEzk3RL2HuRfADM?=
+ =?iso-8859-1?Q?7R+FXzTeluq2816NoiCoG3JhXOLVVqjDSDHozhzr3TgLI1kGSThrNZld54?=
+ =?iso-8859-1?Q?Ns17cFYz8emF8oHPd0PfhuCxA/K315PB6d3tSz6y722y0bqO9cr4avYCt0?=
+ =?iso-8859-1?Q?MOoPoswQtQew1uFG6ZsvXNds4ZqO52Bd9WXh+VRjI0kdkLCnUpSf3aKqCT?=
+ =?iso-8859-1?Q?hPy/quNvRXJhbp+LhorqnPs17Cd+9Cw47PIuRJAVW20pZh0fOiOU4b1tO1?=
+ =?iso-8859-1?Q?P8w8Zg9v6o1IzbBlWiOK1T1GapJ5lQjV2lLAT06Z6l0+Z+BUSPKYeZnKMF?=
+ =?iso-8859-1?Q?Vw1e0Mlrxm1nULKBR8Ncfs4h6hFFPgCaM27/GY8ok4onBpFPMlILnpKlBu?=
+ =?iso-8859-1?Q?T0u4aBcV5XM+B/5eI1VxLt34UobzPmNPIZsk4xqIvMnXQRSWsxl5JU1fYr?=
+ =?iso-8859-1?Q?Bx+M9bfIgWzdgGKos+X8jzsvD5YfU6Lmmpg48fzMU3/RKdh8BSCKXfsuCJ?=
+ =?iso-8859-1?Q?CmYpkjHaAZvI+AKjaGc5ep648kabJhmTvPPYa/qzNpPHq4+KsOhn83UsGK?=
+ =?iso-8859-1?Q?PWQpFUOJhyuNow9Fc3kyIAJVJEg/oK7Ao66CXyQpi7pZXt1FJT7+Mh1hsI?=
+ =?iso-8859-1?Q?Y0xTKCYyvc5yjpNsEqc/xjFF1TCohOPPp7FxIV+rY9emBe32fM/A8iSFPw?=
+ =?iso-8859-1?Q?uEua/6mRvVpF+q9d?=
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 X-Mailing-List: linux-api@vger.kernel.org
@@ -165,112 +170,62 @@ X-OriginatorOrg: outlook.com
 X-MS-Exchange-CrossTenant-AuthAs: Internal
 X-MS-Exchange-CrossTenant-AuthSource: SA3PR05MB10385.namprd05.prod.outlook.com
 X-MS-Exchange-CrossTenant-RMS-PersistedConsumerOrg: 00000000-0000-0000-0000-000000000000
-X-MS-Exchange-CrossTenant-Network-Message-Id: 6f74eb51-4ead-4e3e-a0f2-08df3579f5e7
-X-MS-Exchange-CrossTenant-originalarrivaltime: 29 Oct 2026 05:03:24.2107
+X-MS-Exchange-CrossTenant-Network-Message-Id: d66ccbf1-c9a0-449c-80c6-08df3579f696
+X-MS-Exchange-CrossTenant-originalarrivaltime: 29 Oct 2026 05:03:25.3183
  (UTC)
 X-MS-Exchange-CrossTenant-fromentityheader: Hosted
 X-MS-Exchange-CrossTenant-id: 84df9e7f-e9f6-40af-b435-aaaaaaaaaaaa
 X-MS-Exchange-CrossTenant-rms-persistedconsumerorg: 00000000-0000-0000-0000-000000000000
 X-MS-Exchange-Transport-CrossTenantHeadersStamped: SJ0PR05MB8214
 
-Shakeel, thanks for the suggestion.=0A=
+Commit 6a4746ba0619 ("ipc: remove memcg accounting for sops objects in=0A=
+do_semtimedop()") removed accounting based on the assumption that sops=0A=
+arrays would remain small, describing a maximum cost of two pages.=0A=
 =0A=
-Patch 1 now uses GFP_KERNEL_ACCOUNT for every dynamically allocated sops=0A=
-array. The first 64 operations still use the existing stack buffer. The=0A=
-fixed 1000-operation exemption and its conditional allocation flags have=0A=
-been removed.=0A=
+SEMOPM is a UAPI default that can be changed at build time and through=0A=
+the per-namespace sysctl. Commit 50ec499b9a43 ("sysctl: allow change=0A=
+system v ipc sysctls inside ipc namespace") made that limit tunable by=0A=
+IPC namespace owners without capabilities in the initial user namespace.=0A=
 =0A=
-I compared this version with v4 in a 4-vCPU KVM guest. The benchmark proces=
-s=0A=
-was pinned to one vCPU. Each number is the median of 21 samples from three=
+do_semtimedop() keeps up to SEMOPM_FAST operations on the stack. Charge=0A=
+every larger, dynamically allocated operation array to the caller's memory=
 =0A=
-fresh boots of each kernel. In a leaf memory cgroup, the changes were:=0A=
+cgroup. This avoids a second size threshold and prevents a configured=0A=
+SEMOPM limit from expanding an unaccounted heap-allocation range.=0A=
 =0A=
-                                      65       500      1000=0A=
-  successful semop()                   +3.2%     +3.2%     +2.3%=0A=
-  allocation-focused invalid semid     +5.6%     +9.1%    +11.9%=0A=
+In a 4-vCPU KVM guest, with the benchmark pinned to one vCPU in a leaf=0A=
+memory cgroup, accounting raised the median time per successful semop()=0A=
+call by 2.3% to 3.2% for 65, 500 and 1000 operations, compared with=0A=
+unaccounted allocation. An invalid semid, which allocates and copies the=0A=
+array before returning EINVAL, rose by 5.6% to 11.9%. The 64-operation=0A=
+stack path changed by at most 0.9%, and successful calls in the root=0A=
+cgroup by at most 2.3%. Each result used 21 samples from three boots.=0A=
 =0A=
-The invalid-sem-id case allocates and copies the operation array before=0A=
-returning EINVAL, so it emphasizes allocation overhead. The 64-operation=0A=
-stack controls changed by 0.9% and 0.5%, respectively. The already-accounte=
-d=0A=
-1001-operation controls changed by 1.0% and -0.2%. Successful calls in the=
+Suggested-by: Shakeel Butt <shakeel.butt@linux.dev>=0A=
+Link: https://lore.kernel.org/r/20261016152609.2528805-1-x-professor@outloo=
+k.com=0A=
+Fixes: 6a4746ba0619 ("ipc: remove memcg accounting for sops objects in do_s=
+emtimedop()")=0A=
+Cc: stable@vger.kernel.org=0A=
+Signed-off-by: Yingjie Wang <x-professor@outlook.com>=0A=
+---=0A=
+ ipc/sem.c | 2 +-=0A=
+ 1 file changed, 1 insertion(+), 1 deletion(-)=0A=
 =0A=
-root cgroup changed by at most 2.3%, including the controls.=0A=
-=0A=
-The sysctl handler parses writes into a temporary array while holding a=0A=
-per-IPC-namespace mutex. The mutex covers the snapshot, validation, and=0A=
-publication, so a failed write leaves the live settings unchanged and a=0A=
-partial write cannot restore fields from an older snapshot. The snapshot an=
-d=0A=
-publication use READ_ONCE() and WRITE_ONCE(), and reads continue through=0A=
-proc_dointvec(). The unused sem_check_semmni() helper is also removed.=0A=
-=0A=
-The UAPI warning about physical fragmentation is obsolete now that the=0A=
-operation array uses kvmalloc(). The header describes SEMOPM as the=0A=
-compiled-in default and retains the uniform <=3D INT_MAX range comment.=0A=
-=0A=
-Patches 2 and 3 are unchanged from v4 and retain Manfred's Reviewed-by tags=
-.=0A=
-The series is based on 7be4bc52fd9e ("Merge tag 'driver-core-7.4-rc1' of=0A=
-git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/driver-core").=0A=
-=0A=
-Validation completed on v5:=0A=
-=0A=
-- a W=3D1 full x86-64 bzImage build;=0A=
-- W=3D1 i386 builds of ipc/sem.o and ipc/ipc_sysctl.o;=0A=
-- three paired boots of v4 and v5 for the root/leaf memcg benchmark, with=
-=0A=
-  seven samples for every path, cgroup, and operation count in each boot;=
-=0A=
-- initial and user-owned non-initial IPC namespaces rejected negative SEMOP=
-M,=0A=
-  invalid SEMMNI, and malformed writes without changing live settings;=0A=
-- zero and positive SEMOPM values remained valid, including the 1000/1001=
-=0A=
-  operation boundary;=0A=
-- concurrent partial, full, rejected, and successful sysctl writes complete=
-d=0A=
-  without stale-snapshot overwrites;=0A=
-- successful, EAGAIN, EFAULT, signal-interruption, and IPC_RMID paths relea=
-sed=0A=
-  operation-array allocations;=0A=
-- no BUG, WARNING, KASAN, UBSAN, or lock dependency report appeared;=0A=
-- strict checkpatch with the intentional CONST_STRUCT diagnostic ignored,=
-=0A=
-  and patch application checks passed.=0A=
-=0A=
-Changes since v4:=0A=
-=0A=
-- account every dynamically allocated sops array with GFP_KERNEL_ACCOUNT, a=
-s=0A=
-  Shakeel suggested;=0A=
-- remove the separate 1000-operation accounting threshold;=0A=
-- add root and leaf memory-cgroup benchmark results for 64, 65, 500, 1000,=
-=0A=
-  and 1001 operations.=0A=
-=0A=
-V4:=0A=
-https://lore.kernel.org/r/cover.1793207025.git.x-professor@outlook.com=0A=
-=0A=
-Review of v4 1/3 by Shakeel:=0A=
-https://lore.kernel.org/r/565d855cbd81e0f49018da21df00ff0308f646b1.17932070=
-25.git.x-professor@outlook.com=0A=
-=0A=
-Yingjie Wang (3):=0A=
-  ipc/sem: account dynamically allocated sops arrays to memcg=0A=
-  ipc/sem: reject negative SEMOPM values=0A=
-  ipc/sem: remove obsolete SEMOPM fragmentation warning=0A=
-=0A=
- include/linux/ipc_namespace.h |  3 +++=0A=
- include/uapi/linux/sem.h      |  7 +++----=0A=
- ipc/ipc_sysctl.c              | 35 ++++++++++++++++++++++++++---------=0A=
- ipc/sem.c                     |  3 ++-=0A=
- ipc/util.h                    |  9 ---------=0A=
- 5 files changed, 34 insertions(+), 23 deletions(-)=0A=
-=0A=
-=0A=
-base-commit: 7be4bc52fd9e0e55dc9a2e0232b89427d2c4b614=0A=
+diff --git a/ipc/sem.c b/ipc/sem.c=0A=
+index 5ec41de7e85b2..ea95cca5bb0ec 100644=0A=
+--- a/ipc/sem.c=0A=
++++ b/ipc/sem.c=0A=
+@@ -2234,7 +2234,7 @@ static long do_semtimedop(int semid, struct sembuf __=
+user *tsops,=0A=
+ 		return -EINVAL;=0A=
+ =0A=
+ 	if (nsops > SEMOPM_FAST) {=0A=
+-		sops =3D kvmalloc_objs(*sops, nsops);=0A=
++		sops =3D kvmalloc_objs(*sops, nsops, GFP_KERNEL_ACCOUNT);=0A=
+ 		if (sops =3D=3D NULL)=0A=
+ 			return -ENOMEM;=0A=
+ 	}=0A=
 -- =0A=
 2.43.0=0A=
 =0A=
