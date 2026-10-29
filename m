@@ -1,70 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=46.105.50.107
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.179
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793300002;
-	b=pywJINc2bgeJ5vz5qexKJU4F2CTDmuQG5ok2gZWzgt2BWEgqfIivg/Seu/0+cxfOYWzX
-	 os+ocQfC5iCjXxJW7kJJO2lhNpitw56vvQ85mp26qoV6QwOqmyT5Kb5KB+X8Za44dAh22
-	 HorI6qj82GdEqkHfK9bn6rWEVX3z70Yd8JnbqW3NTc1Jkmymw9JmFWfCr2oCG41OqGcx/
-	 JaOmi/puE1n2SWTluImegWm5vBZNbTjItAM/2iN3II1M0k00cjls92hx889tbQTxjRz8K
-	 zWOyZDTQsK0A5/CO0G2o5JrEaYOmcKB8Z/M9upvtCq6xMsaOkk6Q5E3Tm+gq2lJ9Rdw==
+	t=1793302738;
+	b=3KRy2kqPrryokNO1BiqKqMJ7Xfy+Lp9fnPZSRSEIyBhYhr6HTdNmff+XzIZbMKosDCzD
+	 AY+p5GRIQ4SDrtD3E5XPcijx216gDoDAsxPDC0CqJn2gnRsADn+BB4iyL4gnIdHkDtZu+
+	 yrlgWlY11QVnIdwmRdCUyRrlECyxM1A4BvT/vPsY4NrG1fEiA/ZM604HMmSLvX3C16rzf
+	 SBVuhqT+2V5x+qXHU6M6zbvgaz96F7XxmN5X502Xs9XnWN90aNLz+t4+NS9uwyxaKiqp9
+	 ULn9ubVU3K683YpiTHE8hhmqhJSBTWMxCEZavudJzItK5edU+FC4iOvneemnAS5sIkw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793300002;
-	h=DMARC-Filter:Received:Received:Received:X-OVh-ClientIp:Date:From:To:
-	 Cc:Subject:Message-ID:References:MIME-Version:Content-Type:
-	 Content-Disposition:In-Reply-To:x-ovh-tracer-id:X-VR-SPAMSTATE:
-	 X-VR-SPAMSCORE:X-VR-SPAMCAUSE:DKIM-Signature;
-	bh=yhrtAoUmb1ba6pgSshpme+NeuozvjU6Nr2zb8FJ6bno=;
-	b=POHEGQ1KA9ABTGe+MXx8zN6JcwvVcVXiTDA3R4DVDjHpTlVpUKf/PlZpoCbfWJ0bO2wx
-	 UDZEyGkHtSyF677Nj6syxdpJXT4569en8ji0aSFN3brNnlyKeeP9vq2R1Q6fQ2jKoATIx
-	 dezonTr7Qi+8KjyD2FnNNAckqVO1Ykp9PCsTZrdAijPCJh+RyFmmUXdU1m+CE9tqt/Qvp
-	 Df5rdRzHEvVTzsR4N8Gmy4msIQFVglmD55nwBOOuNy0iYP4nQSsG23LC5IlMXan3UTwoh
-	 WcPbCkt7LMYSW6NlmIXssYkdAfxQo3+17xxEe+1zhMugffq8VJZEx2WIduZnsTUybZw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793302738;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
+	b=Ry85wgPM60zt91icI0ogJT9QYbCaMNMW0544tCzRXOFElD/JIaRBQ72TKUm4nmI7plMM
+	 CB9VyRVQDBgRmuPPZoT1SPEo3t0uoa9s/0NP7itY8ngzPsXCP3wAtGB/nUY2+otSNE4mD
+	 kfaDALCeDtoThtIpOQ7CdkgCZt5rWB7WLPzHetdMjnqMtEZygP5fGyHhSz5Zwu3jdhnxV
+	 3d7NHOpHykHzMmPGv7mQFFSqq75LIosFUO7rftyv3c1nh+3xb0eei8IXrNt9z2VChhZq/
+	 8oRBJ1/02QoQ1wTeO6+I16ay+a2QqqBpWhIvzCUnefBgjSB5iVptFrrpOReM361Q2Gw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=3mdeb.com;
-	spf=pass smtp.mailfrom=3mdeb.com;
-	dkim=pass header.d=3mdeb.com header.i=@3mdeb.com header.a=rsa-sha256 header.s=ovhmo3617313-selector1 header.b=m8s+fdBI;
-	arc=none smtp.remote-ip=46.105.50.107
-Received: from 6.mo576.mail-out.ovh.net (6.mo576.mail-out.ovh.net [46.105.50.107])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	arc=none smtp.remote-ip=209.85.208.179
+Received: from mail-lj1-f179.google.com (mail-lj1-f179.google.com [209.85.208.179])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2ECFC606A323
-	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 18:53:21 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2ECFC606A323
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=3mdeb.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=3mdeb.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=3mdeb.com header.i=@3mdeb.com header.a=rsa-sha256 header.s=ovhmo3617313-selector1 header.b=m8s+fdBI
-Received: from director4.ghost.mail-out.ovh.net (unknown [10.109.231.5])
-	by mo576.mail-out.ovh.net (Postfix) with ESMTP id 4jFtfM4QN0z5vyJ
-	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 18:53:15 +0000 (UTC)
-Received: from ghost-submission-7ccd8bbbb6-zwq2g (unknown [10.111.174.98])
-	by director4.ghost.mail-out.ovh.net (Postfix) with ESMTPS id 1772CC21F8;
-	Thu, 29 Oct 2026 18:53:11 +0000 (UTC)
-Received: from 3mdeb.com ([37.59.142.109])
-	by ghost-submission-7ccd8bbbb6-zwq2g with ESMTPSA
-	id X7pGMReW42oUfhwAcildmA
-	(envelope-from <sergii.dmytruk@3mdeb.com>); Thu, 29 Oct 2026 18:53:11 +0000
-Authentication-Results:garm.ovh; auth=pass (GARM-109S0032d2b680c-5f01-4095-bf1b-8325b6a5fbb6,
-                    80E54DDF43994B3DD4677030DFD12DA1D43C0C90) smtp.auth=sergii.dmytruk@3mdeb.com
-X-OVh-ClientIp:176.111.182.218
-Date: Thu, 29 Oct 2026 20:53:11 +0200
-From: Sergii Dmytruk <sergii.dmytruk@3mdeb.com>
-To: Jiri Pirko <jiri@resnulli.us>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
-	linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com,
-	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
-	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
-	James.Bottomley@HansenPartnership.com, aik@amd.com,
-	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
-	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3FE71606A31F
+	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 19:38:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3FE71606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+Received: by mail-lj1-f179.google.com with SMTP id 38308e7fff4ca-3a9841363b5so291501fa.2
+        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 12:38:55 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=resnulli.us; s=google; t=1793302734; x=1793907534; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
+        b=FNBa56KT/9Dp2z4RqTJX4SmEdUz5QF0XsrQGqBzBDcfvePMHkyjRSZHgA2dL4abyfy
+         Z5mCosjvFkTxPpDmCgqoP7G7lT2FVFFUQ0YpXNjOUhaorkhdgy63Iaj0z/fMjsNDNf/C
+         B7N559oM1aQ463TkFMl4hlBO/WHCqunTmnc/UsMFfppEpnpGG5WUa9uxWJFZXCt4Mw4m
+         rz9/qKuz3+niyjl8T1wW4UCRCMZX5MVtZiU3CO2A9BHdOcdEtVxmOzi+D8+vZa+Jmmo5
+         /rJGHoehxWckvC7h0zyK1y6pn3xGNLKqI4ReeBj7jtQ2yBzeEYj7vSzrelBOMx5CX0az
+         WXnw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793302734; x=1793907534;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=L2bOsI/tPPOv5HbBwJUDpCwYmaK0u+9V6K9ALx35wl4=;
+        b=maCd/wObjRh+SuMqNEhUg3jOhWdy4UwI8IXyYF1p6jaVjldutdBA0Tf8+aGTHNyb9/
+         VgTCBlVU6/+5Ljs8ApN6nGEyo2SySilnFpw9Uwb33YVn0qVo7m4Rq4jMjE724SHHFPph
+         gG77i+V2+zsd0LlU5uTP7SU1gtE1A2270Ru+kQeB6NVUrUxvMe0nkYFECTnzNclcjYE3
+         Rlxf4HKNtPNkuwBi2az4Lnyh1mntI/JEUHyYmffl39C+mtKNbYUHl5S5+XZHWvAN2jdo
+         4cnlh8WR2t1QYSBS1l67kPgy8ktUzaXFYRDFlLECw9ATs1tTD7HR7PlLMqfHDx01efc0
+         dwNg==
+X-Forwarded-Encrypted: i=1; AKwUvByJRQ3s+ATeCq6+HHl1uFgjFnTOlfy4OtNVoYF62K6SWQ4d82ZPFj56sAoVU03GeLI1C6ZTk9ivG1I=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJi64hAzGvFgZpAhXTsntO1nTGAt0VgyAsJautaGnP8ItWWO1El
+	wmdn4wL2sW6/Ej9VqKoVXVMJSvm/6Bv9tW5qk8biCNI6GrxG7Vt6gD5b5A6ZIqFA6gM=
+X-Gm-Gg: AYBFou0xxckNaOi67tV/o3QpDlUqC1EJx2ZUIe1hBpm1rIx65nOvcHsPCQ24d7W+tUM
+	95rqs2m75L2PiRMEONIXNBAdWwhnQIKsENt0aRVQvQgKQueXmGzdlZS/5TCj2Pitg/28TGHY2Fj
+	M/xVHlIkG6W4L/b4BIo3edSMxuD143J10ezUq77k7rKLwU79SRiZ8Z6eWm02UVMaYUy8xntynO7
+	OllMHXjPELWu01mMCraZ6lph9Em2Dz4vD6++i1msvCyocRqI4hvA8v1GnGH4bxFAFVE8zQ/zfGL
+	Bs6jRkurFYScf1LTstDyFsjVgtPC2XVEdWA5DdtjhL19dRkcZHp4EWAoZYpQ/UKSp/NDWnowjhK
+	vFBCEujThdmnpo4fSgMDZwR/u9gRZbMoTVAiKd9dhdcTmKIpU9sc6VGTxoMzqYoM8crGYUrFYnZ
+	Uu+z9sCR5J0ijq1IuEC/FDoJYTJJMrKT+Eiy/uIXWc3zGf3+CFA8KsQ+gJcOKFeXKPCjEY2KlWH
+	TINRpzS7sOBKhsq9zPxIUZxTq+7HLUjpJ9ovPo7kSMIXDzncW/1pXmSJrA8kXZaucPnKNBh81ZT
+	BEdv9FSvsge8+Y5cg3zueEIgJ4qoqAs3y4QKEHsDnOIlj6tDwFblUImj4wg=
+X-Received: by 2002:a05:6512:3f03:b0:5be:414b:a84b with SMTP id 2adb3069b0e04-5bfcadda82dmr2380923e87.51.1793302734163;
+        Thu, 29 Oct 2026 12:38:54 -0700 (PDT)
+Received: from localhost ([208.127.45.21])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5bfd7ef0c2esm69050e87.50.2026.10.29.12.38.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 29 Oct 2026 12:38:53 -0700 (PDT)
+Date: Thu, 29 Oct 2026 20:38:49 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Jason Gunthorpe <jgg@nvidia.com>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com, 
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 04/20] Documentation: ctlv: Add userspace ABI
-Message-ID: <auOWFzX5N7HBbcH3@MjU3Nj>
+Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
+ and generated files
+Message-ID: <auOgwlGeW-vRGVb0@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-5-jiri@resnulli.us>
+ <20261015145053.3664509-15-jiri@resnulli.us>
+ <179302367452.58760.3782556786585774917.b4-review@b4>
+ <auMX4kbsflE9kK3Q@FV6GYCPJ69>
+ <20261029184324.GE3734323@nvidia.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -76,102 +107,48 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261015145053.3664509-5-jiri@resnulli.us>
-x-ovh-tracer-id: 10816238932508026193
-X-VR-SPAMSTATE: OK
-X-VR-SPAMSCORE: -100
-X-VR-SPAMCAUSE: dmFkZTFRGI1yaOcyDfLgNXjfMxwmupW2IW64ehzRIoHhqwLBlPIe0jAgyJB0LlqKu0wtkov5oTsfOtxqVTrvMp41g1IW4164qf3YzjiVMHIil3j9rRAWoNXx3GiQVReQC9kv4gSz1+UST8GFYnYUTcgZllXIwzyufvQL6rB4SnBRobHyvpxxp4dydBi/G8rhr8eTNISs6C4cfrkUVgVh7QKeICXeIwY/NFnauWbK7VIpUUiWDXk+YLgM8Xrc0YK6W+iMtkXMPrXLTTZNhDWHz5rTmMOLTH9a6noJ9yg9Av2enhV1YX1pjSh9SByPSMh2zOloOHaeU/23sH8dlgGVpp2yd+qdCaIUecu+GSVPgaiiaTXiehtOgnol/EoZXwLePR5UdIimdVYZb5Qw+AcAu+2J0BBPVoTDcM4s2p29HGv6yy4mIVWBMlvGFlyAG4aj3ruPUwlaE+0+mh2/ukZ7wFNm1sku5TQVNR7HekrGgJrKzmjGBvU3ehz+DRKLrZESgZQJvLco4t0qtdclxELox8oMIiInthotUOCqgUmbWPmg/m4avTiVBPBURxk/L5uNgMfpe5AykF3Hem0IlU2wb3CPxiTEhNmOMNtESfimASgjnyCbzJAr+PRkwq1tC3pciUiMMtjL4AnYax81+MXYx4nXeiJ7TMQYzlT0IxqUdSebWqIxUQ
-DKIM-Signature: a=rsa-sha256; bh=yhrtAoUmb1ba6pgSshpme+NeuozvjU6Nr2zb8FJ6bno=;
- c=relaxed/relaxed; d=3mdeb.com; h=From; s=ovhmo3617313-selector1;
- t=1793299995; v=1;
- b=m8s+fdBIL36ZAq008qBhqVz6RAHTHjlxNuQvwTcsNQlaE4Mtdv5HHoQW3qYXaHAGelZoqqDZ
- wuuSMUt0E7NFN1CiFV6+9Vh8s1iBHc1iVKFt2DIPaWlPJwo87MVwa6dh5F/YrWdGXOgdl+Af9lQ
- MwjUX7MhDUJRVXqprkwtKnRdRcqKELnJHjX6+CjhJ+s+jg1248O9/NsO72HDCmSBV2rg/dzRvuu
- W01X8YCRBGS8H+UEXtkKdL4CpYquFzR8HjASzSqNF2yzWuSNikI1oIUPXvVN+acwbjCuyW1vtgT
- PXQp0BFNgruNTNuLw5E/+1aKByLuIrenexkQlHKf3fTmQ==
+In-Reply-To: <20261029184324.GE3734323@nvidia.com>
 
-On Thu, Oct 15, 2026 at 04:50:37PM +0200, Jiri Pirko wrote:
-> From: Jiri Pirko <jiri@nvidia.com>
+Thu, Oct 29, 2026 at 07:43:24PM +0100, jgg@nvidia.com wrote:
+>On Thu, Oct 29, 2026 at 11:04:58AM +0100, Jiri Pirko wrote:
+>> Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
+>> 
+>> [..]
+>> 
+>> >
+>> >=======
+>> >
+>> >device-get:
+>> >  request: {}
+>> >  reply:
+>> >    caps:
+>> >      evidence?:
+>> >        min-challenge-length: uint
+>> >        max-challenge-length: uint
+>> >
+>> >Did anyone implement a variable length challenge? That seems a bit
+>> >strange. There is also a very important crypto warning here that the
+>> 
+>> Yes. TPM2_Quote accepts variable-length qualifyingData, represented by
+>> TPM2B_DATA with an explicit length. This varies per request on the same
+>> TPM:
+>> 
+>> [1] TPM Library Part 2, section 10.3.3, page 136: TPM2B_DATA.
+>> https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_2_Structures_Version_185_pub_c0a962a931.pdf#page=136
+>> 
+>> [2] Part 3, section 18.4.2, page 158: TPM2_Quote qualifyingData.
+>> https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_3_Commands_Version_185_pub_87a5c10230.pdf#page=158
+>> 
+>> The PSA Attestation API, section 4.4, also requires one implementation to
+>> support 32-, 48-, and 64-byte challenges:
+>> https://arm-software.github.io/psa-api/attestation/1.0/api/api.html
+>> 
+>> FIRME DEN0149 1.0 ALP2, section 8.12, Table 8.23, page 100, likewise
+>> defines an explicit Platform challenge size parameter in x4[31:0].
+>> FIRME itself does not mandate the specific 32/48/64-byte set:
+>> https://documentation-service.arm.com/static/699c3b70b60ef220b14ec14d?token=#page=100
 >
-> Describe the CTLV transport, discovery, wire format and userspace
-> compatibility rules.
->
-> Assisted-by: Cursor: GPT-5.6 Sol
-> Assisted-by: Cursor: Claude Opus 5.5
-> Signed-off-by: Jiri Pirko <jiri@nvidia.com>
-> ---
->  Documentation/userspace-api/ctlv.rst  | 507 ++++++++++++++++++++++++++
->  Documentation/userspace-api/index.rst |   1 +
->  MAINTAINERS                           |   1 +
->  3 files changed, 509 insertions(+)
->  create mode 100644 Documentation/userspace-api/ctlv.rst
->
-> diff --git a/Documentation/userspace-api/ctlv.rst b/Documentation/userspace-api/ctlv.rst
-> new file mode 100644
-> index 000000000000..5ebca3d4d94a
-> --- /dev/null
-> +++ b/Documentation/userspace-api/ctlv.rst
+>I feel like userspace needs to know the difference between 'any size
+>between 0 and 100 and 'exactly one of 32, 64, 128' ?
 
-[...]
-
-> +Errors
-> +------
-> +
-> +A failed operation returns a negative errno. Where the failure is a rule the
-> +message broke and the caller offered a reply buffer, CTLV also writes
-> +error information there in TLV form: a ``validation-reason`` value, a
-> +human-readable message, the offset of the offending attribute, the offset of
-> +the nest it was in, the ID of a missing attribute, and for a stale query the
-> +expected and the current generation. A buffer too small leaves it unwritten;
-> +the errno is authoritative either way.
-> +
-> +What the transport answers with, as against a family's own callback:
-
-It seems like this mixes results of several syscalls (e.g., `open()` and
-`ioctl()`).  Does it?
-
-> +
-> +``ENOTTY``
-> +    Not ``CTLV_IOC_OP_EXEC``; this transport has one ioctl.
-> +
-> +``EINVAL``
-> +    A reserved field was not zero, ``op_id`` was zero, ``generation`` or
-> +    ``cursor`` was set on something that is not a query, or the message broke
-> +    a rule of the format or of the schema.
-> +
-> +``EFAULT``
-> +    The structure, the request or the reply was not accessible.
-> +
-> +``EOPNOTSUPP``
-> +    The device does not publish the operation, publishes it but has it
-> +    disabled, or the operation is an event, which is read rather than executed.
-> +
-> +``EACCES``
-> +    The fd lacks the operation's declared authority, or an ``O_WRONLY`` open
-> +    was attempted.
-> +
-> +``EMSGSIZE``
-> +    ``reply_len`` is smaller than the smallest fragment the operation can
-> +    answer with. Nothing was executed.
-> +
-> +``ESTALE``
-> +    A continuation whose ``generation`` no longer matches. Start the query
-> +    again.
-> +
-> +``ENODEV``
-> +    The device was unregistered. Descriptors stay open and every operation on
-> +    them fails this way.
-> +
-> +``EBADF``, ``EIO``
-> +    A blob descriptor named something that is not a file, or the file refused
-> +    the transfer.
-> +
-> +``ENOMEM``
-> +    The kernel could not allocate what the operation needed.
-> +
-> +``read()`` answers ``EAGAIN`` when no record is queued on a non-blocking
-> +description, ``EINTR`` when a blocking read was interrupted, ``EMSGSIZE`` when
-> +the buffer cannot hold the record at the head of the queue, and ``ENODEV``
-> +once a removed device's queue has been drained.
-
-[...]
+True.
