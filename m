@@ -1,102 +1,102 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793266379;
-	b=v0eGjP1odRuPK6MhWpcDlf69XFBuvd+++78TBk0pj2Iav416YRLUx+VRDf3kJ8vNIGXL
-	 REMFvt3GDoYTWj3X+8XIffLiYI437CXM3aCnWBH/INLe+gMXxc2X8MJ07P0dzUhB20efZ
-	 tve2ie+SFYV4VAtQPHOxXbMLKmsRFRYMk7lvpXn5a8WbzburOVohU4Cp9Ru+SwTzOCNPy
-	 xc5driRH9aWySBOAvBCNLglF/JEsVobqejcJFdJKLteW8IdjizEemgScP/KarcLb27CpW
-	 +cT31hWyjMEbx+y2NuDTdDT5aDIATqbh9AKOkb+ZaFR9VPEIWcERvA55xxHtOGDiFng==
+	t=1793268307;
+	b=r5GJPYeU1M9QRgsgqck/aNFKDAm6+0II/5t6POUguAixEJCCdpW5lsks0NPLGc/I5OKZ
+	 bI4+CTxxdUkCuy73Oxnb3mNY+pge2PaBB2wARMOAga/7YgHa9tuV1hanfPL0TOpcVQTeU
+	 Kf9gzxyj0ErrUkeJbIsCB12JFUdnffkYAZxov8FZLBKc1Tw7qk/yGPH/fywwotkvEl0y6
+	 H3XYCANLLADfBPeh3Pr05lrTjUtkSDyxNyEt0xkHPt6nKRYG9S19TICfZJRW4fVZ6LGBV
+	 1wHwJCkxPhB3TBUQH0BHrxUOq8QFoqt8M0E4fe7QNlNsFp0yRbKOPjKA9UHAVSmjxMQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793266379;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793268307;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=25Xe2LGlhfjUVvHKZS8zB+EQgKUVnKIy/4iS8f7+DSY=;
-	b=C7GEUQjhps4eXz8vli1Vxy/+Z/PP3Yuo8+pw756PuYrrHqEvhCxqjWNx51VRKD4BbsgL
-	 78Bp1rt20sLihX2ZO9Wmh5IVouO7XTrqPcIeMG+H0enDPkK4XMdmqOQDmhOF9M+mG9WfS
-	 minokAADMv76RCDXA8Y/VwJrBSn69+FvIF4wlXBYUgqNsn2O0asHW0il9e2mo1Mv3t240
-	 N8klLcgGOaGVAcu9ofp+34bwqIheY3wrsO7hQKurUlV+yc5KMiLDWL6YofS3QwPluROhH
-	 KHmXFStVLSjTNElMbK81Mertq4dWU0nKw7H9sauxj83BJ+x6TBeHTJDFDdNvFBpsCow==
+	bh=HZ9giMsL3tTbnyDf/k62OFthNCmQXGHyiD+KvibTtRA=;
+	b=eCVqGD+jMf9TBdFEUA7C7KAeEfjLNIb52xSXshix7XyYRWiPHoIFvhdA+mmfNGQXemmV
+	 NE7tc6z2sln1D+fAfkQHBk18e5A7Y7ShhB+auPsEumsf4z0kc15mIdOL67tijsEwoxk+r
+	 yNuSC3bhzAEDmaBELCPnzTsNQe7uwKBnYDREn7/aGnrZsYsHpyUCq8LCrW6XJTX10VsCa
+	 tRzVveik8wqFJFXHT/DBlcVr1Qd1DrBn5gHKwWjv/o1JEEk45osPloQ9N253aTKin9NG3
+	 STrUfMlALb4YW2t68udrE3onhFbQmsogefX/mDO+cAdr7QQuLsNqSNQdGIFncLYB0mA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.128.54
-Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=H1R2lLqH;
+	arc=none smtp.remote-ip=209.85.218.47
+Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4D53606A31E
-	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 09:32:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B4D53606A31E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F3448606A31D
+	for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 10:05:05 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org F3448606A31D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4a207b02a2cso13028905e9.1
-        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 02:32:58 -0700 (PDT)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=H1R2lLqH
+Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-c40e30c26a4so105697666b.0
+        for <linux-api@vger.kernel.org>; Thu, 29 Oct 2026 03:05:05 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793266377; x=1793871177; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1793268304; x=1793873104; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=25Xe2LGlhfjUVvHKZS8zB+EQgKUVnKIy/4iS8f7+DSY=;
-        b=QH69CTU+mXD9r/mvEuahgml2HOKFQRQJRW8BDZn+++9cViMZQc/pcNx8tmGqUlzfst
-         VGUgif0Z8D7dZmUQqjKAyfKtT49slL0aATVCJvSp8Pah7juV8r8n2umG7Hsbtw7LWYXs
-         e3Lidy6xFzE4p4IJ/Ru/yw1c4e6NtsU5b+8JxoyD6sa+3d/+tTabLmRxA/oJ9qkiL1Ir
-         hP8YXvceBTsFHvjt4RNrthEjgcD61ucWib5a7uANRq+iQ6GS+WgvB3ZcOP3yzxdiOdOl
-         LJph8ZfuS8zWbl59DoBWEwStQfyFGxQ/qLXI6YS4TDEaxNEqX+9iCbR8qm/HQnRzaKUm
-         NX2g==
+        bh=HZ9giMsL3tTbnyDf/k62OFthNCmQXGHyiD+KvibTtRA=;
+        b=H1R2lLqHn2Lr6k+r6OdZgfppHvcjyP6TZWTLyu5FilYMTbK3u3CZpeuCjjZIdi4jnC
+         0TwveKR9jA6jVTkHNUrcAW5Tw1tmadniatMZ/qV5n4QHz4UpZeLMCH6YQcpCWNXHiqxm
+         sw8RqXVy0A85Vy4bcECMhm6L0/zQylmNx98oc9kMhu0oZgHWGKa9CkqcG5v4I07BYGt8
+         CgLVdi11r6LTfqrelvyydvPWPfjIYWzxZUqu9juiWWPud6Vj39Og6UeHebRhF8opkpqo
+         QTVfn2BUYNe+MeNX4dHVQkUb1CFSbYgbCR2R0c9GD4Um/2KcLIxENbQuIx0sssnOk+oO
+         cWpw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793266377; x=1793871177;
+        d=1e100.net; s=20260707; t=1793268304; x=1793873104;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=25Xe2LGlhfjUVvHKZS8zB+EQgKUVnKIy/4iS8f7+DSY=;
-        b=P+nhoCTdwNoawZGe5IETXuaURVY81N5B9iz2UPwJ3Zmaqufx4bF1BuG/MVmyDrn/CK
-         r0Yknya4AusB6vYne/X72jauw4HSW9uxYUMrvKpwyfiNbUmh2qzCYHewmqUDzLfYjKbo
-         RFE8ujvcDtT1u+ItieJxrX7Sgq2brRjIzb3iiPsvnX96vcCx4PgyzrKwW7ybI0Q0fQnf
-         sD/ERDvQQqFBp2EnM6s+k+u5zCihzsvFUqQH8I6YI+O0lqcdryzdD90qP2HHTmnG3KUz
-         UFQ2Ryb2YAqow4dh998HZeu2gD6tcL1Vbe9UChhwpY0Q6eWYbMvYQaAwy0rGWM31QXc5
-         UffA==
-X-Forwarded-Encrypted: i=1; AKwUvBy7rfkmGK4a7+f8t5ABU0Q9QgtlvTS/QfviQbr0K8CCQcRH9un7pDqEep9fps86Y2OYAsU4YpNgu6U=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIfBhUDCTsc1kgifcjMgVhyAu40RSkPGS/rHuDUxhOTGTjneblr
-	4JZbEA10+EkWcMILhF4HE2fDzhsjnBiwLMw70xG2z4WpoMZO8hnHFdMQGxtOhDxYc5CctVLKWGu
-	dgpfXW6c=
-X-Gm-Gg: AYBFou3Dvh1iHlLnpHipO7jlCm+PP83/SzgAk8q/sagHq2cVsBDUskKIZxcgcnnifXt
-	BgZ+aVlU5gbjQ07QemgNu+oxNXfHrBd8Micka60el1W2jpdUBexqhZNksWcy/JzuWsVvZjjJ08p
-	RqVrgiSvhcF3WwDbHDyizm4WRALCEoQs3nQtE1IY1xn1B62vKpP7PJLlu+az2cAJZ9z/6ITRf4g
-	plG6mGXlFiY4PkYiH32Z8YVYgpiLtWr62p08Z2DwdPtqBWwbhoAh875rlDrhXMQYnp6wmmdCf12
-	Yr6+dtT4/E8zcnyE9DD3N14TGgAWGBHfIwysE33KFZjV50Zx1phjvwkLzR7OGvWgNIl7uusCGkY
-	Lp5tUuyTD+6+J4doozzGi/4ZQ7GCsJWMVMl6t+VkQImKRURjAjrqnFPTxgxHbLsHCDT/mXbvs8C
-	XQWyIC2XCvqw/acWeCaFsRRyGC8vfBRwVI2gwTLOt0rvQ3gcYiDjXwqllBBdbe+LxH/5wBXjyCP
-	w1RaetERYyEYfDjrIPJJ6HvbRPDUSZSyVTPzGbhvxoaZwOTIfYI//ckFNuxTdSBviwxlFVA9oCy
-	ka/hQHp8oiNET4rL3G68irUeF5kkcN/ThXnrXg==
-X-Received: by 2002:a05:600c:1909:b0:4a2:1e1:d55 with SMTP id 5b1f17b1804b1-4a9675dc5cfmr104826795e9.28.1793266376792;
-        Thu, 29 Oct 2026 02:32:56 -0700 (PDT)
+        bh=HZ9giMsL3tTbnyDf/k62OFthNCmQXGHyiD+KvibTtRA=;
+        b=t8SO7ytUowWSkDQ/OaZ5o4MKAfRPZjZLWmrQr3nCQPTcueRYMBhpdXy1r7OZU/nn/P
+         XBnGto40DsTKP2B6bOTht5fYbt/Y1pXmL6Wp3Y2ZBby+fbTO8nN0w2rfzJGDehLmho/9
+         nB6nVrb98f3akUbk7B++jHZiVcy84I2FFxa2v0usaqivE3+3O+8V28+cEG4cVo7HK/QE
+         38Ptror1CG3BgOU7Bnvr9DUMusE612hc+NsS8yx1WwsPoTU34n946j1KjdWcdIMqotZK
+         Hu02fLu8pikZy/hcud5qNSypFtqvUlXvV8SXfOl2yCUGHPUyx6dCWWkmTgFfp16gQBTD
+         ndzA==
+X-Forwarded-Encrypted: i=1; AKwUvBzTJL6oEz58wgaDQIk3joX7uKH/X5xCE0vLxIZGR0N39GvOrktJhPztfufWMDXEPauj7o7xCsrZ/8k=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIeZljQQA0jWWEnGSDH41vTIt3Yj/zcPlVy37lV/9J86oPUnQmm
+	vVBQpCWndiKE88YsVluPZAbFhSlZoBeAz2UUl2RKZ88qcBPP21ejK2F5RI8KD3CqT5k=
+X-Gm-Gg: AYBFou2JlEAmnmHtR0L2oqXgu7h/do8+EHk3A6Z/s/EKLCUDtvScQUmxsD/PXA9xlpt
+	bfw9AqfguMw53VHO1HKQasTArFoLq0sdvTPjzBdye2h9kbySc3RFluDR2wbktcBVwyREB0RTlhE
+	7gSlJ7fXkymiAnlTZGmjfRHuQzaisOkCH4CJO6FvrZ4AJDffqzpFOVMMWIBq+XgnaLUHS7R2DpZ
+	Zny5q51UUcicv8ar/Zwytc0TUInO9pOgbVYnGgr1yujJCbSaFQcLx8CC6IeWvCn+v+YtrY+wCHJ
+	YZee7Ze2p68X7VJq4pnX1/QxdAyqx/7MNyjhbPSpQ3y+JvKvWzKsHi2CDi90lSC7R/rG5zJmQbR
+	eH7T8/3bWCHCPbLW7k5oY8V7a6ZUiPjArM+NPlqzCF0+1Rs7p4WTGjkUdJR4lRu5s/scS+sM7xW
+	K1H7fYjB6O3I9vpJ/sF32dSQbFj6c+2N9UVPkMbfgU93y3XhYqO+OfbBmo3LUaJhCLWLiVXceDf
+	UcFgt3IrNIPk2M9NadvsTh860l/F+yRJUbkR2tNey8l8yUeTbi0SHhJh3C2LdeFLw7rly6q3fvC
+	rWAlR3gCZRgju0HojFZ+GJHOEb5WjB7ZrcQrAA==
+X-Received: by 2002:a17:906:ee82:b0:c25:4d9e:bb28 with SMTP id a640c23a62f3a-c49d10fc56bmr194240166b.3.1793268303706;
+        Thu, 29 Oct 2026 03:05:03 -0700 (PDT)
 Received: from localhost ([208.127.45.21])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa80285b2dsm52889635e9.13.2026.10.29.02.32.55
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c46bd7abf6asm705408566b.81.2026.10.29.03.05.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 29 Oct 2026 02:32:56 -0700 (PDT)
-Date: Thu, 29 Oct 2026 10:32:51 +0100
+        Thu, 29 Oct 2026 03:05:03 -0700 (PDT)
+Date: Thu, 29 Oct 2026 11:04:58 +0100
 From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: Dave Jiang <dave.jiang@intel.com>, linux-coco@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, 
-	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+To: Jason Gunthorpe <jgg@nvidia.com>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
 	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
 	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
 	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
- support
-Message-ID: <auMSPNNXZv1f43v7@FV6GYCPJ69>
+Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
+ and generated files
+Message-ID: <auMX4kbsflE9kK3Q@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <592d643f-e97d-4de8-9a87-e47d57dc8457@intel.com>
- <20261027193629.GK1685504@ziepe.ca>
- <5f33aeed-a20d-4881-9ccf-a69bc308d348@intel.com>
- <20261027234658.GL1685504@ziepe.ca>
+ <20261015145053.3664509-15-jiri@resnulli.us>
+ <179302367452.58760.3782556786585774917.b4-review@b4>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -108,31 +108,52 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261027234658.GL1685504@ziepe.ca>
+In-Reply-To: <179302367452.58760.3782556786585774917.b4-review@b4>
 
-Wed, Oct 28, 2026 at 12:46:58AM +0100, jgg@ziepe.ca wrote:
->On Tue, Oct 27, 2026 at 04:09:19PM -0700, Dave Jiang wrote:
->
+Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
 
 [..]
 
 >
->> >> 6. tdx_attestation_test's discovery_and_construction_fields expects an
->> >>    inheritance chain of 4, but the TDX family inherits ctlv-attestation
->> >>    directly, which gives 3. In a real TDX guest it fails with
->> >>    "Expected 4 (4) == ctlv_chain_len(self->dev) (3)".
->> > 
->> > I would have naively guessed this should inherent from some SPDM family?
->> 
->> The TDX family is the TD's own attestation (TD report, Quote and RTMRs), with
->> no device or SPDM in it. In wip_attestation_all_1 it inherits ctlv-attestation
->> directly, so I think the test's 4 is what's stale. Jiri would know for sure.
+>=======
 >
->I think TDX report/quote/rtmrs should be a different familiy from TDX device
->assignment SPDM. They are completely different things.
+>device-get:
+>  request: {}
+>  reply:
+>    caps:
+>      evidence?:
+>        min-challenge-length: uint
+>        max-challenge-length: uint
+>
+>Did anyone implement a variable length challenge? That seems a bit
+>strange. There is also a very important crypto warning here that the
 
-correct:
-1) ctlv-attestation-tdx
-2) ctlv-attestation-spdm
+Yes. TPM2_Quote accepts variable-length qualifyingData, represented by
+TPM2B_DATA with an explicit length. This varies per request on the same
+TPM:
 
-The spdm instance is backed by particular implementation/transport.
+[1] TPM Library Part 2, section 10.3.3, page 136: TPM2B_DATA.
+https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_2_Structures_Version_185_pub_c0a962a931.pdf#page=136
+
+[2] Part 3, section 18.4.2, page 158: TPM2_Quote qualifyingData.
+https://medias.cdn.trustedcomputinggroup.org/production/Trusted_Platform_Module_2_0_Library_Part_3_Commands_Version_185_pub_87a5c10230.pdf#page=158
+
+The PSA Attestation API, section 4.4, also requires one implementation to
+support 32-, 48-, and 64-byte challenges:
+https://arm-software.github.io/psa-api/attestation/1.0/api/api.html
+
+FIRME DEN0149 1.0 ALP2, section 8.12, Table 8.23, page 100, likewise
+defines an explicit Platform challenge size parameter in x4[31:0].
+FIRME itself does not mandate the specific 32/48/64-byte set:
+https://documentation-service.arm.com/static/699c3b70b60ef220b14ec14d?token=#page=100
+
+
+>userspace use of the challenge must not create a "signing oracle". Ie
+>do not pass naked network data into the challenge..
+
+Agreed that we should document safe challenge construction.
+
+
+[..]
+
+
