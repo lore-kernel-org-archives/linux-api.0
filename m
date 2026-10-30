@@ -1,100 +1,102 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.53
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793372065;
-	b=P4cmxOEgvaUXRuqgkiPhK1f0VIupw7t2Het03LazZDOGH91bIRHi0/yGztRCjZ3/1MVG
-	 Kcn4TJk44xKUv8Up3w8Jaz6eYaHA3X0Qq/7m/gKHNugi84XDx5+aiqPZ5C3E3ZI0OvJTO
-	 40wEESB4crsd3z9slr6ucR6V9jKOxsWh0zN0KlK3E+SnLoh5YYUS/HNLpM/EJCgIHH64c
-	 tPULGDeVqld3pDbRETuVXQEs8LyfkW0bkLBq7PXJ0qAAMlbQA4sQ92BfWrjagEsNIG+9h
-	 8q0VpIt4YQCM7+LhzM+hdXkpPs57vc/YC9+EueEJStotEHc/p6NKrVL2wmbulXyOGnA==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793372065;
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.51
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1793372580;
+	b=qO4HS6gQy69/kQG+enifvD1Iahtlgn4v9Fo3Ut0q4lzvF8nfvoXul0JmgvXZll6Lt7SD
+	 +bNirM8QnVNlwhm6WwMrma+0KGYyOX9GGqyTVvHuLkB4wKn1ogG5oD/IX0oUbMJ0/Rvy2
+	 TJ/rf9PhJZvwl+/aKr6A+mUWtOl28Ge5n+PDzDG5izKNcf3OIvQ8Ei5quC1IUsspTm8wy
+	 gqsOSNQUUS/4WeXzRokRH2EqaTUQ5qOwmuOgHC/BN1FR5HYtarjBMGQhm0law9fVy2SCI
+	 zSpGSBe5VIYc1iYD8ppmRseWSdFzZwo6VZ22q3QAlD/AVL8SvdBfTGZD4yJbfTLpNQA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793372580;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=jMsUz0CmedXWqrdh2TheB4BjYFtAJcIsl6CPDLvVdyA=;
-	b=EI+IuyQaQXEoQGxZwP2GWzmzhQdsnqaGJiM6dPB/ZTUTl0h8Xsrzkoeka1kAbsMMJVAP
-	 AsFvmP8hHSBxeEnIDdg598l46Lg8LXngaM+09TmYo0VlcZmiCY8+rZqGh2Kfbv0epb6e/
-	 fqzKDYNtg1AW9p6g3EhBLF8hG1AXp2tgwPuizAMF3z+9exi61toZk04OlQu8QBTe2OHfI
-	 GXPyyOhpwZbw6d1SbYzKu5ULo3LxyExSPbiKl74kect4GGCicYwvKH1N7A48uLmaLkJBx
-	 IN/Aq222jiPffj6mp7t1/p8C8Qrb7vfWsaU7i4tHGnvtY9a+WnjFS9K1xRW03tP2ljw==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amacapital.net;
-	spf=pass smtp.mailfrom=amacapital.net;
-	dkim=pass header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=llSAjB83;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.53
-Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
+	b=05muC9mvGHuE5Px65VvXMw58LBWF9he1AW5mNaTQimvkZKxzxIzdy41F+3pQsIqWONZP
+	 /9Ea02jzdYj4EvwqzGfFAWK/c5EInmT8PzEA0oWhG3ZAKJhg3qvcHBRLdUAUiEJ0hQEFF
+	 CHCvvG6sprA3N7izd8B5oqS8SgI8H0crttLqh8/xgONCKlgJiHniPHDZ57ZW8/D/4oMRk
+	 Z3hshd7Wc1L/NMelgoSW+0EqXLgZB+zxu05JnGprSbla+1HZuAv+XC6n8jIE8M4BzUAAI
+	 6EEZRzJAkm/9qNoFYwCTj7C+ASDACcdEuqauPHHfmU7Azzj/M274anIUm+1AwGlhFmQ==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=wwfcN5xh;
+	arc=none smtp.remote-ip=209.85.128.51
+Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B4C43606A31C
-	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 14:54:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B4C43606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C88A8606A31F
+	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 15:02:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C88A8606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=llSAjB83
-Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5bcb0f245e0so797744e87.3
-        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 07:54:24 -0700 (PDT)
-ARC-Seal: i=1; a=rsa-sha256; t=1793372063; cv=none;
-        d=google.com; s=arc-20260327;
-        b=o4s0OlHz/iiTKfYSGLGNA2uCbbATMsK+vlTaCfJpu9M/nvLAk3XsCq8kQutgvRk6uA
-         Agp5av9AdgH4bf3rwnEJa+L7DelwcCpkTdA5PaA3Ygla51PYHIbg5JliWCYgnXluBTRX
-         OxTTWhrxs3z/qDg5mWv7Sm/F/sGw36ZXd6dJ//wifGygUR37y/9YSY+MAPRz2VndBYqW
-         JFLUqCzFYjoHmiBJZBewOBKwGX3CurRsWNf10aBbCJdQ7qkLApyRtU3LsSzjOmJVw1Eo
-         onmcihjpoDSQvb3l/C40ttJSJEFwXQnaoBxLgySEypKIgHW8Mpg8JzvMIzs0g0FawGrd
-         Ihhw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=jMsUz0CmedXWqrdh2TheB4BjYFtAJcIsl6CPDLvVdyA=;
-        fh=CRtDCB9f85XNfwBvmLiEc8nzUUQhresVDpA5y+EEAk0=;
-        b=EWoE3aRbjVCHighU8vwdS9TtAxnaE7828bAqqru0tY3dVJ06N6d8Yh6jrheMbZ6c5/
-         OkB5TJ1Q8Yt78c393ZnuMiN0QHLBhUjg2hrYHvcNxNA3PGxoQR44dgGj0t5jBlBzGbji
-         cDhT6wZwlMHs7VjkBLw5LpH91gKoPlioCzOT1cvxrH6IfWYQkavJTutGkO3vN+0gsJYz
-         lueKoLmmyrJC5xgpO1BLm06DiavpMoIXUKyN80UgLmUm6jtHLwigWY0XGNkPOWFli4tJ
-         tiBQp3V4L31KY7dBOr3v4SW7h296WAoQ9fq9qIC+KiiMDtg9lXUTslIRn9pL/P4G9S/D
-         heXw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=wwfcN5xh
+Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4a5087a5348so6262755e9.0
+        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 08:02:58 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1793372063; x=1793976863; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+        d=resnulli.us; s=google; t=1793372577; x=1793977377; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=jMsUz0CmedXWqrdh2TheB4BjYFtAJcIsl6CPDLvVdyA=;
-        b=llSAjB8353GhiWJmW3lo0k47FpkVKUdOxkuIOEucyL686RRVtqlcVe+w6TaigBAncs
-         RuBiEjJ5RrmdukHl9fbglfLqkd2Dg+gjSdyMfUNinYhI7lTg3SjhAWHlmdLd+D8lytl0
-         M1Rn3HwniQdcK7QDZQC67l3ULytWecMDkddi/H2Av5rBgVEioLJ5lIUl6VdFcNi8F8Di
-         ZlrBvbaHyHBGra4g6QxFHMA0e8cVrMPmfnPiJB8gTSMYPlzsJT2zqxQo9dExYOy/fmGw
-         DBqyFbwKfTBpdLVueOJy00qtFaDWF4VRQSHd1hnmI3eyBv0v9uPa3/SYP6vznJSqPqAm
-         FduA==
+        bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
+        b=wwfcN5xhJxmJIEs/AzLSOKGoZTkD6+8NGP2qYbyNFhJ3ZePhPC12lXgsmIHSzpBzcO
+         71d0fBrr1/B0EVWRwTU4JSXXvJ/Wr1eHyWOr6vbvgmdkDIWvglRqf4i9q++G0XE3NJ8i
+         S2xNR+q8cf0+NqHemf9xQpAofRPyggoeqvaCmnZTKQtViK6XnkkmWIqV5NXQQ7TxzVF2
+         ZZ0TVZcs3kkfzqhYZ3v4MGg348nCq3l3bT/bwopwha2MLL2cYn1f5N9xcPZtRK96BFm0
+         9J6dNo27JRTdybTsDSGt55KhTK18zZR2Ab+2mEsVjSiKfFzKHINGh8jYyPI2Ol1FvCLG
+         s7kA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793372063; x=1793976863;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
+        d=1e100.net; s=20260707; t=1793372577; x=1793977377;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=jMsUz0CmedXWqrdh2TheB4BjYFtAJcIsl6CPDLvVdyA=;
-        b=sS43/Csu6fhNK3vpBhSWXi9v84lc6P4GZHmsoEjZJKDjs+HbBB5nTnp40UgUXVEDHk
-         ZK0GiARuhmLUrLESQNk/0PGg+Cdp5yksskvQCCQmvvVf5HeQc41FO96GkGlNl9/z7Je3
-         IcmXaa6poKG0HCF9fbNqeTGIWCRlYnL5KxORvThzoj+tYfPnyetO/BaO7pH4JNzqc4+M
-         KzD8Vxit3kxoQsPUDvlokbVkkmc8+/m4P8Rrh7kvYAwfD+fD0DkbIrQm7ctQQX9IqR91
-         bezbiyVta9TlFEhWeIr4/G52SJJLJCLV+zAU+lpjqZD2wVQ8YpU+hjeH++pzyeRJNV6D
-         QSkA==
-X-Forwarded-Encrypted: i=1; AKwUvByx+X8u35Z7RsLmC1w/N+CMAZpGI0iEK1z6C+8/SOVyqOQN44etuslv7286h7hQFuFaCyHWOezVBy8=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIU1pclaj38nenzDnLQ2qbMbbs6j7XYpTiFY6ox7VxzPEWpINgE
-	0iUbYYvrU6D/0THf1SAI0mMGAbDCog96OF5ixAadZxA6bgdS7DT46m0Co+PPzxxbR+flor7Po+m
-	P6yQE10vdZwrHyd6wO/8yHTbk9Xkz4FyFh1f0FgAq
-X-Gm-Gg: AYBFou2Yhds8xBf8Eon3fnlYemlfb2lkXjWfMjLwCSFF9CbGZ9Kf9wYAMikcD03cnsj
-	H9mkSB4RVFQThKPJed0DAfF/vor9cQ2xV/xmUoMbd4vEGVgOSYC+Wd5i566ujL+rdTrF7T7Hw3V
-	TViGgIevup7DzIjTHmIqeMImrO8KHxkgJrwum28SAYvZPMvSDzJxNgegEmhHLxsi+5+EW6pFApK
-	NvdQnda6JBc3F40NWfXMWm0S5CtTTIOPiqJYcYSy5A1ry9si42CclkHl+6tXPRtXUetKzDlu18w
-	AfyVaSjx/ieM2g9D0zr1h4vLDKpNqbYsws0W4aGB47648WfdkkkGU4ghAOfTEITBCwy8OiPcP+5
-	xafxzasxix+EfYJNN81KohcQqy3wSnBvGsQ==
-X-Received: by 2002:a05:6512:3402:b0:5bb:7b2a:5b2d with SMTP id
- 2adb3069b0e04-5bfd9566d37mr824353e87.35.1793372062806; Fri, 30 Oct 2026
- 07:54:22 -0700 (PDT)
+        bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
+        b=CKN+8JzVcXy18mUk23ENGTvS6AwemGCz4w7OOT/2RtEzh9R8yeTGJz5LI/E+FkvFDA
+         OIiW6UPIDPDOzZagTcmFBpP1gLbQpd5Q2tC86eRz5I97Hl6maiDu5+96waW2iF4jXGTD
+         EXwXvanxGOhlUXQkXt57YVqPFJ1omu5IMg7UDsZlLjA+3xbtxxu6sKHSTO1cCpnPJ0Bb
+         OuuxocC6yEGPqJRSvqitzNLAtqCEv3RIxh7CUtwckZwxajWy5VGxY4DkMyoXDE5lFUON
+         zRr9hDILiQEc1DWV4sbCnfIVlp1Wc5ZDKPvmZACEFVuUxw0lWWffIz5tcygc+ZyZm26A
+         8gBg==
+X-Forwarded-Encrypted: i=1; AKwUvBythkDnMeZ0IA5cUt9XYRcv+OYAW9wtaYf458xk875bvIfewJceOtWdtlKi76pGmUfEK2q6VxmvWtM=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKfYNoBGFVU+1kksREd5hwXkezGg4SNPkMahS3m+lMnN7D8Ufcq
+	lZOTm7A4Td+kWLrJsDC009/XIxguTvDGpRRaU+j657Ad5bbcqjyyWRcX/9V+cvbcZEY=
+X-Gm-Gg: AYBFou2s7k39VNZkNQRUYL2rA3nYQB5opo0Bu5Oz1DdNN/Qxv4wJMUYq3cCmqy7ouX4
+	7odSsp63i3qG22OVVCtA+RyxMT2ypjSlkrj/CpqfSYvX3hWtuQzKiuwm8DCbT2iK2faqgbtumoB
+	TNaqJcP02zBji/3z7tdzWxvsTCPlIqN348jC7yJQHyyPGzB752YtKlwLsf2umz55O+9Aq/HqFVf
+	RCeiWf6ffA/eAAhab0xoVtwFYMJTXIFqT4SEvUIj/aLPz6ZKnj7XOT9+XV9u/qfUdmZSXlZIcRd
+	soCTLzcbnWYb5ZnwXV1zao+iEVr2AkiAHDtobU7j+TCy7rXWeAt9c+wa/Dr041sAD6ooBhYtAq9
+	EcJ5v8V9PQ2/PkrBUJeSY3H/Fz00plPNB68n2jwf7GYqcofQjpjSLSdO0uHSqlG8WHCcaghgwRr
+	nSXxG3uVyzxBOrosqEwLtWZRcPVr1Wvp5qexr/N48QcScHlv0MU+SC6qOt2gKX9If+DMNbaoLUB
+	e5XtfBBZM8Vmna2Djv/qCTusrE7Cd/RbAUsw/Jmxv4qmmcM0EwvFSVTeNN8wWGxLmJd5zbJqRZQ
+	/cFMRyIiGLxyr9xrRS7hl88jBDuZJYtQ60nGZuk5
+X-Received: by 2002:a05:600c:a00d:b0:4a5:e6fd:65e5 with SMTP id 5b1f17b1804b1-4ac19705d57mr55863395e9.31.1793372577101;
+        Fri, 30 Oct 2026 08:02:57 -0700 (PDT)
+Received: from localhost ([140.209.217.212])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71b81c74sm3623785f8f.36.2026.10.30.08.02.56
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 30 Oct 2026 08:02:56 -0700 (PDT)
+Date: Fri, 30 Oct 2026 16:02:52 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Jason Gunthorpe <jgg@nvidia.com>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
+ and generated files
+Message-ID: <auSxhgC30bubNJpI@FV6GYCPJ69>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-15-jiri@resnulli.us>
+ <179302367452.58760.3782556786585774917.b4-review@b4>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,108 +106,31 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261026220546.3114241-1-skhawaja@google.com> <CALCETrXNEWQNPjtuHnTfVFOafeJ7APXq288Cq16Q5adDNYx9+A@mail.gmail.com>
- <auEksxfAi9lHFXmT@google.com> <CALCETrXDY2e8x2kdr-FQvFLs-Y7FwNozXGDvqqM6yvVA7QLV3g@mail.gmail.com>
- <auPKfqh_YjRU9Ui3@google.com> <CALCETrUEyfvaEGxMHo=c0ia3CDgSxg-YW0_=Z7T31Ou+pvicuQ@mail.gmail.com>
- <CALCETrVpEP=HxVqdSP_AgA=U7ignwAgjz5Vi9+Z9dZsX5DXeLw@mail.gmail.com> <20261030121259.GC3889730@ziepe.ca>
-In-Reply-To: <20261030121259.GC3889730@ziepe.ca>
-From: Andy Lutomirski <luto@amacapital.net>
-Date: Fri, 30 Oct 2026 07:54:08 -0700
-X-Gm-Features: AclHuK8DrMlKsyKpQjiDV0_C05DMTWGTaa3ilPqU973TM9OhhHNjeL5jGLxSymM
-Message-ID: <CALCETrW6RUgTGFuqx+cxV0c+Oq4d-P5C8AQ2ja0ESMP_8JGpxg@mail.gmail.com>
-Subject: Re: [PATCH 0/2] mm/memfd: add F_SEAL_PUNCH_HOLE
-To: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: Samiullah Khawaja <skhawaja@google.com>, Andrew Morton <akpm@linux-foundation.org>, 
-	Hugh Dickins <hughd@google.com>, Baolin Wang <baolin.wang@linux.alibaba.com>, 
-	David Hildenbrand <david@kernel.org>, Muchun Song <muchun.song@linux.dev>, 
-	Oscar Salvador <osalvador@suse.de>, Jeff Layton <jlayton@kernel.org>, Chuck Lever <cel@kernel.org>, 
-	Alexander Aring <alex.aring@gmail.com>, Shuah Khan <shuah@kernel.org>, 
-	Gerd Hoffmann <kraxel@redhat.com>, Vivek Kasireddy <vivek.kasireddy@intel.com>, 
-	Jeff Xu <jeffxu@google.com>, David Matlack <dmatlack@google.com>, 
-	Pasha Tatashin <tatashin@google.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
-	linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <179302367452.58760.3782556786585774917.b4-review@b4>
 
-On Fri, Oct 30, 2026 at 5:13=E2=80=AFAM Jason Gunthorpe <jgg@ziepe.ca> wrot=
-e:
+Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
+
+[..]
+
+
+>> +++ b/Documentation/ctlv/abi/ctlv-attestation.yaml
+>> @@ -0,0 +1,184 @@
+>> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
+>> +%YAML 1.2
+>> +---
+>> +# Checked-in ABI snapshot of the ctlv-attestation family, written by
+>> +# "make -C tools/ctlv abi-update".
+>> +#
+>> +# The checker compares this family's declarations and inherited stub fills
+>> +# against this file. Updating it is how a UAPI change gets reviewed; an update
+>> +# that removes or renumbers anything, narrows a bound, or makes a placement
+>> +# required is an ABI break, whatever this file says afterwards.
 >
-> On Thu, Oct 29, 2026 at 07:11:25PM -0700, Andy Lutomirski wrote:
->
-> > I can't shake the feeling that the problem here isn't so much that KHO
-> > + iommofd doesn't like this but that the behavior in question is
-> > nonsensical.
->
-> It has been this way for ages, like David says if userspace shoot
-> itself in the foot it should not be surprised by this illogical
-> behavior..
->
+>Have the generator emit a line showing the original yaml file this was
+>generated from?
 
-I dunno, a couple weeks ago I tracked down a 20+-year-old bug, and now
-it's fixed :)
+Okay.
 
-> You can get the same nonsenscial thing with just mmap too, you don't
-> even need a memfd.
-
-I feel like there are multiple levels of footgun here.
-
-mmap anonymous (or MAP_PRIVATE), pin the pages, munmap: okay, mmap
-creates unnamed private memory, and munmapping is maybe like unlinking
-a file -- if someone else is still accessing it, it's still there.  In
-fact, you can mmap, fork, unmap, then mmap in the same location, and
-your child process still sees the original memory.  It's not clear to
-me that anything is wrong.
-
-mmap anonymous, pin, MADV_DONTNEED: okay, this one is starting to be a
-small footgun.  But at least it's pointed at *your own feet* (unless
-you've forked, which in which case maybe it's pointed at a related
-process' feet).  I would still argue that the kernel could notice that
-it's false that I "DON'T NEED" the memory and fail or ignore the
-request.  And the kernel's pages are still anonymous.
-
-mmap a named file or memfd, pin, truncate or punch hole: who says the
-footgun is even pointed at my own feet?  If I mmap a named file,
-SCM_RIGHTS it to you, and you mmap it too, and then I punch a hole,
-the rmap machinery had better invalidate your mapping along with mine
-(and get the TLB flush right!), and it would be an unambiguous and
-severe bug if this didn't happen correctly.  After all, what you have
-done is to assign a *logical range* within the file an address in your
-address space, and nothing I do should change that fact (except,
-sadly, truncate, which can give you a SIGBUS, but your vma still
-logically refers to the file).
-
-So why is the kernel exempt from keeping its own mappings coherent the
-way it keeps user mappings coherent?
-
-What if that memfd (or tmpfs file or whatever) is shared between
-multiple processes that don't trust each other?  One of them can cause
-it to become incoherent from the perspective of the other one's use of
-kernel APIs.
-
-
-
-P.S. You can access the offending APIs from a VM guest using balloon
-in typical implementations.  If the host userspace does not strictly
-enforce that the guest doesn't balloon memory that is not ordinary
-host memory *and that is absolutely not in use for any sort of
-kernel-side pinned-folio IO*, then the guest may be able to cause the
-host kernel's or hardware's view of its memory to become incoherent.
-Heck, host userspace could literally use a memfd to share memory
-between the guest and a separate host process that implements a
-device.
-
-P.P.S. It's possible for there to be a legitimate security boundary
-between user or guest code and a future version of *the same*
-userspace or guest, via DRTM.  Someone should build a guest that sets
-up some form of host-kernel-pinned-folio IO (IOMMU or simply a
-host-side emulated device that works this way), then
-DONTNEED/REMOVE/hole-punch the memory, then do the DRTM dance and
-attest to its state.
-
---Andy
-
-
---=20
-Andy Lutomirski
-AMA Capital Management, LLC
+[..]
