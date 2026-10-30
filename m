@@ -1,85 +1,85 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.51
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.45
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793372580;
-	b=qO4HS6gQy69/kQG+enifvD1Iahtlgn4v9Fo3Ut0q4lzvF8nfvoXul0JmgvXZll6Lt7SD
-	 +bNirM8QnVNlwhm6WwMrma+0KGYyOX9GGqyTVvHuLkB4wKn1ogG5oD/IX0oUbMJ0/Rvy2
-	 TJ/rf9PhJZvwl+/aKr6A+mUWtOl28Ge5n+PDzDG5izKNcf3OIvQ8Ei5quC1IUsspTm8wy
-	 gqsOSNQUUS/4WeXzRokRH2EqaTUQ5qOwmuOgHC/BN1FR5HYtarjBMGQhm0law9fVy2SCI
-	 zSpGSBe5VIYc1iYD8ppmRseWSdFzZwo6VZ22q3QAlD/AVL8SvdBfTGZD4yJbfTLpNQA==
+	t=1793372719;
+	b=zDvHkA+f0d+DRV0tqAgV7bMkfEH/OjJPjS63kmHurlRjYLISTwG8gSz+wAnRvtThaoRY
+	 daUEJ2zZFHjXx/gg2yJuRwxtn+x/O13sE3L2TupaBXcULw9qtHzTWIxpfan52+XMz2PYi
+	 PTe2t/5sd7cT5LsT3h1bknj6JE2o+21bVY4fgcmnfnBm3vTCM/EanqyeMTYpHGWMXh1eR
+	 TXJdk3v/JztxtZdLnq/G1lJnySCNXHvIQ41J6gpidNYCBImW3XyDRtZUZ1zQpdurASfMj
+	 QQpDCXbP9C430qAuid7vkmXg6VnInHf7z6Q+1COM6wWTW3eYwIwJuuvYmDOFYv7361w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793372580;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793372719;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
-	b=05muC9mvGHuE5Px65VvXMw58LBWF9he1AW5mNaTQimvkZKxzxIzdy41F+3pQsIqWONZP
-	 /9Ea02jzdYj4EvwqzGfFAWK/c5EInmT8PzEA0oWhG3ZAKJhg3qvcHBRLdUAUiEJ0hQEFF
-	 CHCvvG6sprA3N7izd8B5oqS8SgI8H0crttLqh8/xgONCKlgJiHniPHDZ57ZW8/D/4oMRk
-	 Z3hshd7Wc1L/NMelgoSW+0EqXLgZB+zxu05JnGprSbla+1HZuAv+XC6n8jIE8M4BzUAAI
-	 6EEZRzJAkm/9qNoFYwCTj7C+ASDACcdEuqauPHHfmU7Azzj/M274anIUm+1AwGlhFmQ==
+	bh=8skhpE8x/+Won6i3+XD12raNMCS4xOoCCKoDLeKTESk=;
+	b=Rvs02NeonEeS+U3Yq9piD5GdTJqNVsEHMfgGXltaH/mCLkjcXKiq4FmVTBBJzlpK19Yi
+	 zsPN2Pc5LXRlhZh3OGJJuRPsuPPIWAV3ywOiCoQ3uq7jB5tufYdtY3qTTjzHWG9OAYv5U
+	 1WvCbWEemfNw+AjryGT8+fpepW9EixAFiJpPL/gMnwH1L4UiaABabsXTz46usKAuM5ePW
+	 Qgqj+Ry9tFNNUSoCvFRLNIfKpH+nQG/CphZLq8tPTJ9mdFOlh/tSu241aRfUwy96bPrEf
+	 KUbfd5DMj/7sQFhlqYDLZ98829DQSARuPSZTSi2I1tsO/p6wYqtbvC67JzACEY5XsgQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=wwfcN5xh;
-	arc=none smtp.remote-ip=209.85.128.51
-Received: from mail-wm1-f51.google.com (mail-wm1-f51.google.com [209.85.128.51])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=czkACChM;
+	arc=none smtp.remote-ip=209.85.221.45
+Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C88A8606A31F
-	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 15:02:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C88A8606A31F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DCDAD606A31A
+	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 15:05:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DCDAD606A31A
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=wwfcN5xh
-Received: by mail-wm1-f51.google.com with SMTP id 5b1f17b1804b1-4a5087a5348so6262755e9.0
-        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 08:02:58 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=czkACChM
+Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-48af4d4e61fso467869f8f.2
+        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 08:05:18 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793372577; x=1793977377; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1793372717; x=1793977517; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
-        b=wwfcN5xhJxmJIEs/AzLSOKGoZTkD6+8NGP2qYbyNFhJ3ZePhPC12lXgsmIHSzpBzcO
-         71d0fBrr1/B0EVWRwTU4JSXXvJ/Wr1eHyWOr6vbvgmdkDIWvglRqf4i9q++G0XE3NJ8i
-         S2xNR+q8cf0+NqHemf9xQpAofRPyggoeqvaCmnZTKQtViK6XnkkmWIqV5NXQQ7TxzVF2
-         ZZ0TVZcs3kkfzqhYZ3v4MGg348nCq3l3bT/bwopwha2MLL2cYn1f5N9xcPZtRK96BFm0
-         9J6dNo27JRTdybTsDSGt55KhTK18zZR2Ab+2mEsVjSiKfFzKHINGh8jYyPI2Ol1FvCLG
-         s7kA==
+        bh=8skhpE8x/+Won6i3+XD12raNMCS4xOoCCKoDLeKTESk=;
+        b=czkACChM1Vp//qoKfk5C/DvEMQvaO2yxTtnTnNrUz1iZrGkpmjYA7sRpCOkiK85OR5
+         DKyVNu3yHScYnpTV8mEyNjy0GM6AiGkEY+yqMV2kwhj4nogM5hBtnMNrDyDvhJfUP91Y
+         2qLHj18b3y+ItwylHnK3AxAJpQcnWODG8q5TOy1izMOxysmu/gE3PBKDvsyiMMeYHPdN
+         L37BWcbW4GBGw63knHhhcjI2CyLf8W45aZwoP+DUdcfn7pfklTtyoTc13Ps5EzD68ze2
+         PhwKJwRPpHLlcw1quPe3gfGrKyhVNOtKuxcCOGPE+MqRlL4wQREaJw+p9SN5GR4rJNeH
+         4qQw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793372577; x=1793977377;
+        d=1e100.net; s=20260707; t=1793372717; x=1793977517;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=LD3FTctKH+htDtI40/USwM/+YwDf042Qy6l0BgbuGzY=;
-        b=CKN+8JzVcXy18mUk23ENGTvS6AwemGCz4w7OOT/2RtEzh9R8yeTGJz5LI/E+FkvFDA
-         OIiW6UPIDPDOzZagTcmFBpP1gLbQpd5Q2tC86eRz5I97Hl6maiDu5+96waW2iF4jXGTD
-         EXwXvanxGOhlUXQkXt57YVqPFJ1omu5IMg7UDsZlLjA+3xbtxxu6sKHSTO1cCpnPJ0Bb
-         OuuxocC6yEGPqJRSvqitzNLAtqCEv3RIxh7CUtwckZwxajWy5VGxY4DkMyoXDE5lFUON
-         zRr9hDILiQEc1DWV4sbCnfIVlp1Wc5ZDKPvmZACEFVuUxw0lWWffIz5tcygc+ZyZm26A
-         8gBg==
-X-Forwarded-Encrypted: i=1; AKwUvBythkDnMeZ0IA5cUt9XYRcv+OYAW9wtaYf458xk875bvIfewJceOtWdtlKi76pGmUfEK2q6VxmvWtM=@vger.kernel.org
-X-Gm-Message-State: AFq9FYKfYNoBGFVU+1kksREd5hwXkezGg4SNPkMahS3m+lMnN7D8Ufcq
-	lZOTm7A4Td+kWLrJsDC009/XIxguTvDGpRRaU+j657Ad5bbcqjyyWRcX/9V+cvbcZEY=
-X-Gm-Gg: AYBFou2s7k39VNZkNQRUYL2rA3nYQB5opo0Bu5Oz1DdNN/Qxv4wJMUYq3cCmqy7ouX4
-	7odSsp63i3qG22OVVCtA+RyxMT2ypjSlkrj/CpqfSYvX3hWtuQzKiuwm8DCbT2iK2faqgbtumoB
-	TNaqJcP02zBji/3z7tdzWxvsTCPlIqN348jC7yJQHyyPGzB752YtKlwLsf2umz55O+9Aq/HqFVf
-	RCeiWf6ffA/eAAhab0xoVtwFYMJTXIFqT4SEvUIj/aLPz6ZKnj7XOT9+XV9u/qfUdmZSXlZIcRd
-	soCTLzcbnWYb5ZnwXV1zao+iEVr2AkiAHDtobU7j+TCy7rXWeAt9c+wa/Dr041sAD6ooBhYtAq9
-	EcJ5v8V9PQ2/PkrBUJeSY3H/Fz00plPNB68n2jwf7GYqcofQjpjSLSdO0uHSqlG8WHCcaghgwRr
-	nSXxG3uVyzxBOrosqEwLtWZRcPVr1Wvp5qexr/N48QcScHlv0MU+SC6qOt2gKX9If+DMNbaoLUB
-	e5XtfBBZM8Vmna2Djv/qCTusrE7Cd/RbAUsw/Jmxv4qmmcM0EwvFSVTeNN8wWGxLmJd5zbJqRZQ
-	/cFMRyIiGLxyr9xrRS7hl88jBDuZJYtQ60nGZuk5
-X-Received: by 2002:a05:600c:a00d:b0:4a5:e6fd:65e5 with SMTP id 5b1f17b1804b1-4ac19705d57mr55863395e9.31.1793372577101;
-        Fri, 30 Oct 2026 08:02:57 -0700 (PDT)
+        bh=8skhpE8x/+Won6i3+XD12raNMCS4xOoCCKoDLeKTESk=;
+        b=Tkx4h7yFWnga1eHnGhDbh9vNRYYELTgtYykdi+vuIairy3CaI3TZUP063IH6iMiEVm
+         EvhZI2ovo+i+BCVy2KTMccBDO0cBSVQK4lBuiDWxnwksTDUPoFnfQuOBRb07PpNlSYpV
+         rec+7PBRa8ZtSIWy6H3sjF/fudckdepx5YqO2N88ow3zzTnyPKssAAopN7Jnjm/5/XI3
+         DoGw0dYHg/JB6LAzbPZIJwpRfMLoPVikKnS+R6gqxPMQ2zrHzlfmWYAGR2bpvhqFXzwL
+         QWpew8Axs+jswmiXm/NpdNwvkMbe+wd+6f8sBpiWRK8r9gIpL2xkkXHB85l+cXPFxbAc
+         rueQ==
+X-Forwarded-Encrypted: i=1; AKwUvBxyFP5+Mjv5A5jl4ixP997GB6FUv3XZlZtHCepElpNFA7MZULE4YgEpOGcFhbUOHPKjIqgJdIjoc3w=@vger.kernel.org
+X-Gm-Message-State: AFq9FYKUoV3J2OtvAgNJsP/NxSjvezq59iwxHU6kfd+RKJY8v0x03i/A
+	kWsl1SMyWSj8ac2on3kEL63xRBUriu+rfxNggFbIRDV7zxBWVQF42mHR81ubY7W9NwY=
+X-Gm-Gg: AYBFou3TRHnwjnRDTk/oxHXBtggLUCUh9C6o9eZ5vlma6gmujeS/Tzw0AQo8fVq1/+D
+	l7qI2oT8nTxSLSmvcQ9Iy4b7qoF7U4daPMFgDEAAq8HPNF0cNON0sdSzuqAiF9e6Deb968pu6dw
+	Fc28pRM40S8ppc/0i2sHome1xOwBx7OPf0pfA7Ih0oLbouhuMSW4havWLzA47RZNUhAg10hUKW2
+	93CuAQOYAA38M0LDjhqjNYwiSch2m7yKhX9HgmNw27RbUpQ5VNpx5l1vjmy5Rr4i5yvRfcN8/zj
+	jw1Sb2Zw67q5DEgDFGSILSr1yq9GoICAG2KvEpj7H1z4ZNZy0904h+qtRV7xXOVCiLv+8q6zn2s
+	VLX8CkgmbMEIcPIW/xcY2P2o08uhLPZjLqDovVMe6DhIcfag575SvflYT7x3L6N4Ah0GTmIWUp6
+	3VFPK/LlsaLZs7PUI4/8rxSxdGEamK14GHDjGQZVL/oQmqnImy+jPaXEDSFynAPuamy3FUknC9L
+	g6E8913NE/kwzZ3QNrF1EG9d9vV1GE2xr+j0dVymwpNm48i+iShfFtjtApZ/GpcX3YPaL6s7Xrk
+	4qo5rg0BzgJoMVc/GROq1G+1eBR4Vh8zW3ZRXiQq
+X-Received: by 2002:a5d:4ec6:0:b0:48c:7143:610c with SMTP id ffacd0b85a97d-48e6e3091c8mr5024505f8f.36.1793372717264;
+        Fri, 30 Oct 2026 08:05:17 -0700 (PDT)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71b81c74sm3623785f8f.36.2026.10.30.08.02.56
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71b77f06sm3716923f8f.21.2026.10.30.08.05.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 30 Oct 2026 08:02:56 -0700 (PDT)
-Date: Fri, 30 Oct 2026 16:02:52 +0100
+        Fri, 30 Oct 2026 08:05:16 -0700 (PDT)
+Date: Fri, 30 Oct 2026 16:05:13 +0100
 From: Jiri Pirko <jiri@resnulli.us>
 To: Jason Gunthorpe <jgg@nvidia.com>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
@@ -93,7 +93,7 @@ Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
 Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
  and generated files
-Message-ID: <auSxhgC30bubNJpI@FV6GYCPJ69>
+Message-ID: <auSxxPM5z8BzgNm3@FV6GYCPJ69>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
  <20261015145053.3664509-15-jiri@resnulli.us>
  <179302367452.58760.3782556786585774917.b4-review@b4>
@@ -114,23 +114,35 @@ Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
 
 [..]
 
-
->> +++ b/Documentation/ctlv/abi/ctlv-attestation.yaml
->> @@ -0,0 +1,184 @@
->> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
->> +%YAML 1.2
->> +---
->> +# Checked-in ABI snapshot of the ctlv-attestation family, written by
->> +# "make -C tools/ctlv abi-update".
->> +#
->> +# The checker compares this family's declarations and inherited stub fills
->> +# against this file. Updating it is how a UAPI change gets reviewed; an update
->> +# that removes or renumbers anything, narrows a bound, or makes a placement
->> +# required is an ABI break, whatever this file says afterwards.
+>> +
+>> +/* attrs of group cap */
+>> +#define _CTLV_ATTESTATION_ATTR_CAP(_attr) \
+>> +	_CTLV_ATTESTATION_ATTR(CTLV_ATTESTATION_GROUP_CAP, _CTLV_ATTESTATION_ATTR_CAP_##_attr)
+>> +
+>> +enum _ctlv_attestation_attr_cap {
+>> +	_CTLV_ATTESTATION_ATTR_CAP_EVIDENCE = 1,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MR,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MIN_CHALLENGE_LENGTH,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_CHALLENGE_LENGTH,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_TOTAL_OUTPUT_LENGTH,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MR_FLAGS,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_OBJECT,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_BLOB_CLASS,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_FORMAT,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_REPRESENTATION,
+>> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_LENGTH,
+>> +};
+>> +
+>> +#define CTLV_ATTESTATION_ATTR_CAP_EVIDENCE _CTLV_ATTESTATION_ATTR_CAP(EVIDENCE)
 >
->Have the generator emit a line showing the original yaml file this was
->generated from?
+>I feel like there are too many layers here for a code generator..
+>
+>enum ctvl_attestation_attributes {
+>   CTLV_ATTESTATION_ATTR_CAP_EVIDENCE = CTLV_ATTR(CTLV_FAMILY_ATTESTATION, 2, 1),
+>}
+>
+>Do the intermediate constants add anything?
 
-Okay.
-
-[..]
+True. I originally had it like you suggest, I changed to enums to avoid
+the explicit numbers. But you are right, does not add anything.
+Changed back.
