@@ -1,108 +1,98 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.48
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793373081;
-	b=qSHb1DSaQXtoIALpSVFYGLPUWW2mgZtkOXOcBWv+nKPmNTO9S5m6eAbV2PLQg93GeDvW
-	 vJs65PwvrVd5yGJdKtD82XY/JsWTd8mtar8GbokRKMlmm0IZKFT43k54VXU7lZQDWH5NW
-	 sKuK10UjWAtbfq9g+VqkAOJlPm4OVZQ25wx4EYsT6P3z0RT7VqEbEuc5K9GAlsfod/wn9
-	 S2IA87Rzp6v4El2Lm4t+Sl4r/Wq/yf9KOgF7RNjCpmdiirVUNcJoYvLj8LTbDi9xSYva2
-	 iIfjI+Y+kE0FvRqNIzeTkYgIx0LJaDzGMaPNj5szAGiJ0m/iuve0SFyKTF8oifGlSaA==
+	t=1793382029;
+	b=VUwgGlR5GtLaTtAPEDdoPLd7S6wPDFVzGouLlGjk+Gie2NRM26AHBrFPeaPXrVk+yj7+
+	 tlK9gGHGghodRNyIfvZaf//D+ZATioJ+R0pycPdYoXGVoxS9UUlcSoyDv1ogAd4sFdIvz
+	 VNjIV2/fZewIEoRYN6A6jP66zfRNmQ9T3PbR+whIxLbg46UseYT4KemiFpG5uUugUnUov
+	 pGtfK8/HsqgRFD+CTo09Xr6e0lcG5/EuspD8iU3aaWpUkYGb1HRGp7j5V/NyvZT9VQcF5
+	 ZTcvNDYBKy56iPRsPAkYRKrPHAdicSPTQWMY3fGO0oieWYCVWrRYCxV7LtzbbqnPVnQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793373081;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793382029;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=SknYW3+pVsCwOENllYU3jowrrCPEotGjBjq9wVk1tW0=;
-	b=FUewqWowp9YSmne3K4bxMwHrtRMpq0pOnlTmLvWHZcxHemKULCAFKuhqg1i1t9IqIIVV
-	 GHyrcLTREZOhmy1+055rrgBWaX8n4PeYp+uNrZ36vOMO9Y/eLV1+oHkFfiLP5fLV6GmMR
-	 CyMoolFXlpz8FUJmxQ3l3yhrdZKLCG0O5qrvOgfaG+pKHgv9W6sFJUPYQwz8LkXcitybN
-	 hV8L0Ij2vVK1xntWGBetj9yuiAVbhUG/zGj6e3qtnQKHa9Q4PHOoBQXhV/zLp0Mc1Ip4m
-	 X1U+F8BhbddVMjLxtr+ytQEaQ20mhKfz52Atleyy41laE6idD1Sbqt03TqBlE3QkVOQ==
+	bh=GHjT9rUZ9mZdmwhmeKnY8H1ENZyPrLJ45wFlFoMuMrE=;
+	b=e6YQGdaflvNMaBoCrns7YQriFy8MP/wGEMd0L8pWMIU+LGsUSF97ojMKivN5NRvxkzTh
+	 aQmlaE+4Xl3DbZdhtkdHgwx9RJ+s+NprLcY3nzMPuhNnCC8IWmMcCgZq4Oqrf+t/7xVf7
+	 9rNC8DqqALzka81MqogBx0uLQ+G/nM9Tbb91LWddfnNi3qOXBgq3mZn6FdhsH8i/zedGQ
+	 MgG6nAhKdO3sBCq04drsg3T6COSBpJbDPML+DCOuoIl5VkaSOcZqMeX0aibd5VGBWYx7K
+	 EmwOlN57om3VRmeeOmXDRlIWsOJHfup9SVYgUq5MJtdVksZ10cJ6WnKCmJ9xlCv4EPA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=ziepe.ca;
-	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=VAnxgq+X;
-	arc=none smtp.remote-ip=209.85.219.48
-Received: from mail-qv1-f48.google.com (mail-qv1-f48.google.com [209.85.219.48])
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=hFGIcN54;
+	arc=none smtp.remote-ip=209.85.214.169
+Received: from mail-pl1-f169.google.com (mail-pl1-f169.google.com [209.85.214.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74B59606A324
-	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 15:11:20 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 74B59606A324
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 02A5A606A31E
+	for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 17:40:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 02A5A606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=VAnxgq+X
-Received: by mail-qv1-f48.google.com with SMTP id 6a1803df08f44-91c8fef5ce2so10281046d6.2
-        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 08:11:20 -0700 (PDT)
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=hFGIcN54
+Received: by mail-pl1-f169.google.com with SMTP id d9443c01a7336-2e9f6a16afcso2095ad.1
+        for <linux-api@vger.kernel.org>; Fri, 30 Oct 2026 10:40:28 -0700 (PDT)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1793373079; x=1793977879; darn=vger.kernel.org;
+        d=google.com; s=20260707; t=1793382028; x=1793986828; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=SknYW3+pVsCwOENllYU3jowrrCPEotGjBjq9wVk1tW0=;
-        b=VAnxgq+X4QCFTDu9AfTIw48AdlrmXvNeSuIaONQhqFkWoVPXZBz84mze+bQQdrgAhR
-         Yb1qIjdcTWGrZL1vyxFrdGovjWe0C1rwpn88C7tgXg3BW1x/vT+4lppONNZ8N5T4dIZF
-         A86w3AiVzzJlHYHoWjb+ZBekF/EkxgqB5kFZzSlRgpVyxvegFwpmbFlwECZi5LehdbEw
-         fPlvuM+bv9BCs3E+qbixvAbLVr2hTUtX7fpfDGGuE5hdiG5M5JPOPvHVD91ix6/f0At2
-         dnlRKLnPnupUvjaDpJdUG/mHdwTGSxDI+PfrEZRHaKDbgB1fY52C8lRrarj8WAIdi77C
-         HTkw==
+        bh=GHjT9rUZ9mZdmwhmeKnY8H1ENZyPrLJ45wFlFoMuMrE=;
+        b=hFGIcN54HxCRWLwn+m1Xl4QEQDE5/cl5x+KQSXQJyEMT7wiQkby7aqDXSx488THYoh
+         f5kvplnhqeV9H0k5RQGHt7kvJo1UxJbeygdqm1NlxybFI+IKbH5B7sosuiPbjK5SSmUx
+         wfmzHB3MKh0KJszVevX1LoLIVaWH1EN5bVX41aH4OURNcHbwHQxwGDqCkdH3LymLeTv5
+         wfhlyhEtPWyaNF3C5seBSdczetIWvRQsxsEp97tep86ff1DRBcxuV80CfWJKgoaMWYjs
+         TksrH2ngp09wtcLUCyFJnya0jRB+MDR/3mR4e3RHUskJbg9rjzdXrJ5mEBF4fwPsGYs2
+         gUnw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793373079; x=1793977879;
+        d=1e100.net; s=20260707; t=1793382028; x=1793986828;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=SknYW3+pVsCwOENllYU3jowrrCPEotGjBjq9wVk1tW0=;
-        b=BYJA5qXCUWzsc6XDZaVwA+rBWV0rfygkedSZFesrLtCq9ZUB5nWy6jvNDtmMgntP2J
-         N11QmmhW1U5OOaxjUoWdKLk2WC7G2y75Mu52//lk2eBbFENJnz7uzPA19JboYnlXLkVP
-         J5Rm7dU9nvRfGLRHSWSH9RNs/7dJYJMgmgWKoI1i/hCiG7wHtpDyKanQ9XIltb0Qt5Sx
-         hEnV71SGQgDIF7Nb1R7GLsNCjLS+RY+mPGiEhBix8kwuDeOVbNTAZZ/Es6q8h7kVfLAd
-         L7uFEsct/j/ZZgrYTYrApMgmgYukRBuuM1k938ysqbDZgzxfN5eQJaDWVEDVh88/RIki
-         qT/Q==
-X-Forwarded-Encrypted: i=1; AKwUvByso53i2EwSc7OXZIQ9dBbBoQFS2+/CBERZWZdk3IRvuC6WmNWWPOtfL08JwdcJFSTapEfqqbjBzdo=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIwJpWGrLuBmfrNnZmbCKPRmbBk7PhbAlSvWq+RUz68OC+Rktq4
-	86ZGAr0lvH+gExl4E32JABzYbPSPuiOpjVw6oN1qgbGkmG4tYbVPL/z1OrsjubF+QJI=
-X-Gm-Gg: AYBFou3oPT8a0VSs/GyxhhWc/k9jlU2i30o6h2uK804l9XBzWTl5geJl1o8fG3mgpZZ
-	9XbywT6ggsudA4+GSvaw3E8Lmu/3AFRCfk205veCHN7gvSZ2JIHQuHR/g9ckSsNf75kWjrPTxvX
-	8XYbmyGpUHGncmGO9GnvNhIbemGf33JmfaKsVV2LwL1a2CPsJVB2E8B9jGAqq6NWUz6VSQg3MEv
-	MmOAPvLlFpld8PCT8BL/g35ST5NwkSCKW1FtB8EgknXXkd20BOvLGkQogY8GatrkfloiFnuzhb6
-	1BWsiSIy1fzOB6PQSZix/CK3PZzeDUtoclz/xR+Fsm6WIvWrR3V+C6s4Q6GaXn2wPJzfbyWLh7D
-	Omev4uUlYQ59wP3rCbTjCGEPO2h6KvHl7RC/eUXhFKucHs6UHKj0CdHj7kslETUR5g9ZnU6P7aS
-	1Scrr+MJb70DBfbcnyDiWvKmX6svv7tjS8aSNU0M73c79WGnnBBTwjaNcGtk/JmJ35H6s36M1Mz
-	g8ZpV0GmU0yQEn2lMTWQc5GYWlCHPuA+51Fun7PvBwHnLlBKOlUCpetN/uiouUF565K8vVxJKkp
-	aFp/kuSRXXbJ0IqzBky0a9iqNWjthFZ/Q7kRQTLHiR3BjNf9SlBIZuGxUl4vWpK7ZPyL1ewkNuJ
-	I+3D3bVfiWc0=
-X-Received: by 2002:a05:6214:29ec:b0:91c:5fc4:ec2f with SMTP id 6a1803df08f44-91ca4b0dc32mr40691666d6.26.1793373079235;
-        Fri, 30 Oct 2026 08:11:19 -0700 (PDT)
-Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ca807047bsm17117606d6.39.2026.10.30.08.11.15
+        bh=GHjT9rUZ9mZdmwhmeKnY8H1ENZyPrLJ45wFlFoMuMrE=;
+        b=siDj9upZoUr700kuwwQqXTPjS+VPO+Aktu6xhET/9cl4IVH2IpoDk/XiDg8loHJhv6
+         pmsSiD9TnlKNiGG/Z1Oo38AOXpCWCoMA7C7HhJ/TPvPCIcTaSocj30qEv6Nn+lzd6mxr
+         nqDe6SAiEWDCcFWL0N5llCyKdP5JbX3/codfP+p0tvC8OG2hMo5mFVpuiuAwTIy0/rRR
+         4+wE78b1w0eqPQ5U69CY3pCMMG+5LBX5+1C8dqSmnkwoRxHD28PXJAPfkeyRtDY3vqJ7
+         dDfzDqbSYKVWh0UwRh18wOjdeUkWwzzGkbzAt1ut3I7TQtVXqzahoQHBZClFnPr0nR/6
+         kOKw==
+X-Forwarded-Encrypted: i=1; AKwUvBwfXlhhw+J0IJHoX0AsW+tODSJQB0Xvcq26Lo2jqN+WTyiXSjqGWN8DeE74TynEzF54XFs7im97zRU=@vger.kernel.org
+X-Gm-Message-State: AFq9FYJ5wnwGUhh7hToOwDeoHIL902VItaKVgnnP20y+I33TECoe4CyT
+	i5K4dXHBq9wPqpFGxANlPR09BMm6yKqe5Bieq2Yfcmnz0WofhDl+pcohlMtCmdqbIg==
+X-Gm-Gg: AYBFou3dl4ywXnW52u8ZcxZmsaT8WDOJdY62GUEFc0YXAH+nyDe3l0e952eTET/XEBi
+	dG6flaUIn1rV0UpkoBRCi29s60gr5Yh3MALHEYqG1oYCTadkXFCqh/RuSTK99tW9bjCMGqssbck
+	pdoBM1KBc0V+ff2w9wZ7SMiPgb1H3eCfWfEyka/EBIy8Skb2/Idshxto5hz8fBe0/PELzXorFw8
+	+ijoiKjDn+l5EXFXALO/yzfpvE9uX3s+Wrc9WWmRAhvc7yF+vjvXS4bRId070bsxOf8R5gIfAON
+	ldGmoU/mXiKkw438BedZiL9u8ZnqCzTeYSeeLdAoqgL4I+Ui0dGnIIgimReARsIOjZMB1do5FS1
+	3jPRLuxyk5uuc9sDXm+8eHoPyTEX1u5EDVfp/Mnp/QGyg7v6n29NmoCYXmfYTj5+XUTgKhW33mp
+	UerNPQP4JheGHDPnOZ+aFnA8ICBBHMdy+E52UjxsMSfLzC56nrppHrVhkpHAnC4r6tbMxT6k8Gn
+	55MCEzKtLVhF5NIMpl/wuWnwyCT2weZWjnag7SZdx9cfxfr9xo4C28akK3GNWEpIX8gkJFHFUBt
+	ML5y7sSGco5R0r9s8Lg86K4jKsgZFsD1RewPbvF5UKFxhVS89JCcRMm+BrheLMr7wpW9j28g5u5
+	+/NV2laTvMr0oE9djf+BPuA==
+X-Received: by 2002:a17:902:dad1:b0:2d5:c090:3810 with SMTP id d9443c01a7336-2eb1b6c6ae5mr11320655ad.2.1793382027347;
+        Fri, 30 Oct 2026 10:40:27 -0700 (PDT)
+Received: from google.com (25.75.145.34.bc.googleusercontent.com. [34.145.75.25])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8aada9aadecsm286624b3a.48.2026.10.30.10.40.26
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 30 Oct 2026 08:11:17 -0700 (PDT)
-Received: from jgg by wakko with local (Exim 4.97)
-	(envelope-from <jgg@ziepe.ca>)
-	id 1xMoGB-00000000v1Y-0kVg;
-	Fri, 30 Oct 2026 12:11:15 -0300
-Date: Fri, 30 Oct 2026 12:11:15 -0300
-From: Jason Gunthorpe <jgg@ziepe.ca>
+        Fri, 30 Oct 2026 10:40:26 -0700 (PDT)
+Date: Fri, 30 Oct 2026 17:40:22 +0000
+From: Samiullah Khawaja <skhawaja@google.com>
 To: "David Hildenbrand (Arm)" <david@kernel.org>
-Cc: Samiullah Khawaja <skhawaja@google.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Hugh Dickins <hughd@google.com>,
-	Baolin Wang <baolin.wang@linux.alibaba.com>,
-	Muchun Song <muchun.song@linux.dev>,
-	Oscar Salvador <osalvador@suse.de>,
-	Jeff Layton <jlayton@kernel.org>, Chuck Lever <cel@kernel.org>,
-	Alexander Aring <alex.aring@gmail.com>,
-	Shuah Khan <shuah@kernel.org>, Gerd Hoffmann <kraxel@redhat.com>,
-	Vivek Kasireddy <vivek.kasireddy@intel.com>,
-	Jeff Xu <jeffxu@google.com>, David Matlack <dmatlack@google.com>,
-	Pasha Tatashin <tatashin@google.com>, linux-mm@kvack.org,
-	linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: Jason Gunthorpe <jgg@ziepe.ca>, 
+	Andrew Morton <akpm@linux-foundation.org>, Hugh Dickins <hughd@google.com>, 
+	Baolin Wang <baolin.wang@linux.alibaba.com>, Muchun Song <muchun.song@linux.dev>, 
+	Oscar Salvador <osalvador@suse.de>, Jeff Layton <jlayton@kernel.org>, Chuck Lever <cel@kernel.org>, 
+	Alexander Aring <alex.aring@gmail.com>, Shuah Khan <shuah@kernel.org>, Gerd Hoffmann <kraxel@redhat.com>, 
+	Vivek Kasireddy <vivek.kasireddy@intel.com>, Jeff Xu <jeffxu@google.com>, David Matlack <dmatlack@google.com>, 
+	Pasha Tatashin <tatashin@google.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, 
+	linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
 Subject: Re: [PATCH 0/2] mm/memfd: add F_SEAL_PUNCH_HOLE
-Message-ID: <20261030151115.GD3889730@ziepe.ca>
+Message-ID: <auTR9SnDLsLVmnJ7@google.com>
 References: <20261026220546.3114241-1-skhawaja@google.com>
  <d4891333-43ea-4d74-9fb9-6ad8dac1a446@kernel.org>
  <20261030121113.GB3889730@ziepe.ca>
@@ -116,30 +106,72 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Disposition: inline
 In-Reply-To: <2c7aa5c1-3af3-4654-b244-1257d05c9d45@kernel.org>
 
 On Fri, Oct 30, 2026 at 03:39:40PM +0100, David Hildenbrand (Arm) wrote:
+>On 10/30/26 13:11, Jason Gunthorpe wrote:
+>> On Fri, Oct 30, 2026 at 11:20:30AM +0100, David Hildenbrand (Arm) wrote:
+>>> On 10/26/26 23:05, Samiullah Khawaja wrote:
+>>>> This series introduces F_SEAL_PUNCH_HOLE, a new memfd seal that prevents
+>>>> holes from being punched into a shmem or hugetlbfs memfd while leaving
+>>>> the file fully writable.
+>>>>
+>>>> Background
+>>>> ==========
+>>>>
+>>>> Drivers such as udmabuf and iommufd (via IOMMU_IOAS_MAP_FILE) use
+>>>> memfd_pin_folios() to pin the folios backing a memfd and hand them to a
+>>>> device for DMA. Pinning keeps those folios allocated, but it does not
+>>>> keep them in the file. If userspace later calls
+>>>> fallocate(FALLOC_FL_PUNCH_HOLE) or madvise(MADV_REMOVE) on the range,
+>>>> the folios are dropped from the page cache while the device continues
+>>>> to use them. The pin holder is never notified, and from that point on
+>>>> the device and the file silently diverge.
+>>>
+>>> We have the exact same situation when userspace maps anonymous folios into vfio
+>>> and then desides to MADV_DONTNEED the pages. Or any other memory backend that is
+>>> used for such purposes.
+>>>
+>>> User space must not zap/punch things that might be pinned elsewhere.
+>>>
+>>> That's not specific to memfd, udmabuf, iommufd or anything else.
+>>>
+>>> I don't see a reason to make userspace (that should not shoot itself into the
+>>> foot) a kernel feature it must activate itself to not shoot itself into the foot.
 
-> >> I don't see a reason to make userspace (that should not shoot itself into the
-> >> foot) a kernel feature it must activate itself to not shoot itself into the foot.
-> > 
-> > The issue is live update doesn't preserve those background punched
-> > folios and now we have created an UAF attack on the kernel across
-> > kexec if you don't do something about it.
-> > 
-> > There was some notion here that with the right sealing flags we could
-> > tell if everything was 'live update compatible' and then know that
-> > these attacks are impossible.
-> Just remember that there was any hole punch and refuse to live update this instance.
-> 
-> We could likely implement "we saw hole punch on a pinned folio" as well, but I
-> don't think that's required initially.
-> 
-> No need for more shaky seals.
+Agreed, for normal use this is userspace's problem. The seal was meant
+for the kernel to cheaply verify at preserve time that nothing was
+punched.
 
-Ah, yeah that might work out. It has to be checked really late though,
-after userspace cannot change the memfd any further.
+>>
+>> The issue is live update doesn't preserve those background punched
+>> folios and now we have created an UAF attack on the kernel across
+>> kexec if you don't do something about it.
+>>
+>> There was some notion here that with the right sealing flags we could
+>> tell if everything was 'live update compatible' and then know that
+>> these attacks are impossible.
+>Just remember that there was any hole punch and refuse to live update this instance.
+>
+>We could likely implement "we saw hole punch on a pinned folio" as well, but I
+>don't think that's required initially.
 
-Jason
+If I understand correctly, you mean recording on the memfd that a hole
+punch happened, and refusing the live update if it did? That would work
+and is much cheaper than what we do today, where iommufd walks all the
+mapped pages at preserve time. For truncate, the existing F_SEAL_SHRINK
+is enough or I can record that also on the memfd. I will send patches
+for this.
+
+>
+>No need for more shaky seals.
+>
+>-- 
+>Cheers,
+>
+>David
+
+Thanks for the feedback,
+Sami
