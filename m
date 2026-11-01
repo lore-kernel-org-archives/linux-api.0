@@ -1,93 +1,110 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.12
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.49
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793491899;
-	b=3MEHOFl/nd4JpBskZroJA7qjwPSCSq+v/AO9HysR7+C12IfzalgO3yu/UBQrKjasbp6d
-	 JGmc/LQDqOPL9zeFhlvOJyLv8JWnBs5Xwn7kED1W+DR07X+v0/TyKo6+e3qbwCrpvtUXx
-	 ZvBieCLx50g070A8L4QG6calWh5qeyIxJnk/xn1FMmXoBJDOd9SlRBHNZrTyz0MS3gNNf
-	 rEeH5iiqcIn+CT3Y6FLyhevxaGsJ3c+bxOpQAYR8Ret9kRHivdllutH5LvsHU87DBYlK2
-	 BrQBCVZzkymim1AkxIdgxyBmfoOviAtxtgwbkuUnzWVKMty4THU77GRvHshiWSBgSyQ==
+	t=1793498242;
+	b=0XxO5lB48BrVdYnHzW0kN7/7O6+deVt5g/lSJpIqhLqOUj0fuwvZQchWe20kgz2PRS7x
+	 47+AUAs50cs1vOEE5moQ7V2Bde9Xbtdzk5TEDrpLdwHwXojFdMqU+hFUKdmJxpfPM3fAG
+	 qw+WyEAov4ZAfKi4pInZ76xJeXx9PDoxd7CgElenR8QT9MxY8cHaO+7Hw19hEuPA0nfbG
+	 XSs2NlLAwZ6/HSyFfHrqFGHhi3BO0i0wj+MFLgsqZEhERaSErUi9lkhRqSezy+XL3KZpe
+	 QMJ+fd+hzi3pb+bKuDDv5jqG6SkcapYNCTY4UzX0t0gqUZFeb1oXe0+PVjXOVrWGvWg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793491899;
-	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
-	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:Received:Date:From:To:
-	 Cc:Subject:Message-ID:References:MIME-Version:Content-Type:
-	 Content-Disposition:Content-Transfer-Encoding:In-Reply-To;
-	bh=2EzAq3F/oZImqHNtfFN7yucFQTKmJ98J6mbsgnQaAnk=;
-	b=pF7dZmO4LmjSNQeAydIxA/ooDPayjX7yEidS4Yncdvs/EyAJCj0OXiDkAGxvCXXXAHhT
-	 p3qsvToWAFyd75RPDcdv8UdGvsWReyXyqOnCBsHyhY6cBup/CPZ+LwUlhl4YFpRufNewg
-	 h+hmviTgh4fx5QYW/8TKgsZ2d3GaEdofCcc4PZ0jq6U3YrIOSc8JbdywcOY2+MBbfx6WB
-	 jsA34WXBC3ra69xbuKKd3QFws5EOCaVQlxAYVCgvSGvTZ6Rv+0MqDbMYWBlUt1ZsoiFwl
-	 80EMpdec1i/uK345HihXcETlu+FsofKU5dHe2aqYANlLawqkVNNo3Hgq62q53QO7sdg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793498242;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=ldhDDTtZAE/3brSKAhksuwsG1IPpe3NESKnYVMmoFBE=;
+	b=5Cz8AlVgUjQYXGha7uufsHUFBHlzALe1lzSkGnhyb6+5kQS/Du4ITql1TUwoqUMHnxje
+	 RllVUx4tO7LLAdQvvLnMwzjHAVu4Zfil8dXMkh2EwOrpjbJkXl2KuJoANxZdKNTA8IfOo
+	 N/YQ6PE8FBTEEPLuZVYDdWwDsuBfVM8hTXRdkTP7Z6SbbOV/TH225RB6Hu9Px9e34ZujJ
+	 9nxUMuRp/VJ3jZyeMdQ7sYP02z3R/y8MjRvfnvraN0XzpgpojQCfGVIwuKC+FWzvLCwGR
+	 ymkPprWG1iyCGavq87vebVgcLoPcwnJhL2NwTjhsLW1M/uzKdu3S9htXFGej8Dz0kEQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=intel.com;
-	spf=pass smtp.mailfrom=intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b="ku4gpgB/";
-	arc=none smtp.remote-ip=192.198.163.12
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.12])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=uAYmsTxn;
+	arc=none smtp.remote-ip=209.85.128.49
+Received: from mail-wm1-f49.google.com (mail-wm1-f49.google.com [209.85.128.49])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 66045606A31C;
-	Sun,  1 Nov 2026 00:11:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 66045606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 41C59606A329
+	for <linux-api@vger.kernel.org>; Sun,  1 Nov 2026 01:57:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 41C59606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=ku4gpgB/
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1793491897; x=1825027897;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:content-transfer-encoding:in-reply-to;
-  bh=JxWINGtEXiE/19oIrBdKjOvxqg4jRzLQd0nxSgU6mLQ=;
-  b=ku4gpgB/VHRLnWzSTwIfjQgUwAM0tU4WuXlNU3kEcpHXBtKTiNg78VJ5
-   MTP8vTSZXuiK3RCABU1HT0RV4fC1h07TDe658sVIEz3Rf/UbYQnOcM1gI
-   qvRhDbhkcg4xc9CEFs8RUh3BFyo47mn4kJ/H12cdnsR5J/teqK7Z2zgs/
-   +NsgV1nNfT8dUBLKWbLMBNZhtft3slgiH0YoM4Qxc7/ia5gvtY7gUtOgc
-   WaWps2WpDqfUL1rpewdpWLWMImuB/frwq/XZXIHEWBEDyFWNbuw5BIdmi
-   zwZvhDzwYenLvGtg0u5TUP8AEjE41F7F3e3QgMeb0kqpCMO9r8X0lQCUg
-   Q==;
-X-CSE-ConnectionGUID: +ggxwgRVQo+MLcAYYTnAdw==
-X-CSE-MsgGUID: 15JWxi0dQZ2eewat/82edQ==
-X-IronPort-AV: E=McAfee;i="6800,10657,11952"; a="2108915"
-X-IronPort-AV: E=Sophos;i="6.27,188,1787036400"; 
-   d="scan'208";a="2108915"
-Received: from orviesa002.jf.intel.com ([10.64.159.142])
-  by fmvoesa106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 31 Oct 2026 17:11:36 -0700
-X-CSE-ConnectionGUID: hWVuwracTrCN1bMAbJ7VaQ==
-X-CSE-MsgGUID: 9l+96SLnSdSfe1kZ1buVAQ==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.27,188,1787036400"; 
-   d="scan'208";a="5762544"
-Received: from lkp-server01.sh.intel.com (HELO 0caa9d2d175c) ([10.239.97.150])
-  by orviesa002.jf.intel.com with ESMTP; 31 Oct 2026 17:11:32 -0700
-Received: from kbuild by 0caa9d2d175c with local (Exim 4.98.2)
-	(envelope-from <lkp@intel.com>)
-	id 1xNJAW-00000000dIq-1U6v;
-	Sun, 01 Nov 2026 00:11:28 +0000
-Date: Sun, 1 Nov 2026 08:10:33 +0800
-From: kernel test robot <lkp@intel.com>
-To: =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Juri Lelli <juri.lelli@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Christian Brauner <brauner@kernel.org>, Kees Cook <kees@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>, willy@infradead.org,
-	mathieu.desnoyers@efficios.com,
-	David Laight <david.laight.linux@gmail.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	akpm@linux-foundation.org, Yafang Shao <laoar.shao@gmail.com>,
-	andrii.nakryiko@gmail.com, arnaldo.melo@gmail.com,
-	Petr Mladek <pmladek@suse.com>
-Cc: oe-kbuild-all@lists.linux.dev, LKML <linux-kernel@vger.kernel.org>,
-	kernel-dev@igalia.com, linux-mm@kvack.org,
-	linux-api@vger.kernel.org, linux-trace-kernel@vger.kernel.org,
-	=?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>
-Subject: Re: [PATCH v8 4/6] sched: Extend task command name with
- TASK_COMM_EXT_LEN
-Message-ID: <202611010746.Qs8jUny8-lkp@intel.com>
-References: <20261030-tonyk-long_name-v8-4-c9b030332254@igalia.com>
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=uAYmsTxn
+Received: by mail-wm1-f49.google.com with SMTP id 5b1f17b1804b1-4a2d6cf958bso8544515e9.1
+        for <linux-api@vger.kernel.org>; Sat, 31 Oct 2026 18:57:21 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1793498240; x=1794103040; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=ldhDDTtZAE/3brSKAhksuwsG1IPpe3NESKnYVMmoFBE=;
+        b=uAYmsTxnVYOAxhIuO6akQJRAlwulHZ1cjkwNFSKIuLwxuMITROqm04zH8bg2jtdAiN
+         K/q2Xv7O6neta4eG6DSc9d85IPEWiv1++igy29ZUlsr8AKb4Pw8hHevGM6CKovQDGs8p
+         8kNi9wTr+vjarzKpUQpHytF8G944CMgJbukUoNCEdSh+49YhYerb/mSJYVUgYy+HarE1
+         oUBMUty+81j//ZUZmDfTLrKQD5lVb23rSanXMXMqWrKZpIDmf1IeYUqKsCaVdZrygZnK
+         9I/I/b6mqytwi3p1nsWGT6rMtbXnjrwlZ26NoWVYuNgErdJHIx9pErffmAQNAUQcGLmG
+         s8dg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793498240; x=1794103040;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=ldhDDTtZAE/3brSKAhksuwsG1IPpe3NESKnYVMmoFBE=;
+        b=GPa3rbn+2BI5scGbdgLk8EDBHkv1BN7B9KLdRpqPPn8O9q1xiQ7sVu3anmMmHwrD/G
+         onMAkDyVM10gAPNGhlaYmV1ZXgrE8nD+o/b7e00VsKf9R5ayFY0z9nIhme5VNX25XZ/q
+         uZWtslpMNpGd/g+HqwQR5NnZCU79+SYQJfjSZ8hdRWQ8GfF125v0aMd67lYcIv47w/hS
+         ctMq66js48BJiOFO+OoM0TlFeyfgk6IOFSOSpj839rOzv8ci2mZMU54M2GFFkh6VHQAw
+         3fB5YtW7seicyacKdzZQVbhHSvonyxELN1RgZ1ij3/le3UCfwulnhI5Km5VhPVNWJ9Z5
+         SGxQ==
+X-Forwarded-Encrypted: i=1; AKwUvBysNFHK8RREcuwGh3eU3/xB4xJ6+T/aULW9rrRpI5N1SSXiG93qill2TJ9T85mJCQ4Xr4a1AYBMtB0=@vger.kernel.org
+X-Gm-Message-State: AFq9FYLqYfaMVyhQiRCgoOtxAC2FrxcirFmERHNbnaXFdxaIwGUdl19I
+	8bJS5lUvoC6WzIVOilIotQ4/O4EuW1WLnolzRV9fGUkQLSyuBornkKDe
+X-Gm-Gg: AYBFou2aCQ9NfY3uxyO6rG9+/FLCJ3SGJGsFV/ZKftf10Ic/NIWADOWp5DUVgTBYD2f
+	7fqhj/+WPBvnJb9MujTYPxOUy88eUHm7zUUhgzpOBpT76NBRaQI41JmTBnVqV3URQdg9j9i/5AJ
+	YrxUmhcT5QJ2+0B1jrId4zluoVhHDStZysw2OHDMmCjTvWD+H+cNdeMZA2A71V8X+yvXSoAQ1N5
+	tiuupHzonTjehLgiaIHMNWoakdnSpnjYGcOv3IbYTJrHaxT5U6a9IjvdznVUEst4xDMdKO+EIYv
+	iUhx1+gZ5gOkTLLQssP/kNmgweilJoVA7GthVaVMeek80SmzvQY6I6BzZi1n0wMl81h4436Cx2j
+	sTPiDnW/n1h+TjzFDmkcvxZG8EXKzi/PNtoA82ZI/1lczbDXFml9s1l8ebCeHksKgvDYiG/lIHm
+	82GPIfMPVk7IBVocDqYc7+B7msFSKJ1uc0T2Vkoo35N8FyndlYnzvcsCKh6bWmeFJojPQChJyz9
+	zhXDl0n9GQL0UyWkD0evADfykIzK5nv5xEoT6Zivf6i5PDCrr58L3D6o+uawFok9CpzqS3XascF
+	B4TJU0cqA50PvR0GaYwKLEJr
+X-Received: by 2002:a05:600d:c:b0:4af:83ad:8f70 with SMTP id 5b1f17b1804b1-4af83ad8fa7mr31193005e9.35.1793498240391;
+        Sat, 31 Oct 2026 18:57:20 -0700 (PDT)
+Received: from infinity ([2001:b07:5d26:7a6a:365a:60ff:fe0d:cfc6])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa81b7fe80sm273532835e9.11.2026.10.31.18.57.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sat, 31 Oct 2026 18:57:19 -0700 (PDT)
+From: koraynilay <koray.fra@gmail.com>
+To: David Sterba <dsterba@suse.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Christian Brauner <brauner@kernel.org>,
+	Namjae Jeon <linkinjeon@kernel.org>,
+	Sungjong Seo <sj1557.seo@samsung.com>,
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>
+Cc: Chris Mason <mason@kernel.org>,
+	Jan Kara <jack@suse.cz>,
+	Yuezhang Mo <yuezhang.mo@sony.com>,
+	Chuck Lever <cel@kernel.org>,
+	"Darrick J . Wong" <djwong@kernel.org>,
+	Sean Smith <defendthedisabled@gmail.com>,
+	Andrey Albershteyn <aalbersh@kernel.org>,
+	Pedro Falcato <pfalcato@suse.de>,
+	Amir Goldstein <amir73il@gmail.com>,
+	=?UTF-8?q?Pali=20Roh=C3=A1r?= <pali@kernel.org>,
+	linux-btrfs@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	exfat@lists.linux.dev,
+	ntfs3@lists.linux.dev,
+	linux-api@vger.kernel.org,
+	koraynilay <koray.fra@gmail.com>
+Subject: [RFC PATCH v3 0/5] add provenance time (ptime)
+Date: Sun,  1 Nov 2026 02:55:46 +0100
+Message-ID: <20261101015551.786044-1-koray.fra@gmail.com>
+X-Mailer: git-send-email 2.56.0
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -97,153 +114,111 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
-In-Reply-To: <20261030-tonyk-long_name-v8-4-c9b030332254@igalia.com>
 
-Hi André,
+This is an initial implementation of a new timestamp to indicate the
+time when a file/directory was initially created.
 
-kernel test robot noticed the following build warnings:
+This patch series takes inspiration from the one by Sean Smith
+<defendthedisabled@gmail.com> [1], but using
+file_setattr()/file_getattr() as suggested by Darrick J. Wong
+<djwong@kernel.org> in [2].
 
-[auto build test WARNING on 4dd16e31135ea8437a720222df34e8745f385d6d]
+The semantics of this new timestamp should be at least these:
+- it should be the same as btime on a newly created file
+- it's user-settable, so it can be preserved for backups, filesystem
+  conversions, archives and any similar operation
+- it should be preserved every time mtime gets preserved
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Andr-Almeida/treewide-Get-rid-of-get_task_comm/20261030-183832
-base:   4dd16e31135ea8437a720222df34e8745f385d6d
-patch link:    https://lore.kernel.org/r/20261030-tonyk-long_name-v8-4-c9b030332254%40igalia.com
-patch subject: [PATCH v8 4/6] sched: Extend task command name with TASK_COMM_EXT_LEN
-config: x86_64-rhel-9.4 (https://download.01.org/0day-ci/archive/20261101/202611010746.Qs8jUny8-lkp@intel.com/config)
-compiler: gcc-14 (Debian 14.2.0-19) 14.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20261101/202611010746.Qs8jUny8-lkp@intel.com/reproduce)
+and the correspondence with the other timestamps is as follows:
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202611010746.Qs8jUny8-lkp@intel.com/
+ctime <-> btime
+mtime <-> ptime
 
-All warnings (new ones prefixed by >>):
+Examples:
+1) a .zsh_history file created in 2019, then after a few years the user
+   decides to switch to another filesystem, copying the .zsh_history to
+   the new home, in that case btime would have the timestamp of the copy
+   and ptime would have the 2019 timestamp (just like mtime would have
+   been preserved)
+2) a symlink created in 2020 from the home directory to a /path going
+   through the same process as the .zsh_history, in this case it would
+   also make sense to sync the ptime to the 2020 timestamp instead of
+   keeping only the btime (so the inode creation time).
 
-   drivers/gpu/drm/nouveau/nouveau_chan.c: In function 'nouveau_channel_ctor':
->> drivers/gpu/drm/nouveau/nouveau_chan.c:343:58: warning: '%s' directive output may be truncated writing up to 63 bytes into a region of size 32 [-Wformat-truncation=]
-     343 |         snprintf(args->name, __member_size(args->name), "%s[%d]",
-         |                                                          ^~
-   drivers/gpu/drm/nouveau/nouveau_chan.c:343:9: note: 'snprintf' output between 4 and 77 bytes into a destination of size 32
-     343 |         snprintf(args->name, __member_size(args->name), "%s[%d]",
-         |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-     344 |                  current->comm, task_pid_nr(current));
-         |                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The proof-of-concept code (for testing) for stat(1) and cp(1) is
+available at https://github.com/koraynilay/coreutils (master branch)
+(Note: these coreutils code changes are a prototype and won't be
+submitted upstream as-is, but they work as expected in simple stat and
+cp -a/--preserve=ptime tests)
+
+Lastly, the name "provenance" and "ptime" are not final, I personally
+don't have a strong opinion on any name, but while testing with stat(1)
+I noticed that "Provenance" is definitely too long for the normal
+output, so another option which would fit well is "Origin time",
+abbreviated as "ntime" (OrigiN time) and not as "otime", as that would
+conflict with btrfs' internal naming and create confusion.
+
+v2 changes:
+- fix permission bypass leading to ptime update on immutable and
+  append-only files (found by sashiko[3])
+- normalize ptime timestamp as done in fs/attr.c:notify_change() (found
+  by sashiko[3])
+- fix wording in vfs patch to be like the cover-letter
+
+v3 changes:
+- vfs: reject setting ptime with -EOPNOTSUPP on filesystems that do not
+  support it instead of silently ignoring it (found by sashiko[4])
+- vfs: fix not being able to clear immutable and append-only on files
+  with ptime, and allow updating immutable/append-only atomically along
+  with ptime (found by sashiko[4])
+- btrfs: validate on-disk ptime nanoseconds and reset to otime if
+  invalid (found by sashiko[4])
+- btrfs: avoid re-assigning ptime on unrelated chattr calls (found by
+  sashiko[4])
+- add ntfs3 and exfat support as suggested by Amir Goldstein[5], but no
+  vfat, smb, or nfs4 yet as they are a bit more complex
+- move the introduction of fileattr_has_fsx_mask() from the btrfs patch
+  to a standalone patch in the series
+- btrfs: add fileattr_[gs]et to symlink and special file operations
+
+Thanks.
+
+[1]: https://lore.kernel.org/20260405195007.1306-2-DefendTheDisabled@gmail.com
+[2]: https://lore.kernel.org/20260407014129.GC6192@frogsfrogsfrogs
+[3]: https://sashiko.dev/#/patchset/20261027220532.736352-1-koray.fra%40gmail.com
+[4]: https://sashiko.dev/#/patchset/20261028134728.294127-1-koray.fra%40gmail.com
+[5]: https://lore.kernel.org/linux-btrfs/CAOQ4uxiuy0VwZj+3M-zRqQ49WTpHZpiaQ+6MZ8z8WdLjyQM_zA@mail.gmail.com/
+
+koraynilay (5):
+  vfs: add provenance time (ptime)
+  vfs: add fileattr_has_fsx_mask()
+  ntfs3: make crtime user-settable using ptime
+  exfat: make crtime user-settable using ptime
+  btrfs: add provenance time (ptime)
+
+ fs/btrfs/btrfs_inode.h          |  4 ++++
+ fs/btrfs/delayed-inode.c        |  6 ++++++
+ fs/btrfs/inode.c                | 29 +++++++++++++++++++++++++-
+ fs/btrfs/ioctl.c                | 12 ++++++++++-
+ fs/btrfs/print-tree.c           |  1 +
+ fs/btrfs/tree-log.c             |  3 +++
+ fs/exfat/exfat_fs.h             |  2 ++
+ fs/exfat/file.c                 | 36 ++++++++++++++++++++++++++++++++-
+ fs/exfat/namei.c                |  1 +
+ fs/file_attr.c                  | 33 ++++++++++++++++++++++++++++--
+ fs/ntfs3/file.c                 | 14 +++++++++++--
+ fs/ntfs3/frecord.c              |  8 +++++++-
+ fs/stat.c                       |  2 ++
+ include/linux/fileattr.h        | 26 +++++++++++++++++++++---
+ include/linux/stat.h            |  1 +
+ include/uapi/linux/btrfs_tree.h |  3 ++-
+ include/uapi/linux/fs.h         |  8 +++++++-
+ include/uapi/linux/stat.h       |  7 ++++++-
+ 18 files changed, 182 insertions(+), 14 deletions(-)
 
 
-vim +343 drivers/gpu/drm/nouveau/nouveau_chan.c
+base-commit: cbbddb6b08cc9900a87cccaa9b22bbe06aa4f50a
+-- 
+2.56.0
 
-ebb945a94bba2ce Ben Skeggs          2012-07-20  253  
-5b8a43aeb9cbf6b Marcin Slusarz      2012-08-19  254  static int
-5cca41ac70e5877 Ben Skeggs          2024-07-26  255  nouveau_channel_ctor(struct nouveau_cli *cli, bool priv, u64 runm,
-06db7fded6dec88 Ben Skeggs          2022-06-01  256  		     struct nouveau_channel **pchan)
-ebb945a94bba2ce Ben Skeggs          2012-07-20  257  {
-152be54224de182 Danilo Krummrich    2023-10-02  258  	const struct nvif_mclass hosts[] = {
-284ad706ad2f509 Ben Skeggs          2025-02-04  259  		{ BLACKWELL_CHANNEL_GPFIFO_B, 0 },
-32cb1cc358ffed2 Ben Skeggs          2024-11-25  260  		{ BLACKWELL_CHANNEL_GPFIFO_A, 0 },
-44f93b209e2afde Ben Skeggs          2024-11-25  261  		{    HOPPER_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  262  		{    AMPERE_CHANNEL_GPFIFO_B, 0 },
-7f4f35ea5b080e6 Ben Skeggs          2022-06-01  263  		{    AMPERE_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  264  		{    TURING_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  265  		{     VOLTA_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  266  		{    PASCAL_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  267  		{   MAXWELL_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  268  		{    KEPLER_CHANNEL_GPFIFO_B, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  269  		{    KEPLER_CHANNEL_GPFIFO_A, 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  270  		{     FERMI_CHANNEL_GPFIFO  , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  271  		{       G82_CHANNEL_GPFIFO  , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  272  		{      NV50_CHANNEL_GPFIFO  , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  273  		{      NV40_CHANNEL_DMA     , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  274  		{      NV17_CHANNEL_DMA     , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  275  		{      NV10_CHANNEL_DMA     , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  276  		{      NV03_CHANNEL_DMA     , 0 },
-06db7fded6dec88 Ben Skeggs          2022-06-01  277  		{}
-06db7fded6dec88 Ben Skeggs          2022-06-01  278  	};
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  279  	DEFINE_RAW_FLEX(struct nvif_chan_v0, args, name, TASK_COMM_LEN + 16);
-5cca41ac70e5877 Ben Skeggs          2024-07-26  280  	struct nvif_device *device = &cli->device;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  281  	struct nouveau_channel *chan;
-06db7fded6dec88 Ben Skeggs          2022-06-01  282  	const u64 plength = 0x10000;
-06db7fded6dec88 Ben Skeggs          2022-06-01  283  	const u64 ioffset = plength;
-06db7fded6dec88 Ben Skeggs          2022-06-01  284  	const u64 ilength = 0x02000;
-06db7fded6dec88 Ben Skeggs          2022-06-01  285  	int cid, ret;
-06db7fded6dec88 Ben Skeggs          2022-06-01  286  	u64 size;
-06db7fded6dec88 Ben Skeggs          2022-06-01  287  
-06db7fded6dec88 Ben Skeggs          2022-06-01  288  	cid = nvif_mclass(&device->object, hosts);
-06db7fded6dec88 Ben Skeggs          2022-06-01  289  	if (cid < 0)
-06db7fded6dec88 Ben Skeggs          2022-06-01  290  		return cid;
-06db7fded6dec88 Ben Skeggs          2022-06-01  291  
-06db7fded6dec88 Ben Skeggs          2022-06-01  292  	if (hosts[cid].oclass < NV50_CHANNEL_GPFIFO)
-06db7fded6dec88 Ben Skeggs          2022-06-01  293  		size = plength;
-06db7fded6dec88 Ben Skeggs          2022-06-01  294  	else
-06db7fded6dec88 Ben Skeggs          2022-06-01  295  		size = ioffset + ilength;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  296  
-ebb945a94bba2ce Ben Skeggs          2012-07-20  297  	/* allocate dma push buffer */
-5cca41ac70e5877 Ben Skeggs          2024-07-26  298  	ret = nouveau_channel_prep(cli, size, &chan);
-ebb945a94bba2ce Ben Skeggs          2012-07-20  299  	*pchan = chan;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  300  	if (ret)
-ebb945a94bba2ce Ben Skeggs          2012-07-20  301  		return ret;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  302  
-ebb945a94bba2ce Ben Skeggs          2012-07-20  303  	/* create channel object */
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  304  	args->version = 0;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  305  	args->namelen = __member_size(args->name);
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  306  	args->runlist = __ffs64(runm);
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  307  	args->runq = 0;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  308  	args->priv = priv;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  309  	args->devm = BIT(0);
-06db7fded6dec88 Ben Skeggs          2022-06-01  310  	if (hosts[cid].oclass < NV50_CHANNEL_GPFIFO) {
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  311  		args->vmm = 0;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  312  		args->ctxdma = nvif_handle(&chan->push.ctxdma);
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  313  		args->offset = chan->push.addr;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  314  		args->length = 0;
-bbf8906b2cad17c Ben Skeggs          2014-08-10  315  	} else {
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  316  		args->vmm = nvif_handle(&chan->vmm->vmm.object);
-06db7fded6dec88 Ben Skeggs          2022-06-01  317  		if (hosts[cid].oclass < FERMI_CHANNEL_GPFIFO)
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  318  			args->ctxdma = nvif_handle(&chan->push.ctxdma);
-06db7fded6dec88 Ben Skeggs          2022-06-01  319  		else
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  320  			args->ctxdma = 0;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  321  		args->offset = ioffset + chan->push.addr;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  322  		args->length = ilength;
-06db7fded6dec88 Ben Skeggs          2022-06-01  323  	}
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  324  	args->huserd = 0;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  325  	args->ouserd = 0;
-06db7fded6dec88 Ben Skeggs          2022-06-01  326  
-06db7fded6dec88 Ben Skeggs          2022-06-01  327  	/* allocate userd */
-06db7fded6dec88 Ben Skeggs          2022-06-01  328  	if (hosts[cid].oclass >= VOLTA_CHANNEL_GPFIFO_A) {
-06db7fded6dec88 Ben Skeggs          2022-06-01  329  		ret = nvif_mem_ctor(&cli->mmu, "abi16ChanUSERD", NVIF_CLASS_MEM_GF100,
-06db7fded6dec88 Ben Skeggs          2022-06-01  330  				    NVIF_MEM_VRAM | NVIF_MEM_COHERENT | NVIF_MEM_MAPPABLE,
-06db7fded6dec88 Ben Skeggs          2022-06-01  331  				    0, PAGE_SIZE, NULL, 0, &chan->mem_userd);
-06db7fded6dec88 Ben Skeggs          2022-06-01  332  		if (ret)
-ebb945a94bba2ce Ben Skeggs          2012-07-20  333  			return ret;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  334  
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  335  		args->huserd = nvif_handle(&chan->mem_userd.object);
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  336  		args->ouserd = 0;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  337  
-06db7fded6dec88 Ben Skeggs          2022-06-01  338  		chan->userd = &chan->mem_userd.object;
-06db7fded6dec88 Ben Skeggs          2022-06-01  339  	} else {
-06db7fded6dec88 Ben Skeggs          2022-06-01  340  		chan->userd = &chan->user;
-06db7fded6dec88 Ben Skeggs          2022-06-01  341  	}
-ebb945a94bba2ce Ben Skeggs          2012-07-20  342  
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16 @343  	snprintf(args->name, __member_size(args->name), "%s[%d]",
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  344  		 current->comm, task_pid_nr(current));
-ebb945a94bba2ce Ben Skeggs          2012-07-20  345  
-06db7fded6dec88 Ben Skeggs          2022-06-01  346  	ret = nvif_object_ctor(&device->object, "abi16ChanUser", 0, hosts[cid].oclass,
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  347  			       args, __struct_size(args), &chan->user);
-06db7fded6dec88 Ben Skeggs          2022-06-01  348  	if (ret) {
-06db7fded6dec88 Ben Skeggs          2022-06-01  349  		nouveau_channel_del(pchan);
-ebb945a94bba2ce Ben Skeggs          2012-07-20  350  		return ret;
-bbf8906b2cad17c Ben Skeggs          2014-08-10  351  	}
-ebb945a94bba2ce Ben Skeggs          2012-07-20  352  
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  353  	chan->runlist = args->runlist;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  354  	chan->chid = args->chid;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  355  	chan->inst = args->inst;
-e270b3665f8321c Gustavo A. R. Silva 2025-04-16  356  	chan->token = args->token;
-06db7fded6dec88 Ben Skeggs          2022-06-01  357  	return 0;
-ebb945a94bba2ce Ben Skeggs          2012-07-20  358  }
-ebb945a94bba2ce Ben Skeggs          2012-07-20  359  
-
---
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
