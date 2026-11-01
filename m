@@ -1,88 +1,88 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.52
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793530038;
-	b=bejY0BmhqI7Hu+woeeIhJrsqUk8eLsHRG3e+H2Drki5sFbAMnxC/umVEen+4R9RTg18/
-	 qhlEaiAXkMPrMJbe7vdJ/chbn4wePCRju5fdND8DYUzcfeedG/r7znFQ3CbrhSB9azDzi
-	 3qprlbKqoEGEonbuNnqa2U2EPfZPcrlUa93V+dlxTCL631CLsXpG2UqCAJ2iv0WYgsDDn
-	 c+4IegYUm/7Mz7N+oXkigFs8xYPpa4qHpKJliRmIzA6GDCzxkYOBKU8djWQqJnUuuMTXk
-	 hAjSwm89q/te52JjWCHySJ3uZvjMqkULQbqQvfmHZ4buupqQ/nrUFIGDHcveqRXdZEw==
+	t=1793530041;
+	b=bYGIOG3dncNoUt0sF4xyOdgg3Z+vJobK8k2Uz8Nlhi8jsv4Mvk31KrBwHRKESKe8beRr
+	 6qTDLzkacmpccYgU04UQWiukJiyGPQLFF5ha2NnlA1T6EXXG4J1UY87AVGS3PIxSTjcrB
+	 U2v+rOyn382Bxc/WbN42iYLaUUXwjNRx7Mmi6gO3gQu/ixeCr6dUvZbO9XlO4qAEVx89G
+	 JVcVv2kX7v92lGG3tcOUIbCEOxboZZx8x5xea5lNf2oWkBe+yzzp1j2iXK13QgPSLgSxJ
+	 YiGyhRlrwiDt2AKnchG8ESuGo5jMJmo8Jkqup56ePozlFu4kBY/moVLNBpArQCNPR6A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793530038;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793530041;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:Date:Subject:MIME-Version:Content-Type:Content-Transfer-Encoding:
 	 Message-Id:References:In-Reply-To:To:Cc:X-Mailer;
-	bh=wqCydl85UFhEEn7IQH/DuLIDXb3/DdiyuBh1Pu5ZGaQ=;
-	b=g0xjMCAGB1KwPZ1qzLMY3q4eApFL0vpGpPaMGIYxq31c3vwCbBZq+9Z18CQuFB0ELu/4
-	 eU7VM3jkdbrdGUZPbw3gfS7eeJATheTaCI8W9Q4/VtXtdfjR+vBoMtR8bclE/NlcRSDrf
-	 WjdBPNQYw1v4h90/dxWH94WGZXqJWdMBRSx9Fvbg51Ukn/O+1uZnCE4vjUqTMmQ9CJQFo
-	 Cud31rURTkKwNvmx/+3vz8JOPyr9ZzpFkuZfLsUqgAswIESqzkAVYnjgY6WCFyLYPUCKq
-	 ePGOITFNVlneXZ2ar50ryxZ9V3LQC2lyXy3YrJtY1QrGEFgrT8Dc9FJ9te4bO1s3dbw==
+	bh=AexwcsRGwzjjNvCz+2Yi3C/cbZ1yMKJ7WYhXkPSgkVk=;
+	b=zg1g2ucbo4LXUZ7J5KtJBBXVM2plGG6ZBCUAYyOUI9RdoIaMOJG3Fd5vAqsh6+SqaUwQ
+	 2Bev/VDdJPCcJpJPovJmNFCcmuOMf6k90SSmWpIi8RODpgbtgIfyfBesX8++vR6vyVRna
+	 xtYHu5uFjxSSCwZf/GOxXml22OIRUH2UNN6JKuCPVNZEZ+3vP2L/psQBehbezKriMrgw/
+	 KQ3iAAakoh80mzBqc8QFv1mk6fWr9LyGBGMwsu+RtUCA5c0rZPUwqnrxgRFiqKYqqaDAq
+	 60CsGMnQ797g0FPs0V5QfuEwqqKr43whkiZCKc0q7RMDPaoBepKNG0Bgo9tyhc+Ep+w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=v85B9AXW;
-	arc=none smtp.remote-ip=209.85.128.52
-Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aglBb8YV;
+	arc=none smtp.remote-ip=209.85.128.50
+Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0FC83606A338
-	for <linux-api@vger.kernel.org>; Sun,  1 Nov 2026 10:47:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0FC83606A338
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90353606A327
+	for <linux-api@vger.kernel.org>; Sun,  1 Nov 2026 10:47:21 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 90353606A327
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=v85B9AXW
-Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-4a214af2076so15424445e9.0
-        for <linux-api@vger.kernel.org>; Sun, 01 Nov 2026 02:47:17 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aglBb8YV
+Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4a1b07c3c5fso17727555e9.1
+        for <linux-api@vger.kernel.org>; Sun, 01 Nov 2026 02:47:21 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793530036; x=1794134836; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1793530040; x=1794134840; darn=vger.kernel.org;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=wqCydl85UFhEEn7IQH/DuLIDXb3/DdiyuBh1Pu5ZGaQ=;
-        b=v85B9AXW/oSBNu83YCRh+CKObKuOXbOyUrvGdrWnB9OaCC77W+PoOYvCLORsPDQvYr
-         aOrxacKUuJJN6h8aP1We0cdanaUDICl3tDAqEBSpr2SY32WzBs5eLSLhPR+uUd8tPKCr
-         SKLnhR2ZAprPa6v1md+4btuPIZCr/7T1lnFILXg/P0dp9ek0xo+9/8b69XKYBh049wRa
-         0HsP912s2iiN3saZJbQBhqSVuNlCHNgm7A31iD/teeGSuvQbNNCNo2zQOyzfEDiQ9A/Z
-         UlnkNO9zCu7G+4DVfod53Ulmdhm0jwj5RszFTfzGhShcO1wc+GZ4OEifLeUAiovIdV8I
-         qeDA==
+        bh=AexwcsRGwzjjNvCz+2Yi3C/cbZ1yMKJ7WYhXkPSgkVk=;
+        b=aglBb8YVKgoNb71KyRKWkL0xRX0pkCyiGqavmUrOaAz23M6tr/2ZqV7/XfnNVWKHXI
+         fpAEpZxzQG+TipsAFosqLjfC6JQRFSPx+hjkvrswXLIbCfOt/0OmIvq61nIJnIq4rOMo
+         VVk3Im/v373RcWAsGvJe9H8NhqeIXCciTAtsUmx1g+kva7Q4Ra+MlTkso5vNLMqB3cKZ
+         OhWzBQRrn/4FtdtC33FPamn3cWPOh18xPzSm1kWI+dg8b5V1jbDHDSTdpMEUE/qlRWVH
+         YmUwEHk4d/aD37MPJKqtWRDc1MtjxbeZ4DeGAcNjsM4+P28knX4+8Xwc12228gLOyoWs
+         MMmg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793530036; x=1794134836;
+        d=1e100.net; s=20260707; t=1793530040; x=1794134840;
         h=cc:to:in-reply-to:references:message-id:content-transfer-encoding
          :content-type:mime-version:subject:date:from:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=wqCydl85UFhEEn7IQH/DuLIDXb3/DdiyuBh1Pu5ZGaQ=;
-        b=tkelCY1OuqL1xkBwooSySaDwOcndhXalb+NJtmOtRXvvovtqsnAMdluoMUxYHNFToI
-         woDLN2WU8OOUMv5wa2Uv7ZH3Z59YE6PS4TLtOkrq4mdu4lQ+z6Pbq/L5ZHW1+VeAOHYp
-         hDjuXD6KnzL4ylwUG9U4DAKOqMQnAiRa0jcybIReDRhl+ZGV5CnIEdNBvMKnGEQxzOwo
-         5RQ+86/ERIltlzwA91ab1TH6CrcbhmI1HDFjKB1IXTm+VQoZHDoE7ha039iATK1VWhEa
-         VVsUeKgTl+ISr3IMRmgoRXVVKb43dST4WPwFFy3JMvFxRaNm9hCCDwFXVpn2vt06Mr3R
-         KqOg==
-X-Forwarded-Encrypted: i=1; AKwUvBy3ttylwLjTNwuf1IRDrWoAa3lwxk+oNWFdiWYS2v39TUWX+gphUUZtzFk5QRDSWJtUDq4MJ8PzCKE=@vger.kernel.org
-X-Gm-Message-State: AFq9FYIMrJvxlSlD2K7/KWaa0bVQ9jVsBq6DLe9qJDLBYPt0UltVptNt
-	GMgglZyrxJ/SjvsYvyKkfOiiJcbCkumflrMaolO0c5AJry1wlrPZuHX6
-X-Gm-Gg: AYBFou12EPCR+eczh5IPf8yWQA8d+efIHHbsUrEyRWXdIvthA2PiFKn9N3o1Q3tpwTn
-	6CFBcKx5mZoJCjCn2uXrqvlkRW3kkLkRX3kQvgkomewdNHUJeyxgauv9aVD+s+o8DAQApDvxyI4
-	WPfsxWu6NIRq0505Ha6+xfTIslPQr0uKZy7uCNVQDnxBV+lGjuEu1Evhye8TZGaiEG0jKGqpjYX
-	gMgOxtMt8q1pvnOtAq6U3m98mcOqr0aQacOmV5W2z9MCsPDkeCZleMVXLfEE1GvAm2AHSmIiSXx
-	YnkQcssCv4VUn1Ip+LSTdwf+sOZVjrQVP9yw+IgDGKSNPaQnfImLRPPGtM6QXtxZvRi1SZNDFHT
-	Q7vvkY3WL0Iy8Ai2bQtCpfXVQVV1ZSl/BAA16Rqr14BU88T2xRV0x+GwgDlKz+wX83L7t3STycI
-	XHv4Q7h12ZF7Hn5zZC7fepCQVH2MRCFfqYFD2Sh5KWBrh4F2tUxfQnAhgBLHwJLq+MI38M434ng
-	OH4qkQ5bX5EPlJQpm9xbxgEd5EYJvNreKqx/OxSQdMdcztgRv2Lie9/30aApFv+UzNON3Oxxoaa
-	gDCBPloaMCpfbYt7BQi16oYMALQ=
-X-Received: by 2002:a05:600d:a:b0:4ac:aae6:6400 with SMTP id 5b1f17b1804b1-4acaae665a6mr115662105e9.13.1793530036364;
-        Sun, 01 Nov 2026 02:47:16 -0800 (PST)
+        bh=AexwcsRGwzjjNvCz+2Yi3C/cbZ1yMKJ7WYhXkPSgkVk=;
+        b=A+6ja8g4EKif1ldjxilu911JbzO+mIdmK5uUItjW/nao1uQYZR1GxTdQfC4wkNNQpD
+         64L5xqr1HgKNbEd77kWyBK1r0pz6mRfePJHhR+EulB6hToAM10/XTo65j0zSjoOBEes6
+         h8tWpeebd5+FD/Qc28ugyyCDfmcLC/rhXE6gebz1dPt9h9vyNq5/CQwJL25LB7xW5V0D
+         6/iJM6qykMoLa4q/vINMlCfCloAAj1O9Q5P1nlgKYCH8RmXodgPBp01mAauvkacNvqr3
+         oUNZ5jaQcXjokQLro9l0AanYWyLdp50VdxC1jp58I1ANMsXGCCRUt41XhXwhOVykfgfC
+         Ds8w==
+X-Forwarded-Encrypted: i=1; AKwUvBy+QyEZ7FncGAW0CFWh418fYeEGokKyxOuMNFyC9KxnTLEObVlZ/USijml4N4mmKBKQjWT9pJ1r6C4=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIZeWOpcr39LpLsA3abGN2fr62HpvI3Li34XbymOmFkMZoXqe/p
+	q2/jcwRYhpiZAvPHNhAMGS+KWskcFgsWn+1JPltgGBzDZzpmevpZ31/6
+X-Gm-Gg: AYBFou2gVsr+lVUFKVatFFSgjgw3Z7NMQ2W5UDfVJj+8t+hsyMA0b2jAngckv48uMI4
+	7wWU1ycO5Ax8fMVd7rsEAbQfosMbDVk/CvUuGvOJt6oh5Km+oHO3HqcX6/GHlurWgmFgJWgqXU+
+	CE0eLgy7Yjz4/5CBOZRPVWM+0X1BKAPz7adTKP3zbHAfxn0783UtSv4eDTQU0Jum90m3vPVCJXV
+	LUfY+mgmMtEqIXvT+D3ut2mkICGNm2J/Qx4m3JlwRkIz//uMbIfvDFwmBtCjHDg/VfGySVvuLFG
+	N1joc9TUdVlUPf58gBAw2XJO9u4M+dzudsDL35CgFL9B2nWh0q0wqskqRWEdrG0MyT954jzhMUE
+	yMT/RnfX2fW8hNmL67+h2AS6ICetZw9rPgRm99mePUVlFYvyJRzYMaap8wFPxzef8oCZwcK1/P0
+	0Bpol8xFw6kHOFQeyD32ebVfE/VI1E6sOglri253qttRw4Quctp8O3u+ocH03aEJ3/qXvnmfGSz
+	u+z2UCMsuPX8q3Zxat/8AiFlIczsgKRC/EWncXud04xlBfHQCAaAK4dHJEgB35/oqdPL3NO7Tla
+	WX5+uCXde3wtkqdEmVYXcr5iffc=
+X-Received: by 2002:a05:600c:8b66:b0:4a3:5a91:5f61 with SMTP id 5b1f17b1804b1-4ac1793f8ddmr170505775e9.14.1793530039980;
+        Sun, 01 Nov 2026 02:47:19 -0800 (PST)
 Received: from [127.0.1.1] ([85.105.252.11])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa7f322c46sm255602715e9.2.2026.11.01.02.47.13
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4aa7f322c46sm255602715e9.2.2026.11.01.02.47.16
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 01 Nov 2026 02:47:16 -0800 (PST)
+        Sun, 01 Nov 2026 02:47:19 -0800 (PST)
 From: Bartu Alev <bartualev@gmail.com>
-Date: Sun, 01 Nov 2026 13:46:46 +0300
-Subject: [PATCH 6/7] platform/x86: asus-wmi: expose the fan floor tables
- via hwmon
+Date: Sun, 01 Nov 2026 13:46:47 +0300
+Subject: [PATCH 7/7] platform/x86: asus-wmi: show the effective duty for
+ enabled curves
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -94,7 +94,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261101-asus-fan-floors-v4-v1-6-b8d1c31a99a9@gmail.com>
+Message-Id: <20261101-asus-fan-floors-v4-v1-7-b8d1c31a99a9@gmail.com>
 References: <20261101-asus-fan-floors-v4-v1-0-b8d1c31a99a9@gmail.com>
 In-Reply-To: <20261101-asus-fan-floors-v4-v1-0-b8d1c31a99a9@gmail.com>
 To: Corentin Chary <corentin.chary@gmail.com>, 
@@ -106,238 +106,139 @@ Cc: platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org,
  linux-api@vger.kernel.org, Bartu Alev <bartualev@gmail.com>
 X-Mailer: b4 0.15.2
 
-Firmware enforces minimum duties on fan curves without updating the
-reported curve buffers, leaving userspace unable to determine which
-duty ranges are unreachable.
+When a custom fan curve is enabled, the embedded controller executes
+each point at max(written_duty, floor_duty).  However,
+pwmY_auto_pointZ_pwm reports only the stored value, diverging from
+the duty applied by hardware.
 
-Export read-only pwm[1-3]_auto_point[1-8]_floor_pwm attributes on the
-hwmon device.  Each file returns the minimum duty (0-255 PWM) enforced
-for that curve point.  The attributes are registered for every
-supported fan curve and return -ENODATA when firmware provides no
-floor table.
+Return max(stored, floor) from pwmY_auto_pointZ_pwm when the curve is
+enabled and floor data is valid.  When disabled, continue returning
+the stored value.
 
-Standard hwmon curve attributes (pwmY_auto_pointZ_pwm) assume
-writable points and cannot represent a separate, hardware enforced
-floor.  Dedicated read-only floor attributes provide these values
-while adhering to the one value per file rule.
+Because the controller operates in integer percentages while sysfs
+uses PWM units (0-255), the reported value is an upper bound of the
+applied duty.  Consequently, reading an enabled curve is not
+read/modify/write safe: writing back a read value commits the
+firmware floor into the stored curve.
 
-Document these attributes in
-Documentation/ABI/testing/sysfs-platform-asus-wmi.
+Trigger sysfs notifications on pwmY_auto_pointZ_pwm on enable and
+disable transitions, as well as floor refreshes, so pollers detect
+changes in effective duty.
 
 Signed-off-by: Bartu Alev <bartualev@gmail.com>
 ---
- Documentation/ABI/testing/sysfs-platform-asus-wmi |  23 ++++
- drivers/platform/x86/asus-wmi.c                   | 141 +++++++++++++++++++++-
- 2 files changed, 163 insertions(+), 1 deletion(-)
+ Documentation/ABI/testing/sysfs-platform-asus-wmi | 14 +++++++++++
+ drivers/platform/x86/asus-wmi.c                   | 30 +++++++++++++++++++----
+ 2 files changed, 39 insertions(+), 5 deletions(-)
 
 diff --git a/Documentation/ABI/testing/sysfs-platform-asus-wmi b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-index 775ea88625c0d..24931cc97ca86 100644
+index 24931cc97ca86..36b633a5dfc49 100644
 --- a/Documentation/ABI/testing/sysfs-platform-asus-wmi
 +++ b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-@@ -297,3 +297,26 @@ Contact:	Luke D. Jones <luke@ljones.dev>, Denis Benato <denis.benato@linux.dev>,
- Description:
- 		Same as the pwm1 and pwm2 curve points, for the mid fan
- 		(pwm3) of laptops whose firmware exposes a third fan curve.
+@@ -281,6 +281,20 @@ Description:
+ 		(0-255); the driver scales the duty to the percentage the
+ 		firmware expects when the curve is enabled.
+ 
++		While the curve is enabled, _pwm reports the effective duty,
++		which is the higher of the stored duty and the firmware floor
++		of the point (pwmY_auto_pointZ_floor_pwm).  A disabled curve
++		reports the stored duty.  The controller works in whole
++		percent, so the reported value is an upper bound: the applied
++		duty can be up to 2.5 pwm units lower.
 +
-+What:		/sys/class/hwmon/hwmonX/pwm[1-3]_auto_point[1-8]_floor_pwm
-+Date:		Nov 2026
-+KernelVersion:	7.5
-+Contact:	Bartu Alev <bartualev@gmail.com>
-+Description:
-+		Read-only minimum duty, in pwm units (0-255), that the
-+		embedded controller enforces for curve point Z of fan Y.
-+		The firmware reports the floor as a percentage; the driver
-+		converts it with DIV_ROUND_UP(255 * percent, 100), which maps
-+		every 0-100 percentage back to itself.
-+		Point Z (Z = 1..8) is bound to the temperature decade
-+		[30 + 10 * (Z - 1), 39 + 10 * (Z - 1)] degrees Celsius and
-+		the value is the floor of that decade.  The controller applies
-+		max(curve, floor) for every point on each thermal tick, so
-+		the floor is a hardware limit on top of the curve written
-+		through pwmY_auto_pointZ_pwm.
++		Reading while the curve is enabled is therefore not
++		read-modify-write safe: a curve editor that reads the points
++		and writes them back stores the effective duty as the new
++		curve, and the duty the user originally wrote is lost.  Read
++		the curve while it is disabled, or write back the values that
++		were written rather than the ones that were read.
 +
-+		The attribute exists for every fan with a custom fan curve.
-+		Reading it returns -ENODATA when the firmware of that fan
-+		does not provide a floor table.  A zero value is a real
-+		floor: the controller then enforces no minimum duty for that
-+		point.
+ 		The embedded controller binds point Z (Z = 1..8) to the
+ 		temperature decade [30 + 10 * (Z - 1), 39 + 10 * (Z - 1)]
+ 		degrees Celsius and silently clamps the threshold into that
 diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
-index dc1e69b964c99..74476904cb99c 100644
+index 74476904cb99c..bae5a528ac5d8 100644
 --- a/drivers/platform/x86/asus-wmi.c
 +++ b/drivers/platform/x86/asus-wmi.c
-@@ -3868,6 +3868,23 @@ static ssize_t fan_curve_show(struct device *dev,
- 	return sysfs_emit(buf, "%d\n", value);
- }
+@@ -324,7 +324,7 @@ struct asus_wmi {
+ 	bool gpu_fan_curve_available;
+ 	bool mid_fan_curve_available;
+ 	struct fan_curve_data custom_fan_curves[3];
+-	/* protects custom_fan_curves[].floors */
++	/* protects custom_fan_curves[].floors and .floors_valid */
+ 	struct mutex fan_curve_lock;
+ 	struct device *fan_curve_hwmon;
  
-+static ssize_t fan_curve_floor_show(struct device *dev,
-+				    struct device_attribute *attr, char *buf)
-+{
-+	struct sensor_device_attribute_2 *dev_attr = to_sensor_dev_attr_2(attr);
-+	struct asus_wmi *asus = dev_get_drvdata(dev);
-+	struct fan_curve_data *data = &asus->custom_fan_curves[dev_attr->nr];
-+	u8 floor;
-+
-+	guard(mutex)(&asus->fan_curve_lock);
-+	if (!data->floors_valid)
-+		return -ENODATA;
-+
-+	floor = data->floors[dev_attr->index];
-+
-+	return sysfs_emit(buf, "%u\n", floor);
-+}
-+
- /*
-  * "fan_dev" is the related WMI method such as ASUS_WMI_DEVID_CPU_FAN_CURVE.
-  */
-@@ -4153,6 +4170,58 @@ static SENSOR_DEVICE_ATTR_2_RW(pwm3_auto_point7_pwm, fan_curve,
- static SENSOR_DEVICE_ATTR_2_RW(pwm3_auto_point8_pwm, fan_curve,
- 			       FAN_CURVE_DEV_MID | FAN_CURVE_PWM_MASK, 7);
- 
-+/* Firmware enforced minimum duty of each point, read-only */
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point1_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 0);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point2_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 1);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point3_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 2);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point4_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 3);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point5_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 4);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point6_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 5);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point7_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 6);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point8_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_CPU, 7);
-+
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point1_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 0);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point2_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 1);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point3_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 2);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point4_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 3);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point5_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 4);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point6_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 5);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point7_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 6);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point8_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_GPU, 7);
-+
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point1_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 0);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point2_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 1);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point3_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 2);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point4_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 3);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point5_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 4);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point6_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 5);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point7_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 6);
-+static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point8_floor_pwm, fan_curve_floor,
-+			       FAN_CURVE_DEV_MID, 7);
-+
- static struct attribute *asus_fan_curve_attr[] = {
- 	/* CPU */
- 	&sensor_dev_attr_pwm1_enable.dev_attr.attr,
-@@ -4211,6 +4280,37 @@ static struct attribute *asus_fan_curve_attr[] = {
- 	NULL
- };
- 
-+static struct attribute *asus_fan_curve_floor_attr[] = {
-+	/* CPU */
-+	&sensor_dev_attr_pwm1_auto_point1_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point2_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point3_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point4_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point5_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point6_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point7_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm1_auto_point8_floor_pwm.dev_attr.attr,
-+	/* GPU */
-+	&sensor_dev_attr_pwm2_auto_point1_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point2_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point3_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point4_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point5_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point6_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point7_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm2_auto_point8_floor_pwm.dev_attr.attr,
-+	/* MID */
-+	&sensor_dev_attr_pwm3_auto_point1_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point2_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point3_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point4_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point5_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point6_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point7_floor_pwm.dev_attr.attr,
-+	&sensor_dev_attr_pwm3_auto_point8_floor_pwm.dev_attr.attr,
-+	NULL
-+};
-+
- static umode_t asus_fan_curve_is_visible(struct kobject *kobj,
- 					 struct attribute *attr, int idx)
- {
-@@ -4233,11 +4333,50 @@ static umode_t asus_fan_curve_is_visible(struct kobject *kobj,
+@@ -3754,7 +3754,7 @@ static int fan_curve_load_floors(struct asus_wmi *asus, u32 fan_dev)
  	return 0;
  }
  
-+static bool fan_curve_available(struct asus_wmi *asus, int fan_idx)
-+{
-+	switch (fan_idx) {
-+	case FAN_CURVE_DEV_CPU:
-+		return asus->cpu_fan_curve_available;
-+	case FAN_CURVE_DEV_GPU:
-+		return asus->gpu_fan_curve_available;
-+	case FAN_CURVE_DEV_MID:
-+		return asus->mid_fan_curve_available;
-+	default:
-+		return false;
-+	}
-+}
-+
-+static umode_t asus_fan_curve_floor_is_visible(struct kobject *kobj,
-+					       struct attribute *attr, int idx)
-+{
-+	struct device *dev = kobj_to_dev(kobj);
-+	struct asus_wmi *asus = dev_get_drvdata(dev->parent);
-+	struct device_attribute *dattr =
-+		container_of(attr, struct device_attribute, attr);
-+	int fan = to_sensor_dev_attr_2(dattr)->nr;
-+
-+	if (!fan_curve_available(asus, fan))
-+		return 0;
-+
-+	return 0444;
-+}
-+
- static const struct attribute_group asus_fan_curve_attr_group = {
- 	.is_visible = asus_fan_curve_is_visible,
- 	.attrs = asus_fan_curve_attr,
- };
--__ATTRIBUTE_GROUPS(asus_fan_curve_attr);
-+
-+static const struct attribute_group asus_fan_curve_floor_attr_group = {
-+	.is_visible = asus_fan_curve_floor_is_visible,
-+	.attrs = asus_fan_curve_floor_attr,
-+};
-+
-+static const struct attribute_group *asus_fan_curve_attr_groups[] = {
-+	&asus_fan_curve_attr_group,
-+	&asus_fan_curve_floor_attr_group,
-+	NULL,
-+};
+-static void fan_curve_notify_floors(struct asus_wmi *asus)
++static void fan_curve_notify(struct asus_wmi *asus)
+ {
+ 	struct device *hwmon = asus->fan_curve_hwmon;
+ 	bool valid[ARRAY_SIZE(asus->custom_fan_curves)];
+@@ -3778,6 +3778,10 @@ static void fan_curve_notify_floors(struct asus_wmi *asus)
+ 				 "pwm%d_auto_point%d_floor_pwm",
+ 				 fan + 1, point + 1);
+ 			sysfs_notify(&hwmon->kobj, NULL, name);
++			snprintf(name, sizeof(name),
++				 "pwm%d_auto_point%d_pwm",
++				 fan + 1, point + 1);
++			sysfs_notify(&hwmon->kobj, NULL, name);
+ 		}
+ 	}
+ }
+@@ -3797,7 +3801,7 @@ static void fan_curve_refresh_floors(struct asus_wmi *asus)
+ 	if (asus->mid_fan_curve_available)
+ 		fan_curve_load_floors(asus, ASUS_WMI_DEVID_MID_FAN_CURVE);
  
- /*
-  * Must be initialised after throttle_thermal_policy_dev is set as
+-	fan_curve_notify_floors(asus);
++	fan_curve_notify(asus);
+ }
+ 
+ /* Check if the capability exists, populate its defaults and read its floor table */
+@@ -3855,15 +3859,28 @@ static ssize_t fan_curve_show(struct device *dev,
+ 	struct asus_wmi *asus = dev_get_drvdata(dev);
+ 	struct fan_curve_data *data;
+ 	int value, pwm, index;
++	bool enabled;
+ 
+ 	data = fan_curve_attr_2_select(asus, attr);
+ 	pwm = dev_attr->nr & FAN_CURVE_PWM_MASK;
+ 	index = dev_attr->index;
+ 
+-	if (pwm)
++	if (pwm) {
++		enabled = data->enabled;
+ 		value = data->percents[index];
+-	else
++
++		/*
++		 * The EC runs the point at the higher of the curve and the
++		 * firmware floor, so report the duty it applies.  Only the
++		 * floor table is protected by fan_curve_lock; enabled and
++		 * percents are written without it, so this is a snapshot.
++		 */
++		guard(mutex)(&asus->fan_curve_lock);
++		if (enabled && data->floors_valid)
++			value = max(value, (int)data->floors[index]);
++	} else {
+ 		value = data->temps[index];
++	}
+ 
+ 	return sysfs_emit(buf, "%d\n", value);
+ }
+@@ -4059,6 +4076,9 @@ static ssize_t fan_curve_enable_store(struct device *dev,
+ 			fan_curve_refresh_floors(asus);
+ 		}
+ 	}
++
++	fan_curve_notify(asus);
++
+ 	return count;
+ }
+ 
 
 -- 
 2.56.0
