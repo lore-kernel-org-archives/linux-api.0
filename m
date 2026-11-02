@@ -1,109 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.42
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793605469;
-	b=LTO8HR6A5QEZHO2+KPBHOXmeeQLGx5Mpk+WjEVb1NtnncSFcG1fAdJRX3dpCy7EDDt/3
-	 vwv+JEjUPHTt69iVAE6KeCsdTyKNyt2Zw9OcwVEfMkV9bGGPCjzKktnIwXPeQLvWkSF6s
-	 SbIksFgvZ9UwW0aPpB3AikBOo4zWu229UmwJl5UzQzP/b4dmhUZIOrhWrn+/Ni2MxiYiR
-	 jN/jnjfLb5N3BL6vrtUNRK0+9XHaXrqUghVp761FVUeDwqAAgkVjP+ESIbITJoyUMV7A2
-	 OhSvtmkmutuHjb4cFHDSd66eTGh1IRSxn7GrJzWVm0FmEqS4vs7kyAZ8nFoepDGEk0w==
+	t=1793623752;
+	b=btC8fw7dG+ZqeJiyO+fctrZz/eArAfowDyi1U05nRzldQy3lRg+6PJJPiFWlR1TWGAfl
+	 IzHzDSatBnswurOq3Y+61QT+Ax/55fkwO95U553/h/hi1II5OKrwwuJI1MFJbtsYq1ghi
+	 3/pmCwGlgs9k35IMH4KgYN4j4YTbuc29j4Usyb/0k9efLQvGYumcrYyoYuEeTg3z32VSQ
+	 T++pR+wqTbkb8biDgM8WzLj+Abr0ULsn4RlglDmHCnDMNsUlTzAM9S7Lqurv3kTdA463s
+	 E8Io1ygS+wCqjZKc2RgAs+BpnQtZhuba/nWIJvEcfrgD5UmvqWd6E60IEhCcRVTJE6A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793605469;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793623752;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=tbEqoEmiOLpfQLZXaMwfuY090SS6ZvbC9oI0iDoMLRc=;
-	b=Y1Ia9aQC8vOEq7ma2DxxPilt0diyLlHgnI9i5/CRv7HoNng3uQoh+thFvnFbmBd12qhl
-	 xRK4+K+VgWTLAbgRqtAoVOVGUKqu52HhkQSSDWMYoXOG1kdad8m6M3GuxSWDSScDHo/Wf
-	 VT4iStO/HB17Cqtmxgk2t63ik/L5idFeGlBjfen8nJmvNzCy8sCD3GQb4ylCr920DHNSP
-	 IKAZkrX3F81Jr950rzJPnmykDqacAFTaMxqtQCfCPMPYPYT60WcWke9iKbJQoeuOKlg12
-	 tm0mkMLuf31fCyoHIDxM2EVMgCiFluZnDyFjQrK27p92S6NYmP3KjVyAalDxsdNGXMg==
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
+	b=wl/zEG9zxvfWc+0Fj/Qf2MHm62u2B1g5287jJ4w1JgPzYBumq068bjknCcrt8bgghkcW
+	 kTxFEJB1R7mp/vxfy2uv0qOAkDSPNkuQGsd3c1G+A+48CrseZ2m7PwhcZpt2L0JVZh34P
+	 O67ZCyBgDu59ffxP7xjdTybLDXjFnZ14NADbNPktVAyxQZbdL2WDOl5LZ8t54FOCXoBkz
+	 8z7fKY2zX4Getr9I7lGRQRsLS/YfEkEtwY0rWX0eQvWV4vnfvNRJgM/hN26G71f+IvNJp
+	 KYaldD9j6gMZauDjwrN1lFBvbtQr460L7IVKi9mM/l7zdd9FziU5hg0CI+QV7P90sjA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="g55Rr/XF";
-	arc=none smtp.remote-ip=209.85.221.42
-Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=NpuobCOD;
+	arc=none smtp.remote-ip=209.85.167.50
+Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com [209.85.167.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7593160A260D
-	for <linux-api@vger.kernel.org>; Mon,  2 Nov 2026 07:44:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7593160A260D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6442C60A3828
+	for <linux-api@vger.kernel.org>; Mon,  2 Nov 2026 12:49:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6442C60A3828
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=g55Rr/XF
-Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-48df4f540ebso1138775f8f.3
-        for <linux-api@vger.kernel.org>; Sun, 01 Nov 2026 23:44:29 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=NpuobCOD
+Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-5bccb867d6fso2608815e87.0
+        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2026 04:49:11 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793605468; x=1794210268; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=tbEqoEmiOLpfQLZXaMwfuY090SS6ZvbC9oI0iDoMLRc=;
-        b=g55Rr/XF1d28kJml+NF7JZU9snuT/I/3wcn0NtnKDeNWwtw7hTBHwrsCYjseESZ0QE
-         YM4ixaPDJgSNxQsI4tDs2fx39Q8FPog73TciZ4rZca30FgtmhbQKuj0ZkMtOR6mYbAhd
-         4DRGhYUwE6DXaZn0eeNHegtQfxPLErwLsX/K3k1ipwu7azBa9wes+CbI1I4u8w0d+pmP
-         I/wV0EtTUkoe1F/5zqpjwSGDFq2RrDxzoEIOE/reeMNzQj6Q3ZBJKwn4Z/SG+WdA+Rso
-         8FfbCZb2G8nMirGo0AyX1tL4VFZd0jcomNDfKzxlNbC6buF7B3j4b0fSrRtmAn1paL4P
-         +6SQ==
+        d=resnulli.us; s=google; t=1793623749; x=1794228549; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
+        b=NpuobCODsaeMaWK3KSJ7CYeFzFjejBe/CdpSaMImxO/psFfYWNgksAz6IaQBHVoGnw
+         yG4TCf9GwWszKn5P0wcTjS5/F7bSf5w6P8cLbEzmHkhdfS4xOg4xf7JMiocrxffE62mH
+         DVHo0o1CX5jLPh/fOcr4yzR01YrMQb2/9QMO2M4askf2lmuroalMbTS/uP0jeYTWWaUI
+         MeE6SgTJTPiWBhC9AUU5hmVaAXjzy50bPM6LOV17JjqC+4inRl/4yDJxVhRxuDK40T5A
+         vGvZhmz6TCJp+zWhB42LV9spfusWTm3gQ9YT7of8ECrFocRAwvhVwM0uOZ6rJaD5eZkE
+         XJ3w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793605468; x=1794210268;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=tbEqoEmiOLpfQLZXaMwfuY090SS6ZvbC9oI0iDoMLRc=;
-        b=hXwjLmIkkbQ25zbOTEzd/xWj5THYiFDcuZjR7dfQW6fse/ILJ/pnjAZdjA2972YfFB
-         3I2C61tSIb64YZDYeV7TOhI3CrXk005tR9VPOrX0BW7yA19k7YGi5Y3RJpHUBIOS9Vti
-         2KOAZfdVkIhAJ/+iFXYkTU/NkruoYbHBysYunaG4Wffz9nyfQRSAEZV34JXnaYB7dlAH
-         BDdFD95hi4HvLq/eI9R/Ou+V9fk3uMRW+Z+/SQutJODpP8TY/+GwCsdJg9MlzhQ6zxco
-         5p195+RGtvXchK/0pDPi06hsVgR5rBqdfyiKl/TJYSeYsa3Rx+SPguWheD/dh7M+dnPF
-         a4VQ==
-X-Forwarded-Encrypted: i=1; AKwUvBzjnO3W4KgREMZ+atd10J8Kxt/zDqnxoC7Mw973Ya89e5A99ZvFRVL0SlsQy4ExLmpOHUshaqt9zpE=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/BvtJtvqjpySWnCpfZVC9MnB21gFeDqdYyJ1nzhzAtTW+ITHG4
-	SdOgBPIgFT9yjfc657ka2VIyWPmTkwxsR8kcJiY1hOpzxNWmPWauZ/96
-X-Gm-Gg: AYBFou10ekoKM4vOxZGTskAH1JtlTa0KqaW27WGXSa7IWPVw4gYKHnn3UGEH+vU/JZ1
-	N9hAsMxnobzVGLJDQLLFjpdnw7SRZJsIRZ5ckLOgMxL/yLm+fPt+4lBetwl+wuHr/tNrxwslQ9b
-	gmppPis6ri1uCrBoRGJHeeFvzGR8kbe9Jkmc4TUiGYvZBlY+V4SHAv4wNFJssNanTXC70Hi/L/e
-	VNQpXnWxmgNJLvhUo8vxiiwO/GPlkPiqyNOo74EDPAY+Df3N0Hy2dTzqbMD9b7/TU1xCqhXZLY5
-	MHOAYH9yQC489QYf4TsV1Vsc2+7kmv6vLRC51wk/0jueY6ri2LJusfkSEyCKDyddFpVcJIUjG7/
-	fj3hN119YXUhWQAhKvWYqz/uCpG0S4Y+8oCgqbglWtoOsxnGKaq2UMkEeBMXlw4+8+CpReecdDs
-	2l7X5TrWgsQuvVA2CR8We94t5L9whHNftP1a7MbQglbs48A7p71mGXEAcMhinFyLiMnpzlxmI5n
-	HDBToSLgNOTUjJpxJTBb4vkqI6b2ttY6UQRXdsqKWNdqEN8sbqXRCTDYph6qWDKja994Y2ASoMQ
-	AMSsULXBbsB9DXZMQf1Gqc4hFnJ3/pR6S7s=
-X-Received: by 2002:a05:6000:144f:b0:48d:de0f:b79 with SMTP id ffacd0b85a97d-48e6e264067mr23884219f8f.0.1793605467644;
-        Sun, 01 Nov 2026 23:44:27 -0800 (PST)
-Received: from nobara ([83.231.69.9])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71b81c74sm18050374f8f.36.2026.11.01.23.44.26
+        d=1e100.net; s=20260707; t=1793623749; x=1794228549;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
+        b=dRQEfpFBwlviuq3p1IOgp1l/Fvm5jf1fLP/BzJObZssGE82RKw3EyPgLjSdGfuDVLy
+         LKQyV1HW7r0JTp1ATpYdEqU+CyFGwt9AnIWgtGqX6mCwv7JPLkf/WWOnUgyHhugjzBOT
+         /ht2SdMsZwibkzj/YXfSM7AlsfZIsWDYQfr8CO5qq/GsTn6wPcmYgl9mtnOLPyXbQ7NV
+         xmVMYFNHgTxd3T81EUsnEKmDpzbPXdJ8gzBpHjrIYmjhVmlxm7TT8l6MOIYBOdA2XbBr
+         5ZpRb9YK10Nw3FBb0zgRR1AMJdzAXSSYEQOREXFmT+3Z5mwcyAAtBbBUIz1/05OLGdo7
+         XeYg==
+X-Forwarded-Encrypted: i=1; AKwUvBxB5KZRuLQ78+Oi8bECOZBiZttx+oEvhEsP76PHjFw2osMI0tuBdroE5svoMJbU4cMZBF9t1FMQXu4=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+VHAnmccUJvb8Ua3nd0xZOsoUEX09nX4T8YFq0347zb7qGhdIP
+	VAXfpieestSfmxgR8ydENtRJ808Kg/nnk9YvIMxYqBE8X4UD5ctB4TZmyIO3k92nPQw=
+X-Gm-Gg: AYBFou2oxZ8dvJIdkc9oy8/EJCAY2WQEvvbFAIx5OnZHSvsoG3f8drBWf298dPxhl49
+	xMdQPhOhnMzwRVOIWPagaW19w+wbHq7tefrlif7rhshf9Zs5BL5Fnq0IGvyUDdqoWPG0NRBwx4Q
+	95GNvQaaiDfrorXa8ZWi6gzFlc6KXAdkFd+J5Z2UT+12pXseKU6miT4XBu1ixPHZqWXEXpGqbRR
+	e8THlCBOZ8H8AXF84ncNbDDf2quHsu4ixdvaIvBPPs8MIxH97tubwdaEANxWlQbj+hI3+V1QYDV
+	wxF7XQPWKS6E5IdmusKGRn+7MdsOOmL1aL+/v4SiqezLFI44O2kmpAD/rssO4tZTSV5OsUK82A4
+	8BJIpZP5/x3qZJ2/8/BXXhd83xpOBj1VYqO+tJXkA5gkZiyzqmO8udVN2tYC5KyEa81nd3rDiBL
+	sIscdNg0N1htksFIKJ5CD2WmdVx5sDHAazJTSXpRaOqzAvmgcvJAbxi110OqOIqFjXhnqzXvWr1
+	KO2l/NSGWdkcQrAhvDuddO6aoVEI+k55dOB4X4m6U6LSzLShhylI0WLrmUc/Bu99pbpHQQney3N
+	0H/eRs0A2TfWO0CjEsHzmv2bKmyFxuqT34ghQQw=
+X-Received: by 2002:a05:6512:158d:b0:5bf:e799:c7f3 with SMTP id 2adb3069b0e04-5bfe799c920mr1589103e87.61.1793623749527;
+        Mon, 02 Nov 2026 04:49:09 -0800 (PST)
+Received: from localhost ([140.209.217.212])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5bfe04ee003sm1638014e87.7.2026.11.02.04.49.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 01 Nov 2026 23:44:27 -0800 (PST)
-From: "Jose A. Perez de Azpillaga" <azpijr@gmail.com>
-To: Andrew Morton <akpm@linux-foundation.org>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	David Hildenbrand <david@kernel.org>,
-	Shuah Khan <shuah@kernel.org>
-Cc: Vlastimil Babka <vbabka@kernel.org>,
-	Jann Horn <jannh@google.com>,
-	Pedro Falcato <pfalcato@suse.de>,
-	Mike Rapoport <rppt@kernel.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Michal Hocko <mhocko@suse.com>,
-	linux-mm@kvack.org,
-	linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	ts930@dgu.ac.kr,
-	alx@kernel.org,
-	linux-api@vger.kernel.org,
-	linux-man@vger.kernel.org,
-	"Jose A. Perez de Azpillaga" <azpijr@gmail.com>
-Subject: [PATCH RESEND 3/3] selftests/mm: test mlock() and munlock() range normalisation
-Date: Mon,  2 Nov 2026 08:44:01 +0100
-Message-ID: <20261102074412.189554-4-azpijr@gmail.com>
-X-Mailer: git-send-email 2.56.0
-In-Reply-To: <20261102074412.189554-1-azpijr@gmail.com>
-References: <20261102074412.189554-1-azpijr@gmail.com>
+        Mon, 02 Nov 2026 04:49:09 -0800 (PST)
+Date: Mon, 2 Nov 2026 13:49:05 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Yeoreum Yun <yeoreum.yun@arm.com>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 10/20] ctlv: Prepare event queue support
+Message-ID: <auiGL-Xq72i5K8FT@FV6GYCPJ69>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-11-jiri@resnulli.us>
+ <auCbPdoaMq9oWoQ_@e129823.arm.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -113,255 +105,85 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <auCbPdoaMq9oWoQ_@e129823.arm.com>
 
-Add mlock2-tests cases for a zero length at aligned and unaligned
-addresses, for a length that wraps when rounded to pages, and for an
-overflowing start + len, checking the return value and VmLck.  The
-overflow cases expect -EINVAL with and without CAP_IPC_LOCK, so running
-the test unprivileged also covers the errno that used to depend on it.
+Tue, Oct 27, 2026 at 01:38:21PM +0100, yeoreum.yun@arm.com wrote:
+>Hi Jiri,
+>
+>
+>[...]
+>
+>> +int ctlv_event_emit(struct ctlv_op_ctx *ctx)
+>> +{
+>> +	struct ctlv_device *ctlvdev = ctx->ctlvdev;
+>> +	struct ctlv_event_record *rec, *next;
+>> +	struct ctlv_file *cfile;
+>> +	u32 len, wanted = 0;
+>> +	LIST_HEAD(spare);
+>> +	int ret;
+>> +
+>> +	if (WARN_ON_ONCE(ctx->file))
+>> +		return -EINVAL;
+>> +	ret = ctlv_event_finish(ctx);
+>> +	if (ret)
+>> +		goto out_free;
+>> +
+>> +	len = sizeof(struct ctlv_event_hdr) + CTLV_ALIGN(ctx->output.root->len);
+>> +	scoped_guard(spinlock, &ctlvdev->events_lock) {
+>> +		if (ctlvdev->dead_announced)
+>> +			goto out_free;
+>> +		list_for_each_entry(cfile, &ctlvdev->files, node)
+>> +			if (test_bit(ctx->op->event_index, cfile->subscribed))
+>> +				wanted++;
+>> +	}
+>
+>Suppose at the time of here, the number of subscriber is 1.
+>However, before calling the ctlv_event_deliver(), another task hold the
+>event_lock() to register new subscriber. for example:
+>
+>
+>Task 1 (emit)					Task 2 (new subscriber B)
+>
+>wanted = 1
+>unlock events_lock.
+>						Register subscription.
+>allocate one record
+>ctlv_event_delver()
+>
+>  grab events_lock.
+>    Deliver former subscribe event to old one.
+>    new subscriber B will call ctlv_event_queue_event() with NULL.
+>
+>When this happens, new subscriber B would receive overflow event
+>via ctlv_event_queue_dropped() though it was registered right before.
+>
+>Is this intended? It doesn't make sense that subscribe B receives
+>the overflow event in this situation...
 
-The wrapping cases assume the test is built for the kernel's word size: a
-32-bit binary on a 64-bit kernel cannot pass a range that wraps.
+Not intended. Will fix.
 
-Suggested-by: David Hildenbrand <david@kernel.org>
-Signed-off-by: Jose A. Perez de Azpillaga <azpijr@gmail.com>
----
- tools/testing/selftests/mm/mlock2-tests.c | 191 +++++++++++++++++++++-
- 1 file changed, 190 insertions(+), 1 deletion(-)
-
-diff --git a/tools/testing/selftests/mm/mlock2-tests.c b/tools/testing/selftests/mm/mlock2-tests.c
-index 144b550813a6..3dca349c4738 100644
---- a/tools/testing/selftests/mm/mlock2-tests.c
-+++ b/tools/testing/selftests/mm/mlock2-tests.c
-@@ -2,6 +2,7 @@
- #define _GNU_SOURCE
- #include <sys/mman.h>
- #include <linux/mman.h>
-+#include <limits.h>
- #include <stdint.h>
- #include <unistd.h>
- #include <string.h>
-@@ -91,6 +92,7 @@ static bool is_vmflag_set(unsigned long addr, const char *vmflag)
- #define SIZE "Size:"
- #define RSS  "Rss:"
- #define LOCKED "lo"
-+#define VMLCK "VmLck:"
- 
- static unsigned long get_value_for_name(unsigned long addr, const char *name)
- {
-@@ -177,6 +179,27 @@ static int unlock_lock_check(char *map, bool mlock_supported)
- 	return 1;
- }
- 
-+static unsigned long get_vmlck(void)
-+{
-+	unsigned long vmlck;
-+	char line[1024];
-+	FILE *file;
-+
-+	file = fopen("/proc/self/status", "r");
-+	if (!file)
-+		ksft_exit_fail_msg("fopen: %s\n", strerror(errno));
-+
-+	while (fgets(line, sizeof(line), file)) {
-+		if (sscanf(line, VMLCK "\t%lu kB", &vmlck) == 1) {
-+			fclose(file);
-+			return vmlck << 10;
-+		}
-+	}
-+
-+	fclose(file);
-+	ksft_exit_fail_msg("cannot parse VmLck in /proc/self/status\n");
-+}
-+
- static void test_mlock_lock(void)
- {
- 	char *map;
-@@ -204,6 +227,167 @@ static void test_mlock_lock(void)
- 	munmap(map, 2 * page_size);
- }
- 
-+static void test_mlock_zero_length(void)
-+{
-+	unsigned long page_size = getpagesize();
-+	unsigned long vmlck_before, vmlck_after;
-+	char *map;
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (map == MAP_FAILED)
-+		ksft_exit_fail_msg("mmap error: %s\n", strerror(errno));
-+
-+	vmlck_before = get_vmlck();
-+	ksft_test_result(!mlock(map, 0),
-+			 "%s: zero length mlock() at an aligned address\n", __func__);
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: zero length mlock() at an aligned address locked nothing\n",
-+			 __func__);
-+
-+	vmlck_before = get_vmlck();
-+	ksft_test_result(!mlock(map + 5, 0),
-+			 "%s: zero length mlock() at an unaligned address\n", __func__);
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: zero length mlock() at an unaligned address locked nothing\n",
-+			 __func__);
-+
-+	munmap(map, 2 * page_size);
-+}
-+
-+static void test_munlock_zero_length(void)
-+{
-+	unsigned long page_size = getpagesize();
-+	unsigned long vmlck_before, vmlck_after;
-+	char *map;
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (map == MAP_FAILED)
-+		ksft_exit_fail_msg("mmap error: %s\n", strerror(errno));
-+
-+	if (mlock(map, 2 * page_size)) {
-+		munmap(map, 2 * page_size);
-+		ksft_exit_fail_msg("mlock(): %s\n", strerror(errno));
-+	}
-+
-+	vmlck_before = get_vmlck();
-+	ksft_test_result(vmlck_before > 0,
-+			 "%s: the range to release is accounted as locked\n",
-+			 __func__);
-+	ksft_test_result(!munlock(map + 5, 0),
-+			 "%s: zero length munlock() at an unaligned address\n", __func__);
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: zero length munlock() at an unaligned address released nothing\n",
-+			 __func__);
-+
-+	munmap(map, 2 * page_size);
-+}
-+
-+static void test_mlock_length_wrap(void)
-+{
-+	unsigned long page_size = getpagesize();
-+	unsigned long vmlck_before, vmlck_after;
-+	char *map;
-+	int ret;
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (map == MAP_FAILED)
-+		ksft_exit_fail_msg("mmap error: %s\n", strerror(errno));
-+
-+	vmlck_before = get_vmlck();
-+	errno = 0;
-+	ret = mlock(map, ULONG_MAX);
-+	ksft_test_result(ret == -1 && errno == EINVAL,
-+			 "%s: mlock() with a wrapping length is rejected\n",
-+			 __func__);
-+
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: mlock() with a wrapping length locked nothing\n",
-+			 __func__);
-+
-+	vmlck_before = get_vmlck();
-+	errno = 0;
-+	ret = mlock(map + 5, ULONG_MAX);
-+	ksft_test_result(ret == -1 && errno == EINVAL,
-+			 "%s: unaligned mlock() with a wrapping length is rejected\n",
-+			 __func__);
-+
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: unaligned mlock() with a wrapping length locked nothing\n",
-+			 __func__);
-+
-+	munmap(map, 2 * page_size);
-+}
-+
-+static void test_mlock_addr_overflow(void)
-+{
-+	unsigned long page_size = getpagesize();
-+	unsigned long vmlck_before, vmlck_after;
-+	size_t len;
-+	char *map;
-+	int ret;
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (map == MAP_FAILED)
-+		ksft_exit_fail_msg("mmap error: %s\n", strerror(errno));
-+
-+	/* addr + len wraps to 0 */
-+	len = (size_t)(0UL - (unsigned long)map);
-+
-+	/* -EINVAL with or without CAP_IPC_LOCK */
-+	vmlck_before = get_vmlck();
-+	errno = 0;
-+	ret = mlock(map, len);
-+	ksft_test_result(ret == -1 && errno == EINVAL,
-+			 "%s: mlock() with an overflowing addr + len is rejected\n",
-+			 __func__);
-+
-+	vmlck_after = get_vmlck();
-+	ksft_test_result(vmlck_before == vmlck_after,
-+			 "%s: mlock() with an overflowing addr + len locked nothing\n",
-+			 __func__);
-+
-+	munmap(map, 2 * page_size);
-+}
-+
-+static void test_munlock_range_overflow(void)
-+{
-+	unsigned long page_size = getpagesize();
-+	size_t len;
-+	char *map;
-+
-+	map = mmap(NULL, 2 * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-+	if (map == MAP_FAILED)
-+		ksft_exit_fail_msg("mmap error: %s\n", strerror(errno));
-+
-+	errno = 0;
-+	ksft_test_result(munlock(map, ULONG_MAX) == -1 && errno == EINVAL,
-+			 "%s: munlock() with a wrapping length is rejected\n",
-+			 __func__);
-+
-+	errno = 0;
-+	ksft_test_result(munlock(map + 5, ULONG_MAX) == -1 && errno == EINVAL,
-+			 "%s: unaligned munlock() with a wrapping length is rejected\n",
-+			 __func__);
-+
-+	len = (size_t)(0UL - (unsigned long)map);
-+	errno = 0;
-+	ksft_test_result(munlock(map, len) == -1 && errno == EINVAL,
-+			 "%s: munlock() with an overflowing addr + len is rejected\n",
-+			 __func__);
-+
-+	munmap(map, 2 * page_size);
-+}
-+
- static int onfault_check(char *map)
- {
- 	*map = 'a';
-@@ -506,9 +690,14 @@ int main(int argc, char **argv)
- 
- 	munmap(map, size);
- 
--	ksft_set_plan(15);
-+	ksft_set_plan(31);
- 
- 	test_mlock_lock();
-+	test_mlock_zero_length();
-+	test_munlock_zero_length();
-+	test_mlock_length_wrap();
-+	test_mlock_addr_overflow();
-+	test_munlock_range_overflow();
- 	test_mlock_onfault();
- 	test_munlockall0();
- 	test_munlockall1();
--- 
-2.56.0
-
+>
+>
+>> +	if (wanted) {
+>> +		ctlv_event_copies(ctx, len, &spare, wanted);
+>> +		ctlv_event_deliver(ctx, &spare);
+>> +		list_for_each_entry_safe(rec, next, &spare, node)
+>> +			kfree(rec);
+>> +	}
+>> +
+>> +out_free:
+>> +	ctlv_event_free(ctx);
+>> +	return ret;
+>> +}
+>> +EXPORT_SYMBOL_NS_GPL(ctlv_event_emit, "CTLV");
+>> +
+>
+>[...]
+>
+>Thanks!
+>
+>-- 
+>Sincerely,
+>Yeoreum Yun
