@@ -1,101 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.50
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793623752;
-	b=btC8fw7dG+ZqeJiyO+fctrZz/eArAfowDyi1U05nRzldQy3lRg+6PJJPiFWlR1TWGAfl
-	 IzHzDSatBnswurOq3Y+61QT+Ax/55fkwO95U553/h/hi1II5OKrwwuJI1MFJbtsYq1ghi
-	 3/pmCwGlgs9k35IMH4KgYN4j4YTbuc29j4Usyb/0k9efLQvGYumcrYyoYuEeTg3z32VSQ
-	 T++pR+wqTbkb8biDgM8WzLj+Abr0ULsn4RlglDmHCnDMNsUlTzAM9S7Lqurv3kTdA463s
-	 E8Io1ygS+wCqjZKc2RgAs+BpnQtZhuba/nWIJvEcfrgD5UmvqWd6E60IEhCcRVTJE6A==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793623752;
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.42
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793628043;
+	b=Bpw7UtO60w5KG9HEwNvyrQi302V/0qXxgw/LQnRK7DfeWrmLlXb9cIG/OAfy5qzzuJOi
+	 JgC/O5CYA5lIpY+bmJCi94nh7PNvH50y1+KIoagPLa5OwnGvgr6HFa9i8JZtMATWAX8Ws
+	 diYRzMY8XcKdv5wChhkd/5cvSKa3BaAKan2kM1YgiKPnwnFRDYHc+d7bu8/g5KQ48Zhss
+	 fvC1sHEZAGOAuneRqT4AQWT+/6J1kJwosW/Jg4CXw2LVsNbCaZbQCwjo+ESUPvw0/C/r4
+	 r2auefx/H0forMJQbIi5K4tAGOj26GJHZ0Zg8/Hx7Lve1lM4LkJl5PDrIA9iTgi3QUg==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793628043;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
-	b=wl/zEG9zxvfWc+0Fj/Qf2MHm62u2B1g5287jJ4w1JgPzYBumq068bjknCcrt8bgghkcW
-	 kTxFEJB1R7mp/vxfy2uv0qOAkDSPNkuQGsd3c1G+A+48CrseZ2m7PwhcZpt2L0JVZh34P
-	 O67ZCyBgDu59ffxP7xjdTybLDXjFnZ14NADbNPktVAyxQZbdL2WDOl5LZ8t54FOCXoBkz
-	 8z7fKY2zX4Getr9I7lGRQRsLS/YfEkEtwY0rWX0eQvWV4vnfvNRJgM/hN26G71f+IvNJp
-	 KYaldD9j6gMZauDjwrN1lFBvbtQr460L7IVKi9mM/l7zdd9FziU5hg0CI+QV7P90sjA==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=NpuobCOD;
-	arc=none smtp.remote-ip=209.85.167.50
-Received: from mail-lf1-f50.google.com (mail-lf1-f50.google.com [209.85.167.50])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=s5Xf4onWksy+tbgDhi+LvOuZ3PKtrfpCQRc1Tg6vJHg=;
+	b=g9rWizxPVp/cU9l2pWbWlZDri+BUiYleUx/uQeehBCSMgWEBoNzFd7rcDq4HT5/X1tkT
+	 4y8YLyDkanOHZwrjvzxZufG8CVJqimbrQmHWmPSjm9S8NScyp9JE2suBdFPQdxuNgkZ0v
+	 U7lhv2X7r4JjYGSvm9AovJaGA9PPPW65vFeIVz/+wx3nh3Giq8ltLDOfSZvhNrrdkMYZW
+	 4lqnkKFI8xwFzrhpfRZcLYKPKSUmfyrmOU/P8pT9f5SkQ2FyapoLTjBQvVdiIA5mo33Yl
+	 Y1uW+7HSiXC88FFIjng8lGB0vf/aw7Wbx1q0PcmF/RfPG9EUf1GriHzK49i2baP9qKA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=sqAIi+u2;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.42
+Received: from mail-ej1-f42.google.com (mail-ej1-f42.google.com [209.85.218.42])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6442C60A3828
-	for <linux-api@vger.kernel.org>; Mon,  2 Nov 2026 12:49:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6442C60A3828
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6489A60A3821
+	for <linux-api@vger.kernel.org>; Mon,  2 Nov 2026 14:00:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6489A60A3821
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=NpuobCOD
-Received: by mail-lf1-f50.google.com with SMTP id 2adb3069b0e04-5bccb867d6fso2608815e87.0
-        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2026 04:49:11 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=sqAIi+u2
+Received: by mail-ej1-f42.google.com with SMTP id a640c23a62f3a-c4203bbb1e9so488624366b.3
+        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2026 06:00:43 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1793628042; cv=none;
+        d=google.com; s=arc-20260327;
+        b=QAHeu9RddiMg3uCJzrxLz8Dn1CSaErmXju1l3/YYAmcpujwq0e0DbO5ytNk/lTxBxB
+         X2K900ZwjXzGZPwO9DzylPepPcvkZz5lUbvrOZf52abBmgSYpAeELOdx2QuRudtEbsaV
+         GbCUUS5GoClfCD6cZbGSiCtCZJnNq+aHc+GYgWF7E8Kx8t4fTI+EXDFr6QsX2H8KyzSN
+         yTOilxBFY2pwW2LZegGbgTSG5aBb5sAU65pkUEOxl7Q6zMMbSfkVifgpXPj80mCyjW37
+         PFEU0mdETsVVGORH1zpkr5QCiPTtrCDKa6rgwt6NdAA3HZWmJa3f9P0ifUMVWgGnqyMP
+         PfMg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=s5Xf4onWksy+tbgDhi+LvOuZ3PKtrfpCQRc1Tg6vJHg=;
+        fh=X3DvrAeaaL6eRXmBSlmmhr2uRFcWPEVW272ONwSjZ/Q=;
+        b=J9Nee4Vl70S2tFTMC8QM3jZzrYlJcXf/IjBR/ve1FasYIfDljsc/NyjoWOiSo+sIgg
+         cW1+ApLlTYpoGKnbfUJx6gY4td4ZmuxU+WaQ+mR2OLVLBKSa95Io+BP3Y4F/TmCk/T47
+         WgNIXq9adro3HfbD8SLIgO7GOrMukYC4ugrGmANKtDcwzrsgWCyVZl2LQ7HTjKkvDkoP
+         Nqmtf4ZqtD4l7ktxsibR0eT9pp0Z8LeJ7OHHWj6wjxTOUMG/YGcmrn0MPvLU3lwuwl/c
+         xNjpGH3pU5WZJiAjnvolZ5A2uxkTmin/vvoAU137YfI6+XIBDHv9AQCjjt3Q+hT7IKGf
+         JgnQ==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793623749; x=1794228549; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+        d=gmail.com; s=20260707; t=1793628042; x=1794232842; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
-        b=NpuobCODsaeMaWK3KSJ7CYeFzFjejBe/CdpSaMImxO/psFfYWNgksAz6IaQBHVoGnw
-         yG4TCf9GwWszKn5P0wcTjS5/F7bSf5w6P8cLbEzmHkhdfS4xOg4xf7JMiocrxffE62mH
-         DVHo0o1CX5jLPh/fOcr4yzR01YrMQb2/9QMO2M4askf2lmuroalMbTS/uP0jeYTWWaUI
-         MeE6SgTJTPiWBhC9AUU5hmVaAXjzy50bPM6LOV17JjqC+4inRl/4yDJxVhRxuDK40T5A
-         vGvZhmz6TCJp+zWhB42LV9spfusWTm3gQ9YT7of8ECrFocRAwvhVwM0uOZ6rJaD5eZkE
-         XJ3w==
+        bh=s5Xf4onWksy+tbgDhi+LvOuZ3PKtrfpCQRc1Tg6vJHg=;
+        b=sqAIi+u2ogK6jCFX9j76dArnOThd5X0GCkPk+9VoPxB/STC2ao3yNQSapJ/76uyvZF
+         UQeJMLj3OjZQ6jYb3yKYpQYBgapfOVjbaeH6XWMUdukR6YyyOJiZarpmEibYav80QQel
+         ARzb1zBdJX680p6g7SYIcqKej0UMKNcuV/AzvXi9sTPGi/DS+5e8TNR91gHolVHyQs08
+         0pb9QRYTbtnS9lHSmz2/j9UIRd0UCpD0n6qnEqh4x5brTozZCvk/gpLraes7Ilzx05Qt
+         g2ZPufDM/NVNfGkokXFUysAeDG9pH92EnlHodWhDjFX58izRV8iTvo18CdxRQeNzpMZ6
+         WV3g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793623749; x=1794228549;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
+        d=1e100.net; s=20260707; t=1793628042; x=1794232842;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=i8NTQB3dN2QpIdebJsLSmUNNG/IYt0L9NmfBKr3dfDw=;
-        b=dRQEfpFBwlviuq3p1IOgp1l/Fvm5jf1fLP/BzJObZssGE82RKw3EyPgLjSdGfuDVLy
-         LKQyV1HW7r0JTp1ATpYdEqU+CyFGwt9AnIWgtGqX6mCwv7JPLkf/WWOnUgyHhugjzBOT
-         /ht2SdMsZwibkzj/YXfSM7AlsfZIsWDYQfr8CO5qq/GsTn6wPcmYgl9mtnOLPyXbQ7NV
-         xmVMYFNHgTxd3T81EUsnEKmDpzbPXdJ8gzBpHjrIYmjhVmlxm7TT8l6MOIYBOdA2XbBr
-         5ZpRb9YK10Nw3FBb0zgRR1AMJdzAXSSYEQOREXFmT+3Z5mwcyAAtBbBUIz1/05OLGdo7
-         XeYg==
-X-Forwarded-Encrypted: i=1; AKwUvBxB5KZRuLQ78+Oi8bECOZBiZttx+oEvhEsP76PHjFw2osMI0tuBdroE5svoMJbU4cMZBF9t1FMQXu4=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+VHAnmccUJvb8Ua3nd0xZOsoUEX09nX4T8YFq0347zb7qGhdIP
-	VAXfpieestSfmxgR8ydENtRJ808Kg/nnk9YvIMxYqBE8X4UD5ctB4TZmyIO3k92nPQw=
-X-Gm-Gg: AYBFou2oxZ8dvJIdkc9oy8/EJCAY2WQEvvbFAIx5OnZHSvsoG3f8drBWf298dPxhl49
-	xMdQPhOhnMzwRVOIWPagaW19w+wbHq7tefrlif7rhshf9Zs5BL5Fnq0IGvyUDdqoWPG0NRBwx4Q
-	95GNvQaaiDfrorXa8ZWi6gzFlc6KXAdkFd+J5Z2UT+12pXseKU6miT4XBu1ixPHZqWXEXpGqbRR
-	e8THlCBOZ8H8AXF84ncNbDDf2quHsu4ixdvaIvBPPs8MIxH97tubwdaEANxWlQbj+hI3+V1QYDV
-	wxF7XQPWKS6E5IdmusKGRn+7MdsOOmL1aL+/v4SiqezLFI44O2kmpAD/rssO4tZTSV5OsUK82A4
-	8BJIpZP5/x3qZJ2/8/BXXhd83xpOBj1VYqO+tJXkA5gkZiyzqmO8udVN2tYC5KyEa81nd3rDiBL
-	sIscdNg0N1htksFIKJ5CD2WmdVx5sDHAazJTSXpRaOqzAvmgcvJAbxi110OqOIqFjXhnqzXvWr1
-	KO2l/NSGWdkcQrAhvDuddO6aoVEI+k55dOB4X4m6U6LSzLShhylI0WLrmUc/Bu99pbpHQQney3N
-	0H/eRs0A2TfWO0CjEsHzmv2bKmyFxuqT34ghQQw=
-X-Received: by 2002:a05:6512:158d:b0:5bf:e799:c7f3 with SMTP id 2adb3069b0e04-5bfe799c920mr1589103e87.61.1793623749527;
-        Mon, 02 Nov 2026 04:49:09 -0800 (PST)
-Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5bfe04ee003sm1638014e87.7.2026.11.02.04.49.08
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 02 Nov 2026 04:49:09 -0800 (PST)
-Date: Mon, 2 Nov 2026 13:49:05 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Yeoreum Yun <yeoreum.yun@arm.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 10/20] ctlv: Prepare event queue support
-Message-ID: <auiGL-Xq72i5K8FT@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-11-jiri@resnulli.us>
- <auCbPdoaMq9oWoQ_@e129823.arm.com>
+        bh=s5Xf4onWksy+tbgDhi+LvOuZ3PKtrfpCQRc1Tg6vJHg=;
+        b=ERba0bCo7y9lAPF10hEF5zRmk9Jo93wu0XMyE09qnX0EPT2WvvjajGhYPED3Mxs9ui
+         Acbwqg1w5E2e6/9j+2Pc8kexMhuz17/Regj6hNdBNG0g+YC0xLn5RMmVMynvxyElX80T
+         49YhzDcyNtqfWK2htvTnHliEkWN1rHQvbPFIYQjnJ6AAZtXAFYl4lOSv8uObFR6vtZWf
+         FfsCdu7Giv6C44bKjxJYYCnwmtMoSWeKRm0zXAq1H34/5Nt0+OeNX5lmr8Zq57VmK4Kp
+         25xJM2WBwlD2lmu45ELnUzFCRHnniFfEHgz5T3OxTiUWEJdhxf1su4d/T5esqSdaDF9i
+         dWtA==
+X-Forwarded-Encrypted: i=1; AKwUvByJMo7K+M1+pXM3V8PILbZULcXcS2CwDdptxDFgTXgDGfgGX+emoM+cnQAC5dK2CN91QuQJbCBLovQ=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+737dHYQQ+8gNZayh0/24OdR8aHhprO/DrV8TUcdbCdsSAcdTd
+	weTDYdaLVUhL0gyQy4+SrrPKPXH5TcBEXOx0hAyOwLfsZlCqNzTCEfuTiixe9KOlq8wy2f5weBl
+	Z/8yo0HDLahPWLQWVPA16dMPtAABKdK8=
+X-Gm-Gg: AYBFou2+BB2gnFNgdmla5tyrFp9WEBX3kpUFzmVhmdP09IeJz3VEunb9S2Bn7XFj1K5
+	HbTzVh8rCsnPVhT9lxqtJFjGlmUjWpRfT4Dxuq9CEHayfSzte85NFP0Q0JqVWKs3G4WNE2UvUpe
+	wqWtOajB2HaLYYk0mEI8UG5IGsTFqT2u18VRMns7n7a5Tny9WtnEvIOVVcJi8V3UFsmjT4Ko8Ne
+	dAxbrxnv5hS4YU9++L2AqqwmuZ6ulIO9g8gzwn50ZetfL9f3dhuEVuWOMycpoF+DZkwaxE7NKj4
+	TrMppbju37SRLRABdj3WvGlcz0pkBdPR7t4XTTSpoa39uA4hKlulUl8+pMEXOsV9OadQgIfxCrQ
+	W9/GNB7nCJ85/UVSjGFM1Q77jhdspKbGONSWgSkiPtnyl5jurJesSvFbSSwS7h0u85/xZ9g==
+X-Received: by 2002:a17:906:9f87:b0:c33:9fab:5f61 with SMTP id
+ a640c23a62f3a-c4ca7a80dfcmr888696766b.29.1793628041476; Mon, 02 Nov 2026
+ 06:00:41 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -105,85 +104,112 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <auCbPdoaMq9oWoQ_@e129823.arm.com>
+References: <20261101015551.786044-1-koray.fra@gmail.com> <20261101015551.786044-2-koray.fra@gmail.com>
+In-Reply-To: <20261101015551.786044-2-koray.fra@gmail.com>
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Mon, 2 Nov 2026 15:00:29 +0100
+X-Gm-Features: AclHuK8C6KXo0yGTK4G9AdpXOF6ch7dlD0GPHOdparCBMVqSIwGLvVGFGi1BG64
+Message-ID: <CAOQ4uxiuJ=eZu28FZAUz3rpqPKqCimPxJucOnYYuBowvD09_Cw@mail.gmail.com>
+Subject: Re: [RFC PATCH v3 1/5] vfs: add provenance time (ptime)
+To: koraynilay <koray.fra@gmail.com>
+Cc: David Sterba <dsterba@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Christian Brauner <brauner@kernel.org>, Namjae Jeon <linkinjeon@kernel.org>, 
+	Sungjong Seo <sj1557.seo@samsung.com>, 
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, Chris Mason <mason@kernel.org>, 
+	Jan Kara <jack@suse.cz>, Yuezhang Mo <yuezhang.mo@sony.com>, Chuck Lever <cel@kernel.org>, 
+	"Darrick J . Wong" <djwong@kernel.org>, Sean Smith <defendthedisabled@gmail.com>, 
+	Andrey Albershteyn <aalbersh@kernel.org>, Pedro Falcato <pfalcato@suse.de>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
+	linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, exfat@lists.linux.dev, ntfs3@lists.linux.dev, 
+	linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Tue, Oct 27, 2026 at 01:38:21PM +0100, yeoreum.yun@arm.com wrote:
->Hi Jiri,
+On Sun, Nov 1, 2026 at 2:57=E2=80=AFAM koraynilay <koray.fra@gmail.com> wro=
+te:
 >
+> Add provenance time (ptime), indicating the time when a file or
+> directory was created. This is user-settable via file_setattr() and
+> retrievable via statx(2) (using STATX_PTIME) or file_getattr().
 >
->[...]
+> The semantics of when to preserve this new timestamp are the same as
+> mtime, the idea being that there is a correspondence like this:
 >
->> +int ctlv_event_emit(struct ctlv_op_ctx *ctx)
->> +{
->> +	struct ctlv_device *ctlvdev = ctx->ctlvdev;
->> +	struct ctlv_event_record *rec, *next;
->> +	struct ctlv_file *cfile;
->> +	u32 len, wanted = 0;
->> +	LIST_HEAD(spare);
->> +	int ret;
->> +
->> +	if (WARN_ON_ONCE(ctx->file))
->> +		return -EINVAL;
->> +	ret = ctlv_event_finish(ctx);
->> +	if (ret)
->> +		goto out_free;
->> +
->> +	len = sizeof(struct ctlv_event_hdr) + CTLV_ALIGN(ctx->output.root->len);
->> +	scoped_guard(spinlock, &ctlvdev->events_lock) {
->> +		if (ctlvdev->dead_announced)
->> +			goto out_free;
->> +		list_for_each_entry(cfile, &ctlvdev->files, node)
->> +			if (test_bit(ctx->op->event_index, cfile->subscribed))
->> +				wanted++;
->> +	}
+> ctime <-> btime
+> mtime <-> ptime
 >
->Suppose at the time of here, the number of subscriber is 1.
->However, before calling the ctlv_event_deliver(), another task hold the
->event_lock() to register new subscriber. for example:
+> so every operation (copying, moving, ...) that currently preserves mtime
+> should also preserve ptime.
 >
+> Furthermore, in order to avoid the legacy FS_IOC_FSSETXATTR accepting
+> FS_XFLAG_PTIME, add an FS_FILE_ATTR_XFLAGS_MASK mask to support new
+> xflags, and use it in fileattr_to_file_attr()/file_attr_to_fileattr() to
+> allow ptime to be used with the file_setattr()/file_getattr() syscalls.
 >
->Task 1 (emit)					Task 2 (new subscriber B)
+> [ This is a re-implementation of the initial patch[1] by Sean Smith
+>   <defendthedisabled@gmail.com>, following the advice[2] from Darrick J.
+>   Wong <djwong@kernel.org> of using file_setattr() instead of updating
+>   utimensat() ]
 >
->wanted = 1
->unlock events_lock.
->						Register subscription.
->allocate one record
->ctlv_event_delver()
+> [1]: https://lore.kernel.org/20260405195007.1306-2-DefendTheDisabled@gmai=
+l.com
+> [2]: https://lore.kernel.org/20260407014129.GC6192@frogsfrogsfrogs
 >
->  grab events_lock.
->    Deliver former subscribe event to old one.
->    new subscriber B will call ctlv_event_queue_event() with NULL.
+> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.4.7
+> Signed-off-by: koraynilay <koray.fra@gmail.com>
+> ---
+>  fs/file_attr.c            | 33 +++++++++++++++++++++++++++++++--
+>  fs/stat.c                 |  2 ++
+>  include/linux/fileattr.h  |  5 +++++
+>  include/linux/stat.h      |  1 +
+>  include/uapi/linux/fs.h   |  8 +++++++-
+>  include/uapi/linux/stat.h |  7 ++++++-
+>  6 files changed, 52 insertions(+), 4 deletions(-)
 >
->When this happens, new subscriber B would receive overflow event
->via ctlv_event_queue_dropped() though it was registered right before.
+> diff --git a/fs/file_attr.c b/fs/file_attr.c
+> index 833e03810b24..c0645cb22bf3 100644
+> --- a/fs/file_attr.c
+> +++ b/fs/file_attr.c
+> @@ -102,7 +102,7 @@ EXPORT_SYMBOL(vfs_fileattr_get);
+>  static void fileattr_to_file_attr(const struct file_kattr *fa,
+>                                   struct file_attr *fattr)
+>  {
+> -       __u32 mask =3D FS_XFLAGS_MASK;
+> +       __u32 mask =3D FS_FILE_ATTR_XFLAGS_MASK;
 >
->Is this intended? It doesn't make sense that subscribe B receives
->the overflow event in this situation...
+>         memset(fattr, 0, sizeof(struct file_attr));
+>         fattr->fa_xflags =3D fa->fsx_xflags & mask;
+> @@ -110,6 +110,8 @@ static void fileattr_to_file_attr(const struct file_k=
+attr *fa,
+>         fattr->fa_nextents =3D fa->fsx_nextents;
+>         fattr->fa_projid =3D fa->fsx_projid;
+>         fattr->fa_cowextsize =3D fa->fsx_cowextsize;
+> +       fattr->fa_ptime_sec =3D fa->fsx_ptime.tv_sec;
+> +       fattr->fa_ptime_nsec =3D fa->fsx_ptime.tv_nsec;
+>  }
+>
+>  /**
+> @@ -141,15 +143,20 @@ EXPORT_SYMBOL(copy_fsxattr_to_user);
+>  static int file_attr_to_fileattr(const struct file_attr *fattr,
+>                                  struct file_kattr *fa)
+>  {
+> -       __u64 mask =3D FS_XFLAGS_MASK;
+> +       __u64 mask =3D FS_FILE_ATTR_XFLAGS_MASK;
 
-Not intended. Will fix.
+That is not the correct way to extend this API.
+This fixed mask was added as a placeholder for
+"We intend to add support for more xflags to selective filesystems":
+https://lore.kernel.org/linux-fsdevel/20250329143312.1350603-2-amir73il@gma=
+il.com/
 
->
->
->> +	if (wanted) {
->> +		ctlv_event_copies(ctx, len, &spare, wanted);
->> +		ctlv_event_deliver(ctx, &spare);
->> +		list_for_each_entry_safe(rec, next, &spare, node)
->> +			kfree(rec);
->> +	}
->> +
->> +out_free:
->> +	ctlv_event_free(ctx);
->> +	return ret;
->> +}
->> +EXPORT_SYMBOL_NS_GPL(ctlv_event_emit, "CTLV");
->> +
->
->[...]
->
->Thanks!
->
->-- 
->Sincerely,
->Yeoreum Yun
+Please see this POC patch for filesystems to publish their supported
+xflags mask:
+https://lore.kernel.org/linux-fsdevel/20250329143312.1350603-3-amir73il@gma=
+il.com/
+
+This will allow callers of file_getattr() to know if the filesystem
+supports ptime
+without trying to set it and failing.
+
+Thanks,
+Amir.
