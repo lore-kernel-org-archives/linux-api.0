@@ -1,75 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793699350;
-	b=vOnTDDV2JMoWYEFmTrLKVHgiwuvmx4DPchKfOgJNWoGAFDiSvUm2PBX7FyFDZx0sXkMs
-	 7lF4iHor7lhpxAXqgGQONQddyzi7LIqFOAa3DsmsOdxSAeAnJSUwk6XweGHHJddfiDmL9
-	 YM15HzIJgzy2S9ndhOU/MBVlhGf4hqj9j/4dE9AvMU7z3+nAoUUBIcIVIfZIP64OQcCm7
-	 OYtiGCmmDXXuXqumLzO7Trewc22rS2B2P2I0OuMJcQ3SccncvZZAVyKa75Ed5jK7/3Wpk
-	 Np/gcvAQv7euPtqajCY6kxnYwOgB8epr00uEqjM/Tz2r9pr/85Ni5v9c+S+uMjhDpTg==
+	t=1793700613;
+	b=oYiAV+lleE07o2SDw2iB9SAeX6ZoIQukEwgH/epsv3SWGRo3RvU1neYx9W2d9uRuSmwq
+	 ZhdMsYpcb1e/G/gIJ4utQlqFIAtVLFxlZluv/s3f5DrL+ZjOPe3CoOk9dN8Tla6wdOQZF
+	 b+zRtG3YnexqEXoUfNx3WcQk3f3YYU5HQxaH5ND5v6XTJ6ma80K5a/IYzO7TgDrvdlENH
+	 7oX4OJy0XUc8ADJg/2iGYy8OdoO8jJJI3pn5gBpbmzYIIVxU2w2E4UKhisM81Usq9ZTxQ
+	 hAEvNYWDsbVvxskUrn54FXEQv2RAJ19ijAx/KIQIC/g+EyrIAjgyqbuIqdAOj3J4LQQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793699350;
-	h=Received:DKIM-Signature:Received:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding:In-Reply-To:User-Agent;
-	bh=XL4SaG7L/XXlyGlGwCJEgaOiwsZVVTv0gM6IKPqUD+0=;
-	b=ZMp0eA7ci+2/EuIeG3R9MJ2q0rcVv9xz9n6xzhmLoWxnxQUaU+gHuxqXyYcHUUHAl2Sz
-	 TJMAbxAM/x+sd3de4gFt0B6ekuiqkX7YjEeCeE/aRhSbO6iB4KMz6PXdh32nt5CQiubvU
-	 tn5Sde5l9gpC0X2bUJcB5pzctZnBL8RTi+9yH7N9g6ciEWwvswyHbIxRAg1VeBtxZv/K2
-	 XLg0M/5vJVqKR01EaZlP2XorPKOTpY4zFhtMtZksxgaDgzisEhzq04jlPdtDV8znflZoL
-	 H3OqHYzsRFk+7vkbP27xhwigNvgXdhC68rPLgJqpZkkhS5S4JghbULUhgc1BGbwnP6A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793700613;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=amuDM1XErH3iNEOGYc3quFOh2xV3FDKDTqioT+ZE0VY=;
+	b=IdnrDf4eD4ACVhUlhd3S+6hB6Y5xja8DnUe/896s7X5cVOeau/5yIrXGW2FrflIJXxgt
+	 Bj0BEDJZ7E5NrA2s6sUTfDyyG7dZVWCzyCylGH2v7UcSk139jne/H/fAxNmMu2e1sedke
+	 CYhnOqSVaH/T0wHgLDjTEg+zs8VbYhkhQyPEQWMls0veWMqkj58c5h9SfTPmC7qUK0rSV
+	 VBDiaPn+ntX8Zha1Y6NYmUj2BmhoWpfd0bXGCBRcJchymWolYCPFnsd+WSRE+1KEJXWj7
+	 DkvkAF6Q8Quxuhr056fOLt2HJinZQ0+PLmYt9VzWVsDBBK0RgF38+rgJkDQNj6TaVYA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=UuSdju1l;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=D3lfzvgl;
+	arc=none smtp.remote-ip=209.85.128.54
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78705606D81C;
-	Tue,  3 Nov 2026 09:49:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8FD4E6083639
+	for <linux-api@vger.kernel.org>; Tue,  3 Nov 2026 10:10:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8FD4E6083639
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=UuSdju1l
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id EEC4F1F00919;
-	Tue,  3 Nov 2026 09:49:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793699350;
-	bh=XL4SaG7L/XXlyGlGwCJEgaOiwsZVVTv0gM6IKPqUD+0=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=UuSdju1lKxYSD7T9GpBTIiFWbOB0LPNLBDUyTAFSNuDGhxYxU+Bkv01abCJWc/6hQ
-	 s1DwWM9hEHeBVq3nLUVReXL/c/E1UHOwdUaWhJFUZM9WfyF88vfGhpKm+pXWc5UKxR
-	 jKJFFGWw8BdqeB9JA+y5prb3z8XTcZlpaEtZR534ovWndSesGkeH0EhG3msjAv9HJW
-	 8YABtSLUivmNNjDnJEBSjyHdR9chX/nXk0sQUbfSzaU1LSugw0aMkrpkCX6NXAw2Sb
-	 +06h1bBG077GSJ6IptR2NrJ2N5n4iuX4D+ziMCE7tAXHMspuTGfavEB5qNuW5fZhz6
-	 ThNmpto4VqyDw==
-Received: by pali.im (Postfix)
-	id AE43D809; Tue,  3 Nov 2026 10:49:06 +0100 (CET)
-Date: Tue, 3 Nov 2026 10:49:06 +0100
-From: Pali =?utf-8?B?Um9ow6Fy?= <pali@kernel.org>
-To: Amir Goldstein <amir73il@gmail.com>
-Cc: Andreas Dilger <adilger@dilger.ca>, koraynilay <koray.fra@gmail.com>,
-	David Sterba <dsterba@suse.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>,
-	Namjae Jeon <linkinjeon@kernel.org>,
-	Sungjong Seo <sj1557.seo@samsung.com>,
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
-	Chris Mason <mason@kernel.org>, Jan Kara <jack@suse.cz>,
-	Yuezhang Mo <yuezhang.mo@sony.com>, Chuck Lever <cel@kernel.org>,
-	"Darrick J . Wong" <djwong@kernel.org>,
-	Sean Smith <defendthedisabled@gmail.com>,
-	Andrey Albershteyn <aalbersh@kernel.org>,
-	Pedro Falcato <pfalcato@suse.de>, linux-btrfs@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	exfat@lists.linux.dev, ntfs3@lists.linux.dev,
-	linux-api@vger.kernel.org
-Subject: Re: [RFC PATCH v3 3/5] ntfs3: make crtime user-settable using ptime
-Message-ID: <20261103094906.n55n5dhrpct5ykmw@pali>
-References: <20261101015551.786044-1-koray.fra@gmail.com>
- <20261101015551.786044-4-koray.fra@gmail.com>
- <20261102142452.d6jkitgdeuquy23i@pali>
- <CAOQ4uxhQ3uhq6s+4deEJAQV5iy8QZoucojR58_dUNYrnjt_yvA@mail.gmail.com>
- <20261102153845.d67wlorqcbe3c2w7@pali>
- <DD1A08F1-8F47-4612-A807-AEA39461AF9B@dilger.ca>
- <CAOQ4uxh8EDX5HzFFKWv10-mHYVcSC1zXN+BS2qCm5cTMq=GOCA@mail.gmail.com>
+	dkim=pass (2048-bit key, unprotected) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=D3lfzvgl
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4a4d7ae1ae9so38436455e9.1
+        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 02:10:07 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=resnulli.us; s=google; t=1793700606; x=1794305406; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=amuDM1XErH3iNEOGYc3quFOh2xV3FDKDTqioT+ZE0VY=;
+        b=D3lfzvgllAy66yjpM83+uVVVcHqBsQmU2iC+S50qheFJh6Z6HrWBQnekbhCeCv4G+Z
+         Ra7rGFAhRkwcMI7hBAHXNoP+sPC5vG81oHR9q31T72khBBTfIVMX4B3zofHI7kIbBEYg
+         x+ofObQJpGGSsUuCYsnXliGlh2v3iYfKt1YEeEpM69NKsfEhZ00em3D/KLP+xKWYAs5t
+         l3Dlm0C34JuOlxS+MkHfDJ08Gz+4l4agLbQLAO6e8QdvGnDMiAv01PEoXmcOePIVwn0a
+         3um1Fgk+lesN7MsnVgbsjCzOTGy7nwX2/fPB5f80Md8TlWs4k1hIrlA3TGvR85RBYNO8
+         /sDQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793700606; x=1794305406;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=amuDM1XErH3iNEOGYc3quFOh2xV3FDKDTqioT+ZE0VY=;
+        b=lOtgwzGJlaulxd6g7kbVcSOoHroyXt5jggfIobQRYgK+U4UDPOSeUV9PCOskPrM8Sh
+         ZtebixryShW8dvcD9YBPEcI6SGhHajTb2YytTKawC66qvRcw+PCs+TmV4YtEzUI+tc3V
+         pa6yKiqEB5TCOY5kjLUv3iL/Lf3oGCECaE6I4qliJJb6PjxcUS6SVQkhFj3K6qTsAjTP
+         3EavwsRAyVr6fyVW68qHKOZ1JfYkscds726XywZQp+DntO8KjG8I3djue/xD+m2Xth2e
+         meh9IkFnnAgnNNjhPP6O3gF24uPpB3/VX7aliBO5oiRm+FphFjpkqnWDFpeULdVqoQFc
+         ViKw==
+X-Forwarded-Encrypted: i=1; AKwUvBzLkTEcY7SNjxsHDVtDU5nQTaS4q6fSOedhsZqkrneZjjuQfBy7zaX3ddRwznHKfoZTLB0+FaEkG7k=@vger.kernel.org
+X-Gm-Message-State: APuU4Z//qYjY7hRJcNrbBjMZ4ZrZ1E9hCiKn+yzGqTQnhhIKwspLV/ry
+	9bJnhQK05dC4EmFqnECetODO025hV2WZ2T04H/uXh/lR2diFNVYfd0RX1VTiaWKxPw0=
+X-Gm-Gg: AYBFou0eaxhxhly0yqfa3Ok8AUxkSO9I4imQNu2hgFEnidIFHIWbj1zSQ3wvd+n+K2S
+	ihdnZ/5ZzE98sI0H+hMPXWdDcxmF/icQcql2R33iNk94CpOrMaSpIyjHdYbWD0nzDz+piHFnDdF
+	C21CvYXn//YNhgQhmuPW2ADeKl0qqmkSmAjtXkoYzG51cQPw588B/JZRimPbHRxd19iQDZs5w/e
+	iT7wJ+ksMZUPNASKvx6vIr5wIcHYOZbjOoUWaTBddYOcf7Vchnlw/cFuGmJ0reGkrUwLFAp9DE0
+	WOoCeuUKv8EE89x2TXoRN2Bq2muwYJCBtQMbLcSQWU/BdcfqIxJt56IlAJHlEVHOcuXwKUWA6eL
+	cRzkim2TiZW/Z4hxYXgWGGXRMLk2pOtzaG/KoiY+8MRQLgBXziVDGF2BfNIhd/IMnaaB6NCfzze
+	FmNkoO4tHLs7B8sk1sEyxxvSMXDqLSgfSRdsXlJ9ZHrpljx3HxoRzsXrfLK3KccrkDM4L/L+8YX
+	gYorGr7hzy4OxSVnFDDZ7FRLb9Q8HdP5Nx6JJEfWptw7VIy1IUEwD2vXYjzQblgOYbYTtP7+97h
+	LDQGvtJC/XemT3ohsk40bkx0KaQegLUQetIM
+X-Received: by 2002:a05:600c:3110:b0:4a2:883:4adb with SMTP id 5b1f17b1804b1-4ac18b7e059mr294027715e9.22.1793700605595;
+        Tue, 03 Nov 2026 02:10:05 -0800 (PST)
+Received: from localhost ([208.127.45.21])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4abeb77c132sm231363455e9.1.2026.11.03.02.10.04
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 03 Nov 2026 02:10:05 -0800 (PST)
+Date: Tue, 3 Nov 2026 11:10:00 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Sergii Dmytruk <sergii.dmytruk@3mdeb.com>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
+	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
+Subject: Re: [PATCH RFC 00/20] attestation: Add a common subsystem and TDX
+ support
+Message-ID: <aumpp4VptzmasuX8@FV6GYCPJ69>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <auOT1UwdNt67XfTq@MjU3Nj>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -79,253 +105,349 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <CAOQ4uxh8EDX5HzFFKWv10-mHYVcSC1zXN+BS2qCm5cTMq=GOCA@mail.gmail.com>
-User-Agent: NeoMutt/20180716
+In-Reply-To: <auOT1UwdNt67XfTq@MjU3Nj>
 
-On Tuesday 03 November 2026 09:23:32 Amir Goldstein wrote:
-> On Tue, Nov 3, 2026 at 2:19 AM Andreas Dilger <adilger@dilger.ca> wrote:
-> >
-> > On Nov 2, 2026, at 09:38, Pali Rohár <pali@kernel.org> wrote:
-> > >
-> > > On Monday 02 November 2026 16:09:41 Amir Goldstein wrote:
-> > >> On Mon, Nov 2, 2026 at 3:24 PM Pali Rohár <pali@kernel.org> wrote:
-> > >>>
-> > >>> On Sunday 01 November 2026 02:55:49 koraynilay wrote:
-> > >>>> @@ -154,6 +158,11 @@ int ntfs_fileattr_set(const struct mnt_idmap *idmap, struct dentry *dentry,
-> > >>>>      if (flags & FS_APPEND_FL)
-> > >>>>              new_fl |= S_APPEND;
-> > >>>>
-> > >>>> +     if (fa->fsx_xflags & FS_XFLAG_PTIME) {
-> > >>>> +             ni->i_crtime.tv_sec = fa->fsx_ptime.tv_sec;
-> > >>>> +             ni->i_crtime.tv_nsec = fa->fsx_ptime.tv_nsec;
-> > >>>> +     }
-> > >>>> +
-> > >>>>      inode_set_flags(inode, new_fl, S_IMMUTABLE | S_APPEND);
-> > >>>>
-> > >>>>      /* Save nodump flag to return in ntfs_getattr. */
-> > >>>> @@ -275,8 +284,9 @@ int ntfs_getattr(const struct mnt_idmap *idmap, const struct path *path,
-> > >>>>      if (unlikely(is_bad_ni(ni)))
-> > >>>>              return -EINVAL;
-> > >>>>
-> > >>>> -     stat->result_mask |= STATX_BTIME;
-> > >>>> +     stat->result_mask |= (STATX_BTIME | STATX_PTIME);
-> > >>>>      stat->btime = ni->i_crtime;
-> > >>>> +     stat->ptime = ni->i_crtime;
-> > >>>
-> > >>> For me this patch looks dangerous. Somehow I would expect that the
-> > >>> "btime" will never change for existing inode.
-> > >>>
-> > >>> But because the ptime is mapped to i_crtime and ptime is settable from
-> > >>> userspace, with this patch it is directly possible to change btime.
-> > >>>
-> > >>>
-> > >>>
-> > >>> I was thinking more about it... Is not this just misunderstanding of how
-> > >>> the security model around the times is working on different systems?
-> > >>> Because on NTFS there is stored just one field which says when the file
-> > >>> was created. There are not two fields like "time set by user and time
-> > >>> set by system".
-> > >>>
-> > >>> Windows security model allows anybody with WRITE_ATTRIBUTES access to
-> > >>> change that create time. Linux security model does not allow to change it.
-> > >>>
-> > >>> NTFS in this view is just a filesystem like any other (ext4, btrfs, ...).
-> > >>> In my opinion if the ext4 or btrfs filesystem is correctly implemented
-> > >>> on Windows systems, then Windows security model should handle it in the
-> > >>> same way like for NTFS or exFAT. So if something grants WRITE_ATTRIBUTES
-> > >>> access, then Windows should allow to change also btime on ext4 or btrfs.
-> > >>>
-> > >>>
-> > >>>
-> > >>> On the other hand, I understand the use case to have two creation times.
-> > >>> One time which would never be changed and could be used for any kind of
-> > >>> atomic / synchronization by userspace application logic (this btime).
-> > >>> And another time for human which can be changed at any time to any value
-> > >>> which user wants (this ptime).
-> > >>>
-> > >>> In any case, I would suggest that filesystem driver would not report to
-> > >>> userspace unsupported values and would not try to invent other values
-> > >>> and lying about them.
-> > >>
-> > >> But all those fs with mutable creation time already report it with STATX_BTIME
-> > >> so what can we do about this?
-> > >
-> > > Well, what I wanted above to point out is that the "mutability" of
-> > > creation time is not feature of filesystem, but in my opinion rather
-> > > property of the security model on the running operating system.
-> > >
-> > > Maybe better question is: how ext4 btimes differs from the ntfs btime?
-> > > In my opinion there is no much difference, both of them has meaning
-> > > "time when was the file created".
-> > >
-> > >> If userspace requests both STATX_BTIME|STATX_PTIME in mask arg,
-> > >> those fs could technically return only STATX_PTIME and it should not regress
-> > >> existing programs.
-> > >>
-> > >> But this is still a bit surprising behavior is it not?
-> > >>
-> > >> Thanks,
-> > >> Amir.
-> > >
-> > > I'm not sure what to do with it.
-> > >
-> > > If we allow to change btime of ntfs then for consistency we should also
-> > > allow to change btime of ext4.
-> > >
-> > > Maybe another idea... define new capability which would allow to change
-> > > btime (on any filesystem)? This would at least make the consistency.
-> 
-> Pali, I think this is a very bad idea.
+Thu, Oct 29, 2026 at 07:43:33PM +0100, sergii.dmytruk@3mdeb.com wrote:
+>On Thu, Oct 15, 2026 at 04:50:33PM +0200, Jiri Pirko wrote:
+>> From: Jiri Pirko <jiri@nvidia.com>
 
-Ok, if the point is that ext4 btime must stay immutable then it is a bad idea.
+[..]
 
-> This has nothing to do with capabilities.
-> The Windows and MacOS filesystems have allowed setting their
-> "creation time" forever
+>
+>Hi,
+>
+>I have no say in kernel development and wasn't trying to do a proper
+>review of the changes (was mostly understanding them with regard to
+>DRTM), so take my comments with a grain of salt, but I do think most of
+>them are valid.  I also get this is an RFC/PoC type of thing and
 
-FreeBSD for some fs allow it too (see below).
-
-> and for all the other Linux filesystems that had
-> "birth time" it was immutable, so let's not mix filesystem features
-> with capabilities.
-
-I think that it is important to first define behavior and invariants of
-these "btime" and "ptime" kernel properties.
-
-If we want to be consistent then there are two possible options:
-
-1. If we choose that the STATX_BTIME is immutable then no kernel fs
-   driver should allow to change.
-
-2. If we choose that the "NTFS create time" is reported via STATX_BTIME
-   then STATX_BTIME is not immutable at all.
-
-These two options cannot be chosen together because option 1 would
-implie that the modifiable "NTFS create time" cannot be reported over
-STATX_BTIME.
-
-We are have currently STATX_BTIME immutable and "NTFS create time"
-reported via STATX_BTIME.
-
-If we want to stay _consistent_ across fs drivers then adding API for
-changing "NTFS create time" would break one of those two things.
-
-In my opinion we should stay consistent across filesystem drivers and
-provide unified behavior of APIs independently of used filesystem.
-Otherwise userspace applications would have to write fs specific code
-for doing their use cases (and we can stay with fs-specific xattrs, no
-need to create unified APIs).
-
-Does it make sense? Or it is still a bad idea to think about it in this way?
-
-> >
-> > I think the ext4 and xfs maintainers have repeatedly said that btime/crtime
-> > attribute should not be modified by users.  There was a long discussion on
-> > this from Ted as well, and the reality is that "creation" time is not worth
-> > the bits that it is written on,
-> 
-> This is an opinion of individual people, who did not lay out technical
-> arguments.
-> I have concrete technical arguments in favor of first class creation time for
-> ext4/xfs from my experience with production systems that need it and use xattr
-> to store it (by smbd), but I am not going to list them here because
-> this is not a
-> thread about implementing mutable creation time for ext4/xfs.
-> 
-> > since it is not preserved by any tools, has
-> 
-> Facts check:
-> 
-> # NEWS for rsync 3.2.3 (6 Aug 2020)
-> 
-> ## Changes in this version:
-> ...
->  - Added [`--crtimes`](rsync.1#opt) (`-N`) option for preserving the file's
->    create time (I believe that this is macOS only at the moment).
-> 
-> Incidentally, I have an implementation for --crtimes for cifs [1], but this
-> is not extendable to support all the filsystems which support settable crtime.
-
-Another two facts check:
-
-FreeBSD has also API for changing "birth (creation) times".
-It is documented in utimes(2) manpage:
-https://man.freebsd.org/cgi/man.cgi?query=utimes&sektion=2
-
-So I guess that there has to be some tool which is using this API and
-therefore these "birth (creation) times" are preserved.
+They are, thanks for the careful read.
 
 
-NFS4 has time_create attribute (FATTR4_TIME_CREATE=50) which is
-per-fs-object read-write attribute and defined (in RFC8881 5.8.2.40.) as:
-  The time of creation of the object. This attribute does not have any
-  relation to the traditional UNIX file attribute "ctime" or "change time".
-Since NFSv4.1 it can be even specified during creating a new file/dir
-which seems to be for backup-restore. And permissions (RFC8881 6.2.1.3.1.):
-  ACE4_WRITE_ATTRIBUTES
-  Operation(s) affected: SETATTR of time_access_set, time_backup,
-    time_create, time_modify_set, mimetype, hidden, system
-  Discussion: Permission to change the times associated with a file or
-    directory to an arbitrary value. Also permission to change the
-    mimetype, hidden, and system attributes. A user having ACE4_WRITE_DATA
-    or ACE4_WRITE_ATTRIBUTES will be allowed to set the times associated
-    with a file to the current server time.
 
-I'm not sure if there is some backup/restore tool which do it over NFS4
-but the NFS4 description seems to be very clear that the network protocol
-itself is already prepared for these use cases. And permissions mostly
-matches the SMB / NTFS / Windows security model.
+>sometimes generalizing from multiple locations, those types of comments
+>do not apply to all instances and specify a general direction that seems
+>helpful.
+>
+>Overall impression
+>------------------
+>
+>I was surprised to find that 80% of the changes in an attestation RFC
+>are about a new kernel interface, which is also proposed as a potential
+>future API for many other things.  The cover letter mentions it, but
+>doesn't do justice to its scale: YAML specifications, code generation,
+>serialization, deserialization, actions, events, etc.  Things like
+>CORBA, COM, or D-Bus come to mind, even though they are different in
+>many ways.
+>
 
-> > a "vague" meaning (is it when the *file* was created, when the *content* was
-> > created, do edits update it, is it preserved across filesystems, archives,
-> > etc.) and adding it into the filesystem is misplaced effort.
-> 
-> Sorry now you are talking nonsense. Meaning has nothing to do with it.
-> This is a property of filesystems (plural) which have documented APIs
-> and documented network protocols - it is what it is.
-> 
-> If you are looking for a meaning, it is the first publication date, whether
-> it means something to you is irrelevant - what's relevant is that customers
-> use it and want to preserve it in backups, whatever its meaning is.
+Fair, CTLV is the bigger part (with the generator and generated files
+too), and it is meant to be general, with attestation as its first user.
+It is closer to netlink than to an RPC system though: no objects,
+proxies or daemon, just a device fd, one ioctl, and messages the kernel
+checks against the family's schema before the driver sees them.
+Ment to be easy to use and error prone as much as possible.
 
-I agree here. I also heard lot of times that users (customers) want to
-preserve create time in backups and be able to restore it. And that
-Windows is already able to do it, Linux not yet.
+RFCv2 will be smaller too: it will leave out the events and the
+MR journal as well.
 
-Maybe what is a "vague" here is where that "create time" is stored and
-from which (API) source is GUI (or CLI) application showing it to user.
 
-> >
-> > Storing it as an xattr has some reasonable chance of being preserved across
-> > tar/cp/filesystems, and doesn't introduce a herculean effort of changing
-> > all of the system calls and on-disk formats for every filesystem.
-> >
+>I feel that something this size needs to be motivated more thoroughly:
+>
+>1. State goals of what an interface aims to achieve, why it can't be
+>   done with existing measures, or how bad it would look when using only
+>   what's already there.
+>
+>   This is mentioned briefly in the cover letter and has surfaced in
+>   various responses, but it should be stated explicitly given the
+>   objective of proposing a long-term interface.
+>
+>2. Maybe try defining conditions where CTLV is applicable and when it
+>   doesn't make sense.
+>
+>   I saw changes to this effect in replies, but it could be done more
+>   systematically and compare CTLV against existing alternatives to show
+>   where it fits among them.
 
-I think the part "being preserved across tar/cp/filesystems" is
-relevant. If a completely new API is introduced into Linux then it means
-that every existing backup tool would not be able to preserve this
-property and also would not be able to restore it.
+Agreed, RFCv2's CTLV doc and cover letter will open with that.
 
-I'm not sure if we can do anything with this issue, but it is important
-to know about this limitation.
 
-About the part "introduce a herculean effort of changing all of the
-system calls and on-disk formats for every filesystem.". In my opinion
-it is better to do that cleanup (maybe even in all stat-related
-syscalls) if it makes things easier and prevents another technical
-issues.
+>
+>3. Specify elements of the design (e.g., schema, actions, events, a tree
+>   of attributes, a single `ioctl()` operation) and how they serve the
+>   stated goals.
+>
+>   For example, what use cases are enabled by partial responses?
 
-> 
-> As I said I can provide data for why the xattr approach taken by smbd is
-> limited and inferior, but this is not the place to get into it (there are hints
-> in the rsync commit message below).
-> 
-> Thanks,
-> Amir.
-> 
-> [1] https://github.com/amir73il/rsync/commits/cifs-crtimes/
+Will do.
 
-I would say that xattr does not solve this issue too.
+
+>
+>4. Explain how the elements are to be represented, produced, and
+>   consumed.
+>
+>   That is, the actual tree structure, information about padding,
+>   generation of the boilerplate, what parts are to be provided by the
+>   programmer, etc.  This is what existing documentation contains,
+>   although not very structured.
+
+Okay.
+
+
+>
+>5. Possibilities of future extensions (compatible and not).
+>
+>   I haven't noticed versioning, but suspect that a different `ioctl()`
+>   could be used.  Types or fields can be added and ignored or can fail
+>   parsing if unrecognized, but this has its limits.  The stance on such
+>   changes should be documented, so it's clear what one might expect
+>   going forward.
+
+There are no versions, on purpose. The ioctl struct carries its size
+and grows only at its end. A family grows by new ops and
+new optional fields: an old program skips what a newer kernel
+adds to a reply, a newer program marks what an older kernel may skip in
+a request, and op-schema-get tells it which fields the kernel acts on.
+Anything incompatible is a new op. Each family also has a checked-in
+ABI snapshot, so a uAPI change is a visible change of that file, and
+the checker refuses removing anything, narrowing a bound or making a
+field required.
+
+
+>
+>Having experience with parsing and producing TPM commands and event
+>logs, I understand the motivation for CTLV and see how it can remove the
+>most unpleasant parts of dealing with data of this sort.  However, the
+>machinery necessary on both kernel- and user-space sides is quite
+>elaborate.  It can end up making even trivial interactions hard (try
+>using `dbus-send` to retrieve some information or see its C API to get
+>what I mean).  That's why I feel like the motivational part is very much
+
+For a trivial interaction there is ctlvctl, which needs no generated
+code, only the family's YAML for the names; the cover letter has a few.
+In RFCv2, reading an MR will be:
+
+  ctlvctl query /dev/attestation/attestation0 mr-read id=1
+
+with CTLV_SPEC_DIR pointing at Documentation/ctlv/specs.
+
+
+>lacking here.  Describing the approach in terms of goals and how they
+>are fulfilled is also partially aimed at making it easier to assess
+>applicability of CTLV to other subsystems by reviewers.
+>
+>CTLV specification
+>------------------
+>
+>The schema description is machine-oriented and is hard to use for
+>humans.  At some point, a textual version will be needed, if only to
+>introduce the most commonly used subset.  It has already been mentioned
+>that names of attributes aren't descriptive enough, and comments or some
+>kind of embedded help would be nice to see.
+>
+>"attr-groups" vs. "attr-sets" confusion has also been mentioned.
+>Knowing that groups are part of IDs helps, but doesn't make it much
+>easier to read ("groups" and "sets" don't suggest different levels in a
+>hierarchy).
+
+Agreed, that design is unfortunate. I was attached to the netlink and
+netlink yaml too much. But RFCv2 will have the YAML in the layout
+Jason suggested on 11/20. Groups and sets will be gone: a spec will
+have records and ops, each op the tree of its request and reply, and
+the comment above an item will be its doc, in the uapi header and the
+rendered docs too:
+
+  # One MR's values, and the MR generation they belong to.
+  mr-read:
+    type: query
+    fd-access: read
+    optional: true
+    suggested-reply-length: 4K
+    request:
+      id: uint(..u32-max)
+      device-generation?: record
+      options?: extension mr-options
+    reply:
+      device-generation: record
+      mr-generation: record
+      mr-values: record
+
+The generator will also print each op as a call, and RFCv2's cover
+letter will list them so:
+
+  mr-read(id, device-generation?, options?: mr-options) ->
+      { device-generation, mr-generation, mr-values[23]: mr-value }
+
+>
+>Documentation and comments
+>--------------------------
+>
+>Right now, it mostly covers implementation details rather than concepts
+>and how they fit together.  This makes it hard to review the changes, as
+>the reviewer needs to discern high-level stuff from the code to assess
+>that code.  Having a more abstract description that's also mapped to a
+>particular representation would allow checking the overall design and
+>more fine-grained details.
+
+Right, intention is to change it in RFCv2.
+
+
+>
+>There is also not much information about how the user-space is expected
+>to use this (i.e., encode and decode structures).  I suppose there is a
+>user-space library for that (saw `libctlv` mentioned), but the kernel
+>part isn't complete without giving an idea of how it's expected to be
+>used.
+>
+>I was trying to compensate for the lack of documentation by reading some
+>comments, but many that I've seen (excluding comments on functions or
+>structures, those were sensible) restate what the code is doing or
+>repeat other comments.  Some others seem to say something important, but
+>do not place it in the context necessary to understand the statement,
+>and thus do not fulfill the purpose of explaining the code (i.e., why
+>it's written in a specific way).  It's worth revisiting them in some
+>future version.
+
+Okay.
+
+
+>
+>Code
+>----
+>
+>Quite a lot of functions are comprised of two blocks of lines with no
+>newlines or comments within them: declarations and the rest.  That's
+>fine if the body is small or uniform, but larger functions often have
+>identifiable steps with conditions and loops.  I'm not saying those
+>should always be extracted as helper functions, but some kind of visual
+>structure helps to understand the code.  Given that there are many
+>thousands of lines in here, that seems like a desirable property for
+>review as well.
+>
+>Terminology
+>-----------
+>
+>It may be just me, but I found some of it rather confusing, and the
+>absence of a glossary didn't help.
+>
+>It took a while to figure out that "family" means a single-instance
+>class-like construct (data, methods, inheritance with virtual methods).
+>I also initially thought that "nest" meant a subtree, but it seems to
+>apply to a top-level tree as well, so it's actually just a tree called
+
+Yeah, confusing a bit, agreed. Will change to "records" in RFCv2.
+
+
+>differently (why?).  "stub" also looked weird, but that can be remedied
+>by documenting it better; not sure if there is a better word.
+
+In RFCv2 the stub will go, and the YAML will name the extension point
+directly: "info: extension device-info".
+
+
+>
+>Other terms seemed just weird, like "file description" instead of "file
+>descriptor", mentioning of "wire" and "physical something" (no wire
+>transmissions and nothing physical here).  Still unsure what "placement"
+>means in various places.
+
+Right, will check those.
+
+
+>
+>If the terms come from netlink, their use needs to be explained here
+>too, or the reader needs to be referred to the relevant netlink's
+>documentation, if borrowing of the terms is intentional and meant to
+>stay.
+
+Agreed.
+
+
+>
+>TPM event log and MR log
+>------------------------
+>
+>I know this will be dropped from this series, but it's still relevant to
+>keep in mind and will return at some point anyway.
+>
+>What about measurements taken outside of the kernel?  I've seen the
+>discussion about extensions done in parallel, with the likely outcome of
+>not handling this in any way.  But there are also measurements done
+>before the kernel has started, for both SRTM and DRTM cases.  A way to
+>import measurements is needed.  Am I correct that nothing should prevent
+>doing it later?
+
+Correct. The MR values are the hardware's, so they already hold what
+firmware extended; what is missing is the kernel's record of it, and
+RFCv2 will leave the journal out. An import will belong to the series
+that brings the journal back, as an op or a provider callback, and
+adding either is compatible.
+
+
+>
+>DRTM perspective
+>----------------
+>
+>While there is no TPM/DRTM attestation provider yet, an RFC seems like a
+>good place to make sure this can be accounted for by the final design.
+>
+>All the crucial measurements happen before running the kernel and then
+>by the kernel.  The interesting operations in the user-space are
+>obtaining the log and having the ability to replay it.  Also, locality
+>change can block further PCR updates, so the user-space part doesn't
+>seem to be that important for this use case.
+>
+>Linux currently doesn't extend the PCR measurements it makes to the
+>event log, so misalignment of the PCRs and the log won't be something
+>new.  However, if there is a log, it should be correct at least before
+>any user-space measurements are taken (IMA breaks this for PCR-10, but
+>would be nice to avoid this for DRTM or similarly limit the effects to a
+>specific PCR).  Again, relinquishing locality can be the answer here,
+>and I suppose that an attestation provider can handle that on its side.
+
+Yes. Each MR says whether it may be extended, and the core refuses
+mr-extend on one that may not, so a provider can keep the DRTM PCRs out
+of userspace's reach.
+
+
+>
+>Some of the replies suggest the intention for the kernel to do
+>measurements using the attestation subsystem.  Combined with importing
+>measurements, this seems to be enough to cover the needs of DRTM in
+>terms of data.
+>
+>What remains is whether postponing extending PCRs until attestation is
+>online is considered acceptable and by how much they get postponed
+>compared to doing it early.  In principle, delaying extending the
+>measurements isn't all that new.  coreboot does exactly that on a lot of
+>boards, assuming that nothing will mess with its log until devices are
+>initialized.  DRTM is supposed to enter DLME in an isolated state, so it
+>may as well rely on it.  However, what does the use of this attestation
+>subsystem actually buy the kernel for the DRTM case?  And are there
+>reasons for all DRTM implementations to extend PCRs at the same point if
+>some can do it earlier?
+
+Nothing here makes DRTM extend later. What has to be measured before
+the subsystem is up, at module_initcall(), can be measured as it is
+today, and how early a TPM provider takes over is for the TPM series.
+For DRTM's own measurements the subsystem buys little. What it gives is
+the rest: userspace would read the PCRs, get a quote and fetch the logs
+the same way on a TPM as on TDX, and later, kernel users such as IMA
+would extend through one API whatever the root of trust. And no, I see
+no reason for all implementations to extend at the same point.
+
+
+>
+>Also, is the attestation log expected to be the way of publishing the
+>DRTM log?  That may make consuming it more difficult due to requiring
+>CTLV-specific tooling.  A TPM2.0 event log requires its own tooling, but
+>it's the same format SRTM uses.
+
+No. In RFCv2, evidence objects will carry logs in their own formats:
+TDX will return the CCEL as an event-log object, the bytes as firmware
+wrote them, and a DRTM log would be one in its TCG format, read with
+the tools that already parse it.
+
+[..]
