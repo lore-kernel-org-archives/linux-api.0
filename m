@@ -1,83 +1,75 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=178.63.66.53
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793707905;
-	b=bQW65LIgCghFM4xIqJKtY5ppB5hRIqMQH4YReX01lpD0dqUDAt19BRmoQBPrVpbmzsgM
-	 MScwdRiocPo11bBnBF4UIuHgZvgQ9Bstoxxr9WEDdFGVXi6GKaPt3KIoiblh9OvphT15l
-	 LQ9LDUjyM51+h7sj/rbXr9nogdcMujnEUGX350PilRUg8DyzFPqMHJlyzJevufqMRiLZw
-	 Tw65aXXGJfuxJYSr6hYSrPtOmIQ/A4j8FGf2KW6aRqasU0iTLciTmkgxjs/wTifDCssZ5
-	 q+N1mzfPGl4ypzzuwNikxDV0xZpKkqgL51pC5eLkqymcr9LB2YKF2xluF5447Tykt9Q==
+	t=1793709476;
+	b=hAL7AGAfjgLRQgb5TxmeiE51rGsq68iSMRKYfoZFXl7PfVvOXXDpFIVQxbYv2XSQM1d/
+	 UQD6roX4Z5UlBTs1BWF6lkb5J/i2XSJAh80QqFmxPTuMloKZd6j/v5MVaWjMAO4zu6/7c
+	 UoO/wmFD1YVdQLmYbo7kZvWHad5Jxc8b0mB00B29c/f4m8eW37COrJqUm8M8NW8BxKcMG
+	 BZ5odE6D9b4AW/zf/JS4oLlnz6hwMA5LNZrZsQgJn0SV/qT8SX+tV5WDA3pIipxctniyg
+	 I7J7mME6JZkT2mPRSKEfzXgUTFGlrw5VPQXlc3/q86tu4RnE9e3W8ZOQEpk+nk7+Z0w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793707905;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Mime-Version:Content-Type:Date:Message-Id:From:To:Cc:Subject:X-Mailer:
-	 References:In-Reply-To;
-	bh=xaoHhtO7aV+Q2IZPOZAqbumhvcxyDzSipkyK2kiugFo=;
-	b=p5ivv4S+2/knib1GVyWOAfceI/otunMEF94lyb6WFOCwE/ZvqDuIz2Fa+YIHKzTAabRQ
-	 146WhAHDVCs/rCP1ef0A7F2UlD2fdRkpI38Ts8VKF55Y4zMpTBBWPNIKaL9RmKCxTp1gT
-	 wYwkuiKMCaZfMh7M00lzsgBh9gJrG2urN/p68J2jTNMb475MiRtoIq9Crg35HrDaLA88u
-	 hfoIpiMZSPZViMQL11K/cInW1+upA8JcV1wWjFprctZNJeEYIYhPoRf7cPFCh/xtQyJKK
-	 Vg1DmNJDt47iQPRQCA5KcnqXbrLYhVNIww3iIgd5UixKi9fpG31sATywUiB/pcqi1Mg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793709476;
+	h=DMARC-Filter:DKIM-Signature:Received:Date:From:To:Cc:Subject:
+	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
+	 In-Reply-To;
+	bh=oV7i9bIc6g6SKXJ1HJf50C8bZZAE2Takb9sNll8AaUA=;
+	b=r+1jV4wo21sclTqao1oYZSV0fzT29rCVU97bIyC6yVkrjmRttCwrfD2Q/s7G/K9hyOwu
+	 XUF6oGmcdlq0nJ/cSW6kI4fmXLfMXmmOiTR/TPBP+jQg+mQdLbk9ctomuIupIL/ozfUKD
+	 gJ0DoAXIbHWdByagEN9fm7KfuZmgZDwQs9aVe+z+f45ceBAi9ZEqu9fO1dWLYNqkANYpZ
+	 NCOj3qhPN5BzEk1dJdG079/SOUNx0hCbWF57mE/5tJMMWH9MlSAehB0aMRygj2A5el2Jo
+	 qe62uJUEdJDqqwwUcikpBN2yknk+4Dg6y3R5eC+S42msouDQy4GA8cAhWOVvaIquqyg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=k9MuALIV;
-	arc=none smtp.remote-ip=209.85.221.41
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=hallyn.com;
+	spf=(null) smtp.mailfrom=hallyn.com;
+	dkim=pass header.d=hallyn.com header.i=@hallyn.com header.a=rsa-sha256 header.s=mail header.b=vC9TDmhV;
+	arc=none smtp.remote-ip=178.63.66.53
+Received: from mail.hallyn.com (mail.hallyn.com [178.63.66.53])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DCE2606A32D
-	for <linux-api@vger.kernel.org>; Tue,  3 Nov 2026 12:11:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6DCE2606A32D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C3F20606EEA0;
+	Tue,  3 Nov 2026 12:37:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C3F20606EEA0
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=hallyn.com
+Authentication-Results: smtp.subspace.kernel.org; spf=tempfail smtp.mailfrom=hallyn.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=k9MuALIV
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-48df4e9d2d4so2211156f8f.3
-        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 04:11:44 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1793707903; x=1794312703; darn=vger.kernel.org;
-        h=in-reply-to:references:subject:cc:to:from:message-id:date
-         :content-type:mime-version:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=xaoHhtO7aV+Q2IZPOZAqbumhvcxyDzSipkyK2kiugFo=;
-        b=k9MuALIV9+qIoD4+CMM0ZHKiUSGtMqwttDDmvBJvoAgoHdTYPkNfjz8rHL34F3k9RE
-         8+Hoc368of4iQ560wv3YPjMY4Yalw8q4kZopEwU+lSNKYmyJrdwEt3DW+iVWnJKe7mmZ
-         ME4XTifjWsgp4AC4wBJg+bEuXO/vkkfjRgV++IOocjxLQehV7jL0KL6ZDsDU0ShG4DpW
-         C4T0embwiZpDsnJlZ9tGkHMATW0LPxnF0r4T+zodmf8SuG6yIxR707Nj8EWh8poSyMI9
-         CFT3bG9Jx88naRp4nylVJc8mMgy95weLICN/iZRvFJCigE9qwt7QqtFrFQiU2yWtlOxz
-         gFgw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793707903; x=1794312703;
-        h=in-reply-to:references:subject:cc:to:from:message-id:date
-         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=xaoHhtO7aV+Q2IZPOZAqbumhvcxyDzSipkyK2kiugFo=;
-        b=vHvtXyI71Mf69es8KldyiAzsFNymmXT7QhQr7xNcmusJsvte1VTNDjsgiY4rMdcjAH
-         QCtb0K+lVfp8hAwevdPwGtRd9BZ2AaC8SCn7qmAZw9mooVGhxRGHT/Y0I5PRGg4lFfLk
-         dhnIWwpgkyEKNYqM2aQHfovWoRfcBYa8APeNmhq/V7ZtBzf/yzj4SAD5B+Rdl+Lq8HY/
-         FGhzaiNwPhYFGMF15/PWul7BjsP67ubhjiuU+6SWkw/SjYPcUiLwqaVTn7an5ZFQNP6q
-         NYMZivIFwxE0pJ+d9RaeKwlGxm23sxJb8jX0G2rSPc+eNDu4fmhKrHqbUzkc9y+hF/8D
-         kPsg==
-X-Forwarded-Encrypted: i=1; AKwUvBzncy2lsbGIgr+mpjl3QcKP4KOer6o8pbifBc3PNkwY6cepmkO39KjbRfFQmipcBKuBd7M+CO8Gtrs=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9jWy5RZbrfZwxvRGRb2rv4TmhYCcXBGe9a7eYr/dtLJsW05n+M
-	eTT4ZlxoIVRCt9buFNsBFclRoLLD7NnjFvXqF+pUS6GXoB6wa+yvQX0E
-X-Gm-Gg: AYBFou3b7JaavfH1vUne22XvE3wSL+1VaLlM625KbhNLambRB2fYiZJI4HhBUz7cLXj
-	L4vgKIPS98sMXequNqlk1SOMrgf8aIVAK3ca6EK0DvKd3RjAMKNNR3zh538bbaGMP66HfYqK+OX
-	CKqC+uizSUSyQW+855kl7zUKgSXH/Cqp3tZqvB/XpjuzLvZajo4womnvs37Mg9KUY2pg9YvM1qv
-	4R0trN8rsNq8Yg0UX8+f2F+ucIt5ufAyH9pJxloeBvY4QrJ53fOohK6Fb/wnJtKwn1A2N0bdunF
-	zQzIiF2SMIpP60fgcBOGGHhU5BeqtRoTguI2P6mzPF5MczffOoB8VAgsVLRSX/XRrd4dSzhzpvX
-	TxA0lvq59zJa6sKThbQqfc4EC1Gbq8V0+5P9YI+61kDevwupPX/vb6NkpPFKokpo88ZypyI5IgK
-	QKOC3v1OdhXueiu2e6J37CvLRlaPzSBz2LZ6APBHMnyd2HqM06VEWeFQl790TbIG4MvzlB2GlBP
-	5Iw5onupmI9JvA28EkegYRMIDw0dYcgKnw0hWARtNf+Jr/SCkhI0SYsNCNGwX1Vx94C6gUzATX4
-	7/yVuOIfQIn8h9izO4HmwRcQyQMs9TYCduNm6qJZqC65MBZ0Pwd6sCE=
-X-Received: by 2002:a5d:64e3:0:b0:48d:f876:f370 with SMTP id ffacd0b85a97d-48e6e309763mr26884305f8f.48.1793707902446;
-        Tue, 03 Nov 2026 04:11:42 -0800 (PST)
-Received: from localhost (78-212-141-14.subs.proxad.net. [78.212.141.14])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48e71b9b54dsm24330834f8f.47.2026.11.03.04.11.38
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Tue, 03 Nov 2026 04:11:40 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=hallyn.com header.i=@hallyn.com header.a=rsa-sha256 header.s=mail header.b=vC9TDmhV
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=hallyn.com; s=mail;
+	t=1793709466; bh=srJr0W2zj7CWyIxBRugbw6W/RJOIVVmVJA2BZvprlc4=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=vC9TDmhVzpFPGgCSMr4165tQq6DCEFta1S319V91nRjNJWVnaElj5EAq2XW2eRHjJ
+	 gGh+I4bOHp/FtOf8Kea16ZVZiBZ+iLnPQwxED32qxh1DgFUkGIPtnmq0RepGmeQJ+l
+	 4iztOzjKyQPMal+wlEpDHPXVZPYZMmQ+r1A0YwDnpjt0prpdx8aH3DoDR5Ll8IkZdg
+	 fcB/kqvpbIl1RI+I4UahFb1R62IqF66zwswBhfdrCuY2o7ADXAPpnWNhmtnnb+e4Q6
+	 hgTFzkN5XOXy7wa91Udr49XuOtsnYjLlHZroXiYyT2j/Kp51c9u6bwkqVdqZ0o8Yn8
+	 F6wDnif+kXC3g==
+Received: by mail.hallyn.com (Postfix, from userid 1001)
+	id 326D81B96; Tue,  3 Nov 2026 06:37:46 -0600 (CST)
+Date: Tue, 3 Nov 2026 06:37:46 -0600
+From: "Serge E. Hallyn" <serge@hallyn.com>
+To: "Hallgrimur H. Gunnarsson" <halg@google.com>
+Cc: Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>,
+	Kees Cook <kees@kernel.org>,
+	"David S . Miller" <davem@davemloft.net>,
+	Eric Dumazet <edumazet@google.com>,
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>,
+	Jan Kara <jack@suse.cz>, James Morris <jmorris@namei.org>,
+	Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>, Jann Horn <jannh@google.com>,
+	=?iso-8859-1?Q?G=FCnther?= Noack <gnoack@google.com>,
+	KP Singh <kpsingh@kernel.org>, Jonathan Calmels <jcalmels@3xx0.net>,
+	Casey Schaufler <casey@schaufler-ca.com>,
+	linux-fsdevel@vger.kernel.org,
+	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+	containers@lists.linux.dev, netdev@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+Message-ID: <aunVmg42/S2uUDWR@hallyn.com>
+References: <20261028221705.3915340-1-halg@google.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,467 +78,309 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: multipart/signed;
- boundary=4021ef4d146425c1319d29eb562c73840b95500eb95f16ec5197c0df3fe8;
- micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Tue, 03 Nov 2026 13:11:30 +0100
-Message-Id: <DMLKDOZWVDTU.GLUJUDOZES2V@gmail.com>
-From: "koraynilay" <koray.fra@gmail.com>
-To: =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "koraynilay"
- <koray.fra@gmail.com>
-Cc: "Amir Goldstein" <amir73il@gmail.com>, "Andreas Dilger"
- <adilger@dilger.ca>, "David Sterba" <dsterba@suse.com>, "Alexander Viro"
- <viro@zeniv.linux.org.uk>, "Christian Brauner" <brauner@kernel.org>,
- "Namjae Jeon" <linkinjeon@kernel.org>, "Sungjong Seo"
- <sj1557.seo@samsung.com>, "Konstantin Komarov"
- <almaz.alexandrovich@paragon-software.com>, "Chris Mason"
- <mason@kernel.org>, "Jan Kara" <jack@suse.cz>, "Yuezhang Mo"
- <yuezhang.mo@sony.com>, "Chuck Lever" <cel@kernel.org>, "Darrick J . Wong"
- <djwong@kernel.org>, "Sean Smith" <defendthedisabled@gmail.com>, "Andrey
- Albershteyn" <aalbersh@kernel.org>, "Pedro Falcato" <pfalcato@suse.de>,
- <linux-btrfs@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
- <linux-kernel@vger.kernel.org>, <exfat@lists.linux.dev>,
- <ntfs3@lists.linux.dev>, <linux-api@vger.kernel.org>
-Subject: Re: [RFC PATCH v3 3/5] ntfs3: make crtime user-settable using ptime
-X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
-References: <20261101015551.786044-1-koray.fra@gmail.com>
- <20261101015551.786044-4-koray.fra@gmail.com>
- <20261102142452.d6jkitgdeuquy23i@pali>
- <CAOQ4uxhQ3uhq6s+4deEJAQV5iy8QZoucojR58_dUNYrnjt_yvA@mail.gmail.com>
- <20261102153845.d67wlorqcbe3c2w7@pali>
- <DD1A08F1-8F47-4612-A807-AEA39461AF9B@dilger.ca>
- <CAOQ4uxh8EDX5HzFFKWv10-mHYVcSC1zXN+BS2qCm5cTMq=GOCA@mail.gmail.com>
- <20261103094906.n55n5dhrpct5ykmw@pali>
- <DMLIYIKP2CN8.3VGUCOLTMZC5J@gmail.com>
- <20261103113835.7kndzvvegrkwjlsd@pali>
-In-Reply-To: <20261103113835.7kndzvvegrkwjlsd@pali>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261028221705.3915340-1-halg@google.com>
 
---4021ef4d146425c1319d29eb562c73840b95500eb95f16ec5197c0df3fe8
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
+On Wed, Oct 28, 2026 at 10:16:57PM +0000, Hallgrimur H. Gunnarsson wrote:
+> When an unprivileged process creates a new user namespace, it is granted
+> a full set of capabilities (CAP_FULL_SET) scoped to that namespace.
+> While these capabilities are isolated to the namespace, they allow
+> unprivileged local users to reach deep kernel subsystems (most notably
+> networking configuration and raw sockets via CAP_NET_ADMIN and
+> CAP_NET_RAW) that historically assumed a trusted caller and have
+> accounted for a large share of local privilege escalation
+> vulnerabilities.
+> 
+> Many workloads and sandboxes use unprivileged user namespaces strictly
+> for basic UID/GID, mount, PID, or network isolation and never need
+> high-risk capabilities like CAP_NET_ADMIN or CAP_NET_RAW. Likewise,
+> system administrators often want a host-wide policy ceiling restricting
+> which capabilities unprivileged user namespaces may acquire, without
+> disabling unprivileged user namespaces altogether.
+> 
+> Prior work by Jonathan Calmels [1] proposed addressing this via a sixth
+> per-thread capability set (cap_userns) alongside a global sysctl mask.
+> During that discussion [1, 2], feedback (e.g. from Casey Schaufler)
+> suggested that rather than adding another per-thread capability set and
+> prctl() interface, capability restrictions could be integrated directly
+> into struct user_namespace and configured via clone3(). At the same
+> time, as noted in [1], a clone3() flag alone is not sufficient for
+> administrators who need to enforce a host-wide ceiling on unprivileged
+> user namespaces without modifying every userspace callsite.
+> 
+> This series combines both pieces of feedback: it embeds a capability
+> bounding set (cap_bset) directly into struct user_namespace, reusing
+> the existing task cap_bset, cap_permitted, and cap_effective sets on
+> namespace entry, and provides both a system-wide sysctl ceiling for
+> unprivileged user namespaces and a CLONE_NEWUSER_BSET flag for
+> voluntary per-namespace restriction via clone3().
 
-On Tue Nov 3, 2026 at 12:38 PM CET, Pali Roh=C3=A1r wrote:
-> On Tuesday 03 November 2026 12:04:39 koraynilay wrote:
->> Hi and sorry for the late reply,
->>=20
->> On Tue Nov 3, 2026 at 10:49 AM CET, Pali Roh=C3=A1r wrote:
->> > On Tuesday 03 November 2026 09:23:32 Amir Goldstein wrote:
->> >> On Tue, Nov 3, 2026 at 2:19=E2=80=AFAM Andreas Dilger <adilger@dilger=
-.ca> wrote:
->> >> >
->> >> > On Nov 2, 2026, at 09:38, Pali Roh=C3=A1r <pali@kernel.org> wrote:
->> >> > >
->> >> > > On Monday 02 November 2026 16:09:41 Amir Goldstein wrote:
->> >> > >> On Mon, Nov 2, 2026 at 3:24=E2=80=AFPM Pali Roh=C3=A1r <pali@ker=
-nel.org> wrote:
->> >> > >>>
->> >> > >>> On Sunday 01 November 2026 02:55:49 koraynilay wrote:
->> >> > >>>> @@ -154,6 +158,11 @@ int ntfs_fileattr_set(const struct mnt_id=
-map *idmap, struct dentry *dentry,
->> >> > >>>>      if (flags & FS_APPEND_FL)
->> >> > >>>>              new_fl |=3D S_APPEND;
->> >> > >>>>
->> >> > >>>> +     if (fa->fsx_xflags & FS_XFLAG_PTIME) {
->> >> > >>>> +             ni->i_crtime.tv_sec =3D fa->fsx_ptime.tv_sec;
->> >> > >>>> +             ni->i_crtime.tv_nsec =3D fa->fsx_ptime.tv_nsec;
->> >> > >>>> +     }
->> >> > >>>> +
->> >> > >>>>      inode_set_flags(inode, new_fl, S_IMMUTABLE | S_APPEND);
->> >> > >>>>
->> >> > >>>>      /* Save nodump flag to return in ntfs_getattr. */
->> >> > >>>> @@ -275,8 +284,9 @@ int ntfs_getattr(const struct mnt_idmap *i=
-dmap, const struct path *path,
->> >> > >>>>      if (unlikely(is_bad_ni(ni)))
->> >> > >>>>              return -EINVAL;
->> >> > >>>>
->> >> > >>>> -     stat->result_mask |=3D STATX_BTIME;
->> >> > >>>> +     stat->result_mask |=3D (STATX_BTIME | STATX_PTIME);
->> >> > >>>>      stat->btime =3D ni->i_crtime;
->> >> > >>>> +     stat->ptime =3D ni->i_crtime;
->> >> > >>>
->> >> > >>> For me this patch looks dangerous. Somehow I would expect that =
-the
->> >> > >>> "btime" will never change for existing inode.
->> >> > >>>
->> >> > >>> But because the ptime is mapped to i_crtime and ptime is settab=
-le from
->> >> > >>> userspace, with this patch it is directly possible to change bt=
-ime.
->> >> > >>>
->> >> > >>>
->> >> > >>>
->> >> > >>> I was thinking more about it... Is not this just misunderstandi=
-ng of how
->> >> > >>> the security model around the times is working on different sys=
-tems?
->> >> > >>> Because on NTFS there is stored just one field which says when =
-the file
->> >> > >>> was created. There are not two fields like "time set by user an=
-d time
->> >> > >>> set by system".
->> >> > >>>
->> >> > >>> Windows security model allows anybody with WRITE_ATTRIBUTES acc=
-ess to
->> >> > >>> change that create time. Linux security model does not allow to=
- change it.
->> >> > >>>
->> >> > >>> NTFS in this view is just a filesystem like any other (ext4, bt=
-rfs, ...).
->> >> > >>> In my opinion if the ext4 or btrfs filesystem is correctly impl=
-emented
->> >> > >>> on Windows systems, then Windows security model should handle i=
-t in the
->> >> > >>> same way like for NTFS or exFAT. So if something grants WRITE_A=
-TTRIBUTES
->> >> > >>> access, then Windows should allow to change also btime on ext4 =
-or btrfs.
->> >> > >>>
->> >> > >>>
->> >> > >>>
->> >> > >>> On the other hand, I understand the use case to have two creati=
-on times.
->> >> > >>> One time which would never be changed and could be used for any=
- kind of
->> >> > >>> atomic / synchronization by userspace application logic (this b=
-time).
->> >> > >>> And another time for human which can be changed at any time to =
-any value
->> >> > >>> which user wants (this ptime).
->> >> > >>>
->> >> > >>> In any case, I would suggest that filesystem driver would not r=
-eport to
->> >> > >>> userspace unsupported values and would not try to invent other =
-values
->> >> > >>> and lying about them.
->> >> > >>
->> >> > >> But all those fs with mutable creation time already report it wi=
-th STATX_BTIME
->> >> > >> so what can we do about this?
->> >> > >
->> >> > > Well, what I wanted above to point out is that the "mutability" o=
-f
->> >> > > creation time is not feature of filesystem, but in my opinion rat=
-her
->> >> > > property of the security model on the running operating system.
->> >> > >
->> >> > > Maybe better question is: how ext4 btimes differs from the ntfs b=
-time?
->> >> > > In my opinion there is no much difference, both of them has meani=
-ng
->> >> > > "time when was the file created".
->> >> > >
->> >> > >> If userspace requests both STATX_BTIME|STATX_PTIME in mask arg,
->> >> > >> those fs could technically return only STATX_PTIME and it should=
- not regress
->> >> > >> existing programs.
->> >> > >>
->> >> > >> But this is still a bit surprising behavior is it not?
->> >> > >>
->> >> > >> Thanks,
->> >> > >> Amir.
->> >> > >
->> >> > > I'm not sure what to do with it.
->> >> > >
->> >> > > If we allow to change btime of ntfs then for consistency we shoul=
-d also
->> >> > > allow to change btime of ext4.
->> >> > >
->> >> > > Maybe another idea... define new capability which would allow to =
-change
->> >> > > btime (on any filesystem)? This would at least make the consisten=
-cy.
->> >>=20
->> >> Pali, I think this is a very bad idea.
->> >
->> > Ok, if the point is that ext4 btime must stay immutable then it is a b=
-ad idea.
->> >
->> >> This has nothing to do with capabilities.
->> >> The Windows and MacOS filesystems have allowed setting their
->> >> "creation time" forever
->> >
->> > FreeBSD for some fs allow it too (see below).
->> >
->> >> and for all the other Linux filesystems that had
->> >> "birth time" it was immutable, so let's not mix filesystem features
->> >> with capabilities.
->> >
->> > I think that it is important to first define behavior and invariants o=
-f
->> > these "btime" and "ptime" kernel properties.
->> >
->> > If we want to be consistent then there are two possible options:
->> >
->> > 1. If we choose that the STATX_BTIME is immutable then no kernel fs
->> >    driver should allow to change.
->> >
->> > 2. If we choose that the "NTFS create time" is reported via STATX_BTIM=
-E
->> >    then STATX_BTIME is not immutable at all.
->> >
->> > These two options cannot be chosen together because option 1 would
->> > implie that the modifiable "NTFS create time" cannot be reported over
->> > STATX_BTIME.
->> >
->> > We are have currently STATX_BTIME immutable and "NTFS create time"
->> > reported via STATX_BTIME.
->> >
->> > If we want to stay _consistent_ across fs drivers then adding API for
->> > changing "NTFS create time" would break one of those two things.
->> >
->> > In my opinion we should stay consistent across filesystem drivers and
->> > provide unified behavior of APIs independently of used filesystem.
->> > Otherwise userspace applications would have to write fs specific code
->> > for doing their use cases (and we can stay with fs-specific xattrs, no
->> > need to create unified APIs).
->> >
->> > Does it make sense? Or it is still a bad idea to think about it in thi=
-s way?
->>=20
->> Personally I think in this discussion we should separate linux
->> filesystems vs non-linux filesystems, as linux filesystems are "ours"
->> and are the ones we can change as we want, while non-linux filesystems
->> are not made by "us" and cannot be easily changed (like NFS I would say)
->> or cannot changed at all (e.g. NTFS (well, unless we make ntfs
->> incompatible with windows lol)).
->>=20
->> But I understand why it would be better to keep a unified API across all
->> filesystems, even "non-official" ones, so I can think of 2 options
->> (well, with ntfs/exfat in mind, as I don't know much about NFS/smb):
->
-> SMB for timestamps has exactly same meaning and storage format as NTFS.
-> So it should be pretty straightforward what to do with it.
-> NFS3 does not have btime at all. And NFS4 has FATTR4_TIME_CREATE attr
-> which I described in previous email (there is no more info). So based on
-> the decision of 1 or 2, that NFS4 attr would either map to btime or ptime=
-.
+Hi.  Thanks for sending this, and continuing to think about this problem.
 
-Ah ok, thanks.
+A few weeks back I had a somewhat different idea for such controls.  I've
+been meaning to start a wider discussion about it, but was traveling for
+a bit.  What I wrote then:
 
->>=20
->> 1) keep btime aliased to ptime, which means that (to userspace) btime
->>    would be mutable for ntfs/exfat/vfat/etc
->>=20
->> 2) move ntfs/exfat/vfat/etc's cr_time from btime to ptime, effectively
->>    "removing" btime from those FSs and "keeping" only ptime; in this cas=
-e
->>    stat would show "-" for Birth:, but would show the correct timestamp =
-for
->>    Origin:/Create:/Provenance:/...
->>=20
->> I prefer 1) because it probably breaks less scripts, but 2) would be
->> more correct semantically.
->
-> My personal opinion is 2) because the btime stay immutable also in
-> userspace and is also more correct semantically.
->
-> Another argument why 2) should be less breaking change: Userspace
-> applications have to already expect that the btime is not filled at all
-> (e.g. when filesystem does not support it or when application is running
-> on older kernel version without such support).
+Generally, if I, or some users I support, need to use unprivileged containers
+or user namespaces, then when an 0day comes along, I can hopefully trust them
+not to exploit it.  The biggest danger comes from the fact that, right now, if
+they can use them, anyone can.  So if someone can trigger some other code running
+as user nginx or something, that can become a root vector.
 
-Right, I didn't think of that.
+So what if we had a built-in feature or LSM which implemented a credential based
+whitelist, entered at firstboot?  Something like
 
-> My opinion is that if the _new_ API provides two different timestamps
-> based on the filesystem then we should report it as is, so userspace can
-> decide how to want to process them. For example full 1:1 clone backup
-> application would want to preserve both btime and ptime and correctly
-> indicate if one of them is not available (e.g. because underlying fs
-> support only one of those times, like NTFS). And such full 1:1 clone
-> backup application do not want to "invent" some unavailable values.
-> Option 1) would not allow to do that for such applications.
+```
+# Default deny
+uid == 1000  # approved
+1005 < uid < 1010  # approved
+gid == 1005
+security_label = lxc_user_t  # Not sure how far we want to go with this
+tty # must have a session
+```
 
-Ok yes I agree, I'll update the ntfs/exfat patches to switch btime for
-ptime then.
+Now, if you want to use user namespaces for generic sandboxes for all
+users, e.g. to confine browser activity or nginx modules, then this model
+may not fit.  Or rather, it might need a few tweaks.
 
->> And both break at least 1 existing script anyway (as per https://xkcd.co=
-m/1172/).
->
-> Yes. And that is because we want a new feature which allows changing
-> something which was immutable. So we need to handle it somehow.
->
->> >> >
->> >> > I think the ext4 and xfs maintainers have repeatedly said that btim=
-e/crtime
->> >> > attribute should not be modified by users.  There was a long discus=
-sion on
->> >> > this from Ted as well, and the reality is that "creation" time is n=
-ot worth
->> >> > the bits that it is written on,
->> >>=20
->> >> This is an opinion of individual people, who did not lay out technica=
-l
->> >> arguments.
->> >> I have concrete technical arguments in favor of first class creation =
-time for
->> >> ext4/xfs from my experience with production systems that need it and =
-use xattr
->> >> to store it (by smbd), but I am not going to list them here because
->> >> this is not a
->> >> thread about implementing mutable creation time for ext4/xfs.
->>=20
->> For my (backups, preservation) use case, making btime mutable would also
->> be fine, but I can see the value of having a "ctime" for creation, hence
->> this RFC.
->>=20
->> >>=20
->> >> > since it is not preserved by any tools, has
->> >>=20
->> >> Facts check:
->> >>=20
->> >> # NEWS for rsync 3.2.3 (6 Aug 2020)
->> >>=20
->> >> ## Changes in this version:
->> >> ...
->> >>  - Added [`--crtimes`](rsync.1#opt) (`-N`) option for preserving the =
-file's
->> >>    create time (I believe that this is macOS only at the moment).
->> >>=20
->> >> Incidentally, I have an implementation for --crtimes for cifs [1], bu=
-t this
->> >> is not extendable to support all the filsystems which support settabl=
-e crtime.
->> >
->> > Another two facts check:
->> >
->> > FreeBSD has also API for changing "birth (creation) times".
->> > It is documented in utimes(2) manpage:
->> > https://man.freebsd.org/cgi/man.cgi?query=3Dutimes&sektion=3D2
->> >
->> > So I guess that there has to be some tool which is using this API and
->> > therefore these "birth (creation) times" are preserved.
->> >
->> >
->> > NFS4 has time_create attribute (FATTR4_TIME_CREATE=3D50) which is
->> > per-fs-object read-write attribute and defined (in RFC8881 5.8.2.40.) =
-as:
->> >   The time of creation of the object. This attribute does not have any
->> >   relation to the traditional UNIX file attribute "ctime" or "change t=
-ime".
->> > Since NFSv4.1 it can be even specified during creating a new file/dir
->> > which seems to be for backup-restore. And permissions (RFC8881 6.2.1.3=
-.1.):
->> >   ACE4_WRITE_ATTRIBUTES
->> >   Operation(s) affected: SETATTR of time_access_set, time_backup,
->> >     time_create, time_modify_set, mimetype, hidden, system
->> >   Discussion: Permission to change the times associated with a file or
->> >     directory to an arbitrary value. Also permission to change the
->> >     mimetype, hidden, and system attributes. A user having ACE4_WRITE_=
-DATA
->> >     or ACE4_WRITE_ATTRIBUTES will be allowed to set the times associat=
-ed
->> >     with a file to the current server time.
->> >
->> > I'm not sure if there is some backup/restore tool which do it over NFS=
-4
->> > but the NFS4 description seems to be very clear that the network proto=
-col
->> > itself is already prepared for these use cases. And permissions mostly
->> > matches the SMB / NTFS / Windows security model.
->> >
->> >> > a "vague" meaning (is it when the *file* was created, when the *con=
-tent* was
->> >> > created, do edits update it, is it preserved across filesystems, ar=
-chives,
->> >> > etc.) and adding it into the filesystem is misplaced effort.
->> >>=20
->> >> Sorry now you are talking nonsense. Meaning has nothing to do with it=
-.
->> >> This is a property of filesystems (plural) which have documented APIs
->> >> and documented network protocols - it is what it is.
->> >>=20
->> >> If you are looking for a meaning, it is the first publication date, w=
-hether
->> >> it means something to you is irrelevant - what's relevant is that cus=
-tomers
->> >> use it and want to preserve it in backups, whatever its meaning is.
->> >
->> > I agree here. I also heard lot of times that users (customers) want to
->> > preserve create time in backups and be able to restore it. And that
->> > Windows is already able to do it, Linux not yet.
->>=20
->> Hi I'm one of those users, I still can't believe no-one has implemented
->> something like this yet since POSIX came out way back when (*cry*).
->>=20
->> > Maybe what is a "vague" here is where that "create time" is stored and
->> > from which (API) source is GUI (or CLI) application showing it to user=
-.
->> >
->> >> >
->> >> > Storing it as an xattr has some reasonable chance of being preserve=
-d across
->> >> > tar/cp/filesystems, and doesn't introduce a herculean effort of cha=
-nging
->> >> > all of the system calls and on-disk formats for every filesystem.
->> >> >
->> >
->> > I think the part "being preserved across tar/cp/filesystems" is
->> > relevant. If a completely new API is introduced into Linux then it mea=
-ns
->> > that every existing backup tool would not be able to preserve this
->> > property and also would not be able to restore it.
->> >
->> > I'm not sure if we can do anything with this issue, but it is importan=
-t
->> > to know about this limitation.
->>=20
->> My thinking for this RFC would be to then submit relevant patches also
->> to at least the main tools I use like tar, cp, rsync and vim, which will
->> hopefully make it gain momentum and be supported also in other less
->> well-known tools (I would also love for it to be supported by HTTP like
->> mtime is, but that will likely be a lot more difficult to get accepted
->> and implemented).
->
-> If having two btime and ptime fields would be the direction then we can
-> propose an extension for NFS4 protocol with a new attribute (as NFS4 has
-> currently only one). There are already some NFS4 extensions which comes
-> from Linux or was inspired, e.g. umask or xattr support.
+Kees whipped up a proof of concept BPF lsm that implemented this.  A copy
+from his email (and let's call it GPLv2 unless he wants to change it to
+something like MIT) follows:
 
-Yes that would be nice, so when making the patch for nfs (in v4 or v5),
-should I treat FATTR4_TIME_CREATE as ptime and maybe try to add the
-needed code for a new btime?
+Needs:
 
-Thanks,
-koraynilay
+CONFIG_BPF_LSM=y
+CONFIG_DEBUG_INFO_BTF=y
+FUNCTION_TRACER=y
+DYNAMIC_FTRACE=y
 
->> > About the part "introduce a herculean effort of changing all of the
->> > system calls and on-disk formats for every filesystem.". In my opinion
->> > it is better to do that cleanup (maybe even in all stat-related
->> > syscalls) if it makes things easier and prevents another technical
->> > issues.
->> >
->> >>=20
->> >> As I said I can provide data for why the xattr approach taken by smbd=
- is
->> >> limited and inferior, but this is not the place to get into it (there=
- are hints
->> >> in the rsync commit message below).
->> >>=20
->> >> Thanks,
->> >> Amir.
->> >>=20
->> >> [1] https://github.com/amir73il/rsync/commits/cifs-crtimes/
->> >
->> > I would say that xattr does not solve this issue too.
->>=20
->> I would also like to note again that xattrs aren't available to symlinks
->> (or other special files), which would break at least my backup/preservat=
-ion
->> use case.
->>=20
->> Best,
->> koraynilay
 
---4021ef4d146425c1319d29eb562c73840b95500eb95f16ec5197c0df3fe8
-Content-Type: application/pgp-signature; name="signature.asc"
+#!/bin/bash
+# Manage the userns allowlist policy.
+#
+#   policy.sh load                 load, attach and pin (policy still writable)
+#   policy.sh allow-uid UID        add a uid
+#   policy.sh allow-gid GID        add a gid
+#   policy.sh deny-uid  UID        remove a uid (only before "lock")
+#   policy.sh show                 dump the policy
+#   policy.sh failures             who has been denied, and how often
+#   policy.sh lock                 freeze the policy maps, one way
+#   policy.sh unload               detach and unpin everything
+#
+# bpftool takes keys and values as raw bytes in target byte order, so a u32
+# uid has to be written little-endian on x86: uid 1000 is "e8 03 00 00", not
+# "00 00 03 e8". Getting that backwards silently writes a policy for uid
+# 3892510720 instead, which is why this script exists.
+set -eu
 
------BEGIN PGP SIGNATURE-----
+BPFFS=${BPFFS:-/sys/fs/bpf}
+DIR=$BPFFS/userns			# pinned maps (a directory)
+LINK=$BPFFS/userns_link			# pinned lsm link (a file)
+OBJ=${OBJ:-$(dirname "$0")/userns_allowlist.bpf.o}
+BPFTOOL=${BPFTOOL:-bpftool}
 
-iHQEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCaunPcgAKCRA0bnTtJTDo
-OI6mAPjMnLq/EQ+r++5IMXXLUDypRX7qUy1wK/iyFhNiWG2/AQCyMgTOsWOkdFgi
-u/tBpysg8yTHGlDE1l6EeIg4m3LLBw==
-=Q7qx
------END PGP SIGNATURE-----
+u32_le() {	# 1000 -> "hex e8 03 00 00"
+	printf 'hex %02x %02x %02x %02x' \
+		$(( $1        & 0xff)) $(( ($1 >> 8)  & 0xff)) \
+		$(( ($1 >> 16) & 0xff)) $(( ($1 >> 24) & 0xff))
+}
 
---4021ef4d146425c1319d29eb562c73840b95500eb95f16ec5197c0df3fe8--
+# bpftool prints map contents as integers when the object carries BTF and as
+# arrays of hex byte strings when it does not. Handle both.
+decode() {
+	python3 -c '
+import json, sys
+rows = json.load(sys.stdin)
+if not rows:
+    sys.exit("(empty)")
+def val(v):
+    if isinstance(v, list):
+        return int.from_bytes(bytes(int(x, 16) for x in v), "little")
+    return int(v)
+for r in sorted(rows, key=lambda r: -val(r["value"])):
+    print("uid %-8d denied %d time(s)" % (val(r["key"]), val(r["value"])))
+'
+}
+
+case ${1:-} in
+load)
+	mountpoint -q "$BPFFS" 2>/dev/null || mount -t bpf bpf "$BPFFS"
+	# bpftool creates both pin paths itself and fails if either exists, so
+	# do not mkdir them. For a single-program object the program path is a
+	# file (the pinned link); pinmaps is a directory.
+	$BPFTOOL prog load "$OBJ" "$LINK" pinmaps "$DIR" autoattach
+	# "prog load" exits 0 even when the LSM attach failed and it silently
+	# fell back to pinning the program, which leaves the policy loaded but
+	# inert. The only reliable check is that an lsm link now exists.
+	if ! $BPFTOOL link show | grep -q lsm; then
+		echo "ERROR: no lsm link: the program is loaded but NOT enforcing." >&2
+		echo "Needs CONFIG_BPF_LSM=y, CONFIG_DEBUG_INFO_BTF=y and" >&2
+		echo "CONFIG_DYNAMIC_FTRACE_WITH_DIRECT_CALLS=y (the last one" >&2
+		echo "requires CONFIG_FUNCTION_TRACER=y), plus bpf in CONFIG_LSM." >&2
+		exit 1
+	fi
+	echo "loaded and enforcing; policy maps under $DIR (not yet frozen)"
+	;;
+allow-uid)
+	$BPFTOOL map update pinned "$DIR/allowed_uids" key $(u32_le "$2") value hex 01
+	;;
+allow-gid)
+	$BPFTOOL map update pinned "$DIR/allowed_gids" key $(u32_le "$2") value hex 01
+	;;
+deny-uid)
+	$BPFTOOL map delete pinned "$DIR/allowed_uids" key $(u32_le "$2")
+	;;
+show)
+	echo "== allowed uids"; $BPFTOOL map dump pinned "$DIR/allowed_uids"
+	echo "== allowed gids"; $BPFTOOL map dump pinned "$DIR/allowed_gids"
+	;;
+failures)
+	# key is the euid that was denied, value is a count
+	$BPFTOOL -j map dump pinned "$DIR/denied_uids" | decode
+	;;
+lock)
+	# Only the policy maps. denied_uids is written by the program, and
+	# program writes bypass the frozen check, so freezing it would lock out
+	# this script without stopping anything.
+	$BPFTOOL map freeze pinned "$DIR/allowed_uids"
+	$BPFTOOL map freeze pinned "$DIR/allowed_gids"
+	echo "policy frozen; allow-uid/allow-gid/deny-uid will now fail with EPERM"
+	echo "even as root. Changing it means 'unload' and 'load' again."
+	;;
+unload)
+	rm -f "$LINK" "$DIR"/allowed_uids "$DIR"/allowed_gids "$DIR"/denied_uids
+	rmdir "$DIR" 2>/dev/null || true
+	echo "unpinned; enforcement stops when the last reference goes away"
+	;;
+*)
+	# the header comment block, however long it grows
+	awk 'NR > 1 && /^#/ { print; next } NR > 1 { exit }' "$0"
+	exit 1
+	;;
+esac
+
+# There is no "digest" command, though a frozen policy looks like it should
+# have one. The kernel will hash a frozen map and return it through
+# BPF_OBJ_GET_INFO_BY_FD in info.hash (syscall.c:5433, -EPERM unless
+# map->frozen), but only array maps implement ->map_get_hash(); for a
+# BPF_MAP_TYPE_HASH it fails with -EINVAL however frozen it is. bpftool does
+# not expose info.hash either way. Attesting to this policy would mean
+# reshaping it as arrays -- e.g. a bitmap indexed by uid -- and calling
+# BPF_OBJ_GET_INFO_BY_FD directly.
+
+exit 0
+
+
+
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Credential allowlist for unprivileged user namespace creation.
+ *
+ * Default deny. A caller is allowed to create a user namespace if any of:
+ *   - its euid is in allowed_uids
+ *   - its egid is in allowed_gids
+ *   - any of its supplementary groups is in allowed_gids
+ *
+ * The maps are populated once (at first boot, from a config file) and then
+ * frozen with BPF_MAP_FREEZE, after which the kernel refuses further updates
+ * through the syscall interface even from root. Pin the program and the maps
+ * under bpffs so they survive the loader exiting.
+ */
+#include "vmlinux.h"
+#include <errno.h>
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_tracing.h>
+#include <bpf/bpf_core_read.h>
+
+char _license[] SEC("license") = "GPL";
+
+/*
+ * Supplementary groups are walked with a fixed bound so the verifier can
+ * see termination. A caller in more than this many groups falls back to the
+ * euid/egid checks. Raise it, or switch to bpf_loop(), if that matters.
+ */
+#define MAX_SUPP_GROUPS 64
+
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 1024);
+	__type(key, __u32);		/* uid */
+	__type(value, __u8);
+} allowed_uids SEC(".maps");
+
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 1024);
+	__type(key, __u32);		/* gid */
+	__type(value, __u8);
+} allowed_gids SEC(".maps");
+
+/* Denials, so you can see what a policy would break before enforcing it. */
+struct {
+	__uint(type, BPF_MAP_TYPE_HASH);
+	__uint(max_entries, 4096);
+	__type(key, __u32);		/* uid */
+	__type(value, __u64);		/* count */
+} denied_uids SEC(".maps");
+
+static __always_inline int gid_allowed(__u32 gid)
+{
+	return bpf_map_lookup_elem(&allowed_gids, &gid) != NULL;
+}
+
+SEC("lsm/userns_create")
+int BPF_PROG(userns_allowlist, const struct cred *cred, int ret)
+{
+	struct group_info *gi;
+	__u32 uid, gid;
+	int i, ngroups;
+	__u64 init = 1, *count;
+
+	/* Someone before us already objected; do not launder their denial. */
+	if (ret)
+		return ret;
+
+	uid = BPF_CORE_READ(cred, euid.val);
+	if (bpf_map_lookup_elem(&allowed_uids, &uid))
+		return 0;
+
+	gid = BPF_CORE_READ(cred, egid.val);
+	if (gid_allowed(gid))
+		return 0;
+
+	/*
+	 * The common deployment is one group that everyone permitted is a
+	 * member of, which for most users is a supplementary group rather
+	 * than their primary one, so egid alone is not enough.
+	 */
+	gi = BPF_CORE_READ(cred, group_info);
+	if (gi) {
+		ngroups = BPF_CORE_READ(gi, ngroups);
+		if (ngroups > MAX_SUPP_GROUPS)
+			ngroups = MAX_SUPP_GROUPS;
+
+		for (i = 0; i < MAX_SUPP_GROUPS; i++) {
+			if (i >= ngroups)
+				break;
+			/*
+			 * struct group_info is __randomize_layout and gid[] is
+			 * a flexible array, so this has to go through CO-RE
+			 * rather than any assumed offset.
+			 */
+			if (bpf_core_read(&gid, sizeof(gid), &gi->gid[i].val))
+				break;
+			if (gid_allowed(gid))
+				return 0;
+		}
+	}
+
+	count = bpf_map_lookup_elem(&denied_uids, &uid);
+	if (count)
+		__sync_fetch_and_add(count, 1);
+	else
+		bpf_map_update_elem(&denied_uids, &uid, &init, BPF_NOEXIST);
+
+	return -EPERM;
+}
