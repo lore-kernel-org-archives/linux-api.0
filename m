@@ -1,106 +1,130 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.178
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793656025;
-	b=oWijSuWVLiO9nF1pZsvNZJ78gCp01hY3jc6xAiCoGeHTYljyMoMiElQYFmPwjVTJex7v
-	 ljwxKEyxk5tsVa77bS1JA0FsQsjlMQ/CfoFSA4AgIsb85dVbhZyiUpZbcnLVin5fZQyan
-	 naCA8Ph1v7gMlkis7rhkAN6Tw9i6fKLKYlXPPZoLBL98c1+xjgtsbkwjVpk3F6Wo8ZQGh
-	 7lkcCSzSSadhrKmJh/8sbJLe0FfjkeUte9QA6PBm0jaZXvU2PXlAluQgsq2Vyu+sws68K
-	 KH4KzXqIw9AK7F4v9MmSVwgHKdDn85TCuCerxdLaxIkODGIUatMDmzzfw8oUAUI8/PQ==
+	t=1793667535;
+	b=4cLYL3pGv64opWYJM3/5/z0R2qtGHPtj2fSrdkFKrjkiSMYP/0bU+dRTIdva9nP7LAtK
+	 s7ubEdAG9/FPrKVRo95E489o0fpzrJGgF+BgGzish+IxPl0XMorgCdbEd3yBmwfzbLd+W
+	 im6oQtkxAg3EP07hPUJlEB1AEOZ85/q0ZVEd1IpQyxO3GpxDFs8egjQ43HWPzUwGVW1AV
+	 MeGSlUMBt/MlrRhl8lYDrPPCuYh+Sw3/3ippjxW8rACBB+ptklUyT3JZRCHAVIVZ/74nb
+	 VCkVFRsuGlAV/5RUtt6hv/FQFWggBdjVlB3QQdGSqmobXWQt6LO4+Xjg711LKCcCuTg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793656025;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:DKIM-Signature:
-	 DKIM-Signature:Received:Received:Received:Date:From:To:Cc:Subject:
-	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
-	 In-Reply-To:X-Spam-Flag:X-Spam-Level:X-Spamd-Result:X-Spam-Score;
-	bh=eryNLBdB+9u2OMDHvVsk50PIGXu+I13jRpOSwM//8IU=;
-	b=RwoE1rudiIgUPeFMpLXGaRJZMQtIT9jxbbhonc/2pHwuKgZEedzmLmayOrJ79I+qy4xJ
-	 zfBdwnGwDkeICEba78GPKzrWLR6LxN+TZB+gKF0iQ+zuxV9sko+OSMbBpamX3foHFK5is
-	 tSsZXAh3IVro8zWUjL02wM4xq3scsbBBAi0aDO++2u/IWscLU6PrtaRPNvoiP0jE7hmr7
-	 6kgyOQFtI35wRqIT10EglK3hxWbdV3kjyReV3+DQ9fPq/tLyJQVMJ+PteaZIht39Fp2OF
-	 6jdolL6Rsq7rX152mv4w2DSZg1ZDmVWoI63gDtRyqEc849NgrO+FA8hcySGf0TTJDpg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793667535;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:Content-Transfer-Encoding:
+	 In-Reply-To;
+	bh=QoYRJANCltXIHssksq3+ydkfr4I2KVxvqmMBU8nH1QA=;
+	b=FqRbLJasJYJA4temknnSakPLjqL3lVumqkCg90iwFFpumBbTKFQB06/qP5E8AtYmjYRu
+	 G67CYR4oHTPkC0Ug7N7+fulGlcgQdqeUEvgqdv7J8af7S+NoEM8OJ5bnO2FnlvMj8lohs
+	 dCzM5tcfAIeNsEVapcyY7NM0T3y8KaCOgEpU+zjSUOxxu/B2p2S4YiG+1mGCylAKh19GT
+	 yLj6UXxM89hMS/WzIt1rGX1U705qvqiM/LUQJ3p/ZxoFEezFnrfKGYJBIpJd0Lsm3WKs/
+	 g4yoj+zQQs8v47YX7NZFyQY9HTL2/i3FC6CM68/BENcqDR773lzu5n4B/Pig06RyPpw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=suse.cz;
-	spf=pass smtp.mailfrom=suse.cz;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=SQeKXy+q;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=yzYijHmJ;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=2PHZxyL7;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=Yp4LXDCH;
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=H1zPRlIe;
+	arc=none smtp.remote-ip=209.85.160.178
+Received: from mail-qt1-f178.google.com (mail-qt1-f178.google.com [209.85.160.178])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64976606D823;
-	Mon,  2 Nov 2026 21:47:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 64976606D823
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=suse.cz
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.cz
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9065F606A327
+	for <linux-api@vger.kernel.org>; Tue,  3 Nov 2026 00:58:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9065F606A327
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=SQeKXy+q;
-	dkim=pass header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=yzYijHmJ;
-	dkim=pass (1024-bit key) header.d=suse.cz header.i=@suse.cz header.a=rsa-sha256 header.s=susede2_rsa header.b=2PHZxyL7;
-	dkim=neutral header.d=suse.cz header.i=@suse.cz header.a=ed25519-sha256 header.s=susede2_ed25519 header.b=Yp4LXDCH
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id DFC7021F8E;
-	Mon,  2 Nov 2026 21:47:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1793656024; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eryNLBdB+9u2OMDHvVsk50PIGXu+I13jRpOSwM//8IU=;
-	b=SQeKXy+qzGsdG96mI4gh14ny/OOdlK2hTdsnLfvW2H9iAVjGuWFMrQQR+cPW1fuR+y8emf
-	z39hCC28VQfPLljw1ZxZkjdEN9351tkxhqZcWt2/08SsJZkW7UKzzooWzCYYyQ1RGOSdVS
-	UdfhFzTL5HZVaiJccs+JNoxYIH8mw7k=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1793656024;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eryNLBdB+9u2OMDHvVsk50PIGXu+I13jRpOSwM//8IU=;
-	b=yzYijHmJH/Aj36OlYzbq6pb+mM4VaojS6jMRE89Pg1cN2scxo4ZRhBfxH5RUsOLnOeQqJ7
-	ii+fiyUNpQRgYDCw==
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.cz; s=susede2_rsa;
-	t=1793656023; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eryNLBdB+9u2OMDHvVsk50PIGXu+I13jRpOSwM//8IU=;
-	b=2PHZxyL7oHeWpIo2ukq9oBPB5XPYzs854BU0dn6UmvmDBomxJfVY8auLpwGCxRxOrf0JMV
-	5rCsdJ31yucilI4RMZSwG16ZDkRbGFHhgprkvZ2jSlUfdObVwgbO9UvlHmhv66DKcRX30N
-	VhcwcIJaNOE/wsrI2YJ/YAeUmEs9MdA=
-DKIM-Signature: v=1; a=ed25519-sha256; c=relaxed/relaxed; d=suse.cz;
-	s=susede2_ed25519; t=1793656023;
-	h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=eryNLBdB+9u2OMDHvVsk50PIGXu+I13jRpOSwM//8IU=;
-	b=Yp4LXDCHKLSJwAu/iZdkNC4p02WFmG1/giR/XUZzV80ueWF7udizasyKTB6H5EeG5/SyRX
-	5M7Oqw+fapVB3YCg==
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id C1ADD134B3;
-	Mon,  2 Nov 2026 21:47:03 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id ZFf/KNcE6WqSAQAAD6G6ig
-	(envelope-from <jack@suse.cz>); Mon, 02 Nov 2026 21:47:03 +0000
-Received: by quack.suse.cz (Postfix, from userid 1000)
-	id 6DF03B171; Mon, 02 Nov 2026 22:46:59 +0100 (CET)
-Date: Mon, 2 Nov 2026 22:46:59 +0100
-From: Jan Kara <jack@suse.cz>
-To: Jeff Layton <jlayton@kernel.org>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Christian Brauner <brauner@kernel.org>, Jan Kara <jack@suse.cz>, Christoph Hellwig <hch@lst.de>, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH] statx: add STATX_ATTR_MULTIGRAIN_TIMESTAMP
-Message-ID: <vf6shjsmysanedmphb4dpsn6nk3ka47nm5qv2pt7togoha4yrz@cckxyxmzmgtq>
-References: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
+	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=H1zPRlIe
+Received: by mail-qt1-f178.google.com with SMTP id d75a77b69052e-53512cd2f85so49114121cf.1
+        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2026 16:58:54 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1793667533; x=1794272333; darn=vger.kernel.org;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :content-type:mime-version:references:message-id:subject:cc:to:from
+         :date:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=QoYRJANCltXIHssksq3+ydkfr4I2KVxvqmMBU8nH1QA=;
+        b=H1zPRlIek7ds8M6NQOXwrD7lOc3bluGthhRv4XKpDgzkRsAQZQ9QpELH7lynxKitrC
+         iAK3y/NLEfzWZg/zLhxLIfDoe3wG0Zi0g7uRxjIB5PHRUoAwVJYqdwPM5ma8QgTsDzzE
+         A1YlDOQMCvdTjJvkcVq/n8F/g3cxTcOLvq0rFJUC7KCBYjJ3KGXhiwuXhH17l0Swl0ek
+         aliTnEwJ2nESBRVL7qU/uR1nVs17I8sEP39YljjfAB04uP1vgKV3xHgqnt9dYYqWPGUi
+         9LoVzZmGLFBycgB8TaF7d/PDBIFGxvyUNueK0pVkswaKoLaJV6OK4ikoFARC+YUNYP5F
+         F/uw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793667533; x=1794272333;
+        h=in-reply-to:content-transfer-encoding:content-disposition
+         :content-type:mime-version:references:message-id:subject:cc:to:from
+         :date:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=QoYRJANCltXIHssksq3+ydkfr4I2KVxvqmMBU8nH1QA=;
+        b=wYWSFJfX52ZkLWBmQjmRj0jhSt5PtH1/UE30Cs48AvKxHGoqVdf84uDG6NxhEzj4LB
+         ENTmKd2FcypUt21nr8EWqpaTgRAUKOJ4WJKgKJUlTvXe4QtrDTscwy9dY4401dErg8lz
+         7oqghTVcCxgAwFPj9K1oyY/qQ4d5i577jMBw9pYnh5ZZN/iTII5uowQGfeeREQarr4lH
+         0vZTFqqk1v8KcNljDGvuPpTJnZDVhuBWozsKtiEUh8rEo+pVEjlvo++63mVLHEVhgj+1
+         7p81Id6griooeEql8Wc3UaZp+eK3TuBi1kqxMOoB+Un0ufn5JoCnTg9h3PvXabnI/GP0
+         7UkQ==
+X-Forwarded-Encrypted: i=1; AKwUvBzlDkw6QWJHAppzGmI/ujl/ZgiglQMxGxsRHxVP5SpKVVF7jEhTivB7/r11ddQFL+bnWYYMqxge4f8=@vger.kernel.org
+X-Gm-Message-State: AFq9FYIPnUKVgj74lionK/O+quu9mogqBvsN2XJO1jeqGzy+Xc03CecZ
+	r+TxIcYtUTWDbsJ16Zkndm7yeurscNS8M2huOyUUIa+yrcUq4Pp3K2CxzJ8yigCAbic=
+X-Gm-Gg: AYBFou09MnexdMTwXzZNRWjTl/+QQs3V7sN+9QMrfq+lB6j+Q9tyHo+k3mb9FIJ71EN
+	sw+eEOdrDEO3oD4smH7wiJQZdUAJ/o3qHKYRe8VdJDg01SzMdalWvF2QFgWxcRNIVNOVPOfpiMd
+	SiGZSytaXwhmAPKAQ/DKQPXVt+lEEAlnFfY9HfVcxLhggHOzv7eLhHdsBMc7PPn8hAf01hW9DGp
+	OGYWTaCV79BqyUD9FJSolO83e53NumdpbEXblFRVgeHOmH164z6L8BGZnZRKlpDID6NXh2rjHDH
+	YQMMrEsmuZTigEevNPuZY4NGjPDZjqtWxcNNN6LaJag14JtPfxYjmIbB4rytCynN9kQLKhIhJ4T
+	WntXWFfnDrVn8bS+NCtP90qtuA19eFDSKVMs8X+mQJwW45OtPmsvd0Ws2SHIgHwnl7PZLAOIsnH
+	wtI8iT2u+caA6cOm9vVBDM9hlFIwY5xSlc5ucE6ZR3C6c5XHFdN15iIDYMDMBII+lz5zkOpH38G
+	Wj+SdlOIFa7vLnxuzQ6bTG2QFlTvp7TbUE+tAf7PNhgaHeWc+ee47clkp6THI3BHvNW86w5u/Pt
+	aMCqcikVquh6mtGdBqsOvxUxDgA4JpLoLyD+v8fWR/WUQR08gw57OjHcSNl4ls6aMPCiLMN0KrT
+	d8U8ivrgbuA==
+X-Received: by 2002:ac8:5f92:0:b0:533:a4a:8826 with SMTP id d75a77b69052e-542b6595288mr197108781cf.19.1793667533172;
+        Mon, 02 Nov 2026 16:58:53 -0800 (PST)
+Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-5498b49d8efsm12193441cf.7.2026.11.02.16.58.51
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 02 Nov 2026 16:58:52 -0800 (PST)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xO2rT-0000000BHob-1A7Z;
+	Mon, 02 Nov 2026 20:58:51 -0400
+Date: Mon, 2 Nov 2026 20:58:51 -0400
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
+Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
+	"linux-coco@lists.linux.dev" <linux-coco@lists.linux.dev>,
+	"suzuki.poulose@arm.com" <suzuki.poulose@arm.com>,
+	"drdeeglaze@gmail.com" <drdeeglaze@gmail.com>,
+	"James.Bottomley@hansenpartnership.com" <James.Bottomley@hansenpartnership.com>,
+	"dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
+	"Xing, Cedric" <cedric.xing@intel.com>,
+	"alistair.francis@wdc.com" <alistair.francis@wdc.com>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	"Reshetova, Elena" <elena.reshetova@intel.com>,
+	"kas@kernel.org" <kas@kernel.org>,
+	"ankita@nvidia.com" <ankita@nvidia.com>,
+	"jiri@resnulli.us" <jiri@resnulli.us>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"Jiang, Dave" <dave.jiang@intel.com>,
+	"Quigley, David" <david.quigley@intel.com>,
+	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+	"pgonda@google.com" <pgonda@google.com>,
+	"jpiotrowski@nvidia.com" <jpiotrowski@nvidia.com>,
+	"Vivi, Rodrigo" <rodrigo.vivi@intel.com>,
+	"lukas@wunner.de" <lukas@wunner.de>,
+	"Fang, Peter" <peter.fang@intel.com>,
+	"jic23@kernel.org" <jic23@kernel.org>,
+	"x86@kernel.org" <x86@kernel.org>,
+	"sameo@meta.com" <sameo@meta.com>, "aik@amd.com" <aik@amd.com>,
+	"sathyanarayanan.kuppuswamy@linux.intel.com" <sathyanarayanan.kuppuswamy@linux.intel.com>,
+	"ksinyuk@kernel.org" <ksinyuk@kernel.org>,
+	"qinkun@google.com" <qinkun@google.com>
+Subject: Re: [PATCH RFC 20/20] attestation: Add the TDX family implementation
+Message-ID: <20261103005851.GH3889730@ziepe.ca>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-21-jiri@resnulli.us>
+ <ed52bb6d48c87ab8023bf2165cadffa259e21725.camel@intel.com>
+ <20261023141218.GD3977851@ziepe.ca>
+ <343e4a12f2fdbb4e9a19c4afe49cf2b8908d6739.camel@intel.com>
+ <20261023220030.GM3977851@ziepe.ca>
+ <7843a833723e3aad40f8fc4de3a83f5a5059280f.camel@intel.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -110,100 +134,114 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Spamd-Result: default: False [-12.80 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	MID_RHS_NOT_FQDN(0.50)[];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	ARC_NA(0.00)[];
-	MISSING_XM_UA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCVD_COUNT_THREE(0.00)[3];
-	TO_DN_SOME(0.00)[];
-	FROM_EQ_ENVFROM(0.00)[];
-	RCPT_COUNT_SEVEN(0.00)[8];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	DKIM_SIGNED(0.00)[suse.cz:s=susede2_rsa,suse.cz:s=susede2_ed25519];
-	RCVD_TLS_LAST(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo,suse.cz:email,lst.de:email]
-X-Spam-Score: -12.80
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <7843a833723e3aad40f8fc4de3a83f5a5059280f.camel@intel.com>
 
-On Thu 29-10-26 12:28:16, Jeff Layton wrote:
-> Userland has no way to tell whether a file's timestamps are multigrain,
-> i.e. whether successive changes after a query are guaranteed to yield
-> distinct timestamps.
+On Mon, Nov 02, 2026 at 07:02:37PM +0000, Edgecombe, Rick P wrote:
+> > Though I am planning/hoping to have a sane admin tool here as we agree
+> > to things, so admin can do like:
+> > 
+> > $ attest report
+> >    TDX Report:
+> >      Xyz 
+> >      Abc
+> >    TPM Report:
+> >      124
+> >      435
 > 
-> Add STATX_ATTR_MULTIGRAIN_TIMESTAMP and set it in vfs_getattr_nosec()
-> when is_mgtime() is true (IOP_MGTIME is set from FS_MGTIME at inode
-> init). Always advertise it in attributes_mask.
-> 
-> Suggested-by: Christoph Hellwig <hch@lst.de>
-> Signed-off-by: Jeff Layton <jlayton@kernel.org>
+> Hmm. TPM report is a signed thing right? But "TDX report" is not. Or "TDX
+> report" is really the TDX quote?
 
-Makes sense to me. Feel free to add:
+Yeah, the signed thing.
 
-Reviewed-by: Jan Kara <jack@suse.cz>
+Sounds like in the TDX language it is TDX quote. ARM CCA calls their
+signed thing report. systemd calls the entire aggregate bundle the
+report. I think TPM called it quote. Isn't it nice everyone has their
+own words?
 
-								Honza
+Jiri, I suppose we should meditate on what word you use in the schema
+to try to be clear.
 
-> ---
-> HCH suggested this when I posted the fstest for multigrain timestamps. I
-> think it makes sense. If this looks good, I'll plan to send a manpage
-> update for statx(2).
-> ---
->  fs/stat.c                 | 6 +++++-
->  include/uapi/linux/stat.h | 1 +
->  2 files changed, 6 insertions(+), 1 deletion(-)
+> I still don't see the need to expose the TDX report (TDX definition
+> of report) through a generic interface.
+
+Great, let's not do that. Signed things only is what I was expecting,
+because that is what systemd needs when it generates its aggregated
+"report" to send to verification.
+
+> Are you thinking about having any kind of community
+> call for TSM? Maybe we could walk people through TDX attestation.
+
+If we have to, but it is more inclusive if the mailing list has a
+record of such things..
+
+I was thinking of trying to organize some smallish summit type call of
+a longer duration when this is more solidified and everyone has time
+to digest it so we can go over *everything* and confirm people are
+happy. This would be a 'come prepared' kind of call, instead of a
+physical conference. Let's see
+
+> > > On the TDX side we would have to work through how to ask for a
+> > > specific type of quote. In the initial set we have planned, the host
+> > > will decide.
+> > 
+> > That's fine. Broadly the "default" report format should be set by the
+> > VM's instance type, eg defined by the CSP. It should not change
+> > launch to launch of the same VM.
 > 
-> diff --git a/fs/stat.c b/fs/stat.c
-> index a2e63c6c45b7..67b9f1784b23 100644
-> --- a/fs/stat.c
-> +++ b/fs/stat.c
-> @@ -206,9 +206,13 @@ int vfs_getattr_nosec(const struct path *path, struct kstat *stat,
->  	if (IS_VERITY(inode))
->  		stat->attributes |= STATX_ATTR_VERITY;
->  
-> +	if (is_mgtime(inode))
-> +		stat->attributes |= STATX_ATTR_MULTIGRAIN_TIMESTAMP;
-> +
->  	stat->attributes_mask |= (STATX_ATTR_AUTOMOUNT |
->  				  STATX_ATTR_DAX |
-> -				  STATX_ATTR_VERITY);
-> +				  STATX_ATTR_VERITY |
-> +				  STATX_ATTR_MULTIGRAIN_TIMESTAMP);
->  
->  	idmap = mnt_idmap(path->mnt);
->  	if (inode->i_op->getattr) {
-> diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-> index 1686861aae20..b978860590b1 100644
-> --- a/include/uapi/linux/stat.h
-> +++ b/include/uapi/linux/stat.h
-> @@ -255,6 +255,7 @@ struct statx {
->  #define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
->  #define STATX_ATTR_DAX			0x00200000 /* File is currently in DAX state */
->  #define STATX_ATTR_WRITE_ATOMIC		0x00400000 /* File supports atomic write operations */
-> +#define STATX_ATTR_MULTIGRAIN_TIMESTAMP	0x00800000 /* File uses multigrain timestamps */
->  
->  
->  #endif /* _UAPI_LINUX_STAT_H */
+> In the attestation space, it seems there are people who want many
+> slightly different things. And it has been generating option
+> complexity on top of the TDX legacy baggage.
+
+Yeah, I am aware.. Above has been my view as the only logical position
+for a CSP to take. If you change the format of the TDX quote from
+launch to launch you risk ABI breakage with the customer's
+verifier. You will have angry customers if one day their VMs boot and
+they don't verify anymore.
+
+> > If you also want to have a way to query specific types, like AMD's
+> > guid thing, then that's fine too. But I think integrating into systemd
+> > report might be a bit tricky so I'm not sure it is a great idea.
+> > 
+> > In all cases the format of the report is labled, passed to userspace
+> > and given to the verifier. I see Intel already defined DICE format as
+> > 'larger than 8k'.
 > 
-> ---
-> base-commit: c339f4010dea8b0d754f84ace70cd1b089878ef8
-> change-id: 20261029-mgtime-statx-26a229f9c3b4
+> I'll have to check (or maybe Peter can chime in) if there is some easy label to
+> look at.
 > 
-> Best regards,
-> -- 
-> Jeff Layton <jlayton@kernel.org>
+> > We'd probably want to give that a dedicated label in
+> > CTLV land.
 > 
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+> Not following what you mean exactly. A CTLV format that contains the report? Or
+> a user ABI way to request a certain format?
+
+The CTVL output will always be something like {label, data blob}, for
+everything so it is self described.
+
+Since the DICE and non-DICE TDX quotes sound non-interoperable they
+should have different labels.. I guess? I really don't know the
+details of TDX enough to say.
+
+> > One of the things I'm quite adament about on the data labeling is that
+> > if something sees Blob type A then it should at least be able to
+> > verify the signature. Further format variation should be self
+> > describing data within the signed payload. If it is so different that
+> > you can't verify the signature then you have to give it a different
+> > label too.
+> 
+> I'll make sure this made it back to our attestation people. (probably someone
+> already picked it up)
+
+Yeah, I'm quite adament about this. I don't want this to turn into a
+funnel for undefined binary blobs that nobody can understand. At a
+minimum the signature has to parse, and at the maximum I'd love to
+insist on a userspace implementation to dump the contents. We will
+see.
+
+This will naturally force people to use the right labels since they
+won't be able to make a dumper if they don't.
+
+Jason
