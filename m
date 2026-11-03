@@ -1,87 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.215.175
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793668770;
-	b=xPsh+O4WvU3CSH/S5OG9W0k+YLvhBT2UW7GzDodS8zezv6aG9WZVoYVuZHWaxmgqi9MT
-	 NcbhJw75sra4rLwXg4U1J38I5XNnnUs0/8RMthTfpx8IMn+5H5ZtA2OcsysiihNkkWsRd
-	 WlHZNgzDAsHvKdFt+LHP1sfsISiyWhTGI2UqdrN8Nb4YfBvcCnJvF5dgfMzI1XjBhToqV
-	 iuQPIf69eBk7kjV6KuW/ezGu3HOAMZrwvBrNJYcDFON+Wr/PHS7p2XgbydYUAV0AVys24
-	 K9xYt02lECVsfAwajz0IfbjC4jF/3snLqlEaSNOo6pdRXA1XYHP9s+7dYY6qDTeBq8A==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793668770;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Content-Type:Mime-Version:Subject:From:In-Reply-To:Date:Cc:
-	 Content-Transfer-Encoding:Message-Id:References:To:X-Mailer;
-	bh=OzeCAPmNW+SHsrPHyP2lgHfACb376kvzXRAy4aBxIGI=;
-	b=M36VjNcWJkBC1Ba5olh42GH6q+fSWjzjW5qanqKuZ/Dqg40JO2ttTU8RTS0qcHORJEkD
-	 09iOTg+7qu8F6WKIBdMq4kLCyTpdkeRMbXalBvu8h2hmk03ir3iMiCcZTQR/5/8DvNOS6
-	 6LxdplXY54Bu/TGiDn+nQFMJNsngz5Xm0eppel74Lk7fyMlR01xJyP7Tn7ovv3K+nM7P2
-	 71s9pq7OAnf/SPhrzKOS60jcbpf90vX4D7QJQFmWc6OWiLzuInafZLphXNk2jdN6q3h4T
-	 WF+lJpByyAwd7/S1CChKy2gTepFDsXc+rmMZ6OujzpXgFPkirFAHMQxI8e9Cz5PCnBA==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=dilger.ca;
-	spf=pass smtp.mailfrom=dilger.ca;
-	dkim=pass header.d=dilger-ca.20260707.gappssmtp.com header.i=@dilger-ca.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=WLyuuwnE;
-	arc=none smtp.remote-ip=209.85.215.175
-Received: from mail-pg1-f175.google.com (mail-pg1-f175.google.com [209.85.215.175])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793688634;
+	b=m9+T2eS44C8fM/2KY8mRPoFZ9xuc1WwCA+fxn2uN/QUZJ4w0yNfvUOFemFwy814U/j5A
+	 8lQCVGD/Lukg1xsOT6csqDb3131H3j0DnQIzAPtmVzrEH/ZsFzoAsW4IBQORNTdEPwPkl
+	 0yA8IgGsEMPYOh7cThRFTnGbwVqXcotDQkYKuQnKK5CtMYUAdFahRgqNkqMhvEQ6DdOq6
+	 4ubwdE7OJO1mkwFmrJCNHHygGXc6w66cLi4+Qic2TbNX6Jk5CHsKApuJ2tDdhUoADh4tx
+	 aCUQITowZLfEUpy0MySOLHNwsCdvzjfPpaI/smL8MKYl18oIL5EmutisIkq/q3KI7hQ==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793688634;
+	h=Received:DKIM-Signature:Received:From:Subject:Date:Message-Id:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:X-B4-Tracking:
+	 X-Change-ID:To:Cc:X-Mailer:X-Developer-Signature:X-Developer-Key:
+	 X-Endpoint-Received:X-Original-From:Reply-To;
+	bh=HwclU+gLykGCGcplaQdtPQR2+Vkq9X8QL9LHv2ipImQ=;
+	b=QNN2popiyUboeQpFEYm2KR9Gs94gvW/NCMPAQPvOsMhaql6Y2G1vsAK5/nUG9AvAzdqH
+	 nlaGT2qeKiDmgupzHKO/LRPLs8rpeV8PDqfUgRjgPPfA7cqiA1GwyvO6EEwponzMAOtBa
+	 EygoSZDCw1MozX3bmoIsFGurz8XFBsXgD4kIRyhS1SbiDNmhfG28V4YyUscSd7LE2tCo5
+	 YpFsae0pna98sTiDbs/G6FmNPDE1zrHguNMJhjtO0gW44PUqhWDXaL8GbzMIUE3gIj3lX
+	 OfRwx1f/YTo3Vr8/1zogdpIo2Pwf6fFLHWkVhRXREVFyE+ogJy5zvchrGTk9tDEACCA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YOBpAbRS;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C758A606A329;
+	Tue,  3 Nov 2026 06:50:33 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YOBpAbRS
+Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
+ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
+	t=1793688633;
+	b=GxUjPtbIEkgZv4lZNqmPL4p8/ZG2EmgLwIeU55IDoxUfXRw8e2CnV35fLgO3gmCvahVi
+	 Gj/bUy+koB/BEihfGv9NAnvlQ2u3xXtugSjhEG+d+ROPEbJToXrO7JAjdvjxm/AHhJwD1
+	 axsDJeHs4Mzv+q+4YxcDkcJvWJtTUNjD2VgKkNGgVwdntN1bIa6047X4JJP8xmzujCzxx
+	 m5jXGZ+A1EwHHkzuj9rmWl9547APiyYzbZLnvYiH/FPgiGsYZNCAVd/bszDPbSov2TOPg
+	 FbjDZc9ONvjM9EVCnErgJxVzex8TIwndJioWTmRVSkKFL8seXKKXWQsvcsD9kO/jpfA==
+ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
+	c=relaxed/relaxed; t=1793688633;
+	h=DKIM-Signature:Received:From:Subject:Date:Message-Id:MIME-Version:
+	 Content-Type:Content-Transfer-Encoding:X-B4-Tracking:X-Change-ID:To:
+	 Cc:X-Mailer:X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
+	 X-Original-From:Reply-To;
+	bh=HwclU+gLykGCGcplaQdtPQR2+Vkq9X8QL9LHv2ipImQ=;
+	b=vmkhlwyr85/YtPf+4VUJlYYEccftZsqfBvfGZPfmYtMLvkGEPYisSJ/CwMF/lNoTMsY2
+	 pYBms+lJ+RqV8+xNG0ElFlZKGusZ8eBWbUMtEAf4/DNXFbHHSGv2o/5PTYBfER7Q3hqns
+	 f3Nhxp9vLOxaRpRBxsV9DiB4cS38Y1xE+OE3p+7RJt4gYJtAISMNRr7w5WpR5tm8FkQ6Q
+	 1Wq+2iS18HBFhH9g7Y5K2bgFEzJHjTS/97OVnNXaOKB/3mmIcm9qye3box1VbYi6gRRsd
+	 zvjmun54D+iZxVVXNCZLH5sGXG/jiPD0Of2+Sd3r65ysfBGC28Jhb1mITg3ZTDToLcQ==
+ARC-Authentication-Results: i=1; smtp.kernel.org; 
+	arc=none smtp.remote-ip=100.80.115.77
+Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C4FE6606A32E
-	for <linux-api@vger.kernel.org>; Tue,  3 Nov 2026 01:19:24 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C4FE6606A32E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=dilger.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=dilger.ca
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=dilger-ca.20260707.gappssmtp.com header.i=@dilger-ca.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=WLyuuwnE
-Received: by mail-pg1-f175.google.com with SMTP id 41be03b00d2f7-cdab9e9761cso2099309a12.2
-        for <linux-api@vger.kernel.org>; Mon, 02 Nov 2026 17:19:24 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=dilger-ca.20260707.gappssmtp.com; s=20260707; t=1793668764; x=1794273564; darn=vger.kernel.org;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:content-type:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=OzeCAPmNW+SHsrPHyP2lgHfACb376kvzXRAy4aBxIGI=;
-        b=WLyuuwnEhkbAyv28mwDIKyWMkPW+CaP9ZTshNGZcTqE1nhqBVxUmsjtyy4mQbGWbt4
-         rlNZCrwEFtGxid83cj4tDMvLM05p2Z02rPI6Us/tthLuA9ws6uylnx+0Ls8EVjIDXfzd
-         ePpjDOYPpKHWSBgnzeIo2DZuZxCNnRfcp5iDjXAijLYj3gQvO8Lwnq0kBbQZJv4+lbrf
-         HzfDUzQO+pBVTgxZp0qUPUIr/ceYzNPPL5Ug5vEKueEig1bCyp0zqaq1j+GSD0oTwg+9
-         /FFnjHTlruZ36DI3TIdFUyyWrXxPvb20pWegZcfg6zqdNBBPdZ+cMs2vAbkUyVFlhsvu
-         QTXQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793668764; x=1794273564;
-        h=to:references:message-id:content-transfer-encoding:cc:date
-         :in-reply-to:from:subject:mime-version:content-type:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=OzeCAPmNW+SHsrPHyP2lgHfACb376kvzXRAy4aBxIGI=;
-        b=r/GSuE7nlNGlvOC6+WWUBhrRW2w644zYYjS/lIGBa8eRZs4bvLZLTK0lTLdxFk3lvO
-         K3ykFj/gas7z8QZ86PVjPZL98uv4GCPYlRCKxXcXPDqio7Fk95Q9PzyVFszESwIBODeN
-         JqAmhdiOqil3CYAABSm2QhT3qB/Dp5EH6p7KXjs4qEug5GRSUqTFUxCFSq3B2DXsKz3M
-         DKaJ9VNRYmQ2Yp5ctapzDlFJI01GV0sj3DPR7La2M/TQxuAL9RZRNE2HT89ri52wAAqt
-         0ntNrnS5JV0+g6dFcUTUgLxTDbSuNLRcf3XK2GeS16zsLnKhubB/S7EL2hJGVzyMEJ6u
-         q2RA==
-X-Forwarded-Encrypted: i=1; AKwUvBxKIY8ieKWJGcXhjBmVa7B06n7M4Jntls6tTKHa+0TRyEAw8qXgKB1aO9k5LDk5Vx+TtlSFoH+9RIU=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+AqmfknRdUS/QE5u4+MdY1bMlLk1wreu7w2THe6rdLhrNox6J+
-	IppmI96nkFRv/J1nPGh7s8I2fw36/JWYxshZhqq7A7hcIsQaTFFI0KkeSFOKH2QrPZ8=
-X-Gm-Gg: AYBFou0toPFRG5VgwhqQuPEy5RribKO7RIzJi2CYZXmPWTtDwnrj1bjsK/+tSQjwDXD
-	NzvLlkIhVoFwE0Gm6jWvoVe7vkP4ypYoBIhAkq+m+cz0PGjoPG6qD9kF85Cc7BXSLiHv3gAE4Q8
-	5S2QFkl1nxf4ssHKJ6vEgvPZ9wLlKrc9IlhDAoW4O/oeNTii5IyUWU86DwOMI+0NFvaNagrQNBJ
-	6LzHr9v3tuPO2FjANIBijn1GS1cGxUFVEFIw7bm9AjgKPP2FVctG7aJ3+Zb62ezpCR2AxywFp+n
-	2I7lm6Qj4jSseW0RJ9JxraDA3bU97mCtTOZ04eBavojOjjZnICWFJgiwYeDu+Tg2hMhdhCTeUDR
-	O02XTd6itCPbJKQM9uiKvwg0pW/BjDYtKvJZQNu2z9bzpGtGLoTChvmSvWjfRVGOyEjWP6betlY
-	WNkDNYJzUQqcs0NReyQYvbjQ0U5ugROvNU1jreepbV9uhwhto+g2Z1fVHnaUt+gEea/7/q4LyD1
-	4sn6+PEp8MOldHSY2zohY/hit0UCN7tYcY64Essu1Gff0Ln+1wiKOE8b0riMbm5H4T0G7ywH6UJ
-	TOXiNJiRUY0CRcwaktjZw4F3VCjhUv9i/CGbwZiZtOCFiBQ3+SG0i31FGYe1t4ttFcIxCpleAfa
-	nMiyQr/BTMwKmzM/8hnm0RoXgcWrIMw==
-X-Received: by 2002:a17:90b:1188:b0:3ad:b7d1:8631 with SMTP id 98e67ed59e1d1-3ae897eb75bmr7031480a91.17.1793668764007;
-        Mon, 02 Nov 2026 17:19:24 -0800 (PST)
-Received: from smtpclient.apple (S01068c763f81ca4b.cg.shawcable.net. [24.64.171.237])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b07c71c253sm1446998a91.16.2026.11.02.17.19.22
-        (version=TLS1_2 cipher=ECDHE-ECDSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 02 Nov 2026 17:19:23 -0800 (PST)
-Content-Type: text/plain;
-	charset=utf-8
+	by smtp.kernel.org (Postfix) with ESMTPS id B0ADF1F000C1;
+	Tue,  3 Nov 2026 06:50:32 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793688633;
+	bh=HwclU+gLykGCGcplaQdtPQR2+Vkq9X8QL9LHv2ipImQ=;
+	h=From:Subject:Date:To:Cc:Reply-To;
+	b=YOBpAbRS5jTu9ycyvrHBL44PEZkuV4zjn12w8l3nOpQ5YmarlQWsdozzy4ZmOoAV4
+	 GytBfwI80HotAU0Sjvse6Z2Cbzw+Z7cbPD5wFvykR1GZzRuHF7LviwLd7okA09cviT
+	 ZNgC/DBXU6MnqCUa6+ozXxkGIDF+HCTFjum584sDV5Gb+T5KPwccS2WkDZ8omR1gxg
+	 jeRbT+GSlr3Za4XeF2Iv3vEZm+VuVxRsESPeORr+IhqpBxqTN5GWbORIseU2JWRqVI
+	 OfBLJ1wHG1rQoWSke4xHEhhZ9bPzHmj9r+0WwNQxp0c38Pa8UeMy4Bdir9tqa6bRva
+	 kV6lLBrzybbyQ==
+Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
+	by lkml.kernel.org (Postfix) with ESMTP id 0DB76467F7;
+	Tue,  3 Nov 2026 06:50:32 +0000 (UTC)
+From: Hermes Wu via B4 Relay <devnull+Hermes.wu.ite.com.tw@kernel.org>
+Subject: [PATCH 0/5] media: i2c: it6625: add HDMI audio capture over I2S
+Date: Tue, 03 Nov 2026 14:50:18 +0800
+Message-Id: <20261103-upstream-it6625-alsa-i2s-v1-0-bb91e2879b01@ite.com.tw>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -90,179 +82,96 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0 (Mac OS X Mail 16.0 \(3864.700.51.1.3\))
-Subject: Re: [RFC PATCH v3 3/5] ntfs3: make crtime user-settable using ptime
-From: Andreas Dilger <adilger@dilger.ca>
-In-Reply-To: <20261102153845.d67wlorqcbe3c2w7@pali>
-Date: Mon, 2 Nov 2026 19:19:11 -0600
-Cc: Amir Goldstein <amir73il@gmail.com>,
- koraynilay <koray.fra@gmail.com>,
- David Sterba <dsterba@suse.com>,
- Alexander Viro <viro@zeniv.linux.org.uk>,
- Christian Brauner <brauner@kernel.org>,
- Namjae Jeon <linkinjeon@kernel.org>,
- Sungjong Seo <sj1557.seo@samsung.com>,
- Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
- Chris Mason <mason@kernel.org>,
- Jan Kara <jack@suse.cz>,
- Yuezhang Mo <yuezhang.mo@sony.com>,
- Chuck Lever <cel@kernel.org>,
- "Darrick J . Wong" <djwong@kernel.org>,
- Sean Smith <defendthedisabled@gmail.com>,
- Andrey Albershteyn <aalbersh@kernel.org>,
- Pedro Falcato <pfalcato@suse.de>,
- linux-btrfs@vger.kernel.org,
- linux-fsdevel@vger.kernel.org,
- linux-kernel@vger.kernel.org,
- exfat@lists.linux.dev,
- ntfs3@lists.linux.dev,
- linux-api@vger.kernel.org
-Content-Transfer-Encoding: quoted-printable
-Message-Id: <DD1A08F1-8F47-4612-A807-AEA39461AF9B@dilger.ca>
-References: <20261101015551.786044-1-koray.fra@gmail.com>
- <20261101015551.786044-4-koray.fra@gmail.com>
- <20261102142452.d6jkitgdeuquy23i@pali>
- <CAOQ4uxhQ3uhq6s+4deEJAQV5iy8QZoucojR58_dUNYrnjt_yvA@mail.gmail.com>
- <20261102153845.d67wlorqcbe3c2w7@pali>
-To: =?utf-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>
-X-Mailer: Apple Mail (2.3864.700.51.1.3)
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIACqE6WoC/x3MQQrCMBBA0auEWXegiRqTXqW4GJtRBzSGTCtC6
+ N0NLt/i/wbKVVhhMg0qf0TlnTvsYGB5UL4zSuoGNzpvRxtxK7pWphfK6r07IT2VUJxipMCHYzi
+ HdF2g56XyTb7/9XzZ9x9IUoyyagAAAA==
+X-Change-ID: 20261019-upstream-it6625-alsa-i2s-9a8e34878dbc
+To: Hermes Wu <Hermes.Wu@ite.com.tw>, 
+ Mauro Carvalho Chehab <mchehab@kernel.org>, Rob Herring <robh@kernel.org>, 
+ Krzysztof Kozlowski <krzk+dt@kernel.org>, 
+ Conor Dooley <conor+dt@kernel.org>, 
+ Hans Verkuil <hverkuil+cisco@kernel.org>
+Cc: linux-media@vger.kernel.org, devicetree@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, Mark Brown <broonie@kernel.org>, 
+ Liam Girdwood <lgirdwood@gmail.com>, linux-sound@vger.kernel.org, 
+ linux-api@vger.kernel.org, Hermes Wu <Hermes.wu@ite.com.tw>
+X-Mailer: b4 0.14.2
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1793688630; l=2997;
+ i=Hermes.wu@ite.com.tw; s=20241230; h=from:subject:message-id;
+ bh=Nm+fsrBt7LJXn+KC2GFbWQ/8X/G2DwmBWKzhDgqwqdg=;
+ b=l1cuymu/R23iIZBojovlJlGBLcPG4Zzq0c6k9OGEhwLVRMnxJNdnaXjmTdbgQq579U1xp9d2j
+ IRgp47ihNlvAVKetj6CyPRXPTVLn00zkav2H3wfZxLrlMNsPJwR3x2b
+X-Developer-Key: i=Hermes.wu@ite.com.tw; a=ed25519;
+ pk=qho5Dawp2WWj9CGyjtJ6/Y10xH8odjRdS6SXDaDAerU=
+X-Endpoint-Received: by B4 Relay for Hermes.wu@ite.com.tw/20241230 with
+ auth_id=310
+X-Original-From: Hermes Wu <Hermes.wu@ite.com.tw>
+Reply-To: Hermes.wu@ite.com.tw
 
-On Nov 2, 2026, at 09:38, Pali Roh=C3=A1r <pali@kernel.org> wrote:
->=20
-> On Monday 02 November 2026 16:09:41 Amir Goldstein wrote:
->> On Mon, Nov 2, 2026 at 3:24=E2=80=AFPM Pali Roh=C3=A1r =
-<pali@kernel.org> wrote:
->>>=20
->>> On Sunday 01 November 2026 02:55:49 koraynilay wrote:
->>>> @@ -154,6 +158,11 @@ int ntfs_fileattr_set(const struct mnt_idmap =
-*idmap, struct dentry *dentry,
->>>>      if (flags & FS_APPEND_FL)
->>>>              new_fl |=3D S_APPEND;
->>>>=20
->>>> +     if (fa->fsx_xflags & FS_XFLAG_PTIME) {
->>>> +             ni->i_crtime.tv_sec =3D fa->fsx_ptime.tv_sec;
->>>> +             ni->i_crtime.tv_nsec =3D fa->fsx_ptime.tv_nsec;
->>>> +     }
->>>> +
->>>>      inode_set_flags(inode, new_fl, S_IMMUTABLE | S_APPEND);
->>>>=20
->>>>      /* Save nodump flag to return in ntfs_getattr. */
->>>> @@ -275,8 +284,9 @@ int ntfs_getattr(const struct mnt_idmap *idmap, =
-const struct path *path,
->>>>      if (unlikely(is_bad_ni(ni)))
->>>>              return -EINVAL;
->>>>=20
->>>> -     stat->result_mask |=3D STATX_BTIME;
->>>> +     stat->result_mask |=3D (STATX_BTIME | STATX_PTIME);
->>>>      stat->btime =3D ni->i_crtime;
->>>> +     stat->ptime =3D ni->i_crtime;
->>>=20
->>> For me this patch looks dangerous. Somehow I would expect that the
->>> "btime" will never change for existing inode.
->>>=20
->>> But because the ptime is mapped to i_crtime and ptime is settable =
-from
->>> userspace, with this patch it is directly possible to change btime.
->>>=20
->>>=20
->>>=20
->>> I was thinking more about it... Is not this just misunderstanding of =
-how
->>> the security model around the times is working on different systems?
->>> Because on NTFS there is stored just one field which says when the =
-file
->>> was created. There are not two fields like "time set by user and =
-time
->>> set by system".
->>>=20
->>> Windows security model allows anybody with WRITE_ATTRIBUTES access =
-to
->>> change that create time. Linux security model does not allow to =
-change it.
->>>=20
->>> NTFS in this view is just a filesystem like any other (ext4, btrfs, =
-...).
->>> In my opinion if the ext4 or btrfs filesystem is correctly =
-implemented
->>> on Windows systems, then Windows security model should handle it in =
-the
->>> same way like for NTFS or exFAT. So if something grants =
-WRITE_ATTRIBUTES
->>> access, then Windows should allow to change also btime on ext4 or =
-btrfs.
->>>=20
->>>=20
->>>=20
->>> On the other hand, I understand the use case to have two creation =
-times.
->>> One time which would never be changed and could be used for any kind =
-of
->>> atomic / synchronization by userspace application logic (this =
-btime).
->>> And another time for human which can be changed at any time to any =
-value
->>> which user wants (this ptime).
->>>=20
->>> In any case, I would suggest that filesystem driver would not report =
-to
->>> userspace unsupported values and would not try to invent other =
-values
->>> and lying about them.
->>=20
->> But all those fs with mutable creation time already report it with =
-STATX_BTIME
->> so what can we do about this?
->=20
-> Well, what I wanted above to point out is that the "mutability" of
-> creation time is not feature of filesystem, but in my opinion rather
-> property of the security model on the running operating system.
->=20
-> Maybe better question is: how ext4 btimes differs from the ntfs btime?
-> In my opinion there is no much difference, both of them has meaning
-> "time when was the file created".
->=20
->> If userspace requests both STATX_BTIME|STATX_PTIME in mask arg,
->> those fs could technically return only STATX_PTIME and it should not =
-regress
->> existing programs.
->>=20
->> But this is still a bit surprising behavior is it not?
->>=20
->> Thanks,
->> Amir.
->=20
-> I'm not sure what to do with it.
->=20
-> If we allow to change btime of ntfs then for consistency we should =
-also
-> allow to change btime of ext4.
->=20
-> Maybe another idea... define new capability which would allow to =
-change
-> btime (on any filesystem)? This would at least make the consistency.
+IT6625 and IT6626 decode the audio of their HDMI input and output it on
+an I2S interface, driving the bit and frame clocks themselves. The audio
+format is not configurable by the host; the bridge reports the stream it
+passes through in read-only status registers.
 
-I think the ext4 and xfs maintainers have repeatedly said that =
-btime/crtime
-attribute should not be modified by users.  There was a long discussion =
-on
-this from Ted as well, and the reality is that "creation" time is not =
-worth
-the bits that it is written on, since it is not preserved by any tools, =
-has
-a "vague" meaning (is it when the *file* was created, when the *content* =
-was
-created, do edits update it, is it preserved across filesystems, =
-archives,
-etc.) and adding it into the filesystem is misplaced effort.
+This series adds an ASoC capture DAI to the IT6625 V4L2 driver, so that
+this audio can be recorded through a SoC I2S controller, for example
+with simple-audio-card.
 
-Storing it as an xattr has some reasonable chance of being preserved =
-across
-tar/cp/filesystems, and doesn't introduce a herculean effort of changing
-all of the system calls and on-disk formats for every filesystem.
+Patch 1 adds the '#sound-dai-cells' and 'ite,i2s-data-lanes' properties
+to the binding.
+Patch 2 documents the existing driver-specific audio controls.
+Patch 3 decodes the audio status registers with FIELD_GET() and reads
+them in one place.
+Patch 4 adds the I2S capture DAI for LPCM.
+Patch 5 extends the DAI to compressed (IEC 61937) and HBR streams, and
+adds a read-only audio type control.
 
-Cheers, Andreas
+The series is based on media next and does not depend on the pending
+IT6625 reset timing [1] and DV timings [2] series; either applies before
+or after this one.
 
+Tested by capturing HDMI audio from a signal generator, a PC and a
+second HDMI output looped back to the bridge, through an SoC I2S
+controller with simple-audio-card:
+- LPCM at 32 kHz to 192 kHz with 2 channels on one data line and 8
+  channels on four data lines, from 16-bit and 24-bit sources. 128 kHz
+  was not captured, as the I2S controller used does not support it.
+- AC-3, DTS-HD and TrueHD bitstreams, captured bit-exact, including
+  high bit rate streams on four data lines.
+- Rate, channel and coding changes, unplug, AV mute and pause/resume
+  while capturing, and the audio controls with no capture open.
+One-bit, multi-stream and 3D audio could not be tested; the driver
+rejects them.
 
+[1] https://lore.kernel.org/r/20261007-upstream-it6625-reset-delay-v2-0-c5d6b2522bbe@ite.com.tw
+[2] https://lore.kernel.org/r/20261103-upstream-it6625-dv-timings-fix-v2-0-127b879da6d3@ite.com.tw
 
+Signed-off-by: Hermes Wu <Hermes.wu@ite.com.tw>
+---
+Hermes Wu (5):
+      dt-bindings: media: ite,it6625: add audio DAI properties
+      media: Documentation: it6625: document the audio controls
+      media: i2c: it6625: decode audio status fields with FIELD_GET()
+      media: i2c: it6625: add I2S audio capture DAI
+      media: i2c: it6625: capture compressed and HBR audio, not just LPCM
+
+ .../devicetree/bindings/media/i2c/ite,it6625.yaml  |  23 +-
+ .../userspace-api/media/drivers/index.rst          |   1 +
+ .../userspace-api/media/drivers/it6625.rst         |  48 ++
+ MAINTAINERS                                        |   1 +
+ drivers/media/i2c/Kconfig                          |   1 +
+ drivers/media/i2c/it6625.c                         | 879 +++++++++++++++++++--
+ include/uapi/linux/it6625.h                        |  25 +
+ 7 files changed, 899 insertions(+), 79 deletions(-)
+---
+base-commit: d7e7bca7169873b46e857c025c10f3336c1258d8
+change-id: 20261019-upstream-it6625-alsa-i2s-9a8e34878dbc
+
+Best regards,
+-- 
+Hermes Wu <Hermes.wu@ite.com.tw>
 
 
