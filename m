@@ -1,98 +1,76 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.48
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.71
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793780561;
-	b=Z4OvtjMk/aWbyarNpJ8+er20y3WZmXBycPa+9ghpT+JFggywpBonUNrOzzxyEKvEUa0F
-	 0Qph1qleEEqXYbRiitNvSDvmkFf9foIr0DwnskLvlIOlaVGdW7oeFftZFYhzD5z0smmG4
-	 JdYZYkLxNgbpRQPNfQVvNHirzRFnU8yr3tEXq2j9PI42OomWVCrlK86n/fjyO990m6U1O
-	 krHvwQCcIgzTsagcnFOXQfKjleJfx/in/tS+8Old26n0MAATQbHrctnTpuu9VzuOaUKXH
-	 8no+B/HyBElyu7Rx3fkP8z5zdCeOc6GBl4AuTRmBdXUcBRNa4xklv7jMGI/T2MRTsww==
+	t=1793791834;
+	b=YuIzaR/wkAy0PsuXW3MAxUgGWnO8xHqgqTeiXmUb0CPjdHqSGx6caEUh7QdJugNP7twu
+	 5g+pV5CmUHSgmH4Zqk7rGUOJ43Wma3WzGzgUJrp4sdEGWZ3e/XgS9DvDl6dFOJCyHx9P3
+	 s5KN4kE48JomAQXgh3Ib5WJoEb5cN6Uk/EXDTV+gYWdnMQAsOd3ccI1uCNJAV30+jXVLm
+	 X+h0t9nAZHkByyvw8OTJP7+A2B5ji07QNyhR4NiLqffTZz297YIIMmfTn8Ue6kA42/tev
+	 GKQcGPbTdBX2T5dGVIoC/itgHadviqptbdkXnDGTFRhrGPVypmgtSS1dxQYl98mxj2w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793780561;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793791834;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=Zx8jHzDvw8va/CX+J+ppLsFj9mBNb+GyOOHFkDmbSlI=;
-	b=oTtjXMEH5JLxFFKGYqidSY8yfDiM5W/zyFN0kesTMvLwrzg8G3SGvt12Z0nRnnZaHTVi
-	 sjFnHvZtoX9UUPM7V2rQOQI/hwG60Knn1G4X81q+xdSAnc7DrLwM9XiI6Lr7rSKWClBkY
-	 OXO+4woV6pMryazyB2eUlYcBkkrnKrnressJaSQkyngyft/oSriD6j4gbcK6DXFe73umV
-	 hfzy1FlUaFsMvBwMydugdv41u+x7Kv15ZcMmvt7maGYLY4Emqm2EtYHQLr4ruM7qWC7nY
-	 lzng0o/Wxi4dmYIqfuROLm/9Fg7WtKEgLp7KsD67OIJjw6YtmL0e5sp1GyrFxT4uKyw==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
+	 Mime-Version:References:Message-ID:Subject:From:To:Cc:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=12Z4lOF0jQfTB4x6+mhkZ27w3B4gOwwYBosLZfWaVjk=;
+	b=0YQC6bKVETEExuejrZLyPBytjpeTim+U2JNYUM0tNHqRxaxUqeNxhGpamImjQfhSUmpr
+	 BFMzTPBgt4MPmntUgnsmQkb9sTByKHZD1ZwL9YkAKE2aCxXr5D3Zz4etNFHFixXVSiE+k
+	 aaQlgFCRn8uYAJlsTih8oB+EuWpRkqDPNjbOl4eXImw/Nokin4xDfmko9Qma+dTdDTkaq
+	 lS/HnvBmGuPACBOk1/ZpxB1dQdnhgHsGBXTy5dqH9ZNrXV3pLkiYHqbnoygr0xTuwpEpR
+	 1Hgb3N5vU/Ndf3ehT42X21cEcikW+oR3+PwL1IbcBMMbHkbnpRx1we3/v2xZf6FPesQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.128.48
-Received: from mail-wm1-f48.google.com (mail-wm1-f48.google.com [209.85.128.48])
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=flex--halg.bounces.google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=OxFwYHpZ;
+	arc=none smtp.remote-ip=209.85.218.71
+Received: from mail-ej1-f71.google.com (mail-ej1-f71.google.com [209.85.218.71])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3A29C606A326
-	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 08:22:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3A29C606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-wm1-f48.google.com with SMTP id 5b1f17b1804b1-4a207b02a2cso2333805e9.1
-        for <linux-api@vger.kernel.org>; Wed, 04 Nov 2026 00:22:33 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8206606A334
+	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 11:30:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A8206606A334
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--halg.bounces.google.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=OxFwYHpZ
+Received: by mail-ej1-f71.google.com with SMTP id a640c23a62f3a-c3a4da6437bso78861166b.1
+        for <linux-api@vger.kernel.org>; Wed, 04 Nov 2026 03:30:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793780552; x=1794385352; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=Zx8jHzDvw8va/CX+J+ppLsFj9mBNb+GyOOHFkDmbSlI=;
-        b=stGCcKR2XDWs2JXEfhtZr7iLAW8lUux9SMxROW6OOCRA1mWbx8OrRo4JMyxUU+27jW
-         8c13+kyddkij1BwcIWUx304IGIDbLM01Ibc2QYWx3RFhyX7gUV0iwPgp0xCFVDf1vyxS
-         PETlqgBra90W+V/xUeB/QKZV9smQJ+N83Bar1G3ihYu5ExGkVz/eUj3qiP1q/iXdAaWO
-         iP95iXIz3iUqNRhfpusCP2d0spZdrly4qJazkBVuuot+aWl5mVhhuL+oA45dVpKNrgNX
-         ae4LyDG/ScCBOiSm9zbGcSHLDVtAEZ/lplpYpBpok5SQLo4JKTsqx5vxTu/N2nZBy+Hq
-         IERg==
+        d=google.com; s=20260707; t=1793791832; x=1794396632; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:from:subject
+         :message-id:references:mime-version:in-reply-to:date:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=12Z4lOF0jQfTB4x6+mhkZ27w3B4gOwwYBosLZfWaVjk=;
+        b=OxFwYHpZryXJb9enpLN87kRHPhZ5WBZA/67/YXzaPEYjTTLlymCutEI1uecBPE/BvN
+         huqf7toSWyGVex91ZAogh6DgqKGuOt0mMBn6kABO9B6FhqYW8AjjUa4VQ+ayHjfaXA/R
+         wVlA1/oiUvTChrgsjjjL1YCgMQUeI38CqG2EEPykNUfu1ppbl/V8SEu51MEg8KAcQzwy
+         phahP5oTOjD8rnSCmk6+y6VkWQadghfC1gEExWqEMbyPplT2lqJDDTPGTuZpBEv3iy6d
+         FfsAnJqioiB+zVM0HXxdHfTfpaK/euZmoaLFFdj+oIPkYpGlH4YM41240bEq7B4gWTTM
+         E3lA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793780552; x=1794385352;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
+        d=1e100.net; s=20260707; t=1793791832; x=1794396632;
+        h=content-transfer-encoding:content-type:cc:to:from:subject
+         :message-id:references:mime-version:in-reply-to:date
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=Zx8jHzDvw8va/CX+J+ppLsFj9mBNb+GyOOHFkDmbSlI=;
-        b=lOU36+IxkHTZuP/NKqi7Pp74B6iK+Rd2YX+s7UNNAgxupE2nWNKZ+75KYrpXLLIfMQ
-         CkaWse1CqlUv6hEI+veUVf1jttQeFFlXD5/I8xqFmLeY1m++0yonhqhDyUaj/hk1K1/W
-         ZWPkaoZ3lqcDJAPhIqcsxmy/u4Z81yzdry6++GX4hEG8Yez+TyDOoqMzpWqZ9S0rDIGk
-         S8kW940d8hUsjFqS/Na72tVjGptItGzp0IshuEUZPagojF0un1b1HqjeAAhF3OtVygbK
-         a0NEQIYC+XSS91FZDX0/qHAvvzqvnAHLvkZVSGL6CyxuB4kiO9nR2A/4Yo5Lm2jhHKXN
-         Wg/Q==
-X-Forwarded-Encrypted: i=1; AKwUvBw3D0xiPykExaY6EX/6Hwtlz27TbUJ9AIjvdKhaHO8r7F9/UZTCshj8fQZiX8shYVZm9XlLCDbmJPE=@vger.kernel.org
-X-Gm-Message-State: APuU4Z8ts2+AjydFtQCgWU7kmdB+i7wOEkFPE7qts3lBmOWpq0YggxCk
-	pY8wgQsMvhq34CrZgewMtOmNYf37KDJuOpo4lIwNqy1LcHbW9ZbUchtr4rxPWF3YEOU=
-X-Gm-Gg: AYBFou2+uKBmR1UWX+DLU/hzjt4/nk/VYlc+YjItJXw/a/plFB8DIisRM+4ucNCIm+4
-	7QyYu+uAhPJE4kYnCRb66kDfPhwYMBdrJCDamwmmwKeVr/URCUifHOeqq2cwnfc+JQhgNb/xGr9
-	DoVbpBIPHxvQs6sDVyAJFkJrlZpsXM3fy0UHe1cBfdzqCYV2Zr+LJ7iCJ8NNxqE7JzEqz3OosRm
-	66FmOjNLBgolpLaDWc/kySU0k0D0FzLnBvM9t13Yt1KXYolBaMkwTqDeYsEiSzs8zTq0Rbff8v5
-	FaIbMUShCX9Z3XM2JG2zWSiKx0u3512SytmwUkyOuTVMygTMsdquUby45Z/ME7d0Q4TD2NTK7FI
-	F6LS68bfqeGrDa36ze7Qd/XCnMDDozFlf43NbVej7v9Kd0uTXkucjvvYW4RVeq/ROEy3oQ3E4qb
-	Go8lpXTWnf2iLps7kkCBDIOqx2WLh3figuM+KPlsiXVU2BRWK7IAiG/FNeIBeX58GoJOK83pWwM
-	oUJURX0HqiwF60tg+yKrS09s5tXr2J99IMuBqQJ0ABvTK3Xh2gqUGens2a6hFIhHXzHahXVAQlD
-	35dvLntH+6T0Gm7KX0HCBDuCbagQT7CU0z5F
-X-Received: by 2002:a05:600c:3554:b0:4a2:267:25b3 with SMTP id 5b1f17b1804b1-4ac18c7461emr379283885e9.35.1793780552290;
-        Wed, 04 Nov 2026 00:22:32 -0800 (PST)
-Received: from localhost ([208.127.45.21])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48fece99a5dsm2366556f8f.21.2026.11.04.00.22.31
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Nov 2026 00:22:31 -0800 (PST)
-Date: Wed, 4 Nov 2026 09:22:26 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Sergii Dmytruk <sergii.dmytruk@3mdeb.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 15/20] attestation: Prepare provider and instance core
-Message-ID: <aurpges1eUwSJUBE@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-16-jiri@resnulli.us>
- <auOVbGYJjIQTN53z@MjU3Nj>
+        bh=12Z4lOF0jQfTB4x6+mhkZ27w3B4gOwwYBosLZfWaVjk=;
+        b=ckd1Ee9Vq4swppk3H0DJGYF+Xq+Z+K3aFNXTku5wUDij+Ol9qZ+ey29xxpB9Z3EQgh
+         qZwxv4mo/47ISTL9dPw1K1rcJ29gMcfCLMR2XiMpzrgxfK/Nfn5tTgcz61HPrrcqgztM
+         TNNmPzl/NVTPXfe12vvdR0E/wzv9ttKYNXki7OqZ1b0gSja9kQv8QSeTafOK1mQ2gQZ5
+         PYIvoVxkoLBmsYe/BULVeg2hBWnWCiTnKN23wud6kzXRgN6m7aZ3F8SzcuIp02qLe+Fu
+         AAeKVrvqLEjSH4fgN/NVqBZLIErGt2tKAhBwEfUXePJy28BRuYWnfv2F7FvcllWNCipf
+         GAig==
+X-Forwarded-Encrypted: i=1; AKwUvBwANK4UuAF+89hdFfBkcI8GV5ZmzhHwF4XkB/8WPydzvb3DiYTIUlPXUAg5invW2pAooKSpVFnH2Hs=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/nqJfGYCYUMXus3c+y7Y1/DUESwN0Mj5gqHx8vVIiSAyQE/CWi
+	o3Krx/2lWQAQODjmBUk7h7+HpGevIcerVUXxFLRUS1REX+y/BHpQSDpLrxBDHa8Td2WtlO/LTw=
+	=
+X-Received: from ejbgw4.prod.google.com ([2002:a17:906:f144:b0:c3f:7129:4c10])
+ (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a17:907:18c3:b0:c26:22ae:b66b
+ with SMTP id a640c23a62f3a-c4ca7aee966mr1382566266b.15.1793791831732; Wed, 04
+ Nov 2026 03:30:31 -0800 (PST)
+Date: Wed, 4 Nov 2026 11:30:31 +0000
+In-Reply-To: <CALCETrUD4vh_iSHV7G0bprUFU8=c+ECo701-tXcbQ3UXBWC1ig@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -101,161 +79,122 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <auOVbGYJjIQTN53z@MjU3Nj>
+Mime-Version: 1.0
+References: <20261028221705.3915340-1-halg@google.com> <CALCETrW9ygriu54gxiHFLEd5+hJminQo0r8Jwd63wR69Dj4W7w@mail.gmail.com>
+ <auM32mOlBLu6ZUlt@google.com> <CALCETrUD4vh_iSHV7G0bprUFU8=c+ECo701-tXcbQ3UXBWC1ig@mail.gmail.com>
+Message-ID: <ausXFWLgHabezE7R@google.com>
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+From: "Hallgrimur H. Gunnarsson" <halg@google.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
+	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
+	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
+	Jann Horn <jannh@google.com>, "=?utf-8?Q?G=C3=BCnther?= Noack" <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-api@vger.kernel.org, containers@lists.linux.dev, netdev@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 
-Thu, Oct 29, 2026 at 07:50:20PM +0100, sergii.dmytruk@3mdeb.com wrote:
->On Thu, Oct 15, 2026 at 04:50:48PM +0200, Jiri Pirko wrote:
->> From: Jiri Pirko <jiri@nvidia.com>
+On Tue, Nov 03, 2026 at 10:37:48AM -0800, Andy Lutomirski wrote:
+> On Thu, Oct 29, 2026 at 5:11=E2=80=AFAM Hallgrimur H. Gunnarsson
+> <halg@google.com> wrote:
+> >
+> > On Wed, Oct 28, 2026 at 03:56:11PM -0700, Andy Lutomirski wrote:
+>=20
+> > >
+> > > Why should the task's cap masks affect this?  *Maybe* cap_bset makes
+> > > sense, but I'm struggling a bit to see why cap_permitted and
+> > > cap_effective should matter.
+> >
+> > Sorry, the phrasing here may have been misleading. Just to clarify:
+> > none of the creating task's capability sets (cap_bset, cap_permitted
+> > or cap_effective) are used to restrict the new user namespace.
+> >
+> > When I wrote "reusing the existing task cap_bset, cap_permitted and
+> > cap_effective sets on namespace entry", I was contrasting this with
+> > the prior series from 2024 [1], which proposed adding a 6th per-thread
+> > capability set to struct cred.
+> >
+> > In this series, when a task creates or enters a user namespace, we
+> > simply initialize its new cred->cap_{bset,permitted,effective} in
+> > that namespace to user_ns->cap_bset instead of CAP_FULL_SET.
+> >
+>=20
+> Okay, this makes *more* sense, but I think it's too weak.
+>=20
+> I have a sort-of goal of having the creation of unprivileged
+> namespaces be allowed in most contexts by default, *even in Docker*
+> (which would involve the Docker team changing their default seccomp
+> rules, but that bridge can be crossed later).  (In furtherance of this
+> goal, I fixed an ancient bug in newuidmap that gets us quite a bit
+> closer a couple weeks ago.)
+>=20
+> But tying this mitigation to a parent userns means that it's
+> completely unusable in the single-deep case.
 
-[..]
+To clarify, this mitigation isn't exclusively tied to the parent userns.
+If a system administrator wants a host-wide policy, like trimming
+CAP_NET_ADMIN for all unprivileged user namespaces, including
+single-deep Docker containers, then the host-wide sysctl handles this
+seamlessly. Any unprivileged process in init_user_ns calling CLONE_NEWUSER
+is subjected to the sysctl ceiling, effectively stripping CAP_NET_ADMIN
+upon creation.
 
->> +/**
->> + * struct attestation_mr_props - Immutable MR properties.
->> + * @id: provider-unique MR ID
->> + * @name: MR name
->> + * @algorithms: ordered hash algorithms
->
->Why do these need to be sorted?  Is it just to make indexing easier?
+Where the single-deep case falls short in this series is per-container
+granularity. For flexible configuration on a per-container basis, this
+patch series assumes that containers run in their own user namespace,
+allowing the runtime to bound capabilities at creation time via clone3()
+and have that bound persist down the namespace hierarchy across any nested
+userns creation.
 
-They don't. Will lift this limitation.
+If a container runs in init_user_ns (as in standard Docker) and we want
+to restrict userns capabilities for that specific container without
+relying on a host-wide sysctl, then you are exactly right. We would need
+some kind of cred-based mechanism to pre-configure a restriction for any
+future CLONE_NEWUSER calls within that container.
 
+> I do have a question about this whole scheme, though: are we talking
+> *just* about CAP_NET_ADMIN?  That is, is there any other bit that has
+> anywhere near enough security relevance to make this kind of thing
+> worthwhile?  Because if it's really just a single bit control, maybe
+> we can come up with a nicer scheme.
 
->
->I see that the number of algorithms is also checked on extending.  Does
->it mean that a situation when not all PCR banks are extended at the same
->time is considered an invalid one?  That may be a problem at least for
->DRTM which may extend only one bank even if several are active.
+Yes, primarily CAP_NET_ADMIN, and to a lesser extent CAP_NET_RAW.
 
-Great catch, I missed this usecase. Will allow extension of subset
-of banks.
+If we look at submissions to Google's kernelCTF VRP [1], 90% of the
+exploit submissions in 2026 require CAP_NET_ADMIN (and about 70%
+across all submissions since the program started in 2023).
 
+Restricting these network capabilities when they are not strictly needed
+(e.g. for sandboxing) is the primary motivation behind the series.
+However, I wrote the userns capability bounding as a generic mask so it
+could restrict arbitrary capabilities down the hierarchy, but if the
+preference is to narrow the scope more specifically to trimming
+CAP_NET_ADMIN and CAP_NET_RAW, that's completely fine by me.
 
->
->> + * @algorithms_count: number of algorithms
->> + * @has_register_index: whether @register_index is valid
->> + * @register_index: native register index
->> + * @readable: MR can be read
->> + * @extendable: MR can be extended
->
->At least with TPMs, whether a PCR can be extended depends on locality,
->so this isn't necessarily a static property.  Is this flag expected to
->always be accurate or it would be OK for a provider to declare an
->extendable MR but then deny doing it?
+If we go that route and want to support the single-deep Docker case, a
+per-task inheritable securebit might be one way to do it, e.g.
+SECBIT_NO_USERNS_NET and SECBIT_NO_USERNS_NET_LOCKED. Docker could then
+set and lock that bit on a container in init_user_ns without needing a
+parent userns.
 
-Okay to declare it and return some appropriate error, like -EPERM. Will
-document it.
+On userns creation, create_user_ns() could record this restriction on
+struct user_namespace. That could either feed into the userns capability
+bounding set proposed in this series (clearing CAP_NET_ADMIN and
+CAP_NET_RAW from user_ns->cap_bset when the bit is set on the creator),
+or be stored as a single boolean in struct user_namespace if we want to
+keep the mechanism minimal and drop the generic capability mask UAPI.
+In the latter case, we would still need to replicate some of the
+userns capability bounding functionality, e.g. strip CAP_NET_ADMIN and
+CAP_NET_RAW in set_cred_user_ns() on namespace entry, and bound the
+parent-owner check in cap_capable_helper().
 
-
->
->> + */
->> +struct attestation_mr_props {
->> +	unsigned int id;
->> +	const char *name;
->> +	const enum hash_algo *algorithms;
->> +	size_t algorithms_count;
->> +	bool has_register_index;
->> +	unsigned int register_index;
->> +	bool readable;
->> +	bool extendable;
->> +};
->> +
->> +/**
->> + * struct attestation_evidence_supported_object - Evidence output description.
->> + * @format: evidence format name
->> + * @max_length: maximum output bytes
->> + * @binds_mrs: evidence validity depends on MR state
->> + */
->> +struct attestation_evidence_supported_object {
->> +	const char *format;
->> +	size_t max_length;
->> +	bool binds_mrs;
->> +};
->> +
->> +/**
->> + * struct attestation_evidence_caps - Immutable evidence capabilities.
->> + * @min_challenge_length: minimum challenge bytes
->> + * @max_challenge_length: maximum challenge bytes
->> + * @max_total_output_length: maximum bytes across all objects
->> + * @objects: supported evidence objects
->> + * @objects_count: number of objects
->> + */
->> +struct attestation_evidence_caps {
->> +	size_t min_challenge_length;
->> +	size_t max_challenge_length;
->> +	size_t max_total_output_length;
->> +	const struct attestation_evidence_supported_object *objects;
->> +	size_t objects_count;
->> +};
->> +
->> +/**
->> + * struct attestation_evidence_object_request - One resolved output object.
->> + * @supported_object: matching capability entry
->> + * @output: resolved output blob
->> + */
->> +struct attestation_evidence_object_request {
->> +	const struct attestation_evidence_supported_object *supported_object;
->> +	struct ctlv_blob *output;
->> +};
->> +
->> +/**
->> + * struct attestation_evidence_request - Validated evidence request.
->> + * @challenge: challenge bytes
->> + * @challenge_length: challenge length
->> + * @objects: requested output objects
->> + * @objects_count: number of objects
->> + */
->> +struct attestation_evidence_request {
->> +	const u8 *challenge;
->> +	size_t challenge_length;
->> +	const struct attestation_evidence_object_request *objects;
->> +	size_t objects_count;
->> +};
->> +
->> +/**
->> + * struct attestation_evidence_result - Provider evidence result.
->> + * @object_lengths: produced length for every requested object
->> + */
->> +struct attestation_evidence_result {
->> +	size_t *object_lengths;
->
->No number of objects?  That would make this structure more
->self-contained.  Copying `objects` from the request would allow passing
->it around to handle results, but there may not be too much value in
->doing it this way.
-
-Not really needed. This struct is only related got evidence_get cb and
-it is always used alongside with struct attestation_evidence_request
-which has the count. It would be redundant to have it here too.
-
-
->
->> +};
->> +
->> +/**
->> + * struct attestation_provider - Immutable provider operations and properties.
->> + * @evidence_get: produce requested evidence
->> + * @mr_read: read one MR
->> + * @mr_extend: extend one MR
->> + * @evidence_caps: evidence capabilities, or NULL
->> + * @mrs: fixed MR properties
->> + * @mrs_count: number of fixed MRs
->> + */
->> +struct attestation_provider {
->> +	int (*evidence_get)(struct attestation *att,
->> +			    const struct attestation_evidence_request *request,
->> +			    struct attestation_evidence_result *result);
->> +	int (*mr_read)(struct attestation *att, unsigned int mr_id,
->> +		       struct attestation_digest_set *values);
->> +	int (*mr_extend)(struct attestation *att, unsigned int mr_id,
->> +			 const struct attestation_digest_set *values);
->> +	const struct attestation_evidence_caps *evidence_caps;
->> +	const struct attestation_mr_props *mrs;
->> +	size_t mrs_count;
->> +};
->> +
->> +#endif /* _LINUX_ATTESTATION_H */
->> -- 
->> 2.56.0
+[1] https://github.com/google/security-research/tree/master/pocs/linux/kern=
+elctf
