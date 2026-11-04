@@ -1,97 +1,47 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.47
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793764957;
-	b=AwObqz9HHeSQ3LYSbIuEbONb2TdcDaVvAJa5f2ZwTc6H6ew1RdRpcGqK5643k6RIv8Hb
-	 AexD/ufZ4YDwoFNLYBdjgdI/ilMKbwpft6r1bWDXilcquOOBoNZOH6FG3gwx+fIdFPN95
-	 ftVeQS9neId+S4LFCz/o67/r/TIqnE2m54k64POsguWn5Rrrtr8fjl7QSruo5t2zRHjzw
-	 99GqFG5qunOwYQPjacD8AvWWFEaRcQY4L6S8nQ1U2T3NL03juDRtVZW5yjq+Z1zwOvNeQ
-	 p8JrGZXx2VyyQpD2lnV++7KPMFQATwTDBSSVP7H44daEWw5LSJfTiUkdfS+8104xYKA==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793764957;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
-	b=csTUL+UKj+sAB12g11uItGm+aKg5J4ZSI+rXBJrmuwpj1FnS4ydzRYPhNpTtz4kGsuc1
-	 lQ+lal+oH9w2K3/8SRB3FxbX99Ppmx3vDi7yg5KuemYhuCWJkE+gtKGH18EBi/IrfKm6z
-	 Ij9f9sU+4/wSDa8ltBXJtvZg8c9gPAxINkpk2oGflLxlmeS0FZeZ822kWOvaStB+/qeke
-	 uSqpLxI0pth/xCcHYK0HQUYI3scWVdx+r0Ap19b3IgiviMfHjWbWY90Q/JwoX3KOxEZKa
-	 Ha8aiWPsOcJEHKKWiZCWuavtrjgTH5+c006XWdR5b8YQBiOSkub4y61UCQKyXb+1dPQ==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amacapital.net;
-	spf=pass smtp.mailfrom=amacapital.net;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.47
-Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com [209.85.167.47])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=213.95.11.211
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1793777468;
+	b=izkO4QhqtoNvrkQ/fQLzGvezTmCyKXJn+uI19rRaxMaMhxBVHaahrQy33ugt+U3jV9Wr
+	 hLklfrO6qClWlGomr64noSZ/1WfzWom1eFRDWVe5sb+DLTKM2MA8V4bMLmmc6Yo7p0TZT
+	 yfFJzNL/ifJ/wvRvGUveqDuhyoY3qbNNRs6gshbU/Rlei5+yA/FikscBrgUD7r4/ouGI7
+	 TUzw0mgraZZXZv66TKbDKUumWT/m1xlgWNfbIEXRW+isdxMvDeKKU6uLHfhVKwwT66Ee7
+	 WBqgf6ERQLwopG1K6bkXmAO2RDm6nJjYAzPgNus2V8W2TPdR/4x66qzrkjeGHUcF7/w==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793777468;
+	h=DMARC-Filter:Received:Date:From:To:Cc:Subject:Message-ID:References:
+	 MIME-Version:Content-Type:Content-Disposition:In-Reply-To:User-Agent;
+	bh=pkdjWus5knRkpiK/IaGC5F8JUCPOn32ecVHJLQtmr8c=;
+	b=bCTSn8lQyUiZBDZZz0gFqtBhS6zeQMWIrAy/G24vt7leERxyVapou5IHHNfm3j1PTJki
+	 GIQUmAQfiXD6no6j6d741Hb6EUyc0/et5c821xiO8NiiuuFWDlOS5rJWKWmfb0XFxXCB3
+	 GE5KdeoaDgb6wLngb0rxUQat/Xa3/yu5W1yog5f8yWW/F4CsqfUAWrmQDpMyG/H2DfDin
+	 BGONhR9BVywgrI9q40VocO1642/LS1jBBxkMgU0uaVhcENe2IqkOUYwk5JoqQ7PpDb9JJ
+	 Um+LaUGdUAE+4jdlHmeORZVRKRCYrZtbqs7Zcsbdt3PEJRhZCdYIIlovZFEOBu9Emsg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=lst.de;
+	spf=pass smtp.mailfrom=lst.de;
+	arc=none smtp.remote-ip=213.95.11.211
+Received: from verein.lst.de (verein.lst.de [213.95.11.211])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8302606A326
-	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 04:02:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E8302606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
-Received: by mail-lf1-f47.google.com with SMTP id 2adb3069b0e04-5bfc32574e7so197809e87.0
-        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 20:02:26 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1793764945; cv=none;
-        d=google.com; s=arc-20260327;
-        b=sLs0ALgGNIoNFcoIYkGs9CX2J8JOZDC7tZK6E5tZsfBmQtjnQeLPGgQ9zVQz3DSxPb
-         5e3rctBvfu8ZH3AZNuNezJE9z+5lkJGRiFTf1SVjAf5K7WsWSEk6UTGXg7tHWDworPRG
-         XN0/GGc8jrfcdZEATkVm6ZIXdgg1P7X1ahEWDaZSkuyAcMzKQcL1HzZFCseiHi19Bj9O
-         iH1qHB97QccPF+bel2hSRPiTEc67h/Z/+762NQS/p+IH5Pn3SShlMsNeLYix1qAqxI/5
-         cQ3y/SaK7XvzvqQFhy36+M8zgluG74c1WFTatOjrgJrI2dfWhSFui+ka4mh3txbgiDWp
-         SGVw==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
-        fh=S4wwpdxn/Ov6AL4ugRjy8d7z0F8khf23AkqkuK6VML4=;
-        b=n6E8p38GLE/Ko7JElBoMQKZ1iUQxyGYo7+a1BGmTPWj43hXkH1WLh+4PC8sxd0M93w
-         d8j2jkfv4JlhOl+2m/pDeultTxxPna4zFw/yupXnyjFsCfvZwUOZlZa9UR+zYUGTQhTh
-         kCAyF55g8tFx6BcF80HKfWBVzX68nOBDAMlQ7ET2FnIWGgFyHsCkHxTrHSFUQbaIB5aI
-         3qf6GOW358S5XUexG+YRXrGpFWBN7O4vaNeacnHy6EddoJ4i8wKvUkFZaotwiwB88O2s
-         U4O0HMKO/yTpb46OD/gvnvSEWcXa5vdCouDJeGMn5I2x8kSLRTbGx4jhH3z+1tQXy1Li
-         5B1g==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1793764945; x=1794369745; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
-        b=H+fmLhXrrkvfDZlWGVHCS/Xgt2ts+HiINeDRjYU1tILKj4uC4FJWvAcHvWxaMOjN23
-         D5Gp20WTldXu0tgiNi3OmQ01yoQ/iHN/u95HiOGxM/0mhlJ9XmSDGdMaANAeZER/z8hl
-         lGSVn+So/FYWt475DaUOq1ZKlWEURGFfAgN+HKviE9prJCdcEDqocgPIPtR982x1NkmE
-         4biZpz1IXWJI32RBxS1TqyQYdpD96O7zfx4wr1NGpzTgyzmNlbr47MLimxivOdoGFygG
-         SIL+6Hft1ckhBa7AjBoL1PHXT6Y3VsgLZZYDHnVZ1bRt0zHa6frtr4PHhKHEnJwpV01C
-         dMRQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793764945; x=1794369745;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
-        b=MNDFkW5EARciejywDOClQNuqQnD++X/5qDhynA7FSxMM99eQ498QrKLbKfngcrRsrU
-         fl22IDzzyVYh3f9Q0kxAsOLD/Q+p60Vr72AILWI4fvsmXgUaLt56GX0W4HwMBIEkseg9
-         k/fQQuHZIg1zzuPCoKZLoRv9MPaeNO/wDHc8jq25sK+WQsvlw5QPHLAIy8d+XB/kCq4X
-         98omkKXII2gd0rBS/3ze8bbLo7/C0p7VOaZXQ/sFQaarSeo9sUP8pDVhnJeaM9szb//4
-         0tvaCei29tjST/1kdZh1Nw0OX0WNqE4fFL8DcggbOpPhXtT8mCU+LBmF6jaHPFzjEeO9
-         eWjw==
-X-Forwarded-Encrypted: i=1; AKwUvBwjnEBDP7CJJ5cKHOLAKTPJumI5MYWyG6HL7N2GLnVDQ2FTSeER7TuU6tJNGwUM2QD6pAElh5w0/Ts=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9AtSimy5fdFLiAiiK4ARB0AA1BkhR8yk/mIdeQsaxJyNKvW40s
-	AiloDBmAX4ck5EZThTNSbj/yHZ0VqZJtR73rVxHXzTMe5oOC7JLHq3yRsm21bh+X4dFh42C4Egp
-	X05aS6BF/Q1PAQhkl2VIxgBAta324adYd0r9+7kq0
-X-Gm-Gg: AYBFou3ZyntgloG7SyzvCjl2Sflb/rSW9wW7eN5vlkOq/yQCHbdZcJU5gHZCjEaK9gE
-	Hy0ffhUY4vj1nTYtngYGBjTfxHUCBjACMswZxTUHpC8uvzZZmUTGrdD4BpxMj+7FZ4igtLlhkYG
-	BhEmLdPpMXIjnem0zp6LLF2l/I/tjEYEArPzmCNtQzKpiEeCvvA33GZjR6IiI2M9OYql7v90cNs
-	FzhTycJRZYXhzaWpzweTH17vY0b8YmXLjXtkWxh5qzhIcSuraw9kGTdGA3lfcsvs2sR+wlC3vWb
-	quep0sppxfaBwvCr44qiz8/2UO4tNSK+53GNePCSKhIkQZpCVlvDmiOal1lUAT90mNOf1TKQ886
-	RrgVRP777s1zhHFzriDRFG/meFGIhUe5b9A==
-X-Received: by 2002:a05:6512:3599:b0:5bf:d226:a231 with SMTP id
- 2adb3069b0e04-5bfd226a2bdmr3558911e87.18.1793764944982; Tue, 03 Nov 2026
- 20:02:24 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A2F6606A31B;
+	Wed,  4 Nov 2026 07:31:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5A2F6606A31B
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
+Received: by verein.lst.de (Postfix, from userid 2407)
+	id 611F368C4E; Wed,  4 Nov 2026 08:31:00 +0100 (CET)
+Date: Wed, 4 Nov 2026 08:30:59 +0100
+From: Christoph Hellwig <hch@lst.de>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Christoph Hellwig <hch@lst.de>, Christian Brauner <brauner@kernel.org>,
+	Stefan Metzmacher <metze@samba.org>, linux-fsdevel@vger.kernel.org,
+	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
+	io-uring@vger.kernel.org, linux-api@vger.kernel.org,
+	willy@infradead.org
+Subject: direct I/O vs buffered I/O coherency, was: Re: [PATCH] fs: add
+ RWF_DIRECT for preadv2/pwritev2/io_uring to set IOCB_DIRECT per io
+Message-ID: <20261104073059.GA29199@lst.de>
+References: <20261012184642.558349-1-metze@samba.org> <20261021-kontakt-hauen-albern-9053a385d79e@brauner> <20261103080718.GA4109@lst.de> <CALCETrU0jXA7PJwsL059O+ewqTBopdopbDwMuH-Rb8M5yLdUew@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -101,142 +51,162 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
- <87se1hclmb.fsf@email.froward.int.ebiederm.org>
-In-Reply-To: <87se1hclmb.fsf@email.froward.int.ebiederm.org>
-From: Andy Lutomirski <luto@amacapital.net>
-Date: Tue, 3 Nov 2026 20:02:12 -0800
-X-Gm-Features: AclHuK8Rq1ure5jrSqU1h7Ma_hUjTZc0HgFdGOQhHoCimQVJ-46MEYCIww-2oPs
-Message-ID: <CALCETrXnZVq4pcmo=2T2S=yzWuj9Q5tvrpuZTXzU4ptHCDnjBA@mail.gmail.com>
-Subject: Re: Accidental mountns/tmpfs API break from 2016?
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <CALCETrU0jXA7PJwsL059O+ewqTBopdopbDwMuH-Rb8M5yLdUew@mail.gmail.com>
+User-Agent: Mutt/1.5.17 (2007-11-01)
 
-On Tue, Nov 3, 2026 at 7:37=E2=80=AFPM Eric W. Biederman <ebiederm@xmission=
-.com> wrote:
->
-> Andy Lutomirski <luto@amacapital.net> writes:
->
-> > Hi-
-> >
-> > I (well, an LLM following my rather explicit instructions) just wrote
-> > a little tool to make a tmpfs as an unprivileged user: it unshares
-> > userns and mountns, makes a tmpfs, fchdirs to it, and prints
-> > /proc/PID/cwd to stdout.  Full source below.
-> >
-> > I was a bit surprised that trying to create anything in the tmpfs did
-> > not work without a uid_map and gid_map.  It looks like it came from:
-> >
-> > commit 036d523641c66bef713042894a17f4335f199e49
-> > Author: Eric W. Biederman <ebiederm@xmission.com>
-> > Date:   Fri Jul 1 12:52:06 2016 -0500
-> >
-> >     vfs: Don't create inodes with a uid or gid unknown to the vfs
-> >
-> >     It is expected that filesystems can not represent uids and gids fro=
-m
-> >     outside of their user namespace.  Keep things simple by not even
-> >     trying to create filesystem nodes with non-sense uids and gids.
-> >
-> >     Acked-by: Seth Forshee <seth.forshee@canonical.com>
-> >     Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
-> >
-> >
-> > Now my tool won't actually run on a pre-2016 kernel due to use of
-> > fsopen, and I'm not about to say that a decade-old commit broke my ABI
-> > and needs to be reverted.  But I am rather curious whether this rule
-> > actually makes sense.
->
-> I am pretty certain it was deliberate at the time.
->
-> > I'm not creating an idmapped mount, and I'm
-> > using tmpfs, which could not care less about the mapping as far as I
-> > know.
-> >
-> > Would it make sense to only enforce this for filesystems that care?
->
-> Interesting question.  You are in a user namespace.  You are
-> running as a user that does not exist in your user namespace.
-> You want to create files.
->
-> You can map a that single uid and gid without privileges.
-> So there is no hardship in getting a uid and gid in your user namespace.
->
-> Is it just the extra bit of code to perform that write that is the
-> problem?
->
-> Why would you want to be able to create files as a owned by a user
-> from another user namespace?  Even if you created them reading them
-> would show an 0xfffe the invalid uid/gid.  I think there are then
-> some difficulties in using those files as well.
->
-> Why would you want to do much of anything as without having a
-> properly setup uid or gid?
+On Tue, Nov 03, 2026 at 11:13:32AM -0800, Andy Lutomirski wrote:
+> Here's a bit of a taxonomy of page cache access types that I've come
+> up with from poking around at the kernel source [0]:
+> 
+> a) Plain buffered I/O (pread, pwrite, etc) -- I'm sure there is a lot
+> of nuance here, but I'm generally referring to I/O, via pagecache,
+> done in syscall or io_uring context on behalf of a user request.
+> 
+> b) Access via MAP_SHARED mmap or via unbroken-cow MAP_PRIVATE read,
+> whether this is actual ordinary user access or one of the weirder
+> cases like KVM that hits it by cheating a bit and using mmu_notifier.
 
-Hah, you haven't quite figured out the ridiculous thing I'm doing. :)
-What I want is a temporary tmpfs that I can create as an unprivileged
-user.  Linux doesn't let me do that directly, so I'm kludging it.
-Shell transcript, edited for clarity:
+This really also needs to be split into
 
-#### Make a tmpfs, keeping the tool running to keep it alive
-$ ./temp_shm &
-[1] 34157
-/proc/34157/cwd
+b1) Read-only access through MAP_SHARED mmap without PROT_WRITE
+    or unbroken-cow MAP_PRIVATE read.
 
-#### cd to the tmpfs, which references it and keeps it alive
-$ cd /proc/34157/cwd
+and
 
-#### Kill the tool, since we're done with it
-$ fg
-bin/lktool temp_shm     (wd: /workspaces/master)
-^C
 
-#### cwd is a working tmpfs!
-$ echo "Look a tmpfs!" >some_file
+b2) Writable access through writable MAP_SHARED mmap.
 
-#### and it has no '..', as expected :)
-$ cd ..                  # and it has
-cd: error retrieving current directory: getcwd: cannot access parent
-directories: No such file or directory
+> 
+> c) O_DIRECT: not actually page cache, but it does *logically* touch
+> the same data that might be in page cache.
 
-This whole workflow runs in the init userns and the init mountns,
-which is exactly what I wanted.  And now I have a tmpfs that I can use
-to run my test suite unprivileged to test some cool code that *needs*
-a tmpfs.  (Yes, I could probably use /dev/shm, but that's messy and I
-don't want to.)
+As in the file side of direct I/O to make this clear.
 
-I'm not actually banging this out in shell, but I am running literally
-the C++ code I posted as a subprocess called by my test harness.
+> d) Access via pinned folio.  We have reads and writes, and we have
+> non-longterm and longterm pins.
 
-The user creating files is not in the mountns or the userns, by design.
+... and this includes the "remote" side of direct I/O if done to file
+backed VMAs.
 
->
-> At a quick look tmpfs just uses vfs inodes which use kuid_t and kgid_t
-> so it theoretically would be ok.
->
-> Still what would be the motivation for supporting something so silly?
->
+We also still have
 
-My test suite! :)
+e) access through get_user_pages without pins.
 
-> If there is a good use case I could see it making sense to support it.
+e) really needs to die ASAP, but various maintainers have dragged
+their feed and kept it.  And of course there's still vmsplice which
+kinda hardcodes this into the syscall interface.
 
-I think my use case is excellent.
+> But why can't an O_DIRECT access be coherent vs mmap?  (I'm assuming
+> we're talking about O_DIRECT writes, not reads.)  ISTM the kernel has
+> two ways to do it coherently: unmap the mapping (slow) or copy the
+> data being written into page cache and then write it from page cache
+> (differently slow).  If anyone mmaps a file and O_DIRECT-writes it
+> while they're touching the mapping at high frequency, I'm not sure
+> they deserve excellent performance, and I'd rather give coherence than
+> high performance incoherent behavior.
 
-Seriously, though, I think a *much* nicer solution would be to allow
-fsconfig and fsmount to be called by an unprivileged user, at least
-for some very limited list of filesystems.
+Because reads invalidate the mapping they are just as relevant.
+But yes, both could fall back to some form of buffered I/O if the
+relevant ranges are mapped.  And maybe that is the best thing to do.
 
->
-> Short of a good use case we are talking about having to support weird
-> corner cases that no one really cares about that will just bit-rot.
->
-> Note.  You can identity map your original uid and gid, instead of
-> mapping your uid and gid 0.
+Note that this also means we need to prevent new folio in the page cache
+from being instantiated while direct I/O is pending.  For XFS which
+always take i_rwsem on buffered reads that's reasonably easy, although
+we'd need additional i_dio_count checks (or move to non-owner release
+of i_rwsem for direct I/O).
+But other file systems don't do this, and they get significantly better
+performance for small cached buffered writes, so they probably do not
+want to change that.
 
-Does the inner uid made a sound if there's no running task to observe it? :=
-)
-
---Andy
+Leaving the rest in here for context.
+> 
+> 
+> Anyway, I have a sort of proposed definition for what coherence might
+> mean -- call this "weak coherence":
+> 
+> For each address in the file, there are various accesses.  They happen
+> in an order -- think of this like a CPU memory model, not a strictly
+> linearizable order (if nothing else, mmaped accesses literally follow
+> the CPU's memory model).  But we broaden the memory model to pretend
+> that it applies to the logical file, not to the physical memory. The
+> implementation is weakly coherent if:
+> 
+> - Accesses via mmap obey the CPU memory model.
+> 
+> - Accesses via syscall or io_uring *including fixed buffers* obey the
+> CPU memory model, except that the access may be broken up into smaller
+> accesses that happen in arbitrary order, so long as they all happen
+> between the submission and the completion of the request.  This
+> includes direct I/O.
+> 
+> - Accesses via longterm folio pin follow the same rules as mmap.
+> 
+> - Accesses via shortterm folio pin are like syscalls: they happen some
+> time between acquisition and release of the pin but are not
+> necessarily ordered at the time that they are made by the CPU.  (This
+> is the weak part.)
+> 
+> I haven't come up with a reason that this would be impossible to
+> implement nicely, except that longterm folio pins would need a much
+> stricter locking scheme: anything that wants to detach a folio from an
+> address_space would need to wait for the pin to be released or
+> actively expedite the pin's release.
+> 
+> Is there a hard issue with O_DIRECT that I haven't thought of?
+> 
+> And someone would need to go through all the short-term pins in the
+> tree and make sure they're all actually okay with the weak form of
+> coherence.
+> 
+> I think there's at least one example that I think is questionable:
+> iov_iter_extract_user_pages, as reachable from FUSE and possibly
+> elsewhere.  Suppose there are two FUSE filesystems, A and B. A has a
+> file a and B has a file b. A process mmaps b, faults it in, and does
+> read(a_fd, b_ptr, 1), and the FUSE kernel code takes a short-term pin
+> on b_ptr's folio.  Then, before A's daemon responds, B's daemon
+> requests invalidation of b (via fuse_notify_inval_inode), which calls
+> invalidate_inode_pages2_range, which removes the folio from b's page
+> cache. Then A's daemon responds to the read via splice from a pipe,
+> causing the kernel to write to the short-term pinned folio, which goes
+> off into the void.
+> 
+> Is this a bug?  If B's invalidation happened because some external
+> actor logically wrote to *the entire area covered by the read*, then
+> arguably it's not -- under my coherence model, the read syscall can be
+> deemed to have occurred immediately before that write and the results
+> simply got overwritten.  But if B's invalidation happened for a
+> different reason (say an external write to a non-overlapping range),
+> then I think this behavior is incorrect.
+> 
+> Similarly, if there is just one FUSE and B is an ordinary filesystem,
+> then userspace can do read(a_fd, b_ptr, 1) and overlap it with an
+> O_DIRECT write to b at, say, offset 512, size 512.  If the FS accepts
+> that, then the folio gets detached and the read's update goes into the
+> void.
+> 
+> 
+> That last example seems more likely to hit if RWF_DIRECT shows up and
+> some library is like "hey, cool, now I can use our shiny atomic direct
+> I/O features in what used to be a buffered I/O path".  And maybe this
+> isn't a *security* bug, but it is an observable case where a simple
+> read() call appears to succeed but does not actually update the
+> destination buffer.  Ouch.
+> 
+> 
+> Anyway, that's my brain dump.
+> 
+> 
+> [0] Despite the fact that I got my start doing serious kernel work as
+> a result of writing a memory mapped database of sorts, I've never
+> actually stared at this part of the code before now...
+> 
+> 
+> --Andy
+> 
+> 
+> -- 
+> Andy Lutomirski
+> AMA Capital Management, LLC
+---end quoted text---
