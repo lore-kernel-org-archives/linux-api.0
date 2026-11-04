@@ -1,47 +1,108 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=213.95.11.211
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793777468;
-	b=izkO4QhqtoNvrkQ/fQLzGvezTmCyKXJn+uI19rRaxMaMhxBVHaahrQy33ugt+U3jV9Wr
-	 hLklfrO6qClWlGomr64noSZ/1WfzWom1eFRDWVe5sb+DLTKM2MA8V4bMLmmc6Yo7p0TZT
-	 yfFJzNL/ifJ/wvRvGUveqDuhyoY3qbNNRs6gshbU/Rlei5+yA/FikscBrgUD7r4/ouGI7
-	 TUzw0mgraZZXZv66TKbDKUumWT/m1xlgWNfbIEXRW+isdxMvDeKKU6uLHfhVKwwT66Ee7
-	 WBqgf6ERQLwopG1K6bkXmAO2RDm6nJjYAzPgNus2V8W2TPdR/4x66qzrkjeGHUcF7/w==
+	t=1793777483;
+	b=0S3oFo+sL/YzRNrPatPYPEePrIh4tLfSfV/tWKvFAhH/9r9dt3Jw/QG3ZCm0dz59sQ0+
+	 dzgCWKZzVLpbhLFJKzQ7YLPKumEjy7SGrP5wlQP49jc9wkC2+cA5tUDZZyiJLoY+bfGWI
+	 A1rE0uEYX9j0uA4KLpuKIcBm5brftIbzg42KjJhYsTa/uEtWbGRQJKns4ApHe5ubwU1dH
+	 k5T6GAubr3uw9nZBT1oThd4wsXrfA5l11LRddXtJKihRJ9dWh90ivcZS5hitSTaG8thlK
+	 y92w3z3T+S8YFML8k1Raq5wKlA6bzC+Q0DKxiuDGd1irk3Wsxt4Ap/3SGYNw3nQCHfw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793777468;
-	h=DMARC-Filter:Received:Date:From:To:Cc:Subject:Message-ID:References:
-	 MIME-Version:Content-Type:Content-Disposition:In-Reply-To:User-Agent;
-	bh=pkdjWus5knRkpiK/IaGC5F8JUCPOn32ecVHJLQtmr8c=;
-	b=bCTSn8lQyUiZBDZZz0gFqtBhS6zeQMWIrAy/G24vt7leERxyVapou5IHHNfm3j1PTJki
-	 GIQUmAQfiXD6no6j6d741Hb6EUyc0/et5c821xiO8NiiuuFWDlOS5rJWKWmfb0XFxXCB3
-	 GE5KdeoaDgb6wLngb0rxUQat/Xa3/yu5W1yog5f8yWW/F4CsqfUAWrmQDpMyG/H2DfDin
-	 BGONhR9BVywgrI9q40VocO1642/LS1jBBxkMgU0uaVhcENe2IqkOUYwk5JoqQ7PpDb9JJ
-	 Um+LaUGdUAE+4jdlHmeORZVRKRCYrZtbqs7Zcsbdt3PEJRhZCdYIIlovZFEOBu9Emsg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793777483;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 X-Received:Received:Message-ID:Date:MIME-Version:User-Agent:Subject:
+	 To:Cc:References:Content-Language:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=Gf1SJ60wh6rt1cgDzJ1XsuN+6DsStx0G3H1EPBnHUrc=;
+	b=obM+DpgcN0rM16flph/O9/lfickXBQPjiD1XMVDuw8lG/LDS9/imDFzTrNJqME/kPe7W
+	 SxB5jFVV1o8X+4IrNgMCGHSd8qOmKhBW19tZ3FjpMoCGo7bBiAyNVSSRIyLXVl8eR4dlX
+	 /Ru4KrM9VwE5rz80CKY0n8Cwy+NPmR8k5RRX7pnUJSPgBrUQdc6kaaIJjyup1PzLQVDgt
+	 9X8VdC3/NL41rbHbu92VzwVfzHHq1PNdkJNoJ436lQ2iFlCOnVEyCJERzGKmRlNws+HD/
+	 2hAWgPsxMDbTfYtbybk0BbruCQb8ScVOnx4F6CPUHvL2e/VuWl6U1dBLLXMA6ebPccA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=lst.de;
-	spf=pass smtp.mailfrom=lst.de;
-	arc=none smtp.remote-ip=213.95.11.211
-Received: from verein.lst.de (verein.lst.de [213.95.11.211])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=bHveVmbM;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=qPyUMYEP;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A2F6606A31B;
-	Wed,  4 Nov 2026 07:31:07 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5A2F6606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=lst.de
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=lst.de
-Received: by verein.lst.de (Postfix, from userid 2407)
-	id 611F368C4E; Wed,  4 Nov 2026 08:31:00 +0100 (CET)
-Date: Wed, 4 Nov 2026 08:30:59 +0100
-From: Christoph Hellwig <hch@lst.de>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Christoph Hellwig <hch@lst.de>, Christian Brauner <brauner@kernel.org>,
-	Stefan Metzmacher <metze@samba.org>, linux-fsdevel@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>,
-	io-uring@vger.kernel.org, linux-api@vger.kernel.org,
-	willy@infradead.org
-Subject: direct I/O vs buffered I/O coherency, was: Re: [PATCH] fs: add
- RWF_DIRECT for preadv2/pwritev2/io_uring to set IOCB_DIRECT per io
-Message-ID: <20261104073059.GA29199@lst.de>
-References: <20261012184642.558349-1-metze@samba.org> <20261021-kontakt-hauen-albern-9053a385d79e@brauner> <20261103080718.GA4109@lst.de> <CALCETrU0jXA7PJwsL059O+ewqTBopdopbDwMuH-Rb8M5yLdUew@mail.gmail.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEAED606A326
+	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 07:31:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AEAED606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (1024-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=bHveVmbM;
+	dkim=pass (2048-bit key, unprotected) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=google header.b=qPyUMYEP
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1793777481;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Gf1SJ60wh6rt1cgDzJ1XsuN+6DsStx0G3H1EPBnHUrc=;
+	b=bHveVmbMboFoyV/JO0zO4CZHk0sykT/qOL2/fszQ0zblTFn2wFfP1dTCXlbULjVWuiQ6lA
+	hkIAVs4LrV6RSWBM7l4BxUVp6sN22wBPRZbykFsWabZRsqW5MC/L5EyhBomu7kdPVQkQ++
+	he3m5V8F58tqHZzmi38LORtin1KHjfY=
+Received: from mail-wr1-f69.google.com (mail-wr1-f69.google.com
+ [209.85.221.69]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-52-byl_PXt1O0WhXB0bxuh44w-1; Wed, 04 Nov 2026 02:31:20 -0500
+X-MC-Unique: byl_PXt1O0WhXB0bxuh44w-1
+X-Mimecast-MFC-AGG-ID: byl_PXt1O0WhXB0bxuh44w_1793777479
+Received: by mail-wr1-f69.google.com with SMTP id ffacd0b85a97d-48e0c896d05so391245f8f.1
+        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 23:31:20 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=redhat.com; s=google; t=1793777479; x=1794382279; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=Gf1SJ60wh6rt1cgDzJ1XsuN+6DsStx0G3H1EPBnHUrc=;
+        b=qPyUMYEPu6QMDw+ynFBXj+Jukdd/b7kY/MwSzggCPBbpqxVgSSKgaPVvCXHszLHMco
+         DlChHW+HSdOND+z92arp08ItIKAl5SBxI6sb508qvBIMVvrx5D+CCApcPJ6w2U8LroJm
+         r4b2JM0Z5YGcJCNO5bJoyhZPF2SGZUAU5HamlEA3FNIx58qghw1wsKgWyPu6gXbmqnQN
+         E+gOashfTRRTa6fbRRxM9NEUCG+fzcXqMLRRTDR5xfCivw/vR7Iab+z/LJZmmRbcob58
+         7nPyMK1EcwD+cvreIfJGyM9HJYnIuzgjJgn3rUsVj/grOtz2KJY44lsvT26XeYlcUWSR
+         WrDA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793777479; x=1794382279;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:user-agent:mime-version
+         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=Gf1SJ60wh6rt1cgDzJ1XsuN+6DsStx0G3H1EPBnHUrc=;
+        b=JlFKVAeoWq007xG4WmtE4R7p6xoVLMr5YcIMPQOzraz+s6i06JD2G9GIv3Mu9HoGWE
+         BJsf9ame2GpSsHKkmg3rjkysLD78i3Mq/raXlrKx5sCPEdHhS2tp3mpljPyKN9gTtYnW
+         DwReqm/nm+Ch7U6UhNs+box8VowADlhJPRcph+qmn9CCUhKNWtf6Ba2gbhG4VR5/E1m2
+         6cvvJkq7so0jKtkOEfwoGTuWnsVaJqq/mL92qYrpPI7k653f304GXwzfATvsqGxwnP7N
+         IAeBXiIE4kvB84/VxfooKzCY7aEG1X4wSlWf2o8XsVHGHEBJbqiJzUNKMSKgmRaaYY47
+         vjpQ==
+X-Forwarded-Encrypted: i=1; AKwUvBx42X2WKsNp8Ylkxbg1OyCtTo47U0dkoCYYYb1Gm92CfIfbkTWhnHkCfWqgBMnQArByFxivD7zsqH8=@vger.kernel.org
+X-Gm-Message-State: APuU4Z8vCoyZgdCk9g2DbUgsk3+gU9NSgVuEuVP2R2bt3vHydyClegMG
+	pXMq2uiJ4ICyAn9bvRQ7FsNNBOCg5JuDTG7X8g0H2yzfrQfBHH1qLnzgdYYEIoKvRFxpxbzEqtV
+	yDlZ/E3IOfVVayD+3ZaMdZf73j7kEBf2SdRMlC6Q6OCyboZ879sOvhzSHZFKrcw==
+X-Gm-Gg: AYBFou1Ya87JX9/1TKcER4TZY6Ur1GRRpgzmZgjUFJ/MsWFMjNir8Sf/OHOqcBgNzxw
+	uEpsknPgTGVNq/R3vaFmPZk5uQUq0fM7NvgdaYLKbloqtNdW32UBTIZTV9zol2EReJYfprL9nOO
+	/UXs9VedXEL/x6a/fzyJW2L2C60kQ3/01DyypjpX9rkObLhtQowBWHFlpW7qlPpcz0q2O2bjTwh
+	mrdLCP3d3rVFYzQQ1DcCw6c+rkzq9O/LW9dC7+N9wBVb6X+mxN8PUGbDI8QZTDwjyKRmAvWkLv+
+	goVHTV10NHLnQ1sfTByL2EWxOCD6jY0GVzustienEBB4PpQTXLBdf3Jkstqf5aARr27ZVq26QDU
+	0+bVmTCNO+TyT4BFiiUU4UkL6DIihFop02XVihgYzA6MzLxfXhcJXma13anhnanrEvkSvLtdwxP
+	I+O/RDZijRnH3Ik86OfpXxLlcLHToOnwAvki4BgZ4N8dU=
+X-Received: by 2002:a05:600c:19c9:b0:4a1:7c7d:8881 with SMTP id 5b1f17b1804b1-4ac182dcb6fmr342501285e9.13.1793777479224;
+        Tue, 03 Nov 2026 23:31:19 -0800 (PST)
+X-Received: by 2002:a05:600c:19c9:b0:4a1:7c7d:8881 with SMTP id 5b1f17b1804b1-4ac182dcb6fmr342500785e9.13.1793777478812;
+        Tue, 03 Nov 2026 23:31:18 -0800 (PST)
+Received: from [192.168.88.30] (ip231-128-192-82.pool-bba.aruba.it. [82.192.128.231])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b4532916f2sm29117235e9.5.2026.11.03.23.31.17
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Tue, 03 Nov 2026 23:31:18 -0800 (PST)
+Message-ID: <a323799f-a817-4022-96dd-e6f376fb4d03@redhat.com>
+Date: Wed, 4 Nov 2026 08:31:17 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -51,162 +112,36 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <CALCETrU0jXA7PJwsL059O+ewqTBopdopbDwMuH-Rb8M5yLdUew@mail.gmail.com>
-User-Agent: Mutt/1.5.17 (2007-11-01)
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH net-next 1/2] netlink: add an optional per-netns ROUTE
+ multicast index
+To: patrick <work_patrick@qq.com>, netdev@vger.kernel.org
+Cc: davem@davemloft.net, edumazet@kernel.org, kuba@kernel.org,
+ horms@kernel.org, corbet@lwn.net, rdunlap@infradead.org,
+ linux-doc@vger.kernel.org, skhan@linuxfoundation.org,
+ linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org,
+ linux-kernel@vger.kernel.org
+References: <20261104033526.2917590-1-work_patrick@qq.com>
+ <tencent_1E208C03035DF063166FD46C1DA1978F6306@qq.com>
+Content-Language: en-US
+From: Paolo Abeni <pabeni@redhat.com>
+In-Reply-To: <tencent_1E208C03035DF063166FD46C1DA1978F6306@qq.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-On Tue, Nov 03, 2026 at 11:13:32AM -0800, Andy Lutomirski wrote:
-> Here's a bit of a taxonomy of page cache access types that I've come
-> up with from poking around at the kernel source [0]:
-> 
-> a) Plain buffered I/O (pread, pwrite, etc) -- I'm sure there is a lot
-> of nuance here, but I'm generally referring to I/O, via pagecache,
-> done in syscall or io_uring context on behalf of a user request.
-> 
-> b) Access via MAP_SHARED mmap or via unbroken-cow MAP_PRIVATE read,
-> whether this is actual ordinary user access or one of the weirder
-> cases like KVM that hits it by cheating a bit and using mmu_notifier.
+On 11/4/26 04:35, patrick wrote:
+> diff --git a/Documentation/admin-guide/sysctl/net.rst b/Documentation/admin-guide/sysctl/net.rst
+> index fe43e8595..0cda347ed 100644
+> --- a/Documentation/admin-guide/sysctl/net.rst
+> +++ b/Documentation/admin-guide/sysctl/net.rst
+> @@ -280,6 +280,33 @@ checksums.
+>   These messages are now emitted at KERN_DEBUG and can generally be enabled
+>   and controlled by the dynamic_debug facility.
+>   
+> +netlink_route_mc_index
+> +---------------------
 
-This really also needs to be split into
+The above breaks kdoc
 
-b1) Read-only access through MAP_SHARED mmap without PROT_WRITE
-    or unbroken-cow MAP_PRIVATE read.
+/P
 
-and
-
-
-b2) Writable access through writable MAP_SHARED mmap.
-
-> 
-> c) O_DIRECT: not actually page cache, but it does *logically* touch
-> the same data that might be in page cache.
-
-As in the file side of direct I/O to make this clear.
-
-> d) Access via pinned folio.  We have reads and writes, and we have
-> non-longterm and longterm pins.
-
-... and this includes the "remote" side of direct I/O if done to file
-backed VMAs.
-
-We also still have
-
-e) access through get_user_pages without pins.
-
-e) really needs to die ASAP, but various maintainers have dragged
-their feed and kept it.  And of course there's still vmsplice which
-kinda hardcodes this into the syscall interface.
-
-> But why can't an O_DIRECT access be coherent vs mmap?  (I'm assuming
-> we're talking about O_DIRECT writes, not reads.)  ISTM the kernel has
-> two ways to do it coherently: unmap the mapping (slow) or copy the
-> data being written into page cache and then write it from page cache
-> (differently slow).  If anyone mmaps a file and O_DIRECT-writes it
-> while they're touching the mapping at high frequency, I'm not sure
-> they deserve excellent performance, and I'd rather give coherence than
-> high performance incoherent behavior.
-
-Because reads invalidate the mapping they are just as relevant.
-But yes, both could fall back to some form of buffered I/O if the
-relevant ranges are mapped.  And maybe that is the best thing to do.
-
-Note that this also means we need to prevent new folio in the page cache
-from being instantiated while direct I/O is pending.  For XFS which
-always take i_rwsem on buffered reads that's reasonably easy, although
-we'd need additional i_dio_count checks (or move to non-owner release
-of i_rwsem for direct I/O).
-But other file systems don't do this, and they get significantly better
-performance for small cached buffered writes, so they probably do not
-want to change that.
-
-Leaving the rest in here for context.
-> 
-> 
-> Anyway, I have a sort of proposed definition for what coherence might
-> mean -- call this "weak coherence":
-> 
-> For each address in the file, there are various accesses.  They happen
-> in an order -- think of this like a CPU memory model, not a strictly
-> linearizable order (if nothing else, mmaped accesses literally follow
-> the CPU's memory model).  But we broaden the memory model to pretend
-> that it applies to the logical file, not to the physical memory. The
-> implementation is weakly coherent if:
-> 
-> - Accesses via mmap obey the CPU memory model.
-> 
-> - Accesses via syscall or io_uring *including fixed buffers* obey the
-> CPU memory model, except that the access may be broken up into smaller
-> accesses that happen in arbitrary order, so long as they all happen
-> between the submission and the completion of the request.  This
-> includes direct I/O.
-> 
-> - Accesses via longterm folio pin follow the same rules as mmap.
-> 
-> - Accesses via shortterm folio pin are like syscalls: they happen some
-> time between acquisition and release of the pin but are not
-> necessarily ordered at the time that they are made by the CPU.  (This
-> is the weak part.)
-> 
-> I haven't come up with a reason that this would be impossible to
-> implement nicely, except that longterm folio pins would need a much
-> stricter locking scheme: anything that wants to detach a folio from an
-> address_space would need to wait for the pin to be released or
-> actively expedite the pin's release.
-> 
-> Is there a hard issue with O_DIRECT that I haven't thought of?
-> 
-> And someone would need to go through all the short-term pins in the
-> tree and make sure they're all actually okay with the weak form of
-> coherence.
-> 
-> I think there's at least one example that I think is questionable:
-> iov_iter_extract_user_pages, as reachable from FUSE and possibly
-> elsewhere.  Suppose there are two FUSE filesystems, A and B. A has a
-> file a and B has a file b. A process mmaps b, faults it in, and does
-> read(a_fd, b_ptr, 1), and the FUSE kernel code takes a short-term pin
-> on b_ptr's folio.  Then, before A's daemon responds, B's daemon
-> requests invalidation of b (via fuse_notify_inval_inode), which calls
-> invalidate_inode_pages2_range, which removes the folio from b's page
-> cache. Then A's daemon responds to the read via splice from a pipe,
-> causing the kernel to write to the short-term pinned folio, which goes
-> off into the void.
-> 
-> Is this a bug?  If B's invalidation happened because some external
-> actor logically wrote to *the entire area covered by the read*, then
-> arguably it's not -- under my coherence model, the read syscall can be
-> deemed to have occurred immediately before that write and the results
-> simply got overwritten.  But if B's invalidation happened for a
-> different reason (say an external write to a non-overlapping range),
-> then I think this behavior is incorrect.
-> 
-> Similarly, if there is just one FUSE and B is an ordinary filesystem,
-> then userspace can do read(a_fd, b_ptr, 1) and overlap it with an
-> O_DIRECT write to b at, say, offset 512, size 512.  If the FS accepts
-> that, then the folio gets detached and the read's update goes into the
-> void.
-> 
-> 
-> That last example seems more likely to hit if RWF_DIRECT shows up and
-> some library is like "hey, cool, now I can use our shiny atomic direct
-> I/O features in what used to be a buffered I/O path".  And maybe this
-> isn't a *security* bug, but it is an observable case where a simple
-> read() call appears to succeed but does not actually update the
-> destination buffer.  Ouch.
-> 
-> 
-> Anyway, that's my brain dump.
-> 
-> 
-> [0] Despite the fact that I got my start doing serious kernel work as
-> a result of writing a memory mapped database of sorts, I've never
-> actually stared at this part of the code before now...
-> 
-> 
-> --Andy
-> 
-> 
-> -- 
-> Andy Lutomirski
-> AMA Capital Management, LLC
----end quoted text---
