@@ -1,70 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=166.70.13.232
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793763481;
-	b=HvXZC13kI2U825KCyQtUYz/1xKGXUp+B84+OKwXR8tJkBujADIGYj8BDviIY3Uz4sxKX
-	 B+4c0vrqLQkFv5vz2ET7iGjnbT8cADRaP9u2Wiw3UIy5o4OQ46xkcGbcXEPJCyajffzst
-	 m1+wgMyrL9WmU8InxNRN/pm4LDN1Str4FbkxWm2fcpYdCmqnEErihIcOAxzVPodlR7yni
-	 aiYsRSpRN/Dn2l/Q+DPYxcCExxmgG69XlsjGvWH/jt+yE4ezupGB5KP2ZwG+kRjKPg+C6
-	 3glmZxxmq0KJj6l/MXZJBKU3QRChB3Iaa71BeK2YYTFkVQ407AZXEPqzoI6dyW3Pvvg==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793763481;
-	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:Cc:In-Reply-To:
-	 References:Date:Message-ID:User-Agent:MIME-Version:Content-Type:
-	 X-XM-SPF:X-XM-AID:X-Spam-Checker-Version:X-Spam-Level:X-Spam-Status:
-	 X-Spam-Report:X-Spam-DCC:X-Spam-Combo:X-Spam-Relay-Country:
-	 X-Spam-Timing:Subject:X-SA-Exim-Connect-IP:X-SA-Exim-Rcpt-To:
-	 X-SA-Exim-Mail-From:X-SA-Exim-Scanned;
-	bh=kDqwx+3PxNKfZCj2JhmKBNa78z0Kr9aqLUdVPYRM3Xo=;
-	b=ge5Za5aJorkIKc5fsR6Pu/j0vN5IkQYOVpHisnX55LYGUGmovFPyXmjugswdsSNB52Zy
-	 vyuJxdmCB6qLH2yK0V/uU6CoM8LxOxHx0PtfF5DU6h4ieCYOPUYrFpG9YwiJYto1iAN6h
-	 qRQR9G8ShYSoCNyK+C2ZoOzefK0p1znBYkGKQtGUmwBsMJBd8ksnspmj26DOjdcJRHIm6
-	 G4JEOpfeY7JwWkjCfz+F1Z/r2k078HXY2kvfd6z2SwfgRRJPbZY9Qxpass8dp0RS/DMUj
-	 Zm3AIYFB7CDLGx3NOizRhq1BBac3+NHrjJ5LvQK23Nz5UsUEU1UzCRjBP02b30lNuhA==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=xmission.com;
-	spf=pass smtp.mailfrom=xmission.com;
-	dkim=pass header.d=xmission.com header.i=@xmission.com header.a=rsa-sha256 header.s=xmission header.b=r+Gnh+jK;
-	arc=none smtp.remote-ip=166.70.13.232
-Received: from out02.mta.xmission.com (out02.mta.xmission.com [166.70.13.232])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.47
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1793764957;
+	b=AwObqz9HHeSQ3LYSbIuEbONb2TdcDaVvAJa5f2ZwTc6H6ew1RdRpcGqK5643k6RIv8Hb
+	 AexD/ufZ4YDwoFNLYBdjgdI/ilMKbwpft6r1bWDXilcquOOBoNZOH6FG3gwx+fIdFPN95
+	 ftVeQS9neId+S4LFCz/o67/r/TIqnE2m54k64POsguWn5Rrrtr8fjl7QSruo5t2zRHjzw
+	 99GqFG5qunOwYQPjacD8AvWWFEaRcQY4L6S8nQ1U2T3NL03juDRtVZW5yjq+Z1zwOvNeQ
+	 p8JrGZXx2VyyQpD2lnV++7KPMFQATwTDBSSVP7H44daEWw5LSJfTiUkdfS+8104xYKA==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793764957;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
+	b=csTUL+UKj+sAB12g11uItGm+aKg5J4ZSI+rXBJrmuwpj1FnS4ydzRYPhNpTtz4kGsuc1
+	 lQ+lal+oH9w2K3/8SRB3FxbX99Ppmx3vDi7yg5KuemYhuCWJkE+gtKGH18EBi/IrfKm6z
+	 Ij9f9sU+4/wSDa8ltBXJtvZg8c9gPAxINkpk2oGflLxlmeS0FZeZ822kWOvaStB+/qeke
+	 uSqpLxI0pth/xCcHYK0HQUYI3scWVdx+r0Ap19b3IgiviMfHjWbWY90Q/JwoX3KOxEZKa
+	 Ha8aiWPsOcJEHKKWiZCWuavtrjgTH5+c006XWdR5b8YQBiOSkub4y61UCQKyXb+1dPQ==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=none header.from=amacapital.net;
+	spf=pass smtp.mailfrom=amacapital.net;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.47
+Received: from mail-lf1-f47.google.com (mail-lf1-f47.google.com [209.85.167.47])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 78B42606A31B;
-	Wed,  4 Nov 2026 03:38:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 78B42606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=xmission.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xmission.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=xmission.com header.i=@xmission.com header.a=rsa-sha256 header.s=xmission header.b=r+Gnh+jK
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=simple/simple; d=xmission.com;
-	 s=xmission; h=Subject:Content-Type:MIME-Version:Message-ID:Date:References:
-	In-Reply-To:Cc:To:From:Sender:Reply-To:Content-Transfer-Encoding:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=TqBt9UO+EMMHepGoKLFhPlrkCxqNTuX9E4MRFVfu4ng=; b=r+Gnh+jKlvBK+V+RKchdmVz3cO
-	eDU91omtyoB91RXbG+A5BiwPAAQvEqQTJyKZaHwoYozHY8Z//QgUp2Dk4UG0kYzmDszRzzwiX1yLa
-	r5VXFUY1lwEIYVWJYsyETROQZHGbkeyoKZGCjYan2u7ynEgEiHVjKS2SUT/0avHCBdw8=;
-Received: from in02.mta.xmission.com ([166.70.13.52]:34732)
-	by out02.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1xORov-009N8y-MK; Tue, 03 Nov 2026 20:37:53 -0700
-Received: from ip72-198-196-98.om.om.cox.net ([72.198.196.98]:33406 helo=email.froward.int.ebiederm.org.xmission.com)
-	by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1xORou-007cdp-LX; Tue, 03 Nov 2026 20:37:53 -0700
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>,  Linux API
- <linux-api@vger.kernel.org>
-In-Reply-To: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
-	(Andy Lutomirski's message of "Tue, 3 Nov 2026 11:58:38 -0800")
-References: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
-Date: Tue, 03 Nov 2026 21:37:48 -0600
-Message-ID: <87se1hclmb.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8302606A326
+	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 04:02:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E8302606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+Received: by mail-lf1-f47.google.com with SMTP id 2adb3069b0e04-5bfc32574e7so197809e87.0
+        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 20:02:26 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1793764945; cv=none;
+        d=google.com; s=arc-20260327;
+        b=sLs0ALgGNIoNFcoIYkGs9CX2J8JOZDC7tZK6E5tZsfBmQtjnQeLPGgQ9zVQz3DSxPb
+         5e3rctBvfu8ZH3AZNuNezJE9z+5lkJGRiFTf1SVjAf5K7WsWSEk6UTGXg7tHWDworPRG
+         XN0/GGc8jrfcdZEATkVm6ZIXdgg1P7X1ahEWDaZSkuyAcMzKQcL1HzZFCseiHi19Bj9O
+         iH1qHB97QccPF+bel2hSRPiTEc67h/Z/+762NQS/p+IH5Pn3SShlMsNeLYix1qAqxI/5
+         cQ3y/SaK7XvzvqQFhy36+M8zgluG74c1WFTatOjrgJrI2dfWhSFui+ka4mh3txbgiDWp
+         SGVw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
+        fh=S4wwpdxn/Ov6AL4ugRjy8d7z0F8khf23AkqkuK6VML4=;
+        b=n6E8p38GLE/Ko7JElBoMQKZ1iUQxyGYo7+a1BGmTPWj43hXkH1WLh+4PC8sxd0M93w
+         d8j2jkfv4JlhOl+2m/pDeultTxxPna4zFw/yupXnyjFsCfvZwUOZlZa9UR+zYUGTQhTh
+         kCAyF55g8tFx6BcF80HKfWBVzX68nOBDAMlQ7ET2FnIWGgFyHsCkHxTrHSFUQbaIB5aI
+         3qf6GOW358S5XUexG+YRXrGpFWBN7O4vaNeacnHy6EddoJ4i8wKvUkFZaotwiwB88O2s
+         U4O0HMKO/yTpb46OD/gvnvSEWcXa5vdCouDJeGMn5I2x8kSLRTbGx4jhH3z+1tQXy1Li
+         5B1g==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1793764945; x=1794369745; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
+        b=H+fmLhXrrkvfDZlWGVHCS/Xgt2ts+HiINeDRjYU1tILKj4uC4FJWvAcHvWxaMOjN23
+         D5Gp20WTldXu0tgiNi3OmQ01yoQ/iHN/u95HiOGxM/0mhlJ9XmSDGdMaANAeZER/z8hl
+         lGSVn+So/FYWt475DaUOq1ZKlWEURGFfAgN+HKviE9prJCdcEDqocgPIPtR982x1NkmE
+         4biZpz1IXWJI32RBxS1TqyQYdpD96O7zfx4wr1NGpzTgyzmNlbr47MLimxivOdoGFygG
+         SIL+6Hft1ckhBa7AjBoL1PHXT6Y3VsgLZZYDHnVZ1bRt0zHa6frtr4PHhKHEnJwpV01C
+         dMRQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793764945; x=1794369745;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=hfsn3svuSn2UYUgGkIHtdaxh7qZRWlSurHoCxB6ikgI=;
+        b=MNDFkW5EARciejywDOClQNuqQnD++X/5qDhynA7FSxMM99eQ498QrKLbKfngcrRsrU
+         fl22IDzzyVYh3f9Q0kxAsOLD/Q+p60Vr72AILWI4fvsmXgUaLt56GX0W4HwMBIEkseg9
+         k/fQQuHZIg1zzuPCoKZLoRv9MPaeNO/wDHc8jq25sK+WQsvlw5QPHLAIy8d+XB/kCq4X
+         98omkKXII2gd0rBS/3ze8bbLo7/C0p7VOaZXQ/sFQaarSeo9sUP8pDVhnJeaM9szb//4
+         0tvaCei29tjST/1kdZh1Nw0OX0WNqE4fFL8DcggbOpPhXtT8mCU+LBmF6jaHPFzjEeO9
+         eWjw==
+X-Forwarded-Encrypted: i=1; AKwUvBwjnEBDP7CJJ5cKHOLAKTPJumI5MYWyG6HL7N2GLnVDQ2FTSeER7TuU6tJNGwUM2QD6pAElh5w0/Ts=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9AtSimy5fdFLiAiiK4ARB0AA1BkhR8yk/mIdeQsaxJyNKvW40s
+	AiloDBmAX4ck5EZThTNSbj/yHZ0VqZJtR73rVxHXzTMe5oOC7JLHq3yRsm21bh+X4dFh42C4Egp
+	X05aS6BF/Q1PAQhkl2VIxgBAta324adYd0r9+7kq0
+X-Gm-Gg: AYBFou3ZyntgloG7SyzvCjl2Sflb/rSW9wW7eN5vlkOq/yQCHbdZcJU5gHZCjEaK9gE
+	Hy0ffhUY4vj1nTYtngYGBjTfxHUCBjACMswZxTUHpC8uvzZZmUTGrdD4BpxMj+7FZ4igtLlhkYG
+	BhEmLdPpMXIjnem0zp6LLF2l/I/tjEYEArPzmCNtQzKpiEeCvvA33GZjR6IiI2M9OYql7v90cNs
+	FzhTycJRZYXhzaWpzweTH17vY0b8YmXLjXtkWxh5qzhIcSuraw9kGTdGA3lfcsvs2sR+wlC3vWb
+	quep0sppxfaBwvCr44qiz8/2UO4tNSK+53GNePCSKhIkQZpCVlvDmiOal1lUAT90mNOf1TKQ886
+	RrgVRP777s1zhHFzriDRFG/meFGIhUe5b9A==
+X-Received: by 2002:a05:6512:3599:b0:5bf:d226:a231 with SMTP id
+ 2adb3069b0e04-5bfd226a2bdmr3558911e87.18.1793764944982; Tue, 03 Nov 2026
+ 20:02:24 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -74,210 +101,142 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain
-X-XM-SPF: eid=1xORou-007cdp-LX;;;mid=<87se1hclmb.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=72.198.196.98;;;frm=ebiederm@xmission.com;;;sPfnum=0;;;sPf=pass
-X-XM-AID: U2FsdGVkX1/ejodJehYrLy+6ajNDKQv/5agvXonhAYs=
-X-Spam-Level: 
-X-Spam-Report: 
-	* -1.0 ALL_TRUSTED Passed through trusted hosts only via SMTP
-	*  0.1 BAYES_50 BODY: Bayes spam probability is 40 to 60%
-	*      [score: 0.5000]
-	*  0.0 T_TM2_M_HEADER_IN_MSG BODY: No description available.
-	* -0.0 DCC_CHECK_NEGATIVE Not listed in DCC
-	*      [sa04 1397; Body=1 Fuz1=1 Fuz2=1]
-	*  0.2 XM_B_SpammyWords One or more commonly used spammy words
-X-Spam-DCC: XMission; sa04 1397; Body=1 Fuz1=1 Fuz2=1 
-X-Spam-Combo: ;Andy Lutomirski <luto@amacapital.net>
-X-Spam-Relay-Country: 
-X-Spam-Timing: total 543 ms - load_scoreonly_sql: 0.05 (0.0%),
-	signal_user_changed: 10 (1.9%), b_tie_ro: 9 (1.7%), parse: 1.00 (0.2%),
-	 extract_message_metadata: 17 (3.1%), get_uri_detail_list: 3.0 (0.5%),
-	tests_pri_-2000: 15 (2.7%), tests_pri_-1000: 2.00 (0.4%),
-	tests_pri_-950: 0.94 (0.2%), tests_pri_-900: 0.68 (0.1%),
-	tests_pri_-90: 71 (13.1%), check_bayes: 70 (12.9%), b_tokenize: 10
-	(1.9%), b_tok_get_all: 12 (2.2%), b_comp_prob: 3.6 (0.7%),
-	b_tok_touch_all: 39 (7.3%), b_finish: 1.10 (0.2%), tests_pri_0: 413
-	(76.0%), check_dkim_signature: 0.46 (0.1%), check_dkim_adsp: 1.99
-	(0.4%), poll_dns_idle: 0.93 (0.2%), tests_pri_10: 1.29 (0.2%),
-	tests_pri_500: 8 (1.4%), rewrite_mail: 0.00 (0.0%)
+References: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
+ <87se1hclmb.fsf@email.froward.int.ebiederm.org>
+In-Reply-To: <87se1hclmb.fsf@email.froward.int.ebiederm.org>
+From: Andy Lutomirski <luto@amacapital.net>
+Date: Tue, 3 Nov 2026 20:02:12 -0800
+X-Gm-Features: AclHuK8Rq1ure5jrSqU1h7Ma_hUjTZc0HgFdGOQhHoCimQVJ-46MEYCIww-2oPs
+Message-ID: <CALCETrXnZVq4pcmo=2T2S=yzWuj9Q5tvrpuZTXzU4ptHCDnjBA@mail.gmail.com>
 Subject: Re: Accidental mountns/tmpfs API break from 2016?
-X-SA-Exim-Connect-IP: 166.70.13.52
-X-SA-Exim-Rcpt-To: linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, luto@amacapital.net
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-X-SA-Exim-Scanned: No (on out02.mta.xmission.com); SAEximRunCond expanded to false
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Andy Lutomirski <luto@amacapital.net> writes:
+On Tue, Nov 3, 2026 at 7:37=E2=80=AFPM Eric W. Biederman <ebiederm@xmission=
+.com> wrote:
+>
+> Andy Lutomirski <luto@amacapital.net> writes:
+>
+> > Hi-
+> >
+> > I (well, an LLM following my rather explicit instructions) just wrote
+> > a little tool to make a tmpfs as an unprivileged user: it unshares
+> > userns and mountns, makes a tmpfs, fchdirs to it, and prints
+> > /proc/PID/cwd to stdout.  Full source below.
+> >
+> > I was a bit surprised that trying to create anything in the tmpfs did
+> > not work without a uid_map and gid_map.  It looks like it came from:
+> >
+> > commit 036d523641c66bef713042894a17f4335f199e49
+> > Author: Eric W. Biederman <ebiederm@xmission.com>
+> > Date:   Fri Jul 1 12:52:06 2016 -0500
+> >
+> >     vfs: Don't create inodes with a uid or gid unknown to the vfs
+> >
+> >     It is expected that filesystems can not represent uids and gids fro=
+m
+> >     outside of their user namespace.  Keep things simple by not even
+> >     trying to create filesystem nodes with non-sense uids and gids.
+> >
+> >     Acked-by: Seth Forshee <seth.forshee@canonical.com>
+> >     Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> >
+> >
+> > Now my tool won't actually run on a pre-2016 kernel due to use of
+> > fsopen, and I'm not about to say that a decade-old commit broke my ABI
+> > and needs to be reverted.  But I am rather curious whether this rule
+> > actually makes sense.
+>
+> I am pretty certain it was deliberate at the time.
+>
+> > I'm not creating an idmapped mount, and I'm
+> > using tmpfs, which could not care less about the mapping as far as I
+> > know.
+> >
+> > Would it make sense to only enforce this for filesystems that care?
+>
+> Interesting question.  You are in a user namespace.  You are
+> running as a user that does not exist in your user namespace.
+> You want to create files.
+>
+> You can map a that single uid and gid without privileges.
+> So there is no hardship in getting a uid and gid in your user namespace.
+>
+> Is it just the extra bit of code to perform that write that is the
+> problem?
+>
+> Why would you want to be able to create files as a owned by a user
+> from another user namespace?  Even if you created them reading them
+> would show an 0xfffe the invalid uid/gid.  I think there are then
+> some difficulties in using those files as well.
+>
+> Why would you want to do much of anything as without having a
+> properly setup uid or gid?
 
-> Hi-
->
-> I (well, an LLM following my rather explicit instructions) just wrote
-> a little tool to make a tmpfs as an unprivileged user: it unshares
-> userns and mountns, makes a tmpfs, fchdirs to it, and prints
-> /proc/PID/cwd to stdout.  Full source below.
->
-> I was a bit surprised that trying to create anything in the tmpfs did
-> not work without a uid_map and gid_map.  It looks like it came from:
->
-> commit 036d523641c66bef713042894a17f4335f199e49
-> Author: Eric W. Biederman <ebiederm@xmission.com>
-> Date:   Fri Jul 1 12:52:06 2016 -0500
->
->     vfs: Don't create inodes with a uid or gid unknown to the vfs
->
->     It is expected that filesystems can not represent uids and gids from
->     outside of their user namespace.  Keep things simple by not even
->     trying to create filesystem nodes with non-sense uids and gids.
->
->     Acked-by: Seth Forshee <seth.forshee@canonical.com>
->     Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
->
->
-> Now my tool won't actually run on a pre-2016 kernel due to use of
-> fsopen, and I'm not about to say that a decade-old commit broke my ABI
-> and needs to be reverted.  But I am rather curious whether this rule
-> actually makes sense.
+Hah, you haven't quite figured out the ridiculous thing I'm doing. :)
+What I want is a temporary tmpfs that I can create as an unprivileged
+user.  Linux doesn't let me do that directly, so I'm kludging it.
+Shell transcript, edited for clarity:
 
-I am pretty certain it was deliberate at the time. 
+#### Make a tmpfs, keeping the tool running to keep it alive
+$ ./temp_shm &
+[1] 34157
+/proc/34157/cwd
 
-> I'm not creating an idmapped mount, and I'm
-> using tmpfs, which could not care less about the mapping as far as I
-> know.
+#### cd to the tmpfs, which references it and keeps it alive
+$ cd /proc/34157/cwd
+
+#### Kill the tool, since we're done with it
+$ fg
+bin/lktool temp_shm     (wd: /workspaces/master)
+^C
+
+#### cwd is a working tmpfs!
+$ echo "Look a tmpfs!" >some_file
+
+#### and it has no '..', as expected :)
+$ cd ..                  # and it has
+cd: error retrieving current directory: getcwd: cannot access parent
+directories: No such file or directory
+
+This whole workflow runs in the init userns and the init mountns,
+which is exactly what I wanted.  And now I have a tmpfs that I can use
+to run my test suite unprivileged to test some cool code that *needs*
+a tmpfs.  (Yes, I could probably use /dev/shm, but that's messy and I
+don't want to.)
+
+I'm not actually banging this out in shell, but I am running literally
+the C++ code I posted as a subprocess called by my test harness.
+
+The user creating files is not in the mountns or the userns, by design.
+
 >
-> Would it make sense to only enforce this for filesystems that care?
-
-Interesting question.  You are in a user namespace.  You are
-running as a user that does not exist in your user namespace.
-You want to create files.
-
-You can map a that single uid and gid without privileges.
-So there is no hardship in getting a uid and gid in your user namespace.
-
-Is it just the extra bit of code to perform that write that is the
-problem?
-
-Why would you want to be able to create files as a owned by a user
-from another user namespace?  Even if you created them reading them
-would show an 0xfffe the invalid uid/gid.  I think there are then
-some difficulties in using those files as well.
-
-Why would you want to do much of anything as without having a
-properly setup uid or gid?
-
-At a quick look tmpfs just uses vfs inodes which use kuid_t and kgid_t
-so it theoretically would be ok.
-
-Still what would be the motivation for supporting something so silly?
-
-If there is a good use case I could see it making sense to support it.
-
-Short of a good use case we are talking about having to support weird
-corner cases that no one really cares about that will just bit-rot.
-
-Note.  You can identity map your original uid and gid, instead of
-mapping your uid and gid 0.
-
-
-We have occasionally talked about having a uid space that doesn't map to
-the outside world.  Perhaps by having a 64bit kuid, while uid's remain
-32bit.  I don't think anyone has pushed forward and merged that yet.  I
-did see a proposal form "cells" the other day that appeared to have a
-version of that idea implemented.  I mention it just in case that is
-what you were expecting to exist in a fresh user namespace.
-
-Eric
-
-> --Andy
+> At a quick look tmpfs just uses vfs inodes which use kuid_t and kgid_t
+> so it theoretically would be ok.
 >
+> Still what would be the motivation for supporting something so silly?
 >
-> #include <cerrno>
-> #include <cstdio>
-> #include <fcntl.h>
-> #include <linux/mount.h>
-> #include <sched.h>
-> #include <string>
-> #include <string_view>
-> #include <sys/syscall.h>
-> #include <system_error>
-> #include <unistd.h>
+
+My test suite! :)
+
+> If there is a good use case I could see it making sense to support it.
+
+I think my use case is excellent.
+
+Seriously, though, I think a *much* nicer solution would be to allow
+fsconfig and fsmount to be called by an unprivileged user, at least
+for some very limited list of filesystems.
+
 >
-> namespace {
-> void Check(long result, const char *operation) {
->     if (result < 0)
->         throw std::system_error(errno, std::generic_category(), operation);
-> }
+> Short of a good use case we are talking about having to support weird
+> corner cases that no one really cares about that will just bit-rot.
 >
-> struct OwnedFd {
->     int fd;
->
->     ~OwnedFd() { close(fd); }
-> };
->
-> void WriteAll(int fd, std::string_view bytes) {
->     while (!bytes.empty()) {
->         auto n = write(fd, bytes.data(), bytes.size());
->         if (n < 0 && errno == EINTR)
->             continue;
->         Check(n, "write");
->         if (n == 0)
->             throw std::system_error(EIO, std::generic_category(),
-> "zero-length write");
->         bytes.remove_prefix(n);
->     }
-> }
->
-> void WriteFile(const char *path, std::string_view bytes) {
->     OwnedFd file{open(path, O_WRONLY | O_CLOEXEC)};
->     Check(file.fd, path);
->     WriteAll(file.fd, bytes);
-> }
-> }
->
-> int cmd_temp_shm(int argc, char **) {
->     if (argc != 1) {
->         fprintf(stderr, "Usage: lktool temp_shm\n");
->         return 1;
->     }
->
->     try {
->         auto uid = getuid();
->         auto gid = getgid();
->         Check(unshare(CLONE_NEWUSER | CLONE_NEWNS), "unshare user and
-> mount namespaces");
->
->         /*
->          * The outside UID and GID need to be mapped in order for the
-> outside tasks
->          * to create dentries.  This comes from commit 036d523641c6
-> ("vfs: Don't create
->          * inodes with a uid or gid unknown to the vfs"), which I
-> think may have been
->          * a mistake.
->          */
->         WriteFile("/proc/self/setgroups", "deny\n");
->         WriteFile("/proc/self/uid_map", "0 " + std::to_string(uid) + " 1\n");
->         WriteFile("/proc/self/gid_map", "0 " + std::to_string(gid) + " 1\n");
->
->         OwnedFd context{static_cast<int>(syscall(SYS_fsopen, "tmpfs",
-> FSOPEN_CLOEXEC))};
->         Check(context.fd, "fsopen tmpfs");
->         Check(syscall(SYS_fsconfig, context.fd, FSCONFIG_CMD_CREATE,
-> nullptr, nullptr, 0),
->               "fsconfig create tmpfs");
->
->         OwnedFd mount{static_cast<int>(syscall(SYS_fsmount,
-> context.fd, FSMOUNT_CLOEXEC, 0))};
->         Check(mount.fd, "fsmount tmpfs");
->         Check(fchdir(mount.fd), "fchdir tmpfs");
->
->         // The detached mount is kept alive by cwd and the mount descriptor.
->         // No mount is attached to the inherited filesystem hierarchy.
->         std::string path = "/proc/" + std::to_string(getpid()) + "/cwd";
->         path.push_back('\0');
->         WriteAll(STDOUT_FILENO, path);
->         for (;;)
->             pause();
->     } catch (const std::system_error &e) {
->         fprintf(stderr, "lktool temp_shm: %s\n", e.what());
->         return 1;
->     }
-> }
+> Note.  You can identity map your original uid and gid, instead of
+> mapping your uid and gid 0.
+
+Does the inner uid made a sound if there's no running task to observe it? :=
+)
+
+--Andy
