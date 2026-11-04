@@ -1,97 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.52
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1793735933;
-	b=r+R7S38SvUb8nwq1i6sYWWR1oFViV9rPFZg22XMzh3uXmW3Ch0TBi0D5Aijn8Vi2uCol
-	 2vsD23xtOBB9/c1tIxj5nFYPr4Lguez3Uap9XUKcntj8xLuYRd9BRc6iQKjTEYKu/h280
-	 pPNWlcvFQO7GiibtfKifUhTuLWJBlUJhdNYvdGAGJ/RXPZGDmtOAejBIO2MkVlFw14M5W
-	 +J9kHsNaZLod1kmhNJfnUMuJdu+PkW7nPPt9X53j0HMNDRQdwdhCaTJDzCQd5HtD3npAG
-	 +6/J7w188yWc1vD9squd4R82bwmVY3+TzvR4rq41OpwYPAnT2T4GY97QFhUUqep4XWQ==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793735933;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:From:Date:X-Gm-Features:Message-ID:Subject:To:
-	 Content-Type;
-	bh=msC8AEF28+LoD4wR4QMW7ybuarkuRynrg91O2ZPZPW4=;
-	b=xLvgxN+HRA6hFExPisu/aYuN7bHjpgZDjKrMcLo6EF7t8TcP3RD2cmE8RWT9+8BiK6d/
-	 A7zhf4SbcH2NiPpyLDn1UOCIPp+TJCXGD7kiul9v8XdiehLPuEEy9GrTSJjtcUli7+RYB
-	 tak6P+SfscudbfA8A28KUNxEQWXd+e2eqWZecoAq6ZW5XMeB+8FvH+y2rhMkwRdKRKoIe
-	 UNBwxLQAbP59LDgSHBSwzuCIHUvYgaG8d5Jm7FmUlqIyx0OdGhq03ofIYCDfOtGC/PUwv
-	 xTibVRvuqdObMXwp0QyvsfJEG8Om/Ytzp07Z3SvqUwL4Rdrz6+ohrfBlk9YhzyXS8iA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amacapital.net;
-	spf=pass smtp.mailfrom=amacapital.net;
-	dkim=pass header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=OUWKSaqv;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.52
-Received: from mail-lf1-f52.google.com (mail-lf1-f52.google.com [209.85.167.52])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=162.62.57.49
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1793763370;
+	b=stOubMqDmharQ/xj/EirxhWjGRMdCer9Rt/YgNJ0kEV9FwiFnEVuoIqAogkFHk2ee5Jr
+	 2F0qy3t3rd+0B9htQMzmczwxQQkRavZUJbAz1Ktu8ULfAJz/rJULmD0A3WkeJnTJ/m7CI
+	 jmikrK/vTRJjG6IqPJSRagCRZgku5q2LdVaCR4g/6bJFhtZNdrauPTZYzvb93M+ipDdim
+	 Yag4WwUC9TSSj0cjuVHZhlsrZ72+raoSddp1hHoIr7yvX5JvgmXFu+aMqZ9C+83Y9bkli
+	 uDy3cg4dbAvQIMd7NJoeKXthXSFp+lepFTfnPBwDeXzGj3NhN9ssWebqF6JEbzOAgjA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793763370;
+	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
+	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=RDaP+dNG/QtNuoB0a0b0YVPr/BeKGVTsXfTUPQfFDL0=;
+	b=rC4Y/n4COfnp2MO9VFke+mn1pmkm7VwQrwRrpqH28ZmDc5CmOW+WH38HBY3lep2qXgjX
+	 HqcB+7F24lZZHNUnCzUWYdBLlGBKkTenpR4FderMNEUFQNBm5U+YtIt0qJAGb92K6A1CF
+	 Bdz0CxpYn/rGmHJ/PlTrRBrxcMWob8UozNEEx6tch6D8nB6T4JOcRmKWzgTiDzLSHprxz
+	 y5DUdlQWDI664Fz23a3AtxFzeDjjJtBlPJao1rSNNX8fQi/GYF8Fgic3g3H1M8nD4j8wo
+	 tTNnIY3ae8GcqJ12EFMQPrSZnTvHNhKWvErUusJClKQYMGAuxKFgctd08/ynvJDz0tA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=qq.com;
+	spf=pass smtp.mailfrom=qq.com;
+	dkim=pass header.d=qq.com header.i=@qq.com header.a=rsa-sha256 header.s=s201512 header.b=Jwxkrk3d;
+	arc=none smtp.remote-ip=162.62.57.49
+Received: from out162-62-57-49.mail.qq.com (out162-62-57-49.mail.qq.com [162.62.57.49])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F890606A324
-	for <linux-api@vger.kernel.org>; Tue,  3 Nov 2026 19:58:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6F890606A324
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6D16606A326;
+	Wed,  4 Nov 2026 03:36:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B6D16606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=OUWKSaqv
-Received: by mail-lf1-f52.google.com with SMTP id 2adb3069b0e04-5bcb4f23ddeso4324169e87.3
-        for <linux-api@vger.kernel.org>; Tue, 03 Nov 2026 11:58:52 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1793735931; cv=none;
-        d=google.com; s=arc-20260327;
-        b=SeUr8dHb+Fjqhhwx5sm+AnyKEMH9M+3963PWlcowdybw2oOVUiajEdViZzACrOymVx
-         bPazp+mkg9rv4LBWnaSjZLVyfXQ0j2GX2Zeu3NhALVMPZvReECI/J57ZJy/z6L0sxeVP
-         +JHYS+nCFaZvD4wYlnmsMq9D10LGJA+eeX/gEUqVQCkgRg6AFn0/+UKU816LyIq6WzX+
-         tu5Lo0pJQQhnwknSpDhTl5PPpFEF6D2hcdb7xJ1h1lSCh3gBVrsdxq1F9/wzFkqeqpvU
-         225MxjWs2m1U/L/nP7h6+dN15d5/GHBwyR+uGbwDAGbRMB8JZnd6cR9dazeI3CiwP1+x
-         q7Vg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=to:subject:message-id:date:from:mime-version:dkim-signature;
-        bh=msC8AEF28+LoD4wR4QMW7ybuarkuRynrg91O2ZPZPW4=;
-        fh=BR4kpKV8ytqLuqXGf93PdoVV7PFD+qZQTuS3SXrYiCE=;
-        b=esxdhd1dH9d8ym4OFvzYJJFi6kpyaBmeV8eU3C7Stzg2k9ssbpBAKBpKvhaNhqBsLi
-         ecenFOSg1xYqIRudy330/RBAeely9OvUCVBH99/XZ7YDfKbiwwqVxeyFcGHrjFHFsxL+
-         /J5kEfMfbx+dcj15wpi3z5nUDKDiPz81Vh5hivNXlRoGQOLXS0xuC6fGWlXmmVIQXqwi
-         KnoTY6V+die1e+5WS2jH+tKIZOjTs0T2aAF254yonJlHxG5OeGaa4IhImAbd8NqF7e4f
-         tJq650BJVgYbApEKV7oT7t9uWGTnLzni2nIh7j35mOYo4z11wGOeAq2X49pedaP8UXK7
-         C26A==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1793735931; x=1794340731; darn=vger.kernel.org;
-        h=content-type:to:subject:message-id:date:from:mime-version:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=msC8AEF28+LoD4wR4QMW7ybuarkuRynrg91O2ZPZPW4=;
-        b=OUWKSaqvQkmcspifGwE+EUFLnJNYnk1pd+X7y2Y3MaFNVGje4/4Zjo81naXmQymB0P
-         erAk3MBi8RbpVw7hiycXO4gs4tyh0syx3KYCD7ME14rViIO7Ta3Hni5mYE2SGGfxxGBl
-         fuxrht0kRuBtkV2SNJN8jNcHRk/Cm2Wd+f7P0R1b9a029msFihbfseZ5OZersC6LP0kB
-         qkquA08gvdbVxN5omTGAqCDYYOvyJx1bVkxMDlotZipaQwCTzf1m4UdxQiyATCquPLFX
-         dpB0MGGFQHAIcHbrVr1RjNrVbd7m6eKO7IMJz9qi0Ub7lFvBHrzdnpXjes1Uby4MQiTd
-         N7Gg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793735931; x=1794340731;
-        h=content-type:to:subject:message-id:date:from:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=msC8AEF28+LoD4wR4QMW7ybuarkuRynrg91O2ZPZPW4=;
-        b=mpwlLvQAnvH/rQ+5qLCGx2a95uLzbqCULgjgR0Q65fweWyfYwa/39RBIlMr8a7l7Ib
-         /SCz4OTG2rf7Y6MnK6G86dqzDDFfKbSiJo0DV/zRD+FlIHYCK7BFPLzRkz41RCeqP9oE
-         PZcT+z888+wNzoBFGEI6z7/SewCwJxdG7Mr+kjErqlmQ63doDSkv+o8MJCpvjQMlGWe8
-         WcbWzM8VI26ayyejQM9cg7CHbPKOabwYOVFYAl4NYBtDrBs5PUtTSuB0pEZXk8hyldbE
-         wcXAHutjmHH3cii0RbIf65Dwa5v0MoC/IJLJGwNRZouRWCnTezJzHTLJDFKnh9JN2IcK
-         BcoA==
-X-Forwarded-Encrypted: i=1; AKwUvBzAVPuORgiIO9mRwTtk2JjbwkwxvxCRkdl1+a2WwzCBfm4iPvyLjHk2uXFyP2XgklsHSj2kpHWFP/w=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9dccwhCaIhkcIPAzbDkQjcep4f6u+JzZ4DBaq0uKkLaIw8A9fy
-	64QzTR1ZcO/RwOqhp6l8SGg+1jUfXcik0Erlf9nXOwr4qrQMPYtcpVY0zp+E3L1fzbUKdJKCo5K
-	RAI4Lm2a+cleR1zhcjlLNW02nIBd88UBS1qDQekEi
-X-Gm-Gg: AYBFou3qmmt0OcrBgPbhoOwxaZhuXyfHF6QU2IqeA7/0vRTHc1lpFGWgezrA+pEoCBu
-	TBoFqQWzQIRjX7jGrz7iACnQHXD1Ce5GAX+6sj2vCSbinWs58SeHseYtFth0JlEnAm0l1ROaivA
-	HsK5avIeWfETGNeHlw/FgC7IRkXD0Js8LgjSvVBNC59DkATo6P7hzoiQ2R2hNG38bYe6/tGQ87S
-	1AKHWXbxT2c26nT+J7knodkmA9EmKc81Wse858bdZk0sEZx6kVlrXKU2TNiOzBNFjkmI+RCnvsN
-	mpJn0jB845ee56AjMxLevh87oSRw2LTw0rStm+VnW4fJ08KgoL4Hmi1bp9fptPIBp/a+/LnZEv0
-	xHlDEdjunNxDpd7shLbP5wvXD4PFt+V0laQ==
-X-Received: by 2002:a05:6512:3044:b0:5bc:cb94:830b with SMTP id
- 2adb3069b0e04-5bfd957fbc9mr4631201e87.55.1793735930576; Tue, 03 Nov 2026
- 11:58:50 -0800 (PST)
+	dkim=pass (1024-bit key, unprotected) header.d=qq.com header.i=@qq.com header.a=rsa-sha256 header.s=s201512 header.b=Jwxkrk3d
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1793763362; bh=RDaP+dNG/QtNuoB0a0b0YVPr/BeKGVTsXfTUPQfFDL0=;
+	h=From:To:Cc:Subject:Date;
+	b=Jwxkrk3dsBcvrLEtgybEMGb79TAsvzMx8+otDSrl0T6OcM7Ht2oxbYuO7lJzHRTFQ
+	 su32Vt8dZA88FtSjaZHdwMUq6EC+lmdgf7heONqkeSPEfePF00nGnRMGkpnPjJJI8q
+	 8n2X6f27utGmxcBC45lUov+nOQOI0BhHovwpolkw=
+Received: from hub.zhongying.com.zhongying.com ([2409:891f:8f46:1a8b:2dd5:45b2:eebc:59b4])
+	by newxmesmtplogicsvrszc50-0.qq.com (NewEsmtp) with SMTP
+	id 8DBB9AD2; Wed, 04 Nov 2026 11:35:27 +0800
+X-QQ-mid: xmsmtpt1793763327tsscucnbb
+Message-ID: <tencent_BC9FCDC060870B3AAD4716DE9ED970420107@qq.com>
+X-QQ-XMAILINFO: NbgegmlEc3Ju/BQxMc7j346TICtme/opNEbfOI3/wbxeYYPlOfk4wf43P9jQpp
+	 lp6vPX7e27ylODIGYIz5ITIqgKac5Pszo6rjKEPioxZBUZKXNYmOOSFFMXhXi5JV6c0Vl+P95aTH
+	 MgqugR5L8qwZLQbnyIPmUcuhJOTTcSjhfkJ+J5aHIbcEBYcR5MGWdSwWA14dJLyVmwYouyIWYurf
+	 AO+ibZXiqesCtWfq4pu9QJL6pL6dYxwhSUiUutPWWPWhsNMDXXUDbi/O+hAr0QTDPCEemqC5lqYk
+	 PEVVvjjCfOnWkBL/2ME+ENqmtI2GPot0PtS8Z3EbnaTEAGF7uosGc+ybt1HGhu1EV+qda1B+cqCz
+	 kSEYl6M6we9g9HO4CzbvhEDq7rDZF8R0i6xPVvV0fMTUz3LzhUZmaiGDHSxAflQG8qp7z1+gT467
+	 88bq58+tmLEYvqMtO3od4Ctrgt6cNkRo773KXTZByIiBZ9ZCf5BHQ3z34febTMTDepCn/kFS6+Td
+	 +W4zRT5oM3geYN3y/Km2tOt0YS7HDL0wZQPJUSW7RHwzz4RZyUErcaVEWSQVL4bnMgUXHEGa4KZF
+	 ErecbgN5+y+ErIFA463Bz6a8h6eBEBe3SV0EbTlG62yAvezrPgyWzzoPGldCEVjSV6UAZWAOu4/a
+	 k/yLRRo6a5+ug2F3mct3ELWF67ZPUfthqtbkVeJOWbwXWTtRmletNTw40GK1pYycfgcg4wrD6Yms
+	 ma8buSYT6TV6OyCufKLcM+NT+JXAfBfMR2CQp99Ef3kkoaz1QFrNPUvC5Gad7+sTXLYtKUmih0LF
+	 b8hcqnMQHFIbuUkfkkdtRnKEk/O4yAEjwWWCwhEZCsJNITXsURo331FlnckIsZwygUDLKzQYqhOk
+	 D2RYTikNJtOZWWpcSTx/EUpHLWU4ldT+k5TaojjmEEjLH2lEFUtiEh67FpiZ5PDR/SesM7FtPUzf
+	 nY3dcronqnBN4WGjoJTw0PHjmvEJ6VFUGjvKN5EjyXFzDd0l2T+DiUAL6sClWka6m8NMuGVWK1t5
+	 rGVQM0gEn4qeKfvU6bVjHjBDGOX5Ed8dCS8UfyUGwQLeyUjK/GQAAMuibxwO530DQz6eMTopHXo8
+	 ff2CGJ
+X-QQ-XMRINFO: NS+P29fieYNwqS3WCnRCOn9D1NpZuCnCRA==
+From: patrick <work_patrick@qq.com>
+To: netdev@vger.kernel.org
+Cc: davem@davemloft.net,
+	edumazet@kernel.org,
+	kuba@kernel.org,
+	pabeni@redhat.com,
+	horms@kernel.org,
+	corbet@lwn.net,
+	rdunlap@infradead.org,
+	linux-doc@vger.kernel.org,
+	skhan@linuxfoundation.org,
+	linux-kselftest@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: [PATCH net-next 0/2] netlink: optional per-netns ROUTE multicast index
+Date: Wed,  4 Nov 2026 11:35:24 +0800
+X-OQ-MSGID: <20261104033526.2917590-1-work_patrick@qq.com>
+X-Mailer: git-send-email 2.25.1
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -101,140 +87,158 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-From: Andy Lutomirski <luto@amacapital.net>
-Date: Tue, 3 Nov 2026 11:58:38 -0800
-X-Gm-Features: AclHuK_bN6YrhtswWu642OC1b8BtqaJiPZLecfCpjtFSxigsPxo-YRM7r02qtCE
-Message-ID: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
-Subject: Accidental mountns/tmpfs API break from 2016?
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, 
-	Linux API <linux-api@vger.kernel.org>
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 
-Hi-
+NETLINK_ROUTE multicast walks the protocol-wide subscriber list before
+checking network namespace and group membership. Ordinary subscribers in
+unrelated namespaces therefore add work to every notification.
 
-I (well, an LLM following my rather explicit instructions) just wrote
-a little tool to make a tmpfs as an unprivileged user: it unshares
-userns and mountns, makes a tmpfs, fchdirs to it, and prints
-/proc/PID/cwd to stdout.  Full source below.
+Maintain one ROUTE subscriber list per network namespace and one global
+LISTEN_ALL_NSID list. With net.core.netlink_route_mc_index=1, visit the
+sender's namespace and the cross-namespace list. Exclude local sockets
+from the second walk to avoid duplicate delivery. Preserve do_one_broadcast
+and the existing broadcast initialization, locking, completion, error and
+skb ownership handling; only select a different candidate iteration.
+No additional broadcast helper or forced inlining is needed.
 
-I was a bit surprised that trying to create anything in the tmpfs did
-not work without a uid_map and gid_map.  It looks like it came from:
+The setting defaults to 0, is visible only in init_net and affects all
+network namespaces. Mode 0 retains the original global walk. Other
+Netlink protocols retain their original walk. Both auxiliary lists remain
+maintained in both modes so switching includes existing subscriptions
+immediately. There is no automatic threshold or fallback.
 
-commit 036d523641c66bef713042894a17f4335f199e49
-Author: Eric W. Biederman <ebiederm@xmission.com>
-Date:   Fri Jul 1 12:52:06 2016 -0500
+The explicit switch allows administrators to choose the indexed walk
+for workloads with many ordinary foreign subscribers. Local and ALL_NSID
+subscribers can remove its benefit. Disabling it retains the memory and
+subscription-maintenance costs.
 
-    vfs: Don't create inodes with a uid or gid unknown to the vfs
+U is the unpatched base; P0/P1 use the same newly built patched image with
+the switch disabled/enabled. Measurements ran in ARM64 KVM with two vCPUs
+and 3072 MiB RAM on a shared Phytium D2000/8 host. Three independent boot
+pairs, three rounds and four samples per round yield 36 samples per state
+and scene: 63 scenes and 6804 valid samples. The unchanged U image was
+hash-verified and reused; every measurement in this comparison is new.
+Performance configurations match except LOCALVERSION, with no probes.
 
-    It is expected that filesystems can not represent uids and gids from
-    outside of their user namespace.  Keep things simple by not even
-    trying to create filesystem nodes with non-sense uids and gids.
+Each route batch replaces 2640 routes using existing nexthop IDs, then
+drains and validates every actual recipient. Timings include userspace,
+syscalls, draining and validation. Thread CPU excludes asynchronous
+cleanup workers. The 95% intervals resample paired boots and whole rounds
+with 10000 bootstrap replicates. All completed formal samples are retained.
+The host CPUs remained at 2300 MHz with performance governors.
+Host load and small swap-counter changes were observed;
+CPU pinning does not establish exclusive host resources or isolate kernel
+layout effects.
 
-    Acked-by: Seth Forshee <seth.forshee@canonical.com>
-    Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+Selected median wall times; negative changes mean less time:
+
+Scenario              U ms      P0 ms      P1 ms   P0/U %   P1/U %
+T1-n900-d0           105.112    120.571     18.595   +14.71   -82.31
+T1-n900-d2           147.796    152.543     16.378    +3.21   -88.92
+T2-field-c0          200.423    197.234     13.228    -1.59   -93.40
+T2-field-c1          199.410    207.788     13.254    +4.20   -93.35
+T3-monitor1          101.576    120.891     23.994   +19.02   -76.38
+C1-n0                 17.393     17.784     16.973    +2.24    -2.42
+C2-candidate900       86.568     91.119     93.700    +5.26    +8.24
+C4-all450            108.084    115.643     77.509    +6.99   -28.29
+C4-all900            123.199    137.517    161.098   +11.62   +30.76
+E1-n1800-d0          585.290    603.409    769.098    +3.10   +31.40
+C7-option-route      201.253    208.166    206.722    +3.43    +2.72
+PAR-n900              99.985    102.772     19.941    +2.79   -80.06
+
+T1-n900-d0 holds 900 ordinary foreign sockets in one namespace; d2 puts
+two sockets in each foreign namespace. These are sockets, not 900 processes.
+The source has two receivers. T2-field-c0/c1 uses a synthetic layout with
+450 two-socket namespaces and seven extra subscribers under
+nexthop_compat_mode 0/1, producing one recipient per event. T3-monitor1
+adds a mapped cross-namespace monitor. C1-n0 has no foreign subscribers;
+C2-candidate900 has 900 local candidates with only two matching receivers.
+C4-all450/all900 enables ALL_NSID on 450/900 foreign sockets without NSID
+mappings; E1-n1800-d0 extends this to 1800 sockets. C7-option-route measures
+ROUTE socket-option changes. PAR-n900 has two senders sharing the foreign
+socket pool. Workloads differ between scenes; comparisons are within a scene.
+
+Default-off median changes and 95% relative confidence intervals:
+
+  T1-n900-d0: wall +14.71% [-5.03%, +37.23%];
+    thread CPU +15.06% [-6.24%, +37.81%]
+  T2-field-c0: wall -1.59% [-6.03%, +5.55%];
+    thread CPU -1.36% [-5.85%, +5.99%]
+  T3-monitor1: wall +19.02% [+2.68%, +20.75%];
+    thread CPU +18.98% [+2.51%, +20.75%]
+  C4-all900: wall +11.62% [+1.38%, +16.63%];
+    thread CPU +11.98% [+1.30%, +16.93%]
+  C7-option-route: wall +3.43% [+0.91%, +5.83%];
+    thread CPU +4.37% [+1.68%, +6.52%]
+
+With the switch enabled, T1-n900-d0 wall change is -82.31% [-85.75%, -80.43%],
+and T2-field-c0 is -93.40% [-93.64%, -93.12%].
+The high-ALL_NSID cases show the boundary cost: C4-all900 wall change is
++30.76% [+21.83%, +36.14%]; E1-n1800-d0 is
++31.40% [+8.40%, +44.03%].
+There is no candidate reduction when almost all foreign listeners use
+ALL_NSID, while auxiliary-node access and local-namespace checks remain.
+Default-off changes vary by scene and include intervals entirely above
+zero, as shown above; the disabled state is not claimed to be cost-free.
+These are measured costs and uncertainty, without a fixed-percentage
+claim for default-off overhead. This is workload-dependent multicast
+behavior, not end-to-end routing convergence or x86 runtime evidence.
+
+On this ARM64 configuration, netlink_sock grows from 1072 to 1104 bytes
+(+32) for all Netlink protocols. Both sizes use the 2048-byte kmalloc
+bucket here. The per-netns payload is an 8-byte list
+head, with allocation rounding and generic-pointer overhead in addition.
+Selected new global symbols total 72 bytes, excluding alignment,
+strings and dynamic sysctl registration. Both modes retain these costs.
+
+The 21-case semantics test passes on U, both production modes, both debug
+modes and as an installed standalone selftest. Six switch cases pass on
+production and debug kernels and from the installed standalone copy.
+Production and KASAN/PROVE_LOCKING/DEBUG_LIST/DEBUG_NET kernels each pass
+fixed-0, fixed-1 and live-switching stress. Every group has two pinned
+senders, at least 60 seconds and 100 batches per sender, concurrent socket,
+membership, option and namespace churn; switching groups verify at least
+1000 writes. Stable receiver notifications and ACKs are checked. No new
+KASAN, lock or list error was reported.
+
+Full linked builds pass for ARM64 production and debug, all four x86_64
+GCC NET_NS/SYSCTL combinations, and x86_64 Clang 19. All builds ran in the
+isolated ARM64 guest. Cross builds do not establish x86 runtime correctness.
+KCSAN and skb allocation-failure injection were not run. FRR 10.3 dual-stack
+learn/install/ping/withdraw/reinstall passes separately on U/P0/P1.
+
+The tested base is 4dd16e31135ea8437a720222df34e8745f385d6d.
+Both patches also apply cleanly to the checked net-next main
+7b6ab4dbc156e2f96419715130b3d5738a306c93. Its five additional
+commits change no implementation or test-code file touched here; the
+shared selftest config adds unrelated devmem options. Runtime evidence
+is for the stated tested base.
+
+Patch 1 adds the lists, sysctl and documentation. Patch 2 adds two
+standalone networking selftests, including behavior without the switch.
+Raw samples, all scene comparisons and benchmark tools are retained and
+can be supplied separately; they are not additional patches or attachments.
+
+Please review this series for application to net-next.
+
+AI assistance: An LLM assisted with implementation adaptation and
+simplification.
+
+patrick (2):
+  netlink: add an optional per-netns ROUTE multicast index
+  selftests: net: cover ROUTE multicast namespace and switch semantics
+
+ Documentation/admin-guide/sysctl/net.rst      |  27 ++
+ net/netlink/af_netlink.c                      | 109 ++++-
+ net/netlink/af_netlink.h                      |   4 +
+ tools/testing/selftests/net/Makefile          |   2 +
+ tools/testing/selftests/net/config            |   1 +
+ .../selftests/net/netlink_mcast_semantics.py  | 420 ++++++++++++++++++
+ .../selftests/net/netlink_mcast_switch.py     | 217 +++++++++
+ 7 files changed, 777 insertions(+), 3 deletions(-)
+ create mode 100755 tools/testing/selftests/net/netlink_mcast_semantics.py
+ create mode 100755 tools/testing/selftests/net/netlink_mcast_switch.py
 
 
-Now my tool won't actually run on a pre-2016 kernel due to use of
-fsopen, and I'm not about to say that a decade-old commit broke my ABI
-and needs to be reverted.  But I am rather curious whether this rule
-actually makes sense.  I'm not creating an idmapped mount, and I'm
-using tmpfs, which could not care less about the mapping as far as I
-know.
+base-commit: 4dd16e31135ea8437a720222df34e8745f385d6d
 
-Would it make sense to only enforce this for filesystems that care?
-
---Andy
-
-
-#include <cerrno>
-#include <cstdio>
-#include <fcntl.h>
-#include <linux/mount.h>
-#include <sched.h>
-#include <string>
-#include <string_view>
-#include <sys/syscall.h>
-#include <system_error>
-#include <unistd.h>
-
-namespace {
-void Check(long result, const char *operation) {
-    if (result < 0)
-        throw std::system_error(errno, std::generic_category(), operation);
-}
-
-struct OwnedFd {
-    int fd;
-
-    ~OwnedFd() { close(fd); }
-};
-
-void WriteAll(int fd, std::string_view bytes) {
-    while (!bytes.empty()) {
-        auto n = write(fd, bytes.data(), bytes.size());
-        if (n < 0 && errno == EINTR)
-            continue;
-        Check(n, "write");
-        if (n == 0)
-            throw std::system_error(EIO, std::generic_category(),
-"zero-length write");
-        bytes.remove_prefix(n);
-    }
-}
-
-void WriteFile(const char *path, std::string_view bytes) {
-    OwnedFd file{open(path, O_WRONLY | O_CLOEXEC)};
-    Check(file.fd, path);
-    WriteAll(file.fd, bytes);
-}
-}
-
-int cmd_temp_shm(int argc, char **) {
-    if (argc != 1) {
-        fprintf(stderr, "Usage: lktool temp_shm\n");
-        return 1;
-    }
-
-    try {
-        auto uid = getuid();
-        auto gid = getgid();
-        Check(unshare(CLONE_NEWUSER | CLONE_NEWNS), "unshare user and
-mount namespaces");
-
-        /*
-         * The outside UID and GID need to be mapped in order for the
-outside tasks
-         * to create dentries.  This comes from commit 036d523641c6
-("vfs: Don't create
-         * inodes with a uid or gid unknown to the vfs"), which I
-think may have been
-         * a mistake.
-         */
-        WriteFile("/proc/self/setgroups", "deny\n");
-        WriteFile("/proc/self/uid_map", "0 " + std::to_string(uid) + " 1\n");
-        WriteFile("/proc/self/gid_map", "0 " + std::to_string(gid) + " 1\n");
-
-        OwnedFd context{static_cast<int>(syscall(SYS_fsopen, "tmpfs",
-FSOPEN_CLOEXEC))};
-        Check(context.fd, "fsopen tmpfs");
-        Check(syscall(SYS_fsconfig, context.fd, FSCONFIG_CMD_CREATE,
-nullptr, nullptr, 0),
-              "fsconfig create tmpfs");
-
-        OwnedFd mount{static_cast<int>(syscall(SYS_fsmount,
-context.fd, FSMOUNT_CLOEXEC, 0))};
-        Check(mount.fd, "fsmount tmpfs");
-        Check(fchdir(mount.fd), "fchdir tmpfs");
-
-        // The detached mount is kept alive by cwd and the mount descriptor.
-        // No mount is attached to the inherited filesystem hierarchy.
-        std::string path = "/proc/" + std::to_string(getpid()) + "/cwd";
-        path.push_back('\0');
-        WriteAll(STDOUT_FILENO, path);
-        for (;;)
-            pause();
-    } catch (const std::system_error &e) {
-        fprintf(stderr, "lktool temp_shm: %s\n", e.what());
-        return 1;
-    }
-}
