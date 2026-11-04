@@ -1,90 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.170
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.175
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793814887;
-	b=HH+jFQMTwvQPUO5GrouUbhfsoIOuAOtscYjB764CEwLZ9odwxHX48hheqNwTeaGvtUGq
-	 YL3ui2j4YhezJ0T5pet0x75BxUHwy+HqVMjlvgPgqKwEeBAKE02H4AS3zKt3X0wOl57PQ
-	 /ZCaMcKTfX2KiR0Au2GfwVYhy59kt5/9qR4Me2LF5vnc6pFSWqbinQuNEVsKYgR2WoS/L
-	 rqZtIeoGs1QdsAaLfWYxoYaBMH4PMHGrkO7pBhF3lVz9J8fAzMY4E6NsF87c56SCV51Wu
-	 FVz16DXpmhlhoPs4si2fVrtKUoOsAfyq7y0vplZZhuAj+TLIN4hPr2D/YjrHq+yx4JA==
+	t=1793815035;
+	b=c5HZ6r2BLwuaUAuZD1cmHubvuZnng9SBxEetvgjdTcJX55+bR5qjIqz4tBNwHr9dh2Rl
+	 uo3GiSuKiwe73Jlghn3is3pUa3ZVp7F8qOyWtz9zCnuWDm1MAs9Vs3omRN0lD77A3OKKo
+	 pAjklqis03kYn55Zu/ioiOfI3p6esUfHr+VgJY1MCuQtdPSNjrWB8vK6LX8WTC31IhH+v
+	 2H4RGJFaMSInoR1NGL6CNepXJ/jYvxnuhGrPsqAPhn9yMmFt9RCTSr0AtU6QrS1EbQ6Cw
+	 q/kfLO/ZktyV4on1TLL6ehw77pn62gwIS8BatYNxVu5i8g1cETnpEAjQGH5LEipQv9g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793814887;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793815035;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=a8PVgr6ypDrmvyZQYT+mIAJLHr75TSjPc21F4dgd8gQ=;
-	b=Gxx/H3wxY5ZlU8prNpgBsIfSWyd6y6dqwyD+Dh8RPULdaWPfJJhmp0uuly8ZER8oaMlL
-	 8lBmcFaXV+pKNLxZA3ZxUKPo56BvftGjoO3nnO40rMbglZgLH0Hcwhmv5fghp4KdozTSC
-	 HLTCYBOxGzbsSZb7+xMdJfWPy1JL5z5fjvNO1kLpTtDzTASEvfzZzZKGmF0n2+wu4LjWN
-	 htYaqGQZdnmLDHPFhrP40g1x9oGUD8u3fSfkVRSu+mZgQZLCw9vWV3PChHsi7SJDoQJKj
-	 Is5Y8jooI+FGzgkVsPCfAAcdXat/DxW+bHicGyjTmohCyb9ttpP5cDwz9Gs2eXguL3Q==
+	bh=u6+Lf/8gHZf1IKHjq4H+ss02XIxxzMA/c7y+z6oAgJc=;
+	b=b1dfs1leXO/MMQy45d+ALEgxs2zIbopQkp9cWjOuUrOiqn0Lp5iIn8b8FZSxAWa9WeZJ
+	 /WVk87HEjJb8psvZKF166qCGwe44ky1x3yRUpKiEQC3QaFBfEjGo6I2F5cJ43QcylM2jJ
+	 NXm8QH14rLyqFf5Z0Oru9Je2XlopjJGxBdphq11SrEO0/ba7Pvr2gIxFq510q8XzVSc0P
+	 kbc07QfcYVaj6l70lG4yNntauh7KINvlO0vx3H0gaTUxnNXUPI0+fs5FMqrkgPnrxEq0B
+	 UtiM5jiSB8dGvLabKsyOR8iYgI8LMKpr4TrH0tQ8wyR2/2Qonlxh2qlZV/PqVfh+Mag==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=none header.from=ziepe.ca;
 	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=INpwrSmc;
-	arc=none smtp.remote-ip=209.85.222.170
-Received: from mail-qk1-f170.google.com (mail-qk1-f170.google.com [209.85.222.170])
+	arc=none smtp.remote-ip=209.85.160.175
+Received: from mail-qt1-f175.google.com (mail-qt1-f175.google.com [209.85.160.175])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6613C606CFC8
-	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 17:54:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6613C606CFC8
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 19018607168E
+	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 17:57:09 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 19018607168E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=INpwrSmc
-Received: by mail-qk1-f170.google.com with SMTP id af79cd13be357-93e635220b4so92229485a.1
-        for <linux-api@vger.kernel.org>; Wed, 04 Nov 2026 09:54:47 -0800 (PST)
+Received: by mail-qt1-f175.google.com with SMTP id d75a77b69052e-533797e72e8so5969831cf.2
+        for <linux-api@vger.kernel.org>; Wed, 04 Nov 2026 09:57:09 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1793814886; x=1794419686; darn=vger.kernel.org;
+        d=ziepe.ca; s=google; t=1793815029; x=1794419829; darn=vger.kernel.org;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=a8PVgr6ypDrmvyZQYT+mIAJLHr75TSjPc21F4dgd8gQ=;
-        b=INpwrSmcSZ3/FfNbUp3Zcr+7zlKzli+O6Uz28XKAuaFHCd6G1aFXVW+Kr3yO5Ukz+j
-         ffDXRlN6wtFTSSL1fI87DbOCN5vN+Dc416Nx6rDo4BG87l6cEysDdTsz9/v6agED2t+J
-         az1Qc3jEPHGJciuqX8c8qHkclvi7nCxDnvEXRAWlfbwS4b/tczJBghfuvNFFt5Sen/Eu
-         CngVW0iXdQ5aqtzO5S5pQGC/GojetaWvMaM/79HB0aZi9AGJnQGdsr25FTscWCuemx6V
-         59aB6uINYARVi1TbzM33RDdQMxcq9J/VGqC7mlwisFA76vBco1Plqb7SMZBj/4wLB/55
-         +vlQ==
+        bh=u6+Lf/8gHZf1IKHjq4H+ss02XIxxzMA/c7y+z6oAgJc=;
+        b=jSpTFwGrGxYp4V4QZz2ba5dYIoDJJuxWjxKzx8KifYjFiBa0ODGbZD1ZEEW7S/WD0T
+         Uh/eSnAdhC0igsZSTinaNwZ4d/bVNxNVLR0SLBhFpcfR//v8TwO6mWhjarmiAGHvyd/R
+         eexkK+c4Gy+NJuptHuPNZ54oZFyCFRniuibxorEQrulnSaF5/g4Ne6nK4G/A+pa2SYyO
+         6VfYSM9ZMa476+obumWFBoY+RomdwnrNryQ/m7ngxfEuyZ57ZyO3Quffa1K8yWwxMq9m
+         PI1/0vFyzZ7alsgF2rxdyGUkXrbSK26XBu/pXg8rzUuwGjiFyUH5CdTcpJmTHMDmmIvS
+         oFLA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793814886; x=1794419686;
+        d=1e100.net; s=20260707; t=1793815029; x=1794419829;
         h=in-reply-to:content-disposition:content-type:mime-version
          :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=a8PVgr6ypDrmvyZQYT+mIAJLHr75TSjPc21F4dgd8gQ=;
-        b=mglw7WX8SRv38XCaCKbOioylyOMAysvv5IHrsOlDHECgRFWzZsB7yZEhWT8qdOr624
-         6+Rx/wG0MLbM6cOJeQIc2x+Jh42+Fd3PVLBvKmYTAcOprfyBT71LBNbw2N/KQwptFcMl
-         6BlOSL4hAXgsnSHbHXGF3h1LjWWreXwCyUmF6tnE+N3EokZsbjcAFUjfmogC2DIttouR
-         Vfksw8QlO0KKTvvzONLfJ3xvINZjvAKgUGaKBkrdww0TXmHaCj8+a7g/PuXu9m0Qz7ML
-         PvUXIEf94/FgN4Xanly/5rxm32XOvsRyTKonLwS1BrYmxKfhMkGOhB4NqQAoyVa24clT
-         l/PQ==
-X-Forwarded-Encrypted: i=1; AKwUvBwZsg7Ihop8s6fhDv97xfcluXx8WPeQzr5mOzVOGylP8aJ/+ZmySyAtzgcQjmcSx/eqGX9+KiMI2qQ=@vger.kernel.org
-X-Gm-Message-State: APuU4Z956sarb7u2tdc8ml4OK5w1E2137VzKRAVocZHgV4aC58Dup6j5
-	YNVaRhjkYPATuAYXhL2e8jiM9SKHuYSus2KOKo/1e1aPUYfoxWoYFZ7GlndSRr6sOrM=
-X-Gm-Gg: AYBFou1lgu6JKJrdZqxepghM+jsZ5tFL8m4afvnTThiOe/1hMdgNpBuYp9loCZp5ua7
-	1j+Z6HB/69XR4cEFXNCoENYUOIYAGGR1gh4/SY23wpSg53VCkdp85exT+kKuGbz2etXmsD9zAgL
-	ERA8EZJ8aiT0AIokc+1hb9ZQbcxN1vakrV7zdwppEEAEmeXzEDWa76YZKVRqPs7QaS9705qGtUf
-	wnAAZWs4lAdQmt324WXvhiKaW2mbkxsOXlsA60Cz4A5pxdXYPt28fflWOKi7vvesnRofzhzEKq1
-	Jz5pVk5ZJCf8oD4N6OjKnCisjA6sgN9PhnSuwnOLIvz0Tgf6KfbiA1adpNPtn3hKRZOIqMt3IdE
-	BmUmRfAL4PFnAsecZNzG288fvqFTz79ignSZcH/uVRgKEp6QH5TeyT9MOQOY69pOxWRWmp1Lddj
-	9fO6Kz+csNOcVKTBTauU3oEXuv0odcaWqJCt7tOt3NFJihNEq4WVzREnAmljlTcqyd3wpHEW3lr
-	cVRLP1BjNeWHmAOGTCssvIQmOYgTnKWmRUDs31i17sj+JUOl3R4GgGOxQ4UC404oXlYlLMG0Oku
-	JO/MMxVTqGE4lQtwpD2Hdl0uywesaBo0c41NdKvE7q9OG6bhkH9tlP0zYKONerclTT4ax3YdWV2
-	jKH5usZrgRw==
-X-Received: by 2002:a05:620a:4155:b0:93e:d364:c9fe with SMTP id af79cd13be357-944216970cemr2702179085a.40.1793814886203;
-        Wed, 04 Nov 2026 09:54:46 -0800 (PST)
+        bh=u6+Lf/8gHZf1IKHjq4H+ss02XIxxzMA/c7y+z6oAgJc=;
+        b=Y4dzCOUfgWh7IsA9hF7r8gHoIl+hJZEmVachMaGUdw+61Xr+4i2BJhwCLFGlNq1ktp
+         njGB/Fdb2pykAfU7VwCC1VIb5A6lWVG/whlG4257DW0fTtv117sxHKgTsd+aLVD0tX1W
+         MnH+PNyJWpj/AMTqN2g877bmQE3vTw2/JBDg2199ini5nPo05MexU662UxAxGzfP5V+N
+         Da01difM3js+rldPXAGqEVbaWE+Vw3Vg0UKWVin3An1iVOO19c6+sXIQoBrZFSYcKW6Q
+         WxIjDn+lX1wo/D8FwABRoGqHUMC2b+4bz3OUEbKnmozD14LymPsLI0oKF0EoyuKIYeB9
+         yB4Q==
+X-Forwarded-Encrypted: i=1; AKwUvByszOOHVL2gWjDxB4ue/3urzdafVD4d9Xa8b6N4fvJyC3nHnenaMq4otpamKCeIYdA78Gz7KGcUyGQ=@vger.kernel.org
+X-Gm-Message-State: APuU4Z83rDhcOGVRK3onnzPjPDAAD7NFprRXoZmB3lg45GCTHwDYj9KZ
+	k/YQfBxP/+RWPtO5kEcmvGPytCm1iZH6sC2rvNMBJn2uJTcAfFl8RyrDImvsqQvM5hs=
+X-Gm-Gg: AYBFou2GZErp6j4XC/C7ASPAMiHgyy1otpEzUBWzJCNOKVLRy88X1X+E1JlYUl1bypb
+	djy6KXOCA618Evr5R0i5CoXWOE8cF2CJHOoVp05HkU7DW1t2/e7WnqCoDaZBGzZRsTHXa7mdrhY
+	KDLo9ZLozw8+9Imv5MzJ/k7xMvB4kDttOSWleThk/PZkgwmwgdYRwh6QNN8ivsUOtKIPq55UHSf
+	bwJJ1ZSXpdULpGzd+FHSeF0KS+TdQD4Rty1ZbyK9TpMxqSBtE1CxZkc0simG1RhM/eyK3RQ6ISt
+	kREwh+Apk/cdPNPX9e4qpO+/HmS9MDO64aWyQ2jmyI5wvvv7zPE0uswKe293XTQa6/t+q5wdMxl
+	Jipv+f/HQbX6GuGbrgo1xVaUpJ+pEgIAizYyVaRSk47ZnXhoKoH6Ps7V9rzTDmvXU9+9/q2nrMY
+	MLzS6gMlLMV/fbDxQuvR13atEknuSBdFE2AtT+haQjfVWkyHhU3GAsyhMmOqoa1+LfZWpiQRvoN
+	0MRb72b+qo7k28J/5+K85jm3t0wkSVCnXOLXuidMYObRsFK/neu10c9iU+Qom/BjIrB0axetHwY
+	FwskqLit31EM8OEbY9LWvs+Jp9XquVQeslvrIh8kncEwMLBPI2sZNW64hhd2jEBJxTVCIuz1dZM
+	+ffN/T6FdZg==
+X-Received: by 2002:ac8:5f08:0:b0:535:baa:a78d with SMTP id d75a77b69052e-542b3a728c4mr272645741cf.10.1793815029017;
+        Wed, 04 Nov 2026 09:57:09 -0800 (PST)
 Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id af79cd13be357-945d479a7easm257041185a.12.2026.11.04.09.54.42
+        by smtp.gmail.com with ESMTPSA id d75a77b69052e-54b10a6ca24sm30262291cf.14.2026.11.04.09.57.08
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Nov 2026 09:54:44 -0800 (PST)
+        Wed, 04 Nov 2026 09:57:08 -0800 (PST)
 Received: from jgg by wakko with local (Exim 4.97)
 	(envelope-from <jgg@ziepe.ca>)
-	id 1xOfC1-0000000H1Y6-00br;
-	Wed, 04 Nov 2026 13:54:37 -0400
-Date: Wed, 4 Nov 2026 13:54:36 -0400
+	id 1xOfER-0000000H210-48gw;
+	Wed, 04 Nov 2026 13:57:07 -0400
+Date: Wed, 4 Nov 2026 13:57:07 -0400
 From: Jason Gunthorpe <jgg@ziepe.ca>
 To: Jiri Pirko <jiri@resnulli.us>
 Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
@@ -98,13 +95,14 @@ Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
- and generated files
-Message-ID: <20261104175436.GZ3889730@ziepe.ca>
+Subject: Re: [PATCH RFC 11/20] ctlv: Prepare runtime introspection
+Message-ID: <20261104175707.GA3889730@ziepe.ca>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-15-jiri@resnulli.us>
- <179302367452.58760.3782556786585774917.b4-review@b4>
- <auSxxPM5z8BzgNm3@FV6GYCPJ69>
+ <20261015145053.3664509-12-jiri@resnulli.us>
+ <179302367452.58760.11808905856343064399.b4-review@b4>
+ <auRmMPfaFINUIchi@FV6GYCPJ69>
+ <20261103010537.GI3889730@ziepe.ca>
+ <aumogVKtYnY0QJ2r@FV6GYCPJ69>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -116,49 +114,44 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <auSxxPM5z8BzgNm3@FV6GYCPJ69>
+In-Reply-To: <aumogVKtYnY0QJ2r@FV6GYCPJ69>
 
-On Fri, Oct 30, 2026 at 04:05:13PM +0100, Jiri Pirko wrote:
-> Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
-> 
-> [..]
-> 
-> >> +
-> >> +/* attrs of group cap */
-> >> +#define _CTLV_ATTESTATION_ATTR_CAP(_attr) \
-> >> +	_CTLV_ATTESTATION_ATTR(CTLV_ATTESTATION_GROUP_CAP, _CTLV_ATTESTATION_ATTR_CAP_##_attr)
-> >> +
-> >> +enum _ctlv_attestation_attr_cap {
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_EVIDENCE = 1,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MR,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MIN_CHALLENGE_LENGTH,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_CHALLENGE_LENGTH,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_TOTAL_OUTPUT_LENGTH,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MR_FLAGS,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_OBJECT,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_BLOB_CLASS,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_FORMAT,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_REPRESENTATION,
-> >> +	_CTLV_ATTESTATION_ATTR_CAP_MAX_LENGTH,
-> >> +};
-> >> +
-> >> +#define CTLV_ATTESTATION_ATTR_CAP_EVIDENCE _CTLV_ATTESTATION_ATTR_CAP(EVIDENCE)
+On Tue, Nov 03, 2026 at 10:29:45AM +0100, Jiri Pirko wrote:
+> Tue, Nov 03, 2026 at 02:05:37AM +0100, jgg@ziepe.ca wrote:
+> >On Fri, Oct 30, 2026 at 10:53:11AM +0100, Jiri Pirko wrote:
+> >> >So.. how about could we drop the sets, use a direct description of the
+> >> >layout and do something else for the ID numbering? Maybe the numbering
+> >> >can be solved directly by only listing the names in:
+> >> >
+> >> >numbering:
+> >> >  - device-get.reply
+> >> >  - device-get.reply.caps
+> >> >  - device-get.caps.evidence
+> >> >  -[..]
+> >> >
+> >> >?
+> >> 
+> >> I'm still committed to implicit numbering. For "inline records" I
+> >> resolved it by having it encoded as a tree with 4 levels:
+> >> 
+> >>  63         48 47 46 45        32 31  28 27  24 23  20 19  16 15               0
+> >> +-------------+-----+------------+------+------+------+------+------------------+
+> >> |   family    |kind |   index    |  L1  |  L2  |  L3  |  L4  |      field       |
+> >> +-------------+-----+------------+------+------+------+------+------------------+
+> >>               |<------------------ record ------------------>|
 > >
-> >I feel like there are too many layers here for a code generator..
+> >Fascinating idea. Sort of like an oid
 > >
-> >enum ctvl_attestation_attributes {
-> >   CTLV_ATTESTATION_ATTR_CAP_EVIDENCE = CTLV_ATTR(CTLV_FAMILY_ATTESTATION, 2, 1),
-> >}
-> >
-> >Do the intermediate constants add anything?
+> >I guarentee we will run out of bits someday :) I saw recently we ran
+> >out of bits in RDMA :\ 3 bits seems like quite a small number..
 > 
-> True. I originally had it like you suggest, I changed to enums to avoid
-> the explicit numbers. But you are right, does not add anything.
-> Changed back.
+> Well, this is just for inlines. I think if user comes to the point this
+> will not be enough, he can use named record, as he probably should with
+> more than 8 inline records anyway :) Also, we can introduce "mapping"
+> mechanism to allow inline conversion to named record without breaking
+> userspace. I just didn't bother to implement now as it is a theoretical
+> problem now as I see it.
 
-I was also thinking that having the explicit numbers makes it more
-robust if someone does backport. We should try to have everything
-explicitly numbered in these generated files to prevent subtle errors
-like that.
+Oh OK, thats interesting.
 
 Jason
