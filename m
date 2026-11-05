@@ -1,109 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.160.177
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=219.87.157.213
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793821585;
-	b=DQ9QdkYTNf/RAF4K5vq+McKfZBBpnIzEEhyWXO+0GbBIIu0D0tzlBe6TujwA/dDNEkqy
-	 giqG8P0Ru7QvIelccd2J8H5TlkxXGwrJCJxitkRIhyyTk2cFjaghprXjm1zVL0LG7t8WM
-	 zhBO6t9ww7bq5uPW95aCtf5V51Sf/WuuSI/9i+2rESJQ6+UKjLO/V8b902zNzkJ4LpQBa
-	 N1EoFTntvJvCtwkXjnx7paIa9U7VKxp+80UfjnSPA8qIApoWgyKFrrAPJJNhkC7SbHq2K
-	 yj0+z2zsesOo8ZHEzccqyQuH2op12+iyluiPQnBzC3I7U1Df+3v9KKNiRRY5Lcwq3cA==
+	t=1793843476;
+	b=wC0ug/6kQNt3hq3SwHpHTIHAsm+bUfCKxxXZ5HIv8ED7P6Y0tUOhw2I5TX8lNseAApkC
+	 cYVkIIC/cynNithgidIUlxxNKibb2M+TX3zQPltBxyNwF5v0wWwm8wKFI5pvQpqYsvOX8
+	 Y1cYM7iYTYjttrdkVN74WpkS7xjTKgxuZ1uuFGu3BPMHp2Dr8M5+RjW4ob+GHpSpYN13N
+	 rHBziW8jsyEgGNQynOPGAgaw8fyB0bS/T3F9sGDNi0beliubORmSqY6m6rrzaRidqQcKL
+	 tC50ag3/+lDcpTtBjLIAhNMPceTj8euYC5XDNL1ZbbbfEULPjnVFAALQT41w/VTUG2Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793821585;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=/iOiQOUFj+ZNXsxkV0W7K4UHGpRKtOzL2hr1OPDdR9w=;
-	b=lsoEk3aAsocMhmR41kuajYfdPIxkursOSBiIZjBvie97rEEWClHMLR2MXPbsrG5Ykmz4
-	 NVCEjho8VbKKB6ZCuryoSL/Nun4dKABsVV5LrcKNOVrWZG930V57u8ofROA/usQtx97k/
-	 tEyixWELECIf1kqjCHbGqW6og9K4aNRPu9bXlzErgof6jIUBRM2QFK2OCefZdMaEukWNz
-	 lzkrNxwCyFGPEj1fvVqc61HzbAK4RHmyftWs585rpSkppSDyYeS2FnlkTpFyXZyZ/S6Lr
-	 qYTCoiYFhPlqSLn/fCVF5XRD3ahqRUZbFRfOdwDYQRq3DCL7WWMsk+tF/IgsErvxlkQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793843476;
+	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
+	 Received:Received:Received:Received:From:To:CC:Subject:Thread-Topic:
+	 Thread-Index:Date:Message-ID:References:In-Reply-To:Accept-Language:
+	 Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
+	 x-originating-ip:x-tm-snts-smtp:Content-Type:
+	 Content-Transfer-Encoding:MIME-Version:X-MAIL;
+	bh=LbT+cDt3x5H3RSlP6PJ6sjoErQEa3773tcGsgbYPWQg=;
+	b=JnGWYFuU2UJUyB7F9/r6UZFX7dmP/d1c+ly0uAOJPRA0z3aamrijRM+GGKjm9VT2wFXX
+	 vL2pR4MBUeQqnQxNByYLEIsYcz1H0Zr9zTl2m532wtEnF0zk5b97DJZAIy6i7LlDl3vfR
+	 N3AnLrddVVhDNJ/7LhgzDtDXvWiVGq+vCWDA5Xwdd2GqDuRlQfNgUNwX7IT8MHnz/0TIR
+	 utaTf7260EbV41BLn8aX1RGPkNeh40Je57QZMKBc6k1eOZbisV75yBskDY3eFqlaksdCt
+	 uGjs6m/vBICz7NjxIaIYcIsCyrBQ7mrsjANg0WWpLWCgGNqT6fPp25qfunrkFnWhBIA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=ziepe.ca;
-	spf=pass smtp.mailfrom=ziepe.ca;
-	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=WRBm+GQF;
-	arc=none smtp.remote-ip=209.85.160.177
-Received: from mail-qt1-f177.google.com (mail-qt1-f177.google.com [209.85.160.177])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=ite.com.tw;
+	spf=pass smtp.mailfrom=ite.com.tw;
+	dkim=pass header.d=ite.com.tw header.i=@ite.com.tw header.a=rsa-sha256 header.s=dkim header.b=GSTl0NbS;
+	arc=none smtp.remote-ip=219.87.157.213
+Received: from ironport.ite.com.tw (unknown [219.87.157.213])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 448BD608CABC
-	for <linux-api@vger.kernel.org>; Wed,  4 Nov 2026 19:46:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 448BD608CABC
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8B542606A31B;
+	Thu,  5 Nov 2026 01:51:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8B542606A31B
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ite.com.tw
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ite.com.tw
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=WRBm+GQF
-Received: by mail-qt1-f177.google.com with SMTP id d75a77b69052e-5361e313e63so10162411cf.3
-        for <linux-api@vger.kernel.org>; Wed, 04 Nov 2026 11:46:24 -0800 (PST)
+	dkim=pass (2048-bit key, unprotected) header.d=ite.com.tw header.i=@ite.com.tw header.a=rsa-sha256 header.s=dkim header.b=GSTl0NbS
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1793821584; x=1794426384; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=/iOiQOUFj+ZNXsxkV0W7K4UHGpRKtOzL2hr1OPDdR9w=;
-        b=WRBm+GQFrwS5Zas3ZL99mrACnUfCSQ6IoeXlzzeD5KKnBqHHgtxYl2c9wviBwKfOJD
-         qtN+ZFY9uOU0mlzNZCuwr0exw/fYbp1g7ho5/pM/xUO2KAdWMlMV2RV+eo8CzwSP0PK1
-         MgVCvd6blq74OYN7OPzEIJ01+NGUqyNVGsk9oJ9gJnGaU9hlo5GRil1NKdsf3xy0EYAo
-         KWR5bpoPTgSvX2xINyPwl/GgNSWpYL76GMZPxcwzp8e6CZ+A0tOfzm6uN9XILruejEOn
-         jmRIHZ7FemA5lobw30d7bQdTmz2Zgu/15vEm4Imf92NuvMQXWpZlg1Y/yMPrwX5t4FVQ
-         NW8Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793821584; x=1794426384;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=/iOiQOUFj+ZNXsxkV0W7K4UHGpRKtOzL2hr1OPDdR9w=;
-        b=z4pdoYjHAv+eeO4dJ99mXgW24LCywZ8Y2DPCg/nP5PCSsDDAtks8raxDXHd3vNGOTM
-         Kq+X6hE3C6x7+cUQioknSlqyC7iUgb+gRZjHyuTdHxbGPXuw4Bg8i+vFj7QaON3T9Dxp
-         0qx7wkxaKm21Qsvptehcrmfwmav0/vRcuanK7kukmpQyO+t38HQsI6ybxywnTMDEJD/n
-         8CiDN+zGmizWnoBFzc4L3kPuMd8R2sanT1o4U5xtfnJZiXxHkcSNy+NIXMVt3hv/IQwY
-         DiU5+2U1WMjjOrZ5UQbThJ7ipbqCMGWH1pL0pC8SgZWqhud54py6Xpo4qbow36ulnaEn
-         zXPw==
-X-Forwarded-Encrypted: i=1; AKwUvBx7wZKPu6j/dw+kOUmnpkxQ6G+5YT86jliFEaV8kTWZOYu6lm3AF4lp9pcVEOy9SrfcUGklfTXI0qU=@vger.kernel.org
-X-Gm-Message-State: APuU4Z8gvLE5B/+BsUHuCumTa1lBXKuBm7BKRUw060nPjLAfrM26RbTa
-	9vTYF4spaQhi+C5t7srDHb3V1GJfj0upgthlgvt9BRoM+ud/s1bZxoSSMwioSBjYXTU=
-X-Gm-Gg: AYBFou1TiEO/I9C5FHn2ZBx6PKHLV9N1l8/7+RQzxh/4jrH68uqLV82asKXiXSyg912
-	R0HzTHItzZRS3U78+zaXC3xwWASxVXzdz7H2bUKgvl8hPHheIKjRh5/NfokaEIijHI75JN0er/w
-	Eto4aYWAS4KhWI09/DMsYcuwsMWp8SX5lwCGZv0sw6I4+BCEL38e9W/6fzrAv+ldn5RZOn9iAoR
-	C5m0PC2w2FqZL3mnVKMMdnXFosZcuKBxdxRDfrP0Lmp0vQJFuCel4cSgyGxT3fdHG7Z7u1dSy+d
-	O3rB8OaVz242m0hy9GfBN9Lj/WBNF9Yt4LFjgBAYddbYQ9Olka039EndnQQsyfBy+xH4lsqf2cE
-	R13kqEtubaSrkqdhCqHf3MsdO4hXlENn6HiyS6D2SfvU6EW5f4xZ5YGXGSncqopvbgglq3wLjD8
-	qbcD/XgRRlK7pg4QsSVaQ5CUr3BUq+9gPEkIM/HqeLBi/TesJA8iX5no4vHJsXOQZfhjfZ5firJ
-	YvcpiV+J84O6QBlyAB89CK606hnanACtZPM3w8KHYDAdzIZcj3/UZ5hkohEhUkd9nW/8JSDT6m3
-	GqGrSdEUDa/mDp/y8vbUDObNsH9s0dQkWON4qgWSRbgLR5LkmuMbZkThF8yyruUjkf5mYUp2fXh
-	ZlXS3fLtkLhye7Li3W9SNpvTgmhJVCdE=
-X-Received: by 2002:a05:622a:98b:b0:535:be07:f31c with SMTP id d75a77b69052e-542b83f684dmr276665021cf.74.1793821583898;
-        Wed, 04 Nov 2026 11:46:23 -0800 (PST)
-Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id d75a77b69052e-54b100aba28sm32315511cf.9.2026.11.04.11.46.23
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 04 Nov 2026 11:46:23 -0800 (PST)
-Received: from jgg by wakko with local (Exim 4.97)
-	(envelope-from <jgg@ziepe.ca>)
-	id 1xOgwA-0000000HIFZ-2f1S;
-	Wed, 04 Nov 2026 15:46:22 -0400
-Date: Wed, 4 Nov 2026 15:46:22 -0400
-From: Jason Gunthorpe <jgg@ziepe.ca>
-To: Yeoreum Yun <yeoreum.yun@arm.com>
-Cc: Jiri Pirko <jiri@resnulli.us>, linux-coco@lists.linux.dev,
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org,
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org,
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com,
-	drdeeglaze@gmail.com, James.Bottomley@hansenpartnership.com,
-	aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com,
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com,
-	ankita@nvidia.com, suzuki.poulose@arm.com, kas@kernel.org,
-	rick.p.edgecombe@intel.com, elena.reshetova@intel.com,
-	dave.hansen@linux.intel.com,
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 17/20] attestation: Add CTLV operation handling
-Message-ID: <20261104194622.GC3889730@ziepe.ca>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-18-jiri@resnulli.us>
- <auuDcABX27EeTApl@e129823.arm.com>
+  d=ite.com.tw; s=dkim;
+  h=from:to:cc:subject:date:message-id:references:
+   in-reply-to:content-transfer-encoding:mime-version;
+  bh=LbT+cDt3x5H3RSlP6PJ6sjoErQEa3773tcGsgbYPWQg=;
+  b=GSTl0NbSoL/bHoZShCiPCDOG4zpZkxuRpvMHuPrnq3vYGbDmrRHWjqKq
+   eafc1tcP4CaV4ozd+rkW6ADyXAwYksMlN87/bKH65qbI5g8vGbpTfj6Yq
+   CxIa8UrxdVGWiJnsKyrnxR+hMxl3I3/YQmkT8A7Obt2T99RzoJnQdQfH6
+   MVzNTTxfuZ6ZTYQsqURR55dFI7yLiHkqnfo/oO8XMqykRhn2cTa9PCDVt
+   mc8540/jQb4136i20P2YT01bdcZrEXQfhXSfyQ85xF5VYoSZZZvJHZot0
+   Rx09yeqSfqN5O8wrdq2dVTJ7wO/1C0FcukJxV9rvaYCybfS2+Gt+VeMQA
+   w==;
+X-CSE-ConnectionGUID: Ho0X/4iXTfe1+B0p127BJw==
+X-CSE-MsgGUID: bvNrJYKpQJudTrTDXMPhAQ==
+Received: from unknown (HELO mse.ite.com.tw) ([192.168.35.30])
+  by ironport.ite.com.tw with ESMTP; 05 Nov 2026 09:51:04 +0800
+Received: from tpemail1.internal.ite.com.tw (TPEMAIL1.internal.ite.com.tw [192.168.15.58])
+	by mse.ite.com.tw with ESMTP id 6A51owQl083341;
+	Thu, 5 Nov 2026 09:50:58 +0800 (+08)
+	(envelope-from Hermes.Wu@ite.com.tw)
+Received: from TPEMAIL1.internal.ite.com.tw (192.168.15.58) by
+ TPEMAIL1.internal.ite.com.tw (192.168.15.58) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.2562.46; Thu, 5 Nov 2026 09:50:57 +0800
+Received: from TPEMAIL1.internal.ite.com.tw ([fe80::63c1:9095:c5a6:3291]) by
+ TPEMAIL1.internal.ite.com.tw ([fe80::63c1:9095:c5a6:3291%3]) with mapi id
+ 15.02.2562.046; Thu, 5 Nov 2026 09:50:57 +0800
+From: <Hermes.Wu@ite.com.tw>
+To: <krzk@kernel.org>
+CC: <mchehab@kernel.org>, <robh@kernel.org>, <krzk+dt@kernel.org>,
+        <conor+dt@kernel.org>, <hverkuil+cisco@kernel.org>,
+        <linux-media@vger.kernel.org>, <devicetree@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <broonie@kernel.org>,
+        <lgirdwood@gmail.com>, <linux-sound@vger.kernel.org>,
+        <linux-api@vger.kernel.org>
+Subject: RE: [PATCH 1/5] dt-bindings: media: ite,it6625: add audio DAI
+ properties
+Thread-Topic: [PATCH 1/5] dt-bindings: media: ite,it6625: add audio DAI
+ properties
+Thread-Index: AQHdbGgxolHeqP/vkkmm0FEYfk19CbcetuOg
+Date: Thu, 5 Nov 2026 01:50:57 +0000
+Message-ID: <01818606697f4504b67d6f461d04ae57@ite.com.tw>
+References: <20261103-upstream-it6625-alsa-i2s-v1-0-bb91e2879b01@ite.com.tw>
+ <20261103-upstream-it6625-alsa-i2s-v1-1-bb91e2879b01@ite.com.tw>
+ <20261104-sparkling-icy-hound-fd0dac@quoll>
+In-Reply-To: <20261104-sparkling-icy-hound-fd0dac@quoll>
+Accept-Language: zh-TW, en-US
+Content-Language: zh-TW
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+x-tm-snts-smtp: 0A64C475197B0BD3ADEB90642EE49E854F58658056F55C1F726BA9C9AD51143C2002:8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -113,50 +97,33 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <auuDcABX27EeTApl@e129823.arm.com>
+X-MAIL:mse.ite.com.tw 6A51owQl083341
 
-On Wed, Nov 04, 2026 at 07:11:44PM +0000, Yeoreum Yun wrote:
-> [..snip..]
-> 
-> > +static int attestation_evidence_request_decode(struct attestation *att, struct ctlv_op_ctx *ctx,
-> > +					       const struct ctlv_cursor *request,
-> > +					       struct attestation_evidence_request *decoded,
-> > +					       struct attestation_evidence_object_request **objects)
-> > +{
-> > +	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
-> > +	u32 challenge_length;
-> > +
-> > +	decoded->challenge =
-> > +		ctlv_attestation_evidence_get_evidence_challenge_get(request, &challenge_length);
-> > +	decoded->challenge_length = challenge_length;
-> > +	if (challenge_length < caps->min_challenge_length ||
-> > +	    challenge_length > caps->max_challenge_length)
-> 
-> Hmm, I'm not sure whether this check is required for
-> ATTESTATION_EVIDENCE_BLOB_EVENT_LOG blob type.
-> 
-> for example, if the provider provides two evidence:
->   - ATTESTATION_EVIDENCE_BLOB_PRIMARY (might attestation token)
->   - ATTESTATION_EVIDENCE_BLOB_EVENT_LOG
-> 
-> might challenge is reuiqred for generating the token
-> and this would be marked at min/max_challenge_size in evidence_cap.
-> 
-> However, in case of eventlog, it wouldn't require challenge.
-> for example, TPM event log or CCEL event log.
-
-Right
-
-> Do we need some field on attestation_evidence_supported_object whether
-> it requires challenge or not and applies this sanity check per the object?
-> 
-> Otherwise, to get eventlog, it would need to send *dummy* challenge
-> always.
-
-I wonder if we should have two interfaces here for signed and unsigned
-evidence? It would be clearer for userspace then when it needs to
-provide a challenge or not.
-
-Jason
+SGkgS3J6eXN6dG9mDQo+DQo+LS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj5Gcm9tOiBLcnp5
+c3p0b2YgS296bG93c2tpIDxrcnprQGtlcm5lbC5vcmc+IA0KPlNlbnQ6IFdlZG5lc2RheSwgTm92
+ZW1iZXIgNCwgMjAyNiAxMDoyNCBQTQ0KPlRvOiBIZXJtZXMgV3UgKOWQs+S9s+WujykgPEhlcm1l
+cy5XdUBpdGUuY29tLnR3Pg0KPkNjOiBNYXVybyBDYXJ2YWxobyBDaGVoYWIgPG1jaGVoYWJAa2Vy
+bmVsLm9yZz47IFJvYiBIZXJyaW5nIDxyb2JoQGtlcm5lbC5vcmc+OyBLcnp5c3p0b2YgS296bG93
+c2tpIDxrcnprK2R0QGtlcm5lbC5vcmc+OyBDb25vciBEb29sZXkgPGNvbm9yK2R0QGtlcm5lbC5v
+cmc+OyBIYW5zIFZlcmt1aWwgPGh2ZXJrdWlsK2Npc2NvQGtlcm5lbC5vcmc+OyBsaW51eC1tZWRp
+YUB2Z2VyLmtlcm5lbC5vcmc7IGRldmljZXRyZWVAdmdlci5rZXJuZWwub3JnOyBsaW51eC1rZXJu
+ZWxAdmdlci5rZXJuZWwub3JnOyBNYXJrIEJyb3duIDxicm9vbmllQGtlcm5lbC5vcmc+OyBMaWFt
+IEdpcmR3b29kIDxsZ2lyZHdvb2RAZ21haWwuY29tPjsgbGludXgtc291bmRAdmdlci5rZXJuZWwu
+b3JnOyBsaW51eC1hcGlAdmdlci5rZXJuZWwub3JnDQo+U3ViamVjdDogUmU6IFtQQVRDSCAxLzVd
+IGR0LWJpbmRpbmdzOiBtZWRpYTogaXRlLGl0NjYyNTogYWRkIGF1ZGlvIERBSSBwcm9wZXJ0aWVz
+DQo+DQo+T24gVHVlLCBOb3YgMDMsIDIwMjYgYXQgMDI6NTA6MTlQTSArMDgwMCwgSGVybWVzIFd1
+IHdyb3RlOg0KPj4gSVQ2NjI1IGFuZCBJVDY2MjYgZGVjb2RlIHRoZSBIRE1JIGF1ZGlvIHN0cmVh
+bSBhbmQgb3V0cHV0IGl0IG9uIGFuIEkyUyANCj4+IGludGVyZmFjZSwgZHJpdmluZyB0aGUgYml0
+IGFuZCBmcmFtZSBjbG9ja3MgdGhlbXNlbHZlcy4gVGhlIGJyaWRnZSBoYXMgDQo+PiB1cCB0byBl
+aWdodCBJMlMgZGF0YSBwaW5zLg0KPj4gDQo+PiBBZGQgJyNzb3VuZC1kYWktY2VsbHMnIHNvIHRo
+ZSBicmlkZ2UgY2FuIGJlIHJlZmVyZW5jZWQgYXMgYW4gYXVkaW8gDQo+PiBjb2RlYyBEQUksIGFu
+ZCAnaXRlLGkycy1kYXRhLWxhbmVzJyB0byBkZXNjcmliZSB3aGljaCBkYXRhIHBpbnMgYXJlIA0K
+Pj4gY29ubmVjdGVkIHRvIHRoZSBhdWRpbyByZWNlaXZlciwgaW4gSERNSSBjaGFubmVsLXBhaXIg
+b3JkZXIuIFdpdGhvdXQgDQo+PiB0aGUgcHJvcGVydHkgb25seSBTRDAgaXMgY29ubmVjdGVkLg0K
+Pj4gDQo+PiBTaWduZWQtb2ZmLWJ5OiBIZXJtZXMgV3UgPEhlcm1lcy53dUBpdGUuY29tLnR3Pg0K
+Pj4gLS0tDQo+PiAgLi4uL2RldmljZXRyZWUvYmluZGluZ3MvbWVkaWEvaTJjL2l0ZSxpdDY2MjUu
+eWFtbCAgfCAyMyANCj4+ICsrKysrKysrKysrKysrKysrKysrKy0NCj4+ICAxIGZpbGUgY2hhbmdl
+ZCwgMjIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQ0KPg0KPlJldmlld2VkLWJ5OiBLcnp5
+c3p0b2YgS296bG93c2tpIDxrcnp5c3p0b2Yua296bG93c2tpQG9zcy5xdWFsY29tbS5jb20+DQoN
+ClRoYW5rcyBmb3IgeW91ciByZXZpZXcuDQoNCj5CZXN0IHJlZ2FyZHMsDQo+S3J6eXN6dG9mDQo+
+DQo+DQo=
