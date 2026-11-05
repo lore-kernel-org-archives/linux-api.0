@@ -1,48 +1,48 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793886713;
-	b=maxHZFrfDhG1MBOOXB148VP2K/7zpxy+zr8L1iyKOo50ln1KDLlSUTnJEDYponpROSIz
-	 GlgYi8JhElCXWLmGTVeYJbM+7Rgw/HEyGppaKpjBOCPlURyLxBcnfMX6VUUTzXwvGoeI2
-	 rAHwKqUcOm7tLA9mYzB09v/xZ/C4k0uW0DuT6kUJoVJxb2d5wgcW2pFlcWnBQwZhqo717
-	 fEtXFpbva7OWQbcAwDx8Sjpt3E4PZ3Seq57CDP6iv+ixO/zpysMXewB/LkpNPLQthDJH5
-	 pJd2ikWT5gsUH2rp3VIvPCopYd8MLgCjAzO11gaPTfvHpqty9YENq3a3+W9NZdPfSAQ==
+	t=1793886752;
+	b=Eff3NaDAHFZviENrRENjpWtTmyknxKeVdBLOQoRqKW1wcmN2KJwQpcEJvg9YahWK5YgC
+	 ClpQshNOf8xMzPmRo4FuMJSVKhZVQ96ja5zIQTh9k/SRfn8RjSHMvbSr0j5hm5/HdyiGO
+	 LgAUpOTNmNUDrMI2SYcxspHFRjOQis/fVz4IvQdkHmxU0AuCZaGeGhNDp8LjOMFXC36J7
+	 k0AylXh1Xdug0GTyMHx/89FkyN/8JDXtiiiWX09S0O+w24X+ezSwftWj7HEZNKIIJLIsn
+	 IicsoaT4C4/AcAlE6LsEuiw8K7RPrvvvec7RaGiL5izDKYG0COY7+1GrDpYg0gWQRZQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793886713;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793886752;
 	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
 	 Subject:Message-ID:References:MIME-Version:Content-Type:
 	 Content-Disposition:In-Reply-To;
-	bh=jeG3y12HtFa7m8IvIKhqM9ur3tVT1kjPhMNf8HVLxi8=;
-	b=dgmGv/OATO9RIva/1jEtgpyhR6OkLDbNrV+gnpFWKeXI4vAgT4fzr62Nv7uNli6wjjrc
-	 C3hHFUPEQuLQtTrtnzS8OYmCK1jQtt8MiQlQhhbfdhhFpfzdcgR5qT82kqahHsI3aTES8
-	 DvTVwR2WAnXJpfel2b4K6Klhc21d3qNp3WFtAVQIW8s0eKxPvo34Y5CAfAmKOCBt8D3GQ
-	 0FmIqr0ryvlzNncRjmH1ZqA/4NyBloaeR5DKQUjlb/gwncEXKa3/p3PrS1J5G5B35ItnP
-	 UMEYHDe1ULQozX2Ouy3vZUOcdPMt15BXx2okzxV0O27hG+xctRPcOQ50PfKbnXOcM7w==
+	bh=RsnUe3JgTB8DnyyeAYUnaAmGAs6RXw0MhN3JR3y8fLA=;
+	b=E1w+bELqrTPFhL3My3Qhluiw0mAt7kiO6hwoCcxbRKCkXfBQ7+8GvHPZi7pj0dZsOcAB
+	 HDYxVFr/N1TATuvHxmRxKk/U+5bZQiY+loaV9rn8DthuyXrc+FTKHSEKWWBEVLpe5qWrE
+	 HDIutcBM8x2CaUHd1FpDC3jR0QKDtZ6l/Sssf+k27X+B2xODP1hVTqIAweCh6fh7hJnjW
+	 CcXvSO1hShVbbAKze3Kl0rnhcNhpR2ARsaMB8tGOm6saMARSFo91cQHHGD8U69yJHYULf
+	 dADqJp/Fqk/7hf+n4Lqk2wqsrzxRN3ZBCFlj7QGYvsA3hug9zdbEYcKyFLSVIU9vBmQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=arm.com;
 	spf=pass smtp.mailfrom=arm.com;
-	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=m+09lacs;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=dOQH4A24;
 	arc=none smtp.remote-ip=217.140.110.172
 Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 7C0E6606A328;
-	Thu,  5 Nov 2026 13:51:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7C0E6606A328
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 44B4F606A333;
+	Thu,  5 Nov 2026 13:52:27 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 44B4F606A333
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=m+09lacs
+	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=dOQH4A24
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 975371650;
-	Thu,  5 Nov 2026 05:51:48 -0800 (PST)
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 7B9691650;
+	Thu,  5 Nov 2026 05:52:23 -0800 (PST)
 Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 532CF3F628;
-	Thu,  5 Nov 2026 05:51:47 -0800 (PST)
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 374123F628;
+	Thu,  5 Nov 2026 05:52:22 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
-	t=1793886711; bh=h84UlwUJYAiqDq33RX39Hh2D1oEYdS7iW7dNb129dXw=;
+	t=1793886746; bh=U59oM5gHSrnPLb3WgEtriMAyHxBns7UzuoS2VJzFNB8=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=m+09lacsvQH6RHUHtbjlvSu27zPjooCxuMs6qDiflGnjn4Td/TYYUafIL8k4EYAXF
-	 6ediJxrSXelxhGk1YIPGggBvbGC0ixvbbQaewIy+pOtbmJ19guvhIRcQFuracVXXk/
-	 OZeo6y15VTgJCsrdOWjJ0R7OhFPrIqPJRjYl1Eq8=
-Date: Thu, 5 Nov 2026 13:51:44 +0000
+	b=dOQH4A24WRuTkitLEFqE+4JEmVDQkzQmG2G8d0S5B5K3MM5bRC9UfDmkrloVmL4yz
+	 9L1KgPSvMstz/tUmr9wWbaKHmfp8Brpqab13VVX8sZ06a2V/XoAuMyZKxwpoCr80sP
+	 CJcmUZcsQD+OG7nWeMGRTp4l2Tf3gTKbLHGA96OY=
+Date: Thu, 5 Nov 2026 13:52:19 +0000
 From: Yeoreum Yun <yeoreum.yun@arm.com>
 To: Jiri Pirko <jiri@resnulli.us>
 Cc: Jason Gunthorpe <jgg@ziepe.ca>, Yeoreum Yun <yeoreum.yun@arm.com>,
@@ -57,16 +57,13 @@ Cc: Jason Gunthorpe <jgg@ziepe.ca>, Yeoreum Yun <yeoreum.yun@arm.com>,
 	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
 	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
 	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 02/20] ctlv: Add the UAPI wire format and family API
-Message-ID: <auyJ8Nuvn0t2qj5w@e129823.arm.com>
+Subject: Re: [PATCH RFC 17/20] attestation: Add CTLV operation handling
+Message-ID: <auyKE2sGqtfjk4v5@e129823.arm.com>
 References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-3-jiri@resnulli.us>
- <at-iEMxN98nie1Qr@e129823.arm.com>
- <auBaROC0XdWpILEI@FV6GYCPJ69>
- <20261027141524.GF1685504@ziepe.ca>
- <auC5sw9YMC9NO4wl@e129823.arm.com>
- <20261027151729.GG1685504@ziepe.ca>
- <auyAJ8OMWHUTCFKs@FV6GYCPJ69>
+ <20261015145053.3664509-18-jiri@resnulli.us>
+ <auuDcABX27EeTApl@e129823.arm.com>
+ <20261104194622.GC3889730@ziepe.ca>
+ <aux01NUd85PabtZu@FV6GYCPJ69>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -78,72 +75,81 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <auyAJ8OMWHUTCFKs@FV6GYCPJ69>
+In-Reply-To: <aux01NUd85PabtZu@FV6GYCPJ69>
 
-> Tue, Oct 27, 2026 at 04:17:29PM +0100, jgg@ziepe.ca wrote:
-> >On Tue, Oct 27, 2026 at 02:48:19PM +0000, Yeoreum Yun wrote:
-> >> > On Tue, Oct 27, 2026 at 09:02:14AM +0100, Jiri Pirko wrote:
-> >> > > Mon, Oct 26, 2026 at 07:55:12PM +0100, yeoreum.yun@arm.com wrote:
-> >> > > >[    3.856919]  ctlv_schema_check_attr+0x3dc/0x538
-> >> > > >[    3.857105]  ctlv_schema_check_indexed_nest+0x788/0x958
-> >> > > >[    3.857301]  ctlv_schema_validate+0x88/0x180
-> >> > > >[    3.857482]  ctlv_msg_test_as_deep_as_the_core_allows+0x11c/0x1e8
-> >> > > >[    3.857698]  kunit_try_run_case+0x64/0x188
-> >> > > >[    3.857878]  kunit_generic_run_threadfn_adapter+0x30/0x68
-> >> > > >[    3.858086]  kthread+0x10c/0x140
-> >> > > >[    3.858245]  ret_from_fork+0x10/0x20
-> >> > > >[    3.858398] SMP: stopping secondary CPUs
-> >> > > >[    3.858630] Kernel Offset: disabled
-> >> > > >[    3.858720] CPU features: 0x0,00000000,00b0802e,9f190bc3,2affe72f
-> >> > > >[    3.858872] Memory Limit: none
-> >> > > >[    3.858976] ---[ end Kernel panic - not syncing: kernel stack overflow ]---
-> >> > > >
-> >> > > >[...]
-> >> > > >
-> >> > > >I think it might be good to configurable according to architecture
-> >> > > >unless it's not good to reduce the CTLV_MAX_NEST_DEPTH number
-> >> > > >otherwise, increasing stack size when CTLV is enabled seems unresonable...
-> >> > > 
-> >> > > Agreed, will lower it down. I think we should be okay with 8 for start.
-> >> > 
-> >> > I'm surprised this ran out of stack though with even as few as
-> >> > 32 levels.. Is there accidently something large on the stack?
-> >> >
+On Thu, Nov 05, 2026 at 01:32:49PM +0100, Jiri Pirko wrote:
+> Wed, Nov 04, 2026 at 08:46:22PM +0100, jgg@ziepe.ca wrote:
+> >On Wed, Nov 04, 2026 at 07:11:44PM +0000, Yeoreum Yun wrote:
+> >> [..snip..]
 > >> 
-> >> Nope.
+> >> > +static int attestation_evidence_request_decode(struct attestation *att, struct ctlv_op_ctx *ctx,
+> >> > +					       const struct ctlv_cursor *request,
+> >> > +					       struct attestation_evidence_request *decoded,
+> >> > +					       struct attestation_evidence_object_request **objects)
+> >> > +{
+> >> > +	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
+> >> > +	u32 challenge_length;
+> >> > +
+> >> > +	decoded->challenge =
+> >> > +		ctlv_attestation_evidence_get_evidence_challenge_get(request, &challenge_length);
+> >> > +	decoded->challenge_length = challenge_length;
+> >> > +	if (challenge_length < caps->min_challenge_length ||
+> >> > +	    challenge_length > caps->max_challenge_length)
 > >> 
-> >> When I see the each functions stack allocation:
-> >> - ctlv_schema_check_indexed_nest():
-> >> 	sub	sp, sp, #0xf0 // 240 bytes
+> >> Hmm, I'm not sure whether this check is required for
+> >> ATTESTATION_EVIDENCE_BLOB_EVENT_LOG blob type.
 > >> 
-> >> - ctlv_schema_check_attr():
-> >> 	sub	sp, sp, #0xb0 // 176 bytes
+> >> for example, if the provider provides two evidence:
+> >>   - ATTESTATION_EVIDENCE_BLOB_PRIMARY (might attestation token)
+> >>   - ATTESTATION_EVIDENCE_BLOB_EVENT_LOG
 > >> 
-> >> Roughly (240 + 176) * CTLV_MAX_NEST_DEPTH = 13,952 (around 14KB)
-> >> consumed.
+> >> might challenge is reuiqred for generating the token
+> >> and this would be marked at min/max_challenge_size in evidence_cap.
+> >> 
+> >> However, in case of eventlog, it wouldn't require challenge.
+> >> for example, TPM event log or CCEL event log.
 > >
-> >400 bytes per nest seems pretty big to me...
+> >Right
 > >
-> >Do you have debug options enabled or something that increases stack usage?
+> >> Do we need some field on attestation_evidence_supported_object whether
+> >> it requires challenge or not and applies this sanity check per the object?
+> >> 
+> >> Otherwise, to get eventlog, it would need to send *dummy* challenge
+> >> always.
+> >
+> >I wonder if we should have two interfaces here for signed and unsigned
+> >evidence? It would be clearer for userspace then when it needs to
+> >provide a challenge or not.
 > 
-> KASAN is such an option. On arm64 with GCC 15, the stack protector and
-> zero-initialized stack variables, ctlv_schema_check_indexed_nest() takes
-> 208 bytes and ctlv_schema_check_attr() 144 without KASAN. With generic
-> KASAN, which instruments the stack with GCC, they take 432 and 304: the
-> redzones around every local whose address is taken more than double both
-> frames. Your numbers are in between, I guess a different compiler or
-> KASAN mode.
+> Isn't the challenge field provided/not-provided enough?
 > 
-> Otherwise there is nothing large on the stack. 96 of the 208 bytes hold
-> the callee-saved registers, the rest are small locals and spills. It is
-> just two frames per nesting level.
-> With the limit lowered to 8, validation at the maximum depth takes about
-> 3KB, about 6KB with generic KASAN.
+> Currently on the introspection side, device-get op would provide
+> challenge-lengths array:
+> 
+>         evidence?:
+>           challenge-lengths[8]:
+>             length?: uint(..4096)
+>             min-length?: uint(..4096)
+>             max-length?: uint(..4096)
+>  	  objects[16]:
+>             blob-class: evidence-blob-class
+>             max-length: uint
+>             blob-instance?: uint(..u32-max)
+> 
+> I think it would make sense to have challenge-lengths array per object:
+> 
+>  	  objects[16]:
+>             blob-class: evidence-blob-class
+>             max-length: uint
+>             blob-instance?: uint(..u32-max)
+>             challenge-lengths[8]:
+>               length?: uint(..4096)
+>               min-length?: uint(..4096)
+>               max-length?: uint(..4096)
+> 
+> Then the unsigned object would just simply have challenge-lengths empty?
 
-TBH, I'm bit of surprised since I'm not using GENERIC option but with HW
-(MTE). Do you mean this with KASAN HW_TAG?
-might the GENERIC and SW_TAG would be, but I don't expected with HW_TAG.
-
+This looks good to me. :)
 
 -- 
 Sincerely,
