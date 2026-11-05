@@ -1,99 +1,74 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.52
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.72
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793887384;
-	b=qmqD7n8B7YEXWaCJkl1/ixSGRhacl/WfEQwS5Bu3Wung50eJIBI2mTq76v7s+JI10POV
-	 Pc+xIZi57XJ7L7Vsulo0TsXYxRGtq0MwNhTKql14Ru3UhkGZM5KISo+Z4e2IMVL91ie/f
-	 s+WL+0k65CrHQH34AixcoDXGvhYms+Bcvp1QqfB0IrSM0BTYRqTY59uSYkq8p8oRlaF6J
-	 wClAEYxgg2V8o9YUDoVYGlGE/KQSFDNZ5G+6osUXRjB8T8/LDeS5EffGPjbtGLr62Kz28
-	 /+Hoi4bD3VbJh9VeOsqSUQjb4JvSju2thzR+hiZkInsQkAFD4m3QN+gVYyYCOO45Wiw==
+	t=1793893025;
+	b=TyOawflNPiBYrVPEYPvXZ458CFhkKh2UyoF3kpAoeibwiZ/cx4RdOz9T1WX10D7Balsz
+	 1H3CltCBrRDCqKKYcRZsPxFzBW0pV3i+TcIs9N2PaArKitvTz0/hGoZTgRroyIrfJhKW0
+	 bo0Q9lrbAvb0zpU17N5/Ykrntg1C9BN5Z47d/WeWCXE05w4dpYWFYWTORRbE0YD02gvKk
+	 k1RrrT/owxi0v9Ji+Q2VD2NbplxHgnCJt9lTDAhswqbcwisPLqtaHIbpHDbUmtGU/ukpX
+	 AVzqiLuP7eupAC3KLCnAFuuvX2wWBBCH4/SpfuERgOV7t/2hXHoh3ohebalaOQ3Rs0A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793887384;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793893025;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=7rw+Vw2Z3L2B8lNDfsIFSmx/pfSm9WeDfRFG4S2Q0cI=;
-	b=xPfLt9NPet3RwnY4W1bZkdwT8geW05wc7y0TR9fi4USMKKkpCIBdAWP9zsC/SxWNbO56
-	 IgIGwmg3ieoAKt/vxvRRjALRW9tmqgh/0oMehBaeqIF/64wruI/+mPVLzWMyzA3cnzvre
-	 g8I4IXJzKSOfIkzKBFjP8JTdZzb3hGZpoSkrdq1/XODpqfV2nF0jpgZsHC1uEMnwpB9ed
-	 EUGNfow9NJuSixzx6Bjw14t6WtxcoTDw8LN1n8rXgZdEsHWYiPO+kThEAHh1FfNg32xxS
-	 1J6ksnTcALDV6IniUJVwNcKaVj+z4NTK1Aw6emJXTy9qs2OPzCFEIaNO8fZty64CcOA==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
+	 Mime-Version:References:Message-ID:Subject:From:To:Cc:Content-Type;
+	bh=kvailjwqfOmhbJJjcy8TbvowePxzON+06QO6Up9gGT0=;
+	b=n2y/pdVdxhTyL/SjQKKTvoakvsx4tgZsZCvtK8kZ53ElCQ/I+mGVTADAYGBGOp4eqv7a
+	 wyqhu2bxcHxqwQ+45Vzm9k5d4NDoq3ysdiJ3EFWVY9S8VZOT5wcMl07JFMvIzpDz0b80d
+	 0sERCiLRhviqxtijW2HdOVISInl0eiGNazUlNAS/FKYl2+RNAKbYhwzr647qAtt3n8DVY
+	 CuJmDPVzYcHD1PgkPO7uyZnrl9iL3CShSmCU1AovBN+KOjlw00S8NYy1g6zDIix6mSj4X
+	 UeSNc2IQI3p0zRcUcETcc3aBYjvKO8jiXT6+h3rgE71vSQddkBedRNKhufeqUGzzi4A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	arc=none smtp.remote-ip=209.85.221.52
-Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=flex--halg.bounces.google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b="Gxle+Ke/";
+	arc=none smtp.remote-ip=209.85.218.72
+Received: from mail-ej1-f72.google.com (mail-ej1-f72.google.com [209.85.218.72])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 974CF606A336
-	for <linux-api@vger.kernel.org>; Thu,  5 Nov 2026 14:02:58 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 974CF606A336
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
-Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-491f34b4e0fso244212f8f.2
-        for <linux-api@vger.kernel.org>; Thu, 05 Nov 2026 06:02:58 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 402AB606A31B
+	for <linux-api@vger.kernel.org>; Thu,  5 Nov 2026 15:37:05 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 402AB606A31B
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--halg.bounces.google.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=Gxle+Ke/
+Received: by mail-ej1-f72.google.com with SMTP id a640c23a62f3a-c40285df2a0so159598366b.2
+        for <linux-api@vger.kernel.org>; Thu, 05 Nov 2026 07:37:05 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1793887377; x=1794492177; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=7rw+Vw2Z3L2B8lNDfsIFSmx/pfSm9WeDfRFG4S2Q0cI=;
-        b=wcPW2VeSRvODbdYagFsU2XIg0aTXdnhx/kXOwWNbpngwDM/gCfcZrWORghX1FKTjDc
-         Mv5N2+vmUnjqQm9dS9NB6DBVam/f0NDbeQqt4+86O0cpG537XPDtso4cmVRWMyArr8PI
-         jXiPqpbCMNpRwt04pZ64rNnRkpc1jgKy9F7LZJn034x7mHjW9lWeHDZ8wuGAGcsp9tA6
-         fdYaq4RLqyMu+odlklcLb3/vkf+rq5ENmZYu7oz4AZdq4mhjZAN+ODbuapfT9A5hM+9n
-         IBsHWEC4PC7xOlWAsj92te775B+ABgmDcVqt7oltV+jbn2ZKpApmiWB2SPL7l15TkecI
-         7lpQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793887377; x=1794492177;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+        d=google.com; s=20260707; t=1793893024; x=1794497824; darn=vger.kernel.org;
+        h=content-type:cc:to:from:subject:message-id:references:mime-version
+         :in-reply-to:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=7rw+Vw2Z3L2B8lNDfsIFSmx/pfSm9WeDfRFG4S2Q0cI=;
-        b=ZckG8wAHQKPzps8u/SGWbhWeR4KNG3/zGTYlFGlet2EC8I15Y9Z9rQXJID6PbGlGYl
-         FvuKvxuDqeWRcejnYVMh6QFoSYKHWqyHIZuHNmxa4o/KH2Bsw+OlVup7uM8jaouF2ee4
-         1du3K2/oMMft4egEtEqZqlpeXEyZic9+s8fjIxYV0Oa2PJkKfskPVWabWJBWLNMXWoJy
-         qCDq9tmiO6czyayLp9ZVugNbb96KnHJUZpBWA0FVUvXsjFUg09CrM1R4F75pY1S67fka
-         JvZI8ZM1/XbIehD0A4R3fnw9iWQPpkA1FqUJi6gg1OXYtH9Dt7azo/mh4XDtiZhRiu7Z
-         CMEw==
-X-Forwarded-Encrypted: i=1; AKwUvBzX+X8KKq9Tk5ZaMUQainAggnrukSj3fWihNFjiN5dqKVOn+FQhHb0HmULNY4dliUpJ7W42yvNruas=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+I8QJCU9c/Po0+VY7Rx+yqF03GtJe/8Cv0td5a6Y9pd5qojHBB
-	OnFPXwj3Lvpu0pkE5L0EhfBxusnzbcgeYcaKqFRuqIPn+np74f99FH1Ro6r1s3BYuOk=
-X-Gm-Gg: AYBFou3QL9m0GagAEgmCFTyD1JBCsOEWcJ0CrreJPJaI/lkXC6t/WjEgcQR/O6NI0Fb
-	OULgZo53BG1yU28T+YCtqD9y9w6a4EwjhNKIP0gkmGNaA0CKP4g6gKUbO4sMcSQ7Ot8JqBjlSZ9
-	725JgZOPtNKyMrifZ2AOtE2boz4xLRzBNCbFb/opANsatcIL1jDF7ulWC8pOsl+zUfGjO/pReJI
-	7mfKYiB7+LqdNIxW5kRlEWXKPm1fw/ilz5YkbxAjL37F8eeUCar2HzGE0LNtUWt4Gol/WgbCN2k
-	x0mfBX9tNDbl2KtO69Z1fDMIFXyZcXd4Ep8/K7KguUBsq8QuXrwKrlyyNd9CBrjm313k8+Ef0G9
-	XwRpIzeXTEHA7Gj8ZZFLLIYmO2QeJLtExXnpgwQLGQn/Glqof3/DkQJxlaAgDac0kSt89uETdL3
-	4/2IHN/dwbv6s0N/QgBps0//bi4jaJqFXFAOHlWimSaNyaie3cjIspxRUW3ToWN23jYy4a9K/bD
-	ODFC4bKnrcAPlWNwu2HMDNDKZFRs+VWV/0TfJnjIg+p//COWqgsMcx1+aua4FTMAiFgRGIDEEIC
-	rweDzrIioAyMtqmCnDxE2ExZgmmxNqqtmUi4uj8=
-X-Received: by 2002:a05:6000:310f:b0:48d:f95e:6e8 with SMTP id ffacd0b85a97d-48e6e2c3586mr39104058f8f.1.1793887376849;
-        Thu, 05 Nov 2026 06:02:56 -0800 (PST)
-Received: from localhost ([140.209.217.211])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-48fec8d8e29sm10937240f8f.19.2026.11.05.06.02.55
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 05 Nov 2026 06:02:56 -0800 (PST)
-Date: Thu, 5 Nov 2026 15:02:52 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jason Gunthorpe <jgg@nvidia.com>
-Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	jgg@ziepe.ca, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
-	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com
-Subject: Re: [PATCH RFC 14/20] attestation: Add the base family specification
- and generated files
-Message-ID: <auyKhc02JmfXNiMe@FV6GYCPJ69>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-15-jiri@resnulli.us>
- <179302367452.58760.3782556786585774917.b4-review@b4>
+        bh=kvailjwqfOmhbJJjcy8TbvowePxzON+06QO6Up9gGT0=;
+        b=Gxle+Ke/ft0qPJDBX0JQWzA1ZLmQgVZzBrWyEVoNZxTcMrrajfo1O4ASCBG23EIcjq
+         cUy28QM3QPVKkqYviAKt4UuDyzpJABmNQR4JRuUY/9J9Hkfes1ObSbTFJBTMv0xgyn36
+         I605vsADiFHcxXf4eX61I0j4Gi+kKyS6oNG5NvaDGMqTtAbtArrAfHjtJRgz0KAQXT73
+         KzZfmQgJwuEWSDCZ0Dz1NtIeuRDvR+OePZg4x0U3S37xPzoaWN3MauXtR0KYCrK+pAhq
+         rsIk4Yf8fmIvbb2p7AhpUlOpetxQvv3G4Qgr9XZcKOy2pWy+dVo2136CYJcH164SwW/n
+         pIAQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793893024; x=1794497824;
+        h=content-type:cc:to:from:subject:message-id:references:mime-version
+         :in-reply-to:date:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=kvailjwqfOmhbJJjcy8TbvowePxzON+06QO6Up9gGT0=;
+        b=LMsZI0XxixLnz84HliQzOmSDNN45AOpWOYhmnM4qCgihEHDByJLcfMXR4girV1Q9jp
+         F1j6I5b30IJpZQTkli+gveMR15YUU63qazVfuw7db6/k9MsoXhwMkdbONSTI1bL5Fqpr
+         6k9Mb7pAR+ZU+884A/d6GFXlDeDz3Dv0xFWxpdQSjDC2ngw7sKGcCbQnxUd1A1TATorK
+         TCrQqfX7i3TiYwMHfR5NgTllv88zBg6kUCSVeuTXYpnCgWbXYAPSqDD8buu0EUz3lmcD
+         XXBgHfnn8ZxE1qMDidEouU8Fn533ThGM8HUxucAQiak6pzE2senaBnsBxtG3t36XfsMa
+         icXA==
+X-Forwarded-Encrypted: i=1; AKwUvBwXzmksDTLmRwLlQzgrsTdrQjTfLYgxQN4FbwxRk69gjgya01q7J2uc8MSi039BGhHeE2OpOf3Gd9w=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9iQVuYBM/9lD6JH7oMxy6BmKj4CmReTXXnwibyl96wix1K6Ptc
+	bX5V3Qj5mV/8NlQrmDXaoW1gcjpxxK7HuvtzVCACOjniQPLhaqvHexirmO0ZKQ3an4urJdxmXg=
+	=
+X-Received: from ejcwz8-n2.prod.google.com ([2002:a17:907:b048:20b0:c4d:23d9:b0d9])
+ (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a17:907:cb88:b0:c26:19e3:e98d
+ with SMTP id a640c23a62f3a-c4ca7af17a5mr1750569566b.45.1793893023363; Thu, 05
+ Nov 2026 07:37:03 -0800 (PST)
+Date: Thu, 5 Nov 2026 15:37:02 +0000
+In-Reply-To: <aunVmg42/S2uUDWR@hallyn.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -102,87 +77,110 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <179302367452.58760.3782556786585774917.b4-review@b4>
+Mime-Version: 1.0
+References: <20261028221705.3915340-1-halg@google.com> <aunVmg42/S2uUDWR@hallyn.com>
+Message-ID: <auyink594bxptAPN@google.com>
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+From: "Hallgrimur H. Gunnarsson" <halg@google.com>
+To: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
+	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
+	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
+	Jann Horn <jannh@google.com>, "=?utf-8?Q?G=C3=BCnther?= Noack" <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-api@vger.kernel.org, containers@lists.linux.dev, netdev@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
 
-Mon, Oct 26, 2026 at 03:07:54PM +0100, jgg@nvidia.com wrote:
+On Tue, Nov 03, 2026 at 06:37:46AM -0600, Serge E. Hallyn wrote:
+> Generally, if I, or some users I support, need to use unprivileged containers
+> or user namespaces, then when an 0day comes along, I can hopefully trust them
+> not to exploit it.  The biggest danger comes from the fact that, right now, if
+> they can use them, anyone can.  So if someone can trigger some other code running
+> as user nginx or something, that can become a root vector.
+> 
+> So what if we had a built-in feature or LSM which implemented a credential based
+> whitelist, entered at firstboot?  Something like
+> 
+> ```
+> # Default deny
+> uid == 1000  # approved
+> 1005 < uid < 1010  # approved
+> gid == 1005
+> security_label = lxc_user_t  # Not sure how far we want to go with this
+> tty # must have a session
+> ```
+> 
+> Now, if you want to use user namespaces for generic sandboxes for all
+> users, e.g. to confine browser activity or nginx modules, then this model
+> may not fit.  Or rather, it might need a few tweaks.
 
-[..]
+Thanks for taking a look and sharing the credential-based allowlist.
 
->
->evidence-get:
->  request:
->    challenge: binary
->
->Binary, blob, raw? Lots of words for the same idea here..
+The latter scenario (generic sandboxes for all users) is actually the
+primary use case that I'm targeting. I want to allow unprivileged users to
+create user namespaces, e.g. for sandboxing, but without granting them
+security-sensitive network capabilities (CAP_NET_ADMIN/CAP_NET_RAW) when
+they are not strictly needed, given the historically high risk of local
+privilege escalation associated with them.
 
-binary is inline field, blob is va/memfd/dmabuf using field. I want to
-keep these to "types" of TLV separate.
+The two approaches target complementary layers of the problem. A credential
+allowlist at creation time controls who can create a user namespace, while
+this patch series controls what capabilities are available inside that
+namespace (and its descendants) once it is created.
 
+Gating creation works well when there is a clear boundary between trusted
+and untrusted users. However, in a multi-tenant environment (like a large
+container fleet), we generally treat workloads as untrusted by default.
+Because we still want to allow these untrusted workloads to use unprivileged
+user namespaces for sandboxing, it is essential to keep the attack surface
+small and follow the principle of least privilege whenever possible.
 
->
->    objects[]:
->      blob-class: evidence-blob-class
->      format: string
->      representation: evidence-representation
->      data: output-blob
->  reply:
->    object-lengths[]: uint
->    mr-generation?: uint
->
->=======
->
->mr-get:
->  request:
->    id: uint
->  reply:
->    name: string
->    supported-hash-algorithms[]: uint
->
->No definition what these numbers are. They should be TCG2 defined hash
->algorithm constants I guess. Why not have an enum here for them?
+More specifically, this patch series enables that model of safe sandboxing
+across three key use cases:
 
-it's enum hash_algo - I will make it more explicit including existing
-c enums into yaml.
+1. Configurable capability stripping: Administrators can enable unprivileged
+   user namespaces for all users to support sandboxing, but configure the
+   system to strip CAP_NET_ADMIN and CAP_NET_RAW by default in new user
+   namespaces created by unprivileged users. Basic sandboxing rarely needs
+   these (except to bring up loopback, which Patch 1 addresses via
+   CLONE_NEWNET_LOOPBACK).
 
+   The per-namespace bounding set can enforce this either globally via the
+   sysctl, or explicitly via clone3() at the container manager level. This
+   restriction is monotonic and persists down the namespace hierarchy.
 
->
->    caps: mr-caps
->    register-index?: uint
->
->So we get a string and a small integer for every MR? Like PCR10 and 10
->for TPM?
+2. Selectively granting CAP_NET_ADMIN: Some containerized workloads
+   legitimately need CAP_NET_ADMIN to configure advanced networking for
+   sub-containers. Because an unprivileged creator's child namespace is
+   bounded by:
 
-Yes. The name is the platform's and the index is the hardware's number,
-where it has one. TDX has mrtd without an index and rtmr0-rtmr3 with
-0-3. A TPM would have pcr10 and 10.
+     parent_bset & (sysctl_ceiling | creator_effective)
 
+   a container that is explicitly granted CAP_NET_ADMIN in its own user
+   namespace automatically propagates that capability into the bounding
+   set of any child namespace it creates (unless it is explicitly
+   dropped).
 
-[..]
+3. Dropping capabilities for nested namespaces: If a container with
+   CAP_NET_ADMIN needs to spawn an inner user namespace to run untrusted
+   code in a nested sandbox, it can use CLONE_NEWUSER_BSET to voluntarily
+   drop CAP_NET_ADMIN from the inner namespace's bounding set. This
+   guarantees the nested sandbox cannot access the capability and the
+   restriction persists for all further descendants.
 
-
->
->=======
->
->mr-extend:
->  request:
->    id: uint
->    values[]:
->      hash-algo: uint
->      data: binary
->  reply:
->    generation: uint
->
->Is this extend 'you give me an exactly sized data that is a hash' or
->'you give me data and I hash it' ?
->
->TPM/etc do both, there are good reasons to have both, and the latter
->is more flexible in supporting crypto agility..
-
-The former. I have a patch in a queue that adds the latter: mr-extend
-takes either a digest per bank or the data, as an input blob, which the
-kernel hashes with the algorithm of each bank, and the reply returns
-the digests the banks were extended by.
+As a quick clarification on how this interacts with the hierarchy: the
+bounding set restricts tasks inside the namespace and parent tasks
+relying purely on the parent-ownership check. It does not restrict
+tasks in an ancestor userns that inherently hold the capability.
+Therefore, in the nested sandbox scenario above (#3), the parent
+container with CAP_NET_ADMIN can still configure the sandbox's network
+from the outside (by using setns() to enter the nested netns directly)
+even though CAP_NET_ADMIN is stripped inside the sandbox userns.
 
