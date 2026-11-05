@@ -1,121 +1,55 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.171
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793907477;
-	b=rZRfRF3cW5GzfX5t9hIb/T1t7ssPQTaKyYDAJM4R1OB57udD2acuSloMUwDsadja3Xrd
-	 SUU51hKA5WgSPdWO9iPcjJZvMoXQCOsIZ249m0xK9QxiJQp5lNIkV/FiPqjOQSNde+sdE
-	 5mDBJQAtXo5ZV6ZBhktMT7F5tajrxyFiKI0TcK+rH5FsWJgPeO0haHkhA4Uf9DTUp1G5J
-	 5flJWSt4b6BxL+9r/Zv/gOGE0DqB7TLGaR71V42LTLXYYiEuY9tI3+X3rmyHq8iuKnndL
-	 4S47SwJVduv6l3InYbHiBVQwIXhm2e2mOcVnr/MDOCQAXWgA+QDhELYSgrowBox8vEQ==
+	t=1793915593;
+	b=zuR7loIORa7kJ7OLfNxRE/mqV+4PmK5HNGQBQ7u7W8l5i1c5Whs1nd1yFNxWoEYyf+Fb
+	 YoEmNTXV3jiLN2gwnJFFT600/vnPaHijdEujI93wnGcz1B5/RILw82SWUgNAEi9OTxPAf
+	 /dZTUdoSjzEml29T5Jq+B2i9ZxIukEtwTH7CbenNfDpduIH8QPWuQXPeqP3ni1RsNlHUe
+	 DQOECalSNDe6DFMQKBFlF+5iL9NzZ/8551TewtamlkmuI9uAcMlrxszJxvJr20CUIm1Hr
+	 ABENw6hSl3Oc7Ec4s9LvjocL74ESkiQMUEZmSauJUIwFttM0hu187AtslZoSh0G+Udw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793907477;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=GEs52XSVkXr3Lysumh8vBcPCuRt3C+96FDYzKDRWk9o=;
-	b=eOF+6NBAw3w4LOSkP2n6k+bbA9Lu445BGUEOSXNiDdTXA7lxzVUdCaaThJIAki5Ta0m0
-	 h19RswJZiTtfvh+1VVIjhp1Dy7n7zwobjyBpX4m7y+CZKUe9XmFD7k1VbrQlhCxzHB3E3
-	 szQK1BD6G9e+8QTrZWRQP8u728fLC1dy9HIhiqt4kFgebJLC1sXg/n9QyTN2jyfoN9MLI
-	 j8Pzmornw88Wr6imNMj/bmaR+Ui9Zu2S9HG0i6+LcJlUSdJMKsRurySY1wHal4Vl6oz8x
-	 XQHxwa+QkIZYPUrXqlttMT2bkqffeyZBpMCTeNvr2yVL7pzId3vH/PsYjagyFN0ky8w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793915593;
+	h=Received:DKIM-Signature:From:To:Cc:In-Reply-To:References:Subject:
+	 Message-Id:Date:MIME-Version:Content-Type:Content-Transfer-Encoding:
+	 X-Mailer;
+	bh=sG2USpY9Qzk2BNUDuSKagpHgcyzqMiC0cqV68Oi+240=;
+	b=dFq5s6NjG41qKGPTQxSoh4RkYCledFz+Fwf1l7ayrFvsOkY5Zi1j+tIxSrS7knjf5YxY
+	 2x7kZtPyUZ+KT5xTM2Px8+LpHJOvv/9b/J2/YUMdR5HRMdnSY3f7ICObMi5Y59H55WaB7
+	 p8Vy87uRyxeHPOu93ptc5xDOrbmme2tKXosXup+7KhHG3xQkoUcqwYUXIPukApvB3E/xC
+	 th1+DczVhO0UFX9Z2BE+/+t4W6FJVa19n/AzzCjHEZCkeL5U8MP4UkEAc9QU1Pldp4gS9
+	 oF2v0YylJkBzNu4hHZVqz/W3DuPMh0RR1/ddn5mIr9C1xn91Rnac9V5XP3FguTMeR8A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=arista.com;
-	spf=pass smtp.mailfrom=arista.com;
-	dkim=pass header.d=arista.com header.i=@arista.com header.a=rsa-sha256 header.s=google header.b=CpWYY4HP;
-	arc=none smtp.remote-ip=74.125.82.171
-Received: from mail-dy1-f171.google.com (mail-dy1-f171.google.com [74.125.82.171])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TDzlJLUD;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7468D607B95E
-	for <linux-api@vger.kernel.org>; Thu,  5 Nov 2026 19:37:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7468D607B95E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=arista.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arista.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 116D8606A326;
+	Thu,  5 Nov 2026 21:53:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=arista.com header.i=@arista.com header.a=rsa-sha256 header.s=google header.b=CpWYY4HP
-Received: by mail-dy1-f171.google.com with SMTP id 5a478bee46e88-36f6295304dso169460eec.1
-        for <linux-api@vger.kernel.org>; Thu, 05 Nov 2026 11:37:56 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=arista.com; s=google; t=1793907476; x=1794512276; darn=vger.kernel.org;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=GEs52XSVkXr3Lysumh8vBcPCuRt3C+96FDYzKDRWk9o=;
-        b=CpWYY4HPqsMqathLuCP0SqyPHsMFAQWoskfk2GdP07u48l12UmKTiwONJuvB++DOZo
-         Yclhv2OYTvpyVQe0nGDznRS9Z3hWx2kbCBFvY0pqnRrXO41EfaKHYTGa75im9YoH0HyQ
-         yVlSieODB043s7YTZG83QMLxA1SHJ8toDshd16zaROUJAf2wNKauWeStmi1bLrH6/8Tz
-         mQQW4N4m8vwam53SdfBwr6BB3a+iuCtW3J6Db2OjYNgcUSfpF/y05AZgZRu+kEXd/N4u
-         Ct4MdT86o/xNJxf/iCp+y8jz1OLKeZSYtEQMz8MNbuIitFs0Ewo+oz4HzT9k1iLJwTE9
-         Ebzg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1793907476; x=1794512276;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=GEs52XSVkXr3Lysumh8vBcPCuRt3C+96FDYzKDRWk9o=;
-        b=e+9Z/6dxapYHufkLLJV694xc78wvoqB1APhkXLodFdxeQ/iJDT9bIjVoEK0Bd5XFvX
-         Ww8ydERbbtI/9O1jSMFHrs7YqmnRL6sBYEjLGRiB1chKJt474wakq0857b/X+BA5VL7e
-         uJoGNH3OSj+DP2UU334TTMr2a5C7Mw+Y47/Z9zOCTSzlGODb3y9OLuzyeI2m/iy5Z/CO
-         oBueJguvMlPgX4+6V79/f1E9zUhXxVB8aNsybnTwoFRB5w140jfHK0Iugp5zRxpgJzek
-         DjCFr/UKLJXQXcuqeIoAjXFG0bBi7uAnILojJhrg1GXypJw8oRaHNlXj8tqFTBNid0Av
-         ZmtA==
-X-Forwarded-Encrypted: i=1; AKwUvBxgvr3yrrwO2jGI8BsEwDKtlEzK1o7/aUGeK7vyjWnhmxFbKgftBlcaZb/ggPKzy+kAyK3xLawlMg4=@vger.kernel.org
-X-Gm-Message-State: APuU4Z82VLl4gUUDkBnaegufZVfKj033Y0J8YhZKoO0OzIL/SZNDRTA1
-	STCRWJ4Oz5pqGOortIZwKrLzC81noTsxQcRxIsI2LwBVusNO22bL1xcK0uIZ8K6Bvg==
-X-Gm-Gg: AYBFou2cEpt2oxSQXcHT3vAUVmN/2J5F2nx2WnCwKDzoamB/GDOM26o60TFraqOUez/
-	4XrkCWe6dec5r0Ipwugd59Qv8MBLNDdoWfbno523JXZLJX40OItMppX6xljIMWrV4xztl8LpL8J
-	QW6ynDXls2lZZsHzNzKFcWG6sN1q+EELepAjklAJ2PYmJt7YTDqeTnqyroN/HuKjpSeOf2QqDzc
-	5QEddjIx+Cjji3yC6w+qj80H6mxcWeV0NVTJCLj/unBoMF+TlpLKs7AjX/bkVnfRX6LfBmUSucP
-	hFnc6GTNtinIKopgN+8hJ9ZZ5SYW+5hbNkEepoojyK95RPbG1zvYONuTLTo/sbSTT/pxHXrBY7a
-	KRlpuiXoY2yKnYI9KvVCBkUIdhXFKanrf4zafbHVNX+aTQ+34FH6b0PHn9WlshyRZTtiKMm4Gn1
-	m8l7kAynlU134/Ovov4kXoVB3Sd+HJoMuFKXGMjCq3RhkVvOqWm37EzuXv+qo2ZgAfk6Uby1htV
-	hkDv9yHrelm9mxDxIJw9DGxLYp9pi5k+IbAQlyutTz2cPvupA/lPDpxMbPAHq7xnsoOHRyZzPlO
-	nFjKLyf3mLNAyBzrdQ6UUCdPVlKhpttQ6E/PzfwXDSpM5kcS2JFEwzKQatyCZqvAHD6yqeuVIZa
-	hn6arw7y6s6ikW1kASmwEtyw=
-X-Received: by 2002:a05:7300:3e97:b0:36d:9900:bb92 with SMTP id 5a478bee46e88-36f75254a98mr150454eec.10.1793907475358;
-        Thu, 05 Nov 2026 11:37:55 -0800 (PST)
-Received: from dannyhu-upstreamLinux.sjc.aristanetworks.com ([74.123.28.19])
-        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-36f72ec8a02sm326134eec.11.2026.11.05.11.37.53
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 05 Nov 2026 11:37:54 -0800 (PST)
-From: Danny Hu <dannyhu@arista.com>
-To: Alexander Viro <viro@zeniv.linux.org.uk>,
-	Christian Brauner <brauner@kernel.org>
-Cc: Mimi Zohar <zohar@linux.ibm.com>,
-	Roberto Sassu <roberto.sassu@huawei.com>,
-	Dmitry Kasatkin <dmitry.kasatkin@gmail.com>,
-	Eric Snowberg <eric.snowberg@oracle.com>,
-	Jan Kara <jack@suse.cz>,
-	Victor Kamensky <kamensky@cisco.com>,
-	Taras Kondratiuk <takondra@cisco.com>,
-	Zheng Zengkai <zhengzengkai@huawei.com>,
-	zhangguangzhi <zhangguangzhi3@huawei.com>,
-	Danny Hu <dannyhu@arista.com>,
-	Jason Yan <yanaijie@huawei.com>,
-	silviu.vlasceanu@huawei.com,
-	hpa@zytor.com,
-	arnd@arndb.de,
-	james.w.mcmechan@gmail.com,
-	niveditas98@gmail.com,
-	pierre@arista.com,
-	julien@arista.com,
-	kbharathi@arista.com,
-	alexandr.lobakin@intel.com,
-	linux-fsdevel@vger.kernel.org,
-	linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	linux-kbuild@vger.kernel.org,
-	initramfs@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	bug-cpio@gnu.org
-Subject: [PATCH v6 1/4] ima: skip algorithm availability check until initramfs unpacking is finished
-Date: Thu,  5 Nov 2026 11:37:40 -0800
-Message-ID: <20261105193743.2654656-2-dannyhu@arista.com>
-X-Mailer: git-send-email 2.51.0
-In-Reply-To: <20261105193743.2654656-1-dannyhu@arista.com>
-References: <20261105193743.2654656-1-dannyhu@arista.com>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TDzlJLUD
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D8AD71F0089F;
+	Thu,  5 Nov 2026 21:53:10 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793915592;
+	bh=sG2USpY9Qzk2BNUDuSKagpHgcyzqMiC0cqV68Oi+240=;
+	h=From:To:Cc:In-Reply-To:References:Subject:Date;
+	b=TDzlJLUDDSRfGqZBJG7aivEmzDqEEi4tKR44i0a+ayY9bG44AQWP6wGeTU1tPZO3K
+	 qumPeM/SogAL4SVAKqk1ldXvXAFPbxwQyq0Iq/IGzDxScaWsmTAwj8nJF9uipz5I7o
+	 d/qYZD3RYDd2WdoxPM1I884tREUZzBsWnPooGaOk5+mddd3f2owvyRGHABpcuP0070
+	 xmsHO0n6gbuhDawekKHBMJ7pTCObrvSb6i+aJ/xSkgI5C+gPeg3nMHq78PWCTjEI0l
+	 lRvJMZ36gYp8qqqIRTY+9LV4KAQTSXqOAeMSuO8D41B55S57gdagPTEW1cSuFM+py8
+	 d4Bv9MXXv1I2g==
+From: Christian Brauner <brauner@kernel.org>
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kara <jack@suse.cz>, 
+ Jeff Layton <jlayton@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, linux-fsdevel@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
+References: <20261029-mgtime-statx-v1-1-175b5afdf2fb@kernel.org>
+Subject: Re: [PATCH] statx: add STATX_ATTR_MULTIGRAIN_TIMESTAMP
+Message-Id: <20261105-fachabteilung-irrwitzig-bersten-6dbe710891ce@brauner>
+Date: Thu, 05 Nov 2026 22:53:09 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -125,82 +59,36 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.17-dev-ce4c1
 
-With CONFIG_IMA_APPRAISE=y, restoring xattrs during initramfs unpacking
-can deadlock the kernel if the xattr being restored is signed with a hash
-that the kernel does not already have available. This occurs when the
-ima_inode_setxattr() hook calls crypto_has_alg(). crypto_has_alg() may
-synchronously request a module leading to a circular dependency where the
-userspace helper waits for initramfs unpacking to complete while initramfs
-unpacking waits for the userspace helper.
+On Thu, 29 Oct 2026 12:28:16 -0400, Jeff Layton wrote:
+> Userland has no way to tell whether a file's timestamps are multigrain,
+> i.e. whether successive changes after a query are guaranteed to yield
+> distinct timestamps.
+> 
+> Add STATX_ATTR_MULTIGRAIN_TIMESTAMP and set it in vfs_getattr_nosec()
+> when is_mgtime() is true (IOP_MGTIME is set from FS_MGTIME at inode
+> init). Always advertise it in attributes_mask.
+> 
+> [...]
 
-Guard this crypto availability check in validate_hash_algo() until
-initramfs unpacking is complete. This prevents the kernel from requesting
-a module during unpacking and allows security.ima xattrs to be restored
-even if the hash algorithm is unavailable in the running kernel.
-Essentially, this flag distinguishes restoration of existing metadata
-during initial population from setting/changing an xattr during runtime.
+Applied to the vfs-7.5.misc branch of the vfs/vfs.git tree.
+Patches in the vfs-7.5.misc branch should appear in linux-next soon.
 
-A benefit of this approach is that once unpacking is complete, all
-subsequent xattr updates go through the same codepath as before which
-preserves the existing behavior during normal userspace operation.
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
 
-Signed-off-by: Danny Hu <dannyhu@arista.com>
----
- security/integrity/ima/ima_appraise.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
 
-diff --git a/security/integrity/ima/ima_appraise.c b/security/integrity/ima/ima_appraise.c
-index 63b0cb957c65..1403f5653973 100644
---- a/security/integrity/ima/ima_appraise.c
-+++ b/security/integrity/ima/ima_appraise.c
-@@ -20,6 +20,14 @@
- 
- #include "ima.h"
- 
-+static bool ima_initramfs_populated __ro_after_init =
-+	!IS_ENABLED(CONFIG_BLK_DEV_INITRD);
-+
-+static void ima_notify_initramfs_populated(void)
-+{
-+	ima_initramfs_populated = true;
-+}
-+
- #ifdef CONFIG_IMA_APPRAISE_BOOTPARAM
- static char *ima_appraise_cmdline_default __initdata;
- core_param(ima_appraise, ima_appraise_cmdline_default, charp, 0);
-@@ -738,6 +746,22 @@ static int validate_hash_algo(struct dentry *dentry,
- 		if (likely(xattr_hash_algo == ima_hash_algo))
- 			return 0;
- 
-+		/*
-+		 * IMA validates the crypto algorithm whenever the security.ima
-+		 * xattr is set. Restoring xattrs during initramfs unpacking
-+		 * can call crypto_has_alg() before unpacking has completed.
-+		 *
-+		 * If the algo is unavailable, crypto_has_alg() may
-+		 * synchronously request a module. The userspace helper waits
-+		 * for initramfs unpacking to finish and creates a circular
-+		 * dependency.
-+		 *
-+		 * Skip the algorithm availability check until initramfs is
-+		 * populated to avoid this deadlock.
-+		 */
-+		if (!ima_initramfs_populated)
-+			return 0;
-+
- 		/* allow any xattr using an algorithm built in the kernel */
- 		if (crypto_has_alg(hash_algo_name[xattr_hash_algo], 0, 0))
- 			return 0;
-@@ -829,6 +853,7 @@ static struct security_hook_list ima_appraise_hooks[] __ro_after_init = {
- 	LSM_HOOK_INIT(inode_set_acl, ima_inode_set_acl),
- 	LSM_HOOK_INIT(inode_removexattr, ima_inode_removexattr),
- 	LSM_HOOK_INIT(inode_remove_acl, ima_inode_remove_acl),
-+	LSM_HOOK_INIT(initramfs_populated, ima_notify_initramfs_populated),
- };
- 
- void __init init_ima_appraise_lsm(const struct lsm_id *lsmid)
--- 
-2.51.0
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs-7.5.misc
+
+[1/1] statx: add STATX_ATTR_MULTIGRAIN_TIMESTAMP
+      https://git.kernel.org/vfs/vfs/c/81f2cc03b537
 
