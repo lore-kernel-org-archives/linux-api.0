@@ -1,72 +1,65 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793955453;
-	b=a4I7XeOWpEYjZtxshlGdeRbM1PTcu/LHz0RPodc7WpgJeUBH3RiqEy7XhsiiYShqrgLx
-	 M9UHNtrqa3v7Hy1Tpug/t9e2Ha/+pMtrlnlGOJ46QM2PPHCamvTLLg7LOfugkfkqDoivf
-	 S4QLEM/CNG1MmeuTZvigSd150fmlOuUuCIVArDOduReg9bd+bKR1EuI0lx5pe/eh/M9lv
-	 L5IiirVLhu9Ro9cwnM1Xj+ZcG2DdaoIGHKMtp31y2A8/vVOrAW4HTpxZW+Cd/mhMM8dlF
-	 9Mp9MYkymJ3BFwjAOwF4CtFOri64Rpmw8ASeF7ltgnv3nNhDNqXN37AEQc8IYeMpWYg==
+	t=1793959982;
+	b=Z+MhnnWrt6JPuTP4JSsqIj1oHNViJpmCiEG3ua34SX2e2vVTzaTrlN4xnhsznOZ/Mp2w
+	 TFIxz3FAcIioRTbsCYh9CBQNZ6WPT9Ok+h8pWPHRoEi2UXpXmcmDO5PDm5PVMuJP8Njrh
+	 kWFEJ173bLe+0+vNJ5S+hwFA0pRMsYmhQyOIapPXNolRJe+wILJjX76D2ysY6i9PsNgp9
+	 //Rz1heaAVG6idkoChhug24fOGgI7+3o89TLQA8wkbrGr+mDWKRXlLcC+jmz+UErUsosF
+	 MU4ruTNuq1LgPE68OqBgM+ROofJUO4x1jr6QvBhizVegUy4rvKJvktpKKto8fBIOQfA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793955453;
-	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
-	 Subject:Message-ID:References:MIME-Version:Content-Type:
-	 Content-Disposition:In-Reply-To;
-	bh=U8NbQLJQXWhE9kRQfhYMRG1gPTaScKvk/CWFssfmr0M=;
-	b=1RI5IcoW44sYCFv8H+D4wSo/fTEqRE0Mc07aofYa50WxwX3d5sYwOENQb19NEU0e8mvP
-	 z67M6srWl500oJLVR1v/A7UsxyRs0hudgcrUJdCRJzpNXfv8E/HuCYwKCRVbeP9GcCzj4
-	 1Eopvob0Ox/f1PSEhp8G+BtmjBUOJrSAVx4cghYclojlrShWKOKwCpK8KqL3lcIEbnRdi
-	 BOe81WKsSFoIoJD6RWORtqvX5KBvxG+yrZqY1sQkBA6zkaIi+miw0Nu/QiICvQ7KUaOa0
-	 dJsvAeW3hmSBzalr3PObN/tkMkZLUO1blbWnDWBc7FEwXzTkEuiHw/9RYtQo/IYiI0w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793959982;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=nnzK0BslWJHcXFemGgfYITU9fhviw2smy0wN/ApAn14=;
+	b=hZc5LuKlOx2w2Rj9dJJVWrPOd+rMzUP8RYWAtuGiHC4aOjQowbicne2HE+A55E+sOXzH
+	 ShEe1Q37OPzLq5XxuCXwfDHBqCzrZlNEbhHO8p2UYS/gwAccNrcyilJqxAuoU6UZQCrE5
+	 NnqikgR5l+ROns1KftFoonDvbjHqnJpq+onv5lkp0Sb3j4jmenHD8DFYxmW1ZVtMh8Ghz
+	 TU28JlcNj0Mt9pQ5Jzfdqcw162gxO+xghvhZa95EVpS82A+y9u0f7vpdlBGUc6LaQhmkl
+	 ySipzs+g88lP9YHGk6KbJb79+nhrWnA48URkmAmuWJHtClwdu/PQNG3kV4L3NOpulAw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=arm.com;
-	spf=pass smtp.mailfrom=arm.com;
-	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=XszJqe4J;
-	arc=none smtp.remote-ip=217.140.110.172
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id C27B1606A32C;
-	Fri,  6 Nov 2026 08:57:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C27B1606A32C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="edM4/p9S";
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 54AFD606A326;
+	Fri,  6 Nov 2026 10:13:02 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=XszJqe4J
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id DD0C91650;
-	Fri,  6 Nov 2026 00:57:28 -0800 (PST)
-Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 945A63F673;
-	Fri,  6 Nov 2026 00:57:27 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
-	t=1793955452; bh=O/L8Xi+/doDKEHUTFfH9GXIaTDWnQJy0rB+FzYj+0/c=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=XszJqe4JrvzxPntwZX3H1oWIoGpTG4x+s3Eno/88TbHCZ0FGPvkSOrDvEtcBCz0s9
-	 x8laoq14tL0TS1I17eP+Fd3F5Ox8CIiN9yaH+byC8xsMcqvhXaySnADXt+e7uGt5iJ
-	 ov6U+NtVpkprCc3zV6oCmqqNrj8n/80rxEetD8LM=
-Date: Fri, 6 Nov 2026 08:57:25 +0000
-From: Yeoreum Yun <yeoreum.yun@arm.com>
-To: Jiri Pirko <jiri@resnulli.us>
-Cc: Yeoreum Yun <yeoreum.yun@arm.com>, Jason Gunthorpe <jgg@ziepe.ca>,
-	linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
-	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de,
-	ksinyuk@kernel.org, rodrigo.vivi@intel.com, cedric.xing@intel.com,
-	sameo@meta.com, drdeeglaze@gmail.com,
-	James.Bottomley@hansenpartnership.com, aik@amd.com,
-	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
-	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
-	aneesh.kumar@kernel.org
-Subject: Re: [PATCH RFC 17/20] attestation: Add CTLV operation handling
-Message-ID: <au2WdWFOYbPEv0Uj@e129823.arm.com>
-References: <20261015145053.3664509-1-jiri@resnulli.us>
- <20261015145053.3664509-18-jiri@resnulli.us>
- <auuDcABX27EeTApl@e129823.arm.com>
- <20261104194622.GC3889730@ziepe.ca>
- <aux01NUd85PabtZu@FV6GYCPJ69>
- <auyKE2sGqtfjk4v5@e129823.arm.com>
- <auy7IM0_S2tv7EZX@FV6GYCPJ69>
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=edM4/p9S
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id A44D81F0089F;
+	Fri,  6 Nov 2026 10:12:55 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1793959982;
+	bh=nnzK0BslWJHcXFemGgfYITU9fhviw2smy0wN/ApAn14=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=edM4/p9SW7+S73fDgQfspXTjrIk9baHrV37Kd/QhylG3sLFrLKrn7Hstn6AQsz5uw
+	 UpQitFXbsHcThZxWuXEdgx2CDWhWf6hbi4u2aagagDQcQos8ZBnDTihVAkxsA3Xn2S
+	 DaXEaR4Ddkun5RuUbGazbbXXqJnn4U2NrjbxamgcSa5zL2fHatPp33S0Uil9R6wxXW
+	 6ge5YPJC6yBuH0U/vS7kAmhEAxOiNR4kAK8TFOI7nFk/vAgdTcuJjqV3mfM6VrhrYp
+	 EqVajW7CacXXOnIxA1xdsWgBIymxyAvUB9LHqQ8we47DuLvg13NGqZGYXr7xRTpXPl
+	 +UVOBxUZErwXA==
+Date: Fri, 6 Nov 2026 11:12:53 +0100
+From: Christian Brauner <brauner@kernel.org>
+To: "Serge E. Hallyn" <serge@hallyn.com>, 
+	"Hallgrimur H. Gunnarsson" <halg@google.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
+	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
+	Randy Dunlap <rdunlap@infradead.org>, Jann Horn <jannh@google.com>, 
+	=?utf-8?Q?G=C3=BCnther?= Noack <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
+	containers@lists.linux.dev, netdev@vger.kernel.org, linux-doc@vger.kernel.org, 
+	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+Message-ID: <20261106-sandalen-monopol-neugierig-23357f8efc64@brauner>
+References: <20261028221705.3915340-1-halg@google.com>
+ <aunVmg42/S2uUDWR@hallyn.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -76,193 +69,40 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <auy7IM0_S2tv7EZX@FV6GYCPJ69>
+In-Reply-To: <aunVmg42/S2uUDWR@hallyn.com>
 
-On Fri, Nov 06, 2026 at 09:27:42AM +0100, Jiri Pirko wrote:
-> Thu, Nov 05, 2026 at 02:52:19PM +0100, yeoreum.yun@arm.com wrote:
-> >On Thu, Nov 05, 2026 at 01:32:49PM +0100, Jiri Pirko wrote:
-> >> Wed, Nov 04, 2026 at 08:46:22PM +0100, jgg@ziepe.ca wrote:
-> >> >On Wed, Nov 04, 2026 at 07:11:44PM +0000, Yeoreum Yun wrote:
-> >> >> [..snip..]
-> >> >> 
-> >> >> > +static int attestation_evidence_request_decode(struct attestation *att, struct ctlv_op_ctx *ctx,
-> >> >> > +					       const struct ctlv_cursor *request,
-> >> >> > +					       struct attestation_evidence_request *decoded,
-> >> >> > +					       struct attestation_evidence_object_request **objects)
-> >> >> > +{
-> >> >> > +	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
-> >> >> > +	u32 challenge_length;
-> >> >> > +
-> >> >> > +	decoded->challenge =
-> >> >> > +		ctlv_attestation_evidence_get_evidence_challenge_get(request, &challenge_length);
-> >> >> > +	decoded->challenge_length = challenge_length;
-> >> >> > +	if (challenge_length < caps->min_challenge_length ||
-> >> >> > +	    challenge_length > caps->max_challenge_length)
-> >> >> 
-> >> >> Hmm, I'm not sure whether this check is required for
-> >> >> ATTESTATION_EVIDENCE_BLOB_EVENT_LOG blob type.
-> >> >> 
-> >> >> for example, if the provider provides two evidence:
-> >> >>   - ATTESTATION_EVIDENCE_BLOB_PRIMARY (might attestation token)
-> >> >>   - ATTESTATION_EVIDENCE_BLOB_EVENT_LOG
-> >> >> 
-> >> >> might challenge is reuiqred for generating the token
-> >> >> and this would be marked at min/max_challenge_size in evidence_cap.
-> >> >> 
-> >> >> However, in case of eventlog, it wouldn't require challenge.
-> >> >> for example, TPM event log or CCEL event log.
-> >> >
-> >> >Right
-> >> >
-> >> >> Do we need some field on attestation_evidence_supported_object whether
-> >> >> it requires challenge or not and applies this sanity check per the object?
-> >> >> 
-> >> >> Otherwise, to get eventlog, it would need to send *dummy* challenge
-> >> >> always.
-> >> >
-> >> >I wonder if we should have two interfaces here for signed and unsigned
-> >> >evidence? It would be clearer for userspace then when it needs to
-> >> >provide a challenge or not.
-> >> 
-> >> Isn't the challenge field provided/not-provided enough?
-> >> 
-> >> Currently on the introspection side, device-get op would provide
-> >> challenge-lengths array:
-> >> 
-> >>         evidence?:
-> >>           challenge-lengths[8]:
-> >>             length?: uint(..4096)
-> >>             min-length?: uint(..4096)
-> >>             max-length?: uint(..4096)
-> >>  	  objects[16]:
-> >>             blob-class: evidence-blob-class
-> >>             max-length: uint
-> >>             blob-instance?: uint(..u32-max)
-> >> 
-> >> I think it would make sense to have challenge-lengths array per object:
-> >> 
-> >>  	  objects[16]:
-> >>             blob-class: evidence-blob-class
-> >>             max-length: uint
-> >>             blob-instance?: uint(..u32-max)
-> >>             challenge-lengths[8]:
-> >>               length?: uint(..4096)
-> >>               min-length?: uint(..4096)
-> >>               max-length?: uint(..4096)
-> >> 
-> >> Then the unsigned object would just simply have challenge-lengths empty?
-> >
-> >This looks good to me. :)
-> 
-> The challenge is one of several open points that all depend on what an
-> evidence object is: Rick's TDREPORT, legacy versus DICE Quotes,
-> "primary", "raw" and the format strings. Here is my proposal to settle
-> these together:
-> 
-> The model:
-> 
-> 1. device-get lists each object with an id, a class (signed, event-log,
->    cert-chain or auxiliary), the formats it may come in, its max-length
->    and, for signed objects only, challenge-lengths.
-> 2. evidence-get names objects by id, as MR ops name MRs, each with its
->    output blob. It carries a challenge exactly when it names a signed
->    object, and the challenge has to fit each of them.
-> 3. The reply gives each object's format, length and, where the TCB
->    vouches for it, the TCB's digest. The output is always {label, data}.
-> 4. A signed object is made by the call, over the challenge, and never
->    reused. The rest are read as they stand.
-> 
-> This settles following issues discussed during this patchset review:
-> 
-> 1. One op, not two. Per-object challenge-lengths tell userspace when to
->    pass a challenge, and one call returns the signed object with the log
->    and certificates needed to check it.
-> 2. TDX's TDREPORT goes: it is MAC'd for the platform, not signed.
->    /dev/tdx_guest keeps TDX_CMD_GET_REPORT0.
-> 3. TDX's Quote object lists the legacy and the DICE format. The provider
->    labels what the host returned and fails on a Quote it cannot label.
-> 4. "primary" becomes "signed", manifest joins auxiliary, spdm-vca,
->    spdm-measurements and tdisp-report become formats, and signature
->    goes, as a signed object carries its own.
-> 5. "raw" goes with the representation attr. The TCB digest is a reply
->    field, so a blob always holds the object's own bytes.
-> 
-> Formats become an enum each provider family defines, instead of free
-> strings. I'm still unsure if format should be entirely provider-specific
-> and defined as "extension", or it should be somehow mixture of common
-> and provider-specific. Looks there is not really much common
-> anyway, so I lean towards provider-specific only. So far I have:
+On Tue, Nov 03, 2026 at 06:37:46AM -0600, Serge E. Hallyn wrote:
+> Kees whipped up a proof of concept BPF lsm that implemented this.  A copy
+> from his email (and let's call it GPLv2 unless he wants to change it to
+> something like MIT) follows:
 
-Overall, This is plausible for me with some small question.
+There's no need to special-case user namespaces for this anymore.
+I've added generic namespace LSM hooks for v7.4-rc1:
 
-> 
-> ======  ============  ==========  =========  ===========================
-> Family  Format        Class       Challenge  Bytes
-> ======  ============  ==========  =========  ===========================
-[...]
-> tpm     ek-cert       cert-chain  none       EK certificate from NV
+* namespace_init()
+* namespace_install() (setns())
+* namespace_free()
 
-Just a thought, but how are we planning to retrieve
-the NV index for EK certificate?
+called from the common namespace code I added and for every namespace type.
 
-As far as I know, TPM NV storage doesn't support labeling.
+So a policy like this can cover creation and setns() of all namespaces
+and follow a namespace by its id until it's gone.
 
-Should I assume that the NV index would be specified as part of the
-challenge to retrieve the certificate from TPM NV storage?
+The catch is that what got merged doesn't work with the bpf LSM right
+now.
 
-[...]
-> armcca  event-log     event-log   none       Realm firmware log, if any
+namespace_free() is never called unless an LSM allocated a namespace
+blob, namespace_init() sees a namespace id of zero because
+the id is allocated after the hook has run, and the bpf LSM marks the
+namespace arguments of both hooks as trusted although the namespace can
+be freed right after.
 
-JFYI, this would be a CCEL log like tdx:
-  - https://github.com/tianocore/edk2/issues/11384
+I sent fixes for all of that (cf. [1], [2]) (cf. [3]).
 
-
-> snp     report        signed      64         SNP attestation report
-> snp     cert-table    cert-chain  none       VCEK or VLEK, ASK and ARK
-> ======  ============  ==========  =========  ===========================
-> 
-> Did I miss something that would break us here?
-> 
-> CTLV layout draft:
-> 
->     device-get reply, caps.evidence:
->       objects[16]:
->         id: uint(..15)
->         class: evidence-class
->         # The reply says which one was written.
->         formats[4]: evidence-format
->         max-length: uint
->         # Signed objects only, entries as today.
->         challenge-lengths[8]?: ...
->         # Descriptive, such as an SPDM slot.
->         instance?: uint(..u32-max)
->         # When the TCB vouches for the object with a digest.
->         tcb-digest-algo?: hash-algo
-> 
->     evidence-get request:
->       # Required exactly when a signed object is named.
->       challenge?: binary(1..4K)
->       objects[16]:
->         id: uint(..15)
->         data: blob(out, va memfd dma-buf)
->       # selection, privlevel, service and options as now.
-> 
->     evidence-get reply:
->       # In request order.
->       objects[16]:
->         format: evidence-format
->         length: uint
->         tcb-digest?:
->           hash-algo: hash-algo
->           data: binary(16..64)
->       # The generations as now.
-> 
-> Makes sense?
-
-For me, It seems fine.
+[1]: https://lore.kernel.org/all/20261026-work-security-namespace_free-v1-0-ffa3ebbf71bd@kernel.org
+[2]: https://lore.kernel.org/all/20261029-work-security-namespace_free-v2-0-65591dbba7b3@kernel.org
+[3]: https://lore.kernel.org/all/CAHC9VhRwD1c1qKK4=Uc8cbMy27iF722C0DZeXy4WGtH-kOBOcQ@mail.gmail.com
 
 -- 
-Sincerely,
-Yeoreum Yun
