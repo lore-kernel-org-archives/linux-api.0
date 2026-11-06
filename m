@@ -1,73 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=166.70.13.231
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.44
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793936904;
-	b=fnckPFiyqc+cqFSJQHEpleeuMep2J8mhPtIVbjwBK+QjLZiybRMf9QYxM0Ft9WlAMe2c
-	 ePGgCrrt7KIXrdR84JKx2fC5uySdM8Uqn85EVkH7ijdj/3qDwJH5c6R6i1JMC/KSRgBhP
-	 hMdeaj1t2PQaD/J4HSx+X0D2pB4+ccayAqqWWrpme075XP6lVh6gTchsypYkGcZrdce7Y
-	 67Sv+Gg5vn6yTM4cBwue/JOvKnuaYbknbJCWWE6l+/UfJ8+QIpJsjV68/8thPM4wPBEOF
-	 qQR8eDPA92YMEt981TNdLHi1Y/jpkAvQBHXoo7Ayw/ERV4XblI5sinkYCrw0JiAYJDQ==
+	t=1793953675;
+	b=fKLMaBPOugzWZqfrhP8KNv0brA2gWo4q9JLMnrcuModuweTI/BwRZdCCm/m0m0PI6Aau
+	 SQ/YDgPTB/fusHhKt4hBd3r8CiEbbrOJBwUlFJI02yEtwgfBEUMT7te2pDbUmvy7gjMim
+	 GvYD2LYYNGuJZxWeSR57NZH83EJTYuxNG+wHzRF65XtgIZIDkIfY/s3sdQxNJY3VKgpEg
+	 soHCSpraJ9olf+7MpaU3z/rybIP0Cq8JK2/VMrKTQPwEGPwdViPpo4ic3nXji80/69chj
+	 WDV+d+3h4cKts3rmjj9BZC8l1k8W5XF98lic6EJijXNvWNkixvCoqKQJrIOB1EdQfiQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793936904;
-	h=DMARC-Filter:DKIM-Signature:Received:Received:From:To:Cc:In-Reply-To:
-	 References:Date:Message-ID:User-Agent:MIME-Version:Content-Type:
-	 Content-Transfer-Encoding:X-XM-SPF:X-XM-AID:X-Spam-Checker-Version:
-	 X-Spam-Level:X-Spam-Status:X-Spam-Virus:X-Spam-Report:X-Spam-DCC:
-	 X-Spam-Combo:X-Spam-Relay-Country:X-Spam-Timing:Subject:
-	 X-SA-Exim-Connect-IP:X-SA-Exim-Rcpt-To:X-SA-Exim-Mail-From:
-	 X-SA-Exim-Scanned;
-	bh=Be0Za5xRQuKpCLQH+AxKFL6WKlTHgvlPTNvTbJmkg0A=;
-	b=4aO6EdiF6nPeBGxspzY8VfgmH9tC2wVOEsTfHSqYwMC8a64qv9yuV/30sxztd0oQHcuJ
-	 r2chYmJ0PBXTxaGLe/hF520QGG4UdG8WRRGP/Icjkilh8x8nAY5ndAv2yuomqaMkltWpQ
-	 RYoKVT43iZON9D8TMx8UTy5MVHICA6i+6vWT+Jrc3O1V9buTAeABZOdmfzT5EMAhpt5Ma
-	 ZdwMtrqKLL6Kbf1TgeWKYnMJcB6NA2T+IB0fc75rZY8BeC51XNZy5AJKcZFFCZEz66IZE
-	 O0MpEZKMkqEDV1+5ukRVSF9gukP3qwN2z0Slq+4806LKR+pJ6CJHBXQ+DdkJZlRGR9A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793953675;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=eFyf1J2eCmzdcygEsnj9uuRDnIkV5nwpe7sUFMbcNPA=;
+	b=yaWgi58CRljkFUGIx23aycD+UUnds6P3gzk3n5S9Wolj/oQN8NMJ7bVLug4NpimzotXt
+	 bj+LRTkPN2504vSSeXl/N9NqsQFESWt/YEy3GFZnbgkQYeE7xp9Q42y/de4u4si8ngfRw
+	 Tk0C69TPxOYMxX+oRps9bz5y+dz+oyIMpVVROBW96U1kS2O3pK8/aipsYxU2bv7JeUAu9
+	 83edFh3BU0v6weDjHdEpv4O16HWNwr+kB/zLlPXAcZ0guLF9y1xTiOzJ5datzVwSSIl0M
+	 5+Yqd7OPNx1WlskQL1kp/2qNcDmRioIUPmmP5827WyEFpvhIelY3xgh5tDwnnVeY1bg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=xmission.com;
-	spf=pass smtp.mailfrom=xmission.com;
-	dkim=pass header.d=xmission.com header.i=@xmission.com header.a=rsa-sha256 header.s=xmission header.b=EHKXlCPs;
-	arc=none smtp.remote-ip=166.70.13.231
-Received: from out01.mta.xmission.com (out01.mta.xmission.com [166.70.13.231])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=resnulli.us;
+	spf=pass smtp.mailfrom=resnulli.us;
+	arc=none smtp.remote-ip=209.85.128.44
+Received: from mail-wm1-f44.google.com (mail-wm1-f44.google.com [209.85.128.44])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 99C71606A31B;
-	Fri,  6 Nov 2026 03:48:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 99C71606A31B
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=xmission.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=xmission.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=xmission.com header.i=@xmission.com header.a=rsa-sha256 header.s=xmission header.b=EHKXlCPs
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=simple/simple; d=xmission.com;
-	 s=xmission; h=Subject:Content-Transfer-Encoding:Content-Type:MIME-Version:
-	Message-ID:Date:References:In-Reply-To:Cc:To:From:Sender:Reply-To:Content-ID:
-	Content-Description:Resent-Date:Resent-From:Resent-Sender:Resent-To:Resent-Cc
-	:Resent-Message-ID:List-Id:List-Help:List-Unsubscribe:List-Subscribe:
-	List-Post:List-Owner:List-Archive;
-	bh=qOycUJnM4+Vyffpl3FVfBzrNIrruMMWTqnYgMXkrk38=; b=EHKXlCPszM0rpYy4cajgqFYg4J
-	jWoICZTCzQtAO63laxuT/FUZ1ri1EN9NyXmJc6p+GeBT305E//7uGH+jtyE0EUH2J0oAw7H3WR7yP
-	mUiTG+oP/HJsngXtPE2Uj13DfHhZgTyJ5ZkW41lesRVQMThtz2M7RWSnaVp2hQzqlfiU=;
-Received: from in02.mta.xmission.com ([166.70.13.52]:44172)
-	by out01.mta.xmission.com with esmtps  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1xPAw4-000kR9-NM; Thu, 05 Nov 2026 20:48:16 -0700
-Received: from ip72-198-196-98.om.om.cox.net ([72.198.196.98]:60968 helo=email.froward.int.ebiederm.org.xmission.com)
-	by in02.mta.xmission.com with esmtpsa  (TLS1.3) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-	(Exim 4.93)
-	(envelope-from <ebiederm@xmission.com>)
-	id 1xPAw3-00Cpbz-Ft; Thu, 05 Nov 2026 20:48:16 -0700
-From: "Eric W. Biederman" <ebiederm@xmission.com>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>,  Linux API
- <linux-api@vger.kernel.org>
-In-Reply-To: <CALCETrXnZVq4pcmo=2T2S=yzWuj9Q5tvrpuZTXzU4ptHCDnjBA@mail.gmail.com>
-	(Andy Lutomirski's message of "Tue, 3 Nov 2026 20:02:12 -0800")
-References: <CALCETrWDJKr=LMzfPjwwRRuKapFKQ_OaYF6qYz-9Cs91xAXUgA@mail.gmail.com>
-	<87se1hclmb.fsf@email.froward.int.ebiederm.org>
-	<CALCETrXnZVq4pcmo=2T2S=yzWuj9Q5tvrpuZTXzU4ptHCDnjBA@mail.gmail.com>
-Date: Thu, 05 Nov 2026 21:48:11 -0600
-Message-ID: <87bj82d3ic.fsf@email.froward.int.ebiederm.org>
-User-Agent: Gnus/5.13 (Gnus v5.13)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 76949606A32F
+	for <linux-api@vger.kernel.org>; Fri,  6 Nov 2026 08:27:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 76949606A32F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+Received: by mail-wm1-f44.google.com with SMTP id 5b1f17b1804b1-4a4d7ae1ae9so2869575e9.1
+        for <linux-api@vger.kernel.org>; Fri, 06 Nov 2026 00:27:49 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=resnulli.us; s=google; t=1793953668; x=1794558468; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=eFyf1J2eCmzdcygEsnj9uuRDnIkV5nwpe7sUFMbcNPA=;
+        b=B/rSxcDlMYnthEPXsv+Dey7MmueZn3MQHpzmfFmdz1qKA5YAzHst+P9vXXtmfUjBQd
+         Hdo9pdjh+loJd+rBiJmMoikQfhb0UunnrP0Elsn0wtcOJK5yGfwrv7yB5A5r1O7aEZ6N
+         JKoqxQnRiR3gEpt3AYwAVsU2u4+l2q+hP33U4CSayE/Uxg/PHBIy+CSfOyKmo3a6U0hF
+         CoMD+sTdwlw31W6xMku/iAxMVKl4QD+AzugLDDpHwuzMW/hxt5bfWmEDVgpP/L4oJclM
+         6+zD7o/sl2wTljFv+oUaeCGHHdQWPtNEG2pghabPaWW4g0MZgOfU+JN06X9amJ35uAOt
+         hiZQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793953668; x=1794558468;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=eFyf1J2eCmzdcygEsnj9uuRDnIkV5nwpe7sUFMbcNPA=;
+        b=KwjtdfRT4ga0FJvVSDPvHyGjnM3nzfZhY8sodaWpUD9kkhqOVRj5BD49WjHOBzpU6e
+         WkAmL8s6+c9CxaNf0AfrJeAAvS+46UWvzQ2ab9Iybfz77G1jkx5txVZRe+oalWPg9nCv
+         cdYBX0k2zJ293+qKJNgHeHqWYBaVpASOuVmAVmXeklF2C6iOWtMUpRp5JnSsCAwRw7nh
+         7bWdtB3EkXaLDkwvoeKalFYYO/byTbNmIJGUXBUyRnCstKcDwZPG7y0SwHDp9xmf3osY
+         qDqKGNySbst0ek64gOU9hdqvoxD5nkP7z6h1OXEbbGZ4z+OP7mQXwZj47IJttXK0c1Sy
+         tLaw==
+X-Forwarded-Encrypted: i=1; AKwUvBzlBS0T+ie6cjt4yTgqK3kUEpHMz6enUzX4g5ninHd9j6aNo8008K3nroQ5oOw8AQSNd8oXY6LHjYU=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+JE4EF+H4hzbEvhL1khtAvvfLQyailoqFjPHyOXQ7eIMAqJGt0
+	Y1ELlYOo9JfgtM5Gnv1oeo04R4ZDu1hjTJ2vrpexKat9dF4JdaYUZ4v1dHwC/6KnOsE=
+X-Gm-Gg: AYBFou3KEjomGO6+w26lLG5L99spBf6rpxZjpgi6NmdSouC8OA5yAZhJ1ekZ8kF4iWf
+	e7Tr/1gRChmL/qlUQg3DlFywDaiXtpb2ec9WramnGmZ17AEg62ageNBGCm+LdYXSI6LuR1m8kqn
+	Ai7nzbw0I8YeD6aeVKgfWAWbURinwsnsOEZEEEk1ZiVRCt4IwHkJfDh8WD3K5l2jlGazWiPw8Di
+	4l7zMtOV99XVRDp+ZrZkJplLa6i7fxYxKysSandzMj3zgIRFUSPPhdnIWv6VzJJFZQ0vpRn3Kdb
+	OGRbV34kGOg7pWQnSQEDUQgaLv7QqizK8pXTIu6aqrYseX2QdYC/HSm5FQJIiu3dwoSjIAYPF3K
+	Uh7/Lfp55cM9chpgJfdhbVyYPc7oTqwmSP9zRbFP3uB1Q+Dya52UvRX7m+P4IFHZAXwDwxtyowZ
+	PYVbL70fsBpkIjSvADMYPxgR/KqzoTVPKxqVHJZ4b3gR7Nzh4JMKi1zHXGJsYoRh/XJ7awX6+zu
+	wVK+AbYECX71iWw8+qopMWbNqsXLSwQqK4BrIQ1WoyUPHQalyQfCpRMhxB5VaZ4+JCMzAT5MaNo
+	q+hlGbvKdO2YaVsMc645T5A5ETDZxwjvdG3V+6r9eFy6T9Ckk8fJg+qGqKlX
+X-Received: by 2002:a05:600c:3e0e:b0:4a2:150f:1605 with SMTP id 5b1f17b1804b1-4b6dfba908bmr27264855e9.24.1793953667539;
+        Fri, 06 Nov 2026 00:27:47 -0800 (PST)
+Received: from localhost ([140.209.217.211])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4b73ee651b7sm16201965e9.0.2026.11.06.00.27.46
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 06 Nov 2026 00:27:46 -0800 (PST)
+Date: Fri, 6 Nov 2026 09:27:42 +0100
+From: Jiri Pirko <jiri@resnulli.us>
+To: Yeoreum Yun <yeoreum.yun@arm.com>
+Cc: Jason Gunthorpe <jgg@ziepe.ca>, linux-coco@lists.linux.dev, 
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, 
+	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, 
+	rodrigo.vivi@intel.com, cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
+	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com, aneesh.kumar@kernel.org
+Subject: Re: [PATCH RFC 17/20] attestation: Add CTLV operation handling
+Message-ID: <auy7IM0_S2tv7EZX@FV6GYCPJ69>
+References: <20261015145053.3664509-1-jiri@resnulli.us>
+ <20261015145053.3664509-18-jiri@resnulli.us>
+ <auuDcABX27EeTApl@e129823.arm.com>
+ <20261104194622.GC3889730@ziepe.ca>
+ <aux01NUd85PabtZu@FV6GYCPJ69>
+ <auyKE2sGqtfjk4v5@e129823.arm.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -77,187 +105,184 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-X-XM-SPF: eid=1xPAw3-00Cpbz-Ft;;;mid=<87bj82d3ic.fsf@email.froward.int.ebiederm.org>;;;hst=in02.mta.xmission.com;;;ip=72.198.196.98;;;frm=ebiederm@xmission.com;;;sPfnum=0;;;sPf=pass
-X-XM-AID: U2FsdGVkX19xw+2xzokroOVsQV1/cg6Q/Fo7dzZ0siU=
-X-Spam-Level: 
-X-Spam-Virus: No
-X-Spam-Report: 
-	* -1.0 ALL_TRUSTED Passed through trusted hosts only via SMTP
-	*  0.1 BAYES_50 BODY: Bayes spam probability is 40 to 60%
-	*      [score: 0.5000]
-	*  0.0 T_TM2_M_HEADER_IN_MSG BODY: No description available.
-	*  0.0 XM_B_Unicode BODY: Testing for specific types of unicode
-	*  0.0 XM_B_EmailChain RAW: Email Chain Detected
-	* -0.0 DCC_CHECK_NEGATIVE Not listed in DCC
-	*      [sa01 1397; Body=1 Fuz1=1 Fuz2=1]
-	*  0.2 XM_B_SpammyWords One or more commonly used spammy words
-X-Spam-DCC: XMission; sa01 1397; Body=1 Fuz1=1 Fuz2=1 
-X-Spam-Combo: ;Andy Lutomirski <luto@amacapital.net>
-X-Spam-Relay-Country: 
-X-Spam-Timing: total 738 ms - load_scoreonly_sql: 0.04 (0.0%),
-	signal_user_changed: 4.4 (0.6%), b_tie_ro: 3.0 (0.4%), parse: 1.67
-	(0.2%), extract_message_metadata: 16 (2.2%), get_uri_detail_list: 2.9
-	(0.4%), tests_pri_-2000: 15 (2.0%), tests_pri_-1000: 1.95 (0.3%),
-	tests_pri_-950: 1.01 (0.1%), tests_pri_-900: 0.69 (0.1%),
-	tests_pri_-90: 64 (8.7%), check_bayes: 63 (8.6%), b_tokenize: 10
-	(1.3%), b_tok_get_all: 11 (1.5%), b_comp_prob: 3.5 (0.5%),
-	b_tok_touch_all: 34 (4.6%), b_finish: 0.88 (0.1%), tests_pri_0: 550
-	(74.5%), check_dkim_signature: 0.53 (0.1%), check_dkim_adsp: 2.1
-	(0.3%), poll_dns_idle: 69 (9.3%), tests_pri_10: 1.72 (0.2%),
-	tests_pri_500: 78 (10.6%), rewrite_mail: 0.00 (0.0%)
-Subject: Re: Accidental mountns/tmpfs API break from 2016?
-X-SA-Exim-Connect-IP: 166.70.13.52
-X-SA-Exim-Rcpt-To: linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, luto@amacapital.net
-X-SA-Exim-Mail-From: ebiederm@xmission.com
-X-SA-Exim-Scanned: No (on out01.mta.xmission.com); SAEximRunCond expanded to false
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <auyKE2sGqtfjk4v5@e129823.arm.com>
 
-Andy Lutomirski <luto@amacapital.net> writes:
+Thu, Nov 05, 2026 at 02:52:19PM +0100, yeoreum.yun@arm.com wrote:
+>On Thu, Nov 05, 2026 at 01:32:49PM +0100, Jiri Pirko wrote:
+>> Wed, Nov 04, 2026 at 08:46:22PM +0100, jgg@ziepe.ca wrote:
+>> >On Wed, Nov 04, 2026 at 07:11:44PM +0000, Yeoreum Yun wrote:
+>> >> [..snip..]
+>> >> 
+>> >> > +static int attestation_evidence_request_decode(struct attestation *att, struct ctlv_op_ctx *ctx,
+>> >> > +					       const struct ctlv_cursor *request,
+>> >> > +					       struct attestation_evidence_request *decoded,
+>> >> > +					       struct attestation_evidence_object_request **objects)
+>> >> > +{
+>> >> > +	const struct attestation_evidence_caps *caps = att->provider->evidence_caps;
+>> >> > +	u32 challenge_length;
+>> >> > +
+>> >> > +	decoded->challenge =
+>> >> > +		ctlv_attestation_evidence_get_evidence_challenge_get(request, &challenge_length);
+>> >> > +	decoded->challenge_length = challenge_length;
+>> >> > +	if (challenge_length < caps->min_challenge_length ||
+>> >> > +	    challenge_length > caps->max_challenge_length)
+>> >> 
+>> >> Hmm, I'm not sure whether this check is required for
+>> >> ATTESTATION_EVIDENCE_BLOB_EVENT_LOG blob type.
+>> >> 
+>> >> for example, if the provider provides two evidence:
+>> >>   - ATTESTATION_EVIDENCE_BLOB_PRIMARY (might attestation token)
+>> >>   - ATTESTATION_EVIDENCE_BLOB_EVENT_LOG
+>> >> 
+>> >> might challenge is reuiqred for generating the token
+>> >> and this would be marked at min/max_challenge_size in evidence_cap.
+>> >> 
+>> >> However, in case of eventlog, it wouldn't require challenge.
+>> >> for example, TPM event log or CCEL event log.
+>> >
+>> >Right
+>> >
+>> >> Do we need some field on attestation_evidence_supported_object whether
+>> >> it requires challenge or not and applies this sanity check per the object?
+>> >> 
+>> >> Otherwise, to get eventlog, it would need to send *dummy* challenge
+>> >> always.
+>> >
+>> >I wonder if we should have two interfaces here for signed and unsigned
+>> >evidence? It would be clearer for userspace then when it needs to
+>> >provide a challenge or not.
+>> 
+>> Isn't the challenge field provided/not-provided enough?
+>> 
+>> Currently on the introspection side, device-get op would provide
+>> challenge-lengths array:
+>> 
+>>         evidence?:
+>>           challenge-lengths[8]:
+>>             length?: uint(..4096)
+>>             min-length?: uint(..4096)
+>>             max-length?: uint(..4096)
+>>  	  objects[16]:
+>>             blob-class: evidence-blob-class
+>>             max-length: uint
+>>             blob-instance?: uint(..u32-max)
+>> 
+>> I think it would make sense to have challenge-lengths array per object:
+>> 
+>>  	  objects[16]:
+>>             blob-class: evidence-blob-class
+>>             max-length: uint
+>>             blob-instance?: uint(..u32-max)
+>>             challenge-lengths[8]:
+>>               length?: uint(..4096)
+>>               min-length?: uint(..4096)
+>>               max-length?: uint(..4096)
+>> 
+>> Then the unsigned object would just simply have challenge-lengths empty?
+>
+>This looks good to me. :)
 
- On Tue, Nov 3, 2026 at 7:37=E2=80=AFPM Eric W. Biederman <ebiederm@xmissio=
-n.com> wrote:
->>
->> Andy Lutomirski <luto@amacapital.net> writes:
->>
->> > Hi-
->> >
->> > I (well, an LLM following my rather explicit instructions) just wrote
->> > a little tool to make a tmpfs as an unprivileged user: it unshares
->> > userns and mountns, makes a tmpfs, fchdirs to it, and prints
->> > /proc/PID/cwd to stdout.  Full source below.
->> >
->> > I was a bit surprised that trying to create anything in the tmpfs did
->> > not work without a uid_map and gid_map.  It looks like it came from:
->> >
->> > commit 036d523641c66bef713042894a17f4335f199e49
->> > Author: Eric W. Biederman <ebiederm@xmission.com>
->> > Date:   Fri Jul 1 12:52:06 2016 -0500
->> >
->> >     vfs: Don't create inodes with a uid or gid unknown to the vfs
->> >
->> >     It is expected that filesystems can not represent uids and gids fr=
-om
->> >     outside of their user namespace.  Keep things simple by not even
->> >     trying to create filesystem nodes with non-sense uids and gids.
->> >
->> >     Acked-by: Seth Forshee <seth.forshee@canonical.com>
->> >     Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
->> >
->> >
->> > Now my tool won't actually run on a pre-2016 kernel due to use of
->> > fsopen, and I'm not about to say that a decade-old commit broke my ABI
->> > and needs to be reverted.  But I am rather curious whether this rule
->> > actually makes sense.
->>
->> I am pretty certain it was deliberate at the time.
->>
->> > I'm not creating an idmapped mount, and I'm
->> > using tmpfs, which could not care less about the mapping as far as I
->> > know.
->> >
->> > Would it make sense to only enforce this for filesystems that care?
->>
->> Interesting question.  You are in a user namespace.  You are
->> running as a user that does not exist in your user namespace.
->> You want to create files.
->>
->> You can map a that single uid and gid without privileges.
->> So there is no hardship in getting a uid and gid in your user namespace.
->>
->> Is it just the extra bit of code to perform that write that is the
->> problem?
->>
->> Why would you want to be able to create files as a owned by a user
->> from another user namespace?  Even if you created them reading them
->> would show an 0xfffe the invalid uid/gid.  I think there are then
->> some difficulties in using those files as well.
->>
->> Why would you want to do much of anything as without having a
->> properly setup uid or gid?
->
-> Hah, you haven't quite figured out the ridiculous thing I'm doing. :)
-> What I want is a temporary tmpfs that I can create as an unprivileged
-> user.  Linux doesn't let me do that directly, so I'm kludging it.
-> Shell transcript, edited for clarity:
->
-> #### Make a tmpfs, keeping the tool running to keep it alive
-> $ ./temp_shm &
-> [1] 34157
-> /proc/34157/cwd
->
-> #### cd to the tmpfs, which references it and keeps it alive
-> $ cd /proc/34157/cwd
->
-> #### Kill the tool, since we're done with it
-> $ fg
-> bin/lktool temp_shm     (wd: /workspaces/master)
-> ^C
->
-> #### cwd is a working tmpfs!
-> $ echo "Look a tmpfs!" >some_file
->
-> #### and it has no '..', as expected :)
-> $ cd ..                  # and it has
-> cd: error retrieving current directory: getcwd: cannot access parent
-> directories: No such file or directory
->
-> This whole workflow runs in the init userns and the init mountns,
-> which is exactly what I wanted.  And now I have a tmpfs that I can use
-> to run my test suite unprivileged to test some cool code that *needs*
-> a tmpfs.  (Yes, I could probably use /dev/shm, but that's messy and I
-> don't want to.)
->
-> I'm not actually banging this out in shell, but I am running literally
-> the C++ code I posted as a subprocess called by my test harness.
->
-> The user creating files is not in the mountns or the userns, by design.
->
->>
->> At a quick look tmpfs just uses vfs inodes which use kuid_t and kgid_t
->> so it theoretically would be ok.
->>
->> Still what would be the motivation for supporting something so silly?
->>
->
-> My test suite! :)
->
->> If there is a good use case I could see it making sense to support it.
->
-> I think my use case is excellent.
->
-> Seriously, though, I think a *much* nicer solution would be to allow
-> fsconfig and fsmount to be called by an unprivileged user, at least
-> for some very limited list of filesystems.
->
->>
->> Short of a good use case we are talking about having to support weird
->> corner cases that no one really cares about that will just bit-rot.
->>
->> Note.  You can identity map your original uid and gid, instead of
->> mapping your uid and gid 0.
->
-> Does the inner uid made a sound if there's no running task to observe
-> it? :)
+The challenge is one of several open points that all depend on what an
+evidence object is: Rick's TDREPORT, legacy versus DICE Quotes,
+"primary", "raw" and the format strings. Here is my proposal to settle
+these together:
 
-Hmm.  So the problem is that the user outside of the user namespace
-can't write files unless he is mapped.
+The model:
 
-I think I even remember why that happened originally, it seems very
-familiar.
+1. device-get lists each object with an id, a class (signed, event-log,
+   cert-chain or auxiliary), the formats it may come in, its max-length
+   and, for signed objects only, challenge-lengths.
+2. evidence-get names objects by id, as MR ops name MRs, each with its
+   output blob. It carries a challenge exactly when it names a signed
+   object, and the challenge has to fit each of them.
+3. The reply gives each object's format, length and, where the TCB
+   vouches for it, the TCB's digest. The output is always {label, data}.
+4. A signed object is made by the call, over the challenge, and never
+   reused. The rest are read as they stand.
 
-I think that was to prevent processes running inside of a user namespace
-from having to deal with files and directories appearing on their
-filesystem that their isn't full information for because they aren't
-mapped.
+This settles following issues discussed during this patchset review:
 
-In particular I think it prevents "chmod u+S file" on a file that isn't
-mapped into the user namespace.
+1. One op, not two. Per-object challenge-lengths tell userspace when to
+   pass a challenge, and one call returns the signed object with the log
+   and certificates needed to check it.
+2. TDX's TDREPORT goes: it is MAC'd for the platform, not signed.
+   /dev/tdx_guest keeps TDX_CMD_GET_REPORT0.
+3. TDX's Quote object lists the legacy and the DICE format. The provider
+   labels what the host returned and fails on a Quote it cannot label.
+4. "primary" becomes "signed", manifest joins auxiliary, spdm-vca,
+   spdm-measurements and tdisp-report become formats, and signature
+   goes, as a signed object carries its own.
+5. "raw" goes with the representation attr. The TCB digest is a reply
+   field, so a blob always holds the object's own bytes.
 
-The issue is that the mounter of the filesystem has all caps over the
-filesystem.
+Formats become an enum each provider family defines, instead of free
+strings. I'm still unsure if format should be entirely provider-specific
+and defined as "extension", or it should be somehow mixture of common
+and provider-specific. Looks there is not really much common
+anyway, so I lean towards provider-specific only. So far I have:
 
-So in general you don't want them to be able to manipulate files that
-they couldn't create.
+======  ============  ==========  =========  ===========================
+Family  Format        Class       Challenge  Bytes
+======  ============  ==========  =========  ===========================
+tdx     quote         signed      64         Intel TDX DCAP Quote
+tdx     quote-dice    signed      64         DICE-based TDX Quote
+tdx     ccel          event-log   none       ACPI CCEL log area, a TCG
+                                             crypto-agile event log
+spdm    cert-chain    cert-chain  none       SPDM certificate chain,
+                                             instance = slot 0-7
+spdm    vca           auxiliary   none       SPDM version, capabilities
+                                             and algorithms transcript
+spdm    measurements  signed      32         SPDM GET_MEASUREMENTS
+                                             response
+spdm    tdisp-report  auxiliary   none       TDISP interface report
+tpm     quote         signed      varies     TPM2_Quote's attestation
+                                             structure and signature
+tpm     event-log     event-log   none       TCG PC Client crypto-agile
+                                             event log
+tpm     ek-cert       cert-chain  none       EK certificate from NV
+armcca  token         signed      64         CCA attestation token,
+                                             platform and realm parts
+armcca  event-log     event-log   none       Realm firmware log, if any
+snp     report        signed      64         SNP attestation report
+snp     cert-table    cert-chain  none       VCEK or VLEK, ASK and ARK
+======  ============  ==========  =========  ===========================
 
-Eric
+Did I miss something that would break us here?
+
+CTLV layout draft:
+
+    device-get reply, caps.evidence:
+      objects[16]:
+        id: uint(..15)
+        class: evidence-class
+        # The reply says which one was written.
+        formats[4]: evidence-format
+        max-length: uint
+        # Signed objects only, entries as today.
+        challenge-lengths[8]?: ...
+        # Descriptive, such as an SPDM slot.
+        instance?: uint(..u32-max)
+        # When the TCB vouches for the object with a digest.
+        tcb-digest-algo?: hash-algo
+
+    evidence-get request:
+      # Required exactly when a signed object is named.
+      challenge?: binary(1..4K)
+      objects[16]:
+        id: uint(..15)
+        data: blob(out, va memfd dma-buf)
+      # selection, privlevel, service and options as now.
+
+    evidence-get reply:
+      # In request order.
+      objects[16]:
+        format: evidence-format
+        length: uint
+        tcb-digest?:
+          hash-algo: hash-algo
+          data: binary(16..64)
+      # The generations as now.
+
+Makes sense?
