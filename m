@@ -1,50 +1,50 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793959982;
-	b=Z+MhnnWrt6JPuTP4JSsqIj1oHNViJpmCiEG3ua34SX2e2vVTzaTrlN4xnhsznOZ/Mp2w
-	 TFIxz3FAcIioRTbsCYh9CBQNZ6WPT9Ok+h8pWPHRoEi2UXpXmcmDO5PDm5PVMuJP8Njrh
-	 kWFEJ173bLe+0+vNJ5S+hwFA0pRMsYmhQyOIapPXNolRJe+wILJjX76D2ysY6i9PsNgp9
-	 //Rz1heaAVG6idkoChhug24fOGgI7+3o89TLQA8wkbrGr+mDWKRXlLcC+jmz+UErUsosF
-	 MU4ruTNuq1LgPE68OqBgM+ROofJUO4x1jr6QvBhizVegUy4rvKJvktpKKto8fBIOQfA==
+	t=1793970835;
+	b=NAtbdzh6W1wPGaZb3v1D9lVqUGIFnPq2XiGrG1TowwK3BmlZO0i285gYjfb5DHdyrW7E
+	 A0v2uAlDsKm4kPIKbEG5rTpytal5/xLxSByq1gCB1Sncu9dj3JW1RlyVYQx/eHCWsE0sr
+	 fNqRWo9Fp499sFpG3L1ovQFdFhB8WMiURgJNEOSb11NiJTdJpS/IHXuuKmlTAbeQFQtva
+	 SFmFKZjDqat3rXj0UdPHjwlSfrvqLbmm9JDL2RL55Z0k3tHLFxVt4moFKYozDXmjacOpp
+	 X336TsV+SHbwAaqTqRBEGtBgGjMEb207Ri0mfxXwr1fmreqvfqADN9UHWroAig/ZPNw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793959982;
+	a=rsa-sha256; c=relaxed/relaxed; t=1793970835;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=nnzK0BslWJHcXFemGgfYITU9fhviw2smy0wN/ApAn14=;
-	b=hZc5LuKlOx2w2Rj9dJJVWrPOd+rMzUP8RYWAtuGiHC4aOjQowbicne2HE+A55E+sOXzH
-	 ShEe1Q37OPzLq5XxuCXwfDHBqCzrZlNEbhHO8p2UYS/gwAccNrcyilJqxAuoU6UZQCrE5
-	 NnqikgR5l+ROns1KftFoonDvbjHqnJpq+onv5lkp0Sb3j4jmenHD8DFYxmW1ZVtMh8Ghz
-	 TU28JlcNj0Mt9pQ5Jzfdqcw162gxO+xghvhZa95EVpS82A+y9u0f7vpdlBGUc6LaQhmkl
-	 ySipzs+g88lP9YHGk6KbJb79+nhrWnA48URkmAmuWJHtClwdu/PQNG3kV4L3NOpulAw==
+	bh=9iuU7MEsK2c2Pxl1bKzJoGbt24cwSpLcFKHMSnlxVwA=;
+	b=tKk/fjXPWg1AaVrBJ/a8KBBH/ZBfrLe6kLgiEeMCZI5j08THcAyifGbDCxmJFDxGwQND
+	 JZBvRx8hy27BktTIIvAvqVnIMbQfUA8nwITAv91K09Kznq7aXCQAF7w2uhbjW23vCrotg
+	 3A9kEMbuyZFrhTjvJzwdo4ohtgJMJsgn8A0ZUt2KldLds/XjtfCaCdUoOTKtHvoFSQDZ8
+	 TecOj2ub2XBROqxjF9W8jwidFSlXUCjsHVJ1O1PFkoC/3WMoYe6qfWpbLvMuqbOAGqJaO
+	 VMMCPEU30g0qqOHs5BXbfhcTkUFHEOwJVWOh/ItkDMtoUWuPiiZtM9MGiKoeqQ34s9A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="edM4/p9S";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KC5lAMVT;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 54AFD606A326;
-	Fri,  6 Nov 2026 10:13:02 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACFA8606A32F;
+	Fri,  6 Nov 2026 13:13:54 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=edM4/p9S
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A44D81F0089F;
-	Fri,  6 Nov 2026 10:12:55 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KC5lAMVT
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CC9261F008A1;
+	Fri,  6 Nov 2026 13:13:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1793959982;
-	bh=nnzK0BslWJHcXFemGgfYITU9fhviw2smy0wN/ApAn14=;
+	s=k20260515; t=1793970834;
+	bh=9iuU7MEsK2c2Pxl1bKzJoGbt24cwSpLcFKHMSnlxVwA=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=edM4/p9SW7+S73fDgQfspXTjrIk9baHrV37Kd/QhylG3sLFrLKrn7Hstn6AQsz5uw
-	 UpQitFXbsHcThZxWuXEdgx2CDWhWf6hbi4u2aagagDQcQos8ZBnDTihVAkxsA3Xn2S
-	 DaXEaR4Ddkun5RuUbGazbbXXqJnn4U2NrjbxamgcSa5zL2fHatPp33S0Uil9R6wxXW
-	 6ge5YPJC6yBuH0U/vS7kAmhEAxOiNR4kAK8TFOI7nFk/vAgdTcuJjqV3mfM6VrhrYp
-	 EqVajW7CacXXOnIxA1xdsWgBIymxyAvUB9LHqQ8we47DuLvg13NGqZGYXr7xRTpXPl
-	 +UVOBxUZErwXA==
-Date: Fri, 6 Nov 2026 11:12:53 +0100
+	b=KC5lAMVTiD1H0HRO9wudEjkt9ITRbgLn9PNNZsFAY+PQgcAeTb+mLFYjU0VQBr/P4
+	 OMgR42zZI/a2XPhf2h7VSdpTnTw+0H4wU7aQXkP7RjIUfB+HBeff4XbbOOVLZiU+Ef
+	 d+tf/0NHrAEZuk6IfYvnyUE8lgmnTQjSZ0Bx8YVn6mlfS8I8eHqh0HdwSiV8K805D4
+	 bJ5IqHRIeniTOCWEvTu2GBSeCrdyHq1f6RaWtk+BKmv8FhwurXZ0OHdQtFPFH3rTGF
+	 N9CtRUIOqssm47/xNL3vOfqwll1NQPWSaNY3Fc6Y80QCDrAqqIW4txwjbaUoMbPGvN
+	 WvA32gRJYIsIA==
+Date: Fri, 6 Nov 2026 14:13:45 +0100
 From: Christian Brauner <brauner@kernel.org>
-To: "Serge E. Hallyn" <serge@hallyn.com>, 
-	"Hallgrimur H. Gunnarsson" <halg@google.com>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: "Hallgrimur H. Gunnarsson" <halg@google.com>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Paul Moore <paul@paul-moore.com>, 
+	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
 	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
 	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
 	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, 
@@ -57,9 +57,9 @@ Cc: Alexander Viro <viro@zeniv.linux.org.uk>,
 	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
 Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
  opt-in netns loopback
-Message-ID: <20261106-sandalen-monopol-neugierig-23357f8efc64@brauner>
+Message-ID: <20261106-befreien-addieren-eislauf-e09212803534@brauner>
 References: <20261028221705.3915340-1-halg@google.com>
- <aunVmg42/S2uUDWR@hallyn.com>
+ <CALCETrW9ygriu54gxiHFLEd5+hJminQo0r8Jwd63wR69Dj4W7w@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -71,38 +71,45 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <aunVmg42/S2uUDWR@hallyn.com>
+In-Reply-To: <CALCETrW9ygriu54gxiHFLEd5+hJminQo0r8Jwd63wR69Dj4W7w@mail.gmail.com>
 
-On Tue, Nov 03, 2026 at 06:37:46AM -0600, Serge E. Hallyn wrote:
-> Kees whipped up a proof of concept BPF lsm that implemented this.  A copy
-> from his email (and let's call it GPLv2 unless he wants to change it to
-> something like MIT) follows:
+On Wed, Oct 28, 2026 at 03:56:11PM -0700, Andy Lutomirski wrote:
+> The whole unshare/clone flag situation is getting out of hand, IMO.
+> And this new thing makes logical sense but is really about reducing
+> exposure.
+> 
+> Perhaps we should instead have a small list associated with a userns
+> (extensible in the future) of things that the ns's admin (i.e. whoever
+> has CAP_SYS_ADMIN relative to the ns) may do.  That list could
+> include:
+> 
+> - Create loopback with sensible defaults for ipv4 and/or ipv6 (i see
+> no obvious reason to separate them)
+> - Create tun/tap interfaces in that ns (and attach them, etc)
+> 
+> And add a very simple new API to do these things.  Actually, the
 
-There's no need to special-case user namespaces for this anymore.
-I've added generic namespace LSM hooks for v7.4-rc1:
+We've had this idea in the past and I think it is reasonable. I had
+always thought that we should expose a system call to create empty
+namespaces ot any type. Usually I'd be excited about that but I think
+that point is a bit moot and I'd really like see whether we can turn
+cells (or whatever other name) into a first class api.
 
-* namespace_init()
-* namespace_install() (setns())
-* namespace_free()
+The problem I have with the patchset as written is that adds a lot of
+moving parts. And yes, I find the CLONE_* and UNSHARE_* flags plus
+sysctl to be suboptimal as well.
 
-called from the common namespace code I added and for every namespace type.
+So the TL;DR is that CAP_NET_ADMIN + userns =
+CAP_NET_PRIVILEGE_ESCALATION 10+ years later. And this patchset wants to
+put it back on a leash.
 
-So a policy like this can cover creation and setns() of all namespaces
-and follow a namespace by its id until it's gone.
+So why isn't an aggressively stupid solution to this problem to split a
+new capability out of CAP_NET_ADMIN so it covers the absolute minimal
+set of things that should be allowed instead of doing effectively the
+same thing but split over multiple apis?
 
-The catch is that what got merged doesn't work with the bpf LSM right
-now.
-
-namespace_free() is never called unless an LSM allocated a namespace
-blob, namespace_init() sees a namespace id of zero because
-the id is allocated after the hook has run, and the bpf LSM marks the
-namespace arguments of both hooks as trusted although the namespace can
-be freed right after.
-
-I sent fixes for all of that (cf. [1], [2]) (cf. [3]).
-
-[1]: https://lore.kernel.org/all/20261026-work-security-namespace_free-v1-0-ffa3ebbf71bd@kernel.org
-[2]: https://lore.kernel.org/all/20261029-work-security-namespace_free-v2-0-65591dbba7b3@kernel.org
-[3]: https://lore.kernel.org/all/CAHC9VhRwD1c1qKK4=Uc8cbMy27iF722C0DZeXy4WGtH-kOBOcQ@mail.gmail.com
-
--- 
+Anything that is reasonably advanced should not be the kernel's
+responsibility to delegate. I really think the old privilege model where
+the kernel grants control over a whole subsystem is inherently flawed
+and is much better replaced if you have the means to let userspace
+services grant and delegate resources.
