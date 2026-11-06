@@ -1,56 +1,103 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.54
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1793986044;
-	b=LPV1KLrU0mlW9dc07XKh2Z0oSf3w92ewKpgNVhD+UdHRpKcUb+8lZ7yIKyxx0d41SQA7
-	 aJnNEmuH9PheT/XYUgCUDqr4jKJ67i4E3GjK9cWVxMFVD5/noSfiXSc4ziJj9LZ3NlIsy
-	 xu7OBvbBBLfzXI1Xw0n35EV3GSsPYADoJOX3V1I5ZP1KTjr+B3S3NHrUM2Ci3dIfHH9zK
-	 NpnkkHpxGyJ9HAcwmNfXNxPmjatwd2o3MKqkfWy+NwIFDOyD6pO+OImk0luyzPB2YnTDe
-	 3bmLLcUdqXWrW6DkuM9OoyL/1+xKmgYjakPyKFNxMRJwYnNwekA6mfwqZqbsOVv98yA==
+	t=1793997630;
+	b=uya2cVBr2I8SlcPTdL4Lb1VVoY+jHqKH0NLSoCfQNcv1QhsHlknpDC0FY8Mh03U9ZoUw
+	 snL34Ddtvtce4+k13HCLV2R+zmdjwPGHloFVs/EN1723K323XYG8QGIk+58ikelyl01DV
+	 lyMhxuG8VSO0iiahcgFIMS6i4DqBF42IXjV5eUQF25JLYNX7fKgWwR1XewVh/qOHeXi9O
+	 YWJAz3VflTkFvEEtNtmbbRJbuXKPKoqjHtVutJio9KCUpvow0S3581K5zF+E+6JEixFzV
+	 Pz81RQa2XRyA+4B+8lReDChzhvuxDVfL+MkHEz0k1aDBavo/x2yKPlajsOsw5N7X+3Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1793986044;
-	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
-	 Subject:Message-ID:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding;
-	bh=D1OP9qC177zA3aBfRfenxMIit8o8G0GoKrdtUwc1iHk=;
-	b=bpOZBhU156WAqegPnFjqvuEX6/toD0tjGtmtAxMTRvJidjPph6+u4P212gDZ8ahEhjk+
-	 tggqjoEvp5BYnEnx6P4ErG/jwxc4WSdt11C+YflPRCVT5Dg6qGJTbrVvn5Fhly3Gh25gw
-	 wfbrO13Y4sfefQPxqVcsxCHD0qHn5mwASk549MoHUjt28WVk6zth3rQgNcz+SZG8Ztj/h
-	 Kfy5y4QWlftbkprc4pOGoOWRgjOYZahBXcTnVDqoJVsKKHr/gMvMuSSN1nJzbQmGydPFR
-	 d3hXNPr2AOyiKRY3FxzalunDyWv8kZotGyJ2PXC3xaZZLPe0/EaNwz9FL+XIDL/brNg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1793997630;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=D/PxjqMUnoRNvdLWmtMbPlTvfojIHeVHPRoAErTV6bk=;
+	b=FnBcobSKS7zajtOkb3KuOQFx+3TEU98TlEQ7kTfv1j1jJ12RFdIaqJQ7Vm5fQ0iU//oN
+	 122NRUNbjZZryfEnoEci4Y6b5mg7GSokSWkvlKGokdx/N/7LtYCUP0yFLRrroC7A3Eeah
+	 yYiYEuBj/5y+yKNmTHhPM97khaeU87FOO0O5wAcbNCNUt8Hg53Hx0OVw0zBrn7B5QWz5Q
+	 4qci8+y+ij1NV7j19Fe6KewupRWobYPJPMWkXk8xxDMIGIIHj5hBPN8h3oGnHPimt6BtZ
+	 +3cKe1we26Jabv/ZtIk1FOsypYvlJo2oMWWU1oabumjbCzEW5v2p2qk99aisAefPaMA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=arm.com;
-	spf=pass smtp.mailfrom=arm.com;
-	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=Ob6o03Xe;
-	arc=none smtp.remote-ip=217.140.110.172
-Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 8853B606A329;
-	Fri,  6 Nov 2026 17:27:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8853B606A329
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SIJeD92Q;
+	arc=none smtp.remote-ip=209.85.167.54
+Received: from mail-lf1-f54.google.com (mail-lf1-f54.google.com [209.85.167.54])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0F70D606A334
+	for <linux-api@vger.kernel.org>; Fri,  6 Nov 2026 20:40:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0F70D606A334
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=Ob6o03Xe
-Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id CBB311477;
-	Fri,  6 Nov 2026 09:27:19 -0800 (PST)
-Received: from localhost (a079125.arm.com [10.164.21.43])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 282A43F632;
-	Fri,  6 Nov 2026 09:27:21 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
-	t=1793986042; bh=6bzuAkIaDZvpb/WEZZmaV1YDCZ13Mh9rHG1iq3jJ37w=;
-	h=Date:From:To:Cc:Subject:From;
-	b=Ob6o03Xec1fUWggLPZ/Zu5jDYGGVgmIPtWdBk1KGltVeDja5el7//AVqGpMJtWish
-	 l7EuGPFP34NXFapK/r591dA5Uok+vifaW/hB3jYQZ50pImwfLBqcssjSMwuk9B3+6Z
-	 5gEQm0qrcKFXYkCxACwhnpuLvakHukn0Klu44rvQ=
-Date: Fri, 6 Nov 2026 22:57:19 +0530
-From: Linu Cherian <linu.cherian@arm.com>
-To: Will Deacon <will@kernel.org>, 
-	Catalin Marinas <catalin.marinas@arm.com>, Mark Rutland <mark.rutland@arm.com>, 
-	Kevin Brodsky <kevin.brodsky@arm.com>
-Cc: linux-arch@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-arm-kernel@lists.infradead.org, Ryan Roberts <ryan.roberts@arm.com>
-Subject: [RFC] ARM64 ESR ownership issue for signal delivery
-Message-ID: <fp2tsl5lkj4rzvwfkkgogeka7uhd2bwkci37zvikjjtg7wkckd@qc2lyhdpdocx>
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SIJeD92Q
+Received: by mail-lf1-f54.google.com with SMTP id 2adb3069b0e04-5bfc3292d90so828531e87.1
+        for <linux-api@vger.kernel.org>; Fri, 06 Nov 2026 12:40:29 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1793997628; x=1794602428; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=D/PxjqMUnoRNvdLWmtMbPlTvfojIHeVHPRoAErTV6bk=;
+        b=SIJeD92Qu1ghLn6Diwyb6fKrNsRE4AsbWWViYIN/gXJsQyeupZTIwUP8vl58BvBs2t
+         YI+JBoAXYqrypkee0TpRKbjDCNK7XjE+X8s+DbIKRMNyYguo2UimIdmlW9FHJFkxsj6F
+         PRe74jak0M/nBlafEMyhrTfp5sy9m+5Y5AKj9tYqSQiZ8qhvXj75WvrXgfTpfb7Q8+QW
+         27tEhwXkHqsMzu2hu7fLcBCVVP92uvzvKB+vrrQgbQ1Xrnke6CxmcQt+JKCUCDBBy4tG
+         X4eElH8xoqVZzURtTRS97dAV9yMuUmrqd4xvPFm8WmomV7UhwzX7c9nlGhmbkKTPspy/
+         Z6QQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1793997628; x=1794602428;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=D/PxjqMUnoRNvdLWmtMbPlTvfojIHeVHPRoAErTV6bk=;
+        b=Rr63QAQ9vmS2UchkuhN/ivKAXEUOYz8QCz5iO40C5YV8Z22nK0NCvZq66LW+2l1lUi
+         L9f/EMBhaGAXmAhhxTx8yrQHlksKZ/4l0uatkIWPWwu/k/kCwya6wy/PjvRtGSgjJaxZ
+         BSiihnYrKB8dMtXyb/WnaNMeLv/JFQGg8gWMoIRYoFOOiBeD3MwdqI7OJC1u37enL5Ty
+         /lADxGs6fEIWhjhKAoo2icbK+LUzdJB4uWFqkVaEDwHmkNkmCR+hGCt6wodXt5pUc7L2
+         B+ff5QpyKOHI3BcmsFN1UF6BIJ0Uzu7ewfYk9DiORhKNn7nYyjkzRi2vv7jm4D/U33U5
+         4N2Q==
+X-Forwarded-Encrypted: i=1; AL+hErHeAWHQR87Zwei9wCeNALTaLf2WNp2d59Tls1wmQ7upfwtwAR71wkJs5R4gHjU8eT3Yb3HJHAeJJGw=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/oIMeT+f6jckP33h8RQfxHEgQtbKwgfZRCtIQJtCkqZluRyM3x
+	0jdYuV5SqhFsFL6nCagPPTNIEdBN9bNdRdhVt0P9UyWNG5LP/AU5Ty1x
+X-Gm-Gg: AYBFou3m5utQ/r77puGZNsTAOYqvHnseMwWUCyG7VYPyfxHTJK1G1dQJXzIAQhfbt8J
+	eCbi1w5Ei0ql3yIFAgHt6zzWkUdCTLtbqSASPHIB1vo8ZiWm+BMNvJcWhtldfIJL4jpuMakvbFC
+	sE4hUMpg2KpvJpLjV0tXg+4XuuXBDJUUWQovtV7YfslGlbszMyu5TV4pVn2IzxoYMiG9aXZahOD
+	KAwCG0/OTJaeUXVs3WjBKtG4KD5DhWlM1YKgOJ7DM6i0oN6HMYlLmh2647jZCSDvdst/v9lf1EU
+	saNHywvqORdc15JyzsacFedWRJnDHV0VA7ywAHMlZq3aq4Vkvu3O/SStuXpMiWXNYqUcyt4Yx32
+	vOQuUXofWoRYApcVivlf2/X69URUrTd69zRznvs3jCACDafHkQtTmxcnLsjK/+pjsrfzpg1B2Su
+	iOKI3qmZGWduMsjC2gniF6ANr0BiKUAu0KhTTBcVJ2J21Ml6pqK1mwiyEOCxgb/sy0UrtQ5ewOu
+	LfOEEwPuMARf0XfHMPvdOy7wXNcslN03QVJRHjVZ8fPpoveL55u9ZnrKTDje41fbzXHdpawVNqQ
+	jx9R6J2+gag3YTTbQ9ehAdoivIV1Iyk2OYoVEnnAwUIeqJbKLOyIDJWmrL9vUYdlfGnVAedXkaM
+	U4NdN4uPPJ35u1wyHoDrSZOI3kyjmgdHIWgzmpO1HGmZlPfoTRYo4T5dP02pc
+X-Received: by 2002:a05:6512:1104:b0:5bf:e341:b175 with SMTP id 2adb3069b0e04-5c003ab5418mr1155367e87.39.1793997627853;
+        Fri, 06 Nov 2026 12:40:27 -0800 (PST)
+Received: from Lauri-G-Pro-14-M4.intra.lakuz.com (n2vuxegy3pwmc89dqti-1.v6.elisa-laajakaista.fi. [2001:99a:2ab:bb00:c40d:a019:da27:d206])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5c00306f939sm494383e87.52.2026.11.06.12.40.27
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Fri, 06 Nov 2026 12:40:27 -0800 (PST)
+From: Lauri Gates <lauri.gates@gmail.com>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: Dave Chinner <dgc@kernel.org>,
+	linux-xfs@vger.kernel.org,
+	Carlos Maiolino <cem@kernel.org>,
+	Christian Brauner <christian@brauner.io>,
+	"Darrick J. Wong" <djwong@kernel.org>,
+	linux-api@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	ocfs2-devel@lists.linux.dev,
+	linux-nfs@vger.kernel.org,
+	linux-cifs@vger.kernel.org
+Subject: Re: Concurrent FIEMAP on reflinked files serialises on the AGF buffer lock
+Date: Fri,  6 Nov 2026 22:40:26 +0200
+Message-ID: <20261106204026.14530-1-lauri.gates@gmail.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <au3wJNbRPXQZG5Op@infradead.org>
+References: <au3wJNbRPXQZG5Op@infradead.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -60,161 +107,149 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-Hi,
+On Fri, Nov 06, 2026 at 07:20:04AM -0800, Christoph Hellwig wrote:
+> Please do.  The main question are:
+>
+>  - do we want it in fileattr_get or as a STATX_ATTR_ in statx.
+>  - how do we make the query reliable, and do we even need to?
 
-I am sharing some details on the ARM64 ESR ownership issue during
-signal delivery, along with a few possible solutions.
-I would appriciate feedback on the scenarios and proposed approaches.
+Thanks. For the newly Cc'd lists: the thread [1] started from du-like
+tools that call FIEMAP on every file to count shared extents, which on
+XFS serialises on the AGF buffer lock. Dave suggested a per-file "may
+have shared extents" flag so such tools can skip FIEMAP on files that
+cannot share, and Christoph asked for a patch. Before writing one I'd
+like to settle the two questions above and the "two bits" question
+below.
 
-Introduction to ESR
-~~~~~~~~~~~~~~~~~~~
+To see what the flag would buy, I emulated it: a walker that calls
+statx() on every file and runs open + FIEMAP + close only on files
+whose XFS_DIFLAG2_REFLINK was set, read beforehand with xfs_db -r. In
+all 80 configurations (trees 0-100% reflinked, 1-24 threads, two
+machines) it found the same shared files and extents as FIEMAP on
+every file.
 
-ESR refers to an AArch64 system register, Exception syndrome register
-which holds the information about why an exception occurred.
+On placement, a STATX_ATTR_ bit (say STATX_ATTR_MAY_SHARE) looks like
+the better fit to me, for two reasons, though I may well be missing
+history here.
 
-For relevant hardware faults, Linux exposes this value to user space, by
-including ESR context in the signal frame. This was originally introduced [1]
-for user space instruction emulators to identify whether a fault is read/write
-and its access size without decoding the instruction itself.
+A du walk needs statx() for stx_blocks anyway, so a bit in
+stx_attributes would cost it no extra syscall, while the path-based
+file_getattr(2) adds a second call and lookup per file. Median of 5
+runs, 100,000 files, warm cache, Ryzen 9 3900X on 6.17:
 
-Problem statement
-~~~~~~~~~~~~~~~~~
+                               1 thread   24 threads
+    statx()                      195 ms      11.4 ms
+    statx() + file_getattr()     352 ms      19.9 ms
 
-ARM64 uses a task level field, current->thread.fault_code to retain the
-ESR state captured during faults. This is later used to generate the ESR
-context during signal frame generation. Essentially the ESR state stored
-in fault_code has no ownership relation with the signals queued.
+(An arm64 VM on 7.2 shows a smaller gap: statx() alone vs with
+file_getattr() is 79 vs 97 ms on 1 thread, 8.9 vs 11.0 ms on 13.)
 
-From Linux arm64 point of view, there are two categories,
-* Signals with relevant ESR context - triggered by hardware faults only
-* Signals without ESR context - triggered by hardware faults and software as well.
+The other is that for a "may share" bit, clear is the unsafe answer,
+so a filesystem that cannot answer should not look like one that
+answers "not shared". As I understand it, stx_attributes_mask makes
+that distinction, while struct file_attr has no validity mask today
+(it is size-versioned, so one could be added), so through
+file_getattr() btrfs would currently read as never shared. A spare
+bit in stx_attributes adds no field to struct statx, which I hope
+meets the concern Christian raised about spending statx space on the
+case-folding RFC [2]. If fileattr is preferred, the bit could instead
+mean "no shared extents", so that clear is the safe default, as it is
+for FS_XFLAG_CASEFOLD.
 
-Because fault_code has no signal ownership, an ESR captured for one signal can be
-included in the frame of an unrelated signal.
+> Besides xfs, btrfs and ocfs2 also support reflinks, and nfs (and maybe
+> cifs?) can export the semanics remotely.  So we really need a way
+> to indicate if the file system could support reflinks to start with,
+> and then one that the file could, so we probably need two bits
 
-Some possible error scenarios are given below that show the ESR ownership issue.
+For du, I think the mask could stand in for the "could support
+reflinks" bit if it means "this filesystem can answer for this file":
 
-Assumption:
-1. Signals described as being delivered to user space are assumed to have handlers
-installed that allow the task to continue.
-2. Cases 2 and 3 assume that the task is traced by ptrace
+  mask clear            not reported, fall back to FIEMAP
+  mask set, bit clear   no shared extents
+  mask set, bit set     may have shared extents
 
-Case 1: Hardware fault followed by an unrelated asynchronous signal
+A filesystem that cannot share extents at all would set the mask and
+leave the bit clear. If I read v7.4-rc1 right, only xfs, btrfs and
+ocfs2 report shared extents, and all three implement
+->remap_file_range, so the VFS might set the mask itself for files
+whose filesystem lacks ->remap_file_range. What I could find per
+filesystem:
 
-* An EL0 exception generates and delivers a fault signal with ESR A.
-* current->thread.fault_code remains set after the signal is delivered.
-* A subsequent asynchronous SIGUSR1 is delivered
-* Since ESR context is added to signal frame based on non zero fault_code,
-  a stale ESR context can get attached to this non fault signal.
+ - xfs: XFS_DIFLAG2_REFLINK is set on both inodes in
+   xfs_reflink_remap_prep() before any extent is remapped, so clear
+   means no shared extents.
+ - ocfs2: OCFS2_HAS_REFCOUNT_FL is set on both inodes before the
+   remap and cleared only at zero clusters, which looks like the same
+   meaning.
+ - btrfs: I could not find a persisted per-inode reflink record
+   (last_reflink_trans is in memory only and reset to last_trans when
+   the inode is loaded), so btrfs would leave the bit out of the mask
+   for now. btrfs folks, please correct me if I missed something.
+ - nfs, cifs: I could not find a per-file attribute in NFSv4.2 or
+   MS-FSCC that could carry it (space_freed comes closest, and nfsd
+   does not implement it), so no mask bit there.
 
-Case 2: Two EL0 faults, each with distinct ESR values
+A filesystem-level "could reflink" bit might be a separate need:
+nfsd encodes clone_blksize for every export and ksmbd advertises
+FILE_SUPPORTS_BLOCK_REFCOUNTING unconditionally, I assume because
+neither can ask the exported filesystem. Did you have nfsd and ksmbd
+in mind for that bit?
 
-* An EL0 store to a read-only page triggers hardware fault with ESR A
-  and SIGSEGV gets queued.
-* At the SIGSEGV ptrace stop, ptrace tracer
-  - masks SIGSEGV
-  - queues SIGUSR1 to the tracee
-  - continues the tracee task with SIGSEGV and hence SIGSEGV gets requeued.
-    ie. PTRACE_CONT(..., SIGSEGV)
-  So essentially SIGSEGV gets deferred and SIGUSR1 gets processed first.
-* Task continues with SIGUSR1 user space handler which in turn triggers another
-  hardware fault with ESR B resulting in a SIGBUS. This overwrites ESR A in
-  the task level storage.
-* When the initially deferred SIGSEGV is later delivered,
-  its ESR context is generated from ESR B instead of ESR A.
+On reliability, my tentative answer is that the bit does not need to
+be exact for this use. A clear bit must never be wrong, and it never
+was in my tests, including a survey of my desktop's XFS root (2.0M
+files, flags read with xfs_db -r and matched by inode number). A
+stale set bit costs one FIEMAP, so I would document it as "may have
+shared extents"; since the contract is only "may", clearing it more
+eagerly later would not change the uapi.
 
-Case 3: One EL0 fault with valid ESR + software-originated fault signal without ESR
+Stale bits do limit what it saves, though. The flag stays set when
+the other copy is deleted or the file is overwritten; only truncation
+to zero and FALLOC_FL_UNSHARE_RANGE (see the caveat below) clear it.
+Ordinary copies set it: coreutils 9.4 cp and install, cat (which
+copies with copy_file_range), Rust's std::fs::copy, and overlayfs
+copy-up all reflink on XFS. On my desktop, leaving out benchmark
+trees, 18% of inodes have the flag and 41% of those share nothing.
+That leaves out ~/.rustup too: an earlier test reflink-copied it, so
+all of its 132k inodes are flagged and none share; counting it, the
+figures are 25% and 62%.
 
-* A task masks SIGBUS signal and then self-queues the same SIGBUS/BUS_ADRERR signal
-  This is software generated but uses the same encoding (signo, si_code)
-  of hardware fault signal.
-* The task then encounters a hardware fault with ESR A and SIGSEGV
-  gets queued.
-* At the SIGSEGV ptrace stop, ptrace tracer
-  - masks SIGSEGV,
-  - unmasks SIGBUS,
-  - continues the tracee with SIGSEGV and hence SIGSEGV gets requeued
-* Task continues with SIGBUS handling and the signal can get wrongly framed with ESR A.
+On real trees (24 threads, median of 5), statx() on every file, then
+open + FIEMAP + close on every file, on flagged files, or on files
+with shared extents only, the lower bound for a flag cleared when
+sharing ends (/usr has no shared files):
 
-Open questions
-~~~~~~~~~~~~~~
+                       statx only  every file  flagged  shared only
+  /usr      224k files      28 ms      264 ms    29 ms       -
+  ~/.local  372k files      63 ms      506 ms   487 ms    322 ms
+  ~/.rustup 132k files      20 ms      319 ms   318 ms     21 ms
 
-Are there any known users for ESR context in arm64 signal frames currently?
-If not, should we really continue exposing ESR context through signal frames ?
+Would there be a reasonable point for XFS to clear the flag once
+sharing ends? I don't know the code well enough to tell what that
+would cost.
 
-Possible solutions
-~~~~~~~~~~~~~~~~~~
+The caveat, which may be unintended or may be my misreading:
+FALLOC_FL_UNSHARE_RANGE over a whole shared file does not clear the
+flag on the first call. bpftrace on 7.2 shows
+xfs_reflink_clear_inode_flag() entered and
+xfs_reflink_inode_has_shared_extents() not, so it looks like
+xfs_can_free_cowblocks() returned false, perhaps on I_DIRTY_PAGES
+left by the unshare. A second call after sync clears the flag.
 
-If we wish to expose ESR context in signal frames, below are few options.
+On Darrick's XFS_IOC_GETFSREFCOUNTS patch from your other mail:
+thanks for the pointer. It gives a device-wide total without
+privileges, which a du tool could show for the whole filesystem,
+though not per directory.
 
-Option 1: Task-level ESR with filtering (no changes to generic kernel)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+If the statx direction sounds reasonable, I would be glad to put
+together an RFC with the uapi bit, xfs and ocfs2 support, a man-pages
+patch and an xfstest. This would be my first kernel patch, so
+corrections on any of the above are very welcome.
 
-Category A: Non-synchronous signals
-Prevent signals such as SIGUSR1 from receiving an ESR context.
-Fix: Allow ESR framing only for sigmask(ksig->sig) & SYNCHRONOUS_MASK
-
-Category B: Synchronous signal codes that cannot carry ESR
-Exclude codes such as TRAP_PERF, BUS_MCEERR_AO, and SEGV_MTEAERR.
-Fix: Allow ESR framing only for ARM64 ESR-capable (signo, si_code) pair.
-
-Category C: ESR-capable pairs without a captured ESR
-Some software-generated signals use the same ESR-capable (signo, si_code)
-pair as hardware exceptions.
-Fix: Add current->thread.esr_valid, set only by ESR-capturing exception paths
-and cleared after consumption or invalidation.
-
-Required assumption: Multiple ESR-less ESR-capable(Cat C) signals may be outstanding
-while esr_valid is clear. While esr_valid is set, the signal owning the ESR must
-be the only outstanding ESR-capable signal until its ESR is framed or invalidated.
-
-Atleast cases 2 and 3 violate this assumption.
-
-Option 2: Per-signal ESR ownership flag
-+++++++++++++++++++++++++++++++++++++++
-
-Add a per signal ESR ownership flag, potentially using unused bits in the fields of
-_sigfault (part of struct kernel_siginfo) to mark which queued signal owns
-current->thread.fault_code.
-
-By default, the field should stay cleared.
-
-  - Set thread.esr_valid when an exception captures ESR.
-  - Set the signal’s ESR_VALID flag when queueing it.
-  - Generate an ESR context only when both are set.
-  - Clear thread.esr_valid after the owning signal has framed the ESR,
-     or when the owning signal is discarded
-  - Detect an ownership conflict if ESR is captured while thread.esr_valid
-    is already set.
-  - Detect stale ownership if a flagged signal is dequeued while thread.esr_valid
-     is clear.
-
-This approach resolves ambiguity between any number of ESR-less Category C signals
-and one ESR-owning signal. It detects, but does not solve, the case where multiple
-ESR-owning signals coexist.
-
-This may be involve fewer changes than Option 3, but then this option needs further
-validiation of layout compatibility and sanitization of siginfo passed from/to userspace.
-Also implications of reusing siginfo storage for kernel internal metada need to be
-looked further.
-
-Option 3: Add per-signal arch context
-+++++++++++++++++++++++++++++++++++++
-
-Probably a cleaner but more invasive solution is to add arch context
-(ESR value and valid bit) to each struct sigqueue (ie. outside struct kernel_siginfo)
-and propagate it into struct ksignal.
-Context aware APIs can be used to specify ESR value and its validity while existing
-APIs would leave the context invalid.
-
-This option could open a way for ptrace to get the precise ESR value and that can be really
-benefecial for POE2 use case.
-
-[1] https://github.com/torvalds/linux/commit/15af1942dd61ee236a48b3de14d6f31c0b9e8116
+[1] https://lore.kernel.org/linux-xfs/20261102193533.93690-1-lauri.gates@gmail.com/
+[2] https://lore.kernel.org/all/20251006-zypressen-paarmal-4167375db973@brauner/
 
 Thanks,
-Linu Cherian.
+Lauri
