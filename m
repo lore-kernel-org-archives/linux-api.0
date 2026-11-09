@@ -1,78 +1,78 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=198.175.65.13
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=198.175.65.14
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794248623;
-	b=mDmZa5F90DXBlYsvCD4CFGhMSnYhXgcx5mXvQ7ykmCnkLlC1xF3yKJQrPEfkjBqAkPpr
-	 xm5pCr7TIM1l01a3O7cBSHs9aRuE7UPwWMuT3AyqsmOD6kJg68saW6UtaM9AGZqRW76DU
-	 tp1qkIPZAg0vtzPiglvUITHyPgs7blW77RghtJvIlCH+8N20zfWuqVlfRv9n6kwbvketu
-	 8AA53Pl/wWGfdjbb0/D6Mu7oLRIhDzuocr5ThGdl4kAyqlzAll/dzSjoMM3B/UJdCKD5U
-	 MMpkF0FDpSEnuwXgMzzHhfaXGNtv5EwAtq+0iFHSj+lTgFUo73djzso5crOE//pGngA==
+	t=1794249282;
+	b=fb57JDywUWN6SRXPqyGC54iVRNBXeN4v1VIwPBeO5q9JNXC0B1eyAYk9E2Z8MPozc+1T
+	 yOjVADpXftRreDOpicXaKGnjUjMw4KPbSeS9fraqTaU6vxRvYri+cCkEg1Y+bHnw9J8YP
+	 Psnyh7MDeQ7GBKHYRLV4HB9TdYUcelgSkioJjex5iwLU146y+7UOw0jFN+5vI4PFEtice
+	 aKUJyZEEIE31F72B5jck+EoJr0Im3DZ4TdQ9/10IuEHdevbSCUS07n62DSl7rnI7qarbu
+	 4kPGeNHrEhhsn+wnITe/7BTxGCfnj3fqK7gbIwSv15QqKwPSXB9ACKwiuykZEvdSDQQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794248623;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794249282;
 	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
 	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
 	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:To:cc:
 	 Subject:In-Reply-To:Message-ID:References:MIME-Version:Content-Type;
-	bh=nVHVF+Kc92+BRI/aLmdGMRNmm3kBUyhiEVjuIYHrvVQ=;
-	b=z9UlQ82kTkcUC8tSgR+Dor9d8Tb3hVSX3wX61I35gH2Yri+/0uN/Dh8vs11579k3VuWq
-	 XnEcouT0EN9UVtaDfodPg+2WxhBUATMw125TK4EcwL3LYPAewLNX+jbvQJlNL7iSvQjdi
-	 TYrBwSKDy/H2pZn5CZipbMIWjFBr0nnFRo3DXjpMlWrkqKSbVIIywdDx7p86ZS/1g1oPv
-	 /8E+3o2jEbx2AADO4QufwVTNM5lvzW4Dhu1cVf751HqqSlVJKUZu/LQ1r2eAg2UBqwOHP
-	 dyS0YSUGO9BOKadn2vwuyeq51RZOnnHcuDSA4h+kkHlZ7yViqOEban4EIZEVEj1NTqQ==
+	bh=EAYzsoHGShDNLxcEC4nzCs8egN1aw2JDSXlKgPC5Mfo=;
+	b=F5vWrYhDK0sPSBIO8mcRrnjHtEmy+cZ29YDyln9yWj6vjFjxh13NI5Bjh62wwIyyMQEZ
+	 kZUGEh15RjM8NWp71tKQPIKoBoozA6REZeqmH09yoiqK0Wo5om3QHHbPRMh69at7QPVSA
+	 nvEXZPdU55BoY0VjCwi1DUg3jXs6sSLETmpOEnXRVkTMa+ETesCb3oOfb1vXJs8iOdbnz
+	 KY0ylXUuXun00UoEglzF5rjiKwFhzUdrWwTzFcWeH5UtOh7v1e6YpaJOUS7s8krVm7UTq
+	 N5S/JIOKvThMrBqMH8Jh2h9TxQNjExUJVXpwdSHnB1RXM/sTFfcl7vQhbC4Y4+stzgw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.intel.com;
 	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=Nyw4HMPX;
-	arc=none smtp.remote-ip=198.175.65.13
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.13])
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b="g2Gqat/c";
+	arc=none smtp.remote-ip=198.175.65.14
+Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.14])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4B87606A325;
-	Mon,  9 Nov 2026 18:23:41 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D4B87606A325
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 923FB606A5C1;
+	Mon,  9 Nov 2026 18:34:41 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 923FB606A5C1
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=Nyw4HMPX
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=g2Gqat/c
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1794248622; x=1825784622;
+  t=1794249281; x=1825785281;
   h=from:date:to:cc:subject:in-reply-to:message-id:
    references:mime-version;
-  bh=86KVkOJZ+b8WfEPmHNnWW2R1LFl+RH1uq4vmQ1SjCfI=;
-  b=Nyw4HMPX9dqxwylGUbnmHN64w1bV2UH2BWuWuG2NKR8I4Kn/SES95t8p
-   JT65qtxNkuoV75zEfJJWqMKIvAl5kfGOQeoE7sCRQ2w9Um94oPocvjrcn
-   wLSUwUlESVJysZHmHUsN6UbDIeLw3w8v/ygN8aIeffPlUTRkwZug6kSCd
-   UgkxmzkBIs+Yb7mwsTx/yIqnEsXJqzCxDhdvaCLTni8AHAcN1/V+G8wgh
-   +FtqHsxbw7w/JImhbrwDn8b37ZvhOhzHnVOagFBk7Q/fpc63W/sY1mG3b
-   F3GzkrsvTO0qIKJY9L/sYce1Grv4ImO3ARYThn/+3pN0UxglM4wTeto2/
-   A==;
-X-CSE-ConnectionGUID: JbObTrGdTzm44GkWN2fAQw==
-X-CSE-MsgGUID: PfjtixPOTv+WdgBlz5Cysg==
-X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="2861379"
+  bh=uIdTCvf5Xd+7AgxI7O+gBFdCHrkZGxWNz4Lt1PpdbjI=;
+  b=g2Gqat/cMDFCdH+J376PF09/czvg9oB90PoV7QtnWWuI7HN62mFfsicn
+   Ljazm7C8NSSaNP+zWUMzauQZwDRtLPjuE2l4x4TBH32/rDSDsPeZJGo+L
+   nvQJz7VFoeaJK76lqjLUTGMsZa8jIx7r/IBP47LBPqP/QWnq6SJB6WR06
+   /XcXBe4SBswQ73t7EtUyoWpyojnxxBV2cFKV9JvWMl0iB7peqk39cg04Z
+   Wg3/WpKHYnHD+rF0IXSbVlyN7EAF8ozrTDYs8Jd3A8lGXBzIQptt6+GBs
+   9KJYsiuXHkAcE/dczzaX2AhfTXDM9nrfBYUSYaASV6nP6wFy3+EN4nd9w
+   w==;
+X-CSE-ConnectionGUID: iigwvCdoSqmIlOvBTVmtKA==
+X-CSE-MsgGUID: aQGqYYe/Q02vcldm9mAAxg==
+X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="2874825"
 X-IronPort-AV: E=Sophos;i="6.27,204,1787036400"; 
-   d="scan'208";a="2861379"
-Received: from orviesa006.jf.intel.com ([10.64.159.146])
-  by orvoesa105.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 10:23:41 -0800
-X-CSE-ConnectionGUID: K9QaV3jgR3mClpkPr7nl8A==
-X-CSE-MsgGUID: zJS3SNKUQnmc77RIMK62Mg==
+   d="scan'208";a="2874825"
+Received: from fmviesa005.fm.intel.com ([10.60.135.145])
+  by orvoesa106.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 10:34:40 -0800
+X-CSE-ConnectionGUID: SQvI6sYVQomtBNtNVoHgOQ==
+X-CSE-MsgGUID: I3SZNZs6QbymxG8nMpfxJQ==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="6.27,204,1787036400"; 
-   d="scan'208";a="7957427"
+   d="scan'208";a="8068631"
 Received: from ijarvine-mobl1.ger.corp.intel.com (HELO localhost) ([10.245.244.139])
-  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 10:23:38 -0800
+  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 10:34:38 -0800
 From: =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
-Date: Mon, 9 Nov 2026 20:23:34 +0200 (EET)
+Date: Mon, 9 Nov 2026 20:34:34 +0200 (EET)
 To: Bartu Alev <bartualev@gmail.com>
 cc: Corentin Chary <corentin.chary@gmail.com>, 
     "Luke D. Jones" <luke@ljones.dev>, Denis Benato <denis.benato@linux.dev>, 
     Hans de Goede <hansg@kernel.org>, platform-driver-x86@vger.kernel.org, 
     LKML <linux-kernel@vger.kernel.org>, linux-hwmon@vger.kernel.org, 
     Guenter Roeck <linux@roeck-us.net>, linux-api@vger.kernel.org
-Subject: Re: [PATCH 4/7] platform/x86: asus-wmi: read the firmware fan floor
- tables
-In-Reply-To: <20261101-asus-fan-floors-v4-v1-4-b8d1c31a99a9@gmail.com>
-Message-ID: <9097a71a-a7f5-54ec-dd2b-7f55376b2a14@linux.intel.com>
-References: <20261101-asus-fan-floors-v4-v1-0-b8d1c31a99a9@gmail.com> <20261101-asus-fan-floors-v4-v1-4-b8d1c31a99a9@gmail.com>
+Subject: Re: [PATCH 6/7] platform/x86: asus-wmi: expose the fan floor tables
+ via hwmon
+In-Reply-To: <20261101-asus-fan-floors-v4-v1-6-b8d1c31a99a9@gmail.com>
+Message-ID: <fd2f3c5d-9ff8-3c72-e9f0-d5704b539f9b@linux.intel.com>
+References: <20261101-asus-fan-floors-v4-v1-0-b8d1c31a99a9@gmail.com> <20261101-asus-fan-floors-v4-v1-6-b8d1c31a99a9@gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,362 +86,257 @@ Content-Type: text/plain; charset=US-ASCII
 
 On Sun, 1 Nov 2026, Bartu Alev wrote:
 
-> On some ASUS laptops, the embedded controller enforces minimum fan
-> duties on top of custom fan curves written via CPU_FAN_CURVE
-> (0x00110024), GPU_FAN_CURVE (0x00110025), and the mid fan curve
-> methods. The floors are exposed via read-only DSTS methods 0x00110026,
-> 0x00110027, and 0x00110033.
+> Firmware enforces minimum duties on fan curves without updating the
+> reported curve buffers, leaving userspace unable to determine which
+> duty ranges are unreachable.
 > 
-> The floor table is indexed by curve point: entry i (0-based, sysfs
-> point i + 1) provides the minimum duty for that point. The EC maps
-> each point to a temperature decade [30 + 10 * i, 39 + 10 * i] degrees
-> Celsius, stepping between points with 5 degrees Celsius of hysteresis
-> without interpolation on TUF series.
+> Export read-only pwm[1-3]_auto_point[1-8]_floor_pwm attributes on the
+> hwmon device.  Each file returns the minimum duty (0-255 PWM) enforced
+> for that curve point.  The attributes are registered for every
+> supported fan curve and return -ENODATA when firmware provides no
+> floor table.
 > 
-> EC firmware dumps from an FA507 show floor tables of {0, 0, 0, 0, 25,
-> 48, 58, 74}% for the CPU fan and {0, 0, 0, 0, 26, 57, 68, 91}% for the
-> GPU fan, verified via live DSTS reads on an FA507NV.
+> Standard hwmon curve attributes (pwmY_auto_pointZ_pwm) assume
+> writable points and cannot represent a separate, hardware enforced
+> floor.  Dedicated read-only floor attributes provide these values
+> while adhering to the one value per file rule.
 > 
-> Read the tables at probe and refresh them after power profile changes
-> or curve resets, as the EC can reload defaults when operating modes
-> change.  Profile switches did not alter table bytes on the FA507, so
-> this refresh is precautionary.
-> 
-> Export the floors without altering user curves, rejecting replies
-> shorter than eight bytes or containing values exceeding 100%.  If a
-> table contains decreasing values along its points, warn once but still
-> export it so userspace can inspect what firmware enforces.  When
-> firmware returns 0xFFFFFFFE, mark the table unsupported for that fan
-> to avoid repeating failed WMI calls on future refreshes; unreadable
-> tables remain zeroed.
-> 
-> Protect the cached floor tables with a mutex against concurrent sysfs
-> reads.
-> 
-> Also fix the stale comment claiming that firmware interpolates between
-> curve points.
+> Document these attributes in
+> Documentation/ABI/testing/sysfs-platform-asus-wmi.
 > 
 > Signed-off-by: Bartu Alev <bartualev@gmail.com>
 > ---
->  drivers/platform/x86/asus-wmi.c | 170 ++++++++++++++++++++++++++++++++++++++--
->  1 file changed, 165 insertions(+), 5 deletions(-)
+>  Documentation/ABI/testing/sysfs-platform-asus-wmi |  23 ++++
+>  drivers/platform/x86/asus-wmi.c                   | 141 +++++++++++++++++++++-
+>  2 files changed, 163 insertions(+), 1 deletion(-)
 > 
+> diff --git a/Documentation/ABI/testing/sysfs-platform-asus-wmi b/Documentation/ABI/testing/sysfs-platform-asus-wmi
+> index 775ea88625c0d..24931cc97ca86 100644
+> --- a/Documentation/ABI/testing/sysfs-platform-asus-wmi
+> +++ b/Documentation/ABI/testing/sysfs-platform-asus-wmi
+> @@ -297,3 +297,26 @@ Contact:	Luke D. Jones <luke@ljones.dev>, Denis Benato <denis.benato@linux.dev>,
+>  Description:
+>  		Same as the pwm1 and pwm2 curve points, for the mid fan
+>  		(pwm3) of laptops whose firmware exposes a third fan curve.
+> +
+> +What:		/sys/class/hwmon/hwmonX/pwm[1-3]_auto_point[1-8]_floor_pwm
+> +Date:		Nov 2026
+> +KernelVersion:	7.5
+> +Contact:	Bartu Alev <bartualev@gmail.com>
+> +Description:
+> +		Read-only minimum duty, in pwm units (0-255), that the
+> +		embedded controller enforces for curve point Z of fan Y.
+> +		The firmware reports the floor as a percentage; the driver
+> +		converts it with DIV_ROUND_UP(255 * percent, 100), which maps
+
+No code quotes here please.
+
+> +		every 0-100 percentage back to itself.
+
+This mapping sounds like implementation detail not much of user interest.
+
+> +		Point Z (Z = 1..8) is bound to the temperature decade
+> +		[30 + 10 * (Z - 1), 39 + 10 * (Z - 1)] degrees Celsius and
+> +		the value is the floor of that decade.  The controller applies
+> +		max(curve, floor) for every point on each thermal tick, so
+> +		the floor is a hardware limit on top of the curve written
+
+If I understand things right, there's ambiguity with "the curve" so it 
+would be better to differentiate the minumum curve from the custom curve.
+If you want, the the latter you could say inside parenthesis how the 
+custom curve is inputted.
+
+> +		through pwmY_auto_pointZ_pwm.
+> +
+> +		The attribute exists for every fan with a custom fan curve.
+
+Is that same as "the curve written through pwmY_auto_pointZ_pwm"? Please 
+try to use consistent terminology. I'd say the custom
+
+> +		Reading it returns -ENODATA when the firmware of that fan
+> +		does not provide a floor table.  A zero value is a real
+> +		floor: the controller then enforces no minimum duty for that
+> +		point.
 > diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
-> index c55f469cb03dc..b6541183d4568 100644
+> index dc1e69b964c99..74476904cb99c 100644
 > --- a/drivers/platform/x86/asus-wmi.c
 > +++ b/drivers/platform/x86/asus-wmi.c
-> @@ -239,6 +239,10 @@ struct fan_curve_data {
->  	u32 device_id;
->  	u8 temps[FAN_CURVE_POINTS];
->  	u8 percents[FAN_CURVE_POINTS];
-> +	/* EC minimum duty per point, pwm 0-255, not percent */
-> +	u8 floors[FAN_CURVE_POINTS];
-> +	bool floors_valid;
-> +	bool floors_unsupported;
->  };
->  
->  struct asus_wmi {
-> @@ -320,6 +324,9 @@ struct asus_wmi {
->  	bool gpu_fan_curve_available;
->  	bool mid_fan_curve_available;
->  	struct fan_curve_data custom_fan_curves[3];
-> +	/* protects custom_fan_curves[].floors */
-> +	struct mutex fan_curve_lock;
-> +	struct device *fan_curve_hwmon;
->  
->  	struct device *ppdev;
->  
-> @@ -466,7 +473,8 @@ static int asus_wmi_evaluate_method5(u32 method_id,
->   * means that the method called is unsupported.
->   */
->  static int asus_wmi_evaluate_method_buf(u32 method_id,
-> -		u32 arg0, u32 arg1, u8 *ret_buffer, size_t size)
-> +		u32 arg0, u32 arg1, u8 *ret_buffer, size_t size,
-> +		size_t *ret_len)
->  {
->  	struct bios_args args = {
->  		.arg0 = arg0,
-> @@ -479,6 +487,9 @@ static int asus_wmi_evaluate_method_buf(u32 method_id,
->  	union acpi_object *obj;
->  	int err = 0;
->  
-> +	if (ret_len)
-> +		*ret_len = 0;
-> +
->  	status = asus_wmi_evaluate_method_locked(method_id, &input, &output);
->  
->  	pr_debug("%s called (0x%08x) with args: 0x%08x, 0x%08x\n",
-> @@ -503,6 +514,8 @@ static int asus_wmi_evaluate_method_buf(u32 method_id,
->  		}
->  
->  		memcpy(ret_buffer, obj->buffer.pointer, obj->buffer.length);
-> +		if (ret_len)
-> +			*ret_len = obj->buffer.length;
->  		break;
->  	case ACPI_TYPE_INTEGER:
->  		err = (u32)obj->integer.value;
-> @@ -3631,7 +3644,7 @@ static int fan_curve_get_factory_default(struct asus_wmi *asus, u32 fan_dev)
->  		mode = 2;
->  
->  	err = asus_wmi_evaluate_method_buf(asus->dsts_id, fan_dev, mode, buf,
-> -					   FAN_CURVE_BUF_LEN);
-> +					   FAN_CURVE_BUF_LEN, NULL);
->  	if (err) {
->  		pr_warn("%s (0x%08x) failed: %d\n", __func__, fan_dev, err);
->  		return err;
-> @@ -3651,7 +3664,136 @@ static int fan_curve_get_factory_default(struct asus_wmi *asus, u32 fan_dev)
->  	return 0;
+> @@ -3868,6 +3868,23 @@ static ssize_t fan_curve_show(struct device *dev,
+>  	return sysfs_emit(buf, "%d\n", value);
 >  }
 >  
-> -/* Check if capability exists, and populate defaults */
-> +/*
-> + * Read the firmware fan floor table. The EC enforces a minimum duty per
-> + * curve point on top of the custom curve. Reading is best effort: at
-> + * probe time a failed read leaves the table zeroed and invalid, and a
-> + * failed refresh keeps the last table that was read.
-> + */
-> +static int fan_curve_load_floors(struct asus_wmi *asus, u32 fan_dev)
+> +static ssize_t fan_curve_floor_show(struct device *dev,
+> +				    struct device_attribute *attr, char *buf)
 > +{
-> +	struct fan_curve_data *curves;
-> +	u8 buf[FAN_CURVE_BUF_LEN] = {};
-> +	size_t len;
-> +	int err, fan_idx, i;
-
-Reverse xmas-tree order.
-
-I seems to only use positive values(?) => unsigned int 
-
-> +	switch (fan_dev) {
-> +	case ASUS_WMI_DEVID_CPU_FAN_CURVE:
-> +		fan_idx = FAN_CURVE_DEV_CPU;
-> +		fan_dev = ASUS_WMI_DEVID_CPU_FAN_FLOOR;
-> +		break;
-> +	case ASUS_WMI_DEVID_GPU_FAN_CURVE:
-> +		fan_idx = FAN_CURVE_DEV_GPU;
-> +		fan_dev = ASUS_WMI_DEVID_GPU_FAN_FLOOR;
-> +		break;
-> +	case ASUS_WMI_DEVID_MID_FAN_CURVE:
-> +		fan_idx = FAN_CURVE_DEV_MID;
-> +		fan_dev = ASUS_WMI_DEVID_MID_FAN_FLOOR;
-> +		break;
-> +	default:
-> +		return -EOPNOTSUPP;
-> +	}
-> +
-> +	curves = &asus->custom_fan_curves[fan_idx];
-> +	if (curves->floors_unsupported)
-> +		return -ENODEV;
-> +
-> +	err = asus_wmi_evaluate_method_buf(asus->dsts_id, fan_dev, 0, buf,
-> +					   FAN_CURVE_BUF_LEN, &len);
-> +	if (err) {
-> +		pr_debug("%s (0x%08x) failed: %d\n", __func__, fan_dev, err);
-
-Below you use dev_*() printing, so why pr_*() here??
-
-This also seems to lack include for dev_*() so lets finally add that one.
-
-> +		/* 0xFFFFFFFE means the firmware has no such method */
-
-Drop comment.
-
-> +		if (err == -ENODEV)
-> +			curves->floors_unsupported = true;
-> +		return err;
-> +	}
-> +
-> +	if (len < FAN_CURVE_POINTS) {
-> +		pr_debug("%s (0x%08x): short reply of %zu bytes\n",
-> +			 __func__, fan_dev, len);
-
-dev_...()
-
-> +		return -ENODATA;
-> +	}
-> +
-> +	/* A percentage above 100 would overflow the pwm scale below */
-
-Drop.
-
-> +	for (i = 0; i < FAN_CURVE_POINTS; i++) {
-> +		if (buf[i] > 100) {
-> +			pr_debug("%s (0x%08x): implausible floor table\n",
-> +				 __func__, fan_dev);
-
-dev_xx().
-
-Why is this only debug level? It would seem like something that has 
-relevance beyond that.
-
-When making it err/warn level, improve/simplify the message too to 
-simply state that floor table entry > 100 instead of something cryptic 
-like the above :-). And never print __func__ for messages intended for 
-normal user.
-
-> +			return -EINVAL;
-> +		}
-> +	}
-> +
-> +	/*
-> +	 * The floors observed so far do not decrease along the points, but
-> +	 * that is only proven on the FA507.  Do not reject a table that
-> +	 * does: the values are still usable as per-point minimums, and
-> +	 * hiding them would leave userspace no way to see what the
-> +	 * firmware enforces.
-> +	 */
-> +	for (i = 1; i < FAN_CURVE_POINTS; i++) {
-> +		if (buf[i] < buf[i - 1]) {
-
-Reverse the compare sides to make it more logical.
-
-> +			dev_warn_once(&asus->platform_device->dev,
-> +				      "fan curve (0x%08x): floor table decreases at point %d\n",
-> +				      fan_dev, i + 1);
-> +			break;
-> +		}
-> +	}
+> +	struct sensor_device_attribute_2 *dev_attr = to_sensor_dev_attr_2(attr);
+> +	struct asus_wmi *asus = dev_get_drvdata(dev);
+> +	struct fan_curve_data *data = &asus->custom_fan_curves[dev_attr->nr];
+> +	u8 floor;
 > +
 > +	guard(mutex)(&asus->fan_curve_lock);
-> +	for (i = 0; i < FAN_CURVE_POINTS; i++)
-> +		curves->floors[i] = DIV_ROUND_UP(255 * buf[i], 100);
-
-Add include.
-
-> +	curves->floors_valid = true;
+> +	if (!data->floors_valid)
+> +		return -ENODATA;
 > +
-> +	return 0;
+> +	floor = data->floors[dev_attr->index];
+> +
+> +	return sysfs_emit(buf, "%u\n", floor);
 > +}
 > +
-> +static void fan_curve_notify_floors(struct asus_wmi *asus)
-> +{
-> +	struct device *hwmon = asus->fan_curve_hwmon;
-> +	bool valid[ARRAY_SIZE(asus->custom_fan_curves)];
-> +	char name[32];
-> +	int fan, point;
-> +
-> +	if (!hwmon)
-> +		return;
-> +
-> +	scoped_guard(mutex, &asus->fan_curve_lock) {
-> +		for (fan = 0; fan < ARRAY_SIZE(valid); fan++)
-
-Add include.
-
-> +			valid[fan] = asus->custom_fan_curves[fan].floors_valid;
-> +	}
-> +
-> +	for (fan = 0; fan < ARRAY_SIZE(valid); fan++) {
-> +		if (!valid[fan])
-> +			continue;
-> +
-> +		for (point = 0; point < FAN_CURVE_POINTS; point++) {
-> +			snprintf(name, sizeof(name),
-
-scnprintf()
-
-> +				 "pwm%d_auto_point%d_floor_pwm",
-> +				 fan + 1, point + 1);
-> +			sysfs_notify(&hwmon->kobj, NULL, name);
-
-Add include.
-
-> +		}
-> +	}
-> +}
-> +
-> +/*
-> + * The EC re-runs its defaults reload when the mode byte it keys on
-> + * changes, which a thermal profile switch can do.  Re-read the tables
-> + * so that the exported values follow the firmware; on the FA507 the
-> + * tables are profile independent, so this is defensive.
-> + */
-> +static void fan_curve_refresh_floors(struct asus_wmi *asus)
-> +{
-> +	if (asus->cpu_fan_curve_available)
-> +		fan_curve_load_floors(asus, ASUS_WMI_DEVID_CPU_FAN_CURVE);
-> +	if (asus->gpu_fan_curve_available)
-> +		fan_curve_load_floors(asus, ASUS_WMI_DEVID_GPU_FAN_CURVE);
-> +	if (asus->mid_fan_curve_available)
-> +		fan_curve_load_floors(asus, ASUS_WMI_DEVID_MID_FAN_CURVE);
-> +
-> +	fan_curve_notify_floors(asus);
-> +}
-> +
-> +/* Check if the capability exists, populate its defaults and read its floor table */
->  static int fan_curve_check_present(struct asus_wmi *asus, bool *available,
->  				   u32 fan_dev)
->  {
-> @@ -3668,6 +3810,16 @@ static int fan_curve_check_present(struct asus_wmi *asus, bool *available,
->  	}
+>  /*
+>   * "fan_dev" is the related WMI method such as ASUS_WMI_DEVID_CPU_FAN_CURVE.
+>   */
+> @@ -4153,6 +4170,58 @@ static SENSOR_DEVICE_ATTR_2_RW(pwm3_auto_point7_pwm, fan_curve,
+>  static SENSOR_DEVICE_ATTR_2_RW(pwm3_auto_point8_pwm, fan_curve,
+>  			       FAN_CURVE_DEV_MID | FAN_CURVE_PWM_MASK, 7);
 >  
->  	*available = true;
+> +/* Firmware enforced minimum duty of each point, read-only */
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point1_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 0);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point2_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 1);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point3_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 2);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point4_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 3);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point5_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 4);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point6_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 5);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point7_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 6);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm1_auto_point8_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_CPU, 7);
 > +
-> +	err = fan_curve_load_floors(asus, fan_dev);
-> +	if (err == -ENODEV)
-> +		dev_dbg(&asus->platform_device->dev,
-> +			"fan curve (0x%08x): no floor table\n", fan_dev);
-> +	else if (err)
-> +		dev_warn(&asus->platform_device->dev,
-> +			 "fan curve (0x%08x): unusable floor table (%d)\n",
-> +			 fan_dev, err);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point1_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 0);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point2_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 1);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point3_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 2);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point4_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 3);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point5_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 4);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point6_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 5);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point7_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 6);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm2_auto_point8_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_GPU, 7);
 > +
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point1_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 0);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point2_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 1);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point3_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 2);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point4_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 3);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point5_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 4);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point6_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 5);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point7_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 6);
+> +static SENSOR_DEVICE_ATTR_2_RO(pwm3_auto_point8_floor_pwm, fan_curve_floor,
+> +			       FAN_CURVE_DEV_MID, 7);
+> +
+>  static struct attribute *asus_fan_curve_attr[] = {
+>  	/* CPU */
+>  	&sensor_dev_attr_pwm1_enable.dev_attr.attr,
+> @@ -4211,6 +4280,37 @@ static struct attribute *asus_fan_curve_attr[] = {
+>  	NULL
+>  };
+>  
+> +static struct attribute *asus_fan_curve_floor_attr[] = {
+> +	/* CPU */
+> +	&sensor_dev_attr_pwm1_auto_point1_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point2_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point3_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point4_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point5_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point6_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point7_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm1_auto_point8_floor_pwm.dev_attr.attr,
+> +	/* GPU */
+> +	&sensor_dev_attr_pwm2_auto_point1_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point2_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point3_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point4_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point5_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point6_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point7_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm2_auto_point8_floor_pwm.dev_attr.attr,
+> +	/* MID */
+> +	&sensor_dev_attr_pwm3_auto_point1_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point2_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point3_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point4_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point5_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point6_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point7_floor_pwm.dev_attr.attr,
+> +	&sensor_dev_attr_pwm3_auto_point8_floor_pwm.dev_attr.attr,
+> +	NULL
+> +};
+> +
+>  static umode_t asus_fan_curve_is_visible(struct kobject *kobj,
+>  					 struct attribute *attr, int idx)
+>  {
+> @@ -4233,11 +4333,50 @@ static umode_t asus_fan_curve_is_visible(struct kobject *kobj,
 >  	return 0;
 >  }
 >  
-> @@ -3738,8 +3890,9 @@ static int fan_curve_write(struct asus_wmi *asus,
->  }
+> +static bool fan_curve_available(struct asus_wmi *asus, int fan_idx)
+> +{
+> +	switch (fan_idx) {
+> +	case FAN_CURVE_DEV_CPU:
+> +		return asus->cpu_fan_curve_available;
+> +	case FAN_CURVE_DEV_GPU:
+> +		return asus->gpu_fan_curve_available;
+> +	case FAN_CURVE_DEV_MID:
+> +		return asus->mid_fan_curve_available;
+> +	default:
+> +		return false;
+> +	}
+> +}
+> +
+> +static umode_t asus_fan_curve_floor_is_visible(struct kobject *kobj,
+> +					       struct attribute *attr, int idx)
+> +{
+> +	struct device *dev = kobj_to_dev(kobj);
+> +	struct asus_wmi *asus = dev_get_drvdata(dev->parent);
+> +	struct device_attribute *dattr =
+> +		container_of(attr, struct device_attribute, attr);
+
+Add include.
+
+> +	int fan = to_sensor_dev_attr_2(dattr)->nr;
+> +
+> +	if (!fan_curve_available(asus, fan))
+> +		return 0;
+> +
+> +	return 0444;
+> +}
+> +
+>  static const struct attribute_group asus_fan_curve_attr_group = {
+>  	.is_visible = asus_fan_curve_is_visible,
+>  	.attrs = asus_fan_curve_attr,
+>  };
+> -__ATTRIBUTE_GROUPS(asus_fan_curve_attr);
+> +
+> +static const struct attribute_group asus_fan_curve_floor_attr_group = {
+> +	.is_visible = asus_fan_curve_floor_is_visible,
+> +	.attrs = asus_fan_curve_floor_attr,
+> +};
+> +
+> +static const struct attribute_group *asus_fan_curve_attr_groups[] = {
+> +	&asus_fan_curve_attr_group,
+> +	&asus_fan_curve_floor_attr_group,
+> +	NULL,
+> +};
 >  
 >  /*
-> - * A fan curve is a set of points the firmware interpolates between, so it
-> - * only makes sense if neither temperature nor PWM ever decreases along it.
-> + * A fan curve is a set of points the firmware steps through, without
-> + * interpolating between them, so it only makes sense if neither temperature
-> + * nor PWM ever decreases along it.
->   */
->  static int fan_curve_validate(struct device *dev, struct fan_curve_data *data)
->  {
-> @@ -3870,6 +4023,7 @@ static ssize_t fan_curve_enable_store(struct device *dev,
->  			err = asus_fan_set_auto(asus);
->  			if (err)
->  				return err;
-> +			fan_curve_refresh_floors(asus);
->  		} else {
->  			/* Safeguard against fautly ACPI tables */
->  			err = fan_curve_get_factory_default(asus, data->device_id);
-> @@ -3878,6 +4032,7 @@ static ssize_t fan_curve_enable_store(struct device *dev,
->  			err = fan_curve_write(asus, data);
->  			if (err)
->  				return err;
-> +			fan_curve_refresh_floors(asus);
->  		}
->  	}
->  	return count;
-> @@ -4125,6 +4280,8 @@ static int asus_wmi_custom_fan_curve_init(struct asus_wmi *asus)
->  		return PTR_ERR(hwmon);
->  	}
->  
-> +	asus->fan_curve_hwmon = hwmon;
-> +
->  	return 0;
->  }
->  
-> @@ -4195,6 +4352,8 @@ static int throttle_thermal_policy_write(struct asus_wmi *asus)
->  	if (asus->mid_fan_curve_available)
->  		asus->custom_fan_curves[FAN_CURVE_DEV_MID].enabled = false;
->  
-> +	fan_curve_refresh_floors(asus);
-> +
->  	return 0;
->  }
->  
-> @@ -5202,6 +5361,7 @@ static int asus_wmi_add(struct platform_device *pdev)
->  	asus->platform_device = pdev;
->  	wdrv->platform_device = pdev;
->  	platform_set_drvdata(asus->platform_device, asus);
-> +	mutex_init(&asus->fan_curve_lock);
->  
->  	if (wdrv->detect_quirks)
->  		wdrv->detect_quirks(asus->driver);
+>   * Must be initialised after throttle_thermal_policy_dev is set as
 > 
 > 
 
