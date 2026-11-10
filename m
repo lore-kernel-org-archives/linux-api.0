@@ -1,71 +1,71 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.13
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794281811;
-	b=2N4zthGwD41YLbNGbwLoJDO7bZ6zrS/RXwO2v3nHSX908e2fN/VT7bdXHJvzCx7eQnsM
-	 ndayafTGI/RjGKERPkys4Y/dH15bILv9ARDKIg4UoyQ1WWQnQLRc8Jvs9SB64Z/YMVuTl
-	 q41OqsZCtko/OjOaqHB/rNrcZ4RjdGjOcE79b+CmeXt7Eg0tN1Tt9MlVyZ3OuGZabooGi
-	 n4K99GCWm4RoRyUue/lTkZLXGNbF0+DhK9V0b1gTP3qTpkd4AsHgwV/bhXRtx7SdMhpSH
-	 R7JpMPvCY1jmy1uaRFkMFHPgoYA/PwZ6fN1+azrCZcxYYgRhnLhqym+06kk+qzGl3Tw==
+	t=1794281812;
+	b=GlQPKd3bKelOmiWJNmjx+5Xs27Vb7JPrIkS5LkXC7th/G250XPa7VVq+aqHB8E3JdUHh
+	 RUCcDjy3N19RBjy4TXlw7zxuq5Dsa7RPf1k/yFjRz5GJ/PPl/VGomxjmepaykmrboKcs1
+	 kSBrw7G8iONpft0BQwn9eXur/eu24swMr0eAEM2wdUKyXH4/u9iDbYoCVh3YMsB8iDPgc
+	 c6xluUu5yqHrrG5x2z/6JZOAN/md/CWksuOMOppfCbo/qMcg0ZrfoEIfDrXd0pVulVA8w
+	 7CL51NoL+TaD0YjcQDN52tX8sWxDBOOBzoa8UcvXBOhZvvka1RPmpKfnIvU1883Dq+w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794281811;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794281812;
 	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
 	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
 	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:Subject:
 	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
 	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
 	 X-Developer-Key;
-	bh=oBvjhj5mA9cP+8HQy3MmppUNwq6KXbqmuj5mAbRfZdw=;
-	b=x3KouQJEXcf6WONDh0hjKw99SNZc1DXNujl6GvhykmrCDX0oLzIEDY91YfodE1eQ+WuG
-	 gzeV11AJt3oTnCAAv184hv0VmXxADzoDfZWRq+GkQ/09DYeCVoCapPahS2A+ikftIKTMs
-	 zQFZlZrVcrzvguQayCAYbZVMq/mbfAeg/nOYMXZaORR1KOmZQSYM8y7fAcUq6IklONv0h
-	 xYBOa+cdE8SdQpszyOKQuKxOspfwG6WymmlGx3m4SxL5S4rdhjsuv41/hYUX7yLDynB4i
-	 fmL+IutcwjvWQv7niO5+szVmBX6pG4it82Ttnjuvb+YXY8VyJaI8QBqkNIdgUOXQdcA==
+	bh=0zvT7oCej3Q9DIt3FKkPiNSTHiXNzdumAlRy8FW076c=;
+	b=0J9I0/IL/0QkeKZJMfpVvRH1eK6R38mgG0qKGyj4GWr1rBk/UdJW1Epx9AL5fMfVjqGm
+	 awdwboOYVINha41/KZZNwmmRuTSvyU8aJlq2Rsp2e41dgqResdKhvwRyNOv8Z247u7jv8
+	 hVHv4GAB8h7/dCI8T96hF/BSV53Jt8s4pz8bKc/gxEVa4mIh0aM5FNUPbTor/YRf/14f9
+	 B/B8rhW+p/h22uYSmdrV0WalIyBcvaAyOxDvLgMrIEjDQ83Oq4ooK/+jKIKyUvmL2X3H7
+	 /QtZ/N1aIX/FhjpyZNXWv6ytG8hn8/1wlcoixtWC/dOgjeHs4n0v2fc8uYITgfDePYA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.intel.com;
 	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=covzX1+5;
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=B41DpXBu;
 	arc=none smtp.remote-ip=192.198.163.13
 Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.13])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5BC1160A2600;
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5D1BC60A2601;
 	Tue, 10 Nov 2026 03:36:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5BC1160A2600
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5D1BC60A2601
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=covzX1+5
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=B41DpXBu
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
   t=1794281811; x=1825817811;
   h=from:date:subject:mime-version:content-transfer-encoding:
    message-id:references:in-reply-to:to:cc;
-  bh=WCMIOAy3+UdQk6bUXBwe+jyEPO6jPfwHW80F+W581Zk=;
-  b=covzX1+5NDAvIpa/xgQat0FcapeDsxlYfodkSM1jbeKrIeE/8VwkKBa5
-   sqU84LZyrWwk6jnbCWUunKNOt3O7ibDqEi0cEQwgLzNQ3+LNKi1v/qXlh
-   ciFHskOkQ6a6/EfJv4S9rZP/X8KzjWJPaVy2keyID+zh2I72SHdPeAWUk
-   tYPaXwELmDww5fU1SAijxbPzQ+5LPW1+dKmNBtHv1N9y5+V0R1O5WloY+
-   MM3dZUUM99AhieOxymj8VH9ngGGUKwOkrG+SAcmB1sjwvuYStIengmhl6
-   fVXUo49AmgBv3jtbf2yFrcl9dXOlfCJ7q0YZrEyylFedQVeAX3yDrD3gX
+  bh=09tsY2dIJmO8wbs7jsY3wYPWSdoqLh5GcMEkTuJdszA=;
+  b=B41DpXBuWKGVavtG7hp0uZjo1CZWkWxU9LhDklY0+TWIEgKGgUnRDhcL
+   v6uWRoSnSgROl+uQuTM+q0IwAc0On7CiAKp9FR8aIXv3ho3zMsrJLDX1Y
+   0J/5rafQ2iQrwKSy/GcTw8EhjYFr20O+vCBFUAXa+Mit8HVm5gpvgha1b
+   FGYHY4somMTQo4xh6kTK9+l0GUxxOGE24Euvp5dX1HXGqKYcOqPyf4eeJ
+   qR7HTlkuz1uJDETo0UST2JdjQkbvqL0AbClEuoOSo2xFFfH0BIOF57mgm
+   EJR2FKcobuXE//cZVoFL49PtIvxk2xm+VbFBTHd+vqtjTtaBiFkFmm5LP
    Q==;
-X-CSE-ConnectionGUID: YodkH1rsRHStvBTAZ4Takw==
-X-CSE-MsgGUID: OPhWjMXpRtWVdSswQRhv5Q==
-X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3010649"
+X-CSE-ConnectionGUID: /0Pch25cTBGIyreaNvC8eA==
+X-CSE-MsgGUID: mX/0XBv2Rs6gkC0D70BxqQ==
+X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3010646"
 X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="3010649"
+   d="scan'208";a="3010646"
 Received: from fmviesa001.fm.intel.com ([10.60.135.141])
   by fmvoesa107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
-X-CSE-ConnectionGUID: HKttpJ3SRB+SVkvqACq3Dg==
-X-CSE-MsgGUID: 0OX97Z6/RzWwRyb/IZfioQ==
+X-CSE-ConnectionGUID: OsjkQejNQReVB5NaAcwitQ==
+X-CSE-MsgGUID: Qex/qrJqRdyfPpveLJKWzQ==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="8370801"
+   d="scan'208";a="8370798"
 Received: from unknown (HELO [172.25.112.21]) ([172.25.112.21])
   by fmviesa001.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 09 Nov 2026 19:36:33 -0800
-Subject: [PATCH 06/13] thermal: intel: dpti: Introduce struct dpti_pkg for
- per-package state
+Date: Mon, 09 Nov 2026 19:36:32 -0800
+Subject: [PATCH 05/13] thermal: intel: dpti: Tear down DPTI only during
+ boot
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -77,7 +77,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261109-dpti-custom-cpu-v1-6-ead8e2d2067e@linux.intel.com>
+Message-Id: <20261109-dpti-custom-cpu-v1-5-ead8e2d2067e@linux.intel.com>
 References: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
 In-Reply-To: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
 To: "Rafael J. Wysocki" <rafael@kernel.org>, 
@@ -88,147 +88,137 @@ Cc: linux-pm@vger.kernel.org, linux-api@vger.kernel.org,
  linux-kernel@vger.kernel.org, ricardo.neri@intel.com, 
  Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1794281807; l=4114;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1794281807; l=4677;
  i=ricardo.neri-calderon@linux.intel.com; s=20250602;
- h=from:subject:message-id; bh=WCMIOAy3+UdQk6bUXBwe+jyEPO6jPfwHW80F+W581Zk=;
- b=GzJ+k3SGno3K1RHBNjdMsU9rxQrcus35VRpy/ys2U8eINTa7ztzHYgujvlX0qoFhWS5pzDChB
- 6idkcrBX3S+AjI5VC6NWDUIM+XGLsrFz4LrlM72K4ty+ZklNarAUHXM
+ h=from:subject:message-id; bh=09tsY2dIJmO8wbs7jsY3wYPWSdoqLh5GcMEkTuJdszA=;
+ b=gYLI7ruuFZxx1yX59epue6YMMOdf2G2OW72pq5fzdskQmlu/pm4QOpbcBRvdIJihadEGY0Rme
+ ZZ6MV6A4nf+ABhI6SfhWK8xp0Tf8hZuvu2X/s7509aTs7AzJdRVCU+G
 X-Developer-Key: i=ricardo.neri-calderon@linux.intel.com; a=ed25519;
  pk=NfZw5SyQ2lxVfmNMaMR6KUj3+0OhcwDPyRzFDH9gY2w=
 
-The array dpti_owner_cpus[] tracks the CPU that owns the directed
-package-level thermal interrupt (DPTI) for each package.
+An unacknowledged DPTI setup on a CPU coming online tears DPTI down on all
+packages, at any time. During boot, the hotplug online callback runs on
+every online CPU. The teardown keeps each of them from spending its own ack
+timeout on the same failure.
 
-A sticky, per-package owner CPU that the user selects through sysfs will
-need a field of its own. Rather than adding a second parallel array, wrap
-the state in a struct. Future members can be added in one place without
-churning every call site again.
+Add a flag that tells boot apart from later CPU hotplug. Clear it once the
+hotplug callbacks are registered. By then at least one CPU has attempted
+the setup. If DPTI is still up, that attempt succeeded. From then on,
+assume the hardware works and prevent a complete teardown from other code
+paths.
 
-No functional change intended.
+The flag is system-wide. This assumes that if DPTI works on the boot
+package it will work on others too. This assumption is reasonable since all
+packages are identical in hardware and firmware.
+
+Skipping the teardown after boot is safe because a failure leaves the
+hardware in a working state: failures in the migration of the interrupt to
+another CPU fall back to broadcasting the interrupt to all CPUs in the
+package.
+
+Name the failing package in the message and whether it alone or every
+package reverts to broadcast. Raise the message to a warning, like the
+offline path's.
+
+cpuhp_setup_state() releases the CPU hotplug lock before returning.
+Clearing the flag outside the lock means a CPU could come online in that
+window, see the flag still set, and hit the boot-teardown path on failure,
+even though the initcall has already finished verifying the CPUs to which
+"boot" refers. Use cpuhp_setup_state_cpuslocked() under cpus_read_lock()
+so the flag is cleared while no CPU can come online.
 
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
- drivers/thermal/intel/therm_throt.c | 38 ++++++++++++++++++++++---------------
- 1 file changed, 23 insertions(+), 15 deletions(-)
+ drivers/thermal/intel/therm_throt.c | 47 +++++++++++++++++++++++++++----------
+ 1 file changed, 34 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
-index ac719e2407ac..a0a3842e2760 100644
+index a170dcc8513f..ac719e2407ac 100644
 --- a/drivers/thermal/intel/therm_throt.c
 +++ b/drivers/thermal/intel/therm_throt.c
-@@ -515,12 +515,21 @@ static void dpti_config(void *info)
- 	wrmsrq(MSR_IA32_THERM_INTERRUPT, msr_val);
- }
- 
-+/**
-+ * struct dpti_pkg - Per-package DPTI state
-+ * @owner:	CPU currently programmed to receive the package-level
-+ *		interrupt, or nr_cpu_ids when the package has no owner.
-+ */
-+struct dpti_pkg {
-+	unsigned int owner;
-+};
-+
- /*
-  * Accessed from CPU hotplug callbacks and from code that runs while CPU
-  * hotplug is inactive: the init and cleanup paths as well as syscore callbacks.
-  * No extra locking needed.
+@@ -529,6 +529,13 @@ static unsigned int *dpti_owner_cpus;
   */
--static unsigned int *dpti_owner_cpus;
-+static struct dpti_pkg *dpti_pkgs;
+ static bool dpti_shut_down;
  
- /*
-  * Set by the syscore shutdown callback before it disables the directed
-@@ -541,7 +550,7 @@ static bool dpti_supported(void)
++/*
++ * Cleared once the hotplug callbacks are registered: at least one CPU
++ * attempted the setup by then, and the hardware is assumed sane from that
++ * point on.
++ */
++static bool dpti_in_boot __ro_after_init = true;
++
+ static bool dpti_supported(void)
+ {
  	if (!boot_cpu_has(X86_FEATURE_DPTI))
- 		return false;
- 
--	if (!dpti_owner_cpus)
-+	if (!dpti_pkgs)
- 		return false;
- 
- 	return true;
-@@ -562,14 +571,14 @@ static void dpti_clear_all(void)
- 		return;
- 
- 	/*
--	 * No need to reset the owners: callers free dpti_owner_cpus or have shut
-+	 * No need to reset the owners: callers free dpti_pkgs[] or have shut
- 	 * DPTI down.
- 	 */
- 	for (i = 0; i < topology_max_packages(); i++) {
--		if (dpti_owner_cpus[i] == nr_cpu_ids)
-+		if (dpti_pkgs[i].owner == nr_cpu_ids)
- 			continue;
- 
--		smp_call_function_single(dpti_owner_cpus[i], dpti_config,
-+		smp_call_function_single(dpti_pkgs[i].owner, dpti_config,
- 					 &enable, true);
- 	}
- }
-@@ -590,7 +599,7 @@ static int dpti_online(unsigned int cpu)
- 		return 0;
- 
- 	/* Another CPU in this package already owns the directed interrupt. */
--	if (dpti_owner_cpus[pkg_id] != nr_cpu_ids)
-+	if (dpti_pkgs[pkg_id].owner != nr_cpu_ids)
- 		return 0;
- 
- 	thermal_clear_package_intr_status(PACKAGE_LEVEL,
-@@ -598,7 +607,7 @@ static int dpti_online(unsigned int cpu)
- 
- 	dpti_config(&enable);
- 	if (!dpti_wait_for_ack()) {
--		dpti_owner_cpus[pkg_id] = cpu;
-+		dpti_pkgs[pkg_id].owner = cpu;
+@@ -595,11 +602,7 @@ static int dpti_online(unsigned int cpu)
  		return 0;
  	}
  
-@@ -626,7 +635,7 @@ static void dpti_offline(unsigned int cpu)
- 		return;
- 
- 	/* Not the owner of the directed interrupt. */
--	if (dpti_owner_cpus[pkg_id] != cpu)
-+	if (dpti_pkgs[pkg_id].owner != cpu)
- 		return;
- 
- 	/*
-@@ -673,7 +682,7 @@ static void dpti_offline(unsigned int cpu)
- 	 */
+-	/*
+-	 * A failure indicates faulty hardware. Roll back completely so that
+-	 * no other CPU tries. This is especially important during boot as all
+-	 * CPUs may come online and would otherwise keep trying.
+-	 */
++	/* Roll back on failure so the package reverts to broadcasting mode. */
+ 	enable = false;
  	dpti_config(&enable);
  
--	dpti_owner_cpus[pkg_id] = (new_cpu < nr_cpu_ids) ? new_cpu : nr_cpu_ids;
-+	dpti_pkgs[pkg_id].owner = (new_cpu < nr_cpu_ids) ? new_cpu : nr_cpu_ids;
+@@ -681,8 +684,7 @@ static void dpti_syscore_resume(void *data)
+ {
+ 	/*
+ 	 * We can't do anything to handle errors. If direction fails for CPU0,
+-	 * another CPU will take over or disable direction entirely during CPU
+-	 * hotplug.
++	 * another CPU will take over during CPU hotplug.
+ 	 */
+ 	dpti_online(0);
  }
+@@ -825,8 +827,16 @@ static int thermal_throttle_online(unsigned int cpu)
+ 	intel_hfi_online(cpu);
  
- /*
-@@ -720,13 +729,12 @@ static __init void dpti_init(void)
- 	if (!boot_cpu_has(X86_FEATURE_DPTI))
- 		return;
+ 	if (dpti_online(cpu)) {
+-		pr_info_once("Failed to direct package thermal interrupts. All CPUs will receive it\n");
+-		dpti_cleanup();
++		pr_warn_once("Failed to direct the thermal interrupt of package %u; reverting to broadcast on %s\n",
++			     topology_logical_package_id(cpu),
++			     dpti_in_boot ? "all packages" : "this package");
++
++		/*
++		 * A failure during boot indicates faulty hardware, so no other
++		 * CPU should try.
++		 */
++		if (dpti_in_boot)
++			dpti_cleanup();
+ 	}
  
--	dpti_owner_cpus = kmalloc_objs(*dpti_owner_cpus,
--				       topology_max_packages());
--	if (!dpti_owner_cpus)
-+	dpti_pkgs = kmalloc_objs(*dpti_pkgs, topology_max_packages());
-+	if (!dpti_pkgs)
- 		return;
+ 	/* Unmask the thermal vector after the above workqueues are initialized. */
+@@ -871,11 +881,22 @@ static __init int thermal_throttle_init_device(void)
  
- 	for (i = 0; i < topology_max_packages(); i++)
--		dpti_owner_cpus[i] = nr_cpu_ids;
-+		dpti_pkgs[i].owner = nr_cpu_ids;
+ 	intel_hfi_init();
  
- 	register_syscore(&dpti_syscore);
- }
-@@ -738,8 +746,8 @@ static void dpti_cleanup(void)
+-	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "x86/therm:online",
+-				thermal_throttle_online,
+-				thermal_throttle_offline);
+-	if (ret >= 0)
++	/*
++	 * A CPU coming online before dpti_in_boot is cleared would treat a DPTI
++	 * failure as faulty hardware and tear DPTI down. Hold the CPU hotplug
++	 * lock across the registration and the clear, so that the flag changes
++	 * only while no CPU can come online.
++	 */
++	guard(cpus_read_lock)();
++
++	ret = cpuhp_setup_state_cpuslocked(CPUHP_AP_ONLINE_DYN,
++					   "x86/therm:online",
++					   thermal_throttle_online,
++					   thermal_throttle_offline);
++	if (ret >= 0) {
++		dpti_in_boot = false;
+ 		return 0;
++	}
  
- 	unregister_syscore(&dpti_syscore);
- 	dpti_clear_all();
--	kfree(dpti_owner_cpus);
--	dpti_owner_cpus = NULL;
-+	kfree(dpti_pkgs);
-+	dpti_pkgs = NULL;
- }
+ 	dpti_cleanup();
  
- /* Add/Remove thermal_throttle interface for CPU device: */
 
 -- 
 2.43.0
