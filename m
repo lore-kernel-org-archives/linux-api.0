@@ -1,130 +1,76 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.71
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794316282;
-	b=vMecjAlDQm8Cxy1YGSmQiP2VoI5qLrjE85qxKDXJhtXt6qFhVkg3vWzrMap01p6vJvix
-	 lxGBOcTPA/CFmqkQ1WSIGSsEZSzqXRxE0gW4iiL5zlXFFGRuISf+JcB4aTWWi8wjxiGpN
-	 2rcPyJ9rGVfSWhl+jfDWsHz3Wbre4DnOQqNde3L2xihsbAIEjIbc05ba9eLSxmwQdLG1S
-	 wyywonFZ74PVwpKieMGLTbl+ZAeQ1PhYvAm71FyQNjfIjFu8DvJRvH/yz4a9108w7Ft49
-	 ylT4TwjILfeIKkc7+StXokbbuEliWjtugs8S4OECQg6OEIGEc5/iZUzipKlej0kvc+Q==
+	t=1794324696;
+	b=2F/y47nzVuKfK6u+0XD+uwyOJDuiv6OvSwXgvasHuNBEkJALc1JoQunUAC33+iv7un1d
+	 5oFHXNLghw2wVrk9q5RtjYBLv/PEtgEh0PXHQMbGMn3u4V/W5fkUIGD98V3t49vRmTSiw
+	 GVsI13DQgxC33wk2Y8fVxV9HUm3yItahC+QsVg3gD4lftoxWcFY4sh9lUpzvLduUJSTnh
+	 rr9k9OCqWrK1dMCZg4eL5CWWblIprp90OVxjJE0NQq9sDw3zfMo4hohWUTnBca7lrqgxA
+	 yay+m2efT9j8vYgdne4TurABVN1m65LhscFdcRLw3A61D0RMuTpjX3cwxaCKuTwcqrQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794316282;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794324696;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
-	b=PWvaoyA9yogqp7sKk+4zC/6w9Hzbnb88C71HEYXmeTUZI8q0he3nCUVNFC1s12SZnBTF
-	 VzfSM8ZE2fFd7x/tzfesw/IefKlVSV7sPwHRaMPPwKa7prtAj+NSn8c7b51DrX6AJ/twF
-	 AAqpF6onavGlbTtyHSJFSWnukdKHuKjVIUnjigcgxmDBHw0axMfgVg7h2AbP+T1x3g8Xy
-	 IihLSy4CzoBZRyB/Ly7NkbnEUh3eNJ00jQyVoC3kPxqZlhGg9gd0zwRyfCNTQXMHcEjAX
-	 F2amDz07mv0lFN5UIzTYUyTBGblA4+4v8nlwXhkLa7tHmn9lquVSSvOkvi2c8Q7cegQ==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
+	 Mime-Version:References:Message-ID:Subject:From:To:Cc:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=SJjtzkP+sBHxUstFA6XSyOLuoy/E3cjaVl7XAdp7TZ4=;
+	b=3uU2VXN6yQ5aMqn8fFidJsPwDKoX8pMvK29T7/u3IEkyuuJfLs9OfGACfZDcEHs+zqMg
+	 ZbWQCg/Fb0oer0/FZTHgI9GnADWf2BbRvF4NDBl+nvbPbD1vCH3scvszoxjBjDMnooi42
+	 Epf3mdSHLnloOLFMDPwC9a9EZite4i1Em20QiO8yTB3cV1WO6jf7LOt4wn1b8fuh5/Ds2
+	 HIy12kk7utKCeQqpwiTCkcwHdsiey+g+Yzxh8h8lp2SB+pAraS5Ui+vQHqI7HFlTZe/Y/
+	 Zn2wNO4zK6gYuUBCUoSTbSsQV8sWNY7y00cb0vJ/bLHRCAQIBSDZP4fjrtfpOyBi1lQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=ziepe.ca;
-	spf=pass smtp.mailfrom=ziepe.ca;
-	arc=none smtp.remote-ip=209.85.219.47
-Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
+	dmarc=pass header.from=google.com;
+	spf=pass smtp.mailfrom=flex--halg.bounces.google.com;
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=EbaSWAnJ;
+	arc=none smtp.remote-ip=209.85.208.71
+Received: from mail-ed1-f71.google.com (mail-ed1-f71.google.com [209.85.208.71])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BFAE606A774
-	for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 13:11:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0BFAE606A774
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
-Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-91eb3ac1875so19660976d6.1
-        for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 05:11:16 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 89A6B606A32A
+	for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 15:31:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 89A6B606A32A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--halg.bounces.google.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=EbaSWAnJ
+Received: by mail-ed1-f71.google.com with SMTP id 4fb4d7f45d1cf-6b3f840cb9cso2626399a12.1
+        for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 07:31:36 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=ziepe.ca; s=google; t=1794316276; x=1794921076; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
-        b=e4PFNw24vmEx9e6XM/cUzCvRERvJabuTvhno9Gz/JzeZWoLyAEqlwt+PiN7PsREzDe
-         nbBIpkI6JTuornnBm7/42NrL/w4IdXPpgJMXAMUPCFd7jbdDVIEmKh/jdZ+I+dzViXSB
-         H2p2NQNLx9ne0cV1aFkGD5AsPCtzbh2oXhKE+mtPHEk6ablNOVM/G42JAjOhvFRRvEdt
-         SknBoahXSauvPineguU97Ohz82cWAZt6yPRa0ML5YUk7kVUMnIDJn8DUcWsiXLLwSwNl
-         eFseGz8JV2OEeli+2NBdOH9OYZhu03xI/lkGEnFQ2GC/c8NKeMa66k6Yl0PwfnR2fGbK
-         Y+Qw==
+        d=google.com; s=20260707; t=1794324695; x=1794929495; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:from:subject
+         :message-id:references:mime-version:in-reply-to:date:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=SJjtzkP+sBHxUstFA6XSyOLuoy/E3cjaVl7XAdp7TZ4=;
+        b=EbaSWAnJ7A533qGpAvii2NS3I9zxkDKlvnsqDPtzIBKMTuzOPF5jRLHhwfsyK6diIL
+         2En3fr/6Wz2Zy14HVjG0BjTT6HzN+p6NPYlr8unPhlA6m2umktQnoqp2AYSjldSAJssk
+         xHzbOcqVaFfuuKFkgO7UgDfRrsaoBkRPDiUM6rHPYGDOR3M31dOOpz5vbhmi2t4d+DUT
+         jeFEACxiutXh0J7ifsM5tXZOXkDouo9+ARx8MVQmgZYMid1HxFVWY6jc0+kGfKGLmr9K
+         dwtVL5ln+2ptHee8NSHeS1SxVprCYBr2xvsLYm8F3UiIKYeFqvbgvqwm4UzA816ruQV6
+         HNoA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794316276; x=1794921076;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
+        d=1e100.net; s=20260707; t=1794324695; x=1794929495;
+        h=content-transfer-encoding:content-type:cc:to:from:subject
+         :message-id:references:mime-version:in-reply-to:date
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
-        b=HkB1MfZdBY2wfbVHwYYswqpq3qWOfH2tpFmq3rFlZRuI5YODAZbGRm1SJZbYK8qKOh
-         PUJqHQC2m8sxxVAIh6zr88kDkQMzOT6OoNhGOEOyAbWFc/2t5VfwEBrTjQeb99uYlLsD
-         PXVC7Z/7Mobl9wpV1MNKsZQdSl8G9SIPo8QgwTqApioiW4RwGfJV09M8+FYluYTUbeyf
-         j7xTYApAuWxs62E+jUw6W66jEiL+UIz0QsnFHmqrBdMP61BFyxPaIeSSOp9Gj4WQ5EY6
-         X0h0t5aKZQ8pIq+7CRF0WNDKEKmVGuWpQUEqMqRRQ641fVV2w5vGYeeJcNyM/dMT7uD0
-         k0KQ==
-X-Forwarded-Encrypted: i=1; AL+hErFzE79AbVOPmF9/z0ibHJs+hLGFCcqzUiktzYM7yoSFC44ufJatmgaLzaNnI9XGrDowO/L4PCE+lDk=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9Qz9+GTVWpmYjPAZnCprOYt45+CdMkxjxlwzNdeKpAuU5RnnM6
-	TMT/M3/kxjmf+deS4si9qZHoOp9LgbBk0gKlphfDM5bVPDvJokzh9tnkcW+onwDlLbw=
-X-Gm-Gg: AYBFou17LnnSPKpX6qQTHt64fl8+OuQpqExtiAXsDPxV9FhrOYeOEOcoJqs5jL3Sy+l
-	wmfcAGfknVNgBe1kjJfZP8B+rVQ7GjyLg6PC7bmTRQ/ZjEOsJ7QDHRceBpF7pFPnNnhGyRQa8js
-	XSa3apt1CMs7jdLQQS066r/e9wUwPeY2V4aXwjUSonYkf4XOc3JC1Dy6bPltLkTnyP04jN9M80n
-	A3psGryCEYJYJOTIJCnq455yOV3XhQ9vvvArGbeP338eJHtOM/2k7GiptSPzyvG4VLf/XVyd9x4
-	Y3v9CriGAAYTh7FrAHuC+HWg6lFvpxpYhcAuyIdE/7Zjz3pMY14XO1pOWIChxlUdbhp3LeGYt5N
-	Y6pZmuHbiRZv/qKn8KvP1hx/zyngWXgISjz+CC5vY5C9m/90jYwgAM/hYVCiLP7nFBCRWJwfK+O
-	7aZMAdjCzdMF8FIueymUBQVe5L3xulaBh315ffEVRIEvXPoDEIrzCrM59RNQy4VNKOuOveHq88g
-	IIbRecvJ6aXhon5QxYFYfqgWpeA6iOpLK3vsz1zQp8iAnywdxPVKyQ3bQYFxWm8q/ghn9s14gmE
-	lNRQ1/ZUGfe+Ljn+GgfcbFuKeqyIWtMlKanLgRkHmr+sHhvCVdo/+DVonoopfQ0XYEa+KshQtMY
-	3JJQb//5ZYII=
-X-Received: by 2002:ad4:5cc4:0:b0:91e:96f8:f369 with SMTP id 6a1803df08f44-91eef913f53mr42602176d6.36.1794316275746;
-        Tue, 10 Nov 2026 05:11:15 -0800 (PST)
-Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
-        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ef052360asm20821916d6.38.2026.11.10.05.11.15
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 10 Nov 2026 05:11:15 -0800 (PST)
-Received: from jgg by wakko with local (Exim 4.97)
-	(envelope-from <jgg@ziepe.ca>)
-	id 1xQld4-00000005faP-2KGJ;
-	Tue, 10 Nov 2026 09:11:14 -0400
-Date: Tue, 10 Nov 2026 09:11:14 -0400
-From: Jason Gunthorpe <jgg@ziepe.ca>
-To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
-Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
-	"linux-coco@lists.linux.dev" <linux-coco@lists.linux.dev>,
-	"drdeeglaze@gmail.com" <drdeeglaze@gmail.com>,
-	"James.Bottomley@hansenpartnership.com" <James.Bottomley@hansenpartnership.com>,
-	"aik@amd.com" <aik@amd.com>,
-	"dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
-	"Xing, Cedric" <cedric.xing@intel.com>,
-	"alistair.francis@wdc.com" <alistair.francis@wdc.com>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"Reshetova, Elena" <elena.reshetova@intel.com>,
-	"kas@kernel.org" <kas@kernel.org>,
-	"ankita@nvidia.com" <ankita@nvidia.com>,
-	"jiri@resnulli.us" <jiri@resnulli.us>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"Jiang, Dave" <dave.jiang@intel.com>,
-	"Quigley, David" <david.quigley@intel.com>,
-	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
-	"x86@kernel.org" <x86@kernel.org>,
-	"jpiotrowski@nvidia.com" <jpiotrowski@nvidia.com>,
-	"suzuki.poulose@arm.com" <suzuki.poulose@arm.com>,
-	"lukas@wunner.de" <lukas@wunner.de>,
-	"Vivi, Rodrigo" <rodrigo.vivi@intel.com>,
-	"Fang, Peter" <peter.fang@intel.com>,
-	"jic23@kernel.org" <jic23@kernel.org>,
-	"ksinyuk@kernel.org" <ksinyuk@kernel.org>,
-	"sameo@meta.com" <sameo@meta.com>,
-	"sathyanarayanan.kuppuswamy@linux.intel.com" <sathyanarayanan.kuppuswamy@linux.intel.com>,
-	"qinkun@google.com" <qinkun@google.com>,
-	"pgonda@google.com" <pgonda@google.com>
-Subject: Re: [PATCH RFC 20/20] attestation: Add the TDX family implementation
-Message-ID: <20261110131114.GV663069@ziepe.ca>
-References: <20261023141218.GD3977851@ziepe.ca>
- <343e4a12f2fdbb4e9a19c4afe49cf2b8908d6739.camel@intel.com>
- <20261023220030.GM3977851@ziepe.ca>
- <7843a833723e3aad40f8fc4de3a83f5a5059280f.camel@intel.com>
- <20261103005851.GH3889730@ziepe.ca>
- <au5LCE1jau0yDo5S@intel.com>
- <20261109171236.GP663069@ziepe.ca>
- <cbef9bda9241ffe98652172edb67fab3eb1c35ee.camel@intel.com>
- <20261109234252.GR663069@ziepe.ca>
- <4c75b369b68c98c5c35e296895b6935342dc7dc1.camel@intel.com>
+        bh=SJjtzkP+sBHxUstFA6XSyOLuoy/E3cjaVl7XAdp7TZ4=;
+        b=i0PuVKmmT0bbFZ2/TLFO9/xcPvma32h+KDKSYpU0PfQKDG28CAEoycLtE9hK05HD9e
+         FsOW0cL1uno0zrDi+hRCCnAndHfJlQY0K3kSVWR9asD8oQraz0UY597+pP/s3/72FlBl
+         +zh20xxesh6jb7gTcifnsMntiKIT/+3VoIRdT8oWNWVs12zfGKrKs4h2BDEm8T3PaBcj
+         vjhIRrmsjRRnBksCRPt/YgfqwUFnMeWZqXQ2CJeVOWg9kKpFH2r7OsPVijUQeDUdsMlB
+         CKx5az9zgBGGZpKVMbWp9L2mOt+LRipMAbpq1BHQ1tZ3zTndBelOnkzTE4PXS5+csjP2
+         q+bA==
+X-Forwarded-Encrypted: i=1; AL+hErH8OyHh+QDDaNLT2wEwzhk+T0un2v/oHScon6xYRTjLOSRGHP7z8axF7klN5iQUMQ7VdY4nyh0HZeo=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/U/9HWxkx7GPzFzYxyXaVmPRAl89ixu/ZZGpqQcOe00UigSGW0
+	lVNiiTaHFuUfRja5jDVxxGsWVpR5F/QZzjseVkl4x6jJBlngzD+Y6ZY/fm6CAmchAt9CoFrDVg=
+	=
+X-Received: from edsw12.prod.google.com ([2002:aa7:da4c:0:b0:6b7:834:31d9])
+ (user=halg job=prod-delivery.src-stubby-dispatcher) by 2002:a05:6402:68a:b0:6b7:675e:7a2f
+ with SMTP id 4fb4d7f45d1cf-6b7675e7a95mr879624a12.1.1794324694693; Tue, 10
+ Nov 2026 07:31:34 -0800 (PST)
+Date: Tue, 10 Nov 2026 15:31:33 +0000
+In-Reply-To: <CALCETrWa1SBLcb5oWjqjgzZvKvCoHjmYFk=Lf5ytEM9uqm5jYA@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -133,107 +79,152 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <4c75b369b68c98c5c35e296895b6935342dc7dc1.camel@intel.com>
+Mime-Version: 1.0
+References: <20261028221705.3915340-1-halg@google.com> <CALCETrW9ygriu54gxiHFLEd5+hJminQo0r8Jwd63wR69Dj4W7w@mail.gmail.com>
+ <20261106-befreien-addieren-eislauf-e09212803534@brauner> <CALCETrWa1SBLcb5oWjqjgzZvKvCoHjmYFk=Lf5ytEM9uqm5jYA@mail.gmail.com>
+Message-ID: <avM41a80aig2de-R@google.com>
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+From: "Hallgrimur H. Gunnarsson" <halg@google.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Christian Brauner <brauner@kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
+	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
+	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
+	Jann Horn <jannh@google.com>, "=?utf-8?Q?G=C3=BCnther?= Noack" <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, 
+	linux-api@vger.kernel.org, containers@lists.linux.dev, netdev@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Tue, Nov 10, 2026 at 01:30:16AM +0000, Edgecombe, Rick P wrote:
-> On Mon, 2026-11-09 at 19:42 -0400, Jason Gunthorpe wrote:
-> > > So we have this SGX based quote format that is fixed because it already
-> > > exists
-> > > in the wild. Going forward we are moving to DICE, but that is a standard
-> > > format.
-> > > So also somewhat fixed. I guess the question is: is there some combo of bits
-> > > in
-> > > each blob we could check that could deterministically distinguish between
-> > > the
-> > > two? To do this we would need to analyze the quote formats.
-> > 
-> > You guys really didn't make it discoverable when you added DICE? :( :(
-> 
-> Like influence the DICE spec to interop with legacy SGX based attestation? I'm
-> out of my depth to try to say how possible that is.
+On Sat, Nov 07, 2026 at 10:47:41AM -0800, Andy Lutomirski wrote:
+> On Fri, Nov 6, 2026 at 5:13=E2=80=AFAM Christian Brauner <brauner@kernel.=
+org> wrote:
+> >
+> > On Wed, Oct 28, 2026 at 03:56:11PM -0700, Andy Lutomirski wrote:
+> > > The whole unshare/clone flag situation is getting out of hand, IMO.
+> > > And this new thing makes logical sense but is really about reducing
+> > > exposure.
+> > >
+> > > Perhaps we should instead have a small list associated with a userns
+> > > (extensible in the future) of things that the ns's admin (i.e. whoeve=
+r
+> > > has CAP_SYS_ADMIN relative to the ns) may do.  That list could
+> > > include:
+> > >
+> > > - Create loopback with sensible defaults for ipv4 and/or ipv6 (i see
+> > > no obvious reason to separate them)
+> > > - Create tun/tap interfaces in that ns (and attach them, etc)
+> > >
+> > > And add a very simple new API to do these things.  Actually, the
+> >
+> > We've had this idea in the past and I think it is reasonable. I had
+> > always thought that we should expose a system call to create empty
+> > namespaces ot any type. Usually I'd be excited about that but I think
+> > that point is a bit moot and I'd really like see whether we can turn
+> > cells (or whatever other name) into a first class api.
+> >
+> > The problem I have with the patchset as written is that adds a lot of
+> > moving parts. And yes, I find the CLONE_* and UNSHARE_* flags plus
+> > sysctl to be suboptimal as well.
+> >
+> > So the TL;DR is that CAP_NET_ADMIN + userns =3D
+> > CAP_NET_PRIVILEGE_ESCALATION 10+ years later. And this patchset wants t=
+o
+> > put it back on a leash.
+> >
+> > So why isn't an aggressively stupid solution to this problem to split a
+> > new capability out of CAP_NET_ADMIN so it covers the absolute minimal
+> > set of things that should be allowed instead of doing effectively the
+> > same thing but split over multiple apis?
+>=20
+> Because we don't actually have a clean way to make a list of
+> privileges that are, in theory, harmless but are hazardous from an
+> attack surface perspective and assign them only to tasks that ought to
+> have them.
 
-No, I mean just have the SGX firmware tell the OS if it produced a
-DICE or legacy blob :(
+Exactly. Furthermore, even if we split a minimal capability out of
+CAP_NET_ADMIN, create_user_ns() still grants CAP_FULL_SET to new
+unprivileged user namespaces by default. Without a mechanism to
+withhold capabilities that are namespaced in scope but carry high
+attack surface risk (like CAP_NET_ADMIN and CAP_NET_RAW) and only
+selectively grant them to tasks that really need them, an unprivileged
+userns would still receive the full set of capabilities.
 
-> I'm also under the impression that the quote was not designed for local
-> processing in the guest. But rather remote attestation which, usually involves a
-> helper service that processes the quote. I've never been clear on why that was
-> desired. But it probably is part of the reason attestation doesn't fit this use
-> case perfectly.
+Providing that mechanism is the core goal of the per-userns capability
+bounding set in this series. Even on its own, without any loopback
+changes, it can be configured to prevent unprivileged users from acquiring
+CAP_NET_ADMIN and CAP_NET_RAW when creating a new userns + netns, while
+still supporting sandboxes that use a completely disconnected netns or
+containers whose networking is configured externally.
 
-Even the remote helper needs to tell the two cases apart so it can
-parse them
+Finding a solution for loopback simply makes this bounding set more
+practical, as it allows us to also support sandboxes that rely on
+localhost networking without forcing them to retain full CAP_NET_ADMIN.
 
-Again if you expected the user to pre-tell the helper that this is a
-legacy vs DICE VM then that's exactly the bad user experiance I want
-to avoid.
+With a way to withhold CAP_NET_ADMIN from unprivileged userns, splitting
+out a minimal capability (as Christian suggests) is a very appealing way
+to handle the allowed subset for loopback, though the main challenge is
+defining a scope that justifies a capability bit without re-introducing
+LPE risk.
 
-> > > If there isn't, I'm not sure what we could do at this point. There is a
-> > > library
-> > > Intel publishes (right Peter?) that can verify the quotes. I'd guess it must
-> > > have some way to distinguish between the two. Can you check how it does it
-> > > Peter?
-> > 
-> > See this is exactly what I'm talking about, I don't want to repeatedly
-> > get into this situation down the road over the next decade.
-> 
-> I'm not sure if I'm missing something. New incompatible standards seem pretty
-> normal? Sometimes there is a container to specify which type of blob, and
-> sometimes it is just discoverable by clues in the bits.
+Looking at the CAP_NET_ADMIN LPEs from Google's kernelCTF, most are
+concentrated in netfilter and tc, with a smaller number in virtual
+interfaces and routing. Simply bringing up loopback at netns init
+shouldn't carry any LPE risk, but something like CAP_NET_LOOPBACK_UP
+is obviously too specific to warrant a capability bit. Conversely,
+broadening it into something like CAP_NET_IFCONFIG (allowing link state,
+L3 address and basic route configuration on existing interfaces) might
+justify a bit, but even such a basic subset would still re-introduce
+some LPE risk (see e.g. CVE-2026-53259 / commit f723ccaff2fb),
+although it would drastically reduce the risk by excluding the most
+high-risk components.
 
-Yes, completely normal. The thing that generates the data should have
-an unambiguous contract with the OS on what kind of data it will
-generate.
+Furthermore, I think splitting out a smaller CAP_NET_ADMIN would also
+run into some practical difficulties when it comes to clean enforcement
+in rtnetlink. Currently, rtnetlink_rcv_msg() relies on a coarse
+CAP_NET_ADMIN check at the beginning before any complex message parsing
+occurs. To support more fine-grained capabilities, we would have to push
+these checks much deeper into the stack, spreading security checks
+across many locations, which could easily lead to mistakes.
 
-If you want to change it, thats fine, but the OS participates in the
-change and is aware of it.
+Given this, I was hoping to have a minimal mechanism to just allow
+bringing up loopback without going for a new capability bit. Ultimately,
+it's a pragmatic judgment call. Maybe something like CAP_NET_IFCONFIG
+offers enough value and risk reduction to be worth the trade-off.
 
-> I think the thing that is a bit dicey (no pun) with this, is that there is kind
-> of a backwards compatibility adjacent change for systems giving the new DICE
-> quotes. This came up in in both discussions with Dave/x86 and Sean/KVM. The
-> reason why it was considered grumble-ok in the end, was because the full
-> verification depends on updates to the library for each new platform due to
-> needing to be aware of new keys. So to actually attest even SGX quotes on a new
-> platform, library updates are needed to whatever tool or service is being used.
-> Since the library needs to be updated in any case, it can also understand the
-> new formats without any impact to the user.
+Otherwise, if we want to avoid consuming a capability bit just for
+loopback, we could also consider other alternatives, e.g. a small nsfs
+ioctl on the netns fd (e.g. NS_NET_LOOPBACK_UP). This would align with
+Andy's earlier suggestion of adding a "very simple new API" dedicated
+to these safely scoped operations.
 
-I don't know what you guys have done here. There are IETF standards
-for all of this and well defined container formats. Sure to parse
-every bit of the token you might need a new library, but you should at
-least be able to get a signature verified and parse the generic
-information reliably.
+If we drop CLONE_NEWNET_LOOPBACK / UNSHARE_NEWNET_LOOPBACK from this
+series and handle loopback separately, do you think the per-userns
+bounding set is a reasonable approach for withholding capabilities
+(e.g. CAP_NET_ADMIN and CAP_NET_RAW) from unprivileged userns, or
+would you prefer a different mechanism?
 
-If your plan is TDX releases are ABI incompatible with the verifiers,
-then thats a horrible plan and *much* worse than what ARM is doing,
-for instance.
+I think the single-deep case we were discussing on the other thread
+could also be cleanly built on top of this. The per-userns bounding
+set provides the underlying enforcement mechanism. How we configure
+and trigger that bounding, whether via sysctl and clone3() as proposed
+in this series, or via a per-task securebit to handle single-deep
+containers in init_user_ns as discussed on the other thread, is a
+policy control interface decision that can feed directly into the
+same mechanism.
 
-But it sounds like your library can somehow parse the blob and figure
-it out, so maybe it is just a matter of describing how that works.
+To address the concern about the number of moving parts, I am also
+happy to simplify the control interfaces. If we decide a per-task
+securebit is the cleanest way to drive this configuration for both
+single-deep and nested cases, we could focus on that and drop the
+clone3() and sysctl from this series entirely, or only expose whatever
+subset you prefer.
 
-> But this didn't take into account this generic API, local quote processing use
-> case. Which is kind of a surprise and I'm actually still not 100% clear on how
-> it will be used.
+Thanks!
 
-It is not local quote processing. This is labeling data properly so a
-verifier is possible without the user having to manually and directly
-inform the system what versions of Intel CPUs and TDX modules it
-should expect to have.
-
-> I think we would have to circle back with everyone that pushed for the host
-> controlled quote type. Let's see if the library can distinguish them already
-> too. This attestctl tool... is that something that could consume a library like
-> this? Or something that would have a no dependency implementation?
-
-I would hope for no dependency, the idea would be to provide
-references for anyone wanting to make verifier software, and a tool
-for the admin that wants to debug/understand their systems..
-
-As well as a point to have a strict injection of sanity into what
-people are doing so we don't get repeated ABI breaking instances in
-future.
-
-Jason
