@@ -1,78 +1,130 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=198.175.65.21
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794311003;
-	b=jdYuBTZxrhAeE5pzZw2iZfyLY6Rl8LuGSxulniXzQp8ZhFm7LzzTOUjB2w8buD6Jp8Q3
-	 c7kj0nQQicIECskVXWcJH+hyK3NJLbgc3s58iRf3ngjxs6gyrOz0dVxe2r90AFC3uKr55
-	 4ACOAzpuk76m1Uc2anqYm5JOdMVksG//OjwtDnZbD+jJbprp8Mz7VcWdTuPNHjeHJZl8B
-	 CYdpvBfnb31NQZNZ1KpRr2nX4bdHs/CwY6SvpD34/SpDy3u8RwBhqkT+sRZpWEzzZ0QpG
-	 I20GaXb0sydM5Om822jNO1v2LpaJkrTywo5XqGkmme2pbe7T+Op9zBtkqqSZ1NL8bng==
+	t=1794316282;
+	b=vMecjAlDQm8Cxy1YGSmQiP2VoI5qLrjE85qxKDXJhtXt6qFhVkg3vWzrMap01p6vJvix
+	 lxGBOcTPA/CFmqkQ1WSIGSsEZSzqXRxE0gW4iiL5zlXFFGRuISf+JcB4aTWWi8wjxiGpN
+	 2rcPyJ9rGVfSWhl+jfDWsHz3Wbre4DnOQqNde3L2xihsbAIEjIbc05ba9eLSxmwQdLG1S
+	 wyywonFZ74PVwpKieMGLTbl+ZAeQ1PhYvAm71FyQNjfIjFu8DvJRvH/yz4a9108w7Ft49
+	 ylT4TwjILfeIKkc7+StXokbbuEliWjtugs8S4OECQg6OEIGEc5/iZUzipKlej0kvc+Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794311003;
-	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
-	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:To:cc:
-	 Subject:In-Reply-To:Message-ID:References:MIME-Version:Content-Type;
-	bh=Dwo3NODYrC8lH9+/ED/zyRctWxyQsy+gkPSiaqjxgzM=;
-	b=S4S/ziMpEBE8DUM3UiJNElm1uhQffjzb4NCYXJUCLVbweM4Z/lfRVQ6XI2cVLSkFbTfw
-	 3VPg/lICzMcG/cYypGieZUDL0J/jiGe0SrmSV82MGv2ou5w3vqTJ9l5Vne4KD/SUgI7lV
-	 4io1JUk7XwJBtt9c+PmsoOH7UMovoW1Ujea6ZCWsQG8PozkwtNNnXXgATuiNyuQuTt1FP
-	 L+0DNTDc6B0TqcPQ9dqzM+7Lgy3ZpLdOimjUMg/i0MdI85/pXkxt1U4+T3r2m/eCIuNYL
-	 FhBPWzW2FDbbBga+nYKGX7F8ee9gmxLBP3UWNvGsAhYR+PMULUprEe+9/1HXDMDEiTg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794316282;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
+	b=PWvaoyA9yogqp7sKk+4zC/6w9Hzbnb88C71HEYXmeTUZI8q0he3nCUVNFC1s12SZnBTF
+	 VzfSM8ZE2fFd7x/tzfesw/IefKlVSV7sPwHRaMPPwKa7prtAj+NSn8c7b51DrX6AJ/twF
+	 AAqpF6onavGlbTtyHSJFSWnukdKHuKjVIUnjigcgxmDBHw0axMfgVg7h2AbP+T1x3g8Xy
+	 IihLSy4CzoBZRyB/Ly7NkbnEUh3eNJ00jQyVoC3kPxqZlhGg9gd0zwRyfCNTQXMHcEjAX
+	 F2amDz07mv0lFN5UIzTYUyTBGblA4+4v8nlwXhkLa7tHmn9lquVSSvOkvi2c8Q7cegQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.intel.com;
-	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=JdpvIJcW;
-	arc=none smtp.remote-ip=198.175.65.21
-Received: from mgamail.intel.com (mgamail.intel.com [198.175.65.21])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	arc=none smtp.remote-ip=209.85.219.47
+Received: from mail-qv1-f47.google.com (mail-qv1-f47.google.com [209.85.219.47])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A9F8606A31C;
-	Tue, 10 Nov 2026 11:43:21 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8A9F8606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=JdpvIJcW
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1794311001; x=1825847001;
-  h=from:date:to:cc:subject:in-reply-to:message-id:
-   references:mime-version;
-  bh=fFlYzKZx6d7zbItcdPrIhfKRGk6oxCXe/4WPWbITVJw=;
-  b=JdpvIJcWXyu6v7dcmlx3TuMZLrr5BLdjcE9T7JuxYANe/eCPtVQ24ZE9
-   dXhCu+q9gKFHWqzCW76EIJUDfAT3iIeC+wEOprPjzZjRO/Boe2rx3OMyt
-   l1rnLrmdX+OJz4O9VnrP4wKmkHiSKj4iW0RyeQlNbw88VUsg/Mtk6CuhG
-   ZCZcLZrkfhKdk6+1CHtU7vQZsFy2GJSJ+tmADPHvb4qrJeNP9AaOb/ODK
-   edfDdoUdjnFcLQa6Zoh33uqPSdMQyb9EttrOccAV84pn5GPJaIsq7U7hy
-   CFMjy35IZtMD3M2wwj3OUwqHiY9ScqOwLTb+V0kzK1S8eKIqgQCUpbJ4L
-   A==;
-X-CSE-ConnectionGUID: /aZWI9eTRJaZV00/Pmvf6g==
-X-CSE-MsgGUID: /KnxLu+ITFyEk/B3z3+1GQ==
-X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3136973"
-X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="3136973"
-Received: from orviesa006.jf.intel.com ([10.64.159.146])
-  by orvoesa113.jf.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2026 03:43:20 -0800
-X-CSE-ConnectionGUID: LZa1K/XxTqqy4Ut7m3heoQ==
-X-CSE-MsgGUID: E6/vOvLBQkqely5eF00TxA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="8145256"
-Received: from ijarvine-mobl1.ger.corp.intel.com (HELO localhost) ([10.245.245.34])
-  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 10 Nov 2026 03:43:18 -0800
-From: =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
-Date: Tue, 10 Nov 2026 13:43:14 +0200 (EET)
-To: Denis Benato <denis.benato@linux.dev>
-cc: Bartu Alev <bartualev@gmail.com>, 
-    Corentin Chary <corentin.chary@gmail.com>, 
-    "Luke D. Jones" <luke@ljones.dev>, Hans de Goede <hansg@kernel.org>, 
-    platform-driver-x86@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, 
-    linux-api@vger.kernel.org, Denis Benato <benato.denis96@gmail.com>
-Subject: Re: [PATCH v4 1/2] platform/x86: asus-wmi: add TUF keyboard RGB
- readback support
-In-Reply-To: <9d9e53e5-aede-46fe-b0cb-747b95a816fd@linux.dev>
-Message-ID: <31f09d55-2920-e80e-435e-00679996afc3@linux.intel.com>
-References: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com> <20261029-asus-tuf-rgb-v4-v4-1-0d3b877d2c30@gmail.com> <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com> <9d9e53e5-aede-46fe-b0cb-747b95a816fd@linux.dev>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0BFAE606A774
+	for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 13:11:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0BFAE606A774
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
+Received: by mail-qv1-f47.google.com with SMTP id 6a1803df08f44-91eb3ac1875so19660976d6.1
+        for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 05:11:16 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=ziepe.ca; s=google; t=1794316276; x=1794921076; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
+        b=e4PFNw24vmEx9e6XM/cUzCvRERvJabuTvhno9Gz/JzeZWoLyAEqlwt+PiN7PsREzDe
+         nbBIpkI6JTuornnBm7/42NrL/w4IdXPpgJMXAMUPCFd7jbdDVIEmKh/jdZ+I+dzViXSB
+         H2p2NQNLx9ne0cV1aFkGD5AsPCtzbh2oXhKE+mtPHEk6ablNOVM/G42JAjOhvFRRvEdt
+         SknBoahXSauvPineguU97Ohz82cWAZt6yPRa0ML5YUk7kVUMnIDJn8DUcWsiXLLwSwNl
+         eFseGz8JV2OEeli+2NBdOH9OYZhu03xI/lkGEnFQ2GC/c8NKeMa66k6Yl0PwfnR2fGbK
+         Y+Qw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794316276; x=1794921076;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=hv46jG8uHZHn78TEQV5LM7K76EVF6QARAJT1M8iUKJw=;
+        b=HkB1MfZdBY2wfbVHwYYswqpq3qWOfH2tpFmq3rFlZRuI5YODAZbGRm1SJZbYK8qKOh
+         PUJqHQC2m8sxxVAIh6zr88kDkQMzOT6OoNhGOEOyAbWFc/2t5VfwEBrTjQeb99uYlLsD
+         PXVC7Z/7Mobl9wpV1MNKsZQdSl8G9SIPo8QgwTqApioiW4RwGfJV09M8+FYluYTUbeyf
+         j7xTYApAuWxs62E+jUw6W66jEiL+UIz0QsnFHmqrBdMP61BFyxPaIeSSOp9Gj4WQ5EY6
+         X0h0t5aKZQ8pIq+7CRF0WNDKEKmVGuWpQUEqMqRRQ641fVV2w5vGYeeJcNyM/dMT7uD0
+         k0KQ==
+X-Forwarded-Encrypted: i=1; AL+hErFzE79AbVOPmF9/z0ibHJs+hLGFCcqzUiktzYM7yoSFC44ufJatmgaLzaNnI9XGrDowO/L4PCE+lDk=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9Qz9+GTVWpmYjPAZnCprOYt45+CdMkxjxlwzNdeKpAuU5RnnM6
+	TMT/M3/kxjmf+deS4si9qZHoOp9LgbBk0gKlphfDM5bVPDvJokzh9tnkcW+onwDlLbw=
+X-Gm-Gg: AYBFou17LnnSPKpX6qQTHt64fl8+OuQpqExtiAXsDPxV9FhrOYeOEOcoJqs5jL3Sy+l
+	wmfcAGfknVNgBe1kjJfZP8B+rVQ7GjyLg6PC7bmTRQ/ZjEOsJ7QDHRceBpF7pFPnNnhGyRQa8js
+	XSa3apt1CMs7jdLQQS066r/e9wUwPeY2V4aXwjUSonYkf4XOc3JC1Dy6bPltLkTnyP04jN9M80n
+	A3psGryCEYJYJOTIJCnq455yOV3XhQ9vvvArGbeP338eJHtOM/2k7GiptSPzyvG4VLf/XVyd9x4
+	Y3v9CriGAAYTh7FrAHuC+HWg6lFvpxpYhcAuyIdE/7Zjz3pMY14XO1pOWIChxlUdbhp3LeGYt5N
+	Y6pZmuHbiRZv/qKn8KvP1hx/zyngWXgISjz+CC5vY5C9m/90jYwgAM/hYVCiLP7nFBCRWJwfK+O
+	7aZMAdjCzdMF8FIueymUBQVe5L3xulaBh315ffEVRIEvXPoDEIrzCrM59RNQy4VNKOuOveHq88g
+	IIbRecvJ6aXhon5QxYFYfqgWpeA6iOpLK3vsz1zQp8iAnywdxPVKyQ3bQYFxWm8q/ghn9s14gmE
+	lNRQ1/ZUGfe+Ljn+GgfcbFuKeqyIWtMlKanLgRkHmr+sHhvCVdo/+DVonoopfQ0XYEa+KshQtMY
+	3JJQb//5ZYII=
+X-Received: by 2002:ad4:5cc4:0:b0:91e:96f8:f369 with SMTP id 6a1803df08f44-91eef913f53mr42602176d6.36.1794316275746;
+        Tue, 10 Nov 2026 05:11:15 -0800 (PST)
+Received: from ziepe.ca (hlfxns010zw-159-2-239-150.pppoe-dynamic.high-speed.ns.bellaliant.net. [159.2.239.150])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-91ef052360asm20821916d6.38.2026.11.10.05.11.15
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 10 Nov 2026 05:11:15 -0800 (PST)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xQld4-00000005faP-2KGJ;
+	Tue, 10 Nov 2026 09:11:14 -0400
+Date: Tue, 10 Nov 2026 09:11:14 -0400
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
+Cc: "kvm@vger.kernel.org" <kvm@vger.kernel.org>,
+	"linux-coco@lists.linux.dev" <linux-coco@lists.linux.dev>,
+	"drdeeglaze@gmail.com" <drdeeglaze@gmail.com>,
+	"James.Bottomley@hansenpartnership.com" <James.Bottomley@hansenpartnership.com>,
+	"aik@amd.com" <aik@amd.com>,
+	"dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>,
+	"Xing, Cedric" <cedric.xing@intel.com>,
+	"alistair.francis@wdc.com" <alistair.francis@wdc.com>,
+	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+	"Reshetova, Elena" <elena.reshetova@intel.com>,
+	"kas@kernel.org" <kas@kernel.org>,
+	"ankita@nvidia.com" <ankita@nvidia.com>,
+	"jiri@resnulli.us" <jiri@resnulli.us>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"Jiang, Dave" <dave.jiang@intel.com>,
+	"Quigley, David" <david.quigley@intel.com>,
+	"linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>,
+	"x86@kernel.org" <x86@kernel.org>,
+	"jpiotrowski@nvidia.com" <jpiotrowski@nvidia.com>,
+	"suzuki.poulose@arm.com" <suzuki.poulose@arm.com>,
+	"lukas@wunner.de" <lukas@wunner.de>,
+	"Vivi, Rodrigo" <rodrigo.vivi@intel.com>,
+	"Fang, Peter" <peter.fang@intel.com>,
+	"jic23@kernel.org" <jic23@kernel.org>,
+	"ksinyuk@kernel.org" <ksinyuk@kernel.org>,
+	"sameo@meta.com" <sameo@meta.com>,
+	"sathyanarayanan.kuppuswamy@linux.intel.com" <sathyanarayanan.kuppuswamy@linux.intel.com>,
+	"qinkun@google.com" <qinkun@google.com>,
+	"pgonda@google.com" <pgonda@google.com>
+Subject: Re: [PATCH RFC 20/20] attestation: Add the TDX family implementation
+Message-ID: <20261110131114.GV663069@ziepe.ca>
+References: <20261023141218.GD3977851@ziepe.ca>
+ <343e4a12f2fdbb4e9a19c4afe49cf2b8908d6739.camel@intel.com>
+ <20261023220030.GM3977851@ziepe.ca>
+ <7843a833723e3aad40f8fc4de3a83f5a5059280f.camel@intel.com>
+ <20261103005851.GH3889730@ziepe.ca>
+ <au5LCE1jau0yDo5S@intel.com>
+ <20261109171236.GP663069@ziepe.ca>
+ <cbef9bda9241ffe98652172edb67fab3eb1c35ee.camel@intel.com>
+ <20261109234252.GR663069@ziepe.ca>
+ <4c75b369b68c98c5c35e296895b6935342dc7dc1.camel@intel.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -82,173 +134,106 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323328-1592355462-1794310994=:1229"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <4c75b369b68c98c5c35e296895b6935342dc7dc1.camel@intel.com>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, Nov 10, 2026 at 01:30:16AM +0000, Edgecombe, Rick P wrote:
+> On Mon, 2026-11-09 at 19:42 -0400, Jason Gunthorpe wrote:
+> > > So we have this SGX based quote format that is fixed because it already
+> > > exists
+> > > in the wild. Going forward we are moving to DICE, but that is a standard
+> > > format.
+> > > So also somewhat fixed. I guess the question is: is there some combo of bits
+> > > in
+> > > each blob we could check that could deterministically distinguish between
+> > > the
+> > > two? To do this we would need to analyze the quote formats.
+> > 
+> > You guys really didn't make it discoverable when you added DICE? :( :(
+> 
+> Like influence the DICE spec to interop with legacy SGX based attestation? I'm
+> out of my depth to try to say how possible that is.
 
---8323328-1592355462-1794310994=:1229
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+No, I mean just have the SGX firmware tell the OS if it produced a
+DICE or legacy blob :(
 
-On Tue, 10 Nov 2026, Denis Benato wrote:
-> On 11/9/26 19:02, Ilpo J=C3=A4rvinen wrote:
-> > On Thu, 29 Oct 2026, Bartu Alev wrote:
-> >
-> >> The TUF keyboard RGB attributes kbd_rgb_mode and kbd_rgb_state are
-> >> write-only, so userspace tools keep their own copy of the lighting
-> >> configuration and lose track of it whenever the EC changes state on it=
-s
-> >> own: after a firmware reset or a boot into another operating system th=
-e
-> >> tools show a stale configuration until the user rewrites every field.
-> >>
-> >> DSTS device 0x0010005B evaluates the DSDT method EC0.KBLS(), which
-> >> snapshots the EC's host-visible keyboard state into a 16-byte buffer:
-> >> lighting mode, red, green and blue levels, animation speed, and the
-> >> four power-state flags.  The first byte is a constant 1 written by the
-> >> AML, which distinguishes a KBLS reply from any other object the method
-> >> could return.
-> >>
-> >> Add kbd_rgb_read_status() to evaluate and validate that buffer, parse
-> >> it through a packed struct, and convert both attributes to
-> >> DEVICE_ATTR_RW.  The read returns the write format with "n/a" in the
-> >> command position: the command word belongs to the write verb (apply
-> >> now or save to flash) and both verbs update the EC mirror the same
-> >> way, so there is no state to report there.  The three EC speed codes
-> >> map back to the sysfs indices 0 to 2.
-> >>
-> >> Readback was verified against the EC firmware: the status bytes mirror
-> >> EC RAM at 0x0B22 to 0x0B2E, and the speed codes 0xe1, 0xeb and 0xf5
-> >> select animation step thresholds of 30, 20 and 10 ticks per phase,
-> >> which matches the slow, normal and fast labels.  Tested on a TUF
-> >> Gaming A15 (FA507NV).
-> >>
-> >> Suggested-by: Denis Benato <denis.benato@linux.dev>
-> >> Signed-off-by: Bartu Alev <bartualev@gmail.com>
-> >> ---
-> >>  drivers/platform/x86/asus-wmi.c            | 83 +++++++++++++++++++++=
-++++++++-
-> >>  include/linux/platform_data/x86/asus-wmi.h |  3 ++
-> >>  2 files changed, 84 insertions(+), 2 deletions(-)
-> >>
-> >> diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/as=
-us-wmi.c
-> >> index b33ebdb21aa2..054d1d684bb0 100644
-> >> --- a/drivers/platform/x86/asus-wmi.c
-> >> +++ b/drivers/platform/x86/asus-wmi.c
-> >> @@ -1062,6 +1062,65 @@ static DEVICE_ATTR_RW(gpu_mux_mode);
-> >>  #define TUF_KBD_RGB_SPEED_SLOW=09=090xe1
-> >>  #define TUF_KBD_RGB_SPEED_NORMAL=090xeb
-> >>  #define TUF_KBD_RGB_SPEED_FAST=09=090xf5
-> >> +/* TUF keyboard RGB status readback *********************************=
-**********/
-> >> +struct asus_wmi_kbd_rgb_status {
-> >> +=09u8 signature;
-> >> +=09u8 mode;
-> >> +=09u8 red;
-> >> +=09u8 green;
-> >> +=09u8 blue;
-> >> +=09u8 speed;
-> >> +=09u8 state;
-> >> +=09u8 unused[9];
-> >> +} __packed;
-> >> +
-> >> +static int kbd_rgb_read_status(struct asus_wmi_kbd_rgb_status *status=
-)
-> >> +{
-> >> +=09int err;
-> >> +
-> >> +=09err =3D asus_wmi_evaluate_method_buf(ASUS_WMI_METHODID_DSTS,
-> >> +=09=09=09=09=09   ASUS_WMI_DEVID_TUF_RGB_READ_STATUS,
-> >> +=09=09=09=09=09   0, (u8 *)status, sizeof(*status));
-> >> +=09if (err)
-> >> +=09=09return err < 0 ? err : -ENODEV;
-> > What do you (or Denis) think on sashiko's mention about=20
-> > asus_wmi_evaluate_method_buf() casting integer.value to int which might=
-=20
-> > end up aliasing high-bit on return values with errnos?
->=20
-> Hi Ilpo,
->=20
-> I don't see the sashiko response neither in my mail nor in the lore,
-> but I think I understand the problem.
+> I'm also under the impression that the quote was not designed for local
+> processing in the guest. But rather remote attestation which, usually involves a
+> helper service that processes the quote. I've never been clear on why that was
+> desired. But it probably is part of the reason attestation doesn't fit this use
+> case perfectly.
 
-Hi,
+Even the remote helper needs to tell the two cases apart so it can
+parse them
 
-https://sashiko.dev is the goto place where you have them for all public=20
-submissions covered.
+Again if you expected the user to pre-tell the helper that this is a
+legacy vs DICE VM then that's exactly the bad user experiance I want
+to avoid.
 
-It's intentional that we don't encumber (spam) our first time submitters=20
-with gazillions of pre-existing problems sashiko finds. Many of which are=
-=20
-largely irrelevant/low value for platform drivers anyway (what user would=
-=20
-remove a platform driver? or probe() rollback path issues; nice to fix=20
-those as well but nowhere near urgent or important level).
+> > > If there isn't, I'm not sure what we could do at this point. There is a
+> > > library
+> > > Intel publishes (right Peter?) that can verify the quotes. I'd guess it must
+> > > have some way to distinguish between the two. Can you check how it does it
+> > > Peter?
+> > 
+> > See this is exactly what I'm talking about, I don't want to repeatedly
+> > get into this situation down the road over the next decade.
+> 
+> I'm not sure if I'm missing something. New incompatible standards seem pretty
+> normal? Sometimes there is a container to specify which type of blob, and
+> sometimes it is just discoverable by clues in the bits.
 
-Sashiko has gotten somewhat better in not spamming the submitters with all=
-=20
-such pre-existing issues but tries to filter only the ones somewhat=20
-relevant to the patch so I might reconsider that.
+Yes, completely normal. The thing that generates the data should have
+an unambiguous contract with the OS on what kind of data it will
+generate.
 
-Sashiko's review emails together with using LLM to create and update=20
-patches also have a tendencity to cause undesirable rapid patch respinning=
-=20
-cycle no human reviewer wants to see in their inboxes so it's a=20
-double-edged sword. I don't want to see v10 in a week or two from=20
-starting, it seems counterproductive as it's discouraging to human=20
-reviewers.
+If you want to change it, thats fine, but the OS participates in the
+change and is aware of it.
 
-In this case you need to read between the lines as the report is for the=20
-Documentation patch, whereas I think it's an indication of a more generic=
-=20
-problem in the code that isn't a mere documentation issue.
+> I think the thing that is a bit dicey (no pun) with this, is that there is kind
+> of a backwards compatibility adjacent change for systems giving the new DICE
+> quotes. This came up in in both discussions with Dave/x86 and Sean/KVM. The
+> reason why it was considered grumble-ok in the end, was because the full
+> verification depends on updates to the library for each new platform due to
+> needing to be aware of new keys. So to actually attest even SGX quotes on a new
+> platform, library updates are needed to whatever tool or service is being used.
+> Since the library needs to be updated in any case, it can also understand the
+> new formats without any impact to the user.
 
-> What I think is that we have been lucky.
->=20
-> ASUS probably chose the presence bit high enough not to cause
-> troubles when they have to report a status to armoury crate
-> and they don't use negative numbers, but yes I agree that the
-> return value is more to be seen as a bitfield (with some-bits
-> fields as numbers) rather than ints.
+I don't know what you guys have done here. There are IETF standards
+for all of this and well defined container formats. Sure to parse
+every bit of the token you might need a new library, but you should at
+least be able to get a signature verified and parse the generic
+information reliably.
 
-So if there's only the FF..FE return with high value, it doesn't seem=20
-problem because it's explicilty checked for but I recall there was also=20
-FF..FF somewhere (no longer sure if I remember even what driver it was=20
-but the numbers seems suspiciously close to ones used here), it's not=20
-being checked in ..._buf() case and casting that to int makes it to alias=
-=20
-with -EPERM.
+If your plan is TDX releases are ABI incompatible with the verifiers,
+then thats a horrible plan and *much* worse than what ARM is doing,
+for instance.
 
-> I have actually spotted this on a commit from Marco that was not
-> being sent on the lkml (because he touched that code) and I didn't
-> like what I saw (I didn't like what was already there).
->=20
-> Those commits were about modernizing the use of mutex
-> and __free where appropriate and I kinda liked them, will
-> ask him to revive it...
->=20
-> But proper and coherent error handling will touch basically
-> a large part of supported hardware and asus-wmi core
-> parts,
->=20
-> I am a bit hesitant to touch that code because I might break
-> some old and not widely known device: it's the only reason
-> I haven't (yet) acted in this regard.
->=20
-> > The other caller seems to also return that value directly out of _store=
-=20
-> > function().
->=20
-> The other caller got lucky exactly as the rest of driver.
->=20
-> setters in wmi don't even report the presence bit so there
-> is even less "incentive" to actually check it.
->=20
->=20
+But it sounds like your library can somehow parse the blob and figure
+it out, so maybe it is just a matter of describing how that works.
 
---=20
- i.
+> But this didn't take into account this generic API, local quote processing use
+> case. Which is kind of a surprise and I'm actually still not 100% clear on how
+> it will be used.
 
---8323328-1592355462-1794310994=:1229--
+It is not local quote processing. This is labeling data properly so a
+verifier is possible without the user having to manually and directly
+inform the system what versions of Intel CPUs and TDX modules it
+should expect to have.
+
+> I think we would have to circle back with everyone that pushed for the host
+> controlled quote type. Let's see if the library can distinguish them already
+> too. This attestctl tool... is that something that could consume a library like
+> this? Or something that would have a no dependency implementation?
+
+I would hope for no dependency, the idea would be to provide
+references for anyone wanting to make verifier software, and a tool
+for the admin that wants to debug/understand their systems..
+
+As well as a point to have a strict injection of sanity into what
+people are doing so we don't get repeated ABI breaking instances in
+future.
+
+Jason
