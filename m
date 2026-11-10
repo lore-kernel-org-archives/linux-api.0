@@ -1,11 +1,11 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.13
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
 	t=1794281812;
-	b=elA/OFq7Uh0r03eoIyr7EgZsq6hpNQ5Fy56Uc9BNxwb6tCjBYMLughgtD2yN7Te67KFB
-	 g8VHAod8BeYHF7fZHsJQvQVRh36abE4ZWGRoyyi4V9CDoTOw8MT9qTxw7yyrXLHdPVPR7
-	 StCaNvmFIUlZfI/1w2sRb0oCgUAhEys54DY8i4AIFgFkP2aO85Ow6c7srcCGASa4kSJT9
-	 d7P9ZZLBfWqExNj8GFzkJ0FBbns3foXzS6/J5kvPbpn4c1VIqiYIk6qcpBcGEN1b4jp5l
-	 zOxNU7qcWsSlU3OnppG+iBn5dreMZramuTaMMFEewmthD3hA7qTOI6iH7PVoDrO7x0w==
+	b=B5BKgQljKVL474MfjpRQnnhvB6qPmeT3mQcxtSReTXrJ1bzc2QPta2cj8NkXLe41NQLK
+	 eL5womX7tfYydeb5l68OQRP5Uj2w5h2WsrSV6dXHEQoVVTdPWyFSBVi8VA3lpSWDNLS23
+	 /dp/14S+z1M0NrmUW8NhBjDa+IIEsMg6ZPylNBKLQJ0uqdrm0rvGkK5lXOivU+MDlMWqt
+	 Jr1ZKbUuOy1bndLqfFo1nH/2odIgg1XOBt+lHeYZ3BQZJzC+5hXUJk8/46PNWPTimMtPz
+	 XYbzXuc6+sZ9tVjw8QtFe0j6nHciDgYNuQe5Lsekn3+WJqoKZIBxDZ7UbpICvX4rf+g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
 	a=rsa-sha256; c=relaxed/relaxed; t=1794281812;
 	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
@@ -14,58 +14,58 @@ ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
 	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
 	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
 	 X-Developer-Key;
-	bh=yL/bYpPbA1VV7P5LqvIvItlJYGnGdCxpyPNU7mxY5dw=;
-	b=pRkx+vfJ1KQzgppnbAUiWfa6XemdpTiW7oakWxewCz0ShFY+rENhElz0Rx9OCRPpMwUX
-	 IvseJMi+Xu64aNbI0r8s7zFmzbHm98ChHgZUwWLuwQW7CB0BvkpAQKiHxg+7Un5RbRlt+
-	 EoItJRmRnKo0ezS8KsdbukYMR0KAzCO1LZK1ZQxL/iZxZU/Sc/RB9rOhRCEjyQ3glHPFv
-	 bcbYpKIRF5qvwLaU9k/ZoZYaHjZceY2wy083gvXBHmlcWycO2qRR7BGS1yO/uLSwnfGXj
-	 +P5PQGnxISmL68PQ/oQkzFCl74KCbKlYLNUKEbB4bLYJdgk1QqeABogkTwQGcENoCIg==
+	bh=BUcImGsuwZjWXWfaY2Ct64FrLcHe3Ijl1QsSaBtzKnM=;
+	b=EnQtCXNsbSnO2r9qmPwmWjEd02827cQdu261xRjMy3XAmPgW/1e4O9tYf38oB+Ou7ZPE
+	 ig/a/xAM2e2zitA5xotd/0uCrEBg60AX3sPHVxkz3Rru5virhbtrxdRj3ZtdRLRzhtpQ0
+	 P2pcFVDxDbtZPKdI8E0K2Ot8aG54WgcFQuM6PmSSknopeCpA2bu5y9AMr+O3/lpncWt3U
+	 f1JzlucE7Q4xSWx2y/I5Kq0NIY6pcvK0c2CxV3qeuErLBTkNMdObYIB2TTDTbzE1lZQLi
+	 fbG937TKJh4lSsnty9eIbM7bktULBkVm9CXkHVu0tyAeyl+0v+yC1/omy9mMKzvD01A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.intel.com;
 	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=L0zhkoaX;
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=PyOgvoq4;
 	arc=none smtp.remote-ip=192.198.163.13
 Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.13])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0571060A260B;
-	Tue, 10 Nov 2026 03:36:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0571060A260B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5331560A2612;
+	Tue, 10 Nov 2026 03:36:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5331560A2612
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=L0zhkoaX
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=PyOgvoq4
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
   t=1794281812; x=1825817812;
   h=from:date:subject:mime-version:content-transfer-encoding:
    message-id:references:in-reply-to:to:cc;
-  bh=LUiMntBanciiEpVPXcBhkYz2EJ70zKF81At3HftVud8=;
-  b=L0zhkoaXHdm7Bb2pdNMzGuHsEZlshYT6gFkr0ehTs5pcB0ak5AYhxl80
-   qS2Vh3b1RHH27Aee9cOEIPb+uBYXiRlxbg3tIK5LzbwijllHYewi+VMH/
-   O4vAEnWlbbK4BkTawK2aOQkWSA2eabZ5sDqqBy2JDnqBl15bhQajkI6JE
-   n5ZKVUm2bGgu4USHP5jZCU070I6ppOSrBk4GP5HbJqbjNpUnbNF8QXPr2
-   vtjcWunJ74fRqjLoh6cxPfwZ+s7rAY3rTI30U2M3a+cVnLJRFWc8zzkKM
-   wa2yEUaGheHN3tDZv1Yl+X4Kb++VnYRlEJYHPG2QtGCOVLnGPccbUzBKB
-   g==;
-X-CSE-ConnectionGUID: RlfTxH79SzWWd4P0GPHgjQ==
-X-CSE-MsgGUID: h7WVCrq/RAO5JzjtiDB6zg==
-X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3010655"
+  bh=bM9HLueu+R7OwU7cX4lNqTZqYbJBSpXuav4uV0W17YY=;
+  b=PyOgvoq4nRQlZFIALhmwbIN1Slv/5HOxZbB+8AD3SJdSM8/MbRyK/BDC
+   wt/WkSp3hti/ALda+fR+TUWqtV7tfv8fwZF6KntcLdvvYdN+J2bTV6GlA
+   68igcKsC2bmHuBbt+JPPatIV8BZmhDteuB3ZMJnH7uqrdSXmPYmQg/Vbk
+   H8Sa7aQPNMebvOI1OFJ0zNaSysKHCxrXt3j4a0Pi5K3k6zbY+hKlqTULJ
+   gW2+7bqyMIdCAZPmYXSJdSRBuZxCRQl1MNl+roYt/Y4VPpJLxTB3rkrM+
+   32Eq7fGnBYZoNC836jXIava/8QEfyRKgjMp1t+gO466rSpiBWCgQJa59Y
+   A==;
+X-CSE-ConnectionGUID: TakrGOmHRKy45KYyh9zJAQ==
+X-CSE-MsgGUID: Cl1np3cCQYy+OOsNPT0ZVQ==
+X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3010658"
 X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="3010655"
+   d="scan'208";a="3010658"
 Received: from fmviesa001.fm.intel.com ([10.60.135.141])
   by fmvoesa107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
-X-CSE-ConnectionGUID: UO1v5YB+ToKJP6Xid56WLQ==
-X-CSE-MsgGUID: TJr8Lm00SQW2LXntDMqJdw==
+X-CSE-ConnectionGUID: F9qFKA5aRn2PsdaZEsj+bg==
+X-CSE-MsgGUID: BG7vd6VGQ5CkUOqnpqs6MA==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
-   d="scan'208";a="8370807"
+   d="scan'208";a="8370810"
 Received: from unknown (HELO [172.25.112.21]) ([172.25.112.21])
   by fmviesa001.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
 From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
-Date: Mon, 09 Nov 2026 19:36:35 -0800
-Subject: [PATCH 08/13] thermal: intel: dpti: Factor the programming
- sequence out into a helper
+Date: Mon, 09 Nov 2026 19:36:36 -0800
+Subject: [PATCH 09/13] thermal: intel: dpti: Program the directed interrupt
+ on the target CPU
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -77,7 +77,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Message-Id: <20261109-dpti-custom-cpu-v1-8-ead8e2d2067e@linux.intel.com>
+Message-Id: <20261109-dpti-custom-cpu-v1-9-ead8e2d2067e@linux.intel.com>
 References: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
 In-Reply-To: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
 To: "Rafael J. Wysocki" <rafael@kernel.org>, 
@@ -88,175 +88,163 @@ Cc: linux-pm@vger.kernel.org, linux-api@vger.kernel.org,
  linux-kernel@vger.kernel.org, ricardo.neri@intel.com, 
  Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 X-Mailer: b4 0.13.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1794281807; l=4845;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1794281807; l=5342;
  i=ricardo.neri-calderon@linux.intel.com; s=20250602;
- h=from:subject:message-id; bh=LUiMntBanciiEpVPXcBhkYz2EJ70zKF81At3HftVud8=;
- b=a2gn89yBP+PACnXnpHrLOfwdnbeDDnnwVWpW1Db8UTHE1Dhv/O1BS1MR89CFmrytxg30Gtwpi
- Nc3rM5iRRHBCPaEcEb9D8Sv+amnsNEdFOIVCkxJer45cGarKFO77atU
+ h=from:subject:message-id; bh=bM9HLueu+R7OwU7cX4lNqTZqYbJBSpXuav4uV0W17YY=;
+ b=Q8XsueQ2OqWfMjJxVdtXZmYgiByWdvI1EeGs0mh8BXlUW+T755Bt7dFunE5v3tN4aqA7PwGQ6
+ DPT0oTGGqu+DyvNao0tQyyIoFPvLK5FFNSVjMSojYPCmkpYWbGM90rX
 X-Developer-Key: i=ricardo.neri-calderon@linux.intel.com; a=ed25519;
  pk=NfZw5SyQ2lxVfmNMaMR6KUj3+0OhcwDPyRzFDH9gY2w=
 
-The hardware programming sequence for the directed package-level thermal
-interrupt (DPTI) is embedded in dpti_online(): clear the acknowledgment
-status, enable the interrupt, wait for the hardware to acknowledge, and
-roll back on failure. The syscore resume callback reuses it to
-unconditionally restore the DPTI on CPU0.
+The CPU online and offline paths of the directed package-level thermal
+interrupt (DPTI) both perform the same hardware programming sequence: clear
+the acknowledgment status, enable the interrupt on a target CPU, wait for
+the hardware to acknowledge the setup, and roll back the enable if the
+acknowledgment times out.
 
-The programming sequence will have to run on a selected owner CPU. CPU0
-will no longer always be the boot package's owner. The syscore resume
-callback then cannot reuse dpti_online().
+MSR_IA32_PACKAGE_THERM_STATUS is package-scoped, but both paths clear and
+poll it on the CPU that runs them while enabling the interrupt on the
+target CPU. This setup works because every caller today targets a CPU in
+its own package. A sysfs interface that programs an owner on behalf of any
+package will lift that restriction.
 
-Factor the sequence out into dpti_program_this_cpu() and call it from both
-the online callback and syscore resume. Its unused argument gives it the
-callback signature, so that it can run on a remote CPU via
-smp_call_on_cpu(). The syscore callbacks now act only if CPU0 owns the
-DPTI.
+Run the full sequence on the target CPU instead.
+smp_call_function_single() cannot be used for the sequence: it would wait
+for up to 15ms in interrupt context. Instead, use smp_call_on_cpu(), which
+can wait and cannot migrate to another CPU.
 
-Add dpti_lookup_pkg_id() to check, at entry points, that a CPU's package
-has per-package state, and dpti_pkg_of_cpu_nocheck() for code that runs
-after that check. Owner selection and the sysfs interface will reuse them.
-
-No locking is needed in the syscore path: interrupts are disabled and
-only the boot CPU is online at this point.
-
-A suspend and resume cycle leaves the same state as before: the DPTI
-directed to CPU0, or broadcasting if the hardware does not acknowledge.
+Keep using smp_call_function_single() to clear the directed interrupt on a
+CPU. It does not wait for acknowledgment and can therefore run in interrupt
+context. Clearing is then the only remote configuration left. Replace
+dpti_config_ipi() with dpti_clear_ipi(), which takes no setting.
 
 Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
 ---
- drivers/thermal/intel/therm_throt.c | 83 ++++++++++++++++++++++++++++++-------
- 1 file changed, 68 insertions(+), 15 deletions(-)
+ drivers/thermal/intel/therm_throt.c | 63 +++++++++++++++++--------------------
+ 1 file changed, 29 insertions(+), 34 deletions(-)
 
 diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
-index 36cdbe0eb6c1..72dabffe3b2f 100644
+index 72dabffe3b2f..e6ce443c0a9d 100644
 --- a/drivers/thermal/intel/therm_throt.c
 +++ b/drivers/thermal/intel/therm_throt.c
-@@ -519,6 +519,25 @@ static void dpti_config_ipi(void *info)
- 	dpti_config_this_cpu(*((bool *)info));
+@@ -514,9 +514,14 @@ static void dpti_config_this_cpu(bool enable)
+ 	wrmsrq(MSR_IA32_THERM_INTERRUPT, msr_val);
  }
  
-+/* The unused argument matches the smp_call_on_cpu() callback signature. */
-+static int dpti_program_this_cpu(void *unused)
-+{
-+	int ret;
-+
-+	thermal_clear_package_intr_status(PACKAGE_LEVEL,
-+					  PACKAGE_THERM_STATUS_DPTI_ACK);
-+
-+	dpti_config_this_cpu(true);
-+	ret = dpti_wait_for_ack();
-+	if (!ret)
-+		return 0;
-+
-+	/* Undo the enable on failure, leaving the package as it was before. */
+-static void dpti_config_ipi(void *info)
++static void dpti_clear_ipi(void *unused)
+ {
+-	dpti_config_this_cpu(*((bool *)info));
 +	dpti_config_this_cpu(false);
++}
 +
-+	return ret;
++static void dpti_clear_on_cpu(unsigned int cpu)
++{
++	smp_call_function_single(cpu, dpti_clear_ipi, NULL, true);
+ }
+ 
+ /* The unused argument matches the smp_call_on_cpu() callback signature. */
+@@ -538,6 +543,18 @@ static int dpti_program_this_cpu(void *unused)
+ 	return ret;
+ }
+ 
++/*
++ * MSR_IA32_PACKAGE_THERM_STATUS is package-scoped, so the acknowledgment must
++ * be polled on the same package. Run a worker bound to @cpu: it cannot be
++ * migrated and may wait for the acknowledgment for as long as 15ms.
++ */
++static int dpti_program_on_cpu(unsigned int cpu)
++{
++	lockdep_assert_cpus_held();
++
++	return smp_call_on_cpu(cpu, dpti_program_this_cpu, NULL, false);
 +}
 +
  /**
   * struct dpti_pkg - Per-package DPTI state
   * @owner:	CPU currently programmed to receive the package-level
-@@ -560,6 +579,38 @@ static bool dpti_supported(void)
- 	return true;
- }
- 
-+static int dpti_lookup_pkg_id(unsigned int cpu, u16 *pkg_id)
-+{
-+	u16 id;
-+
-+	if (!dpti_supported())
-+		return -ENODEV;
-+
-+	id = topology_logical_package_id(cpu);
-+	if (id >= topology_max_packages())
-+		return -ENODEV;
-+
-+	*pkg_id = id;
-+
-+	return 0;
-+}
-+
-+/* For callers already past dpti_lookup_pkg_id(). */
-+static struct dpti_pkg *dpti_pkg_of_cpu_nocheck(unsigned int cpu)
-+{
-+	return &dpti_pkgs[topology_logical_package_id(cpu)];
-+}
-+
-+static bool dpti_cpu_is_owner(unsigned int cpu)
-+{
-+	u16 pkg_id;
-+
-+	if (dpti_lookup_pkg_id(cpu, &pkg_id))
-+		return false;
-+
-+	return dpti_pkgs[pkg_id].owner == cpu;
-+}
-+
- /*
-  * Must be called with cpu_hotplug_lock held to prevent CPUs from going offline
-  * while iterating through packages and interrupts must be enabled to avoid
-@@ -590,6 +641,7 @@ static void dpti_clear_all(void)
- static int dpti_online(unsigned int cpu)
+@@ -619,7 +636,6 @@ static bool dpti_cpu_is_owner(unsigned int cpu)
+  */
+ static void dpti_clear_all(void)
  {
- 	u16 pkg_id;
-+	int ret;
+-	bool enable = false;
+ 	int i;
  
  	if (!dpti_supported())
- 		return 0;
-@@ -605,19 +657,13 @@ static int dpti_online(unsigned int cpu)
+@@ -630,11 +646,12 @@ static void dpti_clear_all(void)
+ 	 * DPTI down.
+ 	 */
+ 	for (i = 0; i < topology_max_packages(); i++) {
+-		if (dpti_pkgs[i].owner == nr_cpu_ids)
++		unsigned int owner = dpti_pkgs[i].owner;
++
++		if (owner == nr_cpu_ids)
+ 			continue;
+ 
+-		smp_call_function_single(dpti_pkgs[i].owner, dpti_config_ipi,
+-					 &enable, true);
++		dpti_clear_on_cpu(owner);
+ 	}
+ }
+ 
+@@ -657,7 +674,7 @@ static int dpti_online(unsigned int cpu)
  	if (dpti_pkgs[pkg_id].owner != nr_cpu_ids)
  		return 0;
  
--	thermal_clear_package_intr_status(PACKAGE_LEVEL,
--					  PACKAGE_THERM_STATUS_DPTI_ACK);
--
--	dpti_config_this_cpu(true);
--	if (!dpti_wait_for_ack()) {
--		dpti_pkgs[pkg_id].owner = cpu;
--		return 0;
--	}
-+	ret = dpti_program_this_cpu(NULL);
-+	if (ret)
-+		return ret;
+-	ret = dpti_program_this_cpu(NULL);
++	ret = dpti_program_on_cpu(cpu);
+ 	if (ret)
+ 		return ret;
  
--	/* Roll back on failure so the package reverts to broadcasting mode. */
--	dpti_config_this_cpu(false);
-+	dpti_pkgs[pkg_id].owner = cpu;
- 
--	return -ETIMEDOUT;
-+	return 0;
- }
- 
+@@ -669,7 +686,6 @@ static int dpti_online(unsigned int cpu)
  static void dpti_offline(unsigned int cpu)
-@@ -695,16 +741,23 @@ static void dpti_offline(unsigned int cpu)
-  */
- static void dpti_syscore_resume(void *data)
  {
-+	if (!dpti_cpu_is_owner(0))
-+		return;
-+
-+	if (!dpti_program_this_cpu(NULL))
-+		return;
-+
- 	/*
--	 * We can't do anything to handle errors. If direction fails for CPU0,
--	 * another CPU will take over during CPU hotplug.
-+	 * Let another CPU take over via CPU hotplug. No lock is needed here:
-+	 * only CPU0 is online and interrupts are disabled.
+ 	unsigned int new_cpu;
+-	bool enable;
+ 	u16 pkg_id;
+ 
+ 	if (!dpti_supported())
+@@ -691,35 +707,14 @@ static void dpti_offline(unsigned int cpu)
+ 	 * offline.
  	 */
--	dpti_online(0);
-+	dpti_pkg_of_cpu_nocheck(0)->owner = nr_cpu_ids;
- }
+ 	new_cpu = cpumask_any_but(topology_core_cpumask(cpu), cpu);
+-	if (new_cpu < nr_cpu_ids) {
+-		enable = true;
+-		thermal_clear_package_intr_status(PACKAGE_LEVEL,
+-						  PACKAGE_THERM_STATUS_DPTI_ACK);
+-
+-		/*
+-		 * We are here via CPU hotplug. Since we are holding the
+-		 * cpu_hotplug_lock, @new_cpu cannot go offline and interrupts
+-		 * are enabled, so the SMP function call is safe.
+-		 *
+-		 * The syscore suspend callback runs with interrupts disabled,
+-		 * but it does not reach this path because all the secondary
+-		 * CPUs are offline.
+-		 */
+-		smp_call_function_single(new_cpu, dpti_config_ipi, &enable,
+-					 true);
+-	}
  
- static int dpti_syscore_suspend(void *data)
- {
--	dpti_offline(0);
-+	if (dpti_cpu_is_owner(0))
-+		dpti_config_this_cpu(false);
+ 	/*
+-	 * If hardware does not acknowledge the directed interrupt setup on
+-	 * @new_cpu, disable the redirection. Since no other CPU is configured
+-	 * to receive the package-level interrupt, all CPUs in the package will
+-	 * receive it.
++	 * dpti_program_on_cpu() undoes a setup that the hardware does not
++	 * acknowledge on @new_cpu. With @cpu cleared below, no CPU is then
++	 * configured to receive the package-level interrupt: all CPUs in the
++	 * package receive it.
+ 	 */
+-	enable = false;
+-	if (new_cpu < nr_cpu_ids && dpti_wait_for_ack()) {
+-		smp_call_function_single(new_cpu, dpti_config_ipi, &enable,
+-					 true);
+-
++	if (new_cpu < nr_cpu_ids && dpti_program_on_cpu(new_cpu)) {
+ 		pr_warn_once("Failed to redirect package thermal interrupt from CPU%u to CPU%u; reverting to broadcast\n",
+ 			     cpu, new_cpu);
  
- 	return 0;
- }
 
 -- 
 2.43.0
