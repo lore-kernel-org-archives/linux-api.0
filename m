@@ -1,54 +1,71 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.186
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.13
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794279047;
-	b=kjron5w3ADxi7T/5ssN5yrpTsXdGz74TDcUlQQff5zhqAZrLpsOeqrnCjyAlB1KKkcbc
-	 JLt18B6bCKNZmkhLaRWFScBnNsDjc7ZkKKtl2c1VjjF8PkZXouFcxPx+287OJNHPqtXyq
-	 R2mUE+sROU1901/+NGIjUlfbBpCKKfAXcAASIgbHhcwhC5aMJrdnuAHAI4pKoVZjrr6IL
-	 GngSeH+nLSNCkUrcM+p99Obl6By64nMmx+wpCs4ehCMwH+OOmvGwerCCg0h6F+5vM45++
-	 FraAkvDucKeOw7aEoR/lY7CDAXeWGnfawGhnrsgtetJXfeI8+aSAzPO4vZFJrTQ119A==
+	t=1794281810;
+	b=U1PW3Lkj4tQpklEn1ulOjbDvgPhURTaZVfG1/2hS25ttXDAzRm5IeSHwNk/wNl3btg5P
+	 gM1d5Im2treshn8iHDv7QMWpuyPsbXNTLSyXOYDBEtyDfFAvjeKvhDI+7Fm+2RrXEklwz
+	 b6EVL9sDFW95XNcEntdHQGS/U/L8g6Q4uJA8U4jYgU08SVr1ggmFXXzylZVWtL8E63cbw
+	 hYatq0i9rWeEI767Jcbd3fcj0/CXQXJzd7gmMfiu3W18VEL8jC5eXUyK5liJMaHO4x1E9
+	 luovWZ7tozAuMHu5BxrYr447voD2xMOppInA2jLYn97IGy4MQTT2zDI7SpswBu4rbFw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794279047;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:Message-ID:Date:MIME-Version:User-Agent:
-	 Subject:To:Cc:References:Content-Language:From:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=C8unCCHJYQwjY59pFoSyfbnbh+xaAmhUDTGx43WO634=;
-	b=D4OZSCNaOXleEplSiSar3SCZf23SmnNkI+BN8Kmq0IBDx9hoPtVBgA1411R0zXF3Uwc0
-	 2NMoAOp7Ble/d8S8uF3CxKGAoTw4AZiUM/J3uGj3lXi568ESvRHTS+Pw5kA6rQWLAFAoV
-	 rJToVAEjCh1kb0JRC85LMQMg9VIDYQAFYinWjgw6J6JOENgsIWpqBIfr1gc+/2YxYQKjL
-	 S5iJRAXEd/rTD4EBju5bzgTdNmoUBf6tC/csh4yZZMCHeYvo4rA/pJGkzwoEYNtPC6HYL
-	 QMaAU0UMsSinLDR713MLU8fu3DZh6JZWd4OjIzZpGvtyE/sFYvfimURXjz2MGYk6hFQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794281810;
+	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
+	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
+	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer:X-Developer-Signature:
+	 X-Developer-Key;
+	bh=MNLCtg4MjfwzcayI+etWY1aDfDu+u6Xqzbezo5dAPp8=;
+	b=iiYHqDo+qtKpq/bpltzgQVeZGweq+89agG85QLqGivngg3WZFlkTv8fC+1RJgNFRovu1
+	 cG9OOGgADHgpsNBj/l8ZwQ0LUxD3JMa/+cKRl8Ap9Y7YSLEFxF1uzo2cXAmoGOTp/Stc9
+	 NlSD1Ok6JoLZahumkgiUV1BCSyly7ZUekvuocynba5YxyuMKUFydSy2LnrvztT3ra3P1X
+	 uRpRUxXtds28XB779lXbAcQDrSseJNtdmXp+5UPtOVsZjOOmgdmIpNmfOGxwElWzkuCVr
+	 BeiHEdoorUGcc62DcdUs7uIwNaM0DLlPkaWsPEd2VIPhBWZL6u5Obm98PtqKvzLtxKA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=ICQ1oRb4;
-	arc=none smtp.remote-ip=91.218.175.186
-Received: from mta0.migadu.com (out-186.mta0.migadu.com [91.218.175.186])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=linux.intel.com;
+	spf=pass smtp.mailfrom=linux.intel.com;
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=H5YmaVhb;
+	arc=none smtp.remote-ip=192.198.163.13
+Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.13])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF46A606A325
-	for <linux-api@vger.kernel.org>; Tue, 10 Nov 2026 02:50:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EF46A606A325
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CDD84606A32A;
+	Tue, 10 Nov 2026 03:36:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CDD84606A32A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=ICQ1oRb4
-X-Envelope-To: linux-api@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=eD87Wy+Emd5tpWqwJtKKrbIiq9BHikxiL8HebslatJA=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794279044; v=1; x=1794883844;
- b=ICQ1oRb4LotvW/3csuh1OkxuTmCjvnD6Egx/4JflMYnFbnwnEVPGFM0gedqkIszxk14cYIT+
- /s5096rYPpwrxOpx6tS58XdPpuEj5WYNZg+aVDspYu8B7URSmG5AH+meo1pMpKl6ccZehbSMGca
- 9bDBs1F/jc3QyMTtu3hWaE0A=
-X-Envelope-To: linux-api@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id 4395f85f1f1d0f1b;
-	Tue, 10 Nov 2026 02:50:44 +0000
-X-Mizu-Trace-ID: 4395f85f1f1d0f1b
-X-Migadu-Flow: FLOW_OUT
-Message-ID: <9d9e53e5-aede-46fe-b0cb-747b95a816fd@linux.dev>
-Date: Tue, 10 Nov 2026 03:50:43 +0100
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=H5YmaVhb
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
+  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
+  t=1794281810; x=1825817810;
+  h=from:date:subject:mime-version:content-transfer-encoding:
+   message-id:references:in-reply-to:to:cc;
+  bh=BlWif15Ll12twzZtrT3KqEDk9Ws6r4dEfEHOmt/E6es=;
+  b=H5YmaVhbkMnFcnIfhzvqB3u8Gb719ZwzS/Oj4sunH71YDRaI5XB7yIzQ
+   CXCYpG46rMVvMyf3cWuQx/u3paSaqBxXgjZe9L1L1Tu5dv2qGw0jwrd7S
+   sNRHJZUDCbBzzZAZvPvGFYblWYBE5UYUijPk2tWpmsRMmKCE/e5KEg5ld
+   8LrhYqnfuDfFbIjEEonOa0lKf3BojWNWIdcPgiVCYyzj6G8Y//hiD8/c6
+   t2QCtXVDxO2HGmPJ07Lysg2Ii5oAKA+U5Bzmjo3Pe462SmE08Z8q1VdKJ
+   gUH/YCHPjJ9EOcRKG10CnwOHp12pgCjjuBq6JZ/meMqV7QXgcp3Y6r66r
+   g==;
+X-CSE-ConnectionGUID: qPM8mp72R1q/4MggZQt5EQ==
+X-CSE-MsgGUID: IMZV1CBhQP+kt7y+xv9yjw==
+X-IronPort-AV: E=McAfee;i="6800,10657,11961"; a="3010634"
+X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
+   d="scan'208";a="3010634"
+Received: from fmviesa001.fm.intel.com ([10.60.135.141])
+  by fmvoesa107.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
+X-CSE-ConnectionGUID: OtcybSYFRS+2MwLxYCXtEw==
+X-CSE-MsgGUID: 4OtWMI47Tnywms1+3QLmxg==
+X-ExtLoop1: 1
+X-IronPort-AV: E=Sophos;i="6.27,205,1787036400"; 
+   d="scan'208";a="8370786"
+Received: from unknown (HELO [172.25.112.21]) ([172.25.112.21])
+  by fmviesa001.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 09 Nov 2026 19:36:48 -0800
+From: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+Date: Mon, 09 Nov 2026 19:36:28 -0800
+Subject: [PATCH 01/13] thermal: intel: Keep directed package interrupts off
+ after syscore shutdown
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -58,130 +75,116 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 1/2] platform/x86: asus-wmi: add TUF keyboard RGB
- readback support
-To: =?UTF-8?Q?Ilpo_J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>,
- Bartu Alev <bartualev@gmail.com>
-Cc: Corentin Chary <corentin.chary@gmail.com>, "Luke D. Jones"
- <luke@ljones.dev>, Hans de Goede <hansg@kernel.org>,
- platform-driver-x86@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
- linux-api@vger.kernel.org, Denis Benato <benato.denis96@gmail.com>
-References: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com>
- <20261029-asus-tuf-rgb-v4-v4-1-0d3b877d2c30@gmail.com>
- <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com>
-Content-Language: en-US
-From: Denis Benato <denis.benato@linux.dev>
-In-Reply-To: <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Message-Id: <20261109-dpti-custom-cpu-v1-1-ead8e2d2067e@linux.intel.com>
+References: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
+In-Reply-To: <20261109-dpti-custom-cpu-v1-0-ead8e2d2067e@linux.intel.com>
+To: "Rafael J. Wysocki" <rafael@kernel.org>, 
+ Daniel Lezcano <daniel.lezcano@kernel.org>, Zhang Rui <rui.zhang@intel.com>, 
+ Lukasz Luba <lukasz.luba@arm.com>, 
+ Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+Cc: linux-pm@vger.kernel.org, linux-api@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, ricardo.neri@intel.com, 
+ Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+X-Mailer: b4 0.13.0
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1794281807; l=3555;
+ i=ricardo.neri-calderon@linux.intel.com; s=20250602;
+ h=from:subject:message-id; bh=BlWif15Ll12twzZtrT3KqEDk9Ws6r4dEfEHOmt/E6es=;
+ b=JEXQuupDBi8XkbrfxyZ2dhmkwlOo1zD4gQw+Gbcx2NmBqgQo0B/TSuQHUzrdJP3DEXryYCIUf
+ 7dHgpAc2BLRAuJB7QSZaTeFusPOxCiJgBqAyBLaius9WMu0NOUAqm32
+X-Developer-Key: i=ricardo.neri-calderon@linux.intel.com; a=ed25519;
+ pk=NfZw5SyQ2lxVfmNMaMR6KUj3+0OhcwDPyRzFDH9gY2w=
 
+On kexec, the syscore shutdown callback disables the directed package-level
+thermal interrupt (DPTI) on every package. kernel_kexec() runs the callback
+with CPU hotplug disabled, but re-enables CPU hotplug before
+machine_shutdown() stops the other CPUs. A CPU hotplug operation in that
+window directs the interrupt again: offlining the CPU that handles it
+migrates the interrupt to another CPU, and a CPU coming online claims a
+package that has no handler. The next kernel inherits the enable bit on
+that CPU, never records the CPU as a handler, and never clears it.
 
-On 11/9/26 19:02, Ilpo Järvinen wrote:
-> On Thu, 29 Oct 2026, Bartu Alev wrote:
->
->> The TUF keyboard RGB attributes kbd_rgb_mode and kbd_rgb_state are
->> write-only, so userspace tools keep their own copy of the lighting
->> configuration and lose track of it whenever the EC changes state on its
->> own: after a firmware reset or a boot into another operating system the
->> tools show a stale configuration until the user rewrites every field.
->>
->> DSTS device 0x0010005B evaluates the DSDT method EC0.KBLS(), which
->> snapshots the EC's host-visible keyboard state into a 16-byte buffer:
->> lighting mode, red, green and blue levels, animation speed, and the
->> four power-state flags.  The first byte is a constant 1 written by the
->> AML, which distinguishes a KBLS reply from any other object the method
->> could return.
->>
->> Add kbd_rgb_read_status() to evaluate and validate that buffer, parse
->> it through a packed struct, and convert both attributes to
->> DEVICE_ATTR_RW.  The read returns the write format with "n/a" in the
->> command position: the command word belongs to the write verb (apply
->> now or save to flash) and both verbs update the EC mirror the same
->> way, so there is no state to report there.  The three EC speed codes
->> map back to the sysfs indices 0 to 2.
->>
->> Readback was verified against the EC firmware: the status bytes mirror
->> EC RAM at 0x0B22 to 0x0B2E, and the speed codes 0xe1, 0xeb and 0xf5
->> select animation step thresholds of 30, 20 and 10 ticks per phase,
->> which matches the slow, normal and fast labels.  Tested on a TUF
->> Gaming A15 (FA507NV).
->>
->> Suggested-by: Denis Benato <denis.benato@linux.dev>
->> Signed-off-by: Bartu Alev <bartualev@gmail.com>
->> ---
->>  drivers/platform/x86/asus-wmi.c            | 83 +++++++++++++++++++++++++++++-
->>  include/linux/platform_data/x86/asus-wmi.h |  3 ++
->>  2 files changed, 84 insertions(+), 2 deletions(-)
->>
->> diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
->> index b33ebdb21aa2..054d1d684bb0 100644
->> --- a/drivers/platform/x86/asus-wmi.c
->> +++ b/drivers/platform/x86/asus-wmi.c
->> @@ -1062,6 +1062,65 @@ static DEVICE_ATTR_RW(gpu_mux_mode);
->>  #define TUF_KBD_RGB_SPEED_SLOW		0xe1
->>  #define TUF_KBD_RGB_SPEED_NORMAL	0xeb
->>  #define TUF_KBD_RGB_SPEED_FAST		0xf5
->> +/* TUF keyboard RGB status readback *******************************************/
->> +struct asus_wmi_kbd_rgb_status {
->> +	u8 signature;
->> +	u8 mode;
->> +	u8 red;
->> +	u8 green;
->> +	u8 blue;
->> +	u8 speed;
->> +	u8 state;
->> +	u8 unused[9];
->> +} __packed;
->> +
->> +static int kbd_rgb_read_status(struct asus_wmi_kbd_rgb_status *status)
->> +{
->> +	int err;
->> +
->> +	err = asus_wmi_evaluate_method_buf(ASUS_WMI_METHODID_DSTS,
->> +					   ASUS_WMI_DEVID_TUF_RGB_READ_STATUS,
->> +					   0, (u8 *)status, sizeof(*status));
->> +	if (err)
->> +		return err < 0 ? err : -ENODEV;
-> What do you (or Denis) think on sashiko's mention about 
-> asus_wmi_evaluate_method_buf() casting integer.value to int which might 
-> end up aliasing high-bit on return values with errnos?
+Set a flag in the shutdown callback and make the CPU hotplug callbacks
+leave DPTI alone once it is set. No lock is needed. The callback runs with
+CPU hotplug disabled. Every later CPU hotplug operation takes
+cpu_add_remove_lock, which cpu_hotplug_enable() releases after the flag is
+set.
 
-Hi Ilpo,
+Fixes: 1e768cc92bc7 ("thermal: intel: Add a syscore shutdown callback for kexec reboot")
+Signed-off-by: Ricardo Neri <ricardo.neri-calderon@linux.intel.com>
+---
+Each package's handler is the first of its CPUs to come online, which for
+package 0 is CPU0. On x86, CPU0 cannot be offlined. Its interrupt never
+migrates: a single-package system never opens the window. The other
+packages of a multi-package system can.
 
-I don't see the sashiko response neither in my mail nor in the lore,
-but I think I understand the problem.
+The sysfs interface added later in this series makes the window real on any
+system: it can move the interrupt off CPU0, and each write programs a CPU
+without a CPU hotplug operation.
+---
+ drivers/thermal/intel/therm_throt.c | 19 +++++++++++++++++++
+ 1 file changed, 19 insertions(+)
 
-What I think is that we have been lucky.
+diff --git a/drivers/thermal/intel/therm_throt.c b/drivers/thermal/intel/therm_throt.c
+index 59520cac6cc8..1ed604bd70e0 100644
+--- a/drivers/thermal/intel/therm_throt.c
++++ b/drivers/thermal/intel/therm_throt.c
+@@ -578,6 +578,13 @@ static void config_directed_thermal_pkg_intr(void *info)
+  */
+ static unsigned int *directed_intr_handler_cpus;
+ 
++/*
++ * Set by the syscore shutdown callback before it disables the directed
++ * interrupt, so that no CPU hotplug operation enables it again on the way to
++ * kexec.
++ */
++static bool directed_pkg_intr_shut_down;
++
+ static bool directed_thermal_pkg_intr_supported(void)
+ {
+ 	if (!boot_cpu_has(X86_FEATURE_DPTI))
+@@ -603,6 +610,10 @@ static void disable_directed_thermal_pkg_intr_all(void)
+ 	if (!directed_thermal_pkg_intr_supported())
+ 		return;
+ 
++	/*
++	 * No need to reset the handlers: callers free directed_intr_handler_cpus
++	 * or have shut DPTI down.
++	 */
+ 	for (i = 0; i < topology_max_packages(); i++) {
+ 		if (directed_intr_handler_cpus[i] == nr_cpu_ids)
+ 			continue;
+@@ -625,6 +636,9 @@ static int enable_directed_thermal_pkg_intr(unsigned int cpu)
+ 	if (pkg_id >= topology_max_packages())
+ 		return -EINVAL;
+ 
++	if (directed_pkg_intr_shut_down)
++		return 0;
++
+ 	/* Another CPU in this package already handles the directed interrupt. */
+ 	if (directed_intr_handler_cpus[pkg_id] != nr_cpu_ids)
+ 		return 0;
+@@ -662,6 +676,9 @@ static void disable_directed_thermal_pkg_intr(unsigned int cpu)
+ 	if (pkg_id >= topology_max_packages())
+ 		return;
+ 
++	if (directed_pkg_intr_shut_down)
++		return;
++
+ 	/* Not the CPU handling the directed interrupt. */
+ 	if (directed_intr_handler_cpus[pkg_id] != cpu)
+ 		return;
+@@ -738,6 +755,8 @@ static int directed_pkg_intr_syscore_suspend(void *data)
+ 
+ static void directed_pkg_intr_syscore_shutdown(void *data)
+ {
++	directed_pkg_intr_shut_down = true;
++
+ 	disable_directed_thermal_pkg_intr_all();
+ }
+ 
 
-ASUS probably chose the presence bit high enough not to cause
-troubles when they have to report a status to armoury crate
-and they don't use negative numbers, but yes I agree that the
-return value is more to be seen as a bitfield (with some-bits
-fields as numbers) rather than ints.
-
-I have actually spotted this on a commit from Marco that was not
-being sent on the lkml (because he touched that code) and I didn't
-like what I saw (I didn't like what was already there).
-
-Those commits were about modernizing the use of mutex
-and __free where appropriate and I kinda liked them, will
-ask him to revive it...
-
-But proper and coherent error handling will touch basically
-a large part of supported hardware and asus-wmi core
-parts,
-
-I am a bit hesitant to touch that code because I might break
-some old and not widely known device: it's the only reason
-I haven't (yet) acted in this regard.
-
-> The other caller seems to also return that value directly out of _store 
-> function().
-
-The other caller got lucky exactly as the rest of driver.
-
-setters in wmi don't even report the presence bit so there
-is even less "incentive" to actually check it.
-
+-- 
+2.43.0
 
