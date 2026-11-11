@@ -1,56 +1,47 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794390976;
-	b=gNzPd7iS+i0R0Dfw3R1iG2LlGf9qv+T8VERSfY+aEO02lsmrQUQ+e3WhdS/xgdmKDHSO
-	 K7goqyCSCy+/JsK9Q86tBghLzOu/g2RdAo+mejhnhWS/qdGVOuvjCml4oT9+cY++0xQjF
-	 KsFwcPTd0dZbsYo+MKotZ9xZispktWfD6aYqEK+zzCJ3mIzmLzxHnLyYDxGxXIDo6AJ0o
-	 r5wMSscfbWJBodKdnDlzLEzq7WRgAZQDc/SfCc5+dNkmiE+Y5hNUwpI4nUmCFOOK9+E+O
-	 yovWbvkwYB7oxriKu+jPhDN2JJxNsmliz1AAxatrprd4XFgpkrLCj7EmZLac2mEkiiQ==
+	t=1794399168;
+	b=vRIQ8NLXatNrduJK7sHKG/VksciBbLdKOXb12hfwP04w04LTeXD+kXWYRu1eoJtFAfHC
+	 73caBROMUvOkl0HJ26/S5gaXp9voSqDE0bnweP2iTyYYKwX/EB63g7PqnN0sBqwuNgXVW
+	 ImSJR1QQrHHMwc0OiqmKVh6uU6iJ0KuRY917g2A3RIYia5ZCyx3Uehq9YDyxTTRtbM4Z6
+	 K2kSTw269zolnB0Nu5/hjD5JOQ0ULxNdJ3+eZkSxfDKoxpcMBHda7faxvuHt1H2BmuR5A
+	 VWPWiz53zaK9M65o6AS3iLHxD6VBOsTRmfBVlBN9f4E9mS8G3Zp1XDJKwnCEKKYZAyg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794390976;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=diWWembtglhqYOPIvis4i129yRh0famPUXEo2wrIz2U=;
-	b=it6bdmt5jISEb2kAOXbim/vhSOkJRUvwUhWPYn5VJpVJOXKmOBL1hTQe4Fjpre0kTIdV
-	 UlDR4QYg0aWWDz0zt06lzNrdFSzmB4Ilt8xszqE8zf6qogcCFyaPNnXs0Nrpe14vnYm7I
-	 as2nfvzfm8F+JWx+Ku5zfIJ9zp/wgLf0qlsmi8yUS43cVknhsjVFnlq+wRQEbdEhpj3Ln
-	 5MjXH8pqNWbNkWENjqPVv6gn/JfLP0qMk3g073lHzxSqaw5jqOAs4+It8yVwx0xzuzhsR
-	 +WiOYcrcvkD11gV7rKXYPBoYlAsBgwtjSKtgcxr8FHP4NsOyhixTXxMAYKn1gyTsDCw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794399168;
+	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:From:
+	 Subject:To:Cc:References:Content-Language:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=DndahKbHHVFbP+dR7mo1vACUgPmW4clx8WQ8XgvyXe4=;
+	b=PmaJQFNYaTCiDZ13l2bEffNwV/OG1TQcN+ILjSFBfvOpP4tNeGejWTGCOxUdKVtrhHsF
+	 uSHz371zbV4chKV0lwVIZvSMliqoVQPJE1Bbwv4qI4rBFFd6sSzx5H1aubYjhwrs1tq4H
+	 XKIcrtUb63fZamhjJEh2/Rnf7UNQ+C/ltSG9RSREKZkMR3ZTD3JHBOmDeyWQ8pOHZVrL1
+	 dP1hoXf4U6A+2XXPeNg1NN8xhL4Ldz4wXbm8Kv6L6C8DW++yS512AguEqWroaqcb505fA
+	 a+y5OSMrADmhn3Mr89BkqxYMsXoTZ8Ak9K1mDVbXV4JHB0gUNQ4K80k9CkfRStSo7UA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jfdjwyV7;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CFRhYsNO;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DD54606A321;
-	Wed, 11 Nov 2026 09:56:16 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D227D606A31C;
+	Wed, 11 Nov 2026 12:12:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jfdjwyV7
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 8389C1F00A07;
-	Wed, 11 Nov 2026 09:56:11 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CFRhYsNO
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 19BFA1F00A06;
+	Wed, 11 Nov 2026 12:12:45 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794390975;
-	bh=diWWembtglhqYOPIvis4i129yRh0famPUXEo2wrIz2U=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=jfdjwyV7bUSfgDZ02cMgBlkUPVzLsUIHBZpEZ9gjxJLEB7RQQotgrvJDisFBP2mGe
-	 1NHuCT0JkZNr+UP/Ybs26Lu+/9fKSssvhnCOKdmX7d9DcmfLg+SIOFKhUvkSfwW7ab
-	 HRtGRji2oHVakaCzi+qGkCEI7raAQ2t7BsCKCAhnGnHmFNCbzBewT2P0phoWMuaozQ
-	 cXI5F+lpiu9h/tgByfAOB+GrgTYhtXSaWyZXt4tt9baW75C+zFBV+IUEbq6Q60eMQw
-	 Co897B6NUq24lQqOADAhxfrdpeoY1uvOzL8cYDQ8MRlCFdEiVtHcAStNfURIKZ3Ovz
-	 pfm7uj1uJMbyA==
-Date: Wed, 11 Nov 2026 11:56:07 +0200
-From: Mike Rapoport <rppt@kernel.org>
-To: Pasha Tatashin <pasha.tatashin@soleen.com>
-Cc: linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	shuah@kernel.org, linux-mm@kvack.org, skhan@linuxfoundation.org,
-	linux-doc@vger.kernel.org, vipinsh@google.com,
-	linux-kernel@vger.kernel.org, corbet@lwn.net, dmatlack@google.com,
-	kexec@lists.infradead.org, pratyush@kernel.org,
-	rdunlap@infradead.org, graf@amazon.com
-Subject: Re: [PATCH v5 0/6] liveupdate: Add LIVEUPDATE_SESSION_FREEZE ioctl
-Message-ID: <avQ7t_ijdR4nm-RO@kernel.org>
-References: <20261105050053.3063001-1-pasha.tatashin@soleen.com>
+	s=k20260515; t=1794399168;
+	bh=DndahKbHHVFbP+dR7mo1vACUgPmW4clx8WQ8XgvyXe4=;
+	h=Date:From:Subject:To:Cc:References:In-Reply-To;
+	b=CFRhYsNOzUMwH4d7PXd+CmRWLW36G8MGdZpsDQBVkpdp3HNoJunwy1m+wDKiGyCOC
+	 vFV7ltzJOjC+t4Uo5vgZs8qPNbxToq7F3eAuKSnBcS4mfLyZCvY/wsI+d0dlwoKvPt
+	 6DsT4OqRjNiVAQGITysmwK0gn94ghxMWYLYd/2qWgwmWWEqHJZl/GLgbiqP4QSL/ep
+	 ZnFOCRKnXZKyOm/MPE2DCv8zwqJI/BLRJ2s5oTPerzRiP9aEAkM6KL77+bzc9Byp+/
+	 o6Cnv9Dtx6rQG6KzUL4mqRtJfa+kWM3X8VRhmCCL4i7mU0nUaa/AmmPtLKHDo2GWB7
+	 mgKOzG3HqL2eA==
+Message-ID: <a554e557-3d10-465e-ad3b-90d8357b60f2@kernel.org>
+Date: Wed, 11 Nov 2026 13:12:44 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -60,144 +51,123 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261105050053.3063001-1-pasha.tatashin@soleen.com>
+User-Agent: Mozilla Thunderbird
+From: Hans Verkuil <hverkuil+cisco@kernel.org>
+Subject: Re: [PATCH 2/5] media: Documentation: it6625: document the audio
+ controls
+To: Hermes.wu@ite.com.tw, Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>,
+ Conor Dooley <conor+dt@kernel.org>
+Cc: linux-media@vger.kernel.org, devicetree@vger.kernel.org,
+ linux-kernel@vger.kernel.org, Mark Brown <broonie@kernel.org>,
+ Liam Girdwood <lgirdwood@gmail.com>, linux-sound@vger.kernel.org,
+ linux-api@vger.kernel.org
+References: <20261103-upstream-it6625-alsa-i2s-v1-0-bb91e2879b01@ite.com.tw>
+ <20261103-upstream-it6625-alsa-i2s-v1-2-bb91e2879b01@ite.com.tw>
+Content-Language: en-US, nl
+In-Reply-To: <20261103-upstream-it6625-alsa-i2s-v1-2-bb91e2879b01@ite.com.tw>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-(adding linux-api@)
+Hi Hermes,
 
-On Thu, Nov 05, 2026 at 12:00:46AM -0500, Pasha Tatashin wrote:
-> Currently, LUO freezes outgoing sessions only inside the
-> reboot(LINUX_REBOOT_CMD_KEXEC) syscall path, serially under global write
-> locks, and binds every outgoing session's lifetime strictly to an open
-> session FD until reboot.
+On 03/11/2026 07:50, Hermes Wu via B4 Relay wrote:
+> From: Hermes Wu <Hermes.wu@ite.com.tw>
 > 
-> On hosts running many workloads (such as VMs or stateful daemons),
-> workloads do not all pause simultaneously inside reboot(): they quiesce
-> one by one ahead of the host kexec. Userspace needs an explicit
-> per-session freeze point to snapshot final file state (.freeze()) as
-> each workload pauses -- concurrently across sessions under per-session
-> locks -- along with a way to commit a frozen session into KHO so it
-> survives closing the session FD.
+> The IT6625 driver exposes two read-only driver-specific controls,
+> V4L2_CID_IT6625_AUDIO_SAMPLING_RATE and V4L2_CID_IT6625_AUDIO_PRESENT,
+> which so far are described only in the uAPI header.
 > 
-> This series introduces LIVEUPDATE_SESSION_FREEZE on session FDs:
+> Add a page for the driver to the V4L2 driver-specific documentation that
+> describes both controls, and list it in MAINTAINERS.
 > 
-> 1. Freeze (flags == 0):
->    Freezes all preserved files in the session under the per-session
->    mutex while keeping session lifetime tied to the session FD. The
->    session stays frozen as long as the FD remains open; closing the
->    session FD before reboot (for example, to abort the session or on
->    process exit/crash) runs .unfreeze() and .unpreserve() and reclaims
->    all resources. At kexec time, already-frozen sessions skip the late
->    auto-freeze step and are published into the outgoing KHO subtree.
+> Signed-off-by: Hermes Wu <Hermes.wu@ite.com.tw>
+> ---
+>  Documentation/userspace-api/media/drivers/index.rst  |  1 +
+>  Documentation/userspace-api/media/drivers/it6625.rst | 18 ++++++++++++++++++
+>  MAINTAINERS                                          |  1 +
+>  3 files changed, 20 insertions(+)
 > 
-> 2. Freeze and commit (LIVEUPDATE_SESSION_FREEZE_COMMIT):
->    Freezes preserved files, immediately inserts the session and its FLB
->    dependencies into the outgoing KHO subtree in O(1), and commits the
->    session so it survives close() with full ownership retained by LUO
->    until reboot. Once committed, closing the session FD (or another
->    session failing to freeze during reboot) never unfreezes or
->    unpreserves it. This allows processes to hand off preserved state to
->    LUO and exit prior to kexec, and makes committed sessions immediately
->    visible in the outgoing KHO subtree before the host reboots.
-> 
-> Overview of the series:
-> - Patch 1 decouples luo_file_freeze()/unfreeze() from
->   struct luo_file_set_ser.
-> - Patches 2-4 add incremental KHO publication helpers for kho_block
->   (kho_block_set_it_append()), LUO sessions (luo_session_publish_one()),
->   and outgoing FLBs (luo_flb_ser_publish_one(), replacing the late
->   luo_flb_serialize() reboot pass).
-> - Patch 5 introduces LIVEUPDATE_SESSION_FREEZE and
->   LIVEUPDATE_SESSION_FREEZE_COMMIT and updates the LUO core and uAPI
->   documentation.
-> - Patch 6 adds selftests covering both uncommitted and committed session
->   freezes across unit and multi-session kexec tests.
-> 
-> This series is based on liveupdate/next commit d80a5528df4c ("Merge
-> branch 'lu-pci-preservation' into next").
-> 
-> Changelog:
-> v5:
-> - Rebase onto latest liveupdate/next.
-> - Replace reserved field in struct liveupdate_session_freeze with flags
->   and add LIVEUPDATE_SESSION_FREEZE_COMMIT so userspace can either
->   freeze a session while keeping it bound to its FD (rolled back on
->   close()) or commit the frozen session (inserted immediately into KHO
->   and retained by LUO across close() until reboot).
-> - Add incremental KHO publication helpers in kho_block, luo_session, and
->   luo_flb so committed sessions and their FLB dependencies are inserted
->   into the outgoing KHO subtree immediately on freeze, dropping the
->   separate luo_flb_serialize() pass at reboot.
-> - Keep luo_session_freeze_one() / luo_session_unfreeze_one() in Patch 1
->   rather than renaming them to luo_session_serialize_one() /
->   luo_session_unserialize_one() and back once luo_session_publish_one()
->   is introduced.
-> - Update Documentation/userspace-api/liveupdate.rst and kernel-doc
->   across kho_block, luo_flb, luo_file, and luo_session.
-> - Drop v4 Reviewed-by tag on the modified freeze and selftest patches,
->   and expand selftests to cover both uncommitted and committed freezes.
-> v4:
-> - Split out a preparatory patch that drops struct luo_file_set_ser *
->   from luo_file_freeze() / luo_file_unfreeze() and moves file_set_ser
->   handling into luo_session_serialize_one() /
->   luo_session_unserialize_one() (Suggested by Mike Rapoport).
-> - Few more nits from Mike.
-> v3:
-> - Renamed session->frozen to session->user_frozen, - Pratyush
-> - Added Reviewed-by's
-> v2:
-> - Rebased onto liveupdate/next (commit 27be83a12b24 ("Merge branch
->   'lu-pci-preservation' into next")) and split out early session freeze
->   into a standalone series (tmpfs preservation and its per-file user
->   argument plumbing were spun out into a separate series).
-> - Patch 1:
->   - Drop struct luo_file_set_ser * from luo_file_freeze() and
->     luo_file_unfreeze(), and rename the session helpers to
->     luo_session_serialize_one() / luo_session_unserialize_one() so all
->     of struct luo_session_ser is populated and cleared in one place
->     (Suggested by Pratyush Yadav).
->   - Unfreeze the session's files if luo_ucmd_respond() fails in
->     luo_session_freeze().
->   - Update remaining reboot-only wording in luo_file.c kernel-doc
->     comments.
-> - Patch 2:
->   - Add checks verifying that non-zero reserved bits and freezing an
->     incoming post-kexec session fail with -EINVAL.
-> Link: https://lore.kernel.org/all/20261015093816.2438942-1-pasha.tatashin@soleen.com/ # v1
-> 
-> Pasha Tatashin (6):
->   liveupdate: Move file_set_ser handling to luo_session_serialize()
->   kho: support incremental entry publication in kho_block
->   liveupdate: luo: serialize sessions via per-session publish helper
->   liveupdate: luo_flb: support incremental outgoing FLB publication
->   liveupdate: Add LIVEUPDATE_SESSION_FREEZE ioctl to freeze sessions
->     early
->   selftests: liveupdate: Add tests for LIVEUPDATE_SESSION_FREEZE
-> 
->  Documentation/userspace-api/liveupdate.rst    |  30 +++
->  include/linux/kho_block.h                     |   1 +
->  include/linux/liveupdate.h                    |   3 +-
->  include/uapi/linux/liveupdate.h               |  46 +++++
->  kernel/liveupdate/kho_block.c                 |  86 ++++++++-
->  kernel/liveupdate/luo_core.c                  |  10 +-
->  kernel/liveupdate/luo_file.c                  |  94 ++++-----
->  kernel/liveupdate/luo_flb.c                   | 111 +++++++----
->  kernel/liveupdate/luo_internal.h              |  16 +-
->  kernel/liveupdate/luo_session.c               | 178 ++++++++++++++----
->  .../liveupdate/lib/include/libliveupdate.h    |   5 +-
->  .../selftests/liveupdate/lib/lu_utils.c       |  21 ++-
->  .../testing/selftests/liveupdate/liveupdate.c | 107 +++++++++++
->  .../selftests/liveupdate/luo_kexec_simple.c   |  22 ++-
->  .../selftests/liveupdate/luo_multi_session.c  |  33 +++-
->  15 files changed, 612 insertions(+), 151 deletions(-)
-> 
-> 
-> base-commit: d80a5528df4cdee5871243e392da08c2d5c92e43
-> -- 
-> 2.56.0.398.g882cbad275-goog
+> diff --git a/Documentation/userspace-api/media/drivers/index.rst b/Documentation/userspace-api/media/drivers/index.rst
+> index 8d2c489b8453e11b8e15ef9d9c1c0312f3da06af..57be8dd5749d7f5aa6e0e21c7e3d89d377a209d0 100644
+> --- a/Documentation/userspace-api/media/drivers/index.rst
+> +++ b/Documentation/userspace-api/media/drivers/index.rst
+> @@ -33,6 +33,7 @@ For more details see the file COPYING in the source distribution of Linux.
+>  	dcmipp
+>  	dw100
+>  	imx-uapi
+> +	it6625
+>  	mali-c55
+>  	max2175
+>  	npcm-video
+> diff --git a/Documentation/userspace-api/media/drivers/it6625.rst b/Documentation/userspace-api/media/drivers/it6625.rst
+> new file mode 100644
+> index 0000000000000000000000000000000000000000..efd970e8124979abffb6f9ba3ea1e1bc193820b3
+> --- /dev/null
+> +++ b/Documentation/userspace-api/media/drivers/it6625.rst
+> @@ -0,0 +1,18 @@
+> +.. SPDX-License-Identifier: GPL-2.0
+> +
+> +ITE IT6625/IT6626 HDMI to MIPI bridge driver
+> +============================================
+> +
+> +The IT6625 driver implements the following driver-specific controls. All of
+> +them are read-only and describe the audio of the HDMI input.
+> +
+> +``V4L2_CID_IT6625_AUDIO_SAMPLING_RATE (integer)``
+> +-------------------------------------------------
+> +    The sampling rate of the HDMI audio stream, in Hz. 0 means that the rate
+> +    is not available: there is no stable input signal or no audio, the bridge
+> +    reported a rate code that the driver does not recognize, or reading the
+> +    audio status failed.
+> +
+> +``V4L2_CID_IT6625_AUDIO_PRESENT (boolean)``
+> +-------------------------------------------
+> +    Whether the bridge currently receives HDMI audio.
+
+Mention in the documentation that these controls are read-only.
+
+We need to make standard controls for the audio sampling rate and presence.
+They are also used by the tc358743 driver, and are in fact common for all
+HDMI receiver drivers (I know of a bunch of out-of-tree drivers that use the
+same controls).
+
+So rather than creating driver-specific controls, can you add standard
+controls for this? They belong to the V4L2_CID_DV_CLASS control class.
+
+So the defines become:
+
+V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE and V4L2_CID_DV_RX_AUDIO_PRESENT.
+
+This also means that there is no need for a separate it6625.rst.
+
+The tc358743 driver should be extended to also support the new standard
+controls. So tc358743_s_ctrl_audio_sampling_rate/_present set both the
+custom and the standard control.
+
+Sorry for this, it is a bit more work but it makes userspace easier since
+there is a standard control for this instead of having driver-specific
+controls.
+
+Make sure that the patches adding support to the v4l2 core for these
+two new standard controls are not mixed with the it656 changes. So
+first add it to the core, then use it in this driver.
+
+Regards,
+
+	Hans
+
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 760791e3635f3c306e7fed7240b948d29b45ae66..1d6de374d86d3046d993bf220195b1a75049fa8a 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -13972,6 +13972,7 @@ M:	Hermes Wu <Hermes.Wu@ite.com.tw>
+>  S:	Maintained
+>  T:	git git://linuxtv.org/media.git
+>  F:	Documentation/devicetree/bindings/media/i2c/ite,it6625.yaml
+> +F:	Documentation/userspace-api/media/drivers/it6625.rst
+>  F:	drivers/media/i2c/it6625.c
+>  F:	include/uapi/linux/it6625.h
+>  
 > 
 
--- 
-Sincerely yours,
-Mike.
