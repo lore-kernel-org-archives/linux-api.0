@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.52
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794585373;
-	b=in0/i0/bubJncYPhZQ0OXIesmD6yOjn86ePICrAvELxaM45EO6Qv7bbqhxNBmCskBKlr
-	 Gv8RFcPVNFqzaDTRgmw0irMxa8wF11sRjv9/0A7KIP7w0xHT0+jSbJxhpzn3iAusJy3xc
-	 S6JmLMnjM4S5wpciX+q0JXz54nN7Oih8IkE/3j0joz+C+5KWTyJ4QN5n5dc2dh8lHJTfQ
-	 ai5lDrP9o4XJt5rBmVL9LXhVS81V45aqhiuyYUVzQsNGnml6qJd3pH8HTkGuzN9WWKQ6U
-	 AQWBH0TTDOcjdoyiRd8w81P40szLQO+ccAAywbWUPY99uhcQq9kVDP4rysYP+d1jENw==
+	t=1794585377;
+	b=T6hncQLlBVJCz4AX1+PcyPaYktNjLRGKVkAOZMmzNcvNCkBTVMt4xFCF15YyEVj5UmO+
+	 /xofcuCXO0Ndy0PdM4jyZGCBalBIk1DrR9x3BvSNPlH6sg573VMrprAO+LK2MaJwjl5/i
+	 AsNGTVEjLJdsG/ZxUOSe610XRHPaXNDbDvvzZ0gdtriubS2Lqo3ejrIbfFOCG2pYvtXy3
+	 HOOpuFo9kOqxE6OHgFp2FK3Y9cSbNKZ/UKrpnyr2ICUcVHEJJvAO2Hx/GWw0kKJbH8aeU
+	 VtjIC8ofpjWfwFDxW7E/S5Ir2RLd7JpWa+zPQYJMHz5od8gKLG9hjCj7yOnzn0Kr3mA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794585373;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794585377;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=KCWQLV59SSkBVEyRi73YWJ7kvOmA9/flLQSro0VYOqA=;
-	b=hqAyT/imRdt9NbBJykOhNcO+CN74WaJ6ct/sqz5AwX6B+4WTosagLHoZhsLikMolMDxT
-	 kZZjAj7UrlVFCCHkvsZvVmDEBXVpRYoQQ4L/+vzzsPdWf/CizsuF47aloYoJRu7dJ+6SM
-	 7pXa5CT2O1+BxN9fOcVJ0+K2Aufr+guZvQEHS/Ne+wvUYPNJ68Y7aHpGoezEYWFXRs6/N
-	 Z4wBIZG0Yd9TMVKLBjbAHUTRXa0tpazKqhthuXmsNTAjm/ts6kv76ndOkWSsvzT9bRLRi
-	 G+bu4dtgTBohn+sgaxmZF2MIKAUFfPqGaQ4hsgfIUYsV/w6KQ8gExnEw4xXgOxnaWGA==
+	bh=2t/p9lLKE0xiM5sPGPNJEYNh/crocJwRO1PjIjkC2TM=;
+	b=GK05UguaL5IWczZ14iKi8m2s0eveSQtawrBtJIkjWDBZmuEzevmrwT0q/yLYhk+8cnbj
+	 6HDWOejXtz/e+wQSCr4lZP2bCjD0LzJBN6tQ14xfvqKJGdCwGkUP5RIuY2CtWYRJf2OKT
+	 VchPO3Nt80GVBKbUDI8tawUCw7CJ+/AvUEkXlSZRvKDCpm3U9jMDa5J3K76TWruerI9Db
+	 rsS0DBSBiJmYJ877ci3/zVYuJ7lXEvK/W2QZlnG8xjsaJ8fxF4oWiMN5gi+Jz8p3lNsym
+	 K5n2eulGCOyZ1YoDXJr6/Lh+77cIaem+kY2fuWIYzpEWRIXKfHDuEJdKWyX3ih+HZxQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=uXHklBYE;
-	arc=none smtp.remote-ip=209.85.218.45
-Received: from mail-ej1-f45.google.com (mail-ej1-f45.google.com [209.85.218.45])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=xs5+YgYi;
+	arc=none smtp.remote-ip=209.85.218.52
+Received: from mail-ej1-f52.google.com (mail-ej1-f52.google.com [209.85.218.52])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6007606AE27
-	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C6007606AE27
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7ED5960A260D
+	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:16 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7ED5960A260D
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=uXHklBYE
-Received: by mail-ej1-f45.google.com with SMTP id a640c23a62f3a-c506a231b88so201225166b.3
-        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:12 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=xs5+YgYi
+Received: by mail-ej1-f52.google.com with SMTP id a640c23a62f3a-c5080ef9b31so244989966b.1
+        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:16 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1794585371; x=1795190171; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1794585375; x=1795190175; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=KCWQLV59SSkBVEyRi73YWJ7kvOmA9/flLQSro0VYOqA=;
-        b=uXHklBYEpWMLRXQHwKuLvydJg/KWSyTceGlGKPNQucAtESrumouDSUc5zs9m2zY+mQ
-         akYl5GUokhmC+EE3nFnK8cqP2QrfMWLQ1C8Mml/eUscVK/vq+gR1ssbGjPxbKiJ4NIrx
-         PYN/kF79+ml0tYKxkiFeAZK4r+YEXXi71vBi7Bz6KVpcCYzJk/Kmp9ImX3k8DsPqLluE
-         iPHRDiTPRsy1u6svxg1FwAlUv0nryAngTCyZFOzNOmcuKiEepbY09u/9cmPTmUH5ywED
-         quipRZCnt3hUd22ldx3aN0coJmuFOIjWU/Gc8tD4hDspD2Swx5liqnNSe7rP1enP+6zH
-         ChCQ==
+        bh=2t/p9lLKE0xiM5sPGPNJEYNh/crocJwRO1PjIjkC2TM=;
+        b=xs5+YgYiIwjY1fTimqT6BA2qZVpCyfD2NOEZpQeXj8yu2SUHLy1KcWFYkZ1oH/Rl9I
+         lT+arWKUzzcrw2GZH9jg0Bj6M2/Z8w7j6GNNli8t4/5bvDRzGF4e3cvoSJ74U/eBx2OD
+         BYu9EKni7ZN8NUh/rRxyYg3Yo6qQRyC0ex62Kz6pHdSGkYKTz3L6ajmf0JimsYbUfrQl
+         1FCOhJpSQNQmQxHRswDin8Lh0AmmrX8EruFqrJoQmGG03xxq490fxdL4aCIt3AcbrNUJ
+         4gVq9aePN7kgDZ+S47iCl8+mYUGOHHSbuUTJIyHhDxJVtNs406fwqmlgFmOR7iESGDwz
+         ogOQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794585371; x=1795190171;
+        d=1e100.net; s=20260707; t=1794585375; x=1795190175;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=KCWQLV59SSkBVEyRi73YWJ7kvOmA9/flLQSro0VYOqA=;
-        b=WmnXfBZhuVyXsjCok3debh3XTHkmuTR+hb82hWXDY0yeHmFUHsv/FS9+zDKuAWuYdh
-         KAn7vjeF8tEGNCeuPqgjIN9+euWBZmdUBkErg/H13xh7pweszj4NFgOaQpY/ZDhAbAVD
-         oDqZ1TYK8Zn6dOUyoCABj+GVKsONElQFirtYaqA3K+d0ZZPzVo0h/kLs0HISzFOMlq3Z
-         U1uM5OsDr8I+rcziBo8Hvlmp7DHyNfWFpFSHTkzFl0EYwl7MH0hMZtbxSeWJFq1g/9+q
-         btqhFVrsnbDAg/HEQ7BIs3vJrVBPAoXb36qmlqSMjtVjhzRdOgaJdQ5pztuW5GiOGd7Y
-         53Ww==
-X-Forwarded-Encrypted: i=1; AL+hErH4INTGZ9N6XA3HJcP3sVc2C8EHltmy2s+iX2V5DlPj4WYgwIYN5cWmz7JHrcTRFXd1n1GZB9eq2Ow=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/WJyhuUrtUCbPgWzJUfo/QVdJHNAKBAMrDy4uCDADSWZeePFHF
-	GoVh96JUErkwvaGBzCUl6RE7EFUpvqIct9BGmP+fqQA3VsfxYKWSE88HGFuK6P2v8f4=
-X-Gm-Gg: AYBFou14WSi2nCjB9LXGjQJyfQoqO9fKWfjHE/IGC9lBhAFiEqERhGXTWIrelN2fJZa
-	VTEMP92DTqIyghtFSKPD+tcplc4MbBHYs/pFifGcFpqCQhgD5EwJvQAOxajNa41cGlwSbZHTFy+
-	X/z2DZOFxmAR3sJgnBaxxLWv9UqJRg25J1B4w87wJzLN16iFfDBIw0ouLVOIbvX9BqrgfCNmvpB
-	CdDHzv+VI0eZgydL1so0rObvrfHEsXLCPnd96JxRbQf8G/oSNzfFRNlmeJ1bNNMLRjn6Pyy65mW
-	res7rLgIYyJ77IhMev+bxpD1nH+BB8zO5zPTAwqw7y9tezLRFxm/DdnDnmd9CxyDO/FVFdrU+r2
-	HjayPJNFqrcuQ507MXiXhe6KWfbxTD+YcHBS7jBssjLWhM+ViOD94ubbVfbcRKVXhXD88VNui0F
-	mqDCX5lr9gOgco2cm/IfNO5zbxNJwUPEb9DuDgYnUurP3fYN7z7oyoejX+HEZK34VPnX/NX6auO
-	B7IY/qRBGcZPKnkIxIrYZ7E/08H+tNV3ixodzimBfASeVhahLNOSlWHiQ3h3qoo9Q95HsaqiufX
-	WQmIICmUGFs6oTayoEIoHB8VXR7wv4kpNJezrqqf
-X-Received: by 2002:a17:907:868f:b0:c50:5545:b66f with SMTP id a640c23a62f3a-c5096419c32mr273901166b.23.1794585371027;
-        Fri, 13 Nov 2026 07:56:11 -0800 (PST)
+        bh=2t/p9lLKE0xiM5sPGPNJEYNh/crocJwRO1PjIjkC2TM=;
+        b=JWIV0iugELxpulB97TBjd2JMJp/NsWBVcCHz58ssV9jT8Uj2LLU63EVYGExUun5QL1
+         3dlgyjLRTTtYZlS90vIK8ojLKVAjoOGkcBfHPujC54ljB3xiM6QJu1jOUt68gbo+DVj7
+         8Uw+0EQrChqeOHPX8JlIO1amx+qqrmp6BdpAdpyPJW9lUPUaAfYSyAfnfbNcjX56zKLu
+         XxWay5H7slPzhIvF71fXNFqu/hQdZmPgB8xGV5hr+VvuwkxVPzBdICqhTq83nYeMob8I
+         XQD+yJRFBWDWoVtlcCd8PSCwVoh7DdSzJ/KYX63xLE5TDom5ZwjEMYoxXt7bl0JWH0H2
+         L5eQ==
+X-Forwarded-Encrypted: i=1; AL+hErHfQoOrTwkHh3ZtYWCl48MUHEFThLKqUrJyWGAyVoIsesQt+35gyOtt9+OXOMtPT6hpNb5FXLN+eec=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9jTqEjWawqVa87CweA1M4o//D4Qvv/VbPBbEUZYbRg7z1DSzTv
+	/F02ch445EGusVoXThXncdZEM7qD5tXg9hDkzcJ4nNi/2QCoOTG67c1F6EMH9OvhA0s=
+X-Gm-Gg: AYBFou0eMfB0iO16+rN6gkzLL7pyRY4/JBMK39sE58zLF0OV+vsteTDt8v4pLT5+KWS
+	AUtvarAFnAIXRlI05ceIUNdfok6Ho7eQqdPcFZOjJ713qx/gNb5oUkiLwvYI1ztAT915ojeiG0t
+	6FryGIu4L9rZftVkN0IzMXiXmi1l/1+0u7hAO6U6Jq0TDONlYT7q7Pb47phywdR34GtjjYewlZe
+	wPtWYKjgFGYi8B3Mk8zw2yB9nCZJ1bYRDLrtydAK/RYBy4UZ1yPBbuS0vhTt3hWAKivFi+GPPSh
+	rDLQxED14hWBAyoP7YfGpFk8z3nwwV6+krkRuyPMVupD+kfhIW1T9FtLRWCH7CV8HJHUUVgZKm7
+	c/jpBQVLVNPIAJkXJNYiPtQvyiWz6lHBP+DFE+gVD9Xu/q5fXVY4pTYxfSRO7li21sl4wYist3G
+	QG6IEC6pBv5mxCp5Zw0i1vfJ97gzH1SfJqGAAWlUmBvyJTv4v378ycJ6iy3wgHI7sw+rxmkbLVk
+	0r6sGxGPSmz5NKLhAPqHNVL7abJdveKkrIiIx5eVcbFalxBEa5y3W7xgx9uCjTblor6HXYPiLE0
+	fQvbAIFd00TSWPCksObUtgC+4ISM40ENRiPkw1gl
+X-Received: by 2002:a17:907:3d0a:b0:c49:a408:f682 with SMTP id a640c23a62f3a-c5096389f4dmr259394866b.42.1794585374845;
+        Fri, 13 Nov 2026 07:56:14 -0800 (PST)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095b40831sm118888166b.42.2026.11.13.07.56.09
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095b68dbbsm116304766b.61.2026.11.13.07.56.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Nov 2026 07:56:10 -0800 (PST)
+        Fri, 13 Nov 2026 07:56:14 -0800 (PST)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -115,9 +115,9 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.jiang@intel.com,
 	nik.borisov@suse.com,
 	sergii.dmytruk@3mdeb.com
-Subject: [PATCH RFC v2 12/15] ctlv: Add character device nodes
-Date: Fri, 13 Nov 2026 16:55:11 +0100
-Message-ID: <20261113155515.2510194-13-jiri@resnulli.us>
+Subject: [PATCH RFC v2 13/15] Documentation: ctlv: Describe how to write a family
+Date: Fri, 13 Nov 2026 16:55:12 +0100
+Message-ID: <20261113155515.2510194-14-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261113155515.2510194-1-jiri@resnulli.us>
 References: <20261113155515.2510194-1-jiri@resnulli.us>
@@ -134,335 +134,787 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Give a subsystem's device a node of the subsystem's own class, whose
-file operations are the CTLV ones. The subsystem registers the class
-with CTLV, which takes its device numbers, and embeds a struct
-ctlv_device beside the instance.
+Describe the YAML language, generated family descriptors, lifecycle,
+operations, blobs, inheritance and compatible extension rules.
 
 Assisted-by: Cursor: GPT-5.6 Sol
 Assisted-by: Cursor: Claude Opus 5.5
 Signed-off-by: Jiri Pirko <jiri@nvidia.com>
 ---
 RFC->RFCv2:
-- split out of the device and operation dispatch patch
-- made a library each subsystem's class builds its nodes with, and
-  dropped the ctlv class
+- fixed the family descriptor name in the ctlv_create() example
+- documented ctlv_record_cancel()
+- stated how the generator keeps every message within the limit
+- dropped the events
+- reworked the guide after review, around a worked example family
+- warned that a family's registry position is its ID
+- renamed stubs to extension points
+- added the kernel-doc of the family API
+- described specs as op trees and records
+- said to return ctlv_blob_too_short() for an output blob too short
+- said what validation accepted instead of placements
+- said record instead of nest, the root being one
+- took the UAPI headers from include/uapi/ctlv/
+- documented every item of the example family's spec
+- generated and recorded a family's ABI with one regen, and listed
+  the files it should change
+- described enum extension points
+- said how to name an op that reads
+- described a subsystem's nodes in place of the ctlv class
+- said message instead of wire
 ---
- include/linux/ctlv_device.h |  57 ++++++++++++
- lib/ctlv/Makefile           |   2 +-
- lib/ctlv/core.c             |  17 ++++
- lib/ctlv/device.c           | 179 ++++++++++++++++++++++++++++++++++++
- lib/ctlv/internal.h         |   2 +
- 5 files changed, 256 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/ctlv_device.h
- create mode 100644 lib/ctlv/device.c
+ Documentation/driver-api/ctlv.rst  | 716 +++++++++++++++++++++++++++++
+ Documentation/driver-api/index.rst |   1 +
+ MAINTAINERS                        |   1 +
+ 3 files changed, 718 insertions(+)
+ create mode 100644 Documentation/driver-api/ctlv.rst
 
-diff --git a/include/linux/ctlv_device.h b/include/linux/ctlv_device.h
+diff --git a/Documentation/driver-api/ctlv.rst b/Documentation/driver-api/ctlv.rst
 new file mode 100644
-index 000000000000..9ff10ce7368f
+index 000000000000..34d20c14a9bf
 --- /dev/null
-+++ b/include/linux/ctlv_device.h
-@@ -0,0 +1,57 @@
-+/* SPDX-License-Identifier: GPL-2.0-only */
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Character device nodes of CTLV instances, in a subsystem's own class.
-+ */
-+#ifndef _LINUX_CTLV_DEVICE_H
-+#define _LINUX_CTLV_DEVICE_H
++++ b/Documentation/driver-api/ctlv.rst
+@@ -0,0 +1,716 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
-+#include <linux/cdev.h>
-+#include <linux/device.h>
-+#include <linux/idr.h>
-+#include <linux/types.h>
++=====================
++Writing a CTLV family
++=====================
 +
-+struct ctlv;
-+struct module;
++:Author: Jiri Pirko
 +
-+/**
-+ * struct ctlv_device_class - The class of a subsystem's nodes.
-+ * @class: the class, whose dev_release frees a node's structure; CTLV sets
-+ *	its dev_uevent
-+ * @max_devices: how many nodes the class may have at once
-+ */
-+struct ctlv_device_class {
-+	struct class class;
-+	unsigned int max_devices;
-+	/* private: */
-+	struct module *owner;
-+	dev_t devt;
-+	struct ida ids;
-+};
++A CTLV family is a set of system calls for one sort of device: actions and
++queries a program executes. The family is written as a
++YAML specification, a generator turns that into headers, and the family
++implementation supplies the callbacks the generated header names. CTLV checks
++every request against the specification before a callback sees it. The
++userspace ABI is :doc:`/userspace-api/ctlv`; the in-tree specifications are
++under ``Documentation/ctlv/specs``.
 +
-+/**
-+ * struct ctlv_device - The node of one instance.
-+ * @dev: the node's device, named for its class and a number of its own
-+ *
-+ * Embedded beside the instance in the subsystem's device structure.
-+ */
-+struct ctlv_device {
-+	struct device dev;
-+	/* private: */
-+	struct cdev cdev;
-+	struct ctlv *ctlv;
-+	struct ctlv_device_class *cls;
-+};
++The example
++===========
 +
-+int __ctlv_device_class_register(struct ctlv_device_class *cls, struct module *owner);
-+#define ctlv_device_class_register(cls) __ctlv_device_class_register(cls, THIS_MODULE)
-+void ctlv_device_class_unregister(struct ctlv_device_class *cls);
++This guide writes a small invented family, ``ctlv-example``, with two system
++calls::
 +
-+int ctlv_device_init(struct ctlv_device *ctlvdev, struct ctlv_device_class *cls,
-+		     struct device *parent, struct ctlv *ctlv);
-+void ctlv_device_fini(struct ctlv_device *ctlvdev);
-+int ctlv_device_add(struct ctlv_device *ctlvdev);
-+void ctlv_device_del(struct ctlv_device *ctlvdev);
++    item_set_action(u64 index, string label?, blob data?) -> status;
++    item_get_query() -> { u64 index; string label?; }[];
 +
-+#endif /* _LINUX_CTLV_DEVICE_H */
-diff --git a/lib/ctlv/Makefile b/lib/ctlv/Makefile
-index 73acdbdf387d..e783ad450c12 100644
---- a/lib/ctlv/Makefile
-+++ b/lib/ctlv/Makefile
-@@ -1,5 +1,5 @@
- # SPDX-License-Identifier: GPL-2.0
- obj-$(CONFIG_CTLV) += ctlv.o
++``index`` is 0..4095, ``label`` is at most 63 bytes excluding NUL, and
++``data`` is at most 1 MiB with 8-byte alignment. ``?`` marks an optional
++argument. An action runs once and returns a status. A query returns an answer
++that may be larger than the caller's buffer, which CTLV delivers in as many
++fragments as the buffer needs; a list, as here, is the usual case.
++
++Write the specification
++=======================
++
++The specification starts with the family. ``ctlv-example`` inherits ``ctlv``,
++the root family every device answers:
++
++.. code-block:: yaml
++
++    # SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
++    %YAML 1.2
++    ---
++    # Numbered items, each with an optional label.
++    family: ctlv-example
++    inherits: ctlv
++
++The comment on the lines above an entry is its documentation, which the
++generated headers carry. The generator refuses a family, record, field, op,
++enum or flags without one, and an enum value or a flag without its own, so
++values go one to a line.
++
++Each system call is an op:
++
++.. code-block:: yaml
++
++    ops:
++      # Sets an item's label and data.
++      item-set:
++        type: action
++        request:
++          # Which item it is.
++          index: uint(..4095)
++          # What the item is called.
++          label?: string(..63)
++          # The item's contents, which the device reads.
++          data?: blob(in, ..1M, align 8, va)
++
++      # Lists the items.
++      item-get:
++        type: query
++        reply:
++          # Every item the device keeps.
++          items[]:
++            # Which item it is.
++            index: uint(..4095)
++            # What the item is called.
++            label?: string(..63)
++
++``request`` is what an op takes and ``reply`` what it returns. An op
++without a ``request`` takes no arguments, and an action without a ``reply``
++returns only its status. An action or a query may also set these keys:
++
++=========================== ========== ========================================
++Key                         Default    What it does
++=========================== ========== ========================================
++``fd-access``               read-write ``read`` lets an ``O_RDONLY`` fd run it
++``suggested-reply-length``  64K        the buffer a caller starts a query with
++``optional``                false      see `Optional operations`_
++``availability``            fixed      see `Dynamic availability`_
++``pre-post``                false      see `Hooks`_
++=========================== ========== ========================================
++
++An op that reads is named ``<object>-get``, the object in the singular, and
++each kind of object has one. A get over a collection, as ``item-get`` is, is a
++query even while it returns one object, as an op's type never changes; its
++request fields are optional filters, none meaning every object. A filter
++matching nothing gives an empty answer, and an ID naming nothing fails with
++``ENOENT``. An action get returns exactly one thing, such as the device.
++
++What an op takes or returns is a record: the fields one level of a message
++may hold, one per line. ``name?`` is an optional field, ``name[N]`` one that
++occurs up to N times, ``name[enum]`` one that occurs up to once per value of
++the enum, and ``name[]`` one a query's reply repeats any number of times. A
++field with fields indented below it is a record, the one declared there, as
++``items[]`` is. Each field has generated helpers named after its op and the
++records it is in: ``ctlv_example_item_set_index_get()`` reads ``index`` in an
++``item-set`` request, and ``ctlv_example_item_get_items_index_put()`` writes
++it in an item of the ``item-get`` reply.
++
++Fields that several messages repeat can be declared once as a named record,
++and then the specification reads:
++
++.. code-block:: yaml
++
++    records:
++      # One item, as item-set takes it and item-get lists it.
++      item:
++        # Which item it is.
++        index: uint(..4095)
++        # What the item is called.
++        label?: string(..63)
++
++    ops:
++      # Sets an item's label and data.
++      item-set:
++        type: action
++        request:
++          $include: item
++          # The item's contents, which the device reads.
++          data?: blob(in, ..1M, align 8, va)
++
++      # Lists the items.
++      item-get:
++        type: query
++        reply:
++          # Every item the device keeps.
++          items[]: record item
++
++``$include: item`` puts the record's fields in place, and ``record item`` makes
++it a whole message or a record's field. The field is then the same wherever it
++appears: ``item.index`` has one type, one bound and one generated helper in
++the ``item-set`` request and in the items ``item-get`` returns, and
++``ctlv_example_item_index_put()`` writes it in the latter. This guide keeps
++the fields spelled out.
++
++A field's type, the ID it has in a message, is made of the family's number,
++its record and its place in that record. A named record is numbered by its
++place in ``records``, an op's request and reply by the op's place in ``ops``,
++and a record declared in place by its place among the records declared beside
++it. Every one of those places is ABI, so records, fields and ops are only ever
++appended. Records declared in place go at most four deep and fifteen side by
++side below a named record or an op's message; a deeper or wider tree takes
++another named record.
++
++A field has one schema kind. Bounds follow it in parentheses, inclusive, with
++limits such as ``u32-max`` written by name and sizes such as ``4K``, which an
++integer takes only with the ``bytes`` unit, as in ``uint(1..4K, bytes)``:
++
++============ ============================== ==================================
++Kind         Holds                          Declared as, for example
++============ ============================== ==================================
++``uint``     an unsigned 64-bit integer     ``uint(..4095)``
++``sint``     a signed 64-bit integer        ``sint(-8..8)``
++``bool``     true or false                  ``bool``
++``string``   text, bounded without its NUL  ``string(..63)``
++``binary``   bytes                          ``binary(16..64)``
++enum         one value of an enum           the enum's name
++flags        a set of flags                 the flags' name
++record       fields                         ``record item``, or fields below
++``blob``     caller memory, see `Blobs`_    ``blob(in, ..1M, align 8, va)``
++============ ============================== ==================================
++
++Bounds, record membership and whether a field is required are ABI.
++
++The top-level keys may come in any order; the in-tree specifications put
++``enums`` and ``flags`` first, then ``records`` and ``ops``.
++
++An enum a uapi header already defines names the header in ``$header``, a path
++under ``include/uapi``, and the enum in ``$enum``. The enum's constants are its
++values, under their own names and numbers, whatever they start from and
++whatever gaps they leave, and need no comments. ``$end`` names a sentinel,
++leaving it and every constant after it out:
++
++.. code-block:: yaml
++
++    enums:
++      # The kernel's hash algorithms.
++      hash-algo:
++        $header: linux/hash_info.h
++        $enum: hash_algo
++        $end: HASH_ALGO__LAST
++
++The generated code includes the header rather than repeating the enum. CTLV
++takes any number from the lowest value up to one below ``$end``, or to the
++highest value without it, so a number in a gap reaches the callback, which
++refuses it. ``$end`` may move later as the header grows, never earlier. An
++enum written as ``extension`` has no values of its own; see
++`Inheritance and HW driver fields`_.
++
++No message outgrows the core's inline limit, ``CTLV_MAX_INLINE_MESSAGE_LEN``
++(64 KiB): the generator refuses an operation whose request or action reply
++could be longer, or a query whose longest field could not fit in one
++fragment. Larger data goes in a blob.
++
++Generate the family
++===================
++
++A new family is one change holding its specification, its registry entry and
++its output manifest entry::
++
++    Documentation/ctlv/specs/ctlv-example.yaml
++    Documentation/ctlv/families.yaml
++    Documentation/ctlv/generated-files.yaml
++
++The family's position in ``families.yaml`` is its family ID, part of every
++type and op ID it generates. Append only: never reorder, remove,
++rename or reuse an entry. Agree the position with the CTLV maintainers (CTLV
++SUBSYSTEM in MAINTAINERS) before adding a family, since families added in
++parallel trees would otherwise end up with the same ID. The output manifest
++says where the generated UAPI, kernel and userspace files go.
++
++Generate the files and record the new family's ABI::
++
++    make -C tools/ctlv regen
++
++``regen`` names each file it writes. A new family should add its generated
++files, its snapshot, ``Documentation/ctlv/abi/ctlv-example.yaml``, its entry
++in ``Documentation/ctlv/abi/families.registry.yaml`` and one line in
++``include/uapi/ctlv/ctlv_families_gen.h``, and change nothing generated for
++another family. Anything else means the specification or the generator
++changed more than intended. ``regen`` refuses a specification change that
++breaks the ABI as last committed unless ``ABI_BREAK=1`` says it is meant, so a
++snapshot's diff shows every ABI change for review. ``make -C tools/ctlv``
++checks the same without writing anything.
++
++Never edit a generated file; change the YAML or the generator and regenerate.
++
++Create and destroy a device
++===========================
++
++CTLV comes in two parts. The engine in ``lib/ctlv/`` is what a subsystem embeds
++in its devices and calls from their file operations. The nodes, declared in
++``<linux/ctlv_device.h>``, are character devices of the subsystem's own class,
++with the engine's file operations.
++
++A device's CTLV state is a ``struct ctlv``, embedded in the structure of
++whoever gives the device. A callback gets the instance and reaches that
++structure with ``container_of()``. The node is a ``struct ctlv_device``, which
++the structure embeds beside the instance:
++
++.. code-block:: c
++
++    struct example_device {
++            struct ctlv_device ctlvdev;
++            struct ctlv ctlv;
++            u64 items_count;
++            u64 generation;
++    };
++
++    static struct example_device *to_example(struct ctlv *ctlv)
++    {
++            return container_of(ctlv, struct example_device, ctlv);
++    }
++
++The subsystem's class is a ``struct ctlv_device_class``, registered once with
++``ctlv_device_class_register()``, which takes its device numbers. Its
++``dev_release`` frees the structure, so an open node holds the module that
++registered the class:
++
++.. code-block:: c
++
++    static void example_release(struct device *dev)
++    {
++            struct example_device *example =
++                    container_of(dev, struct example_device, ctlvdev.dev);
++
++            ctlv_fini(&example->ctlv);
++            ctlv_device_fini(&example->ctlvdev);
++            kfree(example);
++    }
++
++    static struct ctlv_device_class example_class = {
++            .class = {
++                    .name = "example",
++                    .dev_release = example_release,
++            },
++            .max_devices = 16,
++    };
++
++A device of the class is then made:
++
++.. code-block:: c
++
++    example = kzalloc(sizeof(*example), GFP_KERNEL);
++    if (!example)
++            return -ENOMEM;
++    ret = ctlv_device_init(&example->ctlvdev, &example_class, parent,
++                           &example->ctlv);
++    if (!ret)
++            ret = ctlv_init(&example->ctlv, &example->ctlvdev.dev,
++                            &ctlv_example_family, NULL);
++    if (ret)
++            goto err_put;
++    ctlv_publish(&example->ctlv);
++    ret = ctlv_device_add(&example->ctlvdev);
++    if (ret)
++            goto err_unpublish;
++
++``ctlv_device_init()`` names the node after the class, ``/dev/example0``.
++``ctlv_init()`` resolves the family chain. Until the instance is published, the
++driver selects its optional operations and their initial dynamic state, see
++Hooks and availability. ``ctlv_publish()`` makes operations live, and only then
++may the node be added, as a program may open it as soon as it appears.
++``ctlv_device_add()`` adds the node, whose uevent names the family; that is how
++udev finds the device. Destruction is the reverse:
++
++.. code-block:: c
++
++    ctlv_device_del(&example->ctlvdev);
++    ctlv_unpublish(&example->ctlv);
++    put_device(&example->ctlvdev.dev);
++
++``ctlv_unpublish()`` waits for the operations in flight; no callback runs
++afterwards. Each open file description fails its operations with ``-ENODEV``.
++The structure is freed with the last reference, the device's or an open file's,
++so what the callbacks used may stay in it. From ``ctlv_device_init()`` on,
++``put_device()`` alone unwinds a failed initialization, as it does a failed add
++once the instance is unpublished.
++
++A file of another subsystem
++---------------------------
++
++A subsystem may serve the instance on a file of its own instead, a misc device
++whose other operations are the subsystem's, say. It publishes the instance
++around the life of that file, attaches CTLV to each open file and passes on its
++ioctls:
++
++.. code-block:: c
++
++    static int foo_open(struct inode *inode, struct file *filp)
++    {
++            struct foo *foo = container_of(filp->private_data, struct foo, misc);
++            struct ctlv_file *cfile = ctlv_file_open(&foo->ctlv, filp);
++
++            if (IS_ERR(cfile))
++                    return PTR_ERR(cfile);
++            filp->private_data = cfile;
++            return 0;
++    }
++
++    static long foo_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
++    {
++            long ret = ctlv_file_ioctl(filp->private_data, cmd, arg);
++
++            return ret == -ENOIOCTLCMD ? foo_own_ioctl(filp, cmd, arg) : ret;
++    }
++
++Its release calls ``ctlv_file_close()``. The file's uevent is the other
++subsystem's and names no family, so a program opens the file by its name.
++
++The ``struct ctlv_hooks`` passed to ``ctlv_init()`` holds the device's pre and
++post hooks, see `Hooks`_. The device structure's release calls ``ctlv_fini()``
++when the last reference goes.
++
++Implement operations
++====================
++
++Action
++------
++
++Generated getters read only what validation accepted, and generated
++serializers write only what the reply declares:
++
++.. code-block:: c
++
++    int ctlv_example_item_set_action(struct ctlv *ctlv,
++                                     struct ctlv_op_ctx *ctx,
++                                     const struct ctlv_cursor *request,
++                                     struct ctlv_cursor *reply)
++    {
++            struct example_device *example = to_example(ctlv);
++            u64 index = ctlv_example_item_set_index_get(request);
++
++            if (item_busy(example, index))
++                    return ctlv_op_error(ctx, -EBUSY, "item is busy");
++            return item_set(example, index);
++    }
++
++Use ``_present()`` for optional fields and ``_for_each()`` for repeated
++ones. ``ctlv_op_error()`` preserves the errno and adds a short diagnostic when
++the caller supplied enough reply space.
++
++Query
++-----
++
++.. code-block:: c
++
++    int ctlv_example_item_get_query(struct ctlv *ctlv,
++                                      struct ctlv_op_ctx *ctx,
++                                      const struct ctlv_cursor *request,
++                                      struct ctlv_cursor *reply)
++    {
++            struct example_device *example = to_example(ctlv);
++            u64 generation = READ_ONCE(example->generation);
++            u64 cursor = ctlv_op_query_cursor(ctx);
++            struct ctlv_cursor item;
++            u64 i = cursor ? cursor - 1 : 0;
++
++            if (cursor && ctlv_op_query_generation(ctx) != generation)
++                    return -ESTALE;
++            for (; i < example->items_count; i++) {
++                    if (!ctlv_example_item_get_items_start(reply, &item))
++                            return ctlv_op_query_more(ctx, generation, i + 1);
++                    if (!ctlv_example_item_get_items_index_put(&item, i)) {
++                            ctlv_record_cancel(&item);
++                            return ctlv_op_query_more(ctx, generation, i + 1);
++                    }
++                    ctlv_record_end(&item);
++            }
++            return ctlv_op_query_done(ctx, generation);
++    }
++
++A continuation cursor is nonzero and advances. Every continuing fragment
++completes a logical leaf. An item that runs out of room partway is dropped with
++``ctlv_record_cancel()``, for the next fragment to write again. Call
++``ctlv_op_query_more()`` while cursors for open continuation records are alive.
++A generation mismatch returns ``-ESTALE``.
++
++Hooks and availability
++======================
++
++Hooks
++-----
++
++The pre and post hooks of the ``struct ctlv_hooks`` passed to ``ctlv_init()``
++run around every action and query the core does not answer. An op declared
++with ``pre-post: true`` also runs hooks of its own family, inside the
++device's:
++
++.. code-block:: yaml
++
++    item-get:
++      type: query
++      pre-post: true
++
++The family then implements ``ctlv_example_item_get_pre()`` and
++``ctlv_example_item_get_post()``, and the order is::
++
++    device pre -> operation pre -> availability check -> callback
++               -> operation post -> device post
++
++Each successful pre hook has one post hook. A failing pre hook undoes its own
++work. Hooks may sleep and must not retain ``ctx``. Each hook and callback gets
++the instance.
++
++Optional operations
++-------------------
++
++An op declared ``optional: true`` is published only on a device whose driver
++provides it before publishing the instance:
++
++.. code-block:: yaml
++
++    item-set:
++      type: action
++      optional: true
++
++.. code-block:: c
++
++    ctlv_example_item_set_provide(&example->ctlv);
++
++On a device that does not provide it, a program finds no entry for the
++operation in ``op-get`` or ``op-schema-get``, and executing it fails with
++``-EOPNOTSUPP``.
++
++Dynamic availability
++--------------------
++
++An op declared ``availability: dynamic`` can be refused for a while on a
++device that publishes it:
++
++.. code-block:: yaml
++
++    item-get:
++      type: query
++      availability: dynamic
++
++.. code-block:: c
++
++    ctlv_example_item_get_disable(&example->ctlv);
++    ctlv_example_item_get_enable(&example->ctlv);
++
++A disabled operation stays in ``op-get``, which reports it disabled, and
++returns ``-EOPNOTSUPP``.
++
++Blobs
++=====
++
++A blob field describes caller-owned memory. Resolve it only in the callback
++that received its request and release every successful resolve before return:
++
++.. code-block:: c
++
++    blob = ctlv_example_item_set_data_resolve(ctx, request);
++    if (IS_ERR(blob))
++            return PTR_ERR(blob);
++
++    ret = ctlv_blob_read(blob, 0, buf, ctlv_blob_len(blob));
++    put_ret = ctlv_blob_put(blob);
++    return ret ?: put_ret;
++
++The schema fixes direction, backing, length, and alignment. Resolution holds
++the backing for the ioctl. An output blob too short for
++what the operation produces is the caller's to enlarge: return
++``ctlv_blob_too_short()`` with the length needed, rather than writing part of
++it.
++
++Only a request carries a blob; the generator refuses one in a reply. A request
++that shares fields with a reply includes them and declares its blob beside them,
++as ``item-set`` does when it includes ``item``.
++
++Inheritance and HW driver fields
++================================
++
++Several HW drivers can implement ``ctlv-example``, and each knows things
++about its devices that a program may want, such as which bank of the foo
++chip's SRAM holds the items. Those do not belong in ``ctlv-example``, which
++all of them share. Instead, ``ctlv-example`` leaves a place for them, an
++extension point, and each HW driver has a family of its own that inherits
++``ctlv-example`` and fills it.
++
++Say ``ctlv-example`` gains a system call reporting the device::
++
++    device_get_action() -> { details? };
++
++On a device of the foo driver, ``details`` holds foo's fields::
++
++    device_get_action() -> { details? { u64 sram_bank; }; };
++
++``ctlv-example`` declares the op and leaves the contents of ``details`` to the
++HW driver, with an extension point:
++
++.. code-block:: yaml
++
++    ops:
++      # Reports the device.
++      device-get:
++        type: action
++        fd-access: read
++        reply:
++          # Empty here; a HW driver's family fills it with fields of its own.
++          details?: extension device-details
++
++The foo driver's family fills it by declaring a record of the same name:
++
++.. code-block:: yaml
++
++    # The devices of the foo driver, which fill what ctlv-example leaves open.
++    family: ctlv-example-foo
++    inherits: ctlv-example
++
++    records:
++      # The extension point ctlv-example left empty, filled for foo devices.
++      device-details:
++        # The bank of the foo chip's SRAM that holds the items.
++        sram-bank: uint(..3)
++
++The foo driver initializes its instances with ``ctlv_example_foo_family``, and
++they answer every ``ctlv-example`` op. A family implements only the ops it
++declares, so the inherited ones keep the callbacks and hooks of
++``ctlv-example``, and the foo module depends on the module that implements
++``ctlv-example``.
++
++The ``device-get`` callback in ``ctlv-example`` opens the record and has the
++device's family fill it:
++
++.. code-block:: c
++
++    if (ctlv_example_device_get_details_start(reply, &details)) {
++            ret = ctlv_ext_fill(ctx, NULL, &details);
++            ctlv_record_end(&details);
++            if (ret)
++                    return ret;
++    }
++
++The foo family implements the generated fill callback:
++
++.. code-block:: c
++
++    int ctlv_example_foo_device_details_fill(struct ctlv *ctlv,
++                                             struct ctlv_op_ctx *ctx,
++                                             const struct ctlv_cursor *request,
++                                             struct ctlv_cursor *record)
++    {
++            struct foo_device *foo = container_of(ctlv, struct foo_device,
++                                                  example.ctlv);
++
++            ctlv_example_foo_device_details_sram_bank_put(record,
++                                                          foo->sram_bank);
++            return 0;
++    }
++
++``request`` is the matching record of the request, for an op whose request has
++an extension point too; ``device-get`` has none and passes ``NULL``. An
++extension point no family fills adds no record and no length. ``ctlv-example``
++never names ``ctlv-example-foo``, and the foo family names nothing of
++``ctlv-example`` beyond the extension point it fills.
++
++A program knows whose fields it is reading without looking at them. A
++device's family chain runs from the root to the family of its instance,
++here ``ctlv``, ``ctlv-example`` and ``ctlv-example-foo``, and that last one,
++the leaf, is the HW driver's. ``family-get`` reports the chain on the open
++device, so a program picks its handler for the HW driver's fields once, when
++it opens the device; the uevent carries the same chain for udev rules. A tool
++that knows only ``ctlv-example`` skips the TLVs it does not know, as on any
++reply. Each TLV in a filled record also carries the family that declared its
++field, in bits 63..48 of its type: ``CTLV_TYPE_FAMILY()`` extracts it and
++``family-get`` maps it to a name.
++
++An enum can be left open the same way, when each HW driver has values of its
++own, such as the data formats its devices produce. ``ctlv-example`` declares
++the enum as an enum extension point, and its fields name it as any enum:
++
++.. code-block:: yaml
++
++    enums:
++      # The format of a device's data; a HW driver's family gives the values.
++      data-format: extension
++
++The foo driver's family gives the values, by declaring an enum of that name:
++
++.. code-block:: yaml
++
++    enums:
++      # Fills ctlv-example's data-format.
++      data-format:
++        # The foo device's own layout.
++        - foo-raw
++
++One family of a chain gives the values, numbered from 1 and appended to as any
++enum's. The core takes only those values on a device of that family, in a
++request and in what its driver puts in a reply, and none on a device whose
++chain gives none. The names are in the uapi header of the family that gives
++them, such as ``CTLV_EXAMPLE_FOO_DATA_FORMAT_FOO_RAW``. A family that checks
++values a HW driver hands it, before any reaches a reply, asks
++``ctlv_enum_ext_max()`` for the highest the driver's family gives.
++
++The structures embed one another as the families inherit. The module
++implementing ``ctlv-example`` keeps what every device of that family has in a
++structure around the instance, and exports what initializes it for a family
++that inherits ``ctlv-example``. A HW driver embeds that structure in its own
++and describes itself there, for the ``ctlv-example`` callbacks to use:
++
++.. code-block:: c
++
++    struct ctlv_example_device {
++            struct ctlv ctlv;
++            const struct ctlv_example_provider *provider;
++    };
++
++    struct foo_device {
++            struct ctlv_device ctlvdev;
++            struct ctlv_example_device example;
++            u32 sram_bank;
++    };
++
++    static const struct ctlv_example_provider foo_provider = {
++            .name = "foo",
++            .ops = &foo_provider_ops,
++    };
++
++    foo = kzalloc(sizeof(*foo), GFP_KERNEL);
++    if (!foo)
++            return -ENOMEM;
++    ret = ctlv_device_init(&foo->ctlvdev, &foo_class, parent,
++                           &foo->example.ctlv);
++    if (!ret)
++            ret = ctlv_example_device_init(&foo->example, &foo->ctlvdev.dev,
++                                           &ctlv_example_foo_family,
++                                           &foo_provider);
++
++The node is of the foo driver's own class, ``foo_class``, registered as
++``example_class`` is above. ``ctlv_example_device_init()`` refuses a family
++that ``ctlv_family_inherits()`` says is not ``ctlv-example`` or a descendant,
++then calls ``ctlv_init()``.
++
++Reporting an error
++------------------
++
++A callback returns a negative errno, and that is what the ioctl returns. Where
++CTLV itself refuses a message it also writes error information into the
++caller's reply buffer, naming the reason and the offset of the offending
++TLV. A family implementation does not build that; it adds its own errno
++and its reply.
++
++Configuration
++=============
++
++``CONFIG_CTLV``
++    CTLV. A family implementation selects it.
++
++Kernel API
++==========
++
++.. kernel-doc:: include/linux/ctlv.h
++.. kernel-doc:: lib/ctlv/core.c
++   :export:
++.. kernel-doc:: lib/ctlv/builder.c
++   :export:
++.. kernel-doc:: lib/ctlv/schema.c
++   :export:
++.. kernel-doc:: lib/ctlv/blob.c
++   :export:
++.. kernel-doc:: include/linux/ctlv_device.h
++.. kernel-doc:: lib/ctlv/device.c
++   :export:
+diff --git a/Documentation/driver-api/index.rst b/Documentation/driver-api/index.rst
+index aaf5d76ed074..0c5b9d2165d8 100644
+--- a/Documentation/driver-api/index.rst
++++ b/Documentation/driver-api/index.rst
+@@ -37,6 +37,7 @@ of interest to most developers working on device drivers.
  
--ctlv-y += blob.o blob_desc.o builder.o core.o introspection.o \
-+ctlv-y += blob.o blob_desc.o builder.o core.o device.o introspection.o \
- 	  message.o schema.o ctlv_gen.o
-diff --git a/lib/ctlv/core.c b/lib/ctlv/core.c
-index 605f191de77b..eb493104da62 100644
---- a/lib/ctlv/core.c
-+++ b/lib/ctlv/core.c
-@@ -1034,6 +1034,23 @@ static int ctlv_uevent_check(const struct ctlv_family *family)
- 	return ret;
- }
- 
-+/**
-+ * ctlv_uevent - Add the family variables to a device uevent.
-+ * @ctlv: instance
-+ * @env: uevent environment
-+ *
-+ * Return: 0, or a negative error.
-+ */
-+int ctlv_uevent(const struct ctlv *ctlv, struct kobj_uevent_env *env)
-+{
-+	/* Read unlocked: a uevent may be asked for under the registration lock. */
-+	const struct ctlv_family *family = READ_ONCE(ctlv->family);
-+
-+	if (!family)
-+		return 0;
-+	return ctlv_uevent_families(env, family);
-+}
-+
- /**
-  * ctlv_init - Prepare an embedded instance for one family.
-  * @ctlv: zeroed instance
-diff --git a/lib/ctlv/device.c b/lib/ctlv/device.c
-new file mode 100644
-index 000000000000..b761739e5442
---- /dev/null
-+++ b/lib/ctlv/device.c
-@@ -0,0 +1,179 @@
-+// SPDX-License-Identifier: GPL-2.0-only
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Character device nodes of CTLV instances.
-+ */
-+#include <linux/bug.h>
-+#include <linux/cdev.h>
-+#include <linux/cleanup.h>
-+#include <linux/container_of.h>
-+#include <linux/ctlv.h>
-+#include <linux/ctlv_device.h>
-+#include <linux/device.h>
-+#include <linux/err.h>
-+#include <linux/fs.h>
-+#include <linux/idr.h>
-+#include <linux/kdev_t.h>
-+#include <linux/module.h>
-+#include <linux/rwsem.h>
-+
-+#include "internal.h"
-+
-+static int ctlv_device_open(struct inode *inode, struct file *filp)
-+{
-+	struct ctlv_device *ctlvdev = container_of(inode->i_cdev, struct ctlv_device, cdev);
-+	struct ctlv_file *cfile;
-+
-+	cfile = ctlv_file_open(ctlvdev->ctlv, filp);
-+	if (IS_ERR(cfile))
-+		return PTR_ERR(cfile);
-+	filp->private_data = cfile;
-+	return 0;
-+}
-+
-+static int ctlv_device_release(struct inode *inode, struct file *filp)
-+{
-+	ctlv_file_close(filp->private_data);
-+	return 0;
-+}
-+
-+static long ctlv_device_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-+{
-+	return ctlv_file_ioctl(filp->private_data, cmd, arg);
-+}
-+
-+static const struct file_operations ctlv_device_operations = {
-+	.owner = THIS_MODULE,
-+	.open = ctlv_device_open,
-+	.release = ctlv_device_release,
-+	.unlocked_ioctl = ctlv_device_ioctl,
-+	/* Every ioctl field is fixed width, so one entry point serves both. */
-+	.compat_ioctl = compat_ptr_ioctl,
-+};
-+
-+static int ctlv_device_uevent(const struct device *dev, struct kobj_uevent_env *env)
-+{
-+	const struct ctlv_device *ctlvdev = container_of_const(dev, struct ctlv_device, dev);
-+
-+	return ctlv_uevent(ctlvdev->ctlv, env);
-+}
-+
-+/**
-+ * __ctlv_device_class_register - Register a class of nodes.
-+ * @cls: class, its name, dev_release and max_devices set
-+ * @owner: module of the dev_release, held while a node is open
-+ *
-+ * Called as ctlv_device_class_register(), which passes the calling module.
-+ *
-+ * Return: 0, or a negative error.
-+ */
-+int __ctlv_device_class_register(struct ctlv_device_class *cls, struct module *owner)
-+{
-+	int ret;
-+
-+	if (WARN_ON(!cls->max_devices))
-+		return -EINVAL;
-+	ret = alloc_chrdev_region(&cls->devt, 0, cls->max_devices, cls->class.name);
-+	if (ret)
-+		return ret;
-+	cls->owner = owner;
-+	cls->class.dev_uevent = ctlv_device_uevent;
-+	ida_init(&cls->ids);
-+	ret = class_register(&cls->class);
-+	if (ret)
-+		unregister_chrdev_region(cls->devt, cls->max_devices);
-+	return ret;
-+}
-+EXPORT_SYMBOL_NS_GPL(__ctlv_device_class_register, "CTLV");
-+
-+/**
-+ * ctlv_device_class_unregister - Unregister a class of nodes.
-+ * @cls: class whose nodes are all released
-+ */
-+void ctlv_device_class_unregister(struct ctlv_device_class *cls)
-+{
-+	class_unregister(&cls->class);
-+	unregister_chrdev_region(cls->devt, cls->max_devices);
-+	ida_destroy(&cls->ids);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_device_class_unregister, "CTLV");
-+
-+/**
-+ * ctlv_device_init - Prepare the node of an instance.
-+ * @ctlvdev: zeroed node, in the structure the class's dev_release frees
-+ * @cls: registered class
-+ * @parent: parent device, or NULL
-+ * @ctlv: instance, for ctlv_init() with the node's device
-+ *
-+ * From here on, put_device() unwinds, whether or not this succeeds.
-+ *
-+ * Return: 0, or a negative error.
-+ */
-+int ctlv_device_init(struct ctlv_device *ctlvdev, struct ctlv_device_class *cls,
-+		     struct device *parent, struct ctlv *ctlv)
-+{
-+	int devnum;
-+
-+	device_initialize(&ctlvdev->dev);
-+	ctlvdev->dev.class = &cls->class;
-+	ctlvdev->dev.parent = parent;
-+	ctlvdev->ctlv = ctlv;
-+	cdev_init(&ctlvdev->cdev, &ctlv_device_operations);
-+	ctlvdev->cdev.owner = cls->owner;
-+
-+	devnum = ida_alloc_max(&cls->ids, cls->max_devices - 1, GFP_KERNEL);
-+	if (devnum < 0)
-+		return devnum;
-+	ctlvdev->cls = cls;
-+	ctlvdev->dev.devt = MKDEV(MAJOR(cls->devt), devnum);
-+	return dev_set_name(&ctlvdev->dev, "%s%d", cls->class.name, devnum);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_device_init, "CTLV");
-+
-+/**
-+ * ctlv_device_fini - Free the node's number.
-+ * @ctlvdev: node
-+ *
-+ * For the class's dev_release, before it frees the node.
-+ */
-+void ctlv_device_fini(struct ctlv_device *ctlvdev)
-+{
-+	if (ctlvdev->cls)
-+		ida_free(&ctlvdev->cls->ids, MINOR(ctlvdev->dev.devt));
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_device_fini, "CTLV");
-+
-+/**
-+ * ctlv_device_add - Add the node.
-+ * @ctlvdev: node, whose instance was initialized with its device and published
-+ *
-+ * The node may be opened as soon as it appears, so its instance is published
-+ * before and unpublished after ctlv_device_del().
-+ *
-+ * Return: 0, or a negative error.
-+ */
-+int ctlv_device_add(struct ctlv_device *ctlvdev)
-+{
-+	struct ctlv *ctlv = ctlvdev->ctlv;
-+	bool published;
-+
-+	scoped_guard(rwsem_read, &ctlv->registration_lock)
-+		published = ctlv->registered;
-+	if (WARN_ON(ctlv->dev != &ctlvdev->dev || !published))
-+		return -EINVAL;
-+	return cdev_device_add(&ctlvdev->cdev, &ctlvdev->dev);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_device_add, "CTLV");
-+
-+/**
-+ * ctlv_device_del - Remove the node.
-+ * @ctlvdev: added node
-+ *
-+ * A file still open keeps the node's device until it is closed.
-+ */
-+void ctlv_device_del(struct ctlv_device *ctlvdev)
-+{
-+	cdev_device_del(&ctlvdev->cdev, &ctlvdev->dev);
-+}
-+EXPORT_SYMBOL_NS_GPL(ctlv_device_del, "CTLV");
-diff --git a/lib/ctlv/internal.h b/lib/ctlv/internal.h
-index 2e1e36799a17..8fb5f0abdc47 100644
---- a/lib/ctlv/internal.h
-+++ b/lib/ctlv/internal.h
-@@ -23,6 +23,7 @@
- #define CTLV_ASSERT(cond) BUILD_BUG_ON_INVALID(cond)
- #endif
- 
-+struct kobj_uevent_env;
- struct task_struct;
- 
- #define CTLV_ERROR_MESSAGE_LEN 256
-@@ -81,5 +82,6 @@ struct ctlv_op_ctx {
- };
- 
- struct ctlv_op_entry *ctlv_op_find(struct ctlv *ctlv, u64 op_id);
-+int ctlv_uevent(const struct ctlv *ctlv, struct kobj_uevent_env *env);
- 
- #endif /* _CTLV_INTERNAL_H */
+    early-userspace/index
+    connector
++   ctlv
+    device-io
+    devfreq
+    dma-buf
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 29bdb4de915d..b16bedbbe0b6 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -7188,6 +7188,7 @@ M:	Jiri Pirko <jiri@resnulli.us>
+ L:	linux-kernel@vger.kernel.org
+ S:	Maintained
+ F:	Documentation/ctlv/
++F:	Documentation/driver-api/ctlv.rst
+ F:	Documentation/userspace-api/ctlv.rst
+ F:	include/linux/ctlv*.h
+ F:	include/uapi/ctlv/
 -- 
 2.56.0
 
