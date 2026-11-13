@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.54
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.53
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794585366;
-	b=X3SWntxDAQQNaYy04Yl4EsVPsBHtBbfzRVckYA7zdZUQfI7x/D7l8EGG9gx83QRGxXGq
-	 Gq7DRx/CCFmhCPwFf2VrpGQKMI346UhhUAJbLijeg8wALX9kVo16eDNxf3Vfa/+LefXt+
-	 Uek6VZ3SJi39Ku5HW5vCwnRT+3FKYxIh7qiDCoEZFZn9iYsiF0xouTvZuXj9zYkme96qD
-	 /wcmfyLkpA3A0BSwN41Psu3SLJcCBPNOQPmtqPK6CybA3fw2VOS9piwxxsOJpoIIIezAB
-	 c7Jetp749v5MM8LE8fgE2nUGugwG44zvc5P6G0u4JykZRi3Usw0T22SO1eJu0Zkpa6A==
+	t=1794585371;
+	b=5bPnz37RTKJTauOnG+B1DFh3A0/zT0orGft83mwAwN5xmYrBdtqXzD1TbR2IsRsZRFDO
+	 1UKB1eme2ZbMXrZ+TM0mEh1lVmmOB8ZYI6/+KSQFei3kSiCOPcH47bzaKyxZALXKPNvv9
+	 zDh+lPKgz4WhbSN/Q84PUDxtrJxlvy6YlFpNbJnY3lM33W3F2MXw3p95no0i1TFmOwK17
+	 XYIgNzHB9wwde9psUYSnXnnk2BQGnqiKHyXtc8XWljwZJHk0aa+HbyWsdIF/jq1OSc+bW
+	 /eWGr/0Lh14eLjEzYv5wdfpjGiB5r/pRLhjXIhfDeFkFe26RCWWxVkTsqWJUTLMilCw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794585366;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794585371;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=iMA1nNIkTQMcLySN9HOcyafC2eBYLhJLhmGy3+ImBow=;
-	b=uDEQHvilxsA1Y3jIzAttypsPPMbWMsl2JMWJkaX5PwGsodKfc1JX4OG91L1zlkSF+4X8
-	 Iu2XafXdUh6SeapvWiBArdTbwwJlQbxbh4EkwKeEpckROag12KXopIxmMoyPvHdE/xXOF
-	 02tjJk5cm5PXk/mdM8LG2xHpWWjvSdFPcbL5tU2vtogBpgCYjZ5j+juHaeVQT66alviT+
-	 QRTovEyelNq3sNI3L6p1EIqbzxznrGmEfITOFwJ8Q8G1MQbSc4vSvxCEZxS2ExZI5VVku
-	 EhepDBNBPnX4J9AgB5NJgglePGnJVKf3Rbr9CaMTjZxMJa+2ztyUYjgyuarfTdLhwiw==
+	bh=LGLEOym6U6XI2HhF9sgdf9oEYDm6152SMOzFToqBrz8=;
+	b=4BYzFPGWW7od+oQqWOKB0eUn27HsMu7caehpkNqIfXeiVgBJ1Cms3FvbbrIFlPNpgIyO
+	 1BJ1hMlKe7nje9hGKvWy+Et6Fzaa/F7XBcxN7T5hPCUJkYO9TOhtQBZ8y/qDj3w2sF52P
+	 z2Rl288DDy56uiR+zUK+Sd9ShRPjvQJkrNXd3nue2DXMAx8oYsg+xEWBNCQIUn6mfjXP9
+	 rA71dCIpKuJKgHSUsirmj/7JPOmKwlvegy3c1ZUDlcoQVPaIHXJrqNUyh0TWOo8Xp53mC
+	 LdGj6feOMioI3x4aft3d2X7tCTVp7gnrWotLE9/x8IF7VXvmRQKi1sOqBtgrzXUMQPQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=fnESBVWQ;
-	arc=none smtp.remote-ip=209.85.218.54
-Received: from mail-ej1-f54.google.com (mail-ej1-f54.google.com [209.85.218.54])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=LeaHfWWy;
+	arc=none smtp.remote-ip=209.85.218.53
+Received: from mail-ej1-f53.google.com (mail-ej1-f53.google.com [209.85.218.53])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5245C606EBA1
-	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5245C606EBA1
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EECFE60A2610
+	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EECFE60A2610
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=fnESBVWQ
-Received: by mail-ej1-f54.google.com with SMTP id a640c23a62f3a-c4cdc606b47so257322266b.0
-        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:05 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=LeaHfWWy
+Received: by mail-ej1-f53.google.com with SMTP id a640c23a62f3a-c50a2efbe1dso196566766b.3
+        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1794585364; x=1795190164; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1794585367; x=1795190167; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=iMA1nNIkTQMcLySN9HOcyafC2eBYLhJLhmGy3+ImBow=;
-        b=fnESBVWQ/TytaieR6uyuIGPSZ2YPt9JBZEB9DEBZxpgxOF61oXaeQdm4WW8hf9WKdn
-         pzLPQzjBxaeN5+/bUQ76ice7VieryHAIzGarhQprtjnsQfEWJDDz8OyvjI0QYg/fZf6i
-         lG9KotwrNfqb8IiPaK8n4tsr0VJfBkVzv9ZxQnO6FsrbyA/F3VK30EjObYP7xjzxecqe
-         dFi3QAR7kFpGXFh93Hr/bwP6l7ohGPu1IIHZuy27kr459cY3Wptv2hCqR9E8G3xkXRjs
-         0397gFj/F/7plD2yFafWoQ3UiqEEGin9AEoEpV6SbENT4ncrw4flcpbH1ZF4BEwSdxnm
-         2eQg==
+        bh=LGLEOym6U6XI2HhF9sgdf9oEYDm6152SMOzFToqBrz8=;
+        b=LeaHfWWyhSM0K9iMoxicEshjAt76ssRD9+zyq3PI4mfdL8G6wXXUsfMwtBu+39cO0W
+         wM+rOM8zgbQX5hCI0kty/9CeudGaXYd+qsGVXcgQDANb9t9aqJ7ypbYV0/oxMIbySh9t
+         0tT3h+1kYll942b1Ep4wfJkBzeLsQQccw3jTCAhmCvdU4oU38tEjwfPV0vkTxFhx88ZX
+         iljpryGyn2B9J6mH5nSuNN88fh1vNnBVEPhXUoff6Gd3fOp/zd5twrW95nc9kGhBo8AM
+         JTGq/AnDUj/IwcXv5YHJdZyToZ+4BUgcjZr/mVXAWXhdj2Q7u26Riz6HSdMXYhU9r/To
+         gxbg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794585364; x=1795190164;
+        d=1e100.net; s=20260707; t=1794585367; x=1795190167;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=iMA1nNIkTQMcLySN9HOcyafC2eBYLhJLhmGy3+ImBow=;
-        b=uyPvPNhbLIL5OVC+mXyGWsUjOQh3xcNKs7IFZq+pDEHG9+C1nefT1zoJpwQLHrpTgN
-         dLguV2EF6bgveFDZlYKc74frVQDwCVjzDW9BhNVxDRN9+U33U9saziJB5qbQM6jaOTld
-         BVZkpd62/g5aR6V8TURegfcSWNVn1gPc0xW3djLonn57pT8MA0V0owIr7s5oKWVYQgKV
-         /4E6N+SgSqVU1vBSgoFz1O8dRFyziSZt7b5p6JqUOdsx2DlIC5DALBcZbwoP2u1vH8oU
-         FEZYgyDe4RGT3GTBjVaPJMa/0RcqZDeIjv/AoLqqsJJFNb2JP9WihZsicbfzvi5yKIOy
-         izdA==
-X-Forwarded-Encrypted: i=1; AL+hErG7YmzVfI1uFjIQ9Q9o9l2lCUcv+5Jz9Pv/9gPiRWz1JdAxlCPFB/C3YCoI3enV6Q1fZ/NmRwih8/w=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+kAicx+a9rowL6SO5mm1OdjXa3nMlQOu2THD85LnQpLrQ3oEJ8
-	Tkox/qkIIiyNyRdk6yIY5zSzz59s0LiOBzqUccINjNMkelZ3IXdT4Y1juWBWmfwCOoI=
-X-Gm-Gg: AYBFou3smqf63mFJ/DhvlScYetf1/pNdgy4FmI1BIB08ZQ7ZS9gwermpCuunDL5MY0k
-	deA/PKU+jnjymctTELPIZDt1Jo3ssj6p2GFTlNtBk52PBBvX6zZqaBN+8GtRQ+soyWnd0Ucn4LT
-	Q5Z0Q1ybLUtuedVkt+ko2z2zNNHor3VWWSxpd2i3yLHbr8GfXC+JxQwEnmG91Gu82zCCadOxR98
-	ybEq3QE7CqYqMkvG6YBiF9iEf075UaEZmAcurNyiGLlnz9n3Qf4RvsbKRdG/upiKLbJPyal0Ljv
-	9S2LHwn8y0j0VKKft7qX4v3yOQUz/+fW1UmBWYnx+gcDDVXZXzj4eh9/jcLqBEd3lE7C9URHjBH
-	RswACv6fMjH3Dp2nuDwlHJIZ1NY2spiRqXZteGJlyIIdodaWdDmeVlVPLdrkhJB1ml/nzk3nGas
-	KJ6lGpsT1UbOWs1XUZocsPkZFqXK3eeIb27fKzi1c4oocNsjutbkZvghOXFlZd8bYgQGTlqkPeD
-	4F0tavPFyfezlhryvXfq/pqJKc/IZBVvxFWkwz+gi5aNjfJ9Xry2LCh6pHHyO5OGdcIj/s/MYt2
-	eUkhf4+TfIHQvg8QaYDM/xv27EvlvUGFQFll1kbYWQ==
-X-Received: by 2002:a17:906:99c2:b0:c29:4a1f:76be with SMTP id a640c23a62f3a-c50963adb21mr242543766b.20.1794585363416;
-        Fri, 13 Nov 2026 07:56:03 -0800 (PST)
+        bh=LGLEOym6U6XI2HhF9sgdf9oEYDm6152SMOzFToqBrz8=;
+        b=vQqudQoNnutfvok2sd5byOP8L5fToLgJjRtG1tajrmIYWZS0azDujuYtiTfq5UQg+S
+         USATpi4BXxTmIyZXLshl/caPF3e8qCA24UmEpcbjHRJCKdsoasGDnDAg6HTAqTYjMf8c
+         RXHn4Ptq0/rm34bjxERm1HzOUa8L+9oTfAWXgWZoQ5NKg1UCZ8FUe8rhDkBwFxcTb6iQ
+         GhtLR1mlpV5rZ11Fc176v2bk5uVdRqQmTQaNcQetz6dX9oxdnwB1761cpv92jl91kask
+         zPsdqkV5nEn8esqdyI7sG7Q0+RDhqVaFTZRlPqaOHtprnR74Bbmo4A0B9DZ7blrsT8Wn
+         rP9Q==
+X-Forwarded-Encrypted: i=1; AL+hErHYjL84vzu6ZsM9apNx7EnIGbKMitxl90I3Yj9qP0Uf8yTCHBj3b9vfRatHuwNaQqDVWkFZ3j864rs=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/VjxJ+LcgKFFillp5FF2jJqOlRMu4fixw3/BVFM0YFNamDtcyL
+	SwE7DFIIpmdsL8avYZ7fvVMddMQv1EeGT0p96KHjfbX0WsCl0WXoUecNSOc8dEDyNmU=
+X-Gm-Gg: AYBFou3LQgNAa5YzKasbYj5waxvfINPQe6OsawxvnnulStRG+NXt0NqFf7vwp1Q5Y99
+	o80rKCtO2lW935oaUjJj6NkJ174bnV3AThmHTd9aEJnckBq8E9z61p8jPuC7l7RnaDFLjr+BfP1
+	eJzErRhK88nlmJvVabJRmMzb0VQ7sTGixJVdT0DFSFUuExU7zYogpygjTgfGq3tJ4WtuC8Mcn9L
+	vmWHRxMG8PIiLBt5ZUCP1xnMQ3BZtzzeAdVNjU8VIXiQeewxK/ubfUs13/4N4dLx1+7DqmBTQpT
+	6r6z7oYCiL1O8dMX68JbCQBWEtXd2JZItphYkMIUtZJJBQXrndsx+aQ8O+25emhSatdFMwjyPLJ
+	dhUuV/92oOCBxNVvv0Cue+JQhOy5QWNf1w0rwS1cby3AOh86PqbVU2LK7ypxyOCqwrWddMcw5FP
+	zdUT+kOjP7BhRTdgksn2MU2ufHADL9QmdHq8lmlZgGdWe55trzwgmmCwTPuwYcGCWMG2Fg6Bk3M
+	uSBU0n5DEGeaYOSbb9jCgmyxsMA5cphhOwQIqA4bbfRf/4wiQuZ2DZc3cID8yO+kydR5dME8lV2
+	KLU5S/Y3zV9iVNTm8V2m4bPiiNW+abStGbLNa7b2
+X-Received: by 2002:a17:907:944e:b0:c49:9383:a28 with SMTP id a640c23a62f3a-c509634b56cmr279039066b.35.1794585367024;
+        Fri, 13 Nov 2026 07:56:07 -0800 (PST)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095b9164bsm118044866b.82.2026.11.13.07.56.02
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095a5a78csm116841366b.4.2026.11.13.07.56.06
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Nov 2026 07:56:03 -0800 (PST)
+        Fri, 13 Nov 2026 07:56:06 -0800 (PST)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -115,9 +115,9 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.jiang@intel.com,
 	nik.borisov@suse.com,
 	sergii.dmytruk@3mdeb.com
-Subject: [PATCH RFC v2 10/15] ctlv: Prepare runtime introspection
-Date: Fri, 13 Nov 2026 16:55:09 +0100
-Message-ID: <20261113155515.2510194-11-jiri@resnulli.us>
+Subject: [PATCH RFC v2 11/15] ctlv: Add operation dispatch
+Date: Fri, 13 Nov 2026 16:55:10 +0100
+Message-ID: <20261113155515.2510194-12-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261113155515.2510194-1-jiri@resnulli.us>
 References: <20261113155515.2510194-1-jiri@resnulli.us>
@@ -134,634 +134,1379 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Add handlers that expose registered families, effective operations and
-message schemas through the CTLV root family. Start struct ctlv with the
-device, family, operations and op state they read.
-
-The introspection object can be compile-checked here. CONFIG_CTLV
-remains unwired until operation dispatch completes the module.
+Let a subsystem embed a CTLV instance in a device of its own, resolve
+family chains and dispatch operations through validated messages. Wire
+CONFIG_CTLV and the generated root family into lib/ after all module
+objects are present.
 
 Assisted-by: Cursor: GPT-5.6 Sol
 Assisted-by: Cursor: Claude Opus 5.5
 Signed-off-by: Jiri Pirko <jiri@nvidia.com>
 ---
 RFC->RFCv2:
-- handed the introspection ops the CTLV instance
-- reported each op's error information length
-- emitted introspection fields without staging them
+- let the subsystem allocate the device and embed CTLV, as fwctl does
+- let a subsystem route the CTLV ioctl from its own file operations
+- moved to lib/ctlv/, and the device nodes to the next patch
+- dropped the family lifecycle hooks and the per-family privs
+- used only gotos in ctlv_op_exec()
+- read struct ctlv_op_exec with copy_struct_from_user()
+- took a reply buffer of any length
+- made plain what the breaks in ctlv_file_open() leave
 - kept each guard() on one line
-- gave each dump cursor field its own mask and said what it holds
-- took struct ctlv from the event patch, without the event state
-- dropped the event record length from op-get
-- renamed stubs to extension points
-- made a check no error path depends on a CTLV_ASSERT()
+- moved the function kernel-doc to the definitions
+- dropped read(), poll() and the op state and removal events
+- renamed ctlv_stub_fill() to ctlv_ext_fill()
 - said TLV, type, record and field instead of attr
 - said record instead of nest, the root being one
-- said node instead of placement
-- numbered every enum member
-- reported the values the device's family chain gives an enum
-  extension point
-- moved to lib/ctlv/
+- reported the length an output blob needs as required-length
+- separated the steps of the longer functions
+- took the UAPI headers from include/uapi/ctlv/
+- said message instead of wire
+- registered the ioctl number, which this patch handles first
 ---
- include/linux/ctlv.h     |  26 ++
- lib/ctlv/Makefile        |   3 +-
- lib/ctlv/internal.h      |   3 +
- lib/ctlv/introspection.c | 505 +++++++++++++++++++++++++++++++++++++++
- 4 files changed, 536 insertions(+), 1 deletion(-)
- create mode 100644 lib/ctlv/introspection.c
+ .../userspace-api/ioctl/ioctl-number.rst      |    2 +
+ include/linux/ctlv.h                          |   33 +
+ include/linux/ctlv_family.h                   |   22 +
+ lib/Kconfig                                   |    2 +
+ lib/Makefile                                  |    2 +
+ lib/ctlv/Makefile                             |    4 +-
+ lib/ctlv/core.c                               | 1152 +++++++++++++++++
+ 7 files changed, 1215 insertions(+), 2 deletions(-)
+ create mode 100644 lib/ctlv/core.c
 
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index dbe462040999..f257b1a22ec2 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -387,6 +387,8 @@ Code  Seq#    Include File                                             Comments
+                                                                        <mailto:linux-hyperv@vger.kernel.org>
+ 0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
+                                                                        <mailto:pasha.tatashin@soleen.com>
++0xBB  00-0F  uapi/ctlv/ctlv.h                                          CTLV
++                                                                       <mailto:jiri@resnulli.us>
+ 0xC0  00-0F  linux/usb/iowarrior.h
+ 0xCA  00-0F  uapi/misc/cxl.h                                           Dead since 6.15
+ 0xCA  10-2F  uapi/misc/ocxl.h
 diff --git a/include/linux/ctlv.h b/include/linux/ctlv.h
-index afb71cc643d3..3847f8411edf 100644
+index 3847f8411edf..f075d0a99b80 100644
 --- a/include/linux/ctlv.h
 +++ b/include/linux/ctlv.h
-@@ -7,6 +7,8 @@
- #ifndef _LINUX_CTLV_H
+@@ -8,17 +8,20 @@
  #define _LINUX_CTLV_H
  
-+#include <linux/device.h>
-+#include <linux/spinlock_types.h>
+ #include <linux/device.h>
++#include <linux/rwsem.h>
+ #include <linux/spinlock_types.h>
  #include <linux/types.h>
  
  #include <uapi/ctlv/ctlv.h>
-@@ -15,6 +17,7 @@ struct ctlv_family;
+ 
+ struct ctlv_family;
++struct ctlv_file;
  struct ctlv;
  struct ctlv_msg;
  struct ctlv_op_ctx;
-+struct ctlv_op_entry;
+ struct ctlv_op_entry;
  struct ctlv_schema_tree;
++struct file;
  
  /**
-@@ -57,6 +60,29 @@ struct ctlv_cursor {
+  * struct ctlv_cursor - One TLV position in one message.
+@@ -60,6 +63,16 @@ struct ctlv_cursor {
  	bool progress;
  };
  
 +/**
-+ * struct ctlv - The CTLV state of one device, embedded by its subsystem.
-+ * @dev: device whose release frees the structure embedding this instance;
-+ *	every open file pins it
-+ *
-+ * A family callback is handed the instance and reaches its own state with
-+ * container_of().
++ * struct ctlv_hooks - What a device runs around the ops of its instance.
++ * @pre: entered before every op the core does not answer, and may refuse it
++ * @post: entered after every op whose @pre succeeded
 + */
-+struct ctlv {
-+	struct device *dev;
-+	/* private: */
-+	const struct ctlv_family *family;
-+
-+	struct ctlv_op_entry *ops;
-+	u32 ops_count;
-+
-+	/* Op publication and state writers, never the dispatch path. */
-+	spinlock_t transition_lock;
-+	u64 state_generation;
-+	u32 dynamic_ops_count;
-+	unsigned long *disabled;
++struct ctlv_hooks {
++	int (*pre)(struct ctlv *ctlv, struct ctlv_op_ctx *ctx);
++	void (*post)(struct ctlv *ctlv, struct ctlv_op_ctx *ctx);
 +};
++
+ /**
+  * struct ctlv - The CTLV state of one device, embedded by its subsystem.
+  * @dev: device whose release frees the structure embedding this instance;
+@@ -71,6 +84,9 @@ struct ctlv_cursor {
+ struct ctlv {
+ 	struct device *dev;
+ 	/* private: */
++	const struct ctlv_hooks *hooks;
++	struct rw_semaphore registration_lock;
++	bool registered;
+ 	const struct ctlv_family *family;
+ 
+ 	struct ctlv_op_entry *ops;
+@@ -78,14 +94,31 @@ struct ctlv {
+ 
+ 	/* Op publication and state writers, never the dispatch path. */
+ 	spinlock_t transition_lock;
++	bool published;
++	bool destroying;
+ 	u64 state_generation;
+ 	u32 dynamic_ops_count;
+ 	unsigned long *disabled;
+ };
+ 
++int ctlv_init(struct ctlv *ctlv, struct device *dev,
++	      const struct ctlv_family *family, const struct ctlv_hooks *hooks);
++void ctlv_publish(struct ctlv *ctlv);
++void ctlv_unpublish(struct ctlv *ctlv);
++void ctlv_fini(struct ctlv *ctlv);
++bool ctlv_family_inherits(const struct ctlv_family *family,
++			  const struct ctlv_family *ancestor);
++
++struct ctlv_file *ctlv_file_open(struct ctlv *ctlv, struct file *filp);
++long ctlv_file_ioctl(struct ctlv_file *cfile, unsigned int cmd,
++		     unsigned long arg);
++void ctlv_file_close(struct ctlv_file *cfile);
 +
  void ctlv_record_end(struct ctlv_cursor *child);
  void ctlv_record_cancel(struct ctlv_cursor *child);
  
++int ctlv_ext_fill(struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
++		  struct ctlv_cursor *record);
+ int ctlv_op_error(struct ctlv_op_ctx *ctx, int error, const char *message);
+ __printf(3, 4)
+ int ctlv_op_errorf(struct ctlv_op_ctx *ctx, int error, const char *fmt, ...);
+diff --git a/include/linux/ctlv_family.h b/include/linux/ctlv_family.h
+index 61ae5b7cec83..d8abdd4964c9 100644
+--- a/include/linux/ctlv_family.h
++++ b/include/linux/ctlv_family.h
+@@ -428,6 +428,9 @@ extern const struct ctlv_family ctlv_family;
+ 
+ u32 ctlv_enum_ext_max(const struct ctlv_family *family, u16 family_id, u32 ext_id);
+ 
++void ctlv_op_provide(struct ctlv *ctlv, u64 op_id);
++void ctlv_op_state_set(struct ctlv *ctlv, u64 op_id, bool disabled);
++
+ struct ctlv_cursor *
+ ctlv_input_field(struct ctlv_cursor *cursor, const struct ctlv_cursor *record,
+ 		 struct ctlv_input_ref ref);
+@@ -453,6 +456,25 @@ bool ctlv_record_start(struct ctlv_cursor *record, struct ctlv_cursor *child,
+ 
+ struct ctlv_blob *ctlv_blob_resolve(struct ctlv_op_ctx *ctx,
+ 				    const struct ctlv_cursor *blob);
++
++#define CTLV_OP_PROVIDE(_name, _op_id)				\
++static inline void _name##_provide(struct ctlv *ctlv)	\
++{								\
++	ctlv_op_provide(ctlv, (_op_id));		\
++}
++
++#define CTLV_OP_ENABLE(_name, _op_id)				\
++static inline void _name##_enable(struct ctlv *ctlv)	\
++{								\
++	ctlv_op_state_set(ctlv, (_op_id), false);	\
++}
++
++#define CTLV_OP_DISABLE(_name, _op_id)				\
++static inline void _name##_disable(struct ctlv *ctlv)	\
++{								\
++	ctlv_op_state_set(ctlv, (_op_id), true);	\
++}
++
+ #define __CTLV_DEFINE_PUT(_name, _ctype, _put_fn, _type, _kind)	\
+ static inline bool _name##_put(struct ctlv_cursor *record,	\
+ 			       _ctype value)			\
+diff --git a/lib/Kconfig b/lib/Kconfig
+index 1e42f5167c68..7d81e1d502d1 100644
+--- a/lib/Kconfig
++++ b/lib/Kconfig
+@@ -496,6 +496,8 @@ source "lib/vdso/Kconfig"
+ 
+ source "lib/fonts/Kconfig"
+ 
++source "lib/ctlv/Kconfig"
++
+ config SG_SPLIT
+ 	def_bool n
+ 	help
+diff --git a/lib/Makefile b/lib/Makefile
+index a2afe954805c..db7e4fcc2c6f 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -342,6 +342,8 @@ obj-$(CONFIG_OBJAGG) += objagg.o
+ # pldmfw library
+ obj-$(CONFIG_PLDMFW) += pldmfw/
+ 
++obj-$(CONFIG_CTLV) += ctlv/
++
+ obj-$(CONFIG_GENERIC_LIB_DEVMEM_IS_ALLOWED) += devmem_is_allowed.o
+ 
+ obj-$(CONFIG_FIRMWARE_TABLE) += fw_table.o
 diff --git a/lib/ctlv/Makefile b/lib/ctlv/Makefile
-index 4455062f83d7..76010d52dd8a 100644
+index 76010d52dd8a..73acdbdf387d 100644
 --- a/lib/ctlv/Makefile
 +++ b/lib/ctlv/Makefile
-@@ -1,4 +1,5 @@
+@@ -1,5 +1,5 @@
  # SPDX-License-Identifier: GPL-2.0
  obj-$(CONFIG_CTLV) += ctlv.o
  
--ctlv-y += blob.o blob_desc.o builder.o message.o schema.o
-+ctlv-y += blob.o blob_desc.o builder.o introspection.o message.o \
-+	  schema.o
-diff --git a/lib/ctlv/internal.h b/lib/ctlv/internal.h
-index 1dbab9709261..2e1e36799a17 100644
---- a/lib/ctlv/internal.h
-+++ b/lib/ctlv/internal.h
-@@ -60,6 +60,7 @@ struct ctlv_query_fragment {
- };
- 
- struct ctlv_op_ctx {
-+	struct ctlv *ctlv;
- 	const struct ctlv_family *family;
- 	/* Compared against current and never followed: identity, not a hold. */
- 	const struct task_struct *submitter;
-@@ -79,4 +80,6 @@ struct ctlv_op_ctx {
- 	struct ctlv_error error;
- };
- 
-+struct ctlv_op_entry *ctlv_op_find(struct ctlv *ctlv, u64 op_id);
-+
- #endif /* _CTLV_INTERNAL_H */
-diff --git a/lib/ctlv/introspection.c b/lib/ctlv/introspection.c
+-ctlv-y += blob.o blob_desc.o builder.o introspection.o message.o \
+-	  schema.o
++ctlv-y += blob.o blob_desc.o builder.o core.o introspection.o \
++	  message.o schema.o ctlv_gen.o
+diff --git a/lib/ctlv/core.c b/lib/ctlv/core.c
 new file mode 100644
-index 000000000000..d030debe69e3
+index 000000000000..605f191de77b
 --- /dev/null
-+++ b/lib/ctlv/introspection.c
-@@ -0,0 +1,505 @@
++++ b/lib/ctlv/core.c
+@@ -0,0 +1,1152 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
 + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Root-family discovery queries and their fragmentation.
 + */
-+
-+#include <linux/bitfield.h>
++#define pr_fmt(fmt) "ctlv: " fmt
 +#include <linux/bitmap.h>
-+#include <linux/bits.h>
++#include <linux/bitops.h>
++#include <linux/build_bug.h>
 +#include <linux/cleanup.h>
++#include <linux/container_of.h>
 +#include <linux/ctlv.h>
 +#include <linux/ctlv_gen.h>
-+#include <linux/errno.h>
++#include <linux/device.h>
++#include <linux/err.h>
++#include <linux/fs.h>
++#include <linux/kobject.h>
++#include <linux/list.h>
++#include <linux/lockdep.h>
++#include <linux/module.h>
++#include <linux/mutex.h>
++#include <linux/overflow.h>
 +#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+#include <linux/types.h>
++#include <linux/stddef.h>
++#include <linux/string.h>
++#include <linux/uaccess.h>
++#include <linux/vmalloc.h>
 +
++#include <uapi/ctlv/ctlv.h>
++
++#include "blob.h"
++#include "builder.h"
 +#include "internal.h"
 +#include "schema.h"
 +
-+/* A cursor packs the entry and member where fragmentation resumes. */
-+#define CTLV_INTROSPECTION_MEMBER_MASK GENMASK_U64(63, 48)
-+#define CTLV_INTROSPECTION_ENTRY_MASK GENMASK_U64(47, 0)
-+
 +/*
-+ * family-get: the entry is a family's position in the chain from the root,
-+ * the member its next field. op-get: the entry indexes the published ops,
-+ * the member is the next CTLV_INTROSPECTION_OP_FIELD_*.
++ * One layout on every ABI, including compat. Alignment is asserted too because
++ * a 32-bit ABI aligns a plain __u64 to four bytes.
 + */
-+struct ctlv_introspection_dump_position {
-+	u64 entry;
-+	u32 member;
++static_assert(sizeof(struct ctlv_hdr) == 16);
++static_assert(__alignof__(struct ctlv_hdr) == CTLV_ALIGNTO);
++
++static_assert(sizeof(struct ctlv_op_exec) == 56);
++static_assert(__alignof__(struct ctlv_op_exec) == CTLV_ALIGNTO);
++
++/* Claims persist across unload so one ID cannot later name another family. */
++struct ctlv_family_claim {
++	struct list_head entry;
++	char *name;
++	u16 family_id;
 +};
 +
-+static void ctlv_introspection_dump_resume(struct ctlv_introspection_dump_position *pos, u64 cursor)
-+{
-+	pos->entry = FIELD_GET(CTLV_INTROSPECTION_ENTRY_MASK, cursor);
-+	pos->member = FIELD_GET(CTLV_INTROSPECTION_MEMBER_MASK, cursor);
-+}
++static LIST_HEAD(ctlv_family_claims);
++static DEFINE_MUTEX(ctlv_family_claims_lock);
 +
-+static u64 ctlv_introspection_dump_cursor(const struct ctlv_introspection_dump_position *pos)
++static int ctlv_family_claim_add(const struct ctlv_family_schema *schema)
 +{
-+	return FIELD_PREP(CTLV_INTROSPECTION_ENTRY_MASK, pos->entry) |
-+	       FIELD_PREP(CTLV_INTROSPECTION_MEMBER_MASK, pos->member);
-+}
++	struct ctlv_family_claim *claim;
 +
-+static bool ctlv_introspection_family_entry(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
-+					    const struct ctlv_family *family,
-+					    struct ctlv_introspection_dump_position *pos)
-+{
-+	const struct ctlv_family_schema *schema = family->schema;
++	guard(mutex)(&ctlv_family_claims_lock);
++	list_for_each_entry(claim, &ctlv_family_claims, entry) {
++		bool same_id = claim->family_id == schema->family_id;
++		bool same_name = !strcmp(claim->name, schema->name);
 +
-+	if (!ctlv_family_get_families_start(reply, entry))
-+		return false;
-+	if (pos->member == 0) {
-+		if (!ctlv_family_get_families_id_put(entry, schema->family_id))
-+			return false;
-+		pos->member = 1;
++		if (same_id && same_name)
++			return 0;
++		if (same_id || same_name) {
++			pr_err("family %s wants ID %u, which belongs to %s\n", schema->name,
++			       schema->family_id, claim->name);
++			return -EEXIST;
++		}
 +	}
-+	if (pos->member == 1) {
-+		if (!ctlv_family_get_families_name_put(entry, schema->name))
-+			return false;
-+		pos->member = 2;
++
++	claim = kzalloc_obj(*claim, GFP_KERNEL);
++	if (!claim)
++		return -ENOMEM;
++	claim->name = kstrdup(schema->name, GFP_KERNEL);
++	if (!claim->name) {
++		kfree(claim);
++		return -ENOMEM;
 +	}
-+	ctlv_record_end(entry);
-+	pos->member = 0;
-+	return true;
-+}
-+
-+int ctlv_family_get_query(struct ctlv *ctlv, struct ctlv_op_ctx *ctx,
-+			  const struct ctlv_cursor *request, struct ctlv_cursor *reply)
-+{
-+	const struct ctlv_family *family = ctx->family;
-+	u32 levels = ctlv_family_levels(family);
-+	struct ctlv_cursor entry;
-+	struct ctlv_introspection_dump_position pos;
-+
-+	ctlv_introspection_dump_resume(&pos, ctlv_op_query_cursor(ctx));
-+	/* The immutable root-first chain always has generation zero. */
-+	for (; pos.entry < levels; pos.entry++) {
-+		const struct ctlv_family *ancestor =
-+			ctlv_family_ancestor(family, levels - 1 - pos.entry);
-+
-+		if (!ctlv_introspection_family_entry(reply, &entry, ancestor, &pos))
-+			return ctlv_op_query_more(ctx, 0, ctlv_introspection_dump_cursor(&pos));
-+	}
-+	return ctlv_op_query_done(ctx, 0);
-+}
-+
-+/* Snapshot published-op state and generation once per fragment. */
-+struct ctlv_op_snapshot {
-+	unsigned long *disabled;
-+	u64 generation;
-+};
-+
-+static int ctlv_introspection_snapshot_take(struct ctlv *ctlv,
-+					    struct ctlv_op_snapshot *snapshot)
-+{
-+	if (ctlv->dynamic_ops_count) {
-+		snapshot->disabled = bitmap_zalloc(ctlv->dynamic_ops_count, GFP_KERNEL);
-+		if (!snapshot->disabled)
-+			return -ENOMEM;
-+	}
-+	guard(spinlock)(&ctlv->transition_lock);
-+	snapshot->generation = ctlv->state_generation;
-+	if (snapshot->disabled)
-+		bitmap_copy(snapshot->disabled, ctlv->disabled, ctlv->dynamic_ops_count);
++	claim->family_id = schema->family_id;
++	list_add_tail(&claim->entry, &ctlv_family_claims);
 +	return 0;
 +}
 +
-+static bool ctlv_introspection_op_disabled(const struct ctlv_op_snapshot *snapshot,
-+					   const struct ctlv_op_entry *op)
++static void ctlv_family_claims_free(void)
++{
++	struct ctlv_family_claim *claim, *next;
++
++	list_for_each_entry_safe(claim, next, &ctlv_family_claims, entry) {
++		list_del(&claim->entry);
++		kfree(claim->name);
++		kfree(claim);
++	}
++}
++
++/*
++ * Everything resolved below is generated, so a failure here is a bug, checked
++ * anyway because an out-of-tree family comes from another generator.
++ */
++
++static const char *ctlv_family_name(const struct ctlv_family *family)
++{
++	if (!family->schema || !family->schema->name)
++		return "(unnamed)";
++	return family->schema->name;
++}
++
++static int ctlv_family_bad(const struct ctlv_family *family, const char *what)
++{
++	pr_err("family %s: %s\n", ctlv_family_name(family), what);
++	return -EINVAL;
++}
++
++static int ctlv_op_bad(const struct ctlv_family *family, u64 op_id, const char *what)
++{
++	pr_err("family %s: op %#018llx %s\n", ctlv_family_name(family), op_id, what);
++	return -EINVAL;
++}
++
++/*
++ * A family is named its parent's whole name plus a suffix, so one name states
++ * the chain it belongs to and every family of this core is ctlv-something.
++ */
++static int ctlv_family_chain_check(const struct ctlv_family *family)
++{
++	const struct ctlv_family *child;
++
++	for (child = family; child != &ctlv_family; child = child->parent) {
++		const struct ctlv_family *parent;
++		size_t len;
++
++		if (!child)
++			return ctlv_family_bad(family, "heads no chain of the core's");
++		parent = child->parent;
++		if (!child->schema || !parent || !parent->schema)
++			return ctlv_family_bad(child, "does not name a complete parent descriptor");
++		if (!child->schema->name || !parent->schema->name)
++			return ctlv_family_bad(family, "inherits a family with no name");
++		if (parent->schema->family_id >= child->schema->family_id)
++			return ctlv_family_bad(child, "does not follow its parent in the registry");
++		len = strlen(parent->schema->name);
++		if (!len || strncmp(child->schema->name, parent->schema->name, len) ||
++		    child->schema->name[len] != '-')
++			return ctlv_family_bad(family, "is not named after the family it inherits");
++	}
++	return 0;
++}
++
++/* One descriptor of a chain: what it answers with, and what it fills. */
++static int ctlv_family_descriptor_check(const struct ctlv_family *family)
++{
++	const struct ctlv_family_schema *schema = family->schema;
++	u32 index;
++
++	/*
++	 * A family that declares no op of its own binds nothing: what it
++	 * inherited is answered where it was declared.
++	 */
++	if (!schema || !schema->name || !*schema->name || (family->ops_count && !family->ops))
++		return ctlv_family_bad(family, "descriptor is incomplete");
++	/* Every device answers the root family already, as the core. */
++	if (schema->family_id == CTLV_FAMILY_ROOT && family != &ctlv_family)
++		return ctlv_family_bad(family, "claims the root family ID");
++	/* An extension point is answered by whichever family filled it. */
++	if (family->ext_ops_count != schema->ext_fill_schemas_count)
++		return ctlv_family_bad(family, "answers other extension points than it fills");
++	for (index = 0; index < family->ext_ops_count; index++) {
++		const struct ctlv_ext_fill_schema *fill_schema = &schema->ext_fill_schemas[index];
++		const struct ctlv_ext_ops *ext_ops = &family->ext_ops[index];
++
++		if (ext_ops->family_id == fill_schema->family_id &&
++		    ext_ops->ext_id == fill_schema->ext_id)
++			continue;
++		return ctlv_family_bad(family, "answers an extension point it does not fill");
++	}
++	return 0;
++}
++
++/* Every descriptor binds its local schema. */
++static int ctlv_family_descriptors_check(const struct ctlv_family *family)
++{
++	const struct ctlv_family *descriptor;
++
++	for (descriptor = family; descriptor; descriptor = descriptor->parent) {
++		int ret;
++
++		ret = ctlv_family_descriptor_check(descriptor);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++/* The graph a device answers over, and the descriptors standing on it. */
++static int ctlv_family_check(const struct ctlv_family *family)
++{
++	int ret;
++
++	if (!family->schema)
++		return ctlv_family_bad(family, "descriptor is incomplete");
++	ret = ctlv_family_chain_check(family);
++	if (ret)
++		return ret;
++	return ctlv_family_descriptors_check(family);
++}
++
++/* What one walk of the chain has accounted for so far. */
++struct ctlv_op_resolution {
++	const struct ctlv_family *target;
++	const struct ctlv_family *family;
++	u32 bound;
++	u32 dynamic;
++	u64 previous;
++};
++
++/* Every binding of one family answers an op, so a spare one answers nothing. */
++static int ctlv_op_resolution_family_bound(const struct ctlv_op_resolution *state)
++{
++	const struct ctlv_family *family = state->family;
++
++	if (!family || state->bound == family->ops_count)
++		return 0;
++	/* The core's own table is this core's bug, not a family's. */
++	if (WARN_ON_ONCE(family == &ctlv_family))
++		return -EINVAL;
++	return ctlv_family_bad(family, "binds more than its schema asks for");
++}
++
++/*
++ * The ops of one family are contiguous in the walk, so the family before this
++ * one is complete as soon as another family's op arrives.
++ */
++static int ctlv_op_resolution_family_enter(struct ctlv_op_resolution *state,
++					   const struct ctlv_family *family)
++{
++	int ret;
++
++	if (state->family == family)
++		return 0;
++	ret = ctlv_op_resolution_family_bound(state);
++	if (ret)
++		return ret;
++	state->family = family;
++	state->bound = 0;
++	return 0;
++}
++
++static int ctlv_op_resolution_add(struct ctlv_op_resolution *state, const struct ctlv_family *owner,
++				  const struct ctlv_op_schema *op, struct ctlv_op_entry *entry)
++{
++	const struct ctlv_family *target = state->target;
++	const struct ctlv_family *family = state->family;
++	int ret;
++
++	entry->schema = op;
++	entry->state_index = CTLV_OP_STATE_NONE;
++
++	/*
++	 * An op ID is its family's ID and a number within it, so a walk from
++	 * the oldest ancestor down ascends, which covers uniqueness too.
++	 */
++	if (!CTLV_OP_NUMBER(op->op_id) || CTLV_OP_FAMILY(op->op_id) != owner->schema->family_id)
++		return ctlv_op_bad(target, op->op_id, "belongs to another family");
++	if (op->op_id <= state->previous)
++		return ctlv_op_bad(target, op->op_id, "is out of order");
++	state->previous = op->op_id;
++
++	switch (op->type) {
++	case CTLV_OP_TYPE_ACTION:
++	case CTLV_OP_TYPE_QUERY:
++		if (op->fd_access != CTLV_OP_FD_ACCESS_READ &&
++		    op->fd_access != CTLV_OP_FD_ACCESS_READ_WRITE)
++			return ctlv_op_bad(family, op->op_id, "has an unknown fd access");
++		/* The family that declared the op is the one that answers it. */
++		if (state->bound >= family->ops_count)
++			return ctlv_op_bad(family, op->op_id, "has nothing bound to it");
++		entry->binding = &family->ops[state->bound++];
++		/* Required even for an op this device disables or withholds. */
++		if (!entry->binding->action)
++			return ctlv_op_bad(family, op->op_id, "has no callback");
++		/* An optional op arrives absent, for the opt-in to clear. */
++		entry->absent = op->optional;
++		/* An op has a whole pair of hooks of its own, or none. */
++		if (!entry->binding->pre != !entry->binding->post)
++			return ctlv_op_bad(family, op->op_id, "has half a hook pair");
++		/* No message carries a pair, so this is the only check of it. */
++		if (!entry->binding->pre != !op->pre_post)
++			return ctlv_op_bad(family, op->op_id, "disagrees about its hook pair");
++		break;
++	default:
++		return ctlv_op_bad(target, op->op_id, "has an unknown type");
++	}
++
++	switch (op->availability) {
++	case CTLV_OP_AVAILABILITY_FIXED:
++		break;
++	case CTLV_OP_AVAILABILITY_DYNAMIC:
++		/*
++		 * Numbered from zero as the walk meets them, per device: two
++		 * families of one chain need not have the same ops.
++		 */
++		entry->state_index = state->dynamic++;
++		break;
++	default:
++		return ctlv_op_bad(target, op->op_id, "has an unknown availability");
++	}
++
++	/*
++	 * Once per device: what an inherited op may carry depends on the
++	 * extension points this family filled and on nothing that changes later.
++	 */
++	ret = ctlv_schema_op_sizes(target, op, &entry->sizes);
++	if (ret)
++		return ctlv_op_bad(target, op->op_id, "needs messages this core cannot carry");
++	return 0;
++}
++
++static int ctlv_op_resolution_init(struct ctlv *ctlv, const struct ctlv_family *family)
++{
++	struct ctlv_op_resolution state = {
++		.target = family,
++	};
++	const struct ctlv_family *owner;
++	const struct ctlv_op_schema *op;
++	struct ctlv_schema_cursor cursor;
++	u32 ops_count = 0;
++	int ret;
++
++	ret = ctlv_family_check(family);
++	if (ret)
++		return ret;
++
++	ctlv_schema_cursor_init(&cursor, family);
++	while (ctlv_schema_next_op(&cursor, &owner))
++		ops_count++;
++	if (!ops_count)
++		return ctlv_family_bad(family, "has an effective schema with no op");
++
++	ctlv->ops = kcalloc(ops_count, sizeof(*ctlv->ops), GFP_KERNEL);
++	if (!ctlv->ops)
++		return -ENOMEM;
++	ctlv->ops_count = ops_count;
++
++	ops_count = 0;
++	ctlv_schema_cursor_init(&cursor, family);
++	while ((op = ctlv_schema_next_op(&cursor, &owner))) {
++		ret = ctlv_op_resolution_family_enter(&state, owner);
++		if (ret)
++			return ret;
++		ret = ctlv_op_resolution_add(&state, owner, op, &ctlv->ops[ops_count++]);
++		if (ret)
++			return ret;
++	}
++	/* The device family, no op of another having ended its table. */
++	ret = ctlv_op_resolution_family_bound(&state);
++	if (ret)
++		return ret;
++	ctlv->dynamic_ops_count = state.dynamic;
++	return 0;
++}
++
++/**
++ * ctlv_family_inherits - Check a family's ancestry.
++ * @family: family
++ * @ancestor: family that may be @family or one of its ancestors
++ *
++ * Return: whether @family is @ancestor or inherits from it.
++ */
++bool ctlv_family_inherits(const struct ctlv_family *family,
++			  const struct ctlv_family *ancestor)
++{
++	for (; family; family = family->parent)
++		if (family == ancestor)
++			return true;
++	return false;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_family_inherits, "CTLV");
++
++/*
++ * Dispatch reads the availability bit under no lock, so an op already admitted
++ * is neither cancelled nor waited for by a disable.
++ */
++
++struct ctlv_op_entry *ctlv_op_find(struct ctlv *ctlv, u64 op_id)
++{
++	u32 index;
++
++	/* The index ascends by op ID, so a miss stops early. */
++	for (index = 0; index < ctlv->ops_count; index++) {
++		if (ctlv->ops[index].schema->op_id == op_id)
++			return &ctlv->ops[index];
++		if (ctlv->ops[index].schema->op_id > op_id)
++			break;
++	}
++	return NULL;
++}
++
++static bool ctlv_op_disabled(struct ctlv *ctlv, const struct ctlv_op_entry *op)
 +{
 +	if (op->state_index == CTLV_OP_STATE_NONE)
 +		return false;
-+	return test_bit(op->state_index, snapshot->disabled);
++	/* Acquire, so what the family prepared before enabling is visible. */
++	return test_bit_acquire(op->state_index, ctlv->disabled);
 +}
 +
-+/* Report effective lengths, including descendant fills. */
-+enum ctlv_introspection_op_field {
-+	CTLV_INTROSPECTION_OP_FIELD_ID = 0,
-+	CTLV_INTROSPECTION_OP_FIELD_TYPE = 1,
-+	CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY = 2,
-+	CTLV_INTROSPECTION_OP_FIELD_DISABLED = 3,
-+	CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN = 4,
-+	CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN = 5,
-+	CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_MIN_LEN = 6,
-+	CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_SUGGESTED_LEN = 7,
-+	CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS = 8,
-+	CTLV_INTROSPECTION_OP_FIELD_ERROR_INFO_MAX_LEN = 9,
-+	CTLV_INTROSPECTION_OP_FIELD_END = 10,
-+};
-+
-+static bool ctlv_introspection_op_field_put(struct ctlv_cursor *entry,
-+					    const struct ctlv_op_snapshot *snapshot,
-+					    const struct ctlv_op_entry *op, u32 member)
++static void ctlv_op_publish_all(struct ctlv *ctlv)
 +{
-+	const struct ctlv_op_sizes *sizes = &op->sizes;
++	u32 published = 0;
++	u32 index;
 +
-+	switch (member) {
-+	case CTLV_INTROSPECTION_OP_FIELD_ID:
-+		return ctlv_op_get_ops_id_put(entry, op->schema->op_id);
-+	case CTLV_INTROSPECTION_OP_FIELD_TYPE:
-+		return ctlv_op_get_ops_type_put(entry, op->schema->type);
-+	case CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY:
-+		return ctlv_op_get_ops_availability_put(entry, op->schema->availability);
-+	case CTLV_INTROSPECTION_OP_FIELD_DISABLED:
-+		return ctlv_op_get_ops_disabled_put(entry,
-+						    ctlv_introspection_op_disabled(snapshot, op));
-+	case CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN:
-+		return ctlv_op_get_ops_request_max_len_put(entry, sizes->request_max_len);
-+	case CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN:
-+		/* Zero is a reply that acknowledges and no more. */
-+		return ctlv_op_get_ops_action_reply_max_len_put(entry,
-+								sizes->action_reply_max_len);
-+	case CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_MIN_LEN:
-+		return ctlv_op_get_ops_query_reply_min_len_put(entry, sizes->query_reply_min_len);
-+	case CTLV_INTROSPECTION_OP_FIELD_QUERY_REPLY_SUGGESTED_LEN:
-+		return ctlv_op_get_ops_query_reply_suggested_len_put(
-+			entry, sizes->query_reply_suggested_len);
-+	case CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS:
-+		return ctlv_op_get_ops_fd_access_put(entry, op->schema->fd_access);
-+	default:
-+		return ctlv_op_get_ops_error_info_max_len_put(entry, CTLV_ERROR_INFO_MAX_LEN);
-+	}
-+}
-+
-+static bool ctlv_introspection_op_field_applies(const struct ctlv_op_entry *op, u32 member)
-+{
-+	switch (member) {
-+	case CTLV_INTROSPECTION_OP_FIELD_ID:
-+	case CTLV_INTROSPECTION_OP_FIELD_TYPE:
-+	case CTLV_INTROSPECTION_OP_FIELD_AVAILABILITY:
-+	case CTLV_INTROSPECTION_OP_FIELD_DISABLED:
-+	case CTLV_INTROSPECTION_OP_FIELD_REQUEST_MAX_LEN:
-+	case CTLV_INTROSPECTION_OP_FIELD_FD_ACCESS:
-+	case CTLV_INTROSPECTION_OP_FIELD_ERROR_INFO_MAX_LEN:
-+		return true;
-+	case CTLV_INTROSPECTION_OP_FIELD_ACTION_REPLY_MAX_LEN:
-+		return op->schema->type == CTLV_OP_TYPE_ACTION;
-+	default:
-+		return op->schema->type == CTLV_OP_TYPE_QUERY;
-+	}
-+}
-+
-+static bool ctlv_introspection_op_entry(struct ctlv_cursor *reply, struct ctlv_cursor *entry,
-+					const struct ctlv_op_snapshot *snapshot,
-+					const struct ctlv_op_entry *op,
-+					struct ctlv_introspection_dump_position *pos)
-+{
-+	if (!ctlv_op_get_ops_start(reply, entry))
-+		return false;
-+	for (; pos->member < CTLV_INTROSPECTION_OP_FIELD_END; pos->member++) {
-+		if (!ctlv_introspection_op_field_applies(op, pos->member))
++	/* Against a family still opting in as this is called. */
++	guard(spinlock)(&ctlv->transition_lock);
++	for (index = 0; index < ctlv->ops_count; index++) {
++		if (ctlv->ops[index].absent)
 +			continue;
-+		if (!ctlv_introspection_op_field_put(entry, snapshot, op, pos->member))
-+			return false;
++		ctlv->ops[published++] = ctlv->ops[index];
 +	}
-+	ctlv_record_end(entry);
-+	pos->member = 0;
-+	return true;
++	ctlv->ops_count = published;
++	ctlv->published = true;
 +}
 +
-+int ctlv_op_get_query(struct ctlv *ctlv, struct ctlv_op_ctx *ctx,
-+		      const struct ctlv_cursor *request, struct ctlv_cursor *reply)
++void ctlv_op_provide(struct ctlv *ctlv, u64 op_id)
 +{
-+	struct ctlv_op_snapshot snapshot = {};
-+	struct ctlv_cursor entry;
-+	struct ctlv_introspection_dump_position pos;
-+	int ret;
++	struct ctlv_op_entry *op;
 +
-+	ret = ctlv_introspection_snapshot_take(ctlv, &snapshot);
-+	if (ret)
-+		return ret;
-+	unsigned long *disabled __free(bitmap) = snapshot.disabled;
-+
-+	/* The published index is immutable, so a cursor into it holds. */
-+	ctlv_introspection_dump_resume(&pos, ctlv_op_query_cursor(ctx));
-+	for (; pos.entry < ctlv->ops_count; pos.entry++)
-+		if (!ctlv_introspection_op_entry(reply, &entry, &snapshot,
-+						 &ctlv->ops[pos.entry], &pos))
-+			return ctlv_op_query_more(ctx, snapshot.generation,
-+						  ctlv_introspection_dump_cursor(&pos));
-+	return ctlv_op_query_done(ctx, snapshot.generation);
++	guard(spinlock)(&ctlv->transition_lock);
++	if (WARN_ON_ONCE(ctlv->published || ctlv->destroying))
++		return;
++	op = ctlv_op_find(ctlv, op_id);
++	if (WARN_ON_ONCE(!op))
++		return;
++	op->absent = false;
 +}
++EXPORT_SYMBOL_NS_GPL(ctlv_op_provide, "CTLV");
 +
-+/* A leaf-count cursor permits a fragment boundary at any tree depth. */
-+
-+/* One record of the description, standing for one node of the schema. */
-+struct ctlv_introspection_frame {
-+	struct ctlv_cursor record;
-+	u64 type;
-+	bool open;
-+	/* Which node this stands for, so that a re-entry can be measured. */
-+	const struct ctlv_schema_tree *tree;
-+	u32 node;
-+};
-+
-+/* The frames outlive the walk, as a fragment's open records must stay alive. */
-+struct ctlv_introspection_walk {
-+	const struct ctlv_family *family;
-+	struct ctlv_cursor *root;
-+	struct ctlv_introspection_frame *frames;
-+	u64 ordinal;
-+	u64 resume;
-+	int error;
-+};
-+
-+/* A record is opened by the first thing written inside it. */
-+static bool ctlv_introspection_open(struct ctlv_introspection_walk *walk, u32 depth)
++void ctlv_op_state_set(struct ctlv *ctlv, u64 op_id, bool disabled)
 +{
-+	struct ctlv_introspection_frame *frame = &walk->frames[depth];
-+	struct ctlv_cursor *up = walk->root;
++	const struct ctlv_op_entry *op;
 +
-+	if (frame->open)
-+		return true;
-+	if (depth) {
-+		if (!ctlv_introspection_open(walk, depth - 1))
-+			return false;
-+		up = &walk->frames[depth - 1].record;
-+	}
-+	if (!ctlv_record_start(up, &frame->record, frame->type, CTLV_SCHEMA_RECORD))
-+		return false;
-+	frame->open = true;
-+	return true;
++	/*
++	 * Also serializes lookup against publication, which compacts the
++	 * array, and against teardown stopping state changes.
++	 */
++	guard(spinlock)(&ctlv->transition_lock);
++	if (ctlv->destroying)
++		return;
++
++	op = ctlv_op_find(ctlv, op_id);
++	if (WARN_ON_ONCE(!op) || WARN_ON_ONCE(op->state_index == CTLV_OP_STATE_NONE))
++		return;
++	/* An op this device never took on has no state to change. */
++	if (WARN_ON_ONCE(op->absent))
++		return;
++
++	/*
++	 * Fully ordered, releasing what the family prepared to the acquire in
++	 * ctlv_op_disabled(). The old state makes a repeat change nothing.
++	 */
++	if (disabled ? test_and_set_bit(op->state_index, ctlv->disabled) :
++		       !test_and_clear_bit(op->state_index, ctlv->disabled))
++		return;
++
++	if (!ctlv->published)
++		return;
++	ctlv->state_generation++;
 +}
++EXPORT_SYMBOL_NS_GPL(ctlv_op_state_set, "CTLV");
 +
-+/* Skipped leaves advance the ordinal; a failed write remains the resume point. */
-+static bool ctlv_introspection_put(struct ctlv_introspection_walk *walk, u32 depth, u64 type,
-+				   u8 kind, u64 value)
++static int ctlv_op_check_mode(const struct file *filp, const struct ctlv_op_entry *op)
 +{
-+	struct ctlv_cursor *record = &walk->frames[depth].record;
-+	bool ok;
-+
-+	if (walk->ordinal < walk->resume) {
-+		walk->ordinal++;
-+		return true;
-+	}
-+	if (!ctlv_introspection_open(walk, depth))
-+		return false;
-+	if (kind == CTLV_SCHEMA_SINT)
-+		ok = ctlv_put_s64(record, type, kind, value);
-+	else
-+		ok = ctlv_put_u64(record, type, kind, value);
-+	if (!ok)
-+		return false;
-+	walk->ordinal++;
-+	return true;
-+}
-+
-+static bool ctlv_introspection_uint(struct ctlv_introspection_walk *walk, u32 depth, u64 type,
-+				    u64 value)
-+{
-+	return ctlv_introspection_put(walk, depth, type, CTLV_SCHEMA_UINT, value);
-+}
-+
-+/* Emit only constraints for this node's schema kind. */
-+static bool ctlv_introspection_node_fields(struct ctlv_introspection_walk *walk, u32 depth,
-+					   const struct ctlv_node_schema *node, u32 reenters)
-+{
-+	if (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_TYPE, node->type) ||
-+	    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_KIND, node->kind) ||
-+	    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MAX_OCCURRENCES,
-+				     node->max_occurrences))
-+		return false;
-+
-+	switch (node->kind) {
-+	case CTLV_SCHEMA_ENUM:
-+		/* An extension point's maximum is 0 when nothing filled it. */
-+		if (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MIN,
-+					     node->is_enum_ext ? 1 : node->range.min) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MAX,
-+					     ctlv_schema_enum_max(walk->family, node)))
-+			return false;
-+		break;
-+	case CTLV_SCHEMA_UINT:
-+	case CTLV_SCHEMA_SINT:
-+		if (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MIN,
-+					     node->range.min) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MAX,
-+					     node->range.max))
-+			return false;
-+		break;
-+	case CTLV_SCHEMA_FLAGS:
-+		if (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_FLAGS_MASK,
-+					     node->flags_mask))
-+			return false;
-+		break;
-+	case CTLV_SCHEMA_STRING:
-+	case CTLV_SCHEMA_BINARY:
-+		if (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MIN_LENGTH,
-+					     node->length.min_len) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_MAX_LENGTH,
-+					     node->length.max_len))
-+			return false;
-+		break;
-+	case CTLV_SCHEMA_BLOB:
-+		if (!ctlv_introspection_put(walk, depth, CTLV_T_SCHEMA_NODE_BLOB_DIRECTION,
-+					    CTLV_SCHEMA_ENUM, node->blob.direction) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_BLOB_BACKINGS,
-+					     node->blob.backings) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_BLOB_MAX_LENGTH,
-+					     node->blob.max_len) ||
-+		    !ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_BLOB_ALIGNMENT,
-+					     node->blob.alignment))
-+			return false;
-+		break;
++	switch (op->schema->fd_access) {
++	case CTLV_OP_FD_ACCESS_READ:
++		return filp->f_mode & FMODE_READ ? 0 : -EACCES;
++	case CTLV_OP_FD_ACCESS_READ_WRITE:
++		return (filp->f_mode & (FMODE_READ | FMODE_WRITE)) == (FMODE_READ | FMODE_WRITE) ?
++			       0 :
++			       -EACCES;
 +	default:
-+		break;
++		/* Registration rejects this before the device is visible. */
++		return -EACCES;
 +	}
-+
-+	if (node->unit != CTLV_UNIT_NONE &&
-+	    (!ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_UNIT, node->unit) ||
-+	     !ctlv_introspection_put(walk, depth, CTLV_T_SCHEMA_NODE_SCALE, CTLV_SCHEMA_SINT,
-+				     node->scale)))
-+		return false;
-+	return !reenters ||
-+	       ctlv_introspection_uint(walk, depth, CTLV_T_SCHEMA_NODE_REENTERS, reenters);
 +}
 +
-+/* Re-entry targets an ancestor with the same child range. */
-+static u32 ctlv_introspection_reenters(struct ctlv_introspection_walk *walk, u32 depth,
-+				       const struct ctlv_schema_tree *tree,
-+				       const struct ctlv_node_schema *node)
++static u32 ctlv_reply_needed(const struct ctlv_op_entry *op)
 +{
-+	u32 levels;
++	if (op->schema->type == CTLV_OP_TYPE_QUERY)
++		return op->sizes.query_reply_min_len;
++	return op->sizes.action_reply_max_len;
++}
 +
-+	for (levels = 1; levels <= depth; levels++) {
-+		const struct ctlv_introspection_frame *up = &walk->frames[depth - levels];
-+
-+		if (up->tree == tree &&
-+		    tree->node_schemas[up->node].first_child == node->first_child)
-+			return levels;
++/*
++ * request_len is the copy boundary; root length frames the message. Ignored
++ * unknown TLVs may exceed the schema maximum up to the transport limit.
++ */
++static int ctlv_request_frame(struct ctlv_op_ctx *ctx, const struct ctlv_op_exec *exec,
++			      const struct ctlv_hdr *root)
++{
++	if (root->len < sizeof(*root) || root->len > exec->request_len ||
++	    root->type != CTLV_TYPE_ROOT || root->flags != CTLV_HDR_F_RECORD) {
++		ctx->error.reason = CTLV_VALIDATION_REASON_MALFORMED_MESSAGE;
++		return -EINVAL;
 +	}
-+	/* A back edge to nothing is metadata this core cannot describe. */
-+	CTLV_ASSERT(0);
-+	walk->error = -EINVAL;
 +	return 0;
 +}
 +
-+static bool ctlv_introspection_node(struct ctlv_introspection_walk *walk, u32 depth,
-+				    const struct ctlv_schema_tree *tree, u32 index);
-+
-+/* The members of a fill inherit the optionality of its extension point. */
-+static bool ctlv_introspection_children(struct ctlv_introspection_walk *walk, u32 depth,
-+					const struct ctlv_schema_tree *tree, u32 index,
-+					bool force_optional)
++static int ctlv_request_validate(struct ctlv_op_ctx *ctx, const struct ctlv_op_exec *exec,
++				 struct ctlv_hdr *root)
 +{
-+	const struct ctlv_node_schema *node = &tree->node_schemas[index];
-+	u32 i;
++	int ret;
 +
-+	if (WARN_ON_ONCE(depth + 1 >= CTLV_MAX_RECORD_DEPTH)) {
-+		/* Deeper than a specification may declare, so unreachable. */
-+		walk->error = -EINVAL;
-+		return false;
-+	}
-+	for (i = 0; i < node->children_count; i++) {
-+		u32 child = node->first_child + i;
-+		bool required = !force_optional && i < node->required_children_count;
++	ret = ctlv_request_frame(ctx, exec, root);
++	if (ret)
++		return ret;
++	if (!ctx->op->schema->request.node_schemas)
++		return 0;
 +
-+		walk->frames[depth + 1] = (struct ctlv_introspection_frame){
-+			.type = required ? CTLV_T_SCHEMA_NODE_FIELDS :
-+					      CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS,
-+			.tree = tree,
-+			.node = child,
-+		};
-+		if (!ctlv_introspection_node(walk, depth + 1, tree, child))
-+			return false;
-+	}
-+	for (i = 0; i < tree->ext_schemas_count; i++) {
-+		const struct ctlv_ext_schema *ext_schema = &tree->ext_schemas[i];
-+		const struct ctlv_ext_fill_schema *fill_schema;
-+
-+		if (ext_schema->node != index)
-+			continue;
-+		fill_schema =
-+			ctlv_schema_fill(walk->family, ext_schema->family_id, ext_schema->ext_id);
-+		/* Nothing of this chain filled it, so it contributes none. */
-+		if (!fill_schema)
-+			continue;
-+		/* Its root is the extension point, its children the members. */
-+		if (!ctlv_introspection_children(walk, depth, &fill_schema->members, 0,
-+						 force_optional || ext_schema->optional))
-+			return false;
-+	}
-+	return true;
-+}
-+
-+/* One node, into the record that stands for it. */
-+static bool ctlv_introspection_node(struct ctlv_introspection_walk *walk, u32 depth,
-+				    const struct ctlv_schema_tree *tree, u32 index)
-+{
-+	const struct ctlv_node_schema *node = &tree->node_schemas[index];
-+	u32 reenters = 0;
-+
-+	if (node->reenters) {
-+		reenters = ctlv_introspection_reenters(walk, depth, tree, node);
-+		if (!reenters)
-+			return false;
-+	}
-+	if (!ctlv_introspection_node_fields(walk, depth, node, reenters))
-+		return false;
-+	/*
-+	 * A node that re-enters a level says so instead of listing that level's
-+	 * members again, which is what makes unbounded depth describable.
-+	 */
-+	if (!node->reenters && !ctlv_introspection_children(walk, depth, tree, index, false))
-+		return false;
-+	if (walk->frames[depth].open)
-+		ctlv_record_end(&walk->frames[depth].record);
-+	return true;
-+}
-+
-+/* One of the two messages of an op, the root of it being a node like any. */
-+static bool ctlv_introspection_message(struct ctlv_introspection_walk *walk, u64 type,
-+				       const struct ctlv_schema_tree *tree)
-+{
-+	/* An op without such a message has nothing to describe. */
-+	if (!tree->node_schemas)
-+		return true;
-+	walk->frames[0] = (struct ctlv_introspection_frame){
-+		.type = type,
-+		.tree = tree,
-+	};
-+	return ctlv_introspection_node(walk, 0, tree, 0);
-+}
-+
-+int ctlv_op_schema_get_query(struct ctlv *ctlv, struct ctlv_op_ctx *ctx,
-+			     const struct ctlv_cursor *request, struct ctlv_cursor *reply)
-+{
-+	struct ctlv_introspection_walk walk = {
++	ctx->request = (struct ctlv_msg){
++		.root = root,
++		.len = exec->request_len,
++		.tree = &ctx->op->schema->request,
 +		.family = ctx->family,
-+		.root = reply,
-+		.resume = ctlv_op_query_cursor(ctx),
++		.request = true,
 +	};
-+	const struct ctlv_op_entry *op;
++	return ctlv_schema_validate(&ctx->request, &ctx->error);
++}
 +
-+	/* Describe published ops regardless of current dynamic state. */
-+	op = ctlv_op_find(ctx->ctlv, ctlv_op_schema_get_id_get(request));
++/*
++ * An action is given exactly the maximum its schema allows, so running out of
++ * room is this kernel's mistake. A query is given whatever the caller offered,
++ * up to the longest fragment this core builds.
++ */
++static u32 ctlv_reply_capacity(const struct ctlv_op_entry *op, const struct ctlv_op_exec *exec)
++{
++	if (!op->schema->reply.node_schemas)
++		return 0;
++	if (op->schema->type == CTLV_OP_TYPE_QUERY)
++		return min(exec->reply_len, CTLV_MAX_INLINE_MESSAGE_LEN);
++	return op->sizes.action_reply_max_len;
++}
++
++/* Actions and final query fragments must be complete schema-valid replies. */
++static int ctlv_reply_finish(struct ctlv_op_ctx *ctx)
++{
++	struct ctlv_error refused = {};
++
++	if (!ctx->output.root)
++		return 0;
++	/* Whatever poisoned it has warned about it already. */
++	if (ctx->output.poison)
++		return ctx->output.poison;
++	/* A query was held to its open records by the ending it came to. */
++	if (ctx->op->schema->type == CTLV_OP_TYPE_QUERY) {
++		if (ctx->frag.cursor || ctx->frag.next_cursor)
++			return 0;
++	} else if (WARN_ON_ONCE(ctx->deepest != &ctx->output_root)) {
++		/* A cursor of a returned frame is reset, never followed. */
++		ctx->deepest = &ctx->output_root;
++		return -EINVAL;
++	}
++	if (WARN_ON_ONCE(ctlv_schema_validate(&ctx->output, &refused)))
++		return -EINVAL;
++	return 0;
++}
++
++/* A successful query callback must end exactly one fragment. */
++static int ctlv_query_fragment_result(struct ctlv_op_ctx *ctx)
++{
++	if (WARN_ON_ONCE(!ctx->frag.answered))
++		return -EINVAL;
++	return ctx->frag.result;
++}
++
++static int ctlv_op_call(struct ctlv_op_ctx *ctx)
++{
++	const struct ctlv_op_entry *op = ctx->op;
++	struct ctlv_cursor *request = NULL;
++	struct ctlv_cursor *reply = NULL;
++	int blob_ret;
++	int ret;
++
++	if (ctx->request.root) {
++		ctlv_message_root(&ctx->request_root, &ctx->request);
++		request = &ctx->request_root;
++	}
++	if (ctx->output.root)
++		reply = &ctx->output_root;
++
++	ctlv_blob_context_init(ctx);
++	if (op->schema->type == CTLV_OP_TYPE_ACTION) {
++		ret = op->binding->action(ctx->ctlv, ctx, request, reply);
++	} else {
++		ret = op->binding->query(ctx->ctlv, ctx, request, reply);
++		if (!ret)
++			ret = ctlv_query_fragment_result(ctx);
++	}
++	blob_ret = ctlv_blob_context_finish(ctx);
++	if (!ret)
++		ret = blob_ret;
++	if (ret)
++		return ret;
++	return ctlv_reply_finish(ctx);
++}
++
++/*
++ * The device's hooks around the declaring op's, except around a core op. The
++ * availability check is innermost.
++ */
++static int ctlv_op_dispatch(struct ctlv_op_ctx *ctx)
++{
++	const struct ctlv_hooks *hooks = ctx->ctlv->hooks;
++	const struct ctlv_op *op = ctx->op->binding;
++	struct ctlv *ctlv = ctx->ctlv;
++	int ret;
++
++	if (CTLV_OP_FAMILY(ctx->op->schema->op_id) == CTLV_FAMILY_ROOT)
++		hooks = NULL;
++	if (hooks) {
++		ret = hooks->pre(ctlv, ctx);
++		if (ret)
++			return ret;
++	}
++
++	if (op->pre) {
++		ret = op->pre(ctlv, ctx);
++		if (ret)
++			goto out;
++	}
++
++	/* The only authoritative check: introspection is advisory. */
++	if (ctlv_op_disabled(ctlv, ctx->op))
++		ret = -EOPNOTSUPP;
++	else
++		ret = ctlv_op_call(ctx);
++
++	if (op->post)
++		op->post(ctlv, ctx);
++out:
++	if (hooks)
++		hooks->post(ctlv, ctx);
++	return ret;
++}
++
++/* Error information replaces the reply atomically; errno remains authoritative. */
++static void ctlv_error_info(struct ctlv_op_ctx *ctx, u32 room, void **reply, u32 *reply_len)
++{
++	const struct ctlv_error *error = &ctx->error;
++	struct ctlv_cursor *root = &ctx->output_root;
++	void *buf;
++
++	if ((!error->reason && !error->message[0]) || !room)
++		return;
++	buf = kvmalloc(CTLV_ERROR_INFO_MAX_LEN, GFP_KERNEL_ACCOUNT);
++	if (!buf)
++		return;
++
++	/* The same builder over another schema, and a buffer of its own. */
++	ctlv_message_output_init(&ctx->output, ctx, buf, CTLV_ERROR_INFO_MAX_LEN,
++				 &ctlv_error_info_schema);
++	ctlv_message_root(root, &ctx->output);
++	ctx->deepest = root;
++
++	if (error->reason)
++		ctlv_put_u64(root, CTLV_T_ERROR_INFO_REASON, CTLV_SCHEMA_ENUM, error->reason);
++	if (error->message[0])
++		ctlv_error_info_message_put(root, error->message);
++	if (error->reason == CTLV_VALIDATION_REASON_STALE_GENERATION) {
++		/* The one failure that is about no part of any message. */
++		ctlv_put_u64(root, CTLV_T_ERROR_INFO_EXPECTED_GENERATION, CTLV_SCHEMA_UINT,
++			     error->expected_generation);
++		ctlv_put_u64(root, CTLV_T_ERROR_INFO_CURRENT_GENERATION, CTLV_SCHEMA_UINT,
++			     error->current_generation);
++	} else if (error->reason) {
++		ctlv_put_u64(root, CTLV_T_ERROR_INFO_BAD_TLV_OFFSET, CTLV_SCHEMA_UINT,
++			     error->bad_tlv_offset);
++		ctlv_put_u64(root, CTLV_T_ERROR_INFO_RECORD_OFFSET, CTLV_SCHEMA_UINT,
++			     error->record_offset);
++		/* No field's type is zero, so a zero names nothing. */
++		if (error->missing_type)
++			ctlv_put_u64(root, CTLV_T_ERROR_INFO_MISSING_TYPE, CTLV_SCHEMA_UINT,
++				     error->missing_type);
++		if (error->required_length)
++			ctlv_put_u64(root, CTLV_T_ERROR_INFO_REQUIRED_LENGTH, CTLV_SCHEMA_UINT,
++				     error->required_length);
++	}
++
++	if (ctx->output.poison || ctx->output.root->len > room) {
++		kvfree(buf);
++		return;
++	}
++	*reply = buf;
++	*reply_len = ctx->output.root->len;
++}
++
++struct ctlv_file {
++	struct ctlv *ctlv;
++	/* The device file, whose release frees this. */
++	struct file *filp;
++};
++
++/*
++ * Everything that needs the device to still have a family. @reply is built
++ * here and becomes the caller's to free, to copy out once the family is gone.
++ */
++static int ctlv_op_exec(struct ctlv_file *cfile, struct ctlv_op_exec *exec,
++			void *snapshot, void **reply, u32 *reply_len)
++{
++	struct ctlv *ctlv = cfile->ctlv;
++	const struct ctlv_op_entry *op;
++	struct ctlv_op_ctx ctx = {};
++	void *out = NULL;
++	u32 capacity;
++	int ret;
++
++	/* No family numbers an op zero, so a zero here is an unset field. */
++	if (!exec->op_id)
++		return -EINVAL;
++	op = ctlv_op_find(ctlv, exec->op_id);
 +	if (!op)
 +		return -EOPNOTSUPP;
++	ret = ctlv_op_check_mode(cfile->filp, op);
++	if (ret)
++		return ret;
 +
 +	/*
-+	 * One frame per level the reply may reach, too many for the stack: a
-+	 * description is one level deeper than the message it describes.
++	 * Only a query resumes. A cursor says which fragment this is, so a
++	 * generation without one continues what was never started.
 +	 */
-+	struct ctlv_introspection_frame *frames __free(kfree) =
-+		kcalloc(CTLV_MAX_RECORD_DEPTH, sizeof(*frames), GFP_KERNEL);
-+
-+	if (!frames)
-+		return -ENOMEM;
-+	walk.frames = frames;
-+
-+	if (!ctlv_introspection_message(&walk, CTLV_T_OP_SCHEMA_GET_REQUEST,
-+					&op->schema->request) ||
-+	    !ctlv_introspection_message(&walk, CTLV_T_OP_SCHEMA_GET_REPLY,
-+					&op->schema->reply)) {
-+		if (walk.error)
-+			return walk.error;
-+		/* A schema is immutable, so there is nothing to be stale. */
-+		return ctlv_op_query_more(ctx, 0, walk.ordinal);
++	if (op->schema->type == CTLV_OP_TYPE_QUERY) {
++		if (!exec->cursor && exec->generation)
++			return -EINVAL;
++		ctx.frag.generation = exec->generation;
++		ctx.frag.cursor = exec->cursor;
++	} else if (exec->generation || exec->cursor) {
++		return -EINVAL;
 +	}
-+	return ctlv_op_query_done(ctx, 0);
++
++	/* Before the callback, so a buffer too small mutates nothing. */
++	if (exec->reply_len < ctlv_reply_needed(op))
++		return -EMSGSIZE;
++
++	ctx.ctlv = ctlv;
++	ctx.family = ctlv->family;
++	/* Whose memory a blob descriptor of this request describes. */
++	ctx.submitter = current;
++	ctx.op = op;
++
++	/* Before any hook, so that no family code sees an unchecked TLV. */
++	ret = ctlv_request_validate(&ctx, exec, snapshot);
++	if (ret)
++		goto out_error_info;
++
++	capacity = ctlv_reply_capacity(op, exec);
++	if (capacity) {
++		/*
++		 * Not zeroed: a byte is copied out only once the root's
++		 * length covers it, padding included.
++		 */
++		out = kvmalloc(capacity, GFP_KERNEL_ACCOUNT);
++		if (!out) {
++			ret = -ENOMEM;
++			goto out_request;
++		}
++		ctlv_message_output_init(&ctx.output, &ctx, out, capacity, &op->schema->reply);
++		ctlv_message_root(&ctx.output_root, &ctx.output);
++		ctx.deepest = &ctx.output_root;
++	}
++
++	ret = ctlv_op_dispatch(&ctx);
++	if (ret)
++		goto out_error_info;
++
++	/* Where the caller carries on from, zero for anything but a query. */
++	exec->generation = ctx.frag.reported;
++	exec->cursor = ctx.frag.next_cursor;
++	*reply_len = ctx.output.root ? ctx.output.root->len : 0;
++	*reply = out;
++	out = NULL;
++	ret = 0;
++	goto out_request;
++
++out_error_info:
++	ctlv_error_info(&ctx, exec->reply_len, reply, reply_len);
++out_request:
++	ctlv_message_index_free(&ctx.request);
++	kvfree(out);
++	return ret;
 +}
++
++/* What one family of this device's chain does with one extension point. */
++static const struct ctlv_ext_ops *ctlv_ext_ops_find(const struct ctlv *ctlv,
++						    const struct ctlv_ext_schema *ext_schema)
++{
++	const struct ctlv_family *family;
++	u32 index;
++
++	/* From the device family towards the core, where the fill was found. */
++	for (family = ctlv->family; family; family = family->parent)
++		for (index = 0; index < family->ext_ops_count; index++)
++			if (family->ext_ops[index].family_id == ext_schema->family_id &&
++			    family->ext_ops[index].ext_id == ext_schema->ext_id)
++				return &family->ext_ops[index];
++	return NULL;
++}
++
++/**
++ * ctlv_ext_fill - Delegate an extension-point output record.
++ * @ctx: operation context
++ * @request: validated request root
++ * @record: output record selected by the generated helper
++ *
++ * Return: filling callback result, or 0 for an unfilled point.
++ */
++int ctlv_ext_fill(struct ctlv_op_ctx *ctx, const struct ctlv_cursor *request,
++		  struct ctlv_cursor *record)
++{
++	const struct ctlv_schema_tree *tree;
++	u32 index;
++
++	if (WARN_ON_ONCE(!record->tree))
++		return -EINVAL;
++	tree = record->tree;
++
++	for (index = 0; index < tree->ext_schemas_count; index++) {
++		const struct ctlv_ext_schema *ext_schema = &tree->ext_schemas[index];
++		const struct ctlv_cursor *filled_request = request;
++		const struct ctlv_ext_fill_schema *fill_schema;
++		const struct ctlv_ext_ops *ext_ops;
++		struct ctlv_cursor filled;
++		int ret;
++
++		if (ext_schema->node != record->node)
++			continue;
++		ext_ops = ctlv_ext_ops_find(ctx->ctlv, ext_schema);
++		if (!ext_ops || !ext_ops->fill)
++			continue;
++
++		if (request) {
++			fill_schema = ctlv_schema_fill(ctx->family, ext_schema->family_id,
++						       ext_schema->ext_id);
++			if (WARN_ON_ONCE(!fill_schema))
++				return -EINVAL;
++			filled = *request;
++			if (ctlv_message_input_rebind(&filled, &fill_schema->members, 0))
++				filled_request = &filled;
++			else
++				filled_request = NULL;
++		}
++
++		ret = ext_ops->fill(ctx->ctlv, ctx, filled_request, record);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_ext_fill, "CTLV");
++
++static long ctlv_op_exec_ioctl(struct ctlv_file *cfile, unsigned long arg)
++{
++	struct ctlv_op_exec __user *uexec = (struct ctlv_op_exec __user *)arg;
++	struct ctlv *ctlv = cfile->ctlv;
++	struct ctlv_op_exec exec;
++	u32 reply_len = 0;
++	u32 size;
++	int ret;
++
++	if (get_user(size, &uexec->size))
++		return -EFAULT;
++	/* The first version ends at cursor, so every size covers the write-back. */
++	if (size < offsetofend(struct ctlv_op_exec, cursor))
++		return -EINVAL;
++	ret = copy_struct_from_user(&exec, sizeof(exec), uexec, size);
++	if (ret)
++		return ret;
++	if (exec.flags)
++		return -EINVAL;
++	if (exec.request_len < sizeof(struct ctlv_hdr) ||
++	    exec.request_len > CTLV_MAX_INLINE_MESSAGE_LEN)
++		return -EINVAL;
++
++	/*
++	 * Before the lock, which destruction must not wait on for a faulting
++	 * copy. Everything after this reads the snapshot, never userspace.
++	 */
++	void *snapshot __free(kvfree) = kvmalloc(exec.request_len, GFP_KERNEL_ACCOUNT);
++	if (!snapshot)
++		return -ENOMEM;
++	if (copy_from_user(snapshot, u64_to_user_ptr(exec.request), exec.request_len))
++		return -EFAULT;
++
++	void *reply __free(kvfree) = NULL;
++
++	scoped_guard(rwsem_read, &ctlv->registration_lock) {
++		if (!ctlv->registered || !ctlv->family)
++			return -ENODEV;
++		ret = ctlv_op_exec(cfile, &exec, snapshot, &reply, &reply_len);
++	}
++	/* Do not make destruction wait for a faulting userspace copy. */
++	if (reply_len && copy_to_user(u64_to_user_ptr(exec.reply), reply, reply_len))
++		return ret ?: -EFAULT;
++	/*
++	 * The only fields the kernel writes back, a field at a time so that
++	 * what the caller stated about its own buffers stays the caller's.
++	 */
++	if (!ret && (put_user(exec.generation, &uexec->generation) ||
++		     put_user(exec.cursor, &uexec->cursor)))
++		return -EFAULT;
++	return ret;
++}
++
++/**
++ * ctlv_file_ioctl - Run a CTLV ioctl on a device file.
++ * @cfile: state returned by ctlv_file_open()
++ * @cmd: ioctl command
++ * @arg: ioctl argument
++ *
++ * Return: ioctl result, or -ENOIOCTLCMD for a command that is not CTLV's.
++ */
++long ctlv_file_ioctl(struct ctlv_file *cfile, unsigned int cmd, unsigned long arg)
++{
++	switch (cmd) {
++	case CTLV_IOC_OP_EXEC:
++		return ctlv_op_exec_ioctl(cfile, arg);
++	default:
++		return -ENOIOCTLCMD;
++	}
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_file_ioctl, "CTLV");
++
++static bool ctlv_file_open_allowed(struct ctlv *ctlv)
++{
++	lockdep_assert_held_read(&ctlv->registration_lock);
++	return ctlv->registered && ctlv->family;
++}
++
++/**
++ * ctlv_file_open - Attach CTLV to one open file of its device.
++ * @ctlv: published instance
++ * @filp: device file, open for reading
++ *
++ * Return: per-open state, or an error pointer.
++ */
++struct ctlv_file *ctlv_file_open(struct ctlv *ctlv, struct file *filp)
++{
++	struct ctlv_file *cfile;
++	int ret;
++
++	/*
++	 * A failed registration can withdraw the node while an open is waiting
++	 * for the registration lock, so admission itself first pins the device.
++	 */
++	get_device(ctlv->dev);
++
++	do {
++		guard(rwsem_read)(&ctlv->registration_lock);
++		if (!ctlv_file_open_allowed(ctlv)) {
++			ret = -ENODEV;
++			break;
++		}
++		if (!(filp->f_mode & FMODE_READ)) {
++			ret = -EACCES;
++			break;
++		}
++
++		cfile = kzalloc_obj(*cfile, GFP_KERNEL_ACCOUNT);
++		if (!cfile) {
++			ret = -ENOMEM;
++			break;
++		}
++		cfile->ctlv = ctlv;
++		cfile->filp = filp;
++		/* This description keeps the reference taken on entry. */
++		return cfile;
++	} while (0);
++
++	put_device(ctlv->dev);
++	return ERR_PTR(ret);
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_file_open, "CTLV");
++
++/**
++ * ctlv_file_close - Detach CTLV from a device file.
++ * @cfile: state returned by ctlv_file_open()
++ *
++ * For the release of the device file.
++ */
++void ctlv_file_close(struct ctlv_file *cfile)
++{
++	struct device *dev = cfile->ctlv->dev;
++
++	kfree(cfile);
++	put_device(dev);
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_file_close, "CTLV");
++
++/* Uevent identity is available to rules before the device can be opened. */
++static int ctlv_uevent_families(struct kobj_uevent_env *env,
++				const struct ctlv_family *family)
++{
++	u32 levels = ctlv_family_levels(family);
++	u32 level;
++	int ret;
++
++	ret = add_uevent_var(env, "CTLV_FAMILY=%s", family->schema->name);
++	if (ret)
++		return ret;
++	for (level = 0; level < levels; level++) {
++		const struct ctlv_family *ancestor =
++			ctlv_family_ancestor(family, levels - 1 - level);
++
++		ret = add_uevent_var(env, "CTLV_COMPATIBLE_%u=%s", level, ancestor->schema->name);
++		if (ret)
++			return ret;
++	}
++	return add_uevent_var(env, "CTLV_COMPATIBLE_N=%u", levels);
++}
++
++static int ctlv_uevent_check(const struct ctlv_family *family)
++{
++	struct kobj_uevent_env *env;
++	int ret;
++
++	env = kzalloc_obj(*env, GFP_KERNEL);
++	if (!env)
++		return -ENOMEM;
++	ret = ctlv_uevent_families(env, family);
++	if (!ret && (env->buflen > CTLV_UEVENT_MAX_LEN || env->envp_idx > CTLV_UEVENT_MAX_VARS)) {
++		pr_err("family %s: its chain of names needs %d bytes in %d properties of a uevent, more than the %d in %d it may take\n",
++		       family->schema->name, env->buflen, env->envp_idx, CTLV_UEVENT_MAX_LEN,
++		       CTLV_UEVENT_MAX_VARS);
++		ret = -E2BIG;
++	}
++	kfree(env);
++	return ret;
++}
++
++/**
++ * ctlv_init - Prepare an embedded instance for one family.
++ * @ctlv: zeroed instance
++ * @dev: device
++ * @family: device family
++ * @hooks: pair around every op the core does not answer, or NULL
++ *
++ * Until ctlv_publish(), the family decides its optional and dynamic
++ * ops through its generated helpers.
++ *
++ * Return: 0, or a negative error. ctlv_fini() applies either way.
++ */
++int ctlv_init(struct ctlv *ctlv, struct device *dev,
++	      const struct ctlv_family *family, const struct ctlv_hooks *hooks)
++{
++	int ret;
++
++	/* Nothing in common means no pair, not half of one. */
++	if (!dev || !family || (hooks && (!hooks->pre || !hooks->post)))
++		return -EINVAL;
++
++	ctlv->dev = dev;
++	ctlv->hooks = hooks;
++	init_rwsem(&ctlv->registration_lock);
++	spin_lock_init(&ctlv->transition_lock);
++
++	/* Before anything reads the schema through this instance. */
++	ret = ctlv_op_resolution_init(ctlv, family);
++	if (ret)
++		return ret;
++
++	/* Before a subsystem announces a device that could not be. */
++	ret = ctlv_uevent_check(family);
++	if (ret)
++		return ret;
++
++	if (ctlv->dynamic_ops_count) {
++		ctlv->disabled = bitmap_zalloc(ctlv->dynamic_ops_count, GFP_KERNEL);
++		if (!ctlv->disabled)
++			return -ENOMEM;
++	}
++
++	ret = ctlv_family_claim_add(family->schema);
++	if (ret)
++		return ret;
++	ctlv->family = family;
++	return 0;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_init, "CTLV");
++
++/**
++ * ctlv_publish - Fix the op table and accept operations.
++ * @ctlv: initialized instance
++ */
++void ctlv_publish(struct ctlv *ctlv)
++{
++	ctlv_op_publish_all(ctlv);
++	scoped_guard(rwsem_write, &ctlv->registration_lock)
++		ctlv->registered = true;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_publish, "CTLV");
++
++/**
++ * ctlv_unpublish - Stop operations.
++ * @ctlv: published instance
++ *
++ * Waits for the operations in flight. No family callback runs afterwards.
++ */
++void ctlv_unpublish(struct ctlv *ctlv)
++{
++	u32 index;
++
++	lockdep_assert_not_held(&ctlv->registration_lock);
++	lockdep_assert_not_held(&ctlv->transition_lock);
++
++	/*
++	 * The write side waits for admitted callbacks. Once held, registration
++	 * state keeps every later ioctl out.
++	 */
++	scoped_guard(rwsem_write, &ctlv->registration_lock)
++		ctlv->registered = false;
++
++	scoped_guard(spinlock, &ctlv->transition_lock)
++		ctlv->destroying = true;
++
++	/* No callback can reach what the family owns after this. */
++	scoped_guard(rwsem_write, &ctlv->registration_lock)
++		WRITE_ONCE(ctlv->family, NULL);
++	for (index = 0; index < ctlv->ops_count; index++)
++		ctlv->ops[index].binding = NULL;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_unpublish, "CTLV");
++
++/**
++ * ctlv_fini - Free what an instance allocated.
++ * @ctlv: instance never published, or unpublished
++ *
++ * For the release of the device.
++ */
++void ctlv_fini(struct ctlv *ctlv)
++{
++	bitmap_free(ctlv->disabled);
++	ctlv->disabled = NULL;
++	kfree(ctlv->ops);
++	ctlv->ops = NULL;
++}
++EXPORT_SYMBOL_NS_GPL(ctlv_fini, "CTLV");
++
++static void __exit ctlv_module_exit(void)
++{
++	ctlv_family_claims_free();
++}
++
++module_exit(ctlv_module_exit);
++MODULE_DESCRIPTION("CTLV character device TLV UAPI core");
++MODULE_LICENSE("GPL");
 -- 
 2.56.0
 
