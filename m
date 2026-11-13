@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794585385;
-	b=dRcZNqrGYlXA0rYLXnXDsIhaDSmyOIvOuCsn8WGF3MplruT3sMR+S1wdo1aMrDPT5dgM
-	 U0AwzppWMTcrSr9U3XVfxpf2VjhNfQ9LZcdO9vKCfOIUWxow0K5T2gwCf3xyZTjGRFxBU
-	 encJrSLS4BMBnXtnItbyqB8dtH37KsXhC2GqgR3DvEHOTltNANf4l1t7Es/dWH2txLEmG
-	 XiSVNxcS+J5P+Qa3M+QauK27FRofXu4VRwZTRf0pzq8Z0wp19v5lXHqzvzIsAk9UGnnsm
-	 xsJ/DZhmkQbFZCixNLYKRdrIuWLwi3C0Dxka49DY5rxBtCVoPckL2RTkwEKhtAZyi7g==
+	t=1794585390;
+	b=K8eMgBOUJfyogWaL68+sMD5/p5eB1v8rbAfGgLhi4CxMZ59vdrdBalBwD86WQUMcIZ8L
+	 x4+ZbAwjYvGBdZ6WellBErBkkCwihEn/+dTnWqxiHZ17TSK1YsR1NwtiYRmP5qftuRo7m
+	 k83MkwC6cfpPEAUUB+HAhiE2zfyCt0JilJ9zw4OaigmzDt5ggS4pEEfyQ9T2AwKcNnTew
+	 B/c/qrmLU87ezk/O8nypX503IceD1uYd8pNiVwWwWXRt5KXb9l0WCtyMPqd0NS/mXdkMt
+	 +IpIF9ns1Yfugi9KUIvXJ4a83gH5sfHMjBKGhnC3bQHG8VhmtoMbGZ/3qA2A6rFM0Rw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794585385;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794585390;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=ViWUsNtArpQaeI/uRHSB0U3BV7ZktxAAxWhCe8LOG40=;
-	b=YfCNpWyQel3Vp6J7PFRRTsc9V0IcZsXRz8JBXpNOx2Rju84zFvXjnADGsU1xmlmTlRpo
-	 ZXPaPzx9GLEgI6h/5UUrq3GpeDLQ7e1QyyPQ0OpqPylDnSXRdkXUmZxQycLlQctGP/HdH
-	 70K6SJleRQimPSr6YCn78c6Pym8ZHqBMbYIceizYV8ka8qJ08SygFkA+Epb/xxwEEKjq4
-	 rA3g5W58sGKa+f9YLtkdZzp7etARdfuF6+JX/BGdRxhDa8Hdq1uOk1Js2xd7a9ycWc0Np
-	 Kev2Q+2KPOSQz/v3Yi2/zOHRh3v1Ptq89zw9TuK9EI8p9IYYeIE6qZL4Ltb/DR5n1vg==
+	bh=JcTi3sxvuGcrSNBBRa/NlMOXS13wjV4ymMaAnQWU+10=;
+	b=EmPpgiVpMKrdtnEumtWeNuHHfk+rjNRLazYY/DvdRoyMJcgOXgez5vsUkO5YT9eiUBlq
+	 YDdekZCmA7Smwe03ebzBTGfbsmfYDHuQJkHtoIEMsaL6waLtioxP40VL/hXzkVeloMuKI
+	 CneytDSmL1cYV0qrWcy5Vt5mOHtRA6ksuZlvcyiLvWKLdH9YjZuSANTGwiBDUuj+8MbNc
+	 sfRa+Kn4VnSnjh6qtFjmgMfiyfB4vVWt4b6jtcmBKgo9ddgF9nSXWfYfKUJFAaOsbxEbG
+	 X3gdXwrzN4H6/AJZSRGUf2C9ESi41QVzNJ61r7skMNFZPPAB5uILpcmFk4GXQywBSNQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=resnulli.us;
 	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=y0D5upDx;
-	arc=none smtp.remote-ip=209.85.218.47
-Received: from mail-ej1-f47.google.com (mail-ej1-f47.google.com [209.85.218.47])
+	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=MeR5EwUO;
+	arc=none smtp.remote-ip=209.85.218.50
+Received: from mail-ej1-f50.google.com (mail-ej1-f50.google.com [209.85.218.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 305F560A2610
-	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 305F560A2610
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8BF6B6070239
+	for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 15:56:27 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8BF6B6070239
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=y0D5upDx
-Received: by mail-ej1-f47.google.com with SMTP id a640c23a62f3a-c247f6687dcso284479866b.2
-        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:23 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=MeR5EwUO
+Received: by mail-ej1-f50.google.com with SMTP id a640c23a62f3a-c4cac7a7d3cso195681466b.3
+        for <linux-api@vger.kernel.org>; Fri, 13 Nov 2026 07:56:27 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1794585382; x=1795190182; darn=vger.kernel.org;
+        d=resnulli.us; s=google; t=1794585386; x=1795190186; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=ViWUsNtArpQaeI/uRHSB0U3BV7ZktxAAxWhCe8LOG40=;
-        b=y0D5upDxTMRwg4B1+c1pNLwC2rHjWqLW+EmRkAw6iET26cmaAjyThTHYbzNdM6mxYE
-         hHHM8SCESNu2ITa2cgzdjt2uIWMKbQTL2E369xytuiy5NfO+fF2jeg5SaNLtHg+DZcw7
-         wFNHTaqMgFkG56p6+mDgbum9IlYw1ztKoc481mg32wYm6+IpciJnHus/MFwtvGjKpVPP
-         +1uVmE+L1WsuV9WxWv9+NXtUHUpARHMp6WGhzNVt3xR3I3oUYlWKVQD7mPTooKs0FDsk
-         iuqMmHTEjsqKCB5fX+a9gCnuca9768Hbyn1IkMFoUstWDikhQSehBFRdsONFNkbmFyJY
-         RF4A==
+        bh=JcTi3sxvuGcrSNBBRa/NlMOXS13wjV4ymMaAnQWU+10=;
+        b=MeR5EwUO5t8AuWJDv9SU64oybGvzFKaxAtCSFgf9NANutTjhSAisSrmuU1t12pWt9O
+         V9KCFvNtEnGLiRxx/Q49mSE9keSWOS0abnjRD5OH09XZMC1CGeH02+W8CXwpbBthJKg8
+         0OprNYSzmEyc9+jBcmsD46nQFXnfzYACXulgLkd9VN5gNU5YKS2y1SOCYf1amnXdnhd3
+         vujQZISS4LeJv5J7btPYjnGRHfr/+e+F+hOlELP9v8FaSI5s5/BYPzxRczXnogQJEspH
+         Ac8vy0I/i/DgkreQB4lG/KLvqv5rTXUiOgWtjnRml63pWP4ZYz90fmKYj+T5vOS4F+iS
+         vv1w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794585382; x=1795190182;
+        d=1e100.net; s=20260707; t=1794585386; x=1795190186;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=ViWUsNtArpQaeI/uRHSB0U3BV7ZktxAAxWhCe8LOG40=;
-        b=Ohpzki8Pje+SpfaJEjuAxar73zutw2Z/T+eeRw8DS06pFSFL+zcWJA8pL3N7n3FMsu
-         AVgAQtlr+2LBVZ9284pFYsxEOLFy4ld51KCAZHKl2sc3UVA4Qd6nxNy/cyyJl53E/X58
-         RKH4Y3CNUnAwbmOKZycOrJyFLTTHXG6Ew+f/OjV6Mv5aWcX0JPFhUDk6MfdaYlaxXTbY
-         4Rh70RsyjfJndCsSJtfbhKshkyAOkxaO5CXYC4q2WdL49xnLF/lWrjdCleZoqQDytBHQ
-         Bccx915SSFPcHDTN73DMY/XsMldA0YIglqTASC4eg/mGaSyxArRGcyqDbgcPjKeG5nyV
-         mbsA==
-X-Forwarded-Encrypted: i=1; AL+hErEXMwd7aALOBX4kA3BRCmWXkk6wNeUo3H13sP68A+UWJGzGm1p5taGFVIv3x2mVR7qcKFKO5Uo/6DY=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+WkUuyHop9Sp0K1VgqK422WfrmwPZeMBmwBgrYvw4jPjGUYZsd
-	LWjVWJmrHj9WWM4YrwnDG3lF/sxEJcJBIzrrFga17cz10xZJXd2NNRzbMGg6tp4s+bA=
-X-Gm-Gg: AYBFou0a2qDTdlRvgE07bDphx/7FWTcZKSiJCUCdipRumfNk0IT9pH1DosRQU7913gN
-	PzAgKdTstNXSOa7jeoFpfPrbdIacw5wHrPt4l4XnkjB2IeNOi7WnWSmbEzNxcI4LR3pjrv5QJMq
-	DGI5UkQbpXrrwRW+l+LI+o+0YtBt7d0KiqsZouEvARd5WRotD8lLftgzdz/5YlgX7oZ4fZnya9v
-	iR5440+R9yEkcZATnwlygTlOMZGIHWVNNj2lcXI79b9CsV83ChLDBwckxdXsGm8diX9dbMJijnc
-	+woLqhvP5rCr/zK5w9/3KgB/sJVrjU0wBRXJmY4bKYLy3jjowrUEh3VuHHm55hBNWz5h8VcCIG/
-	XLKFdCORvBPQ6N3FqJWgpQHVwuPAQCJIwjHGfySr0jqJLKHILOBSBJwFRzbl+QRCSGqpVAx/SUE
-	HHD797vEJsehmIRFxdy8ACHLAdmCU6CKXfp7a1Vpfkqnw/blDrKhmhBneHua8DNw9mTr2Bv85ii
-	kzy2E8a/x0BQ9IMjDGr/643D7Wr/SRvfLUZjBf2qtO/2atd0k+iDS12Y2d6hY7OuK04/Mtm/tac
-	MiSv2ImiV3DYFDv2RkMFDS2sgBK4EmirM7R0n/hYO8Zi7JwPBS9vNGKRhFoh1Q==
-X-Received: by 2002:a17:907:3f91:b0:c42:102f:15d7 with SMTP id a640c23a62f3a-c5096398ac9mr244692866b.10.1794585379767;
-        Fri, 13 Nov 2026 07:56:19 -0800 (PST)
+        bh=JcTi3sxvuGcrSNBBRa/NlMOXS13wjV4ymMaAnQWU+10=;
+        b=g6knRR5el3GT0Baj+iN78RWxHFIKmp8w+SrhH/Ut0snNBA4rfsa+5YIFo5ph5PDijT
+         QzkLlrOIyNrFv1LccyqoH3gpuAjH9Wav68VL8foYfQDIAYrxuRopxUnMia1VhE+dYiSZ
+         o10OmyAfJmPG5ru7LK8zRXjH6N68IDwshBVPjLbJzg8PdA5ITaz57qkAZCtho5OIbCRg
+         9Df58Nv7ogRePHGLFvguH9Nzm/amGhL9Mr1MfYTqsffftWUPjU1DdKchKx94BabXJwr3
+         0uojFbP0CDa/jo45tpALEbFGK+EirV/aaUvdxpBsWR68mSxNfsK6B1RaSmxNLiP/Oqs6
+         CtWA==
+X-Forwarded-Encrypted: i=1; AL+hErE8cRqQ0CIo2/m9OaWXWkio1FmDAEajvRikztSZMtj50eLjCs9HxeL7s72bLUIk6QIHZGVyRRN00hw=@vger.kernel.org
+X-Gm-Message-State: APuU4Z92uvVWrWFD7jdAk6YtqjybuzbrJSa1IFh3fe+dfFX6PIrPoseD
+	MxJu0Ub0Pkf3HuDlQhb+NIgIJj4FD+tMWIR2fpCZ64xoPxkwlVF2yP67dax6eNlQNfw=
+X-Gm-Gg: AYBFou1MEqMZ2AGLexFAvwm0OLlZu22xTRLAggZwNCy+xqdFUXZRtURcwZef5NyjN2k
+	pwihEVc2xPgwYTDJhwY18X9GSfvXgM1lsxBZ9IA7pO3uXmmZnxITdlKj5xLLkbde9wWVJH6dHwi
+	4vzSWTjLQ9CLWU3f/eD46rHlDzoJ1UArPKrV97hh7VbAbEbWpx5hmhpzJuZ7IV8vdONsUPg+HYj
+	KE08Tp4XbnUj9Y2evLP+kAaSBkfhf0KUZR91J04IgAtujwQf57uonaSF6Z8JBYEOgkDmChAGQzp
+	T7Wrl+h1dzo6YM/CSIW/hk45AR2CiE5J4Kg/grVBeuKIQmoRqJEs3hB2jbhBTfhHvOIHHY1AbIx
+	QkS+bgUb1tqVVeJSg3ipn0qx+ZCJkqZftQVdMYrfpgsgNwSUEoficozAs2pCwXkIck1+PLOM1GL
+	x/pu9drEqUVpeBwP/QUxqWZXaOxDlGUermN5e3JHbR/8jKRof7fLdLN1CvgpqP6g1QeuQao5nen
+	rYqBg3ymWhrfyK68qvc4UZ2hMTtbc7hXv8Zb/PGnBxWD87hZhLRuW6StAIzHq5NNrW2O503Brff
+	x46BsKCtTnoIiBKi8vSNJjjALoNBJaH1FARfkRYrWVdzZYQSsXn9Nfb9hAIe0Q==
+X-Received: by 2002:a17:907:9444:b0:c46:9ca9:f522 with SMTP id a640c23a62f3a-c5096428c34mr246003766b.26.1794585384914;
+        Fri, 13 Nov 2026 07:56:24 -0800 (PST)
 Received: from localhost ([140.209.217.212])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095b3f8d3sm115575566b.33.2026.11.13.07.56.18
+        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c5095b42480sm114994466b.36.2026.11.13.07.56.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 13 Nov 2026 07:56:19 -0800 (PST)
+        Fri, 13 Nov 2026 07:56:24 -0800 (PST)
 From: Jiri Pirko <jiri@resnulli.us>
 To: linux-coco@lists.linux.dev
 Cc: linux-kernel@vger.kernel.org,
@@ -115,9 +115,9 @@ Cc: linux-kernel@vger.kernel.org,
 	dave.jiang@intel.com,
 	nik.borisov@suse.com,
 	sergii.dmytruk@3mdeb.com
-Subject: [PATCH RFC v2 14/15] tools/ctlv: Add the userspace library
-Date: Fri, 13 Nov 2026 16:55:13 +0100
-Message-ID: <20261113155515.2510194-15-jiri@resnulli.us>
+Subject: [PATCH RFC v2 15/15] tools/ctlv: Add ctlvctl
+Date: Fri, 13 Nov 2026 16:55:14 +0100
+Message-ID: <20261113155515.2510194-16-jiri@resnulli.us>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261113155515.2510194-1-jiri@resnulli.us>
 References: <20261113155515.2510194-1-jiri@resnulli.us>
@@ -134,3443 +134,1120 @@ Content-Transfer-Encoding: 8bit
 
 From: Jiri Pirko <jiri@nvidia.com>
 
-Provide family-independent userspace transport, message handling,
-discovery, schemas and blob descriptors. Generated bindings build on
-this API.
+Add a command-line client that discovers and queries any CTLV device,
+with optional names from a specification directory.
+
+Examples:
+  Root-family discovery on any CTLV device:
+    ctlvctl --spec-dir Documentation/ctlv/specs \
+      exec ctlv-example family-get
+  The operations the same device publishes:
+    ctlvctl --spec-dir Documentation/ctlv/specs ops ctlv-example
 
 Assisted-by: Cursor: GPT-5.6 Sol
 Assisted-by: Cursor: Claude Opus 5.5
 Signed-off-by: Jiri Pirko <jiri@nvidia.com>
 ---
- .../ctlv/generated-files-schema.yaml          |   4 +
- Documentation/ctlv/generated-files.yaml       |   1 +
- Documentation/driver-api/ctlv.rst             |   2 +-
- Documentation/userspace-api/ctlv.rst          |  17 +
- tools/ctlv/Makefile                           |   8 +-
- tools/ctlv/ctlvgen/cli.py                     |   8 +-
- tools/ctlv/ctlvgen/lib/gen_user.py            | 808 ++++++++++++++++++
- tools/ctlv/ctlvgen/lib/outputs.py             |  12 +-
- tools/ctlv/libctlv/Makefile                   |  41 +
- tools/ctlv/libctlv/ctlv.h                     | 413 +++++++++
- tools/ctlv/libctlv/ctlv_user_gen.c            | 551 ++++++++++++
- tools/ctlv/libctlv/device.c                   | 412 +++++++++
- tools/ctlv/libctlv/internal.h                 | 161 ++++
- tools/ctlv/libctlv/introspection.c            | 238 ++++++
- tools/ctlv/libctlv/message.c                  | 518 +++++++++++
- tools/ctlv/libctlv/schema.c                   | 742 ++++++++++++++++
- tools/ctlv/libctlv/spec.c                     | 186 ++++
- tools/ctlv/libctlv/transport.c                | 572 +++++++++++++
- 18 files changed, 4689 insertions(+), 5 deletions(-)
- create mode 100644 tools/ctlv/ctlvgen/lib/gen_user.py
- create mode 100644 tools/ctlv/libctlv/Makefile
- create mode 100644 tools/ctlv/libctlv/ctlv.h
- create mode 100644 tools/ctlv/libctlv/ctlv_user_gen.c
- create mode 100644 tools/ctlv/libctlv/device.c
- create mode 100644 tools/ctlv/libctlv/internal.h
- create mode 100644 tools/ctlv/libctlv/introspection.c
- create mode 100644 tools/ctlv/libctlv/message.c
- create mode 100644 tools/ctlv/libctlv/schema.c
- create mode 100644 tools/ctlv/libctlv/spec.c
- create mode 100644 tools/ctlv/libctlv/transport.c
+ Documentation/driver-api/ctlv.rst     |   29 +-
+ Documentation/userspace-api/ctlv.rst  |   80 +-
+ tools/Makefile                        |    9 +-
+ tools/ctlv/Makefile                   |   23 +-
+ tools/ctlv/ctlvctl/.gitignore         |    4 +
+ tools/ctlv/ctlvctl/Makefile           |   64 +
+ tools/ctlv/ctlvctl/ctlvctl.c          | 2787 +++++++++++++++++++++++++
+ tools/ctlv/ctlvctl/spec.c             |  672 ++++++
+ tools/ctlv/ctlvctl/spec.h             |   60 +
+ tools/ctlv/ctlvgen/cli.py             |   47 +-
+ tools/ctlv/ctlvgen/lib/dump.py        |  161 ++
+ tools/ctlv/ctlvgen/lib/gen_doc.py     |  684 ++++++
+ tools/ctlv/ctlvgen/lib/gen_runtime.py |   66 +
+ 13 files changed, 4661 insertions(+), 25 deletions(-)
+ create mode 100644 tools/ctlv/ctlvctl/.gitignore
+ create mode 100644 tools/ctlv/ctlvctl/Makefile
+ create mode 100644 tools/ctlv/ctlvctl/ctlvctl.c
+ create mode 100644 tools/ctlv/ctlvctl/spec.c
+ create mode 100644 tools/ctlv/ctlvctl/spec.h
+ create mode 100644 tools/ctlv/ctlvgen/lib/dump.py
+ create mode 100644 tools/ctlv/ctlvgen/lib/gen_doc.py
+ create mode 100644 tools/ctlv/ctlvgen/lib/gen_runtime.py
 
-diff --git a/Documentation/ctlv/generated-files-schema.yaml b/Documentation/ctlv/generated-files-schema.yaml
-index d3529ce6e8e7..d5f2d3763c48 100644
---- a/Documentation/ctlv/generated-files-schema.yaml
-+++ b/Documentation/ctlv/generated-files-schema.yaml
-@@ -20,6 +20,10 @@ $defs:
-         $ref: '#/$defs/path'
-       kernel-source:
-         $ref: '#/$defs/path'
-+      user-header:
-+        $ref: '#/$defs/path'
-+      user-source:
-+        $ref: '#/$defs/path'
- 
-   registry:
-     type: object
-diff --git a/Documentation/ctlv/generated-files.yaml b/Documentation/ctlv/generated-files.yaml
-index 5488ddf40e17..d4766b176ceb 100644
---- a/Documentation/ctlv/generated-files.yaml
-+++ b/Documentation/ctlv/generated-files.yaml
-@@ -15,3 +15,4 @@ families:
-       uapi-header: include/uapi/ctlv/ctlv_gen.h
-       kernel-header: include/linux/ctlv_gen.h
-       kernel-source: lib/ctlv/ctlv_gen.c
-+      user-source: tools/ctlv/libctlv/ctlv_user_gen.c
 diff --git a/Documentation/driver-api/ctlv.rst b/Documentation/driver-api/ctlv.rst
-index 34d20c14a9bf..f6a4f9632e3a 100644
+index f6a4f9632e3a..e8e6ecdf6ab6 100644
 --- a/Documentation/driver-api/ctlv.rst
 +++ b/Documentation/driver-api/ctlv.rst
-@@ -312,7 +312,7 @@ driver selects its optional operations and their initial dynamic state, see
- Hooks and availability. ``ctlv_publish()`` makes operations live, and only then
- may the node be added, as a program may open it as soon as it appears.
- ``ctlv_device_add()`` adds the node, whose uevent names the family; that is how
--udev finds the device. Destruction is the reverse:
-+libctlv and udev find the device. Destruction is the reverse:
+@@ -235,6 +235,9 @@ checks the same without writing anything.
  
- .. code-block:: c
+ Never edit a generated file; change the YAML or the generator and regenerate.
  
++``make -C tools/ctlv docs`` writes optional RST reference pages to
++``Documentation/output/ctlv/families``.
++
+ Create and destroy a device
+ ===========================
+ 
+@@ -684,20 +687,24 @@ The node is of the foo driver's own class, ``foo_class``, registered as
+ that ``ctlv_family_inherits()`` says is not ``ctlv-example`` or a descendant,
+ then calls ``ctlv_init()``.
+ 
+-Reporting an error
+-------------------
++Tests and examples
++==================
++
++``Documentation/ctlv/specs/ctlv-test.yaml``
++    Every schema kind, records, actions, queries, blobs, availability, hooks,
++    and an extension point.
++
++``drivers/ctlv/tests/ctlv_test.c``
++    The ``ctlv-test`` family implementation.
+ 
+-A callback returns a negative errno, and that is what the ioctl returns. Where
+-CTLV itself refuses a message it also writes error information into the
+-caller's reply buffer, naming the reason and the offset of the offending
+-TLV. A family implementation does not build that; it adds its own errno
+-and its reply.
++``drivers/ctlv/tests/ctlv_test_child.c``
++    A separately built inheriting family and extension-point fill.
+ 
+-Configuration
+-=============
++``lib/ctlv/tests/*_kunit.c``
++    Unit tests of the engine and of its nodes.
+ 
+-``CONFIG_CTLV``
+-    CTLV. A family implementation selects it.
++``tools/testing/selftests/ctlv/``
++    Raw-message, generated-binding, allocation-failure, and mutation selftests.
+ 
+ Kernel API
+ ==========
 diff --git a/Documentation/userspace-api/ctlv.rst b/Documentation/userspace-api/ctlv.rst
-index f1f775071a78..8a8ade33b490 100644
+index 8a8ade33b490..dc590f334545 100644
 --- a/Documentation/userspace-api/ctlv.rst
 +++ b/Documentation/userspace-api/ctlv.rst
-@@ -118,6 +118,21 @@ The op ID and the types come from the family's generated UAPI header.
- Before the family sees the request, the kernel checks it against the
- specification: ``index`` must be at most 4095 and ``label`` at most 63 bytes.
+@@ -58,8 +58,8 @@ Each part of the design serves one of the needs:
+   so that a caller whose answer changed between the parts gets ``ESTALE``
+   rather than a mix of two states.
+ - Introspection. Every device answers ``family-get``, ``op-get`` and
+-  ``op-schema-get``, so a program built without a family still learns what
+-  the device accepts.
++  ``op-schema-get``, so a program built without a family, such as ``ctlvctl``,
++  still learns what the device accepts.
  
-+``libctlv`` and the generated bindings build and send the same message:
+ `Compatibility`_ collects the rules for growing a family.
+ 
+@@ -133,6 +133,11 @@ specification: ``index`` must be at most 4095 and ``label`` at most 63 bytes.
+     ctlv_example_item_set_label_put(req, "ab");
+     ctlv_example_item_set(dev, req, &error);
+ 
++and so does ``ctlvctl``, given the family's specification::
 +
-+.. code-block:: c
-+
-+    struct ctlv_error error;
-+    struct ctlv_msg *req;
-+    struct ctlv_dev *dev;
-+
-+    /* Error checks left out. */
-+    ctlv_open("ctlv-example", 0, O_RDWR, &dev);
-+    ctlv_example_item_set_request_new(&req);
-+    ctlv_example_item_set_index_put(req, 3);
-+    ctlv_example_item_set_label_put(req, "ab");
-+    ctlv_example_item_set(dev, req, &error);
++    ctlvctl --spec-dir Documentation/ctlv/specs \
++            exec /dev/ctlv-example item-set index=3 label=ab
 +
  The sections below define each piece: the device, the message format, the
  ioctl, queries, blobs and introspection, and then the rules of compatibility.
  
-@@ -410,6 +425,8 @@ defined flags. The root cannot carry the flag, and replies never do.
+@@ -564,7 +569,7 @@ cut. The first call passes ``generation`` and ``cursor`` zero. On return:
  
- So the kernel acts on what it knows and ignores the rest. A caller that needs
- to know which of its fields will be acted on asks ``op-schema-get`` first.
-+``libctlv`` sets the flag with ``ctlv_msg_ignore_if_unknown()`` on the TLV
-+written last.
+ To continue, the caller repeats the call with the same ``op_id`` and request,
+ the returned ``cursor`` and the returned ``generation``, and reassembles by
+-concatenating the children of each still-open record.
++concatenating the children of each still-open record, which ``libctlv`` does.
  
- Executing an operation
- ======================
+ One answer of three items, cut by a buffer that holds two::
+ 
+@@ -591,7 +596,8 @@ it, so a reader knows whether to append or to open a new record beside it.
+ 
+ Every continuing fragment adds at least one complete logical TLV beyond its
+ repeated path, and a cursor value cannot recur within one logical reply.
+-A reader must reject either violation.
++``libctlv`` rejects either violation. It also limits one query to 65,536
++fragments and a 64 MiB reassembled reply.
+ 
+ A continuation whose generation no longer matches fails with ``-ESTALE``, and
+ the error information carries the expected and the current generation.
+@@ -709,3 +715,69 @@ removing or renumbering anything, changing a field's kind or an operation's
+ type, access or availability, narrowing a bound or an occurrence limit,
+ making a field that the kernel writes optional, and, in any message,
+ making a field required or adding a required one.
++
++Library and tools
++=================
++
++``tools/ctlv/libctlv`` is a small C library for the mechanical parts: opening
++a device, checking the chain, building requests, parsing replies, reassembling
++fragmented queries and building blob descriptors. Per-family
++bindings are generated beside it, turning operations into typed functions.
++``ctlv_open()`` finds a device by the family its uevent announces, whichever
++subsystem it is in. ``ctlv_open_fd()`` takes a file the caller opened, through
++another subsystem's interface if need be, and ``ctlv_close()`` leaves it open.
++
++``tools/ctlv/ctlvctl`` defaults to runtime introspection alone. Compiled
++against no family, it can list devices, print the operations one publishes and
++their schemas, and execute its actions and queries alike. A device is
++named as ``list`` prints it, relative to ``/dev``, or by a path::
++
++    ctlvctl list
++    ctlvctl ops /dev/ctlv-example
++    ctlvctl schema /dev/ctlv-example 0x0001000000000008
++    ctlvctl exec /dev/ctlv-example 0x0001000000000001
++    ctlvctl exec /dev/ctlv-example 0x0001000000000002 0x0001800200000001=7
++
++Passing the directory of the kernel's family specifications adds the names
++that are deliberately absent from introspection. This is the ``specs``
++directory of a CTLV documentation bundle; its registry and meta-schemas are in
++the parent directory::
++
++    ctlvctl --spec-dir Documentation/ctlv/specs ops /dev/ctlv-example
++    ctlvctl --spec-dir Documentation/ctlv/specs \
++            schema /dev/ctlv-example series-get
++    ctlvctl --spec-dir Documentation/ctlv/specs \
++            exec /dev/ctlv-example probe-get token=7
++    ctlvctl --spec-dir Documentation/ctlv/specs \
++            exec /dev/ctlv-example echo-reply \
++            --json '{"u":17,"mode":"busy","count":[3,5]}'
++    ctlvctl --spec-dir Documentation/ctlv/specs \
++            exec /dev/ctlv-example transfer --json \
++            '{"source":{"file":"in"},"target":{"file":"out","length":64}}'
++
++``CTLV_SPEC_DIR`` avoids repeating the directory. Known items are printed by
++name without IDs; ``-n`` adds them, while an item unknown to the selected
++specifications stays numeric. ``schema --json-template`` prints a minimal JSON
++request. ``--output-json`` emits one object for an action or query. A JSON
++request may be inline, read from ``@file``, or read from standard input with
++``--json -``; it cannot be combined with assignments. Specification and JSON
++support are built when json-c is available.
++
++In JSON, a blob is ``{"file": "<path>"}``, passed as ``va`` memory. An input
++blob holds the file. An output blob is written to the file whole, so give it
++the ``"length"`` the operation writes; without one it starts at a byte and
++grows to each ``required-length`` the operation fails with, the operation
++being retried. An ``inout`` blob is read from the file and written back.
++
++In the directory, ``ctlvctl`` reads a family's names from ``<family>.json``
++when it is there, and otherwise has ``ctlvgen``, with its Python dependencies,
++resolve ``<family>.yaml``. Building ``ctlvctl`` writes the ``.json`` of each of
++the tree's families beside it, so a machine with neither the source tree nor
++Python needs only that directory and json-c. ``ctlvgen --spec <family>.yaml
++--runtime-json`` prints the file for a family outside the tree.
++
++``make -C tools/ctlv programs`` builds both in the source tree. After ``make
++O=<dir> headers``, ``make O=<dir> tools/ctlv`` builds ``ctlvctl`` into
++``<dir>/tools/ctlv/ctlvctl`` against that tree's headers, for another
++architecture with ``CROSS_COMPILE`` or ``LLVM`` as the kernel takes them;
++``PKG_CONFIG`` names the ``pkg-config`` that finds the target's json-c.
+diff --git a/tools/Makefile b/tools/Makefile
+index cb40961a740f..d8d0003b16a5 100644
+--- a/tools/Makefile
++++ b/tools/Makefile
+@@ -13,6 +13,7 @@ help:
+ 	@echo '  bpf                    - misc BPF tools'
+ 	@echo '  counter                - counter tools'
+ 	@echo '  cpupower               - a tool for all things x86 CPU power'
++	@echo '  ctlv                   - CTLV library and ctlvctl, after make headers'
+ 	@echo '  debugging              - tools for debugging'
+ 	@echo '  dma                    - tools for DMA mapping'
+ 	@echo '  firewire               - the userspace part of nosy, an IEEE-1394 traffic sniffer'
+@@ -70,6 +71,9 @@ acpi: FORCE
+ cpupower: FORCE
+ 	$(call descend,power/$@)
+ 
++ctlv: FORCE
++	$(call descend,ctlv/ctlvctl)
++
+ counter dma firewire hv guest bootconfig spi usb virtio mm bpf iio gpio objtool leds wmi firmware debugging tracing: FORCE
+ 	$(call descend,$@)
+ 
+@@ -179,6 +183,9 @@ acpi_clean:
+ cpupower_clean:
+ 	$(call descend,power/cpupower,clean)
+ 
++ctlv_clean:
++	$(call descend,ctlv/ctlvctl,clean)
++
+ counter_clean dma_clean hv_clean firewire_clean bootconfig_clean spi_clean usb_clean virtio_clean mm_clean wmi_clean bpf_clean iio_clean gpio_clean objtool_clean leds_clean firmware_clean debugging_clean tracing_clean:
+ 	$(call descend,$(@:_clean=),clean)
+ 
+@@ -225,7 +232,7 @@ build_clean:
+ ynl_clean:
+ 	$(call descend,net/$(@:_clean=),clean)
+ 
+-clean: acpi_clean counter_clean cpupower_clean dma_clean hv_clean firewire_clean \
++clean: acpi_clean counter_clean cpupower_clean ctlv_clean dma_clean hv_clean firewire_clean \
+ 		perf_clean selftests_clean turbostat_clean bootconfig_clean spi_clean usb_clean virtio_clean \
+ 		mm_clean bpf_clean iio_clean x86_energy_perf_policy_clean tmon_clean \
+ 		freefall_clean build_clean libbpf_clean libsubcmd_clean \
 diff --git a/tools/ctlv/Makefile b/tools/ctlv/Makefile
-index bdec011595aa..881fae9127c7 100644
+index 881fae9127c7..83c0ece690e8 100644
 --- a/tools/ctlv/Makefile
 +++ b/tools/ctlv/Makefile
-@@ -30,10 +30,16 @@ lint:
+@@ -2,6 +2,10 @@
+ 
+ KDIR = ../..
+ DOCDIR = $(KDIR)/Documentation/ctlv
++SPECDIR = $(DOCDIR)/specs
++SPECS = $(wildcard $(SPECDIR)/*.yaml)
++TOOL = ./ctlvgen/cli.py
++DOC_OUTPUT ?= $(KDIR)/Documentation/output/ctlv/families
+ 
+ # Writes nothing. Fails on an invalid specification, and on any generated file
+ # or ABI snapshot that regen would change.
+@@ -30,16 +34,29 @@ lint:
  	python3 -m pyflakes $(PYSRC)
  	python3 -m mypy $(PYSRC)
  
-+# The C half of this directory: the userspace library, which is not generated
-+# and not Python, so it is its own target rather than part of the checks above.
-+programs:
-+	$(MAKE) -C libctlv
+-# The C half of this directory: the userspace library, which is not generated
+-# and not Python, so it is its own target rather than part of the checks above.
++docs:
++	@mkdir -p $(DOC_OUTPUT)
++	@for spec in $(SPECS) ; do \
++		name=$$(basename $$spec .yaml) ; \
++		echo -e "\tDOC $$name.rst" ; \
++		$(TOOL) --spec $$spec --mode doc --rst \
++			-o $(DOC_OUTPUT)/$$name.rst || exit 1 ; \
++	done
 +
++# The C half of this directory: the userspace library, and the tool that drives
++# a device it was never compiled against. Neither is generated and neither is
++# Python, so they are their own target rather than part of the checks above.
+ programs:
+ 	$(MAKE) -C libctlv
++	$(MAKE) -C ctlvctl
+ 
  clean:
  	rm -rf ctlvgen/__pycache__
  	rm -rf ctlvgen/lib/__pycache__
  	rm -rf ctlvgen.egg-info
  	rm -rf build
-+	$(MAKE) -C libctlv clean
++	rm -rf $(DOC_OUTPUT)
+ 	$(MAKE) -C libctlv clean
++	$(MAKE) -C ctlvctl clean
  
--.PHONY: all regen lint clean
-+.PHONY: all regen lint programs clean
-diff --git a/tools/ctlv/ctlvgen/cli.py b/tools/ctlv/ctlvgen/cli.py
-index 78e09cfd620e..59180f9757e8 100755
---- a/tools/ctlv/ctlvgen/cli.py
-+++ b/tools/ctlv/ctlvgen/cli.py
-@@ -16,6 +16,7 @@ sys.path.append(pathlib.Path(__file__).resolve().parents[1].as_posix())
- from ctlvgen.lib import cgen  # noqa: E402
- from ctlvgen.lib import gen_kernel  # noqa: E402
- from ctlvgen.lib import gen_uapi  # noqa: E402
-+from ctlvgen.lib import gen_user  # noqa: E402
- from ctlvgen.lib import semantics  # noqa: E402
- from ctlvgen.lib import spec  # noqa: E402
- from ctlvgen.lib import tree  # noqa: E402
-@@ -27,6 +28,8 @@ GENERATORS: dict[tuple[str, str], Callable[..., str]] = {
-     ('uapi', 'header'): gen_uapi.render,
-     ('kernel', 'header'): gen_kernel.render_header,
-     ('kernel', 'source'): gen_kernel.render_source,
-+    ('user', 'header'): gen_user.render_header,
-+    ('user', 'source'): gen_user.render_source,
- }
- 
- 
-@@ -50,7 +53,7 @@ def main() -> int:
-                         help='regenerate every file in the output manifests '
-                              'and every ABI snapshot')
-     action.add_argument('--mode',
--                        choices=('uapi', 'kernel'),
-+                        choices=('uapi', 'kernel', 'user'),
-                         help='generate the files of this mode')
-     parser.add_argument('--schema-only', action='store_true',
-                         help='omit the family API from kernel output')
-@@ -105,6 +108,9 @@ def main() -> int:
-         family = semantics.load(paths)
-         if args.validate:
-             cgen.symbols(family)
-+            # The root family has no binding: libctlv is that binding.
-+            if family.name != spec.CORE_FAMILY_NAME:
-+                cgen.user_symbols(family)
-         else:
-             assert file is not None
-             _generate(args, file, family)
-diff --git a/tools/ctlv/ctlvgen/lib/gen_user.py b/tools/ctlv/ctlvgen/lib/gen_user.py
+-.PHONY: all regen lint programs clean
++.PHONY: all regen lint docs programs clean
+diff --git a/tools/ctlv/ctlvctl/.gitignore b/tools/ctlv/ctlvctl/.gitignore
 new file mode 100644
-index 000000000000..060a142ba813
+index 000000000000..dcade74af00e
 --- /dev/null
-+++ b/tools/ctlv/ctlvgen/lib/gen_user.py
-@@ -0,0 +1,808 @@
-+# SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+"""The userspace binding of one family.
-+
-+The header is names, and a child's includes its parent's. The source is the
-+specification as data: one struct ctlv_node_schema tree per op message, in the
-+shape op-schema-get reports, so a device can be compared with it.
-+"""
-+
-+from __future__ import annotations
-+
-+import dataclasses
-+
-+from . import cgen
-+from . import semantics
-+from . import sizes
-+from . import spec
-+from .errors import CtlvError
-+
-+# What every wrapper starts and ends with. A caller wanting only the errno
-+# passes NULL for the error.
-+DEV_PARAM: str = 'struct ctlv_dev *dev'
-+ERROR_PARAM: str = 'struct ctlv_error *error'
-+
-+# What a request is built in, and what an answer arrives in.
-+REQUEST_PARAM: str = 'struct ctlv_msg *request'
-+REPLY_PARAM: str = 'struct ctlv_reply **reply'
-+
-+# The record a reader reads from, and the one TLV it found there.
-+RECORD_PARAM: str = 'const struct ctlv_hdr *record'
-+FOUND: str = 'hdr'
-+
-+# What a getter of each schema kind hands back, and the libctlv reader that
-+# answers it. An enum and a flags payload are read as the integer they are.
-+READERS: dict[str, tuple[tuple[str, ...], str, tuple[str, ...]]] = {
-+    'uint': (('__u64 *value',), 'ctlv_get_u64', ()),
-+    'sint': (('__s64 *value',), 'ctlv_get_s64', ()),
-+    'bool': (('bool *value',), 'ctlv_get_bool', ()),
-+    'string': (('const char **value',), 'ctlv_get_str', ()),
-+    'binary': (('const void **value', '__u32 *len'), 'ctlv_get_bin',
-+               ('value', 'len')),
-+    'enum': (('__u64 *value', 'bool *known'), 'ctlv_get_enum',
-+             ('value', 'known')),
-+    'flags': (('__u64 *value', '__u64 *unknown'), 'ctlv_get_flags',
-+              ('value', 'unknown')),
-+}
-+
-+# What a putter of each schema kind takes, and the libctlv append it wraps.
-+WRITERS: dict[str, tuple[tuple[str, ...], str]] = {
-+    'uint': (('__u64 value',), 'ctlv_put_u64'),
-+    'sint': (('__s64 value',), 'ctlv_put_s64'),
-+    'bool': (('bool value',), 'ctlv_put_bool'),
-+    'string': (('const char *value',), 'ctlv_put_str'),
-+    'binary': (('const void *value', '__u32 len'), 'ctlv_put_bin'),
-+    'enum': (('__u64 value',), 'ctlv_put_u64'),
-+    'flags': (('__u64 value',), 'ctlv_put_u64'),
-+}
-+
-+# Which schema member each length of an op fills, and its name in the header.
-+LENGTHS: tuple[tuple[str, str], ...] = tuple(cgen.USER_LENGTHS.items())
-+
-+# The lengths an op table entry holds, by sizes.OpSizes member.
-+TABLE_LENGTHS: tuple[str, ...] = tuple(
-+    field.name for field in dataclasses.fields(sizes.OpSizes))
-+
-+# Bits of struct ctlv_node_schema's present mask, by the member they cover.
-+PRESENT: dict[str, str] = {
-+    'min': 'CTLV_NODE_SCHEMA_HAS_MIN',
-+    'max': 'CTLV_NODE_SCHEMA_HAS_MAX',
-+    'min_length': 'CTLV_NODE_SCHEMA_HAS_MIN_LENGTH',
-+    'max_length': 'CTLV_NODE_SCHEMA_HAS_MAX_LENGTH',
-+    'flags_mask': 'CTLV_NODE_SCHEMA_HAS_FLAGS_MASK',
-+    'unit': 'CTLV_NODE_SCHEMA_HAS_UNIT',
-+    'scale': 'CTLV_NODE_SCHEMA_HAS_SCALE',
-+    'blob': 'CTLV_NODE_SCHEMA_HAS_BLOB',
-+    'reenters': 'CTLV_NODE_SCHEMA_HAS_REENTERS',
-+}
-+
-+# What a blob node contributes, in the order the core reports it, and the
-+# root family's enum naming the backings it allows.
-+BLOB_MEMBERS: tuple[str, ...] = ('blob_direction', 'blob_backings',
-+                                 'blob_max_length', 'blob_alignment')
-+BLOB_TYPES: str = 'blob-type'
-+
-+# The extremes of an unbounded integer bound, stored as the unsigned pattern of
-+# the value. The most negative signed one has no literal.
-+EXTREMES: dict[tuple[str, int], str] = {
-+    ('uint', spec.U64_MAX): 'UINT64_MAX',
-+    ('sint', spec.S64_MIN): '(__u64)INT64_MIN',
-+    ('sint', spec.S64_MAX): 'INT64_MAX',
-+}
-+
-+OP_TYPES: dict[str, str] = {
-+    op_type: cgen.macro(spec.CORE_FAMILY_NAME, 'op-type', op_type)
-+    for op_type in ('action', 'query')
-+}
-+
-+FD_ACCESSES: dict[str, str] = {
-+    access: cgen.macro(spec.CORE_FAMILY_NAME, 'op-fd-access', access)
-+    for access in spec.FD_ACCESSES
-+}
-+
-+AVAILABILITIES: dict[str, str] = {
-+    availability: cgen.macro(spec.CORE_FAMILY_NAME, 'op-availability',
-+                             availability)
-+    for availability in spec.AVAILABILITIES
-+}
-+
-+
-+def _reject_root(family: semantics.Family) -> None:
-+    """The root family's userspace API is provided by libctlv."""
-+    if family.name == spec.CORE_FAMILY_NAME:
-+        raise CtlvError(f'{family.path}: family {family.name}',
-+                        'the root family has no generated userspace binding, '
-+                        'because libctlv implements its ops directly as the '
-+                        'bootstrap every caller starts from')
-+
-+
-+def render_header(family: semantics.Family) -> str:
-+    """Return the userspace binding header of family as text."""
-+    _reject_root(family)
-+    names = cgen.Names(family)
-+    cgen.symbols(family)
-+    cgen.user_symbols(family)
-+    guard = names.user_guard()
-+
-+    writer = cgen.preamble(family, 'user', 'header')
-+    writer.comment(f'Userspace binding of the {family.name} CTLV family.')
-+    writer.line()
-+    writer.open_guard(guard)
-+    writer.includes(*_includes(family, names))
-+
-+    writer.comment('What this family\'s specification says, for holding a '
-+                   'device against it.')
-+    writer.declaration('extern const struct ctlv_family_spec',
-+                       f'{names.user_spec()};')
-+    _ops(writer, names, family)
-+    _writers(writer, names, family)
-+    _readers(writer, names, family)
-+    writer.line()
-+    writer.close_guard(guard)
-+    return writer.text()
-+
-+
-+def _includes(family: semantics.Family, names: cgen.Names) -> tuple[str, ...]:
-+    """libctlv, this family's constants, and the parent's binding."""
-+    headers = ['<ctlv.h>', '', names.uapi_header()]
-+    if family.parent != spec.CORE_FAMILY_NAME:
-+        headers += ['', cgen.Names(family.chain[-2]).user_header()]
-+    return tuple(headers)
-+
-+
-+def _ops(writer: cgen.Writer, names: cgen.Names,
-+         family: semantics.Family) -> None:
-+    """One call per action and query this family declares.
-+
-+    A wrapper needing a reply buffer asks the device for the length.
-+    """
-+    ops = family.local_ops
-+    if not ops:
-+        return
-+    writer.line()
-+    writer.comment('Executing an op. A query is reassembled into the one '
-+                   'reply it fills.')
-+    for op in ops:
-+        writer.line()
-+        if op.request is not None:
-+            _lengths(writer, names, op)
-+            _request_new(writer, names, op)
-+            writer.line()
-+        _wrapper(writer, names, op)
-+
-+
-+def _lengths(writer: cgen.Writer, names: cgen.Names, op: semantics.Op) -> None:
-+    """The longest request of one op, as this specification computed."""
-+    for field, what in LENGTHS:
-+        value = getattr(op.sizes, field)
-+        if value:
-+            writer.define(names.user_op_len(op, what), str(value))
-+    writer.line()
-+
-+
-+def _request_new(writer: cgen.Writer, names: cgen.Names,
-+                 op: semantics.Op) -> None:
-+    """A request buffer this op's longest request fits in.
-+
-+    Only the size to start at: past it the message grows to what the transport
-+    allows, a descendant's device taking more.
-+    """
-+    writer.signature('static inline int',
-+                     names.user_op_helper(op, 'request_new'),
-+                     ('struct ctlv_msg **request',), ')')
-+    writer.line('{')
-+    writer.declaration('\tconst __u32 len =',
-+                       f'{names.user_op_len(op, "request-max-len")};')
-+    writer.line()
-+    writer.line('\treturn ctlv_msg_new(len, request);')
-+    writer.line('}')
-+
-+
-+def _wrapper(writer: cgen.Writer, names: cgen.Names, op: semantics.Op) -> None:
-+    """The one call that executes one op."""
-+    params = [DEV_PARAM]
-+    if op.request is not None:
-+        params.append(REQUEST_PARAM)
-+    if op.reply is not None:
-+        params.append(REPLY_PARAM)
-+    params.append(ERROR_PARAM)
-+    writer.signature('static inline int', names.user_op(op), tuple(params),
-+                     ')')
-+    writer.line('{')
-+    request = 'request' if op.request is not None else 'NULL'
-+    reply = 'reply' if op.reply is not None else 'NULL'
-+    call = 'ctlv_query' if op.type == 'query' else 'ctlv_action'
-+    arguments = ('dev', names.op_id(op), request, reply, 'error')
-+    writer.parenthesized(f'\treturn {call}(', arguments, ');')
-+    writer.line('}')
-+
-+
-+def _writers(writer: cgen.Writer, names: cgen.Names,
-+             family: semantics.Family) -> None:
-+    """What an application puts into a request, one putter per field.
-+
-+    Every field has one, so a test can put a field where it does not belong.
-+    """
-+    fields = family.local_fields
-+    if not fields:
-+        return
-+    writer.line()
-+    writer.comment('Building a request. ctlv_msg_err() reports the first '
-+                   'failure.')
-+    for field in fields:
-+        writer.line()
-+        writer.doc(field.decl.doc)
-+        if field.decl.kind == 'blob':
-+            _blob_putters(writer, names, field)
-+        elif field.decl.kind == 'record':
-+            _record_opener(writer, names, field)
-+        else:
-+            _putter(writer, names, field)
-+
-+
-+def _record_opener(writer: cgen.Writer, names: cgen.Names,
-+                   field: semantics.Field) -> None:
-+    writer.signature('static inline int', names.field_helper(field, 'start'),
-+                     ('struct ctlv_msg *msg',), ')')
-+    writer.line('{')
-+    writer.parenthesized('\treturn ctlv_record_start(',
-+                         ('msg', names.field(field)), ');')
-+    writer.line('}')
-+
-+
-+def _putter(writer: cgen.Writer, names: cgen.Names,
-+            field: semantics.Field) -> None:
-+    params, put = WRITERS[field.decl.kind]
-+    values = tuple(param.split()[-1].lstrip('*') for param in params)
-+    writer.signature('static inline int', names.field_helper(field, 'put'),
-+                     ('struct ctlv_msg *msg', *params), ')')
-+    writer.line('{')
-+    writer.parenthesized(f'\treturn {put}(',
-+                         ('msg', names.field(field), *values), ');')
-+    writer.line('}')
-+
-+
-+def _blob_putters(writer: cgen.Writer, names: cgen.Names,
-+                  field: semantics.Field) -> None:
-+    """One descriptor writer per backing this field allows."""
-+    assert field.decl.blob is not None
-+    for first, backing in enumerate(field.decl.blob.backings):
-+        suffix, params = cgen.BLOB_PUTTERS[backing]
-+        if first:
-+            writer.line()
-+        values = tuple(param.split()[-1].lstrip('*') for param in params)
-+        writer.signature('static inline int',
-+                         names.field_helper(field, f'put_{suffix}'),
-+                         ('struct ctlv_msg *msg', *params), ')')
-+        writer.line('{')
-+        writer.parenthesized(f'\treturn ctlv_put_blob_{suffix}(',
-+                             ('msg', names.field(field), *values), ');')
-+        writer.line('}')
-+
-+
-+def _readers(writer: cgen.Writer, names: cgen.Names,
-+             family: semantics.Family) -> None:
-+    """What an application reads out of a reply.
-+
-+    A getter answers whether it read anything: a device wrote it, not the
-+    validator.
-+    """
-+    fields = [field for field in family.local_fields
-+              if cgen.user_readers(names, field)]
-+    if not fields:
-+        return
-+    writer.line()
-+    writer.comment('Reading a reply. A getter answers whether it could '
-+                   'read.')
-+    for field in fields:
-+        writer.line()
-+        writer.doc(field.decl.doc)
-+        if field.decl.max_occurrences != 1:
-+            _iterator(writer, names, field)
-+        else:
-+            _present(writer, names, field)
-+        if cgen.getter_value(field):
-+            writer.line()
-+            _getter(writer, names, field)
-+
-+
-+def _present(writer: cgen.Writer, names: cgen.Names,
-+             field: semantics.Field) -> None:
-+    writer.signature('static inline bool',
-+                     names.field_helper(field, 'present'), (RECORD_PARAM,),
-+                     ')')
-+    writer.line('{')
-+    writer.parenthesized('\treturn ctlv_hdr_find(',
-+                         ('record', names.field(field)), ');')
-+    writer.line('}')
-+
-+
-+def _iterator(writer: cgen.Writer, names: cgen.Names,
-+              field: semantics.Field) -> None:
-+    """Every occurrence of a repeated field, in the device's own order."""
-+    writer.define_call(
-+        f'{names.field_helper(field, "for_each")}(_hdr, _record)',
-+        'ctlv_for_each_type', '_hdr', '_record', names.field(field))
-+
-+
-+def _getter(writer: cgen.Writer, names: cgen.Names,
-+            field: semantics.Field) -> None:
-+    """What one field holds, or that it did not hold it.
-+
-+    A single field is looked up in the record it is given, a repeated one is
-+    read where its iterator left the cursor.
-+    """
-+    getter = names.field_helper(field, 'get')
-+    single = field.decl.max_occurrences == 1
-+    found = RECORD_PARAM if single else f'const struct ctlv_hdr *{FOUND}'
-+
-+    if field.decl.kind == 'record':
-+        # A record holds no value of its own: what a caller wants is itself.
-+        writer.signature('static inline const struct ctlv_hdr',
-+                         f'*{getter}', (RECORD_PARAM,), ')')
-+        writer.line('{')
-+        writer.parenthesized('\treturn ctlv_hdr_find(',
-+                             ('record', names.field(field)), ');')
-+        writer.line('}')
-+        return
-+
-+    kind = field.decl.kind
-+    if _extension_enum(names, field):
-+        # What is known depends on the device's family, so it is a number.
-+        kind = 'uint'
-+    params, reader, extra = READERS[kind]
-+    writer.signature('static inline bool', getter, (found, *params), ')')
-+    writer.line('{')
-+    if single:
-+        writer.line(f'\tconst struct ctlv_hdr *{FOUND};')
-+        writer.line()
-+        writer.parenthesized(f'\t{FOUND} = ctlv_hdr_find(',
-+                             ('record', names.field(field)), ');')
-+    arguments = (FOUND,) + _reader_arguments(names, field, extra)
-+    writer.parenthesized(f'\treturn {FOUND} && !{reader}(', arguments, ');')
-+    writer.line('}')
-+
-+
-+def _reader_arguments(names: cgen.Names, field: semantics.Field,
-+                      extra: tuple[str, ...]) -> tuple[str, ...]:
-+    """What the libctlv reader takes beyond the TLV it reads.
-+
-+    An enum and a flags payload are read against what this caller knows, so
-+    anything outside is reported as a newer device's.
-+    """
-+    if (field.decl.kind not in ('enum', 'flags') or
-+            _extension_enum(names, field)):
-+        return extra or ('value',)
-+    assert field.decl.ref is not None
-+    definition = names.effective.definitions[field.decl.ref]
-+    if field.decl.kind == 'flags':
-+        return (names.value_mask(definition),) + extra
-+    if definition.header:
-+        return cgen.header_bounds(definition) + extra
-+    numbers = definition.numbers()
-+    return (str(min(numbers)), str(max(numbers))) + extra
-+
-+
-+def _extension_enum(names: cgen.Names, field: semantics.Field) -> bool:
-+    if field.decl.kind != 'enum':
-+        return False
-+    assert field.decl.ref is not None
-+    return names.effective.definitions[field.decl.ref].extension is not None
-+
-+
-+class ComposedNode:
-+    """One node of a composed tree, with the members that arrive at it.
-+
-+    A composed tree is what a device answers, extension points filled in.
-+    """
-+
-+    def __init__(self, node: semantics.Node, reenters: int = 0) -> None:
-+        self.node = node
-+        self.reenters = reenters
-+        self.fields: list[ComposedNode] = []
-+        self.optional_fields: list[ComposedNode] = []
-+        # The arrays holding this node's members, once they have a name.
-+        self.fields_symbol: str | None = None
-+        self.optional_symbol: str | None = None
-+
-+    @property
-+    def members(self) -> list[ComposedNode]:
-+        return self.fields + self.optional_fields
-+
-+
-+def compose(family: semantics.Family, root: semantics.Node) -> ComposedNode:
-+    """Return the composed tree of one op message."""
-+    return _place(family, root, ())
-+
-+
-+def _place(family: semantics.Family, node: semantics.Node,
-+           stack: tuple[semantics.Node, ...]) -> ComposedNode:
-+    """One node and everything below it, fills spliced in."""
-+    if node.reenters is not None:
-+        return ComposedNode(node, reenters=_levels(node, stack))
-+    place = ComposedNode(node)
-+    _splice(family, node, False, stack + (node,), place)
-+    return place
-+
-+
-+def _levels(node: semantics.Node, stack: tuple[semantics.Node, ...]) -> int:
-+    """How far up the node whose members are this one's as well.
-+
-+    One means the node this one is a member of, as the core reports it.
-+    """
-+    for levels, above in enumerate(reversed(stack), start=1):
-+        if above.expands == node.reenters:
-+            return levels
-+    # The resolver rejects a re-entry of a record nothing expanded above.
-+    raise AssertionError(f'{node.child_field.full_name} re-enters '
-+                         f'{node.reenters} below nothing that expands it')
-+
-+
-+def _splice(family: semantics.Family, node: semantics.Node,
-+            force_optional: bool, stack: tuple[semantics.Node, ...],
-+            place: ComposedNode) -> None:
-+    """The members of one level: what it declares, then what filled it."""
-+    for child in node.required_children:
-+        target = place.optional_fields if force_optional else place.fields
-+        target.append(_place(family, child, stack))
-+    for child in node.optional_children:
-+        place.optional_fields.append(_place(family, child, stack))
-+    for extension in node.extensions:
-+        fill = family.fill_of(extension)
-+        if fill is None:
-+            # Nothing in this chain filled it, so it contributes no member.
-+            continue
-+        _splice(family, fill.root, force_optional or extension.optional, stack,
-+                place)
-+
-+
-+def _sizing(place: ComposedNode) -> semantics.Node:
-+    """One composed tree as an IR node, for the length arithmetic."""
-+    if place.reenters:
-+        return place.node
-+    return dataclasses.replace(
-+        place.node,
-+        required_children=tuple(_sizing(member) for member in place.fields),
-+        optional_children=tuple(_sizing(member)
-+                                for member in place.optional_fields),
-+        extensions=())
-+
-+
-+def render_source(family: semantics.Family) -> str:
-+    """Return the userspace binding source of family as text."""
-+    names = cgen.Names(family)
-+    cgen.symbols(family)
-+    if family.name != spec.CORE_FAMILY_NAME:
-+        cgen.user_symbols(family)
-+
-+    ops = _spec_ops(family)
-+    writer = cgen.preamble(family, 'user', 'source')
-+    writer.includes(*_source_includes(family, names, ops))
-+    writer.comment('Effective request and reply schemas.')
-+    writer.line()
-+    for entry in ops:
-+        for which, place in (('request', entry.request),
-+                             ('reply', entry.reply)):
-+            if place is not None:
-+                _tree(writer, names, entry.op, which, place)
-+    _table(writer, names, ops)
-+    _spec(writer, names, family, ops)
-+    return writer.text()
-+
-+
-+def _source_includes(family: semantics.Family, names: cgen.Names,
-+                     ops: tuple[Entry, ...]) -> tuple[str, ...]:
-+    """libctlv, and this family's own names where it has any."""
-+    headers = ['<ctlv.h>']
-+    if _has_integer(ops):
-+        headers = ['<stdint.h>', '', '<ctlv.h>']
-+    if family.name != spec.CORE_FAMILY_NAME:
-+        headers += ['', names.user_header()]
-+    return tuple(headers)
-+
-+
-+def _has_integer(ops: tuple[Entry, ...]) -> bool:
-+    """Whether any bound of any tree of these ops is an integer's."""
-+    def integers(place: ComposedNode) -> bool:
-+        node = place.node
-+        if not node.is_root and node.child_field.decl.kind in ('uint', 'sint'):
-+            return True
-+        return any(integers(member) for member in place.members)
-+
-+    return any(integers(place) for entry in ops
-+               for place in (entry.request, entry.reply) if place)
-+
-+
-+class Entry:
-+    """One op of a specification table: the op and its composed messages."""
-+
-+    def __init__(self, family: semantics.Family, op: semantics.Op) -> None:
-+        self.op = op
-+        self.request = compose(family, op.request) if op.request else None
-+        self.reply = compose(family, op.reply) if op.reply else None
-+        where = f'{family.path}: op {op.name}'
-+        self.sizes = sizes.composed(where, op,
-+                                    _sizing(self.request) if self.request
-+                                    else None,
-+                                    _sizing(self.reply) if self.reply
-+                                    else None)
-+
-+
-+def _spec_ops(family: semantics.Family) -> tuple[Entry, ...]:
-+    """Every op a device of this family answers, as the family composes it.
-+
-+    An inherited op is described again, since a fill anywhere in the chain
-+    widens its message. The root's ops are libctlv's own table.
-+    """
-+    if family.name == spec.CORE_FAMILY_NAME:
-+        _reject_root_extension(family)
-+        ops = family.local_ops
-+    else:
-+        ops = tuple(op for op in family.ops
-+                    if family.owners[op.family_id] != spec.CORE_FAMILY_NAME)
-+    return tuple(Entry(family, op) for op in ops)
-+
-+
-+def _reject_root_extension(family: semantics.Family) -> None:
-+    """One table serves every chain, so the root may not be widened."""
-+    for extension in family.local_extensions:
-+        raise CtlvError(f'{family.path}: extension {extension.name}',
-+                        'the root family cannot declare an extension '
-+                        'point, because its ops are described once for '
-+                        'every chain')
-+
-+
-+def _tree(writer: cgen.Writer, names: cgen.Names, op: semantics.Op, which: str,
-+          place: ComposedNode) -> None:
-+    """One message: the arrays of its levels, deepest first, then its root."""
-+    symbol = names.user_node_schema(op, which)
-+    _arrays(writer, names, cgen.ident(op.name, which), place, set())
-+    writer.declaration('static const struct ctlv_node_schema',
-+                       f'{symbol} = {{')
-+    _members(writer, names, place, 1)
-+    writer.line('};')
-+    writer.line()
-+
-+
-+def _arrays(writer: cgen.Writer, names: cgen.Names, path: str,
-+            place: ComposedNode, taken: set[str]) -> None:
-+    """The member arrays below place, each emitted before whoever holds it.
-+
-+    An array is named after the path down to the node it carries.
-+    """
-+    for member in place.members:
-+        if member.members:
-+            _arrays(writer, names, _path(path, member, taken), member, taken)
-+    for what, members in (('fields', place.fields),
-+                          ('optional_fields', place.optional_fields)):
-+        if not members:
-+            continue
-+        symbol = f'{path}_{what.removesuffix("s")}_node_schemas'
-+        if what == 'fields':
-+            place.fields_symbol = symbol
-+        else:
-+            place.optional_symbol = symbol
-+        where = 'root' if place.node.is_root else \
-+            place.node.child_field.full_name
-+        writer.comment(f'{where}, {what.replace("_", " ")}')
-+        writer.declaration('static const struct ctlv_node_schema',
-+                           f'{symbol}[] = {{')
-+        for member in members:
-+            _node(writer, names, member)
-+        writer.line('};')
-+        writer.line()
-+
-+
-+def _path(path: str, place: ComposedNode, taken: set[str]) -> str:
-+    """The name of one node below path, which no other node has.
-+
-+    One field twice in one record is two nodes, so repeats are counted.
-+    """
-+    candidate = f'{path}_{cgen.ident(place.node.child_field.name)}'
-+    symbol = candidate
-+    repeat = 1
-+    while symbol in taken:
-+        repeat += 1
-+        symbol = f'{candidate}_{repeat}'
-+    taken.add(symbol)
-+    return symbol
-+
-+
-+def _node(writer: cgen.Writer, names: cgen.Names, place: ComposedNode) -> None:
-+    """One member, as an element of the array that holds it."""
-+    writer.line('\t{')
-+    _members(writer, names, place, 2)
-+    writer.line('\t},')
-+
-+
-+def _members(writer: cgen.Writer, names: cgen.Names, place: ComposedNode,
-+             depth: int) -> None:
-+    """What one node says about itself, in the order the core reports it."""
-+    node = place.node
-+    tab = '\t' * depth
-+    if node.is_root:
-+        writer.line(f'{tab}.type = CTLV_TYPE_ROOT,')
-+        writer.line(f'{tab}.kind = CTLV_SCHEMA_RECORD,')
-+    else:
-+        writer.declaration(f'{tab}.type =',
-+                           f'{names.field(node.child_field)},')
-+        writer.line(f'{tab}.kind = {cgen.KINDS[node.child_field.decl.kind]},')
-+    if node.max_occurrences:
-+        writer.line(f'{tab}.max_occurrences = {node.max_occurrences},')
-+    else:
-+        writer.line(f'{tab}.max_occurrences = 0, /* unlimited */')
-+    _bounds(writer, names, place, tab)
-+    if place.fields_symbol:
-+        writer.declaration(f'{tab}.fields =', f'{place.fields_symbol},')
-+        writer.line(f'{tab}.fields_count = {len(place.fields)},')
-+    if place.optional_symbol:
-+        writer.declaration(f'{tab}.optional_fields =',
-+                           f'{place.optional_symbol},')
-+        writer.line(f'{tab}.optional_fields_count = '
-+                    f'{len(place.optional_fields)},')
-+
-+
-+def _bounds(writer: cgen.Writer, names: cgen.Names, place: ComposedNode,
-+            tab: str) -> None:
-+    """The bounds of the schema kind this node has, with the present mask."""
-+    bounds = _bounded(names, place)
-+    if not bounds:
-+        return
-+    bits = [PRESENT[name] for name, _ in bounds]
-+    _or_lines(writer, f'{tab}.present = ', bits)
-+    for name, value in bounds:
-+        if name == 'blob':
-+            for member, part in zip(BLOB_MEMBERS, value):
-+                writer.line(f'{tab}.{member} = {part},')
-+        else:
-+            writer.line(f'{tab}.{name} = {value},')
-+
-+
-+def _or_lines(writer: cgen.Writer, opening: str, terms: list[str]) -> None:
-+    """One or-ed list of bits, broken after an operator where it must be."""
-+    column = cgen.width(opening)
-+    indent = '\t' * (column // cgen.TAB_WIDTH) + ' ' * (column %
-+                                                        cgen.TAB_WIDTH)
-+    line = opening
-+    for first, term in enumerate(terms):
-+        part = term if not first else f' | {term}'
-+        if first and cgen.width(f'{line}{part} |') > cgen.LINE_LIMIT:
-+            writer.line(f'{line} |')
-+            line = indent + term
-+        else:
-+            line += part
-+    writer.line(f'{line},')
-+
-+
-+def _bounded(
-+        names: cgen.Names,
-+        place: ComposedNode) -> tuple[tuple[str, str | tuple[str, ...]], ...]:
-+    """Every bounded member of one node, with the value the core reports."""
-+    node = place.node
-+    if node.is_root:
-+        return ()
-+    decl = node.child_field.decl
-+    bounds: list[tuple[str, str | tuple[str, ...]]] = []
-+    if decl.kind in ('uint', 'sint'):
-+        assert decl.min is not None and decl.max is not None
-+        bounds += [('min', _bound(decl.kind, decl.min)),
-+                   ('max', _bound(decl.kind, decl.max))]
-+    elif decl.kind == 'enum':
-+        assert decl.ref is not None
-+        definition = names.effective.definitions[decl.ref]
-+        if definition.extension is not None:
-+            # As the device's family fills it, so nothing when none did.
-+            bounds += [('min', '1'), ('max', str(definition.max_value))]
-+        elif definition.header:
-+            low, high = cgen.header_bounds(definition)
-+            bounds += [('min', low), ('max', high)]
-+        else:
-+            numbers = definition.numbers()
-+            bounds += [('min', str(min(numbers))),
-+                       ('max', str(max(numbers)))]
-+    elif decl.kind == 'flags':
-+        assert decl.ref is not None
-+        mask = 0
-+        for bit in _numbers(names, decl.ref):
-+            mask |= 1 << bit
-+        bounds.append(('flags_mask', _u64(mask)))
-+    elif decl.kind in ('string', 'binary'):
-+        assert decl.min_length is not None and decl.max_length is not None
-+        bounds += [('min_length', _u64(decl.min_length)),
-+                   ('max_length', _u64(decl.max_length))]
-+    elif decl.kind == 'blob':
-+        assert decl.blob is not None
-+        bounds.append(('blob', _blob(names, decl.blob)))
-+    if decl.unit is not None:
-+        bounds += [('unit', f'CTLV_UNIT_{cgen.macro(decl.unit)}'),
-+                   ('scale', str(decl.scale))]
-+    if place.reenters:
-+        bounds.append(('reenters', str(place.reenters)))
-+    return tuple(bounds)
-+
-+
-+def _numbers(names: cgen.Names, ref: str) -> tuple[int, ...]:
-+    """The numbers of the definition one field refers to."""
-+    return names.effective.definitions[ref].numbers()
-+
-+
-+def _blob(names: cgen.Names, blob: spec.BlobDecl) -> tuple[str, ...]:
-+    """What a blob node allows, in the order the core reports it."""
-+    direction = cgen.macro(spec.CORE_FAMILY_NAME, 'blob-direction',
-+                           blob.direction)
-+    types = dict(names.effective.definitions[BLOB_TYPES].values)
-+    mask = 0
-+    for backing in blob.backings:
-+        mask |= 1 << types[backing]
-+    return (direction, _u64(mask), _u64(blob.max_length),
-+            _u64(blob.alignment))
-+
-+
-+def _bound(kind: str, value: int) -> str:
-+    extreme = EXTREMES.get((kind, value))
-+    if extreme:
-+        return extreme
-+    if kind == 'sint':
-+        return _s64(value)
-+    return _u64(value)
-+
-+
-+def _u64(value: int) -> str:
-+    """One unsigned value, hexadecimal once decimal stops being readable."""
-+    if value < 1 << 16:
-+        return str(value)
-+    return f'{value:#x}ULL'
-+
-+
-+def _s64(value: int) -> str:
-+    """One signed bound, as the unsigned payload a message carries."""
-+    if value >= 0:
-+        return _u64(value)
-+    return f'(__u64)(__s64){value}'
-+
-+
-+def _table(writer: cgen.Writer, names: cgen.Names,
-+           ops: tuple[Entry, ...]) -> None:
-+    """Every op of one table, with what its messages may hold."""
-+    if not ops:
-+        return
-+    writer.comment('Effective ops in declaration order.')
-+    writer.declaration('static const struct ctlv_op_spec',
-+                       f'{names.user_op_specs()}[] = {{')
-+    for entry in ops:
-+        op = entry.op
-+        writer.line('\t{')
-+        writer.declaration('\t\t.op_id =', f'{names.op_id(op)},')
-+        writer.line(f'\t\t.type = {OP_TYPES[op.type]},')
-+        writer.line(f'\t\t.fd_access = {FD_ACCESSES[op.fd_access]},')
-+        writer.line('\t\t.availability = '
-+                    f'{AVAILABILITIES[op.availability]},')
-+        if op.optional:
-+            writer.line('\t\t.optional = true,')
-+        for field in TABLE_LENGTHS:
-+            value = getattr(entry.sizes, field)
-+            if value:
-+                writer.line(f'\t\t.{field} = {value},')
-+        for which in ('request', 'reply'):
-+            if getattr(entry, which) is not None:
-+                writer.line(f'\t\t.{which} = '
-+                            f'&{names.user_node_schema(op, which)},')
-+        writer.line('\t},')
-+    writer.line('};')
-+    writer.line()
-+
-+
-+def _spec(writer: cgen.Writer, names: cgen.Names, family: semantics.Family,
-+          ops: tuple[Entry, ...]) -> None:
-+    """This family's node of the specification graph."""
-+    writer.comment('Family specification descriptor.')
-+    writer.declaration('const struct ctlv_family_spec',
-+                       f'{names.user_spec()} = {{')
-+    writer.line(f'\t.name = "{family.name}",')
-+    writer.line(f'\t.family_id = {family.family_id},')
-+    if family.name != spec.CORE_FAMILY_NAME:
-+        parent = cgen.Names(family.chain[-2]).user_spec()
-+        writer.line(f'\t.parent = &{parent},')
-+    if ops:
-+        writer.line(f'\t.ops = {names.user_op_specs()},')
-+        writer.line(f'\t.ops_count = {len(ops)},')
-+    writer.line('};')
-diff --git a/tools/ctlv/ctlvgen/lib/outputs.py b/tools/ctlv/ctlvgen/lib/outputs.py
-index a295055c46b2..6ee8abe7f765 100644
---- a/tools/ctlv/ctlvgen/lib/outputs.py
-+++ b/tools/ctlv/ctlvgen/lib/outputs.py
-@@ -14,6 +14,7 @@ from typing import Optional
- from . import cgen
- from . import gen_kernel
- from . import gen_uapi
-+from . import gen_user
- from . import semantics
- from . import spec
- from . import yamlload
-@@ -24,16 +25,21 @@ FLAVOURS: dict[str, Callable[..., str]] = {
-     'uapi-header': gen_uapi.render,
-     'kernel-header': gen_kernel.render_header,
-     'kernel-source': gen_kernel.render_source,
-+    'user-header': gen_user.render_header,
-+    'user-source': gen_user.render_source,
- }
- 
- IDENTITIES: dict[str, tuple[str, str, str]] = {
-     'uapi-header': ('uapi', 'header', '.h'),
-     'kernel-header': ('kernel', 'header', '.h'),
-     'kernel-source': ('kernel', 'source', '.c'),
-+    'user-header': ('user', 'header', '.h'),
-+    'user-source': ('user', 'source', '.c'),
- }
- 
--ROOT_FLAVOURS = frozenset(FLAVOURS)
--FAMILY_FLAVOURS: frozenset[str] = frozenset(FLAVOURS)
-+USER_FLAVOURS = frozenset({'user-header', 'user-source'})
-+ROOT_FLAVOURS = frozenset(FLAVOURS) - {'user-header'}
-+FAMILY_FLAVOURS: frozenset[str] = frozenset(FLAVOURS) - USER_FLAVOURS
- FIXTURE_FLAVOURS: frozenset[str] = frozenset({
-     'uapi-header', 'kernel-header', 'kernel-source',
- })
-@@ -143,6 +149,8 @@ def load(paths: spec.Paths) -> tuple[Output, ...]:
-             if not fixture and name == spec.CORE_FAMILY_NAME:
-                 required = ROOT_FLAVOURS
-             flavours = frozenset(record['outputs'])
-+            if required == FAMILY_FLAVOURS and flavours & USER_FLAVOURS:
-+                required |= USER_FLAVOURS
-             if flavours != required:
-                 missing = sorted(required - flavours)
-                 extra = sorted(flavours - required)
-diff --git a/tools/ctlv/libctlv/Makefile b/tools/ctlv/libctlv/Makefile
++++ b/tools/ctlv/ctlvctl/.gitignore
+@@ -0,0 +1,4 @@
++# SPDX-License-Identifier: GPL-2.0-only
++/*.json
++/ctlvctl
++/libctlv/
+diff --git a/tools/ctlv/ctlvctl/Makefile b/tools/ctlv/ctlvctl/Makefile
 new file mode 100644
-index 000000000000..8e4e40118db2
+index 000000000000..dcfca390d402
 --- /dev/null
-+++ b/tools/ctlv/libctlv/Makefile
-@@ -0,0 +1,41 @@
++++ b/tools/ctlv/ctlvctl/Makefile
+@@ -0,0 +1,64 @@
 +# SPDX-License-Identifier: GPL-2.0
 +
 +KDIR ?= ../../..
++LIBDIR = ../libctlv
 +
 +CFLAGS ?= -O2 -g
 +
 +include ../../scripts/Makefile.include
 +
-+# What make headers_install leaves behind, which is where <ctlv/ctlv.h> and
-+# every generated family header come from.
 +KHDR_INCLUDES ?= -isystem $(or $(ABSOLUTE_O),$(KDIR))/usr/include
 +
 +CFLAGS += -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers
-+CFLAGS += -D_GNU_SOURCE -I. $(KHDR_INCLUDES)
++CFLAGS += -D_GNU_SOURCE -I$(LIBDIR) $(KHDR_INCLUDES)
 +
-+LIB = $(OUTPUT)libctlv.a
++# The one that knows the target's json-c, when cross-compiling.
++PKG_CONFIG ?= $(CROSS_COMPILE)pkg-config
 +
-+# ctlv_user_gen.o is the root family's specification, generated from the same
-+# YAML the core is generated from: the ops this library implements directly are
-+# described by the tool that describes every other family's.
-+OBJS = $(addprefix $(OUTPUT),	\
-+	ctlv_user_gen.o			\
-+	device.o			\
-+	introspection.o			\
-+	message.o			\
-+	schema.o			\
-+	spec.o				\
-+	transport.o)
++JSON_C_CFLAGS := $(shell $(PKG_CONFIG) --atleast-version=0.14 json-c \
++			  2>/dev/null && $(PKG_CONFIG) --cflags json-c)
++JSON_C_LIBS := $(shell $(PKG_CONFIG) --atleast-version=0.14 json-c \
++			2>/dev/null && $(PKG_CONFIG) --libs json-c)
++ifneq ($(JSON_C_LIBS),)
++CFLAGS += -DHAVE_JSON_C $(JSON_C_CFLAGS)
++LDLIBS += $(JSON_C_LIBS)
++endif
 +
-+all: $(LIB)
++# With a build directory, libctlv is built for ctlvctl inside it.
++LIBCTLV_OUTPUT ?= $(if $(OUTPUT),$(OUTPUT)libctlv/)
++LIB = $(or $(LIBCTLV_OUTPUT),$(LIBDIR)/)libctlv.a
++OBJS = $(OUTPUT)ctlvctl.o $(OUTPUT)spec.o
 +
-+$(LIB): $(OBJS)
-+	$(QUIET_AR)$(AR) rcs $@ $^
++# What --spec-dir reads where there is neither the source tree nor Python:
++# the names of each of the tree's families and of the families it inherits.
++DOCDIR = $(KDIR)/Documentation/ctlv
++SPECDIR = $(DOCDIR)/specs
++SPECS = $(wildcard $(SPECDIR)/*.yaml)
++CTLVGEN = ../ctlvgen/cli.py
++CTLVGEN_INPUTS = $(SPECS) $(wildcard $(DOCDIR)/*.yaml) \
++		 $(wildcard ../ctlvgen/*.py ../ctlvgen/lib/*.py)
++MANIFESTS = $(patsubst $(SPECDIR)/%.yaml,$(OUTPUT)%.json,$(SPECS))
 +
-+$(OUTPUT)%.o: %.c ctlv.h internal.h
++all: $(OUTPUT)ctlvctl $(MANIFESTS)
++
++$(OUTPUT)ctlvctl: $(OBJS) $(LIB)
++	$(QUIET_LINK)$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIB) $(LDLIBS)
++
++$(OUTPUT)%.o: %.c spec.h
 +	$(QUIET_CC)$(CC) $(CFLAGS) -c -o $@ $<
 +
++$(OUTPUT)%.json: $(SPECDIR)/%.yaml $(CTLVGEN_INPUTS)
++	$(QUIET_GEN)$(CTLVGEN) --spec $< --runtime-json > $@
++
++$(LIB): FORCE
++	$(if $(LIBCTLV_OUTPUT),$(Q)mkdir -p $(LIBCTLV_OUTPUT))
++	$(Q)$(MAKE) -C $(LIBDIR) OUTPUT=$(LIBCTLV_OUTPUT)
++
 +clean:
-+	rm -f $(OBJS) $(LIB)
++	rm -f $(OUTPUT)ctlvctl $(OBJS) $(MANIFESTS)
++	$(if $(LIBCTLV_OUTPUT),rm -rf $(LIBCTLV_OUTPUT))
 +
-+.PHONY: all clean
-diff --git a/tools/ctlv/libctlv/ctlv.h b/tools/ctlv/libctlv/ctlv.h
++FORCE:
++
++.PHONY: all clean FORCE
++.DELETE_ON_ERROR:
+diff --git a/tools/ctlv/ctlvctl/ctlvctl.c b/tools/ctlv/ctlvctl/ctlvctl.c
 new file mode 100644
-index 000000000000..cd643531ab64
+index 000000000000..ef9bb8536c47
 --- /dev/null
-+++ b/tools/ctlv/libctlv/ctlv.h
-@@ -0,0 +1,413 @@
-+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Family-independent userspace API; generated bindings build on it.
-+ * int functions return zero or a negative errno; builders retain first error.
-+ */
-+#ifndef _CTLV_H
-+#define _CTLV_H
-+
-+#include <ctlv/ctlv.h>
-+#include <ctlv/ctlv_gen.h>
-+#include <linux/types.h>
-+#include <stdbool.h>
-+#include <stddef.h>
-+
-+/* Room for the device's message in struct ctlv_error; a longer one is cut. */
-+#define CTLV_ERROR_MESSAGE_LEN 256
-+
-+/* Which members of struct ctlv_error the failure came with. */
-+#define CTLV_ERROR_HAS_REASON			(1U << 0)
-+#define CTLV_ERROR_HAS_MESSAGE			(1U << 1)
-+#define CTLV_ERROR_HAS_BAD_TLV_OFFSET		(1U << 2)
-+#define CTLV_ERROR_HAS_RECORD_OFFSET		(1U << 3)
-+#define CTLV_ERROR_HAS_MISSING_TYPE		(1U << 4)
-+#define CTLV_ERROR_HAS_EXPECTED_GENERATION	(1U << 5)
-+#define CTLV_ERROR_HAS_CURRENT_GENERATION	(1U << 6)
-+#define CTLV_ERROR_HAS_REQUIRED_LENGTH		(1U << 7)
-+
-+/**
-+ * struct ctlv_error - Why one op failed, as the device explained it.
-+ * @err: the negative errno the op failed with, zero when it did not
-+ * @present: CTLV_ERROR_HAS_* bits saying which members below were reported
-+ * @reason: enum ctlv_validation_reason
-+ * @message: what the device said, NUL terminated
-+ * @bad_tlv_offset: offset in the request of the TLV that was refused
-+ * @record_offset: offset in the request of the record holding it
-+ * @missing_type: type of a required field that was absent
-+ * @expected_generation: the generation a stale continuation carried
-+ * @current_generation: the generation the device is on now
-+ * @required_length: how long the output blob at @bad_tlv_offset has to be
-+ *
-+ * Everything beyond @err is optional, and a caller that wants only the errno
-+ * may pass NULL wherever this is asked for.
-+ */
-+struct ctlv_error {
-+	int err;
-+	__u32 present;
-+	__u32 reason;
-+	char message[CTLV_ERROR_MESSAGE_LEN];
-+	__u64 bad_tlv_offset;
-+	__u64 record_offset;
-+	__u64 missing_type;
-+	__u64 expected_generation;
-+	__u64 current_generation;
-+	__u64 required_length;
-+};
-+
-+/* Renders @error into @buf and returns it, for a diagnostic of one line. */
-+const char *ctlv_error_str(const struct ctlv_error *error, char *buf,
-+			   size_t len);
-+
-+/* An open device, its family chain resolved. */
-+struct ctlv_dev;
-+/* A message being built. */
-+struct ctlv_msg;
-+/* A complete reply, however many fragments it arrived in. */
-+struct ctlv_reply;
-+/* One op's request or reply tree, as numbers. */
-+struct ctlv_schema;
-+
-+int ctlv_open(const char *family, unsigned int which, int flags,
-+	      struct ctlv_dev **devp);
-+int ctlv_open_path(const char *path, int flags, struct ctlv_dev **devp);
-+/* A file its own subsystem opened, which ctlv_close() leaves open. */
-+int ctlv_open_fd(int fd, struct ctlv_dev **devp);
-+void ctlv_close(struct ctlv_dev *dev);
-+
-+int ctlv_dev_fd(const struct ctlv_dev *dev);
-+const char *ctlv_dev_name(const struct ctlv_dev *dev);
-+
-+/* The chain of the opened device, root first and the device family last. */
-+unsigned int ctlv_chain_len(const struct ctlv_dev *dev);
-+__u16 ctlv_chain_id(const struct ctlv_dev *dev, unsigned int level);
-+const char *ctlv_chain_name(const struct ctlv_dev *dev, unsigned int level);
-+/* The family the device answers as. */
-+const char *ctlv_dev_family(const struct ctlv_dev *dev);
-+/* Whether @family is anywhere in the chain, so an inherited op applies. */
-+bool ctlv_dev_inherits(const struct ctlv_dev *dev, const char *family);
-+
-+/**
-+ * struct ctlv_dev_list - Every CTLV device this system has.
-+ * @names: device names as they appear in /dev
-+ * @names_count: number of names
-+ */
-+struct ctlv_dev_list {
-+	char **names;
-+	unsigned int names_count;
-+};
-+
-+int ctlv_enumerate(struct ctlv_dev_list *list);
-+void ctlv_dev_list_free(struct ctlv_dev_list *list);
-+
-+int ctlv_msg_new(__u32 capacity, struct ctlv_msg **msgp);
-+/* The same with a ceiling, so an over-long request fails as it is built. */
-+int ctlv_msg_new_max(__u32 capacity, __u32 max, struct ctlv_msg **msgp);
-+void ctlv_msg_free(struct ctlv_msg *msg);
-+void ctlv_msg_reset(struct ctlv_msg *msg);
-+
-+/* The first failure since the last reset, or 0. */
-+int ctlv_msg_err(const struct ctlv_msg *msg);
-+/* Closes whatever is still open and returns the message, or the failure. */
-+int ctlv_msg_done(struct ctlv_msg *msg);
-+const struct ctlv_hdr *ctlv_msg_root(const struct ctlv_msg *msg);
-+__u32 ctlv_msg_len(const struct ctlv_msg *msg);
-+
-+int ctlv_put_u64(struct ctlv_msg *msg, __u64 type, __u64 value);
-+int ctlv_put_s64(struct ctlv_msg *msg, __u64 type, __s64 value);
-+int ctlv_put_bool(struct ctlv_msg *msg, __u64 type, bool value);
-+int ctlv_put_str(struct ctlv_msg *msg, __u64 type, const char *value);
-+int ctlv_put_bin(struct ctlv_msg *msg, __u64 type, const void *value,
-+		 __u32 len);
-+int ctlv_record_start(struct ctlv_msg *msg, __u64 type);
-+int ctlv_record_end(struct ctlv_msg *msg);
-+
-+/*
-+ * Says of the TLV written last, a record just ended included, that a device
-+ * whose schema does not declare its type should skip it rather than refuse
-+ * the request. A type the device does declare is held to its schema as ever,
-+ * so this covers a field a newer version of a family added and nothing more.
-+ */
-+int ctlv_msg_ignore_if_unknown(struct ctlv_msg *msg);
-+
-+/* A blob TLV carries a record describing memory; these write all of it. */
-+int ctlv_put_blob_va(struct ctlv_msg *msg, __u64 type, const void *address,
-+		     __u64 length);
-+
-+/* Fails when framing, lengths or records are not self-consistent. */
-+int ctlv_msg_check(const void *buf, __u32 len);
-+
-+bool ctlv_hdr_is_record(const struct ctlv_hdr *hdr);
-+const void *ctlv_hdr_payload(const struct ctlv_hdr *hdr, __u32 *len);
-+__u32 ctlv_hdr_payload_len(const struct ctlv_hdr *hdr);
-+
-+const struct ctlv_hdr *ctlv_hdr_first(const struct ctlv_hdr *record);
-+const struct ctlv_hdr *ctlv_hdr_next(const struct ctlv_hdr *record,
-+				     const struct ctlv_hdr *child);
-+const struct ctlv_hdr *ctlv_hdr_find(const struct ctlv_hdr *record,
-+				     __u64 type);
-+const struct ctlv_hdr *ctlv_hdr_find_next(const struct ctlv_hdr *record,
-+					  const struct ctlv_hdr *hdr,
-+					  __u64 type);
-+unsigned int ctlv_hdr_count(const struct ctlv_hdr *record, __u64 type);
-+
-+/* Every child of @record, in the order the device wrote them. */
-+#define ctlv_for_each(_child, _record)					\
-+	for ((_child) = ctlv_hdr_first(_record); (_child);		\
-+	     (_child) = ctlv_hdr_next((_record), (_child)))
-+
-+/* Every occurrence of a field that may repeat. */
-+#define ctlv_for_each_type(_child, _record, _type)			\
-+	for ((_child) = ctlv_hdr_find((_record), (_type)); (_child);	\
-+	     (_child) = ctlv_hdr_find_next((_record), (_child),		\
-+					   (_type)))
-+
-+int ctlv_get_u64(const struct ctlv_hdr *hdr, __u64 *value);
-+int ctlv_get_s64(const struct ctlv_hdr *hdr, __s64 *value);
-+int ctlv_get_bool(const struct ctlv_hdr *hdr, bool *value);
-+int ctlv_get_str(const struct ctlv_hdr *hdr, const char **value);
-+int ctlv_get_bin(const struct ctlv_hdr *hdr, const void **value, __u32 *len);
-+
-+/*
-+ * Neither refuses a value a device newer than its caller sent: @known says
-+ * whether the value is from @min to @max, @unknown collects the bits outside
-+ * @mask.
-+ */
-+int ctlv_get_enum(const struct ctlv_hdr *hdr, __u64 min, __u64 max,
-+		  __u64 *value, bool *known);
-+int ctlv_get_flags(const struct ctlv_hdr *hdr, __u64 mask, __u64 *value,
-+		   __u64 *unknown);
-+
-+/*
-+ * An action is one ioctl. A query is as many as its answer takes, reassembled
-+ * here into the one reply the device would have sent given room for all of it.
-+ */
-+int ctlv_action(struct ctlv_dev *dev, __u64 op_id, struct ctlv_msg *request,
-+		struct ctlv_reply **replyp, struct ctlv_error *error);
-+int ctlv_query(struct ctlv_dev *dev, __u64 op_id, struct ctlv_msg *request,
-+	       struct ctlv_reply **replyp, struct ctlv_error *error);
-+
-+/*
-+ * The same two with the reply buffer sized, sparing the fallback dump. A sized
-+ * action keeps error information only if @reply_len has room for it, and a
-+ * sized query does not restart a stale dump, so a caller learns that it went
-+ * stale.
-+ */
-+int ctlv_action_sized(struct ctlv_dev *dev, __u64 op_id,
-+		      struct ctlv_msg *request, __u32 reply_len,
-+		      struct ctlv_reply **replyp, struct ctlv_error *error);
-+int ctlv_query_sized(struct ctlv_dev *dev, __u64 op_id,
-+		     struct ctlv_msg *request, __u32 buf_len,
-+		     struct ctlv_reply **replyp, struct ctlv_error *error);
-+
-+const struct ctlv_hdr *ctlv_reply_root(const struct ctlv_reply *reply);
-+/* The generation the answer belongs to. */
-+__u64 ctlv_reply_generation(const struct ctlv_reply *reply);
-+/* How many ioctls it took, a property of the buffer, not the reply. */
-+unsigned int ctlv_reply_fragments(const struct ctlv_reply *reply);
-+void ctlv_reply_free(struct ctlv_reply *reply);
-+
-+/*
-+ * What op-schema-get reports, in the shape the generator computes the same
-+ * numbers into, so a device and its specification compare member by member.
-+ */
-+
-+/* Which members of struct ctlv_node_schema the node declares. */
-+#define CTLV_NODE_SCHEMA_HAS_MIN		(1U << 0)
-+#define CTLV_NODE_SCHEMA_HAS_MAX		(1U << 1)
-+#define CTLV_NODE_SCHEMA_HAS_MIN_LENGTH		(1U << 2)
-+#define CTLV_NODE_SCHEMA_HAS_MAX_LENGTH		(1U << 3)
-+#define CTLV_NODE_SCHEMA_HAS_FLAGS_MASK		(1U << 4)
-+#define CTLV_NODE_SCHEMA_HAS_UNIT		(1U << 5)
-+#define CTLV_NODE_SCHEMA_HAS_SCALE		(1U << 6)
-+#define CTLV_NODE_SCHEMA_HAS_BLOB		(1U << 7)
-+#define CTLV_NODE_SCHEMA_HAS_REENTERS		(1U << 8)
-+
-+/**
-+ * struct ctlv_node_schema - One node of an op's request or reply tree.
-+ * @type: the field's type, or CTLV_TYPE_ROOT for the message root
-+ * @kind: enum ctlv_schema_kind, the one schema kind this payload takes
-+ * @max_occurrences: how often it may appear, zero meaning as often as fits
-+ * @present: CTLV_NODE_SCHEMA_HAS_* bits saying which members below apply
-+ * @min: inclusive lower bound of an integer or enum payload
-+ * @max: inclusive upper bound of the same
-+ * @min_length: shortest string or binary payload, a terminator excluded
-+ * @max_length: longest of the same
-+ * @flags_mask: every bit a flags payload may carry
-+ * @unit: enum ctlv_unit of an integer payload
-+ * @scale: decimal scale that accompanies @unit
-+ * @blob_direction: enum ctlv_blob_direction of a blob
-+ * @blob_backings: mask of BIT(enum ctlv_blob_type) this blob takes
-+ * @blob_max_length: longest external payload the blob may describe
-+ * @blob_alignment: alignment the blob's address or offset must have
-+ * @reenters: levels to climb to the node whose members are this one's too
-+ * @fields: the required nodes one level in
-+ * @fields_count: how many
-+ * @optional_fields: the optional nodes one level in
-+ * @optional_fields_count: how many
-+ *
-+ * The same field in two places is two nodes, each required or not.
-+ */
-+struct ctlv_node_schema {
-+	__u64 type;
-+	__u32 kind;
-+	__u64 max_occurrences;
-+	__u32 present;
-+	__u64 min;
-+	__u64 max;
-+	__u64 min_length;
-+	__u64 max_length;
-+	__u64 flags_mask;
-+	__u32 unit;
-+	__s64 scale;
-+	__u32 blob_direction;
-+	__u64 blob_backings;
-+	__u64 blob_max_length;
-+	__u64 blob_alignment;
-+	__u64 reenters;
-+	const struct ctlv_node_schema *fields;
-+	unsigned int fields_count;
-+	const struct ctlv_node_schema *optional_fields;
-+	unsigned int optional_fields_count;
-+};
-+
-+/* Either tree is absent when the op has no such message. */
-+int ctlv_op_schema_get(struct ctlv_dev *dev, __u64 op_id,
-+		       struct ctlv_schema **schemap, struct ctlv_error *error);
-+const struct ctlv_node_schema *ctlv_schema_request(const struct ctlv_schema *s);
-+const struct ctlv_node_schema *ctlv_schema_reply(const struct ctlv_schema *s);
-+void ctlv_schema_free(struct ctlv_schema *schema);
-+
-+/*
-+ * Whether two trees agree, and where they first differ. @expected is what a
-+ * specification generated, @actual what a device reported.
-+ */
-+bool ctlv_schema_equal(const struct ctlv_node_schema *expected,
-+		       const struct ctlv_node_schema *actual, char *diff,
-+		       size_t len);
-+
-+/* One line describing a node; @indent is how deep it sits. */
-+void ctlv_schema_render(const struct ctlv_node_schema *node,
-+			unsigned int indent, char *buf, size_t len);
-+
-+/* What every device answers, whatever family it belongs to. */
-+
-+/**
-+ * struct ctlv_op_info - One entry of an ops dump.
-+ * @op_id: complete op ID
-+ * @type: enum ctlv_op_type
-+ * @fd_access: enum ctlv_op_fd_access
-+ * @availability: enum ctlv_op_availability
-+ * @disabled: whether this device refuses the op right now
-+ * @request_max_len: longest request made from known fields
-+ * @action_reply_max_len: longest action reply, zero when it is not an action
-+ * @query_reply_min_len: smallest buffer a query fragment needs
-+ * @query_reply_suggested_len: buffer size the device would rather have
-+ * @error_info_max_len: longest error information
-+ */
-+struct ctlv_op_info {
-+	__u64 op_id;
-+	__u32 type;
-+	__u32 fd_access;
-+	__u32 availability;
-+	bool disabled;
-+	__u64 request_max_len;
-+	__u64 action_reply_max_len;
-+	__u64 query_reply_min_len;
-+	__u64 query_reply_suggested_len;
-+	__u64 error_info_max_len;
-+};
-+
-+/**
-+ * struct ctlv_ops - Every op one device publishes.
-+ * @ops: entries in the order the device reported them
-+ * @ops_count: number of entries
-+ * @generation: the op-state generation the whole dump belongs to
-+ */
-+struct ctlv_ops {
-+	struct ctlv_op_info *ops;
-+	unsigned int ops_count;
-+	__u64 generation;
-+};
-+
-+int ctlv_ops_get(struct ctlv_dev *dev, struct ctlv_ops **opsp,
-+		 struct ctlv_error *error);
-+void ctlv_ops_free(struct ctlv_ops *ops);
-+const struct ctlv_op_info *ctlv_ops_find(const struct ctlv_ops *ops,
-+					 __u64 op_id);
-+
-+/*
-+ * What a family's specification says, as its generated binding carries it.
-+ * Comparing it against what a device reports says whether the two agree.
-+ */
-+
-+/**
-+ * struct ctlv_op_spec - What a specification says about one op.
-+ * @op_id: complete op ID
-+ * @type: enum ctlv_op_type
-+ * @fd_access: enum ctlv_op_fd_access
-+ * @availability: enum ctlv_op_availability
-+ * @optional: whether a device may omit this op
-+ * @request_max_len: longest request made from known fields
-+ * @action_reply_max_len: longest action reply, zero when it is not an action
-+ * @query_reply_min_len: smallest buffer a query fragment needs
-+ * @query_reply_suggested_len: buffer size worth offering a query
-+ * @error_info_max_len: longest error information
-+ * @request: the request tree, NULL when the op takes no request
-+ * @reply: the reply tree, NULL when it answers none
-+ *
-+ * An ops dump says whether a particular device offers an optional op.
-+ */
-+struct ctlv_op_spec {
-+	__u64 op_id;
-+	__u32 type;
-+	__u32 fd_access;
-+	__u32 availability;
-+	bool optional;
-+	__u64 request_max_len;
-+	__u64 action_reply_max_len;
-+	__u64 query_reply_min_len;
-+	__u64 query_reply_suggested_len;
-+	__u64 error_info_max_len;
-+	const struct ctlv_node_schema *request;
-+	const struct ctlv_node_schema *reply;
-+};
-+
-+/**
-+ * struct ctlv_family_spec - What a specification says about one family.
-+ * @name: the family name, as a device's uevent carries it
-+ * @family_id: its position in the central registry
-+ * @parent: the family it inherits, NULL for the root
-+ * @ops: every op a device of the family answers below the root, in the order
-+ *	its chain declared them
-+ * @ops_count: number of entries
-+ *
-+ * A chain is these linked upwards, one per family. An inherited op is
-+ * described again in each, because every length that touches it differs.
-+ */
-+struct ctlv_family_spec {
-+	const char *name;
-+	__u16 family_id;
-+	const struct ctlv_family_spec *parent;
-+	const struct ctlv_op_spec *ops;
-+	unsigned int ops_count;
-+};
-+
-+/* The root family, which every chain starts from and every device answers. */
-+extern const struct ctlv_family_spec ctlv_spec;
-+
-+/* The op of @spec's chain with @op_id, or NULL for one it does not describe. */
-+const struct ctlv_op_spec *ctlv_spec_find(const struct ctlv_family_spec *spec,
-+					  __u64 op_id);
-+
-+/*
-+ * Whether @dev agrees with @spec about its published ops: 0 when they do,
-+ * -ENOMSG when they do not with @diff saying where, -EINVAL when @spec is not
-+ * the family @dev registered as, another errno when the device could not be
-+ * asked. Every mandatory op must be published; an optional one may be absent.
-+ */
-+int ctlv_spec_check(struct ctlv_dev *dev, const struct ctlv_family_spec *spec,
-+		    char *diff, size_t len, struct ctlv_error *error);
-+
-+#endif /* _CTLV_H */
-diff --git a/tools/ctlv/libctlv/ctlv_user_gen.c b/tools/ctlv/libctlv/ctlv_user_gen.c
-new file mode 100644
-index 000000000000..606dbf93b746
---- /dev/null
-+++ b/tools/ctlv/libctlv/ctlv_user_gen.c
-@@ -0,0 +1,551 @@
-+// SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
-+/*
-+ * Generated from Documentation/ctlv/specs/ctlv.yaml by
-+ * tools/ctlv/ctlv-regen.sh. Do not edit.
-+ */
-+/* CTLV-GEN user source */
-+
-+#include <stdint.h>
-+
-+#include <ctlv.h>
-+
-+/* Effective request and reply schemas. */
-+
-+static const struct ctlv_node_schema family_get_request_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+};
-+
-+/* family-get families, fields */
-+static const struct ctlv_node_schema family_get_reply_families_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_FAMILY_GET_FAMILIES_ID,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_FAMILY_GET_FAMILIES_NAME,
-+		.kind = CTLV_SCHEMA_STRING,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN_LENGTH | CTLV_NODE_SCHEMA_HAS_MAX_LENGTH,
-+		.min_length = 0,
-+		.max_length = 63,
-+	},
-+};
-+
-+/* root, fields */
-+static const struct ctlv_node_schema family_get_reply_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_FAMILY_GET_FAMILIES,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.fields = family_get_reply_families_field_node_schemas,
-+		.fields_count = 2,
-+	},
-+};
-+
-+static const struct ctlv_node_schema family_get_reply_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+	.fields = family_get_reply_field_node_schemas,
-+	.fields_count = 1,
-+};
-+
-+static const struct ctlv_node_schema op_get_request_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+};
-+
-+/* op-get ops, fields */
-+static const struct ctlv_node_schema op_get_reply_ops_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_OP_GET_OPS_ID,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_TYPE,
-+		.kind = CTLV_SCHEMA_ENUM,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = 2,
-+	},
-+};
-+
-+/* op-get ops, optional fields */
-+static const struct ctlv_node_schema op_get_reply_ops_optional_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_OP_GET_OPS_AVAILABILITY,
-+		.kind = CTLV_SCHEMA_ENUM,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = 2,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_DISABLED,
-+		.kind = CTLV_SCHEMA_BOOL,
-+		.max_occurrences = 1,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_REQUEST_MAX_LEN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_ACTION_REPLY_MAX_LEN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_QUERY_REPLY_MIN_LEN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_QUERY_REPLY_SUGGESTED_LEN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_FD_ACCESS,
-+		.kind = CTLV_SCHEMA_ENUM,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = 2,
-+	},
-+	{
-+		.type = CTLV_T_OP_GET_OPS_ERROR_INFO_MAX_LEN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+};
-+
-+/* root, fields */
-+static const struct ctlv_node_schema op_get_reply_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_OP_GET_OPS,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.fields = op_get_reply_ops_field_node_schemas,
-+		.fields_count = 2,
-+		.optional_fields = op_get_reply_ops_optional_field_node_schemas,
-+		.optional_fields_count = 8,
-+	},
-+};
-+
-+static const struct ctlv_node_schema op_get_reply_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+	.fields = op_get_reply_field_node_schemas,
-+	.fields_count = 1,
-+};
-+
-+/* root, fields */
-+static const struct ctlv_node_schema op_schema_get_request_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_OP_SCHEMA_GET_ID,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = UINT64_MAX,
-+	},
-+};
-+
-+static const struct ctlv_node_schema op_schema_get_request_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+	.fields = op_schema_get_request_field_node_schemas,
-+	.fields_count = 1,
-+};
-+
-+/* op-schema-get request, fields */
-+static const struct ctlv_node_schema op_schema_get_reply_request_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_TYPE,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_KIND,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX_OCCURRENCES,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+};
-+
-+/* op-schema-get request, optional fields */
-+static const struct ctlv_node_schema op_schema_get_reply_request_optional_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MIN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MIN_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_FLAGS_MASK,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_UNIT,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_SCALE,
-+		.kind = CTLV_SCHEMA_SINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = (__u64)INT64_MIN,
-+		.max = INT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_DIRECTION,
-+		.kind = CTLV_SCHEMA_ENUM,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = 3,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_BACKINGS,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_MAX_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_ALIGNMENT,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_REENTERS,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_FIELDS,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.present = CTLV_NODE_SCHEMA_HAS_REENTERS,
-+		.reenters = 1,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.present = CTLV_NODE_SCHEMA_HAS_REENTERS,
-+		.reenters = 1,
-+	},
-+};
-+
-+/* op-schema-get reply, fields */
-+static const struct ctlv_node_schema op_schema_get_reply_reply_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_TYPE,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_KIND,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX_OCCURRENCES,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+};
-+
-+/* op-schema-get reply, optional fields */
-+static const struct ctlv_node_schema op_schema_get_reply_reply_optional_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MIN,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MIN_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_MAX_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_FLAGS_MASK,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_UNIT,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_SCALE,
-+		.kind = CTLV_SCHEMA_SINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = (__u64)INT64_MIN,
-+		.max = INT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_DIRECTION,
-+		.kind = CTLV_SCHEMA_ENUM,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = 3,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_BACKINGS,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_MAX_LENGTH,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_BLOB_ALIGNMENT,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 0,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_REENTERS,
-+		.kind = CTLV_SCHEMA_UINT,
-+		.max_occurrences = 1,
-+		.present = CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX,
-+		.min = 1,
-+		.max = UINT64_MAX,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_FIELDS,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.present = CTLV_NODE_SCHEMA_HAS_REENTERS,
-+		.reenters = 1,
-+	},
-+	{
-+		.type = CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 0, /* unlimited */
-+		.present = CTLV_NODE_SCHEMA_HAS_REENTERS,
-+		.reenters = 1,
-+	},
-+};
-+
-+/* root, optional fields */
-+static const struct ctlv_node_schema op_schema_get_reply_optional_field_node_schemas[] = {
-+	{
-+		.type = CTLV_T_OP_SCHEMA_GET_REQUEST,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 1,
-+		.fields = op_schema_get_reply_request_field_node_schemas,
-+		.fields_count = 3,
-+		.optional_fields = op_schema_get_reply_request_optional_field_node_schemas,
-+		.optional_fields_count = 14,
-+	},
-+	{
-+		.type = CTLV_T_OP_SCHEMA_GET_REPLY,
-+		.kind = CTLV_SCHEMA_RECORD,
-+		.max_occurrences = 1,
-+		.fields = op_schema_get_reply_reply_field_node_schemas,
-+		.fields_count = 3,
-+		.optional_fields = op_schema_get_reply_reply_optional_field_node_schemas,
-+		.optional_fields_count = 14,
-+	},
-+};
-+
-+static const struct ctlv_node_schema op_schema_get_reply_node_schema = {
-+	.type = CTLV_TYPE_ROOT,
-+	.kind = CTLV_SCHEMA_RECORD,
-+	.max_occurrences = 1,
-+	.optional_fields = op_schema_get_reply_optional_field_node_schemas,
-+	.optional_fields_count = 2,
-+};
-+
-+/* Effective ops in declaration order. */
-+static const struct ctlv_op_spec ctlv_op_specs[] = {
-+	{
-+		.op_id = CTLV_OP_FAMILY_GET,
-+		.type = CTLV_OP_TYPE_QUERY,
-+		.fd_access = CTLV_OP_FD_ACCESS_READ,
-+		.availability = CTLV_OP_AVAILABILITY_FIXED,
-+		.request_max_len = 16,
-+		.query_reply_min_len = 112,
-+		.query_reply_suggested_len = 65536,
-+		.error_info_max_len = 456,
-+		.request = &family_get_request_node_schema,
-+		.reply = &family_get_reply_node_schema,
-+	},
-+	{
-+		.op_id = CTLV_OP_OP_GET,
-+		.type = CTLV_OP_TYPE_QUERY,
-+		.fd_access = CTLV_OP_FD_ACCESS_READ,
-+		.availability = CTLV_OP_AVAILABILITY_FIXED,
-+		.request_max_len = 16,
-+		.query_reply_min_len = 56,
-+		.query_reply_suggested_len = 65536,
-+		.error_info_max_len = 456,
-+		.request = &op_get_request_node_schema,
-+		.reply = &op_get_reply_node_schema,
-+	},
-+	{
-+		.op_id = CTLV_OP_OP_SCHEMA_GET,
-+		.type = CTLV_OP_TYPE_QUERY,
-+		.fd_access = CTLV_OP_FD_ACCESS_READ,
-+		.availability = CTLV_OP_AVAILABILITY_FIXED,
-+		.request_max_len = 40,
-+		.query_reply_min_len = 168,
-+		.query_reply_suggested_len = 65536,
-+		.error_info_max_len = 456,
-+		.request = &op_schema_get_request_node_schema,
-+		.reply = &op_schema_get_reply_node_schema,
-+	},
-+};
-+
-+/* Family specification descriptor. */
-+const struct ctlv_family_spec ctlv_spec = {
-+	.name = "ctlv",
-+	.family_id = 0,
-+	.ops = ctlv_op_specs,
-+	.ops_count = 3,
-+};
-diff --git a/tools/ctlv/libctlv/device.c b/tools/ctlv/libctlv/device.c
-new file mode 100644
-index 000000000000..468ec2fb563a
---- /dev/null
-+++ b/tools/ctlv/libctlv/device.c
-@@ -0,0 +1,412 @@
++++ b/tools/ctlv/ctlvctl/ctlvctl.c
+@@ -0,0 +1,2787 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 +/*
 + * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
 + *
-+ * Device discovery, opening, and family-chain verification.
++ * Family-independent CTLV command-line client.
 + */
 +
-+#include <dirent.h>
-+#include <fcntl.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+
-+#include "internal.h"
-+
-+/* Whichever subsystem a device is in announces its family, so all are here. */
-+#define CHAR_DIR "/sys/dev/char"
-+#define DEV_DIR "/dev"
-+
-+/* Longest device or family name, and longest path naming one. */
-+#define NAME_LEN 256
-+#define PATH_LEN 1024
-+
-+/* One line of a uevent file, PROPERTY=value. */
-+#define UEVENT_LINE_LEN 512
-+
-+static int name_dup(const char *name, char **out)
-+{
-+	char *copy = strdup(name);
-+
-+	if (!copy)
-+		return -ENOMEM;
-+	*out = copy;
-+	return 0;
-+}
-+
-+/* The value @line gives @property, its newline dropped, or NULL. */
-+static const char *uevent_value(char *line, const char *property)
-+{
-+	size_t prefix = strlen(property);
-+	char *end;
-+
-+	if (strncmp(line, property, prefix) || line[prefix] != '=')
-+		return NULL;
-+	end = strchr(line, '\n');
-+	if (end)
-+		*end = '\0';
-+	return line + prefix + 1;
-+}
-+
-+/*
-+ * The family of one char device and its name under /dev, NAME_LEN each, or
-+ * -ENOENT for a device that is not a CTLV one.
-+ */
-+static int uevent_read(const char *devnum, char *family, char *devname)
-+{
-+	char line[UEVENT_LINE_LEN];
-+	char path[PATH_LEN];
-+	FILE *file;
-+
-+	family[0] = '\0';
-+	devname[0] = '\0';
-+	snprintf(path, sizeof(path), "%s/%s/uevent", CHAR_DIR, devnum);
-+	file = fopen(path, "re");
-+	if (!file)
-+		return -errno;
-+	while (fgets(line, sizeof(line), file)) {
-+		const char *value = uevent_value(line, "CTLV_FAMILY");
-+		char *out = family;
-+		size_t len;
-+
-+		if (!value) {
-+			value = uevent_value(line, "DEVNAME");
-+			out = devname;
-+		}
-+		if (!value)
-+			continue;
-+		len = strlen(value);
-+		/* A property this reader cannot hold is not one it matched. */
-+		if (len < NAME_LEN)
-+			memcpy(out, value, len + 1);
-+	}
-+	fclose(file);
-+	return *family && *devname ? 0 : -ENOENT;
-+}
-+
-+static int name_cmp(const void *a, const void *b)
-+{
-+	return strcmp(*(const char *const *)a, *(const char *const *)b);
-+}
-+
-+/* Every CTLV device, or only those registered as @family. */
-+static int dev_scan(struct ctlv_dev_list *list, const char *family)
-+{
-+	char found[NAME_LEN], devname[NAME_LEN];
-+	struct dirent *entry;
-+	char **name = NULL;
-+	unsigned int n = 0;
-+	DIR *dir;
-+	int ret = 0;
-+
-+	memset(list, 0, sizeof(*list));
-+	dir = opendir(CHAR_DIR);
-+	if (!dir)
-+		return -errno;
-+	while ((entry = readdir(dir))) {
-+		char **grown;
-+
-+		if (entry->d_name[0] == '.' ||
-+		    uevent_read(entry->d_name, found, devname) ||
-+		    (family && strcmp(found, family)))
-+			continue;
-+		grown = realloc(name, (n + 1) * sizeof(*name));
-+		if (!grown) {
-+			ret = -ENOMEM;
-+			break;
-+		}
-+		name = grown;
-+		ret = name_dup(devname, &name[n]);
-+		if (ret)
-+			break;
-+		n++;
-+	}
-+	closedir(dir);
-+	list->names_count = n;
-+	list->names = name;
-+	if (ret) {
-+		ctlv_dev_list_free(list);
-+		return ret;
-+	}
-+	/* Ordered, so that a tool listing devices lists them the same twice. */
-+	if (name)
-+		qsort(name, n, sizeof(*name), name_cmp);
-+	return 0;
-+}
-+
-+int ctlv_enumerate(struct ctlv_dev_list *list)
-+{
-+	return dev_scan(list, NULL);
-+}
-+
-+void ctlv_dev_list_free(struct ctlv_dev_list *list)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < list->names_count; i++)
-+		free(list->names[i]);
-+	free(list->names);
-+	memset(list, 0, sizeof(*list));
-+}
-+
-+/* The chain the device reports, root family first and device family last. */
-+int ctlv_chain_load(struct ctlv_dev *dev)
-+{
-+	const struct ctlv_hdr *root, *entry;
-+	struct ctlv_reply *reply = NULL;
-+	unsigned int n = 0;
-+	int ret;
-+
-+	ret = ctlv_query_sized(dev, CTLV_OP_FAMILY_GET, NULL, 0, &reply,
-+			       NULL);
-+	if (ret)
-+		return ret;
-+
-+	root = ctlv_reply_root(reply);
-+	ret = ctlv_bootstrap_validate(root, reply->msg->len,
-+				      CTLV_OP_FAMILY_GET);
-+	if (ret)
-+		goto out;
-+	n = ctlv_hdr_count(root, CTLV_T_FAMILY_GET_FAMILIES);
-+	dev->chain_id = calloc(n, sizeof(*dev->chain_id));
-+	dev->chain_name = calloc(n, sizeof(*dev->chain_name));
-+	if (!dev->chain_id || !dev->chain_name) {
-+		ret = -ENOMEM;
-+		goto out;
-+	}
-+
-+	ctlv_for_each_type(entry, root, CTLV_T_FAMILY_GET_FAMILIES) {
-+		const struct ctlv_hdr *hdr;
-+		const char *name;
-+		__u64 id;
-+
-+		hdr = ctlv_hdr_find(entry, CTLV_T_FAMILY_GET_FAMILIES_ID);
-+		if (!hdr || ctlv_get_u64(hdr, &id) || id > UINT16_MAX) {
-+			ret = -EPROTO;
-+			goto out;
-+		}
-+		hdr = ctlv_hdr_find(entry, CTLV_T_FAMILY_GET_FAMILIES_NAME);
-+		if (!hdr || ctlv_get_str(hdr, &name)) {
-+			ret = -EPROTO;
-+			goto out;
-+		}
-+		dev->chain_id[dev->chain_len] = id;
-+		ret = name_dup(name, &dev->chain_name[dev->chain_len]);
-+		if (ret)
-+			goto out;
-+		dev->chain_len++;
-+	}
-+	ret = 0;
-+out:
-+	ctlv_reply_free(reply);
-+	return ret;
-+}
-+
-+static void dev_free(struct ctlv_dev *dev)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < dev->chain_len; i++)
-+		free(dev->chain_name[i]);
-+	free(dev->chain_name);
-+	free(dev->chain_id);
-+	free(dev->name);
-+	ctlv_ops_free(dev->sizes);
-+	if (dev->fd >= 0 && dev->owns_fd)
-+		close(dev->fd);
-+	free(dev);
-+}
-+
-+/* @fd's device, whose family chain it is asked for over that same fd. */
-+static int dev_attach(const char *name, int fd, bool owns_fd,
-+		      struct ctlv_dev **devp)
-+{
-+	struct ctlv_dev *dev;
-+	int ret;
-+
-+	dev = calloc(1, sizeof(*dev));
-+	if (!dev) {
-+		if (owns_fd)
-+			close(fd);
-+		return -ENOMEM;
-+	}
-+	dev->fd = fd;
-+	dev->owns_fd = owns_fd;
-+	ret = name_dup(name, &dev->name);
-+	if (!ret)
-+		ret = ctlv_chain_load(dev);
-+	if (ret) {
-+		dev_free(dev);
-+		return ret;
-+	}
-+	*devp = dev;
-+	return 0;
-+}
-+
-+static int dev_open(const char *name, const char *path, int flags,
-+		    struct ctlv_dev **devp)
-+{
-+	int fd = open(path, flags | O_CLOEXEC);
-+
-+	if (fd < 0)
-+		return -errno;
-+	return dev_attach(name, fd, true, devp);
-+}
-+
-+int ctlv_open_path(const char *path, int flags, struct ctlv_dev **devp)
-+{
-+	const char *name = strrchr(path, '/');
-+
-+	return dev_open(name ? name + 1 : path, path, flags, devp);
-+}
-+
-+int ctlv_open_fd(int fd, struct ctlv_dev **devp)
-+{
-+	char link[PATH_LEN], target[PATH_LEN];
-+	const char *name = target;
-+	ssize_t len;
-+
-+	if (fd < 0)
-+		return -EBADF;
-+	/* Named for messages only, after the file if /proc can say which. */
-+	snprintf(link, sizeof(link), "/proc/self/fd/%d", fd);
-+	len = readlink(link, target, sizeof(target) - 1);
-+	if (len < 0) {
-+		snprintf(target, sizeof(target), "fd%d", fd);
-+	} else {
-+		target[len] = '\0';
-+		if (strrchr(target, '/'))
-+			name = strrchr(target, '/') + 1;
-+	}
-+	return dev_attach(name, fd, false, devp);
-+}
-+
-+/*
-+ * The @which'th device of @family, matched against its registered family
-+ * rather than any it inherits.
-+ */
-+int ctlv_open(const char *family, unsigned int which, int flags,
-+	      struct ctlv_dev **devp)
-+{
-+	char path[PATH_LEN];
-+	struct ctlv_dev_list list;
-+	int ret;
-+
-+	ret = dev_scan(&list, family);
-+	if (ret)
-+		return ret;
-+	ret = -ENODEV;
-+	if (which < list.names_count) {
-+		snprintf(path, sizeof(path), "%s/%s", DEV_DIR,
-+			 list.names[which]);
-+		ret = dev_open(list.names[which], path, flags, devp);
-+	}
-+	ctlv_dev_list_free(&list);
-+	return ret;
-+}
-+
-+void ctlv_close(struct ctlv_dev *dev)
-+{
-+	if (dev)
-+		dev_free(dev);
-+}
-+
-+int ctlv_dev_fd(const struct ctlv_dev *dev)
-+{
-+	return dev->fd;
-+}
-+
-+const char *ctlv_dev_name(const struct ctlv_dev *dev)
-+{
-+	return dev->name;
-+}
-+
-+unsigned int ctlv_chain_len(const struct ctlv_dev *dev)
-+{
-+	return dev->chain_len;
-+}
-+
-+__u16 ctlv_chain_id(const struct ctlv_dev *dev, unsigned int level)
-+{
-+	return level < dev->chain_len ? dev->chain_id[level] : 0;
-+}
-+
-+const char *ctlv_chain_name(const struct ctlv_dev *dev, unsigned int level)
-+{
-+	return level < dev->chain_len ? dev->chain_name[level] : NULL;
-+}
-+
-+const char *ctlv_dev_family(const struct ctlv_dev *dev)
-+{
-+	return ctlv_chain_name(dev, dev->chain_len - 1);
-+}
-+
-+bool ctlv_dev_inherits(const struct ctlv_dev *dev, const char *family)
-+{
-+	unsigned int i;
-+
-+	for (i = 0; i < dev->chain_len; i++)
-+		if (!strcmp(dev->chain_name[i], family))
-+			return true;
-+	return false;
-+}
-+
-+/*
-+ * The dump is taken once: its lengths follow from the schema and cannot go out
-+ * of date.
-+ */
-+const struct ctlv_ops *ctlv_dev_sizes(struct ctlv_dev *dev)
-+{
-+	if (!dev->sizes && ctlv_ops_get(dev, &dev->sizes, NULL))
-+		return NULL;
-+	return dev->sizes;
-+}
-+
-+/* What one op answers with, for the two calls that were not told. */
-+static const struct ctlv_op_info *op_sizes(struct ctlv_dev *dev, __u64 op_id)
-+{
-+	const struct ctlv_ops *sizes = ctlv_dev_sizes(dev);
-+
-+	return sizes ? ctlv_ops_find(sizes, op_id) : NULL;
-+}
-+
-+/*
-+ * Room for a refusal's error information as well: an action cannot be retried
-+ * into a larger buffer the way a query can, it has happened.
-+ */
-+int ctlv_action(struct ctlv_dev *dev, __u64 op_id, struct ctlv_msg *request,
-+		struct ctlv_reply **replyp, struct ctlv_error *error)
-+{
-+	const struct ctlv_op_info *info = op_sizes(dev, op_id);
-+	__u64 reply_len = 0;
-+
-+	if (info) {
-+		reply_len = info->action_reply_max_len;
-+		if (reply_len < info->error_info_max_len)
-+			reply_len = info->error_info_max_len;
-+	}
-+	return ctlv_action_sized(dev, op_id, request, reply_len, replyp,
-+				 error);
-+}
-+
-+/*
-+ * A dump that went stale is started again, the fragments of two answers not
-+ * being an answer. A caller wanting the -ESTALE instead asks for a size.
-+ */
-+int ctlv_query(struct ctlv_dev *dev, __u64 op_id, struct ctlv_msg *request,
-+	       struct ctlv_reply **replyp, struct ctlv_error *error)
-+{
-+	const struct ctlv_op_info *info = op_sizes(dev, op_id);
-+	__u32 buf_len = 0;
-+	unsigned int try;
-+	int ret;
-+
-+	if (info)
-+		buf_len = info->query_reply_suggested_len;
-+	for (try = 0; try < QUERY_RESTARTS; try++) {
-+		ret = ctlv_query_sized(dev, op_id, request, buf_len, replyp,
-+				       error);
-+		if (ret != -ESTALE)
-+			return ret;
-+	}
-+	return ret;
-+}
-diff --git a/tools/ctlv/libctlv/internal.h b/tools/ctlv/libctlv/internal.h
-new file mode 100644
-index 000000000000..ff3553561ac6
---- /dev/null
-+++ b/tools/ctlv/libctlv/internal.h
-@@ -0,0 +1,161 @@
-+/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Private libctlv declarations.
-+ */
-+#ifndef _CTLV_INTERNAL_H
-+#define _CTLV_INTERNAL_H
-+
++#include <ctype.h>
 +#include <errno.h>
++#include <fcntl.h>
++#include <getopt.h>
++#include <limits.h>
++#include <stdbool.h>
 +#include <stdint.h>
++#include <stdio.h>
 +#include <stdlib.h>
 +#include <string.h>
 +
-+#include "ctlv.h"
++#ifdef HAVE_JSON_C
++#include <json.h>
++#endif
 +
-+#define CTLV_ARRAY_SIZE(_a) (sizeof(_a) / sizeof((_a)[0]))
++#include <ctlv.h>
 +
-+/*
-+ * How many times a query is started over when the answer changed underneath
-+ * it. More than this is a device changing faster than it can be described.
-+ */
-+#define QUERY_RESTARTS 8
++#include "spec.h"
 +
-+/*
-+ * The deepest level a message may reach, the root at depth zero. No device
-+ * goes deeper today, so a message that does is malformed.
-+ */
-+#define CTLV_RECORD_DEPTH_MAX 32
-+
-+/* The root is at depth zero, hence one more than the levels below it. */
-+#define CTLV_DEPTH_MAX (CTLV_RECORD_DEPTH_MAX + 1)
-+
-+/* Stops a runaway builder: no device today takes a longer request. */
-+#define CTLV_REQUEST_LEN_MAX 0x10000
++#define DEV_DIR "/dev"
++#define PATH_LEN 1024
++#define LINE_LEN 512
++#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 +
 +/*
-+ * Reassembly needs a bound of its own, a query reply not being held to the
-+ * inline limit. A message cannot describe more anyway: a record's length is
-+ * u32.
++ * How deep a request built from the command line may go: the root and 32
++ * levels below it, as deep as any device goes today.
 + */
-+#define CTLV_REPLY_LEN_MAX (64U << 20)
++#define PATH_DEPTH 33
 +
-+/* Bounds the cursor history retained for one query. */
-+#define CTLV_QUERY_FRAGMENTS_MAX (64U << 10)
++/* Where a request buffer starts; it grows as fields are added. */
++#define REQUEST_HINT 512
 +
-+/**
-+ * struct ctlv_msg - One message being written.
-+ * @buf: the bytes, grown as needed and aligned as a root must be
-+ * @capacity: how much @buf holds
-+ * @max: how far @capacity may grow before appending fails
-+ * @len: how much of it is written
-+ * @open: offsets of the record headers not yet ended, the root first
-+ * @depth: how many of those there are
-+ * @last: offset of the TLV written last, or of a record just ended; zero while
-+ *	that is the root, which no per-TLV choice applies to
-+ * @err: the first failure since the last reset
-+ *
-+ * A TLV is tracked by offset because a record's length is only known once its
-+ * children are written, and because growing @buf moves it.
-+ */
-+struct ctlv_msg {
-+	__u8 *buf;
-+	__u32 capacity;
-+	__u32 max;
-+	__u32 len;
-+	__u32 open[CTLV_DEPTH_MAX];
-+	unsigned int depth;
-+	__u32 last;
-+	int err;
-+};
++static const char *prog = "ctlvctl";
 +
-+int ctlv_msg_new_max(__u32 capacity, __u32 max, struct ctlv_msg **msgp);
-+int ctlv_msg_put(struct ctlv_msg *msg, __u64 type, __u32 flags,
-+		 const void *payload, __u32 len);
-+/* Appends a copy of one TLV, header and payload, without its flags. */
-+int ctlv_msg_copy(struct ctlv_msg *msg, const struct ctlv_hdr *hdr);
++static struct {
++	const char *spec_dir;
++	bool show_ids;
++	bool output_json;
++} options;
 +
-+struct ctlv_frag_path {
-+	__u64 type[CTLV_RECORD_DEPTH_MAX];
-+	unsigned int depth;
-+};
++#ifdef HAVE_JSON_C
++static int json_template_print(const struct ctlv_node_schema *root,
++			       const struct ctlvctl_spec *spec);
++static void json_add_id(struct json_object *object, const char *key, __u64 id);
++static void json_add_op(struct json_object *object,
++			const struct ctlvctl_spec *spec, __u64 op_id);
++static int json_print(struct json_object *object);
++static int json_schema_print(const struct ctlv_dev *dev,
++			     const struct ctlvctl_spec *spec, __u64 op_id,
++			     const struct ctlv_schema *schema);
 +
-+int ctlv_frag_splice(struct ctlv_msg *out, const struct ctlv_hdr *root,
-+		     struct ctlv_frag_path *open, bool *progress);
-+
-+struct ctlv_query_guard {
-+	__u64 *cursors;
-+	unsigned int cursors_capacity;
-+	unsigned int cursors_count;
-+};
-+
-+int ctlv_query_guard_next(struct ctlv_query_guard *guard, __u64 cursor,
-+			  bool progress);
-+void ctlv_query_guard_free(struct ctlv_query_guard *guard);
-+
-+/**
-+ * struct ctlv_dev - One open device.
-+ * @fd: the character device
-+ * @owns_fd: whether ctlv_close() closes @fd
-+ * @name: what it is called under /dev
-+ * @chain_len: how many families it answers
-+ * @chain_id: their registry IDs, the root first
-+ * @chain_name: their names, in the same order
-+ * @sizes: one ops dump, kept for the message lengths it reports
-+ *
-+ * @sizes is filled the first time a length is needed and was not named, and
-+ * only its length members are read: they cannot go out of date.
-+ */
-+struct ctlv_dev {
-+	int fd;
-+	bool owns_fd;
-+	char *name;
-+	unsigned int chain_len;
-+	__u16 *chain_id;
-+	char **chain_name;
-+	struct ctlv_ops *sizes;
-+};
-+
-+/**
-+ * struct ctlv_reply - One complete answer.
-+ * @msg: the reassembled message, whose root is the reply's
-+ * @generation: what the device reported the answer belongs to
-+ * @fragments: how many ioctls it took
-+ */
-+struct ctlv_reply {
-+	struct ctlv_msg *msg;
-+	__u64 generation;
-+	unsigned int fragments;
-+};
-+
-+/**
-+ * struct ctlv_schema - One op's trees and their node schemas.
-+ * @node_schemas: every node schema of both trees, owned as one allocation
-+ * @node_schemas_count: number of node schemas
-+ * @request: the root of the request tree, or NULL
-+ * @reply: the root of the reply tree, or NULL
-+ */
-+struct ctlv_schema {
-+	struct ctlv_node_schema *node_schemas;
-+	unsigned int node_schemas_count;
-+	const struct ctlv_node_schema *request;
-+	const struct ctlv_node_schema *reply;
-+};
-+
-+void ctlv_error_clear(struct ctlv_error *error);
-+void ctlv_error_set(struct ctlv_error *error, int err);
-+/* Reads whatever error information a failed op wrote into the reply buffer. */
-+void ctlv_error_parse(struct ctlv_error *error, int err, const void *buf,
-+		      __u32 len);
-+
-+int ctlv_chain_load(struct ctlv_dev *dev);
-+/* @dev's @sizes, dumped on first use; NULL when the dump failed. */
-+const struct ctlv_ops *ctlv_dev_sizes(struct ctlv_dev *dev);
-+int ctlv_bootstrap_validate(const void *buf, __u32 len, __u64 op_id);
-+int ctlv_schema_parse(const struct ctlv_hdr *root, __u32 len,
-+		      struct ctlv_schema **sp);
-+int ctlv_ops_parse(const struct ctlv_hdr *root, __u32 len,
-+		   __u64 generation, struct ctlv_ops **opsp);
-+
-+#endif /* _CTLV_INTERNAL_H */
-diff --git a/tools/ctlv/libctlv/introspection.c b/tools/ctlv/libctlv/introspection.c
-new file mode 100644
-index 000000000000..1bd2662e5831
---- /dev/null
-+++ b/tools/ctlv/libctlv/introspection.c
-@@ -0,0 +1,238 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Root-family introspection.
-+ */
-+
-+#include "internal.h"
-+
-+enum op_info_ctype {
-+	OP_INFO_U32 = 0,
-+	OP_INFO_U64 = 1,
-+	OP_INFO_BOOL = 2,
-+};
-+
-+enum op_info_type {
-+	OP_INFO_ACTION = 1,
-+	OP_INFO_QUERY = 2,
-+};
-+
-+static int op_info_read(struct ctlv_op_info *info,
-+			const struct ctlv_hdr *entry)
++static void json_add_string(struct json_object *object, const char *key,
++			    const char *value)
 +{
-+	static const struct {
-+		__u64 type;
-+		size_t offset;
-+		unsigned int applies;
-+		enum op_info_ctype ctype;
-+	} fields[] = {
-+		{ CTLV_T_OP_GET_OPS_FD_ACCESS,
-+		  offsetof(struct ctlv_op_info, fd_access),
-+		  OP_INFO_ACTION | OP_INFO_QUERY, OP_INFO_U32 },
-+		{ CTLV_T_OP_GET_OPS_AVAILABILITY,
-+		  offsetof(struct ctlv_op_info, availability),
-+		  OP_INFO_ACTION | OP_INFO_QUERY, OP_INFO_U32 },
-+		{ CTLV_T_OP_GET_OPS_DISABLED,
-+		  offsetof(struct ctlv_op_info, disabled),
-+		  OP_INFO_ACTION | OP_INFO_QUERY, OP_INFO_BOOL },
-+		{ CTLV_T_OP_GET_OPS_REQUEST_MAX_LEN,
-+		  offsetof(struct ctlv_op_info, request_max_len),
-+		  OP_INFO_ACTION | OP_INFO_QUERY, OP_INFO_U64 },
-+		{ CTLV_T_OP_GET_OPS_ACTION_REPLY_MAX_LEN,
-+		  offsetof(struct ctlv_op_info, action_reply_max_len),
-+		  OP_INFO_ACTION, OP_INFO_U64 },
-+		{ CTLV_T_OP_GET_OPS_QUERY_REPLY_MIN_LEN,
-+		  offsetof(struct ctlv_op_info, query_reply_min_len),
-+		  OP_INFO_QUERY, OP_INFO_U64 },
-+		{ CTLV_T_OP_GET_OPS_QUERY_REPLY_SUGGESTED_LEN,
-+		  offsetof(struct ctlv_op_info, query_reply_suggested_len),
-+		  OP_INFO_QUERY, OP_INFO_U64 },
-+		{ CTLV_T_OP_GET_OPS_ERROR_INFO_MAX_LEN,
-+		  offsetof(struct ctlv_op_info, error_info_max_len),
-+		  OP_INFO_ACTION | OP_INFO_QUERY, OP_INFO_U64 },
-+	};
-+	const struct ctlv_hdr *hdr;
-+	unsigned int applies = 0;
-+	unsigned int i;
-+	__u64 value;
-+	bool boolean;
-+
-+	hdr = ctlv_hdr_find(entry, CTLV_T_OP_GET_OPS_ID);
-+	if (!hdr || ctlv_get_u64(hdr, &info->op_id))
-+		return -EPROTO;
-+	hdr = ctlv_hdr_find(entry, CTLV_T_OP_GET_OPS_TYPE);
-+	if (!hdr || ctlv_get_u64(hdr, &value) || value > UINT32_MAX)
-+		return -EPROTO;
-+	info->type = value;
-+	if (value == CTLV_OP_TYPE_ACTION)
-+		applies = OP_INFO_ACTION;
-+	else if (value == CTLV_OP_TYPE_QUERY)
-+		applies = OP_INFO_QUERY;
-+
-+	for (i = 0; i < CTLV_ARRAY_SIZE(fields); i++) {
-+		hdr = ctlv_hdr_find(entry, fields[i].type);
-+		if (applies && !!hdr != !!(fields[i].applies & applies))
-+			return -EPROTO;
-+		if (!hdr)
-+			continue;
-+		if (fields[i].ctype == OP_INFO_BOOL) {
-+			if (ctlv_get_bool(hdr, &boolean))
-+				return -EPROTO;
-+			*(bool *)((char *)info + fields[i].offset) = boolean;
-+			continue;
-+		}
-+		if (ctlv_get_u64(hdr, &value))
-+			return -EPROTO;
-+		if (fields[i].ctype == OP_INFO_U32) {
-+			if (value > UINT32_MAX)
-+				return -EPROTO;
-+			*(__u32 *)((char *)info + fields[i].offset) = value;
-+		} else {
-+			*(__u64 *)((char *)info + fields[i].offset) = value;
-+		}
-+	}
-+	if ((applies & (OP_INFO_ACTION | OP_INFO_QUERY)) &&
-+	    info->availability == CTLV_OP_AVAILABILITY_FIXED &&
-+	    info->disabled)
-+		return -EPROTO;
-+	if (applies == OP_INFO_QUERY &&
-+	    info->query_reply_suggested_len < info->query_reply_min_len)
-+		return -EPROTO;
-+	return 0;
++	json_object_object_add(object, key, json_object_new_string(value));
 +}
 +
-+static int op_id_compare(const void *left, const void *right)
++static void json_add_u64(struct json_object *object, const char *key,
++			 __u64 value)
 +{
-+	const __u64 *a = left;
-+	const __u64 *b = right;
-+
-+	return (*a > *b) - (*a < *b);
++	json_object_object_add(object, key, json_object_new_uint64(value));
 +}
 +
-+int ctlv_ops_parse(const struct ctlv_hdr *root, __u32 len,
-+		   __u64 generation, struct ctlv_ops **opsp)
++static void json_add_s64(struct json_object *object, const char *key,
++			 __s64 value)
 +{
-+	const struct ctlv_hdr *entry;
-+	struct ctlv_ops *ops;
-+	__u64 *ids = NULL;
-+	unsigned int i;
-+	unsigned int n = 0;
-+	int ret;
++	json_object_object_add(object, key, json_object_new_int64(value));
++}
 +
-+	ret = ctlv_bootstrap_validate(root, len, CTLV_OP_OP_GET);
-+	if (ret)
-+		return ret;
++static void json_add_int(struct json_object *object, const char *key, int value)
++{
++	json_object_object_add(object, key, json_object_new_int(value));
++}
 +
-+	ops = calloc(1, sizeof(*ops));
-+	if (!ops)
++static void json_add_bool(struct json_object *object, const char *key,
++			  bool value)
++{
++	json_object_object_add(object, key, json_object_new_boolean(value));
++}
++
++static int json_array_add_string(struct json_object *array, const char *value)
++{
++	struct json_object *string = json_object_new_string(value);
++
++	if (!string)
 +		return -ENOMEM;
-+	n = ctlv_hdr_count(root, CTLV_T_OP_GET_OPS);
-+	if (n) {
-+		ops->ops = calloc(n, sizeof(*ops->ops));
-+		if (!ops->ops) {
-+			ret = -ENOMEM;
-+			goto out_free_ops;
-+		}
-+		ids = calloc(n, sizeof(*ids));
-+		if (!ids) {
-+			ret = -ENOMEM;
-+			goto out_free_op;
-+		}
-+	}
-+	ctlv_for_each_type(entry, root, CTLV_T_OP_GET_OPS) {
-+		ret = op_info_read(&ops->ops[ops->ops_count], entry);
-+		if (ret)
-+			goto out_free_ids;
-+		ids[ops->ops_count] = ops->ops[ops->ops_count].op_id;
-+		ops->ops_count++;
-+	}
-+	if (n > 1)
-+		qsort(ids, n, sizeof(*ids), op_id_compare);
-+	for (i = 1; i < n; i++) {
-+		if (ids[i] == ids[i - 1]) {
-+			ret = -EPROTO;
-+			goto out_free_ids;
-+		}
-+	}
-+	free(ids);
-+	ops->generation = generation;
-+
-+	*opsp = ops;
-+	return 0;
-+
-+out_free_ids:
-+	free(ids);
-+out_free_op:
-+	free(ops->ops);
-+out_free_ops:
-+	free(ops);
-+	return ret;
-+}
-+
-+int ctlv_ops_get(struct ctlv_dev *dev, struct ctlv_ops **opsp,
-+		 struct ctlv_error *error)
-+{
-+	struct ctlv_reply *reply = NULL;
-+	int ret;
-+
-+	/* Sized, or the dump kept for op lengths would ask for itself. */
-+	ret = ctlv_query_sized(dev, CTLV_OP_OP_GET, NULL, 0, &reply, error);
-+	if (ret)
-+		return ret;
-+
-+	ret = ctlv_ops_parse(ctlv_reply_root(reply), reply->msg->len,
-+			     ctlv_reply_generation(reply), opsp);
-+	if (ret)
-+		ctlv_error_set(error, ret);
-+	ctlv_reply_free(reply);
-+	return ret;
-+}
-+
-+void ctlv_ops_free(struct ctlv_ops *ops)
-+{
-+	if (!ops)
-+		return;
-+	free(ops->ops);
-+	free(ops);
-+}
-+
-+const struct ctlv_op_info *ctlv_ops_find(const struct ctlv_ops *ops,
-+					 __u64 op_id)
-+{
-+	unsigned int i;
-+
-+	if (!ops)
-+		return NULL;
-+	for (i = 0; i < ops->ops_count; i++)
-+		if (ops->ops[i].op_id == op_id)
-+			return &ops->ops[i];
-+	return NULL;
-+}
-+
-+int ctlv_op_schema_get(struct ctlv_dev *dev, __u64 op_id,
-+		       struct ctlv_schema **schemap, struct ctlv_error *error)
-+{
-+	struct ctlv_reply *reply = NULL;
-+	struct ctlv_msg *request;
-+	int ret;
-+
-+	ret = ctlv_msg_new(64, &request);
-+	if (ret) {
-+		ctlv_error_set(error, ret);
-+		return ret;
-+	}
-+	ctlv_put_u64(request, CTLV_T_OP_SCHEMA_GET_ID, op_id);
-+
-+	ret = ctlv_query(dev, CTLV_OP_OP_SCHEMA_GET, request, &reply, error);
-+	ctlv_msg_free(request);
-+	if (ret)
-+		return ret;
-+
-+	ret = ctlv_schema_parse(ctlv_reply_root(reply), reply->msg->len,
-+				schemap);
-+	if (ret)
-+		ctlv_error_set(error, ret);
-+	ctlv_reply_free(reply);
-+	return ret;
-+}
-diff --git a/tools/ctlv/libctlv/message.c b/tools/ctlv/libctlv/message.c
-new file mode 100644
-index 000000000000..ab4464fb8af2
---- /dev/null
-+++ b/tools/ctlv/libctlv/message.c
-@@ -0,0 +1,518 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * CTLV message builder and parser.
-+ */
-+
-+#include <stdint.h>
-+
-+#include "internal.h"
-+
-+/* The TLV alignment applied to a length that may be close to overflowing. */
-+static int aligned(__u32 len, __u32 *out)
-+{
-+	if (len > UINT32_MAX - (CTLV_ALIGNTO - 1))
-+		return -EMSGSIZE;
-+	*out = CTLV_ALIGN(len);
-+	return 0;
-+}
-+
-+static int msg_room(struct ctlv_msg *msg, __u32 need)
-+{
-+	__u32 capacity = msg->capacity;
-+	__u8 *buf;
-+
-+	if (need > msg->max - msg->len)
-+		return -EMSGSIZE;
-+	need += msg->len;
-+	if (need <= capacity)
-+		return 0;
-+	while (capacity < need) {
-+		if (capacity > msg->max / 2) {
-+			capacity = msg->max;
-+			break;
-+		}
-+		capacity *= 2;
-+	}
-+	buf = realloc(msg->buf, capacity);
-+	if (!buf)
++	if (json_object_array_add(array, string)) {
++		json_object_put(string);
 +		return -ENOMEM;
-+	msg->buf = buf;
-+	msg->capacity = capacity;
-+	return 0;
-+}
-+
-+/* Zeroes up to the next TLV boundary; a message's padding is zero. */
-+static int msg_pad(struct ctlv_msg *msg)
-+{
-+	__u32 padded;
-+	int ret;
-+
-+	ret = aligned(msg->len, &padded);
-+	if (ret)
-+		return ret;
-+	ret = msg_room(msg, padded - msg->len);
-+	if (ret)
-+		return ret;
-+	memset(msg->buf + msg->len, 0, padded - msg->len);
-+	msg->len = padded;
-+	return 0;
-+}
-+
-+static struct ctlv_hdr *msg_hdr(struct ctlv_msg *msg, __u32 offset)
-+{
-+	return (struct ctlv_hdr *)(msg->buf + offset);
-+}
-+
-+/* One TLV at the next boundary; a writer holding an error appends none. */
-+int ctlv_msg_put(struct ctlv_msg *msg, __u64 type, __u32 flags,
-+		 const void *payload, __u32 len)
-+{
-+	struct ctlv_hdr hdr = {
-+		.flags = flags,
-+		.type = type,
-+	};
-+	int ret;
-+
-+	if (msg->err)
-+		return msg->err;
-+	if (len > UINT32_MAX - sizeof(hdr)) {
-+		msg->err = -EMSGSIZE;
-+		return msg->err;
-+	}
-+	hdr.len = sizeof(hdr) + len;
-+
-+	ret = msg_pad(msg);
-+	if (!ret)
-+		ret = msg_room(msg, hdr.len);
-+	if (ret) {
-+		msg->err = ret;
-+		return ret;
-+	}
-+	msg->last = msg->len;
-+	memcpy(msg->buf + msg->len, &hdr, sizeof(hdr));
-+	msg->len += sizeof(hdr);
-+	if (len) {
-+		memcpy(msg->buf + msg->len, payload, len);
-+		msg->len += len;
 +	}
 +	return 0;
 +}
++#endif
 +
-+int ctlv_msg_copy(struct ctlv_msg *msg, const struct ctlv_hdr *hdr)
++static void help(FILE *out)
 +{
-+	return ctlv_msg_put(msg, hdr->type,
-+			    hdr->flags & ~CTLV_HDR_F_FRAG_MORE, hdr + 1,
-+			    hdr->len - sizeof(*hdr));
++	fprintf(out,
++		"usage: %s [options] <command> [arguments]\n"
++		"\n"
++		"  list                       every CTLV device and its family chain\n"
++		"  ops <device>               every op the device publishes\n"
++		"  schema [--json-template] <device> <op>\n"
++		"                             the request and reply ABI of one op\n"
++		"  exec [-l len] <device> <op> [a=v]\n"
++		"                             run an op, reassembling a query's answer\n"
++		"\n"
++		"  --spec-dir DIR             use DIR/<family>.json or .yaml\n"
++		"  -n, --show-ids             show IDs beside specification names\n"
++		"  --output-json              print structured JSON\n"
++		"  --json TEXT|@FILE|-        build a request from JSON\n"
++		"\n"
++		"In --json, a blob is {\"file\": PATH}. Input is read from the file, and\n"
++		"output written to it: \"length\" bytes, or as many as the op needs.\n"
++		"\n"
++		"-l names the reply buffer, which for a query decides how many fragments\n"
++		"the answer arrives in; the device reports its smallest usable size in ops.\n"
++		"\n"
++		"With --spec-dir, operation names and top-level scalar names may be\n"
++		"used. Otherwise an operation goes by its ID and a field by its type.\n"
++		"A dotted numeric path enters a record:\n"
++		"\n"
++		"  %s exec ctlv-test0 0x3000000000009 0x3800900000001=7\n"
++		"  %s exec ctlv-test0 0x3000000000006 0x3000100000001=1 \\\n"
++		"      0x3000100000009.0x3000110000001=3\n",
++		prog, prog, prog);
 +}
 +
-+int ctlv_msg_new_max(__u32 capacity, __u32 max, struct ctlv_msg **msgp)
++static int parse_u64(const char *text, __u64 *value)
 +{
-+	struct ctlv_msg *msg;
++	char *end;
 +
-+	if (!capacity || capacity > max)
++	if (!*text || *text == '-' || isspace((unsigned char)*text))
 +		return -EINVAL;
-+	msg = calloc(1, sizeof(*msg));
-+	if (!msg)
-+		return -ENOMEM;
-+	/* Separate from the handle, so growing the buffer does not move it. */
-+	msg->buf = malloc(capacity);
-+	if (!msg->buf) {
-+		free(msg);
-+		return -ENOMEM;
-+	}
-+	msg->capacity = capacity;
-+	msg->max = max;
-+	*msgp = msg;
-+	return ctlv_record_start(msg, CTLV_TYPE_ROOT);
++	errno = 0;
++	*value = strtoull(text, &end, 0);
++	if (errno || end == text || *end)
++		return -EINVAL;
++	return 0;
 +}
 +
-+int ctlv_msg_new(__u32 capacity, struct ctlv_msg **msgp)
++static int parse_s64(const char *text, __s64 *value)
 +{
-+	return ctlv_msg_new_max(capacity, CTLV_REQUEST_LEN_MAX, msgp);
++	char *end;
++
++	errno = 0;
++	*value = strtoll(text, &end, 0);
++	if (errno || end == text || *end)
++		return -EINVAL;
++	return 0;
 +}
 +
-+void ctlv_msg_free(struct ctlv_msg *msg)
++static int dev_open(const char *name, int flags, struct ctlv_dev **devp)
 +{
-+	if (!msg)
-+		return;
-+	free(msg->buf);
-+	free(msg);
-+}
-+
-+void ctlv_msg_reset(struct ctlv_msg *msg)
-+{
-+	msg->len = 0;
-+	msg->depth = 0;
-+	msg->last = 0;
-+	msg->err = 0;
-+	ctlv_record_start(msg, CTLV_TYPE_ROOT);
-+}
-+
-+int ctlv_msg_err(const struct ctlv_msg *msg)
-+{
-+	return msg->err;
-+}
-+
-+int ctlv_record_start(struct ctlv_msg *msg, __u64 type)
-+{
-+	__u32 offset;
++	char path[PATH_LEN];
 +	int ret;
 +
-+	if (msg->err)
-+		return msg->err;
-+	if (msg->depth == CTLV_DEPTH_MAX) {
-+		msg->err = -ELOOP;
-+		return msg->err;
++	/* A listed name is under /dev even when it has a directory of its own. */
++	if (name[0] == '/' || name[0] == '.')
++		snprintf(path, sizeof(path), "%s", name);
++	else
++		snprintf(path, sizeof(path), "%s/%s", DEV_DIR, name);
++	ret = ctlv_open_path(path, flags, devp);
++	if (ret)
++		fprintf(stderr, "%s: %s: %s\n", prog, path, strerror(-ret));
++	return ret;
++}
++
++static int spec_load(const struct ctlv_dev *dev, struct ctlvctl_spec **spec)
++{
++	if (!options.spec_dir) {
++		*spec = NULL;
++		return 0;
 +	}
-+	/* Pad first, so the saved offset is where the header lands. */
-+	ret = msg_pad(msg);
++	return ctlvctl_spec_load(prog, options.spec_dir, dev, spec);
++}
++
++static int op_resolve(const struct ctlvctl_spec *spec, const char *text,
++		      __u64 *op_id)
++{
++	const struct ctlvctl_op_name *op;
++
++	if (!parse_u64(text, op_id))
++		return 0;
++	op = ctlvctl_spec_op_name(spec, text);
++	if (op) {
++		*op_id = op->id;
++		return 0;
++	}
++	if (spec)
++		fprintf(stderr, "%s: no operation \"%s\"\n", prog, text);
++	else
++		fprintf(stderr, "%s: %s: not an op ID\n", prog, text);
++	return -ENOENT;
++}
++
++static void chain_print(const struct ctlv_dev *dev)
++{
++	unsigned int i;
++
++	for (i = 0; i < ctlv_chain_len(dev); i++)
++		printf("%s%s", i ? "/" : "", ctlv_chain_name(dev, i));
++}
++
++static int cmd_list(int argc, char **argv)
++{
++#ifdef HAVE_JSON_C
++	struct json_object *json = NULL;
++#endif
++	struct ctlv_dev_list list;
++	unsigned int i;
++	int ret;
++
++	if (argc) {
++		help(stderr);
++		return -EINVAL;
++	}
++	ret = ctlv_enumerate(&list);
 +	if (ret) {
-+		msg->err = ret;
++		fprintf(stderr, "%s: no CTLV devices: %s\n", prog,
++			strerror(-ret));
 +		return ret;
 +	}
-+	offset = msg->len;
-+	ret = ctlv_msg_put(msg, type, CTLV_HDR_F_RECORD, NULL, 0);
++#ifdef HAVE_JSON_C
++	if (options.output_json) {
++		json = json_object_new_array();
++		if (!json) {
++			ctlv_dev_list_free(&list);
++			return -ENOMEM;
++		}
++	}
++#endif
++	for (i = 0; i < list.names_count; i++) {
++		struct ctlv_dev *dev;
++
++#ifdef HAVE_JSON_C
++		if (json) {
++			struct json_object *chain = json_object_new_array();
++			struct json_object *item = json_object_new_object();
++			unsigned int level;
++
++			json_add_string(item, "device", list.names[i]);
++			if (!dev_open(list.names[i], O_RDONLY, &dev)) {
++				for (level = 0; level < ctlv_chain_len(dev);
++				     level++) {
++					struct json_object *family =
++						json_object_new_object();
++
++					json_add_string(family, "name",
++							ctlv_chain_name(dev,
++									level));
++					if (options.show_ids)
++						json_add_int(family, "id",
++							     ctlv_chain_id(dev, level));
++					json_object_array_add(chain, family);
++				}
++				ctlv_close(dev);
++			}
++			json_object_object_add(item, "chain", chain);
++			json_object_array_add(json, item);
++			continue;
++		}
++#endif
++		printf("%s", list.names[i]);
++		/* Listing should not need the right to change a device. */
++		if (!dev_open(list.names[i], O_RDONLY, &dev)) {
++			printf("\t");
++			chain_print(dev);
++			ctlv_close(dev);
++		}
++		printf("\n");
++	}
++	ctlv_dev_list_free(&list);
++#ifdef HAVE_JSON_C
++	if (json)
++		return json_print(json);
++#endif
++	return 0;
++}
++
++static const char *type_name(__u32 type)
++{
++	switch (type) {
++	case CTLV_OP_TYPE_ACTION:
++		return "action";
++	case CTLV_OP_TYPE_QUERY:
++		return "query";
++	default:
++		return "?";
++	}
++}
++
++static const char *fd_access_name(__u32 fd_access)
++{
++	return fd_access == CTLV_OP_FD_ACCESS_READ ? "read" : "read-write";
++}
++
++static bool op_matches(const struct ctlvctl_op_name *name,
++		       const struct ctlv_op_info *op)
++{
++	return name->type == op->type &&
++	       name->fd_access == op->fd_access &&
++	       name->availability == op->availability;
++}
++
++static int op_print(const struct ctlvctl_spec *spec,
++		    const struct ctlv_op_info *op)
++{
++	const struct ctlvctl_op_name *name;
++
++	name = ctlvctl_spec_op_id(spec, op->op_id);
++	if (name && !op_matches(name, op)) {
++		fprintf(stderr,
++			"%s: specification disagrees with operation %#llx\n",
++			prog, (unsigned long long)op->op_id);
++		return -ENOMSG;
++	}
++	if (name) {
++		printf("%-20s", name->name);
++		if (options.show_ids)
++			printf("\t%#018llx",
++			       (unsigned long long)op->op_id);
++	} else {
++		printf("%#018llx", (unsigned long long)op->op_id);
++	}
++	printf("\t%-6s", type_name(op->type));
++	if (op->fd_access)
++		printf("\t%s", fd_access_name(op->fd_access));
++	if (op->availability == CTLV_OP_AVAILABILITY_DYNAMIC)
++		printf("\tdynamic %s", op->disabled ? "disabled" : "enabled");
++	else if (op->availability == CTLV_OP_AVAILABILITY_FIXED)
++		printf("\tfixed");
++	if (op->request_max_len)
++		printf("\trequest %llu",
++		       (unsigned long long)op->request_max_len);
++	if (op->action_reply_max_len)
++		printf("\treply %llu",
++		       (unsigned long long)op->action_reply_max_len);
++	if (op->query_reply_min_len)
++		printf("\treply %llu..%llu",
++		       (unsigned long long)op->query_reply_min_len,
++		       (unsigned long long)op->query_reply_suggested_len);
++	printf("\n");
++	return 0;
++}
++
++static int cmd_ops(int argc, char **argv)
++{
++#ifdef HAVE_JSON_C
++	struct json_object *json = NULL;
++	struct json_object *json_ops = NULL;
++#endif
++	struct ctlvctl_spec *spec = NULL;
++	struct ctlv_error error;
++	struct ctlv_dev *dev;
++	struct ctlv_ops *ops;
++	char text[LINE_LEN];
++	unsigned int i;
++	int ret;
++
++	if (argc != 1) {
++		help(stderr);
++		return -EINVAL;
++	}
++	ret = dev_open(argv[0], O_RDONLY, &dev);
 +	if (ret)
 +		return ret;
-+	msg->open[msg->depth++] = offset;
-+	return 0;
++	ret = spec_load(dev, &spec);
++	if (ret)
++		goto out;
++
++	ret = ctlv_ops_get(dev, &ops, &error);
++	if (ret) {
++		fprintf(stderr, "%s: op-get: %s\n", prog,
++			ctlv_error_str(&error, text, sizeof(text)));
++		goto out;
++	}
++#ifdef HAVE_JSON_C
++	if (options.output_json) {
++		json = json_object_new_object();
++		json_ops = json_object_new_array();
++		if (!json || !json_ops) {
++			ret = -ENOMEM;
++			goto out_json;
++		}
++		json_add_string(json, "device", ctlv_dev_name(dev));
++		json_add_u64(json, "generation", ops->generation);
++		json_object_object_add(json, "ops", json_ops);
++	}
++#endif
++	if (!options.output_json) {
++		printf("# ");
++		chain_print(dev);
++		printf(", generation %llu\n",
++		       (unsigned long long)ops->generation);
++	}
++	for (i = 0; i < ops->ops_count; i++) {
++#ifdef HAVE_JSON_C
++		if (json) {
++			const struct ctlvctl_op_name *name;
++			struct json_object *item;
++
++			name = ctlvctl_spec_op_id(spec, ops->ops[i].op_id);
++			if (name && !op_matches(name, &ops->ops[i])) {
++				fprintf(stderr,
++					"%s: specification disagrees with operation %#llx\n",
++					prog, (unsigned long long)
++					ops->ops[i].op_id);
++				ret = -ENOMSG;
++				break;
++			}
++			item = json_object_new_object();
++			if (!item) {
++				ret = -ENOMEM;
++				break;
++			}
++			if (name)
++				json_add_string(item, "name", name->name);
++			if (!name || options.show_ids)
++				json_add_id(item, "id", ops->ops[i].op_id);
++			json_add_string(item, "type",
++					type_name(ops->ops[i].type));
++			if (ops->ops[i].fd_access) {
++				const char *access =
++					fd_access_name(ops->ops[i].fd_access);
++
++				json_add_string(item, "fd-access",
++						access);
++			}
++			if (ops->ops[i].availability) {
++				const char *availability;
++
++				availability = ops->ops[i].availability ==
++					CTLV_OP_AVAILABILITY_DYNAMIC ?
++					"dynamic" : "fixed";
++				json_add_string(item, "availability",
++						availability);
++				if (ops->ops[i].availability ==
++				    CTLV_OP_AVAILABILITY_DYNAMIC)
++					json_add_bool(item, "disabled",
++						      ops->ops[i].disabled);
++			}
++			json_object_array_add(json_ops, item);
++			continue;
++		}
++#endif
++		ret = op_print(spec, &ops->ops[i]);
++		if (ret)
++			break;
++	}
++#ifdef HAVE_JSON_C
++	if (!ret && json)
++		ret = json_print(json);
++	else if (json)
++		json_object_put(json);
++	json = NULL;
++	json_ops = NULL;
++out_json:
++	if (json)
++		json_object_put(json);
++	else if (json_ops)
++		json_object_put(json_ops);
++#endif
++	ctlv_ops_free(ops);
++out:
++	ctlvctl_spec_free(spec);
++	ctlv_close(dev);
++	return ret;
 +}
 +
-+/* A record counts the padding of its last child, so a walk steps aligned. */
-+int ctlv_record_end(struct ctlv_msg *msg)
++static const struct ctlvctl_field_name *
++field_name(const struct ctlvctl_spec *spec,
++	   const struct ctlv_node_schema *node)
 +{
++	const struct ctlvctl_field_name *name;
++
++	if (!node)
++		return NULL;
++	name = ctlvctl_spec_field(spec, node->type);
++	if (name && name->kind != node->kind)
++		return NULL;
++	return name;
++}
++
++static int tree_names_check(const struct ctlvctl_spec *spec,
++			    const struct ctlv_node_schema *node)
++{
++	const struct ctlvctl_field_name *name;
++	__u64 known = 0;
++	unsigned int i;
 +	int ret;
 +
-+	if (msg->err)
-+		return msg->err;
-+	if (!msg->depth) {
-+		msg->err = -EINVAL;
-+		return msg->err;
++	if (!node)
++		return 0;
++	name = ctlvctl_spec_field(spec, node->type);
++	if (name && name->kind != node->kind) {
++		fprintf(stderr,
++			"%s: specification schema kind for %s disagrees with the device\n",
++			prog, name->name);
++		return -ENOMSG;
 +	}
-+	ret = msg_pad(msg);
-+	if (ret) {
-+		msg->err = ret;
-+		return ret;
-+	}
-+	msg->depth--;
-+	msg_hdr(msg, msg->open[msg->depth])->len =
-+		msg->len - msg->open[msg->depth];
-+	/* A closed record is the TLV a per-TLV choice now applies to. */
-+	msg->last = msg->open[msg->depth];
-+	return 0;
-+}
++	if (name && name->definition) {
++		for (i = 0; i < name->definition->values_count; i++) {
++			__u64 value = name->definition->values[i].value;
 +
-+/*
-+ * The bit is a per-occurrence choice, so it belongs to a call of its own after
-+ * whatever wrote the TLV, a generated putter included.
-+ */
-+int ctlv_msg_ignore_if_unknown(struct ctlv_msg *msg)
-+{
-+	if (msg->err)
-+		return msg->err;
-+	/* The root frames the message and is nothing a device may skip. */
-+	if (!msg->last) {
-+		msg->err = -EINVAL;
-+		return msg->err;
-+	}
-+	msg_hdr(msg, msg->last)->flags |= CTLV_HDR_F_IGNORE_IF_UNKNOWN;
-+	return 0;
-+}
-+
-+int ctlv_msg_done(struct ctlv_msg *msg)
-+{
-+	while (msg->depth && !msg->err)
-+		ctlv_record_end(msg);
-+	return msg->err;
-+}
-+
-+const struct ctlv_hdr *ctlv_msg_root(const struct ctlv_msg *msg)
-+{
-+	return (const struct ctlv_hdr *)msg->buf;
-+}
-+
-+__u32 ctlv_msg_len(const struct ctlv_msg *msg)
-+{
-+	return msg->len;
-+}
-+
-+int ctlv_put_u64(struct ctlv_msg *msg, __u64 type, __u64 value)
-+{
-+	return ctlv_msg_put(msg, type, 0, &value, sizeof(value));
-+}
-+
-+int ctlv_put_s64(struct ctlv_msg *msg, __u64 type, __s64 value)
-+{
-+	return ctlv_msg_put(msg, type, 0, &value, sizeof(value));
-+}
-+
-+int ctlv_put_bool(struct ctlv_msg *msg, __u64 type, bool value)
-+{
-+	__u8 byte = value;
-+
-+	return ctlv_msg_put(msg, type, 0, &byte, sizeof(byte));
-+}
-+
-+/* The terminator is part of the payload, and a declared length excludes it. */
-+int ctlv_put_str(struct ctlv_msg *msg, __u64 type, const char *value)
-+{
-+	size_t len = strlen(value) + 1;
-+
-+	if (len > UINT32_MAX)
-+		return -EMSGSIZE;
-+	return ctlv_msg_put(msg, type, 0, value, len);
-+}
-+
-+int ctlv_put_bin(struct ctlv_msg *msg, __u64 type, const void *value,
-+		 __u32 len)
-+{
-+	return ctlv_msg_put(msg, type, 0, value, len);
-+}
-+
-+/* A blob TLV carries a record of core members, chosen by the backing. */
-+int ctlv_put_blob_va(struct ctlv_msg *msg, __u64 type, const void *address,
-+		     __u64 length)
-+{
-+	ctlv_record_start(msg, type);
-+	ctlv_put_u64(msg, CTLV_T_BLOB_TYPE, CTLV_BLOB_TYPE_VA);
-+	ctlv_put_u64(msg, CTLV_T_BLOB_ADDRESS, (__u64)(uintptr_t)address);
-+	ctlv_put_u64(msg, CTLV_T_BLOB_LENGTH, length);
-+	return ctlv_record_end(msg);
-+}
-+
-+bool ctlv_hdr_is_record(const struct ctlv_hdr *hdr)
-+{
-+	return hdr->flags & CTLV_HDR_F_RECORD;
-+}
-+
-+__u32 ctlv_hdr_payload_len(const struct ctlv_hdr *hdr)
-+{
-+	return hdr->len - sizeof(*hdr);
-+}
-+
-+const void *ctlv_hdr_payload(const struct ctlv_hdr *hdr, __u32 *len)
-+{
-+	if (len)
-+		*len = ctlv_hdr_payload_len(hdr);
-+	return hdr + 1;
-+}
-+
-+const struct ctlv_hdr *ctlv_hdr_first(const struct ctlv_hdr *record)
-+{
-+	if (record->len <= sizeof(*record))
-+		return NULL;
-+	/* A record too short to hold the header it announces holds no child. */
-+	if (record->len - sizeof(*record) < sizeof(*record))
-+		return NULL;
-+	return record + 1;
-+}
-+
-+/*
-+ * The next child is a step of this one's aligned length. Both the step and the
-+ * header it lands on have to stay inside the record.
-+ */
-+const struct ctlv_hdr *ctlv_hdr_next(const struct ctlv_hdr *record,
-+				     const struct ctlv_hdr *child)
-+{
-+	const char *end = (const char *)record + record->len;
-+	const char *next = (const char *)child;
-+	__u32 step;
-+
-+	if (aligned(child->len, &step))
-+		return NULL;
-+	next += step;
-+	if (next < (const char *)child || next > end)
-+		return NULL;
-+	if ((size_t)(end - next) < sizeof(*child))
-+		return NULL;
-+	return (const struct ctlv_hdr *)next;
-+}
-+
-+const struct ctlv_hdr *ctlv_hdr_find(const struct ctlv_hdr *record,
-+				     __u64 type)
-+{
-+	const struct ctlv_hdr *child;
-+
-+	ctlv_for_each(child, record)
-+		if (child->type == type)
-+			return child;
-+	return NULL;
-+}
-+
-+const struct ctlv_hdr *ctlv_hdr_find_next(const struct ctlv_hdr *record,
-+					  const struct ctlv_hdr *hdr,
-+					  __u64 type)
-+{
-+	while ((hdr = ctlv_hdr_next(record, hdr)))
-+		if (hdr->type == type)
-+			return hdr;
-+	return NULL;
-+}
-+
-+unsigned int ctlv_hdr_count(const struct ctlv_hdr *record, __u64 type)
-+{
-+	const struct ctlv_hdr *child;
-+	unsigned int n = 0;
-+
-+	ctlv_for_each(child, record)
-+		if (child->type == type)
-+			n++;
-+	return n;
-+}
-+
-+/*
-+ * Framing, checked before anything reads it: a message that fails this is not
-+ * walked, which is what lets the walkers above trust the lengths they step.
-+ */
-+static int check_record(const struct ctlv_hdr *record, unsigned int depth)
-+{
-+	const char *p = (const char *)(record + 1);
-+	const char *end = (const char *)record + record->len;
-+
-+	if (depth >= CTLV_DEPTH_MAX)
-+		return -ELOOP;
-+	while (p < end) {
-+		const struct ctlv_hdr *child = (const struct ctlv_hdr *)p;
-+		__u32 step;
-+		int ret;
-+
-+		if ((size_t)(end - p) < sizeof(*child))
-+			return -EBADMSG;
-+		if (child->len < sizeof(*child))
-+			return -EBADMSG;
-+		if (child->len > (__u32)(end - p))
-+			return -EBADMSG;
-+		if (child->flags & CTLV_HDR_F_RECORD) {
-+			ret = check_record(child, depth + 1);
-+			if (ret)
-+				return ret;
++			known |= value;
++			if (name->kind == CTLV_SCHEMA_ENUM &&
++			    (!(node->present & CTLV_NODE_SCHEMA_HAS_MIN) ||
++			     !(node->present & CTLV_NODE_SCHEMA_HAS_MAX) ||
++			     value < node->min || value > node->max)) {
++				fprintf(stderr,
++					"%s: specification values for %s disagree with the device\n",
++					prog, name->name);
++				return -ENOMSG;
++			}
 +		}
-+		ret = aligned(child->len, &step);
++		if (name->kind == CTLV_SCHEMA_FLAGS &&
++		    (!(node->present & CTLV_NODE_SCHEMA_HAS_FLAGS_MASK) ||
++		     (known & ~node->flags_mask))) {
++			fprintf(stderr,
++				"%s: specification flags for %s disagree with the device\n",
++				prog, name->name);
++			return -ENOMSG;
++		}
++	}
++	for (i = 0; i < node->fields_count; i++) {
++		ret = tree_names_check(spec, &node->fields[i]);
 +		if (ret)
 +			return ret;
-+		/* Padding is in the record, so the step lands on its end. */
-+		if (step > (__u32)(end - p))
-+			return -EBADMSG;
-+		p += step;
++	}
++	for (i = 0; i < node->optional_fields_count; i++) {
++		ret = tree_names_check(spec, &node->optional_fields[i]);
++		if (ret)
++			return ret;
 +	}
 +	return 0;
 +}
 +
-+int ctlv_msg_check(const void *buf, __u32 len)
++static void tree_print(const struct ctlvctl_spec *spec,
++		       const struct ctlv_node_schema *node, unsigned int indent,
++		       int required)
 +{
-+	const struct ctlv_hdr *root = buf;
-+
-+	if (len < sizeof(*root))
-+		return -EBADMSG;
-+	if (root->type != CTLV_TYPE_ROOT)
-+		return -EBADMSG;
-+	if (!(root->flags & CTLV_HDR_F_RECORD))
-+		return -EBADMSG;
-+	if (root->len < sizeof(*root) || root->len > len)
-+		return -EBADMSG;
-+	return check_record(root, 0);
-+}
-+
-+/*
-+ * A scalar payload is eight bytes in a message whatever it holds, so another
-+ * width is a corrupt message rather than something to interpret.
-+ */
-+static int get_scalar(const struct ctlv_hdr *hdr, __u64 *value)
-+{
-+	__u64 raw;
-+
-+	if (ctlv_hdr_is_record(hdr))
-+		return -EINVAL;
-+	if (ctlv_hdr_payload_len(hdr) != sizeof(raw))
-+		return -EBADMSG;
-+	memcpy(&raw, hdr + 1, sizeof(raw));
-+	*value = raw;
-+	return 0;
-+}
-+
-+int ctlv_get_u64(const struct ctlv_hdr *hdr, __u64 *value)
-+{
-+	return get_scalar(hdr, value);
-+}
-+
-+int ctlv_get_s64(const struct ctlv_hdr *hdr, __s64 *value)
-+{
-+	__u64 raw;
-+	int ret;
-+
-+	ret = get_scalar(hdr, &raw);
-+	if (ret)
-+		return ret;
-+	*value = (__s64)raw;
-+	return 0;
-+}
-+
-+int ctlv_get_bool(const struct ctlv_hdr *hdr, bool *value)
-+{
-+	const __u8 *byte;
-+
-+	if (ctlv_hdr_is_record(hdr))
-+		return -EINVAL;
-+	if (ctlv_hdr_payload_len(hdr) != sizeof(*byte))
-+		return -EBADMSG;
-+	byte = (const __u8 *)(hdr + 1);
-+	if (*byte > 1)
-+		return -EBADMSG;
-+	*value = *byte;
-+	return 0;
-+}
-+
-+int ctlv_get_str(const struct ctlv_hdr *hdr, const char **value)
-+{
-+	const char *str = (const char *)(hdr + 1);
-+	__u32 len = ctlv_hdr_payload_len(hdr);
-+
-+	if (ctlv_hdr_is_record(hdr))
-+		return -EINVAL;
-+	if (!len || str[len - 1] != '\0')
-+		return -EBADMSG;
-+	*value = str;
-+	return 0;
-+}
-+
-+int ctlv_get_bin(const struct ctlv_hdr *hdr, const void **value, __u32 *len)
-+{
-+	if (ctlv_hdr_is_record(hdr))
-+		return -EINVAL;
-+	*value = hdr + 1;
-+	if (len)
-+		*len = ctlv_hdr_payload_len(hdr);
-+	return 0;
-+}
-+
-+/*
-+ * Neither refuses a value from a device newer than its caller: dropping the
-+ * reply would make every added value an ABI break.
-+ */
-+int ctlv_get_enum(const struct ctlv_hdr *hdr, __u64 min, __u64 max,
-+		  __u64 *value, bool *known)
-+{
-+	int ret;
-+
-+	ret = get_scalar(hdr, value);
-+	if (ret)
-+		return ret;
-+	if (known)
-+		*known = *value >= min && *value <= max;
-+	return 0;
-+}
-+
-+int ctlv_get_flags(const struct ctlv_hdr *hdr, __u64 mask, __u64 *value,
-+		   __u64 *unknown)
-+{
-+	int ret;
-+
-+	ret = get_scalar(hdr, value);
-+	if (ret)
-+		return ret;
-+	if (unknown)
-+		*unknown = *value & ~mask;
-+	return 0;
-+}
-diff --git a/tools/ctlv/libctlv/schema.c b/tools/ctlv/libctlv/schema.c
-new file mode 100644
-index 000000000000..cd68d237b568
---- /dev/null
-+++ b/tools/ctlv/libctlv/schema.c
-@@ -0,0 +1,742 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Numeric schema parsing and comparison.
-+ */
-+
-+#include <limits.h>
-+#include <stddef.h>
-+#include <stdarg.h>
-+#include <stdio.h>
-+
-+#include "internal.h"
-+
-+struct validate {
-+	const struct ctlv_node_schema *node[CTLV_DEPTH_MAX];
-+};
-+
-+static const struct ctlv_node_schema *
-+schema_member(const struct ctlv_node_schema *parent, __u64 type)
-+{
++	char line[LINE_LEN];
++	const struct ctlvctl_field_name *name;
++	char *detail;
 +	unsigned int i;
 +
++	name = field_name(spec, node);
++	ctlv_schema_render(node, 0, line, sizeof(line));
++	if (!name || node->type == CTLV_TYPE_ROOT) {
++		printf("%*s%s\n", indent * 2, "", line);
++	} else {
++		detail = strchr(line + strlen("field "), ' ');
++		printf("%*s%s", indent * 2, "", name->name);
++		if (options.show_ids)
++			printf(" (%#018llx)",
++			       (unsigned long long)node->type);
++		if (required >= 0)
++			printf(" %s", required ? "required" : "optional");
++		printf("%s", detail ? detail : "");
++		if (name->definition) {
++			unsigned int j;
++
++			printf(" {");
++			for (j = 0; j < name->definition->values_count; j++) {
++				printf("%s%s", j ? ", " : "",
++				       name->definition->values[j].name);
++				if (options.show_ids)
++					printf("=%#llx",
++					       (unsigned long long)
++					       name->definition->values[j].value);
++			}
++			printf("}");
++		}
++		printf("\n");
++	}
++	for (i = 0; i < node->fields_count; i++)
++		tree_print(spec, &node->fields[i], indent + 1, true);
++	for (i = 0; i < node->optional_fields_count; i++)
++		tree_print(spec, &node->optional_fields[i], indent + 1, false);
++}
++
++static int cmd_schema(int argc, char **argv)
++{
++	const struct ctlvctl_op_name *op_name;
++	const struct ctlv_op_info *op_info;
++	const struct ctlv_node_schema *node;
++	struct ctlvctl_spec *spec = NULL;
++	struct ctlv_schema *schema;
++	struct ctlv_ops *ops;
++	struct ctlv_error error;
++	struct ctlv_dev *dev;
++	char text[LINE_LEN];
++	__u64 op_id;
++	__u32 op_type = 0;
++	bool template = false;
++	int ret;
++
++	if (argc && !strcmp(argv[0], "--json-template")) {
++		template = true;
++		argc--;
++		argv++;
++	}
++	if (argc != 2) {
++		help(stderr);
++		return -EINVAL;
++	}
++	ret = dev_open(argv[0], O_RDONLY, &dev);
++	if (ret)
++		return ret;
++	ret = spec_load(dev, &spec);
++	if (ret)
++		goto out;
++	ret = op_resolve(spec, argv[1], &op_id);
++	if (ret)
++		goto out;
++	op_name = ctlvctl_spec_op_id(spec, op_id);
++	if (spec) {
++		ret = ctlv_ops_get(dev, &ops, &error);
++		if (ret) {
++			fprintf(stderr, "%s: op-get: %s\n", prog,
++				ctlv_error_str(&error, text, sizeof(text)));
++			goto out;
++		}
++		op_info = ctlv_ops_find(ops, op_id);
++		if (!op_info) {
++			fprintf(stderr,
++				"%s: operation is not available on %s\n",
++				prog, ctlv_dev_name(dev));
++			ret = -ENOENT;
++		} else {
++			op_type = op_info->type;
++			if (op_name && !op_matches(op_name, op_info)) {
++				fprintf(stderr,
++					"%s: specification disagrees with operation %s\n",
++					prog, op_name->name);
++				ret = -ENOMSG;
++			}
++		}
++		ctlv_ops_free(ops);
++		if (ret)
++			goto out;
++	}
++
++	ret = ctlv_op_schema_get(dev, op_id, &schema, &error);
++	if (ret) {
++		fprintf(stderr, "%s: op-schema-get: %s\n", prog,
++			ctlv_error_str(&error, text, sizeof(text)));
++		goto out;
++	}
++	ret = tree_names_check(spec, ctlv_schema_request(schema));
++	if (!ret)
++		ret = tree_names_check(spec, ctlv_schema_reply(schema));
++	if (ret)
++		goto out_schema;
++	if (template) {
++		node = ctlv_schema_request(schema);
++		if (!spec) {
++			fprintf(stderr,
++				"%s: --json-template requires --spec-dir\n", prog);
++			ret = -EINVAL;
++		} else if (!node) {
++			printf("{}\n");
++		} else {
++#ifdef HAVE_JSON_C
++			ret = json_template_print(node, spec);
++#else
++			ret = -EOPNOTSUPP;
++#endif
++		}
++		goto out_schema;
++	}
++#ifdef HAVE_JSON_C
++	if (options.output_json) {
++		ret = json_schema_print(dev, spec, op_id, schema);
++		goto out_schema;
++	}
++#endif
++	if (op_name) {
++		printf("%s (%s", op_name->name, type_name(op_name->type));
++		if (options.show_ids)
++			printf(", %#018llx", (unsigned long long)op_id);
++		printf(")\n");
++	} else if (spec) {
++		printf("%#018llx (%s)\n", (unsigned long long)op_id,
++		       type_name(op_type));
++	}
++	node = ctlv_schema_request(schema);
++	if (node) {
++		printf("request:\n");
++		tree_print(spec, node, 1, -1);
++	}
++	node = ctlv_schema_reply(schema);
++	if (node) {
++		printf("reply:\n");
++		tree_print(spec, node, 1, -1);
++	}
++out_schema:
++	ctlv_schema_free(schema);
++out:
++	ctlvctl_spec_free(spec);
++	ctlv_close(dev);
++	return ret;
++}
++
++/*
++ * An assignment names a field by its type and a dotted path enters a record.
++ * What a value means is decided by the schema kind the device reports.
++ */
++
++/* The member of @parent for @type, following any re-entry. */
++static const struct ctlv_node_schema *
++node_member(const struct ctlv_node_schema **stack, unsigned int depth,
++	    __u64 type)
++{
++	const struct ctlv_node_schema *parent = stack[depth];
++	unsigned int level = depth;
++	unsigned int i;
++
++	if (!parent)
++		return NULL;
++	while (parent->reenters) {
++		if (parent->reenters > level)
++			return NULL;
++		level -= parent->reenters;
++		parent = stack[level];
++		if (!parent)
++			return NULL;
++	}
 +	for (i = 0; i < parent->fields_count; i++)
 +		if (parent->fields[i].type == type)
 +			return &parent->fields[i];
@@ -3580,1486 +1257,3837 @@ index 000000000000..cd68d237b568
 +	return NULL;
 +}
 +
-+static int schema_members(const struct ctlv_hdr *record,
-+			  const struct ctlv_node_schema *parent)
++static int hex_digit(char c)
 +{
-+	const struct ctlv_node_schema *child;
-+	unsigned int count;
-+	unsigned int i;
-+
-+	for (i = 0; i < parent->fields_count; i++) {
-+		child = &parent->fields[i];
-+		count = ctlv_hdr_count(record, child->type);
-+		if (!count)
-+			return -EPROTO;
-+		if (child->max_occurrences &&
-+		    count > child->max_occurrences)
-+			return -EPROTO;
-+	}
-+	for (i = 0; i < parent->optional_fields_count; i++) {
-+		child = &parent->optional_fields[i];
-+		count = ctlv_hdr_count(record, child->type);
-+		if (child->max_occurrences &&
-+		    count > child->max_occurrences)
-+			return -EPROTO;
-+	}
-+	return 0;
++	if (c >= '0' && c <= '9')
++		return c - '0';
++	if (c >= 'a' && c <= 'f')
++		return c - 'a' + 10;
++	if (c >= 'A' && c <= 'F')
++		return c - 'A' + 10;
++	return -EINVAL;
 +}
 +
-+static bool schema_length_ok(const struct ctlv_node_schema *node, __u64 len)
++static int put_hex(struct ctlv_msg *msg, __u64 type, const char *text)
 +{
-+	if ((node->present & CTLV_NODE_SCHEMA_HAS_MIN_LENGTH) &&
-+	    len < node->min_length)
-+		return false;
-+	if ((node->present & CTLV_NODE_SCHEMA_HAS_MAX_LENGTH) &&
-+	    len > node->max_length)
-+		return false;
-+	return true;
-+}
-+
-+static int schema_scalar(const struct ctlv_hdr *hdr,
-+			 const struct ctlv_node_schema *node)
-+{
-+	const char *string;
-+	__s64 signed_value;
-+	__u64 value;
-+	__u32 len;
-+	bool boolean;
++	size_t text_len = strlen(text);
++	size_t len = text_len / 2;
++	unsigned char *bytes;
++	size_t i;
 +	int ret;
++
++	if (text_len & 1)
++		return -EINVAL;
++	bytes = malloc(len ? len : 1);
++	if (!bytes)
++		return -ENOMEM;
++	for (i = 0; i < len; i++) {
++		int high = hex_digit(text[i * 2]);
++		int low = hex_digit(text[i * 2 + 1]);
++
++		if (high < 0 || low < 0) {
++			free(bytes);
++			return -EINVAL;
++		}
++		bytes[i] = high << 4 | low;
++	}
++	ret = ctlv_put_bin(msg, type, bytes, len);
++	free(bytes);
++	return ret;
++}
++
++static int flags_parse(const struct ctlvctl_field_name *field, const char *text,
++		       __u64 *value)
++{
++	char *copy, *part, *walk;
++	int ret = 0;
++
++	if (!parse_u64(text, value))
++		return 0;
++	copy = strdup(text);
++	if (!copy)
++		return -ENOMEM;
++	*value = 0;
++	walk = copy;
++	while ((part = strsep(&walk, ","))) {
++		__u64 bit;
++
++		if (!*part || ctlvctl_spec_value(field, part, &bit)) {
++			ret = -EINVAL;
++			break;
++		}
++		*value |= bit;
++	}
++	free(copy);
++	return ret;
++}
++
++static int put_value(struct ctlv_msg *msg, const struct ctlv_node_schema *node,
++		     const struct ctlvctl_spec *spec, const char *text)
++{
++	const struct ctlvctl_field_name *field = field_name(spec, node);
++	__u64 value;
++	__s64 signed_value;
 +
 +	switch (node->kind) {
 +	case CTLV_SCHEMA_UINT:
++		if (parse_u64(text, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
 +	case CTLV_SCHEMA_ENUM:
++		if (parse_u64(text, &value) &&
++		    ctlvctl_spec_value(field, text, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
 +	case CTLV_SCHEMA_FLAGS:
-+		ret = ctlv_get_u64(hdr, &value);
-+		if (ret)
-+			return -EPROTO;
-+		if (node->kind == CTLV_SCHEMA_FLAGS)
-+			return 0;
-+		if ((node->present & CTLV_NODE_SCHEMA_HAS_MIN) &&
-+		    value < node->min)
-+			return -EPROTO;
-+		/* New output enum values are appended above the known range. */
-+		if (node->kind == CTLV_SCHEMA_ENUM)
-+			return 0;
-+		if ((node->present & CTLV_NODE_SCHEMA_HAS_MAX) &&
-+		    value > node->max)
-+			return -EPROTO;
-+		return 0;
++		if (flags_parse(field, text, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
 +	case CTLV_SCHEMA_SINT:
-+		ret = ctlv_get_s64(hdr, &signed_value);
-+		if (ret)
-+			return -EPROTO;
-+		if ((node->present & CTLV_NODE_SCHEMA_HAS_MIN) &&
-+		    signed_value < (__s64)node->min)
-+			return -EPROTO;
-+		if ((node->present & CTLV_NODE_SCHEMA_HAS_MAX) &&
-+		    signed_value > (__s64)node->max)
-+			return -EPROTO;
-+		return 0;
++		if (parse_s64(text, &signed_value))
++			return -EINVAL;
++		return ctlv_put_s64(msg, node->type, signed_value);
 +	case CTLV_SCHEMA_BOOL:
-+		return ctlv_get_bool(hdr, &boolean) ? -EPROTO : 0;
++		if (!strcmp(text, "true") || !strcmp(text, "1"))
++			return ctlv_put_bool(msg, node->type, true);
++		if (!strcmp(text, "false") || !strcmp(text, "0"))
++			return ctlv_put_bool(msg, node->type, false);
++		return -EINVAL;
 +	case CTLV_SCHEMA_STRING:
-+		ret = ctlv_get_str(hdr, &string);
-+		if (ret)
-+			return -EPROTO;
-+		len = ctlv_hdr_payload_len(hdr);
-+		if (memchr(string, '\0', len - 1))
-+			return -EPROTO;
-+		return schema_length_ok(node, len - 1) ? 0 : -EPROTO;
++		return ctlv_put_str(msg, node->type, text);
 +	case CTLV_SCHEMA_BINARY:
-+		len = ctlv_hdr_payload_len(hdr);
-+		return schema_length_ok(node, len) ? 0 : -EPROTO;
++		if (field) {
++			if (strncmp(text, "hex:", 4))
++				return -EINVAL;
++			return put_hex(msg, node->type, text + 4);
++		}
++		return ctlv_put_bin(msg, node->type, text, strlen(text));
 +	default:
-+		return -EPROTO;
++		/* A command line has no memory of the caller's to describe. */
++		return -ENOTSUP;
 +	}
 +}
 +
-+static int schema_record(struct validate *validate,
-+			 const struct ctlv_hdr *record, unsigned int depth);
-+
-+static int schema_tlv(struct validate *validate,
-+		      const struct ctlv_hdr *hdr,
-+		      const struct ctlv_node_schema *node,
-+		      unsigned int depth)
++static const struct ctlv_node_schema *
++node_named(const struct ctlv_node_schema *parent,
++	   const struct ctlvctl_spec *spec, const char *name, bool *ambiguous)
 +{
-+	bool is_record = node->kind == CTLV_SCHEMA_RECORD ||
-+		      node->kind == CTLV_SCHEMA_BLOB;
-+	__u32 flags = is_record ? CTLV_HDR_F_RECORD : 0;
++	const struct ctlv_node_schema *match = NULL;
++	unsigned int i;
 +
-+	if (is_record && depth >= CTLV_DEPTH_MAX)
-+		return -ELOOP;
-+	if (hdr->type != node->type || hdr->flags != flags)
-+		return -EPROTO;
-+	if (!is_record)
-+		return schema_scalar(hdr, node);
-+	if (node->kind == CTLV_SCHEMA_BLOB)
-+		return -EPROTO;
++	*ambiguous = false;
++	for (i = 0; i < parent->fields_count + parent->optional_fields_count; i++) {
++		const struct ctlv_node_schema *node;
++		const struct ctlvctl_field_name *field;
 +
-+	validate->node[depth] = node;
-+	return schema_record(validate, hdr, depth);
++		if (i < parent->fields_count)
++			node = &parent->fields[i];
++		else
++			node = &parent->optional_fields[i - parent->fields_count];
++		field = field_name(spec, node);
++		if (!field)
++			continue;
++		if (!strcmp(field->name, name))
++			return node;
++		if (strcmp(field->short_name, name))
++			continue;
++		if (match)
++			*ambiguous = true;
++		match = node;
++	}
++	return *ambiguous ? NULL : match;
 +}
 +
-+static int schema_record(struct validate *validate,
-+			 const struct ctlv_hdr *record, unsigned int depth)
++/* One path element: a type and which occurrence of it. */
++static int path_element(char *name, __u64 *type, __u64 *occurrence)
 +{
-+	const struct ctlv_node_schema *parent = validate->node[depth];
-+	const struct ctlv_node_schema *child_node;
-+	const struct ctlv_hdr *child;
-+	unsigned int level = depth;
-+	int ret;
++	char *at = strchr(name, '@');
 +
-+	while (parent->present & CTLV_NODE_SCHEMA_HAS_REENTERS) {
-+		if (!parent->reenters || parent->reenters > level)
-+			return -EPROTO;
-+		level -= parent->reenters;
-+		parent = validate->node[level];
++	*occurrence = 0;
++	if (at) {
++		*at++ = '\0';
++		if (parse_u64(at, occurrence))
++			return -EINVAL;
 +	}
++	return parse_u64(name, type);
++}
 +
-+	ret = schema_members(record, parent);
-+	if (ret)
-+		return ret;
-+	ctlv_for_each(child, record) {
-+		child_node = schema_member(parent, child->type);
-+		if (!child_node) {
-+			if (!child->type ||
-+			    child->flags & ~CTLV_HDR_F_RECORD)
-+				return -EPROTO;
++static int no_such_field(__u64 type)
++{
++	fprintf(stderr, "%s: %#llx: not a field of this record\n", prog,
++		(unsigned long long)type);
++	return -ENOENT;
++}
++
++static int not_a_record(__u64 type)
++{
++	fprintf(stderr, "%s: %#llx: not a record of this record\n", prog,
++		(unsigned long long)type);
++	return -ENOENT;
++}
++
++/**
++ * request_build - Turns assignments into one request.
++ * @msg: the message to append to
++ * @root: the request tree the device reported
++ * @spec: the names from --spec-dir, or NULL
++ * @argc: how many assignments
++ * @argv: the assignments, each field[@n][.field[@n]...]=value
++ *
++ * Records are opened as a path descends and closed as the next path leaves, so
++ * assignments have to be given in the order the message holds them. Two
++ * occurrences of one record are told apart by the @n suffix.
++ *
++ * Return: 0, or a negative errno naming the assignment that failed.
++ */
++static int request_build(struct ctlv_msg *msg,
++			 const struct ctlv_node_schema *root,
++			 const struct ctlvctl_spec *spec, int argc, char **argv)
++{
++	const struct ctlv_node_schema *stack[PATH_DEPTH] = { root };
++	__u64 path[PATH_DEPTH], occurrence[PATH_DEPTH];
++	unsigned int depth = 0;
++	int i, ret;
++
++	for (i = 0; i < argc; i++) {
++		char *text = strchr(argv[i], '=');
++		unsigned int level = 0;
++		char *name, *rest;
++
++		if (!text) {
++			fprintf(stderr, "%s: %s: not an assignment\n", prog,
++				argv[i]);
++			return -EINVAL;
++		}
++		*text++ = '\0';
++		rest = argv[i];
++
++		if (spec) {
++			const struct ctlv_node_schema *node;
++			bool ambiguous;
++
++			node = node_named(root, spec, rest, &ambiguous);
++			if (ambiguous) {
++				fprintf(stderr, "%s: %s: ambiguous field\n",
++					prog, rest);
++				return -EINVAL;
++			}
++			if (node) {
++				if (node->kind == CTLV_SCHEMA_RECORD ||
++				    node->kind == CTLV_SCHEMA_BLOB) {
++					fprintf(stderr,
++						"%s: %s: use --json for this field\n",
++						prog, rest);
++					return -ENOTSUP;
++				}
++				/* A named field is the root's. */
++				while (depth) {
++					ctlv_record_end(msg);
++					depth--;
++				}
++				ret = put_value(msg, node, spec, text);
++				if (ret) {
++					fprintf(stderr, "%s: %s=%s: %s\n",
++						prog, rest, text,
++						strerror(-ret));
++					return ret;
++				}
++				continue;
++			}
++		}
++
++		while ((name = strsep(&rest, "."))) {
++			const struct ctlv_node_schema *node;
++			__u64 type, which;
++
++			if (level == PATH_DEPTH - 1)
++				return -E2BIG;
++			if (path_element(name, &type, &which)) {
++				fprintf(stderr, "%s: %s: not a type\n",
++					prog, name);
++				return -EINVAL;
++			}
++
++			/*
++			 * A different record here, or the same one named again
++			 * as a second occurrence, ends what came before.
++			 */
++			if (level < depth && (path[level] != type ||
++					      occurrence[level] != which))
++				while (depth > level) {
++					ctlv_record_end(msg);
++					depth--;
++				}
++
++			if (!rest) {
++				/* The leaf, which carries the value. */
++				while (depth > level) {
++					ctlv_record_end(msg);
++					depth--;
++				}
++				node = node_member(stack, depth, type);
++				if (!node)
++					return no_such_field(type);
++				ret = put_value(msg, node, spec, text);
++				if (ret) {
++					fprintf(stderr,
++						"%s: %#llx=%s: %s\n",
++						prog,
++						(unsigned long long)type,
++						text,
++						strerror(-ret));
++					return ret;
++				}
++				break;
++			}
++
++			if (level == depth) {
++				node = node_member(stack, depth, type);
++				if (!node)
++					return no_such_field(type);
++				if (node->kind != CTLV_SCHEMA_RECORD)
++					return not_a_record(type);
++				ret = ctlv_record_start(msg, type);
++				if (ret)
++					return ret;
++				path[depth] = type;
++				occurrence[depth] = which;
++				stack[depth + 1] = node;
++				depth++;
++			}
++			level++;
++		}
++	}
++	return ctlv_msg_err(msg);
++}
++
++static int stream_read(FILE *file, char **textp, size_t *lenp)
++{
++	size_t used = 0, size = 4096;
++	char *text;
++
++	text = malloc(size);
++	if (!text)
++		return -ENOMEM;
++	for (;;) {
++		size_t n;
++
++		if (used == size - 1) {
++			char *grown;
++
++			size *= 2;
++			grown = realloc(text, size);
++			if (!grown) {
++				free(text);
++				return -ENOMEM;
++			}
++			text = grown;
++		}
++		n = fread(text + used, 1, size - used - 1, file);
++		used += n;
++		if (n)
++			continue;
++		if (feof(file))
++			break;
++		if (errno == EINTR) {
++			clearerr(file);
 +			continue;
 +		}
-+		ret = schema_tlv(validate, child, child_node, depth + 1);
-+		if (ret)
-+			return ret;
++		free(text);
++		return -errno;
 +	}
++	text[used] = '\0';
++	*textp = text;
++	*lenp = used;
 +	return 0;
 +}
 +
-+int ctlv_bootstrap_validate(const void *buf, __u32 len, __u64 op_id)
++static int file_read(const char *path, char **textp, size_t *lenp)
 +{
-+	const struct ctlv_node_schema *schema;
-+	const struct ctlv_op_spec *op;
-+	const struct ctlv_hdr *root = buf;
-+	struct validate validate = {};
++	FILE *file;
 +	int ret;
 +
-+	op = ctlv_spec_find(&ctlv_spec, op_id);
-+	if (!op || !op->reply)
-+		return -EINVAL;
-+	ret = ctlv_msg_check(buf, len);
-+	if (ret)
-+		return ret;
-+	if (root->len != len)
-+		return -EPROTO;
-+
-+	schema = op->reply;
-+	if (schema->type != CTLV_TYPE_ROOT ||
-+	    schema->kind != CTLV_SCHEMA_RECORD)
-+		return -EINVAL;
-+	return schema_tlv(&validate, root, schema, 0);
++	file = fopen(path, "re");
++	if (!file)
++		return -errno;
++	ret = stream_read(file, textp, lenp);
++	fclose(file);
++	return ret;
 +}
 +
-+/* A node's members occupy one contiguous range in the pool. */
-+struct build {
-+	struct ctlv_node_schema *node_schemas;
-+	const struct ctlv_node_schema *path[CTLV_DEPTH_MAX];
-+	unsigned int node_schemas_count;
++static int json_source_read(const char *source, char **textp, size_t *lenp)
++{
++	if (source[0] != '@' && strcmp(source, "-")) {
++		*textp = strdup(source);
++		if (!*textp)
++			return -ENOMEM;
++		*lenp = strlen(*textp);
++		return 0;
++	}
++	if (!strcmp(source, "-"))
++		return stream_read(stdin, textp, lenp);
++	return file_read(source + 1, textp, lenp);
++}
++
++/* A blob --json names by its file, and the memory its descriptor names. */
++struct blob_file {
++	const struct ctlv_node_schema *node;
++	char *path;
++	void *data;
++	__u64 len;
++	/* Where its descriptor starts in the request. */
++	__u64 offset;
++	/* Whether the length is settled, rather than the op's to ask for. */
++	bool sized;
++	unsigned int grown;
++};
++
++/* A rebuilt request meets its blobs in the order the first build did. */
++struct blob_files {
++	struct blob_file *files;
++	unsigned int count;
++	/* How many of them the request being built has reached. */
 +	unsigned int used;
 +};
 +
-+static size_t text_append(char *buf, size_t len, size_t used,
-+			  const char *format, ...)
++/* How often one blob grows for an op that keeps asking for more. */
++#define BLOB_GROWN_MAX 2
++
++/* Zeroed and aligned as the blob requires. */
++static int blob_alloc(struct blob_file *blob, __u64 len)
 +{
-+	va_list args;
-+	int written;
-+
-+	if (!len)
-+		return 0;
-+	if (used >= len - 1) {
-+		buf[len - 1] = '\0';
-+		return len - 1;
-+	}
-+
-+	va_start(args, format);
-+	written = vsnprintf(buf + used, len - used, format, args);
-+	va_end(args);
-+	if (written < 0) {
-+		buf[used] = '\0';
-+		return used;
-+	}
-+	if ((size_t)written >= len - used)
-+		return len - 1;
-+	return used + written;
-+}
-+
-+static bool node_u64(const struct ctlv_hdr *src, __u64 type, __u64 *value)
-+{
-+	const struct ctlv_hdr *hdr = ctlv_hdr_find(src, type);
-+
-+	return hdr && !ctlv_get_u64(hdr, value);
-+}
-+
-+/* An optional member, and the bit that says it was there. */
-+static void node_opt(const struct ctlv_hdr *src, __u64 type, __u32 bit,
-+		     __u64 *value, __u32 *present)
-+{
-+	if (node_u64(src, type, value))
-+		*present |= bit;
-+}
-+
-+static bool node_has(const struct ctlv_hdr *src, __u64 type)
-+{
-+	return ctlv_hdr_find(src, type);
-+}
-+
-+static int node_id_compare(const void *left, const void *right)
-+{
-+	const __u64 *a = left;
-+	const __u64 *b = right;
-+
-+	return (*a > *b) - (*a < *b);
-+}
-+
-+static int node_children_check(const struct ctlv_hdr *src,
-+			       unsigned int count)
-+{
-+	const struct ctlv_hdr *child;
-+	__u64 *ids;
-+	unsigned int i = 0;
-+	int ret = 0;
-+
-+	if (!count)
-+		return 0;
-+	ids = calloc(count, sizeof(*ids));
-+	if (!ids)
-+		return -ENOMEM;
-+	ctlv_for_each_type(child, src, CTLV_T_SCHEMA_NODE_FIELDS) {
-+		if (!node_u64(child, CTLV_T_SCHEMA_NODE_TYPE, &ids[i++])) {
-+			ret = -EPROTO;
-+			goto out;
-+		}
-+	}
-+	ctlv_for_each_type(child, src, CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS) {
-+		if (!node_u64(child, CTLV_T_SCHEMA_NODE_TYPE, &ids[i++])) {
-+			ret = -EPROTO;
-+			goto out;
-+		}
-+	}
-+	if (i != count) {
-+		ret = -EPROTO;
-+		goto out;
-+	}
-+	if (count > 1)
-+		qsort(ids, count, sizeof(*ids), node_id_compare);
-+	for (i = 1; i < count; i++) {
-+		if (ids[i] == ids[i - 1]) {
-+			ret = -EPROTO;
-+			break;
-+		}
-+	}
-+out:
-+	free(ids);
-+	return ret;
-+}
-+
-+static int node_kind_check(const struct ctlv_hdr *src,
-+			   const struct ctlv_node_schema *node,
-+			   unsigned int depth)
-+{
-+	bool range = node->kind == CTLV_SCHEMA_UINT ||
-+		     node->kind == CTLV_SCHEMA_SINT ||
-+		     node->kind == CTLV_SCHEMA_ENUM;
-+	bool length = node->kind == CTLV_SCHEMA_STRING ||
-+		      node->kind == CTLV_SCHEMA_BINARY;
-+	bool blob = node->kind == CTLV_SCHEMA_BLOB;
-+	bool flags = node->kind == CTLV_SCHEMA_FLAGS;
-+	bool children = node->fields_count || node->optional_fields_count;
-+	bool reenters = node_has(src, CTLV_T_SCHEMA_NODE_REENTERS);
-+	bool unit = node_has(src, CTLV_T_SCHEMA_NODE_UNIT);
-+	bool scale = node_has(src, CTLV_T_SCHEMA_NODE_SCALE);
-+
-+	if ((!depth && (node->type != CTLV_TYPE_ROOT ||
-+			node->kind != CTLV_SCHEMA_RECORD ||
-+			node->max_occurrences != 1)) ||
-+	    (depth && node->type == CTLV_TYPE_ROOT))
-+		return -EPROTO;
-+
-+	/* A later library may understand an appended schema kind. */
-+	if (node->kind > CTLV_SCHEMA_BLOB)
-+		return 0;
-+	if (node_has(src, CTLV_T_SCHEMA_NODE_MIN) != range ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_MAX) != range ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_MIN_LENGTH) != length ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_MAX_LENGTH) != length ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_FLAGS_MASK) != flags ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_BLOB_DIRECTION) != blob ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_BLOB_BACKINGS) != blob ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_BLOB_MAX_LENGTH) != blob ||
-+	    node_has(src, CTLV_T_SCHEMA_NODE_BLOB_ALIGNMENT) != blob)
-+		return -EPROTO;
-+	if (unit != scale ||
-+	    (unit && !node->unit) ||
-+	    (unit && node->kind != CTLV_SCHEMA_UINT &&
-+	     node->kind != CTLV_SCHEMA_SINT))
-+		return -EPROTO;
-+	if ((children && node->kind != CTLV_SCHEMA_RECORD) ||
-+	    (reenters && (node->kind != CTLV_SCHEMA_RECORD || children)))
-+		return -EPROTO;
-+
-+	if (range) {
-+		if (node->kind == CTLV_SCHEMA_SINT)
-+			return (__s64)node->min <= (__s64)node->max ?
-+			       0 : -EPROTO;
-+		/* An enum extension point the device's family leaves unfilled. */
-+		if (node->kind == CTLV_SCHEMA_ENUM && node->min == 1 &&
-+		    !node->max)
-+			return 0;
-+		return node->min <= node->max ? 0 : -EPROTO;
-+	}
-+	if (length && node->min_length > node->max_length)
-+		return -EPROTO;
-+	if (flags && !node->flags_mask)
-+		return -EPROTO;
-+	if (blob && (!node->blob_backings || !node->blob_max_length ||
-+		     !node->blob_alignment ||
-+		     node->blob_alignment & (node->blob_alignment - 1)))
-+		return -EPROTO;
-+	return 0;
-+}
-+
-+static bool node_is_a_node(const struct ctlv_hdr *hdr)
-+{
-+	return hdr->type == CTLV_T_SCHEMA_NODE_FIELDS ||
-+	       hdr->type == CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS;
-+}
-+
-+static int count_nodes(const struct ctlv_hdr *src, unsigned int depth,
-+		       unsigned int *count)
-+{
-+	const struct ctlv_hdr *child;
++	size_t align = blob->node->blob_alignment;
++	void *data;
 +	int ret;
 +
-+	if (depth > CTLV_RECORD_DEPTH_MAX)
-+		return -ELOOP;
-+	if (*count == UINT_MAX)
-+		return -EOVERFLOW;
-+	(*count)++;
-+	ctlv_for_each(child, src) {
-+		if (!node_is_a_node(child))
-+			continue;
-+		if (!ctlv_hdr_is_record(child))
-+			return -EPROTO;
-+		ret = count_nodes(child, depth + 1, count);
-+		if (ret)
-+			return ret;
-+	}
-+	return 0;
-+}
-+
-+static int fill(struct build *build, const struct ctlv_hdr *src,
-+		struct ctlv_node_schema *dst, unsigned int depth)
-+{
-+	struct ctlv_node_schema *required, *optional;
-+	const struct ctlv_hdr *child;
-+	unsigned int required_count, optional_count, i;
-+	__u64 value;
-+	int ret;
-+
-+	if (depth > CTLV_RECORD_DEPTH_MAX)
-+		return -ELOOP;
-+	build->path[depth] = dst;
-+	if (!node_u64(src, CTLV_T_SCHEMA_NODE_TYPE, &dst->type))
-+		return -EPROTO;
-+	if (!node_u64(src, CTLV_T_SCHEMA_NODE_KIND, &value))
-+		return -EPROTO;
-+	if (value > UINT32_MAX)
-+		return -EPROTO;
-+	dst->kind = value;
-+	if (!node_u64(src, CTLV_T_SCHEMA_NODE_MAX_OCCURRENCES,
-+		      &dst->max_occurrences))
-+		return -EPROTO;
-+
-+	node_opt(src, CTLV_T_SCHEMA_NODE_MIN, CTLV_NODE_SCHEMA_HAS_MIN,
-+		 &dst->min, &dst->present);
-+	node_opt(src, CTLV_T_SCHEMA_NODE_MAX, CTLV_NODE_SCHEMA_HAS_MAX,
-+		 &dst->max, &dst->present);
-+	node_opt(src, CTLV_T_SCHEMA_NODE_MIN_LENGTH,
-+		 CTLV_NODE_SCHEMA_HAS_MIN_LENGTH, &dst->min_length,
-+		 &dst->present);
-+	node_opt(src, CTLV_T_SCHEMA_NODE_MAX_LENGTH,
-+		 CTLV_NODE_SCHEMA_HAS_MAX_LENGTH, &dst->max_length,
-+		 &dst->present);
-+	node_opt(src, CTLV_T_SCHEMA_NODE_FLAGS_MASK,
-+		 CTLV_NODE_SCHEMA_HAS_FLAGS_MASK, &dst->flags_mask,
-+		 &dst->present);
-+	node_opt(src, CTLV_T_SCHEMA_NODE_REENTERS,
-+		 CTLV_NODE_SCHEMA_HAS_REENTERS, &dst->reenters, &dst->present);
-+	if (node_u64(src, CTLV_T_SCHEMA_NODE_UNIT, &value)) {
-+		if (value > UINT32_MAX)
-+			return -EPROTO;
-+		dst->unit = value;
-+		dst->present |= CTLV_NODE_SCHEMA_HAS_UNIT;
-+	}
-+	/* A scale only ever accompanies a unit, and may be negative. */
-+	if (node_u64(src, CTLV_T_SCHEMA_NODE_SCALE, &value)) {
-+		dst->scale = (__s64)value;
-+		dst->present |= CTLV_NODE_SCHEMA_HAS_SCALE;
-+	}
-+	if (node_u64(src, CTLV_T_SCHEMA_NODE_BLOB_DIRECTION, &value)) {
-+		if (value > UINT32_MAX)
-+			return -EPROTO;
-+		dst->blob_direction = value;
-+		dst->present |= CTLV_NODE_SCHEMA_HAS_BLOB;
-+		node_u64(src, CTLV_T_SCHEMA_NODE_BLOB_BACKINGS,
-+			 &dst->blob_backings);
-+		node_u64(src, CTLV_T_SCHEMA_NODE_BLOB_MAX_LENGTH,
-+			 &dst->blob_max_length);
-+		node_u64(src, CTLV_T_SCHEMA_NODE_BLOB_ALIGNMENT,
-+			 &dst->blob_alignment);
-+	}
-+
-+	required_count = ctlv_hdr_count(src, CTLV_T_SCHEMA_NODE_FIELDS);
-+	optional_count = ctlv_hdr_count(src,
-+					CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS);
-+	if (build->used > build->node_schemas_count ||
-+	    required_count > build->node_schemas_count - build->used ||
-+	    optional_count > build->node_schemas_count - build->used - required_count)
-+		return -EPROTO;
-+	ret = node_children_check(src, required_count + optional_count);
++	if (align < sizeof(void *))
++		align = sizeof(void *);
++	if (len > SIZE_MAX)
++		return -EFBIG;
++	ret = posix_memalign(&data, align, len);
 +	if (ret)
-+		return ret;
-+	required = &build->node_schemas[build->used];
-+	build->used += required_count;
-+	optional = &build->node_schemas[build->used];
-+	build->used += optional_count;
-+	dst->fields = required;
-+	dst->fields_count = required_count;
-+	dst->optional_fields = optional;
-+	dst->optional_fields_count = optional_count;
-+
-+	i = 0;
-+	ctlv_for_each_type(child, src, CTLV_T_SCHEMA_NODE_FIELDS) {
-+		ret = fill(build, child, &required[i++], depth + 1);
-+		if (ret)
-+			return ret;
-+	}
-+	i = 0;
-+	ctlv_for_each_type(child, src, CTLV_T_SCHEMA_NODE_OPTIONAL_FIELDS) {
-+		ret = fill(build, child, &optional[i++], depth + 1);
-+		if (ret)
-+			return ret;
-+	}
-+	if ((dst->present & CTLV_NODE_SCHEMA_HAS_REENTERS) &&
-+	    (!dst->reenters || dst->reenters > depth ||
-+	     required_count || optional_count ||
-+	     build->path[depth - dst->reenters]->kind !=
-+			CTLV_SCHEMA_RECORD))
-+		return -EPROTO;
-+	return node_kind_check(src, dst, depth);
-+}
-+
-+/* The two trees of one op. Either may be absent. */
-+int ctlv_schema_parse(const struct ctlv_hdr *root, __u32 len,
-+		      struct ctlv_schema **sp)
-+{
-+	const struct ctlv_hdr *request, *reply;
-+	struct ctlv_schema *schema;
-+	struct build build = {};
-+	int ret;
-+
-+	ret = ctlv_bootstrap_validate(root, len, CTLV_OP_OP_SCHEMA_GET);
-+	if (ret)
-+		return ret;
-+	request = ctlv_hdr_find(root, CTLV_T_OP_SCHEMA_GET_REQUEST);
-+	reply = ctlv_hdr_find(root, CTLV_T_OP_SCHEMA_GET_REPLY);
-+
-+	schema = calloc(1, sizeof(*schema));
-+	if (!schema)
-+		return -ENOMEM;
-+	if (request) {
-+		ret = count_nodes(request, 0, &build.node_schemas_count);
-+		if (ret)
-+			goto err;
-+	}
-+	if (reply) {
-+		ret = count_nodes(reply, 0, &build.node_schemas_count);
-+		if (ret)
-+			goto err;
-+	}
-+	if (build.node_schemas_count) {
-+		build.node_schemas = calloc(build.node_schemas_count, sizeof(*build.node_schemas));
-+		if (!build.node_schemas) {
-+			free(schema);
-+			return -ENOMEM;
-+		}
-+	}
-+	schema->node_schemas = build.node_schemas;
-+	schema->node_schemas_count = build.node_schemas_count;
-+
-+	if (request) {
-+		schema->request = &build.node_schemas[build.used++];
-+		ret = fill(&build, request,
-+			   (struct ctlv_node_schema *)schema->request, 0);
-+		if (ret)
-+			goto err;
-+	}
-+	if (reply) {
-+		schema->reply = &build.node_schemas[build.used++];
-+		ret = fill(&build, reply,
-+			   (struct ctlv_node_schema *)schema->reply, 0);
-+		if (ret)
-+			goto err;
-+	}
-+	if (build.used != build.node_schemas_count) {
-+		ret = -EPROTO;
-+		goto err;
-+	}
-+	*sp = schema;
++		return -ret;
++	memset(data, 0, len);
++	free(blob->data);
++	blob->data = data;
++	blob->len = len;
 +	return 0;
-+err:
-+	ctlv_schema_free(schema);
-+	return ret;
-+}
-+
-+void ctlv_schema_free(struct ctlv_schema *schema)
-+{
-+	if (!schema)
-+		return;
-+	free(schema->node_schemas);
-+	free(schema);
-+}
-+
-+const struct ctlv_node_schema *ctlv_schema_request(const struct ctlv_schema *s)
-+{
-+	return s->request;
-+}
-+
-+const struct ctlv_node_schema *ctlv_schema_reply(const struct ctlv_schema *s)
-+{
-+	return s->reply;
 +}
 +
 +/*
-+ * Whether two descriptions of one op agree. The first difference is reported,
-+ * with the path to it, a drift in one place having many consequences.
++ * Whether the op failed for want of a longer output blob that ctlvctl sizes,
++ * which then grows so that the op can be retried.
 + */
++static bool blobs_grow(struct blob_files *blobs, const struct ctlv_error *error)
++{
++	const __u32 need = CTLV_ERROR_HAS_BAD_TLV_OFFSET |
++			   CTLV_ERROR_HAS_REQUIRED_LENGTH;
++	unsigned int i;
 +
-+#define DIFFER(_member, _expected, _actual) do {			\
-+	if ((_expected) != (_actual)) {					\
-+		snprintf(diff, len, "%s: %s %llu != %llu", path,	\
-+			 _member, (unsigned long long)(_expected),	\
-+			 (unsigned long long)(_actual));		\
-+		return false;						\
-+	}								\
-+} while (0)
++	if (error->err != -EMSGSIZE || (error->present & need) != need)
++		return false;
++	for (i = 0; i < blobs->count; i++) {
++		struct blob_file *blob = &blobs->files[i];
 +
-+static bool node_equal(const struct ctlv_node_schema *expected,
-+		       const struct ctlv_node_schema *actual, char *path,
-+		       size_t path_len, size_t at, char *diff, size_t len)
++		if (blob->offset != error->bad_tlv_offset)
++			continue;
++		if (blob->sized || blob->grown == BLOB_GROWN_MAX ||
++		    error->required_length <= blob->len ||
++		    error->required_length > blob->node->blob_max_length)
++			return false;
++		blob->grown++;
++		return !blob_alloc(blob, error->required_length);
++	}
++	return false;
++}
++
++/* The device does not say how much it wrote, so a file gets the whole blob. */
++static int blobs_save(const struct blob_files *blobs)
 +{
 +	unsigned int i;
 +
-+	DIFFER("type", expected->type, actual->type);
-+	DIFFER("kind", expected->kind, actual->kind);
-+	DIFFER("max-occurrences", expected->max_occurrences,
-+	       actual->max_occurrences);
-+	DIFFER("present", expected->present, actual->present);
-+	DIFFER("min", expected->min, actual->min);
-+	DIFFER("max", expected->max, actual->max);
-+	DIFFER("min-length", expected->min_length, actual->min_length);
-+	DIFFER("max-length", expected->max_length, actual->max_length);
-+	DIFFER("flags-mask", expected->flags_mask, actual->flags_mask);
-+	DIFFER("unit", expected->unit, actual->unit);
-+	DIFFER("scale", expected->scale, actual->scale);
-+	DIFFER("blob-direction", expected->blob_direction,
-+	       actual->blob_direction);
-+	DIFFER("blob-backings", expected->blob_backings,
-+	       actual->blob_backings);
-+	DIFFER("blob-max-length", expected->blob_max_length,
-+	       actual->blob_max_length);
-+	DIFFER("blob-alignment", expected->blob_alignment,
-+	       actual->blob_alignment);
-+	DIFFER("reenters", expected->reenters, actual->reenters);
-+	DIFFER("fields", expected->fields_count, actual->fields_count);
-+	DIFFER("optional-fields", expected->optional_fields_count,
-+	       actual->optional_fields_count);
++	for (i = 0; i < blobs->count; i++) {
++		const struct blob_file *blob = &blobs->files[i];
++		FILE *file;
++		int ret = 0;
 +
-+	for (i = 0; i < expected->fields_count; i++) {
-+		size_t used = text_append(path, path_len, at, ".fields[%u]", i);
-+
-+		if (!node_equal(&expected->fields[i], &actual->fields[i], path,
-+				path_len, used, diff, len))
-+			return false;
++		if (blob->node->blob_direction == CTLV_BLOB_DIRECTION_INPUT)
++			continue;
++		file = fopen(blob->path, "we");
++		if (!file)
++			ret = -errno;
++		else if (fwrite(blob->data, 1, blob->len, file) != blob->len)
++			ret = errno ? -errno : -EIO;
++		if (file && fclose(file) && !ret)
++			ret = errno ? -errno : -EIO;
++		if (ret) {
++			fprintf(stderr, "%s: %s: %s\n", prog, blob->path,
++				strerror(-ret));
++			return ret;
++		}
 +	}
-+	for (i = 0; i < expected->optional_fields_count; i++) {
-+		size_t used = text_append(path, path_len, at,
-+					  ".optional-fields[%u]", i);
++	return 0;
++}
 +
-+		if (!node_equal(&expected->optional_fields[i],
-+				&actual->optional_fields[i], path, path_len,
-+				used, diff, len))
-+			return false;
++static void blobs_free(struct blob_files *blobs)
++{
++	unsigned int i;
++
++	for (i = 0; i < blobs->count; i++) {
++		free(blobs->files[i].path);
++		free(blobs->files[i].data);
 +	}
-+	path[at] = '\0';
++	free(blobs->files);
++}
++
++#ifdef HAVE_JSON_C
++
++static const struct ctlv_node_schema *
++node_key(const struct ctlv_node_schema *parent,
++	 const struct ctlvctl_spec *spec, const char *key, bool *ambiguous)
++{
++	__u64 id;
++
++	if (!parse_u64(key, &id))
++		return node_member((const struct ctlv_node_schema *[]){ parent },
++				   0, id);
++	return node_named(parent, spec, key, ambiguous);
++}
++
++static int json_node_value(struct json_object *object,
++			   const struct ctlv_node_schema *parent,
++			   const struct ctlv_node_schema *wanted,
++			   const struct ctlvctl_spec *spec,
++			   struct json_object **value, bool *present)
++{
++	struct json_object *found = NULL;
++
++	json_object_object_foreach(object, key, item) {
++		const struct ctlv_node_schema *node;
++		bool ambiguous = false;
++
++		node = node_key(parent, spec, key, &ambiguous);
++		if (ambiguous) {
++			fprintf(stderr, "%s: %s: ambiguous field\n",
++				prog, key);
++			return -EINVAL;
++		}
++		if (!node) {
++			fprintf(stderr, "%s: %s: no such field here\n",
++				prog, key);
++			return -ENOENT;
++		}
++		if (node != wanted)
++			continue;
++		if (found) {
++			fprintf(stderr, "%s: %s: field given twice\n",
++				prog, key);
++			return -EINVAL;
++		}
++		found = item;
++	}
++	*present = !!found;
++	*value = found;
++	return 0;
++}
++
++static int json_text_value(struct json_object *value, const char **text)
++{
++	if (!json_object_is_type(value, json_type_string))
++		return -EINVAL;
++	*text = json_object_get_string(value);
++	if (strlen(*text) != (size_t)json_object_get_string_len(value))
++		return -EINVAL;
++	return 0;
++}
++
++static int json_u64_value(struct json_object *value, __u64 *number)
++{
++	const char *text;
++
++	if (json_object_is_type(value, json_type_int)) {
++		text = json_object_get_string(value);
++		return parse_u64(text, number);
++	}
++	if (!json_text_value(value, &text))
++		return parse_u64(text, number);
++	return -EINVAL;
++}
++
++static int json_s64_value(struct json_object *value, __s64 *number)
++{
++	if (json_object_is_type(value, json_type_int))
++		return parse_s64(json_object_get_string(value), number);
++	{
++		const char *text;
++
++		if (json_text_value(value, &text))
++			return -EINVAL;
++		return parse_s64(text, number);
++	}
++}
++
++static int json_flags_value(const struct ctlvctl_field_name *field,
++			    struct json_object *json, __u64 *value)
++{
++	size_t i, n;
++
++	if (!json_object_is_type(json, json_type_array))
++		return json_u64_value(json, value);
++	*value = 0;
++	n = json_object_array_length(json);
++	for (i = 0; i < n; i++) {
++		struct json_object *item = json_object_array_get_idx(json, i);
++		const char *name;
++		__u64 bit;
++
++		if (json_text_value(item, &name) ||
++		    ctlvctl_spec_value(field, name, &bit))
++			return -EINVAL;
++		*value |= bit;
++	}
++	return 0;
++}
++
++static int json_put_value(struct ctlv_msg *msg,
++			  const struct ctlv_node_schema *node,
++			  const struct ctlvctl_spec *spec,
++			  struct json_object *json)
++{
++	const struct ctlvctl_field_name *field = field_name(spec, node);
++	const char *text;
++	__u64 value;
++	__s64 signed_value;
++
++	switch (node->kind) {
++	case CTLV_SCHEMA_UINT:
++		if (json_u64_value(json, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
++	case CTLV_SCHEMA_SINT:
++		if (json_s64_value(json, &signed_value))
++			return -EINVAL;
++		return ctlv_put_s64(msg, node->type, signed_value);
++	case CTLV_SCHEMA_BOOL:
++		if (!json_object_is_type(json, json_type_boolean))
++			return -EINVAL;
++		return ctlv_put_bool(msg, node->type,
++				     json_object_get_boolean(json));
++	case CTLV_SCHEMA_STRING:
++		if (json_text_value(json, &text))
++			return -EINVAL;
++		return ctlv_put_str(msg, node->type, text);
++	case CTLV_SCHEMA_BINARY:
++		if (json_text_value(json, &text))
++			return -EINVAL;
++		if (strncmp(text, "hex:", 4))
++			return -EINVAL;
++		return put_hex(msg, node->type, text + 4);
++	case CTLV_SCHEMA_ENUM:
++		if (json_object_is_type(json, json_type_string)) {
++			if (json_text_value(json, &text) ||
++			    ctlvctl_spec_value(field, text, &value))
++				return -EINVAL;
++			return ctlv_put_u64(msg, node->type, value);
++		}
++		if (json_u64_value(json, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
++	case CTLV_SCHEMA_FLAGS:
++		if (json_flags_value(field, json, &value))
++			return -EINVAL;
++		return ctlv_put_u64(msg, node->type, value);
++	default:
++		return -ENOTSUP;
++	}
++}
++
++static const struct ctlv_node_schema *
++node_members(const struct ctlv_node_schema **stack, unsigned int depth)
++{
++	const struct ctlv_node_schema *node = stack[depth];
++	unsigned int level = depth;
++
++	if (!node)
++		return NULL;
++	while (node->reenters) {
++		if (node->reenters > level)
++			return NULL;
++		level -= node->reenters;
++		node = stack[level];
++		if (!node)
++			return NULL;
++	}
++	return node;
++}
++
++/* {"file": PATH}, and "length" for a blob the op writes. */
++static int json_blob_parse(const struct ctlv_node_schema *node,
++			   struct json_object *value, const char **path,
++			   __u64 *len, bool *sized)
++{
++	struct json_object *file = NULL, *length = NULL;
++
++	if (!json_object_is_type(value, json_type_object))
++		return -EINVAL;
++	json_object_object_foreach(value, key, item) {
++		if (!strcmp(key, "file"))
++			file = item;
++		else if (!strcmp(key, "length"))
++			length = item;
++		else
++			return -EINVAL;
++	}
++	if (!file || json_text_value(file, path) || !**path)
++		return -EINVAL;
++	*sized = !!length;
++	if (!length)
++		return 0;
++	if (node->blob_direction == CTLV_BLOB_DIRECTION_INPUT)
++		return -EINVAL;
++	return json_u64_value(length, len);
++}
++
++/* An output blob starts at a byte unless the request says how long it is. */
++static int json_blob_new(const struct ctlv_node_schema *node,
++			 struct json_object *value, struct blob_files *blobs)
++{
++	bool output = node->blob_direction == CTLV_BLOB_DIRECTION_OUTPUT;
++	struct blob_file *files, *blob;
++	char *contents = NULL;
++	const char *path;
++	size_t size = 0;
++	__u64 len = 1;
++	bool sized;
++	int ret;
++
++	if (!(node->present & CTLV_NODE_SCHEMA_HAS_BLOB) ||
++	    !(node->blob_backings & (1ULL << CTLV_BLOB_TYPE_VA)))
++		return -EOPNOTSUPP;
++	ret = json_blob_parse(node, value, &path, &len, &sized);
++	if (ret)
++		return ret;
++	if (!output) {
++		ret = file_read(path, &contents, &size);
++		if (ret)
++			return ret;
++		if (!sized)
++			len = size;
++	}
++	ret = -EINVAL;
++	if (!len)
++		goto out;
++	ret = -EFBIG;
++	if (len > node->blob_max_length || size > len)
++		goto out;
++	ret = -ENOMEM;
++	files = realloc(blobs->files, (blobs->count + 1) * sizeof(*files));
++	if (!files)
++		goto out;
++	blobs->files = files;
++	blob = &files[blobs->count];
++	*blob = (struct blob_file){
++		.node = node,
++		.path = strdup(path),
++		.sized = sized || !output,
++	};
++	if (!blob->path)
++		goto out;
++	ret = blob_alloc(blob, len);
++	if (ret) {
++		free(blob->path);
++		goto out;
++	}
++	if (size)
++		memcpy(blob->data, contents, size);
++	blobs->count++;
++out:
++	free(contents);
++	return ret;
++}
++
++static int json_blob_put(struct ctlv_msg *msg,
++			 const struct ctlv_node_schema *node,
++			 struct json_object *value, struct blob_files *blobs)
++{
++	struct blob_file *blob;
++	int ret;
++
++	if (blobs->used == blobs->count) {
++		ret = json_blob_new(node, value, blobs);
++		if (ret)
++			return ret;
++	}
++	blob = &blobs->files[blobs->used++];
++	if (blob->node != node)
++		return -EINVAL;
++	blob->offset = CTLV_ALIGN(ctlv_msg_len(msg));
++	return ctlv_put_blob_va(msg, node->type, blob->data, blob->len);
++}
++
++static int json_build_object(struct ctlv_msg *msg,
++			     const struct ctlv_node_schema **stack,
++			     unsigned int depth, struct json_object *object,
++			     const struct ctlvctl_spec *spec,
++			     struct blob_files *blobs);
++
++static int json_build_one(struct ctlv_msg *msg,
++			  const struct ctlv_node_schema **stack,
++			  unsigned int depth,
++			  const struct ctlv_node_schema *node,
++			  struct json_object *value,
++			  const struct ctlvctl_spec *spec,
++			  struct blob_files *blobs)
++{
++	int ret;
++
++	if (node->kind == CTLV_SCHEMA_BLOB)
++		return json_blob_put(msg, node, value, blobs);
++	if (node->kind != CTLV_SCHEMA_RECORD)
++		return json_put_value(msg, node, spec, value);
++	if (!json_object_is_type(value, json_type_object))
++		return -EINVAL;
++	if (depth + 1 >= PATH_DEPTH)
++		return -E2BIG;
++
++	ret = ctlv_record_start(msg, node->type);
++	if (ret)
++		return ret;
++	stack[depth + 1] = node;
++	ret = json_build_object(msg, stack, depth + 1, value, spec, blobs);
++	ctlv_record_end(msg);
++	return ret;
++}
++
++static int json_build_node(struct ctlv_msg *msg,
++			   const struct ctlv_node_schema **stack,
++			   unsigned int depth,
++			   const struct ctlv_node_schema *node,
++			   struct json_object *value,
++			   const struct ctlvctl_spec *spec,
++			   struct blob_files *blobs)
++{
++	size_t i, n;
++	int ret;
++
++	if (node->max_occurrences == 1)
++		return json_build_one(msg, stack, depth, node, value, spec,
++				      blobs);
++	if (!json_object_is_type(value, json_type_array))
++		return -EINVAL;
++	n = json_object_array_length(value);
++	if (node->max_occurrences && n > node->max_occurrences)
++		return -E2BIG;
++	for (i = 0; i < n; i++) {
++		ret = json_build_one(msg, stack, depth, node,
++				     json_object_array_get_idx(value, i), spec,
++				     blobs);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int json_build_members(struct ctlv_msg *msg,
++			      const struct ctlv_node_schema **stack,
++			      unsigned int depth,
++			      const struct ctlv_node_schema *parent,
++			      const struct ctlv_node_schema *node,
++			      unsigned int n, bool required,
++			      struct json_object *object,
++			      const struct ctlvctl_spec *spec,
++			      struct blob_files *blobs)
++{
++	unsigned int i;
++
++	for (i = 0; i < n; i++) {
++		const struct ctlvctl_field_name *name = field_name(spec, &node[i]);
++		struct json_object *value;
++		bool present;
++		int ret;
++
++		ret = json_node_value(object, parent, &node[i], spec,
++				      &value, &present);
++		if (ret)
++			return ret;
++		if (!present) {
++			if (!required)
++				continue;
++			fprintf(stderr, "%s: %s: required field is missing\n",
++				prog, name ? name->name : "field");
++			return -EINVAL;
++		}
++		if (required && node[i].max_occurrences != 1 &&
++		    json_object_is_type(value, json_type_array) &&
++		    !json_object_array_length(value)) {
++			fprintf(stderr, "%s: %s: at least one value is required\n",
++				prog, name ? name->name : "field");
++			return -EINVAL;
++		}
++		ret = json_build_node(msg, stack, depth, &node[i], value,
++				      spec, blobs);
++		if (ret) {
++			fprintf(stderr, "%s: %s: %s\n", prog,
++				name ? name->name : "field", strerror(-ret));
++			return ret;
++		}
++	}
++	return 0;
++}
++
++static int json_build_object(struct ctlv_msg *msg,
++			     const struct ctlv_node_schema **stack,
++			     unsigned int depth, struct json_object *object,
++			     const struct ctlvctl_spec *spec,
++			     struct blob_files *blobs)
++{
++	const struct ctlv_node_schema *parent;
++	int ret;
++
++	if (!json_object_is_type(object, json_type_object))
++		return -EINVAL;
++	parent = node_members(stack, depth);
++	if (!parent)
++		return -EINVAL;
++	json_object_object_foreach(object, key, item) {
++		bool ambiguous = false;
++
++		if (!node_key(parent, spec, key, &ambiguous)) {
++			fprintf(stderr, "%s: %s: %s field\n", prog, key,
++				ambiguous ? "ambiguous" : "no such");
++			return ambiguous ? -EINVAL : -ENOENT;
++		}
++	}
++
++	ret = json_build_members(msg, stack, depth, parent, parent->fields,
++				 parent->fields_count, true, object, spec,
++				 blobs);
++	if (ret)
++		return ret;
++	return json_build_members(msg, stack, depth, parent,
++				  parent->optional_fields,
++				  parent->optional_fields_count, false, object,
++				  spec, blobs);
++}
++
++/* A rebuild for a retry parses @text again and starts the message over. */
++static int json_request_build(struct ctlv_msg *msg,
++			      const struct ctlv_node_schema *root,
++			      const struct ctlvctl_spec *spec,
++			      const char *text, size_t text_len,
++			      struct blob_files *blobs)
++{
++	const struct ctlv_node_schema *stack[PATH_DEPTH] = { root };
++	struct json_tokener *tokener;
++	struct json_object *object;
++	enum json_tokener_error error;
++	int ret;
++
++	if (memchr(text, '\0', text_len))
++		return -EINVAL;
++	if (text_len >= INT_MAX)
++		return -E2BIG;
++	tokener = json_tokener_new_ex(PATH_DEPTH * 2 + 2);
++	if (!tokener)
++		return -ENOMEM;
++	json_tokener_set_flags(tokener, JSON_TOKENER_STRICT |
++			       JSON_TOKENER_VALIDATE_UTF8);
++	object = json_tokener_parse_ex(tokener, text, text_len + 1);
++	error = json_tokener_get_error(tokener);
++	if (error != json_tokener_success || !object) {
++		fprintf(stderr, "%s: invalid JSON request: %s\n", prog,
++			json_tokener_error_desc(error));
++		ret = -EINVAL;
++	} else {
++		ctlv_msg_reset(msg);
++		blobs->used = 0;
++		ret = json_build_object(msg, stack, 0, object, spec, blobs);
++		json_object_put(object);
++	}
++	json_tokener_free(tokener);
++	return ret;
++}
++
++#else /* HAVE_JSON_C */
++
++static int json_request_build(struct ctlv_msg *msg,
++			      const struct ctlv_node_schema *root,
++			      const struct ctlvctl_spec *spec,
++			      const char *text, size_t text_len,
++			      struct blob_files *blobs)
++{
++	fprintf(stderr, "%s: JSON support was built without json-c\n", prog);
++	return -EOPNOTSUPP;
++}
++
++#endif /* HAVE_JSON_C */
++
++#ifdef HAVE_JSON_C
++
++static char *hex_encode(const void *bytes, __u32 len, const char *prefix)
++{
++	const unsigned char *data = bytes;
++	size_t prefix_len = strlen(prefix);
++	char *text;
++	__u32 i;
++
++	text = malloc(prefix_len + (size_t)len * 2 + 1);
++	if (!text)
++		return NULL;
++	memcpy(text, prefix, prefix_len);
++	for (i = 0; i < len; i++)
++		snprintf(text + prefix_len + i * 2, 3, "%02x", data[i]);
++	return text;
++}
++
++static struct json_object *json_binary(const void *bytes, __u32 len)
++{
++	struct json_object *json;
++	char *text;
++
++	text = hex_encode(bytes, len, "hex:");
++	if (!text)
++		return NULL;
++	json = json_object_new_string(text);
++	free(text);
++	return json;
++}
++
++static struct json_object *json_invalid_utf8(const void *bytes, __u32 len)
++{
++	struct json_object *json;
++	char *text;
++
++	json = json_object_new_object();
++	text = hex_encode(bytes, len, "");
++	if (!json || !text) {
++		json_object_put(json);
++		free(text);
++		return NULL;
++	}
++	json_add_string(json, "encoding", "hex");
++	json_add_string(json, "data", text);
++	free(text);
++	return json;
++}
++
++static bool utf8_valid(const unsigned char *text, size_t len)
++{
++	size_t i = 0;
++
++	while (i < len) {
++		unsigned char first = text[i++];
++		unsigned int continuation;
++
++		if (first < 0x80)
++			continue;
++		if (first >= 0xc2 && first <= 0xdf) {
++			continuation = 1;
++		} else if (first >= 0xe0 && first <= 0xef) {
++			continuation = 2;
++			if (i >= len ||
++			    (first == 0xe0 && text[i] < 0xa0) ||
++			    (first == 0xed && text[i] >= 0xa0))
++				return false;
++		} else if (first >= 0xf0 && first <= 0xf4) {
++			continuation = 3;
++			if (i >= len ||
++			    (first == 0xf0 && text[i] < 0x90) ||
++			    (first == 0xf4 && text[i] >= 0x90))
++				return false;
++		} else {
++			return false;
++		}
++		if (continuation > len - i)
++			return false;
++		while (continuation--)
++			if ((text[i++] & 0xc0) != 0x80)
++				return false;
++	}
 +	return true;
 +}
 +
-+bool ctlv_schema_equal(const struct ctlv_node_schema *expected,
-+		       const struct ctlv_node_schema *actual, char *diff,
-+		       size_t len)
++static struct json_object *
++json_payload(const struct ctlv_hdr *hdr,
++	     const struct ctlv_node_schema *node,
++	     const struct ctlvctl_spec *spec)
 +{
-+	char path[512] = "root";
++	const struct ctlvctl_field_name *name = field_name(spec, node);
++	const void *bytes;
++	const char *text;
++	struct json_object *json;
++	__u64 value;
++	__s64 signed_value;
++	__u32 len;
++	bool flag;
++	unsigned int i;
 +
-+	if (!expected || !actual) {
-+		if (expected == actual)
-+			return true;
-+		snprintf(diff, len, "one tree is absent: %s expected, %s got",
-+			 expected ? "present" : "absent",
-+			 actual ? "present" : "absent");
-+		return false;
++	switch (node ? node->kind : CTLV_SCHEMA_BINARY) {
++	case CTLV_SCHEMA_UINT:
++		if (ctlv_get_u64(hdr, &value))
++			return NULL;
++		return json_object_new_uint64(value);
++	case CTLV_SCHEMA_SINT:
++		if (ctlv_get_s64(hdr, &signed_value))
++			return NULL;
++		return json_object_new_int64(signed_value);
++	case CTLV_SCHEMA_BOOL:
++		if (ctlv_get_bool(hdr, &flag))
++			return NULL;
++		return json_object_new_boolean(flag);
++	case CTLV_SCHEMA_STRING:
++		if (ctlv_get_str(hdr, &text))
++			return NULL;
++		len = ctlv_hdr_payload_len(hdr) - 1;
++		if (!utf8_valid((const unsigned char *)text, len))
++			return json_invalid_utf8(text, len);
++		return json_object_new_string_len(text, len);
++	case CTLV_SCHEMA_ENUM:
++		if (ctlv_get_u64(hdr, &value))
++			return NULL;
++		text = ctlvctl_spec_value_name(name, value);
++		return text ? json_object_new_string(text) :
++			      json_object_new_uint64(value);
++	case CTLV_SCHEMA_FLAGS:
++		if (ctlv_get_u64(hdr, &value))
++			return NULL;
++		if (!name || !name->definition)
++			return json_object_new_uint64(value);
++		json = json_object_new_array();
++		if (!json)
++			return NULL;
++		for (i = 0; i < name->definition->values_count; i++) {
++			const struct ctlvctl_value_name *item =
++				&name->definition->values[i];
++
++			if (!(value & item->value))
++				continue;
++			if (json_array_add_string(json, item->name)) {
++				json_object_put(json);
++				return NULL;
++			}
++			value &= ~item->value;
++		}
++		if (value) {
++			char unknown[32];
++
++			snprintf(unknown, sizeof(unknown), "%#llx",
++				 (unsigned long long)value);
++			if (json_array_add_string(json, unknown)) {
++				json_object_put(json);
++				return NULL;
++			}
++		}
++		return json;
++	default:
++		if (ctlv_get_bin(hdr, &bytes, &len))
++			return NULL;
++		return json_binary(bytes, len);
 +	}
-+	return node_equal(expected, actual, path, sizeof(path), strlen(path),
-+			  diff, len);
 +}
 +
-+static const char *const kinds[] = {
-+	[CTLV_SCHEMA_UINT] = "uint",
-+	[CTLV_SCHEMA_SINT] = "sint",
-+	[CTLV_SCHEMA_BOOL] = "bool",
-+	[CTLV_SCHEMA_STRING] = "string",
-+	[CTLV_SCHEMA_BINARY] = "binary",
-+	[CTLV_SCHEMA_ENUM] = "enum",
-+	[CTLV_SCHEMA_FLAGS] = "flags",
-+	[CTLV_SCHEMA_RECORD] = "record",
-+	[CTLV_SCHEMA_BLOB] = "blob",
++static int json_object_add_value(struct json_object *object, const char *key,
++				 struct json_object *value, bool repeated)
++{
++	struct json_object *array, *existing;
++	int ret;
++
++	if (!json_object_object_get_ex(object, key, &existing) && !repeated) {
++		ret = json_object_object_add(object, key, value);
++		if (ret)
++			json_object_put(value);
++		return ret ? -ENOMEM : 0;
++	}
++	if (!json_object_object_get_ex(object, key, &existing)) {
++		array = json_object_new_array();
++		if (!array) {
++			json_object_put(value);
++			return -ENOMEM;
++		}
++		ret = json_object_object_add(object, key, array);
++		if (ret) {
++			json_object_put(array);
++			json_object_put(value);
++			return -ENOMEM;
++		}
++		ret = json_object_array_add(array, value);
++		if (ret)
++			json_object_put(value);
++		return ret ? -ENOMEM : 0;
++	}
++	if (json_object_is_type(existing, json_type_array)) {
++		ret = json_object_array_add(existing, value);
++		if (ret)
++			json_object_put(value);
++		return ret ? -ENOMEM : 0;
++	}
++
++	array = json_object_new_array();
++	if (!array) {
++		json_object_put(value);
++		return -ENOMEM;
++	}
++	json_object_get(existing);
++	if (json_object_array_add(array, existing)) {
++		json_object_put(existing);
++		json_object_put(array);
++		json_object_put(value);
++		return -ENOMEM;
++	}
++	if (json_object_object_add(object, key, array)) {
++		json_object_put(array);
++		json_object_put(value);
++		return -ENOMEM;
++	}
++	ret = json_object_array_add(array, value);
++	if (ret)
++		json_object_put(value);
++	return ret ? -ENOMEM : 0;
++}
++
++static struct json_object *
++json_reply_object(const struct ctlv_hdr *record,
++		  const struct ctlv_node_schema **stack,
++		  unsigned int depth, const struct ctlvctl_spec *spec)
++{
++	struct json_object *object;
++	const struct ctlv_hdr *child;
++
++	object = json_object_new_object();
++	if (!object)
++		return NULL;
++	ctlv_for_each(child, record) {
++		const struct ctlv_node_schema *node = NULL;
++		const struct ctlvctl_field_name *name;
++		struct json_object *value;
++		char numeric[32];
++		const char *key;
++
++		if (depth < PATH_DEPTH)
++			node = node_member(stack, depth, child->type);
++		name = node ? field_name(spec, node) : NULL;
++		if (name) {
++			key = name->name;
++		} else {
++			snprintf(numeric, sizeof(numeric), "%#018llx",
++				 (unsigned long long)child->type);
++			key = numeric;
++		}
++		if (ctlv_hdr_is_record(child)) {
++			if (depth + 1 >= PATH_DEPTH) {
++				json_object_put(object);
++				return NULL;
++			}
++			stack[depth + 1] = node;
++			value = json_reply_object(child, stack, depth + 1,
++						  spec);
++		} else {
++			value = json_payload(child, node, spec);
++		}
++		if (!value ||
++		    json_object_add_value(object, key, value,
++					  node &&
++					  node->max_occurrences != 1)) {
++			json_object_put(object);
++			return NULL;
++		}
++	}
++	return object;
++}
++
++static struct json_object *
++json_reply(const struct ctlv_hdr *root,
++	   const struct ctlv_node_schema *tree,
++	   const struct ctlvctl_spec *spec)
++{
++	const struct ctlv_node_schema *stack[PATH_DEPTH] = { tree };
++
++	return json_reply_object(root, stack, 0, spec);
++}
++
++static void json_add_id(struct json_object *object, const char *key, __u64 id)
++{
++	char text[32];
++
++	snprintf(text, sizeof(text), "%#018llx", (unsigned long long)id);
++	json_object_object_add(object, key, json_object_new_string(text));
++}
++
++static void json_add_op(struct json_object *object,
++			const struct ctlvctl_spec *spec, __u64 op_id)
++{
++	const struct ctlvctl_op_name *name = ctlvctl_spec_op_id(spec, op_id);
++
++	if (name)
++		json_add_string(object, "op", name->name);
++	if (!name || options.show_ids)
++		json_add_id(object, "id", op_id);
++}
++
++static const char *schema_kind_name(__u32 kind)
++{
++	static const char *const names[] = {
++		[CTLV_SCHEMA_UINT] = "uint",
++		[CTLV_SCHEMA_SINT] = "sint",
++		[CTLV_SCHEMA_BOOL] = "bool",
++		[CTLV_SCHEMA_STRING] = "string",
++		[CTLV_SCHEMA_BINARY] = "binary",
++		[CTLV_SCHEMA_ENUM] = "enum",
++		[CTLV_SCHEMA_FLAGS] = "flags",
++		[CTLV_SCHEMA_RECORD] = "record",
++		[CTLV_SCHEMA_BLOB] = "blob",
++	};
++
++	if (kind >= ARRAY_SIZE(names) || !names[kind])
++		return "unknown";
++	return names[kind];
++}
++
++static struct json_object *
++json_schema_node(const struct ctlv_node_schema *node,
++		 const struct ctlvctl_spec *spec, bool required)
++{
++	const struct ctlvctl_field_name *name = field_name(spec, node);
++	struct json_object *object, *array;
++	unsigned int i;
++
++	object = json_object_new_object();
++	if (!object)
++		return NULL;
++	if (node->type != CTLV_TYPE_ROOT) {
++		if (name)
++			json_add_string(object, "name", name->name);
++		if (!name || options.show_ids)
++			json_add_id(object, "type", node->type);
++		json_add_bool(object, "required", required);
++	}
++	json_add_string(object, "kind", schema_kind_name(node->kind));
++	if (!node->max_occurrences)
++		json_add_string(object, "max-occurrences", "unlimited");
++	else
++		json_add_u64(object, "max-occurrences",
++			     node->max_occurrences);
++	if (node->present & CTLV_NODE_SCHEMA_HAS_MIN) {
++		if (node->kind == CTLV_SCHEMA_SINT)
++			json_add_s64(object, "min", (__s64)node->min);
++		else
++			json_add_u64(object, "min", node->min);
++	}
++	if (node->present & CTLV_NODE_SCHEMA_HAS_MAX) {
++		if (node->kind == CTLV_SCHEMA_SINT)
++			json_add_s64(object, "max", (__s64)node->max);
++		else
++			json_add_u64(object, "max", node->max);
++	}
++	if (node->present & CTLV_NODE_SCHEMA_HAS_MIN_LENGTH)
++		json_add_u64(object, "min-length", node->min_length);
++	if (node->present & CTLV_NODE_SCHEMA_HAS_MAX_LENGTH)
++		json_add_u64(object, "max-length", node->max_length);
++	if (name && name->definition) {
++		array = json_object_new_array();
++		if (!array) {
++			json_object_put(object);
++			return NULL;
++		}
++		for (i = 0; i < name->definition->values_count; i++) {
++			const char *value_name =
++				name->definition->values[i].name;
++
++			if (json_array_add_string(array, value_name)) {
++				json_object_put(array);
++				json_object_put(object);
++				return NULL;
++			}
++		}
++		json_object_object_add(object, "values", array);
++	}
++	if (node->reenters)
++		json_add_u64(object, "reenters", node->reenters);
++
++	array = json_object_new_array();
++	if (!array) {
++		json_object_put(object);
++		return NULL;
++	}
++	for (i = 0; i < node->fields_count; i++) {
++		struct json_object *child =
++			json_schema_node(&node->fields[i], spec, true);
++
++		if (!child) {
++			json_object_put(array);
++			json_object_put(object);
++			return NULL;
++		}
++		json_object_array_add(array, child);
++	}
++	for (i = 0; i < node->optional_fields_count; i++) {
++		struct json_object *child =
++			json_schema_node(&node->optional_fields[i], spec, false);
++
++		if (!child) {
++			json_object_put(array);
++			json_object_put(object);
++			return NULL;
++		}
++		json_object_array_add(array, child);
++	}
++	if (json_object_array_length(array))
++		json_object_object_add(object, "fields", array);
++	else
++		json_object_put(array);
++	return object;
++}
++
++static int json_schema_print(const struct ctlv_dev *dev,
++			     const struct ctlvctl_spec *spec, __u64 op_id,
++			     const struct ctlv_schema *schema)
++{
++	const struct ctlv_node_schema *node;
++	struct json_object *object, *tree;
++
++	object = json_object_new_object();
++	if (!object)
++		return -ENOMEM;
++	json_add_string(object, "device", ctlv_dev_name(dev));
++	json_add_op(object, spec, op_id);
++	node = ctlv_schema_request(schema);
++	if (node) {
++		tree = json_schema_node(node, spec, true);
++		if (!tree)
++			goto err;
++		json_object_object_add(object, "request", tree);
++	}
++	node = ctlv_schema_reply(schema);
++	if (node) {
++		tree = json_schema_node(node, spec, true);
++		if (!tree)
++			goto err;
++		json_object_object_add(object, "reply", tree);
++	}
++	return json_print(object);
++err:
++	json_object_put(object);
++	return -ENOMEM;
++}
++
++static int json_print(struct json_object *object)
++{
++	const char *text;
++	size_t len;
++	int ret = 0;
++
++	if (!object)
++		return -ENOMEM;
++	text = json_object_to_json_string_ext(object,
++					      JSON_C_TO_STRING_PLAIN);
++	if (!text) {
++		ret = -ENOMEM;
++		goto out;
++	}
++	len = strlen(text);
++	if (fwrite(text, 1, len, stdout) != len ||
++	    fputc('\n', stdout) == EOF || fflush(stdout))
++		ret = errno ? -errno : -EIO;
++out:
++	json_object_put(object);
++	return ret;
++}
++
++static struct json_object *
++json_template_object(const struct ctlv_node_schema **stack,
++		     unsigned int depth, const struct ctlvctl_spec *spec);
++
++static struct json_object *
++json_template_value(const struct ctlv_node_schema **stack,
++		    unsigned int depth, const struct ctlv_node_schema *node,
++		    const struct ctlvctl_spec *spec)
++{
++	const struct ctlvctl_field_name *name = field_name(spec, node);
++	const char *text;
++	struct json_object *value;
++	__u64 number;
++
++	switch (node->kind) {
++	case CTLV_SCHEMA_UINT:
++		number = node->present & CTLV_NODE_SCHEMA_HAS_MIN ? node->min : 0;
++		value = json_object_new_uint64(number);
++		break;
++	case CTLV_SCHEMA_SINT:
++		number = node->present & CTLV_NODE_SCHEMA_HAS_MIN ? node->min : 0;
++		value = json_object_new_int64((__s64)number);
++		break;
++	case CTLV_SCHEMA_BOOL:
++		value = json_object_new_boolean(false);
++		break;
++	case CTLV_SCHEMA_STRING: {
++		size_t len = node->present & CTLV_NODE_SCHEMA_HAS_MIN_LENGTH ?
++			     node->min_length : 0;
++		char *text = calloc(len + 1, 1);
++
++		if (!text)
++			return NULL;
++		memset(text, 'x', len);
++		value = json_object_new_string_len(text, len);
++		free(text);
++		break;
++	}
++	case CTLV_SCHEMA_BINARY: {
++		size_t len = node->present & CTLV_NODE_SCHEMA_HAS_MIN_LENGTH ?
++			     node->min_length : 0;
++		unsigned char *bytes = calloc(len ? len : 1, 1);
++
++		if (!bytes)
++			return NULL;
++		value = json_binary(bytes, len);
++		free(bytes);
++		break;
++	}
++	case CTLV_SCHEMA_ENUM:
++		number = node->present & CTLV_NODE_SCHEMA_HAS_MIN ? node->min : 0;
++		text = ctlvctl_spec_value_name(name, number);
++		if (text)
++			value = json_object_new_string(text);
++		else
++			value = json_object_new_uint64(number);
++		break;
++	case CTLV_SCHEMA_FLAGS:
++		value = json_object_new_array();
++		break;
++	case CTLV_SCHEMA_RECORD:
++		if (depth + 1 >= PATH_DEPTH)
++			return NULL;
++		stack[depth + 1] = node;
++		value = json_template_object(stack, depth + 1, spec);
++		break;
++	case CTLV_SCHEMA_BLOB:
++		value = json_object_new_object();
++		if (value)
++			json_add_string(value, "file", "");
++		break;
++	default:
++		fprintf(stderr, "%s: cannot template schema kind %u\n", prog,
++			node->kind);
++		return NULL;
++	}
++	if (!value)
++		return NULL;
++	if (node->max_occurrences == 1)
++		return value;
++
++	{
++		struct json_object *array = json_object_new_array();
++
++		if (!array) {
++			json_object_put(value);
++			return NULL;
++		}
++		json_object_array_add(array, value);
++		return array;
++	}
++}
++
++static struct json_object *
++json_template_object(const struct ctlv_node_schema **stack,
++		     unsigned int depth, const struct ctlvctl_spec *spec)
++{
++	const struct ctlv_node_schema *parent = node_members(stack, depth);
++	struct json_object *object;
++	unsigned int i;
++
++	if (!parent)
++		return NULL;
++	object = json_object_new_object();
++	if (!object)
++		return NULL;
++	for (i = 0; i < parent->fields_count; i++) {
++		const struct ctlv_node_schema *node = &parent->fields[i];
++		const struct ctlvctl_field_name *name = field_name(spec, node);
++		struct json_object *value;
++		char numeric[32];
++		const char *key;
++
++		value = json_template_value(stack, depth, node, spec);
++		if (!value) {
++			json_object_put(object);
++			return NULL;
++		}
++		if (name) {
++			key = name->name;
++		} else {
++			snprintf(numeric, sizeof(numeric), "%#018llx",
++				 (unsigned long long)node->type);
++			key = numeric;
++		}
++		json_object_object_add(object, key, value);
++	}
++	return object;
++}
++
++static int json_template_print(const struct ctlv_node_schema *root,
++			       const struct ctlvctl_spec *spec)
++{
++	const struct ctlv_node_schema *stack[PATH_DEPTH] = { root };
++
++	return json_print(json_template_object(stack, 0, spec));
++}
++
++#endif /* HAVE_JSON_C */
++
++static void payload_print(const struct ctlv_hdr *hdr,
++			  const struct ctlv_node_schema *node,
++			  const struct ctlvctl_spec *spec)
++{
++	const struct ctlvctl_field_name *name = field_name(spec, node);
++	const void *bytes;
++	const char *text;
++	__u64 value;
++	__s64 signed_value;
++	bool flag;
++	__u32 len, i;
++
++	switch (node ? node->kind : CTLV_SCHEMA_BINARY) {
++	case CTLV_SCHEMA_UINT:
++		if (!ctlv_get_u64(hdr, &value))
++			printf("%llu", (unsigned long long)value);
++		return;
++	case CTLV_SCHEMA_ENUM:
++		if (ctlv_get_u64(hdr, &value))
++			return;
++		text = ctlvctl_spec_value_name(name, value);
++		if (!text) {
++			printf("%llu", (unsigned long long)value);
++			return;
++		}
++		printf("%s", text);
++		if (options.show_ids)
++			printf(" (%llu)", (unsigned long long)value);
++		return;
++	case CTLV_SCHEMA_FLAGS:
++		if (ctlv_get_u64(hdr, &value))
++			return;
++		if (name && name->definition) {
++			__u64 unknown = value;
++			bool first = true;
++
++			for (i = 0; i < name->definition->values_count; i++) {
++				const struct ctlvctl_value_name *item =
++					&name->definition->values[i];
++
++				if (!(value & item->value))
++					continue;
++				printf("%s%s", first ? "" : ",", item->name);
++				unknown &= ~item->value;
++				first = false;
++			}
++			if (unknown || first)
++				printf("%s%#llx", first ? "" : ",",
++				       (unsigned long long)unknown);
++			if (options.show_ids)
++				printf(" (%#llx)", (unsigned long long)value);
++		} else {
++			printf("%#llx", (unsigned long long)value);
++		}
++		return;
++	case CTLV_SCHEMA_SINT:
++		if (!ctlv_get_s64(hdr, &signed_value))
++			printf("%lld", (long long)signed_value);
++		return;
++	case CTLV_SCHEMA_BOOL:
++		if (!ctlv_get_bool(hdr, &flag))
++			printf("%s", flag ? "true" : "false");
++		return;
++	case CTLV_SCHEMA_STRING:
++		if (!ctlv_get_str(hdr, &text))
++			printf("%s", text);
++		return;
++	default:
++		if (ctlv_get_bin(hdr, &bytes, &len))
++			return;
++		if (name)
++			printf("hex:");
++		for (i = 0; i < len; i++)
++			printf("%02x", ((const __u8 *)bytes)[i]);
++		return;
++	}
++}
++
++/*
++ * Printed as the schema says, and a TLV the schema does not mention is
++ * printed as bytes with a "?": a device newer than this tool is not an error.
++ */
++static void reply_print(const struct ctlv_hdr *record,
++			const struct ctlv_node_schema **stack,
++			unsigned int depth, const struct ctlvctl_spec *spec)
++{
++	const struct ctlv_hdr *child;
++
++	ctlv_for_each(child, record) {
++		const struct ctlv_node_schema *node = NULL;
++		const struct ctlvctl_field_name *name;
++
++		if (depth < PATH_DEPTH)
++			node = node_member(stack, depth, child->type);
++		name = node ? field_name(spec, node) : NULL;
++		printf("%*s", (depth + 1) * 2, "");
++		if (name) {
++			printf("%s", name->name);
++			if (options.show_ids)
++				printf(" (%#018llx)",
++				       (unsigned long long)child->type);
++		} else {
++			printf("%#018llx%s",
++			       (unsigned long long)child->type,
++			       node ? "" : "?");
++		}
++		if (ctlv_hdr_is_record(child)) {
++			printf("\n");
++			if (depth + 1 < PATH_DEPTH) {
++				stack[depth + 1] = node;
++				reply_print(child, stack, depth + 1, spec);
++			}
++			continue;
++		}
++		printf(" ");
++		payload_print(child, node, spec);
++		printf("\n");
++	}
++}
++
++static void reply_dump(const struct ctlv_hdr *root,
++		       const struct ctlv_node_schema *tree,
++		       const struct ctlvctl_spec *spec)
++{
++	const struct ctlv_node_schema *stack[PATH_DEPTH] = { tree };
++
++	reply_print(root, stack, 0, spec);
++}
++
++static int run_op_info(const struct ctlv_dev *dev,
++		       const struct ctlvctl_spec *spec,
++		       const struct ctlv_ops *ops, __u64 op_id,
++		       const struct ctlv_op_info **infop)
++{
++	const struct ctlvctl_op_name *name = ctlvctl_spec_op_id(spec, op_id);
++	const struct ctlv_op_info *info = ctlv_ops_find(ops, op_id);
++
++	if (!info) {
++		fprintf(stderr, "%s: operation is not available on %s\n",
++			prog, ctlv_dev_name(dev));
++		return -ENOENT;
++	}
++	if (name && !op_matches(name, info)) {
++		fprintf(stderr, "%s: specification disagrees with operation %s\n",
++			prog, name->name);
++		return -ENOMSG;
++	}
++	if (info->fd_access != CTLV_OP_FD_ACCESS_READ &&
++	    info->fd_access != CTLV_OP_FD_ACCESS_READ_WRITE)
++		return -EPROTO;
++	*infop = info;
++	return 0;
++}
++
++static int cmd_run(int argc, char **argv)
++{
++	const struct ctlvctl_op_name *name;
++	const struct ctlv_node_schema *request_tree;
++	const struct ctlv_op_info *info;
++	struct ctlvctl_spec *spec = NULL;
++	struct ctlv_msg *request = NULL;
++	struct ctlv_reply *reply = NULL;
++	struct blob_files blobs = {};
++	struct ctlv_schema *schema;
++	struct ctlv_ops *ops = NULL;
++	struct ctlv_error error;
++	struct ctlv_dev *dev;
++	const char *json_source = NULL;
++	char *json_text = NULL;
++	char text[LINE_LEN];
++	size_t json_len = 0;
++	__u64 reply_len = 0;
++	__u64 op_id;
++	__u32 fd_access;
++	__u32 type;
++	int ret;
++
++	if (argc > 1 && !strcmp(argv[0], "-l")) {
++		ret = parse_u64(argv[1], &reply_len);
++		if (ret || !reply_len || reply_len > UINT32_MAX) {
++			fprintf(stderr, "%s: %s: not a reply length\n", prog,
++				argv[1]);
++			return ret ? ret : -EINVAL;
++		}
++		argc -= 2;
++		argv += 2;
++	}
++
++	if (argc < 2) {
++		help(stderr);
++		return -EINVAL;
++	}
++	if (argc > 2 && !strcmp(argv[2], "--json")) {
++		if (argc != 4) {
++			fprintf(stderr,
++				"%s: --json needs one source and no assignments\n",
++				prog);
++			return -EINVAL;
++		}
++		json_source = argv[3];
++	}
++	/* Discovery is always available through an observation fd. */
++	ret = dev_open(argv[0], O_RDONLY, &dev);
++	if (ret)
++		return ret;
++	ret = spec_load(dev, &spec);
++	if (ret)
++		goto out_close;
++	ret = op_resolve(spec, argv[1], &op_id);
++	if (ret)
++		goto out_close;
++
++	name = ctlvctl_spec_op_id(spec, op_id);
++	ret = ctlv_ops_get(dev, &ops, &error);
++	if (ret) {
++		fprintf(stderr, "%s: op-get: %s\n", prog,
++			ctlv_error_str(&error, text, sizeof(text)));
++		goto out_close;
++	}
++	ret = run_op_info(dev, spec, ops, op_id, &info);
++	if (ret)
++		goto out_free_ops;
++	fd_access = info->fd_access;
++	type = info->type;
++	ctlv_ops_free(ops);
++	ops = NULL;
++
++	if (fd_access == CTLV_OP_FD_ACCESS_READ_WRITE) {
++		__u64 reopened_id;
++
++		ctlvctl_spec_free(spec);
++		spec = NULL;
++		ctlv_close(dev);
++		dev = NULL;
++		ret = dev_open(argv[0], O_RDWR, &dev);
++		if (ret)
++			return ret;
++		ret = spec_load(dev, &spec);
++		if (ret)
++			goto out_close;
++		ret = op_resolve(spec, argv[1], &reopened_id);
++		if (ret)
++			goto out_close;
++		if (reopened_id != op_id) {
++			ret = -ENODEV;
++			goto out_close;
++		}
++		name = ctlvctl_spec_op_id(spec, op_id);
++		ret = ctlv_ops_get(dev, &ops, &error);
++		if (ret) {
++			fprintf(stderr, "%s: op-get: %s\n", prog,
++				ctlv_error_str(&error, text, sizeof(text)));
++			goto out_close;
++		}
++		ret = run_op_info(dev, spec, ops, op_id, &info);
++		if (ret)
++			goto out_free_ops;
++		if (info->fd_access != fd_access || info->type != type) {
++			ret = -ENODEV;
++			goto out_free_ops;
++		}
++		ctlv_ops_free(ops);
++		ops = NULL;
++	}
++
++	/* The schema first: it says how to read values and print the reply. */
++	ret = ctlv_op_schema_get(dev, op_id, &schema, &error);
++	if (ret) {
++		fprintf(stderr, "%s: op-schema-get: %s\n", prog,
++			ctlv_error_str(&error, text, sizeof(text)));
++		goto out_close;
++	}
++	ret = tree_names_check(spec, ctlv_schema_request(schema));
++	if (!ret)
++		ret = tree_names_check(spec, ctlv_schema_reply(schema));
++	if (ret)
++		goto out_free_schema;
++
++	request_tree = ctlv_schema_request(schema);
++	if ((argc > 2 || json_source) && !request_tree) {
++		fprintf(stderr, "%s: this op takes no request\n", prog);
++		ret = -EINVAL;
++		goto out_free_schema;
++	}
++	if (request_tree) {
++		ret = ctlv_msg_new(REQUEST_HINT, &request);
++		if (ret)
++			goto out_free_schema;
++		if (json_source) {
++			ret = json_source_read(json_source, &json_text,
++					       &json_len);
++			if (!ret)
++				ret = json_request_build(request, request_tree,
++							 spec, json_text,
++							 json_len, &blobs);
++		} else {
++			ret = request_build(request, request_tree, spec,
++					    argc - 2, argv + 2);
++		}
++		if (ret)
++			goto out_free_request;
++	}
++
++	for (;;) {
++		if (type == CTLV_OP_TYPE_QUERY && reply_len)
++			ret = ctlv_query_sized(dev, op_id, request, reply_len,
++					       &reply, &error);
++		else if (type == CTLV_OP_TYPE_QUERY)
++			ret = ctlv_query(dev, op_id, request, &reply, &error);
++		else if (reply_len)
++			ret = ctlv_action_sized(dev, op_id, request, reply_len,
++						&reply, &error);
++		else
++			ret = ctlv_action(dev, op_id, request, &reply, &error);
++		if (!ret || !blobs_grow(&blobs, &error))
++			break;
++		ret = json_request_build(request, request_tree, spec,
++					 json_text, json_len, &blobs);
++		if (ret)
++			goto out_free_request;
++	}
++	if (ret) {
++		fprintf(stderr, "%s: %s\n", prog,
++			ctlv_error_str(&error, text, sizeof(text)));
++		goto out_free_request;
++	}
++	ret = blobs_save(&blobs);
++	if (ret)
++		goto out_free_reply;
++
++	if (options.output_json) {
++#ifdef HAVE_JSON_C
++		struct json_object *output = json_object_new_object();
++
++		if (!output) {
++			ret = -ENOMEM;
++			goto out_free_reply;
++		}
++		json_add_string(output, "device", ctlv_dev_name(dev));
++		json_add_op(output, spec, op_id);
++		if (!reply) {
++			json_add_bool(output, "acknowledged", true);
++		} else {
++			struct json_object *body;
++
++			json_add_u64(output, "generation",
++				     ctlv_reply_generation(reply));
++			json_add_int(output, "fragments",
++				     ctlv_reply_fragments(reply));
++			body = json_reply(ctlv_reply_root(reply),
++					  ctlv_schema_reply(schema), spec);
++			if (!body) {
++				json_object_put(output);
++				ret = -ENOMEM;
++				goto out_free_reply;
++			}
++			json_object_object_add(output, "reply", body);
++		}
++		ret = json_print(output);
++#endif
++	} else if (!reply) {
++		printf("# acknowledged\n");
++	} else {
++		printf("# ");
++		if (name) {
++			printf("%s", name->name);
++			if (options.show_ids)
++				printf(" (%#018llx)",
++				       (unsigned long long)op_id);
++			printf(", ");
++		}
++		printf("%u fragment%s, generation %llu\n",
++		       ctlv_reply_fragments(reply),
++		       ctlv_reply_fragments(reply) == 1 ? "" : "s",
++		       (unsigned long long)ctlv_reply_generation(reply));
++		reply_dump(ctlv_reply_root(reply), ctlv_schema_reply(schema),
++			   spec);
++	}
++out_free_reply:
++	ctlv_reply_free(reply);
++out_free_request:
++	ctlv_msg_free(request);
++	blobs_free(&blobs);
++	free(json_text);
++out_free_schema:
++	ctlv_schema_free(schema);
++out_close:
++	ctlvctl_spec_free(spec);
++	ctlv_close(dev);
++	return ret;
++out_free_ops:
++	ctlv_ops_free(ops);
++	goto out_close;
++}
++
++int main(int argc, char **argv)
++{
++	static const struct option long_options[] = {
++		{ "spec-dir", required_argument, NULL, 1 },
++		{ "show-ids", no_argument, NULL, 'n' },
++		{ "output-json", no_argument, NULL, 2 },
++		{ "help", no_argument, NULL, 'h' },
++		{},
++	};
++	const char *command;
++	const char *spec_dir;
++	int opt;
++
++	if (argc > 0)
++		prog = argv[0];
++	while ((opt = getopt_long(argc, argv, "+nh", long_options, NULL)) != -1) {
++		switch (opt) {
++		case 1:
++			options.spec_dir = optarg;
++			break;
++		case 2:
++			options.output_json = true;
++			break;
++		case 'n':
++			options.show_ids = true;
++			break;
++		case 'h':
++			help(stdout);
++			return EXIT_SUCCESS;
++		default:
++			help(stderr);
++			return EXIT_FAILURE;
++		}
++	}
++	if (!options.spec_dir) {
++		spec_dir = getenv("CTLV_SPEC_DIR");
++		if (spec_dir && *spec_dir)
++			options.spec_dir = spec_dir;
++	}
++#ifndef HAVE_JSON_C
++	if (options.spec_dir || options.output_json) {
++		fprintf(stderr,
++			"%s: specification and JSON support require json-c\n",
++			prog);
++		return EXIT_FAILURE;
++	}
++#endif
++	if (optind == argc) {
++		help(stderr);
++		return EXIT_FAILURE;
++	}
++	command = argv[optind++];
++	argc -= optind;
++	argv += optind;
++
++	if (!strcmp(command, "list"))
++		return cmd_list(argc, argv) ? EXIT_FAILURE : EXIT_SUCCESS;
++	if (!strcmp(command, "ops"))
++		return cmd_ops(argc, argv) ? EXIT_FAILURE : EXIT_SUCCESS;
++	if (!strcmp(command, "schema"))
++		return cmd_schema(argc, argv) ? EXIT_FAILURE : EXIT_SUCCESS;
++	if (!strcmp(command, "exec"))
++		return cmd_run(argc, argv) ? EXIT_FAILURE : EXIT_SUCCESS;
++	if (!strcmp(command, "help") || !strcmp(command, "--help")) {
++		help(stdout);
++		return EXIT_SUCCESS;
++	}
++	fprintf(stderr, "%s: %s: no such command\n", prog, command);
++	help(stderr);
++	return EXIT_FAILURE;
++}
+diff --git a/tools/ctlv/ctlvctl/spec.c b/tools/ctlv/ctlvctl/spec.c
+new file mode 100644
+index 000000000000..7fa1e3de2d33
+--- /dev/null
++++ b/tools/ctlv/ctlvctl/spec.c
+@@ -0,0 +1,672 @@
++// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
++#include <ctype.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <limits.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#include <ctlv.h>
++
++#include "spec.h"
++
++#define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
++
++struct ctlvctl_spec {
++	struct ctlvctl_definition *definitions;
++	unsigned int definitions_count;
++	struct ctlvctl_field_name *fields;
++	unsigned int fields_count;
++	struct ctlvctl_op_name *ops;
++	unsigned int ops_count;
 +};
 +
-+/* One line for one node, for a tool that has no names to print. */
-+void ctlv_schema_render(const struct ctlv_node_schema *node,
-+			unsigned int indent, char *buf, size_t len)
++#ifdef HAVE_JSON_C
++
++#include <json.h>
++
++static int parse_u64(const char *text, __u64 *value)
 +{
-+	const char *kind = "?";
-+	size_t used;
++	char *end;
 +
-+	if (node->kind < CTLV_ARRAY_SIZE(kinds) && kinds[node->kind])
-+		kind = kinds[node->kind];
-+
-+	used = text_append(buf, len, 0, "%*s", indent * 2, "");
-+	if (node->type == CTLV_TYPE_ROOT)
-+		used = text_append(buf, len, used, "root %s", kind);
-+	else
-+		used = text_append(buf, len, used, "field %#llx %s",
-+				   (unsigned long long)node->type, kind);
-+
-+	if (node->max_occurrences == 1)
-+		;
-+	else if (!node->max_occurrences)
-+		used = text_append(buf, len, used, " xN");
-+	else
-+		used = text_append(buf, len, used, " x%llu",
-+				   (unsigned long long)node->max_occurrences);
-+
-+	/* One pair of members serves sint and uint, read by the schema kind. */
-+	if (node->present & (CTLV_NODE_SCHEMA_HAS_MIN | CTLV_NODE_SCHEMA_HAS_MAX)) {
-+		if (node->kind == CTLV_SCHEMA_SINT)
-+			used = text_append(buf, len, used, " [%lld, %lld]",
-+					   (long long)node->min,
-+					   (long long)node->max);
-+		else
-+			used = text_append(buf, len, used, " [%llu, %llu]",
-+					   (unsigned long long)node->min,
-+					   (unsigned long long)node->max);
-+	}
-+	if (node->present & CTLV_NODE_SCHEMA_HAS_MAX_LENGTH)
-+		used = text_append(buf, len, used, " len [%llu, %llu]",
-+				   (unsigned long long)node->min_length,
-+				   (unsigned long long)node->max_length);
-+	if (node->present & CTLV_NODE_SCHEMA_HAS_FLAGS_MASK)
-+		used = text_append(buf, len, used, " mask %#llx",
-+				   (unsigned long long)node->flags_mask);
-+	if (node->present & CTLV_NODE_SCHEMA_HAS_UNIT)
-+		used = text_append(buf, len, used, " unit %u scale %lld",
-+				   node->unit, (long long)node->scale);
-+	if (node->present & CTLV_NODE_SCHEMA_HAS_BLOB)
-+		used = text_append(buf, len, used,
-+				   " blob dir %u backings %#llx max %llu align %llu",
-+				   node->blob_direction,
-+				   (unsigned long long)node->blob_backings,
-+				   (unsigned long long)node->blob_max_length,
-+				   (unsigned long long)node->blob_alignment);
-+	if (node->present & CTLV_NODE_SCHEMA_HAS_REENTERS)
-+		text_append(buf, len, used, " reenters %llu",
-+			    (unsigned long long)node->reenters);
++	if (!*text || *text == '-' || isspace((unsigned char)*text))
++		return -EINVAL;
++	errno = 0;
++	*value = strtoull(text, &end, 0);
++	if (errno || end == text || *end)
++		return -EINVAL;
++	return 0;
 +}
-diff --git a/tools/ctlv/libctlv/spec.c b/tools/ctlv/libctlv/spec.c
-new file mode 100644
-index 000000000000..194966e29e2d
---- /dev/null
-+++ b/tools/ctlv/libctlv/spec.c
-@@ -0,0 +1,186 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Runtime device/specification conformance.
-+ */
 +
-+#include <stdio.h>
++static int json_member(struct json_object *parent, const char *name,
++		       enum json_type type, struct json_object **value)
++{
++	if (!json_object_object_get_ex(parent, name, value) ||
++	    !json_object_is_type(*value, type))
++		return -EINVAL;
++	return 0;
++}
 +
-+#include "internal.h"
++static int json_string_dup(struct json_object *parent, const char *name,
++			   char **value)
++{
++	struct json_object *item;
 +
-+/* Where a difference is written, long enough for a path and two numbers. */
-+#define DIFF_LEN 512
++	if (json_member(parent, name, json_type_string, &item))
++		return -EINVAL;
++	*value = strdup(json_object_get_string(item));
++	return *value ? 0 : -ENOMEM;
++}
 +
-+#define UNEQUAL(_what, _expected, _actual) do {				\
-+	if ((_expected) != (_actual)) {					\
-+		snprintf(diff, len, "op %#llx: %s %llu != %llu",		\
-+			 (unsigned long long)spec->op_id, _what,		\
-+			 (unsigned long long)(_expected),		\
-+			 (unsigned long long)(_actual));		\
-+		return -ENOMSG;						\
-+	}								\
-+} while (0)
++static int json_u64(struct json_object *parent, const char *name, __u64 *value)
++{
++	struct json_object *item;
 +
-+const struct ctlv_op_spec *ctlv_spec_find(const struct ctlv_family_spec *spec,
-+					  __u64 op_id)
++	if (!json_object_object_get_ex(parent, name, &item))
++		return -EINVAL;
++	if (json_object_is_type(item, json_type_string))
++		return parse_u64(json_object_get_string(item), value);
++	if (!json_object_is_type(item, json_type_int))
++		return -EINVAL;
++	*value = json_object_get_uint64(item);
++	return 0;
++}
++
++static int kind_parse(const char *name, __u32 *kind)
++{
++	static const char *const names[] = {
++		[CTLV_SCHEMA_UINT] = "uint",
++		[CTLV_SCHEMA_SINT] = "sint",
++		[CTLV_SCHEMA_BOOL] = "bool",
++		[CTLV_SCHEMA_STRING] = "string",
++		[CTLV_SCHEMA_BINARY] = "binary",
++		[CTLV_SCHEMA_ENUM] = "enum",
++		[CTLV_SCHEMA_FLAGS] = "flags",
++		[CTLV_SCHEMA_RECORD] = "record",
++		[CTLV_SCHEMA_BLOB] = "blob",
++	};
++	unsigned int i;
++
++	for (i = 0; i < ARRAY_SIZE(names); i++)
++		if (names[i] && !strcmp(names[i], name)) {
++			*kind = i;
++			return 0;
++		}
++	return -EINVAL;
++}
++
++static int op_type_parse(const char *name, __u32 *type)
++{
++	if (!strcmp(name, "action"))
++		*type = CTLV_OP_TYPE_ACTION;
++	else if (!strcmp(name, "query"))
++		*type = CTLV_OP_TYPE_QUERY;
++	else
++		return -EINVAL;
++	return 0;
++}
++
++static int availability_parse(const char *name, __u32 *availability)
++{
++	if (!strcmp(name, "fixed"))
++		*availability = CTLV_OP_AVAILABILITY_FIXED;
++	else if (!strcmp(name, "dynamic"))
++		*availability = CTLV_OP_AVAILABILITY_DYNAMIC;
++	else
++		return -EINVAL;
++	return 0;
++}
++
++static int fd_access_parse(const char *name, __u32 *fd_access)
++{
++	if (!strcmp(name, "read"))
++		*fd_access = CTLV_OP_FD_ACCESS_READ;
++	else if (!strcmp(name, "read-write"))
++		*fd_access = CTLV_OP_FD_ACCESS_READ_WRITE;
++	else
++		return -EINVAL;
++	return 0;
++}
++
++static struct ctlvctl_definition *
++definition_find(struct ctlvctl_spec *spec, const char *name)
 +{
 +	unsigned int i;
 +
-+	for (; spec; spec = spec->parent)
-+		for (i = 0; i < spec->ops_count; i++)
-+			if (spec->ops[i].op_id == op_id)
-+				return &spec->ops[i];
++	for (i = 0; i < spec->definitions_count; i++)
++		if (!strcmp(spec->definitions[i].name, name))
++			return &spec->definitions[i];
 +	return NULL;
 +}
 +
-+/* What an ops dump reports about an op, against what the family says it is. */
-+static int info_check(const struct ctlv_op_spec *spec,
-+		      const struct ctlv_op_info *info, char *diff, size_t len)
++static int definition_parse(struct json_object *json,
++			    struct ctlvctl_definition *definition)
 +{
-+	UNEQUAL("type", spec->type, info->type);
-+	UNEQUAL("fd-access", spec->fd_access, info->fd_access);
-+	UNEQUAL("availability", spec->availability, info->availability);
-+	UNEQUAL("request-max-len", spec->request_max_len,
-+		info->request_max_len);
-+	UNEQUAL("action-reply-max-len", spec->action_reply_max_len,
-+		info->action_reply_max_len);
-+	UNEQUAL("query-reply-min-len", spec->query_reply_min_len,
-+		info->query_reply_min_len);
-+	UNEQUAL("query-reply-suggested-len", spec->query_reply_suggested_len,
-+		info->query_reply_suggested_len);
-+	UNEQUAL("error-info-max-len", spec->error_info_max_len,
-+		info->error_info_max_len);
++	struct json_object *kind, *values;
++	size_t i, n;
++	int ret;
++
++	ret = json_string_dup(json, "name", &definition->name);
++	if (ret)
++		return ret;
++	if (json_member(json, "kind", json_type_string, &kind) ||
++	    kind_parse(json_object_get_string(kind), &definition->kind))
++		return -EINVAL;
++	if (definition->kind != CTLV_SCHEMA_ENUM &&
++	    definition->kind != CTLV_SCHEMA_FLAGS)
++		return -EINVAL;
++	if (json_member(json, "values", json_type_array, &values))
++		return -EINVAL;
++
++	n = json_object_array_length(values);
++	definition->values = calloc(n, sizeof(*definition->values));
++	if (n && !definition->values)
++		return -ENOMEM;
++	definition->values_count = n;
++	for (i = 0; i < n; i++) {
++		struct json_object *item = json_object_array_get_idx(values, i);
++
++		if (!item ||
++		    json_string_dup(item, "name",
++				    &definition->values[i].name) ||
++		    json_u64(item, "value", &definition->values[i].value))
++			return -EINVAL;
++	}
 +	return 0;
 +}
 +
-+/* Both trees of one op, as the device describes them. */
-+static int schema_check(struct ctlv_dev *dev, const struct ctlv_op_spec *spec,
-+			char *diff, size_t len, struct ctlv_error *error)
++static int definitions_parse(struct json_object *root,
++			     struct ctlvctl_spec *spec)
 +{
-+	char where[DIFF_LEN];
-+	struct ctlv_schema *schema;
++	struct json_object *items;
++	size_t i, n;
 +	int ret;
 +
-+	ret = ctlv_op_schema_get(dev, spec->op_id, &schema, error);
-+	if (ret)
-+		return ret;
-+
-+	ret = 0;
-+	if (!ctlv_schema_equal(spec->request, ctlv_schema_request(schema),
-+			       where, sizeof(where))) {
-+		snprintf(diff, len, "op %#llx request: %s",
-+			 (unsigned long long)spec->op_id, where);
-+		ret = -ENOMSG;
-+	} else if (!ctlv_schema_equal(spec->reply, ctlv_schema_reply(schema),
-+				      where, sizeof(where))) {
-+		snprintf(diff, len, "op %#llx reply: %s",
-+			 (unsigned long long)spec->op_id, where);
-+		ret = -ENOMSG;
++	if (json_member(root, "definitions", json_type_array, &items))
++		return -EINVAL;
++	n = json_object_array_length(items);
++	spec->definitions = calloc(n, sizeof(*spec->definitions));
++	if (n && !spec->definitions)
++		return -ENOMEM;
++	spec->definitions_count = n;
++	for (i = 0; i < n; i++) {
++		ret = definition_parse(json_object_array_get_idx(items, i),
++				       &spec->definitions[i]);
++		if (ret)
++			return ret;
 +	}
-+	ctlv_schema_free(schema);
-+	return ret;
++	return 0;
 +}
 +
-+/* Whether the chain @spec describes is the chain @dev resolved. */
-+static int chain_check(struct ctlv_dev *dev,
-+		       const struct ctlv_family_spec *spec, char *diff,
-+		       size_t len)
++static int field_parse(struct json_object *json, struct ctlvctl_spec *spec,
++		       struct ctlvctl_field_name *field)
 +{
-+	const struct ctlv_family_spec *walk;
-+	unsigned int level;
++	struct json_object *item;
++	const char *definition;
++	int ret;
 +
-+	if (strcmp(spec->name, ctlv_dev_family(dev))) {
-+		snprintf(diff, len, "%s describes a %s, not a %s",
-+			 spec->name, spec->name, ctlv_dev_family(dev));
++	ret = json_string_dup(json, "name", &field->name);
++	if (ret)
++		return ret;
++	ret = json_string_dup(json, "short", &field->short_name);
++	if (ret)
++		return ret;
++	ret = json_u64(json, "type", &field->type);
++	if (ret)
++		return ret;
++	if (json_member(json, "kind", json_type_string, &item) ||
++	    kind_parse(json_object_get_string(item), &field->kind))
++		return -EINVAL;
++
++	if (!json_object_object_get_ex(json, "definition", &item))
++		return 0;
++	if (!json_object_is_type(item, json_type_string))
++		return -EINVAL;
++	definition = json_object_get_string(item);
++	field->definition = definition_find(spec, definition);
++	return field->definition ? 0 : -EINVAL;
++}
++
++static int fields_parse(struct json_object *root, struct ctlvctl_spec *spec)
++{
++	struct json_object *items;
++	size_t i, n;
++	int ret;
++
++	if (json_member(root, "fields", json_type_array, &items))
++		return -EINVAL;
++	n = json_object_array_length(items);
++	spec->fields = calloc(n, sizeof(*spec->fields));
++	if (n && !spec->fields)
++		return -ENOMEM;
++	spec->fields_count = n;
++	for (i = 0; i < n; i++) {
++		ret = field_parse(json_object_array_get_idx(items, i),
++				  spec, &spec->fields[i]);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int op_parse(struct json_object *json, struct ctlvctl_op_name *op)
++{
++	struct json_object *item;
++	int ret;
++
++	ret = json_string_dup(json, "name", &op->name);
++	if (ret)
++		return ret;
++	ret = json_u64(json, "id", &op->id);
++	if (ret)
++		return ret;
++	if (json_member(json, "type", json_type_string, &item) ||
++	    op_type_parse(json_object_get_string(item), &op->type))
++		return -EINVAL;
++	if (json_member(json, "fd-access", json_type_string, &item) ||
++	    fd_access_parse(json_object_get_string(item), &op->fd_access) ||
++	    json_member(json, "availability", json_type_string, &item) ||
++	    availability_parse(json_object_get_string(item),
++			       &op->availability))
++		return -EINVAL;
++	if (json_u64(json, "request-max-len", &op->request_max_len) ||
++	    json_u64(json, "action-reply-max-len",
++		     &op->action_reply_max_len) ||
++	    json_u64(json, "query-reply-min-len",
++		     &op->query_reply_min_len) ||
++	    json_u64(json, "query-reply-suggested-len",
++		     &op->query_reply_suggested_len))
++		return -EINVAL;
++	return 0;
++}
++
++static int ops_parse(struct json_object *root, struct ctlvctl_spec *spec)
++{
++	struct json_object *items;
++	size_t i, n;
++	int ret;
++
++	if (json_member(root, "ops", json_type_array, &items))
++		return -EINVAL;
++	n = json_object_array_length(items);
++	spec->ops = calloc(n, sizeof(*spec->ops));
++	if (n && !spec->ops)
++		return -ENOMEM;
++	spec->ops_count = n;
++	for (i = 0; i < n; i++) {
++		ret = op_parse(json_object_array_get_idx(items, i), &spec->ops[i]);
++		if (ret)
++			return ret;
++	}
++	return 0;
++}
++
++static int chain_check(struct json_object *root, const struct ctlv_dev *dev)
++{
++	struct json_object *family, *chain;
++	size_t i, n;
++
++	if (json_member(root, "family", json_type_string, &family) ||
++	    strcmp(json_object_get_string(family), ctlv_dev_family(dev)))
++		return -ENOMSG;
++	if (json_member(root, "chain", json_type_array, &chain))
++		return -EINVAL;
++	n = json_object_array_length(chain);
++	if (n != ctlv_chain_len(dev))
++		return -ENOMSG;
++
++	for (i = 0; i < n; i++) {
++		struct json_object *item, *name;
++		__u64 id;
++
++		item = json_object_array_get_idx(chain, i);
++		if (!item ||
++		    json_member(item, "name", json_type_string, &name) ||
++		    json_u64(item, "id", &id))
++			return -EINVAL;
++		if (id != ctlv_chain_id(dev, i) ||
++		    strcmp(json_object_get_string(name),
++			   ctlv_chain_name(dev, i)))
++			return -ENOMSG;
++	}
++	return 0;
++}
++
++static int manifest_parse(const char *prog, const char *text,
++			  const struct ctlv_dev *dev,
++			  struct ctlvctl_spec **specp)
++{
++	struct json_tokener *tokener;
++	struct json_object *root;
++	struct ctlvctl_spec *spec;
++	enum json_tokener_error error;
++	size_t text_len;
++	__u64 version;
++	int ret;
++
++	if (!text)
++		return -EINVAL;
++	text_len = strlen(text);
++	if (text_len >= INT_MAX)
++		return -E2BIG;
++	tokener = json_tokener_new();
++	if (!tokener)
++		return -ENOMEM;
++	json_tokener_set_flags(tokener, JSON_TOKENER_STRICT |
++			       JSON_TOKENER_VALIDATE_UTF8);
++	root = json_tokener_parse_ex(tokener, text, text_len + 1);
++	error = json_tokener_get_error(tokener);
++	json_tokener_free(tokener);
++	if (error != json_tokener_success || !root) {
++		fprintf(stderr, "%s: invalid ctlvgen manifest: %s\n", prog,
++			json_tokener_error_desc(error));
 +		return -EINVAL;
 +	}
-+
-+	level = ctlv_chain_len(dev);
-+	for (walk = spec; walk; walk = walk->parent) {
-+		if (!level--) {
-+			snprintf(diff, len,
-+				 "the device's chain never reaches %s",
-+				 walk->name);
-+			return -ENOMSG;
-+		}
-+		if (walk->family_id != ctlv_chain_id(dev, level) ||
-+		    strcmp(walk->name, ctlv_chain_name(dev, level))) {
-+			snprintf(diff, len,
-+				 "chain level %u: %s (%u) != %s (%u)", level,
-+				 walk->name, walk->family_id,
-+				 ctlv_chain_name(dev, level),
-+				 ctlv_chain_id(dev, level));
-+			return -ENOMSG;
-+		}
-+	}
-+	if (level) {
-+		snprintf(diff, len, "%s describes %u families too few",
-+			 spec->name, level);
-+		return -ENOMSG;
-+	}
-+	return 0;
-+}
-+
-+static int required_ops_check(const struct ctlv_family_spec *spec,
-+			      const struct ctlv_ops *ops, char *diff,
-+			      size_t len)
-+{
-+	const struct ctlv_family_spec *family;
-+	unsigned int i;
-+
-+	/* Parsing already rejected duplicate published IDs. */
-+	for (family = spec; family; family = family->parent) {
-+		for (i = 0; i < family->ops_count; i++) {
-+			const struct ctlv_op_spec *op = &family->ops[i];
-+
-+			if (op->optional || ctlv_ops_find(ops, op->op_id))
-+				continue;
-+			snprintf(diff, len, "op %#llx: mandatory, but not published",
-+				 (unsigned long long)op->op_id);
-+			return -ENOMSG;
-+		}
-+	}
-+	return 0;
-+}
-+
-+int ctlv_spec_check(struct ctlv_dev *dev, const struct ctlv_family_spec *spec,
-+		    char *diff, size_t len, struct ctlv_error *error)
-+{
-+	struct ctlv_ops *ops;
-+	unsigned int i;
-+	int ret;
-+
-+	if (diff && len)
-+		*diff = '\0';
-+	ret = chain_check(dev, spec, diff, len);
-+	if (ret)
-+		return ret;
-+	ret = ctlv_ops_get(dev, &ops, error);
-+	if (ret)
-+		return ret;
-+
-+	for (i = 0; i < ops->ops_count; i++) {
-+		const struct ctlv_op_info *info = &ops->ops[i];
-+		const struct ctlv_op_spec *described;
-+
-+		described = ctlv_spec_find(spec, info->op_id);
-+		if (!described) {
-+			snprintf(diff, len,
-+				 "op %#llx: published, and %s has no such op",
-+				 (unsigned long long)info->op_id, spec->name);
-+			ret = -ENOMSG;
-+			break;
-+		}
-+		ret = info_check(described, info, diff, len);
-+		if (ret)
-+			break;
-+		ret = schema_check(dev, described, diff, len, error);
-+		if (ret)
-+			break;
-+	}
-+	if (!ret)
-+		ret = required_ops_check(spec, ops, diff, len);
-+	ctlv_ops_free(ops);
-+	return ret;
-+}
-diff --git a/tools/ctlv/libctlv/transport.c b/tools/ctlv/libctlv/transport.c
-new file mode 100644
-index 000000000000..647bab085c9e
---- /dev/null
-+++ b/tools/ctlv/libctlv/transport.c
-@@ -0,0 +1,572 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
-+/*
-+ * Copyright (c) 2026, NVIDIA CORPORATION & AFFILIATES
-+ *
-+ * Operation execution, query reassembly, and error decoding.
-+ */
-+
-+#include <stdio.h>
-+#include <sys/ioctl.h>
-+
-+#include "internal.h"
-+
-+/* Where a query's buffer starts when nothing said how long its answer is. */
-+#define QUERY_BUF_LEN 0x10000
-+
-+void ctlv_error_clear(struct ctlv_error *error)
-+{
-+	if (error)
-+		memset(error, 0, sizeof(*error));
-+}
-+
-+void ctlv_error_set(struct ctlv_error *error, int err)
-+{
-+	if (!error)
-+		return;
-+	memset(error, 0, sizeof(*error));
-+	error->err = err;
-+}
-+
-+static void error_u64(struct ctlv_error *error, const struct ctlv_hdr *root,
-+		      __u64 type, __u32 bit, __u64 *value)
-+{
-+	const struct ctlv_hdr *hdr = ctlv_hdr_find(root, type);
-+
-+	if (!hdr || ctlv_get_u64(hdr, value))
-+		return;
-+	error->present |= bit;
-+}
-+
-+/*
-+ * What a device wrote about the failure. A buffer holding nothing, or nothing
-+ * this reader can parse, leaves the errno as the whole of the report.
-+ */
-+void ctlv_error_parse(struct ctlv_error *error, int err, const void *buf,
-+		      __u32 len)
-+{
-+	const struct ctlv_hdr *root = buf;
-+	const struct ctlv_hdr *hdr;
-+	__u64 value;
-+
-+	if (!error)
-+		return;
-+	memset(error, 0, sizeof(*error));
-+	error->err = err;
-+	if (!buf || ctlv_msg_check(buf, len))
-+		return;
-+
-+	hdr = ctlv_hdr_find(root, CTLV_T_ERROR_INFO_REASON);
-+	if (hdr && !ctlv_get_enum(hdr, 1,
-+				  CTLV_VALIDATION_REASON_STALE_GENERATION,
-+				  &value, NULL)) {
-+		error->reason = value;
-+		error->present |= CTLV_ERROR_HAS_REASON;
-+	}
-+	hdr = ctlv_hdr_find(root, CTLV_T_ERROR_INFO_MESSAGE);
-+	if (hdr) {
-+		const char *message;
-+
-+		if (!ctlv_get_str(hdr, &message)) {
-+			snprintf(error->message, sizeof(error->message), "%s",
-+				 message);
-+			error->present |= CTLV_ERROR_HAS_MESSAGE;
-+		}
-+	}
-+	error_u64(error, root, CTLV_T_ERROR_INFO_BAD_TLV_OFFSET,
-+		  CTLV_ERROR_HAS_BAD_TLV_OFFSET, &error->bad_tlv_offset);
-+	error_u64(error, root, CTLV_T_ERROR_INFO_RECORD_OFFSET,
-+		  CTLV_ERROR_HAS_RECORD_OFFSET, &error->record_offset);
-+	error_u64(error, root, CTLV_T_ERROR_INFO_MISSING_TYPE,
-+		  CTLV_ERROR_HAS_MISSING_TYPE, &error->missing_type);
-+	error_u64(error, root, CTLV_T_ERROR_INFO_EXPECTED_GENERATION,
-+		  CTLV_ERROR_HAS_EXPECTED_GENERATION,
-+		  &error->expected_generation);
-+	error_u64(error, root, CTLV_T_ERROR_INFO_CURRENT_GENERATION,
-+		  CTLV_ERROR_HAS_CURRENT_GENERATION,
-+		  &error->current_generation);
-+	error_u64(error, root, CTLV_T_ERROR_INFO_REQUIRED_LENGTH,
-+		  CTLV_ERROR_HAS_REQUIRED_LENGTH, &error->required_length);
-+}
-+
-+static const char *const reasons[] = {
-+	[CTLV_VALIDATION_REASON_MALFORMED_MESSAGE] = "malformed message",
-+	[CTLV_VALIDATION_REASON_UNKNOWN_TYPE] = "unknown type",
-+	[CTLV_VALIDATION_REASON_UNKNOWN_FLAG] = "unknown flag",
-+	[CTLV_VALIDATION_REASON_RECORD_TOO_DEEP] = "record too deep",
-+	[CTLV_VALIDATION_REASON_MISSING_FIELD] = "missing field",
-+	[CTLV_VALIDATION_REASON_TOO_MANY_OCCURRENCES] = "too many occurrences",
-+	[CTLV_VALIDATION_REASON_VALUE_OUT_OF_RANGE] = "value out of range",
-+	[CTLV_VALIDATION_REASON_BAD_LENGTH] = "bad length",
-+	[CTLV_VALIDATION_REASON_BAD_STRING] = "bad string",
-+	[CTLV_VALIDATION_REASON_BAD_BLOB_DESCRIPTOR] = "bad blob descriptor",
-+	[CTLV_VALIDATION_REASON_STALE_GENERATION] = "stale generation",
-+	[CTLV_VALIDATION_REASON_NONCONTIGUOUS_TYPE] = "noncontiguous type",
-+};
-+
-+const char *ctlv_error_str(const struct ctlv_error *error, char *buf,
-+			   size_t len)
-+{
-+	const char *reason = NULL;
-+	size_t used;
-+
-+	if (error->present & CTLV_ERROR_HAS_REASON &&
-+	    error->reason < CTLV_ARRAY_SIZE(reasons))
-+		reason = reasons[error->reason];
-+	used = snprintf(buf, len, "%s", strerror(-error->err));
-+	if (reason && used < len)
-+		used += snprintf(buf + used, len - used, ": %s", reason);
-+	if (error->present & CTLV_ERROR_HAS_MESSAGE && used < len)
-+		used += snprintf(buf + used, len - used, ": %s",
-+				 error->message);
-+	if (error->present & CTLV_ERROR_HAS_MISSING_TYPE && used < len)
-+		used += snprintf(buf + used, len - used, " (type %#llx)",
-+				 (unsigned long long)error->missing_type);
-+	if (error->present & CTLV_ERROR_HAS_REQUIRED_LENGTH && used < len)
-+		used += snprintf(buf + used, len - used, " (needs %llu bytes)",
-+				 (unsigned long long)error->required_length);
-+	if (error->present & CTLV_ERROR_HAS_BAD_TLV_OFFSET && used < len)
-+		snprintf(buf + used, len - used, " (at offset %llu)",
-+			 (unsigned long long)error->bad_tlv_offset);
-+	return buf;
-+}
-+
-+static int exec(struct ctlv_dev *dev, struct ctlv_op_exec *arg)
-+{
-+	if (ioctl(dev->fd, CTLV_IOC_OP_EXEC, arg))
-+		return -errno;
-+	return 0;
-+}
-+
-+static int reply_new(__u32 capacity, struct ctlv_reply **replyp)
-+{
-+	struct ctlv_reply *reply;
-+	int ret;
-+
-+	reply = calloc(1, sizeof(*reply));
-+	if (!reply)
-+		return -ENOMEM;
-+	ret = ctlv_msg_new_max(capacity, CTLV_REPLY_LEN_MAX, &reply->msg);
-+	if (ret) {
-+		free(reply);
-+		return ret;
-+	}
-+	*replyp = reply;
-+	return 0;
-+}
-+
-+void ctlv_reply_free(struct ctlv_reply *reply)
-+{
-+	if (!reply)
-+		return;
-+	ctlv_msg_free(reply->msg);
-+	free(reply);
-+}
-+
-+const struct ctlv_hdr *ctlv_reply_root(const struct ctlv_reply *reply)
-+{
-+	return ctlv_msg_root(reply->msg);
-+}
-+
-+__u64 ctlv_reply_generation(const struct ctlv_reply *reply)
-+{
-+	return reply->generation;
-+}
-+
-+unsigned int ctlv_reply_fragments(const struct ctlv_reply *reply)
-+{
-+	return reply->fragments;
-+}
-+
-+static const struct ctlv_hdr empty_request = {
-+	.len = sizeof(struct ctlv_hdr),
-+	.flags = CTLV_HDR_F_RECORD,
-+	.type = CTLV_TYPE_ROOT,
-+};
-+
-+/* The request bytes an op takes, an empty root when it takes no fields. */
-+static int request_of(struct ctlv_msg *request, __u64 *ptr, __u32 *len)
-+{
-+	int ret;
-+
-+	if (!request) {
-+		*ptr = (__u64)(uintptr_t)&empty_request;
-+		*len = sizeof(empty_request);
-+		return 0;
-+	}
-+	ret = ctlv_msg_done(request);
-+	if (ret)
-+		return ret;
-+	*ptr = (__u64)(uintptr_t)request->buf;
-+	*len = request->len;
-+	return 0;
-+}
-+
-+int ctlv_action_sized(struct ctlv_dev *dev, __u64 op_id,
-+		      struct ctlv_msg *request, __u32 reply_len,
-+		      struct ctlv_reply **replyp, struct ctlv_error *error)
-+{
-+	struct ctlv_op_exec arg = { .size = sizeof(arg), .op_id = op_id };
-+	struct ctlv_reply *reply = NULL;
-+	int ret;
-+
-+	ctlv_error_clear(error);
-+	ret = request_of(request, &arg.request, &arg.request_len);
-+	if (ret) {
-+		ctlv_error_set(error, ret);
-+		return ret;
++	if (!json_object_is_type(root, json_type_object) ||
++	    json_u64(root, "version", &version) || version != 1) {
++		fprintf(stderr, "%s: unsupported ctlvgen manifest\n", prog);
++		ret = -EINVAL;
++		goto out_root;
 +	}
 +
-+	/* A zeroed root says nothing was written, a real one being longer. */
-+	if (reply_len < sizeof(struct ctlv_hdr))
-+		reply_len = sizeof(struct ctlv_hdr);
-+	ret = reply_new(reply_len, &reply);
-+	if (ret) {
-+		ctlv_error_set(error, ret);
-+		return ret;
-+	}
-+	memset(reply->msg->buf, 0, sizeof(struct ctlv_hdr));
-+	arg.reply = (__u64)(uintptr_t)reply->msg->buf;
-+	arg.reply_len = reply_len;
-+
-+	ret = exec(dev, &arg);
-+	if (ret) {
-+		ctlv_error_parse(error, ret, reply->msg->buf, reply_len);
-+		ctlv_reply_free(reply);
-+		return ret;
-+	}
-+
-+	reply->fragments = 1;
-+	reply->msg->len = ctlv_msg_root(reply->msg)->len;
-+	if (!reply->msg->len) {
-+		/* Acknowledged, and there is nothing to read. */
-+		ctlv_reply_free(reply);
-+		reply = NULL;
-+	} else {
-+		ret = ctlv_msg_check(reply->msg->buf, reply_len);
-+		if (ret) {
-+			ctlv_error_set(error, ret);
-+			ctlv_reply_free(reply);
-+			return ret;
-+		}
-+	}
-+	if (replyp)
-+		*replyp = reply;
-+	else
-+		ctlv_reply_free(reply);
-+	return 0;
-+}
-+
-+static unsigned int query_cursor_slot(__u64 cursor, unsigned int capacity)
-+{
-+	cursor ^= cursor >> 30;
-+	cursor *= 0xbf58476d1ce4e5b9ULL;
-+	cursor ^= cursor >> 27;
-+	cursor *= 0x94d049bb133111ebULL;
-+	cursor ^= cursor >> 31;
-+	return cursor & (capacity - 1);
-+}
-+
-+static void query_cursor_insert(__u64 *slots, unsigned int capacity,
-+				__u64 cursor)
-+{
-+	unsigned int slot = query_cursor_slot(cursor, capacity);
-+
-+	while (slots[slot])
-+		slot = (slot + 1) & (capacity - 1);
-+	slots[slot] = cursor;
-+}
-+
-+static int query_guard_grow(struct ctlv_query_guard *guard)
-+{
-+	unsigned int capacity = guard->cursors_capacity ?
-+		guard->cursors_capacity * 2 : 64;
-+	__u64 *cursor;
-+	unsigned int i;
-+
-+	cursor = calloc(capacity, sizeof(*cursor));
-+	if (!cursor)
-+		return -ENOMEM;
-+	for (i = 0; i < guard->cursors_capacity; i++)
-+		if (guard->cursors[i])
-+			query_cursor_insert(cursor, capacity, guard->cursors[i]);
-+	free(guard->cursors);
-+	guard->cursors = cursor;
-+	guard->cursors_capacity = capacity;
-+	return 0;
-+}
-+
-+int ctlv_query_guard_next(struct ctlv_query_guard *guard, __u64 cursor,
-+			  bool progress)
-+{
-+	unsigned int slot;
-+	int ret;
-+
-+	if (!cursor)
-+		return 0;
-+	if (!progress)
-+		return -EPROTO;
-+	if (guard->cursors_count >= CTLV_QUERY_FRAGMENTS_MAX - 1)
-+		return -E2BIG;
-+	if (guard->cursors_count * 2 >= guard->cursors_capacity) {
-+		ret = query_guard_grow(guard);
-+		if (ret)
-+			return ret;
-+	}
-+	slot = query_cursor_slot(cursor, guard->cursors_capacity);
-+	while (guard->cursors[slot]) {
-+		if (guard->cursors[slot] == cursor)
-+			return -ELOOP;
-+		slot = (slot + 1) & (guard->cursors_capacity - 1);
-+	}
-+	guard->cursors[slot] = cursor;
-+	guard->cursors_count++;
-+	return 0;
-+}
-+
-+void ctlv_query_guard_free(struct ctlv_query_guard *guard)
-+{
-+	free(guard->cursors);
-+	*guard = (struct ctlv_query_guard){};
-+}
-+
-+/* No continuation marker may hide below a record that was completed. */
-+static int frag_closed(const struct ctlv_hdr *record)
-+{
-+	const struct ctlv_hdr *child;
-+	int ret;
-+
-+	ctlv_for_each(child, record) {
-+		if (child->flags & CTLV_HDR_F_FRAG_MORE)
-+			return -EPROTO;
-+		if (!ctlv_hdr_is_record(child))
-+			continue;
-+		ret = frag_closed(child);
-+		if (ret)
-+			return ret;
-+	}
-+	return 0;
-+}
-+
-+/* Remember the one last-child path this fragment leaves open. */
-+static int frag_path_build(const struct ctlv_hdr *record,
-+			   struct ctlv_frag_path *path)
-+{
-+	const struct ctlv_hdr *child, *last = NULL;
-+	int ret;
-+
-+	ctlv_for_each(child, record)
-+		last = child;
-+	ctlv_for_each(child, record) {
-+		if (child == last)
-+			break;
-+		if (child->flags & CTLV_HDR_F_FRAG_MORE)
-+			return -EPROTO;
-+		if (!ctlv_hdr_is_record(child))
-+			continue;
-+		ret = frag_closed(child);
-+		if (ret)
-+			return ret;
-+	}
-+	if (!last)
-+		return 0;
-+	if (!(last->flags & CTLV_HDR_F_FRAG_MORE))
-+		return ctlv_hdr_is_record(last) ? frag_closed(last) : 0;
-+	if (!ctlv_hdr_is_record(last))
-+		return -EPROTO;
-+	if (path->depth == CTLV_ARRAY_SIZE(path->type))
-+		return -ELOOP;
-+	path->type[path->depth++] = last->type;
-+	return frag_path_build(last, path);
-+}
-+
-+static int frag_path_read(const struct ctlv_hdr *root,
-+			  struct ctlv_frag_path *path)
-+{
-+	*path = (struct ctlv_frag_path){};
-+	if (!(root->flags & CTLV_HDR_F_FRAG_MORE))
-+		return frag_closed(root);
-+	return frag_path_build(root, path);
-+}
-+
-+/* The next fragment begins by repeating every record still open. */
-+static int frag_path_repeat(const struct ctlv_hdr *root,
-+			    const struct ctlv_frag_path *path)
-+{
-+	const struct ctlv_hdr *record = root;
-+	const struct ctlv_hdr *child;
-+	unsigned int i;
-+
-+	for (i = 0; i < path->depth; i++) {
-+		child = ctlv_hdr_first(record);
-+		if (!child || !ctlv_hdr_is_record(child) ||
-+		    child->type != path->type[i])
-+			return -EPROTO;
-+		record = child;
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * One fragment, appended to the reply being assembled. @skip levels of
-+ * re-emitted path are descended into rather than appended, being still open in
-+ * @out; a record left marked open stays open for the next fragment.
-+ */
-+static int splice(struct ctlv_msg *out, const struct ctlv_hdr *record,
-+		  unsigned int skip, bool *progress)
-+{
-+	const struct ctlv_hdr *child;
-+	bool first = true;
-+	int ret;
-+
-+	ctlv_for_each(child, record) {
-+		bool more = child->flags & CTLV_HDR_F_FRAG_MORE;
-+
-+		if (first && skip) {
-+			ret = splice(out, child, skip - 1, progress);
-+			if (!ret && !more)
-+				ret = ctlv_record_end(out);
-+		} else if (more) {
-+			ret = ctlv_record_start(out, child->type);
-+			if (!ret)
-+				ret = splice(out, child, 0, progress);
-+		} else {
-+			/* Complete: nothing inside waits for a continuation. */
-+			ret = ctlv_msg_copy(out, child);
-+			if (!ret)
-+				*progress = true;
-+		}
-+		if (ret)
-+			return ret;
-+		first = false;
-+	}
-+	return 0;
-+}
-+
-+int ctlv_frag_splice(struct ctlv_msg *out, const struct ctlv_hdr *root,
-+		     struct ctlv_frag_path *open, bool *progress)
-+{
-+	struct ctlv_frag_path next;
-+	bool made_progress = false;
-+	int ret;
-+
-+	if (progress)
-+		*progress = false;
-+	ret = frag_path_read(root, &next);
-+	if (ret)
-+		return ret;
-+	ret = frag_path_repeat(root, open);
-+	if (ret)
-+		return ret;
-+	ret = splice(out, root, open->depth, &made_progress);
-+	if (!ret) {
-+		*open = next;
-+		if (progress)
-+			*progress = made_progress;
-+	}
-+	return ret;
-+}
-+
-+int ctlv_query_sized(struct ctlv_dev *dev, __u64 op_id,
-+		     struct ctlv_msg *request, __u32 buf_len,
-+		     struct ctlv_reply **replyp, struct ctlv_error *error)
-+{
-+	struct ctlv_op_exec arg = { .size = sizeof(arg), .op_id = op_id };
-+	struct ctlv_query_guard guard = {};
-+	struct ctlv_reply *reply = NULL;
-+	struct ctlv_frag_path open = {};
-+	void *buf;
-+	int ret;
-+
-+	ctlv_error_clear(error);
-+	if (!buf_len)
-+		buf_len = QUERY_BUF_LEN;
-+	if (buf_len < sizeof(struct ctlv_hdr))
-+		buf_len = sizeof(struct ctlv_hdr);
-+	ret = request_of(request, &arg.request, &arg.request_len);
-+	if (ret)
-+		goto out_err;
-+
-+	buf = malloc(buf_len);
-+	if (!buf) {
++	spec = calloc(1, sizeof(*spec));
++	if (!spec) {
 +		ret = -ENOMEM;
-+		goto out_err;
++		goto out_root;
 +	}
-+	arg.reply = (__u64)(uintptr_t)buf;
-+	arg.reply_len = buf_len;
-+
-+	ret = reply_new(buf_len, &reply);
-+	if (ret)
-+		goto out_free_buf;
-+
-+	do {
-+		const struct ctlv_hdr *root = buf;
-+		bool progress;
-+
-+		/* A failure that writes nothing leaves the root zeroed. */
-+		memset(buf, 0, sizeof(struct ctlv_hdr));
-+		ret = exec(dev, &arg);
-+		if (ret) {
-+			ctlv_error_parse(error, ret, buf, buf_len);
-+			goto out_free_reply;
-+		}
-+		ret = ctlv_msg_check(buf, buf_len);
-+		if (ret)
-+			goto out_set_err;
-+
-+		/*
-+		 * The root's mark and the cursor both say whether there is
-+		 * more, and disagreeing is not something to reassemble.
-+		 */
-+		if (!(root->flags & CTLV_HDR_F_FRAG_MORE) != !arg.cursor) {
-+			ret = -EPROTO;
-+			goto out_set_err;
-+		}
-+
-+		ret = ctlv_frag_splice(reply->msg, root, &open, &progress);
-+		if (ret)
-+			goto out_set_err;
-+		ret = ctlv_query_guard_next(&guard, arg.cursor, progress);
-+		if (ret)
-+			goto out_set_err;
-+		if (!arg.cursor && open.depth) {
-+			ret = -EPROTO;
-+			goto out_set_err;
-+		}
-+
-+		reply->fragments++;
-+		reply->generation = arg.generation;
-+	} while (arg.cursor);
-+
-+	/* The answer having ended, the root is the only record still open. */
-+	if (reply->msg->depth != 1) {
-+		ret = -EPROTO;
-+		goto out_set_err;
++	ret = chain_check(root, dev);
++	if (!ret)
++		ret = definitions_parse(root, spec);
++	if (!ret)
++		ret = fields_parse(root, spec);
++	if (!ret)
++		ret = ops_parse(root, spec);
++	if (ret) {
++		if (ret == -ENOMSG)
++			fprintf(stderr,
++				"%s: specifications do not match device %s\n",
++				prog, ctlv_dev_name(dev));
++		else
++			fprintf(stderr, "%s: malformed ctlvgen manifest\n",
++				prog);
++		ctlvctl_spec_free(spec);
++		goto out_root;
 +	}
-+	ret = ctlv_msg_done(reply->msg);
-+	if (ret)
-+		goto out_set_err;
-+	/* The reassembled tree is a message in its own right, or nothing is. */
-+	ret = ctlv_msg_check(reply->msg->buf, reply->msg->len);
-+	if (ret)
-+		goto out_set_err;
-+
-+	ctlv_query_guard_free(&guard);
-+	free(buf);
-+	if (replyp)
-+		*replyp = reply;
-+	else
-+		ctlv_reply_free(reply);
-+	return 0;
-+
-+out_set_err:
-+	ctlv_error_set(error, ret);
-+out_free_reply:
-+	ctlv_reply_free(reply);
-+out_free_buf:
-+	ctlv_query_guard_free(&guard);
-+	free(buf);
-+	return ret;
-+out_err:
-+	ctlv_error_set(error, ret);
++	*specp = spec;
++out_root:
++	json_object_put(root);
 +	return ret;
 +}
++
++static int read_all(int fd, char **textp)
++{
++	size_t used = 0, size = 4096;
++	char *text;
++
++	text = malloc(size);
++	if (!text)
++		return -ENOMEM;
++	for (;;) {
++		ssize_t n;
++
++		if (used == size - 1) {
++			char *grown;
++
++			size *= 2;
++			grown = realloc(text, size);
++			if (!grown) {
++				free(text);
++				return -ENOMEM;
++			}
++			text = grown;
++		}
++		n = read(fd, text + used, size - used - 1);
++		if (n < 0) {
++			if (errno == EINTR)
++				continue;
++			free(text);
++			return -errno;
++		}
++		if (!n)
++			break;
++		used += n;
++	}
++	text[used] = '\0';
++	*textp = text;
++	return 0;
++}
++
++static void generator_exec(const char *prog, const char *spec_path)
++{
++	const char *override = getenv("CTLVGEN");
++	char executable[PATH_MAX];
++	char candidate[PATH_MAX];
++	char *slash;
++	ssize_t n;
++
++	if (override)
++		execl(override, override, "--spec", spec_path,
++		      "--runtime-json", NULL);
++
++	n = readlink("/proc/self/exe", executable, sizeof(executable) - 1);
++	if (n > 0) {
++		static const char suffix[] = "/../ctlvgen/cli.py";
++		size_t len;
++
++		executable[n] = '\0';
++		slash = strrchr(executable, '/');
++		if (slash) {
++			*slash = '\0';
++			len = strlen(executable);
++			if (len + sizeof(suffix) <= sizeof(candidate)) {
++				memcpy(candidate, executable, len);
++				memcpy(candidate + len, suffix, sizeof(suffix));
++				execl(candidate, candidate, "--spec",
++				      spec_path, "--runtime-json", NULL);
++			}
++		}
++	}
++	execlp("ctlvgen", "ctlvgen", "--spec", spec_path,
++	       "--runtime-json", NULL);
++	dprintf(STDERR_FILENO, "%s: cannot execute ctlvgen: %s\n", prog,
++		strerror(errno));
++	_exit(127);
++}
++
++static int manifest_generate(const char *prog, const char *spec_path,
++			     char **textp)
++{
++	int pipefd[2];
++	int status;
++	pid_t pid;
++	int ret;
++
++	if (pipe2(pipefd, O_CLOEXEC))
++		return -errno;
++	pid = fork();
++	if (pid < 0) {
++		ret = -errno;
++		goto out_pipe;
++	}
++	if (!pid) {
++		close(pipefd[0]);
++		if (pipefd[1] == STDOUT_FILENO) {
++			int flags = fcntl(STDOUT_FILENO, F_GETFD);
++
++			if (flags < 0 ||
++			    fcntl(STDOUT_FILENO, F_SETFD,
++				  flags & ~FD_CLOEXEC) < 0)
++				_exit(127);
++		} else {
++			if (dup2(pipefd[1], STDOUT_FILENO) < 0)
++				_exit(127);
++			close(pipefd[1]);
++		}
++		generator_exec(prog, spec_path);
++	}
++	close(pipefd[1]);
++	ret = read_all(pipefd[0], textp);
++	close(pipefd[0]);
++	while (waitpid(pid, &status, 0) < 0) {
++		if (errno != EINTR) {
++			ret = -errno;
++			goto out_text;
++		}
++	}
++	if (!ret && (!WIFEXITED(status) || WEXITSTATUS(status)))
++		ret = -EINVAL;
++out_text:
++	if (ret) {
++		free(*textp);
++		*textp = NULL;
++	}
++	return ret;
++out_pipe:
++	close(pipefd[0]);
++	close(pipefd[1]);
++	return ret;
++}
++
++static int manifest_read(const char *path, char **textp)
++{
++	int fd, ret;
++
++	fd = open(path, O_RDONLY | O_CLOEXEC);
++	if (fd < 0)
++		return -errno;
++	ret = read_all(fd, textp);
++	close(fd);
++	return ret;
++}
++
++int ctlvctl_spec_load(const char *prog, const char *dir,
++		      const struct ctlv_dev *dev, struct ctlvctl_spec **specp)
++{
++	char path[PATH_MAX];
++	char *text = NULL;
++	int ret;
++
++	if (snprintf(path, sizeof(path), "%s/%s.json", dir,
++		     ctlv_dev_family(dev)) >= (int)sizeof(path))
++		return -ENAMETOOLONG;
++	ret = manifest_read(path, &text);
++	if (ret == -ENOENT) {
++		snprintf(path, sizeof(path), "%s/%s.yaml", dir,
++			 ctlv_dev_family(dev));
++		ret = manifest_generate(prog, path, &text);
++	} else if (ret) {
++		fprintf(stderr, "%s: %s: %s\n", prog, path, strerror(-ret));
++	}
++	if (ret)
++		return ret;
++	ret = manifest_parse(prog, text, dev, specp);
++	free(text);
++	return ret;
++}
++
++#else /* HAVE_JSON_C */
++
++int ctlvctl_spec_load(const char *prog, const char *dir,
++		      const struct ctlv_dev *dev, struct ctlvctl_spec **specp)
++{
++	fprintf(stderr,
++		"%s: specification support was built without json-c\n", prog);
++	return -EOPNOTSUPP;
++}
++
++#endif /* HAVE_JSON_C */
++
++void ctlvctl_spec_free(struct ctlvctl_spec *spec)
++{
++	unsigned int i, j;
++
++	if (!spec)
++		return;
++	for (i = 0; i < spec->definitions_count; i++) {
++		for (j = 0; j < spec->definitions[i].values_count; j++)
++			free(spec->definitions[i].values[j].name);
++		free(spec->definitions[i].values);
++		free(spec->definitions[i].name);
++	}
++	for (i = 0; i < spec->fields_count; i++) {
++		free(spec->fields[i].name);
++		free(spec->fields[i].short_name);
++	}
++	for (i = 0; i < spec->ops_count; i++)
++		free(spec->ops[i].name);
++	free(spec->definitions);
++	free(spec->fields);
++	free(spec->ops);
++	free(spec);
++}
++
++const struct ctlvctl_op_name *
++ctlvctl_spec_op_id(const struct ctlvctl_spec *spec, __u64 id)
++{
++	unsigned int i;
++
++	if (!spec)
++		return NULL;
++	for (i = 0; i < spec->ops_count; i++)
++		if (spec->ops[i].id == id)
++			return &spec->ops[i];
++	return NULL;
++}
++
++const struct ctlvctl_op_name *
++ctlvctl_spec_op_name(const struct ctlvctl_spec *spec, const char *name)
++{
++	unsigned int i;
++
++	if (!spec)
++		return NULL;
++	for (i = 0; i < spec->ops_count; i++)
++		if (!strcmp(spec->ops[i].name, name))
++			return &spec->ops[i];
++	return NULL;
++}
++
++const struct ctlvctl_field_name *
++ctlvctl_spec_field(const struct ctlvctl_spec *spec, __u64 type)
++{
++	unsigned int i;
++
++	if (!spec)
++		return NULL;
++	for (i = 0; i < spec->fields_count; i++)
++		if (spec->fields[i].type == type)
++			return &spec->fields[i];
++	return NULL;
++}
++
++const char *ctlvctl_spec_value_name(const struct ctlvctl_field_name *field,
++				    __u64 value)
++{
++	unsigned int i;
++
++	if (!field || !field->definition)
++		return NULL;
++	for (i = 0; i < field->definition->values_count; i++)
++		if (field->definition->values[i].value == value)
++			return field->definition->values[i].name;
++	return NULL;
++}
++
++int ctlvctl_spec_value(const struct ctlvctl_field_name *field, const char *name,
++		       __u64 *value)
++{
++	unsigned int i;
++
++	if (!field || !field->definition)
++		return -ENOENT;
++	for (i = 0; i < field->definition->values_count; i++)
++		if (!strcmp(field->definition->values[i].name, name)) {
++			*value = field->definition->values[i].value;
++			return 0;
++		}
++	return -ENOENT;
++}
+diff --git a/tools/ctlv/ctlvctl/spec.h b/tools/ctlv/ctlvctl/spec.h
+new file mode 100644
+index 000000000000..0ac6e314232e
+--- /dev/null
++++ b/tools/ctlv/ctlvctl/spec.h
+@@ -0,0 +1,60 @@
++/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
++#ifndef CTLVCTL_SPEC_H
++#define CTLVCTL_SPEC_H
++
++#include <linux/types.h>
++#include <stdbool.h>
++
++struct ctlv_dev;
++
++struct ctlvctl_value_name {
++	__u64 value;
++	char *name;
++};
++
++struct ctlvctl_definition {
++	char *name;
++	__u32 kind;
++	struct ctlvctl_value_name *values;
++	unsigned int values_count;
++};
++
++struct ctlvctl_field_name {
++	__u64 type;
++	__u32 kind;
++	char *name;
++	char *short_name;
++	const struct ctlvctl_definition *definition;
++};
++
++struct ctlvctl_op_name {
++	__u64 id;
++	__u32 type;
++	__u32 fd_access;
++	__u32 availability;
++	__u64 request_max_len;
++	__u64 action_reply_max_len;
++	__u64 query_reply_min_len;
++	__u64 query_reply_suggested_len;
++	char *name;
++};
++
++struct ctlvctl_spec;
++
++int ctlvctl_spec_load(const char *prog, const char *dir,
++		      const struct ctlv_dev *dev, struct ctlvctl_spec **specp);
++void ctlvctl_spec_free(struct ctlvctl_spec *spec);
++
++const struct ctlvctl_op_name *
++ctlvctl_spec_op_id(const struct ctlvctl_spec *spec, __u64 id);
++const struct ctlvctl_op_name *
++ctlvctl_spec_op_name(const struct ctlvctl_spec *spec, const char *name);
++const struct ctlvctl_field_name *
++ctlvctl_spec_field(const struct ctlvctl_spec *spec, __u64 type);
++
++const char *ctlvctl_spec_value_name(const struct ctlvctl_field_name *field,
++				    __u64 value);
++int ctlvctl_spec_value(const struct ctlvctl_field_name *field, const char *name,
++		       __u64 *value);
++
++#endif /* CTLVCTL_SPEC_H */
+diff --git a/tools/ctlv/ctlvgen/cli.py b/tools/ctlv/ctlvgen/cli.py
+index 59180f9757e8..5da444984bd5 100755
+--- a/tools/ctlv/ctlvgen/cli.py
++++ b/tools/ctlv/ctlvgen/cli.py
+@@ -14,7 +14,10 @@ from collections.abc import Callable
+ sys.path.append(pathlib.Path(__file__).resolve().parents[1].as_posix())
+ 
+ from ctlvgen.lib import cgen  # noqa: E402
++from ctlvgen.lib import dump  # noqa: E402
++from ctlvgen.lib import gen_doc  # noqa: E402
+ from ctlvgen.lib import gen_kernel  # noqa: E402
++from ctlvgen.lib import gen_runtime  # noqa: E402
+ from ctlvgen.lib import gen_uapi  # noqa: E402
+ from ctlvgen.lib import gen_user  # noqa: E402
+ from ctlvgen.lib import semantics  # noqa: E402
+@@ -30,6 +33,7 @@ GENERATORS: dict[tuple[str, str], Callable[..., str]] = {
+     ('kernel', 'source'): gen_kernel.render_source,
+     ('user', 'header'): gen_user.render_header,
+     ('user', 'source'): gen_user.render_source,
++    ('doc', 'rst'): gen_doc.render,
+ }
+ 
+ 
+@@ -46,6 +50,12 @@ def main() -> int:
+     action = parser.add_mutually_exclusive_group(required=True)
+     action.add_argument('--validate', action='store_true',
+                         help='validate the specification and exit')
++    action.add_argument('--dump', action='store_true',
++                        help='print the resolved schema in text form')
++    action.add_argument('--runtime-json', action='store_true',
++                        help='print the resolved runtime manifest as JSON')
++    action.add_argument('--signatures', action='store_true',
++                        help='print each op the family declares as a call')
+     action.add_argument('--outputs-check', action='store_true',
+                         help='check every file in the output manifests and '
+                              'every ABI snapshot')
+@@ -53,7 +63,7 @@ def main() -> int:
+                         help='regenerate every file in the output manifests '
+                              'and every ABI snapshot')
+     action.add_argument('--mode',
+-                        choices=('uapi', 'kernel', 'user'),
++                        choices=('uapi', 'kernel', 'user', 'doc'),
+                         help='generate the files of this mode')
+     parser.add_argument('--schema-only', action='store_true',
+                         help='omit the family API from kernel output')
+@@ -62,6 +72,8 @@ def main() -> int:
+                        help='generate the header of --mode')
+     files.add_argument('--source', action='store_true',
+                        help='generate the source of --mode')
++    files.add_argument('--rst', action='store_true',
++                       help='generate the reStructuredText of --mode')
+     parser.add_argument('-o', '--output', type=str,
+                         help='write to this file instead of standard output')
+     parser.add_argument('--cmp-out', action='store_true',
+@@ -73,12 +85,12 @@ def main() -> int:
+                         help='let --outputs-update break the committed ABI')
+     args = parser.parse_args()
+ 
+-    file = next((name for name in ('header', 'source')
++    file = next((name for name in ('header', 'source', 'rst')
+                  if getattr(args, name)), None)
+     if args.mode and not file:
+-        parser.error('--mode needs --header or --source')
++        parser.error('--mode needs --header, --source or --rst')
+     if file and not args.mode:
+-        parser.error('--header and --source need --mode')
++        parser.error('--header, --source and --rst need --mode')
+     if args.mode and (args.mode, file) not in GENERATORS:
+         parser.error(f'--mode {args.mode} cannot generate --{file}')
+     if args.schema_only and args.mode != 'kernel':
+@@ -111,20 +123,43 @@ def main() -> int:
+             # The root family has no binding: libctlv is that binding.
+             if family.name != spec.CORE_FAMILY_NAME:
+                 cgen.user_symbols(family)
++        elif args.dump:
++            sys.stdout.write(dump.render(family))
++        elif args.runtime_json:
++            sys.stdout.write(gen_runtime.render(family))
++        elif args.signatures:
++            sys.stdout.write(gen_doc.signatures(family))
+         else:
+             assert file is not None
+-            _generate(args, file, family)
++            _generate(args, paths, file, family)
+     except CtlvError as exc:
+         print(f'ctlvgen: {exc}', file=sys.stderr)
+         return 1
+     return 0
+ 
+ 
+-def _generate(args: argparse.Namespace, file: str,
++def _descendants(args: argparse.Namespace, paths: spec.Paths,
++                 family: semantics.Family) -> tuple[semantics.Family, ...]:
++    """Every family of the registry that inherits family."""
++    found = []
++    for entry in spec.load_registry(paths).entries:
++        path = paths.spec_dir / f'{entry.name}.yaml'
++        if entry.name == family.name or not path.exists():
++            continue
++        child = semantics.load(spec.Paths(str(path), schema=args.schema,
++                                          registry=args.registry))
++        if family.name in (item.name for item in child.chain[:-1]):
++            found.append(child)
++    return tuple(found)
++
++
++def _generate(args: argparse.Namespace, paths: spec.Paths, file: str,
+               family: semantics.Family) -> None:
+     render = GENERATORS[(args.mode, file)]
+     if args.mode == 'kernel':
+         text = render(family, family_api=not args.schema_only)
++    elif args.mode == 'doc':
++        text = render(family, _descendants(args, paths, family))
+     else:
+         text = render(family)
+     if args.output is None:
+diff --git a/tools/ctlv/ctlvgen/lib/dump.py b/tools/ctlv/ctlvgen/lib/dump.py
+new file mode 100644
+index 000000000000..20eca794aa11
+--- /dev/null
++++ b/tools/ctlv/ctlvgen/lib/dump.py
+@@ -0,0 +1,161 @@
++# SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
++"""Deterministic text rendering of an effective family.
++
++A debugging window and a golden-test surface, not an interchange format: every
++generated ID, effective bound and computed length, in declaration order.
++"""
++
++from __future__ import annotations
++
++from . import semantics
++from . import sizes
++from . import spec
++
++INDENT: str = '  '
++
++
++def render(family: semantics.Family) -> str:
++    """Return the dump of one effective family as a string."""
++    lines = []
++    lines.append(f'family: {family.name}')
++    lines.append(f'family-id: {family.family_id}')
++    lines.append('chain: ' + ' -> '.join(item.name for item in family.chain))
++
++    _definitions(lines, family)
++    _records(lines, family)
++    _extensions(lines, family)
++    _ops(lines, family)
++    return '\n'.join(lines) + '\n'
++
++
++def _definitions(lines: list[str], family: semantics.Family) -> None:
++    if not family.definitions:
++        return
++    lines.append('')
++    lines.append('definitions:')
++    for definition in family.definitions.values():
++        extension = definition.extension
++        what = ''
++        if extension is not None:
++            what = f', extension {extension.ext_id} of family ' \
++                   f'{extension.family_id}'
++        lines.append(f'{INDENT}{definition.kind} {definition.name} '
++                     f'(family {definition.family_id}{what})')
++        for name, number in definition.values:
++            if definition.kind == 'enum':
++                lines.append(f'{INDENT * 2}{name} = {number}')
++            else:
++                lines.append(f'{INDENT * 2}{name} = bit {number}')
++
++
++def _records(lines: list[str], family: semantics.Family) -> None:
++    if not family.records:
++        return
++    lines.append('')
++    lines.append('records:')
++    for record in family.records.values():
++        lines.append(f'{INDENT}{record.path} = {record.record_id:#010x} '
++                     f'{record.role} (family {record.family_id})')
++        for member in record.members:
++            field = member.field
++            requirement = '' if member.required else '?'
++            lines.append(f'{INDENT * 2}{field.name}{requirement} = '
++                         f'{_id(field.type)} {_field_detail(field)}')
++
++
++def _field_detail(field: semantics.Field) -> str:
++    decl = field.decl
++    detail = [decl.kind]
++    if decl.kind in ('uint', 'sint'):
++        detail.append(f'[{decl.min}, {decl.max}]')
++        if decl.unit is not None:
++            detail.append(f'unit {decl.unit} scale {decl.scale}')
++    elif decl.kind in ('string', 'binary'):
++        detail.append(f'length [{decl.min_length}, {decl.max_length}]')
++    elif decl.kind in ('enum', 'flags'):
++        assert decl.ref is not None
++        detail.append(decl.ref)
++    elif decl.kind == 'blob':
++        assert decl.blob is not None
++        detail.append(decl.blob.direction)
++        detail.append('backings ' + ','.join(decl.blob.backings))
++        detail.append(f'max-length {decl.blob.max_length}')
++        detail.append(f'alignment {decl.blob.alignment}')
++    elif decl.extension is not None:
++        detail.append(f'extension {decl.extension}')
++    else:
++        detail.append(f'record {field.holds}')
++    detail.append(_occurrences(decl.max_occurrences))
++    return ' '.join(detail)
++
++
++def _extensions(lines: list[str], family: semantics.Family) -> None:
++    if not family.extensions:
++        return
++    lines.append('')
++    lines.append('extensions:')
++    for extension in family.extensions.values():
++        fill = family.fill_of(extension)
++        filled = f', filled by family {fill.owner_family_id}' if fill else ''
++        lines.append(f'{INDENT}{extension.name} = {extension.ext_id} '
++                     f'(family {extension.family_id}{filled})')
++
++
++def _ops(lines: list[str], family: semantics.Family) -> None:
++    if not family.ops:
++        return
++    lines.append('')
++    lines.append('ops:')
++    for op in family.ops:
++        lines.append(f'{INDENT}{op.name} = {_id(op.op_id)} {op.type}')
++        lines.append(f'{INDENT * 2}fd-access: {op.fd_access}')
++        if op.request is not None:
++            _tree(lines, 'request', op.request)
++        if op.reply is None:
++            lines.append(f'{INDENT * 2}reply: none')
++        else:
++            _tree(lines, 'reply', op.reply)
++        _sizes(lines, op.sizes)
++
++
++def _tree(lines: list[str], what: str, root: semantics.Node) -> None:
++    lines.append(f'{INDENT * 2}{what}:')
++    if not root.children():
++        lines.append(f'{INDENT * 3}(empty)')
++        return
++    _children(lines, root, 3)
++
++
++def _children(lines: list[str], node: semantics.Node, depth: int) -> None:
++    for child in node.children():
++        requirement = 'required' if child.required else 'optional'
++        line = (f'{INDENT * depth}{child.child_field.full_name} '
++                f'{_occurrences(child.max_occurrences)} {requirement}')
++        if child.reenters is not None:
++            line += f' -> {child.reenters}'
++        lines.append(line)
++        _children(lines, child, depth + 1)
++
++
++def _sizes(lines: list[str], op_sizes: sizes.OpSizes) -> None:
++    lines.append(f'{INDENT * 2}sizes:')
++    reported = (
++        ('request-max-len', op_sizes.request_max_len),
++        ('action-reply-max-len', op_sizes.action_reply_max_len),
++        ('query-reply-min-len', op_sizes.query_reply_min_len),
++        ('query-reply-suggested-len', op_sizes.query_reply_suggested_len),
++        ('error-info-max-len', op_sizes.error_info_max_len),
++    )
++    for name, value in reported:
++        if value:
++            lines.append(f'{INDENT * 3}{name}: {value}')
++
++
++def _occurrences(max_occurrences: int) -> str:
++    if max_occurrences == spec.UNLIMITED:
++        return 'x*'
++    return f'x{max_occurrences}'
++
++
++def _id(value: int) -> str:
++    return f'0x{value:016x}'
+diff --git a/tools/ctlv/ctlvgen/lib/gen_doc.py b/tools/ctlv/ctlvgen/lib/gen_doc.py
+new file mode 100644
+index 000000000000..7d36d4a7dd9b
+--- /dev/null
++++ b/tools/ctlv/ctlvgen/lib/gen_doc.py
+@@ -0,0 +1,684 @@
++# SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
++"""The reference documentation of one family.
++
++Each op's request and reply as the tree the core admits, with every field's
++number, schema kind, bounds and doc, and what each descendant puts into an
++extension point shown where it lands. An inherited declaration is documented
++by the family that owns it.
++"""
++
++from __future__ import annotations
++
++import textwrap
++from typing import Union
++
++from . import cgen
++from . import semantics
++from . import spec
++
++# Documentation/doc-guide/sphinx.rst asks for lines that fit a terminal, which
++# is why a generated tree is an indented literal block.
++LINE_LIMIT: int = 79
++
++# A literal block's indent, the columns of one tree row inside it, and how far
++# in from its row a doc goes.
++BLOCK_INDENT: int = 4
++NAME_WIDTH: int = 30
++NUMBER_WIDTH: int = 4
++DOC_INDENT: int = 4
++
++TYPES: dict[str, str] = {
++    'action': 'action',
++    'query': 'query',
++}
++
++# A blob's direction as a spec writes it.
++DIRECTIONS: dict[str, str] = {value: key
++                              for key, value in spec.DIRECTIONS.items()}
++
++
++def render(family: semantics.Family,
++           descendants: tuple[semantics.Family, ...] = ()) -> str:
++    """Return the reference page of family as reStructuredText.
++
++    descendants are the families inheriting this one, whose fills appear in
++    its trees.
++    """
++    writer = _Writer()
++    _preamble(writer, family)
++    _title(writer, family)
++    _intro(writer, family)
++    _definitions(writer, family)
++    _records(writer, family, descendants)
++    _extensions(writer, family, descendants)
++    _fills(writer, family, descendants)
++    _ops(writer, family, descendants)
++    _messages(writer, family, descendants)
++    return writer.text()
++
++
++def signatures(family: semantics.Family, width: int = 100) -> str:
++    """Return every op this family declares as one call per line."""
++    lines = []
++    for op in family.local_ops:
++        lines += _signature(family, op, width)
++    return '\n'.join(lines) + '\n' if lines else ''
++
++
++class _Writer:
++    """The lines of one generated page."""
++
++    def __init__(self) -> None:
++        self._lines: list[str] = []
++
++    def line(self, text: str = '') -> None:
++        self._lines.append(text.rstrip())
++
++    def lines(self, *texts: str) -> None:
++        for text in texts:
++            self.line(text)
++
++    def paragraph(self, text: str) -> None:
++        """One paragraph, wrapped, followed by a blank line.
++
++        A hyphenated family name is never broken, so a grep for one finds it.
++        """
++        for line in _wrap(text, LINE_LIMIT):
++            self.line(line)
++        self.line()
++
++    def title(self, text: str) -> None:
++        """The one title of the page, overlined and underlined."""
++        self.line('=' * len(text))
++        self.line(text)
++        self.line('=' * len(text))
++        self.line()
++
++    def heading(self, text: str, char: str) -> None:
++        """One section heading, underlined the width of its title."""
++        self.line(text)
++        self.line(char * len(text))
++        self.line()
++
++    def block(self, *texts: str) -> None:
++        """One literal block, indented, followed by a blank line."""
++        self.line('::')
++        self.line()
++        for text in texts:
++            self.line(f'{" " * BLOCK_INDENT}{text}' if text else '')
++        self.line()
++
++    def field(self, name: str, value: int | str) -> None:
++        self.line(f':{name}: {value}')
++
++    def text(self) -> str:
++        while self._lines and not self._lines[-1]:
++            self._lines.pop()
++        return '\n'.join(self._lines) + '\n'
++
++
++def _wrap(text: str, width: int) -> list[str]:
++    return textwrap.wrap(' '.join(text.split()), width,
++                         break_on_hyphens=False, break_long_words=False)
++
++
++def _preamble(writer: _Writer, family: semantics.Family) -> None:
++    """The comment ctlv-regen.sh recovers the generation parameters from."""
++    writer.lines(
++        f'.. SPDX-License-Identifier: {family.license}',
++        f'.. Generated from {cgen.spec_path(family.path)} by',
++        f'   {cgen.REGEN}. Do not edit.',
++        '.. CTLV-GEN doc rst',
++    )
++    writer.line()
++
++
++def _title(writer: _Writer, family: semantics.Family) -> None:
++    writer.title(family.name)
++
++
++def _intro(writer: _Writer, family: semantics.Family) -> None:
++    writer.field('Family ID', family.family_id)
++    writer.field('Chain', ' -> '.join(item.name for item in family.chain))
++    writer.field('Specification', cgen.spec_path(family.path))
++    writer.line()
++    if family.doc:
++        writer.paragraph(family.doc)
++    if family.parent:
++        writer.paragraph(
++            f'This family inherits ``{family.parent}`` and its page describes '
++            f'what ``{family.name}`` declares itself, together with the '
++            'extension points it fills. An inherited op or field keeps the '
++            'name and the description its own family gives it, so a program '
++            'speaking to a device of this family uses both pages.')
++    else:
++        writer.paragraph(
++            'This is the family every other family inherits: its ops are the '
++            'ones the core answers itself, on every device, whatever '
++            'family registered it.')
++    writer.paragraph(
++        'A tree lists one field per line: its name as the specification '
++        'writes it, its number and its schema kind. A field\'s type is the '
++        'family, the record above it and that number. A field of records: '
++        'is a record of its own, which its line names.')
++
++
++def _definitions(writer: _Writer, family: semantics.Family) -> None:
++    own = family.local_definitions
++    if not own:
++        return
++    writer.heading('Enumerations and flags', '=')
++    for definition in own:
++        writer.heading(definition.name, '-')
++        if definition.doc:
++            writer.paragraph(definition.doc)
++        if definition.is_extension_point:
++            writer.paragraph(
++                'An enum extension point: the family of a device gives the '
++                'values, by declaring an enum of this name. On a device '
++                'whose family gives none, no value is valid.')
++            continue
++        if definition.extension is not None:
++            owner = family.owners[definition.extension.family_id]
++            writer.paragraph(f'The values this family gives the enum '
++                             f'extension point of {owner}.')
++        if definition.kind == 'enum':
++            writer.paragraph(
++                'A payload restricted to these values. An unknown value is '
++                'refused on a request and tolerated on a reply, so a caller '
++                'built against an older specification keeps working.')
++            header = definition.header
++            if header:
++                before = f' before ``{header.end}``' if header.end else ''
++                writer.paragraph(
++                    f'These are the constants of ``enum {header.tag}`` in '
++                    f'``<{header.path}>``{before}, under its names and '
++                    'numbers. A number between two of them passes CTLV, for '
++                    'the family to refuse.')
++            rows = _value_rows(definition, '')
++        else:
++            writer.paragraph(
++                'A payload restricted to these bits. An unknown bit is '
++                'refused on a request and tolerated on a reply.')
++            rows = _value_rows(definition, 'bit ')
++        writer.block(*rows)
++
++
++def _value_rows(definition: semantics.Definition, prefix: str) -> list[str]:
++    """One line per value, its doc below."""
++    rows = []
++    width = LINE_LIMIT - BLOCK_INDENT - DOC_INDENT
++    for (name, number), doc in zip(definition.values, definition.value_docs):
++        rows.append(f'{prefix}{number} = {name}')
++        if doc:
++            rows += [f'{" " * DOC_INDENT}{line}' for line in _wrap(doc, width)]
++    return rows
++
++
++def _records(writer: _Writer, family: semantics.Family,
++             descendants: tuple[semantics.Family, ...]) -> None:
++    """The named records and the fields of records: this family declares."""
++    own = [record for record in family.local_records
++           if record.role in ('named', 'field')]
++    if not own:
++        return
++    writer.heading('Records', '=')
++    writer.paragraph(
++        'What an op places by name. A named record is placed with record or '
++        'spliced with $include; a field of records: is placed with a bare '
++        'record and has one type wherever it is.')
++    for record in own:
++        writer.heading(record.name, '-')
++        if record.doc:
++            writer.paragraph(record.doc)
++        if record.role == 'field':
++            field = record.fields[0]
++            writer.block(f'record {record.record_id:#010x}, field '
++                         f'{field.number}: {_kind_text(family, field)}')
++            continue
++        rows = [f'record {record.record_id:#010x}', '']
++        rows += _record_rows(family, descendants, record, 0, (record.name,))
++        writer.block(*rows)
++
++
++def _record_rows(family: semantics.Family,
++                 descendants: tuple[semantics.Family, ...],
++                 record: semantics.Record, depth: int,
++                 opened: tuple[str, ...] = ()) -> list[str]:
++    """One line per member of a record, in spec order, records expanded.
++
++    opened are the named records above, which a record of one re-enters.
++    """
++    rows = []
++    included = None
++    for member in record.members:
++        field = member.field
++        origin = None
++        if field.record_id != record.record_id and not field.shared:
++            origin = field.record
++        if origin is not None and origin != included:
++            source = family.records[origin]
++            rows.append(f'{"  " * depth}$include {origin}, record '
++                        f'{source.record_id:#010x}')
++        included = origin
++        inner, reenters = None, False
++        if field.decl.kind == 'record' and field.decl.extension is None:
++            assert field.holds is not None
++            inner = family.records[field.holds]
++            reenters = inner.role == 'named' and inner.name in opened
++        name = field.name + _suffix(member.required, field.decl)
++        rows += _row(family, name, field, depth, _doc(family, member),
++                     reenters)
++        if inner is not None and not reenters:
++            below = opened + ((inner.name,) if inner.role == 'named'
++                              else ())
++            rows += _record_rows(family, descendants, inner, depth + 1,
++                                 below)
++        if field.decl.extension is not None:
++            rows += _fill_rows(family, descendants,
++                               family.extensions[field.decl.extension],
++                               depth + 1)
++    return rows
++
++
++def _doc(family: semantics.Family, member: semantics.Member) -> str | None:
++    """A member's doc: where it is placed, else where it is declared."""
++    if member.doc:
++        return member.doc
++    if member.field.decl.doc:
++        return member.field.decl.doc
++    if member.field.shared:
++        return family.records[member.field.record].doc
++    return None
++
++
++def _extensions(writer: _Writer, family: semantics.Family,
++                descendants: tuple[semantics.Family, ...]) -> None:
++    own = family.local_extensions
++    if not own:
++        return
++    writer.heading('Extension points', '=')
++    writer.paragraph(
++        'A place a descendant adds members to, by declaring a record of the '
++        'same name. It is empty on this family\'s own devices; a descendant '
++        'that fills it lengthens every message that reaches it.')
++    rows = []
++    for extension in own:
++        fillers = []
++        for child in descendants:
++            fill = child.fill_of(extension)
++            if fill is not None:
++                fillers.append(child.owners[fill.owner_family_id])
++        filled = ', filled by ' + ', '.join(fillers) if fillers else ''
++        rows.append(f'{extension.name}, ID {extension.ext_id}{filled}')
++    writer.block(*rows)
++
++
++def _fills(writer: _Writer, family: semantics.Family,
++           descendants: tuple[semantics.Family, ...]) -> None:
++    if not family.fills:
++        return
++    writer.heading('Extension points this family fills', '=')
++    writer.paragraph(
++        'Each of these completes an extension point an ancestor declared. '
++        'What it adds appears in every message of every op that reaches that '
++        'point, so an inherited op admits a longer message on a device of '
++        'this family than on a device of the family that declared it.')
++    for fill in family.fills:
++        owner = family.owners.get(fill.family_id, str(fill.family_id))
++        writer.heading(f'{fill.name} of {owner}', '-')
++        if fill.record.doc:
++            writer.paragraph(fill.record.doc)
++        rows = [f'record {fill.record.record_id:#010x}', '']
++        rows += _record_rows(family, descendants, fill.record, 0)
++        writer.block(*rows)
++
++
++def _ops(writer: _Writer, family: semantics.Family,
++         descendants: tuple[semantics.Family, ...]) -> None:
++    own = family.local_ops
++    if not own:
++        return
++    writer.heading('Ops', '=')
++    writer.paragraph(
++        'One section per op this family declares. An action is executed and '
++        'acknowledged, and a query is executed and answered in as many '
++        'fragments as its answer needs. In short:')
++    lines = []
++    for op in own:
++        lines += _signature(family, op, LINE_LIMIT - BLOCK_INDENT)
++    writer.block(*lines)
++    for op in own:
++        _op(writer, family, descendants, op)
++
++
++def _op(writer: _Writer, family: semantics.Family,
++        descendants: tuple[semantics.Family, ...], op: semantics.Op) -> None:
++    writer.heading(op.name, '-')
++    writer.field('Op ID', f'``{_id(op.op_id)}``, op {op.local_id}')
++    writer.field('Type', TYPES[op.type])
++    writer.field('FD access', _fd_access(op.fd_access))
++    writer.field('Availability', _availability(op.availability))
++    writer.line()
++    if op.doc:
++        writer.paragraph(op.doc)
++    _message(writer, family, descendants, 'Request', op.request_record)
++    _message(writer, family, descendants, 'Reply', op.reply_record)
++    _sizes(writer, op)
++
++
++def _availability(availability: str) -> str:
++    if availability == 'dynamic':
++        return 'dynamic, so a device may disable and enable it at any time'
++    return 'fixed, so a device that publishes it always answers it'
++
++
++def _fd_access(fd_access: str) -> str:
++    if fd_access == 'read':
++        return 'read, so an observation or full-control fd may execute it'
++    return 'read-write, so only a full-control fd may execute it'
++
++
++def _message(writer: _Writer, family: semantics.Family,
++             descendants: tuple[semantics.Family, ...], what: str,
++             record: semantics.Record | None) -> None:
++    if record is None:
++        writer.paragraph(f'{what}: none.')
++        return
++    if record.role == 'named':
++        writer.paragraph(f'{what}: record {record.name}, '
++                         f'{record.record_id:#010x}, as Records has it.')
++        return
++    if record.doc:
++        writer.paragraph(record.doc)
++    rows = _record_rows(family, descendants, record, 0)
++    if not rows:
++        writer.paragraph(f'{what}: an empty root, record '
++                         f'{record.record_id:#010x}.')
++        return
++    writer.paragraph(f'{what}, record {record.record_id:#010x}:')
++    writer.block(*rows)
++
++
++def _fill_rows(family: semantics.Family,
++               descendants: tuple[semantics.Family, ...],
++               extension: semantics.Extension, depth: int) -> list[str]:
++    """What each family below puts into one extension point."""
++    rows = []
++    for child in (family, *descendants):
++        fill = child.fill_of(extension)
++        if fill is None or (child is not family and
++                            fill.owner_family_id != child.family_id):
++            continue
++        owner = child.owners[fill.owner_family_id]
++        rows.append(f'{"  " * depth}{owner}: record '
++                    f'{fill.record.record_id:#010x} of family '
++                    f'{fill.owner_family_id}')
++        rows += _record_rows(child, descendants, fill.record, depth + 1)
++    return rows
++
++
++def _row(family: semantics.Family, name: str, field: semantics.Field,
++         depth: int, doc: str | None, reenters: bool = False) -> list[str]:
++    """One field: name, number and schema kind, its doc below."""
++    indent = '  ' * depth
++    label = f'{indent}{name}'
++    number = str(field.number)
++    what = _kind_text(family, field, reenters)
++    if field.shared:
++        what += f', record {field.record_id:#010x}'
++    column = NAME_WIDTH + NUMBER_WIDTH
++    parts = _wrap(what, LINE_LIMIT - BLOCK_INDENT - column) or ['']
++    if len(label) >= NAME_WIDTH:
++        rows = [label, f'{" " * NAME_WIDTH}{number:<{NUMBER_WIDTH}}{parts[0]}']
++    else:
++        rows = [f'{label:<{NAME_WIDTH}}{number:<{NUMBER_WIDTH}}{parts[0]}']
++    rows += [f'{" " * column}{part}' for part in parts[1:]]
++    if doc:
++        doc_indent = indent + ' ' * DOC_INDENT
++        width = LINE_LIMIT - BLOCK_INDENT - len(doc_indent)
++        rows += [f'{doc_indent}{line}' for line in _wrap(doc, width)]
++    return rows
++
++
++def _suffix(required: bool, decl: spec.FieldDecl) -> str:
++    """The [N] and ? a spec writes after a field name."""
++    suffix = ''
++    if decl.count_enum is not None:
++        suffix = f'[{decl.count_enum}]'
++    elif decl.max_occurrences == spec.UNLIMITED:
++        suffix = '[]'
++    elif decl.max_occurrences != 1:
++        suffix = f'[{decl.max_occurrences}]'
++    return suffix + ('' if required else '?')
++
++
++def _kind_text(family: semantics.Family, field: semantics.Field,
++               reenters: bool = False) -> str:
++    """A field's schema kind and bounds, as a spec reads."""
++    decl = field.decl
++    if decl.kind in ('uint', 'sint'):
++        return decl.kind + _bounds(_integer_bounds(decl), _unit(decl))
++    if decl.kind == 'bool':
++        return 'bool'
++    if decl.kind in ('string', 'binary'):
++        return decl.kind + _bounds(_length_bounds(decl), ())
++    if decl.kind == 'enum':
++        assert decl.ref is not None
++        return decl.ref
++    if decl.kind == 'flags':
++        assert decl.ref is not None
++        names = ', '.join(name for name, _ in
++                          family.definitions[decl.ref].values)
++        return f'{decl.ref}: {names}'
++    if decl.kind == 'blob':
++        assert decl.blob is not None
++        return 'blob' + _bounds((), _blob_parts(decl.blob))
++    if decl.extension is not None:
++        return f'extension {decl.extension}'
++    assert field.holds is not None
++    record = family.records[field.holds]
++    what = f'record {record.record_id:#010x}'
++    if record.role == 'named':
++        what = f'record {record.name} {record.record_id:#010x}'
++    if reenters:
++        what += ', which this re-enters'
++    return what
++
++
++def _bounds(range_parts: tuple[str, ...], other_parts: tuple[str, ...]) -> str:
++    parts = list(range_parts) + list(other_parts)
++    return f' {", ".join(parts)}' if parts else ''
++
++
++def _integer_bounds(decl: spec.FieldDecl) -> tuple[str, ...]:
++    low = None if decl.min == _default_min(decl.kind) else decl.min
++    high = None if decl.max == _default_max(decl.kind) else decl.max
++    if low is None and high is None:
++        return ()
++    text = spec.size_text if decl.unit == 'bytes' else spec.number_text
++    low_text = text(low) if low is not None else ''
++    high_text = text(high) if high is not None else ''
++    return (f'{low_text}..{high_text}',)
++
++
++def _default_min(kind: str) -> int:
++    return 0 if kind == 'uint' else spec.S64_MIN
++
++
++def _default_max(kind: str) -> int:
++    return spec.U64_MAX if kind == 'uint' else spec.S64_MAX
++
++
++def _unit(decl: spec.FieldDecl) -> tuple[str, ...]:
++    if decl.unit is None:
++        return ()
++    parts = [decl.unit]
++    if decl.scale:
++        parts.append(f'scale {decl.scale}')
++    return tuple(parts)
++
++
++def _length_bounds(decl: spec.FieldDecl) -> tuple[str]:
++    assert decl.min_length is not None and decl.max_length is not None
++    if decl.min_length == decl.max_length:
++        return (spec.size_text(decl.max_length),)
++    low = spec.size_text(decl.min_length) if decl.min_length else ''
++    return (f'{low}..{spec.size_text(decl.max_length)}',)
++
++
++def _blob_parts(blob: spec.BlobDecl) -> tuple[str, ...]:
++    parts = [DIRECTIONS[blob.direction]]
++    if blob.max_length != spec.U32_MAX:
++        parts.append(f'..{spec.size_text(blob.max_length)}')
++    if blob.alignment != 1:
++        parts.append(f'align {spec.size_text(blob.alignment)}')
++    parts.append(' '.join(blob.backings))
++    return tuple(parts)
++
++
++def _sizes(writer: _Writer, op: semantics.Op) -> None:
++    """What a caller has to bring and what it gets back, in bytes."""
++    reported = (
++        ('a schema-known request of at most {} bytes',
++         op.sizes.request_max_len),
++        ('a reply of at most {} bytes', op.sizes.action_reply_max_len),
++        ('a reply buffer of at least {} bytes',
++         op.sizes.query_reply_min_len),
++        ('{} bytes of reply buffer suggested',
++         op.sizes.query_reply_suggested_len),
++    )
++    rows = [label.format(value) for label, value in reported if value]
++    if not rows:
++        return
++    writer.paragraph('Lengths on a device of this family:')
++    writer.block(*rows)
++
++
++def _messages(writer: _Writer, family: semantics.Family,
++              descendants: tuple[semantics.Family, ...]) -> None:
++    if not family.messages:
++        return
++    writer.heading('Messages no op declares', '=')
++    writer.paragraph(
++        'The core writes these itself, so they belong to no op: a '
++        'caller reads one out of the buffer it offered for a reply.')
++    for message in family.messages:
++        writer.heading(message.name, '-')
++        record = family.records[message.name]
++        writer.block(f'record {message.record_id:#010x}', '',
++                     *_record_rows(family, descendants, record, 0,
++                                   (record.name,)))
++        writer.paragraph(f'At most {message.max_len} bytes, bounded by '
++                         f'{message.limit}.')
++
++
++def _signature(family: semantics.Family, op: semantics.Op,
++               width: int) -> list[str]:
++    """One op as a call: what it takes, and what it answers."""
++    request = _members(family, op.request_record) if op.request_record \
++        else []
++    call = (f'{op.name}(', request, ')')
++    if op.reply_record is None:
++        return _layout((call,), width)
++    return _layout((call, ' -> ', _shape(family, op.reply_record)), width)
++
++
++_Piece = Union[str, tuple[str, list['_Piece'], str]]
++
++
++def _shape(family: semantics.Family, record: semantics.Record) -> _Piece:
++    """A message root: a named record by name, else its members."""
++    if record.role == 'named':
++        return record.name
++    members = _members(family, record)
++    return ('{ ', members, ' }') if members else '{}'
++
++
++def _layout(pieces: tuple[_Piece, ...], width: int) -> list[str]:
++    """One signature, wrapped inside its braces where it is too long.
++
++    A piece is text or a group, an opener, its members and a closer. A member
++    that does not fit goes on a line of its own, below the first one; a reply
++    that does not fit goes on an indented line.
++    """
++    lines = ['']
++    for piece in pieces:
++        if piece == ' -> ':
++            lines[-1] += piece
++            continue
++        if lines[-1].endswith(' -> ') and \
++                len(lines[-1]) + len(_flat(piece)) > width:
++            lines[-1] = lines[-1].rstrip()
++            lines.append('    ')
++        _place(piece, lines, width)
++    return lines
++
++
++def _place(item: _Piece, lines: list[str], width: int) -> None:
++    """Append item to lines, wrapping inside it where it does not fit."""
++    flat = _flat(item)
++    if isinstance(item, str) or len(lines[-1]) + len(flat) <= width:
++        lines[-1] += flat
++        return
++    opener, members, closer = item
++    lines[-1] += opener
++    inner = len(lines[-1])
++    for index, member in enumerate(members):
++        tail = closer if index == len(members) - 1 else ','
++        if index:
++            if len(lines[-1]) + 1 + len(_flat(member)) + len(tail) <= width:
++                lines[-1] += ' '
++            else:
++                lines.append(' ' * inner)
++        _place(member, lines, width - len(tail))
++        lines[-1] += tail
++
++
++def _flat(item: _Piece) -> str:
++    if isinstance(item, str):
++        return item
++    opener, members, closer = item
++    return opener + ', '.join(_flat(member) for member in members) + closer
++
++
++def _members(family: semantics.Family,
++             record: semantics.Record) -> list[_Piece]:
++    """Each member of one record, a record written out in place."""
++    parts: list[_Piece] = []
++    included = None
++    for member in record.members:
++        field = member.field
++        origin = None
++        if field.record_id != record.record_id and not field.shared:
++            origin = field.record
++        if origin is not None:
++            if origin != included:
++                parts.append(origin)
++            included = origin
++            continue
++        included = None
++        name = field.name + _suffix(member.required, field.decl)
++        parts.append(_member(family, field, name))
++    return parts
++
++
++def _member(family: semantics.Family, field: semantics.Field,
++            name: str) -> _Piece:
++    decl = field.decl
++    if decl.kind == 'blob':
++        assert decl.blob is not None
++        return f'{name}: {DIRECTIONS[decl.blob.direction]} blob'
++    if decl.kind != 'record':
++        return name
++    if decl.extension is not None:
++        return f'{name}: {decl.extension}'
++    assert field.holds is not None
++    record = family.records[field.holds]
++    if record.role == 'named':
++        return f'{name}: {record.name}'
++    return (f'{name}: {{ ', _members(family, record), ' }')
++
++
++def _id(value: int) -> str:
++    return f'0x{value:016x}'
+diff --git a/tools/ctlv/ctlvgen/lib/gen_runtime.py b/tools/ctlv/ctlvgen/lib/gen_runtime.py
+new file mode 100644
+index 000000000000..bfb65d7d7b54
+--- /dev/null
++++ b/tools/ctlv/ctlvgen/lib/gen_runtime.py
+@@ -0,0 +1,66 @@
++# SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
++"""Resolved names and values consumed by specification-aware tools."""
++
++from __future__ import annotations
++
++import json
++from typing import Any
++
++from . import semantics
++
++
++def _definition(item: semantics.Definition) -> dict[str, Any]:
++    values = []
++    for name, number in item.values:
++        value = 1 << number if item.kind == 'flags' else number
++        values.append({'name': name, 'value': value})
++    return {
++        'name': item.name,
++        'kind': item.kind,
++        'values': values,
++    }
++
++
++def _field(item: semantics.Field) -> dict[str, str]:
++    out = {
++        'name': item.full_name,
++        'short': item.name,
++        'type': f'0x{item.type:016x}',
++        'kind': item.decl.kind,
++    }
++    if item.decl.kind in ('enum', 'flags'):
++        assert item.decl.ref is not None
++        out['definition'] = item.decl.ref
++    return out
++
++
++def _op(item: semantics.Op) -> dict[str, Any]:
++    return {
++        'name': item.name,
++        'id': f'0x{item.op_id:016x}',
++        'type': item.type,
++        'availability': item.availability,
++        'request-max-len': item.sizes.request_max_len,
++        'action-reply-max-len': item.sizes.action_reply_max_len,
++        'query-reply-min-len': item.sizes.query_reply_min_len,
++        'query-reply-suggested-len':
++            item.sizes.query_reply_suggested_len,
++        'error-info-max-len': item.sizes.error_info_max_len,
++        'fd-access': item.fd_access,
++    }
++
++
++def render(family: semantics.Family) -> str:
++    """Return a versioned manifest for one effective family."""
++    chain = [{'name': name, 'id': family_id}
++             for family_id, name in family.owners.items()]
++    data = {
++        'version': 1,
++        'family': family.name,
++        'chain': chain,
++        'definitions': [_definition(item)
++                        for item in family.definitions.values()],
++        'fields': [_field(item) for item in family.fields.values()],
++        'ops': [_op(item) for item in family.ops],
++    }
++    return json.dumps(data, separators=(',', ':')) + '\n'
 -- 
 2.56.0
 
