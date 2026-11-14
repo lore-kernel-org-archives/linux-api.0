@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=130.136.161.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794682053;
-	b=pHQdKvS1M/selJFg2PDBdx1dVdzELc7fugfPhTJa0ny5P+AuypFtEebSSpW6wUyWlayJ
-	 ihRi8j3uJqBLO6Cb0yECMZ/KzPHnKe/ep34wVwQMbOe/K6xQNUE2sh3TEM0MIpogNX20s
-	 rRl6tyO7G1TSW6x0xUWYmsGaRC6BeoObF//0XKrYUHQdA8NjRvMOExEqVaawqvg2vOI12
-	 QA6RvxMHRWiHh31EZumpJ2AmQvLz6MSVhDSrQNVJKvsxI4IMaEj+huf4XFJtUhmwZnFA9
-	 aoMrL3etkBMgfMZS3+9CNn+jLRetJuNgvQvtV3o48xj2BT1SkccbyJwTcbeE3zCErfg==
+	t=1794682054;
+	b=tCfJ6isE09eSTyry3E91fCGlEE5Z0zVMIdmp570RlCScLSpkz0LLH9mDC/JRbYuEfA37
+	 dfstPBsTRkNc/Lv733ZFwp0ZFUQSGKqUj6pFtKbIG3BOfp7scLb8fAFhCeD/mOOAwmec1
+	 rVEK/lFTOBRnV6JJlCibxSFMwPB+UAWWnr8Tqmvzsjdo3zVkzz9lvrmgpqnbhKq29q7mT
+	 7f29jzRchj6M7w4LLPpvoEXAWTGfS5t6NpckkdNZOUa57O+MBIPP2tMyLb6EbRAvSfp6B
+	 FWqr9F/ejd87oBXYQpsiKoUaAL0M9hzdiXusR/Hn+88kaL9ReuifT+9LHcs5F0wXxiw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794682053;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794682054;
 	h=DMARC-Filter:Received:DKIM-Signature:From:To:Cc:Subject:Date:
 	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=eXrt6zjXDYGtbkAl2DYVnczzLf0GaCjURpDTDmTj8GU=;
-	b=lAvDaxcxMRH5x41cSd0SlJkdZbe+uEfOohO3ohPfd51+s3UI5Cu8yfndqV595fXWMfjh
-	 EZ2rmaqzXQx8C1JwRLuF7qDx4VNFgp8lc/23i7kizyQ/bCH9W+N/NBl1AJOewT+RjZWO7
-	 J+lRW3S/lhNsXZFY/lkTPsu53g1kHYTUDYNXirRD3Qo02rllwaE+cxcRtx7x/HEwMABRJ
-	 DUn/guSZJWTP8vMg3uOLtTi+dYcRj6KuQgLpeCIWytNFykwLoALUbUIodAYYJUA4MLeEG
-	 ZOmTa4sxP1l8sv0ljKi4tQWLpv0HTGN832qb641X+RFkaQXtwIQcmGUDA7sw3PBmmlw==
+	bh=00dly/4uJsAvZjuQ0ZIcQDBkN5Fye630g3uWkbaeUMo=;
+	b=Jg8UKLksWHBeFtzlCEkfQABShiosup5sz2zNz3EO7tDrkH3xUOe29xd/2MAa67cnCvCe
+	 S8NiC/unFk4sDspY4P/1HuX5TSCR3waiDrKeOkgE8BQPUaMRCJPGh4tCQxu8fcG4sty5X
+	 8DojHESUCNuguIWjHoQVQGssG9soEAHvKBreaYYF0rb3qd+51bkaPSfYtbHI/BYgKeLur
+	 phM0QtDdgOgIFOIngwyLMlohHSD6qRrFYacaaq42ZwLJ17DEQ94UgKynZuauHReAxLq1S
+	 Fg9HmWK9x6x/QUHg341VbSJ2DwjQG1AmGk4MpHik+EWDTIeAX87zTLfJlgIr93IaBZg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=cs.unibo.it;
 	spf=pass smtp.mailfrom=cs.unibo.it;
-	dkim=pass header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=sr0v5n3s;
+	dkim=pass header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=EHwvfCki;
 	arc=none smtp.remote-ip=130.136.161.50
 Received: from mail.virtlab.unibo.it (mail.virtlab.unibo.it [130.136.161.50])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 77BDD606A337;
-	Sat, 14 Nov 2026 18:47:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 77BDD606A337
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 78673606A33E;
+	Sat, 14 Nov 2026 18:47:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 78673606A33E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cs.unibo.it
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.unibo.it
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=sr0v5n3s
+	dkim=pass (1024-bit key) header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=EHwvfCki
 Received: from eipi10.cs.unibo.it (host0.studiodavoli.it [109.234.61.1])
-	by mail.virtlab.unibo.it (Postfix) with ESMTPA id F0BC91C025B;
-	Sat, 14 Nov 2026 19:47:30 +0100 (CET)
+	by mail.virtlab.unibo.it (Postfix) with ESMTPA id 73C031C025E;
+	Sat, 14 Nov 2026 19:47:32 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=cs.unibo.it;
-	s=virtlab; t=1794682051;
-	bh=rb+3MKxX5aVEtvNPL35DviAvmrKKFIkGgi9tYTrkJVk=;
+	s=virtlab; t=1794682052;
+	bh=hoWPkmv3P1ctIMiEu2Hj5HhfcHsRt29pRdzWjH7fRac=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References:From;
-	b=sr0v5n3sFV1hSxJsnNyaJjh9ORnCa2EuxQxIo6EYpQNdWQ9Qdp8NehDSsaYHUChFI
-	 avvhnS/DXptVVDuBIjIj62/RTds4VX8/oZy/mFF8YzIUKeKafi2KnqVbePJqo7OvdS
-	 3w6F4suIu5/B1ADHz2yBJmYpIv7VdqBsBMlcJmDE=
+	b=EHwvfCkiZ7uDwQgvFmWkAyf4BF8KLc6f3B0gDkffOP7DDRJtsWCwMWaEZLNY6ymVY
+	 m30beYOGkyLgrF0bVME5Ru4bnvxqr9GF8jhi5jEuKQtAjTr6rHU/SfhZzLCBOqzTI0
+	 YD4kK854lO0tJVYnfSgCTP5ciqdwUL4eh/+hpYQs=
 From: Renzo Davoli <renzo@cs.unibo.it>
 To: linux-kernel@vger.kernel.org
 Cc: Renzo Davoli <renzo@cs.unibo.it>,
@@ -54,27 +54,10 @@ Cc: Renzo Davoli <renzo@cs.unibo.it>,
 	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
 	strace-devel@lists.strace.io,
 	linux-api@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	Richard Henderson <richard.henderson@linaro.org>,
-	Matt Turner <mattst88@gmail.com>,
-	Magnus Lindholm <linmag7@gmail.com>,
-	Brian Cain <bcain@kernel.org>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	Michal Simek <monstr@monstr.eu>,
-	Dinh Nguyen <dinguyen@kernel.org>,
-	Simon Schuster <schuster.simon@siemens-energy.com>,
-	Richard Weinberger <richard@nod.at>,
-	Anton Ivanov <anton.ivanov@cambridgegreys.com>,
-	Johannes Berg <johannes@sipsolutions.net>,
-	Chris Zankel <chris@zankel.net>,
-	Max Filippov <jcmvbkbc@gmail.com>,
-	linux-alpha@vger.kernel.org,
-	linux-hexagon@vger.kernel.org,
-	linux-m68k@lists.linux-m68k.org,
-	linux-um@lists.infradead.org
-Subject: [PATCH v4 1/3] asm/ptrace.h: add instruction_pointer_set
-Date: Sat, 14 Nov 2026 19:47:16 +0100
-Message-ID: <20261114184720.373178-2-renzo@cs.unibo.it>
+	linux-kselftest@vger.kernel.org
+Subject: [PATCH v4 2/3] ptrace: add PTRACE_SYSCALL_INFO_FLAG_SET_IP
+Date: Sat, 14 Nov 2026 19:47:17 +0100
+Message-ID: <20261114184720.373178-3-renzo@cs.unibo.it>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20261114184720.373178-1-renzo@cs.unibo.it>
 References: <20261114184720.373178-1-renzo@cs.unibo.it>
@@ -89,137 +72,181 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add an instruction_pointer_set function for architectures that do
-not currently provide one.
+This flag adds support for modifying the tracee's instruction pointer.
+
+To do this, the tracer stores the new instruction pointer value in the
+instruction_pointer field of the ptrace_syscall_info structure and
+sets the PTRACE_SYSCALL_INFO_FLAG_SET_IP flag in the flags field.
+
+This flag is introduced to avoid breaking existing code that uses
+PTRACE_SET_SYSCALL_INFO and currently ignores the
+instruction_pointer field.
+
+The proposal does not add any new ptrace capability. It merely provides a
+portable interface for a capability that already exists and is already relied
+upon by existing applications.
+
+WHY
+
+PTRACE_SYSCALL_INFO_FLAG_SET_IP completes the set of actions that a tracer can
+request when intercepting a system call.
+
+A tracer can currently instruct a tracee to:
+
+* execute the original system call;
+* execute a different system call (or the same system call with modified arguments);
+* skip the system call and provide the desired return value and/or errno.
+
+The proposed PTRACE_SYSCALL_INFO_FLAG_SET_IP adds a fourth possibility:
+* execute an arbitrary sequence of two or more system calls in place of the original one.
+
+The mechanism is straightforward. During a PTRACE_SYSCALL_INFO_EXIT stop, the
+tracer rewinds the instruction pointer to the system call instruction (e.g. by
+2 bytes on x86-64 for syscall, or by the appropriate amount on other
+architectures). When the tracee resumes, it immediately generates a new
+syscall-entry stop, allowing the tracer to provide a new system call number and
+arguments. By repeating this process, a tracer can transparently replace a
+single system call with any sequence of system calls.
+
+This capability already exists on all architectures through
+architecture-specific interfaces such as PTRACE_POKEUSER, PTRACE_SETREGS, or
+PTRACE_SETREGSET. PTRACE_SYSCALL_INFO_FLAG_SET_IP does not introduce a new
+capability; it merely exposes an existing one through the portable
+PTRACE_GET_SYSCALL_INFO/PTRACE_SET_SYSCALL_INFO API.
+
+WHO
+
+The VUOS project uses this mechanism extensively.
+VUOS provides namespace-like execution environments implemented entirely in
+user space, without relying on kernel namespaces.
+https://wiki.virtualsquare.org/#/tutorials/vuosbasics
+
+For example, VUOS allows unprivileged processes to use user-space
+implementations of filesystems (FUSE), networking stacks, virtual devices, and
+other resources.
+
+To improve scalability on multicore systems, VUOS implements what we call the
+guardian angel model: each traced thread has its own dedicated tracer thread.
+This avoids a single tracer becoming a bottleneck.
+
+When a traced thread creates a child, ownership of the new tracee must be
+transferred to a newly created guardian angel. This requires delaying execution
+of the child's first system call until the new tracer has attached.
+
+The current implementation proceeds as follows:
+* save the original system call number and arguments;
+* replace the system call with a blocking ppoll(NULL, 0, NULL, NULL) call;
+* detach the original tracer;
+* attach the new guardian angel using PTRACE_SEIZE;
+* interrupt the blocking ppoll() with PTRACE_INTERRUPT;
+* at the subsequent syscall-exit stop, rewind the instruction pointer to the system call instruction;
+* at the following syscall-entry stop, restore the original system call number and arguments.
+
+This mechanism is currently implemented using architecture-specific register
+manipulation. PTRACE_SYSCALL_INFO_FLAG_SET_IP would allow the same
+implementation to be written using the portable ptrace syscall information API.
+
+Although VUOS is the primary motivation for this proposal, the feature is
+generally useful for any project implementing ptrace-based system call
+interposition, including PRoot, strace's syscall injection machinery, and
+similar frameworks.
 
 Signed-off-by: Renzo Davoli <renzo@cs.unibo.it>
 ---
- arch/alpha/include/asm/ptrace.h      | 6 ++++++
- arch/hexagon/include/asm/ptrace.h    | 6 ++++++
- arch/m68k/include/asm/ptrace.h       | 6 ++++++
- arch/microblaze/include/asm/ptrace.h | 6 ++++++
- arch/nios2/include/asm/ptrace.h      | 6 ++++++
- arch/um/include/asm/ptrace-generic.h | 6 ++++++
- arch/xtensa/include/asm/ptrace.h     | 6 ++++++
- 7 files changed, 42 insertions(+)
+ include/uapi/linux/ptrace.h |  4 ++++
+ kernel/ptrace.c             | 38 +++++++++++++++++++++++++++----------
+ 2 files changed, 32 insertions(+), 10 deletions(-)
 
-diff --git a/arch/alpha/include/asm/ptrace.h b/arch/alpha/include/asm/ptrace.h
-index 45d1229344b6..1a6f073e892e 100644
---- a/arch/alpha/include/asm/ptrace.h
-+++ b/arch/alpha/include/asm/ptrace.h
-@@ -33,6 +33,12 @@ static __always_inline bool regs_irqs_disabled(struct pt_regs *regs)
- 	return arch_irqs_disabled_flags(regs->ps);
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index 5f8ef6156752..6f62cb812875 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -80,6 +80,10 @@ struct seccomp_metadata {
+ #define PTRACE_SYSCALL_INFO_EXIT	2
+ #define PTRACE_SYSCALL_INFO_SECCOMP	3
+ 
++#define PTRACE_SYSCALL_INFO_FLAG_SET_IP (1 << 0)
++#define PTRACE_SYSCALL_INFO_FLAG_ALL \
++	(PTRACE_SYSCALL_INFO_FLAG_SET_IP)
++
+ struct ptrace_syscall_info {
+ 	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
+ 	__u8 reserved;
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index ab6f5dab0223..a6980855ce2d 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -1156,7 +1156,9 @@ ptrace_set_syscall_info(struct task_struct *child, unsigned long user_size,
+ {
+ 	struct pt_regs *regs = task_pt_regs(child);
+ 	struct ptrace_syscall_info info;
++	unsigned long ip = 0;
+ 	int op;
++	int ret;
+ 
+ 	if (user_size < sizeof(info))
+ 		return -EINVAL;
+@@ -1169,10 +1171,16 @@ ptrace_set_syscall_info(struct task_struct *child, unsigned long user_size,
+ 	if (copy_from_user(&info, datavp, sizeof(info)))
+ 		return -EFAULT;
+ 
+-	/* Reserved for future use. */
+-	if (info.flags || info.reserved)
++	/* Unused flags and fields reserved for future use. */
++	if ((info.flags & ~PTRACE_SYSCALL_INFO_FLAG_ALL) || info.reserved)
+ 		return -EINVAL;
+ 
++	if (info.flags & PTRACE_SYSCALL_INFO_FLAG_SET_IP) {
++		ip = info.instruction_pointer;
++		if (ip != info.instruction_pointer)
++			return -ERANGE;
++	}
++
+ 	op = ptrace_get_syscall_info_op(child);
+ 
+ 	/*
+@@ -1183,24 +1191,34 @@ ptrace_set_syscall_info(struct task_struct *child, unsigned long user_size,
+ 	 * PTRACE_SYSCALL_INFO_EXIT one, so only the return value can be
+ 	 * changed anymore during the same stop.
+ 	 */
+-	if (op == PTRACE_SYSCALL_INFO_SECCOMP &&
+-	    info.op == PTRACE_SYSCALL_INFO_EXIT)
+-		return ptrace_set_syscall_info_seccomp_skip(child, regs, &info);
+-
+-	if (op != info.op)
++	if (op != info.op &&
++	    !(op == PTRACE_SYSCALL_INFO_SECCOMP &&
++	      info.op == PTRACE_SYSCALL_INFO_EXIT))
+ 		return -EINVAL;
+ 
+ 	switch (info.op) {
+ 	case PTRACE_SYSCALL_INFO_ENTRY:
+-		return ptrace_set_syscall_info_entry(child, regs, &info);
++		ret = ptrace_set_syscall_info_entry(child, regs, &info);
++		break;
+ 	case PTRACE_SYSCALL_INFO_EXIT:
+-		return ptrace_set_syscall_info_exit(child, regs, &info);
++		if (op == PTRACE_SYSCALL_INFO_SECCOMP)
++			ret = ptrace_set_syscall_info_seccomp_skip(child, regs,
++								   &info);
++		else
++			ret = ptrace_set_syscall_info_exit(child, regs, &info);
++		break;
+ 	case PTRACE_SYSCALL_INFO_SECCOMP:
+-		return ptrace_set_syscall_info_seccomp(child, regs, &info);
++		ret = ptrace_set_syscall_info_seccomp(child, regs, &info);
++		break;
+ 	default:
+ 		/* Other types of system call stops are not supported yet. */
+ 		return -EINVAL;
+ 	}
++
++	if (!ret && (info.flags & PTRACE_SYSCALL_INFO_FLAG_SET_IP))
++		instruction_pointer_set(regs, ip);
++
++	return ret;
  }
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- /* Syscall emulation defines */
- #define PTRACE_SYSEMU			0x1d
- #define PTRACE_SYSEMU_SINGLESTEP	0x1e
-diff --git a/arch/hexagon/include/asm/ptrace.h b/arch/hexagon/include/asm/ptrace.h
-index ed35da1ee685..0a121f6e3bfc 100644
---- a/arch/hexagon/include/asm/ptrace.h
-+++ b/arch/hexagon/include/asm/ptrace.h
-@@ -18,6 +18,12 @@ extern const char *regs_query_register_name(unsigned int offset);
- 	((struct pt_regs *) \
- 	 ((unsigned long)current_thread_info() + THREAD_SIZE) - 1)
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- #if CONFIG_HEXAGON_ARCH_VERSION >= 4
- #define arch_has_single_step()	(1)
- #endif
-diff --git a/arch/m68k/include/asm/ptrace.h b/arch/m68k/include/asm/ptrace.h
-index bc86ce012025..6e8a8f0daee8 100644
---- a/arch/m68k/include/asm/ptrace.h
-+++ b/arch/m68k/include/asm/ptrace.h
-@@ -18,6 +18,12 @@
- 	(struct pt_regs *)((char *)current_thread_info() + THREAD_SIZE) - 1
- #define current_user_stack_pointer() rdusp()
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- #define arch_has_single_step()	(1)
- 
- #ifdef CONFIG_MMU
-diff --git a/arch/microblaze/include/asm/ptrace.h b/arch/microblaze/include/asm/ptrace.h
-index 17982292a64f..69e10658d7a9 100644
---- a/arch/microblaze/include/asm/ptrace.h
-+++ b/arch/microblaze/include/asm/ptrace.h
-@@ -20,5 +20,11 @@ static inline long regs_return_value(struct pt_regs *regs)
- 	return regs->r3;
- }
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- #endif /* __ASSEMBLER__ */
- #endif /* _ASM_MICROBLAZE_PTRACE_H */
-diff --git a/arch/nios2/include/asm/ptrace.h b/arch/nios2/include/asm/ptrace.h
-index 96cbcd40c7ce..d120d8ecb187 100644
---- a/arch/nios2/include/asm/ptrace.h
-+++ b/arch/nios2/include/asm/ptrace.h
-@@ -70,6 +70,12 @@ struct switch_stack {
- #define user_stack_pointer(regs)	((regs)->sp)
- extern void show_regs(struct pt_regs *);
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- #define current_pt_regs() \
- 	((struct pt_regs *)((unsigned long)current_thread_info() + THREAD_SIZE)\
- 		- 1)
-diff --git a/arch/um/include/asm/ptrace-generic.h b/arch/um/include/asm/ptrace-generic.h
-index 62e9916078ec..632d4ce3334d 100644
---- a/arch/um/include/asm/ptrace-generic.h
-+++ b/arch/um/include/asm/ptrace-generic.h
-@@ -29,6 +29,12 @@ struct pt_regs {
- 
- #define PTRACE_OLDSETOPTIONS 21
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- #ifdef CONFIG_BINFMT_ELF_FDPIC
- #define PTRACE_GETFDPIC		31
- #define PTRACE_GETFDPIC_EXEC	0
-diff --git a/arch/xtensa/include/asm/ptrace.h b/arch/xtensa/include/asm/ptrace.h
-index d0568ff6d349..97b14418955e 100644
---- a/arch/xtensa/include/asm/ptrace.h
-+++ b/arch/xtensa/include/asm/ptrace.h
-@@ -103,6 +103,12 @@ static inline unsigned long regs_return_value(struct pt_regs *regs)
- 	return regs->areg[2];
- }
- 
-+static inline void instruction_pointer_set(struct pt_regs *regs,
-+					   unsigned long val)
-+{
-+	instruction_pointer(regs) = val;
-+}
-+
- int do_syscall_trace_enter(struct pt_regs *regs);
- void do_syscall_trace_leave(struct pt_regs *regs);
+ #endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
  
 -- 
 2.47.3
