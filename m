@@ -1,88 +1,63 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.10
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794778264;
-	b=jVvmAEIaig7IZIjQjkTK9B8h3kO7xZWICL54FF7zQH7uTsL0AUDvy2hn4ZATtmWIr58y
-	 +v9Nw1jX2Hv7TwTsIJgEFENmC8cd4Djm6vkBpLdmiZIflG9S9UgU/t8l5ioN0HXKeLqvU
-	 dz+tRNNlaaxmd7FjbT6rU7UynJRZ8eMPI//aojI4dgdzR/gWCo6GELlOScQ6m+XuVL7l1
-	 PabUEOPLsNeVPZlFMW1l+jzUIxHkLHpJSnV09GQ6+Ww3BtRkFOi/PO8r/XW2ot7lintWU
-	 ua6dOI68vUCqsoaAazuxTg9pj7LqnH49j+A5jvy9othxbUc7EgcZirBX/LaPnyzkivA==
+	t=1794780728;
+	b=ArPRbO/AG9k9TUZWjdhpSX9Uv9b/3NRQ5SpT0zzAQz/DVThUhL2eFgxsGUiZfoc4HuhW
+	 siDO039QPcbvLjCZQqRRmofo2fZ/VVKpJRsamJXe2jILVL2L+CWlRDXeGJOVupWfVYgrF
+	 417VWPspxnKldGh4/o3TG1ndSKURu2/KPcrBEdpbsWrbP+FCXE7MkexQQilQU0LGXpsyi
+	 mmRfxjJCYe8EB6Zhe4djwoLNtHk8DONO6h5zeyEDEInoD+SCWGG3A3L7R4jOb73Tu4ytO
+	 t2eePRqjGf0sAfI/k+7JgsTVJf5Rc4PoagIDvgphHuc0VBVn3kUyHzwzrOVMDB9kwiQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794778264;
-	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
-	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:Received:Date:From:To:
-	 Cc:Subject:Message-ID:References:MIME-Version:Content-Type:
-	 Content-Disposition:Content-Transfer-Encoding:In-Reply-To;
-	bh=gI3pT+vyemFy2bR8tG+tuc3UaQlX4B8AkgTSVPpKmCY=;
-	b=sckvIKkkv59YBBCrtLZlJOoB5Z+IC9978c7iO7h4o8fVbB7MCKY0tahnsoTyMOMJHL2N
-	 HOeM/Z+wnE8tLUoFkgVO72fLYa5QjVRR6JVl9KPrnFlHcfq0iWLczR+rX83NB644Gor/6
-	 eALxvZ4m3ixdjE3v1C5Ch55KzFGzkih0wyttWHuAlueU9kCJnrSj3SMUXdipaU1MM+jY4
-	 yVSbIiEFGXhVmlNgXEpvzvcmpJIa+r4W5WJON+0Ie9PJ93LimNL9l14KTsNgV7OpFWBxd
-	 YdZaZgs4Ka84hiU4C6di3jOzplG691a+MCL1Dgt4ssorXDCh3cWrLiWcbD+tlvVC3vQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794780728;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-Id:
+	 In-Reply-To:References:X-Mailer:Mime-Version:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=q9s42YVPhc56VTV+G1TekC9EyggoNH/5JmNGm6Xx0OY=;
+	b=G3NlcQpPNgauL0GS5F2pFxEtsGmPB+LqiVlzu7kYfwpExO1OtVu9M4O+XKW3+lcWOqST
+	 5mbbOHpG+Lnl0l77pFK/ZBlcbpFbPvjwL0HVwwZ0MUKreobC6vHi3k3AOkgbp6tdbXvYw
+	 zc36R7UT1gCrpgYUJjv8s/JXUgZikIXwIrsqj0di9ApGALpr6QJHGzp2ZIndN4n1Y78qI
+	 l+fEveVqsON2uO8mqdHWdfll8glmTVPJVPKRluOypNG5Ce3KswQF6goDqiaSHBr5Ndp6d
+	 9CFLmVIdSnQQPOC2cLXVuqavXMUqS96v4I1YGeG2ceJuZhFHK7Gk/dCIPDOFG8qn4Yg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=intel.com;
-	spf=pass smtp.mailfrom=intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=TD+YLUMO;
-	arc=none smtp.remote-ip=192.198.163.10
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.10])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dkim=pass header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=2dU+DbgF;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 01380606A323;
-	Sun, 15 Nov 2026 21:31:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 01380606A323
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B646606A31F;
+	Sun, 15 Nov 2026 22:12:07 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=TD+YLUMO
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1794778264; x=1826314264;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:content-transfer-encoding:in-reply-to;
-  bh=jCKBvtDwsyaFaVJiupvEpl5700EKZdPVw5dmNxMVuSs=;
-  b=TD+YLUMOnp++488g7wSsWJ0ThD7ZUhZZrt2FwQ+vCNbhKFmazb6zjQwj
-   giAAeJfrUpPTe8uJ8T6nGUYqT1lQxhNSDBUAxI5fPK4346GSjFx4WCfZH
-   dozPqUdWuonnecNfEevhuPj+GOx+wIKkBxcFHnO0egL19PbZreeW8+Cr3
-   IPI4RUERSSiqA8zExqSvJMYeSE3Wor45n0C2hJhrjX/vuY3b+Ry+R/JDl
-   5XCb6By/JKONm/unI4zzmiONb6Y4gGl+5/4gM0/f0FrymXOnggUv+Efb6
-   tnfYhJkVYTpFkvJ+dpK7i+csrkc823lI95zhlpRWg2+vMAtmBAMSA9wup
-   g==;
-X-CSE-ConnectionGUID: B3Rr7MApSwSgoLcdBj0/8w==
-X-CSE-MsgGUID: oV7OuvJ1S8KBPOai3//Uug==
-X-IronPort-AV: E=McAfee;i="6800,10657,11967"; a="3403312"
-X-IronPort-AV: E=Sophos;i="6.27,215,1787036400"; 
-   d="scan'208";a="3403312"
-Received: from fmviesa001.fm.intel.com ([10.60.135.141])
-  by fmvoesa104.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 15 Nov 2026 13:31:03 -0800
-X-CSE-ConnectionGUID: bfSLt/uHSn+iE3PZ81FKKw==
-X-CSE-MsgGUID: EdM1X6NaTzWv3nFMBfQyZQ==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.27,215,1787036400"; 
-   d="scan'208";a="9722593"
-Received: from lkp-server01.sh.intel.com (HELO 0caa9d2d175c) ([10.239.97.150])
-  by fmviesa001.fm.intel.com with ESMTP; 15 Nov 2026 13:31:00 -0800
-Received: from kbuild by 0caa9d2d175c with local (Exim 4.98.2)
-	(envelope-from <lkp@intel.com>)
-	id 1xShoP-000000017LS-0Ahq;
-	Sun, 15 Nov 2026 21:30:57 +0000
-Date: Mon, 16 Nov 2026 05:30:11 +0800
-From: kernel test robot <lkp@intel.com>
-To: =?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Darren Hart <dvhart@infradead.org>,
-	Davidlohr Bueso <dave@stgolabs.net>, Arnd Bergmann <arnd@arndb.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Waiman Long <longman@redhat.com>,
-	Ryan Houdek <Sonicadvance1@gmail.com>,
-	Thomas Gleixner <tglx@kernel.org>
-Cc: oe-kbuild-all@lists.linux.dev, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-api@vger.kernel.org,
-	kernel-dev@igalia.com,
-	=?iso-8859-1?Q?Andr=E9?= Almeida <andrealmeid@igalia.com>
-Subject: Re: [PATCH v8 06/10] futex: Wire up set_robust_list2 syscall
-Message-ID: <202611160554.MGBENVam-lkp@intel.com>
-References: <20261115-tonyk-robust_futex-v8-6-a4fe47333a28@igalia.com>
+	dkim=pass (1024-bit key, unprotected) header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=2dU+DbgF
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D80C81F000C4;
+	Sun, 15 Nov 2026 22:12:06 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=linux-foundation.org; s=korg; t=1794780727;
+	bh=q9s42YVPhc56VTV+G1TekC9EyggoNH/5JmNGm6Xx0OY=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References;
+	b=2dU+DbgFDrqSj3PWmmULOFhMRJrMipQby1pDwXNQGxLi46AXNwWZX7utTYV4vHXMw
+	 OuPTqGy1iRd0KdBcAa+7e2q56eUOyyVc+qL8yfUS0ZDGXQiZX1nqa8ER3jfu0eQFvY
+	 gnkUjz6mfockveWho3dsBBhBNdBl3oqMsZUPEw20=
+Date: Sun, 15 Nov 2026 14:12:06 -0800
+From: Andrew Morton <akpm@linux-foundation.org>
+To: Yingjie Wang <x-professor@outlook.com>
+Cc: Manfred Spraul <manfred@colorfullife.com>, Alexey Gladkov
+ <legion@kernel.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Vasily
+ Averin <vasily.averin@linux.dev>, Johannes Weiner <hannes@cmpxchg.org>,
+ Shakeel Butt <shakeel.butt@linux.dev>, Michal =?ISO-8859-1?Q?Koutn=FD?=
+ <mkoutny@suse.com>, Michal Hocko <mhocko@suse.com>, Alejandro Colomar
+ <alx@kernel.org>, "linux-kernel@vger.kernel.org"
+ <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>,
+ "cgroups@vger.kernel.org" <cgroups@vger.kernel.org>,
+ "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
+ "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>,
+ "linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>,
+ Davidlohr Bueso <dave@stgolabs.net>
+Subject: Re: [PATCH v5 0/3] ipc/sem: account dynamic sops arrays and
+ validate SEMOPM
+Message-Id: <20261115141206.920bdc8c5a84073712bb5c3b@linux-foundation.org>
+In-Reply-To: <cover.1793250194.git.x-professor@outlook.com>
+References: <cover.1793250194.git.x-professor@outlook.com>
+X-Mailer: Sylpheed 3.8.0beta1 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -91,40 +66,112 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <20261115-tonyk-robust_futex-v8-6-a4fe47333a28@igalia.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-Hi André,
+On Thu, 29 Oct 2026 05:03:24 +0000 Yingjie Wang <x-professor@outlook.com> wrote:
 
-kernel test robot noticed the following build errors:
+> Shakeel, thanks for the suggestion.
 
-[auto build test ERROR on 9f74092fda91ef93c2b07585785c1dc83cd7971f]
+Thanks.  Shakeel, please review [1/3]?
 
-url:    https://github.com/intel-lab-lkp/linux/commits/Andr-Almeida/futex-Skip-test_futex_robust_unlock-if-not-supported/20261115-143110
-base:   9f74092fda91ef93c2b07585785c1dc83cd7971f
-patch link:    https://lore.kernel.org/r/20261115-tonyk-robust_futex-v8-6-a4fe47333a28%40igalia.com
-patch subject: [PATCH v8 06/10] futex: Wire up set_robust_list2 syscall
-config: xtensa-allnoconfig (https://download.01.org/0day-ci/archive/20261116/202611160554.MGBENVam-lkp@intel.com/config)
-compiler: xtensa-linux-gcc (GCC) 16.2.0
-reproduce (this is a W=1 build): (https://download.01.org/0day-ci/archive/20261116/202611160554.MGBENVam-lkp@intel.com/reproduce)
+> Patch 1 now uses GFP_KERNEL_ACCOUNT for every dynamically allocated sops
+> array. The first 64 operations still use the existing stack buffer. The
+> fixed 1000-operation exemption and its conditional allocation flags have
+> been removed.
+> 
+> I compared this version with v4 in a 4-vCPU KVM guest. The benchmark process
+> was pinned to one vCPU. Each number is the median of 21 samples from three
+> fresh boots of each kernel. In a leaf memory cgroup, the changes were:
+> 
+>                                       65       500      1000
+>   successful semop()                   +3.2%     +3.2%     +2.3%
+>   allocation-focused invalid semid     +5.6%     +9.1%    +11.9%
+> 
+> The invalid-sem-id case allocates and copies the operation array before
+> returning EINVAL, so it emphasizes allocation overhead. The 64-operation
+> stack controls changed by 0.9% and 0.5%, respectively. The already-accounted
+> 1001-operation controls changed by 1.0% and -0.2%. Successful calls in the
+> root cgroup changed by at most 2.3%, including the controls.
+> 
+> The sysctl handler parses writes into a temporary array while holding a
+> per-IPC-namespace mutex. The mutex covers the snapshot, validation, and
+> publication, so a failed write leaves the live settings unchanged and a
+> partial write cannot restore fields from an older snapshot. The snapshot and
+> publication use READ_ONCE() and WRITE_ONCE(), and reads continue through
+> proc_dointvec(). The unused sem_check_semmni() helper is also removed.
+> 
+> The UAPI warning about physical fragmentation is obsolete now that the
+> operation array uses kvmalloc(). The header describes SEMOPM as the
+> compiled-in default and retains the uniform <= INT_MAX range comment.
+> 
+> Patches 2 and 3 are unchanged from v4 and retain Manfred's Reviewed-by tags.
+> The series is based on 7be4bc52fd9e ("Merge tag 'driver-core-7.4-rc1' of
+> git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/driver-core").
 
-If you fix the issue in a separate patch/commit (i.e. not just a new version of
-the same patch/commit), kindly add following tags
-| Reported-by: kernel test robot <lkp@intel.com>
-| Closes: https://lore.kernel.org/oe-kbuild-all/202611160554.MGBENVam-lkp@intel.com/
+Thing is, the above is largely about what-changed-since-last-time. 
+It's useful info, but it's short-term development-time stuff.  Most of
+this is inappropriate for the long-term kernel record.
 
-All errors (new ones prefixed by >>):
+I had LLM suggest a replacement [0/N].  wdyt?
 
->> ./arch/xtensa/include/generated/asm/syscall_table.h:474:16: error: 'sys_set_robust_list2' undeclared here (not in a function); did you mean 'sys_set_robust_list'?
-     474 | __SYSCALL(473, sys_set_robust_list2)
-         |                ^~~~~~~~~~~~~~~~~~~~
-   arch/xtensa/kernel/syscall.c:31:44: note: in definition of macro '__SYSCALL'
-      31 | #define __SYSCALL(nr, entry)    (syscall_t)entry,
-         |                                            ^~~~~
+: An IPC namespace owner can raise SEMOPM and make semop() allocate a large
+: operation array.  A blocked call retains the array.  These allocations are
+: currently uncharged to the caller's memory cgroup, so repeated calls can
+: consume host memory beyond a container's limit.  In one test, a call
+: retained 60,936,448 bytes while a 32 MiB cgroup recorded less than 1 MiB. 
+: Sixteen concurrent calls retained 100,860,416 bytes while the cgroup
+: recorded about 1.3 MiB.
+: 
+: The SEMOPM sysctl also accepts negative values.  Because the operation
+: count is unsigned, SEMOPM=-1 becomes an effective limit of UINT_MAX. 
+: Separately, a rejected kernel.sem write can leave earlier fields changed:
+: an invalid SEMMNI can return ERANGE after setting SEMOPM to zero, causing
+: subsequent nonempty semop() calls in that IPC namespace to fail with
+: E2BIG.
+: 
+: Patch 1 charges dynamically allocated operation arrays in the regular
+: semop() path to the caller's memory cgroup.  Patch 2 parses and validates
+: kernel.sem writes before publishing them and serializes writers within
+: each IPC namespace.  Patch 3 removes the obsolete warning that SEMOPM
+: above 1000 risks physical memory fragmentation; the operation array uses
+: kvmalloc().
+: 
+: Accounting contains the large-array case when the caller's memory cgroup
+: has an effective limit.  The series does not impose a maximum on positive
+: SEMOPM values, so a root or unlimited cgroup can still request large
+: allocations.
+: 
+: Validation included x86-64 and i386 builds, initial and user-owned IPC
+: namespace checks, concurrent sysctl writes, operation-count boundaries,
+: and allocation cleanup on success and error paths.  In a limited memory
+: cgroup, accounting increased median successful-call time by 2.3% to 3.2%
+: for 65, 500 and 1000 operations; the allocation-focused invalid semaphore
+: ID case increased by 5.6% to 11.9%.
 
---
-0-DAY CI Kernel Test Service
-https://github.com/intel/lkp-tests/wiki
+Also, [1/3] and [2/3] are cc:stable but include no clear description of
+why we're recommending backports.  Backportable patches should clearly
+state the userspace-visible runtime effects of the bug which is being
+fixed.  Our downstream people (-stable maintainers and further
+downstream) are swamped with bugfixes, so let's help them out!
+
+So for [1/3] I inserted this statement:
+
+: A caller can raise SEMOPM and keep large, uncharged operation arrays alive
+: in blocked semop() calls.  Repeating this from a memory-limited cgroup can
+: exhaust host memory outside that cgroup, causing reclaim, stalls, or OOM
+: kills of unrelated processes.  Charging the arrays lets an effective memcg
+: limit contain that memory use.
+
+and for [2/3] I inserted
+
+: A negative SEMOPM becomes a large unsigned limit in semop(), allowing
+: operation counts that the configured limit should reject.  Separately, a
+: kernel.sem write can return ERANGE for an invalid SEMMNI while leaving
+: earlier fields changed; if it leaves SEMOPM at zero, subsequent nonempty
+: semop() calls in that IPC namespace fail with E2BIG.  Validate the whole
+: write before changing the live settings.
+
+Please check these also.
+
