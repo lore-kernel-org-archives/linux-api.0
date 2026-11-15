@@ -1,54 +1,54 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=213.97.179.56
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794763908;
-	b=XR8OpiE0tIi6PP30ROn/cNYZqDmJvza1JSRwwoLuhWfAIVREUFjr7h/uVFPwSzAY0pC/
-	 9SgGDu4XzmfQtQ/kcrwIOp6NZPvSjxC//h0JI6hFLWtqwPH+h0xxTkzsI20J5d2Qv2pYv
-	 125UHLe3kTKiawRjKEvhYD3sr7nHPDltLaMwYYtiQ6YoAL/qymgoq1WO2xPKf38fOc09r
-	 03CnqRqI9Cy/3PmNgvh466D6ggNDI1BBJQfOMKHZQrRS8OVSJN8Nt7obB51Ggtq7HkIuD
-	 ktWhjEjLJsvBK33sgJSIVEUi06SImYwEF9ZgUMDJPlCHc7+8g9719TJJMBmDbxtDAgw==
+	t=1794763915;
+	b=RAyOP+Uc+VOHM1C0WPDtr7n8uu+r2qmIQMbs+75A2QLr8XgOAYAVE2fuAFqSPUwLwmfC
+	 5OOeDQp+ePcml+wi6r+Fr3t8R/rqbHJYqOfDqzVp3UWjolZeZEv/DSATFX55P0NWCrU42
+	 vFmG5C3t4pBBphpxx56pPt6amO3SN8ynU3BhqXR10ssIKwfFehm5BmOy4Igfrj8GDJBRg
+	 0tiU6U9TIyy6tU4as+sU+eSHtFKZqmkL5QQ6BBQg1ktUu0RK1hCAEFLaxelA3yY2jXrwk
+	 0qLBedkSg1bfaqnGu+6xakYtUMlJsEUVnJfQnp3xuuEih2lKWW99VM2GAPSzxNepFJQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794763908;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794763915;
 	h=DMARC-Filter:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
 	 Content-Type:Content-Transfer-Encoding:Message-Id:References:
 	 In-Reply-To:To:Cc:X-Mailer;
-	bh=HRWYrXzhlwAbtuV2gpwgHXA9J9vxIsN+hfFv8twN1aY=;
-	b=r2hTLOw2w+RXpxwoDMMWIWe+W4+sEjxhOyLWc2M+wI1LvxfqQrfepFD3VHVvJDPMwD+p
-	 Vw4vMb4mbfAx51zVR9H4VX67OOg2JAOHqMWO4rF6ICNDDteueWitvXSEs2KjbYQMISMcE
-	 IbT+nRreOzQaSQ2kWy+b7UEB/yhdOFYpUZjIHe4KQSkk0zwF9lOyFHr49/GooT7voCsP2
-	 AX/rfdS/8nnIn4FkxdIDDMnmXG6Gg7BMOkMmnXXbWvz6tu0Q2JShvKgRxuoabjGfSn9MV
-	 qaLRqnk5uEBVnlWfx4Wc71TZFehuQiQpBQomcl083isFGc65VCn3hepshLaSuAUG/SA==
+	bh=iM7CGigwx2AQWgxaBx8uyJMiLu5v3OW/dXT0eRrgAqQ=;
+	b=p4G4X1kZt+9bfTQa5ydTcRI5aed9SfBKDxERR9rFLgDtKFGcUpDwp4s76FXOFGKquNR+
+	 1AIQden1vakl5OGQC0n3x5Ugk33xBJJCm0PUMj/Zi+urv5X/nPdIbuXTy+thb46hlJAgN
+	 CiArYXK95LZqC4qQ3TQqLpV1ZJZ1rQn+h627qK/NbwurhaJIprXUBfUQx6LJgDnMhgvtF
+	 ODy8+14JoFGR17rxBjWG9VnrxliDFWcsD1H2eNJ1kICAAYQJLk0+NcG9ORwyyYlhkARRL
+	 tgXJMPDKdRHLoCs1KSx8sXI5FSSMsOIPdKADtHKEEhU65HVn45a1nzaGNGFxFuDj8Aw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=igalia.com;
 	spf=pass smtp.mailfrom=igalia.com;
-	dkim=pass header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=WmJseOeV;
+	dkim=pass header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=aZiRA4kW;
 	arc=none smtp.remote-ip=213.97.179.56
 Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF2D4606A33F;
-	Sun, 15 Nov 2026 17:31:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BF2D4606A33F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D853E606A323;
+	Sun, 15 Nov 2026 17:31:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D853E606A323
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=WmJseOeV
+	dkim=pass (2048-bit key) header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=aZiRA4kW
 DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
 	s=20170329; h=Cc:To:Message-Id:Content-Transfer-Encoding:Content-Type:
 	MIME-Version:Subject:Date:From:From:Reply-To;
-	bh=HRWYrXzhlwAbtuV2gpwgHXA9J9vxIsN+hfFv8twN1aY=; t=1794763907; x=2110123907; 
-	b=WmJseOeVgWRd04hkkcFYYTOyFi0S/fPYURWWUl/MqD2p5xiFzvkLDFTBqH69N+v7qAqy0Wi3JL7
-	dNSFCtR6feFzyH66WaygwP/2WGJNyQFxrssxMhZx8vbFHP3dMRrb9CZDU8tm14FK48BpCiCdB3Dwz
-	zNzvmQ/kXJxnYXaAS/9yooehlVU8rAMFZIE0D0OHkAzaafjS7LC/bHiofhKIT0Brpb52ezVo7q1zO
-	gY9tZapcqNs0W1mp4w+xdjyL+bbW9lRgj3mhV5jk4XA4UBbk1xykUZ8a1xNV1L5Yee1qvvFAnv2+H
-	j2tBCZ6J76tHRaqiUL9fLGxMsXVlUZxuWXEA==;
+	bh=iM7CGigwx2AQWgxaBx8uyJMiLu5v3OW/dXT0eRrgAqQ=; t=1794763914; x=2110123914; 
+	b=aZiRA4kWzyr8Wng0BMV/q1XiJVmomPITxx/h/HIsR1/Shbk74tdCr08bbB5oesEChZ1afcnmASt
+	vqoqu9FdiBtp4H5ijA3cYOD1/L3FEgrDnUydhDyHu9sJthJcRV/MwEDFGCN4orQNth8QQG6O0F6Jh
+	UjHuXol7IiuZki6wUlEO5TB9I7myRk63FgGleKFA/aaU+5CSXm1BNRy9h+HfUUCmq2a1zPbA+jCmC
+	ZRXrCst8RRByEknb7hzJUoBeeL5qpmcLqyYZqSNCZTnfvvotpvURgOyVjc7LvrzZ0w1FAvFAHr+nW
+	47XbJuqqb4rVTMbgKu/74rQMWCIrl7J0/FWg==;
 Received: from [177.172.124.218] (helo=[192.168.15.100])
 	by fanzine2.igalia.com with esmtpsa 
 	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
-	id 1xSe4p-00B0BK-4j; Sun, 15 Nov 2026 18:31:39 +0100
+	id 1xSe4s-00B0BK-Lg; Sun, 15 Nov 2026 18:31:42 +0100
 From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
-Date: Sun, 15 Nov 2026 14:31:16 -0300
-Subject: [PATCH v8 07/10] futex: Wire up get_robust_list2 syscall
+Date: Sun, 15 Nov 2026 14:31:17 -0300
+Subject: [PATCH v8 08/10] selftests/futex: Expand for set_robust_list2()
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -60,7 +60,7 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
-Message-Id: <20261115-tonyk-robust_futex-v8-7-a4fe47333a28@igalia.com>
+Message-Id: <20261115-tonyk-robust_futex-v8-8-a4fe47333a28@igalia.com>
 References: <20261115-tonyk-robust_futex-v8-0-a4fe47333a28@igalia.com>
 In-Reply-To: <20261115-tonyk-robust_futex-v8-0-a4fe47333a28@igalia.com>
 To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, 
@@ -74,193 +74,660 @@ Cc: linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
  =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
 X-Mailer: b4 0.15.2
 
-Wire up the new get_robust_list2 syscall in all available architectures.
+Reuse the same selftest for the original set_robust_list() syscall for
+the new set_robust_list2() syscall. Use kselftest variants feature to
+run the relevant tests for both interfaces. Create new test cases for
+checking invalid parameters, the ability to correctly set multiple lists
+for the same task, and to use 32-bit lists in a 64-bit task.
 
 Signed-off-by: André Almeida <andrealmeid@igalia.com>
 ---
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
- include/uapi/asm-generic/unistd.h           | 4 +++-
- scripts/syscall.tbl                         | 1 +
- 17 files changed, 19 insertions(+), 1 deletion(-)
+ .../selftests/futex/functional/robust_list.c       | 465 +++++++++++++++++++--
+ 1 file changed, 431 insertions(+), 34 deletions(-)
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index cdf641845014..e26df2cf9de7 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -513,3 +513,4 @@
- 581	common	rseq_slice_yield		sys_rseq_slice_yield
- 582	common	fchroot				sys_fchroot
- 583	common	set_robust_list2		sys_set_robust_list2
-+584	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index c287461803ff..0268a887f90d 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -488,3 +488,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index beb0ba7f350c..91cc1ea407ec 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -473,3 +473,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common  set_robust_list2		sys_set_robust_list2
-+474	common  get_robust_list2		sys_get_robust_list2
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index bf04133f7239..18a59b24724c 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -479,3 +479,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 5b5b217ee7f3..f498b01178e4 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -412,3 +412,4 @@
- 471	n32	rseq_slice_yield		sys_rseq_slice_yield
- 472	n32	fchroot				sys_fchroot
- 473	n32	set_robust_list2		sys_set_robust_list2
-+474	n32	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 6f203cb3a558..b12328d537e3 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -388,3 +388,4 @@
- 471	n64	rseq_slice_yield		sys_rseq_slice_yield
- 472	n64	fchroot				sys_fchroot
- 473	n64	set_robust_list2		sys_set_robust_list2
-+474	n64	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index d170650521a7..3c8e3890644f 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -461,3 +461,4 @@
- 471	o32	rseq_slice_yield		sys_rseq_slice_yield
- 472	o32	fchroot				sys_fchroot
- 473	o32	set_robust_list2		sys_set_robust_list2
-+474	o32	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index f9317ff28e37..f746f152cd51 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -472,3 +472,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index acb9d446d1f6..b785d6861963 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -564,3 +564,4 @@
- 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 987e026ffbcf..eb0c5bf1d71f 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -400,3 +400,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index c944333c1990..520ec9072ce3 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 3c01fa1cd885..8d332ffde99f 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -519,3 +519,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 11ebbf074920..be72e54ce2fd 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -479,3 +479,4 @@
- 471	i386	rseq_slice_yield	sys_rseq_slice_yield
- 472	i386	fchroot			sys_fchroot
- 473	i386	set_robust_list2	sys_set_robust_list2
-+474	i386	get_robust_list2	sys_get_robust_list2
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 53398e8d4981..d5f91d276e75 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -398,6 +398,7 @@
- 471	common	rseq_slice_yield	sys_rseq_slice_yield
- 472	common	fchroot			sys_fchroot
- 473	common	set_robust_list2	sys_set_robust_list2
-+474	common	get_robust_list2	sys_get_robust_list2
+diff --git a/tools/testing/selftests/futex/functional/robust_list.c b/tools/testing/selftests/futex/functional/robust_list.c
+index ddb610149857..7666b9a64501 100644
+--- a/tools/testing/selftests/futex/functional/robust_list.c
++++ b/tools/testing/selftests/futex/functional/robust_list.c
+@@ -49,6 +49,35 @@
+ # define BUILD_64
+ #endif
  
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 7ba9d6993800..4908baf60363 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -444,3 +444,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 7525e0add809..3d84f306e677 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -869,9 +869,11 @@ __SYSCALL(__NR_fchroot, sys_fchroot)
++#ifndef SYS_set_robust_list2
++# define SYS_set_robust_list2 473
++
++enum robust_list_cmd {
++	FUTEX_ROBUST_LIST_CMD_CREATE_64,
++	FUTEX_ROBUST_LIST_CMD_CREATE_32,
++	FUTEX_ROBUST_LIST_CMD_MODIFY_64,
++	FUTEX_ROBUST_LIST_CMD_MODIFY_32,
++	FUTEX_ROBUST_LIST_CMD_LIST_LIMIT,
++	FUTEX_ROBUST_LIST_CMD_USER_MAX,
++
++	/*
++	 * Kernel internal, rejected for user space
++	 */
++	FUTEX_ROBUST_LIST_SET_NATIVE = 128,
++	FUTEX_ROBUST_LIST_SET_COMPAT,
++};
++
++struct robust_list32 {
++	uint32_t next;
++};
++
++struct robust_list_head32 {
++	struct robust_list32	list;
++	int32_t			futex_offset;
++	uint32_t		list_op_pending;
++};
++#endif
++
+ static pthread_barrier_t barrier, barrier2;
  
- #define __NR_set_robust_list2 473
- __SYSCALL(__NR_set_robust_list2, sys_set_robust_list2)
-+#define __NR_get_robust_list2 474
-+__SYSCALL(__NR_get_robust_list2, sys_get_robust_list2)
+ static int set_robust_list(struct robust_list_head *head, size_t len)
+@@ -67,6 +96,65 @@ static int sys_futex_robust_unlock(_Atomic(uint32_t) *uaddr, unsigned int op, in
+ 	return syscall(SYS_futex, uaddr, op, val, NULL, list_op_pending, val3, 0);
+ }
  
- #undef __NR_syscalls
--#define __NR_syscalls 474
-+#define __NR_syscalls 475
++static int set_robust_list2(struct robust_list_head *head, enum robust_list_cmd cmd,
++			    unsigned int index, unsigned int flags)
++{
++	return syscall(SYS_set_robust_list2, head, cmd, index, flags, 0, 0);
++}
++
++static bool robust_list2_support(void)
++{
++	int ret = set_robust_list2(NULL, FUTEX_ROBUST_LIST_CMD_LIST_LIMIT, 0, 0);
++
++	if (ret == -1 && errno == ENOSYS)
++		return false;
++
++	return true;
++}
++
++/*
++ * Return the set command according to the app bitness
++ */
++static int get_cmd_create(void)
++{
++	return sizeof(uintptr_t) == 8 ? FUTEX_ROBUST_LIST_CMD_CREATE_64 :
++	       FUTEX_ROBUST_LIST_CMD_CREATE_32;
++}
++
++static int get_cmd_modify(void)
++{
++	return sizeof(uintptr_t) == 8 ? FUTEX_ROBUST_LIST_CMD_MODIFY_64 :
++	       FUTEX_ROBUST_LIST_CMD_MODIFY_32;
++}
++
++FIXTURE(robust_api) {};
++
++FIXTURE_VARIANT(robust_api)
++{
++	bool robust2;
++};
++
++FIXTURE_SETUP(robust_api)
++{
++	if (!variant->robust2)
++		return;
++
++	if (!robust_list2_support())
++		SKIP(return, "robust_list2 not supported");
++}
++
++FIXTURE_TEARDOWN(robust_api) {}
++
++FIXTURE_VARIANT_ADD(robust_api, robust1)
++{
++	.robust2 = false,
++};
++
++FIXTURE_VARIANT_ADD(robust_api, robust2)
++{
++	.robust2 = true,
++};
++
+ /*
+  * Basic lock struct, contains just the futex word and the robust list element
+  * Real implementations have also a *prev to easily walk in the list
+@@ -76,6 +164,12 @@ typedef _Atomic(unsigned int) atomic_futex_t;
+ struct lock_struct {
+ 	atomic_futex_t		futex;
+ 	struct robust_list	list;
++	bool			robust2;
++};
++
++struct lock_struct32 {
++	_Atomic(uint32_t)	futex;
++	struct robust_list32	list;
+ };
+ 
+ struct child_args {
+@@ -118,20 +212,32 @@ static int create_child(struct __test_metadata *_metadata, int (*fn)(void *arg),
+ /*
+  * Helper function to prepare and register a robust list
+  */
+-static int set_list(struct robust_list_head *head)
++static int set_list(struct robust_list_head *head, bool robust2, int *index)
+ {
+ 	int ret;
+ 
+-	ret = set_robust_list(head, sizeof(*head));
+-	if (ret)
+-		return ret;
+-
+ 	head->futex_offset = (size_t) offsetof(struct lock_struct, futex) -
+ 			     (size_t) offsetof(struct lock_struct, list);
+ 	head->list.next = &head->list;
+ 	head->list_op_pending = NULL;
+ 
+-	return 0;
++	if (!robust2)
++		return set_robust_list(head, sizeof(*head));
++
++	ret = set_robust_list2(head, get_cmd_create(), 0, 0);
++
++	if (ret >= 0 && index)
++		*index = ret;
++
++	return ret;
++}
++
++/*
++ * Change a given list index to a different head
++ */
++static int modify_list(struct robust_list_head *head, int index)
++{
++	return set_robust_list2(head, get_cmd_modify(), index, 0);
+ }
  
  /*
-  * 32 bit systems traditionally used different
-diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
-index c8d261cb8762..b4fb5e1a2141 100644
---- a/scripts/syscall.tbl
-+++ b/scripts/syscall.tbl
-@@ -414,3 +414,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	set_robust_list2		sys_set_robust_list2
-+474	common	get_robust_list2		sys_get_robust_list2
+@@ -203,12 +309,12 @@ static int child_fn_lock(void *arg)
+ 	struct __test_metadata *_metadata = cargs->_metadata;
+ 	struct lock_struct *lock = cargs->arg;
+ 	struct robust_list_head head;
+-	int ret;
++	int ret, index;
+ 
+ 	free(cargs);
+ 
+-	ret = set_list(&head);
+-	ASSERT_EQ(ret, 0)
++	ret = set_list(&head, lock->robust2, &index);
++	ASSERT_NE(ret, -1)
+ 		TH_LOG("set_robust_list error");
+ 
+ 	ret = mutex_lock(lock, &head, false);
+@@ -233,15 +339,17 @@ static int child_fn_lock(void *arg)
+  * in the robust list and die. The parent thread will wait on this futex, and
+  * should be waken up when the child exits.
+  */
+-TEST(test_robustness)
++TEST_F(robust_api, test_robustness)
+ {
+ 	struct lock_struct lock = { .futex = 0 };
+ 	atomic_futex_t *futex = &lock.futex;
+ 	struct robust_list_head head;
+-	int ret, pid, wstatus;
++	int ret, pid, wstatus, index;
+ 
+-	ret = set_list(&head);
+-	ASSERT_EQ(ret, 0);
++	lock.robust2 = variant->robust2;
++
++	ret = set_list(&head, lock.robust2, &index);
++	ASSERT_NE(ret, -1);
+ 
+ 	/*
+ 	 * Lets use a barrier to ensure that the child thread takes the lock
+@@ -281,7 +389,7 @@ TEST(test_set_robust_list_invalid_size)
+ 	int ret;
+ 
+ 	ret = set_robust_list(&head, head_size);
+-	ASSERT_EQ(ret, 0);
++	ASSERT_GE(ret, 0);
+ 
+ 	ret = set_robust_list(&head, head_size * 2);
+ 	ASSERT_EQ(ret, -1);
+@@ -296,6 +404,53 @@ TEST(test_set_robust_list_invalid_size)
+ 	ASSERT_EQ(errno, EINVAL);
+ }
+ 
++/*
++ * Test invalid parameters
++ */
++TEST(test_set_robust_list2_inval)
++{
++	struct robust_list_head head;
++	int i, ret, index, list_limit;
++
++	if (!robust_list2_support())
++		SKIP(return, "robust_list2 not supported\n");
++
++	/* Bad flag */
++	ret = set_robust_list2(&head, get_cmd_create(), 0, 999);
++	ASSERT_EQ(ret, -1);
++	ASSERT_EQ(errno, EINVAL);
++
++	/* List out of range */
++	list_limit = set_robust_list2(NULL, FUTEX_ROBUST_LIST_CMD_LIST_LIMIT, 0, 0);
++	ASSERT_GT(list_limit, 1);
++
++	for (i = 0; i < list_limit; i++) {
++		ret = set_list(&head, true, &index);
++		ASSERT_EQ(ret, i);
++	}
++
++	ret = set_list(&head, true, &index);
++	ASSERT_EQ(ret, -1);
++	ASSERT_EQ(errno, ENOSPC);
++
++	/* clear the list */
++	for (i = 0; i < list_limit; i++)
++		modify_list(NULL, i);
++
++#ifdef BUILD_64
++	/* Create a 64-bit entry, and try to set it as 32-bit */
++	ret = set_robust_list2(&head, FUTEX_ROBUST_LIST_CMD_CREATE_64, 0, 0);
++	ASSERT_GE(ret, 0);
++
++	ret = set_robust_list2(&head, FUTEX_ROBUST_LIST_CMD_MODIFY_64, 0, 0);
++	ASSERT_GE(ret, 0);
++
++	ret = set_robust_list2(&head, FUTEX_ROBUST_LIST_CMD_MODIFY_32, 0, 0);
++	ASSERT_NE(ret, 0);
++#endif
++
++}
++
+ /*
+  * Test get_robust_list with pid = 0, getting the list of the running thread
+  */
+@@ -388,12 +543,12 @@ static int child_fn_lock_with_error(void *arg)
+ 	struct __test_metadata *_metadata = cargs->_metadata;
+ 	struct lock_struct *lock = cargs->arg;
+ 	struct robust_list_head head;
+-	int ret;
++	int ret, index;
+ 
+ 	free(cargs);
+ 
+-	ret = set_list(&head);
+-	ASSERT_EQ(ret, 0)
++	ret = set_list(&head, lock->robust2, &index);
++	ASSERT_NE(ret, -1)
+ 		TH_LOG("set_robust_list error");
+ 
+ 	ret = mutex_lock(lock, &head, true);
+@@ -413,15 +568,17 @@ static int child_fn_lock_with_error(void *arg)
+  * earlier, just after setting list_op_pending and taking the lock, to test the
+  * list_op_pending mechanism
+  */
+-TEST(test_set_list_op_pending)
++TEST_F(robust_api, test_set_list_op_pending)
+ {
+ 	struct lock_struct lock = { .futex = 0 };
+ 	atomic_futex_t *futex = &lock.futex;
+ 	struct robust_list_head head;
+-	int ret, wstatus;
++	int ret, wstatus, index;
+ 
+-	ret = set_list(&head);
+-	ASSERT_EQ(ret, 0);
++	lock.robust2 = variant->robust2;
++
++	ret = set_list(&head, lock.robust2, &index);
++	ASSERT_NE(ret, -1);
+ 
+ 	ret = pthread_barrier_init(&barrier, NULL, 2);
+ 	ASSERT_EQ(ret, 0);
+@@ -450,11 +607,11 @@ static int child_lock_holder(void *arg)
+ 	struct child_args *cargs = arg;
+ 	struct lock_struct *locks = cargs->arg;
+ 	struct robust_list_head head;
+-	int i;
++	int i, index;
+ 
+ 	free(cargs);
+ 
+-	set_list(&head);
++	set_list(&head, locks[0].robust2, &index);
+ 
+ 	for (i = 0; i < CHILD_NR; i++) {
+ 		locks[i].futex = 0;
+@@ -495,17 +652,23 @@ static int child_wait_lock(void *arg)
+  * Test a robust list of more than one element. All the waiters should wake when
+  * the holder dies
+  */
+-TEST(test_robust_list_multiple_elements)
++TEST_F(robust_api, test_robust_list_multiple_elements)
+ {
+ 	struct lock_struct locks[CHILD_NR];
+ 	pid_t pids[CHILD_NR + 1];
+ 	int i, ret, wstatus;
+ 
++	if (variant->robust2 && !robust_list2_support())
++		SKIP(return, "robust_list2 not supported\n");
++
++	locks[0].robust2 = variant->robust2;
++
+ 	ret = pthread_barrier_init(&barrier, NULL, 2);
+ 	ASSERT_EQ(ret, 0);
+ 	ret = pthread_barrier_init(&barrier2, NULL, CHILD_NR + 1);
+ 	ASSERT_EQ(ret, 0);
+ 
++
+ 	pids[0] = create_child(_metadata, &child_lock_holder, &locks);
+ 	ASSERT_NE(pids[0], -1);
+ 
+@@ -532,18 +695,112 @@ TEST(test_robust_list_multiple_elements)
+ 		TH_LOG("One or more children failed");
+ }
+ 
++static int child_lock_holder_multiple_lists(void *arg)
++{
++	struct child_args *cargs = arg;
++	struct __test_metadata *_metadata = cargs->_metadata;
++	struct lock_struct *locks = cargs->arg;
++	struct robust_list_head *heads;
++	int i, list_limit, index, ret;
++
++	free(cargs);
++
++	list_limit = set_robust_list2(NULL, FUTEX_ROBUST_LIST_CMD_LIST_LIMIT, 0, 0);
++	ASSERT_GT(list_limit, 1);
++
++	heads = malloc(list_limit * sizeof(*heads));
++	ASSERT_TRUE((uintptr_t) heads);
++
++	/*
++	 * Try to clear any exiting list, ignore errors if they didn't exit
++	 */
++	for (i = 0; i < list_limit; i++)
++		modify_list(NULL, i);
++
++	/*
++	 * Given that this thread has no robust list attached yet, it should
++	 * get as return all available lists in order [0, list_limit)
++	 */
++	for (i = 0; i < list_limit; i++) {
++		ret = set_list(&heads[i], true, &index);
++		ASSERT_EQ(ret, i);
++		locks[i].futex = 0;
++		mutex_lock(&locks[i], &heads[i], false);
++	}
++
++	pthread_barrier_wait(&barrier);
++	pthread_barrier_wait(&barrier2);
++
++	/* See comment at child_fn_lock() */
++	usleep(SLEEP_US * 10);
++
++	return 0;
++}
++
++/*
++ * Similar to test_robust_list_multiple_elements, but instead of one list with
++ * several elements, create several lists with one element.
++ */
++TEST(test_robust_list_multiple_lists)
++{
++	int i, ret, wstatus, list_limit;
++	struct lock_struct *locks;
++	pid_t *pids;
++
++	if (!robust_list2_support())
++		SKIP(return, "robust_list2 not supported\n");
++
++	list_limit = set_robust_list2(NULL, FUTEX_ROBUST_LIST_CMD_LIST_LIMIT, 0, 0);
++	ASSERT_GT(list_limit, 1);
++
++	locks = malloc(list_limit * sizeof(*locks));
++	ASSERT_NE(locks, NULL);
++
++	pids = malloc(list_limit * sizeof(*pids));
++	ASSERT_NE(pids, NULL);
++
++	ret = pthread_barrier_init(&barrier, NULL, 2);
++	ASSERT_EQ(ret, 0);
++	ret = pthread_barrier_init(&barrier2, NULL, list_limit + 1);
++	ASSERT_EQ(ret, 0);
++
++	pids[0] = create_child(_metadata, &child_lock_holder_multiple_lists, locks);
++
++	/* Wait until the locker thread takes the look */
++	pthread_barrier_wait(&barrier);
++
++	for (i = 0; i < list_limit; i++)
++		pids[i+1] = create_child(_metadata, &child_wait_lock, &locks[i]);
++
++	/* Wait for all children to return */
++	ret = 0;
++
++	for (i = 0; i < list_limit; i++) {
++		waitpid(pids[i], &wstatus, 0);
++		if (WEXITSTATUS(wstatus))
++			ret = -1;
++	}
++
++	pthread_barrier_destroy(&barrier);
++	pthread_barrier_destroy(&barrier2);
++
++	free(locks);
++	free(pids);
++}
++
+ static int child_circular_list(void *arg)
+ {
+ 	struct child_args *cargs = arg;
++	bool robust2 = cargs->arg;
+ 	struct __test_metadata *_metadata = cargs->_metadata;
+ 	static struct lock_struct a, b, c;
+ 	struct robust_list_head head;
+-	int ret;
++	int ret, index;
+ 
+ 	free(cargs);
+ 
+-	ret = set_list(&head);
+-	ASSERT_EQ(ret, 0)
++	ret = set_list(&head, robust2, &index);
++	ASSERT_NE(ret, -1)
+ 		TH_LOG("set_list error");
+ 
+ 	head.list.next = &a.list;
+@@ -563,11 +820,13 @@ static int child_circular_list(void *arg)
+  * while processing it so it won't be trapped in an infinite loop while handling
+  * a process exit
+  */
+-TEST(test_circular_list)
++TEST_F(robust_api, test_circular_list)
+ {
++	bool robust2 = variant->robust2;
+ 	int wstatus;
+ 	pid_t pid;
+ 
++	create_child(_metadata, child_circular_list, (void *) robust2);
+ 	pid = create_child(_metadata, child_circular_list, NULL);
+ 	ASSERT_NE(pid, -1);
+ 
+@@ -660,8 +919,8 @@ TEST_F(vdso_unlock, test_robust_try_unlock_uncontended)
+ 
+ 	*futex = tid;
+ 
+-	ret = set_list(&head);
+-	if (ret)
++	ret = set_list(&head, false, NULL);
++	if (ret == -1)
+ 		ksft_test_result_fail("set_robust_list error\n");
+ 
+ 	head.list_op_pending = &lock.list;
+@@ -700,8 +959,8 @@ TEST_F(vdso_unlock, test_robust_try_unlock_contended)
+ 
+ 	*futex = tid | FUTEX_WAITERS;
+ 
+-	ret = set_list(&head);
+-	if (ret)
++	ret = set_list(&head, false, NULL);
++	if (ret == -1)
+ 		ksft_test_result_fail("set_robust_list error\n");
+ 
+ 	head.list_op_pending = &lock.list;
+@@ -783,8 +1042,8 @@ TEST_F(futex_op, test_futex_robust_unlock)
+ 
+ 	*futex = tid | FUTEX_WAITERS;
+ 
+-	ret = set_list(&head);
+-	if (ret)
++	ret = set_list(&head, false, 0);
++	if (ret == -1)
+ 		ksft_test_result_fail("set_robust_list error\n");
+ 
+ 	head.list_op_pending = &lock.list;
+@@ -806,4 +1065,142 @@ TEST_F(futex_op, test_futex_robust_unlock)
+ 	ASSERT_EQ((uintptr_t)(unsigned long)head.list_op_pending, exp);
+ }
+ 
++/*
++ * 32-bit version of child_lock_holder.
++ */
++static int child_lock_holder32(void *arg)
++{
++	struct child_args *cargs = arg;
++	struct lock_struct32 *locks = cargs->arg;
++	struct __test_metadata *_metadata = cargs->_metadata;
++	struct robust_list_head32 *head;
++	pid_t tid = gettid();
++	int i, ret;
++
++	head = mmap((void *)0x10000, sizeof(*head), PROT_READ | PROT_WRITE,
++		    MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
++
++	ASSERT_TRUE((uintptr_t) head);
++	ASSERT_LT(((uint32_t)(uintptr_t) head), 0x7FFFFFFF);
++
++	head->futex_offset = (uint32_t) ((size_t) offsetof(struct lock_struct32, futex) -
++			     (size_t) offsetof(struct lock_struct32, list));
++	head->list.next = (uint32_t)(uintptr_t) &head->list;
++	head->list_op_pending = (uint32_t)(uintptr_t) NULL;
++
++	ret = set_robust_list2((struct robust_list_head *) head,
++			FUTEX_ROBUST_LIST_CMD_CREATE_32, 0, 0);
++	ASSERT_GE(ret, 0);
++
++	/*
++	 * Take all the locks and insert them in the list
++	 */
++	for (i = 0; i < CHILD_NR; i++) {
++		struct robust_list32 *list = &head->list;
++
++		locks[i].futex = tid;
++
++		while (list->next != (uint32_t)(uintptr_t) &head->list)
++			list = (struct robust_list32 *)(uintptr_t) list->next;
++
++		list->next = (uint32_t)(uintptr_t) &locks[i].list;
++		locks[i].list.next = (uint32_t)(uintptr_t) &head->list;
++	}
++
++	pthread_barrier_wait(&barrier);
++	pthread_barrier_wait(&barrier2);
++
++	/* See comment at child_fn_lock() */
++	usleep(SLEEP_US);
++
++	/* Exit holding all the locks */
++	return 0;
++}
++
++static int child_wait_lock32(void *arg)
++{
++	struct child_args *cargs = arg;
++	struct __test_metadata *_metadata = cargs->_metadata;
++	struct lock_struct32 *lock = cargs->arg;
++	atomic_futex_t *futex;
++	struct timespec to;
++	pid_t tid;
++	int ret;
++
++	futex = &lock->futex;
++
++	pthread_barrier_wait(&barrier2);
++
++	to.tv_sec = FUTEX_TIMEOUT;
++	to.tv_nsec = 0;
++
++	tid = atomic_load(futex);
++
++	/* Kernel ignores futexes without the waiters flag */
++	tid |= FUTEX_WAITERS;
++	atomic_store(futex, tid);
++
++	ret = futex_wait((futex_t *) futex, tid, &to, 0);
++
++	ASSERT_EQ(ret, 0);
++	ASSERT_TRUE(lock->futex & FUTEX_OWNER_DIED);
++
++	return 0;
++}
++
++/*
++ * Test to create a 32-bit robust list in a 64-bit kernel. Replicate
++ * test_robust_list_multiple_elements, but it's simplified: don't do all the
++ * mutex lock dance, just insert futexes in the list and check if the kernel
++ * correctly walks the list and wake the threads
++ */
++TEST(test_32bit_lists)
++{
++	struct lock_struct32 *locks;
++	pid_t pids[CHILD_NR + 1];
++	int i, ret, wstatus;
++
++#ifndef BUILD_64
++	SKIP(return, "Test only for 64-bit\n");
++#endif
++
++	if (!robust_list2_support())
++		SKIP(return, "robust_list2 not supported\n");
++
++	locks = mmap((void *)0x20000, sizeof(*locks) * CHILD_NR,
++		     PROT_READ | PROT_WRITE,
++		     MAP_FIXED_NOREPLACE | MAP_PRIVATE | MAP_ANONYMOUS,
++		     -1, 0);
++
++	ASSERT_NE(locks, NULL);
++	ASSERT_LT((uintptr_t) locks, 0x7FFFFFFF);
++
++	ret = pthread_barrier_init(&barrier, NULL, 2);
++	ASSERT_EQ(ret, 0);
++	ret = pthread_barrier_init(&barrier2, NULL, CHILD_NR + 1);
++	ASSERT_EQ(ret, 0);
++
++	pids[0] = create_child(_metadata, &child_lock_holder32, locks);
++
++	/* Wait until the locker thread takes the look */
++	pthread_barrier_wait(&barrier);
++
++	for (i = 0; i < CHILD_NR; i++)
++		pids[i+1] = create_child(_metadata, &child_wait_lock32, &locks[i]);
++
++	/* Wait for all children to return */
++	ret = 0;
++
++	for (i = 0; i < CHILD_NR; i++) {
++		waitpid(pids[i], &wstatus, 0);
++		if (WEXITSTATUS(wstatus))
++			ret = -1;
++	}
++
++	pthread_barrier_destroy(&barrier);
++	pthread_barrier_destroy(&barrier2);
++
++	munmap(locks, sizeof(*locks) * CHILD_NR);
++}
++
+ TEST_HARNESS_MAIN
 
 -- 
 2.56.1
