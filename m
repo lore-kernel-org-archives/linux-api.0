@@ -1,66 +1,55 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.138
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=213.97.179.56
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794759437;
-	b=gJu3z98X40rSWzfjUc7a3YXj9nBCgV95rbkz4jjztFJ4/iImsMbmFrp4ifsMoQsOyp3t
-	 KK5GGybJdGi3gabezn09h0cAqHn0vGF4gTfyfntVBDb069tt6Qs67GB1u+oYrzeMi9nZ8
-	 NM0LcoBSNLpGFtQ/ODBqnMquT+iFvzSw2wPYU011qe/u0/NuGvxqgFVM4B8bQGem/746e
-	 KpPJIjlJ6lkGPvw0ZOCvdWzNgi5L1IHxbIAWEhjEXwQhnmRDoIs6JhDyyyYtgpv5NGgU3
-	 V9hvOqtPrN5D4p9+56D/GIHWJUMKrLCAYfihF9HJDa9GgKdtsNgvGrY2HDYP1jPrVcw==
+	t=1794763896;
+	b=jtlWwmX6F608EBRSfOrwVn6j27SiLPvTwt4CYbxyEmQWSOCYIKO92k5fVLXffazQOo4A
+	 lHC1X/oq+cgFvSN0OJwDGjAWeEH6T8syh+4HCE3KtqtmJ+UtWGNzRH6rvxqnHoSIwbYag
+	 2nqLQS3QVOQHXq+g6hwbPJ2aWtRxFHYEX7FPkqS9twjq+z/oHl+xzOpKXjEGK2YJ5lSI9
+	 7M+wJsygFVgc9Yw315j9FcBVg0CRUbMMP+Ibjj35k39qI+zDc3sdb3iqAXwcy//u1Okd4
+	 F4YonAbxR6ZjA0agsWE5i1VyQFQNdFl6L4f/8SUmsEgBn0dNBh8uA7VaC618rQ4C4+A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794759437;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:Date:From:To:CC:Subject:In-Reply-To:
-	 References:Message-ID:MIME-Version:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=NCICt+g4ba+h6Y1JYbGSqPwtwINdBha1BMylpnmqlkw=;
-	b=c5v/SGSp//9s4ZmA2uCWZ5B0f7D8rdS5dVmORplRbFnUmxf6jEBSVSaNxNVUNSK7a2vx
-	 2+BhXoPLwjGUVzUvynIrjx9g2t/HIGn5k+YzQzgNdkdI0KzQvNwm5dp2/N4qIvjVz+Fvy
-	 we3L3q27uyl6mFM55xG04i9KvTMdHgcNUb5BTS+VtnJpd6Iu6igVuLAItn2bu1oa+X8od
-	 TN0/6vlk6de+T6w359OSHjjZRWXg1eYtOUYTl/GJWQ9EJqSrZBXxl2XU2bQqeCB/20hrB
-	 mx30N8vVuZ9oQI3jE4HRGetqUutPUBSbB1LvEBmf/C7+S7byE/34w7Wl9i4157jnCXw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794763896;
+	h=DMARC-Filter:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
+	 Content-Type:Content-Transfer-Encoding:Message-Id:References:
+	 In-Reply-To:To:Cc:X-Mailer;
+	bh=C3bbnymH/AHGYpcpFk8/j247A/7fyrb+hVFtH4yEx/A=;
+	b=UEoArF0sjfUnnQt9oiy5c3CV0hKKU8e9/5ehErpJ6PkCePHQaUz+sVHJanwjc4NegJq/
+	 6p4Z1Ro8FZ35B2ha1fydsZOmnqDv0CGYVsvCYook8NI4Mm1gqY/g44Yzv2wGaECwmzeKE
+	 LadrdCsj9QaHuVGT8nIe7SHuqtReE+VJ23ziWxGWEefKJNpjj++QAp6OXfi+V9bQqE20i
+	 JWok8w1AxX5KRZBC2Quq2YwU1Nq0H6Sc+M9OrMzM54eRcblx5ecyoe0gQ4Mol17HdQeBy
+	 x7L8k+959qrl5ifg3XHdkphyVDrB/7GfG/H4k520xPx/qwvhMXAEECg/YX6Y6Nw2L3Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=jTGU0qPZ;
-	arc=none smtp.remote-ip=91.218.175.138
-Received: from mta0.migadu.com (out-138.mta0.migadu.com [91.218.175.138])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=igalia.com;
+	spf=pass smtp.mailfrom=igalia.com;
+	dkim=pass header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=Ik1pJb2Z;
+	arc=none smtp.remote-ip=213.97.179.56
+Received: from fanzine2.igalia.com (fanzine2.igalia.com [213.97.179.56])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange ECDHE (prime256v1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A8462606A32E
-	for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 16:17:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A8462606A32E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 32063606A31E;
+	Sun, 15 Nov 2026 17:31:34 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 32063606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=igalia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=igalia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=jTGU0qPZ
-X-Envelope-To: linux-api@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=g57S+tnYE1I+WM8B/j2X3/lHuNfkcd/fJZIJlo5BpOI=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794759434; v=1; x=1795364234;
- b=jTGU0qPZCdwrI1i/wZMz58bJOOopSnXcy2Ep+1AQXZPEmXUnbL1WX7MKLyJcDW9D67Sz3koD
- ockiAJ9/swiyVABwzraZ99v2DEt2JrQeE8Cuv0m/xBV9BjzJUqhdpe1tef+brwftpEBOouOuVfG
- KtxDx7idEGBPqti7itEL2fDs=
-X-Envelope-To: linux-api@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id 434b23527c560fa3;
-	Sun, 15 Nov 2026 16:17:14 +0000
-X-Mizu-Trace-ID: 434b23527c560fa3
-X-Migadu-Flow: FLOW_OUT
-Date: Sun, 15 Nov 2026 16:17:06 +0000
-From: Bradley Morgan <bradley.morgan@linux.dev>
-To: Renzo Davoli <renzo@cs.unibo.it>, linux-kernel@vger.kernel.org
-CC: Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>,
- "Dmitry V . Levin" <ldv@strace.io>, Alexey Gladkov <legion@kernel.org>,
- Eugene Syromyatnikov <evgsyr@gmail.com>,
- Charlie Jenkins <thecharlesjenkins@gmail.com>, Shuah Khan <shuah@kernel.org>,
- strace-devel@lists.strace.io, linux-api@vger.kernel.org,
- linux-kselftest@vger.kernel.org
-Subject: =?US-ASCII?Q?Re=3A_=5BPATCH_v3_2/2=5D_selftests/ptrace=3A_check_that_PT?=
- =?US-ASCII?Q?RACE=5FSET=5FSYSCALL=5FINFO_rejects_invalid_error_values?=
-In-Reply-To: <20261115152703.416254-3-renzo@cs.unibo.it>
-References: <20261115152703.416254-1-renzo@cs.unibo.it> <20261115152703.416254-3-renzo@cs.unibo.it>
-Message-ID: <DEC23DE6-5D6B-42FA-8A31-2914B730C777@linux.dev>
+	dkim=pass (2048-bit key, unprotected) header.d=igalia.com header.i=@igalia.com header.a=rsa-sha256 header.s=20170329 header.b=Ik1pJb2Z
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed; d=igalia.com;
+	s=20170329; h=Cc:To:Message-Id:Content-Transfer-Encoding:Content-Type:
+	MIME-Version:Subject:Date:From:From:Reply-To;
+	bh=C3bbnymH/AHGYpcpFk8/j247A/7fyrb+hVFtH4yEx/A=; t=1794763894; x=2110123894; 
+	b=Ik1pJb2ZpTJXEQP5eyihMUnDflRc+OsmYCdTZsrd7V42iVix5XveYf+RFeul7LCQksHBzbmpXXl
+	dhc9m/Qt1EHRSoX7ytrDc5rskvKXAqLuev9ZkGVyYA5t4TOUdEbr+aPCCAvHkwPHi21dG9fm9RtqN
+	vc6cn6MpKns7mliuhNCS5d7a/cx3OlNY8GvsCmeOvwFLc+nBKJlTP+H2ggseEvKEFmOo3dmXoT0E8
+	zW0dp5+4LzCe3sGXWzLScP75UeCYFfT2zRuLXYyvyjy0dhriN7l1BkCuCDmttRkXZYxpyQMR8e3MO
+	x0RuPKizhEFBHsUPtLEcACgUvgDG1rF7xDXg==;
+Received: from [177.172.124.218] (helo=[192.168.15.100])
+	by fanzine2.igalia.com with esmtpsa 
+	(Cipher TLS1.3:ECDHE_X25519__RSA_PSS_RSAE_SHA256__AES_256_GCM:256) (Exim)
+	id 1xSe4U-00B0BK-0I; Sun, 15 Nov 2026 18:31:18 +0100
+From: =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+Date: Sun, 15 Nov 2026 14:31:10 -0300
+Subject: [PATCH v8 01/10] futex: Skip test_futex_robust_unlock() if not
+ supported
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -70,109 +59,45 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 8bit
+Message-Id: <20261115-tonyk-robust_futex-v8-1-a4fe47333a28@igalia.com>
+References: <20261115-tonyk-robust_futex-v8-0-a4fe47333a28@igalia.com>
+In-Reply-To: <20261115-tonyk-robust_futex-v8-0-a4fe47333a28@igalia.com>
+To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, 
+ Darren Hart <dvhart@infradead.org>, Davidlohr Bueso <dave@stgolabs.net>, 
+ Arnd Bergmann <arnd@arndb.de>, 
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>, 
+ Waiman Long <longman@redhat.com>, Ryan Houdek <Sonicadvance1@gmail.com>, 
+ Thomas Gleixner <tglx@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+ linux-api@vger.kernel.org, kernel-dev@igalia.com, 
+ =?utf-8?q?Andr=C3=A9_Almeida?= <andrealmeid@igalia.com>
+X-Mailer: b4 0.15.2
 
-On 15 November 2026 15:27:00 GMT, Renzo Davoli <renzo@cs.unibo.it> wrote:
->At every exit stop of the set_syscall_info test, try to set with
->is_error set a few values outside [-MAX_ERRNO, -1], check that
->PTRACE_SET_SYSCALL_INFO fails with ERANGE and that the return value
->of the system call is left untouched.
->
->Signed-off-by: Renzo Davoli <renzo@cs.unibo.it>
->---
-> .../selftests/ptrace/set_syscall_info.c       | 51 +++++++++++++++++++
-> 1 file changed, 51 insertions(+)
->
->diff --git a/tools/testing/selftests/ptrace/set_syscall_info.c b/tools/testing/selftests/ptrace/set_syscall_info.c
->index 1cc411a41cd6..366ef0ec228f 100644
->--- a/tools/testing/selftests/ptrace/set_syscall_info.c
->+++ b/tools/testing/selftests/ptrace/set_syscall_info.c
->@@ -126,6 +126,54 @@ check_psi_exit(struct __test_metadata *_metadata,
-> 	}
-> }
-> 
->+/* Error values that PTRACE_SET_SYSCALL_INFO must reject with ERANGE. */
->+static const long long bad_error_rval[] = {
->+	0,
->+	1,
->+	ESRCH,
->+	-4095 - 1,	/* -MAX_ERRNO - 1 */
->+	-2147483647LL - 1,
->+#if __SIZEOF_LONG__ > 4
->+	0x100000000LL,
->+	-0x100000000LL - ESRCH,
->+#endif
->+};
+Skip test_futex_robust_unlock() if FUTEX_ROBUST_UNLOCK operation is not
+supported.
 
-yeah sure. Bit of a odd way to show error codes but okie dokie.
+Signed-off-by: André Almeida <andrealmeid@igalia.com>
+---
+ tools/testing/selftests/futex/functional/robust_list.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
->+
->+static void
->+check_psi_exit_bad_rval(struct __test_metadata *_metadata,
->+			const struct ptrace_syscall_info *orig,
->+			const struct si_exit *exp_exit)
->+{
->+	struct ptrace_syscall_info info;
->+	unsigned int i;
->+
->+	for (i = 0; i < ARRAY_SIZE(bad_error_rval); ++i) {
->+		info = *orig;
->+		info.exit.is_error = 1;
->+		info.exit.rval = bad_error_rval[i];
->+		ASSERT_EQ(-1, sys_ptrace(PTRACE_SET_SYSCALL_INFO,
->+					 tracee_pid, sizeof(info),
->+					 (uintptr_t) &info)) {
->+			LOG_KILL_TRACEE("PTRACE_SET_SYSCALL_INFO: error rval %lld accepted",
->+					bad_error_rval[i]);
->+		}
->+		ASSERT_EQ(ERANGE, errno) {
->+			LOG_KILL_TRACEE("PTRACE_SET_SYSCALL_INFO: error rval %lld: %m",
->+					bad_error_rval[i]);
->+		}
->+
->+		/* the return value must be left untouched */
->+		memset(&info, 0, sizeof(info));
->+		info.op = 0xff;
->+		ASSERT_LT(0, sys_ptrace(PTRACE_GET_SYSCALL_INFO, tracee_pid,
->+					sizeof(info), (uintptr_t) &info)) {
->+			LOG_KILL_TRACEE("PTRACE_GET_SYSCALL_INFO: %m");
->+		}
->+		check_psi_exit(_metadata, &info, exp_exit,
->+			       "PTRACE_SET_SYSCALL_INFO with bad error rval");
->+	}
->+}
->+
-> TEST(set_syscall_info)
-> {
-> 	const pid_t tracer_pid = getpid();
->@@ -476,6 +524,9 @@ TEST(set_syscall_info)
-> 				check_psi_exit(_metadata, &info, exp_exit,
-> 						"PTRACE_GET_SYSCALL_INFO #1");
-> 
->+				/* invalid error values must be rejected */
->+				check_psi_exit_bad_rval(_metadata, &info, exp_exit);
->+
+diff --git a/tools/testing/selftests/futex/functional/robust_list.c b/tools/testing/selftests/futex/functional/robust_list.c
+index 87217c549361..ddb610149857 100644
+--- a/tools/testing/selftests/futex/functional/robust_list.c
++++ b/tools/testing/selftests/futex/functional/robust_list.c
+@@ -792,6 +792,9 @@ TEST_F(futex_op, test_futex_robust_unlock)
+ 	ret = sys_futex_robust_unlock(futex, FUTEX_ROBUST_UNLOCK | variant->op, tid,
+ 				      &head.list_op_pending, variant->val3);
+ 
++	if (ret == -1 && errno == ENOSYS)
++		SKIP(return, "No support for FUTEX_ROBUST_UNLOCK");
++
+ 	ASSERT_EQ(ret, 0);
+ 	ASSERT_EQ(*futex, 0);
+ 
 
-Reviewed-by: Bradley Morgan <bradley.morgan@linux.dev>
+-- 
+2.56.1
 
-
-A feature suggestion on the table here is that you can modify the
-bad_error_rval[] parameter thru sysfs so you'd provide custom addresses or
-custom whatever.
-
-E.g:
-
-Echoing 0 to the sysfs directory. Then checking dmesg to see if it passed
-or if a hole happened.
-
-
-
-> 				/* apply the changes */
-> 				info.exit.is_error = set_exit->is_error;
-> 				info.exit.rval = set_exit->rval;
->
-
-
---- Thanks!
