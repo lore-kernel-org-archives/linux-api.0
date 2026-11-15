@@ -1,74 +1,74 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.216.70
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.200
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794758472;
-	b=L1lH101lN1R7ZyJEBtwXwTd9HCl034DX0W3A6VS2x4E3iLTnRDSA2EhGhFiJckYnQh2d
-	 YDp8yJAV+z48AGmNuQ2eaayyDursDBjpleuAWyXI09HFmoG56f9glGjIqizHyhSyC+o3z
-	 mrWFW34IMkOVSH/cNBPTx1IHnl3vy0ilIAbPKtaxZ84PShAH2BsNAriN+mwtFUCMoKlgV
-	 NQx3WK4HBERfKxdrynBSkSa8PBCTzS422WMMzFIKeVC39ix4LFn+4PE8EfSlluw8Iev93
-	 0+9J5Dz6rUp1HVuBesF8IHhV11BTpIH+/ZUtT9tWPIvuMba0Mr99l+pPYFrgpe9hbPw==
+	t=1794758475;
+	b=FYYFSJj8nFlDQLf89Jsl6zclNyv98ipuhHvHwVaxPv9rlUlfHbkLn6+h5vbYx9fAQHwI
+	 qm4L14sN4jjbnDlWPycU4hGAInFdSbzRiyNv+qD/7Hk4+dR72FM56cLJz8rxuxAXNFTbx
+	 B9uhk5ZgsIo3rqpF3tstEVxiLP9d6DLSNP80m0WH5CMKs6sm/b1FnP9+w7EzOvofMF7IB
+	 Nwf0RIJwCaz+CFWR4ZHCrUs9eZCdl+k2LoQSKEjE+lXfHFuU5C5Z3xTtrQrBCvZhXw+n/
+	 SaP2ylBEMoQ6xeoKdU9bEbiUBxo1CjDOE0faO29LGmGuNMaTaxvKZadnYqba3FQGgaQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794758472;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794758475;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:In-Reply-To:
 	 Mime-Version:References:X-Mailer:Message-ID:Subject:From:To:Cc:
 	 Content-Type;
-	bh=RQNBN5n20nbzOeQbJMzo0/EVUvvdWpBCnk4LAdFuQrs=;
-	b=Z67FytReEMujV828nDJrpVh4rX+BKeDjnRM5IT6Q84efVJubvglfpoDs4U5ZLxtAvMNP
-	 cYlRfFjrM2cWv34MgMWT2D/nvfxv9CgnyE5+P1WxFSjN1je/0FlHZOlW3oK5JOtWDRyTe
-	 +9kl1vsEdD8E5COsLc1bbiIxNLX9eO+syfLXnVqf7fp8tt1vKlgNlvxDPxR2jsQDQTZl+
-	 HeG8tOk990pwJjgF9eu9ic7vJXCO56Sd6vsNiPTlJxuBN7B48I/XaU5izPh+82R4rqNF1
-	 Na0iq+3jEUF467X2FJrdCU8eyA9DUvNIUH8F85JkJWvs1DAzAKKdPjCP8fqwCAAt3SQ==
+	bh=Kj5cOFjcYI4tFTJJsY4Uv8uB18SZbYD+rdOQRKLJNMQ=;
+	b=oOhd825xVam/3Q2SIvqcBLnPJCniX+74Xkm05aDbT1FzJTd5oj8Gc5Hi/yvvA4fU137v
+	 bur4VoVpPl7UKFmX1to/u5oJn3U4FeBo2+YKn73SoB/TtvYHlBLwW7SXqnWg8jNmsJsjZ
+	 eJpe0ERsc4TwdNBn0QLV6RBt6b1ECgKiQ2YNqm8HTkd5hLa3Xcl/VtViQPqC5j/wd3+D5
+	 LSAHj70gCLACrr/yXoY06Q2WBWKBQBIu9+Aqq8+5V9BiPE5UbwNdmZ61sk97Hksk+CMrN
+	 9NoYn2XsSFsNumhX7IXFTI5RdmT6wVhmmkDKJ14wdarpWB1QCqdQYxLjaoGWOU0ryoA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=google.com;
 	spf=pass smtp.mailfrom=flex--jiaqiyan.bounces.google.com;
-	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=ELf8WOcx;
-	arc=none smtp.remote-ip=209.85.216.70
-Received: from mail-pj1-f70.google.com (mail-pj1-f70.google.com [209.85.216.70])
+	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=YzTqVchL;
+	arc=none smtp.remote-ip=209.85.214.200
+Received: from mail-pl1-f200.google.com (mail-pl1-f200.google.com [209.85.214.200])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6DBB3606A33B
-	for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 16:01:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6DBB3606A33B
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64978606A897
+	for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 16:01:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 64978606A897
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--jiaqiyan.bounces.google.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=ELf8WOcx
-Received: by mail-pj1-f70.google.com with SMTP id 98e67ed59e1d1-3aed1b64104so4533439a91.0
-        for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 08:01:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=YzTqVchL
+Received: by mail-pl1-f200.google.com with SMTP id d9443c01a7336-2ee04c49451so37836995ad.2
+        for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 08:01:13 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20260707; t=1794758471; x=1795363271; darn=vger.kernel.org;
+        d=google.com; s=20260707; t=1794758473; x=1795363273; darn=vger.kernel.org;
         h=content-type:cc:to:from:subject:message-id:references:mime-version
          :in-reply-to:date:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=RQNBN5n20nbzOeQbJMzo0/EVUvvdWpBCnk4LAdFuQrs=;
-        b=ELf8WOcxLmDSbJGTojRN5BCAqFL1lB3xbQqleHMWS5lMBKwrBSyRnk+e0ML8rtkwi4
-         3YrLybP1fNHS0ed4h9kTpXarEdfJtios3jhfnJ4l/wSAdbc5Of0M5THrN+hqFACx3mbI
-         5Xrmv7WL864APzwdxqkX1SfwffhtujHC1msBBGPmUvJ73YTw+LMp6isb0+0X6GMI8X41
-         ePbMpj3Y1sYNSCAoK6esJvttcgQjg0zmndh0fyEUTGeG73Wh9ig9iCF0X3UPuZXBMU8O
-         O7DJJngYfao9kZwXFQUZyrm9tZTZ3+KN1QR+vTSJIlFxCKzjVbV7ce+sL7wexWJ9tk+c
-         9fbQ==
+        bh=Kj5cOFjcYI4tFTJJsY4Uv8uB18SZbYD+rdOQRKLJNMQ=;
+        b=YzTqVchL00k/nJJZnFd0GNfE8D7Qak1nrPGuUVL0zbxU5/0zZdpMHsbWImHtjxZJpc
+         +emGvhQJWSR1RxMB4YJF8wyAyCTBBIxenEWMY8iq7llj/K8FZtnfIg58z2Ui7vm/QeCv
+         exsXqkp3XVlq6Hytbb03C5rvq3CyIcsiuQGHkwbWdinrd/j6jFo2G2lhpgKuEqPMjCNE
+         cndzH8T0lexMxVcLK56sLnInW119vWsA4wrQL5+yfVJIM2QfDFpT2D4cTc4gjni9OsOY
+         3MN6Eb3ZINNLEFxJPH5YSzSznQx/4ExvN7y4rONxuRtev0kJafOABE8W8WsrEY3YmZk4
+         cEuA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794758471; x=1795363271;
+        d=1e100.net; s=20260707; t=1794758473; x=1795363273;
         h=content-type:cc:to:from:subject:message-id:references:mime-version
          :in-reply-to:date:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=RQNBN5n20nbzOeQbJMzo0/EVUvvdWpBCnk4LAdFuQrs=;
-        b=fvhUp2iY0kodo7AYnqf7FgdfXDZjm0wx5T5rZ9qn69KNt9/8R9kMB1ZngA8GMDakpT
-         CyJZs9AbllcSloHomaXVQ1sknCQ/Or1gro4PzXOfdnHcgKr7LCnf0HngZfwS5RpUUJPI
-         0UGAicTdZFsRjpFSxqwIy/+NYgN9lQvzzfAzenrouRaXwSKjagA7uEtQns/Woywc+ojz
-         y7GZatwiXjunq0z27AhctS2OQssOW/FAXGbrUDjE24PO3icijoEAZddGBULZaaAWZ9KJ
-         SDLKHrbk2hD7lxCOLNRuQRrwQxzC0mNdBRy8wnEq5VJSU4gZdVhY7OPsXR/gQYDaHT7J
-         Vp9Q==
-X-Forwarded-Encrypted: i=1; AL+hErGCiglwKEDCoqd/qrItoDvlDJpBJ7fgiQDS4gd2Ui3r7StdFHJvwmB2VbLidCk53IgmzgZmOZtRhR0=@vger.kernel.org
-X-Gm-Message-State: APuU4Z8X33hWpU7BHQy5ba5tyKhZPGvMpjx9vek8A0OmyJLDJVwoO4QH
-	TGYjzsAdJ/Ul3SxqMvdWdIzVAj6AOlPAxuOdQTcBLx9gDv/A8qBTrgp6yz2muMBI5yJXWHR4E8F
-	z1keS86zqwBufGQ==
-X-Received: from pjbmv22.prod.google.com ([2002:a17:90b:1996:b0:3b3:7744:80c5])
+        bh=Kj5cOFjcYI4tFTJJsY4Uv8uB18SZbYD+rdOQRKLJNMQ=;
+        b=XLkfHUgyM+49B6uTyVqOgillSZcLq/ycsprALqXCESOzUN5Z3H2sB4utK0Szfrb+em
+         Eso6vyLupOBFDdnDLxGzq3y6Ygo4MHXhnt6nZzp1Hhk1VNYOo62MB812Xz5KsV0TUWEF
+         RpyKmLN4H8MLLegKo3OEyMEdA2Kdt/tDHrB+jfYjLNDqz9hiz+Mk5HYdSQCdYnTI1ijT
+         FgeLohlFFujg5lj1kamFSUO5mK5Fhu8jebSa/TNE4R2r3YI2iG8mdrEovyy9fppKD3ow
+         qUOMRRw9P/TUeazBIQrBw/r0twpQfNQ5+0nrOH6OZo76mX9+uPFdDtny8yAvc7k4OJZx
+         zbSg==
+X-Forwarded-Encrypted: i=1; AL+hErHXgxapjsW71ojy2miIWBJpojraMJWTAw4BpxJ/C4fsbXhPJX3UpOXJCIH93m4kgAw22MXAg0eFgRs=@vger.kernel.org
+X-Gm-Message-State: APuU4Z90Lnl7l6LsgHzZcA8l0e+I85pPlMh3iQZ66xeDErnE4pkQQjbj
+	ycq0jx1Q1IYG2Bs3nPBZ1KZ3drJXKkrZh/hzIXWfjCBeWtAwEti88NgKUJy8zRjIVvQvqB052s9
+	DciYJgcOtZ9RO7A==
+X-Received: from plnx11.prod.google.com ([2002:a17:902:820b:b0:2e1:2a71:d15b])
  (user=jiaqiyan job=prod-delivery.src-stubby-dispatcher) by
- 2002:a17:90b:5607:b0:3a8:c0cd:57fb with SMTP id 98e67ed59e1d1-3b1b0cbee8emr7980273a91.42.1794758470324;
- Sun, 15 Nov 2026 08:01:10 -0800 (PST)
-Date: Sun, 15 Nov 2026 16:01:03 +0000
+ 2002:a17:902:fc4e:b0:2e9:66f6:7894 with SMTP id d9443c01a7336-2ee0dc2e2b8mr82014535ad.40.1794758472395;
+ Sun, 15 Nov 2026 08:01:12 -0800 (PST)
+Date: Sun, 15 Nov 2026 16:01:04 +0000
 In-Reply-To: <20261115160105.2507650-1-jiaqiyan@google.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -81,8 +81,8 @@ Precedence: list
 Mime-Version: 1.0
 References: <20261115160105.2507650-1-jiaqiyan@google.com>
 X-Mailer: git-send-email 2.56.0.611.g1030f0b940-goog
-Message-ID: <20261115160105.2507650-2-jiaqiyan@google.com>
-Subject: [PATCH v4 1/3] mm: memfd/hugetlb: memfd-based userspace HugeTLB MFR policy
+Message-ID: <20261115160105.2507650-3-jiaqiyan@google.com>
+Subject: [PATCH v4 2/3] selftests/mm: test userspace MFR for HugeTLB hugepage
 From: Jiaqi Yan <jiaqiyan@google.com>
 To: linmiaohe@huawei.com, muchun.song@linux.dev
 Cc: nao.horiguchi@gmail.com, william.roche@oracle.com, ljs@kernel.org, 
@@ -98,540 +98,809 @@ Cc: nao.horiguchi@gmail.com, william.roche@oracle.com, ljs@kernel.org,
 	Jiaqi Yan <jiaqiyan@google.com>
 Content-Type: text/plain; charset="UTF-8"
 
-Sometimes immediately hard offlining a large chunk of contiguous memory
-having uncorrected memory errors (UE) may not be the best option.
-Cloud providers usually serve capacity- and performance-critical guest
-memory with 1G HugeTLB hugepages, as this significantly reduces the
-overhead associated with managing page tables and TLB misses. However,
-for today's HugeTLB system, once a byte of memory in a hugepage is
-hardware corrupted, the kernel discards the whole hugepage, including
-the healthy portion. Customer workload running in the VM can hardly
-recover from such a great loss of memory.
+Test the userspace memory failure recovery (MFR) policy for HugeTLB:
 
-Therefore keeping or discarding a large chunk of contiguous memory
-owned by userspace (particularly to serve guest memory) due to
-recoverable UE may better be controlled by userspace process
-that owns the memory, e.g. VMM in the Cloud environment.
+1. Create a memfd backed by HugeTLB and MFD_MF_KEEP_UE_MAPPED bit set.
 
-Introduce a memfd-based userspace memory failure recovery (MFR) policy,
-MFD_MF_KEEP_UE_MAPPED. The policy could be supported by other kinds of
-memfd in the future, but the current implementation only covers HugeTLB.
+2. Allocate and map 4 hugepages, and fill them with data.
 
-For a hugepage associated with MFD_MF_KEEP_UE_MAPPED enabled memfd,
-whenever it runs into a new UE:
+3. Create sub-threads to inject memory errors at inner addresses of
+   the 1st hugepage.
 
-* MFR defers hard offline operations, i.e., unmapping and
-  dissolving. MFR still sets the HWPoison flag, records the raw
-  HWPoison page in the folio's raw_hwp_list, and sends SIGBUS to
-  the consuming thread, but si_addr_lsb is reduced to PAGE_SHIFT.
-  If userspace is able to handle the SIGBUS, the hugepage remains
-  accessible via the mapping created with that memfd. The result
-  is reported as MF_DELAYED, since the hugepage will be dealt with
-  later.
+4. Check if each sub-thread gets correct SIGBUS for the poisoned raw page.
 
-* MFR doesn't hold any refcount on the hugepage after it returns;
-  the page cache keeps the hugepage alive. Every memory_failure()
-  on such a hugepage takes exactly one refcount and drops it in
-  me_huge_page(), so it never drops a refcount held by others,
-  e.g. hugetlb isolation. Since the 1st error clears the
-  hugepage's migratable flag, get_huge_page_for_hwpoison() treats
-  an already HWPoison hugepage of an MFD_MF_KEEP_UE_MAPPED memfd as
-  in use, so that the 2nd and later errors are handled the same as
-  the 1st. Without extra refcounts, the memfd can still be sealed
-  with F_SEAL_WRITE after its hugepages have UEs.
+5. Check if all memory is still accessible and content still valid.
 
-* If the memory was not faulted in yet, the fault handler also
-  allows faulting in the HWPoison folio.
+6. Optionally seal the memfd, before and after injecting errors.
 
-For an MFD_MF_KEEP_UE_MAPPED enabled memfd, when it is closed, or
-when the userspace process truncates or punches holes in its
-hugepages:
+7. Check if the poisoned hugepage is dissolved after the memfd is
+   truncated or closed, and only its raw HWPoison pages are isolated.
 
-* When the HugeTLB in-memory file system removes the filemap's
-  folios one by one, it asks MFR to deal with HWPoison folios
-  on the fly, implemented by filemap_offline_hwpoison_folio().
+8. Unpoison the raw HWPoison pages.
 
-* MFR drops only the refcount taken by filemap_get_folios(), so that
-  the HWPoison folio becomes free, and then dissolves it into a set
-  of raw pages. dissolve_free_hugetlb_folio() moves the HWPoison flag
-  to the raw pages after restoring vmemmap, so the healthy pages are
-  freed to the buddy allocator, while the HWPoison ones are kept out
-  of it. If the dissolve fails for any reason (e.g. an extra refcount
-  on the folio), the folio remains HWPoison and is never allocated
-  from the HugeTLB pool again.
+Configurables in the test:
 
-By default MFD_MF_KEEP_UE_MAPPED is not set, so MFR immediately hard
-offlines hugepages having UEs.
+- hugepage_size: size of the hugepage, 1G (default) or 2M.
 
-Tested with the new selftest hugetlb-mfr in the follow-up commit, with
+- nr_hwp_pages: number of raw pages within the 1st hugepage to poison,
+  1 to 8 (default 8).
 
-1. HVO on and off.
+- inject_method: how memory errors are injected.
+  - corrupt-pfn (default): write the PFN to hwpoison_inject's
+    corrupt-pfn, which calls memory_failure() without
+    MF_COUNT_INCREASED, like a real action optional error. The
+    injecting thread opts in to early kill and gets SIGBUS with
+    BUS_MCEERR_AO.
+  - madvise: MADV_HWPOISON, which calls memory_failure() with
+    MF_ACTION_REQUIRED | MF_COUNT_INCREASED. The injecting thread gets
+    SIGBUS with BUS_MCEERR_AR.
 
-2. MADV_HWPOISON and corrupt-pfn. corrupt-pfn
-   covers the code paths in get_huge_page_for_hwpoison() that
-   MADV_HWPOISON skips with MF_COUNT_INCREASED.
+- release_method: how the HWPoison hugepage is released.
+  - truncate (default): truncate the memfd to 0.
+  - seal: model a sealed base image shared via MAP_PRIVATE. Before
+    injecting errors, seal the memfd with F_SEAL_SHRINK | F_SEAL_GROW |
+    F_SEAL_FUTURE_WRITE, and replace the writable shared mapping with a
+    read-only private one, through which errors are injected. After
+    injecting errors, seal the memfd with F_SEAL_WRITE | F_SEAL_EXEC |
+    F_SEAL_SEAL, check that the seals are enforced and the memfd is
+    still readable, then close it. Adding F_SEAL_WRITE needs the folio
+    to have no refcount other than the page cache and page tables, so
+    it checks that memory_failure() didn't leave one behind.
 
-3. 2M and 1G hugepages.
+The test needs root, and the hwpoison_inject module for corrupt-pfn
+and unpoisoning. It sets up the HugeTLB pages it needs, and restores
+the original HugeTLB settings when it exits. run_vmtests.sh runs it
+under the memory-failure category.
 
-4. Hugepages released by truncation, and by closing a sealed memfd.
+The test code is heavily re-written by an AI assistant based on the
+original code I wrote from scratch [1]. I reviewed and tested AI's
+new code.
 
-This commit message was reworded with an AI assistant, which was also
-used to review the code; I wrote all the code and have reviewed
-results from AI.
+[1] https://lore.kernel.org/linux-mm/20260203192352.2674184-3-jiaqiyan@google.com/
 
-Suggested-by: Jason Gunthorpe <jgg@nvidia.com>
-Co-developed-by: William Roche <william.roche@oracle.com>
-Signed-off-by: William Roche <william.roche@oracle.com>
 Assisted-by: Antigravity:claude-opus-5-5
 Signed-off-by: Jiaqi Yan <jiaqiyan@google.com>
 ---
- fs/hugetlbfs/inode.c       |  42 ++++++++++---
- include/linux/pagemap.h    |  24 ++++++++
- include/uapi/linux/memfd.h |   6 ++
- mm/hugetlb.c               |   8 ++-
- mm/memfd.c                 |   9 ++-
- mm/memory-failure.c        | 119 ++++++++++++++++++++++++++++++++++---
- 6 files changed, 189 insertions(+), 19 deletions(-)
+ tools/testing/selftests/mm/Makefile       |   1 +
+ tools/testing/selftests/mm/hugetlb-mfr.c  | 704 ++++++++++++++++++++++
+ tools/testing/selftests/mm/run_vmtests.sh |   1 +
+ 3 files changed, 706 insertions(+)
+ create mode 100644 tools/testing/selftests/mm/hugetlb-mfr.c
 
-diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
-index f0be8edb3517..282bb19dfd3f 100644
---- a/fs/hugetlbfs/inode.c
-+++ b/fs/hugetlbfs/inode.c
-@@ -493,10 +493,14 @@ hugetlb_vmdelete_list(struct address_space *mapping, pgoff_t start,
- 
- /*
-  * Called with hugetlb fault mutex held.
-+ * Return true if the folio's folio_batch's refcount is consumed by
-+ * filemap_offline_hwpoison_folio() because it attempted to deal with
-+ * the folio for HWPoison reason.
-  */
--static void remove_inode_single_folio(struct hstate *h, struct inode *inode,
--		struct address_space *mapping, struct folio *folio,
--		pgoff_t index, bool truncate_op)
-+static bool remove_inode_single_folio(struct hstate *h, struct inode *inode,
-+				      struct address_space *mapping,
-+				      struct folio *folio, pgoff_t index,
-+				      bool truncate_op)
- {
- 	/*
- 	 * If folio is mapped, it was faulted in after being
-@@ -526,6 +530,17 @@ static void remove_inode_single_folio(struct hstate *h, struct inode *inode,
- 	}
- 
- 	folio_unlock(folio);
+diff --git a/tools/testing/selftests/mm/Makefile b/tools/testing/selftests/mm/Makefile
+index 675ec57d47de..c25a4048fc1c 100644
+--- a/tools/testing/selftests/mm/Makefile
++++ b/tools/testing/selftests/mm/Makefile
+@@ -62,6 +62,7 @@ TEST_GEN_FILES += gup
+ TEST_GEN_FILES += gup_longterm
+ TEST_GEN_FILES += hmm-tests
+ TEST_GEN_FILES += hugetlb-madvise
++TEST_GEN_FILES += hugetlb-mfr
+ TEST_GEN_FILES += hugetlb-mmap
+ TEST_GEN_FILES += hugetlb-mremap
+ TEST_GEN_FILES += hugetlb-read-hwpoison
+diff --git a/tools/testing/selftests/mm/hugetlb-mfr.c b/tools/testing/selftests/mm/hugetlb-mfr.c
+new file mode 100644
+index 000000000000..c591160f3b2a
+--- /dev/null
++++ b/tools/testing/selftests/mm/hugetlb-mfr.c
+@@ -0,0 +1,704 @@
++// SPDX-License-Identifier: GPL-2.0
++
++/*
++ * Test the userspace memory failure recovery (MFR) policy for HugeTLB
++ * hugepage case:
++ * 1. Create a memfd backed by HugeTLB and MFD_MF_KEEP_UE_MAPPED bit set.
++ * 2. Allocate and map 4 hugepages, and fill them with data.
++ * 3. Create sub-threads to inject memory errors at inner addresses of
++ *    the 1st hugepage.
++ * 4. Check if each sub-thread gets correct SIGBUS for the poisoned raw page.
++ * 5. Check if all memory is still accessible and content still valid.
++ * 6. Optionally seal the memfd, before and after injecting errors.
++ * 7. Check if the poisoned hugepage is dissolved after the memfd is
++ *    truncated or closed, and only its raw HWPoison pages are isolated.
++ * 8. Unpoison the raw HWPoison pages.
++ *
++ * Usage: hugetlb-mfr [hugepage_size] [nr_hwp_pages] [inject_method]
++ *                    [release_method]
++ * - hugepage_size: size of the hugepage, 1G (default) or 2M.
++ * - nr_hwp_pages: number of raw pages within the 1st hugepage to poison,
++ *   1 to 8 (default 8).
++ * - inject_method: how memory errors are injected.
++ *   - corrupt-pfn (default): write the PFN to hwpoison_inject's
++ *     corrupt-pfn, which calls memory_failure() without
++ *     MF_COUNT_INCREASED, like a real action optional error. The
++ *     injecting thread opts in to early kill and gets SIGBUS with
++ *     BUS_MCEERR_AO.
++ *   - madvise: MADV_HWPOISON, which calls memory_failure() with
++ *     MF_ACTION_REQUIRED | MF_COUNT_INCREASED. The injecting thread gets
++ *     SIGBUS with BUS_MCEERR_AR.
++ * - release_method: how the HWPoison hugepage is released.
++ *   - truncate (default): truncate the memfd to 0.
++ *   - seal: model a sealed base image shared via MAP_PRIVATE. Before
++ *     injecting errors, seal the memfd with F_SEAL_SHRINK | F_SEAL_GROW |
++ *     F_SEAL_FUTURE_WRITE, and replace the writable shared mapping with a
++ *     read-only private one, through which errors are injected. After
++ *     injecting errors, seal the memfd with F_SEAL_WRITE | F_SEAL_EXEC |
++ *     F_SEAL_SEAL, check that the seals are enforced and the memfd is
++ *     still readable, then close it. Adding F_SEAL_WRITE needs the folio
++ *     to have no refcount other than the page cache and page tables, so
++ *     it also checks that memory_failure() didn't leave one behind.
++ *
++ * The test needs root, and the hwpoison_inject module for corrupt-pfn
++ * and for unpoisoning. HugeTLB pages are set up by the test, and the
++ * original HugeTLB settings are restored when the test exits.
++ */
++
++#define _GNU_SOURCE
++#include <assert.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <pthread.h>
++#include <signal.h>
++#include <stdbool.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <string.h>
++#include <unistd.h>
++
++#include <linux/falloc.h>
++#include <linux/magic.h>
++#include <linux/memfd.h>
++#include <sys/mman.h>
++#include <sys/prctl.h>
++#include <sys/statfs.h>
++#include <sys/types.h>
++
++#include "../kselftest.h"
++#include "vm_util.h"
++
++#define HUGEPAGE_SIZE_1G	(1UL << 30)
++#define HUGEPAGE_SIZE_2M	(1UL << 21)
++#define NR_HUGEPAGES		4
++#define HUGETLB_FILL		0xab
++
++#ifndef MFD_MF_KEEP_UE_MAPPED
++#define MFD_MF_KEEP_UE_MAPPED	0x0020U
++#endif
++
++#ifndef F_SEAL_FUTURE_WRITE
++#define F_SEAL_FUTURE_WRITE	0x0010
++#endif
++
++#ifndef F_SEAL_EXEC
++#define F_SEAL_EXEC		0x0020
++#endif
++
++/* Seals of a base image that is still being populated by its owner. */
++#define SEALS_BEFORE_ERRORS	(F_SEAL_SHRINK | F_SEAL_GROW | \
++				 F_SEAL_FUTURE_WRITE)
++/*
++ * F_SEAL_EXEC implies F_SEAL_WRITE if the memfd has exec bits, so it has
++ * to wait until after injecting errors too.
++ */
++#define SEALS_AFTER_ERRORS	(F_SEAL_WRITE | F_SEAL_EXEC | F_SEAL_SEAL)
++#define SEALS_ALL		(SEALS_BEFORE_ERRORS | SEALS_AFTER_ERRORS)
++
++#define INJECT_MADVISE_STR	"madvise"
++#define RELEASE_TRUNCATE_STR	"truncate"
++#define RELEASE_SEAL_STR	"seal"
++#define INJECT_CORRUPT_PFN_STR	"corrupt-pfn"
++#define CORRUPT_PFN_DEBUGFS	"/sys/kernel/debug/hwpoison/corrupt-pfn"
++#define UNPOISON_PFN_DEBUGFS	"/sys/kernel/debug/hwpoison/unpoison-pfn"
++
++enum inject_method {
++	INJECT_MADVISE,
++	INJECT_CORRUPT_PFN,
++};
++
++enum release_method {
++	RELEASE_TRUNCATE,
++	RELEASE_SEAL,
++};
++
++static const unsigned long offsets_1g[] = {
++	0x200000, 0x3ff000, 0x801000, 0x2000000,
++	0x3fff000, 0x4001000, 0x7fff000, 0x3ffff000
++};
++
++static const unsigned long offsets_2m[] = {
++	0x020000, 0x041000, 0x07f000, 0x120000,
++	0x13f000, 0x141000, 0x17f000, 0x1ff000
++};
++
++static_assert(ARRAY_SIZE(offsets_1g) == ARRAY_SIZE(offsets_2m),
++	      "offsets_1g and offsets_2m must have the same size");
++#define MAX_NR_HWP_PAGES	ARRAY_SIZE(offsets_1g)
++
++static unsigned long hugepage_size = HUGEPAGE_SIZE_1G;
++static size_t nr_hwp_pages = MAX_NR_HWP_PAGES;
++static enum inject_method inject_method = INJECT_CORRUPT_PFN;
++static enum release_method release_method = RELEASE_TRUNCATE;
++
++static int pagemap_fd = -1;
++static int kpageflags_fd = -1;
++static unsigned long hwp_pfns[MAX_NR_HWP_PAGES];
++
++static void *sigbus_addr;
++static int sigbus_addr_lsb;
++static int sigbus_code;
++static bool expecting_sigbus;
++static bool got_sigbus;
++
++struct hwp_target {
++	void *addr;
++	unsigned long pfn;
++	int ret;
++};
++
++static int create_hugetlbfs_file(void)
++{
++	struct statfs file_stat = { 0 };
++	int flags = MFD_HUGETLB | MFD_MF_KEEP_UE_MAPPED | MFD_ALLOW_SEALING;
++	int fd;
++
++	if (hugepage_size == HUGEPAGE_SIZE_2M)
++		flags |= MFD_HUGE_2MB;
++	else
++		flags |= MFD_HUGE_1GB;
++
++	fd = memfd_create("hugetlb_tmp", flags);
++	if (fd < 0)
++		ksft_exit_fail_perror("Failed to memfd_create");
++
++	if (fstatfs(fd, &file_stat))
++		ksft_exit_fail_perror("Failed to fstatfs");
++	if (file_stat.f_type != HUGETLBFS_MAGIC)
++		ksft_exit_fail_msg("Not hugetlbfs file\n");
++	if (file_stat.f_bsize != hugepage_size)
++		ksft_exit_fail_msg("Hugepage size is %#lx, not %#lx\n",
++				   file_stat.f_bsize, hugepage_size);
++
++	return fd;
++}
++
++/*
++ * SIGBUS handler for the "do_hwpoison" thread that injected the memory error.
++ */
++static void sigbus_handler(int signo, siginfo_t *info, void *context)
++{
++	if (!expecting_sigbus)
++		ksft_exit_fail_msg("Unexpected SIGBUS with addr=%p\n",
++				   info->si_addr);
++
++	got_sigbus = true;
++	sigbus_code = info->si_code;
++	sigbus_addr = info->si_addr;
++	sigbus_addr_lsb = info->si_addr_lsb;
++}
++
++static int inject_corrupt_pfn(unsigned long pfn)
++{
++	char buf[64];
++	int fd, len, ret = 0;
 +
 +	/*
-+	 * There may be pending HWPoison-ed folios when a memfd is being
-+	 * removed or part of it is being truncated.
-+	 *
-+	 * HugeTLBFS' error_remove_folio keeps the HWPoison-ed folios in
-+	 * page cache until mm wants to drop the folio at the end of the
-+	 * filemap. At this point, if memory failure was previously delayed
-+	 * by MFD_MF_KEEP_UE_MAPPED, we can now deal with it.
++	 * hwpoison_inject calls memory_failure() without MF_ACTION_REQUIRED,
++	 * so SIGBUS(BUS_MCEERR_AO) is only sent to a thread that opted in to
++	 * early kill. Opt in this thread so the signal comes back to it.
 +	 */
-+	return filemap_offline_hwpoison_folio(mapping, folio);
- }
- 
- /*
-@@ -556,13 +571,14 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
- 	const pgoff_t end = lend >> PAGE_SHIFT;
- 	struct folio_batch fbatch;
- 	pgoff_t next, index;
--	int i, freed = 0;
-+	int i, j, freed = 0;
- 	bool truncate_op = (lend == LLONG_MAX);
-+	bool ret;
- 
- 	folio_batch_init(&fbatch);
- 	next = lstart >> PAGE_SHIFT;
- 	while (filemap_get_folios(mapping, &next, end - 1, &fbatch)) {
--		for (i = 0; i < folio_batch_count(&fbatch); ++i) {
-+		for (i = 0, j = 0; i < folio_batch_count(&fbatch); ++i) {
- 			struct folio *folio = fbatch.folios[i];
- 			u32 hash = 0;
- 
-@@ -573,12 +589,21 @@ static void remove_inode_hugepages(struct inode *inode, loff_t lstart,
- 			/*
- 			 * Remove folio that was part of folio_batch.
- 			 */
--			remove_inode_single_folio(h, inode, mapping, folio,
--						  index, truncate_op);
-+			ret = remove_inode_single_folio(h, inode, mapping,
-+							folio, index, truncate_op);
- 			freed++;
- 
-+			/*
-+			 * Skip HWPoison folio whose reference was already
-+			 * dropped by filemap_offline_hwpoison_folio().
-+			 */
-+			if (!ret)
-+				fbatch.folios[j++] = folio;
++	if (prctl(PR_MCE_KILL, PR_MCE_KILL_SET, PR_MCE_KILL_EARLY, 0, 0) < 0)
++		return -errno;
 +
- 			mutex_unlock(&hugetlb_fault_mutex_table[hash]);
- 		}
-+		fbatch.nr = j;
++	fd = open(CORRUPT_PFN_DEBUGFS, O_WRONLY);
++	if (fd < 0)
++		return -errno;
 +
- 		folio_batch_release(&fbatch);
- 		cond_resched();
- 	}
-@@ -1048,6 +1073,9 @@ static int hugetlbfs_migrate_folio(struct address_space *mapping,
- static int hugetlbfs_error_remove_folio(struct address_space *mapping,
- 				struct folio *folio)
- {
-+	if (mapping_mf_keep_ue_mapped(mapping))
-+		return MF_DELAYED;
++	len = snprintf(buf, sizeof(buf), "%#lx\n", pfn);
++	if (write(fd, buf, len) != len)
++		ret = -errno;
 +
- 	return 0;
- }
- 
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 73af18a37367..120821141234 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -209,6 +209,7 @@ enum mapping_flags {
- 	AS_WRITEBACK_MAY_DEADLOCK_ON_RECLAIM = 9,
- 	AS_KERNEL_FILE = 10,	/* mapping for a fake kernel file that shouldn't
- 				   account usage to user cgroups */
-+	AS_MF_KEEP_UE_MAPPED = 11, /* For MFD_MF_KEEP_UE_MAPPED. */
- 	/* Bits 16-25 are used for FOLIO_ORDER */
- 	AS_FOLIO_ORDER_BITS = 5,
- 	AS_FOLIO_ORDER_MIN = 16,
-@@ -344,6 +345,16 @@ static inline bool mapping_writeback_may_deadlock_on_reclaim(const struct addres
- 	return test_bit(AS_WRITEBACK_MAY_DEADLOCK_ON_RECLAIM, &mapping->flags);
- }
- 
-+static inline bool mapping_mf_keep_ue_mapped(const struct address_space *mapping)
-+{
-+	return test_bit(AS_MF_KEEP_UE_MAPPED, &mapping->flags);
++	close(fd);
++	return ret;
 +}
 +
-+static inline void mapping_set_mf_keep_ue_mapped(struct address_space *mapping)
++static void *do_hwpoison(void *arg)
 +{
-+	set_bit(AS_MF_KEEP_UE_MAPPED, &mapping->flags);
-+}
++	struct hwp_target *target = arg;
 +
- static inline gfp_t mapping_gfp_mask(const struct address_space *mapping)
- {
- 	return mapping->gfp_mask;
-@@ -1349,6 +1360,19 @@ void replace_page_cache_folio(struct folio *old, struct folio *new);
- void delete_from_page_cache_batch(struct address_space *mapping,
- 				  struct folio_batch *fbatch);
- bool filemap_release_folio(struct folio *folio, gfp_t gfp);
-+#ifdef CONFIG_MEMORY_FAILURE
-+/*
-+ * Provided by memory failure to offline HWPoison-ed folio managed by memfd.
-+ */
-+bool filemap_offline_hwpoison_folio(struct address_space *mapping,
-+				    struct folio *folio);
-+#else
-+static inline bool filemap_offline_hwpoison_folio(struct address_space *mapping,
-+						  struct folio *folio)
-+{
-+	return false;
-+}
-+#endif
- loff_t mapping_seek_hole_data(struct address_space *, loff_t start, loff_t end,
- 		int whence);
- 
-diff --git a/include/uapi/linux/memfd.h b/include/uapi/linux/memfd.h
-index 273a4e15dfcf..d9875da551b7 100644
---- a/include/uapi/linux/memfd.h
-+++ b/include/uapi/linux/memfd.h
-@@ -12,6 +12,12 @@
- #define MFD_NOEXEC_SEAL		0x0008U
- /* executable */
- #define MFD_EXEC		0x0010U
-+/*
-+ * Keep owned folios mapped when uncorrectable memory errors (UE) causes
-+ * memory failure (MF) within the folio. Only at the end of the mapping
-+ * will its HWPoison-ed folios be dealt with.
-+ */
-+#define MFD_MF_KEEP_UE_MAPPED	0x0020U
- 
- /*
-  * Huge page size encoding when MFD_HUGETLB is specified, and a huge page
-diff --git a/mm/hugetlb.c b/mm/hugetlb.c
-index ff9dbfbc7a96..d28710d3ede6 100644
---- a/mm/hugetlb.c
-+++ b/mm/hugetlb.c
-@@ -5978,9 +5978,11 @@ static vm_fault_t hugetlb_no_page(struct address_space *mapping,
- 		 * So we need to block hugepage fault by PG_hwpoison bit check.
- 		 */
- 		if (unlikely(folio_test_hwpoison(folio))) {
--			ret = VM_FAULT_HWPOISON_LARGE |
--				VM_FAULT_SET_HINDEX(hstate_index(h));
--			goto backout_unlocked;
-+			if (!mapping_mf_keep_ue_mapped(mapping)) {
-+				ret = VM_FAULT_HWPOISON_LARGE |
-+				      VM_FAULT_SET_HINDEX(hstate_index(h));
-+				goto backout_unlocked;
-+			}
- 		}
- 
- 		/* Check for page in userfault range. */
-diff --git a/mm/memfd.c b/mm/memfd.c
-index 0f6fff004f5e..fcc00b4ba10e 100644
---- a/mm/memfd.c
-+++ b/mm/memfd.c
-@@ -341,7 +341,8 @@ long memfd_fcntl(struct file *file, unsigned int cmd, unsigned int arg)
- #define MFD_NAME_PREFIX_LEN (sizeof(MFD_NAME_PREFIX) - 1)
- #define MFD_NAME_MAX_LEN (NAME_MAX - MFD_NAME_PREFIX_LEN)
- 
--#define MFD_ALL_FLAGS (MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB | MFD_NOEXEC_SEAL | MFD_EXEC)
-+#define MFD_ALL_FLAGS (MFD_CLOEXEC | MFD_ALLOW_SEALING | MFD_HUGETLB | \
-+		       MFD_NOEXEC_SEAL | MFD_EXEC | MFD_MF_KEEP_UE_MAPPED)
- 
- static int check_sysctl_memfd_noexec(unsigned int *flags)
- {
-@@ -412,6 +413,9 @@ static int sanitize_flags(unsigned int *flags_ptr)
- 	if (!(flags & MFD_HUGETLB)) {
- 		if (flags & ~MFD_ALL_FLAGS)
- 			return -EINVAL;
-+		/* Only HugeTLBFS supports MFD_MF_KEEP_UE_MAPPED. */
-+		if (flags & MFD_MF_KEEP_UE_MAPPED)
-+			return -EINVAL;
- 	} else {
- 		/* Allow huge page size encoding in flags. */
- 		if (flags & ~(MFD_ALL_FLAGS |
-@@ -484,6 +488,9 @@ struct file *memfd_alloc_file(const char *name, unsigned int flags)
- 	file->f_mode |= FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE;
- 	file->f_flags |= O_LARGEFILE;
- 
-+	if (flags & MFD_MF_KEEP_UE_MAPPED)
-+		mapping_set_mf_keep_ue_mapped(file->f_mapping);
-+
- 	if (flags & MFD_NOEXEC_SEAL) {
- 		inode->i_mode &= ~0111;
- 		file_seals = memfd_file_seals_ptr(file);
-diff --git a/mm/memory-failure.c b/mm/memory-failure.c
-index b456e0996ecd..30fa252d1522 100644
---- a/mm/memory-failure.c
-+++ b/mm/memory-failure.c
-@@ -459,6 +459,8 @@ static void __add_to_kill(struct task_struct *tsk, const struct page *p,
- 			  unsigned long addr)
- {
- 	struct to_kill *tk;
-+	const struct folio *folio;
-+	struct address_space *mapping;
- 
- 	tk = kmalloc_obj(struct to_kill, GFP_ATOMIC);
- 	if (!tk) {
-@@ -467,10 +469,21 @@ static void __add_to_kill(struct task_struct *tsk, const struct page *p,
- 	}
- 
- 	tk->addr = addr;
--	if (is_zone_device_page(p))
-+	if (is_zone_device_page(p)) {
- 		tk->size_shift = dev_pagemap_mapping_shift(vma, tk->addr);
--	else
--		tk->size_shift = folio_shift(page_folio(p));
++	/*
++	 * Invoke memory_failure() the way a real memory error would. We
++	 * expect memory_failure() to return 0, so report failure if
++	 * madvise() or write() fails.
++	 */
++	if (inject_method == INJECT_CORRUPT_PFN) {
++		ksft_print_msg("Injecting corrupt-pfn=%#lx for vaddr=%p\n",
++			       target->pfn, target->addr);
++		target->ret = inject_corrupt_pfn(target->pfn);
 +	} else {
-+		folio = page_folio(p);
-+		mapping = folio_mapping(folio);
-+		if (mapping && mapping_mf_keep_ue_mapped(mapping))
-+			/*
-+			 * Let userspace know the radius of HWPoison is
-+			 * the size of raw page; accessing other pages
-+			 * inside the folio is still ok.
-+			 */
-+			tk->size_shift = PAGE_SHIFT;
-+		else
-+			tk->size_shift = folio_shift(folio);
++		ksft_print_msg("MADV_HWPOISON vaddr=%p (pfn=%#lx)\n",
++			       target->addr, target->pfn);
++		if (madvise(target->addr, getpagesize(), MADV_HWPOISON) < 0)
++			target->ret = -errno;
 +	}
- 
- 	/*
- 	 * Send SIGKILL if "tk->addr == -EFAULT". Also, as
-@@ -895,6 +908,8 @@ static int kill_accessing_process(struct task_struct *p, unsigned long pfn,
- 				  int flags)
- {
- 	int ret;
-+	struct folio *folio;
-+	struct address_space *mapping;
- 	struct hwpoison_walk priv = {
- 		.pfn = pfn,
- 	};
-@@ -912,8 +927,14 @@ static int kill_accessing_process(struct task_struct *p, unsigned long pfn,
- 	 * ret = 0 when poison page is a clean page and it's dropped, no
- 	 * SIGBUS is needed.
- 	 */
--	if (ret == 1 && priv.tk.addr)
-+	if (ret == 1 && priv.tk.addr) {
-+		folio = pfn_folio(pfn);
-+		mapping = folio_mapping(folio);
-+		if (mapping && mapping_mf_keep_ue_mapped(mapping))
-+			priv.tk.size_shift = PAGE_SHIFT;
 +
- 		kill_proc(&priv.tk, pfn, flags);
-+	}
- 	mmap_read_unlock(p->mm);
- 
- 	return ret > 0 ? -EHWPOISON : 0;
-@@ -1210,6 +1231,15 @@ static int me_swapcache_clean(struct page_state *ps, struct page *p)
- 	return ret;
- }
- 
-+static bool hugetlb_should_keep_hwpoison_mapped(struct folio *folio,
-+						struct address_space *mapping)
-+{
-+	if (!folio_test_hugetlb(folio) || !mapping)
-+		return false;
-+
-+	return mapping_mf_keep_ue_mapped(mapping);
++	return NULL;
 +}
 +
- /*
-  * Huge pages. Needs work.
-  * Issues:
-@@ -1229,6 +1259,15 @@ static int me_huge_page(struct page_state *ps, struct page *p)
- 		/* The page is kept in page cache. */
- 		extra_pins = true;
- 		folio_unlock(folio);
-+
-+		if (hugetlb_should_keep_hwpoison_mapped(folio, mapping)) {
-+			/*
-+			 * Page cache keeps the folio until
-+			 * filemap_offline_hwpoison_folio() dissolves it.
-+			 */
-+			folio_put(folio);
-+			return res;
-+		}
- 	} else {
- 		folio_unlock(folio);
- 		/*
-@@ -1689,7 +1728,9 @@ static bool hwpoison_user_mappings(struct folio *folio, struct page *p,
- 	LIST_HEAD(tokill);
- 	bool unmap_success;
- 	bool forcekill;
-+	bool keep_mapped;
- 	bool mlocked = folio_test_mlocked(folio);
-+	struct address_space *mapping = folio_mapping(folio);
- 
- 	/*
- 	 * Here we are interested only in user-mapped pages, so skip any
-@@ -1715,8 +1756,12 @@ static bool hwpoison_user_mappings(struct folio *folio, struct page *p,
- 	 */
- 	collect_procs(folio, p, &tokill, flags & MF_ACTION_REQUIRED);
- 
--	unmap_success = !unmap_poisoned_folio(folio, pfn, flags & MF_MUST_KILL);
--	if (!unmap_success)
-+	keep_mapped = hugetlb_should_keep_hwpoison_mapped(folio, mapping);
-+	if (!keep_mapped)
-+		unmap_poisoned_folio(folio, pfn, flags & MF_MUST_KILL);
-+
-+	unmap_success = !folio_mapped(folio);
-+	if (!keep_mapped && !unmap_success)
- 		pr_err("%#lx: failed to unmap page (folio mapcount=%d)\n",
- 		       pfn, folio_mapcount(folio));
- 
-@@ -1741,7 +1786,7 @@ static bool hwpoison_user_mappings(struct folio *folio, struct page *p,
- 		    !unmap_success;
- 	kill_procs(&tokill, forcekill, pfn, flags);
- 
--	return unmap_success;
-+	return unmap_success || keep_mapped;
- }
- 
- static int identify_page_state(unsigned long pfn, struct page *p,
-@@ -1989,6 +2034,7 @@ static int hugetlb_update_hwpoison(struct folio *folio, struct page *page)
- 	struct raw_hwp_page *raw_hwp;
- 	struct raw_hwp_page *p;
- 	int ret = folio_test_set_hwpoison(folio) ? MF_HUGETLB_FOLIO_PRE_POISONED : 0;
-+	struct address_space *mapping = folio_mapping(folio);
- 
- 	/*
- 	 * Once the hwpoison hugepage has lost reliable raw error info,
-@@ -2007,6 +2053,10 @@ static int hugetlb_update_hwpoison(struct folio *folio, struct page *page)
- 	if (raw_hwp) {
- 		raw_hwp->page = page;
- 		llist_add(&raw_hwp->node, head);
-+
-+		if (hugetlb_should_keep_hwpoison_mapped(folio, mapping))
-+			/* A new raw HWPoison page in a still mapped hugepage. */
-+			ret = MF_HUGETLB_IN_USED;
- 	} else {
- 		/*
- 		 * Failed to save raw error info.  We no longer trace all
-@@ -2057,11 +2107,13 @@ static int get_huge_page_for_hwpoison(unsigned long pfn, int flags,
- {
- 	struct page *page = pfn_to_page(pfn);
- 	struct folio *folio;
-+	struct address_space *mapping;
- 	bool count_increased = false;
- 	int ret, rc;
- 
- 	spin_lock_irq(&hugetlb_lock);
- 	folio = page_folio(page);
-+	mapping = folio_mapping(folio);
- 	if (!folio_test_hugetlb(folio)) {
- 		ret = MF_HUGETLB_NON_HUGEPAGE;
- 		goto out_unlock;
-@@ -2070,7 +2122,15 @@ static int get_huge_page_for_hwpoison(unsigned long pfn, int flags,
- 		count_increased = true;
- 	} else if (folio_test_hugetlb_freed(folio)) {
- 		ret = MF_HUGETLB_FREED;
--	} else if (folio_test_hugetlb_migratable(folio)) {
-+	} else if (folio_test_hugetlb_migratable(folio) ||
-+		   (folio_test_hwpoison(folio) &&
-+		    hugetlb_should_keep_hwpoison_mapped(folio, mapping))) {
-+		/*
-+		 * A kept-mapped HWPoison hugepage is
-+		 * no longer migratable (cleared by
-+		 * the 1st error), but it is still in use
-+		 * and should/can go through same handling.
-+		 */
- 		if (folio_try_get(folio)) {
- 			ret = MF_HUGETLB_IN_USED;
- 			count_increased = true;
-@@ -2107,6 +2167,49 @@ static int get_huge_page_for_hwpoison(unsigned long pfn, int flags,
- 	return ret;
- }
- 
-+static void filemap_offline_hwpoison_folio_hugetlb(struct folio *folio)
++/* Poison one raw page and check the SIGBUS it gets. */
++static bool hwpoison_raw_page(void *addr, unsigned long pfn)
 +{
++	const int expected_code = inject_method == INJECT_CORRUPT_PFN ?
++				  BUS_MCEERR_AO : BUS_MCEERR_AR;
++	struct hwp_target target = { .addr = addr, .pfn = pfn };
++	pthread_t pthread;
++
++	sigbus_addr = (void *)0xBADBADBAD;
++	sigbus_addr_lsb = 0;
++	sigbus_code = 0;
++	got_sigbus = false;
++	expecting_sigbus = true;
++
++	if (pthread_create(&pthread, NULL, do_hwpoison, &target))
++		ksft_exit_fail_perror("Failed to create hwpoison thread");
++	pthread_join(pthread, NULL);
++
++	expecting_sigbus = false;
++
++	if (target.ret) {
++		ksft_print_msg("Failed to inject error: %s\n",
++			       strerror(-target.ret));
++		return false;
++	}
++	if (!got_sigbus) {
++		ksft_print_msg("Didn't get a SIGBUS\n");
++		return false;
++	}
++	if (sigbus_code != expected_code) {
++		ksft_print_msg("Incorrect si_code: got=%d, expected=%d\n",
++			       sigbus_code, expected_code);
++		return false;
++	}
++	if (sigbus_addr != addr) {
++		ksft_print_msg("Incorrect si_addr: got=%p, expected=%p\n",
++			       sigbus_addr, addr);
++		return false;
++	}
++	if (sigbus_addr_lsb != pshift()) {
++		ksft_print_msg("Incorrect si_addr_lsb: got=%d, expected=%d\n",
++			       sigbus_addr_lsb, pshift());
++		return false;
++	}
++
++	return true;
++}
++
++static bool raw_pages_hwpoison(bool expected)
++{
++	uint64_t flags;
++	size_t i;
++
++	for (i = 0; i < nr_hwp_pages; ++i) {
++		if (pageflags_get(hwp_pfns[i], kpageflags_fd, &flags))
++			ksft_exit_fail_msg("Failed to read kpageflags\n");
++		if (!!(flags & KPF_HWPOISON) != expected) {
++			ksft_print_msg("pfn=%#lx: HWPoison is %s, expected %s\n",
++				       hwp_pfns[i],
++				       expected ? "clear" : "set",
++				       expected ? "set" : "clear");
++			return false;
++		}
++	}
++
++	return true;
++}
++
++static bool hardware_corrupted_is(unsigned long expected_kb)
++{
++	unsigned long size_kb;
++
++	if (get_hardware_corrupted_size(&size_kb))
++		ksft_exit_fail_msg("Failed to read HardwareCorrupted\n");
++	if (size_kb != expected_kb) {
++		ksft_print_msg("HardwareCorrupted: got=%lukB, expected=%lukB\n",
++			       size_kb, expected_kb);
++		return false;
++	}
++
++	return true;
++}
++
++static bool memory_intact(const unsigned char *map, unsigned long len)
++{
++	const unsigned char *iter;
++
++	for (iter = map; iter < map + len; ++iter) {
++		if (*iter != HUGETLB_FILL) {
++			ksft_print_msg("At addr=%p: got=%#x, expected=%#x\n",
++				       iter, *iter, HUGETLB_FILL);
++			return false;
++		}
++	}
++
++	return true;
++}
++
++/*
++ * Seal the memfd like the owner of a base image does before sharing it,
++ * then replace the writable shared mapping with a read-only private one,
++ * like the one a user of the base image has. Return the new mapping.
++ */
++static unsigned char *seal_before_errors(int fd, unsigned char *map,
++					 unsigned long len)
++{
++	unsigned long offset;
++
++	if (fcntl(fd, F_ADD_SEALS, SEALS_BEFORE_ERRORS))
++		ksft_exit_fail_perror("Failed to seal memfd before injecting errors");
++
++	munmap(map, len);
++	map = mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
++	if (map == MAP_FAILED)
++		ksft_exit_fail_perror("Failed to mmap sealed memfd");
++
++	/* Fault in every hugepage so that pagemap can find its PFN. */
++	for (offset = 0; offset < len; offset += hugepage_size)
++		FORCE_READ(map[offset]);
++
++	return map;
++}
++
++/*
++ * Add the remaining seals to the memfd having HWPoison hugepage, then
++ * check that all seals are enforced and the HWPoison hugepage is still
++ * readable.
++ */
++static bool seal_after_errors(int fd, unsigned long len)
++{
++	unsigned char *map;
++	bool pass;
 +	int ret;
 +
 +	/*
-+	 * Since folio is still in the folio_batch, drop the refcount
-+	 * elevated by filemap_get_folios.
-+	 *
-+	 * If folio has multiple HWPoison pages:
-+	 * - When handling the 1st HWPoison page, me_huge_page() drops
-+	 *   the refcount raised by get_huge_page_for_hwpoison() or the
-+	 *   caller's refcount passed in with MF_COUNT_INCREASED.
-+	 * - When handling the 2nd and later HWPoison page, although
-+	 *   the folio's migratable flag is already cleared, it is still
-+	 *   in use, the refcount raised by get_huge_page_for_hwpoison()
-+	 *   will still be dropped by me_huge_page().
-+	 * Therefore no extra refcount to drop.
++	 * Adding F_SEAL_WRITE fails with EBUSY if any folio has an
++	 * unexpected refcount, e.g. one left behind by memory_failure().
 +	 */
-+	folio_put(folio);
++	if (fcntl(fd, F_ADD_SEALS, SEALS_AFTER_ERRORS)) {
++		ksft_print_msg("Failed to seal memfd after injecting errors: %s\n",
++			       strerror(errno));
++		return false;
++	}
 +
-+	/* Refcount now should be zero and ready to dissolve folio. */
-+	ret = dissolve_free_hugetlb_folio(folio);
-+	if (ret)
-+		pr_err("failed to dissolve hugetlb folio: %d\n", ret);
++	ret = fcntl(fd, F_GET_SEALS);
++	if (ret < 0 || (ret & SEALS_ALL) != SEALS_ALL) {
++		ksft_print_msg("F_GET_SEALS: got=%#x, expected %#x set\n",
++			       ret, SEALS_ALL);
++		return false;
++	}
++
++	if (!fcntl(fd, F_ADD_SEALS, F_SEAL_SEAL) || errno != EPERM) {
++		ksft_print_msg("F_ADD_SEALS on sealed memfd didn't fail with EPERM\n");
++		return false;
++	}
++
++	if (!ftruncate(fd, 0) || errno != EPERM) {
++		ksft_print_msg("Shrinking sealed memfd didn't fail with EPERM\n");
++		return false;
++	}
++
++	if (!ftruncate(fd, len + hugepage_size) || errno != EPERM) {
++		ksft_print_msg("Growing sealed memfd didn't fail with EPERM\n");
++		return false;
++	}
++
++	if (!fallocate(fd, FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
++		       0, hugepage_size) ||
++	    errno != EPERM) {
++		ksft_print_msg("Punching hole in sealed memfd didn't fail with EPERM\n");
++		return false;
++	}
++
++	map = mmap(NULL, hugepage_size, PROT_READ | PROT_WRITE, MAP_SHARED,
++		   fd, 0);
++	if (map != MAP_FAILED || errno != EPERM) {
++		ksft_print_msg("Writable shared mmap of sealed memfd didn't fail with EPERM\n");
++		if (map != MAP_FAILED)
++			munmap(map, hugepage_size);
++		return false;
++	}
++
++	/* All errors were injected into the 1st hugepage. */
++	map = mmap(NULL, hugepage_size, PROT_READ, MAP_SHARED, fd, 0);
++	if (map == MAP_FAILED) {
++		ksft_print_msg("Failed to mmap sealed memfd: %s\n",
++			       strerror(errno));
++		return false;
++	}
++	pass = memory_intact(map, hugepage_size);
++	munmap(map, hugepage_size);
++
++	return pass;
 +}
 +
-+bool filemap_offline_hwpoison_folio(struct address_space *mapping,
-+				    struct folio *folio)
++/*
++ * Unpoison the pages previously injected with errors,
++ * then validate HardwareCorrupted is reduced to original amount.
++ */
++static void unpoison_raw_pages(unsigned long corrupted_kb)
 +{
-+	WARN_ON_ONCE(!mapping);
++	bool pass = true;
++	size_t i;
++	int ret;
 +
-+	if (!folio_test_hwpoison(folio))
-+		return false;
++	if (access(UNPOISON_PFN_DEBUGFS, W_OK)) {
++		ksft_test_result_skip("Unpoison raw pages: %s not available\n",
++				      UNPOISON_PFN_DEBUGFS);
++		return;
++	}
 +
-+	/* Pending MFR currently only exist for hugetlb. */
-+	if (hugetlb_should_keep_hwpoison_mapped(folio, mapping)) {
-+		filemap_offline_hwpoison_folio_hugetlb(folio);
-+		return true;
++	for (i = 0; i < nr_hwp_pages; ++i) {
++		ret = unpoison_memory(hwp_pfns[i]);
++		if (ret == -EOPNOTSUPP) {
++			/* Unpoison is disabled after a real memory error. */
++			ksft_test_result_skip("Unpoison raw pages: not supported\n");
++			return;
++		}
++		if (ret) {
++			ksft_print_msg("Failed to unpoison pfn=%#lx: %s\n",
++				       hwp_pfns[i], strerror(-ret));
++			pass = false;
++		}
++	}
++
++	pass = pass && raw_pages_hwpoison(false);
++	pass = pass && hardware_corrupted_is(corrupted_kb);
++	ksft_test_result(pass, "Unpoison raw pages\n");
++}
++
++/*
++ * Main thread that drives the test. It reports nr_hwp_pages + 4 results,
++ * plus 1 more if release_method is seal.
++ */
++static void test_main(void)
++{
++	const unsigned long *offsets = hugepage_size == HUGEPAGE_SIZE_2M ?
++				       offsets_2m : offsets_1g;
++	const unsigned long len = hugepage_size * NR_HUGEPAGES;
++	unsigned long nr_hugepages_before, nr_hugepages_after;
++	unsigned long corrupted_kb;
++	unsigned char *map;
++	struct sigaction sa = { 0 };
++	bool pass;
++	size_t i;
++	int fd;
++
++	fd = create_hugetlbfs_file();
++	nr_hugepages_before = hugetlb_nr_pages(hugepage_size);
++
++	if (ftruncate(fd, len) < 0)
++		ksft_exit_fail_perror("Failed to ftruncate");
++
++	map = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++	if (map == MAP_FAILED)
++		ksft_exit_fail_perror("Failed to mmap");
++	memset(map, HUGETLB_FILL, len);
++
++	sa.sa_sigaction = sigbus_handler;
++	sa.sa_flags = SA_SIGINFO;
++	if (sigaction(SIGBUS, &sa, NULL) < 0)
++		ksft_exit_fail_perror("Failed to set up SIGBUS handler");
++
++	if (get_hardware_corrupted_size(&corrupted_kb))
++		ksft_exit_fail_msg("Failed to read HardwareCorrupted\n");
++
++	if (release_method == RELEASE_SEAL)
++		map = seal_before_errors(fd, map, len);
++
++	for (i = 0; i < nr_hwp_pages; ++i) {
++		void *addr = map + offsets[i];
++
++		hwp_pfns[i] = pagemap_get_pfn(pagemap_fd, addr);
++		if (hwp_pfns[i] == -1UL || !hwp_pfns[i])
++			ksft_exit_fail_msg("Failed to get PFN for %p\n", addr);
++
++		ksft_test_result(hwpoison_raw_page(addr, hwp_pfns[i]),
++				 "SIGBUS for raw page %zu at offset %#lx\n",
++				 i, offsets[i]);
++	}
++
++	/*
++	 * Neither MADV_HWPOISON nor corrupt-pfn corrupts the memory in
++	 * hardware, and MFD_MF_KEEP_UE_MAPPED keeps the hugepage mapped,
++	 * so every byte should remain accessible and hold original data.
++	 */
++	ksft_test_result(memory_intact(map, len), "Memory content intact\n");
++
++	/* The HWPoison hugepage should still be in the HugeTLB pool. */
++	nr_hugepages_after = hugetlb_nr_pages(hugepage_size);
++	pass = nr_hugepages_after == nr_hugepages_before;
++	if (!pass)
++		ksft_print_msg("nr_hugepages: before=%lu, after=%lu\n",
++			       nr_hugepages_before, nr_hugepages_after);
++	pass = hardware_corrupted_is(corrupted_kb +
++				     nr_hwp_pages * getpagesize() / 1024) && pass;
++	ksft_test_result(pass, "HWPoison hugepage kept\n");
++
++	/* End of the lifetime of the HugeTLB memfd. */
++	if (release_method == RELEASE_SEAL) {
++		/* Seal while the read-only private mapping is still alive. */
++		ksft_test_result(seal_after_errors(fd, len),
++				 "Seal memfd having HWPoison hugepage\n");
++		munmap(map, len);
++		/* The last close evicts the inode and releases its folios. */
++		close(fd);
++	} else {
++		if (ftruncate(fd, 0) < 0)
++			ksft_exit_fail_perror("Failed to ftruncate to 0");
++		munmap(map, len);
++		close(fd);
++	}
++
++	/*
++	 * After truncation or closure, the HWPoison hugepage should be
++	 * dissolved and removed from the HugeTLB pool, with only its raw
++	 * HWPoison pages isolated.
++	 */
++	nr_hugepages_after = hugetlb_nr_pages(hugepage_size);
++	pass = nr_hugepages_after + 1 == nr_hugepages_before;
++	if (!pass)
++		ksft_print_msg("nr_hugepages: before=%lu, after closure=%lu\n",
++			       nr_hugepages_before, nr_hugepages_after);
++	pass = raw_pages_hwpoison(true) && pass;
++	ksft_test_result(pass, "HWPoison hugepage dissolved after %s\n",
++			 release_method == RELEASE_SEAL ? "close" : "truncation");
++
++	unpoison_raw_pages(corrupted_kb);
++}
++
++static unsigned long parse_hugepage_size(const char *arg)
++{
++	if (!strcasecmp(arg, "1G"))
++		return HUGEPAGE_SIZE_1G;
++	if (!strcasecmp(arg, "2M"))
++		return HUGEPAGE_SIZE_2M;
++
++	ksft_exit_fail_msg("Invalid hugepage_size '%s': must be 1G or 2M\n",
++			   arg);
++}
++
++static size_t parse_nr_hwp_pages(const char *arg)
++{
++	unsigned long val;
++	char *endptr;
++
++	errno = 0;
++	val = strtoul(arg, &endptr, 10);
++	if (errno || endptr == arg || *endptr != '\0' ||
++	    val < 1 || val > MAX_NR_HWP_PAGES)
++		ksft_exit_fail_msg("Invalid nr_hwp_pages '%s': must be 1 to %zu\n",
++				   arg, MAX_NR_HWP_PAGES);
++
++	return val;
++}
++
++static enum inject_method parse_inject_method(const char *arg)
++{
++	if (!strcmp(arg, INJECT_MADVISE_STR))
++		return INJECT_MADVISE;
++	if (!strcmp(arg, INJECT_CORRUPT_PFN_STR))
++		return INJECT_CORRUPT_PFN;
++
++	ksft_exit_fail_msg("Invalid inject_method '%s': must be %s or %s\n",
++			   arg, INJECT_MADVISE_STR, INJECT_CORRUPT_PFN_STR);
++}
++
++static enum release_method parse_release_method(const char *arg)
++{
++	if (!strcmp(arg, RELEASE_TRUNCATE_STR))
++		return RELEASE_TRUNCATE;
++	if (!strcmp(arg, RELEASE_SEAL_STR))
++		return RELEASE_SEAL;
++
++	ksft_exit_fail_msg("Invalid release_method '%s': must be %s or %s\n",
++			   arg, RELEASE_TRUNCATE_STR, RELEASE_SEAL_STR);
++}
++
++static bool hugepage_size_supported(unsigned long size)
++{
++	unsigned long sizes[10];
++	int i, nr_sizes;
++
++	nr_sizes = detect_hugetlb_page_sizes(sizes, ARRAY_SIZE(sizes));
++	for (i = 0; i < nr_sizes; ++i) {
++		if (sizes[i] == size)
++			return true;
 +	}
 +
 +	return false;
 +}
 +
- /*
-  * Taking refcount of hugetlb pages needs extra care about race conditions
-  * with basic operations like hugepage allocation/free/demotion.
++/*
++ * Make sure there are at least nr free HugeTLB pages of the given size.
++ * hugetlb_save_settings() restores the original settings at exit.
++ */
++static bool setup_hugetlb_pages(unsigned long size, unsigned long nr)
++{
++	unsigned long free;
++
++	hugetlb_save_settings();
++
++	free = hugetlb_free_pages(size);
++	if (free >= nr)
++		return true;
++
++	hugetlb_set_nr_pages(size, hugetlb_nr_pages(size) + nr - free);
++	return hugetlb_free_pages(size) >= nr;
++}
++
++int main(int argc, char **argv)
++{
++	if (argc > 5)
++		ksft_exit_fail_msg("Usage: %s [1G|2M] [nr_hwp_pages] [%s|%s] [%s|%s]\n",
++				   argv[0], INJECT_CORRUPT_PFN_STR,
++				   INJECT_MADVISE_STR, RELEASE_TRUNCATE_STR,
++				   RELEASE_SEAL_STR);
++	if (argc > 1)
++		hugepage_size = parse_hugepage_size(argv[1]);
++	if (argc > 2)
++		nr_hwp_pages = parse_nr_hwp_pages(argv[2]);
++	if (argc > 3)
++		inject_method = parse_inject_method(argv[3]);
++	if (argc > 4)
++		release_method = parse_release_method(argv[4]);
++
++	ksft_print_header();
++
++	if (geteuid())
++		ksft_exit_skip("Need root to inject and unpoison memory errors\n");
++	if (inject_method == INJECT_CORRUPT_PFN &&
++	    access(CORRUPT_PFN_DEBUGFS, W_OK))
++		ksft_exit_skip("%s not available, try 'modprobe hwpoison_inject'\n",
++			       CORRUPT_PFN_DEBUGFS);
++	if (!hugepage_size_supported(hugepage_size))
++		ksft_exit_skip("%lukB HugeTLB pages not supported\n",
++			       hugepage_size / 1024);
++	if (!setup_hugetlb_pages(hugepage_size, NR_HUGEPAGES))
++		ksft_exit_skip("Failed to set up %d %lukB HugeTLB pages\n",
++			       NR_HUGEPAGES, hugepage_size / 1024);
++
++	pagemap_fd = open("/proc/self/pagemap", O_RDONLY);
++	if (pagemap_fd < 0)
++		ksft_exit_fail_perror("Failed to open /proc/self/pagemap");
++	kpageflags_fd = open("/proc/kpageflags", O_RDONLY);
++	if (kpageflags_fd < 0)
++		ksft_exit_fail_perror("Failed to open /proc/kpageflags");
++
++	ksft_print_msg("hugepage_size=%lukB nr_hwp_pages=%zu inject_method=%s release_method=%s\n",
++		       hugepage_size / 1024, nr_hwp_pages,
++		       inject_method == INJECT_CORRUPT_PFN ?
++				INJECT_CORRUPT_PFN_STR : INJECT_MADVISE_STR,
++		       release_method == RELEASE_SEAL ?
++				RELEASE_SEAL_STR : RELEASE_TRUNCATE_STR);
++
++	/*
++	 * One result per raw HWPoison page, plus 4 for the hugepage, plus 1
++	 * for sealing.
++	 */
++	ksft_set_plan(nr_hwp_pages + 4 + (release_method == RELEASE_SEAL));
++	test_main();
++
++	close(kpageflags_fd);
++	close(pagemap_fd);
++	ksft_finished();
++}
+diff --git a/tools/testing/selftests/mm/run_vmtests.sh b/tools/testing/selftests/mm/run_vmtests.sh
+index 973cb715b326..4d5140b7dee7 100755
+--- a/tools/testing/selftests/mm/run_vmtests.sh
++++ b/tools/testing/selftests/mm/run_vmtests.sh
+@@ -467,6 +467,7 @@ CATEGORY="page_frag" run_test ./test_page_frag.sh nonaligned
+ CATEGORY="rmap" run_test ./rmap
+ 
+ CATEGORY="memory-failure" run_test ./memory-failure
++CATEGORY="memory-failure" run_test ./hugetlb-mfr
+ 
+ echo "SUMMARY: PASS=${count_pass} SKIP=${count_skip} FAIL=${count_fail}" | tap_prefix
+ echo "1..${count_total}" | tap_output
 -- 
 2.56.0.611.g1030f0b940-goog
 
