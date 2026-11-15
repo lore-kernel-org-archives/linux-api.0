@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.42
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.49
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794765856;
-	b=Hh8AF6nnGiF1ycdZC/cJv7/zIyIMM25p7vzdAJK4jxDG9zkP/FIK8In6La9MEn8uw6Wg
-	 jfgdfd/3UF5JDoxKjsoSnOrCtg0rRcTy8g8SwQXD5kwEDp6yhm1PZnRJLzk7TWE+gwKJU
-	 i8Il+IfsRWoAnRSjIN1OiLg/5roe5GNcETy0PoMItiXsmaRxz/a45zNPrJnjsmAWGsX5W
-	 B0YHRxo0hooBb//GYEB6mzzuS16cHGklHDhc/QKIoeXYYjSogU3/8XgfQI6hzqts3WbKw
-	 H9qHgS01mdSLb5B+zdHRiCXF73inArTPIepi0DU2zL45FaiSPwNYy2QwwwpfpHU6lKQ==
+	t=1794765859;
+	b=xti4jfuxKsjApcXef6gkaiW8OIW3zwLYrbSKgZ1v+DwGlQIpMpIIlG1c705we3hUt8ZN
+	 dc92HI7hwktbM1i//GrDx/eObiBKnT3jfIvWiSQmQARYATYq1TKUxHOkh9Al+/LEDRkA1
+	 D/kiLQ36If1q2iKnl9ApXlB/EiExIh96r2miyx1x2H1OSRpYTgjoyx+6uCfIv7B9Eak2d
+	 Vz36LZTzWk5UhTeNlBNel2QspIufu6EgBsXSZjqJXUfQ+HMdBO6sDXwTjZ99lg8k0Eaoh
+	 /CzjNAOjczJB4WyjnRHkIH0e8MT7QbZpEIhV9QNF9D+ZCNZlM/k20+hF+NanW6l4qBg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794765856;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794765859;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=xB0aGae+0N7Qh6IxNBA7KeNJxluraojMhTHNGzXsPds=;
-	b=mdat3TCc2Ky8Rpt6Ckii/4JTgswRzGmCwb5cDRLYd/Fkm3Z34eeuIbJr/8TFCRdkjVs+
-	 PdjKWqgRVkdGAp7krrAyBzbB4G5d5hzYUXv06SM5aZ09YO5GjyV80VorZDYRLTvMHPNtt
-	 G6vp/8onZ+ztz/hH387usxy+6H5lUehAJHS0kGMKfrigVxe/fHCVgZL+Lz1x0S46hnucD
-	 IBGLcPV3hdi7IYkydRYDfb2qgeYlSah0T00Szo7qdw7epKW7wxVtBOfklYzHwYQeZhIz8
-	 WyrDWmiPLbt78SfrPLvH3k2p3hGjSbguGfaYcAp7/aW2SCQjqOnGROkYQOJPGiQ8QNw==
+	bh=xf9H7Xpls5bTYgvWPqTUbZKwhVzPiZ1KJIKZ28Qv1VM=;
+	b=DWC4M2lyBmAj+SeUPCVY8B9TB8G8PUOaExFlm4D4d4YSy0ALFA0IBvP1a9ELDPXuvgFU
+	 eTmJdTq77AJZQ+OPiD/YUo0KFWl34WvccTQjHWHTrTlKxNtQlmUHa4yryj8I/m56Qm5x1
+	 n8WePPOilY5KSRYjp5hlVla333XqrU/lljgm+JlTY3vSYRhZpLqhEat+oKdsmIpX8NXac
+	 mcFlc7V4yzjJHH/IroQlKGaNRWOGDEba5VJSKD9fMM2cwweDyiilwG8alrZvoXt+dlG7d
+	 yxH/HphFHvCwkXhQqw266mUxlHvXIAFCJy77alulx6dlGiCtfhLnrFrKxJfaMTb6+lg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=BaP5GLCO;
-	arc=none smtp.remote-ip=209.85.221.42
-Received: from mail-wr1-f42.google.com (mail-wr1-f42.google.com [209.85.221.42])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=j9j0Ugd7;
+	arc=none smtp.remote-ip=209.85.221.49
+Received: from mail-wr1-f49.google.com (mail-wr1-f49.google.com [209.85.221.49])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 438D060A5BDC
-	for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 18:04:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 438D060A5BDC
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 564A760A6F57
+	for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 18:04:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 564A760A6F57
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=BaP5GLCO
-Received: by mail-wr1-f42.google.com with SMTP id ffacd0b85a97d-49465892f7bso2255063f8f.1
-        for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 10:04:16 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=j9j0Ugd7
+Received: by mail-wr1-f49.google.com with SMTP id ffacd0b85a97d-48b001cd92bso1769606f8f.2
+        for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 10:04:18 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794765855; x=1795370655; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1794765857; x=1795370657; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=xB0aGae+0N7Qh6IxNBA7KeNJxluraojMhTHNGzXsPds=;
-        b=BaP5GLCOzZs6hrpMCjo6a/iFP3AhAS9vV6ZBcuz5EHHTRGZk1uUFDljCWDlo9MVxn9
-         UYJvbEa8R7HIndjUFJ3j0ZDsVx2xCpBgdHvpYmYmWXKWuRdXVw3wJ8rOaASPso9uGk8v
-         IDJJIxaKcUnTuOfjP49Iv6Z885rhJl2eJhR6Y95L8RE8Cb9RYGHFiS5a00kX40wfzgk8
-         HEE5WD84/qx62WDedaX4VvT2eSJZgtfrI1dRYI8q64jg2KnZQx3I6xVGyQITD9+fiZo+
-         lZlKXI3a+n3CpDd5okvNK/t0O3p6HEOj+PmzLxoY1qyy3r4G9cIR1IR9yk7o9qKY32WT
-         lGmA==
+        bh=xf9H7Xpls5bTYgvWPqTUbZKwhVzPiZ1KJIKZ28Qv1VM=;
+        b=j9j0Ugd7VJ9ks5rDGJwcAQFJKFk9vhh3zfSEndffcNbUrLK01mqCXInIlkneQRVFq5
+         Tx1+AFpuiPcr3JcHOzXv4iLA0lCoAs12tvSs5yy8wxNJQ7SfXrFdsGr6g6IQvMrF49J5
+         a89C0v0tXyZ2XzmI2H/SKpGQmULgPVYTg8uLw+fOnYKiWjTaZ1+pBZWES1sqWd1HEoqG
+         YRVi2cRWHohFAuedi+1l+ZQsaE4PjiGSDahAYKWpEF7ZeCtSDK0XqWKg+LF4WMm+Yd/H
+         s0qMu+LwAHij4DQiHGR3w1mh6f4woADhw7IjX2OzkkKxqgNcLkY/UZPlmkHQlmtto6Z/
+         pZDg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794765855; x=1795370655;
+        d=1e100.net; s=20260707; t=1794765857; x=1795370657;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=xB0aGae+0N7Qh6IxNBA7KeNJxluraojMhTHNGzXsPds=;
-        b=D2wU6bekkLvV0MqinHj+4dOwSIddIxOjBBvS5toE3TWXPT05Hamnxg7Y4xcSMn6Lxo
-         VxLwya6nRdfbXxcFswqRvbs0AQk9/oXYXGzlec2TGSIb3ltOeA/5ygVfOhb//kt1CVRb
-         WCoMmH5Ju7jcUXFyE0p8u2cSX6ciPAs1ode4xbim0RnXRXp6hAJ6V96sdbCYk15Kxf2p
-         amTKN+8nK+DmeOwYnCnDQocZBtUZcL8/2XM0jsomLyzMjq4qafhM5SCYj8Wt4NQ8YEl+
-         tmLXEmYqPsPyBZz/p0XoX6+8NkHo7oV0rigVjqk0/T8Oq7UWv28XEF1NqWS2j85M/ccP
-         QTBw==
-X-Forwarded-Encrypted: i=1; AL+hErFuCtixedg4j4HFS9BhbgBw9Pe7czGY1Z4mW0aLS149Q/ZO3PmneEpGb/89X1K7OBcS8Ls707pfYVA=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+crak9RicvD1On01/6aPWuJmrJDh9tChQRrpROPC+7ft4MBUH7
-	uU4iKIK6khpjcYz/FQcb3tOs8tzx1REjbKu2W2scm7FZEcfPaVB7xby+
-X-Gm-Gg: AYBFou1gCDA7RKVzCq3A06MAZk5gdC9/7HsJ8I9FI2dviWQvwHDjyzM4HmhHADhVnun
-	pafDZRNmhsN6eNmt9bQJvwZakhhTpihnCIW0ApfhNm9/totSlHcp5pSduAttTVik/ca/0veE4uf
-	u4YVMtdvrZ72nuwkIs5HUsLzPUXZuD1uqSp68NMYxvNYhwAyvXJ6JRTVDoM0yLZms13ldEinlpU
-	irvCP7aePref7i51NZaS6MbgOhTE9xSkMH1uzM+vOIwpHnc2vXmu08tD4G8xogn/or18W+p9mbO
-	g5d5OlcRojzG457Y8bX9M4W4bqZHu4Cv5PY5NmFGSUUYvBsKV+EJAdNR+Ka8rbXr+KyE8xJExvf
-	2SFxyv9pH7r3sSM/1RIOU/PD9rtO715VhoMdA0uTEpbOE2SZ8UHRrSOqcGiIgF9SHWTp4yHycgW
-	qufKLihS/woXWqrYzL2G1b8uTIrj+WQhNKL0s7kn9735zFvWZLTzI0gHMCb14+bNkk5NNEyhSB5
-	QNhTRGuc4nklxryjLuF7Ddy94zkpfTfV5tcePMoSORjdBx/59TrauKd0ism8bPgt8j764nj3qeE
-	gu8XWUGOvglFIg5XXvbaeisTKhMha6GBjKMAYovMzF/zvw==
-X-Received: by 2002:a5d:5f90:0:b0:48e:7e15:406d with SMTP id ffacd0b85a97d-49c70de3563mr18264821f8f.11.1794765854474;
-        Sun, 15 Nov 2026 10:04:14 -0800 (PST)
+        bh=xf9H7Xpls5bTYgvWPqTUbZKwhVzPiZ1KJIKZ28Qv1VM=;
+        b=JExmCeG57DS64dSxvwRlj0QOHyfdsYFtlXKzB2ptO5N5hOpxPqbwNf+9aFdnDyzqGr
+         8uG3+0ZLjzPeHCn4G31gQDZ8mvQuyEmon3Qi5PULmf54LKT/66cnXrZJZEf8zto2zxc0
+         LGlXL4ZlUHW65ycxsXvHGkBR5QKLgL/dk7x3LL5JUo7D5Ebpnu/dK+D4mcV0m+7Hz9cy
+         RRrmCCNKpa8tugBrpDt7ownMNqKL+mU9RnD82Sa1kYl+v+tYorGOK1gMXSbx1F9McMCP
+         DaaCH0wxGok4VI2jgsAJ4ORRiV28PqMMSwN7TR34PhEl9EAa5nqJDOjvixAdaJItjrj8
+         mQew==
+X-Forwarded-Encrypted: i=1; AL+hErEI0t/Vmwc7XCN4qo27xGWMQT1t7tlE3mTDBeukqjfuyt6HMK3G8hjMliKXU5cK/Z8BwYviDn7iKuE=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/CUQZTEwPmzv6vgd3yopvSDJROEeQrUHmo7WNSs20vniBq9ucx
+	rMDT3dw9FGYwPry76nMOW695GT1txD0hh1hvZDgSL1vuLWcX3V5qPZfL
+X-Gm-Gg: AYBFou1MNo4XctbMWq8959/tpV9VD96kDbhFwQAuDrm/U/Kf56GMSKZgpDS67emGnhM
+	Ot0+CpQqBgnfdaxLkGDbt3fHqZKho3xxo7QC45oN4nLizhZ+4jfTwWHL/YiEGIMAqV+7w7WsT63
+	LLcZrZsNEFhbju7ZckkgF/9LylJUa04ASzVr32HfzNA2+UEWuvwhbPkxc/aa8J/xUiA+r2BOIsF
+	rL0q2iSMfEJ18q5AVCSkyqXLMIu/7qro3Bh7IuCWKPPVoEPcTZPg2zkXJo9n7J3a5Y1njJjoANv
+	uM+8CC/Tvx4DSNId3Vy6/BIC7Ixx4Z6Yi8ovSEWzYu5pVf2/YFIL/00V+WAW/HSrlxJ1do5WfVS
+	DGWjTpjYF+8+qj8HYiOhAvU50sR5gjeDyuDMFfDEEQ61o9LnI2dXh6UQdfYUnErH570HCDNd/bD
+	23yRMIa6N4aUt+cUcR56IDrp2LWRhPtHHTHZl4+utDVegnPf7CINN0Y1UxXbSzUR5j7Z5ohmaNV
+	3Ko7uOqQD+O89UgE/XKtNHa3izNPpBxzXmKqL02T7fnZ4cZVh/3RPlojhGgPWKu8WHZZjuFLiKa
+	h3+JW9BdWhHYsiozH2KEpkgZ
+X-Received: by 2002:a05:6000:2886:b0:4a1:bddf:9003 with SMTP id ffacd0b85a97d-4a1bddf9034mr802741f8f.49.1794765856553;
+        Sun, 15 Nov 2026 10:04:16 -0800 (PST)
 Received: from infinity ([2001:b07:5d26:7a6a:365a:60ff:fe0d:cfc6])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-49c60f8c248sm17980448f8f.58.2026.11.15.10.04.12
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-49c60f8c248sm17980448f8f.58.2026.11.15.10.04.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sun, 15 Nov 2026 10:04:13 -0800 (PST)
+        Sun, 15 Nov 2026 10:04:16 -0800 (PST)
 From: koraynilay <koray.fra@gmail.com>
 To: David Sterba <dsterba@suse.com>,
 	Namjae Jeon <linkinjeon@kernel.org>,
@@ -117,9 +117,9 @@ Cc: Chris Mason <mason@kernel.org>,
 	linux-nfs@vger.kernel.org,
 	linux-api@vger.kernel.org,
 	koraynilay <koray.fra@gmail.com>
-Subject: [RFC PATCH v4 07/10] nfsd: add provenance time (ptime) via FATTR4_TIME_CREATE
-Date: Sun, 15 Nov 2026 19:03:40 +0100
-Message-ID: <20261115180343.576773-8-koray.fra@gmail.com>
+Subject: [RFC PATCH v4 08/10] nfs: add provenance time (ptime) via FATTR4_TIME_CREATE
+Date: Sun, 15 Nov 2026 19:03:41 +0100
+Message-ID: <20261115180343.576773-9-koray.fra@gmail.com>
 X-Mailer: git-send-email 2.56.0
 In-Reply-To: <20261115180343.576773-1-koray.fra@gmail.com>
 References: <20261115180343.576773-1-koray.fra@gmail.com>
@@ -134,257 +134,367 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Implement provenance time (ptime) in NFSD, as introduced in a
+Implement provenance time (ptime) in the NFS client, as introduced in a
 previous commit ("vfs: add provenance time (ptime)").
 
-Map ptime to FATTR4_TIME_CREATE, allowing clients to set it across
-CREATE, OPEN and SETATTR compounds.
+Support reading ptime via statx(2) and file_getattr(), returning the
+cached creation time when the server advertises NFS_ATTR_FATTR_BTIME.
 
-If the underlying filesystem supports it, use __vfs_fileattr_set_locked()
-to set it, returning -EOPNOTSUPP in case it's not supported (i.e. when
-__vfs_fileattr_set_locked() returns -ENOIOCTLCMD).
+Implement sending FATTR4_TIME_CREATE, asking the server to persist the
+file creation time using ptime on the underlying filesystem.
 
-When querying FATTR4_TIME_CREATE, request both STATX_PTIME and
-STATX_BTIME, preferring ptime over btime if available, and advertise
-FATTR4_TIME_CREATE support if either ptime or btime is available.
+Also add .fileattr_set to struct nfs_rpc_ops and set it to
+nfs4_fileattr_set() in nfs_v4_clientops. Provide a generic
+nfs_fileattr_set() dispatcher so even symlinks can update ptime under
+NFSv4 while cleanly returning -EOPNOTSUPP on NFSv2/v3.
 
 Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.7
 Signed-off-by: koraynilay <koray.fra@gmail.com>
 ---
- fs/nfsd/nfs4proc.c |  9 +++++++++
- fs/nfsd/nfs4xdr.c  | 40 +++++++++++++++++++++++++---------------
- fs/nfsd/vfs.c      | 17 +++++++++++++++++
- fs/nfsd/vfs.h      |  4 +++-
- fs/nfsd/xdr4.h     |  3 +++
- 5 files changed, 57 insertions(+), 16 deletions(-)
+ fs/nfs/inode.c          | 27 ++++++++++++++++----
+ fs/nfs/internal.h       |  2 ++
+ fs/nfs/nfs4proc.c       | 56 ++++++++++++++++++++++++++++++++++++++---
+ fs/nfs/nfs4xdr.c        | 19 +++++++++-----
+ fs/nfs/symlink.c        |  1 +
+ include/linux/nfs_xdr.h |  3 +++
+ 6 files changed, 93 insertions(+), 15 deletions(-)
 
-diff --git a/fs/nfsd/nfs4proc.c b/fs/nfsd/nfs4proc.c
-index 3a82af381a8d..06074a7f213e 100644
---- a/fs/nfsd/nfs4proc.c
-+++ b/fs/nfsd/nfs4proc.c
-@@ -322,6 +322,9 @@ nfsd4_create_file(struct svc_rqst *rqstp, struct svc_fh *fhp,
- 	__be32 status, create_status;
- 	int want_write_err;
+diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
+index e0a2e92952af..2ddcfd872616 100644
+--- a/fs/nfs/inode.c
++++ b/fs/nfs/inode.c
+@@ -955,7 +955,7 @@ static u32 nfs_get_valid_attrmask(struct inode *inode)
+ 		reply_mask |= STATX_BLOCKS;
+ 	if (!(cache_validity & NFS_INO_INVALID_BTIME) &&
+ 	    (fattr_valid & NFS_ATTR_FATTR_BTIME))
+-		reply_mask |= STATX_BTIME;
++		reply_mask |= STATX_BTIME | STATX_PTIME;
+ 	if (!(cache_validity & NFS_INO_INVALID_CHANGE))
+ 		reply_mask |= STATX_CHANGE_COOKIE;
+ 	return reply_mask;
+@@ -978,10 +978,10 @@ int nfs_getattr(const struct mnt_idmap *idmap, const struct path *path,
+ 	request_mask &= STATX_TYPE | STATX_MODE | STATX_NLINK | STATX_UID |
+ 			STATX_GID | STATX_ATIME | STATX_MTIME | STATX_CTIME |
+ 			STATX_INO | STATX_SIZE | STATX_BLOCKS | STATX_BTIME |
+-			STATX_CHANGE_COOKIE;
++			STATX_PTIME | STATX_CHANGE_COOKIE;
  
-+	if (open->op_bmval[1] & FATTR4_WORD1_TIME_CREATE)
-+		attrs.na_time_create = &open->op_time_create;
+ 	if (!(fattr_valid & NFS_ATTR_FATTR_BTIME))
+-		request_mask &= ~STATX_BTIME;
++		request_mask &= ~(STATX_BTIME | STATX_PTIME);
+ 
+ 	if ((query_flags & AT_STATX_DONT_SYNC) && !force_sync) {
+ 		if (readdirplus_enabled)
+@@ -1015,7 +1015,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, const struct path *path,
+ 	if (!(request_mask & (STATX_MODE|STATX_NLINK|STATX_ATIME|STATX_CTIME|
+ 					STATX_MTIME|STATX_UID|STATX_GID|
+ 					STATX_SIZE|STATX_BLOCKS|STATX_BTIME|
+-					STATX_CHANGE_COOKIE)))
++					STATX_PTIME|STATX_CHANGE_COOKIE)))
+ 		goto out_no_revalidate;
+ 
+ 	/* Check whether the cached attributes are stale */
+@@ -1038,7 +1038,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, const struct path *path,
+ 		do_update |= cache_validity & NFS_INO_INVALID_OTHER;
+ 	if (request_mask & STATX_BLOCKS)
+ 		do_update |= cache_validity & NFS_INO_INVALID_BLOCKS;
+-	if (request_mask & STATX_BTIME)
++	if (request_mask & (STATX_BTIME | STATX_PTIME))
+ 		do_update |= cache_validity & NFS_INO_INVALID_BTIME;
+ 
+ 	if (do_update) {
+@@ -1061,6 +1061,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, const struct path *path,
+ 	if (S_ISDIR(inode->i_mode))
+ 		stat->blksize = NFS_SERVER(inode)->dtsize;
+ 	stat->btime = NFS_I(inode)->btime;
++	stat->ptime = NFS_I(inode)->btime;
+ 
+ 	/* Special handling for STATX_DIOALIGN and STATX_DIO_READ_ALIGN
+ 	 * - NFS doesn't have DIO alignment constraints, avoid getting
+@@ -1092,10 +1093,26 @@ int nfs_fileattr_get(struct dentry *dentry, struct file_kattr *fa)
+ 	}
+ 	if (nfs_server_capable(inode, NFS_CAP_CASE_NONPRESERVING))
+ 		fa->fsx_xflags |= FS_XFLAG_CASENONPRESERVING;
++	if (NFS_SERVER(inode)->fattr_valid & NFS_ATTR_FATTR_BTIME) {
++		fa->fsx_xflags |= FS_XFLAG_PTIME;
++		fa->fsx_xflags_mask |= FS_XFLAG_PTIME;
++		fa->fsx_ptime = NFS_I(inode)->btime;
++	}
+ 	return 0;
+ }
+ EXPORT_SYMBOL_GPL(nfs_fileattr_get);
+ 
++int nfs_fileattr_set(const struct mnt_idmap *idmap, struct dentry *dentry,
++		     struct file_kattr *fa)
++{
++	const struct nfs_rpc_ops *ops = NFS_PROTO(d_inode(dentry));
 +
- 	if (name_is_dot_dotdot(open->op_fname, open->op_fnamelen))
- 		return nfserr_exist;
- 	if (!(iap->ia_valid & ATTR_MODE))
-@@ -929,6 +932,9 @@ nfsd4_create(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
- 	__be32 status;
- 	dev_t rdev;
- 
-+	if (create->cr_bmval[1] & FATTR4_WORD1_TIME_CREATE)
-+		attrs.na_time_create = &create->cr_time_create;
++	if (ops->fileattr_set)
++		return ops->fileattr_set(idmap, dentry, fa);
++	return -EOPNOTSUPP;
++}
++EXPORT_SYMBOL_GPL(nfs_fileattr_set);
 +
- 	fh_init(&resfh, NFS4_FHSIZE);
- 
- 	status = fh_verify(rqstp, &cstate->current_fh, S_IFDIR, NFSD_MAY_NOP);
-@@ -1347,6 +1353,9 @@ nfsd4_setattr(struct svc_rqst *rqstp, struct nfsd4_compound_state *cstate,
- 	__be32 status = nfs_ok;
- 	int err;
- 
-+	if (setattr->sa_bmval[1] & FATTR4_WORD1_TIME_CREATE)
-+		attrs.na_time_create = &setattr->sa_time_create;
-+
- 	deleg_attrs = setattr->sa_bmval[2] & (FATTR4_WORD2_TIME_DELEG_ACCESS |
- 					      FATTR4_WORD2_TIME_DELEG_MODIFY);
- 
-diff --git a/fs/nfsd/nfs4xdr.c b/fs/nfsd/nfs4xdr.c
-index 84161dbecd1c..faca3b9b58b8 100644
---- a/fs/nfsd/nfs4xdr.c
-+++ b/fs/nfsd/nfs4xdr.c
-@@ -509,7 +509,8 @@ static __be32
- nfsd4_decode_fattr4(struct nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen,
- 		    struct iattr *iattr, struct nfs4_acl **acl,
- 		    struct xdr_netobj *label, int *umask,
--		    struct posix_acl **dpaclp, struct posix_acl **paclp)
-+		    struct posix_acl **dpaclp, struct posix_acl **paclp,
-+		    struct timespec64 *time_create)
+ static void nfs_init_lock_context(struct nfs_lock_context *l_ctx)
  {
- 	unsigned int starting_pos;
- 	u32 attrlist4_count;
-@@ -603,11 +604,10 @@ nfsd4_decode_fattr4(struct nfsd4_compoundargs *argp, u32 *bmval, u32 bmlen,
+ 	refcount_set(&l_ctx->count, 1);
+diff --git a/fs/nfs/internal.h b/fs/nfs/internal.h
+index 5af6a032f145..0e47fad944de 100644
+--- a/fs/nfs/internal.h
++++ b/fs/nfs/internal.h
+@@ -458,6 +458,8 @@ extern int nfs_wait_bit_killable(struct wait_bit_key *key, int mode);
+ 
+ struct file_kattr;
+ int nfs_fileattr_get(struct dentry *dentry, struct file_kattr *fa);
++int nfs_fileattr_set(const struct mnt_idmap *idmap, struct dentry *dentry,
++		     struct file_kattr *fa);
+ 
+ #if IS_ENABLED(CONFIG_NFS_LOCALIO)
+ /* localio.c */
+diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
+index e1018b03c1cb..31d58ceb4dc0 100644
+--- a/fs/nfs/nfs4proc.c
++++ b/fs/nfs/nfs4proc.c
+@@ -55,6 +55,7 @@
+ #include <linux/utsname.h>
+ #include <linux/freezer.h>
+ #include <linux/iversion.h>
++#include <linux/fileattr.h>
+ 
+ #include "nfs4_fs.h"
+ #include "delegation.h"
+@@ -98,7 +99,8 @@ static int _nfs4_proc_getattr(struct nfs_server *server, struct nfs_fh *fhandle,
+ 			      struct nfs_fattr *fattr, struct inode *inode);
+ static int nfs4_do_setattr(struct inode *inode, const struct cred *cred,
+ 			    struct nfs_fattr *fattr, struct iattr *sattr,
+-			    struct nfs_open_context *ctx, struct nfs4_label *ilabel);
++			    struct nfs_open_context *ctx, struct nfs4_label *ilabel,
++			    const struct timespec64 *time_create);
+ static struct rpc_task *_nfs41_proc_sequence(struct nfs_client *clp,
+ 		const struct cred *cred,
+ 		struct nfs4_slot *slot,
+@@ -3216,7 +3218,7 @@ static int _nfs4_do_open(struct inode *dir,
+ 			nfs_fattr_init(opendata->o_res.f_attr);
+ 			status = nfs4_do_setattr(state->inode, cred,
+ 					opendata->o_res.f_attr, sattr,
+-					ctx, label);
++					ctx, label, NULL);
+ 			if (status == 0) {
+ 				nfs_setattr_update_inode(state->inode, sattr,
+ 						opendata->o_res.f_attr);
+@@ -3380,7 +3382,8 @@ static int _nfs4_do_setattr(struct inode *inode,
+ 
+ static int nfs4_do_setattr(struct inode *inode, const struct cred *cred,
+ 			   struct nfs_fattr *fattr, struct iattr *sattr,
+-			   struct nfs_open_context *ctx, struct nfs4_label *ilabel)
++			   struct nfs_open_context *ctx, struct nfs4_label *ilabel,
++			   const struct timespec64 *time_create)
+ {
+ 	struct nfs_server *server = NFS_SERVER(inode);
+ 	__u32 bitmask[NFS4_BITMASK_SZ];
+@@ -3391,6 +3394,7 @@ static int nfs4_do_setattr(struct inode *inode, const struct cred *cred,
+ 		.server		= server,
+ 		.bitmask = bitmask,
+ 		.label		= ilabel,
++		.time_create	= time_create,
+ 	};
+ 	struct nfs_setattrres  res = {
+ 		.fattr		= fattr,
+@@ -3414,6 +3418,9 @@ static int nfs4_do_setattr(struct inode *inode, const struct cred *cred,
+ 	if (sattr->ia_valid & ATTR_MTIME)
+ 		adjust_flags |= NFS_INO_INVALID_MTIME;
+ 
++	if (time_create)
++		adjust_flags |= NFS_INO_INVALID_BTIME;
++
+ 	do {
+ 		nfs4_bitmap_copy_adjust(bitmask, nfs4_bitmask(server, fattr->label),
+ 					inode, adjust_flags);
+@@ -4587,7 +4594,7 @@ nfs4_proc_setattr(struct dentry *dentry, struct nfs_fattr *fattr,
+ 	if ((sattr->ia_valid & (ATTR_MODE|ATTR_UID|ATTR_GID)) != 0)
+ 		nfs4_inode_make_writeable(inode);
+ 
+-	status = nfs4_do_setattr(inode, cred, fattr, sattr, ctx, NULL);
++	status = nfs4_do_setattr(inode, cred, fattr, sattr, ctx, NULL, NULL);
+ 	if (status == 0) {
+ 		nfs_setattr_update_inode(inode, sattr, fattr);
+ 		nfs_setsecurity(inode, fattr);
+@@ -10845,6 +10852,44 @@ static void nfs4_disable_swap(struct inode *inode)
+ 	wake_up_var(&clp->cl_state);
+ }
+ 
++#define NFS4_SUPPORTED_XFLAGS	(FS_XFLAG_PTIME)
++static int nfs4_fileattr_set(const struct mnt_idmap *idmap, struct dentry *dentry,
++			     struct file_kattr *fa)
++{
++	struct inode *inode = d_inode(dentry);
++	struct nfs_server *server = NFS_SERVER(inode);
++	struct nfs_fattr *fattr;
++	struct iattr sattr = { .ia_valid = 0 };
++	const struct timespec64 *time_create = NULL;
++	int error;
++
++	if (!(server->fattr_valid & NFS_ATTR_FATTR_BTIME))
++		return -EOPNOTSUPP;
++
++	if (fa->flags_valid)
++		return -EOPNOTSUPP;
++
++	if (fileattr_has_fsx_mask(fa, NFS4_SUPPORTED_XFLAGS))
++		return -EOPNOTSUPP;
++
++	if (fa->fsx_xflags_mask & ~NFS4_SUPPORTED_XFLAGS)
++		return -EOPNOTSUPP;
++
++	if (fa->fsx_xflags_mask & FS_XFLAG_PTIME)
++		time_create = &fa->fsx_ptime;
++
++	fattr = nfs_alloc_fattr_with_label(server);
++	if (!fattr)
++		return -ENOMEM;
++
++	error = nfs4_do_setattr(inode, NULL, fattr, &sattr, NULL, NULL, time_create);
++	if (error == 0)
++		nfs_refresh_inode(inode, fattr);
++
++	nfs_free_fattr(fattr);
++	return error;
++}
++
+ static const struct inode_operations nfs4_dir_inode_operations = {
+ 	.create		= nfs_create,
+ 	.lookup		= nfs_lookup,
+@@ -10861,6 +10906,7 @@ static const struct inode_operations nfs4_dir_inode_operations = {
+ 	.setattr	= nfs_setattr,
+ 	.listxattr	= nfs4_listxattr,
+ 	.fileattr_get	= nfs_fileattr_get,
++	.fileattr_set	= nfs4_fileattr_set,
+ };
+ 
+ static const struct inode_operations nfs4_file_inode_operations = {
+@@ -10869,6 +10915,7 @@ static const struct inode_operations nfs4_file_inode_operations = {
+ 	.setattr	= nfs_setattr,
+ 	.listxattr	= nfs4_listxattr,
+ 	.fileattr_get	= nfs_fileattr_get,
++	.fileattr_set	= nfs4_fileattr_set,
+ };
+ 
+ static struct nfs_server *nfs4_clone_server(struct nfs_server *source,
+@@ -10905,6 +10952,7 @@ const struct nfs_rpc_ops nfs_v4_clientops = {
+ 	.try_get_tree	= nfs4_try_get_tree,
+ 	.getattr	= nfs4_proc_getattr,
+ 	.setattr	= nfs4_proc_setattr,
++	.fileattr_set	= nfs4_fileattr_set,
+ 	.lookup		= nfs4_proc_lookup,
+ 	.lookupp	= nfs4_proc_lookupp,
+ 	.access		= nfs4_proc_access,
+diff --git a/fs/nfs/nfs4xdr.c b/fs/nfs/nfs4xdr.c
+index 740f3bc4a19d..dc1dff06c5da 100644
+--- a/fs/nfs/nfs4xdr.c
++++ b/fs/nfs/nfs4xdr.c
+@@ -1086,7 +1086,8 @@ static void encode_attrs(struct xdr_stream *xdr, const struct iattr *iap,
+ 				const struct nfs4_label *label,
+ 				const umode_t *umask,
+ 				const struct nfs_server *server,
+-				const uint32_t attrmask[])
++				const uint32_t attrmask[],
++				const struct timespec64 *time_create)
+ {
+ 	char owner_name[IDMAP_NAMESZ];
+ 	char owner_group[IDMAP_NAMESZ];
+@@ -1147,6 +1148,10 @@ static void encode_attrs(struct xdr_stream *xdr, const struct iattr *iap,
+ 			len += 4;
  		}
  	}
- 	if (bmval[1] & FATTR4_WORD1_TIME_CREATE) {
--		struct timespec64 ts;
-+		if (!time_create)
-+			return nfserr_bad_xdr;
- 
--		/* No Linux filesystem supports setting this attribute. */
--		bmval[1] &= ~FATTR4_WORD1_TIME_CREATE;
--		status = nfsd4_decode_nfstime4(argp, &ts);
-+		status = nfsd4_decode_nfstime4(argp, time_create);
- 		if (status)
- 			return status;
- 	}
-@@ -1013,7 +1013,8 @@ nfsd4_decode_create(struct nfsd4_compoundargs *argp, union nfsd4_op_u *u)
- 				    ARRAY_SIZE(create->cr_bmval),
- 				    &create->cr_iattr, &create->cr_acl,
- 				    &create->cr_label, &create->cr_umask,
--				    &create->cr_dpacl, &create->cr_pacl);
-+				    &create->cr_dpacl, &create->cr_pacl,
-+				    &create->cr_time_create);
- 	if (status)
- 		return status;
- 
-@@ -1165,7 +1166,8 @@ nfsd4_decode_createhow4(struct nfsd4_compoundargs *argp, struct nfsd4_open *open
- 					     ARRAY_SIZE(open->op_bmval),
- 					     &open->op_iattr, &open->op_acl,
- 					     &open->op_label, &open->op_umask,
--					     &open->op_dpacl, &open->op_pacl);
-+					     &open->op_dpacl, &open->op_pacl,
-+					     &open->op_time_create);
- 		if (status)
- 			return status;
- 		break;
-@@ -1184,7 +1186,8 @@ nfsd4_decode_createhow4(struct nfsd4_compoundargs *argp, struct nfsd4_open *open
- 					     ARRAY_SIZE(open->op_bmval),
- 					     &open->op_iattr, &open->op_acl,
- 					     &open->op_label, &open->op_umask,
--					     &open->op_dpacl, &open->op_pacl);
-+					     &open->op_dpacl, &open->op_pacl,
-+					     &open->op_time_create);
- 		if (status)
- 			return status;
- 		break;
-@@ -1512,7 +1515,7 @@ nfsd4_decode_setattr(struct nfsd4_compoundargs *argp, union nfsd4_op_u *u)
- 				   ARRAY_SIZE(setattr->sa_bmval),
- 				   &setattr->sa_iattr, &setattr->sa_acl,
- 				   &setattr->sa_label, NULL, &setattr->sa_dpacl,
--				   &setattr->sa_pacl);
-+				   &setattr->sa_pacl, &setattr->sa_time_create);
- }
- 
- static __be32
-@@ -3646,7 +3649,14 @@ static __be32 nfsd4_encode_fattr4_time_access(struct xdr_stream *xdr,
- static __be32 nfsd4_encode_fattr4_time_create(struct xdr_stream *xdr,
- 					      const struct nfsd4_fattr_args *args)
- {
--	return nfsd4_encode_nfstime4(xdr, &args->stat.btime);
-+	const struct timespec64 *ts;
-+
-+	if (args->stat.result_mask & STATX_PTIME)
-+		ts = &args->stat.ptime;
-+	else
-+		ts = &args->stat.btime;
-+
-+	return nfsd4_encode_nfstime4(xdr, ts);
- }
- 
- /*
-@@ -4089,8 +4099,8 @@ nfsd4_encode_fattr4(struct svc_rqst *rqstp, struct xdr_stream *xdr,
- 	}
- 
- 	err = vfs_getattr(&path, &args.stat,
--			  STATX_BASIC_STATS | STATX_BTIME | STATX_CHANGE_COOKIE,
--			  AT_STATX_SYNC_AS_STAT);
-+			  STATX_BASIC_STATS | STATX_BTIME | STATX_PTIME |
-+			  STATX_CHANGE_COOKIE, AT_STATX_SYNC_AS_STAT);
- 	if (dp) {
- 		struct nfs4_cb_fattr *ncf = &dp->dl_cb_fattr;
- 
-@@ -4113,8 +4123,8 @@ nfsd4_encode_fattr4(struct svc_rqst *rqstp, struct xdr_stream *xdr,
- 	if (err)
- 		goto out_nfserr;
- 
--	if (!(args.stat.result_mask & STATX_BTIME))
--		/* underlying FS does not offer btime so we can't share it */
-+	if (!(args.stat.result_mask & (STATX_BTIME | STATX_PTIME)))
-+		/* underlying FS does not offer ptime or btime so we can't share it */
- 		attrmask[1] &= ~FATTR4_WORD1_TIME_CREATE;
- 	if ((attrmask[0] & (FATTR4_WORD0_FILES_AVAIL | FATTR4_WORD0_FILES_FREE |
- 			FATTR4_WORD0_FILES_TOTAL | FATTR4_WORD0_MAXNAME)) ||
-@@ -4434,7 +4444,7 @@ nfsd4_setup_notify_entry4(struct notify_entry4 *ne, struct xdr_stream *xdr,
- 		if (!setup_notify_fhandle(dentry, dp, nf, &args))
- 			attrmask[0] &= ~FATTR4_WORD0_FILEHANDLE;
- 
--		if (!(args.stat.result_mask & STATX_BTIME))
-+		if (!(args.stat.result_mask & (STATX_PTIME | STATX_BTIME)))
- 			attrmask[1] &= ~FATTR4_WORD1_TIME_CREATE;
- 	}
- 	attrmask[2] = 0;
-diff --git a/fs/nfsd/vfs.c b/fs/nfsd/vfs.c
-index 56c49b5bc5bb..286ed7c98d91 100644
---- a/fs/nfsd/vfs.c
-+++ b/fs/nfsd/vfs.c
-@@ -621,6 +621,23 @@ nfsd_setattr(struct svc_rqst *rqstp, struct svc_fh *fhp,
- 	if (attr->na_seclabel && attr->na_seclabel->len)
- 		attr->na_labelerr = security_inode_setsecctx(dentry,
- 			attr->na_seclabel->data, attr->na_seclabel->len);
-+
-+	if (attr->na_time_create) {
-+		struct file_kattr fa = {
-+			.fsx_valid = true,
-+			.fsx_xflags = FS_XFLAG_PTIME,
-+			.fsx_xflags_mask = FS_XFLAG_PTIME,
-+			.fsx_ptime = *attr->na_time_create,
-+		};
-+
-+		host_err = __vfs_fileattr_set_locked(&nop_mnt_idmap, dentry, &fa);
-+		if (host_err) {
-+			if (host_err == -ENOIOCTLCMD)
-+				host_err = -EOPNOTSUPP;
-+			goto out_fill_attrs;
-+		}
++	if (time_create && (attrmask[1] & FATTR4_WORD1_TIME_CREATE)) {
++		bmval[1] |= FATTR4_WORD1_TIME_CREATE;
++		len += (nfstime4_maxsz << 2);
 +	}
-+
- 	if (IS_ENABLED(CONFIG_FS_POSIX_ACL) && attr->na_dpacl) {
- 		if (!S_ISDIR(inode->i_mode))
- 			attr->na_dpaclerr = -EINVAL;
-diff --git a/fs/nfsd/vfs.h b/fs/nfsd/vfs.h
-index 38f7d36bd4da..24c2c22b3e72 100644
---- a/fs/nfsd/vfs.h
-+++ b/fs/nfsd/vfs.h
-@@ -100,6 +100,7 @@ struct nfsd_attrs {
- 	struct xdr_netobj	*na_seclabel;	/* input */
- 	struct posix_acl	*na_pacl;	/* input */
- 	struct posix_acl	*na_dpacl;	/* input */
-+	struct timespec64	*na_time_create; /* input */
+ 	if (attrmask[1] & FATTR4_WORD1_TIME_MODIFY_SET) {
+ 		if (iap->ia_valid & ATTR_MTIME_SET) {
+ 			bmval[1] |= FATTR4_WORD1_TIME_MODIFY_SET;
+@@ -1180,6 +1185,8 @@ static void encode_attrs(struct xdr_stream *xdr, const struct iattr *iap,
+ 		} else
+ 			*p++ = cpu_to_be32(NFS4_SET_TO_SERVER_TIME);
+ 	}
++	if (bmval[1] & FATTR4_WORD1_TIME_CREATE)
++		p = xdr_encode_nfstime4(p, time_create);
+ 	if (bmval[1] & FATTR4_WORD1_TIME_MODIFY_SET) {
+ 		if (iap->ia_valid & ATTR_MTIME_SET) {
+ 			*p++ = cpu_to_be32(NFS4_SET_TO_CLIENT_TIME);
+@@ -1252,7 +1259,7 @@ static void encode_create(struct xdr_stream *xdr, const struct nfs4_create_arg *
  
- 	int			na_labelerr;	/* output */
- 	int			na_dpaclerr;	/* output */
-@@ -118,7 +119,8 @@ static inline bool nfsd_attrs_valid(struct nfsd_attrs *attrs)
- 
- 	return (iap->ia_valid || (attrs->na_seclabel &&
- 		attrs->na_seclabel->len) ||
--		attrs->na_pacl || attrs->na_dpacl);
-+		attrs->na_pacl || attrs->na_dpacl ||
-+		attrs->na_time_create);
+ 	encode_string(xdr, create->name->len, create->name->name);
+ 	encode_attrs(xdr, create->attrs, create->label, &create->umask,
+-			create->server, create->server->attr_bitmask);
++			create->server, create->server->attr_bitmask, NULL);
  }
  
- struct nfsd_net;
-diff --git a/fs/nfsd/xdr4.h b/fs/nfsd/xdr4.h
-index ec198993429e..a495a20e5889 100644
---- a/fs/nfsd/xdr4.h
-+++ b/fs/nfsd/xdr4.h
-@@ -123,6 +123,7 @@ struct nfsd4_create {
- 	struct posix_acl *cr_dpacl;
- 	struct posix_acl *cr_pacl;
- 	struct xdr_netobj cr_label;
-+	struct timespec64 cr_time_create;
+ static void encode_getattr(struct xdr_stream *xdr,
+@@ -1440,12 +1447,12 @@ static inline void encode_createmode(struct xdr_stream *xdr, const struct nfs_op
+ 	case NFS4_CREATE_UNCHECKED:
+ 		*p = cpu_to_be32(NFS4_CREATE_UNCHECKED);
+ 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
+-				arg->server, arg->server->attr_bitmask);
++				arg->server, arg->server->attr_bitmask, NULL);
+ 		break;
+ 	case NFS4_CREATE_GUARDED:
+ 		*p = cpu_to_be32(NFS4_CREATE_GUARDED);
+ 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
+-				arg->server, arg->server->attr_bitmask);
++				arg->server, arg->server->attr_bitmask, NULL);
+ 		break;
+ 	case NFS4_CREATE_EXCLUSIVE:
+ 		*p = cpu_to_be32(NFS4_CREATE_EXCLUSIVE);
+@@ -1455,7 +1462,7 @@ static inline void encode_createmode(struct xdr_stream *xdr, const struct nfs_op
+ 		*p = cpu_to_be32(NFS4_CREATE_EXCLUSIVE4_1);
+ 		encode_nfs4_verifier(xdr, &arg->u.verifier);
+ 		encode_attrs(xdr, arg->u.attrs, arg->label, &arg->umask,
+-				arg->server, arg->server->exclcreat_bitmask);
++				arg->server, arg->server->exclcreat_bitmask, NULL);
+ 	}
+ }
+ 
+@@ -1737,7 +1744,7 @@ static void encode_setattr(struct xdr_stream *xdr, const struct nfs_setattrargs
+ 	encode_op_hdr(xdr, OP_SETATTR, decode_setattr_maxsz, hdr);
+ 	encode_nfs4_stateid(xdr, &arg->stateid);
+ 	encode_attrs(xdr, arg->iap, arg->label, NULL, server,
+-			server->attr_bitmask);
++			server->attr_bitmask, arg->time_create);
+ }
+ 
+ static void encode_delegattr(struct xdr_stream *xdr,
+diff --git a/fs/nfs/symlink.c b/fs/nfs/symlink.c
+index 74a072896f8d..8f50e56fbda0 100644
+--- a/fs/nfs/symlink.c
++++ b/fs/nfs/symlink.c
+@@ -77,4 +77,5 @@ const struct inode_operations nfs_symlink_inode_operations = {
+ 	.getattr	= nfs_getattr,
+ 	.setattr	= nfs_setattr,
+ 	.fileattr_get	= nfs_fileattr_get,
++	.fileattr_set	= nfs_fileattr_set,
  };
- #define cr_datalen	u.link.datalen
- #define cr_data		u.link.data
-@@ -277,6 +278,7 @@ struct nfsd4_open {
- 	struct posix_acl *op_dpacl;
- 	struct posix_acl *op_pacl;
- 	struct xdr_netobj op_label;
-+	struct timespec64 op_time_create;
- 	struct svc_rqst *op_rqstp;
+diff --git a/include/linux/nfs_xdr.h b/include/linux/nfs_xdr.h
+index c0e29b4dfa62..8576c8d8e840 100644
+--- a/include/linux/nfs_xdr.h
++++ b/include/linux/nfs_xdr.h
+@@ -833,6 +833,7 @@ struct nfs_setattrargs {
+ 	const struct nfs_server *	server; /* Needed for name mapping */
+ 	const u32 *			bitmask;
+ 	const struct nfs4_label		*label;
++	const struct timespec64		*time_create;
  };
  
-@@ -378,6 +380,7 @@ struct nfsd4_setattr {
- 	struct xdr_netobj sa_label;
- 	struct posix_acl *sa_dpacl;
- 	struct posix_acl *sa_pacl;
-+	struct timespec64 sa_time_create;
- };
- 
- struct nfsd4_setclientid {
+ enum nfs4_acl_type {
+@@ -1801,6 +1802,8 @@ struct nfs_rpc_ops {
+ 			    struct nfs_fattr *, struct inode *);
+ 	int	(*setattr) (struct dentry *, struct nfs_fattr *,
+ 			    struct iattr *);
++	int	(*fileattr_set)(const struct mnt_idmap *, struct dentry *,
++				struct file_kattr *);
+ 	int	(*lookup)  (struct inode *, struct dentry *, const struct qstr *,
+ 			    struct nfs_fh *, struct nfs_fattr *);
+ 	int	(*lookupp) (struct inode *, struct nfs_fh *,
 -- 
 2.56.0
 
