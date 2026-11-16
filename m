@@ -1,100 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=fail smtp.remote-ip=209.85.167.49
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=fail;
-	t=1794849333;
-	b=Sd+5RB2cu/v1Jnoo4Zz4Jk0XdnOdKHF3ZkbUgUsRdbSNEtZOjK+hS1sQEszBIZj3gX8a
-	 abfboIu06Us2HnZuKfw+wY+ZXMZurL8Ka25GjjyeDb+uZsiCa00LY1icG+Ekyn8zaM/L3
-	 XzZWtDRd89tGYKyskfbkiyyjS0YFjN/m/tIU2+5bBo37g3rOMdP0RlAKzD2J20UMF31rH
-	 NauWVJ2llSXeUgP5UVivQch1Uy7V9UTq/6JQn7fv4QnDRF8hE9uRrVGPA+dWOJ2l+OdVH
-	 jZONdZuVGvYsnVROl5Rt2tG+mnBEs4431tZ9TGiDvlaxOWKR939WH6KPQ26j5XB7WYA==
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.50
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1794852645;
+	b=kqP1+RpQdrCKsAYJSrME0sopGT7C+Htzs50/dtJzZRD/BlWtO8fSQ0f4gYNqwrahe4Nk
+	 nOtHiSf//EXmrbVX2Tj765VxBRica2108ZnDogWvgFlhBPDaeJYVUUv+CUmM3tNw0OtsM
+	 wJYrmuS8xUOiFnZI92eU/w99CiauIVtjblCKhj9bCcc48/8mUjnQQs1k2AMgalDbHbuEY
+	 2uPsN4bJdwjX6Vl6AkbM+s697xL6g4ImgWmiVMtEgQA3ISg1OwmFDSaiCMK0Iv4vzpgDh
+	 KfCZhGO6RWntGOv1eMmRUVXRir8b+ZsGQt4fbW8zESUKJ6aR6d8ppASDl2MsLb8Xs5Q==
 ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794849333;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794852645;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
 	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
 	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=TeTKNjRbgGCPVD9Hh4J0uSo4q2UCRSd3rU9Pr4FPh88=;
-	b=jh5eC+uf+OPyE2v2yopK1mIRGK1TIXQAWeouNnX4/oBwFtRLvM6Sld1IkD4j9A0FD7Ak
-	 c5tdsvAZk0kVYE80smcTUuEPTVkNNIhAhQKYbrExFitwN9UZFeflhHUde9r3hfNqKQpdA
-	 sh3oe8QUTzLlIpX11MDpVGy/41SHF5tcRxpVUsCsPs+BMi4y6kU0MfeyufmZQ53h6OilD
-	 LA1U0vYUkxpZ/wFcDTMl5tT+tumCf5RCkDgOLlhqV2XKvMRlea8ipmHiGPoa4uc0EoHZ6
-	 FijhwQrPyll9UHnIDcAEZlJpVs/vzEEVOvUofH76ds4THLRoJaAqpKosN8l86Q+hIWQ==
+	bh=t10LdZZQL9q+bSGABLhe386ponBIV6xlTkNunDiJC5Y=;
+	b=3Ux8szBbyQpJggt7KGU5RJ1eASqKPI4i7Xa4rWQl+Qi61oLJ6+ls+tsEaxdz8JkA04Xg
+	 PGETs19Qn4bk7OS4CBeJmvOfdc11ukyJYNccnA2c94E7tZdR9Vos8/ofptfG/t3gRIFA4
+	 EVYpGepyu7YlDB/uODJ4hMjH6Oxw32Zn6DV/3Lx1laaxG/HxZsVQURCVsujZaKEnGBLKE
+	 sdTR8pddBmrgcWSMEP0oF/F1yS1oNAj5yRnEmvV5S5iwNKjZeI4XsCVQP9eS64fKfDyV2
+	 WMbEb/B0Uwy8BI0KKNVDleL4DpaeD1dDWDSIkQHuUsmYjlrHgI/WvbSSMkKdP76PldQ==
 ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amacapital.net;
-	spf=pass smtp.mailfrom=amacapital.net;
-	dkim=pass header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=ApZjJDVm;
-	arc=fail smtp.remote-ip=209.85.167.49
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=x0lt4j5h;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.50
+Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A93E0606A32C
-	for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 17:15:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A93E0606A32C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F71B606A323
+	for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 18:10:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8F71B606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=ApZjJDVm
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-5c14f7768acso3029788e87.3
-        for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 09:15:32 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1794849331; cv=none;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=x0lt4j5h
+Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-6b56221d361so5867648a12.3
+        for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 10:10:44 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1794852643; cv=none;
         d=google.com; s=arc-20260327;
-        b=Dy2vwcQnSN+vmaTpbe84cb/QNeUU/vOAf4qhgwwGd2vO/3lnc5GbIm5IdJ7QhzrXI0
-         v3BuNo3dSdRRrEcvbNI8/7SBWxCHMuMgnDz8uK88VRArqcOs93vNL2PXFxEan03Zztqu
-         lYf4ru5I+QHN/PRyPP3RG08oC9hG6DYVpu1ynDZW3xn56luMlVZCYVU/Ipx4ImeQcGiL
-         +ekIdH3WZqyHpEsdpI2jFPP18NmzoYSMYaRdPp5DcveX23zUS3i1rtBqxPDH44FJ+wnk
-         0q22oRYbZBLKBHzn94xHRXaJCChCddCcqtwSWf6k/cqtB9CJ7oHwl7CW1Yyo+2hTQWXb
-         lzmw==
+        b=ixmIYIG7dvn5BFl/bmQXwgQFyynGGFabyQkoYIPxJj49VOdwJwTNxvIPsnNtQrn0IA
+         aWTvjZwWwdgBkr5IUkvAyBPUMpRQI8mrK2iziqkg+5sUoUn7U3uQy/j+9kG+BVITVluI
+         GXLeC6zdJ5rPZKUmzI4NIT8X9jzX6o33HoRWgh3yD36LDE87Sa78q9Xuyrc5t96awD6J
+         3vWkfnZtrWpanZsjhFUz5iKTeEq12xHpWNOtimMWfzUtsYv3MPcoJLWQrmi2LWuC6VzI
+         sx133Ppa5t6ZbsmK+zhDsY5vI4K8PVziEXpKvInnB2Z7cVwoQfEel0n8qGdeO62bYNFc
+         xaRw==
 ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
         h=content-transfer-encoding:cc:to:subject:message-id:date:from
          :in-reply-to:references:mime-version:dkim-signature;
-        bh=TeTKNjRbgGCPVD9Hh4J0uSo4q2UCRSd3rU9Pr4FPh88=;
-        fh=o81aBXs/qxboE4TmZ/55hR27xS0e9aQUTizN5YUjEu4=;
-        b=NMbyECa2mKo76F4r/0zCL4L1W59zq07FIfyvtIZIIOXPubnQMJKnJkJQXQY63SprCX
-         yxgmkTSHjfwPaPL7Ex8EmnBYRRP6RJrd+IxbYTFHa05trSkR4QMztiG2XTOL64VCcBQj
-         uiP9ZpDV85CT+SN8HP7ll/VMcshqO4ya9R85EMrHoHGnobrozZCdmh4yozlk2NNlNiDy
-         801RizhDf6yw0bKEuG0+0WxWHF8m2FKDpMa59AwyXxSqA8OouBbzmUlHKLYbQDNxSJCJ
-         qQ//Kn6fGwz0N7yPwZ3AZVfgqZmco4YNAkSuNmj9Ofmtu/HO5SgidUJMtQa7BVsCDie9
-         8Row==;
+        bh=t10LdZZQL9q+bSGABLhe386ponBIV6xlTkNunDiJC5Y=;
+        fh=jeY7QrkNletp9zFz83FpOZUDqwoWTb+FMlGKPKfaTfE=;
+        b=AX40uWg2eOkJypWvUX3+3kTFA2bTWEA/TfZVdRqpkZgucPZfnpY8hZS7tVlI7IIaw4
+         pfwD6Izp7y9GxoggUynCzDEl+6Eh78I17dKzTrjI//lCSfgKgOopAHBiUjcS6V2KOoeP
+         HAF6oAVWV62rrdIe6G81nNt7KxQab9yLIMc/go43kKfBBXncYJ6pjVXulERs5BwdoDgX
+         ahRXqJQu0EGYBmC3jykw6Jv0XOnpf8I1a8XjGwxwb/K4qxypD+qCfQEXnQPB45JnKQO8
+         o6W3+8DcjsEJfkUDM+D2Y+NsU5sIwGDbjsb+bhRT3El0cjTjVlyoY01gP/1j1oBxbc2h
+         EWVg==;
         darn=vger.kernel.org
 ARC-Authentication-Results: i=1; mx.google.com; arc=none
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1794849331; x=1795454131; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1794852643; x=1795457443; darn=vger.kernel.org;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=TeTKNjRbgGCPVD9Hh4J0uSo4q2UCRSd3rU9Pr4FPh88=;
-        b=ApZjJDVmy8Blwb7f7lK+J9zx/UG2Nq6aXE4IXdGkzgUwpToyasBcQHpBbdCoC3FESr
-         MQ2PZz5AdlVHNvlsqaPOUhVXU3AFQNLJAN81XG6pfFgAc6frBmguv1fNXCnwvlexdYFm
-         uO001TbMoAU22k912+wt4nRdhkzXhgHEC+18i3vXzqhK+v6NpV47705ecYGnZsqvk4DL
-         g6w8+qZm1pDPrQRMNLhaqZRn9oZ3QufBXisXUWcG4Bt5SKsG50DoZOpIlec+jJanR0oF
-         DlZo19AWOKlNBknkIEAGop4Dj0TKXO2QS+ZO8YRHjNeW7rbds/2qrDHQ2QwC997oDlRa
-         WV7g==
+        bh=t10LdZZQL9q+bSGABLhe386ponBIV6xlTkNunDiJC5Y=;
+        b=x0lt4j5h7o5ZOIupC6QpocZBfmv8wFzUHnqEUjT+qXXHs4fqM/212o+JPya3Ne+Seo
+         tLIn+ce71Roeft17QbgYTLYZCJ0+SlsLtt4o2OLm95aLJ5VyGYDhMzriK8UdMTHsHNnj
+         8mTqTlr5/Ax8I+pLOcrqBMRwU57PT7keOGJO4t4tmQGJKRYz/1wZ/uaK+JY6cLy80yx1
+         pkobwBcMhURP6h4GfSR12sTX8GLQ2Qvn5juEllVfsWcYtDCP4X7X2kujH+BqvT2pv+Ny
+         N7Wj9fipbTOHczIeVSeB+l1xH0/w8nez4g0GJUB68vMGCquO73GzeOY0af50BLWOXJ1z
+         6RHA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794849331; x=1795454131;
+        d=1e100.net; s=20260707; t=1794852643; x=1795457443;
         h=content-transfer-encoding:content-type:cc:to:subject:message-id
          :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=TeTKNjRbgGCPVD9Hh4J0uSo4q2UCRSd3rU9Pr4FPh88=;
-        b=Mqh75UlKgzguQf23/45AGJjKfC90gSV9BvHccWyFLFWH30Sdv6lJ7HA3UTsMnf+dKm
-         Hk2zo2MamRCxMU2F4427ugkezBpEI7YlGzPdUTB6pPCPvsgY53aSwTnfC7pMAoA7vvNk
-         01fwJf8jn/XCUKaoP+ni5N076fqVQS1O4kOJX1InJwW+ABvp2mScRnz8CZfOAkm7Yh0O
-         31rKl9FC1FaYRR57eelsFGmJd7UbUUuikfFgcPnnqnQ/cQyn0pNGrI2EmdXw3o4SzR4c
-         eU6/KMks2isYtG5ybK2XOaoRUmDcwYofZvtXhS2Jk/ZVpf4c3150RL5YnYWpn65/qG4X
-         d/JA==
-X-Forwarded-Encrypted: i=1; AL+hErHOpD4KVmVZ+pwgFxCsYpN84TEY9QKhl7+wOrgxsjEpv34dWAAJy4WWHRjqWyOv6U72aO+qliVaZLg=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/V8pCjtGPGxO5UzZdeV+MXRqriHVSBkrLfgZRoZHYNE1i5fYFt
-	o6qwyqbjyQS2jkPxigLC1kEOS00ZbI7KDppsplu1j5CsyPbHoGjJiJxU5+8GMOUmZBGExKROnI3
-	JiunTPr+fEAWK/sCRW//6ctCnz/TvmYiNomEP1yWJ
-X-Gm-Gg: AYBFou3uweXpWdidhT6rkKGfTe/SpqvRDNGg4Oyx8hsZ+qBbT9Vmf7zelQzcPuo4Ufh
-	otVKGISpaFRGt6VPXuemwfTokhRmUk/SCO+pQdJSXBORinp6mJ2iXfStWCxu+49mW6M61rgmtmn
-	J4SbOgEpAm+XSumZvjEcLX3PkqVNzFma2JnRGHK292dkEE3wRjIOxCbvSF4x/ARyJiGzTmXup4p
-	ngN6LZ0/PVMVIhjfr9vq9POTHHdq1l2kjFsdnrNrcinxJi6KR5O+I4zgwDog0IgZjJ2pYV3cbts
-	ohBvJEhZSWEPMNWbMdmqjgnLqJQOHPCDOtBbzAGoBZCFvQ1Booorp79kUbjSazZsQClGWTovWv8
-	vdoxRYoeZXz4QD8pHdSyqtYyB05feZnAhnw==
-X-Received: by 2002:a05:6512:132a:b0:5c1:57cd:507 with SMTP id
- 2adb3069b0e04-5c1705d8c18mr4112436e87.8.1794849330616; Mon, 16 Nov 2026
- 09:15:30 -0800 (PST)
+        bh=t10LdZZQL9q+bSGABLhe386ponBIV6xlTkNunDiJC5Y=;
+        b=X8R/UqR3Plyz3Z3KCQ2xnGsWxoqq2IJUxqFPWqsl+BT6bggcREPalCxOa2H4OsRaqP
+         VIvWtiE/iy+kkFryB7+SBjsOlWnS/e6rfkEOkbw6j16i5f0wBtPwrdfjUoi/sThQfBaR
+         +695S9fybihvT2VYaNR26F5AvKTRFgYdmI/Q5B8WzobIBHBabgURTm20ZcW8Y2i2izNc
+         qAYdKvekC0MtamswKUs0hu3e6uEgpm1fqibybLxJ6fXaxsGv/31GaHRrVg+RNTxaQQp6
+         DD8T/fJDQW5Ag3mgbf+eh+Ma95INb2RPe8Jpx6Sbm7DSDLTGUCvWgmSvVLmoiKV1kmH0
+         8crA==
+X-Forwarded-Encrypted: i=1; AL+hErHH9RfeYHNhLT3CD9Y/xIJACA+vy+mypHmhuLvBRqglrF3wxLVtYuOXPMmTOdJFLI4+RIKkwtptr1E=@vger.kernel.org
+X-Gm-Message-State: APuU4Z8RxP+RTOGDPEZl8P6tXVVXA0i0hmzyZkCfULEaLASUreVlB/o4
+	6d2xN8zErq7opj9KOnj31VeSQvE4TsPEvbdgsONjSvBHN0pZnbVLoL1HbeiBCV0w9BWtHJkUplN
+	mnXApB89wspXGS32VFBDo+87qvvm6Bms=
+X-Gm-Gg: AYBFou1xtdwZK1pdaFxnKIVXj0Ri1zVk3pRSqdOUFti0n2NIKG+bGTBoW+Z7MPVlE/7
+	8NOQbCQ9roKbRrw4bl/iOtkW+pHJPQ7SI7W75niS/0+FLS0SydBnV6rfnFEADq7FH4uG+xGSU5K
+	8OGmgZfYNYaklcKcGzReSFoCcA0QmjRMh3FKuZstx/d+LGvNNV9iP7sp+8lmm80AUayw+5g2QQr
+	gEkXuT9QCx5Ys0IrP0gI8PRhOQGCO1D4mvmPfrBFd3Tw7K4fF83imjB+qAzQcGzmYqDy37xjXxs
+	YEYbhfLsPkG94DOlripRSKrvxEdAVOJ9aF7Y9TEdVN6z9H874gKLdB7eXuJ7IsAa2tNowWrmaJd
+	VRGkdeB86hoTH/0DjOiGlNHcboukRMRPgiYjExJhxH/HpZG+lVTFsROJ2kshZnbKW9GZmfSIrkt
+	m9L5f8frK9DIRBev27B8YScfj9lx22A8Ce8oJfbhTxWmDA
+X-Received: by 2002:aa7:c4cc:0:b0:6b4:1037:2bb1 with SMTP id
+ 4fb4d7f45d1cf-6b7c0bc27a9mr6612692a12.22.1794852642773; Mon, 16 Nov 2026
+ 10:10:42 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,134 +105,196 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261028221705.3915340-1-halg@google.com> <CALCETrW9ygriu54gxiHFLEd5+hJminQo0r8Jwd63wR69Dj4W7w@mail.gmail.com>
- <20261106-befreien-addieren-eislauf-e09212803534@brauner> <CALCETrWa1SBLcb5oWjqjgzZvKvCoHjmYFk=Lf5ytEM9uqm5jYA@mail.gmail.com>
- <avM41a80aig2de-R@google.com> <20261111-behagen-faktisch-entgegen-e2e714373895@brauner>
-In-Reply-To: <20261111-behagen-faktisch-entgegen-e2e714373895@brauner>
-From: Andy Lutomirski <luto@amacapital.net>
-Date: Mon, 16 Nov 2026 09:15:18 -0800
-X-Gm-Features: Aa3M54qwWxMtxsZDh2vrMHB0wizt5RpGMmIfg1U4U0aXsb9fKiA9QIK00CYod18
-Message-ID: <CALCETrUjW=kXxyggDUvEN+Pxc-pE98eVbdW8XBU8JzfqXj_voA@mail.gmail.com>
-Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
- opt-in netns loopback
-To: Christian Brauner <brauner@kernel.org>
-Cc: "Hallgrimur H. Gunnarsson" <halg@google.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
-	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
-	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
-	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
-	Jann Horn <jannh@google.com>, =?UTF-8?Q?G=C3=BCnther_Noack?= <gnoack@google.com>, 
-	KP Singh <kpsingh@kernel.org>, Jonathan Calmels <jcalmels@3xx0.net>, 
-	Casey Schaufler <casey@schaufler-ca.com>, linux-fsdevel@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
-	containers@lists.linux.dev, netdev@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20261114184720.373178-1-renzo@cs.unibo.it> <20261114184720.373178-2-renzo@cs.unibo.it>
+In-Reply-To: <20261114184720.373178-2-renzo@cs.unibo.it>
+From: Magnus Lindholm <linmag7@gmail.com>
+Date: Mon, 16 Nov 2026 19:10:30 +0100
+X-Gm-Features: AclHuK-3zf0u-_tVqqSwOuwnlXe0JuQIB0eE-s6YSpQo7rK-ZYPGihb4jDlFOAE
+Message-ID: <CA+=Fv5QPMYffznpkrEhZ3pMWtpHwNUUa3OaHxLexu8S47a7tRQ@mail.gmail.com>
+Subject: Re: [PATCH v4 1/3] asm/ptrace.h: add instruction_pointer_set
+To: Renzo Davoli <renzo@cs.unibo.it>
+Cc: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, 
+	Oleg Nesterov <oleg@redhat.com>, Shuah Khan <shuah@kernel.org>, Alexey Gladkov <legion@kernel.org>, 
+	Eugene Syromyatnikov <evgsyr@gmail.com>, Davide Berardi <berardi.dav@gmail.com>, 
+	"Dmitry V . Levin" <ldv@strace.io>, =?UTF-8?Q?Michal_Such=C3=A1nek?= <msuchanek@suse.de>, 
+	Thomas Bogendoerfer <tsbogend@alpha.franken.de>, strace-devel@lists.strace.io, 
+	linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org, 
+	Richard Henderson <richard.henderson@linaro.org>, Matt Turner <mattst88@gmail.com>, 
+	Brian Cain <bcain@kernel.org>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, 
+	Dinh Nguyen <dinguyen@kernel.org>, Simon Schuster <schuster.simon@siemens-energy.com>, 
+	Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, 
+	Johannes Berg <johannes@sipsolutions.net>, Chris Zankel <chris@zankel.net>, 
+	Max Filippov <jcmvbkbc@gmail.com>, linux-alpha@vger.kernel.org, 
+	linux-hexagon@vger.kernel.org, linux-m68k@lists.linux-m68k.org, 
+	linux-um@lists.infradead.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, Nov 11, 2026 at 7:20=E2=80=AFAM Christian Brauner <brauner@kernel.o=
-rg> wrote:
->
-> On Tue, Nov 10, 2026 at 03:31:33PM +0000, Hallgrimur H. Gunnarsson wrote:
-> > If we drop CLONE_NEWNET_LOOPBACK / UNSHARE_NEWNET_LOOPBACK from this
-> > series and handle loopback separately, do you think the per-userns
-> > bounding set is a reasonable approach for withholding capabilities
-> > (e.g. CAP_NET_ADMIN and CAP_NET_RAW) from unprivileged userns, or
-> > would you prefer a different mechanism?
->
-> Seems ok to me.
->
-> > To address the concern about the number of moving parts, I am also
-> > happy to simplify the control interfaces. If we decide a per-task
-> > securebit is the cleanest way to drive this configuration for both
-> > single-deep and nested cases, we could focus on that and drop the
-> > clone3() and sysctl from this series entirely, or only expose whatever
-> > subset you prefer.
->
-> Just a note on the essay I cut off. I really object to any arguments
-> that amount to "it's too much work" propped up by a few thin arguments
-> sprinkled in such as rtnetlink.
->
-> I also reject any arguments that amount to underscoping and overscoping
-> of the new capability. The scope is clear: empty netns with brought up
-> loop device.
->
-> I'm 180 patches deep into fixing procfs and 41 patches deep into
-> preventing loop devices from abuse. Either we do the work and get
-> something better or we do the same thing we've always done and hope we
-> end up happily ever after.
->
-> But again, I'm more focussed on cells so here's what I find acceptable:
->
-> I'd rather go back to what Jonathan proposed in 2024 (cf. [1]). A
-> per-task userns capability mask. Serge acked the core of it back
-> then. It's at least generic and not just the single securebit capability
-> thing. And we'd burn a new bit for every capability that turns out to be
-> a problem later.
->
-> Jonathan's version had holes though. The restriction only lived in the
-> task's creds so the owner rule and setns() blew this up. So it needs to
-> be combined with your per-namespace set. Roughly:
->
-> * every task carries a mask, cred->cap_userns, full by default
->   fork, exec, setuid and entering a namespace never change it
-> * a new user namespace records
->
->         ns->cap_bset =3D parent->cap_bset &
->                        (cred->cap_userns | cred->cap_permitted);
->
->   once at creation and never changes it again =3D> it's monotonic downwar=
-ds
-> * the creator gets ns->cap_bset instead of CAP_FULL_SET
-> * a task that setns()es in later gets
->   ns->cap_bset & (cred->cap_userns | cred->cap_permitted)
+Hi Renzo,
 
-I'm not sure this is ideal.  If a task has cap_userns & CAP_NET_ADMIN,
-then there is no attack surface issue with allowing it to enter a
-namespace and be NET_ADMIN there even if the namespace itself has
-CAP_NET_ADMIN cleared from cap_bset.  But any exemption here would
-need to be a new API so that it isn't used by accident.
+On Sat, Nov 14, 2026 at 7:47=E2=80=AFPM Renzo Davoli <renzo@cs.unibo.it> wr=
+ote:
+>
+> Add an instruction_pointer_set function for architectures that do
+> not currently provide one.
+>
+> Signed-off-by: Renzo Davoli <renzo@cs.unibo.it>
+> ---
+>  arch/alpha/include/asm/ptrace.h      | 6 ++++++
+>  arch/hexagon/include/asm/ptrace.h    | 6 ++++++
+>  arch/m68k/include/asm/ptrace.h       | 6 ++++++
+>  arch/microblaze/include/asm/ptrace.h | 6 ++++++
+>  arch/nios2/include/asm/ptrace.h      | 6 ++++++
+>  arch/um/include/asm/ptrace-generic.h | 6 ++++++
+>  arch/xtensa/include/asm/ptrace.h     | 6 ++++++
+>  7 files changed, 42 insertions(+)
+>
+> diff --git a/arch/alpha/include/asm/ptrace.h b/arch/alpha/include/asm/ptr=
+ace.h
+> index 45d1229344b6..1a6f073e892e 100644
+> --- a/arch/alpha/include/asm/ptrace.h
+> +++ b/arch/alpha/include/asm/ptrace.h
+> @@ -33,6 +33,12 @@ static __always_inline bool regs_irqs_disabled(struct =
+pt_regs *regs)
+>         return arch_irqs_disabled_flags(regs->ps);
+>  }
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  /* Syscall emulation defines */
+>  #define PTRACE_SYSEMU                  0x1d
+>  #define PTRACE_SYSEMU_SINGLESTEP       0x1e
+> diff --git a/arch/hexagon/include/asm/ptrace.h b/arch/hexagon/include/asm=
+/ptrace.h
+> index ed35da1ee685..0a121f6e3bfc 100644
+> --- a/arch/hexagon/include/asm/ptrace.h
+> +++ b/arch/hexagon/include/asm/ptrace.h
+> @@ -18,6 +18,12 @@ extern const char *regs_query_register_name(unsigned i=
+nt offset);
+>         ((struct pt_regs *) \
+>          ((unsigned long)current_thread_info() + THREAD_SIZE) - 1)
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  #if CONFIG_HEXAGON_ARCH_VERSION >=3D 4
+>  #define arch_has_single_step() (1)
+>  #endif
+> diff --git a/arch/m68k/include/asm/ptrace.h b/arch/m68k/include/asm/ptrac=
+e.h
+> index bc86ce012025..6e8a8f0daee8 100644
+> --- a/arch/m68k/include/asm/ptrace.h
+> +++ b/arch/m68k/include/asm/ptrace.h
+> @@ -18,6 +18,12 @@
+>         (struct pt_regs *)((char *)current_thread_info() + THREAD_SIZE) -=
+ 1
+>  #define current_user_stack_pointer() rdusp()
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  #define arch_has_single_step() (1)
+>
+>  #ifdef CONFIG_MMU
+> diff --git a/arch/microblaze/include/asm/ptrace.h b/arch/microblaze/inclu=
+de/asm/ptrace.h
+> index 17982292a64f..69e10658d7a9 100644
+> --- a/arch/microblaze/include/asm/ptrace.h
+> +++ b/arch/microblaze/include/asm/ptrace.h
+> @@ -20,5 +20,11 @@ static inline long regs_return_value(struct pt_regs *r=
+egs)
+>         return regs->r3;
+>  }
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  #endif /* __ASSEMBLER__ */
+>  #endif /* _ASM_MICROBLAZE_PTRACE_H */
+> diff --git a/arch/nios2/include/asm/ptrace.h b/arch/nios2/include/asm/ptr=
+ace.h
+> index 96cbcd40c7ce..d120d8ecb187 100644
+> --- a/arch/nios2/include/asm/ptrace.h
+> +++ b/arch/nios2/include/asm/ptrace.h
+> @@ -70,6 +70,12 @@ struct switch_stack {
+>  #define user_stack_pointer(regs)       ((regs)->sp)
+>  extern void show_regs(struct pt_regs *);
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  #define current_pt_regs() \
+>         ((struct pt_regs *)((unsigned long)current_thread_info() + THREAD=
+_SIZE)\
+>                 - 1)
+> diff --git a/arch/um/include/asm/ptrace-generic.h b/arch/um/include/asm/p=
+trace-generic.h
+> index 62e9916078ec..632d4ce3334d 100644
+> --- a/arch/um/include/asm/ptrace-generic.h
+> +++ b/arch/um/include/asm/ptrace-generic.h
+> @@ -29,6 +29,12 @@ struct pt_regs {
+>
+>  #define PTRACE_OLDSETOPTIONS 21
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  #ifdef CONFIG_BINFMT_ELF_FDPIC
+>  #define PTRACE_GETFDPIC                31
+>  #define PTRACE_GETFDPIC_EXEC   0
+> diff --git a/arch/xtensa/include/asm/ptrace.h b/arch/xtensa/include/asm/p=
+trace.h
+> index d0568ff6d349..97b14418955e 100644
+> --- a/arch/xtensa/include/asm/ptrace.h
+> +++ b/arch/xtensa/include/asm/ptrace.h
+> @@ -103,6 +103,12 @@ static inline unsigned long regs_return_value(struct=
+ pt_regs *regs)
+>         return regs->areg[2];
+>  }
+>
+> +static inline void instruction_pointer_set(struct pt_regs *regs,
+> +                                          unsigned long val)
+> +{
+> +       instruction_pointer(regs) =3D val;
+> +}
+> +
+>  int do_syscall_trace_enter(struct pt_regs *regs);
+>  void do_syscall_trace_leave(struct pt_regs *regs);
+>
+> --
+> 2.47.3
+>
 
-I'm mostly saying this because container managers might want to
-restrict cap_userns within their containers but still have it
-themselves for management.  But maybe there isn't any need to enter
-the userns for this purpose.
+The Alpha change looks good and applies cleanly on my for-next,
+including the generic-entry fixes.
 
-> * the owner rule in cap_capable_helper() grants exactly what entering
->   would and otherwise falls through to what the owner has
->
-> So caps a task actually has always count as allowed
-> =3D> should check Andy's "only restrict creators that don't have
->    CAP_NET_ADMIN themselves" per capability.
->
->    This amounts to a host-wide default without a sysctl.
->    PID 1 drops CAP_NET_ADMIN and CAP_NET_RAW from its own mask at boot
->    and everything inherits that.
->
->    Root, sudo and setuid-root binaries have those capabilities so
->    nothing changes for them. A regular user doesn't and so their user
->    namespaces come without CAP_NET_ADMIN and CAP_NET_RAW.
->
->    This also covers newgrp, su and sudo -u shells which is where
->    resetting the mask on setuid exec (Which was raised by Serge in the
->    other thread.).
->
-> * Root in a container has caps as well so for containers the exemption
->   would be wrong.
->
->   So here we need a a lockable SECURE_NO_USERNS_CAP_RAISE bit thingy.
->   This turns off the exemption and prevents raising the mask.
->
->   Docker lowers the mask, sets and locks the bit, and
->   unshare(CLONE_NEWUSER) in the container doesn't hand out CAP_NET_ADMIN
->   anymore.
+Tested both series together on my AlphaServer ES40. The ptrace
+selftests passed on all three CPUs, including syscall skipping
+and instruction-pointer modification.
 
-Can you clarify this part a bit?  I'm not seeing why Docker should be
-special.  Shouldn't the inside of a Docker container work as much like
-a normal non-container system as possible?  What's the use case?
+For the Alpha part:
 
+Acked-by: Magnus Lindholm <linmag7@gmail.com>
+Tested-by: Magnus Lindholm <linmag7@gmail.com>
 
-In any event, the ptrace access checks also need to be updated.  If
-we're adding cap_userns, then one should not be able to
-PTRACE_MODE_ATTACH a task with higher cap_userns.
+Thanks,
+Magnus
