@@ -1,63 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.176
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794780728;
-	b=ArPRbO/AG9k9TUZWjdhpSX9Uv9b/3NRQ5SpT0zzAQz/DVThUhL2eFgxsGUiZfoc4HuhW
-	 siDO039QPcbvLjCZQqRRmofo2fZ/VVKpJRsamJXe2jILVL2L+CWlRDXeGJOVupWfVYgrF
-	 417VWPspxnKldGh4/o3TG1ndSKURu2/KPcrBEdpbsWrbP+FCXE7MkexQQilQU0LGXpsyi
-	 mmRfxjJCYe8EB6Zhe4djwoLNtHk8DONO6h5zeyEDEInoD+SCWGG3A3L7R4jOb73Tu4ytO
-	 t2eePRqjGf0sAfI/k+7JgsTVJf5Rc4PoagIDvgphHuc0VBVn3kUyHzwzrOVMDB9kwiQ==
+	t=1794800001;
+	b=i1F9b9fdp7aAmkQL/kLhTqHzOphYsCmEIaM3LBqHfLoqvK2jnMpMhrEb8L28Ph8wCwz1
+	 cRZzei3jPS/9Iax3m6mQP2X24R9t6LV0VQDdN2cTnNH2sgSnyEp3wrjiX2jaBpWBzluVO
+	 CUfvpCHTNxP+jYsPGVuboay1m5UAGteYhnHJfZD9HZDX0WdDgm+lCGIhrQFmtPrbuizf1
+	 1+9elveOf65lwNXR4OGAJPDEPcEd4q1qOwuB0KTWllOBPXriwf/Wp/+U6YDwT9H6q8rbg
+	 87bqRa4JsQfpRwVPHaR4iI65vcIzvWZEGYigCijHbjpfPfyaI6wI+0kDv3HmcJpySJQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794780728;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-Id:
-	 In-Reply-To:References:X-Mailer:Mime-Version:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=q9s42YVPhc56VTV+G1TekC9EyggoNH/5JmNGm6Xx0OY=;
-	b=G3NlcQpPNgauL0GS5F2pFxEtsGmPB+LqiVlzu7kYfwpExO1OtVu9M4O+XKW3+lcWOqST
-	 5mbbOHpG+Lnl0l77pFK/ZBlcbpFbPvjwL0HVwwZ0MUKreobC6vHi3k3AOkgbp6tdbXvYw
-	 zc36R7UT1gCrpgYUJjv8s/JXUgZikIXwIrsqj0di9ApGALpr6QJHGzp2ZIndN4n1Y78qI
-	 l+fEveVqsON2uO8mqdHWdfll8glmTVPJVPKRluOypNG5Ce3KswQF6goDqiaSHBr5Ndp6d
-	 9CFLmVIdSnQQPOC2cLXVuqavXMUqS96v4I1YGeG2ceJuZhFHK7Gk/dCIPDOFG8qn4Yg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794800001;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:MIME-Version:
+	 Content-Transfer-Encoding:Content-Type;
+	bh=nlTtnR+wCpHl9FSCHLEGv7xGmXmxOT2nZcPf4/lr2y4=;
+	b=cEkkeG0Efu6NUQ1hqu/3y/4SVxB2I1AfKUJJ+gxLRli0io1r1Rxs4O+tK0JD90Gkz/90
+	 nYbCVqStJST8URSw9CtDUrUvmLi/gs8moYTCQMhpbRDomIEFg8EjRHO7ldLC9tKReG1Uy
+	 /ZXj+pVe+yeKJMuwH+pKXvqig9+XM1cMlrds+CAnUy1zKQrz51+cI/WvqfDdAWgXrdP1Q
+	 jcoVLGpA/lrlDl2EOp0spZS519AwTLfD/cir+MClhuMS9YG7AbailGrPJT87rXzwepfj2
+	 a3joamIt3xuDZ9tMjSV5yU08rsW/gB00yVqgEWIjcy8A/qsfIsXEW6091uPgiILQ6Ng==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=2dU+DbgF;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hgaUM0ak;
+	arc=none smtp.remote-ip=209.85.222.176
+Received: from mail-qk1-f176.google.com (mail-qk1-f176.google.com [209.85.222.176])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B646606A31F;
-	Sun, 15 Nov 2026 22:12:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A7E1B606A31C
+	for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 03:33:20 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A7E1B606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=2dU+DbgF
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D80C81F000C4;
-	Sun, 15 Nov 2026 22:12:06 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hgaUM0ak
+Received: by mail-qk1-f176.google.com with SMTP id af79cd13be357-9495f083657so281965185a.0
+        for <linux-api@vger.kernel.org>; Sun, 15 Nov 2026 19:33:20 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=linux-foundation.org; s=korg; t=1794780727;
-	bh=q9s42YVPhc56VTV+G1TekC9EyggoNH/5JmNGm6Xx0OY=;
-	h=Date:From:To:Cc:Subject:In-Reply-To:References;
-	b=2dU+DbgFDrqSj3PWmmULOFhMRJrMipQby1pDwXNQGxLi46AXNwWZX7utTYV4vHXMw
-	 OuPTqGy1iRd0KdBcAa+7e2q56eUOyyVc+qL8yfUS0ZDGXQiZX1nqa8ER3jfu0eQFvY
-	 gnkUjz6mfockveWho3dsBBhBNdBl3oqMsZUPEw20=
-Date: Sun, 15 Nov 2026 14:12:06 -0800
-From: Andrew Morton <akpm@linux-foundation.org>
-To: Yingjie Wang <x-professor@outlook.com>
-Cc: Manfred Spraul <manfred@colorfullife.com>, Alexey Gladkov
- <legion@kernel.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Vasily
- Averin <vasily.averin@linux.dev>, Johannes Weiner <hannes@cmpxchg.org>,
- Shakeel Butt <shakeel.butt@linux.dev>, Michal =?ISO-8859-1?Q?Koutn=FD?=
- <mkoutny@suse.com>, Michal Hocko <mhocko@suse.com>, Alejandro Colomar
- <alx@kernel.org>, "linux-kernel@vger.kernel.org"
- <linux-kernel@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>,
- "cgroups@vger.kernel.org" <cgroups@vger.kernel.org>,
- "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
- "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>,
- "linux-hardening@vger.kernel.org" <linux-hardening@vger.kernel.org>,
- Davidlohr Bueso <dave@stgolabs.net>
-Subject: Re: [PATCH v5 0/3] ipc/sem: account dynamic sops arrays and
- validate SEMOPM
-Message-Id: <20261115141206.920bdc8c5a84073712bb5c3b@linux-foundation.org>
-In-Reply-To: <cover.1793250194.git.x-professor@outlook.com>
-References: <cover.1793250194.git.x-professor@outlook.com>
-X-Mailer: Sylpheed 3.8.0beta1 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
+        d=gmail.com; s=20260707; t=1794799999; x=1795404799; darn=vger.kernel.org;
+        h=content-type:content-transfer-encoding:mime-version:message-id:date
+         :subject:cc:to:from:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=nlTtnR+wCpHl9FSCHLEGv7xGmXmxOT2nZcPf4/lr2y4=;
+        b=hgaUM0akhfIblJZRHS1um/ResgJtAxAoSHYbf4DebsNzZSgSEOTK2PUUFJYr46ycbO
+         SvWxtAghL3ugAZ9pai5SU6+wNpu+O9I3gK3N1i5RZMuiWf+59EDoF67X+yQGTmWaDo6c
+         8V4HYkdesumvwLnYssRCdcJB25yQNTfhnma7NQNRpRzsoCt4MLeF7Ia7ZMEC5YYn8fUm
+         UoEHspP2YPaP2rFpG2KWdLg/f2d2n41NxSjOdw9txt8/iddqYt9CxJQhpzGFzhZE+RSM
+         o6aXlJjWDz/vL1egZ6Y7tUMkgakD0MUgVXKktRggv0cn7BZ88ASPRxmwXt/9bEeu2vQW
+         qQWw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794799999; x=1795404799;
+        h=content-type:content-transfer-encoding:mime-version:message-id:date
+         :subject:cc:to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=nlTtnR+wCpHl9FSCHLEGv7xGmXmxOT2nZcPf4/lr2y4=;
+        b=A06TIEjwU8gU+Zbw/Ir7ycSIBWQXoeRdTjbSkhGOlA3jTEZQxFzwXbugoD9TGrhYvn
+         /BDSIvJxaP6hBDCJ6HAn8kNIPaBn9C2YvvdLz9QiDwZ7mwtaW2VgBNOx9Lt9EpOcAWnp
+         pZ0GvM1DypSFi+frUAG/2XnFKvap2ehDgS9JhrnWDFpe9vTpr1M5+Mih7cDzLvsmhfnT
+         ITLgkWYAg0gtqPGEwvAxz2E5ikMV6caYoLn8P6Ty3sG/qVc5MPJX327hEvbJ/0Svx6Hu
+         6a1KmIkFJOrgj7PNVlrkapd2hcMdELrkqr2uMxwXfynD8LPq2E3qO/dvbJnL8YVl+dsr
+         d/Cw==
+X-Forwarded-Encrypted: i=1; AL+hErEQLHfKK25B3JO5DmD6ao72VHzrVSakjMorSTgOzGljdt0B4awMWlWVrlXlsMNqIvKvk44E5mVK0DY=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9bmsxn1uhTz3RgeygB55I5hBtlZzSmE4PIuBidx9KB+9X1iMAq
+	n7RLBpP4slZpUEiFY0LTmjVDzRbjwuEnDf3GUT45DZZOeepOJ8Ft7Qvt
+X-Gm-Gg: AYBFou1mpYA7cgW0H/zMdSApDLOVo4g+0PEHo4E/jdkfg9M02wPDEwA8iaj4YSIlYuw
+	zZFj0BBNaXAIjH4/B4CaDWTKr3kRQ+jPxxCoXF09OJkqHLtAGk3YOI1i6rpBbmx7PQHquTI2b8O
+	Dfy07iGb+ZUaQAcQGgYwlTYPvvTps3GB4WmyqyMupJhq3Qgo1Bha5XctNZrTFAnLjTClXoS9z5R
+	/mK5EbzU/pwYOnLuPzpt5KqGR5EQmjv3Egnc7mMRgkQiVreGFQ8COZmsX2Kby/4mepE7XLoChDU
+	SRJX441awXEI9XKLY1hJUi6y17/ANL4XkfWiYTDjTEPEAiWAMJ4PZsEd53q6Pm57Im21nZDCV7H
+	gf8tYcZaf4uKryY5ob/+tGhDgaL+UHnGRNRcvZPS9HzgleZAfFxVm9VsTxYcUxftQaJIrs9Lz0F
+	A6MBBq13jmPuwQml3V0HSRo/S5tLdL5Y6/9fpgdwj7mRAuibeZ7m1b1UBKFD97oAZn4V9G8/HGw
+	/ABpSpjYXl/moyGGB7H3blRZr52Kjdz5BogBY8JRp45jykDWHkoFVxBU2M+7KNuo9B/BzwwR+PR
+	6upyktA/kTjR0sSkV2qShiwHn2iiaSLjsqbh3VvpbUlOCsX75vXRCiRZBws=
+X-Received: by 2002:a05:620a:40d2:b0:949:76ed:591f with SMTP id af79cd13be357-94976ed5e0emr393702685a.8.1794799999296;
+        Sun, 15 Nov 2026 19:33:19 -0800 (PST)
+Received: from daniel-desktop3.localnet ([204.48.77.170])
+        by smtp.gmail.com with ESMTPSA id af79cd13be357-9494c836f62sm753411885a.23.2026.11.15.19.33.17
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 15 Nov 2026 19:33:18 -0800 (PST)
+From: Daniel Tang <danielzgtg.opensource@gmail.com>
+To: linux-man@vger.kernel.org,
+ Christian Brauner <christian.brauner@ubuntu.com>,
+ Alejandro Colomar <alx.manpages@gmail.com>,
+ Michael Kerrisk <mtk.manpages@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org,
+ linux-api@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
+Subject: [PATCH] mount_setattr.2: Fix nonexistent perf_setattr
+Date: Sun, 15 Nov 2026 22:33:16 -0500
+Message-ID: <6099049.DvuYhMxLoT@daniel-desktop3>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -66,112 +96,38 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="utf-8"
 
-On Thu, 29 Oct 2026 05:03:24 +0000 Yingjie Wang <x-professor@outlook.com> wrote:
+The problematic reference had been copied from openat2.2, where it was
+fixed in bbed82c0693a ("openat2.2: tfix: fix minor reference typo"). I
+performed the same fix for mount_setattr.2.
 
-> Shakeel, thanks for the suggestion.
+Fixes: f3a5ba3f0151 ("mount_setattr.2: New manual page documenting the mount_setattr() system call")
+Link: https://lore.kernel.org/linux-man/20200929223509.11783-2-cyphar@cyphar.com/
+Link: https://lore.kernel.org/linux-man/20191003145542.17490-1-cyphar@cyphar.com/
+Link: https://lore.kernel.org/linux-man/20210730094121.3252024-1-brauner@kernel.org/
+Signed-off-by: Daniel Tang <danielzgtg.opensource@gmail.com>
+---
+ man2/mount_setattr.2 | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks.  Shakeel, please review [1/3]?
+diff --git a/man2/mount_setattr.2 b/man2/mount_setattr.2
+index 77233f589..5f26119cc 100644
+--- a/man2/mount_setattr.2
++++ b/man2/mount_setattr.2
+@@ -786,7 +786,7 @@ acting as an implicit version number.
+ (Because new extension fields will always
+ be appended, the structure size will always increase.)
+ This extensibility design is very similar to other system calls such as
+-.BR perf_setattr (2),
++.BR sched_setattr (2),
+ .BR perf_event_open (2),
+ .BR clone3 (2)
+ and
+-- 
+2.53.0
 
-> Patch 1 now uses GFP_KERNEL_ACCOUNT for every dynamically allocated sops
-> array. The first 64 operations still use the existing stack buffer. The
-> fixed 1000-operation exemption and its conditional allocation flags have
-> been removed.
-> 
-> I compared this version with v4 in a 4-vCPU KVM guest. The benchmark process
-> was pinned to one vCPU. Each number is the median of 21 samples from three
-> fresh boots of each kernel. In a leaf memory cgroup, the changes were:
-> 
->                                       65       500      1000
->   successful semop()                   +3.2%     +3.2%     +2.3%
->   allocation-focused invalid semid     +5.6%     +9.1%    +11.9%
-> 
-> The invalid-sem-id case allocates and copies the operation array before
-> returning EINVAL, so it emphasizes allocation overhead. The 64-operation
-> stack controls changed by 0.9% and 0.5%, respectively. The already-accounted
-> 1001-operation controls changed by 1.0% and -0.2%. Successful calls in the
-> root cgroup changed by at most 2.3%, including the controls.
-> 
-> The sysctl handler parses writes into a temporary array while holding a
-> per-IPC-namespace mutex. The mutex covers the snapshot, validation, and
-> publication, so a failed write leaves the live settings unchanged and a
-> partial write cannot restore fields from an older snapshot. The snapshot and
-> publication use READ_ONCE() and WRITE_ONCE(), and reads continue through
-> proc_dointvec(). The unused sem_check_semmni() helper is also removed.
-> 
-> The UAPI warning about physical fragmentation is obsolete now that the
-> operation array uses kvmalloc(). The header describes SEMOPM as the
-> compiled-in default and retains the uniform <= INT_MAX range comment.
-> 
-> Patches 2 and 3 are unchanged from v4 and retain Manfred's Reviewed-by tags.
-> The series is based on 7be4bc52fd9e ("Merge tag 'driver-core-7.4-rc1' of
-> git://git.kernel.org/pub/scm/linux/kernel/git/gregkh/driver-core").
 
-Thing is, the above is largely about what-changed-since-last-time. 
-It's useful info, but it's short-term development-time stuff.  Most of
-this is inappropriate for the long-term kernel record.
-
-I had LLM suggest a replacement [0/N].  wdyt?
-
-: An IPC namespace owner can raise SEMOPM and make semop() allocate a large
-: operation array.  A blocked call retains the array.  These allocations are
-: currently uncharged to the caller's memory cgroup, so repeated calls can
-: consume host memory beyond a container's limit.  In one test, a call
-: retained 60,936,448 bytes while a 32 MiB cgroup recorded less than 1 MiB. 
-: Sixteen concurrent calls retained 100,860,416 bytes while the cgroup
-: recorded about 1.3 MiB.
-: 
-: The SEMOPM sysctl also accepts negative values.  Because the operation
-: count is unsigned, SEMOPM=-1 becomes an effective limit of UINT_MAX. 
-: Separately, a rejected kernel.sem write can leave earlier fields changed:
-: an invalid SEMMNI can return ERANGE after setting SEMOPM to zero, causing
-: subsequent nonempty semop() calls in that IPC namespace to fail with
-: E2BIG.
-: 
-: Patch 1 charges dynamically allocated operation arrays in the regular
-: semop() path to the caller's memory cgroup.  Patch 2 parses and validates
-: kernel.sem writes before publishing them and serializes writers within
-: each IPC namespace.  Patch 3 removes the obsolete warning that SEMOPM
-: above 1000 risks physical memory fragmentation; the operation array uses
-: kvmalloc().
-: 
-: Accounting contains the large-array case when the caller's memory cgroup
-: has an effective limit.  The series does not impose a maximum on positive
-: SEMOPM values, so a root or unlimited cgroup can still request large
-: allocations.
-: 
-: Validation included x86-64 and i386 builds, initial and user-owned IPC
-: namespace checks, concurrent sysctl writes, operation-count boundaries,
-: and allocation cleanup on success and error paths.  In a limited memory
-: cgroup, accounting increased median successful-call time by 2.3% to 3.2%
-: for 65, 500 and 1000 operations; the allocation-focused invalid semaphore
-: ID case increased by 5.6% to 11.9%.
-
-Also, [1/3] and [2/3] are cc:stable but include no clear description of
-why we're recommending backports.  Backportable patches should clearly
-state the userspace-visible runtime effects of the bug which is being
-fixed.  Our downstream people (-stable maintainers and further
-downstream) are swamped with bugfixes, so let's help them out!
-
-So for [1/3] I inserted this statement:
-
-: A caller can raise SEMOPM and keep large, uncharged operation arrays alive
-: in blocked semop() calls.  Repeating this from a memory-limited cgroup can
-: exhaust host memory outside that cgroup, causing reclaim, stalls, or OOM
-: kills of unrelated processes.  Charging the arrays lets an effective memcg
-: limit contain that memory use.
-
-and for [2/3] I inserted
-
-: A negative SEMOPM becomes a large unsigned limit in semop(), allowing
-: operation counts that the configured limit should reject.  Separately, a
-: kernel.sem write can return ERANGE for an invalid SEMMNI while leaving
-: earlier fields changed; if it leaves SEMOPM at zero, subsequent nonempty
-: semop() calls in that IPC namespace fail with E2BIG.  Validate the whole
-: write before changing the live settings.
-
-Please check these also.
 
