@@ -1,88 +1,58 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794866427;
-	b=B26s2yOpYCYErB3mgXxRd6/vQNCg+hiqGAopYCmVrLkdzdvtnVirqGtwQUzmnB+yljC3
-	 s9utcb5gpbPwNhtK6llQBRd77WSFy3g1gjpiQtJhoVL8Kgi1yu/K+pmBWbnnOjeaoxz7e
-	 PcTo94ZflWhqyBC5ZcrJSX0UwBUaOvZP7CuT3cpHtiYIS/Kv52CQ8mrEMGeY5LhgKXEIQ
-	 p0DSKH2dkQvQm0j9Ojo2z+oYwrHKk58/jLZAfFBI17WfDuto7Li2nRnf3kSLjLIqi0I3l
-	 JlSQzyVopgHMOhFgpelWCkYdt4N2mF02AVqbHn7GmvtDzcHwMboTPWFH8/NJAzIcgBw==
+	t=1794872203;
+	b=LTLAdsdLXqKxunAOs/L0cJ6yeSaTleregEXm3nHll0YWYY7VGfX0dUhzkVeSmfCbcYrr
+	 76MWlxI+F5FC39rzIZVkb6i34zpoTY3Pu8DBtCMLhOHGHn7JQFjp/22XCBdkygt4HOljo
+	 mlUvrMsOD+yFC9OEgYSEYA5M6vbKYTNP0TsjpZJOuBJWapF0Bu/wruZjRAM/RAwz/Ha0W
+	 1UUxg3TAqijGhUUOF1OGOHSkTnpUdXzEuqUejaVneH1TU6o0UvnePqKUbXueON7Q7sXQn
+	 ddRL53iugp/Cvx1Z6pwh4jkR660V+pwTlU/IPwkzXSqoqJjXRYbhutjSQl34+6xsKtA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794866427;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Message-ID:Date:MIME-Version:User-Agent:Subject:To:Cc:References:
-	 Content-Language:From:In-Reply-To:Content-Type:
+	a=rsa-sha256; c=relaxed/relaxed; t=1794872203;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-Id:
+	 In-Reply-To:References:X-Mailer:Mime-Version:Content-Type:
 	 Content-Transfer-Encoding;
-	bh=BTPE9Q1KzFgXOzghIcy1Do+zsJcn2B9P+6aO9CoEBkg=;
-	b=LPJ7dWt3O+KznDSZQCvGf8tfWPCImkiEz50t1VyFxnKt9a36u4hIjAUcJEX3c9TDjs54
-	 LrPcR3bSN7QqmzOev6PoWRpof+n9+WzBIfD8SPRTwSa+thQZTl3kbM9C7DUy8+kg3Lsnf
-	 Gkf+HwLAXjOkRB7lbSrX+Ca2h/kh0dpTJD8nf3s3/57rnBNl8hLqUr741NiZ7id8fQYpz
-	 vwU1J3uPb2rKVaHcH008pmRJm4BzVPVqzP5VdqkNCBJ3jFA54KkpI/Hc4J2Y7bN4xij/Y
-	 bQYk8SR7j5plb1LPHy+TLeaQs0apejQ1y2K17VHeIS4aTvHlVZaWATOsvPXuvGmW56Q==
+	bh=SqY9CO3fEYEagBoh62ysw+i10UsVB9Z68o/EjIOaJHg=;
+	b=ZuHjS9d+modIb7gzXqtZeMHWYULLQupVxoI+xnp49yx8nahZZ4oPE3n1zKgm9RosrZOV
+	 S2Hba3Eu/w1fOCKW7Bxib0015qMtLfK32vdoPNdOxkbKFBmydVdrN+kmxhZTWYVQAH5FA
+	 RRscaF8C1vFooJ4STWBlM+TvOpNzLqDHqxsILNWgwpiZILyMuHT214HHVY71LOcbj0LTC
+	 ytxUusKMS/iuRIPP4UGaRGVL9F3JeNTp86KNfoZtwuPgO8/vrfCK9LDJ9hoY0Ji+UZa/J
+	 8nNS71Pg65KGiSxBs9lxcA96IeGc0Ofg5w/NFDZtjXQH39kKhdA4Zfi2m+1rn5GF9qQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Wgaz3sxI;
-	arc=none smtp.remote-ip=209.85.128.47
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=mC+IXjY2;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A25CE606A33E
-	for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 22:00:26 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A25CE606A33E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 81046606A31C;
+	Mon, 16 Nov 2026 23:36:43 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Wgaz3sxI
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4a35d5d4a20so48315945e9.2
-        for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 14:00:26 -0800 (PST)
+	dkim=pass (1024-bit key, unprotected) header.d=linux-foundation.org header.i=@linux-foundation.org header.a=rsa-sha256 header.s=korg header.b=mC+IXjY2
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7D11F1F000C4;
+	Mon, 16 Nov 2026 23:36:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794866425; x=1795471225; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=BTPE9Q1KzFgXOzghIcy1Do+zsJcn2B9P+6aO9CoEBkg=;
-        b=Wgaz3sxIxWZLDFT7xVEdmX1ppNgZ14lH2Bd/pkkQY8LuwSm23WSJcoASZdiEoRzwgY
-         NrDnUGRd8QWiPBQaGHTSVC3t/pfUMPwHHDcS6QN4v/rhN4wcNK+PQW58WH9kQyQh51/m
-         dodS6K1TM1o95Uso14CGLlGiQg+16nqE76ucJu+hS8G1eDddvX5CmuQKKYzcYv+lHhiW
-         QsraJwnG1B74v4hIV4DQcwYn+NAEt5Px5tM+fx+hA/Li4DkDMHyRmupnWh4tg+1nAAGd
-         PX1eRA47BtO4ClJlF/DMwUrc9Bnw4tkHBPbbcwTtOdOOCduf50BdrndDMGZh5wGc0uyb
-         ELFA==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794866425; x=1795471225;
-        h=content-transfer-encoding:content-type:in-reply-to:from
-         :content-language:references:cc:to:subject:user-agent:mime-version
-         :date:message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=BTPE9Q1KzFgXOzghIcy1Do+zsJcn2B9P+6aO9CoEBkg=;
-        b=2x7WQjeYCZ7WgOF/GhK6IjrwOns4ZBPFDOQCC+PIrOMwW7B/N5K68HUY0FIzGUjYMl
-         aGeKiG6CVlJ8tm0FTU+a8ueg54vt1N00y0R0vQnQ6fvHljURsLuBWG7gPVgxMGgcRJin
-         diZISWc6/2f2ZuZCdvhZds3q/0Suercq9reqadMykQdwv0MEU7UvRcoW8bsUt8xnTtLP
-         V2stSfWJSXx1a4a3xSexhYlTt6WzdxUwFcOf9MTQOu6PCZuPb2CMziVoBJMOO8U/vT71
-         HXt7WJ9rmbL1ihPgYEfCuQqfPbfrQt7MTCKaXwWf9wZVscbfXU0XSh8HrlgWXlIyF14o
-         E6tw==
-X-Forwarded-Encrypted: i=1; AL+hErFJp0S6JBsF6it7kqtfeeLjBnxALvag7ZR/hoiaEMk7ZtY/AmnoM0+Eyuq/tOBZAgCJna55a3nQIZ0=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/zRe2ZEAYxIID7WcJIEicPM1PUdKe5F8Gt9PAAAUByrG0EJ8TY
-	I1swn5iKJWCzDNpjMWoVeTBAKoGb3zVDWVpMePZtRDDflP4oJxTezxPO
-X-Gm-Gg: AYBFou227PpFoftPGtZ0LD/EihF+C0ivyzCrp1Vo1r5RM5OZEOYhpB90qXv9xNUbl/1
-	PR7tysWuHlMDmCVl7A9qbYy4Ey3YbQjPB8nkj+y9w3JPX7dohFHvDUZd5rNwm79PkNnBwIk01l5
-	N0ecFI3cpl/s5Sk/7RhksM/A5BptnUSzGWKUUdCmW2MsTb+PzWrz9+IhWpWsexSmj6mwHtPEygj
-	7lY+HOI155m7XQYedoaICxUV3DiCtfXfLfg1/Q/xpjYCC+30niOIiVpX3iuk2gaZn5MvQCODDlP
-	GH9dcRpZaiTHrWk6zyuZGxBT9kWIsv6ccl5LVJED1X33BJ0pCPclFp37P5VGj47Zyefd97j0kWC
-	o9QAp/HDN3oZRu73OYhTdAWelZocITHj8aUp1ZIbaapfQr8RucpQhCTbQ14Dxg5OTsvt42+zcXw
-	S0KKjAosQ9Wgo1Jt1yUU/kewMkLCMa2WZYYipeZp4idl8eJLYNx76WTy/1UvtYr3UOUl2uLkGnP
-	YjDRZ5FtFQ4eiPYqjrAiJagv+/90icCNc79JtG11+/Inb0oT54iJupzkFsFyNXHnrqUmSU9MIY1
-	527Ks+SVcp7XSHsg70Xy+Xx8iVuPLw==
-X-Received: by 2002:a05:600c:34d0:b0:4a2:133:45e1 with SMTP id 5b1f17b1804b1-4bb55a59f41mr249245185e9.24.1794866424901;
-        Mon, 16 Nov 2026 14:00:24 -0800 (PST)
-Received: from [10.10.0.26] ([85.105.252.11])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb56f97257sm207857645e9.4.2026.11.16.14.00.21
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 16 Nov 2026 14:00:24 -0800 (PST)
-Message-ID: <228df241-da5e-49cb-b29f-6b9158557f55@gmail.com>
-Date: Tue, 17 Nov 2026 01:00:20 +0300
+	d=linux-foundation.org; s=korg; t=1794872202;
+	bh=SqY9CO3fEYEagBoh62ysw+i10UsVB9Z68o/EjIOaJHg=;
+	h=Date:From:To:Cc:Subject:In-Reply-To:References;
+	b=mC+IXjY26Sewr12LP9oiVQl8fdcKTbMh/ZgHnYk6C7FV8CJvIftp5pAasuEFPKGDL
+	 Cq9nHkcS0VbWh5goVYlc/J9VpPntZfg+weOwdBiA2ZRBK36K+quwAkx4KNkxdI5hLR
+	 uP+fsfNAzRRwjMDHVxOhu85tticamOAkrib+e8ws=
+Date: Mon, 16 Nov 2026 15:36:42 -0800
+From: Andrew Morton <akpm@linux-foundation.org>
+To: Renzo Davoli <renzo@cs.unibo.it>
+Cc: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>,
+ "Dmitry V . Levin" <ldv@strace.io>, Alexey Gladkov <legion@kernel.org>,
+ Eugene Syromyatnikov <evgsyr@gmail.com>, Charlie Jenkins
+ <thecharlesjenkins@gmail.com>, Bradley Morgan <bradley.morgan@linux.dev>,
+ Shuah Khan <shuah@kernel.org>, strace-devel@lists.strace.io,
+ linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org
+Subject: Re: [PATCH v4 2/2] selftests/ptrace: check that
+ PTRACE_SET_SYSCALL_INFO rejects invalid error values
+Message-Id: <20261116153642.a8dddc43f53fed0402283dfa@linux-foundation.org>
+In-Reply-To: <20261116134050.505355-3-renzo@cs.unibo.it>
+References: <20261116134050.505355-1-renzo@cs.unibo.it>
+	<20261116134050.505355-3-renzo@cs.unibo.it>
+X-Mailer: Sylpheed 3.8.0beta1 (GTK+ 2.24.33; x86_64-pc-linux-gnu)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -91,82 +61,85 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 1/2] platform/x86: asus-wmi: add TUF keyboard RGB
- readback support
-To: =?UTF-8?Q?Ilpo_J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>,
- Denis Benato <denis.benato@linux.dev>
-Cc: Corentin Chary <corentin.chary@gmail.com>, "Luke D. Jones"
- <luke@ljones.dev>, Hans de Goede <hansg@kernel.org>,
- platform-driver-x86@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
- linux-api@vger.kernel.org, Denis Benato <benato.denis96@gmail.com>
-References: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com>
- <20261029-asus-tuf-rgb-v4-v4-1-0d3b877d2c30@gmail.com>
- <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com>
-Content-Language: en-US
-From: bartu alev <bartualev@gmail.com>
-In-Reply-To: <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 
-On 11/9/26 9:02 PM, Ilpo Järvinen wrote:
-> What do you (or Denis) think on sashiko's mention about 
-> asus_wmi_evaluate_method_buf() casting integer.value to int which might 
-> end up aliasing high-bit on return values with errnos?
-> 
-> The other caller seems to also return that value directly out of _store 
-> function().
+On Mon, 16 Nov 2026 14:40:46 +0100 Renzo Davoli <renzo@cs.unibo.it> wrote:
 
-Hi Ilpo and Denis,
+> At every exit stop of the set_syscall_info test, try to set with
+> is_error set a few values outside [-MAX_ERRNO, -1], check that
+> PTRACE_SET_SYSCALL_INFO fails with ERANGE and that the return value
+> of the system call is left untouched.
 
-I checked the DSDTs across 102 ASUS models we have dumped as well as the
-UEFI/SMM path on my FA507NV (BIOS 318) to see what firmware actually
-returns on the DSTS path:
+Thanks.
 
-1. Across the 102 DSDTs, no static DSTS branch returns 0xFFFFFFFF or
-   Ones. Models without 0x0010005B either hit a DSTS tail of
-   0xFFFFFFFE (15), fall through to WMNB's trailing 0xFFFFFFFE (45),
-   or return Zero (3 older models: GL553VD, GL553VE, FX505DT).
+LLM suggested a little fixup here, please check.
 
-2. On modern models (including FA507NV, FX517, GA403, GA605WI), DSTS
-   delegates unlisted DEVIDs via WCHK/W15H (SW SMI 0xAA, cmd 0x9603).
-   Disassembling the FA507NV modules (AsusSmmService ->
-   AsusWmiToProtocol -> QuantaDxeWrapperPkg) shows that this dynamic
-   chain also returns 0 (unmatched consumer / missing table entry), 1,
-   capability/presence bits (e.g. 0x00010000 for 0x00100056/57), MMIO
-   reads, or 0xFFFFFFFE -- never 0xFFFFFFFF.
 
-   (Note: on FA507NV, 0x0010005B itself is static in AML and calls
-   EC0.KBLS(), while 0x00100056/57 go through WCHK/W15H and return
-   0x00010000 on DSTS.)
 
-However, checking those tables did uncover one real mismatch and a clean
-reason to still harden asus_wmi_evaluate_method_buf():
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: selftests/ptrace: test the lowest valid syscall error
+Date: Mon, 16 Nov 2026 22:27:14 +0000
 
-- On models like FX505DT, DSTS(0x00100056/57) returns 0x00010000 (so
-  kbd_rgb_mode/kbd_rgb_state are registered), while 0x0010005B hits the
-  DSTS tail Return (Zero).  asus_wmi_evaluate_method_buf() turns 0 into
-  -ENODATA, so v4's `err < 0 ? err : -ENODEV` would return -ENODATA
-  instead of -ENODEV as documented in the ABI patch.  The same happens
-  if W15H hits an unmatched consumer/table miss in SMM (returns 0).
+PTRACE_SET_SYSCALL_INFO must reject values below -MAX_ERRNO while
+accepting -MAX_ERRNO itself. Name the bound locally for this userspace
+selftest, and add a successful exit-stop case at that boundary. Retain
+the existing -EISDIR case. The tracee checks the resulting errno.
 
-- Even though 0xFFFFFFFF didn't show up in this set, an unseen BIOS or
-  SMM branch returning 0xFFFFFFFF or any bit-31-set integer would still
-  alias a negative errno in asus_wmi_evaluate_method_buf().
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Cc: Renzo Davoli <renzo@cs.unibo.it>
 
-To avoid disturbing older devices, would a minimal approach like this be
-acceptable for v5?
+ tools/testing/selftests/ptrace/set_syscall_info.c |   25 +++++++++++-
+ 1 file changed, 24 insertions(+), 1 deletion(-)
 
-1. Add a small prep patch to asus_wmi_evaluate_method_buf() using a u32
-   retval: keep 0xFFFFFFFE -> -ENODEV and 0 -> -ENODATA as today, also
-   map (u32)~0 (0xFFFFFFFF) -> -ENODEV (matching asus_wmi_get_devstate()),
-   and return -ENODATA for any other unexpected integer (matching the
-   `default:` case; the only existing caller fan_curve_get_factory_default()
-   already treats any non-zero return as failure).
+--- a/tools/testing/selftests/ptrace/set_syscall_info.c~selftests-ptrace-check-that-ptrace_set_syscall_info-rejects-invalid-error-values-fix
++++ a/tools/testing/selftests/ptrace/set_syscall_info.c
+@@ -15,6 +15,8 @@
+ #include <linux/types.h>
+ #include <linux/ptrace.h>
+ 
++#define MAX_ERRNO 4095
++
+ #if defined(_MIPS_SIM) && _MIPS_SIM == _MIPS_SIM_NABI32
+ /*
+  * MIPS N32 is the only architecture where __kernel_ulong_t
+@@ -131,7 +133,7 @@ static const long long bad_error_rval[]
+ 	0,
+ 	1,
+ 	ESRCH,
+-	-4095 - 1,	/* -MAX_ERRNO - 1 */
++	-MAX_ERRNO - 1,
+ 	-2147483647LL - 1,
+ #if __SIZEOF_LONG__ > 4
+ 	0x100000000LL,
+@@ -325,6 +327,27 @@ TEST(set_syscall_info)
+ 			}
+ 		},
+ 
++		/* change scno, change non-error rval to -MAX_ERRNO */
++		{
++			{
++				{
++					__NR_chdir,
++					{
++						dummy[0], dummy[1], dummy[2],
++						dummy[3], dummy[4], dummy[5]
++					}
++				}, {
++					__NR_getppid,
++					{
++						dummy[0], dummy[1], dummy[2],
++						dummy[3], dummy[4], dummy[5]
++					}
++				}
++			}, {
++				{ 0, tracer_pid }, { 1, -MAX_ERRNO }
++			}
++		},
++
+ 		/* change scno and all args, change non-error rval */
+ 		{
+ 			{
+_
 
-2. In kbd_rgb_read_status(), translate -ENODATA to -ENODEV so FX505DT /
-   0-returning firmware matches the ABI while preserving -EIO / -ENOSPC.
-
-Thanks,
-Bartu
