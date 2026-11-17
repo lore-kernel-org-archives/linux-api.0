@@ -1,46 +1,46 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=130.136.161.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794906343;
-	b=JR7R9DFkPbfuN/u8DRxQdMCFRwHK4ywjRGSAEIwMKA52Mb2XkLR/GW9pqf0NA+x3eSCT
-	 aHjaQkJrNV0QO9FqZ2Cevff7sw4cF3sc4zdbEDunEHPGj+V4SWD62AhvjAEydoYxeMcVh
-	 g/HD4O6cw2gkxTfaVF6iSrg8TMGs68rLjA/exqoZiasoWwbRW7AaTRCZKbEAUe/Unerq0
-	 l7Snhanx8I56lx3zHksAfmcY/9C2HjbcZKL/VdlmOyBA17O+Q61vnPkznylsOqUagG6Ag
-	 PACIfFcmSgho63tik+HW4LQCnKFD+AL5embJe4xKS9IR5cfX7Va2zAvgUnc11yNL6dQ==
+	t=1794909109;
+	b=fua7ZVEFXwI15zwRdcZoqng3OapoN0SA0VzIhsYyNdIACUFTBDYaDiKXBYeNwHNzEnWh
+	 QbUiFZnCG8HmV3voXuJGyUpzOPuMhzC9pH8sL0A6DXo5CKyWElT4VNchKnO7GSr/xYvZa
+	 VHw+TjcdOesfyH4Td+essT7ECREGhASQNAek3wU5kxutMLnZD3j4B9L3Zzrs8TMw0kS/w
+	 k/ioSy1gTnkuVdR5Nt2XlSzqmcwU5ibXJJfFQOwTSGjgW/z3bPENXxBGbY/vDlA4YoYT2
+	 ofB68EEjMxCNad5WV9SfrkmOIy6o+G5nX0P/ryWTco9maf3TlbWQymBlnlqWUESab1Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794906343;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794909109;
 	h=DMARC-Filter:Received:DKIM-Signature:Date:From:To:Cc:Subject:
 	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
 	 In-Reply-To;
-	bh=q9unebL19dWYI7xi7vjuz1ClkA+F8EiJo9H2IlkNq/g=;
-	b=zjgBdQRgkQOP9DrKF69UV3DooWlyvENKhvMoIWLBkpITWsgMW66bXDLTeUMvccgiYayb
-	 x98NM/y878OR6Qni+c6COHBvOyh4T4eXHTwEA1YC28butqgjKV37ANq6cIkIktw+dlSU2
-	 ofepPHVUibbkRXhtdkQW1arzuLRtAndV0Xq9KKDPV4qDqCeUmsfspQGR/k6/qrsWzmFRk
-	 FQ/f5rV3vGXxuUl0qWs6rxRw+tEOO3vUOYo9oPZ+30ToYscNZgONTT9D5dAgb3JmZIqLd
-	 U2ZzCLsEyNizLKx8D4KzM9UhQ+XOBztJYm7IHjg3QuNKrJ7jb/NH99mZDZAXTdc3+7Q==
+	bh=cKRq7f5sfRlpjrqiJnBl46k8dvzPN6Cm5PEhEPkW5k8=;
+	b=nqZsdhKa3dCIZ+nNBxXlU4guD4AZjXuw5Xd3jB40wpQRUhyJRcXe+CCQMkUgEqneeYY4
+	 JgEWi94tsfsch0AH4TJkQ925e4gvcZgpgXh4dAtnB3zpvEBobDjHG5ix46+3O0aZZPVH+
+	 ATfe/SzzdxYajorofnyJdOashJmE+sjiSncRsJPyCghXltOj9i8AgNocbT2p+lk0f6KeB
+	 L4prcQp6BfUcKLUeCe9XCu4NMwl7Xp8+5jGePfJaGY0/NjDWIDCXNLDLth0O4kQcORRhl
+	 D0fAu1u+BER6spfqpHicUNUFCAwu2ALQSgkW671fHL5moV/shX1GzcEX5RExrtv2gIQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=cs.unibo.it;
 	spf=pass smtp.mailfrom=cs.unibo.it;
-	dkim=pass header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=jQPvnuKs;
+	dkim=pass header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=Gx9Xu9iP;
 	arc=none smtp.remote-ip=130.136.161.50
 Received: from mail.virtlab.unibo.it (mail.virtlab.unibo.it [130.136.161.50])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 96A4F606A31C;
-	Tue, 17 Nov 2026 09:05:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 96A4F606A31C
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 3FED0606A323;
+	Tue, 17 Nov 2026 09:51:48 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3FED0606A323
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cs.unibo.it
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.unibo.it
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=jQPvnuKs
+	dkim=pass (1024-bit key) header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=Gx9Xu9iP
 Received: from cs.unibo.it (renzopb-wl.cs.unibo.it [130.136.2.252])
-	by mail.virtlab.unibo.it (Postfix) with ESMTPSA id 46AF71C024A;
-	Tue, 17 Nov 2026 10:05:38 +0100 (CET)
+	by mail.virtlab.unibo.it (Postfix) with ESMTPSA id D3C6C1C024A;
+	Tue, 17 Nov 2026 10:51:45 +0100 (CET)
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=cs.unibo.it;
-	s=virtlab; t=1794906338;
-	bh=q9unebL19dWYI7xi7vjuz1ClkA+F8EiJo9H2IlkNq/g=;
+	s=virtlab; t=1794909105;
+	bh=cKRq7f5sfRlpjrqiJnBl46k8dvzPN6Cm5PEhEPkW5k8=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
-	b=jQPvnuKs6sB3GBlqerzW884eyCwWr6CzTNc7zR1uJCkehdi3BzPegRG4dH1jXQ7Nm
-	 p6yKWzMRnewkDVCXF6m17FFOfqtI1qEUGsC6y50I2yVNlzMNueXHBahEw6PLWU3cQW
-	 NfcbSKbbqoWTZrNyu8qkVzZM8CIdL8NLr8OzSGwM=
-Date: Tue, 17 Nov 2026 10:05:37 +0100
+	b=Gx9Xu9iPedqdjGY9OlCzB4M4OllwpC+LUcPKuPjRaC406iguJqjPJlei/m35BR0Zi
+	 kI4hahO0nhl4v+Y36ymGFZ0d85NGjmGt8zHBYUZChHs6VLZSbRvmd3CQqe3rHYe51a
+	 bpaFBHPHohObg24dEROUiMEG16WJ+QBj34x8HXcM=
+Date: Tue, 17 Nov 2026 10:51:44 +0100
 From: Renzo Davoli <renzo@cs.unibo.it>
 To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>,
@@ -53,10 +53,11 @@ Cc: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>,
 	linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org
 Subject: Re: [PATCH v4 2/2] selftests/ptrace: check that
  PTRACE_SET_SYSCALL_INFO rejects invalid error values
-Message-ID: <avwY4RW14jtVfgZO@cs.unibo.it>
+Message-ID: <avwjsMQay_N_pfvt@cs.unibo.it>
 References: <20261116134050.505355-1-renzo@cs.unibo.it>
  <20261116134050.505355-3-renzo@cs.unibo.it>
  <20261116153642.a8dddc43f53fed0402283dfa@linux-foundation.org>
+ <avwY4RW14jtVfgZO@cs.unibo.it>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -68,20 +69,29 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261116153642.a8dddc43f53fed0402283dfa@linux-foundation.org>
+In-Reply-To: <avwY4RW14jtVfgZO@cs.unibo.it>
 
-On Mon, 16 Nov 2026 15:36:42 -0800 Andrew Morton <akpm@linux-foundation.org> wrote:
-> LLM suggested a little fixup here, please check.
->
-> From: Andrew Morton <akpm@linux-foundation.org>
-> Subject: selftests/ptrace: test the lowest valid syscall error
+On Tue, Nov 17, 2026 at 10:05:37AM +0100, Renzo Davoli wrote:
+> Thanks Andrew, the fixup is correct and a good addition: the test now
+> covers both sides of the -MAX_ERRNO boundary.
 
-Thanks Andrew, the fixup is correct and a good addition: the test now
-covers both sides of the -MAX_ERRNO boundary.
+A follow-up for when the other two PTRACE_SET_SYSCALL_INFO series come
+up:
 
-I tested it on top of v4 (x86_64, QEMU): set_syscall_info passes.
+[PATCH v11 0/3] PTRACE_SET_SYSCALL_INFO: add support for seccomp syscall skipping
+https://lore.kernel.org/lkml/20261114181923.370930-1-renzo@cs.unibo.it/
+[PATCH v4 0/3] ptrace_set_syscall_info: add support for instruction pointer modification
+https://lore.kernel.org/lkml/20261114184720.373178-1-renzo@cs.unibo.it/
 
-Reviewed-by: Renzo Davoli <renzo@cs.unibo.it>
-Tested-by: Renzo Davoli <renzo@cs.unibo.it>
+I tested the full stack on x86_64 (QEMU): this series with your fixup,
+then the syscall-skipping v11, then SET_IP v4 (which depends on
+syscall-skipping). set_syscall_info passes.
+
+There is one trivial textual conflict: your "#define MAX_ERRNO" lands
+right where syscall-skipping v11 patch 3/3 adds new #includes, so it
+does not apply with plain "git am"; "git am -3" resolves it, and the
+result differs from the stack without your fixup only by the fixup
+itself. If you prefer, I can send syscall-skipping v12 rebased on top
+of mm-nonmm-unstable.
 
 renzo
