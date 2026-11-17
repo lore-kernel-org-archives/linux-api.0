@@ -1,51 +1,55 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794873225;
-	b=eFLLnjrnnQ5hK+iVv2Ww6Mnv7DrUvJuivEBW7goaZGbFKA3CVeQd7Rxgz55jpcqVhEyP
-	 ODKlqUmHkH479HZvJ4wts+LX8+njud0qJAaAl9QawmXoJ6NlhIEjIYMnjChhIVEdZeVf9
-	 iFmlPikzNe9bT6IDRIgVB7WjJDMl3IhEokjHE+bQE9Fu/t1QtoruwPMYVgYXiKmgeRikm
-	 iojRo7xi8CueGJYi2lrXBORo8yKkHvbVbe7rCwE+94XV+ACMEDSknMIhxRwQPhTcg/4bQ
-	 wG9N3vUZrRG9Fbhzt63bxcSFzIZjeWjN7deljke4+dFkkSHfX4G2PK60FxdYUHZcmvQ==
+	t=1794873808;
+	b=zQB/anRn4kk9E6bEhnnwjdDq25tftvijAaF8/RdNy039BHzegz+ovskQjtsA7Oa9ZXtS
+	 guups+NqEF632mY0/vPk/rRcKsCh7/AuTRXvkalPAPWVmpJlgLJ9jEXKnG6nOzd1K2etx
+	 84XX6JYCUQsD0Jv01F7qe8oKtJNbbu2L6LFMVaTrCH0h5BEXjlEmdj7ASGATZfyrKfPlq
+	 A07pO4s+k7HOeogx10OuBVF/dpLc59U50qd1fJnJct3G06KZ4Cv/WKR2s7w8IzlD4cK9D
+	 W8D8qHAYCcs4OLUOpAAJqr77o1yMmdETBO/8GQaHz2wQ5wCUQgz587GRmlSHbR6APbQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794873225;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:Message-ID:Date:MIME-Version:User-Agent:
-	 Subject:To:Cc:References:Content-Language:From:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=NNrK36daNZtQN0yQpzsNCwHN/e1UlEP86bn5liD8cbA=;
-	b=j/q4Ti52nvr71l5mDska0oP1K44dJ+A9mX+lyXiMddp/GfvGnl8DCKvugYPUzDddOq0p
-	 wPGa/J9qp9tOrVlGmUh3uIvAl7QmdGq/J4zsHg1OYW6k7MqPllhS9UzvWeP9IxiSR12cj
-	 efW/V2jgC3hu9mxSMZpRrY2lJEuENZ1QVL4EDzqxxiDZgkDlqi4DCqI4o4WLqZ3ok/jnB
-	 P9xlkqbWqjLC6gw3e+jyZoI4bUVoBF7yppvMiG4zGu29HhxDQCURXo3Hj+6iw5t5msdmt
-	 qssXUd64BVGiRapwJkMMPDyONL8Is9K5DwFJa18z6hntdzH8glAcIVua2Jo6EZjA/zg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794873808;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=3egGb1yTaR5T+abPV32Q7s/CnDfUohQ8vNkrtdSvGHo=;
+	b=2aq7ZSuI9+z3MYOYZ8IPeGWKZNjeIVkDEQbT8g1h11GIuJ8ir2YTLceTJXXCUqhRFjH6
+	 egiPCZtxGqNmlRGSdLmge3P7f0EZ6lNsWdcwkgwIljzD1Qy9nFZMa4N5dPtYqAZbrsPiQ
+	 6SLIlnk2W8eKZ5I+hji4Z3Auz+L+3rwSEql/GM5GGeI099fOdR5puQt8xU5zINvxCletY
+	 w8imrVwgY+VahXI3JqOJIueOCphvdTowlRzuZNNkUu4cukb9galnVr44LMSJx7fI6O+gB
+	 6Cpzhxl9Rl84qLNm/+X9zXuRBMhm8eHjVHlyncneVvMb9JMrOnNkCiIkeesQOTf7Gng==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	arc=none smtp.remote-ip=95.215.58.169
-Received: from mta1.migadu.com (out-169.mta1.migadu.com [95.215.58.169])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=nTKCwgOr;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ACF43606A329
-	for <linux-api@vger.kernel.org>; Mon, 16 Nov 2026 23:53:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org ACF43606A329
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
-X-Envelope-To: linux-api@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=NNrK36daNZtQN0yQpzsNCwHN/e1UlEP86bn5liD8cbA=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794873217; v=1; x=1795478017;
- b=ZEpmsOQOBxwsaBy/JoIlh/lFTwA9kQHivTVw3eBBUA77yH0OYbq44NoBrLGQ3c8nFesrA3ay
- pbOJHUbTTNzFCTmxyS7i2RAHdwL2rpklMeHOtoZIZi9FV8cQyjHiApUKcrfk0BvzWNXzi2JNDCo
- vtOAdsAO4VQ/6J57veZ4ZoF4=
-X-Envelope-To: linux-api@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id a333d897c954cd59;
-	Mon, 16 Nov 2026 23:53:37 +0000
-X-Mizu-Trace-ID: a333d897c954cd59
-X-Migadu-Flow: FLOW_OUT
-Message-ID: <def9fb29-3212-4d1f-8041-4bbb1c18e89e@linux.dev>
-Date: Tue, 17 Nov 2026 00:53:34 +0100
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED1C2606A31C;
+	Tue, 17 Nov 2026 00:03:27 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=nTKCwgOr
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 868A51F000C4;
+	Tue, 17 Nov 2026 00:03:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1794873807;
+	bh=3egGb1yTaR5T+abPV32Q7s/CnDfUohQ8vNkrtdSvGHo=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=nTKCwgOri5yr35gUkLZJOeYS0lDuEz47J9rdQffNOcKKD9U0uX5msK39KmJ6qR4f0
+	 uRB5nrlHpVACol+go4U9wXOPJ3eqr4cJ2QJSbw8pRqMDAjcBaSkBCq1Hs07k/bGqKg
+	 6sZegWVv87dieb74Gld+5AxMurth1ozJ9+AxnyQP4W1+0gKTVb/Y7VjFhCf/TsJ1nu
+	 /pMMmZQNLLokKS8Ko29FyFTBAa/sqjHtzRtGW2wWOyvqfya7Brz58YI1Nj33gC9BM9
+	 k2hsKi1dZwqs6NDrur6O2To92/UyxKw8ttMr+2RPAGf/yM5J9oCP2lcHI9K3hJxTiT
+	 OImOM2fLybbqA==
+Date: Tue, 17 Nov 2026 01:03:21 +0100
+From: Alejandro Colomar <alx+linux-man@kernel.org>
+To: Daniel Tang <danielzgtg.opensource@gmail.com>
+Cc: linux-man@vger.kernel.org, 
+	Christian Brauner <christian.brauner@ubuntu.com>, Alejandro Colomar <alx.manpages@gmail.com>, 
+	Michael Kerrisk <mtk.manpages@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, 
+	Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH] mount_setattr.2: Fix nonexistent perf_setattr
+Message-ID: <avuYP6-OQJMhLqCn@devuan>
+References: <6099049.DvuYhMxLoT@daniel-desktop3>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -55,97 +59,101 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v4 1/2] platform/x86: asus-wmi: add TUF keyboard RGB
- readback support
-To: bartu alev <bartualev@gmail.com>,
- =?UTF-8?Q?Ilpo_J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
-Cc: Corentin Chary <corentin.chary@gmail.com>, "Luke D. Jones"
- <luke@ljones.dev>, Hans de Goede <hansg@kernel.org>,
- platform-driver-x86@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>,
- linux-api@vger.kernel.org, Denis Benato <benato.denis96@gmail.com>
-References: <20261029-asus-tuf-rgb-v4-v4-0-0d3b877d2c30@gmail.com>
- <20261029-asus-tuf-rgb-v4-v4-1-0d3b877d2c30@gmail.com>
- <cc9c8655-6f7c-05f9-ad09-4ea30f1dda95@linux.intel.com>
- <228df241-da5e-49cb-b29f-6b9158557f55@gmail.com>
-Content-Language: en-US
-From: Denis Benato <denis.benato@linux.dev>
-In-Reply-To: <228df241-da5e-49cb-b29f-6b9158557f55@gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="dnzxl4algc3lluj6"
+Content-Disposition: inline
+In-Reply-To: <6099049.DvuYhMxLoT@daniel-desktop3>
 
 
-On 11/16/26 23:00, bartu alev wrote:
-> On 11/9/26 9:02 PM, Ilpo Järvinen wrote:
->> What do you (or Denis) think on sashiko's mention about 
->> asus_wmi_evaluate_method_buf() casting integer.value to int which might 
->> end up aliasing high-bit on return values with errnos?
->>  
->> The other caller seems to also return that value directly out of _store 
->> function().
-> Hi Ilpo and Denis,
+--dnzxl4algc3lluj6
+Content-Type: text/plain; protected-headers=v1; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+From: Alejandro Colomar <alx+linux-man@kernel.org>
+To: Daniel Tang <danielzgtg.opensource@gmail.com>
+Cc: linux-man@vger.kernel.org, 
+	Christian Brauner <christian.brauner@ubuntu.com>, Alejandro Colomar <alx.manpages@gmail.com>, 
+	Michael Kerrisk <mtk.manpages@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, 
+	Christoph Hellwig <hch@infradead.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH] mount_setattr.2: Fix nonexistent perf_setattr
+Message-ID: <avuYP6-OQJMhLqCn@devuan>
+References: <6099049.DvuYhMxLoT@daniel-desktop3>
+MIME-Version: 1.0
+In-Reply-To: <6099049.DvuYhMxLoT@daniel-desktop3>
+
+Hi Daniel,
+
+> Date: 2026-11-15 22:33:16-0500
+> From: Daniel Tang <danielzgtg.opensource@gmail.com>
 >
-> I checked the DSDTs across 102 ASUS models we have dumped as well as the
-> UEFI/SMM path on my FA507NV (BIOS 318) to see what firmware actually
-> returns on the DSTS path:
->
-> 1. Across the 102 DSDTs, no static DSTS branch returns 0xFFFFFFFF or
->    Ones. Models without 0x0010005B either hit a DSTS tail of
->    0xFFFFFFFE (15), fall through to WMNB's trailing 0xFFFFFFFE (45),
->    or return Zero (3 older models: GL553VD, GL553VE, FX505DT).
->
-> 2. On modern models (including FA507NV, FX517, GA403, GA605WI), DSTS
->    delegates unlisted DEVIDs via WCHK/W15H (SW SMI 0xAA, cmd 0x9603).
->    Disassembling the FA507NV modules (AsusSmmService ->
->    AsusWmiToProtocol -> QuantaDxeWrapperPkg) shows that this dynamic
->    chain also returns 0 (unmatched consumer / missing table entry), 1,
->    capability/presence bits (e.g. 0x00010000 for 0x00100056/57), MMIO
->    reads, or 0xFFFFFFFE -- never 0xFFFFFFFF.
->
->    (Note: on FA507NV, 0x0010005B itself is static in AML and calls
->    EC0.KBLS(), while 0x00100056/57 go through WCHK/W15H and return
->    0x00010000 on DSTS.)
->
-> However, checking those tables did uncover one real mismatch and a clean
-> reason to still harden asus_wmi_evaluate_method_buf():
->
-> - On models like FX505DT, DSTS(0x00100056/57) returns 0x00010000 (so
->   kbd_rgb_mode/kbd_rgb_state are registered), while 0x0010005B hits the
->   DSTS tail Return (Zero).  asus_wmi_evaluate_method_buf() turns 0 into
->   -ENODATA, so v4's `err < 0 ? err : -ENODEV` would return -ENODATA
->   instead of -ENODEV as documented in the ABI patch.  The same happens
->   if W15H hits an unmatched consumer/table miss in SMM (returns 0).
+> The problematic reference had been copied from openat2.2, where it was
+> fixed in bbed82c0693a ("openat2.2: tfix: fix minor reference typo"). I
+> performed the same fix for mount_setattr.2.
+>=20
+> Fixes: f3a5ba3f0151 ("mount_setattr.2: New manual page documenting the mo=
+unt_setattr() system call")
+> Link: https://lore.kernel.org/linux-man/20200929223509.11783-2-cyphar@cyp=
+har.com/
+> Link: https://lore.kernel.org/linux-man/20191003145542.17490-1-cyphar@cyp=
+har.com/
+> Link: https://lore.kernel.org/linux-man/20210730094121.3252024-1-brauner@=
+kernel.org/
+> Signed-off-by: Daniel Tang <danielzgtg.opensource@gmail.com>
+> ---
+>  man2/mount_setattr.2 | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 
-Not good.
+You seem to have a very old copy of the git repository.
+See dcde2f70372b (2024-05-02; "man/, share/mk/: Move man*/ to man/").
+Would you mind rebasing the patch?
 
-> - Even though 0xFFFFFFFF didn't show up in this set, an unseen BIOS or
->   SMM branch returning 0xFFFFFFFF or any bit-31-set integer would still
->   alias a negative errno in asus_wmi_evaluate_method_buf().
 
-Yeah this much is clear, as I said we are lucky asus isn't using the
-most significant bit on wmi dev id we support.
+Have a lovely night!
+Alex
 
-> To avoid disturbing older devices, would a minimal approach like this be
-> acceptable for v5?
->
-> 1. Add a small prep patch to asus_wmi_evaluate_method_buf() using a u32
->    retval: keep 0xFFFFFFFE -> -ENODEV and 0 -> -ENODATA as today, also
->    map (u32)~0 (0xFFFFFFFF) -> -ENODEV (matching asus_wmi_get_devstate()),
->    and return -ENODATA for any other unexpected integer (matching the
->    `default:` case; the only existing caller fan_curve_get_factory_default()
->    already treats any non-zero return as failure).
->
-> 2. In kbd_rgb_read_status(), translate -ENODATA to -ENODEV so FX505DT /
->    0-returning firmware matches the ABI while preserving -EIO / -ENOSPC.
+>=20
+> diff --git a/man2/mount_setattr.2 b/man2/mount_setattr.2
+> index 77233f589..5f26119cc 100644
+> --- a/man2/mount_setattr.2
+> +++ b/man2/mount_setattr.2
+> @@ -786,7 +786,7 @@ acting as an implicit version number.
+>  (Because new extension fields will always
+>  be appended, the structure size will always increase.)
+>  This extensibility design is very similar to other system calls such as
+> -.BR perf_setattr (2),
+> +.BR sched_setattr (2),
+>  .BR perf_event_open (2),
+>  .BR clone3 (2)
+>  and
+> --=20
+> 2.53.0
+>=20
+>=20
+>=20
+>=20
 
-Yes, it's absolutely reasonable. If the return either doesn't have the
-presence bit set or is 0xFFF..... it is to be counted as "not implemented".
+--=20
+<https://www.alejandro-colomar.es>
 
-And also yes, we should respect ABIs whenever possible...
+--dnzxl4algc3lluj6
+Content-Type: application/pgp-signature; name="signature.asc"
 
-However... now that I think about it asus_wmi_evaluate_method_buf() can
-be used on setters and those don't have the presence bit, do we have that
-covered?
+-----BEGIN PGP SIGNATURE-----
 
-> Thanks,
-> Bartu
+iQIzBAABCgAdFiEES7Jt9u9GbmlWADAi64mZXMKQwqkFAmr7mckACgkQ64mZXMKQ
+wql7Pw/+NkxZ7e2iZ0zwBns03B9wjAQTuzX9lVqVTjhT1JdpvxQf5nToT4TjTtMQ
+vxLcSj6nX7uBrlJplAWKEkEaJ5YbtkRtuyt6ZgOdLuNuugn6wxCo+HhhyVN5wCBl
+QgssIWMvDLRgNTtC7PJJN0amyEC5RQOqQvdJtKDnezpW3AcDFCtnp+4is+aqdWX9
+rQDpJbOqv+kYlJ1j4gEf+eWfKHsAyyS36wVHlMecdkXBBJIo013RATt9efDpAJE+
+h4VZcNu/8dSRrtoVQsMczUV1W7rkPnGPWv2xAJE0QgdF/vxHe2pRWWNw7/W5c8A+
+MejT7SAub95XhCYdLBJgPawGgtKkwJzBsCwXE3Qd/Dq0Myn3NCC3HSQGmAyCMc2P
+wHfotSwJunYx+ZA5gVW0zmVLQKyWL0VBNO1xPROh1s7ZT97LVlKI6mjAP9QHknG7
+vXzpFWA95v1aXprcVBES2trHIiAmm95QGmPpVqa5cElcvDXRV/QC8jVaIFbEAtP6
+uKGvYtI9aFDVe2eTXl09e1wuOZqUa4Nf0jVmK7EzU/r5c50zBa7HltGgnFZW+R/2
+oyXUDnpEReYctXqvXu7czCwmKkwEYWbjthYiWk2RzWa3j9TzwOxyH03DVQJLV0c8
+ClcFWY/WNAE/ysS4w/8u0eAOkhXWPZ240uoztRU9q1uCIAPK6Fw=
+=3p8L
+-----END PGP SIGNATURE-----
+
+--dnzxl4algc3lluj6--
