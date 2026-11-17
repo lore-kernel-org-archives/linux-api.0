@@ -1,91 +1,62 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=130.136.161.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794892180;
-	b=Fs//nxSDMQoMoMnm/FZTPtZhJ66eSWywbeuMZ3tih9FhvBkg5JRmUV/8OOUCmtrKuM9z
-	 ecq33sl9NTjauMue9VBHXCDGqQFDSNMRztH0lqFMhD5qT4hgTeuB+MtK3+JQD8QGh0QZf
-	 /Nlv81/S5RTLg1inU/uM3KE3w8kEsgyfp8jX2xJga73mJ84zW8+yvS/tygesBLo2PCTYX
-	 SYt90OK8QhCv985FZTFylJF3noCzAU5JVPO6AX/NDucr/QJK8CwadWToMIBWGRIb2aioc
-	 rvYCGGspnQydDUiZ1fTDwLDW52DpvsLeCrheBTQdIj3h1Ll8fZjctLisitd/na9Q7rg==
+	t=1794906343;
+	b=JR7R9DFkPbfuN/u8DRxQdMCFRwHK4ywjRGSAEIwMKA52Mb2XkLR/GW9pqf0NA+x3eSCT
+	 aHjaQkJrNV0QO9FqZ2Cevff7sw4cF3sc4zdbEDunEHPGj+V4SWD62AhvjAEydoYxeMcVh
+	 g/HD4O6cw2gkxTfaVF6iSrg8TMGs68rLjA/exqoZiasoWwbRW7AaTRCZKbEAUe/Unerq0
+	 l7Snhanx8I56lx3zHksAfmcY/9C2HjbcZKL/VdlmOyBA17O+Q61vnPkznylsOqUagG6Ag
+	 PACIfFcmSgho63tik+HW4LQCnKFD+AL5embJe4xKS9IR5cfX7Va2zAvgUnc11yNL6dQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794892180;
-	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=sBuq7agc2LJ6hWE7imheP/OC6f3LlJfwcnXlMy2Xfu8=;
-	b=RLj4Vfd79JsQ3wjCutqDPRqBfNCZIkncBgNpBGejaLGFhhluhMATF5EOhaWzgvh6m4HF
-	 +Emeiuyg4GMgjOA6JO7HeUpwUHTt26NL3LzWjsFUmKEsp9YfTzbMNFkvNFWahT6UmkFSU
-	 a2QJEKS0rSTSSS5Yy9c2TSRSbWVU+HIErU1iNZokF+OYT2BmUCgAxFqQF7/mHopA+2Ocf
-	 WEtNSl9GrxjXfg/5hAt9Ogk0XPQAOSgPEMrPbxytWVpRn/p9fkF07yV89KintIQd0ZC+b
-	 HNb6msPJdD1ZozZQHL5gTDnuhJbvBMJ97kt+pXMOKznqR4sO0ZYlZddBYnUiXGpMbZg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794906343;
+	h=DMARC-Filter:Received:DKIM-Signature:Date:From:To:Cc:Subject:
+	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
+	 In-Reply-To;
+	bh=q9unebL19dWYI7xi7vjuz1ClkA+F8EiJo9H2IlkNq/g=;
+	b=zjgBdQRgkQOP9DrKF69UV3DooWlyvENKhvMoIWLBkpITWsgMW66bXDLTeUMvccgiYayb
+	 x98NM/y878OR6Qni+c6COHBvOyh4T4eXHTwEA1YC28butqgjKV37ANq6cIkIktw+dlSU2
+	 ofepPHVUibbkRXhtdkQW1arzuLRtAndV0Xq9KKDPV4qDqCeUmsfspQGR/k6/qrsWzmFRk
+	 FQ/f5rV3vGXxuUl0qWs6rxRw+tEOO3vUOYo9oPZ+30ToYscNZgONTT9D5dAgb3JmZIqLd
+	 U2ZzCLsEyNizLKx8D4KzM9UhQ+XOBztJYm7IHjg3QuNKrJ7jb/NH99mZDZAXTdc3+7Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=m2Y1P68o;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 763FC606A329;
-	Tue, 17 Nov 2026 05:09:40 +0000 (UTC)
+	dmarc=pass header.from=cs.unibo.it;
+	spf=pass smtp.mailfrom=cs.unibo.it;
+	dkim=pass header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=jQPvnuKs;
+	arc=none smtp.remote-ip=130.136.161.50
+Received: from mail.virtlab.unibo.it (mail.virtlab.unibo.it [130.136.161.50])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 96A4F606A31C;
+	Tue, 17 Nov 2026 09:05:40 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 96A4F606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=cs.unibo.it
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cs.unibo.it
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=m2Y1P68o
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6AEF51F000C9;
-	Tue, 17 Nov 2026 05:09:39 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794892180;
-	bh=sBuq7agc2LJ6hWE7imheP/OC6f3LlJfwcnXlMy2Xfu8=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=m2Y1P68oF3q8KRZXuY1dLQyCw7Xuffv8OmSRl/XRANK/TJRucEcvKZ7ML40C9WIT0
-	 2QSfuZcJpGeTlHq+kA/FndpXIuAZ4/3IXJ8L4y/OEa7LznWrwu48E9xD0mykdM9fFO
-	 tDPfqB26b7brXwbYtUkwUSptl5IZRMT3T2K5LcWWhbIiGUgWlt80bOOqg+3i4AaMHT
-	 UD9v8ntxI8rcuw6SzeqpkMe2yhb3NtfpAVtK73/KsvfyLGBqCC5hZBuk5nU7J23Ca0
-	 ZTLJ06fyDF7PqeD6U5CQnM7LbniWVBmO6Pr5VN367BVf723Hm2KNrL10kIac9yrhZA
-	 1QYYVTl3wgyRA==
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: Jarkko Sakkinen <jarkko@kernel.org>,
-	linux-api@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Ben Segall <bsegall@google.com>,
-	Christian Brauner <brauner@kernel.org>,
-	David Hildenbrand <david@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Ingo Molnar <mingo@redhat.com>,
-	Jan Kara <jack@suse.cz>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Juri Lelli <juri.lelli@redhat.com>,
-	Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mel Gorman <mgorman@suse.de>,
-	Michal Hocko <mhocko@suse.com>,
-	Mike Rapoport <rppt@kernel.org>,
-	Neal Gompa <neal@gompa.dev>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vlastimil Babka <vbabka@kernel.org>
-Subject: [RFC PATCH 13/13] MAINTAINERS: Add entry for ROOT NAMESPACE
-Date: Tue, 17 Nov 2026 07:08:41 +0200
-Message-ID: <20261117050841.3289652-14-jarkko@kernel.org>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20261117050841.3289652-1-jarkko@kernel.org>
-References: <20261117050841.3289652-1-jarkko@kernel.org>
+	dkim=pass (1024-bit key, unprotected) header.d=cs.unibo.it header.i=@cs.unibo.it header.a=rsa-sha256 header.s=virtlab header.b=jQPvnuKs
+Received: from cs.unibo.it (renzopb-wl.cs.unibo.it [130.136.2.252])
+	by mail.virtlab.unibo.it (Postfix) with ESMTPSA id 46AF71C024A;
+	Tue, 17 Nov 2026 10:05:38 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=cs.unibo.it;
+	s=virtlab; t=1794906338;
+	bh=q9unebL19dWYI7xi7vjuz1ClkA+F8EiJo9H2IlkNq/g=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=jQPvnuKs6sB3GBlqerzW884eyCwWr6CzTNc7zR1uJCkehdi3BzPegRG4dH1jXQ7Nm
+	 p6yKWzMRnewkDVCXF6m17FFOfqtI1qEUGsC6y50I2yVNlzMNueXHBahEw6PLWU3cQW
+	 NfcbSKbbqoWTZrNyu8qkVzZM8CIdL8NLr8OzSGwM=
+Date: Tue, 17 Nov 2026 10:05:37 +0100
+From: Renzo Davoli <renzo@cs.unibo.it>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>,
+	"Dmitry V . Levin" <ldv@strace.io>,
+	Alexey Gladkov <legion@kernel.org>,
+	Eugene Syromyatnikov <evgsyr@gmail.com>,
+	Charlie Jenkins <thecharlesjenkins@gmail.com>,
+	Bradley Morgan <bradley.morgan@linux.dev>,
+	Shuah Khan <shuah@kernel.org>, strace-devel@lists.strace.io,
+	linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org
+Subject: Re: [PATCH v4 2/2] selftests/ptrace: check that
+ PTRACE_SET_SYSCALL_INFO rejects invalid error values
+Message-ID: <avwY4RW14jtVfgZO@cs.unibo.it>
+References: <20261116134050.505355-1-renzo@cs.unibo.it>
+ <20261116134050.505355-3-renzo@cs.unibo.it>
+ <20261116153642.a8dddc43f53fed0402283dfa@linux-foundation.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -95,39 +66,22 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261116153642.a8dddc43f53fed0402283dfa@linux-foundation.org>
 
-Record maintainership and mailing list routing for the root namespace
-subsystem across its uAPI headers, core implementation, documentation,
-and selftests.
+On Mon, 16 Nov 2026 15:36:42 -0800 Andrew Morton <akpm@linux-foundation.org> wrote:
+> LLM suggested a little fixup here, please check.
+>
+> From: Andrew Morton <akpm@linux-foundation.org>
+> Subject: selftests/ptrace: test the lowest valid syscall error
 
-Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
----
- MAINTAINERS | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+Thanks Andrew, the fixup is correct and a good addition: the test now
+covers both sides of the -MAX_ERRNO boundary.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 7e7753a54125..1019266bc077 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -24534,6 +24534,17 @@ F:	include/linux/mfd/rohm-bd96802.h
- F:	include/linux/mfd/rohm-generic.h
- F:	include/linux/mfd/rohm-shared.h
- 
-+ROOT NAMESPACE
-+M:	David Howells <dhowells@redhat.com>
-+M:	Jarkko Sakkinen <jarkko@kernel.org>
-+L:	linux-fsdevel@vger.kernel.org
-+S:	Maintained
-+F:	Documentation/userspace-api/rootns.rst
-+F:	include/linux/rootns.h
-+F:	include/uapi/linux/rootns.h
-+F:	kernel/rootns.c
-+F:	tools/testing/selftests/rootns/
-+
- ROTATION DRIVER FOR ALLWINNER A83T
- M:	Jernej Skrabec <jernej.skrabec@gmail.com>
- L:	linux-media@vger.kernel.org
--- 
-2.47.3
+I tested it on top of v4 (x86_64, QEMU): set_syscall_info passes.
 
+Reviewed-by: Renzo Davoli <renzo@cs.unibo.it>
+Tested-by: Renzo Davoli <renzo@cs.unibo.it>
+
+renzo
