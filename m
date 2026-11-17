@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794892129;
-	b=kaNyeHMfszvrF//jCsgsS/1FvKZCNpARCzI3FolJExRpukd/HQxxBRntPsx2b/tUOIYh
-	 Tt2O2GxMnpTIj8bpt5Fa7L1txzm3+VlxiVpokDmJ46V+M3ZqQZEoFk1LgCSGp7U1M/9Dc
-	 X9ugBnJeOt8ApQ1JNYtpUjnJaUo8+V5IiAaePytzE9lNlpHQvkEibxahQtL7vpdBDpaGZ
-	 HYFKc3I53z4eT082j+zrdibjRTlCSA18CUdc4xpvQhxGsjJN6VUiH5MBRRZSO30P23Bzz
-	 wqe5NknltXvzijK4FfIEj5IMyD470klo4/N8CDTPYbKGWXXuqiJWKVWFU/BbeA6Ne9w==
+	t=1794892133;
+	b=QtUg8hB63eeYAsm2RYhxvi23INEMIMvv7XkvKPiM9BNDWKnA2VW65cN1kmtyLidd9cpk
+	 2hGZ6Z8S7rY1jPRXORWVTootdEfdO306PdFW2a1wciGjEm/qE3wd39hlyZdvBj4E2gI+v
+	 8K6gLoi3TTXD7PWz3zWRZi6R1RoQ4duUg2UoxHxEKESlzqup0ozS3c8maDbya4cJrSdHI
+	 QGvyWKeGdmdnijuRKmo/BYDqp+6zJCLMX32W0XDBFQXloVuW20AvrFfZOGBpeFOfALElS
+	 R7DzMpFAzYZ6oudk80rZiJPmyS4Bhvje8bkoJTyQMcMgx7PqTik9Te2N8dRbTWKj2jA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794892129;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794892133;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=EHOaglGu01L1Blez6rThdkeRSDoeQsisrNfdJmtnDfw=;
-	b=hGF3SyrGlrM8quqJKIJYq+GgoyJzoXQcfIXj4RgvV8+McljV65pIbv6C6BhjDWbF6WOa
-	 afOvUWoY/lTlj/jtq9/BDRz+7eHWtMCwnUEWiuIXNKsOwJd+Ui5cyQmegnZJO/89CEybR
-	 NKn/YzBr/AVqFA2z7l+atuxD7UM1bhBGdc+C/Rp9WLSUddscE6hoH2pkjfBv12FOdg0cc
-	 Du3io3xvqZk1JCIXyCyfyAH+MhLb6EDDOF7ACXiucboG1zmoX+ocJgA4CuI85TynFTmfH
-	 F9MQF0Nn3CuQ2LsUED5U4lG0hoK5nxh6CiSBha5bw8u2TOS8G48ZqClkWedgAFqUFdw==
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=glmqSz2x+APivEM/vonQfanbbokAEU7WMuncz0VaekQ=;
+	b=1ZdczRE8EndBwNvu8dnnefluNQgzd81IKreuqjHscw/ZYmLnErhrjBzbYdSaz/k3NIKh
+	 Gf4WJRFX2wO2SlH+WtEJKoaXzmde3ruxIgshW/aE/0rM6WXARd5vUZtZLGKvcZDCvmqH9
+	 9a6RCctxvkNrlYO02ibk6kF1aEd0VLs6co71U0AKSZm30ixWCLz867/UNQt2OzbsQuU3J
+	 VCaxcIKdLKVCZmTWUljyS3BHDRyVvZcQ+0q6eEKQt12+npabJIhxm05hMMqn2CyfLJSTK
+	 QvI0wGRtW7CFUGbSp30CdmVueO67DJH/KRqRcsKHcMgBJ+dcytARR3hJHE3rRJQACSQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LEczq6rN;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="He/O1Yy/";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id BBD4B606A31C;
-	Tue, 17 Nov 2026 05:08:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 80ABD606A31C;
+	Tue, 17 Nov 2026 05:08:53 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LEczq6rN
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9A8CC1F000C5;
-	Tue, 17 Nov 2026 05:08:48 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=He/O1Yy/
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 805E41F000D0;
+	Tue, 17 Nov 2026 05:08:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794892129;
-	bh=EHOaglGu01L1Blez6rThdkeRSDoeQsisrNfdJmtnDfw=;
-	h=From:To:Cc:Subject:Date;
-	b=LEczq6rNDD7/cZElMucuSr8e9ue2aG8F06dN2crHVgmE7ZPKTXCa7tv+Xg5QuIC1J
-	 xycva1j6I8rXKchoZy3SblemaCtNsHXPwWgLGsMfvy2S7ruepM7D9KUXZb3ny81NGO
-	 8MWnS8r6SViQfto5mHPABF2iC4OAlQrjDCB5zp419SJcpQ7hahNnNMbEUgldJL4Sh+
-	 jTOhvPMAcTPyM9Y06iGqVZ+rZ6hRsJ64zi9p+dcXKE+v0MQHVcM8BEmJQRU3B908Jr
-	 q+vVswDXYKILSq1zDUtt96nII0FBEln74u0FpB4+9SWdxzNO3xNNvb+h0dlWA7d60E
-	 7EjJRf+RRy4Uw==
+	s=k20260515; t=1794892133;
+	bh=glmqSz2x+APivEM/vonQfanbbokAEU7WMuncz0VaekQ=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=He/O1Yy/L1j4ZozAOzPbkeszipcs7RRuCmyVSYaTq1BV8Vc4qKurtvkhGG1pB/OlG
+	 mLeqBxCxgNnmeuDokGWvChBtutsb91igoC8oLr9iLqqT/dJd04LRFqoLY8w+cyu8UA
+	 eAmMHro8YjtWx+oxikakHiHu5BTsPyM4LEE5/rhTqB8ZWmorfH1b1NDRdwkhc6ErHM
+	 zB0SW7daDGcT4TAv4MrjBiu+fV5epwkyhapDN/tIkFi4FLBSgnxlmHWkE9sSzIdHb2
+	 ASadzctJObrLmyKpZo7ANrbXur2n+ApSLe5h9eMVHrMcXamrWisU+qB4q40/TcjWqn
+	 iw2iC7INnWbVg==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -80,10 +80,12 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Valentin Schneider <vschneid@redhat.com>,
 	Vincent Guittot <vincent.guittot@linaro.org>,
 	Vlastimil Babka <vbabka@kernel.org>
-Subject: [RFC PATCH 00/13] Namespace for namespace roots
-Date: Tue, 17 Nov 2026 07:08:28 +0200
-Message-ID: <20261117050841.3289652-1-jarkko@kernel.org>
+Subject: [RFC PATCH 01/13] nsproxy: Pass nsproxy to create_new_namespaces()
+Date: Tue, 17 Nov 2026 07:08:29 +0200
+Message-ID: <20261117050841.3289652-2-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261117050841.3289652-1-jarkko@kernel.org>
+References: <20261117050841.3289652-1-jarkko@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -95,178 +97,160 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-OVERVIEW
-========
+create_new_namespaces() takes a struct task_struct pointer even though
+it only reads tsk->nsproxy, preventing callers outside kernel/nsproxy.c
+from constructing a child nsproxy without mutating a task.
 
-The problem that root namespaces try to resolve is starting a container
-from a root mount tree that is pre-populated before any process is allowed
-to run, without inheriting any host mount-tree ancestors.
+Expose create_new_namespaces() and pass the source struct nsproxy
+pointer directly so root namespace creation can allocate a detached
+namespace set from current->nsproxy.
 
-Work on this feature started originally in 2025 from David Howells'
-container object patch set [1], but I turned container objects into a
-namespace of namespace roots and built a new implementation around this
-premise.
+Co-developed-by: David Howells <dhowells@redhat.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+---
+ include/linux/nsproxy.h |  5 +++++
+ kernel/nsproxy.c        | 32 ++++++++++++++++----------------
+ 2 files changed, 21 insertions(+), 16 deletions(-)
 
-In early 2026, the patch set was left to gather dust in my kernel tree
-[2]. Then, the other day I saw [3] as was shocked by its over the top
-complexity and thus, here we are.
-
-Not doubling the number of container frameworks inside Linux kernel is at
-least a benefit over container object based solutions. Parallel plumbing is
-an inherent flaw of container objects, and it directly affects on
-development and maintenance cost of container runtimes.
-
-Also, thanks to better scoped implementation surface, verifying rootns
-correctness is factors easier than with container objects, and even my
-early kselftest is meaningful. We know what and where we are testing,
-which is always great.
-
-Finally, it is more compatible with pre-existing container tooling
-whereas container objects would have much higher cost.
-
-[1] https://lore.kernel.org/all/155059610368.17079.2220554006494174417.stgit@warthog.procyon.org.uk/
-[2] https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git/log/?h=rootns
-[3] https://lore.kernel.org/linux-fsdevel/20261105-b4-cells-v3-0-bc9095937a84@toxicpanda.com/
-
-IMPLEMENTATION
-==============
-
-rootns_create() allocates a rootns object backed by a pollable anonymous
-inode fd, pinning dedicated empty mount (CLONE_EMPTY_MNTNS) and PID
-namespaces along with any optional namespaces selected in flags.
-
-Before entry, a manager prepares the mount tree through the control fd:
-FSCONFIG_SET_ROOTNS binds a newly opened fs_context to the target rootns,
-and move_mount(..., MOVE_MOUNT_T_ROOTNS_ROOT) installs "/" onto the nullfs
-root once and attaches relative submounts beneath it.
-
-rootns_enter() forks a child directly into the rootns credentials,
-nsproxy, and root path without mutating the caller in place. The first
-entrant becomes PID 1; once it exits and zap_pid_ns_processes() reaps all
-members, poll() reports EPOLLHUP and rootns_wait() returns init's status
-and rusage. rootns_kill() walks pid_ns->idr under RCU to signal member
-thread groups.
-
-Namespaces allocated by member tasks inherit the owning rootns ID in
-__ns_common_init() so intra-rootns clone(), unshare(), open_tree(), and
-setns() work while foreign setns() calls fail with -EPERM.
-
-Cc: linux-api@vger.kernel.org
-Cc: linux-doc@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-kselftest@vger.kernel.org
-Cc: linux-mm@kvack.org
-Cc: linux-security-module@vger.kernel.org
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Ben Segall <bsegall@google.com>
-Cc: Christian Brauner <brauner@kernel.org>
-Cc: David Hildenbrand <david@kernel.org>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Davidlohr Bueso <dave@stgolabs.net>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Juri Lelli <juri.lelli@redhat.com>
-Cc: Kees Cook <kees@kernel.org>
-Cc: K Prateek Nayak <kprateek.nayak@amd.com>
-Cc: "Liam R. Howlett" <liam@infradead.org>
-Cc: Lorenzo Stoakes <ljs@kernel.org>
-Cc: Manfred Spraul <manfred@colorfullife.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Michal Hocko <mhocko@suse.com>
-Cc: Mike Rapoport <rppt@kernel.org>
-Cc: Neal Gompa <neal@gompa.dev>
-Cc: Paul Moore <paul@paul-moore.com>
-Cc: Pavel Tikhomirov <ptikhomirov@virtuozzo.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: Serge Hallyn <sergeh@kernel.org>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Suren Baghdasaryan <surenb@google.com>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: Vincent Guittot <vincent.guittot@linaro.org>
-Cc: Vlastimil Babka <vbabka@kernel.org>
-
-Jarkko Sakkinen (13):
-  nsproxy: Pass nsproxy to create_new_namespaces()
-  rootns: Add core infrastructure for root namespaces
-  rootns: Track init lifecycle via copy_process() and pid_namespace
-  rootns: Add rootns_create() system call
-  rootns: Add rootns_wait() system call
-  rootns: Add rootns_kill() system call
-  rootns: Add rootns_enter() system call
-  fs: Support FSCONFIG_SET_ROOTNS in fsconfig()
-  fs: Support installing rootns mount trees via move_mount()
-  arch: Wire up rootns system calls
-  docs: Document root namespace uAPI
-  selftests/rootns: Add root namespace test suite
-  MAINTAINERS: Add entry for ROOT NAMESPACE
-
- Documentation/userspace-api/index.rst       |    1 +
- Documentation/userspace-api/rootns.rst      |   35 +
- MAINTAINERS                                 |   11 +
- arch/alpha/kernel/syscalls/syscall.tbl      |    4 +
- arch/arm/tools/syscall.tbl                  |    4 +
- arch/arm64/tools/syscall_32.tbl             |    4 +
- arch/m68k/kernel/syscalls/syscall.tbl       |    4 +
- arch/microblaze/kernel/syscalls/syscall.tbl |    4 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   |    4 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   |    4 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   |    4 +
- arch/parisc/kernel/syscalls/syscall.tbl     |    4 +
- arch/powerpc/kernel/syscalls/syscall.tbl    |    4 +
- arch/s390/kernel/syscalls/syscall.tbl       |    4 +
- arch/sh/kernel/syscalls/syscall.tbl         |    4 +
- arch/sparc/kernel/syscalls/syscall.tbl      |    4 +
- arch/x86/entry/syscalls/syscall_32.tbl      |    4 +
- arch/x86/entry/syscalls/syscall_64.tbl      |    4 +
- arch/xtensa/kernel/syscalls/syscall.tbl     |    4 +
- fs/fsopen.c                                 |   74 +-
- fs/namespace.c                              |  176 ++-
- fs/proc/root.c                              |   13 +
- include/linux/compat.h                      |    4 +
- include/linux/cred.h                        |    4 +-
- include/linux/fs_context.h                  |    3 +
- include/linux/ns/ns_common_types.h          |    4 +
- include/linux/nsproxy.h                     |   27 +-
- include/linux/pid_namespace.h               |    4 +
- include/linux/rootns.h                      |   87 ++
- include/linux/sched/task.h                  |    4 +
- include/linux/syscalls.h                    |    5 +
- include/uapi/asm-generic/unistd.h           |   12 +-
- include/uapi/linux/mount.h                  |    4 +-
- include/uapi/linux/rootns.h                 |   38 +
- init/Kconfig                                |    9 +
- ipc/mqueue.c                                |   12 +
- kernel/Makefile                             |    2 +
- kernel/cred.c                               |   70 +-
- kernel/fork.c                               |   29 +-
- kernel/nscommon.c                           |    8 +
- kernel/nsproxy.c                            |   49 +-
- kernel/pid_namespace.c                      |    2 +
- kernel/rootns.c                             |  599 +++++++++
- kernel/sys_ni.c                             |    7 +
- scripts/syscall.tbl                         |    4 +
- tools/testing/selftests/Makefile            |    1 +
- tools/testing/selftests/rootns/.gitignore   |    2 +
- tools/testing/selftests/rootns/Makefile     |    5 +
- tools/testing/selftests/rootns/config       |    9 +
- tools/testing/selftests/rootns/smoke.c      | 1254 +++++++++++++++++++
- 50 files changed, 2559 insertions(+), 73 deletions(-)
- create mode 100644 Documentation/userspace-api/rootns.rst
- create mode 100644 include/linux/rootns.h
- create mode 100644 include/uapi/linux/rootns.h
- create mode 100644 kernel/rootns.c
- create mode 100644 tools/testing/selftests/rootns/.gitignore
- create mode 100644 tools/testing/selftests/rootns/Makefile
- create mode 100644 tools/testing/selftests/rootns/config
- create mode 100644 tools/testing/selftests/rootns/smoke.c
-
---
+diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
+index dc2447f5f092..cacbbbe3f1ce 100644
+--- a/include/linux/nsproxy.h
++++ b/include/linux/nsproxy.h
+@@ -12,6 +12,7 @@ struct ipc_namespace;
+ struct pid_namespace;
+ struct cgroup_namespace;
+ struct fs_struct;
++struct user_namespace;
+ 
+ /*
+  * A structure to contain pointers to all per-process
+@@ -92,6 +93,10 @@ static inline struct cred *nsset_cred(struct nsset *set)
+  *
+  */
+ 
++struct nsproxy *create_new_namespaces(u64 flags,
++				      struct nsproxy *ns,
++				      struct user_namespace *user_ns,
++				      struct fs_struct *new_fs);
+ int copy_namespaces(u64 flags, struct task_struct *tsk);
+ void switch_cred_namespaces(const struct cred *old, const struct cred *new);
+ void exit_nsproxy_namespaces(struct task_struct *tsk);
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index 2dcf105e8ee2..8a3c6d4e94e2 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -85,9 +85,10 @@ void deactivate_nsproxy(struct nsproxy *ns)
+  * Return the newly created nsproxy.  Do not attach this to the task,
+  * leave it to the caller to do proper locking and attach it to task.
+  */
+-static struct nsproxy *create_new_namespaces(u64 flags,
+-	struct task_struct *tsk, struct user_namespace *user_ns,
+-	struct fs_struct *new_fs)
++struct nsproxy *create_new_namespaces(u64 flags,
++				      struct nsproxy *ns,
++				      struct user_namespace *user_ns,
++				      struct fs_struct *new_fs)
+ {
+ 	struct nsproxy *new_nsp;
+ 	int err;
+@@ -96,52 +97,51 @@ static struct nsproxy *create_new_namespaces(u64 flags,
+ 	if (!new_nsp)
+ 		return ERR_PTR(-ENOMEM);
+ 
+-	new_nsp->mnt_ns = copy_mnt_ns(flags, tsk->nsproxy->mnt_ns,
+-				      user_ns, new_fs);
++	new_nsp->mnt_ns = copy_mnt_ns(flags, ns->mnt_ns, user_ns, new_fs);
+ 	if (IS_ERR(new_nsp->mnt_ns)) {
+ 		err = PTR_ERR(new_nsp->mnt_ns);
+ 		goto out_ns;
+ 	}
+ 
+-	new_nsp->uts_ns = copy_utsname(flags, user_ns, tsk->nsproxy->uts_ns);
++	new_nsp->uts_ns = copy_utsname(flags, user_ns, ns->uts_ns);
+ 	if (IS_ERR(new_nsp->uts_ns)) {
+ 		err = PTR_ERR(new_nsp->uts_ns);
+ 		goto out_uts;
+ 	}
+ 
+-	new_nsp->ipc_ns = copy_ipcs(flags, user_ns, tsk->nsproxy->ipc_ns);
++	new_nsp->ipc_ns = copy_ipcs(flags, user_ns, ns->ipc_ns);
+ 	if (IS_ERR(new_nsp->ipc_ns)) {
+ 		err = PTR_ERR(new_nsp->ipc_ns);
+ 		goto out_ipc;
+ 	}
+ 
+ 	new_nsp->pid_ns_for_children =
+-		copy_pid_ns(flags, user_ns, tsk->nsproxy->pid_ns_for_children);
++		copy_pid_ns(flags, user_ns, ns->pid_ns_for_children);
+ 	if (IS_ERR(new_nsp->pid_ns_for_children)) {
+ 		err = PTR_ERR(new_nsp->pid_ns_for_children);
+ 		goto out_pid;
+ 	}
+ 
+ 	new_nsp->cgroup_ns = copy_cgroup_ns(flags, user_ns,
+-					    tsk->nsproxy->cgroup_ns);
++					    ns->cgroup_ns);
+ 	if (IS_ERR(new_nsp->cgroup_ns)) {
+ 		err = PTR_ERR(new_nsp->cgroup_ns);
+ 		goto out_cgroup;
+ 	}
+ 
+-	new_nsp->net_ns = copy_net_ns(flags, user_ns, tsk->nsproxy->net_ns);
++	new_nsp->net_ns = copy_net_ns(flags, user_ns, ns->net_ns);
+ 	if (IS_ERR(new_nsp->net_ns)) {
+ 		err = PTR_ERR(new_nsp->net_ns);
+ 		goto out_net;
+ 	}
+ 
+ 	new_nsp->time_ns_for_children = copy_time_ns(flags, user_ns,
+-					tsk->nsproxy->time_ns_for_children);
++					ns->time_ns_for_children);
+ 	if (IS_ERR(new_nsp->time_ns_for_children)) {
+ 		err = PTR_ERR(new_nsp->time_ns_for_children);
+ 		goto out_time;
+ 	}
+-	new_nsp->time_ns = get_time_ns(tsk->nsproxy->time_ns);
++	new_nsp->time_ns = get_time_ns(ns->time_ns);
+ 
+ 	return new_nsp;
+ 
+@@ -192,7 +192,7 @@ int copy_namespaces(u64 flags, struct task_struct *tsk)
+ 		(CLONE_NEWIPC | CLONE_SYSVSEM))
+ 		return -EINVAL;
+ 
+-	new_ns = create_new_namespaces(flags, tsk, user_ns, tsk->fs);
++	new_ns = create_new_namespaces(flags, tsk->nsproxy, user_ns, tsk->fs);
+ 	if (IS_ERR(new_ns))
+ 		return  PTR_ERR(new_ns);
+ 
+@@ -231,7 +231,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
+ 		flags |= CLONE_EMPTY_MNTNS;
+ 	}
+ 
+-	*new_nsp = create_new_namespaces(flags, current, user_ns,
++	*new_nsp = create_new_namespaces(flags, current->nsproxy, user_ns,
+ 					 new_fs ? new_fs : current->fs);
+ 	if (IS_ERR(*new_nsp)) {
+ 		err = PTR_ERR(*new_nsp);
+@@ -289,7 +289,7 @@ int exec_task_namespaces(void)
+ 	if (tsk->nsproxy->time_ns_for_children == tsk->nsproxy->time_ns)
+ 		return 0;
+ 
+-	new = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
++	new = create_new_namespaces(0, tsk->nsproxy, current_user_ns(), tsk->fs);
+ 	if (IS_ERR(new))
+ 		return PTR_ERR(new);
+ 
+@@ -356,7 +356,7 @@ static int prepare_nsset(unsigned flags, struct nsset *nsset)
+ 	struct task_struct *me = current;
+ 
+ 	nsset->flags = flags;
+-	nsset->nsproxy = create_new_namespaces(0, me, current_user_ns(), me->fs);
++	nsset->nsproxy = create_new_namespaces(0, me->nsproxy, current_user_ns(), me->fs);
+ 	if (IS_ERR(nsset->nsproxy))
+ 		return PTR_ERR(nsset->nsproxy);
+ 
+-- 
 2.47.3
 
