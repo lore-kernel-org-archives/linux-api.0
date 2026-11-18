@@ -1,87 +1,73 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795021716;
-	b=FB+wv+mmD5Iiv+KTYSowvVVpd/bE7O9gMpjzE5Tjy+GsSaWK5NUk4v+s19IU6JEi5SVN
-	 AT66201R7mSFeyIipqfjcV8TwxSoKDoEGiDmDjhTfJFSaqcTDNUlwstAir9XTjt/7SxOJ
-	 5NFHHFD1g8GS3CI/3szQ0+pNn4CvUUWq6kv1/G1z2Lr7gOkS3tx9c/aBU/K/HtdGlFVvd
-	 gsMsgdjYdCgviScTWczyGhF+o7sIKNBfvtRxLmXM6WLjmXDEe7lShaPgMrugt96Z6FHdX
-	 vpKqZx7Vm+GixYfYLi/oNLEA6UzOjJ0lwkGxvlYPKo4RemIu6LnSvvkchpFQ72MLfMg==
+	t=1795022071;
+	b=O/HsW+ACQdU4gHp/i5sDqurM4kQF9FL1pF5UBCaMg0AL7xymdFevL8Jl1WTAPc/xq39Z
+	 mbcnbxgQWfhre37nzLF3svBPSurTOk558hKejsHyitpPfnxTDTjIW0pL8WZQK22RE4P3S
+	 Wrp9uzwBzEa0YyuyBjWhYDQrAPcMYEnKQ4VgPyPb1lx7PBl8XVvjBfeIIyAUnk6QtYJlD
+	 FV0mJAxKttfIYFu5ts/kosdj8mrqb254GmqesooPMylIRa1KlsbQ5MtXdek+VgMnsnSBH
+	 8rnojvb9NbBO9vVwIWfBKuPBVOOtRBpEq3Cx2Tnc6VGnAzrMTQfBOhbHSzqQRwk561w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795021716;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding:In-Reply-To;
-	bh=zINOi7QPXEvi98cbqP6TjwwtqfWoUArKawL5JYAavAU=;
-	b=kg5HCxech1uO+62kY+Va49GwEugkM/31UGlftPXBcNj6eUyvcZ9D1V4Ae7Srt6xz4/Nw
-	 g8JbI/o+V4x22PRJmZ/zxd4g2psQmvVv3ZcVL00KL7fck5JJ+Q5VrcMUmp8mu4jjKBuwA
-	 9FTRwcs85/nK/FNtsYyMljcR16VMS6vQcKPlSyGZ6Bv7n35kxY+SHcBDMBmAUyIrNbTdB
-	 hEmBH0fgBcOMsT4MGPdBvDOK2+nJv8mkE43m9U+iqX1lLJkmEZOv0jK11SBAqdhVYuXhV
-	 H4rD/O35mM2I/jWKRquXzUMcjP+N0Kax2ZZ7DJ1+t8FilhP2dN8flkisqsUas+XHSng==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795022071;
+	h=Received:DKIM-Signature:Received:Received:X-ME-Sender:
+	 X-ME-Proxy-Cause:X-ME-Proxy:Feedback-ID:Received:X-Mailer:
+	 MIME-Version:X-ThreadId:Date:From:To:Cc:Message-Id:In-Reply-To:
+	 References:Subject:Content-Type:Content-Transfer-Encoding;
+	bh=iuxQ2ylSQRCwgbS64Cu4sTUpzf9Rv38mt2//czf1GWg=;
+	b=uZU7US5yU0u25bI3J5LE8TzV10TBSc8mhGLzLRcwG3U/A4y2urbYCchxh2BKt+4eRaY+
+	 Wlm7vP6XaPJLmU1cwT/25R2NiDGcXfEEIA40/SvD8vOFHsUSSdZcnIipKdoTtA+oPVFRu
+	 lasvlVmjO0XvhrjYCiUjz8DzAcmnqgdcLQheTw6ufl9F/IDJxApaGstFu9pD/zV/Y7v2X
+	 ZtfPBwiU/XPa2kXP6/NcX1xxWRkyprODOgxcoiNswmyZPAsQ2pqwifg7XybevpknjzukW
+	 t9SKrWt+xg3AuiK/dt9QxhdpYc5chQoHw6n6zvA8dlukJw9eXZySekmyepDwkIQ7pkw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ai7InkSx;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="J/6NenOl";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id CE4C8606A31C;
-	Wed, 18 Nov 2026 17:08:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 86FC1606A320;
+	Wed, 18 Nov 2026 17:14:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ai7InkSx
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id CEC651F000C6;
-	Wed, 18 Nov 2026 17:08:35 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=J/6NenOl
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id BC03E1F000C6;
+	Wed, 18 Nov 2026 17:14:29 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795021716;
-	bh=zINOi7QPXEvi98cbqP6TjwwtqfWoUArKawL5JYAavAU=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=ai7InkSxjpjgivgeXU6eK1BzM9SMFaBHZ97FKtVTgzZrgbTvyMLm/yoQ5iDK2F15o
-	 iTRkDOM5FMMC7Su4PQB1NNwWaeJVN/3Q/mYacYUCeTZRfLZiNbc0Psa/woPxI9priV
-	 o794AiIxzMMqwmGdfxK1sVY51lnnoLeRxopyMxm3Fw2Wn75jZxgMjWDWGbfvJwR/F7
-	 55uapbzqrx1sE6psi4VAyHUC+D/mArx5ooB7wwR90Jm3Q5Q2x2m32mx71CpDNud7Ql
-	 0+EGSljYTSewzaz+DAbOKH8by3wxtDmKxsjPI2frMrPXcPdOdqYqLiNXz6oTJsS+vw
-	 QjKJcR1CdMiUg==
-Date: Wed, 18 Nov 2026 19:08:32 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: josef@toxicpanda.com, linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-mm@kvack.org, linux-security-module@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Ben Segall <bsegall@google.com>,
-	Christian Brauner <brauner@kernel.org>,
-	David Hildenbrand <david@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Ingo Molnar <mingo@redhat.com>, Jan Kara <jack@suse.cz>,
-	Jonathan Corbet <corbet@lwn.net>,
-	John Johansen <john.johansen@canonical.com>,
-	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mel Gorman <mgorman@suse.de>, Michal Hocko <mhocko@suse.com>,
-	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vlastimil Babka <vbabka@kernel.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
-Message-ID: <av3bkDnwmjunTleX@kernel.org>
-References: <20261117231352.3816603-1-jarkko@kernel.org>
- <CALCETrVUkbpoFjwSAejyA4b_9qEauAP_36i=O8Op1ifp8aUkqA@mail.gmail.com>
- <av3akYFOYaeQZauZ@kernel.org>
+	s=k20260515; t=1795022071;
+	bh=iuxQ2ylSQRCwgbS64Cu4sTUpzf9Rv38mt2//czf1GWg=;
+	h=Date:From:To:Cc:In-Reply-To:References:Subject;
+	b=J/6NenOl28dHs+OgqaN5e8kdFQ3IGgcR6pNocqMsJGddTpGSc33RiYlZP9K83HW/l
+	 DTka+b48iY0PwQXdUYFe6DPKbTXSy20OToFPVsNUUoa2nsuUMdguT4G1FVDI/x+sOo
+	 LsKwRJURf42NaPtzpKarfXJrnWsbj9z9IMalBEa/w2RBwuQBiw6LHqfdgWxwuOZNdC
+	 rBhQiFgTzKwlV8XO8cBc/g7wBx23WNIwtHmg7tFhP6RMSZTUzOowqLFJIdZp7Me3KY
+	 cFQhnQINc+4Nhx+JzF/nSVHAPj+j1oL+Zqvu1U4sxFhq7RRvzmHNA2FaB8zP+JyxYw
+	 nF1eLlZkn9PSQ==
+Received: from phl-compute-10.internal (phl-compute-10.internal [10.202.2.50])
+	by mailfauth.phl.internal (Postfix) with ESMTP id 02C49F4006D;
+	Wed, 18 Nov 2026 12:14:29 -0500 (EST)
+Received: from phl-imap-15 ([10.202.2.104])
+  by phl-compute-10.internal (MEProxy); Wed, 18 Nov 2026 12:14:29 -0500
+X-ME-Sender: <xms:9Nz9avLllcjjP2r1L1u4usU71qhGtsrlmuIl9tdqCXqqqfubn4KA_g>
+    <xme:9Nz9at8nEceuwTXRPUo_LKMt-B9V3Nx4vmE7J1C5eqO25yGwdFEbtLEPWfI9Qn9wq
+    iW5SWhX9NY1bKCtKpRi717HG0rnV9Hfl1jrUmOwewkC1d7jGjR1AirR>
+X-ME-Proxy-Cause: dmFkZTF68uhA34dUZFXhC1OhT9K6/PB+XWVL9PjXE0rZcEgn2eGQ7IlouPiwo4Ly20+mLP
+    /lurMllbg0WJrRpwvrpb1vE2rECGmLBzRBZ9KWzFfGeiPZ52nTSQ6tn+Zh2mdY9vmhOy1C
+    qi/DMg3X4vHJ7VmQVlNHJ/ns/Xge49Iui9yShuVNn/r6kphQj26ndVDXwSEI+eVyMeMFdJ
+    3MvV1pgbcf3/Hq/u6hab0FqIR8w60prJE8sQLSRDT1p73mXw/IECsYQ+F48C7GK54Qbaq2
+    IGIoyjKlKVxNJQLA3U5xqNaTu9NqEcSD5pqn2ePx+6GeXKwzL1Ys6kxFywoni2oyfmbJWU
+    E8HDlw81byIEQHf10k8KkiQQ4uYE59+WqrwGHJIxLsD88JVRS6TpVTc7xVXxIPGESvDzLW
+    iNTGakW80MNLSqU+KZPfeEUMN8yxop7Jjjjgh/UquDdCWeqtKRANFQiB0MAHBqgwHGhlWJ
+    ZmO0rXncZ/F5PVSdYu+vP225G02jg/2ViBpQ7BQA791tSopMMy9mXZYTrvSWq+b+uqqP5R
+    fXxqovRQHkVLCsGCP+YYWR3NT56jQbyp1RYaF5OfCQyzvBUlTCF3T0Y5sRYGIxHDw5NN12
+    ruY9v63wDM6kxJRYiYNvk3k6Gy9LcimQYksK8BWbEjzM/AGzvyYIZSLlsfKA
+X-ME-Proxy: <xmx:9Nz9asqqIkvOYmEKjUPhfmu1DaGLctcH9M8szVikza9FK3lzF0Y2pw>
+    <xmx:9Nz9al94RRYvfwA5oQ_NeqixjFhnaUKzt-GE7v422Qeqkqo5SLV2oA>
+    <xmx:9Nz9atCI3zWU_AXx1IUa89pq85TIatDvWtmW06hQ0ESev8BrOVR3RQ>
+    <xmx:9Nz9anHKD1OjQVsvBqVdcaen7Y77XNgNEAeKQ29o6vil0sI4X2eMZA>
+    <xmx:9Nz9av0BlmDTZ5ReVMqRV5cDqJenueU2dmUrZMLM8UUkMqtzAR2WCc9Z>
+Feedback-ID: ifa6e4810:Fastmail
+Received: by mailuser.phl.internal (Postfix, from userid 501)
+	id C5EE4780076; Wed, 18 Nov 2026 12:14:28 -0500 (EST)
+X-Mailer: MessagingEngine.com Webmail Interface
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -91,77 +77,65 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <av3akYFOYaeQZauZ@kernel.org>
+X-ThreadId: AgKvhXN-CN1w
+Date: Wed, 18 Nov 2026 12:14:08 -0500
+From: "Chuck Lever" <cel@kernel.org>
+To: "Amir Goldstein" <amir73il@gmail.com>
+Cc: koraynilay <koray.fra@gmail.com>, "David Sterba" <dsterba@suse.com>,
+ "Namjae Jeon" <linkinjeon@kernel.org>,
+ "Sungjong Seo" <sj1557.seo@samsung.com>,
+ "Alexander Viro" <viro@zeniv.linux.org.uk>,
+ "Christian Brauner" <brauner@kernel.org>,
+ "Trond Myklebust" <trondmy@kernel.org>, "Anna Schumaker" <anna@kernel.org>,
+ "Jeff Layton" <jlayton@kernel.org>,
+ "Konstantin Komarov" <almaz.alexandrovich@paragon-software.com>,
+ "Paulo Alcantara" <pc@manguebit.org>, "Chris Mason" <mason@kernel.org>,
+ "Yuezhang Mo" <yuezhang.mo@sony.com>, "Jan Kara" <jack@suse.cz>,
+ NeilBrown <neil@brown.name>, "Olga Kornievskaia" <okorniev@redhat.com>,
+ "Dai Ngo" <Dai.Ngo@oracle.com>, "Tom Talpey" <tom@talpey.com>,
+ "Ronnie Sahlberg" <ronniesahlberg@gmail.com>,
+ "Shyam Prasad N" <sprasad@microsoft.com>,
+ "Bharath SM" <bharathsm@microsoft.com>,
+ "Sergey Senozhatsky" <senozhatsky@chromium.org>,
+ ChenXiaoSong <chenxiaosong@chenxiaosong.com>,
+ "Darrick J. Wong" <djwong@kernel.org>,
+ "Sean Smith" <defendthedisabled@gmail.com>,
+ "Andrey Albershteyn" <aalbersh@kernel.org>,
+ "Pedro Falcato" <pfalcato@suse.de>,
+ =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, linux-btrfs@vger.kernel.org,
+ linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+ exfat@lists.linux.dev, ntfs3@lists.linux.dev, linux-cifs@vger.kernel.org,
+ linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Message-Id: <9c4a509c-b6af-4da1-8a64-9d5c26c74bff@app.fastmail.com>
+In-Reply-To: 
+ <CAOQ4uxjme9sJ5LGNDnP6rEKZLTJzX_ZdcMohgu2iLULK96GPOA@mail.gmail.com>
+References: <20261115180343.576773-1-koray.fra@gmail.com>
+ <20261115180343.576773-8-koray.fra@gmail.com>
+ <f297d9ea-ebd7-47f4-ab7b-de5c45980000@app.fastmail.com>
+ <CAOQ4uxhpMARO_ZMJDeoa044BwufLVnS0o4Fv0abBF=tjaZmtWQ@mail.gmail.com>
+ <cd49ce48-58d7-4341-b4fc-34e63daf3c52@app.fastmail.com>
+ <CAOQ4uxjme9sJ5LGNDnP6rEKZLTJzX_ZdcMohgu2iLULK96GPOA@mail.gmail.com>
+Subject: Re: [RFC PATCH v4 07/10] nfsd: add provenance time (ptime) via
+ FATTR4_TIME_CREATE
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-On Wed, Nov 18, 2026 at 07:04:21PM +0200, Jarkko Sakkinen wrote:
-> On Wed, Nov 18, 2026 at 08:59:39AM -0800, Andy Lutomirski wrote:
-> > On Tue, Nov 17, 2026 at 3:14 PM Jarkko Sakkinen <jarkko@kernel.org> wrote:
-> > >
-> > > OVERVIEW
-> > > ========
-> > >
-> > > A root namespace (rootns) is a kernel object backed by a file descriptor
-> > > that binds together:
-> > >
-> > > 1. A full or partial set of detached namespaces.
-> > > 2. A dedicated PID namespace for spawning processes into, signaling
-> > >    members, and polling or waiting on PID 1 exit.
-> > > 3. An initially empty mount namespace (CLONE_EMPTY_MNTNS) that must be
-> > >    populated before going live, without inheriting host mount-tree
-> > >    ancestors.
-> > >
-> > > Work on this feature started in 2025 from David Howells' container object
-> > > patch set [1], which I turned into a namespace for namespace roots and
-> > > rebuilt around that premise.
-> > >
-> > > While the patch set is manually written, the original motivation came
-> > > from isolating LLM agents. Running untrusted agent workloads made it
-> > > clear that OCI runtimes need to minimize their live configuration
-> > > surface.
-> > >
-> > > Assembling mounts, credentials, and namespaces inside helper processes
-> > > with a half-configured container is what I see as the main challenge,
-> > > and the existential debate around namespaces and container objects is an
-> > > unfocused discussion topic.
-> > 
-> > 
-> > I've skimmed some of the series, and I see a bunch of good ideas that
-> > involve using an fd to manage a thing.  But I'm wondering how much of
-> > the value is added by that and how much is added by having a new
-> > *type* of thing: the "rootns".
-> > 
-> > How much of the value comes from the rootns vs the new APIs to
-> > configure namespaces without entering them first?
-> > 
-> > For that matter, the cells series also seems to contain a (possibly
-> > very similar) variant of the same thing.
-> > 
-> > Would it make sense to come up with a patchset that does *just* the
-> > configure-a-namespace-by-fd part?  It seems to me that this should be
-> > an easier thing to agree on, and it's a big part of the complexity of
-> > all of this, and it solves a real problem even without
-> > cells/rootnses/jails/whatever.
-> 
-> Is it  more accurately scope the part that is "just the fd-part" and
-> what you consider as "extra cruft"?
-> 
-> I.e., where do you draw the border?
 
-I'm asking this because I had similar thoughts when I started this back
-in 2025. David had some good ideas but it did more than having a fd
-that does not go live before everything is set up properly.
 
-Then I thought that, I guess people who proactively on the topic do
-something more lean and compact, and never sent roonts patches.
-I'm not seeing anything more lean and compact.
+On Wed, Nov 18, 2026, at 11:36 AM, Amir Goldstein wrote:
+> Can't an NFS client be connected to another NFS server
+> implementation which does allow this?
+>
+> I can't wrap my head around the problem.
 
-> 
-> > 
-> > --Andy
-> 
-> Br, Jarkko
+You already named the problem in a previous email: What happens
+when the NFS server's kernel is upgraded from an NFSD that exposes
+only btime to one that picks either ptime or btime?
 
-Br, Jarkko
+Clients will see a file's btime before the server restart, and
+afterwards, they will see a changed TIME_CREATE but the file's
+NFSv4 change attribute will be unchanged.
+
+
+-- 
+Chuck Lever (Come to NFS bake-a-thon! https://nfsv4bat.org)
