@@ -1,83 +1,90 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.149.156.87
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795010641;
-	b=ab+BLwEegNf3GyTn+wXAYFZXWGQZFwwgFXO+3Z03fVPgsrZc6WHLBd4O+7TCDqyN3Qz6
-	 GzUCpzv6HzNNjxCYSREXtM5jDGsBgBAP1m7gBEkYet0KLgn/e6UQ5BKR0OM9uDxm12jXQ
-	 aXfuK1fEginCYK7ROFcOy8jvVgYqicbIbeiVzRKMoHRYC0g75A8a8gN5M/0bf2LDqjbX5
-	 phY5+3v0Gj7D4g9GrBF113xSbGm+iCby0yKYjc5ia2uOIbN90cbXsTrDZxU7+X0h6QyZb
-	 jkyiLyxWzRtu3jsZZk0akK8VwaxjMy8oyctEICMDpOj0KnAfy0UvhudhQ9NjqCDrL/Q==
+	t=1795010680;
+	b=ISMX5eFHG1VQQf11AzzyPjv+mKSeKzhrBy207hg+aK0CWYUrUBh3WJZZg7JLTZVNXtCY
+	 G8nwW6lsn1QkVBp3CTKDCkB0l3aCru82YDxmttSg5yXgtDOhsqzURTEibUtfMuPy3wipS
+	 5wgT+KLoqxVzntaoUjGZPOuGtb66GIkHbSMX73HMO0N/a6DTikK/V7Lv3cZpG+2MLXATm
+	 +wut9tuAt3qz8b+pqZsFxu6AMszk7nFXK81UmkFjg1nWfcNr+PfSWvn6GfFaHMfebNWBm
+	 AJWjB66bQJeRID5mGC8CMi3Wg/fczdfQpCGip4ZwbfFTmWvsOWrAFYuv0mvtZ8m/rDw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795010641;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Mime-Version:Content-Type:Date:Message-Id:To:Cc:Subject:From:X-Mailer:
-	 References:In-Reply-To;
-	bh=+uwi0okOO21nN8029G5kKeS0+aK14PL+obDOFNYM53E=;
-	b=NUmYlR7ClF+UU87yDD269nMtPdvah2fRlgj4TNhk9IMSBNxwP/7JWFyedA2Jmm1xjCzR
-	 qqbzNDNLbTSR7+DxvU92dGEQSodDcGGil8xjadAZ/0APBDI0hZqjiW4w/fTFxjxrRzjCi
-	 RDcZ4QRsPNliQLzJJD3YBq0xpMgnMMOTQLODIcyutHaE1yjF+UWkuZ/ct6KloJFNoCWtZ
-	 YRCKuByPae4nlt8NxKVG/v7sR+uFA/NMIdC3qLYJ/MmX2c7pYT1cxEschAJbJejbZf2G9
-	 RylqyeZD9ozkzLP+1yx+mMdPFLigJMaaQ4OnuzDsiJbwe0SZ96b/EYvKG/QcbOA7Q5Q==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795010680;
+	h=DMARC-Filter:Received:DKIM-Signature:From:To:Cc:Subject:Date:
+	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding:X-CMAE-Envelope;
+	bh=z/HJIcpabCxs0VbBc5qQ1+MCFiToabINpitp6JkLwho=;
+	b=Zd8v0/hRj4R1PFYqizpfqy+jXNgTHAsk7oRaB95O6qhuqekNfFg3bRgFBYUZXsN6I+cf
+	 /bPfvMdREEbcOlq7e1F+FENH2mTuARUgeOyH6+S/x728Yf/SuSh+2d65Xbn0eOrP+hzob
+	 2sFpIPwnjIq2VTozy9YPiOLs9/vL/0hf4yWY2k1kIIDs4YLGuEwi4gYYcAc/RHhNjWVa5
+	 /GhBPi+XPnoiyTP++4Oe6nmiekOuC7QVg2tMrvV+oxxKoWemmBZFYJFJNpBbBkYSOezBf
+	 4kPkHCS1mQNRLZKAa1X+EczKJrwiO++FSz3jmFpnYDHaH7rGhUuEayLhlkhawezQA0g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=JGPO2haG;
-	arc=none smtp.remote-ip=209.85.221.41
-Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=enneenne.com;
+	spf=pass smtp.mailfrom=enneenne.com;
+	dkim=pass header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=lUEUd6nx;
+	arc=none smtp.remote-ip=62.149.156.87
+Received: from smtpcmd0987.aruba.it (smtpcmd0987.aruba.it [62.149.156.87])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DCDE60A260A
-	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:04:00 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7DCDE60A260A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74507606A320
+	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:04:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 74507606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=enneenne.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=enneenne.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=JGPO2haG
-Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-4a33359c1b3so675568f8f.3
-        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 06:04:00 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795010639; x=1795615439; darn=vger.kernel.org;
-        h=in-reply-to:references:from:subject:cc:to:message-id:date
-         :content-type:mime-version:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=+uwi0okOO21nN8029G5kKeS0+aK14PL+obDOFNYM53E=;
-        b=JGPO2haGwzUQSz9syBu2Ro7Ot85HLEGbqqcUz25csQFarPKfEFyGhUPIj0Fr4x22Ja
-         1eUS80KrZvharuC6DphOL/NKbzOx93PjTcsQ1kIJSOISxCfPPYi/1TlfP42+rKFOxurE
-         p6s2xQ4QHzx3d5IcZy43EMXXO4uAsD8JAaJBi/8PJ30V9uqRrmb6XqlcMj4ep6VAs8jw
-         ZPMWUbE55PvIRfbJzQoOBBTMis27muSb8pzcNQ6toICnzjiAQQ0Nbg0Iu4aPhCDx2g8j
-         2crfA4J3sLQj0aMsv5t57o0JWza0sAwU7/08+is8x/pmkOVwaBhhBuy+gjb6vmEIuP4n
-         AJJw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795010639; x=1795615439;
-        h=in-reply-to:references:from:subject:cc:to:message-id:date
-         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=+uwi0okOO21nN8029G5kKeS0+aK14PL+obDOFNYM53E=;
-        b=omTfV/MKvsoBp8ZNNbMvnyX0K+UYNn/M/vEV27Z0qd7OdAIBSItpq/T8gU5g4GaTeH
-         8cAj9OLTzUq7rjF60xPYtLX3sTzYvy+1DBu/RrI+xKWX0fElBOFYEEwCnpUN5Ch2UwRj
-         TXvlhGNBPOtmf5dFGbIgEgKhi2TfxTCYGY2qNvbtxC93EYBnxMFst1xJiVTmuKTOkqGO
-         TbUgnXrTzrDvAk/zHfY8FKACXxfzqw84RNz0QFK0e6hU4LHaUo/szqNpQyZ8cv8D2KbI
-         c6eniPXOCqphqOguHuW4kho+QHaL3H+u2h/DqC0j0D4mpUKfpsUkO9lxP91rXS5ZfGHk
-         I/Pw==
-X-Forwarded-Encrypted: i=1; AL+hErFmNbMUgFYuAuFtferb5C6VDQwUuRO994HIjufr216B2rdwKpojUp/hdk7wXvqrzi1XkJ0XaWyb7tQ=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/727iX0jb5e833iB3c6HCTWqNeBFslSkJDzyw5nfR8LTUQC99A
-	nKAN2vYqNU+SDGywvjhHuZXhGrmtYlxhlhD0p47GdOfqo3eUy86EWYO1
-X-Gm-Gg: AZFdTZf82pcTFER8HQlsqa2HOV7+T7z/Mi//TwDiNE732FtSDOM7+UeuuH/wROokNTq
-	xgNaFcU1uL7s8RGYF+VeWNhVsxYlujmh7cr21t1jakFW/SJj0epBKK++gRMz/IFs9Eeghv4nRn0
-	UhxI0K7mpDF5metp/f+y/3N9/MyhtDI35SMDC2mfCvYcS1nrV4PJDDJC0pzecW6S/7XVcDgNgFh
-	f1ayYg2Esak6H7run0+076t5IR5EJhFH6bZFEgd5q+roEKqvKXRxfgxlSbuN8kbVyANBOZjjI28
-	0Sx2104IVUThF7qCR+eB2OkkiiHFXJker+MoUhYi13wDugDuBprW4Nn94t8SnxOByBs7zliIuTb
-	ORrgoRqCUHCwuq5O7ZqvEZBiFcfDpU94j14tnNtMWeydY3Ywax2Ui8iAmIrpbe5zlQl44qQOLDx
-	g1vosk83D5JvhkfzSVTdl6NPtjfMWotGIxtE0XfnAYI0JzBP5ShKOnWqY4rgUIE41XJCzAQU3bj
-	+Ku4oAjwTUuFEJeSN9vglOfwC6OYXwRUG6Y42vImCvj+8IbCX+/0PiiQHbqgrz3PR1dRVIbGIuN
-	51WTgwpQBSE+bgObTfSbYM/EEGYqrAFPqE4qFrzKu5m0T6o3uqNq3exKynYPckn+wOY=
-X-Received: by 2002:a05:6000:41c3:b0:48e:20ed:d5e7 with SMTP id ffacd0b85a97d-4a63de5249fmr5373556f8f.34.1795010638556;
-        Wed, 18 Nov 2026 06:03:58 -0800 (PST)
-Received: from localhost (mob-176-246-251-118.net.vodafone.it. [176.246.251.118])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4a65560b2a1sm4737224f8f.32.2026.11.18.06.03.52
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Wed, 18 Nov 2026 06:03:57 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=lUEUd6nx
+Received: from polimar.tail4f75e6.ts.net ([101.57.122.26])
+	by Aruba SMTP with ESMTPSA
+	id TgGvxLK1X6q8sTgH0xc6NE; Wed, 18 Nov 2026 15:04:30 +0100
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=aruba.it; s=a1;
+	t=1795010670; bh=ri1z1nmKrZJAIeer2FvVgJMXr755InTgnrOMRLpwRDE=;
+	h=From:To:Subject:Date:MIME-Version;
+	b=lUEUd6nx9bfWcWkMOFl70pUcMUi9A8djTq+aXLhAYQ3fSB1ZmCqTyQW9G4u9+t4bO
+	 t2bfVLxS9FTArdx4n3MgQRkLNGetjJ/h5OLu/E60SiCMXCsn2QEOeWCuIBYJN8DoXD
+	 g9dMhzS3eC2/GJFssiGuq2eQu63qIO32uTOqb03uW45W9JFjuhP3cPs4bWAm9c6h/p
+	 gOqIDZjSAZWkLUnO8gp1hD+GNQBE8cnVZWowhnhn1/s23x4ro8vqmiYWJpQCdZMATj
+	 A/lZaliSVI7/owxP/V/hbo9QGS+/j9CtJfWFnsnKyWW0FPMxwh5HDiwe4zmfpkZWdU
+	 KdclpE8NEzqVg==
+From: Rodolfo Giometti <giometti@enneenne.com>
+To: David Howells <dhowells@redhat.com>,
+	Jarkko Sakkinen <jarkko@kernel.org>,
+	keyrings@vger.kernel.org
+Cc: Herbert Xu <herbert@gondor.apana.org.au>,
+	"David S. Miller" <davem@davemloft.net>,
+	Jens Wiklander <jenswi@kernel.org>,
+	Sumit Garg <sumit.garg@kernel.org>,
+	op-tee@lists.trustedfirmware.org,
+	=?UTF-8?q?Horia=20Geant=C4=83?= <horia.geanta@nxp.com>,
+	Pankaj Gupta <pankaj.gupta@nxp.com>,
+	Sahil Malhotra <sahil.malhotra@nxp.com>,
+	Ahmad Fatoum <a.fatoum@pengutronix.de>,
+	Richard Weinberger <richard@nod.at>,
+	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Demi Marie Obenour <demiobenour@gmail.com>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Paul Moore <paul@paul-moore.com>,
+	James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	linux-crypto@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	linux-kselftest@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linuxppc-dev@lists.ozlabs.org,
+	linux-kernel@vger.kernel.org,
+	Rodolfo Giometti <giometti@enneenne.com>
+Subject: [RFC PATCH 2/9] KEYS: keycrypt: Add the sw backend
+Date: Wed, 18 Nov 2026 15:04:14 +0100
+Message-ID: <20261118140421.584086-3-giometti@enneenne.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20261118140421.584086-1-giometti@enneenne.com>
+References: <20261118140421.584086-1-giometti@enneenne.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,444 +93,562 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: multipart/signed;
- boundary=4827e7d7bbe23dd35858a8366dc75e2a45dd46e9129f07e8a6f88ac53c0e;
- micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Wed, 18 Nov 2026 15:03:50 +0100
-Message-Id: <DMYE5VTQIU4R.7PNKJGR0DST0@gmail.com>
-To: "Jeff Layton" <jlayton@kernel.org>, "Amir Goldstein"
- <amir73il@gmail.com>, "koraynilay" <koray.fra@gmail.com>
-Cc: "David Sterba" <dsterba@suse.com>, "Namjae Jeon"
- <linkinjeon@kernel.org>, "Sungjong Seo" <sj1557.seo@samsung.com>,
- "Alexander Viro" <viro@zeniv.linux.org.uk>, "Christian Brauner"
- <brauner@kernel.org>, "Trond Myklebust" <trondmy@kernel.org>, "Anna
- Schumaker" <anna@kernel.org>, "Chuck Lever" <cel@kernel.org>, "Konstantin
- Komarov" <almaz.alexandrovich@paragon-software.com>, "Paulo Alcantara"
- <pc@manguebit.org>, "Chris Mason" <mason@kernel.org>, "Yuezhang Mo"
- <yuezhang.mo@sony.com>, "Jan Kara" <jack@suse.cz>, "NeilBrown"
- <neil@brown.name>, "Olga Kornievskaia" <okorniev@redhat.com>, "Dai Ngo"
- <Dai.Ngo@oracle.com>, "Tom Talpey" <tom@talpey.com>, "Ronnie Sahlberg"
- <ronniesahlberg@gmail.com>, "Shyam Prasad N" <sprasad@microsoft.com>,
- "Bharath SM" <bharathsm@microsoft.com>, "Sergey Senozhatsky"
- <senozhatsky@chromium.org>, "ChenXiaoSong" <chenxiaosong@chenxiaosong.com>,
- "Darrick J . Wong" <djwong@kernel.org>, "Sean Smith"
- <defendthedisabled@gmail.com>, "Andrey Albershteyn" <aalbersh@kernel.org>,
- "Pedro Falcato" <pfalcato@suse.de>, =?utf-8?q?Pali_Roh=C3=A1r?=
- <pali@kernel.org>, <linux-btrfs@vger.kernel.org>,
- <linux-kernel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
- <exfat@lists.linux.dev>, <ntfs3@lists.linux.dev>,
- <linux-cifs@vger.kernel.org>, <linux-nfs@vger.kernel.org>,
- <linux-api@vger.kernel.org>
-Subject: Re: [RFC PATCH v4 00/10] add provenance time (ptime)
-From: "koraynilay" <koray.fra@gmail.com>
-X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
-References: <20261115180343.576773-1-koray.fra@gmail.com>
- <fc53ec55d315a4b96ec1e6f250ad3763f2189755.camel@kernel.org>
- <DMXXOPD9UDNP.2YP9ROMHFLM9E@gmail.com>
- <CAOQ4uxjcvAKTaGXO0=BpbtgoEPmN7GKieVbX1ZpZR38H1Z3j9g@mail.gmail.com>
- <a2889a0bfb26e329ecf2eed6d2318bfcbbb0ff2c.camel@kernel.org>
-In-Reply-To: <a2889a0bfb26e329ecf2eed6d2318bfcbbb0ff2c.camel@kernel.org>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+X-CMAE-Envelope: MS4xfP3GH+/uUH2UT8xMvG9D4FaNvSpSliR0tTjVUWsuRp2/IOriQDotlmu0kb3Bvcv48aoM5XNmWbhv5eiS7QNJbgeBC1jsSjfOF972Rnh0emTdPjKGem6H
+ R8FQM5ApEvDUk+7C5B64URlE/DqsWbFPmIqF5Fdxjbuw5qXpIO8d3te0cEC82Z1yxBQsfy5fV3Q6vZ1LuvDllWjcXQWhDr7/HbtU7r6PNWGUC6idVx8Dr8+B
+ ek4wY1yZBCSekXremPsy96JR7VaG9YbC7dlZs/oF6FLaX56+khmMFDlKpg5Dga4RtCmlhP/PTf3/Dh/xG0Z35IxWGkvCS6mi3AQfMrTerV4gSjhBfTQ8TQhO
+ 2WtVsUgvTKAdiS2UhdVIk71THz3tgRxdeiBji8ZF+HADmbWgIlux4FlE4A0p3VP28f3gPJjwZKDH6AglEq+tcr1rjRLY8s7zrvU3ThHx7VMVVqpygaf93J27
+ DHVEmdvKZFfR2UpWKSpSpKe8bJ0gn5UBlCLF0U9qDWYm+OsTcJC1+LnMhIjs4V4ikBIZNYQ72dmcSA3wyxBIE0HTPEzGG5/FK79bEa+OjwBYPRNnZMFu4/jE
+ 8fLscBn43xcxUZDE5f739I9U6VsNnUIH18fH8PjS9D9PsDJMhGMIuXaIiTxfCA1eB5mKHBc0ZnDALP0lYEcdczQp4+tzuYYNQ5Dm+6QH5rRsXS2mo/04EzVe
+ gOWbCEMppMR8Ix+CM/H9ZCn3Merx9nyppgAhPDvrxQg21bU2Slt3lq4OPuwCaUo4PM1BGE3mSkSH/K1Lh7n2baw0oAovFNLJASml8hcwqvwIut+vbNsDev+/
+ jL4TwCncokB9Gi9URV3sZeunfcG9elxQWWwLF70sRfu/Lj5CRo/LRnLLovR6bdbfJLbQL9PSC4rTIB9ezDgA8pCsliQo+8sfWszS7g+kZLsqcJe/pCzk3G2a
+ K+aXWYYMBQ0+ZNodOykTnAu3U4Hpwf+A2Zhq0OsFvpNa5DfzMmhakS1mds1nPPfv5ZvQqawz4umbE/HXrLCnbCHipO7LH80m7k96Pvpd8GYdU5c+qkfL6OQj
+ fBCugevbR4dYV71GmnWwMQf65uCPFfgEkHD8W5tyK0vJk30l/gaBt/FPPDGig/O2ukfHCRY0tThWdOkh7mGihZ6qm0bRs1fluXnNy3LNQBVXy/6c/Tec1ozG
+ NUtfvoTF17PzVAAZusBifuJoXObZh4EK1MP30GWBGgaUpFqcU8vImlEjsHJ2AZ7eVxR1conCt1qT4W3JkVapXZnACuU4vDw/6BLTMqZ/9OLmP+rDNjRBJRSv
+ hk8hlS8qrmlHW4pWqVe6at3+Hlu3MLpacBiP3W/Elb7Irg4wAAw=
 
---4827e7d7bbe23dd35858a8366dc75e2a45dd46e9129f07e8a6f88ac53c0e
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
+Systems with neither a TEE nor a crypto engine able to keep keys still
+want keys that user space cannot read and that are bound to one
+algorithm and purpose, and the same interface on every device.
 
-On Wed Nov 18, 2026 at 2:45 PM CET, Jeff Layton wrote:
-> On Wed, 2026-11-18 at 09:14 +0100, Amir Goldstein wrote:
->> On Wed, Nov 18, 2026 at 2:09=E2=80=AFAM koraynilay <koray.fra@gmail.com>=
- wrote:
->> >=20
->> > Hello and thanks for replying,
->> >=20
->> > On Wed Nov 18, 2026 at 12:53 AM CET, Jeff Layton wrote:
->> > > On Sun, 2026-11-15 at 19:03 +0100, koraynilay wrote:
->> > > > This is an initial implementation of a new timestamp to indicate t=
-he
->> > > > time when a file/directory was initially created.
->> > > >=20
->> > > > This patch series takes inspiration from the one by Sean Smith
->> > > > <defendthedisabled@gmail.com> [1], but using
->> > > > file_setattr()/file_getattr() as suggested by Darrick J. Wong
->> > > > <djwong@kernel.org> in [2].
->> > > >=20
->> > > > The semantics of this new timestamp should be at least these:
->> > > > - it should be the same as btime on a newly created file
->> > > > - it's user-settable, so it can be preserved for backups, filesyst=
-em
->> > > >   conversions, archives and any similar operation
->> > > > - it should be preserved every time mtime gets preserved
->> > > >=20
->> > > > and the correspondence with the other timestamps is as follows:
->> > > >=20
->> > > > ctime <-> btime
->> > > > mtime <-> ptime
->> > > >=20
->> > >=20
->> > > I'm not sure how to interpret the correspondence above.
->> >=20
->> >   |-----\_-----------------|-----------|
->> >   |       \_      change/  |   birth/  |
->> >   |         \_ modification|  creation |
->> >   |           \------------|-----------|
->> >   | inode time |   ctime   |   btime   |
->> >   |------------|-----------|-----------|
->> >   | file time  |   mtime   |   ptime   |
->> >   |------------|-----------|-----------|
->> >=20
->> > ("file" as in "the concept of this file", I'd say "file content" but
->> > that would be incorrect for symlinks)
->> >=20
->> > so ctime is "inode change time", btime is "inode birth/creation time",
->> > while mtime is "file content change/modification time" and ptime would
->> > be "file content creation time" (same as Window's or MacOS's creation
->> > time).
->> >=20
->> > Does this make more sense?
->> >=20
->> > >=20
->> > > > Examples:
->> > > > 1) a .zsh_history file created in 2019, then after a few years the=
- user
->> > > >    decides to switch to another filesystem, copying the .zsh_histo=
-ry to
->> > > >    the new home, in that case btime would have the timestamp of th=
-e copy
->> > > >    and ptime would have the 2019 timestamp (just like mtime would =
-have
->> > > >    been preserved)
->> > > > 2) a symlink created in 2020 from the home directory to a /path go=
-ing
->> > > >    through the same process as the .zsh_history, in this case it w=
-ould
->> > > >    also make sense to sync the ptime to the 2020 timestamp instead=
- of
->> > > >    keeping only the btime (so the inode creation time).
->> > > >=20
->> > > > The proof-of-concept code (for testing) for stat(1) and cp(1) is
->> > > > available at https://github.com/koraynilay/coreutils (master branc=
-h)
->> > > > (Note: these coreutils code changes are a prototype and won't be
->> > > > submitted upstream as-is, but they work as expected in simple stat=
- and
->> > > > cp -a/--preserve=3Dptime tests)
->> > > >=20
->> > > > Lastly, the name "provenance" and "ptime" are not final, I persona=
-lly
->> > > > don't have a strong opinion on any name, but while testing with st=
-at(1)
->> > > > I noticed that "Provenance" is definitely too long for the normal
->> > > > output, so another option which would fit well is "Origin time",
->> > > > abbreviated as "ntime" (OrigiN time) and not as "otime", as that w=
-ould
->> > > > conflict with btrfs' internal naming and create confusion.
->> > > >=20
->> > > > v2 changes:
->> > > > - fix permission bypass leading to ptime update on immutable and
->> > > >   append-only files (found by sashiko[3])
->> > > > - normalize ptime timestamp as done in fs/attr.c:notify_change() (=
-found
->> > > >   by sashiko[3])
->> > > > - fix wording in vfs patch to be like the cover-letter
->> > > >=20
->> > > > v3 changes:
->> > > > - vfs: reject setting ptime with -EOPNOTSUPP on filesystems that d=
-o not
->> > > >   support it instead of silently ignoring it (found by sashiko[4])
->> > > > - vfs: fix not being able to clear immutable and append-only on fi=
-les
->> > > >   with ptime, and allow updating immutable/append-only atomically =
-along
->> > > >   with ptime (found by sashiko[4])
->> > > > - btrfs: validate on-disk ptime nanoseconds and reset to otime if
->> > > >   invalid (found by sashiko[4])
->> > > > - btrfs: avoid re-assigning ptime on unrelated chattr calls (found=
- by
->> > > >   sashiko[4])
->> > > > - add ntfs3 and exfat support as suggested by Amir Goldstein[5], b=
-ut no
->> > > >   vfat, smb, or nfs4 yet as they are a bit more complex
->> > > > - move the introduction of fileattr_has_fsx_mask() from the btrfs =
-patch
->> > > >   to a standalone patch in the series
->> > > > - btrfs: add fileattr_[gs]et to symlink and special file operation=
-s
->> > > >=20
->> > > > v4 changes:
->> > > > - vfs: implement fsx_xflags_mask as suggested by Amir Goldstein[6]=
-;
->> > > > - add SMB (ksmbd/cifs) and nfs (nfsd/nfs) support as requested in
->> > > >   previous threads;
->> > > >=20
->> > > > Note:
->> > > > to apply this patch 2 previous patches[7][8] from the ksmbd/cifs
->> > > > subsystem are needed.
->> > > >=20
->> > > > New Question:
->> > > > should I rename fileattr_has_fsx_mask() to something like
->> > > > fileattr_has_unsupported_fsx() and keep its code as-is, or should =
-I add
->> > > > the fsx_xflags_mask & ~allowed check in it and keep the name as-is=
-? (or
->> > > > both?)
->> > > >=20
->> > > > Thanks.
->> > > >=20
->> > > > [1]: https://lore.kernel.org/20260405195007.1306-2-DefendTheDisabl=
-ed@gmail.com
->> > > > [2]: https://lore.kernel.org/20260407014129.GC6192@frogsfrogsfrogs
->> > > > [3]: https://sashiko.dev/#/patchset/20261027220532.736352-1-koray.=
-fra%40gmail.com
->> > > > [4]: https://sashiko.dev/#/patchset/20261028134728.294127-1-koray.=
-fra%40gmail.com
->> > > > [5]: https://lore.kernel.org/CAOQ4uxiuy0VwZj+3M-zRqQ49WTpHZpiaQ+6M=
-Z8z8WdLjyQM_zA@mail.gmail.com/
->> > > > [6]: https://lore.kernel.org/CAOQ4uxjtuTDT63vJdYaq+RHQEQFLTksp66e4=
-6OMN99WhJz3SbA@mail.gmail.com/
->> > > > [7]: https://lore.kernel.org/linux-cifs/20261112111637.184045-2-ko=
-ray.fra@gmail.com/
->> > > > [8]: https://lore.kernel.org/linux-cifs/20261115155308.415734-1-ko=
-ray.fra@gmail.com/
->> > > >=20
->> > > >=20
->> > > > koraynilay (10):
->> > > >   vfs: add provenance time (ptime)
->> > > >   vfs: add fileattr_has_fsx_mask()
->> > > >   ntfs3: make crtime user-settable using ptime
->> > > >   exfat: make crtime user-settable using ptime
->> > > >   btrfs: add provenance time (ptime)
->> > > >   vfs: add __vfs_fileattr_set_locked() for inode_lock()'d callers
->> > > >   nfsd: add provenance time (ptime) via FATTR4_TIME_CREATE
->> > > >   nfs: add provenance time (ptime) via FATTR4_TIME_CREATE
->> > > >   ksmbd: add provenance time (ptime) and map it to CreationTime
->> > > >   cifs: add provenance time (ptime) and map it to SMB's CreationTi=
-me
->> > > >=20
->> > > >  fs/btrfs/btrfs_inode.h          |   4 +
->> > > >  fs/btrfs/delayed-inode.c        |   6 ++
->> > > >  fs/btrfs/inode.c                |  29 +++++-
->> > > >  fs/btrfs/ioctl.c                |  24 ++++-
->> > > >  fs/btrfs/print-tree.c           |   1 +
->> > > >  fs/btrfs/tree-log.c             |   3 +
->> > > >  fs/exfat/exfat_fs.h             |   2 +
->> > > >  fs/exfat/file.c                 |  42 ++++++++-
->> > > >  fs/exfat/namei.c                |   1 +
->> > > >  fs/file_attr.c                  | 156 ++++++++++++++++++++++++++-=
------
->> > > >  fs/nfs/inode.c                  |  27 +++++-
->> > > >  fs/nfs/internal.h               |   2 +
->> > > >  fs/nfs/nfs4proc.c               |  56 +++++++++++-
->> > > >  fs/nfs/nfs4xdr.c                |  19 ++--
->> > > >  fs/nfs/symlink.c                |   1 +
->> > > >  fs/nfsd/nfs4proc.c              |   9 ++
->> > > >  fs/nfsd/nfs4xdr.c               |  40 +++++---
->> > > >  fs/nfsd/vfs.c                   |  17 ++++
->> > > >  fs/nfsd/vfs.h                   |   4 +-
->> > > >  fs/nfsd/xdr4.h                  |   3 +
->> > > >  fs/ntfs3/file.c                 |  20 +++-
->> > > >  fs/ntfs3/frecord.c              |   8 +-
->> > > >  fs/smb/client/cifsfs.c          |   8 ++
->> > > >  fs/smb/client/inode.c           |   7 +-
->> > > >  fs/smb/client/ioctl.c           | 109 ++++++++++++++++------
->> > > >  fs/smb/server/smb2pdu.c         |  37 +++++---
->> > > >  fs/smb/server/vfs.c             |  43 ++++++++-
->> > > >  fs/smb/server/vfs.h             |   1 +
->> > > >  fs/stat.c                       |   2 +
->> > > >  include/linux/fileattr.h        |  29 +++++-
->> > > >  include/linux/nfs_xdr.h         |   3 +
->> > > >  include/linux/stat.h            |   1 +
->> > > >  include/uapi/linux/btrfs_tree.h |   3 +-
->> > > >  include/uapi/linux/fs.h         |   9 +-
->> > > >  include/uapi/linux/stat.h       |   7 +-
->> > > >  35 files changed, 614 insertions(+), 119 deletions(-)
->> > > >=20
->> > > >=20
->> > > > base-commit: 3bc1fb9c3b20cd478c83496ab16addecb401770d
->> > > > prerequisite-patch-id: 049ae0eba275b5be35a238833107e0b251a55aa2
->> > > > prerequisite-patch-id: 614f0bc9411391403d4e9702bafeb31b0ec04ec1
->> > > > prerequisite-patch-id: ddf636b9d33d82ea206ce265d817371350bf8858
->> > >=20
->> > > I think this is going to be very hard to do properly, because the
->> > > kernel can't really manage this on its own. Something in userland is
->> > > going to have to set this value if you want to update it to somethin=
-g
->> > > other than the original inode instantiation time (aka btime).
->> > >=20
->> > > It really sounds like what you want is the ability to make the btime
->> > > settable. Personally I think the decision to forbid that was wrong-
->> > > headed and that it should have been settable from userland from the
->> > > beginning. Maybe we should just revisit that decision.
->> >=20
->>=20
->> Frankly, I don't think this decision was made at all.
->>=20
->> There are only 2 types of filesystems in Linux today:
->> 1. btime is constant (xfs, etx4, btrfs,...)
->> 2. crtime is settable in principle but not via a standardized Linux
->> API (ntfs, cifs, ...)
->>=20
->
-> CephFS is in this category too. I explicitly made it settable so we
-> could set it when restoring backups.
+Add the "sw" backend, of the kernel tier: it seals each key with
+AES-256-GCM under a key derived with HMAC-SHA256 from a "trusted" key
+named by master=, authenticating the keycrypt header with it, and runs
+the operations with the kernel's crypto library. A loaded key is in
+clear in kernel memory until revoked or destroyed, which the kernel
+log says when the backend registers and when the first key is loaded;
+the backend is chosen only by tier=kernel, by backend=sw, or when no
+backend of a higher tier is registered, and a system that must not use
+it raises the system tier above it (CONFIG_KEYCRYPT_SYSTEM_TIER_*), or
+leaves this option off.
 
-Ah ok, should I try adding support for it using this API in the next
-version? (either by making btime settable like with SMB/NFS or adding
-ptime as new?)
+In that derivation the trusted key's material is what the HMAC
+processes, under a label and a random salt as its key, and not the
+other way round: AF_ALG lets user space name a trusted key by its
+serial number as the key of an HMAC socket, so with the material as the
+key anyone allowed to search the master could recompute the sealing
+key of every blob.
 
->
->> AFAIK, btrfs in this series is the only filesystem which is going to
->> have two deviated copies of btime and ptime.
->> For all the rest, the deviation is artificial in statx.
->>=20
->> So the questions to ask are:
->> 1. Do btrfs developers prefer to store a new settable ptime or
->>     making otime/btime settable with this new API?
->> 2. Will any other fs in the future want to store settable ptime along
->>     side the legacy immutable btime?
->>=20
->> My take on these question is:
->> - Personally I would love to see ptime support in xfs in the future and =
-would
->>   willing to contribute to this work, because I have hard evidence from =
-the
->>   performance benefits that it brings to smb server workloads
->> - Judging by past experience with i_version bump interpretation on xfs,
->>   I find it hard to believe that xfs developer would agree to making the
->>   legacy btime settable
->>=20
->
-> Maybe? The main reason for that was that XFS uses i_version  as
-> internally as a change counter for any inode change. I doubt that it
-> uses btime internally like that.
->
-> The only reason I can see to _not_ make btime settable is for
-> forensics: maybe having the inode btime be immutable would make it
-> harder to disguise when an inode was instantiated, but I imagine that
-> would be defeatable with offline tools anyway.
->
-> If people are using the btime in this way, then it would be nice for
-> them to speak up and give us some details about this usage. How does
-> keeping it immutable help you?
+It depends on TRUSTED_KEYS and is a module when trusted keys are one.
 
-I agree, I do understand the possible reasons for keeping it, but
-personally I don't have any use for immutable btime (tho, it is nice to
-have also that information available).
+Signed-off-by: Rodolfo Giometti <giometti@enneenne.com>
+---
+ security/keys/keycrypt/Kconfig  |  36 ++-
+ security/keys/keycrypt/Makefile |   2 +
+ security/keys/keycrypt/sw.c     | 404 ++++++++++++++++++++++++++++++++
+ security/keys/keycrypt/sw.h     |  30 +++
+ 4 files changed, 468 insertions(+), 4 deletions(-)
+ create mode 100644 security/keys/keycrypt/sw.c
+ create mode 100644 security/keys/keycrypt/sw.h
 
->> Hence the distinction in statx API is needed, but for most filesystems
->> it is a pure semantic way of saying "I do/don't have settable birth time=
-".
->>=20
->> > Originally I just wanted to have btime settable, yes, and if btime was
->> > settable I wouldn't have made this RFC PATCH either, but after reading
->> > the already existing discussions about it, I can understand having an
->> > "immutable inode creation time", like ctime exists, so even after maki=
-ng
->> > btime settable, a new timestamp would be necessary anyway (e.g. for th=
-e
->> > people who want btime to exist as a forensics timestamp).
->> >=20
->>=20
->> Right, but every filesystem (e.g. btrfs) can still make an independent
->> choice whether storing one or two copies is desired.
->> The API does not limit those choices.
->>=20
->> > > Failing that, why not just track this in an xattr of some sort, sinc=
-e
->> > > this is really just an opaque blob once you allow it to be settable.=
- If
->> > > the xattr isn't present, then you can just use the value of the btim=
-e
->> > > as-is. FWIW, I think samba does this today, so you could try to sync
->> > > with its behavior here.
->> >=20
->> > (This is copied and adapted from [2])
->> >=20
->> > I actually have been using fully userspace xattrs[1] for a few months,
->> > mostly for backups, and it "works"; but last month I wanted to merge 2
->> > FSs (and have another merge I have to do), so I ran [1] on all files a=
-nd
->> > then compared all metadata/data between source and destination and
->> > noticed there were quite a lot of files that didn't have the xattr set=
-.
->> > So I looked online and learned that xattrs only work on regular
->> > files/directories, not on symlinks or anything else (and the missing
->> > ones were of symlinks).
->> > This is what prompted me to search more if anyone had already proposed=
- a
->> > new timestamp (instead of making btime settable) and found the email
->> > thread from april linked in the cover letter, which gave me the excuse
->> > to finally work on a proper patch.
->> >=20
->>=20
->> I am tired of repeating my arguments (and finding my own quotes)
->> about why using xattrs is a poor replacement for in-inode ptime.
->> AI agents can easily find those quotes for those who are interested
->> so I won't bother, I just say that smbd already uses xattr to store
->> the creation time - it's just bad for performance and disk usage in
->> metadata intensive workloads.
->>=20
->> > > That seems a lot simpler than adding an entirely new inode timestamp
->> > > that is always going to be a copy of the btime, except in rare cases=
-.
->> > > Having to patch all of the on-disk filesystems with a new per-inode
->> > > field is a lot more work.
->> >=20
->> > > This patch is quite simple, but changing btrfs, then ext4, xfs, etc =
-is a
->> > > mess, and inevitably you can't get these timestamps until you upgrad=
-e your
->> > > filesystems.
->> >=20
->
-> Weird. I didn't write the above sentence.
+diff --git a/security/keys/keycrypt/Kconfig b/security/keys/keycrypt/Kconfig
+index e1d1b8e2a58b..50fd4cb3b1d2 100644
+--- a/security/keys/keycrypt/Kconfig
++++ b/security/keys/keycrypt/Kconfig
+@@ -34,10 +34,13 @@ choice
+ 	help
+ 	  The lowest tier a keycrypt key may be used at when the kernel
+ 	  starts: KEYCTL_CRYPT_OPEN refuses a key of a lower tier, which
+-	  can still be created and loaded. The keycrypt.system_tier= boot
+-	  parameter and the kernel.keys.keycrypt_system_tier sysctl can
+-	  only raise it, so a signed kernel image sets a floor its command
+-	  line cannot lower.
++	  can still be created and loaded. A key of the kernel tier so
++	  created or loaded is in clear in kernel memory all the same, as
++	  its trusted master is: to have none, build without
++	  KEYCRYPT_SW, the in-tree backend of that tier. The
++	  keycrypt.system_tier= boot parameter and the
++	  kernel.keys.keycrypt_system_tier sysctl can only raise it, so a
++	  signed kernel image sets a floor its command line cannot lower.
+ 
+ 	  The default sets no floor: which backends a kernel builds says
+ 	  nothing about which will be present when it runs (a
+@@ -70,3 +73,28 @@ config KEYCRYPT_SYSTEM_TIER_HSM
+ 	  keycrypt key can be used at all.
+ 
+ endchoice
++
++config KEYCRYPT_SW
++	tristate "The sw keycrypt backend, of the kernel tier"
++	depends on KEYCRYPT && TRUSTED_KEYS
++	select CRYPTO_LIB_AES_GCM
++	select CRYPTO_LIB_AES_CBC
++	select CRYPTO_LIB_SHA256
++	help
++	  This option provides the "sw" keycrypt backend: keys sealed
++	  with AES-256-GCM under a key derived from a "trusted" key, and
++	  used by the kernel itself. While such a key is loaded, it is in
++	  clear in kernel memory: this lowers the security of the system,
++	  and the kernel says so in its log when the backend registers and
++	  when the first such key is loaded. This backend is chosen by
++	  tier=kernel or backend=sw, and for a key created with
++	  neither a tier option nor backend= whenever no backend of a
++	  higher tier is registered.
++
++	  It needs trusted keys (TRUSTED_KEYS) to seal and load keys, and
++	  is built as a module when trusted keys are one.
++
++	  Use trusted keys created with blob authorization or a policy as
++	  masters (see the documentation).
++
++	  If you are unsure as to whether this is required, answer N.
+diff --git a/security/keys/keycrypt/Makefile b/security/keys/keycrypt/Makefile
+index 8910fb0156e7..5a2e222a6908 100644
+--- a/security/keys/keycrypt/Makefile
++++ b/security/keys/keycrypt/Makefile
+@@ -1,3 +1,5 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ 
+ obj-y += core.o ctx.o
++obj-$(CONFIG_KEYCRYPT_SW) += keycrypt_sw.o
++keycrypt_sw-y := sw.o
+diff --git a/security/keys/keycrypt/sw.c b/security/keys/keycrypt/sw.c
+new file mode 100644
+index 000000000000..f1ff4de4afc6
+--- /dev/null
++++ b/security/keys/keycrypt/sw.c
+@@ -0,0 +1,404 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * keycrypt - the sw backend, of the kernel tier: keys sealed under a
++ * trusted key, used by the kernel itself
++ *
++ * The blob's layout and its GCM key are in keycrypt.rst, "The sw
++ * backend".
++ *
++ * Copyright (C) 2026 Rodolfo Giometti <giometti@enneenne.com>
++ */
++
++#include <crypto/aes-cbc.h>
++#include <crypto/aes-gcm.h>
++#include <crypto/sha2.h>
++#include <keys/trusted-type.h>
++#include <linux/err.h>
++#include <linux/init.h>
++#include <linux/key.h>
++#include <linux/module.h>
++#include <linux/random.h>
++#include <linux/slab.h>
++#include <linux/string.h>
++#include "keycrypt.h"
++#include "sw.h"
++
++/* <keys/trusted-type.h> redefines pr_fmt; reassert ours after it */
++#undef pr_fmt
++#define pr_fmt(fmt) "keycrypt: " fmt
++
++#define SW_LABEL	"keycrypt kernel-tier v1"
++#define SW_AAD_MAX	(KEYCRYPT_HEADER_MAX + 2 + KEYCRYPT_SW_DESC_MAX + \
++			 KEYCRYPT_SW_SALT_LEN)
++
++static int sw_prepare(struct aes_gcm_key *gk, const u8 *master, size_t mlen,
++		      const u8 *salt)
++{
++	u8 label[sizeof(SW_LABEL) - 1 + KEYCRYPT_SW_SALT_LEN];
++	u8 dk[SHA256_DIGEST_SIZE];
++	int ret;
++
++	memcpy(label, SW_LABEL, sizeof(SW_LABEL) - 1);
++	memcpy(label + sizeof(SW_LABEL) - 1, salt, KEYCRYPT_SW_SALT_LEN);
++	/*
++	 * The master is the data, never the key: AF_ALG keys an HMAC with
++	 * a trusted key given by serial, so whoever may search the master
++	 * could otherwise compute this key.
++	 */
++	hmac_sha256_usingrawkey(label, sizeof(label), master, mlen, dk);
++	ret = aes_gcm_preparekey(gk, dk, sizeof(dk), KEYCRYPT_SW_TAG_LEN);
++	memzero_explicit(dk, sizeof(dk));
++	return ret;
++}
++
++static size_t sw_aad(u8 *aad, const u8 *hdr, u32 hdr_len, const u8 *prefix,
++		     size_t prefix_len)
++{
++	memcpy(aad, hdr, hdr_len);
++	memcpy(aad + hdr_len, prefix, prefix_len);
++	return hdr_len + prefix_len;
++}
++
++static int keycrypt_sw_seal(const u8 *master, size_t mlen,
++			    const u8 *hdr, u32 hdr_len,
++			    const char *desc, const u8 *key,
++			    size_t klen, struct keycrypt_blob *out)
++{
++	size_t dlen = strlen(desc), prefix_len, alen, len;
++	struct aes_gcm_key gk;
++	u8 aad[SW_AAD_MAX];
++	u8 *p, *salt, *nonce, *ct;
++	int ret;
++
++	if (!dlen || dlen > KEYCRYPT_SW_DESC_MAX ||
++	    hdr_len > KEYCRYPT_HEADER_MAX || !klen ||
++	    klen > KEYCRYPT_SW_KEY_MAX)
++		return -EINVAL;
++	len = 2 + dlen + KEYCRYPT_SW_SALT_LEN + KEYCRYPT_SW_NONCE_LEN + klen +
++	      KEYCRYPT_SW_TAG_LEN;
++	p = kmalloc(len, GFP_KERNEL);
++	if (!p)
++		return -ENOMEM;
++	p[0] = KEYCRYPT_SW_VERSION;
++	p[1] = dlen;
++	memcpy(p + 2, desc, dlen);
++	salt = p + 2 + dlen;
++	nonce = salt + KEYCRYPT_SW_SALT_LEN;
++	ct = nonce + KEYCRYPT_SW_NONCE_LEN;
++	ret = get_random_bytes_wait(salt, KEYCRYPT_SW_SALT_LEN);
++	if (ret) {
++		kfree(p);
++		return ret;
++	}
++	ret = sw_prepare(&gk, master, mlen, salt);
++	if (ret) {
++		kfree(p);
++		return ret;
++	}
++	ret = get_random_bytes_wait(nonce, KEYCRYPT_SW_NONCE_LEN);
++	if (ret) {
++		memzero_explicit(&gk, sizeof(gk));
++		kfree(p);
++		return ret;
++	}
++	prefix_len = 2 + dlen + KEYCRYPT_SW_SALT_LEN;
++	alen = sw_aad(aad, hdr, hdr_len, p, prefix_len);
++	aes_gcm_encrypt(ct, key, klen, ct + klen, aad, alen, nonce, &gk);
++	memzero_explicit(&gk, sizeof(gk));
++	out->data = p;
++	out->len = len;
++	return 0;
++}
++
++static int keycrypt_sw_unseal(const u8 *master, size_t mlen,
++			      const u8 *hdr, u32 hdr_len,
++			      const u8 *data, u32 len, u8 *key,
++			      size_t *klen)
++{
++	const u8 *salt, *nonce, *ct;
++	struct aes_gcm_key gk;
++	size_t dlen, clen, alen, prefix_len;
++	u8 aad[SW_AAD_MAX];
++	int ret;
++
++	if (len < 2 || data[0] != KEYCRYPT_SW_VERSION ||
++	    hdr_len > KEYCRYPT_HEADER_MAX)
++		return -EBADMSG;
++	dlen = data[1];
++	if (!dlen ||
++	    len < 2 + dlen + KEYCRYPT_SW_SALT_LEN + KEYCRYPT_SW_NONCE_LEN + 1 +
++		  KEYCRYPT_SW_TAG_LEN)
++		return -EBADMSG;
++	clen = len - 2 - dlen - KEYCRYPT_SW_SALT_LEN - KEYCRYPT_SW_NONCE_LEN -
++	       KEYCRYPT_SW_TAG_LEN;
++	if (clen > KEYCRYPT_SW_KEY_MAX)
++		return -EBADMSG;
++	salt = data + 2 + dlen;
++	nonce = salt + KEYCRYPT_SW_SALT_LEN;
++	ct = nonce + KEYCRYPT_SW_NONCE_LEN;
++	prefix_len = 2 + dlen + KEYCRYPT_SW_SALT_LEN;
++	alen = sw_aad(aad, hdr, hdr_len, data, prefix_len);
++	ret = sw_prepare(&gk, master, mlen, salt);
++	if (ret)
++		return ret;
++	ret = aes_gcm_decrypt(key, ct, clen, ct + clen, aad, alen, nonce, &gk);
++	memzero_explicit(&gk, sizeof(gk));
++	if (ret) {
++		memzero_explicit(key, clen);
++		return -EBADMSG;
++	}
++	*klen = clen;
++	return 0;
++}
++
++/*
++ * Copy the key material of the trusted key @desc that the caller can
++ * search for into @buf (MAX_KEY_SIZE bytes). No callout information, so no
++ * upcall: the key must exist, though it may still be under construction,
++ * and then this waits for it with the backend's handle held: the one wait
++ * without bound in this backend's callbacks. Not request_key_rcu(): it
++ * misses keys that the RCU walk cannot reach, such as those of the user
++ * keyring of a process without a session keyring.
++ */
++static int sw_master(const char *desc, u8 *buf, size_t *len)
++{
++	const struct trusted_key_payload *tp;
++	struct key *mk;
++	int ret;
++
++	mk = request_key(&key_type_trusted, desc, NULL);
++	if (IS_ERR(mk))
++		return PTR_ERR(mk) == -EACCES ? -EACCES : -ENOKEY;
++	down_read(&mk->sem);
++	tp = dereference_key_locked(mk);
++	if (key_validate(mk) || !tp || tp->key_len < MIN_KEY_SIZE ||
++	    tp->key_len > MAX_KEY_SIZE) {
++		ret = -ENOKEY;
++	} else {
++		memcpy(buf, tp->key, tp->key_len);
++		*len = tp->key_len;
++		ret = 0;
++	}
++	up_read(&mk->sem);
++	key_put(mk);
++	return ret;
++}
++
++/* The one option of the sw backend: "master=<description>" */
++static int sw_master_opt(const char *opts, const char **desc)
++{
++	if (!opts || strncmp(opts, "master=", 7) || !opts[7])
++		return -EINVAL;
++	*desc = opts + 7;
++	return 0;
++}
++
++static int sw_seal_key(const u8 *hdr, u32 hdr_len, const char *opts,
++		       const u8 *key, size_t klen, struct keycrypt_blob *out)
++{
++	u8 master[MAX_KEY_SIZE];
++	const char *desc;
++	size_t mlen;
++	int ret;
++
++	ret = sw_master_opt(opts, &desc);
++	if (ret)
++		return ret;
++	if (strlen(desc) > KEYCRYPT_SW_DESC_MAX)
++		return -EINVAL;
++	ret = sw_master(desc, master, &mlen);
++	if (!ret)
++		ret = keycrypt_sw_seal(master, mlen, hdr, hdr_len, desc, key,
++				       klen, out);
++	memzero_explicit(master, sizeof(master));
++	return ret;
++}
++
++static int sw_generate(struct keycrypt_backend *b,
++		       const struct keycrypt_meta *m, const u8 *hdr,
++		       u32 hdr_len, const char *opts,
++		       struct keycrypt_blob *out)
++{
++	u8 key[32];
++	int ret;
++
++	ret = get_random_bytes_wait(key, sizeof(key));
++	if (!ret)
++		ret = sw_seal_key(hdr, hdr_len, opts, key, sizeof(key), out);
++	memzero_explicit(key, sizeof(key));
++	return ret;
++}
++
++static int sw_import(struct keycrypt_backend *b,
++		     const struct keycrypt_meta *m, const u8 *hdr,
++		     u32 hdr_len, const char *opts, const u8 *key,
++		     size_t keylen, struct keycrypt_blob *out)
++{
++	return sw_seal_key(hdr, hdr_len, opts, key, keylen, out);
++}
++
++static int sw_load(struct keycrypt_backend *b, struct keycrypt_key *k,
++		   const char *opts)
++{
++	char desc[KEYCRYPT_SW_DESC_MAX + 1];
++	u8 master[MAX_KEY_SIZE];
++	struct keycrypt_sw_key *priv;
++	size_t mlen, dlen;
++	int ret;
++
++	if (opts)
++		return -EINVAL;
++	if (k->data_len < 2 || !k->data[1])
++		return -EBADMSG;
++	dlen = k->data[1];
++	if (k->data_len < 2 + dlen)
++		return -EBADMSG;
++	memcpy(desc, k->data + 2, dlen);
++	desc[dlen] = '\0';
++	if (strlen(desc) != dlen)
++		return -EBADMSG;
++
++	priv = kzalloc_obj(*priv);
++	if (!priv)
++		return -ENOMEM;
++	ret = sw_master(desc, master, &mlen);
++	if (!ret)
++		ret = keycrypt_sw_unseal(master, mlen, k->hdr, k->hdr_len,
++					 k->data, k->data_len, priv->key,
++					 &priv->len);
++	memzero_explicit(master, sizeof(master));
++	if (!ret && !keycrypt_key_len_valid(k->meta.alg, priv->len))
++		ret = -EBADMSG;
++	if (ret) {
++		kfree_sensitive(priv);
++		return ret;
++	}
++	k->priv = priv;
++	pr_warn_once("a key of the kernel tier is loaded: it is in clear in kernel memory\n");
++	return 0;
++}
++
++static void sw_destroy(struct keycrypt_backend *b, struct keycrypt_key *k)
++{
++	kfree_sensitive(k->priv);
++	k->priv = NULL;
++}
++
++struct sw_ctx {
++	u32 op;
++	union {
++		struct {
++			union {
++				struct aes_key    key;	    /* decrypt */
++				struct aes_enckey enc_key; /* encrypt-only */
++			};
++			u8 iv[AES_BLOCK_SIZE];
++		} cbc;
++		struct hmac_sha256_ctx mac;
++	};
++};
++
++static int sw_ctx_open(struct keycrypt_backend *b, struct keycrypt_key *k,
++		       u32 op, u8 *iv, void **ctx)
++{
++	struct keycrypt_sw_key *kk = k->priv;
++	struct sw_ctx *c;
++	int ret;
++
++	if (!kk)
++		return -EIO;
++	c = kzalloc_obj(*c, GFP_KERNEL_ACCOUNT);
++	if (!c)
++		return -ENOMEM;
++	c->op = op;
++	if (op == KEYCRYPT_OP_MAC || op == KEYCRYPT_OP_VERIFY) {
++		hmac_sha256_init_usingrawkey(&c->mac, kk->key, kk->len);
++	} else {
++		ret = op == KEYCRYPT_OP_ENCRYPT ?
++		      aes_prepareenckey(&c->cbc.enc_key, kk->key, kk->len) :
++		      aes_preparekey(&c->cbc.key, kk->key, kk->len);
++		if (ret) {
++			kfree_sensitive(c);
++			return -EIO;
++		}
++		memcpy(c->cbc.iv, iv, AES_BLOCK_SIZE);
++	}
++	*ctx = c;
++	return 0;
++}
++
++static int sw_update(struct keycrypt_backend *b, void *ctx, const u8 *in,
++		     u8 *out, size_t len)
++{
++	struct sw_ctx *c = ctx;
++
++	switch (c->op) {
++	case KEYCRYPT_OP_ENCRYPT:
++		aes_cbc_encrypt(out, in, len, c->cbc.iv, &c->cbc.enc_key);
++		break;
++	case KEYCRYPT_OP_DECRYPT:
++		aes_cbc_decrypt(out, in, len, c->cbc.iv, &c->cbc.key);
++		break;
++	default:
++		hmac_sha256_update(&c->mac, in, len);
++	}
++	return 0;
++}
++
++static int sw_final(struct keycrypt_backend *b, void *ctx, u8 *out,
++		    size_t out_size, size_t *len)
++{
++	struct sw_ctx *c = ctx;
++
++	if (c->op == KEYCRYPT_OP_MAC || c->op == KEYCRYPT_OP_VERIFY) {
++		if (out_size < SHA256_DIGEST_SIZE)
++			return -EIO;
++		hmac_sha256_final(&c->mac, out);
++		*len = SHA256_DIGEST_SIZE;
++	} else {
++		*len = 0;
++	}
++	return 0;
++}
++
++static void sw_ctx_free(struct keycrypt_backend *b, void *ctx)
++{
++	kfree_sensitive(ctx);
++}
++
++static const char * const sw_opts[] = { "master", NULL };
++
++static struct keycrypt_backend keycrypt_sw = {
++	.name		= "sw",
++	.tier		= KEYCRYPT_TIER_KERNEL,
++	.algs		= KEYCRYPT_ALGS_ALL,
++	.owner		= THIS_MODULE,
++	.opts		= sw_opts,
++	.generate	= sw_generate,
++	.import		= sw_import,
++	.load		= sw_load,
++	.destroy	= sw_destroy,
++	.ctx_open	= sw_ctx_open,
++	.update		= sw_update,
++	.final		= sw_final,
++	.ctx_free	= sw_ctx_free,
++};
++
++static int __init keycrypt_sw_init(void)
++{
++	int ret = keycrypt_register_backend(&keycrypt_sw);
++
++	if (!ret)
++		pr_warn("kernel tier enabled: its keys are in clear in kernel memory while loaded\n");
++	return ret;
++}
++module_init(keycrypt_sw_init);
++
++static void __exit keycrypt_sw_exit(void)
++{
++	keycrypt_unregister_backend(&keycrypt_sw);
++}
++module_exit(keycrypt_sw_exit);
++
++MODULE_DESCRIPTION("keycrypt sw backend, of the kernel tier");
++MODULE_LICENSE("GPL");
+diff --git a/security/keys/keycrypt/sw.h b/security/keys/keycrypt/sw.h
+new file mode 100644
+index 000000000000..30e24fb56ce3
+--- /dev/null
++++ b/security/keys/keycrypt/sw.h
+@@ -0,0 +1,30 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * keycrypt - the sw backend's blob fields and loaded-key state
++ *
++ * Copyright (C) 2026 Rodolfo Giometti <giometti@enneenne.com>
++ */
++
++#ifndef _SECURITY_KEYS_KEYCRYPT_SW_H
++#define _SECURITY_KEYS_KEYCRYPT_SW_H
++
++#include <linux/types.h>
++
++#define KEYCRYPT_SW_VERSION	1
++#define KEYCRYPT_SW_SALT_LEN	32
++#define KEYCRYPT_SW_NONCE_LEN	12
++#define KEYCRYPT_SW_TAG_LEN	16
++#define KEYCRYPT_SW_DESC_MAX	255
++#define KEYCRYPT_SW_KEY_MAX	64
++
++/**
++ * struct keycrypt_sw_key - the sw backend's state for a loaded key
++ * @len: bytes in @key
++ * @key: the key, in clear
++ */
++struct keycrypt_sw_key {
++	size_t	len;
++	u8	key[KEYCRYPT_SW_KEY_MAX];
++};
++
++#endif /* _SECURITY_KEYS_KEYCRYPT_SW_H */
+-- 
+2.43.0
 
-Yes, I copy-pasted from the linked email and since it was raising the
-same issue I kept it along yours (I should've probably used >>).
-
->>=20
->> Jeff, this is standard "how to make progress".
->> I completely don't agree with this argument.
->> We cannot use this argument to block progress.
->> Is it already a long standing practice for userspace file servers (samba=
-)
->> to probe the host filesystem for specific features and fall back to
->> alternative implementation if they are not supported.
->>=20
->> There will be nothing new in this case, that's the only way to
->> make forward progress - define the API, make support queryable,
->> implement the feature in some filesystems, implement consumers, repeat.
->>=20
->> Also for nfsd, that's the only way to ever implement settable
->> FATTR4_TIME_CREATE which is the protocol allows.
->> This is never going to be possible with custom xattrs.
->> So I must say that I don't understand the objection from you and Chuck
->>=20
->
-> I'm not saying that to try and block progress. I'm just pointing out
-> that it is a rather heavy lift to add a new inode field. This will
-> require revving the on-disk format for most local filesystems, and it
-> will take years to roll out. If we can get away with just making the
-> btime settable, that seems like a much simpler way to do this.
->
-> FWIW, Omar Sandoval apparently tried to add AT_UTIME_BTIME to
-> utimensat() back in 2019, but it never made it in. It might be good to
-> look over the objections to it then to see if they can be overcome.
-
-That would also be fine for me, tho adding ptime as a new timestamp does
-increase completeness, which would be better IMO.
-
-Thanks,
-koraynilay
-
---4827e7d7bbe23dd35858a8366dc75e2a45dd46e9129f07e8a6f88ac53c0e
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCav2wRgAKCRA0bnTtJTDo
-OLi8AP9On9SVdP2pKaY1bWdUmRmtD+y7ePm2dX8InXgjigrpogEA8jJF9kAz0j67
-U81poULRLeUHl4UqJ/jCdHtr6gV6YQM=
-=E9c9
------END PGP SIGNATURE-----
-
---4827e7d7bbe23dd35858a8366dc75e2a45dd46e9129f07e8a6f88ac53c0e--
