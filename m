@@ -1,50 +1,50 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.149.156.87
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.149.156.91
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
 	t=1795010680;
-	b=ISMX5eFHG1VQQf11AzzyPjv+mKSeKzhrBy207hg+aK0CWYUrUBh3WJZZg7JLTZVNXtCY
-	 G8nwW6lsn1QkVBp3CTKDCkB0l3aCru82YDxmttSg5yXgtDOhsqzURTEibUtfMuPy3wipS
-	 5wgT+KLoqxVzntaoUjGZPOuGtb66GIkHbSMX73HMO0N/a6DTikK/V7Lv3cZpG+2MLXATm
-	 +wut9tuAt3qz8b+pqZsFxu6AMszk7nFXK81UmkFjg1nWfcNr+PfSWvn6GfFaHMfebNWBm
-	 AJWjB66bQJeRID5mGC8CMi3Wg/fczdfQpCGip4ZwbfFTmWvsOWrAFYuv0mvtZ8m/rDw==
+	b=AokEOdOi6RbGycnxZhtkCjjO/Ry/vNQ4atXj95hxodOiJ0TjvwteuAxtbgZElp9qIJpO
+	 /7ARZAAIw2CijFVm88YVt+jB9vg1MhR+L988q/ouhRtVupFwCpdJI65lMnJJY4uVPxhzn
+	 /cOXZd182XqpRo1jkkI3iZJrDYT2Az28PZgKU/Qi2SYb6kpa5j9s9wiFyH46UStBI2XI5
+	 AnzPOEdm7+9ofhNUsl0k6OZGVRlmoI1R+5BH/rhr9wCCBcVnunmjettKHCIwaH+CimG3x
+	 IotGIC/VHTV4OU3etU7+BjinWFuu+yB5SodaOHmJf5MZEwVxwyupd18x3JE12mNZNHQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
 	a=rsa-sha256; c=relaxed/relaxed; t=1795010680;
 	h=DMARC-Filter:Received:DKIM-Signature:From:To:Cc:Subject:Date:
 	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding:X-CMAE-Envelope;
-	bh=z/HJIcpabCxs0VbBc5qQ1+MCFiToabINpitp6JkLwho=;
-	b=Zd8v0/hRj4R1PFYqizpfqy+jXNgTHAsk7oRaB95O6qhuqekNfFg3bRgFBYUZXsN6I+cf
-	 /bPfvMdREEbcOlq7e1F+FENH2mTuARUgeOyH6+S/x728Yf/SuSh+2d65Xbn0eOrP+hzob
-	 2sFpIPwnjIq2VTozy9YPiOLs9/vL/0hf4yWY2k1kIIDs4YLGuEwi4gYYcAc/RHhNjWVa5
-	 /GhBPi+XPnoiyTP++4Oe6nmiekOuC7QVg2tMrvV+oxxKoWemmBZFYJFJNpBbBkYSOezBf
-	 4kPkHCS1mQNRLZKAa1X+EczKJrwiO++FSz3jmFpnYDHaH7rGhUuEayLhlkhawezQA0g==
+	bh=gr8Qv6oDz1kKxMIQvC8LrpYwAhBBUywYgZsdVMhA6/Q=;
+	b=Wkk+0kcDJZt4YvbVBAiYfWkDnk03Yj60ZW0fm0YHtBURfPS6GZDLaRmZZz1LuHEw9BNA
+	 nPgY5lRxB4klyvdBfRqAHCd8jdjILuZqr9AKZAbaJSWi2GjKwFFvvnruvuBaSbP8enkKK
+	 0g2NzHgiy4ZsrPVGQuSvfWlUYmWyEvAcQN3/b2xNDWTT/3XLOpUDky9sSIgf4jKFZL1kR
+	 qJL96TgxKAHaJFp0Vlgb4Q3ur20PiCiuq3ctMDpYPEagCQ7EY3NQF2MAyBdCL3a8ohrGk
+	 yirQi0xXQGnHQitgBqHsAZoWWVa/ww5bFUH7z/4/AiHmghHk8SDyA3yiUm2ZxheGvuQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=enneenne.com;
 	spf=pass smtp.mailfrom=enneenne.com;
-	dkim=pass header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=lUEUd6nx;
-	arc=none smtp.remote-ip=62.149.156.87
-Received: from smtpcmd0987.aruba.it (smtpcmd0987.aruba.it [62.149.156.87])
+	dkim=pass header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=dookSa6H;
+	arc=none smtp.remote-ip=62.149.156.91
+Received: from smtpcmd0991.aruba.it (smtpcmd0991.aruba.it [62.149.156.91])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 74507606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0E97F60A2604
 	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:04:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 74507606A320
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0E97F60A2604
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=enneenne.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=enneenne.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=lUEUd6nx
+	dkim=pass (2048-bit key) header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=dookSa6H
 Received: from polimar.tail4f75e6.ts.net ([101.57.122.26])
 	by Aruba SMTP with ESMTPSA
-	id TgGvxLK1X6q8sTgH0xc6NE; Wed, 18 Nov 2026 15:04:30 +0100
+	id TgGvxLK1X6q8sTgH0xc6OJ; Wed, 18 Nov 2026 15:04:31 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=aruba.it; s=a1;
-	t=1795010670; bh=ri1z1nmKrZJAIeer2FvVgJMXr755InTgnrOMRLpwRDE=;
+	t=1795010671; bh=LFu8MgDXQ6MAAoGPfVc8BvfkRFpgUYXzNzNAuKZ4MPE=;
 	h=From:To:Subject:Date:MIME-Version;
-	b=lUEUd6nx9bfWcWkMOFl70pUcMUi9A8djTq+aXLhAYQ3fSB1ZmCqTyQW9G4u9+t4bO
-	 t2bfVLxS9FTArdx4n3MgQRkLNGetjJ/h5OLu/E60SiCMXCsn2QEOeWCuIBYJN8DoXD
-	 g9dMhzS3eC2/GJFssiGuq2eQu63qIO32uTOqb03uW45W9JFjuhP3cPs4bWAm9c6h/p
-	 gOqIDZjSAZWkLUnO8gp1hD+GNQBE8cnVZWowhnhn1/s23x4ro8vqmiYWJpQCdZMATj
-	 A/lZaliSVI7/owxP/V/hbo9QGS+/j9CtJfWFnsnKyWW0FPMxwh5HDiwe4zmfpkZWdU
-	 KdclpE8NEzqVg==
+	b=dookSa6HuUStJcyUT1RFUrEIDYfmojNRQrDx94g0U26X9U8I9XpoNdYQk5ogJ61pu
+	 fNBdncXbI3b097oC9PduVNDFeCfuAiaAQHiQCPm4XGJ4bffS28jlDp2D0M05uL6wqA
+	 vhvH4LFcJChkflk4XWoaLYhqn2gXxi1hY4AT4vLGETTK+Dbpv6PV8uKP+bss26+XsF
+	 uIOKwF+GntJgMl+S+VrBmZaC8OrDwo6T5ltcSqeBhVfII+Fi7DRephkl6M8+wgIaas
+	 aARlQWivIiHafgcY7UArNGq4K2C3mTzwePW98dTRkHZJ5nSV6Xn9tVg62XkVM5yPdy
+	 7SqUiE6YyU9Yg==
 From: Rodolfo Giometti <giometti@enneenne.com>
 To: David Howells <dhowells@redhat.com>,
 	Jarkko Sakkinen <jarkko@kernel.org>,
@@ -79,9 +79,9 @@ Cc: Herbert Xu <herbert@gondor.apana.org.au>,
 	linuxppc-dev@lists.ozlabs.org,
 	linux-kernel@vger.kernel.org,
 	Rodolfo Giometti <giometti@enneenne.com>
-Subject: [RFC PATCH 2/9] KEYS: keycrypt: Add the sw backend
-Date: Wed, 18 Nov 2026 15:04:14 +0100
-Message-ID: <20261118140421.584086-3-giometti@enneenne.com>
+Subject: [RFC PATCH 3/9] KEYS: keycrypt: Add the OP-TEE backend
+Date: Wed, 18 Nov 2026 15:04:15 +0100
+Message-ID: <20261118140421.584086-4-giometti@enneenne.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261118140421.584086-1-giometti@enneenne.com>
 References: <20261118140421.584086-1-giometti@enneenne.com>
@@ -95,560 +95,563 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CMAE-Envelope: MS4xfP3GH+/uUH2UT8xMvG9D4FaNvSpSliR0tTjVUWsuRp2/IOriQDotlmu0kb3Bvcv48aoM5XNmWbhv5eiS7QNJbgeBC1jsSjfOF972Rnh0emTdPjKGem6H
- R8FQM5ApEvDUk+7C5B64URlE/DqsWbFPmIqF5Fdxjbuw5qXpIO8d3te0cEC82Z1yxBQsfy5fV3Q6vZ1LuvDllWjcXQWhDr7/HbtU7r6PNWGUC6idVx8Dr8+B
- ek4wY1yZBCSekXremPsy96JR7VaG9YbC7dlZs/oF6FLaX56+khmMFDlKpg5Dga4RtCmlhP/PTf3/Dh/xG0Z35IxWGkvCS6mi3AQfMrTerV4gSjhBfTQ8TQhO
- 2WtVsUgvTKAdiS2UhdVIk71THz3tgRxdeiBji8ZF+HADmbWgIlux4FlE4A0p3VP28f3gPJjwZKDH6AglEq+tcr1rjRLY8s7zrvU3ThHx7VMVVqpygaf93J27
- DHVEmdvKZFfR2UpWKSpSpKe8bJ0gn5UBlCLF0U9qDWYm+OsTcJC1+LnMhIjs4V4ikBIZNYQ72dmcSA3wyxBIE0HTPEzGG5/FK79bEa+OjwBYPRNnZMFu4/jE
- 8fLscBn43xcxUZDE5f739I9U6VsNnUIH18fH8PjS9D9PsDJMhGMIuXaIiTxfCA1eB5mKHBc0ZnDALP0lYEcdczQp4+tzuYYNQ5Dm+6QH5rRsXS2mo/04EzVe
- gOWbCEMppMR8Ix+CM/H9ZCn3Merx9nyppgAhPDvrxQg21bU2Slt3lq4OPuwCaUo4PM1BGE3mSkSH/K1Lh7n2baw0oAovFNLJASml8hcwqvwIut+vbNsDev+/
- jL4TwCncokB9Gi9URV3sZeunfcG9elxQWWwLF70sRfu/Lj5CRo/LRnLLovR6bdbfJLbQL9PSC4rTIB9ezDgA8pCsliQo+8sfWszS7g+kZLsqcJe/pCzk3G2a
- K+aXWYYMBQ0+ZNodOykTnAu3U4Hpwf+A2Zhq0OsFvpNa5DfzMmhakS1mds1nPPfv5ZvQqawz4umbE/HXrLCnbCHipO7LH80m7k96Pvpd8GYdU5c+qkfL6OQj
- fBCugevbR4dYV71GmnWwMQf65uCPFfgEkHD8W5tyK0vJk30l/gaBt/FPPDGig/O2ukfHCRY0tThWdOkh7mGihZ6qm0bRs1fluXnNy3LNQBVXy/6c/Tec1ozG
- NUtfvoTF17PzVAAZusBifuJoXObZh4EK1MP30GWBGgaUpFqcU8vImlEjsHJ2AZ7eVxR1conCt1qT4W3JkVapXZnACuU4vDw/6BLTMqZ/9OLmP+rDNjRBJRSv
- hk8hlS8qrmlHW4pWqVe6at3+Hlu3MLpacBiP3W/Elb7Irg4wAAw=
+X-CMAE-Envelope: MS4xfN4aS6QuPJBvjUCjh1TLCqNOiwD9JJZC0RsoyzsxnmWljiDL2LPxxCkgYdSevusWK9TrDQ5DHRnnCOXccq0RXArif5cEVTOjYKo65bKOXxLZWsOMFfsM
+ CNa7WFXtN26uSFYze9sOM2cVo9HyHPSCn0C9zs5MyaXUvuiBbKQSgxUkGXeFTzpG8JlkNJGGgJejH1NJDLcHeWMXGp3aNj/3cDKJaf0v1+EA8JrAkX6hk4VZ
+ 4GI5u+PuQbHgiZEOr97nrGEdTE6D8L14y9X297u9AISUfBhtyqmShzb1NrnIAlsPa6sgCOwdB8MqTNnlczKGeYmITsP2JA8nEsDmPT8Ru1/+G2wccBs3WLd4
+ RPD1HtxcE4/SC0sIUd0jjScht6MZDK0+E0je+RjGofRzPeOxs2+1aVPkb4jfdjR3jt8TWi/1DOgC6Cd0JJqo+2yeXlUG/fBVo1+DC0qEKNtXLIXujw2j8PXh
+ QMaCJD14nEO3Rj+APPinVfcwL703gaxEBNqc5GTde33ohF+ASMxQB8zNtzxzg2B+9kpm2ADbaFRYWPplH1bG4lQHMoNvelVnO3SPO6QXWQzY7OrNJxnfnpRh
+ plHXSsAnWmVHJK6IJGlR5QFCSlozlrVyrf8lvUi9Zsq+QNydzlQ27TR0qq8RZAklFXQiY1T+py9oeGuUEZcMZEriPI8LEKf12EIzrwHcxic21Xaq9pOVnI86
+ hWfVw4dfs4Mbip9VPql+PufjFu1M55Z5evoUMq3uIPIEM0jI40h+3xt7A60aGxLW8CWviexh2DKaWyLd1PnpxLgVAfoZyzR27vzS23s4T4a8q5WVaoT+B3W/
+ sWOWxfNQN2buIkFNKe0uX7KcUBsYB6nTwMb4wSvEbx9p4XBe/BFGk1K2uu42PSD4cCXIg0NdSnSxq5xBj1nfvhduZI3/esILrSYAm33gYrl9shjDFrCU0j0e
+ n9XxPZE1z1fOXP1C7CcPGPa5cDy2RCGQY29YA3fxzziKKYp79xWTSEwJQXYdG5i3a9xcTC0WACHFhgyvhpraczIkCRHqluGT9M0QPw4vwaPsIb/lq0cKDr3l
+ 7VDU59a2zN4n1tVs33BoRdeTpPZSO3w+tyEA6FaeZ1i/VcMSHucDlHDtFMuYaOy9PIB2iqdVYross3U+GS9FCGXdtfeO7qBV4jQoxTa1Q+5EISuS1wwpkeuM
+ N2qRCd+rTJG7XStsJwCZKaxBfOlWydX9QrM/QLwEf4oHn52Ewr8ykW2VffH5NyE0Nw571iXmQKhQmWRl8SvRiO8HM8UlVBckmumJfNGH6p1RsmB0sn2T3rf/
+ LMCcmxij76mX17pQPUGFGGSMSEwnrevkVIVZvh5fouVHmVw789Q=
 
-Systems with neither a TEE nor a crypto engine able to keep keys still
-want keys that user space cannot read and that are bound to one
-algorithm and purpose, and the same interface on every device.
+Keys of the kernel tier are in clear in kernel memory while loaded,
+and nothing the keycrypt core checks holds against a compromised
+kernel. Add "optee", a backend of the tee tier.
 
-Add the "sw" backend, of the kernel tier: it seals each key with
-AES-256-GCM under a key derived with HMAC-SHA256 from a "trusted" key
-named by master=, authenticating the keycrypt header with it, and runs
-the operations with the kernel's crypto library. A loaded key is in
-clear in kernel memory until revoked or destroyed, which the kernel
-log says when the backend registers and when the first key is loaded;
-the backend is chosen only by tier=kernel, by backend=sw, or when no
-backend of a higher tier is registered, and a system that must not use
-it raises the system tier above it (CONFIG_KEYCRYPT_SYSTEM_TIER_*), or
-leaves this option off.
+One TA session is one operation context. The TA authenticates the
+key's header again when the context opens, refuses an operation the
+key's purpose does not allow, keeps the CBC chain and the HMAC state,
+and compares a tag to verify without returning it: what keycrypt.rst's
+"Backend requirements" asks of a backend against a compromised kernel.
 
-In that derivation the trusted key's material is what the HMAC
-processes, under a label and a random salt as its key, and not the
-other way round: AF_ALG lets user space name a trusted key by its
-serial number as the key of an HMAC socket, so with the material as the
-key anyone allowed to search the master could recompute the sealing
-key of every blob.
-
-It depends on TRUSTED_KEYS and is a module when trusted keys are one.
+The TA accepts only kernel clients. It is ta/keycrypt, written for
+OP-TEE and not proposed to OP-TEE yet.
 
 Signed-off-by: Rodolfo Giometti <giometti@enneenne.com>
 ---
- security/keys/keycrypt/Kconfig  |  36 ++-
+ security/keys/keycrypt/Kconfig  |  17 ++
  security/keys/keycrypt/Makefile |   2 +
- security/keys/keycrypt/sw.c     | 404 ++++++++++++++++++++++++++++++++
- security/keys/keycrypt/sw.h     |  30 +++
- 4 files changed, 468 insertions(+), 4 deletions(-)
- create mode 100644 security/keys/keycrypt/sw.c
- create mode 100644 security/keys/keycrypt/sw.h
+ security/keys/keycrypt/optee.c  | 437 ++++++++++++++++++++++++++++++++
+ security/keys/keycrypt/optee.h  |  37 +++
+ 4 files changed, 493 insertions(+)
+ create mode 100644 security/keys/keycrypt/optee.c
+ create mode 100644 security/keys/keycrypt/optee.h
 
 diff --git a/security/keys/keycrypt/Kconfig b/security/keys/keycrypt/Kconfig
-index e1d1b8e2a58b..50fd4cb3b1d2 100644
+index 50fd4cb3b1d2..e61922933bd7 100644
 --- a/security/keys/keycrypt/Kconfig
 +++ b/security/keys/keycrypt/Kconfig
-@@ -34,10 +34,13 @@ choice
- 	help
- 	  The lowest tier a keycrypt key may be used at when the kernel
- 	  starts: KEYCTL_CRYPT_OPEN refuses a key of a lower tier, which
--	  can still be created and loaded. The keycrypt.system_tier= boot
--	  parameter and the kernel.keys.keycrypt_system_tier sysctl can
--	  only raise it, so a signed kernel image sets a floor its command
--	  line cannot lower.
-+	  can still be created and loaded. A key of the kernel tier so
-+	  created or loaded is in clear in kernel memory all the same, as
-+	  its trusted master is: to have none, build without
-+	  KEYCRYPT_SW, the in-tree backend of that tier. The
-+	  keycrypt.system_tier= boot parameter and the
-+	  kernel.keys.keycrypt_system_tier sysctl can only raise it, so a
-+	  signed kernel image sets a floor its command line cannot lower.
+@@ -98,3 +98,20 @@ config KEYCRYPT_SW
+ 	  masters (see the documentation).
  
- 	  The default sets no floor: which backends a kernel builds says
- 	  nothing about which will be present when it runs (a
-@@ -70,3 +73,28 @@ config KEYCRYPT_SYSTEM_TIER_HSM
- 	  keycrypt key can be used at all.
- 
- endchoice
+ 	  If you are unsure as to whether this is required, answer N.
 +
-+config KEYCRYPT_SW
-+	tristate "The sw keycrypt backend, of the kernel tier"
-+	depends on KEYCRYPT && TRUSTED_KEYS
-+	select CRYPTO_LIB_AES_GCM
-+	select CRYPTO_LIB_AES_CBC
-+	select CRYPTO_LIB_SHA256
++config KEYCRYPT_OPTEE
++	tristate "Keycrypt keys held by OP-TEE"
++	depends on KEYCRYPT && TEE
 +	help
-+	  This option provides the "sw" keycrypt backend: keys sealed
-+	  with AES-256-GCM under a key derived from a "trusted" key, and
-+	  used by the kernel itself. While such a key is loaded, it is in
-+	  clear in kernel memory: this lowers the security of the system,
-+	  and the kernel says so in its log when the backend registers and
-+	  when the first such key is loaded. This backend is chosen by
-+	  tier=kernel or backend=sw, and for a key created with
-+	  neither a tier option nor backend= whenever no backend of a
-+	  higher tier is registered.
++	  This option provides the "optee" keycrypt backend, of the tee
++	  tier: keys sealed by the keycrypt Trusted Application under a
++	  key derived from the device's hardware unique key, and used only
++	  inside it. The kernel never holds such a key in clear, except
++	  one given to it to import. The keys are only as secret as that
++	  hardware unique key: with OP-TEE's test value (QEMU, or a board
++	  whose key is not provisioned) anyone can unseal them.
 +
-+	  It needs trusted keys (TRUSTED_KEYS) to seal and load keys, and
-+	  is built as a module when trusted keys are one.
-+
-+	  Use trusted keys created with blob authorization or a policy as
-+	  masters (see the documentation).
++	  It needs OP-TEE with the keycrypt TA built in as an early TA,
++	  which the driver finds on the TEE bus.
 +
 +	  If you are unsure as to whether this is required, answer N.
 diff --git a/security/keys/keycrypt/Makefile b/security/keys/keycrypt/Makefile
-index 8910fb0156e7..5a2e222a6908 100644
+index 5a2e222a6908..f051050428cd 100644
 --- a/security/keys/keycrypt/Makefile
 +++ b/security/keys/keycrypt/Makefile
-@@ -1,3 +1,5 @@
- # SPDX-License-Identifier: GPL-2.0-only
- 
+@@ -3,3 +3,5 @@
  obj-y += core.o ctx.o
-+obj-$(CONFIG_KEYCRYPT_SW) += keycrypt_sw.o
-+keycrypt_sw-y := sw.o
-diff --git a/security/keys/keycrypt/sw.c b/security/keys/keycrypt/sw.c
+ obj-$(CONFIG_KEYCRYPT_SW) += keycrypt_sw.o
+ keycrypt_sw-y := sw.o
++obj-$(CONFIG_KEYCRYPT_OPTEE) += keycrypt_optee.o
++keycrypt_optee-y := optee.o
+diff --git a/security/keys/keycrypt/optee.c b/security/keys/keycrypt/optee.c
 new file mode 100644
-index 000000000000..f1ff4de4afc6
+index 000000000000..5a3ab6f825f1
 --- /dev/null
-+++ b/security/keys/keycrypt/sw.c
-@@ -0,0 +1,404 @@
++++ b/security/keys/keycrypt/optee.c
+@@ -0,0 +1,437 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * keycrypt - the sw backend, of the kernel tier: keys sealed under a
-+ * trusted key, used by the kernel itself
-+ *
-+ * The blob's layout and its GCM key are in keycrypt.rst, "The sw
-+ * backend".
++ * keycrypt - the OP-TEE backend
 + *
 + * Copyright (C) 2026 Rodolfo Giometti <giometti@enneenne.com>
 + */
 +
-+#include <crypto/aes-cbc.h>
-+#include <crypto/aes-gcm.h>
-+#include <crypto/sha2.h>
-+#include <keys/trusted-type.h>
++#include <keys/keycrypt.h>
 +#include <linux/err.h>
-+#include <linux/init.h>
-+#include <linux/key.h>
 +#include <linux/module.h>
-+#include <linux/random.h>
++#include <linux/mutex.h>
 +#include <linux/slab.h>
 +#include <linux/string.h>
-+#include "keycrypt.h"
-+#include "sw.h"
++#include <linux/tee_drv.h>
++#include <linux/uuid.h>
++#include "optee.h"
 +
-+/* <keys/trusted-type.h> redefines pr_fmt; reassert ours after it */
-+#undef pr_fmt
-+#define pr_fmt(fmt) "keycrypt: " fmt
++#define KC_KEY_MAX	64	/* the longest key, hmac-sha256's */
 +
-+#define SW_LABEL	"keycrypt kernel-tier v1"
-+#define SW_AAD_MAX	(KEYCRYPT_HEADER_MAX + 2 + KEYCRYPT_SW_DESC_MAX + \
-+			 KEYCRYPT_SW_SALT_LEN)
++/*
++ * Offsets in a shared buffer, which carries one call's parameters at a
++ * time: header, blob and imported key for a control call; header, blob
++ * and IV for CTX_OPEN; data and tag for a context's later calls.
++ */
++#define KC_SHM_HDR	0
++#define KC_SHM_BLOB	(KC_SHM_HDR + KEYCRYPT_HEADER_MAX)
++#define KC_SHM_KEY	(KC_SHM_BLOB + KC_TA_DATA_MAX)
++#define KC_CTL_SIZE	(KC_SHM_KEY + KC_KEY_MAX)
++#define KC_SHM_DATA	0
++#define KC_SHM_TAG	(KC_SHM_DATA + KEYCRYPT_UPDATE_MAX)
++#define KC_SHM_IV	(KC_SHM_TAG + KEYCRYPT_MAC_LEN)
++#define KC_IV_LEN	sizeof_field(struct keycrypt_open_params, iv)
++#define KC_CTX_SIZE	(KC_SHM_IV + KC_IV_LEN)
 +
-+static int sw_prepare(struct aes_gcm_key *gk, const u8 *master, size_t mlen,
-+		      const u8 *salt)
++static_assert(KC_SHM_BLOB + KC_TA_DATA_MAX <= KC_SHM_TAG);
++static_assert(KEYCRYPT_UPDATE_MAX <= KC_TA_BUF_MAX);
++
++/**
++ * struct kc_optee - the backend's link to the TA
++ * @tee: the TEE context of every session, NULL while no TA device is bound
++ * @uuid: the TA's
++ * @ctl: the control session (GENERATE, IMPORT, CHECK), open while the
++ *	backend is registered
++ * @ctl_shm: its shared buffer
++ * @ctl_va: @ctl_shm's kernel address
++ * @ctl_lock: one control call at a time, the one @ctl_shm holds
++ */
++struct kc_optee {
++	struct tee_context *tee;
++	u8 uuid[TEE_IOCTL_UUID_LEN];
++	u32 ctl;
++	struct tee_shm *ctl_shm;
++	u8 *ctl_va;
++	struct mutex ctl_lock;	/* serialises the control calls */
++};
++
++/* A context: a TA session of its own, fixed to one operation */
++struct kc_optee_ctx {
++	u32 session;
++	u8 alg;
++	u32 op;
++	struct tee_shm *shm;
++	u8 *va;
++};
++
++static struct kc_optee kc_optee = {
++	.ctl_lock = __MUTEX_INITIALIZER(kc_optee.ctl_lock),
++};
++
++static void kc_memref(struct tee_param *p, u64 attr, struct tee_shm *shm,
++		      size_t offs, size_t size)
 +{
-+	u8 label[sizeof(SW_LABEL) - 1 + KEYCRYPT_SW_SALT_LEN];
-+	u8 dk[SHA256_DIGEST_SIZE];
-+	int ret;
-+
-+	memcpy(label, SW_LABEL, sizeof(SW_LABEL) - 1);
-+	memcpy(label + sizeof(SW_LABEL) - 1, salt, KEYCRYPT_SW_SALT_LEN);
-+	/*
-+	 * The master is the data, never the key: AF_ALG keys an HMAC with
-+	 * a trusted key given by serial, so whoever may search the master
-+	 * could otherwise compute this key.
-+	 */
-+	hmac_sha256_usingrawkey(label, sizeof(label), master, mlen, dk);
-+	ret = aes_gcm_preparekey(gk, dk, sizeof(dk), KEYCRYPT_SW_TAG_LEN);
-+	memzero_explicit(dk, sizeof(dk));
-+	return ret;
-+}
-+
-+static size_t sw_aad(u8 *aad, const u8 *hdr, u32 hdr_len, const u8 *prefix,
-+		     size_t prefix_len)
-+{
-+	memcpy(aad, hdr, hdr_len);
-+	memcpy(aad + hdr_len, prefix, prefix_len);
-+	return hdr_len + prefix_len;
-+}
-+
-+static int keycrypt_sw_seal(const u8 *master, size_t mlen,
-+			    const u8 *hdr, u32 hdr_len,
-+			    const char *desc, const u8 *key,
-+			    size_t klen, struct keycrypt_blob *out)
-+{
-+	size_t dlen = strlen(desc), prefix_len, alen, len;
-+	struct aes_gcm_key gk;
-+	u8 aad[SW_AAD_MAX];
-+	u8 *p, *salt, *nonce, *ct;
-+	int ret;
-+
-+	if (!dlen || dlen > KEYCRYPT_SW_DESC_MAX ||
-+	    hdr_len > KEYCRYPT_HEADER_MAX || !klen ||
-+	    klen > KEYCRYPT_SW_KEY_MAX)
-+		return -EINVAL;
-+	len = 2 + dlen + KEYCRYPT_SW_SALT_LEN + KEYCRYPT_SW_NONCE_LEN + klen +
-+	      KEYCRYPT_SW_TAG_LEN;
-+	p = kmalloc(len, GFP_KERNEL);
-+	if (!p)
-+		return -ENOMEM;
-+	p[0] = KEYCRYPT_SW_VERSION;
-+	p[1] = dlen;
-+	memcpy(p + 2, desc, dlen);
-+	salt = p + 2 + dlen;
-+	nonce = salt + KEYCRYPT_SW_SALT_LEN;
-+	ct = nonce + KEYCRYPT_SW_NONCE_LEN;
-+	ret = get_random_bytes_wait(salt, KEYCRYPT_SW_SALT_LEN);
-+	if (ret) {
-+		kfree(p);
-+		return ret;
-+	}
-+	ret = sw_prepare(&gk, master, mlen, salt);
-+	if (ret) {
-+		kfree(p);
-+		return ret;
-+	}
-+	ret = get_random_bytes_wait(nonce, KEYCRYPT_SW_NONCE_LEN);
-+	if (ret) {
-+		memzero_explicit(&gk, sizeof(gk));
-+		kfree(p);
-+		return ret;
-+	}
-+	prefix_len = 2 + dlen + KEYCRYPT_SW_SALT_LEN;
-+	alen = sw_aad(aad, hdr, hdr_len, p, prefix_len);
-+	aes_gcm_encrypt(ct, key, klen, ct + klen, aad, alen, nonce, &gk);
-+	memzero_explicit(&gk, sizeof(gk));
-+	out->data = p;
-+	out->len = len;
-+	return 0;
-+}
-+
-+static int keycrypt_sw_unseal(const u8 *master, size_t mlen,
-+			      const u8 *hdr, u32 hdr_len,
-+			      const u8 *data, u32 len, u8 *key,
-+			      size_t *klen)
-+{
-+	const u8 *salt, *nonce, *ct;
-+	struct aes_gcm_key gk;
-+	size_t dlen, clen, alen, prefix_len;
-+	u8 aad[SW_AAD_MAX];
-+	int ret;
-+
-+	if (len < 2 || data[0] != KEYCRYPT_SW_VERSION ||
-+	    hdr_len > KEYCRYPT_HEADER_MAX)
-+		return -EBADMSG;
-+	dlen = data[1];
-+	if (!dlen ||
-+	    len < 2 + dlen + KEYCRYPT_SW_SALT_LEN + KEYCRYPT_SW_NONCE_LEN + 1 +
-+		  KEYCRYPT_SW_TAG_LEN)
-+		return -EBADMSG;
-+	clen = len - 2 - dlen - KEYCRYPT_SW_SALT_LEN - KEYCRYPT_SW_NONCE_LEN -
-+	       KEYCRYPT_SW_TAG_LEN;
-+	if (clen > KEYCRYPT_SW_KEY_MAX)
-+		return -EBADMSG;
-+	salt = data + 2 + dlen;
-+	nonce = salt + KEYCRYPT_SW_SALT_LEN;
-+	ct = nonce + KEYCRYPT_SW_NONCE_LEN;
-+	prefix_len = 2 + dlen + KEYCRYPT_SW_SALT_LEN;
-+	alen = sw_aad(aad, hdr, hdr_len, data, prefix_len);
-+	ret = sw_prepare(&gk, master, mlen, salt);
-+	if (ret)
-+		return ret;
-+	ret = aes_gcm_decrypt(key, ct, clen, ct + clen, aad, alen, nonce, &gk);
-+	memzero_explicit(&gk, sizeof(gk));
-+	if (ret) {
-+		memzero_explicit(key, clen);
-+		return -EBADMSG;
-+	}
-+	*klen = clen;
-+	return 0;
++	p->attr = attr;
++	p->u.memref.shm = shm;
++	p->u.memref.shm_offs = offs;
++	p->u.memref.size = size;
 +}
 +
 +/*
-+ * Copy the key material of the trusted key @desc that the caller can
-+ * search for into @buf (MAX_KEY_SIZE bytes). No callout information, so no
-+ * upcall: the key must exist, though it may still be under construction,
-+ * and then this waits for it with the backend's handle held: the one wait
-+ * without bound in this backend's callbacks. Not request_key_rcu(): it
-+ * misses keys that the RCU walk cannot reach, such as those of the user
-+ * keyring of a process without a session keyring.
++ * The TA's answers that reach user space as themselves; any other is
++ * -EIO, as the core narrows a backend's errors anyway.
 + */
-+static int sw_master(const char *desc, u8 *buf, size_t *len)
++static int kc_errno(u32 res)
 +{
-+	const struct trusted_key_payload *tp;
-+	struct key *mk;
-+	int ret;
-+
-+	mk = request_key(&key_type_trusted, desc, NULL);
-+	if (IS_ERR(mk))
-+		return PTR_ERR(mk) == -EACCES ? -EACCES : -ENOKEY;
-+	down_read(&mk->sem);
-+	tp = dereference_key_locked(mk);
-+	if (key_validate(mk) || !tp || tp->key_len < MIN_KEY_SIZE ||
-+	    tp->key_len > MAX_KEY_SIZE) {
-+		ret = -ENOKEY;
-+	} else {
-+		memcpy(buf, tp->key, tp->key_len);
-+		*len = tp->key_len;
-+		ret = 0;
-+	}
-+	up_read(&mk->sem);
-+	key_put(mk);
-+	return ret;
-+}
-+
-+/* The one option of the sw backend: "master=<description>" */
-+static int sw_master_opt(const char *opts, const char **desc)
-+{
-+	if (!opts || strncmp(opts, "master=", 7) || !opts[7])
-+		return -EINVAL;
-+	*desc = opts + 7;
-+	return 0;
-+}
-+
-+static int sw_seal_key(const u8 *hdr, u32 hdr_len, const char *opts,
-+		       const u8 *key, size_t klen, struct keycrypt_blob *out)
-+{
-+	u8 master[MAX_KEY_SIZE];
-+	const char *desc;
-+	size_t mlen;
-+	int ret;
-+
-+	ret = sw_master_opt(opts, &desc);
-+	if (ret)
-+		return ret;
-+	if (strlen(desc) > KEYCRYPT_SW_DESC_MAX)
-+		return -EINVAL;
-+	ret = sw_master(desc, master, &mlen);
-+	if (!ret)
-+		ret = keycrypt_sw_seal(master, mlen, hdr, hdr_len, desc, key,
-+				       klen, out);
-+	memzero_explicit(master, sizeof(master));
-+	return ret;
-+}
-+
-+static int sw_generate(struct keycrypt_backend *b,
-+		       const struct keycrypt_meta *m, const u8 *hdr,
-+		       u32 hdr_len, const char *opts,
-+		       struct keycrypt_blob *out)
-+{
-+	u8 key[32];
-+	int ret;
-+
-+	ret = get_random_bytes_wait(key, sizeof(key));
-+	if (!ret)
-+		ret = sw_seal_key(hdr, hdr_len, opts, key, sizeof(key), out);
-+	memzero_explicit(key, sizeof(key));
-+	return ret;
-+}
-+
-+static int sw_import(struct keycrypt_backend *b,
-+		     const struct keycrypt_meta *m, const u8 *hdr,
-+		     u32 hdr_len, const char *opts, const u8 *key,
-+		     size_t keylen, struct keycrypt_blob *out)
-+{
-+	return sw_seal_key(hdr, hdr_len, opts, key, keylen, out);
-+}
-+
-+static int sw_load(struct keycrypt_backend *b, struct keycrypt_key *k,
-+		   const char *opts)
-+{
-+	char desc[KEYCRYPT_SW_DESC_MAX + 1];
-+	u8 master[MAX_KEY_SIZE];
-+	struct keycrypt_sw_key *priv;
-+	size_t mlen, dlen;
-+	int ret;
-+
-+	if (opts)
-+		return -EINVAL;
-+	if (k->data_len < 2 || !k->data[1])
++	switch (res) {
++	case KC_TEE_SUCCESS:
++		return 0;
++	case KC_TEE_ERROR_MAC_INVALID:
 +		return -EBADMSG;
-+	dlen = k->data[1];
-+	if (k->data_len < 2 + dlen)
-+		return -EBADMSG;
-+	memcpy(desc, k->data + 2, dlen);
-+	desc[dlen] = '\0';
-+	if (strlen(desc) != dlen)
-+		return -EBADMSG;
-+
-+	priv = kzalloc_obj(*priv);
-+	if (!priv)
++	case KC_TEE_ERROR_OUT_OF_MEMORY:
 +		return -ENOMEM;
-+	ret = sw_master(desc, master, &mlen);
-+	if (!ret)
-+		ret = keycrypt_sw_unseal(master, mlen, k->hdr, k->hdr_len,
-+					 k->data, k->data_len, priv->key,
-+					 &priv->len);
-+	memzero_explicit(master, sizeof(master));
-+	if (!ret && !keycrypt_key_len_valid(k->meta.alg, priv->len))
-+		ret = -EBADMSG;
-+	if (ret) {
-+		kfree_sensitive(priv);
-+		return ret;
++	default:
++		return -EIO;
 +	}
-+	k->priv = priv;
-+	pr_warn_once("a key of the kernel tier is loaded: it is in clear in kernel memory\n");
-+	return 0;
 +}
 +
-+static void sw_destroy(struct keycrypt_backend *b, struct keycrypt_key *k)
++static int kc_invoke(u32 session, u32 func, struct tee_param *p)
 +{
-+	kfree_sensitive(k->priv);
-+	k->priv = NULL;
-+}
-+
-+struct sw_ctx {
-+	u32 op;
-+	union {
-+		struct {
-+			union {
-+				struct aes_key    key;	    /* decrypt */
-+				struct aes_enckey enc_key; /* encrypt-only */
-+			};
-+			u8 iv[AES_BLOCK_SIZE];
-+		} cbc;
-+		struct hmac_sha256_ctx mac;
++	struct tee_ioctl_invoke_arg arg = {
++		.func = func,
++		.session = session,
++		.num_params = 4,
 +	};
-+};
-+
-+static int sw_ctx_open(struct keycrypt_backend *b, struct keycrypt_key *k,
-+		       u32 op, u8 *iv, void **ctx)
-+{
-+	struct keycrypt_sw_key *kk = k->priv;
-+	struct sw_ctx *c;
 +	int ret;
 +
-+	if (!kk)
++	ret = tee_client_invoke_func(kc_optee.tee, &arg, p);
++	if (ret)
++		return ret == -ENOMEM ? ret : -EIO;
++	return kc_errno(arg.ret);
++}
++
++static int kc_open_session(u32 *session)
++{
++	struct tee_ioctl_open_session_arg arg = {
++		.clnt_login = TEE_IOCTL_LOGIN_REE_KERNEL,
++	};
++	int ret;
++
++	memcpy(arg.uuid, kc_optee.uuid, sizeof(arg.uuid));
++	ret = tee_client_open_session(kc_optee.tee, &arg, NULL);
++	if (ret)
++		return ret == -ENOMEM ? ret : -EIO;
++	ret = kc_errno(arg.ret);
++	if (!ret)
++		*session = arg.session;
++	return ret;
++}
++
++static int kc_seal(u32 func, const u8 *hdr, u32 hdr_len, const u8 *key,
++		   size_t keylen, struct keycrypt_blob *out)
++{
++	struct tee_shm *shm = kc_optee.ctl_shm;
++	struct tee_param p[4] = {};
++	size_t len;
++	int n = 0;
++	int ret;
++
++	if (hdr_len > KEYCRYPT_HEADER_MAX || keylen > KC_KEY_MAX)
++		return -EINVAL;
++	mutex_lock(&kc_optee.ctl_lock);
++	memcpy(kc_optee.ctl_va + KC_SHM_HDR, hdr, hdr_len);
++	kc_memref(&p[n++], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, shm,
++		  KC_SHM_HDR, hdr_len);
++	if (key) {
++		memcpy(kc_optee.ctl_va + KC_SHM_KEY, key, keylen);
++		kc_memref(&p[n++], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, shm,
++			  KC_SHM_KEY, keylen);
++	}
++	kc_memref(&p[n], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT, shm,
++		  KC_SHM_BLOB, KC_TA_DATA_MAX);
++	ret = kc_invoke(kc_optee.ctl, func, p);
++	len = p[n].u.memref.size;
++	if (!ret && (!len || len > KC_TA_DATA_MAX))
++		ret = -EIO;
++	if (!ret) {
++		out->data = kmemdup(kc_optee.ctl_va + KC_SHM_BLOB, len,
++				    GFP_KERNEL);
++		ret = out->data ? 0 : -ENOMEM;
++		out->len = len;
++	}
++	memzero_explicit(kc_optee.ctl_va, KC_CTL_SIZE);
++	mutex_unlock(&kc_optee.ctl_lock);
++	return ret;
++}
++
++static int kc_optee_generate(struct keycrypt_backend *b,
++			     const struct keycrypt_meta *m, const u8 *hdr,
++			     u32 hdr_len, const char *opts,
++			     struct keycrypt_blob *out)
++{
++	return kc_seal(KC_TA_CMD_GENERATE, hdr, hdr_len, NULL, 0, out);
++}
++
++static int kc_optee_import(struct keycrypt_backend *b,
++			   const struct keycrypt_meta *m, const u8 *hdr,
++			   u32 hdr_len, const char *opts, const u8 *key,
++			   size_t keylen, struct keycrypt_blob *out)
++{
++	return kc_seal(KC_TA_CMD_IMPORT, hdr, hdr_len, key, keylen, out);
++}
++
++static int kc_optee_load(struct keycrypt_backend *b, struct keycrypt_key *k,
++			 const char *opts)
++{
++	struct tee_shm *shm = kc_optee.ctl_shm;
++	struct tee_param p[4] = {};
++	int ret;
++
++	/* Not the TA's: it would refuse it as not authenticating */
++	if (k->hdr_len > KEYCRYPT_HEADER_MAX || k->data_len > KC_TA_DATA_MAX)
++		return -EBADMSG;
++	mutex_lock(&kc_optee.ctl_lock);
++	memcpy(kc_optee.ctl_va + KC_SHM_HDR, k->hdr, k->hdr_len);
++	memcpy(kc_optee.ctl_va + KC_SHM_BLOB, k->data, k->data_len);
++	kc_memref(&p[0], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, shm,
++		  KC_SHM_HDR, k->hdr_len);
++	kc_memref(&p[1], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, shm,
++		  KC_SHM_BLOB, k->data_len);
++	ret = kc_invoke(kc_optee.ctl, KC_TA_CMD_CHECK, p);
++	memzero_explicit(kc_optee.ctl_va, KC_CTL_SIZE);
++	mutex_unlock(&kc_optee.ctl_lock);
++	return ret;
++}
++
++static void kc_ctx_release(struct kc_optee_ctx *c)
++{
++	memzero_explicit(c->va, KC_CTX_SIZE);
++	tee_shm_free(c->shm);
++	kfree(c);
++}
++
++static int kc_optee_ctx_open(struct keycrypt_backend *b,
++			     struct keycrypt_key *k, u32 op, u8 *iv,
++			     void **ctx)
++{
++	struct tee_param p[4] = {};
++	struct kc_optee_ctx *c;
++	int ret;
++
++	if (k->hdr_len > KEYCRYPT_HEADER_MAX || k->data_len > KC_TA_DATA_MAX)
 +		return -EIO;
 +	c = kzalloc_obj(*c, GFP_KERNEL_ACCOUNT);
 +	if (!c)
 +		return -ENOMEM;
-+	c->op = op;
-+	if (op == KEYCRYPT_OP_MAC || op == KEYCRYPT_OP_VERIFY) {
-+		hmac_sha256_init_usingrawkey(&c->mac, kk->key, kk->len);
-+	} else {
-+		ret = op == KEYCRYPT_OP_ENCRYPT ?
-+		      aes_prepareenckey(&c->cbc.enc_key, kk->key, kk->len) :
-+		      aes_preparekey(&c->cbc.key, kk->key, kk->len);
-+		if (ret) {
-+			kfree_sensitive(c);
-+			return -EIO;
-+		}
-+		memcpy(c->cbc.iv, iv, AES_BLOCK_SIZE);
++	/* The session first: a full TA table refuses before any buffer */
++	ret = kc_open_session(&c->session);
++	if (ret)
++		goto free_ctx;
++	c->shm = tee_shm_alloc_kernel_buf(kc_optee.tee, KC_CTX_SIZE);
++	if (IS_ERR(c->shm)) {
++		ret = -ENOMEM;
++		goto close_session;
 +	}
++	c->va = tee_shm_get_va(c->shm, 0);
++	if (IS_ERR(c->va)) {
++		ret = -EIO;
++		goto free_shm;
++	}
++
++	memcpy(c->va + KC_SHM_HDR, k->hdr, k->hdr_len);
++	memcpy(c->va + KC_SHM_BLOB, k->data, k->data_len);
++	memcpy(c->va + KC_SHM_IV, iv, KC_IV_LEN);
++	kc_memref(&p[0], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, c->shm,
++		  KC_SHM_HDR, k->hdr_len);
++	kc_memref(&p[1], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, c->shm,
++		  KC_SHM_BLOB, k->data_len);
++	p[2].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT;
++	p[2].u.value.a = op;
++	kc_memref(&p[3], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT, c->shm,
++		  KC_SHM_IV, KC_IV_LEN);
++	ret = kc_invoke(c->session, KC_TA_CMD_CTX_OPEN, p);
++	if (!ret && p[3].u.memref.size != KC_IV_LEN)
++		ret = -EIO;
++	if (ret)
++		goto wipe;
++	memzero_explicit(c->va, KC_CTX_SIZE);
++	c->alg = k->meta.alg;
++	c->op = op;
 +	*ctx = c;
 +	return 0;
-+}
 +
-+static int sw_update(struct keycrypt_backend *b, void *ctx, const u8 *in,
-+		     u8 *out, size_t len)
-+{
-+	struct sw_ctx *c = ctx;
-+
-+	switch (c->op) {
-+	case KEYCRYPT_OP_ENCRYPT:
-+		aes_cbc_encrypt(out, in, len, c->cbc.iv, &c->cbc.enc_key);
-+		break;
-+	case KEYCRYPT_OP_DECRYPT:
-+		aes_cbc_decrypt(out, in, len, c->cbc.iv, &c->cbc.key);
-+		break;
-+	default:
-+		hmac_sha256_update(&c->mac, in, len);
-+	}
-+	return 0;
-+}
-+
-+static int sw_final(struct keycrypt_backend *b, void *ctx, u8 *out,
-+		    size_t out_size, size_t *len)
-+{
-+	struct sw_ctx *c = ctx;
-+
-+	if (c->op == KEYCRYPT_OP_MAC || c->op == KEYCRYPT_OP_VERIFY) {
-+		if (out_size < SHA256_DIGEST_SIZE)
-+			return -EIO;
-+		hmac_sha256_final(&c->mac, out);
-+		*len = SHA256_DIGEST_SIZE;
-+	} else {
-+		*len = 0;
-+	}
-+	return 0;
-+}
-+
-+static void sw_ctx_free(struct keycrypt_backend *b, void *ctx)
-+{
-+	kfree_sensitive(ctx);
-+}
-+
-+static const char * const sw_opts[] = { "master", NULL };
-+
-+static struct keycrypt_backend keycrypt_sw = {
-+	.name		= "sw",
-+	.tier		= KEYCRYPT_TIER_KERNEL,
-+	.algs		= KEYCRYPT_ALGS_ALL,
-+	.owner		= THIS_MODULE,
-+	.opts		= sw_opts,
-+	.generate	= sw_generate,
-+	.import		= sw_import,
-+	.load		= sw_load,
-+	.destroy	= sw_destroy,
-+	.ctx_open	= sw_ctx_open,
-+	.update		= sw_update,
-+	.final		= sw_final,
-+	.ctx_free	= sw_ctx_free,
-+};
-+
-+static int __init keycrypt_sw_init(void)
-+{
-+	int ret = keycrypt_register_backend(&keycrypt_sw);
-+
-+	if (!ret)
-+		pr_warn("kernel tier enabled: its keys are in clear in kernel memory while loaded\n");
++wipe:
++	memzero_explicit(c->va, KC_CTX_SIZE);
++free_shm:
++	tee_shm_free(c->shm);
++close_session:
++	tee_client_close_session(kc_optee.tee, c->session);
++free_ctx:
++	kfree(c);
 +	return ret;
 +}
-+module_init(keycrypt_sw_init);
 +
-+static void __exit keycrypt_sw_exit(void)
++static int kc_optee_update(struct keycrypt_backend *b, void *ctx,
++			   const u8 *in, u8 *out, size_t len)
 +{
-+	keycrypt_unregister_backend(&keycrypt_sw);
-+}
-+module_exit(keycrypt_sw_exit);
++	struct kc_optee_ctx *c = ctx;
++	bool mac = c->alg == KEYCRYPT_ALG_HMAC_SHA256;
++	struct tee_param p[4] = {};
++	int ret;
 +
-+MODULE_DESCRIPTION("keycrypt sw backend, of the kernel tier");
++	if (len > KEYCRYPT_UPDATE_MAX)
++		return -EIO;
++	memcpy(c->va + KC_SHM_DATA, in, len);
++	kc_memref(&p[0], mac ? TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT :
++		  TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INOUT, c->shm,
++		  KC_SHM_DATA, len);
++	ret = kc_invoke(c->session, KC_TA_CMD_UPDATE, p);
++	if (!ret && !mac && p[0].u.memref.size != len)
++		ret = -EIO;
++	if (!ret && !mac)
++		memcpy(out, c->va + KC_SHM_DATA, len);
++	memzero_explicit(c->va + KC_SHM_DATA, len);
++	return ret;
++}
++
++static int kc_optee_final(struct keycrypt_backend *b, void *ctx, u8 *out,
++			  size_t out_size, size_t *len)
++{
++	struct kc_optee_ctx *c = ctx;
++	struct tee_param p[4] = {};
++	bool mac = c->op == KEYCRYPT_OP_MAC;
++	int ret;
++
++	if (mac) {
++		if (out_size < KEYCRYPT_MAC_LEN)
++			return -EIO;
++		kc_memref(&p[0], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_OUTPUT,
++			  c->shm, KC_SHM_TAG, KEYCRYPT_MAC_LEN);
++	}
++	ret = kc_invoke(c->session, KC_TA_CMD_FINAL, p);
++	if (!ret && mac && p[0].u.memref.size != KEYCRYPT_MAC_LEN)
++		ret = -EIO;
++	if (!ret && mac)
++		memcpy(out, c->va + KC_SHM_TAG, KEYCRYPT_MAC_LEN);
++	*len = !ret && mac ? KEYCRYPT_MAC_LEN : 0;
++	memzero_explicit(c->va + KC_SHM_TAG, KEYCRYPT_MAC_LEN);
++	return ret;
++}
++
++static int kc_optee_verify(struct keycrypt_backend *b, void *ctx,
++			   const u8 *expected)
++{
++	struct kc_optee_ctx *c = ctx;
++	struct tee_param p[4] = {};
++	int ret;
++
++	memcpy(c->va + KC_SHM_TAG, expected, KEYCRYPT_MAC_LEN);
++	kc_memref(&p[0], TEE_IOCTL_PARAM_ATTR_TYPE_MEMREF_INPUT, c->shm,
++		  KC_SHM_TAG, KEYCRYPT_MAC_LEN);
++	ret = kc_invoke(c->session, KC_TA_CMD_VERIFY, p);
++	memzero_explicit(c->va + KC_SHM_TAG, KEYCRYPT_MAC_LEN);
++	return ret;
++}
++
++static void kc_optee_ctx_free(struct keycrypt_backend *b, void *ctx)
++{
++	struct kc_optee_ctx *c = ctx;
++
++	tee_client_close_session(kc_optee.tee, c->session);
++	kc_ctx_release(c);
++}
++
++static struct keycrypt_backend keycrypt_optee = {
++	.name		= "optee",
++	.tier		= KEYCRYPT_TIER_TEE,
++	.algs		= KEYCRYPT_ALGS_ALL,
++	.owner		= THIS_MODULE,
++	.generate	= kc_optee_generate,
++	.import		= kc_optee_import,
++	.load		= kc_optee_load,
++	.ctx_open	= kc_optee_ctx_open,
++	.update		= kc_optee_update,
++	.final		= kc_optee_final,
++	.verify		= kc_optee_verify,
++	.ctx_free	= kc_optee_ctx_free,
++};
++
++static int kc_optee_match(struct tee_ioctl_version_data *ver,
++			  const void *data)
++{
++	return ver->impl_id == TEE_IMPL_ID_OPTEE;
++}
++
++static int kc_optee_probe(struct tee_client_device *tdev)
++{
++	struct tee_context *tee;
++	int ret;
++
++	/* One backend, so one TA device: a second one is refused untouched */
++	if (kc_optee.tee)
++		return -EBUSY;
++	tee = tee_client_open_context(NULL, kc_optee_match, NULL, NULL);
++	if (IS_ERR(tee))
++		return -ENODEV;
++	kc_optee.tee = tee;
++	memcpy(kc_optee.uuid, tdev->id.uuid.b, TEE_IOCTL_UUID_LEN);
++	kc_optee.ctl_shm = tee_shm_alloc_kernel_buf(kc_optee.tee, KC_CTL_SIZE);
++	if (IS_ERR(kc_optee.ctl_shm)) {
++		ret = PTR_ERR(kc_optee.ctl_shm);
++		goto close_tee;
++	}
++	kc_optee.ctl_va = tee_shm_get_va(kc_optee.ctl_shm, 0);
++	if (IS_ERR(kc_optee.ctl_va)) {
++		ret = PTR_ERR(kc_optee.ctl_va);
++		goto free_shm;
++	}
++	ret = kc_open_session(&kc_optee.ctl);
++	if (ret) {
++		dev_err(&tdev->dev, "cannot open a session to the keycrypt TA: %d\n",
++			ret);
++		goto free_shm;
++	}
++	ret = keycrypt_register_backend(&keycrypt_optee);
++	if (ret)
++		goto close_ctl;
++	return 0;
++
++close_ctl:
++	tee_client_close_session(kc_optee.tee, kc_optee.ctl);
++free_shm:
++	tee_shm_free(kc_optee.ctl_shm);
++close_tee:
++	tee_client_close_context(kc_optee.tee);
++	kc_optee.tee = NULL;
++	return ret;
++}
++
++static void kc_optee_remove(struct tee_client_device *tdev)
++{
++	keycrypt_unregister_backend(&keycrypt_optee);
++	tee_client_close_session(kc_optee.tee, kc_optee.ctl);
++	tee_shm_free(kc_optee.ctl_shm);
++	tee_client_close_context(kc_optee.tee);
++	kc_optee.tee = NULL;
++}
++
++static const struct tee_client_device_id kc_optee_id_table[] = {
++	{ UUID_INIT(0x65a0d9f0, 0xf057, 0x414c,
++		    0x9d, 0x5a, 0x9a, 0xac, 0x7c, 0x8b, 0xa4, 0x61) },
++	{}
++};
++MODULE_DEVICE_TABLE(tee, kc_optee_id_table);
++
++static struct tee_client_driver kc_optee_driver = {
++	.probe		= kc_optee_probe,
++	.remove		= kc_optee_remove,
++	/* Sessions left open would outlive a kexec in the secure world */
++	.shutdown	= kc_optee_remove,
++	.id_table	= kc_optee_id_table,
++	.driver		= {
++		.name	= "keycrypt-optee",
++	},
++};
++module_tee_client_driver(kc_optee_driver);
++
++MODULE_DESCRIPTION("keycrypt OP-TEE backend");
 +MODULE_LICENSE("GPL");
-diff --git a/security/keys/keycrypt/sw.h b/security/keys/keycrypt/sw.h
+diff --git a/security/keys/keycrypt/optee.h b/security/keys/keycrypt/optee.h
 new file mode 100644
-index 000000000000..30e24fb56ce3
+index 000000000000..391eba15b699
 --- /dev/null
-+++ b/security/keys/keycrypt/sw.h
-@@ -0,0 +1,30 @@
++++ b/security/keys/keycrypt/optee.h
+@@ -0,0 +1,37 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * keycrypt - the sw backend's blob fields and loaded-key state
++ * keycrypt - the OP-TEE backend's protocol with the keycrypt TA
++ *
++ * The TA's interface is ta/keycrypt/include/keycrypt_ta.h in OP-TEE: the
++ * command numbers and limits below are its, and neither side changes one
++ * alone. The operation, and the algorithm, purpose and tier in a key's
++ * header, reach the TA as keycrypt's own values, which that file repeats.
++ * The result codes are GlobalPlatform's.
 + *
 + * Copyright (C) 2026 Rodolfo Giometti <giometti@enneenne.com>
 + */
 +
-+#ifndef _SECURITY_KEYS_KEYCRYPT_SW_H
-+#define _SECURITY_KEYS_KEYCRYPT_SW_H
++#ifndef _SECURITY_KEYS_KEYCRYPT_OPTEE_H
++#define _SECURITY_KEYS_KEYCRYPT_OPTEE_H
 +
 +#include <linux/types.h>
 +
-+#define KEYCRYPT_SW_VERSION	1
-+#define KEYCRYPT_SW_SALT_LEN	32
-+#define KEYCRYPT_SW_NONCE_LEN	12
-+#define KEYCRYPT_SW_TAG_LEN	16
-+#define KEYCRYPT_SW_DESC_MAX	255
-+#define KEYCRYPT_SW_KEY_MAX	64
++#define KC_TA_CMD_GENERATE	0
++#define KC_TA_CMD_IMPORT	1
++#define KC_TA_CMD_CHECK		2
++#define KC_TA_CMD_CTX_OPEN	3
++#define KC_TA_CMD_UPDATE	4
++#define KC_TA_CMD_FINAL		5
++#define KC_TA_CMD_VERIFY	6
 +
-+/**
-+ * struct keycrypt_sw_key - the sw backend's state for a loaded key
-+ * @len: bytes in @key
-+ * @key: the key, in clear
-+ */
-+struct keycrypt_sw_key {
-+	size_t	len;
-+	u8	key[KEYCRYPT_SW_KEY_MAX];
-+};
++#define KC_TA_DATA_MAX		93	/* the TA's data: 1 + 12 + 64 + 16 */
++#define KC_TA_BUF_MAX		65536	/* data of one UPDATE */
++/* The TA's limit, the control session included; not enforced here */
++#define KC_TA_SESSIONS_MAX	32
 +
-+#endif /* _SECURITY_KEYS_KEYCRYPT_SW_H */
++/* GlobalPlatform TEE result codes */
++#define KC_TEE_SUCCESS			0x00000000
++#define KC_TEE_ERROR_OUT_OF_MEMORY	0xffff000c
++#define KC_TEE_ERROR_MAC_INVALID	0xffff3071
++
++#endif /* _SECURITY_KEYS_KEYCRYPT_OPTEE_H */
 -- 
 2.43.0
 
