@@ -1,77 +1,72 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=185.125.25.11
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795012769;
-	b=CKCEquYL/SDJx5RBEBbRHdr9PAIt/uwPYksmpbjyvSAXJrcJ8kbbL0v0BIPLE8C/r8nq
-	 0inVIIDyp+ot+3vC+RaDPJ2EbuM/sAg80a6C/YrqN/So6K/FTNv9pRQGS3fikI2ckhkx2
-	 oIfJiBC0bY0jC20G6r2CjcFrfGzFnOSuCaOEiCEuBptl9vcyH0LZ6BRClYmx8Efj1dfjC
-	 LXsmT2S2m9LO2JpoiJp3PqztjAvDZvIlRczUkyJvDWgffCSSr9wP7eDvYyfXmOc0uiar3
-	 rBYDZDZjT7HR9mL7TNScVehsDpxK9byPIBHLen1gdvjbLXG2a4dL+nzgq7dS5l+/qkQ==
+	t=1795013001;
+	b=sK0NUpXx3M7Qb9Am5cxtg/DhSERmO5nUYbZIRbbZu5LtDEenk2n1Qlv5RS9Q3yjharhz
+	 qPXjvG8zs3CGnhGNOQuHJ3h5guZeAGukOeNosGdyz9nt5pWVZbVZI9I+RN8SSzr9OVahw
+	 ILe8k9xpNGTCCJ9S9XlQGFCaBhDe/+fFsVbLqL45GNvH82PJLePMOsC7ue2TruPCvF04c
+	 qN7fzU0XtGpVmI/lkFb1y9wHmDiL0/0IWo+7UyQCUYLp8w6BBNx0KXpSEMawFpNLE5xzH
+	 g0X64W7qZqL1AOFJWQQHfh8WQ+QITIdqiZ8yTme/9XZh67kfJ8rH0ZGkjD5N7IA8IZw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795012769;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=EkTIfpCkKGsr/+EUWsgItcZz9N+NCRH4ACc35xW4RU0=;
-	b=fXG4d5ehNSm20lh2TOTaI6mj5GTGjyYWM/pgiYIWG6YWy+7X42gW3jRbDFrPM6tU6cI1
-	 nPZTocMK2IURRKKery4Om3/Vdh3LNR2xoN+NJKCjwlelma0aQ697IyFBqitmFs/zvpjCG
-	 8muKftJLsmcG0vBou2v4pTxqL62zXWI4vL5cecHSO4zxaKNKmWgGIHSUe9fCxX58TcOEs
-	 VrW3EfkwLMojm6cjhDNT+LqDE/DoYJ1Uykz58no+mubQVY9cpjHJzAzqCFZH/u8PrbNWq
-	 XFfk/qbpyQbCaWyw2toPNI2mUeuWKz11hWBEm59addE1JmQqGX1OcPZ6g1tMTYpe+Og==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795013001;
+	h=DMARC-Filter:Received:DKIM-Signature:Received:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:Content-Transfer-Encoding:In-Reply-To:
+	 X-Infomaniak-Routing;
+	bh=M6QIKb9uK+rYlKgFv0M8IDY5COdkGlTIaO9ytGUAZX0=;
+	b=Z0cqbTJEl+foSh5MMaoJMwsIxruRuNcp1FNOQ2PCjjplKGop5feSvgY+hxsLmthJeB0X
+	 2WcHNnnfwyScvgzB/ZqiOqfrbMneqXtnDSqAh3Xk7x+7HZ2zGJIDQUp3RgIolAUcCwOCH
+	 lYvlQCVLjc5OUrCKTeIN0558ze6oMMgx4KA84hV2S8rtf62g1HplW1qAnYo9I/4/LN18v
+	 ETcY51jXGy832/79Mhcc8pq6tjVfJ9YgCSHSYuK1yv+umltVKYrnYSMwYi4c7J123WqIV
+	 VBnKUsX26Uc3JGK3qkgnSgaDiIIMu3i2TsQuQuVkaiE2XiFyIenicV7ReC8TWbeF6aQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=D4ftvp5U;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=none header.from=digikod.net;
+	spf=pass smtp.mailfrom=digikod.net;
+	dkim=pass header.d=digikod.net header.i=@digikod.net header.a=rsa-sha256 header.s=20191114 header.b=FgUMxLDk;
+	arc=none smtp.remote-ip=185.125.25.11
+Received: from smtp-190b.mail.infomaniak.ch (smtp-190b.mail.infomaniak.ch [185.125.25.11])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id D76B2606A325;
-	Wed, 18 Nov 2026 14:39:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF25A606A32C
+	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:43:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BF25A606A32C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=digikod.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=digikod.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=D4ftvp5U
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id DD2571F000C4;
-	Wed, 18 Nov 2026 14:39:28 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795012769;
-	bh=EkTIfpCkKGsr/+EUWsgItcZz9N+NCRH4ACc35xW4RU0=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=D4ftvp5UnRHjBoaocLaME4nyOfPMFjThfwMZhQe5L15XZrIXgfm1mUpDBjT7pCCl+
-	 9QPgzjYOYQ/zcXytm375W++rt+wWgM2daUsOOwMJgD2AXKK2ombWPTHDdM/Wg9u30S
-	 938J8rLDYOyysFggccBRsB65VyG6YWC6xmSIGZtK8YMT2dUOfdIaC9sSgDwRDLDXhJ
-	 r+qUZ8vfCqmMIH01TvQ/t8/DyJBUcTov6rXG0ezUtF5YB1L/2a72OtJeEG70Ye8vfS
-	 6YBlDKQYr+Ceham9eQHjVxX9uFnXXUJqezQO5jCJrESouIJX2NmE+LeG06PuD9Q8Ch
-	 zyikQSnO5LmbA==
-Date: Wed, 18 Nov 2026 16:39:25 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Rodolfo Giometti <giometti@enneenne.com>
-Cc: David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	"David S. Miller" <davem@davemloft.net>,
-	Jens Wiklander <jenswi@kernel.org>,
-	Sumit Garg <sumit.garg@kernel.org>,
-	op-tee@lists.trustedfirmware.org,
-	Horia =?utf-8?Q?Geant=C4=83?= <horia.geanta@nxp.com>,
-	Pankaj Gupta <pankaj.gupta@nxp.com>,
-	Sahil Malhotra <sahil.malhotra@nxp.com>,
-	Ahmad Fatoum <a.fatoum@pengutronix.de>,
-	Richard Weinberger <richard@nod.at>,
-	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Demi Marie Obenour <demiobenour@gmail.com>,
-	Arnd Bergmann <arnd@arndb.de>, Paul Moore <paul@paul-moore.com>,
-	James Morris <jmorris@namei.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Randy Dunlap <rdunlap@infradead.org>, linux-crypto@vger.kernel.org,
-	linux-integrity@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-	linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH 0/9] KEYS: keycrypt: keys that user space can use but
- never read
-Message-ID: <av24nYfBMbOcoW4Y@kernel.org>
-References: <20261118140421.584086-1-giometti@enneenne.com>
- <av22tUCclsAPJq1g@kernel.org>
+	dkim=pass (1024-bit key) header.d=digikod.net header.i=@digikod.net header.a=rsa-sha256 header.s=20191114 header.b=FgUMxLDk
+Received: from smtp-3-0001.mail.infomaniak.ch (smtp-3-0001.mail.infomaniak.ch [10.4.36.108])
+	by smtp-4-3000.mail.infomaniak.ch (Postfix) with ESMTPS id 4jV48b1XfvzmKT;
+	Wed, 18 Nov 2026 15:43:11 +0100 (CET)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=digikod.net;
+	s=20191114; t=1795012990;
+	bh=M6QIKb9uK+rYlKgFv0M8IDY5COdkGlTIaO9ytGUAZX0=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=FgUMxLDkPqSmwZ6EcBTblOHEUd3cgQPaQjH7r9+HN4HyCZJeS3aKGBU7y63C5PQm4
+	 oahgWtSJtuYQnKjYsDzintXkET56emKP/Mku2uupkeQGot2oHw2ebluUA1miq883PB
+	 QdiuiYDN13+67tWQ3e8v1w4PYHRkbyYyag7nc3PM=
+Received: from unknown by smtp-3-0001.mail.infomaniak.ch (Postfix) with ESMTPA id 4jV48V68V3zPlr;
+	Wed, 18 Nov 2026 15:43:06 +0100 (CET)
+Date: Wed, 18 Nov 2026 15:43:03 +0100
+From: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+To: "Hallgrimur H. Gunnarsson" <halg@google.com>
+Cc: Christian Brauner <brauner@kernel.org>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, Paul Moore <paul@paul-moore.com>, 
+	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
+	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
+	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
+	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, 
+	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
+	Randy Dunlap <rdunlap@infradead.org>, Jann Horn <jannh@google.com>, 
+	=?utf-8?Q?G=C3=BCnther?= Noack <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
+	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
+	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
+	containers@lists.linux.dev, netdev@vger.kernel.org, linux-doc@vger.kernel.org, 
+	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
+ opt-in netns loopback
+Message-ID: <20261118.faiBee9Taigh@digikod.net>
+References: <20261028221705.3915340-1-halg@google.com>
+ <20261107.aighieG4Ami1@digikod.net>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -81,325 +76,212 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <av22tUCclsAPJq1g@kernel.org>
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <20261107.aighieG4Ami1@digikod.net>
+X-Infomaniak-Routing: alpha
 
-On Wed, Nov 18, 2026 at 04:31:22PM +0200, Jarkko Sakkinen wrote:
-> On Wed, Nov 18, 2026 at 03:04:12PM +0100, Rodolfo Giometti wrote:
-> > This RFC proposes a key type, "keycrypt", whose material user space can
-> > use for symmetric operations but never read: AES-256-CBC, HMAC-SHA256
-> > and an authenticated AES-256-GCM stream, through a file descriptor that
-> > KEYCTL_CRYPT_OPEN returns for one key and one operation. The key is held
-> > by a backend: the kernel itself (sealed under a trusted key), an OP-TEE
-> > trusted application, or, as a proposal only, the CAAM. I am asking
-> > whether this is a direction the keyrings, crypto and TEE maintainers
-> > would take, before polishing it further.
-> > 
-> > Patch 9, the authenticated stream, is a proposal on its own and not
-> > needed by the rest of the series: it is a construction of keycrypt's
-> > own, and patches 1-8 do not depend on it, so it can be discussed, or
-> > left out, apart from them. No user-space consumer uses the stream or
-> > HMAC-SHA256 yet: craf (below) uses CBC only. If this direction is found
-> > acceptable, one of the next steps is to bring craf's keycrypt backend
-> > into craf's main line, with the stream and HMAC-SHA256, as long as
-> > doing so does not stand in the way of this RFC or of the series I hope
-> > will follow it.
-> > 
-> > The problem
-> > -----------
-> > 
-> > An embedded product that encrypts its own data (a root filesystem
-> > archive, configuration backups, logs) needs a key that does not sit in
-> > the root filesystem and that a compromised user space cannot copy. Today
-> > user space either reads the key (a user or logon key handed to AF_ALG)
-> > or cannot use it at all (a trusted key serves kernel consumers only).
-> > AF_ALG, the one interface that let user space drive a key the kernel
-> > held, has moved away from that use: v7.2 dropped off-CPU cryptography
-> > from it (7524070f26d8, "crypto: af_alg - Drop support for off-CPU
-> > cryptography"), whose message says "If using an off-CPU accelerator
-> > really does turn out to be a win, a new API should be developed that is
-> > actually a good fit for it", and v7.3 restricted it to allowlisted
-> > generic algorithms by default (2f204fe718f5, the af_alg_restrict
-> > sysctl). One exception was let back in, cbc(paes) with a CAAM blob in
-> > place of the key, because "this crypto operation cannot be implemented
-> > in a userspace library" (285d8204638c, v7.2), for privileged users only
-> > (d9506e82ced5, v7.3): the need is acknowledged, for one driver and
-> > one mode. keycrypt is meant to be the API that 7524070f26d8 asks for,
-> > for keys that stay in a TEE or in hardware, whatever the backend.
-> > 
-> > The interface
-> > -------------
-> > 
-> > 1. A key type, "keycrypt", created with add_key() from "new <alg>
-> >    <purposes> [tier=|min-tier=] [backend=]", "load <blob>
-> >    [accepted-min-tier=] [purpose=]" or, when allowed, "import <alg>
-> >    <purposes> [tier=|min-tier=] [backend=] <hex>". User space states the
-> >    protection a key needs, as a tier, and the kernel chooses the backend
-> >    that provides it, unless backend= names one. backend= is a constraint
-> >    added to the tier, never one in its place: a named backend that does
-> >    not meet tier= or min-tier= gives ENODEV, not a weaker key. It is for
-> >    a system with more than one backend, an i.MX8 with both the CAAM and
-> >    OP-TEE say, where a program must choose which mechanism holds a key
-> >    (the cost of each call, what the key is bound to) and not only how
-> >    well; the name chooses among mechanisms that meet the tier asked for,
-> >    it never lowers a tier asked for (without one, it takes that backend
-> >    at the tier it declares, so a program that needs a tier states it).
-> >    Its payload read back is a blob that only that backend can open; the
-> >    material itself never reaches user space.
-> > 2. Each key is bound, when it is made, to one algorithm and to the
-> >    purposes it may serve, checked at every open:
-> >    a. encrypt and decrypt, for aes256-cbc and aes256-gcm-stream keys:
-> >       a key that may only encrypt lets a device write data it cannot
-> >       read back, a key that may only decrypt the reverse;
-> >    b. mac and verify, for hmac-sha256 keys: "mac" computes a tag over
-> >       data, "verify" only checks a tag given by the caller, so a
-> >       component holding a verify-only key can authenticate data (a
-> >       configuration, an update) but cannot produce a tag that would
-> >       pass. VERIFY takes the expected tag at FINAL and answers 0 or
-> >       EBADMSG; the tag it computed never leaves the backend. For
-> >       example, a server authenticates the commands it sends to a fleet
-> >       of devices with HMAC-SHA256, and every device holds the same key,
-> >       imported at the factory as verify-only. With a plain HMAC key,
-> >       root on one device could extract it and forge commands for the
-> >       whole fleet; with a verify-only keycrypt key held by a tee or hsm
-> >       backend, a compromised device can still check commands but can
-> >       neither read the key nor compute a tag that passes. It comes
-> >       close to what a signature gives (everyone verifies, only the
-> >       server signs), with a MAC, as long as no device's TEE or HSM is
-> >       broken: the key is the fleet's, so the device that breaks forges
-> >       for all of it, which a signature would not allow.
-> > 3. KEYCTL_CRYPT_OPEN (keyctl 33) opens an operation context on a key and
-> >    returns an fd; ioctls on it: KEYCRYPT_IOC_UPDATE, KEYCRYPT_IOC_FINAL,
-> >    KEYCRYPT_IOC_SEGMENT (the GCM stream, patch 9) and KEYCRYPT_IOC_INFO,
-> >    which tells a program holding only the fd (passed by SCM_RIGHTS, say)
-> >    the operation, the minimum tier it was opened with, and the
-> >    algorithm, purposes, tier, origin and backend of the key it is using.
-> >    Search permission on the key is the right to open it; the caller may
-> >    name the lowest tier it accepts (accepted_min_tier), and a key below
-> >    it is refused.
-> > 4. Policies: kernel.keys.keycrypt_system_tier and
-> >    kernel.keys.keycrypt_import (also the boot parameters
-> >    keycrypt.system_tier= and keycrypt.import=), one-way, so that a
-> >    system can refuse the use of low-tier keys or clear-key import for
-> >    good. The system tier is a floor on use only: keys below it can
-> >    still be made and loaded, but KEYCTL_CRYPT_OPEN refuses them. Its
-> >    starting value is chosen at build time
-> >    (CONFIG_KEYCRYPT_SYSTEM_TIER_*), so a signed kernel image carries a
-> >    floor its command line cannot lower; likewise, a kernel built
-> >    without CONFIG_KEYCRYPT_IMPORT refuses import whatever its command
-> >    line or sysctl say.
-> > 5. EOPNOTSUPP from KEYCTL_CRYPT_OPEN means "not a keycrypt key", or a
-> >    kernel without keycrypt, so a library may fall back to another
-> >    interface on it; ENODEV means no backend can run the key.
-> > 
-> > Tiers and what a compromised kernel can do
-> > ------------------------------------------
-> > 
-> > Each backend declares a tier, and the open path checks it against the
-> > system tier and the caller's accepted minimum:
-> > 
-> >   tier     key in clear    purpose enforced by   who may use the key
-> >            in the kernel
-> >   kernel   yes             the kernel            the kernel
-> >   engine   no              the kernel            the kernel
-> >   tee      no              the TA                the kernel
-> >   hsm      no              the HSM               the kernel
-> > 
-> > The last column is the limit of the mechanism: a compromised kernel can
-> > use a tee or hsm key for the purposes it already has, but cannot extract
-> > it or change its purpose. Documentation/security/keys/keycrypt.rst,
-> > "Backend requirements", is the contract a tee or hsm backend must meet.
-> > 
-> > 1. kernel: the keys are in clear in kernel memory while loaded. It is
-> >    there so that the same interface works on a system with no TEE and
-> >    no suitable hardware, where it still keeps the key out of user space
-> >    and out of the root filesystem; its one backend, sw, is off by
-> >    default (CONFIG_KEYCRYPT_SW), and a system that has one of the
-> >    other tiers should use it, engine at least, and raise the system
-> >    tier accordingly. Raising it stops the use of kernel-tier keys, not
-> >    their presence: one created or loaded below it is in clear all the
-> >    same, as its trusted master is, so a system that must have none
-> >    builds without CONFIG_KEYCRYPT_SW.
-> > 2. engine: a crypto engine the kernel drives keeps the key, never in
-> >    clear in the kernel, but its use is decided by the kernel only. It
-> >    comes in patch 6, on its own, so that patches 1-5 stand without a
-> >    tier no backend of theirs declares. The CAAM backend of this series
-> >    is an engine, since the CAAM does not check what a key is used for;
-> >    an ELE backend (below) would start as an engine too, and could move
-> >    to hsm once the firmware is confirmed to enforce a key's purpose. If
-> >    more such shades appear, a separate property may fit better than
-> >    more tiers, and I would welcome an opinion.
-> > 3. tee: the OP-TEE backend; the TA re-checks every operation against
-> >    the purposes it bound when the key was sealed.
-> > 4. hsm: as tee, in dedicated hardware apart from the CPU running the
-> >    kernel (a secure element, a security core of its own such as NXP's
-> >    EdgeLock Enclave, a crypto engine with its own policy), the place of
-> >    Android KeyMint's StrongBox; no backend in this series.
-> > 
-> > The backends
-> > ------------
-> > 
-> > 1. sw, of the kernel tier (no name is both a tier's and a backend's):
-> >    keys sealed with AES-256-GCM under a key derived with HMAC-SHA256
-> >    from a trusted key (any trusted-key source); HKDF-derived stream
-> >    subkeys; lib/crypto AES. Where the trusted key
-> >    comes from a TPM, the TPM only unseals that master when a key is
-> >    loaded; the data itself is ciphered on the CPU, never by the TPM.
-> > 2. OP-TEE: a trusted application, an early TA, REE kernel login only;
-> >    it derives its sealing key from OP-TEE's hardware-unique-key
-> >    service. The TA is written (ta/keycrypt, one patch to optee_os) and
-> >    is the one that ran on the hardware below, but I have not proposed
-> >    it to OP-TEE yet: I would first like to know whether this direction
-> >    can go on. I can publish it for anyone who wants to try it and is
-> >    willing to support the work.
-> > 3. CAAM: patches 7 and 8, a proposal and not to be applied as they
-> >    are.
-> >    They are based on Richard Weinberger's "crypto: caam" series v1 (see
-> >    "Base and prerequisites") and never ran on a CAAM. Questions for the
-> >    CAAM maintainers:
-> >    a. is an internal cbc(paes) taking the caller's key modifier an
-> >       acceptable form;
-> >    b. can a job generate a key in the CAAM and keep it black without it
-> >       crossing kernel memory;
-> >    c. can the use of a key be checked by something a compromised kernel
-> >       does not drive: trusted descriptors, which would let the CAAM
-> >       itself enforce a key's purpose and make the backend hsm, or a job
-> >       ring owned by the secure world, which would make it tee;
-> >    d. could cbc(paes) take CCM black keys, which are authenticated where
-> >       ECB ones are not, once the driver handles their extra length
-> >       (Weinberger's series refuses them, so the backend uses ECB).
-> > 4. ELE (i.MX9), not in this series: this is an RFC, and I am not an
-> >    expert of the enclave, so I would rather know first what NXP thinks
-> >    of it, and whether they would be willing to propose an ELE backend
-> >    themselves, as an engine or, better, as an hsm. As far as I can see,
-> >    the se_if driver in linux-next gives user space a misc device with a
-> >    generic send-and-receive ioctl for the enclave's messages, and offers
-> >    nothing to other kernel code. A per-operation in-kernel API exported
-> >    by that driver (open a key store reserved to the kernel, generate a
-> >    key, import a wrapped one, read a key's attributes, delete it,
-> >    AES-CBC and MAC in one call) would let a keycrypt backend use the
-> >    enclave. Questions for NXP:
-> >    a. does the firmware enforce a key's key_usage and permitted_algo on
-> >       every operation, min_mac_length when verifying, and never release
-> >       a generated key in clear (yes to all three would make the backend
-> >       hsm rather than engine);
-> >    b. could a key be exported wrapped under a device-unique key and
-> >       imported again, so that a keycrypt blob holds the key itself
-> >       rather than a reference to the enclave's key store;
-> >    c. is the key that wraps an imported key unique per device;
-> >    d. the user-space library has a streaming MAC (hsm_mac() with its
-> >       INIT, UPDATE_DATA and FINALIZE flags): would the firmware offer
-> >       it to the kernel for a key in its key store;
-> >    e. can a key_id be reused after a key is deleted (the library's
-> >       documentation does not say);
-> >    f. would a per-operation API of this kind answer the objection Arnd
-> >       Bergmann raised to the generic passthrough
-> >       (<2034fb2f-f169-46a5-85e8-fa723ddb0360@app.fastmail.com>).
-> > 
-> > Base and prerequisites
-> > ----------------------
-> > 
-> > The series is based on mainline v7.4-rc2-92 (067c5c24cef2). Patches
-> > 1-6, and patch 9 on top of them, apply on it alone. Patches 7 and 8, the
-> > CAAM proposal, need Richard
-> > Weinberger's "crypto: caam" series v1
-> > (<20260726081504.2182951-1-richard@nod.at>, three patches, listed as
-> > prerequisites below) applied first, for example with:
-> > 
-> >   b4 am -o - 20260726081504.2182951-1-richard@nod.at | git am
-> > 
-> > Testing
-> > -------
-> > 
-> > The series comes without its tests. There are KUnit suites for the
-> > core and the sw, OP-TEE and CAAM backends, and a kselftest for the user
-> > ABI, with a case for every reachable row of keycrypt.rst's error
-> > tables; together they are larger than the code they test, so I am
-> > keeping them for the non-RFC series, once the direction is agreed. The
-> > results below that name them come from the series with the tests in it.
-> > Taking them out removed only the tests and the hooks that let them
-> > reach the code's internals (static functions made visible and exported
-> > to KUnit modules): with CONFIG_KUNIT off, the posted patches build for
-> > arm64 to the same instructions as that series.
-> > 
-> > On that base, with Weinberger's three patches applied: built for arm64
-> > with W=1 (security/keys/keycrypt/ and drivers/crypto/caam/, no
-> > warning), and, with the tests on top, the KUnit suites pass on UML
-> > but for the one case that needs the system tier above kernel (by
-> > Kconfig or boot parameter). Patches 1-6 and 9 alone, on the base without
-> > Weinberger's patches: the same build of security/keys/keycrypt/, no
-> > warning.
-> > The runs below were made on that series at v7.3 on QEMU, and, without
-> > the CAAM code, backported to NXP's 6.18, on QEMU and on hardware:
-> > 
-> > 1. QEMU (qemuarm64-secureboot, OP-TEE 4.9.0, an fTPM as the source of
-> >    the trusted master): the KUnit suites and the kselftest passed on
-> >    the sw and OP-TEE backends, a case skipped only where its backend
-> >    was absent (the CAAM) or where it needs a one-way policy setting;
-> >    the TA's unbind and bind; persistence of a blob across a restart.
-> >    QEMU proves function, not secrecy: its hardware unique key is a stub.
-> > 2. Hardware: the series, backported to NXP's linux-imx lf-6.18.2-1.0.0
-> >    (six upstream prerequisites; the two CAAM patches left out), with the
-> >    TA built as an early TA into NXP's imx-optee-os 4.8.0, ran on an
-> >    i.MX93 board with secure boot closed (AHAB), where OP-TEE derives the
-> >    key that seals the TA's key blobs from the EdgeLock Enclave's
-> >    hardware unique key. The KUnit suites and the kselftest passed on
-> >    the OP-TEE backend, a case skipped only where its backend was absent
-> >    (sw, which 6.18 cannot build for lack of the library AES it needs,
-> >    and the CAAM, left out) or where it needs a one-way policy setting.
-> >    A key generated in OP-TEE and kept as its blob
-> >    was loaded back after a reboot and after a full power-off, and
-> >    decrypted a file encrypted before them. The same AES-256-CBC key and
-> >    IV through AF_ALG (cbc-aes-ce), through keycrypt and through openssl
-> >    gave identical ciphertexts.
-> > 3. Cost on that board (Cortex-A55), AES-256-CBC, per call on an open
-> >    context: keycrypt with the OP-TEE backend 59-62us up to 256 bytes,
-> >    ~106us at 4KiB, 880-930us at 64KiB (67-71MiB/s); AF_ALG cbc-aes-ce
-> >    6-7, 12-14 and 110-138us (454-570MiB/s). Opening a context costs
-> >    ~500us, against ~9us for an AF_ALG accept on a keyed socket (~25us
-> >    for the whole AF_ALG setup). OP-TEE's own benchmark (xtest
-> >    --aes-perf, from user space through libteec) on the same board gives
-> >    ~64us per call plus ~1.5ns per byte. keycrypt's fixed cost matches
-> >    that round trip to the secure world; its remaining ~11ns per byte is
-> >    spent in this prototype's own data path (buffer allocation and
-> >    copies between user space, kernel, shared memory and the TA); which
-> >    part dominates is not yet measured, and it is to be reduced.
-> > 
-> > A user-space consumer exists: craf, the archive tool of crypto-afalg,
-> > has a keycrypt backend on the keycrypt branch of
-> > https://github.com/giometti/crypto-afalg (tag keycrypt-board-5 is the
-> > version that ran on the hardware above). Its enc command, an openssl
-> > enc that takes its key from the keyring, shows what a keycrypt key
-> > carries. A key made once as
-> > 
-> >   k=$(keyctl add keycrypt demo \
-> >         "new aes256-cbc encrypt,decrypt min-tier=tee" @u)
-> > 
-> > is bound there to AES-256-CBC, to encrypting and decrypting, and to a
-> > backend of tier tee at least, chosen by the kernel; so
-> > 
-> >   craf enc -enc-key $k -iv <hex> < plain > cipher
-> >   craf enc -d -enc-key $k -iv <hex> < cipher > plain
-> > 
-> > need nothing else: the open takes no algorithm and no backend, the key
-> > brings them, and its tier is enforced by the kernel against
-> > -enc-min-tier or the system's tier. Any other key goes to AF_ALG, and
-> > the command line must name the cipher. On the board, craf enc with an
-> > imported keycrypt key and openssl enc with the same key bytes and IV
-> > each decrypted what the other encrypted.
-> > 
-> > While testing the user-space side of this series, craf's test suite hit
-> > the KEYCTL_PKEY_VERIFY regression of cb481e59ea6c, which lets a short
-> > RSA signature verify: it is fixed by Florian Bauckholt's patch [1], and
-> > the reproducer was reported in [2].
+Hallgrimur, could you please explain why your use case would not work
+with Landlock?  The capability split or new clone flags would be
+complementary of course.
+
+On Sat, Nov 07, 2026 at 01:43:53PM +0100, Mickaël Salaün wrote:
+> Hi,
 > 
-> I likely have never time to read this. Thus, NAK.
-
-Would you yourself enjoy reading the above? Have you read it word by word?
-
-It fails on projecting "extraordinary to ordinary". That makes this
-random code with no context.
-
-Br, Jarkko
-
+> I think this is mostly solved with Landlock (kernel v7.4), see
+> https://docs.kernel.org/userspace-api/landlock.html#capability-and-namespace-restrictions
+> and
+> https://lore.kernel.org/all/20261014082718.1435842-1-mic@digikod.net/
+> 
+> This approach is agnostic to UID, cgroups, or other ways to identify
+> processes, so it should fit any use case.
+> 
+> What is missing is a split of capabilities (e.g. CAP_NET_ADMIN) that
+> makes sense from a security and (user) namespace point of view.
+> 
+> Regards,
+>  Mickaël
+> 
+> On Wed, Oct 28, 2026 at 10:16:57PM +0000, Hallgrimur H. Gunnarsson wrote:
+> > When an unprivileged process creates a new user namespace, it is granted
+> > a full set of capabilities (CAP_FULL_SET) scoped to that namespace.
+> > While these capabilities are isolated to the namespace, they allow
+> > unprivileged local users to reach deep kernel subsystems (most notably
+> > networking configuration and raw sockets via CAP_NET_ADMIN and
+> > CAP_NET_RAW) that historically assumed a trusted caller and have
+> > accounted for a large share of local privilege escalation
+> > vulnerabilities.
+> > 
+> > Many workloads and sandboxes use unprivileged user namespaces strictly
+> > for basic UID/GID, mount, PID, or network isolation and never need
+> > high-risk capabilities like CAP_NET_ADMIN or CAP_NET_RAW. Likewise,
+> > system administrators often want a host-wide policy ceiling restricting
+> > which capabilities unprivileged user namespaces may acquire, without
+> > disabling unprivileged user namespaces altogether.
+> > 
+> > Prior work by Jonathan Calmels [1] proposed addressing this via a sixth
+> > per-thread capability set (cap_userns) alongside a global sysctl mask.
+> > During that discussion [1, 2], feedback (e.g. from Casey Schaufler)
+> > suggested that rather than adding another per-thread capability set and
+> > prctl() interface, capability restrictions could be integrated directly
+> > into struct user_namespace and configured via clone3(). At the same
+> > time, as noted in [1], a clone3() flag alone is not sufficient for
+> > administrators who need to enforce a host-wide ceiling on unprivileged
+> > user namespaces without modifying every userspace callsite.
+> > 
+> > This series combines both pieces of feedback: it embeds a capability
+> > bounding set (cap_bset) directly into struct user_namespace, reusing
+> > the existing task cap_bset, cap_permitted, and cap_effective sets on
+> > namespace entry, and provides both a system-wide sysctl ceiling for
+> > unprivileged user namespaces and a CLONE_NEWUSER_BSET flag for
+> > voluntary per-namespace restriction via clone3().
+> > 
+> > In addition, because restricting CAP_NET_ADMIN at user namespace
+> > creation time prevents userspace from bringing up the loopback
+> > interface in new network namespaces, the series first introduces
+> > an opt-in flag to automatically enable loopback on network namespace
+> > creation:
+> > 
+> > 1. Opt-in loopback activation on netns creation (Patch 1)
+> > 
+> >   New network namespaces start with the loopback interface (lo) DOWN by
+> >   default, requiring CAP_NET_ADMIN over the owning user namespace to
+> >   bring it up. To block external network access while preserving
+> >   localhost networking, sandboxes commonly create an isolated network
+> >   namespace with only the loopback interface enabled.
+> > 
+> >   However, requiring a sandbox to hold CAP_NET_ADMIN in a new user
+> >   namespace solely to bring loopback up conflicts with reducing the
+> >   CAP_NET_ADMIN attack surface. Today, an unprivileged sandbox must
+> >   start with CAP_NET_ADMIN to bring loopback up, drop it, and then
+> >   block CAP_NET_ADMIN from being regained in nested user namespaces
+> >   (e.g. via seccomp or max_user_namespaces limits). Conversely, when
+> >   CAP_NET_ADMIN is restricted at user namespace creation time (via the
+> >   sysctl ceiling or CLONE_NEWUSER_BSET introduced in Patches 2-3, or
+> >   via LSMs such as Landlock), tasks inside the new namespace never
+> >   acquire CAP_NET_ADMIN and cannot bring loopback up from userspace,
+> >   breaking localhost networking for unprivileged sandboxes.
+> > 
+> >   Introduce the CLONE_NEWNET_LOOPBACK flag for clone3() and the
+> >   corresponding UNSHARE_NEWNET_LOOPBACK flag for unshare(), which imply
+> >   CLONE_NEWNET and automatically bring the loopback device up in
+> >   copy_net_ns() before returning the new network namespace. Making this
+> >   an explicit opt-in preserves default network namespace semantics
+> >   while allowing unprivileged sandboxes to create an isolated network
+> >   namespace with functional localhost networking without ever holding
+> >   CAP_NET_ADMIN.
+> > 
+> > 2. Per-user-namespace capability bounding set & sysctl ceiling (Patch 2)
+> > 
+> >   Add cap_bset to struct user_namespace (initialized to CAP_FULL_SET in
+> >   init_user_ns) and introduce a system-wide sysctl ceiling for
+> >   unprivileged users at:
+> >     /proc/sys/kernel/unprivileged_userns_caps_allowed
+> >   (defaulting to CAP_FULL_SET).
+> > 
+> >   When a new user namespace is created:
+> >   - Privileged creators (holding CAP_SYS_ADMIN in the parent user
+> >     namespace) inherit cap_bset from the parent user namespace.
+> >   - Unprivileged creators (lacking CAP_SYS_ADMIN in the parent user
+> >     namespace) have the child namespace's bounding set constrained by
+> >     the sysctl ceiling combined with any effective capabilities the
+> >     creator already holds in the parent namespace:
+> >         child_bset = parent_bset & (sysctl_ceiling | creator_effective)
+> >     Allowing the creator to retain capabilities it already holds in the
+> >     parent namespace ensures that a process granted a specific
+> >     capability (e.g. CAP_NET_ADMIN) does not lose it when creating a
+> >     nested user namespace.
+> > 
+> >   When a task enters a user namespace via clone()/unshare() or
+> >   setns(), its cap_bset, cap_permitted, and cap_effective sets are
+> >   clamped to user_ns->cap_bset. In addition, cap_capable_helper() is
+> >   updated so that implicit capabilities granted to the parent-namespace
+> >   owner of a user namespace are likewise bounded by the owned
+> >   namespace's cap_bset.
+> > 
+> > 3. Per-namespace restriction via clone3() (Patch 3)
+> > 
+> >   Introduce CLONE_NEWUSER_BSET and add cap_bset to struct clone_args.
+> >   When specified alongside CLONE_NEWUSER, the new user namespace's
+> >   bounding set is further intersected with the requested cap_bset mask,
+> >   allowing container runtimes and sandboxes to drop unneeded capabilities
+> >   from a user namespace at creation time even when permitted by the
+> >   global sysctl.
+> > 
+> > 4. Introspection via NS_USER_GET_INFO (Patch 4)
+> > 
+> >   While tasks inside a user namespace see their initial ceiling in
+> >   /proc/<pid>/status (CapBnd), threads may subsequently drop
+> >   individual capabilities from their per-thread bounding set. Add
+> >   an extensible NS_USER_GET_INFO ioctl on userns file descriptors
+> >   to allow userspace to directly query a user namespace's cap_bset.
+> > 
+> > 5. Selftests (Patches 5-8)
+> > 
+> >   Add kselftest suites covering CLONE_NEWNET_LOOPBACK, the sysctl
+> >   ceiling, creator capability retention, nested monotonicity,
+> >   parent-owner bounding, CLONE_NEWUSER_BSET and NS_USER_GET_INFO.
+> > 
+> > [1] https://lore.kernel.org/all/20240609104355.442002-1-jcalmels@3xx0.net/
+> > [2] https://lwn.net/Articles/978846/
+> > 
+> > Note on tree routing:
+> > 
+> > While Patch 1 (CLONE_NEWNET_LOOPBACK) touches net/core/net_namespace.c,
+> > most of its changes add clone3()/unshare() flag plumbing in
+> > include/uapi/linux/sched.h, kernel/fork.c, and kernel/nsproxy.c, which
+> > Patch 3 (CLONE_NEWUSER_BSET) builds directly on top of. To avoid
+> > merge conflicts in kernel/fork.c and include/uapi/linux/sched.h, it
+> > may be simplest to route the entire series through a single tree, e.g.
+> > a namespace branch in vfs.git with Acked-by from the netdev and
+> > capabilities/credentials maintainers, or whichever tree the maintainers
+> > prefer.
+> > 
+> > Hallgrimur H. Gunnarsson (8):
+> >   net: introduce CLONE_NEWNET_LOOPBACK to auto-enable loopback
+> >   userns: introduce capability bounding set for user namespaces
+> >   userns: allow restricting capability bounding set via clone3()
+> >   nsfs: add NS_USER_GET_INFO ioctl to inspect user namespace
+> >     capabilities
+> >   selftests/net: add test suite for CLONE_NEWNET_LOOPBACK
+> >   selftests/capabilities: tests for user namespace capability bounding
+> >     set
+> >   selftests/capabilities: add clone3() tests for CLONE_NEWUSER_BSET
+> >   selftests/nsfs: add tests for NS_USER_GET_INFO ioctl
+> > 
+> >  Documentation/admin-guide/sysctl/kernel.rst   |  37 ++
+> >  fs/nsfs.c                                     |  29 +
+> >  include/linux/cred.h                          |   3 +-
+> >  include/linux/sched/task.h                    |   1 +
+> >  include/linux/user_namespace.h                |  20 +-
+> >  include/uapi/linux/nsfs.h                     |  17 +
+> >  include/uapi/linux/sched.h                    |   9 +
+> >  kernel/cred.c                                 |  10 +-
+> >  kernel/fork.c                                 |  38 +-
+> >  kernel/nsproxy.c                              |   9 +
+> >  kernel/user.c                                 |   1 +
+> >  kernel/user_namespace.c                       | 100 +++-
+> >  net/core/net_namespace.c                      |  11 +
+> >  security/commoncap.c                          |   8 +-
+> >  .../testing/selftests/capabilities/.gitignore |   1 +
+> >  tools/testing/selftests/capabilities/Makefile |   2 +-
+> >  .../capabilities/userns_bounding_set_test.c   | 566 ++++++++++++++++++
+> >  .../selftests/clone3/clone3_selftests.h       |   1 +
+> >  .../selftests/filesystems/nsfs/.gitignore     |   1 +
+> >  .../selftests/filesystems/nsfs/Makefile       |   4 +-
+> >  .../selftests/filesystems/nsfs/userns.c       | 120 ++++
+> >  tools/testing/selftests/net/.gitignore        |   1 +
+> >  tools/testing/selftests/net/Makefile          |   1 +
+> >  tools/testing/selftests/net/loopback_netns.c  | 103 ++++
+> >  24 files changed, 1069 insertions(+), 24 deletions(-)
+> >  create mode 100644 tools/testing/selftests/capabilities/userns_bounding_set_test.c
+> >  create mode 100644 tools/testing/selftests/filesystems/nsfs/userns.c
+> >  create mode 100644 tools/testing/selftests/net/loopback_netns.c
+> > 
+> > 
+> > base-commit: cee9395acd8043be0644b25c34bfa86623f2b935
+> > -- 
+> > 2.56.0.313.g2479322e68-goog
+> > 
+> > 
