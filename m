@@ -1,50 +1,50 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.149.156.91
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.149.156.116
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795010990;
-	b=rH5mRxZrfSV9cqnDW90uzLfQhMbIs2CHjwnRMSnD9s2MYwMGpz42CR12cL//iXjhVVZB
-	 j+mVlF3ZYJt6swhzkXgMZLnrI2PZc/MQcU2ZhlZ63V0pDg+VCWR3VUfXhcDYEMgkIqJxp
-	 UY75XGvGssGglfyoAKYGS7CgWg2uznRcrUACZAw0RGRhQ4y2SwmPuuBbUle04OTN1bEZk
-	 ZquMR4HktpCmey4Hc8eREWUvWnynT4vTC+XPJ7nIASQtMSpkbRo1RC3Xuy472JOzSctcT
-	 fdhOGadUq4P63QM0tw+pjG5XKh4Idj/0181BaXfubucCMYuYdILWFrdlsnssbGsnetw==
+	t=1795011063;
+	b=u8vae08SnksnJX/I/MFOKMqOOkX3GVtwD5duokm7NmnfYeqWL9I9oR+5mr/sIHg6M4VT
+	 ayUfftHWLjhjhOG8ISnfGpOTODiYtP83u3XFnSR2BJFHRqwkBIdpEA950nwxEucxQT/CJ
+	 26Ot0Fd3nZ//fc0LEvhPiIj6vFCRvQUPcs013yAgED2Zmotr6biC84w+bL5jZsusCOPtX
+	 6FyNBTUhA9U8Ja3oTrtBCuwfTrnK9QQB9OSduw4gmxdnxD/S1rZLYDO65NalFgYRV6YCM
+	 3QArBJ25mtrnLQRdvdtebyS0FzFBVWrzZpK5Jjm8xmHX9qDAjYGO/roHrJphmV+3C7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795010990;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795011063;
 	h=DMARC-Filter:Received:DKIM-Signature:From:To:Cc:Subject:Date:
 	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding:X-CMAE-Envelope;
-	bh=T1qvRLtkirmgKXEavAQCYElsIkpIGZmynR3Whc+7Ebc=;
-	b=FVB628wGH/YY9Xes3NZ3A0XcrU1K/McilDkk8+Vs7HkQvkWWIOYBWnQ4ZEjfZ6/GkEZw
-	 YzjSclJKh/82vNebfV8gfF3nxDSraLwU/oCKApl99qDYBIteXK8sAcgFN6aN2Z3qm9gIf
-	 SREdduQTYQD2XGTV6UsxUR1oR6Qi4rP3HIZxb/NzjWtS/ok2iwO8i1ZEx/yCVLFJBiZ8L
-	 HsmbcRmkF71OQss9ONoCA7PsFsDOIY/O7iHfhtjmGTnWtxFi0QyoIg8XULEO/cxYWKgSH
-	 3T8ugEBwlbDaPI/xIMqd+lgJnt+2Wwj5FlWLT0M5833MOPDZ2UxxZ58hYP0U+olG1SA==
+	bh=fKl8MNySZ88IUVeu2UU7VcrqEn+ayXaw8/l2vB54HEo=;
+	b=jO5y8g9HXZOVIQLWN2D6d4sjeW1MMuS4wLa3/CoPOSl8Ez3sgeg+jmm0hhMXWH6VCAHR
+	 eGYqZ5vlTuw8+LnnvZMLcuMX/atLMET2tFNMWLekcCcAKgSeMBErEeTrRUlZytKuRVfsN
+	 7Rtj1Q5Ssjjkvz2l1HQdmQvGKvWxWw+J1XCRT0+OBLXBAXkjPK5JLkHg4d2leen86CKKY
+	 fsj5X3asqQSamhPElXjEVeXbBuwPWPgKQVUG4J3Y6kYcs5lVNyF4t7d0YjSa1rx2XfTsa
+	 psfvarlqd3SOI9gAZRi7p1L8gAIe58trzKRXfZzrs1sc1jhrckkvfca1cn8Qan6r0+w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=enneenne.com;
 	spf=pass smtp.mailfrom=enneenne.com;
-	dkim=pass header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=MFTygGwd;
-	arc=none smtp.remote-ip=62.149.156.91
-Received: from smtpcmd0991.aruba.it (smtpcmd0991.aruba.it [62.149.156.91])
+	dkim=pass header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=eJWb9UxQ;
+	arc=none smtp.remote-ip=62.149.156.116
+Received: from smtpcmd11116.aruba.it (smtpcmd11116.aruba.it [62.149.156.116])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 11C3F60A2629
-	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:09:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 11C3F60A2629
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 65F57606A339
+	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 14:11:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 65F57606A339
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=enneenne.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=enneenne.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=MFTygGwd
+	dkim=pass (2048-bit key) header.d=aruba.it header.i=@aruba.it header.a=rsa-sha256 header.s=a1 header.b=eJWb9UxQ
 Received: from polimar.tail4f75e6.ts.net ([101.57.122.26])
 	by Aruba SMTP with ESMTPSA
-	id TgM6xLP476q8sTgM6xc97L; Wed, 18 Nov 2026 15:09:47 +0100
+	id TgNAx52bt6VShTgNAxMwjf; Wed, 18 Nov 2026 15:10:53 +0100
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple; d=aruba.it; s=a1;
-	t=1795010987; bh=XZv05H9A0y4JWx4C2kfVEJYBBhLV1Q9ClegJUUM5OIE=;
+	t=1795011053; bh=GvPGRQ87Mt+BUKvr7jj3/S+NK4dYrqykH+GKaaPi5aQ=;
 	h=From:To:Subject:Date:MIME-Version;
-	b=MFTygGwdCJZ8dpJvyJST8MwHh46EfjwD8kJhmEijTWLZPxxhase+OwFsh7lq4cxfB
-	 LvCzgmBzy5Sj0C+N8g+2EU6Pcu6B9geb94MQEOAaldHnVjX4NbEFpnu9yCVc7RVqVI
-	 +/AlMwU46kB64xB6rlOg11YsetCkK56NQCCud9ukyLEjGxv8FI2EFtwtCzI88HVCUM
-	 B6NkgyZorcsWSf/nTrtd3tpjpBJsBiLJVblcOmVSQ+xtE2OkhSr6Xp9ZjC4W2kKWsf
-	 BdIKUCSta0s0GrqoJrElz2rqMIPfoGeQMGuaO7S4Jm0PYmBD6xJ5cqhofu31zEpuIG
-	 sgCvnIdr8afqw==
+	b=eJWb9UxQhFL46ix3TFV/rWxZQYgNwDgvkzEXGxx+dAa0fIKa9nl6xxcu9R1sqUsQU
+	 70TNopPpMPKX8+sMA7PxML6zXGo20jAZEARneS5fgPEgSsBK6yI0iJ+QjgFO+wi+Xm
+	 7F9YW8NuDMvNxEiKMV1M0U1Dt1kpDYpVLyRWH323K3W5oa+SPn0cCsrgX9NbKMZEUF
+	 QI/6X+293T3J0m+tatOCHPQJa0Jwu2SiFIKOGj39lP0nc5Ta9jCtldrqtp8gDoJsDH
+	 2NspoD23D3W/ZaYc7jgdodUkPwwTrocn7clOezUpe7y/vQbj8OgGjNA/7uqrdFjVHp
+	 Er5lI35K1r0Ew==
 From: Rodolfo Giometti <giometti@enneenne.com>
 To: David Howells <dhowells@redhat.com>,
 	Jarkko Sakkinen <jarkko@kernel.org>,
@@ -79,9 +79,9 @@ Cc: Herbert Xu <herbert@gondor.apana.org.au>,
 	linuxppc-dev@lists.ozlabs.org,
 	linux-kernel@vger.kernel.org,
 	Rodolfo Giometti <giometti@enneenne.com>
-Subject: [RFC PATCH 6/9] KEYS: keycrypt: Add the engine tier
-Date: Wed, 18 Nov 2026 15:09:42 +0100
-Message-ID: <20261118140942.611715-1-giometti@enneenne.com>
+Subject: [RFC PATCH 7/9] crypto: caam - add an internal cbc(paes) taking the blob's key modifier
+Date: Wed, 18 Nov 2026 15:10:47 +0100
+Message-ID: <20261118141047.616989-1-giometti@enneenne.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261118140421.584086-1-giometti@enneenne.com>
 References: <20261118140421.584086-1-giometti@enneenne.com>
@@ -95,234 +95,247 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CMAE-Envelope: MS4xfFtUaTfzPhMStwlKWj88S+iQKFn5wIBaG0bPK9UENjParNezD2h+kZm7q4GYiByZEdzsQH74S0KbPsFg8L7xfVpZZUnjhY3pvc+kJ0BI7LAXIm58qdb9
- bmkkzJji62ZNTiCaxMVfpuHS4eJ/IXnFce4WrfNK4ImC4JclA+7r7fNiS6xXF3F9kUC91n5svOz1wzWSghT5q6XEf53LyZNPrrc/noqYJn3OAMFe3Pcb7d+Z
- lRjzZ3rJpEVlyaE6ZI2Wxa4zh+XsUDK06eYDCydSJelXQvFXJ/WcWw5zkZJmJbm+vSiBAWnHsm2ItB4NZD5IeudmMrhZuKOXH7fJAO1LJTX3f0+sCHzRh9Xa
- n6jRK7VYKmcuD36NmPcE5a5qQ/DRV4vSOdUvPRrj/YvrPiea5MQ272QjO9qYLF/tix30iyVpguDSK2HRDa5zWr9oHu/AmEqOnLHKbVlXBpjLAdAazGEbIdth
- HLdXtums/t6kZMih5f2171UZiUULMzQNNsA94fCJdyDrVNFgPi8QHEXi6Y6xttQhUmXYmmZ4AuvnmL3kqMJn7s1upMk6hz9BbrqmMr4MMqaJVK30Jdysnt3f
- aRE8ya2QcCJtLQZr2RKmA4za1+IDt3smFwyvwU0c0r7cklwl8k5m34d/3+v0wnQc3OYnJcu1eSKZC7iiFg5RCwiMaeE4GI9gOFJDyvCaAFdyRFcCpRjXKm/u
- GnIMoCQUZ5cJbIXmH42HgeB9Mom/HM5zjf0AlDmQtFWyjsKOawX6s1W3KoFBLp0q0/5py+RkiRvnGJj0OMMIa9p3PYucVRq6lNq9gjio7BegbgMgdi8r8j/d
- xoJQ/GXQOWY68hvg/ZjD3OLU7hzNveMPkTCK96+gF/kzvrwVR+Ov6eIIfrB54gLPMnycFVr8wlY9Ouj04WoukiONU0ZPwhpz+SloxyLiXmGFuthIFr8FhsfS
- 0eWaDGWHGPkp/suwdEXROQaeuYznS1LzoE24Vp3dBHi6YHa/fK4JF7yMGmMjjJSkbdNO9q5+x8865SHF0fA8CjK0jlLmZcGf6DM0Kiite82qeySAORG2OHJj
- tsqmLYj7eCkPBqaXElyOd10BiBW5+l71PrgU6PmJ01lz1dfGGYbyi0hh2O084BQyoFb51+EX8oC0fOneRnlTf5YqiiOyj8W3ITzlZC4yuRDvls9YeeraZcew
- 16RkCXAhbo/9u1wjwqAT+RTjXNHh+RgruILUwr6hGEZ6T7PcMQzrNneKZec16tMsxqCQ1dH6MW6E9jAeCvsC9SIXyrfSWdpa1/TFF9zOmXIA7d6cP1Vrkwvq
- /dvjANn24zLCUQGaJId5m7U3wjKNz3IJB5tye/7AjlK9e0p9aQ0=
+X-CMAE-Envelope: MS4xfE5OpqY75Ap3Fw41rg59MeMfDJL8VLBXfB7grLmJrcheJpfdBBjwj4/o3/jJ+Oq/GidTZ5rPY+KvdqwBHB0smNkdNjPlFYZQ/YMI66SfBxOdEt7QQmuJ
+ VxyiSgTYAk6BtCBqQJ4PJc/1GFqvSANx4AQ7GBzWENhF/z1l/fUyGnUY9UVdgfmMtcV5fB/gT3qg4t60O8gkg/AZ5klrgiJk+94IiD8iv8e1an81pI8cY/3B
+ iPsu7US/wz9binHbc+L1ce3G8HBgP6gu1qPrGRY94h1XBiuYRKdBjzV+qrlnssejxIQklBlk6wDsbfy/+hQPAOmJuOalB51CIE78GPs9BvDU9c1VYtQNUGPN
+ FaNzJTBwYs1vnylakFLkGjXrcDuZ6ElzzijYPmMU/8mxaZ/iXnoJo0noL3UEDlTEoWvFgthTjooPrgwq9r5An5SWmuvA5jhcpDaWjGNPeVpJX/X4mZykjMP9
+ dROwmsgDD7Ky0w87+5in9Kr0JTdltoisiZvcKxAp7sqzZ55KrkvjaqH5wQIi1o8veWwci7KpRx48j9G74P4yQsT4ES7thJ21J8gZNqzkeSPFsgIMZb/jKX6S
+ Iu4VZmJ1++s2x6l/0cEWtRphuW3Rt6RFezF7qhecDIgg60M/qwsf5E3zKFQ9BnYLobNFEcAg0HY/9d8CPS3USBlzD3aw+5sjpU2cGD9mgzXNZjzz3FRjJQQf
+ t6zFocVmFWMtja1S4fFwN4AmjrcFmaTfoniARPlzw7HZd8PS+BC6sMjTOqpFycfcAcpUKbkSVJgxscf8zaWY0TpQlK4L+VtMiqA0QkMh3WPmB83rA3V+W5oi
+ NCJCAYKLYHIkbxIhj8o5jILr/DS6haFVdy1dUUBurNJ3NVEhx/7Vl88aA8W6T1sH03o37BahwRPZn9W3PWKa0+F0AMmPB3Zkttbaf03m96JKwG76aRUeJBj8
+ 5xtJMj/9ikF/QABBS2kBAMsoYo8Yi0R3vwwVn00LXawbU+eDbEq1DkfZAknqDK5dl5fgvTfDZQO1i3pGoqY90YcSZxgFrGTDxXyD3hnj7fi+90DdqodpZhRD
+ xqXY4AaXY6IIpB208HEZi3ndRW+e0hAGd5fM6+65sHfl5qcu1IoMhDjUbotryYDCK8E1dTajC7Xq5L32ML6B9xgnWnsyHAD1r24tb3fl9RGugkZlWZCRow/y
+ RufAhx/8Z1aOsTca/tWcherpNmTt7Qw1IVKhW9m2lo+VBNWml7Hskh/nR2lJSEzgI7V0Z0OAjTkr5i/h03plD6qzcTX5PETQI/AeHui6KZd5h/lpfc/YAH9d
+ e+lQLGjp76Zpu9yJ4OG4//vtWGgSPc4Cx0hei1rRAjgeKvmCvQ0=
 
-Some crypto engines hold a key so that the kernel never reads it once
-sealed, yet run whatever operation the kernel asks of it: the CAAM's
-black keys are of this kind. A key there is better kept than in
-kernel memory, but its use is no more checked than the kernel
-tier's.
+cbc(paes) decapsulates every blob with the fixed key modifier
+"SECURE_KEY", the one trusted keys use for their "pk" keys, and is
+reachable from AF_ALG: a blob made for either can be used through the
+other by whoever holds CAP_NET_ADMIN or CAP_SYS_ADMIN (with AF_ALG's
+default restriction), for whatever operation they choose. A kernel
+user that wants its blobs bound to something of its own, such as the
+metadata of the key they protect, has no way to say so.
 
-Add the engine tier, 15, between kernel and tee, for such backends:
-tier=engine and min-tier=engine choose them, accepted-min-tier=engine
-and KEYCTL_CRYPT_OPEN's accepted_min_tier take them, and
-CONFIG_KEYCRYPT_SYSTEM_TIER_ENGINE makes it the system tier at boot.
-The core warns in the kernel log when a backend registers at it, since
-the protection its name may suggest stops short of the use of the key.
+Add a second cbc(paes), cbc-paes-km-caam, flagged CRYPTO_ALG_INTERNAL
+so that only kernel code asking for that flag can allocate it, as the
+DCP's paes is, which trusted keys allocate by driver name with that
+flag; its key names the key modifier to decapsulate with.
+caam_encap_blob() already takes a caller's key modifier, so a kernel
+user can now bind its blobs to a value of its own.
 
-No backend in the kernel declares this tier yet; the keycrypt CAAM
-backend proposed with it does.
+Its only user is the keycrypt CAAM backend, which is a proposal, and
+so is this.
 
 Signed-off-by: Rodolfo Giometti <giometti@enneenne.com>
 ---
- .../admin-guide/kernel-parameters.txt         |  2 +-
- Documentation/security/keys/keycrypt.rst      | 42 ++++++++++++-------
- include/uapi/linux/keycrypt.h                 |  2 +
- security/keys/keycrypt/Kconfig                | 11 ++++-
- security/keys/keycrypt/core.c                 |  4 ++
- security/keys/keycrypt/keycrypt.h             |  2 +
- 6 files changed, 46 insertions(+), 17 deletions(-)
+ drivers/crypto/caam/caamalg.c      | 89 ++++++++++++++++++++++++++----
+ drivers/crypto/caam/caamalg_desc.c |  3 +-
+ drivers/crypto/caam/caamalg_desc.h |  1 +
+ include/soc/fsl/caam-blob.h        |  8 +++
+ 4 files changed, 89 insertions(+), 12 deletions(-)
 
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 62d44a5225e4..0cacb7d1ca1d 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2947,7 +2947,7 @@ Kernel parameters
- 	keycrypt.system_tier=	[KEYS] Lowest protection tier a keycrypt key
- 			may be used at; keys of a lower tier can still
- 			be created and loaded.
--			Format: { kernel | tee | hsm }
-+			Format: { kernel | engine | tee | hsm }
- 			Default: the CONFIG_KEYCRYPT_SYSTEM_TIER_*
- 			choice, kernel unless set. Can only be raised,
- 			here or later through the
-diff --git a/Documentation/security/keys/keycrypt.rst b/Documentation/security/keys/keycrypt.rst
-index 17af3b041000..ac393a0bc97d 100644
---- a/Documentation/security/keys/keycrypt.rst
-+++ b/Documentation/security/keys/keycrypt.rst
-@@ -26,6 +26,10 @@ The tiers, lowest first:
- ========== =========================================================
- ``kernel`` the key is in clear in kernel memory while loaded; the
-            kernel enforces its use
-+``engine`` a crypto engine the kernel drives keeps the key, never in
-+           clear in the kernel once sealed; the kernel decides its use
-+           (a secure element that does not check a key's use is an
-+           engine too)
- ``tee``    a trusted execution environment keeps the key and checks
-            every use against the purpose it bound (an OP-TEE TA)
- ``hsm``    as ``tee``, in dedicated hardware apart from the CPU running
-@@ -34,7 +38,9 @@ The tiers, lowest first:
-            policy)
- ========== =========================================================
+diff --git a/drivers/crypto/caam/caamalg.c b/drivers/crypto/caam/caamalg.c
+index d00caa9cdf8e..f34717f312b8 100644
+--- a/drivers/crypto/caam/caamalg.c
++++ b/drivers/crypto/caam/caamalg.c
+@@ -125,6 +125,8 @@ struct caam_ctx {
+ 	dma_addr_t key_dma;
+ 	u8 protected_key[CAAM_MAX_KEY_SIZE];
+ 	dma_addr_t protected_key_dma;
++	u8 key_mod[CAAM_BLOB_KEYMOD_LENGTH];
++	unsigned int key_mod_len;
+ 	enum dma_data_direction dir;
+ 	struct device *jrdev;
+ 	struct alginfo adata;
+@@ -784,18 +786,19 @@ static int skcipher_setkey(struct crypto_skcipher *skcipher, const u8 *key,
+ 	return 0;
+ }
  
--Each tier holds the guarantees of those before it.
-+Each tier holds the guarantees of those before it. Keys of the ``engine``
-+tier, such as the CAAM's protected keys, are used by the kernel, which
-+cannot read them once sealed.
+-static int paes_skcipher_setkey(struct crypto_skcipher *skcipher,
+-				const u8 *key,
+-				unsigned int keylen)
++static int paes_set_blob(struct crypto_skcipher *skcipher,
++			 const struct caam_pkey_info *pkey_info,
++			 const u8 *blob, unsigned int keylen,
++			 const u8 *key_mod, unsigned int key_mod_len)
+ {
+-	struct caam_pkey_info *pkey_info = (struct caam_pkey_info *)key;
+ 	struct caam_ctx *ctx = crypto_skcipher_ctx_dma(skcipher);
+ 	struct device *jrdev = ctx->jrdev;
+ 	int err;
  
- The backends of this document: ``sw``, of tier ``kernel``, where the
- kernel's own software uses the key (`The sw backend`_); and ``optee``,
-@@ -55,7 +61,9 @@ sw backend the secret is the trusted master each key names with
- master (`The sw backend`_).
+-	ctx->cdata.key_inline = false;
++	if (WARN_ON(key_mod_len > CAAM_BLOB_KEYMOD_LENGTH))
++		return -EINVAL;
  
- A backend of tier ``tee`` or ``hsm`` also declares that it meets
--`Backend requirements`_.
-+`Backend requirements`_; one that keeps a sealed key out of the kernel's
-+reading but leaves its use to the kernel is ``engine``. The core says
-+so in the kernel log when an ``engine`` backend registers.
+-	keylen = keylen - CAAM_PKEY_HEADER;
++	ctx->cdata.key_inline = false;
  
- A backend registers with ``keycrypt_register_backend()``
- (``include/keys/keycrypt.h``) under a name that is stored in every blob it
-@@ -96,10 +104,13 @@ itself does what the core has no way to check:
- A backend declares its own tier at ``keycrypt_register_backend()``; the
- core stores and compares it wherever a tier is checked, but never
- confirms that the backend is actually a TEE or hardware rather than
--ordinary kernel code claiming to be one. The ``kernel`` tier meets
--none of the above: its key material is in clear in kernel memory (`The
--sw backend`_), so there every property above is only as strong as the
--kernel itself.
-+ordinary kernel code claiming to be one. The ``engine`` and ``kernel``
-+tiers meet none of the above: an ``engine`` backend leaves the key's
-+use to the kernel, and the kernel tier's key material is in clear in
-+kernel memory (`The sw backend`_), so there every property above is
-+only as strong as the kernel itself. What an ``engine`` backend keeps
-+against a compromised kernel is only that a sealed key is not in clear
-+in kernel memory, as far as its hardware's own properties hold.
+ 	if (pkey_info->is_pkey != 1) {
+ 		dev_dbg(jrdev, "not a protected key\n");
+@@ -842,19 +845,52 @@ static int paes_skcipher_setkey(struct crypto_skcipher *skcipher,
+ 	/* Retrieve the length of blob*/
+ 	ctx->cdata.keylen = keylen;
  
- Metadata
- ========
-@@ -187,7 +198,7 @@ Any other ``<option>=<value>`` is passed to the backend; the core refuses
- an option the backend does not declare and an option given twice. The
- one option a backend of this document takes from user space is
- ``master=``, the sw backend's: it needs a master to seal its keys, while from
--``tee`` up a backend's own mechanisms protect the key. A command for
-+``engine`` up a backend's own mechanisms protect the key. A command for
- the kernel tier therefore reads ``tier=kernel master=<name>``; the kernel
- tier chosen without ``master=``, or ``master=`` given to a backend of
- another tier, is refused with ``EINVAL``.
-@@ -451,10 +462,11 @@ so that a kernel compromised enough to lie about the operation or the
- key's metadata still cannot open, say, an encryption context on a
- decrypt-only key; the sw backend has no such check of its own, since
- a compromised kernel already has that backend's key material in clear
--(`The sw backend`_), and relies on the core's check alone. Across
--every tier it is the kernel, not any backend, that decides who may open
--a context on a key, since Search permission is the core's own check; a
--compromised kernel can
-+(`The sw backend`_), and relies on the core's check alone; neither
-+does an ``engine`` backend, whose key's use the kernel decides
-+(`Tiers and backends`_). Across every tier it is the kernel, not any
-+backend, that decides who may open a context on a key, since Search
-+permission is the core's own check; a compromised kernel can
- therefore still open a context on a key of any tier and use it for a
- purpose the key already has, but, for a backend of tier ``tee`` or
- ``hsm`` meeting `Backend requirements`_, it can neither read that key
-@@ -603,8 +615,8 @@ the capability); neither touches a context already open at the time
- they change.
+-	/* Retrieve the address of the blob */
+-	ctx->cdata.key_virt = pkey_info->key_buf;
+-
+ 	/* set command option */
+ 	ctx->cdata.key_cmd_opt = KEY_ENC;
  
- ``kernel.keys.keycrypt_system_tier`` is the system tier, the lowest tier
--a key may be used at: one of ``10`` (``kernel``), ``20`` (``tee``)
--or ``30`` (``hsm``), the same values as
-+a key may be used at: one of ``10`` (``kernel``), ``15`` (``engine``),
-+``20`` (``tee``) or ``30`` (``hsm``), the same values as
- ``KEYCRYPT_TIER_*`` (`Tiers and backends`_). It can only be raised,
- never lowered (``EPERM`` on a lower value, ``EINVAL`` on anything
- else). It applies to use only: ``KEYCTL_CRYPT_OPEN`` refuses a key
-@@ -630,8 +642,8 @@ already loaded is affected, imported or not. With
- rather than this one.
- 
- Each has a boot parameter setting its starting value before either sysctl
--is ever written: ``keycrypt.system_tier=`` (``kernel``, ``tee`` or
--``hsm``) and ``keycrypt.import=`` (a boolean). An invalid
-+is ever written: ``keycrypt.system_tier=`` (``kernel``, ``engine``,
-+``tee`` or ``hsm``) and ``keycrypt.import=`` (a boolean). An invalid
- value, or one that would lower what is already set, is ignored, with a
- kernel warning, rather than failing the boot. An administrator who
- wants either policy fixed from the very start, before any user-space
-diff --git a/include/uapi/linux/keycrypt.h b/include/uapi/linux/keycrypt.h
-index c03348579f62..71209a08c924 100644
---- a/include/uapi/linux/keycrypt.h
-+++ b/include/uapi/linux/keycrypt.h
-@@ -13,6 +13,8 @@
- 
- /* Protection tiers, lowest first; the gaps leave room for more */
- #define KEYCRYPT_TIER_KERNEL	10	/* the kernel itself */
-+/* a crypto engine the kernel drives; the kernel decides its use */
-+#define KEYCRYPT_TIER_ENGINE	15
- #define KEYCRYPT_TIER_TEE	20	/* a trusted execution environment */
- /* as TEE, in dedicated hardware apart from the CPU running the kernel */
- #define KEYCRYPT_TIER_HSM	30
-diff --git a/security/keys/keycrypt/Kconfig b/security/keys/keycrypt/Kconfig
-index e61922933bd7..a6d8a0fa6d29 100644
---- a/security/keys/keycrypt/Kconfig
-+++ b/security/keys/keycrypt/Kconfig
-@@ -56,11 +56,20 @@ config KEYCRYPT_SYSTEM_TIER_KERNEL
- 	  A system with no backend of the kernel tier built has no key of
- 	  that tier to use.
- 
-+config KEYCRYPT_SYSTEM_TIER_ENGINE
-+	bool "Engine"
-+	help
-+	  Only keys whose backend declares them never in clear in the
-+	  kernel once sealed can be used: a key of the kernel tier is
-+	  refused at every KEYCTL_CRYPT_OPEN; the engine, tee and hsm tiers
-+	  can be used. For a system that must never use a key held in clear
-+	  by the kernel.
+-	memcpy(ctx->key, ctx->cdata.key_virt, keylen);
++	/* The key modifier the blob is decapsulated with, at every job */
++	memcpy(ctx->key_mod, key_mod, key_mod_len);
++	ctx->key_mod_len = key_mod_len;
 +
- config KEYCRYPT_SYSTEM_TIER_TEE
- 	bool "TEE"
- 	help
- 	  Keys whose use a trusted execution environment or the hardware
--	  checks: keys of the kernel tier are refused at every
-+	  checks: keys of the kernel and engine tiers are refused at every
- 	  KEYCTL_CRYPT_OPEN; the tee and hsm tiers can be used. For a
- 	  system where OP-TEE or an hsm backend holds the keys.
++	/* Retrieve the address of the blob */
++	memcpy(ctx->key, blob, keylen);
++	ctx->cdata.key_virt = ctx->key;
+ 	dma_sync_single_for_device(jrdev, ctx->key_dma, keylen, DMA_TO_DEVICE);
+ 	ctx->cdata.key_dma = ctx->key_dma;
  
-diff --git a/security/keys/keycrypt/core.c b/security/keys/keycrypt/core.c
-index debd0845621e..4a2609c6830f 100644
---- a/security/keys/keycrypt/core.c
-+++ b/security/keys/keycrypt/core.c
-@@ -40,6 +40,7 @@ static const struct keycrypt_name keycrypt_algs[] = {
+ 	return 0;
+ }
  
- static const struct keycrypt_name keycrypt_tiers[] = {
- 	{ KEYCRYPT_TIER_KERNEL,		"kernel" },
-+	{ KEYCRYPT_TIER_ENGINE,		"engine" },
- 	{ KEYCRYPT_TIER_TEE,		"tee" },
- 	{ KEYCRYPT_TIER_HSM,		"hsm" },
- };
-@@ -441,6 +442,9 @@ int keycrypt_register_backend(struct keycrypt_backend *b)
- 		b->handle = h;
- 	}
- 	mutex_unlock(&keycrypt_lock);
-+	if (!ret && b->tier == KEYCRYPT_TIER_ENGINE)
-+		pr_warn("backend %s registered at tier engine: the use of its keys is checked by the kernel only\n",
-+			b->name);
- 	if (ret)
- 		kfree(h);
- 	return ret;
-diff --git a/security/keys/keycrypt/keycrypt.h b/security/keys/keycrypt/keycrypt.h
-index 5a41a68c48fa..40487eb3e139 100644
---- a/security/keys/keycrypt/keycrypt.h
-+++ b/security/keys/keycrypt/keycrypt.h
-@@ -143,6 +143,8 @@ bool keycrypt_tier_valid(u32 tier);
- #define KEYCRYPT_BOOT_SYSTEM_TIER	KEYCRYPT_TIER_HSM
- #elif IS_ENABLED(CONFIG_KEYCRYPT_SYSTEM_TIER_TEE)
- #define KEYCRYPT_BOOT_SYSTEM_TIER	KEYCRYPT_TIER_TEE
-+#elif IS_ENABLED(CONFIG_KEYCRYPT_SYSTEM_TIER_ENGINE)
-+#define KEYCRYPT_BOOT_SYSTEM_TIER	KEYCRYPT_TIER_ENGINE
- #else
- #define KEYCRYPT_BOOT_SYSTEM_TIER	KEYCRYPT_TIER_KERNEL
- #endif
++static int paes_skcipher_setkey(struct crypto_skcipher *skcipher,
++				const u8 *key,
++				unsigned int keylen)
++{
++	const struct caam_pkey_info *pkey_info =
++		(const struct caam_pkey_info *)key;
++
++	return paes_set_blob(skcipher, pkey_info, pkey_info->key_buf,
++			     keylen - CAAM_PKEY_HEADER, KEYMOD,
++			     sizeof(KEYMOD) - 1);
++}
++
++/*
++ * The internal cbc(paes): the blob comes with the key modifier it was
++ * encapsulated with, which only kernel code can choose; a caller that
++ * picks a modifier of its own keeps its blobs apart from those of
++ * cbc(paes) and of trusted "pk" keys
++ */
++static int paes_km_skcipher_setkey(struct crypto_skcipher *skcipher,
++				   const u8 *key,
++				   unsigned int keylen)
++{
++	const struct caam_pkey_info *pkey_info =
++		(const struct caam_pkey_info *)key;
++
++	return paes_set_blob(skcipher, pkey_info, key + CAAM_PKEY_KM_HEADER,
++			     keylen - CAAM_PKEY_KM_HEADER,
++			     key + CAAM_PKEY_HEADER, CAAM_BLOB_KEYMOD_LENGTH);
++}
++
+ static int aes_skcipher_setkey(struct crypto_skcipher *skcipher,
+ 			       const u8 *key, unsigned int keylen)
+ {
+@@ -1398,7 +1434,9 @@ static int init_skcipher_job(struct skcipher_request *req,
+ 		edesc->desc_dma = desc_dma;
+ 		edesc->desc_dma_bytes = desc_bytes(desc);
+ 
+-		cnstr_desc_protected_blob_decap(edesc->hw_desc, &ctx->cdata, desc_dma);
++		cnstr_desc_protected_blob_decap(edesc->hw_desc, &ctx->cdata,
++						ctx->key_mod, ctx->key_mod_len,
++						desc_dma);
+ 	} else {
+ 		sh_desc = encrypt ? ctx->sh_desc_enc : ctx->sh_desc_dec;
+ 		ptr = encrypt ? ctx->sh_desc_enc_dma : ctx->sh_desc_dec_dma;
+@@ -2031,6 +2069,30 @@ static struct caam_skcipher_alg driver_algs[] = {
+ 		.caam.class1_alg_type = OP_ALG_ALGSEL_AES | OP_ALG_AAI_CBC,
+ 		.caam.is_paes = true,
+ 	},
++	{
++		.skcipher.base = {
++			.base = {
++				.cra_name = "cbc(paes)",
++				.cra_driver_name = "cbc-paes-km-caam",
++				.cra_blocksize = AES_BLOCK_SIZE,
++				/* kernel users only: never from AF_ALG */
++				.cra_flags = CRYPTO_ALG_INTERNAL,
++			},
++			.setkey = paes_km_skcipher_setkey,
++			.encrypt = skcipher_encrypt,
++			.decrypt = skcipher_decrypt,
++			.min_keysize = AES_MIN_KEY_SIZE + CAAM_BLOB_OVERHEAD +
++				       CAAM_PKEY_KM_HEADER,
++			.max_keysize = AES_MAX_KEY_SIZE + CAAM_BLOB_OVERHEAD +
++				       CAAM_PKEY_KM_HEADER,
++			.ivsize = AES_BLOCK_SIZE,
++		},
++		.skcipher.op = {
++			.do_one_request = skcipher_do_one_req,
++		},
++		.caam.class1_alg_type = OP_ALG_ALGSEL_AES | OP_ALG_AAI_CBC,
++		.caam.is_paes = true,
++	},
+ 	{
+ 		.skcipher.base = {
+ 			.base = {
+@@ -3812,6 +3874,11 @@ static int caam_cra_init(struct crypto_skcipher *tfm)
+ 		 * AF_ALG refuses ALG_SET_KEY once an op socket exists, so
+ 		 * concurrent jobs all decapsulate the same blob into the same
+ 		 * black key.
++		 * In-kernel users of the internal cbc(paes) set the key once,
++		 * before any request, as well. It also relies on the black
++		 * key being decapsulated identically by every job, which ECB
++		 * black keys are; CCM ones, with their random nonce, would
++		 * need a buffer per request.
+ 		 */
+ 		ctx->protected_key_dma = dma_map_single(ctx->jrdev,
+ 							ctx->protected_key,
+diff --git a/drivers/crypto/caam/caamalg_desc.c b/drivers/crypto/caam/caamalg_desc.c
+index 04c1105eb1f5..db3bbba67c8b 100644
+--- a/drivers/crypto/caam/caamalg_desc.c
++++ b/drivers/crypto/caam/caamalg_desc.c
+@@ -1410,6 +1410,7 @@ void cnstr_desc_skcipher_enc_dec(u32 * const desc, struct alginfo *cdata,
+ EXPORT_SYMBOL(cnstr_desc_skcipher_enc_dec);
+ 
+ void cnstr_desc_protected_blob_decap(u32 * const desc, struct alginfo *cdata,
++				     const u8 *key_mod, unsigned int key_mod_len,
+ 				     dma_addr_t next_desc_addr)
+ {
+ 	u32 protected_store;
+@@ -1417,7 +1418,7 @@ void cnstr_desc_protected_blob_decap(u32 * const desc, struct alginfo *cdata,
+ 	init_job_desc(desc, 0);
+ 
+ 	/* Load key modifier */
+-	append_load_as_imm(desc, KEYMOD, sizeof(KEYMOD) - 1,
++	append_load_as_imm(desc, key_mod, key_mod_len,
+ 			   LDST_CLASS_2_CCB | LDST_SRCDST_BYTE_KEY);
+ 
+ 	append_seq_in_ptr_intlen(desc, cdata->key_dma,
+diff --git a/drivers/crypto/caam/caamalg_desc.h b/drivers/crypto/caam/caamalg_desc.h
+index 323490a4a756..ae673b596a6d 100644
+--- a/drivers/crypto/caam/caamalg_desc.h
++++ b/drivers/crypto/caam/caamalg_desc.h
+@@ -117,6 +117,7 @@ void cnstr_shdsc_xts_skcipher_encap(u32 * const desc, struct alginfo *cdata);
+ void cnstr_shdsc_xts_skcipher_decap(u32 * const desc, struct alginfo *cdata);
+ 
+ void cnstr_desc_protected_blob_decap(u32 * const desc, struct alginfo *cdata,
++				     const u8 *key_mod, unsigned int key_mod_len,
+ 				     dma_addr_t next_desc);
+ 
+ void cnstr_desc_skcipher_enc_dec(u32 * const desc, struct alginfo *cdata,
+diff --git a/include/soc/fsl/caam-blob.h b/include/soc/fsl/caam-blob.h
+index 922f7ec3e231..13c21c7e4c2e 100644
+--- a/include/soc/fsl/caam-blob.h
++++ b/include/soc/fsl/caam-blob.h
+@@ -38,6 +38,14 @@ struct caam_pkey_info {
+ /* sizeof struct caam_pkey_info */
+ #define CAAM_PKEY_HEADER		4
+ 
++/*
++ * A key of the CAAM's internal cbc(paes): struct caam_pkey_info, the
++ * CAAM_BLOB_KEYMOD_LENGTH-byte key modifier the blob was encapsulated
++ * with, then the blob
++ */
++#define CAAM_PKEY_KM_HEADER		(CAAM_PKEY_HEADER + \
++					 CAAM_BLOB_KEYMOD_LENGTH)
++
+ /**
+  * struct caam_blob_info - information for CAAM blobbing
+  * @pkey_info:	 pointer to keep protected key information
 -- 
 2.43.0
 
