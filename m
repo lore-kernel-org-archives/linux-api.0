@@ -1,100 +1,47 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.46
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795038587;
-	b=PxX4QuobiOxMf/K5iA3FI/ttA6tXxlcgCEVa5OJK091oPG/2c65Zj8HUZh+Gqi1p17LA
-	 pdnPz9H0W3wAdMC/8krbbpkRUhu+EIa/vQPBaM1xa+KR7a4F4JKHt7fAv+1uWiw+Oa3wN
-	 ACXYAyI4lCxdO6GLlPsEBhkq93Px1xBezpotbKtFQh7tMxjECoyybGiwl6npFpOLqKNry
-	 wZLtmA4c+dkHsLnC3aPo8WADXxMbFClRiuoOVOF+lWXSt94Q6P3dYN8sW4VU+ZHQvyIrX
-	 nb8R+V95iEuI5RvQwMIr8EjU/fTkIBilrRd+zNGEocIwmwx12ntOo53INn0j4q0m5eg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795038587;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=CZPHqjEKi2vg5bpASOGDI+kJVhoG5JNXko8FEV4Oxfg=;
-	b=fVpPaqhM4gJTuXXCT6bkK6lUyHDblEPtN9D1L/ZSqhhF3jMI9ZQhgM7HFSOfs5ZtVlzb
-	 bcZ8TH39/g1adURGYJ4dO55pSYm551D3tBs0uhzaNcH6I1LnrAvgOCuqyp4GuHCw1QgEl
-	 kkDzWx6G+cT4SdWuV+vVlgBIBXqxnG+SsZ1sqrC6n3azDEqqoelwa4iWOOtHss4cPVneJ
-	 l59CppGoumLWzA6w+UqjoD5U1SpOG2tWwTG0oKjzO03dLQYKIE/zTdd/RkCycxkwzweTf
-	 ln4o5MZsvTrgqY4I/KdAVJXV7UnHvF2k/ObjuHAGn0SjDzhieSKUc/+Sa7007n+XX2g==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amacapital.net;
-	spf=pass smtp.mailfrom=amacapital.net;
-	dkim=pass header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=KaciEEIF;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.46
-Received: from mail-lf1-f46.google.com (mail-lf1-f46.google.com [209.85.167.46])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795041391;
+	b=LgToh0lRSq4qdmsLP8ADHuiyVP9RIUw8l8wpqH99j8OspOL5Oh/iBe/2ifDyiDhTjqfB
+	 RjsG3EgUl4DH7NbmsjjAO4PAglscXEevPO5zrDNOM2HUB1GpUZsJdcEm3wxZ2q8Z4QdKs
+	 dVHJMM6lR3hPjnQnxwlqx5vDMpGXoFFndh+IT0hTkOzra99Fn7gbsZPLYizN2c4NYOZsV
+	 vzBd5Mm0tFwP39tnmoRZJekxeDHsVPLevzfEh/1McCqxDv/q6eoV3wy+4/GW9tBdhR3mS
+	 X9eSWqvOubeBIEGUVcAYdd+CHLIlb4Mw2u9verDd/WHzrxRbakxYRd3cO+lETxw9P5w==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795041391;
+	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:Content-Language:To:Cc:References:From:Autocrypt:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=giz9sJbi7AOf6PAf+EITaeI2qW09MerlLLpsHbUYRWE=;
+	b=KcZ5y92ctMiukzpw4maZH7aeVhcXH3fnHGWoOoudXdMOHnAUBRYZHPLiWFvedMT2n9zE
+	 lU1KWbpENt/OY396E+zlWgmVAMQZfsPJy8UoJ5CE/069vwdPZnM8vsJxo/x9E2jvRGUSk
+	 OajoATdiPPRvzuJzSipCXIKmSveM/wxWb7qsish1CCPsQS4eZRSmsScp2WKgWHXGdeyD2
+	 OtfZUCfmBwPXQWk5FqWuOFUCiEbHeBgPRP8wl9Plbd5i6GQxMAii2BU74PwycAo9V5HqV
+	 wSmW4opKmL7LUA+U0Z9cohYaK/90IMWp6QbQEp+lJq2IZykjhSqs/zSRBh0k9yLxb3w==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=he7jUpP7;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DC7B606A334
-	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 21:49:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9DC7B606A334
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 45E59606A325;
+	Wed, 18 Nov 2026 22:36:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=KaciEEIF
-Received: by mail-lf1-f46.google.com with SMTP id 2adb3069b0e04-5c14f3dab66so286220e87.0
-        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 13:49:46 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795038585; cv=none;
-        d=google.com; s=arc-20260327;
-        b=ZxBq6/AnsdBbLAMWDLIm4xK1tmapbpKIA+J+wezi0WNjKJ/TpUkstCTLmieKlVRR8e
-         L283f+zkyJ7ZMsn6zYt65wrE+gxlC/80iRGOiKebq9g7RVQ5mFrC/hyh/Yq9UK9ppv3u
-         VICkqxIyAWGgZvYouYqYtwXH/pI5byQHbUQgPPgq/doO3tr6fqdgI5PlEewHgcKpwrUC
-         YS8DE2zGLoEzS4L894zjWKIh30C1y2cS8bo9gX5cD0RyIdzIVJBSveDEsptOeEeRDwWw
-         NAJfBZqNbpFQ4KkgnvD1Up72GxxAH5XVDKitVdAiYDKGbd9MXybezBHuo8C9qSONSvsX
-         24Zg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=CZPHqjEKi2vg5bpASOGDI+kJVhoG5JNXko8FEV4Oxfg=;
-        fh=j9Yz8qKHxzkZrRaENkDLfnK+ZFPJxbUyhILBSCDAgmY=;
-        b=UshRBYYtuyB0kks0IV4SNvcVedbPgLJUUaYoP4e4hUduyU62CK9gQIy3r1HupVey/Y
-         OhB1mzlxlcSV/gVqcLDtHU7OvQVFvteccceGT/3IfyI/wlNcp3YmQlVMbElAphy8ZdOL
-         GMvXi6EXc9WnnCSRKz6NJvsMKBLbGb3DpcTx+VNjsuz4p0wlHvNI3EuHPrVyH6ucBvrZ
-         BmUJzUauXMmD7WUeTrOQAF8tEujOD87fX3m4YDaJZTvcFMQ585RKfC4VMzVuHIFwtaHf
-         6RRP1CU+DkuAXgmfj+wJm4aqhkkFgdTGYXMvFuO1C8fA04dX7VmJtGnZQQyzlt5hEEWg
-         DqKA==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1795038585; x=1795643385; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=CZPHqjEKi2vg5bpASOGDI+kJVhoG5JNXko8FEV4Oxfg=;
-        b=KaciEEIFbL/YwiIDScNJOJE/ZISkK9Hm5quErzyii+lNT1WfC7kXZg/3FpRZhArF36
-         Ad6xuGX4OWHMMcj6Uv+Z0P3xjYKr4xdoCcBZYBSZ40V+hyh+sFba/6f/Byhy6/IHBYV0
-         /krtJ2/zrzEeNc29BPoEzTEoutLnweqJEraHWGz4Xdqq1myp231uUNQJfdNikDffJxU0
-         OhrtcSpB956rNGC7WaELPyoRadGtF0ROnUwsxD71d4jKhm42p47rbfwAaCyy31Ekzp8c
-         eLl8tZDuFmJ51rjZGikkRD11SztUd+7xg3bdsx6y/sDvmlwM86hcs70DaEGgQFzFJe8W
-         wh1Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795038585; x=1795643385;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=CZPHqjEKi2vg5bpASOGDI+kJVhoG5JNXko8FEV4Oxfg=;
-        b=sdXNEF6RF71aAJpU9W1bmqbut3Yxi42iOgR3YifuKXMa9gQbzUiZsp9HjUAzGvlkQJ
-         5XAUbxmhMNKnYL05y5oARBFWQy1sZICIu8pFLysSvrlMowjJxDUVdjiq+0XxcLB1rty2
-         YeY0Ysi+w7xRnpM5ApxoVJWK7vtlub4I+Vw0UYIBOjzFC1dfL+FEBwpnoCMCueBgAeUV
-         +huywlTlTVm2lISh4FL1oDlkAE7LTumwWn3JtkkKhMIMP8j0AEwg7KfcGbDwnl8rqX0S
-         i/JDP8fLukjf068D83UYsSTP8zMBRF4nhRaAa7Pt51G2OzcLfHWDkxEvwhTfXbuC8PSA
-         ILAw==
-X-Forwarded-Encrypted: i=1; AL+hErH7YkGwa3MA1x/VkBhEzlYAmbV0ptXW1W/DGDSh3MIABJTIzmjdHCop0QtifFgMiloc5uQ4GPd5aYU=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9Iup/TypwMhDAS1vOyE6tpicIwMZC5bepi+TI+ULZWLHLslrdc
-	aXPgcUkZw2wX20N2V1ya8LuYLMCt33pTMkG+OddC5oXffrrFt1L4O3s7kFA49mot8LWlsHo9UCP
-	qTLbgJVOIOnn1SzdOSqRYHF5yuhtrwEw+2hrDOq3l
-X-Gm-Gg: AYBFou0iLB5N0gWCpyGnNgCIHQrQtM+LUxlR8Mcw1n4B+3/uJIKoiLyCHeLtdJAVS+q
-	I8lHyAqw53JSjz5IIsiNOGmhqB6VVmyV3h0oo8UDGbsyVZmuTtOF6HOdnZLnZkMrC4xtAASeM3W
-	AsFKR+JHfpILj9sKNSQvMiU608aLNBVyR8loLDbnDSdQZjjP1vdiqR+LBL/RALAOljrvhOzgNJd
-	/CPQMgkeHNZR0qRAVN2OIRY8gsONMKKsydHU+bfZZtfPyfVsnLLxF2Do5Z+0FmKhYm2bPerwMmE
-	zZ+qkQPRpVzmDwJlYcrlz/7UN+AqZtBZmNg6jV+SJ3JVYZI7ZEY6HyJz7bOOGkt5jiGzfw4mShh
-	5UnWWeX9zPKga27RgkUeQzceBjmkr5J70tw==
-X-Received: by 2002:a05:6512:3c8e:b0:5c1:ac5f:e596 with SMTP id
- 2adb3069b0e04-5c1b40e9b72mr9362e87.23.1795038584801; Wed, 18 Nov 2026
- 13:49:44 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=he7jUpP7
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 702831F000C5;
+	Wed, 18 Nov 2026 22:36:22 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795041391;
+	bh=giz9sJbi7AOf6PAf+EITaeI2qW09MerlLLpsHbUYRWE=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=he7jUpP7W8wDKQl/Ac9/kNQcvc3DMO1YkGS7w+fX+gzQALPIfhbbsoZRzonAL29hz
+	 XV2HJ4mGcFOxPoxIyvK2iqLjsLfC80ujakgr3GD3gBIexhQZbwv1Ra29Nv6i0urF93
+	 mFVUHruiJeluzhgNRXnqLSsr9Wx9o3USwccENA1lM4ilNwGvubCTIWITLl6XcGO0fS
+	 RI44swSjupHrKUIAq31VGqsT4SEO7dYtfDCAzwOIPxgIj9xsJNpjbB91y/6otnFA5T
+	 NH9Sr0EiJ/BBY4/r0MRuie9RbCf5YhUSLt8DUfj+85e1AqQRk2cYYKFqlKIf8QkfNX
+	 rTYiX1mfpLPxA==
+Message-ID: <9bc43f9b-d721-408c-bf78-0f08f6ec4bb2@kernel.org>
+Date: Wed, 18 Nov 2026 23:36:20 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,97 +51,90 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261106-befreien-addieren-eislauf-e09212803534@brauner>
- <CALCETrWa1SBLcb5oWjqjgzZvKvCoHjmYFk=Lf5ytEM9uqm5jYA@mail.gmail.com>
- <avM41a80aig2de-R@google.com> <20261111-behagen-faktisch-entgegen-e2e714373895@brauner>
- <CALCETrUjW=kXxyggDUvEN+Pxc-pE98eVbdW8XBU8JzfqXj_voA@mail.gmail.com>
- <20261117-rational-ohnehin-unbeugsam-e5c04759a156@brauner>
- <CALCETrWhuOnBy0N0KznmczD4S2XEK0fbr0C=1KFQqTnoTJbQbg@mail.gmail.com>
- <20261118-stapeln-eckpunkte-lesbar-ee73537f474d@brauner> <20261118-zufahrt-baubeginn-gutsbetrieb-c09004227e8f@brauner>
- <CALCETrUMNr=32ENT6VBKPzoyJDfaX6nzZsjMVxuz9O3z+6LRhw@mail.gmail.com> <20261118-professionell-kondition-kerzen-5dd23c1ee490@brauner>
-In-Reply-To: <20261118-professionell-kondition-kerzen-5dd23c1ee490@brauner>
-From: Andy Lutomirski <luto@amacapital.net>
-Date: Wed, 18 Nov 2026 13:49:32 -0800
-X-Gm-Features: Aa3M54rEY9J5hVHcO1DPxjhsi7Vv-UveBjN-XrYjaJlUs9gt6QOZEnzJ-89YhLo
-Message-ID: <CALCETrXAGpb=OZyGQ2=VfKmA6xeizAsusGZ_HmRtp_s99RpRJA@mail.gmail.com>
-Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
- opt-in netns loopback
-To: Christian Brauner <brauner@kernel.org>
-Cc: lennart@poettering.net, Jann Horn <jannh@google.com>, 
-	"Hallgrimur H. Gunnarsson" <halg@google.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Paul Moore <paul@paul-moore.com>, Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
-	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
-	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, Jonathan Corbet <corbet@lwn.net>, 
-	Shuah Khan <skhan@linuxfoundation.org>, Randy Dunlap <rdunlap@infradead.org>, 
-	=?UTF-8?Q?G=C3=BCnther_Noack?= <gnoack@google.com>, 
-	KP Singh <kpsingh@kernel.org>, Jonathan Calmels <jcalmels@3xx0.net>, 
-	Casey Schaufler <casey@schaufler-ca.com>, linux-fsdevel@vger.kernel.org, 
-	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
-	containers@lists.linux.dev, netdev@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v3 00/13] Namespace for namespace roots
+Content-Language: en-US
+To: Jarkko Sakkinen <jarkko@kernel.org>, David Howells <dhowells@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+ linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
+ linux-security-module@vger.kernel.org,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ Andrew Morton <akpm@linux-foundation.org>,
+ Andy Lutomirski <luto@amacapital.net>,
+ Anna-Maria Behnsen <anna-maria@linutronix.de>,
+ Ben Segall <bsegall@google.com>, Christian Brauner <brauner@kernel.org>,
+ David Hildenbrand <david@kernel.org>, Davidlohr Bueso <dave@stgolabs.net>,
+ Dietmar Eggemann <dietmar.eggemann@arm.com>,
+ Frederic Weisbecker <frederic@kernel.org>, Ingo Molnar <mingo@redhat.com>,
+ Jan Kara <jack@suse.cz>, John Johansen <john.johansen@canonical.com>,
+ Jonathan Corbet <corbet@lwn.net>, Juri Lelli <juri.lelli@redhat.com>,
+ Kees Cook <kees@kernel.org>, K Prateek Nayak <kprateek.nayak@amd.com>,
+ "Liam R. Howlett" <liam@infradead.org>, Lorenzo Stoakes <ljs@kernel.org>,
+ Manfred Spraul <manfred@colorfullife.com>, Mel Gorman <mgorman@suse.de>,
+ Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@kernel.org>,
+ Neal Gompa <neal@gompa.dev>, Paul Moore <paul@paul-moore.com>,
+ Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+ Peter Zijlstra <peterz@infradead.org>, Randy Dunlap <rdunlap@infradead.org>,
+ Serge Hallyn <sergeh@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>,
+ Steven Rostedt <rostedt@goodmis.org>, Suren Baghdasaryan
+ <surenb@google.com>, Thomas Gleixner <tglx@kernel.org>,
+ Valentin Schneider <vschneid@redhat.com>,
+ Vincent Guittot <vincent.guittot@linaro.org>,
+ Vincenzo Frascino <vincenzo.frascino@arm.com>,
+ Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
+References: <20261118193539.240065-1-jarkko@kernel.org>
+From: "Vlastimil Babka (SUSE)" <vbabka@kernel.org>
+Autocrypt: addr=vbabka@kernel.org; keydata=
+ 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
+In-Reply-To: <20261118193539.240065-1-jarkko@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Wed, Nov 18, 2026 at 1:37=E2=80=AFPM Christian Brauner <brauner@kernel.o=
-rg> wrote:
->
-> On Wed, Nov 18, 2026 at 01:12:45PM -0800, Andy Lutomirski wrote:
+On 11/18/26 20:35, Jarkko Sakkinen wrote:
+> VERSIONS
+> ========
+> 
+> v2: https://lore.kernel.org/linux-fsdevel/20261117231352.3816603-1-jarkko@kernel.org/
+> v1: https://lore.kernel.org/linux-fsdevel/20261117050841.3289652-1-jarkko@kernel.org/
 
-> > > > * deny privilege gain on exec in the initial user namespace and all=
-ow it
-> > > >   in nested ones. I mused about this in
-> > > >   https://github.com/uapi-group/kernel-features/pull/38
-> > > >
-> > > > Also, since v7.1 there's CLONE_NNP to spawn a child without no_new_=
-privs
-> > > > set.
-> > >
-> > > Forgot:
-> > >
-> > > https://www.thkukuk.de/blog/no_new_privs/
-> > >
-> > > has an overview of where we're currently at.
-> >
-> > Nice!
-> >
-> > I commented in the uapi-group issue:
-> >
-> > I think there may be a rather more direct solution to this problem. I
-> > seem to recall advocating for clearing no_new_privs when entering a
-> > userns way back when, and IIRC I dropped this as part of the extensive
-> > negotiation to get NNP into the kernel in the first place. (I think
-> > dropping it was probably the right decision to keep the final patch
-> > simple.)
-> >
-> > But I think I would still advocate for an option to let clone, unshare
-> > and setns callers turn no_new_privs off. The logic is that, if you own
-> > a userns, you already have all capabilities in it. If you enter it,
-> > you get to keep those by having them raised in cap_permitted. Being
-> > able to clear NNP and thus drop and subsequently regain them does not
-> > let you do anything you couldn=E2=80=99t already do.
-> >
-> > An LSM hook for this would be needed because this argument does not
-> > apply to non-namespace-scoped LSM-based privileges. But the LSM hook
-> > would just be a "may this caller enter this userns and clear
-> > no_new_privs while doing so" query. In the absence of LSMs, the
-> > operation would be allowed.
-> >
-> > This would allow a fully no_new_privs host to run an ordinary
-> > container that runs, in the ordinary way, without no_new_privs, and
-> > without hitting any new LSM calls after it's started.
-> >
-> > The API could be as simple as a CLONE_CLEAR_NNP bit.
->
-> I think that sounds ok. I worry a little it since it would somewhat
-> alter the promise that NNP gives. What model do you envision?
-> It seems that CLONE_CLEAR_NNP would only be allowed with CLONE_NEWUSER.
-> I _think_ this safe even for privileged users that create a user
-> namespace and map uid 0 to uid 0. So I think this could work.
+3 versions in 2 days, with 13 patches and such a vast CC list? Maybe slow
+down a bit, please?
 
-Whoops.  I thought that and didn't type that.  Yes, I think you should
-only be able to clear NNP with CLONE_NEWUSER.
-
-(And if something like cells ever lands, presumably a task with NNP
-set should be allowed to create a cell without NNP in the init task as
-long as the same LSM hook says it's okay.)
