@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.217.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.217.42
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795037335;
-	b=OZj4+/qYScjJx7DbG9xBovBYCqMMLakAFPGodrAMS7U0kgAz5J42vGxvOgWSVcNRorqn
-	 4sPNUgAXmi69wmwpvLc1SvpI8cSAK3GRUzSXRB83ubOyayk8Z19tAk1wsBYDCI772mdCz
-	 2yXub08h1TyWdozrAIoSa/wtP9sJCT7bHeKJEFyeiwADd2cU0HF0SavatgGjvbI7zLF0w
-	 2iJcd89AA47zzItv7fCKkMBar2invvKJRlbVhNn/ZfltrYib62+SFS6g3ACoNkWnYWNmA
-	 RdqGBY9PlrWMUks51pceym7dHbNoIdXEYOf1FMSnoo44G02h16uN3yLmUa8RO6u7tUw==
+	t=1795037337;
+	b=2abpFaS/q/QeULLhldtHR2LcUtHnr73kGNdENb/LIYj44rEhE9qFQR0SSn61GM+NIltm
+	 t7sKvlpvmzn1mJnUVQoW5+uhkSA3QlAnswZSQ27+r6aH8QFu+oviWuSQZv2wAuxLTPidd
+	 eMeOdMhoAi+6v6y/qJl5VTftttRXI5ELo8c6IVJEuVkq2I+5g1fGeoCQe8xFEZek3Zo8u
+	 I4C96Z1f66JgYg2oetz9HEjjThwih01p6Ob1eenYyaFEKyEDJBhMaIxmfumP8p2Ytnhe0
+	 WiOxwvb/KwB6txbketZaToXymJ/tzXILRyddTe4gKNOAM80iHGe7HeFsCyzHLA9AxKw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795037335;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795037337;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=s4n5oLhMYFN0GZT8T1PCl7tWuEXQGuvdSxMt72RME2E=;
-	b=Mogv87VWsCXeXNkAVM2MRg403bSJLBWDKwfArwnOx28rJYissFfsHz8y/Gh/fRZeUnX8
-	 UWeqTnhphDvfA9wrxj9XDEhinCsjhcP983TQF+d0YsHNXo5qtj1r8UMwi7MBOIML+V7OB
-	 7oD2xRQ1ivuHIdD3gGzqtk8tQrgqogGUUvfNOAi/19dieLTUxrE9elEy1zAw3bUReTi8y
-	 AwdqSdx58ydU6G1TB1owffxytc9h0tA72qsZj58YjhD7W24JalCSxng3huR9MsA6vAi9R
-	 om6yL+eMZGDEfzPJBsKaSJZBU8FntMPsamt9cB4Y0Y5GKprtADRO31W7p1x397ySanA==
+	bh=L1yhfvEqBP7e5XFUmbUnaIa/8XvUMLf0rUD2vnzu2NQ=;
+	b=FfnHNZyaMQnMqP0JZf6l3uD6rS8JrdLzX3ElorlHgsilbiXlwlKnP6MMthOTJOB7amtR
+	 1KpWvRLLdivq11fI7lrwONPmF+3OFrJVPGrkzudd2GEEKwRibZpm2uH9sEginuOXlKEoK
+	 LSuW/jHegJRr69RFIlcV2Vm0zTpiqzlbuO1xV9K6OOqZRIz4MDAeaGkpAwqBvjOE0waFa
+	 wjd65zTRn134845mnf8OkxPrCjnqQrva0EZPK8iDZHO68cvIfiTC9BEcHGZBtsViqbkU+
+	 CE4NWvmjVrLbydkyChkb63T3irdIq+V+1d10vZBNHofGzTN/LG08i2MR3vbjk4FG/CQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=soleen.com;
 	spf=pass smtp.mailfrom=soleen.com;
-	dkim=pass header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=DOjwVFMD;
-	arc=none smtp.remote-ip=209.85.217.46
-Received: from mail-vs1-f46.google.com (mail-vs1-f46.google.com [209.85.217.46])
+	dkim=pass header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=iSvs7k6Y;
+	arc=none smtp.remote-ip=209.85.217.42
+Received: from mail-vs1-f42.google.com (mail-vs1-f42.google.com [209.85.217.42])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7DDC460A3828
-	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 21:28:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7DDC460A3828
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AF1C9606A337
+	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 21:28:56 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AF1C9606A337
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=DOjwVFMD
-Received: by mail-vs1-f46.google.com with SMTP id ada2fe7eead31-7d2c8141dc6so725105137.1
-        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 13:28:55 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=iSvs7k6Y
+Received: by mail-vs1-f42.google.com with SMTP id ada2fe7eead31-7cc53938a8fso1247705137.2
+        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 13:28:56 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=soleen.com; s=google; t=1795037334; x=1795642134; darn=vger.kernel.org;
+        d=soleen.com; s=google; t=1795037335; x=1795642135; darn=vger.kernel.org;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=s4n5oLhMYFN0GZT8T1PCl7tWuEXQGuvdSxMt72RME2E=;
-        b=DOjwVFMDfcMo57qcwPQexgRTtJ0WzI9qCReEasXVrgqEWpoptSAZ8EiO6SY+KBhmSt
-         /mH9YngiZeYLZlw1qcnMhSZ8DkTcEtDddhbQxHDeIB+R63DtLzHMTLeWVryjDdCLTHbz
-         AWTTlvc+CjIYNgAUi6mw52l5zJ5aBZheMgFYPh2Hk51rrE74237uB4YnPOTy0AmYFZan
-         B8bqcVH8j2nn+3mkI9X0uVPSXrMWlXfdTAQrGAI8bQxPgUs8uZbFLD5gYpDFkjSrk5az
-         4kMLST8/D7yE6ut+5k8xblahHCDXf2wCzdWyy4eQd+8O/HTk9c2shtP2RRDIIea/7qxF
-         /xqA==
+        bh=L1yhfvEqBP7e5XFUmbUnaIa/8XvUMLf0rUD2vnzu2NQ=;
+        b=iSvs7k6YwjaxOvBDjp3PksIfFWqgtnS2UWETg9JQuN099NJd1V5afHew59ASHEXl0t
+         /SbmR7llhG9ljkHTguJhDUZoA9ca9FbalTO6CTroVmSlRpekw/wR8CcnvQF4cq87YMYh
+         mi/Z1Ga/fbnK6PtFPhzw9saeFY4wOdqc2zFxrrF8E1lFBGz3xnRD5chdVSgzoI8qQydz
+         5SR8IQcafGMjeFyIm5Tfvk8qwjx2kTdHXGqG2MBjyKwUcrrAECkvG/utfbg2msB8Nnf7
+         zSukO7U2vuN9arRWTK9eU1ldf7qlM0rRUB2bEzLnLXlx8rR0zp5zLamEzGabuhN/P/gJ
+         /1jg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795037334; x=1795642134;
+        d=1e100.net; s=20260707; t=1795037335; x=1795642135;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:to:from:x-gm-gg:x-gm-message-state:from:to
          :cc:subject:date:message-id:reply-to:content-type;
-        bh=s4n5oLhMYFN0GZT8T1PCl7tWuEXQGuvdSxMt72RME2E=;
-        b=UOpQ73BoYSs5ToYdglarLCIKbdMO+puBclvLxrxdKTQNs+IXmN1m4nOpVXnuNCbjOv
-         VjSje86wKKC3MysPwfy9gbOdWhHcgh+29Hir2p/pRaHC8i/y/4xx7vPB6aKPUepZLq4h
-         +xLSJI8pXckYrpJ+Q4ZQ1HZKihVuqNVDqRZitUBeINH4OJyyMi3NK9kyTLRPljMnjHQp
-         nfdMfluz4w0LGwnZ1ZmZy9IISgbQg4G412hl8o2rM+SAmamZ9B2XtXHayDdgvp614N9F
-         /4Ph0B4XhyHBvRipQEE0aBe/u1yumgqaSjfdDPbiopGd1Dfh6almuU56kHGsIdkloW9X
-         vI8A==
-X-Forwarded-Encrypted: i=1; AL+hErHsnDp8jvLs6YapUu8EehMsOAqzoHSTLPSI6aRYZATfQLq9T6IETyoqCt5SpRNUEubL5EiyzLcgrI8=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9VGzR4MUHaS2pbNJZ1dwQ2M/tEMsiKGsbtU6Cin1Vmed5Xjwht
-	x/Iw+AhP1r/ILSU2P6Dw9RWwQ6zltImDErhhnLty0y1kZlHRJSjNWC7XYJ/2VkMwiH4=
-X-Gm-Gg: AYBFou29VbFV2O+/hHCGoQCZ3hHtqZ4btgFhXh/0W0WY7jKqs9XpvrwzE/8Rd7YdgQX
-	alQLyo3jU3eNfm/rV5aZa+PngRIhZEWpGB6qVN1D+GZ3kvtM9cl/ul/9ne26nV62BhgDn/R1aGI
-	ZI94R1XhOttFTYeaLzWYOsCL8tp2Cxphq8W5ci80nOOt7bL72wfPtMe67bZdO/4oHXlJsJbcRUI
-	r5p4l3EfY6X4BgKNVslfkqDvCsHBVDTjZfNHEzbHhYxLjuTFWw9/cRO25DpxkO2xLOqXOMYkpdK
-	t0jngJSuYdCEXqyRoeAh+tDHnnjIqnJxv2/H6MOUkbQdgaCD+IKZuxUeMqgYcUrBjsxhlF2dZm3
-	PsePfYh7yR9s/DZ4kV1EI7epYcxDB+TbyrODTkg6HRajYBGBa5HcJFfVxOyRiDa0APBs4WkWzJl
-	6HNdIAmfD2m5udMlCzL9DXxe8Ja1ibRWxP5pnAREwH19DwmIJSPByudYH9/ZQh2mOu832UWGjJm
-	6x4GcQTvo6T7W30VSxg5GaSilm8jzlKOLp52NknYyuxNgvuO/whIHH0ojxpbrfDHnBz1G4n7Y29
-	SCDyQg/8FMAY6Mt1+JEJwel/N4CIEnutXy0B7whHegP8P2zwidFvBU6AuFf2zR+77709fXrz1IT
-	+kRyPcTl9qlkvmraNL0oMI+6b2sOup5IRTOarTJX0yf+RajzCR5SWx6O+sLuuGS47LEHZ7SEiFQ
+        bh=L1yhfvEqBP7e5XFUmbUnaIa/8XvUMLf0rUD2vnzu2NQ=;
+        b=ANMWhaWiTyXBzG14ts9Eq4fMw227X6jYLmWqID2B16rmWehdO2nUhwCBw4um+pN6ME
+         enRRdzVdT4PXVXQaoFAt8ZbkxAmiLRpWjhBRQC/k4n3nnlHlrzVUdOlgSDH/w1mSkQ9J
+         4UkamLEDK8UpZcDrBQ4+H7dUTKRR59Ttvv89h7D2APTL/UB/8DA0DYB8hipOsIvfazhL
+         /ruGjyk8m+E+/BRWpGmeF2HWTBkCUS9QEkHCbMJzzCgSxjC1BNWCiWmudKrxeCu/rXJh
+         4vlGnQhsij/HrumSoQrw/7mq5dM6EPM0nCq5BKYhOk3Kl+LaxPr3BSWY+jgjQ6Y4xk5p
+         ZqBg==
+X-Forwarded-Encrypted: i=1; AL+hErG/IYH0bcspEY8g7Maus1bJn84l4TbHssQ322V0v+p8yqneMTUI63MAJzuNLf1beeffdJswuTpVo/M=@vger.kernel.org
+X-Gm-Message-State: APuU4Z8ugs3AC43wuNhWkIFLgAOf4oWQP0A1fRLBYdV4hnQlC6Y8g68+
+	kAPh/djgdTdAILgKPpUTajb+KMkVeCL0IFFUJeejzLv+oJt4/A46z6KpFjdO8TdJX/E=
+X-Gm-Gg: AYBFou1u0qBBTzCJ1hHlOTS5DMenHo9KQGwbmtcPn/v6sH2/ohOKZOwyJ8bE6hm7tnD
+	5tPnrBto9xb3tGXSxFD/r9/kHaYXHZhPmFi7/ODTYbH0YqMfsXc6NISPSat+XdktV44pvaqyCf7
+	VayZsCeiHk7Ini152OlW0D0jTX2vGSUGDxqivoOQ9qXy5K8/+y8h1MLUEs2YAthSi6SFkBLIuB7
+	yxs2kVb0i1ulgb/SVTZw4rUbYFkSO0G4EGjJxZ4kUPpN6UvOl2c/w84UnPJEwEuLcxvw0QaFh/a
+	fuPkkuxwWPkS+gSjr0ErSSqp7gM9AXi255lja7wqTU2lSnKMucvvEyr3gc45ORK+R4SeKFsc91D
+	eDrRFpZIH1PXSPXjsHLcDf5srX/rlXU2UwT3gfZKfoKAGTcZPHim17kPfPtXhUC2SwNur2TGvxv
+	mcGt4WvpNQudtODhYmCuaTZhfCEo3wlktv6jBCZIUgXuwE11pCaXqgr2II+d4a2+cE5IFpz+Gvk
+	sfDUlIujqT0IDnf/TSqc3sbn+LaGKP78hOQLCH1frpfRBro4v7TnBc+HNgZNxqPW956K4rjlotW
+	L/FbIaOvYbu7FY8wKsUEu/13kjWTU/R1wUUV0SbGPwn0DA8eA2DacC1nMTLHIvgOY/qyeccc3Yg
+	T6+1D7UTvmeBQwreFRusoiP7UCVGzIqEW22/Fwea0SVQp1Y+TBiVwnjV/IddutkDWquw6WRP4uQ
 	==
-X-Received: by 2002:a05:6102:4412:b0:7d2:8529:6892 with SMTP id ada2fe7eead31-7d6ba3e7857mr1999245137.11.1795037334470;
-        Wed, 18 Nov 2026 13:28:54 -0800 (PST)
+X-Received: by 2002:a67:e113:0:b0:7c3:2b19:6267 with SMTP id ada2fe7eead31-7d6ba46ca11mr1512091137.32.1795037335676;
+        Wed, 18 Nov 2026 13:28:55 -0800 (PST)
 Received: from soleen.c.googlers.com.com (57.233.150.34.bc.googleusercontent.com. [34.150.233.57])
-        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-7d6b9185bc3sm2724635137.5.2026.11.18.13.28.53
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-7d6b9185bc3sm2724635137.5.2026.11.18.13.28.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
         Wed, 18 Nov 2026 13:28:54 -0800 (PST)
 From: Pasha Tatashin <pasha.tatashin@soleen.com>
@@ -96,9 +96,9 @@ To: linux-kselftest@vger.kernel.org,
 	pratyush@kernel.org,
 	rdunlap@infradead.org,
 	graf@amazon.com
-Subject: [PATCH v6 6/7] selftests: liveupdate: Add unit tests for LIVEUPDATE_SESSION_FREEZE
-Date: Wed, 18 Nov 2026 16:28:41 -0500
-Message-ID: <20261118212845.2855249-7-pasha.tatashin@soleen.com>
+Subject: [PATCH v6 7/7] selftests: liveupdate: Test LIVEUPDATE_SESSION_FREEZE across kexec
+Date: Wed, 18 Nov 2026 16:28:42 -0500
+Message-ID: <20261118212845.2855249-8-pasha.tatashin@soleen.com>
 X-Mailer: git-send-email 2.56.1.708.g77570a6a1d-goog
 In-Reply-To: <20261118212845.2855249-1-pasha.tatashin@soleen.com>
 References: <20261118212845.2855249-1-pasha.tatashin@soleen.com>
@@ -113,172 +113,106 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Add a luo_session_freeze() helper and unit tests in liveupdate.c for
-LIVEUPDATE_SESSION_FREEZE. Verify negative cases (unsupported flags,
-double freeze, and preserving files after freeze), that closing a
-frozen uncommitted session unfreezes and returns resources, and that
-closing a committed session retains LUO ownership of the session and
-its preserved files.
+Extend luo_multi_session.c to exercise auto-frozen, kept-open frozen,
+closed uncommitted frozen, and closed committed sessions together across
+a kexec reboot, and verify that freezing an incoming session returns
+-EINVAL.
 
 Signed-off-by: Pasha Tatashin <pasha.tatashin@soleen.com>
 ---
- .../liveupdate/lib/include/libliveupdate.h    |   1 +
- .../selftests/liveupdate/lib/lu_utils.c       |  13 +++
- .../testing/selftests/liveupdate/liveupdate.c | 107 ++++++++++++++++++
- 3 files changed, 121 insertions(+)
+ .../selftests/liveupdate/luo_multi_session.c  | 36 ++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
 
-diff --git a/tools/testing/selftests/liveupdate/lib/include/libliveupdate.h b/tools/testing/selftests/liveupdate/lib/include/libliveupdate.h
-index fa07fed08364..34657d6eb67b 100644
---- a/tools/testing/selftests/liveupdate/lib/include/libliveupdate.h
-+++ b/tools/testing/selftests/liveupdate/lib/include/libliveupdate.h
-@@ -26,6 +26,7 @@ int luo_create_session(int luo_fd, const char *name);
- int luo_retrieve_session(int luo_fd, const char *name);
- int luo_session_finish(int session_fd);
- int luo_get_session_name(int session_fd, char *name, size_t name_len);
-+int luo_session_freeze(int session_fd, __u32 flags);
+diff --git a/tools/testing/selftests/liveupdate/luo_multi_session.c b/tools/testing/selftests/liveupdate/luo_multi_session.c
+index aac24a5f5ce3..3b09cd63c832 100644
+--- a/tools/testing/selftests/liveupdate/luo_multi_session.c
++++ b/tools/testing/selftests/liveupdate/luo_multi_session.c
+@@ -15,14 +15,17 @@
+ #define SESSION_EMPTY_2 "multi-test-empty-2"
+ #define SESSION_FILES_1 "multi-test-files-1"
+ #define SESSION_FILES_2 "multi-test-files-2"
++#define SESSION_CLOSED "multi-test-closed"
  
- int luo_ensure_nofile_limit(long min_limit);
- int luo_session_preserve_fd(int session_fd, int fd, __u64 token);
-diff --git a/tools/testing/selftests/liveupdate/lib/lu_utils.c b/tools/testing/selftests/liveupdate/lib/lu_utils.c
-index 74d41115c281..51384374305d 100644
---- a/tools/testing/selftests/liveupdate/lib/lu_utils.c
-+++ b/tools/testing/selftests/liveupdate/lib/lu_utils.c
-@@ -198,6 +198,19 @@ int luo_session_finish(int session_fd)
- 	return 0;
- }
+ #define MFD1_TOKEN 0x1001
+ #define MFD2_TOKEN 0x2002
+ #define MFD3_TOKEN 0x3003
++#define MFD_CLOSED_TOKEN 0x4004
  
-+int luo_session_freeze(int session_fd, __u32 flags)
-+{
-+	struct liveupdate_session_freeze arg = {
-+		.size = sizeof(arg),
-+		.flags = flags,
-+	};
-+
-+	if (ioctl(session_fd, LIVEUPDATE_SESSION_FREEZE, &arg) < 0)
-+		return -errno;
-+
-+	return 0;
-+}
-+
- void create_state_file(int luo_fd, const char *session_name, int token,
- 		       int next_stage)
+ #define MFD1_DATA "Data for session files 1"
+ #define MFD2_DATA "First file for session files 2"
+ #define MFD3_DATA "Second file for session files 2"
++#define MFD_CLOSED_DATA "Closed session data"
+ 
+ #define STATE_SESSION_NAME "kexec_multi_state"
+ #define STATE_MEMFD_TOKEN 998
+@@ -30,7 +33,7 @@
+ /* Stage 1: Executed before the kexec reboot. */
+ static void run_stage_1(int luo_fd)
  {
-diff --git a/tools/testing/selftests/liveupdate/liveupdate.c b/tools/testing/selftests/liveupdate/liveupdate.c
-index 2dedd5fc2534..4b0c0fb1be87 100644
---- a/tools/testing/selftests/liveupdate/liveupdate.c
-+++ b/tools/testing/selftests/liveupdate/liveupdate.c
-@@ -530,4 +530,111 @@ TEST_F(liveupdate_device, preserve_many_files)
- 	ASSERT_EQ(close(session_fd), 0);
- }
+-	int s_empty1_fd, s_empty2_fd, s_files1_fd, s_files2_fd;
++	int s_empty1_fd, s_empty2_fd, s_files1_fd, s_files2_fd, s_closed_fd;
  
-+/*
-+ * Test Case: Session Freeze
-+ *
-+ * Verifies LIVEUPDATE_SESSION_FREEZE with flags == 0: unsupported flags return
-+ * -EOPNOTSUPP, repeated freeze and post-freeze preserve return -EBUSY, and
-+ * closing the session FD unfreezes the session and returns all resources.
-+ */
-+TEST_F(liveupdate_device, session_freeze)
-+{
-+	int session_fd, mem_fd1, mem_fd2;
+ 	ksft_print_msg("[STAGE 1] Starting pre-kexec setup for multi-session test...\n");
+ 
+@@ -57,6 +60,8 @@ static void run_stage_1(int luo_fd)
+ 		fail_exit("create_and_preserve_memfd for token %#x",
+ 			  MFD1_TOKEN);
+ 	}
++	if (luo_session_freeze(s_files1_fd, 0) < 0)
++		fail_exit("luo_session_freeze for '%s'", SESSION_FILES_1);
+ 
+ 	ksft_print_msg("[STAGE 1] Creating session '%s' with two memfds...\n",
+ 		       SESSION_FILES_2);
+@@ -72,6 +77,25 @@ static void run_stage_1(int luo_fd)
+ 		fail_exit("create_and_preserve_memfd for token %#x",
+ 			  MFD3_TOKEN);
+ 	}
++	if (luo_session_freeze(s_files2_fd,
++			       LIVEUPDATE_SESSION_FREEZE_COMMIT) < 0) {
++		fail_exit("luo_session_freeze for '%s'", SESSION_FILES_2);
++	}
++	close(s_files2_fd);
 +
-+	self->fd1 = open(LIVEUPDATE_DEV, O_RDWR);
-+	if (self->fd1 < 0 && errno == ENOENT)
-+		SKIP(return, "%s does not exist", LIVEUPDATE_DEV);
-+	ASSERT_GE(self->fd1, 0);
++	ksft_print_msg("[STAGE 1] Creating frozen uncommitted session '%s' and closing FD...\n",
++		       SESSION_CLOSED);
++	s_closed_fd = luo_create_session(luo_fd, SESSION_CLOSED);
++	if (s_closed_fd < 0)
++		fail_exit("luo_create_session for '%s'", SESSION_CLOSED);
++	if (create_and_preserve_memfd(s_closed_fd, MFD_CLOSED_TOKEN,
++				      MFD_CLOSED_DATA) < 0) {
++		fail_exit("create_and_preserve_memfd for token %#x",
++			  MFD_CLOSED_TOKEN);
++	}
++	if (luo_session_freeze(s_closed_fd, 0) < 0)
++		fail_exit("luo_session_freeze for '%s'", SESSION_CLOSED);
++	close(s_closed_fd);
+ 
+ 	close(luo_fd);
+ 	daemonize_and_wait();
+@@ -91,6 +115,13 @@ static void run_stage_2(int luo_fd, int state_session_fd)
+ 			  stage);
+ 	}
+ 
++	ksft_print_msg("[STAGE 2] Verifying closed uncommitted session '%s' was not preserved...\n",
++		       SESSION_CLOSED);
++	if (luo_retrieve_session(luo_fd, SESSION_CLOSED) != -ENOENT) {
++		fail_exit("Expected -ENOENT for closed uncommitted session '%s'",
++			  SESSION_CLOSED);
++	}
 +
-+	session_fd = luo_create_session(self->fd1, "session-freeze");
-+	ASSERT_GE(session_fd, 0);
+ 	ksft_print_msg("[STAGE 2] Retrieving all sessions...\n");
+ 	s_empty1_fd = luo_retrieve_session(luo_fd, SESSION_EMPTY_1);
+ 	if (s_empty1_fd < 0)
+@@ -108,6 +139,9 @@ static void run_stage_2(int luo_fd, int state_session_fd)
+ 	if (s_files2_fd < 0)
+ 		fail_exit("luo_retrieve_session for '%s'", SESSION_FILES_2);
+ 
++	if (luo_session_freeze(s_files2_fd, 0) != -EINVAL)
++		fail_exit("luo_session_freeze on incoming session did not return -EINVAL");
 +
-+	mem_fd1 = memfd_create("freeze-memfd-1", 0);
-+	ASSERT_GE(mem_fd1, 0);
-+	ASSERT_EQ(luo_session_preserve_fd(session_fd, mem_fd1, 0x1111), 0);
-+
-+	/* Unsupported flag bits must fail with -EOPNOTSUPP */
-+	EXPECT_EQ(luo_session_freeze(session_fd, 1U << 1), -EOPNOTSUPP);
-+
-+	/* Freeze the session */
-+	ASSERT_EQ(luo_session_freeze(session_fd, 0), 0);
-+
-+	/* Subsequent freeze attempts must fail with -EBUSY */
-+	EXPECT_EQ(luo_session_freeze(session_fd, 0), -EBUSY);
-+	EXPECT_EQ(luo_session_freeze(session_fd,
-+				     LIVEUPDATE_SESSION_FREEZE_COMMIT),
-+		  -EBUSY);
-+
-+	/* Preserving a file after freeze must fail with -EBUSY */
-+	mem_fd2 = memfd_create("freeze-memfd-2", 0);
-+	ASSERT_GE(mem_fd2, 0);
-+	EXPECT_EQ(luo_session_preserve_fd(session_fd, mem_fd2, 0x2222), -EBUSY);
-+
-+	/* Closing the session FD must unfreeze and unpreserve resources */
-+	ASSERT_EQ(close(session_fd), 0);
-+
-+	session_fd = luo_create_session(self->fd1, "session-freeze");
-+	ASSERT_GE(session_fd, 0);
-+	ASSERT_EQ(luo_session_preserve_fd(session_fd, mem_fd1, 0x1111), 0);
-+
-+	ASSERT_EQ(close(session_fd), 0);
-+	ASSERT_EQ(close(mem_fd1), 0);
-+	ASSERT_EQ(close(mem_fd2), 0);
-+}
-+
-+/*
-+ * Test Case: Session Freeze and Commit
-+ *
-+ * Verifies LIVEUPDATE_SESSION_FREEZE with LIVEUPDATE_SESSION_FREEZE_COMMIT:
-+ * once committed, the frozen session is serialized into KHO and survives
-+ * closing the session FD with ownership retained by LUO until reboot.
-+ */
-+TEST_F(liveupdate_device, session_freeze_commit)
-+{
-+	char name[LIVEUPDATE_SESSION_NAME_LENGTH];
-+	int session_fd, session_fd2, mem_fd1, mem_fd2;
-+
-+	self->fd1 = open(LIVEUPDATE_DEV, O_RDWR);
-+	if (self->fd1 < 0 && errno == ENOENT)
-+		SKIP(return, "%s does not exist", LIVEUPDATE_DEV);
-+	ASSERT_GE(self->fd1, 0);
-+
-+	snprintf(name, sizeof(name), "freeze-commit-%d", getpid());
-+	session_fd = luo_create_session(self->fd1, name);
-+	ASSERT_GE(session_fd, 0);
-+
-+	mem_fd1 = memfd_create("freeze-commit-memfd-1", 0);
-+	ASSERT_GE(mem_fd1, 0);
-+	ASSERT_EQ(luo_session_preserve_fd(session_fd, mem_fd1, 0x1111), 0);
-+
-+	/* Freeze and commit the session */
-+	ASSERT_EQ(luo_session_freeze(session_fd,
-+				     LIVEUPDATE_SESSION_FREEZE_COMMIT), 0);
-+
-+	/* Subsequent freeze attempts must fail with -EBUSY */
-+	EXPECT_EQ(luo_session_freeze(session_fd, 0), -EBUSY);
-+	EXPECT_EQ(luo_session_freeze(session_fd,
-+				     LIVEUPDATE_SESSION_FREEZE_COMMIT),
-+		  -EBUSY);
-+
-+	/* Preserving a file after freeze must fail with -EBUSY */
-+	mem_fd2 = memfd_create("freeze-commit-memfd-2", 0);
-+	ASSERT_GE(mem_fd2, 0);
-+	EXPECT_EQ(luo_session_preserve_fd(session_fd, mem_fd2, 0x2222), -EBUSY);
-+
-+	/* Closing the session FD must retain LUO ownership of session & files */
-+	ASSERT_EQ(close(session_fd), 0);
-+
-+	EXPECT_EQ(luo_create_session(self->fd1, name), -EEXIST);
-+
-+	session_fd2 = luo_create_session(self->fd1, "freeze-commit-check");
-+	ASSERT_GE(session_fd2, 0);
-+	EXPECT_EQ(luo_session_preserve_fd(session_fd2, mem_fd1, 0x3333),
-+		  -EBUSY);
-+
-+	ASSERT_EQ(close(session_fd2), 0);
-+	ASSERT_EQ(close(mem_fd1), 0);
-+	ASSERT_EQ(close(mem_fd2), 0);
-+}
-+
- TEST_HARNESS_MAIN
+ 	ksft_print_msg("[STAGE 2] Verifying contents of session '%s'...\n",
+ 		       SESSION_FILES_1);
+ 	mfd1 = restore_and_verify_memfd(s_files1_fd, MFD1_TOKEN, MFD1_DATA);
 -- 
 2.56.1.708.g77570a6a1d-goog
 
