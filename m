@@ -1,82 +1,87 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795014969;
-	b=1MztOJome2HG7D4DQVb5U9xp7r82vf3YZkcaO4kdMFuJxDPy+56ki+prBeHSPh8b4vVM
-	 OeppxtiDiTyLfbVMEOQ5wMN02ZM+/Vu8VIA6UDq+RfEB0EvGaLWQKyjpRHLt6DdQuXAkX
-	 musel8sBhchnv4GnR4PgZCDvSU5KgWjIdAEdrbpyi5BysQOGAunybY7ShgDoNCJx4GDGk
-	 u2m1oJmJ6XsIGhTrPwQ1XoAYFlZn2el+M/SkgMuoeAQHtcqGj3CFTdle/zVfwqKfjlp1U
-	 3XVVdyTrQfTfAf8RtpjWEcGzZUhVG9Q8Ztlm0qvi68v6U9JsTxNbm5cLa/E4uw6xEnw==
+	t=1795015690;
+	b=izEW8C/taY1zT65mgGT/bAEhu3dOzj6Ih5kh/qv9A+CBg37UL5Oe2Og0L2ZQT0IfOt42
+	 +FBsknKf6HTTLlFzic41aooZuztu0uMmeXHL/rtUcjIupTPj8xdHyTqicS8zFjbBCbDK7
+	 wxQAtoJg6vH+kxQ5DOMDGSmuNTa0XL4+DTg7Bu7kJm6tSsunsMZ+ZBDUYk9gwOBZvRiPk
+	 a30JG9gWlj7hNioDlOkkHsVJ35ZVrdheR4IUAoorFSO4Ua1zu4VIj9v7D/YTnyU0hrdlT
+	 d5dyFFSndDuW7IoKynh4XcBzkzViqPhWmdjela495DD/kDp3mL2Xfa6+UpuAx/2fe5A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795014969;
-	h=Received:DKIM-Signature:Received:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding:In-Reply-To:User-Agent;
-	bh=VJRW+Ov1+hJWYf0GjjALdvkeKgyKhKIHCpws0o2fknE=;
-	b=JjmTaWPzzZRSkdbhDvyRrNGHMWHvq6Cm9QAAivPz214NS+FrGPckFyVXks961ayY8GB8
-	 w89z+FLjIHnqDqMuVmLkD3sDcd0Q0jh0dhHcqU52NOIOW5Fj/R3Hafq2xj8wxEASNs/KI
-	 PEkI53FB7q/RkS3P255xUurhQJYjvqncsmSXxKO76SLPoM86V5peiB6CwHZ7u3voq2Uw3
-	 muS0cGrDK/fUPfTnba+s4pMBZ3sAhwlbMFwM1hxaaoR0ZXa5bhvM7+jKeXNavauVymCgD
-	 h+u6VMUTMMX03pHpG34A+ACEoIRxmEGZR2xOHbSjvlJ66ZtINbi5R5XzkttrCI/88tw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795015690;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=WAGnVdZX/dnwB/YL80FuMYmEILyT33bR88HdQuYKvtU=;
+	b=oCKlVrOjWZVmfreREw/SGKM4qjqW4APoGqedUSOh0RUJM7e8Ka3aifbPCi1ZKRJmMSa/
+	 nrmkE7JAqabJRpmYISf0sepbkHCX3/pgFs4WO3uJS/VvYBM9fb24wNfnj5s6j4bFikPtw
+	 +EaJ3IN4Oa7AYlGeMN5l/yUczhBlzeybZcsC1luYPvDnmOuHS8/HIyDR72raSeHHQW61P
+	 m/JEXDn0FQQHGVbLTldxM0FEaTl4DPMEkgpAJQVDJ91hpPO1CLxfsu+3+SV127Ab6a1v1
+	 c0CvU0SMluRMHFJP66nKu0pNzw6N1THeGAeypnWUQg0yYjZy66k2UCsoGuHEhmii/Yg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TSlE7NJ2;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lfWAuTIs;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 98318606A31C;
-	Wed, 18 Nov 2026 15:16:09 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 2D7A1606A33D;
+	Wed, 18 Nov 2026 15:28:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=TSlE7NJ2
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id C1D381F000C5;
-	Wed, 18 Nov 2026 15:16:08 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lfWAuTIs
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 28D621F000C6;
+	Wed, 18 Nov 2026 15:28:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795014969;
-	bh=VJRW+Ov1+hJWYf0GjjALdvkeKgyKhKIHCpws0o2fknE=;
+	s=k20260515; t=1795015689;
+	bh=WAGnVdZX/dnwB/YL80FuMYmEILyT33bR88HdQuYKvtU=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=TSlE7NJ24ZHrQjqby7BRumprQ+X4+8LqupeU9Ic0A3522Ds17DPzXVFZwe0JBd6ho
-	 GubLLYFIVNsVAPkFJEvH648kigG7kxnWoxItJWVuGvXDtAx4ld9RpbXs2YF/i/pHvg
-	 IoJDOWDprbfsVrCrmYBi1JtGbscpSjFHgPu7D9ywJ1hYx1lAHMMhOR3mSl4KulHKpe
-	 fhpajsplHwzdx8QTl+uVQSdbOq7HlfNFgYkCBr2s9W1RH2pLT9VZRBVaMQu/2EN3Lh
-	 S10sgG+OG9bMfh1RookXtJuizdsgEup+XRBW62lyyeePfaTh9PHAuvEFSXv7+XdBtx
-	 FZ53ZvVrlCnDQ==
-Received: by pali.im (Postfix)
-	id 9787F846; Wed, 18 Nov 2026 16:16:05 +0100 (CET)
-Date: Wed, 18 Nov 2026 16:16:05 +0100
-From: Pali =?utf-8?B?Um9ow6Fy?= <pali@kernel.org>
-To: koraynilay <koray.fra@gmail.com>
-Cc: David Sterba <dsterba@suse.com>, Namjae Jeon <linkinjeon@kernel.org>,
-	Sungjong Seo <sj1557.seo@samsung.com>,
+	b=lfWAuTIs9elqBsJl8tmIxnEDN32PGAd9hMguq1CqjQ8o/RkfsPYnbLyaCQh0JpMyp
+	 fCYFUcg47M+Cd8AFwuhSGC48F6Y5cgH6aM9nlI6/evJByLvuSbtNpi1JGxi7EIwUTJ
+	 OBpe67ieUMV93jPV8zcm3tdhPX5s9eusutMgiqm6kM4wKqXDNMLFHJEMZuj5NeUXxH
+	 ZIfPVbs2MPGv01KSLzRUChAtf5HJHH1+2P5aDyz3rsuVFgR1gig0jWqw45i+R2qnT3
+	 bQzaR2mSDre2f3gEgsLPEbuxSQhiPc4duXWEbVzw1Q34ufIovz83232MT4K4OG8WBG
+	 GN+02QKGIh6MQ==
+Date: Wed, 18 Nov 2026 17:28:06 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Josef Bacik <josef@toxicpanda.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
+	linux-security-module@vger.kernel.org,
 	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andy Lutomirski <luto@amacapital.net>,
+	Ben Segall <bsegall@google.com>,
 	Christian Brauner <brauner@kernel.org>,
-	Trond Myklebust <trondmy@kernel.org>,
-	Anna Schumaker <anna@kernel.org>, Chuck Lever <cel@kernel.org>,
-	Jeff Layton <jlayton@kernel.org>,
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>,
-	Paulo Alcantara <pc@manguebit.org>, Chris Mason <mason@kernel.org>,
-	Yuezhang Mo <yuezhang.mo@sony.com>, Jan Kara <jack@suse.cz>,
-	NeilBrown <neil@brown.name>,
-	Olga Kornievskaia <okorniev@redhat.com>,
-	Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>,
-	Ronnie Sahlberg <ronniesahlberg@gmail.com>,
-	Shyam Prasad N <sprasad@microsoft.com>,
-	Bharath SM <bharathsm@microsoft.com>,
-	Sergey Senozhatsky <senozhatsky@chromium.org>,
-	ChenXiaoSong <chenxiaosong@chenxiaosong.com>,
-	"Darrick J . Wong" <djwong@kernel.org>,
-	Sean Smith <defendthedisabled@gmail.com>,
-	Andrey Albershteyn <aalbersh@kernel.org>,
-	Pedro Falcato <pfalcato@suse.de>,
-	Amir Goldstein <amir73il@gmail.com>, linux-btrfs@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org,
-	exfat@lists.linux.dev, ntfs3@lists.linux.dev,
-	linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org,
-	linux-api@vger.kernel.org
-Subject: Re: [RFC PATCH v4 00/10] add provenance time (ptime)
-Message-ID: <20261118151605.lqtn5fz423kuswk5@pali>
-References: <20261115180343.576773-1-koray.fra@gmail.com>
- <20261118142613.be3r3s6kobkkxnz4@pali>
- <DMYFBDIV4Y08.35ZKR5G86U1H7@gmail.com>
+	David Hildenbrand <david@kernel.org>,
+	David Howells <dhowells@redhat.com>,
+	Davidlohr Bueso <dave@stgolabs.net>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Ingo Molnar <mingo@redhat.com>, Jan Kara <jack@suse.cz>,
+	Jonathan Corbet <corbet@lwn.net>,
+	John Johansen <john.johansen@canonical.com>,
+	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
+	K Prateek Nayak <kprateek.nayak@amd.com>,
+	"Liam R. Howlett" <liam@infradead.org>,
+	Lorenzo Stoakes <ljs@kernel.org>,
+	Manfred Spraul <manfred@colorfullife.com>,
+	Mel Gorman <mgorman@suse.de>, Michal Hocko <mhocko@suse.com>,
+	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
+	Paul Moore <paul@paul-moore.com>,
+	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Serge Hallyn <sergeh@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Suren Baghdasaryan <surenb@google.com>,
+	Valentin Schneider <vschneid@redhat.com>,
+	Vincent Guittot <vincent.guittot@linaro.org>,
+	Vlastimil Babka <vbabka@kernel.org>,
+	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>,
+	alex@amutable.com
+Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
+Message-ID: <av3EBpSuzn_TcrDk@kernel.org>
+References: <20261117231352.3816603-1-jarkko@kernel.org>
+ <wdwc3b5edgtgvrgqfhlzhrachr5hrqb7ahipcuqdz5pffxlc5b@662cpwhxwjer>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,93 +91,49 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <DMYFBDIV4Y08.35ZKR5G86U1H7@gmail.com>
-User-Agent: NeoMutt/20180716
+In-Reply-To: <wdwc3b5edgtgvrgqfhlzhrachr5hrqb7ahipcuqdz5pffxlc5b@662cpwhxwjer>
 
-On Wednesday 18 November 2026 15:58:02 koraynilay wrote:
-> On Wed Nov 18, 2026 at 3:26 PM CET, Pali Rohár wrote:
-> > Hello,
-> >
-> > I have just one issue with the userspace API. It does not allow me to
-> > figure out what is the source of statx btime field. If it is fs ptime or
-> > fs btime because this RFC implementation is mixing both fs ptime and
-> > fs btime into the statx btime field.
-> >
-> > I have feeling that this is quite a mess in API and I would like to see
-> > a clear distinguish between btime and ptime in the API, like there is a
-> > difference in the fs storage.
-> >
-> > If the btime is used for forensic analysis then somehow I would expect
-> > that the statx would not report / not fill changeable ptime value into
-> > the statx btime.
+On Wed, Nov 18, 2026 at 02:47:34PM +0000, Josef Bacik wrote:
+> On Wed, Nov 18, 2026 at 01:13:39AM +0200, Jarkko Sakkinen wrote:
+> > OVERVIEW
+> > ========
+> > 
+> > A root namespace (rootns) is a kernel object backed by a file descriptor
+> > that binds together:
+> > 
+> > 1. A full or partial set of detached namespaces.
+> > 2. A dedicated PID namespace for spawning processes into, signaling
+> >    members, and polling or waiting on PID 1 exit.
+> > 3. An initially empty mount namespace (CLONE_EMPTY_MNTNS) that must be
+> >    populated before going live, without inheriting host mount-tree
+> >    ancestors.
 > 
-> Hi, for native linux filesystems it will report ptime as PTIME and btime
-> as BTIME (also semnatically).
-
-That is fine.
-
-> for the windows-like ones that only have
-> ptime (semantically) I think it's reasonable to not expect btime to be
-> immutable, since they are meant to be used with other OSs who lack btime
-> semantics.
-
-The problem is here that the RFC statx API does not provide this
-information that the fs lacks btime semantics and instead it fills
-non-immutable ptime value there.
-
-I'm pointing only about this inconsistency.
-
-> > It would be really helpful if the statx API on inode can differ between:
-> >
-> > 1. btime is present and its value is ..., ptime is not supported
-> > 2. btime is not supported, ptime is set to value ...
-> > 3. btime is present and its value is ..., ptime is set to value ...
-> > 4. both btime and ptime are not supported
-> >
-> > This should cover all cases of different filesystems and also allows
-> > userspace to do proper backup of both ptime and btime fields (if it want
-> > to do forensic analysis or anything else).
+> This is what cells is doing https://lwn.net/Articles/1102593/, you may
+> want to take a look at that work. Christian, Lennart, Alex, myself
+> and others are working towards this in a more wholistic way. There's a
+> lot more that goes into this outside of just the object itself. I've got
+> my version deployed inside Anthropic for securing containers and I've
+> tripped over a lot of pre-work that needs to come because we can tackle
+> this. Alex has my rough outline for kuid64 for example, which is
+> necessary for making sure we don't overlap UID's on the system and
+> create holes this way. The cells work/anything that wants to have clear
+> security boundaries is going to require that as a pre-requisite. If
+> you'd like I can include you in our planning so we can get something
+> that will solve all of our problems. Thanks,
 > 
-> These should already all be covered by STATX_BTIME/PTIME and their
-> fields in struct statx, the only problems are windows-like filesystems,
-> which IMO shuold be handled as mentioned above.
+> Josef
 
-Exactly, I pointed out about these problems. I somehow expect that the
-new API would be generic and uniform across filesystem. IMHO it does not
-matter if the filesystem is windows-like or not (there are also FreeBSD
-fs and also others which allows to modify that time). So better
-description is fs belongs to category 2. from my above description.
+No it's not doing the same, and this why I sent the patch set.
 
-> Of course, as in the other discussion, I'm open to changing ptime
-> NTFS/exFAT/... support to remove btime altogether and only use ptime for
-> their own crtime if that's what wanted (I'm fairly impartial on this
-> specific issue).
+I don't see cells fighting with rootns and given that rootns has a small
+surface and it leverages already battle-tested code, instead of
+reinventing the wheel, it also has benefits. It neither doubles the
+number of container frameworks in kernel.
 
-I'm giving some ideas how to possible handle this situation:
+What I'm not claiming is that this is better. I just wanted to fact
+correct "this is what cells is doing". It is not true. It could be
+better solution but still that statement is untrue.
 
-1. do not fill btime it at all when it is not available (remove btime
-   altogether - the case like you wrote above)
-
-2. when userspace ask both ptime and btime, then do not fill btime
-   (remove btime altogether - but only for that new case)
-
-3. fill btime with ptime value, but add a new output flag indicating that
-   the btime is not present at all and instead kernel filled ptime value
-   into the statx btime field
-
-4. let statx btime as currently is, and add two new statx fields:
-   immutable_btime and ptime. immutable_btime would be filled only if the
-   fs supports real btime (so not for ntfs/extfat crtime) and ptime would
-   be what is currently in RFC
-
-Ideas 2. 3. and 4. should be fully backward compatible as it would
-affect statx output only when called with new flags.
-
-> Thanks,
-> koraynilay
-> 
-> >
-> > Pali
+Br, Jarkko
