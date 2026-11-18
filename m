@@ -1,90 +1,103 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.222.43
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795036976;
-	b=oGBveMXfn70MndCAI/lHJuZCKHt1ZmUAXf9nlcWWjPnG7F/wNdK0a4w38icKZ40tGN4H
-	 jIAWSUeTFKfCH53x9pfSCUthaFrAytY3MGmNTkrdJeOHwX7QmCCAqMEB79fmooZDOGy+s
-	 bmZZzxeTEy8/uR1C9xbylhig5gDGvDroLjImackE36Twd/uaKxUxY5uoZvvrBeWStyzYh
-	 Vr28NghNyDo72EV8tVOHGoV8MTrUlGDm/eYBhqOtlGPoRLdSUNEJvPlMbl8qVaJ/Ywcqa
-	 eyFG2aeHVnwGFh6Lgi+wfYmCJvz8cUmFMy78yh54fP0Yid+OJfryjIpX0g6E9XDLKcw==
+	t=1795037330;
+	b=3c5X8tMac18W36L43z7qa4b2Cu80txlKUK5YzDKIK72ZLn3XDuUzmlIFAPfpA6aJmvju
+	 4oiYuGjvTP5eMYjEsq1T0j0DcxIuicARGGegCtkDmcLoj9vneqEaSyU2c5NDkaMNkV9QN
+	 j8KueLe+5UsYHaFD99GJXeJPWNhOWqYOVKNLHh+fqDJ2Wi+yZpKTdSSqWU24BURthCFYC
+	 5w5V9fojImQi5QuQb8zNAx1kkiUEXaIfM1/84rM9Scy4bkFeNn923dRaMzYGHMD28JHyD
+	 LksHmjYjM+NgRWgVJJKjrUC0/SyX4SXrM1/cL3c7p/Rf+HlddvWOg2jcrOCLFU8mZvg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795036976;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=vqtZas3t5wXmBF7qeLP24ETZ+NnHhg0AAw7WUrgO5/M=;
-	b=leWOvHPL7P3/S0xaO7i4oBhePMp6+uRPAKM47EHD1CeAyIMyfvqJ5UKBdNCg6j8Uh1wg
-	 KVHH2+UjoQoXKMsVkrXPmzrd1EqktsCNU/6aE6ep24xb+E4LRvG8y/lq4edxsVyBh9M3u
-	 z+iowanOGQKq7I+hGQ6m/skkV8XICqhq5H8lq9TfJWhW/ck4NmD14kwefGIjxm+gsiKek
-	 jjFY7j1RpgQJcTONEodFb4kR+PhbV0FNJt4SfmAgj6w+IPI5dr2kSlHJ5p+827mlsN6vH
-	 NEP8MSTGQ5OIBljS15i/+UD83Ow4dHwEbPZGG3CxHCUErAH4x6KX78ZOCU5F+aA1/Xw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795037330;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=RinnfRqFmJMbnCr6d3DXp7w2qk/BhwlH7a68zOSwViI=;
+	b=zXk/P9XKed61fLnpCB9k+QZrOmX90jdxD+yDt+OU6OjghgJxDKgAtxb8NwEctb0m9wt+
+	 UALkg8cwrilW3eTCwcKFAYu9GWJ57F+ME+dwQQmNJIQi8qrmpv8vQZ099NK+P5brXZE4l
+	 j5G3f8IXSxyRyeHrlcjXq7hkxoIssBRqjxGNnoj8HsKioiKePl3s3Rauhep5+BfJ3FR7D
+	 BLl92LvMPajBompiMlYwA+7J3A58ZyqpBA1Uo4gZEN9FRPp6BjQUN3vfALpCNy5xIjmyp
+	 xLKqr2Fe76/++q8PP1aLKg9hbTeU3P88LfxXQkc4ieE9TcFX6kMAPuEinNh0rE3g2hg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ml+aVGKv;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=soleen.com;
+	spf=pass smtp.mailfrom=soleen.com;
+	dkim=pass header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=OamzoJbL;
+	arc=none smtp.remote-ip=209.85.222.43
+Received: from mail-ua1-f43.google.com (mail-ua1-f43.google.com [209.85.222.43])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 5DE5B606A31C;
-	Wed, 18 Nov 2026 21:22:56 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B9E50606A32A
+	for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 21:28:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B9E50606A32A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=soleen.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=soleen.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ml+aVGKv
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 733A41F000C4;
-	Wed, 18 Nov 2026 21:22:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795036976;
-	bh=vqtZas3t5wXmBF7qeLP24ETZ+NnHhg0AAw7WUrgO5/M=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=Ml+aVGKvvIC5pcrzx9ZzwGHLtrNZnut1ESXjSEU2HVNx6KxFl13Zr+qffUFbbPCwW
-	 V83mH7Py3EnQBPKdeQ6gpt7TyHQQlg5bEPLKqrq2wu1xjOrLWufishv37LqIoW8BFs
-	 YQp1QvRsDrJQWGENlrzay8K370ntnq0LSRLNiftl+fd7XrzLs8QDVSKZwPJ3ElX+vi
-	 OjP/miHHrlWI0I0NTP6aPNfvZ2Uz7sgVwWjL+HOqy7hVzjmWfdLN31G6Jok2wePmbd
-	 RziLHmPCbpggAo4Y/HUC9dK4Gjc1b5IRHx6l3+MHzVFmMxy1ndqJ3CxDspiyEHOVVd
-	 1GWZ+a/AyLQMA==
-Date: Wed, 18 Nov 2026 23:22:52 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: David Howells <dhowells@redhat.com>
-Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Ben Segall <bsegall@google.com>,
-	Christian Brauner <brauner@kernel.org>,
-	David Hildenbrand <david@kernel.org>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Ingo Molnar <mingo@redhat.com>, Jan Kara <jack@suse.cz>,
-	John Johansen <john.johansen@canonical.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mel Gorman <mgorman@suse.de>, Michal Hocko <mhocko@suse.com>,
-	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Thomas Gleixner <tglx@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vincenzo Frascino <vincenzo.frascino@arm.com>,
-	Vlastimil Babka <vbabka@kernel.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v3 00/13] Namespace for namespace roots
-Message-ID: <av4XLJcO0y8CbGT-@kernel.org>
-References: <20261118193539.240065-1-jarkko@kernel.org>
- <av4CdM-eW73oO4wB@kernel.org>
- <av4NonrcCxzMoDyz@kernel.org>
+	dkim=pass (2048-bit key) header.d=soleen.com header.i=@soleen.com header.a=rsa-sha256 header.s=google header.b=OamzoJbL
+Received: by mail-ua1-f43.google.com with SMTP id a1e0cc1a2514c-98fea7e52b7so890003241.0
+        for <linux-api@vger.kernel.org>; Wed, 18 Nov 2026 13:28:49 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=soleen.com; s=google; t=1795037329; x=1795642129; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=RinnfRqFmJMbnCr6d3DXp7w2qk/BhwlH7a68zOSwViI=;
+        b=OamzoJbL9uxjeznOyamyEJPum8bSRzXRjYlCzZLURlPdu+bET+SL96zAc0amHZw74w
+         Ls8sLCgyWz7UeAOt1aeaNSEVB0WSGIqARJ/AqvqrElfpbhrNqY4nz8bhZPlCJnZsoBVG
+         4meE12uFE8V563KmzfQJBho02GI9ZHqRHEoHFExj6VTqyOUdtltEI/921TA8KDu9uqeS
+         RJRJHdgouAAehrM44ztE6RQDdN9QBi+E2EXFc5W02W63aimScMoeX4xHguu5g8VFWAU9
+         dbSVTj2/q/wTNQdXzxNuotbpd6GoS1hLZq9YasC1nIJOGCWHD2d1rpLsR5Mppr3xfuJD
+         VrAQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795037329; x=1795642129;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:to
+         :from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=RinnfRqFmJMbnCr6d3DXp7w2qk/BhwlH7a68zOSwViI=;
+        b=o7FJPDDAujM0wyxEr+OrCAbaK/Q2zVbbkyYun9thqoaSsqYm2XeAbUibgnKt5vWWE0
+         gkYT70zMjsvStxnU8KuTwnRASheY/qJPXWStABYDYCiBxBYIEp10RL+DxOmc2KfrEZbY
+         yoh8IoJs6l0jSzO68kigh2ozJyxuP/sQQins3iUJSf8Asqynh3DUEV5GwAvAU00z5FLZ
+         Vpofe0LwsSFOJeXsmXp2gf70ceKQacPWodZluGdPa8Fp3RlFXlPHxj9eMXRk0n8sqYuc
+         EvkKNSrUxl+0dr/gKoYKvx8CA/FktyOCLC126SwBLRIPqnQmy1JrS264EF4hE/8nhedx
+         2quw==
+X-Forwarded-Encrypted: i=1; AL+hErGhAXdaT00+fnml1et8IEaD7GD5AcRqwBHJCVPjgQSR40xqAy9UhW1y08UHN/Hrb7pRhjF9OoNAzBc=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9KSQ//dVkOdd090LqH9rhjLf3IoM6I6hy1o9vTCDEkphdsEHpH
+	IJG6ozIDANRrGmlvox7qo7TZKI8UZ5dvhW6G2KjJQZo1FOQ8ikECKakz1U/sMFZ/AQY=
+X-Gm-Gg: AYBFou0/RWnIap53lJcCxIRgIn1H6tQYsFgRMZBmZN6Rl0yjPjcDC4+d4HodseiBxNr
+	52rH6gy1eyAJj67lKGdIwScRS7zAsq5g77EO779YF+G9bqWK1LPaAG7NfZsBUdfGWoZifpP41YL
+	dZ97eDgEgcF+0mE6W2PjCrL0DdZpC3GfC9gbmjhRsuOiXois8oN4L8XTZ7HafOvEFm7gs1KKmon
+	mUGhI5nakOe4dl8qrfQOdPjLD6964KpwEUGTFbeCIDyhfptyQiNoRPwhHUFz27FnC38rQU33zG+
+	/Hs6f0Lnsa3ROWEqFgdrZMzX1NZjn8kXHATOwusTmgj5nJwjowOpTTaBCMdiAf0jAavwOHoGFzl
+	S6ogGdKHp4oI2DXEhewYq9efQ+bzTKXzozekTuyr1tBq3SYWHkKPlHwSYa1mP0Zi2eKt88r7400
+	0z4KR6fkURY+XOFW5VKC6XqtO9994C4ZT4dp+4mvhfJtVnZ/SiPowsSZ5mw+tLSRd1Xd9YxW8Vk
+	VtqxSAB2FUOgiNW5jRED1DqhMiepIy9G/CiuVkbK2Tt8UWC+VGcK69Uz+a0FmgQnzjovGLf1T/H
+	rO3w/jDtBDCe8rfKY+83JJNLDCTHgjX5YyphVcN9gL3jK6xfCXY+sbk1FORLck0sFiqCArLXQCR
+	q9ZR7LLRCPluAGTXWCRK9z7thgL1wl6gpHbus8HV+ytMWKSH/1uOJ
+X-Received: by 2002:a05:6102:4455:b0:7cc:25bc:3b30 with SMTP id ada2fe7eead31-7d6ba438d36mr1283355137.21.1795037328579;
+        Wed, 18 Nov 2026 13:28:48 -0800 (PST)
+Received: from soleen.c.googlers.com.com (57.233.150.34.bc.googleusercontent.com. [34.150.233.57])
+        by smtp.gmail.com with ESMTPSA id ada2fe7eead31-7d6b9185bc3sm2724635137.5.2026.11.18.13.28.47
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 18 Nov 2026 13:28:48 -0800 (PST)
+From: Pasha Tatashin <pasha.tatashin@soleen.com>
+To: linux-kselftest@vger.kernel.org,
+	rppt@kernel.org,
+	shuah@kernel.org,
+	skhan@linuxfoundation.org,
+	linux-doc@vger.kernel.org,
+	vipinsh@google.com,
+	linux-kernel@vger.kernel.org,
+	corbet@lwn.net,
+	linux-api@vger.kernel.org,
+	pasha.tatashin@soleen.com,
+	dmatlack@google.com,
+	kexec@lists.infradead.org,
+	pratyush@kernel.org,
+	rdunlap@infradead.org,
+	graf@amazon.com
+Subject: [PATCH v6 0/7] liveupdate: Add LIVEUPDATE_SESSION_FREEZE ioctl
+Date: Wed, 18 Nov 2026 16:28:35 -0500
+Message-ID: <20261118212845.2855249-1-pasha.tatashin@soleen.com>
+X-Mailer: git-send-email 2.56.1.708.g77570a6a1d-goog
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -94,135 +107,108 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <av4NonrcCxzMoDyz@kernel.org>
+Content-Transfer-Encoding: 8bit
 
-On Wed, Nov 18, 2026 at 10:42:15PM +0200, Jarkko Sakkinen wrote:
-> On Wed, Nov 18, 2026 at 09:54:32PM +0200, Jarkko Sakkinen wrote:
-> > On Wed, Nov 18, 2026 at 09:35:26PM +0200, Jarkko Sakkinen wrote:
-> > > OVERVIEW
-> > > ========
-> > > 
-> > > A root namespace (rootns) is a kernel object backed by a file descriptor
-> > > that binds together:
-> > > 
-> > > 1. A full set of detached namespaces owned by a fresh user namespace.
-> > > 2. A dedicated PID namespace for spawning processes into, signaling
-> > >    members, and polling or waiting on PID 1 exit.
-> > > 3. An initially empty mount namespace (CLONE_EMPTY_MNTNS) populated
-> > >    directly in its target user namespace before going live, without
-> > >    inheriting host mounts or cloning staged trees, while still allowing
-> > >    new mounts to be attached at runtime.
-> > > 
-> > > Work on this feature started in 2025 from David Howells' container object
-> > > patch set [1], which I turned into a namespace for namespace roots and
-> > > rebuilt around that premise.
-> > > 
-> > > While the patch set is manually written, the original motivation came
-> > > from isolating LLM agents. Running untrusted agent workloads made it
-> > > clear that OCI runtimes need to minimize their live configuration
-> > > surface.
-> > > 
-> > > Assembling mounts, credentials, and namespaces inside helper processes
-> > > with a half-configured container is what I see as the main challenge,
-> > > and the existential debate around namespaces and container objects is an
-> > > unfocused discussion topic.
-> > > 
-> > > [1] https://lore.kernel.org/all/155059610368.17079.2220554006494174417.stgit@warthog.procyon.org.uk/
-> > > 
-> > > IMPLEMENTATION
-> > > ==============
-> > > 
-> > > rootns_create() allocates a rootns instance backed by a pollable
-> > > anonymous inode fd, creating a fresh owning user namespace and a full set
-> > > of detached namespaces: empty mount (CLONE_EMPTY_MNTNS), PID, UTS, IPC,
-> > > network, cgroup, and time. ioctl(rootnsfd, ROOTNS_GET_NSFD, nstype)
-> > > returns nsfs file descriptors for individual member namespaces when
-> > > standalone namespace operations are needed.
-> > > 
-> > > Superblocks are configured directly in the target user namespace via
-> > > fsopen(), FSCONFIG_SET_ROOTNS, and fsmount(), allowing unprivileged
-> > > callers to assemble FS_USERNS_MOUNT filesystems without holding
-> > > CAP_SYS_ADMIN in their own user namespace or entering the target user
-> > > namespace first. move_mount(..., MOVE_MOUNT_T_MNTNS) operates on any
-> > > non-anonymous mount namespace fd: on an empty mount namespace it installs
-> > > "/" onto the nullfs root once, and it attaches relative submounts both
-> > > before entry and into live mount namespaces.
-> > > 
-> > > Once "/" is installed, processes are spawned into the rootns via clone3()
-> > > with CLONE_INTO_ROOTNS and struct clone_args.rootns, without mutating the
-> > > caller in place. Pairing CLONE_INTO_ROOTNS with CLONE_VM | CLONE_VFORK
-> > > and opening the target binary via openat2(..., RESOLVE_IN_ROOT) on the
-> > > retained "/" mount fd allows spawning with execveat() without copying
-> > > page tables.
-> > > 
-> > > The first entrant becomes PID 1; once it exits and
-> > > zap_pid_ns_processes() reaps all members, poll() reports EPOLLHUP and
-> > > rootns_wait() returns init's exit status and rusage. rootns_kill() walks
-> > > pid_ns->idr under tasklist_lock to signal member thread groups.
-> > > 
-> > > CHANGES
-> > > =======
-> > > 
-> > > v3:
-> > > - The patch set size increased predominantly because the coverage of
-> > >   kselftest had to widened to cover the introduced changes.
-> > > - Replace MOVE_MOUNT_T_ROOTNS_ROOT with MOVE_MOUNT_T_MNTNS targeting
-> > >   mnt_ns nsfs fds, and add ioctl(ROOTNS_GET_NSFD) to open member
-> > >   namespace fds (Andy Lutomirski).
-> > > - Allow unprivileged fsopen(), FSCONFIG_SET_ROOTNS, and fsmount() to
-> > >   configure and mount FS_USERNS_MOUNT filesystems directly in the target
-> > >   user namespace without entering it first (Andy Lutomirski).
-> > > - Fix locking, refcounting, credential/dumpability/timens setup,
-> > >   pivot_root() lookup, and cross-userns mount checks across copy_rootns(),
-> > >   CLONE_INTO_ROOTNS, rootns_kill(), FSCONFIG_SET_ROOTNS, and move_mount()
-> > >   (Sashiko).
-> > > - Mark PowerPC rootns syscalls nospu (Sashiko).
-> > > - Update documentation and kselftests.
-> > 
-> > I.e. before PID 1 and /proc/<pid>/ns/* existss, nsfd for namespace other
-> > than root nsfd can be acquired as follows:
-> > 
-> > 	int mnts_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
-> 
-> 
-> Unprivileged caller becomes the owner of rootns->user_ns. Each mount
-> syscall then just checks CAP_SYS_ADMIN against rootns->user_ns.
-> 
-> The user space wiring goes along the lines of:
-> 
->         int root_fd = rootns_create(ROOTNS_KILL_ON_CLOSE | ROOTNS_CLOSE_ON_EXEC);
->         int mntns_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
-> 
->         int tmpfs_fd = fsopen("tmpfs", 0);
->         fsconfig(tmpfs_fd, FSCONFIG_SET_ROOTNS, NULL, NULL, root_fd);
->         fsconfig(tmpfs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
->         int rootfs_fd = fsmount(tmpfs_fd, 0, 0);
-> 
->         move_mount(rootfs_fd, "", mntns_fd, "/", MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_MNTNS);
-> 
->         struct clone_args args = {
->                 .flags  = CLONE_INTO_ROOTNS,
->                 .rootns = root_fd,
->         };
->         pid_t pid = clone3(&args, sizeof(args));
-> 
-> Note that example is uncompiled :-)
-> 
-> This example makes me feel that perhaps RootNS is not the best possible
-> name for this but this rather should be e.g., NullNS?
+This series adds the LIVEUPDATE_SESSION_FREEZE ioctl on outgoing session
+FDs. Once frozen, no additional files can be preserved in the session
+and repeated freeze calls return -EBUSY.
 
-Before judging this, keep in mind that I've not just suddenly invented
-this. I first encountered the topic when David posted his patches, and
-felt that they were a bit unfairly judged.
+Currently, LUO freezes sessions only during reboot(LINUX_REBOOT_CMD_KEXEC),
+serially under global write locks. On hosts running multiple workloads
+such as VMs, freezing sessions early under their per-session mutexes
+lets workloads freeze in parallel as they pause ahead of kexec,
+reducing blackout time.
 
-Somewhere at 2025 David rebased his branch when I asked, and slow-cooked
-the result that we're seeing during a period of 1.5 years. It has not
-been a priority topic at work so this has been more like a spare time
-sudoku.
+By default, session lifetime remains tied to the session FD: closing
+the FD before reboot unfreezes and unpreserves the session, while
+keeping it open skips late auto-freeze at kexec.
 
-So if you count the David's original patch set version, this has
-history spanning since 2017.
+Userspace can optionally set LIVEUPDATE_SESSION_FREEZE_COMMIT in flags
+to serialize the frozen session and its FLBs into the outgoing KHO state
+immediately and transfer ownership to LUO until reboot. Committed
+sessions survive closing the session FD, allowing processes to hand off
+preserved state and exit prior to kexec.
 
-Br, Jarkko
+Overview:
+- Patch 1 decouples luo_file_freeze()/unfreeze() from
+  struct luo_file_set_ser.
+- Patches 2-4 add lazy block linking in kho_block and incremental
+  serialization for LUO sessions and outgoing FLBs, dropping the
+  separate luo_flb_serialize() pass in liveupdate_reboot().
+- Patch 5 adds LIVEUPDATE_SESSION_FREEZE and
+  LIVEUPDATE_SESSION_FREEZE_COMMIT along with uAPI and core docs.
+- Patches 6-7 add unit and multi-session kexec selftests.
+
+This series is based on liveupdate/next commit 079c138d2b68 ("Merge
+branch 'lu-pci-preservation' into next").
+
+Changelog:
+v6:
+- Rebase onto latest liveupdate/next (079c138d2b68).
+- Replace "publish" terminology with "serialize" across the series (Mike).
+- Drop kho-ro concurrent-reader prep (ordering helpers and
+  kho_block_set_it_append()), deferring them to the kho-ro series (Mike).
+- Tighten commit messages, docs, and address remaining nits from Mike.
+v5:
+- Rebase onto latest liveupdate/next.
+- Replace reserved field in struct liveupdate_session_freeze with flags
+  and add LIVEUPDATE_SESSION_FREEZE_COMMIT.
+- Add incremental KHO serialization support in kho_block, luo_session, and
+  luo_flb so committed sessions and their FLB dependencies are serialized
+  immediately on freeze, dropping the separate luo_flb_serialize() pass
+  at reboot.
+- Keep luo_session_freeze_one() / luo_session_unfreeze_one() in Patch 1.
+- Update Documentation/userspace-api/liveupdate.rst and kernel-doc.
+- Drop v4 Reviewed-by tag on the modified freeze and selftest patches,
+  and expand selftests to cover both uncommitted and committed freezes.
+v4:
+- Split out a preparatory patch that drops struct luo_file_set_ser *
+  from luo_file_freeze() / luo_file_unfreeze() and moves file_set_ser
+  handling into session serialization helpers (Suggested by Mike
+  Rapoport).
+- Few more nits from Mike.
+v3:
+- Renamed session->frozen to session->user_frozen, - Pratyush
+- Added Reviewed-by's
+v2:
+- Rebased onto liveupdate/next and split out early session freeze into a
+  standalone series.
+- Dropped struct luo_file_set_ser * from luo_file_freeze() /
+  luo_file_unfreeze() (Suggested by Pratyush Yadav).
+- Unfreeze the session's files if luo_ucmd_respond() fails in
+  luo_session_freeze().
+- Updated reboot-only wording in luo_file.c kernel-doc comments and
+  added incoming session -EINVAL / invalid flag selftest checks.
+Link: https://lore.kernel.org/all/20261105050053.3063001-1-pasha.tatashin@soleen.com/ # v5
+Link: https://lore.kernel.org/all/20261015093816.2438942-1-pasha.tatashin@soleen.com/ # v1
+
+Pasha Tatashin (7):
+  liveupdate: Move file_set_ser handling to luo_session_serialize()
+  kho: link outgoing blocks lazily in kho_block
+  liveupdate: luo_session: support incremental session serialization
+  liveupdate: luo_flb: serialize outgoing FLBs incrementally
+  liveupdate: Add LIVEUPDATE_SESSION_FREEZE ioctl to freeze sessions
+    early
+  selftests: liveupdate: Add unit tests for LIVEUPDATE_SESSION_FREEZE
+  selftests: liveupdate: Test LIVEUPDATE_SESSION_FREEZE across kexec
+
+ Documentation/userspace-api/liveupdate.rst    |  20 +++
+ include/linux/liveupdate.h                    |   2 +-
+ include/uapi/linux/liveupdate.h               |  38 +++++
+ kernel/liveupdate/kho_block.c                 |  38 +++--
+ kernel/liveupdate/luo_core.c                  |  10 +-
+ kernel/liveupdate/luo_file.c                  |  76 +++++----
+ kernel/liveupdate/luo_flb.c                   | 102 +++++++-----
+ kernel/liveupdate/luo_internal.h              |  15 +-
+ kernel/liveupdate/luo_session.c               | 151 +++++++++++++-----
+ .../liveupdate/lib/include/libliveupdate.h    |   1 +
+ .../selftests/liveupdate/lib/lu_utils.c       |  13 ++
+ .../testing/selftests/liveupdate/liveupdate.c | 107 +++++++++++++
+ .../selftests/liveupdate/luo_multi_session.c  |  36 ++++-
+ 13 files changed, 473 insertions(+), 136 deletions(-)
+
+
+base-commit: 079c138d2b6870bb658b6e638077264aefc03833
+-- 
+2.56.1.708.g77570a6a1d-goog
+
