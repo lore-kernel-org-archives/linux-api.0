@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795128255;
-	b=r45K+GBn4KwONVG/or31zE5f2cq9kSBrR/a5uBIH+ZmzDVPs6+mGRAk4ajSOD8MfOaUt
-	 x9P40SpNgv4twf+dcMkPnhVa+F0p/QInHnnzLh3/OEFQ+dd54zymMGkIdUhG1GR7nZgH5
-	 tXFA/byMz+gcW7ra8VMx1puL9d8rCNoU3rjnnf7nDybdH3eqlIpcotWyPNgoOu9X7u5+U
-	 ZnmXAQD/QqC9xtXzXFsqiBMTHaYUY/CXN0/fhCkx6t5ltJe0HFMouRqbbxL+NStKXJCz/
-	 wyZg/gXUFXj3zEmxiPP24tp3p0vjIgWxxsw10Sgp/kE06xge/XQC9/Gl+UMq+vV9g0Q==
+	t=1795128251;
+	b=zPtaJD36Ps+r2FeMzFve85TorHSxSyBwEM7GtWEma7kJujWdrk2xdpsqod82pUtEAwAe
+	 31lwiIUsoBhW3CPvdPpE1rBEFn45jJ01ItGQnoRVNNLQ3v/60/LO/pCDwW2JA+hG4UZK9
+	 OeRTXHeO2FgYiskrZ5vdcLZt6del90MxQYy6EzqtFy1UTyuN+Dl8HoaKCzLR2K7Qb6jMv
+	 l4r6o+bb36Dp0yGFMqnQwY3vVQVjJw5XksKoSv4jAaIOwLOgXCWzLr20mKTv1uOwink1q
+	 JoPzzaTTKQEOWdleYSzoebIGTsbwGDwmIa2REFNnXgXl0TZA9VegQ3mjX2RLG0CwqUA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795128255;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795128251;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=C6hYVP0enLj0AQERWbGGs5yJweMv4DbGi61zAd1cNTY=;
-	b=ic/X+JGrcrjyJyyFcOaufOyM8skbVp9DE+Aij4YVcbAxzgRs0MSjZUM8nbLPNt31THYt
-	 K6wd7zIXsRA+OL/neJGutMD7WYaQAFt7jIdo87+38tEN5wpO1WFmkLEae2GpOEmM0lOKq
-	 h/gLhNb8Lz22oR4zN+rd/RqaFtbtq7KMtPHUmGM16NHaM6BPMaq1t9Wt2m/zARE/lO2yD
-	 9WtZbTeu/aaN8KutPyVhcc5ghYLBIXA36hZ5ophemBzAkdgnIkIfHlgMEx3EHiQdj3ZxD
-	 kNh5I6mqSwjO669WyDENoxbck1BXErn7JZwd9te/pejKRQwlgceF8Vyqm87VVV6DRBA==
+	bh=ZUPWkkE68jOh2Dy3OmF8abkOmHVnuLQLMnwupYGDDDM=;
+	b=xpMrLi73ybCpTTNgddoD7x5WOqvMMLbQglpXirorHCLgSdsuXObtJr1vF2eiwz53M1nP
+	 PulqWB+kI6yCLeIX6upsWilU7h1e78H3/rSALnpnEot6gv4dPRCr7RRLVXw5XlfwoJHSv
+	 P1wgjbTQuLcMFsNf6DgcnqUF/ClC73Ov6piHMZi7uzxStvHrObSfxb6Kjp+R350UKhnDe
+	 MHidi8i6o+aCVRWgCLTGZDuSTm1p6FtZdLDTS4w83cQn7QNfW93dFGg3T7MdOek/+pcN2
+	 VYKSo8q2knkHT3vgnYmQs5iqOWPWL2ROitN8U7QUkm+KYTnismPqnt1CaggUzg8y9nw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Mdmyimhx;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=McIT8YM5;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 9E068606A33F;
-	Thu, 19 Nov 2026 22:44:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id CF091606A332;
+	Thu, 19 Nov 2026 22:44:11 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Mdmyimhx
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id BB0FC1F000C4;
-	Thu, 19 Nov 2026 22:44:14 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=McIT8YM5
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id C21131F000C6;
+	Thu, 19 Nov 2026 22:44:10 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795128255;
-	bh=C6hYVP0enLj0AQERWbGGs5yJweMv4DbGi61zAd1cNTY=;
+	s=k20260515; t=1795128251;
+	bh=ZUPWkkE68jOh2Dy3OmF8abkOmHVnuLQLMnwupYGDDDM=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=Mdmyimhx6AO9UdEyht2nFqJsBWh4iypWtoqJsLkL+ts9HnkRJiVYqKhK2Q4HG2Lg+
-	 S+6C+FZedehF+o+Jm9VLnEghPYM1eI2iROvHO2iLxbSN09dxz0FkgGnfjqg44P8r2z
-	 GHaHW6jvzu/G5cMLLppejhwuNBVou90lWaIfeLXdtmNnL5TM+o8uYxMnGMu1aro7B4
-	 aH3NjhnYaGkvAtLmcgeLX0ZMVENISvG7yvt3db8eTW9wOm87pR0ZBD9R1tKYQBKvwd
-	 KHa53K9A6/hYpOvESRL2iV8bQe6kHBxVDHuk/mEnlIkNVwlc6t91Ko8an6X+tVnS8H
-	 VaXhPa7niEPHw==
+	b=McIT8YM55Zqm3s0Hqh01RDE2HZrcXt1IeAGS0yQqhulEa1+zI+D5LHivPSyJwejWW
+	 jhUj83ZTrqHYQeVoQHE1od7gXMF2USIxEfGTfmYY3Z7BnjH4WqCgAiYpDygf3mN/kZ
+	 zKHpvpC1Qitfe8iyR2nJ3WRm0/9rMZpkSRDAN5hVrVkQTXi7PjTFSRf65uZIqr6G4o
+	 3Mam5iVe8gFolLzfF+G3yvERzvb3OShVC8eXiynB7ZkrmKfCFrLbHSoHceIehQi6UB
+	 JAY/epiegoOoTgfBIqMhxjfJvO8jGTfbapVvhAeW/UKe8zo5U8kOUcpbRys/puTrm6
+	 8CXTbjX1X6y3Q==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -130,9 +130,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Will Deacon <will@kernel.org>,
 	Yoshinori Sato <ysato@users.sourceforge.jp>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v4 11/14] arch: Wire up rootns() system call
-Date: Fri, 20 Nov 2026 00:43:09 +0200
-Message-ID: <20261119224312.1037966-12-jarkko@kernel.org>
+Subject: [RFC PATCH v4 10/14] security: Add rootns LSM hooks
+Date: Fri, 20 Nov 2026 00:43:08 +0200
+Message-ID: <20261119224312.1037966-11-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261119224312.1037966-1-jarkko@kernel.org>
 References: <20261119224312.1037966-1-jarkko@kernel.org>
@@ -147,208 +147,404 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Now that the core root namespace lifecycle and VFS mount-tree
-installation are in place, expose rootns() (473, 583 on Alpha) across
-all architecture system call tables and asm-generic unistd.h.
+Security modules need visibility into root namespace creation, teardown,
+process entry, and container-wide signal delivery so policies and BPF LSM
+programs can attach per-rootns security state and mediate operations on
+rootns file descriptors.
+
+Add lbs_rootns and rootns->security blob management alongside
+security_rootns_alloc(), security_rootns_free(), security_rootns_clone(),
+and security_rootns_kill(), and register the new hooks in bpf_lsm.c's
+sleepable and untrusted hook sets.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/arm64/tools/syscall_32.tbl             | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
- include/uapi/asm-generic/unistd.h           | 6 +++++-
- scripts/syscall.tbl                         | 1 +
- 18 files changed, 22 insertions(+), 1 deletion(-)
+ include/linux/lsm_hook_defs.h |  7 +++
+ include/linux/lsm_hooks.h     |  3 ++
+ include/linux/rootns.h        |  3 ++
+ include/linux/security.h      | 30 ++++++++++++
+ kernel/bpf/bpf_lsm.c          | 10 ++++
+ kernel/rootns.c               | 44 +++++++++++++-----
+ security/lsm_init.c           |  6 +++
+ security/security.c           | 86 +++++++++++++++++++++++++++++++++++
+ 8 files changed, 177 insertions(+), 12 deletions(-)
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 52e3538cc7df..ea790cceb67a 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -512,3 +512,4 @@
- 580	common	listns				sys_listns
- 581	common	rseq_slice_yield		sys_rseq_slice_yield
- 582	common	fchroot				sys_fchroot
-+583	common	rootns				sys_rootns
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 55717ed32c27..531b2a2dce72 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -487,3 +487,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/arm64/tools/syscall_32.tbl b/arch/arm64/tools/syscall_32.tbl
-index df2d1d82fb3c..8ef224c0dd42 100644
---- a/arch/arm64/tools/syscall_32.tbl
-+++ b/arch/arm64/tools/syscall_32.tbl
-@@ -484,3 +484,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index ba7a4d8903d0..77239262dc26 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -472,3 +472,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 76d7cbe2a133..df53332ce4a5 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -478,3 +478,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 9ae88e4eac61..84db40158bf0 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -411,3 +411,4 @@
- 470	n32	listns				sys_listns
- 471	n32	rseq_slice_yield		sys_rseq_slice_yield
- 472	n32	fchroot				sys_fchroot
-+473	n32	rootns				sys_rootns
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 83dc93a0712f..9e874a958503 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -387,3 +387,4 @@
- 470	n64	listns				sys_listns
- 471	n64	rseq_slice_yield		sys_rseq_slice_yield
- 472	n64	fchroot				sys_fchroot
-+473	n64	rootns				sys_rootns
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 9c62429c9b7b..592c2225f4ce 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -460,3 +460,4 @@
- 470	o32	listns				sys_listns
- 471	o32	rseq_slice_yield		sys_rseq_slice_yield
- 472	o32	fchroot				sys_fchroot
-+473	o32	rootns				sys_rootns
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 88adc4016cce..93f8539bd179 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -471,3 +471,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index cfbb70039ff0..7e12f74a27c1 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -563,3 +563,4 @@
- 470	common	listns				sys_listns
- 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	nospu	rootns				sys_rootns
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 1b45e68a217b..ab303fbb86f3 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -399,3 +399,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index ace068dff0de..e92778075bcb 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -476,3 +476,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 5b9fe0e8140f..20d6c572d3f1 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -518,3 +518,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 2c172ef48dfd..98cb11b717e5 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -478,3 +478,4 @@
- 470	i386	listns			sys_listns
- 471	i386	rseq_slice_yield	sys_rseq_slice_yield
- 472	i386	fchroot			sys_fchroot
-+473	i386	rootns			sys_rootns
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index d5b6045b0090..674fa2b4b238 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -397,6 +397,7 @@
- 470	common	listns			sys_listns
- 471	common	rseq_slice_yield	sys_rseq_slice_yield
- 472	common	fchroot			sys_fchroot
-+473	common	rootns			sys_rootns
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index d354bb231796..82b7344a099c 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -443,3 +443,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 5b7e77a7c736..25902ed39d79 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -867,8 +867,12 @@ __SYSCALL(__NR_rseq_slice_yield, sys_rseq_slice_yield)
- #define __NR_fchroot 472
- __SYSCALL(__NR_fchroot, sys_fchroot)
- 
-+/* kernel/rootns.c */
-+#define __NR_rootns 473
-+__SYSCALL(__NR_rootns, sys_rootns)
+diff --git a/include/linux/lsm_hook_defs.h b/include/linux/lsm_hook_defs.h
+index 87d9d06710cb..2cb90ddedc14 100644
+--- a/include/linux/lsm_hook_defs.h
++++ b/include/linux/lsm_hook_defs.h
+@@ -480,3 +480,10 @@ LSM_HOOK(int, 0, bdev_alloc_security, struct block_device *bdev)
+ LSM_HOOK(void, LSM_RET_VOID, bdev_free_security, struct block_device *bdev)
+ LSM_HOOK(int, 0, bdev_setintegrity, struct block_device *bdev,
+ 	 enum lsm_integrity_type type, const void *value, size_t size)
 +
- #undef __NR_syscalls
--#define __NR_syscalls 473
-+#define __NR_syscalls 474
++#ifdef CONFIG_ROOTNS
++LSM_HOOK(int, 0, rootns_alloc, struct rootns *rootns, unsigned int flags)
++LSM_HOOK(void, LSM_RET_VOID, rootns_free, struct rootns *rootns)
++LSM_HOOK(int, 0, rootns_clone, struct rootns *rootns)
++LSM_HOOK(int, 0, rootns_kill, struct rootns *rootns, int sig)
++#endif /* CONFIG_ROOTNS */
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index 13621e9e233e..217a59d428b1 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -121,6 +121,9 @@ struct lsm_blob_sizes {
+ 	unsigned int lbs_bpf_map;
+ 	unsigned int lbs_bpf_prog;
+ 	unsigned int lbs_bpf_token;
++#ifdef CONFIG_ROOTNS
++	unsigned int lbs_rootns;
++#endif
+ };
  
  /*
-  * 32 bit systems traditionally used different
-diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
-index 0ab531605120..b6d1b033f49a 100644
---- a/scripts/syscall.tbl
-+++ b/scripts/syscall.tbl
-@@ -413,3 +413,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	rootns				sys_rootns
+diff --git a/include/linux/rootns.h b/include/linux/rootns.h
+index 802fc76bb66e..795a79584231 100644
+--- a/include/linux/rootns.h
++++ b/include/linux/rootns.h
+@@ -31,6 +31,9 @@ enum rootns_state {
+ struct rootns {
+ 	refcount_t		usage;
+ 	int			exit_code;	/* The exit code of 'init' */
++#ifdef CONFIG_SECURITY
++	void			*security;	/* LSM security blob */
++#endif
+ 	struct user_namespace	*user_ns;	/* Owning user namespace */
+ 	struct nsproxy		*ns;		/* This rootns's namespaces */
+ 	struct pid		*init_pid;	/* The 'init' task's TGID (pid ref) */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 40831fab5470..995292f1c92e 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -84,6 +84,7 @@ struct audit_krule;
+ struct ns_common;
+ struct user_namespace;
+ struct timezone;
++struct rootns;
+ 
+ enum lsm_event {
+ 	LSM_POLICY_CHANGE,
+@@ -2469,4 +2470,33 @@ static inline void security_initramfs_populated(void)
+ }
+ #endif /* CONFIG_SECURITY */
+ 
++#ifdef CONFIG_ROOTNS
++#ifdef CONFIG_SECURITY
++int security_rootns_alloc(struct rootns *rootns, unsigned int flags);
++void security_rootns_free(struct rootns *rootns);
++int security_rootns_clone(struct rootns *rootns);
++int security_rootns_kill(struct rootns *rootns, int sig);
++#else
++static inline int security_rootns_alloc(struct rootns *rootns,
++					unsigned int flags)
++{
++	return 0;
++}
++
++static inline void security_rootns_free(struct rootns *rootns)
++{
++}
++
++static inline int security_rootns_clone(struct rootns *rootns)
++{
++	return 0;
++}
++
++static inline int security_rootns_kill(struct rootns *rootns, int sig)
++{
++	return 0;
++}
++#endif /* CONFIG_SECURITY */
++#endif /* CONFIG_ROOTNS */
++
+ #endif /* ! __LINUX_SECURITY_H */
+diff --git a/kernel/bpf/bpf_lsm.c b/kernel/bpf/bpf_lsm.c
+index 468e63dbd922..bbcf1433fdc2 100644
+--- a/kernel/bpf/bpf_lsm.c
++++ b/kernel/bpf/bpf_lsm.c
+@@ -16,6 +16,7 @@
+ #include <linux/btf_ids.h>
+ #include <linux/ima.h>
+ #include <linux/bpf-cgroup.h>
++#include <linux/rootns.h>
+ 
+ /* For every LSM hook that allows attachment of BPF programs, declare a nop
+  * function where a BPF program can be attached. Notably, we qualify each with
+@@ -404,6 +405,11 @@ BTF_ID(func, bpf_lsm_task_setscheduler)
+ BTF_ID(func, bpf_lsm_userns_create)
+ BTF_ID(func, bpf_lsm_bdev_alloc_security)
+ BTF_ID(func, bpf_lsm_bdev_setintegrity)
++#ifdef CONFIG_ROOTNS
++BTF_ID(func, bpf_lsm_rootns_alloc)
++BTF_ID(func, bpf_lsm_rootns_clone)
++BTF_ID(func, bpf_lsm_rootns_kill)
++#endif /* CONFIG_ROOTNS */
+ BTF_SET_END(sleepable_lsm_hooks)
+ 
+ BTF_SET_START(untrusted_lsm_hooks)
+@@ -420,6 +426,10 @@ BTF_ID(func, bpf_lsm_sk_free_security)
+ BTF_ID(func, bpf_lsm_task_free)
+ BTF_ID(func, bpf_lsm_bdev_alloc_security)
+ BTF_ID(func, bpf_lsm_bdev_free_security)
++#ifdef CONFIG_ROOTNS
++BTF_ID(func, bpf_lsm_rootns_alloc)
++BTF_ID(func, bpf_lsm_rootns_free)
++#endif /* CONFIG_ROOTNS */
+ BTF_SET_END(untrusted_lsm_hooks)
+ 
+ bool bpf_lsm_is_sleepable_hook(u32 btf_id)
+diff --git a/kernel/rootns.c b/kernel/rootns.c
+index 865689eed69c..3733a249feca 100644
+--- a/kernel/rootns.c
++++ b/kernel/rootns.c
+@@ -52,6 +52,7 @@
+ #include <linux/user_namespace.h>
+ #include <linux/compat.h>
+ #include <linux/idr.h>
++#include <linux/security.h>
+ #include <uapi/linux/rootns.h>
+ 
+ /*
+@@ -63,14 +64,8 @@ struct rootns *get_rootns(struct rootns *c)
+ 	return c;
+ }
+ 
+-/*
+- * Drop a reference on a rootns and clear it if it is no longer in use.
+- */
+-void put_rootns(struct rootns *c)
++static void free_rootns(struct rootns *c)
+ {
+-	if (!c || !refcount_dec_and_test(&c->usage))
+-		return;
+-
+ 	if (c->ns)
+ 		put_nsproxy(c->ns);
+ 	if (c->init_pid)
+@@ -82,6 +77,18 @@ void put_rootns(struct rootns *c)
+ 	kfree(c);
+ }
+ 
++/*
++ * Drop a reference on a rootns and clear it if it is no longer in use.
++ */
++void put_rootns(struct rootns *c)
++{
++	if (!c || !refcount_dec_and_test(&c->usage))
++		return;
++
++	security_rootns_free(c);
++	free_rootns(c);
++}
++
+ /*
+  * Allow the user to poll for the rootns dying.
+  */
+@@ -163,6 +170,7 @@ static int rootns_kill_members(struct rootns *rootns, int sig)
+ 	bool any_perm = false;
+ 	int other_err = 0;
+ 	struct pid *pid;
++	int ret;
+ 	int nr;
+ 
+ 	if (!pidns_is_ancestor(pid_ns, task_active_pid_ns(current)))
+@@ -170,6 +178,10 @@ static int rootns_kill_members(struct rootns *rootns, int sig)
+ 	if (READ_ONCE(rootns->state) != ROOTNS_RUNNING)
+ 		return -ESRCH;
+ 
++	ret = security_rootns_kill(rootns, sig);
++	if (ret)
++		return ret;
++
+ 	scoped_guard(rcu) {
+ 		read_lock(&tasklist_lock);
+ 		idr_for_each_entry(&pid_ns->idr, pid, nr) {
+@@ -365,31 +377,35 @@ static struct rootns *create_rootns(unsigned int flags)
+ 	user_ns = create_rootns_user_ns();
+ 	if (IS_ERR(user_ns)) {
+ 		ret = PTR_ERR(user_ns);
+-		goto err_put;
++		goto err_free;
+ 	}
+ 	c->user_ns = user_ns;
+ 	ns_ref_active_get(user_ns);
+ 
+ 	if (!ns_capable(user_ns, CAP_SYS_ADMIN)) {
+ 		ret = -EPERM;
+-		goto err_put;
++		goto err_free;
+ 	}
+ 
+ 	ns = create_new_namespaces(clone_flags, current->nsproxy, user_ns,
+ 				   NULL);
+ 	if (IS_ERR(ns)) {
+ 		ret = PTR_ERR(ns);
+-		goto err_put;
++		goto err_free;
+ 	}
+ 
+ 	timens_activate_nsproxy(ns);
+ 	c->ns = ns;
+ 	nsproxy_ns_active_get(ns);
+ 
++	ret = security_rootns_alloc(c, flags);
++	if (ret < 0)
++		goto err_free;
++
+ 	return c;
+ 
+-err_put:
+-	put_rootns(c);
++err_free:
++	free_rootns(c);
+ 	return ERR_PTR(ret);
+ }
+ 
+@@ -485,6 +501,10 @@ int rootns_prepare_fork(struct kernel_clone_args *args)
+ 	if (!pidns_is_ancestor(pid_ns, task_active_pid_ns(current)))
+ 		return -EXDEV;
+ 
++	ret = security_rootns_clone(rootns);
++	if (ret)
++		return ret;
++
+ 	ret = mnt_ns_get_root(rootns->ns->mnt_ns, &root);
+ 	if (ret)
+ 		return ret;
+diff --git a/security/lsm_init.c b/security/lsm_init.c
+index 8d5ecea99c46..56b515b20812 100644
+--- a/security/lsm_init.c
++++ b/security/lsm_init.c
+@@ -316,6 +316,9 @@ static void __init lsm_prepare(struct lsm_info *lsm)
+ 	lsm_blob_size_update(&blobs->lbs_bpf_map, &blob_sizes.lbs_bpf_map);
+ 	lsm_blob_size_update(&blobs->lbs_bpf_prog, &blob_sizes.lbs_bpf_prog);
+ 	lsm_blob_size_update(&blobs->lbs_bpf_token, &blob_sizes.lbs_bpf_token);
++#ifdef CONFIG_ROOTNS
++	lsm_blob_size_update(&blobs->lbs_rootns, &blob_sizes.lbs_rootns);
++#endif
+ }
+ 
+ /**
+@@ -460,6 +463,9 @@ int __init security_init(void)
+ 		lsm_pr("blob(bpf_map) size %d\n", blob_sizes.lbs_bpf_map);
+ 		lsm_pr("blob(bpf_prog) size %d\n", blob_sizes.lbs_bpf_prog);
+ 		lsm_pr("blob(bpf_token) size %d\n", blob_sizes.lbs_bpf_token);
++#ifdef CONFIG_ROOTNS
++		lsm_pr("blob(rootns) size %d\n", blob_sizes.lbs_rootns);
++#endif
+ 	}
+ 
+ 	if (blob_sizes.lbs_file)
+diff --git a/security/security.c b/security/security.c
+index 4727b8347fc4..919d4bb63701 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -30,6 +30,7 @@
+ #include <linux/overflow.h>
+ #include <linux/perf_event.h>
+ #include <linux/fs.h>
++#include <linux/rootns.h>
+ #include <net/flow.h>
+ #include <net/sock.h>
+ 
+@@ -395,6 +396,22 @@ static int lsm_ns_alloc(struct ns_common *ns)
+ 	return lsm_blob_alloc(&ns->ns_security, blob_sizes.lbs_ns, GFP_KERNEL);
+ }
+ 
++#ifdef CONFIG_ROOTNS
++/**
++ * lsm_rootns_alloc - allocate a composite rootns blob
++ * @rootns: the rootns that needs a blob
++ *
++ * Allocate the rootns blob for all the modules
++ *
++ * Return: Returns 0, or -ENOMEM if memory can't be allocated.
++ */
++static int lsm_rootns_alloc(struct rootns *rootns)
++{
++	return lsm_blob_alloc(&rootns->security, blob_sizes.lbs_rootns,
++			      GFP_KERNEL);
++}
++#endif /* CONFIG_ROOTNS */
++
+ /**
+  * lsm_fill_user_ctx - Fill a user space lsm_ctx structure
+  * @uctx: a userspace LSM context to be filled
+@@ -5795,3 +5812,72 @@ void security_initramfs_populated(void)
+ {
+ 	call_void_hook(initramfs_populated);
+ }
++
++#ifdef CONFIG_ROOTNS
++/**
++ * security_rootns_alloc() - Check creation of a new rootns and init LSM blob
++ * @rootns: the new rootns
++ * @flags: creation flags passed to rootns()
++ *
++ * Check whether a new rootns may be created and initialize its LSM security
++ * blob.
++ *
++ * Return: Returns 0 on success, negative error code on failure.
++ */
++int security_rootns_alloc(struct rootns *rootns, unsigned int flags)
++{
++	int rc;
++
++	rc = lsm_rootns_alloc(rootns);
++	if (unlikely(rc))
++		return rc;
++
++	rc = call_int_hook(rootns_alloc, rootns, flags);
++	if (unlikely(rc))
++		security_rootns_free(rootns);
++
++	return rc;
++}
++
++/**
++ * security_rootns_free() - Release LSM security data from a rootns
++ * @rootns: the rootns being freed
++ *
++ * Release security data attached to @rootns before the structure is freed.
++ */
++void security_rootns_free(struct rootns *rootns)
++{
++	call_void_hook(rootns_free, rootns);
++	kfree(rootns->security);
++	rootns->security = NULL;
++}
++
++/**
++ * security_rootns_clone() - Check permission to spawn a task into a rootns
++ * @rootns: the target rootns
++ *
++ * Check permission before spawning a child process into @rootns via
++ * clone3(CLONE_INTO_ROOTNS).
++ *
++ * Return: Returns 0 if permission is granted, negative error code on failure.
++ */
++int security_rootns_clone(struct rootns *rootns)
++{
++	return call_int_hook(rootns_clone, rootns);
++}
++
++/**
++ * security_rootns_kill() - Check permission to signal a rootns
++ * @rootns: the target rootns
++ * @sig: signal number to deliver (or 0 for permission check)
++ *
++ * Check permission before broadcasting @sig to member thread groups in @rootns
++ * via ioctl(ROOTNS_KILL).
++ *
++ * Return: Returns 0 if permission is granted, negative error code on failure.
++ */
++int security_rootns_kill(struct rootns *rootns, int sig)
++{
++	return call_int_hook(rootns_kill, rootns, sig);
++}
++#endif /* CONFIG_ROOTNS */
 -- 
 2.47.3
 
