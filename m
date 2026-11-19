@@ -1,100 +1,107 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.50
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795107871;
-	b=Kphxa3vAnpcYOpHvw2rnYJ243YaMuQr5HKxNChiVbq8Ehsdf/Y1VES02QjtJEuQ0WNGV
-	 bFn0BIiuZLT0ieXGcOP13BbCgUd5oTIwaSeXl5oxJa2xtII+1ok2M6uniISy0D42XypGE
-	 lHIxzafPyu09ejXzdsgPYVh9wOffwiHtVW7M9cUqQs6xrdHAZHqr6SpQKV1Q9AQ7ikkqW
-	 pPLlE7PZexb7B1lOoMIaU5/HHj+nAbg+HkHLNckUNGNvYMryDPUhEKQZShV1JaCaMI+h1
-	 Nx+aHjz9vrlyUxPNwhSSRcrdKwDanMSb4UytSVzBLM2CCE8obJkhRiu4IJwyXZVmpEg==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795107871;
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.53
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795109458;
+	b=qkVd25JEh57m+DOIcUdezmgeSPiUv/arWGBSApi7l+NN/gk9IahrPIT1Z6RvD5/5/Vj1
+	 MDNkA7l6foo0KcTAUwU8dWRi6YYzNdkbquaXgLkqLF9kYfA7OiZEyrRFsRdSDtnRILdd8
+	 XGFtchBWQOmZPWxSOXn9/RSPTiVopSU1u9+vUAKQ6KuUdITcqc1pPfYQFHNX61oeq3Aqq
+	 dNwfMY1nSuHebJTcxr4JkFr0RMHcd1A+SPGMb35TcY42qA9ZvhKrwGrP7GRL/JIsy2Gyu
+	 iXpHzf6hZLEnvjTKQa4w4XUwVW5iss+wH8aj4gI+U0KEFWvfx97r0Yn5inIq+DUorCg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795109458;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=2yLuK3u1QEHTUyBs9ayIe02GiJhaVWl6gJPjVQwJ7zg=;
-	b=WaWia7WqGIMCoEmEetN2Qox1qI9sOztcUuYTb9Cva/IMeXObyfoyWBuLEY8am0k7UEZF
-	 YVMbclxPZJtBfOhvz738Db1lJpFKtyThwNhvSuQHHbesPDVKPipbzR+7O/wA7pM3WM9OG
-	 Hz3awslBqmT3SP7PXcIPHfRVQjLpe8DxcrKGgrJrwOevkAjFS1moL8zrC4wlbe2vck4P6
-	 TEWAvhKhWghyg19KCNsWMx6cahw3uao4Xv0HU1ImE8780kt5W9srx3OLYYZY1iGG977Yr
-	 rk9sqnBdyzUcgh9/OGVrLktqePbMf4+J3Oac5eXYguLi9MvM2NS/zI28CHGPBJvE6+Q==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=s5zc6etq;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.50
-Received: from mail-ed1-f50.google.com (mail-ed1-f50.google.com [209.85.208.50])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Date:Message-ID:From:To:Cc:Subject:In-Reply-To:References:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding;
+	bh=vs32yPthyobk2oEa2KkdNDnwUJjwL8zz25GmqC5+HvQ=;
+	b=W787n5yPebroINyDTKUVPfwBiKAb5smiuBBN1ReDqpX9Cq32JnDEvMAHTPZexBO/aw+B
+	 FOLamvxZq/IjprVMO2eKc1pjOv/gmzgvoGO/V29e7kj0u5DPZF3RLsPeycb0wjJcyvPWm
+	 ZQTJpKl6tM9Az9LwKPnTYiYs8AiGi1+DH7ngyX+1oZqpBDxCT+pLphPQy08aaBX2H0YSu
+	 ROAWaO8zCTHcf8d4+0qn8GAggoUNH7BLo4dD8DN6LnfhgHrWzbnM+DR07HwFLttpCHAmQ
+	 hP+YH9gDCr91jMyYAzWlXsU3xIQwm3n9GpQimHmUYwPPPUS3/gkk3E4yw4zcOEFuwhA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=none header.from=toxicpanda.com;
+	spf=pass smtp.mailfrom=toxicpanda.com;
+	dkim=pass header.d=toxicpanda.com header.i=@toxicpanda.com header.a=rsa-sha256 header.s=google header.b=kcyODoF4;
+	arc=none smtp.remote-ip=209.85.219.53
+Received: from mail-qv1-f53.google.com (mail-qv1-f53.google.com [209.85.219.53])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5213E606A339
-	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 17:04:30 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5213E606A339
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E3239606A325
+	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 17:30:57 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E3239606A325
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=toxicpanda.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=toxicpanda.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=s5zc6etq
-Received: by mail-ed1-f50.google.com with SMTP id 4fb4d7f45d1cf-6ba12b00c76so1154298a12.0
-        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 09:04:30 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795107869; cv=none;
-        d=google.com; s=arc-20260327;
-        b=NcZDAieclVyiWYhroSdOKtEPab4BWfCDjuTxSQvSixbmcnjzRoJVAL+qRk0KAtAgs1
-         WKjEci0TQJo4kdDkbc9o0dpenKvYum62ZY3evoOj9d5vaZ0rWpCMzxm0Gk9+ZYZ1yuKT
-         xGkUhfA8oAUsDJlSrMSqetmt/e9mPR0vhjJr3iM+uo66PZAUOzc6ai/4+OafPGKFn5Rq
-         xaImCXL1Cw4xHStHKw1LviDI7YC/aImhGlJDhC9AIoYSf/5e4eWj6HoHLPYGAz+edPVR
-         m+F7HK4Wm4aPa7GVjBDt77iBbwALQsbI37Ednu1D1IRJXXk8PjrqGfNuYbzeR7dvJ7Xc
-         T1vg==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=2yLuK3u1QEHTUyBs9ayIe02GiJhaVWl6gJPjVQwJ7zg=;
-        fh=IurH4ZUt1UW3q7RRiNUQYHJ9E5pmu3pkJxfJ3bzLJ68=;
-        b=R5bJFucAEWnrDJ8vp+hw60hMGGRynzyVPCU5BvaFvQDVPMLqktX+BnF8N31crzooHZ
-         rpfdTpgBVg3ua0q77FdrxuC42FTvnbmPA4sdYUeXPgR0olEXFVV7rFv0mRodoBHbOwfn
-         qcYDjpB8fHvC+OBMb1uvi20w07CFwy1htvPmvjHHZGDK11m0Ga7RGP5rL/fC98Fzw458
-         DEAfoI2ODMoOV4/A4sRrLmTAQmXSRQom1a+t3wAGT60HyBQUfk1TuvmPBtRHmJRUxsKu
-         /5WusxL8kKOCXuLW3LkAr+Cm8U7/yxibhPRR7/c0F8oHUh3y7vvwjTE/kC6/AYaIuzEZ
-         i7Vw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=toxicpanda.com header.i=@toxicpanda.com header.a=rsa-sha256 header.s=google header.b=kcyODoF4
+Received: by mail-qv1-f53.google.com with SMTP id 6a1803df08f44-92130d3ee15so703056d6.3
+        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 09:30:57 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795107869; x=1795712669; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+        d=toxicpanda.com; s=google; t=1795109457; x=1795714257; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:subject:cc:to:from:message-id:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=2yLuK3u1QEHTUyBs9ayIe02GiJhaVWl6gJPjVQwJ7zg=;
-        b=s5zc6etqP3GKrfiHHgIM6qRwBj4GIrrYXAc6mNtEDxVzqmttJaHCzBqV1dtIN+vio3
-         Bnt6ZD+22BFWnuCnU8EfLslCEzR54XnIaMRCfU4Wp6aReVvOjg7SSEeZ++TPablfbh0l
-         nWScX+/5rkWM/Hp/yZ+hSStf6OX4OY+2MyRjQ6hvynNEq3yrt2g+oozsb2uIIRwN9Z0y
-         kqeQwucwtBml5gJuvt9l9W1sgy2+Q505qHa2NQnc54/JOh7uClHStUwVlxpUu36xurI8
-         7fgIaULXH+3INvDRKkck+rkIPO9DQA/oiLHBMSnEoMnziJpuqf6MgQUtU78WnH6opbGH
-         aXRQ==
+        bh=vs32yPthyobk2oEa2KkdNDnwUJjwL8zz25GmqC5+HvQ=;
+        b=kcyODoF499MEItXJuafpVcnzdrYkl7/sScpUZDNuvzQ8x8TeBmZDqdks69cwQJPENI
+         9iFlKy+JKSRnJ43XkhGYbKr6s8nEbIsy4qEBpMjCGf/q7zUHm+eoySF82h8iB9DE2E+6
+         x6E285TcglmPmUWPzBeIw5GGsOfgrTK54KwCO0dY+Gad/9rpkfmJp+Fzuv7FM12rO3cW
+         oVa7V3SRTkJyyHdCmKYhiZ0iNHkbMSf2mGIbRMegzCViN1JkHDoqRPAMPCRKMsFhAncg
+         tqPk2hQGV6zgzsjM3kKOt4MztPrYgP6ISE5NoJeIoBzovYoyXvuYXpAuHCmOYhEhLB8f
+         9Xsg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795107869; x=1795712669;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
+        d=1e100.net; s=20260707; t=1795109457; x=1795714257;
+        h=content-transfer-encoding:content-type:mime-version:references
+         :in-reply-to:subject:cc:to:from:message-id:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=2yLuK3u1QEHTUyBs9ayIe02GiJhaVWl6gJPjVQwJ7zg=;
-        b=xjIqrNx/YzZhdc8Becu655VzWP0Z6pTRW93vgQ8LBd4C1IkMYVByjB6NqU8ug+YZnY
-         mG7gQNLitl146jGRPOm9z+pqB0kB44G9UJoynaqICTs+itT4Up+hP+3edGOFQ0ZiA9h2
-         C9zJefGTaaAljuWJYksGRPfhku6tZr3znFpTzg5owOu87Uf0pEYaspPpgkR68Rk+VdJI
-         otRwINQ5eYFkQwfIh8jwWFFRCN6LBpb3ODzDzV0F6vMRXtvpBG2tBK+Y89FmJFdelQpM
-         3a8SXsOCzNsxZvY3I+pihNoKDqX00tbdyoY3BAG12s5iNRnNXwsPz8AvZ36S/g9vlPNK
-         gxtQ==
-X-Forwarded-Encrypted: i=1; AL+hErFIbUY4Se3zq5aQNhaiQm4cNVWO/NeZpcey/NxFj1X0NIjUSVcuzkuKqzIId9KRGTVwgdbMZP8iuPU=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9Ahh+t+Te1YdDQYchE+QKTsAieiO6ZT9V1fYP0bGklTNiXuseu
-	An1dl6cD+XilvVfkJjOasdDwX+5oh5lUpxLe0P+EsybYtSRxl2FaXtmxkmQpPRz65CXNIH7eCT1
-	lN9KiXQZeYD56sGsVpSVheQ8lkf9EE8g=
-X-Gm-Gg: AYBFou3lNkIT7naaEvgq8m3ph+UCvslqV+puLqdiOpXVD+wPvnAyfgf5R0xc1t3AZ/k
-	SyuYXRM2JNZ23SpNgtuPpgOG6edoIH8P938a3tOuuce+F8bhXh01i3/KvZRQgjwKtQUTKRrPSMz
-	0WtyE/4EvWuwh0s6fOC6CrCNbOG/cWUZTkk1OwpBjdG8GPYL52uMKvqBI+e2cxRgRlYr1GULi/J
-	X4Uu2ufNSv5/Zu4h297qFPLoY33bjKXHoVZCeCBDaAcUD2cpQuYk9FBRhykqma3lfosxkThWdlW
-	nI0vcG2V56JRlQw2qv0xuvK50Vbb94Svhy6H63077hDgXqpEBXMV6iOshZKLtP8JO0F9Csf4ORV
-	JFfaHDn0jTKDWbphXfr5xsoDEXPdhHehCCAt5xIIMI/5cTpnA0yNWFl/6ElKeUi4ECpQDyb8=
-X-Received: by 2002:a05:6402:15cb:b0:6b7:b872:27a0 with SMTP id
- 4fb4d7f45d1cf-6b887e9b3a2mr4758592a12.21.1795107868285; Thu, 19 Nov 2026
- 09:04:28 -0800 (PST)
+        bh=vs32yPthyobk2oEa2KkdNDnwUJjwL8zz25GmqC5+HvQ=;
+        b=vN7iK+8ZNMo0QTF7lfBlYhD/+xSoPAu4lIWdl+nBIznVWclTTGBaz48XCBm3TkwTUD
+         d8rtMYQ+2dnoBSRfUzBl+0RuOTwm3WcYTxXFIQc+jxWFkD1QW8LMgAmAZ37C17aqpWM6
+         1cvrX9QtkZmAwGdytJJ5wW2f5Y+tSs9vdbu/PmvVgU7U2HmIXu4er4gtfeKoYkzbaMzf
+         Wc7U6WeHf8GsCw9h9w38J+EXucFpt+lijrmJvt3/b/hwFqaNnfUlvs7oXz+A9M1yg3eU
+         sY/jWkIovecRbj9ht+kr57m0zsd0rroqqp33Fi6HwCVjH9F1vMGS3S8x3iwFgMFz1vzA
+         cvSw==
+X-Forwarded-Encrypted: i=1; AL+hErFUjtkunP9flUOif1R/PTvo+PxOfm7xKMFX0CZt9f1uRu/PwTQSignREPceSJZ0cqilO0aXZlWqoV4=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/NrQXSCakrZiHT9YN4MFAIx3NkcEPC+a8J9QWWU7Wxnm1oRspT
+	6XqlGP1+qE8DxI+ijZlDyKlrWBXix0ZgXJKyhayBnrleuFoMSSLGkHKaaO1PsxXymdQ=
+X-Gm-Gg: AZFdTZd82gwrNifGxA16Y6R6AroPu87m3wvm0zwFZY3eHTaExthe5lxlmKdU+lXl1jF
+	KvGoV5jZPOypfyshqkHOH5T3nAjo6pxtvOTNqe8bRXL4QSsaYeeOC08GoCtVpUc0sjjtAgFxE2g
+	00MJYv7t+X0kuzehulfRlrjRbHUO5u58oYIkohc+3B1UpzCcdqq+BRe/Yp8UYErli9sxKcRxWNM
+	GXi/f9rKcfDLx3OrEUYSdsksF4V/bpnh/a5jQiV5Plj8PtYkcGoH2CWl1D7iCv/QwiAcRzXVK+7
+	cngTrWg7AGzZjrWjemQHXFYmsUaw91BE/LkJ176afhLhvUPWNGVKya4K3F+5qLjmsRhpS1/niSq
+	bQWtEdr2M6to9mMjlUkEGdTBEPGxteRpPi4FfVH7fzs02qrAIJR8Xi/YPnn2mJZyf4ETxDkcQet
+	Xn5YmTTRcjHW2GeTxy69Jp+29mszs1G634KBg2CHd9B5xqX3phpTUZJttWJTPOEuXGHRCwLnkp5
+	8croGZ2GFBpgNeYOVaSnQDkH8JY+MvTViRxtoHL0UYRUulnhuoj9yWry0buoVKgMWaYw6AtWHTm
+	Haso9Z4RfM/W3yzxzf3zyVaJyan1T8z9fs8qHSUeGLQ8Qg==
+X-Received: by 2002:a05:6214:3d0f:b0:921:2f16:4714 with SMTP id 6a1803df08f44-921349cdc5cmr6310486d6.7.1795109456756;
+        Thu, 19 Nov 2026 09:30:56 -0800 (PST)
+Received: from toxicpanda.com ([153.61.196.251])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-921349ec64csm3556376d6.28.2026.11.19.09.30.55
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 19 Nov 2026 09:30:56 -0800 (PST)
+Date: Thu, 19 Nov 2026 17:30:55 +0000
+Message-ID: <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com>
+From: Josef Bacik <josef@toxicpanda.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
+ Christian Brauner <brauner@kernel.org>,
+ Alexander Viro <viro@zeniv.linux.org.uk>,
+ David Howells <dhowells@redhat.com>,
+ Jan Kara <jack@suse.cz>,
+ Serge Hallyn <sergeh@kernel.org>,
+ Kees Cook <kees@kernel.org>,
+ Paul Moore <paul@paul-moore.com>,
+ linux-fsdevel@vger.kernel.org,
+ linux-api@vger.kernel.org,
+ linux-security-module@vger.kernel.org,
+ linux-kernel@vger.kernel.org
+Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
+In-Reply-To: <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
+References: <20261117231352.3816603-1-jarkko@kernel.org>
+ <CALCETrVUkbpoFjwSAejyA4b_9qEauAP_36i=O8Op1ifp8aUkqA@mail.gmail.com>
+ <av3akYFOYaeQZauZ@kernel.org>
+ <av3bkDnwmjunTleX@kernel.org>
+ <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,192 +111,42 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <av4Hn9u80fs8iHZ6@dread> <20261119095943.85048-1-lauri.gates@gmail.com>
- <DMZ4VQ7SZ07T.29WMPQ0BQZGSS@gmail.com>
-In-Reply-To: <DMZ4VQ7SZ07T.29WMPQ0BQZGSS@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Thu, 19 Nov 2026 18:04:14 +0100
-X-Gm-Features: AclHuK_v3fdGGegcviRdfo5LNeBocqyxiM32rnjQTLwAQD9spb3t-0FSAl1IioM
-Message-ID: <CAOQ4uximow25oc=3XEN1ATgQvonQaTXtDPmQufxo75tJ=e355A@mail.gmail.com>
-Subject: Re: Concurrent FIEMAP on reflinked files serialises on the AGF buffer lock
-To: koraynilay <koray.fra@gmail.com>
-Cc: Lauri Gates <lauri.gates@gmail.com>, Dave Chinner <dgc@kernel.org>, 
-	Christian Brauner <brauner@kernel.org>, Christoph Hellwig <hch@infradead.org>, linux-xfs@vger.kernel.org, 
-	Carlos Maiolino <cem@kernel.org>, Christian Brauner <christian@brauner.io>, 
-	"Darrick J. Wong" <djwong@kernel.org>, linux-api@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, 
-	ocfs2-devel@lists.linux.dev, linux-nfs@vger.kernel.org, 
-	linux-cifs@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-On Thu, Nov 19, 2026 at 12:00=E2=80=AFPM koraynilay <koray.fra@gmail.com> w=
-rote:
->
-> On Thu Nov 19, 2026 at 10:59 AM CET, Lauri Gates wrote:
-> > On Wed, Nov 18, 2026 at 10:16PM +0200, Dave Chinner wrote:
-> >> I really don't care if it is exposed by statx or file_attr; checking
-> >> the flag through either interface will be orders of magnitude faster
-> >> than using FIEMAP to iterate extents on every file to find shared
-> >> extents. My concern with statx is coherency - it runs completely
-> >> unlocked and so can race with operations that add/remove the reflink
-> >> flag...
-> >
-> > Thanks, Dave and Christian. Given Christian's preference and the
-> > coherency point, I'll write the RFC against file_attr, once the
-> > question at the end is settled. xfs_fileattr_get() already reads the
-> > flags under XFS_ILOCK_SHARED, so the new flag gets that without extra
-> > work. The answer can still go stale right after the call, as with any
-> > stat result: a clone that lands after the read is missed, just as one
-> > that lands after FIEMAP returns is missed today.
-> >
-> > As I suggested on the 6th, the flag would take the inverted meaning,
-> > so that an unset flag stays the safe answer: say FS_XFLAG_NOSHARED
-> > ("no extents shared with another file"), read-only, in
-> > FS_XFLAG_RDONLY_MASK next to the case-folding flags.
->
-> Hello, I don't have any say in the FIEMAP issue, but I wanted to let you
-> know that, since also a mask was mentioned and your patch would be
-> touching the fileattr API, there is work going[1] on for adding a
-> fsx_xflags_mask that filesystem use[2][3] to advertise supported flags (o=
-n
-> get, like stx_attributes_mask) and users use to say what they want to
-> change (on set).
-> It doesn't seem like an FS_XFLAG_NOSHARED flag would touch this new
-> change, but I thought it was worth pointing out, especially because this
-> patch would also add FS_XFLAG_PROJID and a new FS_FILE_ATTR_XFLAGS_MASK
-> to have a way to include both legacy and newly added xflags, so
-> FS_XFLAG_NOSHARED would maybe also go there (correct me if I'm wrong).
->
-> > Christian, one question on the shape within file_attr: would you take
-> > the inverted flag, or would you rather keep a plain "may share" flag
-> > and add a mask to struct file_attr that says which xflags the
-> > filesystem reports?
->
-> And if Christian chooses the mask approach, then my patch[4] becomes
-> relevant.
-> (in [4] I put the patch that will be sent in v5 of [1], since in [1]
-> it's merged with the ptime change)
->
-> (For Amir who I just CC'd, [5] is the main link for this thread)
+On Wed, Nov 18, 2026 at 9:46 AM Andy Lutomirski <luto@amacapital.net> wrote:
+> cells: The dance where I create an anonymous mountns, mount stuff into
+> it, and then attach it to the cell is cute.  But I think the userns
+> interaction is wrong: you are making me assemble all the mounts in
+> *my* userns and then clone the entire tree into a fresh, non-anonymous
+> mountns bound to the current userns.  And that clone operation is not
+> free and serves no actual practical purpose.
 
-Thanks for the CC and the link
+The copy buys us nothing, agreed.  That's just what the mount API gives
+me to work with today, it's not something cells wants.  If I could make
+an empty mount namespace and fill it by fd I'd use that, the "root" slot
+takes a mount namespace fd already.  Extending the API for that makes
+sense to me on its own.
 
->
-> Thanks,
-> koraynilay
->
-> [1]: https://lore.kernel.org/all/20261115180343.576773-1-koray.fra@gmail.=
-com/T/#u
-> [2]: https://lore.kernel.org/all/CAOQ4uxj82K4z+2OiY5W1g7NyWAFOFjqqWnZSS3p=
-rytW36j1LgA@mail.gmail.com/
-> [3]: https://lore.kernel.org/all/CAOQ4uxiuJ=3DeZu28FZAUz3rpqPKqCimPxJucOn=
-YYuBowvD09_Cw@mail.gmail.com/
-> [5]: https://lore.kernel.org/linux-xfs/20261102193533.93690-1-lauri.gates=
-@gmail.com/T/#u
->
-> [4]:
-> commit 0efe0de3b5cc2b767aa6e2bb9174eb05b0d818f1
-> Author: koraynilay <koray.fra@gmail.com>
-> Date:   Tue Nov 17 14:57:47 2026 +0100
->
->     vfs: add xflags mask to file_attr API
->
->     Add fa_xflags_mask to struct file_attr and equivalent fsx_xflags_mask
->     to struct file_kattr.
->
->     This lets filesystems advertise their support for specific xflags and
->     users specify only what they want to change, behaving like
->     statx.stx_attributes_mask:
->     - on GET (file_getattr): each filesystem fills the mask according to
->       its supported xflags, e.g. FS_XFLAG_COWEXTSIZE or FS_XFLAG_EXTSIZE,
->       and provides the values in the corresponding struct fields;
->     - on SET (file_setattr): userspace fills the mask according to which
->       xflags it wants to change, VFS validates this and preserves xflags
->       that were not specified in the mask;
->     - if xflags_mask =3D=3D 0, use legacy full-struct replacement to keep
->       compatibility with older programs.
->
->     Furthermore, add the missing FS_XFLAG_PROJID flag, to allow userspace=
- to
->     set the projid using file_[sg]etattr().
+The mount namespace staying with the builder's userns is on purpose
+though, that's what keeps the cell from mounting anything no matter what
+capabilities it was given.  The builder sets the tree up and hands it
+over, so the cell only ever has what it was given, and the mount code
+isn't something it can attack from the inside.
 
-Correction. usersapce can already set projid using file_[sg]etattr().
-With FS_XFLAG_PROJID in fsx_xflags_mask, chattr -p <projid>
-could set the projid without having to read and set all the other xflags.
+> cells: I find it *incredibly annoying* that one generally cannot put
+> new mounts into an existing container using most existing container
+> managers.  I hit this on a surprisingly regular basis.  You seem to be
+> baking this into the whole cells design.  Why?
 
->
->     Finally, in order to prevent the legacy FS_IOC_FSSETXATTR from accept=
-ing
->     FS_XFLAG_PROJID, add an FS_FILE_ATTR_XFLAGS_MASK to support new xflag=
-s
->     and use it in fileattr_to_file_attr()/file_attr_to_fileattr() to
->     validate that the xflags passed in fa_xflags and fa_xflags_mask field=
-s
->     are valid.
->
->     Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.7
->     Signed-off-by: koraynilay <koray.fra@gmail.com>
-> ---
->  fs/file_attr.c           | 46 ++++++++++++++++++++++++++++++++++++++++++=
-----
->  include/linux/fileattr.h |  5 +++++
->  include/uapi/linux/fs.h  |  3 +++
->  3 files changed, 50 insertions(+), 4 deletions(-)
->
-> diff --git a/fs/file_attr.c b/fs/file_attr.c
-> index 833e03810b24..56ea65f790f1 100644
-> --- a/fs/file_attr.c
-> +++ b/fs/file_attr.c
-> @@ -102,10 +102,18 @@ EXPORT_SYMBOL(vfs_fileattr_get);
->  static void fileattr_to_file_attr(const struct file_kattr *fa,
->                                   struct file_attr *fattr)
->  {
-> -       __u32 mask =3D FS_XFLAGS_MASK;
-> +       /*
-> +        * fsx_xflags_mask contains only flags added after the
-> +        * file_[gs]etattr() API, so we need to tell userspace the filesy=
-stem
-> +        * actually supports all legacy (FS_XFLAGS_MASK and FS_XFLAG_PROJ=
-ID,
-> +        * which lacked its own bit) and new advertised flags.
-> +        */
-> +       __u32 mask =3D (FS_XFLAGS_MASK | FS_XFLAG_PROJID | fa->fsx_xflags=
-_mask) &
-> +                    FS_FILE_ATTR_XFLAGS_MASK;
+By design.  Allowing changes to a running container is what causes the
+problems.  If you need another mount, tear it down and build it again.
 
-This is not exactly how I envisioned exporting fa_xflags_mask.
+> both of you: Can we please make it possible to do the parts of this
+> that oughtn't require privilege without privilege?
 
-fa_xflags_mask =3D=3D 0 means old kernel or unmodified fs.
-
-For a new kernel with fs that supports flags other than
-FS_XFLAGS_MASK it's the fs responsibility to advertise its supported
-flags.
-
-Something like:
-
-     __u32 mask =3D (fa->fsx_xflags_mask ?: FS_XFLAGS_MASK) &
-                              FS_FILE_ATTR_XFLAGS_MASK;
-
-     memset(fattr, 0, sizeof(struct file_attr));
-     fattr->fa_xflags =3D fa->fsx_xflags & mask;
-     fattr->fa_xflags_mask =3D fa->fsx_xflags_mask ? mask : 0;
-
-Then you can add filesystems that support get/set of new
-attributes without support for legacy attributes.
-
-And specific filesytems could opt-into the set of an individual
-attribute like projid by advertising
-fa->fsx_xflags_mask =3D FS_XFLAGS_MASK | FS_XFLAG_PROJID
-or a subset thereof.
-
-And I am still on the fence wrt should API also advertise the
-fsx_xflags_ro_mask in addition to the supported mask.
-
-The advantage being that it makes the interface symmetric.
-User can alway setattr() with the buffer they got from getattr()
-and instead of randomly ignoring flags in set, the fsx_ro_mask
-along with fsx_mask defines the behavior exactly.
+Agreed, we need to come up with a design for this.
 
 Thanks,
-Amir.
+
+Josef
