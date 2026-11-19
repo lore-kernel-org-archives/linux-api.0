@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795128216;
-	b=eeKMdn10wLX25pXtBmkOxrO1pSVnh9ne/AsPN1w5zdlCRFIj2Xtn1FC077w3oDbxBbbB
-	 fOBioc5VeTSbClQTNfthK58jtBaxCzPZXLuwyAU2j2vgYhvboUpkFTpRchxI0tw3kbJ6i
-	 tJuuOg5Yu1r6I01wXraHCaH7fZVSBqaARFR1MyGwVm3BzKd7hYkxRcWqGy6OcF3/v0MVm
-	 fDr2IfY47p792xUrvUxtpzEWBhJdG1ET1AFlbTEYlk1EqK0W3KyjzhDRC3x3NbdBesdDQ
-	 Fm3Vrokgf93aecTZV1DkIFmTOtm0tnX2CYa04h11sfM6wkFB3KVC/c8Uhv60bwxx7zw==
+	t=1795128220;
+	b=vEjYJPl/rCintjluJvlYt/pZPopvlnqY0pOms50UKRR+hQS7DGkwu/LLtygqqIgZk1Yt
+	 nkJGGZaTCiXWUfj3eVtyHfguMjKLQqbUNyHzUP5Z+nZ7puTLC9eBX77qZ/4J0xScngyDb
+	 CLYjI9aHGN946r8ScUZf+YQGJeT8/aNZ54Nx1nWBrAZ/u/f9VIEgMxwznVr1E8ESRGeVd
+	 xjidMDQ/7aSOW/4NiZxppGQBjHOM2xSZJiLdaIHW/6yfxCVCxW8EIMu7lCI3/xbNJyMzf
+	 4siAIvzECmXUXzQDLcEqHIqwVCqDvgTythS52wJbsHE4dh4GchCVmMWhqCu8nqiCD8g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795128216;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795128220;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=glmqSz2x+APivEM/vonQfanbbokAEU7WMuncz0VaekQ=;
-	b=Zubq7jOgB0AuL2BUAq/1wRrGfRXsQ4qo/xc3lE0bc+MaK4mjY0WUn5n94wuspV0/rGIu
-	 2nmQCpVmKM2tBFsHaUE8Nj3zcRPT8kUivW3seYh1Ubh+WWUxLyKkF52X14u5aPrHSVFjI
-	 WTGVKvwJ/TmIkFBvkokiEG3fRJdzvKFE0pg4iT5zC0yCxC6fQBsfSQS8nG1l1Ttr4/uar
-	 mhp96QvM1kSDCA1whXgZOiDnE5p21dxRzjWyJ5RXLYTVUhPXuXddGs9rACY0aEzlkdZlL
-	 bSv0LSDEt/d9kzddDUeZC9S3nJyKgxoydJFkpmTZX4/ewZQAGu7CGwRPtWlNh/VZ+Fw==
+	bh=KV5utKB48R5d2v5yqL1Z/+s/iJ7fF8+qf5kKNuEmfs8=;
+	b=3BO78/fH3jrwdV0Ew8VEYE9QqEvvWvaSbfheP0uZM+dZUEGEouwmzm5yxzWskMngmEJ8
+	 /+BGODGEkO2K6Xv+8dQ1rhwRxPt3SmKf5iM5aXBCBY+oF90pFS3oLEzRyaT67fQmgECi2
+	 dgCaE9RFg2kinZ+CL9lw/WWcdTZUUeYt0n3VCuzNuGTCb7MzyNNmH2CyZICUv3SthTi6K
+	 VTv3x25VaXPNWciTNJAlucY6hgLRZjHUdArSDZ0e6IomImgoyTnL/U2mgeyyA0FtFSN10
+	 LHKex3IQY5LFjI/MrclB0+hedunR1+Hk9M38gja6G9s8J5uUDwv9G6UMZmArKTvPK7Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=R6zbM1hV;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cl67ywKY;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7024D606A325;
-	Thu, 19 Nov 2026 22:43:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 352D760A2611;
+	Thu, 19 Nov 2026 22:43:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=R6zbM1hV
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 46F8C1F000C4;
-	Thu, 19 Nov 2026 22:43:35 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cl67ywKY
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 28D7F1F000D2;
+	Thu, 19 Nov 2026 22:43:39 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795128216;
-	bh=glmqSz2x+APivEM/vonQfanbbokAEU7WMuncz0VaekQ=;
+	s=k20260515; t=1795128219;
+	bh=KV5utKB48R5d2v5yqL1Z/+s/iJ7fF8+qf5kKNuEmfs8=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=R6zbM1hV+WbBhtEXmU14jUlkD2kM34/bg7MXmgqY2TZSwR7bWsienA0vzYKWy+MCl
-	 Qx5t15h+q+yVavc/I/mLlBvI6wQM/YCJxL1IzX8f1kAqSdAcgzYq/dRIosabuqdy2X
-	 N8/tzl7Y5mh5tFS3bHIx/Ze94q+VBR2RaHbM4Rfk64GbDqjLSqIL59ErhCHyvTN0ev
-	 Vglh0NYPCi8c/eCm7eSHXwmi1L2dDORaB6eJmHs8JGEtMpMjH+4TKNM8KGuV2uExsT
-	 C0Qh9N4cJ2sLI6vgBjP4lvkaQS/Id9B5YGWNW4SBV806TffoqAiLdQP924D0IVzJtH
-	 UHl/VGYREGRZw==
+	b=cl67ywKYdzQADbC+FVkoY1b+Nr8Ub6T8DHPYDm/lOLoMUKgCnI73f0MyJRO3z5bf8
+	 WyQYVCEnsThQA9KxqA5dqrm27j2GKnjB3p3GfMd3miR742mzlQOrAPYQ+V/RotdmOY
+	 VDfC4t8mbg+KxGvezisC7AQRRXB5kNB1KX+9QvXc9DHXLnA2cJpsY+IxFHClpnvGsk
+	 A+5xhyAKZH/m355YYAdCnZ2fuifhKwXyhbYpIAFY31YndgITipsz8JiTh68GKaLAXe
+	 A1P38pvCU0IPnyQVtBMOS8dVdT6r66o5tMfpsQ4guZY8fDtjiyta/m86EYR91O7RdC
+	 5n5czg2hVUrMA==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -130,9 +130,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Will Deacon <will@kernel.org>,
 	Yoshinori Sato <ysato@users.sourceforge.jp>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v4 01/14] nsproxy: Pass nsproxy to create_new_namespaces()
-Date: Fri, 20 Nov 2026 00:42:59 +0200
-Message-ID: <20261119224312.1037966-2-jarkko@kernel.org>
+Subject: [RFC PATCH v4 02/14] rootns: Add core infrastructure for root namespaces
+Date: Fri, 20 Nov 2026 00:43:00 +0200
+Message-ID: <20261119224312.1037966-3-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261119224312.1037966-1-jarkko@kernel.org>
 References: <20261119224312.1037966-1-jarkko@kernel.org>
@@ -147,160 +147,458 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-create_new_namespaces() takes a struct task_struct pointer even though
-it only reads tsk->nsproxy, preventing callers outside kernel/nsproxy.c
-from constructing a child nsproxy without mutating a task.
+Linux namespaces can be created and entered individually, but userspace
+orchestrators lack a single kernel object that binds a full detached
+namespace set and an init process behind a pollable file descriptor.
 
-Expose create_new_namespaces() and pass the source struct nsproxy
-pointer directly so root namespace creation can allocate a detached
-namespace set from current->nsproxy.
+Add struct rootns, its lifecycle states, reference counting, uAPI
+creation flags, ROOTNS_GET_NSFD ioctl, and anonymous inode file
+operations under CONFIG_ROOTNS. Drop active and passive namespace
+references on final release, send SIGKILL to the rootns init thread
+group on close when ROOTNS_KILL_ON_CLOSE is set, report EPOLLHUP from
+poll() once the rootns reaches ROOTNS_DEAD, and allow holders with
+CAP_SYS_ADMIN in the rootns user namespace to open member nsfs fds.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- include/linux/nsproxy.h |  5 +++++
- kernel/nsproxy.c        | 32 ++++++++++++++++----------------
- 2 files changed, 21 insertions(+), 16 deletions(-)
+ fs/nsfs.c                   |  64 +++++++++++++
+ include/linux/nsfs.h        |   2 +
+ include/linux/rootns.h      |  60 ++++++++++++
+ include/uapi/linux/rootns.h |  44 +++++++++
+ init/Kconfig                |   9 ++
+ kernel/Makefile             |   2 +
+ kernel/rootns.c             | 185 ++++++++++++++++++++++++++++++++++++
+ 7 files changed, 366 insertions(+)
+ create mode 100644 include/linux/rootns.h
+ create mode 100644 include/uapi/linux/rootns.h
+ create mode 100644 kernel/rootns.c
 
-diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
-index dc2447f5f092..cacbbbe3f1ce 100644
---- a/include/linux/nsproxy.h
-+++ b/include/linux/nsproxy.h
-@@ -12,6 +12,7 @@ struct ipc_namespace;
- struct pid_namespace;
- struct cgroup_namespace;
- struct fs_struct;
+diff --git a/fs/nsfs.c b/fs/nsfs.c
+index 8179d69da038..1de51cd47508 100644
+--- a/fs/nsfs.c
++++ b/fs/nsfs.c
+@@ -711,3 +711,67 @@ void nsproxy_ns_active_put(struct nsproxy *ns)
+ 	ns_ref_active_put(ns->time_ns);
+ 	ns_ref_active_put(ns->time_ns_for_children);
+ }
++
++int nsproxy_open_namespace(struct nsproxy *nsp, struct user_namespace *user_ns,
++			   unsigned long nstype)
++{
++	struct ns_common *ns = NULL;
++
++	switch (nstype) {
++	case CLONE_NEWNS:
++		if (ns_ref_get(nsp->mnt_ns))
++			ns = to_ns_common(nsp->mnt_ns);
++		break;
++#ifdef CONFIG_CGROUPS
++	case CLONE_NEWCGROUP:
++		if (ns_ref_get(nsp->cgroup_ns))
++			ns = to_ns_common(nsp->cgroup_ns);
++		break;
++#endif
++#ifdef CONFIG_UTS_NS
++	case CLONE_NEWUTS:
++		if (ns_ref_get(nsp->uts_ns))
++			ns = to_ns_common(nsp->uts_ns);
++		break;
++#endif
++#ifdef CONFIG_IPC_NS
++	case CLONE_NEWIPC:
++		if (ns_ref_get(nsp->ipc_ns))
++			ns = to_ns_common(nsp->ipc_ns);
++		break;
++#endif
++#ifdef CONFIG_USER_NS
++	case CLONE_NEWUSER:
++		if (ns_ref_get(user_ns))
++			ns = to_ns_common(user_ns);
++		break;
++#endif
++#ifdef CONFIG_PID_NS
++	case CLONE_NEWPID:
++		if (ns_ref_get(nsp->pid_ns_for_children))
++			ns = to_ns_common(nsp->pid_ns_for_children);
++		break;
++#endif
++#ifdef CONFIG_NET_NS
++	case CLONE_NEWNET:
++		if (ns_ref_get(nsp->net_ns))
++			ns = to_ns_common(nsp->net_ns);
++		break;
++#endif
++	case CLONE_NEWTIME:
++#ifdef CONFIG_TIME_NS
++		if (ns_ref_get(nsp->time_ns))
++			ns = to_ns_common(nsp->time_ns);
++		break;
++#else
++		return -EOPNOTSUPP;
++#endif
++	default:
++		return -EINVAL;
++	}
++
++	if (!ns)
++		return -ESRCH;
++
++	return open_namespace(ns);
++}
+diff --git a/include/linux/nsfs.h b/include/linux/nsfs.h
+index 731b67fc2fec..bfba790ee1a7 100644
+--- a/include/linux/nsfs.h
++++ b/include/linux/nsfs.h
+@@ -39,5 +39,7 @@ void nsfs_init(void);
+ 
+ void nsproxy_ns_active_get(struct nsproxy *ns);
+ void nsproxy_ns_active_put(struct nsproxy *ns);
++int nsproxy_open_namespace(struct nsproxy *nsp, struct user_namespace *user_ns,
++			   unsigned long nstype);
+ 
+ #endif /* _LINUX_NSFS_H */
+diff --git a/include/linux/rootns.h b/include/linux/rootns.h
+new file mode 100644
+index 000000000000..3f59415efadb
+--- /dev/null
++++ b/include/linux/rootns.h
+@@ -0,0 +1,60 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ */
++
++#ifndef _LINUX_ROOTNS_H
++#define _LINUX_ROOTNS_H
++
++#include <linux/refcount.h>
++#include <linux/spinlock.h>
++#include <linux/wait.h>
++
++struct file;
++struct nsproxy;
++struct pid;
 +struct user_namespace;
++
++enum rootns_state {
++	ROOTNS_INIT	= 0,
++	ROOTNS_FORKING	= 1,
++	ROOTNS_RUNNING	= 2,
++	ROOTNS_DEAD	= 3,
++};
++
++/*
++ * The rootns object.
++ */
++struct rootns {
++	refcount_t		usage;
++	int			exit_code;	/* The exit code of 'init' */
++	struct user_namespace	*user_ns;	/* Owning user namespace */
++	struct nsproxy		*ns;		/* This rootns's namespaces */
++	struct pid		*init_pid;	/* The 'init' task's TGID (pid ref) */
++	spinlock_t		lock;		/* Guards rootns lifecycle state */
++	wait_queue_head_t	waitq;		/* Someone waiting for init to exit waits here */
++	unsigned int		flags;		/* Validated rootns() flags */
++	enum rootns_state	state;		/* Root namespace lifecycle state */
++};
++
++#ifdef CONFIG_ROOTNS
++struct rootns *get_rootns(struct rootns *c);
++void put_rootns(struct rootns *c);
++bool is_rootns_file(struct file *file);
++#else
++static inline struct rootns *get_rootns(struct rootns *c)
++{
++	return NULL;
++}
++
++static inline void put_rootns(struct rootns *c)
++{
++}
++
++static inline bool is_rootns_file(struct file *file)
++{
++	return false;
++}
++#endif /* CONFIG_ROOTNS */
++
++#endif /* _LINUX_ROOTNS_H */
+diff --git a/include/uapi/linux/rootns.h b/include/uapi/linux/rootns.h
+new file mode 100644
+index 000000000000..bd643bdfb43c
+--- /dev/null
++++ b/include/uapi/linux/rootns.h
+@@ -0,0 +1,44 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ * Copyright (C) 2026 Opinsys Oy
++ */
++
++#ifndef _UAPI_LINUX_ROOTNS_H
++#define _UAPI_LINUX_ROOTNS_H
++
++#include <linux/ioctl.h>
++
++/**
++ * enum rootns_flags - Flags for rootns()
++ * @ROOTNS_KILL_ON_CLOSE: Send %SIGKILL to rootns init on final fd release.
++ * @ROOTNS_CLOSE_ON_EXEC: Set %O_CLOEXEC on the returned control fd.
++ * @ROOTNS_ALL_FLAGS: Mask of all valid flags accepted by rootns().
++ *
++ * Every root namespace allocates a full set of detached namespaces owned
++ * by a fresh user namespace.
++ */
++enum rootns_flags {
++	ROOTNS_KILL_ON_CLOSE	= 0x00000001,
++	ROOTNS_CLOSE_ON_EXEC	= 0x00000002,
++	ROOTNS_ALL_FLAGS	= 0x00000003,
++};
++
++#define ROOTNS_IOCTL_MAGIC	0xB9
++
++/**
++ * DOC: ROOTNS_GET_NSFD
++ *
++ * ``ioctl(rootnsfd, ROOTNS_GET_NSFD, nstype)`` opens an ``nsfs`` file
++ * descriptor (with ``O_CLOEXEC``) for the member namespace identified by
++ * ``nstype`` (one of ``CLONE_NEWNS``, ``CLONE_NEWCGROUP``,
++ * ``CLONE_NEWUTS``, ``CLONE_NEWIPC``, ``CLONE_NEWUSER``, ``CLONE_NEWPID``,
++ * ``CLONE_NEWNET``, or ``CLONE_NEWTIME``).
++ *
++ * Requires ``CAP_SYS_ADMIN`` in the ``rootns`` user namespace. Opening
++ * ``CLONE_NEWPID`` additionally requires running in an ancestor active PID
++ * namespace and that ``rootns`` init is running.
++ */
++#define ROOTNS_GET_NSFD		_IO(ROOTNS_IOCTL_MAGIC, 0x01)
++
++#endif /* _UAPI_LINUX_ROOTNS_H */
+diff --git a/init/Kconfig b/init/Kconfig
+index c8a7cfa60a6e..ed93dd11e6ac 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1281,6 +1281,15 @@ config NET_NS
+ 	  Allow user space to create what appear to be multiple instances
+ 	  of the network stack.
  
- /*
-  * A structure to contain pointers to all per-process
-@@ -92,6 +93,10 @@ static inline struct cred *nsset_cred(struct nsset *set)
-  *
-  */
++config ROOTNS
++	bool "Root namespace"
++	depends on USER_NS && PID_NS && UTS_NS && IPC_NS && NET_NS && CGROUPS
++	help
++	  Allow user space to create and manage isolated root namespaces
++	  with their own mount tree, user namespace, namespace set, and init
++	  process lifecycle via rootns(), rootns ioctls, and clone3() with
++	  CLONE_INTO_ROOTNS.
++
+ endif # NAMESPACES
  
-+struct nsproxy *create_new_namespaces(u64 flags,
-+				      struct nsproxy *ns,
-+				      struct user_namespace *user_ns,
-+				      struct fs_struct *new_fs);
- int copy_namespaces(u64 flags, struct task_struct *tsk);
- void switch_cred_namespaces(const struct cred *old, const struct cred *new);
- void exit_nsproxy_namespaces(struct task_struct *tsk);
-diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
-index 2dcf105e8ee2..8a3c6d4e94e2 100644
---- a/kernel/nsproxy.c
-+++ b/kernel/nsproxy.c
-@@ -85,9 +85,10 @@ void deactivate_nsproxy(struct nsproxy *ns)
-  * Return the newly created nsproxy.  Do not attach this to the task,
-  * leave it to the caller to do proper locking and attach it to task.
-  */
--static struct nsproxy *create_new_namespaces(u64 flags,
--	struct task_struct *tsk, struct user_namespace *user_ns,
--	struct fs_struct *new_fs)
-+struct nsproxy *create_new_namespaces(u64 flags,
-+				      struct nsproxy *ns,
-+				      struct user_namespace *user_ns,
-+				      struct fs_struct *new_fs)
- {
- 	struct nsproxy *new_nsp;
- 	int err;
-@@ -96,52 +97,51 @@ static struct nsproxy *create_new_namespaces(u64 flags,
- 	if (!new_nsp)
- 		return ERR_PTR(-ENOMEM);
+ config CHECKPOINT_RESTORE
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 4ff92e24680c..7074d2664ce7 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -152,6 +152,8 @@ KCOV_INSTRUMENT_kstack_erase.o := n
  
--	new_nsp->mnt_ns = copy_mnt_ns(flags, tsk->nsproxy->mnt_ns,
--				      user_ns, new_fs);
-+	new_nsp->mnt_ns = copy_mnt_ns(flags, ns->mnt_ns, user_ns, new_fs);
- 	if (IS_ERR(new_nsp->mnt_ns)) {
- 		err = PTR_ERR(new_nsp->mnt_ns);
- 		goto out_ns;
- 	}
+ obj-$(CONFIG_SCF_TORTURE_TEST) += scftorture.o
  
--	new_nsp->uts_ns = copy_utsname(flags, user_ns, tsk->nsproxy->uts_ns);
-+	new_nsp->uts_ns = copy_utsname(flags, user_ns, ns->uts_ns);
- 	if (IS_ERR(new_nsp->uts_ns)) {
- 		err = PTR_ERR(new_nsp->uts_ns);
- 		goto out_uts;
- 	}
++obj-$(CONFIG_ROOTNS) += rootns.o
++
+ $(obj)/configs.o: $(obj)/config_data.gz
  
--	new_nsp->ipc_ns = copy_ipcs(flags, user_ns, tsk->nsproxy->ipc_ns);
-+	new_nsp->ipc_ns = copy_ipcs(flags, user_ns, ns->ipc_ns);
- 	if (IS_ERR(new_nsp->ipc_ns)) {
- 		err = PTR_ERR(new_nsp->ipc_ns);
- 		goto out_ipc;
- 	}
- 
- 	new_nsp->pid_ns_for_children =
--		copy_pid_ns(flags, user_ns, tsk->nsproxy->pid_ns_for_children);
-+		copy_pid_ns(flags, user_ns, ns->pid_ns_for_children);
- 	if (IS_ERR(new_nsp->pid_ns_for_children)) {
- 		err = PTR_ERR(new_nsp->pid_ns_for_children);
- 		goto out_pid;
- 	}
- 
- 	new_nsp->cgroup_ns = copy_cgroup_ns(flags, user_ns,
--					    tsk->nsproxy->cgroup_ns);
-+					    ns->cgroup_ns);
- 	if (IS_ERR(new_nsp->cgroup_ns)) {
- 		err = PTR_ERR(new_nsp->cgroup_ns);
- 		goto out_cgroup;
- 	}
- 
--	new_nsp->net_ns = copy_net_ns(flags, user_ns, tsk->nsproxy->net_ns);
-+	new_nsp->net_ns = copy_net_ns(flags, user_ns, ns->net_ns);
- 	if (IS_ERR(new_nsp->net_ns)) {
- 		err = PTR_ERR(new_nsp->net_ns);
- 		goto out_net;
- 	}
- 
- 	new_nsp->time_ns_for_children = copy_time_ns(flags, user_ns,
--					tsk->nsproxy->time_ns_for_children);
-+					ns->time_ns_for_children);
- 	if (IS_ERR(new_nsp->time_ns_for_children)) {
- 		err = PTR_ERR(new_nsp->time_ns_for_children);
- 		goto out_time;
- 	}
--	new_nsp->time_ns = get_time_ns(tsk->nsproxy->time_ns);
-+	new_nsp->time_ns = get_time_ns(ns->time_ns);
- 
- 	return new_nsp;
- 
-@@ -192,7 +192,7 @@ int copy_namespaces(u64 flags, struct task_struct *tsk)
- 		(CLONE_NEWIPC | CLONE_SYSVSEM))
- 		return -EINVAL;
- 
--	new_ns = create_new_namespaces(flags, tsk, user_ns, tsk->fs);
-+	new_ns = create_new_namespaces(flags, tsk->nsproxy, user_ns, tsk->fs);
- 	if (IS_ERR(new_ns))
- 		return  PTR_ERR(new_ns);
- 
-@@ -231,7 +231,7 @@ int unshare_nsproxy_namespaces(unsigned long unshare_flags,
- 		flags |= CLONE_EMPTY_MNTNS;
- 	}
- 
--	*new_nsp = create_new_namespaces(flags, current, user_ns,
-+	*new_nsp = create_new_namespaces(flags, current->nsproxy, user_ns,
- 					 new_fs ? new_fs : current->fs);
- 	if (IS_ERR(*new_nsp)) {
- 		err = PTR_ERR(*new_nsp);
-@@ -289,7 +289,7 @@ int exec_task_namespaces(void)
- 	if (tsk->nsproxy->time_ns_for_children == tsk->nsproxy->time_ns)
- 		return 0;
- 
--	new = create_new_namespaces(0, tsk, current_user_ns(), tsk->fs);
-+	new = create_new_namespaces(0, tsk->nsproxy, current_user_ns(), tsk->fs);
- 	if (IS_ERR(new))
- 		return PTR_ERR(new);
- 
-@@ -356,7 +356,7 @@ static int prepare_nsset(unsigned flags, struct nsset *nsset)
- 	struct task_struct *me = current;
- 
- 	nsset->flags = flags;
--	nsset->nsproxy = create_new_namespaces(0, me, current_user_ns(), me->fs);
-+	nsset->nsproxy = create_new_namespaces(0, me->nsproxy, current_user_ns(), me->fs);
- 	if (IS_ERR(nsset->nsproxy))
- 		return PTR_ERR(nsset->nsproxy);
- 
+ # .config is small, so it is compressed with gzip rather than the image compressor.
+diff --git a/kernel/rootns.c b/kernel/rootns.c
+new file mode 100644
+index 000000000000..3bbf7677080e
+--- /dev/null
++++ b/kernel/rootns.c
+@@ -0,0 +1,185 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ */
++
++/**
++ * DOC: Overview
++ *
++ * A root namespace binds a full set of detached namespaces, an initially empty
++ * mount namespace, an owning user namespace, and an init process behind a
++ * pollable control file descriptor:
++ *
++ * 1. ``rootns()`` allocates a detached ``rootns`` with a fresh user namespace
++ *    and dedicated mount (``CLONE_EMPTY_MNTNS``), PID, UTS, IPC, network,
++ *    cgroup, and time namespaces, returning its control fd.
++ *
++ * 2. Userspace configures superblocks via ``FSCONFIG_SET_ROOTNS``, retrieves
++ *    the mount namespace fd via ``ioctl(rootnsfd, ROOTNS_GET_NSFD,
++ *    CLONE_NEWNS)``, and installs ``"/"`` and relative submounts via
++ *    ``MOVE_MOUNT_T_MNTNS``.
++ *
++ * 3. ``clone3()`` with ``CLONE_INTO_ROOTNS`` spawns processes into the
++ *    ``rootns``; the first call commits PID 1 while concurrent bootstrap
++ *    callers wait killably.
++ *
++ * 4. ``ioctl(rootnsfd, ROOTNS_KILL, sig)`` signals all member thread groups.
++ *    When PID 1 exits, the PID namespace zaps and reaps all remaining tasks,
++ *    ``poll()`` reports ``EPOLLHUP``, and ``ioctl(rootnsfd, ROOTNS_WAIT,
++ *    &args)`` returns init's exit status.
++ */
++
++#include <linux/poll.h>
++#include <linux/wait.h>
++#include <uapi/linux/wait.h>
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/anon_inodes.h>
++#include <linux/rootns.h>
++#include <linux/sched/signal.h>
++#include <linux/sched/task.h>
++#include <linux/slab.h>
++#include <linux/syscalls.h>
++#include <linux/uaccess.h>
++#include <linux/mnt_namespace.h>
++#include <linux/nsproxy.h>
++#include <linux/ns_common.h>
++#include <linux/nsfs.h>
++#include <linux/pid.h>
++#include <linux/pid_namespace.h>
++#include <linux/time_namespace.h>
++#include <linux/user_namespace.h>
++#include <linux/compat.h>
++#include <linux/idr.h>
++#include <uapi/linux/rootns.h>
++
++/*
++ * Get a reference to a rootns.
++ */
++struct rootns *get_rootns(struct rootns *c)
++{
++	refcount_inc(&c->usage);
++	return c;
++}
++
++/*
++ * Drop a reference on a rootns and clear it if it is no longer in use.
++ */
++void put_rootns(struct rootns *c)
++{
++	if (!c || !refcount_dec_and_test(&c->usage))
++		return;
++
++	if (c->ns)
++		put_nsproxy(c->ns);
++	if (c->init_pid)
++		put_pid(c->init_pid);
++	if (c->user_ns) {
++		ns_ref_active_put(c->user_ns);
++		put_user_ns(c->user_ns);
++	}
++	kfree(c);
++}
++
++/*
++ * Allow the user to poll for the rootns dying.
++ */
++static __poll_t rootns_poll(struct file *file, poll_table *wait)
++{
++	struct rootns *rootns = file->private_data;
++	__poll_t mask = 0;
++
++	poll_wait(file, &rootns->waitq, wait);
++
++	if (READ_ONCE(rootns->state) == ROOTNS_DEAD)
++		mask |= EPOLLHUP;
++
++	return mask;
++}
++
++static long rootns_get_nsfd(struct rootns *rootns, unsigned long nstype)
++{
++	if (nstype > UINT_MAX)
++		return -EINVAL;
++	if (!ns_capable(rootns->user_ns, CAP_SYS_ADMIN))
++		return -EPERM;
++
++	if (nstype == CLONE_NEWPID) {
++		if (!pidns_is_ancestor(rootns->ns->pid_ns_for_children,
++				       task_active_pid_ns(current)))
++			return -EXDEV;
++		if (READ_ONCE(rootns->state) != ROOTNS_RUNNING)
++			return -ESRCH;
++	}
++
++	return nsproxy_open_namespace(rootns->ns, rootns->user_ns, nstype);
++}
++
++static long rootns_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
++{
++	struct rootns *rootns = file->private_data;
++
++	switch (cmd) {
++	case ROOTNS_GET_NSFD:
++		return rootns_get_nsfd(rootns, arg);
++	default:
++		return -ENOIOCTLCMD;
++	}
++}
++
++#ifdef CONFIG_COMPAT
++static long rootns_compat_ioctl(struct file *file, unsigned int cmd,
++				unsigned long arg)
++{
++	switch (cmd) {
++	case ROOTNS_GET_NSFD:
++		return rootns_ioctl(file, cmd, arg);
++	default:
++		return -ENOIOCTLCMD;
++	}
++}
++#endif
++
++static int __rootns_kill(struct rootns *rootns, int sig, bool priv)
++{
++	struct pid *pid = NULL;
++	int ret;
++
++	scoped_guard(spinlock, &rootns->lock) {
++		if (rootns->state == ROOTNS_RUNNING)
++			pid = get_pid(rootns->init_pid);
++	}
++	if (!pid)
++		return -ESRCH;
++
++	ret = kill_pid(pid, sig, priv);
++	put_pid(pid);
++	return ret;
++}
++
++static int rootns_release(struct inode *inode, struct file *file)
++{
++	struct rootns *rootns = file->private_data;
++
++	if (rootns->flags & ROOTNS_KILL_ON_CLOSE)
++		__rootns_kill(rootns, SIGKILL, true);
++	put_rootns(rootns);
++	return 0;
++}
++
++static const struct file_operations rootns_fops = {
++	.poll		= rootns_poll,
++	.unlocked_ioctl	= rootns_ioctl,
++#ifdef CONFIG_COMPAT
++	.compat_ioctl	= rootns_compat_ioctl,
++#endif
++	.release	= rootns_release,
++};
++
++/*
++ * Returns true if the file is a rootns.
++ */
++bool is_rootns_file(struct file *file)
++{
++	return file->f_op == &rootns_fops;
++}
 -- 
 2.47.3
 
