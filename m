@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795128259;
-	b=VwCv8+w7CUMdUBh8JgrVfj3dWeIewFnEcHrIIsedp/trckhn9Hquq5bgPAwr0BnGi7EE
-	 RALDRhs3Dmxz0huItBxYugJ4RK9l2JSLV/EpBZrqNZcvwm+Gu+bvb9do7hat/NHnk3mL5
-	 U+lMAgLDR+JwylsutADLd/FYu2ubzBsuZddK9OjBBxJweyMTbpAOmdO7w6lhzHcQ8g92s
-	 Ob6b7BlYFDVQiE6qCMiUts8mF7+yVGyZkQowcWFPQy+MtM/sCe75fffxIqp7o5v2wLNpD
-	 obSz1aMm8fWS257RHdr0bQujL0FBQacbwkglsrv7S/++K1YEMGlijPV05NYdxGAVgyw==
+	t=1795128268;
+	b=nr0nAfAiPXaogSXXIphxxZXVEG0seg0k/TkYKzYEi+kqRUU0yd1b+yZKFNr6FN3+RAP8
+	 4e5Ea4ByKKY0kNlqxKRFBXIXE3rNTbwNEJo+h281jy4/PYs3FlHZwSirPvQP1EUuQCFe4
+	 szVjVlovFx2zO1jKfYq+xzabZtI62S9p8x72F7tYcTIU0qPRNwjJuIZWpsJF6uT90q8Gv
+	 8KaVIz/UvZR/z2sWRqden7xZqFMmN0JPYB0pp8zRxPFA9ROoixOz81SP6ba1lHz6vYIie
+	 CTz9yCKDsYCa4yo1WqCxHi5o39xFR39iILPY3oc/xxg0PUdfA8k8knYoIX2iMq2Ahhg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795128259;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795128268;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=gr97ciCxGN41j4xZpW4DRbzsSgnRLt1+kw53dgKobww=;
-	b=soJcMIHit/ubSfesBP9uAKPI1CXNGoYK24GKtLQgYFXILQlvguFo7kDLHhqLhY1uccyX
-	 6jzggr7VPNCZ62JppI2avHgeOInhhwPWm+mJLkLlqCKe4MxYxr93skF5bV0pamVOcQvn+
-	 MhuAic6DeyYF0wEd2wZCadE9bTXKVxpCApvmy4FNz6ku3YettKjP/npfWYJc9AdH+V52z
-	 iCAO/t2QuHLQFjQ/kGCG/IBiKJ53hWCzVsgpwkIzQJ/C6NglJrVoW29wVhgI3bMNuz2IF
-	 6ll7AvYohRpAiqo9EQVSp0/ydTC2CxIiL1hg9jV9gkp3PrZUpgKGPm7S+3CRb0uzA3g==
+	bh=nefIhKw4pk3hNRgKls2omID/HmfGP96iHh55NTs5Fc8=;
+	b=aBiA10+PgjoD1G7Qsk0lYx0lAnBPygR/bs7w+rTv7x+B86Vqh25Ow3ZSW9P9IaYnTKWJ
+	 bskEpcDVo2M25YpqKY02x5tM6d3b9rVE/qzpGIH75exPD4GeWZxCmvv/SEZNgxkL4Iv9M
+	 k9B8jYZTjj2sf8sxxob5Y2165qR8qHT9RYydpXcXJm6PcMwAol1CpX3M4nGchmMGb8Tjb
+	 gEuOgHR6t+7npH03X5njLRv6JaiYwPz/GdVvVm1YO76j4wkUXTcd+EhCKht4AiQ5IXPrE
+	 J9/0mpI0J4fA70+1r7nbuf/qZtkAlotq03g8AmV6U3xfUOqc09ju7UAt3duBPmfLVmg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=G84QBJ97;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=esdAudvZ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 8621260A2615;
-	Thu, 19 Nov 2026 22:44:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 775C2606A330;
+	Thu, 19 Nov 2026 22:44:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=G84QBJ97
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A28D21F000D2;
-	Thu, 19 Nov 2026 22:44:18 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=esdAudvZ
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 61A181F000CA;
+	Thu, 19 Nov 2026 22:44:27 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795128259;
-	bh=gr97ciCxGN41j4xZpW4DRbzsSgnRLt1+kw53dgKobww=;
+	s=k20260515; t=1795128268;
+	bh=nefIhKw4pk3hNRgKls2omID/HmfGP96iHh55NTs5Fc8=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=G84QBJ97RNq95cEwOE00TXPDVbNAk4Gdl1J92hUsJ6o6u0RVu98a71A1AxcyvXO1l
-	 RIe46SMocH7z89FQIuCWdGh35CxmGXGjYztOoBt8DpdfeyLAGWUZeKcbaaCNNve+oP
-	 D1IP31/vfrRlyAqoMxovmgY3gDk9IENaueIRhZkJLbESvrYPR4ez530gdCGekEI5ee
-	 36/qY52lPzVPvfLUVWK/9YZRR+UpsWxFFi0WvxKkGpne842aJ6XMjQUf4ACXkD0IfP
-	 ZdzQfv6h7XWywcCLlh0ARazsooBunhow7Udy3nDtn7RTZiP4wSdK0W0KPTAIwYaXWG
-	 MKTMCL9KrmQeA==
+	b=esdAudvZa+WKWyffO/lrY+z7QYAZ6No+WEP53swromiY2438FAZcSNn0CJB3YH16X
+	 zpRv0W0Tagm2qyMa2IRE9JZ4dwaENI5Jr512dORRagsTsAAYEpnIzuVY6BsxEGSq3L
+	 7voWpSqv/CsOKdk3E+luW8/3/upHnv1ZDR4/emJbhTr6hEq3QwyLvWqXQBzQWgvbpG
+	 P3Bg0DTBahtB++fEg+4uiF5/UXIvkLDlQSJtQZfxxel1aD44hGtow8FBnBGFCtjloO
+	 2BLScF956dTTJuVxtqyw0Wy7W4qkjXm/aFVwwjtFqf90JnNA4O0IIR2Ur1CPNMAQyw
+	 Jvw9xUkHK33Ng==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -130,9 +130,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Will Deacon <will@kernel.org>,
 	Yoshinori Sato <ysato@users.sourceforge.jp>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v4 12/14] docs: Document root namespace uAPI
-Date: Fri, 20 Nov 2026 00:43:10 +0200
-Message-ID: <20261119224312.1037966-13-jarkko@kernel.org>
+Subject: [RFC PATCH v4 14/14] MAINTAINERS: Add entry for ROOT NAMESPACE
+Date: Fri, 20 Nov 2026 00:43:12 +0200
+Message-ID: <20261119224312.1037966-15-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261119224312.1037966-1-jarkko@kernel.org>
 References: <20261119224312.1037966-1-jarkko@kernel.org>
@@ -147,111 +147,37 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Userspace container managers need a clear specification of rootns state
-transitions, control ioctls, mount-tree construction, credential rules,
-and process creation semantics.
+Record maintainership and mailing list routing for the root namespace
+subsystem across its uAPI headers, core implementation, documentation,
+and selftests.
 
-Add Documentation/userspace-api/rootns.rst to include the kernel-doc
-sections, ioctl descriptions, and system call reference from
-kernel/rootns.c, include/uapi/linux/rootns.h, fs/fsopen.c, and
-fs/namespace.c, and register the rootns ioctl magic in ioctl-number.rst.
-
-Co-developed-by: David Howells <dhowells@redhat.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- Documentation/userspace-api/index.rst         |  1 +
- .../userspace-api/ioctl/ioctl-number.rst      |  1 +
- Documentation/userspace-api/rootns.rst        | 56 +++++++++++++++++++
- 3 files changed, 58 insertions(+)
- create mode 100644 Documentation/userspace-api/rootns.rst
+ MAINTAINERS | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
-index a68b1bea57a8..56d0ac4eb087 100644
---- a/Documentation/userspace-api/index.rst
-+++ b/Documentation/userspace-api/index.rst
-@@ -17,6 +17,7 @@ System calls
-    :maxdepth: 1
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 7cbce21ba45a..072be5ec7fd8 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -24533,6 +24533,17 @@ F:	include/linux/mfd/rohm-bd96802.h
+ F:	include/linux/mfd/rohm-generic.h
+ F:	include/linux/mfd/rohm-shared.h
  
-    unshare
-+   rootns
-    futex2
-    ebpf/index
-    ioctl/index
-diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index dbe462040999..d8dc926ea283 100644
---- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-+++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-@@ -385,6 +385,7 @@ Code  Seq#    Include File                                             Comments
- 0xB8  01-02  uapi/misc/mrvl_cn10k_dpi.h                                Marvell CN10K DPI driver
- 0xB8  all    uapi/linux/mshv.h                                         Microsoft Hyper-V /dev/mshv driver
-                                                                        <mailto:linux-hyperv@vger.kernel.org>
-+0xB9  00-0F  uapi/linux/rootns.h                                       Root namespace uAPI
- 0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
-                                                                        <mailto:pasha.tatashin@soleen.com>
- 0xC0  00-0F  linux/usb/iowarrior.h
-diff --git a/Documentation/userspace-api/rootns.rst b/Documentation/userspace-api/rootns.rst
-new file mode 100644
-index 000000000000..5326fd2eeb21
---- /dev/null
-+++ b/Documentation/userspace-api/rootns.rst
-@@ -0,0 +1,56 @@
-+.. SPDX-License-Identifier: GPL-2.0
++ROOT NAMESPACE
++M:	David Howells <dhowells@redhat.com>
++M:	Jarkko Sakkinen <jarkko@kernel.org>
++L:	linux-fsdevel@vger.kernel.org
++S:	Maintained
++F:	Documentation/userspace-api/rootns.rst
++F:	include/linux/rootns.h
++F:	include/uapi/linux/rootns.h
++F:	kernel/rootns.c
++F:	tools/testing/selftests/rootns/
 +
-+===================
-+Root namespace uAPI
-+===================
-+
-+Overview
-+========
-+
-+.. kernel-doc:: kernel/rootns.c
-+   :doc: Overview
-+
-+Flags
-+=====
-+
-+.. kernel-doc:: include/uapi/linux/rootns.h
-+   :identifiers: rootns_flags
-+
-+Ioctls
-+======
-+
-+.. kernel-doc:: include/uapi/linux/rootns.h
-+   :doc: ROOTNS_GET_NSFD
-+
-+.. kernel-doc:: include/uapi/linux/rootns.h
-+   :identifiers: rootns_wait_args
-+
-+.. kernel-doc:: include/uapi/linux/rootns.h
-+   :doc: ROOTNS_WAIT
-+
-+.. kernel-doc:: include/uapi/linux/rootns.h
-+   :doc: ROOTNS_KILL
-+
-+System calls
-+============
-+
-+.. kernel-doc:: kernel/rootns.c
-+   :identifiers: sys_rootns
-+
-+Process creation
-+================
-+
-+.. kernel-doc:: kernel/rootns.c
-+   :doc: CLONE_INTO_ROOTNS
-+
-+Filesystem configuration
-+========================
-+
-+.. kernel-doc:: fs/fsopen.c
-+   :doc: FSCONFIG_SET_ROOTNS
-+
-+Mount tree installation
-+=======================
-+
-+.. kernel-doc:: fs/namespace.c
-+   :doc: MOVE_MOUNT_T_MNTNS
+ ROTATION DRIVER FOR ALLWINNER A83T
+ M:	Jernej Skrabec <jernej.skrabec@gmail.com>
+ L:	linux-media@vger.kernel.org
 -- 
 2.47.3
 
