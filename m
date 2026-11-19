@@ -1,68 +1,78 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795097325;
-	b=24qaEoeAnoNhJ/avfn/0+w5BGBhud0EpaTQMDwxkIHsElEeJNzchBr4VEsScibqsKBJb
-	 L/mY0SZFtRkwCAm9wbH2ubIE5BR/6cyz86Wce2acpBtcAGw6LXVYzTztiTcoukzJpTFJ2
-	 0MyqdtX4OvYz58lvb8zLWpNE5/igqwC4R6d7o+jGvrPMEUmfcX/myyBwooUYIob+6jhf3
-	 w0DcHQWWmNTE9zg4SGykcQPm1GeW6nWkhRoPhfob5SkMMO6vSB84qsOOJK6vKFwdLCeWt
-	 Rz2fmUACVM4dxZ4acNE5tUbo/n53UviEys+FRM2/Wd6Z7u0LzlCXhywTe4s1I6RWbPQ==
+	t=1795098787;
+	b=2LreflKMo9u/a9lTYG9UY9DO9b1HsOQYfF07CU+u+6flOrjHgfIqVpt2N6PNGWFlsZVi
+	 kqZx6siMMcuVFmDtlCsMAEy3ymWcx57CFSf2sl0QbNQBi0RPNfgms/ibbGAjWC2m/+sA7
+	 5PHdwjYAn3ephDrFaXhyE5zEffXXu8oZNPoqvD3y7TMlMcrhMf2hHkbnDUb/loWxd3HIR
+	 hXBc7HCZqoh9FwBmSGtI8l/iIe78Fg6B0/s9YVO4+JAyZs+SIs9CsQLSn9oFVlqJ3SCNO
+	 i5jSc57LUDbyeRFwC2VPKo2yGdGhbTKVAc0Ns2a9lW0vEmNRMD9UkgZ2xJawiTAoehA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795097325;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795098787;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding:In-Reply-To;
-	bh=deLFcMvvltUgOBB0nzekqT3DRM7PlPpuRsUgmgE0xJs=;
-	b=tpozhdCkIbrCmRCUQT/JMXUO6jhIvss6p9q/a9ZdiwvG+Bau1V9yxQiyF2Vd4hinVmHu
-	 GcafOyOPJ/zJQDMQr4RrUUSzkVhncJ79vV4g227GC+Ui7Ky6+7fpNDn8xJgw5oQ8wWkQS
-	 adEy6f4FYLozzmax7pBVKHdgoMm1AmO+T23muQrOCENWC2aZVQl7feVqAZVK84rmA8E+N
-	 YxpiFiq1U12oYXWunC6WEfZDTgM7FgvUsSzJSuhpPwkHm5nMcE45MbZlrXS76XNk73dTa
-	 eIIwLdHR40Fxzd45m/oHwIDon8dVXvXCHKcnMzZtvwOus1Ui0kewOuIJPaduMJv9Njg==
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=lv3NYu11pHprgRUUKX5nzbXJ9PYh0wkr94sy1z7rgm4=;
+	b=HhUz9P0F7LL2iWHLCqEtIIjRSjYOooDMWnHt/FHS0RGOuuepJWvL4pBjWc3XWKU0SUK+
+	 w/PA6i3tfp5AoaHIlqiMnM2VWjp21PlNjCfEa52mfCdMhQCtkxBmguQNbN/3djHSM45no
+	 Ak/AAIpGE8nDC1DSJlPRGy5eedfHT1NBUuAnDBJkZQ+dCNsEm7E/dOmLadC/idPE4GxZP
+	 2GWKzOj+IvNOCIYaF0n+PKDRLikW8wszbLrIF5F5tK4sB/pnFG75X59h040SfcLtU66kV
+	 p0nRE3anKMwJ4xQQns1OS57BTB3/eJGWCI/zz8m1TbNjw/1jZSMO6wjaY/fbzbvzgAQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="VGT6CPW/";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DkO9ZyBD;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D4EAA606A320;
-	Thu, 19 Nov 2026 14:08:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id F34B1606A320;
+	Thu, 19 Nov 2026 14:33:06 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VGT6CPW/
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9B6D61F000C4;
-	Thu, 19 Nov 2026 14:08:39 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DkO9ZyBD
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 3738E1F000CA;
+	Thu, 19 Nov 2026 14:33:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795097325;
-	bh=deLFcMvvltUgOBB0nzekqT3DRM7PlPpuRsUgmgE0xJs=;
+	s=k20260515; t=1795098786;
+	bh=lv3NYu11pHprgRUUKX5nzbXJ9PYh0wkr94sy1z7rgm4=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=VGT6CPW/wtjf93Hbnt7vGTzxnm+m5tp5bIHpq29p+RgyV5QZXwZhn8vBEMLao+PYg
-	 PCUZ1usoGhC/buvHKCHBr+3FqpWcZI8hA+G/AnsZf0kqeyDDRcuNRnBdBdvUjV8AF5
-	 pbqd3WpW+PvZx1H0nHTPucGg+qChKpjfQL2yIPMnFVf3HQ8i7dLCper3SXG3Oq3Tnn
-	 ljERMRXcjxXOlrsqDe8qKB1/RchUjdc/mKVygZTSK9ZQSj+CKnOlXkNaufaWLk9PPC
-	 h14dMsVmUHWhkRabrbOfkgHJKFwhMsxJ0pXnGerIga4T/8beoldtWKWqL/RWlYosZL
-	 wgB1vSwgzeB9A==
-Date: Thu, 19 Nov 2026 15:08:37 +0100
-From: Christian Brauner <brauner@kernel.org>
-To: "Hallgrimur H. Gunnarsson" <halg@google.com>
-Cc: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Paul Moore <paul@paul-moore.com>, 
-	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, 
-	"David S . Miller" <davem@davemloft.net>, Eric Dumazet <edumazet@google.com>, 
-	Jakub Kicinski <kuba@kernel.org>, Paolo Abeni <pabeni@redhat.com>, Jan Kara <jack@suse.cz>, 
-	James Morris <jmorris@namei.org>, Simon Horman <horms@kernel.org>, 
-	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
-	Randy Dunlap <rdunlap@infradead.org>, Jann Horn <jannh@google.com>, 
-	=?utf-8?Q?G=C3=BCnther?= Noack <gnoack@google.com>, KP Singh <kpsingh@kernel.org>, 
-	Jonathan Calmels <jcalmels@3xx0.net>, Casey Schaufler <casey@schaufler-ca.com>, 
-	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, 
-	containers@lists.linux.dev, netdev@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [PATCH 0/8] userns: per-namespace capability bounding set and
- opt-in netns loopback
-Message-ID: <20261119-bagger-sagst-saatgut-096a6c993e9e@brauner>
-References: <20261028221705.3915340-1-halg@google.com>
- <20261107.aighieG4Ami1@digikod.net>
- <20261118.faiBee9Taigh@digikod.net>
- <av7TsXKUE69lyiWl@google.com>
+	b=DkO9ZyBD2TgaZMRcs8EgWiOCyNyqCS5GVpH0PIaxsiAxioBTNKOP1wNtv66D5cYUo
+	 SVbW8UDU1ecj5E3RCQAhHUNANk3OefmNfhyVcaUvR0Gz4clykNB0Ug9GoG1Ptr8ZuJ
+	 ONnfC20iTyqzzJ2bUJn6Pg6qw6zmZqZ3ZatVKnDFWAqwRPzMWGYReKxU4oRi50tS1Q
+	 1qTF54aQpt4AAtXTH2qm2wUUGVJhq8ji6yCXpiUz4OvXBnHZfzrVs9GnUElmUD670e
+	 vrz7s2wx6vlq7TxR3Li0W0SBs0mp7rRKPrBjNuC5IHgS3SdNuJjawMEJSGy/3xT0BT
+	 6PR8vQwsFHWZw==
+Date: Thu, 19 Nov 2026 16:33:03 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Rodolfo Giometti <giometti@enneenne.com>
+Cc: Rodolfo Giometti <giometti@enneenne.com>,
+	David Howells <dhowells@redhat.com>, keyrings@vger.kernel.org,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	"David S. Miller" <davem@davemloft.net>,
+	Jens Wiklander <jenswi@kernel.org>,
+	Sumit Garg <sumit.garg@kernel.org>,
+	op-tee@lists.trustedfirmware.org,
+	Horia =?utf-8?Q?Geant=C4=83?= <horia.geanta@nxp.com>,
+	Pankaj Gupta <pankaj.gupta@nxp.com>,
+	Sahil Malhotra <sahil.malhotra@nxp.com>,
+	Ahmad Fatoum <a.fatoum@pengutronix.de>,
+	Richard Weinberger <richard@nod.at>,
+	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
+	Eric Biggers <ebiggers@kernel.org>, Arnd Bergmann <arnd@arndb.de>,
+	Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>, linux-crypto@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+	linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org,
+	Demi Marie Obenour <demiobenour@gmail.com>
+Subject: Re: [RFC PATCH 0/9] KEYS: keycrypt: keys that user space can use but
+ never read
+Message-ID: <av8In0Xyd5iI9N7K@kernel.org>
+References: <20261118140421.584086-1-giometti@enneenne.com>
+ <650f89ef-9745-4f75-b254-80fa5ac4773d@gmail.com>
+ <av5EyVHnNzT27dyK@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -72,34 +82,56 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
-In-Reply-To: <av7TsXKUE69lyiWl@google.com>
+In-Reply-To: <av5EyVHnNzT27dyK@kernel.org>
 
-On Thu, Nov 19, 2026 at 10:47:13AM +0000, Hallgrimur H. Gunnarsson wrote:
-> On Wed, Nov 18, 2026 at 03:43:03PM +0100, Mickaël Salaün wrote:
-> > Hallgrimur, could you please explain why your use case would not work
-> > with Landlock?  The capability split or new clone flags would be
-> > complementary of course.
+On Thu, Nov 19, 2026 at 02:37:33AM +0200, Jarkko Sakkinen wrote:
+> The exitential problem here is that KEYCTL_CRYPT_OPEN creates a circular
+> relationship between the keyrings API and a specific key type.
 > 
-> Apologies for the late reply.
+> At hardware level I did not see any support for TPM, which narrows down
+> the potential user base.
 > 
-> Landlock's capability restrictions work well for self-sandboxing
-> applications and launchers. The main gap for our use case is setting a
-> host-wide default for unprivileged user namespaces while still permitting
-> exceptions. Because Landlock restricts all capability use (not just
-> capabilities acquired via user namespaces) and its domains are strictly
-> irrevocable, PID 1 cannot apply a default policy at boot without
-> locking out privileged services, file-capability helpers, and authorized
-> workloads. Using Landlock here would require explicit opt-in enforcement
-> at every unprivileged transition boundary (SSH, container/job launchers,
-> etc.), where missing any entrypoint leaves unprivileged user namespaces
-> unrestricted.
+> The remaining potential user base is further reduced by those that use
+> trusted keys; leaving out those who need to solve the assumed problem
+> that only this patch set can presumebly sort out.
 > 
-> In v1 we had the global sysctl to tackle this. In v2 (based on Christian
-> and Andy's feedback), we combine per-cred cap_userns with per-userns
-> cap_bset), and PID 1 or a service manager can lower the default userns
+> And we don't really know at this point that cut. This is pretty much
+> the break down of what is wrong here.
+> 
+> If there is/was a problem to sort out, it should be so constrained that
+> it should be as quick to describe as stepping over a nail really.
+> 
+> These are the main topics what I would focus on.
 
-Plus, this is useful and improves security in general without having to
-use any LSM framework.
+I'm not disregarding that there might be something; and neither
+disregarding e.g., the use of Claude. Throwing a dice can apply as well
+human made code as for me code is just code. Perhaps using Claude,
+people just tend to have just a itchier trigger finger :-)
+
+The place where *in my personal opinion*  anyone who uses agents would
+be better to do manual work is the commit message. It enforces to use
+cognitive abilities even more so than writing code, if you with
+absolutely no self-deception, read it all through and write with your
+own words what the heck it does.
+
+Usually when hitting the wall doing that leads into better code
+because of the healthy reality check. I'm not a medical doctor but
+I believe at least that thinking more stuff like this is also great
+for long-term health and cognitive abilities.
+
+AI is for mental health as a car is for physical health; for better or
+worse.
+
+Code quality is also over-rated although best effort should be done
+but that's all. If you get it, then it is done. It's harder than it
+sounds without self-deception part.
+
+And yeah, we don't have projected problems. I.e. "no users" is always
+NAK. You have to step on the nail at first.
+
+Just need to clear my thoughts on overall the topic :-) This is I guess
+where I stand now. Hope you find these helpful.
+
+Br, Jarkko
