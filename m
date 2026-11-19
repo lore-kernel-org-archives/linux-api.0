@@ -1,63 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=54.254.200.92
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.54
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795093540;
-	b=vInMQRjoSqQHw934u0WRWX9kKEvzY8EI/1a5HD9fDFr8Uimd6Jitx5cUeCaZm4jrgSFM
-	 CQgzGfJDav4t8HSNfi5/p2f1D7XIiHfISMdKJ4hEPzTDLtHQgfJDNn6LbnsHx9TWNaa5e
-	 pKLtfUi4m7hhcchAv99+dr6pP2Pe8Z6/JDceULwz4Y7DfKOednmKOTkgchZKkfrG6oEZs
-	 rYEissqOHqqtFo8Cb2VinX8lUIGqJvApsJcaw8frHMGaoAFaaZpr3vlR9qF/fBAalWcEs
-	 aMlmzsOUslJvuDqaKNjHMXS6vdzuVUHV2q/N6Z4j+yD730LdBY4BsFiIKSjwNOEgAmw==
+	t=1795095740;
+	b=ReBfrJr1WLJaESf5pLCyUwbFvp0ugpL1CwGzt3K5Q/hvS+ZQJV2nO31EjWizFYxr6R6B
+	 po86z9iRiCDyzucCxAFkvmngGkN5Sj9Gn5F4Qkew6SWAcRzcc8Dv0wmuLY8LxVApjMhkz
+	 E9O/q7pbttWELHe0KrHMtFGKg/S73eWgtmrd1AXdnLHBoxgrg9kqRr3scbhgSUz9zZbEd
+	 NkAgV4NRujke0PLZLYEZ1wrJLQmaRJ715FkuItCpSZP5bDPVdXeASmm02+Y5ODivwivqu
+	 dXBfoK9Nk2AfiA7LyLGLkR6L5W0KfFfzDU9bmbRVvJ3B6637ipQQZDN7pl1cGdxRYeg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795093540;
-	h=DMARC-Filter:X-QQ-mid:X-QQ-Originating-IP:Received:X-QQ-SSF:
-	 X-QQ-GoodBg:X-BIZMAIL-ID:EX-QQ-RecipientCnt:From:To:Cc:Subject:Date:
-	 Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding:
-	 X-QQ-SENDSIZE:Feedback-ID:X-QQ-XMAILINFO:X-QQ-XMRINFO:X-QQ-RECHKSPAM;
-	bh=kqDqFnX19MFdyinSjEoO70xx6iOJeMyJ1peqLym3cZ8=;
-	b=xSAt7cU8bWYvCK7JrQhkfj4fdAi4rkcK/wm4twojzqPMO5fFxmCnscH35OcC3+E/+xMz
-	 iWyqkGT5oxqgRYyoDePm/VBJwRqtzKasU8A9vVbkrGiOAntpqGzVGf7ALSXEy3TbSeFWT
-	 NSzIRe+ROMnR/pV/q4BfW0MjMx/o4tPEzCT60mx1m2jSEPRESeDQevyXniIy3bqQhmtwh
-	 YKk9MpMmLVn66oefeDBXyYkloHe4vEplPO/6zwDQkAlabnO9n044Rz3k9I2HPm8RtAdxb
-	 C6bfmbqT/vXEfnWY4PQPSOaAPj4H6lHh21+tS8WV//NpDG5UKFxGY1qWxcP+cuqI/Jg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795095740;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version;
+	bh=LsU8Zjx85+8Bc4fkBL6bsA4+NBo/da2SQz5szSsymVw=;
+	b=5B2Ol2ZOUvkIAAdPM7RPQDc9Zr/0kySGHLJmBtu+vt07mrgoe+8QAfBxwLl1EkrRmDHq
+	 nPCrnD1YhJt3fUZh1q8vv+jfd3YgrZUBFxBJ2pdmipCJzAgWJ9IuV3DunjZSW1cJlA97D
+	 yf4oSnzulY4oXQ66SErRNOcH5wncHeqJt1Dtgu5cNwEoEgUsQKVNfT2pW5awd6nvUsU+3
+	 IQ7X1hfal8xvuXj9HVXkig4GHEXfBghHy6a+kMbqxQU+PANhdsP+672ONLjk8WjRYs+xL
+	 VHaV3PMTIBzR4nMrw7HKjB0PHzksCqqM4JCNIEv+Zuu49a95THbo4UhW3fH+KWyd/PA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=rustsbi.com;
-	spf=pass smtp.mailfrom=rustsbi.com;
-	arc=none smtp.remote-ip=54.254.200.92
-Received: from smtpbgsg1.qq.com (smtpbgsg1.qq.com [54.254.200.92])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=none header.from=amutable.com;
+	spf=pass smtp.mailfrom=amutable.com;
+	dkim=pass header.d=amutable-com.20260707.gappssmtp.com header.i=@amutable-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=ZEpM7oQ9;
+	arc=none smtp.remote-ip=209.85.128.54
+Received: from mail-wm1-f54.google.com (mail-wm1-f54.google.com [209.85.128.54])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 689A8606A320
-	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 13:05:39 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 689A8606A320
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=rustsbi.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rustsbi.com
-X-QQ-mid: zesmtpsz2t1795093462td71789a8
-X-QQ-Originating-IP: cR3TjEg74wmWMTs1ARy7U2n+xVQze2SG4pmLd9lYPZY=
-Received: from LAPTOP-H63V2Q11 ( [36.110.52.2])
-	by bizesmtp.qq.com (ESMTP) with 
-	id ; Thu, 19 Nov 2026 21:04:09 +0800 (CST)
-X-QQ-SSF: 0000000000000000000000000000000
-X-QQ-GoodBg: 0
-X-BIZMAIL-ID: 15795927322090036901
-EX-QQ-RecipientCnt: 14
-From: Zhouqi Jiang <luojia@rustsbi.com>
-To: linux-riscv@lists.infradead.org
-Cc: Paul Walmsley <pjw@kernel.org>,
-	Palmer Dabbelt <palmer@dabbelt.com>,
-	Albert Ou <aou@eecs.berkeley.edu>,
-	Alexandre Ghiti <alex@ghiti.fr>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Anup Patel <anup@brainfault.org>,
-	Andrew Davis <afd@ti.com>,
-	Mayuresh Chitale <mchitale@ventanamicro.com>,
-	linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Vivian Wang <wangruikang@iscas.ac.cn>,
-	Alejandro Colomar <alx@kernel.org>,
-	contact@rustsbi.com
-Subject: [RFC PATCH RESEND] riscv: sbi: expose firmware identity in sysfs
-Date: Thu, 19 Nov 2026 21:03:56 +0800
-Message-ID: <A039A2DE1DF8F274+20261119130356.1537-1-luojia@rustsbi.com>
-X-Mailer: git-send-email 2.53.0.windows.2
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6A3D60A260E
+	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 13:42:19 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B6A3D60A260E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amutable.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=amutable-com.20260707.gappssmtp.com header.i=@amutable-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=ZEpM7oQ9
+Received: by mail-wm1-f54.google.com with SMTP id 5b1f17b1804b1-4ac95761c85so17668395e9.2
+        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 05:42:19 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amutable-com.20260707.gappssmtp.com; s=20260707; t=1795095738; x=1795700538; darn=vger.kernel.org;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
+         :cc:subject:date:message-id:reply-to:content-type;
+        bh=LsU8Zjx85+8Bc4fkBL6bsA4+NBo/da2SQz5szSsymVw=;
+        b=ZEpM7oQ9F48EoPJ/3iQMrQUiqSXJxvckMmoaQM0X6ue6VQrsD2bzvMPbJuI3lzYt+l
+         qNg7bMquBuJPUrMKac9sQY4E3sSv+fEcqJdzpmxc0ETpzivfk8n1NYXlXh8xO3YVLfW1
+         aNSfIHH170nuIwcc6Ba9wWVDoyqwwwDCQ8nWWxEwiZooHarblvJG+EIoLbkXr/PxpvtX
+         HhCUmTHLrR2eTkmy//Rfx3aH26h1m0nF9uc5VbT6bCQg/UYtxze4js7R7BFkK9we8TWJ
+         e/3FjVCYRDWcz2yEiE4zKo8eEFsm4kxNcIR8MvsfGPLAt6w0H4yxe3bY8yAwAQbtgcH9
+         +Xsg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795095738; x=1795700538;
+        h=mime-version:user-agent:content-transfer-encoding:content-type
+         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=LsU8Zjx85+8Bc4fkBL6bsA4+NBo/da2SQz5szSsymVw=;
+        b=UAGA9/+woJb84Ord7Xrh7Bfmd7jDll+Mz/a+AU4GfdcDugjnY7/ytL220JGpG6Ngbs
+         EGteaoCqx9avz64uqApf5EEjpUrrJDPrHjXUqNcenuMPmlCm+driDSD0/V66mopViN8B
+         hSAKArcK/LSRwOMcY5UtpX7oG3XRqWKdBb2YlDTOIEjRuoRCpkyC0ocaVV+CyvHdPMct
+         oVVqjh5jc5+cDMe4HekVWjYd1FZvjWROAb0Dsjgv7uVfFDqnltBej93m9kMFX2UdvhuN
+         +L3XfDzHVFrAwKl3oxhNuR06kbPxf+po6uD5q2G0x1KE3RocYZjdNaNsn2fxZzpUD6tV
+         W/Ng==
+X-Forwarded-Encrypted: i=1; AL+hErGoUN4Dh2caIU7a3GvJN5U5guISuIzMc3rT0rpN1Dm8wcdiuEAfEv7RyODHJj4ONy+9/j3rk8bOBVY=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/VD3qUUGQM+WveKH+xwKcszWnbBMYcziMLFgdI9gGc+/nNspIE
+	LpRKUSqg+dfVyh3Y6b/TWKCN3OhUNraTe90Vd0cVtT7OReiseTlqTd6vts5uIy7ZO8TX
+X-Gm-Gg: AYBFou3mZxxhLw0B+NoG+CXuRIj/b5nFjw067IsZIA8pw2BgS9woDXkLXf5O2CWug22
+	FNn67Owj4LgXnoqlMVRJur0llQcDTyF6pmTaZ7+KLXZA+t1mAi/EVoOIw9XQ3/rD+QZHpaiRSoc
+	6VGEHr+NuJDTpradZr6yJhov7/tJjNsMe8B1nOWHY/4dJ3xXbqvjKl+b1bvSkp5uY8DktgN/T78
+	KXK+fAX1KE4pyknqNbimTWDtjhU+xh2HAoi6EAUYcE1R0ZZKDIQIvPNvdk8i+uuE0sBA3Oj0V+4
+	CGTyP+4WbdqPQLtFy/eak+yN9dGvpxV2JvB8HzsdGz8Lk2yoAO3flRPeF8Z3rpiXcwveuldzVBG
+	yUhb+IPictZF0zLaeAHPvIfaIK07XOUimO8XfzZ/B8tCI5JhuvWksp4i4D8v5njYOpMoagqhgks
+	DShYGd1QIfn8qmncLLWcc8uYOr2WTs02mjSnyS7XoF1EEcRyNb4A3OjTBeEGTqFmhVm/vf7gA5V
+	EaPukx0fzOCQs/yIEvBp8OULF2HdWXiQfzvOWIvmzv3rqJ5iBl8keRC2jc4EM6sT8Mpmr+bGsEc
+	vif5v9+/4PHlUhgySK/HLaAgk7SmLdkaQFqmhazcvR/4UOpthLooZtSOpiF5nW4oFx3qr+t4lAN
+	7jIVUwekeYC+WpH5S7ioB2Zbuxak5pwBUfGpLaLrSYSROiC2C9eUb/Q==
+X-Received: by 2002:a05:600c:4e93:b0:4bb:5c92:ce12 with SMTP id 5b1f17b1804b1-4bb7da12f06mr122414505e9.17.1795095737895;
+        Thu, 19 Nov 2026 05:42:17 -0800 (PST)
+Received: from ?IPv6:2003:cf:572c:2800:677:1cd6:7e14:6fa6? (p200300cf572c280006771cd67e146fa6.dip0.t-ipconnect.de. [2003:cf:572c:2800:677:1cd6:7e14:6fa6])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb85372b67sm39429045e9.13.2026.11.19.05.42.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Thu, 19 Nov 2026 05:42:17 -0800 (PST)
+Message-ID: <3e4103cbcf7b76535e2f957762174515ef00f08d.camel@amutable.com>
+Subject: Re: [PATCH] pidfd: restrict pidfd_getfd() to the caller's pid
+ namespace
+From: Alexander Mikhalitsyn <alex@amutable.com>
+To: Jiwoo Kim <arpe1618@gmail.com>, Christian Brauner <brauner@kernel.org>
+Cc: Sargun Dhillon <sargun@sargun.me>, Arnd Bergmann <arnd@arndb.de>, Jann
+ Horn	 <jannh@google.com>, Chen Linxuan <me@black-desk.cn>, 
+	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-kernel@vger.kernel.org
+Date: Thu, 19 Nov 2026 14:42:16 +0100
+In-Reply-To: <20261117152332.1221-1-arpe1618@gmail.com>
+References: <20261117152332.1221-1-arpe1618@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.56.2-0+deb13u1 
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -67,209 +104,160 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-QQ-SENDSIZE: 520
-Feedback-ID: zesmtpsz:rustsbi.com:qybglogicsvrsz:qybglogicsvrsz3b-0
-X-QQ-XMAILINFO: M21ph8MgUKJrRs0VPR0RJSWzCHn7d7WZmBf+NsoC39Jf2TiNgGPM2QVB
-	him+MJsDcaoscwu34lvSb6uKQq8yl6C42N7GNW1Ec0dQKBVpd+RLaQS8kqLi8O2RdwhfJ+v
-	8KJUMks2ZRDAoKmYL0L9RKEeUSYoEt/lIhmEbifymYTwmxhQP346vfqa/lVyRiDWtNOGQ09
-	i9ac4Qukltekvm4n2Fv5Pp2A3suAzbdmMy8XQgkER/xZWvVOhhC1nlFF68JXgtRKY6v1l/X
-	fX99n7MlweQAjjDQGyJLw5X6GDjliTx3IS4Eyy9ezG1EmJdqcRa8ee/BFbl8AXfaQi1HIwK
-	UyNnDCSo3cEQmla+f38GdvcxgXRFcI/h7dOCThbTUHutIcO/HaUtCFy/9fxmJ6YyK5wgfRi
-	9XCK4e2yAklcA+gGiMR21wBvTBryhS3oN0lAGa0kb/X2NQjR0gk/EE668kJCqlQz25hqBCn
-	ROQeHo0HPHpk3/3tvBu3G8jb9ALJFx4PkF5KNFJ4T/G5AOenpFrEPZNEmR7DPDRRx+5cy7b
-	H9JXwUCJVUh+ayWfAk4WyLYvj6u6VRYWkl2RMDGc8guu55Eaqd5hu7tC/AZfZauTILeOx3v
-	e6IJZJcWi+sexQCcuhf5oIySazc1Ue82l6sifKB/JEKXDiTAULFTTM6CGxJPyDK/pKYpqkb
-	yoUEplItVTEBr9UEb/ao9o27cDpbHxLGOHAGH3VanS+fuGiXDViFi3zIfKicDYbQHO5dVdd
-	tbchzmTpdItx0+o93VB4OY4VGcahFgbnWwL2yFA12KEpkCK1Y9qaFhRKqBizqXgMSEsUWjN
-	Yqo/9O4ucZxa/zx6QVMUCea8jJl/S/7UaDiH+/w8ojpf3gHh4wh8rD+YUDD/E0A7iigRG2+
-	hb1ayfhkl0euZmKYEYAvDHNglSIapYAYvPvbuEZXZtw1bh/CLXBk+1S2kjhnRjt4VS4xt3B
-	asOZSMI/AbFNQdbZYoZ5HVuw5L+Rk31ccSMm7tjEVecHJuOjA2rdigE1IxWN2yMbw6vjRBS
-	gRdjL6NiaMQG9Pg7oGAyJ5UHjOlmb0VYiumkalEJqnfYploroY5Q3C2zQUQeRu5rWP7Y17L
-	7vuTHZrmPoGSz93LHy3CMc=
-X-QQ-XMRINFO: OD9hHCdaPRBwH5bRRRw8tsiH4UAatJqXfg==
-X-QQ-RECHKSPAM: 0
 
-Linux queries the SBI specification and implementation identity during
-boot. It caches the specification version, but discards the
-implementation ID and version after logging them. Userspace therefore
-has no structured interface for this immutable firmware metadata.
+On Wed, 2026-11-18 at 00:23 +0900, Jiwoo Kim wrote:
+> pidfds can cross pid namespace boundaries: a task can obtain one for
+> a
+> process outside of its own pid namespace hierarchy through
+> SO_PASSPIDFD
+> or SO_PEERPIDFD, via SCM_RIGHTS, or through file descriptor
+> inheritance.
+>=20
+> Commit ee8323fdc827 ("pidfd: restrict task access ioctls to the
+> caller's
+> pid namespace") made the pidfs namespace ioctls fail with -EREMOTE
+> unless the target is visible in the caller's active pid namespace, as
+> PIDFD_GET_INFO already does, following the rule that operations which
+> grant access to additional resources of the target require this [1].
+>=20
 
-Cache the implementation ID and version and expose the available values
-as read-only attributes under /sys/firmware/sbi:
+Hi Jiwoo,
 
-  spec_version
-  impl_id
-  impl_version
+> pidfd_getfd() grants access to the target's open files, but it only
+> performs the ptrace access check, which does not take the pid
+> namespace
+> relationship between the caller and the target into account. With the
+> caller in a child pid namespace and in the same user namespace as the
+> target, PIDFD_GET_INFO and PIDFD_GET_UTS_NAMESPACE fail with -EREMOTE
+> for such a pidfd, while pidfd_getfd() on the same pidfd returns a
+> duplicate of the target's file descriptor.
 
-SBI v0.1 systems expose only spec_version because the implementation
-fields were introduced by the SBI Base extension in v0.2.
+It it an interesting point, because pid namespace itself it not a
+security boundary. While user namespace and capabilities are mechanisms
+to manage permissions.
 
-This gives tools such as lssbi a native source for basic SBI identity
-information and starts moving those queries away from out-of-tree
-kernel modules.
+Currently, you can do something like this on your machine:
 
-Codex was prompted to research lssbi's out-of-tree SBI probe and design
-a minimal in-kernel replacement. It assisted with the sysfs interface,
-implementation, ABI documentation, changelog, and QEMU test setup. The
-result was built with a RISC-V defconfig and boot-tested under QEMU
-virt with:
+# Terminal 0
 
-  OpenSBI v1.3
-  RustSBI v0.4.1
+echo $$ # note this PID we will use it in "Terminal 1"
 
-Assisted-by: Codex:GPT-5
-Signed-off-by: Zhouqi Jiang <luojia@rustsbi.com>
----
- Documentation/ABI/testing/sysfs-firmware-sbi | 30 ++++++++++
- MAINTAINERS                                  |  1 +
- arch/riscv/kernel/sbi.c                      | 62 +++++++++++++++++++-
- 3 files changed, 92 insertions(+), 1 deletion(-)
- create mode 100644 Documentation/ABI/testing/sysfs-firmware-sbi
+# Terminal 1
 
-diff --git a/Documentation/ABI/testing/sysfs-firmware-sbi b/Documentation/ABI/testing/sysfs-firmware-sbi
-new file mode 100644
-index 000000000000..516f9e6cee79
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-firmware-sbi
-@@ -0,0 +1,30 @@
-+What:		/sys/firmware/sbi/spec_version
-+Date:		August 2026
-+Contact:	Linux RISC-V mailing list <linux-riscv@lists.infradead.org>
-+Description:
-+		The SBI specification version available to Linux, formatted as two
-+		unsigned decimal integers separated by a period and followed by a
-+		newline. For example, SBI v0.2 is represented as "0.2".
-+Users:		lssbi
-+
-+What:		/sys/firmware/sbi/impl_id
-+Date:		August 2026
-+Contact:	Linux RISC-V mailing list <linux-riscv@lists.infradead.org>
-+Description:
-+		The SBI implementation ID, formatted as lowercase hexadecimal with
-+		a 0x prefix, no leading zero padding, and a trailing newline. For
-+		example, OpenSBI is represented as "0x1". The ID is assigned by the
-+		SBI specification. This attribute is present only when SBI v0.2 or
-+		later is available.
-+Users:		lssbi
-+
-+What:		/sys/firmware/sbi/impl_version
-+Date:		August 2026
-+Contact:	Linux RISC-V mailing list <linux-riscv@lists.infradead.org>
-+Description:
-+		The SBI implementation version, formatted as lowercase hexadecimal
-+		with a 0x prefix, no leading zero padding, and a trailing newline.
-+		Its encoding is specific to the SBI implementation identified by
-+		impl_id. This attribute is present only when SBI v0.2 or
-+		later is available.
-+Users:		lssbi
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 0b42e898f4d8..707afa1af1a0 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -23494,6 +23494,7 @@ Q:	https://patchwork.kernel.org/project/linux-riscv/list/
- C:	irc://irc.libera.chat/riscv
- P:	Documentation/arch/riscv/patch-acceptance.rst
- T:	git git://git.kernel.org/pub/scm/linux/kernel/git/riscv/linux.git
-+F:	Documentation/ABI/testing/sysfs-firmware-sbi
- F:	arch/riscv/
- N:	riscv
- K:	riscv
-diff --git a/arch/riscv/kernel/sbi.c b/arch/riscv/kernel/sbi.c
-index c443337056ab..945a6d8d4f3e 100644
---- a/arch/riscv/kernel/sbi.c
-+++ b/arch/riscv/kernel/sbi.c
-@@ -7,6 +7,7 @@
- 
- #include <linux/bits.h>
- #include <linux/init.h>
-+#include <linux/kobject.h>
- #include <linux/mm.h>
- #include <linux/pm.h>
- #include <linux/reboot.h>
-@@ -18,6 +19,9 @@
- unsigned long sbi_spec_version __ro_after_init = SBI_SPEC_VERSION_DEFAULT;
- EXPORT_SYMBOL(sbi_spec_version);
- 
-+static unsigned long sbi_impl_id __ro_after_init;
-+static unsigned long sbi_impl_version __ro_after_init;
-+
- static void (*__sbi_set_timer)(uint64_t stime) __ro_after_init;
- static void (*__sbi_send_ipi)(unsigned int cpu) __ro_after_init;
- static int (*__sbi_rfence)(int fid, const struct cpumask *cpu_mask,
-@@ -659,8 +663,10 @@ void __init sbi_init(void)
- 		sbi_major_version(), sbi_minor_version());
- 
- 	if (!sbi_spec_is_0_1()) {
-+		sbi_impl_id = sbi_get_firmware_id();
-+		sbi_impl_version = sbi_get_firmware_version();
- 		pr_info("SBI implementation ID=0x%lx Version=0x%lx\n",
--			sbi_get_firmware_id(), sbi_get_firmware_version());
-+			sbi_impl_id, sbi_impl_version);
- 		if (sbi_probe_extension(SBI_EXT_TIME)) {
- 			__sbi_set_timer = __sbi_set_timer_v02;
- 			pr_info("SBI TIME extension detected\n");
-@@ -707,3 +713,57 @@ void __init sbi_init(void)
- 	if (!srst_power_off)
- 		sbi_set_power_off();
- }
-+
-+static ssize_t spec_version_show(struct kobject *kobj,
-+				 struct kobj_attribute *attr, char *buf)
-+{
-+	return sysfs_emit(buf, "%lu.%lu\n",
-+			  sbi_major_version(), sbi_minor_version());
-+}
-+
-+static ssize_t impl_id_show(struct kobject *kobj,
-+			    struct kobj_attribute *attr, char *buf)
-+{
-+	return sysfs_emit(buf, "0x%lx\n", sbi_impl_id);
-+}
-+
-+static ssize_t impl_version_show(struct kobject *kobj,
-+				 struct kobj_attribute *attr, char *buf)
-+{
-+	return sysfs_emit(buf, "0x%lx\n", sbi_impl_version);
-+}
-+
-+static struct kobj_attribute spec_version_attr = __ATTR_RO(spec_version);
-+static struct kobj_attribute impl_id_attr = __ATTR_RO(impl_id);
-+static struct kobj_attribute impl_version_attr = __ATTR_RO(impl_version);
-+
-+static umode_t sbi_attr_is_visible(struct kobject *kobj,
-+				   struct attribute *attr, int n)
-+{
-+	if (sbi_spec_is_0_1() && attr != &spec_version_attr.attr)
-+		return 0;
-+
-+	return attr->mode;
-+}
-+
-+static struct attribute *sbi_attrs[] = {
-+	&spec_version_attr.attr,
-+	&impl_id_attr.attr,
-+	&impl_version_attr.attr,
-+	NULL,
-+};
-+
-+static const struct attribute_group sbi_attr_group = {
-+	.name = "sbi",
-+	.is_visible = sbi_attr_is_visible,
-+	.attrs = sbi_attrs,
-+};
-+
-+static int __init sbi_sysfs_init(void)
-+{
-+	if (!firmware_kobj)
-+		return -ENOMEM;
-+
-+	return sysfs_create_group(firmware_kobj, &sbi_attr_group);
-+}
-+subsys_initcall(sbi_sysfs_init);
+sudo unshare -f -p=20
+echo hello > /proc/<PID>/fd/0
 
-base-commit: 1b78070aaef63512688aebfbc82365ef9d6660f1
--- 
-2.43.0
+and this will actually print hello in the Terminal 0, while the process
+doing that lives in nested pid namespace. But this is not a problem
+because this guy is a root:
 
+# Terminal 1
+cat /proc/self/status | grep CapEff
 
+So please understand me right, I'm not saying that your point is not
+valid, but I'm not sure what was the intention behind pid_getfd() API
+in the first place and we might want to have semantics and model close
+to the one procfs has.
+
+Speaking about other cases, where we *do* have this check:
+- for exportfs operations it completely makes sense, because filehandle
+  contains an inode number and user space may accidentally (due to the
+memory corruption or purposefully craft it). When I call
+open_by_handle_at I *do* expect to get something from my own PID
+namespace.
+
+- pidfd_ioctl since ee8323fdc827c580425644db605a4be776cace57 ("pidfd:
+restrict task access ioctls to the caller's pid namespace") doesn't
+allow to open namespace files, while procfs has no problem with this
+(it works you can try)
+
+- pidfd_info() also forbids cross pidns information retrieval and for
+part of it functionallity we can do it through procfs, but for exit
+info or coredump we can't
+
+To conclude, it looks like we have a little bit of inconsistencies
+around here :-) [ But please, don't go and change anything in procfs as
+we might break some tricky use-cases like CRIU and SCM_RIGHTS users. ]
+
+IMHO.
+
+Kind regards,
+Alex
+
+>=20
+> Apply the same rule to pidfd_getfd() and fail with -EREMOTE unless
+> the
+> target is visible in the caller's active pid namespace. Callers in
+> ancestor pid namespaces are unaffected.
+>=20
+> This was found with an AI coding assistant, which also drafted this
+> patch and its changelog. The problem was reproduced in a QEMU guest,
+> and the fix was tested there.
+>=20
+> Link:
+> https://lore.kernel.org/all/20260925-gewischt-auftrag-tierzucht-c153cb3f9=
+f74@brauner/
+> =C2=A0[1]
+> Fixes: 8649c322f75c ("pid: Implement pidfd_getfd syscall")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Jiwoo Kim <arpe1618@gmail.com>
+> ---
+> -EREMOTE is a new error for pidfd_getfd(). The check is done before
+> the
+> task lookup, so, as with PIDFD_GET_INFO, a reaped target outside of
+> the
+> caller's pid namespace hierarchy gives -EREMOTE rather than -ESRCH,
+> and
+> the check comes before the ptrace access check.
+>=20
+> setns() also accepts such pidfds without this check, but it requires
+> CAP_SYS_ADMIN over the namespaces being joined, so it is left alone
+> here.
+>=20
+> A reproducer is available on request.
+>=20
+> =C2=A0kernel/pid.c | 14 +++++++++++---
+> =C2=A01 file changed, 11 insertions(+), 3 deletions(-)
+>=20
+> diff --git a/kernel/pid.c b/kernel/pid.c
+> index adf721606768..4f9a29eb29de 100644
+> --- a/kernel/pid.c
+> +++ b/kernel/pid.c
+> @@ -893,6 +893,13 @@ static int pidfd_getfd(struct pid *pid, int fd)
+> =C2=A0	struct file *file;
+> =C2=A0	int ret;
+> =C2=A0
+> +	/*
+> +	 * Require the target to be visible in the caller's pid
+> namespace,
+> +	 * like the pidfs ioctls that grant access to its resources.
+> +	 */
+> +	if (!pid_vnr(pid))
+> +		return -EREMOTE;
+> +
+> =C2=A0	task =3D get_pid_task(pid, PIDTYPE_PID);
+> =C2=A0	if (!task)
+> =C2=A0		return -ESRCH;
+> @@ -917,9 +924,10 @@ static int pidfd_getfd(struct pid *pid, int fd)
+> =C2=A0 *
+> =C2=A0 * This syscall gets a copy of a file descriptor from another
+> process
+> =C2=A0 * based on the pidfd, and file descriptor number. It requires that
+> - * the calling process has the ability to ptrace the process
+> represented
+> - * by the pidfd. The process which is having its file descriptor
+> copied
+> - * is otherwise unaffected.
+> + * the process represented by the pidfd is visible in the caller's
+> pid
+> + * namespace and that the calling process has the ability to ptrace
+> it.
+> + * The process which is having its file descriptor copied is
+> otherwise
+> + * unaffected.
+> =C2=A0 *
+> =C2=A0 * Return: On success, a cloexec file descriptor is returned.
+> =C2=A0 *=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 On error, a nega=
+tive errno number will be returned.
+>=20
+> base-commit: 44cc27050381e92de64cc3d7836376eda4d92a5f
