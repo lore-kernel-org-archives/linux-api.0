@@ -1,99 +1,90 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=62.89.141.173
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795067497;
-	b=PizJrPiRdacQOivJN1glKJiYPuAYyuMqqTZl3wR6SZDQCrGB0x8rOMA9QkgdTaT0uV/1
-	 bgLOd87vA/SwIr+H+68jWMEIOv5B4NGuBQ+p7yO9tZmKcyqE8vVdCqqAKSihHDS0K7yDP
-	 7O8b5P+to3XynZpyLjO5JJjiL8lXNU7SReH3SYW6tM7daU8vm4G6OJm+/TaXmJmMg1gyL
-	 Yfxr+8of5GKNaxXhphnWFrQHUHf8SnYjbFzm5o9OfJIDiolqN8uORqfvKszlLXISCHMvK
-	 2be/9YMNQdXf5MwcfuM4NkEwLIA2LOfWAAHBXC1JS/fmxCNDNh8KH2VXQLN9kHFF89Q==
+	t=1795069291;
+	b=v6H8Eqr0fnYg7hU+LXloUuVLfsJJTLJITJsjVeeaHlDZyMUyKz5GW7+4GjAhwIL2/tuW
+	 Z/J5H9olDGIiIpfp4ET8IbmXlCpwFhxUvMm+lR+2vPiQAzM5xzl2IAdCSh09obDRoDZTW
+	 SeeDSP7OiUj9Y14u+oQcKdeJjyUNwJ8T/qEt6BOWsqH23A1NFQHWCxxQva87+TWbbutvQ
+	 oquDkCSfgv3+smy38YWUTKeELad0tojT47fnzTEQLpVgDdSyUIZ1Jze9Ay174vZUURBih
+	 RUK70gSCwOIGARYNdtuxBhvUsubxIsmUwENWp3NE95efwygaTtI8F/lghl7smzzaZag==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795067497;
-	h=DMARC-Filter:DKIM-Signature:Received:Date:From:To:Cc:Subject:
-	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
-	 In-Reply-To:Sender;
-	bh=z8G4571aUTPFuGlDRih4WtoT+MR1zWs5KxPfHLJ0IoQ=;
-	b=K438CdbgINAZblCj2Vo8NMPTupp/jd8A3pokleOc9gKBuaVvr8hgSpT7r+t88U3xpw4R
-	 8lCEgPXLikVJak4pUOOjA4WHRs43tG8gXxCkodM9lU1qGFg3zzn8+XP2CxxHooy1Gayd0
-	 juO8N3HMQBBckyCNTsdUDRwj9NuzbHC90rRyc7Aa3H108FuG2cE5256WaeqxJlJN+wkEj
-	 takEtrZqw7IUaVDHq3aUOrY1e0ps3JpvqlCFmg12LpqYohT5bh1QbKRiHNRdaq2adobsE
-	 vYFosqm6szMv6srf4rGaa0Vd5nVeEHcEzwuULrG4gu1btRDDdAOfuAPwdULTADdmyPg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795069291;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=btZ2TprQHQojMwnDwVX6xxEuU+pesarzzPhbHJEdoGg=;
+	b=aJhdrYDTVGM+hZ5EhauuarR1r7QtwsyMYPlZBm22siHWZpzkvfod8UQvMai9lFeMEml0
+	 K+LQkFNoBQX9cti8KLJJj8dr/Q9oS4+MCTMoisiwPbwJOr2siT+9Jnyeol/5u/iheBMhQ
+	 tXmnsGyKQsGo3cVD68Zt3SsG2QZEwYz7NUxeb+f1xx7kA3iRlpLXDO6UvSk5GkS43We4m
+	 k9hcw2QysNvYO9kyRG+EetuV6xJZC0KsLO7hGUu2ebkqq+sdr5H8SewU628korMVxwLEv
+	 7WsaU87pfFO7DPYkji3W+JriQ0jhszjK7dB/7IfPsZByVLWOWAISDISNjsrowcCALww==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=zeniv.linux.org.uk;
-	spf=none smtp.mailfrom=ftp.linux.org.uk;
-	dkim=pass header.d=linux.org.uk header.i=@linux.org.uk header.a=rsa-sha256 header.s=zeniv-20220401 header.b=HUmq9V2f;
-	arc=none smtp.remote-ip=62.89.141.173
-Received: from zeniv.linux.org.uk (zeniv.linux.org.uk [62.89.141.173])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=e7xa1Dpj;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFD1F606A325;
-	Thu, 19 Nov 2026 05:51:36 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EFD1F606A325
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=zeniv.linux.org.uk
-Authentication-Results: smtp.subspace.kernel.org; spf=none smtp.mailfrom=ftp.linux.org.uk
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7CC20606A32A;
+	Thu, 19 Nov 2026 06:21:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=linux.org.uk header.i=@linux.org.uk header.a=rsa-sha256 header.s=zeniv-20220401 header.b=HUmq9V2f
-DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
-	d=linux.org.uk; s=zeniv-20220401; h=Sender:In-Reply-To:Content-Type:
-	MIME-Version:References:Message-ID:Subject:Cc:To:From:Date:Reply-To:
-	Content-Transfer-Encoding:Content-ID:Content-Description;
-	bh=z8G4571aUTPFuGlDRih4WtoT+MR1zWs5KxPfHLJ0IoQ=; b=HUmq9V2fqWZniya7o9nBaVPeDZ
-	hdLnNqA0+VaoySgEJuKHB41/nmyLaGptpyplTvFZpj9ZsUfvW/Uacb0EujAyxoatj/wEjrTHUy1Y8
-	Jf/0+dvEia8oYQhTDJ2QTEjT6TZu9xP6N/is4httLR57O2jb4I7x7sybjo+/cFqRcKEnzzz9PN71w
-	Fs3s4nF5yw1DIdzaYMKdWCNazNDVu5/+7GdnX+s8wkC+dHul4l8kAJetHVgTfI7IM42m1/kFkA0V+
-	e5cVGVGh3fNAY2bVKP02Pyi9IdxpjMoQwmhSMxh71ivIpbruqUDwYbd4JXLlMVMx0hkbK2WWTq4Oa
-	k2qmfFmA==;
-Received: from viro by zeniv.linux.org.uk with local (Exim 4.100.1 #2 (Red Hat Linux))
-	id 1xTv3O-000000063G7-3IJX;
-	Thu, 19 Nov 2026 05:51:26 +0000
-Date: Thu, 19 Nov 2026 05:51:26 +0000
-From: Al Viro <viro@zeniv.linux.org.uk>
-To: Christian Brauner <brauner@kernel.org>
-Cc: Cai Xinchen <caixinchen1@huawei.com>, mic@digikod.net,
-	gnoack@google.com, paul@paul-moore.com, jack@suse.cz,
-	amir73il@gmail.com, andrii@kernel.org, apparmor@lists.ubuntu.com,
-	ast@kernel.org, axboe@kernel.dk, bpf@vger.kernel.org,
-	casey@schaufler-ca.com, cel@kernel.org, cem@kernel.org,
-	chenxiaosong@chenxiaosong.com, code@tyhicks.com, corbet@lwn.net,
-	Dai.Ngo@oracle.com, dakr@kernel.org, daniel@iogearbox.net,
-	dhowells@redhat.com, dlemoal@kernel.org, dmitry.kasatkin@gmail.com,
-	driver-core@lists.linux.dev, dsterba@suse.com,
-	ecryptfs@vger.kernel.org, eddyz87@gmail.com, emil@etsalapatis.com,
-	eric.snowberg@oracle.com, exfat@lists.linux.dev,
-	georgia.garcia@canonical.com, gregkh@linuxfoundation.org,
-	hch@lst.de, hirofumi@mail.parknet.co.jp, hyc.lee@gmail.com,
-	ihor.solodrai@linux.dev, jlayton@kernel.org, jmorris@namei.org,
-	johan@kernel.org, john.fastabend@gmail.com,
-	john.johansen@canonical.com, jolsa@kernel.org, kpsingh@kernel.org,
-	linkinjeon@kernel.org, linux-api@vger.kernel.org,
-	linux-block@vger.kernel.org, linux-btrfs@vger.kernel.org,
-	linux-cifs@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-nfs@vger.kernel.org, linux-security-module@vger.kernel.org,
-	linux-trace-kernel@vger.kernel.org, linux-unionfs@vger.kernel.org,
-	linux-xfs@vger.kernel.org, liubaolin12138@163.com,
-	martin.lau@linux.dev, mason@kernel.org,
-	mathieu.desnoyers@efficios.com, matt@bobrowski.net,
-	memxor@gmail.com, mhiramat@kernel.org, miklos@szeredi.hu,
-	neil@brown.name, netfs@lists.linux.dev, ntfs@lists.linux.dev,
-	okorniev@redhat.com, omosnacek@gmail.com,
-	penguin-kernel@i-love.sakura.ne.jp, rafael@kernel.org,
-	rdunlap@infradead.org, roberto.sassu@huawei.com,
-	rostedt@goodmis.org, selinux@vger.kernel.org,
-	senozhatsky@chromium.org, serge@hallyn.com, sj1557.seo@samsung.com,
-	skhan@linuxfoundation.org, song@kernel.org,
-	stephen.smalley.work@gmail.com, takedakn@nttdata.co.jp,
-	tom@talpey.com, yonghong.song@linux.dev, yuezhang.mo@sony.com,
-	zohar@linux.ibm.com, utilityemal77@gmail.com, lujialin4@huawei.com
-Subject: Re: [PATCH -next -v4 02/17] LSM: pass struct path to the
- inode_setsecctx hook
-Message-ID: <20261119055126.GU989762@ZenIV>
-References: <20261117150542.1169451-1-caixinchen1@huawei.com>
- <20261117150542.1169451-3-caixinchen1@huawei.com>
- <20261117184342.GR989762@ZenIV>
- <20261118001641.GA1669148@ZenIV>
- <20261118-woher-duften-bejubeln-7a8a2099f89f@brauner>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=e7xa1Dpj
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 99E921F000C4;
+	Thu, 19 Nov 2026 06:21:30 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795069291;
+	bh=btZ2TprQHQojMwnDwVX6xxEuU+pesarzzPhbHJEdoGg=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=e7xa1Dpj4IV+gGquktCuwkP8uLbLXtGks3wuXwt/tSMkOsmBjJ/0z/lSi6xpEE1if
+	 M+ClMf07lAH8kSdnFi7nUiv7E1oRGPNtacMDB0C9ZyZ9nVvpOERjMX8QaAKZ7lKRn4
+	 M1z2+y5hTJxFCzzBM0zcOMJWoXKpQIZjVMenn5ZU2BG85Fmxa/pgerSdcdz7kbKLdA
+	 QCVfwXzNN8zWPDBlSNSXrmUbYCk3O1GsxodMLXYujCtnvsjSw4DQj4SWvGVet8sWJk
+	 gjUyqjq21Sc89moWlZp69HUgI6J3icvNRaTO40aErPOsiyV3xe7t6GSDpp7+hZ+Auj
+	 I9xdx3hVfOiUQ==
+Date: Thu, 19 Nov 2026 08:21:27 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Paul Moore <paul@paul-moore.com>
+Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
+	linux-security-module@vger.kernel.org,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andy Lutomirski <luto@amacapital.net>,
+	Anna-Maria Behnsen <anna-maria@linutronix.de>,
+	Ben Segall <bsegall@google.com>,
+	Christian Brauner <brauner@kernel.org>,
+	David Hildenbrand <david@kernel.org>,
+	Davidlohr Bueso <dave@stgolabs.net>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Frederic Weisbecker <frederic@kernel.org>,
+	Ingo Molnar <mingo@redhat.com>, Jan Kara <jack@suse.cz>,
+	John Johansen <john.johansen@canonical.com>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
+	K Prateek Nayak <kprateek.nayak@amd.com>,
+	"Liam R. Howlett" <liam@infradead.org>,
+	Lorenzo Stoakes <ljs@kernel.org>,
+	Manfred Spraul <manfred@colorfullife.com>,
+	Mel Gorman <mgorman@suse.de>, Michal Hocko <mhocko@suse.com>,
+	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
+	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Serge Hallyn <sergeh@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Suren Baghdasaryan <surenb@google.com>,
+	Thomas Gleixner <tglx@kernel.org>,
+	Valentin Schneider <vschneid@redhat.com>,
+	Vincent Guittot <vincent.guittot@linaro.org>,
+	Vincenzo Frascino <vincenzo.frascino@arm.com>,
+	Vlastimil Babka <vbabka@kernel.org>,
+	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
+Subject: Re: [RFC PATCH v3 00/13] Namespace for namespace roots
+Message-ID: <av6VZ5NQG4GwYvPl@kernel.org>
+References: <20261118193539.240065-1-jarkko@kernel.org>
+ <av4CdM-eW73oO4wB@kernel.org>
+ <av4NonrcCxzMoDyz@kernel.org>
+ <av5-Zc4xhgkPxb7p@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -105,121 +96,68 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261118-woher-duften-bejubeln-7a8a2099f89f@brauner>
-Sender: Al Viro <viro@ftp.linux.org.uk>
+In-Reply-To: <av5-Zc4xhgkPxb7p@kernel.org>
 
-On Wed, Nov 18, 2026 at 09:51:27AM +0100, Christian Brauner wrote:
-> On Wed, Nov 18, 2026 at 12:16:41AM +0000, Al Viro wrote:
-> > On Tue, Nov 17, 2026 at 06:43:42PM +0000, Al Viro wrote:
-> > > > + * Hooks that take a struct path argument: the VFS only sanctions passing
-> > > > + * the path to VFS helpers that take a struct path (e.g. notify_change());
-> > > > + * it makes no guarantees with regard to path->mnt, whose layout and
-> > > > + * implementation details are subject to change.  Implementations must
-> > > > + * not rely on its properties.
+On Thu, Nov 19, 2026 at 06:43:21AM +0200, Jarkko Sakkinen wrote:
+> On Wed, Nov 18, 2026 at 10:42:10PM +0200, Jarkko Sakkinen wrote:
+> > > I.e. before PID 1 and /proc/<pid>/ns/* existss, nsfd for namespace other
+> > > than root nsfd can be acquired as follows:
+> > > 
+> > > 	int mnts_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
+> > 
+> > 
+> > Unprivileged caller becomes the owner of rootns->user_ns. Each mount
+> > syscall then just checks CAP_SYS_ADMIN against rootns->user_ns.
+> > 
+> > The user space wiring goes along the lines of:
+> > 
+> >         int root_fd = rootns_create(ROOTNS_KILL_ON_CLOSE | ROOTNS_CLOSE_ON_EXEC);
+> >         int mntns_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
+> > 
+> >         int tmpfs_fd = fsopen("tmpfs", 0);
+> >         fsconfig(tmpfs_fd, FSCONFIG_SET_ROOTNS, NULL, NULL, root_fd);
+> >         fsconfig(tmpfs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
+> >         int rootfs_fd = fsmount(tmpfs_fd, 0, 0);
+> > 
+> >         move_mount(rootfs_fd, "", mntns_fd, "/", MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_MNTNS);
+> > 
+> >         struct clone_args args = {
+> >                 .flags  = CLONE_INTO_ROOTNS,
+> >                 .rootns = root_fd,
+> >         };
+> >         pid_t pid = clone3(&args, sizeof(args));
 > 
-> That comment is a garbled version of an earlier review. It meant that
-> LSMs get no guarantees about struct vfsmount internals and don't get to
-> poke at them. I'm not sure how this can be read as path->mnt being a
-> random mount.
+> 
+> [BTW, this patch set is pointed out to David and not fsdevel mailing by a
+>  mishap, apologies.]
+> 
+> I reduced syscalls can be further to only a single syscall: rootns()
+> 
+> The complete API after this:
+> 
+> 1. rootns(flags)
+> 2. ioctl(rootfs_fd, ROOTNS_GET_NSFD, ns)
+> 3. ioctl(rootfs_fd, ROOTNS_WAIT, NULL)
+> 4. ioctl(rootfs_fd, ROOTNS_KILL, signum)
+> 
+> An updated version of the patch set is available over here:
+> 
+> https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git/log/?h=rootns
+> 
+> In order to find more evidence that the API is trimmed and code has no
+> extra fat, I tried how LSM hooks size-fit.
+> 
+> Attached are the experimental LSM hooks and while possibly not exactly
+> right they should not be at least in the ballpar (Paul?).
+> 
+> Not perfect, but very usable, and there's a steady track of convergence
+> where resolving a bottleneck leads into a better symmetry and coherency
+> overall.
 
-"no guarantees with regard to path->mnt" is easy to parse that way when one
-is stuck with a caller that needs to be converted to new API with no relevant
-mount reference in sight.
+Orthogonally, solely fd-local security model (as all is tied to fd) is
+the best thing ever when defining mandatory access control policies  as
+the full flow can be meaningfully described; i.e. roonts(), sendmsg()
+and other calls track the fd's data flow with almost the highest
+achievable granularity.
 
-> > > If that kind of stuff actually does get passed to any existing hooks, we need
-> > > to fix that ASAP.
-> 
-> Of course there is one...
-> 
->   dent = lookup_one_unlocked(idmap, &QSTR_LEN(...),
->                              priv->dir_fp->filp->f_path.dentry);
->   [...].
->   rc = ksmbd_vfs_fill_dentry_attrs(priv->work, idmap, dent, &ksmbd_kstat);
-> 
-> It passes only the bare dentry, and ksmbd_vfs_fill_dentry_attrs() then
-> makes up a path from the share's root mount:
-> 
->   struct path path = {
->           .mnt = share_conf->vfs_path.mnt,   /* mount the share is exported from */
->           .dentry = dentry,                  /* entry inside the listed dir */
->   };
->   rc = vfs_getattr(&path, ...);
-> 
-> since 5614c8c487f6 ("ksmbd: replace generic_fillattr with vfs_getattr").
-> 
-> So a client that lists a directory on a submount below the share then
-> that dentry belongs to another superblock. So security_inode_getattr()
-> and ->getattr() get a mixed path.
-
-So e.g. apparmor hits
-        vfsuid_t vfsuid = i_uid_into_vfsuid(mnt_idmap(path->mnt),
-					    d_backing_inode(path->dentry));
-with path->mnt having nothing to do with path->dentry there?  Fun...
-
-> The third patch in this series fixes this. But we should make this a
-> Fixes: patch really... Something like [1].
-> 
-> > To elaborate a bit: correctness of quite a few places does depend upon the
-> > following invaraint:
-> > 	path->mnt->mnt_sb == path->dentry->d_sb		(1)
-> > for all struct path pointers they might possibly run into.
-> >
-> > _IF_ you can guarantee that (1) is not violated, we have something to
-> > talk about; otherwise, don't call your object struct path and don't
-> > pass it to anything that expects to deal with struct path.
-> 
-> Every struct path the series constructs:
-> 
->   - devtmpfs
->   - nfsd
->   - cachefiles
->   - ecryptfs
->   - overlayfs
->   - ksmbd
-> 
-> doesn't have this bug.
-> 
-> [1]:
-> 
->   --- a/fs/smb/server/smb2pdu.c
->   +++ b/fs/smb/server/smb2pdu.c
->   @@ -6375,13 +6375,14 @@ static int process_query_dir_entries(struct smb2_query_dir_private *priv)
->                           continue;
->                   }
-> 
->   +               path.mnt = priv->dir_fp->filp->f_path.mnt;
->   +               path.dentry = dent;
->   +
->                   if (test_share_config_flag(priv->work->tcon->share_conf,
->                                              KSMBD_SHARE_FLAG_HIDE_UNREADABLE)) {
->                           __le32 daccess = FILE_READ_DATA_LE | FILE_READ_EA_LE |
->                                   FILE_READ_ATTRIBUTES_LE;
-> 
->   -                       path.mnt = priv->dir_fp->filp->f_path.mnt;
->   -                       path.dentry = dent;
->                           rc = smb_check_perm_dacl(priv->work->conn, &path,
->                                                    &daccess, daccess,
->                                                    priv->work->sess->user->uid,
->   @@ -6397,7 +6398,7 @@ static int process_query_dir_entries(struct smb2_query_dir_private *priv)
->   @@ -6397,7 +6398,7 @@ static int process_query_dir_entries(struct smb2_query_dir_private *priv)
->                   if (priv->info_level != FILE_NAMES_INFORMATION) {
->                           rc = ksmbd_vfs_fill_dentry_attrs(priv->work,
->                                                            idmap,
->   -                                                        dent,
->   +                                                        &path,
->                                                            &ksmbd_kstat);
->                           if (rc) {
->                                   dput(dent);
->   --- a/fs/smb/server/smb_common.c
->   +++ b/fs/smb/server/smb_common.c
->   @@ -472,32 +472,36 @@ int ksmbd_populate_dot_dotdot_entries(struct ksmbd_work *work, int info_level,
->           for (i = 0; i < 2; i++) {
->                   struct kstat kstat;
->                   struct ksmbd_kstat ksmbd_kstat;
->   -               struct dentry *dentry;
->   +               struct path path = { .mnt = dir->filp->f_path.mnt };
-
-That's just asking for breakage down the road.  Just pass it
-the address of ->f_path for "." and
-	&(struct path){.mnt = dir->filp->f_path.mnt, .dentry = dentry}
-for ".." (and sod the dentry = dget(...) for "." - just have it NULL there)
+Br, Jarkko
