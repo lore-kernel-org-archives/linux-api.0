@@ -1,52 +1,50 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795102597;
-	b=q0NX0u7yjb5Ndj+rw+gb7qG5vqKGKvozioaEBchr4IEWJxWEaBiQ2Az5zcEYnOmtEfxc
-	 +5vbJXB5e+qT8i+uvJqkiil3AiBUrAkAMr7atzmmAtHlnEtQoZD5ZeW+iH5Wp/3gFHyXT
-	 ET+idJypQzgGPo/LUE+tBk7vmQfsMqC9H8GMwxEDA1ZPt3DCWFKKYATiahuB7sI+Mt/ju
-	 AgPIWQwFIAnxWi9clYGOVBpuqvFxemBfNnnchqHu1RwxHL2rcRNT+E/rBWh+1Vck9poUz
-	 TVouelW7OES1+Jk4N6PfFW5Y/s/6lWFdEXRczSQme55ydXiY+vM9aaqhVIwxp7t5DmA==
+	t=1795102598;
+	b=iznRqC3246oZT7jBMePEZfV2chEZgDVDcJjE/2Z0ZcOX0i6FrCqWV7I+OJxQWr2zUPcl
+	 fgjyUqH44kNXBTaAq9OpF1OEVOn7+rrildgp8sFoprI52OXCDv7xMDM4w21154SwiBGbo
+	 qvjuDnG4B8gVXXy4I6Qsp9HxNnW6fKkuc/kSSfMODTSuS9FvjKPsuTp1/aqn+95qfdNfL
+	 2ztnIiwphoPbxbRXi23/PQEFkRVjv7vJcQLQFywLRa5qZLE0mkEAKT2wMAT4fcPWPIl5I
+	 g5Ld0/HpKmaZBgdCS+jurXRLcQvKUSR49xgjY5xkNQ6HWfq8NrotMAaiaR8CJwr9dKQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795102597;
-	h=DMARC-Filter:Received:Received:DKIM-Signature:From:Subject:Date:
-	 Message-Id:MIME-Version:Content-Type:Content-Transfer-Encoding:
-	 X-B4-Tracking:To:Cc:X-Mailer;
-	bh=H4yit5SDhOFjRfJFYgJaFUlDDWjSPvM5/XqvlQS4pFA=;
-	b=Na4Mcin5L7y2o//AtshEmAcUTmqIo+hAULrBRr82ahmOBS/r3Snxe7dLUGaFSZUZgutK
-	 jh+xsm812V+ttJA4nBFGeJdcazLJjKNUJMdnN2h7iJvGYEFZZXdmqH8BS1RGG4n60/wwq
-	 5SIQn6rZC6o5f5slsSjeklpp/HzeJBjfq7QroLlOUVCa4b2xzDwOLFzZHuL4u8X3REzJo
-	 WGhPNpj49COa1/eeqzymIJKnN7OC4yRvingiV/HhFS4Mb93lGOSXxk1XkqbpsW2GjsNzf
-	 puJwwFEENcTHE/g2itHbZrdt/fU1IE+pk2sXHj8Hcks1ZUML5H3QKBTG6wDdHF0N2Ug==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795102598;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:From:Date:Subject:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:Message-Id:
+	 References:In-Reply-To:To:Cc:X-Mailer;
+	bh=d3xYow8ORTqrFcj+TCUVwlzJAP68PZhkX5ooYPd2dsw=;
+	b=an6J+6WvjIUcbu1MvxLI+ZMygPxWsaIsObKpLeTd/N569e7f/HR6iSTnu3B9twdI6bm3
+	 G9+74YWe2+Dr+W9AYblnIp2TcBOwlcXTL+SK8pqTHHVpwtKecaSKV/nIETxZSUIfONGMt
+	 ohH9HXLT8H2cPfFKtQFmdjYpj1CwkrH0ZUDtt1GqmHQ0xvauAHq38x6C5VGEbmRbGn/N2
+	 bN9n6vjW9fwMyLp5wqUHyggE5VV5f62SbZDUzoBfguTnV8TEpTGt0ArUHuhmHFcvoF17d
+	 hZCZwOraFvOS7TW/ec+C2fmnGGsnEjcxB9Z4KivtKmLOJcj06F/sW8ADE5hbAj5f5SA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=arm.com;
 	spf=pass smtp.mailfrom=arm.com;
-	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=AvPv5gbz;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=GoapcUJi;
 	arc=none smtp.remote-ip=217.140.110.172
 Received: from foss.arm.com (foss.arm.com [217.140.110.172])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id D7CF860A2602;
-	Thu, 19 Nov 2026 15:36:35 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D7CF860A2602
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id AA03160A2600;
+	Thu, 19 Nov 2026 15:36:37 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AA03160A2600
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=AvPv5gbz
+	dkim=pass (1024-bit key) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=GoapcUJi
 Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
-	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 0F5D01575;
-	Thu, 19 Nov 2026 07:36:32 -0800 (PST)
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 265C619F0;
+	Thu, 19 Nov 2026 07:36:34 -0800 (PST)
 Received: from e142430.arm.com (e142430.arm.com [10.33.10.110])
-	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 2594E3F882;
-	Thu, 19 Nov 2026 07:36:33 -0800 (PST)
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 4A49F3F882;
+	Thu, 19 Nov 2026 07:36:35 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
-	t=1795102595; bh=F/IW7r05sEPQU7RmKMophY+HTf4SbgNHPg1LXJ+0/7s=;
-	h=From:Subject:Date:To:Cc:From;
-	b=AvPv5gbzj+pDeoOd2ToVmOfNzetkdOnqKDeIvzzbJSjqfvJawl8Dx7dXaOjNNm80U
-	 gGYWYr/ixLyk8l6+AI6HXgPWdB4uPfhX2PSPT27QXE66hTOaLjPxcRVq9uqzQHuXhl
-	 /T+RfZqr6whanh7HSkRCi/2iE6bSoRRDpzZiB6DA=
+	t=1795102597; bh=DQpZ0nokIMPkbzWDv1VnKuDKQss11s/mtOoOxrD723Q=;
+	h=From:Date:Subject:References:In-Reply-To:To:Cc:From;
+	b=GoapcUJi0pEeZnV4ebNl7TPRMHBPOxytGhq88+ncGTO6vM1Z1oYs1qIWkfTfxwg71
+	 vKH5zkh5ee4gAY2sV3k5E+jhinc9tjA6zl6cBs/jwfpkRew5OKQCv+uuTJNn8B+K8E
+	 vmghNQuKLsHfYA6LxbJnY1ZWQjQtzk+oSD1in7eA=
 From: Ahmed Azeem <ahmed.azeem@arm.com>
-Subject: [PATCH RFC 0/4] firmware: arm: Add Platform Fault Detection
- Interface support
-Date: Thu, 19 Nov 2026 15:36:02 +0000
-Message-Id: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-0-4772d18b9115@arm.com>
+Date: Thu, 19 Nov 2026 15:36:03 +0000
+Subject: [PATCH RFC 1/4] uapi: firmware: arm: Add PFDI userspace ABI
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -58,9 +56,9 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-X-B4-Tracking: v=1; b=H4sIAGIX/2oC/x2NQQ6CQAwAv0J6tgmLQMSrCQ/wajyUpbg9LGxaN
- EbC3109zhxmNjBWYYNzsYHyS0yWOYM7FOADzQ9GGTNDVVatc67DdUniDSlE+nDp8JlsVaaIaRo
- FdfLYHGt/arp6rNoWcicpT/L+P25w7S9wz3IgYxyUZh9++Ui2ssK+fwEWYBH9kQAAAA==
+Message-Id: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-1-4772d18b9115@arm.com>
+References: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-0-4772d18b9115@arm.com>
+In-Reply-To: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-0-4772d18b9115@arm.com>
 To: linux-arm-kernel@lists.infradead.org, 
  Sudeep Holla <sudeep.holla@kernel.org>
 Cc: Jonathan Corbet <corbet@lwn.net>, 
@@ -72,155 +70,265 @@ Cc: Jonathan Corbet <corbet@lwn.net>,
  Ahmed Azeem <ahmed.azeem@arm.com>
 X-Mailer: b4 0.13.0
 
-Hi all,
+From: Divin Raj <divin.raj@arm.com>
 
-This series proposes an arm64 driver for the Arm Platform Fault
-Detection
-Interface (PFDI), providing a common Linux interface for privileged
-userspace to discover and invoke firmware diagnostics.
+Define the userspace ABI for the Arm Platform Fault Detection
+Interface (PFDI).
 
-We are posting this series as an RFC to seek community feedback on both
-the proposed Linux interface and the underlying firmware specification
-before the specification is finalized. This series and its validation
-use
-the PFDI 1.0 ALP0 specification [1]. The current public revision is PFDI
-1.0 BET0 [2]. Feedback on the software integration will help identify
-any
-changes needed to align an upstream implementation with the evolving
-specification.
+Subsequent commits introduce a driver that exposes a per-CPU misc
+device. The ioctl definitions, data structures, and return codes
+must therefore be shared with userspace. Add these definitions to
+a UAPI header and document the ABI for /dev/cpu/<cpu>/pfdi.
 
-PFDI defines firmware calls for discovering a PE's test engine and test
-parts, executing online tests, retrieving out-of-reset test results,
-checking
-firmware integrity, and injecting responses to validate error handling
-[1].
-Trusted Firmware-A documents an implementation of these services [3].
+Placing the interface under include/uapi ensures availability via
+headers_install and clearly identifies it as a userspace contract.
 
-A practical use case is a safety-critical or high-availability platform
-that uses manufacturer-provided software tests in firmware to detect
-faults at boot and during operation. These tests can complement hardware
-error-detection mechanisms by targeting failure modes that those
-mechanisms do not cover. Firmware performs the boot-time tests, Linux
-software can retrieve their results and request online tests at
-intervals
-chosen by the platform's diagnostic application. The diagnostic coverage
-depends on the tests implemented by the platform.
+Link: https://developer.arm.com/documentation/110468/1-0alp0
 
-The Linux use case is a privileged diagnostic application that needs to
-discover the tests available on a CPU, run a selected range, and
-retrieve
-the outcome, including a failing test identifier where firmware provides
-one. A common driver and documented userspace ABI would allow that
-application to use the same interface across platforms implementing
-PFDI,
-while keeping the test implementation in platform firmware.
-
-Kernel mediation is needed to issue the SMC calls and coordinate them
-with
-CPU placement and lifetime. PFDI operations are PE-local [1], so
-executing
-a request on the intended CPU is part of the interface's correctness.
-The proposed driver uses a worker bound to each target CPU and exposes
-/dev/cpu/<cpu>/pfdi. Requests and results are carried through typed
-ioctls;
-device nodes default to mode 0600, and each CPU device permits one open
-owner at a time.
-
-The driver leaves the choice of test ranges, execution frequency, and
-response to a reported fault to userspace. It adds no periodic test loop
-or automatic recovery policy. The intended upstream benefit is a shared
-firmware access mechanism that platform diagnostic tools can build on,
-without embedding their deployment-specific policy in the kernel.
-
-The four patches provide:
-
-1. A UAPI header, ioctl allocation, ABI documentation, and MAINTAINERS
-   entry.
-2. The firmware driver, per-CPU devices, and query operations.
-3. Test execution, out-of-reset result retrieval, and error injection.
-4. Worker serialization and CPU hotplug lifetime handling.
-
-Error injection is included to exercise the software path that consumes
-PFDI responses. The proposed ABI also returns the firmware's 64-bit
-failing
-test identifier for test execution and out-of-reset result queries.
-
-Arm's public reference software documentation describes firmware, Linux
-driver, and userspace components for a PFDI stack [4]. Its default
-reference
-test backend is a placeholder, so this provides integration context
-rather
-than evidence of hardware diagnostic coverage.
-
-Validation of this revision:
-
-Runtime validation was performed on Arm Zena CSS using its reference
-PFDI
-firmware and userspace stack, exercising service startup, per-core
-diagnostic execution, out-of-reset result queries, CLI operations,
-monitoring, and forced-error handling. As the default reference firmware
-test backend is an integration placeholder rather than a production test
-library, this validates the end-to-end userspace, Linux, SMC, and
-firmware
-paths rather than hardware diagnostic coverage.
-
-I would appreciate feedback on the specification's suitability for Linux
-integration, the proposed per-CPU ioctl ABI, the worker and hotplug
-model,
-and whether this belongs under drivers/firmware. In particular, is this
-the right scope for a common PFDI interface, and should error injection
-be exposed separately from normal diagnostic operations?
-
-[1] Arm Platform Fault Detection Interface Specification, document
-110468,
-    version 1.0 ALP0:
-    https://documentation-service.arm.com/static/68593b17961937560be90fbe
-
-[2] Arm Platform Fault Detection Interface Specification, document
-110468,
-    version 1.0 BET0:
-    https://support.arm.com/documentation/110468/1-0bet0/?lang=en
-
-[3] Trusted Firmware-A PFDI implementation documentation:
-    https://tf-a.docs.trustedfirmware.org/en/latest/components/pfdi.html
-
-[4] Arm Zena CSS PFDI design documentation:
-    https://arm-zena-css.docs.arm.com/en/latest/design/platform_fault_detection_interface.html
-
-To: linux-arm-kernel@lists.infradead.org
-To: Sudeep Holla <sudeep.holla@kernel.org>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: Mark Rutland <mark.rutland@arm.com>
-Cc: Lorenzo Pieralisi <lpieralisi@kernel.org>
-Cc: linux-api@vger.kernel.org
-Cc: linux-doc@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: Divin Raj <divin.raj@arm.com>
-Cc: Bertrand Marquis <Bertrand.Marquis@arm.com>
-
+Signed-off-by: Divin Raj <divin.raj@arm.com>
 Signed-off-by: Ahmed Azeem <ahmed.azeem@arm.com>
 ---
-Divin Raj (4):
-      uapi: firmware: arm: Add PFDI userspace ABI
-      firmware: arm: Add PFDI misc driver skeleton
-      firmware: arm: Add PFDI run, result, and error injection support
-      firmware: arm: Harden PFDI worker and hotplug handling
-
- Documentation/ABI/testing/dev-cpu-pfdi             | 103 +++
+ Documentation/ABI/testing/dev-cpu-pfdi             | 103 +++++++++++++++++++++
  Documentation/userspace-api/ioctl/ioctl-number.rst |   1 +
- MAINTAINERS                                        |   8 +
- drivers/firmware/Kconfig                           |  14 +
- drivers/firmware/Makefile                          |   1 +
- drivers/firmware/arm_pfdi.c                        | 948 +++++++++++++++++++++
- include/uapi/linux/pfdi.h                          |  89 ++
- 7 files changed, 1164 insertions(+)
----
-base-commit: 20eef29b7c8465ac98d7dd6d6f2ac07a8d8056ca
-change-id: 20261119-topics-ahmaze01-upstream-pfdi-rfc-534c8594d266
+ MAINTAINERS                                        |   7 ++
+ include/uapi/linux/pfdi.h                          |  89 ++++++++++++++++++
+ 4 files changed, 200 insertions(+)
 
-Best regards,
+diff --git a/Documentation/ABI/testing/dev-cpu-pfdi b/Documentation/ABI/testing/dev-cpu-pfdi
+new file mode 100644
+index 000000000000..e07ed6baa7f8
+--- /dev/null
++++ b/Documentation/ABI/testing/dev-cpu-pfdi
+@@ -0,0 +1,103 @@
++What:		/dev/cpu/<cpu>/pfdi
++Date:		May 2026
++KernelVersion:	6.18
++Contact:	Linux ARM Kernel Mailing list <linux-arm-kernel@lists.infradead.org>
++Reference:	Arm Platform Fault Detection Interface, document 110468,
++		version 1.0 ALP0
++Description:	Per-CPU Arm Platform Fault Detection Interface (PFDI) misc
++		device nodes. Each node targets the CPU encoded in its
++		path and exposes the PFDI service implemented by firmware.
++		PFDI uses the Arm SMCCC SMC64 calling convention and is
++		PE-local. Userspace is therefore expected to bind itself to
++		the target CPU before opening or issuing ioctls on the
++		matching device node. Each node is single-open: only one
++		userspace owner at a time may hold /dev/cpu/<cpu>/pfdi for a
++		given CPU. Additional open attempts fail with -EBUSY while the
++		device is already open.
++
++		The ABI is defined in <linux/pfdi.h>. The following ioctls
++		are supported:
++
++		* PFDI_IOCTL_VERSION
++		  Read the PFDI version for the target CPU. On success the
++		  ioctl returns 0 and copies a 32-bit version value to
++		  userspace with the following layout:
++		  Bits[30:16] PFDI major version
++		  Bits[15:0] PFDI minor version
++
++		* PFDI_IOCTL_FEATURES
++		  Query whether a PFDI function ID is supported on the
++		  target CPU. Userspace passes a 32-bit PFDI function ID.
++		  The ioctl returns 0 when the function is supported,
++		  and -EOPNOTSUPP when it is not supported on the target
++		  CPU, reserved by the specification, or otherwise not
++		  recognized by firmware.
++
++		* PFDI_IOCTL_PE_TEST_ID
++		  Read the test engine identifier for the target CPU.
++		  On success the ioctl returns 0 and copies a 64-bit value to
++		  userspace with the following layout:
++		  Bits[63:32] reserved and zero
++		  Bits[31:24] vendor ID
++		  Bits[23:20] reserved and zero
++		  Bits[19:16] vendor-defined implementation ID
++		  Bits[15:8] major version
++		  Bits[7:0] minor version
++
++		* PFDI_IOCTL_PE_TEST_PART_COUNT
++		  Read the number of available test parts for the target
++		  CPU. On success the ioctl returns 0 and copies a signed
++		  64-bit count to userspace. The smallest schedulable unit is
++		  a test part, and valid test part indices are in the range 0
++		  to count - 1.
++
++		* PFDI_IOCTL_PE_TEST_RUN
++		  Run a requested inclusive test part range on the target
++		  CPU. struct pfdi_test_run.range.start and .end are signed
++		  64-bit values.
++		  Passing start = -1 and end = -1 requests execution of all
++		  available test parts on the target CPU. Any mixed use of
++		  -1, reversed ranges, out-of-range indices, or non-zero
++		  reserved arguments is rejected with -EINVAL, either by the
++		  kernel before the request is issued or by firmware.
++		  If firmware reports PFDI_RET_FAULT_FOUND, the ioctl returns
++		  -EFAULT and copies a signed 64-bit failing test part
++		  identifier to struct pfdi_test_run.ft_id. If the failing
++		  part cannot be identified, ft_id is set to
++		  PFDI_RET_UNKNOWN.
++
++		* PFDI_IOCTL_PE_TEST_RESULT
++		  Fetch the stored out-of-reset test result for the target CPU.
++		  If firmware reports PFDI_RET_FAULT_FOUND, the ioctl returns
++		  -EFAULT and copies a signed 64-bit failing test part
++		  identifier to userspace. If the failing part cannot be
++		  identified, the copied value is PFDI_RET_UNKNOWN. If no
++		  power-on tests were executed on the target CPU, the ioctl
++		  returns -EAGAIN.
++
++		* PFDI_IOCTL_FW_CHECK
++		  Ask firmware to execute platform firmware resident software
++		  integrity checks. The ioctl returns 0 when no fault is
++		  detected. It returns -EFAULT when firmware reports a fault.
++		  Platforms that do not implement firmware integrity checks
++		  still report success.
++
++		* PFDI_IOCTL_FORCE_ERROR
++		  Schedule injection of a specific PFDI return value for the
++		  next invocation of a selected PFDI function on the same
++		  CPU. The requested function ID must be a supported PFDI
++		  function IDs. Only one pending injected error is permitted
++		  per CPU and function, and a new request replaces any older
++		  undelivered request for the same pair. When the injection
++		  is delivered, firmware returns the injected value in x0 and
++		  zeros x1 to x4.
++
++		These device nodes reflect the PFDI 1.0 ALP0 specification.
++		PFDI state is not persistent across reset or firmware update;
++		userspace must rediscover capabilities and any test state
++		after such events.
++
++		These nodes are intended for platform bring-up and validation.
++		Access should therefore be restricted to privileged software.
++
++Users:		Platform validation and manufacturing test tools
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index dbe462040999..aa5a6cf20d3c 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -170,6 +170,7 @@ Code  Seq#    Include File                                             Comments
+ 'I'   all    linux/isdn.h                                              conflict!
+ 'I'   00-0F  drivers/isdn/divert/isdn_divert.h                         conflict!
+ 'I'   40-4F  linux/mISDNif.h                                           conflict!
++'J'   01-08  linux/pfdi.h                                              Arm Platform Fault Detection Interface
+ 'K'   all    linux/kd.h
+ 'L'   00-1F  linux/loop.h                                              conflict!
+ 'L'   10-1F  drivers/scsi/mpt3sas/mpt3sas_ctl.h                        conflict!
+diff --git a/MAINTAINERS b/MAINTAINERS
+index d738990161bd..de9c296d1de1 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14012,6 +14012,13 @@ F:	drivers/iommu/iova.c
+ F:	include/linux/iommu-dma.h
+ F:	include/linux/iova.h
+ 
++Platform Fault Detection Interface - ARM PFDI
++M:	Ahmed Azeem <ahmed.azeem@arm.com>
++L:	linux-arm-kernel@lists.infradead.org (moderated for non-subscribers)
++S:	Maintained
++F:	Documentation/ABI/testing/dev-cpu-pfdi
++F:	include/uapi/linux/pfdi.h
++
+ IOMMU SUBSYSTEM
+ M:	Joerg Roedel (AMD) <joro@8bytes.org>
+ M:	Will Deacon <will@kernel.org>
+diff --git a/include/uapi/linux/pfdi.h b/include/uapi/linux/pfdi.h
+new file mode 100644
+index 000000000000..e3b7fe19daf4
+--- /dev/null
++++ b/include/uapi/linux/pfdi.h
+@@ -0,0 +1,89 @@
++/* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
++/*
++ * Arm Platform Fault Detection Interface (PFDI) userspace ABI
++ *
++ * Copyright (C) 2026 Arm Ltd.
++ */
++
++#ifndef _UAPI_LINUX_PFDI_H
++#define _UAPI_LINUX_PFDI_H
++
++#include <linux/ioctl.h>
++#include <linux/types.h>
++
++/*
++ * SMC function IDs for PFDI v1.0.
++ * These follow the SMCCC fast-call, 64-bit, Standard Secure Service encoding.
++ */
++#define PFDI_FN_BASE			0xC40002D0U
++#define PFDI_FN(n)			(PFDI_FN_BASE + (n))
++
++#define PFDI_FN_VERSION			PFDI_FN(0x00)
++#define PFDI_FN_FEATURES		PFDI_FN(0x01)
++#define PFDI_FN_PE_TEST_ID		PFDI_FN(0x02)
++#define PFDI_FN_PE_TEST_PART_COUNT	PFDI_FN(0x03)
++#define PFDI_FN_PE_TEST_RUN		PFDI_FN(0x04)
++#define PFDI_FN_PE_TEST_RESULT		PFDI_FN(0x05)
++#define PFDI_FN_FW_CHECK		PFDI_FN(0x06)
++#define PFDI_FN_FORCE_ERROR		PFDI_FN(0x07)
++
++#define PFDI_VERSION_MAJOR_SHIFT	16
++#define PFDI_VERSION_MAJOR_MASK		0x7FFFU
++#define PFDI_VERSION_MINOR_MASK		0xFFFFU
++
++#define PFDI_VERSION_MAJOR(ver) \
++	(((ver) >> PFDI_VERSION_MAJOR_SHIFT) & PFDI_VERSION_MAJOR_MASK)
++#define PFDI_VERSION_MINOR(ver)		((ver) & PFDI_VERSION_MINOR_MASK)
++#define PFDI_VERSION(maj, min) \
++	((((maj) & PFDI_VERSION_MAJOR_MASK) << PFDI_VERSION_MAJOR_SHIFT) | \
++	 ((min) & PFDI_VERSION_MINOR_MASK))
++
++/* PFDI return values */
++#define PFDI_RET_TEST_COUNT_ZERO	(-8)
++#define PFDI_RET_UNKNOWN		(-7)
++#define PFDI_RET_NOT_RUN		(-6)
++#define PFDI_RET_ERROR			(-5)
++#define PFDI_RET_FAULT_FOUND		(-4)
++#define PFDI_RET_INVALID_PARAM		(-3)
++#ifndef SMCCC_RET_NOT_SUPPORTED
++#define SMCCC_RET_NOT_SUPPORTED		(-1)
++#endif
++#ifndef SMCCC_RET_SUCCESS
++#define SMCCC_RET_SUCCESS		0
++#endif
++
++struct pfdi_test_range {
++	__s64 start;
++	__s64 end;
++};
++
++struct pfdi_test_run {
++	struct pfdi_test_range range;
++	__s64 ft_id;
++};
++
++struct pfdi_force_error {
++	__u32 smc_fid;
++	/* Keep the ioctl layout identical for native and compat userspace. */
++	__u32 reserved;
++	__s64 error_id;
++};
++
++#define PFDI_IOCTL_VERSION \
++	_IOR('J', 1, __u32)
++#define PFDI_IOCTL_FEATURES \
++	_IOW('J', 2, __u32)
++#define PFDI_IOCTL_PE_TEST_ID \
++	_IOR('J', 3, __u64)
++#define PFDI_IOCTL_PE_TEST_PART_COUNT \
++	_IOR('J', 4, __s64)
++#define PFDI_IOCTL_PE_TEST_RUN \
++	_IOWR('J', 5, struct pfdi_test_run)
++#define PFDI_IOCTL_PE_TEST_RESULT \
++	_IOR('J', 6, __s64)
++#define PFDI_IOCTL_FW_CHECK \
++	_IO('J', 7)
++#define PFDI_IOCTL_FORCE_ERROR \
++	_IOW('J', 8, struct pfdi_force_error)
++
++#endif /* _UAPI_LINUX_PFDI_H */
+
 -- 
-Ahmed Azeem <ahmed.azeem@arm.com>
+2.43.0
 
