@@ -1,78 +1,104 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795081729;
-	b=BpZVzyDAs3Fi3Sd3Hlv7pcAI8zYGBUFBTLISppfUCFdHeY4HXfNVWE+vS4V0gftqpyWP
-	 XdOdmuTc4RDblutEu7/Y6/CHmZ4nqA5CIDvqCH20fQ9JD5zsixQKwtjjI2/qhpi8md+2V
-	 mM796zEEc4wcx8cecVkRfXMJmc1QDNEz+vzVTf26KBp4Qn96wuDpkJv0l62maE4re0ihW
-	 XbsqfO61mTTyuTfaYvinosuFmLgfSXYM2t91YpbysCez1OGKHsMl2Nbd4HvvFvj47rm2L
-	 JWh3kMoe5pJ172HkQprjqkRU2I4H8zE8D9p5zumMizb+4pmUFv/BaLBQEgQWVCvAJqw==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795081729;
-	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
-	 Content-Type:Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
-	b=YcS5Tyf8jMRXkSPQblBa4V8T1310vq45WNBbbUX4RCCdtYjfVsphwDvtRyMPJvd1wV8I
-	 S0rQ1zYRzADTITg63V/wt6DWihe1NOXm6g2KgtmdinIMPr4dnaruchvL0Y5mTSRtez4Kq
-	 oAOIr7mDt2EBw0Blz94uGONS1N/L20j7yUcay4F2mlrc40QXPrnvzMQlGFqg/fL1Kn0Tf
-	 +PUWpz/kQcMSV2scqusAByarJ3GqdAFhq04eHbTx8yIU3uWxPxX16WuQKxiqBHbbQziWI
-	 8xsHN3+xvwyOBukyB26bh5BT2ZctdMNhIML4JbsbvDFhmcaHLO/HkgW9c8JvT6lJdZA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CA0Jifub;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8F68606A320;
-	Thu, 19 Nov 2026 09:48:48 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CA0Jifub
-Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
-ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
-	t=1795081728;
-	b=E0tBF+d0g01McuoEXV82ofJuLCoSBJ5iAQnfBYaseesOs3b09SYzL5ZZJTlWTrV2lZBV
-	 8Q82vJBv16AAFtgOXZvJeo8zIhbp1Xx/oEGRF5C5qFaDQp02z47bEVxNKjawsJsDIJtHU
-	 pF1DkzRTb8EkxnYhyz94hxlEQjOvR9/is+weIKV8AWvSwH84A2vd1S/+sLtiF5HF+A14D
-	 ylwMmkZGfLDCMH+ltDjIIKQNubkYmKs8EegYU4KH6SK/GEiUEWcurO50cqHevB8dhaX9/
-	 3o5kEffQShFLNwasJYh1SDUdtGs8SIgNFjmF89z/iCx9jfD5LnGJnbu7D64LTqJ187Q==
-ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
-	c=relaxed/relaxed; t=1795081728;
-	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
-	 Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
-	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
-	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
-	b=ULFlw2c1bxGu5BfrReXGMictl77HGielQGMbD6WsKUPH1mvQkBhAkvr/WH1C6qfmgwGe
-	 xWzOrpicBsXGCHscQFIeVrO75kdnQjC+ZaFMz32gXs6uFMTtZfL+34XZtf8lu0ao9WAWd
-	 WQlKZmUlXS3/sZx4C0Rvf+ZihV8t9fE6LY7gPZiVPVOnanrKVIypaYJNqG/JQEfewDQ9o
-	 HwLR0ERFVC7XXuxppUIL0RaXouCTUsN2bQYkT/7U9XcnfSuIdB9meexNf+zScziYvFFUi
-	 KX0ZbuRBuJLtayNl53Bkeoza7BE6FYMiVYRnaQv7eKxw7AoWE6LWg5Htgk/sfCjxszg==
-ARC-Authentication-Results: i=1; smtp.kernel.org; 
-	arc=none smtp.remote-ip=100.80.115.77
-Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.208.178
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795082461;
+	b=GLn68kK+6oSr2TYi7io+iURH1zuZJls1bu4m3aTJrUNLGestoooVszv7L5iMzNNX7yb4
+	 I4wg8xRVaNmzcgKkkARDZF8o3n1s2Dg3sb7agiwebEdZR+T/T1gqq/D0svlXUxr9a+6Az
+	 GgV7buUSxwlHawKmWUx0ULvwcQjEGSXDu8o+k+N78tQeBXjnHlxuElNoSTVRpIee03mmQ
+	 tsPqhMlTHmdwNFetVJtR9RVXbtSy1HXtk6QJQtLoXeaqu/HZfVb8Diz9wRTJLM2zB6+w+
+	 qCQijwoaL8q3TyKHKMIi1Q4HgGxBQG4G4muDKLM0BONZyPD4BB5YH4VNx8eZm4GiOQQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795082461;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=bQXf7a2tchZd0sm6ejvBeIAXUJshrV4kEWj9Zx7JZ6o=;
+	b=syrVFVEJ4RTpLzlmrQWEy+Ii4Z4MZk5x4VTv3+mtAehzk/ZKrUkvk3vaE2gVtTlyZBhP
+	 a2diNo9vMy8MEc8ZxDTVs9WnljTw1TVHAje3e4uxKsVZJZ8fSBhKfYU61nOxxh5cR8jca
+	 gzp2rfa69oejJCCiXYKpM62xCxWkPCivH6wxtqlfTWOzoRraZ63MchBwNMzXb24BTjJeB
+	 uagDp4DcodTUemW0g5sMe9hKlDfyR9socgxBJVfYtQpgSiAX4PooaIX+u1iFmSfAJ+tD2
+	 jvBiBlEsAbcOwIWkIP3dxPCTskFoO/2/s2tnPlDAE6rXksQZrc3ug0uVTcsy8J95sKA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=qQtx8HcI;
+	arc=none smtp.remote-ip=209.85.208.178
+Received: from mail-lj1-f178.google.com (mail-lj1-f178.google.com [209.85.208.178])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.kernel.org (Postfix) with ESMTPS id E61521F000C4;
-	Thu, 19 Nov 2026 09:48:47 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795081728;
-	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
-	h=From:Date:Subject:To:Cc:Reply-To;
-	b=CA0JifubC91hEHefqtbvm/LWAf/4mBz1m5sqSLBR5q7HB5/CTef777sDCzdlEd9qh
-	 D9SGwTa3lP5TyMWjin0c5o96vVk2ONzT7DXKbbBpuTBe7XUpccTCnboMnX5VMK1cpg
-	 MHhTQ5S0kKoaRDHA/5UgpO+9dUP1nMo0QA9RsEw6SFkLMmbZ2eoKB6e72omRZcoPmH
-	 nXLpcIs9j3eodSp3Z81f1l5SkxRrmaMAsBCFgpcFMFkV/k++0NwvcM5ExrhNIoeMHi
-	 iitmZzLlV0nGySp76tWYxu5uW5R1QMNkxxT9K2LkwDVUez9oCW75bm71eWIY7Kii3u
-	 XoH84aEK3ySnw==
-Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
-	by lkml.kernel.org (Postfix) with ESMTP id 630804B1F2;
-	Thu, 19 Nov 2026 09:48:47 +0000 (UTC)
-From: Peder Bergan via B4 Relay <devnull+peder.bergan.gmail.com@kernel.org>
-Date: Thu, 19 Nov 2026 10:48:47 +0100
-Subject: [PATCH] rust: drm: enable standard fdinfo for Rust drivers
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2A42D606A337
+	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 10:01:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2A42D606A337
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=qQtx8HcI
+Received: by mail-lj1-f178.google.com with SMTP id 38308e7fff4ca-3acd523a802so18989801fa.2
+        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 02:01:01 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795082459; x=1795687259; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=bQXf7a2tchZd0sm6ejvBeIAXUJshrV4kEWj9Zx7JZ6o=;
+        b=qQtx8HcI9xOYAewqsC1qeKXYpNZYkorGxO+WUf8GNlozJTjTfjp6RYu0ME9dnQS7SU
+         QlKY2a5rrUaalMRM2QkFx1q2fMNmh0+6Kx9oHBLriNElluMZgw2IJqtD+3DSP2pgxNzk
+         2TmsS6xkE/qzDTWdZfTpZ+KAbD1lTDxAfFCzr6drsaxvmeBYV8fzzvm70Eui4lhqXTnh
+         HgbHImFNfpvHwHXydOauwOfe17ING4Q6TVfyd4rcZEWzKr9mr4fzMJ+Vemn7/3JBMyOg
+         1EBPQX8TZZCNUbaVOuHs0Ki+dm4jvN/9bSy06FQShgIIqQcy0wSxBtWSC2/KV4f07jNA
+         MUdw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795082459; x=1795687259;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=bQXf7a2tchZd0sm6ejvBeIAXUJshrV4kEWj9Zx7JZ6o=;
+        b=1+hm6fTIaMwwZjpeNAlotCucWF/pqmMxVHM87VPxlZSQX8R1CPIqeHEf3OLnaE8AeM
+         hcAbVlKXuzK4xXnqm2bU1yosd45AIirww/WGp4CEjtMJD/a6vtYmeDBtIkxTd+BPgIgM
+         MqalYbRkpl+l3nu83GSJNg8zbv9D+C5+USS2nRC/GY+3YoKe+wY1mqyOIvaPE6sipNJF
+         mUqCRN6/IDALX8Qvn1imn4SRYBBgDJNaoR8/PPC87tXmNWz2I6S8kJJ0BVfCsxvrwBgk
+         xg24LmAiqCBMk0UfIyI+Q1xzJkRHVolG13Mo/CkzIzAxYxi50+rXEx0mjaMkLXGI+UWx
+         OYnA==
+X-Forwarded-Encrypted: i=1; AL+hErGNx4qydn4b4buu/vsb2UWRzSW3Ua+kPtH4yhmW1wibCzmDW2TWSJ0hzRr8TWBlHRD+0chwlQEmXZU=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+07/Z7gZ8y1g1c/tAvmwLsmUUEnnc2KaXGi7Zyc8LdCpwHeMzN
+	xCxZdZI+78cLehKN9kXG1FUemmJQsHqfNM7wIPKKb+arZvpX08gtQGUu
+X-Gm-Gg: AYBFou1S7vmdeiq7HP3tV1KMfRQTX1UuXYQkYidvJD7MmzTbPsoDmcBzv21q7L0zKIT
+	AFhMPPTL4NbqQl3MD+uZKv+yAxRLOitWRwjCk7gPu6j0pKowUEoVE+sM06YNxzDiPfmg8u3AqB/
+	ZON8VlF1T9jxkt/W4VUK4SYa4o0TDZ52VCXPkBc+pGqgvH+Q4qkWATHF57FVPcxyVAy8Yzss2RQ
+	bel+S9AkHH65ypWWt2GxDSaCWm397ygmdbjVuqVdxZTA8c8xopu0nDBZWTq01FyymKtA6PNT8gz
+	gxipOvCEbh++6sbjkeult8PZWtmvWOAaHBxMdPpB56T7pb1BLwUgEwchUVvS58g9EhZ6PcTjscZ
+	9c5npLxRR4/6miSWYpLzVkvvKRb1U69ZRYqKTMofZwFGqpU69K+ywQ3y/awVFD9bb5nFrMNyjV/
+	ppSLTd9rGZjbcQKusfpAqTufKrw8yY7fU35vaa1vHrY2RW/eU7DySI5sT08IEdq+vkSzr4Sn4H6
+	gDXYM0zG1ynEoU42uZG2cVcUe5gfBTJd2Qa05ZHYyAh9lLJXp1enCi/FbNvpw8Bj2tmGRWJQHBq
+	fxUYFNmh7NO3bzNi1cpVPWG/OA45pfsdjwARLh79wVZwDUjJaUqCqbmkS0F4mI+Eb7GCb21/H9k
+	7thZ/x8dV2nsQ7jl7QqL5fv+ThI44jb/LIGW1H9BAz2vKDpF73wAuIcI3cMU=
+X-Received: by 2002:a05:651c:1987:b0:3ac:7ad6:2003 with SMTP id 38308e7fff4ca-3ae670dda79mr17356091fa.6.1795082459145;
+        Thu, 19 Nov 2026 02:00:59 -0800 (PST)
+Received: from Lauri-G-Pro-14-M4.intra.lakuz.com (n2vuxeervp7z67jbft6-1.v6.elisa-laajakaista.fi. [2001:99a:2ab:bb00:352b:8deb:4901:b3ca])
+        by smtp.gmail.com with ESMTPSA id 38308e7fff4ca-3ae6ea7c798sm8419451fa.11.2026.11.19.02.00.56
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Thu, 19 Nov 2026 02:00:57 -0800 (PST)
+From: Lauri Gates <lauri.gates@gmail.com>
+To: Dave Chinner <dgc@kernel.org>
+Cc: Christian Brauner <brauner@kernel.org>,
+	Christoph Hellwig <hch@infradead.org>,
+	linux-xfs@vger.kernel.org,
+	Carlos Maiolino <cem@kernel.org>,
+	Christian Brauner <christian@brauner.io>,
+	"Darrick J. Wong" <djwong@kernel.org>,
+	linux-api@vger.kernel.org,
+	linux-fsdevel@vger.kernel.org,
+	linux-btrfs@vger.kernel.org,
+	ocfs2-devel@lists.linux.dev,
+	linux-nfs@vger.kernel.org,
+	linux-cifs@vger.kernel.org
+Subject: Re: Concurrent FIEMAP on reflinked files serialises on the AGF buffer lock
+Date: Thu, 19 Nov 2026 11:59:43 +0200
+Message-ID: <20261119095943.85048-1-lauri.gates@gmail.com>
+X-Mailer: git-send-email 2.56.1
+In-Reply-To: <av4Hn9u80fs8iHZ6@dread>
+References: <av4Hn9u80fs8iHZ6@dread>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -82,90 +108,41 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Message-Id: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
-X-B4-Tracking: v=1; b=H4sIAP7F/moC/0WM0QrCMAxFf2Xk2aCZ4Jy/IntY29RFsJNkE2Hs3
- 20n4uO53HMWMFZhg0u1gPJLTMaUgXYV+KFPN0YJmaE+1CciajHKG4M+UGebMAZJccQzUxMbCqH
- 1R8jmUznftuq1+7LN7s5+KqnycL0xOu2TH8r0C+7/5c1f1w8kFOGgoQAAAA==
-X-Change-ID: 20261119-fix-drm-rust-fdinfo-8e17f71dd9c3
-To: Danilo Krummrich <dakr@kernel.org>, Alice Ryhl <aliceryhl@google.com>
-Cc: David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
- Miguel Ojeda <ojeda@kernel.org>, Boqun Feng <boqun@kernel.org>, 
- Gary Guo <gary@garyguo.net>, 
- =?utf-8?q?Bj=C3=B6rn_Roy_Baron?= <bjorn3_gh@protonmail.com>, 
- Benno Lossin <lossin@kernel.org>, Andreas Hindborg <a.hindborg@kernel.org>, 
- Trevor Gross <tmgross@umich.edu>, 
- Daniel Almeida <daniel.almeida@collabora.com>, 
- Tamir Duberstein <tamird@kernel.org>, 
- Alexandre Courbot <acourbot@nvidia.com>, 
- =?utf-8?q?Onur_=C3=96zkan?= <work@onurozkan.dev>, 
- Asahi Lina <lina+kernel@asahilina.net>, Lyude Paul <lyude@redhat.com>, 
- dri-devel@lists.freedesktop.org, rust-for-linux@vger.kernel.org, 
- linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-X-Mailer: b4 0.16.0
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1795081726; l=1843;
- i=peder.bergan@gmail.com; s=kernel-contributions;
- h=from:subject:message-id;
- bh=xxqWVMVxZbBkPwfGR3DEyfjXL1JPRrrX4MkbzxGWQrE=;
- b=rPGVsN+1pazjTfjzZNIzCQIkNRmJM51jRUZ7lIiSyXuBw8ULl6w8n77Lj/7Cw4gLW85fu/kcM
- 4snU6fRBnW0DNdVdLHz9Y6n9NGKz3jLwgSUWfzSlS2DrR/b8IgOqxz5
-X-Developer-Key: i=peder.bergan@gmail.com; a=ed25519;
- pk=39790pn1YZCulHBoUG1uiQI1Hm01EvhBEa2zVrS/yN0=
-X-Endpoint-Received: by B4 Relay for
- peder.bergan@gmail.com/kernel-contributions with auth_id=1395
-X-Original-From: Peder Bergan <peder.bergan@gmail.com>
-Reply-To: peder.bergan@gmail.com
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 
-From: Peder Bergan <peder.bergan@gmail.com>
+On Wed, Nov 18, 2026 at 10:16PM +0200, Dave Chinner wrote:
+> I really don't care if it is exposed by statx or file_attr; checking
+> the flag through either interface will be orders of magnitude faster
+> than using FIEMAP to iterate extents on every file to find shared
+> extents. My concern with statx is coherency - it runs completely
+> unlocked and so can race with operations that add/remove the reflink
+> flag...
 
-DRM monitoring tools use drm-driver and drm-client-id in procfs fdinfo
-to identify DRM clients. The common Rust DRM file operations leave
-show_fdinfo unset, so these entries are missing for those clients.
+Thanks, Dave and Christian. Given Christian's preference and the
+coherency point, I'll write the RFC against file_attr, once the
+question at the end is settled. xfs_fileattr_get() already reads the
+flags under XFS_ILOCK_SHARED, so the new flag gets that without extra
+work. The answer can still go stale right after the call, as with any
+stat result: a clone that lands after the read is missed, just as one
+that lands after FIEMAP returns is missed today.
 
-Set show_fdinfo to drm_show_fdinfo. The DRM core helper emits the
-standard client information and calls the separate driver statistics
-hook if the driver provides one.
+As I suggested on the 6th, the flag would take the inverted meaning,
+so that an unset flag stays the safe answer: say FS_XFLAG_NOSHARED
+("no extents shared with another file"), read-only, in
+FS_XFLAG_RDONLY_MASK next to the case-folding flags. XFS would set it
+when XFS_DIFLAG2_REFLINK is clear, and ocfs2 when
+OCFS2_HAS_REFCOUNT_FL is clear. btrfs keeps no per-inode record and
+would leave it unset, as would nfs and cifs, so their files read as
+"may share" and a du tool falls back to FIEMAP there, as it does
+today.
 
-Fixes: c284d3e42338 ("rust: drm: gem: Add GEM object abstraction")
-Closes: https://github.com/Rust-for-Linux/linux/issues/1266
-Signed-off-by: Peder Bergan <peder.bergan@gmail.com>
----
-Matt Mireles reported the missing fdinfo fields on an Asahi kernel and
-suggested using this helper.
+overlayfs needs care: ovl_fileattr_get() reads the upper inode, which
+for a metacopy file has no data extents. The overlayfs patch would
+take the flag from the lower data inode, and leave it unset ("may
+share") while that inode is not yet known (the lazy lookup on
+data-only lower layers).
 
-The x86-64 LLVM=1 CLIPPY=1 build adds the drm_show_fdinfo callback to
-nova-drm.ko's file operations table.
-
-The pending move of the file operations into drm::device [1] should
-carry this assignment into UnregisteredDevice::FOPS.
-
-[1] https://lore.kernel.org/dri-devel/20261118163203.2483856-4-dakr@kernel.org/
-
-OpenAI Codex assisted with coding and testing.
----
- rust/kernel/drm/gem/mod.rs | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/rust/kernel/drm/gem/mod.rs b/rust/kernel/drm/gem/mod.rs
-index 85657a39e146..b37695f870d4 100644
---- a/rust/kernel/drm/gem/mod.rs
-+++ b/rust/kernel/drm/gem/mod.rs
-@@ -388,6 +388,7 @@ pub(super) const fn create_fops(owner: *mut bindings::module) -> bindings::file_
-     fops.read = Some(bindings::drm_read);
-     fops.llseek = Some(bindings::noop_llseek);
-     fops.mmap = Some(bindings::drm_gem_mmap);
-+    fops.show_fdinfo = Some(bindings::drm_show_fdinfo);
-     fops.fop_flags = bindings::FOP_UNSIGNED_OFFSET;
- 
-     fops
-
----
-base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
-change-id: 20261119-fix-drm-rust-fdinfo-8e17f71dd9c3
-
-Best regards,
---  
-Peder Bergan <peder.bergan@gmail.com>
-
-
+Christian, one question on the shape within file_attr: would you take
+the inverted flag, or would you rather keep a plain "may share" flag
+and add a mask to struct file_attr that says which xflags the
+filesystem reports?
