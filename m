@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795110191;
-	b=EClClKyb7yKspNyQ/fZaLiz+sP3wb11GOg4RP1+C6fvDXj3cNe4d+sYL4uqcx59Puc3X
-	 EgiC4w25Nz8mWjOsc/C707AexEwVnioeKkBaogsZtHxaAM06VvHM7CJxR/Zbo6at+r1hm
-	 t0g+3K/+0IiAqSwu3xVTJ8fYYv1880U2X6ex5zC4VCJ/txjmFCdREuH2elovQDCWWE+Ex
-	 Nqq24/Md7IfA1EFbcafGDFAvJmHt+8BNVZ1VYz2hWnlwfojDAIv9nu2tcogdvqGJdO3x+
-	 vp8MRCZvnWzBtUKxJuxwu0hEw09U0+jmXIyG4eR8yNzFGDLDBeVViy2FKMAO3QTxfOg==
+	t=1795110716;
+	b=hbf+HfHvm5q7yFBw+/hn16PovdsQ3Q4Slm/CSZsZXCoO4I5HGrFj5NHc1KJOaFe3M5KI
+	 WO/hI1YDQlLE1e7zwQfzYSz0kRWIWm97pr4ezr9VROLSnk/2xfcMHs7kaYHH1qx8drmzS
+	 xlSihMpu86ol9e9p23RX8VV/0Fl1aTPZGG/yZV8oGpj+VFnxcro/Dve+TNUz+sSJue252
+	 VGB8BQtE7P9UUVCcjWLVX67y5PWj4nxn7BxdqbOql2Ubp6r7Idhn8JDTSDiYtH2z4ZDEI
+	 fPhPe/WDPjro4aZKr4Ww/5jWiIBKUlSRqrg5lJj6FzhRJIEdAJkRF3LqnRK37A9+Krg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795110191;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795110716;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=rKTl60KWr0mLCOQNUgZPIfoXZLaIl31V2GUy6m5DwRU=;
-	b=odrc+f6HWhL0zjGKBRES837A5RtnueUyhgmWMe1MGS69HNSNE2wxx4mdXSM1RbGHYzKa
-	 lfp6DBF6J2DjyCBdZo9QMNU/KBm9pdl+yAv6ws6eyZ3/+5sI8dX4kxK0RwmivuHgCAagW
-	 IdY0OlakKMt8IdJw2X0LVElP0ZapqMZXI9GOD6cR+hvupzn3toXHUtZsBLZ0oFslsdXr/
-	 tfrakUVWd216ksEh1qIKbHDCWLDGNAWFICc3UMP//HSRsTWvth4kGhJvAcONELjx81eFU
-	 W7EGzPq5kHA0rpU2bKygjWfTRxHXHohlCFsXZWDF7IQ7Wf/JlSJP5lcDoaHWwtbBS7A==
+	bh=+gNl9zSZClKVdpkaHWachxujrl0GYW/4jdpRJHBtw2I=;
+	b=rUUv3XTeJrVuTAjgFitoHTtRqaJ3F6+BuVbyoUUoynxX2glJ39eHfmSULDr74ldo0Syo
+	 yd0kIY4Td7yBPrI68JJg5bnE+TyAifgdu8L9dj0XrW6Ri3udgBBZq8fsD+v4FAIsdHV3H
+	 X89GTdguxO1g/xHzdF7aVeuVfbK0eA0EKtkni2O3r2Oj7SzXar4H/RvbjEDZuQzYCAHP+
+	 6x/dkP7eo0VWm7oIL+MvglRy6Pv+wiEm1fP7mHnRuteSPw5c0ysbxsLpY5FP8cztfD3s8
+	 Ew5FfGR1t7ndCejp0iWwlsjQjfcdlwrIdb5CqzLDb3oguzfmC1qGVF5GpFo4CbqLeUQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=mfCBeh22;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Aiqyiiz6;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id D580F606A325;
-	Thu, 19 Nov 2026 17:43:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id C32AE606A335;
+	Thu, 19 Nov 2026 17:51:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=mfCBeh22
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id EB54C1F000C5;
-	Thu, 19 Nov 2026 17:43:10 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Aiqyiiz6
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id C9C0D1F0282A;
+	Thu, 19 Nov 2026 17:51:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795110191;
-	bh=rKTl60KWr0mLCOQNUgZPIfoXZLaIl31V2GUy6m5DwRU=;
+	s=k20260515; t=1795110716;
+	bh=+gNl9zSZClKVdpkaHWachxujrl0GYW/4jdpRJHBtw2I=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=mfCBeh22AyZN2cDQZ0Z3bJFKmJBo+enYokZCrjW0LvIdaiFzf5Bi3bgp0L0pLjFWF
-	 KWOEF+P2hF61/peFpR73vG8J+9uVqnaeOC2VVpvhjr0eAKH/uWuel7whOJ5owj8sU2
-	 glpuvnfjRorUr2e2vDGVnSh9dXG+PdrIyBOOy6SKqZ2WHBOdCOz/GGQbHDMRH6sWbG
-	 oswAu3w/7e/zP2JPnJ7b8OVVV4E8dzRljglTvQj3hIKUP3MfzhRaDJSaCVZEBklcD+
-	 RAPIN/Xj87FF4H2rjUER26wi7sgLK+edQ71PUfcQ63F0iIdJ6eg9f0wtVKbk8BaM+R
-	 GVSZhVPnmJLKg==
-Date: Thu, 19 Nov 2026 19:43:07 +0200
+	b=Aiqyiiz6bl8XYtDgoUqfWd2e3ncbmubamZrPonR3TanM5FN8nXs1TLGUZGhlkVuuT
+	 Z/Ue4EeQ3x4yQzeJeyfG85WqvRWtqsNH4lYEdpAu3A+C2bZk9YHB5QkrPGQWkvmgjv
+	 hCfvjDcsGNDPETyHcrbPP8OG7SumINSK57wvUw5uBMfxWJRn4VYu9c1RffQdGSwWDa
+	 oshe3N4O6E/JQBgtV4ap/wmiPbF73n6b2qownpkX1nZJB0UFgpRI2XfhtWXgvJfVWY
+	 K2mhqgFnAygHmzLqyWV0tcVwpTtlWVMqT0DEOC9YY7Ho5PlUDa9yJqXTsF7LsR34UI
+	 UZLMuf9e92xQg==
+Date: Thu, 19 Nov 2026 19:51:52 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Josef Bacik <josef@toxicpanda.com>
 Cc: Andy Lutomirski <luto@amacapital.net>,
@@ -51,13 +51,14 @@ Cc: Andy Lutomirski <luto@amacapital.net>,
 	linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
 	linux-kernel@vger.kernel.org
 Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
-Message-ID: <av81Kz8I5mq3TaY4@kernel.org>
+Message-ID: <av83OLX1_mhgh-Dc@kernel.org>
 References: <20261117231352.3816603-1-jarkko@kernel.org>
  <CALCETrVUkbpoFjwSAejyA4b_9qEauAP_36i=O8Op1ifp8aUkqA@mail.gmail.com>
  <av3akYFOYaeQZauZ@kernel.org>
  <av3bkDnwmjunTleX@kernel.org>
  <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
  <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com>
+ <av81Kz8I5mq3TaY4@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -69,60 +70,61 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com>
+In-Reply-To: <av81Kz8I5mq3TaY4@kernel.org>
 
-On Thu, Nov 19, 2026 at 05:30:55PM +0000, Josef Bacik wrote:
-> On Wed, Nov 18, 2026 at 9:46 AM Andy Lutomirski <luto@amacapital.net> wrote:
-> > cells: The dance where I create an anonymous mountns, mount stuff into
-> > it, and then attach it to the cell is cute.  But I think the userns
-> > interaction is wrong: you are making me assemble all the mounts in
-> > *my* userns and then clone the entire tree into a fresh, non-anonymous
-> > mountns bound to the current userns.  And that clone operation is not
-> > free and serves no actual practical purpose.
+On Thu, Nov 19, 2026 at 07:43:11PM +0200, Jarkko Sakkinen wrote:
+> On Thu, Nov 19, 2026 at 05:30:55PM +0000, Josef Bacik wrote:
+> > On Wed, Nov 18, 2026 at 9:46 AM Andy Lutomirski <luto@amacapital.net> wrote:
+> > > cells: The dance where I create an anonymous mountns, mount stuff into
+> > > it, and then attach it to the cell is cute.  But I think the userns
+> > > interaction is wrong: you are making me assemble all the mounts in
+> > > *my* userns and then clone the entire tree into a fresh, non-anonymous
+> > > mountns bound to the current userns.  And that clone operation is not
+> > > free and serves no actual practical purpose.
+> > 
+> > The copy buys us nothing, agreed.  That's just what the mount API gives
+> > me to work with today, it's not something cells wants.  If I could make
+> > an empty mount namespace and fill it by fd I'd use that, the "root" slot
+> > takes a mount namespace fd already.  Extending the API for that makes
+> > sense to me on its own.
+> > 
+> > The mount namespace staying with the builder's userns is on purpose
+> > though, that's what keeps the cell from mounting anything no matter what
+> > capabilities it was given.  The builder sets the tree up and hands it
+> > over, so the cell only ever has what it was given, and the mount code
+> > isn't something it can attack from the inside.
+> > 
+> > > cells: I find it *incredibly annoying* that one generally cannot put
+> > > new mounts into an existing container using most existing container
+> > > managers.  I hit this on a surprisingly regular basis.  You seem to be
+> > > baking this into the whole cells design.  Why?
+> > 
+> > By design.  Allowing changes to a running container is what causes the
+> > problems.  If you need another mount, tear it down and build it again.
+> > 
+> > > both of you: Can we please make it possible to do the parts of this
+> > > that oughtn't require privilege without privilege?
+> > 
+> > Agreed, we need to come up with a design for this.
 > 
-> The copy buys us nothing, agreed.  That's just what the mount API gives
-> me to work with today, it's not something cells wants.  If I could make
-> an empty mount namespace and fill it by fd I'd use that, the "root" slot
-> takes a mount namespace fd already.  Extending the API for that makes
-> sense to me on its own.
+> To clear things up I'm not pushing "my stuff" over "your stuff", and
+> I get if that is the impression I might have given :-) Apologies for
+> that.
 > 
-> The mount namespace staying with the builder's userns is on purpose
-> though, that's what keeps the cell from mounting anything no matter what
-> capabilities it was given.  The builder sets the tree up and hands it
-> over, so the cell only ever has what it was given, and the mount code
-> isn't something it can attack from the inside.
+> I think it is better to look where things balance. It can even lead
+> to something else than anyone considered (something better). I'm
+> all for right solution :-) Distruption is painful but useful
 > 
-> > cells: I find it *incredibly annoying* that one generally cannot put
-> > new mounts into an existing container using most existing container
-> > managers.  I hit this on a surprisingly regular basis.  You seem to be
-> > baking this into the whole cells design.  Why?
-> 
-> By design.  Allowing changes to a running container is what causes the
-> problems.  If you need another mount, tear it down and build it again.
-> 
-> > both of you: Can we please make it possible to do the parts of this
-> > that oughtn't require privilege without privilege?
-> 
-> Agreed, we need to come up with a design for this.
+> E.g., MOVE_MOUNT_T_MNTS is completely independent patch regardless
+> of patch set for what it is worth [1].
 
-To clear things up I'm not pushing "my stuff" over "your stuff", and
-I get if that is the impression I might have given :-) Apologies for
-that.
+E.g., if it'd turned out that some parts of this work is useful and
+derivable to Cells, I'm good.
 
-I think it is better to look where things balance. It can even lead
-to something else than anyone considered (something better). I'm
-all for right solution :-) Distruption is painful but useful
-
-E.g., MOVE_MOUNT_T_MNTS is completely independent patch regardless
-of patch set for what it is worth [1].
-
-> 
-> Thanks,
-> 
-> Josef
-
-
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git/commit/?h=rootns&id=cb058646b3dd76b13f5044846c119fe1d28db4bf
+Just want to make clear where I stand on this topic. I know how
+opionated area of kernel namespaces are, so it was not exactly an
+eager action from my side.
 
 Br, Jarkko
 
+Br, Jarkko
