@@ -1,55 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795128756;
-	b=JYCB2cBIrSWlg1yime5dtPnbO39OL/WTzTgTs9d8iYrqwCStlJ623xgRNgnyLVdBPm4M
-	 3IdPEf4SH5+A+ne2BrTwv6S3N6KcmSgohihT5L80HHx1GrYxtbMRLIqG9sY0rDl+CQbrt
-	 L0kI0xxMeqzcH6GuTGWui0WcRS5jY2MX8gE6nGcGUWoMrINHlig5PdaX9UaUAABP2r0sn
-	 IGnFSnoBEDZN/+73BVbZNX5970CciZhYo8M0WJ7mfC05SI2T8RDJ2BWFjxSAztqWrgC78
-	 E0f8YU6sX3txA6TV4Luc4S5vhzUR2FF2HjYbe5Del2yS4wccnwv8HURuv+fdnCeulXw==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795128756;
-	h=Received:DKIM-Signature:Received:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:X-Received:MIME-Version:References:In-Reply-To:
-	 From:Date:X-Gmail-Original-Message-ID:X-Gm-Features:Message-ID:
-	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=4p/PmKLFKiTziuAYSkvBfkppOdPY2FKbz8KbdTu8xMs=;
-	b=oVIjClAQGWOcTQJXjo1F7WHuHh0nV3kFh+AnENKq+aLk44AcSJSAk1MwH/03yd7VertI
-	 HvZ4xOPWtAQlEUhzjlyg2vY+YsgpyF02e/PQRSjtuK/mJYcVprX5O3Xe01nwe5GZtX8Q4
-	 Xu4za1Jo5lLMtjhzouDf+bjwgnLAcmVoBhr0O+QEwXErLjybZlJ/v9g4GuoOl691ueA/P
-	 GaqzeS8R6CQu4P9WldrGL9RfGbKVZoxUX0wuYCWEm6TAedggfYDvONsTlk0TC4Y+O6nrN
-	 Rbm9jSzRAM3PuJvBD2HwwP9QxJNrrJdv6LSnXc4VjZXcOdwGLg1fRnnOmnqpiJ4aeBQ==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jLzMGv6Q;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.45
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795130849;
+	b=vRKfAuX/1jKWDKuWUTKADrPxJloP1vVkV9Hj4ATu+7NwFKTo8H8D0tfwtrlh5nnD7zrp
+	 VAfgLobIdF7wLQBc4A12UUYbM8MMHMU4uxvfvZNV8g+WzrmzfpMitIE0sApll4G2nsmAy
+	 ZBmknE5P8ZTgqV1A+Imfx3UVJY8NmHkDqgJlwICDGr6863QBsAE3FaC/PUt9EMe3dd9dY
+	 Q6bDRNUPo/67wVjf8mIA1tc0IwzzAhQQE99MbcOIdAMXxu5eZuAhAMr1cnNLTVuAD9jaw
+	 Nrqzu3QafFfje+LYJdCx2kxwbjn/9kFh9hxvpE/sX8PodD8YwaD+6me8WfhO8SElqCw==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795130849;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=OQjCXUbscPytTNcthMSXFUhQzfR2m/iC2VTnVjvFUQk=;
+	b=TJ8Rp/bMr/o2jvu+HFQLple//Sz0y7NzAxDQGy7PKPNscH4gPCdZgOS+bHzQEHuvK2Nb
+	 8lUdwklbwvnWNTr72VYUcZjCOYYQok3+35/OzZRkqNIf5iZw9PGDu3IpT8rzZHhwOvutU
+	 B5bxNG4lFFuqhp0N5d+wLA4dnIUm6yWwKckLZ3nFops6/rzHZ4PAnyr724Y1ZsTPxXfMz
+	 IdLHDcIgSTtFucBFXBk32KGFgJGpaOnYzWKkGJGOogChEtlL1tyt/l8R3EQJ8J1bYJ+wG
+	 jJzMIxap4fKQivFdDFQpB9hxU6+CcmF398XgPqDxY3267iBnO2YAo5dD0PGaIb/vhpA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=none header.from=amacapital.net;
+	spf=pass smtp.mailfrom=amacapital.net;
+	dkim=pass header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=hjX4t2Xo;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.167.45
+Received: from mail-lf1-f45.google.com (mail-lf1-f45.google.com [209.85.167.45])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9DBA7606A335
-	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 22:52:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 61004606A331
+	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 23:27:29 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 61004606A331
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amacapital.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amacapital.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jLzMGv6Q
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7965B1F000D2
-	for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 22:52:36 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795128756;
-	bh=4p/PmKLFKiTziuAYSkvBfkppOdPY2FKbz8KbdTu8xMs=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc;
-	b=jLzMGv6QSLDRuuYdmlrWyDrqR4/7yaIA4DiuD/TJo+ltbFdpYlnKD1ow6MoFtHmzU
-	 31MDSG+ayW6stLEOadA9RWrGOQ+I96C1UpjULxEKqoVL1cX+R0z59PG73lkV9i8StL
-	 Oj+EfazBd2TGtXjM/kKlP30H6OZPATnmtIKke0/nehMlxkfCb5hvWdym9Ib28gCuGg
-	 TLVjdP22MXAAXGH0tbumy9ZhFMz9X9aaDvzt9CwuPfKq53We+MIFBmpvv83JqhaHMM
-	 Sov1cwLZaff5BXyOowvKrTyvcB6KLO+KfEaB3nEisSyt6sFCl9WQJSwSIJtkvp74WO
-	 NzyPYYqMHk4WA==
-Received: by mail-lf1-f47.google.com with SMTP id 2adb3069b0e04-5c1a947b4adso159043e87.2
-        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 14:52:36 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AL+hErHae7P1F6R9Y/gYQ6Ts/7/kxskPwSlK1cAZZUNT5ariqz8F2sK2esyJXmHzxAOn17ruTP4PBkqMqgY=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+Pkpr3I7cUWU4qQ6Z8pXqSwYAYhY3cIaMxyxMiEJPz58sI4a+j
-	JB3Bok1jkF6E0hjr9SPC3wgTXKoOe9Vh2XjEz2LayFFBSZfeYhRgMp73l3azUNwCXBqmIHvUJ3V
-	DbgApZD9MYv/grlfd/Q7M1hfQHdDCV5w8PtSzVsDm
-X-Received: by 2002:a05:6512:6d2:b0:5c1:ae5e:fec8 with SMTP id
- 2adb3069b0e04-5c1bc8f41bfmr282170e87.61.1795128754567; Thu, 19 Nov 2026
- 14:52:34 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=amacapital-net.20260707.gappssmtp.com header.i=@amacapital-net.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=hjX4t2Xo
+Received: by mail-lf1-f45.google.com with SMTP id 2adb3069b0e04-5c1593fd141so228317e87.0
+        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 15:27:29 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1795130847; cv=none;
+        d=google.com; s=arc-20260327;
+        b=U5X9y5s4E/NwfGS4N7I5UrveGYoKiiVIzP/jZEr587UMdXG7q19ToqjqS8t4b/aG6T
+         FFM22Nqcg0HL5r0M0LzrhcDTktmpyPmhaIsaxwziVj7Y54IQql6Ih/Wh6P46w0ML3wkV
+         lpsSTKrvgeCkKvdV2822+pwrINqd4DxBVXXwddkxr9MjpiDCYd3hBb/GDOw5JhPNVKTA
+         dTnYajhTdB9d/ge+svojnED7S03SikpFFhmth8dpFnE7JIqIJZp70IMqKg0afP39yjRK
+         cVxbX2JdDkbc3LO5s8eLNTpRgDHtez/XV9uqw0PcIKyzZ4Erf7wq0WAWt8MWUgYvit70
+         HPzQ==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=OQjCXUbscPytTNcthMSXFUhQzfR2m/iC2VTnVjvFUQk=;
+        fh=EyrOkU5NLOd8HM1YRC/5vqqgZ7kPIzokpRpA/ZSUc2I=;
+        b=EAltgj4Yc3RJ888Q2hkyOrJknfZN8w9iPPaefIdsmGNtacYwd+sl5hNBE1FUzi/MJA
+         TQnewkCShVFYm6PcYW/wi6/nlr6LhhcqNOgzyj4Fc0n75IkHs5XESzAbsDhwvXjcBmRT
+         CtxDVuNxxSWw5iswoWeNOR1PXmphlA3CTDcrvichG0qMFLC+7h26GMR0lirAhd0T1UOf
+         Vi10QYQOEqI+StGeng7Jqo3Oms9VeGRWIHa/pjgZcZhNn2gCSlNrY+5RtPA4gxTa7/20
+         uhkQVTuiVriM7HNigy15DHw0Bkwt2CIyJ0CfzB9p/B9MZ8Aj3GfQG7wxjpTTDmVbyI+S
+         4llA==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=amacapital-net.20260707.gappssmtp.com; s=20260707; t=1795130847; x=1795735647; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=OQjCXUbscPytTNcthMSXFUhQzfR2m/iC2VTnVjvFUQk=;
+        b=hjX4t2Xo0e4RQY2C7GXTldeqYZukwPJ0G0t0eeIIqIxOs+nv/R5cEOi7krUGHcZauR
+         vqzkL8y++jDu/is0RF8VMVltWdEd0lyrR1cIBs4FTu4VVQYMJFKG/s1sz43eyqiCcrTX
+         Mbg5Ry98V2BB5rY4noROHUppSerOzFFtKwmae0y2na6LMWfxzuzS7JHUleTuTmaHRiow
+         9su2Gf++IX3BLOp0vRmJ0CYQlTuqXctSVrAeuH0kMwAL7Ra/++9cvRom3L2AnQl9FlUD
+         fl60SeNXa2k2FkgU8xK8tCvQtyjYi99pa5QdP3Pc/FV7HKF68S1o+Utpk9RB7yjgN3SL
+         Wk0Q==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795130847; x=1795735647;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=OQjCXUbscPytTNcthMSXFUhQzfR2m/iC2VTnVjvFUQk=;
+        b=jhDs4sW4m/lgfb2sBwqRYsghK+0raCCe/xdsHnMkSbM2FirEwmBamzyx3LSJaqXA3P
+         IOnqOxZFXAwPcfQTI4/JL4MSsS29jGHfm6Vm5h3VS/qKCtWJl8tq1M67ySr/B5S6RFkf
+         JB3aukBJIuQPBIZNSaycB+VjM6E42mgB1KPRznXwaFeuOySovi3DameLVc2QX3TPlDgb
+         i7k//TV9gME0gLpv1Qu68ST7RlDS2h4Lsqoz/eTSVh4xyZhptLth4njx0qP4kdRdQe0B
+         A39n+gQi6Z0qxJ3OQLrZA0HZo52wJLmQFaVmlx8d0bqqb+xb1f8k+LC1MitQ8kHueEf/
+         BKOg==
+X-Forwarded-Encrypted: i=1; AL+hErE0ieTb7WbNyNPomwJlLH3AvK80r2odKI8rMR7Szm5SRT6sFp0KWpXmmC61MBEJiJtnZwfyCq/AU2o=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/9xShSJSplvKKWYl4cDWCBjriiGZTNY+RAWDBC3C+UWRhOWuPL
+	Jlhv1CXXV4n+wUu0d4QoZg2+42cWp9FfmOMOyJHFZRMdczmetsXsFlzE6FswepBkYV8nTcviYWM
+	Fii2omnPGhz7oTzFgdpBgIUjKRXh5+wOdgIbAY7kc
+X-Gm-Gg: AYBFou3j0kfVZeBBy6xvrh8769zLgU8u3JyT8F0EJ6B+eVXfrohtdrbBOD8kKflzPap
+	dmeaZ/Rt1572bNFQiY9Ys9J7iI428CK/mAOqerd1Fww/zNQS2reLr0SNMiRFaBfVLXFuSUqo9vH
+	TFwgoAbXg9u7AU88p0sDuoTkE7Zm/QQ41ATzcLPnAaEft63VUhH+wtFVGI9VHcpSQLaXNRj7fY8
+	ZDR154UstFaI5CWlI7KEFyYSwn270n6DROpjwvINkE1Nfajrq1LqLNwtEV17W1zI3qSJMljCkNF
+	I/AOo9r4J/2jqqzTxP+GhLm/2L5DJ7iX6f5vtxGb5Oqf41IrGWyIrIw2n8UebC+OA4dJDooESVT
+	g01uOP4X8MkmmUbmap1PW8UdkPaUEmsI5Pw==
+X-Received: by 2002:a05:6512:1194:b0:5bf:b365:d82c with SMTP id
+ 2adb3069b0e04-5c1bc89ca7dmr310274e87.57.1795130847409; Thu, 19 Nov 2026
+ 15:27:27 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -59,54 +104,101 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261119104208.782900-1-halg@google.com> <20261119104208.782900-2-halg@google.com>
-In-Reply-To: <20261119104208.782900-2-halg@google.com>
-From: Andy Lutomirski <luto@kernel.org>
-Date: Thu, 19 Nov 2026 14:52:22 -0800
-X-Gmail-Original-Message-ID: <CALCETrVqc+1bjH1bhqHee9bsUdk2B6314z7PMexbsnNpMhk14g@mail.gmail.com>
-X-Gm-Features: Aa3M54orIgtW7gpar1jND6wqZDNNJFniZeT3SuBwbGzX9xy6w35wjatFfSpXNgQ
-Message-ID: <CALCETrVqc+1bjH1bhqHee9bsUdk2B6314z7PMexbsnNpMhk14g@mail.gmail.com>
-Subject: Re: [PATCH v2 1/4] userns: introduce capability bounding set for user namespaces
-To: "Hallgrimur H. Gunnarsson" <halg@google.com>
-Cc: Christian Brauner <brauner@kernel.org>, Serge Hallyn <sergeh@kernel.org>, 
-	Andy Lutomirski <luto@kernel.org>, Paul Moore <paul@paul-moore.com>, James Morris <jmorris@namei.org>, 
-	David Howells <dhowells@redhat.com>, Jarkko Sakkinen <jarkko@kernel.org>, Kees Cook <kees@kernel.org>, 
-	Jonathan Corbet <corbet@lwn.net>, Shuah Khan <skhan@linuxfoundation.org>, 
-	Randy Dunlap <rdunlap@infradead.org>, =?UTF-8?B?TWlja2HDq2wgU2FsYcO8bg==?= <mic@digikod.net>, 
-	Jonathan Calmels <jcalmels@3xx0.net>, Jann Horn <jannh@google.com>, 
-	=?UTF-8?Q?G=C3=BCnther_Noack?= <gnoack@google.com>, 
-	KP Singh <kpsingh@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, 
-	linux-fsdevel@vger.kernel.org, linux-security-module@vger.kernel.org, 
-	linux-api@vger.kernel.org, containers@lists.linux.dev, 
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20261117231352.3816603-1-jarkko@kernel.org> <CALCETrVUkbpoFjwSAejyA4b_9qEauAP_36i=O8Op1ifp8aUkqA@mail.gmail.com>
+ <av3akYFOYaeQZauZ@kernel.org> <av3bkDnwmjunTleX@kernel.org>
+ <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
+ <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com> <CALCETrXt-Do28BHDpbrA98kEy-tQuorxD8c2XsW24Tt8Vspdtg@mail.gmail.com>
+In-Reply-To: <CALCETrXt-Do28BHDpbrA98kEy-tQuorxD8c2XsW24Tt8Vspdtg@mail.gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Date: Thu, 19 Nov 2026 15:27:15 -0800
+X-Gm-Features: Aa3M54pRPzoZRQLZtE8vOKLAtvSp1jFKDAaRmJQa_mjsSLqBguq4HCe2_2_ku5M
+Message-ID: <CALCETrUbe8rBoxrC+Q66AMsrJ8Fow7xt5KJKRAmobtXBvHWdqg@mail.gmail.com>
+Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
+To: Josef Bacik <josef@toxicpanda.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>, Christian Brauner <brauner@kernel.org>, 
+	Alexander Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Jan Kara <jack@suse.cz>, 
+	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>, Paul Moore <paul@paul-moore.com>, 
+	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
+	linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 
-On Thu, Nov 19, 2026 at 2:43=E2=80=AFAM Hallgrimur H. Gunnarsson
-<halg@google.com> wrote:
+On Thu, Nov 19, 2026 at 2:50=E2=80=AFPM Andy Lutomirski <luto@amacapital.ne=
+t> wrote:
 >
-> When a process creates a new user namespace, it receives a full set of
-> capabilities (CAP_FULL_SET) scoped to that namespace. While namespaced
-> in scope, several of these capabilities (such as CAP_NET_ADMIN and
-> CAP_NET_RAW) expose broad kernel attack surface that many sandboxes and
-> containers never need. However, there is currently no configurable way
-> to withhold such capabilities from user namespaces while still granting
-> them to workloads that require them.
+> On Thu, Nov 19, 2026 at 9:30=E2=80=AFAM Josef Bacik <josef@toxicpanda.com=
+> wrote:
+> >
+> > On Wed, Nov 18, 2026 at 9:46 AM Andy Lutomirski <luto@amacapital.net> w=
+rote:
+> > > cells: The dance where I create an anonymous mountns, mount stuff int=
+o
+> > > it, and then attach it to the cell is cute.  But I think the userns
+> > > interaction is wrong: you are making me assemble all the mounts in
+> > > *my* userns and then clone the entire tree into a fresh, non-anonymou=
+s
+> > > mountns bound to the current userns.  And that clone operation is not
+> > > free and serves no actual practical purpose.
+> >
+> > The copy buys us nothing, agreed.  That's just what the mount API gives
+> > me to work with today, it's not something cells wants.  If I could make
+> > an empty mount namespace and fill it by fd I'd use that, the "root" slo=
+t
+> > takes a mount namespace fd already.  Extending the API for that makes
+> > sense to me on its own.
+> >
+> > The mount namespace staying with the builder's userns is on purpose
+> > though, that's what keeps the cell from mounting anything no matter wha=
+t
+> > capabilities it was given.  The builder sets the tree up and hands it
+> > over, so the cell only ever has what it was given, and the mount code
+> > isn't something it can attack from the inside.
+>
+> I don't get it.
+>
+> Using the builder's user namespace means that the contained processes
+> can't be ns_capable on mntns->userns.  But this solves very few
+> problems unless you also deny the contained processes the ability to
+> unshare userns and make a new mountns, and if you can do that, surely
+> you can also deny the ability to modify the mount namespace.
+>
+> As just one example, a mount namespace could have a little flag to say
+> that it's *in* one userns but its owner is a different userns.
+>
+> >
+> > > cells: I find it *incredibly annoying* that one generally cannot put
+> > > new mounts into an existing container using most existing container
+> > > managers.  I hit this on a surprisingly regular basis.  You seem to b=
+e
+> > > baking this into the whole cells design.  Why?
+> >
+> > By design.  Allowing changes to a running container is what causes the
+> > problems.  If you need another mount, tear it down and build it again.
+>
+> What problems?
 
+I'll add:
 
-One thought (from the rootns thread): the other decent sized attack
-surface here is CAP_MOUNT_ADMIN.  Which doesn't exist as a capability
-bit.
+On a non-container Linux system, you can hot-add a removable drive.
+On a Linux-hosted VM, you can hot-add all kinds of devices, with or
+without the help of the hypervisor.  (The hypervisor can hot-add a
+device, and the guest can mount network devices or newly added USB
+devices on a port that was already assigned, etc.)
 
-A sort of horrible solution (but maybe not so awful) would be to
-declare that the bits in cap_userns aren't actually capability bits,
-and that you need the bit in cap_userns *and* the bit in cap_effective
-to do sensitive things, and that mounting needs cap_userns to have
-NSCAP_MOUNT_ADMIN *and* cap_effective to have CAP_SYS_ADMIN.
+For some reason, on Docker and its sort-of-clones, approximately the
+best you can do is rbind in a directory and then mount things into
+that directory from outside.  This is sad.
 
-I want to sleep on this.  It might actually solve several problems,
-e.g. controlling creation of ipv4 and ipv6 loopback or tunnel devices
-or whatever.
+I get that there are plenty of workloads for which this limitation is
+reasonable, and there are more workloads for which this limitation is
+silly and people have learned to live with it because everyone
+imitates Docker and Docker is limited.  But there are also workloads
+that I hit on a surprisingly regular basis for which this limitation
+is genuinely annoying.
 
---Andy
+If you want to write a container manager that shares the same
+limitation, fine.  But please don't make it into the kernel without a
+compelling reason.
+
+(I personally think that Docker has a *lot* of weird properties that
+make little sense.  This is just one of them.)
