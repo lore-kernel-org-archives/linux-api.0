@@ -1,47 +1,59 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795103230;
-	b=V21pePxzCeEVoPopsDSzUy+fA6s6d1y8q6uCm/cwdYxmN7fUt+ogrGmNIeGYCrX1uYkC
-	 gesT+1v8kAcSarRhq4SptR+jYQRquHkLToFkBCqTS3pPi9+43G9os9seMbLmG1oTmUqBM
-	 +iGYY8yZ9jsaiNxt9mzG5Nk4Q4lJNrR7SvqvMuj00JtbgM5ecC2Ipev7m772A8DJivRTu
-	 5XGD/t8BaoXH1zdEfqwbSAH/OUnIf0Ec1U6m2uFAbDMoI+0WW78WK9/0cTlKe6E9/keOj
-	 AMvFUBKnSpyJky5ihau14Jz2dw3U9f6sCC9YOWacFkSosfMCFOnKqvclOxCm8EjthTA==
+	t=1795103845;
+	b=H3k1wJDKoHQFhl2SPOpNtgT14iG79sPI+WDOWyj6r8hIUsahwC0w0vKyEpN+YhtvvQlH
+	 yUJi6Q9WOp6a88eUvCUqHwiWR2W3nTYZw+QSDmDy7f3ElG8N/FOU3NMX56RQv93vZvjys
+	 Jm1/QGhmkWvJMx5qd4OpHlUxsxlDtnl8lpQC7fTa7Q45exBxwvz0X6WubBJpenko+U4t2
+	 NAtOhMZVs1iC76/L7dUdtobWOmBzhtacxbciaoO2qQrkkjLuamuDoNfpMtck4jZwdTMoH
+	 upNffsXdKWMdT3+BHoxozw+TKHZsHT03nBeN3IGJ5wSkC0sh3x66tWqUT3KORujSDPQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795103230;
-	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
-	 Subject:Content-Language:To:Cc:References:From:In-Reply-To:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=HFucv/1vEFUJ92a1RgUBjjm3jSf0ckrYCwva8AjNNgQ=;
-	b=fcMRDIWGsoa/gW93fXgdMwcmD7ubnUxUgZ6xz1y5hcvkg3+O8FFzLnIcdM8NPgOtQwr3
-	 CuC7kOoLsSPGj2u0N99mHXJzbGkEsZpBqecotl/z5BDm792ZdWCGk4h26XZ2+GZHc9pQl
-	 m8LJyzz1jm6mO+XkIpOsI9jABCmCNmHPLt7s9dvx7IoC0OeRBp/APjQIOgg44cnNCZmHK
-	 wX101fHJjfQFsDkZmJcKjNMDZ3rPz5NNaa+TbIOPzhqV3d8+6coklZtLaZ51Eput0lAu/
-	 0xSSUpf6EdejK8CJ0NFlgvZYWD5pXjcR7oyLtX0jVO9oFMNk3BN3Ok+UttgfwQ/ZD7g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795103845;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=gHSpicP6AXFH7Eu6+1T0bXY5QULxN/p2WvEf/j9QhZY=;
+	b=mWH2JL28BaMH4+MhRZVP909w/lejUwlMxjNIqy0NKGs7xGtJ3nTkySeoNFpSEMCbvDko
+	 inYzkL+WF1Y0vlfXoAqArdF5qmS8e5CzEh/V3aZiB158Wu2vhPK0CNblm1lVAfR3AOqhT
+	 7WbhGO0DBKsGIGoJtg+F0hZOEn+rfOs3+D2NAUwKzioLR3ofA6MdIfpDK+0/i2RE14M+J
+	 x8KAnLwT6B+Hv0KoNRx4D2nRPDW6qqxYmdqh7ExM/EebMgGtIrhdGw0Ty7qP2E/kKczv2
+	 qvEL+GuDaBnFMtJJy8hJKVNC7EQZCNjjk91X09sqfh4qPJW2zyMRqXa23Im2euoTxmg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JGNlEtNh;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FKfasLxJ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2355960A2636;
-	Thu, 19 Nov 2026 15:47:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ED679606A331;
+	Thu, 19 Nov 2026 15:57:24 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JGNlEtNh
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6C48F1F000CC;
-	Thu, 19 Nov 2026 15:47:09 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FKfasLxJ
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 120ED1F000C5;
+	Thu, 19 Nov 2026 15:57:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795103230;
-	bh=HFucv/1vEFUJ92a1RgUBjjm3jSf0ckrYCwva8AjNNgQ=;
-	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=JGNlEtNhcFbkQJXcCLCkwxp05ZPMCRFWIQRlOdGCe9zmDfhODt0ip8SItKrNc+ClY
-	 kmq5ZGkjQSLxB0s2CKgGqdRtXEEpGvy3j8sAPkVti/d3hb/yj4wKpm79BRa+LJo3HV
-	 rbykHhN0nNjkb8TDpY7nsmA1gfWtK7yWeJtu+GTrZyo40kTk2vtEtowv5SqZwzRqNR
-	 7UnGdww+hBKQsHPRhVrG9nz3I86sRtY8UVViT6vM4O3Ltriw+qEjEWqW9T+UO+SxDD
-	 wICHKm5m0oCWBc9JaxCFZPNoFj2cMKLBPlFt1vFD6svgkiaAwM/AlMBXo9p7FPiN38
-	 PR/0qv5/H0mag==
-Message-ID: <c5fb4561-f12c-431d-b68d-659ea9cd8a90@kernel.org>
-Date: Thu, 19 Nov 2026 08:47:08 -0700
+	s=k20260515; t=1795103844;
+	bh=gHSpicP6AXFH7Eu6+1T0bXY5QULxN/p2WvEf/j9QhZY=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=FKfasLxJ2K3Ih6qLEsySOLePVg5YZLK07DInZ1YwZ4gLik0V9ZbaMeCr0IT0LFL0A
+	 03jp2D4uQ7p9ljlD4guOcB3NHk56jxD0YjqFuapwYGcQbyxPBxecNLv6NeR5Uzxcw7
+	 wTq1bozLgO5RoxQ/d2PTjHSCaYTwrFBhoEgxqaveOzpH04HitUVolZ9JUrZ9Fu10E3
+	 fqP2ex60h47uU7XPJg8GNB5MQO322GsDn6rQ/hzN63Yt55vTD/5NIFzz4GzxD0ZDaF
+	 DvQhNJt2ZgxtOOZEHq/Yhjldj07FD+dwhQewiYmxb2XHVfrpJi5Dp2BeZ0bwxJmsWu
+	 0J02TDPiVRpcA==
+Date: Thu, 19 Nov 2026 15:57:19 +0000
+From: Conor Dooley <conor@kernel.org>
+To: Zhouqi Jiang <luojia@rustsbi.com>
+Cc: linux-riscv@lists.infradead.org, Paul Walmsley <pjw@kernel.org>,
+	Palmer Dabbelt <palmer@dabbelt.com>,
+	Albert Ou <aou@eecs.berkeley.edu>, Alexandre Ghiti <alex@ghiti.fr>,
+	Dongliang Mu <dzm91@hust.edu.cn>, Anup Patel <anup@brainfault.org>,
+	Andrew Davis <afd@ti.com>,
+	Mayuresh Chitale <mchitale@ventanamicro.com>,
+	linux-api@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Vivian Wang <wangruikang@iscas.ac.cn>,
+	Alejandro Colomar <alx@kernel.org>, contact@rustsbi.com
+Subject: Re: [RFC PATCH RESEND] riscv: sbi: expose firmware identity in sysfs
+Message-ID: <20261119-borough-flap-6481c20b3013@spud>
+References: <A039A2DE1DF8F274+20261119130356.1537-1-luojia@rustsbi.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -51,43 +63,77 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH net 1/2] ipv4: accept nexthop dump attributes in route
- deletes
-Content-Language: en-US
-To: Yuen Su <zypulsecore@gmail.com>, netdev@vger.kernel.org
-Cc: Ido Schimmel <idosch@nvidia.com>,
- Stephen Hemminger <stephen@networkplumber.org>,
- "David S . Miller" <davem@davemloft.net>, Eric Dumazet
- <edumazet@kernel.org>, Jakub Kicinski <kuba@kernel.org>,
- Paolo Abeni <pabeni@redhat.com>, Simon Horman <horms@kernel.org>,
- Shuah Khan <shuah@kernel.org>, linux-kselftest@vger.kernel.org,
- linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-References: <20261118084510.332821-1-zypulsecore@gmail.com>
- <20261118084510.332821-2-zypulsecore@gmail.com>
-From: David Ahern <dsahern@kernel.org>
-In-Reply-To: <20261118084510.332821-2-zypulsecore@gmail.com>
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+	protocol="application/pgp-signature"; boundary="kRq95MxRn1fQKyba"
+Content-Disposition: inline
+In-Reply-To: <A039A2DE1DF8F274+20261119130356.1537-1-luojia@rustsbi.com>
 
-On 11/18/26 2:45 AM, Yuen Su wrote:
-> diff --git a/net/ipv4/fib_frontend.c b/net/ipv4/fib_frontend.c
-> index 8c123b1..6b012c8 100644
-> --- a/net/ipv4/fib_frontend.c
-> +++ b/net/ipv4/fib_frontend.c
-> @@ -868,7 +868,10 @@ static int rtm_to_fib_config(struct net *net, struct sk_buff *skb,
->  		goto errout;
->  	}
->  
-> -	if (cfg->fc_nh_id) {
-> +	/* Dumps can include both a nexthop ID and compatibility attributes.
-> +	 * On deletion, fib_nh_match() uses the ID to match the nexthop.
-> +	 */
-> +	if (cfg->fc_nh_id && nlh->nlmsg_type != RTM_DELROUTE) {
->  		if (cfg->fc_oif || cfg->fc_gw_family ||
->  		    cfg->fc_encap || cfg->fc_mp) {
->  			NL_SET_ERR_MSG(extack,
+--kRq95MxRn1fQKyba
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-as the error message at this point shows, the 2 specifications must be
-mutually exclusive. iproute2 will need to strip the nh_id or the nexthop
-spec.
+On Thu, Nov 19, 2026 at 09:03:56PM +0800, Zhouqi Jiang wrote:
+> Linux queries the SBI specification and implementation identity during
+> boot. It caches the specification version, but discards the
+> implementation ID and version after logging them. Userspace therefore
+> has no structured interface for this immutable firmware metadata.
+>=20
+> Cache the implementation ID and version and expose the available values
+> as read-only attributes under /sys/firmware/sbi:
+>=20
+>   spec_version
+>   impl_id
+>   impl_version
+>=20
+> SBI v0.1 systems expose only spec_version because the implementation
+> fields were introduced by the SBI Base extension in v0.2.
+>=20
+> This gives tools such as lssbi a native source for basic SBI identity
+> information and starts moving those queries away from out-of-tree
+> kernel modules.
+>=20
+> Codex was prompted to research lssbi's out-of-tree SBI probe and design
+> a minimal in-kernel replacement. It assisted with the sysfs interface,
+> implementation, ABI documentation, changelog, and QEMU test setup. The
+> result was built with a RISC-V defconfig and boot-tested under QEMU
+> virt with:
+>=20
+>   OpenSBI v1.3
+>   RustSBI v0.4.1
+
+I like this idea.
+
+> Assisted-by: Codex:GPT-5
+
+FYI, these tags are now deprecated.
+
+> +static ssize_t impl_id_show(struct kobject *kobj,
+> +			    struct kobj_attribute *attr, char *buf)
+> +{
+> +	return sysfs_emit(buf, "0x%lx\n", sbi_impl_id);
+> +}
+
+Should this actually be printed as a decimal? It's a minor thing, but
+the numbers in the spec are defined that way (see 4.9 SBI Implementation
+IDs in the 3.0 spec).
+
+> +
+> +static ssize_t impl_version_show(struct kobject *kobj,
+> +				 struct kobj_attribute *attr, char *buf)
+> +{
+> +	return sysfs_emit(buf, "0x%lx\n", sbi_impl_version);
+> +}
+
+--kRq95MxRn1fQKyba
+Content-Type: application/pgp-signature; name=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQRh246EGq/8RLhDjO14tDGHoIJi0gUCav8cMAAKCRB4tDGHoIJi
+0ixDAP4xbETFFphxxj7syOcQqDBHdnUywbHbdu7xa5QQttMYlwEAob6rN4M0Q0hu
+vxb7dZm+8Dj0REZDMf4Xsse5UfaHcQ4=
+=bSG9
+-----END PGP SIGNATURE-----
+
+--kRq95MxRn1fQKyba--
