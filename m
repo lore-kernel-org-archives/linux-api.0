@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795049718;
-	b=GUtO5r6BGuCMjKEhdhET526/HjMeayU9PKBcm/PTKLnLpeOKRXwTDbCZ/1q6bBH81vRa
-	 XIYeld7OMjAg6/pRGTdJbb42mxkBUJfv3wa/6WtzeNKJALc7fIpyu081be0e6JAeb0fXf
-	 ZvK2O1R8BbScRitmWfefDAfov/someEpMtSBcx+0AzOApuScQpq9k1tF8VoQFFV7pvyiM
-	 2NNr1O4A8iMiW7De49dMxH0BQzki7CZFPUAcYYFrN0DWZ9u2WKsilvCkI4MVKcYdX+9vp
-	 BejD9j5JFLQbZrpCeOpEgAmFR0pB55FxCHMv/ByZNdJl6O/mYzmZfN4N1UZmJrEsTTA==
+	t=1795050069;
+	b=W/g3lm9jTRdYo2hCcXaV1+V6W8Ap29zHjtRwZj2aOIByTQp0GusBPSvWVdnFz0TmQUSY
+	 vHjq7Lwpl1/v051Bl69ECVbOyVQrOeD5EnbsrhYQcVCj3X4GFqJZPBvKaTHJbfQekADpp
+	 nMoqhSOTtV9hcpdSMyLasbBrJQS5yQMAPJCCrg3yG9XTTbrUtereyoRQPopNH3G3qzHkM
+	 uSrtAHvzkMOovGYlJm0fe3vyHbfquBQGNbDY+chxn8fdgNYzNja4YClINyZ+CXF+PlGFs
+	 a/yNuncSbUak987zudP6Gv1VHIUWDUY8/uSqBg9tx3voB8AhqgtUKcUS2JoHa6cwcJg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795049718;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795050069;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=25HxFNVSbdwyEfeQT/v/hb2lKg9U17dcPsjF33ZXCwc=;
-	b=FUP+0nj6RPx/U6VSe9Bu+m284XSH7q368OvxAtGKlNNhwhc2le3smQY7m0SxomMY9vko
-	 faXwKuWrp7U3RTHyzKOQcdp9gzAeiyuFcSVjHzLqq+yePJnFY5TGbl41B6V4d5FhgFUsC
-	 o89SFVZFzBfjE+4h0W9qyfthXOtk670w54oirT4h021gfVTCoRBOd4XHfhsO2+RNFMX6A
-	 IBAKd88Y11FIKrAqTNoD8wR2CkSVjzFOjvNw8FSWOvmvxtYX5SnXVcIHeOM1t+sOb2WOy
-	 cZsA5M6vt72rI/8o0Gj1QQXSrG6RTLapHLWDM3Gq+qFZ+r5DcTvfALxMI0s0v89rOrw==
+	bh=49NXjUTbzL4+xbJpcXKoJd4omTTJA3SheYrgPCgGq84=;
+	b=vS5J49mB1ax80RDM8gC/lh5KXPnw5Alz1PGjohGWgeG0NQG3AaUICpe4JTLs6ZOtYMQY
+	 JwtWoEYj/pwWcIn2uBz01NeCUjDcMubbirjJnvAjhsAhAbW2GODBwJjw4Z6KfKxdoAjy1
+	 nD8hfBhY2fKfQjzmYH9MwB8tZjgHV6J5FQiGcdj+R3ScAXWnM9kc7yx1itInHgvYmmwc+
+	 QcvVjpalSuJSeZeBDcuJQQ9LZsRYZZka4cPXuAYEw/yb+1NDx1nYzspWxIEzv6wgC6ZX1
+	 nOLrurltHwy2yptCh5rDP/xlhaAGdbyL/ws+CDN84RfjlZdQHlp5Ja3PUwbhEIj7bKQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VSxT9huh;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IQv06nro;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3848A606A32A;
-	Thu, 19 Nov 2026 00:55:18 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 0E428606A332;
+	Thu, 19 Nov 2026 01:01:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VSxT9huh
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6BD871F000C6;
-	Thu, 19 Nov 2026 00:55:17 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IQv06nro
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 3E62E1F000C4;
+	Thu, 19 Nov 2026 01:01:08 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795049718;
-	bh=25HxFNVSbdwyEfeQT/v/hb2lKg9U17dcPsjF33ZXCwc=;
+	s=k20260515; t=1795050068;
+	bh=49NXjUTbzL4+xbJpcXKoJd4omTTJA3SheYrgPCgGq84=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=VSxT9huhMwIVOvdxA1oFUsA4Z3PU2/6QKN1JtOI9ZSJErZpgzNWfQOcPlKak7TIE4
-	 tm+0xSyBkBRfpn8XMWTzqp6KgUlDMmSl0HEHE90q5hwkySZIy9ns74+aW5YDlu9QwV
-	 vwcxJUfaAxhlXZj0yYWSuZ8ZbfS2AK6rkE6AUIW0ogLTDSl9WRU2XQN9k6nL4Fy8mv
-	 C4L9LtEdTSU97TB4VEGpS/gI+hAGPUHp3DtgSFei2y7DITtIFMXh2ymqvxfleCFenG
-	 HZgKoVAwIiKWIq+u3tkkkmJxz6F1QUKEAxNhZ+GdXSpvRLONSfa7LYlJ4B0KvBgLyc
-	 SaJhYffuT9SzQ==
-Date: Thu, 19 Nov 2026 02:55:14 +0200
+	b=IQv06nrofbIqNARVVWh9JrAgHaEyRWKOud9QvOcchO4KY4ScIzXSqs80rNJ/ht3b1
+	 Tsu7VMYrIh/2Fi+hRTl7qSSsKz4S7jM8ebpPVfo17lwtEFZMdAvwfZsxatV/ZsWAUp
+	 PJgwsXqU+KqK3LvIcvOGucx9P9jANzCFHIamLnf4sC5rVp+bvnrP0sCUChwGa++Hwx
+	 a7awEoAOqry4Xom2vSVycaB2NRS9vG06yCTtwmMYjMTvqtDoBc6hHSkU5Dk5pOb1Ih
+	 GIaqltmVlM6m491tKp84gsZmgrtTNr8xvyupIzrYmeeJ//m5Bn5hJKwuAsDqwP+LxE
+	 +hNKrozwFIXmA==
+Date: Thu, 19 Nov 2026 03:01:05 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Demi Marie Obenour <demiobenour@gmail.com>
 Cc: Rodolfo Giometti <giometti@enneenne.com>,
@@ -66,12 +66,13 @@ Cc: Rodolfo Giometti <giometti@enneenne.com>,
 	linux-kselftest@vger.kernel.org, linux-doc@vger.kernel.org,
 	linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
 	linuxppc-dev@lists.ozlabs.org, linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH 9/9] KEYS: keycrypt: Add the aes256-gcm-stream
- algorithm
-Message-ID: <av5I8lhExyKvf9w_@kernel.org>
+Subject: Re: [RFC PATCH 0/9] KEYS: keycrypt: keys that user space can use but
+ never read
+Message-ID: <av5KUakRYdiaondn@kernel.org>
 References: <20261118140421.584086-1-giometti@enneenne.com>
- <20261118141257.627441-1-giometti@enneenne.com>
- <75946579-8335-4491-86da-fcda25ae9fd8@gmail.com>
+ <650f89ef-9745-4f75-b254-80fa5ac4773d@gmail.com>
+ <av5EyVHnNzT27dyK@kernel.org>
+ <61ca7c37-7b42-48a3-be2e-95deb4d999a2@gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -83,46 +84,76 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <75946579-8335-4491-86da-fcda25ae9fd8@gmail.com>
+In-Reply-To: <61ca7c37-7b42-48a3-be2e-95deb4d999a2@gmail.com>
 
-On Wed, Nov 18, 2026 at 07:25:09PM -0500, Demi Marie Obenour wrote:
-> On 11/18/26 9:12 AM, Rodolfo Giometti wrote:
-> > This patch is a proposal on its own: nothing before it needs it, so it
-> > can be discussed, or left out, apart from the rest.
-
-If there is no one who needs this, this is literally throwing a dice
-with Claude.
-
+On Wed, Nov 18, 2026 at 07:43:37PM -0500, Demi Marie Obenour wrote:
+> On 11/18/26 7:37 PM, Jarkko Sakkinen wrote:
+> > On Wed, Nov 18, 2026 at 06:42:15PM -0500, Demi Marie Obenour wrote:
+> >> On 11/18/26 9:04 AM, Rodolfo Giometti wrote:
+> >>> This RFC proposes a key type, "keycrypt", whose material user space can
+> >>> use for symmetric operations but never read: AES-256-CBC, HMAC-SHA256
+> >>> and an authenticated AES-256-GCM stream, through a file descriptor that
+> >>> KEYCTL_CRYPT_OPEN returns for one key and one operation.
+> >>
+> >> I haven't looked at the API, but from a cryptographic perspective,
+> >> this encourages very poor practices.  AES-GCM even allows userspace
+> >> to extract the secret authentication key.
+> >>
+> >> AES-256-CBC isn't a suitable mode on its own, unless it's combined
+> >> with a MAC in encrypt-then-MAC.  Even then, it has a 2^64 birthday
+> >> bound, so it should only be used 2^48 times with a single key unless
+> >> the key is ephemeral.
+> >>
+> >> AES-GCM is not a suitable algorithm either.  If you allow encrypting
+> >> with a key loaded from persistent storage, there is no way for the API
+> >> to ensure it is only used with a unique nonce.  Nonce reuse leaks the
+> >> authentication key and allows forgeries.  Using random nonces isn't
+> >> good enough either: NIST only allows 2^32 encryptions in this case,
+> >> and the API can't enforce that limit.
+> >>
+> >> For long-term keys, all of the following are much safer choices.
+> >> They have 192-bit nonces, which means that one can generate them
+> >> at random for each encryption without any problems.
+> >>
+> >> - XAES-256-GCM
+> >> - XChaCha20-Poly1305
+> >> - AEGIS-256
+> >>
+> >> AES-GCM-SIV is also okay, provided that you are fine with occasionally
+> >> leaking if two plaintexts are equal.  This happens whenever there is
+> >> a nonce collision, so with probability 2^-32 after 2^32 encryptions.
 > > 
-> > aes256-cbc does not authenticate what it decrypts, and a file or a
-> > transfer longer than one call cannot be sealed with a single AES-GCM
-> > invocation without buffering all of it, nor decrypted without
-> > releasing plaintext before its tag is checked.
+> > The exitential problem here is that KEYCTL_CRYPT_OPEN creates a circular
+> > relationship between the keyrings API and a specific key type.
 > > 
-> > Add aes256-gcm-stream: the STREAM construction (Hoang, Reyhanitabar,
-> > Rogaway, Vizar) over AES-256-GCM. A message is split into segments
-> > of up to 64 KiB, each sealed with its own tag under a subkey derived
-> > with HKDF-SHA256 from the key and a 16-byte salt drawn at
-> > KEYCTL_CRYPT_OPEN; the nonce carries the segment's position and a
-> > last-segment flag, and the counter lives in the kernel, so segments
-> > can be neither reordered nor dropped from the end unnoticed. The
-> > segments go through a new ioctl, KEYCRYPT_IOC_SEGMENT, and
-> > KEYCRYPT_IOC_FINAL reports a stream whose last segment never came.
-> > A tee or hsm backend draws the salt and keeps the counter in its
-> > secure side; the sw and optee backends implement it.
+> > At hardware level I did not see any support for TPM, which narrows down
+> > the potential user base.
+> > 
+> > The remaining potential user base is further reduced by those that use
+> > trusted keys; leaving out those who need to solve the assumed problem
+> > that only this patch set can presumebly sort out.
+> > 
+> > And we don't really know at this point that cut. This is pretty much
+> > the break down of what is wrong here.
+> > 
+> > If there is/was a problem to sort out, it should be so constrained that
+> > it should be as quick to describe as stepping over a nail really.
+> > 
+> > These are the main topics what I would focus on.
 > 
-> Please use Cobblestone-128 or Cobblestone-256 instead.
-> https://c2sp.org/chunked-encryption has the spec, and you can check
-> against the implementation in pyca/cryptography or (for Cobblestone-128)
-> the Go package filippo.io/cobblestone.  This assumes your CPU has AES
-> and GCM instructions; if not, you should see about using one that does
-> or work with a cryptographer to standardize an alternative that doesn't
-> need them.
+> This whole patchset looks like a solution looking for a problem.
 > 
-> Nonstandard constructions like this one are to be avoided.
+> The usual solution to something like this is a userspace service
+> like ssh-agent.  Then you can do whatever key management you want.
+> That doesn't protect against root, but if someone can get root you
+> have bigger problems.
 
-The wider problem in crypto without a use case there is nothing
-to protect.
+This is true. Even if the code was like it is BUT it had a clear
+motivation, I would likely suggest to the author how to resolve the
+problem more properly.
+
+I.e. bar is not too high in initial code quality but it is steep
+from the get go in the "utility value".
 
 > -- 
 > Sincerely,
