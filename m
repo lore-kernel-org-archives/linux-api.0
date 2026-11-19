@@ -1,90 +1,78 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795069291;
-	b=v6H8Eqr0fnYg7hU+LXloUuVLfsJJTLJITJsjVeeaHlDZyMUyKz5GW7+4GjAhwIL2/tuW
-	 Z/J5H9olDGIiIpfp4ET8IbmXlCpwFhxUvMm+lR+2vPiQAzM5xzl2IAdCSh09obDRoDZTW
-	 SeeDSP7OiUj9Y14u+oQcKdeJjyUNwJ8T/qEt6BOWsqH23A1NFQHWCxxQva87+TWbbutvQ
-	 oquDkCSfgv3+smy38YWUTKeELad0tojT47fnzTEQLpVgDdSyUIZ1Jze9Ay174vZUURBih
-	 RUK70gSCwOIGARYNdtuxBhvUsubxIsmUwENWp3NE95efwygaTtI8F/lghl7smzzaZag==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795069291;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=btZ2TprQHQojMwnDwVX6xxEuU+pesarzzPhbHJEdoGg=;
-	b=aJhdrYDTVGM+hZ5EhauuarR1r7QtwsyMYPlZBm22siHWZpzkvfod8UQvMai9lFeMEml0
-	 K+LQkFNoBQX9cti8KLJJj8dr/Q9oS4+MCTMoisiwPbwJOr2siT+9Jnyeol/5u/iheBMhQ
-	 tXmnsGyKQsGo3cVD68Zt3SsG2QZEwYz7NUxeb+f1xx7kA3iRlpLXDO6UvSk5GkS43We4m
-	 k9hcw2QysNvYO9kyRG+EetuV6xJZC0KsLO7hGUu2ebkqq+sdr5H8SewU628korMVxwLEv
-	 7WsaU87pfFO7DPYkji3W+JriQ0jhszjK7dB/7IfPsZByVLWOWAISDISNjsrowcCALww==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=e7xa1Dpj;
-	arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795081729;
+	b=BpZVzyDAs3Fi3Sd3Hlv7pcAI8zYGBUFBTLISppfUCFdHeY4HXfNVWE+vS4V0gftqpyWP
+	 XdOdmuTc4RDblutEu7/Y6/CHmZ4nqA5CIDvqCH20fQ9JD5zsixQKwtjjI2/qhpi8md+2V
+	 mM796zEEc4wcx8cecVkRfXMJmc1QDNEz+vzVTf26KBp4Qn96wuDpkJv0l62maE4re0ihW
+	 XbsqfO61mTTyuTfaYvinosuFmLgfSXYM2t91YpbysCez1OGKHsMl2Nbd4HvvFvj47rm2L
+	 JWh3kMoe5pJ172HkQprjqkRU2I4H8zE8D9p5zumMizb+4pmUFv/BaLBQEgQWVCvAJqw==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795081729;
+	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
+	 Content-Type:Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
+	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
+	 X-Original-From:Reply-To:Content-Transfer-Encoding;
+	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
+	b=YcS5Tyf8jMRXkSPQblBa4V8T1310vq45WNBbbUX4RCCdtYjfVsphwDvtRyMPJvd1wV8I
+	 S0rQ1zYRzADTITg63V/wt6DWihe1NOXm6g2KgtmdinIMPr4dnaruchvL0Y5mTSRtez4Kq
+	 oAOIr7mDt2EBw0Blz94uGONS1N/L20j7yUcay4F2mlrc40QXPrnvzMQlGFqg/fL1Kn0Tf
+	 +PUWpz/kQcMSV2scqusAByarJ3GqdAFhq04eHbTx8yIU3uWxPxX16WuQKxiqBHbbQziWI
+	 8xsHN3+xvwyOBukyB26bh5BT2ZctdMNhIML4JbsbvDFhmcaHLO/HkgW9c8JvT6lJdZA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CA0Jifub;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7CC20606A32A;
-	Thu, 19 Nov 2026 06:21:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E8F68606A320;
+	Thu, 19 Nov 2026 09:48:48 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=e7xa1Dpj
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 99E921F000C4;
-	Thu, 19 Nov 2026 06:21:30 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CA0Jifub
+Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
+ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
+	t=1795081728;
+	b=E0tBF+d0g01McuoEXV82ofJuLCoSBJ5iAQnfBYaseesOs3b09SYzL5ZZJTlWTrV2lZBV
+	 8Q82vJBv16AAFtgOXZvJeo8zIhbp1Xx/oEGRF5C5qFaDQp02z47bEVxNKjawsJsDIJtHU
+	 pF1DkzRTb8EkxnYhyz94hxlEQjOvR9/is+weIKV8AWvSwH84A2vd1S/+sLtiF5HF+A14D
+	 ylwMmkZGfLDCMH+ltDjIIKQNubkYmKs8EegYU4KH6SK/GEiUEWcurO50cqHevB8dhaX9/
+	 3o5kEffQShFLNwasJYh1SDUdtGs8SIgNFjmF89z/iCx9jfD5LnGJnbu7D64LTqJ187Q==
+ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
+	c=relaxed/relaxed; t=1795081728;
+	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
+	 Message-Id:X-B4-Tracking:X-Change-ID:To:Cc:X-Mailer:
+	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
+	 X-Original-From:Reply-To:Content-Transfer-Encoding;
+	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
+	b=ULFlw2c1bxGu5BfrReXGMictl77HGielQGMbD6WsKUPH1mvQkBhAkvr/WH1C6qfmgwGe
+	 xWzOrpicBsXGCHscQFIeVrO75kdnQjC+ZaFMz32gXs6uFMTtZfL+34XZtf8lu0ao9WAWd
+	 WQlKZmUlXS3/sZx4C0Rvf+ZihV8t9fE6LY7gPZiVPVOnanrKVIypaYJNqG/JQEfewDQ9o
+	 HwLR0ERFVC7XXuxppUIL0RaXouCTUsN2bQYkT/7U9XcnfSuIdB9meexNf+zScziYvFFUi
+	 KX0ZbuRBuJLtayNl53Bkeoza7BE6FYMiVYRnaQv7eKxw7AoWE6LWg5Htgk/sfCjxszg==
+ARC-Authentication-Results: i=1; smtp.kernel.org; 
+	arc=none smtp.remote-ip=100.80.115.77
+Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	(No client certificate requested)
+	by smtp.kernel.org (Postfix) with ESMTPS id E61521F000C4;
+	Thu, 19 Nov 2026 09:48:47 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795069291;
-	bh=btZ2TprQHQojMwnDwVX6xxEuU+pesarzzPhbHJEdoGg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=e7xa1Dpj4IV+gGquktCuwkP8uLbLXtGks3wuXwt/tSMkOsmBjJ/0z/lSi6xpEE1if
-	 M+ClMf07lAH8kSdnFi7nUiv7E1oRGPNtacMDB0C9ZyZ9nVvpOERjMX8QaAKZ7lKRn4
-	 M1z2+y5hTJxFCzzBM0zcOMJWoXKpQIZjVMenn5ZU2BG85Fmxa/pgerSdcdz7kbKLdA
-	 QCVfwXzNN8zWPDBlSNSXrmUbYCk3O1GsxodMLXYujCtnvsjSw4DQj4SWvGVet8sWJk
-	 gjUyqjq21Sc89moWlZp69HUgI6J3icvNRaTO40aErPOsiyV3xe7t6GSDpp7+hZ+Auj
-	 I9xdx3hVfOiUQ==
-Date: Thu, 19 Nov 2026 08:21:27 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Paul Moore <paul@paul-moore.com>
-Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Ben Segall <bsegall@google.com>,
-	Christian Brauner <brauner@kernel.org>,
-	David Hildenbrand <david@kernel.org>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Ingo Molnar <mingo@redhat.com>, Jan Kara <jack@suse.cz>,
-	John Johansen <john.johansen@canonical.com>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mel Gorman <mgorman@suse.de>, Michal Hocko <mhocko@suse.com>,
-	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Thomas Gleixner <tglx@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vincenzo Frascino <vincenzo.frascino@arm.com>,
-	Vlastimil Babka <vbabka@kernel.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v3 00/13] Namespace for namespace roots
-Message-ID: <av6VZ5NQG4GwYvPl@kernel.org>
-References: <20261118193539.240065-1-jarkko@kernel.org>
- <av4CdM-eW73oO4wB@kernel.org>
- <av4NonrcCxzMoDyz@kernel.org>
- <av5-Zc4xhgkPxb7p@kernel.org>
+	s=k20260515; t=1795081728;
+	bh=zVwOWwHUXzKlToaA0R+Ga3qN0U7VwWvqFPcvbla4RKk=;
+	h=From:Date:Subject:To:Cc:Reply-To;
+	b=CA0JifubC91hEHefqtbvm/LWAf/4mBz1m5sqSLBR5q7HB5/CTef777sDCzdlEd9qh
+	 D9SGwTa3lP5TyMWjin0c5o96vVk2ONzT7DXKbbBpuTBe7XUpccTCnboMnX5VMK1cpg
+	 MHhTQ5S0kKoaRDHA/5UgpO+9dUP1nMo0QA9RsEw6SFkLMmbZ2eoKB6e72omRZcoPmH
+	 nXLpcIs9j3eodSp3Z81f1l5SkxRrmaMAsBCFgpcFMFkV/k++0NwvcM5ExrhNIoeMHi
+	 iitmZzLlV0nGySp76tWYxu5uW5R1QMNkxxT9K2LkwDVUez9oCW75bm71eWIY7Kii3u
+	 XoH84aEK3ySnw==
+Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
+	by lkml.kernel.org (Postfix) with ESMTP id 630804B1F2;
+	Thu, 19 Nov 2026 09:48:47 +0000 (UTC)
+From: Peder Bergan via B4 Relay <devnull+peder.bergan.gmail.com@kernel.org>
+Date: Thu, 19 Nov 2026 10:48:47 +0100
+Subject: [PATCH] rust: drm: enable standard fdinfo for Rust drivers
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -94,70 +82,90 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <av5-Zc4xhgkPxb7p@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Message-Id: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
+X-B4-Tracking: v=1; b=H4sIAP7F/moC/0WM0QrCMAxFf2Xk2aCZ4Jy/IntY29RFsJNkE2Hs3
+ 20n4uO53HMWMFZhg0u1gPJLTMaUgXYV+KFPN0YJmaE+1CciajHKG4M+UGebMAZJccQzUxMbCqH
+ 1R8jmUznftuq1+7LN7s5+KqnycL0xOu2TH8r0C+7/5c1f1w8kFOGgoQAAAA==
+X-Change-ID: 20261119-fix-drm-rust-fdinfo-8e17f71dd9c3
+To: Danilo Krummrich <dakr@kernel.org>, Alice Ryhl <aliceryhl@google.com>
+Cc: David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>, 
+ Miguel Ojeda <ojeda@kernel.org>, Boqun Feng <boqun@kernel.org>, 
+ Gary Guo <gary@garyguo.net>, 
+ =?utf-8?q?Bj=C3=B6rn_Roy_Baron?= <bjorn3_gh@protonmail.com>, 
+ Benno Lossin <lossin@kernel.org>, Andreas Hindborg <a.hindborg@kernel.org>, 
+ Trevor Gross <tmgross@umich.edu>, 
+ Daniel Almeida <daniel.almeida@collabora.com>, 
+ Tamir Duberstein <tamird@kernel.org>, 
+ Alexandre Courbot <acourbot@nvidia.com>, 
+ =?utf-8?q?Onur_=C3=96zkan?= <work@onurozkan.dev>, 
+ Asahi Lina <lina+kernel@asahilina.net>, Lyude Paul <lyude@redhat.com>, 
+ dri-devel@lists.freedesktop.org, rust-for-linux@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+X-Mailer: b4 0.16.0
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1795081726; l=1843;
+ i=peder.bergan@gmail.com; s=kernel-contributions;
+ h=from:subject:message-id;
+ bh=xxqWVMVxZbBkPwfGR3DEyfjXL1JPRrrX4MkbzxGWQrE=;
+ b=rPGVsN+1pazjTfjzZNIzCQIkNRmJM51jRUZ7lIiSyXuBw8ULl6w8n77Lj/7Cw4gLW85fu/kcM
+ 4snU6fRBnW0DNdVdLHz9Y6n9NGKz3jLwgSUWfzSlS2DrR/b8IgOqxz5
+X-Developer-Key: i=peder.bergan@gmail.com; a=ed25519;
+ pk=39790pn1YZCulHBoUG1uiQI1Hm01EvhBEa2zVrS/yN0=
+X-Endpoint-Received: by B4 Relay for
+ peder.bergan@gmail.com/kernel-contributions with auth_id=1395
+X-Original-From: Peder Bergan <peder.bergan@gmail.com>
+Reply-To: peder.bergan@gmail.com
+Content-Transfer-Encoding: 7bit
 
-On Thu, Nov 19, 2026 at 06:43:21AM +0200, Jarkko Sakkinen wrote:
-> On Wed, Nov 18, 2026 at 10:42:10PM +0200, Jarkko Sakkinen wrote:
-> > > I.e. before PID 1 and /proc/<pid>/ns/* existss, nsfd for namespace other
-> > > than root nsfd can be acquired as follows:
-> > > 
-> > > 	int mnts_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
-> > 
-> > 
-> > Unprivileged caller becomes the owner of rootns->user_ns. Each mount
-> > syscall then just checks CAP_SYS_ADMIN against rootns->user_ns.
-> > 
-> > The user space wiring goes along the lines of:
-> > 
-> >         int root_fd = rootns_create(ROOTNS_KILL_ON_CLOSE | ROOTNS_CLOSE_ON_EXEC);
-> >         int mntns_fd = ioctl(root_fd, ROOTNS_GET_NSFD, CLONE_NEWNS);
-> > 
-> >         int tmpfs_fd = fsopen("tmpfs", 0);
-> >         fsconfig(tmpfs_fd, FSCONFIG_SET_ROOTNS, NULL, NULL, root_fd);
-> >         fsconfig(tmpfs_fd, FSCONFIG_CMD_CREATE, NULL, NULL, 0);
-> >         int rootfs_fd = fsmount(tmpfs_fd, 0, 0);
-> > 
-> >         move_mount(rootfs_fd, "", mntns_fd, "/", MOVE_MOUNT_F_EMPTY_PATH | MOVE_MOUNT_T_MNTNS);
-> > 
-> >         struct clone_args args = {
-> >                 .flags  = CLONE_INTO_ROOTNS,
-> >                 .rootns = root_fd,
-> >         };
-> >         pid_t pid = clone3(&args, sizeof(args));
-> 
-> 
-> [BTW, this patch set is pointed out to David and not fsdevel mailing by a
->  mishap, apologies.]
-> 
-> I reduced syscalls can be further to only a single syscall: rootns()
-> 
-> The complete API after this:
-> 
-> 1. rootns(flags)
-> 2. ioctl(rootfs_fd, ROOTNS_GET_NSFD, ns)
-> 3. ioctl(rootfs_fd, ROOTNS_WAIT, NULL)
-> 4. ioctl(rootfs_fd, ROOTNS_KILL, signum)
-> 
-> An updated version of the patch set is available over here:
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git/log/?h=rootns
-> 
-> In order to find more evidence that the API is trimmed and code has no
-> extra fat, I tried how LSM hooks size-fit.
-> 
-> Attached are the experimental LSM hooks and while possibly not exactly
-> right they should not be at least in the ballpar (Paul?).
-> 
-> Not perfect, but very usable, and there's a steady track of convergence
-> where resolving a bottleneck leads into a better symmetry and coherency
-> overall.
+From: Peder Bergan <peder.bergan@gmail.com>
 
-Orthogonally, solely fd-local security model (as all is tied to fd) is
-the best thing ever when defining mandatory access control policies  as
-the full flow can be meaningfully described; i.e. roonts(), sendmsg()
-and other calls track the fd's data flow with almost the highest
-achievable granularity.
+DRM monitoring tools use drm-driver and drm-client-id in procfs fdinfo
+to identify DRM clients. The common Rust DRM file operations leave
+show_fdinfo unset, so these entries are missing for those clients.
 
-Br, Jarkko
+Set show_fdinfo to drm_show_fdinfo. The DRM core helper emits the
+standard client information and calls the separate driver statistics
+hook if the driver provides one.
+
+Fixes: c284d3e42338 ("rust: drm: gem: Add GEM object abstraction")
+Closes: https://github.com/Rust-for-Linux/linux/issues/1266
+Signed-off-by: Peder Bergan <peder.bergan@gmail.com>
+---
+Matt Mireles reported the missing fdinfo fields on an Asahi kernel and
+suggested using this helper.
+
+The x86-64 LLVM=1 CLIPPY=1 build adds the drm_show_fdinfo callback to
+nova-drm.ko's file operations table.
+
+The pending move of the file operations into drm::device [1] should
+carry this assignment into UnregisteredDevice::FOPS.
+
+[1] https://lore.kernel.org/dri-devel/20261118163203.2483856-4-dakr@kernel.org/
+
+OpenAI Codex assisted with coding and testing.
+---
+ rust/kernel/drm/gem/mod.rs | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rust/kernel/drm/gem/mod.rs b/rust/kernel/drm/gem/mod.rs
+index 85657a39e146..b37695f870d4 100644
+--- a/rust/kernel/drm/gem/mod.rs
++++ b/rust/kernel/drm/gem/mod.rs
+@@ -388,6 +388,7 @@ pub(super) const fn create_fops(owner: *mut bindings::module) -> bindings::file_
+     fops.read = Some(bindings::drm_read);
+     fops.llseek = Some(bindings::noop_llseek);
+     fops.mmap = Some(bindings::drm_gem_mmap);
++    fops.show_fdinfo = Some(bindings::drm_show_fdinfo);
+     fops.fop_flags = bindings::FOP_UNSIGNED_OFFSET;
+ 
+     fops
+
+---
+base-commit: 6628e7d4c6b25c8d18f1345e3a20d21829aae7e4
+change-id: 20261119-fix-drm-rust-fdinfo-8e17f71dd9c3
+
+Best regards,
+--  
+Peder Bergan <peder.bergan@gmail.com>
+
+
