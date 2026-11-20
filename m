@@ -1,146 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.41
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795180731;
-	b=u7Ot7bObC4nEm1BQzNWdrWOKXlEfsG4xZ2YNCnQ+p6wqpWWtwvobt8CCat4ls5BMuEa0
-	 AmuIT/tBK9N41vRN5k2LZNBv4Rwhj85XDa/jgGOJTZRPzn+RuN1Yz8WupTCHvAKbvrqET
-	 yaJvFx3IHZpBq26nykYqr2R8fzf6aY7Vjj8cTBjZLjIyl9pcbzXn3lznzbOul3unVW6UB
-	 D4DMRbmdLCv1wY585F8rpP49uKif08HC3NfKVmz36UhxCRK6iFb2Gw66BYKrC85NJ7k3e
-	 8+smesGaI2IKz7zxvOSDh5Azdx7gsAevbROHZzmwxOypxoOUm7oOBOSmE/pQcsQoqxg==
+	t=1795181032;
+	b=BOALPDhR9P/jZuH4Jj/1dQAskTpqAjq4VO5rgQi4gsXdt1Nx/HHqom9z1mDVVHfxI0gs
+	 pbJEN2MY5WTZhQ1VQ/Pjc++DYXwEkLyQkHJAz/uDSoByKMCwtLYVvzPIf+kWLF9aJlkck
+	 9faI4ts5DtfKHKo6uyNsOQFPbiGZdGwiiL/nIfoviILsJBFviRBjDS/mVSKn9VaqoZDjb
+	 x0sltj0EYZchs9QCe/jqvaXO2Yb2dELAZBjoyji3thTVsZFOawAVfVN42vkRQgpg6qEjA
+	 63XzGul0g00xeWblJYfQ5fmoguJj7tbEyTbtL64kmsfbup0Oopo0lBvTR50S+Lme5tw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795180731;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795181032;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Message-ID:Subject:
-	 From:To:Cc:Date:In-Reply-To:References:Content-Type:
-	 Content-Transfer-Encoding:User-Agent:MIME-Version;
-	bh=YAQTVNIYZ/0Tbx2obltQhn42YTPBHmmwY733kBIibzM=;
-	b=poWgssikY9M/Ps2VrbgqscRBv0GdSyBX45aTnxzMB6y5ko66T7S0rCPw+xC2xkqZurUh
-	 E7pM/7Vg4d3fdt6o6dhcYCtHaTwC/Wha9tabxL7PSOEAT7nXcfH8tQqIDNvFjhd/iIo+b
-	 Of0wXiZsKVJGd664UY7gtT0UqeZreSGz6O5qNvno6C9YC3zqMItkqRX9FrtjnMiQBvZE/
-	 Z3DJCtYixNTqUafHOShLjITH7iEdglY7w/B0OiMcgvpBFy65ijpCeY17Woba4d3nI5KFN
-	 20kl0qQ1jxzBt2MnGy+1LLfVVRGxMXsBlavAzRAUCNZ9e0n6zZfKV3Id3dIBklef8ug==
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Mime-Version:Content-Type:Date:Message-Id:From:To:Cc:Subject:X-Mailer:
+	 References:In-Reply-To;
+	bh=U9t5C73ir3/3QySglAwAwVOJ69q66296+82EjWEvxrc=;
+	b=Go/Ea9hAPfxV9hLRBb2FdrZZHhsvQo9fHjt5g9kZm2gSXNcbqD4TmgG0e7A7dVrDUkMu
+	 GLWFIu8M1Kj1iVmBIjCJgu/nRr7OUc5XzVjgTzBUX91OHfojkXMLu2Mdpfragvb4NoB1J
+	 mUYDbaPI74xYSRS6YSvXuLAl4AV4Ls32moihTijqdD2BrN9WiOAI9PjR+CtUtwpnDVvqu
+	 f9fArttHZTTqk1c67UykkZZiPXMXyJ+k1u7YK3ofD3lhjC264eABm/L3Pg7zgzW7hWQ3Z
+	 5+dg901+qKs+Qv56gV9OWYrx8GGUYPoU0zUVDOah9bKbnAGmN3EO8AcmDWAZlHEttpA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=amutable.com;
-	spf=pass smtp.mailfrom=amutable.com;
-	dkim=pass header.d=amutable-com.20260707.gappssmtp.com header.i=@amutable-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b="UI/9rv+D";
-	arc=none smtp.remote-ip=209.85.218.41
-Received: from mail-ej1-f41.google.com (mail-ej1-f41.google.com [209.85.218.41])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=TUVe1kLT;
+	arc=none smtp.remote-ip=209.85.128.47
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 277FA606A330
-	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 13:18:49 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 277FA606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=amutable.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=amutable.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 922EB60A261F
+	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 13:23:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 922EB60A261F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=amutable-com.20260707.gappssmtp.com header.i=@amutable-com.20260707.gappssmtp.com header.a=rsa-sha256 header.s=20260707 header.b=UI/9rv+D
-Received: by mail-ej1-f41.google.com with SMTP id a640c23a62f3a-c51373ae637so135958266b.3
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 05:18:49 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=TUVe1kLT
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4a2153c8525so6733985e9.3
+        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 05:23:52 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=amutable-com.20260707.gappssmtp.com; s=20260707; t=1795180728; x=1795785528; darn=vger.kernel.org;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:from:to
-         :cc:subject:date:message-id:reply-to:content-type;
-        bh=YAQTVNIYZ/0Tbx2obltQhn42YTPBHmmwY733kBIibzM=;
-        b=UI/9rv+DZdDezz6z4q5V4bbLRvq2PUwTXKvmGLgkStPFRG3MFzpLEzZUOMicEVzjqv
-         h9WskxL6pQRjVp6LW7wNLul6TdE5DMEMvMtKHVto1kDWUtXl4YZysNnP5izuUm6Wyf00
-         02kOc+/ogItTG9aLvdGftl8BuwMr3ddEGZP8CscGYWnM7MnxJ1gdPDJRCMKsqAHhAduA
-         5fYf+0m8yQ6qc78NG4siN795mYwXAc6BQzyhcrtUI3sLGXErAQdCZNzpNCRSgoDhZ53Q
-         BTlXcoGhXILqja8hQmBbLSiQNTaIckFhQCA59sphyqAh5AgpCytcMtf2fggUT1oBCS51
-         FT4A==
+        d=gmail.com; s=20260707; t=1795181031; x=1795785831; darn=vger.kernel.org;
+        h=in-reply-to:references:subject:cc:to:from:message-id:date
+         :content-type:mime-version:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=U9t5C73ir3/3QySglAwAwVOJ69q66296+82EjWEvxrc=;
+        b=TUVe1kLTe1RrGjkZcB0Jll6qRkbhub5RAYrrBdXYAW7cCWc5ZfKjmtHsxejUWkMmqG
+         JzPS+ZpHkP7wYDJTT9lXMucUyvaeiJXactdfcKWcDDB8coLAUlZ+SLxV/1HOPt72Y8vR
+         ZlJc2GAvUJ9zeSXBUpYabS2EM7tBgAyo4jIeTRVyCxLex4cLnS2ZffMAZOHSFIBuAhgb
+         IhJ9TGzBnVeS+qk3W+h/M+Afxb+UT1xmww35AkhR+sZmys0qIASFOsZUqQF5VUqAX1D4
+         CPz+yTqfhss6B38ZRKGfmP0RMlFT5D9wepGDZqnoCfxFFAl5qcguvOeWnzTzLCK4pe1x
+         4Yxg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795180728; x=1795785528;
-        h=mime-version:user-agent:content-transfer-encoding:content-type
-         :references:in-reply-to:date:cc:to:from:subject:message-id:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=YAQTVNIYZ/0Tbx2obltQhn42YTPBHmmwY733kBIibzM=;
-        b=fBkfJFRCBjdYkef0rh4RsvVYZP/IvWfKLQ524JUsr8QJcnSo91XNcyq2p/QqDCt+1N
-         wIsP3WH2rkSQhTwIetsnTS6ZoyalL01KdjNHTZ+oegisJ5U/829R3Zk1NceHhFhh8Tbr
-         JZxeUufAB40LLfWmwipD+E6XasDBb9mEMO4stUS+h1A53QcpFBHscMkx9nuAjEHVZd08
-         5klEjvboQEBcCIxUs0L9GHVAPjcKU5vDAAAXLkB3Z1n4zKDwx6y+VTKLhYvU/wEXWxLY
-         m3Bi2MXSy2po6tznJj18CSPZlchvshjAHDJyO51XL1EpcgpL9wmH/g23unZWFMwfDH0t
-         XO3g==
-X-Gm-Message-State: APuU4Z/cof1V1ML97LStlkniNwJTa+ID8+GpE719C2RaqyFNgnrREse9
-	0+kI2/rDmrzEYvFwRidDL4nWaLr/fn/FVFPgQ7eiEP515mFsdFURf249N2dJSYbpjBJS
-X-Gm-Gg: AYBFou2qPhL+aMHXcWv5YxAT0df6KpTa1HyRWSMpF3X2JP/vQ5q2U58DhlF+StlTYVF
-	awn/ymXv4BRJgZ/s3Czf1xLhYKO0qbmfB0SkpVVlrWNmUyx5iiOQ9oRi3pIZcQgqhVTrBaRFfVY
-	c2ZfTqqfz0QXqQcWy9m5DWFGKexO/hbfo7YoE/K2/xJlCJmrGa+HRMlbwEFVjDkERLM0c18hYKq
-	2/AC2lDAhTwwccN2Qlcz1crWRuoOksCW9rtEm1r6H8ZUE/mjpLziwBl6MHtquGafpjyCWDHRncv
-	ykXGCQWFqNPUqfZC6Pla0NGS0jAaQ+UopKVctndLvg9kSz6eqBz8tcuKqvMTAGIMdJIBF3em77G
-	XIDUOEofjrDp2XvI6pTyNVipnKi+qqz/Y9+SvDswfpWZeZ+MMRThR+u+xQJS6w0HELGdaXwTGnL
-	khLBP4g8vXcdD3aqy5IHw1H5OHJ8k4+C628aSkASpxFK2io9v4GSHG2gaVIRNyEAYvU/sODgoVH
-	CZvBl3ltrkPC5CLSJRLHy0G6b+dfWeXj998uH0uV48To0KBmYpmF5wO/nYZQEqF0mrDz1IEPVvE
-	CIHE4M2V6tcYDn0YvrdqXK9RciT1lDgOW+4tIKAn0AsUhAe6I91GC7nzoGm9W8gSkg==
-X-Received: by 2002:a17:907:a890:b0:c41:55b4:d88b with SMTP id a640c23a62f3a-c513ab14402mr338807466b.43.1795180728386;
-        Fri, 20 Nov 2026 05:18:48 -0800 (PST)
-Received: from [10.0.0.233] (tmo-084-188.customers.d1-online.com. [80.187.84.188])
-        by smtp.gmail.com with ESMTPSA id a640c23a62f3a-c513acfe3b0sm93731066b.8.2026.11.20.05.18.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Fri, 20 Nov 2026 05:18:47 -0800 (PST)
-Message-ID: <e376c8f0ec5c50b417375197a5589a210f151d9b.camel@amutable.com>
-Subject: Re: [RFC PATCH v4 03/14] rootns: Track init lifecycle via
- copy_process() and pid_namespace
-From: Alexander Mikhalitsyn <alex@amutable.com>
-To: Jarkko Sakkinen <jarkko@kernel.org>, linux-fsdevel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org, 
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org, 
-	linux-security-module@vger.kernel.org, Albert Ou <aou@eecs.berkeley.edu>, 
- Alexander Gordeev <agordeev@linux.ibm.com>, Alexander Viro
- <viro@zeniv.linux.org.uk>, Alexandre Ghiti <alex@ghiti.fr>,  Andreas
- Larsson <andreas@gaisler.com>, Andrew Morton <akpm@linux-foundation.org>,
- Andy Lutomirski	 <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>,
- Anna-Maria Behnsen	 <anna-maria@linutronix.de>, Arnd Bergmann
- <arnd@arndb.de>, Ben Segall	 <bsegall@google.com>, Borislav Petkov
- <bp@alien8.de>, Casey Schaufler	 <casey@schaufler-ca.com>, Catalin Marinas
- <catalin.marinas@arm.com>,  Christian Borntraeger
- <borntraeger@linux.ibm.com>, Christian Brauner <brauner@kernel.org>,
- "Christophe Leroy (CS GROUP)"	 <chleroy@kernel.org>, Chris Zankel
- <chris@zankel.net>, Dave Hansen	 <dave.hansen@linux.intel.com>, David
- Hildenbrand <david@kernel.org>, David Howells <dhowells@redhat.com>,
- Davidlohr Bueso <dave@stgolabs.net>, "David S. Miller"	
- <davem@davemloft.net>, Dietmar Eggemann <dietmar.eggemann@arm.com>,
- Frederic Weisbecker <frederic@kernel.org>, Geert Uytterhoeven
- <geert@linux-m68k.org>, "Hallgrimur H. Gunnarsson"	 <halg@google.com>,
- Heiko Carstens <hca@linux.ibm.com>, Helge Deller	 <deller@gmx.de>, "H.
- Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,  "James E.J.
- Bottomley" <James.Bottomley@HansenPartnership.com>, Jan Kara
- <jack@suse.cz>, John Johansen	 <john.johansen@canonical.com>, John Paul
- Adrian Glaubitz	 <glaubitz@physik.fu-berlin.de>, Jonathan Corbet
- <corbet@lwn.net>, Josef Bacik	 <josef@toxicpanda.com>, Juri Lelli
- <juri.lelli@redhat.com>, Kees Cook	 <kees@kernel.org>, K Prateek Nayak
- <kprateek.nayak@amd.com>, "Liam R. Howlett"	 <liam@infradead.org>, Lorenzo
- Stoakes <ljs@kernel.org>, Madhavan Srinivasan	 <maddy@linux.ibm.com>,
- Magnus Lindholm <linmag7@gmail.com>, Manfred Spraul	
- <manfred@colorfullife.com>, Mark Rutland <mark.rutland@arm.com>, Matt
- Turner	 <mattst88@gmail.com>, Max Filippov <jcmvbkbc@gmail.com>, Mel Gorman
-	 <mgorman@suse.de>, Michael Ellerman <mpe@ellerman.id.au>, Michal Hocko	
- <mhocko@suse.com>, Michal Simek <monstr@monstr.eu>, Mike Rapoport	
- <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>, Nicholas Piggin	
- <npiggin@gmail.com>, Palmer Dabbelt <palmer@dabbelt.com>, Paul Moore	
- <paul@paul-moore.com>, Paul Walmsley <pjw@kernel.org>, Pavel Tikhomirov	
- <ptikhomirov@virtuozzo.com>, Peter Zijlstra <peterz@infradead.org>, Randy
- Dunlap <rdunlap@infradead.org>, Richard Henderson
- <richard.henderson@linaro.org>, Rich Felker	 <dalias@libc.org>, "Ritesh
- Harjani (IBM)" <ritesh.list@gmail.com>, Russell King	
- <linux@armlinux.org.uk>, Serge Hallyn <sergeh@kernel.org>, Shrikanth Hegde	
- <sshegde@linux.ibm.com>, Shuah Khan <skhan@linuxfoundation.org>, Steven
- Rostedt	 <rostedt@goodmis.org>, Suren Baghdasaryan <surenb@google.com>,
- Sven Schnelle	 <svens@linux.ibm.com>, Thomas Bogendoerfer
- <tsbogend@alpha.franken.de>,  Thomas Gleixner	 <tglx@kernel.org>, Valentin
- Schneider <vschneid@redhat.com>, Vasily Gorbik	 <gor@linux.ibm.com>,
- Vincent Guittot <vincent.guittot@linaro.org>, Vincenzo Frascino
- <vincenzo.frascino@arm.com>, Vlastimil Babka <vbabka@kernel.org>, Will
- Deacon	 <will@kernel.org>, Yoshinori Sato <ysato@users.sourceforge.jp>,
- Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Date: Fri, 20 Nov 2026 14:18:43 +0100
-In-Reply-To: <20261119224312.1037966-4-jarkko@kernel.org>
-References: <20261119224312.1037966-1-jarkko@kernel.org>
-	 <20261119224312.1037966-4-jarkko@kernel.org>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.56.2-0+deb13u1 
+        d=1e100.net; s=20260707; t=1795181031; x=1795785831;
+        h=in-reply-to:references:subject:cc:to:from:message-id:date
+         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=U9t5C73ir3/3QySglAwAwVOJ69q66296+82EjWEvxrc=;
+        b=ROvaDeRlpBTOvfM6Ql70iI0Py9JhLk1UXDwcTNigFvnDtBEI+ihFKnEpgIjO6/uc6o
+         uPyknWOAKhBFCk2t1fUU1ecnbuSl94c66vYWO2qA/Qs1R7A/QGqoReq3o8wU6kXN+D8l
+         E+SFyYztnZSbW/zFDpeje2mIEH7/FL28RKRO16ug4zDy6lkKWybF85phwMbm3uvSQKcU
+         3q8FP4ulf2kSdPzJr1+SQjyBhQxJf1B7oxxmnKP+CnBGleFU3N3yWsz6IsvHeBKhF4rV
+         lIcGBbDmv8flSpNTWNwl67GsBH+h6zShmcV/iZyj8P+88oQER+SF1OI7xSt2Olvexo7X
+         6DzQ==
+X-Forwarded-Encrypted: i=1; AL+hErGg+hDPoa1YnlelVZMwAavYq8wNgTF2c/E3Pjz3lUJShHn6Bh/5U2JnFRHQwDvvvAksu665XuARjCY=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+N+Z9iduSB6XdhCvphiB9crx0AbIVbt9xp/GLMIDR1fZeRSikH
+	UUQY3dg+ULtdhNJrsoFbDQeq2qbNEddixryC1sBihVvGj6OWRyIEFLqU
+X-Gm-Gg: AYBFou0OotEqmgFq7gRXRmtBzXCr5FB3jHrO9LVU7jCeyFZXRAMHYAaEHLXYR2vN2Zm
+	gukS0gZrchyQlxWXKrWTO19vH5UAn0748xbQLLGpyAlGcLmpf61oIzVr5YJzMTFMWzReMT9qdZf
+	3uVuXz2m4a2smQMr69OV2GUbXukB7rWGUzhwklh4XSGZiWPLOCHOwSCH5Uc8U50pc1HouHqC0Vn
+	XfSR0zifAUWG02QBF+zrj4SfychgbED69WAwUJ574IdYg4fGHi+dLtsbFDTDIxNQ7svtivxJ6lZ
+	9BgRItfnSzGYRPCbmTKIAx61HBdcJVyr8mwhu545NDYPJXxBJqldG/x1nMKQZpey5NSPUnBWHDJ
+	bmfTcNDFjl02PW/KCk14hKY5ipCzx5DEld+Qk2DpY6fSYIAZJJwKf48/zxO0gVgeoIx5MsFQ+YK
+	qowGc4tOqQoIZ9U4Kd1/4MQPREapZW0FUUjKRlzPENZDOSpcfuYeICFnJKNfwE9wlZxj878mcP0
+	R1OynTFwV+JiJySRP5TItvRBTp6jReEACsz/2Mv0y+63jazNUZx2AXLb/IlwiBpcwHtWSwby64B
+	OgI4h9Ad5d/+z7lwZPsmt+F5uG3STmQwLDjE4C4i0XUOxifq
+X-Received: by 2002:a05:600c:3b83:b0:4b7:6b96:e431 with SMTP id 5b1f17b1804b1-4bb88822242mr75040685e9.28.1795181030668;
+        Fri, 20 Nov 2026 05:23:50 -0800 (PST)
+Received: from localhost ([130.192.98.149])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab65cb41f4sm5518234f8f.7.2026.11.20.05.23.48
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 20 Nov 2026 05:23:49 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -149,207 +86,151 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
+Mime-Version: 1.0
+Content-Type: multipart/signed;
+ boundary=7e8bd4a9c12ebb9d8a66b83f0766d89a19a194b2b3f96510da164a6c43d9;
+ micalg=pgp-sha512; protocol="application/pgp-signature"
+Date: Fri, 20 Nov 2026 14:23:41 +0100
+Message-Id: <DN02K8EYWHSW.1FP154N0I9QCK@gmail.com>
+From: "koraynilay" <koray.fra@gmail.com>
+To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
+ <koray.fra@gmail.com>
+Cc: =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "David Sterba"
+ <dsterba@suse.com>, "Namjae Jeon" <linkinjeon@kernel.org>, "Sungjong Seo"
+ <sj1557.seo@samsung.com>, "Alexander Viro" <viro@zeniv.linux.org.uk>,
+ "Christian Brauner" <brauner@kernel.org>, "Trond Myklebust"
+ <trondmy@kernel.org>, "Anna Schumaker" <anna@kernel.org>, "Chuck Lever"
+ <cel@kernel.org>, "Jeff Layton" <jlayton@kernel.org>, "Konstantin Komarov"
+ <almaz.alexandrovich@paragon-software.com>, "Paulo Alcantara"
+ <pc@manguebit.org>, "Chris Mason" <mason@kernel.org>, "Yuezhang Mo"
+ <yuezhang.mo@sony.com>, "Jan Kara" <jack@suse.cz>, "NeilBrown"
+ <neil@brown.name>, "Olga Kornievskaia" <okorniev@redhat.com>, "Dai Ngo"
+ <Dai.Ngo@oracle.com>, "Tom Talpey" <tom@talpey.com>, "Ronnie Sahlberg"
+ <ronniesahlberg@gmail.com>, "Shyam Prasad N" <sprasad@microsoft.com>,
+ "Bharath SM" <bharathsm@microsoft.com>, "Sergey Senozhatsky"
+ <senozhatsky@chromium.org>, "ChenXiaoSong" <chenxiaosong@chenxiaosong.com>,
+ "Darrick J . Wong" <djwong@kernel.org>, "Sean Smith"
+ <defendthedisabled@gmail.com>, "Andrey Albershteyn" <aalbersh@kernel.org>,
+ "Pedro Falcato" <pfalcato@suse.de>, <linux-btrfs@vger.kernel.org>,
+ <linux-kernel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
+ <exfat@lists.linux.dev>, <ntfs3@lists.linux.dev>,
+ <linux-cifs@vger.kernel.org>, <linux-nfs@vger.kernel.org>,
+ <linux-api@vger.kernel.org>
+Subject: Re: [RFC PATCH v4 09/10] ksmbd: add provenance time (ptime) and map
+ it to CreationTime
+X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
+References: <20261115180343.576773-1-koray.fra@gmail.com>
+ <20261115180343.576773-10-koray.fra@gmail.com>
+ <CAOQ4uxhjxp5sxYphWoB=8sgX3XHOv9zLVYf+8ZjYbS_gQDxO3w@mail.gmail.com>
+ <DMZIQG4U1NTH.2IN0S2YIWEYTG@gmail.com>
+ <20261119220936.mssmaixcorn2gzli@pali> <DMZJGB07CO56.IZ20OCGGH6C@gmail.com>
+ <CAOQ4uxhqgsh9ahJsX7C4YyZH2n_r8VwOe9X9jZwsKALCoYvyag@mail.gmail.com>
+In-Reply-To: <CAOQ4uxhqgsh9ahJsX7C4YyZH2n_r8VwOe9X9jZwsKALCoYvyag@mail.gmail.com>
 
-On Fri, 2026-11-20 at 00:43 +0200, Jarkko Sakkinen wrote:
-> A root namespace needs to record its init thread group's PID when
-> bootstrapped and capture its exit status once all processes in the
-> root
-> namespace have terminated, without serializing normal fork() and
-> exit()
-> paths inside the container.
->=20
-> Commit the bootstrap child reaper, bind pid_ns->rootns, and wake
-> waiters
-> in copy_rootns() after attach_pid(PIDTYPE_PID), and invoke
-> exit_rootns()
-> from zap_pid_ns_processes() after the root namespace's PID namespace
-> has
-> killed and reaped all member tasks.
->=20
-> Co-developed-by: David Howells <dhowells@redhat.com>
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-> ---
-> =C2=A0include/linux/pid_namespace.h |=C2=A0 4 ++++
-> =C2=A0include/linux/rootns.h=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | =
-15 ++++++++++++++
-> =C2=A0kernel/fork.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
-=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 3 +++
-> =C2=A0kernel/pid_namespace.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=
-=C2=A0 2 ++
-> =C2=A0kernel/rootns.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
-=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | 38
-> +++++++++++++++++++++++++++++++++++
-> =C2=A05 files changed, 62 insertions(+)
->=20
-> diff --git a/include/linux/pid_namespace.h
-> b/include/linux/pid_namespace.h
-> index b20baaa7e62b..6fd959f4d0d4 100644
-> --- a/include/linux/pid_namespace.h
-> +++ b/include/linux/pid_namespace.h
-> @@ -15,6 +15,7 @@
-> =C2=A0#define MAX_PID_NS_LEVEL 32
-> =C2=A0
-> =C2=A0struct fs_pin;
-> +struct rootns;
-> =C2=A0
-> =C2=A0#if defined(CONFIG_SYSCTL) && defined(CONFIG_MEMFD_CREATE)
-> =C2=A0/* modes for vm.memfd_noexec sysctl */
-> @@ -45,6 +46,9 @@ struct pid_namespace {
-> =C2=A0	struct user_namespace *user_ns;
-> =C2=A0	struct ucounts *ucounts;
-> =C2=A0	int reboot;	/* group exit code if this pidns was
-> rebooted */
-> +#ifdef CONFIG_ROOTNS
-> +	struct rootns *rootns;
-> +#endif
-> =C2=A0	struct ns_common ns;
-> =C2=A0	struct work_struct	work;
-> =C2=A0} __randomize_layout;
-> diff --git a/include/linux/rootns.h b/include/linux/rootns.h
-> index 3f59415efadb..0557ce75195d 100644
-> --- a/include/linux/rootns.h
-> +++ b/include/linux/rootns.h
-> @@ -13,6 +13,8 @@
-> =C2=A0struct file;
-> =C2=A0struct nsproxy;
-> =C2=A0struct pid;
-> +struct pid_namespace;
-> +struct task_struct;
-> =C2=A0struct user_namespace;
-> =C2=A0
-> =C2=A0enum rootns_state {
-> @@ -41,6 +43,9 @@ struct rootns {
-> =C2=A0struct rootns *get_rootns(struct rootns *c);
-> =C2=A0void put_rootns(struct rootns *c);
-> =C2=A0bool is_rootns_file(struct file *file);
-> +void copy_rootns(struct task_struct *tsk, struct pid *pid,
-> +		 struct rootns *rootns);
-> +void exit_rootns(struct pid_namespace *pid_ns, struct task_struct
-> *tsk);
-> =C2=A0#else
-> =C2=A0static inline struct rootns *get_rootns(struct rootns *c)
-> =C2=A0{
-> @@ -55,6 +60,16 @@ static inline bool is_rootns_file(struct file
-> *file)
-> =C2=A0{
-> =C2=A0	return false;
-> =C2=A0}
-> +
-> +static inline void copy_rootns(struct task_struct *tsk, struct pid
-> *pid,
-> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct rootns *rootns)
-> +{
-> +}
-> +
-> +static inline void exit_rootns(struct pid_namespace *pid_ns,
-> +			=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 struct task_struct *tsk)
-> +{
-> +}
-> =C2=A0#endif /* CONFIG_ROOTNS */
-> =C2=A0
-> =C2=A0#endif /* _LINUX_ROOTNS_H */
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 5efceb8d58a7..08fc28ad1eed 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -83,6 +83,7 @@
-> =C2=A0#include <linux/fs_struct.h>
-> =C2=A0#include <linux/magic.h>
-> =C2=A0#include <linux/perf_event.h>
-> +#include <linux/rootns.h>
-> =C2=A0#include <linux/posix-timers.h>
-> =C2=A0#include <linux/user-return-notifier.h>
-> =C2=A0#include <linux/oom.h>
-> @@ -2576,6 +2577,8 @@ __latent_entropy struct task_struct
-> *copy_process(
-> =C2=A0					=C2=A0 &p->signal->thread_head);
-> =C2=A0		}
-> =C2=A0		attach_pid(p, PIDTYPE_PID);
-> +		if (thread_group_leader(p))
-> +			copy_rootns(p, pid, NULL);
-> =C2=A0		nr_threads++;
-> =C2=A0	}
-> =C2=A0	total_forks++;
-> diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-> index 127a5fd23e70..081c27aa85bd 100644
-> --- a/kernel/pid_namespace.c
-> +++ b/kernel/pid_namespace.c
-> @@ -24,6 +24,7 @@
-> =C2=A0#include <linux/sched/signal.h>
-> =C2=A0#include <linux/idr.h>
-> =C2=A0#include <linux/nstree.h>
-> +#include <linux/rootns.h>
-> =C2=A0#include <uapi/linux/wait.h>
-> =C2=A0#include "pid_sysctl.h"
-> =C2=A0
-> @@ -280,6 +281,7 @@ void zap_pid_ns_processes(struct pid_namespace
-> *pid_ns)
-> =C2=A0		current->signal->group_exit_code =3D pid_ns->reboot;
-> =C2=A0
+--7e8bd4a9c12ebb9d8a66b83f0766d89a19a194b2b3f96510da164a6c43d9
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
 
-Dear Jarkko,
+On Fri Nov 20, 2026 at 7:03 AM CET, Amir Goldstein wrote:
+> On Thu, Nov 19, 2026 at 11:25=E2=80=AFPM koraynilay <koray.fra@gmail.com>=
+ wrote:
+>>
+>> On Thu Nov 19, 2026 at 11:09 PM CET, Pali Roh=C3=A1r wrote:
+>> > On Thursday 19 November 2026 22:51:26 koraynilay wrote:
+>> >> On Thu Nov 19, 2026 at 6:34 PM CET, Amir Goldstein wrote:
+>> >> > On Sun, Nov 15, 2026 at 7:04=E2=80=AFPM koraynilay <koray.fra@gmail=
+.com> wrote:
+>> >> >>
+>> >> >> Implement provenance time (ptime) in ksmbd, as introduced in a
+>> >> >> previous commit ("vfs: add provenance time (ptime)").
+>> >> >>
+>> >> >> Map it to SMB's CreationTime, making it settable by SMB clients. W=
+hen
+>> >> >> reporting CreationTime to clients, prioritize ptime over da.create=
+_time
+>> >> >> memorized in the user.DOSATTRIB xattr.
+>> >> >
+>> >> > That doesn't sound like the right thing to do.
+>> >> >
+>> >> > If the server stored a CreationTime that client had set, you cannot
+>> >> > override this.
+>> >>
+>> >> Ah, yes, but how would we handle older files which get a custom
+>> >> CreationTime both before (in the xattr) and after (in ptime) a kernel
+>> >> upgrade?
+>> >
+>> > Just to note that this problem is already there. ksmbd can export for
+>> > example ntfs filesystem on removable disk. And this removable disk can
+>> > be connected to Windows machine which will always only touch
+>> > CreationTime and ignores xattr DOSATTRIB.
+>> >
+>> >> > When the client sets CreationTime, the server can decide if it can =
+and wants
+>> >> > (may be a policy decision) to store CreationTime in PTIME and not s=
+tore
+>> >> > it in user.DOSATTRIB.
+>> >>
+>> >> To fix the above problem we should probably keep storing it in both
+>> >> ptime and the xattr though.
+>> >
+>> > IMHO for a long term solution it is better to not have duplicated
+>> > information in xattr. Because duplicated information are going to be
+>> > out-of-sync. Windows NTFS driver will not update xattr DOSATTRIB.
+>>
+>> Yeah, to avoid out-of-sync issues is why I made ksmbd prefer ptime over
+>> the xattr's CreationTime.
+>>
+>> >
+>> > For me it looks like that this needs some policy / configuration
+>> > decision done by user. We do not know if the user will replug that dis=
+k
+>> > also to Windows NTFS driver (and then those xattr DOSATTRIB could caus=
+e
+>> > out-of-sync issues) or will only use it from Linux or Samba and then
+>> > xattr DOSATTRIB is probably fine.
+>>
+>> I'm not sure if this is the best solution, it doesn't feel too right
+>> to me, but maybe there isn't a better one.
+>>
+>
+> If you ask me, this is not your problem and I agree with Pali that
+> this is a policy decision.
+>
+> I would not include this patch at all in the series if I were you.
+> Maybe as a demo user, but you could just as well include a demo
+> user application.
 
-> =C2=A0	acct_exit_ns(pid_ns);
-> +	exit_rootns(pid_ns, me);
+Ah, ok, fair.
 
-We have a very similar mechanism around pidfd's to track exit
-information for a task. As far as I can see we already have (struct
-rootns *)->init_pid reference, so we can get exit information for free
-(look for PIDFD_INFO_EXIT).
+> The nfsd user is a simpler demo, so as long as the nfsd maintainers
+> are on the same page wrt the mutable btime plan, you could include
+> it in your series.
+>
+> The problem you raise with DOSATTRIB xattr is similar to the problems
+> that Chuck raised for ptime vs. btime as the source of FATTR4_TIME_CREATE
 
-Kind regards,
-Alex
+Ah right, I can see the parallel, tho before the ptime change you
+couldn't modify the creation time at all from linux with nfsd, so in
+that case unless a user manually changed it after a kernel upgrade, it
+wouldn't have this desync problem (apart from a kernel downgrade).
 
-> =C2=A0	return;
-> =C2=A0}
-> =C2=A0
-> diff --git a/kernel/rootns.c b/kernel/rootns.c
-> index 3bbf7677080e..bde7cf4baebe 100644
-> --- a/kernel/rootns.c
-> +++ b/kernel/rootns.c
-> @@ -183,3 +183,41 @@ bool is_rootns_file(struct file *file)
-> =C2=A0{
-> =C2=A0	return file->f_op =3D=3D &rootns_fops;
-> =C2=A0}
-> +
-> +void copy_rootns(struct task_struct *tsk, struct pid *pid, struct
-> rootns *c)
-> +{
-> +	if (likely(!c || !is_child_reaper(pid)))
-> +		return;
-> +
-> +	scoped_guard(spinlock, &c->lock) {
-> +		if (c->state !=3D ROOTNS_FORKING)
-> +			return;
-> +		ns_of_pid(pid)->rootns =3D get_rootns(c);
-> +		WRITE_ONCE(c->init_pid, get_pid(pid));
-> +		WRITE_ONCE(c->state, ROOTNS_RUNNING);
-> +	}
-> +	wake_up_all(&c->waitq);
-> +}
-> +
-> +void exit_rootns(struct pid_namespace *pid_ns, struct task_struct
-> *tsk)
-> +{
-> +	struct rootns *c =3D pid_ns->rootns;
-> +	struct task_struct *leader;
-> +	int status;
-> +
-> +	if (!c)
-> +		return;
-> +
-> +	leader =3D tsk->group_leader;
-> +	status =3D (tsk->signal->flags & SIGNAL_GROUP_EXIT) ?
-> +		 tsk->signal->group_exit_code : leader->exit_code;
-> +
-> +	scoped_guard(spinlock, &c->lock) {
-> +		c->exit_code =3D status;
-> +		WRITE_ONCE(c->state, ROOTNS_DEAD);
-> +	}
-> +
-> +	pid_ns->rootns =3D NULL;
-> +	wake_up_poll(&c->waitq, EPOLLHUP);
-> +	put_rootns(c);
-> +}
+Thanks,
+koraynilay
+
+> Thanks,
+> Amir.
+
+
+
+--7e8bd4a9c12ebb9d8a66b83f0766d89a19a194b2b3f96510da164a6c43d9
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCawBJ3gAKCRA0bnTtJTDo
+OJc/AQCn/pvK3+PSezucUXa1GtiKLjE7oMlXGStcJfzdnlWtcAD9GPZFH0ccIs4C
+afAlaO9nsoqLSUJ3Hk7qioPrnGVqrQM=
+=CBTM
+-----END PGP SIGNATURE-----
+
+--7e8bd4a9c12ebb9d8a66b83f0766d89a19a194b2b3f96510da164a6c43d9--
