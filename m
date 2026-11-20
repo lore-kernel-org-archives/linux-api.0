@@ -1,100 +1,47 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.44
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795190318;
-	b=l5n0RGYJTdA1sLhZAnbCLnw8Jd/+K+Aj4gpCDslja7nnlh1gXZ5GUTFW59R/wNXaCbog
-	 RcMbjqsHd1S0BLTk0kvW6kz76KS3C4OPvum/0aIwj587nocxYD7S2XPYJeI2JKENbeoP0
-	 LCoUBGvu0u6K3im5hYhebWa/DKY9TzMELHgc/RlprdkdcY04SL51dDR3PjuB4QGXUXYYf
-	 r4fkQMuWeBni4j4CjOC+ZYJyugjC6aD2zUF7s1hN2Ss61vT6GpZXrnu7Di0goHNbRL5WR
-	 pHQgzw36Upur1TkDbGyrJc4DO49YmnXA67KPKppvxqX3hQSycu8jPdCUoD/i0rfv0tA==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795190318;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=6kM0KOtHeHKXYurgzFZtJQepqztK7z7Hv0tSSDFAXAE=;
-	b=uSE2kFQMMfIyB/AWLZtG+xWTqBBHVgU6/ndX4HQCTomAzVA6+IccACD+xGycNtDLOLtC
-	 51TRLYMpsq9UX/9k79O93yEUGULciusN79JL9qwd4AoQhIhl/AHHpZjnVU34G33N6gTxi
-	 O6eazScf+w6+SUDxLwajRafNrNCBvFqY5dyuGMMJQR+ytBOtjutoNsta7KwgsqOHQxT8v
-	 CCTXrrEANqdVkbM+JPQ6rxXSYLEKEDAunUH/dizZZOdvFBMTubzkM+BYJNLe3IXXGvbiv
-	 I0Se5ac0P48o2YKd+lfsN6oqoENGJ7QQiU1N00rI2o/+3vqFd+3jFcgKkWTSH8Z4BEg==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=eTc+eMp4;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.44
-Received: from mail-ed1-f44.google.com (mail-ed1-f44.google.com [209.85.208.44])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795191167;
+	b=uK29Yd5SkH9QfusEOoq3Wb6UwM9BXnfL4f7voQj+wZh24wHQIgSnOR7SSo2WUekxSeYD
+	 rLFKfqSC06e7tZbDFTg4DSjZO+FkymJXmlSjtlUMW0t9zxq4dT2wH2i5Aam+2vla6VqCe
+	 w+Qj6zHcZiQ20V0n2RPwB8ED0weDlgzv2vQpBGQS8tV2Qhp+gjfiYnsBmOp9Z82Zi9SRl
+	 kA8qYLlJbpu3v/phZL4FEj+Txz4CZoFA92Ednx+H4ixdFb1YPPpkAtfnhErUukUfIWMga
+	 n/WJwvZEE665Ml467pmQdvJmW+DF56AEdLUGpoIpiEMOTuZbctLF/uBdXDqqMe1ZzXA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795191167;
+	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:To:Cc:References:From:Content-Language:Autocrypt:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=PUJvVwnS6EwZUWjv8S7z217586V6G8XCo6hR7Yn1lq0=;
+	b=PT/tvN6DuFYWQsZvdogeb7pu+FIRx9n5/ER7ZuFl/ipAtjKLa/+HmCX2na5EZUo4BFj0
+	 P1+WNHBv0w181wOUbIi+DHVCPzmmlRYnzm3dV/LIbpGCFpA/8lxwQYRffQVf/ecLZ4Lbj
+	 4U51COFLesWZIVG/dOS1bNcr7EEVmVHdA1ID2CTgahsdmtMJ/X16KXdT3UihHQysMRgqu
+	 5NSJWwwCVNctn76VcoM0NKb1MLc8ZetdBc2ZGAsXBfoKsJtk8+q4tCo1o3TNHnpjIvU6s
+	 5OBdF840itZAHTgZ1aloeiBW1/dMCB6ziHt1pKhOMMOAV9ueW27JAXI6D7sVZUDnDbA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=N3c+DUy8;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C6C2560A2617
-	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 15:58:37 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C6C2560A2617
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C81CF606A320;
+	Fri, 20 Nov 2026 16:12:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=eTc+eMp4
-Received: by mail-ed1-f44.google.com with SMTP id 4fb4d7f45d1cf-6b894d9a075so1219469a12.2
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 07:58:37 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795190316; cv=none;
-        d=google.com; s=arc-20260327;
-        b=VNhh1LasWkhg0OoSklcqtqBIY7l0ltuePl71y8UNeduparIEPkdDBPddSEhhR83jpU
-         Vw4jUlA9c4QVDDReJwMFLEF9XvS4UfAc4Vb2wbwFTqaXhHPboHeLds7WInU1gyzcMvwM
-         r1lyehHCM4IUMyq7z9ga0zxO7PbBAlTbXqDS9VzxrV6v6dBUcQK9guQD3eCUIKYHBofN
-         c8sHbyB9KuFoxTnoU+2AscbPD3YBKUxdLpRRojO8c7dmBr1fyJSaW286PBsY81z1kkd/
-         +5nN1IfFl0/I+WWVXxVgvy0SgKh1hvcp028yZ4iAzK/V5S4v3O0T7XXZZtSVW0rIF1+q
-         eUEA==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=6kM0KOtHeHKXYurgzFZtJQepqztK7z7Hv0tSSDFAXAE=;
-        fh=g2kLSUAUmqDWxm9CMJ6Pd8mtBejrJmFkSkKatMkniTc=;
-        b=P57CK83D3pDX2fOHs7TTTDu17qTgZE4VSHHnDHHOYDzKXlKQNqj+EL9dYSNOBVYVCj
-         F9LR5Uh6pOq+LblEXhg3CW7uYfrMFDBrrpNs+C4U25iQtjaFgTtLtQsPJfChmRNugInt
-         xNpjnMWWmuVvEg8F2JK7ZNxQOxWXNqXkx6TIS8Dh9L11B88awMUHeaHd00P2oJSE6eyQ
-         palCYzqqGoq8KFaCObA89rsYl0XJ1x3SK+IQ7rP1wQtyZujEFom/lU4YGnLTUbnVRMVK
-         NwOQoQKOj1E8JjdazIK11Euj3lm/k8/79WuG58Uum54lUMziDXwEMtpfrxiTxcxVQ7Uk
-         gpUw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795190316; x=1795795116; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=6kM0KOtHeHKXYurgzFZtJQepqztK7z7Hv0tSSDFAXAE=;
-        b=eTc+eMp4bITMI7jgx5jM4l7NyEFh1c9lTC1VxvFXF9G+vcYBoZB53yLQdKfrQOpf6F
-         Mtz8FTmSSTw6Ei7un/2M30yiLReetEhAe/lO4dm/xLE7CcivvqjbhlK/KCKhN5ARxijZ
-         ChezPcoSYPSGA4dYvVLO7Yd9kb7uDyVuUiuKTqgzbCAKx1XbYJKzxg+Mx7ccVg34Vcwt
-         Sq2087h5YZQNFE89KJ0Ys4A0dIfGzwnygs4zE++uxupxXjpFy9vZB08cycp+xBcweq9+
-         96UTqALXMzvyeJr5t/bjHIhkmiHd4xvEUtcz6apgxXUf6gRVWrykVKb8LpEbPe+pU8hS
-         b+2g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795190316; x=1795795116;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=6kM0KOtHeHKXYurgzFZtJQepqztK7z7Hv0tSSDFAXAE=;
-        b=p8JGk6kMPyXcXFwovt6pGZpqdSYRT/xHQGErwWExSkVsGSycIXC7jRyEmtfeTtjodh
-         UUD3RQysrYhs8c9FeE0gwepwaEXxujkPro+MWvWNI6N8nVBfyNvDrheSkR8MBuF761hw
-         H5tern1Q9sIPKDHqwFyeTU5XorGZKHrp4zcfg46ML4Teu6QSEikrteabJJ1Ocg6ld40i
-         gt4VKiYpu+SDyJy+2L/tR34SagFU4xHg36+ZiJdZXpcZBL7Qr9TyRox91Vm7PFdiwG+G
-         6gsl3uw6g+P1kcAKhdxZrV2l+H7FLy3P3/EZm2nV/x0kSc/ro8l8rq3Sa2CFHLILprmt
-         V7Wg==
-X-Forwarded-Encrypted: i=1; AL+hErGlTaSXTu1o5rFV80aPmrg3mjKrHtNECxz550eWJARPCPz1HGXyLZGctdTFsHj2jJj6rxsCG82H/8w=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+ap2L0zs9D6ib3f7pEZTZeXC6+FE8MFIxMDSvn4VB0ofnqI2oj
-	YvI9dj+6PJEo8RNvf92HmsjY5N+oq+uPn2/xPtekfA81Am9omKzgBQCd9VWH49WpKkYVgB1TAPt
-	c08KcvrUavOipK0FujT52rhzuvzmKQuY=
-X-Gm-Gg: AZFdTZfu/dcsSJDdXnhl42eChrm6FeRng5suRwn50ClcClFN6uxdW6fsinEUqEbvUiN
-	OHTsDIlRmQgAXMQ/AadnN6uyBkM9cuJ4fE4hzgv8daauIBy5cLBvqqlzaCV6XBAtZWCwbEH/9VA
-	nFxkI2qQlTN2MKJjp7+oSq1BssIjQNPwvNsnC9udWc5OjEveV67eFZtEI6tO6p2rUGe4KfFpcoL
-	zm9+mwoKVb7BRudG5qkUShzcpN29gVRFoCflA7NHyzHPsieULYNHIRWR44O1LOjUGT8p3BmKDm/
-	ojQFWars85ywoDZ/JkmJpUU1YEOYn+SlCG81nd8JMG3Pe3PHOWA8rdjrWxNg1fztVQ/NbPzsA2T
-	EGCZoNF26r4B2C5V1/xwSZGCa7huAlTUcX6JOHrt11D7Fs/ddeYf0fTTBlmFDzd000+7yMQ==
-X-Received: by 2002:a05:6402:52c8:b0:6b8:5aba:6c06 with SMTP id
- 4fb4d7f45d1cf-6ba37d652f3mr2090064a12.14.1795190315774; Fri, 20 Nov 2026
- 07:58:35 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=N3c+DUy8
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id CE61E1F000D2;
+	Fri, 20 Nov 2026 16:12:29 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795191167;
+	bh=PUJvVwnS6EwZUWjv8S7z217586V6G8XCo6hR7Yn1lq0=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=N3c+DUy89OIYNJgYet53Hm9+y5kiCcBKKZbBXIgkjsYAK5yjkwgXVZbeD48X7nwdA
+	 hDQJUeRAu+B+4t4XjNVIHy/iuVs95mDJS0kZgR5CN8anJoII4Vld5DKJBkh20xXK93
+	 phMXJ1zWA4QMMtyNClcFo6ReKQJKUIuDWmzeDHpe4FkLZl6RX0KgSwPoBD9Rs4mt8O
+	 OPUlVTXN5fUMpAjnq1Cqta7D0BYDXjVgPqmIWOoLM8EEB34x18uD0iqkMNE76ut6Rs
+	 NAls7oApGHHqdH7NKzXh1+ryzpAvZa/XL+0uweigCWoORdnzhsyhen+I7baKCliFQx
+	 kp5lKhfwsx7TQ==
+Message-ID: <8c9bd441-db5e-4857-8e39-79f147422454@kernel.org>
+Date: Fri, 20 Nov 2026 17:12:25 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,58 +51,102 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261115180343.576773-1-koray.fra@gmail.com> <20261115180343.576773-4-koray.fra@gmail.com>
-In-Reply-To: <20261115180343.576773-4-koray.fra@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Fri, 20 Nov 2026 16:58:24 +0100
-X-Gm-Features: Aa3M54pideZA7GJITw5PojgxjktVU6GBxKullq4dSyaJ0XYgg1VLGv1zO6-iMnU
-Message-ID: <CAOQ4uxjdEiuJMQxtSL8XrPYHSamtfMh+BM8kS1wj_PVME4JynQ@mail.gmail.com>
-Subject: Re: [RFC PATCH v4 03/10] ntfs3: make crtime user-settable using ptime
-To: koraynilay <koray.fra@gmail.com>
-Cc: David Sterba <dsterba@suse.com>, Namjae Jeon <linkinjeon@kernel.org>, 
-	Sungjong Seo <sj1557.seo@samsung.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Christian Brauner <brauner@kernel.org>, Trond Myklebust <trondmy@kernel.org>, 
-	Anna Schumaker <anna@kernel.org>, Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, 
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
-	Paulo Alcantara <pc@manguebit.org>, Chris Mason <mason@kernel.org>, Yuezhang Mo <yuezhang.mo@sony.com>, 
-	Jan Kara <jack@suse.cz>, NeilBrown <neil@brown.name>, Olga Kornievskaia <okorniev@redhat.com>, 
-	Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>, 
-	Ronnie Sahlberg <ronniesahlberg@gmail.com>, Shyam Prasad N <sprasad@microsoft.com>, 
-	Bharath SM <bharathsm@microsoft.com>, Sergey Senozhatsky <senozhatsky@chromium.org>, 
-	ChenXiaoSong <chenxiaosong@chenxiaosong.com>, "Darrick J . Wong" <djwong@kernel.org>, 
-	Sean Smith <defendthedisabled@gmail.com>, Andrey Albershteyn <aalbersh@kernel.org>, 
-	Pedro Falcato <pfalcato@suse.de>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, exfat@lists.linux.dev, ntfs3@lists.linux.dev, 
-	linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, 
-	linux-api@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+User-Agent: Mozilla Thunderbird
+Subject: Re: [RFC PATCH v3 00/25] PISA: Pre-mapped IOVA Superpage Allocator
+ for DMA and CoCo
+To: "Lorenzo Stoakes (ARM)" <ljs@kernel.org>, Luigi Rizzo <lrizzo@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+ Johannes Weiner <hannes@cmpxchg.org>, Vlastimil Babka <vbabka@kernel.org>,
+ Joerg Roedel <joro@8bytes.org>, Will Deacon <will@kernel.org>,
+ Robin Murphy <robin.murphy@arm.com>,
+ Marek Szyprowski <m.szyprowski@samsung.com>, Jens Axboe <axboe@kernel.dk>,
+ "David S . Miller" <davem@davemloft.net>, Eric Dumazet
+ <edumazet@kernel.org>, Jakub Kicinski <kuba@kernel.org>,
+ Paolo Abeni <pabeni@redhat.com>, Luigi Rizzo <rizzo.unipi@gmail.com>,
+ "Liam R . Howlett" <liam@infradead.org>, Mike Rapoport <rppt@kernel.org>,
+ Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>,
+ Brendan Jackman <brendan.jackman@linux.dev>, Zi Yan <ziy@nvidia.com>,
+ Harry Yoo <harry@kernel.org>, Christoph Lameter <cl@gentwo.org>,
+ David Rientjes <rientjes@google.com>,
+ Roman Gushchin <roman.gushchin@linux.dev>, Hao Li <hao.li@linux.dev>,
+ Matthew Wilcox <willy@infradead.org>, Jan Kara <jack@suse.cz>,
+ Jann Horn <jannh@google.com>, Catalin Marinas <catalin.marinas@arm.com>,
+ Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+ "Rafael J . Wysocki" <rafael@kernel.org>, Danilo Krummrich
+ <dakr@kernel.org>, Jonathan Corbet <corbet@lwn.net>,
+ Simon Horman <horms@kernel.org>, Jesper Dangaard Brouer <hawk@kernel.org>,
+ Ilias Apalodimas <ilias.apalodimas@linaro.org>,
+ Willem de Bruijn <willemb@google.com>, Kuniyuki Iwashima
+ <kuniyu@google.com>, Joshua Washington <joshwash@google.com>,
+ Harshitha Ramamurthy <hramamurthy@google.com>,
+ Alexander Lobakin <aleksander.lobakin@intel.com>,
+ Christoph Hellwig <hch@lst.de>, Jason Gunthorpe <jgg@ziepe.ca>,
+ Dragos Tatulea <dtatulea@nvidia.com>, Naman Gulati <namangulati@google.com>,
+ Pranjal Shrivastava <praan@google.com>, Mostafa Saleh <smostafa@google.com>,
+ Randy Dunlap <rdunlap@infradead.org>, linux-mm@kvack.org,
+ iommu@lists.linux.dev, netdev@vger.kernel.org, linux-block@vger.kernel.org,
+ linux-fsdevel@vger.kernel.org, driver-core@lists.linux.dev,
+ linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org,
+ linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
+References: <20261109182533.3594984-1-lrizzo@google.com>
+ <20261120010655.467825-1-lrizzo@google.com> <awBYFhnpFGtEXZ6r@gremlin>
+From: "David Hildenbrand (Arm)" <david@kernel.org>
+Content-Language: en-US
+Autocrypt: addr=david@kernel.org; keydata=
+ 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
+ qIws/H2t
+In-Reply-To: <awBYFhnpFGtEXZ6r@gremlin>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-On Sun, Nov 15, 2026 at 7:04=E2=80=AFPM koraynilay <koray.fra@gmail.com> wr=
-ote:
->
-> Since NTFS supports user-settable file creation timestamps, map
-> provenance time (ptime) to NTFS file creation time (crtime) by using the
-> newly introduced ptime API (in commit "vfs: add provenance time
-> (ptime)").
->
-> To do this, update ntfs_fileattr_[gs]et(), ntfs_getattr() and make it
-> persist to disk in ni_write_inode().
->
-> The timestamp is now retrievable by using file_getattr() or statx(), and
-> is settable by using file_setattr() with the FS_XFLAG_PTIME flag.
->
-> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.4.7
-> Signed-off-by: koraynilay <koray.fra@gmail.com>
-> ---
->  fs/ntfs3/file.c    | 20 ++++++++++++++++++--
->  fs/ntfs3/frecord.c |  8 +++++++-
->  2 files changed, 25 insertions(+), 3 deletions(-)
+On 11/20/26 15:54, Lorenzo Stoakes (ARM) wrote:
+> TL;DR: NAK. All of it. (And yeah, I'm steeling myself for the inevitable 'oh
+> Lorenzo' :)
 
-Please don't change the unmaintained ntfs3 driver.
+Oh Lorenzo ... you are absolutely right.
 
-If you want to include an ntfs patch work on the new fs/ntfs driver.
+-- 
+Cheers,
 
-Thanks,
-Amir.
+David
