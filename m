@@ -1,83 +1,130 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.218.51
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795188083;
-	b=ZLwTDUSfN65VHLCvBMyAreevqIoNv4mBc0eDa0XAeEx2yiPK2b9N0bqa8oo7dwlvg4OE
-	 9rfql4hSllJ5bRtBYPf6Bx0yMOXLk0sFSpvkMrL146S632r/tTBzPr6Q26NrTgzYLtxBn
-	 y7SCzlivsFg/fwzAsSarsK2UDwXpfeVTmMNhKk1ArSwJEWa6Xn0dseSUyxeNb2UQPF53j
-	 s4zIX9GZqPTxZRSrNBxdwEFWS9Y3YhSYbQWmALAZf6c9Zyp6hhu/XiwmgeJTII8WHuE6Q
-	 0GJNjUX94HgFfAVYIqPXPzA2qPTR3MTRymZ4dtXkPqPB81NOfsy5aWRvNmHLYDXRixg==
+	t=1795188276;
+	b=RfAFeDH1PfbhtfH2Bh/YaxGqKegF7yDFH95Z1b8df+ItcZWkUvuylINwZgBRkv6qm5on
+	 D3h1ikB5f5QwQBNVknf16//xcRnXCGn5EJpq4lm0DCk8garWyV71H6D75D6AdsnLLR6AU
+	 3QtN0Tzq90qerFr6Ng1JjfTuZYvjaCeb8OSdIH9KwdSfHtKH5YBwVmQdbZqXaq0je7muM
+	 kV/WfR/omefUc6cXvBrK9bM77zdpCFoAmtgZ+Fpkwe0d4CVScJrZz0XUj8Qu5z5qte6UB
+	 0w8sDsO8XID522AXeq+wkvOgF2KJ6EiyxDgBzk0A4U41EyhpvzFDSeDnY5tFcpX0Cfg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795188083;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:X-Mailer:
-	 References:In-Reply-To;
-	bh=EOuNUplOgjccByi+i7DuzKPwQryobm9GZBpfnMCMmUY=;
-	b=imZfDCN7aQPyY46xK3hJK5cx3b+GncTE0NDvD9ubsMOecUENqnUSLz0tT7NX+KrURXt6
-	 xXYKDuH8+UdzfIzLz0m4BQTbTEf4UlmQsQKYWVuBZ1MxqNBiGseGo3/dwngiznhdHy0Tc
-	 kVBriQSVts0GpQtzz904+gaADcLx6Wwk+0ikiJeKnhAVHYOUDLyXq7kdkXvsw0PQ8odH8
-	 /xhRR2crUMufLAC2c+IMkN8gL6igQ9Jlsgxdru3NdPibomtSlAVcgxOW1J0n0jHI+jtFp
-	 7BAm8PSjHyePomJRU3tQbEfXHns2KP9ZMhynEV/GTzKefEeEG0FfENyHpSHukh4uakw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795188276;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding:In-Reply-To;
+	bh=zOo2EfGngcl3fu/kIhqZadaO75pP0lk1DR/lRHlyrtU=;
+	b=3Bf/JDupGMB0NF5YT0guaBMQxASzyBt8w/bQYuZjpy4pLXvc+1ZMyFO9n8Eev5Ed6Alx
+	 4Y7MlAXroEFDChrhA0V7TYlbTNnQKvpgcH3nTww9GJ+kb1Tfjbiohr3ZglABng4Kdh5l2
+	 9iwPgdwu2OaDjYcbe9Zszk4crOqJ4hHKxZe+bcxYqgvAa5efSUBO+33YuHvzuCgBjiaBz
+	 ETVN/fdmBwFGMjRFpx/o1Vl9SwdSSq2kSbCnJxpM3nU067pguiwACOZxEYHmK3ZLW4kg8
+	 5Pyljq0m9B4+A3HhzhGgRqznESzl+j6HVugTTO0IJiWzmdRO+Xz99CjZcXXH5PLORHA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=NS4+0sJS;
-	arc=none smtp.remote-ip=209.85.218.51
-Received: from mail-ej1-f51.google.com (mail-ej1-f51.google.com [209.85.218.51])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XCQUtSSf;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC6BB606A336
-	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 15:21:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CC6BB606A336
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 1ADE6606A320;
+	Fri, 20 Nov 2026 15:24:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=NS4+0sJS
-Received: by mail-ej1-f51.google.com with SMTP id a640c23a62f3a-c4d581da0aaso132767566b.2
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 07:21:22 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795188081; x=1795792881; darn=vger.kernel.org;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=EOuNUplOgjccByi+i7DuzKPwQryobm9GZBpfnMCMmUY=;
-        b=NS4+0sJSs9ZY/390/dC7VLJUTfAcS54lqeieQtRl8eH5yHWeiW5ytJUQmodv4DKhEJ
-         Piyk+uvIFd6cA17v/LQ32rQmteQ4JvXR1QZozak/uFldjGBchuAxoES2PNfUGoBgDTv2
-         RbPBJZsdPY1/23IPeY0lzOgNMKQtBhaW79XKJ+OjgBo5KzxR2zORITcFzh48Lc61B/4G
-         IpmH+hgmspro/l5uz2hxwnp5j764NrCPcIIHRgzCs3xPLWQwu9A3hyD4S+1gyNKuURVe
-         ByXWj6Mlvb+BbN3iPRxqpawWP9jlY2TCk6M4RWxqsGJ9tZX/mW7dUMoA+Kuqk7L/DFfH
-         KAPg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795188081; x=1795792881;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=EOuNUplOgjccByi+i7DuzKPwQryobm9GZBpfnMCMmUY=;
-        b=Vm7keQteKeMktAGKlr/mmWADL9K6K/7vNmpPqzvdnycuc+dNZxlCPoQ4koIht37imS
-         GlNjc58y6MtBs3AGVNqogXDI2CcA/Nrqng5TXomuRmKXceE2truGb89s0ftBRgfavNHb
-         JCvXgGf9pFLyyw9tnoBoyifjxTNkpowVNSCnW070T/mo77zVgbS5VXsAVVMShvBwnwCj
-         aF+pBHtZL8IZvA5Kno+ew2E1rWHei7tVMqFDbDoIzI9F4k13Im4vCvVno/hqcZYVV33a
-         x4pHRVl0wCq7n5tAFnLAWlNuXLqOxqcn1WJBEeTRn9KPECLfmLFmcQZ9PjfvMU5eHCK5
-         jrEA==
-X-Forwarded-Encrypted: i=1; AL+hErG2DW0qWcgoKtJjPQZkK39o2C7ZYNw93Gtm3TS15oLQ85W3KahZxIfHX17s/+YWhSmPbF2NU4jNPOI=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+CBKJrtb5M01Ox7FSugegU/sXBX/Omub9qlNmuobkVshZOWcMP
-	T5s3a/sH0VzUEg5oNW13953clOwvyYKigjfEDPFM5VKemvWOdQvWQR6U
-X-Gm-Gg: AZFdTZeS446gRGBtwfe9EIiyEXHOwQLt5iz2KU0Rr5rKtkDUcPSohUDd7CT87JNUYTl
-	mGiTNjHGs0vd5na8sgEzJrSB4orNIMiDAihHaa0RkbyVLfdsWjVMCIJgGSDPMQg4Y3H18Oc/4WV
-	uIFMZkAWCbImEO4RSretgiMDI+Q0tDy61u2kaqMJhGsyzm46Y+IpvK4EWNtxHQ2U5KJQl5WiSf7
-	/kltxXJlvEvpNq/YL4HaP9DGUKOsv3hb7k0OitA/KCApfGzUUnUwr9wYE7QyaZeuXYwSfFMYZOY
-	Z6k5/1t4HLCgbLlyGXlhTlAXjzkpHRYeRSEgZ+6b/TFtPCyJQgz4vbXzhnykV9mVxRHNXXFFbk5
-	TFv8bJGcvPMKv4owChm638uBcRonzpiH+7yqYrPM9m34VohBc0/GBrtr6ioxnnOy2jg18OFGSwq
-	ROx6+lHbYcuUr4s52VVF43g1qSg5zpKgd2UzGLuBaiW9EgoczIGaGWV+B3byu+XV55CALGRuCvq
-	VNFPR8OoDRAXSoi7BKrUjVn5v+G2FM+drYUujcV9HeRonH347yLXuVuRzCmdrNXvn/s/Tc6hMcI
-	7xrAoVfHeZQJP/0oYRohbtqUGKHhiy6atOC1xqUmpYmvi4Jl
-X-Received: by 2002:a17:907:9903:b0:c49:cdc8:10cf with SMTP id a640c23a62f3a-c513ac754cbmr269557266b.40.1795188080773;
-        Fri, 20 Nov 2026 07:21:20 -0800 (PST)
-Received: from localhost ([130.192.98.149])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab6c340df4sm7100009f8f.55.2026.11.20.07.21.18
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 20 Nov 2026 07:21:19 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XCQUtSSf
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9CC851F000CA;
+	Fri, 20 Nov 2026 15:24:34 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795188275;
+	bh=zOo2EfGngcl3fu/kIhqZadaO75pP0lk1DR/lRHlyrtU=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=XCQUtSSf00g2G/Jpzjl9LRNQEFXNNRnYGZWzdtuiZBHk7dosmqWBMrC+L7eGsuwT3
+	 6Y8qXJypfh+8W03R5Msm4iQvi0clPna6Y5oqS1fK2fMBPqPJtncagCqPrZrgwYA61c
+	 Ir7DESMb/dns84I6WWtY5IQnf73sTx8SIKL9bvZjYjcc9pfyT2D4A8Rsc/CYWyagj2
+	 DltATLAp/YBb7+MwnvRYS7P7+HT3f1+jlJHOL7W4kb+l4QjcUeVm9fOWhMSveLYD4Q
+	 IO8nsOvMP1W4FNm+RhhQIMrsrDM1nc6imjdTxfwsnAexYb35pl8AoQ1Ir88SqmYiNe
+	 v0OZ/2yfr0Tjg==
+Date: Fri, 20 Nov 2026 17:24:31 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Alexander Mikhalitsyn <alex@amutable.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org,
+	linux-arch@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+	linux-mm@kvack.org, linux-security-module@vger.kernel.org,
+	Albert Ou <aou@eecs.berkeley.edu>,
+	Alexander Gordeev <agordeev@linux.ibm.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Alexandre Ghiti <alex@ghiti.fr>,
+	Andreas Larsson <andreas@gaisler.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Andy Lutomirski <luto@amacapital.net>,
+	Andy Lutomirski <luto@kernel.org>,
+	Anna-Maria Behnsen <anna-maria@linutronix.de>,
+	Arnd Bergmann <arnd@arndb.de>, Ben Segall <bsegall@google.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Casey Schaufler <casey@schaufler-ca.com>,
+	Catalin Marinas <catalin.marinas@arm.com>,
+	Christian Borntraeger <borntraeger@linux.ibm.com>,
+	Christian Brauner <brauner@kernel.org>,
+	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
+	Chris Zankel <chris@zankel.net>,
+	Dave Hansen <dave.hansen@linux.intel.com>,
+	David Hildenbrand <david@kernel.org>,
+	David Howells <dhowells@redhat.com>,
+	Davidlohr Bueso <dave@stgolabs.net>,
+	"David S. Miller" <davem@davemloft.net>,
+	Dietmar Eggemann <dietmar.eggemann@arm.com>,
+	Frederic Weisbecker <frederic@kernel.org>,
+	Geert Uytterhoeven <geert@linux-m68k.org>,
+	"Hallgrimur H. Gunnarsson" <halg@google.com>,
+	Heiko Carstens <hca@linux.ibm.com>, Helge Deller <deller@gmx.de>,
+	"H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
+	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
+	Jan Kara <jack@suse.cz>,
+	John Johansen <john.johansen@canonical.com>,
+	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
+	K Prateek Nayak <kprateek.nayak@amd.com>,
+	"Liam R. Howlett" <liam@infradead.org>,
+	Lorenzo Stoakes <ljs@kernel.org>,
+	Madhavan Srinivasan <maddy@linux.ibm.com>,
+	Magnus Lindholm <linmag7@gmail.com>,
+	Manfred Spraul <manfred@colorfullife.com>,
+	Mark Rutland <mark.rutland@arm.com>,
+	Matt Turner <mattst88@gmail.com>, Max Filippov <jcmvbkbc@gmail.com>,
+	Mel Gorman <mgorman@suse.de>, Michael Ellerman <mpe@ellerman.id.au>,
+	Michal Hocko <mhocko@suse.com>, Michal Simek <monstr@monstr.eu>,
+	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
+	Nicholas Piggin <npiggin@gmail.com>,
+	Palmer Dabbelt <palmer@dabbelt.com>,
+	Paul Moore <paul@paul-moore.com>, Paul Walmsley <pjw@kernel.org>,
+	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Richard Henderson <richard.henderson@linaro.org>,
+	Rich Felker <dalias@libc.org>,
+	"Ritesh Harjani (IBM)" <ritesh.list@gmail.com>,
+	Russell King <linux@armlinux.org.uk>,
+	Serge Hallyn <sergeh@kernel.org>,
+	Shrikanth Hegde <sshegde@linux.ibm.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Suren Baghdasaryan <surenb@google.com>,
+	Sven Schnelle <svens@linux.ibm.com>,
+	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
+	Thomas Gleixner <tglx@kernel.org>,
+	Valentin Schneider <vschneid@redhat.com>,
+	Vasily Gorbik <gor@linux.ibm.com>,
+	Vincent Guittot <vincent.guittot@linaro.org>,
+	Vincenzo Frascino <vincenzo.frascino@arm.com>,
+	Vlastimil Babka <vbabka@kernel.org>, Will Deacon <will@kernel.org>,
+	Yoshinori Sato <ysato@users.sourceforge.jp>,
+	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
+Subject: Re: [RFC PATCH v4 03/14] rootns: Track init lifecycle via
+ copy_process() and pid_namespace
+Message-ID: <awBmL_4VqwinHuVN@kernel.org>
+References: <20261119224312.1037966-1-jarkko@kernel.org>
+ <20261119224312.1037966-4-jarkko@kernel.org>
+ <e376c8f0ec5c50b417375197a5589a210f151d9b.camel@amutable.com>
+ <awBLafK4jqB8fTF2@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,128 +133,31 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: multipart/signed;
- boundary=f7e29ba536d1e92db179b4c7b2dcf417c13b9e676632060f29334f2a5d8b;
- micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Fri, 20 Nov 2026 16:21:11 +0100
-Message-Id: <DN0526U5C1RT.3AQRIHXPB86NS@gmail.com>
-Cc: "David Sterba" <dsterba@suse.com>, "Namjae Jeon"
- <linkinjeon@kernel.org>, "Sungjong Seo" <sj1557.seo@samsung.com>,
- "Alexander Viro" <viro@zeniv.linux.org.uk>, "Christian Brauner"
- <brauner@kernel.org>, "Trond Myklebust" <trondmy@kernel.org>, "Anna
- Schumaker" <anna@kernel.org>, "Chuck Lever" <cel@kernel.org>, "Jeff Layton"
- <jlayton@kernel.org>, "Konstantin Komarov"
- <almaz.alexandrovich@paragon-software.com>, "Paulo Alcantara"
- <pc@manguebit.org>, "Chris Mason" <mason@kernel.org>, "Yuezhang Mo"
- <yuezhang.mo@sony.com>, "Jan Kara" <jack@suse.cz>, "NeilBrown"
- <neil@brown.name>, "Olga Kornievskaia" <okorniev@redhat.com>, "Dai Ngo"
- <Dai.Ngo@oracle.com>, "Tom Talpey" <tom@talpey.com>, "Ronnie Sahlberg"
- <ronniesahlberg@gmail.com>, "Shyam Prasad N" <sprasad@microsoft.com>,
- "Bharath SM" <bharathsm@microsoft.com>, "Sergey Senozhatsky"
- <senozhatsky@chromium.org>, "ChenXiaoSong" <chenxiaosong@chenxiaosong.com>,
- "Darrick J . Wong" <djwong@kernel.org>, "Sean Smith"
- <defendthedisabled@gmail.com>, "Andrey Albershteyn" <aalbersh@kernel.org>,
- "Pedro Falcato" <pfalcato@suse.de>, =?utf-8?q?Pali_Roh=C3=A1r?=
- <pali@kernel.org>, <linux-btrfs@vger.kernel.org>,
- <linux-kernel@vger.kernel.org>, <linux-fsdevel@vger.kernel.org>,
- <exfat@lists.linux.dev>, <ntfs3@lists.linux.dev>,
- <linux-cifs@vger.kernel.org>, <linux-nfs@vger.kernel.org>,
- <linux-api@vger.kernel.org>, "Theodore Tso" <tytso@mit.edu>
-Subject: Re: [RFC PATCH v4 08/10] nfs: add provenance time (ptime) via
- FATTR4_TIME_CREATE
-From: "koraynilay" <koray.fra@gmail.com>
-To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
- <koray.fra@gmail.com>
-X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
-References: <20261115180343.576773-1-koray.fra@gmail.com>
- <20261115180343.576773-9-koray.fra@gmail.com>
- <CAOQ4uxgoNsOH82FyrCxc+qSoid_CFmbmpL0qgWFw-e8E689fFA@mail.gmail.com>
- <DMZJ4PL1JVA4.2YEB7EPYJR5Q7@gmail.com>
- <CAOQ4uxi6h9BBP7pf4sR+gc2+4XtkEgbxXZha45iZzdB_wGFVgQ@mail.gmail.com>
- <DN02S2XNGRZD.1KNOZJ0GGDJNG@gmail.com>
- <CAOQ4uxh+d-wNC0aWLEexPFz7zj=TZjLyu61kaEmwBx9_hKn2gg@mail.gmail.com>
-In-Reply-To: <CAOQ4uxh+d-wNC0aWLEexPFz7zj=TZjLyu61kaEmwBx9_hKn2gg@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <awBLafK4jqB8fTF2@kernel.org>
 
---f7e29ba536d1e92db179b4c7b2dcf417c13b9e676632060f29334f2a5d8b
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
+On Fri, Nov 20, 2026 at 03:30:21PM +0200, Jarkko Sakkinen wrote:
+> On Fri, Nov 20, 2026 at 02:18:43PM +0100, Alexander Mikhalitsyn wrote:
+> > Dear Jarkko,
+> > 
+> > >  	acct_exit_ns(pid_ns);
+> > > +	exit_rootns(pid_ns, me);
+> > 
+> > We have a very similar mechanism around pidfd's to track exit
+> > information for a task. As far as I can see we already have (struct
+> > rootns *)->init_pid reference, so we can get exit information for free
+> > (look for PIDFD_INFO_EXIT).
+> 
+> Thanks for mentioning. I'll see if I can leverage it.
+> 
+> If something like this is found, it is partly due long history of this
+> code i.e., not planned/opionated choice :-) 
 
-On Fri Nov 20, 2026 at 3:55 PM CET, Amir Goldstein wrote:
-> On Fri, Nov 20, 2026 at 2:34=E2=80=AFPM koraynilay <koray.fra@gmail.com> =
-wrote:
->>
->> On Fri Nov 20, 2026 at 7:45 AM CET, Amir Goldstein wrote:
->> > On Thu, Nov 19, 2026 at 11:10=E2=80=AFPM koraynilay <koray.fra@gmail.c=
-om> wrote:
->
->> >> >                    fa->fsx_xflags |=3D FS_XFLAG_CASENONPRESERVING;
->> >> > +                 fa->fsx_xflags_mask |=3D FS_XFLAG_CASENONPRESERVI=
-NG;
->> >> > +                 fa->fsx_xflags_ro_mask |=3D FS_XFLAG_CASENONPRESE=
-RVING;
->> >> Uhm, why both in _mask and _ro_mask? If it's a RDONLY flag shouldn't
->> >> it *only* be in _ro_mask? (same for CASEFOLD)
->> >>
->> >
->> > Good question. Maybe
->> > I guess if you want to follow some percent
->> > FS_FL_USER_MODIFIABLE is a subset of FS_FL_USER_VISIBLE
->> > but I think that exporting ro_mask and _mask is going to be easier and
->> > cleaner than rw_mask but not sure.
->>
->> Hmm I asked that also because you said in the xfs shared extent thread:
->>
->> > The advantage being that it makes the interface symmetric.
->> > User can alway setattr() with the buffer they got from getattr()
->> > and instead of randomly ignoring flags in set, the fsx_ro_mask
->> > along with fsx_mask defines the behavior exactly.
->>
->> But by putting the ro flags in _mask too, a user would have to clean
->> them out or vfs will reject the call with -EINVAL/something else, since
->> in that case the vfs would see the user say "I want to change this [ro]
->> flag".
->>
->
-> That's just a matter of interpretation.
->
-> You could say that if flag FS_XFLAG_CASENONPRESERVING
-> is in ro_mask then its value may not be modified and fs needs to
-> fail the set
+This non-doable or incompatible at least. I'm not sure if that would
+have gain. I think this goes to acceptable redundancy. Or at least,
+currently think this way.
 
-Yes, that's what I was thinking.
-
-> if the user given value is not a match to the current
-> kernel's value.
-
-Since this is a new API, I think it's fine to -EINVAL if it's in _mask
-anyway, even if the value is the same, no?
-
-> Could be used for an "atomic flag set" operation, but I think
-> this is taking this too far.
->
-> I am fine with xflags_ro_mask and xflags_rw_mask I guess this
-> is the less ambiguous option.
-
-Yeah I think this is the better approach here, I'll work using that.
-
-Thanks,
-koraynilay
-
-> Thanks,
-> Amir.
-
-
-
---f7e29ba536d1e92db179b4c7b2dcf417c13b9e676632060f29334f2a5d8b
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCawBlZwAKCRA0bnTtJTDo
-ODe1AQCh/kbA9HU+8r+s0ju3A1YAvNO0gdrrV7t8u43sPfGVSwD5AdqpmBpPOV/5
-L+Tc9hTqkeeZYhiO4l4Sy3W9VwznRwk=
-=IwFj
------END PGP SIGNATURE-----
-
---f7e29ba536d1e92db179b4c7b2dcf417c13b9e676632060f29334f2a5d8b--
+Br, Jarkko
