@@ -1,83 +1,78 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.53
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795185854;
-	b=tVQKon+1S4bpqik3VuKKOvdkg3Ro1u9QqcsJCoJxrdhrJwF09A2SIB66DVWxcH5dFH0Q
-	 haCZ3Bl1N/vfBCSX+4/Aqj/k8Y1eqW7xWAumKp9RWnnk63vI7R/CqrXXoXNYOXdp3k7vK
-	 WWDiTCHkcR2yyn17V2ex2maaRBhiHVvTQNTSfb7MVv2Vk/NUeKdsmC/JaYdxQ6fj36DDd
-	 V1w/nfRg1ne+U6g2QpUtyRXlJGP/R/u0nQCOEv4ovto90NtylrpQlCwH9osaVA9GpTYgC
-	 gRaOX/jGUbKhddxGUcF0EjZMuOD2hdi68Jv2j/5S4cxuGfZlVtQsLMWaHQGDc+nfFuw==
+	t=1795186487;
+	b=zvpg3MrZFkIyYz4dLJ+F9DMmLa+N7Uv0Dk91X1f7lrSIrjIe+1CqY5FMlWsxKF6rJ/xi
+	 XWTaQ337InXHd8g1tsnsfsyEoeRYtAf0scobzG+cTHJxzEZHwyq32YB6LQxUcAZjL5qr6
+	 NqtvZXVr7x+n45MnCqW6YEtwZYPJaEpKXUpXOmeFt7Xpr8IhV7lhHaR20iGK43kd9kIhW
+	 adczOAbo5UNwvqy3B2zhpHJnVOd7GukeSev/+KW0y8lZfUpuC1hp00hLi9MNgpO2Cs7JG
+	 I5zAfaLNmwvHCgiIUA633wGEBobO5bp9v+7vh6uGOA7+0opPw1ovERK/TqDbVFh3B7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795185854;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:X-Mailer:
-	 References:In-Reply-To;
-	bh=aeb62NrfYX2nWbFpQ3h7rH0au2pU37+u990yshAdsq8=;
-	b=2VBY9h/Z7uUNWh4kDwWCffPkXdFJpEs6VUOqudq6guofDrGqip0LdCrU5Y+mfVeEsK5Q
-	 ff5u/KhiCPVZn3LJzKS9vJX2A2yFio2UpqMAPhsEcXJyWjJ9/ORrqaPYr464s0LtsUxOf
-	 hF5Qdylad2C7bFajA1rTqSYP8oQI5O/+nvMdTyMyObVVKMb/sYSd/TKbxXbM8clsfS//g
-	 SJzG87u3n67+k2JdLIPRTNtUwbs3E/6AsBULxUaKyL5dN5PBtBB1xuVBS/+zbRpGXqZLF
-	 lXMmNJjb+G+hcZA+LrgcU2jWJY1GNnwHmbL/0XA7HncS4B84wQyjROatUcKFjM015vw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795186487;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=YXkMF49tfbR1XrNxSmARw9QjbBb1TVrWgTfXHrV4vhQ=;
+	b=h8n9c45ZgApTZBwWhrUrsYH05LiDNrPlNaXaarzf25K8iCrMM5PuCa+ugY6cUK61RRm9
+	 4ZTmW6EJF9Q3chBwhD+HKqA9kr0A1JiFrhFaFdirb9S366giEN21v4zCGAKehgPfmCjqq
+	 YZsbg0a9Ml52K+HxOuZw43L7bvWTf5RnBLhj3eNvmlZcFz90jzaB2W+UdXf0taTHaQnZF
+	 F/1RNplwWK3hkpslAEEjlNyPCqeIZDJOR1DKe/liu8bGxHojNPDCxzPXaoLfgT8qnNT0R
+	 M8Fp22IOmHb/5RTtz3eYqK7ZvZu3nU4+V9AgrblX1xdSyWlzW4oAXxtDeU9qqaKzbGg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=UCx2E0Sw;
-	arc=none smtp.remote-ip=209.85.221.53
-Received: from mail-wr1-f53.google.com (mail-wr1-f53.google.com [209.85.221.53])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eIK9EkYL;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF84A606A330
-	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 14:44:13 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CF84A606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id ECF93606A320;
+	Fri, 20 Nov 2026 14:54:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=UCx2E0Sw
-Received: by mail-wr1-f53.google.com with SMTP id ffacd0b85a97d-492fcbfaa88so604842f8f.3
-        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 06:44:13 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795185852; x=1795790652; darn=vger.kernel.org;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=aeb62NrfYX2nWbFpQ3h7rH0au2pU37+u990yshAdsq8=;
-        b=UCx2E0SwKcK/oqyYNLOz686VusYmii+3mMDSe2hm1s34x/9j7y81gtRcvRwLvYBz3L
-         8OWonxeJ7ONGBIAdCYN28kX+LRG6+zE1qzjaKqtJdHF3MJBPWqGI5u3OnZMZ4nUYhE9m
-         PEaUWEoqsvQP3IAgHgg36VjHmqvLstmO20zMnptGeWfnBQnfV8Xwbcf2i+5+HPE/je1g
-         UffyYR0okyEW/XxdVXBfUQ2+CTA3+deWuJyIBQP4+m3bQJNmt6Az6/sbA917Q6G5mzbK
-         Rj5vUQAl8Up+44D/OFiKqlCYJFj+9wTD4uBgXkGE6VmgSc/N2pGJihXdIl+6jSPw+Tjd
-         ggNw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795185852; x=1795790652;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=aeb62NrfYX2nWbFpQ3h7rH0au2pU37+u990yshAdsq8=;
-        b=Rt1J7Jl21ZI2qhOBbti3hRWYkoFEhg+a+6s05dXLbJ4ydv+bNOoBKoZrRskk4GZsIS
-         WFemp5mT5D5CiSskXIOPNLs0uI4+VQZy0rLZ4orA2LxyVl/pG94Rr8Tco0N3aIfSPF+b
-         d6qWuFUetNU93T23zmJtOiS8njhZtj2HNKziAP5eJTrWW+TjguLr7JPrqQf8YaVDMJ4Q
-         THopn7nAJDeZjwLzUZQu58Gq8qZB2+UTXuwNEC2tXEAdwldLjYNBpJ4RMZGGF5t40wkI
-         nzukZ2MApGhqwWqa857yEbt7jnY1U80RcSkCWJvU9Z4s5Y3QhRaVdNUVFrqjVu09pa8a
-         tBEw==
-X-Forwarded-Encrypted: i=1; AL+hErHaoApWXfGkpYW1cnwX+vhEKnSRjDnWtMrhKtQP/rp9EIrAhkqiN7SMMVx2EndC8tLEwwEFxTq82x0=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/guL+NU4B5r8r7g1vCn3/lcmDYkuNuFL8rvU7FtlHOEAmlBZBL
-	UT/Ln/zJqYPBZeV/awYdupdhXitjFNIBIWqBvBbDIerEOuXHbHouTb5H
-X-Gm-Gg: AZFdTZcJ50bG5cYyCZUNebmwnbeAGmcpoRz4sM5PGw4DfTFuJ7ix/UKr1ITfEEyHs/m
-	izWKHQ9bYZfolmpqayoCA7cWmhD72qVC2M/9XxOF2Z9mNB6OZycEg2hFE1BT3TAVGTL3ffEevvS
-	fZl8hTzjpeacDCFBnXaEQmCCIny/4tCcDFu83k0AzGMCM9dy76Si1H0RgUWpKwuGwJw5ttEjTJn
-	GURXZr7ftS0Ue4msbrnq8pLY7b7dQQVmlW7Bem1IX7niReGPriswBmoe9NpEyHwAQ2uTIJyYjmM
-	9L7sMg51+GhUTbwn3NoYiiV7+PH/Q+6oxM6dK0NsnKxrRJpwQq95VUOrKxoRAx+VVhhvwzYeTJs
-	90p/o2gJwu6yZM61+xfKEgc4wmNxq4rzUX9B/oKRtNM0aA9wagxhmREc946cZ5tNmc0m1bjTa2g
-	/9ulVTumGnttitnzBWtKttWxwQ8tJFa1Hxx4SA7cXTiK9emKDJB9/nC18trKUdoIURIHZnVlVEg
-	OUekR6H/u20sQGaMfFNIgT+WCFVnGuINEgZ2xTBwWJ1WQYDA0mEbRBiB08d6QKMaXUoWmoBurjg
-	DW7D9ehQvFoutzD31k7QlLbsC3uSwJYap4edamJfR4urrGl3
-X-Received: by 2002:adf:e014:0:20b0:491:8462:20cc with SMTP id ffacd0b85a97d-4abb400c0cbmr5198457f8f.37.1795185852061;
-        Fri, 20 Nov 2026 06:44:12 -0800 (PST)
-Received: from localhost ([130.192.98.149])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab69bf62f7sm6426849f8f.13.2026.11.20.06.44.10
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 20 Nov 2026 06:44:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=eIK9EkYL
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6B33C1F000C4;
+	Fri, 20 Nov 2026 14:54:37 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795186486;
+	bh=YXkMF49tfbR1XrNxSmARw9QjbBb1TVrWgTfXHrV4vhQ=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=eIK9EkYL6YNouxCKFKo9gIUK8cO1ySdVl96yCE1rq7wuTOlqRE8qknkbshPl1xlLN
+	 3KOF85Pf3JIzT9160NLAIzPpvBOu/y5o20cpMVSCUStMQJpajDPpxv0xql8onEzdc1
+	 Bq24F74qyQyPCe3a0Ub8zjMBlGHRVua3XzC8HlMSh7rc0w+6ewtdOPqMpNqlgASYYX
+	 tJIZWZMaiMxfw2qlE06Mu17u4Y3J4CbVNpMEF7mMNe9qziuMXKmrwuDoSUkQLv6pn3
+	 yDWp8beOFg/IBB5aoUMH03jJAr+YJNYE609fue5l1rTTHi12txxpruqZ/ms1Gg8eZ0
+	 dnkEtvuXJwE/w==
+Date: Fri, 20 Nov 2026 14:54:35 +0000
+From: "Lorenzo Stoakes (ARM)" <ljs@kernel.org>
+To: Luigi Rizzo <lrizzo@google.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, 
+	David Hildenbrand <david@kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, 
+	Vlastimil Babka <vbabka@kernel.org>, Joerg Roedel <joro@8bytes.org>, Will Deacon <will@kernel.org>, 
+	Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>, 
+	Jens Axboe <axboe@kernel.dk>, "David S . Miller" <davem@davemloft.net>, 
+	Eric Dumazet <edumazet@kernel.org>, Jakub Kicinski <kuba@kernel.org>, 
+	Paolo Abeni <pabeni@redhat.com>, Luigi Rizzo <rizzo.unipi@gmail.com>, 
+	"Liam R . Howlett" <liam@infradead.org>, Mike Rapoport <rppt@kernel.org>, 
+	Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>, 
+	Brendan Jackman <brendan.jackman@linux.dev>, Zi Yan <ziy@nvidia.com>, Harry Yoo <harry@kernel.org>, 
+	Christoph Lameter <cl@gentwo.org>, David Rientjes <rientjes@google.com>, 
+	Roman Gushchin <roman.gushchin@linux.dev>, Hao Li <hao.li@linux.dev>, Matthew Wilcox <willy@infradead.org>, 
+	Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, 
+	Catalin Marinas <catalin.marinas@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
+	"Rafael J . Wysocki" <rafael@kernel.org>, Danilo Krummrich <dakr@kernel.org>, 
+	Jonathan Corbet <corbet@lwn.net>, Simon Horman <horms@kernel.org>, 
+	Jesper Dangaard Brouer <hawk@kernel.org>, Ilias Apalodimas <ilias.apalodimas@linaro.org>, 
+	Willem de Bruijn <willemb@google.com>, Kuniyuki Iwashima <kuniyu@google.com>, 
+	Joshua Washington <joshwash@google.com>, Harshitha Ramamurthy <hramamurthy@google.com>, 
+	Alexander Lobakin <aleksander.lobakin@intel.com>, Christoph Hellwig <hch@lst.de>, Jason Gunthorpe <jgg@ziepe.ca>, 
+	Dragos Tatulea <dtatulea@nvidia.com>, Naman Gulati <namangulati@google.com>, 
+	Pranjal Shrivastava <praan@google.com>, Mostafa Saleh <smostafa@google.com>, 
+	Randy Dunlap <rdunlap@infradead.org>, linux-mm@kvack.org, iommu@lists.linux.dev, 
+	netdev@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	driver-core@lists.linux.dev, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, 
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
+Subject: Re: [RFC PATCH v3 00/25] PISA: Pre-mapped IOVA Superpage Allocator
+ for DMA and CoCo
+Message-ID: <awBYFhnpFGtEXZ6r@gremlin>
+References: <20261109182533.3594984-1-lrizzo@google.com>
+ <20261120010655.467825-1-lrizzo@google.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,74 +81,223 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: multipart/signed;
- boundary=8a2bc4e8bd35bb6d32db85e9ae6f5058abdd79d3019902d3de598560ffbd;
- micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Fri, 20 Nov 2026 15:44:07 +0100
-Message-Id: <DN049T7Y67NZ.10CIWW8DE6PP5@gmail.com>
-Cc: "Lauri Gates" <lauri.gates@gmail.com>, "Dave Chinner" <dgc@kernel.org>,
- "Christian Brauner" <brauner@kernel.org>, "Christoph Hellwig"
- <hch@infradead.org>, <linux-xfs@vger.kernel.org>, "Carlos Maiolino"
- <cem@kernel.org>, "Christian Brauner" <christian@brauner.io>, "Darrick J.
- Wong" <djwong@kernel.org>, <linux-api@vger.kernel.org>,
- <linux-fsdevel@vger.kernel.org>, <linux-btrfs@vger.kernel.org>,
- <ocfs2-devel@lists.linux.dev>, <linux-nfs@vger.kernel.org>,
- <linux-cifs@vger.kernel.org>, "Theodore Tso" <tytso@mit.edu>
-Subject: Re: Concurrent FIEMAP on reflinked files serialises on the AGF
- buffer lock
-From: "koraynilay" <koray.fra@gmail.com>
-To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
- <koray.fra@gmail.com>
-X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
-References: <av4Hn9u80fs8iHZ6@dread>
- <20261119095943.85048-1-lauri.gates@gmail.com>
- <DMZ4VQ7SZ07T.29WMPQ0BQZGSS@gmail.com>
- <CAOQ4uximow25oc=3XEN1ATgQvonQaTXtDPmQufxo75tJ=e355A@mail.gmail.com>
- <DMZJDGMJ1RVF.32ES391JKNFGP@gmail.com>
- <CAOQ4uxjVQ9cjV=_jBjQtNg9zCuWUEJT9KNYMKV+1jwBkHen5OA@mail.gmail.com>
- <DN03LWNSDYP5.11FTQ5KCWU2X7@gmail.com>
- <CAOQ4uxg0oq7VjhSQ0h8dBucdPfON2Q6tJQQqUy05sCaE10QRoQ@mail.gmail.com>
-In-Reply-To: <CAOQ4uxg0oq7VjhSQ0h8dBucdPfON2Q6tJQQqUy05sCaE10QRoQ@mail.gmail.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261120010655.467825-1-lrizzo@google.com>
 
---8a2bc4e8bd35bb6d32db85e9ae6f5058abdd79d3019902d3de598560ffbd
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
+TL;DR: NAK. All of it. (And yeah, I'm steeling myself for the inevitable 'oh
+Lorenzo' :)
 
-On Fri Nov 20, 2026 at 3:35 PM CET, Amir Goldstein wrote:
-> On Fri, Nov 20, 2026 at 3:12=E2=80=AFPM koraynilay <koray.fra@gmail.com> =
-wrote:
->> > With non-zero xflags_mask, internal contact masks
->> > can be used for -EINVAL not for silent ignoring.
->>
->> What do you mean by "internal contact masks"?
->>
->
-> I mean that users do file_setattr() with a bunch of flags
-> some of them are just ignored randomly without any any way
-> for user to know about it, because this logic is some internal kernel con=
-stant,
-> which cannot and should not be documented in the API.
+Sigh. You know, it's hard being a maintainer, and it's twice as hard lately,
+given the endless surge of AI-generated stuff we see every day.
 
-Ah ok.
+But I am especially frustrated that I have to ask people to do the _absolute
+basics_. And from people who are not helping with any of that. Quite the
+opposite.
 
-Thanks,
-koraynilay
+So the basics - you haven't cc'd the right people here and you're sending a
+massive new series in-reply-to another. See below for some automatically
+generated feedback on that.
 
-> Thanks,
-> Amir.
+In any case, the courteous thing to do would be to familiarise yourself with how
+series are sent in mm. And that goes so much more for a series that is so
+invasive. And seemingly, AI generated...
 
+And you're sending it when
+https://lore.kernel.org/linux-mm/a2f584f6-e382-4876-aa6d-d5a34de6ee59@kernel.org/
+is in effect.
 
+Anyway, to the series itself....
 
---8a2bc4e8bd35bb6d32db85e9ae6f5058abdd79d3019902d3de598560ffbd
-Content-Type: application/pgp-signature; name="signature.asc"
+This is ludicrous:
 
------BEGIN PGP SIGNATURE-----
+>  .../admin-guide/kernel-parameters.txt         |    7 +
+>  Documentation/core-api/index.rst              |    1 +
+>  Documentation/core-api/pisa.rst               |  485 +++++
+>  arch/arm64/include/asm/pgtable.h              |   28 +-
+>  block/bio.c                                   |    9 +
+>  drivers/base/core.c                           |   78 +
+>  drivers/iommu/Makefile                        |    3 +
+>  drivers/iommu/dma-iommu.c                     |   49 +-
+>  drivers/iommu/iommu.c                         |    7 +-
+>  drivers/iommu/pisa-map.c                      |  488 +++++
+>  .../ethernet/google/gve/gve_buffer_mgmt_dqo.c |    8 +-
+>  drivers/net/ethernet/google/gve/gve_rx.c      |   40 +-
+>  include/linux/device.h                        |   32 +
+>  include/linux/gfp_types.h                     |   14 +-
+>  include/linux/huge_mm.h                       |    7 +
+>  include/linux/netdevice.h                     |    4 +
+>  include/linux/pisa-iommu.h                    |  141 ++
+>  include/linux/pisa-mm.h                       |  205 ++
+>  include/linux/pisa.h                          |  356 ++++
+>  include/linux/sched.h                         |    4 +
+>  include/linux/slab.h                          |   10 +
+>  include/linux/swap.h                          |    1 +
+>  include/net/libeth/rx.h                       |   11 +-
+>  include/net/pisa.h                            |  204 ++
+>  include/trace/events/mmflags.h                |   11 +-
+>  include/uapi/asm-generic/mman-common.h        |    2 +
+>  kernel/dma/direct.c                           |   11 +
+>  kernel/exit.c                                 |    2 +
+>  kernel/fork.c                                 |    2 +
+>  mm/Kconfig                                    |   35 +
+>  mm/Makefile                                   |    3 +
+>  mm/filemap.c                                  |   12 +-
+>  mm/huge_memory.c                              |   36 +-
+>  mm/ksm.c                                      |    3 +-
+>  mm/madvise.c                                  |   19 +
+>  mm/memory.c                                   |    8 +-
+>  mm/migrate.c                                  |    3 +-
+>  mm/page-writeback.c                           |    9 +
+>  mm/page_alloc.c                               |   10 +
+>  mm/pisa-alloc.c                               | 1758 +++++++++++++++++
+>  mm/pisa-kunit.c                               |  778 ++++++++
+>  mm/pisa-meta.c                                |  834 ++++++++
+>  mm/pisa-node.c                                |  567 ++++++
+>  mm/pisa-priv.h                                |  319 +++
+>  mm/pisa-user.c                                |  898 +++++++++
+>  mm/readahead.c                                |    3 +-
+>  mm/slab.h                                     |    3 +-
+>  mm/slab_common.c                              |    2 +-
+>  mm/slub.c                                     |   23 +-
+>  mm/swapfile.c                                 |    3 +-
+>  mm/userfaultfd.c                              |    7 +-
+>  net/core/Makefile                             |    1 +
+>  net/core/datagram.c                           |   17 +-
+>  net/core/page_pool.c                          |    3 +
+>  net/core/pisa-net.c                           |  264 +++
+>  net/core/skbuff.c                             |   33 +-
+>  net/core/sock.c                               |   31 +-
+>  net/ipv4/esp4.c                               |    7 +-
+>  net/ipv4/ip_output.c                          |   20 +-
+>  net/ipv4/raw.c                                |    6 +-
+>  net/ipv4/tcp.c                                |   17 +-
+>  net/ipv4/tcp_output.c                         |   14 +-
+>  net/ipv6/esp6.c                               |    7 +-
+>  net/ipv6/ip6_output.c                         |   20 +-
+>  net/ipv6/raw.c                                |    6 +-
+>  65 files changed, 7907 insertions(+), 92 deletions(-)
 
-iHUEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCawBctwAKCRA0bnTtJTDo
-OG67AP99DCLnFsLMHCsRAeUitR3pAiNRglGbALKnTbw7U718dAD/Rbb718IIJvnz
-/T8g9StMlY2VrgWntvlMz+RabJ8OUgY=
-=dJIP
------END PGP SIGNATURE-----
+I mean ~ +8ksloc. 65 files. These should be clues for you.
 
---8a2bc4e8bd35bb6d32db85e9ae6f5058abdd79d3019902d3de598560ffbd--
+>  create mode 100644 Documentation/core-api/pisa.rst
+>  create mode 100644 drivers/iommu/pisa-map.c
+>  create mode 100644 include/linux/pisa-iommu.h
+>  create mode 100644 include/linux/pisa-mm.h
+>  create mode 100644 include/linux/pisa.h
+>  create mode 100644 include/net/pisa.h
+>  create mode 100644 mm/pisa-alloc.c
+>  create mode 100644 mm/pisa-kunit.c
+>  create mode 100644 mm/pisa-meta.c
+>  create mode 100644 mm/pisa-node.c
+>  create mode 100644 mm/pisa-priv.h
+>  create mode 100644 mm/pisa-user.c
+
+And here is a perfect clue. 'pisa-mm.h'. 'pisa-alloc.c'. You are creating
+parallel implementations of core mm mechanics _just for your feature_.
+
+And you didn't even update MAINTAINERS :) though, moving implementation to your
+own files and adding hooks elsewhere is its own kind of anti-pattern.
+
+>  create mode 100644 net/core/pisa-net.c
+
+What I'm trying to say, constructively, is that you have gone down the wrong
+road here. And it's one we've seen many times before.
+
+You have decided that this feature is exciting and important and really special
+and unlike anything else, so it must be implemented through hooks into other
+stuff, new special GFP flags, an madvise() hook which amounts to 'I can do what
+I want here', your own allocator, your own node code, your own everything.
+
+And I'm sorry but we've seen this before, and it's been a disaster. Hugetlb and
+uffd are examples of code like this.
+
+Every feature of this nature imposes a tax. It means that you 'just have to
+remember' to consider and deal with feature X when you write code touching Y
+because feature X sits outside of the core mm code.
+
+So my constructive suggestion to you (and this is an RFC, so you're asking for
+this kind of feedback right? :) is as follows:
+
+Firstly - please rethink using AI to generate massive series like this. You are
+not going to get anything like that merged, and it disinclines maintainers from
+even looking at your code.
+
+Secondly - think about the problem at an architectural level. Listen to people
+like Jason and David who are giving you highly valuable feedback, seriously you
+are lucky to get it.
+
+Thirdly - rework it so it _fits in with the existing core mm architecture_.
+
+Finally, please don't send it as an +8 ksloc 65 file monster. Nobody is going to
+take a series like that frankly, especially not from a newcomer to the
+subsystem who may or may not stick around to maintain it.
+
+IOW - try to find ways to implement it incrementally.
+
+Thanks!
+
+~~
+
+FYI: Issues my scripts picked up:
+
+1. New revisions sent in-reply-to mail
+
+Please always send new revisions of series individually, not in-reply-to
+any other email.
+
+The easiest way of accomplishing this is to use b4 [0] (the recommended
+way of sending patches to mm), otherwise format patches like this:
+
+For a patch series, e.g. at v2:
+
+$ git format-patch -v2 --cover-letter --thread ...
+
+For an individual patch, e.g. at v2:
+
+$ git format-patch -v2 HEAD~1
+
+[0]: https://b4.docs.kernel.org/en/latest/contributor/send.html
+
+2. Missing cc's
+
+You are missing cc's. Fixing this is easy with b4 [0] (the recommended way
+of sending patches to mm):
+
+$ b4 prep --auto-to-cc
+
+Alternatively, you can use scripts/get_maintainer.pl:
+
+$ scripts/get_maintainer.pl --nogit-fallback <files-or-patches>
+
+[0]: https://b4.docs.kernel.org/en/latest/contributor/send.html
+
+Specifically, the following appear to be missing:
+
+  chrisl@kernel.org
+  kasong@tencent.com
+  apopple@nvidia.com
+  baohua@kernel.org
+  baolin.wang@linux.alibaba.com
+  baoquan.he@linux.dev
+  byungchul@sk.com
+  chengming.zhou@linux.dev
+  dev.jain@arm.com
+  gourry@gourry.net
+  joshua.hahnjy@gmail.com
+  kas@kernel.org
+  lance.yang@linux.dev
+  matthew.brost@intel.com
+  nico.pache@linux.dev
+  nphamcs@gmail.com
+  peterx@redhat.com
+  ryan.roberts@arm.com
+  shikemeng@huaweicloud.com
+  usama.arif@linux.dev
+  xu.xin@linux.dev
+  ying.huang@linux.alibaba.com
+  youngjun.park@lge.com
+
+--
+Cheers, Lorenzo
