@@ -1,100 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.53
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795157157;
-	b=aKFjn+X/h2eMpaIhrUa5Ye+/qeBR/zWtMU3o6GmTr6LTiEUuPjNa4iYgZlTkRU6Z24hd
-	 6xbF3jPejnTAFs/qafA8iHLj/lIOjdluDJAQhuphVw3+rAm+v0WeekorPbYBaXIzep5ce
-	 Pih5AOlYt5oKL2b9N3wnHEEn4hTpjY718+DDwNLNxX57Tj12dhD6w5TDSR5sP4yHu2ROH
-	 O7b4kjCtPqtjCBOB2y2Adkl5Pcjwx8rJI8B6nS1gzoIaFk8eiIs4gX7jjy2cP/00QX1Bu
-	 6m/OwfpAvHxxJjkPZiXpywgp/qOFNDbuv7ENzqJJrcCXb8O9djOp7QueWxE3fJDF52Q==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795157157;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=PhesRb2fJL2sv3VQKNbTEK9VdI6Zm/OpjPUoDzeKyOI=;
-	b=4y8dKOfH/M1yfKtEkUDFf8895dvYX9Jp5pz9ntXio1fJqo17FRWWI+M0CjeGQk2fqpWi
-	 DdMVmER+AdXo0IFXMKZmmQGSK5K2DHgZUsMjkTxJAsUrJtmdociPmRp42Z0e4XEIAFMMT
-	 LyJqTaYeeSDdau7WVQ3XGy2zoCBN73VRN9aYDDN4abbg5eI9EIwOVyjB3N0VxC8ADCFhp
-	 CaByliVafy+Y0xm6nC7GbmBarKF9M03CNTGGoon7ftx3WToQQHbRyFGYNhDg4ehs0MCwE
-	 GcRJwB+nM5JzSEhNBsOOlWmdpDWUjpRLhgbwB6k5HA2wNvPbCiqAy+GCt4867Z53eyQ==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.41
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795168135;
+	b=OggpGKgaiReWl63ZhjrrJTXzX8vzpMpNbafTBmrXppEe4ln8nrwODoCBBx4MzgehCvdg
+	 duLh1Qcy37jGxOxWUnvW/Ii5wJYRUyqau1ZV+wL2DY7cbHNJCWp7Lisn0GYUIUqipDc6E
+	 R0fHQ9sCh7ZoX0CxnzWKDuaCoIfszxOuXqzCzRFBTCPE55ckrdkwrzqDEfhcVKdC6EO6a
+	 lNp53nkXPtCkYowQI5810i5tylaZ3SuQ9CXSxttN9nM1tXNgMVjcYAqFLnCvDcZI4GmPw
+	 +1QB9WZIooO0ZRIn/QSXeQQ3mkiJ3qHwB13/X+rKs4rcvBM4dFp8nePg09AgWbFyIkQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795168135;
+	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Received:
+	 X-Forwarded-Encrypted:X-Received:Received:Mime-Version:From:X-Mailer:
+	 References:In-Reply-To:Date:X-Gmail-Original-Message-ID:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type;
+	bh=E/BqrsiNEe7N9X/6LzAE99VV6mdYgIQRyh/LOdMxu5o=;
+	b=ElWhPw1fdn564H0ncoEyIIKp9+BGEYEUeZ36gnNyWk1VxegokVwJL/rj0LvyRozD/7OK
+	 7nPPqlCd6SIkltcQHUwUxO6aJwC5rXYHZS1yyqnZO/wXcfhIkVM6nodFJmUEn96DP7hop
+	 +4a6MTK8eLBjhZSkV4/6OTolzJFwmjgmnO/KujeKQvh17J3GufAYq7bu9iaLffmX9enRK
+	 55XjBm3GEBuYAasjZ8SuTpRO85ypLU3ltOA+ORu6UPVm5GpzeZfyQvBHJPua4x7nB6j5Q
+	 RxDkYgBI0IgsjBx47PyhV66xzZFwvrv4bgD15ou8kS5MasMetmvToFttNGWtR09il+A==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=fail header.from=black-desk.cn;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=QnXYqMQr;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.53
-Received: from mail-ed1-f53.google.com (mail-ed1-f53.google.com [209.85.208.53])
+	arc=none smtp.remote-ip=209.85.167.41
+Received: from mail-lf1-f41.google.com (mail-lf1-f41.google.com [209.85.167.41])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFB54606A32C
-	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 06:45:56 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BFB54606A32C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 44BCE606A326
+	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 09:48:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 44BCE606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=black-desk.cn
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=QnXYqMQr
-Received: by mail-ed1-f53.google.com with SMTP id 4fb4d7f45d1cf-6ba38c41804so540017a12.3
-        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 22:45:56 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795157155; cv=none;
-        d=google.com; s=arc-20260327;
-        b=NxsjemO2x09PzKzzxV4ChFlEAxelaYUZ6A5FQy6TdirMc+iuDjoAJJ5UDRTRZ48jaJ
-         tHb0ckK3fxmVfE2lzbH9eKnH5+Hxwu1CcNrj9RlUViS8JWrj9C0Wx+oGAm+1DZ7XkC+q
-         zEBPpZlt7dKoqOTFUGsmT9Uk5nhBzzEY+g1wrKcKCFekInZY2fgTFP5o4h2y3i9QPhGm
-         s3jyxYqCVWn8yuQZ5sb8AX9DyC8dHUnWXQYc8/8GqNHD7UeHgAUgmRwz7GHL1jd99duF
-         X5jlRe8xGm/CQpHnF2Omhj55T0ysLsILRZ3rtsvkFV+AjN3oqiykGtcVY8YIDcggnfxo
-         rW1w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=PhesRb2fJL2sv3VQKNbTEK9VdI6Zm/OpjPUoDzeKyOI=;
-        fh=P11x2rPtm0WQqH8l4TEn1pJLrvlepNWh9G11J1uuKW0=;
-        b=Gc6FtrnUGE5ZDJxcxNytF3UbWWYqkigUYwZDNZ+Akl0OSGJhX+xFxIyK4mNGX+4kbu
-         U/sCWVAAlCQNu57gf1n0NznfiCddlK23q075HnhjrzwjXOqTzbS/L+t/OSkz7iLzR0yN
-         JQRcFyhxlLFet7EopHLR+AZZRwOeH4PF9zKUO84vpbyARwXlbH/wnHVOwfDeSlTjIVPG
-         fvjtulZrW6lGgZUNDpS1DAebX1Of0FZFY9Ey6TpZbR0uvw9vV0uPFYSTAOgKiWuqbqbq
-         VH9Dt1c1Y9X265YdCRKquwy/r+MdSnIjHT4U+C1ztjKd7Kn6xXfeEofRpL7BFfx71O90
-         4vyw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795157155; x=1795761955; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=PhesRb2fJL2sv3VQKNbTEK9VdI6Zm/OpjPUoDzeKyOI=;
-        b=QnXYqMQr5z0NMr6hBuiBJQpdXHRabmycCVdbr+hnA8j8kwrJNNnGAKynnSO7Gvqhdg
-         SwN+TixLmyMkD2wVDOCWnA8nu71rr8HfNDI/8h1i0q3ZT3nHsiux1iOQIvRU3UqAvxe7
-         0MdSAviV1wPO0L/ENM1FwkfPoM3/P0JztGsiSczg4oihtTmhpVJGQfM5KbiZen3X7PMR
-         yDaLS+S4QeMiQcP7CYLX/0Kpv96D6vKQ9XcRDplT0I6yi1wMdl6hYQxAIJKH44RRlD9j
-         MIp6JtUsObTVf/yv4MhCOYPaS8/PEu+bzH2udGN6HONxsB9gjHCHNbYy/iW0vTdeUfzD
-         3DBg==
+Received: by mail-lf1-f41.google.com with SMTP id 2adb3069b0e04-5be47aa555cso788098e87.3
+        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 01:48:55 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795157155; x=1795761955;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=PhesRb2fJL2sv3VQKNbTEK9VdI6Zm/OpjPUoDzeKyOI=;
-        b=JQgXZJv20CHl6F3UIjx5eu7WBWs4JVLm80qZAUOI7KMIg1dlphCLcjhlJp2fvgc6aw
-         2DfirUId6CfteI7hKN4mhlC/zGcinvB0b3snhWHBXWrTxUcMxLYB8UcVRp1iwR2Fg/Ip
-         mI2adwrJ9jm+J+sz0zG5UJvfilRzl5TZSAtS2OJ7XnIOX2Gyzkixw+CUQYa+XxHX23VP
-         dOmR0VqTeFRQlosjb3npwTR8aIfM7qnxbZ1MIQ7MVAaPZQ2Kc9qwr0bVERjwNjIXl6GU
-         thpP+ydIsNgyQUyfG+WLViCaWyqhULIUCHRDrr61jWO0tB4LpA56RLcuHB9i1KxahRdH
-         gk8Q==
-X-Forwarded-Encrypted: i=1; AL+hErG8ZIDU91gkyjVbu9cMEnfHdLQvvpz0Gg88nwvoDIpFpsvZnWR1TGvBiLxRtmK4ItyMJx3o3gsVq8U=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9h7TLY/zFm+8nZ8ISPdZ4Hl5XQlgoqB6URjh1VAvxM5GryfGLv
-	4O5RayuJ2CZpwl3Bsdt4YjXII3i2ZRQCZO+CdIxYhmE3tsL/XutJ2jx/5z+d0Ogi2oT5xQGGVtR
-	un01XXATv/2c/KDmpL1R0ybieL7O/I+Q=
-X-Gm-Gg: AZFdTZfo3t47oifxWNhy1wmmixcb7jrQhM25lDB/YT+gTV7cIUHaE5gx5d4xN5hwHq8
-	AbZUrINBINUF+o4g4x6Ngb19Nz0i8k72svS2izR3WTtmilK1JmAodmgU3sthu6sjZFiJnNbvxax
-	1ShF3ko0Von+Tk4TpdIQZmwMWEHPPOSnKFviJekfNF/87pygIPqZZ0WFEYGEOGUTCy2gVDGsB0K
-	DOw/AmANW8xJEJtlhqzzVo+ARt4FQ4a6hUQRGp02gP1sSEr0qrOwAcnzzQqUc7Q7nhgV/EMEf0x
-	djpuhutBUIY5gqkDOy8P5OV6itUcFW2Y6uwPGjJKz7jQaAEQlK9o3a8HnxHaDsIXMg8Chz9W0kl
-	nSuRqKhsx9puPnCiOGoLcvUwd8c+NIRutva/I5UGFahtEHdhY84c3UqwYgOepUQwX1cceEw==
-X-Received: by 2002:a05:6402:a592:10b0:6b8:8706:8e91 with SMTP id
- 4fb4d7f45d1cf-6ba37d6526dmr960183a12.12.1795157154882; Thu, 19 Nov 2026
- 22:45:54 -0800 (PST)
+        d=1e100.net; s=20260707; t=1795168133; x=1795772933;
+        h=content-type:cc:to:subject:message-id:date:in-reply-to:references
+         :from:mime-version:x-gm-gg:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=E/BqrsiNEe7N9X/6LzAE99VV6mdYgIQRyh/LOdMxu5o=;
+        b=p1Mf8CuQzUvKyb/Uf/bmTOULj7i0tLJNrTsfKoiNilTaZK7/9vyMwYQIyCLfJxx4QO
+         cF5idpXbjqapGXF0ZksrZdlykSZC3UqR3ydYV3CZsrcBK52zc2kwuNQFyu5VE6ZD8QU2
+         03UfyJ0sYKb2+EkTos4XsmPahKDeYlU8uDsqVPYMc3wtcNg8UtPt1/lW/4jt+5bkB103
+         6ZLs4cXY43O8EGMwl/1H+srlUBwD+5MlMVHJzPDeX51d4XY8Ydduik2uDzT/tPjxNmjU
+         l1iuP/K+DKCpFb4aMiEWtWTaP03o2r1alT3KVIwcseyMYeefIWPCBZV4n71v/lzOyghp
+         OrWg==
+X-Forwarded-Encrypted: i=1; AL+hErHE7Iv+X7SZeI3mzHi3FqzW1ShKdfdQR1ZlJP3/f04CzR7rL0t9pq9u8ZB175q+O62ipk3K9mThAqw=@vger.kernel.org
+X-Gm-Message-State: APuU4Z86//6tEytQCSW3Kea8P69YdxkUpgtIG7FTsHukdbaL0csSlMGG
+	k95sIMWfcVe+hBttHqPQOSuGMJYcoQV3y2qdhFUzya+9XuhWQkyLoYk4hBpSdKrCICw=
+X-Gm-Gg: AZFdTZfneQ08257ENZxGPg8+/Tq5RxDymxLkdyn/RccNInCPa+9f9OLHmOh2BZ3YDlo
+	ukxtR087eI14L5Ubaxp2hp3+f2ZOhPzJwQRvRTcQXrEyidqSdwgfm8P/yVZYqML7NxmktpDjlsP
+	zTpg5eBcJSlDccF8YNIjKbEr6EPahmUzptPPCkQ0PGZcbuuxMIpfG70ZXgYUsHzZUzpLNpf/W7M
+	D/KRMO5+UAJCeMtDBubg2eChpqZLx/RmMdVZukuZisW1WVnMKcmGcFemOR1iVHaNzkaBqXvzof+
+	KgYzA5twL8ToQ8uKOrb9hosCHr2MT7w9oE+C2FpikM5W/BG/jc2vWCgX1ldyzX+isiuk9c4tZB7
+	pUpAM/TJapC45e9O5kxyAqVgHxz6B6U0G7e+5I0v0s1vAczLXfEBreXuvUN9uf+ZbHmSJFDtht8
+	SKm7jWgSqys4lybJwu1uqsW/0N7jXAVHlOBIQBTTV0idFRUUDG1WLeGxBCEAbBnFzwtcOmTSrar
+	/Gu6IwAh3YZbC2l91UnSP4YOADJyUkwU+L/27LzieugoMusRB2FnodV3J8hqwW526qlWHGgnMzD
+	r3RNKSwH62H7YwZJeVe2/AG3ap72dlavnq8qr/N+8d8CGMi708kTAsZ+aX1dtaKv/EpYtdYYbj8
+	6QmypymubUTceA01tmuopcMQgU6DmBlWXCYv65L0=
+X-Received: by 2002:a05:6512:2348:b0:5c1:4d49:cd74 with SMTP id 2adb3069b0e04-5c1bc7bcd31mr870620e87.17.1795168133170;
+        Fri, 20 Nov 2026 01:48:53 -0800 (PST)
+Received: from mail-lf1-f43.google.com (mail-lf1-f43.google.com. [209.85.167.43])
+        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5c1bd043387sm450701e87.49.2026.11.20.01.48.52
+        for <linux-api@vger.kernel.org>
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Fri, 20 Nov 2026 01:48:52 -0800 (PST)
+Received: by mail-lf1-f43.google.com with SMTP id 2adb3069b0e04-5be3ed646a5so843157e87.1
+        for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 01:48:52 -0800 (PST)
+X-Forwarded-Encrypted: i=1; AL+hErGJqbOAJ0r0bCMAqT9YO8r+OOMQtYXPm/w1zvCAYWXic3XmB7pi8Hxxzx8r00vrBPrQwdOTZtDR6Ec=@vger.kernel.org
+X-Received: by 2002:a05:6512:104d:b0:5bc:b659:2e15 with SMTP id
+ 2adb3069b0e04-5c1bc7f36d7mr678438e87.36.1795168131847; Fri, 20 Nov 2026
+ 01:48:51 -0800 (PST)
+Received: from 753933720722 named unknown by gmailapi.google.com with
+ HTTPREST; Fri, 20 Nov 2026 01:48:51 -0800
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -103,355 +82,107 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-References: <20261115180343.576773-1-koray.fra@gmail.com> <20261115180343.576773-9-koray.fra@gmail.com>
- <CAOQ4uxgoNsOH82FyrCxc+qSoid_CFmbmpL0qgWFw-e8E689fFA@mail.gmail.com> <DMZJ4PL1JVA4.2YEB7EPYJR5Q7@gmail.com>
-In-Reply-To: <DMZJ4PL1JVA4.2YEB7EPYJR5Q7@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Fri, 20 Nov 2026 07:45:43 +0100
-X-Gm-Features: AclHuK_wtO-xn2FdXS4_uzyRTAs2S8_YFxhSnFKIVmGgyyWPtzVK3ZO9hbfvgbU
-Message-ID: <CAOQ4uxi6h9BBP7pf4sR+gc2+4XtkEgbxXZha45iZzdB_wGFVgQ@mail.gmail.com>
-Subject: Re: [RFC PATCH v4 08/10] nfs: add provenance time (ptime) via FATTR4_TIME_CREATE
-To: koraynilay <koray.fra@gmail.com>
-Cc: David Sterba <dsterba@suse.com>, Namjae Jeon <linkinjeon@kernel.org>, 
-	Sungjong Seo <sj1557.seo@samsung.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
-	Christian Brauner <brauner@kernel.org>, Trond Myklebust <trondmy@kernel.org>, 
-	Anna Schumaker <anna@kernel.org>, Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, 
-	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
-	Paulo Alcantara <pc@manguebit.org>, Chris Mason <mason@kernel.org>, Yuezhang Mo <yuezhang.mo@sony.com>, 
-	Jan Kara <jack@suse.cz>, NeilBrown <neil@brown.name>, Olga Kornievskaia <okorniev@redhat.com>, 
-	Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>, 
-	Ronnie Sahlberg <ronniesahlberg@gmail.com>, Shyam Prasad N <sprasad@microsoft.com>, 
-	Bharath SM <bharathsm@microsoft.com>, Sergey Senozhatsky <senozhatsky@chromium.org>, 
-	ChenXiaoSong <chenxiaosong@chenxiaosong.com>, "Darrick J . Wong" <djwong@kernel.org>, 
-	Sean Smith <defendthedisabled@gmail.com>, Andrey Albershteyn <aalbersh@kernel.org>, 
-	Pedro Falcato <pfalcato@suse.de>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	linux-btrfs@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, exfat@lists.linux.dev, ntfs3@lists.linux.dev, 
-	linux-cifs@vger.kernel.org, linux-nfs@vger.kernel.org, 
-	linux-api@vger.kernel.org, Theodore Tso <tytso@mit.edu>
+Mime-Version: 1.0
+From: Chen Linxuan <me@black-desk.cn>
+X-Mailer: aerc 0.22.0
+References: <3e4103cbcf7b76535e2f957762174515ef00f08d.camel@amutable.com> <20261119135452.990-1-arpe1618@gmail.com>
+In-Reply-To: <20261119135452.990-1-arpe1618@gmail.com>
+Date: Fri, 20 Nov 2026 01:48:51 -0800
+X-Gmail-Original-Message-ID: <CAC1kPDOSS=w6mU6ruk0f5=V4NNdyr0NfUCA3npNdKPVGx+JVZQ@mail.gmail.com>
+X-Gm-Features: Aa3M54ogGYoYwMNHk57gHJJnlwKfTwwkirw9b7KG6c57d-KoNPXDISSoVm4_K7g
+Message-ID: <CAC1kPDOSS=w6mU6ruk0f5=V4NNdyr0NfUCA3npNdKPVGx+JVZQ@mail.gmail.com>
+Subject: Re: [PATCH] pidfd: restrict pidfd_getfd() to the caller's pid namespace
+To: Jiwoo Kim <arpe1618@gmail.com>, Alexander Mikhalitsyn <alex@amutable.com>
+Cc: Christian Brauner <brauner@kernel.org>, Sargun Dhillon <sargun@sargun.me>, Arnd Bergmann <arnd@arndb.de>, 
+	Jann Horn <jannh@google.com>, Chen Linxuan <me@black-desk.cn>, linux-fsdevel@vger.kernel.org, 
+	linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Nov 19, 2026 at 11:10=E2=80=AFPM koraynilay <koray.fra@gmail.com> w=
-rote:
+On Thu Nov 19, 2026 at 9:54 PM CST, Jiwoo Kim wrote:
+> On Thu, 2026-11-19 at 14:42 +0100, Alexander Mikhalitsyn wrote:
+>> It it an interesting point, because pid namespace itself it not a
+>> security boundary. While user namespace and capabilities are mechanisms
+>> to manage permissions.
 >
-> On Thu Nov 19, 2026 at 7:06 PM CET, Amir Goldstein wrote:
-> > On Sun, Nov 15, 2026 at 7:04=E2=80=AFPM koraynilay <koray.fra@gmail.com=
-> wrote:
-> >>
-> >> Implement provenance time (ptime) in the NFS client, as introduced in =
-a
-> >> previous commit ("vfs: add provenance time (ptime)").
-> >>
-> >> Support reading ptime via statx(2) and file_getattr(), returning the
-> >> cached creation time when the server advertises NFS_ATTR_FATTR_BTIME.
-> >>
-> >> Implement sending FATTR4_TIME_CREATE, asking the server to persist the
-> >> file creation time using ptime on the underlying filesystem.
-> >>
-> >> Also add .fileattr_set to struct nfs_rpc_ops and set it to
-> >> nfs4_fileattr_set() in nfs_v4_clientops. Provide a generic
-> >> nfs_fileattr_set() dispatcher so even symlinks can update ptime under
-> >> NFSv4 while cleanly returning -EOPNOTSUPP on NFSv2/v3.
-> >>
-> >> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.7
-> >> Signed-off-by: koraynilay <koray.fra@gmail.com>
-> >> ---
-> >>  fs/nfs/inode.c          | 27 ++++++++++++++++----
-> >>  fs/nfs/internal.h       |  2 ++
-> >>  fs/nfs/nfs4proc.c       | 56 ++++++++++++++++++++++++++++++++++++++--=
--
-> >>  fs/nfs/nfs4xdr.c        | 19 +++++++++-----
-> >>  fs/nfs/symlink.c        |  1 +
-> >>  include/linux/nfs_xdr.h |  3 +++
-> >>  6 files changed, 93 insertions(+), 15 deletions(-)
-> >>
-> >> diff --git a/fs/nfs/inode.c b/fs/nfs/inode.c
-> >> index e0a2e92952af..2ddcfd872616 100644
-> >> --- a/fs/nfs/inode.c
-> >> +++ b/fs/nfs/inode.c
-> >> @@ -955,7 +955,7 @@ static u32 nfs_get_valid_attrmask(struct inode *in=
-ode)
-> >>                 reply_mask |=3D STATX_BLOCKS;
-> >>         if (!(cache_validity & NFS_INO_INVALID_BTIME) &&
-> >>             (fattr_valid & NFS_ATTR_FATTR_BTIME))
-> >> -               reply_mask |=3D STATX_BTIME;
-> >> +               reply_mask |=3D STATX_BTIME | STATX_PTIME;
-> >>         if (!(cache_validity & NFS_INO_INVALID_CHANGE))
-> >>                 reply_mask |=3D STATX_CHANGE_COOKIE;
-> >>         return reply_mask;
-> >> @@ -978,10 +978,10 @@ int nfs_getattr(const struct mnt_idmap *idmap, c=
-onst struct path *path,
-> >>         request_mask &=3D STATX_TYPE | STATX_MODE | STATX_NLINK | STAT=
-X_UID |
-> >>                         STATX_GID | STATX_ATIME | STATX_MTIME | STATX_=
-CTIME |
-> >>                         STATX_INO | STATX_SIZE | STATX_BLOCKS | STATX_=
-BTIME |
-> >> -                       STATX_CHANGE_COOKIE;
-> >> +                       STATX_PTIME | STATX_CHANGE_COOKIE;
-> >>
-> >>         if (!(fattr_valid & NFS_ATTR_FATTR_BTIME))
-> >> -               request_mask &=3D ~STATX_BTIME;
-> >> +               request_mask &=3D ~(STATX_BTIME | STATX_PTIME);
-> >>
-> >>         if ((query_flags & AT_STATX_DONT_SYNC) && !force_sync) {
-> >>                 if (readdirplus_enabled)
-> >> @@ -1015,7 +1015,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, c=
-onst struct path *path,
-> >>         if (!(request_mask & (STATX_MODE|STATX_NLINK|STATX_ATIME|STATX=
-_CTIME|
-> >>                                         STATX_MTIME|STATX_UID|STATX_GI=
-D|
-> >>                                         STATX_SIZE|STATX_BLOCKS|STATX_=
-BTIME|
-> >> -                                       STATX_CHANGE_COOKIE)))
-> >> +                                       STATX_PTIME|STATX_CHANGE_COOKI=
-E)))
-> >>                 goto out_no_revalidate;
-> >>
-> >>         /* Check whether the cached attributes are stale */
-> >> @@ -1038,7 +1038,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, c=
-onst struct path *path,
-> >>                 do_update |=3D cache_validity & NFS_INO_INVALID_OTHER;
-> >>         if (request_mask & STATX_BLOCKS)
-> >>                 do_update |=3D cache_validity & NFS_INO_INVALID_BLOCKS=
-;
-> >> -       if (request_mask & STATX_BTIME)
-> >> +       if (request_mask & (STATX_BTIME | STATX_PTIME))
-> >>                 do_update |=3D cache_validity & NFS_INO_INVALID_BTIME;
-> >>
-> >>         if (do_update) {
-> >> @@ -1061,6 +1061,7 @@ int nfs_getattr(const struct mnt_idmap *idmap, c=
-onst struct path *path,
-> >>         if (S_ISDIR(inode->i_mode))
-> >>                 stat->blksize =3D NFS_SERVER(inode)->dtsize;
-> >>         stat->btime =3D NFS_I(inode)->btime;
-> >> +       stat->ptime =3D NFS_I(inode)->btime;
-> >>
-> >
-> > As an example of what would be needed per the mutable btime proposal,
-> > adding stat->ptime and STATX_PTIME will not be needed...
-> >
-> >>         /* Special handling for STATX_DIOALIGN and STATX_DIO_READ_ALIG=
-N
-> >>          * - NFS doesn't have DIO alignment constraints, avoid getting
-> >> @@ -1092,10 +1093,26 @@ int nfs_fileattr_get(struct dentry *dentry, st=
-ruct file_kattr *fa)
-> >>         }
-> >>         if (nfs_server_capable(inode, NFS_CAP_CASE_NONPRESERVING))
-> >>                 fa->fsx_xflags |=3D FS_XFLAG_CASENONPRESERVING;
-> >
-> > This would need:
-> >                   fa->fsx_xflags |=3D FS_XFLAG_CASEFOLD;
-> > +                fa->fsx_xflags_mask |=3D FS_XFLAG_CASEFOLD;
-> > +                fa->fsx_xflags_ro_mask |=3D FS_XFLAG_CASEFOLD;
-> > +                /* unlink other fs FS_CASEFOLD_FL is read-only */
-> (oh, s/unlink/unlike/?)
+> Hi Alex,
+>
+> thanks for looking at this.
+>
+> Agreed, and the patch does not try to make it one. I followed the rule
+> Christian suggested in [1], requiring pid_vnr(pid) != 0 for operations
+> that grant access to additional resources of the target, which
+> ee8323fdc827 then applied to the namespace ioctls. pidfd_getfd() hands
+> out one of the target's open files, so it looked like it belongs to the
+> same group.
+>
+>> Currently, you can do something like this on your machine:
+> [...]
+>> and this will actually print hello in the Terminal 0, while the process
+>> doing that lives in nested pid namespace. But this is not a problem
+>> because this guy is a root:
+>
+> Right. As far as I can see this also works for an unprivileged task of
+> the same uid, as long as it can reach the outer task through a procfs
+> instance of the outer pid namespace. So pidfd_getfd() currently behaves
+> like procfs here, and the patch would make it stricter than procfs, in
+> line with the pidfd ioctls and PIDFD_GET_INFO instead.
+>
+> The case I had in mind is the one Jann described in [2]: a task in a
+> child pid namespace that gets a pidfd for an outer task over a socket.
+> When it has no procfs view of the outer task, as in a container with its
+> own procfs, that pidfd is its only handle to it. There, the ioctls refuse
+> the pidfd with -EREMOTE, while pidfd_getfd() returns the target's file.
+>
+>> So please understand me right, I'm not saying that your point is not
+>> valid, but I'm not sure what was the intention behind pid_getfd() API
+>> in the first place and we might want to have semantics and model close
+>> to the one procfs has.
+>
+> Understood. If pidfd_getfd() should keep following the procfs model, I'm
+> fine with dropping this patch; the inconsistency would then be on the
+> ioctl side. I'll leave that to Christian.
+>
+>> To conclude, it looks like we have a little bit of inconsistencies
+>> around here :-) [ But please, don't go and change anything in procfs as
+>> we might break some tricky use-cases like CRIU and SCM_RIGHTS users. ]
+>
+> No plans to touch procfs.
+>
+> [1] https://lore.kernel.org/all/20260925-gewischt-auftrag-tierzucht-c153cb3f9f74@brauner/
+> [2] https://lore.kernel.org/all/CAG48ez1T5-tUHVK_iHsgUtWa-inVdrZxA3E-ZCW0iENJvasKfg@mail.gmail.com/
+>
+> Thanks,
+> Jiwoo Kim
 
-Yeh :)
-It's a comment for you not for the code
+pidfds provide process access without requiring procfs to be mounted, but that
+does not mean they must expose every capability that procfs may expose in a
+particular mount configuration. It is reasonable for pidfd operations to apply
+stricter checks.
 
->
-> >                   fa->flags |=3D FS_CASEFOLD_FL;
-> With the new API and vfs helpers, this would need to get removed, as vfs
-> would already handle this for legacy ioctls, correct?
->
-> >         }
-> >                    fa->fsx_xflags |=3D FS_XFLAG_CASENONPRESERVING;
-> > +                 fa->fsx_xflags_mask |=3D FS_XFLAG_CASENONPRESERVING;
-> > +                 fa->fsx_xflags_ro_mask |=3D FS_XFLAG_CASENONPRESERVIN=
-G;
-> Uhm, why both in _mask and _ro_mask? If it's a RDONLY flag shouldn't
-> it *only* be in _ro_mask? (same for CASEFOLD)
->
+The existing handling of the pidfd namespace ioctls follows this principle. Even
+when procfs may be able to access a target, PIDFD_GET_INFO and the namespace
+ioctls require the target to be visible in the caller's active pid namespace.
+This does not treat pid namespaces as independent security boundaries. It is a
+conservative restriction to ensure that pidfd interfaces do not gain additional
+access merely by bypassing procfs.
 
-Good question. Maybe
-I guess if you want to follow some percent
-FS_FL_USER_MODIFIABLE is a subset of FS_FL_USER_VISIBLE
-but I think that exporting ro_mask and _mask is going to be easier and
-cleaner than rw_mask but not sure.
+The original pidfd_getfd() commit, 8649c322f75c, used the following rationale:
 
-> >
-> >> +       if (NFS_SERVER(inode)->fattr_valid & NFS_ATTR_FATTR_BTIME) {
-> >> +               fa->fsx_xflags |=3D FS_XFLAG_PTIME;
-> >> +               fa->fsx_xflags_mask |=3D FS_XFLAG_PTIME;
-> >> +               fa->fsx_ptime =3D NFS_I(inode)->btime;
-> >> +       }
-> >
-> > +               fa->fsx_xflags |=3D FS_XFLAG_BTIME;
-> > +               fa->fsx_xflags_mask |=3D FS_XFLAG_BTIME;
-> > +               fa->fsx_btime =3D NFS_I(inode)->btime;
-> >
-> > Fs with immutable btime could either not advertise the BTIME flag
-> > in xflags/xflags_mask or advertise the flag also in xflags_ro_mask.
->
-> That makes sense.
->
-> >>         return 0;
-> >>  }
-> >>  EXPORT_SYMBOL_GPL(nfs_fileattr_get);
-> >>
-> >> +int nfs_fileattr_set(const struct mnt_idmap *idmap, struct dentry *de=
-ntry,
-> >> +                    struct file_kattr *fa)
-> >> +{
-> >> +       const struct nfs_rpc_ops *ops =3D NFS_PROTO(d_inode(dentry));
-> >> +
-> >> +       if (ops->fileattr_set)
-> >> +               return ops->fileattr_set(idmap, dentry, fa);
-> >> +       return -EOPNOTSUPP;
-> >> +}
-> >> +EXPORT_SYMBOL_GPL(nfs_fileattr_set);
-> >> +
-> >>  static void nfs_init_lock_context(struct nfs_lock_context *l_ctx)
-> >>  {
-> >>         refcount_set(&l_ctx->count, 1);
-> >> diff --git a/fs/nfs/internal.h b/fs/nfs/internal.h
-> >> index 5af6a032f145..0e47fad944de 100644
-> >> --- a/fs/nfs/internal.h
-> >> +++ b/fs/nfs/internal.h
-> >> @@ -458,6 +458,8 @@ extern int nfs_wait_bit_killable(struct wait_bit_k=
-ey *key, int mode);
-> >>
-> >>  struct file_kattr;
-> >>  int nfs_fileattr_get(struct dentry *dentry, struct file_kattr *fa);
-> >> +int nfs_fileattr_set(const struct mnt_idmap *idmap, struct dentry *de=
-ntry,
-> >> +                    struct file_kattr *fa);
-> >>
-> >>  #if IS_ENABLED(CONFIG_NFS_LOCALIO)
-> >>  /* localio.c */
-> >> diff --git a/fs/nfs/nfs4proc.c b/fs/nfs/nfs4proc.c
-> >> index e1018b03c1cb..31d58ceb4dc0 100644
-> >> --- a/fs/nfs/nfs4proc.c
-> >> +++ b/fs/nfs/nfs4proc.c
-> >> @@ -55,6 +55,7 @@
-> >>  #include <linux/utsname.h>
-> >>  #include <linux/freezer.h>
-> >>  #include <linux/iversion.h>
-> >> +#include <linux/fileattr.h>
-> >>
-> >>  #include "nfs4_fs.h"
-> >>  #include "delegation.h"
-> >> @@ -98,7 +99,8 @@ static int _nfs4_proc_getattr(struct nfs_server *ser=
-ver, struct nfs_fh *fhandle,
-> >>                               struct nfs_fattr *fattr, struct inode *i=
-node);
-> >>  static int nfs4_do_setattr(struct inode *inode, const struct cred *cr=
-ed,
-> >>                             struct nfs_fattr *fattr, struct iattr *sat=
-tr,
-> >> -                           struct nfs_open_context *ctx, struct nfs4_=
-label *ilabel);
-> >> +                           struct nfs_open_context *ctx, struct nfs4_=
-label *ilabel,
-> >> +                           const struct timespec64 *time_create);
-> >>  static struct rpc_task *_nfs41_proc_sequence(struct nfs_client *clp,
-> >>                 const struct cred *cred,
-> >>                 struct nfs4_slot *slot,
-> >> @@ -3216,7 +3218,7 @@ static int _nfs4_do_open(struct inode *dir,
-> >>                         nfs_fattr_init(opendata->o_res.f_attr);
-> >>                         status =3D nfs4_do_setattr(state->inode, cred,
-> >>                                         opendata->o_res.f_attr, sattr,
-> >> -                                       ctx, label);
-> >> +                                       ctx, label, NULL);
-> >>                         if (status =3D=3D 0) {
-> >>                                 nfs_setattr_update_inode(state->inode,=
- sattr,
-> >>                                                 opendata->o_res.f_attr=
-);
-> >> @@ -3380,7 +3382,8 @@ static int _nfs4_do_setattr(struct inode *inode,
-> >>
-> >>  static int nfs4_do_setattr(struct inode *inode, const struct cred *cr=
-ed,
-> >>                            struct nfs_fattr *fattr, struct iattr *satt=
-r,
-> >> -                          struct nfs_open_context *ctx, struct nfs4_l=
-abel *ilabel)
-> >> +                          struct nfs_open_context *ctx, struct nfs4_l=
-abel *ilabel,
-> >> +                          const struct timespec64 *time_create)
-> >>  {
-> >>         struct nfs_server *server =3D NFS_SERVER(inode);
-> >>         __u32 bitmask[NFS4_BITMASK_SZ];
-> >> @@ -3391,6 +3394,7 @@ static int nfs4_do_setattr(struct inode *inode, =
-const struct cred *cred,
-> >>                 .server         =3D server,
-> >>                 .bitmask =3D bitmask,
-> >>                 .label          =3D ilabel,
-> >> +               .time_create    =3D time_create,
-> >>         };
-> >>         struct nfs_setattrres  res =3D {
-> >>                 .fattr          =3D fattr,
-> >> @@ -3414,6 +3418,9 @@ static int nfs4_do_setattr(struct inode *inode, =
-const struct cred *cred,
-> >>         if (sattr->ia_valid & ATTR_MTIME)
-> >>                 adjust_flags |=3D NFS_INO_INVALID_MTIME;
-> >>
-> >> +       if (time_create)
-> >> +               adjust_flags |=3D NFS_INO_INVALID_BTIME;
-> >> +
-> >>         do {
-> >>                 nfs4_bitmap_copy_adjust(bitmask, nfs4_bitmask(server, =
-fattr->label),
-> >>                                         inode, adjust_flags);
-> >> @@ -4587,7 +4594,7 @@ nfs4_proc_setattr(struct dentry *dentry, struct =
-nfs_fattr *fattr,
-> >>         if ((sattr->ia_valid & (ATTR_MODE|ATTR_UID|ATTR_GID)) !=3D 0)
-> >>                 nfs4_inode_make_writeable(inode);
-> >>
-> >> -       status =3D nfs4_do_setattr(inode, cred, fattr, sattr, ctx, NUL=
-L);
-> >> +       status =3D nfs4_do_setattr(inode, cred, fattr, sattr, ctx, NUL=
-L, NULL);
-> >>         if (status =3D=3D 0) {
-> >>                 nfs_setattr_update_inode(inode, sattr, fattr);
-> >>                 nfs_setsecurity(inode, fattr);
-> >> @@ -10845,6 +10852,44 @@ static void nfs4_disable_swap(struct inode *i=
-node)
-> >>         wake_up_var(&clp->cl_state);
-> >>  }
-> >>
-> >> +#define NFS4_SUPPORTED_XFLAGS  (FS_XFLAG_PTIME)
-> >> +static int nfs4_fileattr_set(const struct mnt_idmap *idmap, struct de=
-ntry *dentry,
-> >> +                            struct file_kattr *fa)
-> >> +{
-> >> +       struct inode *inode =3D d_inode(dentry);
-> >> +       struct nfs_server *server =3D NFS_SERVER(inode);
-> >> +       struct nfs_fattr *fattr;
-> >> +       struct iattr sattr =3D { .ia_valid =3D 0 };
-> >> +       const struct timespec64 *time_create =3D NULL;
-> >> +       int error;
-> >> +
-> >> +       if (!(server->fattr_valid & NFS_ATTR_FATTR_BTIME))
-> >> +               return -EOPNOTSUPP;
-> >> +
-> >> +       if (fa->flags_valid)
-> >> +               return -EOPNOTSUPP;
-> >> +
-> >> +       if (fileattr_has_fsx_mask(fa, NFS4_SUPPORTED_XFLAGS))
-> >> +               return -EOPNOTSUPP;
-> >> +
-> >> +       if (fa->fsx_xflags_mask & ~NFS4_SUPPORTED_XFLAGS)
-> >> +               return -EOPNOTSUPP;
-> >> +
-> >
-> > These two checks look semantically identical.
-> > I am not sure yet what you intention was with the
-> > fileattr_has_fsx_mask() helper - I know you had reservations about it
-> > but at least in this code, it doesn't look like it is needed at all.
->
-> Eh, the name is not the best, but they aren't, _mask & check the _mask
-> field, has_fsx_mask checks the xflags field (which is why I added the
-> question of keeping its name as it is or changing it to
-> "fileattr_has_unsupported_fsx").
-> But I'm not even sure we still need this helper, so I may just drop it.
->
+> This syscall allows for the retrieval of file descriptors from other
+> processes, based on their pidfd. This is possible using ptrace, and injection
+> of parasitic code to inject code which leverages SCM_RIGHTS to move file
+> descriptors between a tracee and a tracer.
 
-I don't care either way as long as the code reads fine.
+The syscall documentation in the same commit says:
 
-Thanks,
-Amir.
+> This syscall gets a copy of a file descriptor from another process based on
+> the pidfd, and file descriptor number. It requires that the calling process
+> has the ability to ptrace the process represented by the pidfd.
+
+That rationale assumes that the caller can actually ptrace the target, rather
+than merely pass ptrace_may_access() for a task referenced by a pidfd. If the
+target is outside the caller's pid namespace, the caller generally cannot
+address and ptrace it through the ordinary pid-based interface. Allowing
+pidfd_getfd() solely because a pidfd was transferred through SCM_RIGHTS,
+SO_PASSPIDFD, SO_PEERPIDFD, or fd inheritance would therefore give pidfd an
+operation beyond the ptrace-based justification in the original commit.
