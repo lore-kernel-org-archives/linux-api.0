@@ -1,68 +1,67 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=52.59.177.22
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795183052;
-	b=FpSI/+Ys0mKvGhh5XdqZddK1KMthi50ZXTAXVe3l3iNCCL784PpvcK7Xsemh9/kXuUYN
-	 WF90n3sG3xlnsf/lLaEczwCQwQWq+wrJp11+q51GEPs3x2Vdx0Svw4/R0tiChNoGwigwe
-	 ekcEXZilSvLcZhk3gaQFa86damClHRMeLdz025oL1n+7lK4DXDtJipifvs0k5fj9HydR4
-	 7/LTAtAKsqcbmFIkqabGTtPIFTCHBXH6o7Ipblui8HdRzKnIj3dxy4H7yu6HVx+DN2dYg
-	 +dLU8OQjD8lwdwofBg5P78P3nZjPkDs3/pvm/OaGi1a9qoxk2NviQ0NG5uDKsuIRyrQ==
+	t=1795183347;
+	b=IfUGczPyaHXSslLudSflIB7FiuYwrQirLwaUZtW2WObWhHAS0vzjEa+ddBmB+a0b+/Vm
+	 HP8Zm/xAn3k7oK++naK3wqgCArIulo5awxhcXh9zTrR/G5Mmh9llE8854q5pd/7yn0BDE
+	 1+vumr1HpmxFEbUqfokFanr9B1qXUE5/mQknaVN6w48LDVvaqLN8hlBDjQbvKAIw6C3b4
+	 ViwynzUL/56HIZsXeQBrZn5owSq2avimtAozJtykockdLHBx+eLDazJU2kMvrhirBjYA1
+	 1Qqat2gE44C3wIjz23Pry7mx0jeRAXphaP7cyfvAqTl6DD0lziUrw1Wq6FHmTmq181w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795183052;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=or065ct6iH2dxZM7keHH7/u3PMbUyH1ouhp6nN4Rafg=;
-	b=2Kfwh3oZuegGQsV4GR6Ckewm0V+o44T6p15SCemKhUosejjZNv8EeIj0owhTJ2vinFlu
-	 SS/xeQX9zR+9KOH1swKG+bZS85QVkb9jemQZgSDgSn60cTxK3AbMmlVQ8U+vq0C9Uq724
-	 UY1dN2zz0W9Qd3vKthNy+Ihs4k8jIa66MnypN+RXRT94CJFj4GgdAUeq02VqjyYN/Z7oX
-	 Q5TWy/e0+fR8hsANzd1qpSXRpMRJ/heWIs/NwCF5rMRk2BWAJ8iOAG1bqw76AoBAUoC0J
-	 qK0ER0OAkDMTmk3Qgjh7Gc4ouxD/uoUVvGnSrQ1req9iJhifXU/5YXvANyEbVC9f4qw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795183347;
+	h=DMARC-Filter:X-QQ-mid:X-QQ-Originating-IP:Received:X-QQ-SSF:
+	 X-QQ-GoodBg:X-BIZMAIL-ID:EX-QQ-RecipientCnt:From:To:Cc:Subject:Date:
+	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding:X-QQ-SENDSIZE:Feedback-ID:X-QQ-XMAILINFO:
+	 X-QQ-XMRINFO:X-QQ-RECHKSPAM;
+	bh=sebK0A3/eOMXN8mPlDOt9SYhjTonOi08fwNGc+TkCLQ=;
+	b=sqZM8vJQYFnzm31FWZhli5AWPdmC8SMAJFfmj5mcjqETSI8IjQ0x9VCZ4YyMJPI558g+
+	 59diVGIaPBZTTS7FYPjSYyCVNCBNpLsgWl1Lo6PbZeMJIP5o28ptSw8yA5a+PWzDLshUl
+	 PizvlM3m4vONGF4uh31tPvtEQa6sqOs8YbaR18QkIT2gHwRjp7CB/87ZvNOUsVt+zCTMY
+	 gQBKmgTGyiakIx0CT/3Pv7IWKWA0tuwnpYK6GpVGAxjtHz24LbGRNwUWpkptRqjOVBgw4
+	 eKKYHIrJoZoJZXipJ82zDqt8qRYlHdzGJBgnAr8SwF8q3BQ/m5So9Dyva/W+0T+BYEg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGaRycrV;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=none header.from=rustsbi.com;
+	spf=pass smtp.mailfrom=rustsbi.com;
+	arc=none smtp.remote-ip=52.59.177.22
+Received: from smtpbgeu1.qq.com (smtpbgeu1.qq.com [52.59.177.22])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B353E606A320;
-	Fri, 20 Nov 2026 13:57:32 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jGaRycrV
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9B3D41F000C6;
-	Fri, 20 Nov 2026 13:57:31 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795183052;
-	bh=or065ct6iH2dxZM7keHH7/u3PMbUyH1ouhp6nN4Rafg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=jGaRycrV6mDnn3ij7KW+lj1wpPBafr+hZD8QK62MxZD2w5BsgW1W/d8kJxChQ71y1
-	 tiEy34f367xdeP1gnBXzzbN0I+BvvYMIphMSTCJXMhZx4gtYz2QqhHylbW2/Zn2nOh
-	 bf3rSlceQXKyi8NCO4UDkuVbwIa/1RB6LZC3CNSA/PECOPGKg28MTK+8KYgHcJ8rJ1
-	 sh0LboixMl4r52fMmnJX3dKcGfFiXand7tbTV+aO8oPktrnJsg+oSvyjnJ2f0cicOJ
-	 OEx94FHbhkndY8x4GWa/uGPAJJVg/tUyWxb8pOg9WR3twDaOngZa5KG/591ZUtNHVT
-	 DhzR2DEMyJA9g==
-Date: Fri, 20 Nov 2026 15:57:28 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Alexander Mikhalitsyn <alex@amutable.com>
-Cc: Andy Lutomirski <luto@amacapital.net>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Christian Brauner <brauner@kernel.org>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	David Howells <dhowells@redhat.com>, Jan Kara <jack@suse.cz>,
-	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>,
-	Paul Moore <paul@paul-moore.com>, linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
-Message-ID: <awBRyKgOQlaEqpWX@kernel.org>
-References: <CALCETrVUkbpoFjwSAejyA4b_9qEauAP_36i=O8Op1ifp8aUkqA@mail.gmail.com>
- <av3akYFOYaeQZauZ@kernel.org>
- <av3bkDnwmjunTleX@kernel.org>
- <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
- <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com>
- <CALCETrXt-Do28BHDpbrA98kEy-tQuorxD8c2XsW24Tt8Vspdtg@mail.gmail.com>
- <CALCETrUbe8rBoxrC+Q66AMsrJ8Fow7xt5KJKRAmobtXBvHWdqg@mail.gmail.com>
- <c301fff20a4920fcd3baa31dda2e31ad99c93436.camel@amutable.com>
- <awBHZO2VwWyJzvBN@kernel.org>
- <1f12636403bb7af3759cd933b2612d8a5d7317a2.camel@amutable.com>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 182D4606A320;
+	Fri, 20 Nov 2026 14:02:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 182D4606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=rustsbi.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=rustsbi.com
+X-QQ-mid: zesmtpsz3t1795183332tc79d3492
+X-QQ-Originating-IP: 8MUBfue/CSK9C6Ko0L4h+J8TmiUajD4AQmf5ZXhtkkM=
+Received: from LAPTOP-H63V2Q11 ( [36.110.52.2])
+	by bizesmtp.qq.com (ESMTP) with 
+	id ; Fri, 20 Nov 2026 22:00:22 +0800 (CST)
+X-QQ-SSF: 0000000000000000000000000000000
+X-QQ-GoodBg: 0
+X-BIZMAIL-ID: 2838506993678247511
+EX-QQ-RecipientCnt: 15
+From: Zhouqi Jiang <luojia@rustsbi.com>
+To: Conor Dooley <conor@kernel.org>
+Cc: linux-riscv@lists.infradead.org,
+	Paul Walmsley <pjw@kernel.org>,
+	Palmer Dabbelt <palmer@dabbelt.com>,
+	Albert Ou <aou@eecs.berkeley.edu>,
+	Alexandre Ghiti <alex@ghiti.fr>,
+	Dongliang Mu <dzm91@hust.edu.cn>,
+	Anup Patel <anup@brainfault.org>,
+	Andrew Davis <afd@ti.com>,
+	Mayuresh Chitale <mchitale@ventanamicro.com>,
+	linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Vivian Wang <wangruikang@iscas.ac.cn>,
+	Alejandro Colomar <alx@kernel.org>,
+	contact@rustsbi.com
+Subject: Re: [RFC PATCH RESEND] riscv: sbi: expose firmware identity in sysfs
+Date: Fri, 20 Nov 2026 22:00:09 +0800
+Message-ID: <8E061F1E54130DAD+20261120140009.755-2-luojia@rustsbi.com>
+X-Mailer: git-send-email 2.53.0.windows.2
+In-Reply-To: <20261119-zoning-appeasing-71d648cfc78c@spud>
+References: <A039A2DE1DF8F274+20261119130356.1537-1-luojia@rustsbi.com> <20261119-borough-flap-6481c20b3013@spud> <20261119-zoning-appeasing-71d648cfc78c@spud>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -72,39 +71,40 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1f12636403bb7af3759cd933b2612d8a5d7317a2.camel@amutable.com>
+Content-Transfer-Encoding: 8bit
+X-QQ-SENDSIZE: 520
+Feedback-ID: zesmtpsz:rustsbi.com:qybglogicsvrsz:qybglogicsvrsz3b-0
+X-QQ-XMAILINFO: M1JP5WkaVWo/JK7CrDexK/3T8UnQlC1pSI58Tb3okSZJQgbGxVklkUHn
+	gfeAgIPei0jw38cTyzzz1YuX2v+h+ZpEG0gVHwqFN1EphgnsUM2UOgOPpTPVlUxLD/J90b6
+	3lE37/G5fMwUNLECqgNqfzpT10BqNmoJ9xHJbiNLpDGYm0vmFrQW5CPJli+i0En933/Zo2E
+	lkY8e6Fu/XN2kYg1j43ytZZJ+ihkdf1wzQSaXlnCuZRquwjRTEvsGmpFX/QtosJTccd6Cur
+	QLhnXGsGoBGbdpSK1jtI/wk/pQjhICYreVYnKhGgT2I36GIHst6//5Kd/hhAWzb6NSv70xu
+	wxw3cKdkUHEwcrlsnlO3J71bO8hZcOFRDdmW+RAUwnP5LVVAASbAPA9Yw9IZpaH15zN0tQ8
+	rhkfeAXHvNU6FP5AU2uU268SJI3J7269Cv4raZ1Zw0ea9j5SrWXNhXTjsL9oePYByDEckE3
+	TyNhYaEIxGSQgPHj2E7L/0O80a80X5EChqDBwI/f289Sv667uvss8DIIHddxxTD7meqvw42
+	/qSMJmxd/GuFFfqOPPFJgq4Ke9hwps6bkw5Yw2eyJ4yLtS1IkyXqDxttiD2WlZEg2lnmuTF
+	vqRX0T8OQllxzhxFO/lls7KK73WAZ3ciAtuBdEXU8l8pHHvDcjZcVUIeg/kWdGB2LpVYb+T
+	Cxco3o44IZ42Ofukoe4Wq4jMgbQKamppqyZUuIb6k1cqkzZ6RNItVtX9LItS5kYivm1ZsNe
+	uu/PFKjmSFUNBxz6nTSeqXmkUJz3vkMbxUzG5CR0H8onxUcez0Vax/d9hnjokhP1CTKDcc4
+	wyAQXG/5J5kW4PSZ2PKMkm9mb9u3qBPbKik6jj3y35zk45V2MHSsvTzLPVgz+IO5B7RdSb8
+	1CAKzjU0LAP3KSaqdm5mdNmHKjLj34n4unA7XJa5+8zOJrQ7xV7lIuVbfBbXxQzTKtGn8kx
+	bgf1i6mUwMonvCmxanbdXyPWsGyhNv6vkxVpPZ+kWqh9fdS2ukJPSaYq2KVN1eSyD7FM=
+X-QQ-XMRINFO: NyFYKkN4Ny6FuXrnB5Ye7Aabb3ujjtK+gg==
+X-QQ-RECHKSPAM: 0
 
-On Fri, Nov 20, 2026 at 02:24:57PM +0100, Alexander Mikhalitsyn wrote:
-> Yeah, detached mounts API solves a security issue here, but it does not
-> fully enable the use-case Andy describes (if I understood it
-> correctly). My interpretation here is that to fully cover it we need
-> some well-isolated communication channel between container and
-> container manager (vsock for containers? :-D). And some well-defined
-> agreement of how PID 1 inside the container can get an information
-> about a hotplugg-ed stuff. [ But it could be that I completely
-> misunderstood and Andy meant something much more simple here. ]
+Hi Conor,
 
-I guess you are right, It is good to check that in detail. I'm figuring
-out if I can test run it to some near confirmable level.
+Thanks for the review and for testing this on PolarFire HSS.
 
-It has enough steps that it cannot be simply "explained away" so yeah
-thanks for pointing that out.
+> FYI, these tags are now deprecated.
 
-I'm going to use an old NUC for this as I recently made my kernel test
-harness installable bootc operating system. This was minimum working
-environment for Matthew Garrett's lockdown-hibernate patches, and took
-over a month to setup.  Great that it gets more use :-) [1]
+I'll drop the tag in v2.
 
-I think these type of use cases are also best to test with real hardware
-over QEMU up until some guarantees are in place, so I'll just go ahead
-and do that...
+> Should this actually be printed as a decimal?
 
-> 
-> Kind regards,
-> Alex
+Yes, I'll use unsigned decimal for impl_id in sysfs to match the SBI
+implementation ID table and update the ABI documentation. I'll keep
+impl_version in hex because its encoding is implementation-specific.
 
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd-test.git/
-
-Br, Jarkko
+Thanks,
+Zhouqi
