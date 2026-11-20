@@ -1,125 +1,101 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795154290;
-	b=nHcFMD+IPTPJNfXXDiRStQlCJ5xrpo77lEL5RQjJsBjzaol4Ry7Hzh+OgD7OXdVa9vrr
-	 /SJyDsigbvCOqQsmy9Qn1kHOVAmH2YyWJwkpLyp0w/Mh1Hg+biFSXUTa9JEOdT9INeDn9
-	 P3eP7uCi6LnvDDqYtG2cm9SjyXjhHSOqAY9Y6gYnwdodpzBjNmG3fT7uKf/xhVj4zufy0
-	 w7GzcD/EzXvd1WekeMPK1ImdM5RR3qPYo3ty6uRn9EW7DyqSfTsgHQ5N+NbsbCyg7PbGD
-	 0mJuw3Ep1MSZkmGpKEDR82J1JhSpr/otC4d+mOvxZS7moeBwLByGrUb822ye2Pctaxw==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795154290;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=3J4zWN2xZSuepJxvtOxZd6Cv2PFcMo5B56sR2qMDpP8=;
-	b=ppwHdD0Qt2xDSmVyP+IatxDgLL9oipW6DLQ6PxBRrOoaPtXGYSqYYXLEm1E4GC97+pHM
-	 foUeyVZBJJAfa6sNjdAjssTFjLuNHy3VC5J7ikxZ+mUEXS71YFAtK6OeK+5vOtvgx61rE
-	 iBB5aVrRHyuhX570EQGCP5iFfpRzHfqlM1Ecdcloud7O8+LlDferLKHKqM+x00NzRM6ju
-	 9KpzzgWAUKo3VI5wzWD7S7H3gcsIvzZeOkAZAUYhz/yBJ1evYhW6vfTNLoBMVuUdJusoc
-	 brgdhAh6ZuIZtg/l3RHalrDLYNw+547Cy3v7mMlo0J2gRipYW4kkxQBrOB9rRS+9RGA==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SAKS3ST4;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.46
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795154626;
+	b=WrzoU0d/WZGkyt/SrCjNORng/hqaTTmwsnMdTkKgDfbsgD4qZ3erV+t1MH4sZAHRbUkx
+	 TVG+ss7vfH/YW4rrF/B7gO65ehJ9iKAkx/eJJZBy2iljj1/SMX3ONUiXFFO0dECAC8A5X
+	 AQVSw8IRIGchOwzx0LdC81A6iNAyioTwITS0oq3dEPWYp5dfmZK1QAlyMxxqVev+JLkW1
+	 EDOog8xvM5FFIBr0ni+ysTZpeMzKg9Zn9B0VKwF+7r1NmGvVmqUDdHBfA3gU5DiFxLR5M
+	 yL7mabPBe5j1uZXiIjt0D0FZdh6wti2xPhGPyjdpbLl6hSMkelYaZT5j930h4IYx9NA==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795154626;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
+	bh=pGOGVjzDtRAIxks4mvGvAXFdrHYvYvSfhVh3EqISUwM=;
+	b=LHZhaVbpsYRtZS332psJDQTzr7UHVjWfRosekLdGnfd/I5DNo7RtEjzyCwjYS5uM5npo
+	 SL2PcDsUwwX+BEaJw3EbNJQVNhjNybmhoKNEG6LuzPxX3d18Ub9TMTxqGC5IGO0BNt3PT
+	 JnSWzChnRFyt89Fnfj9wJC9Q5imgx0lLAG+MAU0Ssm8xij41BCSYqxm7jGTc8jzb1rq4B
+	 J/9ZA2o8mKFdC6FukAZJIrxNYiv2BVjyWN23SJ7hXO/+jk+BLvXFlnl9WQXO+0n+Q58SG
+	 WqGFwDrdq1hgS+W5M8UjX96reqXvIe6etc9jCpa1LTlY9HBHn4lu/+NoYSAkJhmif0Q==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=twd3LSyP;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.46
+Received: from mail-ed1-f46.google.com (mail-ed1-f46.google.com [209.85.208.46])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3FA3860A2603;
-	Fri, 20 Nov 2026 05:58:10 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91E9F60A260D
+	for <linux-api@vger.kernel.org>; Fri, 20 Nov 2026 06:03:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 91E9F60A260D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SAKS3ST4
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 535581F000EB;
-	Fri, 20 Nov 2026 05:58:09 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795154290;
-	bh=3J4zWN2xZSuepJxvtOxZd6Cv2PFcMo5B56sR2qMDpP8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=SAKS3ST4i7tiUXuSP7l7klGig8K851mCaNcA83yfT7HS5evQwuV9pHxHXPYNRVoBN
-	 OECH81IdbXkatDGtQDTEbZ0S0zjQEdVbnmzdw9mOYz1Xg30Zaplgj5W19nP62y6YlV
-	 Tri0TfVHScfjfdkqkwMEqDkkVdZoLgLFmUKDwq/GJAQHq+lyIRFPSxG1deSxZD/b8w
-	 aozC4d3ZTBXnBMBMor/w9ZkVSDiVqdnfcfimj2dN+sC1cm0iMw+VPyVRobRXELJYS6
-	 2S8q7BhHWzui3oDk1v9py06mOrro/JTr5AlYK88Mj3Em8Yv5p5dWVOcoaGbo7wvjA3
-	 aTGgS+xSE9t4w==
-Date: Fri, 20 Nov 2026 07:58:06 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Albert Ou <aou@eecs.berkeley.edu>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Alexandre Ghiti <alex@ghiti.fr>,
-	Andreas Larsson <andreas@gaisler.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Andy Lutomirski <luto@kernel.org>,
-	Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Arnd Bergmann <arnd@arndb.de>, Ben Segall <bsegall@google.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Casey Schaufler <casey@schaufler-ca.com>,
-	Catalin Marinas <catalin.marinas@arm.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Christian Brauner <brauner@kernel.org>,
-	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
-	Chris Zankel <chris@zankel.net>,
-	Dave Hansen <dave.hansen@linux.intel.com>,
-	David Hildenbrand <david@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	"David S. Miller" <davem@davemloft.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	"Hallgrimur H. Gunnarsson" <halg@google.com>,
-	Heiko Carstens <hca@linux.ibm.com>, Helge Deller <deller@gmx.de>,
-	"H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
-	Jan Kara <jack@suse.cz>,
-	John Johansen <john.johansen@canonical.com>,
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Madhavan Srinivasan <maddy@linux.ibm.com>,
-	Magnus Lindholm <linmag7@gmail.com>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mark Rutland <mark.rutland@arm.com>,
-	Matt Turner <mattst88@gmail.com>, Max Filippov <jcmvbkbc@gmail.com>,
-	Mel Gorman <mgorman@suse.de>, Michael Ellerman <mpe@ellerman.id.au>,
-	Michal Hocko <mhocko@suse.com>, Michal Simek <monstr@monstr.eu>,
-	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
-	Nicholas Piggin <npiggin@gmail.com>,
-	Palmer Dabbelt <palmer@dabbelt.com>,
-	Paul Moore <paul@paul-moore.com>, Paul Walmsley <pjw@kernel.org>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Richard Henderson <richard.henderson@linaro.org>,
-	Rich Felker <dalias@libc.org>,
-	"Ritesh Harjani (IBM)" <ritesh.list@gmail.com>,
-	Russell King <linux@armlinux.org.uk>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shrikanth Hegde <sshegde@linux.ibm.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-	Thomas Gleixner <tglx@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vincenzo Frascino <vincenzo.frascino@arm.com>,
-	Vlastimil Babka <vbabka@kernel.org>, Will Deacon <will@kernel.org>,
-	Yoshinori Sato <ysato@users.sourceforge.jp>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v4 00/14] Namespace for namespace roots
-Message-ID: <av_hbgzwo-1FcAPZ@kernel.org>
-References: <20261119224312.1037966-1-jarkko@kernel.org>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=twd3LSyP
+Received: by mail-ed1-f46.google.com with SMTP id 4fb4d7f45d1cf-6b87a92c17eso773881a12.3
+        for <linux-api@vger.kernel.org>; Thu, 19 Nov 2026 22:03:45 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1795154624; cv=none;
+        d=google.com; s=arc-20260327;
+        b=mmqQ4EBy8SVI3y7JQZBJ8/qD61y9Fb9Izc6ZZVwawk52smcZojiRLwlneuVtUopEPC
+         9UDNq6UoRWjm5KQYGTfHhlURGJ0InGFUeuRUPVmJ/xdifUTh0MFhy7NwtoNm5u6YUiHJ
+         etrZI9wL+eqfca+RimzpxFU44IGh7iuH6IZQov2sW47kniGrcxG5h1je3JQdYC1C00SZ
+         FxVYyeIumvDyBYLhYAL0/eT+SbIB7RdnXCH3CESGa9+wRnTKdugTyNNfcNo4VzxVygci
+         MQY07bDvKHm3sSdOlTixAnsp62LwCLn8AZmVk9TVZJCU2HQNYTODUNdd2Vgpa2epTXH5
+         F5Xw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=content-transfer-encoding:cc:to:subject:message-id:date:from
+         :in-reply-to:references:mime-version:dkim-signature;
+        bh=pGOGVjzDtRAIxks4mvGvAXFdrHYvYvSfhVh3EqISUwM=;
+        fh=gR1OzVJxb9rBrtosQ+hyIKWgB9Wcucwjr3TP9JbjVCs=;
+        b=EYnaLj/mO9gQYSbdeIAl/YkOAKQM67AmtT6Dndr8+O0qUBWdyxrKBaY0XXjLACGYGx
+         mzE0wdbMslDB3OxL0Ew6uwYBT8fB7nYURUA7IJjRaEw4lYvawtR51A7h33h+WGBov0CR
+         UccikGkq6jAnHbQVDqvTRC20oXbRjB0I1K8CYYkdq/OWQ6z3wc/WfrLlp1TG2Jz+OVSM
+         U+5rsD0KbuLtXLniWx99XF5VrRnbT0ZZPyJaReYe2l3Qx29WLoJNea090WAhfHDI+osk
+         u2d/PJUvlpGsQ+6R38f3QamcMfaGVqNl6JOb1CKUobi3MwYDlktwphrwGYZ0GrJYhgqu
+         a76A==;
+        darn=vger.kernel.org
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795154624; x=1795759424; darn=vger.kernel.org;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=pGOGVjzDtRAIxks4mvGvAXFdrHYvYvSfhVh3EqISUwM=;
+        b=twd3LSyPhh/xqGTUhGQCUkwTgPz0ozSKLDTUdzWfuC88iwf9vuQaz4Cbapmx3zwlEj
+         zlPpp5xjkBRG0SDqC55ar8nBqU+85ZN/BbmT34kWJ4vxhbdyZbdyEQy2606KHlPpAcFA
+         JFJXbHJDQWbyltdYp5JJ76dGIZsXzMVaFFB2lWR6MIffBbfdMhvs931PsHwOVCxf6WxW
+         wy21QWjJiN1/vrK+nMRXh+VMOYDU0hoTkIxn3m45nhUC91hezeDKP97nETUPcHv6eNo8
+         2LkA2JYHzh73ui1UQni7id0o3aSMFPuYuUQVmp+IzjGqkrZikwiCYxOEdafgsA18VMyB
+         JQzQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795154624; x=1795759424;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=pGOGVjzDtRAIxks4mvGvAXFdrHYvYvSfhVh3EqISUwM=;
+        b=wEkIRneHNuOrt/29+qurfDR3+ee3HISJfh7eH7L8cRyNd8YxOrUT0Caru7AxZBVuuC
+         MIiolVcPFdImKoxX7Gi7LTuCC4wB07+o55ocQoFD4mITHq5TRu+FrSWmIxeQy8CBKkCX
+         18E9q4h0FT8nqGR/VwCOXd2FReuT4+g8DgExiapahZFGSZL/7oaOdEb9wJXy25cekJaV
+         GGr3itmMjPDpn5Jo86e3ZJ4YpMmK+/M62baaDy1dleVVeSiH+IHN3/N32M7kiw5LHONQ
+         Jz9HSRf2VJwQIXoGbcV8E0UuikwwP3lquEIRZJUQf6KSOvA6gQ/Y4nM3lGUYkArTYBT5
+         IDHQ==
+X-Forwarded-Encrypted: i=1; AL+hErGIybU1U2LTfM8mtbX2f3FQbkcmLMdUUwBNCCkot8V/wTiouFc3wiF4AfxyXaSSDDNeQB0dKevUmeI=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/5ehOeQ7n1sYhrAWPV6Dy/avAKAPV2RCS1Do+mAav/bmU2jkVf
+	PImdC9yn8EtwnANZz5/y9hH/BB+Ptb2IGvUPe6u+KCmo43X9jB/B3NYzGHr/6OvITQxLl4vpp8+
+	2jFCFXLBPJKLAcWneeXwb+OEhZA6oG6w=
+X-Gm-Gg: AZFdTZfaEpyay82Dzk+i4l3Zt+S3nmFl93NIW5jK8G1tlpUeFpxzjji/6cjk0NSIwST
+	bHcx1ODnEVDA3MQs0DsNEja3DoTz79QRzfz8/+Agfmk5t/BRL86jswP/aZDruegBcuYTY0s49yE
+	E/EbdTymS0Om0lGshl0MbaJ95Z2rTlWGUx1gX2GNEnelNHb0PtbTwxGdQRMDWPu+2YMccwq4vTm
+	W9pklEzXLJUIerMJr181Yd8Kh+R3dWVD9TgTJ+G790JmaUTZKCUM8JYG89EU+74nS/d/g/Vd51w
+	lUUhH0oRA0+dF+/xMNuRyUq/ehbt+fwzwmcnRt4rI9EfuxFaVoSlNQtXOpkwruffZqw3hNBAuhB
+	hXoI0MD/qLVpFP0oZot+CT+BLvO3AaFQKEfq9KQohCzIAlzSZPEp3uBfOnzDuzuNhx7HtjLhmlB
+	fEEXg5n5fsvwbFQNo=
+X-Received: by 2002:a05:6402:e06:b0:6b5:4f5c:cb2 with SMTP id
+ 4fb4d7f45d1cf-6ba37ec320fmr1108851a12.34.1795154623771; Thu, 19 Nov 2026
+ 22:03:43 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -129,56 +105,109 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261119224312.1037966-1-jarkko@kernel.org>
+References: <20261115180343.576773-1-koray.fra@gmail.com> <20261115180343.576773-10-koray.fra@gmail.com>
+ <CAOQ4uxhjxp5sxYphWoB=8sgX3XHOv9zLVYf+8ZjYbS_gQDxO3w@mail.gmail.com>
+ <DMZIQG4U1NTH.2IN0S2YIWEYTG@gmail.com> <20261119220936.mssmaixcorn2gzli@pali> <DMZJGB07CO56.IZ20OCGGH6C@gmail.com>
+In-Reply-To: <DMZJGB07CO56.IZ20OCGGH6C@gmail.com>
+From: Amir Goldstein <amir73il@gmail.com>
+Date: Fri, 20 Nov 2026 07:03:31 +0100
+X-Gm-Features: Aa3M54rvTAbJYlhFUqobPAqFrpuIqbxGTrlnaPynQQoE0nz09X_6dT10Gv8Q47Y
+Message-ID: <CAOQ4uxhqgsh9ahJsX7C4YyZH2n_r8VwOe9X9jZwsKALCoYvyag@mail.gmail.com>
+Subject: Re: [RFC PATCH v4 09/10] ksmbd: add provenance time (ptime) and map
+ it to CreationTime
+To: koraynilay <koray.fra@gmail.com>
+Cc: =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
+	David Sterba <dsterba@suse.com>, Namjae Jeon <linkinjeon@kernel.org>, 
+	Sungjong Seo <sj1557.seo@samsung.com>, Alexander Viro <viro@zeniv.linux.org.uk>, 
+	Christian Brauner <brauner@kernel.org>, Trond Myklebust <trondmy@kernel.org>, 
+	Anna Schumaker <anna@kernel.org>, Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, 
+	Konstantin Komarov <almaz.alexandrovich@paragon-software.com>, 
+	Paulo Alcantara <pc@manguebit.org>, Chris Mason <mason@kernel.org>, Yuezhang Mo <yuezhang.mo@sony.com>, 
+	Jan Kara <jack@suse.cz>, NeilBrown <neil@brown.name>, Olga Kornievskaia <okorniev@redhat.com>, 
+	Dai Ngo <Dai.Ngo@oracle.com>, Tom Talpey <tom@talpey.com>, 
+	Ronnie Sahlberg <ronniesahlberg@gmail.com>, Shyam Prasad N <sprasad@microsoft.com>, 
+	Bharath SM <bharathsm@microsoft.com>, Sergey Senozhatsky <senozhatsky@chromium.org>, 
+	ChenXiaoSong <chenxiaosong@chenxiaosong.com>, "Darrick J . Wong" <djwong@kernel.org>, 
+	Sean Smith <defendthedisabled@gmail.com>, Andrey Albershteyn <aalbersh@kernel.org>, 
+	Pedro Falcato <pfalcato@suse.de>, linux-btrfs@vger.kernel.org, 
+	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
+	exfat@lists.linux.dev, ntfs3@lists.linux.dev, linux-cifs@vger.kernel.org, 
+	linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-On Fri, Nov 20, 2026 at 12:42:58AM +0200, Jarkko Sakkinen wrote:
->   nsproxy: Pass nsproxy to create_new_namespaces()
->   rootns: Add core infrastructure for root namespaces
->   rootns: Track init lifecycle via copy_process() and pid_namespace
->   rootns: Add rootns() system call
->   rootns: Add ROOTNS_WAIT ioctl
->   rootns: Add ROOTNS_KILL ioctl
->   fork: Support CLONE_INTO_ROOTNS in clone3()
->   fs: Support FSCONFIG_SET_ROOTNS in fsconfig()
->   fs: Support MOVE_MOUNT_T_MNTNS in move_mount()
->   security: Add rootns LSM hooks
->   arch: Wire up rootns() system call
->   docs: Document root namespace uAPI
->   selftests/rootns: Add root namespace test suite
->   MAINTAINERS: Add entry for ROOT NAMESPACE
+On Thu, Nov 19, 2026 at 11:25=E2=80=AFPM koraynilay <koray.fra@gmail.com> w=
+rote:
+>
+> On Thu Nov 19, 2026 at 11:09 PM CET, Pali Roh=C3=A1r wrote:
+> > On Thursday 19 November 2026 22:51:26 koraynilay wrote:
+> >> On Thu Nov 19, 2026 at 6:34 PM CET, Amir Goldstein wrote:
+> >> > On Sun, Nov 15, 2026 at 7:04=E2=80=AFPM koraynilay <koray.fra@gmail.=
+com> wrote:
+> >> >>
+> >> >> Implement provenance time (ptime) in ksmbd, as introduced in a
+> >> >> previous commit ("vfs: add provenance time (ptime)").
+> >> >>
+> >> >> Map it to SMB's CreationTime, making it settable by SMB clients. Wh=
+en
+> >> >> reporting CreationTime to clients, prioritize ptime over da.create_=
+time
+> >> >> memorized in the user.DOSATTRIB xattr.
+> >> >
+> >> > That doesn't sound like the right thing to do.
+> >> >
+> >> > If the server stored a CreationTime that client had set, you cannot
+> >> > override this.
+> >>
+> >> Ah, yes, but how would we handle older files which get a custom
+> >> CreationTime both before (in the xattr) and after (in ptime) a kernel
+> >> upgrade?
+> >
+> > Just to note that this problem is already there. ksmbd can export for
+> > example ntfs filesystem on removable disk. And this removable disk can
+> > be connected to Windows machine which will always only touch
+> > CreationTime and ignores xattr DOSATTRIB.
+> >
+> >> > When the client sets CreationTime, the server can decide if it can a=
+nd wants
+> >> > (may be a policy decision) to store CreationTime in PTIME and not st=
+ore
+> >> > it in user.DOSATTRIB.
+> >>
+> >> To fix the above problem we should probably keep storing it in both
+> >> ptime and the xattr though.
+> >
+> > IMHO for a long term solution it is better to not have duplicated
+> > information in xattr. Because duplicated information are going to be
+> > out-of-sync. Windows NTFS driver will not update xattr DOSATTRIB.
+>
+> Yeah, to avoid out-of-sync issues is why I made ksmbd prefer ptime over
+> the xattr's CreationTime.
+>
+> >
+> > For me it looks like that this needs some policy / configuration
+> > decision done by user. We do not know if the user will replug that disk
+> > also to Windows NTFS driver (and then those xattr DOSATTRIB could cause
+> > out-of-sync issues) or will only use it from Linux or Samba and then
+> > xattr DOSATTRIB is probably fine.
+>
+> I'm not sure if this is the best solution, it doesn't feel too right
+> to me, but maybe there isn't a better one.
+>
 
-Since David's picking up patches, and starting to drill them, I've not
-paid apparently enough attention to patch division. Just noticed when
-I had hard time finding mqueue and procfs changes.
+If you ask me, this is not your problem and I agree with Pali that
+this is a policy decision.
 
-I've now re-sliced these into a bit more sane pieces:
+I would not include this patch at all in the series if I were you.
+Maybe as a demo user, but you could just as well include a demo
+user application.
 
-$ git log --oneline master..
-d8e24a6bc14e (HEAD -> rootns, origin/rootns) MAINTAINERS: Add entry for ROOT NAMESPACE
-f2569e56a267 selftests/rootns: Add root namespace test suite
-bea05e758f8e docs: Document root namespace uAPI
-dd05a49aff77 arch: Wire up rootns() system call
-2dee7a5fddec bpf: Register rootns LSM hooks
-73c51e02b830 security: Add rootns LSM hooks
-3cfd6576a037 mount: Support MOVE_MOUNT_T_MNTNS in move_mount()
-9ed7387038ea ipc/mqueue: Implement ->set_rootns() fs_context operation
-624f0ed9c1c7 proc: Implement ->set_rootns() fs_context operation
-1085e6ae2eb3 fs: Support FSCONFIG_SET_ROOTNS in fsconfig()
-d2898dbdc39b fork: Support CLONE_INTO_ROOTNS in clone3()
-42dbccb5890e rootns: Add ROOTNS_KILL ioctl
-14cbda3e5bca rootns: Add ROOTNS_WAIT ioctl
-b2cc82539b75 rootns: Add rootns() system call
-d29215aa7f0f rootns: Track init lifecycle via copy_process() and pid_namespace
-0f9ce7febb49 rootns: Add core infrastructure for root namespaces
-7a0e8f969fc7 mount: Enforce mount_too_revealing() for foreign mntns
-8c61aee3afbf mount: Add mnt_ns_get_root()
-07d239d0287c userns: Factor out install_user_ns_cred()
-bf74588e706d nsfs: Add nsproxy_open_namespace()
-645d31a1c516 nsproxy: Pass nsproxy to create_new_namespaces()
+The nfsd user is a simpler demo, so as long as the nfsd maintainers
+are on the same page wrt the mutable btime plan, you could include
+it in your series.
 
-I would also divide "arch: Wire up rootns() system call" into multiple
-patches, if this was not an RFC.
+The problem you raise with DOSATTRIB xattr is similar to the problems
+that Chuck raised for ptime vs. btime as the source of FATTR4_TIME_CREATE
 
-Br, Jarkko
+Thanks,
+Amir.
