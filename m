@@ -1,80 +1,69 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795198625;
-	b=5h+yfFQTjRLiM1b18fbXqQAV70bHUHuKhrFkF0QZpxLCHUpBVutF+VKHDdNoHSsdjNIS
-	 EeOaw4nmZqst/2hyPN5Wu3PrwrNWXIJrYk45vye7o4lL5vcWBvWIm5CAos2ql76VPNbBe
-	 f1+E08NPNdq4s+N5nGYHVt9iOB57IuDtHDkZ/DfFfX3M/S2lACiC3dVnMfXVLP04MWCvY
-	 vLVbbtjh+AFdhi5Xx4luAFHS6tiefkIKMX/6hatI4yqBwsUdnN03tXGB0G6u3+3JuOV+W
-	 UWtX0R3DDUJ4Ut0ixoIEhFQ5ph4naCw9t/urmJ6lZlNh4AV62+UlpIvqEt1BfqWFsAw==
+	t=1795203306;
+	b=R8zxk6pmB5aClnW7dUF5d95BjNQIMCnCPtHrn9e0ImlG4pGs5JtfyHeBRowqofO2/GQC
+	 qtyrh+9h7lnZ6c9FaruXGK4hion6ArJkS/vFvS/QBtvkK7oBel/5g9qCGtiUDjlfhOYaS
+	 C0VTCHHvidp9hDS+Y5UPBNMZgG/rh5Pbom5BsFBz7FWm4PZw307g984YFBciDuFSxa0cS
+	 WokNlCS3RxTrOkrRy89XZYcuLASpG9TiysTjjP1+V9GxdL3BdkM+njj7LN6OHjdqsbYhb
+	 Xck2UYVirc/dYO5Lsolq8sYkg2IY2Wn+8RbhnmeEV0KTt6LagKju1eLOkXmJO539MSg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795198625;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795203306;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=kHnPkHdygJLWUd6Raio1OZlzrSr7Mg2iPFJR6vcJsn0=;
-	b=zgPXnpDV6SoTqwzntHhzHeShTUtCoxEh3gdckCaR7rY6Ld389L7w032nbK1JDr3EjxRV
-	 atY4PQzt0WUXR0sotbREfXEsAjkRbK6YgFc8yC2lT77BwXXcXZcd2FH0xmrOWo0d/C1UY
-	 nY2m86w2ng/t14zr06AwRrbLJCVZOuWm2Dg8971woDWizR0sntlWUVMPZYezxBEQTJwnV
-	 ROcKUuyRiW4YndaS5EFYQ8SP1DNczm1ALiG3FDhmg4/p2iFy0wUlZhlrMBlJ/1o28ROgU
-	 wPaS6fz/5FS1cWC48214LhV5s8CS9YX0ykQytA5BN2OgY+ZK4ZNsaarDFcxApSXIhLQ==
+	bh=f2nwNws6jb2rrcrjqN6IHTTGcIBFf7pHC19yvGssvN4=;
+	b=EOWwo7KIOkf6RvaPdokW+QwoIR8RDLD5bLoSo4/pxz/HfiAv2om/vGkjkgq7IRq4S6xI
+	 2cOOG8Ct9EhEoySjsAEzanAALcTAPmYY5vy73pPP032TsuFuOnDIoLGLVIteaH/1ZoJPx
+	 kNed9RE3i2ubZC3zosaTM3DImuyYjT/J/1DAUBi+zjPfRB3xuOul9A/DCREvuFgK9AD2d
+	 OWX2FNKMi99CCAinDe/vX1mS2oSDvXB5bE7KkLv8Oyi/MgaJBpu8VmhfCiT317DqnL+Qv
+	 dBRh34PoLKHkzQOqtaGSwe+R5S4Xr61MMyg7vy7p8GnVzokX4HPwP/yeqrHPBBpVLTg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FDZ1T56E;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WUM6Iykf;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1E062606BDCE;
-	Fri, 20 Nov 2026 18:17:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id E4CB2606A6F9;
+	Fri, 20 Nov 2026 19:35:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FDZ1T56E
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D22F71F00A3D;
-	Fri, 20 Nov 2026 18:16:54 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WUM6Iykf
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 0EDE41F000C6;
+	Fri, 20 Nov 2026 19:35:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795198624;
-	bh=kHnPkHdygJLWUd6Raio1OZlzrSr7Mg2iPFJR6vcJsn0=;
+	s=k20260515; t=1795203305;
+	bh=f2nwNws6jb2rrcrjqN6IHTTGcIBFf7pHC19yvGssvN4=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=FDZ1T56EY/NGSZoTmntCLex0+4xeE8PucuiZ4OpXHfBdGoiLzo9IrSDqKpJcWcAEx
-	 HknAu50zTJt9dXHaiwcX0LMuj3DCFHLZKTlZ0YSp49BB1UazfGAdNiorcEbNBdAlE0
-	 Jm9XmV45fyiwhBKVkrrMsFJuZMkH80dEj76iDZAD5W2/MMLs8dD601KcImYLSCmqnA
-	 RsuHa3JuDXI8q0CnuESnUy9+uoR0ap/AR56Kh1DZuL9oQd9rYo460sqP0G7aiGVMdG
-	 ikxyOkxyt/pNSE1U3xl1nLM3UxG/UnmmNBmnk44dmqDb2p3sgftQKUtl/+bp4ieAy4
-	 ZzkCSKckENgFA==
-Date: Fri, 20 Nov 2026 18:16:52 +0000
-From: "Lorenzo Stoakes (ARM)" <ljs@kernel.org>
-To: "David Hildenbrand (Arm)" <david@kernel.org>
-Cc: Luigi Rizzo <lrizzo@google.com>, 
-	Andrew Morton <akpm@linux-foundation.org>, Johannes Weiner <hannes@cmpxchg.org>, 
-	Vlastimil Babka <vbabka@kernel.org>, Joerg Roedel <joro@8bytes.org>, Will Deacon <will@kernel.org>, 
-	Robin Murphy <robin.murphy@arm.com>, Marek Szyprowski <m.szyprowski@samsung.com>, 
-	Jens Axboe <axboe@kernel.dk>, "David S . Miller" <davem@davemloft.net>, 
-	Eric Dumazet <edumazet@kernel.org>, Jakub Kicinski <kuba@kernel.org>, 
-	Paolo Abeni <pabeni@redhat.com>, Luigi Rizzo <rizzo.unipi@gmail.com>, 
-	"Liam R . Howlett" <liam@infradead.org>, Mike Rapoport <rppt@kernel.org>, 
-	Suren Baghdasaryan <surenb@google.com>, Michal Hocko <mhocko@suse.com>, 
-	Brendan Jackman <brendan.jackman@linux.dev>, Zi Yan <ziy@nvidia.com>, Harry Yoo <harry@kernel.org>, 
-	Christoph Lameter <cl@gentwo.org>, David Rientjes <rientjes@google.com>, 
-	Roman Gushchin <roman.gushchin@linux.dev>, Hao Li <hao.li@linux.dev>, Matthew Wilcox <willy@infradead.org>, 
-	Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, 
-	Catalin Marinas <catalin.marinas@arm.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, 
-	"Rafael J . Wysocki" <rafael@kernel.org>, Danilo Krummrich <dakr@kernel.org>, 
-	Jonathan Corbet <corbet@lwn.net>, Simon Horman <horms@kernel.org>, 
-	Jesper Dangaard Brouer <hawk@kernel.org>, Ilias Apalodimas <ilias.apalodimas@linaro.org>, 
-	Willem de Bruijn <willemb@google.com>, Kuniyuki Iwashima <kuniyu@google.com>, 
-	Joshua Washington <joshwash@google.com>, Harshitha Ramamurthy <hramamurthy@google.com>, 
-	Alexander Lobakin <aleksander.lobakin@intel.com>, Christoph Hellwig <hch@lst.de>, Jason Gunthorpe <jgg@ziepe.ca>, 
-	Dragos Tatulea <dtatulea@nvidia.com>, Naman Gulati <namangulati@google.com>, 
-	Pranjal Shrivastava <praan@google.com>, Mostafa Saleh <smostafa@google.com>, 
-	Randy Dunlap <rdunlap@infradead.org>, linux-mm@kvack.org, iommu@lists.linux.dev, 
-	netdev@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	driver-core@lists.linux.dev, linux-arm-kernel@lists.infradead.org, linux-api@vger.kernel.org, 
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org
-Subject: Re: [RFC PATCH v3 00/25] PISA: Pre-mapped IOVA Superpage Allocator
- for DMA and CoCo
-Message-ID: <awCOitDwwIoz632b@gremlin>
-References: <20261109182533.3594984-1-lrizzo@google.com>
- <20261120010655.467825-1-lrizzo@google.com>
- <awBYFhnpFGtEXZ6r@gremlin>
- <8c9bd441-db5e-4857-8e39-79f147422454@kernel.org>
+	b=WUM6IykfgvNu8g6AkQkzfo5Kk77jKNOUhYvg5Wz/BbFykaRnSLMtBaIp6+z6erDVN
+	 Km4cec9BuB5poq0q69vDCtW3era3rmkANhJ5Rg5TbP0Yz2p9DtyVV7HMT57goJj4U/
+	 eVVsS0xSSdDjKfg1KQ9H8doGeXtRX0mCTKZ9xtq9CvNtp/fibr0vLfbgYomkn4kEyL
+	 Bo7fvXfIL/2Z7zlhVetzcD6rhw54AW5MOhFvEu0s0qRY+IJDALeniGgZZke54Ff9dT
+	 xglz2l4wsMcX2VZzLKsaAcWB2MD5X6WRtIBFZd23FHebjVozUGq68BnlV8YF5ZUMwM
+	 BPqaw8BTrIRGA==
+Date: Fri, 20 Nov 2026 21:35:01 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Alexander Mikhalitsyn <alex@amutable.com>,
+	Andy Lutomirski <luto@amacapital.net>
+Cc: Andy Lutomirski <luto@amacapital.net>,
+	Josef Bacik <josef@toxicpanda.com>,
+	Christian Brauner <brauner@kernel.org>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	David Howells <dhowells@redhat.com>, Jan Kara <jack@suse.cz>,
+	Serge Hallyn <sergeh@kernel.org>, Kees Cook <kees@kernel.org>,
+	Paul Moore <paul@paul-moore.com>, linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org, linux-security-module@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [RFC PATCH v2 00/13] Namespace for namespace roots
+Message-ID: <awCg5VYXKJvex9vy@kernel.org>
+References: <av3akYFOYaeQZauZ@kernel.org>
+ <av3bkDnwmjunTleX@kernel.org>
+ <CALCETrXPLeUgxyhjP4XuWS46FKB0TUHF5PcMkdMf+qeEXbyXRA@mail.gmail.com>
+ <9463a969d35a7d5ec5a56aeb67644b94.josef@toxicpanda.com>
+ <CALCETrXt-Do28BHDpbrA98kEy-tQuorxD8c2XsW24Tt8Vspdtg@mail.gmail.com>
+ <CALCETrUbe8rBoxrC+Q66AMsrJ8Fow7xt5KJKRAmobtXBvHWdqg@mail.gmail.com>
+ <c301fff20a4920fcd3baa31dda2e31ad99c93436.camel@amutable.com>
+ <awBHZO2VwWyJzvBN@kernel.org>
+ <1f12636403bb7af3759cd933b2612d8a5d7317a2.camel@amutable.com>
+ <awBRyKgOQlaEqpWX@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,16 +75,48 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <8c9bd441-db5e-4857-8e39-79f147422454@kernel.org>
+In-Reply-To: <awBRyKgOQlaEqpWX@kernel.org>
 
-On Fri, Nov 20, 2026 at 05:12:25PM +0100, David Hildenbrand (Arm) wrote:
-> On 11/20/26 15:54, Lorenzo Stoakes (ARM) wrote:
-> > TL;DR: NAK. All of it. (And yeah, I'm steeling myself for the inevitable 'oh
-> > Lorenzo' :)
->
-> Oh Lorenzo ... you are absolutely right.
+On Fri, Nov 20, 2026 at 03:57:32PM +0200, Jarkko Sakkinen wrote:
+> On Fri, Nov 20, 2026 at 02:24:57PM +0100, Alexander Mikhalitsyn wrote:
+> > Yeah, detached mounts API solves a security issue here, but it does not
+> > fully enable the use-case Andy describes (if I understood it
+> > correctly). My interpretation here is that to fully cover it we need
+> > some well-isolated communication channel between container and
+> > container manager (vsock for containers? :-D). And some well-defined
+> > agreement of how PID 1 inside the container can get an information
+> > about a hotplugg-ed stuff. [ But it could be that I completely
+> > misunderstood and Andy meant something much more simple here. ]
 
-:)))
+The sequence for hotplug (Andy's use case) breaks down like this and is
+doable:
 
---
-Cheers, Lorenzo
+1. Host creates rootns(ROOTNS_SEAL_MNTNS).
+2. Host sets uid/gid maps with NS_USERNS_SET_IDMAP.
+3. Host populates "/" with MOVE_MOUNT_T_MNTNS, optionally combined with
+   MOVE_MOUNT_CLONE for bind mounts.
+4. Host spawns PID 1 with clone3(CLONE_INTO_ROOTNS) (optionally passing
+   an AF_UNIX socketpair fd for communication).
+5. PID 1 watches /proc/self/ns/mnt via fanotify(FAN_REPORT_MNT |
+   FAN_MARK_MNTNS, FAN_MNT_ATTACH) or polls /proc/self/mountinfo.
+6. On hotplug, host mounts the filesystem via fsopen()/fsmount() (plus
+   optional MOUNT_ATTR_IDMAP).
+7. Host creates the mountpoint with openat2(RESOLVE_IN_ROOT) + mkdirat()
+   and attaches the mount with MOVE_MOUNT_T_MNTNS.
+8. PID 1 receives FAN_MNT_ATTACH and queries the new mount via
+   statmount().
+
+ROOTNS_SEAL_MNTS, NS_USERNS_SET_IDMAP and MOVE_MOUNT_CLONE new features
+that are yet to be submitted but they were not tedious to ramp up.
+
+I'll include them to v5 of the patch set. Thanks for underlining this
+part because that led to having those.
+
+Architecture scales to this even if my choices to address these details
+would need some adjustment.
+
+The clear two-phase (build/live) progress with rootns sort of just gives
+room to address stuff like this, and I have hard time to believe that it
+would get much better than this.
+
+Br, Jarkko
