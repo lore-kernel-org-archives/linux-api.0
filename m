@@ -1,127 +1,61 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795178824;
-	b=Jty6fYz9Mg4FslCKe8/nES5UnhFW1PHMt/cfJk6csa5uegc+vQlzUM+4ZXOarKJYod2/
-	 1dXxeDp/CmRlHyBCpRHqdSK6XqhILGHLjp65e9TbFo0wjdUORP++NO3enFlmmM7F3SQOr
-	 WXzdhrwik7M0/dL7tmtzaC4UkXnp1J3QTIcJ7ymcc0TxIi+3F5xZ7PMAARE8YhUHuZmCz
-	 3fk5ceR7QtQpzcr+xIi8kfrpVenCR1k60deXHHVCPA0XeXDIQvIEX8If4HrytqfmnnpWB
-	 tDdjrtfnr+Qw4V/yudFCM4RldNeopFkocWIbYITXYYxvGcyU+g25TAzLxNdWqUgbXVg==
+	t=1795178829;
+	b=XVER9FJmNM/h0G5IZgn9WrLCE862G8DXPxmCZBmot2X2S7vujLutRtSGZ1K2zclMGbuP
+	 XJ3R3roLsrwpVplInNJSfAMzs/bW6FnQfscZ5yg5qkxCSzTnm27ztraAsxqEKsmPvMi5Z
+	 jD+Bw/4fbij2zQjHAZUsmgdDVk1rKV/73NVIDnD1nm/A+bnGHqDHPFUJwFUQO5aA76wc3
+	 MOSUQD1diwRbr3lkkhUH/QhOIyxXs3RdBHlPas7L7+KbCK0v+UPlsxjpY8RmyqTdTEOjc
+	 Q2h4jk74R1+LFJ2OMSZyAgGEFbcZArKa5hHBQECa5HhFK2B1eu5rVdcFdkjoNRL1MOg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795178824;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=0ulF/F82puM5FYsSJ0g59/1wc8Edn/NytcDM7FiJ8jc=;
-	b=v0wNUqJK8koC0NnRS5+W3RMN7uRLuM/kwo2Rr+dkq4ySkGOhjdT1wREeBChwTRTf4Pc4
-	 gP1yCbbu0fGupTRrNZ83ndwO+EleldJL+tjJzRROSH8KAffCIjf+S+1yN0bVDwRwo0TlW
-	 is/xnRRuytpQ7ouddnQRuMrvzmY0PeFjPFIOejxBdCJ+h5wbAsCDdyU91MJQg0R70GETQ
-	 idxqWJg7jPr3lNloKrCiJniI+TASZXFzOVOxZxXG1tIW5mUb2f7BxuTUYza7vsWhNhgqy
-	 kLtxKeynidRn0rwbx19AGaZPbavOdCBbw3x5yMZqSGqdji+DJDz4zMgOeEAw4ZkY/+w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795178829;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Content-Type:
+	 X-Developer-Signature:X-Developer-Key:Content-Transfer-Encoding;
+	bh=LdDRBo821w3P+jIu8o4fDxJzmh+upxb4WP1I5LQVriw=;
+	b=JWd9q3KrUjqdnnjzxQJttEm7mfX1DtggyEx6m8fDy02Q+qcRW78ouedTHCIbNn5Al/pR
+	 tKGtQsQlE7Z2ePscsZdhMOJm6xFGquPcTivwrMiHj3DYmZ8+dCBbJpkcoEt4f6fEYWPJN
+	 /wsI7HbxtTgzltznyANmdc1fqZWQFCj5ayFSX8WYedNnczrkeFfOBOo0PONqiWGLn2Q2g
+	 Kz9uw0LxS6fISBjlkWpp3D2ZrovN72IlpcKEGQNi6clxhr82/Qf7apbgwEeBkDkXUBFTX
+	 ef17mEwyKnqZoYkWMYkiyvllxmbQ4O8ZIDKbhth/rg4nsxpCUEa4jK2xJadev58Nv5A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DqoZLySG;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="AQzd/eHL";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 879F660A2607;
-	Fri, 20 Nov 2026 12:47:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 90A72606A332;
+	Fri, 20 Nov 2026 12:47:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DqoZLySG
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 1F3B61F01816;
-	Fri, 20 Nov 2026 12:47:03 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AQzd/eHL
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D79F81F000CA;
+	Fri, 20 Nov 2026 12:47:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795178823;
-	bh=0ulF/F82puM5FYsSJ0g59/1wc8Edn/NytcDM7FiJ8jc=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=DqoZLySG6tbEny6oIUE/axFh/2wx4W5GHzOkvhTlgcaY4EZUTlRys71s81y3ij2s+
-	 Rx6evb1/Oa+v4+RmHdPnlMI8p3/9Vk2Qlijco1EtXlIo6+Uox0MEXkH/j5p22LtJG8
-	 O+pAzJgjaL1XHgOBkbBGKjTQJ9BhUBlib22F8c7LUzIeRP0B3hW1yyMckmXfB09V3/
-	 pb0B13DLnURH0RN2WYu1RtEzVFvz+D8QM0Yu59J9hZtbKvXjbGvXTuwegQcAfBSTXZ
-	 ryU1OkE2JtMJpTX6AEDJ3anQ8K5ylpOqcKArjol4ky4NYsELzEC9Sl23cE4WQ60q2T
-	 OvpwQRIevpNOw==
-Date: Fri, 20 Nov 2026 14:47:00 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Albert Ou <aou@eecs.berkeley.edu>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Alexandre Ghiti <alex@ghiti.fr>,
-	Andreas Larsson <andreas@gaisler.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Andy Lutomirski <luto@kernel.org>,
-	Anna-Maria Behnsen <anna-maria@linutronix.de>,
-	Arnd Bergmann <arnd@arndb.de>, Ben Segall <bsegall@google.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Casey Schaufler <casey@schaufler-ca.com>,
-	Catalin Marinas <catalin.marinas@arm.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Christian Brauner <brauner@kernel.org>,
-	"Christophe Leroy (CS GROUP)" <chleroy@kernel.org>,
-	Chris Zankel <chris@zankel.net>,
-	Dave Hansen <dave.hansen@linux.intel.com>,
-	David Hildenbrand <david@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	"David S. Miller" <davem@davemloft.net>,
-	Dietmar Eggemann <dietmar.eggemann@arm.com>,
-	Frederic Weisbecker <frederic@kernel.org>,
-	Geert Uytterhoeven <geert@linux-m68k.org>,
-	"Hallgrimur H. Gunnarsson" <halg@google.com>,
-	Heiko Carstens <hca@linux.ibm.com>, Helge Deller <deller@gmx.de>,
-	"H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>,
-	"James E.J. Bottomley" <James.Bottomley@hansenpartnership.com>,
-	Jan Kara <jack@suse.cz>,
-	John Johansen <john.johansen@canonical.com>,
-	John Paul Adrian Glaubitz <glaubitz@physik.fu-berlin.de>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Juri Lelli <juri.lelli@redhat.com>, Kees Cook <kees@kernel.org>,
-	K Prateek Nayak <kprateek.nayak@amd.com>,
-	"Liam R. Howlett" <liam@infradead.org>,
-	Lorenzo Stoakes <ljs@kernel.org>,
-	Madhavan Srinivasan <maddy@linux.ibm.com>,
-	Magnus Lindholm <linmag7@gmail.com>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Mark Rutland <mark.rutland@arm.com>,
-	Matt Turner <mattst88@gmail.com>, Max Filippov <jcmvbkbc@gmail.com>,
-	Mel Gorman <mgorman@suse.de>, Michael Ellerman <mpe@ellerman.id.au>,
-	Michal Hocko <mhocko@suse.com>, Michal Simek <monstr@monstr.eu>,
-	Mike Rapoport <rppt@kernel.org>, Neal Gompa <neal@gompa.dev>,
-	Nicholas Piggin <npiggin@gmail.com>,
-	Palmer Dabbelt <palmer@dabbelt.com>,
-	Paul Moore <paul@paul-moore.com>, Paul Walmsley <pjw@kernel.org>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Richard Henderson <richard.henderson@linaro.org>,
-	Rich Felker <dalias@libc.org>,
-	"Ritesh Harjani (IBM)" <ritesh.list@gmail.com>,
-	Russell King <linux@armlinux.org.uk>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shrikanth Hegde <sshegde@linux.ibm.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Suren Baghdasaryan <surenb@google.com>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	Thomas Bogendoerfer <tsbogend@alpha.franken.de>,
-	Thomas Gleixner <tglx@kernel.org>,
-	Valentin Schneider <vschneid@redhat.com>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Vincent Guittot <vincent.guittot@linaro.org>,
-	Vincenzo Frascino <vincenzo.frascino@arm.com>,
-	Vlastimil Babka <vbabka@kernel.org>, Will Deacon <will@kernel.org>,
-	Yoshinori Sato <ysato@users.sourceforge.jp>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v4 07/14] fork: Support CLONE_INTO_ROOTNS in clone3()
-Message-ID: <awBBRDaILtH11wgW@kernel.org>
-References: <20261119224312.1037966-1-jarkko@kernel.org>
- <20261119224312.1037966-8-jarkko@kernel.org>
- <awAh8chFM-9WtNKP@kernel.org>
+	s=k20260515; t=1795178829;
+	bh=LdDRBo821w3P+jIu8o4fDxJzmh+upxb4WP1I5LQVriw=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=AQzd/eHLtLlryBDTbTSwdP+NNJicwq4dSqmuvhPn3EtjSLviD/dtYdLUvMH3v5bvw
+	 LNYgNp1fzSAdzTC0Rev/he0B/2PC69Y9FLyTGlVBeAZR807lrBxOFv+gjVDGMKCXwl
+	 W17BCgzeqCdsRMBRVHZQrwGf6xx2RgiKKrwnMulM1sypFlQLdBK3f6lVRNAAeBIvbR
+	 2KShrHs6uypnJ4erxQ35aoie/ClSHOgefo36yY/TcPLveFg501anDYStR8mfF8yv6E
+	 AfFelslCFMmZ2SuWTO2rS8/Yz9yDg1/BLl2J+mmQNFjVlPv03U7eN3CGLaX48FYB91
+	 H1qsQb46R+/EA==
+From: Christian Brauner <brauner@kernel.org>
+To: Jiwoo Kim <arpe1618@gmail.com>
+Cc: Christian Brauner <brauner@kernel.org>,
+	Sargun Dhillon <sargun@sargun.me>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Jann Horn <jannh@google.com>,
+	Chen Linxuan <me@black-desk.cn>,
+	linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] pidfd: restrict pidfd_getfd() to the caller's pid namespace
+Date: Fri, 20 Nov 2026 13:46:46 +0100
+Message-ID: <20261120-reglementieren-mehrbedarf-miesmacher-a12bf1df0b81@brauner>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <20261117152332.1221-1-arpe1618@gmail.com>
+References: <20261117152332.1221-1-arpe1618@gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -131,51 +65,43 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <awAh8chFM-9WtNKP@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+X-Developer-Signature: v=1; a=openpgp-sha256; l=1471; i=brauner@kernel.org; h=from:subject:message-id; bh=xgHWRgoMuvE14D/QKDcYhYT14B8Hr+inO75uHHhpeW4=; b=owGbwMvMwCU28Zj0gdSKO4sYT6slMWQzOLoxP3VX9vDy+l1aviGNN+ZA9G6rA489p5ev2Mtxw 5LpHtfzjlIWBjEuBlkxRRaHdpNwueU8FZuNMjVg5rAygQxh4OIUgJt8iOGvPBtb7XOP9i7W/iDO dkmRL2qrPkaWe39+sO3q4s68v42HGf5ZOcb4tPK3ecsrBYROrfz9VYVp8kHX84LKB4QORSzekcc CAA==
+X-Developer-Key: i=brauner@kernel.org; a=openpgp; fpr=4880B8C9BD0E5106FC070F4F7B3C391EFEA93624
+Content-Transfer-Encoding: 8bit
 
-On Fri, Nov 20, 2026 at 12:33:25PM +0200, Jarkko Sakkinen wrote:
-> On Fri, Nov 20, 2026 at 12:43:05AM +0200, Jarkko Sakkinen wrote:
-> > Multithreaded userspace daemons cannot call setns(CLONE_NEWUSER) or
-> > safely mutate process-wide filesystem state in place before spawning a
-> > child into a target namespace set.
-> > 
-> > Add CLONE_INTO_ROOTNS and struct clone_args.rootns (CLONE_ARGS_SIZE_VER3)
-> > to spawn a child process directly into a rootns whose root mount has
-> > been installed. Transition the rootns from ROOTNS_INIT through
-> > ROOTNS_FORKING to ROOTNS_RUNNING for the first process so it becomes
-> > PID 1, serialize concurrent entrants on waitq until bootstrap resolves,
-> > and admit subsequent callers into the running PID namespace until
-> > teardown begins.
-> > 
-> > Derive child credentials from current, require CAP_SYS_ADMIN and
-> > CAP_SYS_CHROOT in the target user namespace and an ancestor active PID
-> > namespace, preserve caller umask, reset dumpability across user namespace
-> > transitions, commit time namespace vvar mappings after copy_process()
-> > succeeds, and look up the live mount namespace root. Restrict companion
-> > flags to CLONE_VFORK, CLONE_PIDFD, CLONE_PIDFD_AUTOKILL, CLONE_AUTOREAP,
-> > CLONE_CLEAR_SIGHAND, CLONE_INTO_CGROUP, and CLONE_NNP.
-> > 
-> > Co-developed-by: David Howells <dhowells@redhat.com>
-> > Signed-off-by: David Howells <dhowells@redhat.com>
-> > Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+On Wed, 18 Nov 2026 00:23:32 +0900, Jiwoo Kim wrote:
+> pidfds can cross pid namespace boundaries: a task can obtain one for a
+> process outside of its own pid namespace hierarchy through SO_PASSPIDFD
+> or SO_PEERPIDFD, via SCM_RIGHTS, or through file descriptor
+> inheritance.
 > 
-> Being fd-bound object the gist is that the first clone3() binds
-> cgroups, which could e.g., different process than who build the
-> container.
+> Commit ee8323fdc827 ("pidfd: restrict task access ioctls to the caller's
+> pid namespace") made the pidfs namespace ioctls fail with -EREMOTE
+> unless the target is visible in the caller's active pid namespace, as
+> PIDFD_GET_INFO already does, following the rule that operations which
+> grant access to additional resources of the target require this [1].
 > 
-> CLONE_INTO_CGROUPS is of course available as an optional flag when
-> using CLONE_INTO_ROOTNS.
+> [...]
 
-The major benefit over Cells is that there is no embryonic task state
-and nothing from the host mount table is inherited unless explicitly
-moved in. Also, unshare() cannot ascend from the rootns() created
-hierarchy.
+Seems fine.
 
-Shooting yourself in the foot is an explicit and planned action taken.
+---
 
-And further, it has provably more defence in depth than Cells because
-LSM hooks accurately populate the data crossings.
+Applied to the vfs-7.5.pidfd branch of the vfs/vfs.git tree.
+Patches in the vfs-7.5.pidfd branch should appear in linux-next soon.
 
-Br, Jarkko
+Please report any outstanding bugs that were missed during review in a
+new review to the original patch series allowing us to drop it.
+
+It's encouraged to provide Acked-bys and Reviewed-bys even though the
+patch has now been applied. If possible patch trailers will be updated.
+
+Note that commit hashes shown below are subject to change due to rebase,
+trailer updates or similar. If in doubt, please check the listed branch.
+
+tree:   https://git.kernel.org/pub/scm/linux/kernel/git/vfs/vfs.git
+branch: vfs-7.5.pidfd
+
+[1/1] pidfd: restrict pidfd_getfd() to the caller's pid namespace
+      https://git.kernel.org/vfs/vfs/c/0a5864ad213c
