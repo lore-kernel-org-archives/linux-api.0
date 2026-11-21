@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795284759;
-	b=Y5fnf9Hw4gF0KHFNg3vBFtpt414VbhOBI3RRgKIMa04hF1dOUUsPs/WhH+8dM/AQtGOh
-	 LahomGVo/9Hm4mORzfawlQFn1XOhiQdA6qO6kqwmIla/djuCOJrN2U4rRX12uEnpide+e
-	 +AnFvhtiYK3k3J+uxpW8YPXyk3cbaFwL2Uq6GXJeo1c7hZxtHPfAjNgLj+67i4yusfR+G
-	 CLIBxwHlSoPZADG7Q+LNSg5Eb2RZ9eaNivZUjyfHZcVsNx2oskVO/Idvqk+whqRF5lJsZ
-	 yps56OzzhGJbCZaTLbAK+D+n6GDJshWrW/v7lsBSABA4iOaoUvPqBv8JYUcYIbZr4kg==
+	t=1795288259;
+	b=dbb1ZWMZgsnxv9QIlyzP3nN3vSt90EQLEyYgDovNQEeQENGUMz4GeKwSTgfjSFq28Ty1
+	 B5MWeDLgQHgsoDBOFPVQBeU10MDkyC3n9XejgtLkGRUcVctDhLCugnBSYyAH1nq1oOAHV
+	 rKartnaTO4aZ69oDBA2AONwSWPl9Ca3C9m31BQHroNl3wxPzo1cxj2Ntm+DL/0vNvLfnh
+	 dov5GgF4BTYOq3Id7T+K7A7g2IZVu73vOyrYxs5+R2WJy8sNB2mzRhusJt2jrkeUuRHus
+	 yQmfa60HECLQyVeHlhJi2DO7wRIh+j+gsy/vYMolNGpeTQg9ng0OMo3Oqh+2+CUVtxw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795284759;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795288259;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=ykgUhZMzGN/x6qhqJXjutPzw/2bCyhgJYf32RJRH3+8=;
-	b=XDU3JOIArsnq05JusHgUDLrYo9vnIO+w0idyPp8CMGBEyisPN3Z2HQacLFqVNk5+jupm
-	 qXYjLTKQuOjaz2DgD+Jushvse6uJhLZpzh+JVZ7pxg1U+wMI8owXhg6mQWSeAUr3RWTfd
-	 Dy9ao+9iJOZxnRi4zxz4dA9b3loPQtK4NVLIx7gagxIeNx9+QBariss6qSZfwSP+eiZaZ
-	 y0hQo1+sZwojRmRv1SRmX9fdCkkKSJmKrVJLMPg5v2fsdH11uRn6VREjY15645DNFI+bM
-	 H7IgAyIHl3u4hmCmHuCmwlSrc4cEB6JJaqdGnSvzsnVHTgHP51eOP7BEVxL6tL5WRiw==
+	bh=6ow9Xw7m3YEqTR1MIKUD5mHez4EOB5YhbjcdeDZUw2w=;
+	b=aWNlVhHXFx8TmWjrxdkG0U1f7ci/0NHwXd7FKA5Afg8c5H7QfYJX3eoNuWkz7j2es4OK
+	 2+NV+1yMUTngc1fbjDsdb3AQDgD2CdAQgMkY737UcqaDMPbQcOK5WJG4cC9MNheHSPXDx
+	 xJfnxvYpn7lz2og/tMoCquq/66HXfTJzWVySYYgk5gIsthu/tAwQKovyeQxLH1Hn14oGb
+	 Bx6+4LxggZtrJnHa+Gqu7YSLkCIsaAMGNr5O0gbwBzX6A3g5MSJuZ+9vW6Jdq2f8CQY/K
+	 1ZhmSBTKle5W128UmKWH4/RidKBw75xd5+s/sHvsV4mT/pK1ENko5wOOuekrHI4SQEA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=gizXyHcG;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IXVuogm5;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 357DF606A320;
-	Sat, 21 Nov 2026 18:12:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 31237606A331;
+	Sat, 21 Nov 2026 19:10:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=gizXyHcG
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id EC9AB1F000C0;
-	Sat, 21 Nov 2026 18:12:37 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IXVuogm5
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 7792F1F000C4;
+	Sat, 21 Nov 2026 19:10:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795284758;
-	bh=ykgUhZMzGN/x6qhqJXjutPzw/2bCyhgJYf32RJRH3+8=;
+	s=k20260515; t=1795288259;
+	bh=6ow9Xw7m3YEqTR1MIKUD5mHez4EOB5YhbjcdeDZUw2w=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=gizXyHcGyrGFgvHEvIb9lBxy4s1YyUMohTsz1YR1Kjs4SBFw7IQhXrX2OT1wM3S5u
-	 UzRI3Gypn4jjecAF62TMtKRjzuWDeJKF3tHlEkR8dHOQO71qen2XaMaRXuZ2JwxGe3
-	 SUFeClDq3oJQk0WXNB5Ijq4r/aiPanGP+qW2kCO69BVJyeM8uDii2aPFbmtzCctv5M
-	 edz8R1joRKw3mfPuioJyw3oDqceUDETJpPLdiPZL9XazsMe4uyyTuoYRGE3drNdEvu
-	 3xDY8vdIAOR/GMOSD8oHVS7BRyXA2i/6lRMXxIclEY+fZP9bJot+0RauhBALLOEWHD
-	 xxyHgZ7Fzhbrw==
-Date: Sat, 21 Nov 2026 20:12:34 +0200
+	b=IXVuogm5AmzeqYVSeKK45LIqxXSnmNzlRQhLbnpp/DOl3f1zkSIUhFKlzo1BKxucA
+	 1n4pOf7fvG2ysLhBqbKKPKQ40fjvD/+RCc89Pn3FC34GLo1meaV7US384hKGg720GL
+	 zTN39Od3nvrftfuqzmttAjhxmZ8OAHYMsFoJsuxQIOYi+5AtHmZDitJISN83yhuvZ7
+	 C5cz36I0m/G+CslC7vHQZc2gDqh5XBIkcVNmnq7grN+CrSxpLQ3EZuD0Seh60RmCEn
+	 xhylOpnoDC/9goxsijv5gq2jv7QI+VO5gaOc0nG2/c6yzMltjLvYmG27yBJusJvW2h
+	 7KyizQv3JeDTw==
+Date: Sat, 21 Nov 2026 21:10:55 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
@@ -55,11 +55,10 @@ Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
 	Neal Gompa <neal@gompa.dev>, Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v5 03/25] arch: Wire up userns_set_idmap() system call
-Message-ID: <awHfEvlmG8XEGaam@kernel.org>
+Subject: Re: [RFC PATCH v5 13/25] rootns: Add rootns() system call
+Message-ID: <awHsvz1vdlwsink0@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
- <20261121000844.1863324-4-jarkko@kernel.org>
- <awG_nK9E-UjkVgK6@kernel.org>
+ <20261121000844.1863324-14-jarkko@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -71,39 +70,24 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <awG_nK9E-UjkVgK6@kernel.org>
+In-Reply-To: <20261121000844.1863324-14-jarkko@kernel.org>
 
-On Sat, Nov 21, 2026 at 05:58:24PM +0200, Jarkko Sakkinen wrote:
-> On Sat, Nov 21, 2026 at 02:08:22AM +0200, Jarkko Sakkinen wrote:
-> > Expose userns_set_idmap() (473, 583 on Alpha) across all architecture
-> > system call tables and asm-generic unistd.h.
-> > 
-> > Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-> > ---
-> >  arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
-> >  arch/arm/tools/syscall.tbl                  | 1 +
-> >  arch/arm64/tools/syscall_32.tbl             | 1 +
-> >  arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
-> >  arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
-> >  arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
-> >  arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
-> >  arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
-> >  arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
-> >  arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
-> >  arch/s390/kernel/syscalls/syscall.tbl       | 1 +
-> >  arch/sh/kernel/syscalls/syscall.tbl         | 1 +
-> >  arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
-> >  arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
-> >  arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
-> >  arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
-> >  include/uapi/asm-generic/unistd.h           | 6 +++++-
-> >  scripts/syscall.tbl                         | 1 +
-> >  18 files changed, 22 insertions(+), 1 deletion(-)
+On Sat, Nov 21, 2026 at 02:08:32AM +0200, Jarkko Sakkinen wrote:
+> Setting up an isolated namespace environment from a multithreaded
+> manager process currently requires helper processes to call unshare()
+> and pass file descriptors back over sockets.
 > 
-> I'll populate remaining arch's at the time when I split this. It has
-> enough coverage for the time being.
+> Add the rootns() system call to allocate a detached rootns instance
+> owning a fresh user namespace alongside dedicated empty mount
+> (CLONE_EMPTY_MNTNS), PID, UTS, IPC, network, cgroup, and time
+> namespaces, and return its control file descriptor. Finalize the nsproxy
+> time namespace and pin active references for the lifetime of the rootns.
+> 
+> Co-developed-by: David Howells <dhowells@redhat.com>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 
-Ugh, I have all populated but I found some other issues to fixup while
-checking this.
+Syscall name is outdated. I'll rename it as container_create(). Does
+not have to be final name, but is a better wip name.
 
 Br, Jarkko
