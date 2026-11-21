@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795219813;
-	b=al/OdLc3HFJUn2Yy33XyLh9FX5s2bXvKzGrF7zScBgwr37oNmRHXG1pAv4xiNqrwpP9H
-	 CLjj7cU8a1S/qiMIUeffzhOrsic3qi0/ftWXKpfcAsM21hO0IF/fcZQcz35T8eRS5w/zo
-	 +9odD5Erw/REafkd00jYFzaMhYSlf3wmm9lCwkQ9BEB4a1YEwOYl2k8J9GStr5tRNommx
-	 gZOFLzx4fRGZ+M8dmk3sbboVQSFaVhmpj0k7QMoSpU9aVCsj4bc23tleQnHcNBnBd1j8l
-	 QrIQZx1WAo2s12it1J4oa9LY6buC0qa65N2dAEKnzbwD5VZNKpZkwUjt9I4LGh4t2hA==
+	t=1795219818;
+	b=0MvDvinrjC2NZogSUCkJoO5q0Kd+siux/q76PQDmQTzt/3U/kSo7fpBy7rnZ6EQH6di9
+	 wOZwxrUPupIee3gaNby0qkcuGYVaFyNiPwYUiXuUusW/9LZ8lrOkHBwrK8nMw811Kx96e
+	 O6o3vdHOsMQWYQ/9Y6omlHj208ih5AdpBUB7Lk5SS3XcKK6gKqa0MXbpaAb6MOiBjc9KD
+	 io2wmJ9NUp06ixsjMqVrglbu3Up53dM3y3H8JQWtedzC68geaHHJCjEmwmWuvijvgJ0B9
+	 avtPC2s+uhkBzwFLyeeoKferCExyLegNsNlEDUSORvZ44xGeAa7DpVtQUIVQ/l7RxUg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795219813;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795219818;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=yqfEnWFETbmbQSAYIEm1u3Lu6ctO7/ZcmaZ3U4EI6KI=;
-	b=YlSeAtOPI8yq3VJkbNLHHrQbjZg3d+hIBE1xd3Ptf8kOfGwqZ0Usj7KqTjLWoQt5OO/y
-	 owmbZzM/qihIXhLTizVmGgvnXI0ylv1xEWxbWFKr94AXjFmzut/Q001VZxbfoZySdh0C6
-	 zOaVJ/mzCP8c1N2ixp4vZSjc2kYwqHYGxNWSeHsItPGqXpYlPuPTOznJij9uJKB3jGR1Z
-	 hEPq+HuZgS7wD/WZVlQqe6eNEyzsy479HKIreWaFlbimPu2tlD33KX1LKbzBUZVR3gEI1
-	 p3bzd5hetTF3d8B9+RZJHg0CzPjiGzQ7zTOUURlpOAvsxTfDLUv4TCgl4NgC6LaBF4w==
+	bh=keQHOqhbQzKnskPEephNWpQJ2+gEr/C+/pBH6fJD4Uk=;
+	b=JzO+VUody/iQ59SQQI7IinKgHfLtfOfsKzagH/zYira1IoyALFgxmZ/dupmf0S25CXNq
+	 gfz3QQauRE57+76FH652q25cVIRbyz7ZYtUZPGb9QX61LroVi0Yr3OkDOSibTb85fLDRs
+	 OEuKoOkj+AjC0pSyMjLQaRg870xmb9OcD006geiYLmH7SNAIn1J8G8LIWc0MbBtS3EcTd
+	 yjcP+KztjreeuToeGCo/OMCCDFNaVaTSWggYt6bCiuATJx6Rct2xDxhRJEOFNGBQOTvCG
+	 6sMUM06DlHx0OZv/gT523EE45drdo2qsbflt33Se9qqSOLH6aq03keAz28qy2U2+nkQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PfLEaZMk;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hCUdNbCW;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7576F60A3835;
-	Sat, 21 Nov 2026 00:10:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3602E606BA92;
+	Sat, 21 Nov 2026 00:10:17 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PfLEaZMk
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9E8971F000CA;
-	Sat, 21 Nov 2026 00:10:12 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=hCUdNbCW
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id EC7FC1F000D2;
+	Sat, 21 Nov 2026 00:10:16 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795219813;
-	bh=yqfEnWFETbmbQSAYIEm1u3Lu6ctO7/ZcmaZ3U4EI6KI=;
+	s=k20260515; t=1795219817;
+	bh=keQHOqhbQzKnskPEephNWpQJ2+gEr/C+/pBH6fJD4Uk=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=PfLEaZMk2QFj36evDxl3k1fnD+CD+VA6Vsnq2kjvgAfxg06Pb861t+pQVRmkQVDYO
-	 1sdYvwiIUk+goQzVebUrpINkVMoGEAUMXDrt29X8HwKyc+1oiBAYwrGSkNAr++i8pe
-	 8RZVkAJSI46+nj0Q1+ZnlWauiSZsXeQRem+HKa3HxR0jpUhiUOsUJbgcB6/ZZrFDI8
-	 77qSlfwFBb5Vvt9v70DMzx6Z/v1p8BW0ko2egGIOaVZYXlnGGdVHse9LwsE84FlPZZ
-	 uv2TEt4sDBgrv2CY0MVZcu2kgnVWdam6Abt57m99cHBej9vMpuSTe5EnOEwDAUJOfi
-	 AmrxY/sUZEy2A==
+	b=hCUdNbCWHBgRryTU5nu551za3xRW0gezc5OnTNZCeYNqM9wRJ/NsAbAG+VMQ80fFc
+	 uoQohgRLiSlksCc/Z8OXAbokvEzSj2xFDa8SHwHcHhFa9Mn4xhv1Gww7/2oW4JGL/D
+	 I/qlCZrwdXviGnAWdDkBva0/NKmT2NxDqQbqnlGKCmc2i86RdFVhnvMh9gbxbtOdja
+	 oyVx0Mgr/BwtKtQ0XfHqiIFV9uqT7kXGDt1GJ6f5Y1qpPeuWjr4cktfc+tNAvXZLSo
+	 ArIrP3F4dln8owvw8NahPBsy34x8S7IbeE6gBha8FZ0lmJqFEy+A5PAviI8Yv13P4v
+	 viHdX3QpRHJkw==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -61,9 +61,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v5 18/25] proc: Implement ->set_rootns() fs_context operation
-Date: Sat, 21 Nov 2026 02:08:37 +0200
-Message-ID: <20261121000844.1863324-19-jarkko@kernel.org>
+Subject: [RFC PATCH v5 19/25] ipc/mqueue: Implement ->set_rootns() fs_context operation
+Date: Sat, 21 Nov 2026 02:08:38 +0200
+Message-ID: <20261121000844.1863324-20-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261121000844.1863324-1-jarkko@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
@@ -78,76 +78,59 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-proc_init_fs_context() binds ctx->pid_ns to task_active_pid_ns(current)
-and resets fc->user_ns to ctx->pid_ns->user_ns, overriding the user
-namespace delegated by FSCONFIG_SET_ROOTNS and leaving the context
-attached to the caller's PID namespace.
+mqueue_init_fs_context() captures current->nsproxy->ipc_ns and resets
+fc->user_ns to ctx->ipc_ns->user_ns, overriding the user namespace
+delegated by FSCONFIG_SET_ROOTNS and leaving the context bound to the
+caller's IPC namespace.
 
-Wire up proc_set_rootns() to verify that the target root namespace's PID
-namespace is a descendant of the caller's active PID namespace and
-rebind ctx->pid_ns and fc->user_ns accordingly.
+Wire up mqueue_set_rootns() to switch ctx->ipc_ns to the target root
+namespace's IPC namespace and update fc->user_ns to match.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- fs/proc/root.c | 22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
+ ipc/mqueue.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 7fbbe92bf73a..8d2b9bbfa1c1 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -15,6 +15,8 @@
- #include <linux/sched/stat.h>
- #include <linux/module.h>
- #include <linux/bitops.h>
-+#include <linux/nsproxy.h>
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index 322c3dd98c44..f94e9b566bd0 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -32,6 +32,7 @@
+ #include <linux/mutex.h>
+ #include <linux/nsproxy.h>
+ #include <linux/pid.h>
 +#include <linux/rootns.h>
+ #include <linux/ipc_namespace.h>
  #include <linux/user_namespace.h>
- #include <linux/fs_context.h>
- #include <linux/mount.h>
-@@ -206,6 +208,10 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 			errorfc(fc, "cannot reconfigure pidns for existing procfs");
- 			return -EBUSY;
- 		}
-+		if (fc->rootns_bound) {
-+			errorfc(fc, "cannot override pidns on rootns-bound procfs");
-+			return -EBUSY;
-+		}
- 		err = proc_parse_pidns_param(fc, param, &result);
- 		if (err)
- 			return err;
-@@ -323,6 +329,21 @@ static int proc_get_tree(struct fs_context *fc)
- 	return get_tree_nodev(fc, proc_fill_super);
+ #include <linux/slab.h>
+@@ -400,6 +401,17 @@ static struct inode *mqueue_get_inode(struct super_block *sb,
+ 	return ERR_PTR(ret);
  }
  
-+static int proc_set_rootns(struct fs_context *fc, struct rootns *rootns)
++static int mqueue_set_rootns(struct fs_context *fc, struct rootns *rootns)
 +{
-+	struct proc_fs_context *ctx = fc->fs_private;
-+	struct pid_namespace *target = rootns->ns->pid_ns_for_children;
++	struct mqueue_fs_context *ctx = fc->fs_private;
 +
-+	if (!pidns_is_ancestor(target, task_active_pid_ns(current)))
-+		return invalfc(fc, "cannot set pidns to non-descendant pidns");
-+
-+	put_pid_ns(ctx->pid_ns);
-+	ctx->pid_ns = get_pid_ns(target);
++	put_ipc_ns(ctx->ipc_ns);
++	ctx->ipc_ns = get_ipc_ns(rootns->ns->ipc_ns);
 +	put_user_ns(fc->user_ns);
-+	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
++	fc->user_ns = get_user_ns(ctx->ipc_ns->user_ns);
 +	return 0;
 +}
 +
- static void proc_fs_context_free(struct fs_context *fc)
+ static int mqueue_fill_super(struct super_block *sb, struct fs_context *fc)
  {
- 	struct proc_fs_context *ctx = fc->fs_private;
-@@ -334,6 +355,7 @@ static void proc_fs_context_free(struct fs_context *fc)
- static const struct fs_context_operations proc_fs_context_ops = {
- 	.free		= proc_fs_context_free,
- 	.parse_param	= proc_parse_param,
-+	.set_rootns	= proc_set_rootns,
- 	.get_tree	= proc_get_tree,
- 	.reconfigure	= proc_reconfigure,
+ 	struct inode *inode;
+@@ -1613,6 +1625,7 @@ static const struct super_operations mqueue_super_ops = {
+ 
+ static const struct fs_context_operations mqueue_fs_context_ops = {
+ 	.free		= mqueue_fs_context_free,
++	.set_rootns	= mqueue_set_rootns,
+ 	.get_tree	= mqueue_get_tree,
  };
+ 
 -- 
 2.47.3
 
