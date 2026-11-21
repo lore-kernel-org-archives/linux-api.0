@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795219826;
-	b=kRIbDvZUCAnGk+5I7jLsOsk0YVAncZzTVhflxqI0vu0Ke+H1Gem0YuZ8Wvsx5rYXzRoM
-	 ++OvluU+D1M1HXIOcvjOB2EYDVqiVYUUIlP3fTT/QrGcmOEnnyXr7Ugj5so44Huj+C/im
-	 l3eqCh4qAMCbxZbqoVnJY8OTlEmiaRya2ek8+XcUW7jc+INyo63q+/UK6ZqBoj224ZHl/
-	 bzcuhS2cJtVzZsanC2yWqz2SW3KRRy7KFIU8txw5Dd1yeIks/C9td4WFx0m0yX6TMNupB
-	 23WMEAU9PcBzIaoN+5Vk3UMoB/WupHOLbxQTqUbz+AEQaJKAvSIvILBjssy5wywGW2g==
+	t=1795219835;
+	b=WIQ3Btm7vR4LC3wwU3VVpDmtjBnFQ63l9lV0a4KoEyM1HRr+0vdVHoAOEUHfGbKAvy5p
+	 Yg4aW39Q/D+hAVHxsWn/gGiWAjUhv5mRfA7vv9OnKczDEHpb2BNbo+rJwcCS68XC7oOm8
+	 HiTth/x801yIp+VHBdv3AqoWfLmkjQcncWGXn+2zJyNni6ACp+nkI7w0j7p1MsSKrDj3y
+	 wfzt2H0/zstJTpY4IBoDTK/B7p3Cz6dzw+do+ywkcQY5s+f79bq/B5ESCHFso89GFZqbz
+	 oUaVBYtF7EIGLYkt8kMgufMbloRBTan26BvPIFug0+b28FjPtLGeqnWCzQEj11cSCww==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795219826;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795219835;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=+Eyq4GxevLOo6CnxBFmFSQzUssMKFYdLLMcgPqVG7IE=;
-	b=hOPwLJRlITAdvV5+2M4dgQ1Cf7NR681UzTXanDPpyw+qUebvM1tegPefBn1EvCWXGDzy
-	 L/8uYInxAzHNVanjM7sELxWLLXFBZbsB38tyfy3Q8VhK53eDq2yGsNBUTlhgfULOfLMXF
-	 AgaxIUNvMXrA3Z1DpfPPhjGiicwVKomUKdr5pTt0vQvF6N6cLnrF/akB98g6H5PzA6sG8
-	 X7yWSnaLTijtWJVeDB4QX1xK4HPk1L5I8ZSFnQUP+1F36g7VUpsH//HryinHnREwaLqkI
-	 wJGWqkQbckHZDYeIM8BWO/EhH+T1VVsngycB8Kdp7byy5z6ldfISbECnQxAoRDYpWfw==
+	bh=6Q7Qhps4lRxBhkSd6Kom85Mw9Dpsf9pUqdpKPK8/kYc=;
+	b=uvdA6wJ31vwSlBl4kEWDVTW26J/K0rxwD2YoffR8MGII+MNUD4bi1cecjV/q48ccr4X7
+	 nT98CAShxqh/7dTVLFAnUxNUgwYDInt7Txi0Nety1FiQ7GdeU0qbkr0KiBsuvRu6+kWrA
+	 8BAHPV1zw40vX5hAE3w1rMY2VAKCi1soROZoHjOCrzOjc2ET/gBzT3Uta8zPlkOi7ULW5
+	 G+pTXmK5I8e4DRfxgUrpv2UDvKZptPWZUAtzUiPLZSgFNptaeRXP2y9akI0ldZVyRmwDe
+	 H0jPquhNzH2519skO/iOk7gfaZdewrnVg3gf9IW3/zNZHy5SpquSBFgIjYBPQZK0yZQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=j4k3SiVx;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VJXqL47u;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id BAAB460A5BC0;
-	Sat, 21 Nov 2026 00:10:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id AEFDA606C3DB;
+	Sat, 21 Nov 2026 00:10:35 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=j4k3SiVx
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 7A89B1F000C0;
-	Sat, 21 Nov 2026 00:10:25 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VJXqL47u
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 322BC1F000C6;
+	Sat, 21 Nov 2026 00:10:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795219826;
-	bh=+Eyq4GxevLOo6CnxBFmFSQzUssMKFYdLLMcgPqVG7IE=;
+	s=k20260515; t=1795219834;
+	bh=6Q7Qhps4lRxBhkSd6Kom85Mw9Dpsf9pUqdpKPK8/kYc=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=j4k3SiVxDcE9xNRlED7134kIVV0tuttt6dCAjAJdcuJdDLCLNbA9NMivdrmSGkgMr
-	 OyNYJAI4aS5nK5BjnSJmKNea24ET+/1PJcRvhRqVRku61xK52x95rnz1mf14yb5Cq3
-	 wzasJkApfZpgAp4UJQVf+77zavqRmbkwXW68Cta8+wbDYMnflh84pGO1NF3AhW3KJ5
-	 bkWL4ZK6uXwvzo38zYKicjnk74z6NK/tPzG/PYLm+025Jhr6sftady81fOpPFq+7OL
-	 9CVbjQr8GKAmoKnxNWjVKohFbByvxeQb52RjUYIixDe3jeMOt2VRMI+DTnvns4+r/E
-	 77iaHcj4oHZ+w==
+	b=VJXqL47uM2nuAkyXuX/WrsdOfWCmf8ItRmVzZem6KUkRCUxP25227080tQqnBLJHu
+	 VYL/laPTxmBa5X70DiTE88IuBzetX7HPW4xhAPYYuHeIjEcp7bFoOD/Hv0yCGjkUeY
+	 o+H/r1msu0Y/IPXR0zjZvPSyDhj/AJVSK8ThNIbAI32kMsc3w2WhzwH573c3SM99ml
+	 U844otOTOoTQgp1hY/7NdmdcOU4nLvV2Cuz3FanBroxCulGHuL9BJXzamMvHQLSMZB
+	 Z7sKkUjDnd8OCuyHN18Oi1rMtYlQLM5WZATUPr0ft1Z4HB2H6fdF/3bnN4CVs3XNZn
+	 2b0wx0ay85CUQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -61,9 +61,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v5 21/25] bpf: Register rootns LSM hooks
-Date: Sat, 21 Nov 2026 02:08:40 +0200
-Message-ID: <20261121000844.1863324-22-jarkko@kernel.org>
+Subject: [RFC PATCH v5 23/25] docs: Document root namespace uAPI
+Date: Sat, 21 Nov 2026 02:08:42 +0200
+Message-ID: <20261121000844.1863324-24-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261121000844.1863324-1-jarkko@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
@@ -78,56 +78,121 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-BPF LSM programs need sleepable and untrusted hook classifications for
-the new root namespace LSM hooks in order to attach policies to root
-namespace allocation, cloning, signaling, and release.
+Userspace container managers need a clear specification of rootns state
+transitions, control ioctls, mount-tree construction, user namespace ID
+mapping, credential rules, and process creation semantics.
 
-Register bpf_lsm_rootns_alloc, bpf_lsm_rootns_clone, and
-bpf_lsm_rootns_kill in sleepable_lsm_hooks, and bpf_lsm_rootns_alloc
-and bpf_lsm_rootns_free in untrusted_lsm_hooks under CONFIG_ROOTNS.
+Add Documentation/userspace-api/rootns.rst to include the kernel-doc
+sections, ioctl descriptions, and system call reference from
+kernel/rootns.c, kernel/user_namespace.c, include/uapi/linux/rootns.h,
+include/uapi/linux/nsfs.h, fs/fsopen.c, and fs/namespace.c, and register
+the rootns ioctl magic in ioctl-number.rst.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- kernel/bpf/bpf_lsm.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ Documentation/userspace-api/index.rst         |  1 +
+ .../userspace-api/ioctl/ioctl-number.rst      |  1 +
+ Documentation/userspace-api/rootns.rst        | 65 +++++++++++++++++++
+ 3 files changed, 67 insertions(+)
+ create mode 100644 Documentation/userspace-api/rootns.rst
 
-diff --git a/kernel/bpf/bpf_lsm.c b/kernel/bpf/bpf_lsm.c
-index 468e63dbd922..bbcf1433fdc2 100644
---- a/kernel/bpf/bpf_lsm.c
-+++ b/kernel/bpf/bpf_lsm.c
-@@ -16,6 +16,7 @@
- #include <linux/btf_ids.h>
- #include <linux/ima.h>
- #include <linux/bpf-cgroup.h>
-+#include <linux/rootns.h>
+diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+index a68b1bea57a8..56d0ac4eb087 100644
+--- a/Documentation/userspace-api/index.rst
++++ b/Documentation/userspace-api/index.rst
+@@ -17,6 +17,7 @@ System calls
+    :maxdepth: 1
  
- /* For every LSM hook that allows attachment of BPF programs, declare a nop
-  * function where a BPF program can be attached. Notably, we qualify each with
-@@ -404,6 +405,11 @@ BTF_ID(func, bpf_lsm_task_setscheduler)
- BTF_ID(func, bpf_lsm_userns_create)
- BTF_ID(func, bpf_lsm_bdev_alloc_security)
- BTF_ID(func, bpf_lsm_bdev_setintegrity)
-+#ifdef CONFIG_ROOTNS
-+BTF_ID(func, bpf_lsm_rootns_alloc)
-+BTF_ID(func, bpf_lsm_rootns_clone)
-+BTF_ID(func, bpf_lsm_rootns_kill)
-+#endif /* CONFIG_ROOTNS */
- BTF_SET_END(sleepable_lsm_hooks)
- 
- BTF_SET_START(untrusted_lsm_hooks)
-@@ -420,6 +426,10 @@ BTF_ID(func, bpf_lsm_sk_free_security)
- BTF_ID(func, bpf_lsm_task_free)
- BTF_ID(func, bpf_lsm_bdev_alloc_security)
- BTF_ID(func, bpf_lsm_bdev_free_security)
-+#ifdef CONFIG_ROOTNS
-+BTF_ID(func, bpf_lsm_rootns_alloc)
-+BTF_ID(func, bpf_lsm_rootns_free)
-+#endif /* CONFIG_ROOTNS */
- BTF_SET_END(untrusted_lsm_hooks)
- 
- bool bpf_lsm_is_sleepable_hook(u32 btf_id)
+    unshare
++   rootns
+    futex2
+    ebpf/index
+    ioctl/index
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index dbe462040999..d8dc926ea283 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -385,6 +385,7 @@ Code  Seq#    Include File                                             Comments
+ 0xB8  01-02  uapi/misc/mrvl_cn10k_dpi.h                                Marvell CN10K DPI driver
+ 0xB8  all    uapi/linux/mshv.h                                         Microsoft Hyper-V /dev/mshv driver
+                                                                        <mailto:linux-hyperv@vger.kernel.org>
++0xB9  00-0F  uapi/linux/rootns.h                                       Root namespace uAPI
+ 0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
+                                                                        <mailto:pasha.tatashin@soleen.com>
+ 0xC0  00-0F  linux/usb/iowarrior.h
+diff --git a/Documentation/userspace-api/rootns.rst b/Documentation/userspace-api/rootns.rst
+new file mode 100644
+index 000000000000..ef18ed59ba4a
+--- /dev/null
++++ b/Documentation/userspace-api/rootns.rst
+@@ -0,0 +1,65 @@
++.. SPDX-License-Identifier: GPL-2.0
++
++===================
++Root namespace uAPI
++===================
++
++Overview
++========
++
++.. kernel-doc:: kernel/rootns.c
++   :doc: Overview
++
++Flags
++=====
++
++.. kernel-doc:: include/uapi/linux/rootns.h
++   :identifiers: rootns_flags
++
++Ioctls
++======
++
++.. kernel-doc:: include/uapi/linux/rootns.h
++   :doc: ROOTNS_GET_NSFD
++
++.. kernel-doc:: include/uapi/linux/rootns.h
++   :identifiers: rootns_wait_args
++
++.. kernel-doc:: include/uapi/linux/rootns.h
++   :doc: ROOTNS_WAIT
++
++.. kernel-doc:: include/uapi/linux/rootns.h
++   :doc: ROOTNS_KILL
++
++System calls
++============
++
++.. kernel-doc:: kernel/rootns.c
++   :identifiers: sys_rootns
++
++Process creation
++================
++
++.. kernel-doc:: kernel/rootns.c
++   :doc: CLONE_INTO_ROOTNS
++
++Filesystem configuration
++========================
++
++.. kernel-doc:: fs/fsopen.c
++   :doc: FSCONFIG_SET_ROOTNS
++
++Mount tree installation
++=======================
++
++.. kernel-doc:: fs/namespace.c
++   :doc: MOVE_MOUNT_T_MNTNS
++
++User namespace ID mapping
++=========================
++
++.. kernel-doc:: include/uapi/linux/nsfs.h
++   :identifiers: userns_idmap_extent userns_idmap_flags userns_idmap
++
++.. kernel-doc:: kernel/user_namespace.c
++   :identifiers: sys_userns_set_idmap
 -- 
 2.47.3
 
