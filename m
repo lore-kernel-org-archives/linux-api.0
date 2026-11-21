@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795219748;
-	b=oke9z6kMc4PKzOfk0CTc9TBP52hWf+RbuZrgn6ul6GF9nfey/D8dPIy8ygoHmDNVFi+2
-	 rb4t7sctm4xSE7RRVEGwxmLpQdFDP0kjaHvtceSbvAHdJodrsAxlbYFHYoG3enKPxAWsT
-	 EphvGG0zD7pxI7ZOmiL58MHYUcBKM/1nbDMa743liqotYT4LzZxT54bWNJbd+t4PvFcHD
-	 3I5m+AP7loIi+XB47oOmWSrIJIvxt7E14+X/RA2s622WG7Zdn6FbKIiPFbHYzQUR8gfUh
-	 QX+gj3WwaQjxslH7zY5r2HlsL2I1R+P3OOLL/hOzw/8lOzxXtDPxTcOX4vw4CfxZJHg==
+	t=1795219752;
+	b=pX19IwqSSnXI8/UImmuZgRP0zp/MJQ9JoA3eMpyl8/+pM7/dbh5sqUz7/MakmtvWqSbg
+	 67npcpUytc7+fsLXtERo7PUYaKC3bOBlgrotsraUC5Xva/esvSMd6bCLbJzU7oaZXJZU6
+	 +V2tBAvH3/dAaWvSCVrkldfLjgUdFHFJLKQdy3Grc6RIns3lYCgz0hGv/i4P94l/BFt6d
+	 1eS5yy1/YB8rjLlAywqoaE1/fCEVYP6zscu1RxMy3LXX8JSIPpVAZvU5MjW7RS05K5Zcy
+	 cjh3gpSAMQRgZAdid4Wo6HgHpIpXtADipcf34Rt/yZ9IucZbHBPkO6IBNaMnkmNgr0Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795219748;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795219752;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=xdMFQd5iWnE0etuNgaG+P1V3IRtO+2edlHDd0w1oiXI=;
-	b=IwGhSNlRv5tYu5V7Vv13UwOqgB+22ajjFe0noKrN+DFmVB55gssUBLc6dJG5qZZXxeMJ
-	 awjZrV3BoNknvRv7nsn2P4eu9MBsL2/l/Vmdq3T4fGnl13hKK81hS+SWv5f0SsTmveRfY
-	 EmVX9i2BwZFTdm/IOZJMb1ME1RGCGuOILCjyixhlvGTf3VbtUzNrxisNs/57h3V0dpP+A
-	 G+xn0V7vstbNhTZl/Y9UOGKkun7cETc5Hq0yptmf7idsmDgevC4KNdKfwrPCVk55fVEPt
-	 EnZRmDFvDn6V9G29n1EBRNIxKiBTnStwY8z9VRIRQv+uskfy87v4ZF9fH1avAdIfOZw==
+	bh=vM1mKrQLSyzANBNyG1aKfJTP501fkwwz9TXQLi7bGuQ=;
+	b=OsTvvCDErDf8oaupHIuqC9EFuKKbMu80buJ354KOrii+SJbjUHnUDzwClG15iCiKQm5B
+	 iOY1EsKUEWttCTCppd6Q8GyacLbWvsw9U4MZYVqMNRug7D0eG/2BKLiG34S2214j/7Y0i
+	 ynO8+3l7hnmpIZh75fIXK3fRqulK/3ximSMzHAk28tS9PRMr1gG/GRa87aN5AIMdKVgkr
+	 6gXt/wwRW5xcq7bLDoYeJg5NskvICObyeqp8DUfdZOi1+tOFXAv/hBUjTMJmu6RHxIy02
+	 Y9dG7kI6eb4B8uh0j1/qvTbk/SXiP5YzcllSGxHkgXn4zKY6LSTyNqnIiqM0s2ierLQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=OIx38B1u;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RA5vIfKQ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 0B04A606A6A6;
-	Sat, 21 Nov 2026 00:09:07 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 60428606A6AD;
+	Sat, 21 Nov 2026 00:09:12 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=OIx38B1u
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 35F191F000C6;
-	Sat, 21 Nov 2026 00:09:07 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RA5vIfKQ
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8C46F1F000E0;
+	Sat, 21 Nov 2026 00:09:11 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795219747;
-	bh=xdMFQd5iWnE0etuNgaG+P1V3IRtO+2edlHDd0w1oiXI=;
+	s=k20260515; t=1795219752;
+	bh=vM1mKrQLSyzANBNyG1aKfJTP501fkwwz9TXQLi7bGuQ=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=OIx38B1u3nJnanXh/hKXPskEKfSxQGZ8uO6Ie5n7ZxFtDVKyfnWoZ2ygDZt0krBMn
-	 Eb6WU2mgP3mRzYddEvT/UfzihFtsZQDmPQZM20BNgroAvtd5M8uhQZawsiACv24KkD
-	 m/T7osBk+AjPsA3WKfhe2eW82P7pqjW9AIXjhU4Q8vrhXLr53dri75w9xjL783IGV5
-	 ptVzBO48eq+CcnchCH82rcsmNSeVP5q4CSSrG2HEPzRzWVBRYTMFbdt3cK5QMlHV2K
-	 RgVdRbWc6+ARVMok7ImDzyr4yYRczYlNWV3Z8WmtjZTfnmYmR/tzBrAJqzN6U7dCkx
-	 5O/btILf6z72g==
+	b=RA5vIfKQzINb0NmwFIcU196DEhLa8CEsZmgc4YEKIRIxvuH8traSIVpbLRoke0UNW
+	 tBNIUaVWa2z16E0yzA2TbuKe9Dr99uU2BuJn4+YJeLtNb4ptdsmR8iACUIpzwHGjDw
+	 ADc1+fp/GjRTAbjfbbISTHLI5l61tBvyZP8A9kfp5ET4fbDhjzozSllLTyKTx/4/7v
+	 4QuxUZb0PVU6bKfBCBVUkxxmtmMFjoXaTWhSCZCcG5U7rMoIIgTx3SKe8ZfZKqD4/p
+	 YptaHIjyJBjkxcDxySHp+6pL8eUgvFJlhGP9x2qGBjVazwwRzxsk41CIf4neCjnaIo
+	 c1dEweQGzro2w==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -61,9 +61,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v5 03/25] arch: Wire up userns_set_idmap() system call
-Date: Sat, 21 Nov 2026 02:08:22 +0200
-Message-ID: <20261121000844.1863324-4-jarkko@kernel.org>
+Subject: [RFC PATCH v5 04/25] mount: Add mnt_ns_get_root()
+Date: Sat, 21 Nov 2026 02:08:23 +0200
+Message-ID: <20261121000844.1863324-5-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261121000844.1863324-1-jarkko@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
@@ -78,205 +78,70 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Expose userns_set_idmap() (473, 583 on Alpha) across all architecture
-system call tables and asm-generic unistd.h.
+Empty mount namespaces created with CLONE_EMPTY_MNTNS start with only an
+internal nullfs root mount until a real root filesystem is mounted over
+it, and external callers have no helper to resolve the live root path of
+an unentered mount namespace.
 
+Add mnt_ns_get_root() to look up "/" with LOOKUP_DOWN from the mount
+namespace's base root mount and return -ENOENT if no filesystem has been
+mounted over the initial nullfs root yet.
+
+Co-developed-by: David Howells <dhowells@redhat.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/arm64/tools/syscall_32.tbl             | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
- include/uapi/asm-generic/unistd.h           | 6 +++++-
- scripts/syscall.tbl                         | 1 +
- 18 files changed, 22 insertions(+), 1 deletion(-)
+ fs/namespace.c                | 16 ++++++++++++++++
+ include/linux/mnt_namespace.h |  2 ++
+ 2 files changed, 18 insertions(+)
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 52e3538cc7df..9384d59a44dc 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -512,3 +512,4 @@
- 580	common	listns				sys_listns
- 581	common	rseq_slice_yield		sys_rseq_slice_yield
- 582	common	fchroot				sys_fchroot
-+583	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 55717ed32c27..6130366b7681 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -487,3 +487,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/arm64/tools/syscall_32.tbl b/arch/arm64/tools/syscall_32.tbl
-index df2d1d82fb3c..3fcc7899fd08 100644
---- a/arch/arm64/tools/syscall_32.tbl
-+++ b/arch/arm64/tools/syscall_32.tbl
-@@ -484,3 +484,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index ba7a4d8903d0..5607635bd4bd 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -472,3 +472,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 76d7cbe2a133..97ee93f42fac 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -478,3 +478,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 9ae88e4eac61..da4ed57a91d3 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -411,3 +411,4 @@
- 470	n32	listns				sys_listns
- 471	n32	rseq_slice_yield		sys_rseq_slice_yield
- 472	n32	fchroot				sys_fchroot
-+473	n32	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 83dc93a0712f..5e9839b6b389 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -387,3 +387,4 @@
- 470	n64	listns				sys_listns
- 471	n64	rseq_slice_yield		sys_rseq_slice_yield
- 472	n64	fchroot				sys_fchroot
-+473	n64	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 9c62429c9b7b..290c1b61be47 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -460,3 +460,4 @@
- 470	o32	listns				sys_listns
- 471	o32	rseq_slice_yield		sys_rseq_slice_yield
- 472	o32	fchroot				sys_fchroot
-+473	o32	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 88adc4016cce..fc0fa917eb92 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -471,3 +471,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index cfbb70039ff0..d12e49022b23 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -563,3 +563,4 @@
- 470	common	listns				sys_listns
- 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 1b45e68a217b..dc427811d30d 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -399,3 +399,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index ace068dff0de..e62ac9acc7ad 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -476,3 +476,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 5b9fe0e8140f..df074bf322c4 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -518,3 +518,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 2c172ef48dfd..243a3f55834d 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -478,3 +478,4 @@
- 470	i386	listns			sys_listns
- 471	i386	rseq_slice_yield	sys_rseq_slice_yield
- 472	i386	fchroot			sys_fchroot
-+473	i386	userns_set_idmap	sys_sys_userns_set_idmap
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index d5b6045b0090..f11700e3af65 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -397,6 +397,7 @@
- 470	common	listns			sys_listns
- 471	common	rseq_slice_yield	sys_rseq_slice_yield
- 472	common	fchroot			sys_fchroot
-+473	common	userns_set_idmap	sys_sys_userns_set_idmap
+diff --git a/fs/namespace.c b/fs/namespace.c
+index aecd05ac0170..781380945d78 100644
+--- a/fs/namespace.c
++++ b/fs/namespace.c
+@@ -6708,6 +6708,22 @@ static void mntns_put(struct ns_common *ns)
+ 	put_mnt_ns(to_mnt_ns(ns));
+ }
  
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index d354bb231796..1d28de95915f 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -443,3 +443,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 5b7e77a7c736..695eac2d356b 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -867,8 +867,12 @@ __SYSCALL(__NR_rseq_slice_yield, sys_rseq_slice_yield)
- #define __NR_fchroot 472
- __SYSCALL(__NR_fchroot, sys_fchroot)
- 
-+/* kernel/user_namespace.c */
-+#define __NR_userns_set_idmap 473
-+__SYSCALL(__NR_userns_set_idmap, sys_userns_set_idmap)
++int mnt_ns_get_root(struct mnt_namespace *mnt_ns, struct path *root)
++{
++	int err;
 +
- #undef __NR_syscalls
--#define __NR_syscalls 473
-+#define __NR_syscalls 474
++	err = vfs_path_lookup(mnt_ns->root->mnt.mnt_root, &mnt_ns->root->mnt,
++			      "/", LOOKUP_DOWN, root);
++	if (err)
++		return err;
++	if (root->mnt == &mnt_ns->root->mnt) {
++		path_put(root);
++		*root = (struct path){};
++		return -ENOENT;
++	}
++	return 0;
++}
++
+ static int mntns_install(struct nsset *nsset, struct ns_common *ns)
+ {
+ 	struct nsproxy *nsproxy = nsset->nsproxy;
+diff --git a/include/linux/mnt_namespace.h b/include/linux/mnt_namespace.h
+index 0acd1089d149..98188d1f7428 100644
+--- a/include/linux/mnt_namespace.h
++++ b/include/linux/mnt_namespace.h
+@@ -8,6 +8,7 @@
  
- /*
-  * 32 bit systems traditionally used different
-diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
-index 0ab531605120..0dddd465d1c5 100644
---- a/scripts/syscall.tbl
-+++ b/scripts/syscall.tbl
-@@ -413,3 +413,4 @@
- 470	common	listns				sys_listns
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
-+473	common	userns_set_idmap		sys_sys_userns_set_idmap
+ struct mnt_namespace;
+ struct fs_struct;
++struct path;
+ struct user_namespace;
+ struct ns_common;
+ 
+@@ -15,6 +16,7 @@ extern struct mnt_namespace init_mnt_ns;
+ 
+ extern struct mnt_namespace *copy_mnt_ns(u64, struct mnt_namespace *,
+ 		struct user_namespace *, struct fs_struct *);
++int mnt_ns_get_root(struct mnt_namespace *mnt_ns, struct path *root);
+ extern void put_mnt_ns(struct mnt_namespace *ns);
+ DEFINE_FREE(put_mnt_ns, struct mnt_namespace *, if (!IS_ERR_OR_NULL(_T)) put_mnt_ns(_T))
+ extern struct ns_common *from_mnt_ns(struct mnt_namespace *);
 -- 
 2.47.3
 
