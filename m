@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795219800;
-	b=vqxU6Xx0fLHYPcJNbw3Ed78wAmeEovyMjN4JD1PejPGhrlzBduOCQRii24vRTrH2RRz3
-	 0EyzxV/fAhMm36gEHpilfPFfpSMTLsQ4VWv3RIZhVGPX9QcRpcsldhsajcQb3w/etXICr
-	 XkqH4/Znm6ZSMPgkqFXXG7Dt+7dOQEH9SaeDcWYCw9gXRTCB18ZqLouGC2KDeH248xagB
-	 jEatvyqlb5OxpsnqfPn5XHc35Jsr5VBF7JcC+Z1uHCDwxAoqT9HehZigGvf5iOlawzSZL
-	 f6J9E4ttb6ByK1TKJZNY2XAKSaJbyPrJVbsqh9QVTKgPydEv++extzvJ9lqWETAzLWA==
+	t=1795219813;
+	b=al/OdLc3HFJUn2Yy33XyLh9FX5s2bXvKzGrF7zScBgwr37oNmRHXG1pAv4xiNqrwpP9H
+	 CLjj7cU8a1S/qiMIUeffzhOrsic3qi0/ftWXKpfcAsM21hO0IF/fcZQcz35T8eRS5w/zo
+	 +9odD5Erw/REafkd00jYFzaMhYSlf3wmm9lCwkQ9BEB4a1YEwOYl2k8J9GStr5tRNommx
+	 gZOFLzx4fRGZ+M8dmk3sbboVQSFaVhmpj0k7QMoSpU9aVCsj4bc23tleQnHcNBnBd1j8l
+	 QrIQZx1WAo2s12it1J4oa9LY6buC0qa65N2dAEKnzbwD5VZNKpZkwUjt9I4LGh4t2hA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795219800;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795219813;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=SNImKxX2bLw9d/2f70sP1UeR26evmgWSkqbTpNpXbl0=;
-	b=uLQsODbdn8MuSOm02XlyyoKlOhZ4XG8khJ3jhFLrDQW5l67rCOkzHhCK5ylTGh7Qi2Q8
-	 GO/76ZfwUzgCRKJX2n5g4lrW/jj9buQFmy5YFf42BOOiBH8c1+kyGxI5kaP8i+fQ1qz97
-	 v4OhvP2ZBq0t4bO4ehqPAk032+c2fdA+hXoO6AUQDgVXgR1dp+jj+FpZVL2ie4aDnc2zh
-	 bnpkinzbEv6daIn9XkzTVS88dQ+5ECrsJtwkRVWGbbNmn9TR7Cc/0SYgW+djgkJLd+/dt
-	 Y75W+rjZaTNLMi3p24d5s1y3otzso3ZFn48EuCdcnduELtbV1VmOr1O+PCNE2H/pcRA==
+	bh=yqfEnWFETbmbQSAYIEm1u3Lu6ctO7/ZcmaZ3U4EI6KI=;
+	b=YlSeAtOPI8yq3VJkbNLHHrQbjZg3d+hIBE1xd3Ptf8kOfGwqZ0Usj7KqTjLWoQt5OO/y
+	 owmbZzM/qihIXhLTizVmGgvnXI0ylv1xEWxbWFKr94AXjFmzut/Q001VZxbfoZySdh0C6
+	 zOaVJ/mzCP8c1N2ixp4vZSjc2kYwqHYGxNWSeHsItPGqXpYlPuPTOznJij9uJKB3jGR1Z
+	 hEPq+HuZgS7wD/WZVlQqe6eNEyzsy479HKIreWaFlbimPu2tlD33KX1LKbzBUZVR3gEI1
+	 p3bzd5hetTF3d8B9+RZJHg0CzPjiGzQ7zTOUURlpOAvsxTfDLUv4TCgl4NgC6LaBF4w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=EVH5lsyK;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PfLEaZMk;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 8362C606A6BF;
-	Sat, 21 Nov 2026 00:10:00 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7576F60A3835;
+	Sat, 21 Nov 2026 00:10:13 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=EVH5lsyK
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9EDEB1F000C4;
-	Sat, 21 Nov 2026 00:09:59 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PfLEaZMk
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9E8971F000CA;
+	Sat, 21 Nov 2026 00:10:12 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795219800;
-	bh=SNImKxX2bLw9d/2f70sP1UeR26evmgWSkqbTpNpXbl0=;
+	s=k20260515; t=1795219813;
+	bh=yqfEnWFETbmbQSAYIEm1u3Lu6ctO7/ZcmaZ3U4EI6KI=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=EVH5lsyKLLdg413PMHFk2R7SN0jI2u3gI5FXbU2jXZ8Kk1zm14WIaDl1QeVkhyKVm
-	 WxbQUFopy0FWxT4TgoEoRtnlUAX3TLCu+aFi5on9wm1I3Hcx6dGKwz8Qmggyeai9b6
-	 L8MLxik4JpuLPdHm+vMUmd9nkDjp0+P4xVgWsbNewpi9xdTH72gjjHDQLFaaqUyxvF
-	 mRwtqmnUtXn+HaIbC55u9AgHhjuzcWI1BE2LMwHQkNkoDSjV/EAaDKbn87+SQ794dJ
-	 6QpYOKvthuoKdt8nQP9A5DnfXguVCI6mKaHMeRTIsxecXEDH3yc+UiwObPl3tgSwzE
-	 QGg53Xuc81eBA==
+	b=PfLEaZMk2QFj36evDxl3k1fnD+CD+VA6Vsnq2kjvgAfxg06Pb861t+pQVRmkQVDYO
+	 1sdYvwiIUk+goQzVebUrpINkVMoGEAUMXDrt29X8HwKyc+1oiBAYwrGSkNAr++i8pe
+	 8RZVkAJSI46+nj0Q1+ZnlWauiSZsXeQRem+HKa3HxR0jpUhiUOsUJbgcB6/ZZrFDI8
+	 77qSlfwFBb5Vvt9v70DMzx6Z/v1p8BW0ko2egGIOaVZYXlnGGdVHse9LwsE84FlPZZ
+	 uv2TEt4sDBgrv2CY0MVZcu2kgnVWdam6Abt57m99cHBej9vMpuSTe5EnOEwDAUJOfi
+	 AmrxY/sUZEy2A==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -61,9 +61,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v5 15/25] rootns: Add ROOTNS_KILL ioctl
-Date: Sat, 21 Nov 2026 02:08:34 +0200
-Message-ID: <20261121000844.1863324-16-jarkko@kernel.org>
+Subject: [RFC PATCH v5 18/25] proc: Implement ->set_rootns() fs_context operation
+Date: Sat, 21 Nov 2026 02:08:37 +0200
+Message-ID: <20261121000844.1863324-19-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261121000844.1863324-1-jarkko@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
@@ -78,119 +78,76 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Signaling every process inside a container from userspace via /proc is
-racy against concurrent fork() calls.
+proc_init_fs_context() binds ctx->pid_ns to task_active_pid_ns(current)
+and resets fc->user_ns to ctx->pid_ns->user_ns, overriding the user
+namespace delegated by FSCONFIG_SET_ROOTNS and leaving the context
+attached to the caller's PID namespace.
 
-Add the ROOTNS_KILL ioctl to require an ancestor active PID namespace,
-walk the root namespace's PID namespace IDR under tasklist_lock, and
-deliver a validated signal once to each thread group including in-flight
-forks, aggregating per-process delivery results.
+Wire up proc_set_rootns() to verify that the target root namespace's PID
+namespace is a descendant of the caller's active PID namespace and
+rebind ctx->pid_ns and fc->user_ns accordingly.
 
+Co-developed-by: David Howells <dhowells@redhat.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- include/uapi/linux/rootns.h | 13 ++++++++++
- kernel/rootns.c             | 52 +++++++++++++++++++++++++++++++++++++
- 2 files changed, 65 insertions(+)
+ fs/proc/root.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
 
-diff --git a/include/uapi/linux/rootns.h b/include/uapi/linux/rootns.h
-index 3fd215185398..acd91d895c63 100644
---- a/include/uapi/linux/rootns.h
-+++ b/include/uapi/linux/rootns.h
-@@ -67,4 +67,17 @@ struct rootns_wait_args {
-  */
- #define ROOTNS_WAIT		_IOWR(ROOTNS_IOCTL_MAGIC, 0x02, struct rootns_wait_args)
- 
-+/**
-+ * DOC: ROOTNS_KILL
-+ *
-+ * ``ioctl(rootnsfd, ROOTNS_KILL, sig)`` walks the target root namespace's PID
-+ * namespace IDR under ``tasklist_lock`` and delivers ``sig`` (or ``0`` for a
-+ * permission check) once to each member thread group.
-+ *
-+ * Returns ``0`` if at least one thread group was signaled, or ``-1`` with
-+ * ``errno`` set to ``EXDEV`` if the caller's active PID namespace is not an
-+ * ancestor or ``ESRCH`` if the ``rootns`` is not running or has no members.
-+ */
-+#define ROOTNS_KILL		_IO(ROOTNS_IOCTL_MAGIC, 0x03)
-+
- #endif /* _UAPI_LINUX_ROOTNS_H */
-diff --git a/kernel/rootns.c b/kernel/rootns.c
-index cb74ddc8363c..5ae975604571 100644
---- a/kernel/rootns.c
-+++ b/kernel/rootns.c
-@@ -158,6 +158,53 @@ static long rootns_wait(struct rootns *rootns, void __user *uarg)
- 	return ret;
+diff --git a/fs/proc/root.c b/fs/proc/root.c
+index 7fbbe92bf73a..8d2b9bbfa1c1 100644
+--- a/fs/proc/root.c
++++ b/fs/proc/root.c
+@@ -15,6 +15,8 @@
+ #include <linux/sched/stat.h>
+ #include <linux/module.h>
+ #include <linux/bitops.h>
++#include <linux/nsproxy.h>
++#include <linux/rootns.h>
+ #include <linux/user_namespace.h>
+ #include <linux/fs_context.h>
+ #include <linux/mount.h>
+@@ -206,6 +208,10 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
+ 			errorfc(fc, "cannot reconfigure pidns for existing procfs");
+ 			return -EBUSY;
+ 		}
++		if (fc->rootns_bound) {
++			errorfc(fc, "cannot override pidns on rootns-bound procfs");
++			return -EBUSY;
++		}
+ 		err = proc_parse_pidns_param(fc, param, &result);
+ 		if (err)
+ 			return err;
+@@ -323,6 +329,21 @@ static int proc_get_tree(struct fs_context *fc)
+ 	return get_tree_nodev(fc, proc_fill_super);
  }
  
-+static int rootns_kill_members(struct rootns *rootns, int sig)
++static int proc_set_rootns(struct fs_context *fc, struct rootns *rootns)
 +{
-+	struct pid_namespace *pid_ns = rootns->ns->pid_ns_for_children;
-+	bool any_success = false;
-+	bool any_other = false;
-+	bool any_perm = false;
-+	int other_err = 0;
-+	struct pid *pid;
-+	int nr;
++	struct proc_fs_context *ctx = fc->fs_private;
++	struct pid_namespace *target = rootns->ns->pid_ns_for_children;
 +
-+	if (!pidns_is_ancestor(pid_ns, task_active_pid_ns(current)))
-+		return -EXDEV;
-+	if (READ_ONCE(rootns->state) != ROOTNS_RUNNING)
-+		return -ESRCH;
++	if (!pidns_is_ancestor(target, task_active_pid_ns(current)))
++		return invalfc(fc, "cannot set pidns to non-descendant pidns");
 +
-+	scoped_guard(rcu) {
-+		read_lock(&tasklist_lock);
-+		idr_for_each_entry(&pid_ns->idr, pid, nr) {
-+			struct task_struct *task = pid_task(pid, PIDTYPE_TGID);
-+			int err;
-+
-+			if (!task)
-+				continue;
-+
-+			err = group_send_sig_info(sig, SEND_SIG_NOINFO, task,
-+						  PIDTYPE_MAX);
-+			if (!err) {
-+				any_success = true;
-+			} else if (err == -EPERM) {
-+				any_perm = true;
-+			} else if (err != -ESRCH && !any_other) {
-+				any_other = true;
-+				other_err = err;
-+			}
-+		}
-+		read_unlock(&tasklist_lock);
-+	}
-+
-+	if (any_success)
-+		return 0;
-+	if (any_other)
-+		return other_err;
-+	if (any_perm)
-+		return -EPERM;
-+	return -ESRCH;
++	put_pid_ns(ctx->pid_ns);
++	ctx->pid_ns = get_pid_ns(target);
++	put_user_ns(fc->user_ns);
++	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
++	return 0;
 +}
 +
- static long rootns_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ static void proc_fs_context_free(struct fs_context *fc)
  {
- 	struct rootns *rootns = file->private_data;
-@@ -167,6 +214,10 @@ static long rootns_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		return rootns_get_nsfd(rootns, arg);
- 	case ROOTNS_WAIT:
- 		return rootns_wait(rootns, (void __user *)arg);
-+	case ROOTNS_KILL:
-+		if (arg > INT_MAX || !valid_signal(arg))
-+			return -EINVAL;
-+		return rootns_kill_members(rootns, arg);
- 	default:
- 		return -ENOIOCTLCMD;
- 	}
-@@ -180,6 +231,7 @@ static long rootns_compat_ioctl(struct file *file, unsigned int cmd,
- 	case ROOTNS_WAIT:
- 		return rootns_ioctl(file, cmd, (unsigned long)compat_ptr(arg));
- 	case ROOTNS_GET_NSFD:
-+	case ROOTNS_KILL:
- 		return rootns_ioctl(file, cmd, arg);
- 	default:
- 		return -ENOIOCTLCMD;
+ 	struct proc_fs_context *ctx = fc->fs_private;
+@@ -334,6 +355,7 @@ static void proc_fs_context_free(struct fs_context *fc)
+ static const struct fs_context_operations proc_fs_context_ops = {
+ 	.free		= proc_fs_context_free,
+ 	.parse_param	= proc_parse_param,
++	.set_rootns	= proc_set_rootns,
+ 	.get_tree	= proc_get_tree,
+ 	.reconfigure	= proc_reconfigure,
+ };
 -- 
 2.47.3
 
