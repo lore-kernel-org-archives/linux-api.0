@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795276704;
-	b=frhmcBqQhzf9tTfl159M2JmUkFOnJ+qs8w0PBKKkYORMEMfOPOAw3Mi5D4v/ap7veD1a
-	 tRKaz7tNkErnIS/hn1I9UqBHdYjxszss1Xnhi7Ie3ZPwUjviz7qGqHKT9QTX2y+07KHa5
-	 N7YSz2h8Il3Beu6j8mfln+N3rpjJFmDcnURn5f3Z/Ac53Sb4190OUrDOhVUSVr8nUC1Ot
-	 YoTCKIpBs7BTlByYDXr2dpqcLJflj3GWINqUWyuwOFOyyb5AMVZE4e6RpdW209l6IBaoz
-	 onpWOJbD6hAlRTjs+DvwrYNicYC/nRWow9MuPjwxP2xG8+0DU4ghHLVSgd5hKWb3OSA==
+	t=1795277393;
+	b=CmmOCpe8RxH5fewU8tEjpTcECm/FWf8K9pBolTYoLS3+WFm7UX4WieOKTGwAXkLN0hPr
+	 vXRjmZmAWC5wdWBsxqk7T5MJCIAySDktJBdOV3mIniDuv4UyHO6I6hzvQWnKSwp4DU4N/
+	 6SG/GmWkSJiDuAMIO1PZRUQzWNmFnNOmZAmOqhxp30v2AOzf7bjCjW4LbJXdKVlk0vUpU
+	 yRXsWHM9J4zJ0ja381SnCDzZ5QhlkVcDDIT0n0lrZSEZFVVqP1+gJRMYQC0CiNtquy8qI
+	 DNxwlcTS62Hbf9ttlLLCIKV4NPfkew9dGXR0bzYygXfo+asBeyCTed9zz+QQRVLtcRQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795276704;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795277393;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=v59nU/2/9ru5K4MWt6NBStp2evSJmM0oxZDWWYQAtDI=;
-	b=0JL6xAV00bIeAmdy65OkntNQ6/gOve1YRLAsgo1ifLPBGfQPLTSnuz5mMRUFf2cLgM9J
-	 843QfDOMijL3/d9UWWPwjz4am5I0p1fPBhLb0NKqEVxvrJOd5JfmFDoMhJ2gsbUNOSe/B
-	 AIGxBhTkRsR4Xwav0rvvwb7rCI9t78aJFiMY77FlgLMkb1H+6EDETWzHi+BZfuDy++Nhm
-	 uKca+VTEjwluL8NnNjutu7RvpQyb0QvTiZ2A4NMjSRHHObHVPq/z3VW76lblva3b8615h
-	 J4sz7mMfnQisiF/hsE5YTlJTHMTngN8x5gDzQ7zBPcynP8boBjpaV7brbJVR3pUmn3A==
+	bh=G4XM20aAeu12Jm5j4NnIE/mMGTDsNHoeQWXmu2VwhZk=;
+	b=PqLCJwHCb+ir6ZUfW33sX8+u3X9GcrdcwgSsGEATnEocGryWViDgqj1MmDjsxoMg2Jwz
+	 BRPKj9DGfil7muBirT7RulOXP+MclOJISbWjx1bCXjAeqv2BEKFKxtq/x6Pdq/tQpYr6u
+	 iiMbKgi2zycI/Rb4cjqoDBUoEZv0ne3QC0Ogn/ej4pXv2vJxWJ5js2Vc6GEVw5mGOw46N
+	 caTq/6Yzrss9ehUpwzGy71OquW2DvZbI1THYgkp4psaoWkvQckrCIEypXI6Az077GpuZy
+	 c7BGp5fXhrhSjON1IBhw6W1sl3gY7Rgb7uWt6i5wSwFvoOvywTTaJ9kRyybCURC1eZg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=U08EaliS;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KBKTCy5U;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 97BD2606A320;
-	Sat, 21 Nov 2026 15:58:24 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 47222606A320;
+	Sat, 21 Nov 2026 16:09:52 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=U08EaliS
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id CCAC31F000CA;
-	Sat, 21 Nov 2026 15:58:23 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KBKTCy5U
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 485F21F000C0;
+	Sat, 21 Nov 2026 16:09:52 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795276704;
-	bh=v59nU/2/9ru5K4MWt6NBStp2evSJmM0oxZDWWYQAtDI=;
+	s=k20260515; t=1795277392;
+	bh=G4XM20aAeu12Jm5j4NnIE/mMGTDsNHoeQWXmu2VwhZk=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=U08EaliSbWubcMuaRUSpPl/xtocKTKRG5+LWCQtIwOvf1KyYvw7cQGTtMNjwQj+jx
-	 Ng4QuX/N5lAp9jx7j2hYITxmWQlgrLoVVYa7nA2uyLxoanOfvKHnmbqHjP3p/WCFrD
-	 wR2GLYIVuzGz9NvoACIKUCu691qClsGC87Em4zfKUaOoSmXlVErC63uKS9A8IKcQXV
-	 JshEx6xACR1YzyWXaG3Je89a0VlL+//Y5PN4Fs+llD0UvUh/DHsT+RER+LdFLuuIYI
-	 qeEI4tunehkM1Hw5Lm2kKHa7grtpMKogAQdxNcFXoeymOIsJD6zKuEuZzxuJLG15Uh
-	 +W0MW70agCpIw==
-Date: Sat, 21 Nov 2026 17:58:20 +0200
+	b=KBKTCy5U9VGPIKUtr5T+pTPJ8YTcpZUJWGcJg5bDAWFLkwHDKYBxkKooOahCWXEb3
+	 gAPAKvuh6WV8yNwn/Rx9emu51PZKosn/+Af9RViI3KMIAyxvZl4PkYSo11RmOhQ9Bx
+	 dsiIB7UirdIWN0sst0R5U4jgjVVd5W7gWHFEmxpaGjR+3b/wShv+8PlQkaxQCiAk50
+	 N321ye8ZC6CPo9kQqcaZ9bnbNwdV+TYarhT3fvEe3HFojGQGBdQsChw2QzjIL6rxLn
+	 wyCCvAjkkXW0aRnHm6xCdC4DjY0koyjaFHxTGhSJ7GfGlolJZIyxj03eVMQUqzVJLJ
+	 JD1rerrZ9pB2Q==
+Date: Sat, 21 Nov 2026 18:09:48 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
@@ -55,10 +55,10 @@ Cc: linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
 	Neal Gompa <neal@gompa.dev>, Paul Moore <paul@paul-moore.com>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v5 03/25] arch: Wire up userns_set_idmap() system call
-Message-ID: <awG_nK9E-UjkVgK6@kernel.org>
+Subject: Re: [RFC PATCH v5 02/25] userns: Add userns_set_idmap() system call
+Message-ID: <awHCTNAo9uMakhAH@kernel.org>
 References: <20261121000844.1863324-1-jarkko@kernel.org>
- <20261121000844.1863324-4-jarkko@kernel.org>
+ <20261121000844.1863324-3-jarkko@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -70,35 +70,24 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261121000844.1863324-4-jarkko@kernel.org>
+In-Reply-To: <20261121000844.1863324-3-jarkko@kernel.org>
 
-On Sat, Nov 21, 2026 at 02:08:22AM +0200, Jarkko Sakkinen wrote:
-> Expose userns_set_idmap() (473, 583 on Alpha) across all architecture
-> system call tables and asm-generic unistd.h.
+On Sat, Nov 21, 2026 at 02:08:21AM +0200, Jarkko Sakkinen wrote:
+> Configuring UID, GID, and project ID mappings currently requires writing
+> formatted text to /proc/<pid>/{uid_map,gid_map,projid_map,setgroups},
+> which depends on a live task in /proc and enforces write(2) file-opener
+> CAP_SETUID/CAP_SETGID checks that prevent passing an unprivileged userns
+> file descriptor over SCM_RIGHTS to a dedicated CAP_SETUID/CAP_SETGID
+> mapping helper.
+> 
+> Add userns_set_idmap() to atomically configure setgroups policy and UID,
+> GID, and project ID extents directly on a CLONE_NEWUSER nsfs file
+> descriptor. Require CAP_SYS_ADMIN over the target user namespace in
+> either the caller's or the file opener's credentials, and check parent
+> ID-range capabilities strictly against the caller's credentials.
 > 
 > Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-> ---
->  arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
->  arch/arm/tools/syscall.tbl                  | 1 +
->  arch/arm64/tools/syscall_32.tbl             | 1 +
->  arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
->  arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
->  arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
->  arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
->  arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
->  arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
->  arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
->  arch/s390/kernel/syscalls/syscall.tbl       | 1 +
->  arch/sh/kernel/syscalls/syscall.tbl         | 1 +
->  arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
->  arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
->  arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
->  arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
->  include/uapi/asm-generic/unistd.h           | 6 +++++-
->  scripts/syscall.tbl                         | 1 +
->  18 files changed, 22 insertions(+), 1 deletion(-)
 
-I'll populate remaining arch's at the time when I split this. It has
-enough coverage for the time being.
+I'll remove the flags. I forgot to remove them from final version.
 
 Br, Jarkko
