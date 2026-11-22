@@ -1,86 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795376269;
-	b=GnAIQjjOaur02wXZaElJigfRlUV5dJshy2HTaIgI+JUhLsen6RkIPtY9+OiCffMEaDoV
-	 /xLAvO1X6DG1okGnAPTy/viWZVo0kv6avvNbymC0Y58jXftdaRr54y0bNhoPNt1sy32mm
-	 DtWs/KO5I8w/JP06HLhIa0uHgvRBS4IYDk83IPRYPUSh33803ovMfoX2jaUm+7nBfio/k
-	 fjwUWLqfGvk+60mqUL4DagBlH3g/b+bUjw8jDnk1iWi9glMkeUSBWGcGDG7F1hTrvZOSH
-	 6S8dRaKNXw+itfMtY+kgSzO9QTbjpPxRbwRYiBT6W8VVIKQaCjIM/Fky2o1D4n7/hZg==
+	t=1795378149;
+	b=eq3/dEcfB/WsPgkhcsTF1/vIV7T8QWupXUtcTA2qv3ass6kd7njzffKsQGK3nNApA20X
+	 t0GgVTRqyB9Ciitrd3HMpKn6nZ7cs6Dq38oWJST5WyCbgNmXCxrpAf8XFV22vGt/1v8AC
+	 3u0kwc744BeKPoVOU6ejNrHZN1OBF2MEx5Zvskp9tNm8Be/pfzcItSc9I0O37opIVbKtM
+	 JU63tRES9lcmlI7B3M481M6KzmqHT01/kL4QfWRmVxvNrhiWpyjLdd65dtrBKSMpUFKYl
+	 DlgMsdIX4hPuHVXt7mOwgyYaiztQ47KOjiZiKtrizcZVwpknm9mtES/BKe7NWhbFzxg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795376269;
-	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=c/grzABhgrBQ8/IrA5G6GcEKHy2OSZTwhNr0CPP3+U4=;
-	b=n7Aafw7dtvjp/NZMfdX9RLQK1QCayVqAxwbOzf4+eLa3Uv+7G1UxX60dilhkHJh0NjDN
-	 0ADqbyDwK3O0wrRpMk8rTdAdz27KYYCYWAQvgLXq5S78mxyeFjG/ePktGRiPx24dCqJyV
-	 nww4ZsW9VOQ4nWf/dO+zX8rFdVBQNM57lh6nOmPVKGjLw7SoDcq/6fLC7KcxHdh2aE95M
-	 6fQGRmzhGltUr2IE0KZp6Br4q2pn9hk+nz5ON6E946Ue2vx75yN+vX73ZZgCqLS/oJSva
-	 2LqHk3Fw2ySBB9LXuxHFfTjwF/CAFEgJrjxETloI0YtJ8Hiftu95QKHL2B+zm7KTtkg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795378149;
+	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
+	 In-Reply-To:References:Subject:From:To:Cc:Date;
+	bh=NJy4CQsDbbyrrux6ubIkfBdJ2n5S01Da1nbXLZiKzpo=;
+	b=FD8r74YwPSQF3FHsTnr8Y0A493EBUnVeNB3DplHvVEKtRigJVmDybiwxzKQw6gg2KGd5
+	 5LdfAWKq7BSTU7MtqprUyZeSpK9bKCDIPSmqIdbw+SRggQJ3/OFl27+aWTmIxQS10DRZ8
+	 kp3yn+eKh3wmlruO2SaSeeWFzSbJh/oYQK5t1vprfsRFuDx6fj/Wji8LBuGEblC9T+RKj
+	 0dzaVrw1OOHyhBXT4/XclvhOT9tqhZ3odxMI60kaZ359oSyIXkn5fFDuHjrc0zwrSOEHB
+	 DXYIYUpmW8dwpY2zsPHZJuLhE34eNikkVDezmRpg/IvawBjhx/5sVWsEkIkM3UEYlGQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=If6Azv7y;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FIlPxmeZ;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3BAFC606A684;
-	Sun, 22 Nov 2026 19:37:48 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 739E9606A33A;
+	Sun, 22 Nov 2026 20:09:08 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=If6Azv7y
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id E59221F000D1;
-	Sun, 22 Nov 2026 19:37:47 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FIlPxmeZ
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0C4051F000C0;
+	Sun, 22 Nov 2026 20:09:04 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795376268;
-	bh=c/grzABhgrBQ8/IrA5G6GcEKHy2OSZTwhNr0CPP3+U4=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=If6Azv7y7srTCn6OR0qdqZQAwa1W7Gt05tNg4TPPtNZ0kqbU7S/HJIrOaVSbu5He2
-	 UcQYGZyFJswbruL02XotkP5Qo0sAiLgKUKGIQ8Gi8yiHFaR9w9q4Wx7olOPpVQs/Ky
-	 A9rTDmfwXa5kKjKsqhuSfUcv8eeNDe3A2PZuK0tdgw2gon96AVqaD6syspi5fkJ3Wo
-	 ScgOoGL5gTQFoAfLmxdcLAxxx/Ypx7zjqXVJyKlTiTYDeVpD48x/RK33TjzOrp5rLO
-	 ANINvuVSa4Z5EmpoCFu4ML34znZVg9/tvfMwXoQWObjGP9ozyW5Vp36n4R0Za6rYTG
-	 k9ENPgWMMUgug==
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: Jarkko Sakkinen <jarkko@kernel.org>,
-	bpf@vger.kernel.org,
-	containers@lists.linux.dev,
-	linux-api@vger.kernel.org,
-	linux-arch@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org,
-	linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Aleksa Sarai <aleksa@amutable.com>,
-	Alexander Mikhalitsyn <alex@amutable.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Arnd Bergmann <arnd@arndb.de>,
-	Christian Brauner <brauner@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Giuseppe Scrivano <giuseppe@scrivano.org>,
-	Hugh Dickins <hughd@google.com>,
-	Jan Kara <jack@suse.cz>,
-	Jeff Layton <jlayton@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Josef Bacik <josef@toxicpanda.com>,
-	Kees Cook <kees@kernel.org>,
-	KP Singh <kpsingh@kernel.org>,
-	Lennart Poettering <lennart@poettering.net>,
-	Neal Gompa <neal@gompa.dev>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v7 26/26] MAINTAINERS: Add entry for USERLAND
-Date: Sun, 22 Nov 2026 21:35:39 +0200
-Message-ID: <20261122193539.3334213-27-jarkko@kernel.org>
-X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
-References: <20261122193539.3334213-1-jarkko@kernel.org>
+	s=k20260515; t=1795378148;
+	bh=NJy4CQsDbbyrrux6ubIkfBdJ2n5S01Da1nbXLZiKzpo=;
+	h=In-Reply-To:References:Subject:From:To:Cc:Date;
+	b=FIlPxmeZXnL8jfb5igUreGcXeqBZ5IAPhfnC7/RLkwm2fVCUhGtqYHP5GbDuKZpgf
+	 Rs8od4A00WVlmjWBGKGo1JI6rWCj5nnH1+0NbFWV3AkaIsmYJrE12X6iTuN/k1eFTU
+	 qHOpyuR+Nwcq5ZCDMRP2gPk/h2EmJ/v9lcQ3KUTC29USZykod1aZwlrO8DAi15a4hD
+	 zy5bQ3zQMmT/1KHgei8EgDoFnJTGd80G72XxB2rHkKNj7Sn4cPe3Z8gnlDNJs0gwsh
+	 vuixGezimNtBC0ibmSBuA8VN6JWScZv4O78XVT3q/w0OUhL/QoblIvZBsuRCzQUuQ9
+	 hDDVSB3o1NU7w==
+Content-Type: multipart/mixed; boundary="===============0817330899429733780=="
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -90,38 +49,66 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Message-Id: <777039b970038567305cede50f71dfed0a1a4a5616d06298ec2c7c6298cbcd9e@mail.kernel.org>
+In-Reply-To: <20261122193539.3334213-25-jarkko@kernel.org>
+References: <20261122193539.3334213-25-jarkko@kernel.org>
+Subject: Re: [RFC PATCH v7 24/26] docs: Document userland uAPI
+From: bot+bpf-ci@kernel.org
+To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
+Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,ebiggers@kernel.org,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
+Date: Sun, 22 Nov 2026 20:09:04 +0000 (UTC)
 
-Record maintainership and mailing list routing for userlands across
-their uAPI headers, core implementation, documentation, and selftests.
+--===============0817330899429733780==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+> docs: Document userland uAPI
+
+TL;DR: Docs nit: the sys_userns_set_idmap() kernel-doc @size text may render
+with stray raw backticks around PAGE_SIZE; rewording the source comment would
+avoid it.
+
+> diff --git a/Documentation/userspace-api/userland.rst b/Documentation/userspace-api/userland.rst
+> new file mode 100644
+> index 000000000000..e32ea3501472
+> --- /dev/null
+> +++ b/Documentation/userspace-api/userland.rst
+
+[ ... ]
+
+> +User namespace ID mapping
+> +=========================
+> +
+> +.. kernel-doc:: include/uapi/linux/nsfs.h
+> +   :identifiers: userns_idmap_extent userns_flags userns_idmap
+> +
+> +.. kernel-doc:: kernel/user_namespace.c
+> +   :identifiers: sys_userns_set_idmap
+
+Will the kernel-doc for sys_userns_set_idmap() render correctly here?
+
+The @size description in kernel/user_namespace.c reads:
+
+  @size: Size of @map structure in bytes (%USERNS_IDMAP_SIZE_VER0..%PAGE_SIZE)
+
+and kernel-doc turns this into:
+
+  Size of **map** structure in bytes (``USERNS_IDMAP_SIZE_VER0``..``PAGE_SIZE``)
+
+Because the second inline literal follows a '.', docutils does not
+treat the opening double backtick as a start-string, so the built page
+would show raw backticks around PAGE_SIZE.  Sphinx does not warn about
+this.
+
+Would rewording the source comment avoid it, for example
+"(%USERNS_IDMAP_SIZE_VER0 to %PAGE_SIZE)" or "between
+%USERNS_IDMAP_SIZE_VER0 and %PAGE_SIZE"?
+
+
 ---
- MAINTAINERS | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
+See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 7cbce21ba45a..54d8f628cb87 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -29285,6 +29285,17 @@ F:	arch/um/
- F:	arch/x86/um/
- F:	fs/hostfs/
- 
-+USERLAND
-+M:	David Howells <dhowells@redhat.com>
-+M:	Jarkko Sakkinen <jarkko@kernel.org>
-+L:	linux-fsdevel@vger.kernel.org
-+S:	Maintained
-+F:	Documentation/userspace-api/userland.rst
-+F:	include/linux/userland.h
-+F:	include/uapi/linux/userland.h
-+F:	kernel/userland.c
-+F:	tools/testing/selftests/userland/
-+
- USERSPACE COPYIN/COPYOUT (UIOVEC)
- M:	Alexander Viro <viro@zeniv.linux.org.uk>
- L:	linux-block@vger.kernel.org
--- 
-2.47.3
-
+CI run summary: https://github.com/kernel-patches/bpf/actions/runs/45063222848
+--===============0817330899429733780==--
