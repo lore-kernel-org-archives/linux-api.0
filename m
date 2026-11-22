@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795376191;
-	b=F+DuJWRAMpFfSHbXJS+YprQCxkVaekpjaO0NB5EOIfzrOrH14DYuY0Wfur3x+y2fY2uw
-	 aE/qQRFK86mDEpm+r4ILY6uafJf6qZuf3OY8IHlzdUJqMEBhzwYNkoRkT3frjToqp7Ter
-	 wDflqDQ0hVzCEBmFKOQAVIHBv1odHm4EhEBy52qOBBenFLC6f0uE9R8fUezmr7jdRyIx9
-	 G5/8kQ5v8eXbqg/u0XvZbKzfv82DXaclBohKqqgZJy75g++EjfpUJuHZ5WTZopHHB8C1X
-	 igMEn1Se2Phh2Mk3NkRlXZsX+daEDGh64IPGDtcHfm+U/pWqBh4q7WgVaxGYyfK/Prw==
+	t=1795376195;
+	b=EwPUx7GJayRNT1uUI2+/Ofvg4o+ubykL9fXewcITgNNoKxN5rNbXBUESm31eHFmg1cLg
+	 nFGYMh2xYG/NGOh8ZKzskxPSjYgo+KpyJVK2XTsm9yE7Y0u83RX8jGv+OwiLMmIqmFS9q
+	 ViZkjE55GHNBzBjGiVYzebKdP4rgpT/3lbnoV3f0+8WUH3sNuYtnbTA/GkjLJ8spCJoDB
+	 DerNaDX2xIEhSo8nEyC8I36Tx5xYaEpYxP6EFTBJS2UHs9djsL9G0iMKrTMJTc82uygPO
+	 9Fq//4zvAgctEPmn9B/NpdkDJK/o9DwvxEoGDjje5vivcVagr/sAlvA4XLrfbReD6AQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795376191;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795376195;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=43MsiEFgIrWkQNcNF+GYEjx93qeN3UcnPDjH27vMBMY=;
-	b=NjgPFAuP7VX9v/ecV2jOcO6voJMyU921r26ucFJNu+mIo3pZIN8kIhuMfnLGaPqTwE84
-	 RkF9Nuk1FwYmer+1dITbirD7DquoKAjqY4s10em8GrUyxQcQvWViZDmfKS0JRbGoe0Xcu
-	 1Az4bPwg+RGPBR5v2ZPCQ2VIEzsy42SwTJ7IWduePirdp0GNunmWPUQJ9LGHIKcM7mYI7
-	 UbcMBsyddPJvOh0QlBha0/Q12hBQg+8AnJ6k/fr4cmjIoZjxBt7rkDR32DSlZlD5dwFKP
-	 PvtABPomWvreciMV3jISxF00iry6ucnH22TmbAq5tohuM3wE2a+k/k3shc63GkQCW2w==
+	bh=ujYt3pxK39YV6xgrJ9ycAzI8XphJxsY1pHf5v0/Q8cY=;
+	b=nZNyeNrA8oBoKz1d0iHxBLn+muH/LbgxiZe25vyyVbd7V+91wW8Mtw7GO6RliZyb5OEl
+	 Ej2lxkc2KYlAhGqXjuVZbh+rVWzJA07P9ElBOUTdzrXRbACabEHIYnCi2X1n6u5LarW3p
+	 6uCKX3T5JlUTBGDkyOwtvv2xXyQDAugBuQ1Q79LME/2uPfAtzzxGzKJqdjlVXS91ZrTgS
+	 7PDPQ4aNwRKkVSb9bE73O8iMsHRj8UOX4DDy7NdxGcDTTMkwbZjMOsEOB8j9rV3KbhT5/
+	 DZJRmWvjxy0tSKDR8EXWtTrV2d6QL4vA4nWQGtt+WyDZwRV+mSm5E2M3eFqSH3e9bGw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Jx9MYo4v;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=OoGSfxYg;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 383A9606A338;
-	Sun, 22 Nov 2026 19:36:31 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3D54A606A32D;
+	Sun, 22 Nov 2026 19:36:34 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Jx9MYo4v
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 1E7691F000D4;
-	Sun, 22 Nov 2026 19:36:30 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=OoGSfxYg
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 275C91F000E1;
+	Sun, 22 Nov 2026 19:36:34 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795376190;
-	bh=43MsiEFgIrWkQNcNF+GYEjx93qeN3UcnPDjH27vMBMY=;
+	s=k20260515; t=1795376194;
+	bh=ujYt3pxK39YV6xgrJ9ycAzI8XphJxsY1pHf5v0/Q8cY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=Jx9MYo4v5dG6TuiLqqMpwfnCLNp1dU3fsjM0rs7NeUiQpqvCbQkc6zfNZfQn1ceCg
-	 dkL6lAYTT/XApYv1EnrG/3bDLes3Ar8rT3NVk6CyizxCjxJOWQr/BQgKMnE4DozfXc
-	 6MaZrPMCQKrw6XbZAf3J55qgj9MKKx8nvfOUvGoHcJ7/8yOdGVy1JssCARbZmF8vek
-	 6kxEG95kGAihkM4HDqZ8n1mTcg/lmo4gtW2J8GayVKr+sLDzrsuUuDCALp/vF2d+2v
-	 BPUR0GZ3wJ2zZz8SvSCUOuV/4ea/j5aB9DkmJvEGCqfWbjjKoyCZJsHY54JfZejPWu
-	 dmVhu9cXx73XQ==
+	b=OoGSfxYgsZcZJElXw84v9gsSeSMwok9hzGq6rqX9ynWRDXqq3zx71CzuuYvvw2g/R
+	 1UpEgjqxgsRgThvgJblfJjMiuNX4mqqhqHoyFnm0J7hEkd5/8FlUQcVS3mkMU4mMYX
+	 iF91SZzxOwMNMH2crVXxL7rch4XakMfXwpVbdpSN68at4yxvJhdrFGtdqimiqw52tC
+	 d1j+4sNCZtrz2PP53RcNgvvbAnU4dUe5TRSV/ZC+XXhMOQA24qIq01hpvWa3QXVrBH
+	 aYxsxae0fedmvv9+V6SNnLaGfcB9iN+D8NEneNdjl2luzlR75sAG8Cl8K/pyTCNbLe
+	 u82rSzLk5TrlQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,9 +75,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v7 08/26] userns: Factor out install_user_ns_cred()
-Date: Sun, 22 Nov 2026 21:35:21 +0200
-Message-ID: <20261122193539.3334213-9-jarkko@kernel.org>
+Subject: [RFC PATCH v7 09/26] nsproxy: Expose create_new_namespaces()
+Date: Sun, 22 Nov 2026 21:35:22 +0200
+Message-ID: <20261122193539.3334213-10-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
 References: <20261122193539.3334213-1-jarkko@kernel.org>
@@ -92,77 +92,60 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-userns_install() updates a credential's owning user namespace and
-rebinds its ucounts inline, which cannot be reused by fork paths that
-switch a newly allocated child credential into a target user namespace.
+create_new_namespaces() is currently static to kernel/nsproxy.c,
+preventing callers outside kernel/nsproxy.c from constructing a child
+nsproxy without mutating a task.
 
-Factor this logic out into install_user_ns_cred() with a !CONFIG_USER_NS
-stub so callers outside kernel/user_namespace.c can install a target
-user namespace on a prepared struct cred.
+Expose create_new_namespaces() in <linux/nsproxy.h> so userland_open()
+can allocate a detached namespace set from current.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- include/linux/user_namespace.h |  7 +++++++
- kernel/user_namespace.c        | 12 ++++++++----
- 2 files changed, 15 insertions(+), 4 deletions(-)
+ include/linux/nsproxy.h | 4 ++++
+ kernel/nsproxy.c        | 6 +++---
+ 2 files changed, 7 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index b4a50edfe003..ecee91aa2257 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -182,6 +182,7 @@ static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
- }
+diff --git a/include/linux/nsproxy.h b/include/linux/nsproxy.h
+index dc2447f5f092..d611c40cb4ce 100644
+--- a/include/linux/nsproxy.h
++++ b/include/linux/nsproxy.h
+@@ -12,6 +12,7 @@ struct ipc_namespace;
+ struct pid_namespace;
+ struct cgroup_namespace;
+ struct fs_struct;
++struct user_namespace;
  
- extern int create_user_ns(struct cred *new);
-+int install_user_ns_cred(struct cred *cred, struct user_namespace *user_ns);
- extern int unshare_userns(unsigned long unshare_flags, struct cred **new_cred);
- extern void __put_user_ns(struct user_namespace *ns);
+ /*
+  * A structure to contain pointers to all per-process
+@@ -92,6 +93,9 @@ static inline struct cred *nsset_cred(struct nsset *set)
+  *
+  */
  
-@@ -224,6 +225,12 @@ static inline int create_user_ns(struct cred *new)
- 	return -EINVAL;
- }
- 
-+static inline int install_user_ns_cred(struct cred *cred,
-+				       struct user_namespace *user_ns)
-+{
-+	return -EINVAL;
-+}
-+
- static inline int unshare_userns(unsigned long unshare_flags,
- 				 struct cred **new_cred)
++struct nsproxy *create_new_namespaces(u64 flags, struct task_struct *tsk,
++				      struct user_namespace *user_ns,
++				      struct fs_struct *new_fs);
+ int copy_namespaces(u64 flags, struct task_struct *tsk);
+ void switch_cred_namespaces(const struct cred *old, const struct cred *new);
+ void exit_nsproxy_namespaces(struct task_struct *tsk);
+diff --git a/kernel/nsproxy.c b/kernel/nsproxy.c
+index 2dcf105e8ee2..3c4161515c3c 100644
+--- a/kernel/nsproxy.c
++++ b/kernel/nsproxy.c
+@@ -85,9 +85,9 @@ void deactivate_nsproxy(struct nsproxy *ns)
+  * Return the newly created nsproxy.  Do not attach this to the task,
+  * leave it to the caller to do proper locking and attach it to task.
+  */
+-static struct nsproxy *create_new_namespaces(u64 flags,
+-	struct task_struct *tsk, struct user_namespace *user_ns,
+-	struct fs_struct *new_fs)
++struct nsproxy *create_new_namespaces(u64 flags, struct task_struct *tsk,
++				      struct user_namespace *user_ns,
++				      struct fs_struct *new_fs)
  {
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 61dcf2fab6f0..218ea4e73006 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -1613,6 +1613,13 @@ static void userns_put(struct ns_common *ns)
- 	put_user_ns(to_user_ns(ns));
- }
- 
-+int install_user_ns_cred(struct cred *cred, struct user_namespace *user_ns)
-+{
-+	put_user_ns(cred->user_ns);
-+	set_cred_user_ns(cred, get_user_ns(user_ns));
-+	return set_cred_ucounts(cred);
-+}
-+
- static int userns_install(struct nsset *nsset, struct ns_common *ns)
- {
- 	struct user_namespace *user_ns = to_user_ns(ns);
-@@ -1638,10 +1645,7 @@ static int userns_install(struct nsset *nsset, struct ns_common *ns)
- 	if (!cred)
- 		return -EINVAL;
- 
--	put_user_ns(cred->user_ns);
--	set_cred_user_ns(cred, get_user_ns(user_ns));
--
--	if (set_cred_ucounts(cred) < 0)
-+	if (install_user_ns_cred(cred, user_ns) < 0)
- 		return -EINVAL;
- 
- 	return 0;
+ 	struct nsproxy *new_nsp;
+ 	int err;
 -- 
 2.47.3
 
