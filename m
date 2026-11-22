@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795378154;
-	b=j8RJbrUut7P8xT0KLO/r/PuhpFJdYLy+fbw+geZO9Rpx85Y+E9pGuQPPPhHlAO9n+Oya
-	 YglKLU5ttxFpd3PRk/Jw5IGFKOhRYq7YHKJCV4VBs+fwRjBUwuEIlUte6jnfaxmqBa9ob
-	 zJayQW7einm8uvyRcnXWu3u4gjWKa0UAD7WyQan4lBaIqPYXK795/f4fQPQs0/6R6eKYL
-	 p8Qf4bb6Uv5xur5HhHBbzpy6JeI2DK45kQP7ssIqF3laezyOOeZb5jHcCPKRVOZ5SNOz+
-	 Lq4n2F2iyd3JSRSkT6pNuFO0LqSj6hPIc57mx7RmcNBTKW4EvZ+HVG8ata9nTKOhmTw==
+	t=1795379284;
+	b=lhRwsbBcE8CC3oEG9PlmejTlLgoK633nzCvnUmrowSDyUnMPBvLmiIUuA1EVMusuqxCP
+	 GmWrqo3craAJoZYcxHY/yzTF5/xh8tiPWyFpGQdUU+R7H5UTy6JQuSQRGUwkkF9kLLi+x
+	 5ypVMBkymtdS2aAcPEnf/lYSn9QC16FHONMtYDmWpt9NjD0nKBU/DjlPnT8z/fpdWxBOZ
+	 4aGntLO6OBp9QX1toPOlCKU5sPTc3gsx2GGHrcOMrDq3BRuiLo1detYMLmd73nKE057YY
+	 xvqn6BGvrQmL7x5RitS1Xj7sMvG7dZOTD4EYVjJZtJ3RNwpx+/7/Eco8dqrvutkw4vg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795378154;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795379284;
 	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
 	 In-Reply-To:References:Subject:From:To:Cc:Date;
-	bh=qgAd/VA0V0SFS6QRkanen1M9m5R72JoHXnNt9l1b0f0=;
-	b=01bUJTZCyZOmddzhEUYHlkrkQBwLrXX9tjPasyOUeuvVNiKPxsgWwAOIplYlfSggY5Qn
-	 6wxHRuOzfx4MzSFzqjYF/DHvWxNe1HlKsSnHkNndHNXBe2GGls8RSUOkYyxsua69gXWOC
-	 XRehfN2/9GuF/srkCs5glov8YjStx/a8RmaNScWiOXbmm5/E9yySlYk57aiazn4tHaW2I
-	 pIYIpHeWbJLLDnCjaqE5cO3mghV9gbAzHwoJlMKHzrKXaVCQzfC6Utx/Cp9SHzaj1ce88
-	 LlplUVM2mzYtapdl+rj4tRMaPLl2geRBULUBnTnJLvFdSBDiVYzu9pmoqAVlJKE5wgw==
+	bh=hX4n2ELcNNj0/4nHT8RN7SbsIUQvyFqPuov+TG5Nv9g=;
+	b=0PpT/jxKVddrsw+T1qelY5W5A9EGWH4NJQaZtQadGNIVNi9Y8FoLwpaRMUhV/bmeYU0z
+	 GHca0wBngnckJ9HMvGta6cpXHZqQ27HSp6J2ikpTPkmO6ydDsQL/xtLh6KrhgxYZNXCB7
+	 CBcqHfwRKXRZqS4aAVZyCXodvcjcA7eEKmmBpRj86g57ZTQgLiiGZW9lBJe0U3//aEINd
+	 v016eNA1pinA6kIzPE67EnLq7+aIZC4zhvKCsKjkrD7w/6tPsEiwHFhnbygHY/EB7YeGp
+	 ydGrGBCstSienFbSGrrvRo4aUpFGRxW2zs/O1QSDbPgEzA0ZcV5pFQABGAulSj2hytA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="P28TG/jf";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="DtQFC/+B";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A859E606A31A;
-	Sun, 22 Nov 2026 20:09:14 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D9D14606A31A;
+	Sun, 22 Nov 2026 20:28:04 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=P28TG/jf
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id A0F891F01568;
-	Sun, 22 Nov 2026 20:09:10 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DtQFC/+B
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 579341F000C0;
+	Sun, 22 Nov 2026 20:28:00 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795378154;
-	bh=qgAd/VA0V0SFS6QRkanen1M9m5R72JoHXnNt9l1b0f0=;
+	s=k20260515; t=1795379283;
+	bh=hX4n2ELcNNj0/4nHT8RN7SbsIUQvyFqPuov+TG5Nv9g=;
 	h=In-Reply-To:References:Subject:From:To:Cc:Date;
-	b=P28TG/jfj557Y7MNEKVfg8PB17IIaPG8EaC4Ckjlz91mj3R99wSOaJlPtXNmt8Rjb
-	 QUjgXZGIUX5ijXTicGbgnAkNvSfvrerDwEo0ccVCxYsOyP6YALLBbmtkxCFGLPmjFD
-	 pDRZvJawql5AxieBhsba3ay0Ylbms82auYGDyB8KgQPP9vPfPuzc8pA4A79Eve+SRh
-	 0zxbXKi/4chaRfYvPCYuW9WS+HHgIaqWUeEdEbVQZyi8onJatTBgKPxGqwdrdPGa7+
-	 JPlP/KrqNBrHfel0Y0JV06vSuN1GW8oWBKgLQUki/1mbgZHRq+tN9aFty3QtWaqoDB
-	 t6Fr3eSQU+EiA==
-Content-Type: multipart/mixed; boundary="===============1507986254413833181=="
+	b=DtQFC/+BjIVL35yRIkQAYiez++FX6dq1X7g9+U5wiM9l5aQa2bCiQa0lA2KTXkgKO
+	 2GT1VmmiI5zeFd1FOhAPus/+fS4ofCKzqBssX2tUSpnCu5DOjAqzn3puJ0tq8KB9t4
+	 GpNPbpdGJuuLtuJfgKRWiznvitvtiWUv388C8tOsf0YN4/CfgUZ1IiMn3x35uwU0Mn
+	 1Ao9M5lEIvKdmb/YeWSZ7g4sl3nh/deToqadEqFwGkeoAk1OyDwjyExdU9l/1PjW8N
+	 jHMgktO+4YczGQbKoF+Q9d+vLGJmsYwWWN9aZj/3h6aCyWyoR5o2gpSdRDOswa7+zR
+	 QEgyW1cP1w0QQ==
+Content-Type: multipart/mixed; boundary="===============7306649944735902366=="
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -49,55 +49,65 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Message-Id: <6d2f2a9724b36a8a1329286865eb8e8502d9e7541d523a21602fd3cb0315fedf@mail.kernel.org>
-In-Reply-To: <20261122193539.3334213-12-jarkko@kernel.org>
-References: <20261122193539.3334213-12-jarkko@kernel.org>
-Subject: Re: [RFC PATCH v7 11/26] userland: Track init lifecycle via copy_process() and pid_namespace
+Message-Id: <b6da91bd7d0e63cbf8a3d96298191544d46afbc7d0ba1a7fa55b996f7d7cd7c3@mail.kernel.org>
+In-Reply-To: <20261122193539.3334213-11-jarkko@kernel.org>
+References: <20261122193539.3334213-11-jarkko@kernel.org>
+Subject: Re: [RFC PATCH v7 10/26] userland: Add core infrastructure
 From: bot+bpf-ci@kernel.org
 To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
 Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,ebiggers@kernel.org,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
-Date: Sun, 22 Nov 2026 20:09:10 +0000 (UTC)
+Date: Sun, 22 Nov 2026 20:28:00 +0000 (UTC)
 
---===============1507986254413833181==
+--===============7306649944735902366==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 
-> userland: Track init lifecycle via copy_process() and pid_namespace
+> userland: Add core infrastructure
 
-TL;DR: Nits only: userland_copy() has an unused tsk argument, and the
-rcu_read_lock()/unlock() pair around task_uid() in userland_exit() may be
-redundant.
+TL;DR:
+- USERLAND_ALL_FLAGS in the uapi header becomes fixed ABI; adding flags later
+  may break rebuilt programs, so consider keeping it kernel-internal
+- USERLAND_CLOSE_ON_EXEC naming nit: other flags use *_CLOEXEC
 
-> diff --git a/kernel/userland.c b/kernel/userland.c
-> --- a/kernel/userland.c
-> +++ b/kernel/userland.c
-
-[ ... ]
-
-> +void userland_copy(struct task_struct *tsk, struct pid *pid, struct userland *c)
-> +{
-> +	if (likely(!c || !is_child_reaper(pid)))
-> +		return;
-> +
-
-This isn't a bug, but is the tsk argument of userland_copy() needed?  It
-is not referenced in the body, which uses only pid and c.  Could the
-prototype take just the pid and the userland?
+> diff --git a/include/uapi/linux/userland.h b/include/uapi/linux/userland.h
+> new file mode 100644
+> --- /dev/null
+> +++ b/include/uapi/linux/userland.h
 
 [ ... ]
 
-> +void userland_exit(struct pid_namespace *pid_ns, struct task_struct *tsk)
-> +{
-[ ... ]
-> +	leader = tsk->group_leader;
-> +	rcu_read_lock();
-> +	uid = task_uid(leader);
-> +	rcu_read_unlock();
+> +enum userland_flags {
+> +	USERLAND_KILL_ON_CLOSE	= 0x00000001,
+> +	USERLAND_CLOSE_ON_EXEC	= 0x00000002,
+> +	USERLAND_ALL_FLAGS	= 0x00000003,
+> +};
 
-This isn't a bug, but since task_uid() already takes rcu_read_lock()
-itself, could the surrounding rcu_read_lock()/rcu_read_unlock() pair be
-dropped?
+Should the USERLAND_ALL_FLAGS mask be exported in the uapi header?  The
+later userland_open() syscall validates with:
+
+  if (flags & ~USERLAND_ALL_FLAGS)
+          return -EINVAL;
+
+Once released, the value of this mask is fixed ABI.  If a later kernel adds
+a flag and grows the mask, a program rebuilt against the new header that
+uses USERLAND_ALL_FLAGS would get -EINVAL on older kernels.  If the mask is
+left unchanged, the in-kernel check stops covering the new flag.
+
+fanotify hit this: include/uapi/linux/fanotify.h marks FAN_ALL_CLASS_BITS,
+FAN_ALL_INIT_FLAGS and FAN_ALL_MARK_FLAGS as "Deprecated - do not use this
+in programs and do not add new flags here!", and the valid masks live in
+include/linux/fanotify.h (FANOTIFY_INIT_FLAGS).  Other fd-returning
+syscalls keep their valid-flag masks kernel-internal, for example
+CLONE_LEGACY_FLAGS in include/linux/sched/task.h and VALID_RESOLVE_FLAGS in
+include/linux/fcntl.h.  Would it make sense to move the mask to
+include/linux/userland.h?
+
+Also, this isn't a bug, but should USERLAND_CLOSE_ON_EXEC be spelled
+USERLAND_CLOEXEC?  The other close-on-exec flags under include/uapi all use
+the *_CLOEXEC form (FSOPEN_CLOEXEC, FSMOUNT_CLOEXEC, OPEN_TREE_CLOEXEC,
+MFD_CLOEXEC, EFD_CLOEXEC, ...), and the name cannot be changed after the
+ABI is released.
 
 
 ---
@@ -105,4 +115,4 @@ AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
 See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
 
 CI run summary: https://github.com/kernel-patches/bpf/actions/runs/45063222848
---===============1507986254413833181==--
+--===============7306649944735902366==--
