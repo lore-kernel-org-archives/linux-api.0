@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795310315;
-	b=tYbdMxAN7ien2SZkpSjSWhorIu7XspZy0z5poF5hcLxBep4OGVygScxbJ97LBrvBkO17
-	 NUD+0HbDD0Zdjek+GRgJUxKAbL5V2QFB/KrJMK0oINHKODpHCxSP/M0fqqyH9HHQ9fF6W
-	 q6DODFbihsFcNNiF/q4HXInWoSQfX7q6XJ3PVJabvOw0QGGXfjeBoRr5a2Wb0atfn5uet
-	 l98kWH88PDbyuIA8J4cXZWOZ1+2tMaV2cb4VvWtsReQMLNA5e7F5vw/1pDPM4lvkHJaQb
-	 WkryCHjTmd6gRNRYQ5+SebHmycnUI2OEdofNdS/IIll88i1vSg8FDjJFCh+GkytTW6A==
+	t=1795310319;
+	b=cncYPy8OPnxwvFYUCIdgZflWmpXIiwwVCmmSKEwMPYOuW9PB59ZVcO1Eb3a87q7JGLAj
+	 UpIXEvK115gnMSmUbbOPpF1KZGySRRJ+kZGddKb9bk4oo8Y8ocZVmFVfnFZ+yRDOVKQ1n
+	 CCvtOwAS2aI/5TxNJ6k+492DEI0URm5Nz0/Y9gj3E7JRI1AEGUSpGTWHnn1Frh33glUaz
+	 SOuoydBUeK7BwkyuOb7SBTUOXnIYhOlVSvAzVmd7jRA2IkHuaJ4Xr6d3TrnKfyUn0Hrxy
+	 Ku6i+JAbCbxc+lTNZ9tGvAUjOymt2YClDV+a/gt76w07hWdDvyjOdNfY9Q6P+i9MYqw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795310315;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795310319;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=vM1mKrQLSyzANBNyG1aKfJTP501fkwwz9TXQLi7bGuQ=;
-	b=1wGwEnNf6UlLIj3TDuOY5uvnIIJtOyJOSX89KuU9YfhGh/il2nTg2FrJFjcEgj5o2N/b
-	 ObDBJNSLM7aa80ZFSerFcZJpTkaDS80wv9AVcFzl8mn2neC/JvnnpBz7TcouWmksrGORI
-	 3q+a9/InkYwKJjyTjxxgd8BNHdbYGlAPbJowPpzEUjwox7ZYQL5CBs/C/DzOY9d6iwokP
-	 VdQw5Fd/aqXPQTtkSn5RC/jCigZ6gBqQlZO4pArscOks6v05wU43oc9PW5+3vhcDBdkuV
-	 CW1MYt9sfUCIiHXgmu5OHmYYSOSozGXZ0TWh9lqOMXl8YiRK+5djjEu8HORX0nXiR+w==
+	bh=ltCLnFz06IQQ3SZ4JmjrUpmJ3OSN/eK/CX4oIn1dBP0=;
+	b=hJpaQPOnIhtc32ozIvO45Ch7KLoTIFN09kyAzMvQZ9ItVADxd4CVSa/alK1morh4sR/j
+	 CsWq8wrxvL2ITcrJU6T/liZ9/EyQ/05F/u+UaypUVRzHnCWQrmrlM1CLJ2W9KuD7p9fkH
+	 0yJMUDAzwO5kQW15CmS7OEK+O2+e6wFLJFZXZ4YmzREAFBWU8W643oUfv6b2wrZ11yz7C
+	 9L8C+jrAYCyz8sQw+QR4PXG4WiVPmmZr58RCcoC5qlL8uhf7/Gy2Bwc4H5BtXjxvBNREz
+	 G4Tdt+zcy2jIDfpccyIwUyRDObhrlwV+W+ZACMCsQGFZT6CjCChD2fT9c+idMDVakEg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=iVfzBuYl;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="kgP/2/6s";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 6B40D606A32C;
-	Sun, 22 Nov 2026 01:18:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 8D471606A330;
+	Sun, 22 Nov 2026 01:18:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=iVfzBuYl
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 537E11F000C0;
-	Sun, 22 Nov 2026 01:18:34 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=kgP/2/6s
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 4EEED1F000CF;
+	Sun, 22 Nov 2026 01:18:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795310315;
-	bh=vM1mKrQLSyzANBNyG1aKfJTP501fkwwz9TXQLi7bGuQ=;
+	s=k20260515; t=1795310319;
+	bh=ltCLnFz06IQQ3SZ4JmjrUpmJ3OSN/eK/CX4oIn1dBP0=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=iVfzBuYl9D5EBPT4RUFYpdPXpt9xaEmzAk8iNSi3aHEVx0ty4J0tWRQaLEXFojX+t
-	 JITv1qQ0mH7a4uMK4X9x3tf7ZAYfr/OcZ8IZJgGYGCeIL8zMeFPqBYvdUbFlOTGs7v
-	 IBFX+bLKTFOyKKNRSJpg9qROz3I322jsgCLg1l6aivdJl78o6k17Q+xI9YcBVAsv2W
-	 BT/lpVDAofPBfRN973YskRwER2LF2hilLpbaCp/58nYiVsSzE+UorBYbqlJ5ScenuI
-	 JVzqiK/VGwCFs3WBI6Nd47ozM9A6ALKSH/3jgsri7hUZljkUdalZ7Va5FpbhKtVJ3c
-	 cyqt5wPhz1Qyg==
+	b=kgP/2/6s7spLqnf+9wMSyz4rEEZTRyT+B+YkDBhkt50gtPY+vgrIGcVhtKCrkLRFD
+	 0f2TJ3D7eb/66eUajBQSuTi/fbl8VRvUv25a5lt8QxW+oq/QqpzAMtr3BhPptZ0j5i
+	 3kW5sabhvAZySVfrnN6bJyajveSB6ITeCvGTqK5veb2w1g2xbX4xKOGMMc4+GYvvr8
+	 EMRR/HfWrBOhDIla3WYo95eeveTxI0eMLnSe03JMHIIvWFMZ8OIizWNrWwv+7r/z/D
+	 KlSGsb410AtNh5e/TSaDB78vVeHXyRexH3UeeV5hcfhavPGsM91d/HPvOkbt6OMZDE
+	 HiqUj0/wbi5cg==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -74,9 +74,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v6 04/26] mount: Add mnt_ns_get_root()
-Date: Sun, 22 Nov 2026 03:17:47 +0200
-Message-ID: <20261122011809.2667684-5-jarkko@kernel.org>
+Subject: [RFC PATCH v6 05/26] mount: Enforce mount_too_revealing() for foreign mntns
+Date: Sun, 22 Nov 2026 03:17:48 +0200
+Message-ID: <20261122011809.2667684-6-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261122011809.2667684-1-jarkko@kernel.org>
 References: <20261122011809.2667684-1-jarkko@kernel.org>
@@ -91,70 +91,87 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Empty mount namespaces created with CLONE_EMPTY_MNTNS start with only an
-internal nullfs root mount until a real root filesystem is mounted over
-it, and external callers have no helper to resolve the live root path of
-an unentered mount namespace.
+mount_too_revealing() skips visibility checks whenever
+current->nsproxy->mnt_ns belongs to init_user_ns, assuming the caller
+holds CAP_SYS_ADMIN in its current mount namespace. That assumption does
+not hold when an unprivileged caller creates mounts for a child user
+namespace while running in init_mnt_ns or another foreign mount
+namespace.
 
-Add mnt_ns_get_root() to look up "/" with LOOKUP_DOWN from the mount
-namespace's base root mount and return -ENOENT if no filesystem has been
-mounted over the initial nullfs root yet.
+Require CAP_SYS_ADMIN in init_user_ns before bypassing
+mount_too_revealing() for init_mnt_ns, reject chrooted callers lacking
+CAP_SYS_ADMIN in their current mount namespace, and treat existing
+mounts and child overmounts in a foreign mount namespace as locked
+during mnt_already_visible() checks.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- fs/namespace.c                | 16 ++++++++++++++++
- include/linux/mnt_namespace.h |  2 ++
- 2 files changed, 18 insertions(+)
+ fs/namespace.c | 21 ++++++++++++++++-----
+ 1 file changed, 16 insertions(+), 5 deletions(-)
 
 diff --git a/fs/namespace.c b/fs/namespace.c
-index aecd05ac0170..781380945d78 100644
+index 781380945d78..b2dc84c0d0d6 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
-@@ -6708,6 +6708,22 @@ static void mntns_put(struct ns_common *ns)
- 	put_mnt_ns(to_mnt_ns(ns));
- }
- 
-+int mnt_ns_get_root(struct mnt_namespace *mnt_ns, struct path *root)
-+{
-+	int err;
-+
-+	err = vfs_path_lookup(mnt_ns->root->mnt.mnt_root, &mnt_ns->root->mnt,
-+			      "/", LOOKUP_DOWN, root);
-+	if (err)
-+		return err;
-+	if (root->mnt == &mnt_ns->root->mnt) {
-+		path_put(root);
-+		*root = (struct path){};
-+		return -ENOENT;
-+	}
-+	return 0;
-+}
-+
- static int mntns_install(struct nsset *nsset, struct ns_common *ns)
+@@ -6582,6 +6582,7 @@ static bool mnt_already_visible(struct mnt_namespace *ns,
+ 				const struct super_block *sb,
+ 				int *new_mnt_flags)
  {
- 	struct nsproxy *nsproxy = nsset->nsproxy;
-diff --git a/include/linux/mnt_namespace.h b/include/linux/mnt_namespace.h
-index 0acd1089d149..98188d1f7428 100644
---- a/include/linux/mnt_namespace.h
-+++ b/include/linux/mnt_namespace.h
-@@ -8,6 +8,7 @@
++	bool foreign_ns = !ns_capable_noaudit(ns->user_ns, CAP_SYS_ADMIN);
+ 	int new_flags = *new_mnt_flags;
+ 	struct mount *mnt;
  
- struct mnt_namespace;
- struct fs_struct;
-+struct path;
- struct user_namespace;
- struct ns_common;
+@@ -6606,11 +6607,16 @@ static bool mnt_already_visible(struct mnt_namespace *ns,
+ 			continue;
  
-@@ -15,6 +16,7 @@ extern struct mnt_namespace init_mnt_ns;
+ 		/* A local view of the mount flags */
+-		mnt_flags = mnt->mnt.mnt_flags;
++		mnt_flags = READ_ONCE(mnt->mnt.mnt_flags);
  
- extern struct mnt_namespace *copy_mnt_ns(u64, struct mnt_namespace *,
- 		struct user_namespace *, struct fs_struct *);
-+int mnt_ns_get_root(struct mnt_namespace *mnt_ns, struct path *root);
- extern void put_mnt_ns(struct mnt_namespace *ns);
- DEFINE_FREE(put_mnt_ns, struct mnt_namespace *, if (!IS_ERR_OR_NULL(_T)) put_mnt_ns(_T))
- extern struct ns_common *from_mnt_ns(struct mnt_namespace *);
+ 		/* Don't miss readonly hidden in the superblock flags */
+ 		if (sb_rdonly(mnt->mnt.mnt_sb))
+ 			mnt_flags |= MNT_LOCK_READONLY;
++		if (foreign_ns) {
++			if (mnt_flags & MNT_READONLY)
++				mnt_flags |= MNT_LOCK_READONLY;
++			mnt_flags |= MNT_LOCK_ATIME;
++		}
+ 
+ 		/* Verify the mount flags are equal to or more permissive
+ 		 * than the proposed new mount.
+@@ -6629,7 +6635,7 @@ static bool mnt_already_visible(struct mnt_namespace *ns,
+ 		list_for_each_entry(child, &mnt->mnt_mounts, mnt_child) {
+ 			struct inode *inode = child->mnt_mountpoint->d_inode;
+ 			/* Only worry about locked mounts */
+-			if (!(child->mnt.mnt_flags & MNT_LOCKED))
++			if (!foreign_ns && !(READ_ONCE(child->mnt.mnt_flags) & MNT_LOCKED))
+ 				continue;
+ 			/* Is the directory permanently empty? */
+ 			if (!is_empty_dir_inode(inode))
+@@ -6650,13 +6656,18 @@ static bool mount_too_revealing(const struct super_block *sb, int *new_mnt_flags
+ 	struct mnt_namespace *ns = current->nsproxy->mnt_ns;
+ 	unsigned long s_iflags;
+ 
+-	if (ns->user_ns == &init_user_ns)
+-		return false;
+-
+ 	/* Can this filesystem be too revealing? */
+ 	if (!(sb->s_type->fs_flags & FS_USERNS_MOUNT_RESTRICTED))
+ 		return false;
+ 
++	if (ns->user_ns == &init_user_ns &&
++	    ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN))
++		return false;
++
++	if (!ns_capable_noaudit(ns->user_ns, CAP_SYS_ADMIN) &&
++	    current_chrooted())
++		return true;
++
+ 	s_iflags = sb->s_iflags;
+ 	if ((s_iflags & required_iflags) != required_iflags) {
+ 		WARN_ONCE(1, "Expected s_iflags to contain 0x%lx\n",
 -- 
 2.47.3
 
