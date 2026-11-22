@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795376161;
-	b=I/m/WknjkepquTHZzeigYfg3TxX3yHJGFeZfWf1fPwQLWNhCKsKr+E32Oo7UGqq4QW/T
-	 a1F8fBZzwQnt/2Dfk+1mqjZXN8xadmAlIkhqLicWOm4/pNTAnXDwNoOFuHewaGTVYgWjR
-	 tEMhkALAOzYh+RqGu9qR1msJyyoubRXP8sVr7CuKPPuNslN08qayV1z5BTRlUn/OOuMVh
-	 Ipbx9lxEDBPF+0NOzjRv+dalwwHXdka3MBi2r+tC9cm35y3J/R0rajarHqWtGhpHscULz
-	 x3yPOzXECz779wsn+Shs5CWicnWaDfcWHKGEjBU46yN/UwpiVrCgN5kKs4qfprSoAng==
+	t=1795376157;
+	b=Vq2U7Lltd5OvBzGPWOj4E+eHBGt2ZWCr9nlCd8f+gd1pgwWYY+qIwcEN5KCVKHRnYnnh
+	 1AVEQCExciyIEIJ7yZtqH8cVKxlYH1B9g8N4CVB8gQ7vvBDJi3SQYRxSrb0rbOIje+wDa
+	 ssIKO6Q8K5L4PMLZe83LLDdnB1cSTqRAwIKgoN4whAuJcHy7SHa72gjRZ+UYdIeM/D9t2
+	 rlLd8J14en7ecdDdeiexLAaHlopGjYFnwIAgQW/SdElZ/VieP3dzG2ukqsdYmENQah5rJ
+	 K4ZQaRfE/8mY4fWcNbeyvxVbE//r+fAPUfHhOjNk7gucUxgMq2cmuN+cr9FgaNzbgOQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795376161;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795376157;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=PxWsspzEioIIwUqnuiIeYKp1fTe5D8PzGx83Wd5XdHY=;
-	b=uN4bDiJt4K/gBOp0Yn3/NndacLmnAE+IyoCelvck80qqMIZGAvvmyjvI8X88GN6rcruG
-	 GRu2l5J0+29shwyprW+y2jRfMq83R80fA1GAQABpqRyC5EYBSCKenzGNOM8E+1MjsgALo
-	 mdgmnk49UzvCAGa3JtAzCqzPkxOkuhReDQEpjgjiqfVddGOtZ82osQX3kVEVk1ylsz19M
-	 MSkv/FXYiN30KJsLXbOfQaAqTu2EtgFnCPDWgUBHAe5Gnd2q8ImBS3zCjHQF3Hjto00dm
-	 buovwfa83f7qkSZAhsBlb1ouPDfeGEAj/kkPU7Ia8zgByPmobEcXMcYcclxgmj3CcMA==
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=z6BC8bTNkW2Kb/oWzgzzW0J38AL7u1XskPs2J4J0IMs=;
+	b=5HAeAQzZjTWvi1fsQ9sSWYGU20D62g9k65ppMXre1vhFh7gkkWtk0m9iWJgV3arfCsrG
+	 S4z5ZHJ4eqH91E3XdQ0VrCoMBjejtOEDoLD9YFuX5WIT77Jry3jKdYMLk/MQ+JCdoZA47
+	 +XAmOmI2pcp6Pib1UdFI6DJjK5VARIYYclmS0fDMDWGXo/Q7YqoDiFL8EQ6qoBvsaBjtZ
+	 8vdp69pyYsLT37jn0gSerjY6Q1/BELV55mSqWXW2LqCRsvTXDpd8O+lrtbSOmuvdIUpYG
+	 x8qeLCMO0fyH02QXGZMiMzlKyV1YYCARKhGMNGvZOWTy1x84HButIxLr/sBmXtN88AA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DFiqTxJB;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="afSm/rTg";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 46200606A32C;
-	Sun, 22 Nov 2026 19:36:01 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 10589606A31A;
+	Sun, 22 Nov 2026 19:35:56 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=DFiqTxJB
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id C697E1F000C0;
-	Sun, 22 Nov 2026 19:35:59 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=afSm/rTg
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id B9F611F000C4;
+	Sun, 22 Nov 2026 19:35:55 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795376160;
-	bh=PxWsspzEioIIwUqnuiIeYKp1fTe5D8PzGx83Wd5XdHY=;
-	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=DFiqTxJBeq3OOH2VDJJY2sRb16klNa8m8RHt5Abh/YsPImOZ5nu0uM/UuMH+1ycLe
-	 S+SXiQ9ZdkEJGKkPN8frshQVWuicTWsoG5qYiFtE16U0SbJ6N0d/pprgRSmcbMWB0L
-	 0fc+vdB1MX5xOtwmvvCKQVbCxtNDWEr972W+bhnrLZB08bFuYj96P+xs8sX24UVzV5
-	 vR6e0SgrDbPp5c3KER4nWHsM3H80dhGu3haKOn8CZtqET9eS+adDfRk0TJeYI2DcSh
-	 DNDD/KxSNtFTnTtbxIpVpUpwPU2Jqbe3L0B6Jmlu7Ie34V9iCvX0vbkLcG4h/jk/TN
-	 FUckdOsdfl/JQ==
+	s=k20260515; t=1795376156;
+	bh=z6BC8bTNkW2Kb/oWzgzzW0J38AL7u1XskPs2J4J0IMs=;
+	h=From:To:Cc:Subject:Date;
+	b=afSm/rTgzZFMW4Yd8GBsTnSi9/k2rA1cJD3HY1AclLcTYC2Pw31SwD5cb38UUnt5h
+	 moA+Kqi0QCm1/F/hxeBnTNyIYcLusk85RFidS1GsWr5couz3pL+I1T1yIBypCTASGe
+	 XbUbdKrwjOFZa83YcBPm9SlCo8TjRp9S7RKJlOrFkc0NnR2SSFGLcS4WL3H/twPPag
+	 f8GxIQ+hSsoK3ofc5Ng5+leToB1vwlHPQ2DMkJItOwKoQm9xxNT6/xhH/V5k7PWBEw
+	 Mo/UCOByeRZwlG+JM1WWvB9HxaWLPKpZqmjCV+KRpaC0URJL4yccz9+7La7yWzW88A
+	 HVkmmV/DgCtYg==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,12 +75,10 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v7 01/26] userns: Factor out idmap validation and commit helpers
-Date: Sun, 22 Nov 2026 21:35:14 +0200
-Message-ID: <20261122193539.3334213-2-jarkko@kernel.org>
+Subject: [RFC PATCH v7 00/26] userland: Userland containers
+Date: Sun, 22 Nov 2026 21:35:13 +0200
+Message-ID: <20261122193539.3334213-1-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
-In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
-References: <20261122193539.3334213-1-jarkko@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -92,322 +90,427 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-map_write() and its permission helpers validate extent ranges, check
-root and unprivileged self-mappings, translate parent ID ranges, sort
-extents, and install the resulting map inline for procfs text writes,
-preventing non-procfs callers from reusing the same validation and
-commit path.
+OVERVIEW
+========
 
-Extract idmap_maps_root(), unpriv_idmap_permitted(),
-validate_and_insert_extent(), free_new_idmap(), resolve_new_idmap(), and
-commit_new_idmap() with no functional change.
+A userland is an anonymous-inode control object with separate build and
+live phases that binds together:
 
-Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
----
- kernel/user_namespace.c | 229 +++++++++++++++++++++-------------------
- 1 file changed, 122 insertions(+), 107 deletions(-)
+1. A full set of detached namespaces owned by a fresh user namespace,
+   with optional build-phase opt-in sharing (USERLAND_SHARE_NSFD).
+2. A dedicated PID namespace for spawning processes into, signaling
+   members, and polling or waiting on PID 1 exit.
+3. An initially empty mount namespace (CLONE_EMPTY_MNTNS) populated
+   directly in its target user namespace before going live, without
+   inheriting host mounts or cloning staged trees, while still allowing
+   new mounts to be attached at runtime.
 
-diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index cd748e1cbace..caba2ac33077 100644
---- a/kernel/user_namespace.c
-+++ b/kernel/user_namespace.c
-@@ -884,6 +884,22 @@ VISIBLE_IF_KUNIT int uid_gid_map_sort(struct uid_gid_map *map)
- }
- EXPORT_SYMBOL_IF_KUNIT(uid_gid_map_sort);
- 
-+static bool idmap_maps_root(const struct uid_gid_map *new_map)
-+{
-+	unsigned int idx;
-+
-+	for (idx = 0; idx < new_map->nr_extents; idx++) {
-+		const struct uid_gid_extent *e;
-+
-+		if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
-+			e = &new_map->extent[idx];
-+		else
-+			e = &new_map->forward[idx];
-+		if (e->lower_first == 0)
-+			return true;
-+	}
-+	return false;
-+}
- /**
-  * verify_root_map() - check the uid 0 mapping
-  * @file: idmapping file
-@@ -900,22 +916,9 @@ static bool verify_root_map(const struct file *file,
- 			    struct user_namespace *map_ns,
- 			    struct uid_gid_map *new_map)
- {
--	int idx;
- 	const struct user_namespace *file_ns = file->f_cred->user_ns;
--	struct uid_gid_extent *extent0 = NULL;
--
--	for (idx = 0; idx < new_map->nr_extents; idx++) {
--		if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
--			extent0 = &new_map->extent[idx];
--		else
--			extent0 = &new_map->forward[idx];
--		if (extent0->lower_first == 0)
--			break;
--
--		extent0 = NULL;
--	}
- 
--	if (!extent0)
-+	if (!idmap_maps_root(new_map))
- 		return true;
- 
- 	if (map_ns == file_ns) {
-@@ -938,6 +941,103 @@ static bool verify_root_map(const struct file *file,
- 	return true;
- }
- 
-+static int validate_and_insert_extent(struct uid_gid_map *new_map,
-+				      struct uid_gid_extent *extent)
-+{
-+	if ((extent->first == (u32)-1) || (extent->lower_first == (u32)-1))
-+		return -EINVAL;
-+
-+	if ((extent->first + extent->count) <= extent->first)
-+		return -EINVAL;
-+	if ((extent->lower_first + extent->count) <= extent->lower_first)
-+		return -EINVAL;
-+
-+	if (mappings_overlap(new_map, extent))
-+		return -EINVAL;
-+
-+	if (new_map->nr_extents >= UID_GID_MAP_MAX_EXTENTS)
-+		return -EINVAL;
-+
-+	return uid_gid_map_insert_extent(new_map, extent);
-+}
-+
-+static void free_new_idmap(struct uid_gid_map *new_map)
-+{
-+	if (new_map->nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
-+		kfree(new_map->forward);
-+		kfree(new_map->reverse);
-+	}
-+	memset(new_map, 0, sizeof(*new_map));
-+}
-+
-+static int resolve_new_idmap(struct uid_gid_map *new_map,
-+			     struct uid_gid_map *parent_map)
-+{
-+	unsigned int idx;
-+
-+	if (new_map->nr_extents == 0)
-+		return -EINVAL;
-+
-+	for (idx = 0; idx < new_map->nr_extents; idx++) {
-+		struct uid_gid_extent *e;
-+		u32 lower_first;
-+
-+		if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
-+			e = &new_map->extent[idx];
-+		else
-+			e = &new_map->forward[idx];
-+
-+		lower_first = map_id_range_down(parent_map,
-+						e->lower_first,
-+						e->count);
-+		if (lower_first == (u32)-1)
-+			return -EPERM;
-+
-+		e->lower_first = lower_first;
-+	}
-+
-+	return uid_gid_map_sort(new_map);
-+}
-+
-+static void commit_new_idmap(struct uid_gid_map *map,
-+			     struct uid_gid_map *new_map)
-+{
-+	if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
-+		memcpy(map->extent, new_map->extent,
-+		       new_map->nr_extents * sizeof(new_map->extent[0]));
-+	} else {
-+		map->forward = new_map->forward;
-+		map->reverse = new_map->reverse;
-+	}
-+	/*
-+	 * Pairs with smp_rmb() in map_id_range_down(), map_id_range_up(),
-+	 * and m_start().
-+	 */
-+	smp_wmb();
-+	map->nr_extents = new_map->nr_extents;
-+	memset(new_map, 0, sizeof(*new_map));
-+}
-+
-+static bool unpriv_idmap_permitted(const struct user_namespace *ns,
-+				   const struct cred *cred, int cap_setid,
-+				   unsigned long ns_flags,
-+				   const struct uid_gid_map *new_map)
-+{
-+	u32 id;
-+
-+	if (new_map->nr_extents != 1 || new_map->extent[0].count != 1 ||
-+	    !uid_eq(ns->owner, cred->euid))
-+		return false;
-+
-+	id = new_map->extent[0].lower_first;
-+	if (cap_setid == CAP_SETUID)
-+		return uid_eq(make_kuid(ns->parent, id), cred->euid);
-+	if (cap_setid == CAP_SETGID)
-+		return !(ns_flags & USERNS_SETGROUPS_ALLOWED) &&
-+		       gid_eq(make_kgid(ns->parent, id), cred->egid);
-+	return false;
-+}
-+
- /*
-  * Parse the decimal u32 at *pos, up to the next whitespace or NUL, and
-  * leave *pos pointing at that character.
-@@ -966,8 +1066,7 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- {
- 	struct seq_file *seq = file->private_data;
- 	struct user_namespace *map_ns = seq->private;
--	struct uid_gid_map new_map;
--	unsigned idx;
-+	struct uid_gid_map new_map = {};
- 	struct uid_gid_extent extent;
- 	char *kbuf, *pos, *next_line;
- 	ssize_t ret;
-@@ -1002,8 +1101,6 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 	 */
- 	mutex_lock(&userns_state_mutex);
- 
--	memset(&new_map, 0, sizeof(struct uid_gid_map));
--
- 	ret = -EPERM;
- 	/* Only allow one successful write to the map */
- 	if (map->nr_extents != 0)
-@@ -1052,98 +1149,28 @@ static ssize_t map_write(struct file *file, const char __user *buf,
- 		if (*pos != '\0')
- 			goto out;
- 
--		/* Verify we have been given valid starting values */
--		if ((extent.first == (u32) -1) ||
--		    (extent.lower_first == (u32) -1))
--			goto out;
--
--		/* Verify count is not zero and does not cause the
--		 * extent to wrap
--		 */
--		if ((extent.first + extent.count) <= extent.first)
--			goto out;
--		if ((extent.lower_first + extent.count) <=
--		     extent.lower_first)
--			goto out;
--
--		/* Do the ranges in extent overlap any previous extents? */
--		if (mappings_overlap(&new_map, &extent))
--			goto out;
--
--		if ((new_map.nr_extents + 1) == UID_GID_MAP_MAX_EXTENTS &&
--		    (next_line != NULL))
--			goto out;
--
--		ret = uid_gid_map_insert_extent(&new_map, &extent);
-+		ret = validate_and_insert_extent(&new_map, &extent);
- 		if (ret < 0)
- 			goto out;
- 		ret = -EINVAL;
- 	}
--	/* Be very certain the new map actually exists */
-+
- 	if (new_map.nr_extents == 0)
- 		goto out;
- 
- 	ret = -EPERM;
--	/* Validate the user is allowed to use user id's mapped to. */
- 	if (!new_idmap_permitted(file, map_ns, cap_setid, &new_map))
- 		goto out;
- 
--	ret = -EPERM;
--	/* Map the lower ids from the parent user namespace to the
--	 * kernel global id space.
--	 */
--	for (idx = 0; idx < new_map.nr_extents; idx++) {
--		struct uid_gid_extent *e;
--		u32 lower_first;
--
--		if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS)
--			e = &new_map.extent[idx];
--		else
--			e = &new_map.forward[idx];
--
--		lower_first = map_id_range_down(parent_map,
--						e->lower_first,
--						e->count);
--
--		/* Fail if we can not map the specified extent to
--		 * the kernel global id space.
--		 */
--		if (lower_first == (u32) -1)
--			goto out;
--
--		e->lower_first = lower_first;
--	}
--
--	/*
--	 * If we want to use binary search for lookup, this clones the extent
--	 * array and sorts both copies.
--	 */
--	ret = uid_gid_map_sort(&new_map);
-+	ret = resolve_new_idmap(&new_map, parent_map);
- 	if (ret < 0)
- 		goto out;
- 
--	/* Install the map */
--	if (new_map.nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
--		memcpy(map->extent, new_map.extent,
--		       new_map.nr_extents * sizeof(new_map.extent[0]));
--	} else {
--		map->forward = new_map.forward;
--		map->reverse = new_map.reverse;
--	}
--	smp_wmb();
--	map->nr_extents = new_map.nr_extents;
--
-+	commit_new_idmap(map, &new_map);
- 	*ppos = count;
- 	ret = count;
- out:
--	if (ret < 0 && new_map.nr_extents > UID_GID_MAP_MAX_BASE_EXTENTS) {
--		kfree(new_map.forward);
--		kfree(new_map.reverse);
--		map->forward = NULL;
--		map->reverse = NULL;
--		map->nr_extents = 0;
--	}
--
-+	free_new_idmap(&new_map);
- 	mutex_unlock(&userns_state_mutex);
- 	kfree(kbuf);
- 	return ret;
-@@ -1213,20 +1240,8 @@ static bool new_idmap_permitted(const struct file *file,
- 	/* Don't allow mappings that would allow anything that wouldn't
- 	 * be allowed without the establishment of unprivileged mappings.
- 	 */
--	if ((new_map->nr_extents == 1) && (new_map->extent[0].count == 1) &&
--	    uid_eq(ns->owner, cred->euid)) {
--		u32 id = new_map->extent[0].lower_first;
--		if (cap_setid == CAP_SETUID) {
--			kuid_t uid = make_kuid(ns->parent, id);
--			if (uid_eq(uid, cred->euid))
--				return true;
--		} else if (cap_setid == CAP_SETGID) {
--			kgid_t gid = make_kgid(ns->parent, id);
--			if (!(ns->flags & USERNS_SETGROUPS_ALLOWED) &&
--			    gid_eq(gid, cred->egid))
--				return true;
--		}
--	}
-+	if (unpriv_idmap_permitted(ns, cred, cap_setid, ns->flags, new_map))
-+		return true;
- 
- 	/* Allow anyone to set a mapping that doesn't require privilege */
- 	if (!cap_valid(cap_setid))
--- 
+Work on this feature started in 2025 after reviewing David Howells'
+container object patch set [1], whose underlying mechanics made sense to
+me as a continuation of earlier container object efforts [2]. The
+lifecycle follows a staircase initialization model similar to the Intel
+SGX driver, without an embryonic task state or a parallel namespace
+syscall API, pairing a compact policy-agnostic implementation with an
+allow-list security model (with LSM hooks) and runtime mount hotplug.
+
+While the patch set is manually written, the original motivation came
+from isolating LLM agents. Running untrusted agent workloads made it
+clear that OCI runtimes need to minimize their live configuration
+surface.
+
+Assembling mounts, credentials, and namespaces inside helper processes
+with a half-configured container is what I see as the main challenge,
+and the existential debate around namespaces and container objects is an
+unfocused discussion topic.
+
+[1] https://lore.kernel.org/all/155059610368.17079.2220554006494174417.stgit@warthog.procyon.org.uk/
+[2] https://lwn.net/Articles/1102593/
+
+IMPLEMENTATION
+==============
+
+Standalone fd-based namespace configuration (patches 01-07) decouples
+user and mount namespace setup from live helper tasks. userns_set_idmap()
+atomically configures USERNS_SETGROUPS_ALLOWED policy and UID, GID, and
+project ID mappings on a CLONE_NEWUSER nsfs fd, checking current_cred()
+so an unprivileged creator can delegate the fd via SCM_RIGHTS to a
+privileged mapping daemon. move_mount(..., MOVE_MOUNT_T_MNTNS) operates
+on any non-anonymous mount namespace fd: on an empty mount namespace it
+installs "/" onto the nullfs root once, attaches relative submounts both
+before entry and into live mount namespaces, and supports
+MOVE_MOUNT_CLONE for recursive bind mounts without OPEN_TREE_CLONE.
+
+userland_open() allocates a userland instance backed by a pollable
+anonymous-inode fd, creating a fresh owning user namespace and a full
+set of detached namespaces: empty mount (CLONE_EMPTY_MNTNS), PID, UTS,
+IPC, network, cgroup, and time. ioctl(ufd, USERLAND_GET_NSFD, nstype)
+returns nsfs file descriptors for member namespaces, and
+ioctl(ufd, USERLAND_SHARE_NSFD, ns_fd) replaces a member cgroup, IPC,
+UTS, network, or time namespace while the userland is in USERLAND_INIT.
+
+Superblocks are configured directly in the target user namespace via
+fsopen(), FSCONFIG_SET_USERLAND, and fsmount() for filesystems opting
+into FS_USERLAND_MOUNT (tmpfs, ramfs, devpts, proc, mqueue) or
+FS_USERNS_DELEGATABLE, allowing unprivileged callers to assemble mounts
+without holding CAP_SYS_ADMIN in their own user namespace or entering
+the target user namespace first.
+
+Once "/" is installed, processes are spawned into the userland via
+clone3() with CLONE_INTO_USERLAND and struct clone_args.userland,
+without modifying the calling process's own live state first. Pairing
+CLONE_INTO_USERLAND with CLONE_VFORK and opening the target binary via
+openat2(..., RESOLVE_IN_ROOT) on the retained "/" mount fd allows
+spawning with execveat() directly into the target root.
+
+The first entrant becomes PID 1; once it exits and
+zap_pid_ns_processes() reaps all members, poll() reports EPOLLHUP and
+waitid(P_USERLAND, ufd, infop, options, NULL) returns init's exit
+status without consuming it. pidfd_send_signal(ufd, sig, NULL, 0) walks
+pid_ns->idr under tasklist_lock to signal member thread groups, and
+dedicated LSM hooks mediate userland allocation, teardown, namespace
+sharing, process entry, and signal delivery.
+
+SYSCALLS
+========
+
+Two new system calls are proposed:
+
+1. userland_open(): open an opaque staircase-initialized container
+   object (modeled on Intel SGX enclave initialization with separate
+   build and live states) with no embryonic state, opting selected
+   shared namespaces in via an allow-list instead of unshare semantics.
+2. userns_set_idmap(): configure all UID, GID, and project ID map
+   extents for a container user namespace in a single atomic system
+   call.
+
+Extensions to existing system calls:
+
+1. move_mount() (MOVE_MOUNT_T_MNTNS, MOVE_MOUNT_CLONE): install "/" and
+   relative submounts into a mount namespace fd before entry or at
+   runtime, and recursively bind-clone mount trees without
+   OPEN_TREE_CLONE.
+2. clone3() (CLONE_INTO_USERLAND, struct clone_args.userland): spawn
+   PID 1 and subsequent processes directly into a userland without
+   modifying the calling process's own live state first.
+3. fsopen() / fsconfig() / fsmount() (FSCONFIG_SET_USERLAND): bind a
+   filesystem context to a userland's namespaces and create mounts
+   without entering its user namespace.
+4. waitid() (P_USERLAND): wait on a userland fd for PID 1 exit and read
+   its exit status without consuming it.
+5. pidfd_send_signal(): broadcast signals to member thread groups via a
+   userland fd.
+6. ioctl() (USERLAND_GET_NSFD, USERLAND_SHARE_NSFD): open member nsfs
+   file descriptors and opt selected namespaces into existing nsfs fds
+   during USERLAND_INIT.
+
+HOTPLUG
+=======
+
+1. Host calls userland_open().
+2. Host sets uid/gid maps with userns_set_idmap().
+3. Host populates "/" with MOVE_MOUNT_T_MNTNS, optionally combined with
+   MOVE_MOUNT_CLONE for bind mounts.
+4. Host spawns PID 1 with clone3(CLONE_INTO_USERLAND) (optionally
+   passing an AF_UNIX socketpair fd for communication).
+5. PID 1 watches /proc/self/ns/mnt via fanotify(FAN_REPORT_MNT |
+   FAN_MARK_MNTNS, FAN_MNT_ATTACH) or polls /proc/self/mountinfo.
+6. On hotplug, host mounts the filesystem via fsopen() /
+   fsconfig(FSCONFIG_SET_USERLAND) / fsmount() (plus optional
+   MOUNT_ATTR_IDMAP).
+7. Host creates the mountpoint with openat2(RESOLVE_IN_ROOT) + mkdirat()
+   and attaches the mount with MOVE_MOUNT_T_MNTNS.
+8. PID 1 receives FAN_MNT_ATTACH and queries the new mount via
+   statmount().
+
+CHANGES
+=======
+
+v7:
+- Run userland_copy() after dropping tasklist_lock in copy_process() so
+  userland->lock is never acquired with interrupts disabled, and loop
+  under userland->lock in userland_waitid() so blocking
+  waitid(P_USERLAND) never returns -EAGAIN across concurrent bootstrap
+  retries (Sashiko).
+- Defer may_mount() in fsmount() until neither FSMOUNT_NAMESPACE nor
+  fc->userland_bound applies, deduplicate idmap_maps_root() and
+  unpriv_idmap_permitted() in kernel/user_namespace.c, compute
+  foreign_ns once in mount_too_revealing(), hoist cross_child_src in
+  attach_recursive_mnt(), and drop unreachable !current->nsproxy checks
+  (Sashiko).
+- Document ->set_userland() and userland_bound in mount_api.rst, move
+  all userland.rst prose into kernel-doc comments including lifecycle
+  states and credential rules, and narrow pidfd_send_signal() commit
+  description to forks by member processes (Sashiko).
+- Add TEST_INCLUDES for ksft.py, distinguish i386 from x32 on x86_64,
+  tolerate CONFIG_TIME_NS=n in test_get_nsfd(), and switch AF_UNIX fd
+  passing to SOCK_SEQPACKET in selftests/userland (Sashiko).
+
+v6:
+- Rename rootns to userland (CONFIG_USERLAND, userland_open(),
+  userland_ prefix, CLONE_INTO_USERLAND, FSCONFIG_SET_USERLAND,
+  P_USERLAND, USERLAND_GET_NSFD).
+- Replace ROOTNS_WAIT and ROOTNS_KILL ioctls with waitid(P_USERLAND) and
+  pidfd_send_signal() support for userland file descriptors.
+- Add build-phase USERLAND_SHARE_NSFD ioctl and security_userland_share()
+  LSM hook to opt cgroup, IPC, UTS, network, or time namespaces into an
+  existing nsfs fd before process entry.
+- Pass USERNS_SETGROUPS_ALLOWED via userns_set_idmap() flags instead of
+  in-struct request flags.
+- Gate FSCONFIG_SET_USERLAND and unprivileged fsopen() on explicit
+  FS_USERLAND_MOUNT opt-in (tmpfs, ramfs, devpts, proc, mqueue), refresh
+  fc->cred on bind, bound userns_set_idmap() size to PAGE_SIZE (-E2BIG),
+  enforce projid_map privilege checks and atomic ns->flags updates, fix
+  cross-userns slave mount locking in attach_recursive_mnt(), reject
+  SB_NOUSER and cross-mntns nsfs loops in MOVE_MOUNT_CLONE, and walk
+  ancestor PIDNS_ADDING flags in CLONE_INTO_USERLAND (Sashiko).
+
+v5:
+- Heavy reduction of cc-list. More added by request.
+- Re-slice the patch set into standalone fd-based user and mount
+  namespace configuration (01-07) followed by rootns (08-25), and split
+  proc, ipc/mqueue, and bpf_lsm changes into separate commits.
+- Add userns_set_idmap() system call to atomically configure setgroups
+  and UID, GID, and project ID mappings on CLONE_NEWUSER nsfs fds
+  without /proc/<pid>/*_map, checking current_cred() so unprivileged
+  userns fds can be delegated via SCM_RIGHTS to a privileged mapping
+  daemon (Andy Lutomirski).
+- Add MOVE_MOUNT_CLONE with MOVE_MOUNT_T_MNTNS in move_mount() to
+  recursively bind-clone host mount subtrees into a target mount
+  namespace fd without OPEN_TREE_CLONE.
+- Clarify in overview and uAPI documentation that rootns is an
+  anonymous-inode control object rather than an nsfs namespace.
+- Fix upfront pidns ancestry check in ROOTNS_WAIT, bootstrap -EINVAL
+  preservation in CLONE_INTO_ROOTNS, FSCONFIG_SET_ROOTNS user_ns
+  delegation and fsmount() rootns_bound/seq_origin handling, proc
+  pidns= mount option override check, cross-userns anonymous mount
+  MNT_LOCKED propagation, and selftest wide-arch _IOC_NONE, socket
+  blocking, and cleanup handling (Sashiko).
+- Extend selftests/rootns with userns_set_idmap(), SCM_RIGHTS
+  delegation, MOVE_MOUNT_CLONE, and hotplug mount coverage.
+
+v4:
+- A single syscall API (and shenanigans e.g., in fsconfig).
+- I use a similar API model as I used in SGX driver, as like enclaves,
+  containers are "closures". Instead of /dev/sgx_enclave like device
+  file, anon inode is used.
+- Consolidate rootns_create(), rootns_wait(), and rootns_kill() into a
+  single rootns() system call plus ROOTNS_WAIT and ROOTNS_KILL ioctls,
+  dropping rusage from ROOTNS_WAIT.
+- LSM: lbs_rootns security blob management and security_rootns_alloc(),
+  security_rootns_free(), security_rootns_clone(), and
+  security_rootns_kill() LSM hooks wired into bpf_lsm.
+- Disallow CLONE_VM with CLONE_INTO_ROOTNS across time namespaces, require
+  CAP_SYS_CHROOT, preserve caller umask, reset dumpability on user
+  namespace transitions, and fix ROOTNS_WAIT, FSCONFIG_SET_ROOTNS,
+  fsmount(), and MOVE_MOUNT_T_MNTNS locking and permission checks
+  (Sashiko).
+- Rewrite selftests/rootns in Python. I used similar structure as I've
+  used in selftests/tpm2. This "along the lines" mimics Cells style
+  container manager. Rootns is a quite typical no policy solution and
+  Cells is a managed solution, and they are at the far ends, which can
+  also be witnessed from the patch set sizes.
+
+  The question really is where we want to draw the borderline. I'm
+  neither favoring nor supporting any possible solution because I don't
+  know. I'm just saying where they live as a software stack.
+- Update documentation and architecture syscall tables for rootns().
+
+v3:
+- The patch set size increased predominantly because the coverage of
+  kselftest had to widened to cover the introduced changes.
+- Replace MOVE_MOUNT_T_ROOTNS_ROOT with MOVE_MOUNT_T_MNTNS targeting
+  mnt_ns nsfs fds, and add ioctl(ROOTNS_GET_NSFD) to open member
+  namespace fds (Andy Lutomirski).
+- Allow unprivileged fsopen(), FSCONFIG_SET_ROOTNS, and fsmount() to
+  configure and mount FS_USERNS_MOUNT filesystems directly in the target
+  user namespace without entering it first (Andy Lutomirski).
+- Fix locking, refcounting, credential/dumpability/timens setup,
+  pivot_root() lookup, and cross-userns mount checks across copy_rootns(),
+  CLONE_INTO_ROOTNS, rootns_kill(), FSCONFIG_SET_ROOTNS, and move_mount()
+  (Sashiko).
+- Mark PowerPC rootns syscalls nospu (Sashiko).
+- Update documentation and kselftests.
+
+v2:
+- Drop rootns provenance tracking (rootns_id and rootns_may_setns()) and
+  rely on user_namespace ownership for setns() isolation (Andy
+  Lutomirski).
+- Replace the rootns_enter() system call with clone3(CLONE_INTO_ROOTNS)
+  and struct clone_args.rootns (CLONE_ARGS_SIZE_VER3), allowing
+  CLONE_VM | CLONE_VFORK and compatible per-child clone3() flags (Andy
+  Lutomirski).
+- Drop the spurious task_no_new_privs() check in may_enter_rootns_creds()
+  (Andy Lutomirski).
+- Update documentation, Kconfig, syscall tables, and kselftests for
+  CLONE_INTO_ROOTNS.
+
+VERSIONS
+========
+
+v6: https://lore.kernel.org/linux-fsdevel/20261122011809.2667684-1-jarkko@kernel.org/
+v5: https://lore.kernel.org/linux-fsdevel/20261121000844.1863324-1-jarkko@kernel.org/
+v4: https://lore.kernel.org/linux-fsdevel/20261119224312.1037966-1-jarkko@kernel.org/
+v3: https://lore.kernel.org/linux-fsdevel/20261118193539.240065-1-jarkko@kernel.org/
+v2: https://lore.kernel.org/linux-fsdevel/20261117231352.3816603-1-jarkko@kernel.org/
+v1: https://lore.kernel.org/linux-fsdevel/20261117050841.3289652-1-jarkko@kernel.org/
+
+Cc: bpf@vger.kernel.org
+Cc: containers@lists.linux.dev
+Cc: linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-kselftest@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: linux-security-module@vger.kernel.org
+Cc: Aleksa Sarai <aleksa@amutable.com>
+Cc: Alexander Mikhalitsyn <alex@amutable.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Christian Brauner <brauner@kernel.org>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Giuseppe Scrivano <giuseppe@scrivano.org>
+Cc: Hugh Dickins <hughd@google.com>
+Cc: Jan Kara <jack@suse.cz>
+Cc: Jeff Layton <jlayton@kernel.org>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Josef Bacik <josef@toxicpanda.com>
+Cc: Kees Cook <kees@kernel.org>
+Cc: KP Singh <kpsingh@kernel.org>
+Cc: Lennart Poettering <lennart@poettering.net>
+Cc: Neal Gompa <neal@gompa.dev>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Paul Moore <paul@paul-moore.com>
+Cc: Pavel Tikhomirov <ptikhomirov@virtuozzo.com>
+Cc: Serge Hallyn <sergeh@kernel.org>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
+
+Jarkko Sakkinen (26):
+  userns: Factor out idmap validation and commit helpers
+  userns: Add userns_set_idmap() system call
+  arch: Wire up userns_set_idmap() system call
+  mount: Add mnt_ns_get_root()
+  mount: Enforce mount_too_revealing() for foreign mntns
+  mount: Support MOVE_MOUNT_T_MNTNS in move_mount()
+  mount: Support MOVE_MOUNT_CLONE with MOVE_MOUNT_T_MNTNS
+  userns: Factor out install_user_ns_cred()
+  nsproxy: Expose create_new_namespaces()
+  userland: Add core infrastructure
+  userland: Track init lifecycle via copy_process() and pid_namespace
+  userland: Add userland_open() system call
+  userland: Add USERLAND_GET_NSFD ioctl
+  userland: Add USERLAND_SHARE_NSFD ioctl
+  exit: Support P_USERLAND in waitid()
+  signal: Support userland fds in pidfd_send_signal()
+  fork: Support CLONE_INTO_USERLAND in clone3()
+  fs: Support FSCONFIG_SET_USERLAND in fsconfig()
+  proc: Implement ->set_userland() fs_context operation
+  ipc/mqueue: Implement ->set_userland() fs_context operation
+  security: Add userland LSM hooks
+  bpf: Register userland LSM hooks
+  arch: Wire up userland_open() system call
+  docs: Document userland uAPI
+  selftests/userland: Add userland test suite
+  MAINTAINERS: Add entry for USERLAND
+
+ Documentation/filesystems/mount_api.rst       |   32 +-
+ Documentation/userspace-api/index.rst         |    1 +
+ .../userspace-api/ioctl/ioctl-number.rst      |    1 +
+ Documentation/userspace-api/userland.rst      |   77 +
+ MAINTAINERS                                   |   11 +
+ arch/alpha/kernel/syscalls/syscall.tbl        |    2 +
+ arch/arm/tools/syscall.tbl                    |    2 +
+ arch/arm64/tools/syscall_32.tbl               |    2 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |    2 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |    2 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |    2 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |    2 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |    2 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |    2 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |    2 +
+ arch/s390/kernel/syscalls/syscall.tbl         |    2 +
+ arch/sh/kernel/syscalls/syscall.tbl           |    2 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |    2 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |    2 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |    2 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |    2 +
+ fs/devpts/inode.c                             |    4 +-
+ fs/filesystems.c                              |   15 +
+ fs/fs_context.c                               |   21 +-
+ fs/fsopen.c                                   |  137 +-
+ fs/internal.h                                 |    7 +-
+ fs/namespace.c                                |  358 ++-
+ fs/proc/root.c                                |   26 +-
+ fs/ramfs/inode.c                              |    2 +-
+ include/linux/cred.h                          |    4 +-
+ include/linux/fs.h                            |    1 +
+ include/linux/fs_context.h                    |    6 +
+ include/linux/lsm_hook_defs.h                 |    8 +
+ include/linux/lsm_hooks.h                     |    3 +
+ include/linux/mnt_namespace.h                 |    2 +
+ include/linux/nsfs.h                          |    1 +
+ include/linux/nsproxy.h                       |    8 +-
+ include/linux/pid_namespace.h                 |    4 +
+ include/linux/sched/task.h                    |    6 +
+ include/linux/security.h                      |   37 +
+ include/linux/syscalls.h                      |    5 +
+ include/linux/user_namespace.h                |    9 +-
+ include/linux/userland.h                      |  135 +
+ include/uapi/asm-generic/unistd.h             |   10 +-
+ include/uapi/linux/mount.h                    |    5 +-
+ include/uapi/linux/nsfs.h                     |   46 +
+ include/uapi/linux/sched.h                    |    5 +
+ include/uapi/linux/userland.h                 |   58 +
+ include/uapi/linux/wait.h                     |    1 +
+ init/Kconfig                                  |   10 +
+ ipc/mqueue.c                                  |   18 +-
+ kernel/Makefile                               |    2 +
+ kernel/bpf/bpf_lsm.c                          |   11 +
+ kernel/cred.c                                 |   27 +-
+ kernel/exit.c                                 |    4 +
+ kernel/fork.c                                 |   72 +-
+ kernel/nsproxy.c                              |   15 +-
+ kernel/pid_namespace.c                        |    2 +
+ kernel/signal.c                               |    4 +
+ kernel/sys_ni.c                               |    4 +
+ kernel/user_namespace.c                       |  459 +++-
+ kernel/userland.c                             |  717 +++++
+ mm/shmem.c                                    |    5 +-
+ scripts/syscall.tbl                           |    2 +
+ security/lsm_init.c                           |    6 +
+ security/security.c                           |   72 +
+ tools/include/uapi/asm-generic/unistd.h       |   10 +-
+ .../perf/arch/arm/entry/syscalls/syscall.tbl  |    2 +
+ .../arch/mips/entry/syscalls/syscall_n64.tbl  |    2 +
+ .../arch/powerpc/entry/syscalls/syscall.tbl   |    2 +
+ .../perf/arch/s390/entry/syscalls/syscall.tbl |    2 +
+ tools/perf/arch/sh/entry/syscalls/syscall.tbl |    2 +
+ .../arch/sparc/entry/syscalls/syscall.tbl     |    2 +
+ .../arch/x86/entry/syscalls/syscall_32.tbl    |    2 +
+ .../arch/x86/entry/syscalls/syscall_64.tbl    |    2 +
+ .../arch/xtensa/entry/syscalls/syscall.tbl    |    2 +
+ tools/scripts/syscall.tbl                     |    2 +
+ tools/testing/selftests/Makefile              |    1 +
+ tools/testing/selftests/userland/Makefile     |    6 +
+ tools/testing/selftests/userland/config       |   10 +
+ .../testing/selftests/userland/test_smoke.sh  |   10 +
+ .../selftests/userland/userland_cells.py      | 1088 ++++++++
+ .../selftests/userland/userland_test.py       | 2330 +++++++++++++++++
+ 83 files changed, 5782 insertions(+), 201 deletions(-)
+ create mode 100644 Documentation/userspace-api/userland.rst
+ create mode 100644 include/linux/userland.h
+ create mode 100644 include/uapi/linux/userland.h
+ create mode 100644 kernel/userland.c
+ create mode 100644 tools/testing/selftests/userland/Makefile
+ create mode 100644 tools/testing/selftests/userland/config
+ create mode 100755 tools/testing/selftests/userland/test_smoke.sh
+ create mode 100644 tools/testing/selftests/userland/userland_cells.py
+ create mode 100755 tools/testing/selftests/userland/userland_test.py
+
+--
 2.47.3
 
