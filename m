@@ -1,74 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795312726;
-	b=HGXGp2OxJx3oILS2vmO8vkm6eLnCwT1RBoelpTyUSMuqmbmikGbctvEu/jcQSJ++ph9J
-	 3IdY2McUMspp4gtAcH55E/tk8ienkVHb0Qz/lPdfOuaTNOOw4I3Vk0R1YKVDjQJOeW1e3
-	 iyL8HKFkKEMt/U0VYFy8gyLKAECwyzPnYD5mxLaetvTGg06RUPyvgl8Xfyj7svNVwVsjk
-	 eOTtP/2VGtc7CocN0VQgFDhSXq8BRZM66HVAZUjSr5Uxhzr+XtNT7b3VPqxsnhfQ6PScw
-	 tiU/OXcsUyGkYMoU0NIw+5UJ/kjPjGX2EdTpUunkdPXCVxypI/rMOV/equx5qsckjmw==
+	t=1795313606;
+	b=JxFejBjJL67/XPYDnw5fyfdkWb8wlyTcaMH1Pf/cyhoyXlcK6OhvC0/arQGGgff2It2b
+	 zhywcXwhqIjQA6nNsP0JifwR/mINoYwvbr2cIEPuaBmI4OGpGhd99y81w6Hjgzrow5rcq
+	 4HZl+BohKdA3bQVx1tWrntAF1sqnQULSXWRYbMLb3eZfyhYeiI6EBuIXPVzIBpT+gBeyP
+	 IWhTyZT7upCSSbxIqbppCSx3GD+Pie3s3sFhkUUD5/GgL7fuPEd7C589q7pgzCi4kZ5Ls
+	 AI/fU8Gmcsa0UM34IK+J736RuSDEyMSgORMU9u3g0jtFjQjwcgHuCF4R7U8idHNcohg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795312726;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=my1JKAIGP65RNH2BdYIO2cHSch4Ja97YSaehc+euNFY=;
-	b=O6RaI2YhBmR9yPZUvaqBLpu1FMDVClMIy89jmXiDRLjIOfFQL+MI5k+Rk4faNPqwDsNe
-	 WxLgJb0Ii8tdi9/FQ7e2QlAG+aDI5iWdjAab8/MNpv08ysCJnfvqi1WDZAPWvZl1ugfUr
-	 14qJ0f3Bye6vlkgXR3bdxa+eCrwmPufsant/DPzc7QSwJN2ycF0QFM4XyHs0sDmUbVpbq
-	 uqJve+yjkjKe22UwfT9jWfFeVZRmiFh4WHn2P7Y9cguijpCs9E5UbTwfHlBSz6mIjUkbG
-	 b9fqlgRGiT17pJOGF/h3KK7RpgSLmS19C802u57iDubIkH65w8zjupRmMXWmX0aBo0g==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795313606;
+	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
+	 In-Reply-To:References:Subject:From:To:Cc:Date;
+	bh=JjRuBovetgGLfxfZ7NqPAG69TmUpxN1W3znDQ9aIDdg=;
+	b=jsaL4r0OZPrj24GPYFByd+P1Mq6qZjJY53Sx2aTubBGizvqKRACKu2soEjPrMH6MhmY4
+	 LbyWIkpxMWimbO0oBqhD/HW1/Dko0+UyjBiMsmkNtgVfvefI8MVJdiC6XlhD0P4QgyLer
+	 C6r1lhiT2VXKy9ZhyY4qK/DrmsoWAy4rv2mIB5qh6YFrlF2o4as68cbpaKKGlH+5lZnJk
+	 pMM1b1nVdJHc7YhVRIQSDxiu11uxz0i3PrUCCupM/O01SOab2Khk9nocrnAMm1jpvkjyI
+	 MiwePAjpO9z6cG/XwYzhku4LllYbxW0XEMLl/8KJJzLLMu1kM8Miwu/FK4BX/rHdS6w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QFaCXoo1;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MbYntUSj;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3FD8B606A320;
-	Sun, 22 Nov 2026 01:58:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0EA2E606A320;
+	Sun, 22 Nov 2026 02:13:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=QFaCXoo1
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 4C08B1F000C0;
-	Sun, 22 Nov 2026 01:58:45 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MbYntUSj
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 15DFF1F000C0;
+	Sun, 22 Nov 2026 02:13:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795312725;
-	bh=my1JKAIGP65RNH2BdYIO2cHSch4Ja97YSaehc+euNFY=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=QFaCXoo1RFl2e3MqcAATZcvWUBppaOK/u4W9/JRBcAkZTZdBf5NNHKDAP0XVFq2UB
-	 18NyeT4o7uDpW+GnmmzI+4F6b4waTXBsZLCb5Oc5D078Fi5KZpOmNE5DRLdoF99CyC
-	 fwmNjLEdakpaJ0FjhWNtTGhuldX628gpogHz2YrFO3V/F2JTjJYRYykIAz6ZKvEbdf
-	 Eq4Aa9/TFt/ibItvOY1ZqmLL6sInT0GslX+yZWal1rDzhJqeSDUudf9mp7kJ/4VXuy
-	 Yy1eAUnby1UT8qqZtlLSU/6Nmx51AhaQmuwK2mxrpWKp33SvdrM2vbo+hOz7jV/vBA
-	 SCSWiC32vxOXg==
-Date: Sun, 22 Nov 2026 03:58:41 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
-	linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Aleksa Sarai <aleksa@amutable.com>,
-	Alexander Mikhalitsyn <alex@amutable.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Arnd Bergmann <arnd@arndb.de>,
-	Christian Brauner <brauner@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Giuseppe Scrivano <giuseppe@scrivano.org>,
-	Hugh Dickins <hughd@google.com>, Jan Kara <jack@suse.cz>,
-	Jeff Layton <jlayton@kernel.org>, Jonathan Corbet <corbet@lwn.net>,
-	Josef Bacik <josef@toxicpanda.com>, Kees Cook <kees@kernel.org>,
-	KP Singh <kpsingh@kernel.org>,
-	Lennart Poettering <lennart@poettering.net>,
-	Neal Gompa <neal@gompa.dev>, Oleg Nesterov <oleg@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v6 00/26] userland: Userland containers
-Message-ID: <awJMUf_Upp_ilYPe@kernel.org>
-References: <20261122011809.2667684-1-jarkko@kernel.org>
+	s=k20260515; t=1795313605;
+	bh=JjRuBovetgGLfxfZ7NqPAG69TmUpxN1W3znDQ9aIDdg=;
+	h=In-Reply-To:References:Subject:From:To:Cc:Date;
+	b=MbYntUSj43KK0XEUMVZMfKsY3aiOU7ksnkok0GlzXj9Vtt28SDssP3J5GsRfJHmI1
+	 z6L5M088BaqXgPlcib1rK5rvsISYYuNPrudiwOa6+nxGcI0MqHaoD78Vdv7y/asAMw
+	 iztA46mkWl8XPSBv8yaWoBl4ctG+ccfTMbwJgNy/FfhthBLLLo+rNDZtLpK12DojGO
+	 03f9hyahjSI/9ZhRu0COiJEvVYkoRgaNYZTQ874FPAe0pSig/gs6fogYJ8Rl/zGDwJ
+	 74h5NE+BS8i74tataIgBme9IWkSlKlH3GIKcBDHYgzwoULDGV2yA7lpC0YXbA5SNlZ
+	 qTGbHxhSroa2A==
+Content-Type: multipart/mixed; boundary="===============0061437725914904412=="
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -78,35 +49,99 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261122011809.2667684-1-jarkko@kernel.org>
+Message-Id: <1a12b0b293d0622a6a3f897306f3cf2256be88befcfdc0bf272ceeb1de6bcac6@mail.kernel.org>
+In-Reply-To: <20261122011809.2667684-16-jarkko@kernel.org>
+References: <20261122011809.2667684-16-jarkko@kernel.org>
+Subject: Re: [RFC PATCH v6 15/26] exit: Support P_USERLAND in waitid()
+From: bot+bpf-ci@kernel.org
+To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
+Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
+Date: Sun, 22 Nov 2026 02:13:22 +0000 (UTC)
 
-On Sun, Nov 22, 2026 at 03:17:43AM +0200, Jarkko Sakkinen wrote:
-> Work on this feature started in 2025 from David Howells' container object
-> patch set [1], which I turned into a namespace for namespace roots and
-> rebuilt around that premise.
+--===============0061437725914904412==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
 
-This text is out-of-date and need to be updated.
+> exit: Support P_USERLAND in waitid()
 
-To put short, this is a continuation of "Failed" and "Repeatedly" :-)
-[1]
+TL;DR: A blocking waitid(P_USERLAND) may return an unexpected -EAGAIN if a
+failed clone3() bootstrap is retried while it sleeps; it should probably
+return -ECHILD or keep waiting.
 
-When I looked David's patches in 2025, I thought that while the
-packaging might be a bit unfinished the mechanics made sense to me, so
-since then I've occasionally worked on this problem (with long pauses
-in-between).
+> diff --git a/kernel/userland.c b/kernel/userland.c
+> --- a/kernel/userland.c
+> +++ b/kernel/userland.c
 
-The lack of embryonic state, a compact and policy-agnostic
-implementation,, the lack of weird parallel syscall API, clean
-allow-list security model (with LSM hooks) and the enablers for hotplug
-are I guess the main differentiators to the pre-existing science.
+[ ... ]
 
-I used a lot of same thinking in the life-cycle model as in SGX driver,
-which can be seen e.g., as in the staircase initialization i.e.,
-how ioctl's work and some other things. It was a reference of
-an isolated container I guess that pre-exist in mainline.
+> +/**
+> + * DOC: P_USERLAND
+> + *
+> + * ``waitid(P_USERLAND, userland_fd, &infop, options, NULL)`` waits freezably until
+> + * ``userland_fd`` reaches ``USERLAND_DEAD`` (unless ``WNOHANG`` or ``O_NONBLOCK`` is
+> + * set) and writes init's exit information into ``infop`` without consuming it.
 
-[1] https://lwn.net/Articles/1102593/
+[ ... ]
 
-Br, Jarkko
+> +	if (!nonblock) {
+> +		ret = wait_event_freezable(userland->waitq,
+> +					   READ_ONCE(userland->state) ==
+> +					   USERLAND_DEAD ||
+> +					   READ_ONCE(userland->state) ==
+> +					   USERLAND_INIT);
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+> +	scoped_guard(spinlock, &userland->lock) {
+> +		if (userland->state == USERLAND_INIT)
+> +			return -ECHILD;
+> +		if (userland->state != USERLAND_DEAD)
+> +			return (options & WNOHANG) ? 0 : -EAGAIN;
+
+Can a blocking waitid(P_USERLAND) return -EAGAIN here, even though the DOC
+comment says it waits until USERLAND_DEAD unless WNOHANG or O_NONBLOCK is
+set?
+
+The wait above ends on DEAD or INIT, but userland->lock is only taken after
+the wait returns, so the state can change in between.  INIT is not terminal
+once 498ccb2ffbc4 ("fork: Support CLONE_INTO_USERLAND in clone3()") is
+applied: userland_finish_fork() sets FORKING back to INIT under
+userland->lock when copy_process() fails, and then calls
+wake_up_all(&userland->waitq).
+
+Sequence:
+
+  Task A: waitid(P_USERLAND, fd, &si, WEXITED, NULL), blocking fd
+          passes the early INIT check and sleeps in wait_event_freezable()
+
+  Task B: clone3(CLONE_INTO_USERLAND), state is FORKING
+          copy_process() fails (e.g. -EAGAIN from RLIMIT_NPROC)
+          userland_finish_fork() sets INIT and wakes A
+
+  Task B or C: retries clone3(CLONE_INTO_USERLAND)
+          userland_prepare_fork() sees INIT and sets FORKING again
+
+  Task A: takes userland->lock, state is FORKING or RUNNING,
+          neither INIT nor DEAD, WNOHANG is clear, returns -EAGAIN
+
+With neither WNOHANG nor O_NONBLOCK set, waitid() does not return -EAGAIN
+for P_PID or P_PIDFD, so a manager doing a blocking wait gets an error it has
+no reason to expect, possibly while the new init is running.
+
+In the !nonblock case a non-DEAD state under the lock means a bootstrap
+failed, so should this return -ECHILD like the early INIT check, or go back
+to waiting?  -EAGAIN and 0 would then only apply to the nonblock case.
+
+userland_waitid() is unchanged through the end of the series, so no later
+commit fixes this.  The path is only reachable once 498ccb2ffbc4 adds the
+FORKING state; in this commit the state never leaves INIT.
+
+
+---
+AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
+See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
+
+CI run summary: https://github.com/kernel-patches/bpf/actions/runs/44972669664
+--===============0061437725914904412==--
