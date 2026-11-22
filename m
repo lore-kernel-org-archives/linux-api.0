@@ -1,45 +1,61 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795379307;
-	b=i4gQqVY4ckjXGxrBwyVZJJuA0ddctmGXmzxoFRGU1A3outJBzHkDXEcXRWjcHCCOOfDg
-	 yOrt12pncwfPsZ41M5c0z5raAT1eseIOE3aOrst0CaaK5vOhEyy+REkH0kW0k4cMCqIWu
-	 BDd74UKZSRrxFAS/KzKSB2gTqaYjKcirEvf2b/pKz5d2VDojQnaKiJM8iJRu5C6+gtuOv
-	 QToKMsUy+ZJGsId2AJ+fDyQ4IRbg68uxmJIyPU9XXKcCWXhklAAz3iSIP1ZyYD1MyW5iR
-	 0ZRLsZxSqvkqIx57leqV+vwyvBsykdMJWnwsvgg2cbVzuHULsmt03mIKzRCGtkLmKEg==
+	t=1795381569;
+	b=YVLfIRy77qoWph9GMsYiimEgeuqfo9/0EREheV9DyNY8MA2mNOmdCt449h+LkszOgUkJ
+	 Sj+zSk2vE1Xa22Pr6tKL32GUcScfChQaAfu1rNirlXR06RbPFQ/U4eURWUTRP/TPkOcpb
+	 cshUqvwq1exBxkFOjIGpKJV3FoQoo13J5ZB7rUsqgCm2EDUhXPDDLCwuqCRCdWsLkBQba
+	 3S3xSIFGKn9B7Iphp7BMyW+qBDPSdYtLxgEEXxpojaHNDQEi7fU8ZpSwJfI/zztWXwH4S
+	 FZRZc0AYJCmnOvdLLZHi90LXkgfyHStQLDxGVz+Eo66QkO0z7S60y+ap1XCoFvPS40A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795379307;
-	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
-	 In-Reply-To:References:Subject:From:To:Cc:Date;
-	bh=MKGFNqJhoZuyA4EsjC0ZPdlEy226OjjF7ifp8YCJ0pw=;
-	b=144f4Vtb8ZGY3laXaXMwwi4M6bZuzg3oqI8pznNegTrOG43T1uml35lZIWjFIaqMO/SR
-	 nc6cvKExizoxrgCJBLuLdFQrB1BeZPiyo5QjY+RruY3sdaSaJxxADYldwd5vOpQz+sriR
-	 adknRfMjN4ATH111Qn78fY5lxMFIParzop7loyHsDr+Yf4sDRCjnepIEs8oNEoKWf5mJ+
-	 iD4UpM9CMVnMKdlboK+Zx1pWHzIv7mY/Ksgcl+AJoSMVHbcmHy6Q7wzSWNJPXc1IfmaHw
-	 f0jMb47s8bYUqy95/6AcSijtbo5nk0LomdvtWdvUxhoJ270JPtQFqk6Y/TcJHZk7PlQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795381569;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=YwlY5+8HMIfOP8gjeCqlZaPCdsmRsLFY3NloYb5Xk4I=;
+	b=vcOItC64b9t/TVEdDC4dxvYO3e9cV9X0kfRADs56O9WrxHmAAVSW4VJzkeY764jnaVsx
+	 DGxmxuXFetMOackM8WcNEIfOq7Q/ebfCsqtuPMU+W7n5G8GSz0X9a5dUIwsbIzIM5/cgL
+	 YiErj1PRpgCX1ZaZ4rnmUal5T4al1RXybR/gQaN0Hor91yYIvrGx16KqMjhXulkk2Krq+
+	 fM0Z3ci9jGXiv1mY925QbwdWBMg0BoHUoC3oIi7HuWma3bKEejjVtqVFuvBqn3anELyub
+	 DanmXb0Wtq+/dSW3+xqAL37j/Gs0J8WpbCo8PwOKbmcX4wtFV+niu5p3w1yS46QWj3Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ul+eGqK1;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aT9e0vZ2;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B44E606A320;
-	Sun, 22 Nov 2026 20:28:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C5E99606A31A;
+	Sun, 22 Nov 2026 21:06:09 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ul+eGqK1
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 10D2B1F000C6;
-	Sun, 22 Nov 2026 20:28:22 +0000 (UTC)
+	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aT9e0vZ2
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 9FC971F000C0;
+	Sun, 22 Nov 2026 21:06:06 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795379306;
-	bh=MKGFNqJhoZuyA4EsjC0ZPdlEy226OjjF7ifp8YCJ0pw=;
-	h=In-Reply-To:References:Subject:From:To:Cc:Date;
-	b=Ul+eGqK1TzFk2GoVQ4qrcBtOfQtz9OLX+r4wppvttMllEuX+UwzW1YrAza7piQ2z0
-	 WlQEMFrQCqDRV/6+Bcs/s1B/8RLtRAwEleegTr1/l6KB8BQUa19frILcGbvG9dGYpx
-	 4zTJxLgzLxbKXvc462NcWNBSfVVSfo6qe05JfkRdnmVJeP+kOzBbvvyX2PoD39sc8d
-	 5rNOYL+fMqgCL2eaxnfu8+WJyrOsBaI6KLArf/WCXb4ZiBLFQGQ2bukxmVh7RqbxMt
-	 d/k/9lmqJ+g4mDzA1M3aLWKaOzgnTiXB1wXQn63rKSA00Rfuqj1LWJpFWOw6itOPFv
-	 WNf9nQHOsewgA==
-Content-Type: multipart/mixed; boundary="===============0979252114820036136=="
+	s=k20260515; t=1795381568;
+	bh=YwlY5+8HMIfOP8gjeCqlZaPCdsmRsLFY3NloYb5Xk4I=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=aT9e0vZ2pqv52Qiex10tpuz1zIAEEspXo2mek0V8O7o6ySvVMgWs7yrhTsMGMfV2P
+	 eIB0L/qXawckjHrNi/esY9WB8cUEBkGgycLSyTmZLIK4wM8JGOlLLiDgRfdg92Vfu+
+	 9XLCh/7DIGGSLKRav+uoCa+xCmmNhn7PhxV+VdyhA2x8AeeTjhqa8BO+nsj3DgCwqD
+	 pobNJUKYeU3ICt+SSdQOc19IZ2bHM3J9OYak6gKUp+JHT8TySD5nYy5FBrapUpDuVP
+	 GHOQYkCen/FynmaLT87JD5rUYQXe4OeNjpHH02PrvKgQOjFIkbDVqYn+6GzJazJLQ3
+	 gqJhHBfKWLPPw==
+Date: Sun, 22 Nov 2026 21:06:04 +0000
+From: Sudeep Holla <sudeep.holla@kernel.org>
+To: Ahmed Azeem <ahmed.azeem@arm.com>
+Cc: linux-arm-kernel@lists.infradead.org, Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	Sudeep Holla <sudeep.holla@kernel.org>,
+	Mark Rutland <mark.rutland@arm.com>,
+	Lorenzo Pieralisi <lpieralisi@kernel.org>,
+	linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org, Divin Raj <divin.raj@arm.com>,
+	Bertrand Marquis <Bertrand.Marquis@arm.com>
+Subject: Re: [PATCH RFC 3/4] firmware: arm: Add PFDI run, result, and error
+ injection support
+Message-ID: <20261122-cute-wildebeest-of-downpour-b21fdb@sudeepholla>
+References: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-0-4772d18b9115@arm.com>
+ <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-3-4772d18b9115@arm.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -49,75 +65,77 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Message-Id: <516d488e2aa670a706837915ba7a73f107db09ac4eb736a4a86dc3624dd1c69c@mail.kernel.org>
-In-Reply-To: <20261122193539.3334213-19-jarkko@kernel.org>
-References: <20261122193539.3334213-19-jarkko@kernel.org>
-Subject: Re: [RFC PATCH v7 18/26] fs: Support FSCONFIG_SET_USERLAND in fsconfig()
-From: bot+bpf-ci@kernel.org
-To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
-Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,ebiggers@kernel.org,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
-Date: Sun, 22 Nov 2026 20:28:22 +0000 (UTC)
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261119-topics-ahmaze01-upstream-pfdi-rfc-v1-3-4772d18b9115@arm.com>
 
---===============0979252114820036136==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-
-> fs: Support FSCONFIG_SET_USERLAND in fsconfig()
-
-TL;DR: Nit only: in fsconfig_set_userland(), the fs_type restore block looks
-unreachable, since the only swapping filesystem (cpuset) fails the flag check
-first; it could possibly be dropped.
-
-> diff --git a/fs/fsopen.c b/fs/fsopen.c
-> --- a/fs/fsopen.c
-> +++ b/fs/fsopen.c
-
-[ ... ]
-
-> +static int fsconfig_set_userland(struct fs_context *fc, struct fs_parameter *param)
-> +{
-
-[ ... ]
-
-> +	if (!(fc->fs_type->fs_flags &
-> +	      (FS_USERLAND_MOUNT | FS_USERNS_DELEGATABLE)))
-> +		return -EOPNOTSUPP;
-
-[ ... ]
-
-> +	if (fc->log.prefix && strcmp(fc->fs_type->name, fc->log.prefix)) {
-> +		struct file_system_type *orig;
+On Thu, Nov 19, 2026 at 03:36:05PM +0000, Ahmed Azeem wrote:
+> From: Divin Raj <divin.raj@arm.com>
+> 
+> Extend the PFDI driver with ioctls to execute tests and manage results.
+> 
+> Add support for PFDI_IOCTL_PE_TEST_RUN, PFDI_IOCTL_PE_TEST_RESULT, and
+> PFDI_IOCTL_FORCE_ERROR, along with per-CPU state to serialize test
+> execution. When firmware reports PFDI_RET_FAULT_FOUND, return the
+> failing test identifier to userspace.
+> 
+> Signed-off-by: Divin Raj <divin.raj@arm.com>
+> Signed-off-by: Ahmed Azeem <ahmed.azeem@arm.com>
+> ---
+>  drivers/firmware/arm_pfdi.c | 225 ++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 225 insertions(+)
+> 
+> diff --git a/drivers/firmware/arm_pfdi.c b/drivers/firmware/arm_pfdi.c
+> index 8c6d315b0572..22a69b12dbc8 100644
+> --- a/drivers/firmware/arm_pfdi.c
+> +++ b/drivers/firmware/arm_pfdi.c
+> @@ -350,9 +543,35 @@ static long arm_pfdi_ioctl(struct file *file, unsigned int cmd,
+>  					 sizeof(count)))
+>  			err = -EFAULT;
+>  		break;
+> +	case PFDI_IOCTL_PE_TEST_RUN:
+> +		if (copy_from_user(&test_run, (void __user *)arg,
+> +				   sizeof(test_run)))
+> +			return -EFAULT;
 > +
-> +		orig = get_fs_type_noload(fc->log.prefix);
-> +		if (!orig) {
-> +			fc->phase = FS_CONTEXT_FAILED;
-> +			return -ENODEV;
-> +		}
-> +		put_filesystem(fc->fs_type);
-> +		fc->fs_type = orig;
-> +	}
+> +		err = pfdi_pe_run_tests(cpu, &test_run);
+> +		if (err == -EFAULT &&
+> +		    copy_to_user((void __user *)arg, &test_run,
+> +				 sizeof(test_run)))
+> +			err = -EFAULT;
+> +		break;
+> +	case PFDI_IOCTL_PE_TEST_RESULT:
+> +		err = pfdi_pe_get_result(cpu, &ft_id);
+> +		if (err == -EFAULT && copy_to_user((void __user *)arg, &ft_id,
+> +						   sizeof(ft_id)))
+> +			err = -EFAULT;
+> +		break;
+>  	case PFDI_IOCTL_FW_CHECK:
+>  		err = pfdi_pe_fw_check(cpu);
+>  		break;
+> +	case PFDI_IOCTL_FORCE_ERROR:
+> +		if (copy_from_user(&error_info, (void __user *)arg,
+> +				   sizeof(error_info)))
+> +			return -EFAULT;
+> +		if (error_info.reserved)
+> +			return -EINVAL;
 
-This isn't a bug, but can this restore block be reached?
+Do we really need a strict 1:1 mapping between the userspace IOCTLs and the
+underlying firmware interface? Looking at the proposed commands, we might be
+able to simplify things significantly:
 
-fc->log.prefix is only set in alloc_fs_context(), to the original
-fs_type->name, and no parameters have been parsed yet when
-FSCONFIG_SET_USERLAND is accepted, so fc->fs_type can only differ from the
-prefix if ->init_fs_context() swapped it.
+1. RUN and TEST_RESULT could likely be combined into a single interface from a
+   userspace perspective.
+2. I'm still unclear on the intended use case for FORCE_ERROR (echoing the
+   earlier question on the cover letter).
+3 FW_CHECK feels like it belongs in driver initialization to catch boot-time
+  errors. Since it's hard to see how firmware could safely execute runtime tests
+  without OSPM awareness - despite what the spec suggests - exposing FW_CHECK to
+  userspace doesn't seem necessary.
 
-In this tree cpuset_init_fs_context() is the only init_fs_context that does
-that (to cgroup_fs_type), and cgroup_fs_type has neither FS_USERLAND_MOUNT
-nor FS_USERNS_DELEGATABLE, so the flag check above returns -EOPNOTSUPP
-first.
+Given that RUN appears to be the primary userspace entry point, would a simple
+sysfs attribute be a better fit here than adding a new set of IOCTLs?
 
-Is there a filesystem that can reach this restore with a swapped
-fc->fs_type?  If not, could the block be dropped to keep
-fsconfig_set_userland() shorter?
-
-
----
-AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
-See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
-
-CI run summary: https://github.com/kernel-patches/bpf/actions/runs/45063222848
---===============0979252114820036136==--
+-- 
+Regards,
+Sudeep
