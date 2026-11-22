@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795376203;
-	b=jcUAd/lRQigHorTLsdkigNL6xr89phZdxuBXoE8pkGD2iGg1i5bNqsEbggHGR9ubl1Xp
-	 DMJx21+F8urMLX7RhVedK2hcGw+lCyyb2J+7rhjOAtyP2nD5Eyqg1gGsVZnYu3ScAthxv
-	 PRte7VEzo7RGgntdkVRm4y+OgsOMdfLmyIYoI+E+NnFbNp+mcRhtDjFdXXXjhJcGhcou7
-	 zcmqGiLVLT/UY4LPgffK6oAHA0KaFHqE8MHputN7w0GFFptZw7U+huS61v9EuV0VgMZey
-	 K2yC9lN303JQdRt9ToJpEwPRBt4kCzzoHKjESDk8HXA0kXDrJXD7+BnVxMs1BLvvWUA==
+	t=1795376199;
+	b=IN9dVxTrqmPddojmmaFSBORIi2vPsxaEKUuNKtWJbZXX6MgVsp6oMHqpSOnBGwbjKx84
+	 4en4n/wPx9TcGuwR+HeIBZdDAMTrSJtbs3sf9+l6pQwLJuvISHx5qfKgSz0Gt34M7KCnK
+	 2yujx7yIyu/FJEfnhFaF4ahO8Dj18WheajhjpIbb0V6tXJuyh5MNRoqSlQNLEOUFImpKz
+	 Q8Mn4kzBDILOuugFxQxrfFtpIkCyp7AduaY3FhRlCc6UkObDoQN+Dw0Tnm2SYBhozywDD
+	 AYgeeB9Uk+0AnviU9FFBQ2ViJuy0nHWkmO1MAx5khBiW2M44fpo37+OrmLJi6vJpwAw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795376203;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795376199;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=IjAX6Mgusa/02dTL9k5B5iNWMUDytzyYEuLarDCWpNc=;
-	b=LGb4Dvhc01NhMeG1VVtaILAe1ddO4ez9iGcWDMLjP5YbKVSYanA9EtykAk2pb9Bx4tmy
-	 HqtUXea84Tvnou7+rDXz03w0NR3tNFSySP8/2F3CL7E4ivF+rNfEywNz8pE1BlDDwCWq1
-	 cXK3jyzRC8wf2wLZ3Cj+vg1UetwcJpWMJ+P7+Wncc+zfg/NjVYIKIGlW4FezCNt6PAEeC
-	 6Tem6FKooT4FTLLcfneCdN11G0ysG6vm/MX3e05ew1QadGsZEB0K8+Y4Y7oyvk7pF7A7W
-	 WpsZWYMj4VcCUEDwLvO2ZrZabKgY8eDhNFoJTzSn8Z04HTAwJZFaATg0wJoSfRgVPbQ==
+	bh=YbRTDchIsz6xcCBmI8LhY6NC9NG/SzViBPWKNz/ygpo=;
+	b=bZUW4RGxd3yVRWlya2Hgv14RvRW7LJFfOAz5bJPTDKSEfXFFs/SPoX9/od6VE8KLDWqO
+	 0+ctRu994L+k3PEtNJAccwTDXTWhjXUuLQtuBaDJAHlExwliDYYYh1ybSLdBPc94y42GQ
+	 Zfzi4Pw0HkU/b+G+oIKcoFcnMDJPWhGchs18o9FGjxPqE1YQZNsFAc3TuNY1qtswBFd+a
+	 EA/QGHcZF9IKquO5l2G+Q1kd4sefW7WzqDgt/KEP2ByseeQqha38OX5GB4Pd8tfnwrMm5
+	 JvKQf1L2K15/d24a/K6Xrtz0aodOrYng9Rs4HdQw05mviG7mvjgiAsd4Pceubz/V3AA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=czFAln2I;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CG6CfgoO;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id A3F7A606A333;
-	Sun, 22 Nov 2026 19:36:43 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B8B89606A6B5;
+	Sun, 22 Nov 2026 19:36:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=czFAln2I
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8C2F81F000D4;
-	Sun, 22 Nov 2026 19:36:42 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CG6CfgoO
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 790321F00A01;
+	Sun, 22 Nov 2026 19:36:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795376203;
-	bh=IjAX6Mgusa/02dTL9k5B5iNWMUDytzyYEuLarDCWpNc=;
+	s=k20260515; t=1795376199;
+	bh=YbRTDchIsz6xcCBmI8LhY6NC9NG/SzViBPWKNz/ygpo=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=czFAln2I6+sZq5DeFOwio4VktCbvoePYK6YNR+jqX5L7t1kVE1E6i4UOoC/+6YODO
-	 As9Q2tdND2gTuJbgeUqygX+MOX158TyJEEyEO9tX6+1iLSif2X8rebKCba0J2MRXkA
-	 hyV2Lp/6hTGUgmVrRz6OhP36LXJKHLFLd33LCxox+NfXtTjjBI2BBq1JERLBLnFhE+
-	 B0V0aS/b1TK8XaRsnTnugpynFGEewuW9jXjC3mCfE+JYajLi93UElxeRhmK7auNl44
-	 AyWflxSKkh4/Fqv+9i1D17R6n0QfmX+jFtO+uNeGSvJnVNXeM+YBDHEFBtAFoB05G9
-	 eRtvVy4l0DpeQ==
+	b=CG6CfgoOYB1ykMnFVIQA0eyNbZL7c4vTkkFjT9pExp0M3QXg7D4zdq3w1sclLPgVq
+	 v6GwXd0nxYHutNTZB6HGmpV/+OX73AimUAxExG7MjtuOCGoUXB9N3zjmzMRwpdFDdx
+	 dCdEROaBeimYhLAOA1YltC41CjAlimHm/dakNnZRdrEWBPFmtPW4AkIF+zJfIjIHGG
+	 EGs++cNh42bvFH9IC59uuOPQ33drP6C5iAv5LMllE97DfQwhpVMbtaPngkZXJoHrkz
+	 TdX6U7kwnoRm40yTMUhPbV1gJs6Kq3aLa/e1x5MQ8CAA+fj6p3lm5F9OnZf3ZRlYGE
+	 l0cyVa5uM5glg==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,9 +75,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v7 11/26] userland: Track init lifecycle via copy_process() and pid_namespace
-Date: Sun, 22 Nov 2026 21:35:24 +0200
-Message-ID: <20261122193539.3334213-12-jarkko@kernel.org>
+Subject: [RFC PATCH v7 10/26] userland: Add core infrastructure
+Date: Sun, 22 Nov 2026 21:35:23 +0200
+Message-ID: <20261122193539.3334213-11-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
 References: <20261122193539.3334213-1-jarkko@kernel.org>
@@ -92,196 +92,285 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-A userland needs to record its init thread group's PID when bootstrapped
-and capture its exit status and UID once all processes in the userland
-have terminated, without serializing normal fork() and exit() paths
-inside the userland.
+Linux namespaces can be created and entered individually, but userspace
+orchestrators lack a single control object that binds a full detached
+namespace set and an init process lifecycle behind a pollable file
+descriptor. Because this object manages process lifecycle, wait and
+signal delivery, VFS mount delegation, and LSM state rather than
+representing an nsfs namespace entity, model it as a distinct userland
+abstraction.
 
-Commit the bootstrap child reaper and bind pid_ns->userland in
-userland_copy() after copy_process() attaches PIDs and drops
-tasklist_lock, and invoke userland_exit() from zap_pid_ns_processes()
-after the userland's PID namespace has killed and reaped all member
-tasks.
+Add struct userland, its lifecycle states, reference counting, uAPI
+flags, and anonymous inode file operations under CONFIG_USERLAND. Drop
+active and passive namespace references on final release, send SIGKILL
+to the userland init thread group on close when USERLAND_KILL_ON_CLOSE
+is set, and report EPOLLHUP from poll() once the userland reaches
+USERLAND_DEAD.
 
 Co-developed-by: David Howells <dhowells@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- include/linux/pid_namespace.h |  4 ++++
- include/linux/userland.h      | 17 ++++++++++++++
- kernel/fork.c                 |  4 ++++
- kernel/pid_namespace.c        |  2 ++
- kernel/userland.c             | 43 +++++++++++++++++++++++++++++++++++
- 5 files changed, 70 insertions(+)
+ include/linux/userland.h      | 80 +++++++++++++++++++++++++++++
+ include/uapi/linux/userland.h | 25 ++++++++++
+ init/Kconfig                  | 10 ++++
+ kernel/Makefile               |  2 +
+ kernel/userland.c             | 94 +++++++++++++++++++++++++++++++++++
+ 5 files changed, 211 insertions(+)
+ create mode 100644 include/linux/userland.h
+ create mode 100644 include/uapi/linux/userland.h
+ create mode 100644 kernel/userland.c
 
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index b20baaa7e62b..ef703a3b8ed5 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -15,6 +15,7 @@
- #define MAX_PID_NS_LEVEL 32
- 
- struct fs_pin;
-+struct userland;
- 
- #if defined(CONFIG_SYSCTL) && defined(CONFIG_MEMFD_CREATE)
- /* modes for vm.memfd_noexec sysctl */
-@@ -45,6 +46,9 @@ struct pid_namespace {
- 	struct user_namespace *user_ns;
- 	struct ucounts *ucounts;
- 	int reboot;	/* group exit code if this pidns was rebooted */
-+#ifdef CONFIG_USERLAND
-+	struct userland *userland;
-+#endif
- 	struct ns_common ns;
- 	struct work_struct	work;
- } __randomize_layout;
 diff --git a/include/linux/userland.h b/include/linux/userland.h
-index 9b9fefed63ac..a92709957529 100644
---- a/include/linux/userland.h
+new file mode 100644
+index 000000000000..9b9fefed63ac
+--- /dev/null
 +++ b/include/linux/userland.h
-@@ -9,11 +9,14 @@
- 
- #include <linux/refcount.h>
- #include <linux/spinlock.h>
-+#include <linux/uidgid.h>
- #include <linux/wait.h>
- 
- struct file;
- struct nsproxy;
- struct pid;
-+struct pid_namespace;
-+struct task_struct;
- struct user_namespace;
- 
- /**
-@@ -57,6 +60,7 @@ struct userland {
- 	struct user_namespace	*user_ns;
- 	struct nsproxy		*ns;
- 	struct pid		*init_pid;
-+	kuid_t			init_uid;
- 	spinlock_t		lock;		/* Guards userland lifecycle state */
- 	wait_queue_head_t	waitq;
- 	unsigned int		flags;
-@@ -66,6 +70,9 @@ struct userland {
- #ifdef CONFIG_USERLAND
- void userland_put(struct userland *c);
- bool userland_is_file(struct file *file);
-+void userland_copy(struct task_struct *tsk, struct pid *pid,
-+		   struct userland *userland);
-+void userland_exit(struct pid_namespace *pid_ns, struct task_struct *tsk);
- #else
- static inline void userland_put(struct userland *c)
- {
-@@ -75,6 +82,16 @@ static inline bool userland_is_file(struct file *file)
- {
- 	return false;
- }
+@@ -0,0 +1,80 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ * Copyright (C) 2026 Opinsys Oy
++ */
 +
-+static inline void userland_copy(struct task_struct *tsk, struct pid *pid,
-+				 struct userland *userland)
++#ifndef _LINUX_USERLAND_H
++#define _LINUX_USERLAND_H
++
++#include <linux/refcount.h>
++#include <linux/spinlock.h>
++#include <linux/wait.h>
++
++struct file;
++struct nsproxy;
++struct pid;
++struct user_namespace;
++
++/**
++ * enum userland_state - Userland lifecycle states
++ * @USERLAND_INIT:	Build phase after ``userland_open()`` before any
++ *			process has entered. ``USERLAND_SHARE_NSFD`` is
++ *			permitted, ID mappings may be configured on the owning
++ *			user namespace, and ``"/"`` must be mounted in the
++ *			mount namespace before entry.
++ * @USERLAND_FORKING:	Bootstrap phase while the first
++ *			``clone3(CLONE_INTO_USERLAND)`` call creates PID 1.
++ *			Concurrent callers wait killably; reverts to
++ *			%USERLAND_INIT if ``copy_process()`` fails, or advances
++ *			to %USERLAND_RUNNING once PID 1 is attached.
++ * @USERLAND_RUNNING:	Live phase while PID 1 is attached. Subsequent
++ *			``clone3(CLONE_INTO_USERLAND)`` calls join the PID
++ *			namespace until teardown begins,
++ *			``USERLAND_GET_NSFD(CLONE_NEWPID)`` and
++ *			``pidfd_send_signal()`` are enabled, and
++ *			``USERLAND_SHARE_NSFD`` returns ``-EBUSY``.
++ * @USERLAND_DEAD:	Terminal phase entered after PID 1 exits and the PID
++ *			namespace has killed and reaped all member processes.
++ *			``poll()`` reports ``EPOLLHUP`` and
++ *			``waitid(P_USERLAND, ...)`` reports PID 1's exit status
++ *			without consuming it.
++ *
++ * State transitions advance from %USERLAND_INIT through %USERLAND_FORKING and
++ * %USERLAND_RUNNING to %USERLAND_DEAD, reverting from %USERLAND_FORKING to
++ * %USERLAND_INIT only if the initial bootstrap fork fails.
++ */
++enum userland_state {
++	USERLAND_INIT		= 0,
++	USERLAND_FORKING	= 1,
++	USERLAND_RUNNING	= 2,
++	USERLAND_DEAD		= 3,
++};
++
++struct userland {
++	refcount_t		usage;
++	int			exit_code;
++	struct user_namespace	*user_ns;
++	struct nsproxy		*ns;
++	struct pid		*init_pid;
++	spinlock_t		lock;		/* Guards userland lifecycle state */
++	wait_queue_head_t	waitq;
++	unsigned int		flags;
++	enum userland_state	state;
++};
++
++#ifdef CONFIG_USERLAND
++void userland_put(struct userland *c);
++bool userland_is_file(struct file *file);
++#else
++static inline void userland_put(struct userland *c)
 +{
 +}
 +
-+static inline void userland_exit(struct pid_namespace *pid_ns,
-+				 struct task_struct *tsk)
++static inline bool userland_is_file(struct file *file)
 +{
++	return false;
 +}
- #endif /* CONFIG_USERLAND */
- 
- #endif /* _LINUX_USERLAND_H */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 5efceb8d58a7..d87ab7cbad5e 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -83,6 +83,7 @@
- #include <linux/fs_struct.h>
- #include <linux/magic.h>
- #include <linux/perf_event.h>
-+#include <linux/userland.h>
- #include <linux/posix-timers.h>
- #include <linux/user-return-notifier.h>
- #include <linux/oom.h>
-@@ -2584,6 +2585,9 @@ __latent_entropy struct task_struct *copy_process(
- 	syscall_tracepoint_update(p);
- 	write_unlock_irq(&tasklist_lock);
- 
-+	if (likely(p->pid) && thread_group_leader(p))
-+		userland_copy(p, pid, NULL);
++#endif /* CONFIG_USERLAND */
 +
- 	if (pidfile)
- 		fd_install(pidfd, pidfile);
++#endif /* _LINUX_USERLAND_H */
+diff --git a/include/uapi/linux/userland.h b/include/uapi/linux/userland.h
+new file mode 100644
+index 000000000000..4a9031f81dda
+--- /dev/null
++++ b/include/uapi/linux/userland.h
+@@ -0,0 +1,25 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ * Copyright (C) 2026 Opinsys Oy
++ */
++
++#ifndef _UAPI_LINUX_USERLAND_H
++#define _UAPI_LINUX_USERLAND_H
++
++/**
++ * enum userland_flags - Flags for userland_open()
++ * @USERLAND_KILL_ON_CLOSE: Send %SIGKILL to userland init on final fd release.
++ * @USERLAND_CLOSE_ON_EXEC: Set %O_CLOEXEC on the returned control fd.
++ * @USERLAND_ALL_FLAGS: Mask of all valid flags accepted by userland_open().
++ *
++ * Every userland created by userland_open() allocates a full set of
++ * detached namespaces owned by a fresh user namespace.
++ */
++enum userland_flags {
++	USERLAND_KILL_ON_CLOSE	= 0x00000001,
++	USERLAND_CLOSE_ON_EXEC	= 0x00000002,
++	USERLAND_ALL_FLAGS	= 0x00000003,
++};
++
++#endif /* _UAPI_LINUX_USERLAND_H */
+diff --git a/init/Kconfig b/init/Kconfig
+index c8a7cfa60a6e..0c5fada1ba88 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1283,6 +1283,16 @@ config NET_NS
  
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index 127a5fd23e70..70606d9c5b52 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -24,6 +24,7 @@
- #include <linux/sched/signal.h>
- #include <linux/idr.h>
- #include <linux/nstree.h>
-+#include <linux/userland.h>
- #include <uapi/linux/wait.h>
- #include "pid_sysctl.h"
+ endif # NAMESPACES
  
-@@ -280,6 +281,7 @@ void zap_pid_ns_processes(struct pid_namespace *pid_ns)
- 		current->signal->group_exit_code = pid_ns->reboot;
++config USERLAND
++	bool "Userland support"
++	depends on NAMESPACES && USER_NS && PID_NS && UTS_NS && IPC_NS && NET_NS && CGROUPS
++	help
++	  Allow user space to open and manage isolated userlands and their init
++	  process lifecycle through an anonymous-inode control file descriptor
++	  via userland_open(), waitid(P_USERLAND), pidfd_send_signal(),
++	  USERLAND_GET_NSFD, USERLAND_SHARE_NSFD, FSCONFIG_SET_USERLAND, and
++	  clone3() with CLONE_INTO_USERLAND.
++
+ config CHECKPOINT_RESTORE
+ 	bool "Checkpoint/restore support"
+ 	depends on PROC_FS
+diff --git a/kernel/Makefile b/kernel/Makefile
+index 4ff92e24680c..80eb26639776 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -152,6 +152,8 @@ KCOV_INSTRUMENT_kstack_erase.o := n
  
- 	acct_exit_ns(pid_ns);
-+	userland_exit(pid_ns, me);
- 	return;
- }
+ obj-$(CONFIG_SCF_TORTURE_TEST) += scftorture.o
  
++obj-$(CONFIG_USERLAND) += userland.o
++
+ $(obj)/configs.o: $(obj)/config_data.gz
+ 
+ # .config is small, so it is compressed with gzip rather than the image compressor.
 diff --git a/kernel/userland.c b/kernel/userland.c
-index 7be0c4b5385b..44a1976f97c2 100644
---- a/kernel/userland.c
+new file mode 100644
+index 000000000000..7be0c4b5385b
+--- /dev/null
 +++ b/kernel/userland.c
-@@ -92,3 +92,46 @@ bool userland_is_file(struct file *file)
- {
- 	return file->f_op == &userland_fops;
- }
+@@ -0,0 +1,94 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Copyright (C) 2017-2019 Red Hat, Inc. All Rights Reserved.
++ * Copyright (C) 2026 Opinsys Oy
++ */
 +
-+void userland_copy(struct task_struct *tsk, struct pid *pid, struct userland *c)
++/**
++ * DOC: Overview
++ *
++ * A userland is an anonymous-inode control object opened by ``userland_open()``
++ * that binds a detached namespace set, an initially empty mount namespace, an
++ * owning user namespace, and an init process lifecycle.
++ */
++#include <linux/poll.h>
++#include <linux/wait.h>
++#include <uapi/linux/wait.h>
++#include <linux/file.h>
++#include <linux/fs.h>
++#include <linux/anon_inodes.h>
++#include <linux/userland.h>
++#include <linux/sched/signal.h>
++#include <linux/sched/task.h>
++#include <linux/slab.h>
++#include <linux/syscalls.h>
++#include <linux/uaccess.h>
++#include <linux/mnt_namespace.h>
++#include <linux/nsproxy.h>
++#include <linux/ns_common.h>
++#include <linux/nsfs.h>
++#include <linux/pid.h>
++#include <linux/pid_namespace.h>
++#include <linux/time_namespace.h>
++#include <linux/user_namespace.h>
++#include <linux/idr.h>
++#include <uapi/linux/userland.h>
++
++void userland_put(struct userland *c)
 +{
-+	if (likely(!c || !is_child_reaper(pid)))
++	if (!c || !refcount_dec_and_test(&c->usage))
 +		return;
 +
-+	scoped_guard(spinlock, &c->lock) {
-+		if (c->state != USERLAND_FORKING)
-+			return;
-+		refcount_inc(&c->usage);
-+		ns_of_pid(pid)->userland = c;
-+		WRITE_ONCE(c->init_pid, get_pid(pid));
-+		WRITE_ONCE(c->state, USERLAND_RUNNING);
++	if (c->ns)
++		put_nsproxy(c->ns);
++	if (c->init_pid)
++		put_pid(c->init_pid);
++	if (c->user_ns) {
++		ns_ref_active_put(c->user_ns);
++		put_user_ns(c->user_ns);
 +	}
++	kfree(c);
 +}
 +
-+void userland_exit(struct pid_namespace *pid_ns, struct task_struct *tsk)
++static __poll_t userland_poll(struct file *file, poll_table *wait)
 +{
-+	struct userland *c = pid_ns->userland;
-+	struct task_struct *leader;
-+	kuid_t uid;
-+	int status;
++	struct userland *userland = file->private_data;
++	__poll_t mask = 0;
 +
-+	if (!c)
-+		return;
++	poll_wait(file, &userland->waitq, wait);
 +
-+	leader = tsk->group_leader;
-+	rcu_read_lock();
-+	uid = task_uid(leader);
-+	rcu_read_unlock();
-+	status = (tsk->signal->flags & SIGNAL_GROUP_EXIT) ?
-+		 tsk->signal->group_exit_code : leader->exit_code;
++	if (READ_ONCE(userland->state) == USERLAND_DEAD)
++		mask |= EPOLLHUP;
 +
-+	scoped_guard(spinlock, &c->lock) {
-+		c->exit_code = status;
-+		c->init_uid = uid;
-+		WRITE_ONCE(c->state, USERLAND_DEAD);
++	return mask;
++}
++
++static int userland_release(struct inode *inode, struct file *file)
++{
++	struct userland *userland = file->private_data;
++
++	if (userland->flags & USERLAND_KILL_ON_CLOSE) {
++		struct pid *pid = NULL;
++
++		scoped_guard(spinlock, &userland->lock) {
++			if (userland->state == USERLAND_RUNNING)
++				pid = get_pid(userland->init_pid);
++		}
++		if (pid) {
++			kill_pid(pid, SIGKILL, true);
++			put_pid(pid);
++		}
 +	}
++	userland_put(userland);
++	return 0;
++}
 +
-+	pid_ns->userland = NULL;
-+	__wake_up(&c->waitq, TASK_NORMAL, 0, poll_to_key(EPOLLHUP));
-+	userland_put(c);
++static const struct file_operations userland_fops = {
++	.poll		= userland_poll,
++	.release	= userland_release,
++};
++
++bool userland_is_file(struct file *file)
++{
++	return file->f_op == &userland_fops;
 +}
 -- 
 2.47.3
