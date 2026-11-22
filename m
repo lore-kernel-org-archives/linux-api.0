@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795310354;
-	b=BMSc4Ie4i7A2EXMqXDQhR0LHx1HHO19SVu+esP8Bl3it/I7GNbdVpDGZmLPwh+6Chf7n
-	 3Ao3Dtx08cLMW9G4t4QCVsWnzwZpsFtyBJWlmeYeyJrSgCoMaQ54mEYJNgoy3WHRTbbb6
-	 wUkDnRsAGxRJ7InwLZyaPqtoRbOASX5rAW8V6yo87M6C1rp4av8Tz2xTi6tThP7nmjAuV
-	 +KPJkew0wIQJAB/g8AsWJNxLUnmfl8ko3grK3H7JoX+BeyV/wjxxvMUT3JC/JZFBC5nKe
-	 Gb5QqpOBymIg2vOYpntAO3px2bwm8Dq0PbhbeGPumQxb2tBDJR658jlklJWPwJ8UCxw==
+	t=1795310361;
+	b=DBrEY/wPoAH+eZmiMgGreNt6nwn35MToJaNxGv0JX3o4IHh5oAfDAYNHOXZNYQ+/Jiln
+	 oh9LL9W4oceOQCcM2RbxnuQ/gs/o8gsnHDPGAQNLq06bKUNHRYZzhM0NNx9dP4l1ttPfs
+	 AKw2kCVLqsUiiNVtWqFYelDTgIjVe2nJ/HhpUBE7suI9WdfmwY6KucSAIiodCgBFhyiDO
+	 fjeoRDaByNjNht0uRJEoCrL7cMn8jZ7aakoRyh2Cb0aJxXxOi961QOeqa8I4dXY8iXr7c
+	 X0gwAx96IFWXWPB+7EONhen8aseKnyLN6AhUimSMUd21gaMHPTnRwCxjj3wDuSXw3Tg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795310354;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795310361;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=qsah9M7foXNK9QvRUXT+CrvXBmg+yydBay4Gf38+YR0=;
-	b=2wdRcsH0CoKv8PCacN7yuYVx5asgUJI89iu4DksDInsbZ0+ynSwnuUmUNiY/PZx75HFU
-	 HAgyAgtzCPtr9/zoFHhN0Hy+dKzkdld2I/C8sc0XZsFsrXPB5Jtjlw9/oFtzDjmsZwQtT
-	 3VV0brXuOc0Es7HIT2pSuv3vi/99G7hXvNtoGs7T9elIQdjMBys/o6rYTTyxDa37778Mv
-	 /iEX2d0C8h3/LwRoY9r74FTU+Pz6duk0T/5sJVcT9g9rRoT+FkxcGez0DVUtEweqoMi1b
-	 +xRHmoaPy01uaJnY6Wl0fHn3ppIUb99lJTj0Ug61wo1OHmbUwEv7G9D2ue91sYdW1Dg==
+	bh=RAXPLGk4ldTVweRjtypyvQWpm01HWBNWEtkTkkZV0Ks=;
+	b=MK0tqp1mGqX+HF/RhNTCwQfw3+SGiWrkuvYiKIkJYZcAC8MUErt8mrLXbIjS9a+298r2
+	 OFihYl501B1AoVkmFPZy2IuHC7zBcyp+hXipE6x3eb+TJWb8VO+xCUY7W/9FodSA1gJbR
+	 h9BHUNszFgyJQKhZOizLDPt32Y20xZdPmLeg9QXP7rRNblq0CsMcYycrvCCTVh/EJyf2O
+	 6nb1lQQgJdf1Vrjfrll0+vYUBG7gxqZGXQQkgniJT5giCsVcJ5ayxHFPTWOgmDjMLz+R2
+	 0nLB4pDMEQoIC8uYUnfO30eHPrgZ7LRQNvnrVW/zAKJXGS51wV4snmrg8+OPGMFj6yw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="OKCYL9/h";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="Dz/4YhIh";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3BF0A606A33B;
-	Sun, 22 Nov 2026 01:19:13 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id A5087606A68E;
+	Sun, 22 Nov 2026 01:19:21 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=OKCYL9/h
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 207481F000C4;
-	Sun, 22 Nov 2026 01:19:13 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Dz/4YhIh
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id C9AE81F000C4;
+	Sun, 22 Nov 2026 01:19:20 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795310353;
-	bh=qsah9M7foXNK9QvRUXT+CrvXBmg+yydBay4Gf38+YR0=;
+	s=k20260515; t=1795310361;
+	bh=RAXPLGk4ldTVweRjtypyvQWpm01HWBNWEtkTkkZV0Ks=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=OKCYL9/hTzizf7XZIcDjFqE8r5O8mbskYQYtjjuu5GOLp14M71COOK3RHwALYj0zC
-	 2RcfvSObeAms8ncoscoqC2z3l/cX6+XCThwhswtfIakGCjHB9B/l4tOAbOJVSd/9Wy
-	 GmWvSV+SBiY2b0lnG/GquMH+L79c2Ix9ouvmPuWjh82MtuPSI5HuI79hiWAlfFS5aa
-	 YkPBvWYNwDT3bVKWsdM/Ne051P4jMdIUmIHa8yYxCP8FW6+KH9yHXwlOg9nnCJvuUo
-	 rMKtkpeWfKdn+0VoaIgnRNPBBMnZz9OkDB9y5s62sj29tnDZHgFB1XPzM8LWaEmcRu
-	 oChN4176hN/8Q==
+	b=Dz/4YhIhwbfL7TBgpLOYcylHoSeC+EfOHizQxdnsHkkOkMt8dmQPqoFCuUqkozR/D
+	 Ms9eeSCO9jU09brnBXTvHR8rTFC+YaPSbPtaS0Fp3UD0xZpDqjlYwLFsZVvI7cJogJ
+	 zP54NVWr2/eJab+dPmKx2QKMmua8/q3GNiHGjOqHHETgHjx1gJ03D5+3Rg/37LSUgH
+	 o3rzBgmcblZ5FaJs8T+Kku3WVSB/72I7DwwvZ2jaqT9n2mrLElXIG9YzMMrl/GsZnY
+	 0k0iaQ7jc3K4+WNUvL9r/kw2Fh4CYRr8g9YB+JqSIj9hG3B2SzE1tkWIt9FNRIQ8XB
+	 QgSw7hVxu2wQw==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -74,9 +74,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v6 14/26] userland: Add USERLAND_SHARE_NSFD ioctl
-Date: Sun, 22 Nov 2026 03:17:57 +0200
-Message-ID: <20261122011809.2667684-15-jarkko@kernel.org>
+Subject: [RFC PATCH v6 16/26] signal: Support userland fds in pidfd_send_signal()
+Date: Sun, 22 Nov 2026 03:17:59 +0200
+Message-ID: <20261122011809.2667684-17-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261122011809.2667684-1-jarkko@kernel.org>
 References: <20261122011809.2667684-1-jarkko@kernel.org>
@@ -91,165 +91,150 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-userland_open() isolates every namespace by default rather than relying
-on unshare() deny-listing, which prevents workloads such as
-host-networked sandboxes or sidecars sharing a network or IPC namespace
-from opting into specific existing namespaces.
+Signaling every process inside a userland from userspace via /proc is
+racy against concurrent fork() calls.
 
-Add the build-phase USERLAND_SHARE_NSFD ioctl to replace the userland's
-cgroup, IPC, UTS, network, or time namespace with a supplied nsfs file
-descriptor in-place under userland->lock while the userland is still in
-USERLAND_INIT, rejecting calls with -EBUSY once CLONE_INTO_USERLAND
-begins. Require CAP_SYS_ADMIN in the userland's user namespace, and
-require CAP_SYS_ADMIN in the target namespace's owning user namespace
-when the caller is not already a member of that namespace.
+Teach pidfd_send_signal() to dispatch userland file descriptors to
+userland_send_signal() when info is NULL and flags is 0. Require an
+ancestor active PID namespace, walk the userland's PID namespace IDR
+under tasklist_lock, and deliver a validated signal once to each thread
+group including in-flight forks, aggregating per-process delivery
+results.
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- include/uapi/linux/userland.h | 14 ++++++
- kernel/userland.c             | 92 +++++++++++++++++++++++++++++++++++
- 2 files changed, 106 insertions(+)
+ include/linux/userland.h | 10 +++++++
+ kernel/signal.c          |  4 +++
+ kernel/userland.c        | 59 ++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 73 insertions(+)
 
-diff --git a/include/uapi/linux/userland.h b/include/uapi/linux/userland.h
-index e81a06d6e9eb..addb84e996f5 100644
---- a/include/uapi/linux/userland.h
-+++ b/include/uapi/linux/userland.h
-@@ -41,4 +41,18 @@ enum userland_flags {
-  */
- #define USERLAND_GET_NSFD	_IO(USERLAND_IOCTL_MAGIC, 0x01)
- 
-+/**
-+ * DOC: USERLAND_SHARE_NSFD
-+ *
-+ * ``ioctl(userland_fd, USERLAND_SHARE_NSFD, ns_fd)`` replaces the corresponding
-+ * member namespace of ``userland_fd`` with ``ns_fd`` (``CLONE_NEWCGROUP``,
-+ * ``CLONE_NEWIPC``, ``CLONE_NEWUTS``, ``CLONE_NEWNET``, or ``CLONE_NEWTIME``)
-+ * while ``userland_fd`` is in ``USERLAND_INIT``.
-+ *
-+ * Requires ``CAP_SYS_ADMIN`` in the userland's user namespace, plus
-+ * ``CAP_SYS_ADMIN`` in ``ns_fd``'s owning user namespace when the caller is
-+ * not already a member of ``ns_fd``.
-+ */
-+#define USERLAND_SHARE_NSFD	_IO(USERLAND_IOCTL_MAGIC, 0x02)
+diff --git a/include/linux/userland.h b/include/linux/userland.h
+index 1bab10d931b5..173c22c27ae9 100644
+--- a/include/linux/userland.h
++++ b/include/linux/userland.h
+@@ -17,6 +17,7 @@ struct nsproxy;
+ struct pid;
+ struct pid_namespace;
+ struct rusage;
++struct siginfo;
+ struct task_struct;
+ struct user_namespace;
+ struct waitid_info;
+@@ -49,6 +50,8 @@ void userland_copy(struct task_struct *tsk, struct pid *pid,
+ void userland_exit(struct pid_namespace *pid_ns, struct task_struct *tsk);
+ long userland_waitid(int upid, struct waitid_info *infop, int options,
+ 		     struct rusage *ru);
++int userland_send_signal(struct file *file, int sig,
++			 struct siginfo __user *info, unsigned int flags);
+ #else
+ static inline void userland_put(struct userland *c)
+ {
+@@ -74,6 +77,13 @@ static inline long userland_waitid(int upid, struct waitid_info *infop,
+ {
+ 	return -EINVAL;
+ }
 +
- #endif /* _UAPI_LINUX_USERLAND_H */
++static inline int userland_send_signal(struct file *file, int sig,
++				       struct siginfo __user *info,
++				       unsigned int flags)
++{
++	return -EBADF;
++}
+ #endif /* CONFIG_USERLAND */
+ 
+ #endif /* _LINUX_USERLAND_H */
+diff --git a/kernel/signal.c b/kernel/signal.c
+index dd770e68faee..5b11e67dc98a 100644
+--- a/kernel/signal.c
++++ b/kernel/signal.c
+@@ -37,6 +37,7 @@
+ #include <linux/capability.h>
+ #include <linux/freezer.h>
+ #include <linux/pid_namespace.h>
++#include <linux/userland.h>
+ #include <linux/nsproxy.h>
+ #include <linux/user_namespace.h>
+ #include <linux/uprobes.h>
+@@ -4181,6 +4182,9 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+ 		if (fd_empty(f))
+ 			return -EBADF;
+ 
++		if (userland_is_file(fd_file(f)))
++			return userland_send_signal(fd_file(f), sig, info, flags);
++
+ 		/* Is this a pidfd? */
+ 		pid = pidfd_to_pid(fd_file(f));
+ 		if (IS_ERR(pid))
 diff --git a/kernel/userland.c b/kernel/userland.c
-index 7b44f400dc23..efac9e4f2fa5 100644
+index c118defcff01..739f6b98c103 100644
 --- a/kernel/userland.c
 +++ b/kernel/userland.c
-@@ -24,6 +24,8 @@
- #include <linux/nsfs.h>
- #include <linux/pid.h>
- #include <linux/pid_namespace.h>
-+#include <linux/proc_fs.h>
-+#include <linux/proc_ns.h>
- #include <linux/time_namespace.h>
- #include <linux/user_namespace.h>
- #include <linux/uts_namespace.h>
-@@ -118,6 +120,94 @@ static long userland_get_nsfd(struct userland *userland, unsigned long nstype)
- 	return open_namespace(ns);
+@@ -287,6 +287,65 @@ long userland_waitid(int upid, struct waitid_info *infop, int options,
+ 	return ret;
  }
  
-+static long userland_share_nsfd(struct userland *c, unsigned long arg)
++/**
++ * DOC: pidfd_send_signal
++ *
++ * ``pidfd_send_signal(userland_fd, sig, NULL, 0)`` delivers ``sig`` (or ``0`` for
++ * a permission and existence probe) once to each member thread group in a
++ * running userland. ``info`` must be ``NULL``, ``flags`` must be ``0``, and the
++ * caller must run in an ancestor active PID namespace.
++ */
++int userland_send_signal(struct file *file, int sig,
++			 struct siginfo __user *info, unsigned int flags)
 +{
-+	struct ns_common *old_time_children = NULL;
-+	struct ns_common *old_ns = NULL;
-+	struct ns_common *ns;
++	struct userland *userland = file->private_data;
++	struct pid_namespace *pid_ns = userland->ns->pid_ns_for_children;
++	bool any_success = false;
++	bool any_other = false;
++	bool any_perm = false;
++	int other_err = 0;
++	struct pid *pid;
++	int nr;
 +
-+	if (arg > INT_MAX)
-+		return -EBADF;
-+
-+	CLASS(fd, f)((int)arg);
-+	if (fd_empty(f))
-+		return -EBADF;
-+	if (!proc_ns_file(fd_file(f)))
++	if (info || flags || sig < 0 || !valid_signal(sig))
 +		return -EINVAL;
-+	if (unlikely(!current->nsproxy))
-+		return -EOPNOTSUPP;
++	if (!pidns_is_ancestor(pid_ns, task_active_pid_ns(current)))
++		return -EXDEV;
++	if (READ_ONCE(userland->state) != USERLAND_RUNNING)
++		return -ESRCH;
 +
-+	ns = get_proc_ns(file_inode(fd_file(f)));
-+	switch (ns->ns_type) {
-+	case CLONE_NEWCGROUP:
-+	case CLONE_NEWIPC:
-+	case CLONE_NEWUTS:
-+	case CLONE_NEWNET:
-+		break;
-+	case CLONE_NEWTIME:
-+		if (!IS_ENABLED(CONFIG_TIME_NS))
-+			return -EOPNOTSUPP;
-+		break;
-+	default:
-+		return -EINVAL;
-+	}
++	scoped_guard(rcu) {
++		read_lock(&tasklist_lock);
++		idr_for_each_entry(&pid_ns->idr, pid, nr) {
++			struct task_struct *task = pid_task(pid, PIDTYPE_TGID);
++			int err;
 +
-+	if (!ns_capable(c->user_ns, CAP_SYS_ADMIN))
-+		return -EPERM;
-+	if (!is_current_namespace(ns) &&
-+	    !ns_capable(ns->ops->owner(ns), CAP_SYS_ADMIN))
-+		return -EPERM;
++			if (!task)
++				continue;
 +
-+	scoped_guard(spinlock, &c->lock) {
-+		if (c->state != USERLAND_INIT)
-+			return -EBUSY;
-+
-+		__ns_ref_inc(ns);
-+		__ns_ref_active_get(ns);
-+
-+		switch (ns->ns_type) {
-+		case CLONE_NEWCGROUP:
-+			old_ns = to_ns_common(c->ns->cgroup_ns);
-+			c->ns->cgroup_ns = to_cg_ns(ns);
-+			break;
-+		case CLONE_NEWIPC:
-+			old_ns = to_ns_common(c->ns->ipc_ns);
-+			c->ns->ipc_ns = to_ipc_ns(ns);
-+			break;
-+		case CLONE_NEWUTS:
-+			old_ns = to_ns_common(c->ns->uts_ns);
-+			c->ns->uts_ns = to_uts_ns(ns);
-+			break;
-+		case CLONE_NEWNET:
-+			old_ns = to_ns_common(c->ns->net_ns);
-+			c->ns->net_ns = to_net_ns(ns);
-+			break;
-+#ifdef CONFIG_TIME_NS
-+		case CLONE_NEWTIME:
-+			__ns_ref_inc(ns);
-+			__ns_ref_active_get(ns);
-+			old_ns = to_ns_common(c->ns->time_ns);
-+			old_time_children =
-+				to_ns_common(c->ns->time_ns_for_children);
-+			c->ns->time_ns = to_time_ns(ns);
-+			c->ns->time_ns_for_children = to_time_ns(ns);
-+			break;
-+#endif
-+		default:
-+			WARN_ON_ONCE(1);
-+			break;
++			err = group_send_sig_info(sig, SEND_SIG_NOINFO, task,
++						  PIDTYPE_MAX);
++			if (!err) {
++				any_success = true;
++			} else if (err == -EPERM) {
++				any_perm = true;
++			} else if (err != -ESRCH && !any_other) {
++				any_other = true;
++				other_err = err;
++			}
 +		}
++		read_unlock(&tasklist_lock);
 +	}
 +
-+	__ns_ref_active_put(old_ns);
-+	old_ns->ops->put(old_ns);
-+	if (old_time_children) {
-+		__ns_ref_active_put(old_time_children);
-+		old_time_children->ops->put(old_time_children);
-+	}
-+	return 0;
++	if (any_success)
++		return 0;
++	if (any_other)
++		return other_err;
++	if (any_perm)
++		return -EPERM;
++	return -ESRCH;
 +}
 +
  static long userland_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
  {
  	struct userland *userland = file->private_data;
-@@ -125,6 +215,8 @@ static long userland_ioctl(struct file *file, unsigned int cmd, unsigned long ar
- 	switch (cmd) {
- 	case USERLAND_GET_NSFD:
- 		return userland_get_nsfd(userland, arg);
-+	case USERLAND_SHARE_NSFD:
-+		return userland_share_nsfd(userland, arg);
- 	default:
- 		return -ENOIOCTLCMD;
- 	}
 -- 
 2.47.3
 
