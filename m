@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795312620;
-	b=lFIzneUmXzP1W43SRHnQ/L5RH2/TZmao+GYTi4HsExz0yhXVCgl0bWVd2QQ9zEaujKdG
-	 utjzyK6dqECQYRHMY2meNcDPFI3sli9YPSfnAOEyHYx8MJTlhmWn6vQXOr53RVFnHTQNC
-	 D7GWjxMBGTXj19Fgp/Z8/dq7DJy7SqcgjuUR7uYRbuf+KNwiGR0ceubLBInzP9sN8uRB9
-	 0v2so2Do5+dMzUmrVBUSgM+XO8gD8w6vxbvZQjJsQZeD0rAaOn5/ipvqbp45Y0xlmaYFL
-	 7Y3CFOV29bYuf6NoWJgEebhjLjJ7DKUrkbjMXMpQjj3BX4vrSvRDSWrV0PTAvvC+cZA==
+	t=1795312625;
+	b=cBEWQtsQ0ZVPs999b01dC/ZdbvR5I2RGWzZlyHkkYssoAndaDldu84bOgfZ8MZ0STGJH
+	 yiKZeUcsxqVhlRkKqmZVslOM5nJLWLOP7tXntg4Dl+sa5lp6qRurue0cJ1fvLPR/SCKJ8
+	 9XRQLTqQxl79j34ioNf5Mg+kPl7x8iMTiwMit/r7S8kKV14HtvUHLCg4LbrHBgEWCGcU9
+	 h3A94aEKTApcOmP9QPbXnoo1a3gRbVZPO53VGW7RV/g+Dk+kCeFhe5BDrkni4pUb7q7WG
+	 t5wqRfM24JQlUfwx+uwDbrXWkDWy9qogP5yDlWDjDdEcebyKRaEX0M7oBp0ssnw9wBA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795312620;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795312625;
 	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
 	 In-Reply-To:References:Subject:From:To:Cc:Date;
-	bh=ThwrOz4KQaf/68vZr/EK5L1WefkBvf/yK3CtlQ1HEo4=;
-	b=X6ZWxYEv4uEoMlolZOUT9QvraY3is+LXS8/Ghkd5XIaPFtynTgw547/fND4c+7MN0G3P
-	 SrnglmRWMcdkSeIb27U1m4LiVq2yDmp8Prz/cC5zLmZgMOvGARW8kIFgN++beGeutE8m9
-	 q7B7vgfGEyRJKFf5pu+OTYgfC5PBMgPOtZdH/ZUUdvvZcQ2NKuYpIWlxz7taAJszuiYYi
-	 xpNVUH1qtdqgyZqDgHtx7+Ste2fB8DE/W8Eg1fzerRgIeSprDjHCIrXCbQ+1hvj0UwI4W
-	 WTOQrWKGzmCP7x7nyN+A2ZD96sKIZszVBsdqL4z/JQLhhomIdIAPifw18TUI/TSboUw==
+	bh=6/FyTmAO6EftrsMjGyxjzlp9mWuafpHrb9mW48T2Oss=;
+	b=uXzV7Xg9sf+LCzpB2c8xVOyEmO/vt7gRwjQTkmvNZaqYS+plJT6Fm3BZ5cjUrDZpI7sF
+	 +LHJmf8MqUc99VY7jyT79h59gj+pK9eJz6CjsK+bmCDebuAvxM2uUPPTwdJIHDUUEAFWy
+	 bqsWEz8Fg9ig565mK6s0CqV0JMm+gkyinuhx3a6JlburiIWu/b7TwXprq5yJnuo++h/8u
+	 MQxzQEoBToEtACbjWSej2YekIYeaTOpeu8Pwdq++CKptnxlbjhGoJdVKZQSqkz6j/LObd
+	 b457LpqPaprXw+0CNiH2ikeb8IGL1BMTQgFt0sHOteiuvyn06pLaB7F0xtQ4tPehJBQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="GC/IuWKz";
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LAiB2BDW;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2E685606A32A;
-	Sun, 22 Nov 2026 01:56:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC908606A330;
+	Sun, 22 Nov 2026 01:57:05 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=GC/IuWKz
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5ABEF1F000C4;
-	Sun, 22 Nov 2026 01:56:56 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=LAiB2BDW
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id C20C01F000C6;
+	Sun, 22 Nov 2026 01:57:01 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795312619;
-	bh=ThwrOz4KQaf/68vZr/EK5L1WefkBvf/yK3CtlQ1HEo4=;
+	s=k20260515; t=1795312625;
+	bh=6/FyTmAO6EftrsMjGyxjzlp9mWuafpHrb9mW48T2Oss=;
 	h=In-Reply-To:References:Subject:From:To:Cc:Date;
-	b=GC/IuWKzdP3XPrZY10V0RiplZlejXzbWqHWY2QaOy4znVfE3YN5fkGAgzUnxJiKVi
-	 SPLiEY5c8KMToEo+eZ/6XZVlUDB4rdVdhYv3Bd3S7cwuW5JxRQ4qJm1JPiKn1EtnXq
-	 BOBnnj3U6wWLp2zpdRigdS5yMcgJ3q0jI4h8LsJirUNb1rQi55p1rxggbTdCWzVv42
-	 Uo4cPxRFR53JJuCkEghXMu0Iz2lXAlOWLxU3GdMdcDrY5PYQDRu8yP+kBww+bpkOUj
-	 e7YbUHBNXVoPyB5Qxq4Ve/oGeOT/tplGDKuacxwSvtew1eVp1UBxIfzR0tUg9cMXMw
-	 QofJXhNKIHfqQ==
-Content-Type: multipart/mixed; boundary="===============5046235082527952735=="
+	b=LAiB2BDWU3KDfnCXLYfa7ih/CTFK11tTVZY3+hcQ/8vJmjiSoq/EV3Fgt7hrC/RwN
+	 +EqFbeoqKBYoGn9x471Yg5WTU7aY5g9GaaSEAB3NB2KflPUI5KhBRuyCsEhd5qNQLP
+	 FoUZPTG9ZHGlbSGQoFSZSRGIgo9FUgvcF+qWFzrw5lnwZs86zK0kAG6+8hOTAaEf06
+	 sAS9sL/Qw2Nmb4LR5oTfDBR5Sf9b+shshushM71J23frttECA+gOdPvLONAVYmyXhO
+	 satqdnxwF+LliRSVYYpzkQ8NJpepILIsfD5r6Nliu9SfNY85l+4YcgAEAEOSkN367Y
+	 VPkKumdQpdPrQ==
+Content-Type: multipart/mixed; boundary="===============6512166407887190360=="
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -49,98 +49,67 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Message-Id: <99f64593ccffc93d735505cff682eecae40a6671b80ad7485c078ff8f335a214@mail.kernel.org>
-In-Reply-To: <20261122011809.2667684-25-jarkko@kernel.org>
-References: <20261122011809.2667684-25-jarkko@kernel.org>
-Subject: Re: [RFC PATCH v6 24/26] docs: Document userland uAPI
+Message-Id: <3aca9b48a99eea17865184e5107f26499594cb8e7cb05923abc9cad098e24c5b@mail.kernel.org>
+In-Reply-To: <20261122011809.2667684-2-jarkko@kernel.org>
+References: <20261122011809.2667684-2-jarkko@kernel.org>
+Subject: Re: [RFC PATCH v6 01/26] userns: Factor out idmap validation and commit helpers
 From: bot+bpf-ci@kernel.org
 To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
 Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
-Date: Sun, 22 Nov 2026 01:56:56 +0000 (UTC)
+Date: Sun, 22 Nov 2026 01:57:01 +0000 (UTC)
 
---===============5046235082527952735==
+--===============6512166407887190360==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 
-> docs: Document userland uAPI
+> userns: Factor out idmap validation and commit helpers
 
-TL;DR: Documentation only: the new userland uAPI doc never defines the
-INIT/RUNNING/DEAD states or their transitions, so readers can't tell when
-USERLAND_SHARE_NSFD is allowed. Commit message also misattributes ioctl docs
-to nsfs.h.
+TL;DR: Nit only: the smp_rmb() pairing comment in commit_new_idmap() names
+map_id_up(), which has no barrier; it should name map_id_range_up(),
+map_id_range_down() and m_start().
 
->     docs: Document userland uAPI
->
->     Userspace orchestrators need a clear specification of what a userland
->     is, its build and live state transitions, USERLAND_GET_NSFD,
->     USERLAND_SHARE_NSFD, waitid(P_USERLAND), pidfd_send_signal(), mount-tree
->     construction, user namespace ID mapping, credential rules, and process
->     creation semantics.
->
->     Add Documentation/userspace-api/userland.rst to include the kernel-doc
->     sections, ioctl descriptions, and system call reference from
->     kernel/userland.c, kernel/user_namespace.c,
->     include/uapi/linux/userland.h, include/uapi/linux/nsfs.h, fs/fsopen.c,
->     and fs/namespace.c, and register the userland ioctl magic in
->     ioctl-number.rst.
->
->     Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-
-The message says the ioctl descriptions come from the listed files,
-including include/uapi/linux/nsfs.h.  Is that accurate?
-
-The only nsfs.h content included by userland.rst is:
-
-  .. kernel-doc:: include/uapi/linux/nsfs.h
-     :identifiers: userns_idmap_extent userns_flags userns_idmap
-
-which documents the structures and enum used by userns_set_idmap().  The
-ioctl descriptions (USERLAND_GET_NSFD, USERLAND_SHARE_NSFD) come from
-include/uapi/linux/userland.h.
-
-This isn't a bug, but the body paragraphs and the Signed-off-by tag are
-also not separated by blank lines in the message as rendered.
-
-> diff --git a/Documentation/userspace-api/userland.rst b/Documentation/userspace-api/userland.rst
-> new file mode 100644
-> index 000000000000..47d5c39ccb1c
-> --- /dev/null
-> +++ b/Documentation/userspace-api/userland.rst
-> @@ -0,0 +1,73 @@
-> +.. SPDX-License-Identifier: GPL-2.0
-> +
-> +=============
-> +userland uAPI
-> +=============
-> +
-> +Overview
-> +========
-> +
-> +A userland is an anonymous-inode control object opened by ``userland_open()`` (not
-> +an ``nsfs`` namespace) that binds a detached namespace set, an initially empty
-> +mount namespace, an owning user namespace, and an init process lifecycle across
-> +build (``USERLAND_INIT``) and live (``USERLAND_RUNNING`` / ``USERLAND_DEAD``) phases.
-
-Where are USERLAND_INIT, USERLAND_RUNNING and USERLAND_DEAD defined for
-the reader?
-
-These states are not in any uapi header and are only used inside
-kernel/userland.c, and no section of this document defines them or the
-transitions between them.  Yet the included sections rely on them:
-
-  USERLAND_SHARE_NSFD works only while userland_fd is in USERLAND_INIT
-  P_USERLAND waits until USERLAND_DEAD
-  USERLAND_GET_NSFD for CLONE_NEWPID needs the init to be running
-
-What moves a userland from USERLAND_INIT to USERLAND_RUNNING, and from
-USERLAND_RUNNING to USERLAND_DEAD?  The commit message promises a
-specification of the build and live state transitions and of credential
-rules, but the document only has this one-paragraph overview plus the
-included kernel-doc, so a userspace reader cannot tell when
-USERLAND_SHARE_NSFD is still allowed.
+> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+> --- a/kernel/user_namespace.c
+> +++ b/kernel/user_namespace.c
 
 [ ... ]
+
+> +static void commit_new_idmap(struct uid_gid_map *map,
+> +			     struct uid_gid_map *new_map)
+> +{
+> +	if (new_map->nr_extents <= UID_GID_MAP_MAX_BASE_EXTENTS) {
+> +		memcpy(map->extent, new_map->extent,
+> +		       new_map->nr_extents * sizeof(new_map->extent[0]));
+> +	} else {
+> +		map->forward = new_map->forward;
+> +		map->reverse = new_map->reverse;
+> +	}
+> +	/* Pairs with smp_rmb() in map_id_range_down() / map_id_up(). */
+                                                         ^^^^^^^^^
+
+This isn't a bug, but the comment doesn't match the readers that contain
+the paired smp_rmb().  map_id_up() has no barrier of its own:
+
+    u32 map_id_up(const struct uid_gid_map *map, u32 id)
+    {
+            return map_id_range_up(map, id, 1);
+    }
+
+The barrier is in map_id_range_up(), which is also called directly (for
+example from statmount_mnt_idmap()).  The procfs reader m_start() also
+pairs with this barrier:
+
+    unsigned extents = map->nr_extents;
+    smp_rmb();
+
+Could the comment name map_id_range_down(), map_id_range_up() and
+m_start() instead?
+
+> +	smp_wmb();
+> +	map->nr_extents = new_map->nr_extents;
+> +	memset(new_map, 0, sizeof(*new_map));
+> +}
 
 
 ---
@@ -148,4 +117,4 @@ AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
 See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
 
 CI run summary: https://github.com/kernel-patches/bpf/actions/runs/44972669664
---===============5046235082527952735==--
+--===============6512166407887190360==--
