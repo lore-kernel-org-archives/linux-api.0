@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795313617;
-	b=kQ5pPdvV4bHcFAWyzGSm5inHpunvoslrInaDOT7K303dtRLbFITOqY2h2ObEEloqdfRG
-	 KfKX4A2tYslvkfXOnpH85ApVpgSwRTxXxdHaqjVeryTbKq2NWsSLPMKX9TtrAjVSx4t3a
-	 tj3SG0s9aFsFSSIebzyXaASPXabS43i812wzo+LU/9I353E10E1XKo6DmC9nWfuwi3gaP
-	 hP5YKB19RVbckOKxNv4fDyrTQLzcVHHeSjm8H8sz5kKWk0HLziQqZWjG/JkJLxLpt1cWl
-	 fVZqjtZvSHv4jdm2MByuaouYQuFy3ZlX7iSm9KWQe8QgEuEkliP74Fa1F6KCZFCjsEA==
+	t=1795313627;
+	b=PHlFnoGgMW5JPvgTag7Rdg7hTPjrtLSScH5Lo0mFgo5E4XIwmf82uJ+zWJYT/0VCBmQV
+	 Z4i9CNfg9ncwGKPAfpKPVHumRva9q1eQsntwZF11nAF26ptS0uMry/VRLa2MrDyX66oBY
+	 h0IfT2nusY7uNgerpRvd1yO7uS34cFk0ZtgNR8DTsosieV7Pefn36HhNjzig9RTZQ65Cl
+	 wy1Og5lb7YzFpuuimOvRhywX2E0nwJM1XKpv/M+arNBO9gtlpSMLimaJ48JEkBE+FSbIP
+	 45isIyJL6WooZag+IlV6Wz/avQ7/Q3aKrz4xzBwKi9vdBQlohUTt2Vn1mTWUMp4tpDA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795313617;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795313627;
 	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
 	 In-Reply-To:References:Subject:From:To:Cc:Date;
-	bh=cSdr2cBdqkloDgvS8BMjQJSoyDpO64vjXYle1ikr1YQ=;
-	b=IHwmCxmjcoB7ClKabAhs8RDOaSuBq59FfKyTnCiiGlQZcYwEHgFm4JhF1TQVdAHJCn+i
-	 0Eo1+T+NVKVUhwFvQO4N6jACJ8KazIacENb4FLK2HpK99gL0t8hj3077OlYydksoKn4vu
-	 3d+du/gTFggnaBOkvzxgAwqHrVUZMMs2+lkC6fQ1tNvlrGQmXkFBrjK8hFKMK558Iodn7
-	 wHb17r0W3WFg8G/yEPf+fUJygSZokjAG7VaoMLWGRGgPX3oYWktn/TZ91/CzfkLuvU6iW
-	 v2xgnV0GntfxkugXjVhiQ2Jqw3iETXEIYgK9h9icrKqA89nSyrW3DtyGNlgWAex+gxg==
+	bh=fZRJwAY0kLkmZpFTl11wk8j7FY+RcHR74PBO3B2HID8=;
+	b=U6ZojW06BivzkmdfSSHG/rWjPBNF5i+7S0F0sHK3MsXGh/MumShvBk0FnLAYOgpvogkE
+	 m7xvKyn9TZQmMCFh4mtKOlFEeHEfLX3Ff/L+Wzeu2hoaV3MCR1MAQYq/jJ9a3Sq998DZB
+	 D3X93rnM3kaN5adQpSwGEfYD5h+Ffnpmk1fqQZ1za0I4jA6+EWJ5xRinfzQF5j6Adwa3h
+	 tYLhdk4MXdael7yygolubPPKHokFFxcZZrFuquRufkAFlqSOonorSSavS9IUp+LZzWhLw
+	 Q9yZLqmy9aoEtSgVcWBb8/cYAgKKCWrdWHIEskAzAX/nJBM/2f8XrWhEI7+yQgdfdTQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=B5JOemNw;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=HuzYQ3+Z;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EA33A606A32A;
-	Sun, 22 Nov 2026 02:13:36 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BF576606A33B;
+	Sun, 22 Nov 2026 02:13:47 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=B5JOemNw
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1A3491F000C0;
-	Sun, 22 Nov 2026 02:13:33 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=HuzYQ3+Z
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id EB3081F000CA;
+	Sun, 22 Nov 2026 02:13:43 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795313616;
-	bh=cSdr2cBdqkloDgvS8BMjQJSoyDpO64vjXYle1ikr1YQ=;
+	s=k20260515; t=1795313627;
+	bh=fZRJwAY0kLkmZpFTl11wk8j7FY+RcHR74PBO3B2HID8=;
 	h=In-Reply-To:References:Subject:From:To:Cc:Date;
-	b=B5JOemNwzbqZMdKmy8t8vqSrhW01QJnCyEIibiwaUziPQ5Sc5NQavrA2vLyp1LPBp
-	 VNQDXSAAD/P1KrEfPW77SO/Pmw9NMoJ93RjyBmmeJMkKa0QJ8aly9oZA5ofCUdn60q
-	 LFGpGstl6NI4Akc0S/XxRJINjkl2JCuUhtCX7LP21ZG/3OR7M+J4eSDQWtuBz/wCCw
-	 TiqMouXeULkeIph5i3nEqXzCAy3gLKW9e5xLmXYztgXixlP4cGqEfJ2kTvU4M/y2rz
-	 djctkzD3/xFfC+61kWTsvVp92OuRRNqHSw6aaSyhd0vkJ042MkVN4cia02bB4g2Isx
-	 x3SHdE1JpAy6Q==
-Content-Type: multipart/mixed; boundary="===============6118825193041384337=="
+	b=HuzYQ3+ZJ4kIQAFE0RRBLcAdMCPKIzlkXHrLV4idMRn0R4difRDbB9pQRXrJGFSut
+	 drbvK8Hxjyw0a7PVuHsUeBe8N4ajEJ3dwCOOa0P7S1hinBUW56jo2uIcrmCQwuWDR6
+	 I6XQiDO1LhCvaQF8w+GKOEYGmNoHAaQ+/nxIvG65kJiY9Isl1nJrjR2Tim1IdXxkWD
+	 LEqcqG5WovbXGTZ1ryNg/VsTYR6GAgWmx1XdPJzxoo6bZsZYsS8/c3q8JbKwvX3S4T
+	 oQNTD6qfb+ev+ZgDKyIAJDjVNHujT0e7Eyt3OqFOka9tlHd4GAFYSKWMbP5RrsD9lk
+	 E0xsl2WH3feww==
+Content-Type: multipart/mixed; boundary="===============6920277758331287056=="
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -49,25 +49,25 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Message-Id: <5cf1f729e21c52032316bd1351ca28d6bf30e54d9ece35b6f6055c94a61e6883@mail.kernel.org>
-In-Reply-To: <20261122011809.2667684-17-jarkko@kernel.org>
-References: <20261122011809.2667684-17-jarkko@kernel.org>
-Subject: Re: [RFC PATCH v6 16/26] signal: Support userland fds in pidfd_send_signal()
+Message-Id: <1d998074e046fc55d51361a3f7d642ab1405b4ec87d9bcfe315f717fcf52e456@mail.kernel.org>
+In-Reply-To: <20261122011809.2667684-14-jarkko@kernel.org>
+References: <20261122011809.2667684-14-jarkko@kernel.org>
+Subject: Re: [RFC PATCH v6 13/26] userland: Add USERLAND_GET_NSFD ioctl
 From: bot+bpf-ci@kernel.org
 To: jarkko@kernel.org,linux-fsdevel@vger.kernel.org
 Cc: jarkko@kernel.org,bpf@vger.kernel.org,containers@lists.linux.dev,linux-api@vger.kernel.org,linux-arch@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-mm@kvack.org,linux-security-module@vger.kernel.org,aleksa@amutable.com,alex@amutable.com,viro@zeniv.linux.org.uk,luto@amacapital.net,arnd@arndb.de,brauner@kernel.org,dhowells@redhat.com,giuseppe@scrivano.org,hughd@google.com,jack@suse.cz,jlayton@kernel.org,corbet@lwn.net,josef@toxicpanda.com,kees@kernel.org,kpsingh@kernel.org,lennart@poettering.net,neal@gompa.dev,oleg@redhat.com,paul@paul-moore.com,ptikhomirov@virtuozzo.com,sergeh@kernel.org,skhan@linuxfoundation.org,zygmunt.krynicki@canonical.com,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
-Date: Sun, 22 Nov 2026 02:13:33 +0000 (UTC)
+Date: Sun, 22 Nov 2026 02:13:43 +0000 (UTC)
 
---===============6118825193041384337==
+--===============6920277758331287056==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 
-> signal: Support userland fds in pidfd_send_signal()
+> userland: Add USERLAND_GET_NSFD ioctl
 
-TL;DR: userland_send_signal() may miss a child forked by a parent outside the
-userland's PID namespace (e.g. after setns()), so a broadcast SIGSTOP/SIGTERM
-could skip it; otherwise the commit message needs narrowing.
+TL;DR: userland->lock is taken with irqs enabled but, once
+clone3(CLONE_INTO_USERLAND) lands later in the series, also under siglock; a
+possible deadlock lockdep would report. Latent at this commit.
 
 > diff --git a/kernel/userland.c b/kernel/userland.c
 > --- a/kernel/userland.c
@@ -75,61 +75,63 @@ could skip it; otherwise the commit message needs narrowing.
 
 [ ... ]
 
-> +int userland_send_signal(struct file *file, int sig,
-> +			 struct siginfo __user *info, unsigned int flags)
+> +static long userland_get_nsfd(struct userland *userland, unsigned long nstype)
 > +{
 
 [ ... ]
 
-> +	scoped_guard(rcu) {
-> +		read_lock(&tasklist_lock);
-> +		idr_for_each_entry(&pid_ns->idr, pid, nr) {
-> +			struct task_struct *task = pid_task(pid, PIDTYPE_TGID);
-> +			int err;
-> +
-> +			if (!task)
-> +				continue;
-> +
-> +			err = group_send_sig_info(sig, SEND_SIG_NOINFO, task,
-> +						  PIDTYPE_MAX);
+> +	scoped_guard(spinlock, &userland->lock) {
+> +		switch (nstype) {
+> +		case CLONE_NEWNS:
+> +			ns = from_mnt_ns(userland->ns->mnt_ns);
+> +			break;
 
-The commit message says the signal is delivered "once to each thread group
-including in-flight forks".  Does that hold when the forking parent is not
-a member of the userland's PID namespace?
+[ ... ]
 
-The delayed multiprocess signal handling only reaches a child if the parent
-itself is in pid_ns->idr, so that group_send_sig_info(..., PIDTYPE_MAX)
-hits the parent.  A parent outside the userland can still create a member
-process, for example by calling setns() on the PID nsfd from
-USERLAND_GET_NSFD(CLONE_NEWPID) and then fork().  A later patch in this
-series, "fork: Support CLONE_INTO_USERLAND in clone3()", also lets
-subsequent callers join the running PID namespace.
+Can this lock be taken with hardirqs enabled?  Later in the series,
+commit 498ccb2ffbc4 ("fork: Support CLONE_INTO_USERLAND in clone3()")
+passes args->userland to userland_copy(), and copy_process() calls it
+while holding write_lock_irq(&tasklist_lock) and
+spin_lock(&current->sighand->siglock):
 
-In that case:
+copy_process()
+  write_lock_irq(&tasklist_lock)
+  spin_lock(&current->sighand->siglock)
+  userland_copy()
+    scoped_guard(spinlock, &c->lock)
 
-  parent P (outside pid_ns)          userland_send_signal()
+siglock is hardirq-safe, since it_real_fn() reaches it through
+kill_pid_info()->lock_task_sighand() from a hard hrtimer callback.  That
+gives siglock -> userland->lock, with userland->lock taken here with
+irqs enabled, which lockdep will report and which can deadlock:
+
+CPU0
+ioctl(USERLAND_GET_NSFD, CLONE_NEWNET)
+  spin_lock(&userland->lock)        irqs still enabled
+
+CPU1
+clone3(CLONE_INTO_USERLAND)
   copy_process()
-    alloc_pid() -> idr_replace()
-      child pid now in pid_ns->idr
-                                     read_lock(&tasklist_lock)
-                                     idr walk: pid_task(child, TGID) == NULL
-                                       -> continue (skipped)
-                                     P is not in pid_ns->idr, so it is
-                                       never signalled
-                                     read_unlock(&tasklist_lock); return 0
     write_lock_irq(&tasklist_lock)
-    fatal_signal_pending(P) == false
-    attach_pid(p, PIDTYPE_TGID)
-  child runs without the signal
+    spin_lock(&parent->sighand->siglock)
+    userland_copy()
+      spins on userland->lock
 
-The comment in copy_process() already notes "If current is not in the same
-namespace, we can't rely on fatal_signal_pending() below", and only the
-zap_pid_ns_processes() case is covered through the PIDNS_ADDING check.
+CPU0
+hardirq: parent's ITIMER_REAL fires
+  it_real_fn()
+    lock_task_sighand(parent)       spins on siglock held by CPU1
 
-Can a SIGSTOP, SIGTERM or SIGHUP broadcast miss a process that is being
-spawned or exec'd into the userland at the same moment?  Should the walk
-cover these entrants, or should the commit message and the DOC comment be
-narrowed to forks by member processes?
+GET_NSFD has no state check for types other than CLONE_NEWPID, so it can
+run while the userland is in USERLAND_INIT or USERLAND_FORKING, at the
+same time as the bootstrapping clone.
+
+At this commit userland_copy() is still passed NULL, so this is latent
+until that later commit.  userland_release(), userland_exit() and the
+later userland_share_nsfd() take the lock the same way, and the series up
+to 942764a55437 still uses scoped_guard(spinlock, ...) at every site.
+Should these sites use spinlock_irq, or should the userland_copy()
+bookkeeping move out of the tasklist_lock/siglock section?
 
 
 ---
@@ -137,4 +139,4 @@ AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
 See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
 
 CI run summary: https://github.com/kernel-patches/bpf/actions/runs/44972669664
---===============6118825193041384337==--
+--===============6920277758331287056==--
