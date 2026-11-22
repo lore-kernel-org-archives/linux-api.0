@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795376255;
-	b=RJanLf4dyMBsXoxjzHRT0eLQislLCDunU/30YbkuRMogoPxI7ZQNfrQizjOmVZofjHTb
-	 V7mE5wZI70W18IM8nUqu1/d9lmnJFiGI42VBTotEJr8RSHbDf4yhepa6KyY8tqvsaT3GS
-	 CcbwrYf4tCH1vjAbHSGRl75qSJvip8UdkKfSt4MQJyIGLj+6AQtr5tbGsLePwzRkKE3AN
-	 n9HMVloYrWUUVizjQWh6QrdsDCmyCzeTcgoDJtMqzuxaLSDV4XJVOjzR58X6s9FXX4tDQ
-	 /cO5LN/wqNp8myzPcYdRaN6Fdw6ChlpPjSOLNirpO3K/asnwtpWppM9tjE9b+faa8gQ==
+	t=1795376259;
+	b=MMZhef/T629x52jtCpAuqz1fa2VOnTRE98+CfYSLsRZ9ztthkWSnx0SH0WLISuoxDvc9
+	 Fj+eR271g4ppLA7FGuLuYzZe23TcukBST+UlQM+xOYfYYAs2MGmN8xdUC0uB1qSNJXvLG
+	 Mh158cQDCQRBHq9JA1bNooiOUqX0PB+9wt85VXu+UyaS80OLbFcr7b4HGDNDo8OWr3ZMq
+	 cefkC95IBmEU5oivQSoD8kw2oCeJNoqhFOQj2NOIqi+OcYnuap+UApwlVHF2+XcG92D0p
+	 e4OFyv5SRAUWsWmCYug4AW9UckutUrX5wYwZ9gZibbHW50WZmU1OUzidFGccY08XIkQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795376255;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795376259;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=PRa/Z4N97Xs3mX/qNh7M9bbsE39tiqxbHLlAZExaAw8=;
-	b=QVhtvoaSU2rcZwNJChgkDWfMR/9JMHo+HKH8W3ZEHOTwWx01AyCWWlEE2wsPcF0EUzwm
-	 VnLLzkEB7zKYA6wNfjI0vNhjVRmSy8kuItrucHrN0lXAXPs4OBUESHuJwuB1fbrV1xG/V
-	 XCxDARwzcNhetGUkPUgLg1IczATp39pd4YxEdPEFsJms04xlGlulem9mXl0Agm6K58Ms1
-	 mEqmwaA8k7ncWFz93+DsmvFYbk9F2LpPG2foTjM7sd0nv4I4EstaupsZPtWga0ATvcgEr
-	 FX/A8c82vaENar3b3nCoxUnv2ArXmDgedF/XcfgwbfzTcnCTmo+w4wy4vNhZpDykgiw==
+	bh=lKuvDTI6FKXAAEbVhrzFDmxnTT5Wc4CNv/2+sIEwHRc=;
+	b=kNT5Pbm94mW7Y+OmsJw+eGQUuDHnL2GURY7ckUXGETkICavsBm34f+S/y/xMGJhCJ3Qd
+	 htbJXaN2IhpA9yNHZmFXe/yCmJNnnLkGyjXS5NKSLRR1AG18w3LKYQyOW7bLaO8EDRFB0
+	 E0suIbZVCbkF/UecvKtjB2G1mF/xJr+aCb+pfXa3wSHMvDiFyx9COkEBsGvluxJfm2R+H
+	 5Qy/4EozjR/blMHD4J6ESup4En+wMoQE3gbIeakFabsfShNVMIaa/xqeiclbaT2LPEoQU
+	 ELXUX7KVIjF+Jr2zqUWNuqFgBesfdgdc1SyCxwliD9x6i+y57vZsDqKrz2EsFALfEsw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JZ45Dbnh;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JrRw2VD2;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 98089606A690;
-	Sun, 22 Nov 2026 19:37:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B0926606A6AA;
+	Sun, 22 Nov 2026 19:37:39 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JZ45Dbnh
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 652FA1F000C0;
-	Sun, 22 Nov 2026 19:37:34 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=JrRw2VD2
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id B91A51F000C0;
+	Sun, 22 Nov 2026 19:37:38 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795376255;
-	bh=PRa/Z4N97Xs3mX/qNh7M9bbsE39tiqxbHLlAZExaAw8=;
+	s=k20260515; t=1795376259;
+	bh=lKuvDTI6FKXAAEbVhrzFDmxnTT5Wc4CNv/2+sIEwHRc=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=JZ45DbnhnjG22sXXrfi8OAsPk0tnpcu80M8TaUaBIU/vh3zjbCyKi3YDS5KNOZMVP
-	 P7P+wXeAqZy5QBwP1fJ14MNwzvO4qos+6KconVuWPKf0Tt9+bQwmUfJZADyxZeHuAw
-	 6QUQEi/vtXrWBCDm6FxhM4nyELMBqRj1cXtjFmdZVmLoNGMKEV6OGTdhIlRfYwECbq
-	 rdnnwEH/iS50DHXkjmv1XaCvVN3q3rvxPsMRj2tjD2gsw3+oLrN0AXeJ+PqxD4WX0q
-	 TYLVzeu8J7I9IrNZP+HXFbEGXlhw0ytDoqTxt4hP00gc5J8gDWQzv1G/3SBxOwvtyi
-	 8SsYj1tD2FLaw==
+	b=JrRw2VD2LDlpWWnJ443LaoyqYPi4WgdTpxgCBEg8S1X4e6IoUvfRHh2uCryPfjSrB
+	 k49cshsGh1pQGyu8+ruFN5d5UZ84WoFrEgLMgZL33GuKh7Brduf4ZFFAMf8oJ5YeVe
+	 P5+logxlr1Mggk49m8VIlSPaAsMgwtpUd84l2GYBXS4JQzhRmyU1kB+6TwZ/FwxxFP
+	 TpBUzs/TXlv3gs+UJ16Cf0VGW6o7otugSJjLKPf51TNLQRNCN0a4c4ZxiL5bmTIcJA
+	 2hkuAJmkIf2j7Bq11dWJG+6VxJu6M2HyIMMaJTql4BEoanz/MSQ6sg6sqBmAtBU/UV
+	 E0hG4WNw5gekA==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,9 +75,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Serge Hallyn <sergeh@kernel.org>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: [RFC PATCH v7 23/26] arch: Wire up userland_open() system call
-Date: Sun, 22 Nov 2026 21:35:36 +0200
-Message-ID: <20261122193539.3334213-24-jarkko@kernel.org>
+Subject: [RFC PATCH v7 24/26] docs: Document userland uAPI
+Date: Sun, 22 Nov 2026 21:35:37 +0200
+Message-ID: <20261122193539.3334213-25-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
 References: <20261122193539.3334213-1-jarkko@kernel.org>
@@ -92,329 +92,134 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Now that userland lifecycle and VFS mount-tree installation are in
-place, expose userland_open() (474, 584 on Alpha) across all
-architecture system call tables, asm-generic unistd.h, and the mirrored
-copies under tools/.
+Userspace orchestrators need a clear specification of what a userland
+is, its build and live state transitions, USERLAND_GET_NSFD,
+USERLAND_SHARE_NSFD, waitid(P_USERLAND), pidfd_send_signal(), mount-tree
+construction, user namespace ID mapping, credential rules, and process
+creation semantics.
+
+Add Documentation/userspace-api/userland.rst including the kernel-doc
+sections, type definitions, ioctl descriptions, and system call
+reference from include/linux/userland.h, include/uapi/linux/userland.h,
+include/uapi/linux/nsfs.h, kernel/userland.c, kernel/user_namespace.c,
+fs/fsopen.c, and fs/namespace.c, and register the userland ioctl magic
+in ioctl-number.rst.
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- arch/alpha/kernel/syscalls/syscall.tbl              | 1 +
- arch/arm/tools/syscall.tbl                          | 1 +
- arch/arm64/tools/syscall_32.tbl                     | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl               | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl         | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl           | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl           | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl           | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl             | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl            | 1 +
- arch/s390/kernel/syscalls/syscall.tbl               | 1 +
- arch/sh/kernel/syscalls/syscall.tbl                 | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl              | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl              | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl              | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl             | 1 +
- include/uapi/asm-generic/unistd.h                   | 6 +++++-
- scripts/syscall.tbl                                 | 1 +
- tools/include/uapi/asm-generic/unistd.h             | 6 +++++-
- tools/perf/arch/arm/entry/syscalls/syscall.tbl      | 1 +
- tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl | 1 +
- tools/perf/arch/powerpc/entry/syscalls/syscall.tbl  | 1 +
- tools/perf/arch/s390/entry/syscalls/syscall.tbl     | 1 +
- tools/perf/arch/sh/entry/syscalls/syscall.tbl       | 1 +
- tools/perf/arch/sparc/entry/syscalls/syscall.tbl    | 1 +
- tools/perf/arch/x86/entry/syscalls/syscall_32.tbl   | 1 +
- tools/perf/arch/x86/entry/syscalls/syscall_64.tbl   | 1 +
- tools/perf/arch/xtensa/entry/syscalls/syscall.tbl   | 1 +
- tools/scripts/syscall.tbl                           | 1 +
- 29 files changed, 37 insertions(+), 2 deletions(-)
+ Documentation/userspace-api/index.rst         |  1 +
+ .../userspace-api/ioctl/ioctl-number.rst      |  1 +
+ Documentation/userspace-api/userland.rst      | 77 +++++++++++++++++++
+ 3 files changed, 79 insertions(+)
+ create mode 100644 Documentation/userspace-api/userland.rst
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 60d330a51476..2d66a28b610d 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -513,3 +513,4 @@
- 581	common	rseq_slice_yield		sys_rseq_slice_yield
- 582	common	fchroot				sys_fchroot
- 583	common	userns_set_idmap		sys_userns_set_idmap
-+584	common	userland_open			sys_userland_open
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index d055515e98cd..4d2608f907de 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -488,3 +488,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/arm64/tools/syscall_32.tbl b/arch/arm64/tools/syscall_32.tbl
-index a18982ead3bf..2f3e7a4686bf 100644
---- a/arch/arm64/tools/syscall_32.tbl
-+++ b/arch/arm64/tools/syscall_32.tbl
-@@ -485,3 +485,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index e89ec7d54b8c..ad1b3326c478 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -473,3 +473,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 0dfcd6f9e4e7..4a9f4e1e7e31 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -479,3 +479,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 882ff15f3e6d..7483d569dcb0 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -412,3 +412,4 @@
- 471	n32	rseq_slice_yield		sys_rseq_slice_yield
- 472	n32	fchroot				sys_fchroot
- 473	n32	userns_set_idmap		sys_userns_set_idmap
-+474	n32	userland_open			sys_userland_open
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index daa95049baef..fe5c3ab9ffa7 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -388,3 +388,4 @@
- 471	n64	rseq_slice_yield		sys_rseq_slice_yield
- 472	n64	fchroot				sys_fchroot
- 473	n64	userns_set_idmap		sys_userns_set_idmap
-+474	n64	userland_open			sys_userland_open
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 9e0040399fef..233e0b6850ae 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -461,3 +461,4 @@
- 471	o32	rseq_slice_yield		sys_rseq_slice_yield
- 472	o32	fchroot				sys_fchroot
- 473	o32	userns_set_idmap		sys_userns_set_idmap
-+474	o32	userland_open			sys_userland_open
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index b77482e68d1a..7c251ea35d4c 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -472,3 +472,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 973562f20a94..b07ab66144b5 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -564,3 +564,4 @@
- 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	nospu	userns_set_idmap		sys_userns_set_idmap
-+474	nospu	userland_open			sys_userland_open
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 19d7b234b31b..4daa1f92e171 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -400,3 +400,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index 252e6f9aa04c..df51ac4faaf4 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 1263d0e825c1..3db2b5a99b1f 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -519,3 +519,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 0f8c81c584e0..68e3e01c8751 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -479,3 +479,4 @@
- 471	i386	rseq_slice_yield	sys_rseq_slice_yield
- 472	i386	fchroot			sys_fchroot
- 473	i386	userns_set_idmap	sys_userns_set_idmap
-+474	i386	userland_open		sys_userland_open
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 5452b7567bf8..f8ad4c72a86e 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -398,6 +398,7 @@
- 471	common	rseq_slice_yield	sys_rseq_slice_yield
- 472	common	fchroot			sys_fchroot
- 473	common	userns_set_idmap	sys_userns_set_idmap
-+474	common	userland_open		sys_userland_open
+diff --git a/Documentation/userspace-api/index.rst b/Documentation/userspace-api/index.rst
+index a68b1bea57a8..ac665b8fea72 100644
+--- a/Documentation/userspace-api/index.rst
++++ b/Documentation/userspace-api/index.rst
+@@ -17,6 +17,7 @@ System calls
+    :maxdepth: 1
  
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index f10b491c873c..b87586ff006c 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -444,3 +444,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 695eac2d356b..201335a08837 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -871,8 +871,12 @@ __SYSCALL(__NR_fchroot, sys_fchroot)
- #define __NR_userns_set_idmap 473
- __SYSCALL(__NR_userns_set_idmap, sys_userns_set_idmap)
- 
-+/* kernel/userland.c */
-+#define __NR_userland_open 474
-+__SYSCALL(__NR_userland_open, sys_userland_open)
+    unshare
++   userland
+    futex2
+    ebpf/index
+    ioctl/index
+diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
+index dbe462040999..4cf194e7b648 100644
+--- a/Documentation/userspace-api/ioctl/ioctl-number.rst
++++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
+@@ -385,6 +385,7 @@ Code  Seq#    Include File                                             Comments
+ 0xB8  01-02  uapi/misc/mrvl_cn10k_dpi.h                                Marvell CN10K DPI driver
+ 0xB8  all    uapi/linux/mshv.h                                         Microsoft Hyper-V /dev/mshv driver
+                                                                        <mailto:linux-hyperv@vger.kernel.org>
++0xB9  00-0F  uapi/linux/userland.h                                     userland uAPI
+ 0xBA  00-0F  uapi/linux/liveupdate.h                                   Pasha Tatashin
+                                                                        <mailto:pasha.tatashin@soleen.com>
+ 0xC0  00-0F  linux/usb/iowarrior.h
+diff --git a/Documentation/userspace-api/userland.rst b/Documentation/userspace-api/userland.rst
+new file mode 100644
+index 000000000000..e32ea3501472
+--- /dev/null
++++ b/Documentation/userspace-api/userland.rst
+@@ -0,0 +1,77 @@
++.. SPDX-License-Identifier: GPL-2.0
 +
- #undef __NR_syscalls
--#define __NR_syscalls 474
-+#define __NR_syscalls 475
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/scripts/syscall.tbl b/scripts/syscall.tbl
-index 7ba073cc0e80..c3d07ff911a7 100644
---- a/scripts/syscall.tbl
-+++ b/scripts/syscall.tbl
-@@ -414,3 +414,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
-index 695eac2d356b..201335a08837 100644
---- a/tools/include/uapi/asm-generic/unistd.h
-+++ b/tools/include/uapi/asm-generic/unistd.h
-@@ -871,8 +871,12 @@ __SYSCALL(__NR_fchroot, sys_fchroot)
- #define __NR_userns_set_idmap 473
- __SYSCALL(__NR_userns_set_idmap, sys_userns_set_idmap)
- 
-+/* kernel/userland.c */
-+#define __NR_userland_open 474
-+__SYSCALL(__NR_userland_open, sys_userland_open)
++=============
++userland uAPI
++=============
 +
- #undef __NR_syscalls
--#define __NR_syscalls 474
-+#define __NR_syscalls 475
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/tools/perf/arch/arm/entry/syscalls/syscall.tbl b/tools/perf/arch/arm/entry/syscalls/syscall.tbl
-index d055515e98cd..4d2608f907de 100644
---- a/tools/perf/arch/arm/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/arm/entry/syscalls/syscall.tbl
-@@ -488,3 +488,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-index daa95049baef..fe5c3ab9ffa7 100644
---- a/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-+++ b/tools/perf/arch/mips/entry/syscalls/syscall_n64.tbl
-@@ -388,3 +388,4 @@
- 471	n64	rseq_slice_yield		sys_rseq_slice_yield
- 472	n64	fchroot				sys_fchroot
- 473	n64	userns_set_idmap		sys_userns_set_idmap
-+474	n64	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-index 973562f20a94..b07ab66144b5 100644
---- a/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/powerpc/entry/syscalls/syscall.tbl
-@@ -564,3 +564,4 @@
- 471	nospu	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	nospu	userns_set_idmap		sys_userns_set_idmap
-+474	nospu	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/s390/entry/syscalls/syscall.tbl b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-index 19d7b234b31b..4daa1f92e171 100644
---- a/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/s390/entry/syscalls/syscall.tbl
-@@ -400,3 +400,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/sh/entry/syscalls/syscall.tbl b/tools/perf/arch/sh/entry/syscalls/syscall.tbl
-index 252e6f9aa04c..df51ac4faaf4 100644
---- a/tools/perf/arch/sh/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/sh/entry/syscalls/syscall.tbl
-@@ -477,3 +477,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/sparc/entry/syscalls/syscall.tbl b/tools/perf/arch/sparc/entry/syscalls/syscall.tbl
-index 1263d0e825c1..3db2b5a99b1f 100644
---- a/tools/perf/arch/sparc/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/sparc/entry/syscalls/syscall.tbl
-@@ -519,3 +519,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_32.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_32.tbl
-index 0f8c81c584e0..68e3e01c8751 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -479,3 +479,4 @@
- 471	i386	rseq_slice_yield	sys_rseq_slice_yield
- 472	i386	fchroot			sys_fchroot
- 473	i386	userns_set_idmap	sys_userns_set_idmap
-+474	i386	userland_open		sys_userland_open
-diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-index 5452b7567bf8..f8ad4c72a86e 100644
---- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -398,6 +398,7 @@
- 471	common	rseq_slice_yield	sys_rseq_slice_yield
- 472	common	fchroot			sys_fchroot
- 473	common	userns_set_idmap	sys_userns_set_idmap
-+474	common	userland_open		sys_userland_open
- 
- #
- # Due to a historical design error, certain syscalls are numbered differently
-diff --git a/tools/perf/arch/xtensa/entry/syscalls/syscall.tbl b/tools/perf/arch/xtensa/entry/syscalls/syscall.tbl
-index f10b491c873c..b87586ff006c 100644
---- a/tools/perf/arch/xtensa/entry/syscalls/syscall.tbl
-+++ b/tools/perf/arch/xtensa/entry/syscalls/syscall.tbl
-@@ -444,3 +444,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
-diff --git a/tools/scripts/syscall.tbl b/tools/scripts/syscall.tbl
-index 7ba073cc0e80..c3d07ff911a7 100644
---- a/tools/scripts/syscall.tbl
-+++ b/tools/scripts/syscall.tbl
-@@ -414,3 +414,4 @@
- 471	common	rseq_slice_yield		sys_rseq_slice_yield
- 472	common	fchroot				sys_fchroot
- 473	common	userns_set_idmap		sys_userns_set_idmap
-+474	common	userland_open			sys_userland_open
++Overview
++========
++
++.. kernel-doc:: kernel/userland.c
++   :doc: Overview
++
++Lifecycle
++=========
++
++.. kernel-doc:: include/linux/userland.h
++   :identifiers: userland_state
++
++Flags
++=====
++
++.. kernel-doc:: include/uapi/linux/userland.h
++   :identifiers: userland_flags
++
++Ioctls
++======
++
++.. kernel-doc:: include/uapi/linux/userland.h
++   :doc: USERLAND_GET_NSFD
++
++.. kernel-doc:: include/uapi/linux/userland.h
++   :doc: USERLAND_SHARE_NSFD
++
++System calls
++============
++
++.. kernel-doc:: kernel/userland.c
++   :identifiers: sys_userland_open
++
++Process creation
++================
++
++.. kernel-doc:: kernel/userland.c
++   :doc: CLONE_INTO_USERLAND
++
++Process waiting
++===============
++
++.. kernel-doc:: kernel/userland.c
++   :doc: P_USERLAND
++
++Signal delivery
++===============
++
++.. kernel-doc:: kernel/userland.c
++   :doc: pidfd_send_signal
++
++Filesystem configuration
++========================
++
++.. kernel-doc:: fs/fsopen.c
++   :doc: FSCONFIG_SET_USERLAND
++
++Mount tree installation
++=======================
++
++.. kernel-doc:: fs/namespace.c
++   :doc: MOVE_MOUNT_T_MNTNS
++
++User namespace ID mapping
++=========================
++
++.. kernel-doc:: include/uapi/linux/nsfs.h
++   :identifiers: userns_idmap_extent userns_flags userns_idmap
++
++.. kernel-doc:: kernel/user_namespace.c
++   :identifiers: sys_userns_set_idmap
 -- 
 2.47.3
 
