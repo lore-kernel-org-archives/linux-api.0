@@ -1,100 +1,76 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.41
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795474038;
-	b=pUC19VxIkml9svW5mQ1AltqTiqAXXo1HZe0f3s5Dzw8mYP0S7wipSBgYVcAtV5rdtHVT
-	 6MPQS9RsakLdN8DHUJu9R6QTbEBuEN/ae0USSzUB0Q+jhDLNZGU/o8sl1pLK1FPdWZZ+3
-	 LzVx4HMZ5xxwRtGQ58xnn2BPOULXAR7IvL92aiWnKf7phFSNsgPtLKFOz0RwVwY2csuk0
-	 7e1pvpNMXnjNUVVIexWnfbvyUxwZzaOhW3w3Kmc/xl8THRlNc66O2Jy5NuqUUMQCqW6wN
-	 xU+nFGD50kYXO27xvvjIaLVYJkwzRvJjWR1QYMM9bkWfSZ2U3UQokUCS7yncQS5l9WQ==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795474038;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=prDmnot/bOxVS2gCc8v9HfYcjzpcvwnB8HRgvfXYsr0=;
-	b=Hn7uTZu1c/T3hEmiDUmCZrMhBB/mJvc0kQ+3TtfBelbOYjbDJNOC5U5tDpO2zVhCKMhk
-	 QdWliN7HSjs8iM2Z2zu41iO2dcheeLNjGP1SbDlhTdoY0sbNT2fDLdCqcASFIhXtvEkoM
-	 yBoo7BeWItBqPdmJzdOX51BRaOZ5cIxIIzFvHcq2r3TtPa88snypkOqyak5cEyeb+6QhA
-	 /xUy08bRtjiwdRw17GCXzOYHFJe+dvh8v0Cfkzbf/3vn7E+KULQKRbv92mz1dE5mAfqUO
-	 yxDTc+K/KSECcy4xwwxl83E7pMoOsvpD/IgbaHqrILUqfeCPW4wWxCmniRSQYG++YmQ==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=e9TlTdXc;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.41
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795474335;
+	b=p2dOgdOEvqAFBropP4AeBJ0NhAkGbZTepfdUQjoJ46y7mYtle2nUakScrxCe/L0UAgOD
+	 LnHcZIRhKRIJer7tuyhFD+ib9kpS3uyeNw/7NSlEA7f7q2ufJIcckEVLobrtDo6hQKlML
+	 DTc+o0J5f5Lkz4jyPHN3yve9fNIiCiO9zpiSGU7rOD/v1scxrbvWEBVQFQr9ie6nqTxsn
+	 0pVQ3pIFQXlQXyW/m3GT41DacSS1Okrbij1mfTliDKOUHalq3WueDH0AJV+JfSBs05oK/
+	 CuE8+WtQRznlzI4QqzS29KAteCdM9bAtv1KjZkSLkzkjc+VV0hBreH321fd9NaXF1SQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795474335;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding:In-Reply-To;
+	bh=UmTaUK4reXUwzVb93oXwVlnxEqXXaEADfB6OR4M7V58=;
+	b=PtZKRDbcPc4I40dXzGStm9Rnqq38AAFNCmg2wZcteG2WwAAFpJePee9hgMvHwpjncaZ/
+	 dGim1WIUBnvVKVBwJ4HSDUewzSKRNx+Lg9yGQzFXPn3BXt/X/TpGKJROCpKl2Tgx7QjqD
+	 mmXY5epxIIlTt3pXOXcCS8o8mQ2v5Y3gXxkfxoIN8mc8nSmjp80vZ+fjCAjCsJEeFNyC7
+	 wtrEUsfOsXFPpIIbn0bhtfKPMdz5YGBqzkpnc7UNScP/6Eyav4AHxuvOJYbGo4xPj2Ubk
+	 4ciUfMmKYfNGR2GcycD01FWaITtd5U+Tj9i1AWI7JyiFOT8YX3xYEOFokHOpx59UVcw==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=f+3vFAhu;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB4DF606A31E
-	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 22:47:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DB4DF606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 7E103606A31E;
+	Mon, 23 Nov 2026 22:52:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=e9TlTdXc
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-6b876afbb86so4940317a12.3
-        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 14:47:17 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795474036; cv=none;
-        d=google.com; s=arc-20260327;
-        b=VnPDA6K3i3krpei1Arq45iB4ptxDML9BvO7ZsGhBb/1erwSjxxAT24Bs2j+B0lDyzZ
-         VVWMxnfybCJstGW5w8dhjeB++6un1MyLkbcyD09D/AFikhOBN5HW2NZ2fj9Yoqeh+75h
-         InO2XkeAOkT6UMh/8rfdp/s/nKd1pbrALhO+EwV59AHybgtlc6CVGyyXLyK/P6lA8W8r
-         CF5XJ+rEITPxBiRDULOHAtQEtt3CSN8bTuzrUCfhLS5F+0JgpymByimqk7lv0/FmYulh
-         7a9LwHdmDCd5Q9APs5K3Di3rEvmN3HL32JtB7BNBKJfAWIJxe427cKa0JPhGsnQJlK+Y
-         PM3w==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=prDmnot/bOxVS2gCc8v9HfYcjzpcvwnB8HRgvfXYsr0=;
-        fh=jb+Sy7+fGP3sW8XmpnHhuW2SEvEQ02+melz4CpTBfT0=;
-        b=CQu1iCeITqs8T+MbWDL9koZDzI8gsKIkIbOd2WUVgRSbHoA4e15xjbd6uh9xL0VLOD
-         sPklJXBod00llaqPwTLdVwMfjs9JIbxmMhOb8LuRqD3kliX17xdckyUj8u95JLjqUeRP
-         arX0UEB4JQTTE0dx0LQp2HrPauoVtH/h62kd+mgkSkoyG+S4S5fwYgge8blGBXP8EHLH
-         I68KV9wEBjHaiqwD0oVA9XB1ZeWcAV/8+pM2g9sGkbEny35v32oGGgsPvV/tx7gS7Gem
-         afY0YiXZr1i80bX7I7gaaVQ+uGk+to5xBCWossDz1D2VIUbJ1coNcbNlgtaSM6bXZTyv
-         Oicw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795474036; x=1796078836; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=prDmnot/bOxVS2gCc8v9HfYcjzpcvwnB8HRgvfXYsr0=;
-        b=e9TlTdXc+gatXcuCFKKb7aj/RyvKZZs3Fc22DsvCbrqYMGGtwci3FfIjibOfYQ/CZW
-         9N8fj6eIrKNnVRdbxmnkFIx1GgLKrWEmFGL9vOQOEa0GR8Bc8q6jIgpflc/R1WmaKkIq
-         a1L/XNzQgQR2OfVdP5ZWakzu06AC21i4FBAOG3jwYP8Lhy9AUkzJO9T8iBSrC7rM4aSU
-         +QCy52SpD8tCCzGsrVoCDffQdo0iiSxV39ldqNaCG7VxnqiWEDVWhmyRn5+Uk0DxMQhg
-         +jgf5l52Pyk6Ega5GmFX/ULCv5YHSq3eiAljutksNIdRm4c/i9EcMfRht5xGucVDbs5/
-         qj8g==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795474036; x=1796078836;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=prDmnot/bOxVS2gCc8v9HfYcjzpcvwnB8HRgvfXYsr0=;
-        b=gUlaW74++suwQRt6DoxBLIyRMV8go+vsbqOVtHm3vO77u9prcKWxjF04kOT2xPlw7k
-         72dGm+ypWzBMO1QOZlsXr1bbSzY62t7ObE0LQgsQDmpttywj6nT8flzuv+RWvv8Rn3fn
-         1GlIBqQEwL+sDoDywj9NSzkPFdZP8wrTyt0+pc9hlhpmG+AQNY68abXSgkjAg+s4DY6E
-         ZT2XhjxQ55Jt4o/2vyJhAk9lik93Aap7UL8KSnLV2zGv7c3WvIqy04EEdhsq4C6uRo25
-         CS0C2cSkri05HX9eTnSoswy3tQmAhPJZfT5zwM6BByz6Rx2hw9aSRBRa+o7mrWgq4cc+
-         eVvA==
-X-Forwarded-Encrypted: i=1; AL+hErGsYGflltJADxDEy1cc2OrIDcxbecM9eCPMlw65zf/mgv9wbZUliQ/5OADmytjzloWBr0BLYSI3qCI=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9d1n6GRcR4wh+rXq/XVjEggJOB2IZaWH8AvGgbb8fp6X4IDgvK
-	bnQ+1KGPuUXce/z4k9ACcGIuwqxnU97U882O7g3n9bywzOwUZJL+4un9M7Csx+5naN6zQJxqKWO
-	OQTRgkrdY1fO0zbf755J8JacHwSzK8dQ=
-X-Gm-Gg: AZFdTZf1obS42Emfi347ljDMOv/gP7hMwELs0Xs/WT8eLgRwE7gEH8MZ3YGj/oPFvbS
-	auwhcGluGG2N1Dz90kSO4rRb9NJI5cPUYB3//W4k/R97zgc3UoWdEcNxJhikR5FlafC5+bAAc1g
-	rRTx6+iRGkzbI3e0QWbwagae3QNPrwuFbk7AyT4NgDD7gWRfJy9SXqHmlKaLP3xwqcy6n9/r3wR
-	a5Lk5q/AleuVVW9SscMRe1bebhTCNoM5MLCvlLU/HpUU914x1caiHCxgPvbXLM0QWi4K1RGu1uq
-	zhdyoAUs4EqXC7dJcGYtCU48O69hQTWKQoem61jM/TJW0NaavYNT87ZF6FIEZA98Xtf3A500Fjl
-	z/djO+kc7psDPc+jcNOWHMjFs/to5sau9fp4UrHQlQE3hAtahQL1IJjTXtzVLNxjcC1NLgQ==
-X-Received: by 2002:aa7:c710:0:b0:6b8:e848:d004 with SMTP id
- 4fb4d7f45d1cf-6ba37e8dec5mr6855932a12.29.1795474036043; Mon, 23 Nov 2026
- 14:47:16 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=f+3vFAhu
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id BEF0E1F000E6;
+	Mon, 23 Nov 2026 22:52:14 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795474335;
+	bh=UmTaUK4reXUwzVb93oXwVlnxEqXXaEADfB6OR4M7V58=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=f+3vFAhuzOymo1wUHu3CjVrRJ8d97kRmIwZcfNT6OA1diC3POPAbn26MrKqHAAO/U
+	 3xfHUsCYISsflIvXy0pEIgZu0CepKwoQEUQVJsYermjHB+B0whND6XDCMtNxqnzu7N
+	 sY2HNaGEj/JzD/9EaHsanI9E67O1NNEIMNnf6LH1Xufe7WcGYo/o0EHsYi6L2UIQD0
+	 vBjtguOuXzWh15X8b1DP6ZcPTjzLdhidOalEs0xyw3pHnpxXHvR3rC0qZQIGf3D0gf
+	 3Q4ZZSYKrRrKxiwz1ZEjfOqsDJfnX+9GD38vsVl3n3TLdDgt0e803rhdLbrwHhN8LL
+	 ZAdXHhNHrAMbw==
+Date: Tue, 24 Nov 2026 00:52:11 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Andy Lutomirski <luto@amacapital.net>,
+	Andy Lutomirski <luto@kernel.org>,
+	"Hallgrimur H. Gunnarsson" <halg@google.com>,
+	Christian Brauner <brauner@kernel.org>,
+	Serge Hallyn <sergeh@kernel.org>, Paul Moore <paul@paul-moore.com>,
+	James Morris <jmorris@namei.org>,
+	David Howells <dhowells@redhat.com>, Kees Cook <kees@kernel.org>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	=?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>,
+	Jonathan Calmels <jcalmels@3xx0.net>, Jann Horn <jannh@google.com>,
+	=?iso-8859-1?Q?G=FCnther?= Noack <gnoack@google.com>,
+	Singh KP <kpsingh@kernel.org>, linux-fsdevel@vger.kernel.org,
+	linux-security-module@vger.kernel.org, linux-api@vger.kernel.org,
+	containers@lists.linux.dev, keyrings@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-kselftest@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v2 1/4] userns: introduce capability bounding set for
+ user namespacesg
+Message-ID: <awTDm_EpFNwH9uEy@kernel.org>
+References: <20261119104208.782900-1-halg@google.com>
+ <20261119104208.782900-2-halg@google.com>
+ <CALCETrVqc+1bjH1bhqHee9bsUdk2B6314z7PMexbsnNpMhk14g@mail.gmail.com>
+ <CALCETrV=zSxb6sgA08DLiK2bQovdMEj9ycG=Cc71mLn2C5Pgeg@mail.gmail.com>
+ <4db941ba-3001-4019-8910-63e534b29f89@schaufler-ca.com>
+ <awSVO9Zc-233M7_P@kernel.org>
+ <6a0539de-1a66-4dfd-a21d-aee48ab18f3f@schaufler-ca.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,84 +80,106 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261122000856.536902-1-koray.fra@gmail.com> <CAOQ4uxgf2KE=Ag13EPAu5=KnrFwt7zRH=im-qmLc8+i10Tjd+Q@mail.gmail.com>
- <DN2X3RC5JUFQ.2LNGLQOUX4ZPF@gmail.com>
-In-Reply-To: <DN2X3RC5JUFQ.2LNGLQOUX4ZPF@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Mon, 23 Nov 2026 23:47:04 +0100
-X-Gm-Features: Aa3M54pZr_aGN97hdgjJEJclpmHDWTbmXWMujrk4s8rCr1BMot2r_DEgpbuT4T0
-Message-ID: <CAOQ4uxhsv_1EEqAZ3Ebp5Uy8Q6nvEnE3EAomJjjQO86nTcW0cg@mail.gmail.com>
-Subject: Re: [PATCH 0/3] Add f*_xflags_{rw,ro}_mask flags to the fileattr API
-To: koraynilay <koray.fra@gmail.com>
-Cc: Namjae Jeon <linkinjeon@kernel.org>, Hyunchul Lee <hyc.lee@gmail.com>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, Jan Kara <jack@suse.cz>, 
-	"Darrick J . Wong" <djwong@kernel.org>, Andrey Albershteyn <aalbersh@kernel.org>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	Lauri Gates <lauri.gates@gmail.com>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <dgc@kernel.org>, 
-	linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	ntfs@lists.linux.dev, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+In-Reply-To: <6a0539de-1a66-4dfd-a21d-aee48ab18f3f@schaufler-ca.com>
 
-On Mon, Nov 23, 2026 at 10:45=E2=80=AFPM koraynilay <koray.fra@gmail.com> w=
-rote:
->
-> On Mon Nov 23, 2026 at 2:35 PM CET, Amir Goldstein wrote:
-> > On Sun, Nov 22, 2026 at 1:09=E2=80=AFAM koraynilay <koray.fra@gmail.com=
-> wrote:
+On Mon, Nov 23, 2026 at 01:58:41PM -0800, Casey Schaufler wrote:
+> On 11/23/2026 11:35 AM, Jarkko Sakkinen wrote:
+> > On Mon, Nov 23, 2026 at 09:22:29AM -0800, Casey Schaufler wrote:
+> >> On 11/20/2026 9:09 AM, Andy Lutomirski wrote:
+> >>>> On Nov 19, 2026, at 2:52 PM, Andy Lutomirski <luto@kernel.org> wrote:
+> >>>> ﻿On Thu, Nov 19, 2026 at 2:43 AM Hallgrimur H. Gunnarsson
+> >>>> <halg@google.com> wrote:
+> >>>>> When a process creates a new user namespace, it receives a full set of
+> >>>>> capabilities (CAP_FULL_SET) scoped to that namespace. While namespaced
+> >>>>> in scope, several of these capabilities (such as CAP_NET_ADMIN and
+> >>>>> CAP_NET_RAW) expose broad kernel attack surface that many sandboxes and
+> >>>>> containers never need. However, there is currently no configurable way
+> >>>>> to withhold such capabilities from user namespaces while still granting
+> >>>>> them to workloads that require them.
+> >>>> One thought (from the rootns thread): the other decent sized attack
+> >>>> surface here is CAP_MOUNT_ADMIN.  Which doesn't exist as a capability
+> >>>> bit.
+> >>>>
+> >>>> A sort of horrible solution (but maybe not so awful) would be to
+> >>>> declare that the bits in cap_userns aren't actually capability bits,
+> >>>> and that you need the bit in cap_userns *and* the bit in cap_effective
+> >>>> to do sensitive things, and that mounting needs cap_userns to have
+> >>>> NSCAP_MOUNT_ADMIN *and* cap_effective to have CAP_SYS_ADMIN.
+> >>>>
+> >>>> I want to sleep on this.  It might actually solve several problems,
+> >>>> e.g. controlling creation of ipv4 and ipv6 loopback or tunnel devices
+> >>>> or whatever.
+> >>> I slept on it. Here’s a counterproposal.  I’m not saying I think this
+> >>> is better than this patch set, but I think it’s worth weighting the
+> >>> options.
+> >>>
+> >>> Define a whole new set of privilege bits.  As a
+> >>> poorly-painted-bikeshed option, I’ll call them eprivs (for exposure
+> >>> privileges - it’s a crappy name but at least it’s pronounceable).
+> >> I played with a mechanism I called "chits" (all the good terms for security
+> >> bits have been consumed for a very long time) that looks a lot like
+> >> what you're proposing. I did it to address the CAP_SYS_ADMIN problem,
+> >> where any use of the capability opens up a whole barrel of worms.
+> >> I cannot, unfortunately, find my patches. :( The basic approach is:
 > >>
-> >> This is a follow up patch series stemmed from [1] and [2], splitting t=
-he
-> >> _mask change for the fileattr API into its own separate patch.
+> >> A process has an optional set of chits. A process without a chit set is
+> >> unaffected by the mechanism. A process with a chit set is allowed only
+> >> those operations for which it has a chit. The existing but empty chit set
+> >> allows no operations. A process may drop a chit, but not the set, which,
+> >> again, can be empty.
 > >>
-> >> The first patch is a preparatory patch so that the code in the patch
-> >> after can be formatted better.
+> >> Because I was after CAP_SYS_ADMIN, I envisioned a call
+> >> 	cap_able_chit(capability, chit-list)
+> >> but there's no reason there couldn't be a
+> >> 	chit_able(chit-list)
+> >> as well.
 > >>
-> >> The second patch is the actual implementation, which introduces:
-> >> - fa_xflags_{rw,ro}_mask fields to struct file_attr
-> >> - fsx_xflags_{rw,ro}_mask fields and has_masks selector to struct file=
-_kattr
+> >> I wrote this as an LSM, but the system-wide aspect of it made that
+> >> a questionable choice.
 > >>
-> >> These masks have the following semantics:
-> >> - rw_mask:
-> >>   * for filesystems: advertise which xflags they support changing
-> >>   * for userspace: specify which xflags it wants to modify
-> >> - ro_mask:
-> >>   * for filesystems: advertise which xflags they support only reading
-> >>   * for userspace: ignored
+> >> If you have any interest, I could dig more deeply to try to find the
+> >> patches. Otherwise, I'm happy to look at what you come up with.
+> > What if eprivs or chits would take each capability and subvidide
+> > them into pieces? CAP_MAC_ADMIN would be formally a set of chits
+> > (or eprivs).
 > >
-> > Nice!
-> > I think this API description is very clear and coherent
->
-> By the way, should I use this description in the commit message (and
+> > And process having e.g., CAP_MAC_ADMIN, would actually have the
+> > set of chits that are included to CAP_MAC_ADMIN.
+> 
+> That would require that chits have the same inheritance rules as
+> capabilities, and I think that's a really bad idea. I was an active
+> member of the P1003.1e/2c committee that defined capabilities, and
+> was a major advocate of their inclusion in Linux. I wish that I
+> could say they've been successful, but root still rules the roost.
+> I attribute that to the complexity that arose from trying to address
+> privilege via setuid and privilege bracketing at the same time.
+> Chits (or eprivs) as a finer granularity version of capabilities
+> would make granular privilege even harder to sell than it is now.
 
-You could use that as a short TLDR intro
+Perhaps (or likely'ish). I'm just unpurging what I meant (even if it
+ought to be wrong):
 
-> integrate it with missing information before/after the bullet points),
-> or should I keep the current one?
->
-> (current one:)
-> > This lets filesystems advertise their support for specific xflags, like
-> > statx.stx_attributes_mask does, and userspace can specify only which
-> > xflags it wants to change without needing a RMW cycle:
-> > - on GET: each filesystem that wants to support this new API fills the
-> >   masks according to its supported and read-only xflags, then:
-> >   * for boolean xflags: it fills fsx_xflags with the current on-disk va=
-lue
-> >   * for value xflags: it sets the xflag bit to 1 in fsx_xflags and the
-> >     xflag value in the struct field;
-> > - on SET: userspace fills the rw_mask with the bits of the xflags it
-> >   wants to change, then:
-> >   * for boolean xflags: it provides the xflag value as a bit in fa_xfla=
-gs
-> >   * for value xflags: it sets the xflag bit to 1 in fa_xflags and then
-> >     provides the value in the struct field; if the xflag bit is set to =
-0
-> >     instead, this informs the kernel to unset/clear that value.
+1. You can create F(C) -> S where C is set of caps and S is a set
+   of chits.
+2. G(S) -> C, which finds using some heuristics a set C for which
+   F(C) = S. 
 
-You can keep it also but tbh UAPI documentation is more useful in
-comments and in Documentation than in commit messages.
+> 
+> > Without that type of relation there's just a space full of chit
+> > ;-)
+> 
+> Which is one of the reasons I haven't published anything about them.
+> Even with the scheme being (a lot) simpler than capabilities I don't
+> see it as something I have the resources to complete. If Andy wants to
+> drive the process I'm willing to contribute where I can.
 
-Thanks,
-Amir.
+You should e.g., RFC patch. We're exactly in the situation where
+the skill of not knowing what you're doing is the skill that 
+should be applied with pride ;-)
+
+Br, Jarkko
+
+
