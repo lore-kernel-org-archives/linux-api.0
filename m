@@ -1,100 +1,112 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.43
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795445772;
-	b=iQps+c/jg2qUWHYItJnZyVdrLYmic37xguu72fI2+ZSjz/q2buzsgf/QWRbEy/SSTmx1
-	 Ak1MJLc18tNtLI2hY/itBroHptAz919TXhGEn9CEHbGkzyorfaTrPBw3Vw+7n/Ypu159Z
-	 az7B8nw+lqul7GQapjQ6tkRZi5xUMc+prGoxLztXN0WpcMF4BNGJDdDJxyURglZ4YUEjw
-	 x8FW6PCQMB2r5wlv5FxL8IgmIdYr69mvXtTgdoDIMrOUpy9vwT7yDsmrHT1xtIvEEnRau
-	 21xLwXkwnbZQZolDMd2vRDiTwA0kJV29iGRs1Lmv7ifqCdezSZRrY14MP/iPb78mc2g==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795445772;
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.219.45
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795446691;
+	b=2DWbpuZvEaTxdI9+6AE2o/A8a3IawwIMA5Jbol+4TRnQsxpPMHx+FW30Txr9vQtNkHrP
+	 fr6HoYu8V83YE9mPBq50iDWpl+6gFmnEq60u6z+SKOFwnFZGh/1SbLfclndbtqsuOorml
+	 kR1+jee/JvAQmfAhD2w9cL3W34lHPCyRqkZtfAteN6IT4BtEr/F6xc/7SleyZ3+wa3s5S
+	 UgTDsZgQ9eggNCZg58aW7mqUK/pePNUAee1kCkHjgkzy16lRiDxU6XVC9Gt/qE4WBrzyb
+	 LhQbjkOAlv43Wd/LRLirC4drb8fvmyTf8lNrik7aWW6L/A6zXK0SSYyDXyC2U/vkefg==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795446691;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=iLBZumrqdFfo+uoEqy5DjzVlLpVK7yMeWhuKRObIsyk=;
-	b=fJ71VtOVTJIUHuhIpLiM+2Q15mE+RDxypRa3hZjc/s63bwgKUEx983myD46kG8aEmY18
-	 XvaO1S7+kMS5WR3wXPolTcYekxTW0beZG+j/NFF8AJoZpbgwVgmfq05s70PP1/K5xyTQp
-	 Kas1c3b5Mdxbj4DDm7AmI2iFiJPrA9kEuqve5LphEKbje7WeGKruPtkCECS9pVjNXVy3E
-	 lhg7cnLenpoj1XRwxLUWJxlk5cZNyPLScY2vt9uhUvZe33nXb5cuVwgav9XRNov5ls05d
-	 zjNe2lY0pL7xvSv7hSQRDrN9M9Q1ErF/rFotK4wwON/b7XnNZvORQvmxoptZ4jx+dag==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=wqeG4UVx;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.218.43
-Received: from mail-ej1-f43.google.com (mail-ej1-f43.google.com [209.85.218.43])
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	 Content-Type:Content-Disposition:In-Reply-To;
+	bh=S6J608SnbhlVzTHO8nTfTbyQzCC0Wef9AXmftuQK8FM=;
+	b=Z8o18N0UGAYHYrIndc8GiNxcQDp4vwFYkanl3q56ULdrTI688HGwABbwCFYdY0C7cy/P
+	 uCqbO54etpWt7CNtl3HRvfQI9LpQQatgDBsad+NV0KPGG41/ENM9dxnpyp/xJXCRkIBM9
+	 V0d3BkCLQbh1c2sYgwPiuf+xWgviHhttkPszRuWkxDHNNkridW4AXYZ0ikAiQ0Kb8dpp6
+	 HTstJi7w/kpf9P7bGNKwuK+9zR+0OgpBJ3JSm/NL/Sc3NHFZb5OYBTCavf6pIPRSx09Ly
+	 kvmdmu1hprxp/Z4PbTHcRMJLDhAacZ8fyOIuw2YYE4r9R3gDA/BqwL611U3Iqdz+KdA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=none header.from=ziepe.ca;
+	spf=pass smtp.mailfrom=ziepe.ca;
+	dkim=pass header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=ULnOCYsQ;
+	arc=none smtp.remote-ip=209.85.219.45
+Received: from mail-qv1-f45.google.com (mail-qv1-f45.google.com [209.85.219.45])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5B4B2606A334
-	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 14:56:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5B4B2606A334
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC5B7606A682
+	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 15:11:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CC5B7606A682
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=ziepe.ca
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ziepe.ca
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=wqeG4UVx
-Received: by mail-ej1-f43.google.com with SMTP id a640c23a62f3a-c511c0e2826so390810166b.0
-        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 06:56:12 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795445771; cv=none;
-        d=google.com; s=arc-20260327;
-        b=C56laIQejkeePS8nDrNwJOn/poEetyD/eQj0+D6bxKX6/UW7fZDdEm1NsraDyrZ2bQ
-         45euOuTRD1DbB5JyU0gunRVV7lTgJEoloEwUzF5TVN7+UVqg3zHGE3mb9FDXOQufuOHe
-         ftRrW+Er1ZTZApUWNwL3w8MOk8C6mxY2HWmjo3INzSLlPEgjwNh4waAxBktjmjciMz7n
-         tL0GDYte5hgdHRrez416pQ4dQZfm0PKZR4UOdVx8T8InzleVgp9uPPYZ3omvUMxRZHte
-         68Mk+ZeO9ZDc6P+gpRzbyZGb2n/yIWPW/dyGK0PEId0VuYpUfRjDS8N0w894UOSgTzKq
-         q7LQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=iLBZumrqdFfo+uoEqy5DjzVlLpVK7yMeWhuKRObIsyk=;
-        fh=TS/WftAX4fk/dQDF7/WjoyxOQa/bo3bixjQVJRrkSTA=;
-        b=cY6iH1oJfZiaPVCL17EGxJ0L1O7mRyq9MZw+erJpSBQHVPtbPPG9ZoVUrpK/8h/E1h
-         xYhluLAHSZFOLONtCy0SwpeLekK9eQ6G5FUeyNNdcYUVA6w2bPQ3XmO5VaBQLW9+fXtk
-         500yib9FrMFNB3re+zIrqNOnA9Uk2O05Xx53QAc8XjDfmhoz6DyVgTzeUACxK181npNj
-         XH4T8n4R5WjbMS3QT1BZv/rdQfKIQe0OfI3ZvbcKTukbe+MMwRYaDusR/iKtpGM4HOUX
-         NNn/Uir5fWEpgWD7+FdQiIccnb0tTx2w9HOcG/85R8VevHkFyL1QJ6B6u1BwsIt++hJS
-         dx1w==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
+	dkim=pass (2048-bit key) header.d=ziepe.ca header.i=@ziepe.ca header.a=rsa-sha256 header.s=google header.b=ULnOCYsQ
+Received: by mail-qv1-f45.google.com with SMTP id 6a1803df08f44-92123971d1bso28366776d6.1
+        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 07:11:30 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795445771; x=1796050571; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
+        d=ziepe.ca; s=google; t=1795446690; x=1796051490; darn=vger.kernel.org;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=iLBZumrqdFfo+uoEqy5DjzVlLpVK7yMeWhuKRObIsyk=;
-        b=wqeG4UVxEsqawGNw4hgj4cfTFQ6arGqHSUO6imUiUMeXa8Rm1J1TOte1yUPje6cwe+
-         TH7GIH833ISdvF+478dTG3g3rLc8GhsHBKY9tqDuuQG6ExZLNhc6wL4HurcYB7XYzYdM
-         k1c8ZPl+i2LZWoD5sDSXAeuyZzpwDmF+lV5KF+mNx7I24cADkXDh2iddswNPgtjRQiod
-         98Rf1TYJCpfC9KwAJ5lRFDyGvcIpE/pXspm8dgf3k6SDEHnakNvYQAXllHZS4/z97Zhl
-         7Cy4Ubz5DFhoeGRxQ9Dvdf2g25hW/qM8ZE/LRkxbNQ4Q7lkYgGaDdPliMsLLJbdE54BG
-         tBDg==
+        bh=S6J608SnbhlVzTHO8nTfTbyQzCC0Wef9AXmftuQK8FM=;
+        b=ULnOCYsQhWIKDt7pAFJxN5BdezB6uuwO2wH7M3H75HnvcnHu0ePPTzZKt+/E8HJbsq
+         8xNQcunddG9jd5Lyy5gXDUoI6tNcqkgliwQBuS09bcwR4F/99g5XmNioCqy1g81xleyk
+         LHhAxO/sQfFLnE4JLEDu/YBjhGAidQN37cDWd2dzzVWGUITLsdgtKfpXw8jO/nNEuElh
+         tyEhFp/7OKJTeRItfxiGqKUkSnpdV0wQ/c4bCV2HFB7OEb8h0vw3dWK2Ty+VuV9E6Ewn
+         yDkmNQkEnylRuyYGR1sqGLaQPOKxcWwfhEHqIAlHska+tD6+MsFsnDzdHU0merc4Sqat
+         NOxA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795445771; x=1796050571;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
+        d=1e100.net; s=20260707; t=1795446690; x=1796051490;
+        h=in-reply-to:content-disposition:content-type:mime-version
+         :references:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=iLBZumrqdFfo+uoEqy5DjzVlLpVK7yMeWhuKRObIsyk=;
-        b=u/Kgao8KU+b9xTZQw67gfoCw8ZMi4pSh02tLOf1mLMtQN3ygqFsx5oGsLuawsnnduK
-         EcBcRBWk976AVUEvInn0L/2aEXi1fKrvAbd5LK6fstxtYr40fa++gskghedIeLW63HfW
-         feFeDMUHEqEeq0fLMoetce7qN5NHToVKMMjnoPU32nzp2P/1Zx3WHbaQejip2m/hoFb4
-         4f3zumklA6pSEp3gvyBG0YHSHx3JdK8rutmTrnhUrrmuepMFTne8I6ybJHNZZRv7i2aR
-         M18g9YpMOaGkXXgG8FShsN9J4O/s4gRQ+h7tiTu+p+/kmq3xlqxINGb1K1exYKJjxtKx
-         n4ug==
-X-Forwarded-Encrypted: i=1; AL+hErFXVko/rl4yjYsseWVIVQddpmZyqYUl71wLpMy/vW0bZYXVvwBWSA+LXRFaS/9PpsfOSV/bvNooyak=@vger.kernel.org
-X-Gm-Message-State: APuU4Z8pW5TrRsxDbkOzqlNwXBD7v1zxksi9NbSG9I4LY0+07jqChJkK
-	Wm7h8g1vX2fg5BxNNRGMObW/4EIA1KfdBFnkRzXEq2RfSSJTluOyWxcoDZPNeG1uZ1Eigzz6y4m
-	mh4+GPBwHAkxekkR3mF85kMSh0NEnqWA=
-X-Gm-Gg: AZFdTZfGsx+ySDSu0AsReI+Pbukisp61K4zOlMpnSogTTmYAmCaXRGJ4GV1b6K+eP8s
-	YckhCtEopUKX7Bupqp4l8ktvAESkGTLnoPRRcpaKCI39BpQEQFMQnocH25zqW7oPfvoIY7aBaPA
-	q5dRnsYzC8K4An7rxqKXumuiEf6rT2RBCn96Ec3FHOGhgcgo5n8bwxjFTAIKN+nFjj6EccyHPRQ
-	axQCy1gw/86WTdlb3Ify3f3hnApeJPstN9GMdcq4eHwOvMRx0HnR6mv626zStwutHAHjaxET3P3
-	iBk15CwBoAOdMnf1VBUTsyIxeGaSxSfX4JrRzW34H1aBCWcwBkF5lc+BFXT5DucFiNbYRU1qpL4
-	g26nIiBdv3vNdst88JmAIzpnG76JCaymt9VNJcnd/cebW41vCw5eaLLq0hKgLvYA+nZSS5w==
-X-Received: by 2002:a05:6402:5516:b0:6b6:ef7f:600d with SMTP id
- 4fb4d7f45d1cf-6ba37e74244mr7852050a12.21.1795445770471; Mon, 23 Nov 2026
- 06:56:10 -0800 (PST)
+        bh=S6J608SnbhlVzTHO8nTfTbyQzCC0Wef9AXmftuQK8FM=;
+        b=K+MY7TKgy2gGJ1rzXcY6mRniBiSvzmICS225Wk9esl8Qw0cnYvu4XKRsD0V5iuMrGg
+         xeJo/n6WLj5K50gs+BSb1l2qh1yTYL9+KJdJqngxvMCRlJUjPjuEiTaPzT6IalwEmXA3
+         D8pSERk1wWYqJqw2RdTBLm/k19yjxEaK/aj3VddPXW2UKzHMQlU4pmvBsfNlpgsJptYu
+         xTYK+tA6h3McE1/5OcEJz5vStkpK0FH18LTmpOi65IQYSXWH6e2GobMjWAip5EzJSJsC
+         gqAI2TxWIRcIRD0rN1aELk6Q+ggZhWzs1owIU5kuvugqt3WBdChd+CqcBZXEsJX+GdUb
+         EsKA==
+X-Forwarded-Encrypted: i=1; AL+hErGBAg9mo4/DRi3kCeImYMvA4ijKnc3hVZgEwxhJ0xzr1hRC2vsYoX9hQmd/GKw0LfNg/Xi3XVGcAZ8=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9cL4yFmk53qPLbjyYy2Qlk27jypETjZZTtyUaiHtIzw7L+Ii3s
+	ETc+IVQIxfvoHH/uQHryvaGa/UOgLkGAa3+AvdGZLyh0vG/jlLWZu2mUHv3Vt9bspyw=
+X-Gm-Gg: AZFdTZfFvM/3A69H+74gT/gqfCi3tgTNN2I+Qgqf4xT3xaL6jxU8MOUhMhRhPdb0aHV
+	eVGl9mqnHcgrdFeJtJ2IQaX6TaCXb8zJJIm8Ya+oMD7K6JoyiPW61sfcxCJ4hGQuEpygukNaD0b
+	O/qD2gzDu4iG2xO7A0Ayyp6+gwEHteLQPcWD6voa8XaPzpfHLqZtOs173zT7vYgVCPba5RJnEUV
+	UJuh0Td+wzj2FkGNb6egzEd9uTf53GhfwrBYbRr3oq+AGc/DF9tbn2yP50kw/s6DOj78jYRB2HY
+	FnDVauiWyASDH0/4T/vV+n+wvtX0ebzvdQjbDfTXRg/31clUZCR9LPbsgBUBOAvTT3Emq3Jvqfc
+	GFhHP7m/m5y860iAQ2FwDOkb44jIfW3oBvvGrecbEHTZQYW4JKS/58N80fMx1ph1Ymj/FLG6VUu
+	cpHBRG101hX33DZiJvbCAuG2taPizzE70Aju9/vdpeegT/TNRn6Xjp47qIbcDNJb34JGNZ2iPQC
+	ccbzEnlv0BdfNlbT+Iy7vyFDzFOKnXJdBpJiBQEIraR7UUZ/+kbktSTuI724yw9dGyKayf6n01A
+	ybkttXxgLGEAM6oWnnmChmGDu/GGYvJaYw7XrZ0s6DogVX3lnwnNRXEQ6YoCoZrWY+ZcX0goU3c
+	732I=
+X-Received: by 2002:a05:6214:4108:b0:921:266f:50ff with SMTP id 6a1803df08f44-92134b3f207mr208575596d6.52.1795446689538;
+        Mon, 23 Nov 2026 07:11:29 -0800 (PST)
+Received: from ziepe.ca (stjhnbsu6iw-159-2-142-59.dhcp-dynamic.fibreop.nb.bellaliant.net. [159.2.142.59])
+        by smtp.gmail.com with ESMTPSA id 6a1803df08f44-921349b50besm106533186d6.9.2026.11.23.07.11.28
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 23 Nov 2026 07:11:29 -0800 (PST)
+Received: from jgg by wakko with local (Exim 4.97)
+	(envelope-from <jgg@ziepe.ca>)
+	id 1xVVhY-00000000ro7-1hOk;
+	Mon, 23 Nov 2026 11:11:28 -0400
+Date: Mon, 23 Nov 2026 11:11:28 -0400
+From: Jason Gunthorpe <jgg@ziepe.ca>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Yeoreum Yun <yeoreum.yun@arm.com>, Jiri Pirko <jiri@resnulli.us>,
+	linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, david.quigley@intel.com, lukas@wunner.de,
+	ksinyuk@kernel.org, rodrigo.vivi@intel.com, cedric.xing@intel.com,
+	sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
+	zohar@linux.ibm.com, aneesh.kumar@kernel.org, dave.jiang@intel.com,
+	nik.borisov@suse.com, sergii.dmytruk@3mdeb.com
+Subject: Re: [PATCH RFC v2 9/9] attestation: Add the TDX family implementation
+Message-ID: <20261123151128.GD179082@ziepe.ca>
+References: <20261113160838.2512652-1-jiri@resnulli.us>
+ <20261113160838.2512652-10-jiri@resnulli.us>
+ <awQCrnD5CtEhKRWz@e129823.arm.com>
+ <awQz1P6iXYrL8lv0@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,153 +116,85 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261122000856.536902-1-koray.fra@gmail.com> <20261122000856.536902-4-koray.fra@gmail.com>
- <CAOQ4uxgc6pP+_xvJMbqj6wOdGzS75Vn6x6i_vUfCJDD46DAA_Q@mail.gmail.com>
- <DN2N0BY83OY2.1OV3ZAZFSWCDG@gmail.com> <CAOQ4uxg9O-R_SUPAZ75ESGB99-4Z4EEUKGMkCF2f-sXkGPq1GA@mail.gmail.com>
- <DN2NVGUNO0GA.89JAB2PVI0LA@gmail.com>
-In-Reply-To: <DN2NVGUNO0GA.89JAB2PVI0LA@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Mon, 23 Nov 2026 15:55:57 +0100
-X-Gm-Features: Aa3M54p3kKL3ZKUzvEHZq54IOonM6T5WCFB3q5vIRbaCh5i5swbxajRtrCtjW5o
-Message-ID: <CAOQ4uxjuAN0FdxGr_-OccO5qnUuLF5oxOq7L_545tG3+36EKFw@mail.gmail.com>
-Subject: Re: [PATCH 3/3] ntfs: switch to the new xflags fileattr API
-To: koraynilay <koray.fra@gmail.com>
-Cc: Namjae Jeon <linkinjeon@kernel.org>, Hyunchul Lee <hyc.lee@gmail.com>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, Jan Kara <jack@suse.cz>, 
-	"Darrick J . Wong" <djwong@kernel.org>, Andrey Albershteyn <aalbersh@kernel.org>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	Lauri Gates <lauri.gates@gmail.com>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <dgc@kernel.org>, 
-	linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	ntfs@lists.linux.dev, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <awQz1P6iXYrL8lv0@kernel.org>
 
-On Mon, Nov 23, 2026 at 3:31=E2=80=AFPM koraynilay <koray.fra@gmail.com> wr=
-ote:
->
-> On Mon Nov 23, 2026 at 3:14 PM CET, Amir Goldstein wrote:
-> > On Mon, Nov 23, 2026 at 2:50=E2=80=AFPM koraynilay <koray.fra@gmail.com=
-> wrote:
-> >>
-> >> On Mon Nov 23, 2026 at 2:00 PM CET, Amir Goldstein wrote:
-> >> > On Sun, Nov 22, 2026 at 1:09=E2=80=AFAM koraynilay <koray.fra@gmail.=
-com> wrote:
-> >> >>
-> [...]
-> >> > Rule:
-> >> >
-> >> > You cannot add a flag to common without carefully auditing all
-> >> > filesystems that support the legacy flag.
-> >>
-> >> Yeah, sashiko pointed out a problem in f2fs, and I could reproduce it =
-in
-> >> testing, where adding COMPR to COMMON makes f2fs crash, it also needs
-> >> NOCOMP in COMMON.
-> >>
-> >
-> > I don't think this is correct, or at least not enough.
-> > My agent said that this breaks or changes things on  f2fs/ext4/ubifs
-> > I didn't bother to check if all of them are true - I doubt it
-> > bottom line - need careful audit and good testing.
->
-> Yes, definitely.
->
-> >
-> >> > FS_XFLAG_ENCRYPT can go into common but must also
-> >> > go to FS_XFLAG_RDONLY_MASK because it's read-only for
-> >> > all existing fs.
-> >> >
-> >> > COMPR is rw for some fs and ro for others.
-> >> > As with CASEFOLD, you cannot make it COMMON before
-> >> > converting all casefold fs to new API so that each can say
-> >> > whether it wants RO or RW.
-> >>
-> >> How's CASEFOLD currently handled? in the v2 I'm drafting, I added
-> >> fileattr_mask_to_legacy() and fileattr_legacy_to_mask(), which convert
-> >> between the old format (filtering by FS_XFLAGS_MASK) and the new mask
-> >> format.
-> >>
-> >
-> > Good question.
-> > Need to check this.
->
-> Can you do that? If not, I'll check tonight, no problem.
->
+On Mon, Nov 23, 2026 at 02:38:44PM +0200, Jarkko Sakkinen wrote:
+> On Mon, Nov 23, 2026 at 09:09:02AM +0000, Yeoreum Yun wrote:
+> > Hi Jiri,
+> > 
+> > [...]
+> > 
+> > > +static void __iomem *tdx_attestation_log_map(size_t *length)
+> > > +{
+> > > +	struct acpi_table_header *header;
+> > > +	struct acpi_table_ccel *ccel;
+> > > +	void __iomem *log = NULL;
+> > > +
+> > > +	if (ACPI_FAILURE(acpi_get_table(ACPI_SIG_CCEL, 0, &header)))
+> > > +		return NULL;
+> > > +	ccel = container_of(header, struct acpi_table_ccel, header);
+> > > +	if (header->length >= sizeof(*ccel) && ccel->log_area_start_address &&
+> > > +	    ccel->log_area_minimum_length &&
+> > > +	    ccel->log_area_minimum_length <= UINT_MAX)
+> > > +		log = acpi_os_map_iomem(ccel->log_area_start_address,
+> > > +					ccel->log_area_minimum_length);
+> > > +	if (log)
+> > > +		*length = ccel->log_area_minimum_length;
+> > > +	acpi_put_table(header);
+> > > +	return log;
+> > > +}
+> > > +
+> > 
+> > I think we don't need to dump log area with the log_area_minimum_length
+> > since the area would include none-event otherwise, pre-exist tool (i.e.
+> > tpm2_eventlog) reports error for them like:
+> > 
+> >   ...
+> >   - EventNum: 21
+> >     PCRIndex: 2
+> >     EventType: EV_EFI_ACTION
+> >     DigestCount: 1
+> >     Digests:
+> >     - AlgorithmId: sha256
+> >       Digest: "b54f7542cbd872a81a9d9dea839b2b8d747c7ebd5ea6615c40f42f44a6dbeba0"
+> >     EventSize: 40
+> >     Event: |-
+> >       Exit Boot Services Returned with Success
+> >   ERROR: corrupted log, insufficient size for event header: 3
+> >   ERROR: failed to parse tpm2 eventlog
+> >   ERROR: Unable to run tpm2_eventlog
+> > 
+> > 
+> > So, what about export *real size* of eventlog like
+> > tpm2_calc_event_log_size()?
+> 
+> Nothing in the patch (neither commit message nor any comment in code)
+> says that TDX attestion registers share the same format as TPM2 even
+> log.
 
-CASEFOLD is set in FS_XFLAG_RDONLY_MASK and NOT set
-in COMMON
+It comes from the UEFI spec's definition of CCEL:
 
-Therefore, doing set with the old xflags API for the common flags always
-preserves the old CASEFOLD.
+ 38.1 Virtual Platform CC Event Log
 
-This is kind of ugly and works but its hard to see the design there
-so hopefully all the new helpers and masks will sort this and make it
-more explicit.
+ If a virtual firmware with confidential computing (CC) capability
+ supports measurement and an event is created, virtual firmware should
+ report the event log with the same data structure in TCG Platform
+ Firmware Profile (PFP) specification with
+ EFI_TCG2_EVENT_LOG_FORMAT_TCG_2 format. The index created by the
+ virtual firmware in the event log should be the index for the
+ confidential computing (CC) measurement register. It is CC vendor
+ specific.
 
-IOW, ENCRYPT can use the VERITY RDONLY and COMMON
-precedent because it is read-only across all fs (via this API).
+It makes sense that the kernel would size it correctly.
 
-COMPR (for the purpose of ntfs patch) can follow the precedent
-of CASEFOLD of RDONLY and ~COMMON, which somehow works.
+> As per the function, perhaps tpm2_calc_event_log_size() should be
+> relocated to lib and have non-TPM name like firmware_event_log_size()
+> or something.
 
-Note that for fs that were converted to the xflags_mask API,
-COMMON should be irrelevant.
+Probably under drivers/attestation since that is where all the TCG
+formatted logs should end up. It should be 'tcg_event_log_size()' or
+something. Maybe a tiny module for it like we would have done in lib/
 
-COMMON is only used in SET to do GET and preserve the ~COMMON
-bits of the "other" API flavor.
-
-With the xflags_mask API, unless we adopt the "verify" feature
-there needs to be no internal GET with user SET and then COMMON
-is not used at all relevant at all for those fs (e.g. ntfs) only the
-_fill_ converters are important.
-
-> >> > I think there may be a way to deal with this easily since
-> >> > ntfs doesn't need to set either but not sure.
-> >>
-> >> We could export the 2 other helpers I added for v2 (xflags_to_flags an=
-d
-> >> flags_to_xflags) and make NTFS use them?
-> >> Though adding the fileattr_ prefix will make the current (v2) vfs code
-> >> maybe too verbose.
-> >>
-> >
-> > Honestly, I can't say for sure - you can try
-> >
-> > I think you may need a different set of helpers fileattr_prep_ used by =
-the
-> > filesystsems that are converted to xflags_mask, which may be different =
-from
-> > the set of helpers used by the user facing ioctls but I'm not sure.
-> >
->
-> I guess I'll think about it when I move NTFS's impl to the updated vfs
-> code.
->
-> > The thing is - this is all hard to wrap our heads around
-> Yes.
-> > You and I have parts of the design in our heads w.r.t backward
-> > compat with legacy API, both UAPI and vfs internal api.
-> >
-> > I think you should put it in writing to see that you and I have
-> > not left anything out because this v1 surely does get it wrong
-> > in several places both wrt legacy UAPI breakage and internal
-> > API correctness.
->
-> I agree, now the version in my head is not finalized yet, so I'll do
-> that in the v2 patch/cover letter.
->
-> TLDR is "use the legacy to/from mask converters whenever needed, so:
-> - user legacy -> fs legacy: keep as the old code did
-> - user legacy -> fs mask: fileattr_legacy_to_mask()
-> - user mask -> fs legacy: fileattr_mask_to_legacy()
-> - user mask -> fs mask: pass it through
->
-> (before finalizing the GET path I want to finish the SET path).
->
-
-Maybe for me if I don't see the full picture, full get-set cycle
-it's hard for me to judge.
-
-Thanks,
-Amir.
+Jason
