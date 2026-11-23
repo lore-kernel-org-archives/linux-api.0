@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795393369;
-	b=1xAXtJ7z9SbNtOEoD7vep0ylgMN2Z6CnABswnj9TeWTCnQAsCKxOsGQh0VxPz+B3NgUt
-	 /s2KttENA0Mm3Ah+hUxuiebjHG6MXTqxsjsPVgG0mMN+4sGd8vGzC5KpJv7qyZW+3lFa7
-	 leq5Bp8gt6tLw0IFGWpcVaOMtjnxDbZjKzYbnD/iHb5lIUZwvdPyFsRhiqvj0K5Ejy25K
-	 sqLYjqj+yLit5kOMcDz9UBbQ+S+vW6YzQ6t8SFqatOfgoP5AmQRcBhZIAc4yylXf37B/t
-	 qhYrsmCrSGXq9T8RskPZ0sy/A74F6j/gL/Hlhc8QzgY0Gy6Sb3KyxwR6vzMqxXLfegQ==
+	t=1795393574;
+	b=n2o/OFk77fcUGA46Sc0QZ9o6CMcVH0jmTSkY7IhLC5tjTsAEc+jUW8HWH/rn2JNsUHwA
+	 brubhQM4D7W1Nqpew5fu7ukUs43VVPoEDkuaR1McI6x6o6m1Q7jfRaDRzT3nbilh89Cab
+	 BpWowLSzhuJkTgNKX0vZEBzaTWPFLMz8/JqI235LrfA58turEUKsJUpZ2nB7Z3/WbMPe0
+	 n+Un2EYMp2jGxx42EkHxek3AD/+spn1Ggu2+WaG1wVXRhbuxsppGOdpd0NGay1Tu/J/10
+	 PJjjsiVzZojwMCFkW4E4pTiCP8SjlMTZcCEilnWlscyVqDtsfrd5br2W8WKa8CDwpmw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795393369;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795393574;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=Jz1NKIIKgCd2mV0Gf7xePKwq1B4TLlq2GWrC4ESjcAQ=;
-	b=a+6O0JxlwYaBpVCXQfVMzuYNe3tCXOU3MoO5Giw4bz0QmdnhpaVDWFUk3v0JHNPQnhDf
-	 PCJuxlz1alW4wVoaNhNVOIhOAjP1MOJfU6yhUjBNpUw+eTJKeiXaqNKaXPtWGpnF/Qrq0
-	 0KJKDfPGP26rRVLhyRsYEYjPDQ/FwM5scHZkYT9gUjfHFwwzL3LTf9IhhPeSsYphBO96Y
-	 jArE78YtFPlJZEI7n4CAoWD6F7gOt6JhCSQj+D2pzk/x3YZnjZPbIf5OmxRKKhSotDhSr
-	 hHGD8JutIcsVsX0FvyksE+iZbpldx4X9AJpty0tANV+m5TRox7jwsk4PJ3aVumAa1eA==
+	bh=Np7fZSYURVKo0ykLKnKN/e1CFyZ5GmziW7UTv6oqkBg=;
+	b=JPghQysTF/xfVx2xM+qwIFL0XwQDHoxXDFpZzxpqnLidbstXL90Y3ncwVfZh1FZcvt4o
+	 7bELXuB08zd3HEn6+3TmsQOZ5J02UGQ1C606Q5EUTawcgMQ8K6HqAeg3UqIDTxmnsn33x
+	 0EHaj4NZr8mr/vh6Ekf/uy4i03+bDetjnLL/PNXMggbfANql4oc9p4cVau0QmzsrqYjeD
+	 GFVkM9npoZwPx9jHL2Z6FyuVZMSSfcqm/XLExYJoemBXDlYkHl/IcCir9KI+K7BdeiKr/
+	 dXAnFFX5yWUDopjQFppchNCIsBcEccr1gNwLm7dWU3S6kFUVwwIxd/P0Jg6V4In8gyg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=D9PzkT11;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XTTYuAtT;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 4BF32606A31A;
-	Mon, 23 Nov 2026 00:22:49 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 92486606A320;
+	Mon, 23 Nov 2026 00:26:14 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=D9PzkT11
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 15F751F000C6;
-	Mon, 23 Nov 2026 00:22:48 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XTTYuAtT
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 77F411F000C6;
+	Mon, 23 Nov 2026 00:26:13 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795393368;
-	bh=Jz1NKIIKgCd2mV0Gf7xePKwq1B4TLlq2GWrC4ESjcAQ=;
+	s=k20260515; t=1795393574;
+	bh=Np7fZSYURVKo0ykLKnKN/e1CFyZ5GmziW7UTv6oqkBg=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=D9PzkT11tfiXFbsmqjxDg4JVSIMsco9OtJLz8dJ3yn2/dEcJVEzcRbuZCSLbL4pIQ
-	 NF9VESCGoar573rnroMuamO3celH4JvkzdLprPXCbFU0eHdwWCBjioF8vNDqae4K2U
-	 w/0Pd5FZ5y+8wjRW+NkSdYPoaeBvmJBFPMnYS7EPPkexL9VZEZPlE0IRVWk8zCdpaZ
-	 My/rP7StpwNbAYvw30XqtjzLOGJXEtSw56b1hzxXaQXLqgX64NeFtM52qSXjYW5fUI
-	 mEYW9GYl79/y4A7eEhdM8pWZ1fxk4ooDT4Y4OMfTFDAx9aWat5amCSC7XxETL0zCHh
-	 2siz7HXceBmwQ==
-Date: Mon, 23 Nov 2026 02:22:44 +0200
+	b=XTTYuAtTfAlg0WH9XZNPNM7S+HLBop3wyxrt6AZb8BiQ/Gcs79kUj59MMdnE7zjKQ
+	 6xk0zPvaGdlG8o9ZUMGLAaOiaoDh4dLG6WNkRYPhuhQSyEsvPBz3KMQjuS6m7xd5dG
+	 Ot9O95tbcPRy9IHFMgYR0M5uFEZsIn+69FEAQlQR3rWR6ymXF88kwRbDdIo+Jw4lgY
+	 YKAHH8A25VOQvWrywy5q8chM2R+ortwz1L4AYTL89LZ/Swh1LO/3fuwj1dPvoYQS1e
+	 rxcdFPD4rGTTlycsU6r7F/Z5zD9ej6TCW+7qcXWzVmur1oME5eDf3FDMxcpULj0bY5
+	 LbOIMT1N38+0Q==
+Date: Mon, 23 Nov 2026 02:26:10 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
 Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
@@ -67,10 +67,11 @@ Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
 Subject: Re: [RFC PATCH v7 00/26] userland: Userland containers
-Message-ID: <awOHVCpztLQv4Uwv@kernel.org>
+Message-ID: <awOIIuoNvNLZ_scF@kernel.org>
 References: <20261122193539.3334213-1-jarkko@kernel.org>
  <awOEa303zNUDrzA3@kernel.org>
  <awOFGIWekH9-vlhM@kernel.org>
+ <awOHVCpztLQv4Uwv@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -82,41 +83,45 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <awOFGIWekH9-vlhM@kernel.org>
+In-Reply-To: <awOHVCpztLQv4Uwv@kernel.org>
 
-On Mon, Nov 23, 2026 at 02:13:16AM +0200, Jarkko Sakkinen wrote:
-> On Mon, Nov 23, 2026 at 02:10:23AM +0200, Jarkko Sakkinen wrote:
-> > On Sun, Nov 22, 2026 at 09:35:13PM +0200, Jarkko Sakkinen wrote:
-> > > SYSCALLS
-> > > ========
+On Mon, Nov 23, 2026 at 02:22:49AM +0200, Jarkko Sakkinen wrote:
+> On Mon, Nov 23, 2026 at 02:13:16AM +0200, Jarkko Sakkinen wrote:
+> > On Mon, Nov 23, 2026 at 02:10:23AM +0200, Jarkko Sakkinen wrote:
+> > > On Sun, Nov 22, 2026 at 09:35:13PM +0200, Jarkko Sakkinen wrote:
+> > > > SYSCALLS
+> > > > ========
+> > > > 
+> > > > Two new system calls are proposed:
+> > > > 
+> > > > 1. userland_open(): open an opaque staircase-initialized container
+> > > >    object (modeled on Intel SGX enclave initialization with separate
+> > > >    build and live states) with no embryonic state, opting selected
+> > > >    shared namespaces in via an allow-list instead of unshare semantics.
+> > > > 2. userns_set_idmap(): configure all UID, GID, and project ID map
+> > > >    extents for a container user namespace in a single atomic system
+> > > >    call.
 > > > 
-> > > Two new system calls are proposed:
+> > > Andy, perhaps a bit too far of the box idea but I'll just throw this out.
 > > > 
-> > > 1. userland_open(): open an opaque staircase-initialized container
-> > >    object (modeled on Intel SGX enclave initialization with separate
-> > >    build and live states) with no embryonic state, opting selected
-> > >    shared namespaces in via an allow-list instead of unshare semantics.
-> > > 2. userns_set_idmap(): configure all UID, GID, and project ID map
-> > >    extents for a container user namespace in a single atomic system
-> > >    call.
+> > > An alternative to userland_open() would a file e.g., virtual device
+> > > file, and necessary wiring for open().
+> > > 
+> > > Then the added syscall surface would reduce only to userns_set_idmap(),
+> > > and it adds more robustness to access control (e.g. who can create
+> > > containers).
+> > > 
+> > > What do you think of this?
 > > 
-> > Andy, perhaps a bit too far of the box idea but I'll just throw this out.
-> > 
-> > An alternative to userland_open() would a file e.g., virtual device
-> > file, and necessary wiring for open().
-> > 
-> > Then the added syscall surface would reduce only to userns_set_idmap(),
-> > and it adds more robustness to access control (e.g. who can create
-> > containers).
-> > 
-> > What do you think of this?
+> > Also, easy way to detect the feature. This does make sense to me.
 > 
-> Also, easy way to detect the feature. This does make sense to me.
+> This as a side-effect would enable LKM compilation, and reorganization
+> of the beef of the core feature as a driver. Not sure what would be
+> the best location for the driver tho, perhaps just drivers/userland.
+> 
+> I.e., full decoupling from the syscalls.
 
-This as a side-effect would enable LKM compilation, and reorganization
-of the beef of the core feature as a driver. Not sure what would be
-the best location for the driver tho, perhaps just drivers/userland.
-
-I.e., full decoupling from the syscalls.
+Right, and LKMs are great for live patching. This has enough quantative
+weight.
 
 Br, Jarkko
