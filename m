@@ -1,45 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795392624;
-	b=tSai+mVeaOAIT+AjYPT690a3+C7p3Lqrxb9zzjuQl4gLB/l6AZq4sAFkJF262eSjsZLE
-	 6rpMMQbK+8NnQyyCT5mlg1YD8dcGcSHHNpULIkU/gENIKQBYJhE46hQ3/PDdnXpE4a70o
-	 NckD5UeXrWYk06CdIuBQBVBE4cBCqaAPZULgAvBKp6ywkFUE5d92Mhg/CrogTBjsM74nH
-	 m1xv64cgriFE43h+gq70aovgbeeOOJ73CJCs3ZSskRcMCAhql4VpqFfcOcEXo7qiTpGt4
-	 YFbm+ATRhiVucvIbNsSYYvW33gRaoGYu4aDlg2HIMcEhnUXNcHIrgoDDcH8BA+O0Tbg==
+	t=1795392796;
+	b=jJ5OkAe8X/KNAwxF7m9stVuTcBYMRpacS76smhFSDWMRXVif03NViYlnzYlCrgIxvZxt
+	 UVNaOlYYC197m1nk/RF/GxwoQaNFMElNAmYKUMCIqsfLpXvWltjoeRLUzHsmWcY9IVttL
+	 LuVjZKdUv31ueRP0FuST3QLyaJe33u0NQi6WlX60Fi2nAHZlh3E0Ovl8nXaB6WEvgQRst
+	 /xXGh+sz7QjE/l1kNnm5z40WtA/1r0fQ7uuJlXz19zKvQF7sC8bAZGYTsJZo/MNOQgaWu
+	 fMAymEyeB4+peba2da386/u3oadbNqKbCzpWAgiUgtBTgPVScaDPt2jOo4BDLvMyoUw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795392624;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795392796;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=ZVqAgRNp/806Eu6FhKubSIrbLTDfdOK4rCR11mJ3soA=;
-	b=VIMYhMLLnH6RKpz1psoR3+1p3EarWQryosfhBH5i/vGMyOnTqcb+DSsOcSg2DdIKXKG9
-	 d6sKIRSAX4Vglk8oTtUbqapJ94L9+E1DymnN0FxhKODyi5aWTg0cb+LEeH+syT3gMYAUv
-	 Om4oaGTJNrjj7JEw2DE5OWXqQ07kg56hwI8iFdBk2Hj/WtdJDbOYrWvmWpsPpyqMDBrA6
-	 nfT2wDQM8k8duLD5mRXYxP/uyBY1slwGot6AKeRbKVOdZzZghwINH+Cg4c9kjMJ01rYtQ
-	 Z36aWj3HUgFHCPdQF8ptJ7edDrNqx0xVW63JrfR34yYp0dHWYCEW6lD408wehHKrzTQ==
+	bh=wNHqEZsoH0fl0KvemxrRFgEKII9FO4FpbdMxVzBA/es=;
+	b=zGmRZL4qgG8JU7nzY63oAJFR4fLPo/fM40sT0XekNczbE3KIdAtUkV3tm+DrLI4jmEgZ
+	 2v5t2up3CRl83n+l3jrn1dAzataYPjNH5affgTsFHqUKR65LsUABN0NtJ22KFQ93wyAfh
+	 YlBmrr+/SaEOYJ+RuWCoORItbEjN8QYhymiYzWI6XIkTUX2bxsFZQuIAeJIvnmXIFNe4u
+	 SrlRgdXlEz5Mr8n9QZnvfk9WTgYb5Z5SGFnOLX/Q73fzGWSoY6aYHB0+NAzHSXgNR1dde
+	 eLulw/fJ97CcsiZGAyMrwfkpUzr5uF3pOIre84WFQF8X7aqwaxfIuy9GO7UtQoKppig==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aIBalDqF;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Thac0G2i;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id EA047606A31A;
-	Mon, 23 Nov 2026 00:10:23 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 32855606A31A;
+	Mon, 23 Nov 2026 00:13:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aIBalDqF
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 574BA1F000C0;
-	Mon, 23 Nov 2026 00:10:22 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Thac0G2i
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id EB8E31F000C0;
+	Mon, 23 Nov 2026 00:13:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795392623;
-	bh=ZVqAgRNp/806Eu6FhKubSIrbLTDfdOK4rCR11mJ3soA=;
+	s=k20260515; t=1795392795;
+	bh=wNHqEZsoH0fl0KvemxrRFgEKII9FO4FpbdMxVzBA/es=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=aIBalDqFUyBaRSQx3VhqHqWOCy356DzFuoO1chw/cAmHvSXvAodD4MbvPpaj96fK0
-	 7kG77OT80wpmVRWo8hA4UTxfYDOvNNQ+OPKjT8JIHjGfDyoxJ5mHA0oCR5MqNuJz12
-	 sXnZ3AfTd+SHluWBc9scTS910r7uaKlFGTcD3VAMeNTD6CPRRb5C/uuEGDUYWLaxGO
-	 4Xoz8L38hCpwtmo1Nups5A87P+5Uu+QzJzway5aRYJikhauRbI82OjUxnAql+Uzlxy
-	 1vhRp2jijx/G6uOla6NeECNxbmKVss6aoH3MP/Y0bhy+w0it1R8Sn/KeH7uil/e+Q/
-	 Vo6z9i9W8aI0Q==
-Date: Mon, 23 Nov 2026 02:10:19 +0200
+	b=Thac0G2iUDcXz2qgaJW8h/S+5nNIqyajBYdxzDEme/bJSPMTe7c3pRgwzgodAVoQh
+	 mSokN09iHBie/kF/x0KahT2ipTDZfjbXgWYwU1GSRAZwJdLyPaFSaN/DwkoxM+5A+p
+	 7MshlxsCaWUb+qkLze23KVR1cmAv5hnNsNU939yryaW8IPFXuZTne6FPxmqP8Go0Sa
+	 cDfWRGtcKwXGHvXoVygr6TiD71aXKFcfCOU2d6HUw9YdgmFVbrYVyY6igYRm3F9YKb
+	 EViZyMRONm1wSRulbDZZ/8V5UuxKVjY/b0SanxkgwkIiE4eozqzbOYfncDgHX+BmsK
+	 M4rbopl0ZwExQ==
+Date: Mon, 23 Nov 2026 02:13:12 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: linux-fsdevel@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
 Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
@@ -67,8 +67,9 @@ Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
 Subject: Re: [RFC PATCH v7 00/26] userland: Userland containers
-Message-ID: <awOEa303zNUDrzA3@kernel.org>
+Message-ID: <awOFGIWekH9-vlhM@kernel.org>
 References: <20261122193539.3334213-1-jarkko@kernel.org>
+ <awOEa303zNUDrzA3@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -80,31 +81,34 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261122193539.3334213-1-jarkko@kernel.org>
+In-Reply-To: <awOEa303zNUDrzA3@kernel.org>
 
-On Sun, Nov 22, 2026 at 09:35:13PM +0200, Jarkko Sakkinen wrote:
-> SYSCALLS
-> ========
+On Mon, Nov 23, 2026 at 02:10:23AM +0200, Jarkko Sakkinen wrote:
+> On Sun, Nov 22, 2026 at 09:35:13PM +0200, Jarkko Sakkinen wrote:
+> > SYSCALLS
+> > ========
+> > 
+> > Two new system calls are proposed:
+> > 
+> > 1. userland_open(): open an opaque staircase-initialized container
+> >    object (modeled on Intel SGX enclave initialization with separate
+> >    build and live states) with no embryonic state, opting selected
+> >    shared namespaces in via an allow-list instead of unshare semantics.
+> > 2. userns_set_idmap(): configure all UID, GID, and project ID map
+> >    extents for a container user namespace in a single atomic system
+> >    call.
 > 
-> Two new system calls are proposed:
+> Andy, perhaps a bit too far of the box idea but I'll just throw this out.
 > 
-> 1. userland_open(): open an opaque staircase-initialized container
->    object (modeled on Intel SGX enclave initialization with separate
->    build and live states) with no embryonic state, opting selected
->    shared namespaces in via an allow-list instead of unshare semantics.
-> 2. userns_set_idmap(): configure all UID, GID, and project ID map
->    extents for a container user namespace in a single atomic system
->    call.
+> An alternative to userland_open() would a file e.g., virtual device
+> file, and necessary wiring for open().
+> 
+> Then the added syscall surface would reduce only to userns_set_idmap(),
+> and it adds more robustness to access control (e.g. who can create
+> containers).
+> 
+> What do you think of this?
 
-Andy, perhaps a bit too far of the box idea but I'll just throw this out.
-
-An alternative to userland_open() would a file e.g., virtual device
-file, and necessary wiring for open().
-
-Then the added syscall surface would reduce only to userns_set_idmap(),
-and it adds more robustness to access control (e.g. who can create
-containers).
-
-What do you think of this?
+Also, easy way to detect the feature. This does make sense to me.
 
 Br, Jarkko
