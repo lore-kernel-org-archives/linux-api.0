@@ -1,61 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.65
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795441384;
-	b=jN6I7Nfn5lS87Mb+Ixx8KvYB+5xy5bVQoOTlcDkgqzSxTXB5z6Z6ozKYGZSsvvOH7GaC
-	 PqJFfCx2/KnChczmCs6xTQ4Hn7m/RJw/w6EDwYzECzYzg4x8LQINNTKQfPuQI/a/fs0x9
-	 GomkbI8jVgHhKl9WcaAMpB0ezLNPIXeCkV0/ERmVzWHXGdYuRw/jkejNZg59dkEf6JUuj
-	 hPvQfDNsgA9y1xLhqwnD/xTmJq/Gt80d3kjwmmGsCEqdnlx1hx7kEuQPUnkNgh5s/iP7s
-	 PYMtOfYgIaETnoqTDEyueaXewE1kirtSxN+RQeI2s4LDNxW5QGBrt95c3AbrhHBxhPA==
+	t=1795441832;
+	b=smhmUydz/3VYqLNQHeiSbZynhBAwh/NrDIOBvdsigK/diKeSDSXARB9VCbjKYAh9zRc7
+	 9Ko4GutGWC9vK4dpZ2LzxawNuxnLU6LGdgtYciMxt74z3lxW++UIzDPjJbpfunRwRjkIN
+	 FA1j4SJ0xNwMJ2wth5dHFBE/2YhnAGUQbeW7OwcH6th5ZH7xGqfasyyri6UNukBiQKCbI
+	 SHICDGlx91PMd8+sEBnKsXoS/nPi9h0wXxJabmpK7JqL5JFcq0qU4XEnkK7GDntiJKtj5
+	 YhM4wOP9itRpkKo4oNiZFw9YPxa1Qj9XnrLpeZA4O7xvri/18NQiy4nmFBEROyuj6Ig==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795441384;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=DCQx/SItVG2utyNVIJWfKgNvluAQSFlMsMHNGPCyXeQ=;
-	b=OYoSkXUmqMN4glkqlGmnJS7KEfEh+1yR33f2d26Hx6qGr6+StGt3iwjGC34RUyRbFTXd
-	 FniQHbz+Nh+cw8w8N6OIQX6yZ7pJhlzGS2gOT2pzOH795OYOLGv0N/AzH/Nqya1dDpMpd
-	 uyhK9fu6ugMP1KLebSYkWRnKRua4+swHngWuavwgbPUpD81UmBUQ2XJv3LzVJ0SzZAsdG
-	 gBSXZAkafk1h59E3eArMtcZjp2OvHHQH1lyfkhLPFoNo688j5piPugygzkUpbnXTwS45D
-	 UJLrCSFNH6zd5bv4CLbPZPyfylvcVJ+WZzEx9bEQK3snG1E7LqDQdFyTUfKVz6TdhiA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795441832;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:X-Mailer:
+	 References:In-Reply-To;
+	bh=nDVijpGqwKWyH50w8XVucnbg4rdJHZCpEUX0lljvpb8=;
+	b=CJ0Ch90TqtAC7JeGzvUJn4ZeRxZu4XpF9qTaKsJ73n7cb+5e7NfOzjXqgprP0atuzWgd
+	 TWBxTXelu+g+3jky1iFYCTqWXjLD/kHDp6bT1Is+I/zdHrZyd25hUCwCq5WlILzFCgbrp
+	 u3/AXQCMSLAlaNo8S89rzsvhRWewSmbEUNRa5cflH2LXFkGlDi9pbdAN2yVYR9KiWobgl
+	 1ZEdbaNNwtYVP49Kedsi4x7/TDGLhFtSS9Yv3PeQdaTjq9aMueZjkRVshtB+2SPFb2CCu
+	 rJPU+x9NP5SjCBDS/VJrxaE9D/m/Jymq/W5MRDGla6G6g8Udq3BhBuVcC4yWjOocfeA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=eUGBsarg;
-	arc=none smtp.remote-ip=91.218.175.65
-Received: from mta0.migadu.com (out-65.mta0.migadu.com [91.218.175.65])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=EROWc7oY;
+	arc=none smtp.remote-ip=209.85.128.47
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C8470606A330
-	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 13:43:03 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C8470606A330
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DB7EE606A333
+	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 13:50:31 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DB7EE606A333
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=eUGBsarg
-X-Envelope-To: linux-api@vger.kernel.org
-DKIM-Signature: a=rsa-sha256; bh=/UJnZf6f4DUrDz4PUaI4ZIVfRtW4AczQ3P06vh6Vzso=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1795441382; v=1; x=1796046182;
- b=eUGBsarglolewKTIYHVqsxBi5ESQ1GwL4KopKskK82tCguvkdYFRJ86KlYHQqJQB8y8FnlKZ
- CjtEGB2RfydMUg90/0/e+Pm6jJ24R6ukLM8s7oPGsfXQGUnlHTlhR8J/dwyK5M/LWLVhIvVjR7T
- lu0QgQ3sNU55XzN1q9rHEhVs=
-X-Envelope-To: linux-api@vger.kernel.org
-Received: by smtp.migadu.com with ESMTPS id 11ba230085014a12;
-	Mon, 23 Nov 2026 13:43:01 +0000
-X-Mizu-Trace-ID: 11ba230085014a12
-X-Migadu-Flow: FLOW_OUT
-Date: Mon, 23 Nov 2026 14:42:57 +0100
-From: "Pankaj Raghav (Samsung)" <pankaj.raghav@linux.dev>
-To: John Garry <john.garry@linux.dev>
-Cc: Wayne Gao <Wayne.Gao1@solidigm.com>, "cem@kernel.org" <cem@kernel.org>, 
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, 
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, gost.dev@samsung.com, pankaj.raghav@linux.dev
-Subject: Re: [RFC PATCH] xfs: add a per-filesystem switch to force atomic CoW
-Message-ID: <awRASEIJGTYGOx46@quentin>
-References: <LV0PR10MB997684D5CA8A6AC037F6D1CD8AB9472@LV0PR10MB997684.namprd10.prod.outlook.com>
- <1801b5bf-6cb2-40ee-b553-5bcba04875b4@linux.dev>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=EROWc7oY
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4ba013938d7so30415015e9.2
+        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 05:50:31 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795441830; x=1796046630; darn=vger.kernel.org;
+        h=in-reply-to:references:to:from:subject:cc:message-id:date
+         :content-type:mime-version:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=nDVijpGqwKWyH50w8XVucnbg4rdJHZCpEUX0lljvpb8=;
+        b=EROWc7oY9HdiuOpsRGUthkHINXiipaSyPMDYzSawxLU5aWqobqcmnFnwToY98OdLXf
+         qJfDcB4+A8q++a+EN13WjvAlZeWCaOKo2UsSQJ5+fQ1MlRl/KRNafFwDinnSNxWYPbiw
+         VRXPFVDoI4cdf5PnMJEf/NKzywFpZn4lJNqxpoOsYQjBEC6qtplcSoQa7v6tcT2EpGRz
+         RHG2vyd9p4eg4I4DRsTf0IhQP79hJaY0pykaI9fujqA9telSKI6p+nDD1LZyoFpMfWjv
+         JuzCe0SaA+DkidiGkJTl8r1/CIuJAip5VhrU8jiv+enZEzaWHcx0BJ2R5jDN2AtBxTOH
+         fO1g==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795441830; x=1796046630;
+        h=in-reply-to:references:to:from:subject:cc:message-id:date
+         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=nDVijpGqwKWyH50w8XVucnbg4rdJHZCpEUX0lljvpb8=;
+        b=aEhlzvRol3u1lkhrdXojSBhbPib9F6ot9qDgTH1qiQDi+mAciP6+d3+rJHTL1cAAMF
+         9wvYEi8q7P9yxZzD+vOoyycnnlF+AV9YeehUI+0BaEonf6KLypO6ykoMKSA4TInvk792
+         rNe8sYJdaiZz9opFORulzOOxhqklea+6f0YsUfaYPHxP8d0kFx4Z+Fx/ETQrNewk4ud+
+         WlQkBc7mAQHCM2BhW3it8/bvepJuQ0V9QGxEbzbys05T+iM2k+I2KXX1X9gG8c8FupXC
+         Rvihik4R8QkzARJ8k6PmSnm6Tfe86PBRDgXMtagt4K5+MNnWwrARmgw8MmL6TtVoZHtA
+         mWbQ==
+X-Forwarded-Encrypted: i=1; AL+hErHASN+Y4kwsmn9kCWJjRWKuQL2GOB3aj8GvJVG2urGj96fs8NAG2KdH3Vv29HEOSGeSNV/h3ObyplM=@vger.kernel.org
+X-Gm-Message-State: APuU4Z+3W6QnOn3gjU3beDoT0DM3Auphxvt1CP97F5cdDAKomrPJn2Fh
+	+DtgW1G+2dJVj+7ugxnF8IkUeS0PFzQ96p2aW2mkAORB3dW5dR3iAduO
+X-Gm-Gg: AZFdTZdFY96urG17ZLvjevJJBfB/ICOOZPwbILE/1FFpunC2AoqeLKyey8dICvCy5eq
+	giuQG9ALY/Z6KE9rSot+FJ9Rmpl6gVUseWDjlPuv/G1NSvmiUGr/w455YaaSY4LNMNG4+pBJuxS
+	2EnEqZ5nSCBPsSaAwBOADfikA5a+nLIasK/TdE5ArWACnFgi/ODKlruprNxce+/MtIfm20PEU/A
+	4IdcY2vyrvRnQ9RYI0JK1LvassGpo4UELjV+sl9IChLoNvGd6Bgoktxt6FFhdNCbuBfQPKhMUfh
+	trdEYY7SoyP7sX+taIG+GHuFLdyPA9hpdLynXQi9L59H3b/ZYaA8K6zLFfZdLF92bTbEIX1ZTKU
+	SnnamLBJ8rli5akJAUXr1X5OCUWlfmD4T8HWqNc08W+apvJDxCMHqxbK2ivNIyBpnmpagLKVvyk
+	3F4fjQU0tqoFVPZy5SxvU+193bpHDL5w5dUioOAoNNi/JixjKJtqusk+9vLseA/gQmENT5457xu
+	j7de92ZknHDHEgBpQAeDYLKpL/bVJBB3fb07AGITa9zOsxxeWcAa+8hyD/93+cIxIunl9cT4j+B
+	hR3yYH26zBB4GM9PmOFv1+9biDC6gC23sQSJew0TrM0CsJY=
+X-Received: by 2002:a05:600c:5493:b0:4a2:8c5:5e5 with SMTP id 5b1f17b1804b1-4bb8881c734mr251533555e9.7.1795441829886;
+        Mon, 23 Nov 2026 05:50:29 -0800 (PST)
+Received: from localhost ([2001:b07:5d26:7a6a:365a:60ff:fe0d:cfc6])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb853ca452sm348754825e9.15.2026.11.23.05.50.28
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 23 Nov 2026 05:50:28 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -64,69 +86,184 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <1801b5bf-6cb2-40ee-b553-5bcba04875b4@linux.dev>
+Mime-Version: 1.0
+Content-Type: multipart/signed;
+ boundary=5849192148479b23b3d4c31f6e3ae6158a9ba4dcae3531b8cba6e234b57e;
+ micalg=pgp-sha512; protocol="application/pgp-signature"
+Date: Mon, 23 Nov 2026 14:50:25 +0100
+Message-Id: <DN2N0BY83OY2.1OV3ZAZFSWCDG@gmail.com>
+Cc: "Namjae Jeon" <linkinjeon@kernel.org>, "Hyunchul Lee"
+ <hyc.lee@gmail.com>, "Alexander Viro" <viro@zeniv.linux.org.uk>, "Christian
+ Brauner" <brauner@kernel.org>, "Chuck Lever" <cel@kernel.org>, "Jeff
+ Layton" <jlayton@kernel.org>, "Jan Kara" <jack@suse.cz>, "Darrick J . Wong"
+ <djwong@kernel.org>, "Andrey Albershteyn" <aalbersh@kernel.org>,
+ =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "Lauri Gates"
+ <lauri.gates@gmail.com>, "Christoph Hellwig" <hch@infradead.org>, "Dave
+ Chinner" <dgc@kernel.org>, <linux-btrfs@vger.kernel.org>,
+ <linux-xfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+ <linux-fsdevel@vger.kernel.org>, <ntfs@lists.linux.dev>,
+ <linux-nfs@vger.kernel.org>, <linux-api@vger.kernel.org>
+Subject: Re: [PATCH 3/3] ntfs: switch to the new xflags fileattr API
+From: "koraynilay" <koray.fra@gmail.com>
+To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
+ <koray.fra@gmail.com>
+X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
+References: <20261122000856.536902-1-koray.fra@gmail.com>
+ <20261122000856.536902-4-koray.fra@gmail.com>
+ <CAOQ4uxgc6pP+_xvJMbqj6wOdGzS75Vn6x6i_vUfCJDD46DAA_Q@mail.gmail.com>
+In-Reply-To: <CAOQ4uxgc6pP+_xvJMbqj6wOdGzS75Vn6x6i_vUfCJDD46DAA_Q@mail.gmail.com>
 
-On Mon, Nov 23, 2026 at 11:44:19AM +0000, John Garry wrote:
-> On 11/21/26 15:47, Wayne Gao wrote:
-> > 
-> 
-> Christoph was proposing something similar here:
-> 
-> https://lore.kernel.org/linux-xfs/20250714131713.GA8742@lst.de/
-> 
-> Plesse check it. But it is for a difference purpose to what you propose,
-> below. Actually, I am not sure on the motivation.
-> 
-> > 
-> > Hardware-capable devices normally prefer hardware atomic writes, making
-> > it difficult to exercise the software CoW path deterministically without
-> > changing file layouts or affecting ordinary writes.
-> > 
-> > Add a non-debug force_atomic_cow sysfs control for each filesystem.
+--5849192148479b23b3d4c31f6e3ae6158a9ba4dcae3531b8cba6e234b57e
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
 
-Why do you think this should be a non-debug interface? Why would anyone
-want to disable HW atomics if the device supports it in production?
+On Mon Nov 23, 2026 at 2:00 PM CET, Amir Goldstein wrote:
+> On Sun, Nov 22, 2026 at 1:09=E2=80=AFAM koraynilay <koray.fra@gmail.com> =
+wrote:
+>>
+>> Switch ntfs_fileattr_[gs]et() from the legacy FS_*_FL flags to the
+>> modern xflags (FS_XFLAG_*) fileattr API with masks.
+>>
+>> Introduce FS_XFLAG_COMPR and FS_XFLAG_ENCRYPT and add them to
+>> FS_XFLAG_COMMON (and add FS_COMPR_FL and FS_ENCRYPT_FL to FS_COMMON_FL)
+>> to be used in this API switch.
+>>
+>> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.11
+>> Signed-off-by: koraynilay <koray.fra@gmail.com>
+>> ---
+>>  fs/file_attr.c           |  8 +++++
+>>  fs/ntfs/file.c           | 63 +++++++++++++++++++---------------------
+>>  include/linux/fileattr.h |  6 ++--
+>>  include/uapi/linux/fs.h  |  2 ++
+>>  4 files changed, 44 insertions(+), 35 deletions(-)
+>>
+> ...
+>
+>> diff --git a/fs/ntfs/file.c b/fs/ntfs/file.c
+>> index 50be49f4c913..fde6fb2fe39c 100644
+>> --- a/fs/ntfs/file.c
+>> +++ b/fs/ntfs/file.c
+>> @@ -155,31 +155,37 @@ int ntfs_file_release(struct inode *vi, struct fil=
+e *filp)
+>>   * @dentry: dentry to report the flags of
+>>   * @fa: filled in with the flags of @dentry
+>>   */
+>> +#define NTFS_RO_XFLAGS (FS_XFLAG_COMPR | FS_XFLAG_ENCRYPT | FS_XFLAG_CA=
+SEFOLD)
+>> +#define NTFS_RW_XFLAGS (FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND | \
+>> +                       FS_XFLAG_NOATIME | FS_XFLAG_NODUMP)
+>
+> Nit: checkpatch may allow 100 chars, but this due formatting is not
+> easy on the eyes
+> pls break to RO line
+It should be 78 and imo it looks fine, but yes, I'll split it in next
+patch.
 
-> > When enabled, route RWF_ATOMIC writes directly to the existing software
-> > CoW path regardless of hardware eligibility. Keep automatic selection
-> > as the default and reject enabling the control without software atomic
-> > write support.
-> > 
-> > Sample the setting once per I/O so in-flight requests retain their
-> > selected path. Preserve existing validation, completion and error
-> > handling, and leave non-atomic writes unchanged.
-> > 
-> > Report no separate optimized atomic write limit while CoW is forced
-> > and document the control's runtime scope and lifetime.
-> > 
-> > Validation: strict checkpatch passed. Linux kernel build and mounted-XFS
-> > runtime tests have not been run.
-> > 
-> 
-> Hmmm.. you are just describing what it does. Not why.
-> 
-> > Signed-off-by: Wayne Gao <wayne.gao1@solidigm.com>
-> > ---
-> > Hi Carlos and XFS developers,
-> > 
-> > I would appreciate feedback on this proposed interface.
-> > 
-> > The intended use is a controlled comparison of hardware-backed and
-> > software-backed RWF_ATOMIC writes on the same hardware, without having
-> > to construct misaligned mappings to trigger fallback.
-> 
-> Why do you want to compare?
-> 
+> and indent the broken lines below (
 
-Probably to measure the performance of HW atomics vs SW atomics?
+This should be a diff-only problem, in my working tree the file has them
+correctly indented using 3 tabs (wide 8) and 0 space, probably same
+problem as the PROJID line being unaligned here:
+>>  #define FS_XFLAG_PROJID                0x00100000      /* project ID */
+>> +#define FS_XFLAG_COMPR         0x00200000      /* Compress file */
 
-If the goal is to compare HW atomics vs SW atomics, then a simple module
-parameter in the nvme driver (or scsi) to disable atomics even on HW atomic
-capable device should force SW atomics from XFS. I am not sure if it
-needs to be in the upstream kernel.
+>
+>> diff --git a/include/linux/fileattr.h b/include/linux/fileattr.h
+>> index 4faa40febf11..219e7c8eb601 100644
+>> --- a/include/linux/fileattr.h
+>> +++ b/include/linux/fileattr.h
+>> @@ -7,12 +7,14 @@
+>>  #define FS_COMMON_FL \
+>>         (FS_SYNC_FL | FS_IMMUTABLE_FL | FS_APPEND_FL | \
+>>          FS_NODUMP_FL | FS_NOATIME_FL | FS_DAX_FL | \
+>> -        FS_PROJINHERIT_FL | FS_VERITY_FL)
+>> +        FS_PROJINHERIT_FL | FS_VERITY_FL | FS_COMPR_FL | \
+>> +        FS_ENCRYPT_FL)
+>>
+>>  #define FS_XFLAG_COMMON \
+>>         (FS_XFLAG_SYNC | FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND | \
+>>          FS_XFLAG_NODUMP | FS_XFLAG_NOATIME | FS_XFLAG_DAX | \
+>> -        FS_XFLAG_PROJINHERIT | FS_XFLAG_VERITY)
+>> +        FS_XFLAG_PROJINHERIT | FS_XFLAG_VERITY | FS_XFLAG_COMPR | \
+>> +        FS_XFLAG_ENCRYPT)
+>
+>
+> Rule:
+>
+> You cannot add a flag to common without carefully auditing all
+> filesystems that support the legacy flag.
 
--- 
-Pankaj
+Yeah, sashiko pointed out a problem in f2fs, and I could reproduce it in
+testing, where adding COMPR to COMMON makes f2fs crash, it also needs
+NOCOMP in COMMON.
+
+> FS_XFLAG_ENCRYPT can go into common but must also
+> go to FS_XFLAG_RDONLY_MASK because it's read-only for
+> all existing fs.
+>
+> COMPR is rw for some fs and ro for others.
+> As with CASEFOLD, you cannot make it COMMON before
+> converting all casefold fs to new API so that each can say
+> whether it wants RO or RW.
+
+How's CASEFOLD currently handled? in the v2 I'm drafting, I added
+fileattr_mask_to_legacy() and fileattr_legacy_to_mask(), which convert
+between the old format (filtering by FS_XFLAGS_MASK) and the new mask
+format.
+
+> I think there may be a way to deal with this easily since
+> ntfs doesn't need to set either but not sure.
+
+We could export the 2 other helpers I added for v2 (xflags_to_flags and
+flags_to_xflags) and make NTFS use them?
+Though adding the fileattr_ prefix will make the current (v2) vfs code
+maybe too verbose.
+
+>>
+>>  /* Read-only inode flags */
+>>  #define FS_XFLAG_RDONLY_MASK \
+>> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+>> index e40806b3a69c..09fc7e066485 100644
+>> --- a/include/uapi/linux/fs.h
+>> +++ b/include/uapi/linux/fs.h
+>> @@ -275,6 +275,8 @@ struct file_attr {
+>>  #define FS_XFLAG_CASENONPRESERVING 0x00080000  /* case not preserved */
+>>
+>>  #define FS_XFLAG_PROJID                0x00100000      /* project ID */
+>> +#define FS_XFLAG_COMPR         0x00200000      /* Compress file */
+>> +#define FS_XFLAG_ENCRYPT       0x00400000      /* Encrypted file */
+>
+> This is a mistake of patch 1. the newline should remain above HASATTR
+> which is allocated from the end.
+
+Right, fixed (and removed the blank line between CASENONPRESERVING and
+PROJID).
+
+Thanks,
+koraynilay
+
+>
+>>  #define FS_XFLAG_HASATTR       0x80000000      /* no DIFLAG for this   =
+*/
+>>
+>>  /* the read-only stuff doesn't really belong here, but any other place =
+is
+>
+> Thanks,
+> Amir.
+>>
+
+
+
+--5849192148479b23b3d4c31f6e3ae6158a9ba4dcae3531b8cba6e234b57e
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQSgVimKafU5DQMcjcDmj22qf5IGXAUCawREoQAKCRDmj22qf5IG
+XPikAQDShiHwdlBzVhBmmlaSOjx657TCRAUhtq5TpU0jWZ2HUwEAqm4ENGadEir3
+5R98mqEdCF353Ii7LkdpHNEHYRGrkQE=
+=QROX
+-----END PGP SIGNATURE-----
+
+--5849192148479b23b3d4c31f6e3ae6158a9ba4dcae3531b8cba6e234b57e--
