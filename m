@@ -1,59 +1,68 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795423348;
-	b=vWyR0++Fmb1hMHLZNWqxK3scwRoWsKbHR6uRPav5U8YM74NG42v7UeKR/tsMtzeGJa7u
-	 gqjXTVjwkE9Ca23ipO69fvxhiPnHXYGIQk2NlGFN3FPGRUyMsBX1bXwzVqGgOLzix71Sz
-	 J/42c2clxMB5+YBlIzjzfTVHSLFABufTyj0tiLHll9pdxg7r2ZgSPOCOWyz14Bvk6TC3K
-	 Z+3o1GixNnfhij3WTT/yT3gQWHtfYCsz0aW+K6Q9Vn+c3qPPJ5d5udNa8AyK/zNP4HAC2
-	 bZME85czaLP88FEh9L+2UCzmnZythSA2YgsL/52wZ62TYKGMqiTF96vO3w5lR1gp9DQ==
+	t=1795424950;
+	b=Oq3caeav14SueV8SeQMLII990v/g8JLNE1kY0+aRwZkJcMKtc94Rl36Xnemq0w/0MvY8
+	 BIbEv4JqN2RY+bVOwo/U5gXjPWZY4t6taPgoFAcrpsa8217JefTiQI9X+nJ7DrwqsHs3Q
+	 crKnGi3npX6MBo9FVwaH+YJsCabkcVyvfx4/nCwi4MoKytsGOsDJ16tzBi6R3dGgcImFq
+	 nIwKTxLYACJsSVydQ63eQoFKUb8yaLBW1I6wceLmu82noHp7QKdlgTin2ZFHAjJBxwcgQ
+	 nbz5g6taZ+UQuMsGnPXBIR/nwOriCwg4i+F2GojWzeGWgh5Z0F1iQK04Wzp24p6M+/g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795423348;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=GnIk51qj01nRrXsnOHu/fIQGm+CWLUJoNK8st13nPwo=;
-	b=ap0MAgunPnrZh3c1H6ou/gdp8QXv00yMPE6bZiP7hVmpDgwgHCanpXJnjUNx0rWqm0Z5
-	 Zp7+9EUcD33TTqiL9IVRREiotPctPYbSTMzvZLgisCgl1HAu3fIK80nvhgsJ/Wowr0FHg
-	 qyt2J0m47ZP/W+U+I3jUXAJ1PEpfmoSuSD3QxCMN6O2zgVyCh3qdFBNZni2KSg8Npr6Gp
-	 PGHUhUAszS1v4r+EARr6v8qyI5F2JRv6TfZJNUbGgo5NSvzlCCqrHCJb7c6f+zFUkloIT
-	 4OFr6A3Ri8og8cg/uTZEtVx9k9RjwAcGphJAd7nLAkvJPycJlcSIZ1OlQ1izFvN1qPg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795424950;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To;
+	bh=O02VVtRWSBlBTffNTMdkr0d21ECe3B1DyZ7TQUqkyYc=;
+	b=Oy2uh9N1/2hIyADVX6XuWeQ7lrts8uz4Bxq9BhDWvY7agjOfk1wvSi6qdnivrgmuwjKd
+	 bY/Ekkh6dRiRtf1UBDvKIXgf3WnolYwBa3GKUb/oCOBGT/UVm6H7M31kW7bmjvZd+bR8z
+	 +lbk2KXCkOQe+xB8M0a/doSE/Sl3v0iCUayu4wiRLU8Tt4EBswYuiAzNImPmhVom33R02
+	 OZb1m9CAZE8Ik34eXs1v4E8/gMffh8+GyERZwYHAkzgDSt0RqTxBt88OH80x0fqYivdhW
+	 SiN2rDPatPxNQ8duJ+sI6cWd/n52nDtoDvDGinOTLv7E71OCCewdNebI16yJFCMYhuA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="EaQgt/Fz";
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CC16F606A31A;
-	Mon, 23 Nov 2026 08:42:28 +0000 (UTC)
+	dmarc=pass header.from=arm.com;
+	spf=pass smtp.mailfrom=arm.com;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=qS0UZJq0;
+	arc=none smtp.remote-ip=217.140.110.172
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 6A821606A321;
+	Mon, 23 Nov 2026 09:09:10 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6A821606A321
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=EaQgt/Fz
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 826291F000D1;
-	Mon, 23 Nov 2026 08:42:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795423347;
-	bh=GnIk51qj01nRrXsnOHu/fIQGm+CWLUJoNK8st13nPwo=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=EaQgt/FzKze3wJRfPGE513dfCman+8X4AAIAVfKUCMeCfM3/W4f2VAZjMrJgJB6kq
-	 C372EOKxHq2ZviLHiLjEagtYFvvN9/INQ1uP41sGgx9Nb+hXWOWwVmPZxDkU8l7ZCw
-	 Jl5pSbNVqfOzUZ1/5wXEMF4Eu+k53AAImFVIq8608Pv93NMzeAiZ9Q5sSX8v/KR5Gv
-	 gN53wRsAQijIlAcvm+fCUYL/3vuyMyPi8ro5V8lt1q0qldyvIcdamjHDpZGFkjHqM6
-	 I39Mq6vo9kacIKif2whQ3zOv5mtGlEPYQX1zi1eiQ7BbX2QZ2/ptBn1r7MYCxIbH1Z
-	 Ql8NtIJIprzrg==
-Date: Mon, 23 Nov 2026 09:42:20 +0100
-From: Andrey Albershteyn <aalbersh@kernel.org>
-To: koraynilay <koray.fra@gmail.com>
-Cc: Namjae Jeon <linkinjeon@kernel.org>, Hyunchul Lee <hyc.lee@gmail.com>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, Jan Kara <jack@suse.cz>, 
-	"Darrick J . Wong" <djwong@kernel.org>, Amir Goldstein <amir73il@gmail.com>, 
-	Pali =?utf-8?B?Um9ow6Fy?= <pali@kernel.org>, Lauri Gates <lauri.gates@gmail.com>, 
-	Christoph Hellwig <hch@infradead.org>, Dave Chinner <dgc@kernel.org>, linux-btrfs@vger.kernel.org, 
-	linux-xfs@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	ntfs@lists.linux.dev, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
-Subject: Re: [PATCH 1/3] vfs: use goto out on error in vfs_fileattr_set()
-Message-ID: <awP8S5KF9v-nqWVY@aalbersh-thinkpadx1carbongen13.rmtcz.csb>
-References: <20261122000856.536902-1-koray.fra@gmail.com>
- <20261122000856.536902-2-koray.fra@gmail.com>
+	dkim=pass (1024-bit key) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=qS0UZJq0
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id 9B53A1476;
+	Mon, 23 Nov 2026 01:09:06 -0800 (PST)
+Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 08FBC3F632;
+	Mon, 23 Nov 2026 01:09:04 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
+	t=1795424949; bh=jm/tu+I4qmiRATBKNiNwWj7t44LL0Pz4nclHyYCT45w=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=qS0UZJq0Kphetvr/RKKkXdDctKNYhKx2Lb7gDOhRTb+fw+Pt7bJLaCJFjIOCuaDet
+	 WzNxU0kfTkTwgpy1gCegKFTBnvk5ksbsvMaHz3veGEgevLHwY3BpX9MKubSvB90g1M
+	 OeAl6pNM3coIibp4WW/8Wwm3yziZe2NFBgy7L1Gg=
+Date: Mon, 23 Nov 2026 09:09:02 +0000
+From: Yeoreum Yun <yeoreum.yun@arm.com>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com,
+	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
+	jarkko@kernel.org, zohar@linux.ibm.com, yeoreum.yun@arm.com,
+	aneesh.kumar@kernel.org, dave.jiang@intel.com, nik.borisov@suse.com,
+	sergii.dmytruk@3mdeb.com
+Subject: Re: [PATCH RFC v2 9/9] attestation: Add the TDX family implementation
+Message-ID: <awQCrnD5CtEhKRWz@e129823.arm.com>
+References: <20261113160838.2512652-1-jiri@resnulli.us>
+ <20261113160838.2512652-10-jiri@resnulli.us>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -65,16 +74,64 @@ Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <20261122000856.536902-2-koray.fra@gmail.com>
+In-Reply-To: <20261113160838.2512652-10-jiri@resnulli.us>
 
-On 2026-11-22 01:08:54, koraynilay wrote:
-> Switch from using if (!err) { ... } to the cleaner if (err) goto out;
-> in the main body of vfs_fileattr_set().
-> 
-> Signed-off-by: koraynilay <koray.fra@gmail.com>
+Hi Jiri,
 
-Looks good to me
-Reviewed-by: Andrey Albershteyn <aalbersh@kernel.org>
+[...]
+
+> +static void __iomem *tdx_attestation_log_map(size_t *length)
+> +{
+> +	struct acpi_table_header *header;
+> +	struct acpi_table_ccel *ccel;
+> +	void __iomem *log = NULL;
+> +
+> +	if (ACPI_FAILURE(acpi_get_table(ACPI_SIG_CCEL, 0, &header)))
+> +		return NULL;
+> +	ccel = container_of(header, struct acpi_table_ccel, header);
+> +	if (header->length >= sizeof(*ccel) && ccel->log_area_start_address &&
+> +	    ccel->log_area_minimum_length &&
+> +	    ccel->log_area_minimum_length <= UINT_MAX)
+> +		log = acpi_os_map_iomem(ccel->log_area_start_address,
+> +					ccel->log_area_minimum_length);
+> +	if (log)
+> +		*length = ccel->log_area_minimum_length;
+> +	acpi_put_table(header);
+> +	return log;
+> +}
+> +
+
+I think we don't need to dump log area with the log_area_minimum_length
+since the area would include none-event otherwise, pre-exist tool (i.e.
+tpm2_eventlog) reports error for them like:
+
+  ...
+  - EventNum: 21
+    PCRIndex: 2
+    EventType: EV_EFI_ACTION
+    DigestCount: 1
+    Digests:
+    - AlgorithmId: sha256
+      Digest: "b54f7542cbd872a81a9d9dea839b2b8d747c7ebd5ea6615c40f42f44a6dbeba0"
+    EventSize: 40
+    Event: |-
+      Exit Boot Services Returned with Success
+  ERROR: corrupted log, insufficient size for event header: 3
+  ERROR: failed to parse tpm2 eventlog
+  ERROR: Unable to run tpm2_eventlog
+
+
+So, what about export *real size* of eventlog like
+tpm2_calc_event_log_size()?
+
+
+Otherwise, look good to me.
+
+[...]
+
+
+Thanks!
 
 -- 
-- Andrey
+Sincerely,
+Yeoreum Yun
