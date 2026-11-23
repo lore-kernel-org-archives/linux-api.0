@@ -1,79 +1,79 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.12
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795428412;
-	b=WhzZZb1BCPeNTFAWO3EiC2qf0AhK2Yw2OLeuz6c8BVje1X0FfXXOXq9mSwmIGflgzwoq
-	 GvGKWwT0YkSVesf0SsUP957xQTwV8EgztK8vlNLytmPbcTw4pxrpGN+tUgvPdIsSv5v2s
-	 pyOSmpEwBj7cIj/NsV6DlheJ8r2FuXnGbZSBMrYn0gtNNe1H3UM9kq3j9t2fdavXpDbf3
-	 3HT9uquHpp+gpMy8R5JA6JN0sK1k4A2GGWNWh2oWBgzRY4PHIMKYzVRVxGRBZBvtajfMp
-	 r50vKa1SesLQTkrbRlyvcIbLJSrGU8Tef3gT9ceR/jlgG8Iq9+3Ez7U2ODM2a01WQ2Q==
+	t=1795428707;
+	b=KrL1dkFzpwxspSzvpnkv7I0IqZrwDZYkxlFjY4e7hXlqkfIsJwMOa5q69UV7wzsA+iMW
+	 fDi8mqxKG+QsdbUyufojmjaQYuinppVuDz4VsB52lLn9h3vARc4cfffItuNVfQEaQXjy7
+	 GXMr72v568abrewQkvn21TXtr/Zh/FCcyMbG9Wn7x9LUj74hRxgLKfhfnapV1DaqsSCFv
+	 hHzg9WETxyezmK4Y8sb/JTNOBYA7WFzfOGRbLTBRBebyy9fxKXA6OgdWv0wsmpfYOsmS+
+	 4O+RyN7Zp6Hs8ccskZZN5D2jWdkh3uHBwwsGu8b5c/u0bknZtiid36f2Mf6Q8SoYvzg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795428412;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795428707;
 	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
 	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:From:Date:To:cc:
-	 Subject:In-Reply-To:Message-ID:References:MIME-Version:Content-Type;
-	bh=KXp8naU/etmC1VzahAxeSl9qV7f97STu4n9jviVbfzQ=;
-	b=yYWq2n1h2+o67dk908UunKlIGJ55yC3yq9kOrN+XCaRPMyr9f07JkeYOWMtXIQ+yox5C
-	 lse7l563ASbKklFjsPf+nvihe4szuO/tPIbLqWEARWNHRQ0aTVkMXxEdso7zdkF+XRQ5Q
-	 OFmnQV9GphXf6EkNuVu5Mz5OyNw4T2tXiJp2MLSlhQKp5T/cIMMn1TbNuAqUhk9i20/S6
-	 pttDpZqCMRCpF0qXOmX+QrT08OFoYkhrDFgjFoX1foFD4OhphMxmHh6xwjSvSjZwlB/JJ
-	 e5dFNF9n6vBhgMTCaYICcFkWHSQuDJI6AOuuMlihJhdIhCrYUtdvenhsoWzGKFzu8YA==
+	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To;
+	bh=6yWhaCtRB+G5IbjR3oGplsbLfpj1Vz0qhq3cS15cjoU=;
+	b=A3xA/jBRui87BpyZupcQ4AyvqlfHINXrCyz1DFVR9abEcuPT/oZ7jcdinpJBr5pngjOb
+	 w15Z4irSTxf9erobam3lR5d9mOt1msEtio1jtPxthf4tedk4gO0HfTytY8f2uNSZHmwyh
+	 EVzl+xhK5Dxxfo0lrPteSHErykjwvCr6nfmt2tZ4U/owaTBPBuB7YhlPmOTFRRsBMzomz
+	 qi/DA6ImFWdwX/SnfyOuKiZRDNjfVB1NYUfRjD82e3WLQBa41een+cSm3gZsIItZsHkdx
+	 X3t5outtzJbIsI4CyhWCpznai7GBPeoArN8EmGg2XBCzyTXItv6dZqHwlddIOloClgw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.intel.com;
 	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=a65fkKFL;
+	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=NPhAzmLq;
 	arc=none smtp.remote-ip=192.198.163.12
 Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.12])
 	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91BFA606A31E;
-	Mon, 23 Nov 2026 10:06:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 91BFA606A31E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67A9F606A31F;
+	Mon, 23 Nov 2026 10:11:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 67A9F606A31F
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=a65fkKFL
+	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=NPhAzmLq
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
   d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1795428412; x=1826964412;
-  h=from:date:to:cc:subject:in-reply-to:message-id:
-   references:mime-version;
-  bh=Ess3+l1NPR4G1pg355/cS8UNqaTJ67pbJVkEocweOh8=;
-  b=a65fkKFL9X7mJSYWGvD1dh8BvjOhmYLQip+1G0OoFPs05hO6diMyMFJX
-   zkp+/rCGjg7ONzZFud4/W/wiQ1Vifcus6tM4ZMAZSB7W9ZtO8Vy1t+L0Z
-   esCmVRVMQdtjo6Qks0vBZfWCZilsrHcltMDGfSEsssHPwaLbJbUG2TCle
-   dei7x1UM1K9yy+9esoumUi4wbRNGIX23BGoIpaBcOlJKeCv35qa1yWzV5
-   01zWJAR3gNBmbcwmGasumfgWJB52k7hNSucFzk0UX86K5/n5qutz8QV8n
-   u3HKQHkSXF2h87kK2VYgsBdMcJGNYlrlaL/L2NF+h8nLWng8zAiVhoNxS
-   g==;
-X-CSE-ConnectionGUID: KxwPW3efTMiyAYp3JUYlOg==
-X-CSE-MsgGUID: 7550G2oUR0iwR+m/58GHjQ==
-X-IronPort-AV: E=McAfee;i="6800,10657,11974"; a="4102001"
+  t=1795428706; x=1826964706;
+  h=date:from:to:cc:subject:message-id:references:
+   mime-version:in-reply-to;
+  bh=P27M+nuTEnh3e05RiUQ6Npx+Ok9Cj2SV7cDtQ95w+y4=;
+  b=NPhAzmLqDJyC3vl3+JuE1sgw7e6TJoqR9q9A6leQjES3DtDwTqjfTZS8
+   37c4CPYutLbVgUvw5U6PTEXIy6bgt8x/KvNRuS0o2QcMx1YdmZ9F2OJxy
+   Mh6D4hdye3OBqxDhXiRRj0TY4trPwSYTeVBrtpRhliJafz4X+nhyZKtMT
+   IO2pStZ6eo+5+gqpFArsN+MnVIzDCXmXkYV6mWSXrhlYsESmJMt22/Q69
+   RgU4ZAHXrPFScK4G/4IcJDVG8/AAxiOsph3/hWjtodXMsIBFn4V4PNZMB
+   aq315EnLbrhXMc5M17JgE262CE4lQHiAR7PbSQ4ea4ySng7nyBT/dxSmM
+   A==;
+X-CSE-ConnectionGUID: FO3AFsz4Qieo8xxnBHRVLg==
+X-CSE-MsgGUID: /+yAHRirTd6IfCDj7s1M6w==
+X-IronPort-AV: E=McAfee;i="6800,10657,11974"; a="4102475"
 X-IronPort-AV: E=Sophos;i="6.27,227,1787036400"; 
-   d="scan'208";a="4102001"
+   d="scan'208";a="4102475"
 Received: from fmviesa001.fm.intel.com ([10.60.135.141])
-  by fmvoesa106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:06:50 -0800
-X-CSE-ConnectionGUID: OnwBYAuqSRKz2YcAMp3Ikw==
-X-CSE-MsgGUID: K6uXUYQsQrWbleJJoA80lg==
+  by fmvoesa106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:11:46 -0800
+X-CSE-ConnectionGUID: sHSdLaiiRGePSTGdwsmdjw==
+X-CSE-MsgGUID: 9jiLi6jyT0+tzYqpKpNqTA==
 X-ExtLoop1: 1
 X-IronPort-AV: E=Sophos;i="6.27,227,1787036400"; 
-   d="scan'208";a="11672414"
-Received: from ijarvine-mobl1.ger.corp.intel.com (HELO localhost) ([10.245.244.225])
-  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:06:45 -0800
-From: =?UTF-8?q?Ilpo=20J=C3=A4rvinen?= <ilpo.jarvinen@linux.intel.com>
-Date: Mon, 23 Nov 2026 12:06:42 +0200 (EET)
-To: alan <alanpluto@163.com>
-cc: Rong Zhang <i@rong.moe>, platform-driver-x86@vger.kernel.org, 
-    Mark Pearson <mpearson-lenovo@squebb.ca>, derekjohn.clark@gmail.com, 
-    W_Armin@gmx.de, Hans de Goede <hansg@kernel.org>, corbet@lwn.net, 
-    skhan@linuxfoundation.org, rdunlap@infradead.org, 
-    LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, 
-    linux-api@vger.kernel.org
-Subject: Re: [PATCH] platform/x86: lenovo-wmi-other: Add raw GetDataByPackage
- interface
-In-Reply-To: <06c29ea2-c9d4-4e9b-bbe8-651ad868a9c4@163.com>
-Message-ID: <600d2462-c586-3b58-3176-64a1330c583c@linux.intel.com>
-References: <20261116040532.154928-1-alanpluto@163.com> <4377ff90ffd0b030de7d4d33c188ba4b7551ad03.camel@rong.moe> <06c29ea2-c9d4-4e9b-bbe8-651ad868a9c4@163.com>
+   d="scan'208";a="11674345"
+Received: from szadworn-mobl.ger.corp.intel.com (HELO alaakso-desk) ([10.245.246.47])
+  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:11:42 -0800
+Date: Mon, 23 Nov 2026 12:11:37 +0200
+From: Antti Laakso <antti.laakso@linux.intel.com>
+To: Miguel Vadillo <miguel.vadillo@intel.com>
+Cc: linux-media@vger.kernel.org, mchehab@kernel.org,
+	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
+	sakari.ailus@linux.intel.com, hansg@kernel.org,
+	laurent.pinchart@ideasonboard.com, mehdi.djait@bootlin.com,
+	andriy.shevchenko@linux.intel.com, mika.westerberg@linux.intel.com,
+	srini@kernel.org, arun.t@intel.com
+Subject: Re: [PATCH v2] media: i2c: cvs: Add NVMem-based firmware update
+ support
+Message-ID: <awQRWY-fZo0rVZqh@alaakso-desk>
+References: <20261008215733.247954-1-miguel.vadillo@intel.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -83,820 +83,922 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323328-171610986-1795428402=:1065"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261008215733.247954-1-miguel.vadillo@intel.com>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi Miguel,
+On Thu, Oct 08, 2026 at 02:57:33PM -0700, Miguel Vadillo wrote:
+> Add firmware update support for the Intel CVS device using the kernel
+> NVMem provider framework.
+> 
+> Two NVMem devices are registered per CVS device:
+>  - nvm_active: read-only, exposes the active firmware version by
+>    querying the device over I2C.
+>  - nvm_non_active: write-only, root-only, accepts an incoming firmware
+>    image staged by userspace (e.g. fwupd).
+> 
+> Firmware update is triggered via the nvm_authenticate sysfs attribute,
+> which supports the following write values:
+>  1 - Validate staged image, stream to device, and request reset
+>  2 - Validate and stream image only (no reset request)
+>  3 - Request reset for a previously streamed image
+>  0 - Clear the staged update state
+> 
+> On a successful write of 1 or 3, a KOBJ_CHANGE uevent is emitted to
+> signal that a device reset is required to activate the new firmware.
+> 
+> The nvm_version attribute exposes the running firmware version in
+> major.minor decimal format. The device_id attribute exposes the device
+> VID:PID for identification by userspace tools.
+> 
+> Firmware images are streamed to the device in 256-byte or 1KB chunks
+> over I2C depending on device quirks. The staging buffer is vmalloc'd
+> on first write and released once the image has been streamed to the
+> device, or on driver remove if no update was performed.
+> 
+> ABI documentation for all new sysfs attributes is added under
+> Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs.
+> 
+> The kernel does not inspect the firmware image contents. Signature
+> verification and anti-rollback enforcement are performed by the CVS
+> device firmware, which rejects images that fail either check.
+> 
+> Signed-off-by: Miguel Vadillo <miguel.vadillo@intel.com>
+> ---
+> 
 
---8323328-171610986-1795428402=:1065
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Reviewed-by: Antti Laakso <antti.laakso@linux.intel.com>
 
-On Mon, 23 Nov 2026, alan wrote:
-
-> Hi Rong,
->=20
-> =E5=9C=A8 2026/11/16 20:44, Rong Zhang =E5=86=99=E9=81=93:
-> > Hi Alan,
-> >=20
-> > Thanks for working on this.
-> >=20
-> > On Mon, 2026-11-16 at 12:05 +0800, Alan Pluto wrote:
-> >> Expose Lenovo Other Mode WMI GetDataByPackage, method 99, through a
-> >> root-only character device so userspace can access the raw firmware
-> >> interface. And document the interface.
-> >=20
-> > What's the practical purpose of the interface? Did you use this to tune
-> > anything on your device?
-> >=20
-> >>
-> >> The upstream driver was build-tested with W=3D1 and checked with Spars=
-e.
-> >> A backport using the five-argument wmidev_invoke_method() interface
-> >> was tested on Ubuntu 7.0.0-42 with Lenovo hardware. The upstream 7.4
-> >> driver has not been tested on hardware.
-> >=20
-> > Don't include this in the commit message, but rather send a cover lette=
-r
-> > or place it under `---'.
-> >=20
-> >>
-> >> Signed-off-by: Alan Pluto <alanpluto@163.com>
-> >=20
-> > Is the work assisted by LLM?
-> >=20
-> >> ---
-> >>  Documentation/ABI/testing/dev-tac             |  49 +++
-> >>  .../wmi/devices/lenovo-wmi-other.rst          |   8 +
-> >>  MAINTAINERS                                   |   1 +
-> >>  drivers/platform/x86/lenovo/wmi-other.c       | 325 +++++++++++++++++=
-+
-> >>  4 files changed, 383 insertions(+)
-> >>  create mode 100644 Documentation/ABI/testing/dev-tac
-> >>
-> >> diff --git a/Documentation/ABI/testing/dev-tac b/Documentation/ABI/tes=
-ting/dev-tac
-> >> new file mode 100644
-> >> index 00000000000..a8be8e95e2d
-> >> --- /dev/null
-> >> +++ b/Documentation/ABI/testing/dev-tac
-> >> @@ -0,0 +1,49 @@
-> >> +What:           /dev/tac[0-9]*
-> >> +Date:           November 2026
-> >> +Contact:        platform-driver-x86@vger.kernel.org
-> >> +Description:
-> >> +                Lenovo Other Mode WMI GetDataByPackage (method 99).
-> >> +                Each firmware WMI instance gets a misc character devi=
-ce with
-> >> +                mode 0600.=C2=A0
-> >>
-> >=20
-> > Why would you need to add a character device instead of a debugfs file?
-> > See also lwmi_debugfs_create_dir().
-> >=20
-> > IMHO the interface is quite internal and undocumented. Exposing it as a
-> > character device makes it too reachable for users, unnecessarily
-> > increases the complexity of the driver, and requires some sorts of ABI
-> > stability.
-> >=20
-> >> Numbering follows allocation order, not necessarily
-> >> +                the firmware instance number.=C2=A0
-> >>
-> >=20
-> > You must be using a wordy LLM if you are using one. Isn't this just
-> > obvious and natural for most character devices?
-> >=20
-> >> Registration does not probe
-> >> +                support for method 99. The parent is the bound WMI de=
-vice.
-> >=20
-> > If it can't be probed, gate it unless a module parameter is set.
-> >=20
-> >> +
-> >> +                Open with O_RDWR. One write submits one complete requ=
-est of
-> >> +                1..100 raw bytes; shorter requests are padded with ze=
-roes to
-> >> +                100 bytes. Empty and oversized writes fail with EINVA=
-L without
-> >=20
-> > sed -E 's/\bE[A-Z]+\b/-\0/g'
-> >=20
-> >> +                calling firmware. Successful writes return the full s=
-ubmitted
-> >> +                length and execute two identical WMI calls for the BI=
-OS
-> >> +                duplicate-call workaround.=C2=A0
-> >>
-> >=20
-> >> Request pairs through this
-> >> +                interface are serialized; calls made by other driver
-> >> +                interfaces are not covered by this serialization.
-> >=20
-> > Why would you need to mention cross-interface implementation details in=
- a
-> > user-facing documentation?
-> >=20
-> >> +                Evaluation failures abort the pair; the driver does n=
-ot
-> >> +                automatically retry.
-> >> +
-> >> +                Each open file description owns its response.=C2=A0
-> >>
-> >=20
-> > Why would you need to support multiple writers? Couldn't you simply
-> > return -EBUSY when there is a pending writer/reader?
-> >=20
-> >> A write while
-> >> +                that response remains unread fails with EBUSY, includ=
-ing after
-> >> +                partial reads.=C2=A0
-> >>
-> >=20
-> > If userspace must write all data at once, why would you need to support
-> > partial reads?
-> >=20
-> >> A new open cannot read another open's response.
-> >> +                Descriptors shared by dup/fork share the same transac=
-tion;
-> >> +                applications must coordinate the complete write/read =
-sequence.
-> >=20
-> > Aren't these just obvious and natural for most character devices, too?
-> >=20
-> >> +
-> >> +                Read returns little-endian u32 DataSize followed by e=
-xactly
-> >> +                DataSize data bytes. Response storage is erased when =
-fully
-> >> +                read or closed. Further reads return EOF until a new =
-successful
-> >> +                write. Before a successful write, or after a failed f=
-irmware
-> >> +                evaluation, reads return ENODATA. A zero-length read =
-returns
-> >> +                zero without consuming data.
-> >> +
-> >> +                Requests are synchronous even with O_NONBLOCK. Seekin=
-g and
-> >> +                positional I/O are not supported.=C2=A0
-> >>
-> >=20
-> > Aren't these just the default characteristic for most non-block charact=
-er
-> > devices?
-> >=20
-> >> There is no ioctl interface.
-> >=20
-> > Too verbose. If you don't say it has some, it's obvious that it has non=
-e.
-> >=20
-> >> +                A removed WMI device causes nonempty reads and valid =
-writes
-> >> +                on existing descriptors to fail with ENODEV.
-> >> +
-> >> +                Firmware evaluation failures map to EIO. WMI marshall=
-ing
-> >> +                failures return the error reported by the WMI subsyst=
-em.
-> >> +                A truncated response or invalid DataSize maps to EPRO=
-TO.
-> >> +                Bad userspace memory maps to EFAULT. Failure does not=
- imply
-> >> +                firmware had no side effects; never blindly resubmit =
-commands.
-> >> +                Interrupted waits can return EINTR before firmware ev=
-aluation.
-> >=20
-> > Obvious, no?
-> >=20
-> >> +
-> >> +                The WMI subsystem converts returned ACPI objects to a=
- buffer.
-> >=20
-> > Yet another implementation detail.
-> >=20
-> >> +                This raw firmware interface may change device state. =
-Use only
-> >> +                commands whose behavior and side effects are understo=
-od.
-> >> diff --git a/Documentation/wmi/devices/lenovo-wmi-other.rst b/Document=
-ation/wmi/devices/lenovo-wmi-other.rst
-> >> index 011054d64ea..ec85fdeeb7a 100644
-> >> --- a/Documentation/wmi/devices/lenovo-wmi-other.rst
-> >> +++ b/Documentation/wmi/devices/lenovo-wmi-other.rst
-> >> @@ -33,6 +33,10 @@ under the following path:
-> >> =20
-> >>  Additionally, this driver also exports attributes to HWMON.
-> >> =20
-> >> +The driver also exposes GetDataByPackage (method 99) through a raw ch=
-aracter
-> >> +device for each WMI instance. See Documentation/ABI/testing/dev-tac f=
-or the
-> >> +request and response format and its access restrictions.
-> >> +
-> >>  LENOVO_CAPABILITY_DATA_00
-> >>  -------------------------
-> >> =20
-> >> @@ -109,6 +113,10 @@ WMI interface description
-> >>  The WMI interface description can be decoded from the embedded binary=
- MOF (bmof)
-> >>  data using the `bmfdec <https://github.com/pali/bmfdec>`_ utility:
-> >> =20
-> >> +The example below describes an older firmware revision and specifies =
-a
-> >> +40-byte maximum input for GetDataByPackage. Newer firmware uses a 100=
--byte
-> >> +input, which is the size used by the raw interface described above.
-> >> +
-> >>  ::
-> >> =20
-> >>    [WMI, Dynamic, Provider("WmiProv"), Locale("MS\\0x409"), Descriptio=
-n("LENOVO_OTHER_METHOD class"), guid("{dc2a8805-3a8c-41ba-a6f7-092e0089cd3b=
-}")]
-> >> diff --git a/MAINTAINERS b/MAINTAINERS
-> >> index 981eb3fdbef..84b1545f525 100644
-> >> --- a/MAINTAINERS
-> >> +++ b/MAINTAINERS
-> >> @@ -15168,6 +15168,7 @@ M:=09Derek J. Clark <derekjohn.clark@gmail.com=
->
-> >>  M:=09Rong Zhang <i@rong.moe>
-> >>  L:=09platform-driver-x86@vger.kernel.org
-> >>  S:=09Maintained
-> >> +F:=09Documentation/ABI/testing/dev-tac
-> >>  F:=09Documentation/wmi/devices/lenovo-wmi-gamezone.rst
-> >>  F:=09Documentation/wmi/devices/lenovo-wmi-other.rst
-> >>  F:=09drivers/platform/x86/lenovo/*
-> >> diff --git a/drivers/platform/x86/lenovo/wmi-other.c b/drivers/platfor=
-m/x86/lenovo/wmi-other.c
-> >> index bd64e7b4466..c15b3a2a758 100644
-> >> --- a/drivers/platform/x86/lenovo/wmi-other.c
-> >> +++ b/drivers/platform/x86/lenovo/wmi-other.c
-> >> @@ -34,16 +34,23 @@
-> >>  #include <linux/device.h>
-> >>  #include <linux/export.h>
-> >>  #include <linux/firmware_attributes.h>
-> >> +#include <linux/fs.h>
-> >>  #include <linux/gfp_types.h>
-> >>  #include <linux/hwmon.h>
-> >>  #include <linux/idr.h>
-> >>  #include <linux/kdev_t.h>
-> >>  #include <linux/kobject.h>
-> >> +#include <linux/kref.h>
-> >>  #include <linux/limits.h>
-> >> +#include <linux/miscdevice.h>
-> >>  #include <linux/module.h>
-> >> +#include <linux/mutex.h>
-> >>  #include <linux/platform_profile.h>
-> >>  #include <linux/power_supply.h>
-> >> +#include <linux/slab.h>
-> >>  #include <linux/types.h>
-> >> +#include <linux/uaccess.h>
-> >> +#include <linux/unaligned.h>
-> >>  #include <linux/wmi.h>
-> >> =20
-> >>  #include <acpi/battery.h>
-> >> @@ -91,6 +98,9 @@ enum lwmi_feature_id_psu {
-> >>  #define LWMI_FEATURE_VALUE_GET 17
-> >>  #define LWMI_FEATURE_VALUE_SET 18
-> >> =20
-> >> +#define LWMI_DATA_PACKAGE_GET 99
-> >> +#define LWMI_DATA_PACKAGE_INPUT_MAX 100
-> >> +
-> >>  #define LWMI_FAN_ID_BASE 1
-> >>  #define LWMI_FAN_NR 4
-> >>  #define LWMI_FAN_ID(x) ((x) + LWMI_FAN_ID_BASE)
-> >> @@ -115,6 +125,27 @@ enum lwmi_feature_id_psu {
-> >> =20
-> >>  static DEFINE_IDA(lwmi_om_ida);
-> >> =20
-> >> +static DEFINE_IDA(lwmi_tac_ida);
-> >> +static DEFINE_MUTEX(lwmi_tac_lock);
-> >> +
-> >> +struct lwmi_tac {
-> >> +=09struct miscdevice misc;
-> >> +=09struct kref ref;
-> >> +=09struct wmi_device *wdev;
-> >> +=09u8 instance;
-> >> +=09int id;
-> >> +};
-> >> +
-> >> +struct lwmi_tac_file {
-> >> +=09struct lwmi_tac *tac;
-> >> +=09/* Protects the per-open response and its position. */
-> >> +=09struct mutex lock;
-> >> +=09void *result;
-> >> +=09size_t result_len;
-> >> +=09loff_t position;
-> >> +=09bool completed;
-> >> +};
-> >> +
-> >>  enum attribute_property {
-> >>  =09DEFAULT_VAL,
-> >>  =09MAX_VAL,
-> >> @@ -1609,6 +1640,295 @@ static void lwmi_om_fw_attr_remove(struct lwmi=
-_om_priv *priv)
-> >>  =09priv->ida_id =3D -EIDRM;
-> >>  }
-> >> =20
-> >> +/**
-> >> + * lwmi_tac_free() - Free an unregistered endpoint after its last clo=
-se
-> >> + * @ref: Reference belonging to the endpoint.
-> >> + */
-> >> +static void lwmi_tac_free(struct kref *ref)
-> >> +{
-> >> +=09struct lwmi_tac *tac =3D container_of(ref, struct lwmi_tac, ref);
-> >> +
-> >> +=09ida_free(&lwmi_tac_ida, tac->id);
-> >> +=09kfree(tac->misc.name);
-> >> +=09kfree(tac);
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_open() - Allocate independent response state for an open =
-file
-> >> + * @inode: Character device inode.
-> >> + * @file: File initially pointing to the registered miscdevice.
-> >> + *
-> >> + * The misc core serializes open against deregistration, so the regis=
-tration
-> >> + * reference remains valid while the file acquires its own reference.
-> >> + *
-> >> + * Return: 0 on success, or -ENOMEM.
-> >> + */
-> >> +static int lwmi_tac_open(struct inode *inode, struct file *file)
-> >> +{
-> >> +=09struct lwmi_tac *tac =3D container_of(file->private_data, struct l=
-wmi_tac, misc);
-> >> +=09struct lwmi_tac_file *state;
-> >> +
-> >> +=09state =3D kzalloc_obj(*state);
-> >> +=09if (!state)
-> >> +=09=09return -ENOMEM;
-> >> +=09mutex_init(&state->lock);
-> >> +=09state->tac =3D tac;
-> >> +=09kref_get(&tac->ref);
-> >> +=09file->private_data =3D state;
-> >> +=09return stream_open(inode, file);
-> >=20
-> > Add line breaks to improve readability. Same for the following methods.
-> >=20
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_release() - Erase the response and drop the endpoint refe=
-rence
-> >> + * @inode: Character device inode.
-> >> + * @file: File holding the endpoint state.
-> >> + *
-> >> + * Return: 0.
-> >> + */
-> >> +static int lwmi_tac_release(struct inode *inode, struct file *file)
-> >> +{
-> >> +=09struct lwmi_tac_file *state =3D file->private_data;
-> >> +
-> >> +=09kfree_sensitive(state->result);
-> >=20
-> > Why on earth is it sensitive?
-> >=20
-> >> +=09mutex_destroy(&state->lock);
-> >> +=09kref_put(&state->tac->ref, lwmi_tac_free);
-> >> +=09kfree(state);
-> >> +=09return 0;
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_invoke() - Execute GetDataByPackage and retain the respon=
-se
-> >> + * @state: Open file whose response buffer is empty.
-> >> + * @data: Zero-padded 100-byte input buffer.
-> >> + *
-> >> + * The caller holds state->lock and lwmi_tac_lock.=C2=A0
-> >>
-> >=20
-> > Add lockdep assertions instead of stating them in comments.
-> >=20
-> >> The latter serializes call
-> >> + * pairs across instances and keeps the WMI device valid during evalu=
-ation.
-> >> + *
-> >> + * Return: 0 on success, or a negative error code.
-> >> + */
-> >> +static int lwmi_tac_invoke(struct lwmi_tac_file *state, u8 *data)
-> >> +{
-> >> +=09struct lwmi_tac *tac =3D state->tac;
-> >> +=09struct wmi_buffer input =3D { .length =3D LWMI_DATA_PACKAGE_INPUT_=
-MAX, .data =3D data };
-> >> +=09struct wmi_buffer output;
-> >> +=09u32 data_size;
-> >> +=09int ret;
-> >> +
-> >> +=09if (!tac->wdev)
-> >> +=09=09return -ENODEV;
-> >> +=09/*
-> >> +=09 * Duplicated call required to match BIOS workaround for behavior
-> >> +=09 * seen when WMI accessed via scripting on other OS.
-> >=20
-> > Reference? Where is the script?
-> >=20
-> >> +=09 */
-> >> +=09for (unsigned int call =3D 0; call < 2; call++) {
-> >> +=09=09ret =3D wmidev_invoke_method(tac->wdev, tac->instance,
-> >> +=09=09=09=09=09   LWMI_DATA_PACKAGE_GET, &input, &output, 0);
-> >> +=09=09if (ret)
-> >> +=09=09=09return ret;
-> >> +=09=09if (!call)
-> >> +=09=09=09kfree_sensitive(output.data);
-> >> +=09}
-> >> +=09/* Validate DataSize before preserving the complete firmware respo=
-nse. */
-> >=20
-> > Don't retell what the code does, but rather explain why.
-> >=20
-> >> +=09if (output.length < sizeof(__le32)) {
-> >=20
-> > Why not use wmidev_invoke_method()'s min_size argument?
-> >=20
-> >> +=09=09ret =3D -EPROTO;
-> >> +=09=09goto free_output;
-> >> +=09}
-> >> +=09data_size =3D get_unaligned_le32(output.data);
-> >=20
-> > wmidev_invoke_method() returns aligned data.
-> >=20
-> >> +=09if (data_size > output.length - sizeof(__le32)) {
-> >> +=09=09ret =3D -EPROTO;
-> >> +=09=09goto free_output;
-> >> +=09}
-> >> +=09/* Transfer ownership without another allocation after firmware ra=
-n. */
-> >> +=09state->result =3D output.data;
-> >=20
-> > Use __free() and no_free_ptr().
-> >=20
-> >> +=09state->result_len =3D sizeof(__le32) + data_size;
-> >=20
-> > Couldn't you declare a struct with a flex array member to represent thi=
-s?
-> >=20
-> >> +=09state->position =3D 0;
-> >> +=09state->completed =3D true;
-> >> +=09return 0;
-> >> +free_output:
-> >> +=09kfree_sensitive(output.data);
-> >> +=09return ret;
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_write() - Submit one complete TAC request
-> >=20
-> > "complete"
-> >=20
-> > Obvious.
-> >=20
-> >> + * @file: Open TAC endpoint with independent response state.
-> >> + * @buffer: Userspace input bytes.
-> >> + * @count: Input size, from 1 to 100 bytes.
-> >> + * @ppos: Unused;=20
-> >>
-> >=20
-> >> TAC is a nonseekable request/response stream.
-> >=20
-> > Obvious.
-> >=20
-> >> + *
-> >> + * Short inputs are zero-padded. An unread response must be consumed =
-before
-> >> + * submitting another request. A failed firmware call is never retrie=
-d here.
-> >> + *
-> >> + * Return: @count on success, or a negative error code.
-> >> + */
-> >> +static ssize_t lwmi_tac_write(struct file *file, const char __user *b=
-uffer,
-> >> +=09=09=09      size_t count, loff_t *ppos)
-> >> +{
-> >> +=09struct lwmi_tac_file *state =3D file->private_data;
-> >> +=09u8 input[LWMI_DATA_PACKAGE_INPUT_MAX] =3D {};
-> >> +=09int ret;
-> >> +
-> >> +=09if (!count || count > sizeof(input))
-> >> +=09=09return -EINVAL;
-> >> +=09if (copy_from_user(input, buffer, count)) {
-> >> +=09=09ret =3D -EFAULT;
-> >> +=09=09goto clear_input;
-> >> +=09}
-> >> +=09ret =3D mutex_lock_interruptible(&state->lock);
-> >> +=09if (ret)
-> >> +=09=09goto clear_input;
-> >> +=09ret =3D mutex_lock_interruptible(&lwmi_tac_lock);
-> >> +=09if (ret)
-> >> +=09=09goto unlock;
-> >=20
-> > Use scoped_cond_guard() or ACQUIRE().
-> >=20
-> >> +=09if (!state->tac->wdev) {
-> >> +=09=09ret =3D -ENODEV;
-> >> +=09} else if (state->result) {
-> >> +=09=09ret =3D -EBUSY;
-> >> +=09} else {
-> >> +=09=09state->completed =3D false;
-> >> +=09=09ret =3D lwmi_tac_invoke(state, input);
-> >> +=09}
-> >> +=09mutex_unlock(&lwmi_tac_lock);
-> >> +unlock:
-> >> +=09mutex_unlock(&state->lock);
-> >> +clear_input:
-> >> +=09memzero_explicit(input, sizeof(input));
-> >=20
-> > Why on earth is it sensitive, too?
-> >=20
-> >> +=09if (ret)
-> >> +=09=09return ret;
-> >> +=09return count;
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_read() - Read only this open file's firmware response
-> >=20
-> > "only"
-> >=20
-> > Obvious, no?
-> >=20
-> >> + * @file: Open TAC endpoint.
-> >> + * @buffer: Userspace destination.
-> >> + * @count: Maximum number of bytes to return.
-> >> + * @ppos: Unused;=C2=A0the response position is protected by state->l=
-ock.
-> >> + *
-> >> + * Responses contain little-endian u32 DataSize followed by Data. Par=
-tial
-> >> + * reads advance the response position. Consuming the result erases i=
-ts
-> >> + * storage immediately; subsequent reads return EOF until another wri=
-te.
-> >> + *
-> >> + * Return: Bytes read, 0 at EOF or for zero @count, or a negative err=
-or code.
-> >> + */
-> >> +static ssize_t lwmi_tac_read(struct file *file, char __user *buffer,
-> >> +=09=09=09     size_t count, loff_t *ppos)
-> >> +{
-> >> +=09struct lwmi_tac_file *state =3D file->private_data;
-> >> +=09ssize_t ret;
-> >> +
-> >> +=09if (!count)
-> >> +=09=09return 0;
-> >> +=09ret =3D mutex_lock_interruptible(&state->lock);
-> >> +=09if (ret)
-> >> +=09=09return ret;
-> >> +=09ret =3D mutex_lock_interruptible(&lwmi_tac_lock);
-> >> +=09if (ret)
-> >> +=09=09goto unlock;
-> >> +=09if (!state->tac->wdev)
-> >> +=09=09ret =3D -ENODEV;
-> >> +=09mutex_unlock(&lwmi_tac_lock);
-> >> +=09if (ret) {
-> >> +=09=09kfree_sensitive(state->result);
-> >> +=09=09state->result =3D NULL;
-> >> +=09=09goto unlock;
-> >> +=09}
-> >> +=09if (!state->completed) {
-> >> +=09=09ret =3D -ENODATA;
-> >> +=09=09goto unlock;
-> >> +=09}
-> >> +=09if (!state->result)
-> >> +=09=09goto unlock;
-> >> +=09ret =3D simple_read_from_buffer(buffer, count, &state->position,
-> >> +=09=09=09=09      state->result, state->result_len);
-> >> +=09if (state->position =3D=3D (loff_t)state->result_len) {
-> >> +=09=09kfree_sensitive(state->result);
-> >> +=09=09state->result =3D NULL;
-> >> +=09}
-> >> +unlock:
-> >> +=09mutex_unlock(&state->lock);
-> >> +=09return ret;
-> >=20
-> > The entire method is in a horrible mess. Drop the support for partial
-> > reads, and use scoped_cond_guard()/ACQUIRE(), and __free() to tidy it u=
-p.
-> >=20
-> >> +}
-> >> +
-> >> +static const struct file_operations lwmi_tac_fops =3D {
-> >> +=09.owner =3D THIS_MODULE,
-> >> +=09.open =3D lwmi_tac_open,
-> >> +=09.release =3D lwmi_tac_release,
-> >> +=09.read =3D lwmi_tac_read,
-> >> +=09.write =3D lwmi_tac_write,
-> >> +};
-> >> +
-> >> +/**
-> >> + * lwmi_tac_remove() - Unregister an endpoint and block further firmw=
-are calls
-> >> + * @data: Endpoint registered as a device-managed cleanup action.
-> >> + *
-> >> + * Stop new opens before waiting for an in-flight call pair. Existing=
- files
-> >> + * retain the endpoint state, but their subsequent reads/writes retur=
-n -ENODEV.
-> >> + */
-> >> +static void lwmi_tac_remove(void *data)
-> >> +{
-> >> +=09struct lwmi_tac *tac =3D data;
-> >> +
-> >> +=09misc_deregister(&tac->misc);
-> >> +=09mutex_lock(&lwmi_tac_lock);
-> >> +=09tac->wdev =3D NULL;
-> >> +=09mutex_unlock(&lwmi_tac_lock);
-> >> +=09kref_put(&tac->ref, lwmi_tac_free);
-> >> +}
-> >> +
-> >> +/**
-> >> + * lwmi_tac_add() - Register TAC endpoints independently of capabilit=
-y data
-> >> + * @wdev: Bound Lenovo Other Mode WMI device.
-> >> + *
-> >> + * No capability describes method 99, so registration does not probe =
-firmware
-> >> + * support. Each firmware instance gets an endpoint; unsupported meth=
-od calls
-> >> + * are reported to userspace when requested.
-> >> + *
-> >> + * Return: 0 on success, or a negative error code. Device-managed cle=
-anup
-> >> + * unregisters earlier endpoints if a later registration or probe ste=
-p fails.
-> >> + */
-> >> +static int lwmi_tac_add(struct wmi_device *wdev)
-> >=20
-> > devm_
-> >=20
-> >> +{
-> >> +=09unsigned int instances =3D wmidev_instance_count(wdev);
-> >> +=09int ret;
-> >> +
-> >> +=09for (unsigned int instance =3D 0; instance < instances; instance++=
-) {
-> >> +=09=09struct lwmi_tac *tac;
-> >> +
-> >> +=09=09tac =3D kzalloc_obj(*tac);
-> >> +=09=09if (!tac)
-> >> +=09=09=09return -ENOMEM;
-> >> +=09=09ret =3D ida_alloc(&lwmi_tac_ida, GFP_KERNEL);
-> >> +=09=09if (ret < 0) {
-> >> +=09=09=09kfree(tac);
-> >> +=09=09=09return ret;
-> >> +=09=09}
-> >> +=09=09tac->id =3D ret;
-> >> +=09=09kref_init(&tac->ref);
-> >> +=09=09tac->wdev =3D wdev;
-> >> +=09=09tac->instance =3D instance;
-> >> +=09=09tac->misc.minor =3D MISC_DYNAMIC_MINOR;
-> >> +=09=09tac->misc.name =3D kasprintf(GFP_KERNEL, "tac%d", tac->id);
-> >> +=09=09tac->misc.fops =3D &lwmi_tac_fops;
-> >> +=09=09tac->misc.parent =3D &wdev->dev;
-> >> +=09=09tac->misc.mode =3D 0600;
-> >> +=09=09if (!tac->misc.name) {
-> >> +=09=09=09kref_put(&tac->ref, lwmi_tac_free);
-> >> +=09=09=09return -ENOMEM;
-> >> +=09=09}
-> >> +=09=09ret =3D misc_register(&tac->misc);
-> >> +=09=09if (ret) {
-> >> +=09=09=09kref_put(&tac->ref, lwmi_tac_free);
-> >> +=09=09=09return ret;
-> >> +=09=09}
-> >> +=09=09/* Unregister before the WMI device and its managed state disap=
-pear. */
-> >> +=09=09ret =3D devm_add_action_or_reset(&wdev->dev, lwmi_tac_remove, t=
-ac);
-> >> +=09=09if (ret)
-> >> +=09=09=09return ret;
-> >> +=09}
-> >> +=09return 0;
-> >> +}
-> >> +
-> >>  /* =3D=3D=3D=3D=3D=3D=3D=3D Self (master: lenovo-wmi-other) =3D=3D=3D=
-=3D=3D=3D=3D=3D */
-> >> =20
-> >>  /**
-> >> @@ -1693,6 +2013,7 @@ static int lwmi_other_probe(struct wmi_device *w=
-dev, const void *context)
-> >>  {
-> >>  =09struct component_match *master_match =3D NULL;
-> >>  =09struct lwmi_om_priv *priv;
-> >> +=09int ret;
-> >> =20
-> >>  =09priv =3D devm_kzalloc_obj(&wdev->dev, *priv);
-> >>  =09if (!priv)
-> >> @@ -1708,6 +2029,10 @@ static int lwmi_other_probe(struct wmi_device *=
-wdev, const void *context)
-> >>  =09if (IS_ERR(master_match))
-> >>  =09=09return PTR_ERR(master_match);
-> >> =20
-> >> +=09ret =3D lwmi_tac_add(wdev);
-> >> +=09if (ret)
-> >> +=09=09return ret;
-> >=20
-> > Why is this fatal?
-> >=20
-> > Thanks,
-> > Rong
-> >=20
-> >> +
-> >>  =09return component_master_add_with_match(&wdev->dev, &lwmi_om_master=
-_ops,
-> >>  =09=09=09=09=09       master_match);
-> >>  }
-> >>
-> >> base-commit: 5680519168f65666d2c03cc6ed8fe2b7052aee12
->=20
-> Thanks for the detailed review. I sent v2 patch separately by referring
-> your suggestion. Please help review it.
-> My replies to your points are below.
->=20
-> 1. Practical purpose and tuning
->=20
-> The known use is for Lenovo utility to communicate with firmware.
-> In v2 I use a default-off debugfs interface instead of stable userspace
-> interface.
->=20
-> 2. Test information in the commit message
->=20
-> I removed the build and test details from the v2 commit message.
->=20
-> 3. LLM assistance
->=20
-> Yes, I used AI assistance for the port and review. I reviewed the
-> changes and am responsible for the submission.
->
-> 4. Character device versus debugfs, and the module parameter
->=20
-> I replaced the character device with a 0600 debugfs file created under
-> lwmi_debugfs_create_dir(). There is no non-invasive probe for method 99,
-> so creation is disabled by default and requires
-> enable_get_data_by_package=3D1 when loading the module. I removed the v1
-> ABI document and its MAINTAINERS entry.
->=20
-> 5. ABI documentation and verbosity
->=20
-> Removed the character-device ABI document change.
->=20
-> 6. Multiple writers and partial reads
->=20
-> The debugfs file permits one open only per WMI device.
->=20
-> 7. Readability and comments
->=20
-> I simplified the handlers and removed the redundant kernel-doc and
-> comments that merely described normal file operations. I also removed
-> the unsupported reference to a script on another OS.
->=20
-> 8. Locking
->=20
-> With one open per WMI device, a per-open lock protects the response and
-> serializes operations through shared descriptors. lwmi_package_invoke()
-> uses lockdep_assert_held() for that lock.
->=20
-> 9. Sensitive data
->=20
-> The firmware response can contain sensitive data, so I retained
-> kfree_sensitive() for buffers returned successfully by WMI.
-
-Vague and broad statements like that are unacceptable for me.
-
-Either provide clear and unambiguous justification or do not use=20
-_sensitive. I'll not accept doing it using "just in case" reasoning.
-You might want to split code path for the sensitive case for clarity.
-
-> 10. Duplicate calls
->=20
-> You can refer as think-lmi.c, same duplicated call. The reason is
-> invoking WMI under Windows OS will result the BIOS ACPI code execute
-> twice, so BIOS implemented the workaround, thus Linux driver will need
-> the duplicated call to match the BIOS workaround.
->=20
-> 11. Response size, alignment and cleanup
->=20
-> The second wmidev_invoke_method() call passes the response header size
-> as min_size. The driver separately validates DataSize against the
-> returned buffer length. The response is represented by an aligned
-> structure with a flexible array; after the successful call I declare it
-> with __free(kfree_sensitive) and transfer ownership with no_free_ptr().
->=20
-> 12. Scoped locking and probe failure
->=20
-> Read and write use ACQUIRE()/ACQUIRE_ERR(). The device-managed debugfs
-> cleanup action handles removal and setup rollback. A debugfs setup error
-> is reported with dev_warn(), but does not by itself fail driver probe.
-
-In future, please reply properly to the review comments (inline), not=20
-adding an LLM-generated reply to tail. Tail (or head) replies makes it=20
-hard to connect the reviewer comment to your reply and you don't want=20
-to upset the acting maintainer with that. ;-)
-
---=20
- i.
-
---8323328-171610986-1795428402=:1065--
+> Changes in v2 (review feedback from Andy Shevchenko, thanks!):
+> - Reflow the kmalloc() assignment onto its own continuation line.
+> - cvs_send() only ever returns 0 or a negative errno, so the "ret < 0"
+>   checks in cvs_do_fw_download() were misleading. Use plain "if (ret)"
+>   and "ret ? : end_ret" instead.
+> - Split nvm_authenticate_store() into a cvs_nvm_authenticate() helper
+>   holding ctx->lock via guard(), plus a thin sysfs wrapper. This drops
+>   both mutex_unlock() calls, the err_status goto label and the do_uevent
+>   bool; the uevent condition is now derived from the requested mode.
+> - Use plain guard() everywhere instead of scoped_guard(): apart from the
+>   KOBJ_CHANGE uevent, none of the users needed work outside the lock.
+> - Use __ATTRIBUTE_GROUPS() instead of hand-rolling cvs_fw_groups[].
+> - Drop stale references to an "nvm_reset_pending" attribute from the
+>   commit message; no such attribute is added by this patch.
+> 
+> struct icvs still has four holes, but repacking it is code-size neutral
+> per bloat-o-meter and unrelated to this patch's intent, so it will be
+> sent separately.
+> 
+> Link to v1: https://lore.kernel.org/linux-media/20260930182142.108744-1-miguel.vadillo@intel.com/
+> 
+>  .../ABI/testing/sysfs-bus-i2c-devices-cvs     |  53 ++
+>  MAINTAINERS                                   |   1 +
+>  drivers/media/i2c/cvs/Kconfig                 |   1 +
+>  drivers/media/i2c/cvs/core.c                  | 516 +++++++++++++++++-
+>  drivers/media/i2c/cvs/icvs.h                  |  34 +-
+>  drivers/media/i2c/cvs/v4l2.c                  |   2 +-
+>  6 files changed, 582 insertions(+), 25 deletions(-)
+>  create mode 100644 Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
+> 
+> diff --git a/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs b/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
+> new file mode 100644
+> index 000000000000..553532b35f07
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
+> @@ -0,0 +1,53 @@
+> +What:		/sys/bus/i2c/devices/<dev>/nvm_version
+> +Date:		January 2027
+> +KernelVersion:	7.4
+> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
+> +Description:	Returns the active firmware version of the Intel CVS device
+> +		in "<major>.<minor>" decimal format. This reflects the firmware
+> +		version currently running on the device.
+> +
+> +		This file is read-only and is only present when the CVS device
+> +		is accessible over I2C.
+> +
+> +What:		/sys/bus/i2c/devices/<dev>/nvm_authenticate
+> +Date:		January 2027
+> +KernelVersion:	7.4
+> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
+> +Description:	Reading returns the authentication status of the last firmware
+> +		update attempt as a hex value. 0x0 indicates success; any
+> +		non-zero value is an errno from the failed operation.
+> +
+> +		Writing triggers a firmware update operation using the image
+> +		previously staged via the nvm_non_active NVMem region. Accepted
+> +		values:
+> +
+> +		* 0 - Clear the staged update state
+> +		* 1 - Validate staged image, stream to device, and request reset
+> +		* 2 - Validate and stream image only (no reset request)
+> +		* 3 - Request device reset for a previously streamed image
+> +
+> +		After a successful write of 1 or 3, a KOBJ_CHANGE uevent is
+> +		emitted. The new firmware only takes effect once the device
+> +		has been reset.
+> +
+> +		The kernel does not inspect the image contents. Signature
+> +		verification and anti-rollback enforcement are performed by the
+> +		CVS device firmware, which rejects images that fail either
+> +		check.
+> +
+> +		This file is only present when the CVS device is accessible
+> +		over I2C and supports firmware update.
+> +
+> +What:		/sys/bus/i2c/devices/<dev>/device_id
+> +Date:		January 2027
+> +KernelVersion:	7.4
+> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
+> +Description:	Returns the device vendor and product identifier in
+> +		"<vid>:<pid>" lowercase hexadecimal format
+> +		(e.g. "06cb:0701"). Note this identifies the CVS device
+> +		make and model, not the individual device instance, and
+> +		is not necessarily unique when multiple identical devices
+> +		share the same bus.
+> +
+> +		This file is read-only and is only present when the CVS device
+> +		is accessible over I2C.
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index 65e8a4b5c90b..efd7f373924e 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -13034,6 +13034,7 @@ INTEL COMPUTER VISION SENSING (CVS) DRIVER
+>  M:	Miguel Vadillo <miguel.vadillo@intel.com>
+>  L:	linux-media@vger.kernel.org
+>  S:	Maintained
+> +F:	Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
+>  F:	drivers/media/i2c/cvs/
+>  
+>  INTEL CPU family model numbers
+> diff --git a/drivers/media/i2c/cvs/Kconfig b/drivers/media/i2c/cvs/Kconfig
+> index 4309d20dd726..0a5f4fdc6b66 100644
+> --- a/drivers/media/i2c/cvs/Kconfig
+> +++ b/drivers/media/i2c/cvs/Kconfig
+> @@ -5,6 +5,7 @@ config VIDEO_INTEL_CVS
+>  	depends on I2C && ACPI && VIDEO_DEV
+>  	depends on IPU_BRIDGE || !IPU_BRIDGE
+>  	select MEDIA_CONTROLLER
+> +	select NVMEM
+>  	select VIDEO_V4L2_SUBDEV_API
+>  	select V4L2_FWNODE
+>  	help
+> diff --git a/drivers/media/i2c/cvs/core.c b/drivers/media/i2c/cvs/core.c
+> index d4a3b9c3bab1..bd3ee9e6111b 100644
+> --- a/drivers/media/i2c/cvs/core.c
+> +++ b/drivers/media/i2c/cvs/core.c
+> @@ -13,11 +13,15 @@
+>  #include <linux/interrupt.h>
+>  #include <linux/jiffies.h>
+>  #include <linux/module.h>
+> +#include <linux/nvmem-provider.h>
+>  #include <linux/pci.h>
+>  #include <linux/platform_device.h>
+>  #include <linux/pm_runtime.h>
+> +#include <linux/sizes.h>
+>  #include <linux/slab.h>
+>  #include <linux/time64.h>
+> +#include <linux/unaligned.h>
+> +#include <linux/vmalloc.h>
+>  #include <linux/workqueue.h>
+>  
+>  #include <media/ipu-bridge.h>
+> @@ -25,9 +29,18 @@
+>  
+>  #include "icvs.h"
+>  
+> -/* Command timeouts determined experimentally */
+> -#define CMD_TIMEOUT (5 * HZ)
+> -#define FW_READY_DELAY_MS 100
+> +/*
+> + * FW_LOADER_END has to wait for the device to actually finish writing the
+> + * image to flash and exit ICVS_DEV_STATE_DOWNLOAD. Measured completion time
+> + * on reference hardware is well under a second, but this is given extra
+> + * margin over the generic ICVS_CMD_TIMEOUT since flash commit time can
+> + * vary with image size and flash part across supported devices.
+> + */
+> +#define FW_END_TIMEOUT		(10 * HZ)
+> +#define FW_READY_DELAY_MS	100
+> +
+> +#define ICVS_NVM_MIN_SIZE	SZ_4K
+> +#define ICVS_NVM_MAX_SIZE	SZ_4M
+>  
+>  #define PCI_DEVICE_ID_INTEL_IPU7		0x645d	/* MTL / LNL */
+>  #define PCI_DEVICE_ID_INTEL_IPU7P5		0xb05d	/* ARL / PTL */
+> @@ -436,6 +449,9 @@ static void cvs_reset(struct icvs *ctx)
+>   * @work: Embedded delayed_work member
+>   *
+>   * Re-reads device state; if device_busy remains set, re-schedules itself.
+> + * When ctx->nvm.wait_dl_clear is set (FW_LOADER_END completion), also keeps
+> + * re-scheduling while ICVS_DEV_STATE_DOWNLOAD remains set, since the
+> + * device can clear BUSY slightly before it exits download mode.
+>   * Otherwise stores state into wq_resp and completes the command.
+>   */
+>  static void cvs_recv(struct work_struct *work)
+> @@ -450,7 +466,8 @@ static void cvs_recv(struct work_struct *work)
+>  		return;
+>  	}
+>  
+> -	if (state & ICVS_DEV_STATE_BUSY) {
+> +	if ((state & ICVS_DEV_STATE_BUSY) ||
+> +	    (ctx->nvm.wait_dl_clear && (state & ICVS_DEV_STATE_DOWNLOAD))) {
+>  		dev_dbg(cvs_dev(ctx), "device busy, reschedule\n");
+>  		schedule_delayed_work(&ctx->work,
+>  				      msecs_to_jiffies(FW_READY_DELAY_MS));
+> @@ -466,6 +483,8 @@ static void cvs_recv(struct work_struct *work)
+>   * @ctx: CVS device context
+>   * @cmd: Command buffer (icvs_cmd) with cmd_id and param populated
+>   * @len: Buffer length
+> + * @timeout: Timeout (jiffies) to wait for command completion; unused for
+> + *	     the GPIO-only ICVS_HOST_SENSOR_OWNER command
+>   *
+>   * Dispatches a set of supported commands:
+>   * - ICVS_SET_DEV_HOST_ID,
+> @@ -480,10 +499,12 @@ static void cvs_recv(struct work_struct *work)
+>   * Caller must hold ctx->lock when invoking this function and check for i2c
+>   * bus availability.
+>   *
+> - * Return: 0 on success, negative errno, -EINVAL for unsupported command
+> - * or status from device in ctx->wq_resp.
+> + * Return: 0 on success or negative errno; -EINVAL for an unsupported command
+> + * or for an error state reported by the device. Never returns a positive
+> + * value.
+>   */
+> -int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+> +int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len,
+> +	     unsigned long timeout)
+>  {
+>  	int ret, status = 0;
+>  
+> @@ -500,8 +521,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+>  		if (ret < 0)
+>  			break;
+>  
+> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
+> -					    CMD_TIMEOUT);
+> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
+>  		if (ret < 0)
+>  			break;
+>  
+> @@ -521,8 +541,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+>  		if (ret < 0)
+>  			break;
+>  
+> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
+> -					    CMD_TIMEOUT);
+> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
+>  		status = (ctx->wq_resp.resp.state &
+>  			  ICVS_DEV_STATE_ERROR) ? -EINVAL : 0;
+>  		break;
+> @@ -532,13 +551,11 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+>  		if (ret < 0)
+>  			break;
+>  
+> -		ret = cvs_wait_wake_or_sleep(ctx, CMD_TIMEOUT,
+> -					     FW_READY_DELAY_MS);
+> +		ret = cvs_wait_wake_or_sleep(ctx, timeout, FW_READY_DELAY_MS);
+>  		if (ret)
+>  			break;
+>  
+> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
+> -					    CMD_TIMEOUT);
+> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
+>  		status = (ctx->wq_resp.resp.state &
+>  			  ICVS_DEV_STATE_DOWNLOAD) ? 0 : -EINVAL;
+>  		break;
+> @@ -561,8 +578,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+>  		if (ret)
+>  			break;
+>  
+> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
+> -					    CMD_TIMEOUT);
+> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
+>  		status = ctx->wq_resp.resp.state &
+>  			  ICVS_DEV_STATE_ERROR ? -EINVAL : 0;
+>  		break;
+> @@ -572,13 +588,13 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
+>  		if (ret < 0)
+>  			break;
+>  
+> -		ret = cvs_wait_wake_or_sleep(ctx, CMD_TIMEOUT,
+> -					     FW_READY_DELAY_MS);
+> +		ret = cvs_wait_wake_or_sleep(ctx, timeout, FW_READY_DELAY_MS);
+>  		if (ret)
+>  			break;
+>  
+> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
+> -					    CMD_TIMEOUT);
+> +		ctx->nvm.wait_dl_clear = true;
+> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
+> +		ctx->nvm.wait_dl_clear = false;
+>  		status = !(ctx->wq_resp.resp.state &
+>  			   ICVS_DEV_STATE_DOWNLOAD) ? 0 : -EINVAL;
+>  		break;
+> @@ -612,7 +628,7 @@ int cvs_set_link_owner(struct icvs *ctx, enum icvs_csi_link_owner owner)
+>  	size_t cmd_size = sizeof(cmd.cmd_id) + sizeof(cmd.param.param);
+>  
+>  	guard(mutex)(&ctx->lock);
+> -	return cvs_send(ctx, &cmd, cmd_size);
+> +	return cvs_send(ctx, &cmd, cmd_size, ICVS_CMD_TIMEOUT);
+>  }
+>  
+>  /**
+> @@ -641,9 +657,442 @@ static int cvs_configure_dev_caps(struct icvs *ctx)
+>  		cmd.param.host_id |= ICVS_HOST_ID_RGBCAMERA_PWRUP;
+>  
+>  	guard(mutex)(&ctx->lock);
+> -	return cvs_send(ctx, &cmd, sz);
+> +	return cvs_send(ctx, &cmd, sz, ICVS_CMD_TIMEOUT);
+> +}
+> +
+> +/**
+> + * enum icvs_nvm_auth_mode - nvm_authenticate sysfs write values
+> + * @ICVS_NVM_AUTH_CLEAR: Clear the staged update state
+> + * @ICVS_NVM_AUTH_WRITE_AND_AUTH: Validate image, stream, and request reset
+> + * @ICVS_NVM_AUTH_WRITE_ONLY: Validate and stream image without reset request
+> + * @ICVS_NVM_AUTH_AUTH_ONLY: Request reset for previously streamed image
+> + */
+> +enum icvs_nvm_auth_mode {
+> +	ICVS_NVM_AUTH_CLEAR		= 0,
+> +	ICVS_NVM_AUTH_WRITE_AND_AUTH	= 1,
+> +	ICVS_NVM_AUTH_WRITE_ONLY	= 2,
+> +	ICVS_NVM_AUTH_AUTH_ONLY		= 3,
+> +};
+> +
+> +/**
+> + * cvs_nvm_validate - Locate the payload within the staged firmware image
+> + * @ctx: CVS device context
+> + *
+> + * Only the staged image size is checked here. Signature verification and
+> + * anti-rollback enforcement are performed by the CVS device firmware, which
+> + * rejects images that fail either check.
+> + *
+> + * Return: 0 on success, -ENODATA when no usable image is staged.
+> + */
+> +static int cvs_nvm_validate(struct icvs *ctx)
+> +{
+> +	struct icvs_nvm *nvm = &ctx->nvm;
+> +	unsigned int header_size = SZ_1K;
+> +
+> +	if (ctx->quirks & ICVS_FW_HEADER_SIZE_256)
+> +		header_size = SZ_256;
+> +
+> +	if (!nvm->buf || nvm->buf_total_size < ICVS_NVM_MIN_SIZE)
+> +		return -ENODATA;
+> +
+> +	/* The ICVS_NVM_MIN_SIZE check above keeps this from underflowing */
+> +	nvm->buf_data_start = nvm->buf + header_size;
+> +	nvm->buf_data_size = nvm->buf_total_size - header_size;
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * cvs_do_fw_download - Stream firmware payload to the device over I2C
+> + * @ctx: CVS device context (ctx->lock held by caller)
+> + * @buf: Firmware payload (header already removed)
+> + * @size: Payload size in bytes
+> + *
+> + * Sends FW_LOADER_START, streams @buf in FW_LOADER_DATA chunks, then
+> + * FW_LOADER_END. cvs_send() already waits for and confirms actual flash
+> + * completion for FW_LOADER_END (via the BUSY/DOWNLOAD state polling in
+> + * cvs_recv()), so its return value is the final result here.
+> + *
+> + * Return: 0 on success or negative errno.
+> + */
+> +static int cvs_do_fw_download(struct icvs *ctx, const u8 *buf, size_t size)
+> +{
+> +	struct icvs_cmd cmd = { };
+> +	size_t chunk_max, chunk, pos;
+> +	int ret, end_ret;
+> +
+> +	if (ctx->quirks & ICVS_FW_BUF_SIZE_256)
+> +		chunk_max = SZ_256;
+> +	else
+> +		chunk_max = SZ_1K;
+> +
+> +	void *fw_buf __free(kfree) =
+> +		kmalloc(chunk_max + sizeof(__be16), GFP_KERNEL);
+> +	if (!fw_buf)
+> +		return -ENOMEM;
+> +
+> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_START);
+> +	ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), ICVS_CMD_TIMEOUT);
+> +	if (ret)
+> +		return ret;
+> +
+> +	for (pos = 0; pos < size; pos += chunk) {
+> +		chunk = min(chunk_max, size - pos);
+> +		put_unaligned_be16(ICVS_FW_LOADER_DATA, fw_buf);
+> +		memcpy(fw_buf + sizeof(__be16), buf + pos, chunk);
+> +
+> +		ret = cvs_send(ctx, fw_buf, sizeof(__be16) + chunk,
+> +			       ICVS_CMD_TIMEOUT);
+> +		if (ret) {
+> +			dev_err(cvs_dev(ctx),
+> +				"FW data chunk send failed: %d\n", ret);
+> +			break;
+> +		}
+> +	}
+> +
+> +	/* Always send FW_LOADER_END, but keep any earlier DATA error. */
+> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_END);
+> +	end_ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), FW_END_TIMEOUT);
+> +
+> +	return ret ? : end_ret;
+> +}
+> +
+> +/* cvs_nvm_active_read - NVMem read callback for active firmware region */
+> +static int cvs_nvm_active_read(void *priv, unsigned int offset,
+> +			       void *val, size_t bytes)
+> +{
+> +	__be16 op = cpu_to_be16(ICVS_GET_DEV_FW_VERSION);
+> +	struct icvs_fw_version fw_ver = { };
+> +	struct icvs *ctx = priv;
+> +	struct device *dev = cvs_dev(ctx);
+> +	size_t avail = sizeof(fw_ver);
+> +	size_t len;
+> +	int ret;
+> +
+> +	if (offset >= avail)
+> +		return -EINVAL;
+> +
+> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
+> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+> +	if (ret)
+> +		return ret;
+> +
+> +	guard(mutex)(&ctx->lock);
+> +
+> +	ret = cvs_read_i2c(ctx, op, &fw_ver, sizeof(fw_ver));
+> +	if (ret)
+> +		return ret;
+> +
+> +	len = min(bytes, avail - offset);
+> +	memcpy(val, (void *)&fw_ver + offset, len);
+> +
+> +	return 0;
+> +}
+> +
+> +/*
+> + * cvs_nvm_write_buf - NVMem write callback for non-active firmware staging
+> + *
+> + * Serialized against nvm_authenticate_store() via ctx->lock, since both
+> + * read and mutate the shared staging buffer and its size/flushed state.
+> + *
+> + * offset + bytes is always used as the new total size (rather than only
+> + * growing it) so that staging a new, smaller image after a larger one
+> + * does not leave stale trailing bytes from the previous image in the
+> + * buffer that would otherwise be sent to the device.
+> + */
+> +static int cvs_nvm_write_buf(void *priv, unsigned int offset,
+> +			     void *val, size_t bytes)
+> +{
+> +	struct icvs *ctx = priv;
+> +	struct icvs_nvm *nvm = &ctx->nvm;
+> +
+> +	guard(mutex)(&ctx->lock);
+> +
+> +	if (!nvm->buf)
+> +		nvm->buf = vmalloc(ICVS_NVM_MAX_SIZE);
+> +	if (!nvm->buf)
+> +		return -ENOMEM;
+> +
+> +	memcpy(nvm->buf + offset, val, bytes);
+> +	nvm->buf_total_size = offset + bytes;
+> +	nvm->flushed = false;
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * cvs_nvm_add_active - Register read-only NVMem device for active FW version
+> + * @ctx: CVS device context
+> + *
+> + * Registers an NVMem device named "nvm_active" whose read callback queries
+> + * the device for its currently running firmware version.
+> + *
+> + * Return: 0 on success or negative errno.
+> + */
+> +static int cvs_nvm_add_active(struct icvs *ctx)
+> +{
+> +	struct nvmem_config config = {
+> +		.name = "nvm_active",
+> +		.id = NVMEM_DEVID_NONE,
+> +		.dev = cvs_dev(ctx),
+> +		.owner = THIS_MODULE,
+> +		.read_only = true,
+> +		.reg_read = cvs_nvm_active_read,
+> +		.priv = ctx,
+> +		.stride = 4,
+> +		.word_size = 4,
+> +		.size = sizeof(struct icvs_fw_version),
+> +	};
+> +	struct nvmem_device *nvmem;
+> +
+> +	nvmem = nvmem_register(&config);
+> +	if (IS_ERR(nvmem))
+> +		return PTR_ERR(nvmem);
+> +
+> +	ctx->nvm.active = nvmem;
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * cvs_nvm_add_non_active - Register write-only NVMem device for FW staging
+> + * @ctx: CVS device context
+> + *
+> + * Registers an NVMem device named "nvm_non_active" that accepts an incoming
+> + * firmware image written by userspace (e.g. fwupd via dd). The image is
+> + * buffered in memory until nvm_authenticate triggers the actual download.
+> + * Access is restricted to root.
+> + *
+> + * Return: 0 on success or negative errno.
+> + */
+> +static int cvs_nvm_add_non_active(struct icvs *ctx)
+> +{
+> +	struct nvmem_config config = {
+> +		.name = "nvm_non_active",
+> +		.id = NVMEM_DEVID_NONE,
+> +		.dev = cvs_dev(ctx),
+> +		.owner = THIS_MODULE,
+> +		.root_only = true,
+> +		.reg_write = cvs_nvm_write_buf,
+> +		.priv = ctx,
+> +		.stride = 4,
+> +		.word_size = 4,
+> +		.size = ICVS_NVM_MAX_SIZE,
+> +	};
+> +	struct nvmem_device *nvmem;
+> +
+> +	nvmem = nvmem_register(&config);
+> +	if (IS_ERR(nvmem))
+> +		return PTR_ERR(nvmem);
+> +
+> +	ctx->nvm.non_active = nvmem;
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * cvs_nvm_release_buf - Free the firmware staging buffer
+> + * @nvm: NVM state to release the buffer from
+> + *
+> + * Frees the vmalloc'd staging buffer once it is no longer needed, either
+> + * right after a successful download or during teardown. Does not touch
+> + * @nvm->flushed, since a successfully streamed image must stay reflected
+> + * there even after the buffer backing it has been released.
+> + */
+> +static void cvs_nvm_release_buf(struct icvs_nvm *nvm)
+> +{
+> +	vfree(nvm->buf);
+> +	nvm->buf = NULL;
+> +	nvm->buf_total_size = 0;
+> +	nvm->buf_data_start = NULL;
+> +	nvm->buf_data_size = 0;
+> +}
+> +
+> +/**
+> + * cvs_nvm_free - Release firmware staging buffer
+> + * @ctx: CVS device context
+> + *
+> + * Frees the vmalloc'd buffer used to stage the incoming firmware image
+> + * and resets all associated NVM state fields.
+> + */
+> +static void cvs_nvm_free(struct icvs *ctx)
+> +{
+> +	nvmem_unregister(ctx->nvm.non_active);
+> +	ctx->nvm.non_active = NULL;
+> +	nvmem_unregister(ctx->nvm.active);
+> +	ctx->nvm.active = NULL;
+> +	cvs_nvm_release_buf(&ctx->nvm);
+> +	ctx->nvm.flushed = false;
+> +}
+> +
+> +static ssize_t nvm_version_show(struct device *dev,
+> +				struct device_attribute *attr, char *buf)
+> +{
+> +	__be16 op = cpu_to_be16(ICVS_GET_DEV_FW_VERSION);
+> +	struct icvs *ctx = dev_get_drvdata(dev);
+> +	struct icvs_fw_version fw_ver = { };
+> +	int ret;
+> +
+> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
+> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+> +	if (ret)
+> +		return ret;
+> +
+> +	guard(mutex)(&ctx->lock);
+> +
+> +	ret = cvs_read_i2c(ctx, op, &fw_ver, sizeof(fw_ver));
+> +	if (ret)
+> +		return ret;
+> +
+> +	return sysfs_emit(buf, "%u.%u\n", fw_ver.major, fw_ver.minor);
+> +}
+> +static DEVICE_ATTR_RO(nvm_version);
+> +
+> +static ssize_t nvm_authenticate_show(struct device *dev,
+> +				     struct device_attribute *attr, char *buf)
+> +{
+> +	struct icvs *ctx = dev_get_drvdata(dev);
+> +
+> +	return sysfs_emit(buf, "%#x\n", ctx->nvm.auth_status);
+>  }
+>  
+> +/**
+> + * cvs_nvm_authenticate - Perform an nvm_authenticate operation
+> + * @ctx: CVS device context
+> + * @val: Requested operation, see enum icvs_nvm_auth_mode
+> + *
+> + * Runs the whole operation under ctx->lock and records the outcome in
+> + * nvm->auth_status for nvm_authenticate_show().
+> + *
+> + * Return: 0 on success or negative errno.
+> + */
+> +static int cvs_nvm_authenticate(struct icvs *ctx, unsigned int val)
+> +{
+> +	struct icvs_nvm *nvm = &ctx->nvm;
+> +	int ret = 0;
+> +
+> +	guard(mutex)(&ctx->lock);
+> +
+> +	switch (val) {
+> +	case ICVS_NVM_AUTH_CLEAR:
+> +		nvm->flushed = false;
+> +		break;
+> +
+> +	case ICVS_NVM_AUTH_WRITE_ONLY:
+> +	case ICVS_NVM_AUTH_WRITE_AND_AUTH:
+> +		ret = cvs_nvm_validate(ctx);
+> +		if (!ret)
+> +			ret = cvs_do_fw_download(ctx, nvm->buf_data_start,
+> +						 nvm->buf_data_size);
+> +		if (ret)
+> +			break;
+> +
+> +		nvm->flushed = true;
+> +		cvs_nvm_release_buf(nvm);
+> +
+> +		if (val == ICVS_NVM_AUTH_WRITE_ONLY)
+> +			break;
+> +
+> +		fallthrough;
+> +
+> +	case ICVS_NVM_AUTH_AUTH_ONLY:
+> +		if (!nvm->flushed)
+> +			ret = -ENODATA;
+> +		break;
+> +	}
+> +
+> +	nvm->auth_status = -ret;
+> +
+> +	return ret;
+> +}
+> +
+> +static ssize_t nvm_authenticate_store(struct device *dev,
+> +				      struct device_attribute *attr,
+> +				      const char *buf, size_t count)
+> +{
+> +	struct icvs *ctx = dev_get_drvdata(dev);
+> +	unsigned int val;
+> +	int ret;
+> +
+> +	ret = kstrtouint(buf, 0, &val);
+> +	if (ret)
+> +		return ret;
+> +	if (val > ICVS_NVM_AUTH_AUTH_ONLY)
+> +		return -EINVAL;
+> +
+> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
+> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+> +	if (ret)
+> +		return ret;
+> +
+> +	ret = cvs_nvm_authenticate(ctx, val);
+> +	if (ret)
+> +		return ret;
+> +
+> +	/* Emitted outside ctx->lock; consumers read back sysfs attributes */
+> +	if (val == ICVS_NVM_AUTH_WRITE_AND_AUTH ||
+> +	    val == ICVS_NVM_AUTH_AUTH_ONLY)
+> +		kobject_uevent(&dev->kobj, KOBJ_CHANGE);
+> +
+> +	return count;
+> +}
+> +static DEVICE_ATTR_RW(nvm_authenticate);
+> +
+> +static ssize_t device_id_show(struct device *dev,
+> +			      struct device_attribute *attr, char *buf)
+> +{
+> +	struct icvs *ctx = dev_get_drvdata(dev);
+> +	struct icvs_resp n = { };
+> +	int ret;
+> +
+> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
+> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
+> +	if (ret)
+> +		return ret;
+> +
+> +	n.cmd_id = cpu_to_be16(ICVS_GET_DEV_VID_PID);
+> +
+> +	guard(mutex)(&ctx->lock);
+> +
+> +	ret = cvs_read_i2c(ctx, n.cmd_id, &n.resp.vid_pid,
+> +			   sizeof(n.resp.vid_pid));
+> +	if (ret)
+> +		return ret;
+> +
+> +	return sysfs_emit(buf, "%04x:%04x\n",
+> +			  n.resp.vid_pid.v_id, n.resp.vid_pid.p_id);
+> +}
+> +static DEVICE_ATTR_RO(device_id);
+> +
+> +static umode_t cvs_fw_attr_visible(struct kobject *kobj,
+> +				   const struct attribute *attr, int n)
+> +{
+> +	struct icvs *ctx = dev_get_drvdata(kobj_to_dev(kobj));
+> +
+> +	/* Every attribute in this group needs the I2C transport */
+> +	if (!ctx->i2c_client)
+> +		return 0;
+> +
+> +	if ((ctx->quirks & ICVS_NO_FW_UPDATE) &&
+> +	    attr == &dev_attr_nvm_authenticate.attr)
+> +		return 0;
+> +
+> +	return attr->mode;
+> +}
+> +
+> +static const struct attribute *const cvs_fw_attrs[] = {
+> +	&dev_attr_nvm_version.attr,
+> +	&dev_attr_nvm_authenticate.attr,
+> +	&dev_attr_device_id.attr,
+> +	NULL
+> +};
+> +
+> +static const struct attribute_group cvs_fw_group = {
+> +	.attrs_const = cvs_fw_attrs,
+> +	.is_visible_const = cvs_fw_attr_visible,
+> +};
+> +__ATTRIBUTE_GROUPS(cvs_fw);
+> +
+>  /**
+>   * cvs_core_probe - Shared probe path for I2C & platform instantiation
+>   * @dev: Parent device
+> @@ -806,11 +1255,28 @@ static int cvs_core_probe(struct device *dev, struct i2c_client *i2c)
+>  	pm_runtime_enable(dev);
+>  	pm_runtime_idle(dev);
+>  
+> +	if (ctx->i2c_client) {
+> +		ret = cvs_nvm_add_active(ctx);
+> +		if (ret) {
+> +			dev_err_probe(dev, ret, "NVM active register failed\n");
+> +			goto err_csi_remove;
+> +		}
+> +
+> +		ret = cvs_nvm_add_non_active(ctx);
+> +		if (ret) {
+> +			dev_err_probe(dev, ret,
+> +				      "NVM non-active register failed\n");
+> +			goto err_csi_remove;
+> +		}
+> +	}
+> +
+>  	/*
+>  	 * Create a PM runtime device link with IPU as consumer and CVS as
+>  	 * supplier. When the IPU runtime-resumes to start streaming, the PM
+>  	 * framework automatically resumes CVS first, triggering
+>  	 * cvs_runtime_resume() which hands CSI-2 link ownership to the host.
+> +	 * Kept as the last probe step so it is only established once the
+> +	 * device is otherwise fully initialized.
+>  	 */
+>  	ctx->ipu_link = device_link_add(&ipu->dev, dev,
+>  					DL_FLAG_PM_RUNTIME |
+> @@ -830,6 +1296,7 @@ static int cvs_core_probe(struct device *dev, struct i2c_client *i2c)
+>  	return 0;
+>  
+>  err_csi_remove:
+> +	cvs_nvm_free(ctx);
+>  	if (ctx->ipu_link)
+>  		device_link_del(ctx->ipu_link);
+>  	cvs_csi_remove(ctx);
+> @@ -864,6 +1331,7 @@ static void cvs_core_remove(struct device *dev)
+>  
+>  	cancel_delayed_work_sync(&ctx->work);
+>  	cvs_csi_remove(ctx);
+> +	cvs_nvm_free(ctx);
+>  
+>  	if (ctx->ipu_link)
+>  		device_link_del(ctx->ipu_link);
+> @@ -973,6 +1441,7 @@ static struct i2c_driver cvs_driver = {
+>  	.driver = {
+>  		.name = "intel_cvs",
+>  		.acpi_match_table = intel_cvs_acpi_match,
+> +		.dev_groups = cvs_fw_groups,
+>  		.pm = pm_ptr(&cvs_pm_ops),
+>  	},
+>  	.probe = cvs_probe,
+> @@ -1000,6 +1469,7 @@ static struct platform_driver cvs_platform_driver = {
+>  	.driver = {
+>  		.name = "cvs_platform",
+>  		.acpi_match_table = intel_cvs_acpi_match,
+> +		.dev_groups = cvs_fw_groups,
+>  		.pm = pm_ptr(&cvs_pm_ops),
+>  	},
+>  	.probe = cvs_platform_probe,
+> diff --git a/drivers/media/i2c/cvs/icvs.h b/drivers/media/i2c/cvs/icvs.h
+> index 17beb0920dd2..d0f4e3d02058 100644
+> --- a/drivers/media/i2c/cvs/icvs.h
+> +++ b/drivers/media/i2c/cvs/icvs.h
+> @@ -8,7 +8,9 @@
+>  
+>  #include <linux/bits.h>
+>  #include <linux/completion.h>
+> +#include <linux/jiffies.h>
+>  #include <linux/mutex.h>
+> +#include <linux/nvmem-provider.h>
+>  #include <linux/workqueue.h>
+>  #include <linux/types.h>
+>  #include <linux/wait.h>
+> @@ -38,6 +40,30 @@ struct i2c_client;
+>  /* Firmware response prefix (optional, for protocol revision 2.x or newer) */
+>  #define ICVS_PREFIX_VAL	0xCAFEB0BA
+>  
+> +/**
+> + * struct icvs_nvm - NVM firmware staging and update state
+> + * @buf: vmalloc'd buffer staging the incoming firmware image
+> + * @buf_data_start: Pointer to payload start (past header)
+> + * @active: Read-only NVMem device exposing active firmware version region
+> + * @non_active: Write-only NVMem device accepting incoming firmware image
+> + * @buf_total_size: Total bytes written into @buf by fwupd
+> + * @buf_data_size: Payload byte count (total minus header)
+> + * @auth_status: Last nvm_authenticate error (0 = success)
+> + * @flushed: True after payload has been successfully streamed to device
+> + * @wait_dl_clear: cvs_recv() keeps polling past BUSY until DOWNLOAD clears
+> + */
+> +struct icvs_nvm {
+> +	u8 *buf;
+> +	u8 *buf_data_start;
+> +	struct nvmem_device *active;
+> +	struct nvmem_device *non_active;
+> +	unsigned int buf_total_size;
+> +	unsigned int buf_data_size;
+> +	unsigned int auth_status;
+> +	bool flushed;
+> +	bool wait_dl_clear;
+> +};
+> +
+>  /*
+>   * CSI bridge sub-device definitions
+>   */
+> @@ -443,6 +469,7 @@ enum icvs_state {
+>   * @irq: Wake IRQ (full capability)
+>   * @hostwake_event: Waitqueue for wake events
+>   * @hostwake_event_arg: Wake event flag
+> + * @nvm: NVMem firmware staging and update state
+>   */
+>  struct icvs {
+>  	struct i2c_client *i2c_client;
+> @@ -468,6 +495,7 @@ struct icvs {
+>  	int irq;
+>  	wait_queue_head_t hostwake_event;
+>  	bool hostwake_event_arg;
+> +	struct icvs_nvm nvm;
+>  };
+>  
+>  /**
+> @@ -484,8 +512,12 @@ static inline struct device *cvs_dev(struct icvs *ctx)
+>  	return ctx->i2c_client ? &ctx->i2c_client->dev : ctx->subdev.dev;
+>  }
+>  
+> +/* Command timeout (jiffies) determined experimentally */
+> +#define ICVS_CMD_TIMEOUT (5 * HZ)
+> +
+>  /* Cross-unit interfaces */
+> -int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len);
+> +int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len,
+> +	     unsigned long timeout);
+>  int cvs_set_link_owner(struct icvs *ctx, enum icvs_csi_link_owner owner);
+>  int cvs_csi_init(struct icvs *ctx, struct device *dev, struct i2c_client *i2c);
+>  void cvs_csi_remove(struct icvs *ctx);
+> diff --git a/drivers/media/i2c/cvs/v4l2.c b/drivers/media/i2c/cvs/v4l2.c
+> index 9fadca7a3bee..c74fbd0cda5d 100644
+> --- a/drivers/media/i2c/cvs/v4l2.c
+> +++ b/drivers/media/i2c/cvs/v4l2.c
+> @@ -64,7 +64,7 @@ static int csi_set_link_cfg(struct icvs *ctx, u64 link_freq)
+>  	size_t cmd_size = sizeof(cmd.cmd_id) + sizeof(cmd.param.conf);
+>  
+>  	guard(mutex)(&ctx->lock);
+> -	return cvs_send(ctx, &cmd, cmd_size);
+> +	return cvs_send(ctx, &cmd, cmd_size, ICVS_CMD_TIMEOUT);
+>  }
+>  
+>  /*
+> 
+> base-commit: a90ee4305c4a5df72c11b31dacfdc76e00fcf78a
+> -- 
+> 2.43.0
+> 
+> 
