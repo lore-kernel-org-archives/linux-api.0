@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.42
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795443035;
-	b=sdRoVHnUAV0thnSiMgWMVtCysO3EtlFJsR2jqRtiuzOPkkvXVpnyLVS6REMgvzMnqgXj
-	 mhxXP6tgttznhBDud5BRqlOFRxPVm2sdP/3eFNnuoh+cxAqKuEPwrwhjSM1JWbdLS4qWF
-	 oWVQycHAxvHBZCfe3aAjl/B9Ns2h2TJq4tfmFspIQV54SxiO1+b/g/dG7HmLIArA288LO
-	 fjbX93eyEbptSJ50EQiJ4CLJeaTdqCs7n3ACp/juSq2cw/2wNORtQun1N7znzffjtyFlz
-	 7y7Cr/K6j0kKKO/mzENcEhHqKm05l7EYTAzdLJ2Aqqdzr4LYVNiXaosB+F5zTDKMCzA==
+	t=1795443230;
+	b=gNTNJitwO6FymT0YQca3l87I0Mfxiq2oaJHlRenuptHVZWdzs165RwpM5FtQYdklz243
+	 fpZdUvK6hHVxtIrpkQQfLJRqy1XFIxDNCcDGvNLjfewfOT29OTgQrQSTdJgjnhLZHR+/u
+	 yc/OndgnKTEJq3zdNqqssiSmPjuChmf9vlp1RnV8ywB/qrpIhqbJsnQEic4dC18s/63zi
+	 t7HgS+YiawWLsnKQhH0fJHYuCKSKXUCtYIAlobjGnwDBudQ+Wy0AjoQaD7wH1EvnvAKCH
+	 PK1qr9gNJ8xm0zwOAX5OPFZsugs2ty6xbuW9pKEmoWWp5VKnWNxfaNTK2psxE2Z4R4A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795443035;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795443230;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Mime-Version:Content-Type:Date:Message-Id:To:Cc:Subject:From:X-Mailer:
 	 References:In-Reply-To;
-	bh=CuMgRbNwzbHcnBEprb4vp2b0/t/8wHp/89cdVf+1khg=;
-	b=PtlRdo+SkCGHvGv3F3+DF26rzjBIV01cGUo2CfzDl5KznNietrkT+3Uvduk6Kd/GTpbz
-	 Ko4hkpOWkfpJlZzqRPL5/ZTF2dAy7s3noUrJQx1I0WnRtW+89bsGcnKCbc205ZntO0v0u
-	 jNOaRTs1MtHvdB3A5vmG0ZQYhvDtQP1uAGbTUcuGrD2xKKwYru/OObVi3llFGMCw/htJt
-	 5jrdXQt7R2IlfQsz76pdJfL4sWZC9aEbGjDmAOlZ2stDsmccBX6EVPvwkEqQ0ybuyIvak
-	 f4YW187ILFnq3zF6SvufBKqP/4+t3p5Vnuva62TeThIP1Nk6FfMnTWWJUFNarVlTbsg==
+	bh=AdNUiZw6fAyIiVF2nciH0mXPq/Qr5P0Rz9tmmIcTAgM=;
+	b=Rgbe6QS61OMMIXdG0/JvKS8UKM0Ic0WW5OIxPJ7YY5NKss37NUpqOC7e81FtMp8yuQt2
+	 29W95DkQ82ssqrrvKDE5knaoivE6cQSrQwnQTVZXp95aRqrdXnDfjYU6J/z5ad7Uj+Mv5
+	 So8c0X6nVZtHXy3F9F+Nsty2k99q4okVaWBSBZhLGbZ1nmgl2lqJ8iYnc5YuYB0d0wegN
+	 lY1YSmOqSpG274WOtdb6Ly90wScTHcIEWJLWPAY9Ue+4+Hqv6Jo9YOl9C6ZLY6W2CKoPC
+	 A74hcx9DftlTLUoA1bFL3L0A/1PYW9YVCQG3Pv2O+JD2KO8yuaTwRlK6wP1/2GR03sQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=pO+zyumf;
-	arc=none smtp.remote-ip=209.85.128.46
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ebffeTco;
+	arc=none smtp.remote-ip=209.85.128.42
+Received: from mail-wm1-f42.google.com (mail-wm1-f42.google.com [209.85.128.42])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B1E7606A321
-	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 14:10:34 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0B1E7606A321
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BA5E2606A31F
+	for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 14:13:49 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BA5E2606A31F
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=pO+zyumf
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-4bb666304fdso38539395e9.0
-        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 06:10:34 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ebffeTco
+Received: by mail-wm1-f42.google.com with SMTP id 5b1f17b1804b1-4a35a60499eso26205815e9.0
+        for <linux-api@vger.kernel.org>; Mon, 23 Nov 2026 06:13:49 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795443033; x=1796047833; darn=vger.kernel.org;
+        d=gmail.com; s=20260707; t=1795443228; x=1796048028; darn=vger.kernel.org;
         h=in-reply-to:references:from:subject:cc:to:message-id:date
          :content-type:mime-version:from:to:cc:subject:date:message-id
          :reply-to:content-type;
-        bh=CuMgRbNwzbHcnBEprb4vp2b0/t/8wHp/89cdVf+1khg=;
-        b=pO+zyumfN2hTCRi3iq5NLc4z3g1haVYIkxKoEw23KhrnoeCnmxoW4xCWvhExvnIJt/
-         4gbKTdRC2pDBC5Hp1QDu+A0sp15J8QbF1uz26Txh9nn6GACU+5b0eGJf77ZBrYD4ljq+
-         VVV3TAosIjsC5zJn8eKmTnnWhVsW6mimroaCxKkcPnOjrIMaRqjQxmZWMMEEHiUMLpCa
-         5p6UsfMRL3fW14IdkB9Z+Y3d2oWg/54ukp4uCq+iKOIANK3taEUvY5lWq/haJ8zprVcU
-         w6wYX1Nw8spA/Ix8oPfGxJSdQ1mRWnJ2ch5ULR24WELgRzxBIqSkStDAjP/XrMzlFrUI
-         DGnQ==
+        bh=AdNUiZw6fAyIiVF2nciH0mXPq/Qr5P0Rz9tmmIcTAgM=;
+        b=ebffeTcoM2kGd9tyJYwdkn0BAhKP3teX0NXVi/OtrrM9NfH6b7J/w0Q4IUirzPqgIX
+         Vvu7exd430ieby8Ta08hExTCJAN8zp9SjmimaV45LlnMUx+NoYdslogXx2QgwOiYpnXy
+         f0B5KYuDkYvgeCRA+uTerXqmCPXicY7jQWHZk3TttfS2u3aZrSCGvaSLtaKyEJ/pz4n7
+         8BwcNYaX8ZpWPBApW/Eljbv9l9lsDXZk/KF6+vp4q9M4p3a0p4+/kc+5tL6F8lR9uTdW
+         ygXtU6TBlMdsTfuseBs71kC+rNVYRElnzC0ZnA6zDhUg4LtydOk0mgEcsXkBy/fhNQ8X
+         2vBQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795443033; x=1796047833;
+        d=1e100.net; s=20260707; t=1795443228; x=1796048028;
         h=in-reply-to:references:from:subject:cc:to:message-id:date
          :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
          :subject:date:message-id:reply-to:content-type;
-        bh=CuMgRbNwzbHcnBEprb4vp2b0/t/8wHp/89cdVf+1khg=;
-        b=bYLshNeMddPdS2GgwzykzcqXyH4zJQI8HMtzvdYwEXZ1V0V1eFuaVguqC92Dz/qIvS
-         7oKN42ZEeklg1zUpQALSddtN8TZ2Q7e1gGrUuQ6+0aiOuXwDosWRwrCxNMFXyOTbTiGH
-         DnEkY7KQN4qqS2sHcOTWMg2GToVq8NXc6VesCMJ1CAhWrtXxmfXJIxkfpDcyAst+eUdq
-         Jspcf3YE7WK0bgooP7cU15c6Ekq/MPrinrVBjln+ZhEjZTzDPILMyEd262iMlgHRQD/C
-         Rz9bUkvOw0MtS5EkSHDTmryc2to/bQ6BsXuFeksmLVzFGhS4+dYKeQK1yUjWRrBoHRIV
-         ZxUA==
-X-Forwarded-Encrypted: i=1; AL+hErFzzoKf8VD4vqi8eTGlH3QefBzsc2jBsYrZO9VRR3WAxDXyetN+kO+SjOxyNDXr3vQQNL/W7j4rie8=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+UdtivMIxMUht1zrgwfT2s2MoeiDD3zU6hg19dLiSDK/qNW846
-	0mywHxPb1+ATZvOxv3ZwIeAAAL7bXCle4EuU8YH7uBTLbq+1cQGCaPRd
-X-Gm-Gg: AZFdTZemghnz9brAxvCqwPx2bdPOaD/8ERlev7anrfZBDU4M/wGlJ00tDbIhJBBlJ2D
-	4zvJXYBZaA2sFSPi+e66CA1ipV6ryQBESwx5esJSClyNp2or2I1Sefb4vfNHgN3NM6rM2oaJ8Xn
-	Kq0arPMto4eDwvJpmnNAXok94sMQuYI95IH6ArQMy+0c93esnMfPSiwMx9W2qiQHgHiWM092Je6
-	Uo84Pd1Vap68WjXs/O4ibM5CMDwkr9BbR7xqzaVzX6JeTdsuI6RAbtYy87dofsWPYgRn6N6w/4K
-	nt3D3cpIh9edPzbn4c64vsLn6P+XSSiqwdVvP+1lvUsjhfSth2G9LrpkplYpQvUl1M38yJV2Eep
-	3ZFGvIonvzCB54Bo4veTKvaxVnkWjs3UzoWDmWHB+1Rpg8yN+Q0KNhWMd9r16nUuUaDk3Vou5Vo
-	vi43WNYt+9cr9Syqj3hvkzs+Ddlh45/ytHW2LZD3U1dFgAO3Ha+vFM5bG7NNRSqcHZJ/q0zAa94
-	vgewsKT0An6Bwbb0yshLa4znctaVWbecoVPGytWgpCpI9a2A2A/zpMvbfyZGq2bIfRXfoAnzyiR
-	12/nD1YnKnfSUnJo6PXlXpQLK/8=
-X-Received: by 2002:a05:600c:828e:b0:4a2:526b:d40f with SMTP id 5b1f17b1804b1-4bb88785898mr250028695e9.0.1795443033146;
-        Mon, 23 Nov 2026 06:10:33 -0800 (PST)
+        bh=AdNUiZw6fAyIiVF2nciH0mXPq/Qr5P0Rz9tmmIcTAgM=;
+        b=noFV5SP+/+UKKCNeJ7AFHgN8DzW1T61uYinhp4BIPzIfbtv2wO2YmY4Kdx4OLuPMkt
+         +aauNiX2I6hPBXbxpFEGYBBotRybL/ZJIj/wfW91s4CewlsSQM4JjPD5egrKXgcCmbw+
+         oDyvu3FRHI8aCJz6OaMkCpmbHKWqIy9TY7DpZCgRBLQXG1gPtxXtijYNSuqLik9G4kEW
+         M2RMrroOG69+uzg0XRP3hadBr4dFiDiIF8qAYkQDaGGzx8qNFtW6oWIVnnWiH1IoLY4P
+         tvOUcECaKb+BUeqCo5vSMjoi8kmAVzZj0P7CcissVIwm7zMcrtzSnZDBJ2Zc2BafwLcZ
+         w2+g==
+X-Forwarded-Encrypted: i=1; AL+hErE4MGM++L9ve3CkzyVHjxyjmq2XXU4p/zOD0LUho/z8nJ1oH59gYgW4YsR3VguRHtwA+HL648W1C/A=@vger.kernel.org
+X-Gm-Message-State: APuU4Z8zhLPwGfOcTO0cJMiESNNnzdwjddwzA4UQ6HiQsy0oYWJSztKX
+	Dzqa3874nFauVJkCuURXFO6C3WTVm9GXyuXlbKkwxazyOmlfrnFmCHO1
+X-Gm-Gg: AZFdTZf9eA7QFcpMSSrwhOgnhN8YE9vpPvE4S5tsRoniVBD1tfhkA6R42AnjKpETWUU
+	rEPym9UrWZQytDYaxamy4r28hTnGg+DzDcu0RnZLUmYKqoGZvSrPdq0IR33FzoGrwtCEzmqA2EW
+	K4/Z1nAjIDPWBVjcdMD8Y9EvVZcoEtNmwzCnrurOELWZS24FR/DvLUMHhEeSrhekhIciEgY1/0G
+	9bHORzlKzn4fDTdJI7rTx/iPVEZSqyiAVIbHEL44u/QXFyiSI8RRieTqKmj5llIwunVQnAnm+EP
+	68VgMe/otL5qbi1wuX9gVL9fOqJjLVq2vqb1d2zHkhFiHxyAGs9VyggPFaTrHBvp9daO3iFsIsp
+	f0Mtw4NLs9+tPLAqSh2+inxP1He+7KSypyckAulina6Sa1xpqpQ8RRNbyPAB/hgtycUyqnMfChD
+	8uiyhKdNgqFuyrjh6N38B1F/sSDw39+aqDs8WSUWXfVbQJweKv+5z8JZC0IzuRugbiOaWB0g75i
+	nbB2cFOlUGzatR1Csvwehmf4O4M1bZyTyf5uwySesqait6fwBfEEJhr48wq3RTmNfMbfQM+BcMQ
+	UgXvKoXOAJ2+oPTtUj4+Q3VEmw==
+X-Received: by 2002:a05:600c:848a:b0:4a1:fbd2:f689 with SMTP id 5b1f17b1804b1-4bb8880993amr234005065e9.7.1795443228027;
+        Mon, 23 Nov 2026 06:13:48 -0800 (PST)
 Received: from localhost ([2001:b07:5d26:7a6a:365a:60ff:fe0d:cfc6])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb906817ccsm170559065e9.5.2026.11.23.06.10.31
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb884ab091sm508419575e9.11.2026.11.23.06.13.46
         (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Mon, 23 Nov 2026 06:10:32 -0800 (PST)
+        Mon, 23 Nov 2026 06:13:47 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -88,151 +88,281 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 Mime-Version: 1.0
 Content-Type: multipart/signed;
- boundary=b1a345f2b4a5254b3632da7c1e235601a7730bbbbe126372d6b8eae348d4;
+ boundary=c485377c3c583edb24864dcca5dc2a3b0d7251ed0f88e601a300289ca66a;
  micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Mon, 23 Nov 2026 15:10:28 +0100
-Message-Id: <DN2NFOEO4XGN.1PEF1SWOF7YCQ@gmail.com>
-To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
- <koray.fra@gmail.com>
-Cc: "Namjae Jeon" <linkinjeon@kernel.org>, "Hyunchul Lee"
- <hyc.lee@gmail.com>, "Alexander Viro" <viro@zeniv.linux.org.uk>, "Christian
- Brauner" <brauner@kernel.org>, "Chuck Lever" <cel@kernel.org>, "Jeff
- Layton" <jlayton@kernel.org>, "Jan Kara" <jack@suse.cz>, "Darrick J . Wong"
- <djwong@kernel.org>, "Andrey Albershteyn" <aalbersh@kernel.org>,
+Date: Mon, 23 Nov 2026 15:13:45 +0100
+Message-Id: <DN2NI744M9OC.CYZFL8XSU7UP@gmail.com>
+To: "liubaolin" <liubaolin12138@163.com>, "koraynilay"
+ <koray.fra@gmail.com>, "Namjae Jeon" <linkinjeon@kernel.org>, "Hyunchul
+ Lee" <hyc.lee@gmail.com>, "Alexander Viro" <viro@zeniv.linux.org.uk>,
+ "Christian Brauner" <brauner@kernel.org>
+Cc: "Chuck Lever" <cel@kernel.org>, "Jeff Layton" <jlayton@kernel.org>, "Jan
+ Kara" <jack@suse.cz>, "Darrick J . Wong" <djwong@kernel.org>, "Andrey
+ Albershteyn" <aalbersh@kernel.org>, "Amir Goldstein" <amir73il@gmail.com>,
  =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "Lauri Gates"
  <lauri.gates@gmail.com>, "Christoph Hellwig" <hch@infradead.org>, "Dave
  Chinner" <dgc@kernel.org>, <linux-btrfs@vger.kernel.org>,
  <linux-xfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
  <linux-fsdevel@vger.kernel.org>, <ntfs@lists.linux.dev>,
  <linux-nfs@vger.kernel.org>, <linux-api@vger.kernel.org>
-Subject: Re: [PATCH 0/3] Add f*_xflags_{rw,ro}_mask flags to the fileattr
- API
+Subject: Re: [PATCH 3/3] ntfs: switch to the new xflags fileattr API
 From: "koraynilay" <koray.fra@gmail.com>
 X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
 References: <20261122000856.536902-1-koray.fra@gmail.com>
- <CAOQ4uxgf2KE=Ag13EPAu5=KnrFwt7zRH=im-qmLc8+i10Tjd+Q@mail.gmail.com>
-In-Reply-To: <CAOQ4uxgf2KE=Ag13EPAu5=KnrFwt7zRH=im-qmLc8+i10Tjd+Q@mail.gmail.com>
+ <20261122000856.536902-4-koray.fra@gmail.com>
+ <1ebbb85f-3515-4c45-a850-8039aad93800@163.com>
+ <DN265Y2EAGQV.1ZD49JSIDMME5@gmail.com>
+ <6d054adc-5b6d-4a1c-b9e5-b32916e06abe@163.com>
+In-Reply-To: <6d054adc-5b6d-4a1c-b9e5-b32916e06abe@163.com>
 
---b1a345f2b4a5254b3632da7c1e235601a7730bbbbe126372d6b8eae348d4
+--c485377c3c583edb24864dcca5dc2a3b0d7251ed0f88e601a300289ca66a
 Content-Transfer-Encoding: quoted-printable
 Content-Type: text/plain; charset=UTF-8
 
-On Mon Nov 23, 2026 at 2:35 PM CET, Amir Goldstein wrote:
-> On Sun, Nov 22, 2026 at 1:09=E2=80=AFAM koraynilay <koray.fra@gmail.com> =
-wrote:
->>
->> This is a follow up patch series stemmed from [1] and [2], splitting the
->> _mask change for the fileattr API into its own separate patch.
->>
->> The first patch is a preparatory patch so that the code in the patch
->> after can be formatted better.
->>
->> The second patch is the actual implementation, which introduces:
->> - fa_xflags_{rw,ro}_mask fields to struct file_attr
->> - fsx_xflags_{rw,ro}_mask fields and has_masks selector to struct file_k=
-attr
->>
->> These masks have the following semantics:
->> - rw_mask:
->>   * for filesystems: advertise which xflags they support changing
->>   * for userspace: specify which xflags it wants to modify
->> - ro_mask:
->>   * for filesystems: advertise which xflags they support only reading
->>   * for userspace: ignored
+On Mon Nov 23, 2026 at 4:06 AM CET, liubaolin wrote:
 >
-> Nice!
-> I think this API description is very clear and coherent
-
-Nice.
-
 >
->>
->> (ro_mask for userspace was also proposed as a "verification mask"[3] but
->> I left out that semantic to keep this patch series more contained, and
->> can be added later if needed.)
+> =E5=9C=A8 2026/11/23 08:38, koraynilay =E5=86=99=E9=81=93:
+>> On Sun Nov 22, 2026 at 1:49 PM CET, liubaolin wrote:
+>>>
+>>>
+>>> =E5=9C=A8 2026/11/22 08:08, koraynilay =E5=86=99=E9=81=93:
+>>>> Switch ntfs_fileattr_[gs]et() from the legacy FS_*_FL flags to the
+>>>> modern xflags (FS_XFLAG_*) fileattr API with masks.
+>>>>
+>>>> Introduce FS_XFLAG_COMPR and FS_XFLAG_ENCRYPT and add them to
+>>>> FS_XFLAG_COMMON (and add FS_COMPR_FL and FS_ENCRYPT_FL to FS_COMMON_FL=
+)
+>>>> to be used in this API switch.
+>>>>
+>>>> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.11
+>>>> Signed-off-by: koraynilay <koray.fra@gmail.com>
+>>>> ---
+>>>>    fs/file_attr.c           |  8 +++++
+>>>>    fs/ntfs/file.c           | 63 +++++++++++++++++++------------------=
+---
+>>>>    include/linux/fileattr.h |  6 ++--
+>>>>    include/uapi/linux/fs.h  |  2 ++
+>>>
+>>> Hi koraynilay,
+>>>      One suggestion on the patch split: would it make sense to put the
+>>> new COMPR/ENCRYPT xflags and their VFS handling in a separate patch
+>>> before the NTFS conversion?
+>>>      The changes to include/uapi/linux/fs.h, include/linux/fileattr.h
+>>> and fs/file_attr.c introduce generic fileattr support, and the
+>>> COMMON mask changes also affect other filesystems.
+>>>      Keeping those changes together in a VFS patch would make the API
+>>> and compatibility aspects easier to review.
+>>>      The following NTFS patch could then focus on using the new flags
+>>> while preserving the existing NTFS behaviour.
+>>=20
+>> Hi Baolin and thanks for the feedback,
+>> for now I put them in the same patch since they're not many lines of
+>> code changes, but I now also had to add NOCOMP, maybe I'll split it in
+>> the next version.
+>>=20
+>>> Thanks,
+>>> Baolin.
+>>>
+>>>>    4 files changed, 44 insertions(+), 35 deletions(-)
+>>>> [...]
+>>>>    	if (err)
+>>>>    		return err;
+>>>>   =20
+>>>> -	if (fileattr_has_fsx(fa))
+>>>> -		return -EOPNOTSUPP;
+>>>> -
+>>>> -	/* chattr passes the unchanged read-only flags back to us too. */
+>>>> -	if (NInoCompressed(ni) || NInoWofCompressed(ni))
+>>>> -		readonly |=3D FS_COMPR_FL;
+>>>> -	if (NInoEncrypted(ni))
+>>>> -		readonly |=3D FS_ENCRYPT_FL;
+>>>> -	if ((fa->flags ^ readonly) & (FS_COMPR_FL | FS_ENCRYPT_FL))
+>>>> -		return -EOPNOTSUPP;
+>>>> -	allowed |=3D readonly;
+>>>> -
+>>>> -	/* Case folding is a read-only, mount-wide property. */
+>>>> -	if (!NVolCaseSensitive(ni->vol))
+>>>> -		allowed |=3D FS_CASEFOLD_FL;
+>>>> -	if (fa->flags & ~allowed)
+>>> Hi koraynilay,
+>>>      There is another case worth keeping in mind when replacing this ch=
+eck:
+>>>      fileattr_fill_flags() only translates a subset of FS_*_FL bits,
+>>> so some unsupported flags will not appear in fsx_xflags.
+>>>     For example, a direct SETFLAGS request containing only FS_NOCOW_FL
+>>> produces fsx_xflags =3D=3D 0. On a normal file on a case-sensitive moun=
+t,
+>>> the new check would accept that request.
+>>>     If the file already has persistent NODUMP set, the request would al=
+so
+>>> clear it, since the setter rebuilds linuxflags without NODUMP and write=
+s
+>>> it back to the EA. The current code rejects the request and leaves the
+>>> existing attributes unchanged.
+>>>
+>>>     Would it be possible to keep validating fa->flags when flags_valid =
+is
+>>> set, in addition to the xflags check?
+>>=20
+>> We could, but the objective is to have filesystems that implement the
+>> new _masks API use only xflags.
 >
-> Not so easily added later.
-> We cannot change the meaning from ignore to verify without any opt-in
-> later, but we could use the combination of
-> rw_mask |=3D X
-> ro_mask |=3D X
->
-> to "verify" (set it as long as it is already set)
+> Hi koraynilay,
+>     That makes sense, and I'm fine with NTFS using only xflags.
+> Could we still make sure that legacy SETFLAGS requests with flags=20
+> unsupported by NTFS are rejected rather than silently accepted after=20
+> conversion?
 
-Isn't this just "preserving"?
+Hi,
+yes, my current (v2) code, in the new fileattr_legacy_to_mask() helper,
+does this:
 
-> all we need to do now is make sure that the API returns -EINVAL
-> for rw_mask & ro_mask on set.
+if (fa->flags_valid) {
+	/*
+	 * Assume that if the filesystem supports masks it also added
+	 * its supported FS_*_FL flags to FS_XFLAG_* and to the COMMON
+	 * masks.
+	 */
+	changed =3D fa->flags ^ old_ma->flags;
+	if (changed & ~FS_COMMON_FL)
+		return -EOPNOTSUPP;
 
-Yes, the current (v2) code does
+	changed =3D flags_to_xflags(changed);
+}
 
-if (fa->has_masks && (rw_user_mask & ~old_ma->fsx_xflags_rw_mask))
-	return -EOPNOTSUPP;
-
-at the start of set_prepare(), I think that is enough, since we assume
-the filesystems return the masks such that rw_mask & ro_mask =3D=3D 0.
-
->>
->> This allows userspace to not have to do a RMW cycle when using the
->> file_[gs]etattr() syscalls, avoiding possible race conditions and
->> simplifying their usage.
->>
->> Patch 2/3 also introduces the missing FS_XFLAG_PROJID flag so that
->> programs like chattr can leverage the new mask API.
->> FS_XFLAG_PROJID is kept out of the legacy FS_XFLAG_MASK and so it's
->> defined as part of a new FS_FILE_ATTR_XFLAGS_MASK group of xflags that
->> will be used moving forward for any new xflag (like the one proposed in =
-[2]).
->>
->> Patch 3/3 converts fs/ntfs to this new API, to show how it can benefit
->> filesystem drivers too.
->>
->> The series has been tested across NTFS, ext4 (with project quotas), XFS
->> (project quotas and extent size hints), and Btrfs.
->>
->
-> Judging from the number of bugs reported by Sashiko and by my agent
-> on the COMMON flags change,
-> I think this needs test coverage for the old APIs, especially with old bi=
-naries
-> chattt/xfs_io that do the get/set cycle and re-built binaries with new he=
-aders
-> both tested against old and new kernel.
-> Sorry, but the UAPI issues are fragile...
-
-Yeah, I thought about adding some tests to xfstests yesteday after I
-made my agent test the sashiko issues in my test vm, but I don't want to
-make it generate them and submit them with minimal oversight.
-
-It could still be worth to make it generate them to just test locally,
-then clean them up and submit them after the vfs design/code is
-finalized.
-
-> This is one of the changes that would have been very hard to audit withou=
-t
-> the LLM agents. Hopefully with the agents it is doable, but need to guide
-> them how to review/test for regressions.
-
-Yeah, the amount of edge cases it catches in my code is very high, I
-manually wrote the main vfs code in this patch series, but I took at
-least the same amount of time to fix *some* (considering the amount
-sashiko still reported anyway) of the bugs the robot pointed out.
+so they should be correctly rejected.
 
 Thanks,
 koraynilay
 
 > Thanks,
-> Amir.
+> Baolin.
+>
+>>=20
+>>> Thanks,
+>>> Baolin.
+>>>
+>>>
+>>>> +	/*
+>>>> +	 * When userspace uses file_[gs]etattr(), VFS already checks and fai=
+ls
+>>>> +	 * with -EOPNOTSUPP if rw_mask & ro_mask !=3D 0 and rw_mask & ~allow=
+ed,
+>>>> +	 * but for FS_IOC_SETFLAGS and FS_IOC_FSSETXATTR VFS can't check for
+>>>> +	 * allowed flags as these ioctls don't support fsx_xflags_{rw,ro}_ma=
+sk,
+>>>> +	 * so we need to check for unsupported flags anyway.
+>>>> +	 */
+>>>> +	if (!fa->has_masks &&
+>>>> +	    ((fa->fsx_xflags & ~NTFS_RW_XFLAGS) ||
+>>>> +	     fa->fsx_extsize || fa->fsx_projid || fa->fsx_cowextsize))
+>>>>    		return -EOPNOTSUPP;
+>>>
+>>> Hi koraynilay,
+>>>      Could we keep the existing handling of read-only attributes
+>>> for legacy SETFLAGS callers here?
+>>>      On a case-insensitive NTFS mount, the VFS carries over
+>>> FS_XFLAG_CASEFOLD from the current attributes, since it is not in
+>>> FS_XFLAG_COMMON.
+>>> This check would then reject it because CASEFOLD is not in
+>>> NTFS_RW_XFLAGS, so even chattr +d would fail with EOPNOTSUPP.
+>>>      The unchanged COMPR/ENCRYPT bits that chattr reads with GETFLAGS a=
+nd
+>>> passes back with SETFLAGS would also be rejected on compressed/encrypte=
+d
+>>> files.
+>>>      Allowing those existing read-only attributes to be passed back
+>>> unchanged  would let users continue setting and clearing the persistent
+>>> flags through chattr,as they can today.
+>>>
+>>> Thanks,
+>>> Baolin.
+>>=20
+>> Since I wasn't quite satisfied with this version, I'm working on a
+>> revisited v2, that is hopefully cleaner and fixes these bugs and the
+>> ones reported by sashiko.
+>>=20
+>> Thanks,
+>> koraynilay
+>>=20
+>>=20
+>>>>   =20
+>>>>    	forced_immutable =3D ntfs_is_forced_immutable(vi);
+>>>> -	if (!(fa->flags & FS_IMMUTABLE_FL) && forced_immutable)
+>>>> +	if (!(fa->fsx_xflags & FS_XFLAG_IMMUTABLE) && forced_immutable)
+>>>>    		return -EPERM;
+>>>>   =20
+>>>> -	if (fa->flags & FS_IMMUTABLE_FL) {
+>>>> +	if (fa->fsx_xflags & FS_XFLAG_IMMUTABLE) {
+>>>>    		new_fl |=3D S_IMMUTABLE;
+>>>>    		/* Do not persist an immutable bit derived from the mount. */
+>>>>    		if (!forced_immutable ||
+>>>>    		    (ni->linuxflags & NTFS_LINUXFLAGS_IMMUTABLE))
+>>>>    			linuxflags |=3D NTFS_LINUXFLAGS_IMMUTABLE;
+>>>>    	}
+>>>> -	if (fa->flags & FS_APPEND_FL) {
+>>>> +	if (fa->fsx_xflags & FS_XFLAG_APPEND) {
+>>>>    		new_fl |=3D S_APPEND;
+>>>>    		linuxflags |=3D NTFS_LINUXFLAGS_APPEND;
+>>>>    	}
+>>>> -	if (fa->flags & FS_NODUMP_FL)
+>>>> +	if (fa->fsx_xflags & FS_XFLAG_NODUMP)
+>>>>    		linuxflags |=3D NTFS_LINUXFLAGS_NODUMP;
+>>>> -	if (fa->flags & FS_NOATIME_FL) {
+>>>> +	if (fa->fsx_xflags & FS_XFLAG_NOATIME) {
+>>>>    		new_fl |=3D S_NOATIME;
+>>>>    		linuxflags |=3D NTFS_LINUXFLAGS_NOATIME;
+>>>>    	}
+>>>> diff --git a/include/linux/fileattr.h b/include/linux/fileattr.h
+>>>> index 4faa40febf11..219e7c8eb601 100644
+>>>> --- a/include/linux/fileattr.h
+>>>> +++ b/include/linux/fileattr.h
+>>>> @@ -7,12 +7,14 @@
+>>>>    #define FS_COMMON_FL \
+>>>>    	(FS_SYNC_FL | FS_IMMUTABLE_FL | FS_APPEND_FL | \
+>>>>    	 FS_NODUMP_FL |	FS_NOATIME_FL | FS_DAX_FL | \
+>>>> -	 FS_PROJINHERIT_FL | FS_VERITY_FL)
+>>>> +	 FS_PROJINHERIT_FL | FS_VERITY_FL | FS_COMPR_FL | \
+>>>> +	 FS_ENCRYPT_FL)
+>>>>   =20
+>>>>    #define FS_XFLAG_COMMON \
+>>>>    	(FS_XFLAG_SYNC | FS_XFLAG_IMMUTABLE | FS_XFLAG_APPEND | \
+>>>>    	 FS_XFLAG_NODUMP | FS_XFLAG_NOATIME | FS_XFLAG_DAX | \
+>>>> -	 FS_XFLAG_PROJINHERIT | FS_XFLAG_VERITY)
+>>>> +	 FS_XFLAG_PROJINHERIT | FS_XFLAG_VERITY | FS_XFLAG_COMPR | \
+>>>> +	 FS_XFLAG_ENCRYPT)
+>>>>   =20
+>>>>    /* Read-only inode flags */
+>>>>    #define FS_XFLAG_RDONLY_MASK \
+>>>> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+>>>> index e40806b3a69c..09fc7e066485 100644
+>>>> --- a/include/uapi/linux/fs.h
+>>>> +++ b/include/uapi/linux/fs.h
+>>>> @@ -275,6 +275,8 @@ struct file_attr {
+>>>>    #define FS_XFLAG_CASENONPRESERVING 0x00080000	/* case not preserved=
+ */
+>>>>   =20
+>>>>    #define FS_XFLAG_PROJID		0x00100000	/* project ID */
+>>>> +#define FS_XFLAG_COMPR		0x00200000	/* Compress file */
+>>>> +#define FS_XFLAG_ENCRYPT	0x00400000	/* Encrypted file */
+>>>>    #define FS_XFLAG_HASATTR	0x80000000	/* no DIFLAG for this	*/
+>>>>   =20
+>>>>    /* the read-only stuff doesn't really belong here, but any other pl=
+ace is
+>>=20
 
---b1a345f2b4a5254b3632da7c1e235601a7730bbbbe126372d6b8eae348d4
+
+
+--c485377c3c583edb24864dcca5dc2a3b0d7251ed0f88e601a300289ca66a
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYKAB0WIQSgVimKafU5DQMcjcDmj22qf5IGXAUCawRJVAAKCRDmj22qf5IG
-XPMqAQDKSRELLXXkJM1eWJs/2jAv9K7PNaXrJgEdc9WUuhVlqwEA+UC/ffcMo2z2
-JMu/9eWe5JddaVS+uSeZePo0JhjpBAg=
-=ToHp
+iHUEABYKAB0WIQSgVimKafU5DQMcjcDmj22qf5IGXAUCawRKGQAKCRDmj22qf5IG
+XPWcAP49AViSerRvoyJ97sqTIiiJSLMsgNe7vK+zEVAAQFM2oAEA1KcvCk741zB+
+V7RldREforG/ieOp41N4vF9RjqR5gAo=
+=IGHV
 -----END PGP SIGNATURE-----
 
---b1a345f2b4a5254b3632da7c1e235601a7730bbbbe126372d6b8eae348d4--
+--c485377c3c583edb24864dcca5dc2a3b0d7251ed0f88e601a300289ca66a--
