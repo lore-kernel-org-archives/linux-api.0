@@ -1,79 +1,215 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=192.198.163.12
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=148.163.156.1
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795428707;
-	b=KrL1dkFzpwxspSzvpnkv7I0IqZrwDZYkxlFjY4e7hXlqkfIsJwMOa5q69UV7wzsA+iMW
-	 fDi8mqxKG+QsdbUyufojmjaQYuinppVuDz4VsB52lLn9h3vARc4cfffItuNVfQEaQXjy7
-	 GXMr72v568abrewQkvn21TXtr/Zh/FCcyMbG9Wn7x9LUj74hRxgLKfhfnapV1DaqsSCFv
-	 hHzg9WETxyezmK4Y8sb/JTNOBYA7WFzfOGRbLTBRBebyy9fxKXA6OgdWv0wsmpfYOsmS+
-	 4O+RyN7Zp6Hs8ccskZZN5D2jWdkh3uHBwwsGu8b5c/u0bknZtiid36f2Mf6Q8SoYvzg==
+	t=1795428720;
+	b=NhhIct0Rn5m9lqwkFbXC0D/wN0VE5cRB8SG88TMeeKnhCokTlAQlgwCeTZV0JlcP8+f1
+	 hAJjm10XsWAMNjzOoG3CiXEyINlxC+iFnt5JXP552KBDdvK+YCGeYDUgKzbYoX/7qeEvX
+	 a1ai9OiaMnJpLqe+hzigWsHUiiBDFTkjKYlSRifLHu3BByeg64fYFIzPfBZBEnCUNUEfN
+	 OACO71E1Lv3zHUpOu7n+vpC/oIc8coIdJDLJZ/7tNh1uN8+oMW78v7+kzRvs4NGz1VR72
+	 2dZpPGYwO6XOk2t2mhyCOZWCCylXLD6kyE3NsAdtcMsPmTNTs90wjzADZofL54U9HXw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795428707;
-	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
-	 X-IronPort-AV:X-IronPort-AV:Received:X-CSE-ConnectionGUID:
-	 X-CSE-MsgGUID:X-ExtLoop1:X-IronPort-AV:Received:Date:From:To:Cc:
-	 Subject:Message-ID:References:MIME-Version:Content-Type:
-	 Content-Disposition:In-Reply-To;
-	bh=6yWhaCtRB+G5IbjR3oGplsbLfpj1Vz0qhq3cS15cjoU=;
-	b=A3xA/jBRui87BpyZupcQ4AyvqlfHINXrCyz1DFVR9abEcuPT/oZ7jcdinpJBr5pngjOb
-	 w15Z4irSTxf9erobam3lR5d9mOt1msEtio1jtPxthf4tedk4gO0HfTytY8f2uNSZHmwyh
-	 EVzl+xhK5Dxxfo0lrPteSHErykjwvCr6nfmt2tZ4U/owaTBPBuB7YhlPmOTFRRsBMzomz
-	 qi/DA6ImFWdwX/SnfyOuKiZRDNjfVB1NYUfRjD82e3WLQBa41een+cSm3gZsIItZsHkdx
-	 X3t5outtzJbIsI4CyhWCpznai7GBPeoArN8EmGg2XBCzyTXItv6dZqHwlddIOloClgw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795428720;
+	h=DMARC-Filter:Received:DKIM-Signature:Received:Received:Received:
+	 Received:Received:Received:Received:Message-ID:Subject:From:To:Cc:
+	 In-Reply-To:References:Autocrypt:Content-Type:
+	 Content-Transfer-Encoding:Date:MIME-Version:User-Agent:X-TM-AS-GCONF:
+	 X-Proofpoint-Reinject:X-Authority-Analysis:X-Proofpoint-Spam-Info:
+	 X-Proofpoint-ORIG-GUID:X-Proofpoint-GUID:
+	 X-Proofpoint-Spam-Details-Enc:X-Proofpoint-Virus-Version:
+	 X-Proofpoint-Spam-Details;
+	bh=2snuaHCf1ced3ZKcOLzPklCct0WrnW+pIXLZNFNgR0g=;
+	b=Jb4XRoGZIMPm9QvScb1LjuVPcXbrhYqJYcC6POJJ8aLME8zbBFCetEciN6Da7vriLmMY
+	 q/C79eH8Jg/LC88sFBFB0Hl3I431pISHp9uXEPQj1eHdp/+uT6n3l5KSQGC0y2To/Z3Fx
+	 uIkcuzY106szpbRt0l6KfRIl4/kKiknZsqliYcCwfwhUTnfT3jxvw16KevkT2dze3OP0m
+	 Xv343/ahh2SuEcdXrnR+fdzAApffAH/q7+EIfjg7euzXosKfEZBIXjs/9yzpCdkBXawiF
+	 vvhGL5RTTx1mhuCwswtlWqi1bfvc3sntvguZJDyRbF9YzyEKA5AumY+e95SAAXOVTbg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.intel.com;
-	spf=pass smtp.mailfrom=linux.intel.com;
-	dkim=pass header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=NPhAzmLq;
-	arc=none smtp.remote-ip=192.198.163.12
-Received: from mgamail.intel.com (mgamail.intel.com [192.198.163.12])
-	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
+	dmarc=pass header.from=linux.ibm.com;
+	spf=pass smtp.mailfrom=linux.ibm.com;
+	dkim=pass header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=qZeMY5N8;
+	arc=none smtp.remote-ip=148.163.156.1
+Received: from mx0a-001b2d01.pphosted.com (mx0a-001b2d01.pphosted.com [148.163.156.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 67A9F606A31F;
-	Mon, 23 Nov 2026 10:11:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 67A9F606A31F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.intel.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.intel.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 077C1606A31F;
+	Mon, 23 Nov 2026 10:11:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 077C1606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=intel.com header.i=@intel.com header.a=rsa-sha256 header.s=Intel header.b=NPhAzmLq
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/simple;
-  d=intel.com; i=@intel.com; q=dns/txt; s=Intel;
-  t=1795428706; x=1826964706;
-  h=date:from:to:cc:subject:message-id:references:
-   mime-version:in-reply-to;
-  bh=P27M+nuTEnh3e05RiUQ6Npx+Ok9Cj2SV7cDtQ95w+y4=;
-  b=NPhAzmLqDJyC3vl3+JuE1sgw7e6TJoqR9q9A6leQjES3DtDwTqjfTZS8
-   37c4CPYutLbVgUvw5U6PTEXIy6bgt8x/KvNRuS0o2QcMx1YdmZ9F2OJxy
-   Mh6D4hdye3OBqxDhXiRRj0TY4trPwSYTeVBrtpRhliJafz4X+nhyZKtMT
-   IO2pStZ6eo+5+gqpFArsN+MnVIzDCXmXkYV6mWSXrhlYsESmJMt22/Q69
-   RgU4ZAHXrPFScK4G/4IcJDVG8/AAxiOsph3/hWjtodXMsIBFn4V4PNZMB
-   aq315EnLbrhXMc5M17JgE262CE4lQHiAR7PbSQ4ea4ySng7nyBT/dxSmM
-   A==;
-X-CSE-ConnectionGUID: FO3AFsz4Qieo8xxnBHRVLg==
-X-CSE-MsgGUID: /+yAHRirTd6IfCDj7s1M6w==
-X-IronPort-AV: E=McAfee;i="6800,10657,11974"; a="4102475"
-X-IronPort-AV: E=Sophos;i="6.27,227,1787036400"; 
-   d="scan'208";a="4102475"
-Received: from fmviesa001.fm.intel.com ([10.60.135.141])
-  by fmvoesa106.fm.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:11:46 -0800
-X-CSE-ConnectionGUID: sHSdLaiiRGePSTGdwsmdjw==
-X-CSE-MsgGUID: 9jiLi6jyT0+tzYqpKpNqTA==
-X-ExtLoop1: 1
-X-IronPort-AV: E=Sophos;i="6.27,227,1787036400"; 
-   d="scan'208";a="11674345"
-Received: from szadworn-mobl.ger.corp.intel.com (HELO alaakso-desk) ([10.245.246.47])
-  by smtpauth.intel.com with ESMTP/TLS/ECDHE-RSA-AES256-GCM-SHA384; 23 Nov 2026 02:11:42 -0800
-Date: Mon, 23 Nov 2026 12:11:37 +0200
-From: Antti Laakso <antti.laakso@linux.intel.com>
-To: Miguel Vadillo <miguel.vadillo@intel.com>
-Cc: linux-media@vger.kernel.org, mchehab@kernel.org,
-	linux-kernel@vger.kernel.org, linux-api@vger.kernel.org,
-	sakari.ailus@linux.intel.com, hansg@kernel.org,
-	laurent.pinchart@ideasonboard.com, mehdi.djait@bootlin.com,
-	andriy.shevchenko@linux.intel.com, mika.westerberg@linux.intel.com,
-	srini@kernel.org, arun.t@intel.com
-Subject: Re: [PATCH v2] media: i2c: cvs: Add NVMem-based firmware update
- support
-Message-ID: <awQRWY-fZo0rVZqh@alaakso-desk>
-References: <20261008215733.247954-1-miguel.vadillo@intel.com>
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=qZeMY5N8
+Received: from pps.filterd (m0353729.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6AN9ZR6F1603637;
+	Mon, 23 Nov 2026 10:10:54 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-transfer-encoding:content-type:date:from:in-reply-to
+	:message-id:mime-version:references:subject:to; s=pp1; bh=2snuaH
+	Cf1ced3ZKcOLzPklCct0WrnW+pIXLZNFNgR0g=; b=qZeMY5N8IsLbhZxLNNTnPn
+	zrukWbf9ynh54WOK9bRXhxGoG0zFvnrjzj35tqdh1TjJY0r8LGKZU2z8AH+d3c+b
+	hmEFCp5VNW4FBBpwPErrLNxj0aktXwD11NF4zCyxAX0XxNRLugr1+H3BWoR/S0/u
+	75Lhh66vaTxYE6oHew2u/4MztrSP9qPDucHFeqZkrRB27f+cLHGb1LEw4aKtVmlP
+	H0dURSVf8URxndmV8GBY1qYKaBLJjDhFVyrkbCBIj5uaKpv0UOEf3AFpGcuVIX97
+	7dJ2SrFLP5w15rfj+ud/pdG2xcmaPRQ8QV3YW7moe1JCiR1CjpHsZewNo/JTmo6Q
+	==
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4j34g32jru-1
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 23 Nov 2026 10:10:52 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 6AN9JeFg2759046;
+	Mon, 23 Nov 2026 10:10:51 GMT
+Received: from smtprelay03.wdc07v.mail.ibm.com ([172.16.1.70])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4j3q4h675h-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 23 Nov 2026 10:10:51 +0000 (GMT)
+Received: from smtpav02.dal12v.mail.ibm.com (smtpav02.dal12v.mail.ibm.com [10.241.53.101])
+	by smtprelay03.wdc07v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 6ANAA0Su29229686
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 23 Nov 2026 10:10:00 GMT
+Received: from smtpav02.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 13BA55805E;
+	Mon, 23 Nov 2026 10:10:51 +0000 (GMT)
+Received: from smtpav02.dal12v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 2901F5805A;
+	Mon, 23 Nov 2026 10:10:42 +0000 (GMT)
+Received: from [9.111.1.66] (unknown [9.111.1.66])
+	by smtpav02.dal12v.mail.ibm.com (Postfix) with ESMTP;
+	Mon, 23 Nov 2026 10:10:41 +0000 (GMT)
+Message-ID: <1f10002ea9ee16a17087bd06e4a1685a973fdf6e.camel@linux.ibm.com>
+Subject: Re: [RFC PATCH v3 00/25] PISA: Pre-mapped IOVA Superpage Allocator
+ for DMA and CoCo
+From: Niklas Schnelle <schnelle@linux.ibm.com>
+To: Luigi Rizzo <lrizzo@google.com>, Jason Gunthorpe <jgg@ziepe.ca>
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+        David Hildenbrand	
+ <david@kernel.org>,
+        Johannes Weiner <hannes@cmpxchg.org>,
+        Vlastimil Babka	
+ <vbabka@kernel.org>, Joerg Roedel <joro@8bytes.org>,
+        Will Deacon
+ <will@kernel.org>, Robin Murphy <robin.murphy@arm.com>,
+        Marek Szyprowski
+ <m.szyprowski@samsung.com>,
+        Jens Axboe <axboe@kernel.dk>,
+        "David S .
+ Miller"	 <davem@davemloft.net>,
+        Eric Dumazet <edumazet@kernel.org>, Jakub
+ Kicinski	 <kuba@kernel.org>,
+        Paolo Abeni <pabeni@redhat.com>, Luigi Rizzo	
+ <rizzo.unipi@gmail.com>,
+        Lorenzo Stoakes <ljs@kernel.org>,
+        "Liam R .
+ Howlett"	 <liam@infradead.org>,
+        Mike Rapoport <rppt@kernel.org>,
+        Suren
+ Baghdasaryan	 <surenb@google.com>,
+        Michal Hocko <mhocko@suse.com>,
+        Brendan
+ Jackman	 <brendan.jackman@linux.dev>, Zi Yan <ziy@nvidia.com>,
+        Harry Yoo
+ <harry@kernel.org>, Christoph Lameter	 <cl@gentwo.org>,
+        David Rientjes
+ <rientjes@google.com>,
+        Roman Gushchin	 <roman.gushchin@linux.dev>, Hao Li
+ <hao.li@linux.dev>,
+        Matthew Wilcox	 <willy@infradead.org>, Jan Kara
+ <jack@suse.cz>,
+        Jann Horn <jannh@google.com>,
+        Catalin Marinas
+ <catalin.marinas@arm.com>,
+        Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+        "Rafael J . Wysocki"	 <rafael@kernel.org>,
+        Danilo Krummrich
+ <dakr@kernel.org>, Jonathan Corbet	 <corbet@lwn.net>,
+        Simon Horman
+ <horms@kernel.org>,
+        Jesper Dangaard Brouer	 <hawk@kernel.org>,
+        Ilias
+ Apalodimas <ilias.apalodimas@linaro.org>,
+        Willem de Bruijn
+ <willemb@google.com>,
+        Kuniyuki Iwashima <kuniyu@google.com>,
+        Joshua
+ Washington	 <joshwash@google.com>,
+        Harshitha Ramamurthy
+ <hramamurthy@google.com>,
+        Alexander Lobakin
+ <aleksander.lobakin@intel.com>,
+        Christoph Hellwig <hch@lst.de>, Dragos
+ Tatulea <dtatulea@nvidia.com>,
+        Naman Gulati <namangulati@google.com>,
+        Pranjal Shrivastava <praan@google.com>,
+        Mostafa Saleh	
+ <smostafa@google.com>,
+        Randy Dunlap <rdunlap@infradead.org>, linux-mm@kvack.org,
+        iommu@lists.linux.dev, netdev@vger.kernel.org,
+        linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org,
+        driver-core@lists.linux.dev, linux-arm-kernel@lists.infradead.org,
+        linux-api@vger.kernel.org, linux-doc@vger.kernel.org,
+        linux-kernel@vger.kernel.org
+In-Reply-To: <CAMOZA0LmZ9PFzxLcc1SuS8piFyZu6P=vX_qR2jy-3QRUoNCUKA@mail.gmail.com>
+References: <20261109182533.3594984-1-lrizzo@google.com>
+	 <20261120010655.467825-1-lrizzo@google.com>
+	 <20261120135013.GO3115493@ziepe.ca>
+	 <CAMOZA0LmZ9PFzxLcc1SuS8piFyZu6P=vX_qR2jy-3QRUoNCUKA@mail.gmail.com>
+Autocrypt: addr=schnelle@linux.ibm.com; prefer-encrypt=mutual;
+ keydata=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
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Date: Mon, 23 Nov 2026 11:09:40 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -83,922 +219,128 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261008215733.247954-1-miguel.vadillo@intel.com>
+User-Agent: Evolution 3.60.2 (3.60.2-3.fc44) 
+X-TM-AS-GCONF: 00
+X-Proofpoint-Reinject: loops=2 maxloops=12
+X-Authority-Analysis: v=2.4 cv=SoQFe/O0 c=1 sm=1 tr=0 ts=6b04112d cx=c_pps
+ a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
+ a=IkcTkHD0fZMA:10 a=zJRp6_cAMcgA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=uAbxVGIbfxUO_5tXvNgY:22 a=9jRdOu3wAAAA:8
+ a=HXTMhFcmDb5UjnNm18QA:9 a=QEXdDO2ut3YA:10 a=ZE6KLimJVUuLrTuGpvhn:22
+X-Proofpoint-Spam-Info: AW1haW4tMjYxMTIzMDA0MCBTYWx0ZWRfX+SnUpKBhpNxt
+ 6ltTAuPh+dSZqgYKHq2EXRW6JLOXkC9bKqTXzOMLsW4XQjFY6ICqrLo1eTubFi7+T30qb9yK/Sq
+ g1x/8GS5VQC+luYkfurSA9hBn0vrob8=
+X-Proofpoint-ORIG-GUID: g4YrXK8XHnOLs6hMgSbVa0siPTgmA4y1
+X-Proofpoint-GUID: COYrNUVwdZNscqeoFw9r-VC7XEpM8jcb
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYxMTIzMDA0MCBTYWx0ZWRfX221TJUFwr82H
+ r3mUgrbkS3uy4QqsIJGhCohR3l6xECTkhKk2B/N+op9eDonLFxwOFN0BdaUaIXtTpXOUZet8yjN
+ aQlwwBmgQtA65yL9mninHDLTSLbJu4ItKtAXWNMNxzzqty4zhE/M4TSxo96726kPTyeUU6ftpwy
+ nMPPh4y+F0eTHqjEmxDqB/W+qR7NxyImWAm9TD2IUIquUft3bkDpuLb0y6KBbY2D/Z3udRSkp5M
+ b9WJVFEzVvGYZohAzenyKN2CvdIWAVHV/ZiWNJcAMXZvh6xJ0rBHnZWP3x4W3UuDHE6P8UNcZwa
+ hy+ETYikMLYo1Q6uFj+WQpJ+nZYJywIs9NZmsfo/gl5fTKDa/fZeQJ0BItRWk4w3+zIRFz+E1VC
+ e/nL6Pxj4e61wP1HQ9jbJ0vXal7SsOq9rUnB0y6Dst6TB8/6U0fvmd7OFSp9F5EGScS3L+ocPeG
+ uHgw66vM79lVBe3iOHw==
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.138,FMLib:17.12.100.49
+ definitions=2026-11-23_02,2026-11-22_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ priorityscore=1501 suspectscore=0 spamscore=0 bulkscore=0 adultscore=0
+ lowpriorityscore=0 clxscore=1011 malwarescore=0 impostorscore=0 phishscore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2611040001 definitions=main-2611230040
 
-Hi Miguel,
-On Thu, Oct 08, 2026 at 02:57:33PM -0700, Miguel Vadillo wrote:
-> Add firmware update support for the Intel CVS device using the kernel
-> NVMem provider framework.
-> 
-> Two NVMem devices are registered per CVS device:
->  - nvm_active: read-only, exposes the active firmware version by
->    querying the device over I2C.
->  - nvm_non_active: write-only, root-only, accepts an incoming firmware
->    image staged by userspace (e.g. fwupd).
-> 
-> Firmware update is triggered via the nvm_authenticate sysfs attribute,
-> which supports the following write values:
->  1 - Validate staged image, stream to device, and request reset
->  2 - Validate and stream image only (no reset request)
->  3 - Request reset for a previously streamed image
->  0 - Clear the staged update state
-> 
-> On a successful write of 1 or 3, a KOBJ_CHANGE uevent is emitted to
-> signal that a device reset is required to activate the new firmware.
-> 
-> The nvm_version attribute exposes the running firmware version in
-> major.minor decimal format. The device_id attribute exposes the device
-> VID:PID for identification by userspace tools.
-> 
-> Firmware images are streamed to the device in 256-byte or 1KB chunks
-> over I2C depending on device quirks. The staging buffer is vmalloc'd
-> on first write and released once the image has been streamed to the
-> device, or on driver remove if no update was performed.
-> 
-> ABI documentation for all new sysfs attributes is added under
-> Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs.
-> 
-> The kernel does not inspect the firmware image contents. Signature
-> verification and anti-rollback enforcement are performed by the CVS
-> device firmware, which rejects images that fail either check.
-> 
-> Signed-off-by: Miguel Vadillo <miguel.vadillo@intel.com>
-> ---
-> 
+On Fri, 2026-11-20 at 15:19 +0100, Luigi Rizzo wrote:
+> On Fri, Nov 20, 2026 at 2:50=E2=80=AFPM Jason Gunthorpe <jgg@ziepe.ca> wr=
+ote:
+> >=20
+> > On Fri, Nov 20, 2026 at 01:06:30AM +0000, Luigi Rizzo wrote:
+> > > This is v3 of the RFC previously posted as DMA_PMD [0], now renamed P=
+ISA
+> > > ("Pre-mapped IOVA Superpage Allocator"). The text below follows
+> > > Documentation/core-api/pisa.rst (patch 25/25), which has the details.
+> >=20
+> > I thought the conclusion was to just do this stuff in netdev pagepool,
+> > now you come with an enormous AI series spread across the entire
+> > kernel?
+>=20
+> There were surely comments claiming nothing outside net/ cares or needs t=
+his.
+>=20
+> I respectfully disagree, witness is the fact that e.g. there was already =
+an
+> io_uring proposal which is smaller, but does not address applications
+> that want to use the standard disk I/O paths (libaio, buffer cache etc)
+>=20
+> Nothing has changed from the initial series in terms of size, use cases o=
+r
+> subsystems involved. Large files are placed where they should,
+> the series covers the same three use cases (disk, network, CoCo), and
+> touches three parts which it has to touch: mm (most of it; it is a
+> memory allocator
+> extension after all), dma (it hooks into map and unmap, not a large chang=
+e)
+> and net (the pagepool change is a couple of lines; the tx path needs to
+> touch more places because the current stack assumes all paths have
+> the same I/O requirements).
+>=20
+> For CoCo, there are very fine grained controls so the bounce buffers
+> can be enabled only when they don't pose a risk, which in turn
+> depends on the threat model.
+>=20
+> Specifically, for network tx buffers or disk writes, the user-to-kernel c=
+opy
+> is basically a bounce buffer provided it is used correctly and not leaked
+> elsewhere (which is the design; of course the implementation
+> needs to be verified and possibly fixed so that it matches the design).
+>=20
+> cheers
+> luigi
 
-Reviewed-by: Antti Laakso <antti.laakso@linux.intel.com>
+Hi Luigi, Hi Jason,
 
-> Changes in v2 (review feedback from Andy Shevchenko, thanks!):
-> - Reflow the kmalloc() assignment onto its own continuation line.
-> - cvs_send() only ever returns 0 or a negative errno, so the "ret < 0"
->   checks in cvs_do_fw_download() were misleading. Use plain "if (ret)"
->   and "ret ? : end_ret" instead.
-> - Split nvm_authenticate_store() into a cvs_nvm_authenticate() helper
->   holding ctx->lock via guard(), plus a thin sysfs wrapper. This drops
->   both mutex_unlock() calls, the err_status goto label and the do_uevent
->   bool; the uevent condition is now derived from the requested mode.
-> - Use plain guard() everywhere instead of scoped_guard(): apart from the
->   KOBJ_CHANGE uevent, none of the users needed work outside the lock.
-> - Use __ATTRIBUTE_GROUPS() instead of hand-rolling cvs_fw_groups[].
-> - Drop stale references to an "nvm_reset_pending" attribute from the
->   commit message; no such attribute is added by this patch.
-> 
-> struct icvs still has four holes, but repacking it is code-size neutral
-> per bloat-o-meter and unrelated to this patch's intent, so it will be
-> sent separately.
-> 
-> Link to v1: https://lore.kernel.org/linux-media/20260930182142.108744-1-miguel.vadillo@intel.com/
-> 
->  .../ABI/testing/sysfs-bus-i2c-devices-cvs     |  53 ++
->  MAINTAINERS                                   |   1 +
->  drivers/media/i2c/cvs/Kconfig                 |   1 +
->  drivers/media/i2c/cvs/core.c                  | 516 +++++++++++++++++-
->  drivers/media/i2c/cvs/icvs.h                  |  34 +-
->  drivers/media/i2c/cvs/v4l2.c                  |   2 +-
->  6 files changed, 582 insertions(+), 25 deletions(-)
->  create mode 100644 Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
-> 
-> diff --git a/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs b/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
-> new file mode 100644
-> index 000000000000..553532b35f07
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
-> @@ -0,0 +1,53 @@
-> +What:		/sys/bus/i2c/devices/<dev>/nvm_version
-> +Date:		January 2027
-> +KernelVersion:	7.4
-> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
-> +Description:	Returns the active firmware version of the Intel CVS device
-> +		in "<major>.<minor>" decimal format. This reflects the firmware
-> +		version currently running on the device.
-> +
-> +		This file is read-only and is only present when the CVS device
-> +		is accessible over I2C.
-> +
-> +What:		/sys/bus/i2c/devices/<dev>/nvm_authenticate
-> +Date:		January 2027
-> +KernelVersion:	7.4
-> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
-> +Description:	Reading returns the authentication status of the last firmware
-> +		update attempt as a hex value. 0x0 indicates success; any
-> +		non-zero value is an errno from the failed operation.
-> +
-> +		Writing triggers a firmware update operation using the image
-> +		previously staged via the nvm_non_active NVMem region. Accepted
-> +		values:
-> +
-> +		* 0 - Clear the staged update state
-> +		* 1 - Validate staged image, stream to device, and request reset
-> +		* 2 - Validate and stream image only (no reset request)
-> +		* 3 - Request device reset for a previously streamed image
-> +
-> +		After a successful write of 1 or 3, a KOBJ_CHANGE uevent is
-> +		emitted. The new firmware only takes effect once the device
-> +		has been reset.
-> +
-> +		The kernel does not inspect the image contents. Signature
-> +		verification and anti-rollback enforcement are performed by the
-> +		CVS device firmware, which rejects images that fail either
-> +		check.
-> +
-> +		This file is only present when the CVS device is accessible
-> +		over I2C and supports firmware update.
-> +
-> +What:		/sys/bus/i2c/devices/<dev>/device_id
-> +Date:		January 2027
-> +KernelVersion:	7.4
-> +Contact:	Miguel Vadillo <miguel.vadillo@intel.com>
-> +Description:	Returns the device vendor and product identifier in
-> +		"<vid>:<pid>" lowercase hexadecimal format
-> +		(e.g. "06cb:0701"). Note this identifies the CVS device
-> +		make and model, not the individual device instance, and
-> +		is not necessarily unique when multiple identical devices
-> +		share the same bus.
-> +
-> +		This file is read-only and is only present when the CVS device
-> +		is accessible over I2C.
-> diff --git a/MAINTAINERS b/MAINTAINERS
-> index 65e8a4b5c90b..efd7f373924e 100644
-> --- a/MAINTAINERS
-> +++ b/MAINTAINERS
-> @@ -13034,6 +13034,7 @@ INTEL COMPUTER VISION SENSING (CVS) DRIVER
->  M:	Miguel Vadillo <miguel.vadillo@intel.com>
->  L:	linux-media@vger.kernel.org
->  S:	Maintained
-> +F:	Documentation/ABI/testing/sysfs-bus-i2c-devices-cvs
->  F:	drivers/media/i2c/cvs/
->  
->  INTEL CPU family model numbers
-> diff --git a/drivers/media/i2c/cvs/Kconfig b/drivers/media/i2c/cvs/Kconfig
-> index 4309d20dd726..0a5f4fdc6b66 100644
-> --- a/drivers/media/i2c/cvs/Kconfig
-> +++ b/drivers/media/i2c/cvs/Kconfig
-> @@ -5,6 +5,7 @@ config VIDEO_INTEL_CVS
->  	depends on I2C && ACPI && VIDEO_DEV
->  	depends on IPU_BRIDGE || !IPU_BRIDGE
->  	select MEDIA_CONTROLLER
-> +	select NVMEM
->  	select VIDEO_V4L2_SUBDEV_API
->  	select V4L2_FWNODE
->  	help
-> diff --git a/drivers/media/i2c/cvs/core.c b/drivers/media/i2c/cvs/core.c
-> index d4a3b9c3bab1..bd3ee9e6111b 100644
-> --- a/drivers/media/i2c/cvs/core.c
-> +++ b/drivers/media/i2c/cvs/core.c
-> @@ -13,11 +13,15 @@
->  #include <linux/interrupt.h>
->  #include <linux/jiffies.h>
->  #include <linux/module.h>
-> +#include <linux/nvmem-provider.h>
->  #include <linux/pci.h>
->  #include <linux/platform_device.h>
->  #include <linux/pm_runtime.h>
-> +#include <linux/sizes.h>
->  #include <linux/slab.h>
->  #include <linux/time64.h>
-> +#include <linux/unaligned.h>
-> +#include <linux/vmalloc.h>
->  #include <linux/workqueue.h>
->  
->  #include <media/ipu-bridge.h>
-> @@ -25,9 +29,18 @@
->  
->  #include "icvs.h"
->  
-> -/* Command timeouts determined experimentally */
-> -#define CMD_TIMEOUT (5 * HZ)
-> -#define FW_READY_DELAY_MS 100
-> +/*
-> + * FW_LOADER_END has to wait for the device to actually finish writing the
-> + * image to flash and exit ICVS_DEV_STATE_DOWNLOAD. Measured completion time
-> + * on reference hardware is well under a second, but this is given extra
-> + * margin over the generic ICVS_CMD_TIMEOUT since flash commit time can
-> + * vary with image size and flash part across supported devices.
-> + */
-> +#define FW_END_TIMEOUT		(10 * HZ)
-> +#define FW_READY_DELAY_MS	100
-> +
-> +#define ICVS_NVM_MIN_SIZE	SZ_4K
-> +#define ICVS_NVM_MAX_SIZE	SZ_4M
->  
->  #define PCI_DEVICE_ID_INTEL_IPU7		0x645d	/* MTL / LNL */
->  #define PCI_DEVICE_ID_INTEL_IPU7P5		0xb05d	/* ARL / PTL */
-> @@ -436,6 +449,9 @@ static void cvs_reset(struct icvs *ctx)
->   * @work: Embedded delayed_work member
->   *
->   * Re-reads device state; if device_busy remains set, re-schedules itself.
-> + * When ctx->nvm.wait_dl_clear is set (FW_LOADER_END completion), also keeps
-> + * re-scheduling while ICVS_DEV_STATE_DOWNLOAD remains set, since the
-> + * device can clear BUSY slightly before it exits download mode.
->   * Otherwise stores state into wq_resp and completes the command.
->   */
->  static void cvs_recv(struct work_struct *work)
-> @@ -450,7 +466,8 @@ static void cvs_recv(struct work_struct *work)
->  		return;
->  	}
->  
-> -	if (state & ICVS_DEV_STATE_BUSY) {
-> +	if ((state & ICVS_DEV_STATE_BUSY) ||
-> +	    (ctx->nvm.wait_dl_clear && (state & ICVS_DEV_STATE_DOWNLOAD))) {
->  		dev_dbg(cvs_dev(ctx), "device busy, reschedule\n");
->  		schedule_delayed_work(&ctx->work,
->  				      msecs_to_jiffies(FW_READY_DELAY_MS));
-> @@ -466,6 +483,8 @@ static void cvs_recv(struct work_struct *work)
->   * @ctx: CVS device context
->   * @cmd: Command buffer (icvs_cmd) with cmd_id and param populated
->   * @len: Buffer length
-> + * @timeout: Timeout (jiffies) to wait for command completion; unused for
-> + *	     the GPIO-only ICVS_HOST_SENSOR_OWNER command
->   *
->   * Dispatches a set of supported commands:
->   * - ICVS_SET_DEV_HOST_ID,
-> @@ -480,10 +499,12 @@ static void cvs_recv(struct work_struct *work)
->   * Caller must hold ctx->lock when invoking this function and check for i2c
->   * bus availability.
->   *
-> - * Return: 0 on success, negative errno, -EINVAL for unsupported command
-> - * or status from device in ctx->wq_resp.
-> + * Return: 0 on success or negative errno; -EINVAL for an unsupported command
-> + * or for an error state reported by the device. Never returns a positive
-> + * value.
->   */
-> -int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
-> +int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len,
-> +	     unsigned long timeout)
->  {
->  	int ret, status = 0;
->  
-> @@ -500,8 +521,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
->  		if (ret < 0)
->  			break;
->  
-> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
-> -					    CMD_TIMEOUT);
-> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
->  		if (ret < 0)
->  			break;
->  
-> @@ -521,8 +541,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
->  		if (ret < 0)
->  			break;
->  
-> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
-> -					    CMD_TIMEOUT);
-> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
->  		status = (ctx->wq_resp.resp.state &
->  			  ICVS_DEV_STATE_ERROR) ? -EINVAL : 0;
->  		break;
-> @@ -532,13 +551,11 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
->  		if (ret < 0)
->  			break;
->  
-> -		ret = cvs_wait_wake_or_sleep(ctx, CMD_TIMEOUT,
-> -					     FW_READY_DELAY_MS);
-> +		ret = cvs_wait_wake_or_sleep(ctx, timeout, FW_READY_DELAY_MS);
->  		if (ret)
->  			break;
->  
-> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
-> -					    CMD_TIMEOUT);
-> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
->  		status = (ctx->wq_resp.resp.state &
->  			  ICVS_DEV_STATE_DOWNLOAD) ? 0 : -EINVAL;
->  		break;
-> @@ -561,8 +578,7 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
->  		if (ret)
->  			break;
->  
-> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
-> -					    CMD_TIMEOUT);
-> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
->  		status = ctx->wq_resp.resp.state &
->  			  ICVS_DEV_STATE_ERROR ? -EINVAL : 0;
->  		break;
-> @@ -572,13 +588,13 @@ int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len)
->  		if (ret < 0)
->  			break;
->  
-> -		ret = cvs_wait_wake_or_sleep(ctx, CMD_TIMEOUT,
-> -					     FW_READY_DELAY_MS);
-> +		ret = cvs_wait_wake_or_sleep(ctx, timeout, FW_READY_DELAY_MS);
->  		if (ret)
->  			break;
->  
-> -		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS,
-> -					    CMD_TIMEOUT);
-> +		ctx->nvm.wait_dl_clear = true;
-> +		ret = cvs_schedule_and_wait(ctx, FW_READY_DELAY_MS, timeout);
-> +		ctx->nvm.wait_dl_clear = false;
->  		status = !(ctx->wq_resp.resp.state &
->  			   ICVS_DEV_STATE_DOWNLOAD) ? 0 : -EINVAL;
->  		break;
-> @@ -612,7 +628,7 @@ int cvs_set_link_owner(struct icvs *ctx, enum icvs_csi_link_owner owner)
->  	size_t cmd_size = sizeof(cmd.cmd_id) + sizeof(cmd.param.param);
->  
->  	guard(mutex)(&ctx->lock);
-> -	return cvs_send(ctx, &cmd, cmd_size);
-> +	return cvs_send(ctx, &cmd, cmd_size, ICVS_CMD_TIMEOUT);
->  }
->  
->  /**
-> @@ -641,9 +657,442 @@ static int cvs_configure_dev_caps(struct icvs *ctx)
->  		cmd.param.host_id |= ICVS_HOST_ID_RGBCAMERA_PWRUP;
->  
->  	guard(mutex)(&ctx->lock);
-> -	return cvs_send(ctx, &cmd, sz);
-> +	return cvs_send(ctx, &cmd, sz, ICVS_CMD_TIMEOUT);
-> +}
-> +
-> +/**
-> + * enum icvs_nvm_auth_mode - nvm_authenticate sysfs write values
-> + * @ICVS_NVM_AUTH_CLEAR: Clear the staged update state
-> + * @ICVS_NVM_AUTH_WRITE_AND_AUTH: Validate image, stream, and request reset
-> + * @ICVS_NVM_AUTH_WRITE_ONLY: Validate and stream image without reset request
-> + * @ICVS_NVM_AUTH_AUTH_ONLY: Request reset for previously streamed image
-> + */
-> +enum icvs_nvm_auth_mode {
-> +	ICVS_NVM_AUTH_CLEAR		= 0,
-> +	ICVS_NVM_AUTH_WRITE_AND_AUTH	= 1,
-> +	ICVS_NVM_AUTH_WRITE_ONLY	= 2,
-> +	ICVS_NVM_AUTH_AUTH_ONLY		= 3,
-> +};
-> +
-> +/**
-> + * cvs_nvm_validate - Locate the payload within the staged firmware image
-> + * @ctx: CVS device context
-> + *
-> + * Only the staged image size is checked here. Signature verification and
-> + * anti-rollback enforcement are performed by the CVS device firmware, which
-> + * rejects images that fail either check.
-> + *
-> + * Return: 0 on success, -ENODATA when no usable image is staged.
-> + */
-> +static int cvs_nvm_validate(struct icvs *ctx)
-> +{
-> +	struct icvs_nvm *nvm = &ctx->nvm;
-> +	unsigned int header_size = SZ_1K;
-> +
-> +	if (ctx->quirks & ICVS_FW_HEADER_SIZE_256)
-> +		header_size = SZ_256;
-> +
-> +	if (!nvm->buf || nvm->buf_total_size < ICVS_NVM_MIN_SIZE)
-> +		return -ENODATA;
-> +
-> +	/* The ICVS_NVM_MIN_SIZE check above keeps this from underflowing */
-> +	nvm->buf_data_start = nvm->buf + header_size;
-> +	nvm->buf_data_size = nvm->buf_total_size - header_size;
-> +
-> +	return 0;
-> +}
-> +
-> +/**
-> + * cvs_do_fw_download - Stream firmware payload to the device over I2C
-> + * @ctx: CVS device context (ctx->lock held by caller)
-> + * @buf: Firmware payload (header already removed)
-> + * @size: Payload size in bytes
-> + *
-> + * Sends FW_LOADER_START, streams @buf in FW_LOADER_DATA chunks, then
-> + * FW_LOADER_END. cvs_send() already waits for and confirms actual flash
-> + * completion for FW_LOADER_END (via the BUSY/DOWNLOAD state polling in
-> + * cvs_recv()), so its return value is the final result here.
-> + *
-> + * Return: 0 on success or negative errno.
-> + */
-> +static int cvs_do_fw_download(struct icvs *ctx, const u8 *buf, size_t size)
-> +{
-> +	struct icvs_cmd cmd = { };
-> +	size_t chunk_max, chunk, pos;
-> +	int ret, end_ret;
-> +
-> +	if (ctx->quirks & ICVS_FW_BUF_SIZE_256)
-> +		chunk_max = SZ_256;
-> +	else
-> +		chunk_max = SZ_1K;
-> +
-> +	void *fw_buf __free(kfree) =
-> +		kmalloc(chunk_max + sizeof(__be16), GFP_KERNEL);
-> +	if (!fw_buf)
-> +		return -ENOMEM;
-> +
-> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_START);
-> +	ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), ICVS_CMD_TIMEOUT);
-> +	if (ret)
-> +		return ret;
-> +
-> +	for (pos = 0; pos < size; pos += chunk) {
-> +		chunk = min(chunk_max, size - pos);
-> +		put_unaligned_be16(ICVS_FW_LOADER_DATA, fw_buf);
-> +		memcpy(fw_buf + sizeof(__be16), buf + pos, chunk);
-> +
-> +		ret = cvs_send(ctx, fw_buf, sizeof(__be16) + chunk,
-> +			       ICVS_CMD_TIMEOUT);
-> +		if (ret) {
-> +			dev_err(cvs_dev(ctx),
-> +				"FW data chunk send failed: %d\n", ret);
-> +			break;
-> +		}
-> +	}
-> +
-> +	/* Always send FW_LOADER_END, but keep any earlier DATA error. */
-> +	cmd.cmd_id = cpu_to_be16(ICVS_FW_LOADER_END);
-> +	end_ret = cvs_send(ctx, &cmd, sizeof(cmd.cmd_id), FW_END_TIMEOUT);
-> +
-> +	return ret ? : end_ret;
-> +}
-> +
-> +/* cvs_nvm_active_read - NVMem read callback for active firmware region */
-> +static int cvs_nvm_active_read(void *priv, unsigned int offset,
-> +			       void *val, size_t bytes)
-> +{
-> +	__be16 op = cpu_to_be16(ICVS_GET_DEV_FW_VERSION);
-> +	struct icvs_fw_version fw_ver = { };
-> +	struct icvs *ctx = priv;
-> +	struct device *dev = cvs_dev(ctx);
-> +	size_t avail = sizeof(fw_ver);
-> +	size_t len;
-> +	int ret;
-> +
-> +	if (offset >= avail)
-> +		return -EINVAL;
-> +
-> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
-> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
-> +	if (ret)
-> +		return ret;
-> +
-> +	guard(mutex)(&ctx->lock);
-> +
-> +	ret = cvs_read_i2c(ctx, op, &fw_ver, sizeof(fw_ver));
-> +	if (ret)
-> +		return ret;
-> +
-> +	len = min(bytes, avail - offset);
-> +	memcpy(val, (void *)&fw_ver + offset, len);
-> +
-> +	return 0;
-> +}
-> +
-> +/*
-> + * cvs_nvm_write_buf - NVMem write callback for non-active firmware staging
-> + *
-> + * Serialized against nvm_authenticate_store() via ctx->lock, since both
-> + * read and mutate the shared staging buffer and its size/flushed state.
-> + *
-> + * offset + bytes is always used as the new total size (rather than only
-> + * growing it) so that staging a new, smaller image after a larger one
-> + * does not leave stale trailing bytes from the previous image in the
-> + * buffer that would otherwise be sent to the device.
-> + */
-> +static int cvs_nvm_write_buf(void *priv, unsigned int offset,
-> +			     void *val, size_t bytes)
-> +{
-> +	struct icvs *ctx = priv;
-> +	struct icvs_nvm *nvm = &ctx->nvm;
-> +
-> +	guard(mutex)(&ctx->lock);
-> +
-> +	if (!nvm->buf)
-> +		nvm->buf = vmalloc(ICVS_NVM_MAX_SIZE);
-> +	if (!nvm->buf)
-> +		return -ENOMEM;
-> +
-> +	memcpy(nvm->buf + offset, val, bytes);
-> +	nvm->buf_total_size = offset + bytes;
-> +	nvm->flushed = false;
-> +
-> +	return 0;
-> +}
-> +
-> +/**
-> + * cvs_nvm_add_active - Register read-only NVMem device for active FW version
-> + * @ctx: CVS device context
-> + *
-> + * Registers an NVMem device named "nvm_active" whose read callback queries
-> + * the device for its currently running firmware version.
-> + *
-> + * Return: 0 on success or negative errno.
-> + */
-> +static int cvs_nvm_add_active(struct icvs *ctx)
-> +{
-> +	struct nvmem_config config = {
-> +		.name = "nvm_active",
-> +		.id = NVMEM_DEVID_NONE,
-> +		.dev = cvs_dev(ctx),
-> +		.owner = THIS_MODULE,
-> +		.read_only = true,
-> +		.reg_read = cvs_nvm_active_read,
-> +		.priv = ctx,
-> +		.stride = 4,
-> +		.word_size = 4,
-> +		.size = sizeof(struct icvs_fw_version),
-> +	};
-> +	struct nvmem_device *nvmem;
-> +
-> +	nvmem = nvmem_register(&config);
-> +	if (IS_ERR(nvmem))
-> +		return PTR_ERR(nvmem);
-> +
-> +	ctx->nvm.active = nvmem;
-> +
-> +	return 0;
-> +}
-> +
-> +/**
-> + * cvs_nvm_add_non_active - Register write-only NVMem device for FW staging
-> + * @ctx: CVS device context
-> + *
-> + * Registers an NVMem device named "nvm_non_active" that accepts an incoming
-> + * firmware image written by userspace (e.g. fwupd via dd). The image is
-> + * buffered in memory until nvm_authenticate triggers the actual download.
-> + * Access is restricted to root.
-> + *
-> + * Return: 0 on success or negative errno.
-> + */
-> +static int cvs_nvm_add_non_active(struct icvs *ctx)
-> +{
-> +	struct nvmem_config config = {
-> +		.name = "nvm_non_active",
-> +		.id = NVMEM_DEVID_NONE,
-> +		.dev = cvs_dev(ctx),
-> +		.owner = THIS_MODULE,
-> +		.root_only = true,
-> +		.reg_write = cvs_nvm_write_buf,
-> +		.priv = ctx,
-> +		.stride = 4,
-> +		.word_size = 4,
-> +		.size = ICVS_NVM_MAX_SIZE,
-> +	};
-> +	struct nvmem_device *nvmem;
-> +
-> +	nvmem = nvmem_register(&config);
-> +	if (IS_ERR(nvmem))
-> +		return PTR_ERR(nvmem);
-> +
-> +	ctx->nvm.non_active = nvmem;
-> +
-> +	return 0;
-> +}
-> +
-> +/**
-> + * cvs_nvm_release_buf - Free the firmware staging buffer
-> + * @nvm: NVM state to release the buffer from
-> + *
-> + * Frees the vmalloc'd staging buffer once it is no longer needed, either
-> + * right after a successful download or during teardown. Does not touch
-> + * @nvm->flushed, since a successfully streamed image must stay reflected
-> + * there even after the buffer backing it has been released.
-> + */
-> +static void cvs_nvm_release_buf(struct icvs_nvm *nvm)
-> +{
-> +	vfree(nvm->buf);
-> +	nvm->buf = NULL;
-> +	nvm->buf_total_size = 0;
-> +	nvm->buf_data_start = NULL;
-> +	nvm->buf_data_size = 0;
-> +}
-> +
-> +/**
-> + * cvs_nvm_free - Release firmware staging buffer
-> + * @ctx: CVS device context
-> + *
-> + * Frees the vmalloc'd buffer used to stage the incoming firmware image
-> + * and resets all associated NVM state fields.
-> + */
-> +static void cvs_nvm_free(struct icvs *ctx)
-> +{
-> +	nvmem_unregister(ctx->nvm.non_active);
-> +	ctx->nvm.non_active = NULL;
-> +	nvmem_unregister(ctx->nvm.active);
-> +	ctx->nvm.active = NULL;
-> +	cvs_nvm_release_buf(&ctx->nvm);
-> +	ctx->nvm.flushed = false;
-> +}
-> +
-> +static ssize_t nvm_version_show(struct device *dev,
-> +				struct device_attribute *attr, char *buf)
-> +{
-> +	__be16 op = cpu_to_be16(ICVS_GET_DEV_FW_VERSION);
-> +	struct icvs *ctx = dev_get_drvdata(dev);
-> +	struct icvs_fw_version fw_ver = { };
-> +	int ret;
-> +
-> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
-> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
-> +	if (ret)
-> +		return ret;
-> +
-> +	guard(mutex)(&ctx->lock);
-> +
-> +	ret = cvs_read_i2c(ctx, op, &fw_ver, sizeof(fw_ver));
-> +	if (ret)
-> +		return ret;
-> +
-> +	return sysfs_emit(buf, "%u.%u\n", fw_ver.major, fw_ver.minor);
-> +}
-> +static DEVICE_ATTR_RO(nvm_version);
-> +
-> +static ssize_t nvm_authenticate_show(struct device *dev,
-> +				     struct device_attribute *attr, char *buf)
-> +{
-> +	struct icvs *ctx = dev_get_drvdata(dev);
-> +
-> +	return sysfs_emit(buf, "%#x\n", ctx->nvm.auth_status);
->  }
->  
-> +/**
-> + * cvs_nvm_authenticate - Perform an nvm_authenticate operation
-> + * @ctx: CVS device context
-> + * @val: Requested operation, see enum icvs_nvm_auth_mode
-> + *
-> + * Runs the whole operation under ctx->lock and records the outcome in
-> + * nvm->auth_status for nvm_authenticate_show().
-> + *
-> + * Return: 0 on success or negative errno.
-> + */
-> +static int cvs_nvm_authenticate(struct icvs *ctx, unsigned int val)
-> +{
-> +	struct icvs_nvm *nvm = &ctx->nvm;
-> +	int ret = 0;
-> +
-> +	guard(mutex)(&ctx->lock);
-> +
-> +	switch (val) {
-> +	case ICVS_NVM_AUTH_CLEAR:
-> +		nvm->flushed = false;
-> +		break;
-> +
-> +	case ICVS_NVM_AUTH_WRITE_ONLY:
-> +	case ICVS_NVM_AUTH_WRITE_AND_AUTH:
-> +		ret = cvs_nvm_validate(ctx);
-> +		if (!ret)
-> +			ret = cvs_do_fw_download(ctx, nvm->buf_data_start,
-> +						 nvm->buf_data_size);
-> +		if (ret)
-> +			break;
-> +
-> +		nvm->flushed = true;
-> +		cvs_nvm_release_buf(nvm);
-> +
-> +		if (val == ICVS_NVM_AUTH_WRITE_ONLY)
-> +			break;
-> +
-> +		fallthrough;
-> +
-> +	case ICVS_NVM_AUTH_AUTH_ONLY:
-> +		if (!nvm->flushed)
-> +			ret = -ENODATA;
-> +		break;
-> +	}
-> +
-> +	nvm->auth_status = -ret;
-> +
-> +	return ret;
-> +}
-> +
-> +static ssize_t nvm_authenticate_store(struct device *dev,
-> +				      struct device_attribute *attr,
-> +				      const char *buf, size_t count)
-> +{
-> +	struct icvs *ctx = dev_get_drvdata(dev);
-> +	unsigned int val;
-> +	int ret;
-> +
-> +	ret = kstrtouint(buf, 0, &val);
-> +	if (ret)
-> +		return ret;
-> +	if (val > ICVS_NVM_AUTH_AUTH_ONLY)
-> +		return -EINVAL;
-> +
-> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
-> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret = cvs_nvm_authenticate(ctx, val);
-> +	if (ret)
-> +		return ret;
-> +
-> +	/* Emitted outside ctx->lock; consumers read back sysfs attributes */
-> +	if (val == ICVS_NVM_AUTH_WRITE_AND_AUTH ||
-> +	    val == ICVS_NVM_AUTH_AUTH_ONLY)
-> +		kobject_uevent(&dev->kobj, KOBJ_CHANGE);
-> +
-> +	return count;
-> +}
-> +static DEVICE_ATTR_RW(nvm_authenticate);
-> +
-> +static ssize_t device_id_show(struct device *dev,
-> +			      struct device_attribute *attr, char *buf)
-> +{
-> +	struct icvs *ctx = dev_get_drvdata(dev);
-> +	struct icvs_resp n = { };
-> +	int ret;
-> +
-> +	PM_RUNTIME_ACQUIRE_IF_ENABLED_AUTOSUSPEND(dev, pm);
-> +	ret = PM_RUNTIME_ACQUIRE_ERR(&pm);
-> +	if (ret)
-> +		return ret;
-> +
-> +	n.cmd_id = cpu_to_be16(ICVS_GET_DEV_VID_PID);
-> +
-> +	guard(mutex)(&ctx->lock);
-> +
-> +	ret = cvs_read_i2c(ctx, n.cmd_id, &n.resp.vid_pid,
-> +			   sizeof(n.resp.vid_pid));
-> +	if (ret)
-> +		return ret;
-> +
-> +	return sysfs_emit(buf, "%04x:%04x\n",
-> +			  n.resp.vid_pid.v_id, n.resp.vid_pid.p_id);
-> +}
-> +static DEVICE_ATTR_RO(device_id);
-> +
-> +static umode_t cvs_fw_attr_visible(struct kobject *kobj,
-> +				   const struct attribute *attr, int n)
-> +{
-> +	struct icvs *ctx = dev_get_drvdata(kobj_to_dev(kobj));
-> +
-> +	/* Every attribute in this group needs the I2C transport */
-> +	if (!ctx->i2c_client)
-> +		return 0;
-> +
-> +	if ((ctx->quirks & ICVS_NO_FW_UPDATE) &&
-> +	    attr == &dev_attr_nvm_authenticate.attr)
-> +		return 0;
-> +
-> +	return attr->mode;
-> +}
-> +
-> +static const struct attribute *const cvs_fw_attrs[] = {
-> +	&dev_attr_nvm_version.attr,
-> +	&dev_attr_nvm_authenticate.attr,
-> +	&dev_attr_device_id.attr,
-> +	NULL
-> +};
-> +
-> +static const struct attribute_group cvs_fw_group = {
-> +	.attrs_const = cvs_fw_attrs,
-> +	.is_visible_const = cvs_fw_attr_visible,
-> +};
-> +__ATTRIBUTE_GROUPS(cvs_fw);
-> +
->  /**
->   * cvs_core_probe - Shared probe path for I2C & platform instantiation
->   * @dev: Parent device
-> @@ -806,11 +1255,28 @@ static int cvs_core_probe(struct device *dev, struct i2c_client *i2c)
->  	pm_runtime_enable(dev);
->  	pm_runtime_idle(dev);
->  
-> +	if (ctx->i2c_client) {
-> +		ret = cvs_nvm_add_active(ctx);
-> +		if (ret) {
-> +			dev_err_probe(dev, ret, "NVM active register failed\n");
-> +			goto err_csi_remove;
-> +		}
-> +
-> +		ret = cvs_nvm_add_non_active(ctx);
-> +		if (ret) {
-> +			dev_err_probe(dev, ret,
-> +				      "NVM non-active register failed\n");
-> +			goto err_csi_remove;
-> +		}
-> +	}
-> +
->  	/*
->  	 * Create a PM runtime device link with IPU as consumer and CVS as
->  	 * supplier. When the IPU runtime-resumes to start streaming, the PM
->  	 * framework automatically resumes CVS first, triggering
->  	 * cvs_runtime_resume() which hands CSI-2 link ownership to the host.
-> +	 * Kept as the last probe step so it is only established once the
-> +	 * device is otherwise fully initialized.
->  	 */
->  	ctx->ipu_link = device_link_add(&ipu->dev, dev,
->  					DL_FLAG_PM_RUNTIME |
-> @@ -830,6 +1296,7 @@ static int cvs_core_probe(struct device *dev, struct i2c_client *i2c)
->  	return 0;
->  
->  err_csi_remove:
-> +	cvs_nvm_free(ctx);
->  	if (ctx->ipu_link)
->  		device_link_del(ctx->ipu_link);
->  	cvs_csi_remove(ctx);
-> @@ -864,6 +1331,7 @@ static void cvs_core_remove(struct device *dev)
->  
->  	cancel_delayed_work_sync(&ctx->work);
->  	cvs_csi_remove(ctx);
-> +	cvs_nvm_free(ctx);
->  
->  	if (ctx->ipu_link)
->  		device_link_del(ctx->ipu_link);
-> @@ -973,6 +1441,7 @@ static struct i2c_driver cvs_driver = {
->  	.driver = {
->  		.name = "intel_cvs",
->  		.acpi_match_table = intel_cvs_acpi_match,
-> +		.dev_groups = cvs_fw_groups,
->  		.pm = pm_ptr(&cvs_pm_ops),
->  	},
->  	.probe = cvs_probe,
-> @@ -1000,6 +1469,7 @@ static struct platform_driver cvs_platform_driver = {
->  	.driver = {
->  		.name = "cvs_platform",
->  		.acpi_match_table = intel_cvs_acpi_match,
-> +		.dev_groups = cvs_fw_groups,
->  		.pm = pm_ptr(&cvs_pm_ops),
->  	},
->  	.probe = cvs_platform_probe,
-> diff --git a/drivers/media/i2c/cvs/icvs.h b/drivers/media/i2c/cvs/icvs.h
-> index 17beb0920dd2..d0f4e3d02058 100644
-> --- a/drivers/media/i2c/cvs/icvs.h
-> +++ b/drivers/media/i2c/cvs/icvs.h
-> @@ -8,7 +8,9 @@
->  
->  #include <linux/bits.h>
->  #include <linux/completion.h>
-> +#include <linux/jiffies.h>
->  #include <linux/mutex.h>
-> +#include <linux/nvmem-provider.h>
->  #include <linux/workqueue.h>
->  #include <linux/types.h>
->  #include <linux/wait.h>
-> @@ -38,6 +40,30 @@ struct i2c_client;
->  /* Firmware response prefix (optional, for protocol revision 2.x or newer) */
->  #define ICVS_PREFIX_VAL	0xCAFEB0BA
->  
-> +/**
-> + * struct icvs_nvm - NVM firmware staging and update state
-> + * @buf: vmalloc'd buffer staging the incoming firmware image
-> + * @buf_data_start: Pointer to payload start (past header)
-> + * @active: Read-only NVMem device exposing active firmware version region
-> + * @non_active: Write-only NVMem device accepting incoming firmware image
-> + * @buf_total_size: Total bytes written into @buf by fwupd
-> + * @buf_data_size: Payload byte count (total minus header)
-> + * @auth_status: Last nvm_authenticate error (0 = success)
-> + * @flushed: True after payload has been successfully streamed to device
-> + * @wait_dl_clear: cvs_recv() keeps polling past BUSY until DOWNLOAD clears
-> + */
-> +struct icvs_nvm {
-> +	u8 *buf;
-> +	u8 *buf_data_start;
-> +	struct nvmem_device *active;
-> +	struct nvmem_device *non_active;
-> +	unsigned int buf_total_size;
-> +	unsigned int buf_data_size;
-> +	unsigned int auth_status;
-> +	bool flushed;
-> +	bool wait_dl_clear;
-> +};
-> +
->  /*
->   * CSI bridge sub-device definitions
->   */
-> @@ -443,6 +469,7 @@ enum icvs_state {
->   * @irq: Wake IRQ (full capability)
->   * @hostwake_event: Waitqueue for wake events
->   * @hostwake_event_arg: Wake event flag
-> + * @nvm: NVMem firmware staging and update state
->   */
->  struct icvs {
->  	struct i2c_client *i2c_client;
-> @@ -468,6 +495,7 @@ struct icvs {
->  	int irq;
->  	wait_queue_head_t hostwake_event;
->  	bool hostwake_event_arg;
-> +	struct icvs_nvm nvm;
->  };
->  
->  /**
-> @@ -484,8 +512,12 @@ static inline struct device *cvs_dev(struct icvs *ctx)
->  	return ctx->i2c_client ? &ctx->i2c_client->dev : ctx->subdev.dev;
->  }
->  
-> +/* Command timeout (jiffies) determined experimentally */
-> +#define ICVS_CMD_TIMEOUT (5 * HZ)
-> +
->  /* Cross-unit interfaces */
-> -int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len);
-> +int cvs_send(struct icvs *ctx, struct icvs_cmd *cmd, size_t len,
-> +	     unsigned long timeout);
->  int cvs_set_link_owner(struct icvs *ctx, enum icvs_csi_link_owner owner);
->  int cvs_csi_init(struct icvs *ctx, struct device *dev, struct i2c_client *i2c);
->  void cvs_csi_remove(struct icvs *ctx);
-> diff --git a/drivers/media/i2c/cvs/v4l2.c b/drivers/media/i2c/cvs/v4l2.c
-> index 9fadca7a3bee..c74fbd0cda5d 100644
-> --- a/drivers/media/i2c/cvs/v4l2.c
-> +++ b/drivers/media/i2c/cvs/v4l2.c
-> @@ -64,7 +64,7 @@ static int csi_set_link_cfg(struct icvs *ctx, u64 link_freq)
->  	size_t cmd_size = sizeof(cmd.cmd_id) + sizeof(cmd.param.conf);
->  
->  	guard(mutex)(&ctx->lock);
-> -	return cvs_send(ctx, &cmd, cmd_size);
-> +	return cvs_send(ctx, &cmd, cmd_size, ICVS_CMD_TIMEOUT);
->  }
->  
->  /*
-> 
-> base-commit: a90ee4305c4a5df72c11b31dacfdc76e00fcf78a
-> -- 
-> 2.43.0
-> 
-> 
+I've been lurking but following this series since the start. I am torn.
+On s390 where the IOMMU is always enabled on our closest equivalent to
+bare metal (non paging LPAR hypervisor), and where we also default to
+an emulated IOMMU in KVM guests, the underlying problem is a real pain.
+We're also in the process of enabling large IOMMU mappings via the
+generic_pt API which are 1M and 2G on s390. So, the idea of making
+better use of larger mappings is very attractive to us and I applaud
+you for trying to tackle this very real issue.
+
+That said I do have to agree with the critique. This series is too
+invasive, too unclear in its layering, and most importantly it feels
+like you're trying to do everything in a big swoop ignoring advice from
+the maintainers just because it would limit the scope of a first step.
+
+I also don't think Jason's point is that nothing outside net/ cares, I
+think, it's rather that the IOMMU and DMA layers already offer the
+tools and each subsystem needs to use the right combination for its
+specific requirements. And if a tool is missing this needs to be stated
+very precisely including how the addition keeps layering intact.
+
+I don't claim to have a simple solution to offer, if I did I would have
+sent patches already, but let me state my thoughts. First I think this
+really needs an iterative approach with much smaller self contained
+steps and focus on specific issues. With that, I think this should
+focus on the network stack, while the io_uring specific proposal can go
+after the block layer. Also in my experience networking is where this
+hurts most.
+
+Now, I wonder if we can't start with something simple. What if the page
+pool could start by allocating in batches of PMD sized and aligned
+folios of contiguous pages that can share a single large IOMMU
+translation. The page pool can then still hand out pages from that
+batch without having to do sub-page allocation but would already use
+much fewer IOTLB entries and the locality might even help non IOMMU
+workloads.=C2=A0So, I'd even hope this could be enabled by default and this
+is actually something I don't like about this series, I really don't
+like having a tunable when we know that larger IOMMU mappings are
+strictly better when you have an IOMMU that supports them.
+
+I think that approach would also align with Jason's idea to keep things
+within the network stack and to work with the tools we have until their
+limits become very clear.
+
+Thanks,
+Niklas
+> >=20
