@@ -1,131 +1,102 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=202.12.124.146
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795527591;
-	b=XCPi63v6Hkn0Um023rVTTiKtAcD/K+Loj7LEBcQhNm37AUzkgWHjy9inxr49iDYKoR8R
-	 +MAdWpVmQVrlKVofpz6/6jVQtQoDR8LsYpZQMkvzVjuVnieHE/ehIjegSMQPKTp6Tzjbn
-	 schOj82GZkIIya/oq1LXaqniFK6aMuVzisRcj7ClA6bW/bwoSMxDs1a7NAJc8bcXaahdd
-	 jeizfgARtbOzP156gSZbawwgagMNDGES6oJy4XwoMLbvKStZoD6u9t9MhJEBHuiSecUme
-	 MZiXGJ5M9E81+MT3mu0PNODjdAq+y5U0a2IJflRBgeMfYPOrHA+xqHWJ39EwIUd09hw==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795527591;
-	h=DMARC-Filter:Received:Received:DKIM-Signature:DKIM-Signature:
-	 X-DKIM2-Info:DKIM2-Signature:X-DKIM2-Info:Message-Instance:
-	 X-ME-Sender:X-ME-Received:X-ME-Proxy-Cause:X-ME-Proxy:Feedback-ID:
-	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
-	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=FFPocmiYjY4uBN7YtxnCPmj3gxT6Y3NraGib0JuLZOA=;
-	b=C0U+o8S2IPDov1peDSFoLeUAHCsbUdiTkIR6VxI229qxxcgbtIpQEH0j7p6nTwtKQpXm
-	 6AVJzhlHstuK8eQBSGKj4eAp3CDHrTJrWYaOaJ9VedNCaoC3leJwCBnzolObbxmdWBYI/
-	 DesZCwcQgnKOSLaYhXlXFT66hD9L/CI8Ec5tal/57bYj35/7ClpIEd1mDy36uU9Bkvggo
-	 TNMP3DDQduHSTT1A8TLJVESo++Fo9dyhjtAIw7v7yTk+jalNZQ7pSiBqECKf21G0Ab/SK
-	 lN7i7VCRaDK4gkzqvua7YVXPi2/g/0iAH0FjNuTiy3V89TrAAmSIsvLZSblyAwY+i3w==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=none header.from=jannau.net;
-	spf=pass smtp.mailfrom=jannau.net;
-	dkim=pass header.d=jannau.net header.i=@jannau.net header.a=rsa-sha256 header.s=fm2 header.b="3u8FKVI/";
-	dkim=pass header.d=messagingengine.com header.i=@messagingengine.com header.a=rsa-sha256 header.s=fm3 header.b="by/oM2OY";
-	arc=none smtp.remote-ip=202.12.124.146
-Received: from fout-b3-smtp.messagingengine.com (fout-b3-smtp.messagingengine.com [202.12.124.146])
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=52.101.96.82
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795530533;
+	b=R9nZcp1jhWAFhfjRpA8zbwksJB7gZpefNXLUqU7eZJ8jBGh6I5qRPKuerzucQRgUH2MA
+	 zJbNUOy2mwddpmw8UV6Iba0Cr88XO6w4mWx2XfSCGT3PG2xpT/LRFI5Q9Vn06KUbjdaS/
+	 PwJL4P1qepc/D/nNWUNDrBIJVSPfopMIymGoxQY1PN0/SVdTZqxdbxNoGtmupinJ1agEx
+	 CyDiJ3necLh5d3iwJuPvfPEDFe4VgHjmUsnSActKPl6Pr/IF9VoHLml3waA64oBCrmR82
+	 GpirAINVyiq/X9DH49moMRGJobezBw57e4p1QMH/ZABPDMFx/+8+mn/oc9hT9QKzlQg==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795530533;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:
+	 Content-Transfer-Encoding:Content-Type:Date:Message-Id:Subject:From:
+	 To:Cc:X-Mailer:References:In-Reply-To:X-ClientProxiedBy:MIME-Version:
+	 X-MS-PublicTrafficType:X-MS-TrafficTypeDiagnostic:
+	 X-MS-Office365-Filtering-Correlation-Id:X-MS-Exchange-SenderADCheck:
+	 X-MS-Exchange-AntiSpam-Relay:X-Microsoft-Antispam:
+	 X-Microsoft-Antispam-Message-Info:X-Forefront-Antispam-Report:
+	 X-MS-Exchange-AntiSpam-MessageData-ChunkCount:
+	 X-MS-Exchange-AntiSpam-MessageData-0:X-OriginatorOrg:
+	 X-MS-Exchange-CrossTenant-Network-Message-Id:
+	 X-MS-Exchange-CrossTenant-AuthSource:X-MS-Exchange-CrossTenant-AuthAs:
+	 X-MS-Exchange-CrossTenant-OriginalArrivalTime:
+	 X-MS-Exchange-CrossTenant-FromEntityHeader:
+	 X-MS-Exchange-CrossTenant-Id:X-MS-Exchange-CrossTenant-MailboxType:
+	 X-MS-Exchange-CrossTenant-UserPrincipalName:
+	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
+	bh=XCnT406AtVTLQM1dtuV3kPZfQWiESMWizu0qq6qxkz4=;
+	b=AjgX+YXnTA36WI5wzhsIgnxzmwJw35ttbWNf9yYDfZma0/AnxROBVQyRl5E/yPUiXQVE
+	 c2htgLvz0tXdBn4+b8uYj6i8xfvZdm5+DHA+WNqN7cmpFIwMPDvpaH4E996dV/ZGHdyt+
+	 eOYgILcYC9uk/wjmQEO3aWhLK/kenwtKioqfHjsnHcT4XwUEJeb6oZPUzu8uYFVTjtVut
+	 H8ojULudPBS2n8Yk90h30sf3dzHFj6h8+Bg992K0P/KCSpRB8kH/OVeEmlLuEUEXpDgOR
+	 OoGh+kV6Ft5xmA1TO1/kOm4wAy+y8R7nxA3lSKL58O2AbXPFQuSmC1Qg12lXdX2E/0w==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=garyguo.net;
+	spf=pass smtp.mailfrom=garyguo.net;
+	dkim=pass header.d=garyguo.net header.i=@garyguo.net header.a=rsa-sha256 header.s=selector1 header.b="WBx/jTit";
+	arc=pass header.oldest-pass=0 smtp.remote-ip=52.101.96.82
+Received: from LO0P265CU003.outbound.protection.outlook.com (mail-uksouthazon11022082.outbound.protection.outlook.com [52.101.96.82])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4292A606A31E
-	for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 13:39:50 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4292A606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=jannau.net
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=jannau.net
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4E2FD606A31E;
+	Tue, 24 Nov 2026 14:28:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4E2FD606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=garyguo.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=garyguo.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=jannau.net header.i=@jannau.net header.a=rsa-sha256 header.s=fm2 header.b=3u8FKVI/;
-	dkim=pass (2048-bit key, unprotected) header.d=messagingengine.com header.i=@messagingengine.com header.a=rsa-sha256 header.s=fm3 header.b=by/oM2OY
-Received: from phl-compute-02.internal (phl-compute-02.internal [10.202.2.42])
-	by mailfout.stl.internal (Postfix) with ESMTP id A345D1D00596
-	for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 08:39:49 -0500 (EST)
-Received: from phl-frontend-03 ([10.202.2.162])
-  by phl-compute-02.internal (MEProxy); Tue, 24 Nov 2026 08:39:49 -0500
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=jannau.net; h=cc
-	:cc:content-type:content-type:date:date:from:from:in-reply-to
-	:in-reply-to:message-id:mime-version:references:reply-to:subject
-	:subject:to:to; s=fm2; t=1795527586; x=1795613986; bh=FFPocmiYjY
-	4uBN7YtxnCPmj3gxT6Y3NraGib0JuLZOA=; b=3u8FKVI/enGiX4SpeOpEBmpEvX
-	aBv8TvMxxzF4btN9FAYKThFHiu7X7N0FZR+cqUl8jyMkts9nZbxT+1e2+oKcJASc
-	C8Zwd8cganVwj2OSt7VKiqWX5gKKUfKk87Hd9Lcwe2yqlyAsFKcCgqAqI98UIqL2
-	2Spk3c0nkJhVTCcOkact54bH/2t16sdZCE/+P1BxhiIbxI+LmX4XVLl2AkJbvtBJ
-	14cN0o8Idi8wgkCDgMD7o1na/dnGVZpXvUad7F4Itow13I0vmPjomIrE9clQIHMl
-	dmIOXDWcIbfrhRGEyj3+K3ffDpS5K63GwT+E5dJx6Pect6KfjMf7qNXq42/A==
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
-	messagingengine.com; h=cc:cc:content-type:content-type:date:date
-	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
-	:message-id:mime-version:references:reply-to:subject:subject:to
-	:to:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm3; t=
-	1795527586; x=1795613986; bh=FFPocmiYjY4uBN7YtxnCPmj3gxT6Y3NraGi
-	b0JuLZOA=; b=by/oM2OYQLK45eJq48XUNA1hX//hn3i5lbtoZY8KzPP9lcQxzgA
-	e8W6F0880h/IxZNfg5BPLXhps1JS/5Ik8+GbsLQJMA8JFqU2fPTLuUzUfpMZEBy4
-	1dlpnBLyTjK9g0AkM0WguaQiy9GGL8CMwVcT07NW0fc/Sqbme4Mh2ZO3f9Yt8Hd4
-	MF+YmSZ9Jy67iJGfcuq/Dcs3Thv+vSnR8EjCnNbLsMIjkHd8je344Acu5IowkKxu
-	Qgu7Qo63a5tnRjGS2VLfR+3nf7LlBL1+bmlJIsSt4Tqrf7VBiJr6xZ1ohCbjo1n0
-	tHpQsVOQfjvjllYu5MQdVRmSL8169nN5fzQ==
-X-DKIM2-Info: draft=ietf-dkim-dkim2-spec-09;
-	repo=github.com/dkim2wg/interop; date=2026-11-03; sw=lmtpprox;
-	action=sign d=jannau.net a=rsa-sha256;
-DKIM2-Signature: i=1; m=1; t=1795527586; d=jannau.net;
-	mf=PGpAamFubmF1Lm5ldD4=;
-	rt=PGxpbnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmc+;
-	s=fm2:rsa-sha256:nxy08G6hV2hiNeiOAvV0xllY44WO3VIR/0VpZo5Dab/qe6m
-	IEwIV8vkpAmf26CoVs+y5ehlwdEne7fVlpvKOgIueVYI1hUPh3paH1Q7PdldLL+D
-	eTPaPrzrGJvcHOWFHlhDUkJi1CKiC42fJYu4jEoolMtPCwLLkNcR4982aKO+/lDI
-	XW5/lRUMGoUHz34iZ4dEk/zgMQtameYs/uTqrgfblv/pjRqZif9UUmF/rkOF0ryN
-	k72fYZxw8OFyENlFG3Gjy7QVwbaYmIBhJLZjNm50eAnFiUamFGrVbYtda5b81NMw
-	BpuYLlpHtsVe0tYYWdicwRtvLsc3Ur8X4oETDNg==;
-X-DKIM2-Info: draft=ietf-dkim-dkim2-spec-09;
-	repo=github.com/dkim2wg/interop; date=2026-11-03; sw=lmtpprox;
-	action=mi-m=1; hc=12;
-	hn=cc,content-disposition,content-type,date,feedback-id,from,
-	in-reply-to,message-id,mime-version,references,subject,to;
-Message-Instance: m=1; h=sha256:+4ev4b6mxHnY25pdL20Nn41AxB3DfsjG2hFal/APdjM=:tuy7Q02L8EFGyAlb/RTajzDppwDejqGxKUsvjdBdGZs=;
-X-ME-Sender: <xms:oZMFa67Ho0y6HXBSX3CJ2MosLcdKnQNDtwBPM34ltRrNfKhN7U5ToQ>
-    <xme:oZMFa0Ug99pQyk5vvOOlsG6_V6eA4JzUhQirf0oGqfG0DfKnz9a34KSQdOkyh2A04
-    3NXgCkjakrjmFwKBjYjdS-9PaPX6dxzIM9Bb-dXpS0k81ApSqU9Sog>
-X-ME-Received: <xmr:oZMFa-7-kKzbsnjcJzV12ts_etvG3AxNbq7EAl-5vHGUs9sEsQf6RYrUjjz0xtfL1NbXtQlJvBMokCmJWRQIwrUqQHwkdpANxww>
-X-ME-Proxy-Cause: dmFkZTESlBZ1BuWOe+JmUTVOFojllnFIlNcYBew5u3AEO/m5xTCbKEeFkRQF7OGVf/tX8T
-    h/i9V7vfl+JMtQsvzqaD6jIwjRZ10u9k+PQYJC6AFKCtkCtwZuvqe5uDKGokPJylK4JKE7
-    5nr4nOwn2m+UvTgT3l/15tMjM9IY8d4FwGd8NCK3NTpUv4186uhiAY3yrCk4autrjnKz9a
-    qvREk+HSNuOK+UuyioWs8kYmt0XK8u5JbsuhHng1mHLFw78Nh6lrSdYQdign+ZCgIl+E+Q
-    Ix3UENuWSWr9uY5l0yTToy1m0Gt30AKG9WklczbCNa59q6Tq6x8agtI+ZUvictJGlQYirB
-    YLtmw3d2wtCb8oRlublfJ7zK/GEHEdwqHPSaOfeA0neCJaSquWzKyeTFIb6r7FcAU6etuh
-    hNv1qIakJip8Xje33U6cLveSeSTufTRPV7cLpWSMKpB1apaUuxHFVFIRQs6ge0YKAXjHo/
-    xxYbhJOBhYORFfvX8d6IX2cYHbb2ziSRg8dl2f5955xyUUPgH8jQnLfk3lzz9PutsvXC9v
-    FGTFKYurFsyi7tEySux1IQpsn6xypNA4ZXS0JozfRqenLXQsUqcpxdAVQOoHJ7u6asIlqV
-    xbVFz9L1Q2613VDJgHo5+dN9WbOD6oWExzCW2dCM218Ra0EHhTOrRyyILhYA
-X-ME-Proxy: <xmx:oZMFa1G2ZjzOevGieoPIWUTRsyuZloqzmaMkNKT1EVyiymEZ1gt8eg>
-    <xmx:oZMFax_f60edb8Y9k9tqrQdbmhOWIDFcbtRAdsTgiuVpHoxmO4sYew>
-    <xmx:oZMFa3XhQDLyVB9KS1UzXyhgsNEcnVJa5rg0vg6OZtJBLmYEaf3Itg>
-    <xmx:oZMFazECzWRr2ZG51ct7gAEukGErUWyrRpkr0Iwpzn8SIbbiYoZOMg>
-    <xmx:opMFayrjv0nTLBIJkDe51obopTxGaE3jeJFYxqhPnmyhlZfod7IFXooO>
-Feedback-ID: i47b949f6:Fastmail
-Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
- 24 Nov 2026 08:39:45 -0500 (EST)
-Date: Tue, 24 Nov 2026 14:39:43 +0100
-From: Janne Grunau <j@jannau.net>
-To: peder.bergan@gmail.com
-Cc: Danilo Krummrich <dakr@kernel.org>, Alice Ryhl <aliceryhl@google.com>,
-	David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>,
-	Miguel Ojeda <ojeda@kernel.org>, Boqun Feng <boqun@kernel.org>,
-	Gary Guo <gary@garyguo.net>,
-	=?utf-8?B?QmrDtnJu?= Roy Baron <bjorn3_gh@protonmail.com>,
-	Benno Lossin <lossin@kernel.org>,
-	Andreas Hindborg <a.hindborg@kernel.org>,
-	Trevor Gross <tmgross@umich.edu>,
-	Daniel Almeida <daniel.almeida@collabora.com>,
-	Tamir Duberstein <tamird@kernel.org>,
-	Alexandre Courbot <acourbot@nvidia.com>,
-	Onur =?utf-8?B?w5Z6a2Fu?= <work@onurozkan.dev>,
-	Asahi Lina <lina+kernel@asahilina.net>,
-	Lyude Paul <lyude@redhat.com>, dri-devel@lists.freedesktop.org,
-	rust-for-linux@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-api@vger.kernel.org
+	dkim=pass (1024-bit key, unprotected) header.d=garyguo.net header.i=@garyguo.net header.a=rsa-sha256 header.s=selector1 header.b=WBx/jTit
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=S/q7wmUZE4FkkTd3jUlZzq9RAUroEiu+nOVkjdJEsAuej6fsOAZ9VDic4jOvRZXtNiD5smS1s4V8Cf2/N+wShec37NjEJx7zP8eV9FggG5Y7xC9p2Y8ApsR/HEI2V+nQ37exa30hQu+gxvEGYgZXns14aJqMgE8TyWuUi1HVaEa06ze4HpXsIj0KE8XVbzjct4nL9UPaVnuucS347z3NYG7vixei1nLeqzPyzCHGCZep50ILd9ndd6IehfEDe+aaWVTBwfggfNoWWTLAxjWRAddTzSotjOCg6V52Xx0WfzqYxLLtfqQsP1vgM2Z20KLSSd8+pgVjCwERDN3ibT9moA==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=XCnT406AtVTLQM1dtuV3kPZfQWiESMWizu0qq6qxkz4=;
+ b=F3uggCA4EvlejuDShLsl+b06IyEeJeeVEY37YtpoqvfrqMLryGQOyzNGnabFYQPy5UFy9tpluDnTljUy3ZhcV+vXShZ85RXiEFDqIJr7zT08lN7BsxSaknRIMm2GFevtja43SDlEo/Ed9sWBjUKl9upXQvFxepCFEL4fJARjfo/NUVyj7JY4GsCyXFD1nEzofplYXJA850I8OiEVwbUHGgYEgGszEs7RqNX+me1yBYCXUjmsulwT9TpHRzGsbXIdLl/lNsHVMujjcZLjAv1eKLWpRVBYMLntflPey86MZuTTmTJ8jxECzHmJJxRutONyFnS0bta5wCZbSDRKEHHVcA==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=garyguo.net; dmarc=pass action=none header.from=garyguo.net;
+ dkim=pass header.d=garyguo.net; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=garyguo.net;
+ s=selector1;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=XCnT406AtVTLQM1dtuV3kPZfQWiESMWizu0qq6qxkz4=;
+ b=WBx/jTitou+GRrxOxcroL4jerw01F61c2p9Z52PrQk1fmELCi1mZg++vi4iad+1zF/wqjSH6Dd1kQQ7/tTrAWh4qtwE19nTmPzllsagIHzoy5NKzXUsguh1mnEbQ4WF4oQczMnyz2tad7CLkR0ro165u22Gbn/5BsxN7qVFGU7A=
+Authentication-Results: mx.microsoft.com 1; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=garyguo.net;
+Received: from CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM (2603:10a6:400:1cb::9)
+ by CWXP265MB2581.GBRP265.PROD.OUTLOOK.COM (2603:10a6:400:ab::10) with
+ Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.639.14; Tue, 24 Nov
+ 2026 14:28:50 +0000
+Received: from CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM
+ ([fe80::55f6:f98b:7fad:c6e3]) by CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM
+ ([fe80::55f6:f98b:7fad:c6e3%2]) with mapi id 15.21.0639.012; Tue, 24 Nov 2026
+ 14:28:50 +0000
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Date: Tue, 24 Nov 2026 14:28:48 +0000
+Message-Id: <DN3IG9MGAI6H.1TFVHTSMMTSUH@garyguo.net>
 Subject: Re: [PATCH] rust: drm: enable standard fdinfo for Rust drivers
-Message-ID: <20261124133943.GA372978@robin.jannau.net>
+From: "Gary Guo" <gary@garyguo.net>
+To: <peder.bergan@gmail.com>, "Danilo Krummrich" <dakr@kernel.org>, "Alice
+ Ryhl" <aliceryhl@google.com>
+Cc: "David Airlie" <airlied@gmail.com>, "Simona Vetter" <simona@ffwll.ch>,
+ "Miguel Ojeda" <ojeda@kernel.org>, "Boqun Feng" <boqun@kernel.org>, "Gary
+ Guo" <gary@garyguo.net>, =?utf-8?q?Bj=C3=B6rn_Roy_Baron?=
+ <bjorn3_gh@protonmail.com>, "Benno Lossin" <lossin@kernel.org>, "Andreas
+ Hindborg" <a.hindborg@kernel.org>, "Trevor Gross" <tmgross@umich.edu>,
+ "Daniel Almeida" <daniel.almeida@collabora.com>, "Tamir Duberstein"
+ <tamird@kernel.org>, "Alexandre Courbot" <acourbot@nvidia.com>,
+ =?utf-8?q?Onur_=C3=96zkan?= <work@onurozkan.dev>, "Asahi Lina"
+ <lina+kernel@asahilina.net>, "Lyude Paul" <lyude@redhat.com>,
+ <dri-devel@lists.freedesktop.org>, <rust-for-linux@vger.kernel.org>,
+ <linux-kernel@vger.kernel.org>, <linux-api@vger.kernel.org>
+X-Mailer: aerc 0.22.0
 References: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
+In-Reply-To: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
+X-ClientProxiedBy: PR3P195CA0029.EURP195.PROD.OUTLOOK.COM
+ (2603:10a6:102:b6::34) To CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM
+ (2603:10a6:400:1cb::9)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -135,39 +106,107 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-In-Reply-To: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: CWLP265MB6051:EE_|CWXP265MB2581:EE_
+X-MS-Office365-Filtering-Correlation-Id: 2c316de3-c818-49cc-f1fb-08df4a3741f6
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|7416014|376014|366016|23010399003|10070799003|1800799024|10067099003|56012099006|261022105027099003|261021121427099003|261026140227099003|261009223027099003|261102123227099003|261028144727099003|6133799003|22082099003|18002099003;
+X-Microsoft-Antispam-Message-Info:
+	QXpGyaBzDFQYKEabOJ163CVJH+Cv2ju6h0yHCnylNdZNCn5W5551gAmMplYChFs+Fv7c1O3gNWqSy8mhokaeIO0+Pk3o9PIU9F3wSzbQS7CQHAtkfpsFeRZnb4VSnGun6gOSzeZ45ACRBTR1SSAryUFkPzDCIFa7j4/kS/018t2PBcl5MEiz9IY1ko619pRZyCnZQFf4PJCBWZQUtBr0IncFc87jDDkbUS3kBeVq97AbaDjlSAtd7k2cNwcI/jQQ+0VrZn42iz1lAENg8n3R8R7mqvwGswQxji+KSa88AkR9JLqOT2iyq+Ov3Ir1yYNXgT3LfVcEdytTewPfZ/6z1erxpdj9HyfQV8x1TdMMkeDEfUww2HjlFZKmLvTSU8LvKI/LZiQ0q+vVirggUNCzBaGn8107jHX+o4u5NtY0U6QYA0GPo7aKoJCqEuIyrFG1DgvD/th7ajyxOwzssT2mlIz0j5hhBFyg5nMbhyN7mJO6W/draJyvhHYCcGLqbecgCa0Jz82E/PnQhZ7hZFOmNiHRMLeUJdxjHYmTPYwsviGyFKDR/ncjN3yyaMHnpbgmvotXbNEts5wlZavdeRP74PRsXRDJaixVKrbRyxbfWOlG0b6vx2fcvJcas2fyyXp3
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(366016)(23010399003)(10070799003)(1800799024)(10067099003)(56012099006)(261022105027099003)(261021121427099003)(261026140227099003)(261009223027099003)(261102123227099003)(261028144727099003)(6133799003)(22082099003)(18002099003);DIR:OUT;SFP:1102;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?Y3U3QVVDYkluZDJaaGlpdTVKZVlQbmp2S05zelRNVFc1WTkvL0NsejlmejZs?=
+ =?utf-8?B?bFFvMlNZdHowYm9xNVZmRlB1TUhXZnZSSlcwMlZPQlVkM1EzamIybjg2cUhQ?=
+ =?utf-8?B?ODhyR20wbkdCOEwraGp5Zm5sR2MzZ2FDRG9ONG1GVkhaNzkyRGNHUU0vTnpB?=
+ =?utf-8?B?NGk5MTE4UDJ0V2o1Sjl1WUtZdFlOcUVLVVJQVGZybGxsaU5SS0NhWkN5ZEhF?=
+ =?utf-8?B?bGlGUmljdXp5TW5BMFNMRnlSQXlLZExjT1d3eFFiNHlBZ3RTN0N0Vng2aDFl?=
+ =?utf-8?B?OU5ST2YwQlF6SHVXMXlLajgxL3BORDRla0NqRkZwS1cwQm81K3ROZnQ0eDln?=
+ =?utf-8?B?cWQwOGlHa2psQXNaQlZld1YrcDZxUG9GbkVVTGxaMEVMRFdLdUxLeEhmc2s3?=
+ =?utf-8?B?aXlQM1Z5VUwveWRXWFRFL0ZpZTV3YnFEeWUwbVZZTGhpd09MK2FWdlh5TGNl?=
+ =?utf-8?B?emJJYlkyc3diTTNQMU53cStaSmwvTklqTU80NDJVQWRycTYvR3NMZE01Q0Fw?=
+ =?utf-8?B?Qm91SUkybzBvOUVHamxHMm5LVXFMdG5UQ2NTSDRuWStXSjltMmw1dklmYjBM?=
+ =?utf-8?B?UkFTMlhMTU02UjRDRkpTNk0yaEhsL3NwMVRBNklhdlhudEJtaEtnUm5TQThx?=
+ =?utf-8?B?Qm5lbVFrenh5b3poMGJRMDJaZHAvempvUjV5b09YSXlTTXZWQURsUVVjUjNn?=
+ =?utf-8?B?dmdqcEtHQ3h4clkxa1h4WWtZbmYwbG5mUHpVdjg2UEFBaHp5VldGTFVhZi9Y?=
+ =?utf-8?B?TGNrNnNmQmdMU1pxcndiQW5QTWo0Z1pwbDI3NTk3ZnMvdWNpWnM4eHZOK0o0?=
+ =?utf-8?B?dlVPam51MGZLTHhORFJqY1FsY05HYVp2L3BySURoeFQydjJNa01VaXpNNkRM?=
+ =?utf-8?B?SzlHOFN1VkRlSHdhZ0tNYnFpZC9hczdMMVU5UW5NWTJ1Y1Z6czhteW9lNVpk?=
+ =?utf-8?B?ZEs4SSt5Wkt2S2lmbGRkTFU3L2IzZTBBei9LYlBQVk1SdnlnbWNRcWtibndW?=
+ =?utf-8?B?SlJkTlNmNEZSVjlBc3VXNnVGSFlxd083Mi93bnV2aUQ3TGZwYlNQK1hMZS9y?=
+ =?utf-8?B?U2RYVVNnbmR3TTZML01rdno3Rnh4cE1WVktiK2J0RCtvWVRWbk1WMGV1alN6?=
+ =?utf-8?B?aGdQT1dnR01yblJYaURGMTByaTVxcUtWbTI5T0o0b243UVpqdkc0dFFuZ1ZT?=
+ =?utf-8?B?TTRBVE9xcG1jc0ZCRHU5cnA0Q1M1U2FaeUpBWlpBeHdXd296Wk1aNzcrQzZ4?=
+ =?utf-8?B?THdPWVZCNW5Ub0x4Q1FPQUhiZHA0QnM0MkZXZFE3V1k0VGl1SVhJTHhTQUV2?=
+ =?utf-8?B?aTdtRjZlaVVrcEJ6YS9YSUFkM2J1ZTF1Ulg2OVVvZjJLa2ljMEJZT1hnUmRk?=
+ =?utf-8?B?TnBwcHg1UkJtK01BVE9sMWpUL3diSG9SSE1TWTBMOXhBaU4vbGZTUThOY3J2?=
+ =?utf-8?B?YlJXK0p4Y1psd2pKbDVQaW1xK3pseTRNTmVqdER4VUM4NHNZWkY3dng5RjZ5?=
+ =?utf-8?B?dVl2cFRzem1TdkxMNTcxQmcvVW93YjFjZmdNSmNkWisvQmQ0L0RUQVlOYjE1?=
+ =?utf-8?B?cnU4TWt1MHBOcFB1cUtUeTRkdjNpSkpMN3R0dXNCbTVtY3dnU3dnQldCdGs2?=
+ =?utf-8?B?OWtqbFRDWE1BZWE0Y2tBL0RoZzRVTXh1NFQ5dDg2cDB2R1MyOU80bUY0K0Z5?=
+ =?utf-8?B?QmlnejZXZVhzb01pcEc0T1ozR3I2QmdoUE8rdERVTWZyTVlDNVFYbmlGK2hl?=
+ =?utf-8?B?Y01oekpwRFluYitmZ2hHSUZGZ0o1OEZqVzZ1eDlXVFMyeVNybUNxYk9OMlRD?=
+ =?utf-8?B?UFM2aHBPZngzVVZKbitDMHlJeXZtWUdCWTVVWFZ3MG5XM2wwNWx4NVZ2U1do?=
+ =?utf-8?B?UkJMSlRNckIxdWdzRDZQN3lwY3lLTU5MTVQ0TFZCcUZqVCs4TXZvVGtvRVN0?=
+ =?utf-8?B?VDZxNE92N3kzRGRhcmMrbDhuT3N0K0d5cFhNazRnd2ppbU9qRTJGZk1Va29N?=
+ =?utf-8?B?L2RGQi9IV0I3QXhIRVRCNll2N1Vzc1FzNzBSZ2Q2LzV6SGdrTWdlZmN6eW52?=
+ =?utf-8?B?QkJxejZxTWphNVJPTldtbHlsZTNxNFk4K0lyQXdCSzJIaG00RXR2ZzJMOURM?=
+ =?utf-8?B?NnJ3dnZXTHJvWFI0YmlXa096V1Jzb0I5VEZSeURISW1HZ2V3T0Q5ZnUveTYv?=
+ =?utf-8?B?c3hydlFINzlyeUIvV3hHQzVHMW1NWUJtcDlSUGt0MENEVW1tQ0FkYitHYmR4?=
+ =?utf-8?B?ZmU0Y3FsTW5BNjNIY2dpdnIvWDNZYWQ3RjFKenFwcHoyblN0S3piQU95QWJs?=
+ =?utf-8?B?R2xOcy9hN0JkSHJHcTJUbU9JZTFTVTdJZUt1VGt3V0FCL1VDbEh0dz09?=
+X-OriginatorOrg: garyguo.net
+X-MS-Exchange-CrossTenant-Network-Message-Id: 2c316de3-c818-49cc-f1fb-08df4a3741f6
+X-MS-Exchange-CrossTenant-AuthSource: CWLP265MB6051.GBRP265.PROD.OUTLOOK.COM
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 24 Nov 2026 14:28:50.4785
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: bbc898ad-b10f-4e10-8552-d9377b823d45
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: Ndv2nUO4jaRxnOwf9aHZUORfTeq1F/glBbmXgkHAtad2IAjCpKot6O/cQA79HZ4D5e/d+49G1EKq+LH+CJznSQ==
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: CWXP265MB2581
 
-On Thu, Nov 19, 2026 at 10:48:47AM +0100, Peder Bergan via B4 Relay wrote:
+On Thu Nov 19, 2026 at 9:48 AM GMT, Peder Bergan via B4 Relay wrote:
 > From: Peder Bergan <peder.bergan@gmail.com>
-> 
+>=20
 > DRM monitoring tools use drm-driver and drm-client-id in procfs fdinfo
 > to identify DRM clients. The common Rust DRM file operations leave
 > show_fdinfo unset, so these entries are missing for those clients.
-> 
+>=20
 > Set show_fdinfo to drm_show_fdinfo. The DRM core helper emits the
 > standard client information and calls the separate driver statistics
 > hook if the driver provides one.
-
-None of the drivers (upstream and out of tree) set
-drm_driver.show_fdinfo though as they can't yet so only drm-driver and
-drm-client-id will be printed.
-
-I guess this is ok and if a driver wants or needs opt-out of
-`show_fdinfo` it can be made optional then. Note that most C drivers
-don't set this either only the main GPU drivers and a few npu drivers.
-
-Tested on Apple silicon system with the Asahi downstream driver.
-
-Tested-by: Janne Grunau <j@jannau.net>
-Reviewed-by: Janne Grunau <j@jannau.net>
-
+>=20
 > Fixes: c284d3e42338 ("rust: drm: gem: Add GEM object abstraction")
+> Closes: https://github.com/Rust-for-Linux/linux/issues/1266
+> Signed-off-by: Peder Bergan <peder.bergan@gmail.com>
 
-I don't think the Fixes: tag is justified. This is an optional callback
-and the majority of C drivers (in numbers) don't set it. Even if it sets
-it won't provide much useful information for any existing Rust driver.
+Reviewed-by: Gary Guo <gary@garyguo.net>
 
-thanks,
-Janne
+I agree with Janne that the "Fixes" tag is not warranted.
+
+Best,
+Gary
+
+> ---
+> Matt Mireles reported the missing fdinfo fields on an Asahi kernel and
+> suggested using this helper.
+>=20
+> The x86-64 LLVM=3D1 CLIPPY=3D1 build adds the drm_show_fdinfo callback to
+> nova-drm.ko's file operations table.
+>=20
+> The pending move of the file operations into drm::device [1] should
+> carry this assignment into UnregisteredDevice::FOPS.
+>=20
+> [1] https://lore.kernel.org/dri-devel/20261118163203.2483856-4-dakr@kerne=
+l.org/
+>=20
+> OpenAI Codex assisted with coding and testing.
+> ---
+>  rust/kernel/drm/gem/mod.rs | 1 +
+>  1 file changed, 1 insertion(+)
+
