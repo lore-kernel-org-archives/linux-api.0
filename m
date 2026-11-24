@@ -1,110 +1,131 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.49
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=202.12.124.146
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795522399;
-	b=t0vWeYrsc/400csLCs281ih29rQ/sO3iwBChc09jseQTJzLG0mD/jmdMMXWyIB9L971g
-	 chcaWCRHlrYeBEF14YXiEdAEYuReCrSVAT9ZZHXQGWl8KG52wnARldmWVgOzviM8+WfDR
-	 5H0NzLMZdMd1/9kKqfR5VjsH7E/LtGHW4aryp6H9WRzcowYRFJfE0aP9oJ8/P/TzDgWWx
-	 L+XHocGrPqOkd5mavb7KE6XxsIPX18+wGyPUHGjlVvdDHi5k19c67JADUGSNoCO2wnThh
-	 FyGhwYS50ZtUpgOmFdHPBH9Z6gg1F3U+DhrNPPfdKG1lkgrTpQbb0Cxg5Ff04PsxqjQ==
+	t=1795527591;
+	b=XCPi63v6Hkn0Um023rVTTiKtAcD/K+Loj7LEBcQhNm37AUzkgWHjy9inxr49iDYKoR8R
+	 +MAdWpVmQVrlKVofpz6/6jVQtQoDR8LsYpZQMkvzVjuVnieHE/ehIjegSMQPKTp6Tzjbn
+	 schOj82GZkIIya/oq1LXaqniFK6aMuVzisRcj7ClA6bW/bwoSMxDs1a7NAJc8bcXaahdd
+	 jeizfgARtbOzP156gSZbawwgagMNDGES6oJy4XwoMLbvKStZoD6u9t9MhJEBHuiSecUme
+	 MZiXGJ5M9E81+MT3mu0PNODjdAq+y5U0a2IJflRBgeMfYPOrHA+xqHWJ39EwIUd09hw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795522399;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
+	a=rsa-sha256; c=relaxed/relaxed; t=1795527591;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:DKIM-Signature:
+	 X-DKIM2-Info:DKIM2-Signature:X-DKIM2-Info:Message-Instance:
+	 X-ME-Sender:X-ME-Received:X-ME-Proxy-Cause:X-ME-Proxy:Feedback-ID:
+	 Received:Date:From:To:Cc:Subject:Message-ID:References:MIME-Version:
 	 Content-Type:Content-Disposition:In-Reply-To;
-	bh=Np0NcUv7mJCJjaicOw4k1YXtQeAzhuGY2ockZsxXegU=;
-	b=aQl2FcAmJQQg3DWi6m07HhxqBDSFAsGVywc0RcvMJ/5yu4XXcfI0q0nvaPD6sJ3VySDx
-	 CbKHK70022tfba2wsnMespX2hozSbreTKp52EYUPfg20HXk6D9AVDouxGX1mAUtIrQzfW
-	 ioTzM2ndmRTodvlz1dPlc0nKb6sAhqm1RC5YzWKy7OfJOuDtEh4urVfkCcOp4jDvMf91k
-	 dIBFvD6ImiKiMvoEnJJYTzGEmqgsovK2wb3eVVwB3/2NAbD0DH9uQeR/ozWS2tb3Z0geX
-	 lPHExgatiE4b/cKCnBQxq+L8T7OZ0d6/5u7KPriK8SrRl0y+jfCe55U3JrNMnuLwibA==
+	bh=FFPocmiYjY4uBN7YtxnCPmj3gxT6Y3NraGib0JuLZOA=;
+	b=C0U+o8S2IPDov1peDSFoLeUAHCsbUdiTkIR6VxI229qxxcgbtIpQEH0j7p6nTwtKQpXm
+	 6AVJzhlHstuK8eQBSGKj4eAp3CDHrTJrWYaOaJ9VedNCaoC3leJwCBnzolObbxmdWBYI/
+	 DesZCwcQgnKOSLaYhXlXFT66hD9L/CI8Ec5tal/57bYj35/7ClpIEd1mDy36uU9Bkvggo
+	 TNMP3DDQduHSTT1A8TLJVESo++Fo9dyhjtAIw7v7yTk+jalNZQ7pSiBqECKf21G0Ab/SK
+	 lN7i7VCRaDK4gkzqvua7YVXPi2/g/0iAH0FjNuTiy3V89TrAAmSIsvLZSblyAwY+i3w==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=resnulli.us;
-	spf=pass smtp.mailfrom=resnulli.us;
-	dkim=pass header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b="viTi3/8K";
-	arc=none smtp.remote-ip=209.85.167.49
-Received: from mail-lf1-f49.google.com (mail-lf1-f49.google.com [209.85.167.49])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=none header.from=jannau.net;
+	spf=pass smtp.mailfrom=jannau.net;
+	dkim=pass header.d=jannau.net header.i=@jannau.net header.a=rsa-sha256 header.s=fm2 header.b="3u8FKVI/";
+	dkim=pass header.d=messagingengine.com header.i=@messagingengine.com header.a=rsa-sha256 header.s=fm3 header.b="by/oM2OY";
+	arc=none smtp.remote-ip=202.12.124.146
+Received: from fout-b3-smtp.messagingengine.com (fout-b3-smtp.messagingengine.com [202.12.124.146])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CCA2F606A322
-	for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 12:13:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CCA2F606A322
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=resnulli.us
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=resnulli.us
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4292A606A31E
+	for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 13:39:50 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4292A606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=jannau.net
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=jannau.net
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=resnulli.us header.i=@resnulli.us header.a=rsa-sha256 header.s=google header.b=viTi3/8K
-Received: by mail-lf1-f49.google.com with SMTP id 2adb3069b0e04-5be4b61fd3dso3736440e87.3
-        for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 04:13:17 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=resnulli.us; s=google; t=1795522396; x=1796127196; darn=vger.kernel.org;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=Np0NcUv7mJCJjaicOw4k1YXtQeAzhuGY2ockZsxXegU=;
-        b=viTi3/8KeIE8uhX56JlXlP6/VB/uifLp1YNde/hFxWBVL09rfHt1AgzNSQ1xTLYKYW
-         TxNBy5Mj7sV0GRKJ160Si2rkUSAgJn33iwqUin2swB01y6Ut9G2oo/NtD6GwmuBWsdGK
-         pBscQJ//hVMyPypXQMgFo5oJH1vUFdJ5blh4dTSbHXAdAibs/3F+XbUA3jS5gh2JSVOJ
-         LN2T2nENIFcXoTm0K25ZjYzgf6wvRTivXcZG6y1mBdXRA/xDPzAu9oc8mACnMdnRVp8I
-         5SJUX/xIX1KhwdTHpI3kikeVNii6iesD7pV4JscgeRxDpEqmN+UfwGtYVMRPotk3OsIE
-         2nmg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795522396; x=1796127196;
-        h=in-reply-to:content-disposition:content-type:mime-version
-         :references:message-id:subject:cc:to:from:date:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Np0NcUv7mJCJjaicOw4k1YXtQeAzhuGY2ockZsxXegU=;
-        b=GyZaj64RwMZWsZaxIOJp0gQwNDlCgre2jQy+Sw0q0NgA8LZbT9eWZWkqaNneieoV/j
-         heEbC3fRDxT2pQpTZRvBGuWDv+VNnEtGmmYEIyH62tlZdm9dC/Zp7jpQ7VLadaatgeez
-         sD0zbUKZ1fMNnMK4rSjGisTlJJLLSoC2+Iv4csb6wa7BZCebsvTeyO29s3DOgVO4ZNm8
-         0qZvDQgCfgp/Rngo5r+iEEMuhvYDHPzeiLx96h2+Nk9ePtRhKz2TDXIWgfa+X+CaV14u
-         4uFaswHx0zZ484bkfQh6p0Jx3OzOpiTtcrt3kUjNyovJAhW40wWEWcoeZTx2IZZxcXlQ
-         +P+g==
-X-Forwarded-Encrypted: i=1; AL+hErEzCnoaCvD0Uy6YoKL9zLppmgeWfqAojON/8xGtqctlU4GZnYVOLLuCImEne/pttp0Y+bWAD3VDoVo=@vger.kernel.org
-X-Gm-Message-State: APuU4Z/xfakv9d5PMS5pS3Wf6txBXG6bkdLDIYZiYBypCZT9YluvjXY7
-	3duQlzooGiaAQbFjeuqqlexDZCpNTP3QI7M0aAyBTTwqUC4ez6hK+QwW2O5hGcTdcS4=
-X-Gm-Gg: AZFdTZeRQ4H9SZK1A4UO1Y7GOzcDqCJRQMowQ3ERirvV4EvhgPMr/KpOo2791VdrOEc
-	8Qz8v3u1YuBguKJgvtcmT4AGzaM2dMF8Om+pE2ZmK17auRo8y+oqGTVSoERcxozsxzwOISiUO22
-	5v67YBfats+42qTfzibw8oo4s4rD/rcrT2Di/EmZxIo+Ha3nNr7hNbriE0Sj2IS8LJRbA9sruvg
-	pNMe/DyfHEaSekyoGcYEVoydzzaYI3+tIr3sBMLyayuUr5YlY72dgnMUqY53z+qic/Tk6vFkV1I
-	slhgNIAIyJhGe3ZktwRBirKeJRkAZF2DOS/4MyP4OPgrBI2RRtImWpUjBLkWE4/YdmNqAkv/YLv
-	2ZN5eC2/46D8Shszj79XFX4Kol14DXjTY5gO9rmHqtUirGXecRdaPdmpcLp6TD/CXrrRB6kNiGX
-	9LIBrd0XKENHU0MeJQAYQOn2O/b8IvO4wv9LDmAffKz9gJoHhtYC93hTrjrerkPy55PpK6VZoow
-	+B+u4odLuFQH2j1xl7VVE+/dJGQoh8T3D6BGzE0DmfmTB+TbOWAPyToqNYAn696khkmDNKkL2gG
-	QP8xYL/Y+vuQ0KKK34/xK9ECK2GaoIVHkxOF1g==
-X-Received: by 2002:a05:6512:23a9:b0:5c1:6065:40d with SMTP id 2adb3069b0e04-5c1bc867b6dmr3406850e87.38.1795522395833;
-        Tue, 24 Nov 2026 04:13:15 -0800 (PST)
-Received: from localhost ([208.127.45.21])
-        by smtp.gmail.com with ESMTPSA id 2adb3069b0e04-5c1bd01c018sm3681005e87.44.2026.11.24.04.13.14
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Nov 2026 04:13:15 -0800 (PST)
-Date: Tue, 24 Nov 2026 13:13:11 +0100
-From: Jiri Pirko <jiri@resnulli.us>
-To: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Jason Gunthorpe <jgg@ziepe.ca>, Yeoreum Yun <yeoreum.yun@arm.com>, 
-	linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, 
-	x86@kernel.org, kvm@vger.kernel.org, linux-doc@vger.kernel.org, 
-	david.quigley@intel.com, lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com, 
-	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
-	James.Bottomley@hansenpartnership.com, aik@amd.com, jpiotrowski@nvidia.com, qinkun@google.com, 
-	pgonda@google.com, jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com, 
-	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com, 
-	elena.reshetova@intel.com, dave.hansen@linux.intel.com, 
-	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com, zohar@linux.ibm.com, 
-	aneesh.kumar@kernel.org, dave.jiang@intel.com, nik.borisov@suse.com, 
-	sergii.dmytruk@3mdeb.com
-Subject: Re: [PATCH RFC v2 9/9] attestation: Add the TDX family implementation
-Message-ID: <awV_P5443pO4yJa5@FV6GYCPJ69>
-References: <20261113160838.2512652-1-jiri@resnulli.us>
- <20261113160838.2512652-10-jiri@resnulli.us>
- <awQCrnD5CtEhKRWz@e129823.arm.com>
- <awQz1P6iXYrL8lv0@kernel.org>
- <20261123151128.GD179082@ziepe.ca>
- <awRYr7yB8IWj7S3G@kernel.org>
- <awRan8ZELzpTwduV@kernel.org>
- <20261123154042.GI179082@ziepe.ca>
- <awRe-A_KeE_kXyPq@kernel.org>
+	dkim=pass (2048-bit key, unprotected) header.d=jannau.net header.i=@jannau.net header.a=rsa-sha256 header.s=fm2 header.b=3u8FKVI/;
+	dkim=pass (2048-bit key, unprotected) header.d=messagingengine.com header.i=@messagingengine.com header.a=rsa-sha256 header.s=fm3 header.b=by/oM2OY
+Received: from phl-compute-02.internal (phl-compute-02.internal [10.202.2.42])
+	by mailfout.stl.internal (Postfix) with ESMTP id A345D1D00596
+	for <linux-api@vger.kernel.org>; Tue, 24 Nov 2026 08:39:49 -0500 (EST)
+Received: from phl-frontend-03 ([10.202.2.162])
+  by phl-compute-02.internal (MEProxy); Tue, 24 Nov 2026 08:39:49 -0500
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=jannau.net; h=cc
+	:cc:content-type:content-type:date:date:from:from:in-reply-to
+	:in-reply-to:message-id:mime-version:references:reply-to:subject
+	:subject:to:to; s=fm2; t=1795527586; x=1795613986; bh=FFPocmiYjY
+	4uBN7YtxnCPmj3gxT6Y3NraGib0JuLZOA=; b=3u8FKVI/enGiX4SpeOpEBmpEvX
+	aBv8TvMxxzF4btN9FAYKThFHiu7X7N0FZR+cqUl8jyMkts9nZbxT+1e2+oKcJASc
+	C8Zwd8cganVwj2OSt7VKiqWX5gKKUfKk87Hd9Lcwe2yqlyAsFKcCgqAqI98UIqL2
+	2Spk3c0nkJhVTCcOkact54bH/2t16sdZCE/+P1BxhiIbxI+LmX4XVLl2AkJbvtBJ
+	14cN0o8Idi8wgkCDgMD7o1na/dnGVZpXvUad7F4Itow13I0vmPjomIrE9clQIHMl
+	dmIOXDWcIbfrhRGEyj3+K3ffDpS5K63GwT+E5dJx6Pect6KfjMf7qNXq42/A==
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=
+	messagingengine.com; h=cc:cc:content-type:content-type:date:date
+	:feedback-id:feedback-id:from:from:in-reply-to:in-reply-to
+	:message-id:mime-version:references:reply-to:subject:subject:to
+	:to:x-me-proxy:x-me-sender:x-me-sender:x-sasl-enc; s=fm3; t=
+	1795527586; x=1795613986; bh=FFPocmiYjY4uBN7YtxnCPmj3gxT6Y3NraGi
+	b0JuLZOA=; b=by/oM2OYQLK45eJq48XUNA1hX//hn3i5lbtoZY8KzPP9lcQxzgA
+	e8W6F0880h/IxZNfg5BPLXhps1JS/5Ik8+GbsLQJMA8JFqU2fPTLuUzUfpMZEBy4
+	1dlpnBLyTjK9g0AkM0WguaQiy9GGL8CMwVcT07NW0fc/Sqbme4Mh2ZO3f9Yt8Hd4
+	MF+YmSZ9Jy67iJGfcuq/Dcs3Thv+vSnR8EjCnNbLsMIjkHd8je344Acu5IowkKxu
+	Qgu7Qo63a5tnRjGS2VLfR+3nf7LlBL1+bmlJIsSt4Tqrf7VBiJr6xZ1ohCbjo1n0
+	tHpQsVOQfjvjllYu5MQdVRmSL8169nN5fzQ==
+X-DKIM2-Info: draft=ietf-dkim-dkim2-spec-09;
+	repo=github.com/dkim2wg/interop; date=2026-11-03; sw=lmtpprox;
+	action=sign d=jannau.net a=rsa-sha256;
+DKIM2-Signature: i=1; m=1; t=1795527586; d=jannau.net;
+	mf=PGpAamFubmF1Lm5ldD4=;
+	rt=PGxpbnV4LWFwaUB2Z2VyLmtlcm5lbC5vcmc+;
+	s=fm2:rsa-sha256:nxy08G6hV2hiNeiOAvV0xllY44WO3VIR/0VpZo5Dab/qe6m
+	IEwIV8vkpAmf26CoVs+y5ehlwdEne7fVlpvKOgIueVYI1hUPh3paH1Q7PdldLL+D
+	eTPaPrzrGJvcHOWFHlhDUkJi1CKiC42fJYu4jEoolMtPCwLLkNcR4982aKO+/lDI
+	XW5/lRUMGoUHz34iZ4dEk/zgMQtameYs/uTqrgfblv/pjRqZif9UUmF/rkOF0ryN
+	k72fYZxw8OFyENlFG3Gjy7QVwbaYmIBhJLZjNm50eAnFiUamFGrVbYtda5b81NMw
+	BpuYLlpHtsVe0tYYWdicwRtvLsc3Ur8X4oETDNg==;
+X-DKIM2-Info: draft=ietf-dkim-dkim2-spec-09;
+	repo=github.com/dkim2wg/interop; date=2026-11-03; sw=lmtpprox;
+	action=mi-m=1; hc=12;
+	hn=cc,content-disposition,content-type,date,feedback-id,from,
+	in-reply-to,message-id,mime-version,references,subject,to;
+Message-Instance: m=1; h=sha256:+4ev4b6mxHnY25pdL20Nn41AxB3DfsjG2hFal/APdjM=:tuy7Q02L8EFGyAlb/RTajzDppwDejqGxKUsvjdBdGZs=;
+X-ME-Sender: <xms:oZMFa67Ho0y6HXBSX3CJ2MosLcdKnQNDtwBPM34ltRrNfKhN7U5ToQ>
+    <xme:oZMFa0Ug99pQyk5vvOOlsG6_V6eA4JzUhQirf0oGqfG0DfKnz9a34KSQdOkyh2A04
+    3NXgCkjakrjmFwKBjYjdS-9PaPX6dxzIM9Bb-dXpS0k81ApSqU9Sog>
+X-ME-Received: <xmr:oZMFa-7-kKzbsnjcJzV12ts_etvG3AxNbq7EAl-5vHGUs9sEsQf6RYrUjjz0xtfL1NbXtQlJvBMokCmJWRQIwrUqQHwkdpANxww>
+X-ME-Proxy-Cause: dmFkZTESlBZ1BuWOe+JmUTVOFojllnFIlNcYBew5u3AEO/m5xTCbKEeFkRQF7OGVf/tX8T
+    h/i9V7vfl+JMtQsvzqaD6jIwjRZ10u9k+PQYJC6AFKCtkCtwZuvqe5uDKGokPJylK4JKE7
+    5nr4nOwn2m+UvTgT3l/15tMjM9IY8d4FwGd8NCK3NTpUv4186uhiAY3yrCk4autrjnKz9a
+    qvREk+HSNuOK+UuyioWs8kYmt0XK8u5JbsuhHng1mHLFw78Nh6lrSdYQdign+ZCgIl+E+Q
+    Ix3UENuWSWr9uY5l0yTToy1m0Gt30AKG9WklczbCNa59q6Tq6x8agtI+ZUvictJGlQYirB
+    YLtmw3d2wtCb8oRlublfJ7zK/GEHEdwqHPSaOfeA0neCJaSquWzKyeTFIb6r7FcAU6etuh
+    hNv1qIakJip8Xje33U6cLveSeSTufTRPV7cLpWSMKpB1apaUuxHFVFIRQs6ge0YKAXjHo/
+    xxYbhJOBhYORFfvX8d6IX2cYHbb2ziSRg8dl2f5955xyUUPgH8jQnLfk3lzz9PutsvXC9v
+    FGTFKYurFsyi7tEySux1IQpsn6xypNA4ZXS0JozfRqenLXQsUqcpxdAVQOoHJ7u6asIlqV
+    xbVFz9L1Q2613VDJgHo5+dN9WbOD6oWExzCW2dCM218Ra0EHhTOrRyyILhYA
+X-ME-Proxy: <xmx:oZMFa1G2ZjzOevGieoPIWUTRsyuZloqzmaMkNKT1EVyiymEZ1gt8eg>
+    <xmx:oZMFax_f60edb8Y9k9tqrQdbmhOWIDFcbtRAdsTgiuVpHoxmO4sYew>
+    <xmx:oZMFa3XhQDLyVB9KS1UzXyhgsNEcnVJa5rg0vg6OZtJBLmYEaf3Itg>
+    <xmx:oZMFazECzWRr2ZG51ct7gAEukGErUWyrRpkr0Iwpzn8SIbbiYoZOMg>
+    <xmx:opMFayrjv0nTLBIJkDe51obopTxGaE3jeJFYxqhPnmyhlZfod7IFXooO>
+Feedback-ID: i47b949f6:Fastmail
+Received: by mail.messagingengine.com (Postfix) with ESMTPA; Tue,
+ 24 Nov 2026 08:39:45 -0500 (EST)
+Date: Tue, 24 Nov 2026 14:39:43 +0100
+From: Janne Grunau <j@jannau.net>
+To: peder.bergan@gmail.com
+Cc: Danilo Krummrich <dakr@kernel.org>, Alice Ryhl <aliceryhl@google.com>,
+	David Airlie <airlied@gmail.com>, Simona Vetter <simona@ffwll.ch>,
+	Miguel Ojeda <ojeda@kernel.org>, Boqun Feng <boqun@kernel.org>,
+	Gary Guo <gary@garyguo.net>,
+	=?utf-8?B?QmrDtnJu?= Roy Baron <bjorn3_gh@protonmail.com>,
+	Benno Lossin <lossin@kernel.org>,
+	Andreas Hindborg <a.hindborg@kernel.org>,
+	Trevor Gross <tmgross@umich.edu>,
+	Daniel Almeida <daniel.almeida@collabora.com>,
+	Tamir Duberstein <tamird@kernel.org>,
+	Alexandre Courbot <acourbot@nvidia.com>,
+	Onur =?utf-8?B?w5Z6a2Fu?= <work@onurozkan.dev>,
+	Asahi Lina <lina+kernel@asahilina.net>,
+	Lyude Paul <lyude@redhat.com>, dri-devel@lists.freedesktop.org,
+	rust-for-linux@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org
+Subject: Re: [PATCH] rust: drm: enable standard fdinfo for Rust drivers
+Message-ID: <20261124133943.GA372978@robin.jannau.net>
+References: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -114,52 +135,39 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Disposition: inline
-In-Reply-To: <awRe-A_KeE_kXyPq@kernel.org>
+In-Reply-To: <20261119-fix-drm-rust-fdinfo-v1-1-c10f4134488d@gmail.com>
 
-Mon, Nov 23, 2026 at 04:42:48PM +0100, jarkko@kernel.org wrote:
->On Mon, Nov 23, 2026 at 11:40:42AM -0400, Jason Gunthorpe wrote:
->> On Mon, Nov 23, 2026 at 05:24:15PM +0200, Jarkko Sakkinen wrote:
->> > > > > As per the function, perhaps tpm2_calc_event_log_size() should be
->> > > > > relocated to lib and have non-TPM name like firmware_event_log_size()
->> > > > > or something.
->> > > > 
->> > > > Probably under drivers/attestation since that is where all the TCG
->> > > > formatted logs should end up. It should be 'tcg_event_log_size()' or
->> > > > something. Maybe a tiny module for it like we would have done in lib/
->> > > 
->> > > +1 for the name, as it is obviously more accurate prefix.
->> > 
->> > Location, I don't know. I was thinking something like "lib/tcg.c" with
->> > routines that are plain calculations based on TCG/TPM data.
->> 
->> I think we should not have new users outside attestation subsystem,
->> but the legacy onces will still exist obviously..
->> 
->> IDK either, but this is my guess..
->
->No strong opinions on this; just unpurging my thoughts.
+On Thu, Nov 19, 2026 at 10:48:47AM +0100, Peder Bergan via B4 Relay wrote:
+> From: Peder Bergan <peder.bergan@gmail.com>
+> 
+> DRM monitoring tools use drm-driver and drm-client-id in procfs fdinfo
+> to identify DRM clients. The common Rust DRM file operations leave
+> show_fdinfo unset, so these entries are missing for those clients.
+> 
+> Set show_fdinfo to drm_show_fdinfo. The DRM core helper emits the
+> standard client information and calls the separate driver statistics
+> hook if the driver provides one.
 
-Okay, will put have this in a helper lib.
+None of the drivers (upstream and out of tree) set
+drm_driver.show_fdinfo though as they can't yet so only drm-driver and
+drm-client-id will be printed.
 
+I guess this is ok and if a driver wants or needs opt-out of
+`show_fdinfo` it can be made optional then. Note that most C drivers
+don't set this either only the main GPU drivers and a few npu drivers.
 
->
->> 
->> > And perhaps for tpm_buf (both stack/heap allocatable), if Trenchboot
->> > ever moves forward.
->> 
->> DRTM users will route through attestation subsystem to do their
->> extends so the tpm_buf user would be the TPM driver inside
->> attestation. We definitely need this for ROT agility.
->> 
->> We should be able to build the attestation TPM driver without any
->> trenchboot stuff to motivate it.
->
->OK, this was my guess but did not know it by fact.
->
->> 
->> Jason
->
->
->Br, Jarkko
+Tested on Apple silicon system with the Asahi downstream driver.
+
+Tested-by: Janne Grunau <j@jannau.net>
+Reviewed-by: Janne Grunau <j@jannau.net>
+
+> Fixes: c284d3e42338 ("rust: drm: gem: Add GEM object abstraction")
+
+I don't think the Fixes: tag is justified. This is an optional callback
+and the majority of C drivers (in numbers) don't set it. Even if it sets
+it won't provide much useful information for any existing Rust driver.
+
+thanks,
+Janne
