@@ -1,56 +1,64 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=220.197.31.5
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795550730;
-	b=Fwaj8ClATdfxym7ChiZRFpzcL/2dHdqe7B2SytR5/AMbeLFvYuADB3GevWTUe0Esk6zR
-	 g2vUgicA2rOuM5AE2hiW3XkznUjvBaVFjBGgIUJcrDaLluAK6myJtaxXWU8ROFqxs5S/Y
-	 k6G25Fh0Yndx+jp5OAyL3Tj5r6yvZa+Tvr7az7QywluN8VJpW9fHAPDUgHWtXYHRZrcT8
-	 ia7VwqadVgNA3Pog7yd8AEt0o4suZKvujuPgOklXQnbGpH0FGEwlZX7lt6flU75bhukRp
-	 QFY4jBhKsOS15zx0ywpeVzfmoBdhkuiunOn+RUtE54oXyT3MQqCgdrwI4AoMRBU2cyA==
+	t=1795551887;
+	b=kesfLoXq+EXVi+3LoFVsOHtbDf8hQjcsphBIXVetmnipC3S2NAlz8f/h8cEtKK+QwH+r
+	 NLrS+maImt+x7tv84XxpwFpi+hODTGOkdPt1fdEBnNUBEbU0rtVAdDUj3yETLQ2gLVqW5
+	 I7eJ4P5n5HnWvwRCE2cZsUzysena6Q7sMLphQzXCbw+/sIdHnXUWGO5ajE2T6az/WN57F
+	 +pTs04w1mKaD3BAt6px9Hw2q1nUyMEw2MuPLW9eZBIykxqJgSPIxIRqozXmHRKgpX1+M8
+	 qa5d3CAO1fbzJ+u72Xp7hhBTan1sCux/t/7xjHS+9uM4FzEmCwDDaUZTlf2BmHoSLnQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795550730;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=AyBvgoaflSOYlWmLqE/zHPGUFjIj+qxPBeaaPtkZhDU=;
-	b=aC4SQTuqCn+MZ36s4EbM2Hmwy87N0WC0lNGTDP1UtGd1jL8kMPiE6C67+iloaRSoe5LQ
-	 yrD8eZZOKIDgZEw4JlsLmGsPAXfpHAL/HVG0bYpCaqDFk1tTAOLNXLmc7RVx4A89sYMp4
-	 Us6d7/DvXExYoF1svu5v/hLz32zwW63jNqBYX3ZJ1FHbqugk01Xdgwjg9F7+14WgpfBkJ
-	 A6t63zNntDha1eazRb/hyRc13NIQaGALcswD4QfBK/uM0wcNuccUvmxiWLGJclYJI1svq
-	 Usg8spt//o3T8dCIKrxYdgysqOuE3iKb5Tve+ZiH64pDvazIzpwn0ky330sXoPrbpvA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795551887;
+	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
+	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding:X-CM-TRANSID:X-Coremail-Antispam:
+	 X-CM-SenderInfo;
+	bh=rn2JMXIObYI9wUt1ea1lSjudrwErALnnzN0nbwRNkfY=;
+	b=nIUDVO3OLz/twRkXEBxT7LiSldeKxG2bSTcvXkJ5BN0pbKGjq6Voi7lE4EpFFOm2YSe9
+	 MNmytJiO/AwlTL3KQj8/hryr1Y+WplmT8VM3ruHkCOVoc7m4V3+yNJj4GZkqf2LyS0yGX
+	 QgrVsuBZNSK4KZGdJZZHEk6DQ8VZmlnmQYi/oYBiMYe0PzW38flJq7R7euydm/2uWID1y
+	 yS5tujPzSaflOVuKWVik+wh5WbdO6ksIUsc99IhUCHh8zVPQyzQbYJgx09VmQsc7G6LQM
+	 IiLWynUbVtj7POSB+L5J2xB5irol+v8WJNSj3rEPgNrKM4MDYPXlZ/Q5HzjYXqlswWg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="MGdCw1/5";
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=163.com;
+	spf=pass smtp.mailfrom=163.com;
+	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=kbBvAQ6g;
+	arc=none smtp.remote-ip=220.197.31.5
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F604606A31E;
-	Tue, 24 Nov 2026 20:05:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0B855606A31E;
+	Tue, 24 Nov 2026 20:24:44 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0B855606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=MGdCw1/5
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 01A9A1F000C6;
-	Tue, 24 Nov 2026 20:05:27 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795550729;
-	bh=AyBvgoaflSOYlWmLqE/zHPGUFjIj+qxPBeaaPtkZhDU=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=MGdCw1/5SZDEJzXkuLyv2kDRKES2MAQQwGlYaOLsnHLOHD1ul4NA0IPaHpTaAuybb
-	 gG53L7cYFO/uKp7fqdz3o9svkeK4/js90kSYSMrfk1E8qHD8gScUWkuZmFl/vI44JZ
-	 hzfaQSznQaLpx8iwEgZKcyLUUVWrtCPfVlBNPJA9bfQu9/bXI0ry2Jxp+9hVXswdWw
-	 zgxptwpsGif3tHzF/ErlHOWKmsGKxIyYRUTS6HzpDeDuqth8zRp7qy2XqQv+eZG1jE
-	 VyrgfbZeEvQLLuv92bNgd5IxwxMkzw197uwPfm6jrnsmTEp9B80ppNxEAB9gnWILfe
-	 RgzZewqWOKwsA==
-Date: Wed, 25 Nov 2026 07:05:20 +1100
-From: Dave Chinner <dgc@kernel.org>
-To: John Garry <john.garry@linux.dev>
-Cc: Wayne Gao <Wayne.Gao1@solidigm.com>, "cem@kernel.org" <cem@kernel.org>,
-	"linux-xfs@vger.kernel.org" <linux-xfs@vger.kernel.org>,
-	"linux-api@vger.kernel.org" <linux-api@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Subject: Re: [RFC PATCH] xfs: add a per-filesystem switch to force atomic CoW
-Message-ID: <awXuAESDkLr1nd3n@dread>
-References: <LV0PR10MB997684D5CA8A6AC037F6D1CD8AB9472@LV0PR10MB997684.namprd10.prod.outlook.com>
- <awSd1JEB0F4WeKt0@dread>
- <2a615ca6-3777-4b71-bea6-4072d4fbd950@linux.dev>
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=kbBvAQ6g
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=rn
+	2JMXIObYI9wUt1ea1lSjudrwErALnnzN0nbwRNkfY=; b=kbBvAQ6gbcHIx2KYwd
+	vNu0gcC2BTI++qH82V1ZKqs4a2b9R2vkycNe4I/zc0rZgFaY2hfhcA2wjzbJw37p
+	1mqj9jrxBu2VVOIBpK47uhtnK9Ug7uJWD171N4WdrS3l9aJY1568GTc2zbM+Cfko
+	j38J0XxKcCOaluJh948Q9HL6o=
+Received: from ubuntu (unknown [])
+	by gzga-smtp-mtada-g1-0 (Coremail) with SMTP id _____wCXnZZZ8gVrSzkaJQ--.10376S2;
+	Wed, 25 Nov 2026 04:24:06 +0800 (CST)
+From: Shaopei Zhu <shaopei_1012@163.com>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Namjae Jeon <linkinjeon@kernel.org>,
+	Sungjong Seo <sj1557.seo@samsung.com>,
+	Yuezhang Mo <yuezhang.mo@sony.com>,
+	exfat@lists.linux.dev,
+	linux-fsdevel@vger.kernel.org,
+	linux-api@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v4] exfat: add EXFAT_IOC_COMBINE to append a file's clusters to another
+Date: Wed, 25 Nov 2026 04:23:51 +0800
+Message-ID: <20261124202351.817372-1-shaopei_1012@163.com>
+X-Mailer: git-send-email 2.53.0
+In-Reply-To: <awXMJaZ58iS3K2N0@casper.infradead.org>
+References: <20261124142807.773299-1-shaopei_1012@163.com> <awXMJaZ58iS3K2N0@casper.infradead.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -60,45 +68,44 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <2a615ca6-3777-4b71-bea6-4072d4fbd950@linux.dev>
+Content-Transfer-Encoding: 8bit
+X-CM-TRANSID:_____wCXnZZZ8gVrSzkaJQ--.10376S2
+X-Coremail-Antispam: 1Uf129KBjvJXoW7tF4UAFyftF15Ww18tr48Xrb_yoW8XF17pa
+	y3twsrta1DJw13GFn3Cw4xt3yru3WxKw4fJas8tw1UZrs8XF129r9xtFW2ka48G39Fqwn0
+	qF4Yvas8C398uaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07USQ6JUUUUU=
+X-CM-SenderInfo: pvkd01phlbiiirs6il2tof0z/xtbC6QbxgGsF8mbqeQAA33
 
-On Tue, Nov 24, 2026 at 08:32:56AM +0000, John Garry wrote:
-> On 11/23/26 20:11, Dave Chinner wrote:
-> > > The intended use is a controlled comparison of hardware-backed and
-> > > software-backed RWF_ATOMIC writes on the same hardware, without having
-> > > to construct misaligned mappings to trigger fallback. The existing
-> > > DEBUG-only always_cow control also affects ordinary writes, which
-> > > changes the workload being compared.
-> > Ok, so you want it for your test/dev environment, not production?
-> > 
-> > I thought we could already change the block device characteristics (i.e. support hw
-> > atomic wirite or not) at the block device level?
-> 
-> The block layer just accepts whatever atomic properties is reported by the
-> block driver and there is no method in the block layer to change these
-> limits or turn them off.
+On Tue, Nov 24, 2026 at 05:40:53PM +0000, Matthew Wilcox wrote:
+> On Tue, Nov 24, 2026 at 10:28:07PM +0800, Shaopei Zhu wrote:
+> > As with EXT4_IOC_MOVE_EXT and F2FS_IOC_MOVE_RANGE, the source must be
+> > open for reading and writing, the destination for writing, and both must
+> > be regular files on the same mount.  Files whose allocation, chain
+> > layout or valid_size are inconsistent, as after a failed truncate or on
+> > a corrupt volume, are refused with -EIO before anything is changed.
+>
+> Why are you designing your own ioctl instead of implementing
+> EXT4_IOC_MOVE_EXT in exfat?  That's the normal way of doing things as
+> it lets us later hoist the ioctl from all the filesystems implementing
+> it to the VFS.
 
-Isn't that a bit of an oversight? Lots of the hardware related IO
-capabilities are configurable in the bdev queue (e.g. max io sizes,
-max discard/unmap sizes, max queue depth, etc).
+Hi Matthew,
 
-Sure, they are initially populated by the hardware values, but the
-user can then override them (e.g. via udev rules) and that means we
-don't have need to add 'override the <bdev queue property>'
-management interfaces to every filesystem that supports those
-specific bdev hardware offloads.
+Thanks for looking at this.  That paragraph was badly worded: I only
+meant that the permission rules are the same as for those ioctls, not
+that the operation is similar.
 
-> Then for the only block drivers which today support atomic - NVMe and SCSI -
-> similarly these we just use the atomic limits reported in the disk.
+EXT4_IOC_MOVE_EXT is a defragmentation primitive: it copies the data of
+the original file into the donor's blocks and exchanges the block
+mappings, so the contents and sizes of both files stay the same, and
+the range has to lie within both files.  It cannot append one file to
+another, which is what is needed here: the clusters of the source are
+linked onto the end of the destination, the destination grows and the
+source is unlinked, without copying any data.
 
-That seems to be inconsistent with how we manage other hardware
-offload size limits on block devices. These are -not- filesystem
-properties, and we should not be trying to manage them at the
-filesystem level.
+I will reword that paragraph in the next version so that it states the
+rules without suggesting that the operations are related.
 
--Dave.
--- 
-Dave Chinner
-dgc@kernel.org
+Thanks,
+Shaopei
+
