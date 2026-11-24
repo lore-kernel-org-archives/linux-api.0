@@ -1,64 +1,81 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=117.135.210.3
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795544435;
-	b=ICChWgRM26X8ozbhn2soMrpp6LEF/eETFlC+EakHmeC8ATauzYIXZZIR2iJCwNMUNBiR
-	 Kqyp2JxNI6bdmjvnAnswHTVaDMz3eBN3DDOF964h+iJwSB+jwttYqm4Cl8iWR9JTUs7pa
-	 OCrDPwRzsbwA+6mHM+l1kEyb0ksraW2+b1Ru2oGSGej7LrnutmdiosRpOneaQt3rlEezf
-	 djnJ7fy9xte0PmN/de08ovyRT4svtSRZjOx1QZ6r4TpIhy57r09jVvctYTEjUzn/b2h1l
-	 HUtk0lvbyC4GEtohmOm7TddmzfegoHRg6PbPirveW4WCouCp2ULbFwKYr+685w029Nw==
+	t=1795545347;
+	b=pOZoYMM/PMlLvLO5AhnJ6HoGWjPog2WQh5VdCGjWdbj/TW/vVnbl0o56lLXj5elz6wPF
+	 CtRljG2Yl+nZEXqLKjc2qPW+f5JK/xa7jjzgMa8z2qLODx4xa2C8bHtAhZxwovgjsD+yo
+	 z1H851qPho0wjjG9g4Rolnan6dqVOVVB/vKNxtGaPZR0rifu0ss65eHpO+zpv4Hi2ALeF
+	 8RmT/081BM2oU0V8fjWiLKTMvJPYU3exWA8Ts1F4BQ+yAMPNlH3d4Ck0R4mCv3mMCOWRE
+	 mR5F87pB6PT1bcK7Tn4s8J+QCQx2D4Q3c7RLHyptXVZ5CaCBIErAFzU3p/WQxQLcHnw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795544435;
-	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
-	 Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
-	 Content-Transfer-Encoding:X-CM-TRANSID:X-Coremail-Antispam:
-	 X-CM-SenderInfo;
-	bh=rn2JMXIObYI9wUt1ea1lSjudrwErALnnzN0nbwRNkfY=;
-	b=hCtGBSh8uUtuq/RZ1l/JV536RAOAYCbeTzeHI833+54S6XycX8/3yrKbDfU/OU4x5cYI
-	 LgjcPJSPVF5NVQViiw0tFtFhRUQh0TMQwpGVlHTjW8J43Z9kr/j5FKqVbf3eh5f4Bx3pO
-	 taewL22OJ09As5Z3y42BwF+MlxQF8ekBl/Pb4Mxp1XljrhQrF5S8dXm0on7TSbdGFWOVY
-	 ItCy3hqFFv6wn+se1J14PTlYPZBL4jG6lWRY8XS6W7TwXFIjYEx6dxCEqDC11/FdCJvDz
-	 idDVcgo+lz/mEVlT452Bd9SkYwomU54ulEgwSgvYdMq3TldYtE8piBP6sBxPRlpOX0w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795545347;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=NH+LCPbT58VTTOKIoQohmGo8BCrcjnPK+zFjIzwgB7Y=;
+	b=zCuf3WKPKArafRG0pyuce/nSAzbT3/wwDyBIqC9YWIjG3fC8kH4KHi7P4lNwRgEJHqWK
+	 rUVZr5HxvDgXDs+X49b59GBxyqWJfbFZa0IFudDgo03hmyQxEp9GLjODo/pAl7WXQ1e3N
+	 2a26DVcgPh4dOcnrOJ7js7LadQV7rYrU1eGTCuJhJ36DCJe81b8D9kf8blesxu8jgyfzr
+	 IuxpX/tG4FJRPdfjtkOFdsAcGCGCBkwobbRBRlS0yIY6+DMwb1dA1FnA2iN30gFcQ+Pzw
+	 bz/zaJJmYpE5jCE+Kd8c86VnE1XSlDLK5EhzNucMurI0METtMlKfodHaR5vLXiU7LMA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=163.com;
-	spf=pass smtp.mailfrom=163.com;
-	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=A349BdiF;
-	arc=none smtp.remote-ip=117.135.210.3
-Received: from m16.mail.163.com (m16.mail.163.com [117.135.210.3])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YGNhEOdl;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6FE6A606A687;
-	Tue, 24 Nov 2026 18:20:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6FE6A606A687
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3C8B8606A321;
+	Tue, 24 Nov 2026 18:35:46 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=A349BdiF
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=rn
-	2JMXIObYI9wUt1ea1lSjudrwErALnnzN0nbwRNkfY=; b=A349BdiFhOFLw5eB4o
-	2gs6Xa+Z4epe2azGQRjXucIG6mi0DH9tr1ZwgnqIsQ1nlUDvaYtv1J4vCZCshXSS
-	HHzNZn8d8anK6dTGhqBjGdcLWSuKKdDFWp6It2/jnNJTPQyKJT0N4ccY25ZkbmOb
-	0Orcs6kAvM3MLC7DG+OtseQ1U=
-Received: from ubuntu (unknown [])
-	by gzsmtp4 (Coremail) with SMTP id PygvCgAH7o8k1QVrJbHLHw--.27478S2;
-	Wed, 25 Nov 2026 02:19:29 +0800 (CST)
-From: Shaopei Zhu <shaopei_1012@163.com>
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Namjae Jeon <linkinjeon@kernel.org>,
-	Sungjong Seo <sj1557.seo@samsung.com>,
-	Yuezhang Mo <yuezhang.mo@sony.com>,
-	exfat@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: Re: [PATCH v4] exfat: add EXFAT_IOC_COMBINE to append a file's clusters to another
-Date: Wed, 25 Nov 2026 02:19:11 +0800
-Message-ID: <20261124181911.773506-1-shaopei_1012@163.com>
-X-Mailer: git-send-email 2.53.0
-In-Reply-To: <awXMJaZ58iS3K2N0@casper.infradead.org>
-References: <20261124142807.773299-1-shaopei_1012@163.com> <awXMJaZ58iS3K2N0@casper.infradead.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YGNhEOdl
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id CA1681F000D8;
+	Tue, 24 Nov 2026 18:35:45 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795545346;
+	bh=NH+LCPbT58VTTOKIoQohmGo8BCrcjnPK+zFjIzwgB7Y=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=YGNhEOdlnPN871G/X9PPWV2KDkNfg6lDAYL74NQ4uMZDrqBjOHxooLjxN6J9DJyuN
+	 epQrEamKS5eGTLTDPRfDiX5spXFiq6j1WSiqUG/PtKfJ1tZSmLYqwKylZQhk9WPX7B
+	 bEM8oPgYlXgUet8cYtuVzgh8rRxJEj8ZgkcD4hk3pA4UHghl4N8J0BPQIsCsPCZAFd
+	 +kJTyztWJCLJ50m3BrED2g/opMxeaUu7STWXnyQ8A3/RFw4OBjGhmM9kNWyBlQHyvc
+	 cKvYRL1apD8f0X5RwzYPerXPlVzxh1JZGzc30tc5hQHHP60AIzOQqgM3p4OYptBszq
+	 3eYlMbouXqYYQ==
+Date: Tue, 24 Nov 2026 20:35:42 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: linux-fsdevel@vger.kernel.org
+Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
+	linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
+	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
+	linux-security-module@vger.kernel.org,
+	Aleksa Sarai <aleksa@amutable.com>,
+	Alexander Mikhalitsyn <alex@amutable.com>,
+	Alexander Viro <viro@zeniv.linux.org.uk>,
+	Andy Lutomirski <luto@amacapital.net>,
+	Arnd Bergmann <arnd@arndb.de>,
+	Christian Brauner <brauner@kernel.org>,
+	David Howells <dhowells@redhat.com>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Giuseppe Scrivano <giuseppe@scrivano.org>,
+	Hugh Dickins <hughd@google.com>, Jan Kara <jack@suse.cz>,
+	Jeff Layton <jlayton@kernel.org>, Jonathan Corbet <corbet@lwn.net>,
+	Josef Bacik <josef@toxicpanda.com>, Kees Cook <kees@kernel.org>,
+	KP Singh <kpsingh@kernel.org>,
+	Lennart Poettering <lennart@poettering.net>,
+	Neal Gompa <neal@gompa.dev>, Oleg Nesterov <oleg@redhat.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
+	Serge Hallyn <sergeh@kernel.org>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
+Subject: Re: [RFC PATCH v7 00/26] userland: Userland containers
+Message-ID: <awXY_gKSqi-L5V30@kernel.org>
+References: <20261122193539.3334213-1-jarkko@kernel.org>
+ <awTmJIErjasO4lqq@kernel.org>
+ <awToL2PFNKVgIfqs@kernel.org>
+ <awUGkYoyDXp4P5LJ@kernel.org>
+ <awULfmZR-pESj2EC@kernel.org>
+ <awVInf04kGC0uZZo@kernel.org>
+ <awVRz8XC54nfevtW@kernel.org>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -68,44 +85,63 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:PygvCgAH7o8k1QVrJbHLHw--.27478S2
-X-Coremail-Antispam: 1Uf129KBjvJXoW7tF4UAFyftF15Ww18tr48Xrb_yoW8XF17pa
-	y3twsrta1DJw13GFn3Cw4xt3yru3WxKw4fJas8tw1UZrs8XF129r9xtFW2ka48G39Fqwn0
-	qF4Yvas8C398uaDanT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
-	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07UqeHgUUUUU=
-X-CM-SenderInfo: pvkd01phlbiiirs6il2tof0z/xtbC6hGdLGsF1TGqyAAA3i
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <awVRz8XC54nfevtW@kernel.org>
 
-On Tue, Nov 24, 2026 at 05:40:53PM +0000, Matthew Wilcox wrote:
-> On Tue, Nov 24, 2026 at 10:28:07PM +0800, Shaopei Zhu wrote:
-> > As with EXT4_IOC_MOVE_EXT and F2FS_IOC_MOVE_RANGE, the source must be
-> > open for reading and writing, the destination for writing, and both must
-> > be regular files on the same mount.  Files whose allocation, chain
-> > layout or valid_size are inconsistent, as after a failed truncate or on
-> > a corrupt volume, are refused with -EIO before anything is changed.
->
-> Why are you designing your own ioctl instead of implementing
-> EXT4_IOC_MOVE_EXT in exfat?  That's the normal way of doing things as
-> it lets us later hoist the ioctl from all the filesystems implementing
-> it to the VFS.
+On Tue, Nov 24, 2026 at 10:58:55AM +0200, Jarkko Sakkinen wrote:
+> > https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd.git/log/?h=vault
+> 
+> The key function to look up from here is spawn_userland_container():
+> 
+> 	https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd-test.git/tree/br2-external/patches/systemd/0010-nspawn-Start-containers-in-an-experimental-userland.patch?h=main
+> 
+> It demonstrates an initialization flow that ends up cleanly with
+> clone(). userland_share_host_ns() demonstrates the ioctl I added
+> previous week i.e., USERLAND_SHARE_NSFD, which is used to punch those
+> host namespaces that the guest actually needs. This is the allow-list
+> part, which is usually the favorable principle over deny-list.
 
-Hi Matthew,
+This proves that bootstrap ends with clone3(CLONE_INTO_USERLAND), which
+the most important property to prove at first.
 
-Thanks for looking at this.  That paragraph was badly worded: I only
-meant that the permission rules are the same as for those ioctls, not
-that the operation is similar.
+The second part is "hotpluggability" property (hmm... is that even a
+word). I have early local patches for this but they ares still unpushed.
+I need to test this again with real hardware as I did in ad-hoc manner
+previously. I don't think QEMU is acceptable for this alone.
 
-EXT4_IOC_MOVE_EXT is a defragmentation primitive: it copies the data of
-the original file into the donor's blocks and exchanges the block
-mappings, so the contents and sizes of both files stay the same, and
-the range has to lie within both files.  It cannot append one file to
-another, which is what is needed here: the clusters of the source are
-linked onto the end of the destination, the destination grows and the
-source is unlinked, without copying any data.
+However, it is not really rocket science with these tools, and it would
+require effort to get these completely wrong, especially if they are
+stressed even slightly with bare-metal hardware:
 
-I will reword that paragraph in the next version so that it states the
-rules without suggesting that the operations are related.
+	nspawn: Hotplug device nodes into userland containers via udev
 
-Thanks,
-Shaopei
+	Defer absent /dev bind sources when starting a container in a userland,
+	keep the userland mount namespace fd open in the supervisor, and attach
+	an sd_device_monitor to the supervisor event loop. When matching device
+	nodes or optional API devices appear, update the container scope's
+	DeviceAllow= property, populate the dev node and /dev/{char,block}
+	symlink via its root fd, and attach the device mount with
+	MOVE_MOUNT_T_MNTNS.
+
+	machined: Allow bind mounts on user-namespaced containers
+
+	When experimental support is enabled, bind_mount_in_namespace() attaches
+	mounts via MOVE_MOUNT_T_MNTNS without entering the target's namespaces
+	and refuses to fall back to namespace_fork() for foreign user
+	namespaces.
+
+	mount-util: Attach live namespace mounts with MOVE_MOUNT_T_MNTNS
+
+	When experimental support is enabled, create missing target mountpoints
+	through the target's root fd and attach bind mounts and dissected images
+	directly into the target mount namespace fd instead of forking a
+	setns() helper process. Fall back to namespace_fork() when the kernel
+	does not support MOVE_MOUNT_T_MNTNS.
+
+They are variation of the same pattern, and pretty obvious even from the
+descriptions. When they are known to work, I'll push them.
+
+Br, Jarkko
+
 
