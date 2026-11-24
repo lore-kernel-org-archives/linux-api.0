@@ -1,78 +1,92 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=60.251.196.230
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795492738;
-	b=VC1eQlpNlCPQrk4Sv+b1eUAFET0+tak82dIsasf2rB/n8wUJbju3CSuRWJJGVLm+wYRm
-	 mRYeEw/c+7QQzj8AohBg8U6BoraaRD6no6s57pptbxBLzMVuKoBnY81KBNdjz5PFYDl5W
-	 Zj3NCTnznCG4B5Jdwg+Ui9Kn6gDKEI3ZjxtHLzi+DK8qgsdiHtXSnPu7tcbiy87YUWKhq
-	 mDp8gsPw9zv7L79iKQPtpWul7R9TXP75Kp/388lUx/Cw/bjGe/ZouTrSThs2KxIU+RjmF
-	 8uQ03b23MXzqNLjeDZhIiNmDZ053iHLYzfr6SwnbPcmE552m7FVi1sn0r80B6Ss6WaQ==
+	t=1795492991;
+	b=DpPsczh6cYBwtedJmPdiRpbXzUTEEZgmtyUOrP/bf8l8tK7Lb9It6u8+oIeNFWhbQw5f
+	 sDUf/iQyY6CKhH0YwcFc6dx7lX+fCEPll4rhwmLa0ZPQDGY07l3nKQj9rU897fC0EQqdt
+	 DAAxiaTVS14R+cEivTAZPUa01uw3T8cYmf1qojGMVSVybn9bC4CPWgy9vAJbBHoyLw6XH
+	 0frjyew49YoP/JeoPDs4TQCJoLKIuXEdOVz0Xx+ZLLU40UomMyiWI3c1H2Vfn2VaJSR8C
+	 gYwnC1ODzHEOZVdJyVfswLhnNIq22kA4Hh1RdnGfMfvn4kKDYl3HYFi7AB5I6Zag8zA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795492738;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=NS45uIMLO58QIZFdFsRqQwpuveO9a35GIgn0ekSZke8=;
-	b=DjUTnBsukSIeG/MLC9+o2XR6K6YQkXkfiBlc2+fG2S08gioJ5xHVOTvCA1GZcxrB9Kl4
-	 WPbPoKLW5vXb5K2CLyn7eWt08FFPUxpxwj6b5P871fTG5di912CMv3j4sAdpVVBy4zibT
-	 OA5ZSuSDEQTsJa7xJ9qlEAt5hPsBwHdnxP7u9Eh1OZ2cEn1ReOJhAVtBuzRATrCg2fjH2
-	 hFfE8orV4KWOz+AjD+8T+8+/KAdaGW6bXaEO+YW83SjK3i6A83SEgmVYXg+RM6i8B+vmO
-	 he67MgF3qP5UE/e2Y2yAEd9DBl9y6RJ0fxBKHQEzfAEeNmqs2VY15XcHF3H/aidd51w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795492991;
+	h=DMARC-Filter:DKIM-Signature:X-CSE-ConnectionGUID:X-CSE-MsgGUID:
+	 Received:Received:Received:Received:From:To:CC:Subject:Thread-Topic:
+	 Thread-Index:Date:Message-ID:References:In-Reply-To:Accept-Language:
+	 Content-Language:X-MS-Has-Attach:X-MS-TNEF-Correlator:
+	 x-originating-ip:x-tm-snts-smtp:Content-Type:
+	 Content-Transfer-Encoding:MIME-Version:X-MAIL;
+	bh=dEAWrCcLPoqiH1o+NThWPO02RVOnV+Cf+QRng64jUU0=;
+	b=HzvkVAvBqGFUYP2yBXClPfP1JbC5xPir5MO8hJFua1udrJSuHIFR8S6f5AY3HA5BJOmT
+	 oWfIumWk6rTyeKINolciz5QXoduF0ixzKh4X2b/6QyDhZhVtUYiqjHhJMr0IGecPm11Av
+	 Erm4x4ThlcNSJdDUHu9KSbFRexMv9Tk2uC+D7gj5A84Z7N+aLDeCNplkZ9kbAQdfSFHsF
+	 6pg0TTLzBshXnul3uVbAFWxzDbQx6Ah13W+cCK6eKA0vrTepV7z0empZiFLqaOdc/aBu+
+	 cOBKqE6mDSkyDh256kGiu07xS58y8/EUjwM6z4Sri1m19oWGqOHYZ8cIXIIj+BwDgPg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aTy5+RVI;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=ite.com.tw;
+	spf=pass smtp.mailfrom=ite.com.tw;
+	dkim=pass header.d=ite.com.tw header.i=@ite.com.tw header.a=rsa-sha256 header.s=dkim header.b=HbaxFBEA;
+	arc=none smtp.remote-ip=60.251.196.230
+Received: from ironport.ite.com.tw (itemail.ite.com.tw [60.251.196.230])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 32163606A338;
-	Tue, 24 Nov 2026 03:58:58 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 0488A606A31E;
+	Tue, 24 Nov 2026 04:03:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0488A606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=ite.com.tw
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=ite.com.tw
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=aTy5+RVI
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 0A6C91F000C6;
-	Tue, 24 Nov 2026 03:58:57 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795492737;
-	bh=NS45uIMLO58QIZFdFsRqQwpuveO9a35GIgn0ekSZke8=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=aTy5+RVIdr9BQCwJGNCU+JGZNyIuBkeW2PKcNU22mYFHbK02ep8bNci6jVvu2FCjC
-	 mWD0vUNBFxa16W5/KVosNO/h3a9BHaXz88hq25B1gm3Zqah/8hjvcSRZXUfBfkLoGd
-	 Lq2QZT48f80Cew+fSSoIoW7VwpGEA5V5tWetW2qZ5rC3QM8ebIt3fnGNCa/k9PNyiv
-	 NjXdmCWJsT+P2rZTLcXiveeiQayLn2A4pDDsqdPMUVibLOmgdiSguA2lhUHpOS/zcY
-	 Mob1v+oAmz4/cXBraQV7HBSKGBYGrScyIJwnm6LX73iBJi5oQWeFb2pivVAFOqfaIb
-	 Ue3TCbDSwse1A==
-Date: Tue, 24 Nov 2026 05:58:54 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: linux-fsdevel@vger.kernel.org
-Cc: bpf@vger.kernel.org, containers@lists.linux.dev,
-	linux-api@vger.kernel.org, linux-arch@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-kselftest@vger.kernel.org, linux-mm@kvack.org,
-	linux-security-module@vger.kernel.org,
-	Aleksa Sarai <aleksa@amutable.com>,
-	Alexander Mikhalitsyn <alex@amutable.com>,
-	Alexander Viro <viro@zeniv.linux.org.uk>,
-	Andy Lutomirski <luto@amacapital.net>,
-	Arnd Bergmann <arnd@arndb.de>,
-	Christian Brauner <brauner@kernel.org>,
-	David Howells <dhowells@redhat.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Giuseppe Scrivano <giuseppe@scrivano.org>,
-	Hugh Dickins <hughd@google.com>, Jan Kara <jack@suse.cz>,
-	Jeff Layton <jlayton@kernel.org>, Jonathan Corbet <corbet@lwn.net>,
-	Josef Bacik <josef@toxicpanda.com>, Kees Cook <kees@kernel.org>,
-	KP Singh <kpsingh@kernel.org>,
-	Lennart Poettering <lennart@poettering.net>,
-	Neal Gompa <neal@gompa.dev>, Oleg Nesterov <oleg@redhat.com>,
-	Paul Moore <paul@paul-moore.com>,
-	Pavel Tikhomirov <ptikhomirov@virtuozzo.com>,
-	Serge Hallyn <sergeh@kernel.org>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Zygmunt Krynicki <zygmunt.krynicki@canonical.com>
-Subject: Re: [RFC PATCH v7 00/26] userland: Userland containers
-Message-ID: <awULfmZR-pESj2EC@kernel.org>
-References: <20261122193539.3334213-1-jarkko@kernel.org>
- <awTmJIErjasO4lqq@kernel.org>
- <awToL2PFNKVgIfqs@kernel.org>
- <awUGkYoyDXp4P5LJ@kernel.org>
+	dkim=pass (2048-bit key, unprotected) header.d=ite.com.tw header.i=@ite.com.tw header.a=rsa-sha256 header.s=dkim header.b=HbaxFBEA
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+  d=ite.com.tw; s=dkim;
+  h=from:to:cc:subject:date:message-id:references:
+   in-reply-to:content-transfer-encoding:mime-version;
+  bh=dEAWrCcLPoqiH1o+NThWPO02RVOnV+Cf+QRng64jUU0=;
+  b=HbaxFBEANVXtFVK/5R+pUSwpN1JUCxpyTpnUzBFCDwLppZqCQwod+Bg7
+   i+RMVlfx1kv667648HGnf+LsYIYzTZ3+gS3I4BSIPvAeiBbcBG4PMKsAn
+   LyLu8gYpXAK/JYea+ZJTT2RQZ29vdljSaxh29c9m6EwNMvzNaXmugNVGZ
+   WvIlRGgXBeRSwntUeeHWPo3VXzPfR2kh4IxGR1bMQAlU9J3Y9wcx1fziT
+   tpBlCnEGtsUbs+ABfHT+zdeZ8Lv1QEz0sMmlNCOAknqy5cBHq4icqGLK5
+   dZD9Nb/uOAiV8YJQHQoaqEkn/CQVtiYAiz1CXqAIems4f0TKVEJf06bm6
+   g==;
+X-CSE-ConnectionGUID: nB9btFpES06NvHCzbSAmeQ==
+X-CSE-MsgGUID: dPhrvm1CT9Sw0PNH81Hx5Q==
+Received: from unknown (HELO mse.ite.com.tw) ([192.168.35.30])
+  by ironport.ite.com.tw with ESMTP; 24 Nov 2026 12:03:00 +0800
+Received: from tpemail1.internal.ite.com.tw (TPEMAIL1.internal.ite.com.tw [192.168.15.58])
+	by mse.ite.com.tw with ESMTP id 6AO42tcK054934;
+	Tue, 24 Nov 2026 12:02:55 +0800 (+08)
+	(envelope-from Hermes.Wu@ite.com.tw)
+Received: from TPEMAIL1.internal.ite.com.tw (192.168.15.58) by
+ TPEMAIL1.internal.ite.com.tw (192.168.15.58) with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id
+ 15.2.2562.46; Tue, 24 Nov 2026 12:02:54 +0800
+Received: from TPEMAIL1.internal.ite.com.tw ([fe80::63c1:9095:c5a6:3291]) by
+ TPEMAIL1.internal.ite.com.tw ([fe80::63c1:9095:c5a6:3291%3]) with mapi id
+ 15.02.2562.046; Tue, 24 Nov 2026 12:02:54 +0800
+From: <Hermes.Wu@ite.com.tw>
+To: <Hermes.Wu@ite.com.tw>, <mchehab@kernel.org>, <robh@kernel.org>,
+        <krzk+dt@kernel.org>, <conor+dt@kernel.org>,
+        <hverkuil+cisco@kernel.org>, <hverkuil@kernel.org>
+CC: <linux-media@vger.kernel.org>, <devicetree@vger.kernel.org>,
+        <linux-kernel@vger.kernel.org>, <broonie@kernel.org>,
+        <lgirdwood@gmail.com>, <linux-sound@vger.kernel.org>,
+        <linux-api@vger.kernel.org>
+Subject: RE: [PATCH v2 1/9] media: v4l2-ctrls: add DV RX audio sampling rate
+ and present controls
+Thread-Topic: [PATCH v2 1/9] media: v4l2-ctrls: add DV RX audio sampling rate
+ and present controls
+Thread-Index: AQGjzAf29/U6qc1EEeqYH4GUceBqBQIP9cY2t595iuA=
+Date: Tue, 24 Nov 2026 04:02:54 +0000
+Message-ID: <242d6f760d9d47408285dd8c823582f8@ite.com.tw>
+References: <20261124-upstream-it6625-alsa-i2s-v2-0-a154685f6989@ite.com.tw>
+ <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+In-Reply-To: <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+Accept-Language: zh-TW, en-US
+Content-Language: zh-TW
+X-MS-Has-Attach:
+X-MS-TNEF-Correlator:
+x-tm-snts-smtp: B4F3CEC3C575450E11A7FD2E06239EFCBB8D7A027EDD391DD84FBBE7C38DB2E62002:8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -82,73 +96,9 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <awUGkYoyDXp4P5LJ@kernel.org>
+X-MAIL:mse.ite.com.tw 6AO42tcK054934
 
-On Tue, Nov 24, 2026 at 05:37:58AM +0200, Jarkko Sakkinen wrote:
-> On Tue, Nov 24, 2026 at 03:28:19AM +0200, Jarkko Sakkinen wrote:
-> > On Tue, Nov 24, 2026 at 03:19:36AM +0200, Jarkko Sakkinen wrote:
-> > > On Sun, Nov 22, 2026 at 09:35:13PM +0200, Jarkko Sakkinen wrote:
-> > > > SYSCALLS
-> > > > ========
-> > > > 
-> > > > Two new system calls are proposed:
-> > > > 
-> > > > 1. userland_open(): open an opaque staircase-initialized container
-> > > >    object (modeled on Intel SGX enclave initialization with separate
-> > > >    build and live states) with no embryonic state, opting selected
-> > > >    shared namespaces in via an allow-list instead of unshare semantics.
-> > > > 2. userns_set_idmap(): configure all UID, GID, and project ID map
-> > > >    extents for a container user namespace in a single atomic system
-> > > >    call.
-> > > 
-> > > I played on patching systemd and userns_set_idmap() alone does already
-> > > a lot of good. I'm figuring out userland_open() integration next.
-> > > 
-> > > For the test implementation I probe the opcode's and dependening on that
->                                             ~~~~~~~~
-> 					    syscalls
-> 
-> > > use either "userland path" or "fallback path".
-> > > 
-> > > This auto-probing is done so that I can commit the patches to my kernel
-> > > test harness, which already has systemd, and try them out when built
-> > > against userland-enabled kernel (via LINUX_OVERRIDE_SRCDIR):
-> > > 
-> > > https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd-test.git/tree/?h=main
-> > > 
-> > > The project builds a hybrid ISO, which is a bootable bootc/composefs
-> > > based operating system, and has toolbx bundled i.e., a reasonable test
-> > > environment for all of this. It is also device-installable via "npx
-> > > @puu/install"
-> > > 
-> > > I had to level the harness up a lot so that I could realistically test
-> > > lockdown-hibernate but it is is also pretty good emulation environment
-> > > for any possible container features.
-> > 
-> > Kernel is ukified and systemd-boot is used as the boot loader i.e., for
-> > kernel testing purposes corresponds to something like Silverblue except
-> > not using GRUB.
-> 
-> Experimental systemd patches:
-> 
-> https://git.kernel.org/pub/scm/linux/kernel/git/jarkko/linux-tpmdd-test.git/commit/?h=main&id=e4d6b15da3376ad09c0c575cedf467f69db32a52
-> 
-> The patches are layered per syscall feature:
-> 
-> - 1-5: userns_set_idmap
-> - 6-10: userland_open()
-> 
-> Virtual device would add path/mount complexity and generally dependency
-> to mounts i.e., I think it was an awful idea. At least initially this
-> feels fairly lean way of doing container things now that I've trialed
-> systemd-nspawn a bit.
-> 
-> I'll update the patches over time.
-
-"userland_open" is just a name as I don't have anything better for the
-time being (perhaps <something>fd() e.g., containerfd(), would work
-better).
-
-Br, Jarkko
+VGhlIFNpZ25lZC1vZmYtYnkgaXMgbWlzc2luZyBmcm9tIHRoaXMgcGF0Y2gsIHNvcnJ5IGFib3V0
+IHRoYXQ6DQoNClNpZ25lZC1vZmYtYnk6IEhlcm1lcyBXdSA8SGVybWVzLnd1QGl0ZS5jb20udHc+
+DQoNClRoZSBuZXh0IHZlcnNpb24gd2lsbCBjYXJyeSBpdCBpbiB0aGUgcGF0Y2ggaXRzZWxmLg0K
+DQpCZXN0IHJlZ2FyZHMsDQpIZXJtZXMNCg==
