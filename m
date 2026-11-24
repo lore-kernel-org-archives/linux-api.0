@@ -1,78 +1,79 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
 ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795489528;
-	b=mTm7FffhArvVy6F+dY2ftEFOS5NNJDCCky1BTRwttMKwSJ9XP6Nh2u72xV24qZeyzq/L
-	 ojfgoQIiTHiN4uYXQJ4uvQDctl3J6HfcpOBI1cBFbVtc3KXd1OQL49rrQdwE+OFV6vqiQ
-	 AXhFa/J4s3QVILGcPw7K+cddHhg0NlO2ty0KYeU7UklPbQphJzJqLguhYZp0KUUmnNF2U
-	 yRQenVhif8WtVcLc66RJFSBQg79qJL7fc7diw0xCh+OesEh0yBz+U6v7pY4yvXNNIzinO
-	 Sw7NCLfVNzREufqZdwLyXVFKAHqK6gAS8oLDAS51f+t8FceQezJKZJ1XW7wbxW9FwXg==
+	t=1795489531;
+	b=2lf78QJc/Jn88UwBacLXVKvq/vmOT/0UqR1i0OhsazJXfW27gOJaos/PlVXuTae5z1JV
+	 m5WxBZ5w+mCOXPnXUw7CgZzVLJRK+uqulIeBAdR+cmJP/Ye2ynPaVIaZ8nVmatv+Q2fv0
+	 d2gGVKfQfOGMHFXT6HQS/plPStawaW3kRqYeUFDTex385Zqa00cSoBWgVNb8QEg3rlOU5
+	 zBq28LOsT2qmQVZV3HwbezoxmBfuRssnL2kO1g1TpelXZmVvkM5b5+uQK6aijIm5w7Jwx
+	 udSoSYSriRMOBJPeHvNFx9W1HZX1woASqI6OIo7k9ZdELlmXqiipw3a35p/qOHfrPKg==
 ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795489528;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795489531;
 	h=Received:DKIM-Signature:Received:From:Date:Subject:MIME-Version:
 	 Content-Type:Message-Id:References:In-Reply-To:To:Cc:X-Mailer:
 	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
 	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=AvMwkVBhmHmE4vDu+0EKypwkW/HWTNwEMejtASx99XY=;
-	b=kI2ZX3RniIQwnCR5H1bQAFaRbiU+/I0M/Pzx8rNx9OmXMBQpnNBXfiHVa/vLabKKzkjK
-	 2oQtBgXwaU1aCoHEpvdlGY/yIYnSJk5Sr8GUmzx5WrX53EzLr4AsRAwQEoxzWpcrjI+gs
-	 OHkIk8lGrsBNgVTlkyaK5Qp6Q6znIHey0MgxE/te4pO8v+2BN5jCQnUXXXnxLVI7ukjDx
-	 utnVWF4qYATCWo8afyuGKuqZTSCnpI8tnYqEZlq5lXU+FZ0xWgs9yzryG7DEjiujwGkvi
-	 69ILSdVkBzCZN46uTmM8FD0T8IDtttIl2sS6X2iSRHMDzQ7tRGYgGmX/6e8bzE/6Oug==
+	bh=oJimokr8Sp2/3i9x2zohOQKTJnD9o9zUGU0QqCS/4V8=;
+	b=E4SAwMV5FauBaA4yvZxBoXYxOj6vsKhmaKLH9O1AQ4DSz5HiQTtE2gm6w55SLMz5sgpg
+	 lAqTQIYVtdgzHZhDlj5eRsPnu6v2Vix8tR/1qu/p+LbFjfrcV+5PKOxpsB36EjuTjEBs4
+	 U31kNQ8ZT1Pvq7AD/6kFabH43BivYiXTMFQNeFe5wy3euR2rI9SDkV4Rf2TryAhIrIMck
+	 j18Y7ndWCG8+vzU7QMgKFjfxiYspj/RBV1J8zHWHqmNzuadcBMdnvAWbKfkkQXHsS7Epr
+	 cpDN46Ib5ZVynXOPc9QxAU3NCb2oBAnTGOHK42gkX4IMu2RWADNTkflSLeiYHSWR7Nw==
 ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YSKASw+h;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=F9AsrRFG;
 	arc=pass header.oldest-pass=0 smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D0E53606A698;
-	Tue, 24 Nov 2026 03:05:28 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D00E9606A326;
+	Tue, 24 Nov 2026 03:05:31 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YSKASw+h
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=F9AsrRFG
 Authentication-Results: smtp.kernel.org; arc=none smtp.remote-ip=100.80.115.77
 ARC-Seal: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256; cv=none;
-	t=1795489528;
-	b=khnHypLTvNgege0CzLm7rcVZwwNnDH4yisC++RQ1romAL3UMVpbAx7va7be4piIPVsP2
-	 QdoIelnFThNKCOgjwM2yADGNzltuP+KrHAVzKiW4qUbGlk0VvwPlwWaj/rxAHsrrkC6YB
-	 Q7KvdSduDJCUKJajRHJCCuhsqf2rLf+nxzGVf70HxXLJs6qpptgxZI1iFT1epIGqrf74V
-	 vbuZiaLCCLNAzARIO28wTi5Sbz3HFpoWVL4eI+66F9ouO2Xqw0JIQyDjO3Q8cmE7Em6RW
-	 YPVR3zu52OwCvq8Z9T7qtYd1QBEP46RlnKBJJjkFAKErl6RHE73ZEZNvsk0Tjk7qBmQ==
+	t=1795489531;
+	b=VVOeshE1cIUkrC0gLt9AeY8375gKbl63Te1dKRM4212RmYuZyY/C6TZAbQDmgLY2ccnA
+	 ceEIZAoTkZ0fkb7Ki/PPPSI3XRwMUmIDzQye2q8VB2sKv9+KnYmtC9hUewU/ZadIFd50b
+	 HSo4p9uU2viw4nTseix93OI/IniZTAX1M7XNERKkCy/xggpfgX1tW82AEkXDfkY0I75J8
+	 QJvDIJsfdwSSvtJcE2OYBSlpyP6iTIQBWLH0fG3HknO8PD6zvRw9gpp97/YrDT2pM2rFQ
+	 XXPMb5VLFyipTbI5c5cjEDMf825wa9lTIKL0Y0h25boYR4U/RCxrfIdyzzqCNluv0Ag==
 ARC-Message-Signature: i=1; d=kernel.org; s=arc20260519; a=rsa-sha256;
-	c=relaxed/relaxed; t=1795489528;
+	c=relaxed/relaxed; t=1795489531;
 	h=DKIM-Signature:Received:From:Date:Subject:MIME-Version:Content-Type:
 	 Message-Id:References:In-Reply-To:To:Cc:X-Mailer:
 	 X-Developer-Signature:X-Developer-Key:X-Endpoint-Received:
 	 X-Original-From:Reply-To:Content-Transfer-Encoding;
-	bh=AvMwkVBhmHmE4vDu+0EKypwkW/HWTNwEMejtASx99XY=;
-	b=1U1FL5fiJEJVSDLyv2gAgDWxiw8vi+xK08gRERthfYcLiJkwQ4XAVF9MAdG4Dxhs6NGS
-	 FSchy+9bw7eB7qxSjWYf623g0IBu9JGXLsLoSMiERVVaH3aR7+vZw4XQgfGswf7jLUhAK
-	 mok3F6VoDEiPjJD2bW0S2CU+BRjCk/dmrWDP0e2opFwyy4zwPSnv8Ot1/18wkZYFg8y6q
-	 Q+7d8AMGL0dhmhXmc6Yl29wdeYw6iTZUJrhR0bS9I1RHkPfWp/642G2qEBGvRSLcC3d0P
-	 1PSlR1sLP7DqOZLjLwxnmtNFpbjt+r0wRXz9lMPaFj7B3ylJ4hn2ojtIJnNYFifUAVQ==
+	bh=oJimokr8Sp2/3i9x2zohOQKTJnD9o9zUGU0QqCS/4V8=;
+	b=fn61a9tPXaSkVU8HpJokDRcq39yibzCwC1xn8ZhZT8ES7aA9+GtJ+EzsGospjHbUmG8D
+	 9hZZ6DP9kvlgn1BE9JVKCNqq+WRcYhTOUBlGjaMT615U6Y5fVjpFvMVTYb9JhedJOHzdz
+	 dxzOCaNeT9ZJ4T/AkXyQapiVuLUsM/ZTtZo5NlOfxvaXwj5p1SLBngKKthpc+CZCAwfln
+	 9Q9Mn0Y8GyB4tdyspUBRJitarvqnLuiUEfho/LJfUxIG+wZMibCul5LB+9DH/eFWy63Bn
+	 xNUE0ZCSnAYpcVaoeovWx4XXowQEw+bXIxTgVtGFEdptOlYS/9npDxKrAa/cOlr461A==
 ARC-Authentication-Results: i=1; smtp.kernel.org; 
 	arc=none smtp.remote-ip=100.80.115.77
 Received: from lkml.kernel.org (nexus.subspace.kernel.org [100.80.115.77])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.kernel.org (Postfix) with ESMTPS id 232CF1F000E0;
-	Tue, 24 Nov 2026 03:05:14 +0000 (UTC)
+	by smtp.kernel.org (Postfix) with ESMTPS id E05BC1F000EB;
+	Tue, 24 Nov 2026 03:05:21 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795489528;
-	bh=AvMwkVBhmHmE4vDu+0EKypwkW/HWTNwEMejtASx99XY=;
+	s=k20260515; t=1795489531;
+	bh=oJimokr8Sp2/3i9x2zohOQKTJnD9o9zUGU0QqCS/4V8=;
 	h=From:Date:Subject:References:In-Reply-To:To:Cc:Reply-To;
-	b=YSKASw+hVD7UCKYWxS9FHcOPseePfosZoihuBYUCHYVebVDhWCO/3DkpF5z9oTErz
-	 58uYtCkjxynQ3/sCenQSNFk8Cl6GiTNI9LA67kxyD4CynSguX3xpajunF6+EBSYFL0
-	 x6QzHKFUs0u1MI5d5LBBX6AS7e2z/hzQakQoTdZ1klmC30bFA3GWnC8VsztaVEZGf4
-	 kOqyXiAZejGbU/Zk82v7yxX3HTwBkRIABiGBHXFvY/VG2U2gaLmFsbXxfjaCx9ITM6
-	 xt/P5B7722IFwAiZ+hnVw2455Av2rQNFbFSxWGnabIda23wzc/Aa4eHvwQRMWSw+wM
-	 MO7BMH8ZMW7Bg==
+	b=F9AsrRFGDSjkpSXLHdy0HaZHnykT0JAyjCZChNpJmcbsYlDYeQ74uCslHBKMYOljd
+	 8/oMq9nXktgFGmhHLL6SRX2RQLtcvCbN88nHSNxI6dfe/qFZ1Lsz9+iOOUGxZugQ1s
+	 0DNl2rZucvLfEMQ+JazABVOFNWkXjK0g7aGkBlYbYHbKalF2d5l4EY5BsSHuar4pwy
+	 Mb1oQJLdyZ3jJhQCjInA0dkDi3JIgtU26DM5NQS4FmXhUnUY20kdeJl+dYZKXCcTi1
+	 PLDb330WEEb12PK1TBgv7GmNHGRQoJ79AVJvMeA6A1vVQDFkltcSIRw8HPb3RDYcSF
+	 1x3Rnv+J2Mh+w==
 Received: from nexus.subspace.kernel.org (localhost [IPv6:::1])
-	by lkml.kernel.org (Postfix) with ESMTP id 444A04C86F;
+	by lkml.kernel.org (Postfix) with ESMTP id A69AC4C87B;
 	Tue, 24 Nov 2026 03:05:09 +0000 (UTC)
 From: Hermes Wu via B4 Relay <devnull+Hermes.wu.ite.com.tw@kernel.org>
-Date: Tue, 24 Nov 2026 11:04:43 +0800
-Subject: [PATCH v2 6/9] media: i2c: it6625: add I2S audio capture DAI
+Date: Tue, 24 Nov 2026 11:04:46 +0800
+Subject: [PATCH v2 9/9] media: uapi: it6625: remove the driver-specific
+ audio controls
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -83,7 +84,7 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
-Message-Id: <20261124-upstream-it6625-alsa-i2s-v2-6-a154685f6989@ite.com.tw>
+Message-Id: <20261124-upstream-it6625-alsa-i2s-v2-9-a154685f6989@ite.com.tw>
 References: <20261124-upstream-it6625-alsa-i2s-v2-0-a154685f6989@ite.com.tw>
 In-Reply-To: <20261124-upstream-it6625-alsa-i2s-v2-0-a154685f6989@ite.com.tw>
 To: Hermes Wu <Hermes.Wu@ite.com.tw>, 
@@ -97,11 +98,11 @@ Cc: linux-media@vger.kernel.org, devicetree@vger.kernel.org,
  Liam Girdwood <lgirdwood@gmail.com>, linux-sound@vger.kernel.org, 
  linux-api@vger.kernel.org, Hermes Wu <Hermes.wu@ite.com.tw>
 X-Mailer: b4 0.14.2
-X-Developer-Signature: v=1; a=ed25519-sha256; t=1795489507; l=26033;
+X-Developer-Signature: v=1; a=ed25519-sha256; t=1795489507; l=3311;
  i=Hermes.wu@ite.com.tw; s=20241230; h=from:subject:message-id;
- bh=mIcF/0dc7T0jYWz16Mlx15K8itKPjOf7HY0MsE2qVVk=;
- b=o7yJJKnD3NUOWIqBMxPURfs/ClHB22+wKfm/dx2nnWMRR5oWlyPCt0m5xewPMBK6e7QUfxWPj
- 8xsS1oDXu13BYD3o+csP188Lx79JyGvxoFYvqWFBjrdEfmBcu1XSGpJ
+ bh=6SaU9xnFrmm0KhiPbAskmhGNEZNumQBEu9u4f3AH160=;
+ b=BAF4d0WKa6m7EEPENgMldLYWOoxoUUZsbvuud3OlhwNDeSnAPzjoGBpI2m/N8+abxbK/7agEh
+ ZsMZNFek1jeCXHiX9vqtH7Te2rsnLkPE3Z23g4WUhyuhc3PRbxfeAFd
 X-Developer-Key: i=Hermes.wu@ite.com.tw; a=ed25519;
  pk=qho5Dawp2WWj9CGyjtJ6/Y10xH8odjRdS6SXDaDAerU=
 X-Endpoint-Received: by B4 Relay for Hermes.wu@ite.com.tw/20241230 with
@@ -112,787 +113,92 @@ Content-Transfer-Encoding: 7bit
 
 From: Hermes Wu <Hermes.wu@ite.com.tw>
 
-IT6625 and IT6626 decode the HDMI audio stream and pass it through to an
-I2S output. The bridge drives the bit and frame clocks and uses standard
-I2S framing with 16, 20 or 24 valid bits in 32-bit slots. None of this
-is host-configurable: 0x6B-0x6E only report the stream being output.
+V4L2_CID_IT6625_AUDIO_SAMPLING_RATE and V4L2_CID_IT6625_AUDIO_PRESENT
+have been replaced by the standard V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE
+and V4L2_CID_DV_RX_AUDIO_PRESENT controls, and the driver no longer uses
+them. They were added together with the driver and are not part of any
+released kernel yet.
 
-Register an ASoC component with one capture DAI when the device node has
-'#sound-dai-cells'. The DAI accepts only what the bridge currently
-outputs: single-stream, non-3D LPCM at 32 kHz to 192 kHz, S32_LE with the
-valid bits reported through msbits, and 2 channels per connected I2S
-data pin (from 'ite,i2s-data-lanes'), up to 8 channels. startup pins
-these values, and hw_params, prepare and the start and resume triggers
-check them again against the latest observed status.
-
-The I2S clocks are not guaranteed to keep running at a constant rate
-when audio is lost, muted or changes format. Any observed change of the
-audio status, and any status read failure, therefore stops a running
-capture with an XRUN. A paused stream whose audio changed is still
-released, and then stopped with an XRUN: refusing the release would
-leave it paused, where a blocking read waits indefinitely. Changes are
-observed on the audio-change, video-change, 5V and AV-mute events, and
-every 200 ms while a capture stream is open, to catch changes that raise
-no event.
-
-The V4L2 audio controls are updated from the same status sample. The
-bridge can report audio before the video signal is stable or the
-sampling-frequency code is valid, and may raise no further event once
-they are. After an event that leaves audio present without a valid rate,
-the status is therefore checked again every 200 ms, up to 15 times, also
-when no capture stream is open.
-
-The component is registered without devm and unregistered first in
-remove. Unregistering waits for open capture streams to be closed, so no
-DAI callback can run while the rest of the driver is torn down. Unbind
-therefore blocks while a capture stream is held open.
-
-The driver still builds without ASoC: the audio code is compiled out
-when SND_SOC is disabled.
-
-Signed-off-by: Hermes Wu <Hermes.wu@ite.com.tw>
+Remove the uAPI header and the V4L2_CID_USER_IT6625_BASE reservation.
 ---
- drivers/media/i2c/Kconfig  |   1 +
- drivers/media/i2c/it6625.c | 613 +++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 599 insertions(+), 15 deletions(-)
+ MAINTAINERS                        |  1 -
+ drivers/media/i2c/it6625.c         |  1 -
+ include/uapi/linux/it6625.h        | 25 -------------------------
+ include/uapi/linux/v4l2-controls.h |  6 ------
+ 4 files changed, 33 deletions(-)
 
-diff --git a/drivers/media/i2c/Kconfig b/drivers/media/i2c/Kconfig
-index 9e42b380e3f20ee9f41123d265cb9b0506324ed0..d28b0dc1cf0ec7ea3ff2840cbcf1c0ced81863dc 100644
---- a/drivers/media/i2c/Kconfig
-+++ b/drivers/media/i2c/Kconfig
-@@ -1393,6 +1393,7 @@ config VIDEO_IT6625
- 	tristate "IT6625 HDMI to MIPI CSI bridge"
- 	depends on VIDEO_DEV && I2C
- 	depends on OF
-+	depends on SND_SOC || !SND_SOC
- 	select CEC_CORE
- 	select HDMI
- 	select MEDIA_CONTROLLER
+diff --git a/MAINTAINERS b/MAINTAINERS
+index f4456f4589a1b86b140ab578d149884d46a3320a..a7a315f0e80585be26fe2b52a62c19e469cb5703 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -14271,7 +14271,6 @@ S:	Maintained
+ T:	git git://linuxtv.org/media.git
+ F:	Documentation/devicetree/bindings/media/i2c/ite,it6625.yaml
+ F:	drivers/media/i2c/it6625.c
+-F:	include/uapi/linux/it6625.h
+ 
+ IVTV VIDEO4LINUX DRIVER
+ M:	Andy Walls <awalls@md.metrocast.net>
 diff --git a/drivers/media/i2c/it6625.c b/drivers/media/i2c/it6625.c
-index 6ff5a5574b379c217138500887a041563158845a..4a6ab00f04013b874e9af13f26e88f90fcbc3989 100644
+index e4487e8111b94b2fa9f599e37ecd2b8a11425862..64c1cec26edfcb0e0105e00e1b7ba5960252aae7 100644
 --- a/drivers/media/i2c/it6625.c
 +++ b/drivers/media/i2c/it6625.c
-@@ -30,6 +30,9 @@
- #include <media/v4l2-dv-timings.h>
- #include <media/v4l2-event.h>
- #include <media/v4l2-fwnode.h>
-+#include <sound/pcm.h>
-+#include <sound/pcm_params.h>
-+#include <sound/soc.h>
- #include <uapi/linux/it6625.h>
+@@ -33,7 +33,6 @@
+ #include <sound/pcm.h>
+ #include <sound/pcm_params.h>
+ #include <sound/soc.h>
+-#include <uapi/linux/it6625.h>
  
  static int debug;
-@@ -112,6 +115,15 @@ MODULE_PARM_DESC(debug, "debug level (0-3)");
+ module_param(debug, int, 0644);
+diff --git a/include/uapi/linux/it6625.h b/include/uapi/linux/it6625.h
+deleted file mode 100644
+index a895658aaf6a80d3fb624cdece33c5135161c72d..0000000000000000000000000000000000000000
+--- a/include/uapi/linux/it6625.h
++++ /dev/null
+@@ -1,25 +0,0 @@
+-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+-/*
+- * Controls header for IT6625/IT6626 driver
+- */
+-
+-#ifndef _UAPI_LINUX_IT6625_H
+-#define _UAPI_LINUX_IT6625_H
+-
+-#include <linux/v4l2-controls.h>
+-
+-/*
+- * Currently detected HDMI audio sampling rate, in Hz. Read-only.
+- * 0 means the rate is unavailable/unknown: no audio is currently
+- * present on the input, the hardware reported a sample-rate id this
+- * driver doesn't recognize, or the status read itself failed. Never a
+- * literal 0 Hz sample rate.
+- */
+-#define V4L2_CID_IT6625_AUDIO_SAMPLING_RATE	(V4L2_CID_USER_IT6625_BASE + 0)
+-
+-/*
+- * Whether HDMI audio is currently present on the input. Read-only.
+- */
+-#define V4L2_CID_IT6625_AUDIO_PRESENT		(V4L2_CID_USER_IT6625_BASE + 1)
+-
+-#endif /* _UAPI_LINUX_IT6625_H */
+diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
+index 942a1df3057e3e49c9111f6a27ec1883d964bf64..a2d4ea909e01f9b705d30b680ef382f5fcd39714 100644
+--- a/include/uapi/linux/v4l2-controls.h
++++ b/include/uapi/linux/v4l2-controls.h
+@@ -249,12 +249,6 @@ enum v4l2_colorfx {
+  */
+ #define V4L2_CID_USER_DCMIPP_BASE		(V4L2_CID_USER_BASE + 0x1240)
  
- #define AUDIO_INFO_LEN 4
- 
-+/* I2S capture DAI */
-+#define IT6625_AUDIO_MAX_LANES 8
-+#define IT6625_AUDIO_MAX_CHANNELS 8
-+#define IT6625_AUDIO_MAX_RATE 192000
-+/* status re-check period while a capture stream is open */
-+#define IT6625_AUDIO_REFRESH_MS 200
-+/* re-checks after an event that left present audio without a valid rate */
-+#define IT6625_AUDIO_SETTLE_POLLS 15
-+
- #define REG_IF_LATCH_HB 0x6F
- #define REG_IF_DATA 0x70
- #define REG_EMP_DATA 0xA0
-@@ -348,6 +360,35 @@ struct it6625 {
- 	int if_snapshot_err;
- 	/* set just before complete(), to disambiguate timeout vs. capture */
- 	bool if_snapshot_done;
-+
-+	/*
-+	 * ASoC capture DAI state. audio is written with both it6625_lock and
-+	 * audio_lock held, so either one is enough to read it. Everything
-+	 * else below is protected by audio_lock, which is taken with
-+	 * spin_lock_irqsave() because .trigger runs in atomic context. It is
-+	 * never held across I2C, V4L2 control, ALSA core or work-sync calls.
-+	 */
-+	spinlock_t audio_lock;
-+	/* last published audio status sample */
-+	struct it6625_audio_info audio;
-+	/* bumped on any observed audio status change and on read failures */
-+	u32 audio_gen;
-+	/* the open capture stream, or NULL */
-+	struct snd_pcm_substream *audio_substream;
-+	/* audio_gen and stream accepted by the open capture stream */
-+	u32 audio_accepted_gen;
-+	struct it6625_audio_stream audio_accepted;
-+	bool audio_running;
-+	/* stream shutdown in progress: queue no new work */
-+	bool audio_block;
-+	/* refresh work runs left to follow a rate that is still settling */
-+	unsigned int audio_settle_polls;
-+	/* component registered by probe, unregistered first in remove */
-+	bool audio_registered;
-+	/* number of connected I2S data pins, from ite,i2s-data-lanes */
-+	u8 audio_lanes;
-+	struct work_struct audio_xrun_work;
-+	struct delayed_work audio_refresh_work;
- };
- 
- /*
-@@ -969,21 +1010,132 @@ static int it6625_s_ctrl_detect_hdmi_5v(struct v4l2_subdev *sd)
- 				hdmi_5v_power_present(it6625));
- }
- 
-+static bool it6625_audio_stream_equal(const struct it6625_audio_stream *a,
-+				      const struct it6625_audio_stream *b)
-+{
-+	return a->fs_code == b->fs_code &&
-+	       a->channels == b->channels &&
-+	       a->type == b->type &&
-+	       a->multi_stream == b->multi_stream &&
-+	       a->is_3d == b->is_3d &&
-+	       a->i2s_wl == b->i2s_wl &&
-+	       a->out_if == b->out_if;
-+}
-+
-+/*
-+ * Any change of the status bits or of the stream description, and every
-+ * read failure, invalidates an accepted capture stream: the I2S clocks are
-+ * not guaranteed to keep running at one rate across such a change.
-+ */
-+static bool it6625_audio_changed(const struct it6625_audio_info *old,
-+				 const struct it6625_audio_info *new)
-+{
-+	return !new->read_ok ||
-+	       new->read_ok != old->read_ok ||
-+	       new->vid_stable != old->vid_stable ||
-+	       new->present != old->present ||
-+	       new->avmute != old->avmute ||
-+	       !it6625_audio_stream_equal(&new->stream, &old->stream);
-+}
-+
-+/*
-+ * Sample the audio status and publish it. The read and the publication
-+ * both happen under it6625_lock, so concurrent refreshes cannot publish
-+ * out of order.
-+ */
-+static void it6625_audio_refresh(struct it6625 *it6625)
-+{
-+	struct it6625_audio_info info;
-+	unsigned long flags;
-+
-+	guard(mutex)(&it6625->it6625_lock);
-+
-+	/* keep the last stream description if audio is absent */
-+	info = it6625->audio;
-+	it6625_read_audio_info(it6625, &info);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	if (it6625_audio_changed(&it6625->audio, &info)) {
-+		it6625->audio_gen++;
-+		if (it6625->audio_substream && it6625->audio_running &&
-+		    !it6625->audio_block)
-+			queue_work(system_wq, &it6625->audio_xrun_work);
-+	}
-+	it6625->audio = info;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+}
-+
-+/*
-+ * Selecting the published sample and writing both controls happen under
-+ * the control handler lock, so a stale sample never overwrites a newer one.
-+ */
-+static int it6625_audio_update_ctrls(struct it6625 *it6625)
-+{
-+	struct it6625_audio_info info;
-+	unsigned long flags;
-+	int ret;
-+
-+	v4l2_ctrl_lock(it6625->ctrl_audio_present);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	info = it6625->audio;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	ret = __v4l2_ctrl_s_ctrl(it6625->ctrl_audio_sampling_rate,
-+				 it6625_audio_info_rate(&info));
-+	if (!ret)
-+		ret = __v4l2_ctrl_s_ctrl(it6625->ctrl_audio_present,
-+					 info.present);
-+
-+	v4l2_ctrl_unlock(it6625->ctrl_audio_present);
-+
-+	return ret;
-+}
-+
- static int it6625_s_ctrl_audio(struct v4l2_subdev *sd)
- {
- 	struct it6625 *it6625 = sd_to_6625(sd);
--	struct it6625_audio_info info = {};
-+
-+	it6625_audio_refresh(it6625);
-+
-+	return it6625_audio_update_ctrls(it6625);
-+}
-+
-+/* audio is present but its rate is not valid yet. Caller holds audio_lock. */
-+static bool it6625_audio_settling(struct it6625 *it6625)
-+{
-+	lockdep_assert_held(&it6625->audio_lock);
-+
-+	return it6625->audio.read_ok && it6625->audio.present &&
-+	       !it6625_audio_info_rate(&it6625->audio);
-+}
-+
-+/*
-+ * Update the audio controls on a status event. The chip can report audio
-+ * present before the video is stable or the sampling-frequency code is
-+ * valid, and may raise no further interrupt once they settle, so keep
-+ * re-checking for a while in that case.
-+ */
-+static int it6625_audio_event(struct it6625 *it6625)
-+{
-+	unsigned long flags;
- 	int ret;
- 
--	scoped_guard(mutex, &it6625->it6625_lock)
--		it6625_read_audio_info(it6625, &info);
-+	ret = it6625_s_ctrl_audio(&it6625->sd);
- 
--	ret = v4l2_ctrl_s_ctrl(it6625->ctrl_audio_sampling_rate,
--			       it6625_audio_info_rate(&info));
--	if (ret)
--		return ret;
-+	/*
-+	 * Load the budget and queue the work in one section, so the work
-+	 * can't be queued again after it has used up the budget.
-+	 */
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	if (it6625_audio_settling(it6625)) {
-+		it6625->audio_settle_polls = IT6625_AUDIO_SETTLE_POLLS;
-+		schedule_delayed_work(&it6625->audio_refresh_work,
-+				      msecs_to_jiffies(IT6625_AUDIO_REFRESH_MS));
-+	}
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
- 
--	return v4l2_ctrl_s_ctrl(it6625->ctrl_audio_present, info.present);
-+	return ret;
- }
- 
- static int it6625_v4l2_sd_ctrl_update(struct v4l2_subdev *sd)
-@@ -994,7 +1146,7 @@ static int it6625_v4l2_sd_ctrl_update(struct v4l2_subdev *sd)
- 	if (ret)
- 		return ret;
- 
--	return it6625_s_ctrl_audio(sd);
-+	return it6625_audio_event(sd_to_6625(sd));
- }
- 
- static int it6625_enable_stream_locked(struct it6625 *it6625, bool enable)
-@@ -1227,6 +1379,9 @@ static void it6625_irq_format_change(struct it6625 *it6625)
- 	};
- 	int ret;
- 
-+	/* the audio rate is only valid while the video is stable */
-+	it6625_audio_event(it6625);
-+
- 	if (no_signal(it6625)) {
- 		if (sd->devnode)
- 			v4l2_subdev_notify_event(sd, &it6625_ev_fmt);
-@@ -1245,7 +1400,7 @@ static void it6625_irq_format_change(struct it6625 *it6625)
- 
- static void it6625_irq_hdmi_audio_change(struct it6625 *it6625)
- {
--	it6625_s_ctrl_audio(&it6625->sd);
-+	it6625_audio_event(it6625);
- }
- 
- static void it6625_get_timings(struct it6625 *it6625,
-@@ -1318,11 +1473,13 @@ static void it6625_irq_avmute_change(struct it6625 *it6625)
- 	u8 avmute;
- 
- 	val = it6625_read_byte(it6625, REG_RX_STATUS);
--	if (val < 0)
--		return;
-+	if (val >= 0) {
-+		avmute = (val & B_RX_AVMUTE) ? 1 : 0;
-+		v4l2_info(sd, "AVMute change to %d", avmute);
-+	}
- 
--	avmute = (val & B_RX_AVMUTE) ? 1 : 0;
--	v4l2_info(sd, "AVMute change to %d", avmute);
-+	/* AV mute makes the audio unusable for capture */
-+	it6625_audio_event(it6625);
- }
- 
- static void it6625_dispatch_int_status1(struct it6625 *it6625, int int_sts1)
-@@ -2008,6 +2165,373 @@ static int it6625_v4l2_init_controls(struct v4l2_subdev *sd)
- 	return 0;
- }
- 
-+/*
-+ * I2S capture DAI. The firmware decodes the HDMI audio stream and passes it
-+ * through to the I2S output, which it drives as bit and frame clock
-+ * provider: standard I2S framing, 16/20/24-bit data in 32-bit slots. None of
-+ * this is configurable, so the DAI only accepts streams matching the
-+ * currently observed audio and stops a running capture when that changes.
-+ */
-+
-+/* valid bits per 32-bit slot, 0 if unsupported */
-+static unsigned int it6625_audio_wl_bits(u8 i2s_wl)
-+{
-+	switch (i2s_wl) {
-+	case I2S_WL_16BIT:
-+		return 16;
-+	case I2S_WL_20BIT:
-+		return 20;
-+	case I2S_WL_24BIT:
-+		return 24;
-+	default:
-+		return 0;
-+	}
-+}
-+
-+static unsigned int it6625_audio_max_channels(const struct it6625 *it6625)
-+{
-+	return min(2U * it6625->audio_lanes, IT6625_AUDIO_MAX_CHANNELS);
-+}
-+
-+/* can this audio status be captured? Pure check, callable in atomic context. */
-+static int it6625_audio_check(const struct it6625 *it6625,
-+			      const struct it6625_audio_info *info)
-+{
-+	const struct it6625_audio_stream *s = &info->stream;
-+	u32 rate = it6625_audio_fs_to_rate(s->fs_code);
-+
-+	if (!info->read_ok || !info->vid_stable || !info->present ||
-+	    info->avmute)
-+		return -ENODEV;
-+
-+	if (s->out_if != AUD_OUT_IF_I2S || s->type != AUD_TYPE_LPCM ||
-+	    s->multi_stream || s->is_3d)
-+		return -ENODEV;
-+
-+	if (!rate || rate > IT6625_AUDIO_MAX_RATE)
-+		return -ENODEV;
-+
-+	if (s->channels < 2 || s->channels % 2 ||
-+	    s->channels > it6625_audio_max_channels(it6625))
-+		return -ENODEV;
-+
-+	if (!it6625_audio_wl_bits(s->i2s_wl))
-+		return -ENODEV;
-+
-+	return 0;
-+}
-+
-+/* is the accepted stream still current? Caller holds audio_lock. */
-+static int it6625_audio_validate_locked(struct it6625 *it6625)
-+{
-+	lockdep_assert_held(&it6625->audio_lock);
-+
-+	if (it6625->audio_gen != it6625->audio_accepted_gen)
-+		return -EPIPE;
-+
-+	return it6625_audio_check(it6625, &it6625->audio);
-+}
-+
-+static void it6625_audio_xrun_work(struct work_struct *work)
-+{
-+	struct it6625 *it6625 = container_of(work, struct it6625,
-+					     audio_xrun_work);
-+	struct snd_pcm_substream *substream = NULL;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	if (!it6625->audio_block)
-+		substream = it6625->audio_substream;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	/* .shutdown drains this work before the substream goes away */
-+	if (IS_ENABLED(CONFIG_SND_SOC) && substream)
-+		snd_pcm_stop_xrun(substream);
-+}
-+
-+/*
-+ * Catch persistent audio changes that raise no interrupt while a capture
-+ * stream is open, and follow a rate that is still settling after an event
-+ * for at most IT6625_AUDIO_SETTLE_POLLS runs.
-+ */
-+static void it6625_audio_refresh_work(struct work_struct *work)
-+{
-+	struct it6625 *it6625 = container_of(to_delayed_work(work),
-+					     struct it6625, audio_refresh_work);
-+	unsigned long flags;
-+	bool rearm;
-+
-+	it6625_s_ctrl_audio(&it6625->sd);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	/* every run uses up one re-check of a settle budget */
-+	if (it6625->audio_settle_polls)
-+		it6625->audio_settle_polls--;
-+	rearm = (it6625->audio_substream && !it6625->audio_block) ||
-+		(it6625->audio_settle_polls && it6625_audio_settling(it6625));
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	if (rearm)
-+		schedule_delayed_work(&it6625->audio_refresh_work,
-+				      msecs_to_jiffies(IT6625_AUDIO_REFRESH_MS));
-+}
-+
-+static struct it6625 *dai_to_6625(struct snd_soc_dai *dai)
-+{
-+	/* the I2C client data is the V4L2 subdev */
-+	return sd_to_6625(snd_soc_dai_get_drvdata(dai));
-+}
-+
-+static int it6625_dai_startup(struct snd_pcm_substream *substream,
-+			      struct snd_soc_dai *dai)
-+{
-+	struct it6625 *it6625 = dai_to_6625(dai);
-+	struct snd_pcm_runtime *runtime = substream->runtime;
-+	struct it6625_audio_info info;
-+	unsigned long flags;
-+	u32 gen;
-+	int ret;
-+
-+	it6625_s_ctrl_audio(&it6625->sd);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	if (it6625->audio_substream || it6625->audio_block)
-+		ret = -EBUSY;
-+	else
-+		ret = it6625_audio_check(it6625, &it6625->audio);
-+	info = it6625->audio;
-+	gen = it6625->audio_gen;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+	if (ret)
-+		return ret;
-+
-+	ret = snd_pcm_hw_constraint_single(runtime, SNDRV_PCM_HW_PARAM_RATE,
-+					   it6625_audio_fs_to_rate(info.stream.fs_code));
-+	if (ret < 0)
-+		return ret;
-+
-+	ret = snd_pcm_hw_constraint_single(runtime, SNDRV_PCM_HW_PARAM_CHANNELS,
-+					   info.stream.channels);
-+	if (ret < 0)
-+		return ret;
-+
-+	ret = snd_pcm_hw_constraint_mask64(runtime, SNDRV_PCM_HW_PARAM_FORMAT,
-+					   SNDRV_PCM_FMTBIT_S32_LE);
-+	if (ret < 0)
-+		return ret;
-+
-+	ret = snd_pcm_hw_constraint_msbits(runtime, 0, 32,
-+					   it6625_audio_wl_bits(info.stream.i2s_wl));
-+	if (ret < 0)
-+		return ret;
-+
-+	/* recheck: the status may have changed while installing constraints */
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	if (it6625->audio_substream || it6625->audio_block)
-+		ret = -EBUSY;
-+	else if (it6625->audio_gen != gen)
-+		ret = -EPIPE;
-+	else
-+		ret = it6625_audio_check(it6625, &it6625->audio);
-+	if (!ret) {
-+		it6625->audio_substream = substream;
-+		it6625->audio_accepted = info.stream;
-+		it6625->audio_accepted_gen = gen;
-+		it6625->audio_running = false;
-+	}
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+	if (ret)
-+		return ret;
-+
-+	schedule_delayed_work(&it6625->audio_refresh_work,
-+			      msecs_to_jiffies(IT6625_AUDIO_REFRESH_MS));
-+
-+	return 0;
-+}
-+
-+/* also called on rollback after a successful .startup */
-+static void it6625_dai_shutdown(struct snd_pcm_substream *substream,
-+				struct snd_soc_dai *dai)
-+{
-+	struct it6625 *it6625 = dai_to_6625(dai);
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	it6625->audio_block = true;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	cancel_delayed_work_sync(&it6625->audio_refresh_work);
-+	cancel_work_sync(&it6625->audio_xrun_work);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	it6625->audio_substream = NULL;
-+	it6625->audio_running = false;
-+	it6625->audio_block = false;
-+	/* the cancel above also stopped a rate that is still settling */
-+	if (it6625->audio_settle_polls && it6625_audio_settling(it6625))
-+		schedule_delayed_work(&it6625->audio_refresh_work,
-+				      msecs_to_jiffies(IT6625_AUDIO_REFRESH_MS));
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+}
-+
-+static int it6625_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-+{
-+	if ((fmt & SND_SOC_DAIFMT_CLOCK_PROVIDER_MASK) != SND_SOC_DAIFMT_CBP_CFP ||
-+	    (fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_I2S ||
-+	    (fmt & SND_SOC_DAIFMT_INV_MASK) != SND_SOC_DAIFMT_NB_NF)
-+		return -EINVAL;
-+
-+	return 0;
-+}
-+
-+static int it6625_dai_hw_params(struct snd_pcm_substream *substream,
-+				struct snd_pcm_hw_params *params,
-+				struct snd_soc_dai *dai)
-+{
-+	struct it6625 *it6625 = dai_to_6625(dai);
-+	const struct it6625_audio_stream *s;
-+	unsigned long flags;
-+	int ret;
-+
-+	it6625_s_ctrl_audio(&it6625->sd);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	ret = it6625_audio_validate_locked(it6625);
-+	s = &it6625->audio_accepted;
-+	if (!ret &&
-+	    (params_rate(params) != it6625_audio_fs_to_rate(s->fs_code) ||
-+	     params_channels(params) != s->channels ||
-+	     params_format(params) != SNDRV_PCM_FORMAT_S32_LE))
-+		ret = -EINVAL;
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	return ret;
-+}
-+
-+static int it6625_dai_prepare(struct snd_pcm_substream *substream,
-+			      struct snd_soc_dai *dai)
-+{
-+	struct it6625 *it6625 = dai_to_6625(dai);
-+	unsigned long flags;
-+	int ret;
-+
-+	it6625_s_ctrl_audio(&it6625->sd);
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	ret = it6625_audio_validate_locked(it6625);
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	return ret;
-+}
-+
-+/*
-+ * Atomic: only the published status is consulted. A loss that no refresh
-+ * has observed yet is handled by the refresh that observes it.
-+ */
-+static int it6625_dai_trigger(struct snd_pcm_substream *substream, int cmd,
-+			      struct snd_soc_dai *dai)
-+{
-+	struct it6625 *it6625 = dai_to_6625(dai);
-+	unsigned long flags;
-+	int ret = 0;
-+
-+	spin_lock_irqsave(&it6625->audio_lock, flags);
-+	switch (cmd) {
-+	case SNDRV_PCM_TRIGGER_START:
-+	case SNDRV_PCM_TRIGGER_RESUME:
-+		ret = it6625_audio_validate_locked(it6625);
-+		if (!ret)
-+			it6625->audio_running = true;
-+		break;
-+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-+		/*
-+		 * A refused release would leave the stream paused, and a
-+		 * blocking read on a paused stream never returns. If the
-+		 * stream became stale while paused, release it and stop it
-+		 * with an XRUN instead.
-+		 */
-+		it6625->audio_running = true;
-+		if (it6625_audio_validate_locked(it6625) &&
-+		    it6625->audio_substream && !it6625->audio_block)
-+			queue_work(system_wq, &it6625->audio_xrun_work);
-+		break;
-+	case SNDRV_PCM_TRIGGER_STOP:
-+	case SNDRV_PCM_TRIGGER_SUSPEND:
-+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-+		it6625->audio_running = false;
-+		break;
-+	default:
-+		ret = -EINVAL;
-+		break;
-+	}
-+	spin_unlock_irqrestore(&it6625->audio_lock, flags);
-+
-+	return ret;
-+}
-+
-+static const struct snd_soc_dai_ops it6625_dai_ops = {
-+	.startup = it6625_dai_startup,
-+	.shutdown = it6625_dai_shutdown,
-+	.set_fmt = it6625_dai_set_fmt,
-+	.hw_params = it6625_dai_hw_params,
-+	.prepare = it6625_dai_prepare,
-+	.trigger = it6625_dai_trigger,
-+};
-+
-+static struct snd_soc_dai_driver it6625_dai = {
-+	.name = "it6625-i2s",
-+	.capture = {
-+		.stream_name = "Capture",
-+		.channels_min = 2,
-+		.channels_max = IT6625_AUDIO_MAX_CHANNELS,
-+		.rates = SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
-+			 SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_64000 |
-+			 SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000 |
-+			 SNDRV_PCM_RATE_128000 | SNDRV_PCM_RATE_176400 |
-+			 SNDRV_PCM_RATE_192000,
-+		.formats = SNDRV_PCM_FMTBIT_S32_LE,
-+	},
-+	.ops = &it6625_dai_ops,
-+};
-+
-+static const struct snd_soc_component_driver it6625_component = {
-+	.name = "it6625",
-+	.endianness = 1,
-+};
-+
-+/*
-+ * Registered without devm so that remove can unregister it first: that
-+ * waits until every open capture stream is closed, so no DAI callback
-+ * runs once the driver starts tearing down.
-+ */
-+static int it6625_audio_register(struct it6625 *it6625)
-+{
-+	int err;
-+
-+	if (!IS_ENABLED(CONFIG_SND_SOC) ||
-+	    !of_property_present(it6625->dev->of_node, "#sound-dai-cells"))
-+		return 0;
-+
-+	err = snd_soc_register_component(it6625->dev, &it6625_component,
-+					 &it6625_dai, 1);
-+	if (err)
-+		return dev_err_probe(it6625->dev, err,
-+				     "failed to register audio DAI");
-+
-+	it6625->audio_registered = true;
-+
-+	return 0;
-+}
-+
-+static void it6625_audio_unregister(struct it6625 *it6625)
-+{
-+	if (IS_ENABLED(CONFIG_SND_SOC) && it6625->audio_registered)
-+		snd_soc_unregister_component(it6625->dev);
-+
-+	disable_delayed_work_sync(&it6625->audio_refresh_work);
-+	disable_work_sync(&it6625->audio_xrun_work);
-+}
-+
- static void it6625_regdump_print(struct seq_file *s, const u8 *reg_buf)
- {
- 	seq_puts(s, "     0x00 0x01 0x02 0x03 0x04 0x05 0x06 0x07 0x08 0x09 0x0A 0x0B 0x0C 0x0D 0x0E 0x0F\n");
-@@ -2274,9 +2798,49 @@ static int it6625_parse_endpoint(struct it6625 *it6625)
- 	return ret;
- }
- 
-+static int it6625_parse_audio(struct it6625 *it6625)
-+{
-+	struct device *dev = it6625->dev;
-+	struct device_node *np = dev->of_node;
-+	u32 lanes[IT6625_AUDIO_MAX_LANES];
-+	int count, ret;
-+
-+	it6625->audio_lanes = 1;
-+
-+	if (!of_property_present(np, "ite,i2s-data-lanes"))
-+		return 0;
-+
-+	count = of_property_count_u32_elems(np, "ite,i2s-data-lanes");
-+	if (count < 1 || count > IT6625_AUDIO_MAX_LANES)
-+		return dev_err_probe(dev, -EINVAL,
-+				     "ite,i2s-data-lanes needs 1 to %u entries",
-+				     IT6625_AUDIO_MAX_LANES);
-+
-+	ret = of_property_read_u32_array(np, "ite,i2s-data-lanes", lanes, count);
-+	if (ret)
-+		return dev_err_probe(dev, ret, "failed to read ite,i2s-data-lanes");
-+
-+	/* channel-pair to data-pin mapping is not supported yet */
-+	for (unsigned int i = 0; i < count; i++) {
-+		if (lanes[i] != i)
-+			return dev_err_probe(dev, -EINVAL,
-+					     "ite,i2s-data-lanes must be <0 1 ... n-1>");
-+	}
-+
-+	it6625->audio_lanes = count;
-+
-+	return 0;
-+}
-+
- static int it6625_parse_dt(struct it6625 *it6625)
- {
--	return it6625_parse_endpoint(it6625);
-+	int ret;
-+
-+	ret = it6625_parse_endpoint(it6625);
-+	if (ret)
-+		return ret;
-+
-+	return it6625_parse_audio(it6625);
- }
- 
- static int it6625_check_device(struct it6625 *it6625)
-@@ -2350,6 +2914,9 @@ static int it6625_probe(struct i2c_client *client)
- 	init_completion(&it6625->if_latched);
- 	INIT_DELAYED_WORK(&it6625->hpd_delayed_work, it6625_hpd_delayed_work);
- 	INIT_WORK(&it6625->polling_work, it6625_polling_work);
-+	spin_lock_init(&it6625->audio_lock);
-+	INIT_WORK(&it6625->audio_xrun_work, it6625_audio_xrun_work);
-+	INIT_DELAYED_WORK(&it6625->audio_refresh_work, it6625_audio_refresh_work);
- 
- 	if (client->irq) {
- 		err = devm_request_threaded_irq(&client->dev, client->irq,
-@@ -2434,6 +3001,13 @@ static int it6625_probe(struct i2c_client *client)
- 		goto err_clean_debugfs;
- 	}
- 
-+	/* may bind a waiting sound card, so everything must be set up */
-+	err = it6625_audio_register(it6625);
-+	if (err) {
-+		v4l2_async_unregister_subdev(sd);
-+		goto err_clean_debugfs;
-+	}
-+
- 	if (client->irq)
- 		enable_irq(client->irq);
- 	else
-@@ -2442,6 +3016,12 @@ static int it6625_probe(struct i2c_client *client)
- 	return 0;
- 
- err_clean_debugfs:
-+	/*
-+	 * Events dispatched by the probe control update or a debugfs reader
-+	 * may have queued it. Disable rather than cancel it: a reader still
-+	 * running until the debugfs removal below must not queue it again.
-+	 */
-+	disable_delayed_work_sync(&it6625->audio_refresh_work);
- 	v4l2_debugfs_if_free(it6625->infoframes);
- 	debugfs_remove_recursive(it6625->debugfs_dir);
- 	cec_unregister_adapter(it6625->cec_adap);
-@@ -2469,6 +3049,9 @@ static void it6625_remove(struct i2c_client *client)
- 	struct v4l2_subdev *sd = i2c_get_clientdata(client);
- 	struct it6625 *it6625 = sd_to_6625(sd);
- 
-+	/* first: waits for open capture streams to close */
-+	it6625_audio_unregister(it6625);
-+
- 	v4l2_debugfs_if_free(it6625->infoframes);
- 
- 	if (client->irq)
+-/*
+- * The base for IT6625/IT6626 driver controls.
+- * We reserve 16 controls for this driver.
+- */
+-#define V4L2_CID_USER_IT6625_BASE		(V4L2_CID_USER_BASE + 0x1250)
+-
+ /* MPEG-class control IDs */
+ /* The MPEG controls are applicable to all codec controls
+  * and the 'MPEG' part of the define is historical */
 
 -- 
 2.34.1
