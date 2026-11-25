@@ -1,54 +1,47 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.198
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795602213;
-	b=3B6TTEg7vYiqmjs0H4LOrxwkqfEZt90kahInt6wujxwqS2a9y6t53W3NZoWTGAd35hrl
-	 D34DCLjwqde46tENd4z9jDEaItiR4hu5rX0OSNWdgJEni0+uE9J8nolQIDb3ftMlhSt1G
-	 eomtD9CITztbiz0s4KXRuk5SMrQ2rQjxKcIuTKuOBvHTjOZxTtTZtteBok9ZE/qjt8Rlp
-	 SnE3ilZr5IjqHuk0imxWTEjRApIO6AKlI4jmJ4VJ2S8akKW+naVQnLH76sMiaJ+Nm6zpf
-	 mxaiBzSGuJFlmnsyYhaaGI1elFD8xtR1wYiS7te5YMk0IF2nw8schhY8ceh4sWUsqPA==
+	t=1795610315;
+	b=SRUzsqiXRnvf0ltUY1EwIXOUe5EdLFgQC8uMJ4FDVdToanrVs5FECwSY0pbxJhP0D45/
+	 e5F6CACxfXjfai8nuW3KeZXFIrmdsrL424hHPhrgWLKKWIZ8W7Dmuiaexq0nGQyTgXIIn
+	 AwODcIyqVfMA18Locyk5GaBd3L2oYVZFVI9ZsexZlTOTPLTG3fqjkJtAzBWIgtee/rrx0
+	 IRjPVfiW2k5iMlzwrjl2zm93juds0OjHgpE2s5DIenSqoqWgJr4LoLbhE5KlAGhZNc+oy
+	 N+lTaog/eF8+j/UVJSxbRSzwzmKf0iDds0Hazchwc0oqvsqCb9TvTSbz+GC9EF5jT7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795602213;
-	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:MIME-Version:X-Received:Date:In-Reply-To:
-	 X-Google-Appengine-App-Id:X-Google-Appengine-App-Id-Alias:Message-ID:
-	 Subject:From:To:Cc:Content-Type;
-	bh=nAwEpdk8W5zOz8dRUea8wq0PG12t8rrSsYABB8slUxU=;
-	b=dUEE3jYFh08Mxm3oZh6bL9HuxmfqGbd0CliwBrKcosRK+4CGt7nhF81YX4otnZ2zkNxx
-	 aoD2J/L4A69FLlX6pT4isyd5gr1Ly69EJ+UZAp+tplcVPfQKRDCzIG5J/kyq+/Qh9p5ck
-	 8AvD8QuyliDxOM5aMiShLDw5GD+5BDtPw4yFP8M0cLa40vZRsvjJMGjMRIdZHna/rEPfU
-	 z51K3MP660vHuzCiMAAfgWpXlh7eoqus3ky7rq2y9hqGVOq09lmlLZN6wiJGiQFUm9KTX
-	 /2tRhfhZ2sqYCE/2mMnQOGuY9T9FKWiFH2BX5iqvF8tmReWUkXJ55dR+Czgt01myyjg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795610315;
+	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
+	 Subject:To:Cc:References:From:Content-Language:In-Reply-To:
+	 Content-Type:Content-Transfer-Encoding;
+	bh=0+AXJAxWZ9BUMXQ24kh2T7Uu8yMvUDzaGqCtAJHJM04=;
+	b=hjv+jalfkw9s+5RCONAIVqgXRasr1GY6kymjjSGqrKEHd7ereCUSu6WMDnVqI9tegkoL
+	 r8t+zD7uMNJEVNIG4g6aNErt8nn9IEBnLzT3Bpcc+nZwMz50nEnx0aK2ryePdQIb+FYgO
+	 3MGmiBiqeTsP6P22pbEaBbUANerB0nDgvqx9tkW+/VG+k0Y1qnL2Lkfren/msd/PbK2nD
+	 j1V6ZFrcl+HxSjeXr+U/qkP57mBZ0DavvtoHrZX59j5IyFfCjmMkiTcx5f7Zdjg0E3rD1
+	 De8Gq/6SvOErgBBWlWCNLGbXTEUIFflJfqLTxV31WYhDG6M3C5N57WM5p6GJ8besqDQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=syzkaller.appspotmail.com;
-	spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com;
-	arc=none smtp.remote-ip=209.85.167.198
-Received: from mail-oi1-f198.google.com (mail-oi1-f198.google.com [209.85.167.198])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ApzE5VP+;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7BE19606A326
-	for <linux-api@vger.kernel.org>; Wed, 25 Nov 2026 10:23:32 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7BE19606A326
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f198.google.com with SMTP id 5614622812f47-4ab8b4887d4so3936617b6e.1
-        for <linux-api@vger.kernel.org>; Wed, 25 Nov 2026 02:23:32 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795602211; x=1796207011;
-        h=content-type:cc:to:from:subject:message-id:in-reply-to:date
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=nAwEpdk8W5zOz8dRUea8wq0PG12t8rrSsYABB8slUxU=;
-        b=Wd0rAo1poybGv/aHWKzZxKojkBwu/TvCgklySCSPvgPauPAO+xSWaa15uCyAMy/8lt
-         jTiGmfWCUVSo05U9gwW109D9CWKTA/IH4/pa05haODzyH2OGvO9hEHKni2nLpGt/mK7x
-         m0BJPOsjWwQShxfzdWb4xgEqmPOknZKGjG1giNp9BwAXgvc2HhOYh7Dsyg1Z/A9/AKh5
-         GBdHLPcD/hV2/pJk1ZhYI+Bzy2o7iv3q6olc34irK35Wl/5tAtQ9jXOrvnx1OQIO8BuQ
-         Iyhxa/0cvl1vDhVCfRAnwL0L+2zb+C7iIOGeWl5gZZbtp4nbFzDMdzZwW4EiwwmkqtpA
-         d5mA==
-X-Forwarded-Encrypted: i=1; AL+hErHzR/HMW0ktJlkRiPHbzN/ro8mu/FMShZh7TNpCHrCP+svqSnYvy92BKzUWa5Em5iIdDBdj0J9FOZY=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+288z7MD0+g2W1bdEITqkcSXjSqOLCPTYnfYRBG1jj66RYAdrB
-	eohNkDPNDWHxmjHG+7RPtpkXa2F2ey5DtZbla40Sgcd2AZYPNvVqjnX9bLSaxrOHQW5eh47Eg/j
-	Hw3Q9bsjWf9CaZfnwUjRRTdj/5KaDaLEGjrZ+BpkOpwZFe4MllcTMhLr/gjs=
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A9E9606A31E;
+	Wed, 25 Nov 2026 12:38:35 +0000 (UTC)
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ApzE5VP+
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id D79B11F000C0;
+	Wed, 25 Nov 2026 12:38:31 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795610314;
+	bh=0+AXJAxWZ9BUMXQ24kh2T7Uu8yMvUDzaGqCtAJHJM04=;
+	h=Date:Subject:To:Cc:References:From:In-Reply-To;
+	b=ApzE5VP+2dyQZ+VYa227NrDkMHpe2prWp0lrTGmovXoZWR24/hbM0VuIU+zXijTcE
+	 FzZNzjjDDRQpNM/XpKgChUEnC/J3zVt3J8uv7t4+ryB/bX2ZLtWqb/BEGAJfVVNiJs
+	 Esbo5Bt+ORkjHZwFrg7rhe2bFAF9kFHVynVvPu9AZJ5eGjlN3U2upfG8n8e0A+8RXL
+	 wWI3a4PgSJCj52smF7KIu7x8Wc9ipB9qDm3Ta8kEl88Izg/sEJ1Puchk8+z/K582YV
+	 7f0PMugFQW25FSSjU/cFIAP/Ya+Hi0aZrO+wsXUihAHb0/ZXnMM/+6bklITcQ24YBL
+	 ZULloFZcWTe9g==
+Message-ID: <6dba4041-fd5c-448d-9f9d-e3c1dcff8185@kernel.org>
+Date: Wed, 25 Nov 2026 13:38:30 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -58,153 +51,126 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-X-Received: by 2002:a05:6808:c2be:b0:4d6:90f3:74b1 with SMTP id
- 5614622812f47-57a0ba5a8e4mr18256405b6e.49.1795602211468; Wed, 25 Nov 2026
- 02:23:31 -0800 (PST)
-Date: Wed, 25 Nov 2026 02:23:31 -0800
-In-Reply-To: <20261120010655.467825-1-lrizzo@google.com>
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6b06b723.588a1920.b1e98.0003.GAE@google.com>
-Subject: [syzbot ci] Re: PISA: Pre-mapped IOVA Superpage Allocator for DMA and CoCo
-From: syzbot ci <syzbot+ci910cdb42d3006024@syzkaller.appspotmail.com>
-To: akpm@linux-foundation.org, aleksander.lobakin@intel.com, axboe@kernel.dk, 
-	brendan.jackman@linux.dev, catalin.marinas@arm.com, cl@gentwo.org, 
-	corbet@lwn.net, dakr@kernel.org, davem@davemloft.net, david@kernel.org, 
-	driver-core@lists.linux.dev, dtatulea@nvidia.com, edumazet@kernel.org, 
-	gregkh@linuxfoundation.org, hannes@cmpxchg.org, hao.li@linux.dev, 
-	harry@kernel.org, hawk@kernel.org, hch@lst.de, horms@kernel.org, 
-	hramamurthy@google.com, ilias.apalodimas@linaro.org, iommu@lists.linux.dev, 
-	jack@suse.cz, jannh@google.com, jgg@ziepe.ca, joro@8bytes.org, 
-	joshwash@google.com, kuba@kernel.org, kuniyu@google.com, liam@infradead.org, 
-	linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org, 
-	linux-block@vger.kernel.org, linux-doc@vger.kernel.org, 
-	linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	linux-mm@kvack.org, ljs@kernel.org, lrizzo@google.com, 
-	m.szyprowski@samsung.com, mhocko@suse.com, namangulati@google.com, 
-	netdev@vger.kernel.org, pabeni@redhat.com, praan@google.com, 
-	rafael@kernel.org, rdunlap@infradead.org, rientjes@google.com, 
-	rizzo.unipi@gmail.com
-Cc: syzbot@lists.linux.dev, syzkaller-bugs@googlegroups.com
-Content-Type: text/plain; charset="UTF-8"
+User-Agent: Mozilla Thunderbird
+Subject: Re: [PATCH v2 1/9] media: v4l2-ctrls: add DV RX audio sampling rate
+ and present controls
+To: Hermes.wu@ite.com.tw, Mauro Carvalho Chehab <mchehab@kernel.org>,
+ Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>,
+ Conor Dooley <conor+dt@kernel.org>, Hans Verkuil
+ <hverkuil+cisco@kernel.org>, Hans Verkuil <hverkuil@kernel.org>
+Cc: linux-media@vger.kernel.org, devicetree@vger.kernel.org,
+ linux-kernel@vger.kernel.org, Mark Brown <broonie@kernel.org>,
+ Liam Girdwood <lgirdwood@gmail.com>, linux-sound@vger.kernel.org,
+ linux-api@vger.kernel.org
+References: <20261124-upstream-it6625-alsa-i2s-v2-0-a154685f6989@ite.com.tw>
+ <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+From: Hans Verkuil <hverkuil+cisco@kernel.org>
+Content-Language: en-US, nl
+In-Reply-To: <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
-syzbot ci has tested the following series
+On 24/11/2026 04:04, Hermes Wu via B4 Relay wrote:
+> From: Hermes Wu <Hermes.wu@ite.com.tw>
+> 
+> HDMI and DisplayPort receivers can report whether the source sends audio
+> and at which sampling rate. Drivers expose this today through
+> driver-specific controls (tc358743 and IT6625 each define their own pair),
+> so userspace has to know every driver to find it.
+> 
+> Add two standard read-only controls to the DV control class:
+> V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE, the sampling rate in Hz, 0 when no
+> audio is received or the rate is not known, and
+> V4L2_CID_DV_RX_AUDIO_PRESENT, whether audio is received. Drivers set
+> the range of the sampling rate control.
+> ---
+>  Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst | 10 ++++++++++
+>  drivers/media/v4l2-core/v4l2-ctrls-defs.c              |  5 +++++
+>  include/uapi/linux/v4l2-controls.h                     |  2 ++
+>  3 files changed, 17 insertions(+)
+> 
+> diff --git a/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst b/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
+> index 5918dde83efb324cd27cc4c771245cd2c38d0b0e..a9117912e9cb255a2ce452147858d927e9e3c27a 100644
+> --- a/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
+> +++ b/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
+> @@ -158,3 +158,13 @@ enum v4l2_dv_it_content_type -
+>      from a computer as opposed to content from a TV broadcast or an
+>      analog source. See ``V4L2_CID_DV_TX_IT_CONTENT_TYPE`` for the
+>      available content types.
+> +
+> +``V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE (integer)``
+> +    Reads the sampling rate, in Hz, of the audio that the receiver
+> +    receives from the source. It is 0 if no audio is received, or if the
 
-[v3] PISA: Pre-mapped IOVA Superpage Allocator for DMA and CoCo
-https://lore.kernel.org/all/20261120010655.467825-1-lrizzo@google.com
-* [RFC PATCH v3 01/25] mm: Introduce CONFIG_PISA and metadata table
-* [RFC PATCH v3 02/25] mm: Add PISA allocator lifecycle and page recycle hook
-* [RFC PATCH v3 03/25] mm: Add per-NUMA-node PISA page reservoir
-* [RFC PATCH v3 04/25] mm/page_alloc: Extend alloc_pages() to __GFP_PISA and PISA block allocation
-* [RFC PATCH v3 05/25] mm: Add global cap and shrinker for PISA pages
-* [RFC PATCH v3 06/25] iommu/dma: Map PISA memory in a per-domain IOVA window
-* [RFC PATCH v3 07/25] driver core: Add per-device pisa_* sysfs attributes for PISA optin
-* [RFC PATCH v3 08/25] iommu/dma: Use PISA for coherent DMA allocations
-* [RFC PATCH v3 09/25] mm: Add per-CPU block caches to PISA allocators
-* [RFC PATCH v3 10/25] mm: Add background page scrubber for PISA allocators
-* [RFC PATCH v3 11/25] mm: Migrate user pages into PISA
-* [RFC PATCH v3 12/25] block, mm: Support PISA for disk I/O and scrub migration
-* [RFC PATCH v3 13/25] net: Cache leaf PISA TX flags on struct net_device
-* [RFC PATCH v3 14/25] net: Use per-node PISA allocators for skb_page_frag_refill()
-* [RFC PATCH v3 15/25] net: Use PISA for page_pool memory
-* [RFC PATCH v3 16/25] mm/slub: Add SLAB_CACHE_PISA_RO for PISA-backed slab caches
-* [RFC PATCH v3 17/25] net: Allocate small skb heads from PISA
-* [RFC PATCH v3 18/25] net: Migrate user pages into PISA for MSG_ZEROCOPY
-* [RFC PATCH v3 19/25] mm, iommu/dma: Support decrypted PISA pages
-* [RFC PATCH v3 20/25] arm64/mm, mm: Support decrypted PISA pages in Realms
-* [RFC PATCH v3 21/25] mm: Add PISA statistics and debugfs
-* [RFC PATCH v3 22/25] net/libeth: Use GFP_KERNEL when pre-filling RX rings
-* [RFC PATCH v3 23/25] net/gve: Use GFP_KERNEL when pre-filling RX rings
-* [RFC PATCH v3 24/25] net/gve: Use PISA memory for RX buffers
-* [RFC PATCH v3 25/25] Documentation: Add PISA architecture documentation
+received -> present
 
-and found the following issue:
-WARNING in __alloc_workqueue
+Is this indeed the case, that it is 0 if V4L2_CID_DV_RX_AUDIO_PRESENT is
+false? I think both the tc358743 and this driver actually do not set the
+sampling rate to 0 if audio disappears. (Might be wrong, I didn't dig deeply
+into this)
 
-Full report is available here:
-https://ci.syzbot.org/series/80fa818b-452d-4361-bfc6-33c65f928f71
+I'm inclined to drop that requirement, and instead...
 
-***
+> +    receiver cannot determine the sampling rate. This read-only control
+> +    is applicable to HDMI and DisplayPort connectors.
 
-WARNING in __alloc_workqueue
+...add 'The value is only meaningful while ``V4L2_CID_DV_RX_AUDIO_PRESENT`` is set.'
+to the description.
 
-tree:      axboe
-URL:       https://kernel.googlesource.com/pub/scm/linux/kernel/git/axboe/linux.git
-base:      20eef29b7c8465ac98d7dd6d6f2ac07a8d8056ca
-arch:      amd64
-compiler:  Debian clang version 22.1.8 (1~deb13u4), Debian LLD 22.1.8
-config:    https://ci.syzbot.org/builds/1b1679cb-3959-4df9-8546-bc04ba6e5cd3/config
+So '0' is specific to the case that there is audio present, but the sampling rate
+cannot be determined. If there is no audio present, then, just like AUDIO_TYPE, the
+value is not meaningful. I.e., it should be ignored.
 
-smpboot: CPU0: Intel QEMU Virtual CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
-Performance Events: unsupported Netburst CPU model 107 no PMU driver, software events only.
-signal: max sigframe size: 1440
-rcu: Hierarchical SRCU implementation.
-rcu: 	Max phase no-delay instances is 1000.
-Timer migration: 1 hierarchy levels; 8 children per group; 0 crossnode level
-NMI watchdog: Perf NMI watchdog permanently disabled
-smp: Bringing up secondary CPUs ...
-smpboot: x86: Booting SMP configuration:
-.... node  #1, CPUs:      #1
-smp: Brought up 2 nodes, 2 CPUs
-smpboot: Total of 2 processors activated (11200.80 BogoMIPS)
-Memory: 5553400K/7339508K available (181131K kernel code, 30788K rwdata, 59468K rodata, 27564K init, 120564K bss, 1621204K reserved, 0K cma-reserved)
-devtmpfs: initialized
-x86/mm: Memory block size: 128MB
-Running RCU synchronous self tests
-Running RCU synchronous self tests
-Running RCU Tasks wait API self tests
-Running RCU Tasks Trace wait API self tests
-posixtimers hash table entries: 1024 (order: 5, 73728 bytes, vmalloc)
-futex hash table entries: 256 (32768 bytes on 2 NUMA nodes, total 64 KiB, linear).
-PM: RTC time: 20:32:46, date: 2026-11-24
-NET: Registered PF_NETLINK/PF_ROUTE protocol family
-audit: initializing netlink subsys (disabled)
-thermal_sys: Registered thermal governor 'step_wise'
-cpuidle: using governor menu
-NET: Registered PF_QIPCRTR protocol family
-dca service started, version 1.12.1
-PCI: ECAM [mem 0xb0000000-0xbfffffff] (base 0xb0000000) for domain 0000 [bus 00-ff]
-PCI: ECAM [mem 0xb0000000-0xbfffffff] reserved as E820 entry
-PCI: Using configuration type 1 for base access
-HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
-HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
-------------[ cut here ]------------
-workqueue: pisa is using neither WQ_PERCPU or WQ_UNBOUND. Setting WQ_PERCPU.
-WARNING: kernel/workqueue.c:6151 at __alloc_workqueue+0x1e4b/0x21d0, CPU#1: swapper/0/1
-Modules linked in:
-CPU: 1 UID: 0 PID: 1 Comm: swapper/0 Not tainted syzkaller #0 PREEMPT(full) 
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
-RIP: 0010:__alloc_workqueue+0x1e4e/0x21d0
-Code: 18 89 39 00 90 0f 0b 90 e9 87 fd ff ff e8 0a 89 39 00 90 0f 0b 90 e9 79 fd ff ff e8 fc 88 39 00 48 8d 3d 65 52 32 10 4c 89 f6 <67> 48 0f b9 3a 8b 5c 24 20 81 cb 00 01 00 00 e9 99 e4 ff ff e8 d9
-RSP: 0000:ffffc90000067750 EFLAGS: 00010293
-RAX: ffffffff818fa174 RBX: 0000000000000000 RCX: ffff888102aa5ac0
-RDX: 0000000000000000 RSI: ffff888162ab5d78 RDI: ffffffff91c1f3e0
-RBP: ffffc900000678a0 R08: ffff888102aa5ac0 R09: 0000000000000002
-R10: 0000000000000102 R11: 0000000000000000 R12: dffffc0000000000
-R13: ffff888162ab5c00 R14: ffff888162ab5d78 R15: ffff888162ab5d18
-FS:  0000000000000000(0000) GS:ffff8882a77e4000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000000000000000 CR3: 000000000ff48000 CR4: 00000000000006f0
-Call Trace:
- <TASK>
- alloc_workqueue_noprof+0xe3/0x210
- pisa_init+0x127/0x260
- do_one_initcall+0x250/0x870
- do_initcall_level+0x10a/0x1a0
- do_initcalls+0x59/0xa0
- kernel_init_freeable+0x29d/0x3e0
- kernel_init+0x22/0x1d0
- ret_from_fork+0x514/0xb70
- ret_from_fork_asm+0x1a/0x30
- </TASK>
+Regards,
 
+	Hans
 
-***
+> +
+> +``V4L2_CID_DV_RX_AUDIO_PRESENT (boolean)``
+> +    Detects whether the receiver receives audio from the source. This
+> +    read-only control is applicable to HDMI and DisplayPort connectors.
+> diff --git a/drivers/media/v4l2-core/v4l2-ctrls-defs.c b/drivers/media/v4l2-core/v4l2-ctrls-defs.c
+> index e062f2088490470c42d6c579ff7675be454a29b0..579b2d297cc8246dddb4e8d4ab74aed1e6084744 100644
+> --- a/drivers/media/v4l2-core/v4l2-ctrls-defs.c
+> +++ b/drivers/media/v4l2-core/v4l2-ctrls-defs.c
+> @@ -1180,6 +1180,8 @@ const char *v4l2_ctrl_get_name(u32 id)
+>  	case V4L2_CID_DV_RX_POWER_PRESENT:	return "Power Present";
+>  	case V4L2_CID_DV_RX_RGB_RANGE:		return "Rx RGB Quantization Range";
+>  	case V4L2_CID_DV_RX_IT_CONTENT_TYPE:	return "Rx IT Content Type";
+> +	case V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE: return "Rx Audio Sampling Rate";
+> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:	return "Rx Audio Present";
+>  
+>  	case V4L2_CID_FM_RX_CLASS:		return "FM Radio Receiver Controls";
+>  	case V4L2_CID_TUNE_DEEMPHASIS:		return "De-Emphasis";
+> @@ -1317,6 +1319,7 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
+>  	case V4L2_CID_RDS_RX_TRAFFIC_ANNOUNCEMENT:
+>  	case V4L2_CID_RDS_RX_TRAFFIC_PROGRAM:
+>  	case V4L2_CID_RDS_RX_MUSIC_SPEECH:
+> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:
+>  		*type = V4L2_CTRL_TYPE_BOOLEAN;
+>  		*min = 0;
+>  		*max = *step = 1;
+> @@ -1682,6 +1685,8 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
+>  	case V4L2_CID_DV_TX_EDID_PRESENT:
+>  	case V4L2_CID_DV_RX_POWER_PRESENT:
+>  	case V4L2_CID_DV_RX_IT_CONTENT_TYPE:
+> +	case V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE:
+> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:
+>  	case V4L2_CID_RDS_RX_PTY:
+>  	case V4L2_CID_RDS_RX_PS_NAME:
+>  	case V4L2_CID_RDS_RX_RADIO_TEXT:
+> diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
+> index d17e41d51d2ec1ccb9e8ceb3ccc89ebc4381a4cd..52124b7acdeab787978029aa49ea75d0ad4cc534 100644
+> --- a/include/uapi/linux/v4l2-controls.h
+> +++ b/include/uapi/linux/v4l2-controls.h
+> @@ -1301,6 +1301,8 @@ enum v4l2_dv_it_content_type {
+>  #define V4L2_CID_DV_RX_POWER_PRESENT		(V4L2_CID_DV_CLASS_BASE + 100)
+>  #define V4L2_CID_DV_RX_RGB_RANGE		(V4L2_CID_DV_CLASS_BASE + 101)
+>  #define V4L2_CID_DV_RX_IT_CONTENT_TYPE		(V4L2_CID_DV_CLASS_BASE + 102)
+> +#define V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE	(V4L2_CID_DV_CLASS_BASE + 103)
+> +#define V4L2_CID_DV_RX_AUDIO_PRESENT		(V4L2_CID_DV_CLASS_BASE + 104)
+>  
+>  #define V4L2_CID_FM_RX_CLASS_BASE		(V4L2_CTRL_CLASS_FM_RX | 0x900)
+>  #define V4L2_CID_FM_RX_CLASS			(V4L2_CTRL_CLASS_FM_RX | 1)
+> 
 
-If these findings have caused you to resend the series or submit a
-separate fix, please add the following tag to your commit message:
-  Tested-by: syzbot@syzkaller.appspotmail.com
-
----
-This report is generated by a bot. It may contain errors.
-syzbot ci engineers can be reached at syzkaller@googlegroups.com.
