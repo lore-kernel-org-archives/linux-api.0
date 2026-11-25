@@ -1,100 +1,68 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.41
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795625490;
-	b=A05KD6okfsxeXZIy/oW8pxdmYddSI6+3vnP/XU4wKiUjycl29XSdw54DCbNk2FgMd4Ib
-	 S8JL0yy5uwdG2txUJUElUQu4wXM00wRfy37DFNn18SzEPk2kYrC35kB0lN5MXZC5kDGVo
-	 AQhxOuHPKD8WmHBui079kX5UdJhVEbbu6NlP+sZNMLYk2x38DQG4rdqNAzelsaEEUP/sN
-	 C/EVYlpBZraAVHmC39kAv/FSzYsL7mCQ7KtiOAcQIU+oEHPq9kImi3/Q0cBcaxdLyejhf
-	 qiF+zxQqraLChqIJPu1z65JHtQS1w1H3X4oGRYgcmR99K9LWF0jVzu7TtMUeU1qzNAQ==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795625490;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=RXQk5HMe2BJYtF6nqI/dEd/GRzh+7/vUyfQ0kGs8Dkc=;
-	b=cGzgjReCguJw2pZN5AkOMfOhJDJoryVJdLHJGxT+1AvMSNOOpdo1Rb3mv/o6P5HWUOUH
-	 yD+hmO0Kq159eD99FH6rGiJTfG74oKpRdPpbkzWiCe6VBOwG1p+PoXgTjZ2SZTu1ez9q1
-	 akhosrOE679fayT828LlBq21qtjJBqc8CAjTQ7o2L0yLWNtSy3Y9ar3QPe/9iOYFKiqih
-	 0TFk9c8AACrOFcgMj5ZSZaAQiwZ20Iv1J/H8H87V6i/Mrd6xPxOsVtKSIu+1GBJCYpIHn
-	 NAdOYeCJWrO3VrXldX2vBm0/nOjON6ia7FK6tDklLIPkK3LLyxtlvoG99gKgyGzVHIw==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MoPoxyMU;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.208.41
-Received: from mail-ed1-f41.google.com (mail-ed1-f41.google.com [209.85.208.41])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 954EF606A32A
-	for <linux-api@vger.kernel.org>; Wed, 25 Nov 2026 16:51:29 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 954EF606A32A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=217.140.110.172
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795632147;
+	b=VHAVbWHLOJspS9tJlgg2paXJaIatQkD/aEt32xn9+eMHfUtiSiZknIINyn2scDJ9YEgr
+	 ruwRR4WJMrLl9xu+PvJkKqVBL8lJkz/FnCZhQtF7129aC8o2qdRq2XYaA1UqetOIO3o+y
+	 hQSGIW8BE43sEADMqmR6XBD0UvrH4M8C1NYhSxBOJ4MoWKTNe0zK/+saWBSuWF8ZOKy+m
+	 6GJPi/96qG7hNLIs3UGcp0V8e9ZFmYCyTYi9jgulsA2C9xv1wauqsCxJGyfDl68fg4tsy
+	 77UleKdNYzt8VSiGq/nxikEswqC2Xf4aCNGeRx1+sva6pH3V3PU7UdUhtliQqe2woLQ==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795632147;
+	h=DMARC-Filter:Received:Received:DKIM-Signature:Date:From:To:Cc:
+	 Subject:Message-ID:References:MIME-Version:Content-Type:
+	 Content-Disposition:In-Reply-To;
+	bh=SkOUqs8kh/EKHoDq0DX358tEGX9GWBEQO1PuQCSo4/A=;
+	b=l/o8L3cs3ZA86yFmWbDuNqd+wToIqo4kzU+OJFL/Y1qrT+SQEcECnRtlVf3Z044gn0l8
+	 uQNoUY6f6zzyHe3lbm5Q50/ITrhcSpyUgFeiJsye2UFUhpB8X0BseELkvyy9Ba0VVbAOu
+	 LDfCfpfmXANSeYaaB062EmXPo9lQCYXkkkZBaXRy7cIc73JZ2E8L/cXn8DrW5triiLdFS
+	 bGYMbGx+3R+uQFgcsRHwq8mCaxTgrs86si2J4iXV9kvYPUOhob8VMF5uP5OR0CJAZQi3n
+	 4W91VlD5EeDAVnWyEnKIiTZRt2ald05YFRsIdXF2qXgg8471tIurfkBP53GD1dIoojg==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=arm.com;
+	spf=pass smtp.mailfrom=arm.com;
+	dkim=pass header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=Mxz+SzuE;
+	arc=none smtp.remote-ip=217.140.110.172
+Received: from foss.arm.com (foss.arm.com [217.140.110.172])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id 9B492606A327;
+	Wed, 25 Nov 2026 18:42:26 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9B492606A327
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=arm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=arm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=MoPoxyMU
-Received: by mail-ed1-f41.google.com with SMTP id 4fb4d7f45d1cf-6ba380cd8dbso8168840a12.3
-        for <linux-api@vger.kernel.org>; Wed, 25 Nov 2026 08:51:29 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795625488; cv=none;
-        d=google.com; s=arc-20260327;
-        b=gNJQOr5kUCbE3v3jibrgL1I56sZNKqwVt9soadH+UX4okQAldSXS2J33g5Q/UreLiw
-         ILbhm52Koitz9jmK9gMy6fPV/LlctuncJmNnKF1pcauMuLzgaVrpHmAHwAy3JnEdengv
-         Mm54WsyDOe5TFZSJUsj3jqnDdx0SHHTFvtRixJHeBUwKRVhdzZIzOrtlX+FCwh5gRirK
-         CGzDFguAeOCrL7hy3c/9IX8BWvS6kvGYANMec6K4rPh/0TRWWATckahTwu/N5jBIhuzA
-         arS0bJBIh++asQ4pN8oHMWv8bWfFy7xn1ZNln7Eu73zuuVIX4Qcn6MDrw07hmZc9K6FG
-         BmxQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=RXQk5HMe2BJYtF6nqI/dEd/GRzh+7/vUyfQ0kGs8Dkc=;
-        fh=3wgnEwkQ3EiCN3ZIGZiCst//Em93XP3oMwj68kQ+Asg=;
-        b=CAy1ixrh+lGlNRR+tO3ghV/Rqq+6UUlrpyS6xhjhJBdOVW+PgMc/T1VqIAEhGYDd6B
-         yClBkyTYKgf3cIwjzJEB+YVcd0BFAa6EE91P+GB0LMLmJ9ITLZCKQy3cGejBS/1H+bIy
-         Dez8dbc49tMNYY8mLCpkD4BZwfyhTmNCs0gM0xIU6J+DoBme4CkeTVxxLDPlW22OqTH3
-         /gYhs3IT5Zyd1rUXfvaAlgcj+EPPU+iiYc9Mia081ekDXYHuJFc+Oq3UP0Vw08uZsriB
-         1lcIhyhNkT51C7atRLMzM+u53Mi4dQmxr3MF2VDGZmLKjhhm54O8enuuNL2HKFoIH/yX
-         avLw==;
-        darn=vger.kernel.org
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795625488; x=1796230288; darn=vger.kernel.org;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=RXQk5HMe2BJYtF6nqI/dEd/GRzh+7/vUyfQ0kGs8Dkc=;
-        b=MoPoxyMUvDW1SLt017Zbm2ElRZzGiEKE9LRDq//X7B5j3TZZdR2cJjL2ZBOsvKEAZ6
-         5IMuomAixYVKXTxTSbsvvUkuYlCm6JWLTwiWhbHnmzbjD0SYKpVTGs0a8R/hyeXlTCat
-         v++nacOw8wh8nQnKme7ZkOgcPVHS9U8PIZNzXPa5F/Gs2HzHICpegLzAaPhJMFiGMKnd
-         zJSCrK/jjB3QqXfi00Do0OBXJ9cHaspoS4hsJqMX0lgRiT/EeRtS0YXVLWqei5vHAUbO
-         Qr2NYy6jU0QsyDak7b6GcknaTsPdnQLdlnS7CLbP5ta2fpt8cldZxvRM2QK24ULz/9X2
-         +t2Q==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795625488; x=1796230288;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=RXQk5HMe2BJYtF6nqI/dEd/GRzh+7/vUyfQ0kGs8Dkc=;
-        b=duxLhtsBSVVYTgb5Gxy56WGFNJyjMqU4lNvn33bgjCtnS6SuK5iVjdH6R+OqokH9zT
-         qjXKOX7AZnt4Fq4CtcHkvN/UNGg5v2BZBSjt4PYAQ36JD238hcy9l1c/lKLl2/VZROGT
-         ql55irLH+kkbvgGU8gq75j5IH8JHUHYGRSt3yfnNIDzQq6yPR8Sk/tInf7MEpBb90uvs
-         +Wz1HSAVUKd+kH2A9sfwEz3wDuFnCW8fgkDIIe0dntNeXdcUVxAfFjpr93Gz68XZlJC6
-         CtCdCkReFdnuHPyu3leP3IsftrK79chW1LoC9wfXSgMNglFnxIfuur6P/SzBfAQPH0RO
-         ConA==
-X-Forwarded-Encrypted: i=1; AL+hErF+HWkvGWKvaqYTR1EhH8/1s76Joj05g2EGpxnv3qg+NYTfXkFC3R+vumREYCW4noK7RgGBdVtR7+U=@vger.kernel.org
-X-Gm-Message-State: APuU4Z+c6Zm9CUr5Q2kuILpHZ2uMs0zRwUA7/KtDZnKtFRfwaI8fwOwo
-	h0HKSBQFvjiE55kfKYMrsYevgqvK3keXX85GQUgJJwpS1t6vTCGqkehDvZfk1aZo2RtMEP+BumB
-	GMXlFjIzCJ0+raVNrF5mLr5AZs/kK6EA=
-X-Gm-Gg: AZFdTZcLoPuzDw/Qd2EcCiLYTtObwtTq6QKejen6+A+VDOcyrcle7/eZWN/iQ7jis4j
-	x3DY/F6zcqy3dzN9UbxZzlfmkm89++QsU2c9m08Zyuc9FXxPYaaiHkjgPKw/Y+xw+i26V1Bvqvq
-	uAeRCBGpS11RUHR44xmWXpOtin52kZWNmJIFa6vsxpoCei0xxCQAfG9J62mvBt79nCObgCwARsu
-	Z/hhNpKIW8ZxUtb45VawUu1uHNLg1gv0UmIfCyCvT8khMzYWj8Qof199fq7JYw2LlsxgFVZHWuV
-	bh+6f5gVs5BoLyL2E7wPNerSDUfiGMhePzd7rtNDMHNTNqLn/wYe5V5fNNqLicrQBbQps6RKUFe
-	WYMskF+BHK4+N71HEdASO8uOjs+Ijks4HrSzFiCU+LT8xllEWHfctppXkE6KKX33Co8lyGQ==
-X-Received: by 2002:a05:6402:84e:b0:6b8:ac39:bb7b with SMTP id
- 4fb4d7f45d1cf-6ba37f07a02mr12784419a12.45.1795625487513; Wed, 25 Nov 2026
- 08:51:27 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=arm.com header.i=@arm.com header.a=rsa-sha256 header.s=foss header.b=Mxz+SzuE
+Received: from usa-sjc-imap-foss1.foss.arm.com (unknown [10.121.207.14])
+	by usa-sjc-mx-foss1.foss.arm.com (Postfix) with ESMTP id EED851596;
+	Wed, 25 Nov 2026 10:42:22 -0800 (PST)
+Received: from e129823.arm.com (e129823.arm.com [10.2.213.3])
+	by usa-sjc-imap-foss1.foss.arm.com (Postfix) with ESMTPSA id 543193F632;
+	Wed, 25 Nov 2026 10:42:21 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=arm.com; s=foss;
+	t=1795632145; bh=5/yTrlMerS40XeBeYhkPJ9sgqYnObkxSSdB1SKV7Zjo=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To:From;
+	b=Mxz+SzuEIZqlDqJsq8rfzG7sZQiRFga8RZxxg3gJxqHmZ/7oZWjNFWVz7HdntO7o+
+	 BUYVwkeFjQXzluXsgiSKZvWd1Mg7thPChRRBRUNMRHPn5tQoVwGDnUfvUU0mqpiWLw
+	 fU+JrZ0f0MBHbtYacZtjHRaRvJ8MQmXYhM8jKIvM=
+Date: Wed, 25 Nov 2026 18:42:18 +0000
+From: Yeoreum Yun <yeoreum.yun@arm.com>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org,
+	linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org,
+	linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com,
+	lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com,
+	cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com,
+	James.Bottomley@hansenpartnership.com, aik@amd.com,
+	jpiotrowski@nvidia.com, qinkun@google.com, pgonda@google.com,
+	jic23@kernel.org, alistair.francis@wdc.com, ankita@nvidia.com,
+	suzuki.poulose@arm.com, kas@kernel.org, rick.p.edgecombe@intel.com,
+	elena.reshetova@intel.com, dave.hansen@linux.intel.com,
+	sathyanarayanan.kuppuswamy@linux.intel.com, peter.fang@intel.com,
+	jarkko@kernel.org, zohar@linux.ibm.com, yeoreum.yun@arm.com,
+	aneesh.kumar@kernel.org, dave.jiang@intel.com, nik.borisov@suse.com,
+	sergii.dmytruk@3mdeb.com
+Subject: Re: [PATCH RFC v2 00/15] ctlv: Add a schema-driven TLV uAPI for
+ character devices
+Message-ID: <awcsCt935SgyVIgY@e129823.arm.com>
+References: <20261113155515.2510194-1-jiri@resnulli.us>
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -104,252 +72,440 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-References: <20261122000856.536902-1-koray.fra@gmail.com> <20261122000856.536902-3-koray.fra@gmail.com>
- <CAOQ4uxhegn1z=41_MHL1Zu2hXuPtzNhC=x4gd371oaeJE4-weQ@mail.gmail.com>
- <DN2N6A68PBO1.2QT8ZOARF4I6L@gmail.com> <CAOQ4uxhDQqEQ3T9NveBFpUmSU032BxrNV5D+_zHj8u9LOQY+qg@mail.gmail.com>
- <DN4DRUYPHYMP.20U4DYV5VBN7P@gmail.com>
-In-Reply-To: <DN4DRUYPHYMP.20U4DYV5VBN7P@gmail.com>
-From: Amir Goldstein <amir73il@gmail.com>
-Date: Wed, 25 Nov 2026 17:51:16 +0100
-X-Gm-Features: Aa3M54qBSzc52sWJyl_AAZDXWvCmiaZo0RX22LaXSRo3u2ihdyPPNj6mbzgC3-4
-Message-ID: <CAOQ4uxg0g+XkPb3-kQS5ez1-rp7Q=BkYDHW0CGOFhpbcf70yMg@mail.gmail.com>
-Subject: Re: [PATCH 2/3] vfs: add xflags mask to fileattr API
-To: koraynilay <koray.fra@gmail.com>
-Cc: Namjae Jeon <linkinjeon@kernel.org>, Hyunchul Lee <hyc.lee@gmail.com>, 
-	Alexander Viro <viro@zeniv.linux.org.uk>, Christian Brauner <brauner@kernel.org>, 
-	Chuck Lever <cel@kernel.org>, Jeff Layton <jlayton@kernel.org>, Jan Kara <jack@suse.cz>, 
-	"Darrick J . Wong" <djwong@kernel.org>, Andrey Albershteyn <aalbersh@kernel.org>, =?UTF-8?Q?Pali_Roh=C3=A1r?= <pali@kernel.org>, 
-	Lauri Gates <lauri.gates@gmail.com>, Christoph Hellwig <hch@infradead.org>, Dave Chinner <dgc@kernel.org>, 
-	linux-btrfs@vger.kernel.org, linux-xfs@vger.kernel.org, 
-	linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, 
-	ntfs@lists.linux.dev, linux-nfs@vger.kernel.org, linux-api@vger.kernel.org
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261113155515.2510194-1-jiri@resnulli.us>
 
-On Wed, Nov 25, 2026 at 4:01=E2=80=AFPM koraynilay <koray.fra@gmail.com> wr=
-ote:
->
-> On Mon Nov 23, 2026 at 4:29 PM CET, Amir Goldstein wrote:
-> > On Mon, Nov 23, 2026 at 2:58=E2=80=AFPM koraynilay <koray.fra@gmail.com=
-> wrote:
-> >>
-> >> On Mon Nov 23, 2026 at 2:24 PM CET, Amir Goldstein wrote:
-> >> > On Sun, Nov 22, 2026 at 1:09=E2=80=AFAM koraynilay <koray.fra@gmail.=
-com> wrote:
-> >> >>
-> >> >> Add fa_xflags_rw_mask and fa_xflags_ro_mask to struct file_attr and
-> >> >> equivalent masks to struct file_kattr.
-> >> >>
-> >> >> Also add has_masks selector to struct file_kattr so we can know whe=
-n a
-> >> >> user of this API (userspace or filesystem) supports them.
-> >> >>
-> >> >> This lets filesystems advertise their support for specific xflags, =
-like
-> >> >> statx.stx_attributes_mask does, and userspace can specify only whic=
-h
-> >> >> xflags it wants to change without needing a RMW cycle:
-> >> >> - on GET: each filesystem that wants to support this new API fills =
-the
-> >> >>   masks according to its supported and read-only xflags, then:
-> >> >>   * for boolean xflags: it fills fsx_xflags with the current on-dis=
-k value
-> >> >>   * for value xflags: it sets the xflag bit to 1 in fsx_xflags and =
-the
-> >> >>     xflag value in the struct field;
-> >> >> - on SET: userspace fills the rw_mask with the bits of the xflags i=
-t
-> >> >>   wants to change, then:
-> >> >>   * for boolean xflags: it provides the xflag value as a bit in fa_=
-xflags
-> >> >>   * for value xflags: it sets the xflag bit to 1 in fa_xflags and t=
-hen
-> >> >>     provides the value in the struct field; if the xflag bit is set=
- to 0
-> >> >>     instead, this informs the kernel to unset/clear that value.
-> >> >>
-> >> >> Since fa_xflags_rw_mask means "I want to change the xflags specifie=
-d in
-> >> >> here", if userspace specifies fa_xflags_rw_mask =3D 0, only check f=
-or
-> >> >> permissions and fileattr support without checking any xflags.
-> >> >>
-> >> >> Behaviour of older programs that already use file_[gs]etattr() is
-> >> >> preserved by checking against FILE_ATTR_SIZE_VER*.
-> >> >>
-> >> >> Also add the missing FS_XFLAG_PROJID xflag, to allow userspace to s=
-et
-> >> >> the projid using file_[gs]etattr() by leveraging the new masks.
-> >> >>
-> >> >> Finally, in order to prevent the legacy FS_IOC_FSSETXATTR from acce=
-pting
-> >> >> FS_XFLAG_PROJID, add a FS_FILE_ATTR_XFLAGS_MASK to support new xfla=
-gs
-> >> >> and use it to validate/clamp both the _xflags fields and the masks.
-> >> >>
-> >> >> Assisted-by: Gemini:3.8-flash-high antigravity-cli-1.5.11
-> >> >> Signed-off-by: koraynilay <koray.fra@gmail.com>
-> >> >> ---
-> > ...
-> >> >>         err =3D fileattr_set_prepare(inode, &old_ma, fa);
-> >> >> @@ -424,6 +504,14 @@ SYSCALL_DEFINE5(file_getattr, int, dfd, const =
-char __user *, filename,
-> >> >>                 return error;
-> >> >>
-> >> >>         fileattr_to_file_attr(&fa, &fattr);
-> >> >> +       /*
-> >> >> +        * Remove xflags added in or after VER1 so userspace progra=
-ms compiled
-> >> >> +        * against VER0 don't try to write xflags they don't know a=
-bout (since
-> >> >> +        * they do RMW).
-> >> >> +        */
-> >> >> +       if (usize < FILE_ATTR_SIZE_VER1)
-> >> >> +               fattr.fa_xflags &=3D FS_XFLAGS_MASK;
-> >> >> +
-> >> >
-> >> > This looks odd.
-> >> > old struct size with new flags should be -EINVAL not silently drop t=
-hem
-> >>
-> >> Right, and the GET path should strip any new flags, so old programs
-> >> doing RMW will never see them, correct?
-> >>
-> >
-> > Yes, I think so.
-> >
-> >> >
-> >> >>         error =3D copy_struct_to_user(ufattr, usize, &fattr,
-> >> >>                                     sizeof(struct file_attr), NULL)=
-;
-> >> >>
-> >> >> @@ -460,10 +548,6 @@ SYSCALL_DEFINE5(file_setattr, int, dfd, const =
-char __user *, filename,
-> >> >>         if (error)
-> >> >>                 return error;
-> >> >>
-> >> >> -       error =3D file_attr_to_fileattr(&fattr, &fa);
-> >> >> -       if (error)
-> >> >> -               return error;
-> >> >> -
-> >> >>         CLASS(filename_maybe_null, name)(filename, at_flags);
-> >> >>         if (!name && dfd >=3D 0) {
-> >> >>                 CLASS(fd, f)(dfd);
-> >> >> @@ -479,6 +563,30 @@ SYSCALL_DEFINE5(file_setattr, int, dfd, const =
-char __user *, filename,
-> >> >>                         return error;
-> >> >>         }
-> >> >>
-> >> >> +       /*
-> >> >> +        * Userspace said "I don't want to change any flag", so be =
-it I guess.
-> >> >> +        * Still check for fileattr support and permissions, also i=
-n case this
-> >> >> +        * is just a probe.
-> >> >> +        */
-> >> >> +       if (usize >=3D FILE_ATTR_SIZE_VER1 && fattr.fa_xflags_rw_ma=
-sk =3D=3D 0) {
-> >> >> +               struct inode *inode =3D d_inode(filepath.dentry);
-> >> >
-> >> >
-> >> > No No this is not what this userspace said!
-> >> >
-> >> > This user space is the same old chattr programs recompiled with a ne=
-w
-> >> > fs.h header file
-> >> > installed.
-> >>
-> >> Oh, right, I did not think about this case, I hope it doesn't break to=
-o
-> >> much of the new code I changed already for v2 :(
-> >>
-> >> > When userspace does not set anything is masks it means "old API"
-> >>
-> >> And so a modern program using masks that passes rw_mask as 0 should be
-> >> also interpreted as "old API", even if it kinda goes against the
-> >> definition of rw_mask right?
-> >
-> > Yes, but it is not a problem to describe this backward compat exception=
-:
-> > When (rw_mask | ro_mask) =3D=3D 0, it means "no mask" "set everything"
-> > but then vfs will not accept new xflags that were not supported in v0
-> > syscall.
->
-> Uhm, since we have no way to know on the GET path if the caller is mask
-> aware or not, on mask aware filesystems and legacy programs recompiled
-> against VER1, file_getattr() will return rw_mask !=3D 0, when the program
-> does RMW, so calling file_setattr() with the old struct which has
-> rw_mask !=3D 0, vfs will think that the caller is mask aware.
->
+I've tested with my FIRME and arm-cca-guest implementations based on
+this patch series. So for this series,
 
-True. This is a requirement from the design of v1
-that RMW works correctly when the program does not change the masks.
+Tested-by: Yeoreum Yun <yeoreum.yun@arm.com>
+Reviewed-by: Yeoreum Yun <yeoreum.yun@arm.com>
 
-> This causes problems when that legacy program changes the projid, since
-> vfs will see rw_mask =3D PROJID but fsx_xflags will not have PROJID, vfs
-> will clear it even tho the program wanted to set it to some value.
->
+On Fri, Nov 13, 2026 at 04:54:59PM +0100, Jiri Pirko wrote:
+> From: Jiri Pirko <jiri@nvidia.com>
+> 
+> RFC v1 [1] posted CTLV together with its first user, the attestation
+> subsystem. v2 posts them as two series: this one, and the attestation
+> series, which applies on top of it and is posted alongside as
+> 
+>   [PATCH RFC v2 0/9] attestation: Add a common subsystem and TDX support
+> 
+> CTLV is a schema-driven TLV uAPI on a character device, meant for uAPIs
+> too unconstrained for fixed structures: lists of records, nested and
+> variable-sized data, optional fields. Every request is checked against
+> the family's YAML schema before the driver sees it, and the UAPI
+> header, the bindings and the docs are generated from the same schema.
+> A family grows without versions, by new ops and optional fields. One
+> ioctl over a global number space lets strace or a seccomp supervisor
+> decode any family, and a query whose answer is larger than the
+> caller's buffer is answered in parts, with a cursor and a generation
+> that keep them consistent.
+> 
+> An ioctl with structures of its own fixes their layout, needs pointers
+> to more structures for variable data, and has to be validated and
+> decoded on its own. sysfs and configfs would assemble one request
+> through several files, where CTLV checks and executes it at once.
+> Netlink is built around sockets and network namespaces, while these
+> devices want an fd and the DAC model of a device node, and it was
+> turned down for the TSM's SPDM uAPI [2]. For a value or two, sysfs or a
+> plain ioctl stays simpler, and CTLV is not meant for that.
+> 
+> The uAPI is one ioctl on the device's fd:
+> 
+>   struct ctlv_op_exec {
+>           __u32 size;
+>           __u32 flags;
+>           __aligned_u64 op_id;
+>           __aligned_u64 request;
+>           __aligned_u64 reply;
+>           __u32 request_len;
+>           __u32 reply_len;
+>           __aligned_u64 generation;
+>           __aligned_u64 cursor;
+>   };
+> 
+>   ioctl(fd, CTLV_IOC_OP_EXEC, &exec);
+> 
+> An op is an action, executed once, or a query, which the generation
+> and the cursor carry across replies. Each op needs read or read-write
+> access, checked against the mode the device was opened with. A failed
+> op returns an errno, and in the reply buffer why the request was
+> refused and the offset of the offending TLV.
+> 
+> A family is specified in YAML. The root family, which every device
+> answers, lets a program not compiled against a family discover it. Its
+> first op:
+> 
+>   ops:
+>     # The families this device answers, this one first and the device family
+>     # last. The only names any reply of this family carries.
+>     family-get:
+>       type: query
+>       fd-access: read
+>       reply:
+>         # One entry per family of the chain.
+>         families[]:
+>           # The family ID, which bits 63..48 of the family's types carry.
+>           id: uint
+>           # The registry name, also what a uevent carries. Bounded here, this
+>           # being the only place a message carries a family name.
+>           name: string(..63)
+> 
+> ctlvgen --signatures prints a family's ops as calls, ? marking what
+> may be absent and [] what may repeat. The root family's three, with
+> the purpose of each:
+> 
+>   # The device's family chain, root first.
+>   family-get() -> { families[]: { id, name } }
+> 
+>   # Every op the device publishes, with its type, access and lengths.
+>   op-get() ->
+>       { ops[]: { id, type, availability?, disabled?, request-max-len?,
+>                  action-reply-max-len?, query-reply-min-len?,
+>                  query-reply-suggested-len?, fd-access?, error-info-max-len? } }
+> 
+>   # The tree of one op's request and reply.
+>   op-schema-get(id) -> { request?: schema-node, reply?: schema-node }
+> 
+> libctlv is a small C library for the mechanical parts: opening a
+> device by its family, building requests, parsing replies, reassembling
+> queries and building blob descriptors, with typed bindings generated
+> per family. ctlvctl needs no generated code, only the family's
+> specification, or the .json the build writes from it, for the names.
+> Both build with the kernel's CROSS_COMPILE, LLVM and O=. Here they
+> run in a VM, on a device of the simulation provider from the branch
+> [3], with CTLV_SPEC_DIR pointing at Documentation/ctlv/specs. The
+> device's MR 1 can be extended, and its evidence object 2 is an event
+> log:
+> 
+>   # Every CTLV device and its family chain.
+>   $ ctlvctl list
+>   attestation/attestation0        ctlv/ctlv-attestation/ctlv-attestation-sim
+> 
+>   # The ops the device publishes.
+>   $ ctlvctl ops attestation/attestation0
+>   # ctlv/ctlv-attestation/ctlv-attestation-sim, generation 0
+>   family-get     query   read        fixed  request 16    reply 112..65536
+>   op-get         query   read        fixed  request 16    reply 56..65536
+>   op-schema-get  query   read        fixed  request 40    reply 168..65536
+>   ...
+>   mr-read        query   read        fixed  request 80    reply 112..4096
+>   mr-extend      action  read-write  fixed  request 7232  reply 2824
+>   ...
+> 
+>   # mr-read's request and reply.
+>   $ ctlvctl schema attestation/attestation0 mr-read
+>   mr-read (query)
+>   request:
+>     root record
+>       mr-read id required uint [0, 4294967295]
+>       device-generation optional uint [0, 4294967295]
+>       mr-read options optional record
+>   reply:
+>     root record
+>       device-generation required uint [0, 4294967295]
+>       mr-generation required uint [0, 4294967295]
+>       mr-values required record x23
+>         mr-value.hash-algo required enum [0, 22] {HASH_ALGO_MD4, ...}
+>         mr-value.data required binary len [16, 64]
+> 
+>   # MR 1's banks.
+>   $ ctlvctl exec attestation/attestation0 mr-read id=1
+>   # mr-read, 1 fragment, generation 0
+>     device-generation 0
+>     mr-generation 2
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA256
+>       mr-value.data hex:0000000000000000000000000000000000000000000000000000000000000000
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA384
+>       mr-value.data hex:000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+> 
+>   # Extend MR 1 by a digest for each of its banks.
+>   $ ctlvctl exec attestation/attestation0 mr-extend --json '{"id":1,
+>           "mr-values":[
+>             {"hash-algo":"HASH_ALGO_SHA256","data":"hex:b1a3c4fc2b10743a5f79ce443178df6e99b4426fcae2ef3e1f76a6a26d8f0860"},
+>             {"hash-algo":"HASH_ALGO_SHA384","data":"hex:c8a6d5e64f03a5f3cad5125670fccff0c065a9db91f00a81eb6630836629a85969802308430aa28ea0d6fdd8b1eb0cc8"}]}'
+>   # mr-extend, 1 fragment, generation 0
+>     device-generation 0
+>     mr-generation 3
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA256
+>       mr-value.data hex:b1a3c4fc2b10743a5f79ce443178df6e99b4426fcae2ef3e1f76a6a26d8f0860
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA384
+>       mr-value.data hex:c8a6d5e64f03a5f3cad5125670fccff0c065a9db91f00a81eb6630836629a85969802308430aa28ea0d6fdd8b1eb0cc8
+> 
+>   # MR 1 again, with its new value and generation.
+>   $ ctlvctl exec attestation/attestation0 mr-read id=1
+>   # mr-read, 1 fragment, generation 1
+>     device-generation 0
+>     mr-generation 3
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA256
+>       mr-value.data hex:a4fb91fd25115ec617cc4f17a40590e685cc58de5a65bb119e821e09d780a158
+>     mr-values
+>       mr-value.hash-algo HASH_ALGO_SHA384
+>       mr-value.data hex:1dcbf559ca9d6b48d782d268933c07a9e33c96bb21e1b868c2db7be929a852d3c5dbc5cf44427400c268a2f557c38c75
+> 
+>   # The event log, an output blob, written to a file.
+>   $ ctlvctl exec attestation/attestation0 evidence-get --json \
+>           '{"objects":[{"id":2,"data":{"file":"log.bin"}}]}'
+>   # evidence-get, 1 fragment, generation 0
+>     device-generation 0
+>     evidence-get evidence-generation 1
+>     evidence-get results
+>       evidence-get results.format ccel
+>       evidence-get results.length 65
+> 
+> There are no versions. struct ctlv_op_exec carries its size and grows
+> only at its end. A family grows by new ops and new optional fields,
+> and anything incompatible is a new op. Each family has a checked-in
+> ABI snapshot, and regen refuses a change that breaks it.
+> 
+> Events, a per-fd queue of what changed on a device, are left out until
+> their first user is posted, and so are memfd and dma-buf blobs. Both
+> are on the branch [3], with the generator's tests, KUnit, test
+> families and selftests.
+> 
+> The series adds 23787 lines:
+> 
+>   generator, Python                 7864
+>   core, C                           5643
+>   ctlvctl                           3519
+>   libctlv                           3242
+>   docs                              1510
+>   generated files                   1161
+>   meta-schemas, registry             368
+>   root family specification          211
+>   ABI snapshots                      118
+>   build                              151
+> 
+> Changes since RFC v1, each patch listing its own:
+> 
+> - Specs are written as Jason suggested: enums, flags, records and ops,
+>   each op the tree of its request and reply, every type derived from
+>   where its field sits. Attribute groups and sets are gone. The
+>   comment above an item is its doc, in the UAPI headers and the
+>   rendered docs, and ctlvgen --signatures prints the ops as above.
+> - TLV, type, record and field replace attr and nest.
+> - The events are left out, with read() and poll().
+> - A subsystem allocates its device and embeds CTLV, as fwctl does, and
+>   may route the ioctl from its own file operations. The engine is in
+>   lib/ctlv/, and a subsystem's class gets its nodes from CTLV, and
+>   there is no ctlv class.
+> - struct ctlv_op_exec is sized by its size field and read with
+>   copy_struct_from_user(). A reply buffer may be any length, and an
+>   output blob too short fails with EMSGSIZE and the length it needs.
+> - Enum extension points: an enum whose values a descendant family
+>   gives.
+> - An op that reads is <object>-get: families-dump and ops-dump are
+>   family-get and op-get.
+> - Inline messages are at most 64 KiB, and records nest at most 8 deep.
+> - The UAPI headers are in include/uapi/ctlv/.
+> - regen writes the ABI snapshots too, and refuses an ABI break unless
+>   ABI_BREAK=1.
+> - The userspace ABI opens with the goals, a worked example and a
+>   glossary, and collects the compatibility rules. The family guide is
+>   built around a worked example family.
+> - libctlv and ctlvctl are posted. ctlvctl runs every op with exec,
+>   takes a blob in --json as a file, as Aneesh's patched copy did, and
+>   sizes an output blob by the length the op fails with.
+> 
+> The patches:
+> 
+>   1-3    the spec language and generator, the message format and the
+>          family API, and the root family
+>   4      the userspace ABI
+>   5-11   messages, blobs, validation and introspection, then dispatch
+>   12     character device nodes
+>   13     how to write a family
+>   14-15  libctlv and ctlvctl
+> 
+> Note to reviewers: the uAPI, in 1, 2 and 4, and the family API, in 2
+> and 13, matter most at this stage.
+> 
+> [1] https://lore.kernel.org/all/20261015145053.3664509-1-jiri@resnulli.us/
+> [2] https://lore.kernel.org/all/20260921131911.532d81f4@kernel.org/
+> [3] https://github.com/jpirko/linux_mlxsw/commits/wip_attestation_all_2
+> 
+> Jiri Pirko (15):
+>   ctlv: Add the schema language and generator
+>   ctlv: Add the UAPI message format and family API
+>   ctlv: Add the root family specification and generated files
+>   Documentation: ctlv: Add userspace ABI
+>   ctlv: Prepare message input handling
+>   ctlv: Prepare blob descriptor validation
+>   ctlv: Prepare schema validation
+>   ctlv: Prepare message output handling
+>   ctlv: Prepare VA blob handling
+>   ctlv: Prepare runtime introspection
+>   ctlv: Add operation dispatch
+>   ctlv: Add character device nodes
+>   Documentation: ctlv: Describe how to write a family
+>   tools/ctlv: Add the userspace library
+>   tools/ctlv: Add ctlvctl
+> 
+>  Documentation/ctlv/abi/ctlv.yaml              |  111 +
+>  Documentation/ctlv/abi/families.registry.yaml |    7 +
+>  Documentation/ctlv/ctlv-registry-schema.yaml  |   38 +
+>  Documentation/ctlv/ctlv-schema.yaml           |  227 ++
+>  Documentation/ctlv/families.yaml              |   17 +
+>  .../ctlv/generated-files-schema.yaml          |   68 +
+>  Documentation/ctlv/generated-files.yaml       |   18 +
+>  Documentation/ctlv/specs/ctlv.yaml            |  211 ++
+>  Documentation/driver-api/ctlv.rst             |  723 +++++
+>  Documentation/driver-api/index.rst            |    1 +
+>  Documentation/userspace-api/ctlv.rst          |  783 +++++
+>  Documentation/userspace-api/index.rst         |    1 +
+>  .../userspace-api/ioctl/ioctl-number.rst      |    2 +
+>  MAINTAINERS                                   |   12 +
+>  include/linux/ctlv.h                          |  149 +
+>  include/linux/ctlv_device.h                   |   57 +
+>  include/linux/ctlv_family.h                   |  652 ++++
+>  include/linux/ctlv_gen.h                      |  154 +
+>  include/uapi/ctlv/ctlv.h                      |  180 ++
+>  include/uapi/ctlv/ctlv_families_gen.h         |   17 +
+>  include/uapi/ctlv/ctlv_gen.h                  |  278 ++
+>  lib/Kconfig                                   |    2 +
+>  lib/Makefile                                  |    2 +
+>  lib/ctlv/Kconfig                              |   13 +
+>  lib/ctlv/Makefile                             |    5 +
+>  lib/ctlv/blob.c                               |  421 +++
+>  lib/ctlv/blob.h                               |   15 +
+>  lib/ctlv/blob_desc.c                          |  101 +
+>  lib/ctlv/blob_desc.h                          |   29 +
+>  lib/ctlv/builder.c                            |  455 +++
+>  lib/ctlv/builder.h                            |   14 +
+>  lib/ctlv/core.c                               | 1169 +++++++
+>  lib/ctlv/ctlv_gen.c                           |  161 +
+>  lib/ctlv/device.c                             |  179 ++
+>  lib/ctlv/internal.h                           |   87 +
+>  lib/ctlv/introspection.c                      |  505 +++
+>  lib/ctlv/message.c                            |  393 +++
+>  lib/ctlv/message.h                            |   91 +
+>  lib/ctlv/schema.c                             | 1092 +++++++
+>  lib/ctlv/schema.h                             |   54 +
+>  tools/Makefile                                |    9 +-
+>  tools/ctlv/Makefile                           |   62 +
+>  tools/ctlv/ctlv-regen.sh                      |   64 +
+>  tools/ctlv/ctlvctl/.gitignore                 |    4 +
+>  tools/ctlv/ctlvctl/Makefile                   |   64 +
+>  tools/ctlv/ctlvctl/ctlvctl.c                  | 2787 +++++++++++++++++
+>  tools/ctlv/ctlvctl/spec.c                     |  672 ++++
+>  tools/ctlv/ctlvctl/spec.h                     |   60 +
+>  tools/ctlv/ctlvgen/__init__.py                |    1 +
+>  tools/ctlv/ctlvgen/cli.py                     |  178 ++
+>  tools/ctlv/ctlvgen/lib/__init__.py            |    1 +
+>  tools/ctlv/ctlvgen/lib/cenum.py               |  178 ++
+>  tools/ctlv/ctlvgen/lib/cgen.py                |  763 +++++
+>  tools/ctlv/ctlvgen/lib/compat.py              |  877 ++++++
+>  tools/ctlv/ctlvgen/lib/dump.py                |  161 +
+>  tools/ctlv/ctlvgen/lib/errors.py              |   16 +
+>  tools/ctlv/ctlvgen/lib/gen_doc.py             |  684 ++++
+>  tools/ctlv/ctlvgen/lib/gen_family.py          |  285 ++
+>  tools/ctlv/ctlvgen/lib/gen_kernel.py          |  576 ++++
+>  tools/ctlv/ctlvgen/lib/gen_runtime.py         |   66 +
+>  tools/ctlv/ctlvgen/lib/gen_uapi.py            |  182 ++
+>  tools/ctlv/ctlvgen/lib/gen_user.py            |  808 +++++
+>  tools/ctlv/ctlvgen/lib/outputs.py             |  363 +++
+>  tools/ctlv/ctlvgen/lib/semantics.py           | 1219 +++++++
+>  tools/ctlv/ctlvgen/lib/sizes.py               |  239 ++
+>  tools/ctlv/ctlvgen/lib/spec.py                |  813 +++++
+>  tools/ctlv/ctlvgen/lib/tree.py                |  158 +
+>  tools/ctlv/ctlvgen/lib/yamlload.py            |  138 +
+>  tools/ctlv/libctlv/Makefile                   |   41 +
+>  tools/ctlv/libctlv/ctlv.h                     |  413 +++
+>  tools/ctlv/libctlv/ctlv_user_gen.c            |  551 ++++
+>  tools/ctlv/libctlv/device.c                   |  412 +++
+>  tools/ctlv/libctlv/internal.h                 |  161 +
+>  tools/ctlv/libctlv/introspection.c            |  238 ++
+>  tools/ctlv/libctlv/message.c                  |  518 +++
+>  tools/ctlv/libctlv/schema.c                   |  742 +++++
+>  tools/ctlv/libctlv/spec.c                     |  186 ++
+>  tools/ctlv/libctlv/transport.c                |  572 ++++
+>  tools/ctlv/pyproject.toml                     |   30 +
+>  tools/ctlv/requirements.txt                   |    2 +
+>  80 files changed, 23787 insertions(+), 1 deletion(-)
+>  create mode 100644 Documentation/ctlv/abi/ctlv.yaml
+>  create mode 100644 Documentation/ctlv/abi/families.registry.yaml
+>  create mode 100644 Documentation/ctlv/ctlv-registry-schema.yaml
+>  create mode 100644 Documentation/ctlv/ctlv-schema.yaml
+>  create mode 100644 Documentation/ctlv/families.yaml
+>  create mode 100644 Documentation/ctlv/generated-files-schema.yaml
+>  create mode 100644 Documentation/ctlv/generated-files.yaml
+>  create mode 100644 Documentation/ctlv/specs/ctlv.yaml
+>  create mode 100644 Documentation/driver-api/ctlv.rst
+>  create mode 100644 Documentation/userspace-api/ctlv.rst
+>  create mode 100644 include/linux/ctlv.h
+>  create mode 100644 include/linux/ctlv_device.h
+>  create mode 100644 include/linux/ctlv_family.h
+>  create mode 100644 include/linux/ctlv_gen.h
+>  create mode 100644 include/uapi/ctlv/ctlv.h
+>  create mode 100644 include/uapi/ctlv/ctlv_families_gen.h
+>  create mode 100644 include/uapi/ctlv/ctlv_gen.h
+>  create mode 100644 lib/ctlv/Kconfig
+>  create mode 100644 lib/ctlv/Makefile
+>  create mode 100644 lib/ctlv/blob.c
+>  create mode 100644 lib/ctlv/blob.h
+>  create mode 100644 lib/ctlv/blob_desc.c
+>  create mode 100644 lib/ctlv/blob_desc.h
+>  create mode 100644 lib/ctlv/builder.c
+>  create mode 100644 lib/ctlv/builder.h
+>  create mode 100644 lib/ctlv/core.c
+>  create mode 100644 lib/ctlv/ctlv_gen.c
+>  create mode 100644 lib/ctlv/device.c
+>  create mode 100644 lib/ctlv/internal.h
+>  create mode 100644 lib/ctlv/introspection.c
+>  create mode 100644 lib/ctlv/message.c
+>  create mode 100644 lib/ctlv/message.h
+>  create mode 100644 lib/ctlv/schema.c
+>  create mode 100644 lib/ctlv/schema.h
+>  create mode 100644 tools/ctlv/Makefile
+>  create mode 100755 tools/ctlv/ctlv-regen.sh
+>  create mode 100644 tools/ctlv/ctlvctl/.gitignore
+>  create mode 100644 tools/ctlv/ctlvctl/Makefile
+>  create mode 100644 tools/ctlv/ctlvctl/ctlvctl.c
+>  create mode 100644 tools/ctlv/ctlvctl/spec.c
+>  create mode 100644 tools/ctlv/ctlvctl/spec.h
+>  create mode 100644 tools/ctlv/ctlvgen/__init__.py
+>  create mode 100755 tools/ctlv/ctlvgen/cli.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/__init__.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/cenum.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/cgen.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/compat.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/dump.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/errors.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_doc.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_family.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_kernel.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_runtime.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_uapi.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/gen_user.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/outputs.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/semantics.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/sizes.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/spec.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/tree.py
+>  create mode 100644 tools/ctlv/ctlvgen/lib/yamlload.py
+>  create mode 100644 tools/ctlv/libctlv/Makefile
+>  create mode 100644 tools/ctlv/libctlv/ctlv.h
+>  create mode 100644 tools/ctlv/libctlv/ctlv_user_gen.c
+>  create mode 100644 tools/ctlv/libctlv/device.c
+>  create mode 100644 tools/ctlv/libctlv/internal.h
+>  create mode 100644 tools/ctlv/libctlv/introspection.c
+>  create mode 100644 tools/ctlv/libctlv/message.c
+>  create mode 100644 tools/ctlv/libctlv/schema.c
+>  create mode 100644 tools/ctlv/libctlv/spec.c
+>  create mode 100644 tools/ctlv/libctlv/transport.c
+>  create mode 100644 tools/ctlv/pyproject.toml
+>  create mode 100644 tools/ctlv/requirements.txt
+> 
+> -- 
+> 2.56.0
+> 
 
-Yes, this is a specific issue with PROJID itself, not with the
-entire masks API.
-
-
-> Unless I'm missing something, there is no way for us to know if a caller
-> of file_getattr() is a new mask aware program or just a recompiled legacy
-> program.
-
-Right.
-
->
-> My robot proposed 2 fixes: either don't introduce FS_XFLAG_PROJID
-> (which, eh, not the best imo)
-
-Me neither. It's inconsistent IMO.
-
-But it is inconsistent in that we want to have a way for chattr -p to say w=
-ith
-the new API "set only projid", so we must have the flag, but we
-mostly need it for the mask, we don't really care about its value in
-fsx_flags.
-
-> or add a new flag to be used in at_flags,
-> like AT_FILEATTR_MASKS, which would resolve all our legacy vs non-legacy
-> problems, but it would be in *at*_flags, so doesn't really make sense
-> semantically (but it would work well since file_getattr already rejects
-> unknown at_flags, so it wouldn't cause problems for old programs).
-
-I think this is an overkill as well.
-
-We discussed this before.
-
-Attributes that have X_value like fsx_projid have few types:
-1. 0 means disabled (all existing values incl. projid)
-2. 0 is a valid value but cannot be unset (btime)
-3. 0 is a valid value and NULL/unset is also a valid value
-
-Only for type 3 does can the interpretation of
-(!XFLAG_X && !fsx_X) be considered as an "unset"
-and anyway, this will require support in individual fs.
-
-fileattr_set_prepare() already treats the existing values as:
-fsx_X =3D=3D 0 =3D> clear XFLAG_X
-
-And xfs returns EINVAL for !!(fsx_X) !=3D !!(XFLAGX)
-
-A simple solution is to fix the flag according to val in fileattr_set_prepa=
-re()
-if rw_mask contains this flag:
-
-if (fa->fsx_xflags_rw_mask & FS_XFLAG_PROJID) {
-    /* Possibly legacy chattr -p compiled with new headers unaware of PROJI=
-D */
-    if (fa->fsx_projid =3D=3D 0)
-          fa->fsx_xflags &=3D ~FS_XFLAG_PROJID;
-    else
-          fa->fsx_xflags |=3D FS_XFLAG_PROJID;
-}
-
-Does that leave any problematic corner case?
-
-Thanks,
-Amir.
+-- 
+Sincerely,
+Yeoreum Yun
