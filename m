@@ -1,47 +1,47 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795610315;
-	b=SRUzsqiXRnvf0ltUY1EwIXOUe5EdLFgQC8uMJ4FDVdToanrVs5FECwSY0pbxJhP0D45/
-	 e5F6CACxfXjfai8nuW3KeZXFIrmdsrL424hHPhrgWLKKWIZ8W7Dmuiaexq0nGQyTgXIIn
-	 AwODcIyqVfMA18Locyk5GaBd3L2oYVZFVI9ZsexZlTOTPLTG3fqjkJtAzBWIgtee/rrx0
-	 IRjPVfiW2k5iMlzwrjl2zm93juds0OjHgpE2s5DIenSqoqWgJr4LoLbhE5KlAGhZNc+oy
-	 N+lTaog/eF8+j/UVJSxbRSzwzmKf0iDds0Hazchwc0oqvsqCb9TvTSbz+GC9EF5jT7g==
+	t=1795610618;
+	b=a/1x7ODSPdGyaJM7SmZqYcf38NZWRwkAUuiNSSm9vX5to6DBr7KxdnrIPJwOW2L4j+RA
+	 M65VM7Bfg+fVh4HY9z0ijUUkca2+kwzSU5zkEI4ITZqa5ocfmhQUS4zbXQMGrWgW42cLu
+	 K+uzfY3bmXuC8RGquSlqFbNOxqbGdqu2pQV1fyWxu/LSf9mVER7aQb1S8S2p09KGhMUDM
+	 C6mMcPftXfwkpgYrz3xZ+1egWwQ6MG1Aa97hxgl2IDy3SnzNy17yi8Ec7/upaCRcO2fQE
+	 bc1uadb0l18AWMmsUPPNnaLXyPBFQLhMEwRl2QdYYY6ZTHjNU2IZ/2sAsaE+LerkRcA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795610315;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795610618;
 	h=Received:DKIM-Signature:Message-ID:Date:MIME-Version:User-Agent:
 	 Subject:To:Cc:References:From:Content-Language:In-Reply-To:
 	 Content-Type:Content-Transfer-Encoding;
-	bh=0+AXJAxWZ9BUMXQ24kh2T7Uu8yMvUDzaGqCtAJHJM04=;
-	b=hjv+jalfkw9s+5RCONAIVqgXRasr1GY6kymjjSGqrKEHd7ereCUSu6WMDnVqI9tegkoL
-	 r8t+zD7uMNJEVNIG4g6aNErt8nn9IEBnLzT3Bpcc+nZwMz50nEnx0aK2ryePdQIb+FYgO
-	 3MGmiBiqeTsP6P22pbEaBbUANerB0nDgvqx9tkW+/VG+k0Y1qnL2Lkfren/msd/PbK2nD
-	 j1V6ZFrcl+HxSjeXr+U/qkP57mBZ0DavvtoHrZX59j5IyFfCjmMkiTcx5f7Zdjg0E3rD1
-	 De8Gq/6SvOErgBBWlWCNLGbXTEUIFflJfqLTxV31WYhDG6M3C5N57WM5p6GJ8besqDQ==
+	bh=xgMce4ZLn7WugbByXBoQX9uK8N/L98LxV5lBSsjjcpc=;
+	b=h3+jad8E8WtDvsYcMTbaoRrx/uIhtPYObGYgJjGzeTYdDNbn3Iz2EvEbGijyXbxUeGTj
+	 WTdQM6Q1WMYYW/DSgKv4apn1JpV/yNYPR1n/U+zsOlVbGc6qbC3iKabQMi4KFROklX4pl
+	 RYiqfFwq7g9IEU/bJYQ6/r7TtAPYWLrHTo9Vqt6MgWZedcsv8OWJOa2yjYVQ56WKO11YC
+	 EsQRk7bB0/xzXrPL1S5cWEPJZWcsuiuRVWtpvEPxCxpLwjyLkwxdHERzYWeOeBfoYedsL
+	 FDI1Xt8tpI8yVnxccUxV/tcPotrVx+MDOgPJc3ICByMeIrsi4ZIHYCdRtMUWlcjE4rg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ApzE5VP+;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=BT+hTcP9;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7A9E9606A31E;
-	Wed, 25 Nov 2026 12:38:35 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8406F606A321;
+	Wed, 25 Nov 2026 12:43:38 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ApzE5VP+
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id D79B11F000C0;
-	Wed, 25 Nov 2026 12:38:31 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=BT+hTcP9
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 756F51F000C0;
+	Wed, 25 Nov 2026 12:43:35 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795610314;
-	bh=0+AXJAxWZ9BUMXQ24kh2T7Uu8yMvUDzaGqCtAJHJM04=;
+	s=k20260515; t=1795610618;
+	bh=xgMce4ZLn7WugbByXBoQX9uK8N/L98LxV5lBSsjjcpc=;
 	h=Date:Subject:To:Cc:References:From:In-Reply-To;
-	b=ApzE5VP+2dyQZ+VYa227NrDkMHpe2prWp0lrTGmovXoZWR24/hbM0VuIU+zXijTcE
-	 FzZNzjjDDRQpNM/XpKgChUEnC/J3zVt3J8uv7t4+ryB/bX2ZLtWqb/BEGAJfVVNiJs
-	 Esbo5Bt+ORkjHZwFrg7rhe2bFAF9kFHVynVvPu9AZJ5eGjlN3U2upfG8n8e0A+8RXL
-	 wWI3a4PgSJCj52smF7KIu7x8Wc9ipB9qDm3Ta8kEl88Izg/sEJ1Puchk8+z/K582YV
-	 7f0PMugFQW25FSSjU/cFIAP/Ya+Hi0aZrO+wsXUihAHb0/ZXnMM/+6bklITcQ24YBL
-	 ZULloFZcWTe9g==
-Message-ID: <6dba4041-fd5c-448d-9f9d-e3c1dcff8185@kernel.org>
-Date: Wed, 25 Nov 2026 13:38:30 +0100
+	b=BT+hTcP9vymG7plIWwg5zVbrsIoEEyfkv9Ln58G0WyvQ/w/RuOhRlcZzcuW8O6Ago
+	 H8lPkqpVEf8LdwufW/HUAIhKhlDORtJT8fkSBKjqheJhIGD+nFnuq0jNbDfPJ9/iBK
+	 H5U1lgNUrC2MX96rKjFSKaRAXt7mWYQ7T4NynJc+Ujyicbhs/E8oRbnZlexic4zXdE
+	 39vG/i9OnvNEoduuA9ys3A5+YZQPJxyW4rxdG5/lWimm6gP/m2uomF0Nt4VeBf5S41
+	 yBrei4qtAkoSmp1G67sjI/avTxQNe9Pk6g62G6UO8k9itVUd+e/6nZj2r9ag0Bq8/p
+	 YPpTlVbhtKKGw==
+Message-ID: <c356089d-775d-4998-813f-644b15eddfc3@kernel.org>
+Date: Wed, 25 Nov 2026 13:43:34 +0100
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -52,8 +52,8 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 User-Agent: Mozilla Thunderbird
-Subject: Re: [PATCH v2 1/9] media: v4l2-ctrls: add DV RX audio sampling rate
- and present controls
+Subject: Re: [PATCH v2 9/9] media: uapi: it6625: remove the driver-specific
+ audio controls
 To: Hermes.wu@ite.com.tw, Mauro Carvalho Chehab <mchehab@kernel.org>,
  Rob Herring <robh@kernel.org>, Krzysztof Kozlowski <krzk+dt@kernel.org>,
  Conor Dooley <conor+dt@kernel.org>, Hans Verkuil
@@ -63,114 +63,119 @@ Cc: linux-media@vger.kernel.org, devicetree@vger.kernel.org,
  Liam Girdwood <lgirdwood@gmail.com>, linux-sound@vger.kernel.org,
  linux-api@vger.kernel.org
 References: <20261124-upstream-it6625-alsa-i2s-v2-0-a154685f6989@ite.com.tw>
- <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+ <20261124-upstream-it6625-alsa-i2s-v2-9-a154685f6989@ite.com.tw>
 From: Hans Verkuil <hverkuil+cisco@kernel.org>
 Content-Language: en-US, nl
-In-Reply-To: <20261124-upstream-it6625-alsa-i2s-v2-1-a154685f6989@ite.com.tw>
+In-Reply-To: <20261124-upstream-it6625-alsa-i2s-v2-9-a154685f6989@ite.com.tw>
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 
 On 24/11/2026 04:04, Hermes Wu via B4 Relay wrote:
 > From: Hermes Wu <Hermes.wu@ite.com.tw>
 > 
-> HDMI and DisplayPort receivers can report whether the source sends audio
-> and at which sampling rate. Drivers expose this today through
-> driver-specific controls (tc358743 and IT6625 each define their own pair),
-> so userspace has to know every driver to find it.
-> 
-> Add two standard read-only controls to the DV control class:
-> V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE, the sampling rate in Hz, 0 when no
-> audio is received or the rate is not known, and
-> V4L2_CID_DV_RX_AUDIO_PRESENT, whether audio is received. Drivers set
-> the range of the sampling rate control.
-> ---
->  Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst | 10 ++++++++++
->  drivers/media/v4l2-core/v4l2-ctrls-defs.c              |  5 +++++
->  include/uapi/linux/v4l2-controls.h                     |  2 ++
->  3 files changed, 17 insertions(+)
-> 
-> diff --git a/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst b/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
-> index 5918dde83efb324cd27cc4c771245cd2c38d0b0e..a9117912e9cb255a2ce452147858d927e9e3c27a 100644
-> --- a/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
-> +++ b/Documentation/userspace-api/media/v4l/ext-ctrls-dv.rst
-> @@ -158,3 +158,13 @@ enum v4l2_dv_it_content_type -
->      from a computer as opposed to content from a TV broadcast or an
->      analog source. See ``V4L2_CID_DV_TX_IT_CONTENT_TYPE`` for the
->      available content types.
-> +
-> +``V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE (integer)``
-> +    Reads the sampling rate, in Hz, of the audio that the receiver
-> +    receives from the source. It is 0 if no audio is received, or if the
+> V4L2_CID_IT6625_AUDIO_SAMPLING_RATE and V4L2_CID_IT6625_AUDIO_PRESENT
+> have been replaced by the standard V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE
+> and V4L2_CID_DV_RX_AUDIO_PRESENT controls, and the driver no longer uses
+> them. They were added together with the driver and are not part of any
+> released kernel yet.
 
-received -> present
+Well, that's not really true. By the time this patch would go in, the driver
+will be part of a released kernel.
 
-Is this indeed the case, that it is 0 if V4L2_CID_DV_RX_AUDIO_PRESENT is
-false? I think both the tc358743 and this driver actually do not set the
-sampling rate to 0 if audio disappears. (Might be wrong, I didn't dig deeply
-into this)
+That said, this is one case where I am in favor of dropping the old controls
+even though it strictly speaking breaks the uAPI.
 
-I'm inclined to drop that requirement, and instead...
+I'm not aware of any hardware boards that use this chip, so the impact is very
+small if not zero.
 
-> +    receiver cannot determine the sampling rate. This read-only control
-> +    is applicable to HDMI and DisplayPort connectors.
-
-...add 'The value is only meaningful while ``V4L2_CID_DV_RX_AUDIO_PRESENT`` is set.'
-to the description.
-
-So '0' is specific to the case that there is audio present, but the sampling rate
-cannot be determined. If there is no audio present, then, just like AUDIO_TYPE, the
-value is not meaningful. I.e., it should be ignored.
+It's actually an interesting question: are there boards/SBCs commercially available
+that use this chip? It's an interesting one, it might be nice if there would be
+a board for e.g. the Raspberry Pi.
 
 Regards,
 
 	Hans
 
-> +
-> +``V4L2_CID_DV_RX_AUDIO_PRESENT (boolean)``
-> +    Detects whether the receiver receives audio from the source. This
-> +    read-only control is applicable to HDMI and DisplayPort connectors.
-> diff --git a/drivers/media/v4l2-core/v4l2-ctrls-defs.c b/drivers/media/v4l2-core/v4l2-ctrls-defs.c
-> index e062f2088490470c42d6c579ff7675be454a29b0..579b2d297cc8246dddb4e8d4ab74aed1e6084744 100644
-> --- a/drivers/media/v4l2-core/v4l2-ctrls-defs.c
-> +++ b/drivers/media/v4l2-core/v4l2-ctrls-defs.c
-> @@ -1180,6 +1180,8 @@ const char *v4l2_ctrl_get_name(u32 id)
->  	case V4L2_CID_DV_RX_POWER_PRESENT:	return "Power Present";
->  	case V4L2_CID_DV_RX_RGB_RANGE:		return "Rx RGB Quantization Range";
->  	case V4L2_CID_DV_RX_IT_CONTENT_TYPE:	return "Rx IT Content Type";
-> +	case V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE: return "Rx Audio Sampling Rate";
-> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:	return "Rx Audio Present";
+> 
+> Remove the uAPI header and the V4L2_CID_USER_IT6625_BASE reservation.
+> ---
+>  MAINTAINERS                        |  1 -
+>  drivers/media/i2c/it6625.c         |  1 -
+>  include/uapi/linux/it6625.h        | 25 -------------------------
+>  include/uapi/linux/v4l2-controls.h |  6 ------
+>  4 files changed, 33 deletions(-)
+> 
+> diff --git a/MAINTAINERS b/MAINTAINERS
+> index f4456f4589a1b86b140ab578d149884d46a3320a..a7a315f0e80585be26fe2b52a62c19e469cb5703 100644
+> --- a/MAINTAINERS
+> +++ b/MAINTAINERS
+> @@ -14271,7 +14271,6 @@ S:	Maintained
+>  T:	git git://linuxtv.org/media.git
+>  F:	Documentation/devicetree/bindings/media/i2c/ite,it6625.yaml
+>  F:	drivers/media/i2c/it6625.c
+> -F:	include/uapi/linux/it6625.h
 >  
->  	case V4L2_CID_FM_RX_CLASS:		return "FM Radio Receiver Controls";
->  	case V4L2_CID_TUNE_DEEMPHASIS:		return "De-Emphasis";
-> @@ -1317,6 +1319,7 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
->  	case V4L2_CID_RDS_RX_TRAFFIC_ANNOUNCEMENT:
->  	case V4L2_CID_RDS_RX_TRAFFIC_PROGRAM:
->  	case V4L2_CID_RDS_RX_MUSIC_SPEECH:
-> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:
->  		*type = V4L2_CTRL_TYPE_BOOLEAN;
->  		*min = 0;
->  		*max = *step = 1;
-> @@ -1682,6 +1685,8 @@ void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
->  	case V4L2_CID_DV_TX_EDID_PRESENT:
->  	case V4L2_CID_DV_RX_POWER_PRESENT:
->  	case V4L2_CID_DV_RX_IT_CONTENT_TYPE:
-> +	case V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE:
-> +	case V4L2_CID_DV_RX_AUDIO_PRESENT:
->  	case V4L2_CID_RDS_RX_PTY:
->  	case V4L2_CID_RDS_RX_PS_NAME:
->  	case V4L2_CID_RDS_RX_RADIO_TEXT:
+>  IVTV VIDEO4LINUX DRIVER
+>  M:	Andy Walls <awalls@md.metrocast.net>
+> diff --git a/drivers/media/i2c/it6625.c b/drivers/media/i2c/it6625.c
+> index e4487e8111b94b2fa9f599e37ecd2b8a11425862..64c1cec26edfcb0e0105e00e1b7ba5960252aae7 100644
+> --- a/drivers/media/i2c/it6625.c
+> +++ b/drivers/media/i2c/it6625.c
+> @@ -33,7 +33,6 @@
+>  #include <sound/pcm.h>
+>  #include <sound/pcm_params.h>
+>  #include <sound/soc.h>
+> -#include <uapi/linux/it6625.h>
+>  
+>  static int debug;
+>  module_param(debug, int, 0644);
+> diff --git a/include/uapi/linux/it6625.h b/include/uapi/linux/it6625.h
+> deleted file mode 100644
+> index a895658aaf6a80d3fb624cdece33c5135161c72d..0000000000000000000000000000000000000000
+> --- a/include/uapi/linux/it6625.h
+> +++ /dev/null
+> @@ -1,25 +0,0 @@
+> -/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+> -/*
+> - * Controls header for IT6625/IT6626 driver
+> - */
+> -
+> -#ifndef _UAPI_LINUX_IT6625_H
+> -#define _UAPI_LINUX_IT6625_H
+> -
+> -#include <linux/v4l2-controls.h>
+> -
+> -/*
+> - * Currently detected HDMI audio sampling rate, in Hz. Read-only.
+> - * 0 means the rate is unavailable/unknown: no audio is currently
+> - * present on the input, the hardware reported a sample-rate id this
+> - * driver doesn't recognize, or the status read itself failed. Never a
+> - * literal 0 Hz sample rate.
+> - */
+> -#define V4L2_CID_IT6625_AUDIO_SAMPLING_RATE	(V4L2_CID_USER_IT6625_BASE + 0)
+> -
+> -/*
+> - * Whether HDMI audio is currently present on the input. Read-only.
+> - */
+> -#define V4L2_CID_IT6625_AUDIO_PRESENT		(V4L2_CID_USER_IT6625_BASE + 1)
+> -
+> -#endif /* _UAPI_LINUX_IT6625_H */
 > diff --git a/include/uapi/linux/v4l2-controls.h b/include/uapi/linux/v4l2-controls.h
-> index d17e41d51d2ec1ccb9e8ceb3ccc89ebc4381a4cd..52124b7acdeab787978029aa49ea75d0ad4cc534 100644
+> index 942a1df3057e3e49c9111f6a27ec1883d964bf64..a2d4ea909e01f9b705d30b680ef382f5fcd39714 100644
 > --- a/include/uapi/linux/v4l2-controls.h
 > +++ b/include/uapi/linux/v4l2-controls.h
-> @@ -1301,6 +1301,8 @@ enum v4l2_dv_it_content_type {
->  #define V4L2_CID_DV_RX_POWER_PRESENT		(V4L2_CID_DV_CLASS_BASE + 100)
->  #define V4L2_CID_DV_RX_RGB_RANGE		(V4L2_CID_DV_CLASS_BASE + 101)
->  #define V4L2_CID_DV_RX_IT_CONTENT_TYPE		(V4L2_CID_DV_CLASS_BASE + 102)
-> +#define V4L2_CID_DV_RX_AUDIO_SAMPLING_RATE	(V4L2_CID_DV_CLASS_BASE + 103)
-> +#define V4L2_CID_DV_RX_AUDIO_PRESENT		(V4L2_CID_DV_CLASS_BASE + 104)
+> @@ -249,12 +249,6 @@ enum v4l2_colorfx {
+>   */
+>  #define V4L2_CID_USER_DCMIPP_BASE		(V4L2_CID_USER_BASE + 0x1240)
 >  
->  #define V4L2_CID_FM_RX_CLASS_BASE		(V4L2_CTRL_CLASS_FM_RX | 0x900)
->  #define V4L2_CID_FM_RX_CLASS			(V4L2_CTRL_CLASS_FM_RX | 1)
+> -/*
+> - * The base for IT6625/IT6626 driver controls.
+> - * We reserve 16 controls for this driver.
+> - */
+> -#define V4L2_CID_USER_IT6625_BASE		(V4L2_CID_USER_BASE + 0x1250)
+> -
+>  /* MPEG-class control IDs */
+>  /* The MPEG controls are applicable to all codec controls
+>   * and the 'MPEG' part of the define is historical */
 > 
 
