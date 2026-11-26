@@ -1,47 +1,47 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=117.135.210.4
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=220.197.31.4
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795720847;
-	b=awJztZYIzidfvkWMDR0fqvkd/ldlacgFduCts7a5muGTzKc+D40JYv+iowu8PTRiBpKE
-	 FpcA8NijnPjOgd3kQFVHIvWyycdUngKlmTahmBurOYo2harAMMypglhjMgW8Snj7U038L
-	 AFFEIZsFd0m7UuCkldupQg1BbxBTSnYtFMFqVgXBGU0XSU4kf/aN8uNMztZsVt5O1fG7b
-	 lD45+u7fDgvQ1TyiIUwky5u4EXZPmgqFycnTfOlXpvE0qca1oP/EMSE43ZMBwm2TXkoXe
-	 mMSK26Zsq8nubHGZ+ijJMen7+aJ1nh/x2w+namCl/UPiUnKsUsyTbjzmVVJb57meLNQ==
+	t=1795723700;
+	b=ci+AN7+ieTkRrKzb05F0JogVPm/LYFwfzmrP18q2GbvG/0YjeUFCnlA5+q4dORWuqxoW
+	 /f8t8Lf+3u72fY3GFnUe3o8mZmjoGIE5LENEJLr30E6Igx6KMogbZTI7LzA23W4LyyDJk
+	 YvYSZGfQNTtcJycDHd0kYthWaer1rUCnLo23ikpzaHR9DpjP/yw+r1QaM/vRdaLc9U/Oc
+	 jAzWycc9itEdERdCtVfpjyFhcYtxJCypGneDp8LVap4QQSea60/JJUN23cI2Vcz9cAaMU
+	 WLIqCgaFPO6i1k7TgktGJoFQ/S0XM0QiNOGkZ8yn3NQDuKlFFwHfVcTUpbeWVpU0fXQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795720847;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795723700;
 	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
 	 Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding:
 	 X-CM-TRANSID:X-Coremail-Antispam:X-CM-SenderInfo;
-	bh=QC56lwFUa8WSd0CE7cz/7zcFn37zrJz1L9GMxbp54mk=;
-	b=G9VZK4uAcMTHVVbC8yAH6ocwvvOjUfo4J1XzNpU3TtaYSQX3EWT2UXc9JV+hTWGxrVD2
-	 XnJ2FUfTSkYTc14ChTO8+Th9ksAiW5L3MprKQD95qY7u6C5gS2WCuv8M7bYe3vFhktgtU
-	 YyNpr9lywFfUGjKKQiwORfP1TgMWc/B3fxOY6hOsQgtrhISLKoecaqmHoYEu8wpXEAkIU
-	 LbLvNmAdz1mEaZ8ElH7La78UkCeKToabTxPpWokycr09QrkjjiZPRrGKVHTdqGu9dfcIT
-	 Po5mmMfEzhTwCNskVTXa+DyE+YMlFmFiaXVBgJWVdLlQnGIhwODhiFhEF1Q9tnRR04Q==
+	bh=a/VFJIs5JkgTdi2/O3EhKQtXRXCoFYvWToxQM7ZajQw=;
+	b=KJi7VD1QZQeR2Ig6EZAWWqxe38OD2/71LYDrER6Ko3m3Jpy+s6IBGRl2SiIulbl12Vd3
+	 m7I6WbTfOl9ZUYQanKJwKB3Dgz9Q4acW5jNbxFAbJQjdk8TCWlI/c46lqAmx6lgboqdKg
+	 OKsKdD+Sc52u4vH7F2LMqDfA5KtXBGXUwzBUeCVIVah65Y83ZuuvYft9/FajPCMdQ1LWc
+	 xshZXKMOCfWt25kY/fiX3qanqaKi0xIo4Sj4+OnJ0v5I0i7eAr5doPHDlST4xJl+kg1+9
+	 kyftteKfptKQul/y3sb2C/Wn/kXigu7471GrOnoZDsMbFj17TRVa6CRJFPMVanksAPw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=163.com;
 	spf=pass smtp.mailfrom=163.com;
-	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=MMoNfa18;
-	arc=none smtp.remote-ip=117.135.210.4
-Received: from m16.mail.163.com (m16.mail.163.com [117.135.210.4])
+	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=AbZlmHSs;
+	arc=none smtp.remote-ip=220.197.31.4
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 88487606A31C;
-	Thu, 26 Nov 2026 19:20:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 88487606A31C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 83A93606A31E;
+	Thu, 26 Nov 2026 20:08:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 83A93606A31E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=MMoNfa18
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=AbZlmHSs
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=QC
-	56lwFUa8WSd0CE7cz/7zcFn37zrJz1L9GMxbp54mk=; b=MMoNfa18mkhBAGCzd8
-	C85he6h8f0a7dqZRMjLwGMuoVx8Gp5U6swcxsD1Ai8koE9yJWERyN1Go/hpYA4GH
-	Urk4CTNaXVJBE/SA3e4QtTpS/hApeuSB7YVElnzWO6E+iYMSXEEf7APhQ5Nnyf/d
-	NKuVGa8+w4cljMExHD1l87uVk=
+	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=a/
+	VFJIs5JkgTdi2/O3EhKQtXRXCoFYvWToxQM7ZajQw=; b=AbZlmHSseOCUUYdVA7
+	/PbL8O9kwKJVJTw/1iuBn7ccmT+G7vCeJiTba3llY/Tj/CR4tC3mqVIjynjEpJxf
+	kNth2Lrlqao7wOL2DcJ2MakXDbWiJWGLIRSC+Y+akGmEUWaR2iaZMdX7PJw8CF0W
+	wkajMtXUf/sQWW1SkeXiz5k50=
 Received: from ubuntu (unknown [])
-	by gzga-smtp-mtada-g1-0 (Coremail) with SMTP id _____wD3P6hdhghrnvUDJw--.61226S2;
-	Fri, 27 Nov 2026 03:20:06 +0800 (CST)
+	by gzga-smtp-mtada-g1-2 (Coremail) with SMTP id _____wD3H4h3kQhrbhVfKg--.12298S2;
+	Fri, 27 Nov 2026 04:07:28 +0800 (CST)
 From: Shaopei Zhu <shaopei_1012@163.com>
 To: Namjae Jeon <linkinjeon@kernel.org>,
 	Sungjong Seo <sj1557.seo@samsung.com>
@@ -52,9 +52,9 @@ Cc: Yuezhang Mo <yuezhang.mo@sony.com>,
 	linux-doc@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
 	Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v9] exfat: add EXFAT_IOC_COMBINE to append a file's clusters to another
-Date: Fri, 27 Nov 2026 03:19:55 +0800
-Message-ID: <20261126191955.935845-1-shaopei_1012@163.com>
+Subject: [PATCH v10] exfat: add EXFAT_IOC_COMBINE to append a file's clusters to another
+Date: Fri, 27 Nov 2026 04:07:17 +0800
+Message-ID: <20261126200717.939328-1-shaopei_1012@163.com>
 X-Mailer: git-send-email 2.53.0
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
@@ -66,12 +66,12 @@ List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:_____wD3P6hdhghrnvUDJw--.61226S2
-X-Coremail-Antispam: 1Uf129KBjvAXoWfZr1Dtr15tF4kGr4rWr1DGFg_yoW5ZF47Ao
-	WfZws3Xw1rtFnxtrW8GF17Jry5XaykuF1fJF4YqF4qvF18t34UWa1Fy345Za1Iqw1vkrZ5
-	X3yIq3y3JFWavrn3n29KB7ZKAUJUUUU8529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
-	AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvjxUcHqcUUUUU
-X-CM-SenderInfo: pvkd01phlbiiirs6il2tof0z/xtbC6giYJ2sIhmh4aQAA3B
+X-CM-TRANSID:_____wD3H4h3kQhrbhVfKg--.12298S2
+X-Coremail-Antispam: 1Uf129KBjvAXoWfZr1Dtr15tF4kGr4rWr1DGFg_yoW5uF43to
+	WfZws7Xw1rtFnxtrW8GF47Jry5XaykuF1fJF4YqF4qvF18t34UWa1Fy345Za1Iqw1vkrZ5
+	X3yIq3yfJFWayrn3n29KB7ZKAUJUUUU8529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
+	AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvjxU4s2-UUUUU
+X-CM-SenderInfo: pvkd01phlbiiirs6il2tof0z/xtbC6QFh72sIkYEb7wAA3h
 
 Cameras recording to exFAT SD cards often write auxiliary data, such as
 GPS, motion or per-frame exposure data, to separate files next to the
@@ -170,10 +170,28 @@ Signed-off-by: Shaopei Zhu <shaopei_1012@163.com>
 ---
 
 Notes:
-    Changes in v9:
+    Changes in v10:
     
-    Commit message only, no code change since v8, following the discussion
-    of v7 [1]:
+    No change to the code or the commit message since v9.  The v9 changelog
+    did not say what the patch applies to, and Sashiko reviewed it on
+    mainline, where it does not build [1].  This version states the base
+    again and carries a base-commit.
+    
+    This applies to linux-next (next-20261118).  It uses
+    exfat_emergency_state(), which comes with "exfat: don't set SB_RDONLY
+    after filesystem errors" in the vfs tree (vfs-7.5.super.ro), so it does
+    not build on mainline or on the exfat dev branch until that is merged
+    there.  I can rebase it onto exfat dev then.
+    
+    Of the comments Sashiko made on v9, those about exfat_truncate()
+    skipping the emergency state check, an extending direct write being
+    seen half done, and exfat_extend_valid_size() truncating below the old
+    size describe the mainline code and do not hold on linux-next.  Its
+    comment that a source opened with O_APPEND can be emptied, and is only
+    verified for writing, is not addressed in this version; I can refuse
+    such a source if you prefer that.
+    
+    Changes in v9, commit message only, following the discussion of v7 [2]:
     
     - Describe the use case more precisely: what data is merged and why,
       how large it gets, and that a long copy is also a window for the card
@@ -192,8 +210,10 @@ Notes:
     
     All tests reported for v8 apply unchanged.
     
-    [1] https://lore.kernel.org/all/dcd27d38-60a2-4c1a-81ff-4a82e99520ab@dev.snart.me/
+    [1] https://sashiko.dev/#/patchset/20261126191955.935845-1-shaopei_1012%40163.com
+    [2] https://lore.kernel.org/all/dcd27d38-60a2-4c1a-81ff-4a82e99520ab@dev.snart.me/
     
+    v9: https://lore.kernel.org/all/20261126191955.935845-1-shaopei_1012@163.com/
     v8: https://lore.kernel.org/all/20261126125216.927053-1-shaopei_1012@163.com/
     v7: https://lore.kernel.org/all/20261124230746.850528-1-shaopei_1012@163.com/
     v6: https://lore.kernel.org/all/20261124212236.830224-1-shaopei_1012@163.com/
@@ -209,7 +229,7 @@ Notes:
  3 files changed, 660 insertions(+)
 
 diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index dbe4620..e9b4c13 100644
+index dbe462040..e9b4c13d8 100644
 --- a/Documentation/userspace-api/ioctl/ioctl-number.rst
 +++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
 @@ -292,6 +292,7 @@ Code  Seq#    Include File                                             Comments
@@ -221,7 +241,7 @@ index dbe4620..e9b4c13 100644
  't'   00-7F  linux/ppp-ioctl.h
  't'   80-8F  linux/isdn_ppp.h
 diff --git a/fs/exfat/file.c b/fs/exfat/file.c
-index c7991e9..a278234 100644
+index 7ca26e3f1..7a807bf85 100644
 --- a/fs/exfat/file.c
 +++ b/fs/exfat/file.c
 @@ -13,6 +13,7 @@
@@ -232,7 +252,7 @@ index c7991e9..a278234 100644
  #include <linux/fileattr.h>
  #include <linux/iomap.h>
  #include <linux/pagemap.h>
-@@ -690,6 +691,617 @@ static int exfat_ioctl_set_volume_label(struct super_block *sb,
+@@ -710,6 +711,617 @@ static int exfat_ioctl_set_volume_label(struct super_block *sb,
  	return exfat_write_volume_label(sb, &uniname);
  }
  
@@ -850,7 +870,7 @@ index c7991e9..a278234 100644
  long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
  {
  	struct inode *inode = file_inode(filp);
-@@ -702,6 +1314,8 @@ long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+@@ -722,6 +1334,8 @@ long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
  		return exfat_ioctl_set_attributes(filp, user_attr);
  	case EXFAT_IOC_SHUTDOWN:
  		return exfat_ioctl_shutdown(inode->i_sb, arg);
@@ -860,7 +880,7 @@ index c7991e9..a278234 100644
  		return exfat_ioctl_fitrim(inode, arg);
  	case FS_IOC_GETFSLABEL:
 diff --git a/include/uapi/linux/exfat.h b/include/uapi/linux/exfat.h
-index 46d95b1..40e21c6 100644
+index 46d95b16f..40e21c622 100644
 --- a/include/uapi/linux/exfat.h
 +++ b/include/uapi/linux/exfat.h
 @@ -13,6 +13,7 @@
@@ -920,6 +940,8 @@ index 46d95b1..40e21c6 100644
 +};
 +
  #endif /* _UAPI_LINUX_EXFAT_H */
+
+base-commit: e8017d29067fd1310a65c3494ce1a1b492adbac6
 -- 
-2.50.1 (Apple Git-155)
+2.53.0
 
