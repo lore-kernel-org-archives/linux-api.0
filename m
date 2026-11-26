@@ -1,55 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.53
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795683296;
-	b=wCWCoXJqAFfGHj9QHbJp33ISAsft8ecOdL6L99ATwTHlXkCqyws6m5Wxon0+JN5L8lZZ
-	 HflQ6KlpSvortC13C3wpawVFmNgIcV9kdqY5BwUaD2SM2CHEDlmjoi6SgN1k4+qlaPh3j
-	 v8AoJjQ9nfjzmT8Qd1nPs5TbttTBX0oy7uDbVpgirzhlRC5CxXIKJMVFmutIJjMlVUB3O
-	 WdCCBwxGngux87yAJG8dmSILBw5+A8WEYG0H3UENNSXq0W1z4ofXpw5py0eV+6Z6lYu66
-	 r0KaUH4tooyHXBwZ5b/a3KLkmbrIiimaUQFTcUKF80x+FqVWqq6jIEidirMrBjKJNBA==
+	t=1795683599;
+	b=XH+S3J8LTzRFKORnlEeb1nHxloaN7jHI86/zrXjE6K9rnDirtulpEzj9dlb1e8LbyQ7B
+	 4oD19wK3AVim5Cbgiw0hBtOdfirbs5coUiNQvAxrhYj0Jm2p3CiSO700HhELKuCQm1N9A
+	 qtGswICn1VFSb8eg3K3nll5AoUSkL/AdTSwixhwxG9FmdfNv2vqKhNGXeKjFTK3NYzApA
+	 tbQj5hOUP8sGj38CqLWvbejnju2sVqJu2yJQFiggeQAvGK2snHNg4MU1rsYMbrW3Iev7D
+	 4GE6qFyrXLFdHcivGeCMJXllpLdKZo881XHQ3/ZdXg9mfXMUgJjGdPFCQK+E7hhZv7w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795683296;
-	h=Received:DKIM-Signature:Received:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:X-Received:MIME-Version:References:In-Reply-To:
-	 From:Date:X-Gmail-Original-Message-ID:X-Gm-Features:Message-ID:
-	 Subject:To:Cc:Content-Type:Content-Transfer-Encoding;
-	bh=XD2aXTSUuiCiLHpGAugxfZVXZCiLEmjgR9QKZY9m6mI=;
-	b=j153vS/Afp8QrgASSLFYmG/kKXPSkdGnxyfJmV17Bo+zxZfiFJiXEIGwY4/RZdMrv1r3
-	 pZVR8s86sM2Gloog9EiCcT4fn7z9O1OHsODeeTddRpT9mRq/IKgXKg9TjzUoHEdtIaHgk
-	 AlaY6iOc/sY6HXd26nzmmVYfVdt60mhGSDFbfduHIAXL6ZvBizIWeQDtTCkKG+klMQviI
-	 zJBSvjwKtDKS3cgZ/OIyjNfdFdKu1e3Yrkr/VHGpLTckRHhYv/p+uWKYLGDKwT29LCPlA
-	 FkpPao8FmbkrMfLx61bPiL5vezrEJTtG8z2iD5tT/O1g6y3Rj8KTfsarvLn9An++/eA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795683599;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Mime-Version:Content-Type:Date:Message-Id:Subject:From:To:Cc:X-Mailer:
+	 References:In-Reply-To;
+	bh=pdGJ7QlIha01VNcg3cIU0qWH1SN2Mep0wOZrqFLArYQ=;
+	b=TtB5N6YPDly4gyJJLqiVgHguNr9cMqyaZlllhyYaREG8wik7Ol9jHfdiVqeFQi2lnyMw
+	 vEjY3wS3+HVmUccHMDQAc1+ikaFVpSxKG7eQFp+CIGK0bxuBBTOi7/iUIgVzXHmM7ef0N
+	 +NeReIGbntAtcs20ygLHhgeKEVbucj5deOGGNhdCs+mYtqiDcxAGyb2jt5dpqQhQBFraC
+	 eKeyN0VnCL8WSYYsH5td2h9LwPVwokcLuE5tAeijXkqSu7Nd8HZA6WTKZzcX2msRqhCAP
+	 JNa25hyjk32JTm/qCGABpDNJhXgIscw37tFf+fzjSTH1u4jEp9OYATRrpcjs+Atm50Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NKZKjXt6;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=dZ0KjGB7;
+	arc=none smtp.remote-ip=209.85.128.53
+Received: from mail-wm1-f53.google.com (mail-wm1-f53.google.com [209.85.128.53])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EE100606A323
-	for <linux-api@vger.kernel.org>; Thu, 26 Nov 2026 08:54:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9722C606A323
+	for <linux-api@vger.kernel.org>; Thu, 26 Nov 2026 08:59:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9722C606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NKZKjXt6
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 46E001F000D1
-	for <linux-api@vger.kernel.org>; Thu, 26 Nov 2026 08:54:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795683295;
-	bh=XD2aXTSUuiCiLHpGAugxfZVXZCiLEmjgR9QKZY9m6mI=;
-	h=References:In-Reply-To:From:Date:Subject:To:Cc;
-	b=NKZKjXt60ggmjgkQWJs7L/z9sR6LDbN6c5x8VpKkLZDQE53ha1ofDe/J6yl0UZS32
-	 qzJaM4+wzGcmjm4PZRwDqFWYQD3EKl45jX2orGnelqnE8eYqfoHH7dytYIpYBkndMJ
-	 12B/SyZJnYFxj5CVxNehviesZLrza16sIOOMpM7lxscw0ntUIVaH/GFRgpnbQ9JlNQ
-	 V3VoRoKZ03LBCJjWduez4ImuY8wxZu/j/RF8Ot8LbprOmcOgzcnyItyBoN6DfJ5jpw
-	 7Ufd0tfHZr7iRU1FmGH6YOTfnUaeGK4YCMlOQVoRoYobzTHkSGmeu7IAfFqi8J/fhR
-	 ZIochXIzrnusQ==
-Received: by mail-ej1-f42.google.com with SMTP id a640c23a62f3a-c515369b627so708503466b.1
-        for <linux-api@vger.kernel.org>; Thu, 26 Nov 2026 00:54:55 -0800 (PST)
-X-Forwarded-Encrypted: i=1; AL+hErF4PAAG2jruOtpQWbsstb719i2jH8LuUQSUTkZtB/DI9RlV9iR3PUHcGB7i6kOLQYGCJOca/nRcSIs=@vger.kernel.org
-X-Gm-Message-State: APuU4Z9wWjlP7e2xueYrSAyXgM9Xb5FlOOC7nG03qsZzsXT8iyLXGALa
-	kXDGcj3tYckmP9R08v9OAYC22H3fC/cFposINo46uu/XqjQtmFtcpAGgiAGwMSDECwX4lKH0y4F
-	SC4awDpl5H8E/na8O/JHF+VfH8+lDDB0=
-X-Received: by 2002:a17:906:c102:b0:c51:373e:d6a9 with SMTP id
- a640c23a62f3a-c513aace989mr1575933166b.15.1795683293890; Thu, 26 Nov 2026
- 00:54:53 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=dZ0KjGB7
+Received: by mail-wm1-f53.google.com with SMTP id 5b1f17b1804b1-49d05d51553so47660555e9.2
+        for <linux-api@vger.kernel.org>; Thu, 26 Nov 2026 00:59:59 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795683598; x=1796288398; darn=vger.kernel.org;
+        h=in-reply-to:references:cc:to:from:subject:message-id:date
+         :content-type:mime-version:from:to:cc:subject:date:message-id
+         :reply-to:content-type;
+        bh=pdGJ7QlIha01VNcg3cIU0qWH1SN2Mep0wOZrqFLArYQ=;
+        b=dZ0KjGB7m+OC1UmDFSULTRyhEh/lwe5llDQbTSjiXuQIrRbnZA5GQZIFeNoMyxZZTH
+         z9wSBADwSEaOaOPEe9dp+GusOM8SLT2Ekgm+kOXWdL9czn7bw6aAmC7+P5oOBGesL+Kv
+         Qv9RdiHh330ww6BQsURewUOPINjtLJprH6CZhG0zxJoPNiedKjS2G5XLjUuDuVZcQWHZ
+         Fw2IG+HrZjpp/SvOEkLONf9jSPdiM8tQZNZK8bDcs4ua8f62ihOMZfXoeGzSk1bpY54I
+         2w/okcZYxOXErza9bdcinAFE91q2/OeUPOAoJEbanR47RmrJ/YZpE4u+gnX9Xibflhck
+         PBAA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795683598; x=1796288398;
+        h=in-reply-to:references:cc:to:from:subject:message-id:date
+         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=pdGJ7QlIha01VNcg3cIU0qWH1SN2Mep0wOZrqFLArYQ=;
+        b=RMIUjH2ASbjyoVSGF+87ZgEMwFkGqsq7knx3xF4BBzeKgdSHyUAqStyJ1QOnDpsELK
+         hTPo3CqVpA/A+YiwMPyw2mzXc6+VRR/xQjczFf634gA6/ffnYkTrR1pcxuLhp8exygzl
+         Tnr6qKccBd7zIDj51Vm9/2kA1ryACfSqymsPOpylCJZbcxtKwOaKce7NjiD2FsRoayj2
+         veZ6ipOJZqv2jOheO1LLmdG6DUE7euLSR3cduAg/Fqv08SlyyZEZRdj8ZMd3E3MB7I0A
+         DlJJejB8jighf6BSZIlAxDpmL5rTKb/a9t4XW+lK+UUYXi5Ahu9K1OUrePyChfv344mu
+         LX1w==
+X-Forwarded-Encrypted: i=1; AL+hErFBVDRJ1nZxfV8rqCdto8/3+0wJ45vpRV+ydCKW9iV+EC1U5P3CKtrfpM8tdmiamdk0DoYArV7/08c=@vger.kernel.org
+X-Gm-Message-State: APuU4Z9vFYdEmbZBNW9OBGOTgNXvGBVjkgk2RZK3BZbGJHoj9Ijz0JM6
+	ZZh+ow7zBFfn/we1J58s7a5zBiObJp4V8j1k1bmR0QtbVq17hvek/+Kl
+X-Gm-Gg: AZFdTZfLac50zNLSB+I1Fc8lgb8OMnA3/XOXB0xaB6m8zXhNyRpV2OTrspayndfQ/fp
+	uvklSy9iPRHwdyPC37WlCNXNvkryYwhPDQ+K8nVQnabm/v3j95d3rXZFpXX6WtZ4voRpre9K2FU
+	LyYznj/lz2AvnbmSdv4bgSw47VeV3Y6gnKxuH8oBkZEsHACOZlF7PlL+Bfa68sBHr/5itp3evlw
+	heQjlsAAP0QOd3PZLbDJ+nNfW6QIL4LJph6Az4i5WlPmHcA3qdFMCrI1g12DeTDPUvy+8r17NZ2
+	tT0Kw1mnB7qz+AgBuwZAAODX+fiktTkjBsfImdEliiDaqDFBYA8neMrRxJE/eVSrFpNmZKqNMnA
+	6ncxlp0x7KiareuawnUYsKDfaAmIQkre9xikxQ+PJzyJzc3aG4K6U9txJUYG9gdy1F4m5BzrJ4z
+	Xt18NxzXL8CMbFL9v+KF/urNzuTpLEQYlFGRlME8fjfaIWJ1cQpdaV5xJSeFa8DXAJ5hrDibUjM
+	DMbXk4PZ7FGIpfI1TwJMnYcMTLxEcjhPLBJSBaLgnyR+ixbuZ9mFYRdKQ6tDZYneUoLfOqemx5g
+	m9DXPej8D+Bvv2jmGYNsbwqVrqRzNV+EmpjasI5XGbAjliSGVjabpd2RtWJRcYi5zKHQ71qbrRA
+	GC0/GcIG1iN0=
+X-Received: by 2002:a05:600c:4f4c:b0:4bb:8503:69f4 with SMTP id 5b1f17b1804b1-4bb888097a2mr507049805e9.5.1795683597630;
+        Thu, 26 Nov 2026 00:59:57 -0800 (PST)
+Received: from localhost (mob-176-246-236-25.net.vodafone.it. [176.246.236.25])
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb8d4f9aa8sm554122785e9.4.2026.11.26.00.59.54
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Thu, 26 Nov 2026 00:59:56 -0800 (PST)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -58,105 +87,245 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-MIME-Version: 1.0
-References: <20261124230746.850528-1-shaopei_1012@163.com> <CAKYAXd_ap120uprmarov-GuO0fb1eXEgw-U8G08L1xRJ9bv18A@mail.gmail.com>
- <20261126075247.850895-1-shaopei_1012@163.com>
-In-Reply-To: <20261126075247.850895-1-shaopei_1012@163.com>
-From: Namjae Jeon <linkinjeon@kernel.org>
-Date: Thu, 26 Nov 2026 17:54:42 +0900
-X-Gmail-Original-Message-ID: <CAKYAXd_Xc0XbehABVUOncbcDYxvfFg037+FxDivkM0NZMg29qQ@mail.gmail.com>
-X-Gm-Features: Aa3M54rKxK2yysLAQ3KYIgf-px-qmHSK27mnhAx20UoLmih8jMhUz2_ENxHtKqY
-Message-ID: <CAKYAXd_Xc0XbehABVUOncbcDYxvfFg037+FxDivkM0NZMg29qQ@mail.gmail.com>
-Subject: Re: [PATCH v7] exfat: add EXFAT_IOC_COMBINE to append a file's
- clusters to another
-To: Shaopei Zhu <shaopei_1012@163.com>
-Cc: Sungjong Seo <sj1557.seo@samsung.com>, Yuezhang Mo <yuezhang.mo@sony.com>, exfat@lists.linux.dev, 
-	linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, 
-	linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, 
-	Matthew Wilcox <willy@infradead.org>
-Content-Type: text/plain; charset="UTF-8"
+Mime-Version: 1.0
+Content-Type: multipart/signed;
+ boundary=1bb107e9a21cc29b328dfa80e731d1d8e11a68359f8065fcb2e36792f75f;
+ micalg=pgp-sha512; protocol="application/pgp-signature"
+Date: Thu, 26 Nov 2026 09:59:50 +0100
+Message-Id: <DN50PH7HHSWZ.3H4T25JFPQECY@gmail.com>
+Subject: Re: [PATCH 2/3] vfs: add xflags mask to fileattr API
+From: "koraynilay" <koray.fra@gmail.com>
+To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
+ <koray.fra@gmail.com>
+Cc: "Namjae Jeon" <linkinjeon@kernel.org>, "Hyunchul Lee"
+ <hyc.lee@gmail.com>, "Alexander Viro" <viro@zeniv.linux.org.uk>, "Christian
+ Brauner" <brauner@kernel.org>, "Chuck Lever" <cel@kernel.org>, "Jeff
+ Layton" <jlayton@kernel.org>, "Jan Kara" <jack@suse.cz>, "Darrick J . Wong"
+ <djwong@kernel.org>, "Andrey Albershteyn" <aalbersh@kernel.org>,
+ =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "Lauri Gates"
+ <lauri.gates@gmail.com>, "Christoph Hellwig" <hch@infradead.org>, "Dave
+ Chinner" <dgc@kernel.org>, <linux-btrfs@vger.kernel.org>,
+ <linux-xfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+ <linux-fsdevel@vger.kernel.org>, <ntfs@lists.linux.dev>,
+ <linux-nfs@vger.kernel.org>, <linux-api@vger.kernel.org>
+X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
+References: <20261122000856.536902-1-koray.fra@gmail.com>
+ <20261122000856.536902-3-koray.fra@gmail.com>
+ <CAOQ4uxhegn1z=41_MHL1Zu2hXuPtzNhC=x4gd371oaeJE4-weQ@mail.gmail.com>
+ <DN2N6A68PBO1.2QT8ZOARF4I6L@gmail.com>
+ <CAOQ4uxhDQqEQ3T9NveBFpUmSU032BxrNV5D+_zHj8u9LOQY+qg@mail.gmail.com>
+ <DN4DRUYPHYMP.20U4DYV5VBN7P@gmail.com>
+ <CAOQ4uxg0g+XkPb3-kQS5ez1-rp7Q=BkYDHW0CGOFhpbcf70yMg@mail.gmail.com>
+ <DN4KLSM2OO0K.2C8Q5CPFBVNL6@gmail.com>
+ <CAOQ4uxhpJygZH-arLFSUYEEfqFG96Sr3_6CWakfSkdWxEsOxMg@mail.gmail.com>
+In-Reply-To: <CAOQ4uxhpJygZH-arLFSUYEEfqFG96Sr3_6CWakfSkdWxEsOxMg@mail.gmail.com>
+
+--1bb107e9a21cc29b328dfa80e731d1d8e11a68359f8065fcb2e36792f75f
 Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
 
-On Thu, Nov 26, 2026 at 4:53=E2=80=AFPM Shaopei Zhu <shaopei_1012@163.com> =
+On Thu Nov 26, 2026 at 8:07 AM CET, Amir Goldstein wrote:
+> On Wed, Nov 25, 2026 at 9:22=E2=80=AFPM koraynilay <koray.fra@gmail.com> =
 wrote:
+>>
+>> On Wed Nov 25, 2026 at 5:51 PM CET, Amir Goldstein wrote:
+> ...
+>> >>
+>> >> My robot proposed 2 fixes: either don't introduce FS_XFLAG_PROJID
+>> >> (which, eh, not the best imo)
+>> >
+>> > Me neither. It's inconsistent IMO.
+>> >
+>> > But it is inconsistent in that we want to have a way for chattr -p to =
+say with
+>> > the new API "set only projid", so we must have the flag, but we
+>> > mostly need it for the mask, we don't really care about its value in
+>> > fsx_flags.
+>> >
+>> >> or add a new flag to be used in at_flags,
+>> >> like AT_FILEATTR_MASKS, which would resolve all our legacy vs non-leg=
+acy
+>> >> problems, but it would be in *at*_flags, so doesn't really make sense
+>> >> semantically (but it would work well since file_getattr already rejec=
+ts
+>> >> unknown at_flags, so it wouldn't cause problems for old programs).
+>> >
+>> > I think this is an overkill as well.
+>>
+>> Semantics issue aside, I think this shuold be the way to go, because
+>> it's explicit and doesn't rely on guessing based on struct size or mask
+>> values.
+>>
 >
-> On Wed, Nov 25, 2026 at 11:18 AM Namjae Jeon <linkinjeon@kernel.org> wrot=
-e:
-> > Is there a specific device or product expected to use this feature, or
-> > is it being added as a potentially useful capability without a
-> > concrete use case? If there is a target device or workflow, could you
-> > share some details?
+> Yes this is a good argument.
 >
-> Hi Namjae,
-Hi Shaopei,
+>> > We discussed this before.
+>> >
+>> > Attributes that have X_value like fsx_projid have few types:
+>> > 1. 0 means disabled (all existing values incl. projid)
+>> > 2. 0 is a valid value but cannot be unset (btime)
+>> > 3. 0 is a valid value and NULL/unset is also a valid value
+>> >
+>> > Only for type 3 does can the interpretation of
+>> > (!XFLAG_X && !fsx_X) be considered as an "unset"
+>> > and anyway, this will require support in individual fs.
+>>
+>> IMO !(xflags & XFLAG) && (rw_mask & XFLAG) should clear/unset the value
+>> in all cases, ignoring what's in fsx_X.
+>>
+>> And all existing values would be of type 1 for VER0, but of type 1 + 3
+>> for VER1.
+>>
+>
+> I agree that this will be more consistent.
+>
+> With explicit opt-in to FILEATTR_MASKS API
+> vfs can determine that
+> (!XFLAG_X && !!fsx_X) is alway -EINVAL
+>
+> When fsx_X =3D=3D 0, the value of XFLAG_X does not really matter
+> so filesystems can decide themselves if they want to act on
+> an "unset" flag or not.
 
->
-> Thanks for the review.  Yes, it is going to be used in camera products
-> that record to exFAT SD cards.  The open source user is exfatcombine,
-> posted for exfatprogs [1], and a test for fstests (exfat/002) is posted
-> as well.
->
-> The workflow: cameras and dashcams keep motion or position data with
-> the video, e.g. gyroscope and accelerometer samples for stabilization,
-> or GPS.
->
-> The products on the market keep that data in one of three ways:
->
-> - as a timed metadata track inside the MP4, e.g. GoPro's GPMF, muxed
->   while recording, so that the samples are interleaved with the video
->   in the mdat box and indexed in the moov box;
-> - as a separate sidecar file next to the video, e.g. the GPS logs of
->   dashcams;
-> - as a trailer appended after the MP4 boxes when recording stops,
->   which players ignore and stabilization tools read.
->
-> A sidecar file is lost in practice: users copy, share or import only
-> the video file, and matching the two by name breaks once either is
-> renamed or moved.  A track needs the muxer to take the samples in real
-> time along with the video.  Where the sensor data comes from another
-> writer, at a few hundred samples per second, it cannot go into the file
-> the muxer is writing, so it is written to a separate file in the same
-> directory during recording and appended as a trailer when recording
-> stops.
->
-> That last step is what this ioctl is for.  Today the sensor file is
-> copied into the video file, up to tens of MiB per recording, while the
-> user waits for the camera to be ready again, with flash wear and free
-> space needed for the copy.  With this ioctl its clusters are appended
-> to the video file instead, and the sensor file is removed.
-Okay.
+Hmm, I think fsx_xflags should have priority over the value in this
+_masks API.
 
+In my mind, to clear PROJID a userspace program would only need to do:
+
+  struct file_attr fa =3D {
+  	.fsx_xflags =3D 0,
+  	.fsx_xflags_rw_mask =3D FS_XFLAG_PROJID
+  };
+  file_setattr(&fa, AT_FILE_ATTR_MASKS);
+
+and have projid cleared (same for EXTSIZE/EXTSZINHERIT/COWEXTESIZE),
+while to set/change it:
+
+  struct file_attr fa =3D {
+  	.fsx_xflags =3D FS_XFLAG_PROJID,
+  	.fsx_xflags_rw_mask =3D FS_XFLAG_PROJID,
+  	.fsx_projid =3D 67,
+  };
+  file_setattr(&fa, AT_FILE_ATTR_MASKS);
+
+and this:
+
+  struct file_attr fa =3D {
+  	.fsx_xflags =3D FS_XFLAG_PROJID,
+  	.fsx_xflags_rw_mask =3D FS_XFLAG_PROJID,
+  	.fsx_projid =3D 0,
+  };
+  file_setattr(&fa, AT_FILE_ATTR_MASKS);
+
+would have the same result as the first snippet, but not the same
+meaning, since this would mean "set projid to 0" while the first snippet
+means "clear/unset projid" (but in this case, for projid and all the
+other already existing fsx_* it would have the same result).
+
+>> > fileattr_set_prepare() already treats the existing values as:
+>> > fsx_X =3D=3D 0 =3D> clear XFLAG_X
+>> >
+>> > And xfs returns EINVAL for !!(fsx_X) !=3D !!(XFLAGX)
+>> >
+>> > A simple solution is to fix the flag according to val in fileattr_set_=
+prepare()
+>> (This should be in file_attr_to_fileattr() I think, but yeah)
+>> > if rw_mask contains this flag:
+>> >
+>> > if (fa->fsx_xflags_rw_mask & FS_XFLAG_PROJID) {
+>> >     /* Possibly legacy chattr -p compiled with new headers unaware of =
+PROJID */
+>> >     if (fa->fsx_projid =3D=3D 0)
+>> >           fa->fsx_xflags &=3D ~FS_XFLAG_PROJID;
+>> >     else
+>> >           fa->fsx_xflags |=3D FS_XFLAG_PROJID;
+>> > }
+>>
+>> I think this would be a bit too overcomplicated to understand, and
 >
-> > I suggest changing EXFAT_IOC_COMBINE to transfer only the source's
-> > cluster chain to the destination, leaving the source linked as an
-> > empty file. Userspace can unlink it afterward if desired.
+> True
 >
-> The sensor file is only a temporary part of the recording.  With the
-> unlink in the same call, a power loss, e.g. the battery being pulled
-> right after recording stops, leaves one of the two states the
-> recording application already handles: not combined yet, or combined.
-> With the unlink in user space there is a third one, the combined video
-> next to an empty sensor file, which looks like the first one unless
-> every application also checks the size of the file.  It would be easy
-> to append the sensor data a second time, or to leave an empty file on
-> a card that users read directly.
+>> robot says (with the current v2 code at least) it would make e.g. ntfs
+>> return 0 instead of -EOPNOTSUPP for e.g. chattr +S.
+>>
 >
-> Doing it in the same call also refuses the whole call before anything
-> is changed if the source may not be removed, instead of leaving an
-> emptied file that cannot be deleted, and it removes the file that was
-> passed in, not whatever its name refers to by the time user space gets
-> to unlink it.  The unlink goes through start_removing_dentry(),
-> security_path_unlink() and vfs_unlink(), so it gets the same checks as
-> unlink(2).
+> I suspected that existing filesystems may have different legacy behaviors=
+..
+
+(By the way I meant ntfs as in "mask aware filesystems" (I said ntfs
+because that was the robot's example since it's the only one currently
+implementing masks), but yeah)
+
+>> It also told me that statx already has AT_STATX_* flags that don't match
+>> the at_flags semantics (and indeed, AT_STATX_FORCE_SYNC/DONT_SYNC don't
+>> really make sense for "at"_flags semantics), so my only blocker for that
+>> solution is gone and I would really prefer that approach since it's way
+>> simpler and way cleaner.
 >
-> Does this address your concern?
-Unlinking in the ioctl does not make the operation atomic against
-power loss. It only avoids the interval between a successful ioctl and
-a later userspace unlink. I don't think that is a reason for the
-kernel to perform the unlink. exfatcombine already has the source path
-and opens the file to pass its file descriptor to the ioctl. It can
-unlink the source file after the ioctl succeeds and report an error if
-that fails. The ioctl should only append the source file's cluster
-chain to the destination file. Callers must prevent concurrent renames
-or replacements if they need the pathname to continue referring to the
-same file.
+> Git history claims that I suggested making this an official UAPI policy:
+>
+> b4fef22c2fb97 uapi: explain how per-syscall AT_* flags should be allocate=
+d
+>
+> So definitely no objection to AT_FILEATTR_ semantics.
+
+Oh, yes that's the comments I used as docs to add AT_FILE_ATTR_MASKS to
+fcntl.h ahah.
+
+>>
+>> One more thing gemini told me is that if we don't want to use AT_*, we
+>> have to choose between (copy-pasted, "ntfs" meaning any mask-aware fs):
+>> 1. Keep clamping fattr->fa_xflags & rw_user_mask (VER1 masked semantics
+>>    are clean, but recompiled VER0 RMW tools setting unsupported
+>>    flags/projid on ntfs silently return 0)
+>> 2. Reject unexpected non-zero bits/fields outside rw_user_mask | ro_mask
+>>    (protects recompiled VER0 RMW error reporting on ntfs, at the cost th=
+at
+>>    VER1 callers must zero or mask fa_xflags / fa_projid / fa_extsize
+>>    themselves rather than expecting bits outside rw_mask to be ignored).
+>>
+>> So I would *really* prefer adding AT_FILEATTR_MASKS and setting
+>> has_masks based only on that.
+>> This way we can keep the whole legacy path frozen and not have to worry
+>> about weird edge cases (well, converters code aside of course).
+>>
+>> And personally in this way I can reason about the changes a lot more
+>> clearly and I can finally take a better look at the whole code and maybe
+>> simplify it in some cases (probably not, but I'll have to see).
+>>
+>
+> All very good reasons IMO.
+>
+>> (Unless there is something equivalent to AT_FILEATTR_MASKS to filter on,
+>> like maybe a FS_XFLAG_MASKS (?), but that would be even worse
+>> semantically I think)
+>
+> It's an option, but I think AT_FILEATTR_MASKS is cleaner.
+
+Yes I agree, I also thought a bit about other options, e.g. even having
+FS_XFLAGS_HASMASKS (like HASATTR), and stripping it right away in the
+syscall (or even using it instead of fa->has_masks) but they would all
+be worse options than AT_FILE_ATTR_MASKS.
+
+Today or tomorrow I'll send out v2.
+
+Thanks,
+koraynilay
+
+> Thanks,
+> Amir.
+
+
+
+--1bb107e9a21cc29b328dfa80e731d1d8e11a68359f8065fcb2e36792f75f
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYKAB0WIQRJ2XvJtXGwULYEerQ0bnTtJTDoOAUCawf1BgAKCRA0bnTtJTDo
+OLpjAQDKR/dd73mxIOj/+UMsWX5hqzYCO7wVrdU87VsXoryD2gD7BIDEGqEGAI9o
+nVWwXnlKfovOetcDViuUktTHmdBWygw=
+=GJse
+-----END PGP SIGNATURE-----
+
+--1bb107e9a21cc29b328dfa80e731d1d8e11a68359f8065fcb2e36792f75f--
