@@ -1,61 +1,106 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=117.135.210.2
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795736988;
-	b=TuBIx+MOBXzhBD07bhjAEILMVCwWEARTw6LSe7WWs2KYVk5I6zxg8UB+UFD+kZ/jlvfz
-	 9RgDXnUqCTOw/h23wppu4yboF566pzBHX133x+JGy13k+tn/ITN3VrHNYxYkhRyOOc+dF
-	 OD169nKTlKYoj42GVdRrb0DEq4yL1QPZ/DrfnzRFbpbotVGtXvVXbhR0f8va2nf6peUIG
-	 1c6IbD3thydxcrA+b8EdlAglvDJwh8qRhyw261uD3JlhyyBJ5zS4eqvmnOUMCoJg5c1q9
-	 VuUqTwU3pg5aNHUmlfzKBs9BM/WzXmp/jfmWX/3QCUkH5rd+l0UoIdGV0/HKb2Ev1eA==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795736988;
-	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
-	 Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding:
-	 X-CM-TRANSID:X-Coremail-Antispam:X-CM-SenderInfo;
-	bh=s0cHhkhVkcyMmHeklem0mV/oIOZAkpaU1gLlvGn/cN0=;
-	b=qgxjHC9Sq+8U1cCLrTHRdj3nPcZyDLsLvhw6/XFIK5vU8DPXkItd4xn9dtPnKoxFj0cO
-	 zlQ/3VGcsezQElHdXY9epQulV3lEMhvi3AKPW6gYyyxhTFvudJLtOg90VtjNWvocB1+NL
-	 2HRNBS/+hU+mVNvlZwM2GnnOPbyWIOTSIJ33uJkHx5tcn0fU6fMZA8wqIOFRNYTr+S2t/
-	 9zA4zZtDSOJ5cXdzi3smwrEfCcNz98mY6Mj+CGqZCJXR7kxcbDGPkUHq6b8Xvz6GKCnXk
-	 vX2hvEtrBE717WH93R6vLuwylGLzU22HqNeEy1PMSKvuiEw40P+QcJ8kRjJ2jVi+etw==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=163.com;
-	spf=pass smtp.mailfrom=163.com;
-	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=G1SdJ2f9;
-	arc=none smtp.remote-ip=117.135.210.2
-Received: from m16.mail.163.com (m16.mail.163.com [117.135.210.2])
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.209.15
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1795739153;
+	b=K/Eiq9b50zoRn8ZevvWgSKzFqlW3u0SsU7jq0jGdPceGfgyTMwKB4CvdlFpKFCU93Qwg
+	 y2wDBRbPm5c89g9E8uYvxdCAcJbTPDP13Q4BLVQ7ECd8HDZkmDoubqIwJwqSru4xsqsLh
+	 zEQSRg3DKhPOLSfB2x/7we8Oe6mMYb5dXawzWaKYzN60iNxB4kLAUNJXB+gFIwWAXwr9g
+	 JeUshH2dasSE4ULOuF9WB1zGJoDFMFsxmsowewZ+75HAdO+EVx8L3HRlFxIU6crFglcSA
+	 RotMQlI5Txwmn6qX8L9Sq3YsbS/PGlJ6STuQkCEKIjbOf1S3rXHeDk+fg2GTgF51SOA==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795739153;
+	h=DMARC-Filter:DKIM-Signature:Received:Received:Content-Type:
+	 Content-Transfer-Encoding:Subject:From:To:Cc:In-Reply-To:References:
+	 Date:Message-Id:X-Mailer:X-ClientProxiedBy:MIME-Version:
+	 X-MS-PublicTrafficType:X-MS-TrafficTypeDiagnostic:
+	 X-MS-Office365-Filtering-Correlation-Id:X-MS-Exchange-SenderADCheck:
+	 X-MS-Exchange-AntiSpam-Relay:X-Microsoft-Antispam:
+	 X-Microsoft-Antispam-Message-Info:X-Forefront-Antispam-Report:
+	 X-MS-Exchange-AntiSpam-MessageData-ChunkCount:
+	 X-MS-Exchange-AntiSpam-MessageData-0:X-OriginatorOrg:
+	 X-MS-Exchange-CrossTenant-Network-Message-Id:
+	 X-MS-Exchange-CrossTenant-AuthSource:X-MS-Exchange-CrossTenant-AuthAs:
+	 X-MS-Exchange-CrossTenant-OriginalArrivalTime:
+	 X-MS-Exchange-CrossTenant-FromEntityHeader:
+	 X-MS-Exchange-CrossTenant-Id:X-MS-Exchange-CrossTenant-MailboxType:
+	 X-MS-Exchange-CrossTenant-UserPrincipalName:
+	 X-MS-Exchange-Transport-CrossTenantHeadersStamped;
+	bh=gyBBuEqNOo6oS0WY2TUpfVOWyzRuNWgUlH7zs9cYBVQ=;
+	b=nXjLJyXYAH3yw8gllxvkwPjOMUIujmdlEgHpo1WZeFEx7Ky7adfv8aAdOq6BWCNF9Xpa
+	 jeYW1IaklUGpThi4pt33j5+O6WNocyBp8NyXHndTEeEsTC8Ok9WOhN8rhwX41Zu6SO0Pv
+	 X77CmkdeE8o6Ft9Zd69Ap9D6T0LDReQb4mHQY6FJqUBSFdiU19ZpjmfxY68HJpE2HBMlO
+	 SXKSFZh2CL0Ktw/9C8X0k3M8noprDlSL9kTb+yrIO/d0jJbzoMi/VCY9w5MjuAHGGqPPo
+	 YhbQtGSrjGfl1kFzSQRWGpge8Hlj+LRVmuoxnV4BpXaoEGYujZj13gF0kUY7K0j1UMg==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=nvidia.com;
+	spf=fail smtp.mailfrom=nvidia.com;
+	dkim=pass header.d=Nvidia.com header.i=@Nvidia.com header.a=rsa-sha256 header.s=selector2 header.b=mDFQfdEs;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=40.107.209.15
+Received: from PH8PR06CU001.outbound.protection.outlook.com (mail-westus3azon11012015.outbound.protection.outlook.com [40.107.209.15])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange ECDHE (secp384r1) server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EF8BF606A31C;
-	Thu, 26 Nov 2026 23:49:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EF8BF606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 84BDE606A31C;
+	Fri, 27 Nov 2026 00:25:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 84BDE606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=nvidia.com
+Authentication-Results: smtp.subspace.kernel.org; spf=fail smtp.mailfrom=nvidia.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=G1SdJ2f9
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=From:To:Subject:Date:Message-ID:MIME-Version; bh=s0
-	cHhkhVkcyMmHeklem0mV/oIOZAkpaU1gLlvGn/cN0=; b=G1SdJ2f9T8cU6EYrl+
-	cBvX4ahFw/t14lVK10wPWVkHD+LXD6pGrEjAZIUosWWqi9q1xSnntsNjCIX3GSJh
-	CDdTFBl1mXZ2MrSPf9/AQ0S4OWzh2TCl+DF1LD3g9ZlHs7tFBOk1EQndNXbFS2ln
-	zyzum9+EOmr0Tx5zl1/gyphUY=
-Received: from ubuntu (unknown [])
-	by gzga-smtp-mtada-g0-1 (Coremail) with SMTP id _____wD3fxVgxQhrMs_9KQ--.57815S2;
-	Fri, 27 Nov 2026 07:48:59 +0800 (CST)
-From: Shaopei Zhu <shaopei_1012@163.com>
-To: Namjae Jeon <linkinjeon@kernel.org>,
-	Sungjong Seo <sj1557.seo@samsung.com>
-Cc: Yuezhang Mo <yuezhang.mo@sony.com>,
-	exfat@lists.linux.dev,
-	linux-fsdevel@vger.kernel.org,
-	linux-api@vger.kernel.org,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	Matthew Wilcox <willy@infradead.org>
-Subject: [PATCH v11] exfat: add EXFAT_IOC_COMBINE to append a file's clusters to another
-Date: Fri, 27 Nov 2026 07:48:46 +0800
-Message-ID: <20261126234846.940461-1-shaopei_1012@163.com>
-X-Mailer: git-send-email 2.53.0
+	dkim=pass (2048-bit key, unprotected) header.d=Nvidia.com header.i=@Nvidia.com header.a=rsa-sha256 header.s=selector2 header.b=mDFQfdEs
+ARC-Seal: i=1; a=rsa-sha256; s=arcselector10001; d=microsoft.com; cv=none;
+ b=RNnNEdscVuKKtbKGTTsweI8+p3Eui1DffawJly6FCk+l0s46AisWpDeJAO+Bsta7NhXMu5UZXOB8UBbzSEvqdVOGye0v2qsf1IiggZZPK/ph86sCckS2PW1VKt7xCY8+VSpt2bCWOgsmgkDlhHCRGLNp45I3jqKqFEMQFDSvNtDp/vaViFBG14gLj0ysSZculbETzia1SOWAwAuvdzcK4/x+LUXQ6+dk+hJ1cY28JwlU3tmcaOIzD+e96sLsU/5JfvSM+Z4TMrCB7E4rcA54i7/RhfdEM/AXcEySNb8q6SMalP6EhYyXHde3pNr6JZKsHe/KRnou/O38b2qJBv3ZNg==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=microsoft.com;
+ s=arcselector10001;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-AntiSpam-MessageData-ChunkCount:X-MS-Exchange-AntiSpam-MessageData-0:X-MS-Exchange-AntiSpam-MessageData-1;
+ bh=gyBBuEqNOo6oS0WY2TUpfVOWyzRuNWgUlH7zs9cYBVQ=;
+ b=wPg6KQq55CcfBiEZwLxNlAPKBq/eHc3QsXTZrLKj5OfAtxuzbljabEzCek17xwhDkNiFHBqf0R6DNlLR2F4T9Dj/lu/ZjYm49s6/saGAWCWcFtxwQj/58YM0YHwVJixttmD2M7dKxw9LS3QRgLM5K2fYVNYc+/bHeftm2TBUqiX9BwdaJpUWwogjM2Aw1yAkM32SkoNa5z7JEtL0uGq3dFpOm9z+5GgVWkDK3VPH4rqPUtKA1IdKKxwzzXFTPV5aGTJzhg9S8WKA/FXCm3t2ra/NX/zUk0cQojaYYIKTlSG0JoxOeVjtyuuwALVAnt0MUf+06J/nnt6nbWaJ3uNL5Q==
+ARC-Authentication-Results: i=1; mx.microsoft.com 1; spf=pass
+ smtp.mailfrom=nvidia.com; dmarc=pass action=none header.from=nvidia.com;
+ dkim=pass header.d=nvidia.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=Nvidia.com;
+ s=selector2;
+ h=From:Date:Subject:Message-ID:Content-Type:MIME-Version:X-MS-Exchange-SenderADCheck;
+ bh=gyBBuEqNOo6oS0WY2TUpfVOWyzRuNWgUlH7zs9cYBVQ=;
+ b=mDFQfdEsNEdLbrjTuArSMQRfpbbOgxcXHVSBDRo/eVmbqntIpWqxTfrUTy1O+t1JP//SjZZNFkYExHcPvXS4BWCLZ5tzabXNuTG0ucVd+DnVAKnHNURLU6bMXnOYsQ+DpPwA55HnO0szm39u/MnGHFLtdrytbL/RXtRXlsdNvWyTS/yfrCMpJyqqzTuppmdVskx47zE//THqyAGC8qbR8nhKD4wZ+3tA9UsJVoPX0bmfAtBWrPyq9tNQzACJMntsJP3Zq9cTviXbzluu4r5P9AZXiTjiWa4vjA/UvhZw9acnSCobsHCwoWQg8bo8ncOHU5M1gzIRq1SEmjAHGe78nw==
+Authentication-Results: mx.microsoft.com 1; dkim=none (message not signed)
+ header.d=none;dmarc=none action=none header.from=nvidia.com;
+Received: from CHBPR12MB731189.namprd12.prod.outlook.com
+ (2603:10b6:610:33d::12) by DM4PR12MB6326.namprd12.prod.outlook.com
+ (2603:10b6:8:a3::15) with Microsoft SMTP Server (version=TLS1_2,
+ cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.21.662.9; Fri, 27 Nov
+ 2026 00:25:42 +0000
+Received: from CHBPR12MB731189.namprd12.prod.outlook.com
+ ([fe80::b0e5:123d:fe06:e10d]) by CHBPR12MB731189.namprd12.prod.outlook.com
+ ([fe80::b0e5:123d:fe06:e10d%6]) with mapi id 15.21.0662.007; Fri, 27 Nov 2026
+ 00:25:42 +0000
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Subject: Re: [PATCH RFC v2 1/9] attestation: Add the base family
+ specification and generated files
+From: Jason Gunthorpe <jgg@nvidia.com>
+To: Jiri Pirko <jiri@resnulli.us>
+Cc: linux-coco@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ linux-api@vger.kernel.org, x86@kernel.org, kvm@vger.kernel.org, 
+ linux-doc@vger.kernel.org, jgg@ziepe.ca, david.quigley@intel.com, 
+ lukas@wunner.de, ksinyuk@kernel.org, rodrigo.vivi@intel.com, 
+ cedric.xing@intel.com, sameo@meta.com, drdeeglaze@gmail.com, 
+ James.Bottomley@HansenPartnership.com, aik@amd.com, jpiotrowski@nvidia.com, 
+ qinkun@google.com, pgonda@google.com, jic23@kernel.org, 
+ alistair.francis@wdc.com, ankita@nvidia.com, suzuki.poulose@arm.com, 
+ kas@kernel.org, rick.p.edgecombe@intel.com, elena.reshetova@intel.com, 
+ dave.hansen@linux.intel.com, sathyanarayanan.kuppuswamy@linux.intel.com, 
+ peter.fang@intel.com, jarkko@kernel.org, zohar@linux.ibm.com, 
+ yeoreum.yun@arm.com, aneesh.kumar@kernel.org, dave.jiang@intel.com, 
+ nik.borisov@suse.com, sergii.dmytruk@3mdeb.com, 
+ Jason Gunthorpe <jgg@nvidia.com>
+In-Reply-To: <20261113160838.2512652-2-jiri@resnulli.us>
+References: <20261113160838.2512652-1-jiri@resnulli.us>
+ <20261113160838.2512652-2-jiri@resnulli.us>
+Date: Thu, 26 Nov 2026 20:25:39 -0400
+Message-Id: <179573913907.519186.8407997114208887089.b4-review@b4>
+X-Mailer: b4 0.17-dev
+X-ClientProxiedBy: YT1PR01CA0089.CANPRD01.PROD.OUTLOOK.COM
+ (2603:10b6:b01:2d::28) To CHBPR12MB731189.namprd12.prod.outlook.com
+ (2603:10b6:610:33d::12)
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -65,908 +110,540 @@ List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:_____wD3fxVgxQhrMs_9KQ--.57815S2
-X-Coremail-Antispam: 1Uf129KBjvAXoWfZr1Dtr15tF4kJw1DtrW5Jrb_yoW5tF13Jo
-	WfZws3Xw1rtrnxtrW8Gr17Gry5XaykuF1fJr4YgF4qvF18t34UWa1Fyw15Za1Sqw1vkrZ5
-	X3yIq3y3JFWaqrn3n29KB7ZKAUJUUUU8529EdanIXcx71UUUUU7v73VFW2AGmfu7bjvjm3
-	AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvjxU7L0eDUUUU
-X-CM-SenderInfo: pvkd01phlbiiirs6il2tof0z/xtbC6g5p92sIxW7M9AAA3K
+X-MS-PublicTrafficType: Email
+X-MS-TrafficTypeDiagnostic: CHBPR12MB731189:EE_|DM4PR12MB6326:EE_
+X-MS-Office365-Filtering-Correlation-Id: 1c3b5f63-6cb4-40cb-34cd-08df4c1cf86c
+X-MS-Exchange-SenderADCheck: 1
+X-MS-Exchange-AntiSpam-Relay: 0
+X-Microsoft-Antispam:
+	BCL:0;ARA:13230040|7416014|376014|23010399003|366016|1800799024|11063799006|4143699003|6133799003|5023799004|261009223027099003|18002099003|22082099003|3023799007|10067099003|56012099006|261102124527099003|261102123227099003|261028144727099003|261022113327099003|261022105027099003|261022075727099003|261026121527099003|261026140227099003|261021135927099003|261021121427099003;
+X-Microsoft-Antispam-Message-Info:
+	Hs3RdvEkYWr53thsz2V1IF69qAGS57O1RqM7Xl/5cd0zKUgg6iNr0y6seWmWw1OnZSmIP0k/DGVwYNsjyWA/E730bEKJIqf5mECCkJlAA0qDn82ovDoGcNexts2Wu+DQwBuVcJj1SbHeeWcsxiAV7bsATbTAp3OWRsub3A/s3rhu/spdSqfRf4nH55Oi0KoHmQwzjZCyirF91s0DxiIzE9xMvqMrDMQvsCeTPnDHuE3kvqW7Y6W2qB6mF0HXKBy8sDi3VIMjijMFC6AHDdAgjoT5Wg43hIRTG1WIPjOqcB5exrG3u9wZ845gkVtrNxFdS9Fx+6gfGvf3mq34WjdPEmhalf45UoqcdioInhNYkel9NrZEMQHXRgDDppFtaPiq3AlUHQFuJgwouSNgfzqhSQciWgjphMS72PjBOu2MdEc7EvNiCSe8LiYl4QOQ+GiNOf1gdos8jqKoZa+RZdib9BecITwxeK+XC3ldFZvnaKpNthyyNkXbXbILp4PGssqxowIsZavCfNukF9W1BKXl9KTZHoIdO+QF0Zsk1y/RWXbyVn/X3p1wi4eQHuCz52uiR6YsHP7wLNYanrI3gm+eINcBxhW9jU/4x7QzsnAxVKuVnW3JbblzpBqAxhceVu1fazR7GNaQe4lqT3MrDvdBFQeTS5XjclSrHeaQE33jUvA=
+X-Forefront-Antispam-Report:
+	CIP:255.255.255.255;CTRY:;LANG:en;SCL:1;SRV:;IPV:NLI;SFV:NSPM;H:CHBPR12MB731189.namprd12.prod.outlook.com;PTR:;CAT:NONE;SFS:(13230040)(7416014)(376014)(23010399003)(366016)(1800799024)(11063799006)(4143699003)(6133799003)(5023799004)(261009223027099003)(18002099003)(22082099003)(3023799007)(10067099003)(56012099006)(261102124527099003)(261102123227099003)(261028144727099003)(261022113327099003)(261022105027099003)(261022075727099003)(261026121527099003)(261026140227099003)(261021135927099003)(261021121427099003);DIR:OUT;SFP:1101;
+X-MS-Exchange-AntiSpam-MessageData-ChunkCount: 1
+X-MS-Exchange-AntiSpam-MessageData-0:
+	=?utf-8?B?WWx6Y1RITmd3TCtDRFZSMGM1NmVpdjErajZmNXlnVmVHQlo3WkphenF1blRx?=
+ =?utf-8?B?bFNQYlZ3Y2ZJbk91elNTQ01LWkNpT1FoN2Z5MERZNTVCeEZXSGNaMForY2hN?=
+ =?utf-8?B?Vkl6eWZMT1hPNVFDTDgyVDNuYU1sOUNxeXZka1FqTFF5QTdrY1MxazJZcGkw?=
+ =?utf-8?B?VHFSeUdxRTlyY204ZklFb2JkVlh5MExEa1Y4T2tINm4wWnVMY1h2V0xCaVdN?=
+ =?utf-8?B?b1RyZDRaOHFhb3drMGE1Ky9td1d3Mm05ZmlBaTcxR0JrTHRpcU5PQXdCbERZ?=
+ =?utf-8?B?VkxKSllkR05YcEo1cVhKZjN3OEhXREI5VjI5eW54NGl0MW9rR0NHdHN1cmJV?=
+ =?utf-8?B?RFIwUlhlZ3hKMS9YVEE1bkhDaHN5enVIN0NCbkFnZXhyaHdSaW01RkpqZjhq?=
+ =?utf-8?B?cjVsN2Q2djB1M0tlZHdMb3RYWlNNR1JHcmc5MFhoL0UzaS9BN3RqeUdnRWhS?=
+ =?utf-8?B?V0xiNEtDWFlScjNwcW1HYlo0b04wc2FuSEJuOU1DbWxsTEhiTENLZlRCQlA0?=
+ =?utf-8?B?RCtYdlJFUWFLSTFSWFNqVEpQUVpuV0kyNEoxUmtwUFJLLzFiNjF4RlExcnkx?=
+ =?utf-8?B?YTZZc1UwYStmRkErVm9vcW8wTG44TFp0QnBDL0xnRGhiTlhqRE5NZEN0aE5Y?=
+ =?utf-8?B?NndXMW9oTkdoSHZ1UEh2cmR5UVJUWHVjc29Bajl3Q2VuWTBJc3IwSGdRRTQ2?=
+ =?utf-8?B?cDdSM3c0dEtGT2p4NlVFeU9FVmpOd0ZBTnFjb2tDaWlDTEhsRWFmNjgyT2FX?=
+ =?utf-8?B?N1ExSHV1M1RiTTFSTjUzUjFiR21ZdjF5V21EczV0K1U2NGwwd1hvRFFOUTNj?=
+ =?utf-8?B?RXgzR2dRc25ESUY2aW4zdHQ5WTl2aWd6cW5Yc0VneEVUVHEwZ2p5MS9yc3lU?=
+ =?utf-8?B?RXd5NjVtTzRwQkZRS01zRmhTc1lyNDJyejREYWtvSm95MXNlMDFSSm5MY3pm?=
+ =?utf-8?B?blloQkFNYTd5SWdTZGpKME1oTC91aGEydUhvQ2hucmRSMHZaTkdpVEFqcUhG?=
+ =?utf-8?B?UXBRRE83ei9Ub0F3WWY4ZFpqR0FzTmdXTWlsSHZhbm8yUnZxclZhRC9ldWhJ?=
+ =?utf-8?B?ZGFpTk5LQ1dhZnlCWjBkV2VDckcwejNtdytWLzBjbGt0ZkExMzlyRFhJS2tJ?=
+ =?utf-8?B?SkJKNjNsOW14NFYyRlR2QmRKRURsc2RqRm9DNVpzdDltTDlWNmRVRkpOZHFD?=
+ =?utf-8?B?dG4wYXhsR2ZjaEFseGd3RFg4QzU1eWxncE9MczU4cVRBWG12T1BpNzR1YldW?=
+ =?utf-8?B?aExqdXdwRStqa0hWWnZyQmVYeDRaMllKNitpWXk0WHhGTjIvZ3pkaUhCREZT?=
+ =?utf-8?B?UGtOMlNyOURnN1FQRlo1NnJJOUJ3TjFZSE5Ybm9hY2dRTGNnbVhDbm9TRnds?=
+ =?utf-8?B?UDN1eVBPQ2hkci9pV2hvV0pVUWlCYjhGemd1U3JKellpbmFXUnhkc0tmSnZT?=
+ =?utf-8?B?RGlpUW15UmExeFVBTlphSmxmenAwUnBkVlZ1V2NEUVpHeXp2ZUtMZ2lrYXdx?=
+ =?utf-8?B?cWgrM3g4ZmdsNDU3blVrd096anRoU2FXRS9UNkV1VEFDSFRZL2ZUb1VVVC95?=
+ =?utf-8?B?bFUvZnBSQzJzRTc3eTcwQnB3OUdvbXhyck5Kdjl1ek5MaUtuak9ncFY1TG5y?=
+ =?utf-8?B?U1VUcDBBejlmMklpaVlaN2svR2N6Q3prSmlTaXNtajBqMzh3b0xvRm9SMTlv?=
+ =?utf-8?B?emtVbVpOL0lmTkZ0OE9oemNZOGtGaEFqVHV3RnluWnB4VWE3Z1J6a1JFUTl4?=
+ =?utf-8?B?ZGFqUksrZDBZYmR1WlRKQnU0VDJoZlNiVlQ4ejArUlBzaEIvdFBHaktESVFJ?=
+ =?utf-8?B?SEZKcld5T2YySXJsNFBhNVJ6VzJCKzQrLzE5akpRSXJrbmFTbUdScjVHQVNB?=
+ =?utf-8?B?SGEwclMzQ3h0V0l1ZEo4aEVidUkxSGFWTnBpcy95OWhnMk5BZFZBbXVtMEVX?=
+ =?utf-8?B?Mmt4LzdMYkhMNlE5OEVsNGNnaUZtL0Vxa0dGR1JPS3BhVjh1SUlzOUJHcnJq?=
+ =?utf-8?B?K2ZGelBwckFwWnNra0RFT3o4V0thY1NpdDQzY3pzc0tsK2lCVEJnRWNOWXpq?=
+ =?utf-8?B?VXpQQWtYdk9MZ3JyZmllQTIvN3cvZy84MmNoekJOU2dQTHZzVFV1dmozTUxu?=
+ =?utf-8?B?V3ZXQ3FPeU85NWJYMzVsK2NZTUtkbGZSdGRVQXZZUVpFRytqRXVKQ2dQeStQ?=
+ =?utf-8?B?eml4RjVRcElrWTFhUzNYKzYvalhBZ2dHU01KS1IveSthOUgzSzhTL25UYzB1?=
+ =?utf-8?B?dDBXMFlkb1ZwYzZjb3B5OXRBbWY4bmNDOEVRbEg0NE5Fa3NhVWhlU0FwOUdP?=
+ =?utf-8?Q?zaAqjf6vTdgtbp/QOS?=
+X-OriginatorOrg: Nvidia.com
+X-MS-Exchange-CrossTenant-Network-Message-Id: 1c3b5f63-6cb4-40cb-34cd-08df4c1cf86c
+X-MS-Exchange-CrossTenant-AuthSource: CHBPR12MB731189.namprd12.prod.outlook.com
+X-MS-Exchange-CrossTenant-AuthAs: Internal
+X-MS-Exchange-CrossTenant-OriginalArrivalTime: 27 Nov 2026 00:25:42.4546
+ (UTC)
+X-MS-Exchange-CrossTenant-FromEntityHeader: Hosted
+X-MS-Exchange-CrossTenant-Id: 43083d15-7273-40c1-b7db-39efd9ccc17a
+X-MS-Exchange-CrossTenant-MailboxType: HOSTED
+X-MS-Exchange-CrossTenant-UserPrincipalName: HKeCVNjuX8b51BevBjVC4J+qpDpS0+vDeGwdq+9LW7NIIz9mWy/LMxH7YM9Cct1e
+X-MS-Exchange-Transport-CrossTenantHeadersStamped: DM4PR12MB6326
 
-Cameras recording to exFAT SD cards often write auxiliary data, such as
-GPS, motion or per-frame exposure data, to separate files next to the
-video stream, and merge them into the video file when recording stops,
-so that playback, editing and post-processing work on a single file.
-That data grows with the length of the recording, to hundreds of MiB.
+> [ ... 60 lines skipped ... ]
+> +++ b/Documentation/ctlv/abi/ctlv-attestation.yaml
+> @@ -0,0 +1,147 @@
+> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
+> +%YAML 1.2
+> +---
+> +# Checked-in ABI snapshot of the ctlv-attestation family, from
+> +# Documentation/ctlv/specs/ctlv-attestation.yaml, written by
+> +# "make -C tools/ctlv regen".
+> +#
+> +# Updating the file is how a UAPI change gets reviewed; an update that
+> +# removes or renumbers anything, narrows a bound, or makes a member required
+> +# is an ABI break, whatever the file says afterwards.
+> +family: {name: ctlv-attestation, id: 1, inherits: ctlv}
+> +enums:
+> +  evidence-class: {signed: 1, event-log: 2}
+> +  evidence-format: {ccel: 1}
+> +  hash-algo: {$header: linux/hash_info.h, $enum: hash_algo,
+> +              $end: HASH_ALGO__LAST}
 
-Merging it with read()/write() or copy_file_range() copies all of that
-data, which takes time proportional to its size on such media, wears
-the flash and needs free space for a second copy.  On a battery-powered
-device with a removable card, a copy that takes tens of seconds is also
-a long window in which the card can be pulled or the power lost,
-leaving a partially merged file.
+I feel like this should parse the C enum into numbers here so the ABI
+can be checked too?
 
-Filesystems supporting reflink can already avoid the copy by cloning
-the source to the end of the destination with FICLONERANGE.  exFAT
-cannot share clusters between files, so it needs an operation that
-moves them instead.  Its semantics follow from the exFAT on-disk format
-(cluster granularity, a single valid_size per file), so it is added as
-an exfat ioctl rather than a VFS interface; fallocate() does not fit
-either, as it only takes a single file.
+> +flags:
+> +  mr-device-caps: {extend: 0}
+> +  mr-caps: {extend: 0}
+> +records:
+> +  mr-desc:
+> +    id: 0x00010000
+> +    fields:
+> +      name: {number: 1, type: string, min-length: 1, max-length: 128}
+> +      supported-hash-algorithms: {number: 2, enum: hash-algo,
+> +                                  max-occurrences: hash-algo}
+> +      caps: {number: 3, flags: mr-caps}
+> +      register-index: {number: 4, type: uint, max: u32-max, optional: true}
+> +  mr-value:
+> +    id: 0x00020000
+> +    fields:
+> +      hash-algo: {number: 1, enum: hash-algo}
+> +      data: {number: 2, type: binary, min-length: 16, max-length: 64}
+> +  mr-generation:
+> +    id: 0x00030000
+> +    fields:
+> +      mr-generation: {number: 1, type: uint, max: u32-max}
+> +  mr-values:
+> +    id: 0x00040000
+> +    fields:
+> +      mr-values: {number: 1, record: mr-value, max-occurrences: hash-algo}
+> +  device-get request:
+> +    id: 0x80010000
+> +  device-get reply:
+> +    id: 0xc0010000
+> +    fields:
+> +      caps: {number: 1, record: device-get caps}
+> +      info: {number: 2, extension: device-info}
+> +  device-get caps:
+> +    id: 0xc0011000
+> +    fields:
+> +      evidence: {number: 1, record: device-get caps.evidence, optional: true}
+> +      mr: {number: 2, record: device-get caps.mr, optional: true}
+> +  device-get caps.evidence:
+> +    id: 0xc0011100
+> +    fields:
+> +      objects: {number: 1, record: device-get caps.evidence.objects,
+> +                max-occurrences: 16}
+> +  device-get caps.evidence.objects:
+> +    id: 0xc0011110
+> +    fields:
+> +      id: {number: 1, type: uint, max: 15}
+> +      class: {number: 2, enum: evidence-class}
+> +      formats: {number: 3, enum: evidence-format, max-occurrences: 4,
+> +                optional: true}
+> +      vendor-formats: {number: 4, enum: evidence-vendor-format,
+> +                       max-occurrences: 4, optional: true}
+> +      max-length: {number: 5, type: uint}
+> +      challenge-lengths:
+> +        {number: 6, record: device-get caps.evidence.objects.challenge-lengths,
+> +         max-occurrences: 8, optional: true}
+> +  device-get caps.evidence.objects.challenge-lengths:
+> +    id: 0xc0011111
+> +    fields:
+> +      length: {number: 1, type: uint, min: 1, max: 4K, unit: bytes,
+> +               optional: true}
+> +      min-length: {number: 2, type: uint, min: 1, max: 4K, unit: bytes,
+> +                   optional: true}
+> +      max-length: {number: 3, type: uint, min: 1, max: 4K, unit: bytes,
+> +                   optional: true}
+> +  device-get caps.mr:
+> +    id: 0xc0011200
+> +    fields:
+> +      flags: {number: 1, flags: mr-device-caps}
+> +  evidence-get request:
+> +    id: 0x80020000
+> +    fields:
+> +      challenge: {number: 1, type: binary, min-length: 1, max-length: 4K,
+> +                  optional: true}
+> +      objects: {number: 2, record: evidence-get objects, max-occurrences: 16}
+> +  evidence-get objects:
+> +    id: 0x80021000
+> +    fields:
+> +      id: {number: 1, type: uint, max: 15}
+> +      data: {number: 2, blob: output, backings: [va], max-length: u32-max}
+> +  evidence-get reply:
+> +    id: 0xc0020000
+> +    fields:
+> +      results: {number: 1, record: evidence-get results, max-occurrences: 16}
+> +    members: ['record mr-generation?']
+> +  evidence-get results:
+> +    id: 0xc0021000
+> +    fields:
+> +      format: {number: 1, enum: evidence-format, optional: true}
+> +      vendor-format: {number: 2, enum: evidence-vendor-format, optional: true}
+> +      length: {number: 3, type: uint}
+> +  mr-get request:
+> +    id: 0x80030000
+> +    fields:
+> +      id: {number: 1, type: uint, max: u32-max, optional: true}
+> +  mr-get reply:
+> +    id: 0xc0030000
+> +    fields:
+> +      items: {number: 1, record: mr-get items, max-occurrences: unlimited}
+> +  mr-get items:
+> +    id: 0xc0031000
+> +    fields:
+> +      id: {number: 1, type: uint, max: u32-max}
+> +    members: [$include mr-desc]
+> +  mr-read request:
+> +    id: 0x80040000
+> +    fields:
+> +      id: {number: 1, type: uint, max: u32-max}
+> +  mr-read reply:
+> +    id: 0xc0040000
+> +    members: [record mr-generation, record mr-values]
+> +  mr-extend request:
+> +    id: 0x80050000
+> +    fields:
+> +      id: {number: 1, type: uint, max: u32-max}
+> +    members: [record mr-values]
+> +  mr-extend reply:
+> +    id: 0xc0050000
+> +    members: [record mr-generation]
+> +extensions: {device-info: 1}
+> +enum-extensions: {evidence-vendor-format: 1}
+> +ops:
+> +  device-get: {id: 1, type: action, fd-access: read,
+> +               request: device-get request, reply: device-get reply}
+> +  evidence-get: {id: 2, type: action, availability: dynamic, optional: true,
+> +                 request: evidence-get request, reply: evidence-get reply}
+> +  mr-get: {id: 3, type: query, fd-access: read, optional: true,
+> +           request: mr-get request, reply: mr-get reply}
+> +  mr-read: {id: 4, type: query, fd-access: read, optional: true,
+> +            request: mr-read request, reply: mr-read reply}
+> +  mr-extend: {id: 5, type: action, optional: true, request: mr-extend request,
+> +              reply: mr-extend reply}
+> diff --git a/Documentation/ctlv/abi/families.registry.yaml b/Documentation/ctlv/abi/families.registry.yaml
+> index 5845e745777150..7a5c6af2956578 100644
+> --- a/Documentation/ctlv/abi/families.registry.yaml
+> +++ b/Documentation/ctlv/abi/families.registry.yaml
+> @@ -5,3 +5,4 @@
+>  # Written by "make -C tools/ctlv regen".
+>  families:
+>    - ctlv
+> +  - ctlv-attestation
+> diff --git a/Documentation/ctlv/families.yaml b/Documentation/ctlv/families.yaml
+> index 4d219d7af74a79..dbb0243b873d68 100644
+> --- a/Documentation/ctlv/families.yaml
+> +++ b/Documentation/ctlv/families.yaml
+> @@ -15,3 +15,4 @@
+>  
+>  families:
+>    - ctlv
+> +  - ctlv-attestation
+> diff --git a/Documentation/ctlv/generated-files.yaml b/Documentation/ctlv/generated-files.yaml
+> index d4766b176ceb98..00a56634805d40 100644
+> --- a/Documentation/ctlv/generated-files.yaml
+> +++ b/Documentation/ctlv/generated-files.yaml
+> @@ -16,3 +16,10 @@ families:
+>        kernel-header: include/linux/ctlv_gen.h
+>        kernel-source: lib/ctlv/ctlv_gen.c
+>        user-source: tools/ctlv/libctlv/ctlv_user_gen.c
+> +
+> +  - name: ctlv-attestation
+> +    source: Documentation/ctlv/specs/ctlv-attestation.yaml
+> +    outputs:
+> +      uapi-header: include/uapi/ctlv/ctlv_attestation_gen.h
+> +      kernel-header: drivers/attestation/generated/ctlv_attestation_gen.h
+> +      kernel-source: drivers/attestation/generated/ctlv_attestation_gen.c
+> diff --git a/Documentation/ctlv/specs/ctlv-attestation.yaml b/Documentation/ctlv/specs/ctlv-attestation.yaml
+> new file mode 100644
+> index 00000000000000..78b2dad6318a6f
+> --- /dev/null
+> +++ b/Documentation/ctlv/specs/ctlv-attestation.yaml
+> @@ -0,0 +1,181 @@
+> +# SPDX-License-Identifier: ((GPL-2.0 WITH Linux-syscall-note) OR BSD-3-Clause)
+> +%YAML 1.2
+> +---
+> +# Attestation devices: evidence and measurement registers (MRs). The device's
+> +# family inherits this one, fills device-info and gives evidence-vendor-format
+> +# the formats its vendor defines.
+> +family: ctlv-attestation
+> +inherits: ctlv
 
-Add an ioctl that moves the cluster chain of a source file to the end
-of a destination file and leaves the source as an empty file, so that
-no file data is copied: only the FAT and the stream extension entries
-of both files change:
+This is much easier to read, I think it works well like this!
 
-	struct exfat_combine_args args = { .src_fd = src_fd };
-	ioctl(dst_fd, EXFAT_IOC_COMBINE, &args);
+> +
+> +enums:
+> +  # What an evidence object is.
+> +  evidence-class:
+> +    # Made by evidence-get over its challenge, and signed by the root of
+> +    # trust.
+> +    - signed
+> +    # The platform's log of what firmware and the boot chain measured into
+> +    # the MRs. Later extends, through mr-extend or otherwise, are not in it.
+> +    - event-log
+> +  # A layout of an evidence object that a standard defines.
+> +  evidence-format:
+> +    # The log area of an ACPI CCEL table, a TCG crypto-agile event log.
+> +    - ccel
 
-As with the other interfaces that move or share data between files,
-removing the source is left to the caller, which unlinks it afterwards
-if it is not needed.  An already unlinked source is accepted.  An
-unlinked destination is refused with -ENOENT, as its entry is no longer
-written and the data of the source would be lost with it.
+Lets be in the habit of including a detailed spec reference for things
+that are standards.
 
-The source must be open for reading and writing, as it is emptied and
-its data becomes readable through the destination, and the destination
-for writing; both must be regular files on the same mount.  Files whose
-allocation, chain layout or valid_size are inconsistent, as after a
-failed truncate or on a corrupt volume, or that are found to share
-clusters, are refused with -EIO before anything is changed.
+> +  # A layout of an evidence object that one vendor defines, given by the
+> +  # device's family.
+> +  evidence-vendor-format: extension
 
-exFAT has a single size and valid_size per file, so clusters can only
-be appended at a cluster boundary of a fully initialized file.  The
-destination is therefore first zero-filled up to the end of its last
-cluster with exfat_extend_valid_size(), leaving a zero-filled gap
-between the original and the appended data when its size is not
-cluster aligned.  This keeps stale on-disk data out of the file and is
-documented in the uapi header.  The gap lies in the last cluster, which
-is already allocated to the destination, so it takes no extra space.
+I find this 'standard' 'vendor' distinction confusing. Is this an
+artifact of the compilation process?
 
-exFAT has no journal, so the data and the FAT, then the destination
-entry, then the source entry as an empty file are written and flushed to
-the device in that order, as recommended by section 8.1 of the exFAT
-specification; the allocation bitmap is not touched.  A crash at any
-point leaves all data reachable from at least one entry.  In the worst
-case both entries share the appended clusters; fsck.exfat keeps them in
-the file it checks first and truncates the other one, so either the
-combine has completed or the source still holds its data.  A crash
-between the first two writes leaves the chain of the destination linked
-to the clusters of the source while its size does not cover them, which
-fsck.exfat cuts off again.  In both cases neither file may be truncated
-or removed before fsck.exfat has run, as freeing the clusters of one
-would free clusters the other still uses; the volume is marked dirty
-before the FAT is changed.  On a volume that was not cleanly unmounted,
-the call fails with -EUCLEAN until fsck.exfat has run, so that it never
-works on clusters that two files may already share or that may already
-be linked.  Once the volume is in an emergency state, nothing more is
-written, which leaves what a crash at that point would.  If the call
-fails before the clusters are moved, the padding is removed again; what
-was already written back is kept initialized, as
-exfat_extend_valid_size() does on failure.  Write back errors are
-checked through the errseq of the mappings, as their error flags may be
-taken by a concurrent fsync().  s_lock is only held while updating the
-FAT and the entries, not while waiting for the device, so that writers
-to other files on the volume are not stalled.
+This would be more usable if there was one enum but both this yaml and
+the driver yaml can contribute values to it. If we made an 'extendable
+enum' then the values could be full 64 bit ID numbers with the tree
+coding so that the extension works the same way as a op and record?
 
-No file data is copied, so the cost depends on the number of clusters
-(when a FAT chain has to be built for a contiguous file) rather than on
-the amount of data.  Measured on a disk throttled to SD card speeds
-(30 MiB/s write), appending to a 300 MiB file with 128 KiB clusters,
-until the result is on disk:
+Though I'm a bit nervous about what happens if something in a driver
+turns into a standard. It would be nice to be able to make the
+driver's ID promoted to a global ID without changing the ID. That
+sounds like something the generator could learn to do later I guess.
 
-  source     EXFAT_IOC_COMBINE   copy_file_range() + fsync()
-  50 MiB          12.3 ms                 2.2 s
-  500 MiB         13.3 ms                22.3 s
-  1 GiB           13.0 ms                45.7 s
+The comment should be improved to define what consitutes a 'format'. I
+was advocating that the format should define enough to check the
+signature and the challenge universally.
 
-The files of this test were contiguous.  Building the FAT chain of a
-contiguous file, when it is needed, takes about 100 ms per GiB with
-4 KiB clusters, and 32 times less with 128 KiB clusters.
+Like Peter described the new TDX evidence as "tdx-quote-eat-cwt-1.0".
 
-The ioctl number is taken from the 'r' range next to the FAT ioctls.
-A user space tool for exfatprogs (exfatcombine) and a test for fstests
-(exfat/002) are posted separately.
+Poking at the IETF RFCs with AI a bit I think it should be described
+as "CWT EAT" in this language. The EAT RFC defines the location of the
+challenge and uses the CWT packaging which defines how the signature
+is placed.
 
-This patch was written with the help of an AI coding assistant
-(Claude Code, Opus 5.5); I have reviewed and tested the result.
+I think ARM uses this format too, IDK what AMD uses.
 
-Signed-off-by: Shaopei Zhu <shaopei_1012@163.com>
----
+The EAT itself should have information inside that describes the
+"tdx-quote-1.0" idea, so we don't need it externally.
 
-Notes:
-    Changes in v11, comments and commit message only, no functional change:
-    
-    - Document that after a crash neither file, not only the source, may be
-      truncated or removed before fsck.exfat has run, and describe the
-      state a crash between the FAT update and the destination entry
-      leaves, in the uapi header, the comment of __exfat_combine() and the
-      commit message.
-    
-    This follows the review of v10 by Sashiko [1], which pointed out that
-    the chain of the destination can be left linked to the clusters of the
-    source.  I reproduced it with images edited offline (4 KiB clusters,
-    destination with a FAT chain of 3 clusters, source of 3 clusters,
-    volume dirty), mounted without running fsck, doing one operation and
-    then writing a new file:
-    
-      state on disk     operation        result
-      A                 rm dst           src loses its clusters
-      A                 truncate dst     src silently corrupted
-      A                 append to dst    both files intact
-      A                 rm src           dst intact, but its chain runs
-                                         into the new file
-      B                 rm dst           src corrupted
-      B                 rm src           dst silently corrupted
-      A, contiguous dst rm dst           src intact
-    
-      A: the FAT links the destination to the source, both entries are
-         still the old ones (crash between the first two writes)
-      B: both entries own the clusters (crash before the source entry
-         is written)
-    
-    fsck.exfat run before the operation repairs both states without losing
-    data, and the call itself fails with -EUCLEAN on a dirty volume, so the
-    rule is the one that already applies to a dirty exFAT volume; v11 only
-    states it for both files.
-    
-    The cause is that __exfat_free_cluster() follows a FAT chain to its end
-    rather than for the number of clusters of the file.  If you would
-    rather have the kernel cope with the first state than rely on fsck, I
-    can add a patch that makes it stop after the size of the chain; please
-    let me know.
-    
-    Sashiko's other comment, about a source opened with O_APPEND, is
-    unchanged from v10: not addressed, and I can refuse such a source if
-    you prefer that.
-    
-    This applies to linux-next (next-20261118).  It uses
-    exfat_emergency_state(), which comes with "exfat: don't set SB_RDONLY
-    after filesystem errors" in the vfs tree (vfs-7.5.super.ro), so it does
-    not build on mainline or on the exfat dev branch until that is merged
-    there.  I can rebase it onto exfat dev then.
-    
-    All tests reported for v8 apply unchanged.  v10 was a resend of v9 with
-    the base stated; v9 only changed the commit message (use case, the gap
-    taking no space, measurements).
-    
-    [1] https://sashiko.dev/#/patchset/20261126200717.939328-1-shaopei_1012%40163.com
-    
-    v10: https://lore.kernel.org/all/20261126200717.939328-1-shaopei_1012@163.com/
-    v9: https://lore.kernel.org/all/20261126191955.935845-1-shaopei_1012@163.com/
-    v8: https://lore.kernel.org/all/20261126125216.927053-1-shaopei_1012@163.com/
-    v7: https://lore.kernel.org/all/20261124230746.850528-1-shaopei_1012@163.com/
-    v6: https://lore.kernel.org/all/20261124212236.830224-1-shaopei_1012@163.com/
-    v5: https://lore.kernel.org/all/20261124202455.817408-1-shaopei_1012@163.com/
-    v4: https://lore.kernel.org/all/20261124142807.773299-1-shaopei_1012@163.com/
-    v3: https://lore.kernel.org/all/20261123132742.743416-1-shaopei_1012@163.com/
-    v2: https://lore.kernel.org/all/20261122124029.609636-1-shaopei_1012@163.com/
-    v1: https://lore.kernel.org/all/20261121174315.500249-1-shaopei_1012@163.com/
+> +  # The kernel's hash algorithms.
+> +  hash-algo:
+> +    $header: linux/hash_info.h
+> +    $enum: hash_algo
+> +    $end: HASH_ALGO__LAST
+> +
+> +flags:
+> +  # What a device offers for its MRs.
+> +  mr-device-caps:
+> +    # mr-extend is provided.
+> +    - extend
 
- .../userspace-api/ioctl/ioctl-number.rst      |   1 +
- fs/exfat/file.c                               | 616 ++++++++++++++++++
- include/uapi/linux/exfat.h                    |  47 ++
- 3 files changed, 664 insertions(+)
+I guessed the userspace should learn what operations are supported
+using introspection directly on the operation? Do we need to specify
+what ops are implemented in device-get?
 
-diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index dbe462040..e9b4c13d8 100644
---- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-+++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-@@ -292,6 +292,7 @@ Code  Seq#    Include File                                             Comments
- 'q'   80-FF  linux/telephony.h                                         Internet PhoneJACK, Internet LineJACK
-              linux/ixjuser.h                                           <http://web.archive.org/web/%2A/http://www.quicknet.net>
- 'r'   00-1F  linux/msdos_fs.h and fs/fat/dir.c
-+'r'   20-2F  linux/exfat.h
- 's'   all    linux/cdk.h
- 't'   00-7F  linux/ppp-ioctl.h
- 't'   80-8F  linux/isdn_ppp.h
-diff --git a/fs/exfat/file.c b/fs/exfat/file.c
-index 7ca26e3f1..855593d61 100644
---- a/fs/exfat/file.c
-+++ b/fs/exfat/file.c
-@@ -13,6 +13,7 @@
- #include <linux/writeback.h>
- #include <linux/filelock.h>
- #include <linux/falloc.h>
-+#include <linux/file.h>
- #include <linux/fileattr.h>
- #include <linux/iomap.h>
- #include <linux/pagemap.h>
-@@ -710,6 +711,619 @@ static int exfat_ioctl_set_volume_label(struct super_block *sb,
- 	return exfat_write_volume_label(sb, &uniname);
- }
- 
-+static int exfat_extend_valid_size(struct inode *inode, loff_t new_valid_size);
-+
-+/*
-+ * Write back all dirty metadata buffers and flush the device cache.  The
-+ * error flags of the block device mapping go to whoever checks them
-+ * first, an fsync() of any file on the volume included, so also check
-+ * its errseq sampled in @since.  Advance @since, also when the writeback
-+ * returned the error itself, so that the error is marked seen and fails
-+ * one call only.
-+ */
-+static int exfat_combine_flush(struct super_block *sb, errseq_t *since)
-+{
-+	int err = sync_blockdev(sb->s_bdev);
-+	int ret = errseq_check_and_advance(&sb->s_bdev->bd_mapping->wb_err,
-+					   since);
-+
-+	if (!err)
-+		err = ret;
-+	return err ? err : blkdev_issue_flush(sb->s_bdev);
-+}
-+
-+static void exfat_combine_reset_hints(struct inode *inode)
-+{
-+	struct exfat_inode_info *ei = EXFAT_I(inode);
-+
-+	exfat_cache_inval_inode(inode);
-+	ei->hint_bmap.off = EXFAT_EOF_CLUSTER;
-+	ei->hint_bmap.clu = EXFAT_EOF_CLUSTER;
-+}
-+
-+/*
-+ * Find the last cluster of @dst, walking only the clusters it owns.  A
-+ * crash during an earlier call can have left the last one linked to @src,
-+ * which is rewritten anyway, or, once the entry of @dst was written too,
-+ * @src among them until fsck.exfat has run.  Refuse the latter, and any
-+ * other overlap with the clusters of @src known without walking its
-+ * chain (all of them if it is contiguous), as linking @src would create
-+ * a loop in the FAT.
-+ */
-+static int exfat_combine_find_last(struct super_block *sb,
-+				   struct exfat_chain *chain,
-+				   struct exfat_chain *src, unsigned int *last)
-+{
-+	struct buffer_head *bh = NULL;
-+	unsigned int clu = chain->dir, next, n;
-+	unsigned int src_end = src->dir +
-+		(src->flags == ALLOC_NO_FAT_CHAIN ? src->size : 1);
-+	int err = 0;
-+
-+	if (chain->flags == ALLOC_NO_FAT_CHAIN) {
-+		if (clu < src_end && src->dir < clu + chain->size)
-+			return -EIO;
-+		*last = clu + chain->size - 1;
-+		return 0;
-+	}
-+
-+	for (n = 1; ; n++) {
-+		if (clu >= src->dir && clu < src_end) {
-+			err = -EIO;
-+			break;
-+		}
-+		err = exfat_ent_get(sb, clu, &next, &bh);
-+		if (err)
-+			break;
-+		if (n == chain->size) {
-+			if (next != EXFAT_EOF_CLUSTER && next != src->dir)
-+				goto bogus;
-+			*last = clu;
-+			break;
-+		}
-+		if (next == EXFAT_EOF_CLUSTER)
-+			goto bogus;
-+		clu = next;
-+	}
-+	brelse(bh);
-+	return err;
-+
-+bogus:
-+	brelse(bh);
-+	exfat_fs_error(sb, "bogus cluster chain (start 0x%08x, %u clusters)",
-+		       chain->dir, chain->size);
-+	return -EIO;
-+}
-+
-+/*
-+ * Move the cluster chain of @src to the end of @dst, leaving @src empty.
-+ *
-+ * Only the FAT and the two stream extension entries are updated, no file
-+ * data is copied.  The caller must have found the last cluster @last_clu
-+ * of @dst with exfat_combine_check_chains() and zero-filled @dst up to
-+ * its end, so that no stale data ends up in the middle of the file, and
-+ * must hold the inode and invalidate locks of both files.
-+ *
-+ * exFAT has no journal, so the updates are ordered on disk such that a
-+ * crash at any point leaves all data reachable:
-+ *
-+ * 1. the data of both files and the FAT, so that the new chain of @dst
-+ *    is complete before any entry refers to it; until step 2, the chain
-+ *    of @dst runs into the clusters of @src beyond its size, which
-+ *    fsck.exfat cuts off again;
-+ * 2. the entry of @dst, after which both entries reference the clusters
-+ *    of @src; fsck.exfat keeps them in whichever file it checks first and
-+ *    truncates the other one;
-+ * 3. the entry of @src as an empty file.
-+ *
-+ * This follows the write ordering recommended by section 8.1 of the
-+ * exFAT specification: the FAT before the entry that refers to it.  No
-+ * cluster is allocated or freed, so the allocation bitmap is not
-+ * touched.
-+ *
-+ * s_lock is only held while updating the FAT and the entries, not while
-+ * waiting for the device, so that other files on the volume are not
-+ * stalled.  Until step 2, the in-memory state of @dst is left alone, so
-+ * that writeback cannot publish its new chain flags early, and the
-+ * in-memory state of @src is only changed once @dst is on disk.
-+ */
-+static int __exfat_combine(struct inode *dst, struct inode *src,
-+			   unsigned int last_clu, errseq_t *meta_since)
-+{
-+	struct super_block *sb = dst->i_sb;
-+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-+	struct exfat_inode_info *dst_ei = EXFAT_I(dst);
-+	struct exfat_inode_info *src_ei = EXFAT_I(src);
-+	loff_t dst_size = i_size_read(dst);
-+	loff_t src_size = i_size_read(src);
-+	loff_t new_valid_size;
-+	unsigned int dst_clus, src_clus, dst_start, dst_start_old;
-+	unsigned char dst_flags, dst_flags_old;
-+	bool linked = false;
-+	int err = 0, ret;
-+
-+	dst_clus = exfat_bytes_to_cluster(sbi, exfat_ondisk_size(dst));
-+	src_clus = exfat_bytes_to_cluster(sbi, exfat_ondisk_size(src));
-+
-+	/* Ensured by exfat_ioctl_combine() and stable under its locks. */
-+	if (exfat_cluster_to_bytes(sbi, dst_clus) != dst_size ||
-+	    (!dst_clus && dst_ei->start_clu != EXFAT_EOF_CLUSTER) ||
-+	    (dst_clus && dst_ei->start_clu == EXFAT_EOF_CLUSTER) ||
-+	    exfat_get_valid_size(dst_ei) != dst_size ||
-+	    src_ei->start_clu == EXFAT_EOF_CLUSTER ||
-+	    exfat_bytes_to_cluster_round_up(sbi, src_size) != src_clus)
-+		return -EIO;
-+
-+	/* Step 1: build the new chain of @dst in the FAT. */
-+	mutex_lock(&sbi->s_lock);
-+	err = exfat_emergency_state(sb);
-+	if (err)
-+		goto unlock;
-+	exfat_set_volume_dirty(sb);
-+	dst_start_old = dst_ei->start_clu;
-+	dst_flags_old = dst_ei->flags;
-+	dst_start = dst_start_old;
-+	dst_flags = dst_flags_old;
-+
-+	if (!dst_clus) {
-+		dst_start = src_ei->start_clu;
-+		dst_flags = src_ei->flags;
-+		goto unlock;
-+	}
-+
-+	/*
-+	 * A contiguous @dst can stay contiguous only if @src is contiguous
-+	 * and starts right after it.  Otherwise build its FAT chain first.
-+	 */
-+	if (dst_flags == ALLOC_NO_FAT_CHAIN &&
-+	    (src_ei->flags != ALLOC_NO_FAT_CHAIN ||
-+	     src_ei->start_clu != last_clu + 1)) {
-+		err = exfat_chain_cont_cluster(sb, dst_start, dst_clus);
-+		if (err)
-+			goto unlock;
-+		dst_flags = ALLOC_FAT_CHAIN;
-+	}
-+
-+	if (dst_flags == ALLOC_FAT_CHAIN) {
-+		if (src_ei->flags == ALLOC_NO_FAT_CHAIN) {
-+			err = exfat_chain_cont_cluster(sb, src_ei->start_clu,
-+						       src_clus);
-+			if (err)
-+				goto unlock;
-+		}
-+		err = exfat_ent_set(sb, last_clu, src_ei->start_clu);
-+		linked = !err;
-+	}
-+unlock:
-+	mutex_unlock(&sbi->s_lock);
-+	if (err)
-+		return err;
-+
-+	err = exfat_combine_flush(sb, meta_since);
-+	if (err)
-+		goto undo;
-+
-+	/*
-+	 * Step 2: publish the new size and chain of @dst.  As the rest of
-+	 * exfat, write nothing more once the volume is in an emergency
-+	 * state, which leaves what a crash after step 1 leaves.  If it
-+	 * enters that state after the entry of @dst is written, @src keeps
-+	 * its entry, as after a crash after step 2.
-+	 */
-+	mutex_lock(&sbi->s_lock);
-+	err = exfat_emergency_state(sb);
-+	if (err) {
-+		mutex_unlock(&sbi->s_lock);
-+		goto undo;
-+	}
-+	dst_ei->start_clu = dst_start;
-+	dst_ei->flags = dst_flags;
-+	new_valid_size = dst_size + exfat_get_valid_size(src_ei);
-+	dst->i_blocks = exfat_cluster_to_sectors(sbi, dst_clus + src_clus);
-+	i_size_write(dst, dst_size + src_size);
-+	exfat_set_valid_size(dst_ei, new_valid_size);
-+	exfat_set_zeroed_size(dst_ei, new_valid_size);
-+	dst_ei->attr |= EXFAT_ATTR_ARCHIVE;
-+	inode_set_mtime_to_ts(dst, inode_set_ctime_current(dst));
-+	exfat_combine_reset_hints(dst);
-+	err = __exfat_write_inode(dst, 1);
-+	if (err) {
-+		/*
-+		 * The error is returned, mark it seen in the errseq of the
-+		 * block device mapping, which no flush checks now, so that it
-+		 * does not fail later calls.  Its error flags are left alone:
-+		 * they are shared by every file on the volume.
-+		 */
-+		errseq_check_and_advance(&sb->s_bdev->bd_mapping->wb_err,
-+					 meta_since);
-+		/*
-+		 * Keep @src the only owner of its clusters: give @dst back its
-+		 * old state, which writeback retries to put on disk.
-+		 */
-+		dst_ei->start_clu = dst_start_old;
-+		dst_ei->flags = dst_flags_old;
-+		dst->i_blocks = exfat_cluster_to_sectors(sbi, dst_clus);
-+		i_size_write(dst, dst_size);
-+		exfat_set_valid_size(dst_ei, dst_size);
-+		exfat_set_zeroed_size(dst_ei, dst_size);
-+		exfat_combine_reset_hints(dst);
-+		mark_inode_dirty(dst);
-+	}
-+	mutex_unlock(&sbi->s_lock);
-+	if (err)
-+		goto undo;
-+
-+	err = blkdev_issue_flush(sb->s_bdev);
-+
-+	/*
-+	 * Step 3: the clusters now belong to @dst.  Write @src as an empty
-+	 * file.  If the flush failed, the entry of @dst was still written,
-+	 * so do it anyway.  If writing @src fails, its in-memory state no
-+	 * longer owns the clusters, so evicting it frees nothing, and
-+	 * writeback retries the entry; until then both entries reference
-+	 * the clusters, as after a crash.
-+	 */
-+	mutex_lock(&sbi->s_lock);
-+	src_ei->start_clu = EXFAT_EOF_CLUSTER;
-+	src_ei->flags = ALLOC_NO_FAT_CHAIN;
-+	src->i_blocks = 0;
-+	i_size_write(src, 0);
-+	exfat_set_valid_size(src_ei, 0);
-+	exfat_set_zeroed_size(src_ei, 0);
-+	exfat_combine_reset_hints(src);
-+	src_ei->attr |= EXFAT_ATTR_ARCHIVE;
-+	inode_set_mtime_to_ts(src, inode_set_ctime_current(src));
-+	ret = exfat_emergency_state(sb);
-+	if (!ret) {
-+		ret = __exfat_write_inode(src, 1);
-+		if (ret)	/* as for @dst in step 2 */
-+			errseq_check_and_advance(&sb->s_bdev->bd_mapping->wb_err,
-+						 meta_since);
-+	}
-+	if (ret)
-+		mark_inode_dirty(src);
-+	mutex_unlock(&sbi->s_lock);
-+	return err ? err : ret;
-+
-+undo:
-+	/*
-+	 * @dst does not own the clusters of @src, cut its chain again,
-+	 * unless the volume is in an emergency state.
-+	 */
-+	if (linked) {
-+		mutex_lock(&sbi->s_lock);
-+		if (!exfat_emergency_state(sb))
-+			exfat_ent_set(sb, last_clu, EXFAT_EOF_CLUSTER);
-+		mutex_unlock(&sbi->s_lock);
-+	}
-+	return err;
-+}
-+
-+/*
-+ * Write back @inode and check that everything dirtied since @since has
-+ * reached the disk.  The error flags of a mapping go to whoever checks
-+ * them first, a concurrent fsync() included, so a clean return of the
-+ * writeback alone does not tell; its errseq does.  Mark the error seen,
-+ * so that it does not fail later calls; @since is the caller's copy, so
-+ * checking again with it still reports the error.
-+ */
-+static int exfat_combine_write_back(struct inode *inode, errseq_t since)
-+{
-+	int err = filemap_write_and_wait(inode->i_mapping);
-+	int ret = errseq_check_and_advance(&inode->i_mapping->wb_err, &since);
-+
-+	return err ? err : ret;
-+}
-+
-+/*
-+ * Undo the zero padding of @dst after a failed combine: drop its size
-+ * back to @old_size.  Once @dst was written back, the zeroes and any
-+ * stores through mmap below @old_size are on disk, so keep them, as
-+ * exfat_extend_valid_size() does, after flushing them to the medium
-+ * ahead of the entry that covers them.  Only if @dst cannot be written
-+ * back, drop its valid size back to @old_valid and its zeroed size to
-+ * no more than that, and unmap that range so that further stores through
-+ * mmap fault again and extend valid_size.  The entry is written right
-+ * away.
-+ * Called with the inode and invalidate locks of @dst held.
-+ */
-+static void exfat_combine_unpad(struct inode *dst, loff_t old_size,
-+				loff_t old_valid, loff_t old_zeroed,
-+				bool written, errseq_t since)
-+{
-+	struct exfat_sb_info *sbi = EXFAT_SB(dst->i_sb);
-+	struct exfat_inode_info *ei = EXFAT_I(dst);
-+	bool shrink = i_size_read(dst) > old_size;
-+	loff_t zeroed;
-+
-+	if (shrink)
-+		truncate_setsize(dst, old_size);
-+	/* Do not rely on exfat_truncate(), which stops early after an error. */
-+	if (exfat_get_valid_size(ei) > old_size)
-+		exfat_set_valid_size(ei, old_size);
-+	if (exfat_get_zeroed_size(ei) > old_size)
-+		exfat_set_zeroed_size(ei, old_size);
-+
-+	/*
-+	 * Padding or writing back @src may have failed before @dst was
-+	 * written back: try that first, as stores through mmap that have
-+	 * already completed cannot be made to fault again.
-+	 */
-+	if (!written)
-+		written = !exfat_combine_write_back(dst, since);
-+
-+	if (written) {
-+		if (exfat_get_valid_size(ei) > old_valid)
-+			blkdev_issue_flush(dst->i_sb->s_bdev);
-+	} else {
-+		if (exfat_get_valid_size(ei) > old_valid) {
-+			/*
-+			 * unmap_mapping_range() rounds the start down but not
-+			 * the length up past it: pass whole pages, or the last
-+			 * page of the range stays mapped writable.
-+			 */
-+			if (old_valid < old_size) {
-+				loff_t start = round_down(old_valid, PAGE_SIZE);
-+
-+				unmap_mapping_range(dst->i_mapping, start,
-+						    old_size - start, 0);
-+			}
-+			exfat_set_valid_size(ei, old_valid);
-+		}
-+		/*
-+		 * The failed writeback also cleaned a folio that was dirty
-+		 * before the call, without its blocks reaching the disk: do
-+		 * not count its tail past @old_valid as initialized, so that
-+		 * extending valid_size prepares and dirties it again.
-+		 */
-+		zeroed = min(old_zeroed, old_valid);
-+		if (exfat_get_zeroed_size(ei) > zeroed)
-+			exfat_set_zeroed_size(ei, zeroed);
-+	}
-+
-+	if (shrink) {
-+		exfat_truncate(dst);	/* writes the entry */
-+	} else if (!exfat_emergency_state(dst->i_sb)) {
-+		mutex_lock(&sbi->s_lock);
-+		if (__exfat_write_inode(dst, inode_needs_sync(dst)))
-+			mark_inode_dirty(dst);
-+		mutex_unlock(&sbi->s_lock);
-+	}
-+}
-+
-+/*
-+ * A failed truncate can leave the allocation of a file larger than its
-+ * size, or its valid_size above its size, and a corrupt entry can carry
-+ * neither chain layout, or a contiguous chain running past the volume.
-+ * Refuse such a file before anything is changed, as padding @dst
-+ * allocates based on its allocation, the valid_size of @src is carried
-+ * over to @dst, and Step 1 writes the FAT entries of contiguous chains.
-+ */
-+static bool exfat_combine_inode_ok(struct inode *inode)
-+{
-+	struct exfat_sb_info *sbi = EXFAT_SB(inode->i_sb);
-+	struct exfat_inode_info *ei = EXFAT_I(inode);
-+	loff_t size = i_size_read(inode);
-+
-+	if (exfat_ondisk_size(inode) != round_up(size, sbi->cluster_size) ||
-+	    (!size && ei->start_clu != EXFAT_EOF_CLUSTER) ||
-+	    (size && ei->start_clu == EXFAT_EOF_CLUSTER) ||
-+	    exfat_get_valid_size(ei) > size)
-+		return false;
-+	if (!size || ei->flags == ALLOC_FAT_CHAIN)
-+		return true;
-+	/* As exfat_validate_vendor_alloc() checks a contiguous range. */
-+	return ei->flags == ALLOC_NO_FAT_CHAIN &&
-+	       DIV_ROUND_UP_ULL(size, sbi->cluster_size) <=
-+	       sbi->num_clusters - ei->start_clu;
-+}
-+
-+/*
-+ * Only a corrupt volume has files sharing clusters.  Refuse them before
-+ * anything is changed: zero-filling @dst would overwrite data of @src in
-+ * a shared cluster, and linking @src would create a loop in the FAT.
-+ * Two files owning more clusters than are in use share some of them, and
-+ * the result would fail the check of exfat_find() too.  The chain of
-+ * @dst cannot change until the combine, as it is fully allocated and the
-+ * caller holds its inode lock.
-+ */
-+static int exfat_combine_check_chains(struct inode *dst, struct inode *src,
-+				      unsigned int *last)
-+{
-+	struct super_block *sb = dst->i_sb;
-+	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-+	struct exfat_inode_info *dst_ei = EXFAT_I(dst);
-+	struct exfat_inode_info *src_ei = EXFAT_I(src);
-+	unsigned int dst_clus, src_clus;
-+	struct exfat_chain chain, src_chain;
-+	int err = 0;
-+
-+	dst_clus = exfat_bytes_to_cluster_round_up(sbi, i_size_read(dst));
-+	src_clus = exfat_bytes_to_cluster_round_up(sbi, i_size_read(src));
-+	*last = EXFAT_EOF_CLUSTER;
-+
-+	mutex_lock(&sbi->s_lock);
-+	if ((u64)dst_clus + src_clus > sbi->used_clusters) {
-+		err = -EIO;
-+	} else if (dst_clus) {
-+		exfat_chain_set(&chain, dst_ei->start_clu, dst_clus,
-+				dst_ei->flags);
-+		exfat_chain_set(&src_chain, src_ei->start_clu, src_clus,
-+				src_ei->flags);
-+		err = exfat_combine_find_last(sb, &chain, &src_chain, last);
-+	}
-+	mutex_unlock(&sbi->s_lock);
-+	return err;
-+}
-+
-+static int exfat_ioctl_combine(struct file *dst_file, unsigned long arg)
-+{
-+	struct inode *dst = file_inode(dst_file);
-+	struct exfat_sb_info *sbi = EXFAT_SB(dst->i_sb);
-+	struct exfat_combine_args args;
-+	struct file *src_file;
-+	struct inode *src;
-+	loff_t old_size, old_valid, old_zeroed, dst_size, src_size;
-+	errseq_t dst_since, src_since, meta_since;
-+	unsigned int last_clu;
-+	bool written = false, moved = false;
-+	int err = 0;
-+
-+	if (copy_from_user(&args, (void __user *)arg, sizeof(args)))
-+		return -EFAULT;
-+
-+	if (args.flags)
-+		return -EINVAL;
-+
-+	CLASS(fd, f)(args.src_fd);
-+	if (fd_empty(f))
-+		return -EBADF;
-+	src_file = fd_file(f);
-+	src = file_inode(src_file);
-+
-+	/* The data of @src becomes readable through @dst. */
-+	if (!(dst_file->f_mode & FMODE_WRITE) ||
-+	    !(src_file->f_mode & FMODE_READ) ||
-+	    !(src_file->f_mode & FMODE_WRITE))
-+		return -EBADF;
-+
-+	if (dst_file->f_path.mnt != src_file->f_path.mnt)
-+		return -EXDEV;
-+
-+	if (!S_ISREG(dst->i_mode) || !S_ISREG(src->i_mode) || dst == src)
-+		return -EINVAL;
-+
-+	if (unlikely(exfat_forced_shutdown(dst->i_sb)))
-+		return -EIO;
-+
-+	/*
-+	 * After an unclean shutdown, the clusters of a source may already
-+	 * belong to its destination as well, or be linked to it, and any file
-+	 * may be inconsistent until fsck.exfat has run.
-+	 */
-+	if (sbi->vol_flags_persistent & VOLUME_DIRTY)
-+		return -EUCLEAN;
-+
-+	/* LSM and fanotify permission checks, done before taking any lock. */
-+	src_size = i_size_read(src);
-+	err = remap_verify_area(src_file, 0, src_size, true);
-+	if (err)
-+		return err;
-+	err = remap_verify_area(dst_file, i_size_read(dst), src_size, true);
-+	if (err)
-+		return err;
-+
-+	err = mnt_want_write_file(dst_file);
-+	if (err)
-+		return err;
-+
-+	lock_two_nondirectories(dst, src);
-+	/* swapon() sets S_SWAPFILE under the inode lock. */
-+	if (IS_SWAPFILE(dst) || IS_SWAPFILE(src)) {
-+		err = -ETXTBSY;
-+		goto out_unlock_inodes;
-+	}
-+	/* An unlinked @dst is not written back: @src would lose its data. */
-+	if (!dst->i_nlink) {
-+		err = -ENOENT;
-+		goto out_unlock_inodes;
-+	}
-+	if (!exfat_combine_inode_ok(dst) || !exfat_combine_inode_ok(src)) {
-+		err = -EIO;
-+		goto out_unlock_inodes;
-+	}
-+	inode_dio_wait(dst);
-+	inode_dio_wait(src);
-+
-+	src_size = i_size_read(src);
-+	if (!src_size)
-+		goto out_unlock_inodes;
-+
-+	err = exfat_combine_check_chains(dst, src, &last_clu);
-+	if (err)
-+		goto out_unlock_inodes;
-+
-+	err = exfat_emergency_state(dst->i_sb);
-+	if (err)
-+		goto out_unlock_inodes;
-+
-+	/*
-+	 * exFAT cannot describe a gap in the middle of a file, and the rest
-+	 * of the last cluster of @dst may hold stale data.  Zero-fill @dst
-+	 * up to the end of its last cluster, including any uninitialized
-+	 * range before i_size, so that @src starts at a cluster boundary.
-+	 */
-+	dst_size = round_up(i_size_read(dst), sbi->cluster_size);
-+	err = inode_newsize_ok(dst, dst_size + src_size);
-+	if (err)
-+		goto out_unlock_inodes;
-+
-+	old_size = i_size_read(dst);
-+	old_valid = exfat_get_valid_size(EXFAT_I(dst));
-+	old_zeroed = exfat_get_zeroed_size(EXFAT_I(dst));
-+	dst_since = filemap_sample_wb_err(dst->i_mapping);
-+	src_since = filemap_sample_wb_err(src->i_mapping);
-+	meta_since = filemap_sample_wb_err(dst->i_sb->s_bdev->bd_mapping);
-+	err = exfat_extend_valid_size(dst, dst_size);
-+
-+	filemap_invalidate_lock_two(dst->i_mapping, src->i_mapping);
-+	if (err)
-+		goto out_unlock;
-+
-+	/*
-+	 * Dirty data of @src must reach its clusters before they change
-+	 * owner.  All dirty data of @dst, including the zeroes just written,
-+	 * must be on disk before its new valid_size is, and cached folios of
-+	 * @dst past its EOF must not shadow the data appended from @src.
-+	 */
-+	err = exfat_combine_write_back(src, src_since);
-+	if (err)
-+		goto out_unlock;
-+
-+	err = exfat_combine_write_back(dst, dst_since);
-+	if (err)
-+		goto out_unlock;
-+	written = true;
-+
-+	err = invalidate_inode_pages2_range(dst->i_mapping,
-+					    dst_size >> PAGE_SHIFT, -1);
-+	if (err)
-+		goto out_unlock;
-+
-+	err = __exfat_combine(dst, src, last_clu, &meta_since);
-+	moved = i_size_read(dst) > dst_size;
-+
-+	/* @src may have been emptied even if a later step failed. */
-+	truncate_pagecache(src, i_size_read(src));
-+	if (moved) {
-+		fsnotify_modify(dst_file);
-+		fsnotify_modify(src_file);
-+	}
-+
-+out_unlock:
-+	/*
-+	 * If the clusters were not moved, undo the zero padding so that a
-+	 * failed call leaves @dst as it was.
-+	 */
-+	if (err && i_size_read(dst) <= dst_size)
-+		exfat_combine_unpad(dst, old_size, old_valid, old_zeroed,
-+				    written, dst_since);
-+	filemap_invalidate_unlock_two(dst->i_mapping, src->i_mapping);
-+out_unlock_inodes:
-+	unlock_two_nondirectories(dst, src);
-+
-+	/*
-+	 * Make the empty entry of @src durable and check for metadata write
-+	 * errors, with the inode locks dropped so that writers of either
-+	 * file are not stalled by the device.  Unlinking the emptied @src,
-+	 * if it is not needed, is up to the caller.
-+	 */
-+	if (!err && moved)
-+		err = exfat_combine_flush(dst->i_sb, &meta_since);
-+	mnt_drop_write_file(dst_file);
-+	return err;
-+}
-+
- long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- {
- 	struct inode *inode = file_inode(filp);
-@@ -722,6 +1336,8 @@ long exfat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return exfat_ioctl_set_attributes(filp, user_attr);
- 	case EXFAT_IOC_SHUTDOWN:
- 		return exfat_ioctl_shutdown(inode->i_sb, arg);
-+	case EXFAT_IOC_COMBINE:
-+		return exfat_ioctl_combine(filp, arg);
- 	case FITRIM:
- 		return exfat_ioctl_fitrim(inode, arg);
- 	case FS_IOC_GETFSLABEL:
-diff --git a/include/uapi/linux/exfat.h b/include/uapi/linux/exfat.h
-index 46d95b16f..e5c19ad6d 100644
---- a/include/uapi/linux/exfat.h
-+++ b/include/uapi/linux/exfat.h
-@@ -13,6 +13,7 @@
-  */
- 
- #define EXFAT_IOC_SHUTDOWN _IOR('X', 125, __u32)
-+#define EXFAT_IOC_COMBINE  _IOW('r', 0x20, struct exfat_combine_args)
- 
- /*
-  * Flags used by EXFAT_IOC_SHUTDOWN
-@@ -22,4 +23,50 @@
- #define EXFAT_GOING_DOWN_FULLSYNC	0x1     /* going down with full sync*/
- #define EXFAT_GOING_DOWN_NOSYNC         0x2     /* going down */
- 
-+/*
-+ * Argument for EXFAT_IOC_COMBINE.
-+ *
-+ * The ioctl is issued on the destination file.  The clusters of @src_fd
-+ * are appended to the destination without copying any data, and the
-+ * source is left as an empty file, so that only metadata is changed.
-+ * The caller unlinks the source afterwards if it is not needed; if the
-+ * name of the source has to keep referring to the same file until then,
-+ * the caller has to prevent concurrent renames.
-+ *
-+ * Clusters can only be appended at a cluster boundary.  If the size of
-+ * the destination is not a multiple of the cluster size, it is first
-+ * extended with zeroes up to the end of its last cluster, so the combined
-+ * file has a zero-filled gap between the original and the appended data,
-+ * and the appended data starts at offset round_up(old size, cluster size).
-+ * User space has to account for that gap, e.g. by making the file format
-+ * skip it.  To fill it with something else, user space can pad the
-+ * destination itself before the call, in which case nothing is zeroed.
-+ * The cluster size is reported in st_blksize by stat(2).  Any range of
-+ * the destination that was never written, e.g. after fallocate(2), is
-+ * zeroed as well, which can take a while if it is large.
-+ *
-+ * An unlinked destination is refused (ENOENT); an unlinked source is
-+ * accepted.  An empty source leaves the destination unchanged.
-+ *
-+ * Errors are reported even when the device fails only after the
-+ * destination was updated.  The clusters may then already belong to the
-+ * destination, with the source empty or still to be written as empty;
-+ * callers can tell from the size of the destination.  Otherwise a failed
-+ * call leaves both files unchanged.
-+ *
-+ * A crash during the call may leave both files referencing the appended
-+ * clusters, or the cluster chain of the destination linked to them while
-+ * its size does not cover them yet.  fsck.exfat resolves this without
-+ * losing data, but neither file may be truncated or removed before fsck
-+ * has run: that can free clusters the other file still uses.  On a volume
-+ * that was not cleanly unmounted, the call fails with EUCLEAN until
-+ * fsck.exfat has run.  After a crash, an empty source next to a
-+ * destination that already contains its data means that the call
-+ * completed and only the unlink is left.
-+ */
-+struct exfat_combine_args {
-+	__s32 src_fd;	/* file whose clusters are moved */
-+	__u32 flags;	/* must be zero */
-+};
-+
- #endif /* _UAPI_LINUX_EXFAT_H */
+> [ ... 5 lines skipped ... ]
+> +records:
+> +  # One MR, as mr-get describes it.
+> +  mr-desc:
+> +    # The platform's name for the MR, such as rtmr0.
+> +    name: string(1..128)
+> +    # Its banks, each once, in the provider's order.
+> +    supported-hash-algorithms[hash-algo]: hash-algo
 
-base-commit: e8017d29067fd1310a65c3494ce1a1b492adbac6
+I wonder if it would be wise to put a bit more syntax here:
+    supported-hash-algorithms[num_entries(hash-algo)]: hash-algo
+
+Just to be clear about exactly what is being extracted from
+hash_algo.. It is the total number of entries, not the maximum value
+or something else.
+
+> +    # What it allows.
+> +    caps: mr-caps
+> +    # The hardware's number for the MR, where it has one: 0 for rtmr0.
+> +    register-index?: uint(..u32-max)
+> +
+> +  # One bank of an MR.
+> +  mr-value:
+> +    # The bank's algorithm.
+> +    hash-algo: hash-algo
+> +    # The digest, as long as hash-algo's.
+> +    data: binary(16..64)
+> +
+> +  # The device's MR generation, which each extend bumps.
+> +  mr-generation: uint(..u32-max)
+> +
+> +  # Values for banks of the MR, each bank once.
+> +  mr-values[hash-algo]: record mr-value
+> +
+> +ops:
+> +  # What the device can do, and its family's fields.
+> +  device-get:
+> +    type: action
+> +    fd-access: read
+> +    reply:
+> +      # What the device supports, fixed for its life.
+> +      caps:
+> +        # Present when the device produces evidence.
+> +        evidence?:
+> +          # One per object evidence-get can produce.
+> +          objects[16]:
+> +            # The device's handle for the object in requests.
+> +            id: uint(..15)
+> +            # What the object is.
+> +            class: evidence-class
+> +            # The layouts a standard defines that the object may have. At
+> +            # least one of formats and vendor-formats is present.
+> +            formats[4]?: evidence-format
+> +            # The layouts its vendor defines that the object may have.
+> +            vendor-formats[4]?: evidence-vendor-format
+
+How do we want to fit AMD's unique GUID scheme into this?
+
+I'm not sure we should be passing a GUID from userspace to select an
+opaque blob. If not then the kernel could have the GUID list and
+report the correct evidence formats as options here?
+
+But then this is maybe a bit limiting because the format is supposed
+to be the basic envelope, but the AMD version uses almost the same
+format but they are still different. Though I suppose the difference
+in the nonce calculation warrants a second format.
+
+And then how does generic userspace even know which one to pick? List
+them all? Should kernel give some 'default signed evidence' ID ?
+
+So many questions :(
+
+> +            # The longest the object gets; a blob this long always holds it.
+> +            max-length: uint
+> +            # A signed object's challenge lengths: each entry is one length,
+> +            # or a range from min-length to max-length.
+> +            challenge-lengths[8]?:
+> +              # A single length.
+> +              length?: uint(1..4K, bytes)
+> +              # The shortest of a range.
+> +              min-length?: uint(1..4K, bytes)
+> +              # The longest of a range.
+> +              max-length?: uint(1..4K, bytes)
+
+The comments should be more prescriptive on how userspace has to
+handle this. I guess if length appears then that length must be used,
+otherwise within the range described by min/max length
+
+But I wonder if this is worth some additional schema support to define
+a tagged union?
+
+> +        # Present when the device has MRs.
+> +        mr?:
+> +          # The MR operations the device provides.
+> +          flags: mr-device-caps
+> +      # The device's family's fields.
+> +      info: extension device-info
+> +
+> +  # Evidence objects, written into the caller's blobs. A signed object is made
+> +  # by the call, over the challenge, and never reused; the others are read as
+> +  # they stand at the call.
+> +  evidence-get:
+> +    type: action
+> +    fd-access: read-write
+> +    availability: dynamic
+> +    optional: true
+> +    request:
+> +      # Bound into each signed object named: pass a verifier's nonce, or a hash
+> +      # binding one to your context, never data a peer chose. Present exactly
+> +      # when a signed object is named, and of a length each of them takes.
+> +      challenge?: binary(1..4K)
+> +      # The objects to produce, each named once.
+> +      objects[16]:
+> +        # The object, by the ID device-get lists.
+> +        id: uint(..15)
+> +        # Where the object is written. One too short for it fails the op with
+> +        # EMSGSIZE, and error-info's required-length says how long it has to
+> +        # be.
+> +        data: blob(out, va)
+
+What will this be like when we add memfd later?
+
+> +    reply:
+> +      # One per object, in request order.
+> +      results[16]:
+> +        # The layout it came in, where a standard defines it. Exactly one of
+> +        # format and vendor-format is present.
+> +        format?: evidence-format
+> +        # The layout it came in, where its vendor defines it.
+> +        vendor-format?: evidence-vendor-format
+> +        # The bytes written to its blob.
+> +        length: uint
+> +      # Present when the evidence depends on the MRs.
+> +      mr-generation?: record
+
+Later we will need to add 'tsm controlled challenge' meaning the challenge is
+an output not an input,
+
+> +
+> +  # The MRs' IDs and descriptions, which do not change; mr-read returns
+> +  # values, which change with every extension and are read from the hardware.
+> +  mr-get:
+> +    type: query
+> +    fd-access: read
+> +    optional: true
+> +    suggested-reply-length: 4K
+> +    request:
+> +      # Only this MR; every MR without it.
+> +      id?: uint(..u32-max)
+> +    reply:
+> +      # One per MR, ordered by ID.
+> +      items[]:
+> +        # The device's handle for the MR in requests.
+> +        id: uint(..u32-max)
+> +        $include: mr-desc
+> +
+> +  # One MR's values, and the MR generation they belong to.
+> +  mr-read:
+> +    type: query
+> +    fd-access: read
+> +    optional: true
+> +    suggested-reply-length: 4K
+> +    request:
+> +      # The MR to read, by the ID mr-get lists.
+> +      id: uint(..u32-max)
+> +    reply:
+> +      mr-generation: record
+> +      mr-values: record
+
+Can we leave the generation for a followup with more understanding
+what it will be used for and how it is computed?
+
+> +
+> +  # Extends banks of the MR by digests, as TPM2_PCR_Extend.
+> +  mr-extend:
+> +    type: action
+> +    fd-access: read-write
+> +    optional: true
+> +    request:
+> +      # The MR to extend, by the ID mr-get lists.
+> +      id: uint(..u32-max)
+> +      # For the banks to extend, each once, in any order.
+> +      mr-values: record
+> +    reply:
+> +      mr-generation: record
+
+The comment should say that mr-values must include exactly every bank
+inside the MR, not more or less.
+
+If we want to later add something like a log entry as an option this
+is easy to extend for that, right?
+
+This API eventually needs certificates. I expect that Intel is
+including the certificates embedded within the EAT returned here as
+signed evidence. AFAIK ARM does the same
+
+But AMD seems to pass them through 'auxblob' in tsm_report, so there
+should be a certificates API here to get them. SPDM also has them
+detached from the evidence.
+
 -- 
-2.53.0
-
+Jason
