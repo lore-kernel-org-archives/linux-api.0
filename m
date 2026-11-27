@@ -1,83 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.45
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.173
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795805478;
-	b=rrJT/fb4KsBeNLLzHHQrehM7rx1rg+HL5Dym3FxcB+rBRap38Gn4+Ux3yPgeLfF9fPXN
-	 /aG33a43mvaZT60VsXE7AjWhKXkCfsKVZbe4wrOjPntjqQiWikrkEkZvHwmqC9ZyrRvck
-	 N5g/AR7rWt/8fqg7AiVSwhp5EiJ95dQvGcz6Ydt/piMfZJAyI9EtcVGY4kjd0JTqbl9+t
-	 w0VWsq4Y0/TtU3kspO2lbAjWJbAYEVsST6CWNW68yscojc9MKNv4yh5roZjmKlDqbOTpi
-	 SrN3PV9DNaQj2kstTB//sTnV9b0eFJC6LgNTste3S5QxovHWCV8o7UMa3cwOIjALCOw==
+	t=1795814405;
+	b=ZlqR8srZU9CQIIIkC65WJNv2zRhWv5XpYZDl3ksWyooc2FCiezLvSKNjIOjVcjlR+eOF
+	 X1gFVNABmDWOoT1SPfu5uYL9YXwvH5KMO3SQi2Sbh7TFOgBTOAPPErl9WDlkocfl4Us07
+	 pAeLjjSDsMwqtIBs2su/Ccd0DSeXo6m71Lvg9qSy8UGR0yEvucu+Z87hb2YA5w6BK6QB/
+	 0CHWN5937IQEt1YRM6i/tm1YGjILGpZMwSVfoundBQRv75kFqgUs2pTtFKBYSAbrns2+W
+	 es3MnhQ3/hVuH1gee2CGcBDSO7WDGPJBY+JFDOzxY/rpng42F9aBrAXeTG3AeOuZX3Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795805478;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795814405;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 Mime-Version:Content-Type:Date:Message-Id:Cc:Subject:From:To:X-Mailer:
-	 References:In-Reply-To;
-	bh=JmL8LoMVs76VvbagqtHAZXdxFbOYrgh5zmv9OUe36GM=;
-	b=lwKD6279dPtMafd5wjJoYych9OQsCC854rfZovsh5A/kK+6JxfaFiUGZRZxQ61u3C1Wb
-	 bQgppe0liU9koTR/6HqFqdL9IMcX4ttWO8IxN2DFBcaGXZlB+JRTy9gKBJbmmvcJm1Mu9
-	 ZY8BcXiB3oGVapHy7y9kiwap39RQgEFRDQQSp0X7TMvaXC12Ys9Odf3539fx8Tm1LhsKB
-	 AV6IONM4v0xCh8Du0oXnGvdjxQZxalV2MplTutSCue/aeGiz7VQ5345tL91pW7Amincv2
-	 YmbKwjesJbtZVSfPD/VQmsCsimKvNqsSO/bt9sy7R6Hkljs/sQLE31btsf8SprykmAQ==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 X-Developer-Signature:X-Developer-Key:Content-Transfer-Encoding;
+	bh=1L+JG2vdUpgp0JPqj2FHTVN4G8BfYs3SYaKUQy5dZWM=;
+	b=S0zWDe9G1WOmXM2RY7ho01XY3T+K29nUGhx6tL8TjvCNGPPQN5+qj8CUSnGk5HEPAa+C
+	 Gw07K8/HY9/tm4HZhs6NNgQGFZyxILyNY1qTM2Cw2IZtbC8NvykmI+Hk6Pkvaqe75ELP6
+	 NGrdTPx//lzgszkqEUUtaY+0rHCVAIncZsg+frZy8uvH76wphFBVB+tPX4DyGGFBbPfcX
+	 DnmbfhxPi6ftOG0IXm9E4KlntNSPkZelpEzQ4qUE3zBvlMFMIYb8ae9kqz+XDTQzkjsIf
+	 DsOfmsuEM7iKtjTDxrOspIXZ+hzGZus9DdA6ia75o3UsgmYwsnorspUWJ98vA1AHzHQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=m3pNdptj;
-	arc=none smtp.remote-ip=209.85.221.45
-Received: from mail-wr1-f45.google.com (mail-wr1-f45.google.com [209.85.221.45])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=0hY7ceyl;
+	arc=none smtp.remote-ip=74.125.82.173
+Received: from mail-dy1-f173.google.com (mail-dy1-f173.google.com [74.125.82.173])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C2406606A31E
-	for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 18:51:17 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C2406606A31E
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD7B4606A31E
+	for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 21:20:04 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CD7B4606A31E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=m3pNdptj
-Received: by mail-wr1-f45.google.com with SMTP id ffacd0b85a97d-4ac109a8a12so4995027f8f.3
-        for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 10:51:17 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=0hY7ceyl
+Received: by mail-dy1-f173.google.com with SMTP id 5a478bee46e88-385c497bf94so8917002eec.1
+        for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 13:20:04 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795805476; x=1796410276; darn=vger.kernel.org;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=JmL8LoMVs76VvbagqtHAZXdxFbOYrgh5zmv9OUe36GM=;
-        b=m3pNdptjqW81pY9NLNr665+hJMXwfSRIqlg9cV1mmo9g7662QC2nuYP6a74k3dZ3Iv
-         zvWxD2plIKeVWrLGkl0fu/pCXc3Vzo5AvT6VFc4h9ivwKjhKyhk7gIjLCx9npZwJUmyQ
-         Nk4TvX4IzB2micR2Tn6o+UKGujjmbSTrorSwb1pZ/GkQGqOji8LqBS5bCMicKVrMKepu
-         ioYd1kId/PYWHMgCja4C2aGhqgHUyOK5G1CCmNbKgHfRfy+Yjo4yFy+orjpyYzTB+iHt
-         M9/R5HRHUsAyOqHMXuprEzV4ETE8D3x09EMM2j33PoYMAXrIBvD7VzX01Z6gcTlyJABk
-         Dmow==
+        d=gmail.com; s=20260707; t=1795814404; x=1796419204; darn=vger.kernel.org;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=1L+JG2vdUpgp0JPqj2FHTVN4G8BfYs3SYaKUQy5dZWM=;
+        b=0hY7ceyl1k+6gG5NoRMuyJa5XY8JIWyC5XzIlibVt/9sSjFx1iaDnif1zvh+LEp2cl
+         XqYhrW6hs3xMl9UG4ezqJAqkJnsGDjvrBKBKG9KGKDbwlnha8AN4UVCOS5bM2essWJGV
+         YLFV3QG1oDq7qU/gOILaWeywAg+Q3oODeK6xatjJVpHGvmr2XBo/cZJZbBEPB98dcmov
+         UXicMtWrhFeRfURwU2+zaAp5dRw3PwK/8aGA4a81E9SgtpbvOglFFgH8cik55w+K6ULw
+         kEdYakIK2mIcbbN16BRqFFyczoC65wAjRh7gd9orDPp8fFoULPj3xEr66juGaUd594gb
+         tQKg==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795805476; x=1796410276;
-        h=in-reply-to:references:to:from:subject:cc:message-id:date
-         :content-type:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=JmL8LoMVs76VvbagqtHAZXdxFbOYrgh5zmv9OUe36GM=;
-        b=bLbmSJHCrSLaxHEY9w61lrH0vkxqCK6T8+2Y/yILYy+oNl7T0kMqFXQpI+gGDLuOP8
-         S34hx1CGA28Ul6gh+itkdUuy4TiVNJsHCDnYmmLJ766BoMWHGI1VcP+qZKfXrUCsRW+e
-         A1SqdwSclDAkTnXYtd6HM8jLt+x7DrjO7r6sDuNRGrJmribOxbQUuxIJGLC0/kfG746k
-         AaCJO89AiUvgAuUyioYLefbZMnHKuPicUcEem0P8PUFVa2hDGUoehE0KjCB6BJCzFdXc
-         BCXhQDTBLrBBNVlfUB1WAkdWELW/1p7huxkhYTA2GdJjjM2tXFk6uKZumvP9ltzN8dr6
-         5NKg==
-X-Forwarded-Encrypted: i=1; AL+hErE/sF9gjMwcgOcjXO2Zf4BqmqPpeyCEIPswloQ9qvFS3X1BJS3YJI8RVjMVclvo/gG64CtOvJwXviU=@vger.kernel.org
-X-Gm-Message-State: APuU4Z8KGNyddWZFkWYt0PnusFpz8ZphHlaKNkk8mus4dDpnUKJ1dNwV
-	dlHPaQuioUhp1hWwAFKcrDlNXWuQDVioTgdOr6CB/iu4J+HgvvMgtc+a
-X-Gm-Gg: AZFdTZeAg4fkKIZgktlxvydOubv20pM7dmKlgKYvQHFKmt4D1fQwGj821yujeZ0dMNw
-	NdLxZ48k2vYc/SS+buKrLKakhZ0tN4yY2myVKDmqO9ZIYdIigM1XOdRLJGWgCOAZf3L54blEfNb
-	jq2n0wbvhgph0ZSg3fb4HsuyNwxfcfWnjSYsxSSfecAsH0CIk9gXnEcssRNaHwwftebQC2Q6Yfe
-	W8L8WUznNz3xGNmh5xXGvhxywevzz33+6vkyUmovjFybFHYtyZrn47qJCroKSjlvK8zm2sc4gjJ
-	uvvLuqYRpdxBOVNFXMhGqmYHVXyp6u35s3UmIrADnRIqIvaRlgHg0/QvQSuNx/6knD5OY5jJjsG
-	3U2TFqTouun5jLdciRai33n2JhMuJ2B2XQxnn7mHl4oMi4v8KDa/rcf0eXt+eysPvOpGzQ//IsG
-	eDKaUEdwIDXfx3ln2riHc1FL95r3BxCNg4FHKDnF5EDw3yf/PNwgfVbYnekUrqfe0P09mw3mEOc
-	XZGLNa9uhqCIY4x7QInL7hbvfNg7uFfpBF+dMCmNG5pCYqpZyahRQvpAdNmWeraxQ5gM8XWGODN
-	PdGpUP2z9aJo+1sIgJWMr7Rung==
-X-Received: by 2002:a05:6000:4812:b0:48d:b650:69aa with SMTP id ffacd0b85a97d-4abb55185e4mr49465105f8f.50.1795805475952;
-        Fri, 27 Nov 2026 10:51:15 -0800 (PST)
-Received: from localhost ([2001:b07:5d26:7a6a:365a:60ff:fe0d:cfc6])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4bef07f9e0dsm4921752f8f.53.2026.11.27.10.51.14
-        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
-        Fri, 27 Nov 2026 10:51:15 -0800 (PST)
+        d=1e100.net; s=20260707; t=1795814404; x=1796419204;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=1L+JG2vdUpgp0JPqj2FHTVN4G8BfYs3SYaKUQy5dZWM=;
+        b=mPEPlp5/CCNtg7zz0FClSXETg7RoaHWeip94v/PQa+7oMkoGNTEQ5pxEyW/9urA/Uy
+         5SToFM9YPMNGD5zW4i/kdNaEfeNaMyt5KnLvoDchpXPSKQPlgqROyMRYQ/1mNYDMfzVz
+         UMGbZeFJKAtn4XwRIl8vMjSl5IenOG3OpbSebP8vPS0Ol5KI8wQjjmJLlhlOeWYs/0gF
+         m8l9S/wdPwzxob6J3QgEKFPiM87ShxxqGdfs5dC8TNvDAq26N+4XJJRJrcKMSCeAkSMn
+         BsIMMwNZedeZqlLTgwHVSQIZEta/c3oCs7u2pfdxkYtk4IKKEwMP3NjvQsxLv6Oiogyt
+         M4XQ==
+X-Forwarded-Encrypted: i=1; AL+hErHqrb9MxhhwxvdV8PGugINZMsb2wKjP2deu+0bYFJTaWDnDnWzAdFUbJO4vNkra2cQptOXkCtfMT3I=@vger.kernel.org
+X-Gm-Message-State: APuU4Z/y05NY1sOXNgDJzq97s/kxX4X0kKlB+VxbA1Ersea7M19JeEln
+	+5EDJnQbK0b0rPeOb7trtWcS3SFzad3cHiz/HUxpdYSA2Zl0cChRxfk2
+X-Gm-Gg: AZFdTZfQqEy9lFf9gtm7AfVzM0VC6+t/omjwh2mmldXfh2x4++kKNEG1rYxT7OpDEfM
+	ZYvp/7R6Z5+upSRWGceuJ+YNnLzu6wQ22KUHM65B7tw8iSiYNJvUGNgZUfqY7FbozNbV3TsvB7j
+	qaV2HCkwhrurUrGT6EiFOMO2rE24suV5KfEBSLgj8X2anxdzMAIQQUm9usrWAZ+OH70sDuu74nY
+	GOvM0qJ6rg0VF7afGjMKAt2sKDDVEHiVw6xWdet7sgaBTpCNiNr957Zkw1ALo1AC/OyfJPegWqA
+	3bnlaSZBKXhgEQtHqHXHh+G+59aIkNkdiBlYU91+nFuCVzekSG8ChToWMnMjRDkUhkB29n9pyi2
+	c9HlpXWP/L40cbTHKNSNh2t9MPL2cKwqCiPjtjkgXLrsQVhRoEGZnNFRlTRchnk0uFu3zw5rBi3
+	Vx7Q/xYSmlHh9i0I3bHcEzK1YJ1SDOtkY+dZh1i8HqWtS3CKe2JOJR8p5FpXxBcWqJSApqFQLxP
+	0GiXhOpgR/eL0MYkmb2goSSNXXEzeQ0UHB/K2KQt2z622ooVdYVRPfh04bHLoGd8CkkShAABOom
+	v7Xz933mwom6Ww/7cqan89+RHo8eVg92vCHj/38W+D7+nUVxqxY3k7B4t8mYek8qQ5l7UNpcvrK
+	vslLmJjCo3h9QV9rPNHHH96WsDfHoU8SqZbHkr/KggwceuFHcY3H12i6mMaEGRkAdJm7FNJyoah
+	0+b/Wdxncyq3kfUcDXSNwue4kfb9mmH/gsd4A9TTT7uT71Fhu4CBBKl2koogS3grXtC4cBlCs5I
+	c4me77YQHI75zKlhV3b/i/YSx4V5MNToV1XiYUtakUkoNt6Xb9kmXODs4QgZrhRtsj+rz6oeyUw
+	UVWGxLUM23Vc3O+u/A==
+X-Received: by 2002:a05:7300:1899:b0:386:b6e2:9fa1 with SMTP id 5a478bee46e88-386b6e2a02fmr22240514eec.34.1795814403841;
+        Fri, 27 Nov 2026 13:20:03 -0800 (PST)
+Received: from localhost.localdomain ([2600:1700:5390:dae0:7063:f08:2b4a:6d9a])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-385672c6f31sm73804236eec.15.2026.11.27.13.20.02
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Fri, 27 Nov 2026 13:20:03 -0800 (PST)
+From: Artem Andreenko <miolini@gmail.com>
+To: Jens Axboe <axboe@kernel.dk>,
+	Pavel Begunkov <asml.silence@gmail.com>
+Cc: io-uring@vger.kernel.org,
+	Artem Andreenko <miolini@gmail.com>,
+	linux-api@vger.kernel.org
+Subject: [RFC PATCH 0/2] io_uring: add CLOCK_TAI support for waits and timeouts
+Date: Fri, 27 Nov 2026 13:20:02 -0800
+Message-ID: <20261127212001.18516-4-miolini@gmail.com>
+X-Mailer: git-send-email 2.54.0
 X-Mailing-List: linux-api@vger.kernel.org
 List-Id: <linux-api.vger.kernel.org>
 List-Post: <mailto:linux-api@vger.kernel.org>
@@ -86,110 +99,57 @@ List-Subscribe: <mailto:linux-api+subscribe@vger.kernel.org>
 List-Unsubscribe: <mailto:linux-api+unsubscribe@vger.kernel.org>
 List-Owner: <mailto:linux-api+owner@vger.kernel.org>
 Precedence: list
-Mime-Version: 1.0
-Content-Type: multipart/signed;
- boundary=3d0117b6230d8b8a6a185cfbfe10dda73718c7f46272653fffdbe69dff91;
- micalg=pgp-sha512; protocol="application/pgp-signature"
-Date: Fri, 27 Nov 2026 19:51:13 +0100
-Message-Id: <DN67WTNVL19F.1D5GOBP57BP1L@gmail.com>
-Cc: "Namjae Jeon" <linkinjeon@kernel.org>, "Hyunchul Lee"
- <hyc.lee@gmail.com>, "Eric Biggers" <ebiggers@kernel.org>, "Theodore Y .
- Ts'o" <tytso@mit.edu>, "Jaegeuk Kim" <jaegeuk@kernel.org>, "Alexander Viro"
- <viro@zeniv.linux.org.uk>, "Christian Brauner" <brauner@kernel.org>, "Chuck
- Lever" <cel@kernel.org>, "Jeff Layton" <jlayton@kernel.org>, "Jan Kara"
- <jack@suse.cz>, "Alexander Aring" <alex.aring@gmail.com>, "Darrick J .
- Wong" <djwong@kernel.org>, "Andrey Albershteyn" <aalbersh@kernel.org>,
- =?utf-8?q?Pali_Roh=C3=A1r?= <pali@kernel.org>, "Lauri Gates"
- <lauri.gates@gmail.com>, "Christoph Hellwig" <hch@infradead.org>, "Dave
- Chinner" <dgc@kernel.org>, <linux-btrfs@vger.kernel.org>,
- <linux-xfs@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
- <linux-fsdevel@vger.kernel.org>, <ntfs@lists.linux.dev>,
- <linux-nfs@vger.kernel.org>, <linux-api@vger.kernel.org>
-Subject: Re: [PATCH v2 3/4] vfs: add xflags mask to fileattr API
-From: "koraynilay" <koray.fra@gmail.com>
-To: "Amir Goldstein" <amir73il@gmail.com>, "koraynilay"
- <koray.fra@gmail.com>
-X-Mailer: aerc 0.22.0-0-gc2f86b7abde3
-References: <20261126163114.403846-1-koray.fra@gmail.com>
- <20261126163114.403846-4-koray.fra@gmail.com>
- <CAOQ4uxhA+93bo5WseLxe7cAvJHJ8eQodoQHLwh=iToyEVkeXEA@mail.gmail.com>
-In-Reply-To: <CAOQ4uxhA+93bo5WseLxe7cAvJHJ8eQodoQHLwh=iToyEVkeXEA@mail.gmail.com>
+MIME-Version: 1.0
+X-Developer-Signature: v=1; a=openpgp-sha256; l=2163; i=miolini@gmail.com; h=from:subject; bh=XKWCeqAmuD+zCiWGJnq/gtjNw3U99tOn+x2J75zIfjE=; b=owJ4nJvAy8zAJebzwOiZnvnNTMbTakkM2ZxfGNXVi4wfvVZxqv/GkLte9MbxT18WyjwX7p5d+ e/BhfPHPG53TGBhEONisBRTZGlsnb9W//5n75gSN1uYOaxMIEOkRRoYgICFgS83Ma/USMdIz1Tb UM/QSMdAx5iBi1MAprpWmOHHcv28Vt2527eezrAtuq144dSfnl3st80/s3+tu7pnb95FRoYzzGf 8C/QiTT7YRyp+nnH0VmWknmPQQ5nb7l/NdaqeHuMCAAY1UgM=
+X-Developer-Key: i=miolini@gmail.com; a=openpgp; fpr=81859FAD2FDFF34B5C74463D4CE032E62E37D969
+Content-Transfer-Encoding: 8bit
 
---3d0117b6230d8b8a6a185cfbfe10dda73718c7f46272653fffdbe69dff91
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
+This series adds CLOCK_TAI support to io_uring for both
+IORING_REGISTER_CLOCK (ring wait timers) and IORING_OP_TIMEOUT /
+IORING_OP_LINK_TIMEOUT (via IORING_TIMEOUT_TAI).
 
-On Fri Nov 27, 2026 at 6:48 PM CET, Amir Goldstein wrote:
-> On Thu, Nov 26, 2026 at 5:31=E2=80=AFPM koraynilay <koray.fra@gmail.com> =
-wrote:
->>
->> Add fa_xflags_rw_mask and fa_xflags_ro_mask to struct file_attr, both
->> __u64 to match fa_xflags' size, and bump FILE_ATTR_SIZE_LATEST to
->> FILE_ATTR_SIZE_VER1, which is now 40 bytes.
->>
-...
->
->>  #endif /* _UAPI_LINUX_FCNTL_H */
->> diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
->> index a13c7b32a1bd..63d88ebe3420 100644
->> --- a/include/uapi/linux/fs.h
->> +++ b/include/uapi/linux/fs.h
->> @@ -238,10 +238,13 @@ struct file_attr {
->>         __u32 fa_nextents;      /* nextents field value (get)   */
->>         __u32 fa_projid;        /* project identifier (get/set) */
->>         __u32 fa_cowextsize;    /* CoW extsize field value (get/set) */
->> +       __u64 fa_xflags_rw_mask;/* supported writeable xflags (get) / fl=
-ags to set (set) */
->> +       __u64 fa_xflags_ro_mask;/* supported read-only xflags (get) */
->>  };
->>
->>  #define FILE_ATTR_SIZE_VER0 24
->> -#define FILE_ATTR_SIZE_LATEST FILE_ATTR_SIZE_VER0
->> +#define FILE_ATTR_SIZE_VER1 40
->> +#define FILE_ATTR_SIZE_LATEST FILE_ATTR_SIZE_VER1
->>
->
-> Man... we really need a bot to review all UAPI changes
-> Please someone tell the bot to check
-> NO LATEST/LAST/ALL constants in UAPI headers!!!
+5G NR gNodeB DU/CU radio-slot loops, O-RAN 7.2x fronthaul, and TSN
+workloads anchor periodic activations and TX deadlines to PTP-steered
+CLOCK_TAI (matching SO_TXTIME, sch_etf, and bpf_ktime_get_tai_ns()).
+Adding CLOCK_TAI directly to io_uring avoids per-slot userspace clock
+conversion or separate timerfd(CLOCK_TAI) syscalls.
 
-Forgot to add: maybe Sashiko can do it if asked nicely :D
+Patch 1/2 removes the redundant ctx->clock_offset field (deriving the
+timekeeper offset from ctx->clockid) and snapshots iowq.clockid once per
+io_cqring_wait() cycle, fixing a pre-existing data race between
+IORING_REGISTER_CLOCK and lockless waiters (which becomes severe once
+CLOCK_TAI and CLOCK_MONOTONIC differ by ~56 years).
 
-> Your patch does not introduce this constant in UAPI but if we change
-> it we risk spreading different versions in installed headers.
->
-> Honestly I see no reason for FILE_ATTR_SIZE_VER* to be in UAPI
-> either. For other UAPIs those constants are not in the UAPI header:
->
-> ~/src/linux$ git grep SIZE_LATEST include/linux/
-> include/linux/fcntl.h:#define OPEN_HOW_SIZE_LATEST      OPEN_HOW_SIZE_VER=
-0
-> include/linux/seccomp.h:#define SECCOMP_NOTIFY_ADDFD_SIZE_LATEST
-> SECCOMP_NOTIFY_ADDFD_SIZE_VER0
-> include/linux/xattr.h:#define XATTR_ARGS_SIZE_LATEST    XATTR_ARGS_SIZE_V=
-ER0
->
-> So please move those contacts before adding/changing them
-> (can be in the same patch IMO).
->
-> This is a high level review.
-> I did not look at the details of the conversions and validations
-> Will do that for v3.
->
-> Thanks,
-> Amir.
+Patch 2/2 enables CLOCK_TAI in IORING_REGISTER_CLOCK and adds
+IORING_TIMEOUT_TAI (bit 8) to IORING_TIMEOUT_CLOCK_MASK.
+
+Tool-assisted content note (per Documentation/process/generated-content.rst):
+An AI coding assistant (Google Antigravity / Gemini) assisted with source
+analysis, drafting the patches/changelogs, and writing the standalone
+arm64 QEMU test harness. Both patches were built with W=1 and runtime-tested
+on arm64 QEMU with PROVE_LOCKING, DEBUG_ATOMIC_SLEEP, and a 37-second
+ADJ_TAI offset.
+
+Open question for RFC feedback:
+Should IORING_REGISTER_CLOCK(CLOCK_TAI) and IORING_TIMEOUT_TAI be split
+into separate patches or kept together as in Patch 2/2?
+
+Artem Andreenko (2):
+  io_uring: snapshot clockid per wait and drop clock_offset
+  io_uring: add CLOCK_TAI support for waits and timeouts
+
+ include/linux/io_uring_types.h |  1 -
+ include/uapi/linux/io_uring.h  |  5 ++++-
+ io_uring/io_uring.c            |  1 -
+ io_uring/io_uring.h            | 13 +++++++++----
+ io_uring/napi.c                |  3 ++-
+ io_uring/register.c            |  6 ++----
+ io_uring/timeout.c             |  2 ++
+ io_uring/wait.c                |  9 +++++----
+ 8 files changed, 24 insertions(+), 16 deletions(-)
 
 
+base-commit: 822ba3a89c7896b26e4beb70e2ebffb881924dfe
+-- 
+2.54.0 (Apple Git-157)
 
---3d0117b6230d8b8a6a185cfbfe10dda73718c7f46272653fffdbe69dff91
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYKAB0WIQSgVimKafU5DQMcjcDmj22qf5IGXAUCawnRIQAKCRDmj22qf5IG
-XJUmAP9OYQdkwBS0FIjyqP9a3I8gdrfFrp/bZms8ThGuY3SovAEA9zGXlhLiGxhC
-iuYnX95tMjFyQ2w7/Y0yIwxjSTRZ7gg=
-=DR0g
------END PGP SIGNATURE-----
-
---3d0117b6230d8b8a6a185cfbfe10dda73718c7f46272653fffdbe69dff91--
