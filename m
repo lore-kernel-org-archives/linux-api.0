@@ -1,49 +1,56 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795784884;
-	b=bDOLXlN6Sk6N4KCr7cmQoAOKA6Jg1Sp+Iy6NmHZhUqFWLJAkS+qAAi3STGig2zKaGCvr
-	 3uHW8+d6ZRJkb+AnmbqpDEVX07qSYR5jnCOdaWaC03gpnirb3MhVXpOPFV+xBnAZh0epF
-	 dji0k7H4RBaYe427Oe1uSKCakdRTqGeah8S+Cd7cI0VsSeD5mrN/Zehb142AJH0aIfuhu
-	 PPoYM7aIaPW5DUW1NsGrjMCwNKo3fLXO/FEjWd0wq3B3TwGtnipNvNBqKvzjOTNeaQj7O
-	 q0Kpr5gXmr0MzpTssQflB75nZbGilwb7QDmaJVzRvNvD7a8EGEIGCHYFLwgH8pB4jqg==
+	t=1795785179;
+	b=G7gZLKlsP/LMBZLC00le6YDlayGV9wOgGoorEOFqJL3Rv7l43YsqL/RIZgy4uYvFRAjK
+	 lk1lf8TgwqBikz5uWeJ1Zs8N/T3HP9eQ3obX87kSFDcxC+23oL+1NClFl5AboIHlNmSjZ
+	 H0GsqTejGN2uq/PaAEx7dUFUEkRXwMYZu+R+sI9IzNLfTRwuueoZ7Hpb3GSMAcwKZkMoH
+	 kvTOk8617O0huYT+RCz8Hvrr0QQ6i9x2fn3v/Aa4LaBK8ipC2mt604GdCRsJJ/qixdMyD
+	 7kXaPDmcGC3pehfjtI3QdgjfW8J4bSQ+HJ4YGeriIFB0dHBkSt+jTqImpIMgt/DiN7Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795784884;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795785179;
+	h=Received:DKIM-Signature:Resent-From:Resent-Date:Resent-Message-ID:
+	 Resent-To:Date:From:To:Cc:Cc:Subject:Message-ID:References:
+	 MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
 	bh=1n7aGqslJizq3A0w/V38NH8BqsVPS3xR6m9MYJQhWag=;
-	b=wkMFRG6nkUyimfmzDH77BDtC/f5zRcBIt4Na351i9YtHKYvi4Bo2qGQKP4y3y4o/rAfP
-	 TRLncKKRt/XKURwoQnhML6vb+pPqajYFafhOROO7m4cZolr/JPWd37Kg2Un2EgweLBpcX
-	 3/0dCR4Iiifxkbb8ovw58QNm/ZK2foHwTlum5msnb7zCojQ7C9cawjgWAtswPBZUS38lG
-	 Lo2QKBgCnLgSejudq4DgUQsheXKDX5oSImH+peW2zMjWep+AZ3hvnDHEECdJG/5qHHCRB
-	 k9ePB2p/fxlM2r6JMHlrk6IZgeq4+L/VaGKkARDV9Yq88mon1eS5qElEfCIrZd5y1Fw==
+	b=5P+AJctsfGTgQVaWKGLtpQasYsgcsLUBGXu8op+4h1XDROJgRhYu7IzYKawf52O7w8Hy
+	 YzOm/+ydXCC/TSJeMi9Zp+iSEMATIzmHFuWR9NDJIHjQG5Pn8oWc/+11RWFU6NIe3SQ6c
+	 S+SsIWqRUG/5+SUbC8hbkHndFyJvZuA4f5oVipbbqHgY+Ds+8AJK+ihhbjQYQQ2hP0s8u
+	 4eN1AkDVbXoNrAtV1UAA3+9hfxFSs/FkFGm1ibfpNBkBA42gm4FzwJ2w0ZIM03cMj4kDy
+	 iGQQVT/BEdQd/zZIfbqFNNlf9OEvAiSGoWdZaoeDH8eBdtsvCZAqvKA0UX5bM+A8PlA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ESHsicbg;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Q6fKVmOH;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3EE50606A31C;
-	Fri, 27 Nov 2026 13:08:04 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AEF36606A31F
+	for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 13:12:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ESHsicbg
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 7DD7E1F00927;
-	Fri, 27 Nov 2026 13:08:02 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Q6fKVmOH
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 040B91F00899
+	for <linux-api@vger.kernel.org>; Fri, 27 Nov 2026 13:12:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795784883;
+	s=k20260515; t=1795785179;
 	bh=1n7aGqslJizq3A0w/V38NH8BqsVPS3xR6m9MYJQhWag=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=ESHsicbg+xlaaWdWHm8FmEtru8Bc26u7wFzrtu2iZakf0+Ip0+WKL6YDDVD7rPfsj
-	 1tRSb65YNxjped8mNLqj/S25whel7s1sVWZQ1bT0b9DUSsywS+Mm5HyZfwcS4k5vrq
-	 VMCU/CMqmWYNjFdav83hOmxGCQijxqnqAJmx622/fQM4Q5jUQebEOuUl/vqZRd6ti+
-	 ouUXSMV+iaDO89S4/LTIhLCgtqqn2K9rg0sXOURHWc0QsJcHxOI48QCY+WraMksA9/
-	 Ai7+HvjKSuRzX1VUzvwkBRk9Tq3V8Jb4JBUx3jNsGkvRiiS4oC0FuzWba9m6STTFEy
-	 IPbFf4PIth2cw==
-Date: Fri, 27 Nov 2026 14:07:58 +0100
+	h=Resent-From:Resent-Date:Resent-To:Date:From:To:Cc:Cc:Subject:
+	 References:In-Reply-To;
+	b=Q6fKVmOH1OWprEWAl5S9FHaX7sfONUOr6bPcByYylppPnRP9izo9GR6E6ZRw2lWdY
+	 DqaU5yc7TRQwBo8NhdHQFyPXNbnsbd7gxlXE9aoyN7CnQykkeUxfcaFREoUb3qnGal
+	 o7W61ufA6u71RZRcHio4++oZsw4dc/nHrgCqn2U3yidVbK2OwrTICiJWJNKYbz8VMf
+	 GuiFSu5aSdSB61fpqBcArEkp+Ki6s0fwX7WmfnqEuUBFItFRm1KPEqFvdPleHJ3rUL
+	 2RGYa2kg2J8Tf2QQKvpCajnHOJbu6r9bt+QFo6yOqMkAfSdVumf+7pdJyF6VwOayZL
+	 GpQNIre7yeGfQ==
+Resent-From: Alejandro Colomar <alx+linux-man@kernel.org>
+Resent-Date: Fri, 27 Nov 2026 14:12:57 +0100
+Resent-Message-ID: <awmB2cOJTOB1jvfz@devuan>
+Resent-To: linux-api@vger.kernel.org
+Date: Fri, 27 Nov 2026 14:08:04 +0100
 From: Alejandro Colomar <alx+linux-man@kernel.org>
 To: Christian Brauner <brauner@kernel.org>
 Cc: Niklas =?utf-8?Q?Hamb=C3=BCchen?= <mail@nh2.me>, 
 	linux-man@vger.kernel.org, linux-api@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, Jan Kara <jack@suse.cz>, Alexander Viro <viro@zeniv.linux.org.uk>
 Subject: Re: man 2 unshare: UNSHARE_EMPTY_MNTNS
 Message-ID: <awl-h1Kdc61JccWC@devuan>
 References: <64fb02fd-0ffa-4311-bf21-a3211e9d599e@nh2.me>
@@ -62,6 +69,7 @@ Content-Type: multipart/signed; micalg=pgp-sha512;
 	protocol="application/pgp-signature"; boundary="bshabd5tnbamc7jq"
 Content-Disposition: inline
 In-Reply-To: <20261127-rundlich-geldkassette-farbaufnahme-62856c08c80b@brauner>
+Message-ID: <20261127130804.V62-5e4QD-ZWpRika0sYfg2KjDTkNWRuxHKDw3E4OLQ@z>
 
 
 --bshabd5tnbamc7jq
