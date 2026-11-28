@@ -1,46 +1,46 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795859900;
-	b=t9HzaQkdceO5HfDoA8Hag0IOObu9em1YWo4wGGTKICwFu3Gzw4PXmI73K83ysKFt+7Nc
-	 2fOMXw024GqNVYH3fVLEEFoLnM44GIWmjDdMiH57Xhx+Qe3pyYYX2K1UpY79tKPLUxkae
-	 94HmwFxaLFWA9wyihMTUCs7MtxHKMaYPvfeJ1LuZRnPyMdn3gyaQ2+/BpWhJN3HCjflly
-	 ZdJ5eJ0oFEqafx8guyrEF9yLu2lj7hGTb8s1rSEQBgO0AaGy3HhOw65qYDIkbUOC66zv1
-	 nsOEi1JPwGMlTf6ZYeUR6a0XAPikt+yveojqtunZqwfWtzQki1Q8VjlKB9TTw4hh3IQ==
+	t=1795862203;
+	b=IpJ59F8sJDn5LwSCQOSXoa39enmH8IJxMKsjD5GxYVaubKtNMcC7Zt2LK2J3KM0y6oO0
+	 aFs0MTkFxIcBes08Nwz0wQoDYZ7TtV6nFCBlxYD0E5cbEe09WazVLrG6S/QXdvuo8a9AY
+	 scHb4Tsmqo8YrtCxcIWwr83/a3n0G8BthiMg8YtdwLW57+MQOtxH/LJTuShOntGoc40G1
+	 TM/NI794LBG/DcVUYhp6DjMeDIfxg0O7/aTF8gMVPj2wgEVhnOLO1CDTFxbu56+xhTkJi
+	 86CLdybCmKELn3g7JGs/OdQb6xyjxCtV1CAi6ilUAZt3L6cmYQ5d4cXpdOjObW+ugPA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795859900;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795862203;
 	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
 	 References:MIME-Version:Content-Type:Content-Disposition:
 	 Content-Transfer-Encoding:In-Reply-To;
-	bh=gypr9ixdbwpXyRQHyLVcFcYrxT1qcpmfLiBbRjpRDO8=;
-	b=rfHBaS+2VlklEyl6YM0BwFCNxXBD/puduE1V+XIg5svkuiAk29rQORMoW6oNMJGZ+Uoe
-	 jnXier8aR5WHMXNVlZUf8k9bsZaIDcqVaZOk0mviH3aiSQuUDVXBQHZcBPo8xDNVgkg82
-	 ZQGiCp+yegQDX0ecD4XtDoZVRWENgebVhVJx+0Nt9xi3Q1pBhjCz7L+9pB2dkHE0B8oGC
-	 8Et4FoUXmmu3RFoawHRBc7fOnHo5P290kNOhu9cjxRfbV77mxKwrURaRMcety15LN5IXb
-	 b9Qd24rknnrNA/fFoNbilRFIYrCRtuJyCYD8x0E9gPfd4iW26jNE0KMRWDtRpu9fRRA==
+	bh=3C9fX4TIO80ht8xlUhmpeoykwcnqNbqprrFt/B+wKJc=;
+	b=feJq4ES2Fx8ZD4HszVzbNWr+JiHCT82Ur4ip9of0ADwxRWzUmumtgQkXqEhadfeCCVJi
+	 thkPUZL8LM6NWHAipTPmoweS32uDM/Cb6wPhju+BVQA1RZx52w0czJFhT932K1I1D+LQI
+	 v/8rpo/RZqgQwUQEdsMnfusPonpjxFngA9VPt9r+KbrvfF0Gv+dYbX0Do+Rk/KsxqPvtE
+	 Q6nObNR0Xi62FMO/8+pUjFlAVHkDim3QbG/sneANsPPM8Mpif1ZoBpSycNmhSMdliAR9M
+	 pY1jAELS2nvvgdKSl/cRJBmxfzGm+q6t6UiJqwXbHKPzS2gw2TjstmQO8XUWC3waaPQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Xh9t4AGi;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cfjJUrS3;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id C2940606A31C;
-	Sat, 28 Nov 2026 09:58:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 2B14A606A31C;
+	Sat, 28 Nov 2026 10:36:42 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Xh9t4AGi
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 65CE81F00898;
-	Sat, 28 Nov 2026 09:58:19 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cfjJUrS3
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 057F61F00893;
+	Sat, 28 Nov 2026 10:36:42 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795859900;
-	bh=gypr9ixdbwpXyRQHyLVcFcYrxT1qcpmfLiBbRjpRDO8=;
+	s=k20260515; t=1795862202;
+	bh=3C9fX4TIO80ht8xlUhmpeoykwcnqNbqprrFt/B+wKJc=;
 	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=Xh9t4AGiLURm38vb2SU1trvChHI7gbr2j2mr89kBMmMObRqPqFb31H/Df4kMoB/QE
-	 DTFrZCWcUEejYMMyf6uta0gZ1r5vlFftz5vvG1cN/u5TrwQsJYlqCJQy3985JyPZXl
-	 apHx6xspTchoq4W7I8KvgHK/Hyof2wsym7vgH37qxLOTL5W1cWYCIhFm2lyesYk8R9
-	 Kp0flMcZ/JKT9hHiBRBpIy3ZI+RZWDyhlwPP4rXzSm7o1dCytu8uI5iSFUHRj8LFZW
-	 IVo4JQQxND28kNGxFoK6c4cDpAug7siQfOYddho75iEl1+NIV9JjSbrMQzX+NeACTy
-	 NmQ3tcw1clb2g==
-Date: Sat, 28 Nov 2026 11:58:16 +0200
+	b=cfjJUrS3gUBp7Dj8bg4xSg/pcM8dtIiFwpRZtQI3hkfgOAOpj1rtAPl8EcrkgC6Yi
+	 zF07mAyFPCnZBzmmYeYAJwOQBoS+Zm3JsVmcaKjKX3kQZUkiY+4E4oOgfiGSGsYo8D
+	 sqv5rnd8NE4FuW168wtBtZ5sx3OUiC4ISi3UeCtp8USTmKeJN7zvOdUYZ/Wv8IPeKW
+	 06Dk8OPl+36CxYkf8QRtAGB2kqhRbNtcSWPsNh5fFRMVGM627+sc3qaANYIHviDCqf
+	 j+QZkklHBewmwUrwk9T2v6rua/o6Wrozl99k9QloP7arJXXV0RSFJnE2PNyYxhWrvZ
+	 SnPGJ2wfA5hPA==
+Date: Sat, 28 Nov 2026 12:36:39 +0200
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: Askar Safin <safinaskar@gmail.com>
 Cc: aleksa@amutable.com, alex@amutable.com, alexei.starovoitov@gmail.com,
@@ -58,7 +58,7 @@ Cc: aleksa@amutable.com, alex@amutable.com, alexei.starovoitov@gmail.com,
 	skhan@linuxfoundation.org, viro@zeniv.linux.org.uk,
 	zygmunt.krynicki@canonical.com
 Subject: Re: [RFC PATCH v7 00/26] userland: Userland containers
-Message-ID: <awqluHWbXWeNvUeS@kernel.org>
+Message-ID: <awqut63HdrL97iu3@kernel.org>
 References: <awOQDOel_72Xwjm7@kernel.org>
  <20261127214103.542291-1-safinaskar@gmail.com>
  <awn-ioAuksHNV-Rc@kernel.org>
@@ -106,8 +106,22 @@ On Sat, Nov 28, 2026 at 11:53:06AM +0200, Jarkko Sakkinen wrote:
 > > So, here I like embryos.
 > 
 > We all have things that I like but let's talk about facts instead.
+> 
+> CVE-2019-5736 was also not a sibling process racing the pre-execve
+> window: it happened inside execve() itself via binfmt_script resolving
+> container-controlled #!/proc/self/exe.
+> 
+> CLONE_INTO_USERLAND rejects CLONE_VM, CLONE_FILES, CLONE_FS, and
+> CLONE_SIGHAND, keeps exec_state->user_ns in the caller's outer user
+> namespace, and resets exec_state->dumpable to suid_dumpable (0) when
+> installing userland->user_ns. Until execve(), ptrace_may_access() checks
+> CAP_SYS_PTRACE against the outer user_ns, so processes inside the
+> userland cannot ptrace the child or access /proc/<pid>/{exe,mem,fd}.
 
-I mean just saying but wwanting an embryonic task state in Linux is
-backwards architecturally for any possible topic.
+The build phase on struct userland (USERLAND_INIT, before any task
+exists) lets clone3(CLONE_INTO_USERLAND) stay an atomic copy_process()
+step and execve() stay as it is.
+
+It fully lives in the *pre-existing syscall paths*".
 
 Br, Jarkko
